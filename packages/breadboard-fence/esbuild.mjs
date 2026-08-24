@@ -1,0 +1,43 @@
+import * as esbuild from 'esbuild';
+
+const watch = process.argv.includes('--watch');
+const production = process.argv.includes('--production');
+
+/**
+ * どちらも CommonJS で出す。拡張ホストが require で読み込むためと、
+ * 依存の yaml が CJS 実装を持ち込む (ESM 出力だと dynamic require で落ちる) ため。
+ * package.json は "type": "module" なので拡張子は .cjs にする。
+ */
+const targets = [
+  {
+    entryPoints: ['src/extension/extension.ts'],
+    outfile: 'dist/extension.cjs',
+    format: 'cjs',
+    platform: 'node',
+    external: ['vscode'],
+  },
+  {
+    // shebang は src/cli/main.ts の 1 行目にあり、esbuild がそのまま先頭に残す。
+    entryPoints: ['src/cli/main.ts'],
+    outfile: 'dist/cli.cjs',
+    format: 'cjs',
+    platform: 'node',
+  },
+];
+
+for (const target of targets) {
+  const options = {
+    bundle: true,
+    target: 'node20',
+    sourcemap: !production,
+    minify: production,
+    logLevel: 'info',
+    ...target,
+  };
+  if (watch) {
+    const context = await esbuild.context(options);
+    await context.watch();
+  } else {
+    await esbuild.build(options);
+  }
+}

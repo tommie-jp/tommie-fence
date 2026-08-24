@@ -1,0 +1,14 @@
+/* Markdown プレビューでの図の置き方。
+   拡張が previewStyles を 1 つも contribute しないと、拡張フォルダが webview の
+   localResourceRoots に入らないという事情もあってここに置いている。 */
+
+.breadboard {
+  margin: 1em 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.breadboard svg {
+  max-width: 100%;
+  height: auto;
+}

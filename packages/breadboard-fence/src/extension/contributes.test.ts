@@ -1,0 +1,41 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { describe, expect, test } from 'vitest';
+
+const read = (name: string): unknown =>
+  JSON.parse(readFileSync(fileURLToPath(new URL(`../../${name}`, import.meta.url)), 'utf8'));
+
+const manifest = read('package.json') as {
+  main: string;
+  contributes: {
+    grammars?: { scopeName: string; path: string; injectTo: string[]; embeddedLanguages: Record<string, string> }[];
+    'markdown.previewStyles'?: string[];
+    'markdown.markdownItPlugins'?: boolean;
+  };
+};
+
+describe('extension manifest', () => {
+  test('declares the markdown-it plugin hook', () => {
+    expect(manifest.contributes['markdown.markdownItPlugins']).toBe(true);
+    expect(manifest.main.endsWith('.cjs')).toBe(true);
+  });
+
+  test('contributes a preview stylesheet so the extension folder is a resource root', () => {
+    expect(manifest.contributes['markdown.previewStyles']).toEqual(['./media/breadboard.css']);
+  });
+
+  test('injects the syntax highlighting grammar into markdown', () => {
+    const grammar = manifest.contributes.grammars?.[0];
+
+    expect(grammar?.injectTo).toEqual(['text.html.markdown']);
+    expect(grammar?.embeddedLanguages).toEqual({ 'meta.embedded.block.yaml': 'yaml' });
+  });
+
+  test('points at a grammar whose scope name matches the manifest', () => {
+    const grammar = manifest.contributes.grammars?.[0];
+    const syntax = read(grammar!.path) as { scopeName: string; injectionSelector: string };
+
+    expect(syntax.scopeName).toBe(grammar?.scopeName);
+    expect(syntax.injectionSelector).toBe('L:text.html.markdown');
+  });
+});

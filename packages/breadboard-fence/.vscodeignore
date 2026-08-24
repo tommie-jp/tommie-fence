@@ -1,0 +1,27 @@
+# .vscodeignore がある場合 vsce は .gitignore を見ないので、生成物もここに並べる。
+.vscode/**
+.github/**
+src/**
+docs/**
+scripts/**
+node_modules/**
+coverage/**
+.playwright-mcp/**
+_del/**
+examples/*.md
+examples/out/*.svg
+CLAUDE.md
+dist/cli.cjs
+dist/cli.cjs.map
+**/*.ts
+**/*.map
+**/*.test.*
+**/*.log
+esbuild.mjs
+tsconfig.json
+tsconfig.tsbuildinfo
+vitest.config.ts
+.markdownlint.json
+.gitignore
+.gitattributes
+*.vsix
