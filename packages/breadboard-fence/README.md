@@ -39,19 +39,63 @@ N1 : R1.2, D1.A
 
 ## 使い方
 
-VS Code に `.vsix` を入れて、Markdown プレビュー (`Ctrl+Shift+V`) を開く。
+必要なのは **VS Code 1.75 以上と Node.js 20 以上**。Marketplace には出していないので、
+`.vsix` を自分で作って入れる。
 
 ```bash
 npm install
 npm run package                       # breadboard-fence-x.y.z.vsix を作る
-code --install-extension breadboard-fence-*.vsix
 ```
 
-CLI で GitHub に貼れるスタンドアロン SVG を書き出せる。
+`.vsix` の中身は素の JavaScript (実行時の依存は YAML パーサだけ) なので、
+**同じファイルがどの OS でも使える**。違うのは「どこに入れるか」だけ。
+
+| 環境 | 拡張が動く場所 | インストール |
+| --- | --- | --- |
+| Windows | Windows 側 | PowerShell で `code --install-extension (Get-Item breadboard-fence-*.vsix).FullName` |
+| WSL2 | **WSL 側** (`~/.vscode-server/extensions`) | WSL のシェルで `code --install-extension breadboard-fence-*.vsix` |
+| Linux / macOS | そのマシン | `code --install-extension breadboard-fence-*.vsix` |
+| Remote-SSH / Dev Container / Codespaces | **接続先** | 接続先のシェルで上と同じコマンド |
+
+入れたら Markdown を開いて Markdown プレビュー
+(`Ctrl+Shift+V` / macOS は `Cmd+Shift+V`) を出す。
+
+`code` が PATH に無いときは、拡張ビュー (`Ctrl+Shift+X`) の右上の `...` →
+「VSIX からのインストール」でも同じことができる
+(macOS ならコマンドパレットの `Shell Command: Install 'code' command in PATH` で
+`code` を通せる)。
+
+### Windows で気をつけること
+
+- Node.js は `winget install OpenJS.NodeJS.LTS` で入る。
+- PowerShell と cmd はワイルドカードを展開せず `breadboard-fence-*.vsix` を
+  そのまま渡してしまう。上の表のように `Get-Item` で実体のパスにするか、
+  ファイル名を直接書く。
+
+### WSL2 で気をつけること
+
+- この拡張は**ワークスペース側 (WSL) で動く**。Windows 側に入れただけでは
+  WSL のウィンドウでフェンスが図にならない。拡張ビューに
+  「WSL: &lt;ディストリ&gt; にインストール」のボタンが出たら押す。
+- リポジトリは Linux 側 (`~/breadboard-fence` など) に置く。`/mnt/c/...` の下は
+  ファイルアクセスが遅く、`npm install` とテストが目に見えて重くなる。
+- **Windows と WSL で `node_modules` を共有しない**。esbuild と sharp は
+  プラットフォーム別のバイナリを入れるので、片方で `npm install` したものは
+  もう片方で動かない。混ざったら `rm -rf node_modules && npm install` でやり直す。
+
+### CLI
+
+GitHub に貼れるスタンドアロン SVG を書き出せる。事前に `npm run build`
+(または `npm run package`) が要る。コマンドは PowerShell でも同じ。
 
 ```bash
 node dist/cli.cjs render examples --out examples/out
 ```
+
+引数はファイルでもディレクトリでもよく、展開は CLI 側でやる
+(ワイルドカードを展開しないシェルでもそのまま動く)。`--out` を省くと入力と同じ
+場所に書く。`npm run examples` は PNG も書き出すが、こちらは sharp
+(プラットフォーム別のバイナリ) が要るので開発環境でだけ使う。
 
 ## 文法
 
