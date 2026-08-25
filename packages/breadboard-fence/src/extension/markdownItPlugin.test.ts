@@ -1,5 +1,6 @@
 import MarkdownIt from 'markdown-it';
 import { describe, expect, test } from 'vitest';
+import { THEMES } from '../core/render/theme.ts';
 import { breadboardPlugin } from './markdownItPlugin.ts';
 
 const md = () => new MarkdownIt().use(breadboardPlugin);
@@ -11,6 +12,15 @@ describe('breadboardPlugin', () => {
     expect(html).toContain('<svg');
     expect(html).toContain('class="breadboard"');
     expect(html).not.toContain('<code');
+  });
+
+  test('applies the theme the fence asks for', () => {
+    const html = md().render('```breadboard\nboard: half\nstyle: dark\n```');
+
+    // プレビューまで style が届いていること。ここが classic の板の色になるときは、
+    // たいてい拡張が古い .vsix のままなので `npm run package` から入れ直す。
+    expect(html).toContain(THEMES.dark?.palette.plate);
+    expect(html).not.toContain('知らないキーです: style');
   });
 
   test('leaves a fence of another language to the default renderer', () => {

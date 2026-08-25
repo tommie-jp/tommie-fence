@@ -65,6 +65,22 @@ npm run package                       # breadboard-fence-x.y.z.vsix を作る
 (macOS ならコマンドパレットの `Shell Command: Install 'code' command in PATH` で
 `code` を通せる)。
 
+### 更新するとき
+
+**ソースを直しただけでは、入っている拡張は変わらない。** `.vsix` を作り直して
+入れ直すまで、プレビューは前のビルドのまま動く。
+
+```bash
+npm run package
+code --install-extension breadboard-fence-0.1.0.vsix --force
+```
+
+- バージョン番号を上げずに入れ直すときは `--force` が要る。
+- 入れ直したら**ウィンドウを再読み込みする** (コマンドパレットの
+  `Developer: Reload Window`)。プレビューを開き直すだけでは古いままのことがある。
+- 拡張が古いと、後から入った文法が「知らないキーです」というエラーで出る。
+  文法を足したつもりが図に反映されないときは、まずここを疑う。
+
 ### Windows で気をつけること
 
 - Node.js は `winget install OpenJS.NodeJS.LTS` で入る。
