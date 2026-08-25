@@ -178,3 +178,29 @@ describe('記事によく出る部品', () => {
     expect(symbols).not.toContain('thRp');
   });
 });
+
+describe('足のある 2 端子部品', () => {
+  test('carries the potentiometer with its wiper', () => {
+    const type = lookupPartType('potentiometer');
+
+    expect(type?.kind).toBe('two-terminal');
+    expect(lookupPin(type!, 'w')).toBe('wiper');
+    expect(lookupPin(type!, 'WIPER')).toBe('wiper');
+    // 抵抗の仲間なので値には Ω が付く。
+    expect(type?.unitTex).toBe('\\Omega');
+  });
+
+  test('carries the thyristor and the triac with their gate', () => {
+    for (const name of ['thyristor', 'triac']) {
+      const type = lookupPartType(name);
+
+      expect(type?.kind).toBe('two-terminal');
+      expect(lookupPin(type!, 'g')).toBe('gate');
+      expect(lookupPin(type!, 'gate')).toBe('gate');
+    }
+  });
+
+  test('gives no leg to a part that has none', () => {
+    expect(lookupPin(lookupPartType('resistor')!, 'w')).toBeNull();
+  });
+});

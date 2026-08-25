@@ -39,6 +39,7 @@ wires:
 | --- | --- | --- | --- |
 | `resistor` | 抵抗 | Ω | `R1: resistor a1 a3 10k` |
 | `resistor-var` | 可変抵抗 (2 端子) | Ω | `R2: resistor-var a1 a3 10k` |
+| `potentiometer` | ポテンショメータ (3 端子) | Ω | `P1: potentiometer b1 b5 10k` |
 | `capacitor` | コンデンサ | F | `C1: capacitor a3 c3 100n` |
 | `ecap` | 電解コンデンサ | F | `C2: ecap a5 c5 100u` |
 | `varicap` | バリキャップ | F | `D4: varicap a5 a7 33p` |
@@ -53,6 +54,8 @@ wires:
 | `schottky` | ショットキー | (型番) | `D5: schottky c9 c11 1N5819` |
 | `photodiode` | フォトダイオード | (型番) | `D6: photodiode c13 c15` |
 | `diac` | ダイアック | (型番) | `D7: diac e1 e3` |
+| `thyristor` | サイリスタ (SCR) | (型番) | `T1: thyristor d1 d5` |
+| `triac` | トライアック | (型番) | `T2: triac f1 f5` |
 | `vsource` | 直流電源 | V | `V1: vsource e1 e3 5` |
 | `sine` | 交流電源 (正弦波) | V | `V2: sine e5 e7 1` |
 | `square` | 方形波電源 | V | `V3: square e5 e7 5` |
@@ -140,6 +143,22 @@ wires:
 **足へ引いた線の途中には当てられない**。線がどこを通るかがこちら側では
 分からず、T 字かどうかを決められないため。上の例のように、当てたい番地 (`c7`)
 を通る配線に分けて書く。当てて書くと、その旨を行番号つきで伝える。
+
+### 2 端子でも足を持つもの
+
+ポテンショメータのワイパーと、サイリスタ・トライアックのゲートは、
+**両端を番地で置いたうえで 3 本目を名前で指す**。書き方は 2 端子部品のままで、
+足だけ `P1.w` `T1.g` のように呼ぶ。
+
+| 種類 | 足 |
+| --- | --- |
+| `potentiometer` | `w` (`wiper`) |
+| `thyristor` / `triac` | `g` (`gate`) |
+
+![2 端子でも足を持つもの](../examples/out/03-multi-terminal-4.png)
+
+ワイパーは記号の**真上**に出るので、そのまま `--` で上の番地へ引ける。
+ゲートは横にずれた位置にあるので、ほかの足と同じく `|-` で直角に入れる。
 
 ### 1 端子の記号 — `ID: 種類 番地`
 

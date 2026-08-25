@@ -22,7 +22,8 @@ import type { TexTarget } from './types.ts';
 
 /**
  * 2 端子は `\draw (…) to[symbol] (…)`、1 端子と多端子は `\node[symbol] at (…)`。
- * 多端子だけがピンを持ち、配線から `U1.out` の形で指せる。
+ * 足を持つのは多端子と、**一部の 2 端子** (ポテンショメータのワイパー、
+ * サイリスタのゲート)。どちらも配線から `U1.out` の形で指せる。
  */
 export type PartKind = 'two-terminal' | 'one-terminal' | 'multi-terminal';
 
@@ -45,7 +46,7 @@ export type PartType = {
   /**
    * 書ける名前 → circuitikz のアンカー名。
    * 回路図の慣習の短い名前 (`B` `C` `E`) も、アンカー名そのものも通す。
-   * 多端子部品だけが持つ。
+   * **これを持つ部品だけが足を指される** (種類が多端子かどうかではない)。
    */
   readonly pins?: Readonly<Record<string, string>>;
   /**
@@ -79,6 +80,12 @@ const FET_PINS = {
 /** オペアンプ。circuitikz のアンカーがそのまま記号になっている。 */
 const AMP_PINS = { '+': '+', '-': '-', out: 'out' } as const;
 
+/** ポテンショメータの 3 本目。2 端子の記号にアンカーが 1 つ生えている。 */
+const WIPER_PINS = { w: 'wiper', wiper: 'wiper' } as const;
+
+/** サイリスタ・トライアックの引き金。こちらも 2 端子 + アンカー 1 つ。 */
+const GATE_PINS = { g: 'gate', gate: 'gate' } as const;
+
 /** トランスは 1 次が A、2 次が B。 */
 const TRANSFORMER_PINS = { a1: 'A1', a2: 'A2', b1: 'B1', b2: 'B2' } as const;
 
@@ -102,8 +109,13 @@ const NO_UNIT = { unitTex: null, unitSi: null } as const;
 export const PART_TYPES = {
   // 受動部品
   resistor: { kind: 'two-terminal', symbol: 'R', unitTex: OHM, unitSi: SI_OHM },
-  /** 2 端子の可変抵抗。3 端子のポテンショメータとは別の記号。 */
+  /** 2 端子の可変抵抗。3 本目の足が要るなら potentiometer のほう。 */
   'resistor-var': { kind: 'two-terminal', symbol: 'vR', unitTex: OHM, unitSi: SI_OHM },
+  /**
+   * ポテンショメータ (3 端子の可変抵抗)。両端は番地で置き、ワイパーは
+   * `P1.w` で指す。**ワイパーは記号の上側に出る**ので、線は上へ引く。
+   */
+  potentiometer: { kind: 'two-terminal', symbol: 'potentiometer', unitTex: OHM, unitSi: SI_OHM, pins: WIPER_PINS },
   capacitor: { kind: 'two-terminal', symbol: 'C', unitTex: FARAD, unitSi: SI_FARAD },
   /**
    * 電解コンデンサ (有極性)。`eC` はフォントが無くてプロセスごと落ちるので、
@@ -139,6 +151,12 @@ export const PART_TYPES = {
   photodiode: { kind: 'two-terminal', symbol: 'pD', ...NO_UNIT },
   /** ダイアック (双方向ダイオード)。トライアックの引き金に使う。 */
   diac: { kind: 'two-terminal', symbol: 'biD', ...NO_UNIT },
+  /**
+   * サイリスタ (SCR) とトライアック。ゲートは `T1.g` で指す。
+   * 両端は番地で置くので、足として指せるのはゲートだけ。
+   */
+  thyristor: { kind: 'two-terminal', symbol: 'thyristor', ...NO_UNIT, pins: GATE_PINS },
+  triac: { kind: 'two-terminal', symbol: 'triac', ...NO_UNIT, pins: GATE_PINS },
 
   // 電源
   vsource: { kind: 'two-terminal', symbol: 'V', unitTex: VOLT, unitSi: SI_VOLT },

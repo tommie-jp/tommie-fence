@@ -385,3 +385,31 @@ describe('部品の体の上に乗った端', () => {
     expect([...errors, ...notices]).toEqual([]);
   });
 });
+
+describe('2 端子部品の足', () => {
+  test('resolves the wiper of a potentiometer', () => {
+    const { circuit, errors } = build(
+      'parts:',
+      '  P1: potentiometer a1 a3 10k',
+      'wires:',
+      '  - P1.w -- c2',
+    );
+
+    expect(errors).toEqual([]);
+    expect(circuit.wires[0]?.from).toEqual({ kind: 'pin', part: 'P1', pin: 'wiper' });
+  });
+
+  test('says so when the part has no legs at all', () => {
+    const { errors } = build('parts:', '  R1: resistor a1 a3', 'wires:', '  - R1.w -- c2');
+
+    expect(errors.map((error) => error.message)).toEqual([
+      '部品 R1 (resistor) に足の名前はありません',
+    ]);
+  });
+
+  test('lists the legs it does have when the name is wrong', () => {
+    const { errors } = build('parts:', '  T1: triac a1 a3', 'wires:', '  - T1.k -- c2');
+
+    expect(errors[0]?.message).toBe('T1 に足 k はありません (g / gate)');
+  });
+});

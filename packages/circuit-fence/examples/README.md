@@ -11,7 +11,7 @@
 | --- | --- |
 | [01-rc-lowpass.md](01-rc-lowpass.md) | 番地 / 部品 / 配線 / ネットリスト |
 | [02-parts.md](02-parts.md) | 2 端子部品 34 種、1 端子の記号 4 種 |
-| [03-multi-terminal.md](03-multi-terminal.md) | 多端子部品と足の名前、型番、FET の種類 |
+| [03-multi-terminal.md](03-multi-terminal.md) | 多端子部品と足の名前、型番、FET の種類、2 端子の足 |
 | [04-non-inverting-amp.md](04-non-inverting-amp.md) | オペアンプの向き (`+up`)、足への引き方 |
 | [05-labels.md](05-labels.md) | ID の出方 / 値の出方 |
 | [06-bends.md](06-bends.md) | 配線の `--` / `-\|` / `\|-`、分岐の黒丸と T 字 |

@@ -252,8 +252,10 @@ function resolveEndpoint(
     return null;
   }
 
+  // 足を指せるかは種類が多端子かどうかではなく、足の表を持っているかで決まる
+  // (ポテンショメータのように 2 端子でも足を 1 本持つ種類がある)。
   const type = lookupPartType(part.type);
-  if (type === null || type.kind !== 'multi-terminal') {
+  if (type === null || type.pins === undefined) {
     errors.push(fenceError(`部品 ${safeToken(part.id)} (${safeToken(part.type)}) に足の名前はありません`, line));
     return null;
   }

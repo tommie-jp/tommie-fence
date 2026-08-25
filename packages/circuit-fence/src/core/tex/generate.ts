@@ -294,7 +294,11 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget): string {
   // ラベルは `l_` (下・左)、値は `a^` (上・右) と向かい合わせに置く。
   // どちらも既定の側に置くと、LED のように上へ張り出す記号とラベルが重なる
   // (回路図の定石。実機で重なりを確認して決めた)。
-  const options = [symbolFor(part.type, target), `l_=${labelOf(part.id)}`];
+  const options = [symbolFor(part.type, target)];
+  // 足を指せる種類だけ、記号そのものに名前を付ける (`P1.w` の行き先になる)。
+  // 指せない種類にまで付けると、要らない名前で TeX が太る。
+  if (lookupPartType(part.type)?.pins !== undefined) options.push(`n=${nodeNameOf(part.id)}`);
+  options.push(`l_=${labelOf(part.id)}`);
   if (part.value !== null) options.push(`a^=${annotationOf(part.value, unitOf(part.type), target)}`);
 
   return `\\draw (${formatAddress(part.from)}) to[${options.join(', ')}] (${formatAddress(part.to)});`;

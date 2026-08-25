@@ -437,3 +437,21 @@ describe('電源レールの記号', () => {
     expect(tex).toContain('\\node[vee] at (c1) {VN}; % line 3');
   });
 });
+
+describe('足のある 2 端子部品', () => {
+  test('names the bipole so a wire can reach its leg', () => {
+    const { tex } = generate('parts:', '  P1: potentiometer a1 a3 10k', 'wires:', '  - P1.w -- c2');
+
+    expect(tex).toContain(
+      '\\draw (a1) to[potentiometer, n=part-P1, l_=$P_{1}$, a^=$10\\,\\mathrm{k}\\Omega$] (a3); % line 2',
+    );
+    expect(tex).toContain('\\draw (part-P1.wiper) -- (c2); % line 4');
+  });
+
+  test('leaves the bipoles without legs unnamed', () => {
+    // 名前を付けるのは足を指せる種類だけ。ほかは TeX を増やさない。
+    const { tex } = generate('parts:', '  R1: resistor a1 a3');
+
+    expect(tex).toContain('\\draw (a1) to[R, l_=$R_{1}$] (a3); % line 2');
+  });
+});
