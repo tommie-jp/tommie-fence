@@ -1,0 +1,71 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\foreach \x in {0,2,4,6,8} {\foreach \y in {0,-2,-4,-6,-8,-10,-12,-14,-16} {\fill[gray] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize] at (8,0.84) {5};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-14) {h};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-16) {i};
+\coordinate (b2) at (2,-2);
+\coordinate (b5) at (8,-2);
+\coordinate (e2) at (2,-8);
+\coordinate (e5) at (8,-8);
+\coordinate (h2) at (2,-14);
+\coordinate (h5) at (8,-14);
+\coordinate (a2) at (2,0);
+\coordinate (c2) at (2,-4);
+\coordinate (b1) at (0,-2);
+\coordinate (a5) at (8,0);
+\coordinate (c5) at (8,-4);
+\coordinate (b4) at (6,-2);
+\coordinate (d2) at (2,-6);
+\coordinate (f2) at (2,-10);
+\coordinate (e1) at (0,-8);
+\coordinate (d5) at (8,-6);
+\coordinate (f5) at (8,-10);
+\coordinate (e4) at (6,-8);
+\coordinate (g2) at (2,-12);
+\coordinate (i2) at (2,-16);
+\coordinate (h1) at (0,-14);
+\coordinate (g5) at (8,-12);
+\coordinate (i5) at (8,-16);
+\coordinate (h4) at (6,-14);
+\node[njfet] (part-J1) at (b2) {}; % line 2
+\node[pjfet] (part-J2) at (b5) {}; % line 3
+\node[nigfete] (part-M1) at (e2) {}; % line 4
+\node[pigfete] (part-M2) at (e5) {}; % line 5
+\node[nigfetd] (part-M3) at (h2) {}; % line 6
+\node[pigfetd] (part-M4) at (h5) {}; % line 7
+\draw (a2) -| (part-J1.drain); % line 9
+\draw (c2) -| (part-J1.source); % line 10
+\draw (b1) -| (part-J1.gate); % line 11
+\draw (a5) -| (part-J2.drain); % line 12
+\draw (c5) -| (part-J2.source); % line 13
+\draw (b4) -| (part-J2.gate); % line 14
+\draw (d2) -| (part-M1.drain); % line 15
+\draw (f2) -| (part-M1.source); % line 16
+\draw (e1) -| (part-M1.gate); % line 17
+\draw (d5) -| (part-M2.drain); % line 18
+\draw (f5) -| (part-M2.source); % line 19
+\draw (e4) -| (part-M2.gate); % line 20
+\draw (g2) -| (part-M3.drain); % line 21
+\draw (i2) -| (part-M3.source); % line 22
+\draw (h1) -| (part-M3.gate); % line 23
+\draw (g5) -| (part-M4.drain); % line 24
+\draw (i5) -| (part-M4.source); % line 25
+\draw (h4) -| (part-M4.gate); % line 26
+\end{circuitikz}
+\end{document}

@@ -120,6 +120,21 @@ export const PART_TYPES = {
   nmos: { kind: 'multi-terminal', symbol: 'nmos', ...NO_UNIT, pins: FET_PINS },
   pmos: { kind: 'multi-terminal', symbol: 'pmos', ...NO_UNIT, pins: FET_PINS },
   /**
+   * FET の残り。書くほうは回路図の言葉 (接合型 = `jfet`、エンハンスメント型 =
+   * `-e`、デプレッション型 = `-d`)、描くほうは circuitikz の綴り (`igfet`)。
+   * 上の `nmos` / `pmos` はチャネルを 1 本で描いた簡易記号で、
+   * これはこれで記事でよく使うので残してある。
+   *
+   * circuitikz 1.0 には**デプレッション型 + ボディ端子の記号が無い** (実測)。
+   * ボディ端子つきは載せていない (足がゲートと同じ側に出て図が読みにくい)。
+   */
+  njfet: { kind: 'multi-terminal', symbol: 'njfet', ...NO_UNIT, pins: FET_PINS },
+  pjfet: { kind: 'multi-terminal', symbol: 'pjfet', ...NO_UNIT, pins: FET_PINS },
+  'nmos-e': { kind: 'multi-terminal', symbol: 'nigfete', ...NO_UNIT, pins: FET_PINS },
+  'pmos-e': { kind: 'multi-terminal', symbol: 'pigfete', ...NO_UNIT, pins: FET_PINS },
+  'nmos-d': { kind: 'multi-terminal', symbol: 'nigfetd', ...NO_UNIT, pins: FET_PINS },
+  'pmos-d': { kind: 'multi-terminal', symbol: 'pigfetd', ...NO_UNIT, pins: FET_PINS },
+  /**
    * circuitikz の `op amp` は記号の中の小さな ± に 5pt の太字数式フォントが要り、
    * フェンス側の TeX には無い。例外ではなく**プロセスごと落ちる** (実測)。
    * 三角形だけの `plain amp` に置き換え、± は普通のノードとして書き足す

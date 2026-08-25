@@ -34,6 +34,8 @@ style:
 | --- | --- |
 | `npn` / `pnp` | `B` `C` `E` (`base` `collector` `emitter`) |
 | `nmos` / `pmos` | `G` `D` `S` (`gate` `drain` `source`) |
+| `njfet` / `pjfet` | 同上 |
+| `nmos-e` / `pmos-e` / `nmos-d` / `pmos-d` | 同上 |
 | `opamp` | `+` `-` `out` |
 | `transformer` | `A1` `A2` (1 次) / `B1` `B2` (2 次) |
 
@@ -58,3 +60,45 @@ style:
 
 **足へは `-|` か `|-` で引く**。足は記号ごとに決まった位置にあって格子の上に
 無いので、`--` (まっすぐ) で番地とつなぐと斜めの線になる。
+
+## FET の種類
+
+`nmos` / `pmos` はチャネルを 1 本で描いた**簡易記号**。記事でよく使うのは
+こちらだが、接合型 (JFET) と、エンハンスメント型 / デプレッション型を
+書き分けたいときは次の名前で書く。**足の名前はどれも同じ**。
+
+```circuit
+parts:
+  J1: njfet b2
+  J2: pjfet b5
+  M1: nmos-e e2
+  M2: pmos-e e5
+  M3: nmos-d h2
+  M4: pmos-d h5
+wires:
+  - a2 -| J1.D
+  - c2 -| J1.S
+  - b1 -| J1.G
+  - a5 -| J2.D
+  - c5 -| J2.S
+  - b4 -| J2.G
+  - d2 -| M1.D
+  - f2 -| M1.S
+  - e1 -| M1.G
+  - d5 -| M2.D
+  - f5 -| M2.S
+  - e4 -| M2.G
+  - g2 -| M3.D
+  - i2 -| M3.S
+  - h1 -| M3.G
+  - g5 -| M4.D
+  - i5 -| M4.S
+  - h4 -| M4.G
+style:
+  grid: on
+```
+
+左が N チャネル、右が P チャネル。上から接合型 (`njfet` / `pjfet`)、
+エンハンスメント型 (`nmos-e` / `pmos-e`)、デプレッション型
+(`nmos-d` / `pmos-d`)。エンハンスメント型はチャネルが切れて、
+デプレッション型はつながって描かれる。

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { PART_TYPES, closestPartType, lookupPartType, partTypeNames } from './parts.ts';
+import { PART_TYPES, closestPartType, lookupPartType, lookupPin, partTypeNames } from './parts.ts';
 
 describe('PART_TYPES', () => {
   test('carries the two terminal parts a schematic is drawn with', () => {
@@ -74,5 +74,45 @@ describe('closestPartType', () => {
   test('does not guess wildly at a short name', () => {
     // 2 文字違えば別物。`triac` に `diode` を勧めない。
     expect(closestPartType('triac')).toBeNull();
+  });
+});
+
+describe('FET', () => {
+  /** 接合型・エンハンスメント型・デプレッション型。どれも足の名前は同じ。 */
+  const FETS = ['njfet', 'pjfet', 'nmos-e', 'pmos-e', 'nmos-d', 'pmos-d'];
+
+  test('carries the junction and the insulated gate FETs', () => {
+    for (const name of FETS) {
+      expect(lookupPartType(name)?.kind).toBe('multi-terminal');
+    }
+  });
+
+  test('names the legs of every FET the same way', () => {
+    for (const name of [...FETS, 'nmos', 'pmos']) {
+      const type = lookupPartType(name);
+      expect(type).not.toBeNull();
+      expect(lookupPin(type!, 'g')).toBe('gate');
+      expect(lookupPin(type!, 'drain')).toBe('drain');
+      expect(lookupPin(type!, 'S')).toBe('source');
+    }
+  });
+
+  test('spells the written name out into the circuitikz symbol', () => {
+    // 書くほうは回路図の言葉、描くほうは circuitikz の綴り (igfet)。
+    expect(lookupPartType('njfet')?.symbol).toBe('njfet');
+    expect(lookupPartType('nmos-e')?.symbol).toBe('nigfete');
+    expect(lookupPartType('pmos-e')?.symbol).toBe('pigfete');
+    expect(lookupPartType('nmos-d')?.symbol).toBe('nigfetd');
+    expect(lookupPartType('pmos-d')?.symbol).toBe('pigfetd');
+  });
+
+  test('leaves the simplified MOSFET where it was', () => {
+    // 既存の図が動かないように、簡易記号は nmos / pmos のまま。
+    expect(lookupPartType('nmos')?.symbol).toBe('nmos');
+    expect(lookupPartType('pmos')?.symbol).toBe('pmos');
+  });
+
+  test('suggests the FET behind a name that was cut short', () => {
+    expect(closestPartType('njf')).toBe('njfet');
   });
 });

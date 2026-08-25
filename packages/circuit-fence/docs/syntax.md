@@ -64,9 +64,19 @@ wires:
 | 種類 | 何 | 足の名前 |
 | --- | --- | --- |
 | `npn` / `pnp` | バイポーラトランジスタ | `B` `C` `E` (`base` `collector` `emitter`) |
-| `nmos` / `pmos` | MOSFET | `G` `D` `S` (`gate` `drain` `source`) |
+| `nmos` / `pmos` | MOSFET (簡易記号) | `G` `D` `S` (`gate` `drain` `source`) |
+| `njfet` / `pjfet` | 接合型 FET (JFET) | 同上 |
+| `nmos-e` / `pmos-e` | MOSFET (エンハンスメント型) | 同上 |
+| `nmos-d` / `pmos-d` | MOSFET (デプレッション型) | 同上 |
 | `opamp` | オペアンプ | `+` `-` `out` |
 | `transformer` | トランス | `A1` `A2` (1 次) / `B1` `B2` (2 次) |
+
+FET は**足の名前がどれも同じ**なので、記号だけ後から差し替えられる。
+`nmos` / `pmos` はチャネルを 1 本で描いた簡易記号で、記事でよく使うのは
+こちら。書き分けたいときだけ `-e` (エンハンスメント型。チャネルが切れる) と
+`-d` (デプレッション型。チャネルがつながる) を使う。
+
+![FET の種類](../examples/out/03-multi-terminal-3.png)
 
 向きは今のところオペアンプの `+up` / `+down` だけ (± の上下)。
 `+up` にすると帰還を下に回せるので線が交差しにくい。
