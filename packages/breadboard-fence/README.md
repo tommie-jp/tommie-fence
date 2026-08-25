@@ -80,8 +80,14 @@ sha256sum -c SHA256SUMS
 入れ直すまで、プレビューは前のビルドのまま動く。
 
 ```bash
+./doBuild.sh                             # 検査 → .vsix を作る → 入れ直す
+```
+
+手でやるなら次の 2 つ。
+
+```bash
 npm run package
-code --install-extension breadboard-fence-0.1.0.vsix --force
+code --install-extension breadboard-fence-0.2.0.vsix --force
 ```
 
 - バージョン番号を上げずに入れ直すときは `--force` が要る。
@@ -190,6 +196,7 @@ npm test          # ユニットテスト
 npm run check     # 型チェック + テスト
 npm run examples  # examples/*.md → examples/out/*.svg (+ PNG)
 npm run package   # breadboard-fence-x.y.z.vsix を作る
+./doBuild.sh      # 上 3 つをまとめて、VS Code に入れ直すところまで
 ```
 
 VS Code で F5 を押すと拡張機能をデバッグ実行し、`examples/` を開いた
