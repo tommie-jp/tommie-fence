@@ -10,8 +10,20 @@ const MAX_SHOWN = 8;
 export const errorLine = (error: FenceError): string =>
   error.line === null ? error.message : `${error.line} 行目: ${error.message}`;
 
+// カードの幅は固定なので、長いメッセージは折り返す (はみ出すと切れて読めなくなる)。
+const MAX_CHARS = 62;
+
+const wrap = (text: string): string[] => {
+  const characters = [...text];
+  const rows: string[] = [];
+  for (let start = 0; start < characters.length; start += MAX_CHARS) {
+    rows.push(characters.slice(start, start + MAX_CHARS).join(''));
+  }
+  return rows.length > 0 ? rows : [''];
+};
+
 const lines = (errors: readonly FenceError[]): readonly string[] => [
-  ...errors.slice(0, MAX_SHOWN).map(errorLine),
+  ...errors.slice(0, MAX_SHOWN).flatMap((error) => wrap(errorLine(error))),
   ...(errors.length > MAX_SHOWN ? [`ほかに ${errors.length - MAX_SHOWN} 件`] : []),
 ];
 

@@ -106,6 +106,23 @@ describe('placeParts', () => {
     expect(errors[0]?.line).toBe(5);
   });
 
+  test('reports a part that gives two legs the same name', () => {
+    const led = spec({
+      id: 'D1',
+      type: 'led',
+      holes: [
+        { addr: 'b12', tag: 'A' },
+        { addr: 'b13', tag: 'A' },
+      ],
+      line: 4,
+    });
+
+    const { parts, errors } = placeParts([led], board);
+
+    expect(parts).toEqual([]);
+    expect(errors[0]?.line).toBe(4);
+  });
+
   test('reports a two lead part that is not given exactly two holes', () => {
     const { errors } = placeParts([spec({ id: 'R1', type: 'resistor', holes: holes('a5'), line: 6 })], board);
 

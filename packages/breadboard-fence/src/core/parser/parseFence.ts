@@ -84,7 +84,9 @@ function collectParts(
     return;
   }
 
-  const seen = new Set<string>();
+  // parts: が 2 回書かれることがある (uniqueKeys: false) ので、
+  // これまでに読めた部品も含めて重複を見る。
+  const seen = new Set(parts.map((part) => part.id));
   for (const pair of node.items) {
     const id = scalarText(pair.key);
     const line = lineOf(pair.key) ?? 1;

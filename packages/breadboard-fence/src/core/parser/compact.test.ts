@@ -124,6 +124,11 @@ describe('parseWireSpec', () => {
     expect(!result.ok && result.error.line).toBe(9);
   });
 
+  test('reports a hint whose distance is beyond the board', () => {
+    expect(parseWireSpec(`a1 -- b5 [v-${'9'.repeat(400)}]`, 3).ok).toBe(false);
+    expect(parseWireSpec('a1 -- b5 [v-100000]', 3).ok).toBe(false);
+  });
+
   test('reports a wire that is missing the double dash', () => {
     const result = parseWireSpec('a10 b12', 11);
 

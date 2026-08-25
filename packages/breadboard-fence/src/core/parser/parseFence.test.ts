@@ -102,6 +102,15 @@ describe('parseFence', () => {
     expect(errors).toHaveLength(1);
   });
 
+  test('reports a duplicate part id even when parts is written twice', () => {
+    const { doc, errors } = parseFence(
+      ['parts:', '  R1: resistor a5 a10', 'parts:', '  R1: resistor b5 b10'].join('\n'),
+    );
+
+    expect(doc?.parts).toHaveLength(1);
+    expect(errors.some((error) => error.message.includes('R1'))).toBe(true);
+  });
+
   test('stops reading parts once there are more than the limit allows', () => {
     const many = Array.from({ length: LIMITS.parts + 5 }, (_, index) => `  R${index}: resistor a1 a2`);
     const { doc, errors } = parseFence(['parts:', ...many].join('\n'));

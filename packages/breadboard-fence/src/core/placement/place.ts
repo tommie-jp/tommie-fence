@@ -98,6 +98,10 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
     for (const hole of spec.holes) {
       const address = resolveHole(hole.addr, board, spec.line);
       if (!address.ok) return address;
+      // 同じ名前が 2 本あると `D1.A` がどちらを指すか決まらない。
+      if (pins.some((pin) => pin.name === hole.tag)) {
+        return fail(`部品 ${safeToken(spec.id)}: ピン名 ${safeToken(hole.tag)} が 2 回出てきます`, spec.line);
+      }
       pins.push({ name: hole.tag, address: address.value });
     }
     return ok({ ...base, kind: footprint.kind, pins });

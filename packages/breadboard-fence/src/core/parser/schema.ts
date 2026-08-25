@@ -28,8 +28,11 @@ const isRecord = (raw: unknown): raw is Record<string, unknown> =>
 const asText = (raw: unknown): string | null =>
   typeof raw === 'string' ? raw : typeof raw === 'number' && Number.isFinite(raw) ? String(raw) : null;
 
-const asTextList = (raw: unknown): readonly string[] | null =>
-  Array.isArray(raw) && raw.every((item) => typeof item === 'string') ? raw : null;
+const asTextList = (raw: unknown): readonly string[] | null => {
+  if (!Array.isArray(raw)) return null;
+  const texts = raw.map(asText);
+  return texts.every((item): item is string => item !== null) ? texts : null;
+};
 
 /**
  * 手書きの検証。スキーマライブラリを入れると圧縮後でも数百 KB 増え、
@@ -59,6 +62,8 @@ export function validateExpandedPart(raw: unknown): Validation {
   const pins = raw.pins === undefined ? null : asTextList(raw.pins);
   if (raw.pins !== undefined && pins === null) return invalid('pins はピン名の配列です');
   if (pins && pins.length > LIMITS.devicePins) return invalid(`pins は ${LIMITS.devicePins} 本までです`);
+  const repeated = pins?.find((pin, index) => pins.indexOf(pin) !== index);
+  if (repeated !== undefined) return invalid(`ピン名 ${safeToken(repeated)} が 2 回出てきます`);
   const badPin = pins?.find((pin) => !isPinName(pin));
   if (badPin !== undefined) {
     return invalid(

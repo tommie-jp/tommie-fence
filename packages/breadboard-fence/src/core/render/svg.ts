@@ -8,11 +8,16 @@ const ESCAPES: Record<string, string> = {
   "'": '&apos;',
 };
 
+// XML 1.0 が載せられない文字 (タブ・改行・復帰以外の制御文字)。
+// 1 つ混ざるだけで図全体がパースできなくなるので、エスケープではなく捨てる。
+const ILLEGAL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g;
+
 /**
  * 図に載る文字列は必ずここを通す。VS Code の Markdown プレビューは
  * 拡張が返した HTML をサニタイズしないので、エスケープが唯一の防御になる。
  */
-export const escapeXml = (text: string): string => text.replace(/[&<>"']/g, (char) => ESCAPES[char] ?? char);
+export const escapeXml = (text: string): string =>
+  text.replace(ILLEGAL, '').replace(/[&<>"']/g, (char) => ESCAPES[char] ?? char);
 
 /** 座標の桁を落として出力を安定させる (同じ入力なら同じ文字列 = プレビューの差分更新が軽い)。 */
 export const num = (value: number): string => String(Math.round(value * 100) / 100);

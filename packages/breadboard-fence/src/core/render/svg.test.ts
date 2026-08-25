@@ -6,6 +6,12 @@ describe('escapeXml', () => {
     expect(escapeXml('<a & "b" \'c\'>')).toBe('&lt;a &amp; &quot;b&quot; &apos;c&apos;&gt;');
   });
 
+  test('drops the characters that xml cannot carry at all', () => {
+    // 制御文字が 1 つ混ざるだけで SVG 全体が壊れる (パーサが弾く)。
+    expect(escapeXml('a\u0001b\u001fc')).toBe('abc');
+    expect(escapeXml('tab\there')).toBe('tab\there');
+  });
+
   test('leaves plain text untouched', () => {
     expect(escapeXml('NJM4556A 10k')).toBe('NJM4556A 10k');
   });

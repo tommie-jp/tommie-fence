@@ -42,7 +42,8 @@ describe('validateExpandedPart', () => {
 
   test('reports pins that are not a list of names', () => {
     expect(validateExpandedPart({ type: 'device', pins: 'W1' }).ok).toBe(false);
-    expect(validateExpandedPart({ type: 'device', pins: [1, 2] }).ok).toBe(false);
+    expect(validateExpandedPart({ type: 'device', pins: [true] }).ok).toBe(false);
+    expect(validateExpandedPart({ type: 'device', pins: [{ name: 'W1' }] }).ok).toBe(false);
   });
 
   test('reports holes that are not a list of addresses', () => {
@@ -65,6 +66,19 @@ describe('validateExpandedPart', () => {
     expect(validateExpandedPart({ type: 'device', pins: ['W 1'] }).ok).toBe(false);
     expect(validateExpandedPart({ type: 'device', pins: [''] }).ok).toBe(false);
     expect(validateExpandedPart({ type: 'device', pins: ['x'.repeat(LIMITS.pinNameLength + 1)] }).ok).toBe(false);
+  });
+
+  test('reports a device that repeats a pin name', () => {
+    const result = validateExpandedPart({ type: 'device', pins: ['W1', 'GND', 'GND'] });
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.message).toContain('GND');
+  });
+
+  test('reads pin names written as numbers', () => {
+    const result = validateExpandedPart({ type: 'device', pins: [1, 2] });
+
+    expect(result.ok && result.value.pins).toEqual(['1', '2']);
   });
 
   test('reports a device with more pins than any real package has', () => {

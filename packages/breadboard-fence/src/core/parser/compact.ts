@@ -18,7 +18,9 @@ export function parseHoleToken(token: string, index: number): HoleRef {
  *   R1: resistor a5 a10 10k
  *   D1: led b12(A) b13(K) red
  *   U1: dip8 @ e5 NJM4556A
- *   AD2: device @ top Analog Discovery 2
+ *
+ * ボード外の機器 (device) はピン名を並べる必要があるので、1 行では書けない。
+ * parseFence 側でマップ形式として読む。
  */
 export function parseCompactPart(id: string, spec: string, line: number): Result<PartSpec> {
   const tokens = spec.trim().split(/\s+/).filter(Boolean);
@@ -50,6 +52,8 @@ export function parseCompactPart(id: string, spec: string, line: number): Result
 
 const HINT_GROUP = /\[([^\]]*)\]\s*$/;
 const HINT = /^([vh])([+-]?\d+)$/;
+// 迂回の距離は盤の外まで伸ばしても意味がない。桁あふれで NaN を作らせないための上限でもある。
+const MAX_HINT_DELTA = 2000;
 
 /** `a10 -- b12 red [v-20, h30]` の 1 行を読む。角括弧の中は迂回ヒント。 */
 export function parseWireSpec(text: string, line: number): Result<WireSpec> {
@@ -58,7 +62,11 @@ export function parseWireSpec(text: string, line: number): Result<WireSpec> {
   for (const token of (group?.[1] ?? '').split(/[,\s]+/).filter(Boolean)) {
     const hint = HINT.exec(token);
     if (!hint) return fail(`迂回ヒントは v20 や h-30 の形で書きます: ${safeToken(token)}`, line);
-    hints.push({ axis: hint[1] as 'v' | 'h', delta: Number(hint[2]) });
+    const delta = Number(hint[2]);
+    if (!Number.isFinite(delta) || Math.abs(delta) > MAX_HINT_DELTA) {
+      return fail(`迂回の距離は ±${MAX_HINT_DELTA} までです (20 が穴 1 つぶん)`, line);
+    }
+    hints.push({ axis: hint[1] as 'v' | 'h', delta });
   }
 
   const head = group ? text.trim().slice(0, group.index) : text;
