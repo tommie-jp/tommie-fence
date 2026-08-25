@@ -1,0 +1,28 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\foreach \x in {0,2,4,6} {\foreach \y in {0,-2,-4,-6,-8} {\fill[gray] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
+\coordinate (c2) at (2,-4);
+\coordinate (a1) at (0,0);
+\coordinate (e1) at (0,-8);
+\coordinate (e4) at (6,-8);
+\coordinate (a4) at (6,0);
+\node[dipchip, num pins=8, font=\scriptsize] (part-U1) at (c2) {$\mathrm{NE555}$}; % line 2
+\draw (a1) |- (part-U1.pin 1); % line 4
+\draw (e1) |- (part-U1.pin 4); % line 5
+\draw (part-U1.pin 5) -| (e4); % line 6
+\draw (part-U1.pin 8) -| (a4); % line 7
+\end{circuitikz}
+\end{document}

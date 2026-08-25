@@ -1,6 +1,6 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { cornerOf, formatAddress, isSameAddress } from './address.ts';
-import { lookupPartType, lookupPin, pinNames } from '../parts.ts';
+import { lookupPartType, lookupPin, pinHint } from '../parts.ts';
 import type { Address } from './address.ts';
 import type { FenceDocument } from '../parser/parseFence.ts';
 import { isDrawable } from '../tex/escape.ts';
@@ -264,7 +264,7 @@ function resolveEndpoint(
   if (anchor === null) {
     errors.push(
       fenceError(
-        `${safeToken(part.id)} に足 ${safeToken(endpoint.pin)} はありません (${pinNames(type).join(' / ')})`,
+        `${safeToken(part.id)} に足 ${safeToken(endpoint.pin)} はありません (${pinHint(type)})`,
         line,
       ),
     );

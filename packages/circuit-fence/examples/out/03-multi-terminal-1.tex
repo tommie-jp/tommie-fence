@@ -4,12 +4,15 @@
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\foreach \x in {0,2,4,6,8} {\foreach \y in {0,-2,-4,-6,-8,-10} {\fill[gray] (\x,\y) circle (1.1pt);}}
+\foreach \x in {0,2,4,6,8,10,12,14} {\foreach \y in {0,-2,-4,-6,-8,-10} {\fill[gray] (\x,\y) circle (1.1pt);}}
 \node[gray, font=\scriptsize] at (0,0.84) {1};
 \node[gray, font=\scriptsize] at (2,0.84) {2};
 \node[gray, font=\scriptsize] at (4,0.84) {3};
 \node[gray, font=\scriptsize] at (6,0.84) {4};
 \node[gray, font=\scriptsize] at (8,0.84) {5};
+\node[gray, font=\scriptsize] at (10,0.84) {6};
+\node[gray, font=\scriptsize] at (12,0.84) {7};
+\node[gray, font=\scriptsize] at (14,0.84) {8};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
@@ -20,6 +23,8 @@
 \coordinate (b5) at (8,-2);
 \coordinate (e2) at (2,-8);
 \coordinate (e5) at (8,-8);
+\coordinate (b8) at (14,-2);
+\coordinate (e8) at (14,-8);
 \coordinate (a2) at (2,0);
 \coordinate (c2) at (2,-4);
 \coordinate (b1) at (0,-2);
@@ -32,21 +37,35 @@
 \coordinate (d5) at (8,-6);
 \coordinate (f5) at (8,-10);
 \coordinate (e4) at (6,-8);
+\coordinate (a8) at (14,0);
+\coordinate (c8) at (14,-4);
+\coordinate (b7) at (12,-2);
+\coordinate (d8) at (14,-6);
+\coordinate (f8) at (14,-10);
+\coordinate (e7) at (12,-8);
 \node[npn] (part-Q1) at (b2) {}; % line 2
 \node[pnp] (part-Q2) at (b5) {}; % line 3
 \node[nmos] (part-M1) at (e2) {}; % line 4
 \node[pmos] (part-M2) at (e5) {}; % line 5
-\draw (a2) -| (part-Q1.collector); % line 7
-\draw (c2) -| (part-Q1.emitter); % line 8
-\draw (b1) -| (part-Q1.base); % line 9
-\draw (a5) -| (part-Q2.collector); % line 10
-\draw (c5) -| (part-Q2.emitter); % line 11
-\draw (b4) -| (part-Q2.base); % line 12
-\draw (d2) -| (part-M1.drain); % line 13
-\draw (f2) -| (part-M1.source); % line 14
-\draw (e1) -| (part-M1.gate); % line 15
-\draw (d5) -| (part-M2.drain); % line 16
-\draw (f5) -| (part-M2.source); % line 17
-\draw (e4) -| (part-M2.gate); % line 18
+\node[nigbt] (part-Q3) at (b8) {}; % line 6
+\node[pigbt] (part-Q4) at (e8) {}; % line 7
+\draw (a2) -| (part-Q1.collector); % line 9
+\draw (c2) -| (part-Q1.emitter); % line 10
+\draw (b1) -| (part-Q1.base); % line 11
+\draw (a5) -| (part-Q2.collector); % line 12
+\draw (c5) -| (part-Q2.emitter); % line 13
+\draw (b4) -| (part-Q2.base); % line 14
+\draw (d2) -| (part-M1.drain); % line 15
+\draw (f2) -| (part-M1.source); % line 16
+\draw (e1) -| (part-M1.gate); % line 17
+\draw (d5) -| (part-M2.drain); % line 18
+\draw (f5) -| (part-M2.source); % line 19
+\draw (e4) -| (part-M2.gate); % line 20
+\draw (a8) -| (part-Q3.collector); % line 21
+\draw (c8) -| (part-Q3.emitter); % line 22
+\draw (b7) -| (part-Q3.gate); % line 23
+\draw (d8) -| (part-Q4.collector); % line 24
+\draw (f8) -| (part-Q4.emitter); % line 25
+\draw (e7) -| (part-Q4.gate); % line 26
 \end{circuitikz}
 \end{document}

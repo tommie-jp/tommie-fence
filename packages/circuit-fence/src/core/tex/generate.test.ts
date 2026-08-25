@@ -455,3 +455,18 @@ describe('足のある 2 端子部品', () => {
     expect(tex).toContain('\\draw (a1) to[R, l_=$R_{1}$] (a3); % line 2');
   });
 });
+
+describe('DIP の IC', () => {
+  test('writes the pin count into the symbol and the part number inside it', () => {
+    const { tex } = generate('parts:', '  U1: dip8 c2 NE555', 'wires:', '  - U1.1 |- a1');
+
+    expect(tex).toContain('\\node[dipchip, num pins=8, font=\\scriptsize] (part-U1) at (c2) {$\\mathrm{NE555}$}; % line 2');
+    expect(tex).toContain('\\draw (part-U1.pin 1) |- (a1); % line 4');
+  });
+
+  test('keeps the box empty when no part number is written', () => {
+    const { tex } = generate('parts:', '  U1: dip8 c2');
+
+    expect(tex).toContain('\\node[dipchip, num pins=8, font=\\scriptsize] (part-U1) at (c2) {}; % line 2');
+  });
+});

@@ -331,22 +331,24 @@ function drawOneTerminal(part: OneTerminalPart, target: TexTarget): string {
  * 書き出す `.tex` は本物の `op amp` を使うので、書き足しは要らない。
  */
 function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[] {
+  const type = lookupPartType(part.type);
   const symbol = symbolFor(part.type, target);
-  const options = [symbol];
+  // 種類そのものに要るオプション (DIP の足の本数) が先、書かれた向きが後。
+  const options = [symbol, ...(type?.options ?? [])];
   const turned = part.orientation === null ? null : ORIENTATION_TEX[part.orientation];
   if (turned !== undefined && turned !== null) options.push(turned);
   const at = formatAddress(part.at);
   const name = nodeNameOf(part.id);
-  const node = `\\node[${options.join(', ')}] (${name}) at (${at}) {};`;
-  // 型番は記号の南のアンカーに掛ける。`label=below:` はノードの (空の) 文字を
-  // 基準にするので、記号の体の上に字が乗る (実機で確認)。
+  const annotation = part.value === null ? null : annotationOf(part.value, NO_UNIT, target);
+  // 箱で描く IC は型番を中に書く (回路図の慣習どおり)。
+  const inside = type?.valueInside === true ? (annotation ?? '') : '';
+  const node = `\\node[${options.join(', ')}] (${name}) at (${at}) {${inside}};`;
+  // それ以外の型番は記号の南のアンカーに掛ける。`label=below:` はノードの
+  // (空の) 文字を基準にするので、記号の体の上に字が乗る (実機で確認)。
   const number =
-    part.value === null
+    annotation === null || type?.valueInside === true
       ? []
-      : [
-          `\\node[font=\\scriptsize, anchor=north] at (${name}.south) ` +
-            `{${annotationOf(part.value, NO_UNIT, target)}};`,
-        ];
+      : [`\\node[font=\\scriptsize, anchor=north] at (${name}.south) {${annotation}};`];
   if (symbol !== 'plain amp') return [node, ...number];
 
   return [node, ...number, ...amplifierSigns(name)];

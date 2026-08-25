@@ -9,6 +9,8 @@ parts:
   Q2: pnp b5
   M1: nmos e2
   M2: pmos e5
+  Q3: nigbt b8
+  Q4: pigbt e8
 wires:
   - a2 -| Q1.C
   - c2 -| Q1.E
@@ -22,17 +24,25 @@ wires:
   - d5 -| M2.D
   - f5 -| M2.S
   - e4 -| M2.G
+  - a8 -| Q3.C
+  - c8 -| Q3.E
+  - b7 -| Q3.G
+  - d8 -| Q4.C
+  - f8 -| Q4.E
+  - e7 -| Q4.G
 style:
   grid: on
 ```
 
-左上から `npn` (`b2`) / `pnp` (`b5`) / `nmos` (`e2`) / `pmos` (`e5`)。
+左上から `npn` (`b2`) / `pnp` (`b5`) / `nigbt` (`b8`)、
+下の段が `nmos` (`e2`) / `pmos` (`e5`) / `pigbt` (`e8`)。
 足の名前は回路図の慣習の 1 文字でも、綴りでも同じところを指す
 (`Q1.B` と `Q1.base` は同じ足)。
 
 | 種類 | 足 |
 | --- | --- |
 | `npn` / `pnp` | `B` `C` `E` (`base` `collector` `emitter`) |
+| `nigbt` / `pigbt` | `G` `C` `E` (IGBT の制御端子はゲート) |
 | `nmos` / `pmos` | `G` `D` `S` (`gate` `drain` `source`) |
 | `njfet` / `pjfet` | 同上 |
 | `nmos-e` / `pmos-e` / `nmos-d` / `pmos-d` | 同上 |

@@ -50,6 +50,16 @@ export type PartType = {
    */
   readonly pins?: Readonly<Record<string, string>>;
   /**
+   * 記号に必ず付ける circuitikz のオプション (DIP の足の本数など)。
+   * 書き手が触れるものではないので、向き (`+up`) とは別に持つ。
+   */
+  readonly options?: readonly string[];
+  /**
+   * 型番を記号の**中**に書く種類。省くと記号の下に出る。
+   * 箱で描く IC は中に書ける (そのほうが回路図の慣習に近い)。
+   */
+  readonly valueInside?: boolean;
+  /**
    * 値に補う単位 (TeX)。値が型番や状態で単位を持たない種類は null。
    * 数式モードに置くので、単位の綴りは必ず立体にする
    * (`F` のままだと変数の F になって斜体で出る)。
@@ -80,6 +90,30 @@ const FET_PINS = {
 /** オペアンプ。circuitikz のアンカーがそのまま記号になっている。 */
 const AMP_PINS = { '+': '+', '-': '-', out: 'out' } as const;
 
+/** IGBT。制御端子はゲートだが、あとの 2 本はバイポーラと同じ呼び名。 */
+const IGBT_PINS = {
+  g: 'gate', gate: 'gate',
+  c: 'collector', collector: 'collector',
+  e: 'emitter', emitter: 'emitter',
+} as const;
+
+/** 入力 2 本のロジックゲート。番号でも `a` `b` でも呼べる。 */
+const GATE2_PINS = {
+  '1': 'in 1', in1: 'in 1', a: 'in 1',
+  '2': 'in 2', in2: 'in 2', b: 'in 2',
+  out: 'out', y: 'out',
+} as const;
+
+/** 入力 1 本のロジックゲート (`not` / `buffer`)。 */
+const GATE1_PINS = { in: 'in', a: 'in', out: 'out', y: 'out' } as const;
+
+/** 切り替えスイッチ。共通が `in`、行き先が 2 つ。 */
+const SPDT_PINS = {
+  in: 'in', c: 'in', com: 'in',
+  '1': 'out 1', out1: 'out 1',
+  '2': 'out 2', out2: 'out 2',
+} as const;
+
 /** ポテンショメータの 3 本目。2 端子の記号にアンカーが 1 つ生えている。 */
 const WIPER_PINS = { w: 'wiper', wiper: 'wiper' } as const;
 
@@ -105,6 +139,21 @@ const SI_HERTZ = '\\hertz';
 
 /** 単位を持たない種類 (値は型番や定格)。 */
 const NO_UNIT = { unitTex: null, unitSi: null } as const;
+
+/**
+ * DIP の IC。足は本数ぶんの番号で呼ぶ (`U1.1`)。
+ * 本数はパッケージごとに決まっているので、種類の名前に入れて表に並べる
+ * (文法に本数の欄を足すより、`dip8` と書けるほうが短い)。
+ */
+const dipchip = (count: number): PartType => ({
+  kind: 'multi-terminal',
+  symbol: 'dipchip',
+  // 型番は箱の中に書くので、既定の大きさだと足の番号に重なる (実機で確認)。
+  options: [`num pins=${count}`, 'font=\\scriptsize'],
+  valueInside: true,
+  ...NO_UNIT,
+  pins: Object.fromEntries(Array.from({ length: count }, (_, index) => [`${index + 1}`, `pin ${index + 1}`])),
+});
 
 export const PART_TYPES = {
   // 受動部品
@@ -227,6 +276,28 @@ export const PART_TYPES = {
    */
   opamp: { kind: 'multi-terminal', symbol: 'plain amp', latexSymbol: 'op amp', ...NO_UNIT, pins: AMP_PINS },
   transformer: { kind: 'multi-terminal', symbol: 'transformer', ...NO_UNIT, pins: TRANSFORMER_PINS },
+  nigbt: { kind: 'multi-terminal', symbol: 'nigbt', ...NO_UNIT, pins: IGBT_PINS },
+  pigbt: { kind: 'multi-terminal', symbol: 'pigbt', ...NO_UNIT, pins: IGBT_PINS },
+  /** 切り替えスイッチ (c 接点)。 */
+  spdt: { kind: 'multi-terminal', symbol: 'spdt', ...NO_UNIT, pins: SPDT_PINS },
+
+  // ロジックゲート。入力は番号でも `a` / `b` でも呼べる。
+  and: { kind: 'multi-terminal', symbol: 'and port', ...NO_UNIT, pins: GATE2_PINS },
+  or: { kind: 'multi-terminal', symbol: 'or port', ...NO_UNIT, pins: GATE2_PINS },
+  nand: { kind: 'multi-terminal', symbol: 'nand port', ...NO_UNIT, pins: GATE2_PINS },
+  nor: { kind: 'multi-terminal', symbol: 'nor port', ...NO_UNIT, pins: GATE2_PINS },
+  xor: { kind: 'multi-terminal', symbol: 'xor port', ...NO_UNIT, pins: GATE2_PINS },
+  xnor: { kind: 'multi-terminal', symbol: 'xnor port', ...NO_UNIT, pins: GATE2_PINS },
+  not: { kind: 'multi-terminal', symbol: 'not port', ...NO_UNIT, pins: GATE1_PINS },
+  buffer: { kind: 'multi-terminal', symbol: 'buffer port', ...NO_UNIT, pins: GATE1_PINS },
+
+  // DIP の IC。足の本数だけが違う。
+  dip8: dipchip(8),
+  dip14: dipchip(14),
+  dip16: dipchip(16),
+  dip20: dipchip(20),
+  dip28: dipchip(28),
+  dip40: dipchip(40),
 } as const satisfies Record<string, PartType>;
 
 export type PartTypeName = keyof typeof PART_TYPES;
@@ -260,6 +331,20 @@ export function lookupPin(type: PartType, pin: string): string | null {
 
 /** その種類に書けるピン名 (短い名前と正式名の両方)。 */
 export const pinNames = (type: PartType): readonly string[] => Object.keys(type.pins ?? {});
+
+/** 数字だけの足を範囲でまとめるかどうかの境目。これを超えると並べても読めない。 */
+const LISTED_PINS = 4;
+
+/**
+ * 「書ける足はこれです」と伝えるときの並べ方。
+ * DIP のように数字だけの足は範囲にまとめる (40 本を並べても読めない)。
+ */
+export function pinHint(type: PartType): string {
+  const names = pinNames(type);
+  const numbered = names.length > LISTED_PINS && names.every((name) => /^\d+$/.test(name));
+
+  return numbered ? `1〜${names.length}` : names.join(' / ');
+}
 
 /**
  * 書き間違いとみなす編集距離。短い名前ほど厳しくする。

@@ -1,0 +1,24 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\foreach \x in {0,2,4,6} {\foreach \y in {0,-2,-4} {\fill[gray] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\coordinate (b2) at (2,-2);
+\coordinate (b1) at (0,-2);
+\coordinate (a4) at (6,0);
+\coordinate (c4) at (6,-4);
+\node[spdt] (part-S1) at (b2) {}; % line 2
+\draw (b1) |- (part-S1.in); % line 4
+\draw (part-S1.out 1) -| (a4); % line 5
+\draw (part-S1.out 2) -| (c4); % line 6
+\end{circuitikz}
+\end{document}

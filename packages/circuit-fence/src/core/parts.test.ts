@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { PART_TYPES, closestPartType, lookupPartType, lookupPin, partTypeNames } from './parts.ts';
+import { PART_TYPES, closestPartType, lookupPartType, lookupPin, partTypeNames, pinHint } from './parts.ts';
 
 describe('PART_TYPES', () => {
   test('carries the two terminal parts a schematic is drawn with', () => {
@@ -202,5 +202,67 @@ describe('足のある 2 端子部品', () => {
 
   test('gives no leg to a part that has none', () => {
     expect(lookupPin(lookupPartType('resistor')!, 'w')).toBeNull();
+  });
+});
+
+describe('ロジックゲート', () => {
+  test('carries the two input gates', () => {
+    for (const name of ['and', 'or', 'nand', 'nor', 'xor', 'xnor']) {
+      const type = lookupPartType(name);
+
+      expect(type?.kind).toBe('multi-terminal');
+      expect(lookupPin(type!, '1')).toBe('in 1');
+      expect(lookupPin(type!, 'b')).toBe('in 2');
+      expect(lookupPin(type!, 'out')).toBe('out');
+    }
+  });
+
+  test('carries the one input gates', () => {
+    for (const name of ['not', 'buffer']) {
+      const type = lookupPartType(name);
+
+      expect(lookupPin(type!, 'in')).toBe('in');
+      expect(lookupPin(type!, 'out')).toBe('out');
+      // 入力が 1 本しかないので、番号では呼ばせない。
+      expect(lookupPin(type!, '2')).toBeNull();
+    }
+  });
+});
+
+describe('DIP の IC', () => {
+  test('numbers the pins of the package', () => {
+    const type = lookupPartType('dip8');
+
+    expect(type?.kind).toBe('multi-terminal');
+    expect(lookupPin(type!, '1')).toBe('pin 1');
+    expect(lookupPin(type!, '8')).toBe('pin 8');
+    expect(lookupPin(type!, '9')).toBeNull();
+    expect(type?.options).toEqual(['num pins=8', 'font=\\scriptsize']);
+  });
+
+  test('writes the part number inside the box', () => {
+    expect(lookupPartType('dip8')?.valueInside).toBe(true);
+  });
+
+  test('shows the range instead of every pin number', () => {
+    // 40 本を並べると読めない。数字だけの足は範囲でまとめる。
+    expect(pinHint(lookupPartType('dip40')!)).toBe('1〜40');
+    expect(pinHint(lookupPartType('npn')!)).toBe('b / base / c / collector / e / emitter');
+  });
+});
+
+describe('そのほかの多端子', () => {
+  test('carries the IGBT', () => {
+    expect(lookupPin(lookupPartType('nigbt')!, 'g')).toBe('gate');
+    expect(lookupPin(lookupPartType('pigbt')!, 'c')).toBe('collector');
+    expect(lookupPin(lookupPartType('nigbt')!, 'e')).toBe('emitter');
+  });
+
+  test('carries the changeover switch', () => {
+    const type = lookupPartType('spdt');
+
+    expect(lookupPin(type!, 'in')).toBe('in');
+    expect(lookupPin(type!, '1')).toBe('out 1');
+    expect(lookupPin(type!, '2')).toBe('out 2');
   });
 });

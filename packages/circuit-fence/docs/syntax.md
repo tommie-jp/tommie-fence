@@ -97,12 +97,17 @@ wires:
 | 種類 | 何 | 足の名前 |
 | --- | --- | --- |
 | `npn` / `pnp` | バイポーラトランジスタ | `B` `C` `E` (`base` `collector` `emitter`) |
+| `nigbt` / `pigbt` | IGBT | `G` `C` `E` (制御端子はゲート) |
 | `nmos` / `pmos` | MOSFET (簡易記号) | `G` `D` `S` (`gate` `drain` `source`) |
 | `njfet` / `pjfet` | 接合型 FET (JFET) | 同上 |
 | `nmos-e` / `pmos-e` | MOSFET (エンハンスメント型) | 同上 |
 | `nmos-d` / `pmos-d` | MOSFET (デプレッション型) | 同上 |
 | `opamp` | オペアンプ | `+` `-` `out` |
 | `transformer` | トランス | `A1` `A2` (1 次) / `B1` `B2` (2 次) |
+| `and` / `or` / `nand` / `nor` / `xor` / `xnor` | ロジックゲート (2 入力) | `a` `b` (`1` `2`) / `out` |
+| `not` / `buffer` | ロジックゲート (1 入力) | `in` / `out` |
+| `spdt` | 切り替えスイッチ | `in` (`c`) / `1` `2` |
+| `dip8` `dip14` `dip16` `dip20` `dip28` `dip40` | DIP の IC | `1` 〜 足の本数 |
 
 FET は**足の名前がどれも同じ**なので、記号だけ後から差し替えられる。
 `nmos` / `pmos` はチャネルを 1 本で描いた簡易記号で、記事でよく使うのは
@@ -110,6 +115,16 @@ FET は**足の名前がどれも同じ**なので、記号だけ後から差し
 `-d` (デプレッション型。チャネルがつながる) を使う。
 
 ![FET の種類](../examples/out/03-multi-terminal-3.png)
+
+ロジックゲートの入力は `a` `b` でも番号 (`1` `2`) でも呼べる。
+`not` と `buffer` は入力が 1 本なので `in`。
+
+![ロジックゲート](../examples/out/11-logic-1.png)
+
+DIP の IC は**足の本数が種類の名前に入っている** (`dip8` から `dip40` まで)。
+足は番号で指し (`U1.1`)、型番は記号の**中**に出る。
+
+![DIP の IC](../examples/out/11-logic-2.png)
 
 向きは今のところオペアンプの `+up` / `+down` だけ (± の上下)。
 `+up` にすると帰還を下に回せるので線が交差しにくい。
