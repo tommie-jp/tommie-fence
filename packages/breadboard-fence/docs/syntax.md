@@ -65,7 +65,7 @@ wires:
 `board:` はサイズだけのスカラーのほか、サイズと印字のマップでも書ける。
 実物のシルク印刷はメーカーごとに割れているので、手元のボードに図を寄せるための設定。
 **番地系はどの印字でも共通**で、変わるのは図の見た目だけ。
-並べた図は [examples/board-variants.md](../examples/board-variants.md)。
+並べた図は [examples/03-board-variants.md](../examples/03-board-variants.md)。
 
 ```yaml
 board:
@@ -93,7 +93,7 @@ board:
 
 `style:` にテーマ名を書くと図の配色と大きさが変わる。
 **省略したときは `presentation`** で描く (そのままスライドや記事に貼れる大きさ)。
-並べた図は [examples/themes.md](../examples/themes.md)。
+並べた図は [examples/02-themes.md](../examples/02-themes.md)。
 
 ```yaml
 style: dark
@@ -140,7 +140,7 @@ style:
 
 図の下に、`parts:` に書いた部品が **ID・種類・値の順に 1 行ずつ**並ぶ。
 図だけを渡された人が、何を用意すればよいか図の外を見ずに分かるようにするため、
-**既定で出る**。並べた図は [examples/parts-list.md](../examples/parts-list.md)。
+**既定で出る**。並べた図は [examples/04-parts-list.md](../examples/04-parts-list.md)。
 
 ```yaml
 parts-list: none    # below (既定) / none
@@ -165,13 +165,13 @@ parts-list: none    # below (既定) / none
 
 | 既定 (below) | `parts-list: none` |
 | --- | --- |
-| ![部品リストつき](../examples/out/parts-list-1.svg) | ![部品リストなし](../examples/out/parts-list-2.svg) |
+| ![部品リストつき](../examples/out/04-parts-list-1.svg) | ![部品リストなし](../examples/out/04-parts-list-2.svg) |
 
 ## 部品の姿 (variant)
 
 種類に `/` で続けて書くと、その部品を**実物のどのかたちで描くか**を選べる。
 同じ `capacitor` でもセラミックと電解では板の上の姿が違い、図から実物を
-探すときに効く。並べた図は [examples/capacitors.md](../examples/capacitors.md)。
+探すときに効く。並べた図は [examples/05-capacitors.md](../examples/05-capacitors.md)。
 
 ```yaml
 parts:
@@ -218,13 +218,13 @@ parts:
 - **パッケージの向き (TO-92 の平らな面、TO-220 のタブの向き) は図では主張しない。**
   足の並びは品種ごとに違うため、どの穴がどの足かはピン名で示す。
 
-![コンデンサの姿](../examples/out/capacitors-1.svg)
+![コンデンサの姿](../examples/out/05-capacitors-1.svg)
 
-![LED とトランジスタの姿](../examples/out/capacitors-3.svg)
+![LED とトランジスタの姿](../examples/out/05-capacitors-3.svg)
 
 ## スイッチと可変抵抗
 
-並べた図は [examples/switches.md](../examples/switches.md)。
+並べた図は [examples/06-switches.md](../examples/06-switches.md)。
 
 ```yaml
 parts:
@@ -248,7 +248,7 @@ parts:
 N1 : SW1.2a, SW1.2b, R1.1
 ```
 
-![タクトスイッチで LED を点ける](../examples/out/switches-1.svg)
+![タクトスイッチで LED を点ける](../examples/out/06-switches-1.svg)
 
 ### 半固定抵抗とスライドスイッチ
 
@@ -262,7 +262,7 @@ N1 : SW1.2a, SW1.2b, R1.1
 3 本足の部品は**溝寄りの行 (`e` / `f`) に挿す**と、足の名前が板の列番号とぶつからず、
 配線も外側の空いた行から取れる。
 
-![半固定抵抗とスライドスイッチ](../examples/out/switches-2.svg)
+![半固定抵抗とスライドスイッチ](../examples/out/06-switches-2.svg)
 
 ## 1 列ヘッダ (sipN)
 
@@ -286,14 +286,14 @@ parts:
 ## マイコンボード (Pico シリーズ)
 
 `pico` / `pico-w` / `pico2` / `pico2-w` の 4 つ。**40 ピンの並びはシリーズで共通**なので、
-書き方は種類名を替えるだけ。ソース: [examples/pico.md](../examples/pico.md)
+書き方は種類名を替えるだけ。ソース: [examples/07-pico.md](../examples/07-pico.md)
 
 ```yaml
 parts:
   MCU: pico2 @ h5
 ```
 
-![Pico に電源と LED とボタンをつなぐ](../examples/out/pico.svg)
+![Pico に電源と LED とボタンをつなぐ](../examples/out/07-pico.svg)
 
 - `@` に書くのは**ピン 1 (GP0) の穴**だけ。基板の幅は 0.7 インチ (穴 7 つぶん) なので、
   ピンの 2 列は上下ブロックの**同じ位置の行** (`a`↔`f`、`b`↔`g`、`c`↔`h`、`d`↔`i`、
@@ -308,7 +308,7 @@ parts:
 - 使っていないピンも 1 本ずつネットリストに出る (穴の導通をそのまま出しているため)。
 - 電源は **VSYS (39 番) に入れて、3V3 (36 番) から出す**。外部電源を入れるときは
   USB と同時につながっても壊れないようショットキーダイオードを 1 本はさむ。
-  詳しくは [examples/pico.md](../examples/pico.md) の「電源」。
+  詳しくは [examples/07-pico.md](../examples/07-pico.md) の「電源」。
 
 ### ピン名
 
@@ -327,9 +327,9 @@ GND は 7 本あって名前が重なるので、**ピン番号を付けて区�
 
 ## 出力例 1: LED と抵抗
 
-ソース: [examples/led.md](../examples/led.md)
+ソース: [examples/01-led.md](../examples/01-led.md)
 
-![LED と抵抗の配線図](../examples/out/led.svg)
+![LED と抵抗の配線図](../examples/out/01-led.svg)
 
 穴の導通から導いたネットリスト:
 
@@ -343,9 +343,9 @@ N1 : R1.2, D1.A
 
 B-H カーブ測定回路 (NJM4556A のフォロワ 2 回路を 1Ω 2 本で並列合流 +
 電流センス + RC 積分器)。DIP 配置・ボード外の機器・ピン参照・レール電源を全部使う。
-ソース: [examples/bh-ad2.md](../examples/bh-ad2.md)
+ソース: [examples/09-bh-ad2.md](../examples/09-bh-ad2.md)
 
-![B-H 測定回路の配線図](../examples/out/bh-ad2.svg)
+![B-H 測定回路の配線図](../examples/out/09-bh-ad2.svg)
 
 ネットリスト (意図した回路と一致することを確認済み):
 
@@ -367,29 +367,29 @@ N7    : R3.2, C1.1, AD2.2+      # 積分 C 上端 = CH2+
 
 ## 出力例 3: テーマ
 
-同じ回路を 5 つのテーマで描いたもの。ソース: [examples/themes.md](../examples/themes.md)
+同じ回路を 5 つのテーマで描いたもの。ソース: [examples/02-themes.md](../examples/02-themes.md)
 
 | classic | dark |
 | --- | --- |
-| ![classic](../examples/out/themes-1.svg) | ![dark](../examples/out/themes-2.svg) |
+| ![classic](../examples/out/02-themes-1.svg) | ![dark](../examples/out/02-themes-2.svg) |
 
 | high-contrast | mono |
 | --- | --- |
-| ![high-contrast](../examples/out/themes-3.svg) | ![mono](../examples/out/themes-4.svg) |
+| ![high-contrast](../examples/out/02-themes-3.svg) | ![mono](../examples/out/02-themes-4.svg) |
 
 `presentation` と、テーマを個別に上書きした例:
 
 | presentation | dark + 上書き |
 | --- | --- |
-| ![presentation](../examples/out/themes-5.svg) | ![dark を上書き](../examples/out/themes-6.svg) |
+| ![presentation](../examples/out/02-themes-5.svg) | ![dark を上書き](../examples/out/02-themes-6.svg) |
 
 ## 出力例 4: エミッタ接地アンプ
 
 2SC1815 1 石、電源 5V、入力 50Ω、出力 8Ω スピーカーの音声アンプ。
 トランジスタと電解コンデンサ、部品を縦にレールへ挿す書き方 (`Re: resistor j11 -b11 27`) の例。
-ソースと回路の解説: [examples/common-emitter.md](../examples/common-emitter.md)
+ソースと回路の解説: [examples/08-common-emitter.md](../examples/08-common-emitter.md)
 
-![エミッタ接地アンプの配線図](../examples/out/common-emitter.svg)
+![エミッタ接地アンプの配線図](../examples/out/08-common-emitter.svg)
 
 ```text
 N1    : Q1.B, R1.1, R2.1, C1.+     # ベース (分圧バイアス + 入力結合)

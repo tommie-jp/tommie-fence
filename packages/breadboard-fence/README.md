@@ -16,7 +16,7 @@ wires:
 ```
 ````
 
-![LED と抵抗の配線図](examples/out/led.png)
+![LED と抵抗の配線図](examples/out/01-led.png)
 
 図と同時に、**穴の導通からネットリストを導出**する。描いた図が意図した回路に
 なっているかを機械的に突き合わせられる。
@@ -158,17 +158,21 @@ node dist/cli.cjs render examples --out examples/out
 
 ## サンプル
 
+**番号は読む順**。上から下へ、最小の回路から実験回路まで難しくなる。
+
 | ファイル | 内容 |
 | --- | --- |
-| [examples/led.md](examples/led.md) | 抵抗と LED だけの最小例 |
-| [examples/common-emitter.md](examples/common-emitter.md) | 2SC1815 のエミッタ接地アンプ (電源 5V、スピーカー出力) |
-| [examples/bh-ad2.md](examples/bh-ad2.md) | B-H カーブ測定回路 (オペアンプ・測定器・トロイダルコア) |
-| [examples/board-variants.md](examples/board-variants.md) | ボードの印字を手元の実物に寄せる (`board:` のマップ形式) |
-| [examples/parts-list.md](examples/parts-list.md) | 図の下の部品リストと、その消し方 (`parts-list:`) |
-| [examples/switches.md](examples/switches.md) | タクトスイッチ・半固定抵抗・スライドスイッチ |
-| [examples/pico.md](examples/pico.md) | Raspberry Pi Pico に LED とボタンをつなぐ |
+| [01-led.md](examples/01-led.md) | 抵抗と LED だけの最小例 |
+| [02-themes.md](examples/02-themes.md) | 同じ回路を 5 つのテーマで描き比べる (`style:`) |
+| [03-board-variants.md](examples/03-board-variants.md) | ボードの印字を手元の実物に寄せる (`board:` のマップ形式) |
+| [04-parts-list.md](examples/04-parts-list.md) | 図の下の部品リストと、その消し方 (`parts-list:`) |
+| [05-capacitors.md](examples/05-capacitors.md) | 部品の姿を選ぶ (`capacitor/ceramic`、LED の大きさ、TO-220) |
+| [06-switches.md](examples/06-switches.md) | タクトスイッチ・半固定抵抗・スライドスイッチ |
+| [07-pico.md](examples/07-pico.md) | Raspberry Pi Pico に LED とボタンをつなぐ |
+| [08-common-emitter.md](examples/08-common-emitter.md) | 2SC1815 のエミッタ接地アンプ (電源 5V、スピーカー出力) |
+| [09-bh-ad2.md](examples/09-bh-ad2.md) | B-H カーブ測定回路 (オペアンプ・測定器・トロイダルコア) |
 
-![エミッタ接地アンプの配線図](examples/out/common-emitter.png)
+![エミッタ接地アンプの配線図](examples/out/08-common-emitter.png)
 
 ## 仕組み
 
