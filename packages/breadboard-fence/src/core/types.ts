@@ -59,8 +59,29 @@ export type WireSpec = {
   readonly line: number;
 };
 
+export type StyleRange = { readonly min: number; readonly max: number };
+
+/**
+ * フェンスの `style:` に書かれた見た目の指定。書かれなかったところは null で、
+ * 解決 (`render/theme.ts`) のときにテーマの値が入る。色は `#rrggbb` に揃えてある。
+ */
+export type StyleSpec = {
+  readonly theme: string | null;
+  readonly textSize: number | null;
+  readonly textColor: string | null;
+  readonly textBackground: string | null;
+  readonly wireWidth: number | null;
+  readonly boardColor: string | null;
+  readonly holeSize: number | null;
+  readonly holeColor: string | null;
+  readonly width: number | null;
+  /** `style:` が書かれた行。読めなかった項目の報告に使う。 */
+  readonly line: number | null;
+};
+
 export type FenceDocument = {
   readonly board: BoardSize;
+  readonly style: StyleSpec;
   readonly parts: readonly PartSpec[];
   readonly wires: readonly WireSpec[];
 };

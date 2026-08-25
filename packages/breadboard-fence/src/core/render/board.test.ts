@@ -2,9 +2,10 @@ import { describe, expect, test } from 'vitest';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
 import { renderBoard } from './board.ts';
+import { THEMES } from './theme.ts';
 
 const board = createBoard('half');
-const svg = renderBoard(board, createLayout(board));
+const svg = renderBoard(board, createLayout(board), THEMES.classic!);
 
 const fontSizesOf = (markup: string): number[] =>
   [...markup.matchAll(/font-size="([\d.]+)"/g)].map((match) => Number(match[1]));

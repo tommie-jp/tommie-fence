@@ -1,25 +1,6 @@
-/** 図の配色。実物のブレッドボードに寄せた固定色で、テーマに依らず同じ絵になる。 */
-export const PALETTE = {
-  plate: '#f2efe6',
-  plateEdge: '#d8d2c2',
-  ravine: '#e6e2d4',
-  hole: '#30353d',
-  // 印字は薄いと穴に埋もれるので、板の色に対して十分暗くする。
-  label: '#5f5748',
-  positive: '#d33a2f',
-  negative: '#2b6fd4',
-  lead: '#8f98a3',
-  chipBody: '#2b2f36',
-  chipPin: '#b9bec7',
-  chipText: '#e8ebf0',
-  deviceBody: '#3d434d',
-  deviceEdge: '#20242b',
-  deviceText: '#f0f3f8',
-  partText: '#3f4650',
-  errorInk: '#8c1d18',
-  errorPlate: '#fdecea',
-  errorEdge: '#e0b4b0',
-} as const;
+// ここにあるのは**実物の色そのもの**、つまり意味を持つ色だけ。
+// 配線の被覆・抵抗のカラーコード・LED の発光色は、テーマで塗り替えると図が嘘になるので、
+// 板や印字の配色 (`theme.ts` の Palette) とは別に置いて、テーマから触らせない。
 
 /** 配線の色名。ここに無い名前は書式エラーにして既定色で描く (属性への流し込みを防ぐ)。 */
 export const WIRE_COLORS: Record<string, string> = {
@@ -80,4 +61,4 @@ export const DEFAULT_LED_COLOR = LED_COLORS.red as string;
 
 export const ledColor = (name: string): string | null => lookupColor(LED_COLORS, name.toLowerCase());
 
-export const bandColor = (name: string): string => lookupColor(BAND_COLORS, name) ?? PALETTE.hole;
+export const bandColor = (name: string): string => lookupColor(BAND_COLORS, name) ?? (BAND_COLORS.black as string);

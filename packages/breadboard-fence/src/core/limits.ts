@@ -12,6 +12,18 @@ export const LIMITS = {
   labelLength: 60,
 } as const;
 
+/**
+ * `style:` に書ける大きさの範囲。図として成立する幅に収める。
+ * width の上限は、フェンス 1 つで巨大なラスタ画像を作らせないための頭打ちでもある。
+ */
+export const STYLE_RANGES = {
+  textSize: { min: 6, max: 24 },
+  wireWidth: { min: 1, max: 8 },
+  // 穴の間隔 (render/model/layout.ts の PITCH = 20) より必ず小さく。
+  holeSize: { min: 2, max: 14 },
+  width: { min: 120, max: 4000 },
+} as const;
+
 /** 図に載る文字の長さを切る。サロゲートペアを割らないようにコードポイントで数える。 */
 export function clampText(text: string, max: number): string {
   const characters = [...text];

@@ -2,9 +2,10 @@ import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Node, Pair, ParsedNode } from 'yaml';
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
-import type { BoardSize, FenceDocument, FenceError, PartSpec, WireSpec } from '../types.ts';
+import type { BoardSize, FenceDocument, FenceError, PartSpec, StyleSpec, WireSpec } from '../types.ts';
 import { parseCompactPart, parseHoleToken, parseWireSpec } from './compact.ts';
 import { validateExpandedPart } from './schema.ts';
+import { EMPTY_STYLE, validateStyle } from './style.ts';
 
 const BOARD_SIZES: readonly string[] = ['half', 'full'];
 const MAX_YAML_MESSAGE = 120;
@@ -45,11 +46,12 @@ export function parseFence(source: string): ParseResult {
   const parts: PartSpec[] = [];
   const wires: WireSpec[] = [];
   let board: BoardSize = 'half';
+  let style: StyleSpec = EMPTY_STYLE;
 
   const contents = parsed.contents;
-  if (contents === null) return { doc: { board, parts, wires }, errors };
+  if (contents === null) return { doc: { board, style, parts, wires }, errors };
   if (!isMap(contents)) {
-    return { doc: null, errors: [fenceError('フェンスの中身は board / parts / wires のマップで書きます', 1)] };
+    return { doc: null, errors: [fenceError('フェンスの中身は board / style / parts / wires のマップで書きます', 1)] };
   }
 
   for (const pair of contents.items) {
@@ -60,19 +62,43 @@ export function parseFence(source: string): ParseResult {
       const size = scalarText(pair.value);
       if (size !== null && BOARD_SIZES.includes(size)) board = size as BoardSize;
       else errors.push(fenceError('board は half か full です', lineOf(pair.value as Node) ?? line));
+    } else if (key === 'style') {
+      const node = pair.value as ParsedNode | null;
+      const validated = validateStyle(node?.toJSON() as unknown, line);
+      style = validated.value;
+      // 理由はそれを書いた項目の行に付ける (style: の行だけを指しても直す場所が分からない)。
+      const keyLine = styleKeyLines(node, lineOf);
+      errors.push(
+        ...validated.messages.map((item) =>
+          fenceError(item.message, (item.key === null ? null : keyLine.get(item.key)) ?? line),
+        ),
+      );
     } else if (key === 'parts') {
       collectParts(pair.value as ParsedNode | null, { parts, errors, lineOf });
     } else if (key === 'wires') {
       collectWires(pair.value as ParsedNode | null, { wires, errors, lineOf });
     } else {
-      errors.push(fenceError(`知らないキーです: ${safeToken(key)} (board / parts / wires が使えます)`, line));
+      errors.push(fenceError(`知らないキーです: ${safeToken(key)} (board / style / parts / wires が使えます)`, line));
     }
   }
 
-  return { doc: { board, parts, wires }, errors };
+  return { doc: { board, style, parts, wires }, errors };
 }
 
 type LineOf = (node: Node | Pair | null | undefined) => number | null;
+
+/** style のマップの、項目名 → その項目が書かれた行。 */
+function styleKeyLines(node: ParsedNode | null, lineOf: LineOf): Map<string, number> {
+  const lines = new Map<string, number>();
+  if (!isMap(node)) return lines;
+
+  for (const pair of node.items) {
+    const key = scalarText(pair.key);
+    const line = lineOf(pair.key);
+    if (key !== null && line !== null) lines.set(key, line);
+  }
+  return lines;
+}
 
 function collectParts(
   node: ParsedNode | null,

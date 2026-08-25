@@ -66,14 +66,19 @@ const attributes = (attrs: Attributes): string =>
 export const element = (name: string, attrs: Attributes, children?: string): string =>
   children === undefined ? `<${name}${attributes(attrs)}/>` : `<${name}${attributes(attrs)}>${children}</${name}>`;
 
+/** 既定の字の大きさ (10) に対する縁取りの太さ。字を大きくする側が比例して広げる。 */
+export const TEXT_HALO_WIDTH = 3;
+
 export type TextOptions = Attributes & {
   readonly anchor?: 'start' | 'middle' | 'end';
   /** 穴や配線の上に載る文字を読めるようにする縁取りの色。 */
   readonly halo?: string;
+  /** 縁取りの太さ。字を大きくしたときに広げないと、下の穴が字に透ける。 */
+  readonly haloWidth?: number;
 };
 
 export function svgText(x: number, y: number, content: string, options: TextOptions = {}): string {
-  const { anchor = 'middle', halo, ...rest } = options;
+  const { anchor = 'middle', halo, haloWidth = TEXT_HALO_WIDTH, ...rest } = options;
   return element(
     'text',
     {
@@ -81,7 +86,7 @@ export function svgText(x: number, y: number, content: string, options: TextOpti
       y: num(y),
       'text-anchor': anchor,
       'font-family': 'ui-sans-serif, system-ui, sans-serif',
-      ...(halo ? { stroke: halo, 'stroke-width': 3, 'paint-order': 'stroke' } : {}),
+      ...(halo ? { stroke: halo, 'stroke-width': num(haloWidth), 'paint-order': 'stroke' } : {}),
       ...rest,
     },
     escapeXml(content),

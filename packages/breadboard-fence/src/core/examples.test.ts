@@ -20,13 +20,18 @@ describe('examples', () => {
   });
 
   test.each(markdownFiles)('%s renders to the drawing committed in examples/out', (name) => {
+    const stem = name.replace(/\.md$/, '');
     const fences = extractBreadboardFences(readFileSync(join(EXAMPLES, name), 'utf8'));
-    expect(fences).toHaveLength(1);
+    expect(fences.length).toBeGreaterThan(0);
 
-    const { svg, errors } = renderBreadboard(fences[0]!.source);
-    const committed = readFileSync(join(EXAMPLES, 'out', name.replace(/\.md$/, '.svg')), 'utf8');
+    fences.forEach((fence, index) => {
+      // 出力の名前は CLI (src/cli/main.ts の jobsFor) と同じ付け方に揃える。
+      const outName = fences.length === 1 ? `${stem}.svg` : `${stem}-${index + 1}.svg`;
+      const { svg, errors } = renderBreadboard(fence.source);
+      const committed = readFileSync(join(EXAMPLES, 'out', outName), 'utf8');
 
-    expect(errors).toEqual([]);
-    expect(`${svg}\n`).toBe(committed);
+      expect(errors, outName).toEqual([]);
+      expect(`${svg}\n`, outName).toBe(committed);
+    });
   });
 });

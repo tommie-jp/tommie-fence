@@ -1,6 +1,7 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
-import { PALETTE } from './palette.ts';
+import type { RenderTheme } from './theme.ts';
+import { textScale } from './theme.ts';
 import { element, num, svgText } from './svg.ts';
 
 const PIN_LENGTH = 8;
@@ -8,6 +9,9 @@ const PIN_SPACING = 40;
 const MIN_WIDTH = 120;
 const CHAR_WIDTH = 7.5;
 const DEVICE_GAP = 16;
+// 機器のラベルとピン名は、部品のラベル (既定 10) との比で決める。
+const LABEL_FONT = 11;
+const PIN_FONT = 8.5;
 
 export type DevicePlacement = {
   readonly rect: Rect;
@@ -17,8 +21,8 @@ export type DevicePlacement = {
 
 const captionOf = (part: PlacedPart): string => part.label ?? part.id;
 
-const widthOf = (part: PlacedPart): number =>
-  Math.max(part.pins.length * PIN_SPACING, captionOf(part).length * CHAR_WIDTH + 28, MIN_WIDTH);
+const widthOf = (part: PlacedPart, scale: number): number =>
+  Math.max(part.pins.length * PIN_SPACING, captionOf(part).length * scale * CHAR_WIDTH + 28, MIN_WIDTH);
 
 /**
  * ボード外の機器を上下の帯に並べる。
@@ -28,7 +32,9 @@ export function layoutDevices(
   devices: readonly PlacedPart[],
   preferredX: ReadonlyMap<string, number>,
   layout: Layout,
+  theme: RenderTheme,
 ): Map<string, DevicePlacement> {
+  const fontScale = textScale(theme);
   const placements = new Map<string, DevicePlacement>();
 
   for (const side of ['top', 'bottom'] as const) {
@@ -36,7 +42,7 @@ export function layoutDevices(
     const onSide = devices.filter((device) => (device.at ?? 'top') === side);
     if (!band || onSide.length === 0) continue;
 
-    const widths = new Map(onSide.map((device) => [device.id, widthOf(device)]));
+    const widths = new Map(onSide.map((device) => [device.id, widthOf(device, fontScale)]));
     const total = onSide.reduce((sum, device) => sum + (widths.get(device.id) ?? 0), 0)
       + DEVICE_GAP * (onSide.length - 1);
     const scale = total > band.width ? band.width / total : 1;
@@ -82,18 +88,20 @@ export function layoutDevices(
   return placements;
 }
 
-export function renderDevice(part: PlacedPart, placement: DevicePlacement): string {
+export function renderDevice(part: PlacedPart, placement: DevicePlacement, theme: RenderTheme): string {
   const { rect, side } = placement;
+  const { palette } = theme;
+  const scale = textScale(theme);
   const edgeY = side === 'top' ? rect.y + rect.height : rect.y;
   const labelY = side === 'top' ? rect.y + 20 : rect.y + rect.height - 12;
 
   const shell = element('rect', {
     x: num(rect.x), y: num(rect.y), width: num(rect.width), height: num(rect.height), rx: 6,
-    fill: PALETTE.deviceBody, stroke: PALETTE.deviceEdge,
+    fill: palette.deviceBody, stroke: palette.deviceEdge,
   });
   const label = svgText(rect.x + rect.width / 2, labelY, captionOf(part), {
-    'font-size': 11,
-    fill: PALETTE.deviceText,
+    'font-size': num(scale * LABEL_FONT),
+    fill: palette.deviceText,
   });
 
   const pins = part.pins
@@ -102,11 +110,11 @@ export function renderDevice(part: PlacedPart, placement: DevicePlacement): stri
       if (!point) return '';
       const stub = element('line', {
         x1: num(point.x), y1: num(edgeY), x2: num(point.x), y2: num(point.y),
-        stroke: PALETTE.chipPin, 'stroke-width': 3,
+        stroke: palette.chipPin, 'stroke-width': 3,
       });
       const name = svgText(point.x, side === 'top' ? edgeY - 6 : edgeY + 12, pin.name, {
-        'font-size': 8.5,
-        fill: PALETTE.chipPin,
+        'font-size': num(scale * PIN_FONT),
+        fill: palette.chipPin,
       });
       return stub + name;
     })

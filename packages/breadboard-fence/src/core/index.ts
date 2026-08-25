@@ -13,6 +13,7 @@ import { layoutDevices } from './render/devices.ts';
 import { partObstacles } from './render/parts.ts';
 import { renderErrorCard } from './render/errorCard.ts';
 import { DEFAULT_WIRE_COLOR, wireColor as lookupWireColor, wireColorNames } from './render/palette.ts';
+import { resolveStyle } from './render/theme.ts';
 import type {
   Address, Board, FenceError, Net, PlacedPart, Point, Result, StripId, WireHint, WireSpec,
 } from './types.ts';
@@ -59,6 +60,10 @@ export function renderBreadboard(source: string): RenderResult {
   const placement = placeParts(parsed.doc.parts, board);
   errors.push(...placement.errors);
 
+  const resolved = resolveStyle(parsed.doc.style);
+  const style = resolved.style;
+  errors.push(...resolved.messages.map((message) => fenceError(message, parsed.doc?.style.line ?? null)));
+
   const parts = placement.parts;
   const devices = parts.filter((part) => part.kind === 'device');
   const layout = createLayout(board, {
@@ -68,11 +73,11 @@ export function renderBreadboard(source: string): RenderResult {
 
   const wires: ResolvedWire[] = [];
   for (const spec of parsed.doc.wires) {
-    const resolved = resolveWire(spec, parts, board, errors);
-    if (resolved) wires.push(resolved);
+    const wire = resolveWire(spec, parts, board, errors);
+    if (wire) wires.push(wire);
   }
 
-  const placements = layoutDevices(devices, preferredDeviceX(wires, layout.point), layout);
+  const placements = layoutDevices(devices, preferredDeviceX(wires, layout.point), layout, style.theme);
 
   const drawable = wires.flatMap((wire) => {
     const from = pointOf(wire.from, layout.point, placements);
@@ -80,8 +85,8 @@ export function renderBreadboard(source: string): RenderResult {
     return from && to ? [{ from, to, hints: wire.hints, color: wire.color }] : [];
   });
   const obstacles = [
-    ...parts.flatMap((part) => partObstacles(part, layout)),
-    ...[...placements.values()].map((placement) => placement.rect),
+    ...parts.flatMap((part) => partObstacles(part, layout, style.theme)),
+    ...[...placements.values()].map((device) => device.rect),
   ];
   const rendered: RenderedWire[] = routeWires(drawable, layout, obstacles).map((points, index) => ({
     points,
@@ -93,7 +98,7 @@ export function renderBreadboard(source: string): RenderResult {
     links: wires.map((wire) => [stripOfEndpoint(wire.from), stripOfEndpoint(wire.to)] as const),
   });
 
-  const svg = renderDocument({ board, layout, parts, devices: placements, wires: rendered, errors });
+  const svg = renderDocument({ board, layout, style, parts, devices: placements, wires: rendered, errors });
 
   return { svg, netlist, errors };
 }
