@@ -139,8 +139,14 @@ node dist/cli.cjs render examples --out examples/out
 | 配線 | `- 端点 -- 端点 [色]` | `- a10 -- b12 red` |
 | 迂回ヒント | 角括弧で道順を指定 (20 = 穴 1 つ) | `- j20 -- -b20 black [v-20]` |
 | 部品リスト | 図の下に自動で出る。消すときだけ書く | `parts-list: none` |
+| 押しボタン | 溝をまたいで 4 本足。ピン 1a の穴を書く | `SW1: pushbutton @ e5` |
+| マイコンボード | ピン 1 の穴を書く。ピン名は実物の印字 | `MCU: pico2 @ h5` |
 
-部品は resistor / capacitor / led / transistor / dipN / device。
+部品は 2 本足が resistor / capacitor / led / diode / buzzer / crystal / inductor、
+3 本足が transistor / potentiometer / slide-switch、
+まとまった足を持つものが pushbutton (タクトスイッチ) / dipN / sipN、
+マイコンボードが pico / pico-w / pico2 / pico2-w、
+ボード外の機器が device。
 抵抗の値はカラーコードとして描かれ、コンデンサに `(+)` `(-)` を付けると
 電解コンデンサとして帯が付く。
 
@@ -153,6 +159,8 @@ node dist/cli.cjs render examples --out examples/out
 | [examples/bh-ad2.md](examples/bh-ad2.md) | B-H カーブ測定回路 (オペアンプ・測定器・トロイダルコア) |
 | [examples/board-variants.md](examples/board-variants.md) | ボードの印字を手元の実物に寄せる (`board:` のマップ形式) |
 | [examples/parts-list.md](examples/parts-list.md) | 図の下の部品リストと、その消し方 (`parts-list:`) |
+| [examples/switches.md](examples/switches.md) | タクトスイッチ・半固定抵抗・スライドスイッチ |
+| [examples/pico.md](examples/pico.md) | Raspberry Pi Pico に LED とボタンをつなぐ |
 
 ![エミッタ接地アンプの配線図](examples/out/common-emitter.png)
 

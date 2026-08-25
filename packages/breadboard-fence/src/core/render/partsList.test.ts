@@ -5,7 +5,7 @@ import { partsListHeight, renderPartsList } from './partsList.ts';
 import { DEFAULT_THEME } from './theme.ts';
 
 const part = (id: string, type: string, value: string | null = null, label: string | null = null): PlacedPart => ({
-  id, type, kind: 'two-lead', pins: [], value, label, at: null, line: 1,
+  id, type, kind: 'two-lead', pins: [], bridges: [], value, label, at: null, line: 1,
 });
 
 const theme = DEFAULT_THEME;

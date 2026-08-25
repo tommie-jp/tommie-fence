@@ -18,6 +18,7 @@ dist/cli.cjs.map
 **/*.test.*
 **/*.log
 esbuild.mjs
+doBuild.sh
 tsconfig.json
 tsconfig.tsbuildinfo
 vitest.config.ts

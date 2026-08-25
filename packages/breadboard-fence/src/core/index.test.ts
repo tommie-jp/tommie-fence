@@ -281,6 +281,73 @@ describe('renderBreadboard', () => {
     expect(svg.match(/https?:\/\/\S+/g)).toEqual(['http://www.w3.org/2000/svg"']);
   });
 
+  test('joins the two legs on the same side of a pushbutton into one net', () => {
+    const { netlist, errors } = renderBreadboard(
+      ['parts:', '  SW1: pushbutton @ e5', '  R1: resistor a5 a1', '  R2: resistor a7 a2'].join('\n'),
+    );
+
+    expect(errors).toEqual([]);
+    // 押していなくてもつながっている足なので、e5 と e7 は同じネットに落ちる。
+    const net = netlist.find((item) => item.refs.includes('SW1.1a'));
+    expect(net?.refs).toEqual(expect.arrayContaining(['SW1.1b', 'R1.1', 'R2.1']));
+    // 溝の向こう側は別のまま (押したときだけつながるので、図には出さない)。
+    expect(net?.refs).not.toContain('SW1.2a');
+  });
+
+  test('wires to a board pin by the name printed on the pinout', () => {
+    const { svg, netlist, errors } = renderBreadboard(
+      [
+        'board: full',
+        'parts:',
+        '  MCU: pico2 @ h5',
+        '  R1: resistor a10 a15 330',
+        'wires:',
+        '  - MCU.GP1 -- a10 orange',
+      ].join('\n'),
+    );
+
+    expect(errors).toEqual([]);
+    expect(svg).toContain('GP1');
+    expect(netlist.find((net) => net.refs.includes('MCU.GP1'))?.refs).toContain('R1.1');
+  });
+
+  test('suggests the pins that start with the same letters when a reference misses', () => {
+    const { errors } = renderBreadboard(
+      ['board: full', 'parts:', '  MCU: pico @ h5', 'wires:', '  - MCU.GND -- a10'].join('\n'),
+    );
+
+    // GND は 7 本あるのでピン番号つきの名前になっている。どれを指すか案内する。
+    expect(errors[0]?.message).toContain('GND3');
+  });
+
+  test('draws every part it knows, not just the ones it can place', () => {
+    const ids = ['R1', 'C1', 'D2', 'L1', 'X1', 'BZ1', 'Q1', 'VR1', 'SW2', 'SW1', 'U1', 'M1', 'D1'];
+    const { svg, errors } = renderBreadboard(
+      [
+        'board: full',
+        'parts-list: none',
+        'parts:',
+        '  R1: resistor a1 a3 330',
+        '  C1: capacitor a5 a7 100n',
+        '  D2: diode a9(A) a11(K) 1N4148',
+        '  L1: inductor a13 a15 100u',
+        '  X1: crystal a17 a19 16MHz',
+        '  BZ1: buzzer a21(+) a23(-)',
+        '  Q1: transistor c25(B) c26(C) c27(E) 2SC1815',
+        '  VR1: potentiometer c29 c30 c31 10k',
+        '  SW2: slide-switch c33 c34 c35',
+        '  SW1: pushbutton @ e37',
+        '  U1: dip8 @ e41 NJM4556A',
+        '  M1: sip4 @ a45 OLED',
+        '  D1: led g1(A) g2(K) red',
+      ].join('\n'),
+    );
+
+    expect(errors).toEqual([]);
+    // 部品リストを消してあるので、ID が図に出ていれば本体が描かれている。
+    for (const id of ids) expect(svg).toContain(`>${id}`);
+  });
+
   test('does not throw for text that has nothing to do with the grammar', () => {
     for (const source of ['', '   ', 'hello', '- - -', '{{{', 'board: half\nparts: 3']) {
       expect(() => renderBreadboard(source)).not.toThrow();

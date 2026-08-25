@@ -95,7 +95,10 @@ export function renderBreadboard(source: string): RenderResult {
 
   const netlist = computeNets({
     members: netMembers(parts),
-    links: wires.map((wire) => [stripOfEndpoint(wire.from), stripOfEndpoint(wire.to)] as const),
+    links: [
+      ...wires.map((wire) => [stripOfEndpoint(wire.from), stripOfEndpoint(wire.to)] as const),
+      ...internalLinks(parts),
+    ],
   });
 
   const svg = renderDocument({
@@ -112,6 +115,27 @@ function netMembers(parts: readonly PlacedPart[]): NetMember[] {
       strip: pin.address ? stripOf(pin.address) : devicePinStrip(part.id, pin.name),
     })),
   );
+}
+
+/**
+ * 部品の中で常につながっている足 (タクトスイッチの同じ側どうしなど) を、
+ * 配線と同じ結び目としてネットに効かせる。ここを黙っていると、
+ * **押していないのにつながっている穴**が別のネットに見えてしまう。
+ */
+function internalLinks(parts: readonly PlacedPart[]): (readonly [StripId, StripId])[] {
+  return parts.flatMap((part) => {
+    const stripOfPin = (name: string): StripId | null => {
+      const pin = part.pins.find((candidate) => candidate.name === name);
+      if (!pin) return null;
+      return pin.address ? stripOf(pin.address) : devicePinStrip(part.id, pin.name);
+    };
+
+    return part.bridges.flatMap(([from, to]) => {
+      const a = stripOfPin(from);
+      const b = stripOfPin(to);
+      return a && b ? [[a, b] as const] : [];
+    });
+  });
 }
 
 function resolveWire(
@@ -150,7 +174,7 @@ function resolveEndpoint(
     const part = parts.find((candidate) => candidate.id === partId);
     if (!part) return fail(`配線の端点 ${safeToken(text)}: そんな部品はありません`, line);
     const pin = part.pins.find((candidate) => candidate.name === pinName);
-    if (!pin) return fail(`配線の端点 ${safeToken(text)}: そのピンはありません`, line);
+    if (!pin) return fail(`配線の端点 ${safeToken(text)}: そのピンはありません${nearbyPins(part, pinName)}`, line);
     return pin.address
       ? ok({ kind: 'hole', address: pin.address })
       : ok({ kind: 'device', partId, pin: pinName });
@@ -162,6 +186,19 @@ function resolveEndpoint(
     return fail(`${formatAddress(address)} はボードの外です (1〜${board.columns} 列)`, line);
   }
   return ok({ kind: 'hole', address });
+}
+
+/** 同じ書き出しのピンが 40 本並ぶ (Pico の GND) ので、書き間違いには候補を添える。 */
+const MAX_PIN_HINTS = 4;
+
+function nearbyPins(part: PlacedPart, wanted: string): string {
+  const prefix = wanted.toUpperCase();
+  const near = part.pins
+    .filter((pin) => pin.name.toUpperCase().startsWith(prefix))
+    .slice(0, MAX_PIN_HINTS)
+    .map((pin) => safeToken(pin.name));
+
+  return near.length === 0 ? '' : ` (${near.join(', ')} のことですか)`;
 }
 
 const stripOfEndpoint = (endpoint: Endpoint): StripId =>

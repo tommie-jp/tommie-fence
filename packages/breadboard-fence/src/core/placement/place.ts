@@ -1,10 +1,20 @@
 import { fail, ok, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import { isOnBoard } from '../model/board.ts';
-import type { Address, Board, FenceError, HoleRow, PartSpec, PlacedPart, PlacedPin, Result } from '../types.ts';
+import { HOLE_ROWS } from '../types.ts';
+import type {
+  Address, Board, FenceError, HoleAddress, HoleRow, PartKind, PartSpec, PlacedPart, PlacedPin, Result,
+} from '../types.ts';
+import type { BoardPart } from '../parts/boards.ts';
 import { knownPartTypes, lookupFootprint } from './footprints.ts';
 
 export type PlaceResult = { readonly parts: readonly PlacedPart[]; readonly errors: readonly FenceError[] };
+
+/** 部品の骨格。ピンと形が決まる前の、フェンスに書かれたままの部分。 */
+type PartBase = Omit<PlacedPart, 'kind' | 'pins' | 'bridges'>;
+
+/** 6mm 角のタクトスイッチが溝をまたいでまたぐ列の数。 */
+const SWITCH_SPAN = 2;
 
 /**
  * 部品を穴に落とし込む。1 つ失敗しても残りは描けるように、
@@ -13,7 +23,7 @@ export type PlaceResult = { readonly parts: readonly PlacedPart[]; readonly erro
 export function placeParts(specs: readonly PartSpec[], board: Board): PlaceResult {
   const parts: PlacedPart[] = [];
   const errors: FenceError[] = [];
-  const owners = new Map<string, string>();
+  const claims = new Map<string, Claim>();
 
   for (const spec of specs) {
     const placed = placePart(spec, board);
@@ -22,35 +32,85 @@ export function placeParts(specs: readonly PartSpec[], board: Board): PlaceResul
       continue;
     }
 
-    const conflict = findConflict(placed.value, owners);
+    const covered = coveredHoles(placed.value);
+    const conflict = findConflict(placed.value, covered, claims);
     if (conflict) {
       errors.push(conflict);
       continue;
     }
 
     for (const pin of placed.value.pins) {
-      if (pin.address) owners.set(formatAddress(pin.address), placed.value.id);
+      if (pin.address) claims.set(formatAddress(pin.address), { id: placed.value.id, body: false });
     }
+    for (const address of covered) claims.set(formatAddress(address), { id: placed.value.id, body: true });
     parts.push(placed.value);
   }
 
   return { parts, errors };
 }
 
-function findConflict(part: PlacedPart, owners: Map<string, string>): FenceError | null {
-  const own = new Set<string>();
+/** その穴を押さえている部品。body なら足ではなく本体の下という意味。 */
+type Claim = { readonly id: string; readonly body: boolean };
 
-  for (const pin of part.pins) {
-    if (!pin.address) continue;
-    const address = formatAddress(pin.address);
+/**
+ * 本体が板に載る部品 (パッケージ) の、**ピンで囲まれた内側の穴**。
+ * タクトスイッチの真ん中の列や、マイコンボードの下に隠れる行がこれで、
+ * 実物では何も挿せない。抵抗のように胴が板から浮く部品は対象にしない
+ * (またいだ穴はそのまま使えるため)。
+ */
+const COVERING_KINDS: ReadonlySet<PartKind> = new Set<PartKind>(['switch', 'dip', 'sip', 'board']);
 
-    const owner = owners.get(address);
-    if (owner) return { message: `${address} は部品 ${safeToken(owner)} が使っています`, line: part.line };
-    // 同じ部品の 2 本の足が同じ穴に入る = 部品を短絡させている。
-    if (own.has(address)) {
-      return { message: `部品 ${safeToken(part.id)} の足が 2 本とも ${address} に入っています`, line: part.line };
+function coveredHoles(part: PlacedPart): Address[] {
+  if (!COVERING_KINDS.has(part.kind)) return [];
+
+  const holes = part.pins
+    .map((pin) => pin.address)
+    .filter((address): address is HoleAddress => address?.kind === 'hole');
+  if (holes.length === 0) return [];
+
+  const rows = holes.map((hole) => HOLE_ROWS.indexOf(hole.row));
+  const cols = holes.map((hole) => hole.col);
+  const pins = new Set(holes.map(formatAddress));
+
+  const covered: Address[] = [];
+  for (let row = Math.min(...rows); row <= Math.max(...rows); row += 1) {
+    const name = HOLE_ROWS[row];
+    if (!name) continue;
+    for (let col = Math.min(...cols); col <= Math.max(...cols); col += 1) {
+      const address: Address = { kind: 'hole', row: name, col };
+      if (!pins.has(formatAddress(address))) covered.push(address);
     }
-    own.add(address);
+  }
+  return covered;
+}
+
+function findConflict(
+  part: PlacedPart,
+  covered: readonly Address[],
+  claims: ReadonlyMap<string, Claim>,
+): FenceError | null {
+  const own = new Set<string>();
+  const wanted = [
+    ...part.pins.flatMap((pin) => (pin.address ? [{ address: pin.address, body: false }] : [])),
+    ...covered.map((address) => ({ address, body: true })),
+  ];
+
+  for (const { address, body } of wanted) {
+    const name = formatAddress(address);
+    const claim = claims.get(name);
+
+    if (claim) {
+      // 本体がからむときは、どちらの本体の下なのかを名指しする。
+      const message = body || claim.body
+        ? `${name} は部品 ${safeToken(body ? part.id : claim.id)} の本体の下です`
+        : `${name} は部品 ${safeToken(claim.id)} が使っています`;
+      return { message, line: part.line };
+    }
+    // 同じ部品の 2 本の足が同じ穴に入る = 部品を短絡させている。
+    if (!body && own.has(name)) {
+      return { message: `部品 ${safeToken(part.id)} の足が 2 本とも ${name} に入っています`, line: part.line };
+    }
+    own.add(name);
   }
 
   return null;
@@ -65,7 +125,7 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
     );
   }
 
-  const base = {
+  const base: PartBase = {
     id: spec.id,
     type: spec.type,
     value: spec.value,
@@ -82,73 +142,184 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
       ...base,
       kind: 'device',
       at: spec.at ?? 'top',
+      bridges: [],
       pins: spec.pins.map((name) => ({ name, address: null })),
     });
   }
 
   if (footprint.kind === 'two-lead' || footprint.kind === 'three-lead') {
-    const legs = footprint.kind === 'two-lead' ? 2 : 3;
-    if (spec.holes.length !== legs) {
-      return fail(
-        `部品 ${safeToken(spec.id)}: 穴番地を ${legs} つ書きます (今は ${spec.holes.length} つ)`,
-        spec.line,
-      );
-    }
-    const pins: PlacedPin[] = [];
-    for (const hole of spec.holes) {
-      const address = resolveHole(hole.addr, board, spec.line);
-      if (!address.ok) return address;
-      // 同じ名前が 2 本あると `D1.A` がどちらを指すか決まらない。
-      if (pins.some((pin) => pin.name === hole.tag)) {
-        return fail(`部品 ${safeToken(spec.id)}: ピン名 ${safeToken(hole.tag)} が 2 回出てきます`, spec.line);
-      }
-      pins.push({ name: hole.tag, address: address.value });
-    }
-    return ok({ ...base, kind: footprint.kind, pins });
+    return placeLegs(spec, board, base, footprint.kind === 'two-lead' ? 2 : 3, footprint.kind);
   }
 
-  return placeDip(spec, board, footprint.pins, base);
+  if (footprint.kind === 'switch') return placeSwitch(spec, board, base);
+  if (footprint.kind === 'sip') return placeSip(spec, board, base, footprint.pins);
+  if (footprint.kind === 'board') return placeBoard(spec, board, base, footprint.board);
+  return placeDip(spec, board, base, footprint.pins);
 }
 
-function placeDip(
+/** 足の数だけ穴番地を並べて書く部品 (抵抗・トランジスタなど)。 */
+function placeLegs(
   spec: PartSpec,
   board: Board,
-  pinCount: number,
-  base: Omit<PlacedPart, 'kind' | 'pins'>,
+  base: PartBase,
+  legs: number,
+  kind: 'two-lead' | 'three-lead',
 ): Result<PlacedPart> {
+  if (spec.holes.length !== legs) {
+    return fail(`部品 ${safeToken(spec.id)}: 穴番地を ${legs} つ書きます (今は ${spec.holes.length} つ)`, spec.line);
+  }
+
+  const pins: PlacedPin[] = [];
+  for (const hole of spec.holes) {
+    const address = resolveHole(hole.addr, board, spec.line);
+    if (!address.ok) return address;
+    // 同じ名前が 2 本あると `D1.A` がどちらを指すか決まらない。
+    if (pins.some((pin) => pin.name === hole.tag)) {
+      return fail(`部品 ${safeToken(spec.id)}: ピン名 ${safeToken(hole.tag)} が 2 回出てきます`, spec.line);
+    }
+    pins.push({ name: hole.tag, address: address.value });
+  }
+  return ok({ ...base, kind, bridges: [], pins });
+}
+
+/** `@ 穴` で置く部品の、ピン 1 の穴。 */
+function anchorHole(spec: PartSpec, board: Board, example: string): Result<HoleAddress> {
   const anchorRef = spec.holes[0];
   if (spec.holes.length !== 1 || !anchorRef) {
-    return fail(`部品 ${safeToken(spec.id)}: dip はピン 1 の穴だけを書きます (例: dip8 @ e5)`, spec.line);
+    return fail(`部品 ${safeToken(spec.id)}: ピン 1 の穴だけを書きます (例: ${example})`, spec.line);
   }
 
   const anchor = resolveHole(anchorRef.addr, board, spec.line);
   if (!anchor.ok) return anchor;
-  if (anchor.value.kind !== 'hole' || (anchor.value.row !== 'e' && anchor.value.row !== 'f')) {
-    return fail(`部品 ${safeToken(spec.id)}: dip は溝をまたぐので e 行か f 行に置きます`, spec.line);
+  if (anchor.value.kind !== 'hole') {
+    return fail(`部品 ${safeToken(spec.id)}: レールではなく穴に置きます (例: ${example})`, spec.line);
   }
+  return ok(anchor.value);
+}
 
-  const half = pinCount / 2;
-  const lastCol = anchor.value.col + half - 1;
-  if (lastCol > board.columns) {
-    return fail(`部品 ${safeToken(spec.id)}: ボードの右端 (${board.columns} 列) をはみ出します`, spec.line);
-  }
+const rightEdge = (spec: PartSpec, board: Board, lastCol: number): FenceError | null =>
+  lastCol > board.columns
+    ? { message: `部品 ${safeToken(spec.id)}: ボードの右端 (${board.columns} 列) をはみ出します`, line: spec.line }
+    : null;
 
-  const anchorRow: HoleRow = anchor.value.row;
-  const oppositeRow: HoleRow = anchorRow === 'e' ? 'f' : 'e';
-  const pins: PlacedPin[] = Array.from({ length: pinCount }, (_, index) => {
+/**
+ * 溝をまたいで 2 列に並ぶピンを穴に落とす。ピン 1 から anchor の行を右へ進み、
+ * 折り返して opposite の行を左へ戻る (実物のピン番号の回り方そのまま)。
+ */
+function dualRowPins(anchor: HoleAddress, oppositeRow: HoleRow, names: readonly string[]): PlacedPin[] {
+  const half = names.length / 2;
+  return names.map((name, index) => {
     const pin = index + 1;
     const onAnchorRow = pin <= half;
     return {
-      name: String(pin),
+      name,
       address: {
         kind: 'hole',
-        row: onAnchorRow ? anchorRow : oppositeRow,
-        col: onAnchorRow ? anchor.value.col + pin - 1 : anchor.value.col + (pinCount - pin),
+        row: onAnchorRow ? anchor.row : oppositeRow,
+        col: onAnchorRow ? anchor.col + pin - 1 : anchor.col + (names.length - pin),
       } satisfies Address,
     };
   });
+}
 
-  return ok({ ...base, kind: 'dip', pins });
+function placeDip(spec: PartSpec, board: Board, base: PartBase, pinCount: number): Result<PlacedPart> {
+  const anchor = anchorHole(spec, board, 'dip8 @ e5');
+  if (!anchor.ok) return anchor;
+  if (anchor.value.row !== 'e' && anchor.value.row !== 'f') {
+    return fail(`部品 ${safeToken(spec.id)}: dip は溝をまたぐので e 行か f 行に置きます`, spec.line);
+  }
+
+  const overflow = rightEdge(spec, board, anchor.value.col + pinCount / 2 - 1);
+  if (overflow) return { ok: false, error: overflow };
+
+  const names = Array.from({ length: pinCount }, (_, index) => String(index + 1));
+  const oppositeRow: HoleRow = anchor.value.row === 'e' ? 'f' : 'e';
+  return ok({ ...base, kind: 'dip', bridges: [], pins: dualRowPins(anchor.value, oppositeRow, names) });
+}
+
+/**
+ * 0.7 インチ (7 ピッチ) 幅のマイコンボード。ピンの 2 列は上下ブロックの同じ位置の行
+ * (a↔f, b↔g, c↔h, …) にちょうど落ちる。
+ */
+function placeBoard(spec: PartSpec, board: Board, base: PartBase, part: BoardPart): Result<PlacedPart> {
+  const anchor = anchorHole(spec, board, 'pico @ h5');
+  if (!anchor.ok) return anchor;
+
+  const overflow = rightEdge(spec, board, anchor.value.col + part.pins.length / 2 - 1);
+  if (overflow) return { ok: false, error: overflow };
+
+  const oppositeRow = HOLE_ROWS[(HOLE_ROWS.indexOf(anchor.value.row) + HOLE_ROWS.length / 2) % HOLE_ROWS.length];
+  if (!oppositeRow) return fail(`部品 ${safeToken(spec.id)}: この行には置けません`, spec.line);
+
+  return ok({
+    ...base,
+    kind: 'board',
+    bridges: [],
+    // 何も書かれていなければ製品名を出す。図と部品リストに「何を挿すのか」が残る。
+    label: base.label ?? (base.value === null ? part.name : null),
+    pins: dualRowPins(anchor.value, oppositeRow, part.pins),
+  });
+}
+
+/** 1 列に並んだヘッダ。ピン名を書けるので、ヘッダ 1 列のモジュールをこれで賄う。 */
+function placeSip(spec: PartSpec, board: Board, base: PartBase, pinCount: number): Result<PlacedPart> {
+  const anchor = anchorHole(spec, board, 'sip4 @ a20');
+  if (!anchor.ok) return anchor;
+
+  const names = spec.pins ?? Array.from({ length: pinCount }, (_, index) => String(index + 1));
+  if (names.length !== pinCount) {
+    return fail(
+      `部品 ${safeToken(spec.id)}: pins は ${pinCount} 本ぶんの名前を書きます (今は ${names.length} 本)`,
+      spec.line,
+    );
+  }
+
+  const overflow = rightEdge(spec, board, anchor.value.col + pinCount - 1);
+  if (overflow) return { ok: false, error: overflow };
+
+  return ok({
+    ...base,
+    kind: 'sip',
+    bridges: [],
+    pins: names.map((name, index) => ({
+      name,
+      address: { kind: 'hole', row: anchor.value.row, col: anchor.value.col + index } satisfies Address,
+    })),
+  });
+}
+
+/**
+ * 溝をまたぐ 4 本足のタクトスイッチ。**同じ側の 2 本は押していなくてもつながっている**ので、
+ * その組を bridges で申告する。ここを黙っていると、図から導いたネットリストが実物と食い違う。
+ */
+function placeSwitch(spec: PartSpec, board: Board, base: PartBase): Result<PlacedPart> {
+  const anchor = anchorHole(spec, board, 'pushbutton @ e5');
+  if (!anchor.ok) return anchor;
+  if (anchor.value.row !== 'e' && anchor.value.row !== 'f') {
+    return fail(`部品 ${safeToken(spec.id)}: pushbutton は溝をまたぐので e 行か f 行に置きます`, spec.line);
+  }
+
+  const overflow = rightEdge(spec, board, anchor.value.col + SWITCH_SPAN);
+  if (overflow) return { ok: false, error: overflow };
+
+  const { row, col } = anchor.value;
+  const oppositeRow: HoleRow = row === 'e' ? 'f' : 'e';
+  const leg = (name: string, legRow: HoleRow, legCol: number): PlacedPin => ({
+    name,
+    address: { kind: 'hole', row: legRow, col: legCol } satisfies Address,
+  });
+
+  return ok({
+    ...base,
+    kind: 'switch',
+    pins: [
+      leg('1a', row, col),
+      leg('1b', row, col + SWITCH_SPAN),
+      leg('2a', oppositeRow, col),
+      leg('2b', oppositeRow, col + SWITCH_SPAN),
+    ],
+    bridges: [['1a', '1b'], ['2a', '2b']],
+  });
 }
 
 function resolveHole(text: string, board: Board, line: number): Result<Address> {

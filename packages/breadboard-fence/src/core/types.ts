@@ -124,15 +124,23 @@ export type FenceDocument = {
   readonly wires: readonly WireSpec[];
 };
 
-export type PartKind = 'two-lead' | 'three-lead' | 'dip' | 'device';
+export type PartKind = 'two-lead' | 'three-lead' | 'switch' | 'dip' | 'sip' | 'board' | 'device';
 
 export type PlacedPin = { readonly name: string; readonly address: Address | null };
+
+/**
+ * 部品の中でつながっている足の組。**押した・倒した状態に依らない導通だけ**を載せる
+ * (タクトスイッチの同じ側の 2 本など)。ネットの導出はこれも配線と同じ結び目として扱うので、
+ * 状態で変わる導通を入れるとネットリストが嘘になる。
+ */
+export type PinBridge = readonly [string, string];
 
 export type PlacedPart = {
   readonly id: string;
   readonly type: string;
   readonly kind: PartKind;
   readonly pins: readonly PlacedPin[];
+  readonly bridges: readonly PinBridge[];
   readonly value: string | null;
   readonly label: string | null;
   readonly at: 'top' | 'bottom' | null;
