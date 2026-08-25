@@ -87,6 +87,23 @@ describe('validateExpandedPart', () => {
     expect(validateExpandedPart({ type: 'device', pins }).ok).toBe(false);
   });
 
+  test('reports a value on a device, which the drawing has nowhere to put', () => {
+    const result = validateExpandedPart({ type: 'device', label: '電池', value: '3V', pins: ['+', '-'] });
+
+    // 描けるところ (ラベルとピン) は捨てずに、使われない value だけを言う。
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.value.label).toBe('電池');
+    expect(result.ok && result.value.value).toBeNull();
+    expect(result.ok && result.notes.join('')).toContain('value');
+  });
+
+  test('says nothing about value when the part is not a device', () => {
+    const result = validateExpandedPart({ type: 'resistor', value: '330', holes: ['a5', 'a10'] });
+
+    expect(result.ok && result.value.value).toBe('330');
+    expect(result.ok && result.notes).toEqual([]);
+  });
+
   test('cuts a label that is long enough to blow up the drawing', () => {
     const result = validateExpandedPart({ type: 'device', label: 'あ'.repeat(500), pins: ['P1'] });
 

@@ -95,6 +95,18 @@ describe('renderPartsList', () => {
     expect(Number(valueX) + [...shown].length * Number(size)).toBeLessThanOrEqual(14 + 636);
   });
 
+  test('keeps astral full width characters inside the plate too (emoji, CJK ext B)', () => {
+    // サロゲートペアの文字。BMP だけを見る幅の見積もりでは半角に数えてはみ出す。
+    for (const wide of ['\u{20BB7}', '\u{1F50B}']) {
+      const svg = render([part('R1', 'resistor', wide.repeat(200))]);
+      const cells = [...svg.matchAll(/<text[^>]*x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)];
+      const [, valueX = '', size = '', shown = ''] = cells[2] ?? [];
+
+      expect(shown.endsWith('…')).toBe(true);
+      expect(Number(valueX) + [...shown].length * Number(size)).toBeLessThanOrEqual(14 + 636);
+    }
+  });
+
   test('lists a long id in full, so two parts that share a prefix stay apart', () => {
     const ids = ['SUPPLY_DECOUPLE_A', 'SUPPLY_DECOUPLE_B'];
     const shown = texts(render(ids.map((id) => part(id, 'capacitor', '100uF'))));

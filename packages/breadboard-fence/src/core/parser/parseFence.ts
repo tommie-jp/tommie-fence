@@ -232,8 +232,11 @@ function collectParts(
 
     if (isMap(pair.value)) {
       const expanded = expandPart(id, pair.value.toJSON() as unknown, line);
-      if (expanded.ok) parts.push(expanded.value);
-      else errors.push(expanded.error);
+      if (expanded.ok) {
+        parts.push(expanded.value);
+        // 描けた部品は残したまま、使われなかった指定だけを同じ行で言う。
+        errors.push(...expanded.notes);
+      } else errors.push(expanded.error);
       continue;
     }
 
@@ -254,6 +257,7 @@ function expandPart(id: string, raw: unknown, line: number) {
     value: {
       id, type, variant, holes: holes.map(parseHoleToken), value, label, at, pins, line,
     } satisfies PartSpec,
+    notes: validated.notes.map((note) => fenceError(`部品 ${safeToken(id)}: ${note}`, line)),
   };
 }
 

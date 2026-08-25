@@ -14,8 +14,12 @@ export type ExpandedPart = {
   readonly holes: readonly string[];
 };
 
+/**
+ * `notes` は**描けたが使われなかった指定**の理由。読めた部分を捨てずに残したうえで、
+ * 黙って落としたものを行番号つきで言うために返す (`style` の messages と同じ立て付け)。
+ */
 export type Validation =
-  | { readonly ok: true; readonly value: ExpandedPart }
+  | { readonly ok: true; readonly value: ExpandedPart; readonly notes: readonly string[] }
   | { readonly ok: false; readonly message: string };
 
 const KNOWN_KEYS = ['type', 'at', 'label', 'value', 'pins', 'holes'] as const;
@@ -74,13 +78,22 @@ export function validateExpandedPart(raw: unknown): Validation {
   const holes = raw.holes === undefined ? [] : asTextList(raw.holes);
   if (holes === null) return invalid('holes は穴番地の配列です');
 
+  // 機器の値は図のどこにも出ない (`render/devices.ts` の captionOf は `label ?? id`、
+  // 部品リストの valueOf も機器はラベルしか見ない)。受理だけして黙って捨てると
+  // 書いた人には何も伝わらないので、機器は描いたまま値だけを落として理由を返す。
+  const notes: string[] = [];
+  const drops = type === 'device' && value !== null;
+  if (drops) notes.push('機器 (device) に value は使いません。箱に出す名前は label に書きます');
+  const kept = drops ? null : value;
+
   return {
     ok: true,
+    notes,
     value: {
       type,
       at: raw.at ?? null,
       label: label === null ? null : clampText(label, LIMITS.labelLength),
-      value: value === null ? null : clampText(value, LIMITS.labelLength),
+      value: kept === null ? null : clampText(kept, LIMITS.labelLength),
       pins,
       holes,
     },

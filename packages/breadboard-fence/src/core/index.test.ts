@@ -248,10 +248,13 @@ describe('renderBreadboard', () => {
     );
     const texts = [...svg.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((match) => match[1]);
 
-    expect(errors).toEqual([]);
     // 機器の箱と部品リストの 2 か所に、同じ名前で出る。
     expect(texts.filter((text) => text === 'Analog Discovery 2')).toHaveLength(2);
+    // value は機器のどこにも出ない。出ないものを黙って捨てず、帯で理由を言う。
     expect(texts).not.toContain('波形発生器');
+    expect(errors.map((error) => error.message)).toEqual([
+      expect.stringContaining('value'),
+    ]);
   });
 
   test('keeps the error banner under the parts list so the drawing reads top to bottom', () => {

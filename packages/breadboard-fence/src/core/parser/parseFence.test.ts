@@ -188,6 +188,19 @@ describe('parseFence', () => {
     });
   });
 
+  test('points at the line of a device that carries a value nobody draws', () => {
+    const { doc, errors } = parseFence(
+      ['parts:', '  BAT:', '    type: device', '    label: 電池', '    value: 3V', '    pins: ["+", "-"]', ''].join('\n'),
+    );
+
+    // 機器は描けるので残す。捨てるのは value だけで、そのことは行番号つきで言う。
+    expect(doc?.parts[0]).toMatchObject({ id: 'BAT', type: 'device', label: '電池', value: null });
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toContain('BAT');
+    expect(errors[0]?.message).toContain('value');
+    expect(errors[0]?.line).toBe(2);
+  });
+
   test('records the line number of every wire so later errors can point at it', () => {
     const { doc } = parseFence(led);
 
