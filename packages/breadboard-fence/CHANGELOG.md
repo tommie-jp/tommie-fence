@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Changed
+
+- `.vsix` に入っていた examples の PNG (1.1 MB) を外した。**993 KB → 114 KB**。
+  `.vscodeignore` が `examples/out/*.svg` だけを除いて PNG を書き忘れていた。
+  拡張は実行時に SVG を組み立てるので読むことは無く、README の図は vsce が
+  GitHub の絶対 URL に書き換えるため、詳細ページの見え方も変わらない。
+
 ## [0.2.0] - 2026-08-25
 
 部品が一気に増えた版。既定で図の下に部品リストが出るようになったので、

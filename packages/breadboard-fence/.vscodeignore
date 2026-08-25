@@ -10,6 +10,8 @@ coverage/**
 _del/**
 examples/*.md
 examples/out/*.svg
+# PNG は README が GitHub のページで使うだけで、拡張は実行時に SVG を組み立てる。
+examples/out/*.png
 CLAUDE.md
 dist/cli.cjs
 dist/cli.cjs.map
