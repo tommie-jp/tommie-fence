@@ -26,6 +26,7 @@
     "diagram"
   ],
   "main": "./dist/extension.cjs",
+  "browser": "./dist/extension.web.cjs",
   "bin": {
     "breadboard-fence": "./dist/cli.cjs"
   },
