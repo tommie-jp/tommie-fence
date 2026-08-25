@@ -10,10 +10,11 @@
 - ` ```circuit ` フェンス (YAML) が Markdown プレビューで回路図になる。
   番地 (`a1` `c3`) で置く場所を書くと、YAML → circuitikz TeX → WASM の TeX
   → SVG の順に描かれる。LaTeX のインストールは要らない。
-- 2 端子部品 34 種。抵抗とその仲間 (`resistor` / `resistor-var` /
-  `photoresistor` / `thermistor` / `varistor`)、コンデンサとコイル
-  (`capacitor` / `ecap` / `varicap` / `inductor`)、振動子 (`crystal`)、
-  ダイオード (`diode` / `led` / `zener` / `schottky` / `photodiode` / `diac`)、
+- 2 端子部品 37 種。抵抗とその仲間 (`resistor` / `resistor-var` /
+  `potentiometer` / `photoresistor` / `thermistor` / `varistor`)、
+  コンデンサとコイル (`capacitor` / `ecap` / `varicap` / `inductor`)、
+  振動子 (`crystal`)、ダイオードとその仲間 (`diode` / `led` / `zener` /
+  `schottky` / `photodiode` / `diac` / `thyristor` / `triac`)、
   電源 (`vsource` / `sine` / `square` / `triangle` / `isource` / `battery` /
   `solar`)、切る・光る・鳴る・測るもの (`switch` / `switch-nc` / `button` /
   `button-nc` / `reed` / `fuse` / `lamp` / `speaker` / `mic` / `ammeter` /
