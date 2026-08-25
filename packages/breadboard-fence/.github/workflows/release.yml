@@ -1,0 +1,58 @@
+name: Release
+
+# タグを打つのがリリースの合図。バージョンの出所を package.json とタグの 2 つに
+# 分けないよう、両者の一致を確かめてからパッケージする。
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run examples
+      # ci.yml と同じガード。SVG に差分が出たら図の作り直しをコミットし忘れている。
+      - run: git diff --exit-code -- 'examples/out/*.svg'
+
+      - name: タグと package.json の version が一致することを確かめる
+        run: |
+          pkg="v$(node -p "require('./package.json').version")"
+          if [ "$pkg" != "$GITHUB_REF_NAME" ]; then
+            echo "タグ $GITHUB_REF_NAME と package.json の $pkg が食い違っている" >&2
+            exit 1
+          fi
+
+      # vscode:prepublish が production ビルドを走らせる。
+      - name: .vsix を作る
+        run: |
+          npx vsce package
+          vsix="breadboard-fence-${GITHUB_REF_NAME#v}.vsix"
+          test -f "$vsix"
+          sha256sum "$vsix" > SHA256SUMS
+
+      - name: CHANGELOG から該当バージョンの節を抜き出す
+        run: |
+          awk -v ver="${GITHUB_REF_NAME#v}" '
+            $0 ~ "^## \\[" ver "\\]" { found = 1; next }
+            /^## \[/ { found = 0 }
+            found' CHANGELOG.md > notes.md
+          # 節が無いまま空のリリースノートを出さない。
+          grep -q '[^[:space:]]' notes.md
+
+      - name: Release を作る
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "breadboard-fence-${GITHUB_REF_NAME#v}.vsix" SHA256SUMS \
+            --verify-tag --title "$GITHUB_REF_NAME" --notes-file notes.md

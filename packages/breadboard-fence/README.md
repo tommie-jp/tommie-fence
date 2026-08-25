@@ -39,16 +39,13 @@ N1 : R1.2, D1.A
 
 ## 使い方
 
-必要なのは **VS Code 1.75 以上と Node.js 20 以上**。Marketplace には出していないので、
-`.vsix` を自分で作って入れる。
+必要なのは **VS Code 1.75 以上**だけ。Marketplace には出していないので、
+[Releases](https://github.com/tommie-jp/breadboard-fence/releases) から
+`.vsix` を落として入れる (自分で作ることもできる → [開発](#開発))。
 
-```bash
-npm install
-npm run package                       # breadboard-fence-x.y.z.vsix を作る
-```
-
-`.vsix` の中身は素の JavaScript (実行時の依存は YAML パーサだけ) なので、
-**同じファイルがどの OS でも使える**。違うのは「どこに入れるか」だけ。
+`.vsix` の中身は素の JavaScript で、プラットフォーム別のバイナリを含まない
+(実行時の依存は YAML パーサだけ)。**同じファイルがどの環境でも使える**ので、
+Releases の asset も 1 つしかない。違うのは「どこに入れるか」だけ。
 
 | 環境 | 拡張が動く場所 | インストール |
 | --- | --- | --- |
@@ -56,6 +53,18 @@ npm run package                       # breadboard-fence-x.y.z.vsix を作る
 | WSL2 | **WSL 側** (`~/.vscode-server/extensions`) | WSL のシェルで `code --install-extension breadboard-fence-*.vsix` |
 | Linux / macOS | そのマシン | `code --install-extension breadboard-fence-*.vsix` |
 | Remote-SSH / Dev Container / Codespaces | **接続先** | 接続先のシェルで上と同じコマンド |
+| VSCodium / Cursor | そのマシン | `code` の代わりに `codium` / `cursor` を使う |
+
+落としたファイルが壊れていないかは、同じ Release の `SHA256SUMS` で確かめられる。
+
+```bash
+sha256sum -c SHA256SUMS
+```
+
+ブラウザ版 (vscode.dev / github.dev) でも動くようにビルドしてあるが、**web の
+拡張ホストは `.vsix` の手動インストールを受け付けない**。Marketplace に出すまでは、
+展開した拡張を HTTPS で配信して `Developer: Install Extension from Location...`
+に URL を渡すサイドロードだけが手段になる。
 
 入れたら Markdown を開いて Markdown プレビュー
 (`Ctrl+Shift+V` / macOS は `Cmd+Shift+V`) を出す。
@@ -162,10 +171,14 @@ node dist/cli.cjs render examples --out examples/out
 
 ## 開発
 
+Node.js 20 以上が要る (拡張を使うだけなら要らない)。
+
 ```bash
+npm install
 npm test          # ユニットテスト
 npm run check     # 型チェック + テスト
 npm run examples  # examples/*.md → examples/out/*.svg (+ PNG)
+npm run package   # breadboard-fence-x.y.z.vsix を作る
 ```
 
 VS Code で F5 を押すと拡張機能をデバッグ実行し、`examples/` を開いた
@@ -173,6 +186,21 @@ VS Code で F5 を押すと拡張機能をデバッグ実行し、`examples/` �
 
 図の描画を変えると `examples/out` のスナップショットテストが落ちる。
 `npm run examples` で作り直し、git diff で図の変化を確認してからコミットする。
+
+### リリース
+
+`package.json` の version と [CHANGELOG.md](CHANGELOG.md) を更新してから、
+一致するタグを push する。`.github/workflows/release.yml` が検査 → `.vsix` の作成 →
+Release の作成までをやる。リリースノートは CHANGELOG の該当バージョンの節から取る。
+
+```bash
+npm version 0.2.0 --no-git-tag-version   # package.json / package-lock.json
+$EDITOR CHANGELOG.md                     # ## [0.2.0] の節を書く
+npm run check
+git commit -am "chore: v0.2.0"
+git tag -a v0.2.0 -m "v0.2.0"
+git push origin main v0.2.0
+```
 
 ## ライセンス
 
