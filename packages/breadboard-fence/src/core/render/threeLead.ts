@@ -9,9 +9,11 @@ import type { RenderTheme } from './theme.ts';
  * パッケージの向き (TO-92 の平らな面、スイッチの倒れている側) は図では主張しない。
  * 品種や状態で変わるものを図に描くと嘘になるので、どの穴がどの足かをピン名で示す。
  */
-export function bodyHalfHeight(type: string, layout: Layout): number {
-  if (type === 'potentiometer') return 1.1 * layout.pitch;
-  if (type === 'slide-switch') return 0.8 * layout.pitch;
+export function bodyHalfHeight(part: PlacedPart, layout: Layout): number {
+  if (part.type === 'potentiometer') return 1.1 * layout.pitch;
+  if (part.type === 'slide-switch') return 0.8 * layout.pitch;
+  // TO-220 は放熱タブのぶん胴が高い。実物 (10mm 角ほど) に寄せて丸より大きく取る。
+  if (part.variant === 'to220') return 1.4 * layout.pitch;
   // TO-92 は幅 4.5mm ほど。穴のピッチ 2.54mm に対して直径 2 ピッチ弱に収める。
   return 0.95 * layout.pitch;
 }
@@ -22,7 +24,7 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
   if (!points || !center) return '';
 
   const { palette, metrics } = theme;
-  const reach = bodyHalfHeight(part.type, layout);
+  const reach = bodyHalfHeight(part, layout);
   const towardRavine = center.y < layout.ravineY ? 1 : -1;
 
   const legs = points
@@ -46,16 +48,49 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
     .join('');
   const label = partLabel(center.x, center.y + towardRavine * (reach + ROUND_CAPTION_GAP), caption(part), theme);
 
-  return `${shellOf(part, center, reach, theme)}${legs}${names}${label}`;
+  return `${shellOf(part, center, reach, towardRavine, theme)}${legs}${names}${label}`;
 }
 
-function shellOf(part: PlacedPart, center: Point, reach: number, theme: RenderTheme): string {
+function shellOf(
+  part: PlacedPart,
+  center: Point,
+  reach: number,
+  towardRavine: number,
+  theme: RenderTheme,
+): string {
   if (part.type === 'potentiometer') return potentiometerShell(center, reach);
   if (part.type === 'slide-switch') return slideSwitchShell(center, reach);
+  if (part.variant === 'to220') return to220Shell(center, reach, towardRavine, theme);
   return element('circle', {
     cx: num(center.x), cy: num(center.y), r: num(reach),
     fill: theme.palette.chipBody, stroke: '#14171c',
   });
+}
+
+/**
+ * TO-220。放熱タブつきの角い胴で、TO-92 の丸とは大きさも形も違う。
+ * **タブは溝側に描く**: 反対側にはピン名が並ぶため。
+ * どちら向きに寝かせるか (タブが上か下か) は実装の都合で、実物の向きの主張ではない。
+ */
+function to220Shell(center: Point, reach: number, towardRavine: number, theme: RenderTheme): string {
+  const halfWidth = reach * 1.15;
+  const tabHeight = reach * 0.8;
+  const tabY = towardRavine > 0 ? center.y + reach - tabHeight : center.y - reach;
+
+  const plastic = element('rect', {
+    x: num(center.x - halfWidth), y: num(center.y - reach),
+    width: num(halfWidth * 2), height: num(reach * 2), rx: 3,
+    fill: '#23272e', stroke: '#12151a',
+  });
+  const tab = element('rect', {
+    x: num(center.x - halfWidth), y: num(tabY), width: num(halfWidth * 2), height: num(tabHeight), rx: 2,
+    fill: '#b9c0c9', stroke: '#7c848e',
+  });
+  // 取り付けねじの穴。板の色で抜くと、下の穴の並びと紛れない。
+  const hole = element('circle', {
+    cx: num(center.x), cy: num(tabY + tabHeight / 2), r: num(reach * 0.2), fill: theme.palette.plate,
+  });
+  return plastic + tab + hole;
 }
 
 /** 半固定抵抗。上から見た四角い本体と、回すためのねじの頭。 */

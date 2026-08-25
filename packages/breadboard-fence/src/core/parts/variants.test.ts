@@ -23,7 +23,12 @@ describe('splitPartType', () => {
 
 describe('variantsOf', () => {
   test('lists the looks a capacitor can be drawn as', () => {
-    expect(variantsOf('capacitor')).toEqual(['ceramic', 'film', 'electrolytic']);
+    expect(variantsOf('capacitor')).toEqual(['ceramic', 'film', 'electrolytic', 'tantalum']);
+  });
+
+  test('lists the looks of the parts whose package differs by size', () => {
+    expect(variantsOf('led')).toEqual(['3mm', '5mm']);
+    expect(variantsOf('transistor')).toEqual(['to92', 'to220']);
   });
 
   test('is empty for a type that is only drawn one way', () => {
@@ -37,18 +42,20 @@ describe('variantsOf', () => {
 });
 
 describe('isPolarVariant', () => {
-  test('knows the electrolytic has a minus side', () => {
+  test('knows the electrolytic and the tantalum have a polarity', () => {
     expect(isPolarVariant('electrolytic')).toBe(true);
+    expect(isPolarVariant('tantalum')).toBe(true);
   });
 
   test('knows the ceramic and the film do not', () => {
     expect(isPolarVariant('ceramic')).toBe(false);
     expect(isPolarVariant('film')).toBe(false);
+    expect(isPolarVariant('to220')).toBe(false);
   });
 });
 
 describe('typesWithVariants', () => {
   test('names the types whose look can be chosen', () => {
-    expect(typesWithVariants()).toEqual(['capacitor']);
+    expect(typesWithVariants()).toEqual(['capacitor', 'led', 'transistor']);
   });
 });

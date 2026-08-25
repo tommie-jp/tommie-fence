@@ -91,9 +91,10 @@ function variantError(part: PlacedPart): FenceError | null {
 
   // ここから先の variant は表にある名前なので、そのまま文面に出してよい。
   if (isPolarVariant(variant)) {
-    if (part.pins.some((pin) => pin.name === '-')) return null;
+    // 2 本足なので、どちらか片方に印があれば反対側は決まる。
+    if (part.pins.some((pin) => POLARITY_MARKS.has(pin.name))) return null;
     return {
-      message: `部品 ${safeToken(part.id)}: ${variant} は向きがあるので、マイナス側の穴に (-) を書きます (例: a5(+) a10(-))`,
+      message: `部品 ${safeToken(part.id)}: ${variant} は向きがあるので、極性を穴に書きます (例: a5(+) a10(-))`,
       line: part.line,
     };
   }

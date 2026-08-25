@@ -35,7 +35,7 @@ export function partObstacles(part: PlacedPart, layout: Layout, theme: RenderThe
   }
 
   if (part.kind === 'three-lead') {
-    const radius = bodyHalfHeight(part.type, layout);
+    const radius = bodyHalfHeight(part, layout);
     const center = points[1] ?? points[0]!;
     // 本体に、上下へ出したピン名とラベルを足した高さ。字が伸びればここも伸びる。
     const reach = CAPTION_DROP * textScale(theme);

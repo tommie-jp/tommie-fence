@@ -147,10 +147,52 @@ describe('renderBreadboard', () => {
   });
 
   test('reports a look that the part cannot be drawn as', () => {
-    const { errors } = renderBreadboard('parts:\n  C1: capacitor/tantalum b5 b12 47uF\n');
+    const { errors } = renderBreadboard('parts:\n  C1: capacitor/mica b5 b12 47uF\n');
 
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatchObject({ line: 2 });
+  });
+
+  test('draws the 5mm led as it always was and the 3mm one smaller', () => {
+    const plain = renderBreadboard('parts-list: none\nparts:\n  D1: led b5(A) b8(K) red\n');
+    const five = renderBreadboard('parts-list: none\nparts:\n  D1: led/5mm b5(A) b8(K) red\n');
+    const three = renderBreadboard('parts-list: none\nparts:\n  D1: led/3mm b5(A) b8(K) red\n');
+
+    expect(three.errors).toEqual([]);
+    expect(five.svg).toBe(plain.svg);
+    expect(three.svg).not.toBe(plain.svg);
+  });
+
+  test('draws the to92 transistor as it always was and the to220 differently', () => {
+    const legs = 'h9(B) h10(C) h11(E) 2SC1815';
+    const plain = renderBreadboard(`parts-list: none\nparts:\n  Q1: transistor ${legs}\n`);
+    const to92 = renderBreadboard(`parts-list: none\nparts:\n  Q1: transistor/to92 ${legs}\n`);
+    const to220 = renderBreadboard(`parts-list: none\nparts:\n  Q1: transistor/to220 ${legs}\n`);
+
+    expect(to220.errors).toEqual([]);
+    expect(to92.svg).toBe(plain.svg);
+    expect(to220.svg).not.toBe(plain.svg);
+  });
+
+  test('marks the plus side of a tantalum, not the minus side like an electrolytic', () => {
+    // 電解はマイナス側に帯、タンタルはプラス側に印。逆に読むと部品を壊す。
+    const tantalum = renderBreadboard('parts:\n  C1: capacitor/tantalum b5(+) b8(-) 10u\n');
+    const electrolytic = renderBreadboard('parts:\n  C1: capacitor/electrolytic b5(+) b8(-) 10u\n');
+    const texts = (svg: string) => [...svg.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((match) => match[1]);
+
+    expect(tantalum.errors).toEqual([]);
+    expect(texts(tantalum.svg)).toContain('+');
+    expect(texts(electrolytic.svg)).toContain('\u2212');
+  });
+
+  test('puts the electrolytic band on the lead left unmarked', () => {
+    // `(+)` だけを書いても、2 本足なら反対側が - と決まる。
+    const left = renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/electrolytic b5 b8(+) 10u\n');
+    const right = renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/electrolytic b5(+) b8 10u\n');
+
+    expect(left.errors).toEqual([]);
+    expect(right.errors).toEqual([]);
+    expect(left.svg).not.toBe(right.svg);
   });
 
   test('lets a wire refer to a pin named after its polarity', () => {

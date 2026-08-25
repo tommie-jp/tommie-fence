@@ -71,12 +71,25 @@ function resistorBody(part: PlacedPart, span: number): string {
  * 見え方を変えないため、そこは今までの決め方をそのまま残してある。
  */
 function capacitorBody(part: PlacedPart, span: number): string {
-  const minus = part.pins.findIndex((pin) => pin.name === '-');
-  const variant = part.variant ?? (minus === -1 ? 'film' : 'electrolytic');
+  // 姿を省いたときの選び分けは `-` の有無だけで決める (既に書かれた図を動かさないため)。
+  const variant = part.variant ?? (part.pins.some((pin) => pin.name === '-') ? 'electrolytic' : 'film');
 
   if (variant === 'ceramic') return ceramicCapBody(span);
   if (variant === 'film') return filmCapBody(span);
-  return electrolyticCapBody(minus, span);
+  if (variant === 'tantalum') return tantalumCapBody(part, span);
+  return electrolyticCapBody(part, span);
+}
+
+/**
+ * 極性の印が付く側の足。**片方にしか印が無くても、2 本足なら反対側が決まる**。
+ * 見つからなければ 2 本目 (右) を返す。図の外から直に呼ばれたときの保険で、
+ * フェンス経由では `placement/place.ts` が極性のない極性つき部品を弾いている。
+ */
+function polarityIndex(part: PlacedPart, mark: '+' | '-'): number {
+  const found = part.pins.findIndex((pin) => pin.name === mark);
+  if (found !== -1) return found;
+  const opposite = part.pins.findIndex((pin) => pin.name === (mark === '-' ? '+' : '-'));
+  return opposite === -1 ? 1 : 1 - opposite;
 }
 
 /** フィルム・積層セラミックの角い胴。無極性のコンデンサの既定の姿。 */
@@ -98,9 +111,9 @@ function ceramicCapBody(span: number): string {
 }
 
 /** 電解の缶。マイナス側に帯を描く。逆挿しは壊れるので目立たせる。 */
-function electrolyticCapBody(minus: number, span: number): string {
+function electrolyticCapBody(part: PlacedPart, span: number): string {
   const width = Math.min(span * 0.6, 34);
-  const stripeX = minus === 0 ? -width / 2 + 4.5 : width / 2 - 4.5;
+  const stripeX = polarityIndex(part, '-') === 0 ? -width / 2 + 4.5 : width / 2 - 4.5;
   const shell = element('rect', {
     x: num(-width / 2), y: -9.5, width: num(width), height: 19, rx: 4,
     fill: '#2c3e70', stroke: '#1b2748',
@@ -110,15 +123,36 @@ function electrolyticCapBody(minus: number, span: number): string {
   return shell + stripe + mark;
 }
 
+/**
+ * ディップタンタルの粒。**印が付くのはプラス側**で、電解の帯 (マイナス側) とは逆。
+ * 同じコンデンサでも印の意味が逆なので、形を変えて取り違えられないようにする。
+ */
+function tantalumCapBody(part: PlacedPart, span: number): string {
+  const width = Math.min(span * 0.55, 30);
+  const height = 17;
+  const markX = polarityIndex(part, '+') === 0 ? -width / 2 + 5 : width / 2 - 5;
+  const shell = element('rect', {
+    x: num(-width / 2), y: num(-height / 2), width: num(width), height, rx: num(height / 2),
+    fill: '#e0b93c', stroke: '#a5822a',
+  });
+  const mark = svgText(markX, 4, '+', { 'font-size': 12, 'font-weight': 700, fill: '#5b4611' });
+  return shell + mark;
+}
+
+/** 5mm 砲弾型が既定。3mm はひと回り小さいだけで、置き方も足の名前も変わらない。 */
+const LED_RADIUS = 8.5;
+
 function ledBody(part: PlacedPart): string {
   const color = ledColor(part.value ?? '') ?? DEFAULT_LED_COLOR;
+  // 3mm は 5mm の形をそのまま縮める (5mm と省略時は今までの数字にそのまま戻る)。
+  const scale = part.variant === '3mm' ? 6.5 / LED_RADIUS : 1;
   // カソード側の平らな面。部品の向きに合わせたいので、本体と同じ回転の中で置く。
-  const flatX = part.pins[0]?.name.toUpperCase() === 'K' ? -6 : 6;
+  const flatX = (part.pins[0]?.name.toUpperCase() === 'K' ? -6 : 6) * scale;
   const dome = element('circle', {
-    cx: 0, cy: -4, r: 8.5, fill: color, 'fill-opacity': 0.85, stroke: '#7a2018',
+    cx: 0, cy: num(-4 * scale), r: num(LED_RADIUS * scale), fill: color, 'fill-opacity': 0.85, stroke: '#7a2018',
   });
   const flat = element('line', {
-    x1: flatX, y1: -11, x2: flatX, y2: 3, stroke: '#7a2018', 'stroke-width': 2,
+    x1: num(flatX), y1: num(-11 * scale), x2: num(flatX), y2: num(3 * scale), stroke: '#7a2018', 'stroke-width': 2,
   });
   return dome + flat;
 }

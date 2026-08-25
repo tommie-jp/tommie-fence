@@ -14,14 +14,19 @@ export type PartType = { readonly type: string; readonly variant: string | null 
  * 描き分けられない姿を黙って受け取ると、実物と違うかたちの図になるため。
  */
 const VARIANTS: Record<string, readonly string[]> = {
-  capacitor: ['ceramic', 'film', 'electrolytic'],
+  capacitor: ['ceramic', 'film', 'electrolytic', 'tantalum'],
+  // 実物の玉の大きさ。挿す穴は同じなので、変わるのは丸の大きさだけ。
+  led: ['3mm', '5mm'],
+  // TO-92 は丸い小信号用、TO-220 は放熱タブつき。足の並びはどちらもピン名で示す。
+  transistor: ['to92', 'to220'],
 };
 
 /**
- * 向きのある姿。マイナス側に帯を描くので、**どちらの足が `-` かが要る**。
- * タンタルを足すときもここに入れる。
+ * 向きのある姿。**どちらの足がどちらかを図に描く**ので、ピン名に極性が要る。
+ * 印の付く側は姿ごとに違う (電解はマイナス側の帯、タンタルはプラス側の印) が、
+ * 「向きが要る」という一点だけがここの意味。
  */
-const POLAR_VARIANTS: ReadonlySet<string> = new Set(['electrolytic']);
+const POLAR_VARIANTS: ReadonlySet<string> = new Set(['electrolytic', 'tantalum']);
 
 /**
  * `capacitor/ceramic` を種類と姿に割る。`/` の左右どちらかが空のときは割らず、

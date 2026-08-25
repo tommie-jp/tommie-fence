@@ -380,7 +380,7 @@ describe('placeParts', () => {
 
   test('reports a look the type does not have', () => {
     const { parts, errors } = placeParts(
-      [spec({ id: 'C1', type: 'capacitor', variant: 'tantalum', holes: holes('a5', 'a10'), line: 4 })],
+      [spec({ id: 'C1', type: 'capacitor', variant: 'mica', holes: holes('a5', 'a10'), line: 4 })],
       board,
     );
 
@@ -437,6 +437,23 @@ describe('placeParts', () => {
 
     expect(errors).toEqual([]);
     expect(parts[0]?.variant).toBeNull();
+  });
+
+
+  test('takes a polar look that marks only one of the two leads', () => {
+    // 2 本足なので、片方に印があれば反対側は決まる。
+    const { parts, errors } = placeParts(
+      [spec({
+        id: 'C1',
+        type: 'capacitor',
+        variant: 'electrolytic',
+        holes: [{ addr: 'a5', tag: '+' }, { addr: 'a10', tag: '2' }],
+      })],
+      board,
+    );
+
+    expect(errors).toEqual([]);
+    expect(parts[0]?.variant).toBe('electrolytic');
   });
 
 });
