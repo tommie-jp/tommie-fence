@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "scopeName": "markdown.circuit.codeblock",
+  "injectionSelector": "L:text.html.markdown",
+  "comment": "```circuit フェンスの中身を YAML として色分けする (エディタ側のみ。プレビューの描画とは無関係)。言語名は小文字だけ拾う: 描画側 (markdownItPlugin と fences.ts) が小文字で見ているので、ここだけ大文字を通すと『色は付くのに描かれない』ことになる",
+  "patterns": [{ "include": "#circuit-fence" }],
+  "repository": {
+    "circuit-fence": {
+      "begin": "(^|\\G)(\\s*)(`{3,}|~{3,})\\s*(circuit)(\\s+[^`~]*)?$",
+      "beginCaptures": {
+        "3": { "name": "punctuation.definition.markdown" },
+        "4": { "name": "fenced_code.block.language.markdown" },
+        "5": { "name": "fenced_code.block.language.attributes.markdown" }
+      },
+      "end": "(^|\\G)(\\2|\\s{0,3})(\\3)\\s*$",
+      "endCaptures": {
+        "3": { "name": "punctuation.definition.markdown" }
+      },
+      "patterns": [
+        {
+          "begin": "(^|\\G)(\\s*)(.*)",
+          "while": "(^|\\G)(?!\\s*(`{3,}|~{3,})\\s*$)",
+          "contentName": "meta.embedded.block.yaml",
+          "patterns": [{ "include": "source.yaml" }]
+        }
+      ]
+    }
+  }
+}

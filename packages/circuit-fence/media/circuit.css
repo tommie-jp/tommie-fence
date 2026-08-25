@@ -1,0 +1,88 @@
+/* Markdown プレビューでの図の置き方。
+   拡張が previewStyles を 1 つも contribute しないと、拡張フォルダが webview の
+   localResourceRoots に入らないという事情もあってここに置いている。 */
+
+.circuit {
+  margin: 1em 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.circuit svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 読めなかったところの帯。図が描けたときは図の下、描けなかったときはカードの中。
+   色はテーマ変数から取る (プレビューの明暗どちらでも読めるように)。 */
+.circuit-errors {
+  margin: 0;
+  padding: 0.2em 0 0 1.2em;
+  text-align: left;
+  font-size: 0.9em;
+  color: var(--vscode-editorError-foreground, #a1260d);
+}
+
+.circuit-errors li {
+  margin: 0.15em 0;
+}
+
+.circuit-error-card {
+  padding: 0.6em 0.9em;
+  border: 1px solid var(--vscode-editorError-foreground, #a1260d);
+  border-radius: 6px;
+  background: var(--vscode-inputValidation-errorBackground, rgba(161, 38, 13, 0.08));
+  text-align: left;
+}
+
+.circuit-error-title {
+  margin: 0;
+  font-weight: bold;
+  color: var(--vscode-editorError-foreground, #a1260d);
+}
+
+/* 図を見ずに回路を突き合わせるためのネットリスト。既定では畳んでおく。 */
+.circuit-netlist {
+  margin-top: 0.4em;
+  text-align: left;
+  font-size: 0.9em;
+}
+
+.circuit-netlist summary {
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.circuit-netlist table {
+  margin: 0.3em 0 0;
+  border-collapse: collapse;
+}
+
+.circuit-netlist th,
+.circuit-netlist td {
+  padding: 0.1em 0.7em 0.1em 0;
+  text-align: left;
+  vertical-align: top;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-weight: normal;
+}
+
+.circuit-netlist th {
+  opacity: 0.75;
+}
+
+/* テーマも地の色も書いていない図だけ、エディタの見た目に合わせる。
+   線と文字は SVG 側で currentColor にしてあるのでこのまま追従する。
+   地の色 (端子の白丸の塗り) だけは currentColor で表せないので、ここで当てる。
+   色を書いてある図には circuit-auto が付かないので、書いたとおりの色が残る。 */
+.circuit-auto svg [fill="#ffffff"] {
+  fill: var(--vscode-editor-background, #ffffff);
+}
+
+/* 図が描き上がるまでの間。図と入れ替わるので、場所だけ取って目立たせない。 */
+.circuit-pending {
+  margin: 0;
+  padding: 1.2em 0;
+  opacity: 0.6;
+  font-size: 0.9em;
+}

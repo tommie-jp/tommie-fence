@@ -1,0 +1,35 @@
+# 例
+
+[docs/syntax.md](../docs/syntax.md) に出てくる項目を 1 つずつ図にしたもの。
+プレビュー (`Ctrl+Shift+V`) で開くとそのまま図になる。
+
+図の作り直しは `npm run examples` (1 枚につき `.tex` / `.svg` / `.png` が
+[out/](out/) に出る)。**描画を変えたら作り直して出力もコミットする** —
+`.tex` はスナップショットテストの期待値であり、ドキュメントが貼る図でもある。
+
+| 例 | syntax.md の項目 |
+| --- | --- |
+| [01-rc-lowpass.md](01-rc-lowpass.md) | 番地 / 部品 / 配線 / ネットリスト |
+| [02-parts.md](02-parts.md) | 2 端子部品 13 種、1 端子の記号 |
+| [03-multi-terminal.md](03-multi-terminal.md) | 多端子部品 6 種と足の名前、型番 |
+| [04-non-inverting-amp.md](04-non-inverting-amp.md) | オペアンプの向き (`+up`)、足への引き方 |
+| [05-labels.md](05-labels.md) | ID の出方 / 値の出方 |
+| [06-bends.md](06-bends.md) | 配線の `--` / `-\|` / `\|-`、分岐の黒丸と T 字 |
+| [07-diagonal.md](07-diagonal.md) | 斜めに置く |
+| [08-themes.md](08-themes.md) | `theme` (`auto` / `light` / `dark` / `mono`) |
+| [09-style.md](09-style.md) | 色の上書き / `pitch` / `wire-width` / `standard` / `width` |
+| [10-grid.md](10-grid.md) | `grid` / `grid-to` |
+
+## わざと壊してある例
+
+[errors/](errors/) は「読めなかったときに何が出るか」の見本。
+
+| 例 | syntax.md の項目 |
+| --- | --- |
+| [errors/01-unreadable.md](errors/01-unreadable.md) | 読めなかったとき (行番号つきのエラー) |
+| [errors/02-overlap.md](errors/02-overlap.md) | 重なりの検出 |
+| [errors/03-japanese.md](errors/03-japanese.md) | 日本語の値と `--emit-tex` |
+
+図にならない行が入っているので、`npm run examples` の対象からは外してある
+(CLI は `examples/` の直下しか見ない)。貼ってあるエラーの文面が古びないよう、
+実際に出る文言と一致するかをテストで見ている。

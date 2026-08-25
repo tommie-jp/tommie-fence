@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run examples
+      # .tex はどの環境でも同じバイト列になるので、差分が出たらコミットし忘れ。
+      # SVG は node-tikzjax のバージョンで変わりうるため、PNG ともども一致は求めない。
+      - run: git diff --exit-code -- 'examples/out/*.tex'

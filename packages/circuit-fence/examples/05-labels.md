@@ -1,0 +1,34 @@
+# ID と値の出方
+
+ID は先頭 1 文字が本体、残りが添字になる (回路図の慣習どおり)。
+`R1` は R の添字 1、`Rload` は R の添字 load、`R` はそのまま。
+
+値は種類から単位を補う。数字と SI 接頭辞 (`k` `M` `G` `m` `u` `n` `p`) の
+組でないときは、書いたとおりに出る。単位を勝手に足さない。
+
+```circuit
+parts:
+  R1:    resistor a1 a3 10k
+  Rload: resistor a5 a7 4.7
+  R:     resistor a9 a11 1M
+  L1:    inductor c1 c3 10m
+  C1:    capacitor c5 c7 2.2u
+  D1:    diode c9 c11 1N4148
+style:
+  grid: on
+```
+
+| 書いたもの | 図に出るもの |
+| --- | --- |
+| `R1: resistor … 10k` | R₁ / 10 kΩ |
+| `Rload: resistor … 4.7` | R_load / 4.7 Ω |
+| `R: resistor … 1M` | R / 1 MΩ |
+| `L1: inductor … 10m` | L₁ / 10 mH |
+| `C1: capacitor … 2.2u` | C₁ / 2.2 uF |
+| `D1: diode … 1N4148` | D₁ / 1N4148 (そのまま) |
+
+ID は記号の下 (縦置きなら左)、値は反対側に出る。
+
+値に使えるのは英数字と `. + - / ( ) _ %` だけ。`,` と `=` は circuitikz が
+オプションの区切りとして読んでしまうので使えない (小数点は `.` で書く)。
+日本語は**フェンスの TeX にフォントが無い**ので描けない。

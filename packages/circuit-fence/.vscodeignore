@@ -1,0 +1,39 @@
+# .vscodeignore がある場合 vsce は .gitignore を見ないので、生成物もここに並べる。
+#
+# node_modules は**まるごと除外しない**。node-tikzjax は WASM とフォントを
+# 実ファイルとして持ち歩き (`tex/` `css/`)、`__dirname` からの相対で読むので、
+# 束ねられず、パッケージのまま入っている必要がある。
+# vsce は devDependencies を自動で外すので、残るのは yaml と node-tikzjax まわりだけ。
+.vscode/**
+.github/**
+src/**
+docs/**
+scripts/**
+coverage/**
+.playwright-mcp/**
+_del/**
+examples/*.md
+examples/out/*.svg
+examples/out/*.tex
+CLAUDE.md
+dist/cli.cjs
+dist/cli.cjs.map
+**/*.map
+**/*.test.*
+**/*.log
+esbuild.mjs
+doBuild.sh
+tsconfig.json
+tsconfig.tsbuildinfo
+vitest.config.ts
+.markdownlint.json
+.gitignore
+.gitattributes
+*.vsix
+
+# 同梱する依存のうち、実行に要らないもの
+node_modules/**/*.ts
+node_modules/**/README.md
+node_modules/**/readme.md
+node_modules/**/CHANGELOG.md
+node_modules/**/*.md.map

@@ -1,0 +1,81 @@
+{
+  "name": "circuit-fence",
+  "displayName": "Circuit Fence",
+  "description": "Markdown の ```circuit フェンスを回路図としてプレビューする",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "publisher": "tommie",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tommie-jp/circuit-fence.git"
+  },
+  "type": "module",
+  "engines": {
+    "vscode": "^1.75.0",
+    "node": ">=20"
+  },
+  "categories": [
+    "Programming Languages",
+    "Visualization"
+  ],
+  "keywords": [
+    "markdown",
+    "circuit",
+    "circuitikz",
+    "schematic",
+    "diagram"
+  ],
+  "main": "./dist/extension.cjs",
+  "browser": "./dist/extension.web.cjs",
+  "bin": {
+    "circuit-fence": "./dist/cli.cjs"
+  },
+  "activationEvents": [],
+  "contributes": {
+    "markdown.markdownItPlugins": true,
+    "markdown.previewStyles": [
+      "./media/circuit.css",
+      "./node_modules/node-tikzjax/css/fonts.css"
+    ],
+    "grammars": [
+      {
+        "scopeName": "markdown.circuit.codeblock",
+        "path": "./syntaxes/circuit-injection.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml"
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "examples": "npm run build && node dist/cli.cjs render examples --out examples/out && node scripts/png.mjs",
+    "package": "npm run build && vsce package",
+    "vscode:prepublish": "node esbuild.mjs --production",
+    "check": "npm run typecheck && npm run test"
+  },
+  "dependencies": {
+    "node-tikzjax": "^1.0.5",
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/vscode": "^1.75.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "@vscode/vsce": "^3.9.2",
+    "esbuild": "^0.28.2",
+    "markdown-it": "^15.0.0",
+    "sharp": "^0.35.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

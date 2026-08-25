@@ -1,0 +1,62 @@
+name: Release
+
+# タグを打つのがリリースの合図。バージョンの出所を package.json とタグの 2 つに
+# 分けないよう、両者の一致を確かめてからパッケージする。
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run check
+
+      - name: タグと package.json の version が一致することを確かめる
+        run: |
+          pkg="v$(node -p "require('./package.json').version")"
+          if [ "$pkg" != "$GITHUB_REF_NAME" ]; then
+            echo "タグ $GITHUB_REF_NAME と package.json の $pkg が食い違っている" >&2
+            exit 1
+          fi
+
+      # vscode:prepublish が production ビルドを走らせる。
+      - name: .vsix を作る
+        run: |
+          npx vsce package
+          vsix="circuit-fence-${GITHUB_REF_NAME#v}.vsix"
+          test -f "$vsix"
+          sha256sum "$vsix" > SHA256SUMS
+
+      - name: CHANGELOG から該当バージョンの節を抜き出す
+        run: |
+          extract() {
+            awk -v head="$1" '
+              $0 ~ "^## \\[" head "\\]" { found = 1; next }
+              /^## \[/ { found = 0 }
+              found' CHANGELOG.md
+          }
+          extract "${GITHUB_REF_NAME#v}" > notes.md
+          # 版の節をまだ切っていなければ Unreleased で出す
+          # (タグを打った後にここで落ちると、リリースだけが無い状態になるため)。
+          if ! grep -q '[^[:space:]]' notes.md; then extract Unreleased > notes.md; fi
+          # どちらも空なら、書くことが無いままリリースしない。
+          grep -q '[^[:space:]]' notes.md
+
+      - name: Release を作る
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "circuit-fence-${GITHUB_REF_NAME#v}.vsix" SHA256SUMS \
+            --verify-tag --title "$GITHUB_REF_NAME" --notes-file notes.md

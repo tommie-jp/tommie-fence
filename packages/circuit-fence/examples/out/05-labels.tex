@@ -1,0 +1,41 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\foreach \x in {0,2,4,6,8,10,12,14,16,18,20} {\foreach \y in {0,-2,-4} {\fill[gray] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize] at (8,0.84) {5};
+\node[gray, font=\scriptsize] at (10,0.84) {6};
+\node[gray, font=\scriptsize] at (12,0.84) {7};
+\node[gray, font=\scriptsize] at (14,0.84) {8};
+\node[gray, font=\scriptsize] at (16,0.84) {9};
+\node[gray, font=\scriptsize] at (18,0.84) {10};
+\node[gray, font=\scriptsize] at (20,0.84) {11};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\coordinate (a1) at (0,0);
+\coordinate (a3) at (4,0);
+\coordinate (a5) at (8,0);
+\coordinate (a7) at (12,0);
+\coordinate (a9) at (16,0);
+\coordinate (a11) at (20,0);
+\coordinate (c1) at (0,-4);
+\coordinate (c3) at (4,-4);
+\coordinate (c5) at (8,-4);
+\coordinate (c7) at (12,-4);
+\coordinate (c9) at (16,-4);
+\coordinate (c11) at (20,-4);
+\draw (a1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (a3); % line 2
+\draw (a5) to[R, l_=$R_{load}$, a^=$4.7\,\Omega$] (a7); % line 3
+\draw (a9) to[R, l_=$R$, a^=$1\,\mathrm{M}\Omega$] (a11); % line 4
+\draw (c1) to[L, l_=$L_{1}$, a^=$10\,\mathrm{m}\mathrm{H}$] (c3); % line 5
+\draw (c5) to[C, l_=$C_{1}$, a^=$2.2\,\mathrm{u}\mathrm{F}$] (c7); % line 6
+\draw (c9) to[D, l_=$D_{1}$, a^=$\mathrm{1N4148}$] (c11); % line 7
+\end{circuitikz}
+\end{document}

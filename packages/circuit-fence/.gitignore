@@ -1,0 +1,32 @@
+# 削除予定ファイルの一時置き場
+_del/
+
+# Claude Code のローカル設定
+.claude/settings.local.json
+
+# 環境変数・秘密情報
+.env
+.env.*
+
+# OS / エディタ
+.DS_Store
+Thumbs.db
+
+# Node / TypeScript ビルド生成物
+# (examples/out の SVG は README とメモから参照するのでコミット対象)
+node_modules/
+dist/
+/out/
+*.vsix
+*.tsbuildinfo
+
+# テスト生成物
+coverage/
+.vscode-test/
+
+# LaTeX ビルド生成物 (circuitikz の検証用に .tex を回すことがある)
+.latex-build/
+
+# Playwright
+.playwright-mcp/
+test-results/

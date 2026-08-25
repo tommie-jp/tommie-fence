@@ -1,0 +1,19 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\begin{document}
+\begin{circuitikz}[american, line width=1.6pt]
+\ctikzset{bipoles/length=1.2cm}
+\coordinate (a1) at (0,0);
+\coordinate (a3) at (2.4,0);
+\coordinate (c3) at (2.4,-2.4);
+\coordinate (a4) at (3.6,0);
+\draw (a1) node[ocirc]{} node[above left]{IN}; % line 2
+\draw (a1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (a3); % line 3
+\draw (a3) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (c3); % line 4
+\draw (a4) node[ocirc]{} node[above left]{OUT}; % line 5
+\node[ground] at (c3) {}; % line 6
+\draw (a3) -- (a4); % line 8
+\node[circ] at (a3) {};
+\end{circuitikz}
+\end{document}

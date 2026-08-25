@@ -1,0 +1,52 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\foreach \x in {0,2,4,6,8} {\foreach \y in {0,-2,-4,-6,-8,-10} {\fill[gray] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize] at (8,0.84) {5};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
+\coordinate (b2) at (2,-2);
+\coordinate (b5) at (8,-2);
+\coordinate (e2) at (2,-8);
+\coordinate (e5) at (8,-8);
+\coordinate (a2) at (2,0);
+\coordinate (c2) at (2,-4);
+\coordinate (b1) at (0,-2);
+\coordinate (a5) at (8,0);
+\coordinate (c5) at (8,-4);
+\coordinate (b4) at (6,-2);
+\coordinate (d2) at (2,-6);
+\coordinate (f2) at (2,-10);
+\coordinate (e1) at (0,-8);
+\coordinate (d5) at (8,-6);
+\coordinate (f5) at (8,-10);
+\coordinate (e4) at (6,-8);
+\node[npn] (part-Q1) at (b2) {}; % line 2
+\node[pnp] (part-Q2) at (b5) {}; % line 3
+\node[nmos] (part-M1) at (e2) {}; % line 4
+\node[pmos] (part-M2) at (e5) {}; % line 5
+\draw (a2) -| (part-Q1.collector); % line 7
+\draw (c2) -| (part-Q1.emitter); % line 8
+\draw (b1) -| (part-Q1.base); % line 9
+\draw (a5) -| (part-Q2.collector); % line 10
+\draw (c5) -| (part-Q2.emitter); % line 11
+\draw (b4) -| (part-Q2.base); % line 12
+\draw (d2) -| (part-M1.drain); % line 13
+\draw (f2) -| (part-M1.source); % line 14
+\draw (e1) -| (part-M1.gate); % line 15
+\draw (d5) -| (part-M2.drain); % line 16
+\draw (f5) -| (part-M2.source); % line 17
+\draw (e4) -| (part-M2.gate); % line 18
+\end{circuitikz}
+\end{document}

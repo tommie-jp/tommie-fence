@@ -1,0 +1,14 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\begin{document}
+\begin{circuitikz}[european, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\coordinate (a1) at (0,0);
+\coordinate (a3) at (4,0);
+\coordinate (a5) at (8,0);
+\coordinate (a7) at (12,0);
+\draw (a1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (a3); % line 2
+\draw (a5) to[L, l_=$L_{1}$, a^=$10\,\mathrm{m}\mathrm{H}$] (a7); % line 3
+\end{circuitikz}
+\end{document}

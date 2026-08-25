@@ -1,0 +1,93 @@
+# Circuit Fence
+
+Markdown の ` ```circuit ` フェンス (YAML) を回路図としてレンダリングする
+VS Code 拡張機能。
+
+```yaml
+parts:
+  IN:  port a1
+  R1:  resistor a1 a3 10k
+  C1:  capacitor a3 c3 100n
+  OUT: port a4
+  G1:  ground c3
+wires:
+  - a3 -- a4
+```
+
+![RC ローパス](examples/out/01-rc-lowpass.png)
+
+座標計算も `\coordinate` も `\node[circ]` も書かない。
+分岐の黒丸は自動で付く。
+
+## なぜあるか
+
+回路図をテキストで描く手段は枯れている (CircuiTikZ / Schemdraw / Lcapy)。
+この拡張が張り合うのは 2 点だけ。
+
+1. **位置を番地で直接書ける** — `R1: resistor a1 a3 10k` と書けば
+   そこに置かれる。制約グラフもレイアウト用のダミーノードも要らない。
+   図を直してもネットリストの節点名が動かない。
+2. **間違いが行番号で返る** — 読めた部品は描き、読めなかった行は
+   Markdown の行番号つきで図の下に出る。LLM に書かせて自己修正させるとき、
+   ここが効く。
+
+回路の解析 (伝達関数・過渡応答) が要るなら [Lcapy](https://lcapy.readthedocs.io/)
+を使う。そこは張り合わない。
+
+## 使い方
+
+Markdown を開いてプレビュー (`Ctrl+Shift+V`) を出す。
+書き方は [docs/syntax.md](docs/syntax.md)。
+
+組んでいる間は `style: grid: on` にすると、部品を置ける位置が点で出る。
+行は左に英字、列は上に数字で、ブレッドボードと同じ読み方。
+
+![グリッド](examples/out/10-grid.png)
+
+色は既定でエディタに追従する (明るいテーマでも暗いテーマでも読める)。
+`style: theme:` で `light` / `dark` / `mono` に決め打ちもできる。
+
+図は TeX (WASM) で描くので、LaTeX をインストールしなくてよい。
+1 枚あたり 1 秒ほどかかり、描けるまで「図を描いています…」が出る。
+描けた図は覚えておくので、2 度目からは待たない。
+
+### コマンドラインから
+
+```bash
+node dist/cli.cjs render examples --out examples/out
+```
+
+1 枚につき `.tex` と `.svg` を書き出す。`.tex` は LaTeX にそのまま渡せる。
+ネットリストは標準出力に出る。
+
+日本語や単位が要る図は `--emit-tex` で、手元の xelatex 用の `.tex` を書き出す。
+
+```bash
+node dist/cli.cjs render notes.md --emit-tex --out tex
+xelatex -output-directory tex tex/notes.tex
+```
+
+プレビューとの違いは 3 つだけ (日本語の値が通る・単位が siunitx で µF になる・
+オペアンプが本物の記号になる)。番地も配線も同じなので、プレビューで位置を
+確かめてから書き出せる。書き方は [docs/syntax.md](docs/syntax.md)。
+
+## 開発
+
+```bash
+npm install
+npm run check      # 型チェック + テスト
+npm run examples   # examples の図を作り直す (変えたら出力もコミットする)
+./doBuild.sh       # .vsix を作って VS Code に入れ直す
+```
+
+設計上の約束と運用ルールは [CLAUDE.md](CLAUDE.md)。
+
+## 状態
+
+Phase 3。2 端子部品 14 種と多端子部品 6 種、`--` / `-|` / `|-` の配線、
+足の参照 (`U1.out`)、分岐の黒丸、T 字の接続、重なりの検出、
+`style:` (グリッド表示・テーマ・大きさ)、`--emit-tex` での `.tex` 書き出しまで。
+
+![非反転アンプ](examples/out/04-non-inverting-amp.png)
+
+残りは公開リポジトリへの分離。
