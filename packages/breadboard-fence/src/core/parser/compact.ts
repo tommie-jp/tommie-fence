@@ -1,6 +1,7 @@
 import { fail, ok, safeToken } from '../errors.ts';
 import { LIMITS, clampText } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
+import { splitPartType } from '../parts/variants.ts';
 import type { HoleRef, PartSpec, Result, WireHint, WireSpec } from '../types.ts';
 
 // `b12(A)` `f11(+)` — ピン名には極性の記号も使う。
@@ -24,10 +25,11 @@ export function parseHoleToken(token: string, index: number): HoleRef {
  */
 export function parseCompactPart(id: string, spec: string, line: number): Result<PartSpec> {
   const tokens = spec.trim().split(/\s+/).filter(Boolean);
-  const [type, ...rest] = tokens;
-  if (!type) return fail(`部品 ${safeToken(id)} の内容が空です`, line);
+  const [typeToken, ...rest] = tokens;
+  if (!typeToken) return fail(`部品 ${safeToken(id)} の内容が空です`, line);
 
-  const base: PartSpec = { id, type, holes: [], value: null, label: null, at: null, pins: null, line };
+  const { type, variant } = splitPartType(typeToken);
+  const base: PartSpec = { id, type, variant, holes: [], value: null, label: null, at: null, pins: null, line };
 
   if (rest[0] === '@') {
     const target = rest[1];

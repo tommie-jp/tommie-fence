@@ -29,11 +29,11 @@ const WIDE = /[ᄀ-ᅟ⺀-〾ぁ-㏿㐀-䶿一-鿿ꀀ-꓏가-힣豈-﫿︰-﹯�
 const MIN_COLUMN_WIDTH = 4;
 
 /**
- * 種類の列に許す幅。実在の種類は `transistor` が最長 (5.5) なので普段は効かない。
+ * 種類の列に許す幅。実在の種類は `capacitor/electrolytic` が最長 (12.1) なので普段は効かない。
  * `dip0008` のようにゼロを詰めた種類が通ってしまう (`placement/footprints.ts` の
  * DIP_PATTERN) ため、長すぎる種類が値の列を押し出さないようにする。
  */
-const MAX_TYPE_WIDTH = 12;
+const MAX_TYPE_WIDTH = 13;
 
 type Row = { readonly id: string; readonly type: string; readonly value: string };
 
@@ -48,8 +48,15 @@ type Row = { readonly id: string; readonly type: string; readonly value: string 
 const valueOf = (part: PlacedPart): string =>
   (part.kind === 'device' ? part.label : part.value ?? part.label) ?? '';
 
+/**
+ * 種類の列には姿も添える (`capacitor/ceramic`)。同じ `0.1u` でもセラミックか
+ * フィルムかは買うときに効く違いで、図だけを渡された人はここでしか読めない。
+ */
+const typeOf = (part: PlacedPart): string =>
+  part.variant === null ? part.type : `${part.type}/${part.variant}`;
+
 const rowsOf = (parts: readonly PlacedPart[]): readonly Row[] =>
-  parts.map((part) => ({ id: part.id, type: part.type, value: valueOf(part) }));
+  parts.map((part) => ({ id: part.id, type: typeOf(part), value: valueOf(part) }));
 
 /** 字の大きさを 1 とした文字列の幅。 */
 const textWidth = (text: string): number =>

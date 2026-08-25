@@ -65,17 +65,40 @@ function resistorBody(part: PlacedPart, span: number): string {
   return shell + stripes;
 }
 
+/**
+ * コンデンサ。**姿 (`capacitor/ceramic`) が形を決める**。
+ * 姿を書かなかったときはピン名 `(-)` の有無で選ぶ。既に書かれた図の
+ * 見え方を変えないため、そこは今までの決め方をそのまま残してある。
+ */
 function capacitorBody(part: PlacedPart, span: number): string {
   const minus = part.pins.findIndex((pin) => pin.name === '-');
-  if (minus === -1) {
-    const width = Math.min(span * 0.55, 30);
-    return element('rect', {
-      x: num(-width / 2), y: -8, width: num(width), height: 16, rx: 3,
-      fill: '#e3a72f', stroke: '#9c6f10',
-    });
-  }
+  const variant = part.variant ?? (minus === -1 ? 'film' : 'electrolytic');
 
-  // 極性つき (電解): マイナス側に帯を描く。逆挿しは壊れるので目立たせる。
+  if (variant === 'ceramic') return ceramicCapBody(span);
+  if (variant === 'film') return filmCapBody(span);
+  return electrolyticCapBody(minus, span);
+}
+
+/** フィルム・積層セラミックの角い胴。無極性のコンデンサの既定の姿。 */
+function filmCapBody(span: number): string {
+  const width = Math.min(span * 0.55, 30);
+  return element('rect', {
+    x: num(-width / 2), y: -8, width: num(width), height: 16, rx: 3,
+    fill: '#e3a72f', stroke: '#9c6f10',
+  });
+}
+
+/**
+ * セラミックの円板。色はフィルムと同じ系統に置いて、**形だけで見分けさせる**。
+ * LED の丸とは、足の線の上に中心が乗ることと、平らな面が無いことで区別できる。
+ */
+function ceramicCapBody(span: number): string {
+  const radius = Math.min(span * 0.45, 9.5);
+  return element('circle', { cx: 0, cy: 0, r: num(radius), fill: '#d18b3c', stroke: '#8a5a22' });
+}
+
+/** 電解の缶。マイナス側に帯を描く。逆挿しは壊れるので目立たせる。 */
+function electrolyticCapBody(minus: number, span: number): string {
   const width = Math.min(span * 0.6, 34);
   const stripeX = minus === 0 ? -width / 2 + 4.5 : width / 2 - 4.5;
   const shell = element('rect', {

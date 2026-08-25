@@ -6,6 +6,7 @@ import type {
   Address, Board, FenceError, HoleAddress, HoleRow, PartKind, PartSpec, PlacedPart, PlacedPin, Result,
 } from '../types.ts';
 import type { BoardPart } from '../parts/boards.ts';
+import { isPolarVariant, typesWithVariants, variantsOf } from '../parts/variants.ts';
 import { knownPartTypes, lookupFootprint } from './footprints.ts';
 
 export type PlaceResult = { readonly parts: readonly PlacedPart[]; readonly errors: readonly FenceError[] };
@@ -32,6 +33,12 @@ export function placeParts(specs: readonly PartSpec[], board: Board): PlaceResul
       continue;
     }
 
+    const badVariant = variantError(placed.value);
+    if (badVariant) {
+      errors.push(badVariant);
+      continue;
+    }
+
     const covered = coveredHoles(placed.value);
     const conflict = findConflict(placed.value, covered, claims);
     if (conflict) {
@@ -51,6 +58,53 @@ export function placeParts(specs: readonly PartSpec[], board: Board): PlaceResul
 
 /** その穴を押さえている部品。body なら足ではなく本体の下という意味。 */
 type Claim = { readonly id: string; readonly body: boolean };
+
+/** ピン名に書く極性の印。 */
+const POLARITY_MARKS: ReadonlySet<string> = new Set(['+', '-']);
+
+/**
+ * 書かれた姿がその種類に合うか。**極性はピン名と姿の両方から決まる**ので、
+ * 食い違ったら描かずに報告する。向きの分からない電解や、極性のないセラミックに
+ * `(+)` が付いた図は、そのまま組むと部品を壊すため。
+ */
+function variantError(part: PlacedPart): FenceError | null {
+  const { variant } = part;
+  if (variant === null) return null;
+
+  const allowed = variantsOf(part.type);
+  if (allowed.length === 0) {
+    return {
+      message:
+        `部品 ${safeToken(part.id)}: ${safeToken(part.type)} の姿は選べません ` +
+        `(姿を選べるのは ${typesWithVariants().join(', ')})`,
+      line: part.line,
+    };
+  }
+  if (!allowed.includes(variant)) {
+    return {
+      message:
+        `知らない姿です: ${safeToken(variant)} ` +
+        `(${safeToken(part.type)} に使えるのは ${allowed.join(', ')})`,
+      line: part.line,
+    };
+  }
+
+  // ここから先の variant は表にある名前なので、そのまま文面に出してよい。
+  if (isPolarVariant(variant)) {
+    if (part.pins.some((pin) => pin.name === '-')) return null;
+    return {
+      message: `部品 ${safeToken(part.id)}: ${variant} は向きがあるので、マイナス側の穴に (-) を書きます (例: a5(+) a10(-))`,
+      line: part.line,
+    };
+  }
+  if (part.pins.some((pin) => POLARITY_MARKS.has(pin.name))) {
+    return {
+      message: `部品 ${safeToken(part.id)}: ${variant} は無極性なので (+) (-) は書けません`,
+      line: part.line,
+    };
+  }
+  return null;
+}
 
 /**
  * 本体が板に載る部品 (パッケージ) の、**ピンで囲まれた内側の穴**。
@@ -128,6 +182,7 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
   const base: PartBase = {
     id: spec.id,
     type: spec.type,
+    variant: spec.variant,
     value: spec.value,
     label: spec.label,
     at: spec.at,

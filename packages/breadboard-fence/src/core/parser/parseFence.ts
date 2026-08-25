@@ -9,6 +9,7 @@ import {
 import type {
   BoardSpec, FenceDocument, FenceError, PartSpec, PartsListMode, StyleSpec, WireSpec,
 } from '../types.ts';
+import { splitPartType } from '../parts/variants.ts';
 import { parseCompactPart, parseHoleToken, parseWireSpec } from './compact.ts';
 import { validateExpandedPart } from './schema.ts';
 import { EMPTY_STYLE, validateStyle } from './style.ts';
@@ -246,10 +247,13 @@ function expandPart(id: string, raw: unknown, line: number) {
     return { ok: false as const, error: fenceError(`部品 ${safeToken(id)}: ${validated.message}`, line) };
   }
 
-  const { type, at, label, value, pins, holes } = validated.value;
+  const { at, label, value, pins, holes } = validated.value;
+  const { type, variant } = splitPartType(validated.value.type);
   return {
     ok: true as const,
-    value: { id, type, holes: holes.map(parseHoleToken), value, label, at, pins, line } satisfies PartSpec,
+    value: {
+      id, type, variant, holes: holes.map(parseHoleToken), value, label, at, pins, line,
+    } satisfies PartSpec,
   };
 }
 

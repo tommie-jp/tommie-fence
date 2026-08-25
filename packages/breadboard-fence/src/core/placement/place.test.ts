@@ -12,6 +12,7 @@ const spec = (over: Partial<PartSpec> & Pick<PartSpec, 'id' | 'type'>): PartSpec
   label: null,
   at: null,
   pins: null,
+  variant: null,
   line: 1,
   ...over,
 });
@@ -366,4 +367,76 @@ describe('placeParts', () => {
     expect(parts).toEqual([]);
     expect(errors[0]?.line).toBe(5);
   });
+
+  test('keeps the look written on a capacitor', () => {
+    const { parts, errors } = placeParts(
+      [spec({ id: 'C1', type: 'capacitor', variant: 'ceramic', holes: holes('a5', 'a10') })],
+      board,
+    );
+
+    expect(errors).toEqual([]);
+    expect(parts[0]?.variant).toBe('ceramic');
+  });
+
+  test('reports a look the type does not have', () => {
+    const { parts, errors } = placeParts(
+      [spec({ id: 'C1', type: 'capacitor', variant: 'tantalum', holes: holes('a5', 'a10'), line: 4 })],
+      board,
+    );
+
+    expect(parts).toEqual([]);
+    expect(errors[0]).toMatchObject({ line: 4 });
+    expect(errors[0]?.message).toContain('ceramic');
+  });
+
+  test('reports a look on a type that is drawn only one way', () => {
+    const { errors } = placeParts(
+      [spec({ id: 'R1', type: 'resistor', variant: 'ceramic', holes: holes('a5', 'a10') })],
+      board,
+    );
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toContain('capacitor');
+  });
+
+  test('reports an electrolytic that does not say which lead is the minus', () => {
+    // マイナス側に帯を描くので、どちらの足かが決まらないと図が嘘になる。
+    const { errors } = placeParts(
+      [spec({ id: 'C1', type: 'capacitor', variant: 'electrolytic', holes: holes('a5', 'a10') })],
+      board,
+    );
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toContain('(-)');
+  });
+
+  test('reports a polarity mark on a look that has none', () => {
+    const { errors } = placeParts(
+      [spec({
+        id: 'C1',
+        type: 'capacitor',
+        variant: 'ceramic',
+        holes: [{ addr: 'a5', tag: '+' }, { addr: 'a10', tag: '-' }],
+      })],
+      board,
+    );
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toContain('ceramic');
+  });
+
+  test('still takes polarity marks on a capacitor that names no look', () => {
+    const { parts, errors } = placeParts(
+      [spec({
+        id: 'C1',
+        type: 'capacitor',
+        holes: [{ addr: 'a5', tag: '+' }, { addr: 'a10', tag: '-' }],
+      })],
+      board,
+    );
+
+    expect(errors).toEqual([]);
+    expect(parts[0]?.variant).toBeNull();
+  });
+
 });

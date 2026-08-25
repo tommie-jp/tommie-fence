@@ -77,6 +77,8 @@ export type HoleRef = { readonly addr: string; readonly tag: string };
 export type PartSpec = {
   readonly id: string;
   readonly type: string;
+  /** 姿 (`capacitor/ceramic` の `/` の後ろ)。書かれなければ null で、種類ごとの既定で描く。 */
+  readonly variant: string | null;
   readonly holes: readonly HoleRef[];
   readonly value: string | null;
   readonly label: string | null;
@@ -138,6 +140,8 @@ export type PinBridge = readonly [string, string];
 export type PlacedPart = {
   readonly id: string;
   readonly type: string;
+  /** 姿。`placement/place.ts` で種類に合うことを確かめてある。 */
+  readonly variant: string | null;
   readonly kind: PartKind;
   readonly pins: readonly PlacedPin[];
   readonly bridges: readonly PinBridge[];

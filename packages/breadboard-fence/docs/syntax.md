@@ -29,6 +29,7 @@ wires:
 | レール番地 | `+`/`-` + `t`/`b` (上/下) + 列番号 | `+t5`, `-b20` |
 | 2 端子部品 | `ID: 種類 穴 穴 値` | `R1: resistor a5 a10 10k` |
 | 極性つき部品 | 穴にピン名を付ける | `D1: led b12(A) b13(K) red` |
+| 部品の姿 | `種類/姿` で実物のかたちを選ぶ → [部品の姿](#部品の姿-variant) | `C1: capacitor/ceramic a5 a8 0.1u` |
 | 3 端子部品 | 足の数だけ穴を書く | `Q1: transistor h9(B) h10(C) h11(E) 2SC1815` |
 | DIP 部品 | `ID: dipN @ 穴 ラベル` | `U1: dip8 @ e5 NJM4556A` |
 | 1 列ヘッダ | `ID: sipN @ 穴 ラベル`。足名は `pins:` で付ける | `M1: sip4 @ a20 OLED` |
@@ -48,7 +49,8 @@ wires:
   - ボード外の機器 — `device`
 - 配線の色: red, black, white, gray, orange, yellow, green, blue, purple, brown, pink。
   知らない色名は図に書き込まず、行番号つきのエラーにする。
-- コンデンサに `(+)` `(-)` を付けると電解コンデンサとして描き、マイナス側に帯を出す。
+- コンデンサは `capacitor/ceramic` のように姿を選べる → [部品の姿](#部品の姿-variant)。
+  姿を書かずに `(+)` `(-)` を付けたときは電解として描き、マイナス側に帯を出す。
 - `diode` は `(A)` `(K)` を付けるとその向きにカソード帯を描く。付けないときは
   **2 つ目の穴をカソード**として描く (`led` と同じ約束)。
 - `transistor` は TO-92 の丸い本体で描く。**パッケージの平らな面の向きは図では示さない**
@@ -164,6 +166,46 @@ parts-list: none    # below (既定) / none
 | 既定 (below) | `parts-list: none` |
 | --- | --- |
 | ![部品リストつき](../examples/out/parts-list-1.svg) | ![部品リストなし](../examples/out/parts-list-2.svg) |
+
+## 部品の姿 (variant)
+
+種類に `/` で続けて書くと、その部品を**実物のどのかたちで描くか**を選べる。
+同じ `capacitor` でもセラミックと電解では板の上の姿が違い、図から実物を
+探すときに効く。並べた図は [examples/capacitors.md](../examples/capacitors.md)。
+
+```yaml
+parts:
+  C1: capacitor/ceramic a5 a8 0.1u
+  C2: capacitor/film a12 a15 0.47u
+  C3: capacitor/electrolytic a19(+) a22(-) 100u
+```
+
+| 種類 | 選べる姿 | 描かれ方 |
+| --- | --- | --- |
+| `capacitor` | `ceramic` | 円板 |
+| | `film` | 角い胴 (無極性の既定) |
+| | `electrolytic` | 帯つきの缶。マイナス側に帯 |
+
+- **色は種類のもの、形が姿のもの**。図の中で「コンデンサだ」と分かるのは色で、
+  「どのコンデンサか」は形で読ませる。
+- 姿は図の下の部品リストにも `capacitor/ceramic` と種類ごと並ぶ。
+  同じ `0.1u` でもどれを買うかはそこで決まるため。
+- **極性は姿とピン名の両方から決まる**。食い違う書き方は描かずに報告する。
+
+| 書き方 | 結果 |
+| --- | --- |
+| `capacitor a5 a8` | 角い胴 (今までどおり) |
+| `capacitor a5(+) a8(-)` | 電解の缶 (今までどおり) |
+| `capacitor/electrolytic a5(+) a8(-)` | 電解の缶 |
+| `capacitor/electrolytic a5 a8` | エラー。どちらが `-` か決まらないと帯が描けない |
+| `capacitor/ceramic a5(+) a8(-)` | エラー。無極性の部品に極性を書いている |
+
+- 姿を書かなければ**今までどおりの図**になる。`/…` を足す前に描いた図の
+  見え方は変わらない。
+- 姿を選べない種類 (`resistor` など) に `/…` を書くとエラーにする。
+  描き分けられない指定を黙って受け取ると、実物と違うかたちの図になるため。
+
+![コンデンサの姿](../examples/out/capacitors-1.svg)
 
 ## スイッチと可変抵抗
 
@@ -357,6 +399,7 @@ N5    : C3.-, SPK.+                # 出力
 今後入れる予定のもの。
 
 - 部品の追加 (7 セグ LED、ロータリーエンコーダ、Pico 以外のマイコンボードなど)
+- 姿の追加 (`capacitor/tantalum`、`led/3mm` `led/5mm`、`transistor/to220` など)
 - wokwi-elements からの見た目の取り込み (今は全部この図の自前の簡略描画)
 - 配線が部品の上を通るときの避け方 (今は部品を配線の上に描いて読めるようにしている)
 - 配線の交差を減らす経路探索 (今は横レーンのスロット割り当てまで)

@@ -117,6 +117,42 @@ describe('renderBreadboard', () => {
     expect(polarised.svg).toContain('−');
   });
 
+  test('draws a ceramic capacitor as a different shape from the film one', () => {
+    const ceramic = renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/ceramic b5 b12 0.1u\n');
+    const film = renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/film b5 b12 0.1u\n');
+
+    expect(ceramic.errors).toEqual([]);
+    expect(film.errors).toEqual([]);
+    expect(ceramic.svg).not.toBe(film.svg);
+  });
+
+  test('draws a capacitor with no look written the way it always was', () => {
+    // 既に書かれた図の見え方は変えない。省略時はピン名だけで箱と缶を選び分ける。
+    const box = 'parts-list: none\nparts:\n  C1: capacitor b5 b12 1uF\n';
+    const can = 'parts-list: none\nparts:\n  C1: capacitor b5(+) b12(-) 47uF\n';
+
+    expect(renderBreadboard(box).svg).toBe(
+      renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/film b5 b12 1uF\n').svg,
+    );
+    expect(renderBreadboard(can).svg).toBe(
+      renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/electrolytic b5(+) b12(-) 47uF\n').svg,
+    );
+  });
+
+  test('lists the chosen look beside the type under the drawing', () => {
+    const { svg } = renderBreadboard('parts:\n  C1: capacitor/ceramic b5 b12 0.1u\n');
+    const texts = [...svg.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((match) => match[1]);
+
+    expect(texts).toContain('capacitor/ceramic');
+  });
+
+  test('reports a look that the part cannot be drawn as', () => {
+    const { errors } = renderBreadboard('parts:\n  C1: capacitor/tantalum b5 b12 47uF\n');
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatchObject({ line: 2 });
+  });
+
   test('lets a wire refer to a pin named after its polarity', () => {
     const { netlist, errors } = renderBreadboard(
       ['parts:', '  C1: capacitor b5(-) b12(+) 47uF', 'wires:', '  - C1.+ -- -t12 black'].join('\n'),

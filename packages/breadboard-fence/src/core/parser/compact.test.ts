@@ -85,6 +85,18 @@ describe('parseCompactPart', () => {
   test('reports an anchor form with no hole after the at sign', () => {
     expect(parseCompactPart('U1', 'dip8 @', 5).ok).toBe(false);
   });
+  test('splits the look off the type so the drawing can pick a shape', () => {
+    const result = parseCompactPart('C1', 'capacitor/ceramic a5 a10 0.1u', 3);
+
+    expect(result.ok && result.value).toMatchObject({ type: 'capacitor', variant: 'ceramic', value: '0.1u' });
+  });
+
+  test('leaves the look unset when the type does not name one', () => {
+    const result = parseCompactPart('C1', 'capacitor a5 a10 0.1u', 3);
+
+    expect(result.ok && result.value.variant).toBeNull();
+  });
+
 });
 
 describe('parseWireSpec', () => {
