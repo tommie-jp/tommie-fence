@@ -169,10 +169,11 @@ node dist/cli.cjs render examples --out examples/out
 | [05-capacitors.md](examples/05-capacitors.md) | 部品の姿を選ぶ (`capacitor/ceramic`、LED の大きさ、TO-220) |
 | [06-switches.md](examples/06-switches.md) | タクトスイッチ・半固定抵抗・スライドスイッチ |
 | [07-pico.md](examples/07-pico.md) | Raspberry Pi Pico に LED とボタンをつなぐ |
-| [08-common-emitter.md](examples/08-common-emitter.md) | 2SC1815 のエミッタ接地アンプ (電源 5V、スピーカー出力) |
-| [09-bh-ad2.md](examples/09-bh-ad2.md) | B-H カーブ測定回路 (オペアンプ・測定器・トロイダルコア) |
+| [08-emitter-follower.md](examples/08-emitter-follower.md) | 2SC1815 のエミッタフォロワ (電源 5V、スピーカー出力) |
+| [09-am-radio.md](examples/09-am-radio.md) | 1 石中波ラジオ (高周波増幅 + 検波、バーアンテナとポリバリコン) |
+| [10-bh-ad2.md](examples/10-bh-ad2.md) | B-H カーブ測定回路 (オペアンプ・測定器・トロイダルコア) |
 
-![エミッタ接地アンプの配線図](examples/out/08-common-emitter.png)
+![1 石中波ラジオの配線図](examples/out/09-am-radio.png)
 
 ## 仕組み
 

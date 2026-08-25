@@ -5,7 +5,22 @@
 
 ## [Unreleased]
 
+### Added
+
+- 例を 1 つ足した。[examples/09-am-radio.md](examples/09-am-radio.md) —
+  バーアンテナとポリバリコンで同調し、**検波の前に 1 石で高周波を増幅する**中波ラジオ。
+  `diode` の向き・`capacitor/ceramic` の姿・ボード外の機器 4 台 (アンテナ・バリコン・
+  イヤホン・電池) を上下の帯に分けて置く書き方が 1 枚に入っている。
+
 ### Changed
+
+- `examples/08` をエミッタ接地アンプからエミッタフォロワに差し替えた
+  (`08-common-emitter.md` → [08-emitter-follower.md](examples/08-emitter-follower.md))。
+  同じ 1 石でも**電圧を増やす段と電流だけを増やす段**が並ぶより、
+  バッファ段を見せて次の例 (ラジオの高周波増幅) へ渡すほうが読む順に合う。
+- ラジオを 09 に入れたので、B-H 測定回路を
+  `09-bh-ad2.md` → [10-bh-ad2.md](examples/10-bh-ad2.md) に繰り下げた
+  (図の中身は変わっていない)。
 
 - `.vsix` に入っていた examples の PNG (1.1 MB) を外した。**993 KB → 114 KB**。
   `.vscodeignore` が `examples/out/*.svg` だけを除いて PNG を書き忘れていた。

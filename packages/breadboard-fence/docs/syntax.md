@@ -343,9 +343,9 @@ N1 : R1.2, D1.A
 
 B-H カーブ測定回路 (NJM4556A のフォロワ 2 回路を 1Ω 2 本で並列合流 +
 電流センス + RC 積分器)。DIP 配置・ボード外の機器・ピン参照・レール電源を全部使う。
-ソース: [examples/09-bh-ad2.md](../examples/09-bh-ad2.md)
+ソース: [examples/10-bh-ad2.md](../examples/10-bh-ad2.md)
 
-![B-H 測定回路の配線図](../examples/out/09-bh-ad2.svg)
+![B-H 測定回路の配線図](../examples/out/10-bh-ad2.svg)
 
 ネットリスト (意図した回路と一致することを確認済み):
 
@@ -383,22 +383,40 @@ N7    : R3.2, C1.1, AD2.2+      # 積分 C 上端 = CH2+
 | --- | --- |
 | ![presentation](../examples/out/02-themes-5.svg) | ![dark を上書き](../examples/out/02-themes-6.svg) |
 
-## 出力例 4: エミッタ接地アンプ
+## 出力例 4: エミッタフォロワ
 
-2SC1815 1 石、電源 5V、入力 50Ω、出力 8Ω スピーカーの音声アンプ。
-トランジスタと電解コンデンサ、部品を縦にレールへ挿す書き方 (`Re: resistor j11 -b11 27`) の例。
-ソースと回路の解説: [examples/08-common-emitter.md](../examples/08-common-emitter.md)
+2SC1815 1 石、電源 5V、入力 50Ω、出力 8Ω スピーカーのバッファ段。
+トランジスタと電解コンデンサ、部品を縦にレールへ挿す書き方 (`Re: resistor j11 -b11 47`) の例。
+ソースと回路の解説: [examples/08-emitter-follower.md](../examples/08-emitter-follower.md)
 
-![エミッタ接地アンプの配線図](../examples/out/08-common-emitter.svg)
+![エミッタフォロワの配線図](../examples/out/08-emitter-follower.svg)
 
 ```text
 N1    : Q1.B, R1.1, R2.1, C1.+     # ベース (分圧バイアス + 入力結合)
-N2    : Q1.C, Rc.1, C3.+           # コレクタ (負荷抵抗 + 出力結合)
-N3    : Q1.E, Re.1, C2.+           # エミッタ (帰還抵抗 + バイパス)
-+t/+b : Rc.2, R1.2                 # +5V
--t/-b : Re.2, C2.-, R2.2, IN.GND, SPK.-
-N4    : C1.-, IN.SIG               # 入力
-N5    : C3.-, SPK.+                # 出力
++t/+b : Q1.C, R1.2                 # +5V (コレクタは直結)
+N2    : Q1.E, Re.1, C2.+           # エミッタ (出力)
+-t/-b : Re.2, R2.2, IN.GND, SPK.-
+N3    : C1.-, IN.SIG               # 入力
+N4    : C2.-, SPK.+                # 出力
+```
+
+## 出力例 5: 1 石中波ラジオ
+
+バーアンテナとポリバリコンで同調し、検波の前に 1 石で高周波を増幅する中波ラジオ。
+`diode` の向き (`i12(A) i17(K)`)、`capacitor/ceramic` の姿、ボード外の機器 4 台
+(アンテナ・バリコン・イヤホン・電池) を上下の帯に分けて置く例。
+ソースと回路の解説: [examples/09-am-radio.md](../examples/09-am-radio.md)
+
+![1 石中波ラジオの配線図](../examples/out/09-am-radio.svg)
+
+```text
+N5    : ANT.1a, VC.A               # 同調回路 (1 次巻線 ∥ ポリバリコン)
+N1    : C1.1, ANT.2a               # 2 次巻線 → 結合コンデンサ
+N2    : C1.2, Q1.B, Rb.1           # ベース (コレクタ帰還バイアス)
+N3    : Q1.C, Rb.2, Rc.1, D1.A     # コレクタ (負荷抵抗 + 検波ダイオード)
+N4    : D1.K, C3.1, R3.1, EAR.1    # 検波出力 → イヤホン
++t/+b : Rc.2, C4.1, BAT.+          # +3V
+-t/-b : Q1.E, C4.2, C3.2, R3.2, ANT.1b, ANT.2b, VC.E, EAR.2, BAT.-
 ```
 
 ## エラーの出方
