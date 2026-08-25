@@ -1,6 +1,6 @@
 import type { FenceError } from '../types.ts';
 import type { Palette } from './theme.ts';
-import { CLASSIC_THEME } from './theme.ts';
+import { DEFAULT_THEME } from './theme.ts';
 import { element, num, svgText } from './svg.ts';
 
 const LINE_HEIGHT = 17;
@@ -58,10 +58,10 @@ export function renderErrorBanner(
 
 /**
  * 図が 1 つも描けなかったときに返す、それ自体で完結したカード。
- * ここへ来るのは `style:` すら読めなかったときなので、テーマは classic で固定する。
+ * ここへ来るのは `style:` すら読めなかったときなので、既定のテーマで固定する。
  */
 export function renderErrorCard(errors: readonly FenceError[]): string {
-  const { palette } = CLASSIC_THEME;
+  const { palette } = DEFAULT_THEME;
   const height = LINE_HEIGHT + PADDING + bannerHeight(errors);
   const title = svgText(PADDING * 2, PADDING + LINE_HEIGHT, 'breadboard フェンスを読めませんでした', {
     'font-size': 13, fill: palette.errorInk, anchor: 'start', 'font-weight': 'bold',

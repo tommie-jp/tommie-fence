@@ -59,11 +59,22 @@ export type StyleResolution = { readonly style: RenderStyle; readonly messages: 
 /** 部品ラベルの既定の大きさ。ほかの字の大きさはこれとの比で書く。 */
 export const BASE_TEXT_SIZE = 10;
 
-const DEFAULT_METRICS: Metrics = { textSize: BASE_TEXT_SIZE, boardTextScale: 1, wireWidth: 3.4, holeSize: 5.2 };
+/** 穴の既定の大きさ。ラベルの縁取りは、これより大きい穴のぶんだけ太くする。 */
+export const BASE_HOLE_SIZE = 5.2;
+
+const DEFAULT_METRICS: Metrics = {
+  textSize: BASE_TEXT_SIZE,
+  boardTextScale: 1,
+  wireWidth: 3.4,
+  holeSize: BASE_HOLE_SIZE,
+};
 
 const metrics = (overrides: Partial<Metrics> = {}): Metrics => ({ ...DEFAULT_METRICS, ...overrides });
 
-/** 実物のブレッドボードに寄せた既定の配色。**ここは変えない** (既存の図の見え方が変わる)。 */
+/**
+ * 実物のブレッドボードに寄せた配色。ほかのテーマはここからの差分として考える。
+ * **ここは変えない** (`style: classic` と書いた図の見え方が変わる)。
+ */
 const CLASSIC: Palette = {
   canvas: null,
   plate: '#f2efe6',
@@ -177,7 +188,7 @@ const MONO: Palette = {
 };
 
 /**
- * スライドやスクリーンショット向け。色は classic のまま、字と線と穴だけ大きくする。
+ * 既定のテーマ (`DEFAULT_THEME_NAME`)。色は classic のまま、字と線と穴だけ大きくする。
  * 貼り先が暗いときに縁が透けないよう、地は白で塗る。
  */
 const PRESENTATION: Palette = { ...CLASSIC, canvas: '#ffffff' };
@@ -202,8 +213,17 @@ export const THEMES: Record<string, RenderTheme> = {
 
 export const THEME_NAMES: readonly string[] = Object.keys(THEMES);
 
-/** 既定のテーマ。テーマを選べない場面 (図が組み立てられなかったとき) の拠り所でもある。 */
-export const CLASSIC_THEME = THEMES.classic as RenderTheme;
+/**
+ * `style:` を書かなかったときのテーマ。テーマを選べない場面
+ * (図が組み立てられず、フェンスを読めてすらいないとき) の拠り所でもある。
+ *
+ * classic ではなく presentation にしてある。既定の図がそのままスライドや記事に
+ * 貼れる大きさで出るほうがよく、classic は「実物の見た目に寄せた小さい図が要る」
+ * ときに名前で選ぶ、という位置づけにした。
+ */
+export const DEFAULT_THEME_NAME = 'presentation';
+
+export const DEFAULT_THEME = THEMES[DEFAULT_THEME_NAME] as RenderTheme;
 
 /** 名前は入力から来るので、必ず自分の持ち物だけを引く (`palette.ts` の色名と同じ理由)。 */
 const lookupTheme = (name: string): RenderTheme | null =>
@@ -268,18 +288,18 @@ function withOverrides(theme: RenderTheme, spec: StyleSpec): RenderTheme {
 }
 
 /**
- * 既定 (classic) → テーマ → 個別のキー、の順に重ねて描画に使う見た目を決める。
- * 知らないテーマ名は classic で描き続け、使える名前を添えて理由を返す。
+ * 既定のテーマ → 名前で選ばれたテーマ → 個別のキー、の順に重ねて見た目を決める。
+ * 知らないテーマ名は既定のまま描き続け、使える名前を添えて理由を返す。
  */
 export function resolveStyle(spec: StyleSpec): StyleResolution {
   const messages: string[] = [];
-  const named = spec.theme === null ? CLASSIC_THEME : lookupTheme(spec.theme);
+  const named = spec.theme === null ? DEFAULT_THEME : lookupTheme(spec.theme);
   if (named === null) {
     messages.push(`知らないテーマです。使えるのは ${THEME_NAMES.join(', ')}`);
   }
 
   return {
-    style: { theme: withOverrides(named ?? CLASSIC_THEME, spec), width: spec.width },
+    style: { theme: withOverrides(named ?? DEFAULT_THEME, spec), width: spec.width },
     messages,
   };
 }

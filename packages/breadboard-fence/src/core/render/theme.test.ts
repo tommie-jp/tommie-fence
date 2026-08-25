@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { EMPTY_STYLE } from '../parser/style.ts';
 import type { Palette } from './theme.ts';
-import { THEMES, THEME_NAMES, resolveStyle } from './theme.ts';
+import { DEFAULT_THEME_NAME, THEMES, THEME_NAMES, resolveStyle } from './theme.ts';
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
@@ -114,12 +114,17 @@ describe('THEMES', () => {
 });
 
 describe('resolveStyle', () => {
-  test('draws in classic when nothing is asked for', () => {
+  test('draws in the default theme when nothing is asked for', () => {
     const { style, messages } = resolveStyle(EMPTY_STYLE);
 
-    expect(style.theme).toEqual(themeNamed('classic'));
+    expect(style.theme).toEqual(themeNamed(DEFAULT_THEME_NAME));
     expect(style.width).toBeNull();
     expect(messages).toEqual([]);
+  });
+
+  test('defaults to presentation, so a plain fence comes out big enough to paste somewhere', () => {
+    // 既定を動かすと `style:` の無い図が全部変わる。変えるなら意識して変える。
+    expect(DEFAULT_THEME_NAME).toBe('presentation');
   });
 
   test('picks the named theme', () => {
@@ -129,7 +134,7 @@ describe('resolveStyle', () => {
   test('lists the names it knows when the theme is not one of them', () => {
     const { style, messages } = resolveStyle({ ...EMPTY_STYLE, theme: 'darkk' });
 
-    expect(style.theme.name).toBe('classic');
+    expect(style.theme.name).toBe(DEFAULT_THEME_NAME);
     expect(messages).toHaveLength(1);
     expect(messages[0]).toContain('high-contrast');
   });
@@ -138,7 +143,7 @@ describe('resolveStyle', () => {
     for (const name of ['constructor', 'toString', '__proto__']) {
       const { style, messages } = resolveStyle({ ...EMPTY_STYLE, theme: name });
 
-      expect(style.theme.name).toBe('classic');
+      expect(style.theme.name).toBe(DEFAULT_THEME_NAME);
       expect(messages).toHaveLength(1);
     }
   });

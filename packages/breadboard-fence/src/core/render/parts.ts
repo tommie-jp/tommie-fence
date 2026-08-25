@@ -2,7 +2,7 @@ import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
 import { DEFAULT_LED_COLOR, bandColor, ledColor } from './palette.ts';
 import type { RenderTheme } from './theme.ts';
-import { textScale } from './theme.ts';
+import { BASE_HOLE_SIZE, textScale } from './theme.ts';
 import { TEXT_HALO_WIDTH, element, num, svgText } from './svg.ts';
 import { parseOhms, resistorBandColors } from './values.ts';
 
@@ -17,6 +17,14 @@ const CHAR_WIDTH = 5.6;
 const CAPTION_HEIGHT = 14;
 
 const charWidth = (theme: RenderTheme): number => textScale(theme) * CHAR_WIDTH;
+
+/**
+ * ラベルの縁取りの太さ。ラベルは必ず隣の穴の列にかかる位置に来るので、
+ * **縁取りがその穴を消しきれる太さでなければ字が穴に食われる**。
+ * 字が伸びれば覆う範囲が広がり、穴が大きくなれば消すべき量も増えるので、両方で決める。
+ */
+const haloWidth = (theme: RenderTheme): number =>
+  TEXT_HALO_WIDTH * textScale(theme) + (theme.metrics.holeSize - BASE_HOLE_SIZE) * 1.25;
 
 // ラベルは穴 1 つぶんの隙間 (20) に置く。字を大きくしても**ベースラインは動かさない**:
 // 字は基準線から上へ伸びるので隙間を上に使い、下げると隣の穴の列に食い込む。
@@ -95,7 +103,7 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: RenderTheme): st
     'font-size': num(metrics.textSize),
     fill: palette.partText,
     halo: palette.textHalo,
-    haloWidth: TEXT_HALO_WIDTH * textScale(theme),
+    haloWidth: haloWidth(theme),
   });
   // 3 引数 rotate() を読まないレンダラがあるので translate と rotate に分ける。
   const body = (inner: string): string =>
@@ -189,7 +197,7 @@ function renderTransistor(part: PlacedPart, layout: Layout, theme: RenderTheme):
             'font-weight': 700,
             fill: palette.partText,
             halo: palette.textHalo,
-            haloWidth: TEXT_HALO_WIDTH * textScale(theme),
+            haloWidth: haloWidth(theme),
           })
         : '';
     })
@@ -198,7 +206,7 @@ function renderTransistor(part: PlacedPart, layout: Layout, theme: RenderTheme):
     'font-size': num(metrics.textSize),
     fill: palette.partText,
     halo: palette.textHalo,
-    haloWidth: TEXT_HALO_WIDTH * textScale(theme),
+    haloWidth: haloWidth(theme),
   });
 
   return `${shell}${legs}${names}${label}`;

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
 import { extractBreadboardFences } from './fences.ts';
 import { renderBreadboard } from './index.ts';
-import { THEMES, THEME_NAMES } from './render/theme.ts';
+import { DEFAULT_THEME_NAME, THEMES, THEME_NAMES } from './render/theme.ts';
 
 const EXAMPLES = fileURLToPath(new URL('../../examples/', import.meta.url));
 
@@ -29,8 +29,17 @@ const colorsOf = (svg: string): string[] =>
 const themed = (name: string) => THEMES[name]!;
 
 describe('style', () => {
-  test('draws in classic when the fence says nothing about style', () => {
-    expect(renderBreadboard(led('')).svg).toBe(renderBreadboard(led('style: classic')).svg);
+  test('draws in the default theme when the fence says nothing about style', () => {
+    expect(renderBreadboard(led('')).svg).toBe(renderBreadboard(led(`style: ${DEFAULT_THEME_NAME}`)).svg);
+  });
+
+  test('still draws classic exactly as it always did when it is asked for by name', () => {
+    const { svg } = renderBreadboard(led('style: classic'));
+
+    // 既定から外れても classic 自体は不変。古い図を classic と書いて再現できる。
+    expect(svg).toContain(themed('classic').palette.plate);
+    expect(svg).not.toContain('<rect x="0" y="0"');
+    expect(svg).toContain('font-size="10"');
   });
 
   test('takes a bare theme name on one line', () => {
@@ -48,8 +57,8 @@ describe('style', () => {
     const { svg } = renderBreadboard(led('style: dark'));
 
     expect(svg).toContain(`fill="${themed('dark').palette.canvas}"`);
-    // classic は透明のまま。貼り先の地の色が透ける今までの見え方を変えない。
-    expect(renderBreadboard(led('')).svg).not.toContain('<rect x="0" y="0"');
+    // classic だけは透明のまま。貼り先の地の色が透ける見え方を残してある。
+    expect(renderBreadboard(led('style: classic')).svg).not.toContain('<rect x="0" y="0"');
   });
 
   test('keeps the colours that carry meaning when the board goes monochrome', () => {
@@ -82,7 +91,7 @@ describe('style', () => {
     expect(svg.split('\n').slice(1)).toEqual(plain.split('\n').slice(1));
   });
 
-  test('reports a theme it does not know and draws in classic anyway', () => {
+  test('reports a theme it does not know and draws in the default theme anyway', () => {
     const { svg, errors } = renderBreadboard(led('style: drak'));
 
     expect(errors).toHaveLength(1);
@@ -152,7 +161,7 @@ describe('style', () => {
       Number(/<text[^>]*font-size="([\d.]+)"[^>]*>R1 330</.exec(svg)?.[1]);
 
     expect(sizeOf(renderBreadboard(led('style: presentation')).svg))
-      .toBeGreaterThan(sizeOf(renderBreadboard(led('')).svg));
+      .toBeGreaterThan(sizeOf(renderBreadboard(led('style: classic')).svg));
   });
 });
 
