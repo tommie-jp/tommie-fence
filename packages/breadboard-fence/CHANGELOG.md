@@ -3,6 +3,15 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Added
+
+- `board:` のマップ形式。レールの並び (`rails`)・行ラベルの大小 (`letters`)・
+  列番号の間引き (`numbers`) を、手元のボードの印字に合わせて選べる。
+  番地系は印字に依らず共通で、既定値のときの出力は従来と同一。
+- 番地は大小どちらでも書けるようにした (`A5` == `a5`、`+T5` == `+t5`)。
+
 ## [0.1.0] - 2026-08-25
 
 初版。`.vsix` は [Releases](https://github.com/tommie-jp/breadboard-fence/releases)

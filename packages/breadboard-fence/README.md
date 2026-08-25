@@ -128,7 +128,7 @@ node dist/cli.cjs render examples --out examples/out
 
 | 要素 | 書き方 | 例 |
 | --- | --- | --- |
-| ボード | `board: half` (30 列) / `full` (63 列) | `board: half` |
+| ボード | `board: half` (30 列) / `full` (63 列)。レールの並び・行ラベルの大小・列番号の間引きはマップで選べる | `board: half` |
 | 穴番地 | 行 `a`〜`e` / `f`〜`j` + 列番号 | `a5`, `j30` |
 | レール番地 | `+`/`-` + `t`/`b` + 列番号 | `+t5`, `-b20` |
 | 2 端子部品 | `ID: 種類 穴 穴 値` | `R1: resistor a5 a10 10k` |
@@ -150,6 +150,7 @@ node dist/cli.cjs render examples --out examples/out
 | [examples/led.md](examples/led.md) | 抵抗と LED だけの最小例 |
 | [examples/common-emitter.md](examples/common-emitter.md) | 2SC1815 のエミッタ接地アンプ (電源 5V、スピーカー出力) |
 | [examples/bh-ad2.md](examples/bh-ad2.md) | B-H カーブ測定回路 (オペアンプ・測定器・トロイダルコア) |
+| [examples/board-variants.md](examples/board-variants.md) | ボードの印字を手元の実物に寄せる (`board:` のマップ形式) |
 
 ![エミッタ接地アンプの配線図](examples/out/common-emitter.png)
 

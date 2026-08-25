@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
+import { DEFAULT_BOARD } from '../types.ts';
 import { parseAddress } from './address.ts';
-import { createBoard } from './board.ts';
+import { createBoard, railOrder } from './board.ts';
 import { createLayout } from './layout.ts';
 
 const board = createBoard('half');
@@ -33,6 +34,15 @@ describe('createLayout', () => {
 
     expect(layout.rowY('+t')).toBeLessThan(layout.rowY('-t'));
     expect(layout.rowY('-b')).toBeLessThan(layout.rowY('+b'));
+  });
+
+  test('follows the configured rail arrangement', () => {
+    const layout = createLayout(createBoard({ ...DEFAULT_BOARD, rails: railOrder('+-+-')! }));
+
+    // +-+- では下側の + が内側 (溝寄り) に来る。番地は極性ベースなので座標だけが入れ替わる。
+    expect(layout.rowY('+b')).toBeLessThan(layout.rowY('-b'));
+    expect(layout.rowY('+t')).toBeLessThan(layout.rowY('-t'));
+    expect(layout.rowY('+b')).toBe(createLayout(board).rowY('-b'));
   });
 
   test('keeps every hole inside the canvas', () => {

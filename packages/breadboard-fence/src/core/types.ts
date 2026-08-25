@@ -21,9 +21,37 @@ export type Point = { readonly x: number; readonly y: number };
 
 export type Rect = { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
 
-export type BoardSize = 'half' | 'full';
+export const BOARD_SIZES = ['half', 'full'] as const;
+export type BoardSize = (typeof BOARD_SIZES)[number];
 
-export type Board = { readonly size: BoardSize; readonly columns: number };
+/** レール 4 本の上から下への並び。既定は実物で最も普及した +--+ (RAIL_ROWS の順)。 */
+export type RailOrder = readonly [RailRow, RailRow, RailRow, RailRow];
+
+export const LETTER_CASES = ['lower', 'upper'] as const;
+export type LetterCase = (typeof LETTER_CASES)[number];
+
+export const COLUMN_NUMBERS = ['every-5', 'all'] as const;
+export type ColumnNumbers = (typeof COLUMN_NUMBERS)[number];
+
+/**
+ * フェンスの `board:` に書かれたボードの種類と印字。印字はメーカーごとに割れているので
+ * 手元のボードに図を寄せられるようにする。番地系はどの印字でも共通。
+ */
+export type BoardSpec = {
+  readonly size: BoardSize;
+  readonly rails: RailOrder;
+  readonly letters: LetterCase;
+  readonly numbers: ColumnNumbers;
+};
+
+export const DEFAULT_BOARD: BoardSpec = {
+  size: 'half',
+  rails: RAIL_ROWS,
+  letters: 'lower',
+  numbers: 'every-5',
+};
+
+export type Board = BoardSpec & { readonly columns: number };
 
 /** 導通グループの識別子。`top:5` / `bottom:5` / `rail:+t` / `pin:AD2.W1`。 */
 export type StripId = string;
@@ -80,7 +108,7 @@ export type StyleSpec = {
 };
 
 export type FenceDocument = {
-  readonly board: BoardSize;
+  readonly board: BoardSpec;
   readonly style: StyleSpec;
   readonly parts: readonly PartSpec[];
   readonly wires: readonly WireSpec[];

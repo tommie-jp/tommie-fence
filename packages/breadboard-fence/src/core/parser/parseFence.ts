@@ -2,12 +2,16 @@ import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Node, Pair, ParsedNode } from 'yaml';
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
-import type { BoardSize, FenceDocument, FenceError, PartSpec, StyleSpec, WireSpec } from '../types.ts';
+import { railOrder } from '../model/board.ts';
+import { BOARD_SIZES, COLUMN_NUMBERS, DEFAULT_BOARD, LETTER_CASES } from '../types.ts';
+import type { BoardSpec, FenceDocument, FenceError, PartSpec, StyleSpec, WireSpec } from '../types.ts';
 import { parseCompactPart, parseHoleToken, parseWireSpec } from './compact.ts';
 import { validateExpandedPart } from './schema.ts';
 import { EMPTY_STYLE, validateStyle } from './style.ts';
 
-const BOARD_SIZES: readonly string[] = ['half', 'full'];
+/** 列挙にある値ならその型で返す。列挙は types.ts の as const 配列なので、二重定義にならない。 */
+const pick = <T extends string>(allowed: readonly T[], value: string | null): T | null =>
+  value !== null && (allowed as readonly string[]).includes(value) ? (value as T) : null;
 const MAX_YAML_MESSAGE = 120;
 
 export type ParseResult = { readonly doc: FenceDocument | null; readonly errors: readonly FenceError[] };
@@ -45,7 +49,7 @@ export function parseFence(source: string): ParseResult {
   const errors: FenceError[] = [];
   const parts: PartSpec[] = [];
   const wires: WireSpec[] = [];
-  let board: BoardSize = 'half';
+  let board: BoardSpec = DEFAULT_BOARD;
   let style: StyleSpec = EMPTY_STYLE;
 
   const contents = parsed.contents;
@@ -59,9 +63,7 @@ export function parseFence(source: string): ParseResult {
     const line = lineOf(pair.key);
 
     if (key === 'board') {
-      const size = scalarText(pair.value);
-      if (size !== null && BOARD_SIZES.includes(size)) board = size as BoardSize;
-      else errors.push(fenceError('board は half か full です', lineOf(pair.value as Node) ?? line));
+      board = collectBoard(pair.value as ParsedNode | null, board, errors, lineOf, line);
     } else if (key === 'style') {
       const node = pair.value as ParsedNode | null;
       const validated = validateStyle(node?.toJSON() as unknown, line);
@@ -86,6 +88,68 @@ export function parseFence(source: string): ParseResult {
 }
 
 type LineOf = (node: Node | Pair | null | undefined) => number | null;
+
+/**
+ * `board:` はサイズだけのスカラーでも、サイズと印字のマップでも書ける。
+ * 読めなかった項目は直前の値のまま報告する (書けたところは捨てない)。
+ * キーが 2 回書かれたときは parts と同じく後勝ちで重ねる。
+ */
+function collectBoard(
+  node: ParsedNode | null,
+  current: BoardSpec,
+  errors: FenceError[],
+  lineOf: LineOf,
+  fallbackLine: number | null,
+): BoardSpec {
+  const scalar = scalarText(node);
+  if (scalar !== null) {
+    const size = pick(BOARD_SIZES, scalar);
+    if (size) return { ...current, size };
+    errors.push(fenceError('board は half か full です', lineOf(node) ?? fallbackLine));
+    return current;
+  }
+
+  if (!isMap(node)) {
+    errors.push(
+      fenceError('board は half / full か、size / rails / letters / numbers のマップで書きます', lineOf(node) ?? fallbackLine),
+    );
+    return current;
+  }
+
+  let spec = current;
+  for (const pair of node.items) {
+    const key = scalarText(pair.key) ?? '';
+    const keyLine = lineOf(pair.key) ?? fallbackLine;
+    const value = scalarText(pair.value);
+
+    if (key === 'size') {
+      const size = pick(BOARD_SIZES, value);
+      if (size) spec = { ...spec, size };
+      else errors.push(fenceError('board の size は half か full です', keyLine));
+    } else if (key === 'rails') {
+      const order = value === null ? null : railOrder(value);
+      if (order) spec = { ...spec, rails: order };
+      else {
+        errors.push(
+          fenceError('board の rails は "+--+" のように 4 文字で書きます (上下それぞれ + と - を 1 つずつ)', keyLine),
+        );
+      }
+    } else if (key === 'letters') {
+      const letters = pick(LETTER_CASES, value);
+      if (letters) spec = { ...spec, letters };
+      else errors.push(fenceError('board の letters は lower か upper です', keyLine));
+    } else if (key === 'numbers') {
+      const numbers = pick(COLUMN_NUMBERS, value);
+      if (numbers) spec = { ...spec, numbers };
+      else errors.push(fenceError('board の numbers は every-5 か all です', keyLine));
+    } else {
+      errors.push(
+        fenceError(`board の知らないキーです: ${safeToken(key)} (size / rails / letters / numbers が使えます)`, keyLine),
+      );
+    }
+  }
+  return spec;
+}
 
 /** style のマップの、項目名 → その項目が書かれた行。 */
 function styleKeyLines(node: ParsedNode | null, lineOf: LineOf): Map<string, number> {

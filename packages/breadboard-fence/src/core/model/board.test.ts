@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
+import { DEFAULT_BOARD } from '../types.ts';
 import { parseAddress } from './address.ts';
-import { createBoard, isOnBoard, stripOf } from './board.ts';
+import { createBoard, isOnBoard, railOrder, stripOf } from './board.ts';
 
 const at = (text: string) => {
   const address = parseAddress(text);
@@ -15,6 +16,44 @@ describe('createBoard', () => {
 
   test('gives a full size board 63 columns', () => {
     expect(createBoard('full').columns).toBe(63);
+  });
+
+  test('fills the printing options with the defaults when only a size is given', () => {
+    expect(createBoard('half')).toEqual({ ...DEFAULT_BOARD, columns: 30 });
+  });
+
+  test('keeps the printing options written in the spec', () => {
+    const board = createBoard({ ...DEFAULT_BOARD, rails: railOrder('+-+-')!, letters: 'upper' });
+
+    expect(board.columns).toBe(30);
+    expect(board.rails).toEqual(['+t', '-t', '+b', '-b']);
+    expect(board.letters).toBe('upper');
+  });
+
+  test('rejects rails that are not a permutation of the four rail rows', () => {
+    // 素通しすると欠けたレールが y=0 に無言で描かれるので、宣言した不変条件はここで落とす。
+    expect(() => createBoard({ ...DEFAULT_BOARD, rails: ['+t', '-t', '-t', '+b'] })).toThrow();
+  });
+});
+
+describe('railOrder', () => {
+  test('reads the default arrangement', () => {
+    expect(railOrder('+--+')).toEqual(['+t', '-t', '-b', '+b']);
+  });
+
+  test('reads an arrangement with the positive rail inside at the bottom', () => {
+    expect(railOrder('+-+-')).toEqual(['+t', '-t', '+b', '-b']);
+  });
+
+  test('rejects a side that has two rails of the same polarity', () => {
+    expect(railOrder('++--')).toBeNull();
+    expect(railOrder('+---')).toBeNull();
+  });
+
+  test('rejects anything that is not four polarity signs', () => {
+    for (const bad of ['+-+', '+-+-+', 'abcd', '']) {
+      expect(railOrder(bad), bad).toBeNull();
+    }
   });
 });
 

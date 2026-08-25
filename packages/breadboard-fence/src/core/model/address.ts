@@ -5,14 +5,17 @@ const RAIL_PATTERN = /^([+-])([tb])(\d{1,2})$/;
 
 /** 穴番地 (`a5`) と電源レール番地 (`+t5`) の文字列を解釈する。列数の上限はボードが判定する。 */
 export function parseAddress(text: string): Address | null {
-  const hole = HOLE_PATTERN.exec(text);
+  // 行ラベルは大文字でも印字できる (board.letters) ので、番地は大小どちらでも受けて小文字に正規化する。
+  const token = text.toLowerCase();
+
+  const hole = HOLE_PATTERN.exec(token);
   if (hole) {
     const [, row, digits] = hole;
     const col = Number(digits);
     return col >= 1 ? { kind: 'hole', row: row as HoleRow, col } : null;
   }
 
-  const rail = RAIL_PATTERN.exec(text);
+  const rail = RAIL_PATTERN.exec(token);
   if (rail) {
     const [, polarity, side, digits] = rail;
     const col = Number(digits);

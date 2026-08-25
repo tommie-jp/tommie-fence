@@ -48,12 +48,15 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
     y += DEVICE_GAP;
   }
 
+  // レールの縦位置は 4 スロット固定で、どの極性がどこに来るかだけが board.rails で動く。
+  const [railTopOuter, railTopInner, railBottomInner, railBottomOuter] = board.rails;
+
   const boardY = y;
   y += BOARD_PAD_Y;
   lanes.push({ y: y - BOARD_PAD_Y / 2, halfHeight: 4 });
-  rowY.set('+t', y);
+  rowY.set(railTopOuter, y);
   y += PITCH;
-  rowY.set('-t', y);
+  rowY.set(railTopInner, y);
   lanes.push({ y: y + RAIL_TO_BLOCK / 2, halfHeight: RAIL_TO_BLOCK / 2 - 5 });
   y += RAIL_TO_BLOCK;
 
@@ -67,9 +70,9 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   y -= PITCH;
   lanes.push({ y: y + BLOCK_TO_RAIL / 2, halfHeight: BLOCK_TO_RAIL / 2 - 4 });
   y += BLOCK_TO_RAIL;
-  rowY.set('-b', y);
+  rowY.set(railBottomInner, y);
   y += PITCH;
-  rowY.set('+b', y);
+  rowY.set(railBottomOuter, y);
   lanes.push({ y: y + BOARD_PAD_Y / 2, halfHeight: 4 });
   y += BOARD_PAD_Y;
 

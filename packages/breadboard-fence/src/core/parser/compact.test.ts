@@ -18,6 +18,21 @@ describe('parseCompactPart', () => {
     });
   });
 
+  test('reads uppercase addresses as holes, the same as lowercase', () => {
+    const result = parseCompactPart('R1', 'resistor A5 A10 330', 1);
+
+    expect(result.ok && result.value.holes.map((hole) => hole.addr)).toEqual(['A5', 'A10']);
+    expect(result.ok && result.value.value).toBe('330');
+  });
+
+  test('a value word shaped like an address is read as a hole, in either case', () => {
+    // 小文字の j5 と同じ扱い。番地の形をした語は値やラベルには使えない (syntax.md に明記)。
+    const result = parseCompactPart('R1', 'resistor a5 a10 J5', 1);
+
+    expect(result.ok && result.value.holes.map((hole) => hole.addr)).toEqual(['a5', 'a10', 'J5']);
+    expect(result.ok && result.value.value).toBeNull();
+  });
+
   test('keeps a polarity tag written in parentheses as the pin name', () => {
     const result = parseCompactPart('D1', 'led b12(A) b13(K) red', 4);
 

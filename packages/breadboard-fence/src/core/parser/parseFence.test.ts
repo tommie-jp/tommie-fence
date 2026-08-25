@@ -16,7 +16,7 @@ describe('parseFence', () => {
     const { doc, errors } = parseFence(led);
 
     expect(errors).toEqual([]);
-    expect(doc?.board).toBe('half');
+    expect(doc?.board.size).toBe('half');
     expect(doc?.parts.map((part) => part.id)).toEqual(['R1', 'D1']);
     expect(doc?.wires).toHaveLength(2);
   });
@@ -24,7 +24,84 @@ describe('parseFence', () => {
   test('defaults the board to half size when it is not written', () => {
     const { doc } = parseFence('parts:\n  R1: resistor a5 a10 330\n');
 
-    expect(doc?.board).toBe('half');
+    expect(doc?.board.size).toBe('half');
+  });
+
+  test('reads the board map form with every printing option', () => {
+    const { doc, errors } = parseFence(
+      ['board:', '  size: full', '  rails: "+-+-"', '  letters: upper', '  numbers: all', ''].join('\n'),
+    );
+
+    expect(errors).toEqual([]);
+    expect(doc?.board).toEqual({
+      size: 'full',
+      rails: ['+t', '-t', '+b', '-b'],
+      letters: 'upper',
+      numbers: 'all',
+    });
+  });
+
+  test('keeps the defaults for board entries that are not written', () => {
+    const { doc, errors } = parseFence('board:\n  size: full\n');
+
+    expect(errors).toEqual([]);
+    expect(doc?.board).toEqual({
+      size: 'full',
+      rails: ['+t', '-t', '-b', '+b'],
+      letters: 'lower',
+      numbers: 'every-5',
+    });
+  });
+
+  test('reads every rail arrangement that has one of each polarity per side', () => {
+    const { doc, errors } = parseFence('board:\n  rails: "-++-"\n');
+
+    expect(errors).toEqual([]);
+    expect(doc?.board.rails).toEqual(['-t', '+t', '+b', '-b']);
+  });
+
+  test('reports each unreadable board entry on its own line and keeps the defaults', () => {
+    const { doc, errors } = parseFence(
+      ['board:', '  size: giant', '  rails: "++--"', '  letters: caps', '  numbers: some', ''].join('\n'),
+    );
+
+    expect(errors.map((error) => error.line)).toEqual([2, 3, 4, 5]);
+    expect(doc?.board).toEqual({
+      size: 'half',
+      rails: ['+t', '-t', '-b', '+b'],
+      letters: 'lower',
+      numbers: 'every-5',
+    });
+  });
+
+  test('reports an unknown board key with its name', () => {
+    const { errors } = parseFence('board:\n  color: red\n');
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toContain('color');
+    expect(errors[0]?.line).toBe(2);
+  });
+
+  test('reports a board that is neither a size nor a map', () => {
+    const { doc, errors } = parseFence('board:\n  - half\n');
+
+    expect(errors).toHaveLength(1);
+    expect(doc?.board.size).toBe('half');
+  });
+
+  test('a later board key merges onto the earlier one instead of resetting it', () => {
+    const { doc, errors } = parseFence('board: full\nboard:\n  rails: "+-+-"\n');
+
+    expect(errors).toEqual([]);
+    expect(doc?.board.size).toBe('full');
+    expect(doc?.board.rails).toEqual(['+t', '-t', '+b', '-b']);
+  });
+
+  test('an unreadable later board keeps the earlier value', () => {
+    const { doc, errors } = parseFence('board: full\nboard: giant\n');
+
+    expect(errors).toHaveLength(1);
+    expect(doc?.board.size).toBe('full');
   });
 
   test('reports the line number of an unknown top level key', () => {

@@ -1,6 +1,6 @@
 import type { Layout } from '../model/layout.ts';
-import { HOLE_ROWS, RAIL_ROWS } from '../types.ts';
-import type { Board, RailRow } from '../types.ts';
+import { HOLE_ROWS } from '../types.ts';
+import type { Board, HoleRow, RailRow } from '../types.ts';
 import type { Palette, RenderTheme } from './theme.ts';
 import { TEXT_HALO_WIDTH, element, num, svgText } from './svg.ts';
 
@@ -16,8 +16,6 @@ const LABEL_WEIGHT = 700;
 const railColor = (rail: RailRow, palette: Palette): string =>
   rail.startsWith('+') ? palette.positive : palette.negative;
 
-const stripeOffset = (rail: RailRow): number => (rail === '+t' || rail === '-b' ? -STRIPE_GAP : STRIPE_GAP);
-
 /** ブレッドボード本体 (板・溝・電源レール・全部の穴・行番号) を描く。 */
 export function renderBoard(board: Board, layout: Layout, theme: RenderTheme): string {
   const { palette, metrics } = theme;
@@ -31,9 +29,10 @@ export function renderBoard(board: Board, layout: Layout, theme: RenderTheme): s
     element('rect', { x: num(x), y: num(layout.ravineY - 6), width: num(width), height: 12, fill: palette.ravine }),
   ];
 
-  for (const rail of RAIL_ROWS) {
+  board.rails.forEach((rail, index) => {
     const color = railColor(rail, palette);
-    const stripeY = layout.rowY(rail) + stripeOffset(rail);
+    // 色の線は上下のペアを挟むように、ペアの 1 本目の上・2 本目の下に引く。
+    const stripeY = layout.rowY(rail) + (index % 2 === 0 ? -STRIPE_GAP : STRIPE_GAP);
     parts.push(
       element('line', {
         x1: num(left - 10), y1: num(stripeY), x2: num(right + 10), y2: num(stripeY),
@@ -49,9 +48,9 @@ export function renderBoard(board: Board, layout: Layout, theme: RenderTheme): s
         }),
       );
     }
-  }
+  });
 
-  for (const row of [...RAIL_ROWS, ...HOLE_ROWS]) {
+  for (const row of [...board.rails, ...HOLE_ROWS]) {
     for (let col = 1; col <= board.columns; col += 1) {
       parts.push(
         element('rect', {
@@ -65,10 +64,11 @@ export function renderBoard(board: Board, layout: Layout, theme: RenderTheme): s
     }
   }
 
+  const letter = (row: HoleRow): string => (board.letters === 'upper' ? row.toUpperCase() : row);
   for (const row of HOLE_ROWS) {
     for (const labelX of [x + LABEL_INSET, x + width - LABEL_INSET]) {
       parts.push(
-        svgText(labelX, layout.rowY(row) + 4.5, row, {
+        svgText(labelX, layout.rowY(row) + 4.5, letter(row), {
           'font-size': font(ROW_FONT),
           'font-weight': LABEL_WEIGHT,
           fill: palette.label,
@@ -78,7 +78,7 @@ export function renderBoard(board: Board, layout: Layout, theme: RenderTheme): s
   }
 
   for (let col = 1; col <= board.columns; col += 1) {
-    if (col !== 1 && col % 5 !== 0) continue;
+    if (board.numbers === 'every-5' && col !== 1 && col % 5 !== 0) continue;
     const options = {
       'font-size': font(COLUMN_FONT),
       'font-weight': LABEL_WEIGHT,

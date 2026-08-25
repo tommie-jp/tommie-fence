@@ -1,11 +1,18 @@
 import { describe, expect, test } from 'vitest';
-import { createBoard } from '../model/board.ts';
+import { createBoard, railOrder } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
+import { DEFAULT_BOARD } from '../types.ts';
+import type { BoardSpec } from '../types.ts';
 import { renderBoard } from './board.ts';
 import { THEMES } from './theme.ts';
 
 const board = createBoard('half');
 const svg = renderBoard(board, createLayout(board), THEMES.classic!);
+
+const renderSpec = (over: Partial<BoardSpec>): string => {
+  const printed = createBoard({ ...DEFAULT_BOARD, ...over });
+  return renderBoard(printed, createLayout(printed), THEMES.classic!);
+};
 
 const fontSizesOf = (markup: string): number[] =>
   [...markup.matchAll(/font-size="([\d.]+)"/g)].map((match) => Number(match[1]));
@@ -56,5 +63,33 @@ describe('renderBoard', () => {
     const labels = [...svg.matchAll(/<text[^>]*>/g)].map((match) => match[0]);
 
     expect(labels.every((label) => /font-weight="(bold|[6-9]00)"/.test(label))).toBe(true);
+  });
+
+  test('prints uppercase row letters when the board asks for them', () => {
+    const texts = textsOf(renderSpec({ letters: 'upper' }));
+
+    for (const row of 'AJ') {
+      expect(texts.filter((text) => text === row)).toHaveLength(2);
+    }
+    expect(texts).not.toContain('a');
+  });
+
+  test('prints every column number when the board asks for all of them', () => {
+    const texts = textsOf(renderSpec({ numbers: 'all' }));
+
+    for (const column of ['2', '7', '29']) {
+      expect(texts.filter((text) => text === column)).toHaveLength(2);
+    }
+  });
+
+  test('moves the rail stripes and signs with the configured arrangement', () => {
+    const markup = renderSpec({ rails: railOrder('+-+-')! });
+    const signYs = (sign: string): number[] =>
+      [...markup.matchAll(/<text[^>]*y="([\d.]+)"[^>]*>([+−])<\/text>/g)]
+        .filter((match) => match[2] === sign)
+        .map((match) => Number(match[1]));
+
+    // +-+- では最下段のレールが − になる。
+    expect(Math.max(...signYs('+'))).toBeLessThan(Math.max(...signYs('−')));
   });
 });
