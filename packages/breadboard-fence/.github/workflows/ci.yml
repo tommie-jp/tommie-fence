@@ -17,7 +17,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
-      # examples/out の SVG はスナップショットなので、
-      # 描き直して差分が出たらコミットし忘れ。
       - run: npm run examples
-      - run: git diff --exit-code -- examples/out
+      # SVG はどの環境でも同じバイト列になるので、差分が出たらコミットし忘れ。
+      # PNG はフォントの描画が環境で変わるため一致を求めない。
+      - run: git diff --exit-code -- 'examples/out/*.svg'
