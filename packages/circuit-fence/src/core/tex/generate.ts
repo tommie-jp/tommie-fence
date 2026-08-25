@@ -302,10 +302,20 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget): string {
 
 function drawOneTerminal(part: OneTerminalPart, target: TexTarget): string {
   const at = formatAddress(part.at);
-  // 端子は白丸に名前を添える。グラウンドは記号だけ。
-  return part.type === 'port'
-    ? `\\draw (${at}) node[ocirc]{} node[above left]{${escapeTex(part.id)}};`
-    : `\\node[${symbolFor(part.type, target)}] at (${at}) {};`;
+  const symbol = symbolFor(part.type, target);
+  const id = escapeTex(part.id);
+
+  // 名前の出し方は種類ごとに決まっている (parts.ts の idLabel)。
+  // 端子は白丸の横に添え、電源レールは記号そのものの文字として出す。
+  // グラウンドのように名前を持たない記号は記号だけ。
+  switch (lookupPartType(part.type)?.idLabel) {
+    case 'beside':
+      return `\\draw (${at}) node[${symbol}]{} node[above left]{${id}};`;
+    case 'inside':
+      return `\\node[${symbol}] at (${at}) {${id}};`;
+    default:
+      return `\\node[${symbol}] at (${at}) {};`;
+  }
 }
 
 /**

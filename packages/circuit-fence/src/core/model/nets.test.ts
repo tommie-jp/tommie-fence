@@ -156,3 +156,20 @@ describe('computeNets の T 字', () => {
     expect(nets.every((net) => net.refs.length === 1)).toBe(true);
   });
 });
+
+describe('電源レールの名前', () => {
+  test('names a net after the power rail that hangs off it', () => {
+    // レールは端子と同じで、乗っているネットに名前を与える。
+    const nets = netsOf('parts:', '  V5: vcc a1', '  R1: resistor a1 a3');
+
+    expect(nets[0]).toMatchObject({ name: 'V5', refs: ['V5', 'R1.1'] });
+  });
+
+  test('keeps two rails apart until they are wired', () => {
+    // グラウンドだけが「離して描いても同じ節点」。レールは自動でつながない
+    // (5V と 3V3 を同じネットにしてしまうため)。
+    const nets = netsOf('parts:', '  V5: vcc a1', '  V3: vcc c1', '  R1: resistor a1 a3');
+
+    expect(nets.map((net) => net.name)).toEqual(['V5', 'V3', 'N1']);
+  });
+});

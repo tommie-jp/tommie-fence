@@ -2,6 +2,7 @@ import { cornerOf, formatAddress } from './address.ts';
 import type { Address } from './address.ts';
 import { wireContacts } from './circuit.ts';
 import type { Circuit } from './circuit.ts';
+import { lookupPartType } from '../parts.ts';
 import { cellOf as addressOf, nameOfEndpoint } from '../types.ts';
 import type { Endpoint, PartSpec } from '../types.ts';
 
@@ -151,13 +152,19 @@ function claim(candidate: string, taken: Set<string>): string {
   return name;
 }
 
-/** ネットの名前。グラウンドが乗っていれば GND、ポートが乗っていればその名前。 */
+/**
+ * ネットの名前。グラウンドが乗っていれば GND、名前を図に出す記号
+ * (端子・電源レール) が乗っていればその名前。
+ *
+ * **図に名前が出ている記号だけ**がネットに名前を与える。図とネットリストを
+ * 突き合わせるための出力なので、図に見えない名前を持ち込まない。
+ */
 function nameOf(group: readonly Member[]): string | null {
   if (group.some((member) => member.part.type === 'ground')) return 'GND';
 
-  const ports = group
-    .filter((member) => member.part.type === 'port')
+  const named = group
+    .filter((member) => lookupPartType(member.part.type)?.idLabel !== undefined)
     .map((member) => member.ref)
     .sort();
-  return ports.length > 0 ? ports.join('/') : null;
+  return named.length > 0 ? named.join('/') : null;
 }

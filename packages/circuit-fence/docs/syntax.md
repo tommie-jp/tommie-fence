@@ -38,24 +38,54 @@ wires:
 | 種類 | 何 | 値の単位 | 例 |
 | --- | --- | --- | --- |
 | `resistor` | 抵抗 | Ω | `R1: resistor a1 a3 10k` |
+| `resistor-var` | 可変抵抗 (2 端子) | Ω | `R2: resistor-var a1 a3 10k` |
 | `capacitor` | コンデンサ | F | `C1: capacitor a3 c3 100n` |
 | `ecap` | 電解コンデンサ | F | `C2: ecap a5 c5 100u` |
+| `varicap` | バリキャップ | F | `D4: varicap a5 a7 33p` |
 | `inductor` | コイル | H | `L1: inductor a5 a7 10m` |
+| `photoresistor` | CdS セル | Ω | `R3: photoresistor a13 a15` |
+| `thermistor` | サーミスタ | Ω | `R4: thermistor c1 c3 10k` |
+| `varistor` | バリスタ | (型番) | `R5: varistor c5 c7 470V` |
+| `crystal` | 水晶振動子 | Hz | `X1: crystal a9 a11 16M` |
 | `diode` | ダイオード | (型番) | `D1: diode c1 c3 1N4148` |
 | `led` | LED | (型番) | `D2: led c5 c7` |
 | `zener` | ツェナー | (型番) | `D3: zener c9 c11 5V1` |
+| `schottky` | ショットキー | (型番) | `D5: schottky c9 c11 1N5819` |
+| `photodiode` | フォトダイオード | (型番) | `D6: photodiode c13 c15` |
+| `diac` | ダイアック | (型番) | `D7: diac e1 e3` |
 | `vsource` | 直流電源 | V | `V1: vsource e1 e3 5` |
-| `sine` | 交流電源 | V | `V2: sine e5 e7 1` |
+| `sine` | 交流電源 (正弦波) | V | `V2: sine e5 e7 1` |
+| `square` | 方形波電源 | V | `V3: square e5 e7 5` |
+| `triangle` | 三角波電源 | V | `V4: triangle e9 e11 1` |
 | `isource` | 定電流源 | A | `I1: isource e9 e11 20m` |
 | `battery` | 電池 | V | `B1: battery g1 g3 9` |
-| `switch` | スイッチ | (なし) | `S1: switch g5 g7` |
+| `solar` | 太陽電池 | V | `PV1: solar e13 e15 0.6` |
+| `switch` | スイッチ (a 接点) | (なし) | `S1: switch g5 g7` |
+| `switch-nc` | スイッチ (b 接点) | (なし) | `S2: switch-nc g1 g3` |
+| `button` | 押しボタン (a 接点) | (なし) | `S3: button g5 g7` |
+| `button-nc` | 押しボタン (b 接点) | (なし) | `S4: button-nc g9 g11` |
+| `reed` | リードスイッチ | (なし) | `S5: reed g13 g15` |
 | `fuse` | ヒューズ | (定格) | `F1: fuse g9 g11 3A` |
 | `lamp` | ランプ | (なし) | `P1: lamp i1 i3` |
+| `speaker` | スピーカー | (なし) | `LS1: speaker i1 i3` |
+| `mic` | マイク | (なし) | `MK1: mic i5 i7` |
+| `ammeter` | 電流計 | (なし) | `A1: ammeter i9 i11` |
+| `voltmeter` | 電圧計 | (なし) | `V5: voltmeter i13 i15` |
 
-![使える部品](../examples/out/02-parts.png)
+![使える部品](../examples/out/02-parts-1.png)
+
+![そのほかの 2 端子部品](../examples/out/02-parts-2.png)
 
 `ecap` は**先に書いた番地が + 側**になる (記号の平らな板のほう)。
 `C2: ecap a5 c5` なら a5 が +。
+
+入っていない記号が 2 つある。どちらも代わりを立てられなかったもの。
+
+- 抵抗計 (`ohmmeter`) — 記号の中の Ω にフォントが要り、フェンスの TeX では
+  **例外ではなくプロセスごと落ちる** (電解コンデンサの `eC` と同じ理由。
+  こちらは曲板の記号で代わりを立てられた)
+- NTC / PTC サーミスタ — 落ちないが、記号の中の θ が `#` で出る。
+  区別の無い `thermistor` だけを載せてある
 
 ### 多端子部品 — `ID: 種類 番地 [向き] [型番]`
 
@@ -117,6 +147,16 @@ wires:
 | --- | --- | --- |
 | `port` | 端子 (白丸 + 名前) | `IN: port a1` |
 | `ground` | グラウンド | `G1: ground c3` |
+| `vcc` | 電源レール (上向きの矢印 + 名前) | `VCC: vcc a1` |
+| `vee` | 電源レール (下向きの矢印 + 名前) | `VEE: vee c4` |
+
+`port` と `vcc` / `vee` は **ID がそのまま図に出て、乗っているネットの名前にもなる**
+(`ground` は名前を出さず、ネットは `GND` になる)。
+
+グラウンドは離して描いても同じ節点として数えるが、**電源レールはそうしない**
+(`5V` と `3V3` を同じネットにしてしまうため)。つなぐなら配線を引く。
+
+![1 端子の記号](../examples/out/02-parts-3.png)
 
 ### ID の出方
 

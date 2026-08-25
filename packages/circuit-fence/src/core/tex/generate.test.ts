@@ -427,3 +427,13 @@ describe('多端子部品', () => {
     expect(generate('parts:', '  U1: opamp c5').tex).toContain('\\usetikzlibrary{calc}');
   });
 });
+
+describe('電源レールの記号', () => {
+  test('writes the id inside the rail symbol', () => {
+    // 端子は白丸の横に名前を添えるが、レールは矢印の先に名前が出る。
+    const { tex } = generate('parts:', '  V5: vcc a1', '  VN: vee c1');
+
+    expect(tex).toContain('\\node[vcc] at (a1) {V5}; % line 2');
+    expect(tex).toContain('\\node[vee] at (c1) {VN}; % line 3');
+  });
+});

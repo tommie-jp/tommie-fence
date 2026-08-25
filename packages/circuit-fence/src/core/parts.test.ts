@@ -67,13 +67,14 @@ describe('closestPartType', () => {
   });
 
   test('says nothing when there is nothing close', () => {
-    expect(closestPartType('thyristor')).toBeNull();
+    // リレーは (まだ) 無い種類。近いものが無ければ黙る。
+    expect(closestPartType('relay')).toBeNull();
     expect(closestPartType('')).toBeNull();
   });
 
   test('does not guess wildly at a short name', () => {
-    // 2 文字違えば別物。`triac` に `diode` を勧めない。
-    expect(closestPartType('triac')).toBeNull();
+    // 2 文字違えば別物。`coil` に `led` を勧めない。
+    expect(closestPartType('coil')).toBeNull();
   });
 });
 
@@ -114,5 +115,66 @@ describe('FET', () => {
 
   test('suggests the FET behind a name that was cut short', () => {
     expect(closestPartType('njf')).toBe('njfet');
+  });
+});
+
+describe('記事によく出る部品', () => {
+  test('carries the diodes a hobby article draws', () => {
+    for (const name of ['schottky', 'photodiode', 'varicap', 'diac']) {
+      expect(lookupPartType(name)?.kind).toBe('two-terminal');
+    }
+  });
+
+  test('carries the resistors that sense something', () => {
+    for (const name of ['resistor-var', 'photoresistor', 'thermistor']) {
+      // 抵抗の仲間なので、値には Ω が付く。
+      expect(lookupPartType(name)?.unitTex).toBe('\\Omega');
+    }
+    // バリスタの値は型番か動作電圧なので、単位を足さない。
+    expect(lookupPartType('varistor')?.unitTex).toBeNull();
+  });
+
+  test('carries the switches a panel has', () => {
+    for (const name of ['button', 'button-nc', 'switch-nc', 'reed']) {
+      expect(lookupPartType(name)?.kind).toBe('two-terminal');
+      expect(lookupPartType(name)?.unitTex).toBeNull();
+    }
+  });
+
+  test('gives the crystal its own unit', () => {
+    // 水晶の値は周波数。`X1: crystal a1 a3 16M` が 16 MHz になる。
+    expect(lookupPartType('crystal')?.unitTex).toBe('\\mathrm{Hz}');
+    expect(lookupPartType('crystal')?.unitSi).toBe('\\hertz');
+  });
+
+  test('carries the sources by the shape of their wave', () => {
+    for (const name of ['square', 'triangle', 'solar']) {
+      expect(lookupPartType(name)?.unitTex).toBe('\\mathrm{V}');
+    }
+  });
+
+  test('carries the meters and the parts that make a sound', () => {
+    for (const name of ['ammeter', 'voltmeter', 'speaker', 'mic']) {
+      expect(lookupPartType(name)?.kind).toBe('two-terminal');
+    }
+  });
+
+  test('keeps the power rails as one terminal symbols', () => {
+    expect(lookupPartType('vcc')?.kind).toBe('one-terminal');
+    expect(lookupPartType('vee')?.kind).toBe('one-terminal');
+    // 名前は記号の中に書く (端子は白丸の横、グラウンドは名前を出さない)。
+    expect(lookupPartType('vcc')?.idLabel).toBe('inside');
+    expect(lookupPartType('port')?.idLabel).toBe('beside');
+    expect(lookupPartType('ground')?.idLabel).toBeUndefined();
+  });
+
+  test('never uses a symbol whose glyphs the fence TeX cannot draw', () => {
+    // 抵抗計は Ω の字形が要り、eC と同じく**プロセスごと落ちる**。
+    // NTC / PTC サーミスタは落ちないが、中の θ が `#` で出る (どちらも実測)。
+    const symbols = Object.values(PART_TYPES).map((type) => type.symbol);
+
+    expect(symbols).not.toContain('ohmmeter');
+    expect(symbols).not.toContain('thRn');
+    expect(symbols).not.toContain('thRp');
   });
 });

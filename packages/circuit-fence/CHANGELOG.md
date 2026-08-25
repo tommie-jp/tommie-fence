@@ -10,10 +10,18 @@
 - ` ```circuit ` フェンス (YAML) が Markdown プレビューで回路図になる。
   番地 (`a1` `c3`) で置く場所を書くと、YAML → circuitikz TeX → WASM の TeX
   → SVG の順に描かれる。LaTeX のインストールは要らない。
-- 2 端子部品 14 種: `resistor` / `capacitor` / `ecap` / `inductor` / `diode` /
-  `led` / `zener` / `vsource` / `sine` / `isource` / `battery` / `switch` /
-  `fuse` / `lamp`。1 端子の記号は `port` / `ground`。
+- 2 端子部品 34 種。抵抗とその仲間 (`resistor` / `resistor-var` /
+  `photoresistor` / `thermistor` / `varistor`)、コンデンサとコイル
+  (`capacitor` / `ecap` / `varicap` / `inductor`)、振動子 (`crystal`)、
+  ダイオード (`diode` / `led` / `zener` / `schottky` / `photodiode` / `diac`)、
+  電源 (`vsource` / `sine` / `square` / `triangle` / `isource` / `battery` /
+  `solar`)、切る・光る・鳴る・測るもの (`switch` / `switch-nc` / `button` /
+  `button-nc` / `reed` / `fuse` / `lamp` / `speaker` / `mic` / `ammeter` /
+  `voltmeter`)。1 端子の記号は `port` / `ground` / `vcc` / `vee`。
   配線は `--` (2 点をまっすぐ結ぶ)。
+- 電源レールの `vcc` / `vee` は、**ID がそのまま図に出て、乗っているネットの
+  名前にもなる** (端子と同じ)。グラウンドと違って離して描いても自動では
+  つながらない (`5V` と `3V3` を同じ節点にしてしまうため)。
 - `ecap` (電解コンデンサ) は**先に書いた番地が + 側**。曲板の記号で描くので、
   向きは記号そのものに出る (`+` の字は書き足さない)。
 - 種類を書き間違えたとき、近い名前があれば候補を添える
@@ -82,3 +90,9 @@
 - 日本語の値は、フェンスの TeX にフォントが無いため描けない。行番号つきで返し、
   `--emit-tex` へ誘導する。部品 ID は配線とネットリストで指す名前なので、
   日本語にはできない (英数字と `_` `-` のみ)。
+- 記号は 1 つずつ実機に通してから表に載せている。載せられなかったものが 3 つ。
+  - `eC` (電解コンデンサ) — フォントが無く**プロセスごと落ちる**。
+    曲板の `cC` で代わりを立てた (`ecap`)
+  - `ohmmeter` (抵抗計) — 記号の中の Ω で同じく落ちる。代わりが無い
+  - `thRn` / `thRp` (NTC / PTC サーミスタ) — 落ちないが中の θ が `#` で出る。
+    区別の無い `thermistor` だけを載せている
