@@ -126,6 +126,71 @@ describe('renderBreadboard', () => {
     expect(netlist.find((net) => net.name === '-t')?.refs).toContain('C1.+');
   });
 
+  test('lists the parts under the drawing by default', () => {
+    const { svg } = renderBreadboard(led);
+    const texts = [...svg.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((match) => match[1]);
+
+    expect(texts).toContain('R1');
+    expect(texts).toContain('resistor');
+    expect(texts).toContain('led');
+  });
+
+  test('leaves the parts list out, and the room it took, when the fence turns it off', () => {
+    const listed = renderBreadboard(led);
+    const bare = renderBreadboard(`parts-list: none\n${led}`);
+    const heightOf = (svg: string) => Number(/<svg[^>]*height="([\d.]+)"/.exec(svg)?.[1]);
+
+    expect(bare.errors).toEqual([]);
+    expect(bare.svg).not.toContain('>resistor<');
+    expect(heightOf(bare.svg)).toBeLessThan(heightOf(listed.svg));
+  });
+
+  test('lists only the parts it could place, so a broken one is reported and not listed twice', () => {
+    const { svg, errors } = renderBreadboard(
+      ['parts:', '  R1: resistor a5 a10 330', '  R2: resistor a99 a100 220'].join('\n'),
+    );
+    const texts = [...svg.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((match) => match[1]);
+
+    expect(errors).toHaveLength(1);
+    expect(texts).toContain('R1');
+    expect(texts).not.toContain('R2');
+  });
+
+  test('names an off board device in the list by the same label its box carries', () => {
+    const { svg, errors } = renderBreadboard(
+      [
+        'parts:',
+        '  AD2:',
+        '    type: device',
+        '    at: top',
+        '    label: Analog Discovery 2',
+        '    value: 波形発生器',
+        '    pins: [W1, GND]',
+      ].join('\n'),
+    );
+    const texts = [...svg.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((match) => match[1]);
+
+    expect(errors).toEqual([]);
+    // 機器の箱と部品リストの 2 か所に、同じ名前で出る。
+    expect(texts.filter((text) => text === 'Analog Discovery 2')).toHaveLength(2);
+    expect(texts).not.toContain('波形発生器');
+  });
+
+  test('keeps the error banner under the parts list so the drawing reads top to bottom', () => {
+    const { svg } = renderBreadboard(
+      ['parts:', '  R1: resistor a5 a10 330', 'wires:', '  - a5 -- nowhere'].join('\n'),
+    );
+    const texts = [...svg.matchAll(/<text[^>]*y="([\d.]+)"[^>]*>([^<]*)<\/text>/g)].map((match) => ({
+      y: Number(match[1]),
+      text: match[2] ?? '',
+    }));
+
+    const listed = texts.find((item) => item.text === 'resistor');
+    const banner = texts.find((item) => item.text.includes('行目'));
+    expect(listed).toBeDefined();
+    expect(Number(banner?.y)).toBeGreaterThan(Number(listed?.y));
+  });
+
   test('reports the parse error and still returns a drawable error card', () => {
     const { svg, errors } = renderBreadboard('parts:\n  R1: [unclosed\n');
 

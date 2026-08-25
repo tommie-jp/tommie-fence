@@ -98,7 +98,9 @@ export function renderBreadboard(source: string): RenderResult {
     links: wires.map((wire) => [stripOfEndpoint(wire.from), stripOfEndpoint(wire.to)] as const),
   });
 
-  const svg = renderDocument({ board, layout, style, parts, devices: placements, wires: rendered, errors });
+  const svg = renderDocument({
+    board, layout, style, parts, devices: placements, wires: rendered, partsList: parsed.doc.partsList, errors,
+  });
 
   return { svg, netlist, errors };
 }

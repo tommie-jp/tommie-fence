@@ -5,6 +5,12 @@
  */
 export const LIMITS = {
   parts: 200,
+  /**
+   * 図の下の部品リストに並べる行数。超えたぶんは「ほかに N 件」の 1 行にまとめる。
+   * ブレッドボード 1 枚に挿さる部品数を大きく超えているので実用では頭を打たないが、
+   * 上限が無いと `style.width` の頭打ちを抜けて巨大なラスタ画像を作れてしまう。
+   */
+  listedParts: 60,
   wires: 500,
   devicePins: 64,
   pinNameLength: 24,

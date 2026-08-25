@@ -1,10 +1,11 @@
 import type { Layout } from '../model/layout.ts';
-import type { Board, FenceError, PlacedPart, Point } from '../types.ts';
+import type { Board, FenceError, PartsListMode, PlacedPart, Point } from '../types.ts';
 import { renderBoard } from './board.ts';
 import type { DevicePlacement } from './devices.ts';
 import { renderDevice } from './devices.ts';
 import { bannerHeight, renderErrorBanner } from './errorCard.ts';
 import { renderPart } from './parts.ts';
+import { partsListHeight, renderPartsList } from './partsList.ts';
 import { element, num } from './svg.ts';
 import type { RenderStyle } from './theme.ts';
 import { renderWire } from './wires.ts';
@@ -18,6 +19,7 @@ export type DocumentInput = {
   readonly parts: readonly PlacedPart[];
   readonly devices: ReadonlyMap<string, DevicePlacement>;
   readonly wires: readonly RenderedWire[];
+  readonly partsList: PartsListMode;
   readonly errors: readonly FenceError[];
 };
 
@@ -28,8 +30,10 @@ export type DocumentInput = {
 export function renderDocument(input: DocumentInput): string {
   const { layout, errors, style } = input;
   const { theme } = style;
+  const listed = input.partsList === 'none' ? [] : input.parts;
+  const list = partsListHeight(listed, theme);
   const banner = bannerHeight(errors);
-  const height = layout.height + banner;
+  const height = layout.height + list + banner;
 
   // 座標系 (viewBox) は動かさず、外側の大きさだけを指定の横幅に合わせる。
   // ピッチを変えるとレイアウトも配線の経路も総取り替えになるので、拡大縮小はここだけで済ませる。
@@ -55,7 +59,8 @@ export function renderDocument(input: DocumentInput): string {
         const placement = input.devices.get(part.id);
         return placement ? renderDevice(part, placement, theme) : '';
       }),
-    renderErrorBanner(errors, layout.board.x, layout.height, layout.board.width, theme.palette),
+    renderPartsList(listed, layout.board.x, layout.height, layout.board.width, theme),
+    renderErrorBanner(errors, layout.board.x, layout.height + list, layout.board.width, theme.palette),
   ];
 
   return [

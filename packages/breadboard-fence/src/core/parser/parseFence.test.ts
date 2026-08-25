@@ -118,6 +118,41 @@ describe('parseFence', () => {
     expect(errors[0]?.line).toBe(1);
   });
 
+  test('shows the parts list below the drawing when it is not written', () => {
+    const { doc, errors } = parseFence(led);
+
+    expect(errors).toEqual([]);
+    expect(doc?.partsList).toBe('below');
+  });
+
+  test('reads the parts list being turned off', () => {
+    const { doc, errors } = parseFence('parts-list: none\nparts:\n  R1: resistor a5 a10\n');
+
+    expect(errors).toEqual([]);
+    expect(doc?.partsList).toBe('none');
+  });
+
+  test('reports an unreadable parts list value on its line and keeps the default', () => {
+    const { doc, errors } = parseFence('board: half\nparts-list: hidden\n');
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.line).toBe(2);
+    expect(doc?.partsList).toBe('below');
+  });
+
+  test('an unreadable later parts list keeps the earlier value', () => {
+    const { doc, errors } = parseFence('parts-list: none\nparts-list: nope\n');
+
+    expect(errors).toHaveLength(1);
+    expect(doc?.partsList).toBe('none');
+  });
+
+  test('names the parts list among the keys an unknown top level key could have been', () => {
+    const { errors } = parseFence('partlist: none\n');
+
+    expect(errors[0]?.message).toContain('parts-list');
+  });
+
   test('reports a yaml syntax error with the line it happens on', () => {
     const { doc, errors } = parseFence('parts:\n  R1: [unclosed\n');
 

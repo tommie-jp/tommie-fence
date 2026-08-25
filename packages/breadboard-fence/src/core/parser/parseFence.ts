@@ -3,8 +3,12 @@ import type { Node, Pair, ParsedNode } from 'yaml';
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
 import { railOrder } from '../model/board.ts';
-import { BOARD_SIZES, COLUMN_NUMBERS, DEFAULT_BOARD, LETTER_CASES } from '../types.ts';
-import type { BoardSpec, FenceDocument, FenceError, PartSpec, StyleSpec, WireSpec } from '../types.ts';
+import {
+  BOARD_SIZES, COLUMN_NUMBERS, DEFAULT_BOARD, DEFAULT_PARTS_LIST, LETTER_CASES, PARTS_LIST_MODES,
+} from '../types.ts';
+import type {
+  BoardSpec, FenceDocument, FenceError, PartSpec, PartsListMode, StyleSpec, WireSpec,
+} from '../types.ts';
 import { parseCompactPart, parseHoleToken, parseWireSpec } from './compact.ts';
 import { validateExpandedPart } from './schema.ts';
 import { EMPTY_STYLE, validateStyle } from './style.ts';
@@ -13,6 +17,9 @@ import { EMPTY_STYLE, validateStyle } from './style.ts';
 const pick = <T extends string>(allowed: readonly T[], value: string | null): T | null =>
   value !== null && (allowed as readonly string[]).includes(value) ? (value as T) : null;
 const MAX_YAML_MESSAGE = 120;
+
+/** フェンスの一番外側に書けるキー。読めなかったときの案内はここから作る。 */
+const TOP_LEVEL_KEYS = ['board', 'style', 'parts', 'parts-list', 'wires'] as const;
 
 export type ParseResult = { readonly doc: FenceDocument | null; readonly errors: readonly FenceError[] };
 
@@ -51,11 +58,15 @@ export function parseFence(source: string): ParseResult {
   const wires: WireSpec[] = [];
   let board: BoardSpec = DEFAULT_BOARD;
   let style: StyleSpec = EMPTY_STYLE;
+  let partsList: PartsListMode = DEFAULT_PARTS_LIST;
 
   const contents = parsed.contents;
-  if (contents === null) return { doc: { board, style, parts, wires }, errors };
+  if (contents === null) return { doc: { board, style, partsList, parts, wires }, errors };
   if (!isMap(contents)) {
-    return { doc: null, errors: [fenceError('フェンスの中身は board / style / parts / wires のマップで書きます', 1)] };
+    return {
+      doc: null,
+      errors: [fenceError(`フェンスの中身は ${TOP_LEVEL_KEYS.join(' / ')} のマップで書きます`, 1)],
+    };
   }
 
   for (const pair of contents.items) {
@@ -75,16 +86,23 @@ export function parseFence(source: string): ParseResult {
           fenceError(item.message, (item.key === null ? null : keyLine.get(item.key)) ?? line),
         ),
       );
+    } else if (key === 'parts-list') {
+      const mode = pick(PARTS_LIST_MODES, scalarText(pair.value));
+      // 読めなかったときは直前の値のまま (board と同じ、後勝ちだが不正値では上書きしない)。
+      if (mode) partsList = mode;
+      else errors.push(fenceError('parts-list は below か none です', lineOf(pair.value as Node) ?? line));
     } else if (key === 'parts') {
       collectParts(pair.value as ParsedNode | null, { parts, errors, lineOf });
     } else if (key === 'wires') {
       collectWires(pair.value as ParsedNode | null, { wires, errors, lineOf });
     } else {
-      errors.push(fenceError(`知らないキーです: ${safeToken(key)} (board / style / parts / wires が使えます)`, line));
+      errors.push(
+        fenceError(`知らないキーです: ${safeToken(key)} (${TOP_LEVEL_KEYS.join(' / ')} が使えます)`, line),
+      );
     }
   }
 
-  return { doc: { board, style, parts, wires }, errors };
+  return { doc: { board, style, partsList, parts, wires }, errors };
 }
 
 type LineOf = (node: Node | Pair | null | undefined) => number | null;

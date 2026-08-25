@@ -138,6 +138,7 @@ node dist/cli.cjs render examples --out examples/out
 | ボード外の機器 | マップ形式で `type: device` | 下のサンプル参照 |
 | 配線 | `- 端点 -- 端点 [色]` | `- a10 -- b12 red` |
 | 迂回ヒント | 角括弧で道順を指定 (20 = 穴 1 つ) | `- j20 -- -b20 black [v-20]` |
+| 部品リスト | 図の下に自動で出る。消すときだけ書く | `parts-list: none` |
 
 部品は resistor / capacitor / led / transistor / dipN / device。
 抵抗の値はカラーコードとして描かれ、コンデンサに `(+)` `(-)` を付けると
@@ -151,6 +152,7 @@ node dist/cli.cjs render examples --out examples/out
 | [examples/common-emitter.md](examples/common-emitter.md) | 2SC1815 のエミッタ接地アンプ (電源 5V、スピーカー出力) |
 | [examples/bh-ad2.md](examples/bh-ad2.md) | B-H カーブ測定回路 (オペアンプ・測定器・トロイダルコア) |
 | [examples/board-variants.md](examples/board-variants.md) | ボードの印字を手元の実物に寄せる (`board:` のマップ形式) |
+| [examples/parts-list.md](examples/parts-list.md) | 図の下の部品リストと、その消し方 (`parts-list:`) |
 
 ![エミッタ接地アンプの配線図](examples/out/common-emitter.png)
 

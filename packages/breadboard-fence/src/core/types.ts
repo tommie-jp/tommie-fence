@@ -53,6 +53,15 @@ export const DEFAULT_BOARD: BoardSpec = {
 
 export type Board = BoardSpec & { readonly columns: number };
 
+/**
+ * フェンスの `parts-list:` に書く、部品リストの出し方。
+ * 既定で出すのは、図だけを渡されても何を用意すればよいか分かるようにするため。
+ */
+export const PARTS_LIST_MODES = ['below', 'none'] as const;
+export type PartsListMode = (typeof PARTS_LIST_MODES)[number];
+
+export const DEFAULT_PARTS_LIST: PartsListMode = 'below';
+
 /** 導通グループの識別子。`top:5` / `bottom:5` / `rail:+t` / `pin:AD2.W1`。 */
 export type StripId = string;
 
@@ -110,6 +119,7 @@ export type StyleSpec = {
 export type FenceDocument = {
   readonly board: BoardSpec;
   readonly style: StyleSpec;
+  readonly partsList: PartsListMode;
   readonly parts: readonly PartSpec[];
   readonly wires: readonly WireSpec[];
 };
