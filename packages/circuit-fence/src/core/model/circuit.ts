@@ -1,9 +1,10 @@
 import { fenceError, safeToken } from '../errors.ts';
+import { LIMITS } from '../limits.ts';
 import { cornerOf, formatAddress, isSameAddress, parseAddress } from './address.ts';
 import { lookupPartType, lookupPin, pinHint } from '../parts.ts';
 import type { Address } from './address.ts';
 import type { FenceDocument } from '../parser/parseFence.ts';
-import { isDrawable } from '../tex/escape.ts';
+import { isDrawable, isSourceDrawable } from '../tex/escape.ts';
 import { cellOf, nameOfEndpoint } from '../types.ts';
 import type {
   Endpoint, FenceError, MultiTerminalPart, NoteSpec, PartSpec, TexTarget, WireSpec,
@@ -87,8 +88,12 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
   const wires = doc.wires
     .map((wire) => resolvePins(wire, byId, errors))
     .filter((wire): wire is WireSpec => wire !== null);
-  // 指し先の無い注釈は描けない。1 つ落としても残りは描く。
-  const notes = doc.notes.filter((note) => hasAnchor(note, byId, errors));
+  // 指し先の無い注釈と、書き出せないフェンスを指した注釈は描けない。
+  // 1 つ落としても残りは描く。
+  const sourceLines = doc.source.replace(/\s+$/, '').split('\n');
+  const notes = doc.notes.filter(
+    (note) => hasAnchor(note, byId, errors) && canWriteSource(note, sourceLines, errors),
+  );
   const circuit: Circuit = { parts, wires, notes };
 
   errors.push(...overlaps(parts));
@@ -104,6 +109,30 @@ function hasAnchor(note: NoteSpec, byId: ReadonlyMap<string, PartSpec>, errors: 
   errors.push(
     fenceError(`注釈の指す先 ${safeToken(note.target)} がありません (部品 ID か番地で書きます)`, note.line),
   );
+  return false;
+}
+
+/**
+ * `- source` が指しているフェンスを、そのまま図に書き出せるか。
+ *
+ * 書き出すのは書き手の書いた YAML そのものなので、TeX が自分の記法として読む字
+ * (`\` `$` `{` `}` `^`) が混じることがある。約束 3 はここでも動かさないので、
+ * 書き出しだけ落として**その字のある行**を返す。
+ */
+function canWriteSource(note: NoteSpec, sourceLines: readonly string[], errors: FenceError[]): boolean {
+  if (note.kind !== 'source') return true;
+
+  if (sourceLines.length > LIMITS.sourceLines) {
+    errors.push(
+      fenceError(`フェンスが長すぎて図に書き出せません (${LIMITS.sourceLines} 行まで)`, note.line),
+    );
+    return false;
+  }
+
+  const bad = sourceLines.findIndex((text) => !isSourceDrawable(text));
+  if (bad < 0) return true;
+
+  errors.push(fenceError('この行に図へ書き出せない字があります (source の注釈は描いていません)', bad + 1));
   return false;
 }
 

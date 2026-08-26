@@ -12,6 +12,8 @@ parts:
   G1:  ground c3
 wires:
   - a3 -- a4
+notes:
+  - source a6 blue
 style:
   grid: on
   grid-to: d6

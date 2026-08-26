@@ -12,6 +12,8 @@ parts:
 wires:
   - a3 -| e7
   - g3 |- c7
+notes:
+  - source a11 blue
 style:
   grid: on
 ```

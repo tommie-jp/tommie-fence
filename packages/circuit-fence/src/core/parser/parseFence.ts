@@ -31,6 +31,11 @@ const YAML_POSITION = /\s+at line \d+, column \d+:?\s*$/;
 const TOP_LEVEL_KEYS = ['parts', 'wires', 'notes', 'style'] as const;
 
 export type FenceDocument = {
+  /**
+   * フェンスの中身そのもの。`- source` の注釈が図に書き出す。
+   * 書き写すのではなくここから作るので、フェンスを直すと書き出しも動く。
+   */
+  readonly source: string;
   readonly parts: readonly PartSpec[];
   readonly wires: readonly WireSpec[];
   /** 図に重ねる注釈。回路の一員ではないので parts とは別に持つ。 */
@@ -85,7 +90,7 @@ export function parseFence(source: string): ParseResult {
   let style: StyleSpec = EMPTY_STYLE;
 
   const contents = parsed.contents;
-  if (contents === null) return { doc: { parts, wires, notes, style }, errors };
+  if (contents === null) return { doc: { source, parts, wires, notes, style }, errors };
   if (!isMap(contents)) {
     return {
       doc: null,
@@ -125,7 +130,7 @@ export function parseFence(source: string): ParseResult {
     }
   }
 
-  return { doc: { parts, wires, notes, style }, errors };
+  return { doc: { source, parts, wires, notes, style }, errors };
 }
 
 /**

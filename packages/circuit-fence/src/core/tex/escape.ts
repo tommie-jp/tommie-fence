@@ -44,6 +44,20 @@ const UNICODE_DRAWABLE =
  */
 const NOTE_DRAWABLE = new RegExp(`^[${ASCII_DRAWABLE}${UNICODE_DRAWABLE}:]*$`, 'u');
 
+/**
+ * 元のフェンスをそのまま図に書き出す注釈 (`- source`) に通す字。
+ *
+ * 書き出すのは**書き手が書いた YAML そのもの**なので、注釈の字よりも広い。
+ * YAML とフェンスの記法に出てくる字 (`` ` `` `|` `"` `'` `#` `,` `=` `[` `]`
+ * `!` `?` `;` `<` `>` `*` `@` `&` `~`) を足してある。
+ *
+ * `\` `$` `{` `}` `^` は**足さない**。TeX が自分の記法として読む字を
+ * 通さないという約束 (CLAUDE.md 3) は、書き出しでも動かさない。
+ * これらを書いたフェンスは、書き出しだけ落として行番号つきで理由を返す。
+ */
+const SOURCE_EXTRA = ':`|"\'#,=\\[\\]!?;<>*@&~';
+const SOURCE_DRAWABLE = new RegExp(`^[${ASCII_DRAWABLE}${UNICODE_DRAWABLE}${SOURCE_EXTRA}]*$`, 'u');
+
 const DRAWABLE: Readonly<Record<TexTarget, RegExp>> = {
   fence: new RegExp(`^[${ASCII_DRAWABLE}]*$`, 'u'),
   latex: new RegExp(`^[${ASCII_DRAWABLE}${UNICODE_DRAWABLE}]*$`, 'u'),
@@ -56,6 +70,9 @@ export const isDrawable = (text: string, target: TexTarget): boolean => DRAWABLE
 
 /** 注釈に書ける字だけでできているか。的によらず同じ (上のコメントの理由による)。 */
 export const isNoteDrawable = (text: string): boolean => NOTE_DRAWABLE.test(text);
+
+/** 元のフェンスを図に書き出せる字だけでできているか。 */
+export const isSourceDrawable = (text: string): boolean => SOURCE_DRAWABLE.test(text);
 
 /** ASCII だけでできているか。日本語などはフェンスの TeX にフォントが無い。 */
 export const isAscii = (text: string): boolean => !NON_ASCII.test(text);
@@ -71,3 +88,18 @@ const TEX_ESCAPES: Record<string, string> = { _: '\\_', '%': '\\%' };
 
 /** 許可済みの文字のうち、TeX が自分の記法として読むものを綴り直す。 */
 export const escapeTex = (text: string): string => text.replace(/[_%]/g, (char) => TEX_ESCAPES[char] ?? char);
+
+/**
+ * 書き出しに通す字のうち、TeX が自分の記法として読むものを綴り直す。
+ * 残りは等幅フォント (`\texttt`) にそのまま置ける字だけになっている。
+ *
+ * 空白も綴り直す。**字下げは書き出しの意味そのもの**なのに、TeX は続いた空白を
+ * 1 つに詰めてしまう。制御綴りの空白 (`\ `) にすると書いたぶんだけ空く
+ * (プレビュー側は SVG の xml:space で同じことをしている)。
+ */
+const LISTING_ESCAPES: Record<string, string> = {
+  _: '\\_', '%': '\\%', '&': '\\&', '#': '\\#', '~': '\\textasciitilde{}', ' ': '\\ ',
+};
+
+export const escapeTexListing = (text: string): string =>
+  text.replace(/[_%&#~ ]/g, (char) => LISTING_ESCAPES[char] ?? char);

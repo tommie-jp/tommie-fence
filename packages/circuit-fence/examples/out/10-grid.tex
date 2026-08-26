@@ -1,6 +1,7 @@
 \documentclass{standalone}
 \usepackage{circuitikz}
 \usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
@@ -26,5 +27,21 @@
 \node[ground] at (c3) {}; % line 6
 \draw (a3) -- (a4); % line 8
 \node[circ] at (a3) {};
+\path (10,-5.922) rectangle (14.721,0.395); % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,0) {X}; % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-0.395) {X}; % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-0.79) {X}; % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-1.184) {X}; % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-1.579) {X}; % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-1.974) {X}; % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-2.369) {X}; % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-2.764) {X}; % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-3.158) {X}; % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-3.553) {X}; % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-3.948) {X}; % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-4.343) {X}; % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-4.738) {X}; % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-5.132) {X}; % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-5.527) {X}; % line 10
 \end{circuitikz}
 \end{document}

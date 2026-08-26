@@ -552,7 +552,7 @@ describe('generateTex の注釈の字', () => {
     expect(tex).not.toContain('ここで分圧する');
     expect(tex).toContain('\\definecolor{circuitnotemark}{HTML}{FE00FE}');
     expect(tex).toContain('\\node[anchor=west, circuitnotemark, font=\\footnotesize] at (0,-2) {X};');
-    expect(notes).toEqual([{ text: 'ここで分圧する', color: '#000000' }]);
+    expect(notes).toEqual([{ text: 'ここで分圧する', color: '#000000', mono: false }]);
   });
 
   // TeX は字を渡されていないので幅を知らない。取っておかないと図の縁で切れる。
@@ -568,7 +568,7 @@ describe('generateTex の注釈の字', () => {
   test('gives the colour of a note that has none to the SVG as the ink black', () => {
     const { notes } = generate(...R, 'notes:', '  - text b1 green: ここ');
 
-    expect(notes).toEqual([{ text: 'ここ', color: '#2ea043' }]);
+    expect(notes).toEqual([{ text: 'ここ', color: '#2ea043', mono: false }]);
   });
 
   test('hands the texts over in the order the marks are drawn', () => {
@@ -599,5 +599,82 @@ describe('generateTex の注釈の字', () => {
 
     expect(tex).toContain('\\definecolor{circuitnoteblue}{HTML}{4C8EDA}');
     expect(tex).toContain('anchor=west, circuitnoteblue, font=\\footnotesize');
+  });
+});
+
+describe('generateTex の書き出し (source)', () => {
+  const R = ['parts:', '  R1: resistor a1 a3 10k', 'notes:', '  - source b1'];
+  const write = (...rows: string[]) => {
+    const source = `${rows.join('\n')}\n`;
+    const { doc } = parseFence(source);
+    if (doc === null) throw new Error('YAML を読めませんでした');
+    return generateTex(buildCircuit(doc).circuit, { style: doc.style, source });
+  };
+
+  test('writes the fence out as it was written in the Markdown', () => {
+    const { notes } = write(...R);
+
+    expect(notes.map((note) => note.text)).toEqual([
+      '```circuit',
+      'parts:',
+      '  R1: resistor a1 a3 10k',
+      'notes:',
+      '  - source b1',
+      '```',
+    ]);
+  });
+
+  test('組む字は等幅にする (字下げが意味を持つので)', () => {
+    const { notes } = write(...R);
+
+    expect(notes.every((note) => note.mono)).toBe(true);
+  });
+
+  // 格子の刻み (既定 2cm) で送ると、数行書いただけで図より書き出しが高くなる。
+  test('packs the lines by the height of the type, not by the grid', () => {
+    const { tex } = write(...R);
+    const ys = [...tex.matchAll(/circuitnotemark, font=\\footnotesize\] at \(([\d.]+),(-?[\d.]+)\)/g)].map(
+      (match) => Number(match[2]),
+    );
+
+    expect(ys.length).toBeGreaterThan(1);
+    const step = (ys[0] ?? 0) - (ys[1] ?? 0);
+    expect(step).toBeGreaterThan(0);
+    expect(step).toBeLessThan(1);
+  });
+
+  test('takes room for the whole block, so the last line is not cut off', () => {
+    const { tex } = write(...R);
+
+    expect(tex).toMatch(/\\path \(0,-[\d.]+\) rectangle \([\d.]+,-?[\d.]+\);/);
+  });
+
+  // 書き出す `.tex` はフォントを積めるので、字は TeX に組ませる。
+  test('writes the listing into the TeX that goes to LaTeX', () => {
+    const source = `${R.join('\n')}\n`;
+    const { doc } = parseFence(source);
+    if (doc === null) throw new Error('YAML を読めませんでした');
+    const { tex, notes } = generateTex(buildCircuit(doc, { target: 'latex' }).circuit, {
+      style: doc.style,
+      target: 'latex',
+      source,
+    });
+
+    expect(tex).toContain('\\texttt{parts:}');
+    expect(notes).toEqual([]);
+  });
+
+  test('組む字が日本語を含むときだけ、等幅の日本語フォントを書く', () => {
+    const withJapanese = ['parts:', '  R1: resistor a1 a3', 'notes:', '  - source b1', '  - text c1: ここ'];
+    const source = `${withJapanese.join('\n')}\n`;
+    const { doc } = parseFence(source);
+    if (doc === null) throw new Error('YAML を読めませんでした');
+    const latex = (rows: typeof doc) =>
+      generateTex(buildCircuit(rows, { target: 'latex' }).circuit, {
+        style: rows.style, target: 'latex', source,
+      }).tex;
+
+    expect(latex(doc)).toContain('\\newfontfamily\\circuitmono');
+    expect(write(...R).tex).not.toContain('circuitmono');
   });
 });

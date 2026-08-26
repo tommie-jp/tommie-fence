@@ -90,7 +90,11 @@ export function compileCircuit(source: string, options: CompileOptions = {}): Co
   }
 
   const { circuit, errors: modelErrors, notices } = buildCircuit(doc, { target });
-  const { tex, lineMap, messages: texMessages, notes } = generateTex(circuit, { style: doc.style, target });
+  const { tex, lineMap, messages: texMessages, notes } = generateTex(circuit, {
+    style: doc.style,
+    target,
+    source: doc.source,
+  });
 
   return {
     tex,

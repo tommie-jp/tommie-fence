@@ -14,6 +14,8 @@ parts:
   L1:    inductor c1 c3 10m
   C1:    capacitor c5 c7 2.2u
   D1:    diode c9 c11 1N4148
+notes:
+  - source a13 blue
 style:
   grid: on
 ```

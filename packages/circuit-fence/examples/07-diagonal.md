@@ -10,6 +10,8 @@ parts:
   OUT: port a7
 wires:
   - a1 -- a7
+notes:
+  - source a9 blue
 style:
   grid: on
 ```

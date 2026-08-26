@@ -5,41 +5,33 @@
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\foreach \x in {0,2,4,6} {\foreach \y in {0,-2,-4,-6,-8} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\foreach \x in {0,2,4,6,8,10,12,14,16,18} {\foreach \y in {0} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
 \node[gray, font=\scriptsize] at (0,0.84) {1};
 \node[gray, font=\scriptsize] at (2,0.84) {2};
 \node[gray, font=\scriptsize] at (4,0.84) {3};
 \node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize] at (8,0.84) {5};
+\node[gray, font=\scriptsize] at (10,0.84) {6};
+\node[gray, font=\scriptsize] at (12,0.84) {7};
+\node[gray, font=\scriptsize] at (14,0.84) {8};
+\node[gray, font=\scriptsize] at (16,0.84) {9};
+\node[gray, font=\scriptsize] at (18,0.84) {10};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
 \coordinate (a1) at (0,0);
-\coordinate (c1) at (0,-4);
-\coordinate (e1) at (0,-8);
 \coordinate (a4) at (6,0);
-\coordinate (c4) at (6,-4);
+\coordinate (a7) at (12,0);
+\coordinate (a10) at (18,0);
 \node[vcc] at (a1) {VCC}; % line 2
-\draw (a1) to[R, l_=$R_{1}$, a^=$1\,\mathrm{k}\Omega$] (c1); % line 3
-\draw (c1) to[leD, l_=$D_{1}$] (e1); % line 4
-\node[ground] at (e1) {}; % line 5
-\draw (a4) node[ocirc]{} node[above left]{IN}; % line 6
-\draw (a4) to[R, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (c4); % line 7
-\node[vee] at (c4) {VEE}; % line 8
-\path (10,-0.226) rectangle (11.861,0.226); % line 10
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,0) {X}; % line 10
-\path (10,-2.226) rectangle (13.553,-1.774); % line 11
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-2) {X}; % line 11
-\path (10,-4.226) rectangle (12.2,-3.774); % line 12
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-4) {X}; % line 12
-\path (10,-6.226) rectangle (12.2,-5.774); % line 13
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-6) {X}; % line 13
-\path (10,-8.226) rectangle (11.861,-7.774); % line 14
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-8) {X}; % line 14
-\path (10,-10.226) rectangle (13.722,-9.774); % line 15
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-10) {X}; % line 15
-\path (10,-12.226) rectangle (11.861,-11.774); % line 16
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,-12) {X}; % line 16
+\node[vee] at (a4) {VEE}; % line 3
+\node[ground] at (a7) {}; % line 4
+\draw (a10) node[ocirc]{} node[above left]{IN}; % line 5
+\path (0,-2.395) rectangle (1.861,-1.605); % line 7
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (0,-2) {X}; % line 7
+\path (6,-2.395) rectangle (7.861,-1.605); % line 8
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (6,-2) {X}; % line 8
+\path (12,-2.395) rectangle (14.2,-1.605); % line 9
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (12,-2) {X}; % line 9
+\path (18,-2.395) rectangle (20.03,-1.605); % line 10
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (18,-2) {X}; % line 10
 \end{circuitikz}
 \end{document}

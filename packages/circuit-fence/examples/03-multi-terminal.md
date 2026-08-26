@@ -7,10 +7,10 @@
 parts:
   Q1: npn b2
   Q2: pnp b5
-  M1: nmos e2
-  M2: pmos e5
   Q3: nigbt b8
-  Q4: pigbt e8
+  M1: nmos f2
+  M2: pmos f5
+  Q4: pigbt f8
 wires:
   - a2 -| Q1.C
   - c2 -| Q1.E
@@ -18,31 +18,31 @@ wires:
   - a5 -| Q2.C
   - c5 -| Q2.E
   - b4 -| Q2.B
-  - d2 -| M1.D
-  - f2 -| M1.S
-  - e1 -| M1.G
-  - d5 -| M2.D
-  - f5 -| M2.S
-  - e4 -| M2.G
   - a8 -| Q3.C
   - c8 -| Q3.E
   - b7 -| Q3.G
-  - d8 -| Q4.C
-  - f8 -| Q4.E
-  - e7 -| Q4.G
+  - e2 -| M1.D
+  - g2 -| M1.S
+  - f1 -| M1.G
+  - e5 -| M2.D
+  - g5 -| M2.S
+  - f4 -| M2.G
+  - e8 -| Q4.C
+  - g8 -| Q4.E
+  - f7 -| Q4.G
 notes:
-  - text a10 blue: "Q1: npn b2"
-  - text b10 blue: "Q2: pnp b5"
-  - text c10 blue: "M1: nmos e2"
-  - text d10 blue: "M2: pmos e5"
-  - text e10 blue: "Q3: nigbt b8"
-  - text f10 blue: "Q4: pigbt e8"
+  - text d2 blue: "Q1: npn b2"
+  - text d5 blue: "Q2: pnp b5"
+  - text d8 blue: "Q3: nigbt b8"
+  - text h2 blue: "M1: nmos f2"
+  - text h5 blue: "M2: pmos f5"
+  - text h8 blue: "Q4: pigbt f8"
 style:
   grid: on
 ```
 
-左上から `npn` (`b2`) / `pnp` (`b5`) / `nigbt` (`b8`)、
-下の段が `nmos` (`e2`) / `pmos` (`e5`) / `pigbt` (`e8`)。
+上の段がバイポーラと IGBT、下の段が MOSFET。**記号の下の青い行が、
+その記号を出すために書いた 1 行**そのもの。
 足の名前は回路図の慣習の 1 文字でも、綴りでも同じところを指す
 (`Q1.B` と `Q1.base` は同じ足)。
 
@@ -72,8 +72,8 @@ wires:
   - a9 -| T1.B1
   - c9 -| T1.B2
 notes:
-  - text a11 blue: "U1: opamp b2 LM358"
-  - text b11 blue: "T1: transformer b7 1to1"
+  - text d1 blue: "U1: opamp b2 LM358"
+  - text d6 blue: "T1: transformer b7 1to1"
 style:
   grid: on
 ```
@@ -91,10 +91,10 @@ style:
 parts:
   J1: njfet b2
   J2: pjfet b5
-  M1: nmos-e e2
-  M2: pmos-e e5
-  M3: nmos-d h2
-  M4: pmos-d h5
+  M1: nmos-e f2
+  M2: pmos-e f5
+  M3: nmos-d j2
+  M4: pmos-d j5
 wires:
   - a2 -| J1.D
   - c2 -| J1.S
@@ -102,25 +102,25 @@ wires:
   - a5 -| J2.D
   - c5 -| J2.S
   - b4 -| J2.G
-  - d2 -| M1.D
-  - f2 -| M1.S
-  - e1 -| M1.G
-  - d5 -| M2.D
-  - f5 -| M2.S
-  - e4 -| M2.G
-  - g2 -| M3.D
-  - i2 -| M3.S
-  - h1 -| M3.G
-  - g5 -| M4.D
-  - i5 -| M4.S
-  - h4 -| M4.G
+  - e2 -| M1.D
+  - g2 -| M1.S
+  - f1 -| M1.G
+  - e5 -| M2.D
+  - g5 -| M2.S
+  - f4 -| M2.G
+  - i2 -| M3.D
+  - k2 -| M3.S
+  - j1 -| M3.G
+  - i5 -| M4.D
+  - k5 -| M4.S
+  - j4 -| M4.G
 notes:
-  - text a7 blue: "J1: njfet b2"
-  - text b7 blue: "J2: pjfet b5"
-  - text c7 blue: "M1: nmos-e e2"
-  - text d7 blue: "M2: pmos-e e5"
-  - text e7 blue: "M3: nmos-d h2"
-  - text f7 blue: "M4: pmos-d h5"
+  - text d2 blue: "J1: njfet b2"
+  - text d5 blue: "J2: pjfet b5"
+  - text h2 blue: "M1: nmos-e f2"
+  - text h5 blue: "M2: pmos-e f5"
+  - text l2 blue: "M3: nmos-d j2"
+  - text l5 blue: "M4: pmos-d j5"
 style:
   grid: on
 ```
@@ -139,16 +139,16 @@ style:
 ```circuit
 parts:
   P1: potentiometer b1 b5 10k
-  T1: thyristor d1 d5
-  T2: triac f1 f5
+  T1: thyristor e1 e5
+  T2: triac h1 h5
 wires:
   - P1.w -- a3
-  - T1.g |- c3
-  - T2.g |- e3
+  - T1.g |- d3
+  - T2.g |- g3
 notes:
-  - text a7 blue: "P1: potentiometer b1 b5 10k"
-  - text b7 blue: "T1: thyristor d1 d5"
-  - text c7 blue: "T2: triac f1 f5"
+  - text c1 blue: "P1: potentiometer b1 b5 10k"
+  - text f1 blue: "T1: thyristor e1 e5"
+  - text i1 blue: "T2: triac h1 h5"
 style:
   grid: on
 ```

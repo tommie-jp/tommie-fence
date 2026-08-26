@@ -5,7 +5,7 @@
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\foreach \x in {0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30} {\foreach \y in {0,-2,-4,-6,-8,-10} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\foreach \x in {0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30} {\foreach \y in {0,-2,-4,-6,-8,-10,-12} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
 \node[gray, font=\scriptsize] at (0,0.84) {1};
 \node[gray, font=\scriptsize] at (2,0.84) {2};
 \node[gray, font=\scriptsize] at (4,0.84) {3};
@@ -28,14 +28,15 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
 \coordinate (b2) at (2,-2);
 \coordinate (b6) at (10,-2);
 \coordinate (b10) at (18,-2);
 \coordinate (b14) at (26,-2);
-\coordinate (e2) at (2,-8);
-\coordinate (e6) at (10,-8);
-\coordinate (e10) at (18,-8);
-\coordinate (e14) at (26,-8);
+\coordinate (f2) at (2,-10);
+\coordinate (f6) at (10,-10);
+\coordinate (f10) at (18,-10);
+\coordinate (f14) at (26,-10);
 \coordinate (a1) at (0,0);
 \coordinate (c1) at (0,-4);
 \coordinate (b4) at (6,-2);
@@ -48,16 +49,16 @@
 \coordinate (a13) at (24,0);
 \coordinate (c13) at (24,-4);
 \coordinate (b16) at (30,-2);
-\coordinate (d1) at (0,-6);
-\coordinate (f1) at (0,-10);
-\coordinate (e4) at (6,-8);
-\coordinate (d5) at (8,-6);
-\coordinate (f5) at (8,-10);
-\coordinate (e8) at (14,-8);
-\coordinate (d9) at (16,-6);
-\coordinate (e12) at (22,-8);
-\coordinate (d13) at (24,-6);
-\coordinate (e16) at (30,-8);
+\coordinate (e1) at (0,-8);
+\coordinate (g1) at (0,-12);
+\coordinate (f4) at (6,-10);
+\coordinate (e5) at (8,-8);
+\coordinate (g5) at (8,-12);
+\coordinate (f8) at (14,-10);
+\coordinate (e9) at (16,-8);
+\coordinate (f12) at (22,-10);
+\coordinate (e13) at (24,-8);
+\coordinate (f16) at (30,-10);
 \node[and port] (part-U1) at (b2) {}; % line 2
 \node[font=\scriptsize, anchor=north] at (part-U1.south) {$\mathrm{7408}$}; % line 2
 \node[or port] (part-U2) at (b6) {}; % line 3
@@ -66,13 +67,13 @@
 \node[font=\scriptsize, anchor=north] at (part-U3.south) {$\mathrm{7400}$}; % line 4
 \node[nor port] (part-U4) at (b14) {}; % line 5
 \node[font=\scriptsize, anchor=north] at (part-U4.south) {$\mathrm{7402}$}; % line 5
-\node[xor port] (part-U5) at (e2) {}; % line 6
+\node[xor port] (part-U5) at (f2) {}; % line 6
 \node[font=\scriptsize, anchor=north] at (part-U5.south) {$\mathrm{7486}$}; % line 6
-\node[xnor port] (part-U6) at (e6) {}; % line 7
+\node[xnor port] (part-U6) at (f6) {}; % line 7
 \node[font=\scriptsize, anchor=north] at (part-U6.south) {$\mathrm{74266}$}; % line 7
-\node[not port] (part-U7) at (e10) {}; % line 8
+\node[not port] (part-U7) at (f10) {}; % line 8
 \node[font=\scriptsize, anchor=north] at (part-U7.south) {$\mathrm{7404}$}; % line 8
-\node[buffer port] (part-U8) at (e14) {}; % line 9
+\node[buffer port] (part-U8) at (f14) {}; % line 9
 \node[font=\scriptsize, anchor=north] at (part-U8.south) {$\mathrm{7407}$}; % line 9
 \draw (a1) |- (part-U1.in 1); % line 11
 \draw (c1) |- (part-U1.in 2); % line 12
@@ -86,31 +87,31 @@
 \draw (a13) |- (part-U4.in 1); % line 20
 \draw (c13) |- (part-U4.in 2); % line 21
 \draw (part-U4.out) -| (b16); % line 22
-\draw (d1) |- (part-U5.in 1); % line 23
-\draw (f1) |- (part-U5.in 2); % line 24
-\draw (part-U5.out) -| (e4); % line 25
-\draw (d5) |- (part-U6.in 1); % line 26
-\draw (f5) |- (part-U6.in 2); % line 27
-\draw (part-U6.out) -| (e8); % line 28
-\draw (d9) |- (part-U7.in); % line 29
-\draw (part-U7.out) -| (e12); % line 30
-\draw (d13) |- (part-U8.in); % line 31
-\draw (part-U8.out) -| (e16); % line 32
-\path (34,-0.226) rectangle (36.538,0.226); % line 34
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (34,0) {X}; % line 34
-\path (34,-2.226) rectangle (36.369,-1.774); % line 35
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (34,-2) {X}; % line 35
-\path (34,-4.226) rectangle (36.876,-3.774); % line 36
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (34,-4) {X}; % line 36
-\path (34,-6.226) rectangle (36.707,-5.774); % line 37
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (34,-6) {X}; % line 37
-\path (34,-8.226) rectangle (36.538,-7.774); % line 38
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (34,-8) {X}; % line 38
-\path (34,-10.226) rectangle (36.876,-9.774); % line 39
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (34,-10) {X}; % line 39
-\path (34,-12.226) rectangle (36.707,-11.774); % line 40
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (34,-12) {X}; % line 40
-\path (34,-14.226) rectangle (37.215,-13.774); % line 41
-\node[anchor=west, circuitnotemark, font=\footnotesize] at (34,-14) {X}; % line 41
+\draw (e1) |- (part-U5.in 1); % line 23
+\draw (g1) |- (part-U5.in 2); % line 24
+\draw (part-U5.out) -| (f4); % line 25
+\draw (e5) |- (part-U6.in 1); % line 26
+\draw (g5) |- (part-U6.in 2); % line 27
+\draw (part-U6.out) -| (f8); % line 28
+\draw (e9) |- (part-U7.in); % line 29
+\draw (part-U7.out) -| (f12); % line 30
+\draw (e13) |- (part-U8.in); % line 31
+\draw (part-U8.out) -| (f16); % line 32
+\path (0,-6.395) rectangle (2.538,-5.605); % line 34
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (0,-6) {X}; % line 34
+\path (8,-6.395) rectangle (10.369,-5.605); % line 35
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (8,-6) {X}; % line 35
+\path (16,-6.395) rectangle (18.876,-5.605); % line 36
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (16,-6) {X}; % line 36
+\path (24,-6.395) rectangle (26.707,-5.605); % line 37
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (24,-6) {X}; % line 37
+\path (0,-14.395) rectangle (2.538,-13.605); % line 38
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (0,-14) {X}; % line 38
+\path (8,-14.395) rectangle (10.876,-13.605); % line 39
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (8,-14) {X}; % line 39
+\path (16,-14.395) rectangle (18.707,-13.605); % line 40
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (16,-14) {X}; % line 40
+\path (24,-14.395) rectangle (27.215,-13.605); % line 41
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (24,-14) {X}; % line 41
 \end{circuitikz}
 \end{document}

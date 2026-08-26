@@ -18,6 +18,9 @@ import { escapeHtml } from './html.ts';
 /** 図に出る字は、標準の TeX フォントには字形が無い。読み手の環境のフォントで組む。 */
 const FONT_FAMILY = "'Noto Sans CJK JP','Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif";
 
+/** 元のフェンスの書き出しは等幅で組む。日本語が混じっても崩れない並びにする。 */
+const MONO_FAMILY = "'Noto Sans Mono CJK JP',ui-monospace,'SFMono-Regular',Consolas,'Liberation Mono',monospace";
+
 /** 目印の text 要素。属性の並びはエンジンが決めるので、色の一致だけで拾う。 */
 const MARK = new RegExp(
   `<text\\b([^>]*\\bfill="${NOTE_MARK_COLOR}"[^>]*)>${NOTE_MARK_TEXT}</text>`,
@@ -27,8 +30,8 @@ const MARK = new RegExp(
 const withColor = (attributes: string, color: string): string =>
   attributes.replace(`fill="${NOTE_MARK_COLOR}"`, `fill="${color}"`);
 
-const withFont = (attributes: string): string =>
-  attributes.replace(/\bfont-family="[^"]*"/, `font-family="${FONT_FAMILY}"`);
+const withFont = (attributes: string, mono: boolean): string =>
+  attributes.replace(/\bfont-family="[^"]*"/, `font-family="${mono ? MONO_FAMILY : FONT_FAMILY}"`);
 
 /** エンジンが目印の色を掛けた器 (`<g>`)。中の字を差し替えたら、その色は用済み。 */
 const GROUP = /<g\b[^>]*>/g;
@@ -56,7 +59,9 @@ export function applyNotes(svg: string, notes: readonly NoteOverlay[]): string {
     const note = notes[index];
     if (note === undefined) return whole;
     index += 1;
-    return `<text${withFont(withColor(attributes, note.color))}>${escapeHtml(note.text)}</text>`;
+    // 字下げは書き出しの意味そのものなので、SVG の既定 (空白を詰める) を止める。
+    const space = note.mono ? ' xml:space="preserve"' : '';
+    return `<text${withFont(withColor(attributes, note.color), note.mono)}${space}>${escapeHtml(note.text)}</text>`;
   });
 
   return cleanGroups(filled);

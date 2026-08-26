@@ -110,25 +110,19 @@ circuitikz の NTC / PTC の記号は中に θ を持っていて、フェンス
 ## 1 端子の記号
 
 `port` (端子) と `ground` のほかに、電源レールの `vcc` / `vee` がある。
-どちらも **ID がそのまま図に出て、乗っているネットの名前にもなる**。
+`ground` 以外は **ID がそのまま図に出て、乗っているネットの名前にもなる**。
 
 ```circuit
 parts:
   VCC: vcc a1
-  R1:  resistor a1 c1 1k
-  D1:  led c1 e1
-  G1:  ground e1
-  IN:  port a4
-  R2:  resistor a4 c4 10k
-  VEE: vee c4
+  VEE: vee a4
+  G1:  ground a7
+  IN:  port a10
 notes:
-  - text a6 blue: "VCC: vcc a1"
-  - text b6 blue: "R1: resistor a1 c1 1k"
-  - text c6 blue: "D1: led c1 e1"
-  - text d6 blue: "G1: ground e1"
-  - text e6 blue: "IN: port a4"
-  - text f6 blue: "R2: resistor a4 c4 10k"
-  - text g6 blue: "VEE: vee c4"
+  - text b1 blue: "VCC: vcc a1"
+  - text b4 blue: "VEE: vee a4"
+  - text b7 blue: "G1: ground a7"
+  - text b10 blue: "IN: port a10"
 style:
   grid: on
 ```

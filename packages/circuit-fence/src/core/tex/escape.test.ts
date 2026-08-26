@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { escapeTex, hasUnicode, isAscii, isDrawable } from './escape.ts';
+import { escapeTex, escapeTexListing, hasUnicode, isAscii, isDrawable } from './escape.ts';
 
 describe('isDrawable', () => {
   test('accepts the values a schematic is written with', () => {
@@ -89,5 +89,20 @@ describe('escapeTex', () => {
   test('escapes the characters TeX would read as its own', () => {
     expect(escapeTex('a_b')).toBe('a\\_b');
     expect(escapeTex('50%')).toBe('50\\%');
+  });
+});
+
+describe('escapeTexListing', () => {
+  test('spells out the characters TeX reads as its own notation', () => {
+    expect(escapeTexListing('a_b%c&d#e')).toBe('a\\_b\\%c\\&d\\#e');
+  });
+
+  // 字下げは書き出しの意味そのもの。TeX は続いた空白を 1 つに詰めてしまう。
+  test('keeps the indent TeX would otherwise squeeze out', () => {
+    expect(escapeTexListing('  R1: resistor')).toBe('\\ \\ R1:\\ resistor');
+  });
+
+  test('leaves the characters a listing needs alone', () => {
+    expect(escapeTexListing('- a3 -| a4 "x" [1]')).toContain('-|');
   });
 });

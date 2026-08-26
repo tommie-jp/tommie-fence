@@ -9,10 +9,10 @@ parts:
   U2: or b6 7432
   U3: nand b10 7400
   U4: nor b14 7402
-  U5: xor e2 7486
-  U6: xnor e6 74266
-  U7: not e10 7404
-  U8: buffer e14 7407
+  U5: xor f2 7486
+  U6: xnor f6 74266
+  U7: not f10 7404
+  U8: buffer f14 7407
 wires:
   - a1 |- U1.a
   - c1 |- U1.b
@@ -26,25 +26,25 @@ wires:
   - a13 |- U4.a
   - c13 |- U4.b
   - U4.out -| b16
-  - d1 |- U5.a
-  - f1 |- U5.b
-  - U5.out -| e4
-  - d5 |- U6.a
-  - f5 |- U6.b
-  - U6.out -| e8
-  - d9 |- U7.in
-  - U7.out -| e12
-  - d13 |- U8.in
-  - U8.out -| e16
+  - e1 |- U5.a
+  - g1 |- U5.b
+  - U5.out -| f4
+  - e5 |- U6.a
+  - g5 |- U6.b
+  - U6.out -| f8
+  - e9 |- U7.in
+  - U7.out -| f12
+  - e13 |- U8.in
+  - U8.out -| f16
 notes:
-  - text a18 blue: "U1: and b2 7408"
-  - text b18 blue: "U2: or b6 7432"
-  - text c18 blue: "U3: nand b10 7400"
-  - text d18 blue: "U4: nor b14 7402"
-  - text e18 blue: "U5: xor e2 7486"
-  - text f18 blue: "U6: xnor e6 74266"
-  - text g18 blue: "U7: not e10 7404"
-  - text h18 blue: "U8: buffer e14 7407"
+  - text d1 blue: "U1: and b2 7408"
+  - text d5 blue: "U2: or b6 7432"
+  - text d9 blue: "U3: nand b10 7400"
+  - text d13 blue: "U4: nor b14 7402"
+  - text h1 blue: "U5: xor f2 7486"
+  - text h5 blue: "U6: xnor f6 74266"
+  - text h9 blue: "U7: not f10 7404"
+  - text h13 blue: "U8: buffer f14 7407"
 style:
   grid: on
 ```
@@ -67,7 +67,7 @@ wires:
   - U1.5 -| e4
   - U1.8 -| a4
 notes:
-  - text a6 blue: "U1: dip8 c2 NE555"
+  - text f1 blue: "U1: dip8 c2 NE555"
 style:
   grid: on
 ```
@@ -87,7 +87,7 @@ wires:
   - S1.1 -| a4
   - S1.2 -| c4
 notes:
-  - text a6 blue: "S1: spdt b2"
+  - text d1 blue: "S1: spdt b2"
 style:
   grid: on
 ```

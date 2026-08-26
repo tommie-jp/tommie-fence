@@ -311,3 +311,21 @@ describe('parseNoteText', () => {
     expect(textNoteProblem('circle R1', 'ここ').message).toContain('circle は');
   });
 });
+
+describe('parseNoteLine の source', () => {
+  test('reads a note that writes the fence out', () => {
+    expect(noteOf('source a6')).toEqual({ kind: 'source', at: { row: 0, col: 5 }, color: null, line: 2 });
+  });
+
+  test('reads the colour when it is written', () => {
+    expect(noteOf('source a6 blue')).toMatchObject({ color: 'blue' });
+  });
+
+  test('turns down a place that is not a cell', () => {
+    expect(noteProblem('source z0').message).toContain('番地の形');
+  });
+
+  test('turns down a line with more than a place and a colour', () => {
+    expect(noteProblem('source a6 blue extra').message).toContain('source は');
+  });
+});

@@ -13,11 +13,7 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - text a6 blue: "IN: port a1"
-  - text b6 blue: "R1: resistor a1 a3 10k"
-  - text c6 blue: "C1: capacitor a3 c3 100n"
-  - text d6 blue: "OUT: port a4"
-  - text e6 blue: "G1: ground c3"
+  - source a6 blue
 style:
   grid: on
 ```
@@ -162,14 +158,7 @@ wires:
   - c7 -- c9
   - d7 -- c7
 notes:
-  - text a11 blue: "IN: port b1"
-  - text b11 blue: "Rb: resistor b3 e3 100k"
-  - text c11 blue: "G1: ground e3"
-  - text d11 blue: "U1: opamp c5 +up"
-  - text e11 blue: "R2: resistor d4 e4 1k"
-  - text f11 blue: "G2: ground e4"
-  - text g11 blue: "R3: resistor d4 d7 10k"
-  - text h11 blue: "OUT: port c9"
+  - source a11 blue
 style:
   grid: on
 ```
@@ -253,8 +242,7 @@ parts:
 wires:
   - a3 -- a5
 notes:
-  - text a9 blue: "R1: resistor a1 a3"
-  - text b9 blue: "R2: resistor a5 a7"
+  - source a9 blue
 style:
   grid: on
 ```
@@ -271,8 +259,7 @@ parts:
 wires:
   - a1 -- a7
 notes:
-  - text a9 blue: "R1: resistor a1 c4"
-  - text b9 blue: "R2: resistor c4 a7"
+  - source a9 blue
 style:
   grid: on
 ```
@@ -294,11 +281,7 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - text a6 blue: "IN: port a1"
-  - text b6 blue: "R1: resistor a1 a3 10k"
-  - text c6 blue: "C1: capacitor a3 c3 100n"
-  - text d6 blue: "OUT: port a4"
-  - text e6 blue: "G1: ground c3"
+  - source a6 blue
   - circle R1
   - text e1: ここでカットオフ 159 Hz
 style:
@@ -331,6 +314,21 @@ TeX に組ませるので、どちらでも同じ字が出る。
 書ける字は英数字と `. + - / ( ) _ % :` と日本語、それに `µ` `Ω` `°`。
 `\` `$` `,` `=` は値と同じく書けない (**注釈から任意の TeX を作らせない**ため)。
 部品の 1 行をそのまま書き写せるように、`:` だけは値と違って通す。
+
+### 書き出し — `- source 番地 [色]`
+
+そのフェンスの中身を、**書いたとおりの姿で図に並べる**。囲みの ``` も付く。
+
+プレビューではフェンスが図に差し替わるので、書いた YAML は読み手に見えない。
+図の横に置いておくと、図と書き方を並べて読める。この文法リファレンスの
+回路図はすべてこれで書き出してある。
+
+中身は書き写すのではなく**フェンス自身から作る**ので、図を直すと書き出しも動く。
+行送りは番地の刻みではなく字の高さで決まるので、行数が増えても図ほどは伸びない。
+
+書き出せるのは、YAML とフェンスの記法に出てくる字まで。TeX が自分の記法として
+読む字 (`\` `$` `{` `}` `^`) がフェンスにあると、書き出しだけ描かずに
+**その字のある行**を返す。
 
 ### 色
 
@@ -433,11 +431,7 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - text a6 blue: "IN: port a1"
-  - text b6 blue: "R1: resistor a1 a3 10k"
-  - text c6 blue: "C1: capacitor a3 c3 100n"
-  - text d6 blue: "OUT: port a4"
-  - text e6 blue: "G1: ground c3"
+  - source a6 blue
 style:
   grid: on
   grid-to: d6

@@ -460,3 +460,34 @@ describe('注釈の指し先', () => {
     expect(circuit.notes).toHaveLength(1);
   });
 });
+
+describe('フェンスの書き出し (source)', () => {
+  test('keeps the note when every line can be drawn', () => {
+    const { circuit, errors } = build('parts:', '  R1: resistor a1 a3', 'notes:', '  - source b1');
+
+    expect(errors).toEqual([]);
+    expect(circuit.notes).toHaveLength(1);
+  });
+
+  // 書き出すのは書き手の書いた YAML そのもの。TeX が記法として読む字が
+  // 混じることがあるので、書き出しだけ落として**その字のある行**を返す。
+  test('drops the note and points at the line TeX could not be trusted with', () => {
+    const { circuit, errors } = build(
+      'parts:',
+      '  R1: resistor a1 a3',
+      '# \\usepackage{}',
+      'notes:',
+      '  - source b1',
+    );
+
+    expect(circuit.notes).toEqual([]);
+    expect(errors[0]?.line).toBe(3);
+    expect(errors[0]?.message).toContain('書き出せない字');
+  });
+
+  test('draws the circuit even when the fence cannot be written out', () => {
+    const { circuit } = build('parts:', '  R1: resistor a1 a3', '# $x$', 'notes:', '  - source b1');
+
+    expect(circuit.parts).toHaveLength(1);
+  });
+});

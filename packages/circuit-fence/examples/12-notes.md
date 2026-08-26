@@ -13,11 +13,7 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - text a6 blue: "IN: port a1"
-  - text b6 blue: "R1: resistor a1 a3 10k"
-  - text c6 blue: "C1: capacitor a3 c3 100n"
-  - text d6 blue: "OUT: port a4"
-  - text e6 blue: "G1: ground c3"
+  - source a6 blue
   - circle R1
   - text e1: ここでカットオフ 159 Hz
 style:
@@ -29,6 +25,11 @@ style:
 
 字は `- text 番地 [色]: 文字` と書く。番地が字の**左端**になる。
 字は YAML の値なので、`:` を含むときは `"…"` で囲む。
+
+`- source 番地 [色]` は、**そのフェンスの中身をそのまま図に並べる**。
+上の図の右がそれで、囲みの ``` も付く。プレビューではフェンスが図に
+差し替わって書いた YAML が見えなくなるので、図と並べて読めるようにしておく。
+中身はフェンス自身から作るので、図を直すと書き出しも動く。
 
 ## 色
 
@@ -42,10 +43,6 @@ parts:
   R3: resistor a9 a11
   R4: resistor a13 a15
 notes:
-  - text a17 blue: "R1: resistor a1 a3"
-  - text b17 blue: "R2: resistor a5 a7"
-  - text c17 blue: "R3: resistor a9 a11"
-  - text d17 blue: "R4: resistor a13 a15"
   - circle R1 red
   - circle R2 blue
   - circle R3 green
@@ -54,6 +51,10 @@ notes:
   - text b5 blue: blue
   - text b9 green: green
   - text b13 orange: orange
+  - text c1 blue: "R1: resistor a1 a3"
+  - text c5 blue: "R2: resistor a5 a7"
+  - text c9 blue: "R3: resistor a9 a11"
+  - text c13 blue: "R4: resistor a13 a15"
 style:
   grid: on
 ```
@@ -72,10 +73,7 @@ parts:
 wires:
   - c1 -- c4
 notes:
-  - text a6 blue: "V1: battery a1 c1 9"
-  - text b6 blue: "R1: resistor a1 a4 470"
-  - text c6 blue: "D1: led a4 c4"
-  - text d6 blue: "G1: ground c1"
+  - source a6 blue
   - circle D1 orange
   - text a6: LED の順方向電圧は 2 V ぐらい
   - text b6: 電流は (9 - 2) / 470 で 15 mA

@@ -15,6 +15,8 @@ parts:
   G1:  ground c3
 wires:
   - a3 -- a4
+notes:
+  - source a6 blue
 style:
   ink-color: '#14532d'
   paper-color: '#f0fdf4'
@@ -34,6 +36,8 @@ parts:
   G1:  ground c3
 wires:
   - a3 -- a4
+notes:
+  - source a6 blue
 style:
   grid: on
   pitch: 1.2
@@ -46,6 +50,8 @@ style:
 parts:
   R1: resistor a1 a3 10k
   L1: inductor a5 a7 10m
+notes:
+  - source a9 blue
 style:
   grid: on
   standard: american
@@ -57,6 +63,8 @@ style:
 parts:
   R1: resistor a1 a3 10k
   L1: inductor a5 a7 10m
+notes:
+  - source a9 blue
 style:
   grid: on
   standard: european
@@ -74,6 +82,8 @@ parts:
   G1:  ground c3
 wires:
   - a3 -- a4
+notes:
+  - source a6 blue
 style:
   grid: on
   width: 320

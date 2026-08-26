@@ -77,5 +77,20 @@ const isFullWidth = (char: string): boolean => (char.codePointAt(0) ?? 0) > 0xff
 export const noteWidth = (text: string): number =>
   [...text].reduce((sum, char) => sum + (isFullWidth(char) ? FULL_WIDTH : HALF_WIDTH), 0) * NOTE_EM;
 
+/**
+ * 何行も書く注釈の行送り (cm)。**格子の間隔ではなく字の大きさで決める**。
+ * 番地の刻み (既定 2cm) で送ると、数行書いただけで図より注釈のほうが高くなる。
+ */
+export const NOTE_LINE = NOTE_EM * 1.4;
+
+/** 等幅で組む注釈 (元のフェンスの書き出し) の 1 文字の幅 (em)。 */
+const MONO_WIDTH = 0.62;
+
+/**
+ * 等幅で組んだときに図で占める幅 (cm)。字下げを保つので、空白も 1 文字と数える。
+ */
+export const noteMonoWidth = (text: string): number =>
+  [...text].reduce((sum, char) => sum + (isFullWidth(char) ? FULL_WIDTH : MONO_WIDTH), 0) * NOTE_EM;
+
 /** 色の値から `#` を外した 6 桁。TeX の `\definecolor{...}{HTML}{...}` に渡す形。 */
 export const hexDigits = (color: string): string => color.slice(1).toUpperCase();

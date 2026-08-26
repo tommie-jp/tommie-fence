@@ -12,14 +12,14 @@ const SVG = `<svg viewBox="0 0 10 10"><path d="M0 0"/>${marker('translate(1 2)')
 
 describe('applyNotes', () => {
   test('目印を注釈の文字に差し替える', () => {
-    const svg = applyNotes(SVG, [{ text: 'ここで分圧する', color: '#e5534b' }]);
+    const svg = applyNotes(SVG, [{ text: 'ここで分圧する', color: '#e5534b', mono: false }]);
 
     expect(svg).toContain('>ここで分圧する</text>');
     expect(svg).not.toContain('>X</text>');
   });
 
   test('目印の置かれた位置と大きさをそのまま使う', () => {
-    const svg = applyNotes(SVG, [{ text: 'あ', color: '#e5534b' }]);
+    const svg = applyNotes(SVG, [{ text: 'あ', color: '#e5534b', mono: false }]);
 
     expect(svg).toContain('x="-71.87"');
     expect(svg).toContain('y="-65.495"');
@@ -28,21 +28,21 @@ describe('applyNotes', () => {
   });
 
   test('文字の色は注釈ごとに入れ替える', () => {
-    const svg = applyNotes(SVG, [{ text: 'あ', color: '#4c8eda' }]);
+    const svg = applyNotes(SVG, [{ text: 'あ', color: '#4c8eda', mono: false }]);
 
     expect(svg).toContain('fill="#4c8eda"');
     expect(svg).toMatch(/<text[^>]*fill="#4c8eda"[^>]*>あ<\/text>/);
   });
 
   test('日本語の出るフォントに差し替える (TeX のフォントには字形が無い)', () => {
-    const svg = applyNotes(SVG, [{ text: 'あ', color: '#e5534b' }]);
+    const svg = applyNotes(SVG, [{ text: 'あ', color: '#e5534b', mono: false }]);
 
     expect(svg).not.toContain('font-family="cmr8"');
     expect(svg).toMatch(/font-family="[^"]*sans-serif"/);
   });
 
   test('XML として読まれる字はエスケープする', () => {
-    const svg = applyNotes(SVG, [{ text: 'a<b>&', color: '#e5534b' }]);
+    const svg = applyNotes(SVG, [{ text: 'a<b>&', color: '#e5534b', mono: false }]);
 
     expect(svg).toContain('>a&lt;b&gt;&amp;</text>');
   });
@@ -50,8 +50,8 @@ describe('applyNotes', () => {
   test('目印を書いた順に当てる', () => {
     const many = `<svg>${marker('translate(1 2)')}${marker('translate(3 4)')}</svg>`;
     const svg = applyNotes(many, [
-      { text: 'いち', color: '#e5534b' },
-      { text: 'に', color: '#4c8eda' },
+      { text: 'いち', color: '#e5534b', mono: false },
+      { text: 'に', color: '#4c8eda', mono: false },
     ]);
 
     expect(svg.indexOf('いち')).toBeLessThan(svg.indexOf('に'));
@@ -60,7 +60,7 @@ describe('applyNotes', () => {
   });
 
   test('差し替えた後は器から目印の色を外す', () => {
-    const svg = applyNotes(SVG, [{ text: 'あ', color: '#e5534b' }]);
+    const svg = applyNotes(SVG, [{ text: 'あ', color: '#e5534b', mono: false }]);
 
     expect(svg).not.toContain(`<g fill="${NOTE_MARK_COLOR}"`);
     expect(svg).toContain('<g>');
@@ -74,7 +74,7 @@ describe('applyNotes', () => {
   // 「注釈を書いたのに出ない」だけが残るので、目印を残して図に見せる。
   test('注釈より目印が多ければ、余った目印はそのまま残す', () => {
     const many = `<svg>${marker('translate(1 2)')}${marker('translate(3 4)')}</svg>`;
-    const svg = applyNotes(many, [{ text: 'いち', color: '#e5534b' }]);
+    const svg = applyNotes(many, [{ text: 'いち', color: '#e5534b', mono: false }]);
 
     // 器の色は外しても、当てられなかった目印の字はそのまま図に出る。
     expect(svg).toContain(`fill="${NOTE_MARK_COLOR}" stroke="none"`);
@@ -83,8 +83,8 @@ describe('applyNotes', () => {
 
   test('目印より注釈が多くても落ちない', () => {
     const svg = applyNotes(SVG, [
-      { text: 'いち', color: '#e5534b' },
-      { text: 'に', color: '#e5534b' },
+      { text: 'いち', color: '#e5534b', mono: false },
+      { text: 'に', color: '#e5534b', mono: false },
     ]);
 
     expect(svg).toContain('いち');

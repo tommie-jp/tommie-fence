@@ -173,7 +173,7 @@ function readEndpoint(token: string, line: number): Result<Endpoint> {
 }
 
 /** 注釈の種類。印 (`circle`) と字 (`text`) の 2 つだけ。 */
-const NOTE_KINDS = ['circle', 'text'] as const;
+const NOTE_KINDS = ['circle', 'text', 'source'] as const;
 
 /** 印の既定の色。目立たせるために書くものなので、書かなければ赤。 */
 const DEFAULT_CIRCLE_COLOR = 'red';
@@ -188,6 +188,7 @@ const NOTE_CHARSET = '英数字と . + - / ( ) _ % : 、日本語、µ Ω °';
  */
 const TEXT_FORM = '「- text 番地 [色]: 文字」';
 const CIRCLE_FORM = '「- circle 部品IDか番地 [色]」';
+const SOURCE_FORM = '「- source 番地 [色]」';
 
 const noteKindList = (): string => NOTE_KINDS.join(' / ');
 
@@ -206,9 +207,11 @@ export function parseNoteLine(text: string, line: number): Result<NoteSpec> {
 
   if (kind === undefined) return fail(`注釈の種類がありません (${noteKindList()} が使えます)`, line);
   if (kind === 'text') return fail(`text は ${TEXT_FORM} で書きます (文字は YAML の値にします)`, line);
-  if (kind !== 'circle') {
+  if (kind !== 'circle' && kind !== 'source') {
     return fail(`注釈の種類 ${safeToken(kind)} は知りません (${noteKindList()} が使えます)`, line);
   }
+
+  if (kind === 'source') return readSourceNote(rest, line);
 
   const [target, colorToken, ...extra] = rest;
   if (target === undefined || extra.length > 0) return fail(`circle は ${CIRCLE_FORM} で書きます`, line);
@@ -223,6 +226,22 @@ export function parseNoteLine(text: string, line: number): Result<NoteSpec> {
   if (!color.ok) return color;
 
   return ok({ kind: 'circle', target, color: color.value, line });
+}
+
+/**
+ * `source a6 blue` を読む。中身はフェンス自身から作るので、ここでは場所と色だけ。
+ */
+function readSourceNote(rest: string[], line: number): Result<NoteSpec> {
+  const [atToken, colorToken, ...extra] = rest;
+  if (atToken === undefined || extra.length > 0) return fail(`source は ${SOURCE_FORM} で書きます`, line);
+
+  const at = readAddress(atToken, line);
+  if (!at.ok) return at;
+
+  const color: Result<string | null> = colorToken === undefined ? ok(null) : readNoteColor(colorToken, line);
+  if (!color.ok) return color;
+
+  return ok({ kind: 'source', at: at.value, color: color.value, line });
 }
 
 /**

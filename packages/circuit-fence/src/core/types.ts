@@ -171,10 +171,29 @@ export type TextNote = {
   readonly line: number;
 };
 
-export type NoteSpec = CircleNote | TextNote;
+/**
+ * 元のフェンスをそのまま図に書き出す注釈。
+ *
+ * プレビューではフェンスが図に差し替わるので、**書いた YAML が読み手に見えない**。
+ * 図の横にそのまま出しておくと、図と書き方を並べて読める。
+ * 中身は書き写すのではなく**フェンス自身から作る**ので、直したときにずれない。
+ */
+export type SourceNote = {
+  readonly kind: 'source';
+  readonly at: Address;
+  readonly color: string | null;
+  readonly line: number;
+};
+
+export type NoteSpec = CircleNote | TextNote | SourceNote;
 
 /**
  * 描き上がった SVG に差し込む字 1 つ。書いた順に、TeX が置いた目印へ当てる。
  * 色はここまでで実際の値に決まっている (パレットを引くのは TeX 生成の仕事)。
  */
-export type NoteOverlay = { readonly text: string; readonly color: string };
+export type NoteOverlay = {
+  readonly text: string;
+  readonly color: string;
+  /** 等幅で組んで字下げを保つか (元のフェンスの書き出しだけが true)。 */
+  readonly mono: boolean;
+};

@@ -172,7 +172,7 @@ describe('compileCircuit の注釈', () => {
     );
 
     expect(result.errors).toEqual([]);
-    expect(result.notes).toEqual([{ text: 'ここで分圧する', color: '#e5534b' }]);
+    expect(result.notes).toEqual([{ text: 'ここで分圧する', color: '#e5534b', mono: false }]);
   });
 
   test('draws the circuit even when a note could not be read', () => {
@@ -191,5 +191,21 @@ describe('compileCircuit の注釈', () => {
 
     expect(note.errors).toEqual([]);
     expect(value.errors).toHaveLength(1);
+  });
+});
+
+describe('compileCircuit の書き出し (source)', () => {
+  test('hands the fence out line by line, with the ``` around it', () => {
+    const result = compileCircuit(lines('parts:', '  R1: resistor a1 a3', 'notes:', '  - source b1'));
+
+    expect(result.errors).toEqual([]);
+    expect(result.notes.map((note) => note.text)).toEqual([
+      '```circuit',
+      'parts:',
+      '  R1: resistor a1 a3',
+      'notes:',
+      '  - source b1',
+      '```',
+    ]);
   });
 });
