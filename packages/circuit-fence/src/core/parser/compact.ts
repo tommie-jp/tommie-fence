@@ -7,7 +7,8 @@ import {
   isNoteAlign, isNoteSize, noteColor,
 } from '../notes.ts';
 import type { NoteAlign, NoteSize } from '../notes.ts';
-import { closestPartType, lookupPartType, partTypeNames } from '../parts.ts';
+import { closestPartType, lookupPartType, partTypeNames, resolvePartTypeName } from '../parts.ts';
+import type { PartTypeName } from '../parts.ts';
 import { isNoteDrawable } from '../tex/escape.ts';
 import type { Endpoint, FenceError, NoteSpec, NoteTextStyle, PartSpec, Result, WireSpec } from '../types.ts';
 
@@ -30,41 +31,55 @@ const readAddress = (token: string, line: number): Result<Address> => {
 };
 
 /**
- * `resistor a1 a3 10k` の 1 行を読む。
+ * 読み取り中の 1 行の頭。種類は正式名に畳んであり、`written` だけが
+ * 書かれた綴り (略記のことがある) を覚えている。
+ * エラー文には `written` を出す — 書いた行と照らせないと行番号が生きない。
+ */
+type PartHead = {
+  readonly id: string;
+  readonly type: PartTypeName;
+  readonly written: string;
+  readonly line: number;
+};
+
+/**
+ * `resistor a1 a3 10k` の 1 行を読む。略記 (`r a1 a3 10k`) もここで受ける。
  * 両端が斜めでも通す (circuitikz は任意の角度に引ける)。同じ番地どうしだけは
  * 向きも長さも決まらないので通さない。
  */
 export function parseCompactPart(id: string, text: string, line: number): Result<PartSpec> {
   const tokens = text.trim().split(/\s+/).filter((token) => token.length > 0);
-  const [typeName, ...rest] = tokens;
+  const [written, ...rest] = tokens;
 
-  if (typeName === undefined) {
+  if (written === undefined) {
     return fail(`部品 ${safeToken(id)} の種類がありません (${typeList()} が使えます)`, line);
   }
 
-  const type = lookupPartType(typeName);
-  if (type === null) {
+  // 略記はここで正式名に畳む。以降と中間モデルには正式名だけが流れる。
+  const typeName = resolvePartTypeName(written);
+  const type = typeName === null ? null : lookupPartType(typeName);
+  if (typeName === null || type === null) {
     // 種類が増えるほど羅列は読みにくいので、近いものがあればそれだけを添える。
-    const closest = closestPartType(typeName);
+    const closest = closestPartType(written);
     const hint = closest === null ? `${typeList()} が使えます` : `${closest} のことですか?`;
-    return fail(`種類 ${safeToken(typeName)} は知りません (${hint})`, line);
+    return fail(`種類 ${safeToken(written)} は知りません (${hint})`, line);
   }
 
-  if (type.kind === 'two-terminal') return readTwoTerminal(id, typeName, rest, line);
-  return type.kind === 'one-terminal'
-    ? readOneTerminal(id, typeName, rest, line)
-    : readMultiTerminal(id, typeName, rest, line);
+  const head: PartHead = { id, type: typeName, written, line };
+  if (type.kind === 'two-terminal') return readTwoTerminal(head, rest);
+  return type.kind === 'one-terminal' ? readOneTerminal(head, rest) : readMultiTerminal(head, rest);
 }
 
 /**
  * `Q1: npn d8 2SC1815` / `U1: opamp c5 +up` の形。
  * 番地のあとに来るのは向きか値。向きは決まった語なので見分けられる。
  */
-function readMultiTerminal(id: string, typeName: string, rest: string[], line: number): Result<PartSpec> {
+function readMultiTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
+  const { id, type, written, line } = head;
+  const shape = `${safeToken(written)} は「種類 番地 [向き] [型番]」で書きます`;
+
   const [atToken, ...extra] = rest;
-  if (atToken === undefined) {
-    return fail(`${safeToken(typeName)} は「種類 番地 [向き] [型番]」で書きます`, line);
-  }
+  if (atToken === undefined) return fail(shape, line);
 
   const at = readAddress(atToken, line);
   if (!at.ok) return at;
@@ -77,23 +92,22 @@ function readMultiTerminal(id: string, typeName: string, rest: string[], line: n
       orientation = token;
       continue;
     }
-    if (value !== null) {
-      return fail(`${safeToken(typeName)} は「種類 番地 [向き] [型番]」で書きます`, line);
-    }
+    if (value !== null) return fail(shape, line);
     if ([...token].length > LIMITS.valueLength) {
       return fail(`値が長すぎます (${LIMITS.valueLength} 文字まで)`, line);
     }
     value = token;
   }
 
-  return ok({ kind: 'multi-terminal', id, type: typeName, at: at.value, value, orientation, line });
+  return ok({ kind: 'multi-terminal', id, type, at: at.value, value, orientation, line });
 }
 
-function readTwoTerminal(id: string, typeName: string, rest: string[], line: number): Result<PartSpec> {
+function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
+  const { id, type, written, line } = head;
   const [fromToken, toToken, value, ...extra] = rest;
 
   if (fromToken === undefined || toToken === undefined || extra.length > 0) {
-    return fail(`${safeToken(typeName)} は「種類 番地 番地 [値]」で書きます`, line);
+    return fail(`${safeToken(written)} は「種類 番地 番地 [値]」で書きます`, line);
   }
 
   const from = readAddress(fromToken, line);
@@ -102,34 +116,27 @@ function readTwoTerminal(id: string, typeName: string, rest: string[], line: num
   if (!to.ok) return to;
 
   if (isSameAddress(from.value, to.value)) {
-    return fail(`${safeToken(typeName)} の両端が同じ番地です (${formatAddress(from.value)})`, line);
+    return fail(`${safeToken(written)} の両端が同じ番地です (${formatAddress(from.value)})`, line);
   }
   if (value !== undefined && [...value].length > LIMITS.valueLength) {
     return fail(`値が長すぎます (${LIMITS.valueLength} 文字まで)`, line);
   }
 
-  return ok({
-    kind: 'two-terminal',
-    id,
-    type: typeName,
-    from: from.value,
-    to: to.value,
-    value: value ?? null,
-    line,
-  });
+  return ok({ kind: 'two-terminal', id, type, from: from.value, to: to.value, value: value ?? null, line });
 }
 
-function readOneTerminal(id: string, typeName: string, rest: string[], line: number): Result<PartSpec> {
+function readOneTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
+  const { id, type, written, line } = head;
   const [atToken, ...extra] = rest;
 
   if (atToken === undefined || extra.length > 0) {
-    return fail(`${safeToken(typeName)} は「種類 番地」で書きます`, line);
+    return fail(`${safeToken(written)} は「種類 番地」で書きます`, line);
   }
 
   const at = readAddress(atToken, line);
   if (!at.ok) return at;
 
-  return ok({ kind: 'one-terminal', id, type: typeName, at: at.value, line });
+  return ok({ kind: 'one-terminal', id, type, at: at.value, line });
 }
 
 /**

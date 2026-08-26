@@ -26,6 +26,27 @@ describe('compileCircuit', () => {
     expect(result.errors[0]?.line).toBe(2);
   });
 
+  test('draws a fence written with abbreviations exactly like the full names', () => {
+    // 略記は書く手数を減らすためだけのもの。図が 1 文字でも違うと約束が崩れる。
+    const short = compileCircuit(
+      lines('parts:', '  IN: port a1', '  R1: r a1 a3 10k', '  C1: c a3 c3 100n', '  G1: gnd c3'),
+    );
+    const full = compileCircuit(
+      lines(
+        'parts:',
+        '  IN: port a1',
+        '  R1: resistor a1 a3 10k',
+        '  C1: capacitor a3 c3 100n',
+        '  G1: ground c3',
+      ),
+    );
+
+    expect(short.errors).toEqual([]);
+    expect(short.tex).toBe(full.tex);
+    // グラウンドは名前で見分けているので、畳み忘れるとここが GND でなくなる。
+    expect(short.netlist?.map((net) => net.name)).toContain('GND');
+  });
+
   test('refuses a value that would break the drawing engine', () => {
     // `,` は circuitikz のオプションの区切りとして読まれる。
     const result = compileCircuit(lines('parts:', '  R1: resistor a1 a3 1,5k'));

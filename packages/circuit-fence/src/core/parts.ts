@@ -317,6 +317,57 @@ export const PART_TYPES = {
 
 export type PartTypeName = keyof typeof PART_TYPES;
 
+/**
+ * 略記 → 正式名。**書く手数を減らすためだけの表**で、読んだ直後に正式名へ畳む
+ * (中間モデルから先には正式名だけが流れる。略記のまま流すと、`ground` や
+ * `opamp` を名前で見分けている先が壊れる)。
+ *
+ * 全部の種類には付けない。SPICE の素子文字と、現場で定着した略語だけに絞る
+ * (70 種類ぶんの略記を覚えるくらいなら、正式名を書いたほうが早い)。
+ * 載せていないもの: `q` (BJT) と `m` (MOSFET) は npn / pnp のどちらか決まらない。
+ * `tr` はトランスともトランジスタとも読める。ロジックゲートや `dip8` は既に短い。
+ */
+export const PART_ALIASES = {
+  // SPICE の素子文字。
+  r: 'resistor',
+  c: 'capacitor',
+  l: 'inductor',
+  d: 'diode',
+  i: 'isource',
+  v: 'vsource',
+
+  // 回路図で通っている略語。
+  ec: 'ecap',
+  pot: 'potentiometer',
+  ldr: 'photoresistor',
+  ntc: 'thermistor-ntc',
+  ptc: 'thermistor-ptc',
+  xtal: 'crystal',
+  scr: 'thyristor',
+  bat: 'battery',
+  sw: 'switch',
+  btn: 'button',
+  gnd: 'ground',
+  op: 'opamp',
+
+  // 電源は綴りではなく、直流 / 交流という回路図の言葉で略す。
+  dc: 'vsource',
+  ac: 'sine',
+} as const satisfies Record<string, PartTypeName>;
+
+type PartAlias = keyof typeof PART_ALIASES;
+
+/**
+ * 書かれた名前を正式名にする。略記も正式名も通し、読めなければ null。
+ * 正式名の一覧 (`partTypeNames`) と書き間違いの候補 (`closestPartType`) は
+ * 略記を含めない。羅列が 2 倍になるうえ、1 文字の略記は何にでも近いので
+ * 「`x` は `r` のことですか?」のような的外れが出る。
+ */
+export function resolvePartTypeName(name: string): PartTypeName | null {
+  if (Object.hasOwn(PART_TYPES, name)) return name as PartTypeName;
+  return Object.hasOwn(PART_ALIASES, name) ? PART_ALIASES[name as PartAlias] : null;
+}
+
 export const partTypeNames = (): readonly string[] => Object.keys(PART_TYPES);
 
 export const lookupPartType = (name: string): PartType | null =>

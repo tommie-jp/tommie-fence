@@ -187,6 +187,29 @@ describe('parseCompactPart の種類', () => {
     expect(partOf('diode a1 a3 1N4148')).toMatchObject({ value: '1N4148' });
   });
 
+  test('reads a part written with its abbreviation', () => {
+    expect(partOf('r a1 a3 10k')).toMatchObject({ kind: 'two-terminal', type: 'resistor', value: '10k' });
+    expect(partOf('ac e5 e7 1', 'V2')).toMatchObject({ type: 'sine', value: '1' });
+  });
+
+  test('records the full name so the rest of the pipeline sees one spelling', () => {
+    // 略記のまま流すと、グラウンドやオペアンプを名前で見分けている先が壊れる。
+    expect(partOf('gnd c3', 'G1')).toMatchObject({ kind: 'one-terminal', type: 'ground' });
+    expect(partOf('op c5 +up', 'U1')).toMatchObject({ kind: 'multi-terminal', type: 'opamp', orientation: '+up' });
+  });
+
+  test('reads a pin on a part written with its abbreviation', () => {
+    expect(partOf('scr d1 d5', 'T1')).toMatchObject({ type: 'thyristor' });
+  });
+
+  test('says what was written when an abbreviated line is wrong', () => {
+    // 書いた行と照らせるよう、畳んだあとの正式名ではなく書いた綴りを出す。
+    const message = messageOf('r a1').message;
+
+    expect(message).toContain('r は');
+    expect(message).not.toContain('resistor');
+  });
+
   test('suggests the type behind a typo instead of listing them all', () => {
     const message = messageOf('resistr a1 a3').message;
 

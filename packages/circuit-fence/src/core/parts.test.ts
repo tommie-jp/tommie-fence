@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { PART_TYPES, closestPartType, lookupPartType, lookupPin, partTypeNames, pinHint } from './parts.ts';
+import {
+  PART_ALIASES, PART_TYPES,
+  closestPartType, lookupPartType, lookupPin, partTypeNames, pinHint, resolvePartTypeName,
+} from './parts.ts';
 
 describe('PART_TYPES', () => {
   test('carries the two terminal parts a schematic is drawn with', () => {
@@ -52,6 +55,47 @@ describe('PART_TYPES', () => {
   test('does not answer for something that is not a type', () => {
     expect(lookupPartType('toString')).toBeNull();
     expect(lookupPartType('__proto__')).toBeNull();
+  });
+});
+
+describe('PART_ALIASES', () => {
+  test('reads an abbreviation as the type it stands for', () => {
+    expect(resolvePartTypeName('r')).toBe('resistor');
+    expect(resolvePartTypeName('l')).toBe('inductor');
+    expect(resolvePartTypeName('gnd')).toBe('ground');
+    // 電源は綴りではなく回路図の言葉で略す (直流 / 交流)。
+    expect(resolvePartTypeName('dc')).toBe('vsource');
+    expect(resolvePartTypeName('ac')).toBe('sine');
+  });
+
+  test('lets a full name through unchanged', () => {
+    expect(resolvePartTypeName('resistor')).toBe('resistor');
+    expect(resolvePartTypeName('thermistor-ntc')).toBe('thermistor-ntc');
+  });
+
+  test('points every abbreviation at a type that exists', () => {
+    for (const [alias, name] of Object.entries(PART_ALIASES)) {
+      expect(lookupPartType(name), alias).not.toBeNull();
+    }
+  });
+
+  test('never shadows a full name', () => {
+    // 同じ綴りが 2 つの意味を持つと、書いたほうも読むほうも当てにできない。
+    for (const alias of Object.keys(PART_ALIASES)) {
+      expect(partTypeNames()).not.toContain(alias);
+    }
+  });
+
+  test('keeps the abbreviations out of the list of types', () => {
+    // 「使えるのは…」の羅列は種類の数だけでも長い。略記まで並べると読めなくなる。
+    expect(partTypeNames()).not.toContain('r');
+    expect(partTypeNames()).toContain('resistor');
+  });
+
+  test('does not answer for something that is not a type', () => {
+    expect(resolvePartTypeName('toString')).toBeNull();
+    expect(resolvePartTypeName('__proto__')).toBeNull();
+    expect(resolvePartTypeName('relay')).toBeNull();
   });
 });
 

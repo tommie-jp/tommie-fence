@@ -207,6 +207,30 @@ style:
 
 ![1 端子の記号](../examples/out/02-parts-3.png)
 
+### 略記
+
+よく書く種類には短い名前がある。正式名と**同じ意味**で、
+`R1: r a1 a3 10k` は `R1: resistor a1 a3 10k` と 1 文字も違わない図になる。
+図・ネットリスト・エラーに出るのは**正式名のほう**。
+
+| 略記 | 種類 | 略記 | 種類 |
+| --- | --- | --- | --- |
+| `r` | `resistor` | `ec` | `ecap` |
+| `c` | `capacitor` | `pot` | `potentiometer` |
+| `l` | `inductor` | `ldr` | `photoresistor` |
+| `d` | `diode` | `ntc` | `thermistor-ntc` |
+| `i` | `isource` | `ptc` | `thermistor-ptc` |
+| `v` | `vsource` | `xtal` | `crystal` |
+| `dc` | `vsource` | `scr` | `thyristor` |
+| `ac` | `sine` | `bat` | `battery` |
+| `gnd` | `ground` | `sw` | `switch` |
+| `op` | `opamp` | `btn` | `button` |
+
+**全部の種類にはない**。SPICE の素子文字 (`r` `c` `l` `d` `i` `v`) と、
+回路図で通っている略語だけにしてある。`and` や `dip8` のように元から短いもの、
+`q` (npn か pnp か決まらない) のように**指すものが 1 つに決まらないもの**は
+略記を持たない。
+
 ### ID の出方
 
 先頭 1 文字が本体、残りが添字になる (回路図の慣習どおり)。
