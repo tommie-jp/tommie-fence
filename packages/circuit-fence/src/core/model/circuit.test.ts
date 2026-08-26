@@ -491,3 +491,103 @@ describe('フェンスの書き出し (source)', () => {
     expect(circuit.parts).toHaveLength(1);
   });
 });
+
+describe('指し棒 (arrow) の指し先', () => {
+  test('keeps an arrow whose ends both point at something', () => {
+    const { circuit, errors } = build('parts:', '  R1: resistor a1 a3', 'notes:', '  - arrow b5 R1');
+
+    expect(errors).toEqual([]);
+    expect(circuit.notes).toHaveLength(1);
+  });
+
+  test('drops an arrow whose start points at nothing and says which line', () => {
+    const { circuit, errors } = build('parts:', '  R1: resistor a1 a3', 'notes:', '  - arrow Rload R1');
+
+    expect(circuit.notes).toEqual([]);
+    expect(errors[0]?.message).toContain('注釈の指す先');
+    expect(errors[0]?.line).toBe(4);
+  });
+
+  test('drops an arrow whose end points at nothing', () => {
+    const { circuit, errors } = build('parts:', '  R1: resistor a1 a3', 'notes:', '  - arrow R1 Rload');
+
+    expect(circuit.notes).toEqual([]);
+    expect(errors[0]?.message).toContain('注釈の指す先');
+  });
+
+  // 長さ 0 の矢印は向きが決まらない (どちらを向けても嘘になる)。
+  test('drops an arrow that starts and ends at the same part', () => {
+    const { circuit, errors } = build('parts:', '  R1: resistor a1 a3', 'notes:', '  - arrow R1 R1');
+
+    expect(circuit.notes).toEqual([]);
+    expect(errors[0]?.message).toContain('起点と終点が同じ');
+    expect(errors[0]?.line).toBe(4);
+  });
+
+  // 番地は大小どちらでも書けるので、`a1` と `A1` は同じところを指す。
+  test('drops an arrow whose ends are the same cell written differently', () => {
+    const { circuit, errors } = build('parts:', '  R1: resistor a1 a3', 'notes:', '  - arrow b2 B2');
+
+    expect(circuit.notes).toEqual([]);
+    expect(errors[0]?.message).toContain('起点と終点が同じ');
+  });
+
+  // 部品 ID と番地は書き方が違うだけで、同じ 1 点を指すことがある。
+  // 字の見た目で比べると、この長さ 0 の矢印がすり抜ける。
+  test('drops an arrow whose part and cell ends are the same place', () => {
+    const { circuit, errors } = build(
+      'parts:',
+      '  G1: ground c3',
+      'notes:',
+      '  - arrow G1 c3',
+    );
+
+    expect(circuit.notes).toEqual([]);
+    expect(errors[0]?.message).toContain('起点と終点が同じ');
+  });
+
+  test('drops an arrow between two parts that sit on the same cell', () => {
+    const { circuit, errors } = build(
+      'parts:',
+      '  G1: ground c3',
+      '  IN: port c3',
+      'notes:',
+      '  - arrow G1 IN',
+    );
+
+    expect(circuit.notes).toEqual([]);
+    expect(errors.some((error) => error.message.includes('起点と終点が同じ'))).toBe(true);
+  });
+
+  // 2 端子部品が指すのは記号の真ん中。その真ん中に当たる番地とは同じところ。
+  test('drops an arrow from a two terminal part to the cell at its middle', () => {
+    const { circuit, errors } = build(
+      'parts:',
+      '  R1: resistor a1 a3',
+      'notes:',
+      '  - arrow R1 a2',
+    );
+
+    expect(circuit.notes).toEqual([]);
+    expect(errors[0]?.message).toContain('起点と終点が同じ');
+  });
+
+  test('keeps an arrow from a part to a cell that is somewhere else', () => {
+    const { circuit, errors } = build(
+      'parts:',
+      '  R1: resistor a1 a3',
+      'notes:',
+      '  - arrow R1 c2',
+    );
+
+    expect(errors).toEqual([]);
+    expect(circuit.notes).toHaveLength(1);
+  });
+
+  test('keeps a box, whose corners need not point at a part', () => {
+    const { circuit, errors } = build('parts:', '  R1: resistor a1 a3', 'notes:', '  - box a1 c3');
+
+    expect(errors).toEqual([]);
+    expect(circuit.notes).toHaveLength(1);
+  });
+});

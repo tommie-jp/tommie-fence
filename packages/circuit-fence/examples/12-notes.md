@@ -80,3 +80,76 @@ notes:
 style:
   grid: on
 ```
+
+## 字の大きさ
+
+`- text 番地 大きさ: 文字` と書くと、字の大きさを 5 段から選べる。
+書かなければ普通の大きさ。
+
+```circuit
+parts:
+  R1: resistor a1 a3 10k
+notes:
+  - text b1 tiny: tiny (極小)
+  - text c1 small: small (小)
+  - text d1: 書かなければ普通
+  - text e1 large: large (大)
+  - text f1 huge: huge (極大)
+style:
+  grid: on
+  grid-to: f4
+```
+
+pt の直接指定は書けない。色と同じで、**実機に通した指定だけ**を名前で引く
+(プレビューの TeX はフォントが無いと例外ではなくプロセスごと落ちる)。
+
+## 寄せと太字
+
+`left` / `center` / `right` で、番地を字のどこにするかを決める。
+書かなければ `left` で、番地が字の左端になる。`bold` は太字。
+
+```circuit
+parts:
+  R1: resistor a1 a5 10k
+notes:
+  - circle c3
+  - text c3 left: left (番地が左端)
+  - circle e3
+  - text e3 center: center (番地が真ん中)
+  - circle g3
+  - text g3 right: right (番地が右端)
+  - text i3 bold: bold で太字になる
+style:
+  grid: on
+  grid-to: i6
+```
+
+色・大きさ・寄せ・太字は**どの順に書いてもよい**。
+`- text b1 bold blue huge: …` も `- text b1 huge bold blue: …` も同じ。
+
+## 枠 (`box`) と指し棒 (`arrow`)
+
+`- box 番地 番地 [色]` は 2 つの番地を対角にした枠を引く。
+`- arrow 起点 終点 [色]` は指し棒で、両端とも**部品 ID か番地**。
+
+```circuit
+parts:
+  IN:  port a1
+  R1:  resistor a1 a3 10k
+  C1:  capacitor a3 c3 100n
+  OUT: port a4
+  G1:  ground c3
+wires:
+  - a3 -- a4
+notes:
+  - box a1 c3 blue
+  - text a6 blue: box a1 c3 blue
+  - arrow c6 R1
+  - text c7 red: arrow c6 R1
+style:
+  grid: on
+  grid-to: c8
+```
+
+部品を指した指し棒は、印 (`circle`) と同じ丸の縁で止まる。
+真ん中まで伸ばすと、先端が記号の下に隠れて何を指しているか分からなくなるため。

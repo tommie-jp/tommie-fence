@@ -249,7 +249,7 @@ describe('parseNoteLine', () => {
   });
 
   test('turns down an unknown kind of note', () => {
-    expect(noteProblem('arrow R1 to b3').message).toContain('注釈の種類');
+    expect(noteProblem('star R1 b3').message).toContain('注釈の種類');
   });
 
   test('shows how to write text when it is written as a plain line', () => {
@@ -263,6 +263,74 @@ describe('parseNoteLine', () => {
   test('turns down a line with more than a target and a colour', () => {
     expect(noteProblem('circle R1 red blue').message).toContain('circle は');
   });
+
+  // 印には字が無いので、字の言葉 (大きさ・寄せ・太字) を書いても効かない。
+  // 黙って捨てず、書ける言葉を伝える。
+  test('turns down a word that only text can take', () => {
+    expect(noteProblem('circle R1 huge').message).toContain('circle は');
+  });
+});
+
+describe('parseNoteLine の box', () => {
+  test('reads a box drawn around a range of cells', () => {
+    expect(noteOf('box a1 c3')).toEqual({
+      kind: 'box',
+      from: { row: 0, col: 0 },
+      to: { row: 2, col: 2 },
+      color: 'red',
+      line: 2,
+    });
+  });
+
+  test('reads the colour when it is written', () => {
+    expect(noteOf('box a1 c3 blue')).toMatchObject({ color: 'blue' });
+  });
+
+  // 1 マスだけを囲むのは書き間違いではない (そこを目立たせたいということ)。
+  test('takes the same cell twice as a box around one cell', () => {
+    expect(noteOf('box b2 b2')).toMatchObject({ from: { row: 1, col: 1 }, to: { row: 1, col: 1 } });
+  });
+
+  // 角に書けるのは番地だけ。`R1` のように番地としても読める ID は番地になる
+  // (印と同じ決まり。字の注釈もそうしている)。
+  test('turns down a corner that could not be a cell', () => {
+    expect(noteProblem('box U1.out c3').message).toContain('番地の形');
+  });
+
+  test('turns down a box with only one corner', () => {
+    expect(noteProblem('box a1').message).toContain('box は');
+  });
+
+  test('turns down a colour outside the palette', () => {
+    expect(noteProblem('box a1 c3 rainbow').message).toContain('注釈の色');
+  });
+});
+
+describe('parseNoteLine の arrow', () => {
+  test('reads an arrow drawn between two targets', () => {
+    expect(noteOf('arrow a5 R1')).toEqual({ kind: 'arrow', from: 'a5', to: 'R1', color: 'red', line: 2 });
+  });
+
+  // 起点も終点も、印と同じく部品 ID か番地。どちらかは circuit.ts が決める。
+  test('leaves both ends as written', () => {
+    expect(noteOf('arrow C1 b3')).toMatchObject({ from: 'C1', to: 'b3' });
+  });
+
+  test('reads the colour when it is written', () => {
+    expect(noteOf('arrow a5 R1 green')).toMatchObject({ color: 'green' });
+  });
+
+  test('turns down an arrow with only one end', () => {
+    expect(noteProblem('arrow R1').message).toContain('arrow は');
+  });
+
+  test('turns down an end that could be neither an id nor a cell', () => {
+    expect(noteProblem('arrow U1.out R1').message).toContain('部品 ID にも番地にも');
+  });
+
+  test('turns down a colour outside the palette', () => {
+    expect(noteProblem('arrow a5 R1 rainbow').message).toContain('注釈の色');
+  });
 });
 
 describe('parseNoteText', () => {
@@ -272,6 +340,9 @@ describe('parseNoteText', () => {
       at: { row: 1, col: 0 },
       text: 'ここで分圧する',
       color: null,
+      size: 'normal',
+      align: 'left',
+      bold: false,
       line: 2,
     });
   });
@@ -310,22 +381,108 @@ describe('parseNoteText', () => {
   test('shows how to write a circle when it is written with text', () => {
     expect(textNoteProblem('circle R1', 'ここ').message).toContain('circle は');
   });
+
+  // 表を素の `[名前]` で引くと、Object.prototype にある名前が当たってしまう。
+  // 書き方でない値を、そのまま図の下の帯に出すことになる。
+  test('treats a name from Object.prototype as an unknown kind', () => {
+    const message = textNoteProblem('toString a1', 'ここ').message;
+
+    expect(message).toContain('知りません');
+    expect(message).not.toContain('native code');
+  });
+
+  // `- box a1: c3` は YAML がマップとして読む。知っている種類なのに
+  // 「種類を知りません」と返すと、直す場所が分からない。
+  test('shows how to write the other kinds when they are written with text', () => {
+    for (const kind of ['box', 'arrow', 'source']) {
+      const message = textNoteProblem(`${kind} a1`, 'c3').message;
+
+      expect(message).toContain(`${kind} は`);
+      expect(message).not.toContain('知りません');
+    }
+  });
+});
+
+describe('parseNoteText の見た目', () => {
+  test('reads the size when it is written', () => {
+    expect(textNoteOf('text b1 huge', 'ここ')).toMatchObject({ size: 'huge' });
+  });
+
+  test('reads the alignment when it is written', () => {
+    expect(textNoteOf('text b1 right', 'ここ')).toMatchObject({ align: 'right' });
+  });
+
+  test('reads bold when it is written', () => {
+    expect(textNoteOf('text b1 bold', 'ここ')).toMatchObject({ bold: true });
+  });
+
+  // 語ごとに読む場所を決めていないので、書いた順に縛られない。
+  test('takes the words in any order', () => {
+    const written = textNoteOf('text b1 bold center blue tiny', 'ここ');
+    const reordered = textNoteOf('text b1 tiny blue center bold', 'ここ');
+
+    expect(written).toEqual(reordered);
+    expect(written).toMatchObject({ color: 'blue', size: 'tiny', align: 'center', bold: true });
+  });
+
+  test('turns down a word that is neither a colour nor a look', () => {
+    expect(textNoteProblem('text b1 enormous', 'ここ').message).toContain('注釈の言葉');
+  });
+
+  // 二重に書かれたら、後に書いたほうが黙って勝つのではなく理由を返す。
+  test('turns down a size written twice', () => {
+    expect(textNoteProblem('text b1 tiny huge', 'ここ').message).toContain('二重');
+  });
+
+  test('turns down a colour written twice', () => {
+    expect(textNoteProblem('text b1 red blue', 'ここ').message).toContain('二重');
+  });
+
+  test('turns down an alignment written twice', () => {
+    expect(textNoteProblem('text b1 left right', 'ここ').message).toContain('二重');
+  });
+
+  test('turns down bold written twice', () => {
+    expect(textNoteProblem('text b1 bold bold', 'ここ').message).toContain('二重');
+  });
+
+  test('names the words that can be written', () => {
+    const message = textNoteProblem('text b1 enormous', 'ここ').message;
+
+    expect(message).toContain('huge');
+    expect(message).toContain('center');
+    expect(message).toContain('bold');
+    expect(message).toContain('blue');
+  });
 });
 
 describe('parseNoteLine の source', () => {
   test('reads a note that writes the fence out', () => {
-    expect(noteOf('source a6')).toEqual({ kind: 'source', at: { row: 0, col: 5 }, color: null, line: 2 });
+    expect(noteOf('source a6')).toEqual({
+      kind: 'source',
+      at: { row: 0, col: 5 },
+      color: null,
+      size: 'normal',
+      align: 'left',
+      bold: false,
+      line: 2,
+    });
   });
 
   test('reads the colour when it is written', () => {
     expect(noteOf('source a6 blue')).toMatchObject({ color: 'blue' });
   });
 
+  // 書き出しは長くなりがちなので、小さく組めることに実利がある。
+  test('takes the same looks the text notes take', () => {
+    expect(noteOf('source a6 tiny bold')).toMatchObject({ size: 'tiny', bold: true });
+  });
+
   test('turns down a place that is not a cell', () => {
     expect(noteProblem('source z0').message).toContain('番地の形');
   });
 
-  test('turns down a line with more than a place and a colour', () => {
-    expect(noteProblem('source a6 blue extra').message).toContain('source は');
+  test('turns down a word that is neither a colour nor a look', () => {
+    expect(noteProblem('source a6 blue extra').message).toContain('注釈の言葉');
   });
 });

@@ -1,0 +1,33 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\foreach \x in {0,2,4,6} {\foreach \y in {0,-2,-4,-6,-8,-10} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
+\coordinate (a1) at (0,0);
+\coordinate (a3) at (4,0);
+\draw (a1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (a3); % line 2
+\path (0,-2.247) rectangle (1.111,-1.753); % line 4
+\node[anchor=west, inner sep=0, circuitnotemark, font=\tiny] at (0,-2) {X}; % line 4
+\path (0,-4.346) rectangle (1.445,-3.654); % line 5
+\node[anchor=west, inner sep=0, circuitnotemark, font=\scriptsize] at (0,-4) {X}; % line 5
+\path (0,-6.395) rectangle (2.371,-5.605); % line 6
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (0,-6) {X}; % line 6
+\path (0,-8.593) rectangle (2.476,-7.407); % line 7
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-8) {X}; % line 7
+\path (0,-10.853) rectangle (3.84,-9.147); % line 8
+\node[anchor=west, inner sep=0, circuitnotemark, font=\LARGE] at (0,-10) {X}; % line 8
+\end{circuitikz}
+\end{document}

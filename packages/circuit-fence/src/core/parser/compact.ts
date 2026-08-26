@@ -1,11 +1,15 @@
-import { fail, ok, safeToken } from '../errors.ts';
+import { fail, fenceError, ok, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
 import { formatAddress, isSameAddress, parseAddress } from '../model/address.ts';
 import type { Address, WireOperator } from '../model/address.ts';
-import { NOTE_COLOR_NAMES, noteColor } from '../notes.ts';
+import {
+  DEFAULT_NOTE_ALIGN, DEFAULT_NOTE_SIZE, NOTE_ALIGNS, NOTE_COLOR_NAMES, NOTE_SIZE_NAMES,
+  isNoteAlign, isNoteSize, noteColor,
+} from '../notes.ts';
+import type { NoteAlign, NoteSize } from '../notes.ts';
 import { closestPartType, lookupPartType, partTypeNames } from '../parts.ts';
 import { isNoteDrawable } from '../tex/escape.ts';
-import type { Endpoint, NoteSpec, PartSpec, Result, WireSpec } from '../types.ts';
+import type { Endpoint, FenceError, NoteSpec, NoteTextStyle, PartSpec, Result, WireSpec } from '../types.ts';
 
 /** 配線の演算子。TikZ と同じ 3 つだけ (学習コストを増やさない)。 */
 const WIRE_OPERATOR = /\s*(--|-\||\|-)\s*/;
@@ -172,11 +176,14 @@ function readEndpoint(token: string, line: number): Result<Endpoint> {
   return address.ok ? ok({ kind: 'cell', address: address.value }) : address;
 }
 
-/** 注釈の種類。印 (`circle`) と字 (`text`) の 2 つだけ。 */
-const NOTE_KINDS = ['circle', 'text', 'source'] as const;
+/** 注釈の種類。図に重ねる印 3 つと、字を置くもの 2 つ。 */
+const NOTE_KINDS = ['circle', 'box', 'arrow', 'text', 'source'] as const;
 
 /** 印の既定の色。目立たせるために書くものなので、書かなければ赤。 */
-const DEFAULT_CIRCLE_COLOR = 'red';
+const DEFAULT_MARK_COLOR = 'red';
+
+/** 太字にする語。大きさや寄せと違って 1 語しかないので、表を持たない。 */
+const BOLD_WORD = 'bold';
 
 /** 注釈の字に使える字。escape.ts の関門と対にして書く (片方だけ増やさない)。 */
 const NOTE_CHARSET = '英数字と . + - / ( ) _ % : 、日本語、µ Ω °';
@@ -186,16 +193,77 @@ const NOTE_CHARSET = '英数字と . + - / ( ) _ % : 、日本語、µ Ω °';
  * YAML のプレーンスカラーに `: ` を書けないため (`- text b1 "R1: resistor"` は
  * 黙ってマップになり、エラーにもならない)。値にすれば引用は YAML の仕事になる。
  */
-const TEXT_FORM = '「- text 番地 [色]: 文字」';
+const TEXT_FORM = '「- text 番地 [色や大きさ]: 文字」';
 const CIRCLE_FORM = '「- circle 部品IDか番地 [色]」';
-const SOURCE_FORM = '「- source 番地 [色]」';
+const BOX_FORM = '「- box 番地 番地 [色]」';
+const ARROW_FORM = '「- arrow 起点 終点 [色]」';
+const SOURCE_FORM = '「- source 番地 [色や大きさ]」';
+
+/** 字を持たない注釈の書き方。`:` を書いてしまった人に、正しい形を返すのに使う。 */
+const LINE_FORMS: Readonly<Record<string, string>> = {
+  circle: CIRCLE_FORM,
+  box: BOX_FORM,
+  arrow: ARROW_FORM,
+  source: SOURCE_FORM,
+};
+
+/**
+ * その種類の書き方。**自分の持ちものだけ**を見る。素の `[名前]` で引くと
+ * `toString` のような Object.prototype の名前が当たり、書き方でない値を
+ * そのまま図の下の帯に出してしまう。
+ */
+const lineFormOf = (kind: string): string | null =>
+  Object.hasOwn(LINE_FORMS, kind) ? (LINE_FORMS[kind] ?? null) : null;
 
 const noteKindList = (): string => NOTE_KINDS.join(' / ');
+
+/** 字に添えられる語ぜんぶ。知らない語を返すときの案内に使う。 */
+const wordHint = (): string =>
+  `色: ${NOTE_COLOR_NAMES.join(' / ')}、` +
+  `大きさ: ${NOTE_SIZE_NAMES.join(' / ')}、` +
+  `寄せ: ${NOTE_ALIGNS.join(' / ')}、太字: ${BOLD_WORD}`;
 
 const readNoteColor = (token: string, line: number): Result<string> =>
   noteColor(token) === null
     ? fail(`注釈の色 ${safeToken(token)} は知りません (${NOTE_COLOR_NAMES.join(' / ')} が使えます)`, line)
     : ok(token);
+
+const writtenTwice = (what: string, first: string, second: string, line: number): FenceError =>
+  fenceError(`注釈の${what}が二重に書かれています (${safeToken(first)} と ${safeToken(second)})`, line);
+
+/**
+ * 字に添えられた語を読む。**語ごとに読む場所を決めない**ので、
+ * 色・大きさ・寄せ・太字をどの順に書いてもよい (書き手が順を覚えなくて済む)。
+ *
+ * 二重に書かれたら理由を返す。後に書いたほうを黙って勝たせると、
+ * 直したつもりの指定が効かない図が出る (約束 5)。
+ */
+function readTextStyle(tokens: readonly string[], line: number): Result<NoteTextStyle> {
+  let color: string | null = null;
+  let size: NoteSize | null = null;
+  let align: NoteAlign | null = null;
+  let bold = false;
+
+  for (const token of tokens) {
+    if (noteColor(token) !== null) {
+      if (color !== null) return { ok: false, error: writtenTwice('色', color, token, line) };
+      color = token;
+    } else if (isNoteSize(token)) {
+      if (size !== null) return { ok: false, error: writtenTwice('大きさ', size, token, line) };
+      size = token;
+    } else if (isNoteAlign(token)) {
+      if (align !== null) return { ok: false, error: writtenTwice('寄せ', align, token, line) };
+      align = token;
+    } else if (token === BOLD_WORD) {
+      if (bold) return { ok: false, error: writtenTwice('太字', BOLD_WORD, token, line) };
+      bold = true;
+    } else {
+      return fail(`注釈の言葉 ${safeToken(token)} は知りません (${wordHint()} が使えます)`, line);
+    }
+  }
+
+  return ok({ color, size: size ?? DEFAULT_NOTE_SIZE, align: align ?? DEFAULT_NOTE_ALIGN, bold });
+}
 
 /**
  * `circle R1 red` の 1 行を読む (`notes:` に文字列で並べた項目)。
@@ -207,41 +275,90 @@ export function parseNoteLine(text: string, line: number): Result<NoteSpec> {
 
   if (kind === undefined) return fail(`注釈の種類がありません (${noteKindList()} が使えます)`, line);
   if (kind === 'text') return fail(`text は ${TEXT_FORM} で書きます (文字は YAML の値にします)`, line);
-  if (kind !== 'circle' && kind !== 'source') {
-    return fail(`注釈の種類 ${safeToken(kind)} は知りません (${noteKindList()} が使えます)`, line);
+
+  switch (kind) {
+    case 'circle':
+      return readCircleNote(rest, line);
+    case 'box':
+      return readBoxNote(rest, line);
+    case 'arrow':
+      return readArrowNote(rest, line);
+    case 'source':
+      return readSourceNote(rest, line);
+    default:
+      return fail(`注釈の種類 ${safeToken(kind)} は知りません (${noteKindList()} が使えます)`, line);
   }
+}
 
-  if (kind === 'source') return readSourceNote(rest, line);
+/** 印に書けるのは指し先と色だけ。字の言葉を書いても効かないので、形を示して返す。 */
+function readMarkColor(token: string | undefined, form: string, line: number): Result<string> {
+  if (token === undefined) return ok(DEFAULT_MARK_COLOR);
+  if (isNoteSize(token) || isNoteAlign(token) || token === BOLD_WORD) {
+    return fail(`${form} で書きます (${safeToken(token)} は字の注釈にだけ書けます)`, line);
+  }
+  return readNoteColor(token, line);
+}
 
+function readCircleNote(rest: readonly string[], line: number): Result<NoteSpec> {
   const [target, colorToken, ...extra] = rest;
   if (target === undefined || extra.length > 0) return fail(`circle は ${CIRCLE_FORM} で書きます`, line);
-  if (!isReferenceable(target)) {
-    return fail(
-      `${safeToken(target)} は部品 ID にも番地にもなりません (英数字と _ - だけの ${LIMITS.idLength} 文字まで)`,
-      line,
-    );
-  }
+  if (!isReferenceable(target)) return fail(notReferenceable(target), line);
 
-  const color = colorToken === undefined ? ok(DEFAULT_CIRCLE_COLOR) : readNoteColor(colorToken, line);
-  if (!color.ok) return color;
-
-  return ok({ kind: 'circle', target, color: color.value, line });
+  const color = readMarkColor(colorToken, `circle は ${CIRCLE_FORM}`, line);
+  return color.ok ? ok({ kind: 'circle', target, color: color.value, line }) : color;
 }
 
 /**
- * `source a6 blue` を読む。中身はフェンス自身から作るので、ここでは場所と色だけ。
+ * `box a1 c3 blue` を読む。2 つの番地が枠の対角になる。
+ * 同じ番地を 2 回書くのは書き間違いではない (1 マスだけを囲むということ)。
  */
-function readSourceNote(rest: string[], line: number): Result<NoteSpec> {
-  const [atToken, colorToken, ...extra] = rest;
-  if (atToken === undefined || extra.length > 0) return fail(`source は ${SOURCE_FORM} で書きます`, line);
+function readBoxNote(rest: readonly string[], line: number): Result<NoteSpec> {
+  const [fromToken, toToken, colorToken, ...extra] = rest;
+  if (fromToken === undefined || toToken === undefined || extra.length > 0) {
+    return fail(`box は ${BOX_FORM} で書きます`, line);
+  }
+
+  const from = readAddress(fromToken, line);
+  if (!from.ok) return from;
+  const to = readAddress(toToken, line);
+  if (!to.ok) return to;
+
+  const color = readMarkColor(colorToken, `box は ${BOX_FORM}`, line);
+  return color.ok ? ok({ kind: 'box', from: from.value, to: to.value, color: color.value, line }) : color;
+}
+
+/**
+ * `arrow a5 R1 blue` を読む。両端とも部品 ID か番地で、
+ * どちらかはここでは決めない (印と同じ扱い)。
+ */
+function readArrowNote(rest: readonly string[], line: number): Result<NoteSpec> {
+  const [fromToken, toToken, colorToken, ...extra] = rest;
+  if (fromToken === undefined || toToken === undefined || extra.length > 0) {
+    return fail(`arrow は ${ARROW_FORM} で書きます`, line);
+  }
+  if (!isReferenceable(fromToken)) return fail(notReferenceable(fromToken), line);
+  if (!isReferenceable(toToken)) return fail(notReferenceable(toToken), line);
+
+  const color = readMarkColor(colorToken, `arrow は ${ARROW_FORM}`, line);
+  return color.ok ? ok({ kind: 'arrow', from: fromToken, to: toToken, color: color.value, line }) : color;
+}
+
+const notReferenceable = (token: string): string =>
+  `${safeToken(token)} は部品 ID にも番地にもなりません (英数字と _ - だけの ${LIMITS.idLength} 文字まで)`;
+
+/**
+ * `source a6 blue tiny` を読む。中身はフェンス自身から作るので、
+ * ここでは場所と見た目だけ。見た目の言葉は字の注釈と同じものが使える。
+ */
+function readSourceNote(rest: readonly string[], line: number): Result<NoteSpec> {
+  const [atToken, ...words] = rest;
+  if (atToken === undefined) return fail(`source は ${SOURCE_FORM} で書きます`, line);
 
   const at = readAddress(atToken, line);
   if (!at.ok) return at;
 
-  const color: Result<string | null> = colorToken === undefined ? ok(null) : readNoteColor(colorToken, line);
-  if (!color.ok) return color;
-
-  return ok({ kind: 'source', at: at.value, color: color.value, line });
+  const style = readTextStyle(words, line);
+  return style.ok ? ok({ kind: 'source', at: at.value, ...style.value, line }) : style;
 }
 
 /**
@@ -250,14 +367,17 @@ function readSourceNote(rest: string[], line: number): Result<NoteSpec> {
  */
 export function parseNoteText(head: string, body: string, line: number): Result<NoteSpec> {
   const tokens = head.trim().split(/\s+/).filter((token) => token.length > 0);
-  const [kind, atToken, colorToken, ...extra] = tokens;
+  const [kind, atToken, ...words] = tokens;
 
   if (kind !== 'text') {
-    return kind === 'circle'
-      ? fail(`circle は ${CIRCLE_FORM} の 1 行で書きます (文字は付きません)`, line)
-      : fail(`注釈の種類 ${safeToken(kind ?? '')} は知りません (${noteKindList()} が使えます)`, line);
+    // `- box a1: c3` は YAML がマップとして読む。知っている種類なのに
+    // 「種類を知りません」と返すと、直すのは種類ではないのに種類を疑わせる。
+    const form = kind === undefined ? null : lineFormOf(kind);
+    return form === null
+      ? fail(`注釈の種類 ${safeToken(kind ?? '')} は知りません (${noteKindList()} が使えます)`, line)
+      : fail(`${kind} は ${form} の 1 行で書きます (文字は付きません)`, line);
   }
-  if (atToken === undefined || extra.length > 0) return fail(`text は ${TEXT_FORM} で書きます`, line);
+  if (atToken === undefined) return fail(`text は ${TEXT_FORM} で書きます`, line);
 
   const at = readAddress(atToken, line);
   if (!at.ok) return at;
@@ -270,8 +390,6 @@ export function parseNoteText(head: string, body: string, line: number): Result<
     return fail(`注釈の文字に使えない文字があります (${NOTE_CHARSET} が使えます)`, line);
   }
 
-  const color: Result<string | null> = colorToken === undefined ? ok(null) : readNoteColor(colorToken, line);
-  if (!color.ok) return color;
-
-  return ok({ kind: 'text', at: at.value, text: body, color: color.value, line });
+  const style = readTextStyle(words, line);
+  return style.ok ? ok({ kind: 'text', at: at.value, text: body, ...style.value, line }) : style;
 }

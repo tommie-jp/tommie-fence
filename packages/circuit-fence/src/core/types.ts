@@ -2,6 +2,7 @@
 
 import { formatAddress } from './model/address.ts';
 import type { Address, WireOperator } from './model/address.ts';
+import type { NoteAlign, NoteSize } from './notes.ts';
 
 /**
  * 読めなかったところ 1 件。line は元の YAML の行 (1 始まり)。
@@ -161,15 +162,57 @@ export type CircleNote = {
   readonly line: number;
 };
 
-/** 図に重ねる字 1 つ。番地を左端にして右へ書く。 */
+/**
+ * 図の一角を囲む枠 1 つ。2 つの番地が枠の対角になる。
+ *
+ * 丸 (`circle`) と違って**指せるのは番地だけ**。部品を指せるようにすると、
+ * 記号がどこまで広がっているかを知らないと枠を決められない
+ * (2 端子部品は番地の間隔とは別の長さで描かれる)。
+ */
+export type BoxNote = {
+  readonly kind: 'box';
+  readonly from: Address;
+  readonly to: Address;
+  /** パレットの色の名前。書かなかったときは既定の色が入る。 */
+  readonly color: string;
+  readonly line: number;
+};
+
+/**
+ * 図に重ねる指し棒 1 つ。起点から終点へ矢印を引く。
+ * 両端とも、丸と同じく部品 ID か番地 (どちらかは model/circuit.ts が決める)。
+ */
+export type ArrowNote = {
+  readonly kind: 'arrow';
+  readonly from: string;
+  readonly to: string;
+  /** パレットの色の名前。書かなかったときは既定の色が入る。 */
+  readonly color: string;
+  readonly line: number;
+};
+
+/**
+ * 図に出る字の見た目。`text` と `source` で**同じ言葉が使える**
+ * (どちらも図に字を置く注釈なので、覚えることを 2 通りにしない)。
+ *
+ * 色だけが null を持つ。書かなかったときの「図のほかの文字と同じ色」は
+ * パレットのどの色とも違うため。大きさ・寄せ・太字は書かなかったときの値が
+ * そのまま表にあるので、ここまで来たら必ず決まっている。
+ */
+export type NoteTextStyle = {
+  readonly color: string | null;
+  readonly size: NoteSize;
+  readonly align: NoteAlign;
+  readonly bold: boolean;
+};
+
+/** 図に重ねる字 1 つ。番地を字のどこにするかは寄せで決まる。 */
 export type TextNote = {
   readonly kind: 'text';
   readonly at: Address;
   readonly text: string;
-  /** null は色を書かなかったということ (図のほかの文字と同じ色で出る)。 */
-  readonly color: string | null;
   readonly line: number;
-};
+} & NoteTextStyle;
 
 /**
  * 元のフェンスをそのまま図に書き出す注釈。
@@ -181,11 +224,10 @@ export type TextNote = {
 export type SourceNote = {
   readonly kind: 'source';
   readonly at: Address;
-  readonly color: string | null;
   readonly line: number;
-};
+} & NoteTextStyle;
 
-export type NoteSpec = CircleNote | TextNote | SourceNote;
+export type NoteSpec = CircleNote | TextNote | SourceNote | BoxNote | ArrowNote;
 
 /**
  * 描き上がった SVG に差し込む字 1 つ。書いた順に、TeX が置いた目印へ当てる。
@@ -196,4 +238,14 @@ export type NoteOverlay = {
   readonly color: string;
   /** 等幅で組んで字下げを保つか (元のフェンスの書き出しだけが true)。 */
   readonly mono: boolean;
+  /**
+   * 太字で組むか。TeX は太さを**フォントの名前**で表す (`cmbx8`) が、
+   * 差し込むときにフォントごと入れ替えるのでその指定は消える。持ち直す。
+   */
+  readonly bold: boolean;
+  /**
+   * 番地を字のどこにするか。目印は 1 文字で本物の字とは幅が違うので、
+   * 寄せは TeX では決められない (差し込むときに SVG の側で寄せる)。
+   */
+  readonly align: NoteAlign;
 };

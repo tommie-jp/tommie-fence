@@ -7,7 +7,7 @@ import type { FenceDocument } from '../parser/parseFence.ts';
 import { isDrawable, isSourceDrawable } from '../tex/escape.ts';
 import { cellOf, nameOfEndpoint } from '../types.ts';
 import type {
-  Endpoint, FenceError, MultiTerminalPart, NoteSpec, PartSpec, TexTarget, WireSpec,
+  ArrowNote, Endpoint, FenceError, MultiTerminalPart, NoteSpec, PartSpec, TexTarget, WireSpec,
 } from '../types.ts';
 
 /** 検証を通った図。ここから先 (ネットリスト導出・TeX 生成) は形を疑わない。 */
@@ -42,6 +42,22 @@ export function resolveNoteTarget(
 
   const address = parseAddress(target);
   return address === null ? null : { kind: 'cell', address };
+}
+
+/**
+ * 注釈の指し先が図のどこに当たるか。**番地の目盛りで**返す (cm ではない)。
+ * 2 端子部品は記号の真ん中なので、両端の間の値になることがある。
+ *
+ * 部品 ID と番地は書き方が違うだけで同じ 1 点を指せる (`ground c3` と `c3`)。
+ * 書かれた字ではなくここで比べないと、長さ 0 の指し棒がすり抜ける。
+ */
+export function noteAnchorCell(anchor: NoteAnchor): Address {
+  if (anchor.kind === 'cell') return anchor.address;
+
+  const { part } = anchor;
+  if (part.kind !== 'two-terminal') return part.at;
+
+  return { row: (part.from.row + part.to.row) / 2, col: (part.from.col + part.to.col) / 2 };
 }
 
 export type BuildResult = {
@@ -101,13 +117,44 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
   return { circuit, errors, notices: ambiguousTouches(circuit, byId) };
 }
 
-/** 注釈の指し先があるか。無ければ理由を積んで、その注釈だけ落とす。 */
+/**
+ * 注釈の指し先があるか。無ければ理由を積んで、その注釈だけ落とす。
+ *
+ * 指し先を書くのは印 (`circle`) と指し棒 (`arrow`) だけ。字と枠は番地しか
+ * 書けず、番地はその場に何も無くても図の上の場所として成り立つ。
+ */
 function hasAnchor(note: NoteSpec, byId: ReadonlyMap<string, PartSpec>, errors: FenceError[]): boolean {
-  if (note.kind !== 'circle') return true;
-  if (resolveNoteTarget(note.target, byId) !== null) return true;
+  const targets = note.kind === 'circle' ? [note.target] : note.kind === 'arrow' ? [note.from, note.to] : [];
+
+  // 1 行に 2 つ書き間違えても、返すのは最初の 1 つだけ。同じ行を 2 度指しても
+  // 直す場所は増えない。
+  const missing = targets.find((target) => resolveNoteTarget(target, byId) === null);
+  if (missing !== undefined) {
+    errors.push(
+      fenceError(`注釈の指す先 ${safeToken(missing)} がありません (部品 ID か番地で書きます)`, note.line),
+    );
+    return false;
+  }
+
+  return note.kind !== 'arrow' || hasLength(note, byId, errors);
+}
+
+/**
+ * 指し棒に長さがあるか。起点と終点が同じところだと向きが決まらない。
+ *
+ * 書かれた字ではなく**指し先の場所で**見る。番地は大小どちらでも書けるうえ、
+ * 部品 ID と番地でも同じ 1 点を指せる (`G1: ground c3` があるとき
+ * `arrow G1 c3` は長さ 0)。字で比べると、そこがすり抜ける。
+ */
+function hasLength(note: ArrowNote, byId: ReadonlyMap<string, PartSpec>, errors: FenceError[]): boolean {
+  const from = resolveNoteTarget(note.from, byId);
+  const to = resolveNoteTarget(note.to, byId);
+  if (from === null || to === null) return true;
+
+  if (!isSameAddress(noteAnchorCell(from), noteAnchorCell(to))) return true;
 
   errors.push(
-    fenceError(`注釈の指す先 ${safeToken(note.target)} がありません (部品 ID か番地で書きます)`, note.line),
+    fenceError(`指し棒の起点と終点が同じところです (${safeToken(note.from)})`, note.line),
   );
   return false;
 }

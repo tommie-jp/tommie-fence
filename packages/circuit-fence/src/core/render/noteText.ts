@@ -1,4 +1,5 @@
-import { NOTE_MARK_COLOR, NOTE_MARK_TEXT } from '../notes.ts';
+import { NOTE_MARK_COLOR, NOTE_MARK_TEXT, svgTextAnchorOf } from '../notes.ts';
+import type { NoteAlign } from '../notes.ts';
 import type { NoteOverlay } from '../types.ts';
 import { escapeHtml } from './html.ts';
 
@@ -10,6 +11,11 @@ import { escapeHtml } from './html.ts';
  * ここでその text 要素を見つけて、中身と色とフォントだけ入れ替える。
  * 位置 (x / y / transform) と大きさ (font-size) は TeX が決めたものを使うので、
  * 座標系を二重に持たなくてよい。
+ *
+ * **太さと寄せだけは TeX から受け取れない**。太さは TeX ではフォントの名前
+ * (`cmbx8`) で表されるので、フォントごと入れ替えると消える。寄せは目印が
+ * 1 文字で本物の字とは幅が違うため、TeX のアンカーでは決められない。
+ * どちらも SVG の属性として書き直す。
  *
  * **色を差し替える前に呼ぶこと**。色を書かなかった注釈は `#000000` で出るので、
  * その後の recolorSvg がテーマの文字色に塗り替える。
@@ -32,6 +38,19 @@ const withColor = (attributes: string, color: string): string =>
 
 const withFont = (attributes: string, mono: boolean): string =>
   attributes.replace(/\bfont-family="[^"]*"/, `font-family="${mono ? MONO_FAMILY : FONT_FAMILY}"`);
+
+/** 太字。書き足すだけで、太くない注釈の出力は足す前と同じにする。 */
+const withWeight = (attributes: string, bold: boolean): string =>
+  bold ? `${attributes} font-weight="bold"` : attributes;
+
+/**
+ * 寄せ。番地の点 (TeX が決めた x) に対して、字をどちら側へ置くかを決める。
+ * 左寄せは SVG の既定なので何も足さない。
+ */
+const withAnchor = (attributes: string, align: NoteAlign): string => {
+  const anchor = svgTextAnchorOf(align);
+  return anchor === null ? attributes : `${attributes} text-anchor="${anchor}"`;
+};
 
 /** エンジンが目印の色を掛けた器 (`<g>`)。中の字を差し替えたら、その色は用済み。 */
 const GROUP = /<g\b[^>]*>/g;
@@ -61,7 +80,11 @@ export function applyNotes(svg: string, notes: readonly NoteOverlay[]): string {
     index += 1;
     // 字下げは書き出しの意味そのものなので、SVG の既定 (空白を詰める) を止める。
     const space = note.mono ? ' xml:space="preserve"' : '';
-    return `<text${withFont(withColor(attributes, note.color), note.mono)}${space}>${escapeHtml(note.text)}</text>`;
+    const shown = withAnchor(
+      withWeight(withFont(withColor(attributes, note.color), note.mono), note.bold),
+      note.align,
+    );
+    return `<text${shown}${space}>${escapeHtml(note.text)}</text>`;
   });
 
   return cleanGroups(filled);
