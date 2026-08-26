@@ -95,6 +95,7 @@ notes:
   - text d1: 書かなければ普通
   - text e1 large: large (大)
   - text f1 huge: huge (極大)
+  - source a6 blue
 style:
   grid: on
   grid-to: f4
@@ -119,6 +120,7 @@ notes:
   - circle g3
   - text g3 right: right (番地が右端)
   - text i3 bold: bold で太字になる
+  - source a8 blue
 style:
   grid: on
   grid-to: i6
@@ -146,6 +148,7 @@ notes:
   - text a6 blue: box a1 c3 blue
   - arrow c6 R1
   - text c7 red: arrow c6 R1
+  - source a10 blue
 style:
   grid: on
   grid-to: c8
