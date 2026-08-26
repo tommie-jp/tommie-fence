@@ -14,7 +14,11 @@ export type Theme = {
   readonly ink: string;
   /** 端子の白丸のような「地の色」で塗るところ。 */
   readonly paper: string;
-  /** 部品を置ける位置を示すグリッド。回路より必ず薄くする。 */
+  /**
+   * グリッドの色。**行英字・列数字がこの色そのままで出る**ので、読める濃さにする。
+   * 点は TeX 側で薄めて描くので (tex/generate.ts の GRID_DOT_OPACITY)、
+   * ここを回路より薄い色にすると点が消えてしまう。
+   */
   readonly grid: string;
   /**
    * 地の色をエディタに合わせてよいか。
@@ -34,10 +38,10 @@ const AUTO: Theme = {
 
 const THEMES: Record<string, Theme> = {
   auto: AUTO,
-  light: { name: 'light', ink: '#1f2328', paper: '#ffffff', grid: '#d0d7de', followsEditor: false },
-  dark: { name: 'dark', ink: '#e6edf3', paper: '#0d1117', grid: '#3d444d', followsEditor: false },
+  light: { name: 'light', ink: '#1f2328', paper: '#ffffff', grid: '#8c959f', followsEditor: false },
+  dark: { name: 'dark', ink: '#e6edf3', paper: '#0d1117', grid: '#7d8590', followsEditor: false },
   /** 資料に貼る用。プレビューのテーマに関わらず黒一色。 */
-  mono: { name: 'mono', ink: '#000000', paper: '#ffffff', grid: '#b0b0b0', followsEditor: false },
+  mono: { name: 'mono', ink: '#000000', paper: '#ffffff', grid: '#767676', followsEditor: false },
 };
 
 export const THEME_NAMES: readonly string[] = Object.keys(THEMES);

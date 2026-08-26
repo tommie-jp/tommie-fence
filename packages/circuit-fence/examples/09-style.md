@@ -35,6 +35,7 @@ parts:
 wires:
   - a3 -- a4
 style:
+  grid: on
   pitch: 1.2
   wire-width: 1.6
 ```
@@ -46,6 +47,7 @@ parts:
   R1: resistor a1 a3 10k
   L1: inductor a5 a7 10m
 style:
+  grid: on
   standard: american
 ```
 
@@ -56,6 +58,7 @@ parts:
   R1: resistor a1 a3 10k
   L1: inductor a5 a7 10m
 style:
+  grid: on
   standard: european
 ```
 
@@ -72,5 +75,6 @@ parts:
 wires:
   - a3 -- a4
 style:
+  grid: on
   width: 320
 ```

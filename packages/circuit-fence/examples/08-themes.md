@@ -15,7 +15,9 @@ parts:
   G1:  ground c3
 wires:
   - a3 -- a4
-style: auto
+style:
+  theme: auto
+  grid: on
 ```
 
 `light` / `dark` は明暗を決め打ちする。ノートの見た目を固定したいとき。
@@ -29,7 +31,9 @@ parts:
   G1:  ground c3
 wires:
   - a3 -- a4
-style: light
+style:
+  theme: light
+  grid: on
 ```
 
 ```circuit
@@ -41,7 +45,9 @@ parts:
   G1:  ground c3
 wires:
   - a3 -- a4
-style: dark
+style:
+  theme: dark
+  grid: on
 ```
 
 `mono` は黒一色。資料に貼るときや印刷するとき。
@@ -55,7 +61,9 @@ parts:
   G1:  ground c3
 wires:
   - a3 -- a4
-style: mono
+style:
+  theme: mono
+  grid: on
 ```
 
 テーマだけ選ぶなら `style: dark` の 1 行でよい。細かく指定するときは

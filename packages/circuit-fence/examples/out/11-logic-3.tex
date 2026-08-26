@@ -1,10 +1,11 @@
 \documentclass{standalone}
 \usepackage{circuitikz}
 \usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\foreach \x in {0,2,4,6} {\foreach \y in {0,-2,-4} {\fill[gray] (\x,\y) circle (1.1pt);}}
+\foreach \x in {0,2,4,6} {\foreach \y in {0,-2,-4} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
 \node[gray, font=\scriptsize] at (0,0.84) {1};
 \node[gray, font=\scriptsize] at (2,0.84) {2};
 \node[gray, font=\scriptsize] at (4,0.84) {3};
@@ -20,5 +21,7 @@
 \draw (b1) |- (part-S1.in); % line 4
 \draw (part-S1.out 1) -| (a4); % line 5
 \draw (part-S1.out 2) -| (c4); % line 6
+\path (10,-0.226) rectangle (11.861,0.226); % line 8
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (10,0) {X}; % line 8
 \end{circuitikz}
 \end{document}

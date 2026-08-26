@@ -87,7 +87,7 @@ describe('compileCircuit の style', () => {
     );
 
     expect(result.tex).toContain('to[R,');
-    expect(result.tex).not.toContain('\\fill[gray]');
+    expect(result.tex).not.toContain('\\fill[gray, ');
     expect(result.notices.some((notice) => notice.message.includes('グリッドが広すぎます'))).toBe(true);
     // 図は描けているので、読めなかった扱いにはしない。
     expect(result.errors).toEqual([]);
@@ -96,7 +96,7 @@ describe('compileCircuit の style', () => {
   test('draws a grid that fits', () => {
     const result = compileCircuit(lines('parts:', '  R1: resistor a1 a3', 'style:', '  grid: on'));
 
-    expect(result.tex).toContain('\\fill[gray]');
+    expect(result.tex).toContain('\\fill[gray, ');
     expect(result.errors).toEqual([]);
   });
 
@@ -125,7 +125,7 @@ describe('compileCircuit の style', () => {
     );
 
     expect(result.theme.name).toBe('dark');
-    expect(result.tex).toContain('\\fill[gray]');
+    expect(result.tex).toContain('\\fill[gray, ');
   });
 
   test('reads a style written as an alias of another block', () => {

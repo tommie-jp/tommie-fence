@@ -33,6 +33,8 @@ notes:
   - text h5 blue: "S1: switch g5 g7"
   - text h9 blue: "F1: fuse g9 g11 3A"
   - text j1 blue: "P1: lamp i1 i3"
+style:
+  grid: on
 ```
 
 値は種類から単位を補う (抵抗の `10k` → 10 kΩ、コイルの `10m` → 10 mH)。
@@ -94,6 +96,8 @@ notes:
   - text l1 blue: "A1: ammeter k1 k3"
   - text l5 blue: "V5: voltmeter k5 k7"
   - text l9 blue: "M1: ohmmeter k9 k11"
+style:
+  grid: on
 ```
 
 `switch` / `button` は a 接点 (ふだん開いている)、`-nc` が付くほうは b 接点。
@@ -117,6 +121,14 @@ parts:
   IN:  port a4
   R2:  resistor a4 c4 10k
   VEE: vee c4
+notes:
+  - text a6 blue: "VCC: vcc a1"
+  - text b6 blue: "R1: resistor a1 c1 1k"
+  - text c6 blue: "D1: led c1 e1"
+  - text d6 blue: "G1: ground e1"
+  - text e6 blue: "IN: port a4"
+  - text f6 blue: "R2: resistor a4 c4 10k"
+  - text g6 blue: "VEE: vee c4"
 style:
   grid: on
 ```

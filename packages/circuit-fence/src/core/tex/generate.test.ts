@@ -236,17 +236,26 @@ describe('style', () => {
     generate(...parts, 'style:', ...style).tex;
 
   test('draws no grid unless it is asked for', () => {
-    expect(generate('parts:', '  R1: resistor a1 a3').tex).not.toContain('\\fill[gray]');
+    expect(generate('parts:', '  R1: resistor a1 a3').tex).not.toContain('\\fill[gray, ');
   });
 
   test('shows where parts can go, with breadboard row letters and column numbers', () => {
     const tex = withStyle(['  grid: on']);
 
     // 置ける位置の点
-    expect(tex).toContain('\\fill[gray]');
+    expect(tex).toContain('\\fill[gray, ');
     // 列番号は上、行文字は左
     expect(tex).toContain('{1};');
     expect(tex).toContain('{a};');
+  });
+
+  // 点は位置の目安なので薄く、行英字と列数字は読むものなので濃く出す。
+  // 同じ色を濃さで分けているので、grid-color の 1 つの指定でどちらも決まる。
+  test('draws the dots fainter than the row letters and column numbers', () => {
+    const tex = withStyle(['  grid: on']);
+
+    expect(tex).toContain('\\fill[gray, opacity=0.35]');
+    expect(tex).toContain('\\node[gray, font=\\scriptsize]');
   });
 
   test('covers the cells the drawing uses', () => {
@@ -267,12 +276,12 @@ describe('style', () => {
   test('draws the grid before the circuit, so the circuit sits on top', () => {
     const tex = withStyle(['  grid: on']);
 
-    expect(tex.indexOf('\\fill[gray]')).toBeLessThan(tex.indexOf('to[R,'));
+    expect(tex.indexOf('\\fill[gray, ')).toBeLessThan(tex.indexOf('to[R,'));
   });
 
   test('leaves the grid out of the line map, since no line asked for it', () => {
     const { lineMap, tex } = generate('parts:', '  R1: resistor a1 a3', 'style:', '  grid: on');
-    const gridLine = tex.split('\n').findIndex((row) => row.includes('\\fill[gray]')) + 1;
+    const gridLine = tex.split('\n').findIndex((row) => row.includes('\\fill[gray, ')) + 1;
 
     expect(lineMap.get(gridLine)).toBeUndefined();
   });

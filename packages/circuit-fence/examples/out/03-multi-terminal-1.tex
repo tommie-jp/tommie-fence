@@ -1,10 +1,11 @@
 \documentclass{standalone}
 \usepackage{circuitikz}
 \usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\foreach \x in {0,2,4,6,8,10,12,14} {\foreach \y in {0,-2,-4,-6,-8,-10} {\fill[gray] (\x,\y) circle (1.1pt);}}
+\foreach \x in {0,2,4,6,8,10,12,14} {\foreach \y in {0,-2,-4,-6,-8,-10} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
 \node[gray, font=\scriptsize] at (0,0.84) {1};
 \node[gray, font=\scriptsize] at (2,0.84) {2};
 \node[gray, font=\scriptsize] at (4,0.84) {3};
@@ -67,5 +68,17 @@
 \draw (d8) -| (part-Q4.collector); % line 24
 \draw (f8) -| (part-Q4.emitter); % line 25
 \draw (e7) -| (part-Q4.gate); % line 26
+\path (18,-0.226) rectangle (19.692,0.226); % line 28
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (18,0) {X}; % line 28
+\path (18,-2.226) rectangle (19.692,-1.774); % line 29
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (18,-2) {X}; % line 29
+\path (18,-4.226) rectangle (19.861,-3.774); % line 30
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (18,-4) {X}; % line 30
+\path (18,-6.226) rectangle (19.861,-5.774); % line 31
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (18,-6) {X}; % line 31
+\path (18,-8.226) rectangle (20.03,-7.774); % line 32
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (18,-8) {X}; % line 32
+\path (18,-10.226) rectangle (20.03,-9.774); % line 33
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (18,-10) {X}; % line 33
 \end{circuitikz}
 \end{document}

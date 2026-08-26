@@ -12,6 +12,14 @@ parts:
   G1:  ground c3
 wires:
   - a3 -- a4
+notes:
+  - text a6 blue: "IN: port a1"
+  - text b6 blue: "R1: resistor a1 a3 10k"
+  - text c6 blue: "C1: capacitor a3 c3 100n"
+  - text d6 blue: "OUT: port a4"
+  - text e6 blue: "G1: ground c3"
+style:
+  grid: on
 ```
 
 書けるのは `parts:` と `wires:` と `notes:` と `style:` の 4 つ。
@@ -153,6 +161,17 @@ wires:
   - U1.out -- c7
   - c7 -- c9
   - d7 -- c7
+notes:
+  - text a11 blue: "IN: port b1"
+  - text b11 blue: "Rb: resistor b3 e3 100k"
+  - text c11 blue: "G1: ground e3"
+  - text d11 blue: "U1: opamp c5 +up"
+  - text e11 blue: "R2: resistor d4 e4 1k"
+  - text f11 blue: "G2: ground e4"
+  - text g11 blue: "R3: resistor d4 d7 10k"
+  - text h11 blue: "OUT: port c9"
+style:
+  grid: on
 ```
 
 **足へは `-|` か `|-` で引く**。足は記号ごとに決まった位置にあって格子の上に
@@ -233,6 +252,11 @@ parts:
   R2: resistor a5 a7
 wires:
   - a3 -- a5
+notes:
+  - text a9 blue: "R1: resistor a1 a3"
+  - text b9 blue: "R2: resistor a5 a7"
+style:
+  grid: on
 ```
 
 ## 斜めに置く
@@ -246,6 +270,11 @@ parts:
   R2: resistor c4 a7
 wires:
   - a1 -- a7
+notes:
+  - text a9 blue: "R1: resistor a1 c4"
+  - text b9 blue: "R2: resistor c4 a7"
+style:
+  grid: on
 ```
 
 通らないのは両端が同じ番地のときだけ (向きも長さも決まらないため)。
@@ -265,9 +294,15 @@ parts:
 wires:
   - a3 -- a4
 notes:
+  - text a6 blue: "IN: port a1"
+  - text b6 blue: "R1: resistor a1 a3 10k"
+  - text c6 blue: "C1: capacitor a3 c3 100n"
+  - text d6 blue: "OUT: port a4"
+  - text e6 blue: "G1: ground c3"
   - circle R1
-  - text d1 blue: "R1: resistor a1 a3 10k"
   - text e1: ここでカットオフ 159 Hz
+style:
+  grid: on
 ```
 
 ![注釈](../examples/out/12-notes-1.png)
@@ -361,7 +396,7 @@ style:
 | `theme` | `auto` / `light` / `dark` / `mono` | `auto` |
 | `ink-color` | 線と文字の色 (`#rgb` か `#rrggbb`) | テーマの色 |
 | `paper-color` | 端子の白丸など、地の色で塗るところ | テーマの色 |
-| `grid-color` | グリッドの色 | テーマの色 |
+| `grid-color` | グリッドの色 (点はこの色を薄めて描く) | テーマの色 |
 | `grid` | `on` / `off` | `off` |
 | `grid-to` | グリッドを伸ばす先の番地 (`e12`) | 使っている範囲 |
 | `pitch` | 1 マスの大きさ (cm、0.5〜5) | `2` |
@@ -384,6 +419,10 @@ style:
 `grid: on` にすると、部品を置ける位置が点で出る。行は左に英字、列は上に数字で、
 ブレッドボードと同じ読み方。
 
+**点は薄く、行英字と列数字は濃く**出る。点は位置の目安でしかないが、
+英字と数字は読んで番地を数えるものなので、濃さを分けてある
+(色は 1 つで、点だけを薄めて描いている)。
+
 ```circuit
 parts:
   IN:  port a1
@@ -393,6 +432,12 @@ parts:
   G1:  ground c3
 wires:
   - a3 -- a4
+notes:
+  - text a6 blue: "IN: port a1"
+  - text b6 blue: "R1: resistor a1 a3 10k"
+  - text c6 blue: "C1: capacitor a3 c3 100n"
+  - text d6 blue: "OUT: port a4"
+  - text e6 blue: "G1: ground c3"
 style:
   grid: on
   grid-to: d6
@@ -401,7 +446,8 @@ style:
 `grid-to` を書くと、使っていない範囲までグリッドが伸びる。
 部品を動かす先が見えるので、番地を書き換えながら組むときに使う。
 
-図ができたら `grid: off` に戻す (資料に貼る図に置ける位置は要らない)。
+資料に貼る図では `grid: off` に戻してもよい。この文法リファレンスの図は、
+どの番地に何を置いたかを数えられるように付けたままにしてある。
 
 ## 書き出す (CLI)
 

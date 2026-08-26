@@ -36,6 +36,15 @@ wires:
   - U7.out -| e12
   - d13 |- U8.in
   - U8.out -| e16
+notes:
+  - text a18 blue: "U1: and b2 7408"
+  - text b18 blue: "U2: or b6 7432"
+  - text c18 blue: "U3: nand b10 7400"
+  - text d18 blue: "U4: nor b14 7402"
+  - text e18 blue: "U5: xor e2 7486"
+  - text f18 blue: "U6: xnor e6 74266"
+  - text g18 blue: "U7: not e10 7404"
+  - text h18 blue: "U8: buffer e14 7407"
 style:
   grid: on
 ```
@@ -57,6 +66,8 @@ wires:
   - e1 |- U1.4
   - U1.5 -| e4
   - U1.8 -| a4
+notes:
+  - text a6 blue: "U1: dip8 c2 NE555"
 style:
   grid: on
 ```
@@ -75,6 +86,8 @@ wires:
   - b1 |- S1.in
   - S1.1 -| a4
   - S1.2 -| c4
+notes:
+  - text a6 blue: "S1: spdt b2"
 style:
   grid: on
 ```

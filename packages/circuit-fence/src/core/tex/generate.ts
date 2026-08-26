@@ -245,6 +245,12 @@ function amplifierSigns(name: string): string[] {
   ];
 }
 
+/**
+ * グリッドの点の濃さ。行英字・列数字は同じ色をそのまま (濃く) 使うので、
+ * 点だけをこのぶん薄める。図の主役は回路で、点は位置の目安でしかない。
+ */
+const GRID_DOT_OPACITY = 0.35;
+
 /** 書かれた向き → circuitikz のオプション。綴りを知っているのはここだけ。 */
 const ORIENTATION_TEX: Readonly<Record<string, string>> = {
   '+up': 'noinv input up',
@@ -257,6 +263,10 @@ const ORIENTATION_TEX: Readonly<Record<string, string>> = {
  *
  * 回路より薄く見えるよう gray で描く (描き上がった SVG で色を差し替えるときの
  * 目印でもある。render/theme.ts が gray をグリッドの色に塗り替える)。
+ *
+ * **点と字は同じ色を濃さで分ける**。点は位置を示すだけなので薄く、
+ * 行英字と列数字は読むものなので濃く出す。色を 2 つ持たずに不透明度で分けると、
+ * `grid-color` の 1 つの指定でどちらも決まる。
  */
 function drawGrid(
   cells: ReadonlyMap<string, { readonly address: Address }>,
@@ -299,7 +309,7 @@ function drawGrid(
   );
 
   return [
-    `\\foreach \\x in {${xs.map(num).join(',')}} {\\foreach \\y in {${ys.map(num).join(',')}} {\\fill[gray] (\\x,\\y) circle (${dotSize}pt);}}`,
+    `\\foreach \\x in {${xs.map(num).join(',')}} {\\foreach \\y in {${ys.map(num).join(',')}} {\\fill[gray, opacity=${num(GRID_DOT_OPACITY)}] (\\x,\\y) circle (${dotSize}pt);}}`,
     ...columnLabels,
     ...rowLabels,
   ];

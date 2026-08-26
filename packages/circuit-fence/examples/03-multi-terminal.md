@@ -30,6 +30,13 @@ wires:
   - d8 -| Q4.C
   - f8 -| Q4.E
   - e7 -| Q4.G
+notes:
+  - text a10 blue: "Q1: npn b2"
+  - text b10 blue: "Q2: pnp b5"
+  - text c10 blue: "M1: nmos e2"
+  - text d10 blue: "M2: pmos e5"
+  - text e10 blue: "Q3: nigbt b8"
+  - text f10 blue: "Q4: pigbt e8"
 style:
   grid: on
 ```
@@ -64,6 +71,9 @@ wires:
   - c6 -| T1.A2
   - a9 -| T1.B1
   - c9 -| T1.B2
+notes:
+  - text a11 blue: "U1: opamp b2 LM358"
+  - text b11 blue: "T1: transformer b7 1to1"
 style:
   grid: on
 ```
@@ -104,6 +114,13 @@ wires:
   - g5 -| M4.D
   - i5 -| M4.S
   - h4 -| M4.G
+notes:
+  - text a7 blue: "J1: njfet b2"
+  - text b7 blue: "J2: pjfet b5"
+  - text c7 blue: "M1: nmos-e e2"
+  - text d7 blue: "M2: pmos-e e5"
+  - text e7 blue: "M3: nmos-d h2"
+  - text f7 blue: "M4: pmos-d h5"
 style:
   grid: on
 ```
@@ -128,6 +145,10 @@ wires:
   - P1.w -- a3
   - T1.g |- c3
   - T2.g |- e3
+notes:
+  - text a7 blue: "P1: potentiometer b1 b5 10k"
+  - text b7 blue: "T1: thyristor d1 d5"
+  - text c7 blue: "T2: triac f1 f5"
 style:
   grid: on
 ```

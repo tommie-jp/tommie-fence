@@ -4,6 +4,15 @@
 \begin{document}
 \begin{circuitikz}[european, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
+\foreach \x in {0,2,4,6,8,10,12} {\foreach \y in {0} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize] at (8,0.84) {5};
+\node[gray, font=\scriptsize] at (10,0.84) {6};
+\node[gray, font=\scriptsize] at (12,0.84) {7};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
 \coordinate (a1) at (0,0);
 \coordinate (a3) at (4,0);
 \coordinate (a5) at (8,0);

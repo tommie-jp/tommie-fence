@@ -13,8 +13,12 @@ parts:
 wires:
   - a3 -- a4
 notes:
+  - text a6 blue: "IN: port a1"
+  - text b6 blue: "R1: resistor a1 a3 10k"
+  - text c6 blue: "C1: capacitor a3 c3 100n"
+  - text d6 blue: "OUT: port a4"
+  - text e6 blue: "G1: ground c3"
   - circle R1
-  - text d1 blue: "R1: resistor a1 a3 10k"
   - text e1: ここでカットオフ 159 Hz
 style:
   grid: on
@@ -38,6 +42,10 @@ parts:
   R3: resistor a9 a11
   R4: resistor a13 a15
 notes:
+  - text a17 blue: "R1: resistor a1 a3"
+  - text b17 blue: "R2: resistor a5 a7"
+  - text c17 blue: "R3: resistor a9 a11"
+  - text d17 blue: "R4: resistor a13 a15"
   - circle R1 red
   - circle R2 blue
   - circle R3 green
@@ -46,6 +54,8 @@ notes:
   - text b5 blue: blue
   - text b9 green: green
   - text b13 orange: orange
+style:
+  grid: on
 ```
 
 ## 日本語
@@ -62,7 +72,13 @@ parts:
 wires:
   - c1 -- c4
 notes:
+  - text a6 blue: "V1: battery a1 c1 9"
+  - text b6 blue: "R1: resistor a1 a4 470"
+  - text c6 blue: "D1: led a4 c4"
+  - text d6 blue: "G1: ground c1"
   - circle D1 orange
   - text a6: LED の順方向電圧は 2 V ぐらい
   - text b6: 電流は (9 - 2) / 470 で 15 mA
+style:
+  grid: on
 ```

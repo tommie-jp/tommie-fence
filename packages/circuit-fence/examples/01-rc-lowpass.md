@@ -12,6 +12,8 @@ parts:
   G1:  ground c3
 wires:
   - a3 -- a4
+style:
+  grid: on
 ```
 
 番地は行が英字 (`a` から下へ)、列が数字 (`1` から右へ)。
