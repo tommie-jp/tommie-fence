@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, resolve } from 'node:path';
-import { compileCircuit, errorLine, extractCircuitFences, messageLine, recolorSvg, resizeSvg } from '../core/index.ts';
+import {
+  applyNotes, compileCircuit, errorLine, extractCircuitFences, messageLine, recolorSvg, resizeSvg,
+} from '../core/index.ts';
 import type { FenceError, Net } from '../core/index.ts';
 import { renderTex } from '../host/texSvg.ts';
 import { standaloneTex } from '../core/tex/generate.ts';
@@ -108,7 +110,7 @@ function emitTex(job: Job): number {
 
 /** 1 枚描く。図にできなかった数を返す。 */
 async function runJob(job: Job): Promise<number> {
-  const { tex, lineMap, netlist, theme, width, errors, notices } = compileCircuit(job.source);
+  const { tex, lineMap, netlist, theme, width, notes, errors, notices } = compileCircuit(job.source);
 
   if (tex === null) {
     reportProblem(`${job.label}: 図にできませんでした`);
@@ -138,9 +140,9 @@ async function runJob(job: Job): Promise<number> {
   }
 
   const svgPath = join(job.directory, `${job.stem}.svg`);
-  // プレビューと同じ色と大きさを当ててから書き出す。
+  // プレビューと同じ注釈・色・大きさを当ててから書き出す。
   // auto のときの線は currentColor のままで、単体で開けば地の文字色 (黒) になる。
-  writeFileSync(svgPath, `${resizeSvg(recolorSvg(outcome.svg, theme), width)}\n`);
+  writeFileSync(svgPath, `${resizeSvg(recolorSvg(applyNotes(outcome.svg, notes), theme), width)}\n`);
   console.log(`${job.label} → ${svgPath}`);
   reportNetlist(netlist);
   reportErrors(errors);

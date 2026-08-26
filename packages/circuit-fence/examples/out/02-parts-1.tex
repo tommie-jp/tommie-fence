@@ -1,34 +1,10 @@
 \documentclass{standalone}
 \usepackage{circuitikz}
 \usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\foreach \x in {0,2,4,6,8,10,12,14,16,18,20,22,24,26,28} {\foreach \y in {0,-2,-4,-6,-8,-10,-12,-14,-16} {\fill[gray] (\x,\y) circle (1.1pt);}}
-\node[gray, font=\scriptsize] at (0,0.84) {1};
-\node[gray, font=\scriptsize] at (2,0.84) {2};
-\node[gray, font=\scriptsize] at (4,0.84) {3};
-\node[gray, font=\scriptsize] at (6,0.84) {4};
-\node[gray, font=\scriptsize] at (8,0.84) {5};
-\node[gray, font=\scriptsize] at (10,0.84) {6};
-\node[gray, font=\scriptsize] at (12,0.84) {7};
-\node[gray, font=\scriptsize] at (14,0.84) {8};
-\node[gray, font=\scriptsize] at (16,0.84) {9};
-\node[gray, font=\scriptsize] at (18,0.84) {10};
-\node[gray, font=\scriptsize] at (20,0.84) {11};
-\node[gray, font=\scriptsize] at (22,0.84) {12};
-\node[gray, font=\scriptsize] at (24,0.84) {13};
-\node[gray, font=\scriptsize] at (26,0.84) {14};
-\node[gray, font=\scriptsize] at (28,0.84) {15};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-14) {h};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-16) {i};
 \coordinate (a1) at (0,0);
 \coordinate (a3) at (4,0);
 \coordinate (a5) at (8,0);
@@ -71,5 +47,33 @@
 \draw (g5) to[nos, l_=$S_{1}$] (g7); % line 13
 \draw (g9) to[fuse, l_=$F_{1}$, a^=$\mathrm{3A}$] (g11); % line 14
 \draw (i1) to[lamp, l_=$P_{1}$] (i3); % line 15
+\path (0,-2.226) rectangle (3.722,-1.774); % line 17
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (0,-2) {X}; % line 17
+\path (8,-2.226) rectangle (12.061,-1.774); % line 18
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (8,-2) {X}; % line 18
+\path (16,-2.226) rectangle (19.384,-1.774); % line 19
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (16,-2) {X}; % line 19
+\path (24,-2.226) rectangle (28.061,-1.774); % line 20
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (24,-2) {X}; % line 20
+\path (0,-6.226) rectangle (3.722,-5.774); % line 21
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (0,-6) {X}; % line 21
+\path (8,-6.226) rectangle (10.2,-5.774); % line 22
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (8,-6) {X}; % line 22
+\path (16,-6.226) rectangle (19.384,-5.774); % line 23
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (16,-6) {X}; % line 23
+\path (0,-10.226) rectangle (3.215,-9.774); % line 24
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (0,-10) {X}; % line 24
+\path (8,-10.226) rectangle (10.707,-9.774); % line 25
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (8,-10) {X}; % line 25
+\path (16,-10.226) rectangle (19.722,-9.774); % line 26
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (16,-10) {X}; % line 26
+\path (0,-14.226) rectangle (3.215,-13.774); % line 27
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (0,-14) {X}; % line 27
+\path (8,-14.226) rectangle (10.707,-13.774); % line 28
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (8,-14) {X}; % line 28
+\path (16,-14.226) rectangle (19.046,-13.774); % line 29
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (16,-14) {X}; % line 29
+\path (0,-18.226) rectangle (2.369,-17.774); % line 30
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (0,-18) {X}; % line 30
 \end{circuitikz}
 \end{document}

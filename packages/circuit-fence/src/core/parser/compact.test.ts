@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { LIMITS } from '../limits.ts';
-import { parseCompactPart, parseWireSpec } from './compact.ts';
+import { parseCompactPart, parseNoteLine, parseNoteText, parseWireSpec } from './compact.ts';
 
 const partOf = (text: string, id = 'R1') => {
   const result = parseCompactPart(id, text, 2);
@@ -199,5 +199,115 @@ describe('parseCompactPart の種類', () => {
 
     expect(message).toContain('resistor');
     expect(message).toContain('lamp');
+  });
+});
+
+const noteOf = (text: string) => {
+  const result = parseNoteLine(text, 2);
+  if (!result.ok) throw new Error(`読めませんでした: ${result.error.message}`);
+  return result.value;
+};
+
+const noteProblem = (text: string) => {
+  const result = parseNoteLine(text, 2);
+  if (result.ok) throw new Error('読めてしまいました');
+  return result.error;
+};
+
+const textNoteOf = (head: string, body: string) => {
+  const result = parseNoteText(head, body, 2);
+  if (!result.ok) throw new Error(`読めませんでした: ${result.error.message}`);
+  return result.value;
+};
+
+const textNoteProblem = (head: string, body: string) => {
+  const result = parseNoteText(head, body, 2);
+  if (result.ok) throw new Error('読めてしまいました');
+  return result.error;
+};
+
+describe('parseNoteLine', () => {
+  test('reads a circle drawn around a part', () => {
+    expect(noteOf('circle R1')).toEqual({ kind: 'circle', target: 'R1', color: 'red', line: 2 });
+  });
+
+  test('reads a circle drawn around a cell', () => {
+    expect(noteOf('circle b3')).toMatchObject({ target: 'b3' });
+  });
+
+  // 指し先が部品か番地かは、部品の表を持っている model/circuit.ts が決める。
+  test('leaves the target as written', () => {
+    expect(noteOf('circle C1')).toMatchObject({ target: 'C1' });
+  });
+
+  test('reads the colour when it is written', () => {
+    expect(noteOf('circle R1 blue')).toMatchObject({ color: 'blue' });
+  });
+
+  test('turns down a colour outside the palette', () => {
+    expect(noteProblem('circle R1 rainbow').message).toContain('注釈の色');
+  });
+
+  test('turns down an unknown kind of note', () => {
+    expect(noteProblem('arrow R1 to b3').message).toContain('注釈の種類');
+  });
+
+  test('shows how to write text when it is written as a plain line', () => {
+    expect(noteProblem('text b1 ここ').message).toContain('text 番地');
+  });
+
+  test('turns down a target that could be neither an id nor a cell', () => {
+    expect(noteProblem('circle U1.out').message).toContain('部品 ID にも番地にも');
+  });
+
+  test('turns down a line with more than a target and a colour', () => {
+    expect(noteProblem('circle R1 red blue').message).toContain('circle は');
+  });
+});
+
+describe('parseNoteText', () => {
+  test('reads text written at a cell', () => {
+    expect(textNoteOf('text b1', 'ここで分圧する')).toEqual({
+      kind: 'text',
+      at: { row: 1, col: 0 },
+      text: 'ここで分圧する',
+      color: null,
+      line: 2,
+    });
+  });
+
+  test('reads the colour when it is written', () => {
+    expect(textNoteOf('text b1 blue', 'ここ')).toMatchObject({ color: 'blue' });
+  });
+
+  // 部品の書き方をそのまま写せるように、注釈だけは `:` を通す。
+  test('takes a colon, which values may not hold', () => {
+    expect(textNoteOf('text b1', 'R1: resistor a1 a3 10k')).toMatchObject({
+      text: 'R1: resistor a1 a3 10k',
+    });
+  });
+
+  test('takes Japanese whichever TeX it is drawn for', () => {
+    expect(textNoteOf('text b1', '入力は 5 V まで')).toMatchObject({ text: '入力は 5 V まで' });
+  });
+
+  test('turns down a character that TeX would read as its own notation', () => {
+    expect(textNoteProblem('text b1', 'gain = 10').message).toContain('使えない文字');
+  });
+
+  test('turns down text longer than the limit', () => {
+    expect(textNoteProblem('text b1', 'あ'.repeat(LIMITS.noteLength + 1)).message).toContain('長すぎます');
+  });
+
+  test('turns down empty text', () => {
+    expect(textNoteProblem('text b1', '   ').message).toContain('注釈の文字がありません');
+  });
+
+  test('turns down a place that is not a cell', () => {
+    expect(textNoteProblem('text z0', 'ここ').message).toContain('番地の形');
+  });
+
+  test('shows how to write a circle when it is written with text', () => {
+    expect(textNoteProblem('circle R1', 'ここ').message).toContain('circle は');
   });
 });

@@ -154,3 +154,68 @@ describe('parseFence の style', () => {
     expect(result.errors[0]?.line).toBe(4);
   });
 });
+
+describe('parseFence の notes', () => {
+  test('reads a mark written as a plain line', () => {
+    const result = parseFence(lines('parts:', '  R1: resistor a1 a3', 'notes:', '  - circle R1'));
+
+    expect(result.errors).toEqual([]);
+    expect(result.doc?.notes).toEqual([{ kind: 'circle', target: 'R1', color: 'red', line: 4 }]);
+  });
+
+  test('reads text written as a value of a one entry map', () => {
+    const result = parseFence(lines('parts:', '  R1: resistor a1 a3', 'notes:', '  - text b1: ここ'));
+
+    expect(result.errors).toEqual([]);
+    expect(result.doc?.notes).toMatchObject([{ kind: 'text', text: 'ここ', line: 4 }]);
+  });
+
+  // 図の値と同じで、読めた注釈は捨てない。
+  test('keeps the notes it could read when one of them is broken', () => {
+    const result = parseFence(
+      lines('parts:', '  R1: resistor a1 a3', 'notes:', '  - circle R1', '  - wobble b3'),
+    );
+
+    expect(result.doc?.notes).toHaveLength(1);
+    expect(result.errors[0]?.line).toBe(5);
+  });
+
+  test('asks for a list when notes holds something else', () => {
+    const result = parseFence(lines('notes:', '  circle: R1'));
+
+    expect(result.errors[0]?.message).toContain('notes は');
+  });
+
+  test('asks for a string when the text is written as a number', () => {
+    const result = parseFence(lines('notes:', '  - text b1: 100'));
+
+    expect(result.errors[0]?.message).toContain('文字列で書きます');
+    expect(result.errors[0]?.line).toBe(2);
+  });
+
+  test('stops at the limit and says so on the line it stopped', () => {
+    const many = Array.from({ length: LIMITS.notes + 1 }, () => '  - circle a1');
+    const result = parseFence(lines('notes:', ...many));
+
+    expect(result.doc?.notes).toHaveLength(LIMITS.notes);
+    expect(result.errors[0]?.message).toContain(`${LIMITS.notes} 個まで`);
+  });
+
+  // yaml の言い分は英語で「Nested mappings are not allowed」だけ。
+  // 注釈には部品の書き方をそのまま写したくなるので、この形は必ず踏む。
+  test('adds how to fix a colon written without quotes', () => {
+    const result = parseFence(lines('notes:', '  - text b1: R1: resistor a1 a3 10k'));
+
+    expect(result.doc).toBeNull();
+    expect(result.errors[0]?.message).toContain('"…" で囲みます');
+    expect(result.errors[0]?.line).toBe(2);
+  });
+
+  // yaml は理由の末尾に自分の行番号を書く。フェンスの中の数え方なので、
+  // 帯に出る Markdown の行と食い違って見える。行はこちらのものだけを出す。
+  test('drops the line yaml writes into the reason itself', () => {
+    const result = parseFence(lines('notes:', '  - text b1: R1: resistor'));
+
+    expect(result.errors[0]?.message).not.toContain('at line');
+  });
+});

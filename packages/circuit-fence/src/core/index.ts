@@ -6,7 +6,7 @@ import { parseFence } from './parser/parseFence.ts';
 import { DEFAULT_THEME, resolveTheme } from './render/theme.ts';
 import type { Theme } from './render/theme.ts';
 import { generateTex } from './tex/generate.ts';
-import type { FenceError, TexTarget } from './types.ts';
+import type { FenceError, NoteOverlay, TexTarget } from './types.ts';
 
 export type CompileResult = {
   /** 図にできたときの circuitikz TeX。1 つも描けなかったときは null。 */
@@ -19,6 +19,11 @@ export type CompileResult = {
   readonly theme: Theme;
   /** 出力の横ドット数。指定が無ければ null (図のままの大きさ)。 */
   readonly width: number | null;
+  /**
+   * 描き上がった SVG に差し込む注釈の字。**塗り替えより先に**当てる
+   * (色を書かなかった注釈は黒で出て、そのあと recolorSvg が文字色に塗り替える)。
+   */
+  readonly notes: readonly NoteOverlay[];
   /** 読めなかったところ。図が描けていても空とは限らない。 */
   readonly errors: readonly FenceError[];
   /**
@@ -50,7 +55,14 @@ export function compileCircuit(source: string, options: CompileOptions = {}): Co
 
   if (doc === null) {
     return {
-      tex: null, lineMap: EMPTY_LINE_MAP, netlist: [], theme: DEFAULT_THEME, width: null, errors, notices: [],
+      tex: null,
+      lineMap: EMPTY_LINE_MAP,
+      netlist: [],
+      theme: DEFAULT_THEME,
+      width: null,
+      notes: [],
+      errors,
+      notices: [],
     };
   }
 
@@ -69,6 +81,7 @@ export function compileCircuit(source: string, options: CompileOptions = {}): Co
       netlist: [],
       theme,
       width: doc.style.width,
+      notes: [],
       errors: nothingWritten
         ? [fenceError('部品がありません (parts: に「ID: 種類 番地 番地 値」を並べます)', null)]
         : [...errors, ...themeErrors],
@@ -77,7 +90,7 @@ export function compileCircuit(source: string, options: CompileOptions = {}): Co
   }
 
   const { circuit, errors: modelErrors, notices } = buildCircuit(doc, { target });
-  const { tex, lineMap, messages: texMessages } = generateTex(circuit, { style: doc.style, target });
+  const { tex, lineMap, messages: texMessages, notes } = generateTex(circuit, { style: doc.style, target });
 
   return {
     tex,
@@ -85,6 +98,7 @@ export function compileCircuit(source: string, options: CompileOptions = {}): Co
     netlist: computeNets(circuit),
     theme,
     width: doc.style.width,
+    notes,
     errors: [...errors, ...modelErrors, ...themeErrors],
     // 図は組めたが指定が効かなかったところ。行は style の項目に付けられない
     // ので (どの項目かは文面で分かる) 行なしで出す。
@@ -93,6 +107,7 @@ export function compileCircuit(source: string, options: CompileOptions = {}): Co
 }
 
 export { recolorSvg, resizeSvg, DEFAULT_THEME } from './render/theme.ts';
+export { applyNotes } from './render/noteText.ts';
 export type { Theme } from './render/theme.ts';
 export { errorLine, messageLine, renderErrorBanner, renderErrorCard } from './render/errorCard.ts';
 export { shiftErrors } from './errors.ts';
@@ -100,5 +115,5 @@ export { renderNetlist } from './render/netlistHtml.ts';
 export { extractCircuitFences } from './fences.ts';
 export type { FenceBlock } from './fences.ts';
 export type { Net } from './model/nets.ts';
-export type { FenceError, TexTarget } from './types.ts';
+export type { FenceError, NoteOverlay, TexTarget } from './types.ts';
 export { standaloneTex } from './tex/generate.ts';

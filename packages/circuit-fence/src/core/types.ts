@@ -32,6 +32,10 @@ export type Result<T> = { readonly ok: true; readonly value: T } | { readonly ok
  * **2 つの違いは、フェンス側の制約が強いる 3 点だけ**にする
  * (日本語のフォント・siunitx・`op amp` の記号。いずれも実測で確認済み)。
  * それ以外を変えると、プレビューで確かめた図と書き出した図が食い違う。
+ *
+ * 注釈 (`notes:`) の字は例外ではなく、**この 3 点の 1 つめの回り道**。
+ * フェンスでは字を TeX に渡さず、描き上がった SVG に差し込むので
+ * (render/noteText.ts)、組み方は違っても出る字は同じになる。
  */
 export type TexTarget = 'fence' | 'latex';
 
@@ -140,3 +144,37 @@ export type StyleSpec = {
   /** 出力の横ドット数。図の中身ではなく貼り先の都合なので、テーマとは分ける。 */
   readonly width: number | null;
 };
+
+/**
+ * 図に重ねる印 1 つ。部品を丸で囲んで目立たせる。
+ * **回路の一員ではない**ので、ネットにも分岐の黒丸にも数えない。
+ */
+export type CircleNote = {
+  readonly kind: 'circle';
+  /**
+   * 書かれた指し先。部品 ID か番地だが、どちらかはここでは決めない
+   * (部品の表を持っている model/circuit.ts が決める)。
+   */
+  readonly target: string;
+  /** パレットの色の名前。書かなかったときは既定の色が入る。 */
+  readonly color: string;
+  readonly line: number;
+};
+
+/** 図に重ねる字 1 つ。番地を左端にして右へ書く。 */
+export type TextNote = {
+  readonly kind: 'text';
+  readonly at: Address;
+  readonly text: string;
+  /** null は色を書かなかったということ (図のほかの文字と同じ色で出る)。 */
+  readonly color: string | null;
+  readonly line: number;
+};
+
+export type NoteSpec = CircleNote | TextNote;
+
+/**
+ * 描き上がった SVG に差し込む字 1 つ。書いた順に、TeX が置いた目印へ当てる。
+ * 色はここまでで実際の値に決まっている (パレットを引くのは TeX 生成の仕事)。
+ */
+export type NoteOverlay = { readonly text: string; readonly color: string };

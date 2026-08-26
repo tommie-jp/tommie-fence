@@ -1,6 +1,7 @@
 import type { MarkdownIt, RendererRule } from 'markdown-it';
 import {
-  compileCircuit, recolorSvg, renderErrorBanner, renderErrorCard, renderNetlist, resizeSvg, shiftErrors,
+  applyNotes, compileCircuit, recolorSvg, renderErrorBanner, renderErrorCard, renderNetlist, resizeSvg,
+  shiftErrors,
 } from '../core/index.ts';
 import type { FenceError, Theme } from '../core/index.ts';
 import { hashOf } from '../host/hash.ts';
@@ -63,17 +64,22 @@ function bodyOf(
   figures: FigureSource,
   offset: number,
 ): { readonly html: string; readonly theme: Theme } {
-  const { tex, lineMap, netlist, theme, width, errors, notices } = compileCircuit(source);
+  const { tex, lineMap, netlist, theme, width, notes, errors, notices } = compileCircuit(source);
   if (tex === null) return { html: renderErrorCard(shiftErrors(errors, offset)), theme };
 
   const hash = hashOf(tex);
   const figure = figures.lookup(hash);
   if (figure === undefined) figures.enqueue(hash, tex, lineMap);
 
-  // 図は 1 回描いたものを使い回し、色と大きさだけここで当てる。
-  // こうするとテーマを変えても描き直しにいかない。
+  // 図は 1 回描いたものを使い回し、注釈の字と色と大きさだけここで当てる。
+  // こうするとテーマを変えても描き直しにいかない。注釈の字を先に差し込むのは、
+  // 色を書かなかった注釈をテーマの文字色に乗せるため。
   const drawing =
-    figure === undefined ? PENDING : 'svg' in figure ? resizeSvg(recolorSvg(figure.svg, theme), width) : '';
+    figure === undefined
+      ? PENDING
+      : 'svg' in figure
+        ? resizeSvg(recolorSvg(applyNotes(figure.svg, notes), theme), width)
+        : '';
   const drawingErrors = figure !== undefined && 'errors' in figure ? figure.errors : [];
 
   return {

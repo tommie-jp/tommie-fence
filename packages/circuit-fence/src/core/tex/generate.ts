@@ -1,13 +1,17 @@
 import { LIMITS } from '../limits.ts';
 import { DEFAULT_PITCH, cornerOf, formatAddress, toPoint } from '../model/address.ts';
-import type { Address } from '../model/address.ts';
-import { wireContacts } from '../model/circuit.ts';
-import type { Circuit } from '../model/circuit.ts';
+import type { Address, Point } from '../model/address.ts';
+import { resolveNoteTarget, wireContacts } from '../model/circuit.ts';
+import type { Circuit, NoteAnchor } from '../model/circuit.ts';
+import {
+  NOTE_EM, NOTE_INK, NOTE_MARK_COLOR, NOTE_MARK_TEXT, hexDigits, noteColor, noteWidth, texColorOf,
+} from '../notes.ts';
 import { lookupPartType, symbolFor } from '../parts.ts';
 import { EMPTY_STYLE } from '../parser/style.ts';
 import { cellOf as addressOf, nodeNameOf, texNameOfEndpoint } from '../types.ts';
 import type {
-  MultiTerminalPart, PartSpec, StyleSpec, TexTarget, TwoTerminalPart, OneTerminalPart,
+  MultiTerminalPart, NoteOverlay, NoteSpec, PartSpec, StyleSpec, TexTarget, TextNote,
+  TwoTerminalPart, OneTerminalPart,
 } from '../types.ts';
 import { escapeTex, hasUnicode } from './escape.ts';
 
@@ -21,6 +25,11 @@ export type TexOutput = {
   readonly lineMap: ReadonlyMap<number, number>;
   /** 図は組めたが、そのときに伝えることがあれば (グリッドが広すぎるなど)。 */
   readonly messages: readonly string[];
+  /**
+   * 描き上がった SVG に差し込む注釈の字。**書いた順**に、TeX が置いた目印へ当てる
+   * (render/noteText.ts)。書き出す `.tex` は字を TeX に組ませるので空。
+   */
+  readonly notes: readonly NoteOverlay[];
 };
 
 export type GenerateOptions = {
@@ -55,13 +64,19 @@ const unicodeFontLines = (): string[] => [
  * circuitikz 1.0 (フェンス側 WASM) で通る書き方だけを使う。
  * 書き出す `.tex` はそこにパッケージを足すだけで、図の中身は同じ。
  */
-const headerOf = (style: StyleSpec, target: TexTarget, needsUnicode: boolean): string[] => [
+const headerOf = (
+  style: StyleSpec,
+  target: TexTarget,
+  needsUnicode: boolean,
+  colors: readonly string[],
+): string[] => [
   '\\usepackage{circuitikz}',
   // オペアンプの ± をアンカーからずらして置くのに要る。
   '\\usetikzlibrary{calc}',
   // フェンスの TeX には siunitx が無い (実測)。書き出すほうでだけ使う。
   ...(target === 'latex' ? ['\\usepackage{siunitx}'] : []),
   ...(target === 'latex' && needsUnicode ? unicodeFontLines() : []),
+  ...colors,
   '\\begin{document}',
   `\\begin{circuitikz}[${style.standard ?? DEFAULT_STANDARD}, line width=${num(style.wireWidth ?? DEFAULT_WIRE_WIDTH)}pt]`,
   '\\ctikzset{bipoles/length=1.2cm}',
@@ -369,9 +384,116 @@ const drawPart = (part: PartSpec, target: TexTarget): string[] =>
       ? [drawOneTerminal(part, target)]
       : drawMultiTerminal(part, target);
 
-/** 積んだフォントが要る値があるか。要らないならフォントの行を書かない。 */
+/**
+ * 注釈の丸の半径 (cm)。**部品の長さではなく記号の大きさ**に合わせた決め打ち
+ * (2 端子の記号は `bipoles/length=1.2cm` で、番地の間隔がいくつでも変わらない)。
+ * 長い部品を端から端まで囲うと、印というより枠になって図が読みにくくなる。
+ */
+const NOTE_RADIUS = 0.9;
+
+/** 注釈の字の大きさ。TeX 側の指定と notes.ts の見積り (NOTE_EM) を対にしておく。 */
+const NOTE_FONT = '\\footnotesize';
+
+/** 目印の色に TeX で付ける名前。書き手の字は入らない。 */
+const MARK_COLOR_NAME = 'circuitnotemark';
+
+/** 印を置く場所。部品を指したときは記号の真ん中、番地を指したときはその交点。 */
+function noteCenter(anchor: NoteAnchor, pitch: number): Point {
+  if (anchor.kind === 'cell') return toPoint(anchor.address, pitch);
+
+  const { part } = anchor;
+  if (part.kind !== 'two-terminal') return toPoint(part.at, pitch);
+
+  const from = toPoint(part.from, pitch);
+  const to = toPoint(part.to, pitch);
+  return { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
+}
+
+/** 書き出す `.tex` の注釈の字。日本語が混じるときだけ積んだフォントで組む。 */
+const latexNoteText = (text: string): string =>
+  hasUnicode(text) ? `\\circuittext{${escapeTex(text)}}` : escapeTex(text);
+
+/**
+ * 図に重ねる字。
+ *
+ * 書き出す `.tex` はそのまま TeX に組ませる。フェンスは**字を TeX に渡さない**
+ * (日本語のフォントが無く、渡すと例外ではなくプロセスごと落ちる)。
+ * 代わりに目印の色の 1 文字だけを置き、描き上がった SVG でそこへ本物の字を
+ * 差し込む (render/noteText.ts)。位置と大きさは TeX が決めたものを使うので、
+ * 座標系を二重に持たなくてよい。
+ */
+function drawTextNote(note: TextNote, pitch: number, target: TexTarget): string[] {
+  const { x, y } = toPoint(note.at, pitch);
+  const color = note.color === null ? [] : [texColorOf(note.color)];
+  const at = `at (${num(x)},${num(y)})`;
+
+  if (target === 'latex') {
+    const options = ['anchor=west', ...color, `font=${NOTE_FONT}`];
+    return [`\\node[${options.join(', ')}] ${at} {${latexNoteText(note.text)}};`];
+  }
+
+  // 幅は TeX が知らない (字を渡していない) ので、こちらで見積もったぶんの場所を
+  // 取っておく。取らないと、図の縁に書いた注釈が SVG の外に出て切れる。
+  const half = NOTE_EM * 0.8;
+  const options = ['anchor=west', MARK_COLOR_NAME, `font=${NOTE_FONT}`];
+  return [
+    `\\path (${num(x)},${num(y - half)}) rectangle (${num(x + noteWidth(note.text))},${num(y + half)});`,
+    `\\node[${options.join(', ')}] ${at} {${NOTE_MARK_TEXT}};`,
+  ];
+}
+
+/** 注釈 1 つ。指し先はここでもう一度引く (検証は model/circuit.ts で済んでいる)。 */
+function drawNote(
+  note: NoteSpec,
+  byId: ReadonlyMap<string, PartSpec>,
+  pitch: number,
+  target: TexTarget,
+): string[] {
+  if (note.kind === 'text') return drawTextNote(note, pitch, target);
+
+  const anchor = resolveNoteTarget(note.target, byId);
+  // 指し先の無い注釈は buildCircuit が落としている。ここに来るのは検証漏れ。
+  if (anchor === null) return [];
+
+  const { x, y } = noteCenter(anchor, pitch);
+  return [`\\draw[${texColorOf(note.color)}] (${num(x)},${num(y)}) circle (${num(NOTE_RADIUS)});`];
+}
+
+/**
+ * 注釈に使う色の宣言。**実際に使う色だけ**書く。
+ * 名前も値もパレットの表から作るので、書き手の字は TeX に入らない (約束 3)。
+ */
+function noteColorLines(circuit: Circuit, target: TexTarget): string[] {
+  const names = new Set<string>();
+  for (const note of circuit.notes) {
+    // フェンスの字は目印の色で置くので、パレットの色は要らない (SVG で塗る)。
+    if (note.kind === 'circle') names.add(note.color);
+    else if (target === 'latex' && note.color !== null) names.add(note.color);
+  }
+
+  const palette = [...names].map((name) => {
+    const color = noteColor(name) ?? NOTE_INK;
+    return `\\definecolor{${texColorOf(name)}}{HTML}{${hexDigits(color)}}`;
+  });
+
+  const marked = target === 'fence' && circuit.notes.some((note) => note.kind === 'text');
+  return marked
+    ? [...palette, `\\definecolor{${MARK_COLOR_NAME}}{HTML}{${hexDigits(NOTE_MARK_COLOR)}}`]
+    : palette;
+}
+
+/** SVG に差し込む字。TeX が目印を置く順と同じ並びにする。 */
+const noteOverlays = (circuit: Circuit, target: TexTarget): NoteOverlay[] =>
+  target === 'latex'
+    ? []
+    : circuit.notes
+        .filter((note): note is TextNote => note.kind === 'text')
+        .map((note) => ({ text: note.text, color: noteColor(note.color) ?? NOTE_INK }));
+
+/** 積んだフォントが要る字があるか。要らないならフォントの行を書かない。 */
 const needsUnicodeFont = (circuit: Circuit): boolean =>
-  circuit.parts.some((part) => part.kind !== 'one-terminal' && part.value !== null && hasUnicode(part.value));
+  circuit.parts.some((part) => part.kind !== 'one-terminal' && part.value !== null && hasUnicode(part.value)) ||
+  circuit.notes.some((note) => note.kind === 'text' && hasUnicode(note.text));
 
 /**
  * 検証済みの図を circuitikz TeX にする。
@@ -383,8 +505,9 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
   const pitch = options.pitch ?? style.pitch ?? DEFAULT_PITCH;
   const lineMap = new Map<number, number>();
   const messages: string[] = [];
-  const lines = headerOf(style, target, needsUnicodeFont(circuit));
+  const lines = headerOf(style, target, needsUnicodeFont(circuit), noteColorLines(circuit, target));
   const cells = cellsOf(circuit);
+  const byId = new Map(circuit.parts.map((part) => [part.id, part]));
 
   // グリッドは回路より先に描く (後から描くと部品の上に点が乗る)。
   if (style.grid === true) lines.push(...drawGrid(cells, style, pitch, messages));
@@ -415,7 +538,17 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
     if (cell.ends >= JUNCTION_ENDS) lines.push(`\\node[circ] at (${name}) {};`);
   }
 
+  // 注釈はいちばん最後に描く。図の上に重ねる印と字なので、回路にも黒丸にも
+  // 隠れないようにする。
+  const notes = circuit.notes.flatMap((note) =>
+    drawNote(note, byId, pitch, target).map((tex) => ({ tex, line: note.line })),
+  );
+  for (const drawing of notes) {
+    lines.push(`${drawing.tex} % line ${drawing.line}`);
+    lineMap.set(lines.length, drawing.line);
+  }
+
   lines.push(...FOOTER);
 
-  return { tex: lines.join('\n'), lineMap, messages };
+  return { tex: lines.join('\n'), lineMap, messages, notes: noteOverlays(circuit, target) };
 }

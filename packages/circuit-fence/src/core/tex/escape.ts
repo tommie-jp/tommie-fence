@@ -30,6 +30,20 @@ const ASCII_DRAWABLE = 'A-Za-z0-9 .+\\-/()_%';
 const UNICODE_DRAWABLE =
   '\\u00B0\\u00B5\\u03A9\\u03BC\\u2126\\u3001\\u3002\\u3005\\u3040-\\u30FF\\u3400-\\u4DBF\\u4E00-\\u9FFF';
 
+/**
+ * 注釈 (`notes:`) に書ける字。**的を問わず日本語まで通す**。
+ *
+ * 値と違って、注釈の字はフェンスでは TeX に渡らない (描き上がった SVG に
+ * 差し込む。render/noteText.ts) ので、フェンス側のフォントの有無に縛られない。
+ * プレビューで見た図と書き出す `.tex` の図を同じに保つため、字種も同じにする。
+ *
+ * 値では通さない `:` をここだけ足してある。`to[..., l=...]` のオプションに
+ * 渡らないので区切りとして読まれることがなく、部品の書き方
+ * (`R1: resistor a1 a3 10k`) をそのまま注釈に書き写せる。
+ * 記法として読まれる字 (`\\` `$` `,` `=`) は注釈でも通さない (約束 3)。
+ */
+const NOTE_DRAWABLE = new RegExp(`^[${ASCII_DRAWABLE}${UNICODE_DRAWABLE}:]*$`, 'u');
+
 const DRAWABLE: Readonly<Record<TexTarget, RegExp>> = {
   fence: new RegExp(`^[${ASCII_DRAWABLE}]*$`, 'u'),
   latex: new RegExp(`^[${ASCII_DRAWABLE}${UNICODE_DRAWABLE}]*$`, 'u'),
@@ -39,6 +53,9 @@ const NON_ASCII = /[^ -~]/u;
 
 /** その TeX で描ける字だけでできているか。 */
 export const isDrawable = (text: string, target: TexTarget): boolean => DRAWABLE[target].test(text);
+
+/** 注釈に書ける字だけでできているか。的によらず同じ (上のコメントの理由による)。 */
+export const isNoteDrawable = (text: string): boolean => NOTE_DRAWABLE.test(text);
 
 /** ASCII だけでできているか。日本語などはフェンスの TeX にフォントが無い。 */
 export const isAscii = (text: string): boolean => !NON_ASCII.test(text);

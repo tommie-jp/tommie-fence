@@ -18,8 +18,21 @@ parts:
   S1: switch g5 g7
   F1: fuse g9 g11 3A
   P1: lamp i1 i3
-style:
-  grid: on
+notes:
+  - text b1 blue: "R1: resistor a1 a3 10k"
+  - text b5 blue: "C1: capacitor a5 a7 100n"
+  - text b9 blue: "C2: ecap a9 a11 100u"
+  - text b13 blue: "L1: inductor a13 a15 10m"
+  - text d1 blue: "D1: diode c1 c3 1N4148"
+  - text d5 blue: "D2: led c5 c7"
+  - text d9 blue: "D3: zener c9 c11 5V1"
+  - text f1 blue: "V1: vsource e1 e3 5"
+  - text f5 blue: "V2: sine e5 e7 1"
+  - text f9 blue: "I1: isource e9 e11 20m"
+  - text h1 blue: "B1: battery g1 g3 9"
+  - text h5 blue: "S1: switch g5 g7"
+  - text h9 blue: "F1: fuse g9 g11 3A"
+  - text j1 blue: "P1: lamp i1 i3"
 ```
 
 値は種類から単位を補う (抵抗の `10k` → 10 kΩ、コイルの `10m` → 10 mH)。
@@ -57,8 +70,30 @@ parts:
   A1:  ammeter k1 k3
   V5:  voltmeter k5 k7
   M1:  ohmmeter k9 k11
-style:
-  grid: on
+notes:
+  - text b1 blue: "R2: resistor-var a1 a3 10k"
+  - text b5 blue: "D4: varicap a5 a7 33p"
+  - text b9 blue: "X1: crystal a9 a11 16M"
+  - text b13 blue: "R3: photoresistor a13 a15"
+  - text d1 blue: "R4: thermistor c1 c3 10k"
+  - text d5 blue: "R5: thermistor-ntc c5 c7 10k"
+  - text d9 blue: "R6: thermistor-ptc c9 c11"
+  - text d13 blue: "R7: varistor c13 c15 470V"
+  - text f1 blue: "D5: schottky e1 e3 1N5819"
+  - text f5 blue: "D6: photodiode e5 e7"
+  - text f9 blue: "D7: diac e9 e11"
+  - text f13 blue: "V3: square e13 e15 5"
+  - text h1 blue: "V4: triangle g1 g3 1"
+  - text h5 blue: "PV1: solar g5 g7 0.6"
+  - text h9 blue: "S2: switch-nc g9 g11"
+  - text h13 blue: "S3: button g13 g15"
+  - text j1 blue: "S4: button-nc i1 i3"
+  - text j5 blue: "S5: reed i5 i7"
+  - text j9 blue: "LS1: speaker i9 i11"
+  - text j13 blue: "MK1: mic i13 i15"
+  - text l1 blue: "A1: ammeter k1 k3"
+  - text l5 blue: "V5: voltmeter k5 k7"
+  - text l9 blue: "M1: ohmmeter k9 k11"
 ```
 
 `switch` / `button` は a 接点 (ふだん開いている)、`-nc` が付くほうは b 接点。

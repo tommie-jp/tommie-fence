@@ -20,6 +20,7 @@
 | [09-style.md](09-style.md) | 色の上書き / `pitch` / `wire-width` / `standard` / `width` |
 | [10-grid.md](10-grid.md) | `grid` / `grid-to` |
 | [11-logic.md](11-logic.md) | ロジックゲート / DIP の IC / 切り替えスイッチ |
+| [12-notes.md](12-notes.md) | `notes:` の印 (`circle`) と字 (`text`)、色、日本語 |
 
 ## わざと壊してある例
 
@@ -30,6 +31,7 @@
 | [errors/01-unreadable.md](errors/01-unreadable.md) | 読めなかったとき (行番号つきのエラー) |
 | [errors/02-overlap.md](errors/02-overlap.md) | 重なりの検出 |
 | [errors/03-japanese.md](errors/03-japanese.md) | 日本語の値と `--emit-tex` |
+| [errors/04-notes.md](errors/04-notes.md) | 注釈 (`:` の引用符 / 指し先 / 色 / 使える字) |
 
 図にならない行が入っているので、`npm run examples` の対象からは外してある
 (CLI は `examples/` の直下しか見ない)。貼ってあるエラーの文面が古びないよう、

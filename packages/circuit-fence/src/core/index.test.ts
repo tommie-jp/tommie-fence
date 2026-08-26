@@ -164,3 +164,32 @@ describe('ネットリストに出る名前', () => {
     expect(result.tex).toContain('(part-U1.out)');
   });
 });
+
+describe('compileCircuit の注釈', () => {
+  test('hands the note texts out for the SVG to take', () => {
+    const result = compileCircuit(
+      lines('parts:', '  R1: resistor a1 a3 10k', 'notes:', '  - text b1 red: ここで分圧する'),
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.notes).toEqual([{ text: 'ここで分圧する', color: '#e5534b' }]);
+  });
+
+  test('draws the circuit even when a note could not be read', () => {
+    const result = compileCircuit(
+      lines('parts:', '  R1: resistor a1 a3 10k', 'notes:', '  - circle Rload'),
+    );
+
+    expect(result.tex).not.toBeNull();
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]?.line).toBe(4);
+  });
+
+  test('takes Japanese in a note even though a value may not hold it', () => {
+    const note = compileCircuit(lines('parts:', '  R1: resistor a1 a3', 'notes:', '  - text b1: ここ'));
+    const value = compileCircuit(lines('parts:', '  R1: resistor a1 a3 ここ'));
+
+    expect(note.errors).toEqual([]);
+    expect(value.errors).toHaveLength(1);
+  });
+});

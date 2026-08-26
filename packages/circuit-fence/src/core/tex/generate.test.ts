@@ -486,3 +486,109 @@ describe('記号だけでは見分けが付かない部品', () => {
     expect(tex).toContain('\\draw (a1) to[rmeterwa, t={$\\Omega$}, l_=$M_{1}$] (a3); % line 2');
   });
 });
+
+describe('generateTex の注釈', () => {
+  const RC = ['parts:', '  R1: resistor a1 a3 10k', '  C1: capacitor a3 c3 100n'];
+
+  test('draws the mark around the middle of the part it points at', () => {
+    const { tex } = generate(...RC, 'notes:', '  - circle R1');
+
+    // a1 と a3 の真ん中。番地の間隔は 2cm なので x = 2。
+    expect(tex).toContain('\\draw[circuitnotered] (2,0) circle (0.9);');
+  });
+
+  test('draws the mark on the cell when the note points at a cell', () => {
+    const { tex } = generate(...RC, 'notes:', '  - circle b2');
+
+    expect(tex).toContain('\\draw[circuitnotered] (2,-2) circle (0.9);');
+  });
+
+  test('declares only the colours it uses', () => {
+    const { tex } = generate(...RC, 'notes:', '  - circle R1 blue');
+
+    expect(tex).toContain('\\definecolor{circuitnoteblue}{HTML}{4C8EDA}');
+    expect(tex).not.toContain('circuitnotered');
+  });
+
+  test('declares no colour at all when there are no notes', () => {
+    const { tex } = generate(...RC);
+
+    expect(tex).not.toContain('\\definecolor');
+  });
+
+  // 注釈は図の上に重ねる印なので、回路にも分岐の黒丸にも隠れないようにする。
+  test('draws the notes after the circuit', () => {
+    const { tex } = generate(...RC, 'wires:', '  - a3 -- a4', 'notes:', '  - circle R1');
+
+    expect(tex.indexOf('\\draw[circuitnotered]')).toBeGreaterThan(tex.indexOf('to[R'));
+    expect(tex.indexOf('\\draw[circuitnotered]')).toBeGreaterThan(tex.indexOf('node[circ]'));
+  });
+
+  test('carries the line of the note back for the TeX log', () => {
+    const { tex, lineMap } = generate(...RC, 'notes:', '  - circle R1');
+    const at = tex.split('\n').findIndex((line) => line.startsWith('\\draw[circuitnotered]')) + 1;
+
+    expect(lineMap.get(at)).toBe(5);
+  });
+});
+
+describe('generateTex の注釈の字', () => {
+  const R = ['parts:', '  R1: resistor a1 a3 10k'];
+
+  // フェンスの TeX には日本語のフォントが無く、渡すとプロセスごと落ちる。
+  // 字は渡さず、置き場所だけを目印として描かせる。
+  test('leaves the text out of the fence TeX and marks the place instead', () => {
+    const { tex, notes } = generate(...R, 'notes:', '  - text b1: ここで分圧する');
+
+    expect(tex).not.toContain('ここで分圧する');
+    expect(tex).toContain('\\definecolor{circuitnotemark}{HTML}{FE00FE}');
+    expect(tex).toContain('\\node[anchor=west, circuitnotemark, font=\\footnotesize] at (0,-2) {X};');
+    expect(notes).toEqual([{ text: 'ここで分圧する', color: '#000000' }]);
+  });
+
+  // TeX は字を渡されていないので幅を知らない。取っておかないと図の縁で切れる。
+  test('keeps room for the text the fence TeX cannot measure', () => {
+    const { tex } = generate(...R, 'notes:', '  - text b1: ここで分圧する');
+    const short = generate(...R, 'notes:', '  - text b1: ここ');
+
+    const width = (source: string): number =>
+      Number(/\\path \(0,[-\d.]+\) rectangle \(([\d.]+),/.exec(source)?.[1] ?? 0);
+    expect(width(tex)).toBeGreaterThan(width(short.tex));
+  });
+
+  test('gives the colour of a note that has none to the SVG as the ink black', () => {
+    const { notes } = generate(...R, 'notes:', '  - text b1 green: ここ');
+
+    expect(notes).toEqual([{ text: 'ここ', color: '#2ea043' }]);
+  });
+
+  test('hands the texts over in the order the marks are drawn', () => {
+    const { notes } = generate(...R, 'notes:', '  - text b1: いち', '  - circle R1', '  - text b3: に');
+
+    expect(notes.map((note) => note.text)).toEqual(['いち', 'に']);
+  });
+
+  // 書き出す `.tex` はフォントを積めるので、字は TeX に組ませる。
+  test('writes the text itself into the TeX that goes to LaTeX', () => {
+    const { tex, notes } = generateLatex(...R, 'notes:', '  - text b1: ここで分圧する');
+
+    expect(tex).toContain('\\circuittext{ここで分圧する}');
+    expect(tex).toContain('\\newfontfamily\\circuitunicode');
+    expect(tex).not.toContain('circuitnotemark');
+    expect(notes).toEqual([]);
+  });
+
+  test('leaves the font line out when the text needs no font of its own', () => {
+    const { tex } = generateLatex(...R, 'notes:', '  - text b1: 10k pull down');
+
+    expect(tex).toContain('{10k pull down}');
+    expect(tex).not.toContain('\\newfontfamily');
+  });
+
+  test('colours the text in the TeX that goes to LaTeX', () => {
+    const { tex } = generateLatex(...R, 'notes:', '  - text b1 blue: ここ');
+
+    expect(tex).toContain('\\definecolor{circuitnoteblue}{HTML}{4C8EDA}');
+    expect(tex).toContain('anchor=west, circuitnoteblue, font=\\footnotesize');
+  });
+});

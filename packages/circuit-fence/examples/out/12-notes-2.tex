@@ -1,0 +1,37 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotered}{HTML}{E5534B}
+\definecolor{circuitnoteblue}{HTML}{4C8EDA}
+\definecolor{circuitnotegreen}{HTML}{2EA043}
+\definecolor{circuitnoteorange}{HTML}{D29922}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\coordinate (a1) at (0,0);
+\coordinate (a3) at (4,0);
+\coordinate (a5) at (8,0);
+\coordinate (a7) at (12,0);
+\coordinate (a9) at (16,0);
+\coordinate (a11) at (20,0);
+\coordinate (a13) at (24,0);
+\coordinate (a15) at (28,0);
+\draw (a1) to[R, l_=$R_{1}$] (a3); % line 2
+\draw (a5) to[R, l_=$R_{2}$] (a7); % line 3
+\draw (a9) to[R, l_=$R_{3}$] (a11); % line 4
+\draw (a13) to[R, l_=$R_{4}$] (a15); % line 5
+\draw[circuitnotered] (2,0) circle (0.9); % line 7
+\draw[circuitnoteblue] (10,0) circle (0.9); % line 8
+\draw[circuitnotegreen] (18,0) circle (0.9); % line 9
+\draw[circuitnoteorange] (26,0) circle (0.9); % line 10
+\path (0,-2.226) rectangle (0.508,-1.774); % line 11
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (0,-2) {X}; % line 11
+\path (8,-2.226) rectangle (8.677,-1.774); % line 12
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (8,-2) {X}; % line 12
+\path (16,-2.226) rectangle (16.846,-1.774); % line 13
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (16,-2) {X}; % line 13
+\path (24,-2.226) rectangle (25.015,-1.774); % line 14
+\node[anchor=west, circuitnotemark, font=\footnotesize] at (24,-2) {X}; % line 14
+\end{circuitikz}
+\end{document}

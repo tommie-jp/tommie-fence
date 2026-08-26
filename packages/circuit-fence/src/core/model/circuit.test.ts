@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { parseFence } from '../parser/parseFence.ts';
 import { formatAddress } from './address.ts';
-import { buildCircuit, wireContacts } from './circuit.ts';
+import { buildCircuit, resolveNoteTarget, wireContacts } from './circuit.ts';
 
 const build = (...rows: string[]) => {
   const { doc } = parseFence(`${rows.join('\n')}\n`);
@@ -411,5 +411,52 @@ describe('2 端子部品の足', () => {
     const { errors } = build('parts:', '  T1: triac a1 a3', 'wires:', '  - T1.k -- c2');
 
     expect(errors[0]?.message).toBe('T1 に足 k はありません (g / gate)');
+  });
+});
+
+describe('注釈の指し先', () => {
+  test('finds the part the note points at', () => {
+    const { circuit, errors } = build('parts:', '  R1: resistor a1 a3', 'notes:', '  - circle R1');
+
+    expect(errors).toEqual([]);
+    expect(circuit.notes).toHaveLength(1);
+  });
+
+  test('reads a target that is not a part as a cell', () => {
+    const byId = new Map();
+    expect(resolveNoteTarget('b3', byId)).toEqual({ kind: 'cell', address: { row: 1, col: 2 } });
+  });
+
+  // 番地は大小どちらでも書けるので、`C1` は番地 c1 とも読めてしまう。
+  // 印を付けたくなるのはたいてい部品なので、部品を先に見る。
+  test('lets the part win when an id could also be read as a cell', () => {
+    const { circuit } = build('parts:', '  C1: capacitor a1 a3', 'notes:', '  - circle C1');
+    const anchor = resolveNoteTarget('C1', new Map(circuit.parts.map((part) => [part.id, part])));
+
+    expect(anchor).toMatchObject({ kind: 'part' });
+  });
+
+  test('drops a note that points at nothing and says which line', () => {
+    const { circuit, errors } = build('parts:', '  R1: resistor a1 a3', 'notes:', '  - circle Rload');
+
+    expect(circuit.notes).toEqual([]);
+    expect(errors[0]?.message).toContain('注釈の指す先');
+    expect(errors[0]?.line).toBe(4);
+  });
+
+  // `R9` は番地 r9 とも読める。部品が無ければ番地として通る (印が図の外に出るので
+  // 書いた人には見える)。ここを黙って落とすと、番地への印が書けなくなる。
+  test('reads an id shaped like a cell as a cell when no such part exists', () => {
+    const { circuit, errors } = build('parts:', '  R1: resistor a1 a3', 'notes:', '  - circle R9');
+
+    expect(errors).toEqual([]);
+    expect(circuit.notes).toHaveLength(1);
+  });
+
+  test('keeps text notes, which point at a cell that need not exist', () => {
+    const { circuit, errors } = build('parts:', '  R1: resistor a1 a3', 'notes:', '  - text z9: ここ');
+
+    expect(errors).toEqual([]);
+    expect(circuit.notes).toHaveLength(1);
   });
 });

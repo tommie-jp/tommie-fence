@@ -1,17 +1,47 @@
 import { fenceError, safeToken } from '../errors.ts';
-import { cornerOf, formatAddress, isSameAddress } from './address.ts';
+import { cornerOf, formatAddress, isSameAddress, parseAddress } from './address.ts';
 import { lookupPartType, lookupPin, pinHint } from '../parts.ts';
 import type { Address } from './address.ts';
 import type { FenceDocument } from '../parser/parseFence.ts';
 import { isDrawable } from '../tex/escape.ts';
 import { cellOf, nameOfEndpoint } from '../types.ts';
-import type { Endpoint, FenceError, MultiTerminalPart, PartSpec, TexTarget, WireSpec } from '../types.ts';
+import type {
+  Endpoint, FenceError, MultiTerminalPart, NoteSpec, PartSpec, TexTarget, WireSpec,
+} from '../types.ts';
 
 /** 検証を通った図。ここから先 (ネットリスト導出・TeX 生成) は形を疑わない。 */
 export type Circuit = {
   readonly parts: readonly PartSpec[];
   readonly wires: readonly WireSpec[];
+  /**
+   * 図に重ねる注釈。**回路の一員ではない**ので、ネットリストにも
+   * 分岐の黒丸の数え上げにも参加しない (parts と混ぜないのはそのため)。
+   */
+  readonly notes: readonly NoteSpec[];
 };
+
+/** 注釈が指す先。 */
+export type NoteAnchor =
+  | { readonly kind: 'part'; readonly part: PartSpec }
+  | { readonly kind: 'cell'; readonly address: Address };
+
+/**
+ * 注釈の指し先を決める。**部品 ID を先に探し**、無ければ番地として読む。
+ *
+ * 番地は大小どちらで書いてもよいので、`C1` のような ID は番地 c1 とぶつかる。
+ * 印を付けたくなるのはたいてい部品のほうなので、部品を先に見る
+ * (裏を返すと、`C1` という部品がある図では番地 c1 を指せない)。
+ */
+export function resolveNoteTarget(
+  target: string,
+  byId: ReadonlyMap<string, PartSpec>,
+): NoteAnchor | null {
+  const part = byId.get(target);
+  if (part !== undefined) return { kind: 'part', part };
+
+  const address = parseAddress(target);
+  return address === null ? null : { kind: 'cell', address };
+}
 
 export type BuildResult = {
   readonly circuit: Circuit;
@@ -57,11 +87,24 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
   const wires = doc.wires
     .map((wire) => resolvePins(wire, byId, errors))
     .filter((wire): wire is WireSpec => wire !== null);
-  const circuit: Circuit = { parts, wires };
+  // 指し先の無い注釈は描けない。1 つ落としても残りは描く。
+  const notes = doc.notes.filter((note) => hasAnchor(note, byId, errors));
+  const circuit: Circuit = { parts, wires, notes };
 
   errors.push(...overlaps(parts));
 
   return { circuit, errors, notices: ambiguousTouches(circuit, byId) };
+}
+
+/** 注釈の指し先があるか。無ければ理由を積んで、その注釈だけ落とす。 */
+function hasAnchor(note: NoteSpec, byId: ReadonlyMap<string, PartSpec>, errors: FenceError[]): boolean {
+  if (note.kind !== 'circle') return true;
+  if (resolveNoteTarget(note.target, byId) !== null) return true;
+
+  errors.push(
+    fenceError(`注釈の指す先 ${safeToken(note.target)} がありません (部品 ID か番地で書きます)`, note.line),
+  );
+  return false;
 }
 
 /** 2 つの部品が同じところを占めているか。 */
