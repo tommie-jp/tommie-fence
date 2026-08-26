@@ -223,22 +223,12 @@ describe('compileCircuit の書き出し (source)', () => {
 
     expect(result.errors).toEqual([]);
     expect(result.notes.map((note) => note.text)).toEqual([
-      '   ```circuit',
-      ' 1 parts:',
-      ' 2   R1: resistor a1 a3',
-      ' 3 notes:',
-      ' 4   - source b1',
-      '   ```',
+      '```circuit',
+      'parts:',
+      '  R1: resistor a1 a3',
+      'notes:',
+      '  - source b1',
+      '```',
     ]);
-  });
-
-  // 帯に出る行番号と、書き出しに添える行番号を同じ数え方にする。
-  test('numbers the listing from where the fence sits in the Markdown', () => {
-    const result = compileCircuit(
-      lines('parts:', '  R1: resistor a1 a3', 'notes:', '  - source b1'),
-      { line: 20 },
-    );
-
-    expect(result.notes.map((note) => note.text)).toContain('21 parts:');
   });
 });

@@ -18,7 +18,7 @@ type Job = {
   readonly label: string;
   /**
    * そのフェンスの ``` が書かれた Markdown の行 (`.yaml` は 0)。
-   * 読めなかった行を Markdown の行へ戻すのにも、書き出しに添える行番号にも使う。
+   * 読めなかった行を Markdown の行へ戻すのに使う (プレビューの帯と揃える)。
    */
   readonly line: number;
 };
@@ -97,10 +97,7 @@ const reportTexClash = (label: string, path: string): void =>
  * (描いたものを後から書き換えるのではなく、別の的に向けて組み直す)。
  */
 function emitTex(job: Job): number {
-  const { tex, netlist, errors: raw, notices } = compileCircuit(job.source, {
-    target: 'latex',
-    line: job.line,
-  });
+  const { tex, netlist, errors: raw, notices } = compileCircuit(job.source, { target: 'latex' });
   // 行番号は Markdown の行で返す。プレビューの帯とも、図に書き出した番号とも揃う。
   const errors = shiftErrors(raw, job.line);
 
@@ -127,9 +124,7 @@ function emitTex(job: Job): number {
 
 /** 1 枚描く。図にできなかった数を返す。 */
 async function runJob(job: Job): Promise<number> {
-  const { tex, lineMap, netlist, theme, width, notes, errors: raw, notices } = compileCircuit(job.source, {
-    line: job.line,
-  });
+  const { tex, lineMap, netlist, theme, width, notes, errors: raw, notices } = compileCircuit(job.source);
   const errors = shiftErrors(raw, job.line);
 
   if (tex === null) {

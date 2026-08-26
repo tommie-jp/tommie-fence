@@ -43,12 +43,6 @@ export type GenerateOptions = {
    * 書き写すのではなくここから作るので、フェンスを直すと書き出しも動く。
    */
   readonly source?: string;
-  /**
-   * そのフェンスの ``` が書かれた Markdown の行 (1 始まり)。書き出しに添える
-   * 行番号がここから始まる。省いたときは中身の 1 行目を 1 行目として数える
-   * (`.yaml` を 1 枚として描くときはそれで合う)。
-   */
-  readonly sourceLine?: number;
 };
 
 /** 既定の線の太さ (pt)。実機コンパイルを確認した値。 */
@@ -444,31 +438,19 @@ const BOX_CORNER = 3;
  */
 const ARROW_TIP = '-{Stealth[length=2.2mm]}';
 
-/** 行番号に取る最小の桁数。 */
-const MIN_LINE_DIGITS = 2;
-
 /**
  * フェンスの中身を、Markdown に書いたとおりの姿にする。
  * 囲みの ``` も足す — 図だけを見た人が、そのまま書き写せる形にするため。
  *
- * 頭に **Markdown の行番号**を添える。図の下の帯に出る「13 行目」を、
- * 書き出しの中でそのまま探せるようにするため
- * (**行番号は添えたものであって、フェンスの中身ではない**)。
- * 囲みの ``` には番号を振らない。`.yaml` を 1 枚として描くときは ``` が
- * 実在しないので、振ると中身の行番号が 1 つずれる。
+ * **行番号は添えない**。書き写せる形であることが値打ちなので、書いていない字を
+ * 混ぜない。図の下の帯が指す行は、この書き出しの ``` から数えれば見つかる
+ * (わざと壊してある例のように、Markdown の側で行番号を添えることはある)。
  */
-export function listingOf(source: string, sourceLine = 0): string[] {
-  const body = source.replace(/\s+$/, '').split('\n');
-  // 2 桁ぶんは必ず取る。1 桁で始まって 2 桁で終わる図でも、頭が揃う。
-  const width = Math.max(MIN_LINE_DIGITS, String(sourceLine + body.length).length);
-  const blank = ' '.repeat(width);
-
-  return [
-    `${blank} \`\`\`circuit`,
-    ...body.map((text, index) => `${String(sourceLine + index + 1).padStart(width)} ${text}`),
-    `${blank} \`\`\``,
-  ];
-}
+export const listingOf = (source: string): string[] => [
+  '```circuit',
+  ...source.replace(/\s+$/, '').split('\n'),
+  '```',
+];
 
 /**
  * 注釈の字の上下に取っておく余白 (cm)。行送りと同じだけ取る。
@@ -718,7 +700,7 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
   const pitch = options.pitch ?? style.pitch ?? DEFAULT_PITCH;
   const lineMap = new Map<number, number>();
   const messages: string[] = [];
-  const listing = listingOf(options.source ?? '', options.sourceLine ?? 0);
+  const listing = listingOf(options.source ?? '');
   const lines = headerOf(
     style,
     target,

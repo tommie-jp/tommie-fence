@@ -37,8 +37,7 @@ describe('examples', () => {
     expect(fences.length).toBeGreaterThan(0);
 
     for (const [index, fence] of fences.entries()) {
-      // CLI と同じ呼び方をする (書き出しに添える行番号がフェンスの位置で決まる)。
-      const { tex, errors } = compileCircuit(fence.source, { line: fence.line });
+      const { tex, errors } = compileCircuit(fence.source);
 
       expect(errors.map(errorLine)).toEqual([]);
       expect(tex).not.toBeNull();
@@ -104,7 +103,7 @@ describe('examples/errors', () => {
 
     const shown = fences.flatMap((fence) =>
       // プレビューと同じく Markdown の行番号に直してから見比べる。
-      shiftErrors(compileCircuit(fence.source, { line: fence.line }).errors, fence.line).map(errorLine),
+      shiftErrors(compileCircuit(fence.source).errors, fence.line).map(errorLine),
     );
 
     expect(shown.length).toBeGreaterThan(0);
