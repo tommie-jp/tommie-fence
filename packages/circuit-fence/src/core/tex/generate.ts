@@ -294,11 +294,19 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget): string {
   // ラベルは `l_` (下・左)、値は `a^` (上・右) と向かい合わせに置く。
   // どちらも既定の側に置くと、LED のように上へ張り出す記号とラベルが重なる
   // (回路図の定石。実機で重なりを確認して決めた)。
-  const options = [symbolFor(part.type, target)];
+  const type = lookupPartType(part.type);
+  // 種類そのものに要るオプション (抵抗計の Ω など) は記号のすぐ後ろ。
+  const options = [symbolFor(part.type, target), ...(type?.options ?? [])];
   // 足を指せる種類だけ、記号そのものに名前を付ける (`P1.w` の行き先になる)。
   // 指せない種類にまで付けると、要らない名前で TeX が太る。
-  if (lookupPartType(part.type)?.pins !== undefined) options.push(`n=${nodeNameOf(part.id)}`);
-  options.push(`l_=${labelOf(part.id)}`);
+  if (type?.pins !== undefined) options.push(`n=${nodeNameOf(part.id)}`);
+  // 記号だけでは見分けが付かない種類は、ID の下にもう 1 行書く (`l2_` は
+  // 2 行を組んで下に置く circuitikz の書き方。`and` が行の区切り)。
+  options.push(
+    type?.mark === undefined
+      ? `l_=${labelOf(part.id)}`
+      : `l2_=${labelOf(part.id)} and ${type.mark}`,
+  );
   if (part.value !== null) options.push(`a^=${annotationOf(part.value, unitOf(part.type), target)}`);
 
   return `\\draw (${formatAddress(part.from)}) to[${options.join(', ')}] (${formatAddress(part.to)});`;

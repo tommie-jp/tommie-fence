@@ -39,21 +39,24 @@ parts:
   X1:  crystal a9 a11 16M
   R3:  photoresistor a13 a15
   R4:  thermistor c1 c3 10k
-  R5:  varistor c5 c7 470V
-  D5:  schottky c9 c11 1N5819
-  D6:  photodiode c13 c15
-  D7:  diac e1 e3
-  V3:  square e5 e7 5
-  V4:  triangle e9 e11 1
-  PV1: solar e13 e15 0.6
-  S2:  switch-nc g1 g3
-  S3:  button g5 g7
-  S4:  button-nc g9 g11
-  S5:  reed g13 g15
-  LS1: speaker i1 i3
-  MK1: mic i5 i7
-  A1:  ammeter i9 i11
-  V5:  voltmeter i13 i15
+  R5:  thermistor-ntc c5 c7 10k
+  R6:  thermistor-ptc c9 c11
+  R7:  varistor c13 c15 470V
+  D5:  schottky e1 e3 1N5819
+  D6:  photodiode e5 e7
+  D7:  diac e9 e11
+  V3:  square e13 e15 5
+  V4:  triangle g1 g3 1
+  PV1: solar g5 g7 0.6
+  S2:  switch-nc g9 g11
+  S3:  button g13 g15
+  S4:  button-nc i1 i3
+  S5:  reed i5 i7
+  LS1: speaker i9 i11
+  MK1: mic i13 i15
+  A1:  ammeter k1 k3
+  V5:  voltmeter k5 k7
+  M1:  ohmmeter k9 k11
 style:
   grid: on
 ```
@@ -61,10 +64,9 @@ style:
 `switch` / `button` は a 接点 (ふだん開いている)、`-nc` が付くほうは b 接点。
 水晶の値は周波数なので、`16M` と書くと 16 MHz になる。
 
-入っていない記号が 2 つある。抵抗計 (`ohmmeter`) は記号の中の Ω に
-フォントが要り、フェンスの TeX では**例外ではなくプロセスごと落ちる**。
-NTC / PTC サーミスタは落ちないが、記号の中の θ が `#` で出る。
-どちらも代わりが無いので、サーミスタは区別の無い `thermistor` だけにしてある。
+NTC と PTC のサーミスタは**同じ記号で描き、区別は ID の下に字で書く**。
+circuitikz の NTC / PTC の記号は中に θ を持っていて、フェンスの TeX には
+その大きさの字形が無く `#` で出るため (`op amp` の ± と同じ壊れ方)。
 
 ## 1 端子の記号
 

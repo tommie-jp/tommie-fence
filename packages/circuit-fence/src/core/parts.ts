@@ -4,18 +4,22 @@
  * 種類を増やすときはここに 1 行足す。
  *
  * **記号は実機でコンパイルを確かめたものだけを載せる** (CLAUDE.md 約束 6)。
- * 落ちると分かっている記号は次の 2 つ。どちらもフォントが無く、例外ではなく
- * **プロセスごと落ちる** (実測)。載せてはいけない。
+ * フェンスの TeX で通らない記号は、素の記号 + 書き足しに置き換えてから載せる。
+ * 実測で引っかかったのは次の 4 つ。
+ *
+ * 落ちるもの (例外ではなく**プロセスごと落ちる**。フォントが無いため):
  *
  * - `eC` (電解コンデンサ) → 曲板の `cC` で描く (`ecap`)
- * - `ohmmeter` (抵抗計) → 代わりが無いので載せていない
- *   (`ammeter` と `voltmeter` は Ω が要らないので通る)
+ * - `ohmmeter` (抵抗計) → Ω が**太字の数式**で、その太字数式フォントが無い。
+ *   丸に字を書くだけの `rmeterwa` に普通の太さの Ω を渡す
+ *   (普通の太さの Ω は出る。値のラベルの Ω と同じもの)
  *
- * **落ちなくても字形が壊れる記号がある**。こちらも載せない。
+ * 落ちないが**字形が壊れる**もの:
  *
  * - `op amp` → 三角形の `plain amp` + 手描きの ± に置き換えてある
- * - `thRn` / `thRp` (NTC / PTC サーミスタ) → 中の θ が `#` で出る。
- *   代わりが無いので `thR` (`thermistor`) だけを載せている
+ * - `thRn` / `thRp` (NTC / PTC サーミスタ) → 中の θ が tiny の数式フォントで、
+ *   その大きさの字形が無く `#` で出る。素の `thR` にして、
+ *   NTC / PTC の区別は ID の下の行に書く (mark)
  */
 
 import type { TexTarget } from './types.ts';
@@ -59,6 +63,12 @@ export type PartType = {
    * 箱で描く IC は中に書ける (そのほうが回路図の慣習に近い)。
    */
   readonly valueInside?: boolean;
+  /**
+   * ID の下にもう 1 行足す字。記号だけでは見分けが付かない種類だけが持つ。
+   * circuitikz の記号がフェンスの TeX で壊れる字 (θ) を使っているとき、
+   * 記号を素の形に落として、代わりにここで区別を書く。
+   */
+  readonly mark?: string;
   /**
    * 値に補う単位 (TeX)。値が型番や状態で単位を持たない種類は null。
    * 数式モードに置くので、単位の綴りは必ず立体にする
@@ -180,12 +190,13 @@ export const PART_TYPES = {
   // 感じるもの。抵抗の仲間なので値には Ω が付く。
   photoresistor: { kind: 'two-terminal', symbol: 'phR', unitTex: OHM, unitSi: SI_OHM },
   /**
-   * サーミスタ。NTC / PTC の区別 (`thRn` / `thRp`) は載せていない。
-   * **コンパイルは通るが字形が壊れる**: 記号の中の θ が tiny の数式フォントで、
-   * フェンスの TeX には字形が無く `#` で出る (実測。`op amp` の ± と同じ)。
-   * 区別が要るなら値か ID に書く (`R4: thermistor c1 c3 10k`)。
+   * サーミスタ。NTC / PTC も同じ記号で描き、区別は ID の下の行に書く。
+   * circuitikz の `thRn` / `thRp` は**コンパイルは通るが字形が壊れる**
+   * (記号の中の θ が tiny の数式フォントで、その大きさの字形が無く `#` で出る)。
    */
   thermistor: { kind: 'two-terminal', symbol: 'thR', unitTex: OHM, unitSi: SI_OHM },
+  'thermistor-ntc': { kind: 'two-terminal', symbol: 'thR', mark: 'NTC', unitTex: OHM, unitSi: SI_OHM },
+  'thermistor-ptc': { kind: 'two-terminal', symbol: 'thR', mark: 'PTC', unitTex: OHM, unitSi: SI_OHM },
   /** バリスタ。値は型番か動作電圧なので単位を足さない。 */
   varistor: { kind: 'two-terminal', symbol: 'varistor', ...NO_UNIT },
 
@@ -229,12 +240,16 @@ export const PART_TYPES = {
   speaker: { kind: 'two-terminal', symbol: 'loudspeaker', ...NO_UNIT },
   mic: { kind: 'two-terminal', symbol: 'mic', ...NO_UNIT },
 
-  /**
-   * 測るもの。抵抗計 (`ohmmeter`) は記号の中の Ω にフォントが要り、
-   * **プロセスごと落ちる** (実測) ので入れていない。
-   */
+  // 測るもの。3 つとも丸に矢印 + 字で、見た目が揃う。
   ammeter: { kind: 'two-terminal', symbol: 'ammeter', ...NO_UNIT },
   voltmeter: { kind: 'two-terminal', symbol: 'voltmeter', ...NO_UNIT },
+  /**
+   * 抵抗計。circuitikz の `ohmmeter` は Ω を**太字の数式**で描き、
+   * その太字数式フォントがフェンスの TeX に無いので**プロセスごと落ちる**。
+   * 丸に字を書くだけの `rmeterwa` に、普通の太さの Ω を渡して代わりにする
+   * (普通の太さなら出ると実測で確認。電流計・電圧計と同じ見た目になる)。
+   */
+  ohmmeter: { kind: 'two-terminal', symbol: 'rmeterwa', options: ['t={$\\Omega$}'], ...NO_UNIT },
 
   // 記号
   port: { kind: 'one-terminal', symbol: 'ocirc', idLabel: 'beside', ...NO_UNIT },

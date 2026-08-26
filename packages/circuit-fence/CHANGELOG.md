@@ -10,15 +10,16 @@
 - ` ```circuit ` フェンス (YAML) が Markdown プレビューで回路図になる。
   番地 (`a1` `c3`) で置く場所を書くと、YAML → circuitikz TeX → WASM の TeX
   → SVG の順に描かれる。LaTeX のインストールは要らない。
-- 2 端子部品 37 種。抵抗とその仲間 (`resistor` / `resistor-var` /
-  `potentiometer` / `photoresistor` / `thermistor` / `varistor`)、
+- 2 端子部品 40 種。抵抗とその仲間 (`resistor` / `resistor-var` /
+  `potentiometer` / `photoresistor` / `thermistor` / `thermistor-ntc` /
+  `thermistor-ptc` / `varistor`)、
   コンデンサとコイル (`capacitor` / `ecap` / `varicap` / `inductor`)、
   振動子 (`crystal`)、ダイオードとその仲間 (`diode` / `led` / `zener` /
   `schottky` / `photodiode` / `diac` / `thyristor` / `triac`)、
   電源 (`vsource` / `sine` / `square` / `triangle` / `isource` / `battery` /
   `solar`)、切る・光る・鳴る・測るもの (`switch` / `switch-nc` / `button` /
   `button-nc` / `reed` / `fuse` / `lamp` / `speaker` / `mic` / `ammeter` /
-  `voltmeter`)。1 端子の記号は `port` / `ground` / `vcc` / `vee`。
+  `voltmeter` / `ohmmeter`)。1 端子の記号は `port` / `ground` / `vcc` / `vee`。
   配線は `--` (2 点をまっすぐ結ぶ)。
 - 電源レールの `vcc` / `vee` は、**ID がそのまま図に出て、乗っているネットの
   名前にもなる** (端子と同じ)。グラウンドと違って離して描いても自動では
@@ -102,9 +103,15 @@
 - 日本語の値は、フェンスの TeX にフォントが無いため描けない。行番号つきで返し、
   `--emit-tex` へ誘導する。部品 ID は配線とネットリストで指す名前なので、
   日本語にはできない (英数字と `_` `-` のみ)。
-- 記号は 1 つずつ実機に通してから表に載せている。載せられなかったものが 3 つ。
+- 記号は 1 つずつ実機に通してから表に載せている。そのままでは通らず、
+  素の記号 + 書き足しに置き換えたものが 4 つ。
   - `eC` (電解コンデンサ) — フォントが無く**プロセスごと落ちる**。
-    曲板の `cC` で代わりを立てた (`ecap`)
-  - `ohmmeter` (抵抗計) — 記号の中の Ω で同じく落ちる。代わりが無い
-  - `thRn` / `thRp` (NTC / PTC サーミスタ) — 落ちないが中の θ が `#` で出る。
-    区別の無い `thermistor` だけを載せている
+    曲板の `cC` で描く (`ecap`)
+  - `op amp` — 記号の中の小さな ± のフォントが無くて落ちる。三角形だけの
+    `plain amp` + 線で描いた ± にした
+  - `ohmmeter` (抵抗計) — Ω が**太字の数式**で、その太字数式フォントが無くて
+    落ちる。丸に字を書くだけの記号に、普通の太さの Ω を渡している
+    (普通の太さの Ω は出る。値のラベルの Ω と同じもの)
+  - `thRn` / `thRp` (NTC / PTC サーミスタ) — 落ちないが、中の θ が小さすぎて
+    字形が無く `#` で出る。素のサーミスタの記号にして、区別は ID の下に
+    `NTC` / `PTC` と書く

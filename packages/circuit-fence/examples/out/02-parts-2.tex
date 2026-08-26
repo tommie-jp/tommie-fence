@@ -4,7 +4,7 @@
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\foreach \x in {0,2,4,6,8,10,12,14,16,18,20,22,24,26,28} {\foreach \y in {0,-2,-4,-6,-8,-10,-12,-14,-16} {\fill[gray] (\x,\y) circle (1.1pt);}}
+\foreach \x in {0,2,4,6,8,10,12,14,16,18,20,22,24,26,28} {\foreach \y in {0,-2,-4,-6,-8,-10,-12,-14,-16,-18,-20} {\fill[gray] (\x,\y) circle (1.1pt);}}
 \node[gray, font=\scriptsize] at (0,0.84) {1};
 \node[gray, font=\scriptsize] at (2,0.84) {2};
 \node[gray, font=\scriptsize] at (4,0.84) {3};
@@ -29,6 +29,8 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-14) {h};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-16) {i};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-18) {j};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-20) {k};
 \coordinate (a1) at (0,0);
 \coordinate (a3) at (4,0);
 \coordinate (a5) at (8,0);
@@ -69,25 +71,34 @@
 \coordinate (i11) at (20,-16);
 \coordinate (i13) at (24,-16);
 \coordinate (i15) at (28,-16);
+\coordinate (k1) at (0,-20);
+\coordinate (k3) at (4,-20);
+\coordinate (k5) at (8,-20);
+\coordinate (k7) at (12,-20);
+\coordinate (k9) at (16,-20);
+\coordinate (k11) at (20,-20);
 \draw (a1) to[vR, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (a3); % line 2
 \draw (a5) to[varcap, l_=$D_{4}$, a^=$33\,\mathrm{p}\mathrm{F}$] (a7); % line 3
 \draw (a9) to[piezoelectric, l_=$X_{1}$, a^=$16\,\mathrm{M}\mathrm{Hz}$] (a11); % line 4
 \draw (a13) to[phR, l_=$R_{3}$] (a15); % line 5
 \draw (c1) to[thR, l_=$R_{4}$, a^=$10\,\mathrm{k}\Omega$] (c3); % line 6
-\draw (c5) to[varistor, l_=$R_{5}$, a^=$\mathrm{470V}$] (c7); % line 7
-\draw (c9) to[sD, l_=$D_{5}$, a^=$\mathrm{1N5819}$] (c11); % line 8
-\draw (c13) to[pD, l_=$D_{6}$] (c15); % line 9
-\draw (e1) to[biD, l_=$D_{7}$] (e3); % line 10
-\draw (e5) to[sqV, l_=$V_{3}$, a^=$5\,\mathrm{V}$] (e7); % line 11
-\draw (e9) to[vsourcetri, l_=$V_{4}$, a^=$1\,\mathrm{V}$] (e11); % line 12
-\draw (e13) to[pvsource, l_=$P_{V1}$, a^=$0.6\,\mathrm{V}$] (e15); % line 13
-\draw (g1) to[ncs, l_=$S_{2}$] (g3); % line 14
-\draw (g5) to[nopb, l_=$S_{3}$] (g7); % line 15
-\draw (g9) to[ncpb, l_=$S_{4}$] (g11); % line 16
-\draw (g13) to[reed, l_=$S_{5}$] (g15); % line 17
-\draw (i1) to[loudspeaker, l_=$L_{S1}$] (i3); % line 18
-\draw (i5) to[mic, l_=$M_{K1}$] (i7); % line 19
-\draw (i9) to[ammeter, l_=$A_{1}$] (i11); % line 20
-\draw (i13) to[voltmeter, l_=$V_{5}$] (i15); % line 21
+\draw (c5) to[thR, l2_=$R_{5}$ and NTC, a^=$10\,\mathrm{k}\Omega$] (c7); % line 7
+\draw (c9) to[thR, l2_=$R_{6}$ and PTC] (c11); % line 8
+\draw (c13) to[varistor, l_=$R_{7}$, a^=$\mathrm{470V}$] (c15); % line 9
+\draw (e1) to[sD, l_=$D_{5}$, a^=$\mathrm{1N5819}$] (e3); % line 10
+\draw (e5) to[pD, l_=$D_{6}$] (e7); % line 11
+\draw (e9) to[biD, l_=$D_{7}$] (e11); % line 12
+\draw (e13) to[sqV, l_=$V_{3}$, a^=$5\,\mathrm{V}$] (e15); % line 13
+\draw (g1) to[vsourcetri, l_=$V_{4}$, a^=$1\,\mathrm{V}$] (g3); % line 14
+\draw (g5) to[pvsource, l_=$P_{V1}$, a^=$0.6\,\mathrm{V}$] (g7); % line 15
+\draw (g9) to[ncs, l_=$S_{2}$] (g11); % line 16
+\draw (g13) to[nopb, l_=$S_{3}$] (g15); % line 17
+\draw (i1) to[ncpb, l_=$S_{4}$] (i3); % line 18
+\draw (i5) to[reed, l_=$S_{5}$] (i7); % line 19
+\draw (i9) to[loudspeaker, l_=$L_{S1}$] (i11); % line 20
+\draw (i13) to[mic, l_=$M_{K1}$] (i15); % line 21
+\draw (k1) to[ammeter, l_=$A_{1}$] (k3); % line 22
+\draw (k5) to[voltmeter, l_=$V_{5}$] (k7); % line 23
+\draw (k9) to[rmeterwa, t={$\Omega$}, l_=$M_{1}$] (k11); % line 24
 \end{circuitikz}
 \end{document}

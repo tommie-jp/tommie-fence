@@ -126,7 +126,7 @@ describe('記事によく出る部品', () => {
   });
 
   test('carries the resistors that sense something', () => {
-    for (const name of ['resistor-var', 'photoresistor', 'thermistor']) {
+    for (const name of ['resistor-var', 'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc']) {
       // 抵抗の仲間なので、値には Ω が付く。
       expect(lookupPartType(name)?.unitTex).toBe('\\Omega');
     }
@@ -154,9 +154,28 @@ describe('記事によく出る部品', () => {
   });
 
   test('carries the meters and the parts that make a sound', () => {
-    for (const name of ['ammeter', 'voltmeter', 'speaker', 'mic']) {
+    for (const name of ['ammeter', 'voltmeter', 'ohmmeter', 'speaker', 'mic']) {
       expect(lookupPartType(name)?.kind).toBe('two-terminal');
     }
+  });
+
+  test('draws the ohmmeter as a plain round meter with an omega in it', () => {
+    // circuitikz の ohmmeter は Ω を**太字の数式**で描き、そのフォントが無くて
+    // プロセスごと落ちる。普通の太さの Ω なら出る (どちらも実測)。
+    const type = lookupPartType('ohmmeter');
+
+    expect(type?.symbol).toBe('rmeterwa');
+    expect(type?.options).toEqual(['t={$\\Omega$}']);
+  });
+
+  test('tells the NTC and the PTC thermistor apart with letters', () => {
+    // 記号の中の θ は tiny の数式フォントが無くて `#` で出る (実測)。
+    // 素のサーミスタの記号にして、区別はラベルの下の行に書く。
+    expect(lookupPartType('thermistor-ntc')?.symbol).toBe('thR');
+    expect(lookupPartType('thermistor-ntc')?.mark).toBe('NTC');
+    expect(lookupPartType('thermistor-ptc')?.mark).toBe('PTC');
+    // 素のサーミスタには何も足さない。
+    expect(lookupPartType('thermistor')?.mark).toBeUndefined();
   });
 
   test('keeps the power rails as one terminal symbols', () => {

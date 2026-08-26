@@ -46,34 +46,37 @@ wires:
 | `inductor` | コイル | H | `L1: inductor a5 a7 10m` |
 | `photoresistor` | CdS セル | Ω | `R3: photoresistor a13 a15` |
 | `thermistor` | サーミスタ | Ω | `R4: thermistor c1 c3 10k` |
-| `varistor` | バリスタ | (型番) | `R5: varistor c5 c7 470V` |
+| `thermistor-ntc` | NTC サーミスタ | Ω | `R5: thermistor-ntc c5 c7 10k` |
+| `thermistor-ptc` | PTC サーミスタ | Ω | `R6: thermistor-ptc c9 c11` |
+| `varistor` | バリスタ | (型番) | `R7: varistor c13 c15 470V` |
 | `crystal` | 水晶振動子 | Hz | `X1: crystal a9 a11 16M` |
 | `diode` | ダイオード | (型番) | `D1: diode c1 c3 1N4148` |
 | `led` | LED | (型番) | `D2: led c5 c7` |
 | `zener` | ツェナー | (型番) | `D3: zener c9 c11 5V1` |
-| `schottky` | ショットキー | (型番) | `D5: schottky c9 c11 1N5819` |
-| `photodiode` | フォトダイオード | (型番) | `D6: photodiode c13 c15` |
-| `diac` | ダイアック | (型番) | `D7: diac e1 e3` |
+| `schottky` | ショットキー | (型番) | `D5: schottky e1 e3 1N5819` |
+| `photodiode` | フォトダイオード | (型番) | `D6: photodiode e5 e7` |
+| `diac` | ダイアック | (型番) | `D7: diac e9 e11` |
 | `thyristor` | サイリスタ (SCR) | (型番) | `T1: thyristor d1 d5` |
 | `triac` | トライアック | (型番) | `T2: triac f1 f5` |
 | `vsource` | 直流電源 | V | `V1: vsource e1 e3 5` |
 | `sine` | 交流電源 (正弦波) | V | `V2: sine e5 e7 1` |
-| `square` | 方形波電源 | V | `V3: square e5 e7 5` |
-| `triangle` | 三角波電源 | V | `V4: triangle e9 e11 1` |
+| `square` | 方形波電源 | V | `V3: square e13 e15 5` |
+| `triangle` | 三角波電源 | V | `V4: triangle g1 g3 1` |
 | `isource` | 定電流源 | A | `I1: isource e9 e11 20m` |
 | `battery` | 電池 | V | `B1: battery g1 g3 9` |
-| `solar` | 太陽電池 | V | `PV1: solar e13 e15 0.6` |
+| `solar` | 太陽電池 | V | `PV1: solar g5 g7 0.6` |
 | `switch` | スイッチ (a 接点) | (なし) | `S1: switch g5 g7` |
-| `switch-nc` | スイッチ (b 接点) | (なし) | `S2: switch-nc g1 g3` |
-| `button` | 押しボタン (a 接点) | (なし) | `S3: button g5 g7` |
-| `button-nc` | 押しボタン (b 接点) | (なし) | `S4: button-nc g9 g11` |
-| `reed` | リードスイッチ | (なし) | `S5: reed g13 g15` |
+| `switch-nc` | スイッチ (b 接点) | (なし) | `S2: switch-nc g9 g11` |
+| `button` | 押しボタン (a 接点) | (なし) | `S3: button g13 g15` |
+| `button-nc` | 押しボタン (b 接点) | (なし) | `S4: button-nc i1 i3` |
+| `reed` | リードスイッチ | (なし) | `S5: reed i5 i7` |
 | `fuse` | ヒューズ | (定格) | `F1: fuse g9 g11 3A` |
 | `lamp` | ランプ | (なし) | `P1: lamp i1 i3` |
-| `speaker` | スピーカー | (なし) | `LS1: speaker i1 i3` |
-| `mic` | マイク | (なし) | `MK1: mic i5 i7` |
-| `ammeter` | 電流計 | (なし) | `A1: ammeter i9 i11` |
-| `voltmeter` | 電圧計 | (なし) | `V5: voltmeter i13 i15` |
+| `speaker` | スピーカー | (なし) | `LS1: speaker i9 i11` |
+| `mic` | マイク | (なし) | `MK1: mic i13 i15` |
+| `ammeter` | 電流計 | (なし) | `A1: ammeter k1 k3` |
+| `voltmeter` | 電圧計 | (なし) | `V5: voltmeter k5 k7` |
+| `ohmmeter` | 抵抗計 | (なし) | `M1: ohmmeter k9 k11` |
 
 ![使える部品](../examples/out/02-parts-1.png)
 
@@ -82,13 +85,14 @@ wires:
 `ecap` は**先に書いた番地が + 側**になる (記号の平らな板のほう)。
 `C2: ecap a5 c5` なら a5 が +。
 
-入っていない記号が 2 つある。どちらも代わりを立てられなかったもの。
+記号を素の形に落として代わりを立てているものが 2 つある。
+どちらも circuitikz の記号が、フェンスの TeX に無いフォントを使っているため。
 
-- 抵抗計 (`ohmmeter`) — 記号の中の Ω にフォントが要り、フェンスの TeX では
-  **例外ではなくプロセスごと落ちる** (電解コンデンサの `eC` と同じ理由。
-  こちらは曲板の記号で代わりを立てられた)
-- NTC / PTC サーミスタ — 落ちないが、記号の中の θ が `#` で出る。
-  区別の無い `thermistor` だけを載せてある
+- **抵抗計** — circuitikz の `ohmmeter` は Ω を**太字の数式**で描き、
+  その太字数式フォントが無くて**プロセスごと落ちる**。丸に字を書くだけの
+  記号に、普通の太さの Ω を渡して描いている (電流計・電圧計と同じ見た目)
+- **NTC / PTC サーミスタ** — 記号の中の θ が小さすぎて字形が無く `#` で出る。
+  素のサーミスタの記号にして、**区別は ID の下に字で書く**
 
 ### 多端子部品 — `ID: 種類 番地 [向き] [型番]`
 

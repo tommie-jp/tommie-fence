@@ -470,3 +470,19 @@ describe('DIP の IC', () => {
     expect(tex).toContain('\\node[dipchip, num pins=8, font=\\scriptsize] (part-U1) at (c2) {}; % line 2');
   });
 });
+
+describe('記号だけでは見分けが付かない部品', () => {
+  test('writes the mark under the id as a second label line', () => {
+    const { tex } = generate('parts:', '  R5: thermistor-ntc a1 a3 10k');
+
+    expect(tex).toContain(
+      '\\draw (a1) to[thR, l2_=$R_{5}$ and NTC, a^=$10\\,\\mathrm{k}\\Omega$] (a3); % line 2',
+    );
+  });
+
+  test('carries the options a symbol needs into the bipole', () => {
+    const { tex } = generate('parts:', '  M1: ohmmeter a1 a3');
+
+    expect(tex).toContain('\\draw (a1) to[rmeterwa, t={$\\Omega$}, l_=$M_{1}$] (a3); % line 2');
+  });
+});
