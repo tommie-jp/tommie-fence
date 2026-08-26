@@ -18,6 +18,19 @@ wires:
   - a3 -- a4
 ```
 
+書いたのはこれ。
+
+```text
+parts:
+  IN: port a1
+  R1: resistr a1 a3 10k
+  C1: capacitor z0 z2 100n
+  L1: inductor a5 a5
+  V1: vsource c1 c3 五ボルト
+wires:
+  - a3 -- a4
+```
+
 帯にはこう出る。
 
 ```text

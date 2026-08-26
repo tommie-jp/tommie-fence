@@ -13,6 +13,17 @@ parts:
   G1: ground c1
 ```
 
+書いたのはこれ。
+
+```text
+parts:
+  V1: vsource a1 a3 電池9V
+  R1: resistor a1 c1 10k
+  G1: ground c1
+```
+
+帯にはこう出る。
+
 ```text
 circuit: 11 行目: 部品 V1: 値 9V はプレビューの TeX にフォントがありません (circuit-fence render --emit-tex で .tex に書き出すと LaTeX で組めます)
 ```

@@ -13,6 +13,18 @@ parts:
   C2: capacitor c1 c3 100n
 ```
 
+書いたのはこれ。
+
+```text
+parts:
+  R1: resistor a1 a3 10k
+  R2: resistor a1 a3 4k7
+  C1: capacitor c1 c3 100n
+  C2: capacitor c1 c3 100n
+```
+
+帯にはこう出る。
+
 ```text
 circuit: 11 行目: 部品 R2 が R1 と同じ場所に重なっています (10 行目)
 circuit: 13 行目: 部品 C2 が C1 と同じ場所に重なっています (12 行目)

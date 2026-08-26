@@ -61,6 +61,17 @@ describe('examples/errors', () => {
     expect(brokenDocuments.length).toBeGreaterThan(0);
   });
 
+  // プレビューでは ```circuit が図 (かエラーカード) に差し替わるので、書いた中身が
+  // 読み手に見えない。そこで ```text にも写してある。写しはずれるので、見張る。
+  test.each(brokenDocuments)('%s に写してあるフェンスの中身が実物と一致する', (name) => {
+    const source = readFileSync(join(BROKEN, name), 'utf8');
+    const fences = extractCircuitFences(source);
+    const listings = [...source.matchAll(/```text\n([\s\S]*?)```/g)].map((match) => match[1] ?? '');
+
+    expect(fences.length).toBeGreaterThan(0);
+    for (const fence of fences) expect(listings).toContain(fence.source);
+  });
+
   test.each(brokenDocuments)('%s に貼ってあるエラーが実際に出るものと一致する', (name) => {
     const source = readFileSync(join(BROKEN, name), 'utf8');
     const fences = extractCircuitFences(source);

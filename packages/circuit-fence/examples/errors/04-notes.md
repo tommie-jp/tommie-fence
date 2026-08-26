@@ -15,6 +15,17 @@ notes:
   - text b1: R1: resistor a1 a3 10k
 ```
 
+書いたのはこれ。
+
+```text
+parts:
+  R1: resistor a1 a3 10k
+notes:
+  - text b1: R1: resistor a1 a3 10k
+```
+
+帯にはこう出る。
+
 ```text
 circuit: 15 行目: YAML の構文エラー: Nested mappings are not allowed in compact mappings (`:` を含む文字は "…" で囲みます)
 ```
@@ -35,10 +46,23 @@ notes:
   - text b1: gain = 10
 ```
 
+書いたのはこれ。
+
 ```text
-circuit: 34 行目: 注釈の色 rainbow は知りません (red / blue / green / orange が使えます)
-circuit: 35 行目: 注釈の文字に使えない文字があります (英数字と . + - / ( ) _ % : 、日本語、µ Ω ° が使えます)
-circuit: 33 行目: 注釈の指す先 Rload がありません (部品 ID か番地で書きます)
+parts:
+  R1: resistor a1 a3 10k
+notes:
+  - circle Rload
+  - circle R1 rainbow
+  - text b1: gain = 10
+```
+
+帯にはこう出る。
+
+```text
+circuit: 45 行目: 注釈の色 rainbow は知りません (red / blue / green / orange が使えます)
+circuit: 46 行目: 注釈の文字に使えない文字があります (英数字と . + - / ( ) _ % : 、日本語、µ Ω ° が使えます)
+circuit: 44 行目: 注釈の指す先 Rload がありません (部品 ID か番地で書きます)
 ```
 
 読めた注釈は描き、読めなかった 1 つだけを落とす。行番号が前後しているのは、
@@ -63,11 +87,25 @@ notes:
   - arrow R1 R1
 ```
 
+書いたのはこれ。
+
 ```text
-circuit: 60 行目: 注釈の言葉 enormous は知りません (色: red / blue / green / orange、大きさ: tiny / small / normal / large / huge、寄せ: left / center / right、太字: bold が使えます)
-circuit: 61 行目: 注釈の大きさが二重に書かれています (tiny と huge)
-circuit: 62 行目: circle は 「- circle 部品IDか番地 [色]」 で書きます (huge は字の注釈にだけ書けます)
-circuit: 63 行目: 指し棒の起点と終点が同じところです (R1)
+parts:
+  R1: resistor a1 a3 10k
+notes:
+  - text b1 enormous: ここ
+  - text b2 tiny huge: ここ
+  - circle R1 huge
+  - arrow R1 R1
+```
+
+帯にはこう出る。
+
+```text
+circuit: 84 行目: 注釈の言葉 enormous は知りません (色: red / blue / green / orange、大きさ: tiny / small / normal / large / huge、寄せ: left / center / right、太字: bold が使えます)
+circuit: 85 行目: 注釈の大きさが二重に書かれています (tiny と huge)
+circuit: 86 行目: circle は 「- circle 部品IDか番地 [色]」 で書きます (huge は字の注釈にだけ書けます)
+circuit: 87 行目: 指し棒の起点と終点が同じところです (R1)
 ```
 
 読めた注釈は描き、読めなかったものだけを落とすのは印のときと同じ。
