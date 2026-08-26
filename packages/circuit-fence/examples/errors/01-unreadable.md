@@ -7,6 +7,9 @@
 見ないので、ここの図は書き出されない。プレビュー (`Ctrl+Shift+V`) で開くと、
 図の下にエラーの帯が出る。
 
+写しの先頭に付けた数字は、分かりやすくするために添えた行番号。
+**ソースに行番号はない**。
+
 ```circuit
 parts:
   IN: port a1
@@ -21,23 +24,23 @@ wires:
 書いたのはこれ。
 
 ```text
-parts:
-  IN: port a1
-  R1: resistr a1 a3 10k
-  C1: capacitor z0 z2 100n
-  L1: inductor a5 a5
-  V1: vsource c1 c3 五ボルト
-wires:
-  - a3 -- a4
+14 parts:
+15   IN: port a1
+16   R1: resistr a1 a3 10k
+17   C1: capacitor z0 z2 100n
+18   L1: inductor a5 a5
+19   V1: vsource c1 c3 五ボルト
+20 wires:
+21   - a3 -- a4
 ```
 
 帯にはこう出る。
 
 ```text
-circuit: 13 行目: 種類 resistr は知りません (resistor のことですか?)
-circuit: 14 行目: z0 は番地の形ではありません (行 a〜z + 列 1〜99)
-circuit: 15 行目: inductor の両端が同じ番地です (a5)
-circuit: 16 行目: 部品 V1: 値はプレビューの TeX にフォントがありません (circuit-fence render --emit-tex で .tex に書き出すと LaTeX で組めます)
+circuit: 16 行目: 種類 resistr は知りません (resistor のことですか?)
+circuit: 17 行目: z0 は番地の形ではありません (行 a〜z + 列 1〜99)
+circuit: 18 行目: inductor の両端が同じ番地です (a5)
+circuit: 19 行目: 部品 V1: 値はプレビューの TeX にフォントがありません (circuit-fence render --emit-tex で .tex に書き出すと LaTeX で組めます)
 ```
 
 - **種類の綴り違い**は近い名前を 1 つだけ添える (全部並べるより読みやすい)。

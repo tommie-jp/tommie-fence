@@ -8,6 +8,9 @@ yaml 自身の言い分は英語で「Nested mappings are not allowed」だけ�
 
 **この例もわざと壊してある。**
 
+写しの先頭に付けた数字は、分かりやすくするために添えた行番号。
+**ソースに行番号はない**。
+
 ```circuit
 parts:
   R1: resistor a1 a3 10k
@@ -18,16 +21,16 @@ notes:
 書いたのはこれ。
 
 ```text
-parts:
-  R1: resistor a1 a3 10k
-notes:
-  - text b1: R1: resistor a1 a3 10k
+15 parts:
+16   R1: resistor a1 a3 10k
+17 notes:
+18   - text b1: R1: resistor a1 a3 10k
 ```
 
 帯にはこう出る。
 
 ```text
-circuit: 15 行目: YAML の構文エラー: Nested mappings are not allowed in compact mappings (`:` を含む文字は "…" で囲みます)
+circuit: 18 行目: YAML の構文エラー: Nested mappings are not allowed in compact mappings (`:` を含む文字は "…" で囲みます)
 ```
 
 字は YAML の値なので、`"R1: resistor a1 a3 10k"` と囲めば通る。
@@ -49,20 +52,20 @@ notes:
 書いたのはこれ。
 
 ```text
-parts:
-  R1: resistor a1 a3 10k
-notes:
-  - circle Rload
-  - circle R1 rainbow
-  - text b1: gain = 10
+44 parts:
+45   R1: resistor a1 a3 10k
+46 notes:
+47   - circle Rload
+48   - circle R1 rainbow
+49   - text b1: gain = 10
 ```
 
 帯にはこう出る。
 
 ```text
-circuit: 45 行目: 注釈の色 rainbow は知りません (red / blue / green / orange が使えます)
-circuit: 46 行目: 注釈の文字に使えない文字があります (英数字と . + - / ( ) _ % : 、日本語、µ Ω ° が使えます)
-circuit: 44 行目: 注釈の指す先 Rload がありません (部品 ID か番地で書きます)
+circuit: 48 行目: 注釈の色 rainbow は知りません (red / blue / green / orange が使えます)
+circuit: 49 行目: 注釈の文字に使えない文字があります (英数字と . + - / ( ) _ % : 、日本語、µ Ω ° が使えます)
+circuit: 47 行目: 注釈の指す先 Rload がありません (部品 ID か番地で書きます)
 ```
 
 読めた注釈は描き、読めなかった 1 つだけを落とす。行番号が前後しているのは、
@@ -90,22 +93,22 @@ notes:
 書いたのはこれ。
 
 ```text
-parts:
-  R1: resistor a1 a3 10k
-notes:
-  - text b1 enormous: ここ
-  - text b2 tiny huge: ここ
-  - circle R1 huge
-  - arrow R1 R1
+84 parts:
+85   R1: resistor a1 a3 10k
+86 notes:
+87   - text b1 enormous: ここ
+88   - text b2 tiny huge: ここ
+89   - circle R1 huge
+90   - arrow R1 R1
 ```
 
 帯にはこう出る。
 
 ```text
-circuit: 84 行目: 注釈の言葉 enormous は知りません (色: red / blue / green / orange、大きさ: tiny / small / normal / large / huge、寄せ: left / center / right、太字: bold が使えます)
-circuit: 85 行目: 注釈の大きさが二重に書かれています (tiny と huge)
-circuit: 86 行目: circle は 「- circle 部品IDか番地 [色]」 で書きます (huge は字の注釈にだけ書けます)
-circuit: 87 行目: 指し棒の起点と終点が同じところです (R1)
+circuit: 87 行目: 注釈の言葉 enormous は知りません (色: red / blue / green / orange、大きさ: tiny / small / normal / large / huge、寄せ: left / center / right、太字: bold が使えます)
+circuit: 88 行目: 注釈の大きさが二重に書かれています (tiny と huge)
+circuit: 89 行目: circle は 「- circle 部品IDか番地 [色]」 で書きます (huge は字の注釈にだけ書けます)
+circuit: 90 行目: 指し棒の起点と終点が同じところです (R1)
 ```
 
 読めた注釈は描き、読めなかったものだけを落とすのは印のときと同じ。

@@ -615,13 +615,39 @@ describe('generateTex の書き出し (source)', () => {
     const { notes } = write(...R);
 
     expect(notes.map((note) => note.text)).toEqual([
-      '```circuit',
-      'parts:',
-      '  R1: resistor a1 a3 10k',
-      'notes:',
-      '  - source b1',
-      '```',
+      '   ```circuit',
+      ' 1 parts:',
+      ' 2   R1: resistor a1 a3 10k',
+      ' 3 notes:',
+      ' 4   - source b1',
+      '   ```',
     ]);
+  });
+
+  // 図の下の帯に出る「13 行目」を、書き出しの中でそのまま探せるようにする。
+  test('numbers the lines from where the fence sits in the Markdown', () => {
+    const source = `${R.join('\n')}\n`;
+    const { doc } = parseFence(source);
+    if (doc === null) throw new Error('YAML を読めませんでした');
+    const { notes } = generateTex(buildCircuit(doc).circuit, { source, sourceLine: 12 });
+
+    expect(notes.map((note) => note.text)).toEqual([
+      '   ```circuit',
+      '13 parts:',
+      '14   R1: resistor a1 a3 10k',
+      '15 notes:',
+      '16   - source b1',
+      '   ```',
+    ]);
+  });
+
+  // 囲みの ``` は `.yaml` を 1 枚として描くときに実在しない。
+  // 番号を振ると、中身の行番号が 1 つずれる。
+  test('leaves the ``` unnumbered', () => {
+    const { notes } = write(...R);
+
+    expect(notes[0]?.text.trim()).toBe('```circuit');
+    expect(notes[0]?.text.startsWith('  ')).toBe(true);
   });
 
   test('組む字は等幅にする (字下げが意味を持つので)', () => {
@@ -660,7 +686,7 @@ describe('generateTex の書き出し (source)', () => {
       source,
     });
 
-    expect(tex).toContain('\\texttt{parts:}');
+    expect(tex).toContain('\\texttt{\\ 1\\ parts:}');
     expect(notes).toEqual([]);
   });
 

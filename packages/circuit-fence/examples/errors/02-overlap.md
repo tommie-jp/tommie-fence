@@ -5,6 +5,9 @@
 
 **この例もわざと壊してある。**
 
+写しの先頭に付けた数字は、分かりやすくするために添えた行番号。
+**ソースに行番号はない**。
+
 ```circuit
 parts:
   R1: resistor a1 a3 10k
@@ -16,18 +19,18 @@ parts:
 書いたのはこれ。
 
 ```text
-parts:
-  R1: resistor a1 a3 10k
-  R2: resistor a1 a3 4k7
-  C1: capacitor c1 c3 100n
-  C2: capacitor c1 c3 100n
+12 parts:
+13   R1: resistor a1 a3 10k
+14   R2: resistor a1 a3 4k7
+15   C1: capacitor c1 c3 100n
+16   C2: capacitor c1 c3 100n
 ```
 
 帯にはこう出る。
 
 ```text
-circuit: 11 行目: 部品 R2 が R1 と同じ場所に重なっています (10 行目)
-circuit: 13 行目: 部品 C2 が C1 と同じ場所に重なっています (12 行目)
+circuit: 14 行目: 部品 R2 が R1 と同じ場所に重なっています (13 行目)
+circuit: 16 行目: 部品 C2 が C1 と同じ場所に重なっています (15 行目)
 ```
 
 後から書いたほうの行で返し、先に書いたほうの行を添える。

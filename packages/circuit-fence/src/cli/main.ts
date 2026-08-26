@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import { basename, extname, join, resolve } from 'node:path';
 import {
   applyNotes, compileCircuit, errorLine, extractCircuitFences, messageLine, recolorSvg, resizeSvg,
+  shiftErrors,
 } from '../core/index.ts';
 import type { FenceError, Net } from '../core/index.ts';
 import { renderTex } from '../host/texSvg.ts';
@@ -10,7 +11,17 @@ import { standaloneTex } from '../core/tex/generate.ts';
 import { texErrors } from '../core/tex/texLog.ts';
 import { USAGE, parseArgs } from './args.ts';
 
-type Job = { readonly source: string; readonly stem: string; readonly directory: string; readonly label: string };
+type Job = {
+  readonly source: string;
+  readonly stem: string;
+  readonly directory: string;
+  readonly label: string;
+  /**
+   * そのフェンスの ``` が書かれた Markdown の行 (`.yaml` は 0)。
+   * 読めなかった行を Markdown の行へ戻すのにも、書き出しに添える行番号にも使う。
+   */
+  readonly line: number;
+};
 
 const isYaml = (path: string): boolean => ['.yaml', '.yml'].includes(extname(path));
 const isMarkdown = (path: string): boolean => ['.md', '.markdown'].includes(extname(path));
@@ -31,7 +42,7 @@ function jobsFor(path: string, outDir: string | null): Job[] {
   const directory = outDir ?? resolve(path, '..');
   const source = readFileSync(path, 'utf8');
 
-  if (isYaml(path)) return [{ source, stem, directory, label: stem }];
+  if (isYaml(path)) return [{ source, stem, directory, label: stem, line: 0 }];
 
   const fences = extractCircuitFences(source);
   return fences.map((fence, index) => ({
@@ -39,6 +50,7 @@ function jobsFor(path: string, outDir: string | null): Job[] {
     stem: fences.length === 1 ? stem : `${stem}-${index + 1}`,
     directory,
     label: `${stem} (${fence.line} 行目)`,
+    line: fence.line,
   }));
 }
 
@@ -85,7 +97,12 @@ const reportTexClash = (label: string, path: string): void =>
  * (描いたものを後から書き換えるのではなく、別の的に向けて組み直す)。
  */
 function emitTex(job: Job): number {
-  const { tex, netlist, errors, notices } = compileCircuit(job.source, { target: 'latex' });
+  const { tex, netlist, errors: raw, notices } = compileCircuit(job.source, {
+    target: 'latex',
+    line: job.line,
+  });
+  // 行番号は Markdown の行で返す。プレビューの帯とも、図に書き出した番号とも揃う。
+  const errors = shiftErrors(raw, job.line);
 
   if (tex === null) {
     reportProblem(`${job.label}: 図にできませんでした`);
@@ -104,13 +121,16 @@ function emitTex(job: Job): number {
   console.log(`${job.label} → ${texPath} (xelatex で組んでください)`);
   reportNetlist(netlist);
   reportErrors(errors);
-  reportNotices(notices);
+  reportNotices(shiftErrors(notices, job.line));
   return errors.length;
 }
 
 /** 1 枚描く。図にできなかった数を返す。 */
 async function runJob(job: Job): Promise<number> {
-  const { tex, lineMap, netlist, theme, width, notes, errors, notices } = compileCircuit(job.source);
+  const { tex, lineMap, netlist, theme, width, notes, errors: raw, notices } = compileCircuit(job.source, {
+    line: job.line,
+  });
+  const errors = shiftErrors(raw, job.line);
 
   if (tex === null) {
     reportProblem(`${job.label}: 図にできませんでした`);
@@ -130,10 +150,12 @@ async function runJob(job: Job): Promise<number> {
   // 描画は 1 枚ずつ。node-tikzjax は同時に 2 枚描くと状態が壊れる。
   const outcome = await renderTex(tex);
   if (!outcome.ok) {
-    const failures =
+    const failures = shiftErrors(
       outcome.kind === 'tex-log'
         ? texErrors(outcome.log, lineMap, outcome.preambleLines)
-        : [{ message: outcome.message, line: null }];
+        : [{ message: outcome.message, line: null }],
+      job.line,
+    );
     reportProblem(`${job.label} → ${texPath} (SVG は書けませんでした)`);
     reportErrors([...errors, ...failures]);
     return errors.length + Math.max(failures.length, 1);
@@ -146,7 +168,7 @@ async function runJob(job: Job): Promise<number> {
   console.log(`${job.label} → ${svgPath}`);
   reportNetlist(netlist);
   reportErrors(errors);
-  reportNotices(notices);
+  reportNotices(shiftErrors(notices, job.line));
   return errors.length;
 }
 

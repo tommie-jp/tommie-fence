@@ -6,6 +6,9 @@
 **この例もわざと壊してある。** プレビューでは `V1` の値が落ちて、
 部品だけが描かれる。
 
+写しの先頭に付けた数字は、分かりやすくするために添えた行番号。
+**ソースに行番号はない**。
+
 ```circuit
 parts:
   V1: vsource a1 a3 電池9V
@@ -16,16 +19,16 @@ parts:
 書いたのはこれ。
 
 ```text
-parts:
-  V1: vsource a1 a3 電池9V
-  R1: resistor a1 c1 10k
-  G1: ground c1
+13 parts:
+14   V1: vsource a1 a3 電池9V
+15   R1: resistor a1 c1 10k
+16   G1: ground c1
 ```
 
 帯にはこう出る。
 
 ```text
-circuit: 11 行目: 部品 V1: 値 9V はプレビューの TeX にフォントがありません (circuit-fence render --emit-tex で .tex に書き出すと LaTeX で組めます)
+circuit: 14 行目: 部品 V1: 値 9V はプレビューの TeX にフォントがありません (circuit-fence render --emit-tex で .tex に書き出すと LaTeX で組めます)
 ```
 
 文面に出るのは値のうち**そのまま出しても安全な字だけ** (`9V`)。

@@ -64,7 +64,11 @@ function bodyOf(
   figures: FigureSource,
   offset: number,
 ): { readonly html: string; readonly theme: Theme } {
-  const { tex, lineMap, netlist, theme, width, notes, errors, notices } = compileCircuit(source);
+  // offset はフェンスの ``` が書かれた Markdown の行。エラーの行をずらすのにも、
+  // 書き出しに添える行番号にも、同じものを使う (帯と書き出しで数え方を分けない)。
+  const { tex, lineMap, netlist, theme, width, notes, errors, notices } = compileCircuit(source, {
+    line: offset,
+  });
   if (tex === null) return { html: renderErrorCard(shiftErrors(errors, offset)), theme };
 
   const hash = hashOf(tex);

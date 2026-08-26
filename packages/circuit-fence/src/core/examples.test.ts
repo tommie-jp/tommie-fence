@@ -37,7 +37,8 @@ describe('examples', () => {
     expect(fences.length).toBeGreaterThan(0);
 
     for (const [index, fence] of fences.entries()) {
-      const { tex, errors } = compileCircuit(fence.source);
+      // CLI と同じ呼び方をする (書き出しに添える行番号がフェンスの位置で決まる)。
+      const { tex, errors } = compileCircuit(fence.source, { line: fence.line });
 
       expect(errors.map(errorLine)).toEqual([]);
       expect(tex).not.toBeNull();
@@ -63,13 +64,37 @@ describe('examples/errors', () => {
 
   // プレビューでは ```circuit が図 (かエラーカード) に差し替わるので、書いた中身が
   // 読み手に見えない。そこで ```text にも写してある。写しはずれるので、見張る。
+  // 先頭の行番号は読みやすさのために添えたもの。外してから見比べる。
+  const withoutLineNumbers = (block: string): string => block.replace(/^ *\d+ /gm, '');
+
   test.each(brokenDocuments)('%s に写してあるフェンスの中身が実物と一致する', (name) => {
     const source = readFileSync(join(BROKEN, name), 'utf8');
     const fences = extractCircuitFences(source);
-    const listings = [...source.matchAll(/```text\n([\s\S]*?)```/g)].map((match) => match[1] ?? '');
+    const listings = [...source.matchAll(/```text\n([\s\S]*?)```/g)].map((match) =>
+      withoutLineNumbers(match[1] ?? ''),
+    );
 
     expect(fences.length).toBeGreaterThan(0);
     for (const fence of fences) expect(listings).toContain(fence.source);
+  });
+
+  // 添えた行番号が Markdown の行と食い違うと、帯の「13 行目」を探せなくなる。
+  test.each(brokenDocuments)('%s に写した行番号が Markdown の行と一致する', (name) => {
+    const source = readFileSync(join(BROKEN, name), 'utf8');
+    const rows = source.split('\n');
+    let checked = 0;
+
+    for (const block of source.matchAll(/```text\n([\s\S]*?)```/g)) {
+      const numbered = (block[1] ?? '').split('\n').filter((row) => /^ *\d+ /.test(row));
+      // エラーの並びは「circuit: 13 行目: …」なので、この形にはならない。
+      for (const row of numbered) {
+        const [, number = '', text = ''] = /^ *(\d+) (.*)$/.exec(row) ?? [];
+        expect(rows[Number(number) - 1], `${name} の ${number} 行目`).toBe(text);
+        checked += 1;
+      }
+    }
+
+    expect(checked).toBeGreaterThan(0);
   });
 
   test.each(brokenDocuments)('%s に貼ってあるエラーが実際に出るものと一致する', (name) => {
@@ -79,7 +104,7 @@ describe('examples/errors', () => {
 
     const shown = fences.flatMap((fence) =>
       // プレビューと同じく Markdown の行番号に直してから見比べる。
-      shiftErrors(compileCircuit(fence.source).errors, fence.line).map(errorLine),
+      shiftErrors(compileCircuit(fence.source, { line: fence.line }).errors, fence.line).map(errorLine),
     );
 
     expect(shown.length).toBeGreaterThan(0);

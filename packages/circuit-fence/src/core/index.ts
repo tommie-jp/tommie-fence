@@ -47,6 +47,12 @@ export type CompileOptions = {
    * オペアンプが本物の記号になる。
    */
   readonly target?: TexTarget;
+  /**
+   * そのフェンスの ``` が書かれた Markdown の行 (1 始まり)。
+   * `- source` の書き出しに添える行番号がここから始まる。
+   * 省いたときは中身の 1 行目を 1 行目として数える (`.yaml` はそれで合う)。
+   */
+  readonly line?: number;
 };
 
 export function compileCircuit(source: string, options: CompileOptions = {}): CompileResult {
@@ -94,6 +100,7 @@ export function compileCircuit(source: string, options: CompileOptions = {}): Co
     style: doc.style,
     target,
     source: doc.source,
+    sourceLine: options.line,
   });
 
   return {
