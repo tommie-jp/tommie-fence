@@ -56,6 +56,11 @@ export type TwoTerminalPart = {
   readonly current: string | null;
   /** 電圧の符号に添える字 (`v=vC` の `vC`)。**from が +**。向きの規則は極性と同じ。 */
   readonly voltage: string | null;
+  /**
+   * 図に出るラベル (`l=$\dot{E}$` の `$\dot{E}$`)。書かなければ ID がそのまま出る。
+   * **ID を置き換えるのは図の見た目だけ**で、配線から指す名前もネット名も ID のまま。
+   */
+  readonly label: string | null;
   readonly line: number;
 };
 

@@ -25,6 +25,7 @@ describe('parseCompactPart', () => {
       value: '10k',
       current: null,
       voltage: null,
+      label: null,
       line: 2,
     });
   });

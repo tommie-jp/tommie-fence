@@ -106,6 +106,30 @@ describe('generateTex', () => {
     expect(generate('parts:', '  R_1: resistor a1 a3').tex).toContain('l_=$R_{\\_1}$');
   });
 
+  test('writes the label in place of the id when one is given', () => {
+    const tex = generate('parts:', '  E1: vsource a1 c1 l=$\\dot{E}$').tex;
+
+    expect(tex).toContain('l_=$\\dot{E}$');
+  });
+
+  test('keeps the id in the netlist even when the label replaces it in the figure', () => {
+    // ラベルは図の見た目だけ。配線から指す名前もネット名も ID のまま。
+    const tex = generate('parts:', '  E1: vsource a1 c1 l=$\\dot{E}$').tex;
+
+    expect(tex).toContain('l_=$\\dot{E}$');
+    expect(tex).not.toContain('l_=$E_{1}$');
+  });
+
+  test('subscripts a label written without the math form, like an id', () => {
+    expect(generate('parts:', '  R1: resistor a1 a3 l=RL').tex).toContain('l_=$R_{L}$');
+  });
+
+  test('falls back to the id when the label cannot be read', () => {
+    const { tex } = generate('parts:', '  R1: resistor a1 a3 l=$\\frac{1}{2}$');
+
+    expect(tex).toContain('l_=$R_{1}$');
+  });
+
   test('draws the current arrow from the address written first', () => {
     // `i>` は from → to の向き。番地を入れ替えれば矢も返る (実機で確認)。
     expect(generate('parts:', '  R1: resistor a1 a3 i=i').tex).toContain('i>^=$i$');

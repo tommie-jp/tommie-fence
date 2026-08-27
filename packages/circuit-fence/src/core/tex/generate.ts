@@ -14,6 +14,7 @@ import {
   drawNote, drawStamp, drawTitle, listingOf, noteColorLines, noteNeeds, noteOverlays,
 } from './drawNotes.ts';
 import { escapeTex, hasUnicode } from './escape.ts';
+import { isMathLabel, mathInnerOf, mathLabelTex } from './mathLabel.ts';
 import { num } from './num.ts';
 
 /**
@@ -156,9 +157,24 @@ const FOOTER = ['\\end{circuitikz}', '\\end{document}'];
 export const standaloneTex = (tex: string, target: TexTarget): string =>
   `\\documentclass${target === 'latex' ? '[border=2mm]' : ''}{standalone}\n${tex}`;
 
-/** 部品 ID を回路図の慣習どおりに組む (`R1` → R の添字 1、`Rload` → R の添字 load)。 */
-function labelOf(id: string): string {
-  const [first = '', ...rest] = [...id];
+/**
+ * 図に出る字を組む。**書き方は 2 通りで、置き場所は 3 つ** (ID の代わりの
+ * `l=`、電流の `i=`、電圧の `v=`)。どこでも同じ読み方をする。
+ *
+ * - `$…$` で囲めば数式の部分集合。教科書と同じ綴りをそのまま書ける
+ *   (`$\dot{E}$`)。**生の TeX は渡さず読み直して組み直す** (mathLabel.ts)
+ * - 囲まなければ回路図の慣習どおり、先頭 1 文字が本体・残りが添字
+ *   (`R1` → R の添字 1、`Rload` → R の添字 load)
+ *
+ * 読めない `$…$` はここまで来ない (model/circuit.ts が落として ID に戻す)。
+ */
+function labelOf(written: string): string {
+  if (isMathLabel(written)) {
+    const read = mathLabelTex(mathInnerOf(written));
+    if (read.ok) return `$${read.tex}$`;
+  }
+
+  const [first = '', ...rest] = [...written];
   const subscript = rest.join('');
   return subscript.length === 0
     ? `$${escapeTex(first)}$`
@@ -468,11 +484,9 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
   if (type?.pins !== undefined) options.push(`n=${nodeNameOf(part.id)}`);
   // 記号だけでは見分けが付かない種類は、ID の下にもう 1 行書く (`l2_` は
   // 2 行を組んで下に置く circuitikz の書き方。`and` が行の区切り)。
-  options.push(
-    type?.mark === undefined
-      ? `l_=${labelOf(part.id)}`
-      : `l2_=${labelOf(part.id)} and ${type.mark}`,
-  );
+  // ラベルを書いてあれば図ではそちらを出す。配線から指す名前もネット名も ID のまま。
+  const label = labelOf(part.label ?? part.id);
+  options.push(type?.mark === undefined ? `l_=${label}` : `l2_=${label} and ${type.mark}`);
   if (part.value !== null) options.push(`a^=${annotationOf(part.value, unitOf(part.type), target)}`);
   // 電流の矢は from → to、電圧の + は from の側。**どちらも極性と同じ規則**
   // (先に書いた番地が + 側) なので、書き手が覚えることは増えない。

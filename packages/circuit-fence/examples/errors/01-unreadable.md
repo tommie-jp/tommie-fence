@@ -18,6 +18,7 @@ parts:
   C1: capacitor z0 z2 100n
   L1: inductor a5 a5
   V1: vsource c1 c3 五ボルト
+  E1: sine c5 c7 l=$\frac{1}{2}$
 wires:
   - a3 -- a4
 ```
@@ -32,8 +33,9 @@ wires:
 18   C1: capacitor z0 z2 100n
 19   L1: inductor a5 a5
 20   V1: vsource c1 c3 五ボルト
-21 wires:
-22   - a3 -- a4
+21   E1: sine c5 c7 l=$\frac{1}{2}$
+22 wires:
+23   - a3 -- a4
 ```
 
 帯にはこう出る。
@@ -43,6 +45,7 @@ circuit: 17 行目: 種類 resistr は知りません (resistor のことです�
 circuit: 18 行目: z0 は番地の形ではありません (行 a〜z + 列 1〜99。交点の間は a_1.5 / a.5_1.5)
 circuit: 19 行目: inductor の両端が同じ番地です (a5)
 circuit: 20 行目: 部品 V1: 値はプレビューの TeX にフォントがありません (circuit-fence render --emit-tex で .tex に書き出すと LaTeX で組めます)
+circuit: 21 行目: 部品 E1 の l= : \frac は書けません (使えるのは 英数字 と \dot{…} \mathrm{…} と 添字 _ です)
 ```
 
 - **種類の綴り違い**は近い名前を 1 つだけ添える (全部並べるより読みやすい)。
@@ -51,5 +54,8 @@ circuit: 20 行目: 部品 V1: 値はプレビューの TeX にフォントが�
 - **日本語の値**はフェンスの TeX にフォントが無い。値だけ落として部品は描き、
   `circuit-fence render --emit-tex` で `.tex` に書き出せば LaTeX で組めることを伝える
   (書き出したほうは日本語も単位も組める)。
+
+- **ラベルの数式**は読み直して組み直すので、知らない命令は書ける形を添えて返す。
+  ラベルだけ落として部品は描き、図には ID (`E1`) が出る。
 
 `IN` と `R1` は読めているので、図には出る。読めたところは捨てない。

@@ -142,7 +142,7 @@ function readMultiTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
  * 番地のあとに書ける `キー=字` の札。値と違って順番を決めない
  * (見た目の語を順不同で読むのと同じ。書き手が並びを覚えなくてよい)。
  */
-const PART_TAGS = { i: '電流', v: '電圧' } as const;
+const PART_TAGS = { i: '電流', v: '電圧', l: 'ラベル' } as const;
 type PartTag = keyof typeof PART_TAGS;
 
 const tagList = (): string =>
@@ -169,7 +169,7 @@ function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
     return fail(`${safeToken(written)} の両端が同じ番地です (${formatAddress(from.value)})`, line);
   }
 
-  const tags: { -readonly [K in PartTag]: string | null } = { i: null, v: null };
+  const tags: { -readonly [K in PartTag]: string | null } = { i: null, v: null, l: null };
   let value: string | null = null;
 
   for (const token of extra) {
@@ -215,6 +215,7 @@ function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
     value,
     current: tags.i,
     voltage: tags.v,
+    label: tags.l,
     line,
   });
 }

@@ -7,6 +7,7 @@ import { NO_POINTS } from '../parser/compact.ts';
 import type { Points } from '../parser/compact.ts';
 import type { FenceDocument } from '../parser/parseFence.ts';
 import { isDrawable, isSourceDrawable } from '../tex/escape.ts';
+import { isMathLabel, mathInnerOf, mathLabelTex } from '../tex/mathLabel.ts';
 import { cellOf, nameOfEndpoint } from '../types.ts';
 import type {
   ArrowNote, Endpoint, FenceError, MultiTerminalPart, NoteSpec, PartSpec, TexTarget, TwoTerminalPart, WireSpec,
@@ -654,7 +655,7 @@ export function wireContacts(circuit: Circuit): WireContact[] {
  */
 function checkPart(part: PartSpec, errors: FenceError[], target: TexTarget): PartSpec {
   const oriented = part.kind === 'multi-terminal' ? checkOrientation(part, errors) : part;
-  const checked = oriented.kind === 'two-terminal' ? checkArrows(oriented, errors, target) : oriented;
+  const checked = oriented.kind === 'two-terminal' ? checkLabels(oriented, errors, target) : oriented;
   if (checked.kind === 'one-terminal' || checked.value === null) return checked;
   if (isDrawable(checked.value, target)) return checked;
 
@@ -663,18 +664,37 @@ function checkPart(part: PartSpec, errors: FenceError[], target: TexTarget): Par
 }
 
 /**
- * 矢に添える字も値と同じ関門を通す。図に出る字は種類を問わず通す
+ * 図に出る字 (`l=` `i=` `v=`) の関門。値と同じく**種類を問わず通す**
  * (1 つでも素通りすると、そこから任意の TeX を書けてしまう。約束 3)。
- * 描けない字は**その字だけ落として部品と矢以外は残す** (値と同じ扱い)。
+ * 読めない字は**その字だけ落として部品は残す** (値と同じ扱い。
+ * ラベルを落とせば ID がそのまま図に出る)。
+ *
+ * `$…$` で囲んであれば数式の部分集合として読み直す。囲んでいなければ
+ * 値と同じ字種で見る。**どちらも書かれた TeX がそのまま図へ行くことはない**。
  */
-function checkArrows(part: TwoTerminalPart, errors: FenceError[], target: TexTarget): TwoTerminalPart {
+function checkLabels(part: TwoTerminalPart, errors: FenceError[], target: TexTarget): TwoTerminalPart {
   const check = (text: string | null, key: string): string | null => {
-    if (text === null || isDrawable(text, target)) return text;
-    errors.push(fenceError(`部品 ${safeToken(part.id)} の ${key}= : ${valueProblem(text, target)}`, part.line));
+    if (text === null) return text;
+    const subject = `部品 ${safeToken(part.id)} の ${key}=`;
+
+    if (isMathLabel(text)) {
+      const read = mathLabelTex(mathInnerOf(text));
+      if (read.ok) return text;
+      errors.push(fenceError(`${subject} : ${read.message}`, part.line));
+      return null;
+    }
+
+    if (isDrawable(text, target)) return text;
+    errors.push(fenceError(`${subject} : ${valueProblem(text, target)}`, part.line));
     return null;
   };
 
-  return { ...part, current: check(part.current, 'i'), voltage: check(part.voltage, 'v') };
+  return {
+    ...part,
+    label: check(part.label, 'l'),
+    current: check(part.current, 'i'),
+    voltage: check(part.voltage, 'v'),
+  };
 }
 
 /** 向きはオペアンプにしかない。ほかに書くと circuitikz が知らないキーになる。 */
