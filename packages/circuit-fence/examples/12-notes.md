@@ -98,10 +98,10 @@ notes:
   - text d1: 書かなければ普通
   - text e1 large: large (大)
   - text f1 huge: huge (極大)
-  - source a5 blue
+  - source a4 blue
 style:
   grid: on
-  grid-to: f4
+  grid-to: f3
 ```
 
 pt の直接指定は書けない。色と同じで、**実機に通した指定だけ**を名前で引く
@@ -123,10 +123,10 @@ notes:
   - circle g3
   - text g3 right: right (番地が右端)
   - text i3 bold: bold で太字になる
-  - source a7 blue
+  - source a6 blue
 style:
   grid: on
-  grid-to: i6
+  grid-to: i5
 ```
 
 色・大きさ・寄せ・太字は**どの順に書いてもよい**。
@@ -148,13 +148,13 @@ wires:
   - a3 -- a4
 notes:
   - box a1 c3 blue
-  - text d2 blue center: box a1 c3 blue
+  - text d2 blue large center: box a1 c3 blue
   - arrow c6 R1
   - text c6 red: arrow c6 R1
-  - source a9 blue
+  - source a7 blue large
 style:
   grid: on
-  grid-to: c8
+  grid-to: c6
 ```
 
 部品を指した指し棒は、印 (`circle`) と同じ丸の縁で止まる。
