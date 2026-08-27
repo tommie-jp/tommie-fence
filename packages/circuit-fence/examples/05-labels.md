@@ -7,7 +7,7 @@ ID は先頭 1 文字が本体、残りが添字になる (回路図の慣習ど
 組でないときは、書いたとおりに出る。単位を勝手に足さない。
 
 ```circuit
-title: ID と値の出方
+title: 図01 ID と値の出方
 parts:
   R1:    resistor a1 a2 10k
   Rload: resistor a4 a5 4.7

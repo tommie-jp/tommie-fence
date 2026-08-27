@@ -4,7 +4,7 @@
 ネットリストにも分岐の黒丸にも数えない。
 
 ```circuit
-title: 注釈
+title: 図01 注釈
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
@@ -41,7 +41,7 @@ style:
 印は書かなければ赤、字は書かなければ図のほかの文字と同じ色。
 
 ```circuit
-title: 図18 注釈の色
+title: 図02 注釈の色
 parts:
   R1: resistor a1 a3
   R2: resistor a5 a7
@@ -70,7 +70,7 @@ style:
 TeX には字を渡さず、描き上がった図に差し込んでいるため。
 
 ```circuit
-title: 日本語
+title: 図03 日本語
 parts:
   V1: battery a1 c1 9
   R1: resistor a1 a4 470
@@ -93,7 +93,7 @@ style:
 書かなければ普通の大きさ。
 
 ```circuit
-title: 図15 字の大きさ
+title: 図04 字の大きさ
 parts:
   R1: resistor a1 a3 10k
 notes:
@@ -117,7 +117,7 @@ pt の直接指定は書けない。色と同じで、**実機に通した指定
 書かなければ `left` で、番地が字の左端になる。`bold` は太字。
 
 ```circuit
-title: 図16 寄せと太字
+title: 図05 寄せと太字
 parts:
   R1: resistor a1 a5 10k
 notes:
@@ -143,7 +143,7 @@ style:
 `- arrow 起点 終点 [色]` は指し棒で、両端とも**部品 ID か番地**。
 
 ```circuit
-title: 図14 枠と指し棒
+title: 図06 枠と指し棒
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
@@ -173,7 +173,7 @@ style:
 1 行ずつ指しながら説明したいときは `loose`。
 
 ```circuit
-title: 図17 行送り
+title: 図07 行送り
 parts:
   R1: resistor a1 a3 10k
 notes:

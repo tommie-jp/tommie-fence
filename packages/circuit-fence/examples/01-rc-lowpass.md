@@ -4,7 +4,7 @@
 座標も `\coordinate` も書かない。
 
 ```circuit
-title: RC ローパス
+title: 図01 RC ローパス
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k

@@ -4,7 +4,7 @@
 行は左に英字、列は上に数字で、ブレッドボードと同じ読み方。
 
 ```circuit
-title: グリッド
+title: 図01 グリッド
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
