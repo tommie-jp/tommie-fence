@@ -11,7 +11,7 @@ parts:
 wires:
   - a1 -- a7
 notes:
-  - source a9 blue
+  - source a8 blue
 style:
   grid: on
 ```

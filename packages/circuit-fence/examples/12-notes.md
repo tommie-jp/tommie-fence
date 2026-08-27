@@ -76,10 +76,10 @@ parts:
 wires:
   - c1 -- c4
 notes:
-  - source a6 blue
+  - source a5 blue
   - circle D1 orange
-  - text a6: LED の順方向電圧は 2 V ぐらい
-  - text b6: 電流は (9 - 2) / 470 で 15 mA
+  - text d1: LED の順方向電圧は 2 V ぐらい
+  - text e1: 電流は (9 - 2) / 470 で 15 mA
 style:
   grid: on
 ```
@@ -98,7 +98,7 @@ notes:
   - text d1: 書かなければ普通
   - text e1 large: large (大)
   - text f1 huge: huge (極大)
-  - source a6 blue
+  - source a5 blue
 style:
   grid: on
   grid-to: f4
@@ -123,7 +123,7 @@ notes:
   - circle g3
   - text g3 right: right (番地が右端)
   - text i3 bold: bold で太字になる
-  - source a8 blue
+  - source a7 blue
 style:
   grid: on
   grid-to: i6
@@ -148,10 +148,10 @@ wires:
   - a3 -- a4
 notes:
   - box a1 c3 blue
-  - text a6 blue: box a1 c3 blue
+  - text d2 blue: box a1 c3 blue
   - arrow c6 R1
-  - text c7 red: arrow c6 R1
-  - source a10 blue
+  - text c6 red: arrow c6 R1
+  - source a9 blue
 style:
   grid: on
   grid-to: c8

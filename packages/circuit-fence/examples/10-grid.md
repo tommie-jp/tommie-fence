@@ -13,7 +13,7 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - source a6 blue
+  - source a7 blue
 style:
   grid: on
   grid-to: d6

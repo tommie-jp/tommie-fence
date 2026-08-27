@@ -16,7 +16,7 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - source a6 blue
+  - source a5 blue
 style:
   theme: auto
   grid: on
@@ -34,7 +34,7 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - source a6 blue
+  - source a5 blue
 style:
   theme: light
   grid: on
@@ -50,7 +50,7 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - source a6 blue
+  - source a5 blue
 style:
   theme: dark
   grid: on
@@ -68,7 +68,7 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - source a6 blue
+  - source a5 blue
 style:
   theme: mono
   grid: on

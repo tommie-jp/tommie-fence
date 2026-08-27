@@ -16,7 +16,7 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - source a6 blue
+  - source a5 blue
 style:
   grid: on
 ```
@@ -50,7 +50,7 @@ parts:
   C1: capacitor a3 fb
   G1: ground fb
 notes:
-  - source a6 blue
+  - source a4 blue
 style:
   grid: on
 ```
@@ -230,7 +230,7 @@ wires:
   - U1.out -- c7 -- c9
   - d7 -- c7
 notes:
-  - source a11 blue
+  - source a10 blue
 style:
   grid: on
 ```
@@ -344,7 +344,7 @@ parts:
 wires:
   - a3 -- a5
 notes:
-  - source a9 blue
+  - source a8 blue
 style:
   grid: on
 ```
@@ -377,7 +377,7 @@ parts:
 wires:
   - a1 -- a7
 notes:
-  - source a9 blue
+  - source a8 blue
 style:
   grid: on
 ```
@@ -409,7 +409,7 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - source a6 blue
+  - source a5 blue
   - circle R1
   - text e1: ここでカットオフ 159 Hz
 style:
@@ -674,7 +674,7 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - source a6 blue
+  - source a7 blue
 style:
   grid: on
   grid-to: d6
@@ -712,7 +712,7 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - source a6 blue
+  - source a5 blue
 style:
   grid: on
   stamp: on

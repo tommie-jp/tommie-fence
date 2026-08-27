@@ -13,7 +13,7 @@ wires:
   - a3 -| e7
   - g3 |- c7
 notes:
-  - source a11 blue
+  - source a10 blue
 style:
   grid: on
 ```
@@ -41,7 +41,7 @@ parts:
 wires:
   - a3 -- a5 -- a7
 notes:
-  - source a11 blue
+  - source a10 blue
 style:
   grid: on
 ```
