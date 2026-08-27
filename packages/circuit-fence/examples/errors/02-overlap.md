@@ -9,7 +9,7 @@
 **ソースに行番号はない**。
 
 ```circuit
-title: 回路図01 重なりの検出
+title: 重なりの検出
 parts:
   R1: resistor a1 a3 10k
   R2: resistor a1 a3 4k7
@@ -20,7 +20,7 @@ parts:
 書いたのはこれ。
 
 ```text
-12 title: 回路図01 重なりの検出
+12 title: 重なりの検出
 13 parts:
 14   R1: resistor a1 a3 10k
 15   R2: resistor a1 a3 4k7

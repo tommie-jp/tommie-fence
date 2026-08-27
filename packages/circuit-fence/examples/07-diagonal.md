@@ -3,7 +3,7 @@
 部品も配線も**斜めに置いてよい**。行も列も揃っていない 2 点の間に、そのまま引く。
 
 ```circuit
-title: 回路図01 斜めに置く
+title: 斜めに置く
 parts:
   IN:  port a1
   R1:  resistor a1 c4

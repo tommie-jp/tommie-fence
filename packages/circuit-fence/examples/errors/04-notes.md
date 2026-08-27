@@ -12,7 +12,7 @@ yaml 自身の言い分は英語で「Nested mappings are not allowed」だけ�
 **ソースに行番号はない**。
 
 ```circuit
-title: 回路図01 注釈の直し方
+title: 注釈の直し方
 parts:
   R1: resistor a1 a3 10k
 notes:
@@ -22,7 +22,7 @@ notes:
 書いたのはこれ。
 
 ```text
-15 title: 回路図01 注釈の直し方
+15 title: 注釈の直し方
 16 parts:
 17   R1: resistor a1 a3 10k
 18 notes:
@@ -43,7 +43,7 @@ circuit: 19 行目: YAML の構文エラー: Nested mappings are not allowed in 
 色はパレットの 4 つだけ。字に使えない字も、使える字を添えて返す。
 
 ```circuit
-title: 回路図02 指し先と色と字
+title: 指し先と色と字
 parts:
   R1: resistor a1 a3 10k
 notes:
@@ -55,7 +55,7 @@ notes:
 書いたのはこれ。
 
 ```text
-46 title: 回路図02 指し先と色と字
+46 title: 指し先と色と字
 47 parts:
 48   R1: resistor a1 a3 10k
 49 notes:
@@ -85,7 +85,7 @@ circuit: 50 行目: 注釈の指す先 Rload がありません (部品 ID か�
 指し棒の起点と終点が同じところだと向きが決まらないので、これも返る。
 
 ```circuit
-title: 回路図03 字の見た目と印に書けない言葉
+title: 字の見た目と印に書けない言葉
 parts:
   R1: resistor a1 a3 10k
 notes:
@@ -98,7 +98,7 @@ notes:
 書いたのはこれ。
 
 ```text
-88 title: 回路図03 字の見た目と印に書けない言葉
+88 title: 字の見た目と印に書けない言葉
 89 parts:
 90   R1: resistor a1 a3 10k
 91 notes:

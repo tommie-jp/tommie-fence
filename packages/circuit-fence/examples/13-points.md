@@ -5,7 +5,7 @@
 その名前で出る。
 
 ```circuit
-title: 回路図01 番地に名前を付ける
+title: 番地に名前を付ける
 points:
   vin: b1
   fb:  d4

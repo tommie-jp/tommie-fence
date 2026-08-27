@@ -3,7 +3,7 @@
 2 端子部品は `ID: 種類 番地 番地 [値]` の 1 行で書く。
 
 ```circuit
-title: 回路図01 使える部品
+title: 使える部品
 parts:
   R1: resistor a1 a3 10k
   C1: capacitor a5 a7 100n
@@ -49,7 +49,7 @@ style:
 センサ・スイッチ・波形の違う電源・計器。書き方は同じ 1 行。
 
 ```circuit
-title: 回路図02 そのほかの 2 端子部品
+title: そのほかの 2 端子部品
 parts:
   R2:  resistor-var a1 a3 10k
   D4:  varicap a5 a7 33p
@@ -115,7 +115,7 @@ circuitikz の NTC / PTC の記号は中に θ を持っていて、フェンス
 `ground` 以外は **ID がそのまま図に出て、乗っているネットの名前にもなる**。
 
 ```circuit
-title: 回路図03 1 端子の記号
+title: 1 端子の記号
 parts:
   VCC: vcc a1
   VEE: vee a4

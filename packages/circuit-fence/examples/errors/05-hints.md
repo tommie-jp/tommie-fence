@@ -15,7 +15,7 @@
 まっすぐ結ぶので、記号の中心線に乗っていない足へ引くと斜めに入る。
 
 ```circuit
-title: 回路図01 足へ斜めに入る
+title: 足へ斜めに入る
 parts:
   U1: opamp c5
 wires:
@@ -25,7 +25,7 @@ wires:
 書いたのはこれ。
 
 ```text
-18 title: 回路図01 足へ斜めに入る
+18 title: 足へ斜めに入る
 19 parts:
 20   U1: opamp c5
 21 wires:
@@ -48,7 +48,7 @@ circuit: 22 行目: U1.+ へ -- で引くと斜めに入ります (|- か -| な
 指し先は**部品を先に探す**ので、`C1` という部品がある図では番地 c1 を指せない。
 
 ```circuit
-title: 回路図02 指し先が両方に読める
+title: 指し先が両方に読める
 parts:
   C1: capacitor a1 a3
   R9: resistor c1 c3
@@ -59,7 +59,7 @@ notes:
 書いたのはこれ。
 
 ```text
-51 title: 回路図02 指し先が両方に読める
+51 title: 指し先が両方に読める
 52 parts:
 53   C1: capacitor a1 a3
 54   R9: resistor c1 c3
@@ -83,7 +83,7 @@ circuit: 56 行目: 注釈の指す先 C1 は部品を指しています (番地
 こちらは読めなかったので**エラー**のほう。
 
 ```circuit
-title: 回路図03 色が YAML のコメントで消える
+title: 色が YAML のコメントで消える
 parts:
   R1: resistor a1 a3
 style:
@@ -93,7 +93,7 @@ style:
 書いたのはこれ。
 
 ```text
-86 title: 回路図03 色が YAML のコメントで消える
+86 title: 色が YAML のコメントで消える
 87 parts:
 88   R1: resistor a1 a3
 89 style:

@@ -4,7 +4,7 @@
 足は番地ではなく名前で指す (`Q1.B` `M1.gate` `U1.out` `T1.A1`)。
 
 ```circuit
-title: 回路図01 多端子の記号
+title: 多端子の記号
 parts:
   Q1: npn b2
   Q2: pnp b5
@@ -62,7 +62,7 @@ style:
 2 次側が `B`。
 
 ```circuit
-title: 回路図02 オペアンプとトランス
+title: オペアンプとトランス
 parts:
   U1: opamp b2 LM358
   T1: transformer b7 1to1
@@ -92,7 +92,7 @@ style:
 書き分けたいときは次の名前で書く。**足の名前はどれも同じ**。
 
 ```circuit
-title: 回路図03 FET の種類
+title: FET の種類
 parts:
   J1: njfet b2
   J2: pjfet b5
@@ -143,7 +143,7 @@ style:
 足だけ `P1.w` `T1.g` のように呼ぶ。
 
 ```circuit
-title: 回路図04 2 端子でも足を持つもの
+title: 2 端子でも足を持つもの
 parts:
   P1: potentiometer b1 b5 10k
   T1: thyristor e1 e5

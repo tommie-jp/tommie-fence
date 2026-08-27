@@ -10,7 +10,7 @@
 **ソースに行番号はない**。
 
 ```circuit
-title: 回路図01 日本語の値
+title: 日本語の値
 parts:
   V1: vsource a1 a3 電池9V
   R1: resistor a1 c1 10k
@@ -20,7 +20,7 @@ parts:
 書いたのはこれ。
 
 ```text
-13 title: 回路図01 日本語の値
+13 title: 日本語の値
 14 parts:
 15   V1: vsource a1 a3 電池9V
 16   R1: resistor a1 c1 10k

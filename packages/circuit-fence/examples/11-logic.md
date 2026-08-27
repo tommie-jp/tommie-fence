@@ -4,7 +4,7 @@
 出力は `out`。入力は番号でも呼べる (`U1.1` `U1.2`)。
 
 ```circuit
-title: 回路図01 ロジックゲート
+title: ロジックゲート
 parts:
   U1: and b2 7408
   U2: or b5 7432
@@ -60,7 +60,7 @@ style:
 (`U1.1`)。型番は記号の**中**に出る。
 
 ```circuit
-title: 回路図02 DIP の IC
+title: DIP の IC
 parts:
   U1: dip8 c2 NE555
 wires:
@@ -83,7 +83,7 @@ style:
 `spdt` は共通が `in`、行き先が `1` と `2`。
 
 ```circuit
-title: 回路図03 切り替えスイッチ
+title: 切り替えスイッチ
 parts:
   S1: spdt b2
 wires:

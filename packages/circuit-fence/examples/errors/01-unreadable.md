@@ -11,7 +11,7 @@
 **ソースに行番号はない**。
 
 ```circuit
-title: 回路図01 読めなかったとき
+title: 読めなかったとき
 parts:
   IN: port a1
   R1: resistr a1 a3 10k
@@ -25,7 +25,7 @@ wires:
 書いたのはこれ。
 
 ```text
-14 title: 回路図01 読めなかったとき
+14 title: 読めなかったとき
 15 parts:
 16   IN: port a1
 17   R1: resistr a1 a3 10k
