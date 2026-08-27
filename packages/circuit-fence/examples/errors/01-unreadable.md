@@ -11,6 +11,7 @@
 **ソースに行番号はない**。
 
 ```circuit
+title: 回路図01 読めなかったとき
 parts:
   IN: port a1
   R1: resistr a1 a3 10k
@@ -24,23 +25,24 @@ wires:
 書いたのはこれ。
 
 ```text
-14 parts:
-15   IN: port a1
-16   R1: resistr a1 a3 10k
-17   C1: capacitor z0 z2 100n
-18   L1: inductor a5 a5
-19   V1: vsource c1 c3 五ボルト
-20 wires:
-21   - a3 -- a4
+14 title: 回路図01 読めなかったとき
+15 parts:
+16   IN: port a1
+17   R1: resistr a1 a3 10k
+18   C1: capacitor z0 z2 100n
+19   L1: inductor a5 a5
+20   V1: vsource c1 c3 五ボルト
+21 wires:
+22   - a3 -- a4
 ```
 
 帯にはこう出る。
 
 ```text
-circuit: 16 行目: 種類 resistr は知りません (resistor のことですか?)
-circuit: 17 行目: z0 は番地の形ではありません (行 a〜z + 列 1〜99)
-circuit: 18 行目: inductor の両端が同じ番地です (a5)
-circuit: 19 行目: 部品 V1: 値はプレビューの TeX にフォントがありません (circuit-fence render --emit-tex で .tex に書き出すと LaTeX で組めます)
+circuit: 17 行目: 種類 resistr は知りません (resistor のことですか?)
+circuit: 18 行目: z0 は番地の形ではありません (行 a〜z + 列 1〜99)
+circuit: 19 行目: inductor の両端が同じ番地です (a5)
+circuit: 20 行目: 部品 V1: 値はプレビューの TeX にフォントがありません (circuit-fence render --emit-tex で .tex に書き出すと LaTeX で組めます)
 ```
 
 - **種類の綴り違い**は近い名前を 1 つだけ添える (全部並べるより読みやすい)。

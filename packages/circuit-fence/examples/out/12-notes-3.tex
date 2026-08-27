@@ -19,33 +19,36 @@
 \coordinate (c1) at (0,-4);
 \coordinate (a4) at (6,0);
 \coordinate (c4) at (6,-4);
-\draw (a1) to[battery1, l_=$V_{1}$, a^=$9\,\mathrm{V}$] (c1); % line 2
-\draw (a1) to[R, l_=$R_{1}$, a^=$470\,\Omega$] (a4); % line 3
-\draw (a4) to[leD, l_=$D_{1}$] (c4); % line 4
-\node[ground] at (c1) {}; % line 5
-\draw (c1) -- (c4); % line 7
+\draw (a1) to[battery1, l_=$V_{1}$, a^=$9\,\mathrm{V}$] (c1); % line 3
+\draw (a1) to[R, l_=$R_{1}$, a^=$470\,\Omega$] (a4); % line 4
+\draw (a4) to[leD, l_=$D_{1}$] (c4); % line 5
+\node[ground] at (c1) {}; % line 6
+\draw (c1) -- (c4); % line 8
 \node[circ] at (c1) {};
-\path (8,-5.263) rectangle (15.135,0.395); % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,0) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-0.325) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-0.649) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-0.974) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-1.298) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-1.623) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-1.947) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-2.272) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-2.596) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-2.921) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-3.246) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-3.57) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-3.895) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-4.219) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-4.544) {X}; % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-4.868) {X}; % line 9
-\draw[circuitnoteorange] (6,-2) circle (0.9); % line 10
-\path (0,-6.395) rectangle (4.487,-5.605); % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (0,-6) {X}; % line 11
-\path (0,-8.395) rectangle (4.741,-7.605); % line 12
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (0,-8) {X}; % line 12
+\path (8,-5.588) rectangle (15.135,0.395); % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,0) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-0.325) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-0.649) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-0.974) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-1.298) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-1.623) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-1.947) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-2.272) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-2.596) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-2.921) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-3.246) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-3.57) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-3.895) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-4.219) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-4.544) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-4.868) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-5.193) {X}; % line 10
+\draw[circuitnoteorange] (6,-2) circle (0.9); % line 11
+\path (0,-6.395) rectangle (4.487,-5.605); % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (0,-6) {X}; % line 12
+\path (0,-8.395) rectangle (4.741,-7.605); % line 13
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (0,-8) {X}; % line 13
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\large\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(3.874,0.593);
 \end{circuitikz}
 \end{document}

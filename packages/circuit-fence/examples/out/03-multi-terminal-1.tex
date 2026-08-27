@@ -45,41 +45,43 @@
 \coordinate (e8) at (8.4,-4.8);
 \coordinate (g8) at (8.4,-7.2);
 \coordinate (f7) at (7.2,-6);
-\node[npn] (part-Q1) at (b2) {}; % line 2
-\node[pnp] (part-Q2) at (b5) {}; % line 3
-\node[nigbt] (part-Q3) at (b8) {}; % line 4
-\node[nmos] (part-M1) at (f2) {}; % line 5
-\node[pmos] (part-M2) at (f5) {}; % line 6
-\node[pigbt] (part-Q4) at (f8) {}; % line 7
-\draw (a2) -| (part-Q1.collector); % line 9
-\draw (c2) -| (part-Q1.emitter); % line 10
-\draw (b1) -| (part-Q1.base); % line 11
-\draw (a5) -| (part-Q2.collector); % line 12
-\draw (c5) -| (part-Q2.emitter); % line 13
-\draw (b4) -| (part-Q2.base); % line 14
-\draw (a8) -| (part-Q3.collector); % line 15
-\draw (c8) -| (part-Q3.emitter); % line 16
-\draw (b7) -| (part-Q3.gate); % line 17
-\draw (e2) -| (part-M1.drain); % line 18
-\draw (g2) -| (part-M1.source); % line 19
-\draw (f1) -| (part-M1.gate); % line 20
-\draw (e5) -| (part-M2.drain); % line 21
-\draw (g5) -| (part-M2.source); % line 22
-\draw (f4) -| (part-M2.gate); % line 23
-\draw (e8) -| (part-Q4.collector); % line 24
-\draw (g8) -| (part-Q4.emitter); % line 25
-\draw (f7) -| (part-Q4.gate); % line 26
-\path (-0.07,-4.193) rectangle (2.47,-3.007); % line 28
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1.2,-3.6) {X}; % line 28
-\path (3.53,-4.193) rectangle (6.07,-3.007); % line 29
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,-3.6) {X}; % line 29
-\path (6.876,-4.193) rectangle (9.924,-3.007); % line 30
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8.4,-3.6) {X}; % line 30
-\path (-0.197,-8.993) rectangle (2.597,-7.807); % line 31
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1.2,-8.4) {X}; % line 31
-\path (3.403,-8.993) rectangle (6.197,-7.807); % line 32
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,-8.4) {X}; % line 32
-\path (6.876,-8.993) rectangle (9.924,-7.807); % line 33
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8.4,-8.4) {X}; % line 33
+\node[npn] (part-Q1) at (b2) {}; % line 3
+\node[pnp] (part-Q2) at (b5) {}; % line 4
+\node[nigbt] (part-Q3) at (b8) {}; % line 5
+\node[nmos] (part-M1) at (f2) {}; % line 6
+\node[pmos] (part-M2) at (f5) {}; % line 7
+\node[pigbt] (part-Q4) at (f8) {}; % line 8
+\draw (a2) -| (part-Q1.collector); % line 10
+\draw (c2) -| (part-Q1.emitter); % line 11
+\draw (b1) -| (part-Q1.base); % line 12
+\draw (a5) -| (part-Q2.collector); % line 13
+\draw (c5) -| (part-Q2.emitter); % line 14
+\draw (b4) -| (part-Q2.base); % line 15
+\draw (a8) -| (part-Q3.collector); % line 16
+\draw (c8) -| (part-Q3.emitter); % line 17
+\draw (b7) -| (part-Q3.gate); % line 18
+\draw (e2) -| (part-M1.drain); % line 19
+\draw (g2) -| (part-M1.source); % line 20
+\draw (f1) -| (part-M1.gate); % line 21
+\draw (e5) -| (part-M2.drain); % line 22
+\draw (g5) -| (part-M2.source); % line 23
+\draw (f4) -| (part-M2.gate); % line 24
+\draw (e8) -| (part-Q4.collector); % line 25
+\draw (g8) -| (part-Q4.emitter); % line 26
+\draw (f7) -| (part-Q4.gate); % line 27
+\path (-0.07,-4.193) rectangle (2.47,-3.007); % line 29
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1.2,-3.6) {X}; % line 29
+\path (3.53,-4.193) rectangle (6.07,-3.007); % line 30
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,-3.6) {X}; % line 30
+\path (6.876,-4.193) rectangle (9.924,-3.007); % line 31
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8.4,-3.6) {X}; % line 31
+\path (-0.197,-8.993) rectangle (2.597,-7.807); % line 32
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1.2,-8.4) {X}; % line 32
+\path (3.403,-8.993) rectangle (6.197,-7.807); % line 33
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,-8.4) {X}; % line 33
+\path (6.876,-8.993) rectangle (9.924,-7.807); % line 34
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8.4,-8.4) {X}; % line 34
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\large\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(5.207,0.593);
 \end{circuitikz}
 \end{document}

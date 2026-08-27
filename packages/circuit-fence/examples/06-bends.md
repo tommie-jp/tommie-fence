@@ -4,6 +4,7 @@
 `|-` は先に縦に折れる。
 
 ```circuit
+title: 回路図01 折れた配線
 parts:
   R1: resistor a1 a3
   R2: resistor e7 e9
@@ -31,6 +32,7 @@ style:
 **1 行が 1 本の信号経路**として読める。
 
 ```circuit
+title: 回路図02 1 行につないで書く
 parts:
   IN:  port a1
   R1:  resistor a1 a3

@@ -29,47 +29,50 @@
 \coordinate (d7) at (12,-6);
 \coordinate (b8) at (14,-2);
 \coordinate (b7) at (12,-2);
-\draw (b1) node[ocirc]{} node[above left]{IN}; % line 2
-\draw (b1) to[C, l_=$C_{1}$, a^=$1\,\mathrm{u}\mathrm{F}$] (b3); % line 3
-\draw (b3) to[R, l_=$R_{b}$, a^=$100\,\mathrm{k}\Omega$] (e3); % line 4
-\node[ground] at (e3) {}; % line 5
-\node[plain amp, noinv input up] (part-U1) at (b5) {}; % line 6
-\draw ($(part-U1.+)+(0.44,-0.13)$) -- ++(0.28,0); % line 6
-\draw ($(part-U1.+)+(0.58,-0.27)$) -- ++(0,0.28); % line 6
-\draw ($(part-U1.-)+(0.44,0.13)$) -- ++(0.28,0); % line 6
-\draw (d4) to[R, l_=$R_{2}$, a^=$1\,\mathrm{k}\Omega$] (e4); % line 7
-\node[ground] at (e4) {}; % line 8
-\draw (d4) to[R, l_=$R_{3}$, a^=$10\,\mathrm{k}\Omega$] (d7); % line 9
-\draw (b8) node[ocirc]{} node[above left]{OUT}; % line 10
-\draw (b3) -| (part-U1.+); % line 12
-\draw (d4) |- (part-U1.-); % line 13
-\draw (part-U1.out) -- (b7); % line 14
-\draw (b7) -- (b8); % line 14
-\draw (d7) -- (b7); % line 15
+\draw (b1) node[ocirc]{} node[above left]{IN}; % line 3
+\draw (b1) to[C, l_=$C_{1}$, a^=$1\,\mathrm{u}\mathrm{F}$] (b3); % line 4
+\draw (b3) to[R, l_=$R_{b}$, a^=$100\,\mathrm{k}\Omega$] (e3); % line 5
+\node[ground] at (e3) {}; % line 6
+\node[plain amp, noinv input up] (part-U1) at (b5) {}; % line 7
+\draw ($(part-U1.+)+(0.44,-0.13)$) -- ++(0.28,0); % line 7
+\draw ($(part-U1.+)+(0.58,-0.27)$) -- ++(0,0.28); % line 7
+\draw ($(part-U1.-)+(0.44,0.13)$) -- ++(0.28,0); % line 7
+\draw (d4) to[R, l_=$R_{2}$, a^=$1\,\mathrm{k}\Omega$] (e4); % line 8
+\node[ground] at (e4) {}; % line 9
+\draw (d4) to[R, l_=$R_{3}$, a^=$10\,\mathrm{k}\Omega$] (d7); % line 10
+\draw (b8) node[ocirc]{} node[above left]{OUT}; % line 11
+\draw (b3) -| (part-U1.+); % line 13
+\draw (d4) |- (part-U1.-); % line 14
+\draw (part-U1.out) -- (b7); % line 15
+\draw (b7) -- (b8); % line 15
+\draw (d7) -- (b7); % line 16
 \node[circ] at (b3) {};
 \node[circ] at (d4) {};
 \node[circ] at (b7) {};
-\path (16,-10.329) rectangle (22.824,0.593); % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,0) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-0.487) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-0.974) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-1.46) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-1.947) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-2.434) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-2.921) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-3.408) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-3.895) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-4.381) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-4.868) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-5.355) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-5.842) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-6.329) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-6.816) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-7.302) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-7.789) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-8.276) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-8.763) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-9.25) {X}; % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-9.737) {X}; % line 17
+\path (16,-10.816) rectangle (22.824,0.593); % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,0) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-0.487) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-0.974) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-1.46) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-1.947) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-2.434) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-2.921) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-3.408) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-3.895) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-4.381) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-4.868) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-5.355) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-5.842) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-6.329) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-6.816) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-7.302) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-7.789) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-8.276) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-8.763) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-9.25) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-9.737) {X}; % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-10.223) {X}; % line 18
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\large\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(5.207,0.593);
 \end{circuitikz}
 \end{document}

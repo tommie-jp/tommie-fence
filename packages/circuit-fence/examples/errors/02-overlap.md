@@ -9,6 +9,7 @@
 **ソースに行番号はない**。
 
 ```circuit
+title: 回路図01 重なりの検出
 parts:
   R1: resistor a1 a3 10k
   R2: resistor a1 a3 4k7
@@ -19,18 +20,19 @@ parts:
 書いたのはこれ。
 
 ```text
-12 parts:
-13   R1: resistor a1 a3 10k
-14   R2: resistor a1 a3 4k7
-15   C1: capacitor c1 c3 100n
-16   C2: capacitor c1 c3 100n
+12 title: 回路図01 重なりの検出
+13 parts:
+14   R1: resistor a1 a3 10k
+15   R2: resistor a1 a3 4k7
+16   C1: capacitor c1 c3 100n
+17   C2: capacitor c1 c3 100n
 ```
 
 帯にはこう出る。
 
 ```text
-circuit: 14 行目: 部品 R2 が R1 と同じ場所に重なっています (13 行目)
-circuit: 16 行目: 部品 C2 が C1 と同じ場所に重なっています (15 行目)
+circuit: 15 行目: 部品 R2 が R1 と同じ場所に重なっています (14 行目)
+circuit: 17 行目: 部品 C2 が C1 と同じ場所に重なっています (16 行目)
 ```
 
 後から書いたほうの行で返し、先に書いたほうの行を添える。

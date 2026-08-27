@@ -7,6 +7,7 @@
 暗いテーマでも読める。1 枚描いた図をどちらでも使い回せる。
 
 ```circuit
+title: 回路図01 テーマ auto
 parts:
   IN:  port a1
   R1:  resistor a1 a3 10k
@@ -25,6 +26,7 @@ style:
 `light` / `dark` は明暗を決め打ちする。ノートの見た目を固定したいとき。
 
 ```circuit
+title: 回路図02 テーマ light
 parts:
   IN:  port a1
   R1:  resistor a1 a3 10k
@@ -41,6 +43,7 @@ style:
 ```
 
 ```circuit
+title: 回路図03 テーマ dark
 parts:
   IN:  port a1
   R1:  resistor a1 a3 10k
@@ -59,6 +62,7 @@ style:
 `mono` は黒一色。資料に貼るときや印刷するとき。
 
 ```circuit
+title: 回路図04 テーマ mono
 parts:
   IN:  port a1
   R1:  resistor a1 a3 10k

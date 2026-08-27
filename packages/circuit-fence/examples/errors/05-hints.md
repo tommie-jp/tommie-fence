@@ -15,6 +15,7 @@
 まっすぐ結ぶので、記号の中心線に乗っていない足へ引くと斜めに入る。
 
 ```circuit
+title: 回路図01 足へ斜めに入る
 parts:
   U1: opamp c5
 wires:
@@ -24,16 +25,17 @@ wires:
 書いたのはこれ。
 
 ```text
-18 parts:
-19   U1: opamp c5
-20 wires:
-21   - U1.+ -- c3
+18 title: 回路図01 足へ斜めに入る
+19 parts:
+20   U1: opamp c5
+21 wires:
+22   - U1.+ -- c3
 ```
 
 帯にはこう出る。
 
 ```text
-circuit: 21 行目: U1.+ へ -- で引くと斜めに入ります (|- か -| なら直角に入ります)
+circuit: 22 行目: U1.+ へ -- で引くと斜めに入ります (|- か -| なら直角に入ります)
 ```
 
 `|-` なら先に縦、それから横に入るので、回路図らしく直角に入る。
@@ -46,6 +48,7 @@ circuit: 21 行目: U1.+ へ -- で引くと斜めに入ります (|- か -| な
 指し先は**部品を先に探す**ので、`C1` という部品がある図では番地 c1 を指せない。
 
 ```circuit
+title: 回路図02 指し先が両方に読める
 parts:
   C1: capacitor a1 a3
   R9: resistor c1 c3
@@ -56,17 +59,18 @@ notes:
 書いたのはこれ。
 
 ```text
-49 parts:
-50   C1: capacitor a1 a3
-51   R9: resistor c1 c3
-52 notes:
-53   - circle C1
+51 title: 回路図02 指し先が両方に読める
+52 parts:
+53   C1: capacitor a1 a3
+54   R9: resistor c1 c3
+55 notes:
+56   - circle C1
 ```
 
 帯にはこう出る。
 
 ```text
-circuit: 53 行目: 注釈の指す先 C1 は部品を指しています (番地 c1 のつもりなら、部品 ID と重ならない名前にします)
+circuit: 56 行目: 注釈の指す先 C1 は部品を指しています (番地 c1 のつもりなら、部品 ID と重ならない名前にします)
 ```
 
 言うのは**その番地にも何か置いてあるとき**だけ。行は a〜z あるので ID は
@@ -79,6 +83,7 @@ circuit: 53 行目: 注釈の指す先 C1 は部品を指しています (番地
 こちらは読めなかったので**エラー**のほう。
 
 ```circuit
+title: 回路図03 色が YAML のコメントで消える
 parts:
   R1: resistor a1 a3
 style:
@@ -88,16 +93,17 @@ style:
 書いたのはこれ。
 
 ```text
-82 parts:
-83   R1: resistor a1 a3
-84 style:
-85   ink-color: #333
+86 title: 回路図03 色が YAML のコメントで消える
+87 parts:
+88   R1: resistor a1 a3
+89 style:
+90   ink-color: #333
 ```
 
 帯にはこう出る。
 
 ```text
-circuit: 85 行目: style の ink-color は色として読めません (# から先は YAML のコメントになります。"#333" のように "…" で囲みます)
+circuit: 90 行目: style の ink-color は色として読めません (# から先は YAML のコメントになります。"#333" のように "…" で囲みます)
 ```
 
 `"#333"` と囲めば通る。

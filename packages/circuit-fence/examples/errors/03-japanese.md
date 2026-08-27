@@ -10,6 +10,7 @@
 **ソースに行番号はない**。
 
 ```circuit
+title: 回路図01 日本語の値
 parts:
   V1: vsource a1 a3 電池9V
   R1: resistor a1 c1 10k
@@ -19,16 +20,17 @@ parts:
 書いたのはこれ。
 
 ```text
-13 parts:
-14   V1: vsource a1 a3 電池9V
-15   R1: resistor a1 c1 10k
-16   G1: ground c1
+13 title: 回路図01 日本語の値
+14 parts:
+15   V1: vsource a1 a3 電池9V
+16   R1: resistor a1 c1 10k
+17   G1: ground c1
 ```
 
 帯にはこう出る。
 
 ```text
-circuit: 14 行目: 部品 V1: 値 9V はプレビューの TeX にフォントがありません (circuit-fence render --emit-tex で .tex に書き出すと LaTeX で組めます)
+circuit: 15 行目: 部品 V1: 値 9V はプレビューの TeX にフォントがありません (circuit-fence render --emit-tex で .tex に書き出すと LaTeX で組めます)
 ```
 
 文面に出るのは値のうち**そのまま出しても安全な字だけ** (`9V`)。

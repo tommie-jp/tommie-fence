@@ -7,6 +7,7 @@
 (検証済みの値しか図に入れないため)。
 
 ```circuit
+title: 回路図01 色の上書き
 parts:
   IN:  port a1
   R1:  resistor a1 a3 10k
@@ -28,6 +29,7 @@ style:
 詰めて太くすると、小さく貼っても読める。
 
 ```circuit
+title: 回路図02 pitch と wire-width
 parts:
   IN:  port a1
   R1:  resistor a1 a3 10k
@@ -47,6 +49,7 @@ style:
 `standard` は記号の流儀。既定の `american` は抵抗がギザギザ。
 
 ```circuit
+title: 回路図03 記号の流儀 american
 parts:
   R1: resistor a1 a3 10k
   L1: inductor a5 a7 10m
@@ -60,6 +63,7 @@ style:
 `european` にすると抵抗が箱になる (IEC の流儀)。
 
 ```circuit
+title: 回路図04 記号の流儀 european
 parts:
   R1: resistor a1 a3 10k
   L1: inductor a5 a7 10m
@@ -74,6 +78,7 @@ style:
 資料の段幅に合わせたいときに使う。
 
 ```circuit
+title: 回路図05 出力の横幅
 parts:
   IN:  port a1
   R1:  resistor a1 a3 10k
@@ -94,7 +99,7 @@ style:
 資料に貼った図が、どの版で描いたものかを後から辿れる。
 
 ```circuit
-title: 回路図20 版の刻印
+title: 回路図06 版の刻印
 parts:
   IN:  port a1
   R1:  resistor a1 a3 10k

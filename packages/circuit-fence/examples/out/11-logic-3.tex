@@ -17,11 +17,13 @@
 \coordinate (b1) at (0,-2);
 \coordinate (a4) at (6,0);
 \coordinate (c4) at (6,-4);
-\node[spdt] (part-S1) at (b2) {}; % line 2
-\draw (b1) |- (part-S1.in); % line 4
-\draw (part-S1.out 1) -| (a4); % line 5
-\draw (part-S1.out 2) -| (c4); % line 6
-\path (0,-6.593) rectangle (2.794,-5.407); % line 8
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-6) {X}; % line 8
+\node[spdt] (part-S1) at (b2) {}; % line 3
+\draw (b1) |- (part-S1.in); % line 5
+\draw (part-S1.out 1) -| (a4); % line 6
+\draw (part-S1.out 2) -| (c4); % line 7
+\path (0,-6.593) rectangle (2.794,-5.407); % line 9
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-6) {X}; % line 9
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\large\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(6.096,0.593);
 \end{circuitikz}
 \end{document}

@@ -3,6 +3,7 @@
 多端子部品は 1 つの番地に置き、足は `U1.out` `Q1.B` のように名前で指す。
 
 ```circuit
+title: 回路図01 非反転アンプ
 parts:
   IN:  port b1
   C1:  capacitor b1 b3 1u
