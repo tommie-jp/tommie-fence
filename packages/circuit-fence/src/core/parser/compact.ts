@@ -157,7 +157,7 @@ function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
   const [fromToken, toToken, ...extra] = rest;
 
   if (fromToken === undefined || toToken === undefined) {
-    return fail(`${safeToken(written)} は「種類 番地 番地 [値] [i=字] [v=字]」で書きます`, line);
+    return fail(`${safeToken(written)} は「種類 番地 番地 [値] [l=字] [i=字] [v=字]」で書きます`, line);
   }
 
   const from = readAddress(fromToken, line, points);
@@ -178,7 +178,7 @@ function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
     const at = token.indexOf('=');
     if (at < 0) {
       if (value !== null) {
-        return fail(`${safeToken(written)} は「種類 番地 番地 [値] [i=字] [v=字]」で書きます`, line);
+        return fail(`${safeToken(written)} は「種類 番地 番地 [値] [l=字] [i=字] [v=字]」で書きます`, line);
       }
       const checked = checkLabelLength(token, '値', line);
       if (checked !== null) return checked;

@@ -167,12 +167,19 @@ export const standaloneTex = (tex: string, target: TexTarget): string =>
  *   (`R1` → R の添字 1、`Rload` → R の添字 load)
  *
  * 読めない `$…$` はここまで来ない (model/circuit.ts が落として ID に戻す)。
+ * それでも来たときのために**必ず `fallback` (部品 ID) に落とす** — ID は
+ * 英数字と `_` `-` に限ってあるので、書き手の書いた TeX が図へ漏れる道が無い。
+ * 落とし先をここに置いておけば、この関門は 1 つのファイルの中で閉じる。
  */
-function labelOf(written: string): string {
+function labelOf(written: string, fallback: string): string {
   if (isMathLabel(written)) {
     const read = mathLabelTex(mathInnerOf(written));
-    if (read.ok) return `$${read.tex}$`;
+    return read.ok ? `$${read.tex}$` : labelOf(fallback, fallback);
   }
+
+  // 標準の TeX フォントに字形が無い字は、積んだフォントの側で組む (値と同じ)。
+  // 数式で組むと、フォントが無いときに例外ではなくプロセスごと落ちる。
+  if (hasUnicode(written)) return `\\circuittext{${escapeTex(written)}}`;
 
   const [first = '', ...rest] = [...written];
   const subscript = rest.join('');
@@ -485,15 +492,15 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
   // 記号だけでは見分けが付かない種類は、ID の下にもう 1 行書く (`l2_` は
   // 2 行を組んで下に置く circuitikz の書き方。`and` が行の区切り)。
   // ラベルを書いてあれば図ではそちらを出す。配線から指す名前もネット名も ID のまま。
-  const label = labelOf(part.label ?? part.id);
+  const label = labelOf(part.label ?? part.id, part.id);
   options.push(type?.mark === undefined ? `l_=${label}` : `l2_=${label} and ${type.mark}`);
   if (part.value !== null) options.push(`a^=${annotationOf(part.value, unitOf(part.type), target)}`);
   // 電流の矢は from → to、電圧の + は from の側。**どちらも極性と同じ規則**
   // (先に書いた番地が + 側) なので、書き手が覚えることは増えない。
   // 綴りは 1.0 (フェンス) と 2023 (手元の LaTeX) の両方で同じ図になると実測済み。
-  if (part.current !== null) options.push(`i>^=${labelOf(part.current)}`);
+  if (part.current !== null) options.push(`i>^=${labelOf(part.current, part.id)}`);
   // 値・電流と同じ側に出るので、並べて書けないことはパーサが弾いている。
-  if (part.voltage !== null) options.push(`v^>=${labelOf(part.voltage)}`);
+  if (part.voltage !== null) options.push(`v^>=${labelOf(part.voltage, part.id)}`);
 
   const drawn = `\\draw (${texNameOfAddress(part.from)}) to[${options.join(', ')}] (${texNameOfAddress(part.to)});`;
   if (type?.inner === undefined) return [drawn];
@@ -559,8 +566,17 @@ const drawPart = (part: PartSpec, target: TexTarget, pitch: number): string[] =>
       : drawMultiTerminal(part, target);
 
 /** 部品の値に、積んだフォントが要る字があるか。注釈の側は drawNotes.ts が見る。 */
+/**
+ * 図に出る字のうち、積んだフォントで組むものがあるか。
+ * **値だけでなくラベルと矢の字も見る** — どれも同じ `\circuittext` で組むので、
+ * 1 つでも見落とすと書き出した `.tex` にフォントの行が足りず、組んでも字が出ない。
+ */
 const valuesNeedUnicodeFont = (circuit: Circuit): boolean =>
-  circuit.parts.some((part) => part.kind !== 'one-terminal' && part.value !== null && hasUnicode(part.value));
+  circuit.parts.some((part) => {
+    if (part.kind === 'one-terminal') return false;
+    const written = part.kind === 'two-terminal' ? [part.value, part.label, part.current, part.voltage] : [part.value];
+    return written.some((text) => text !== null && hasUnicode(text));
+  });
 
 /**
  * 検証済みの図を circuitikz TeX にする。

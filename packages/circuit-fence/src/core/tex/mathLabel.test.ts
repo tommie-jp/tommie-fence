@@ -75,6 +75,24 @@ describe('$…$ で書いたラベル', () => {
     expect(messageOf('_1')).toContain('添字');
   });
 
+  // `x_1_2` は TeX が「添字が 2 つ」と言って止まる。読めたことにすると、
+  // 図が描けずログも行番号に引き戻せない (この道具が避けたい落ち方そのもの)。
+  test('添字を 2 つ続けたものを通さない', () => {
+    expect(messageOf('R_1_2')).toContain('添字');
+    expect(mathLabelTex('\\dot{E}_1_2').ok).toBe(false);
+  });
+
+  test('添字を分けて書いたものは通す', () => {
+    expect(texOf('R_1S_2')).toBe('R_{1}S_{2}');
+  });
+
+  // `${}$` は TeX としては通るが、名前の無い部品が描かれる。
+  // ID に落ちてもくれないので、読めなかったことにする。
+  test('中身の無いまとまりを通さない', () => {
+    expect(messageOf('{}')).toContain('中身');
+    expect(messageOf('R_{}')).toContain('中身');
+  });
+
   test('命令に {…} が無いものを通さない', () => {
     expect(messageOf('\\dot E')).toContain('{');
   });

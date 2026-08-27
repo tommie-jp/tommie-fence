@@ -61,6 +61,9 @@ function readAtom(cursor: Cursor): MathLabel {
     if (!inner.ok) return inner;
     if (cursor.text[cursor.index] !== '}') return fail('{ に対する } がありません');
     cursor.index += 1;
+    // 空のまとまりは TeX としては通るが、名前の無い字が図に出る。
+    // ID にも落ちてくれないので、読めなかったことにする。
+    if (inner.tex === '') return fail('{} の中身がありません');
     return { ok: true, tex: `{${inner.tex}}` };
   }
 
@@ -87,6 +90,9 @@ function readAtom(cursor: Cursor): MathLabel {
 /** まとまりを並べて読む。添字 (`_`) は直前のまとまりに付く。 */
 function readSequence(cursor: Cursor, nested: boolean): MathLabel {
   let tex = '';
+  // 直前のまとまりに添字が付いているか。`R_1_2` は TeX が「添字が 2 つ」と
+  // 言って止まるので、読めたことにすると図が描けずログも行番号に戻せない。
+  let subscripted = false;
 
   while (cursor.index < cursor.text.length) {
     const char = cursor.text[cursor.index];
@@ -97,18 +103,21 @@ function readSequence(cursor: Cursor, nested: boolean): MathLabel {
 
     if (char === '_') {
       if (tex === '') return fail('添字を付ける字がありません');
+      if (subscripted) return fail('添字を 2 つ続けて書けません');
       cursor.index += 1;
       const subscript = readAtom(cursor);
       if (!subscript.ok) return subscript;
       // 添字は必ず {…} で包む。1 文字でも包んでおけば、組み方が 1 通りに決まる。
       const inner = subscript.tex.startsWith('{') ? subscript.tex : `{${subscript.tex}}`;
       tex += `_${inner}`;
+      subscripted = true;
       continue;
     }
 
     const atom = readAtom(cursor);
     if (!atom.ok) return atom;
     tex += atom.tex;
+    subscripted = false;
   }
 
   return { ok: true, tex };

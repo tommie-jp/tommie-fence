@@ -130,6 +130,15 @@ describe('generateTex', () => {
     expect(tex).toContain('l_=$R_{1}$');
   });
 
+  // 値と同じで、フォントの要る字はフォントの要る組み方で出す。書き出す .tex に
+  // その 1 行が無いと、組んだときに字が出ない (プレビューには来ない字)。
+  test('writes a label that needs a font the same way a value does', () => {
+    const { tex } = generateLatex('parts:', '  R1: resistor a1 a3 l=Ω');
+
+    expect(tex).toContain('\\circuittext{Ω}');
+    expect(tex).toContain('\\usepackage{fontspec}');
+  });
+
   test('draws the current arrow from the address written first', () => {
     // `i>` は from → to の向き。番地を入れ替えれば矢も返る (実機で確認)。
     expect(generate('parts:', '  R1: resistor a1 a3 i=i').tex).toContain('i>^=$i$');
