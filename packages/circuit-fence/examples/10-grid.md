@@ -13,10 +13,10 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - source a7 blue
+  - source a6 blue
 style:
   grid: on
-  grid-to: d6
+  grid-to: d5
 ```
 
 `grid-to` を書くと、使っていない範囲までグリッドが伸びる。

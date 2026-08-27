@@ -4,6 +4,7 @@
 出力は `out`。入力は番号でも呼べる (`U1.1` `U1.2`)。
 
 ```circuit
+title: 回路図06 ロジックゲート
 parts:
   U1: and b2 7408
   U2: or b6 7432
@@ -59,6 +60,7 @@ style:
 (`U1.1`)。型番は記号の**中**に出る。
 
 ```circuit
+title: 回路図07 DIP の IC
 parts:
   U1: dip8 c2 NE555
 wires:

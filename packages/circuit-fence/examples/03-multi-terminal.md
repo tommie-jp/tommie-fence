@@ -90,6 +90,7 @@ style:
 書き分けたいときは次の名前で書く。**足の名前はどれも同じ**。
 
 ```circuit
+title: 回路図05 FET の種類
 parts:
   J1: njfet b2
   J2: pjfet b5
@@ -140,6 +141,7 @@ style:
 足だけ `P1.w` `T1.g` のように呼ぶ。
 
 ```circuit
+title: 回路図09 2 端子でも足を持つもの
 parts:
   P1: potentiometer b1 b5 10k
   T1: thyristor e1 e5

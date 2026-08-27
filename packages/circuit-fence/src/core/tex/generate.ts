@@ -11,7 +11,7 @@ import { STAMP_TEXT } from '../version.ts';
 import type {
   MultiTerminalPart, NoteOverlay, PartSpec, StyleSpec, TexTarget, TwoTerminalPart, OneTerminalPart,
 } from '../types.ts';
-import { drawNote, listingOf, noteColorLines, noteNeeds, noteOverlays } from './drawNotes.ts';
+import { drawNote, drawTitle, listingOf, noteColorLines, noteNeeds, noteOverlays } from './drawNotes.ts';
 import { escapeTex, hasUnicode } from './escape.ts';
 import { num } from './num.ts';
 
@@ -613,8 +613,14 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
     lineMap.set(lines.length, drawing.line);
   }
 
-  // 刻印は注釈より後。図がどこまで広がったかを測ってから掛ける。
-  // フェンスのどの行から来たものでもないので `% line` は付けない。
+  // 題と刻印は注釈より後。どちらも図がどこまで広がったかを測ってから掛ける
+  // (番地には a より上も、図の右下より外も無い)。フェンスのどの行から来た
+  // ものでもないので `% line` は付けない。
+  //
+  // 題が先。題は図を上へ、そして題が図より長ければ右へも広げるので、
+  // 刻印は**題まで含めた**箱の右下に付く。逆にすると、長い題を書いたときだけ
+  // 刻印が図の途中の幅に取り残される。
+  lines.push(...drawTitle(circuit, target));
   if (style.stamp === true) lines.push(drawStamp());
 
   lines.push(...FOOTER);

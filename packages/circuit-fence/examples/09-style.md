@@ -94,6 +94,7 @@ style:
 資料に貼った図が、どの版で描いたものかを後から辿れる。
 
 ```circuit
+title: 回路図20 版の刻印
 parts:
   IN:  port a1
   R1:  resistor a1 a3 10k

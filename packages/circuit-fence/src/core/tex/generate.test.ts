@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { buildCircuit } from '../model/circuit.ts';
 import { parseFence } from '../parser/parseFence.ts';
+import { noteWidth } from '../notes.ts';
 import { VERSION } from '../version.ts';
 import { generateTex, standaloneTex } from './generate.ts';
 
@@ -669,5 +670,108 @@ describe('generateTex のバージョン刻印', () => {
     const stamped = (generate(...STAMPED).tex ?? '').split('\n').find((row) => row.includes('circuit-fence'));
 
     expect(stamped).not.toContain('% line');
+  });
+});
+
+describe('generateTex の題 (title)', () => {
+  const titled = (...rows: string[]) => generate('title: 回路図01 テスト', ...rows);
+  const RESISTOR = ['parts:', '  R1: resistor a1 a3'];
+
+  test('writes nothing when the fence has no title', () => {
+    expect(generate(...RESISTOR).tex).not.toContain('current bounding box.north west');
+  });
+
+  test('hangs the title off the top of the finished drawing', () => {
+    // 番地には a より上が無いので、題は図の広がりから測るしかない。
+    expect(titled(...RESISTOR).tex).toContain('current bounding box.north west');
+  });
+
+  test('draws the title after the notes, so it clears everything drawn', () => {
+    const lines = (titled(...RESISTOR, 'notes:', '  - text c1: あ').tex ?? '').split('\n');
+    const note = lines.findIndex((line) => line.includes('% line 5'));
+    const title = lines.findIndex((line) => line.includes('current bounding box.north west'));
+
+    expect(note).toBeGreaterThan(-1);
+    expect(title).toBeGreaterThan(note);
+  });
+
+  test('keeps the text out of the fence TeX, leaving a mark to fill in', () => {
+    // フェンスの TeX に日本語のフォントは無い。注釈と同じ道を通す (約束 7)。
+    const { tex, notes } = titled(...RESISTOR);
+
+    expect(tex).not.toContain('回路図01');
+    expect(notes.at(-1)).toMatchObject({ text: '回路図01 テスト', bold: true, mono: false });
+  });
+
+  test('puts the title last in the marks, because it is drawn last', () => {
+    const { notes } = titled(...RESISTOR, 'notes:', '  - text c1: あ');
+
+    expect(notes.map((note) => note.text)).toEqual(['あ', '回路図01 テスト']);
+  });
+
+  test('reserves the width the mark does not have, so the title is not cut off', () => {
+    const narrow = titled(...RESISTOR).tex ?? '';
+    const wide = generate(`title: ${'あ'.repeat(40)}`, ...RESISTOR).tex ?? '';
+    const width = (tex: string): number =>
+      Number(/rectangle \+\+\(([\d.]+),/.exec(tex)?.[1] ?? '0');
+
+    expect(width(wide)).toBeGreaterThan(width(narrow));
+  });
+
+  test('reserves more room for a title in capitals than the plain estimate', () => {
+    // 題は必ず太字。cmbx は cmr より字送りが広く、大文字はさらに広い。
+    // 細字の見積もりのまま取ると、大文字ばかりの題が図の右で切れる。
+    const width = (tex: string): number => Number(/rectangle \+\+\(([\d.]+),/.exec(tex)?.[1] ?? '0');
+    const caps = width(generate('title: WWWWWWWWWW', ...RESISTOR).tex ?? '');
+    const plain = noteWidth('WWWWWWWWWW', 'large');
+
+    // 端数の丸めで勝ってしまわないよう、はっきり広いことを見る。
+    expect(caps).toBeGreaterThan(plain * 1.1);
+  });
+
+  test('lets the exported tex typeset the title itself', () => {
+    const { tex, notes } = generateLatex('title: 回路図01 テスト', ...RESISTOR);
+
+    expect(tex).toContain('回路図01 テスト');
+    expect(notes).toEqual([]);
+  });
+
+  test('asks for the unicode font when the exported title needs one', () => {
+    expect(generateLatex('title: 回路図01', ...RESISTOR).tex).toContain('newfontfamily');
+    expect(generateLatex('title: Fig 1', ...RESISTOR).tex).not.toContain('newfontfamily');
+  });
+
+  test('leaves room for the stamp below even when a title is on top', () => {
+    const { tex } = generate('title: 回路図01', ...RESISTOR, 'style:', '  stamp: on');
+
+    expect(tex).toContain('current bounding box.north west');
+    expect(tex).toContain('current bounding box.south east');
+  });
+});
+
+describe('生成した TeX が TeX の命令として書けているか', () => {
+  // 実機に通すまで気づけない綴りの崩れを、ここで止める。
+  // テンプレート文字列の中では `\n` が改行になるので、`\\node` と書かないと
+  // 行頭の \ が消えて `ode[...]` になり、**TeX は黙って何も描かない**
+  // (エラーにならないので図が出たように見える)。
+  test.each([
+    ['題', 'title: 回路図01', '\\node[anchor=south west'],
+    ['刻印', 'style:\n  stamp: on', '\\node[gray, anchor=north east'],
+  ])('%s は \\node から始まる', (_label, extra, expected) => {
+    const { tex } = generate(...`parts:\n  R1: resistor a1 a3\n${extra}`.split('\n'));
+
+    expect(tex).toContain(expected);
+  });
+
+  test('題の場所取りは \\path から始まる', () => {
+    expect(generate('title: 回路図01', 'parts:', '  R1: resistor a1 a3').tex).toContain('\\path (circuittitle');
+  });
+
+  test('どの行も TeX の命令か注釈で始まっている', () => {
+    const { tex } = generate('title: 回路図01', 'parts:', '  R1: resistor a1 a3', 'style:', '  stamp: on');
+
+    for (const line of (tex ?? '').split('\n')) {
+      expect(line, line).toMatch(/^(\\|%)/);
+    }
   });
 });

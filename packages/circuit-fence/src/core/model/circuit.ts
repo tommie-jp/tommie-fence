@@ -26,6 +26,11 @@ export type Circuit = {
    * 分岐の黒丸の数え上げにも参加しない (parts と混ぜないのはそのため)。
    */
   readonly notes: readonly NoteSpec[];
+  /**
+   * 図の上に載せる題。書かなければ null。
+   * **回路の一員ではない**ので、注釈と同じく数え上げには参加しない。
+   */
+  readonly title: string | null;
 };
 
 /** 注釈が指す先。 */
@@ -123,7 +128,7 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
   const notes = doc.notes.filter(
     (note) => hasAnchor(note, byId, errors, doc.points) && canWriteSource(note, sourceLines, errors),
   );
-  const circuit: Circuit = { points: doc.points, parts, wires, notes };
+  const circuit: Circuit = { points: doc.points, parts, wires, notes, title: doc.title };
 
   errors.push(...overlaps(parts));
 

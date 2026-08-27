@@ -34,29 +34,31 @@
 \coordinate (a11) at (20,0);
 \coordinate (a13) at (24,0);
 \coordinate (a15) at (28,0);
-\draw (a1) to[R, l_=$R_{1}$] (a3); % line 2
-\draw (a5) to[R, l_=$R_{2}$] (a7); % line 3
-\draw (a9) to[R, l_=$R_{3}$] (a11); % line 4
-\draw (a13) to[R, l_=$R_{4}$] (a15); % line 5
-\draw[circuitnotered] (2,0) circle (0.9); % line 7
-\draw[circuitnoteblue] (10,0) circle (0.9); % line 8
-\draw[circuitnotegreen] (18,0) circle (0.9); % line 9
-\draw[circuitnoteorange] (26,0) circle (0.9); % line 10
-\path (0,-2.395) rectangle (0.508,-1.605); % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (0,-2) {X}; % line 11
-\path (8,-2.395) rectangle (8.677,-1.605); % line 12
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-2) {X}; % line 12
-\path (16,-2.395) rectangle (16.847,-1.605); % line 13
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (16,-2) {X}; % line 13
-\path (24,-2.395) rectangle (25.016,-1.605); % line 14
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (24,-2) {X}; % line 14
-\path (0,-4.593) rectangle (4.572,-3.407); % line 15
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-4) {X}; % line 15
-\path (8,-4.593) rectangle (12.572,-3.407); % line 16
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,-4) {X}; % line 16
-\path (16,-4.593) rectangle (20.826,-3.407); % line 17
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-4) {X}; % line 17
-\path (24,-4.593) rectangle (29.08,-3.407); % line 18
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (24,-4) {X}; % line 18
+\draw (a1) to[R, l_=$R_{1}$] (a3); % line 3
+\draw (a5) to[R, l_=$R_{2}$] (a7); % line 4
+\draw (a9) to[R, l_=$R_{3}$] (a11); % line 5
+\draw (a13) to[R, l_=$R_{4}$] (a15); % line 6
+\draw[circuitnotered] (2,0) circle (0.9); % line 8
+\draw[circuitnoteblue] (10,0) circle (0.9); % line 9
+\draw[circuitnotegreen] (18,0) circle (0.9); % line 10
+\draw[circuitnoteorange] (26,0) circle (0.9); % line 11
+\path (0,-2.395) rectangle (0.508,-1.605); % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (0,-2) {X}; % line 12
+\path (8,-2.395) rectangle (8.677,-1.605); % line 13
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-2) {X}; % line 13
+\path (16,-2.395) rectangle (16.847,-1.605); % line 14
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (16,-2) {X}; % line 14
+\path (24,-2.395) rectangle (25.016,-1.605); % line 15
+\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (24,-2) {X}; % line 15
+\path (0,-4.593) rectangle (4.572,-3.407); % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-4) {X}; % line 16
+\path (8,-4.593) rectangle (12.572,-3.407); % line 17
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,-4) {X}; % line 17
+\path (16,-4.593) rectangle (20.826,-3.407); % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-4) {X}; % line 18
+\path (24,-4.593) rectangle (29.08,-3.407); % line 19
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (24,-4) {X}; % line 19
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\large\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(4.318,0.593);
 \end{circuitikz}
 \end{document}

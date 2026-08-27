@@ -317,3 +317,68 @@ describe('parseFence の points', () => {
     expect(result.errors[0]?.message).toContain(`${LIMITS.points}`);
   });
 });
+
+describe('parseFence の title', () => {
+  test('reads the title written at the top level', () => {
+    const result = parseFence(lines('title: 回路図01 circuit フェンスの書き方', 'parts:', '  R1: resistor a1 a3'));
+
+    expect(result.errors).toEqual([]);
+    expect(result.doc?.title).toBe('回路図01 circuit フェンスの書き方');
+  });
+
+  test('leaves the title unwritten when the fence has none', () => {
+    expect(parseFence(lines('parts:', '  R1: resistor a1 a3')).doc?.title).toBeNull();
+  });
+
+  test('takes a title holding a colon, which YAML needs quoted', () => {
+    const result = parseFence(lines('title: "回路図02 R1: resistor の書き方"', 'parts:', '  R1: resistor a1 a3'));
+
+    expect(result.doc?.title).toBe('回路図02 R1: resistor の書き方');
+  });
+
+  test('asks for a line of text when the title is written as something else', () => {
+    const result = parseFence(lines('title:', '  - 回路図01', 'parts:', '  R1: resistor a1 a3'));
+
+    expect(result.doc?.title).toBeNull();
+    expect(result.errors[0]?.line).toBe(1);
+    expect(result.errors[0]?.message).toContain('title');
+  });
+
+  test('refuses a title longer than the limit rather than letting it widen the figure', () => {
+    const result = parseFence(lines(`title: ${'あ'.repeat(LIMITS.titleLength + 1)}`, 'parts:', '  R1: resistor a1 a3'));
+
+    expect(result.doc?.title).toBeNull();
+    expect(result.errors[0]?.message).toContain(`${LIMITS.titleLength}`);
+  });
+
+  test('refuses a character the figure cannot draw, naming the line', () => {
+    // 注釈と同じ関門を通す。TeX が記法として読む字は題にも通さない (約束 3)。
+    const result = parseFence(lines('title: 回路図01 \\draw', 'parts:', '  R1: resistor a1 a3'));
+
+    expect(result.doc?.title).toBeNull();
+    expect(result.errors[0]?.line).toBe(1);
+  });
+
+  test('refuses a title with nothing in it, which would only add blank space', () => {
+    // 空の題でも節点は置かれるので、図の上に見えない余白だけが増える。
+    const result = parseFence(lines('title: "   "', 'parts:', '  R1: resistor a1 a3'));
+
+    expect(result.doc?.title).toBeNull();
+    expect(result.errors[0]?.message).toContain('title');
+  });
+
+  test('counts the length in characters, not in UTF-16 units', () => {
+    // 絵文字は 1 文字で 2 単位を食う。単位で数えると、上限の半分の長さで
+    // 「60 文字までです」と返り、**本当の理由 (描けない字) が隠れる**。
+    const result = parseFence(lines(`title: ${'\u{1F600}'.repeat(31)}`, 'parts:', '  R1: resistor a1 a3'));
+
+    expect(result.doc?.title).toBeNull();
+    expect(result.errors[0]?.message).toContain('描けない字');
+  });
+
+  test('does not call title an unknown key any more', () => {
+    const result = parseFence(lines('title: 回路図01', 'parts:', '  R1: resistor a1 a3'));
+
+    expect(result.errors.map((error) => error.message).join('')).not.toContain('知らないキー');
+  });
+});

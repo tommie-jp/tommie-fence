@@ -15,9 +15,10 @@ import { noteAnchorCell, resolveNoteTarget } from '../model/circuit.ts';
 import type { Circuit, NoteAnchor } from '../model/circuit.ts';
 import type { Points } from '../parser/compact.ts';
 import {
-  NOTE_INK, NOTE_MARK_COLOR, NOTE_MARK_TEXT, hexDigits, noteColor, noteFontTex, noteLine,
-  noteMonoWidth, noteSourceLine, noteSpan, noteWidth, texAnchorOf, texColorOf,
+  NOTE_INK, NOTE_MARK_COLOR, NOTE_MARK_TEXT, hexDigits, noteBoldWidth, noteColor, noteFontTex,
+  noteLine, noteMonoWidth, noteSourceLine, noteSpan, noteWidth, texAnchorOf, texColorOf,
 } from '../notes.ts';
+import type { NoteSize } from '../notes.ts';
 import type {
   ArrowNote, BoxNote, NoteOverlay, NoteSpec, NoteTextStyle, PartSpec, SourceNote, TexTarget,
   TextNote,
@@ -263,6 +264,52 @@ export function drawNote(
 }
 
 /**
+ * 題の字の大きさ。図の見出しなので、注釈のどの段よりはっきりさせる
+ * (`large` + 太字)。書き手が選べるようにはしていない — 題は 1 枚に 1 つで、
+ * 大きさを選ぶ意味が薄いわりに、覚えることだけ増える。
+ */
+const TITLE_SIZE: NoteSize = 'large';
+
+/** 題と図の間に空ける幅 (pt)。刻印と同じで、字が図にくっつかない最小限。 */
+const TITLE_INSET = 2;
+
+/** 題のノードに付ける名前。幅を取っておく `\path` から呼ぶためだけに使う。 */
+const TITLE_NODE = 'circuittitle';
+
+/**
+ * 図の上に載せる題。
+ *
+ * **置き場所は番地から測れない** — 番地は a1 が最上段で、その上が無い。
+ * TikZ に測らせた `current bounding box` の左上に掛ける (実機で確認済み)。
+ * だから注釈より後、刻印と同じ並びで**いちばん最後に書く**。
+ *
+ * 字はフェンスでは TeX に渡さず、目印を 1 文字置いて描き上がった SVG に
+ * 差し込む (約束 7)。注釈とまったく同じ道なので、日本語がそのまま出る。
+ * 幅は TeX が知らないので、見積もったぶんの場所を取っておく
+ * (取らないと、図より長い題が SVG の右で切れる)。
+ */
+export function drawTitle(circuit: Circuit, target: TexTarget): string[] {
+  const title = circuit.title;
+  if (title === null) return [];
+
+  const options = [
+    'anchor=south west',
+    `inner sep=${num(TITLE_INSET)}pt`,
+    ...(target === 'latex' ? [] : [MARK_COLOR_NAME]),
+    `font=${noteFontTex(TITLE_SIZE, true)}`,
+  ];
+  const at = 'at (current bounding box.north west)';
+
+  if (target === 'latex') return [`\\node[${options.join(', ')}] ${at} {${latexNoteText(title)}};`];
+
+  return [
+    `\\node[${options.join(', ')}] (${TITLE_NODE}) ${at} {${NOTE_MARK_TEXT}};`,
+    `\\path (${TITLE_NODE}.south west) rectangle`
+    + ` ++(${num(noteBoldWidth(title, TITLE_SIZE))},${num(noteLine(TITLE_SIZE))});`,
+  ];
+}
+
+/**
  * 注釈に使う色の宣言。**実際に使う色だけ**書く。
  * 名前も値もパレットの表から作るので、書き手の字は TeX に入らない (約束 3)。
  */
@@ -281,7 +328,9 @@ export function noteColorLines(circuit: Circuit, target: TexTarget): string[] {
   });
 
   const marked =
-    target === 'fence' && circuit.notes.some((note) => note.kind === 'text' || note.kind === 'source');
+    target === 'fence'
+    && (circuit.title !== null
+      || circuit.notes.some((note) => note.kind === 'text' || note.kind === 'source'));
   return marked
     ? [...palette, `\\definecolor{${MARK_COLOR_NAME}}{HTML}{${hexDigits(NOTE_MARK_COLOR)}}`]
     : palette;
@@ -291,7 +340,7 @@ export function noteColorLines(circuit: Circuit, target: TexTarget): string[] {
 export function noteOverlays(circuit: Circuit, target: TexTarget, listing: string[]): NoteOverlay[] {
   if (target === 'latex') return [];
 
-  return circuit.notes.flatMap((note): NoteOverlay[] => {
+  const notes = circuit.notes.flatMap((note): NoteOverlay[] => {
     if (note.kind !== 'text' && note.kind !== 'source') return [];
     const color = noteColor(note.color) ?? NOTE_INK;
     const look = { color, bold: note.bold, align: note.align };
@@ -299,6 +348,15 @@ export function noteOverlays(circuit: Circuit, target: TexTarget, listing: strin
       ? [{ text: note.text, mono: false, ...look }]
       : listing.map((text) => ({ text, mono: true, ...look }));
   });
+
+  // 題は TeX のいちばん最後に置くので、差し込む並びでも末尾。
+  // 色は書かせていないので、図のほかの文字と同じ色に乗る (NOTE_INK は
+  // 黒のまま出て、そのあと recolorSvg がテーマの文字色に塗り替える)。
+  if (circuit.title === null) return notes;
+  return [
+    ...notes,
+    { text: circuit.title, color: NOTE_INK, mono: false, bold: true, align: 'left' },
+  ];
 }
 
 /**
@@ -323,7 +381,9 @@ export function noteNeeds(circuit: Circuit, listing: readonly string[]): NoteNee
 
   return {
     unicodeFont:
-      circuit.notes.some((note) => note.kind === 'text' && hasUnicode(note.text)) || monoFont,
+      circuit.notes.some((note) => note.kind === 'text' && hasUnicode(note.text))
+      || (circuit.title !== null && hasUnicode(circuit.title))
+      || monoFont,
     monoFont,
     arrowTips: circuit.notes.some((note) => note.kind === 'arrow'),
   };

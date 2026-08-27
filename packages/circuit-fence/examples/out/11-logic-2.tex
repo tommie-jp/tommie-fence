@@ -20,12 +20,14 @@
 \coordinate (e1) at (0,-4);
 \coordinate (e4) at (3,-4);
 \coordinate (a4) at (3,0);
-\node[dipchip, num pins=8, font=\scriptsize] (part-U1) at (c2) {$\mathrm{NE555}$}; % line 2
-\draw (a1) |- (part-U1.pin 1); % line 4
-\draw (e1) |- (part-U1.pin 4); % line 5
-\draw (part-U1.pin 5) -| (e4); % line 6
-\draw (part-U1.pin 8) -| (a4); % line 7
-\path (0,-5.593) rectangle (4.318,-4.407); % line 9
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-5) {X}; % line 9
+\node[dipchip, num pins=8, font=\scriptsize] (part-U1) at (c2) {$\mathrm{NE555}$}; % line 3
+\draw (a1) |- (part-U1.pin 1); % line 5
+\draw (e1) |- (part-U1.pin 4); % line 6
+\draw (part-U1.pin 5) -| (e4); % line 7
+\draw (part-U1.pin 8) -| (a4); % line 8
+\path (0,-5.593) rectangle (4.318,-4.407); % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-5) {X}; % line 10
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\large\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(5.8,0.593);
 \end{circuitikz}
 \end{document}

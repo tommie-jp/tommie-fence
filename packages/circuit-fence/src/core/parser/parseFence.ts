@@ -5,6 +5,7 @@ import { LIMITS, isReferenceable } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import type { FenceError, NoteSpec, PartSpec, Result, StyleSpec, WireSpec } from '../types.ts';
+import { isNoteDrawable } from '../tex/escape.ts';
 import { NO_POINTS, parseCompactPart, parseNoteLine, parseNoteText, parseWireLine } from './compact.ts';
 import type { Points } from './compact.ts';
 import { EMPTY_STYLE, validateStyle } from './style.ts';
@@ -31,9 +32,14 @@ const YAML_HINTS: Readonly<Record<string, string>> = {
 const YAML_POSITION = /\s+at line \d+, column \d+:?\s*$/;
 
 /** フェンスの一番外側に書けるキー。読めなかったときの案内はここから作る。 */
-const TOP_LEVEL_KEYS = ['points', 'parts', 'wires', 'notes', 'style'] as const;
+export const TOP_LEVEL_KEYS = ['title', 'points', 'parts', 'wires', 'notes', 'style'] as const;
 
 export type FenceDocument = {
+  /**
+   * 図の上に載せる題。書かなければ null。
+   * 番地には a より上が無いので、`notes:` の字では上に置けない。
+   */
+  readonly title: string | null;
   /**
    * 番地に付けた名前。番地が書ける場所ならどこでも使える。
    * 図には出ないが、名前の付いた節点はネットリストにその名前で出る。
@@ -96,9 +102,10 @@ export function parseFence(source: string): ParseResult {
   const wires: WireSpec[] = [];
   const notes: NoteSpec[] = [];
   let style: StyleSpec = EMPTY_STYLE;
+  let title: string | null = null;
 
   const contents = parsed.contents;
-  if (contents === null) return { doc: { source, points: NO_POINTS, parts, wires, notes, style }, errors };
+  if (contents === null) return { doc: { source, title, points: NO_POINTS, parts, wires, notes, style }, errors };
   if (!isMap(contents)) {
     return {
       doc: null,
@@ -123,6 +130,8 @@ export function parseFence(source: string): ParseResult {
       collectWires(pair.value as ParsedNode | null, { wires, errors, lineOf, points });
     } else if (key === 'notes') {
       collectNotes(pair.value as ParsedNode | null, { notes, errors, lineOf, points });
+    } else if (key === 'title') {
+      title = readTitle(pair.value as ParsedNode | null, line, errors) ?? title;
     } else if (key === 'style') {
       // `style: *base` のように書けるので、別名は指し先まで開いてから読む。
       const written = pair.value as ParsedNode | null;
@@ -148,7 +157,39 @@ export function parseFence(source: string): ParseResult {
   // 名前と部品 ID が同じだと、注釈の指し先がどちらを指すのか決められない。
   errors.push(...collidingPoints(contents, parts, lineOf));
 
-  return { doc: { source, points, parts, wires, notes, style }, errors };
+  return { doc: { source, title, points, parts, wires, notes, style }, errors };
+}
+
+/**
+ * `title:` を読む。図の上に 1 行で載せる字。
+ *
+ * 通す字は**注釈の字と同じ関門**を使う (`isNoteDrawable`)。題はフェンスでは
+ * TeX に渡さず描き上がった SVG に差し込むので、日本語が出せて、値では
+ * 通さない `:` も書ける (「回路図01 R1: resistor の書き方」のように書ける)。
+ * TeX が記法として読む字だけは、注釈と同じく通さない (約束 3)。
+ */
+function readTitle(node: ParsedNode | null, line: number | null, errors: FenceError[]): string | null {
+  const written = scalarText(node);
+  if (written === null) {
+    errors.push(fenceError('title は図の上に載せる 1 行の文字で書きます', line));
+    return null;
+  }
+  if (written.trim().length === 0) {
+    // 空の題でも節点は置かれるので、図の上に見えない余白だけが増える。
+    errors.push(fenceError('title に文字がありません (書かないときは title ごと省きます)', line));
+    return null;
+  }
+  // 絵文字のような字は 1 文字で 2 単位を食う。単位で数えると上限の半分で
+  // 「長すぎます」と返り、**本当の理由 (描けない字) が隠れる**。
+  if ([...written].length > LIMITS.titleLength) {
+    errors.push(fenceError(`title は ${LIMITS.titleLength} 文字までです`, line));
+    return null;
+  }
+  if (!isNoteDrawable(written)) {
+    errors.push(fenceError(`title に図へ描けない字があります: ${safeToken(written)}`, line));
+    return null;
+  }
+  return written;
 }
 
 /**

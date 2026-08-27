@@ -28,17 +28,19 @@
 \coordinate (a3) at (4,0);
 \coordinate (d3) at (4,-6);
 \coordinate (g3) at (4,-12);
-\draw (b1) to[potentiometer, n=part-P1, l_=$P_{1}$, a^=$10\,\mathrm{k}\Omega$] (b5); % line 2
-\draw (e1) to[thyristor, n=part-T1, l_=$T_{1}$] (e5); % line 3
-\draw (h1) to[triac, n=part-T2, l_=$T_{2}$] (h5); % line 4
-\draw (part-P1.wiper) -- (a3); % line 6
-\draw (part-T1.gate) |- (d3); % line 7
-\draw (part-T2.gate) |- (g3); % line 8
-\path (0,-4.593) rectangle (6.858,-3.407); % line 10
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-4) {X}; % line 10
-\path (0,-10.593) rectangle (4.826,-9.407); % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-10) {X}; % line 11
-\path (0,-16.593) rectangle (3.81,-15.407); % line 12
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-16) {X}; % line 12
+\draw (b1) to[potentiometer, n=part-P1, l_=$P_{1}$, a^=$10\,\mathrm{k}\Omega$] (b5); % line 3
+\draw (e1) to[thyristor, n=part-T1, l_=$T_{1}$] (e5); % line 4
+\draw (h1) to[triac, n=part-T2, l_=$T_{2}$] (h5); % line 5
+\draw (part-P1.wiper) -- (a3); % line 7
+\draw (part-T1.gate) |- (d3); % line 8
+\draw (part-T2.gate) |- (g3); % line 9
+\path (0,-4.593) rectangle (6.858,-3.407); % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-4) {X}; % line 11
+\path (0,-10.593) rectangle (4.826,-9.407); % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-10) {X}; % line 12
+\path (0,-16.593) rectangle (3.81,-15.407); % line 13
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-16) {X}; % line 13
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\large\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(7.789,0.593);
 \end{circuitikz}
 \end{document}

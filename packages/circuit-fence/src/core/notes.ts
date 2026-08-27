@@ -160,6 +160,9 @@ export const noteSourceLine = (size: NoteSize, leading: NoteLeading | null): num
 /** 半角 1 文字の幅 (em)。少し多めに見て、図が字を切らないようにする。 */
 const HALF_WIDTH = 0.6;
 
+/** 太字の半角 1 文字の幅 (em)。大文字の多い題でも切れない側に振ってある。 */
+const BOLD_HALF_WIDTH = 0.95;
+
 /** 全角 1 文字の幅 (em)。 */
 const FULL_WIDTH = 1.05;
 
@@ -180,6 +183,16 @@ const widthOf = (text: string, size: NoteSize, half: number): number =>
  * 切れる (SVG の viewBox からはみ出す)。
  */
 export const noteWidth = (text: string, size: NoteSize): number => widthOf(text, size, HALF_WIDTH);
+
+/**
+ * 太字で組んだときに図で占める幅 (cm)。題 (`title:`) だけが使う。
+ *
+ * cmbx は cmr より字送りが広く、**大文字はさらに広い** (`W` はほぼ全角と同じ)。
+ * 細字の見積もりのまま場所を取ると、大文字の多い題が図の右で切れる。
+ * 全角の側は太字でも送りがほとんど変わらないので、半角の側だけ広げる。
+ */
+export const noteBoldWidth = (text: string, size: NoteSize): number =>
+  widthOf(text, size, BOLD_HALF_WIDTH);
 
 /**
  * 等幅で組んだときに図で占める幅 (cm)。字下げを保つので、空白も 1 文字と数える。

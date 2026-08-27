@@ -46,41 +46,43 @@
 \coordinate (i5) at (4.8,-9.6);
 \coordinate (k5) at (4.8,-12);
 \coordinate (j4) at (3.6,-10.8);
-\node[njfet] (part-J1) at (b2) {}; % line 2
-\node[pjfet] (part-J2) at (b5) {}; % line 3
-\node[nigfete] (part-M1) at (f2) {}; % line 4
-\node[pigfete] (part-M2) at (f5) {}; % line 5
-\node[nigfetd] (part-M3) at (j2) {}; % line 6
-\node[pigfetd] (part-M4) at (j5) {}; % line 7
-\draw (a2) -| (part-J1.drain); % line 9
-\draw (c2) -| (part-J1.source); % line 10
-\draw (b1) -| (part-J1.gate); % line 11
-\draw (a5) -| (part-J2.drain); % line 12
-\draw (c5) -| (part-J2.source); % line 13
-\draw (b4) -| (part-J2.gate); % line 14
-\draw (e2) -| (part-M1.drain); % line 15
-\draw (g2) -| (part-M1.source); % line 16
-\draw (f1) -| (part-M1.gate); % line 17
-\draw (e5) -| (part-M2.drain); % line 18
-\draw (g5) -| (part-M2.source); % line 19
-\draw (f4) -| (part-M2.gate); % line 20
-\draw (i2) -| (part-M3.drain); % line 21
-\draw (k2) -| (part-M3.source); % line 22
-\draw (j1) -| (part-M3.gate); % line 23
-\draw (i5) -| (part-M4.drain); % line 24
-\draw (k5) -| (part-M4.source); % line 25
-\draw (j4) -| (part-M4.gate); % line 26
-\path (-0.324,-4.193) rectangle (2.724,-3.007); % line 28
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1.2,-3.6) {X}; % line 28
-\path (3.276,-4.193) rectangle (6.324,-3.007); % line 29
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,-3.6) {X}; % line 29
-\path (-0.451,-8.993) rectangle (2.851,-7.807); % line 30
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1.2,-8.4) {X}; % line 30
-\path (3.149,-8.993) rectangle (6.451,-7.807); % line 31
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,-8.4) {X}; % line 31
-\path (-0.451,-13.793) rectangle (2.851,-12.607); % line 32
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1.2,-13.2) {X}; % line 32
-\path (3.149,-13.793) rectangle (6.451,-12.607); % line 33
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,-13.2) {X}; % line 33
+\node[njfet] (part-J1) at (b2) {}; % line 3
+\node[pjfet] (part-J2) at (b5) {}; % line 4
+\node[nigfete] (part-M1) at (f2) {}; % line 5
+\node[pigfete] (part-M2) at (f5) {}; % line 6
+\node[nigfetd] (part-M3) at (j2) {}; % line 7
+\node[pigfetd] (part-M4) at (j5) {}; % line 8
+\draw (a2) -| (part-J1.drain); % line 10
+\draw (c2) -| (part-J1.source); % line 11
+\draw (b1) -| (part-J1.gate); % line 12
+\draw (a5) -| (part-J2.drain); % line 13
+\draw (c5) -| (part-J2.source); % line 14
+\draw (b4) -| (part-J2.gate); % line 15
+\draw (e2) -| (part-M1.drain); % line 16
+\draw (g2) -| (part-M1.source); % line 17
+\draw (f1) -| (part-M1.gate); % line 18
+\draw (e5) -| (part-M2.drain); % line 19
+\draw (g5) -| (part-M2.source); % line 20
+\draw (f4) -| (part-M2.gate); % line 21
+\draw (i2) -| (part-M3.drain); % line 22
+\draw (k2) -| (part-M3.source); % line 23
+\draw (j1) -| (part-M3.gate); % line 24
+\draw (i5) -| (part-M4.drain); % line 25
+\draw (k5) -| (part-M4.source); % line 26
+\draw (j4) -| (part-M4.gate); % line 27
+\path (-0.324,-4.193) rectangle (2.724,-3.007); % line 29
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1.2,-3.6) {X}; % line 29
+\path (3.276,-4.193) rectangle (6.324,-3.007); % line 30
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,-3.6) {X}; % line 30
+\path (-0.451,-8.993) rectangle (2.851,-7.807); % line 31
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1.2,-8.4) {X}; % line 31
+\path (3.149,-8.993) rectangle (6.451,-7.807); % line 32
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,-8.4) {X}; % line 32
+\path (-0.451,-13.793) rectangle (2.851,-12.607); % line 33
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1.2,-13.2) {X}; % line 33
+\path (3.149,-13.793) rectangle (6.451,-12.607); % line 34
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,-13.2) {X}; % line 34
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\large\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(5.482,0.593);
 \end{circuitikz}
 \end{document}
