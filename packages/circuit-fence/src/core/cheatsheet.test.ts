@@ -8,18 +8,18 @@ import { STYLE_KEYS } from './parser/style.ts';
 import { THEME_NAMES } from './render/theme.ts';
 
 /**
- * 早見表 (docs/cheatsheet.md) が実装から遅れていないか。
+ * 早見表 (docs/02-cheatsheet.md) が実装から遅れていないか。
  *
  * この 1 枚は「LLM にそのまま渡す」ためのものなので、載っていない種類は
  * 書かれないし、消えた種類は書かれ続ける。文法リファレンスと違って
  * 説明が無いぶん、抜けを目で見つけられない。**名前の集合だけ**を見張る
  * (書きぶりまで縛ると、直すたびにテストを直すことになる)。
  */
-const CHEATSHEET = readFileSync(fileURLToPath(new URL('../../docs/cheatsheet.md', import.meta.url)), 'utf8');
+const CHEATSHEET = readFileSync(fileURLToPath(new URL('../../docs/02-cheatsheet.md', import.meta.url)), 'utf8');
 
 const mentions = (name: string): boolean => CHEATSHEET.includes(`\`${name}\``);
 
-describe('docs/cheatsheet.md', () => {
+describe('docs/02-cheatsheet.md', () => {
   test('names every part type', () => {
     expect(partTypeNames().filter((name) => !mentions(name))).toEqual([]);
   });

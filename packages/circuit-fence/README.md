@@ -37,8 +37,8 @@ wires:
 ## 使い方
 
 Markdown を開いてプレビュー (`Ctrl+Shift+V`) を出す。
-書き方は [docs/syntax.md](docs/syntax.md)、
-1 画面ぶんの早見表は [docs/cheatsheet.md](docs/cheatsheet.md)
+書き方は [docs/01-syntax.md](docs/01-syntax.md)、
+1 画面ぶんの早見表は [docs/02-cheatsheet.md](docs/02-cheatsheet.md)
 (LLM に書かせるときはこの 1 枚を渡す)。
 
 組んでいる間は `style: grid: on` にすると、部品を置ける位置が点で出る。
@@ -89,7 +89,7 @@ xelatex -output-directory tex tex/notes.tex
 
 プレビューとの違いは 3 つだけ (日本語の値が通る・単位が siunitx で µF になる・
 オペアンプが本物の記号になる)。番地も配線も同じなので、プレビューで位置を
-確かめてから書き出せる。書き方は [docs/syntax.md](docs/syntax.md)。
+確かめてから書き出せる。書き方は [docs/01-syntax.md](docs/01-syntax.md)。
 
 処理系の版は `--version` で出せる。
 

@@ -11,7 +11,7 @@ import { extractCircuitFences } from './fences.ts';
  * 独立させる** (2026-08-27 決定) — 通し番号にすると、1 つのファイルに図を
  * 足しただけで関係のないファイルまで振り直しになる。
  *
- * syntax.md は**貼った図を持たず、フェンスを直に書く**。番号を通しで振れて、
+ * 01-syntax.md は**貼った図を持たず、フェンスを直に書く**。番号を通しで振れて、
  * プレビューでそのまま描き直せるため。ただし同じ図が examples にもあるので、
  * **題が同じなら中身も同じ**であることをここで見張る (片方だけ直すと、
  * 同じ名前の図が 2 通りの姿で出てしまう)。
@@ -21,7 +21,7 @@ const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const DIRECTORIES = ['docs', 'examples', join('examples', 'errors')];
 
 /** 早見表は「フェンスの形」を見せる 1 枚で、図として描くものではない。 */
-const NOT_A_FIGURE = ['cheatsheet.md'];
+const NOT_A_FIGURE = ['02-cheatsheet.md'];
 
 const documents = DIRECTORIES.flatMap((directory) =>
   readdirSync(join(ROOT, directory))
@@ -62,9 +62,9 @@ describe('図の番号', () => {
     expect(numbers).toEqual(wanted);
   });
 
-  test('syntax.md は図を貼らず、フェンスを直に書いている', () => {
+  test('01-syntax.md は図を貼らず、フェンスを直に書いている', () => {
     // 貼ると、その図は examples 側の番号を名乗るので通し番号が崩れる。
-    const embedded = readFileSync(join(ROOT, 'docs', 'syntax.md'), 'utf8').match(/^!\[.*?\]\(.*?\.png\)/gm);
+    const embedded = readFileSync(join(ROOT, 'docs', '01-syntax.md'), 'utf8').match(/^!\[.*?\]\(.*?\.png\)/gm);
 
     expect(embedded).toBeNull();
   });

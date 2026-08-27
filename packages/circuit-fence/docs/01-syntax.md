@@ -3,7 +3,7 @@
 Markdown の ` ```circuit ` フェンスに YAML を書くと、Markdown プレビュー
 (`Ctrl+Shift+V`) で回路図になる。
 
-1 画面に収めた早見表は [cheatsheet.md](cheatsheet.md)
+1 画面に収めた早見表は [02-cheatsheet.md](02-cheatsheet.md)
 (LLM に書かせるときはこの 1 枚を渡す)。
 
 ```circuit

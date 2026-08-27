@@ -1,6 +1,6 @@
 # 例
 
-[docs/syntax.md](../docs/syntax.md) に出てくる項目を 1 つずつ図にしたもの。
+[docs/syntax.md](../docs/01-syntax.md) に出てくる項目を 1 つずつ図にしたもの。
 プレビュー (`Ctrl+Shift+V`) で開くとそのまま図になる。
 
 図の作り直しは `npm run examples` (1 枚につき `.tex` / `.svg` / `.png` が
@@ -11,12 +11,12 @@
 指せるようにするためのもの。**番号は .md ごとに 01 から数え直す** — 通し番号に
 すると、1 つのファイルに図を足しただけで関係のないファイルまで振り直しになる。
 
-[docs/syntax.md](../docs/syntax.md) は図を貼らず、フェンスを直に書いてある
+[docs/syntax.md](../docs/01-syntax.md) は図を貼らず、フェンスを直に書いてある
 (貼ると、その図はこちらの番号を名乗って向こうの通し番号が崩れる)。
 同じ図が両方にあるので、**題が同じなら中身も同じ**であることをテストで
 見張っている — 片方だけ直すと、同じ名前の図が 2 通りの姿で出てしまう。
 
-| 例 | syntax.md の項目 |
+| 例 | 01-syntax.md の項目 |
 | --- | --- |
 | [01-rc-lowpass.md](01-rc-lowpass.md) | 番地 / 部品 / 配線 / ネットリスト |
 | [02-parts.md](02-parts.md) | 2 端子部品 37 種、1 端子の記号 4 種 |
@@ -37,7 +37,7 @@
 
 [errors/](errors/) は「読めなかったときに何が出るか」の見本。
 
-| 例 | syntax.md の項目 |
+| 例 | 01-syntax.md の項目 |
 | --- | --- |
 | [errors/01-unreadable.md](errors/01-unreadable.md) | 読めなかったとき (行番号つきのエラー) |
 | [errors/02-overlap.md](errors/02-overlap.md) | 重なりの検出 |

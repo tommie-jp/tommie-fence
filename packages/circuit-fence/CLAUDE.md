@@ -2,7 +2,7 @@
 
 Markdown の ` ```circuit ` フェンス (YAML) を回路図としてレンダリングする
 VS Code 拡張機能。全体像は [README.md](README.md)、
-文法は [docs/syntax.md](docs/syntax.md)。
+文法は [docs/01-syntax.md](docs/01-syntax.md)。
 
 ## このプロジェクトの存在理由
 

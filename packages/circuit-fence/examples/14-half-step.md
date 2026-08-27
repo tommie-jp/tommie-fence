@@ -17,6 +17,8 @@ parts:
   OUT: port a4
 wires:
   - a_2.5 -- a4
+notes:
+  - source a5 blue
 style:
   grid: on
 ```
@@ -37,7 +39,10 @@ parts:
 wires:
   - a1 -- b1 -- c1
   - a5 -- b5 -- c5
+notes:
+  - source a6 blue
 style:
+  grid: on
   pitch: 3
 ```
 
