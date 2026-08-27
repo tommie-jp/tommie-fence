@@ -131,9 +131,95 @@ style:
 | `voltmeter` | 電圧計 | (なし) | `V5: voltmeter k5 k7` |
 | `ohmmeter` | 抵抗計 | (なし) | `M1: ohmmeter k9 k11` |
 
-![使える部品](../examples/out/02-parts-1.png)
+```circuit
+title: 図03 使える部品
+parts:
+  R1: resistor a1 a3 10k
+  C1: capacitor a5 a7 100n
+  C2: ecap a9 a11 100u
+  L1: inductor a13 a15 10m
+  D1: diode c1 c3 1N4148
+  D2: led c5 c7
+  D3: zener c9 c11 5V1
+  V1: vsource e1 e3 5
+  V2: sine e5 e7 1
+  I1: isource e9 e11 20m
+  B1: battery g1 g3 9
+  S1: switch g5 g7
+  F1: fuse g9 g11 3A
+  P1: lamp i1 i3
+notes:
+  - text b1 blue large: "R1: resistor a1 a3 10k"
+  - text b5 blue large: "C1: capacitor a5 a7 100n"
+  - text b9 blue large: "C2: ecap a9 a11 100u"
+  - text b13 blue large: "L1: inductor a13 a15 10m"
+  - text d1 blue large: "D1: diode c1 c3 1N4148"
+  - text d5 blue large: "D2: led c5 c7"
+  - text d9 blue large: "D3: zener c9 c11 5V1"
+  - text f1 blue large: "V1: vsource e1 e3 5"
+  - text f5 blue large: "V2: sine e5 e7 1"
+  - text f9 blue large: "I1: isource e9 e11 20m"
+  - text h1 blue large: "B1: battery g1 g3 9"
+  - text h5 blue large: "S1: switch g5 g7"
+  - text h9 blue large: "F1: fuse g9 g11 3A"
+  - text j1 blue large: "P1: lamp i1 i3"
+style:
+  grid: on
+```
 
-![そのほかの 2 端子部品](../examples/out/02-parts-2.png)
+```circuit
+title: 図04 そのほかの 2 端子部品
+parts:
+  R2:  resistor-var a1 a3 10k
+  D4:  varicap a5 a7 33p
+  X1:  crystal a9 a11 16M
+  R3:  photoresistor a13 a15
+  R4:  thermistor c1 c3 10k
+  R5:  thermistor-ntc c5 c7 10k
+  R6:  thermistor-ptc c9 c11
+  R7:  varistor c13 c15 470V
+  D5:  schottky e1 e3 1N5819
+  D6:  photodiode e5 e7
+  D7:  diac e9 e11
+  V3:  square e13 e15 5
+  V4:  triangle g1 g3 1
+  PV1: solar g5 g7 0.6
+  S2:  switch-nc g9 g11
+  S3:  button g13 g15
+  S4:  button-nc i1 i3
+  S5:  reed i5 i7
+  LS1: speaker i9 i11
+  MK1: mic i13 i15
+  A1:  ammeter k1 k3
+  V5:  voltmeter k5 k7
+  M1:  ohmmeter k9 k11
+notes:
+  - text b1 blue large: "R2: resistor-var a1 a3 10k"
+  - text b5 blue large: "D4: varicap a5 a7 33p"
+  - text b9 blue large: "X1: crystal a9 a11 16M"
+  - text b13 blue large: "R3: photoresistor a13 a15"
+  - text d1 blue large: "R4: thermistor c1 c3 10k"
+  - text d5 blue large: "R5: thermistor-ntc c5 c7 10k"
+  - text d9 blue large: "R6: thermistor-ptc c9 c11"
+  - text d13 blue large: "R7: varistor c13 c15 470V"
+  - text f1 blue large: "D5: schottky e1 e3 1N5819"
+  - text f5 blue large: "D6: photodiode e5 e7"
+  - text f9 blue large: "D7: diac e9 e11"
+  - text f13 blue large: "V3: square e13 e15 5"
+  - text h1 blue large: "V4: triangle g1 g3 1"
+  - text h5 blue large: "PV1: solar g5 g7 0.6"
+  - text h9 blue large: "S2: switch-nc g9 g11"
+  - text h13 blue large: "S3: button g13 g15"
+  - text j1 blue large: "S4: button-nc i1 i3"
+  - text j5 blue large: "S5: reed i5 i7"
+  - text j9 blue large: "LS1: speaker i9 i11"
+  - text j13 blue large: "MK1: mic i13 i15"
+  - text l1 blue large: "A1: ammeter k1 k3"
+  - text l5 blue large: "V5: voltmeter k5 k7"
+  - text l9 blue large: "M1: ohmmeter k9 k11"
+style:
+  grid: on
+```
 
 記号の下の青い行は、その記号を出すために書いた 1 行そのもの
 ([注釈](#注釈-notes) で重ねてある)。
@@ -201,23 +287,120 @@ FET は**足の名前がどれも同じ**なので、記号だけ後から差し
 こちら。書き分けたいときだけ `-e` (エンハンスメント型。チャネルが切れる) と
 `-d` (デプレッション型。チャネルがつながる) を使う。
 
-![FET の種類](../examples/out/03-multi-terminal-3.png)
+```circuit
+title: 図05 FET の種類
+parts:
+  J1: njfet b2
+  J2: pjfet b5
+  M1: nmos-e f2
+  M2: pmos-e f5
+  M3: nmos-d j2
+  M4: pmos-d j5
+wires:
+  - a2 -| J1.D
+  - c2 -| J1.S
+  - b1 -| J1.G
+  - a5 -| J2.D
+  - c5 -| J2.S
+  - b4 -| J2.G
+  - e2 -| M1.D
+  - g2 -| M1.S
+  - f1 -| M1.G
+  - e5 -| M2.D
+  - g5 -| M2.S
+  - f4 -| M2.G
+  - i2 -| M3.D
+  - k2 -| M3.S
+  - j1 -| M3.G
+  - i5 -| M4.D
+  - k5 -| M4.S
+  - j4 -| M4.G
+notes:
+  - text d2 blue large center: "J1: njfet b2"
+  - text d5 blue large center: "J2: pjfet b5"
+  - text h2 blue large center: "M1: nmos-e f2"
+  - text h5 blue large center: "M2: pmos-e f5"
+  - text l2 blue large center: "M3: nmos-d j2"
+  - text l5 blue large center: "M4: pmos-d j5"
+style:
+  grid: on
+  pitch: 1.2
+```
 
 ロジックゲートの入力は `a` `b` でも番号 (`1` `2`) でも呼べる。
 `not` と `buffer` は入力が 1 本なので `in`。
 
-![ロジックゲート](../examples/out/11-logic-1.png)
+```circuit
+title: 図06 ロジックゲート
+parts:
+  U1: and b2 7408
+  U2: or b5 7432
+  U3: nand b8 7400
+  U4: nor b11 7402
+  U5: xor e2 7486
+  U6: xnor e5 74266
+  U7: not e8 7404
+  U8: buffer e11 7407
+wires:
+  - a1 |- U1.a
+  - c1 |- U1.b
+  - U1.out -| b3
+  - a4 |- U2.a
+  - c4 |- U2.b
+  - U2.out -| b6
+  - a7 |- U3.a
+  - c7 |- U3.b
+  - U3.out -| b9
+  - a10 |- U4.a
+  - c10 |- U4.b
+  - U4.out -| b12
+  - d1 |- U5.a
+  - f1 |- U5.b
+  - U5.out -| e3
+  - d4 |- U6.a
+  - f4 |- U6.b
+  - U6.out -| e6
+  - d7 |- U7.in
+  - U7.out -| e9
+  - d10 |- U8.in
+  - U8.out -| e12
+notes:
+  - text c2 blue large center: "U1: and b2 7408"
+  - text c5 blue large center: "U2: or b5 7432"
+  - text c8 blue large center: "U3: nand b8 7400"
+  - text c11 blue large center: "U4: nor b11 7402"
+  - text f2 blue large center: "U5: xor e2 7486"
+  - text f5 blue large center: "U6: xnor e5 74266"
+  - text f8 blue large center: "U7: not e8 7404"
+  - text f11 blue large center: "U8: buffer e11 7407"
+style:
+  grid: on
+```
 
 DIP の IC は**足の本数が種類の名前に入っている** (`dip8` から `dip40` まで)。
 足は番号で指し (`U1.1`)、型番は記号の**中**に出る。
 
-![DIP の IC](../examples/out/11-logic-2.png)
+```circuit
+title: 図07 DIP の IC
+parts:
+  U1: dip8 c2 NE555
+wires:
+  - a1 |- U1.1
+  - e1 |- U1.4
+  - U1.5 -| e4
+  - U1.8 -| a4
+notes:
+  - text f1 blue large: "U1: dip8 c2 NE555"
+style:
+  grid: on
+  pitch: 1
+```
 
 向きは今のところオペアンプの `+up` / `+down` だけ (± の上下)。
 `+up` にすると帰還を下に回せるので線が交差しにくい。
 
 ```circuit
-title: 図03 オペアンプの向き
+title: 図08 オペアンプの向き
 parts:
   IN:  port b1
   Rb:  resistor b3 e3 100k
@@ -265,7 +448,23 @@ style:
 | `potentiometer` | `w` (`wiper`) |
 | `thyristor` / `triac` | `g` (`gate`) |
 
-![2 端子でも足を持つもの](../examples/out/03-multi-terminal-4.png)
+```circuit
+title: 図09 2 端子でも足を持つもの
+parts:
+  P1: potentiometer b1 b5 10k
+  T1: thyristor e1 e5
+  T2: triac h1 h5
+wires:
+  - P1.w -- a3
+  - T1.g |- d3
+  - T2.g |- g3
+notes:
+  - text c1 blue large: "P1: potentiometer b1 b5 10k"
+  - text f1 blue large: "T1: thyristor e1 e5"
+  - text i1 blue large: "T2: triac h1 h5"
+style:
+  grid: on
+```
 
 ワイパーは記号の**真上**に出るので、そのまま `--` で上の番地へ引ける。
 ゲートは横にずれた位置にあるので、ほかの足と同じく `|-` で直角に入れる。
@@ -285,7 +484,21 @@ style:
 グラウンドは離して描いても同じ節点として数えるが、**電源レールはそうしない**
 (`5V` と `3V3` を同じネットにしてしまうため)。つなぐなら配線を引く。
 
-![1 端子の記号](../examples/out/02-parts-3.png)
+```circuit
+title: 図10 1 端子の記号
+parts:
+  VCC: vcc a1
+  VEE: vee a4
+  G1:  ground a7
+  IN:  port a10
+notes:
+  - text b1 blue large: "VCC: vcc a1"
+  - text b4 blue large: "VEE: vee a4"
+  - text b7 blue large: "G1: ground a7"
+  - text b10 blue large: "IN: port a10"
+style:
+  grid: on
+```
 
 ### 略記
 
@@ -341,7 +554,7 @@ ID は記号の下 (縦置きなら左)、値は反対側に出る。
 | `\|-` | 先に縦、それから横 |
 
 ```circuit
-title: 図04 配線でつなぐ
+title: 図11 配線でつなぐ
 parts:
   R1: resistor a1 a3
   R2: resistor a5 a7
@@ -375,14 +588,16 @@ wires:
 そのまま引く。
 
 ```circuit
-title: 図05 斜めに置く
+title: 図12 斜めに置く
 parts:
-  R1: resistor a1 c4
-  R2: resistor c4 a7
+  IN:  port a1
+  R1:  resistor a1 b3
+  R2:  resistor b3 a5
+  OUT: port a5
 wires:
-  - a1 -- a7
+  - a1 -- a5
 notes:
-  - source a8 blue
+  - source a6 blue
 style:
   grid: on
 ```
@@ -405,7 +620,7 @@ style:
 | 書き出し | `- source 番地 [色や大きさ]` | フェンスの中身そのもの |
 
 ```circuit
-title: 図06 注釈
+title: 図13 注釈
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
@@ -452,7 +667,26 @@ style:
 
 起点と終点が同じところだと向きが決まらないので、行番号つきで返る。
 
-![枠と指し棒](../examples/out/12-notes-6.png)
+```circuit
+title: 図14 枠と指し棒
+parts:
+  IN:  port a1
+  R1:  resistor a1 a2 10k
+  C1:  capacitor a2 b2 100n
+  OUT: port a3
+  G1:  ground b2
+wires:
+  - a2 -- a3
+notes:
+  - box a1 c3 blue
+  - text d2 blue large center: box a1 c3 blue
+  - arrow c6 R1
+  - text c6 red: arrow c6 R1
+  - source a7 blue large
+style:
+  grid: on
+  grid-to: c6
+```
 
 ### 字 — `- text 番地 [色や大きさ]: 文字`
 
@@ -487,7 +721,21 @@ TeX に組ませるので、どちらでも同じ字が出る。
 行送りを選ぶ `tight` / `loose` だけは書き出し (`source`) にしか書けない。
 1 行しかない `text` に書いても効かないので、書いたら行番号つきで返る。
 
-![字の大きさ](../examples/out/12-notes-4.png)
+```circuit
+title: 図15 字の大きさ
+parts:
+  R1: resistor a1 a3 10k
+notes:
+  - text b1 tiny: tiny (極小)
+  - text c1 small: small (小)
+  - text d1: 書かなければ普通
+  - text e1 large: large (大)
+  - text f1 huge: huge (極大)
+  - source a4 blue
+style:
+  grid: on
+  grid-to: f3
+```
 
 大きさは pt では書けない。色と同じで、**実機に通した指定だけ**を名前で引く
 (プレビューの TeX はフォントが無いと例外ではなくプロセスごと落ちるので、
@@ -495,7 +743,23 @@ TeX に組ませるので、どちらでも同じ字が出る。
 
 寄せは、番地を字の左端・真ん中・右端のどこにするかを決める。
 
-![寄せと太字](../examples/out/12-notes-5.png)
+```circuit
+title: 図16 寄せと太字
+parts:
+  R1: resistor a1 a5 10k
+notes:
+  - circle c3
+  - text c3 left: left (番地が左端)
+  - circle e3
+  - text e3 center: center (番地が真ん中)
+  - circle g3
+  - text g3 right: right (番地が右端)
+  - text i3 bold: bold で太字になる
+  - source a6 blue
+style:
+  grid: on
+  grid-to: i5
+```
 
 同じ種類の言葉を 2 回書くと、後に書いたほうが黙って勝つのではなく
 行番号つきで返る。知らない言葉も、書ける言葉を添えて返る。
@@ -520,7 +784,18 @@ TeX に組ませるので、どちらでも同じ字が出る。
 | 書かない | その中間 (既定) | ふつうはこれ |
 | `loose` | 字の注釈と同じ | 1 行ずつ指しながら説明する |
 
-![行送り](../examples/out/12-notes-7.png)
+```circuit
+title: 図17 行送り
+parts:
+  R1: resistor a1 a3 10k
+notes:
+  - text a4 blue bold: tight
+  - source b4 tight
+  - text a10 blue bold: loose
+  - source b10 loose
+style:
+  pitch: 1
+```
 
 `tight` でも**字の高さは下回らない**。それより詰めると、上の行の下がりと
 下の行の上がりが噛む。pt では書けないのは大きさと同じ理由で、
@@ -543,7 +818,29 @@ TeX に組ませるので、どちらでも同じ字が出る。
 | `green` | `#2ea043` |
 | `orange` | `#d29922` |
 
-![注釈の色](../examples/out/12-notes-2.png)
+```circuit
+title: 図18 注釈の色
+parts:
+  R1: resistor a1 a3
+  R2: resistor a5 a7
+  R3: resistor d1 d3
+  R4: resistor d5 d7
+notes:
+  - circle R1 red
+  - circle R2 blue
+  - circle R3 green
+  - circle R4 orange
+  - text b2 red large center: red
+  - text b6 blue large center: blue
+  - text c1 blue large: "R1: resistor a1 a3"
+  - text c5 blue large: "R2: resistor a5 a7"
+  - text e2 green large center: green
+  - text e6 orange large center: orange
+  - text f1 blue large: "R3: resistor d1 d3"
+  - text f5 blue large: "R4: resistor d5 d7"
+style:
+  grid: on
+```
 
 書けるのはこの 4 つだけ。明るいテーマでも暗いテーマでも読める値を選んであり、
 テーマを変えても注釈の色は変わらない (地の色だけが変わる)。
@@ -693,7 +990,7 @@ style:
 (色は 1 つで、点だけを薄めて描いている)。
 
 ```circuit
-title: 図07 グリッド
+title: 図19 グリッド
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
@@ -732,7 +1029,7 @@ style:
 `stamp: on` にすると、その図を組んだ処理系の版が右下に出る。
 
 ```circuit
-title: 図08 版の刻印
+title: 図20 版の刻印
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k

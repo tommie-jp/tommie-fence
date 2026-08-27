@@ -5,7 +5,7 @@
 その名前で出る。
 
 ```circuit
-title: 図01 番地に名前を付ける
+title: 図01 名前で組んだ非反転アンプ
 points:
   vin: b1
   fb:  d4

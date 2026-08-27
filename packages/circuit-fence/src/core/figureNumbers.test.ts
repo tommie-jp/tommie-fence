@@ -11,12 +11,10 @@ import { extractCircuitFences } from './fences.ts';
  * 独立させる** (2026-08-27 決定) — 通し番号にすると、1 つのファイルに図を
  * 足しただけで関係のないファイルまで振り直しになる。
  *
- * 引き換えに、syntax.md には**同じ番号の図が 2 つ以上並ぶ**。貼ってある図は
- * それを作っている examples 側の番号を名乗るため。指すときはファイルも添える
- * (「02-parts.md の図01」)。
- *
- * 図を足したり並べ替えたりすると番号は黙ってずれる (ずれても図は描けてしまう)。
- * ここで見張らないと、文章の「図12」が別の図を指したまま残る。
+ * syntax.md は**貼った図を持たず、フェンスを直に書く**。番号を通しで振れて、
+ * プレビューでそのまま描き直せるため。ただし同じ図が examples にもあるので、
+ * **題が同じなら中身も同じ**であることをここで見張る (片方だけ直すと、
+ * 同じ名前の図が 2 通りの姿で出てしまう)。
  */
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -32,12 +30,21 @@ const documents = DIRECTORIES.flatMap((directory) =>
     .map((name) => join(directory, name)),
 );
 
-const titlesOf = (path: string): (string | null)[] =>
+type Figure = { readonly title: string | null; readonly body: string };
+
+/** 題と、題を外した中身。中身を比べるときは番号の違いを持ち込まない。 */
+const figuresOf = (path: string): Figure[] =>
+  extractCircuitFences(readFileSync(join(ROOT, path), 'utf8')).map((fence) => ({
+    title: /^title: (?:図\d{2} )?(.*)$/m.exec(fence.source)?.[1] ?? null,
+    body: fence.source.replace(/^title: .*\n/m, ''),
+  }));
+
+const numbersOf = (path: string): (string | null)[] =>
   extractCircuitFences(readFileSync(join(ROOT, path), 'utf8')).map(
-    (fence) => /^title: (.*)$/m.exec(fence.source)?.[1] ?? null,
+    (fence) => /^title: 図(\d{2}) .+$/m.exec(fence.source)?.[1] ?? null,
   );
 
-const withFigures = documents.filter((path) => titlesOf(path).length > 0);
+const withFigures = documents.filter((path) => figuresOf(path).length > 0);
 
 describe('図の番号', () => {
   test('図を持つ .md を 1 つ以上見ている', () => {
@@ -45,13 +52,36 @@ describe('図の番号', () => {
   });
 
   test.each(withFigures)('%s のどの図にも題が付いている', (path) => {
-    expect(titlesOf(path).filter((title) => title === null)).toEqual([]);
+    expect(figuresOf(path).filter((figure) => figure.title === null)).toEqual([]);
   });
 
   test.each(withFigures)('%s の題が 図01 から書いた順の連番になっている', (path) => {
-    const numbers = titlesOf(path).map((title) => /^図(\d{2}) .+$/.exec(title ?? '')?.[1] ?? null);
+    const numbers = numbersOf(path);
     const wanted = numbers.map((_, index) => String(index + 1).padStart(2, '0'));
 
     expect(numbers).toEqual(wanted);
+  });
+
+  test('syntax.md は図を貼らず、フェンスを直に書いている', () => {
+    // 貼ると、その図は examples 側の番号を名乗るので通し番号が崩れる。
+    const embedded = readFileSync(join(ROOT, 'docs', 'syntax.md'), 'utf8').match(/^!\[.*?\]\(.*?\.png\)/gm);
+
+    expect(embedded).toBeNull();
+  });
+
+  test('同じ題の図はどこに書いてあっても中身が同じ', () => {
+    const byTitle = new Map<string, { readonly path: string; readonly body: string }[]>();
+    for (const path of withFigures) {
+      for (const { title, body } of figuresOf(path)) {
+        if (title === null) continue;
+        byTitle.set(title, [...(byTitle.get(title) ?? []), { path, body }]);
+      }
+    }
+
+    const split = [...byTitle]
+      .filter(([, figures]) => new Set(figures.map((figure) => figure.body)).size > 1)
+      .map(([title, figures]) => `${title} (${figures.map((figure) => figure.path).join(' / ')})`);
+
+    expect(split).toEqual([]);
   });
 });
