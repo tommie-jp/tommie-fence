@@ -5,33 +5,31 @@
 \begin{document}
 \begin{circuitikz}[european, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\foreach \x in {0,2,4,6,8,10,12} {\foreach \y in {0} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\foreach \x in {0,2,4,6,8} {\foreach \y in {0} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
 \node[gray, font=\scriptsize] at (0,0.84) {1};
 \node[gray, font=\scriptsize] at (2,0.84) {2};
 \node[gray, font=\scriptsize] at (4,0.84) {3};
 \node[gray, font=\scriptsize] at (6,0.84) {4};
 \node[gray, font=\scriptsize] at (8,0.84) {5};
-\node[gray, font=\scriptsize] at (10,0.84) {6};
-\node[gray, font=\scriptsize] at (12,0.84) {7};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
 \coordinate (a1) at (0,0);
-\coordinate (a3) at (4,0);
+\coordinate (a2) at (2,0);
+\coordinate (a4) at (6,0);
 \coordinate (a5) at (8,0);
-\coordinate (a7) at (12,0);
-\draw (a1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (a3); % line 3
-\draw (a5) to[L, l_=$L_{1}$, a^=$10\,\mathrm{m}\mathrm{H}$] (a7); % line 4
-\path (14,-5.461) rectangle (21.654,0.593); % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,0) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-0.487) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-0.974) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-1.46) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-1.947) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-2.434) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-2.921) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-3.408) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-3.895) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-4.381) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-4.868) {X}; % line 6
+\draw (a1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (a2); % line 3
+\draw (a4) to[L, l_=$L_{1}$, a^=$10\,\mathrm{m}\mathrm{H}$] (a5); % line 4
+\path (10,-5.461) rectangle (17.654,0.593); % line 6
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,0) {X}; % line 6
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-0.487) {X}; % line 6
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-0.974) {X}; % line 6
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-1.46) {X}; % line 6
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-1.947) {X}; % line 6
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-2.434) {X}; % line 6
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-2.921) {X}; % line 6
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-3.408) {X}; % line 6
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-3.895) {X}; % line 6
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-4.381) {X}; % line 6
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-4.868) {X}; % line 6
 \node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(10.79,0.853);
 \end{circuitikz}

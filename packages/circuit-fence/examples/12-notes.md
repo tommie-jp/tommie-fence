@@ -52,12 +52,12 @@ notes:
   - circle R2 blue
   - circle R3 green
   - circle R4 orange
-  - text a.5_2 red center: red
-  - text a.5_5 blue center: blue
+  - text a.7_2 red center: red
+  - text a.7_5 blue center: blue
   - text b1 blue: "R1: resistor a1 a3"
   - text b4 blue: "R2: resistor a4 a6"
-  - text c.5_2 green center: green
-  - text c.5_5 orange center: orange
+  - text c.7_2 green center: green
+  - text c.7_5 orange center: orange
   - text d1 blue: "R3: resistor c1 c3"
   - text d4 blue: "R4: resistor c4 c6"
 style:
@@ -72,17 +72,17 @@ TeX には字を渡さず、描き上がった図に差し込んでいるため�
 ```circuit
 title: 図03 日本語
 parts:
-  V1: battery a1 c1 9
-  R1: resistor a1 a4 470
-  D1: led a4 c4
-  G1: ground c1
+  V1: battery a1 b1 9
+  R1: resistor a1 a3 470
+  D1: led a3 b3
+  G1: ground b1
 wires:
-  - c1 -- c4
+  - b1 -- b3
 notes:
   - source a5 blue
   - circle D1 orange
-  - text d1: LED の順方向電圧は 2 V ぐらい
-  - text e1: 電流は (9 - 2) / 470 で 15 mA
+  - text c1: LED の順方向電圧は 2 V ぐらい
+  - text d1: 電流は (9 - 2) / 470 で 15 mA
 style:
   grid: on
 ```
@@ -95,17 +95,17 @@ style:
 ```circuit
 title: 図04 字の大きさ
 parts:
-  R1: resistor a1 a3 10k
+  R1: resistor a1 a2 10k
 notes:
   - text b1 tiny: tiny (極小)
   - text c1 small: small (小)
   - text d1: 書かなければ普通
   - text e1 large: large (大)
   - text f1 huge: huge (極大)
-  - source a4 blue
+  - source a3 blue
 style:
   grid: on
-  grid-to: f3
+  grid-to: f2
 ```
 
 pt の直接指定は書けない。色と同じで、**実機に通した指定だけ**を名前で引く
@@ -119,19 +119,19 @@ pt の直接指定は書けない。色と同じで、**実機に通した指定
 ```circuit
 title: 図05 寄せと太字
 parts:
-  R1: resistor a1 a5 10k
+  R1: resistor a1 a2 10k
 notes:
-  - circle c3
-  - text c3 left: left (番地が左端)
-  - circle e3
-  - text e3 center: center (番地が真ん中)
-  - circle g3
-  - text g3 right: right (番地が右端)
-  - text i3 bold: bold で太字になる
-  - source a6 blue
+  - circle b2
+  - text b2 left: left (番地が左端)
+  - circle c2
+  - text c2 center: center (番地が真ん中)
+  - circle d2
+  - text d2 right: right (番地が右端)
+  - text e2 bold: bold で太字になる
+  - source a5 blue
 style:
   grid: on
-  grid-to: i5
+  grid-to: e3
 ```
 
 色・大きさ・寄せ・太字は**どの順に書いてもよい**。
@@ -175,12 +175,12 @@ style:
 ```circuit
 title: 図07 行送り
 parts:
-  R1: resistor a1 a3 10k
+  R1: resistor a1 a2 10k
 notes:
-  - text a4 blue bold: tight
-  - source b4 tight
+  - text a3 blue bold: tight
+  - source b3 tight
   - text a10 blue bold: loose
-  - source b11 loose
+  - source b10 loose
 style:
   pitch: 1
 ```

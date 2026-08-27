@@ -6,22 +6,22 @@
 ```circuit
 title: 図01 折れた配線
 parts:
-  R1: resistor a1 a3
-  R2: resistor e7 e9
-  R3: resistor g1 g3
-  R4: resistor c7 c9
+  R1: resistor a1 a2
+  R2: resistor c5 c6
+  R3: resistor d1 d2
+  R4: resistor b5 b6
 wires:
-  - a3 -| e7
-  - g3 |- c7
+  - a2 -| c5
+  - d2 |- b5
 notes:
-  - source a10 blue
+  - source a7 blue
 style:
   grid: on
 ```
 
 同じ 2 点を結んでも、`-|` と `|-` では通る道が違う。
 
-この図では 2 本目 (`g3 |- c7`) の終点が 1 本目の縦の脚の**途中**に乗っている。
+この図では 2 本目 (`d2 |- b5`) の終点が 1 本目の縦の脚の**途中**に乗っている。
 端が線の途中に乗ったところは T 字なので、つながっているものとして黒丸が付き、
 ネットリストでも 1 つのネットにまとまる。ただ交差しているだけ (どちらの端でも
 ない) のところには黒丸を打たない = つながらない。
@@ -35,22 +35,22 @@ style:
 title: 図02 1 行につないで書く
 parts:
   IN:  port a1
-  R1:  resistor a1 a3
-  C1:  capacitor a5 c5
-  G1:  ground c5
-  R2:  resistor a7 a9
-  OUT: port a9
+  R1:  resistor a1 a2
+  C1:  capacitor a3 b3
+  G1:  ground b3
+  R2:  resistor a4 a5
+  OUT: port a5
 wires:
-  - a3 -- a5 -- a7
+  - a2 -- a3 -- a4
 notes:
-  - source a10 blue
+  - source a6 blue
 style:
   grid: on
 ```
 
-この 1 行は `a3 -- a5` と `a5 -- a7` の 2 区間に開かれる。
+この 1 行は `a2 -- a3` と `a3 -- a4` の 2 区間に開かれる。
 区間に開いてから先は 1 行ずつ書いたときと同じものが流れるので、
-**分岐の黒丸もネットリストも変わらない** (a5 に C1 が下りているので黒丸が付く)。
+**分岐の黒丸もネットリストも変わらない** (a3 に C1 が下りているので黒丸が付く)。
 
 途中の番地は、この図のようにほかの部品が下りる**節点**でも、
 ただの**曲がり角**でもよい。区間ごとに演算子を選べるので、

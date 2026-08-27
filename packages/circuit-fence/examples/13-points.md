@@ -8,24 +8,24 @@
 title: 図01 名前で組んだ非反転アンプ
 points:
   vin: b1
-  fb:  d4
+  fb:  c3
 parts:
   IN:  port vin
-  C1:  capacitor vin b3 1u
-  Rb:  resistor b3 e3 100k
-  G1:  ground e3
-  U1:  opamp b5 +up
-  R2:  resistor fb e4 1k
-  G2:  ground e4
-  R3:  resistor fb d7 10k
-  OUT: port b8
+  C1:  capacitor vin b2 1u
+  Rb:  resistor b2 d2 100k
+  G1:  ground d2
+  U1:  opamp b4 +up
+  R2:  resistor fb d3 1k
+  G2:  ground d3
+  R3:  resistor fb c5 10k
+  OUT: port b6
 wires:
-  - b3 -| U1.+
+  - b2 -| U1.+
   - fb |- U1.-
-  - U1.out -- b7 -- b8
-  - d7 -- b7
+  - U1.out -- b5 -- b6
+  - c5 -- b5
 notes:
-  - source a9 blue
+  - source a7 blue
 style:
   grid: on
 ```

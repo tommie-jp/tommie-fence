@@ -9,31 +9,31 @@ parts:
   C1: capacitor a4 a6 100n
   C2: ecap a7 a9 100u
   L1: inductor a10 a12 10m
-  D1: diode c1 c3 1N4148
-  D2: led c4 c6
-  D3: zener c7 c9 5V1
-  V1: vsource e1 e3 5
-  V2: sine e4 e6 1
-  I1: isource e7 e9 20m
-  B1: battery g1 g3 9
-  S1: switch g4 g6
-  F1: fuse g7 g9 3A
-  P1: lamp i1 i3
+  D1: diode b1 b3 1N4148
+  D2: led b4 b6
+  D3: zener b7 b9 5V1
+  V1: vsource c1 c3 5
+  V2: sine c4 c6 1
+  I1: isource c7 c9 20m
+  B1: battery d1 d3 9
+  S1: switch d4 d6
+  F1: fuse d7 d9 3A
+  P1: lamp e1 e3
 notes:
   - text a.5_1 blue: "R1: resistor a1 a3 10k"
   - text a.5_4 blue: "C1: capacitor a4 a6 100n"
   - text a.5_7 blue: "C2: ecap a7 a9 100u"
   - text a.5_10 blue: "L1: inductor a10 a12 10m"
-  - text c.5_1 blue: "D1: diode c1 c3 1N4148"
-  - text c.5_4 blue: "D2: led c4 c6"
-  - text c.5_7 blue: "D3: zener c7 c9 5V1"
-  - text e.5_1 blue: "V1: vsource e1 e3 5"
-  - text e.5_4 blue: "V2: sine e4 e6 1"
-  - text e.5_7 blue: "I1: isource e7 e9 20m"
-  - text g.5_1 blue: "B1: battery g1 g3 9"
-  - text g.5_4 blue: "S1: switch g4 g6"
-  - text g.5_7 blue: "F1: fuse g7 g9 3A"
-  - text i.5_1 blue: "P1: lamp i1 i3"
+  - text b.5_1 blue: "D1: diode b1 b3 1N4148"
+  - text b.5_4 blue: "D2: led b4 b6"
+  - text b.5_7 blue: "D3: zener b7 b9 5V1"
+  - text c.5_1 blue: "V1: vsource c1 c3 5"
+  - text c.5_4 blue: "V2: sine c4 c6 1"
+  - text c.5_7 blue: "I1: isource c7 c9 20m"
+  - text d.5_1 blue: "B1: battery d1 d3 9"
+  - text d.5_4 blue: "S1: switch d4 d6"
+  - text d.5_7 blue: "F1: fuse d7 d9 3A"
+  - text e.5_1 blue: "P1: lamp e1 e3"
 style:
   grid: on
 ```

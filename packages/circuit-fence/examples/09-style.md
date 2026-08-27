@@ -31,15 +31,15 @@ style:
 ```circuit
 title: 図02 pitch と wire-width
 parts:
-  IN:  port b1
-  R1:  resistor b1 b3 10k
-  C1:  capacitor b3 d3 100n
-  OUT: port b5
-  G1:  ground d3
+  IN:  port a1
+  R1:  resistor a1 a3 10k
+  C1:  capacitor a3 c3 100n
+  OUT: port a4
+  G1:  ground c3
 wires:
-  - b3 -- b5
+  - a3 -- a4
 notes:
-  - source b7 blue
+  - source a5 blue
 style:
   grid: on
   pitch: 1.2
@@ -51,10 +51,10 @@ style:
 ```circuit
 title: 図03 記号の流儀 american
 parts:
-  R1: resistor a1 a3 10k
-  L1: inductor a5 a7 10m
+  R1: resistor a1 a2 10k
+  L1: inductor a4 a5 10m
 notes:
-  - source a8 blue
+  - source a6 blue
 style:
   grid: on
   standard: american
@@ -65,10 +65,10 @@ style:
 ```circuit
 title: 図04 記号の流儀 european
 parts:
-  R1: resistor a1 a3 10k
-  L1: inductor a5 a7 10m
+  R1: resistor a1 a2 10k
+  L1: inductor a4 a5 10m
 notes:
-  - source a8 blue
+  - source a6 blue
 style:
   grid: on
   standard: european

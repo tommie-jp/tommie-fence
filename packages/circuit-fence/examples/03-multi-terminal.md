@@ -147,17 +147,17 @@ style:
 ```circuit
 title: 図04 2 端子でも足を持つもの
 parts:
-  P1: potentiometer b1 b5 10k
-  T1: thyristor e1 e5
-  T2: triac h1 h5
+  P1: potentiometer b1 b3 10k
+  T1: thyristor e1 e3
+  T2: triac h1 h3
 wires:
-  - P1.w -- a3
-  - T1.g |- d3
-  - T2.g |- g3
+  - P1.w -- a2
+  - T1.g |- d2
+  - T2.g |- g2
 notes:
-  - text c1 blue: "P1: potentiometer b1 b5 10k"
-  - text f1 blue: "T1: thyristor e1 e5"
-  - text i1 blue: "T2: triac h1 h5"
+  - text c1 blue: "P1: potentiometer b1 b3 10k"
+  - text f1 blue: "T1: thyristor e1 e3"
+  - text i1 blue: "T2: triac h1 h3"
 style:
   grid: on
 ```

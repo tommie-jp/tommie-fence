@@ -5,12 +5,10 @@
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\foreach \x in {0,2,4,6,8} {\foreach \y in {0,-2,-4,-6,-8,-10,-12,-14} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\foreach \x in {0,2,4} {\foreach \y in {0,-2,-4,-6,-8,-10,-12,-14} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
 \node[gray, font=\scriptsize] at (0,0.84) {1};
 \node[gray, font=\scriptsize] at (2,0.84) {2};
 \node[gray, font=\scriptsize] at (4,0.84) {3};
-\node[gray, font=\scriptsize] at (6,0.84) {4};
-\node[gray, font=\scriptsize] at (8,0.84) {5};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
@@ -20,20 +18,20 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-14) {h};
 \coordinate (b1) at (0,-2);
-\coordinate (b5) at (8,-2);
+\coordinate (b3) at (4,-2);
 \coordinate (e1) at (0,-8);
-\coordinate (e5) at (8,-8);
+\coordinate (e3) at (4,-8);
 \coordinate (h1) at (0,-14);
-\coordinate (h5) at (8,-14);
-\coordinate (a3) at (4,0);
-\coordinate (d3) at (4,-6);
-\coordinate (g3) at (4,-12);
-\draw (b1) to[potentiometer, n=part-P1, l_=$P_{1}$, a^=$10\,\mathrm{k}\Omega$] (b5); % line 3
-\draw (e1) to[thyristor, n=part-T1, l_=$T_{1}$] (e5); % line 4
-\draw (h1) to[triac, n=part-T2, l_=$T_{2}$] (h5); % line 5
-\draw (part-P1.wiper) -- (a3); % line 7
-\draw (part-T1.gate) |- (d3); % line 8
-\draw (part-T2.gate) |- (g3); % line 9
+\coordinate (h3) at (4,-14);
+\coordinate (a2) at (2,0);
+\coordinate (d2) at (2,-6);
+\coordinate (g2) at (2,-12);
+\draw (b1) to[potentiometer, n=part-P1, l_=$P_{1}$, a^=$10\,\mathrm{k}\Omega$] (b3); % line 3
+\draw (e1) to[thyristor, n=part-T1, l_=$T_{1}$] (e3); % line 4
+\draw (h1) to[triac, n=part-T2, l_=$T_{2}$] (h3); % line 5
+\draw (part-P1.wiper) -- (a2); % line 7
+\draw (part-T1.gate) |- (d2); % line 8
+\draw (part-T2.gate) |- (g2); % line 9
 \path (0,-4.593) rectangle (6.858,-3.407); % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-4) {X}; % line 11
 \path (0,-10.593) rectangle (4.826,-9.407); % line 12

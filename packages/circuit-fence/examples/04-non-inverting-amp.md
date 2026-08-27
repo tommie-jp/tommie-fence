@@ -6,21 +6,21 @@
 title: 図01 非反転アンプ
 parts:
   IN:  port b1
-  C1:  capacitor b1 b3 1u
-  Rb:  resistor b3 e3 100k
-  G1:  ground e3
-  U1:  opamp b5 +up
-  R2:  resistor d4 e4 1k
-  G2:  ground e4
-  R3:  resistor d4 d7 10k
-  OUT: port b8
+  C1:  capacitor b1 b2 1u
+  Rb:  resistor b2 d2 100k
+  G1:  ground d2
+  U1:  opamp b4 +up
+  R2:  resistor c3 d3 1k
+  G2:  ground d3
+  R3:  resistor c3 c5 10k
+  OUT: port b6
 wires:
-  - b3 |- U1.+
-  - d4 |- U1.-
-  - U1.out -- b7 -- b8
-  - d7 -- b7
+  - b2 |- U1.+
+  - c3 |- U1.-
+  - U1.out -- b5 -- b6
+  - c5 -- b5
 notes:
-  - source a9 blue
+  - source a7 blue
 style:
   grid: on
 ```
@@ -31,8 +31,8 @@ style:
 無いので、`--` (まっすぐ) で番地とつなぐと斜めの線になる。`|-` なら先に縦、
 それから横に入るので、回路図らしく直角に入る。
 
-帰還の節点は記号の真下ではなく**少し横にずらす** (`d5` ではなく `d4`)。
+帰還の節点は記号の真下ではなく**少し横にずらす** (`c4` ではなく `c3`)。
 真下に置くと、足へ向かう線が記号の体を突き抜けて見える。
 
-出口は `U1.out -- b7 -- b8` と 1 行につないである。b7 は帰還を当てる節点で、
+出口は `U1.out -- b5 -- b6` と 1 行につないである。b5 は帰還を当てる節点で、
 そこを通る経路として読める。2 行に分けて書いても同じ図になる。
