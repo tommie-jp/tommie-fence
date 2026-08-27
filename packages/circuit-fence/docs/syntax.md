@@ -134,7 +134,7 @@ style:
 | `thermistor-ptc` | PTC サーミスタ | Ω | `R6: thermistor-ptc c9 c11` |
 | `varistor` | バリスタ | (型番) | `R7: varistor c13 c15 470V` |
 | `crystal` | 水晶振動子 | Hz | `X1: crystal a9 a11 16M` |
-| `diode` | ダイオード | (型番) | `D1: diode b1 b3 1N4148` |
+| `diode` | ダイオード | (型番) | `D1: diode c1 c3 1N4148` |
 | `led` | LED | (型番) | `D2: led c5 c7` |
 | `zener` | ツェナー | (型番) | `D3: zener c9 c11 5V1` |
 | `schottky` | ショットキー | (型番) | `D5: schottky e1 e3 1N5819` |
@@ -142,12 +142,12 @@ style:
 | `diac` | ダイアック | (型番) | `D7: diac e9 e11` |
 | `thyristor` | サイリスタ (SCR) | (型番) | `T1: thyristor d1 d5` |
 | `triac` | トライアック | (型番) | `T2: triac f1 f5` |
-| `vsource` | 直流電源 | V | `V1: vsource c1 c3 5` |
+| `vsource` | 直流電源 | V | `V1: vsource e1 e3 5` |
 | `sine` | 交流電源 (正弦波) | V | `V2: sine e5 e7 1` |
 | `square` | 方形波電源 | V | `V3: square e13 e15 5` |
 | `triangle` | 三角波電源 | V | `V4: triangle g1 g3 1` |
 | `isource` | 定電流源 | A | `I1: isource e9 e11 20m` |
-| `battery` | 電池 | V | `B1: battery d1 d3 9` |
+| `battery` | 電池 | V | `B1: battery g1 g3 9` |
 | `solar` | 太陽電池 | V | `PV1: solar g5 g7 0.6` |
 | `switch` | スイッチ (a 接点) | (なし) | `S1: switch g5 g7` |
 | `switch-nc` | スイッチ (b 接点) | (なし) | `S2: switch-nc g9 g11` |
@@ -155,7 +155,7 @@ style:
 | `button-nc` | 押しボタン (b 接点) | (なし) | `S4: button-nc i1 i3` |
 | `reed` | リードスイッチ | (なし) | `S5: reed i5 i7` |
 | `fuse` | ヒューズ | (定格) | `F1: fuse g9 g11 3A` |
-| `lamp` | ランプ | (なし) | `P1: lamp e1 e3` |
+| `lamp` | ランプ | (なし) | `P1: lamp i1 i3` |
 | `speaker` | スピーカー | (なし) | `LS1: speaker i9 i11` |
 | `mic` | マイク | (なし) | `MK1: mic i13 i15` |
 | `ammeter` | 電流計 | (なし) | `A1: ammeter k1 k3` |
@@ -169,31 +169,31 @@ parts:
   C1: capacitor a4 a6 100n
   C2: ecap a7 a9 100u
   L1: inductor a10 a12 10m
-  D1: diode b1 b3 1N4148
-  D2: led b4 b6
-  D3: zener b7 b9 5V1
-  V1: vsource c1 c3 5
-  V2: sine c4 c6 1
-  I1: isource c7 c9 20m
-  B1: battery d1 d3 9
-  S1: switch d4 d6
-  F1: fuse d7 d9 3A
-  P1: lamp e1 e3
+  D1: diode c1 c3 1N4148
+  D2: led c4 c6
+  D3: zener c7 c9 5V1
+  V1: vsource e1 e3 5
+  V2: sine e4 e6 1
+  I1: isource e7 e9 20m
+  B1: battery g1 g3 9
+  S1: switch g4 g6
+  F1: fuse g7 g9 3A
+  P1: lamp i1 i3
 notes:
-  - text a.5_1 blue: "R1: resistor a1 a3 10k"
-  - text a.5_4 blue: "C1: capacitor a4 a6 100n"
-  - text a.5_7 blue: "C2: ecap a7 a9 100u"
-  - text a.5_10 blue: "L1: inductor a10 a12 10m"
-  - text b.5_1 blue: "D1: diode b1 b3 1N4148"
-  - text b.5_4 blue: "D2: led b4 b6"
-  - text b.5_7 blue: "D3: zener b7 b9 5V1"
-  - text c.5_1 blue: "V1: vsource c1 c3 5"
-  - text c.5_4 blue: "V2: sine c4 c6 1"
-  - text c.5_7 blue: "I1: isource c7 c9 20m"
-  - text d.5_1 blue: "B1: battery d1 d3 9"
-  - text d.5_4 blue: "S1: switch d4 d6"
-  - text d.5_7 blue: "F1: fuse d7 d9 3A"
-  - text e.5_1 blue: "P1: lamp e1 e3"
+  - text a.7_1 blue: "R1: resistor a1 a3 10k"
+  - text a.7_4 blue: "C1: capacitor a4 a6 100n"
+  - text a.7_7 blue: "C2: ecap a7 a9 100u"
+  - text a.7_10 blue: "L1: inductor a10 a12 10m"
+  - text c.7_1 blue: "D1: diode c1 c3 1N4148"
+  - text c.7_4 blue: "D2: led c4 c6"
+  - text c.7_7 blue: "D3: zener c7 c9 5V1"
+  - text e.7_1 blue: "V1: vsource e1 e3 5"
+  - text e.7_4 blue: "V2: sine e4 e6 1"
+  - text e.7_7 blue: "I1: isource e7 e9 20m"
+  - text g.7_1 blue: "B1: battery g1 g3 9"
+  - text g.7_4 blue: "S1: switch g4 g6"
+  - text g.7_7 blue: "F1: fuse g7 g9 3A"
+  - text i.7_1 blue: "P1: lamp i1 i3"
 style:
   grid: on
 ```
@@ -225,29 +225,29 @@ parts:
   V5:  voltmeter k4 k6
   M1:  ohmmeter k7 k9
 notes:
-  - text a.5_1 blue: "R2: resistor-var a1 a3 10k"
-  - text a.5_4 blue: "D4: varicap a4 a6 33p"
-  - text a.5_7 blue: "X1: crystal a7 a9 16M"
-  - text a.5_10 blue: "R3: photoresistor a10 a12"
-  - text c.5_1 blue: "R4: thermistor c1 c3 10k"
-  - text c.5_4 blue: "R5: thermistor-ntc c4 c6 10k"
-  - text c.5_7 blue: "R6: thermistor-ptc c7 c9"
-  - text c.5_10 blue: "R7: varistor c10 c12 470V"
-  - text e.5_1 blue: "D5: schottky e1 e3 1N5819"
-  - text e.5_4 blue: "D6: photodiode e4 e6"
-  - text e.5_7 blue: "D7: diac e7 e9"
-  - text e.5_10 blue: "V3: square e10 e12 5"
-  - text g.5_1 blue: "V4: triangle g1 g3 1"
-  - text g.5_4 blue: "PV1: solar g4 g6 0.6"
-  - text g.5_7 blue: "S2: switch-nc g7 g9"
-  - text g.5_10 blue: "S3: button g10 g12"
-  - text i.5_1 blue: "S4: button-nc i1 i3"
-  - text i.5_4 blue: "S5: reed i4 i6"
-  - text i.5_7 blue: "LS1: speaker i7 i9"
-  - text i.5_10 blue: "MK1: mic i10 i12"
-  - text k.5_1 blue: "A1: ammeter k1 k3"
-  - text k.5_4 blue: "V5: voltmeter k4 k6"
-  - text k.5_7 blue: "M1: ohmmeter k7 k9"
+  - text a.7_1 blue: "R2: resistor-var a1 a3 10k"
+  - text a.7_4 blue: "D4: varicap a4 a6 33p"
+  - text a.7_7 blue: "X1: crystal a7 a9 16M"
+  - text a.7_10 blue: "R3: photoresistor a10 a12"
+  - text c.7_1 blue: "R4: thermistor c1 c3 10k"
+  - text c.7_4 blue: "R5: thermistor-ntc c4 c6 10k"
+  - text c.7_7 blue: "R6: thermistor-ptc c7 c9"
+  - text c.7_10 blue: "R7: varistor c10 c12 470V"
+  - text e.7_1 blue: "D5: schottky e1 e3 1N5819"
+  - text e.7_4 blue: "D6: photodiode e4 e6"
+  - text e.7_7 blue: "D7: diac e7 e9"
+  - text e.7_10 blue: "V3: square e10 e12 5"
+  - text g.7_1 blue: "V4: triangle g1 g3 1"
+  - text g.7_4 blue: "PV1: solar g4 g6 0.6"
+  - text g.7_7 blue: "S2: switch-nc g7 g9"
+  - text g.7_10 blue: "S3: button g10 g12"
+  - text i.7_1 blue: "S4: button-nc i1 i3"
+  - text i.7_4 blue: "S5: reed i4 i6"
+  - text i.7_7 blue: "LS1: speaker i7 i9"
+  - text i.7_10 blue: "MK1: mic i10 i12"
+  - text k.7_1 blue: "A1: ammeter k1 k3"
+  - text k.7_4 blue: "V5: voltmeter k4 k6"
+  - text k.7_7 blue: "M1: ohmmeter k7 k9"
 style:
   grid: on
 ```
@@ -524,10 +524,10 @@ parts:
   G1:  ground a5
   IN:  port a7
 notes:
-  - text a.5_1 blue center: "VCC: vcc a1"
-  - text a.5_3 blue center: "VEE: vee a3"
-  - text a.5_5 blue center: "G1: ground a5"
-  - text a.5_7 blue center: "IN: port a7"
+  - text a.7_1 blue center: "VCC: vcc a1"
+  - text a.7_3 blue center: "VEE: vee a3"
+  - text a.7_5 blue center: "G1: ground a5"
+  - text a.7_7 blue center: "IN: port a7"
 style:
   grid: on
 ```
@@ -713,7 +713,7 @@ notes:
   - box a1 c3 blue
   - text d2 blue center: box a1 c3 blue
   - arrow b4 R1
-  - text c4 red: arrow b4 R1
+  - text b4 red: R1のコメント
   - source a7 blue
 style:
   grid: on
@@ -823,7 +823,7 @@ parts:
 notes:
   - text a3 blue bold: tight
   - source b3 tight
-  - text a9 blue bold: loose
+  - text a10 blue bold: loose
   - source b10 loose
 style:
   pitch: 1

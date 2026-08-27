@@ -156,7 +156,7 @@ notes:
   - box a1 c3 blue
   - text d2 blue center: box a1 c3 blue
   - arrow b4 R1
-  - text c4 red: arrow b4 R1
+  - text b4 red: R1のコメント
   - source a7 blue
 style:
   grid: on
