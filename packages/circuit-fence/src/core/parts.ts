@@ -202,6 +202,7 @@ const FARAD = '\\mathrm{F}';
 const HENRY = '\\mathrm{H}';
 const VOLT = '\\mathrm{V}';
 const AMPERE = '\\mathrm{A}';
+const WATT = '\\mathrm{W}';
 const HERTZ = '\\mathrm{Hz}';
 
 const SI_OHM = '\\ohm';
@@ -325,7 +326,7 @@ export const PART_TYPES = {
   speaker: { kind: 'two-terminal', symbol: 'loudspeaker', ...NO_UNIT },
   mic: { kind: 'two-terminal', symbol: 'mic', ...NO_UNIT },
 
-  // 測るもの。3 つとも**丸に字だけ**で描く (回路図の慣習)。
+  // 測るもの。どれも**丸に字だけ**で描く (回路図の慣習)。
   //
   // circuitikz の `ammeter` / `voltmeter` は丸に指針の矢が入り、字も太字になる。
   // `ohmmeter` は Ω が**太字の数式**で、その太字数式フォントがフェンスの TeX に
@@ -335,6 +336,9 @@ export const PART_TYPES = {
   ammeter: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${AMPERE}$}`], ...NO_UNIT },
   voltmeter: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${VOLT}$}`], ...NO_UNIT },
   ohmmeter: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${OHM}$}`], ...NO_UNIT },
+  // 電力計。二電力計法のように 2 つ並べて書くので、ID の添字で見分ける
+  // (`W1` `W2`)。W は普通の太さの立体なので、Ω と違って字形は壊れない (実測)。
+  wattmeter: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${WATT}$}`], ...NO_UNIT },
 
   // 記号
   port: { kind: 'one-terminal', symbol: 'ocirc', idLabel: 'beside', ...NO_UNIT },

@@ -74,6 +74,7 @@ parts:
   A1:  ammeter k1 k3
   V5:  voltmeter k4 k6
   M1:  ohmmeter k7 k9
+  W1:  wattmeter k10 k12
 notes:
   - text a.7_1 blue: "R2: resistor-var a1 a3 10k"
   - text a.7_4 blue: "D4: varicap a4 a6 33p"
@@ -98,6 +99,7 @@ notes:
   - text k.7_1 blue: "A1: ammeter k1 k3"
   - text k.7_4 blue: "V5: voltmeter k4 k6"
   - text k.7_7 blue: "M1: ohmmeter k7 k9"
+  - text k.7_10 blue: "W1: wattmeter k10 k12"
 style:
   grid: on
 ```

@@ -199,12 +199,12 @@ describe('記事によく出る部品', () => {
   });
 
   test('carries the meters and the parts that make a sound', () => {
-    for (const name of ['ammeter', 'voltmeter', 'ohmmeter', 'speaker', 'mic']) {
+    for (const name of ['ammeter', 'voltmeter', 'ohmmeter', 'wattmeter', 'speaker', 'mic']) {
       expect(lookupPartType(name)?.kind).toBe('two-terminal');
     }
   });
 
-  test('draws the three meters as one circle with one letter in it', () => {
+  test('draws every meter as one circle with one letter in it', () => {
     // 回路図の慣習は丸に字だけ。circuitikz の ammeter / voltmeter は指針の矢が
     // 入り、ohmmeter は Ω が**太字の数式**でフォントが無くて落ちる (実測)。
     // 3 つとも矢の無い rmeter に字を渡して、見た目を揃える。
@@ -212,6 +212,7 @@ describe('記事によく出る部品', () => {
     expect(lookupPartType('ammeter')?.options).toEqual(['t={$\\mathrm{A}$}']);
     expect(lookupPartType('voltmeter')?.options).toEqual(['t={$\\mathrm{V}$}']);
     expect(lookupPartType('ohmmeter')?.options).toEqual(['t={$\\Omega$}']);
+    expect(lookupPartType('wattmeter')?.options).toEqual(['t={$\\mathrm{W}$}']);
   });
 
   test('draws the transformer with the core the usual symbol carries', () => {
