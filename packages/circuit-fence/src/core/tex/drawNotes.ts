@@ -132,13 +132,14 @@ function drawTextNote(note: TextNote, pitch: number, target: TexTarget): string[
  * 元のフェンスの書き出し。1 行ずつ、**格子ではなく字の行送り**で下へ並べる。
  * 格子の刻みで送ると、数行書いただけで図より書き出しのほうが高くなる。
  *
- * 送りは地の文より詰めた書き出し用のもの (`noteSourceLine`)。上下に取る余白は
- * 詰めない — 余白は字が縁で切れないための実測値で、行の間隔とは別のもの。
+ * 送りは地の文より詰めた書き出し用のもの (`noteSourceLine`)。書き手が段を
+ * 書いていれば、そちらで送る。上下に取る余白は段に付いてこない — 余白は字が
+ * 縁で切れないための実測値で、行の間隔とは別のもの。
  */
 function drawSourceNote(note: SourceNote, pitch: number, target: TexTarget, lines: string[]): string[] {
   const { x, y } = toPoint(note.at, pitch);
   const options = styleOptions(note, target);
-  const step = noteSourceLine(note.size);
+  const step = noteSourceLine(note.size, note.leading);
   const at = (index: number): string => `at (${num(x)},${num(y - step * index)})`;
 
   if (target === 'latex') {

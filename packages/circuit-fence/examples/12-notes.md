@@ -159,3 +159,24 @@ style:
 
 部品を指した指し棒は、印 (`circle`) と同じ丸の縁で止まる。
 真ん中まで伸ばすと、先端が記号の下に隠れて何を指しているか分からなくなるため。
+
+## 書き出しの行送り
+
+`- source` にだけ、行送りを選ぶ `tight` / `loose` が書ける。
+書かなければその中間 (既定)。長いフェンスを図の高さに収めたいときは `tight`、
+1 行ずつ指しながら説明したいときは `loose`。
+
+```circuit
+parts:
+  R1: resistor a1 a3 10k
+notes:
+  - text a4 blue bold: tight
+  - source b4 tight
+  - text a10 blue bold: loose
+  - source b10 loose
+style:
+  pitch: 1
+```
+
+`tight` でも字の高さは下回らない。それより詰めると、上の行の下がりと
+下の行の上がりが噛む。

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
-import { NOTE_ALIGNS, NOTE_COLOR_NAMES, NOTE_SIZE_NAMES } from './notes.ts';
+import { NOTE_ALIGNS, NOTE_COLOR_NAMES, NOTE_LEADINGS, NOTE_SIZE_NAMES } from './notes.ts';
 import { PART_ALIASES, partTypeNames } from './parts.ts';
 import { THEME_NAMES } from './render/theme.ts';
 
@@ -27,7 +27,7 @@ describe('docs/cheatsheet.md', () => {
   });
 
   test('names every word a note can carry', () => {
-    const words = [...NOTE_COLOR_NAMES, ...NOTE_SIZE_NAMES, ...NOTE_ALIGNS, 'bold'];
+    const words = [...NOTE_COLOR_NAMES, ...NOTE_SIZE_NAMES, ...NOTE_ALIGNS, ...NOTE_LEADINGS, 'bold'];
 
     expect(words.filter((name) => !mentions(name))).toEqual([]);
   });

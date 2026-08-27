@@ -3,10 +3,10 @@ import { LIMITS, isReferenceable } from '../limits.ts';
 import { formatAddress, isSameAddress, parseAddress } from '../model/address.ts';
 import type { Address, WireOperator } from '../model/address.ts';
 import {
-  DEFAULT_NOTE_ALIGN, DEFAULT_NOTE_SIZE, NOTE_ALIGNS, NOTE_COLOR_NAMES, NOTE_SIZE_NAMES,
-  isNoteAlign, isNoteSize, noteColor,
+  DEFAULT_NOTE_ALIGN, DEFAULT_NOTE_SIZE, NOTE_ALIGNS, NOTE_COLOR_NAMES, NOTE_LEADINGS,
+  NOTE_SIZE_NAMES, isNoteAlign, isNoteLeading, isNoteSize, noteColor,
 } from '../notes.ts';
-import type { NoteAlign, NoteSize } from '../notes.ts';
+import type { NoteAlign, NoteLeading, NoteSize } from '../notes.ts';
 import { closestPartType, lookupPartType, partTypeNames, resolvePartTypeName } from '../parts.ts';
 import type { PartTypeName } from '../parts.ts';
 import { isNoteDrawable } from '../tex/escape.ts';
@@ -271,11 +271,19 @@ const lineFormOf = (kind: string): string | null =>
 
 const noteKindList = (): string => NOTE_KINDS.join(' / ');
 
-/** 字に添えられる語ぜんぶ。知らない語を返すときの案内に使う。 */
-const wordHint = (): string =>
+/**
+ * 字に添えられる語ぜんぶ。知らない語を返すときの案内に使う。
+ * 行送りは書き出しにしか効かないので、**そこに書けるときだけ**添える
+ * (どこでも並べると、字の注釈で書いて効かない語を勧めることになる)。
+ */
+const wordHint = (forSource: boolean): string =>
   `色: ${NOTE_COLOR_NAMES.join(' / ')}、` +
   `大きさ: ${NOTE_SIZE_NAMES.join(' / ')}、` +
-  `寄せ: ${NOTE_ALIGNS.join(' / ')}、太字: ${BOLD_WORD}`;
+  `寄せ: ${NOTE_ALIGNS.join(' / ')}、太字: ${BOLD_WORD}` +
+  (forSource ? `、行送り: ${NOTE_LEADINGS.join(' / ')}` : '');
+
+/** 行送りの語を書ける場所。効かないところに書かれたら、これを添えて返す。 */
+const LEADING_BELONGS = `書き出し (source) にだけ書けます`;
 
 const readNoteColor = (token: string, line: number): Result<string> =>
   noteColor(token) === null
@@ -285,18 +293,26 @@ const readNoteColor = (token: string, line: number): Result<string> =>
 const writtenTwice = (what: string, first: string, second: string, line: number): FenceError =>
   fenceError(`注釈の${what}が二重に書かれています (${safeToken(first)} と ${safeToken(second)})`, line);
 
+/** 注釈に添えられた語ぜんぶ。行送りは書き出しにしか無いので、字の見た目と分けて返す。 */
+type NoteWords = {
+  readonly style: NoteTextStyle;
+  readonly leading: NoteLeading | null;
+};
+
 /**
  * 字に添えられた語を読む。**語ごとに読む場所を決めない**ので、
- * 色・大きさ・寄せ・太字をどの順に書いてもよい (書き手が順を覚えなくて済む)。
+ * 色・大きさ・寄せ・太字・行送りをどの順に書いてもよい
+ * (書き手が順を覚えなくて済む)。
  *
  * 二重に書かれたら理由を返す。後に書いたほうを黙って勝たせると、
  * 直したつもりの指定が効かない図が出る (約束 5)。
  */
-function readTextStyle(tokens: readonly string[], line: number): Result<NoteTextStyle> {
+function readNoteWords(tokens: readonly string[], line: number, forSource: boolean): Result<NoteWords> {
   let color: string | null = null;
   let size: NoteSize | null = null;
   let align: NoteAlign | null = null;
   let bold = false;
+  let leading: NoteLeading | null = null;
 
   for (const token of tokens) {
     if (noteColor(token) !== null) {
@@ -311,12 +327,22 @@ function readTextStyle(tokens: readonly string[], line: number): Result<NoteText
     } else if (token === BOLD_WORD) {
       if (bold) return { ok: false, error: writtenTwice('太字', BOLD_WORD, token, line) };
       bold = true;
+    } else if (isNoteLeading(token)) {
+      if (!forSource) return fail(`${safeToken(token)} は${LEADING_BELONGS}`, line);
+      if (leading !== null) return { ok: false, error: writtenTwice('行送り', leading, token, line) };
+      leading = token;
     } else {
-      return fail(`注釈の言葉 ${safeToken(token)} は知りません (${wordHint()} が使えます)`, line);
+      return fail(`注釈の言葉 ${safeToken(token)} は知りません (${wordHint(forSource)} が使えます)`, line);
     }
   }
 
-  return ok({ color, size: size ?? DEFAULT_NOTE_SIZE, align: align ?? DEFAULT_NOTE_ALIGN, bold });
+  return {
+    ok: true,
+    value: {
+      style: { color, size: size ?? DEFAULT_NOTE_SIZE, align: align ?? DEFAULT_NOTE_ALIGN, bold },
+      leading,
+    },
+  };
 }
 
 /**
@@ -351,6 +377,9 @@ export function parseNoteLine(
 /** 印に書けるのは指し先と色だけ。字の言葉を書いても効かないので、形を示して返す。 */
 function readMarkColor(token: string | undefined, form: string, line: number): Result<string> {
   if (token === undefined) return ok(DEFAULT_MARK_COLOR);
+  if (isNoteLeading(token)) {
+    return fail(`${form} で書きます (${safeToken(token)} は${LEADING_BELONGS})`, line);
+  }
   if (isNoteSize(token) || isNoteAlign(token) || token === BOLD_WORD) {
     return fail(`${form} で書きます (${safeToken(token)} は字の注釈にだけ書けます)`, line);
   }
@@ -415,8 +444,11 @@ function readSourceNote(rest: readonly string[], line: number, points: Points): 
   const at = readAddress(atToken, line, points);
   if (!at.ok) return at;
 
-  const style = readTextStyle(words, line);
-  return style.ok ? ok({ kind: 'source', at: at.value, ...style.value, line }) : style;
+  const looks = readNoteWords(words, line, true);
+  if (!looks.ok) return looks;
+
+  const { style, leading } = looks.value;
+  return ok({ kind: 'source', at: at.value, ...style, leading, line });
 }
 
 /**
@@ -453,6 +485,6 @@ export function parseNoteText(
     return fail(`注釈の文字に使えない文字があります (${NOTE_CHARSET} が使えます)`, line);
   }
 
-  const style = readTextStyle(words, line);
-  return style.ok ? ok({ kind: 'text', at: at.value, text: body, ...style.value, line }) : style;
+  const looks = readNoteWords(words, line, false);
+  return looks.ok ? ok({ kind: 'text', at: at.value, text: body, ...looks.value.style, line }) : looks;
 }

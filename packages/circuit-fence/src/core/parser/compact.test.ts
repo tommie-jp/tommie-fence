@@ -537,6 +537,7 @@ describe('parseNoteLine の source', () => {
       size: 'normal',
       align: 'left',
       bold: false,
+      leading: null,
       line: 2,
     });
   });
@@ -556,5 +557,48 @@ describe('parseNoteLine の source', () => {
 
   test('turns down a word that is neither a colour nor a look', () => {
     expect(noteProblem('source a6 blue extra').message).toContain('注釈の言葉');
+  });
+
+  test('reads the leading when it is written', () => {
+    expect(noteOf('source a6 tight')).toMatchObject({ leading: 'tight' });
+    expect(noteOf('source a6 loose')).toMatchObject({ leading: 'loose' });
+  });
+
+  // 語ごとに読む場所を決めていないので、行送りも順を選ばない。
+  test('takes the leading in any order among the other words', () => {
+    expect(noteOf('source a6 tight blue tiny')).toMatchObject({
+      leading: 'tight', color: 'blue', size: 'tiny',
+    });
+  });
+
+  test('turns down a leading written twice', () => {
+    expect(noteProblem('source a6 tight loose').message).toContain('二重');
+  });
+
+  test('names the leading among the words it knows', () => {
+    const message = noteProblem('source a6 nope').message;
+
+    expect(message).toContain('tight');
+    expect(message).toContain('loose');
+  });
+});
+
+// 行送りは何行も並ぶものにしか意味がない。字 1 行の注釈や印に書いても効かないので、
+// 黙って捨てずに、どこに書けるかを添えて返す。
+describe('行送りの語が書ける場所', () => {
+  test('turns the leading down on a one-line text note', () => {
+    const message = textNoteProblem('text b1 tight', 'ここ').message;
+
+    expect(message).toContain('source');
+  });
+
+  test('turns the leading down on a mark', () => {
+    for (const line of ['circle R1 tight', 'box a1 c3 loose', 'arrow a1 R1 tight']) {
+      expect(noteProblem(line).message).toContain('source');
+    }
+  });
+
+  test('does not offer the leading to a note that cannot take it', () => {
+    expect(textNoteProblem('text b1 nope', 'ここ').message).not.toContain('tight');
   });
 });

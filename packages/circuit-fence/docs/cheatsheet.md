@@ -101,6 +101,7 @@ style:             # 任意。見た目
 - 語は順不同。色 `red` / `blue` / `green` / `orange`、
   大きさ `tiny` / `small` / `normal` / `large` / `huge`、
   寄せ `left` / `center` / `right`、太字 `bold`
+- 行送り `tight` / `loose` は `source` にだけ書ける (既定はその中間)
 - 字に `:` を含むときは `"…"` で囲む (YAML がマップとして読むため)
 - 注釈は回路の一員ではない (ネットリストにも黒丸にも数えない)
 

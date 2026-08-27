@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import {
   DEFAULT_NOTE_ALIGN, DEFAULT_NOTE_SIZE, NOTE_ALIGNS, NOTE_COLOR_NAMES, NOTE_COLORS, NOTE_INK,
-  NOTE_MARK_COLOR, NOTE_SIZE_NAMES, isNoteAlign, isNoteSize, noteColor, noteEm, noteFontTex,
-  noteLine, noteSourceLine, noteSpan, noteWidth, svgTextAnchorOf, texAnchorOf, texColorOf,
+  NOTE_LEADINGS, NOTE_MARK_COLOR, NOTE_SIZE_NAMES, isNoteAlign, isNoteLeading, isNoteSize,
+  noteColor, noteEm, noteFontTex, noteLine, noteSourceLine, noteSpan, noteWidth,
+  svgTextAnchorOf, texAnchorOf, texColorOf,
 } from './notes.ts';
-import type { NoteSize } from './notes.ts';
+import type { NoteLeading, NoteSize } from './notes.ts';
 
 describe('注釈の色', () => {
   test('名前で引ける', () => {
@@ -96,20 +97,63 @@ describe('注釈の大きさ', () => {
   });
 
   test('書き出しの行送りも字の大きさで決まる', () => {
-    expect(noteSourceLine('huge')).toBeGreaterThan(noteSourceLine('tiny'));
+    expect(noteSourceLine('huge', null)).toBeGreaterThan(noteSourceLine('tiny', null));
   });
 
   // 書き出しは字が続けて並ぶので、地の文と同じ行送りだと間が空いて読みにくい。
   test('書き出しの行送りは地の文より詰める', () => {
     for (const size of LADDER) {
-      expect(noteSourceLine(size)).toBeLessThan(noteLine(size));
+      expect(noteSourceLine(size, null)).toBeLessThan(noteLine(size));
     }
   });
 
   // 詰めすぎると上の行の下がりと下の行の上がりが噛む。
   test('書き出しの行送りでも、字が上下でぶつからない', () => {
     for (const size of LADDER) {
-      expect(noteSourceLine(size)).toBeGreaterThan(noteEm(size));
+      expect(noteSourceLine(size, null)).toBeGreaterThan(noteEm(size));
+    }
+  });
+});
+
+describe('書き出しの行送りの段', () => {
+  const LADDER: readonly NoteSize[] = ['tiny', 'small', 'normal', 'large', 'huge'];
+  const STEPS: readonly (NoteLeading | null)[] = [null, ...NOTE_LEADINGS];
+
+  test('tight は既定よりさらに詰める', () => {
+    expect(noteSourceLine('normal', 'tight')).toBeLessThan(noteSourceLine('normal', null));
+  });
+
+  test('loose は字の注釈と同じだけ空ける', () => {
+    expect(noteSourceLine('normal', 'loose')).toBeCloseTo(noteLine('normal'), 10);
+  });
+
+  // 1 em を割ると、上の行の下がりと下の行の上がりが噛む。
+  test('どの段でも、字の高さは下回らない', () => {
+    for (const size of LADDER) {
+      for (const leading of STEPS) {
+        expect(noteSourceLine(size, leading)).toBeGreaterThanOrEqual(noteEm(size));
+      }
+    }
+  });
+
+  test('段も字の大きさで決まる', () => {
+    for (const leading of STEPS) {
+      expect(noteSourceLine('huge', leading)).toBeGreaterThan(noteSourceLine('tiny', leading));
+    }
+  });
+
+  // 語は 1 つの並びに混ぜて書く。同じ名前があると、どちらの意味か決められない。
+  test('段の名前は、大きさや寄せの名前とぶつからない', () => {
+    for (const name of NOTE_LEADINGS) {
+      expect(isNoteSize(name)).toBe(false);
+      expect(isNoteAlign(name)).toBe(false);
+      expect(noteColor(name)).toBeNull();
+    }
+  });
+
+  test('Object.prototype にある名前は段として引けない', () => {
+    for (const name of ['toString', 'constructor', 'hasOwnProperty', '__proto__']) {
+      expect(isNoteLeading(name)).toBe(false);
     }
   });
 });

@@ -2,7 +2,7 @@
 
 import { formatAddress } from './model/address.ts';
 import type { Address, WireOperator } from './model/address.ts';
-import type { NoteAlign, NoteSize } from './notes.ts';
+import type { NoteAlign, NoteLeading, NoteSize } from './notes.ts';
 
 /**
  * 読めなかったところ 1 件。line は元の YAML の行 (1 始まり)。
@@ -224,6 +224,11 @@ export type TextNote = {
 export type SourceNote = {
   readonly kind: 'source';
   readonly at: Address;
+  /**
+   * 行送りの段。**書き出しにしか無い**ので、字の見た目 (NoteTextStyle) には
+   * 入れない。null は「書かなかった」— 色と同じで、既定は段の表の外にある。
+   */
+  readonly leading: NoteLeading | null;
   readonly line: number;
 } & NoteTextStyle;
 

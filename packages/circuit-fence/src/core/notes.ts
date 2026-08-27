@@ -121,8 +121,35 @@ export const noteLine = (size: NoteSize): number => noteEm(size) * LINE_HEIGHT;
  */
 const SOURCE_LINE_HEIGHT = 1.15;
 
-/** 書き出しの行送り (cm)。等幅で何行も並べる前提で、地の文より詰めてある。 */
-export const noteSourceLine = (size: NoteSize): number => noteEm(size) * SOURCE_LINE_HEIGHT;
+/**
+ * 書き出しの行送りを選ぶ語。**書かなかったときが既定の詰めた送り**なので、
+ * 語は「もっと詰める」「字の注釈と同じだけ空ける」の 2 つで足りる。
+ *
+ * 段に `normal` を置かないのは、それが**字の大きさの名前として埋まっている**ため。
+ * 語は 1 つの並びに混ぜて書くので、同じ名前があるとどちらの意味か決められない。
+ */
+export const NOTE_LEADINGS = ['tight', 'loose'] as const;
+
+export type NoteLeading = (typeof NOTE_LEADINGS)[number];
+
+export const isNoteLeading = (name: string): name is NoteLeading =>
+  (NOTE_LEADINGS as readonly string[]).includes(name);
+
+/**
+ * 段ごとの、1 em に対する行送りの倍率。
+ * **どれも 1 em を下回らない** — 割ると上の行の下がりと下の行の上がりが噛む。
+ */
+const SOURCE_LEADINGS: Readonly<Record<NoteLeading, number>> = {
+  tight: 1,
+  loose: LINE_HEIGHT,
+};
+
+/**
+ * 書き出しの行送り (cm)。等幅で何行も並べる前提で、既定は地の文より詰めてある。
+ * `leading` が null は「書かなかった」— 段の表に既定を置くと `normal` が要る。
+ */
+export const noteSourceLine = (size: NoteSize, leading: NoteLeading | null): number =>
+  noteEm(size) * (leading === null ? SOURCE_LINE_HEIGHT : SOURCE_LEADINGS[leading]);
 
 /** 半角 1 文字の幅 (em)。少し多めに見て、図が字を切らないようにする。 */
 const HALF_WIDTH = 0.6;

@@ -182,7 +182,30 @@ describe('generateTex の書き出し (source)', () => {
     );
 
     const step = (ys[0] ?? 0) - (ys[1] ?? 0);
-    expect(step).toBeCloseTo(noteSourceLine('normal'), 3);
+    expect(step).toBeCloseTo(noteSourceLine('normal', null), 3);
+  });
+
+  test('sends the lines by the leading the note asks for', () => {
+    const stepOf = (tex: string): number => {
+      const ys = [...tex.matchAll(/circuitnotemark, font=\\footnotesize\] at \((-?[\d.]+),(-?[\d.]+)\)/g)].map(
+        (match) => Number(match[2]),
+      );
+      return (ys[0] ?? 0) - (ys[1] ?? 0);
+    };
+    const at = (words: string) => write('parts:', '  R1: resistor a1 a3 10k', 'notes:', `  - source b1 ${words}`);
+
+    expect(stepOf(at('tight').tex)).toBeCloseTo(noteSourceLine('normal', 'tight'), 3);
+    expect(stepOf(at('loose').tex)).toBeCloseTo(noteSourceLine('normal', 'loose'), 3);
+    expect(stepOf(at('tight').tex)).toBeLessThan(stepOf(at('loose').tex));
+  });
+
+  // 場所取りの矩形が送りに付いてこないと、詰めた図の下に空きが残る。
+  test('takes room for the block the leading actually makes', () => {
+    const bottomOf = (tex: string): number =>
+      Number(/\\path \(0,(-?[\d.]+)\) rectangle/.exec(tex)?.[1] ?? 0);
+    const at = (words: string) => write('parts:', '  R1: resistor a1 a3 10k', 'notes:', `  - source b1 ${words}`);
+
+    expect(bottomOf(at('tight').tex)).toBeGreaterThan(bottomOf(at('loose').tex));
   });
 
   test('takes room for the whole block, so the last line is not cut off', () => {
