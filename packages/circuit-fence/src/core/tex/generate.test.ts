@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { buildCircuit } from '../model/circuit.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import { noteWidth } from '../notes.ts';
+import { DEFAULT_NOTE_SIZE, noteFontTex, noteWidth } from '../notes.ts';
 import { VERSION } from '../version.ts';
 import { generateTex, standaloneTex } from './generate.ts';
 
@@ -636,7 +636,8 @@ describe('generateTex のバージョン刻印', () => {
   });
 
   test('stamps the version of the tool that generated the figure', () => {
-    expect(generate(...STAMPED).tex).toContain(`circuit-fence ${VERSION}`);
+    // フェンスでは字を TeX に渡さず、描き上がった SVG に差し込む (題と同じ道)。
+    expect(generate(...STAMPED).notes.at(-1)).toMatchObject({ text: `circuit-fence ${VERSION}` });
   });
 
   test('hangs the stamp off the finished drawing, not the grid', () => {
@@ -647,29 +648,56 @@ describe('generateTex のバージョン刻印', () => {
 
   test('stamps last so the whole drawing is inside the box it measures', () => {
     const lines = (generate(...STAMPED, 'notes:', '  - text c1 "あ"').tex ?? '').split('\n');
-    const stamp = lines.findIndex((line) => line.includes('circuit-fence'));
+    const stamp = lines.findIndex((line) => line.includes('circuitstamp'));
 
     expect(stamp).toBeGreaterThan(-1);
-    expect(lines[stamp + 1]).toBe('\\end{circuitikz}');
+    // 目印の次は場所取り、その次が図の終わり。刻印より後には何も描かない。
+    expect(lines[stamp + 2]).toBe('\\end{circuitikz}');
+  });
+
+  test('stamps in the size a note is written in when nothing says otherwise', () => {
+    // 刻印だけ別の大きさにすると、同じ図の中で字の大きさが 2 通りになる。
+    // 書き出し (`- source`) の既定と同じ物差しに乗せる。
+    expect(generate(...STAMPED).tex).toContain(`font=${noteFontTex(DEFAULT_NOTE_SIZE, false)}`);
+  });
+
+  test('lets the stamp hang off the right edge of the drawing', () => {
+    // 右下に掛けるものなので、差し込む字は目印から左へ伸ばす。
+    expect(generate(...STAMPED).notes.at(-1)).toMatchObject({ align: 'right', mono: false, bold: false });
+  });
+
+  test('keeps the stamp in front of the title in the order the marks are drawn', () => {
+    // 差し込みは目印の並び順で当てる。題 → 刻印の順に描くので、並びも同じ順。
+    const { notes } = generate('title: 図01 題', ...STAMPED);
+
+    expect(notes.map((note) => note.text)).toEqual(['図01 題', `circuit-fence ${VERSION}`]);
+  });
+
+  test('reserves the room the stamp takes so it does not hang outside the drawing', () => {
+    // 目印は 1 文字。本物の字の幅を測って箱に入れておかないと、図が狭い
+    // ときに刻印だけ外へはみ出す。
+    expect(generate(...STAMPED).tex).toContain('rectangle');
   });
 
   test('draws the stamp in the grid colour so it stays subordinate to the circuit', () => {
     // gray は描き上がった SVG でグリッドの色に塗り替わる (render/theme.ts)。
-    expect(generate(...STAMPED).tex).toContain('gray');
+    // フェンスでは差し込む字に、書き出す .tex では TeX の色として乗る。
+    expect(generate(...STAMPED).notes.at(-1)).toMatchObject({ color: 'gray' });
+    expect(generateLatex(...STAMPED).tex).toContain('gray');
   });
 
-  test('writes the same stamp into the exported tex', () => {
-    // 刻印は ASCII だけなので、フェンスの制約は何も強いない (約束 7)。
-    const line = (tex: string): string | undefined =>
-      tex.split('\n').find((row) => row.includes('circuit-fence'));
-
-    expect(line(generateLatex(...STAMPED).tex ?? '')).toBe(line(generate(...STAMPED).tex ?? ''));
+  test('writes the stamp into the exported tex as the字 itself', () => {
+    // 書き出す .tex には差し込む先が無いので、字は TeX が組む。組み方は違うが
+    // **出る字は同じ**なので、約束 7 の 3 点には入らない (注釈と同じ扱い)。
+    expect(generateLatex(...STAMPED).tex).toContain(`circuit-fence ${VERSION}`);
+    expect(generateLatex(...STAMPED).notes).toEqual([]);
   });
 
   test('carries no line number, because no line of the fence is to blame for it', () => {
-    const stamped = (generate(...STAMPED).tex ?? '').split('\n').find((row) => row.includes('circuit-fence'));
+    const stamped = (generate(...STAMPED).tex ?? '').split('\n').filter((row) => row.includes('circuitstamp'));
 
-    expect(stamped).not.toContain('% line');
+    expect(stamped.length).toBeGreaterThan(0);
+    for (const row of stamped) expect(row).not.toContain('% line');
   });
 });
 
@@ -756,11 +784,16 @@ describe('生成した TeX が TeX の命令として書けているか', () => 
   // (エラーにならないので図が出たように見える)。
   test.each([
     ['題', 'title: 回路図01', '\\node[anchor=south west'],
-    ['刻印', 'style:\n  stamp: on', '\\node[gray, anchor=north east'],
+    ['刻印', 'style:\n  stamp: on', '\\node[anchor=north east'],
   ])('%s は \\node から始まる', (_label, extra, expected) => {
     const { tex } = generate(...`parts:\n  R1: resistor a1 a3\n${extra}`.split('\n'));
 
     expect(tex).toContain(expected);
+  });
+
+  test('刻印の場所取りは \\path から始まる', () => {
+    expect(generate('parts:', '  R1: resistor a1 a3', 'style:', '  stamp: on').tex)
+      .toContain('\\path (circuitstamp');
   });
 
   test('題の場所取りは \\path から始まる', () => {

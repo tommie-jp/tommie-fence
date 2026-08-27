@@ -42,6 +42,7 @@
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-7.302) {X}; % line 11
 \node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(4.938,0.853);
-\node[gray, anchor=north east, font=\tiny, inner sep=2pt] at (current bounding box.south east) {circuit-fence 0.1.0};
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at (current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-4.826,-0.593);
 \end{circuitikz}
 \end{document}

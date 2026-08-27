@@ -44,22 +44,22 @@ style:
 title: 図02 注釈の色
 parts:
   R1: resistor a1 a3
-  R2: resistor a5 a7
-  R3: resistor d1 d3
-  R4: resistor d5 d7
+  R2: resistor a4 a6
+  R3: resistor c1 c3
+  R4: resistor c4 c6
 notes:
   - circle R1 red
   - circle R2 blue
   - circle R3 green
   - circle R4 orange
-  - text b2 red center: red
-  - text b6 blue center: blue
-  - text c1 blue: "R1: resistor a1 a3"
-  - text c5 blue: "R2: resistor a5 a7"
-  - text e2 green center: green
-  - text e6 orange center: orange
-  - text f1 blue: "R3: resistor d1 d3"
-  - text f5 blue: "R4: resistor d5 d7"
+  - text a.5_2 red center: red
+  - text a.5_5 blue center: blue
+  - text b1 blue: "R1: resistor a1 a3"
+  - text b4 blue: "R2: resistor a4 a6"
+  - text c.5_2 green center: green
+  - text c.5_5 orange center: orange
+  - text d1 blue: "R3: resistor c1 c3"
+  - text d4 blue: "R4: resistor c4 c6"
 style:
   grid: on
 ```
@@ -155,8 +155,8 @@ wires:
 notes:
   - box a1 c3 blue
   - text d2 blue center: box a1 c3 blue
-  - arrow c6 R1
-  - text c6 red: arrow c6 R1
+  - arrow b4 R1
+  - text c4 red: arrow b4 R1
   - source a7 blue
 style:
   grid: on
@@ -180,7 +180,7 @@ notes:
   - text a4 blue bold: tight
   - source b4 tight
   - text a10 blue bold: loose
-  - source b10 loose
+  - source b11 loose
 style:
   pitch: 1
 ```

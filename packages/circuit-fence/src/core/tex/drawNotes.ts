@@ -15,10 +15,11 @@ import { noteAnchorCell, resolveNoteTarget } from '../model/circuit.ts';
 import type { Circuit, NoteAnchor } from '../model/circuit.ts';
 import type { Points } from '../parser/compact.ts';
 import {
-  NOTE_INK, NOTE_MARK_COLOR, NOTE_MARK_TEXT, hexDigits, noteBoldWidth, noteColor, noteFontTex,
-  noteLine, noteMonoWidth, noteSourceLine, noteSpan, noteWidth, texAnchorOf, texColorOf,
+  DEFAULT_NOTE_SIZE, NOTE_INK, NOTE_MARK_COLOR, NOTE_MARK_TEXT, hexDigits, noteBoldWidth, noteColor,
+  noteFontTex, noteLine, noteMonoWidth, noteSourceLine, noteSpan, noteWidth, texAnchorOf, texColorOf,
 } from '../notes.ts';
 import type { NoteSize } from '../notes.ts';
+import { STAMP_TEXT } from '../version.ts';
 import type {
   ArrowNote, BoxNote, NoteOverlay, NoteSpec, NoteTextStyle, PartSpec, SourceNote, TexTarget,
   TextNote,
@@ -309,6 +310,53 @@ export function drawTitle(circuit: Circuit, target: TexTarget): string[] {
   ];
 }
 
+/** 刻印の大きさ。書き出し (`- source`) を大きさ無しで書いたときと同じ。 */
+const STAMP_SIZE: NoteSize = DEFAULT_NOTE_SIZE;
+
+/** 刻印と図の間に空ける幅 (pt)。字がグラウンドの記号にくっつかない最小限。 */
+const STAMP_INSET = 2;
+
+/** 刻印の目印に付ける名前。場所を取っておくのに使う。 */
+const STAMP_NODE = 'circuitstamp';
+
+/**
+ * 図の隅に、その図を組んだ処理系のバージョンを刻む (`style: stamp: on`)。
+ *
+ * **置き場所は番地から測らない**。図がどこまで広がるかは、ラベルも注釈も
+ * 描き終わるまで決まらないので、TikZ に測らせた `current bounding box` の
+ * 右下に掛ける (実機で確認済み。だから**いちばん最後に書く**)。
+ *
+ * 字は題と同じで、**フェンスでは TeX に渡さず描き上がった SVG に差し込む**。
+ * TeX のフォント (cmr) の名前は SVG にそのまま出るが、その名前のフォントは
+ * 開く側に無い。代わりのフォントは字送りが違うので、字を大きくすると
+ * TeX が測った幅からはみ出して重なる (実測)。
+ *
+ * `gray` で描くのはグリッドと同じ扱いにするため。描き上がった SVG で
+ * グリッドの色に塗り替わり (render/theme.ts)、回路より薄く出る。
+ */
+export function drawStamp(target: TexTarget): string[] {
+  const options = [
+    'anchor=north east',
+    `inner sep=${num(STAMP_INSET)}pt`,
+    target === 'latex' ? STAMP_COLOR : MARK_COLOR_NAME,
+    `font=${noteFontTex(STAMP_SIZE, false)}`,
+  ];
+  const at = 'at (current bounding box.south east)';
+
+  if (target === 'latex') return [`\\node[${options.join(', ')}] ${at} {${escapeTex(STAMP_TEXT)}};`];
+
+  return [
+    `\\node[${options.join(', ')}] (${STAMP_NODE}) ${at} {${NOTE_MARK_TEXT}};`,
+    // 目印は 1 文字なので、本物の字のぶんだけ左へ場所を取っておく
+    // (図が刻印より狭いと、取らなければ刻印だけ箱の外へ出る)。
+    `\\path (${STAMP_NODE}.north east) rectangle`
+    + ` ++(-${num(noteWidth(STAMP_TEXT, STAMP_SIZE))},-${num(noteLine(STAMP_SIZE))});`,
+  ];
+}
+
+/** 刻印の色。グリッドと同じ `gray` で描き、SVG でテーマのグリッド色に塗り替わる。 */
+const STAMP_COLOR = 'gray';
+
 /**
  * 注釈に使う色の宣言。**実際に使う色だけ**書く。
  * 名前も値もパレットの表から作るので、書き手の字は TeX に入らない (約束 3)。
@@ -337,7 +385,12 @@ export function noteColorLines(circuit: Circuit, target: TexTarget): string[] {
 }
 
 /** SVG に差し込む字。TeX が目印を置く順と同じ並びにする。 */
-export function noteOverlays(circuit: Circuit, target: TexTarget, listing: string[]): NoteOverlay[] {
+export function noteOverlays(
+  circuit: Circuit,
+  target: TexTarget,
+  listing: string[],
+  stamped = false,
+): NoteOverlay[] {
   if (target === 'latex') return [];
 
   const notes = circuit.notes.flatMap((note): NoteOverlay[] => {
@@ -352,10 +405,16 @@ export function noteOverlays(circuit: Circuit, target: TexTarget, listing: strin
   // 題は TeX のいちばん最後に置くので、差し込む並びでも末尾。
   // 色は書かせていないので、図のほかの文字と同じ色に乗る (NOTE_INK は
   // 黒のまま出て、そのあと recolorSvg がテーマの文字色に塗り替える)。
-  if (circuit.title === null) return notes;
+  const titled = circuit.title === null
+    ? notes
+    : [...notes, { text: circuit.title, color: NOTE_INK, mono: false, bold: true, align: 'left' } as const];
+
+  // 刻印は題のさらに後 (題まで含めた箱の右下に掛かる)。右下に付くものなので、
+  // 差し込む字は目印から**左へ**伸ばす。
+  if (!stamped) return titled;
   return [
-    ...notes,
-    { text: circuit.title, color: NOTE_INK, mono: false, bold: true, align: 'left' },
+    ...titled,
+    { text: STAMP_TEXT, color: STAMP_COLOR, mono: false, bold: false, align: 'right' },
   ];
 }
 

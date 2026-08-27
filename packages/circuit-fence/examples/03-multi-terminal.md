@@ -32,12 +32,12 @@ wires:
   - g8 -| Q4.E
   - f7 -| Q4.G
 notes:
-  - text d2 blue center: "Q1: npn b2"
-  - text d5 blue center: "Q2: pnp b5"
-  - text d8 blue center: "Q3: nigbt b8"
-  - text h2 blue center: "M1: nmos f2"
-  - text h5 blue center: "M2: pmos f5"
-  - text h8 blue center: "Q4: pigbt f8"
+  - text c.5_2 blue center: "Q1: npn b2"
+  - text c.5_5 blue center: "Q2: pnp b5"
+  - text c.5_8 blue center: "Q3: nigbt b8"
+  - text g.5_2 blue center: "M1: nmos f2"
+  - text g.5_5 blue center: "M2: pmos f5"
+  - text g.5_8 blue center: "Q4: pigbt f8"
 style:
   grid: on
   pitch: 1.2
@@ -120,12 +120,12 @@ wires:
   - k5 -| M4.S
   - j4 -| M4.G
 notes:
-  - text d2 blue center: "J1: njfet b2"
-  - text d5 blue center: "J2: pjfet b5"
-  - text h2 blue center: "M1: nmos-e f2"
-  - text h5 blue center: "M2: pmos-e f5"
-  - text l2 blue center: "M3: nmos-d j2"
-  - text l5 blue center: "M4: pmos-d j5"
+  - text c.5_2 blue center: "J1: njfet b2"
+  - text c.5_5 blue center: "J2: pjfet b5"
+  - text g.5_2 blue center: "M1: nmos-e f2"
+  - text g.5_5 blue center: "M2: pmos-e f5"
+  - text k.5_2 blue center: "M3: nmos-d j2"
+  - text k.5_5 blue center: "M4: pmos-d j5"
 style:
   grid: on
   pitch: 1.2
