@@ -1,6 +1,6 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
-import { cornerOf, formatAddress, isNearlyZero, isSameAddress, parseAddress } from './address.ts';
+import { addressHint, cornerOf, formatAddress, isNearlyZero, isSameAddress, parseAddress } from './address.ts';
 import { lookupPartType, lookupPin, pinAxis, pinHint } from '../parts.ts';
 import type { Address } from './address.ts';
 import { NO_POINTS } from '../parser/compact.ts';
@@ -132,7 +132,11 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
 
   errors.push(...overlaps(parts));
 
-  return { circuit, errors, notices: ambiguousTouches(circuit, byId) };
+  return {
+    circuit,
+    errors,
+    notices: [...ambiguousTouches(circuit, byId), ...pinLikeAddresses(circuit, byId)],
+  };
 }
 
 /**
@@ -382,8 +386,10 @@ function slantedIntoPins(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>):
 
     const type = lookupPartType(part.type);
     const axis = type === null ? null : pinAxis(type, pin.pin);
-    if (axis === 'h' && cell.row === part.at.row) continue;
-    if (axis === 'v' && cell.col === part.at.col) continue;
+    // 交点の間の番地は 1/100 刻みの小数なので、丸めの残りを 0 として見る
+    // (`===` だと、揃っている線に「斜めです」と言ってしまう)。
+    if (axis === 'h' && isNearlyZero(cell.row - part.at.row)) continue;
+    if (axis === 'v' && isNearlyZero(cell.col - part.at.col)) continue;
 
     errors.push(
       fenceError(
@@ -468,6 +474,49 @@ function resolvePins(
   return { ...wire, from, to };
 }
 
+/**
+ * 足とも番地とも読める綴り。
+ *
+ * 部品 ID には `_` を使えるので (`U_1`)、足を書いた `U_1.5` は
+ * 交点の間の番地 `u_1.5` としても読める。読む順で決めると、線は行 u まで
+ * 飛び、ネットリストからは足が消える — **図もネットリストも黙って壊れる**。
+ * どちらのつもりだったかは書いた人にしか分からないので、書き分けを頼む。
+ *
+ * 言うのは**その ID の部品が実在して、その足を持っているとき**だけ。
+ * 持っていなければ足としては読めないので、番地で確定する。
+ */
+function pinLikeAddresses(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>): FenceError[] {
+  const errors: FenceError[] = [];
+
+  for (const wire of circuit.wires) {
+    for (const endpoint of [wire.from, wire.to]) {
+      if (endpoint.kind !== 'cell') continue;
+
+      const written = formatAddress(endpoint.address);
+      const split = written.lastIndexOf('.');
+      if (!written.includes('_') || split < 0) continue;
+
+      const head = written.slice(0, split);
+      const pin = written.slice(split + 1);
+      const part = [...byId.values()].find((candidate) => candidate.id.toLowerCase() === head);
+      if (part === undefined) continue;
+
+      const type = lookupPartType(part.type);
+      if (type === undefined || type === null || lookupPin(type, pin) === null) continue;
+
+      errors.push(
+        fenceError(
+          `${safeToken(`${part.id}.${pin}`)} は番地 ${written} とも足とも読めます`
+            + ` (足のつもりなら部品 ID から _ を外し、番地のつもりなら points: で名前を付けてください)`,
+          wire.line,
+        ),
+      );
+    }
+  }
+
+  return errors;
+}
+
 /** 端 1 つを解決する。番地はそのまま、足はアンカー名に揃える。 */
 function resolveEndpoint(
   endpoint: Endpoint,
@@ -479,7 +528,11 @@ function resolveEndpoint(
 
   const part = byId.get(endpoint.part);
   if (part === undefined) {
-    errors.push(fenceError(`部品 ${safeToken(endpoint.part)} がありません`, line));
+    // 番地を `_` で切らずに書くと足の形になる (`a1.5` は「a1 の 5 番ピン」)。
+    // 部品が無いなら番地のつもりだった見込みが高いので、直せる形を添える。
+    const near = addressHint(`${endpoint.part}.${endpoint.pin}`);
+    const hint = near === null ? '' : ` (${near})`;
+    errors.push(fenceError(`部品 ${safeToken(endpoint.part)} がありません${hint}`, line));
     return null;
   }
 

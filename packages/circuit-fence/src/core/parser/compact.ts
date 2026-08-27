@@ -42,16 +42,23 @@ const readAddress = (token: string, line: number, points: Points = NO_POINTS): R
   const address = parseAddress(token);
   if (address !== null) return ok(address);
 
-  // 近い書き間違いには、直せる形の案内を先に返す (`a1.5` → `a_1.5`)。
-  const near = addressHint(token);
-  if (near !== null) return fail(`${safeToken(token)} は番地の形ではありません (${near})`, line);
+  return fail(addressProblem(token, points), line);
+};
 
-  // 番地の形でもないなら、名前のつもりで書かれた可能性がある。
-  // 名前を 1 つでも書いてある図では、そちらの案内も添える。
+/**
+ * 番地として読めなかった綴りへの返事。**近い書き間違いには直せる形を先に返す**
+ * (`a1.5` → `a_1.5`)。番地の形ですらないなら、書ける範囲を添える。
+ */
+function addressProblem(token: string, points: Points): string {
+  const near = addressHint(token);
+  if (near !== null) return `${safeToken(token)} は番地の形ではありません (${near})`;
+
+  // 名前のつもりで書かれた可能性がある。名前を 1 つでも書いてある図では、
+  // そちらの案内も添える。
   const form = `行 a〜z + 列 1〜${LIMITS.columns}。交点の間は a_1.5 / a.5_1.5`;
   const hint = points.size === 0 ? form : `${form}。points: に書いた名前でもありません`;
-  return fail(`${safeToken(token)} は番地の形ではありません (${hint})`, line);
-};
+  return `${safeToken(token)} は番地の形ではありません (${hint})`;
+}
 
 /**
  * 読み取り中の 1 行の頭。種類は正式名に畳んであり、`written` だけが
@@ -241,8 +248,9 @@ function readEndpoint(token: string, line: number, points: Points): Result<Endpo
     return ok({ kind: 'pin', part, pin: name });
   }
 
-  const failed = readAddress(token, line, points);
-  return failed.ok ? ok({ kind: 'cell', address: failed.value }) : failed;
+  // ここまで来た綴りは番地でも足でもない。案内だけを返す
+  // (番地としての読み直しは済んでいる)。
+  return fail(addressProblem(token, points), line);
 }
 
 /** 注釈の種類。図に重ねる印 3 つと、字を置くもの 2 つ。 */
@@ -404,7 +412,7 @@ function readMarkColor(token: string | undefined, form: string, line: number): R
 function readCircleNote(rest: readonly string[], line: number): Result<NoteSpec> {
   const [target, colorToken, ...extra] = rest;
   if (target === undefined || extra.length > 0) return fail(`circle は ${CIRCLE_FORM} で書きます`, line);
-  if (!isReferenceable(target)) return fail(notReferenceable(target), line);
+  if (!isNoteTarget(target)) return fail(notReferenceable(target), line);
 
   const color = readMarkColor(colorToken, `circle は ${CIRCLE_FORM}`, line);
   return color.ok ? ok({ kind: 'circle', target, color: color.value, line }) : color;
@@ -438,15 +446,22 @@ function readArrowNote(rest: readonly string[], line: number): Result<NoteSpec> 
   if (fromToken === undefined || toToken === undefined || extra.length > 0) {
     return fail(`arrow は ${ARROW_FORM} で書きます`, line);
   }
-  if (!isReferenceable(fromToken)) return fail(notReferenceable(fromToken), line);
-  if (!isReferenceable(toToken)) return fail(notReferenceable(toToken), line);
+  if (!isNoteTarget(fromToken)) return fail(notReferenceable(fromToken), line);
+  if (!isNoteTarget(toToken)) return fail(notReferenceable(toToken), line);
 
   const color = readMarkColor(colorToken, `arrow は ${ARROW_FORM}`, line);
   return color.ok ? ok({ kind: 'arrow', from: fromToken, to: toToken, color: color.value, line }) : color;
 }
 
+/**
+ * 印と指し棒の指し先になれる綴りか。**部品 ID か番地**のどちらか。
+ * 交点の間の番地 (`a_1.5`) は `.` を含むので、部品 ID の字種だけでは足りない。
+ */
+const isNoteTarget = (token: string): boolean => isReferenceable(token) || parseAddress(token) !== null;
+
 const notReferenceable = (token: string): string =>
-  `${safeToken(token)} は部品 ID にも番地にもなりません (英数字と _ - だけの ${LIMITS.idLength} 文字まで)`;
+  `${safeToken(token)} は部品 ID にも番地にもなりません`
+  + ` (部品 ID は英数字と _ - だけの ${LIMITS.idLength} 文字まで、番地は a1 / a_1.5)`;
 
 /**
  * `source a6 blue tiny` を読む。中身はフェンス自身から作るので、

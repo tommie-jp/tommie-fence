@@ -31,15 +31,15 @@ style:
 ```circuit
 title: 図02 pitch と wire-width
 parts:
-  IN:  port a1
-  R1:  resistor a1 a2 10k
-  C1:  capacitor a2 b2 100n
-  OUT: port a3
-  G1:  ground b2
+  IN:  port b1
+  R1:  resistor b1 b3 10k
+  C1:  capacitor b3 d3 100n
+  OUT: port b5
+  G1:  ground d3
 wires:
-  - a2 -- a3
+  - b3 -- b5
 notes:
-  - source a4 blue
+  - source b7 blue
 style:
   grid: on
   pitch: 1.2

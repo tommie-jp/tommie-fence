@@ -88,7 +88,10 @@ const fractionText = (value: number): string => {
  * **読んだときと同じ綴りに戻る**ことが、ネットの名前とエラー文の拠りどころ。
  */
 export function formatAddress(address: Address): string {
-  const row = round(address.row);
+  // 行は必ず a〜z に収める。parseAddress は範囲を見ているが、この綴りは
+  // TeX の座標名にもなるので、万一はみ出しても `{` のような字を出さない
+  // (**TeX には検証済みの形しか渡さない**という約束の側で守る)。
+  const row = Math.min(LAST_ROW, Math.max(0, round(address.row)));
   const column = round(address.col + 1);
   const letter = String.fromCharCode(FIRST_LETTER + Math.floor(row));
 
@@ -107,30 +110,48 @@ export function formatAddress(address: Address): string {
  */
 export function addressHint(text: string): string | null {
   const lowered = text.toLowerCase();
-  if (lowered.includes('/')) return `分数では書けません (${LIMITS.addressDecimals} 桁までの小数で書きます。1/4 なら .25)`;
+  // 番地のつもりで書かれた綴りにだけ返す。`vin/2` のような書き間違いに
+  // 分数の話をしても、直す手がかりにならない。
+  if (!/^[a-z][0-9./_]*$/.test(lowered)) return null;
 
-  const decimals = /^([a-z])([0-9]{1,3})\.([0-9]+)$/.exec(lowered);
+  // 分数の話をするのは、交点の間を書こうとした綴り (`_` がある) にだけ。
+  if (lowered.includes('/') && lowered.includes('_')) {
+    return `分数では書けません (${LIMITS.addressDecimals} 桁までの小数で書きます。1/4 なら .25)`;
+  }
+  if (lowered.includes('/')) return null;
+
+  const decimals = new RegExp(`^([a-z])([0-9]{1,3})\\.([0-9]+)$`).exec(lowered);
   if (decimals) {
     const [, letter = '', digits = '', step = ''] = decimals;
     return step.length > LIMITS.addressDecimals
       ? `番地の小数は ${LIMITS.addressDecimals} 桁までです`
-      : `交点の間は _ で行と列を切ります (${letter}_${digits}.${step})`;
+      : suggest(`${letter}_${digits}.${step}`, '交点の間は _ で行と列を切ります');
   }
 
-  const underscored = /^([a-z])([0-9]{1,3})_([0-9]{1,2})$/.exec(lowered);
+  const underscored = new RegExp(`^([a-z])([0-9]{1,3})_([0-9]{1,${LIMITS.addressDecimals}})$`).exec(lowered);
   if (underscored) {
     const [, letter = '', digits = '', step = ''] = underscored;
-    return `列の小数は . で書きます (${letter}_${digits}.${step})`;
+    return suggest(`${letter}_${digits}.${step}`, '列の小数は . で書きます');
   }
 
   const plain = /^([a-z])(?:\.0+)?_([0-9]{1,3})(?:\.0+)?$/.exec(lowered);
   if (plain) {
     const [, letter = '', digits = ''] = plain;
-    return `交点の上なら ${letter}${digits} と書きます (_ は交点の間を書くときだけ)`;
+    return suggest(`${letter}${digits}`, '交点の上なら _ は要りません', '_ は交点の間を書くときだけ');
   }
 
   return null;
 }
+
+/**
+ * 直し方の案内。**綴りを返すのは、その綴りが通るときだけ**。
+ * 言われたとおりに直しても通らない案内は、自己修正のループを空回りさせる
+ * (`a0.5` を `a_0.5` にしても、1 より小さい列は無いので通らない)。
+ */
+function suggest(spelling: string, lead: string, fallback = lead): string | null {
+  return parseAddress(spelling) === null ? null : `${lead} (${spelling}。${fallback})`;
+}
+
 
 /**
  * TikZ の座標に付ける名前。**`.` と `_` を綴りから外す**。
@@ -158,8 +179,11 @@ export const toPoint = (address: Address, pitch: number): Point => ({
  *
  * 交点の間の番地は 1/100 刻みの小数なので、掛け算の答えが 2 進小数に収まらない。
  * ちょうど線の上に乗っている点でも外積が 1e-14 ほど残り、**厳密に 0 かで見ると
- * 図では触れて見えるのにネットリストだけが割れる**。番地の刻みは 0.01 なので、
- * 意味のある差 (0.01 の差) とはこの値で十分に離れている。
+ * 図では触れて見えるのにネットリストだけが割れる**。
+ *
+ * 絶対値で決め打てるのは、図の大きさに上限があるため。番地は 26 行 × 99 列
+ * までなので、外積も内積も 1e4 を超えず、丸めの残りは 1e-12 に届かない。
+ * 意味のある差 (番地の刻み 0.01 と、その積) はこの値よりずっと大きい。
  */
 const EPSILON = 1e-9;
 

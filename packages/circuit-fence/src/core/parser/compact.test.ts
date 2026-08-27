@@ -637,3 +637,25 @@ describe('addresses between the cells', () => {
     expect(messageOf('resistor a_1 a3').message).toContain('a1');
   });
 });
+
+describe('交点の間の番地を書ける場所', () => {
+  const noteOf = (text: string) => {
+    const result = parseNoteLine(text, 3);
+    if (!result.ok) throw new Error(`読めませんでした: ${result.error.message}`);
+    return result.value;
+  };
+
+  test('circles a cell between the crossings, which is an address like any other', () => {
+    expect(noteOf('circle a_1.5')).toMatchObject({ kind: 'circle', target: 'a_1.5' });
+  });
+
+  test('points an arrow from and to a cell between the crossings', () => {
+    expect(noteOf('arrow a.5_1 R1')).toMatchObject({ kind: 'arrow', from: 'a.5_1', to: 'R1' });
+  });
+
+  test('still refuses a target that is neither a part nor an address', () => {
+    const result = parseNoteLine('circle a$1', 3);
+
+    expect(result.ok).toBe(false);
+  });
+});

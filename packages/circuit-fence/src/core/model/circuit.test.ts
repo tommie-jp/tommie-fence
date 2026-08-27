@@ -713,3 +713,47 @@ describe('番地の名前 (points)', () => {
     expect(circuit.notes).toHaveLength(1);
   });
 });
+
+describe('交点の間の番地と足の読み分け', () => {
+  test('tells the writer which spelling to use when a pin could also read as an address', () => {
+    // 部品 ID に `_` を使えるので、`U_1.5` は「U_1 の 5 番ピン」とも
+    // 「番地 u_1.5」とも読める。黙ってどちらかに寄せると、線は 20 行も
+    // 離れたところへ引かれ、ネットリストからは足が消える。
+    // 図は描く (つながりは変えない)。読み分けを頼むだけ — 指し先が両取りの
+    // 注釈と同じ扱い。
+    const { notices } = build(
+      'parts:',
+      '  U_1: dip14 c3 74HC00',
+      '  R1: resistor a1 a3 1k',
+      'wires:',
+      '  - U_1.5 -- a3',
+    );
+
+    expect(notices).toHaveLength(1);
+    expect(notices[0]?.message).toContain('U_1.5');
+  });
+
+  test('says nothing when the part has no such pin, because then it is only an address', () => {
+    const { errors, notices } = build(
+      'parts:',
+      '  R_1: resistor a1 a3 1k',
+      '  R2: resistor b1 b3 1k',
+      'wires:',
+      '  - r_1.5 -- b3',
+    );
+
+    expect(errors).toEqual([]);
+    expect(notices).toEqual([]);
+  });
+
+  test('points at the separator when a decimal is written without one in a wire', () => {
+    const { errors } = build(
+      'parts:',
+      '  R1: resistor a1 a3 1k',
+      'wires:',
+      '  - a1.5 -- a3',
+    );
+
+    expect(errors[0]?.message).toContain('a_1.5');
+  });
+});

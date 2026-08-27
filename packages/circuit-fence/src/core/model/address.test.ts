@@ -244,3 +244,26 @@ describe('addressHint', () => {
     expect(addressHint('a1')).toBeNull();
   });
 });
+
+describe('addressHint が返す綴り', () => {
+  test('never hands back a spelling that fails to parse', () => {
+    // 言われたとおりに直しても通らない案内は、自己修正のループを空回りさせる。
+    for (const written of ['a0.5', 'a100.5', 'a1_0', 'a_0', 'z1.5', 'a1.999']) {
+      const hint = addressHint(written);
+      if (hint === null) continue;
+      const suggested = /[a-z](?:\.\d+)?_?\d+(?:\.\d+)?/.exec(hint.replace(/^[^(]*\(/, ''));
+      if (suggested === null) continue;
+      expect(parseAddress(suggested[0])).not.toBeNull();
+    }
+  });
+
+  test('says nothing about fractions for text that is not an address at all', () => {
+    // `points:` の名前を書き間違えた人に分数の話をしても、直す手がかりにならない。
+    expect(addressHint('vin/2')).toBeNull();
+    expect(addressHint('R1/2')).toBeNull();
+  });
+
+  test('keeps the decimals it allows in step with the limit', () => {
+    expect(addressHint(`a1_${'1'.repeat(LIMITS.addressDecimals)}`)).not.toBeNull();
+  });
+});

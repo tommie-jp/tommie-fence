@@ -70,6 +70,7 @@ wires:
   - U1.8 -| a4
 notes:
   - text f1 blue: "U1: dip8 c2 NE555"
+  - source a6 blue
 style:
   grid: on
   pitch: 1
@@ -92,6 +93,7 @@ wires:
   - S1.2 -| c4
 notes:
   - text d1 blue: "S1: spdt b2"
+  - source a6 blue
 style:
   grid: on
 ```

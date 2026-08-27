@@ -422,6 +422,7 @@ wires:
   - U1.8 -| a4
 notes:
   - text f1 blue: "U1: dip8 c2 NE555"
+  - source a6 blue
 style:
   grid: on
   pitch: 1
