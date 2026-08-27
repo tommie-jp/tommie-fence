@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import {
   PART_ALIASES, PART_TYPES,
-  closestPartType, lookupPartType, lookupPin, partTypeNames, pinHint, resolvePartTypeName,
+  closestPartType, lookupPartType, lookupPin, optionsFor, partTypeNames, pinHint,
+  resolvePartTypeName, symbolFor,
 } from './parts.ts';
 
 describe('PART_TYPES', () => {
@@ -345,5 +346,35 @@ describe('そのほかの多端子', () => {
     expect(lookupPin(type!, 'in')).toBe('in');
     expect(lookupPin(type!, '1')).toBe('out 1');
     expect(lookupPin(type!, '2')).toBe('out 2');
+  });
+});
+
+/**
+ * 約束 7 の見張り。フェンス向けと `.tex` 向けの違いは、フェンス側の制約が
+ * 強いる分だけにする — それ以外を変えると、プレビューで位置を確かめてから
+ * 書き出す使い方が壊れる。
+ *
+ * 表に 1 行足すだけで的ごとの違いを増やせてしまうので、**違う種類の顔ぶれ
+ * そのもの**を押さえる。増やすときはここを直すことになり、そのとき理由を
+ * 書き残すことになる。
+ */
+describe('フェンス向けと .tex 向けの違い', () => {
+  const named = partTypeNames();
+
+  test('only the opamp draws a different symbol', () => {
+    // フェンスの TeX には op amp の中の小さな ± のフォントが無い (実測)。
+    const different = named.filter((name) => symbolFor(name, 'fence') !== symbolFor(name, 'latex'));
+
+    expect(different).toEqual(['opamp']);
+  });
+
+  test('only the variable resistor carries different options', () => {
+    // circuitikz 1.0 だけ矢先が左下を向く。出る図は同じ形になるので、
+    // 「3 つの違い」には数えない (綴りだけが違う)。
+    const different = named.filter(
+      (name) => optionsFor(name, 'fence').join() !== optionsFor(name, 'latex').join(),
+    );
+
+    expect(different).toEqual(['resistor-var']);
   });
 });
