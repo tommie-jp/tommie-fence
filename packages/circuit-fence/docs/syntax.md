@@ -10,14 +10,14 @@ Markdown の ` ```circuit ` フェンスに YAML を書くと、Markdown プレ�
 title: 回路図01 circuit フェンスの書き方
 parts:
   IN:  port a1
-  R1:  resistor a1 a3 10k
-  C1:  capacitor a3 c3 100n
-  OUT: port a4
-  G1:  ground c3
+  R1:  resistor a1 a2 10k
+  C1:  capacitor a2 b2 100n
+  OUT: port a3
+  G1:  ground b2
 wires:
-  - a3 -- a4
+  - a2 -- a3
 notes:
-  - source a5 blue
+  - source a4 blue
 style:
   grid: on
 ```
@@ -45,14 +45,14 @@ style:
 title: 回路図02 番地に名前を付ける
 points:
   vin: a1
-  fb:  c3
+  fb:  b2
 parts:
   IN: port vin
-  R1: resistor vin a3
-  C1: capacitor a3 fb
+  R1: resistor vin a2
+  C1: capacitor a2 fb
   G1: ground fb
 notes:
-  - source a4 blue
+  - source a3 blue
 style:
   grid: on
 ```
