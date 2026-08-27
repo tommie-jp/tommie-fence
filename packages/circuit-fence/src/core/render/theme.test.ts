@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { NOTE_COLORS } from '../notes.ts';
 import { EMPTY_STYLE } from '../parser/style.ts';
 import {
   DEFAULT_THEME_NAME, THEME_NAMES, recolorSvg, resizeSvg, resolveTheme, scaleSvgToText,
@@ -139,5 +140,58 @@ describe('scaleSvgToText', () => {
 
   test('leaves a drawing it cannot measure alone', () => {
     expect(scaleSvgToText('<svg viewBox="0 0 80 40"></svg>')).toBe('<svg viewBox="0 0 80 40"></svg>');
+  });
+});
+
+describe('recolorSvg の mono', () => {
+  const mono = resolveTheme({ ...EMPTY_STYLE, theme: 'mono' }).theme;
+  const dark = resolveTheme({ ...EMPTY_STYLE, theme: 'dark' }).theme;
+  const noted = svg(`<path stroke="${NOTE_COLORS.red}"/><text fill="${NOTE_COLORS.blue}">あ</text>`);
+
+  test('paints the notes with the ink too, because mono means one colour', () => {
+    // 「黒一色」と説明している以上、注釈だけ色が残ると説明が嘘になる
+    // (資料に貼る・印刷するためのテーマなので、色が漏れると困る)。
+    const painted = recolorSvg(noted, mono);
+
+    expect(painted).not.toContain(NOTE_COLORS.red);
+    expect(painted).not.toContain(NOTE_COLORS.blue);
+    expect(painted).toContain(`stroke="${mono.ink}"`);
+    expect(painted).toContain(`fill="${mono.ink}"`);
+  });
+
+  test('leaves the notes coloured in every other theme', () => {
+    const painted = recolorSvg(noted, dark);
+
+    expect(painted).toContain(NOTE_COLORS.red);
+    expect(painted).toContain(NOTE_COLORS.blue);
+  });
+
+  test('still paints the circuit with the ink the writer chose', () => {
+    const painted = recolorSvg(svg('<path stroke="#000"/>'), { ...mono, ink: '#333333' });
+
+    expect(painted).toContain('stroke="#333333"');
+  });
+});
+
+describe('recolorSvg の塗り替えは 1 回で決まる', () => {
+  // 順に置き換えると、**塗り替えた色をもう一度拾ってしまう**。
+  // ink に白を書いた図では、回路も注釈も次の行で地の色に塗り直されて消える。
+  const inverted = resolveTheme({
+    ...EMPTY_STYLE, theme: 'mono', inkColor: '#ffffff', paperColor: '#000000',
+  }).theme;
+
+  test('paints the circuit with the ink even when the ink is the other theme colour', () => {
+    expect(recolorSvg(svg('<path stroke="#000000"/>'), inverted)).toContain('stroke="#ffffff"');
+  });
+
+  test('paints a note with the ink without painting it again', () => {
+    // 根に足す塗りも同じ色なので、字のほうを名指しで見る。
+    const painted = recolorSvg(svg(`<text fill="${NOTE_COLORS.red}">あ</text>`), inverted);
+
+    expect(painted).toContain('<text fill="#ffffff">あ</text>');
+  });
+
+  test('still paints the hollow terminal with the paper colour', () => {
+    expect(recolorSvg(svg('<g fill="#fff"/>'), inverted)).toContain('fill="#000000"');
   });
 });

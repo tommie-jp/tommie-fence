@@ -1,4 +1,4 @@
-import { DEFAULT_NOTE_SIZE, notePt } from '../notes.ts';
+import { DEFAULT_NOTE_SIZE, NOTE_COLORS, notePt } from '../notes.ts';
 import type { StyleSpec } from '../types.ts';
 
 /**
@@ -22,6 +22,13 @@ export type Theme = {
    */
   readonly grid: string;
   /**
+   * 注釈の色も ink に潰すか。**mono だけ true**。
+   * 「黒一色」と説明している以上、注釈だけ色が残ると説明が嘘になる
+   * (資料に貼る・印刷するためのテーマなので、色が漏れると困る)。
+   * 色を使いたい図では mono を選ばない、という分け方にしてある。
+   */
+  readonly monochrome: boolean;
+  /**
    * 地の色をエディタに合わせてよいか。
    * テーマを選ばず、地の色も書かなかったときだけ true。
    * 色を書いた図まで CSS で塗り替えると、書いた指定が効かなくなる。
@@ -34,15 +41,25 @@ export type Theme = {
  * そのまま拾うので、明るいテーマでも暗いテーマでも読める。
  */
 const AUTO: Theme = {
-  name: 'auto', ink: 'currentColor', paper: '#ffffff', grid: '#8b949e', followsEditor: true,
+  name: 'auto', ink: 'currentColor', paper: '#ffffff', grid: '#8b949e',
+  monochrome: false, followsEditor: true,
 };
 
 const THEMES: Record<string, Theme> = {
   auto: AUTO,
-  light: { name: 'light', ink: '#1f2328', paper: '#ffffff', grid: '#8c959f', followsEditor: false },
-  dark: { name: 'dark', ink: '#e6edf3', paper: '#0d1117', grid: '#7d8590', followsEditor: false },
-  /** 資料に貼る用。プレビューのテーマに関わらず黒一色。 */
-  mono: { name: 'mono', ink: '#000000', paper: '#ffffff', grid: '#767676', followsEditor: false },
+  light: {
+    name: 'light', ink: '#1f2328', paper: '#ffffff', grid: '#8c959f',
+    monochrome: false, followsEditor: false,
+  },
+  dark: {
+    name: 'dark', ink: '#e6edf3', paper: '#0d1117', grid: '#7d8590',
+    monochrome: false, followsEditor: false,
+  },
+  /** 資料に貼る用。プレビューのテーマに関わらず黒一色 — 注釈の色も潰す。 */
+  mono: {
+    name: 'mono', ink: '#000000', paper: '#ffffff', grid: '#767676',
+    monochrome: true, followsEditor: false,
+  },
 };
 
 export const THEME_NAMES: readonly string[] = Object.keys(THEMES);
@@ -64,6 +81,7 @@ export function resolveTheme(style: StyleSpec): ThemeResolution {
       ink: style.inkColor ?? base.ink,
       paper: style.paperColor ?? base.paper,
       grid: style.gridColor ?? base.grid,
+      monochrome: base.monochrome,
       // 地の色を書いてあるなら、その色のままにする。
       followsEditor: base.followsEditor && style.paperColor === null,
     },
@@ -85,11 +103,36 @@ export function resolveTheme(style: StyleSpec): ThemeResolution {
  * 地に沈んで見えなくなる。
  */
 export function recolorSvg(svg: string, theme: Theme): string {
+  const paint = paletteOf(theme);
+
   return svg
-    .replace(/(stroke|fill)="#000(?:000)?"/g, `$1="${theme.ink}"`)
-    .replace(/(stroke|fill)="#fff(?:fff)?"/g, `$1="${theme.paper}"`)
-    .replace(/(stroke|fill)="gray"/g, `$1="${theme.grid}"`)
+    // **1 回で決める**。順に置き換えると、塗り替えた色を次の行がもう一度拾う
+    // (ink に白を書いた図では、回路も注釈も次の行で地の色に塗り直されて消えた)。
+    .replace(/\b(stroke|fill)="([^"]+)"/g, (whole, attribute: string, color: string) => {
+      const painted = paint.get(color);
+      return painted === undefined ? whole : `${attribute}="${painted}"`;
+    })
     .replace(/^(\s*<svg\b)(?![^>]*\sfill=)/, `$1 fill="${theme.ink}"`);
+}
+
+/**
+ * 塗り替えの表。**ここに載っていない色には触らない** (`none` を含む)。
+ *
+ * mono だけは注釈のパレットも ink に潰す。図は 1 回描いてどのテーマでも
+ * 使い回す作りなので、TeX に焼き込まれた注釈の色もここで塗り替える。
+ */
+function paletteOf(theme: Theme): Map<string, string> {
+  const paint = new Map<string, string>([
+    ['#000', theme.ink],
+    ['#000000', theme.ink],
+    ['#fff', theme.paper],
+    ['#ffffff', theme.paper],
+    ['gray', theme.grid],
+  ]);
+  if (!theme.monochrome) return paint;
+
+  for (const color of Object.values(NOTE_COLORS)) paint.set(color, theme.ink);
+  return paint;
 }
 
 const WIDTH = /(<svg[^>]*?)\swidth="([\d.]+)"([^>]*?)\sheight="([\d.]+)"/;
