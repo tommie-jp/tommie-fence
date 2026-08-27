@@ -422,8 +422,6 @@ style:
   grid: on
 ```
 
-![注釈](../examples/out/12-notes-1.png)
-
 ### 印 — `- circle 指し先 [色]`
 
 指し先は**部品 ID か番地**。部品を指すと記号の真ん中に、番地を指すと
@@ -705,7 +703,7 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - source a6 blue
+  - source a5 blue
 style:
   grid: on
   grid-to: d5
@@ -749,8 +747,6 @@ style:
   grid: on
   stamp: on
 ```
-
-![版の刻印](../examples/out/09-style-6.png)
 
 置き場所は番地からではなく、**図がどこまで広がったか**から決まる。
 上の図で刻印が書き出しの右下に付いているのは、書き出しがそこまで
