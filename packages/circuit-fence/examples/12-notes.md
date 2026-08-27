@@ -52,12 +52,12 @@ notes:
   - circle R2 blue
   - circle R3 green
   - circle R4 orange
-  - text b1 red large: red
-  - text b5 blue large: blue
+  - text b2 red large center: red
+  - text b6 blue large center: blue
   - text c1 blue large: "R1: resistor a1 a3"
   - text c5 blue large: "R2: resistor a5 a7"
-  - text e1 green large: green
-  - text e5 orange large: orange
+  - text e2 green large center: green
+  - text e6 orange large center: orange
   - text f1 blue large: "R3: resistor d1 d3"
   - text f5 blue large: "R4: resistor d5 d7"
 style:
