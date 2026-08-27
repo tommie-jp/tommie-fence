@@ -22,7 +22,15 @@ export const NOTE_COLORS = {
   orange: '#d29922',
 } as const;
 
-export const NOTE_COLOR_NAMES: readonly string[] = Object.keys(NOTE_COLORS);
+/**
+ * 図の線と同じ色で描くときの名前。**パレットには入れない** — 値がテーマの
+ * 塗り替えの目印そのもの (`#000000`) で、色の表は「目印とぶつからないこと」を
+ * 見張っているため。ink はそこにわざと乗せて、図の一部として描く注釈
+ * (電流の矢を指し棒で描くなど) をほかの線と同じ色で出す。
+ */
+export const NOTE_INK_NAME = 'ink';
+
+export const NOTE_COLOR_NAMES: readonly string[] = [...Object.keys(NOTE_COLORS), NOTE_INK_NAME];
 
 /**
  * 色を書かなかった注釈の色。**テーマが塗り替える黒**をそのまま置く
@@ -38,7 +46,7 @@ export const NOTE_INK = '#000000';
  * Object.prototype の名前が当たり、色でない値が色として通ってしまう。
  */
 export const noteColor = (name: string | null): string | null => {
-  if (name === null) return NOTE_INK;
+  if (name === null || name === NOTE_INK_NAME) return NOTE_INK;
   return Object.hasOwn(NOTE_COLORS, name) ? NOTE_COLORS[name as keyof typeof NOTE_COLORS] : null;
 };
 

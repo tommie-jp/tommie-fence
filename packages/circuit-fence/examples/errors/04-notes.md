@@ -40,7 +40,7 @@ circuit: 19 行目: YAML の構文エラー: Nested mappings are not allowed in 
 ## 指し先と色と字
 
 印の指し先は部品 ID か番地。どちらでもない名前は行番号つきで返る。
-色はパレットの 4 つだけ。字に使えない字も、使える字を添えて返す。
+色はパレットの 4 つと、図の線と同じ色の `ink`。字に使えない字も、使える字を添えて返す。
 
 ```circuit
 title: 図02 指し先と色と字
@@ -67,7 +67,7 @@ notes:
 帯にはこう出る。
 
 ```text
-circuit: 51 行目: 注釈の色 rainbow は知りません (red / blue / green / orange が使えます)
+circuit: 51 行目: 注釈の色 rainbow は知りません (red / blue / green / orange / ink が使えます)
 circuit: 52 行目: 注釈の文字に使えない文字があります (英数字と . + - / ( ) _ % : 、日本語、µ Ω ° が使えます)
 circuit: 50 行目: 注釈の指す先 Rload がありません (部品 ID か番地で書きます)
 ```
@@ -111,7 +111,7 @@ notes:
 帯にはこう出る。
 
 ```text
-circuit: 92 行目: 注釈の言葉 enormous は知りません (色: red / blue / green / orange、大きさ: tiny / small / normal / large / huge、寄せ: left / center / right、太字: bold が使えます)
+circuit: 92 行目: 注釈の言葉 enormous は知りません (色: red / blue / green / orange / ink、大きさ: tiny / small / normal / large / huge、寄せ: left / center / right、太字: bold が使えます)
 circuit: 93 行目: 注釈の大きさが二重に書かれています (tiny と huge)
 circuit: 94 行目: circle は 「- circle 部品IDか番地 [色]」 で書きます (huge は字の注釈にだけ書けます)
 circuit: 95 行目: 指し棒の起点と終点が同じところです (R1)

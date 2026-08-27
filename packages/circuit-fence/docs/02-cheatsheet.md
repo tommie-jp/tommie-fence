@@ -104,7 +104,7 @@ style:             # 任意。見た目
 | `- text 番地 [語]: 文字` | 図に重ねる字 |
 | `- source 番地 [語]` | フェンスの中身そのもの |
 
-- 語は順不同。色 `red` / `blue` / `green` / `orange`、
+- 語は順不同。色 `red` / `blue` / `green` / `orange`、図の線と同じ色は `ink`、
   大きさ `tiny` / `small` / `normal` / `large` / `huge`、
   寄せ `left` / `center` / `right`、太字 `bold`
 - 行送り `tight` / `loose` は `source` にだけ書ける (既定はその中間)

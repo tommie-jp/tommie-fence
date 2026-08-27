@@ -31,6 +31,13 @@ describe('注釈の色', () => {
   test('使える色を並べられる', () => {
     expect(NOTE_COLOR_NAMES).toContain('red');
     expect(NOTE_COLOR_NAMES).toContain('blue');
+    expect(NOTE_COLOR_NAMES).toContain('ink');
+  });
+
+  // 図の一部として描きたい矢や丸は、パレットの色ではなく図の線と同じ色で出したい。
+  // ink は**わざと**テーマの塗り替えが目印にしている黒を返す (下の表とは逆の狙い)。
+  test('ink は図の線と同じ色になる', () => {
+    expect(noteColor('ink')).toBe(NOTE_INK);
   });
 
   // render/theme.ts は #000 / #fff / gray を目印にして図の色を塗り替える。
