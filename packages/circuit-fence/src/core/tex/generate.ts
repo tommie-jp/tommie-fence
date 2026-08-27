@@ -474,6 +474,12 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
       : `l2_=${labelOf(part.id)} and ${type.mark}`,
   );
   if (part.value !== null) options.push(`a^=${annotationOf(part.value, unitOf(part.type), target)}`);
+  // 電流の矢は from → to、電圧の + は from の側。**どちらも極性と同じ規則**
+  // (先に書いた番地が + 側) なので、書き手が覚えることは増えない。
+  // 綴りは 1.0 (フェンス) と 2023 (手元の LaTeX) の両方で同じ図になると実測済み。
+  if (part.current !== null) options.push(`i>^=${labelOf(part.current)}`);
+  // 値・電流と同じ側に出るので、並べて書けないことはパーサが弾いている。
+  if (part.voltage !== null) options.push(`v^>=${labelOf(part.voltage)}`);
 
   const drawn = `\\draw (${texNameOfAddress(part.from)}) to[${options.join(', ')}] (${texNameOfAddress(part.to)});`;
   if (type?.inner === undefined) return [drawn];

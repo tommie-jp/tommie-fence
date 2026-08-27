@@ -138,12 +138,26 @@ function readMultiTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
   return ok({ kind: 'multi-terminal', id, type, at: at.value, value, orientation, line });
 }
 
+/**
+ * 番地のあとに書ける `キー=字` の札。値と違って順番を決めない
+ * (見た目の語を順不同で読むのと同じ。書き手が並びを覚えなくてよい)。
+ */
+const PART_TAGS = { i: '電流', v: '電圧' } as const;
+type PartTag = keyof typeof PART_TAGS;
+
+const tagList = (): string =>
+  Object.entries(PART_TAGS)
+    .map(([key, name]) => `${key}= ${name}`)
+    .join(' と ');
+
+const isPartTag = (key: string): key is PartTag => Object.hasOwn(PART_TAGS, key);
+
 function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
   const { id, type, written, line, points } = head;
-  const [fromToken, toToken, value, ...extra] = rest;
+  const [fromToken, toToken, ...extra] = rest;
 
-  if (fromToken === undefined || toToken === undefined || extra.length > 0) {
-    return fail(`${safeToken(written)} は「種類 番地 番地 [値]」で書きます`, line);
+  if (fromToken === undefined || toToken === undefined) {
+    return fail(`${safeToken(written)} は「種類 番地 番地 [値] [i=字] [v=字]」で書きます`, line);
   }
 
   const from = readAddress(fromToken, line, points);
@@ -154,11 +168,62 @@ function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
   if (isSameAddress(from.value, to.value)) {
     return fail(`${safeToken(written)} の両端が同じ番地です (${formatAddress(from.value)})`, line);
   }
-  if (value !== undefined && [...value].length > LIMITS.valueLength) {
-    return fail(`値が長すぎます (${LIMITS.valueLength} 文字まで)`, line);
+
+  const tags: { -readonly [K in PartTag]: string | null } = { i: null, v: null };
+  let value: string | null = null;
+
+  for (const token of extra) {
+    // `=` を含む札は先に拾う。値には `=` を書けない (circuitikz がオプションの
+    // 区切りとして読むため) ので、値と札が紛れることはない。
+    const at = token.indexOf('=');
+    if (at < 0) {
+      if (value !== null) {
+        return fail(`${safeToken(written)} は「種類 番地 番地 [値] [i=字] [v=字]」で書きます`, line);
+      }
+      const checked = checkLabelLength(token, '値', line);
+      if (checked !== null) return checked;
+      value = token;
+      continue;
+    }
+
+    const key = token.slice(0, at);
+    const label = token.slice(at + 1);
+    if (!isPartTag(key)) {
+      // `=` は safeToken が落とす字なので、鍵だけ通して等号は外で足す。
+      return fail(`${safeToken(key)}= は知りません (${tagList()} が使えます)`, line);
+    }
+    if (tags[key] !== null) return fail(`${key}= を 2 回書いています`, line);
+    if (label === '') return fail(`${key}= の字がありません`, line);
+    const checked = checkLabelLength(label, `${key}= の字`, line);
+    if (checked !== null) return checked;
+    tags[key] = label;
   }
 
-  return ok({ kind: 'two-terminal', id, type, from: from.value, to: to.value, value: value ?? null, line });
+  // 値・電流・電圧は circuitikz が図の同じ側に出す (実機で確認)。
+  // 重ねて描くと字が潰れるので、書けた行のまま黙って壊さずに理由を返す。
+  if (tags.v !== null && (value !== null || tags.i !== null)) {
+    const other = value !== null ? '値' : 'i= の字';
+    return fail(`v= の字と${other}は図の同じ側に出ます (どちらか片方にしてください)`, line);
+  }
+
+  return ok({
+    kind: 'two-terminal',
+    id,
+    type,
+    from: from.value,
+    to: to.value,
+    value,
+    current: tags.i,
+    voltage: tags.v,
+    line,
+  });
+}
+
+/** 図に出る字の長さは値と同じ上限で見る (組み方が同じなので、はみ出し方も同じ)。 */
+function checkLabelLength(text: string, subject: string, line: number): Result<PartSpec> | null {
+  return [...text].length > LIMITS.valueLength
+    ? fail(`${subject}が長すぎます (${LIMITS.valueLength} 文字まで)`, line)
+    : null;
 }
 
 function readOneTerminal(head: PartHead, rest: string[]): Result<PartSpec> {

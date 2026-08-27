@@ -23,12 +23,59 @@ describe('parseCompactPart', () => {
       from: { row: 0, col: 0 },
       to: { row: 0, col: 2 },
       value: '10k',
+      current: null,
+      voltage: null,
       line: 2,
     });
   });
 
   test('reads a two terminal part written without a value', () => {
     expect(partOf('capacitor a3 c3')).toMatchObject({ type: 'capacitor', value: null });
+  });
+
+  test('reads the current arrow written after the addresses', () => {
+    expect(partOf('resistor a1 a3 i=i')).toMatchObject({ value: null, current: 'i', voltage: null });
+  });
+
+  test('reads the voltage sign written after the addresses', () => {
+    expect(partOf('capacitor a1 c1 v=vC')).toMatchObject({ value: null, voltage: 'vC', current: null });
+  });
+
+  test('reads a value and a current arrow together, in either order', () => {
+    expect(partOf('resistor a1 a3 10k i=i1')).toMatchObject({ value: '10k', current: 'i1' });
+    expect(partOf('resistor a1 a3 i=i1 10k')).toMatchObject({ value: '10k', current: 'i1' });
+  });
+
+  test('names the key it does not know and lists the ones it does', () => {
+    const error = messageOf('resistor a1 a3 x=1');
+
+    expect(error.line).toBe(2);
+    expect(error.message).toContain('x=');
+    expect(error.message).toContain('i=');
+    expect(error.message).toContain('v=');
+  });
+
+  test('rejects the same key written twice', () => {
+    expect(messageOf('resistor a1 a3 i=i1 i=i2').message).toContain('i=');
+  });
+
+  test('rejects a key written without its label', () => {
+    expect(messageOf('resistor a1 a3 i=').message).toContain('i=');
+  });
+
+  test('rejects a voltage written together with a value (they land on the same side)', () => {
+    const error = messageOf('capacitor a1 c1 100u v=vC');
+
+    expect(error.line).toBe(2);
+    expect(error.message).toContain('v=');
+  });
+
+  test('rejects a voltage written together with a current (they land on the same side)', () => {
+    expect(messageOf('resistor a1 a3 i=i v=v').message).toContain('v=');
+  });
+
+  test('rejects a label longer than the limit', () => {
+    expect(messageOf(`resistor a1 a3 i=${'x'.repeat(LIMITS.valueLength + 1)}`).message).toContain('長すぎ');
   });
 
   test('reads a one terminal part', () => {

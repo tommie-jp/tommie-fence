@@ -106,6 +106,26 @@ describe('generateTex', () => {
     expect(generate('parts:', '  R_1: resistor a1 a3').tex).toContain('l_=$R_{\\_1}$');
   });
 
+  test('draws the current arrow from the address written first', () => {
+    // `i>` は from → to の向き。番地を入れ替えれば矢も返る (実機で確認)。
+    expect(generate('parts:', '  R1: resistor a1 a3 i=i').tex).toContain('i>^=$i$');
+  });
+
+  test('subscripts the current label the same way an id is subscripted', () => {
+    expect(generate('parts:', '  R1: resistor a1 a3 i=i1').tex).toContain('i>^=$i_{1}$');
+  });
+
+  test('draws the voltage with + on the address written first', () => {
+    // `v^>` は from が +。極性の規則 (先に書いた番地が + 側) と同じ向き。
+    expect(generate('parts:', '  C1: capacitor a1 c1 v=vC').tex).toContain('v^>=$v_{C}$');
+  });
+
+  test('draws the same arrows in the tex it writes out', () => {
+    const tex = generateLatex('parts:', '  R1: resistor a1 a3 i=i1').tex;
+
+    expect(tex).toContain('i>^=$i_{1}$');
+  });
+
   test('writes a value that carries its own unit as it was written', () => {
     expect(generate('parts:', '  R1: resistor a1 a3 1/2W').tex).toContain('a^=$\\mathrm{1/2W}$');
   });

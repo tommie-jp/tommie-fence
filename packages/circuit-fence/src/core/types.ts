@@ -48,6 +48,14 @@ export type TwoTerminalPart = {
   readonly from: Address;
   readonly to: Address;
   readonly value: string | null;
+  /**
+   * 電流の矢に添える字 (`i=i1` の `i1`)。**矢は from → to の向き**に描く。
+   * 回路の一員ではない (ネットにも黒丸にも数えない) が、部品に付いて動くので
+   * 注釈 (`notes:`) ではなく部品の一部として持つ。
+   */
+  readonly current: string | null;
+  /** 電圧の符号に添える字 (`v=vC` の `vC`)。**from が +**。向きの規則は極性と同じ。 */
+  readonly voltage: string | null;
   readonly line: number;
 };
 

@@ -32,6 +32,7 @@
 | [12-notes.md](12-notes.md) | `notes:` の印・枠・指し棒・字、色、大きさ、寄せ、日本語 |
 | [13-points.md](13-points.md) | `points:` (番地に名前を付ける) |
 | [14-half-step.md](14-half-step.md) | 交点の間の番地 (`a_1.5` `a.5_1`) |
+| [15-arrows.md](15-arrows.md) | 電流の矢と電圧の符号 (`i=` `v=`) |
 
 ## わざと壊してある例
 

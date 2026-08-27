@@ -9,7 +9,7 @@ import type { FenceDocument } from '../parser/parseFence.ts';
 import { isDrawable, isSourceDrawable } from '../tex/escape.ts';
 import { cellOf, nameOfEndpoint } from '../types.ts';
 import type {
-  ArrowNote, Endpoint, FenceError, MultiTerminalPart, NoteSpec, PartSpec, TexTarget, WireSpec,
+  ArrowNote, Endpoint, FenceError, MultiTerminalPart, NoteSpec, PartSpec, TexTarget, TwoTerminalPart, WireSpec,
 } from '../types.ts';
 
 /** 検証を通った図。ここから先 (ネットリスト導出・TeX 生成) は形を疑わない。 */
@@ -653,12 +653,28 @@ export function wireContacts(circuit: Circuit): WireContact[] {
  * (1 つでも素通りすると、そこから任意の TeX を書けてしまう)。
  */
 function checkPart(part: PartSpec, errors: FenceError[], target: TexTarget): PartSpec {
-  const checked = part.kind === 'multi-terminal' ? checkOrientation(part, errors) : part;
+  const oriented = part.kind === 'multi-terminal' ? checkOrientation(part, errors) : part;
+  const checked = oriented.kind === 'two-terminal' ? checkArrows(oriented, errors, target) : oriented;
   if (checked.kind === 'one-terminal' || checked.value === null) return checked;
   if (isDrawable(checked.value, target)) return checked;
 
   errors.push(fenceError(`部品 ${safeToken(checked.id)}: ${valueProblem(checked.value, target)}`, checked.line));
   return { ...checked, value: null };
+}
+
+/**
+ * 矢に添える字も値と同じ関門を通す。図に出る字は種類を問わず通す
+ * (1 つでも素通りすると、そこから任意の TeX を書けてしまう。約束 3)。
+ * 描けない字は**その字だけ落として部品と矢以外は残す** (値と同じ扱い)。
+ */
+function checkArrows(part: TwoTerminalPart, errors: FenceError[], target: TexTarget): TwoTerminalPart {
+  const check = (text: string | null, key: string): string | null => {
+    if (text === null || isDrawable(text, target)) return text;
+    errors.push(fenceError(`部品 ${safeToken(part.id)} の ${key}= : ${valueProblem(text, target)}`, part.line));
+    return null;
+  };
+
+  return { ...part, current: check(part.current, 'i'), voltage: check(part.voltage, 'v') };
 }
 
 /** 向きはオペアンプにしかない。ほかに書くと circuitikz が知らないキーになる。 */
