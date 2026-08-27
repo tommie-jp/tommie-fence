@@ -45,21 +45,21 @@ title: 回路図02 注釈の色
 parts:
   R1: resistor a1 a3
   R2: resistor a5 a7
-  R3: resistor a9 a11
-  R4: resistor a13 a15
+  R3: resistor d1 d3
+  R4: resistor d5 d7
 notes:
   - circle R1 red
   - circle R2 blue
   - circle R3 green
   - circle R4 orange
-  - text b1 red: red
-  - text b5 blue: blue
-  - text b9 green: green
-  - text b13 orange: orange
+  - text b1 red large: red
+  - text b5 blue large: blue
   - text c1 blue large: "R1: resistor a1 a3"
   - text c5 blue large: "R2: resistor a5 a7"
-  - text c9 blue large: "R3: resistor a9 a11"
-  - text c13 blue large: "R4: resistor a13 a15"
+  - text e1 green large: green
+  - text e5 orange large: orange
+  - text f1 blue large: "R3: resistor d1 d3"
+  - text f5 blue large: "R4: resistor d5 d7"
 style:
   grid: on
 ```
