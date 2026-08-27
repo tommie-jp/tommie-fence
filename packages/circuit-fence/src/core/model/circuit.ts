@@ -1,6 +1,6 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
-import { cornerOf, formatAddress, isSameAddress, parseAddress } from './address.ts';
+import { cornerOf, formatAddress, isNearlyZero, isSameAddress, parseAddress } from './address.ts';
 import { lookupPartType, lookupPin, pinAxis, pinHint } from '../parts.ts';
 import type { Address } from './address.ts';
 import { NO_POINTS } from '../parser/compact.ts';
@@ -247,7 +247,7 @@ function collinear(a: Segment, b: Segment): boolean {
   const cross = (cell: Address): number =>
     dx * (cell.row - a.from.row) - dy * (cell.col - a.from.col);
 
-  return cross(b.from) === 0 && cross(b.to) === 0;
+  return isNearlyZero(cross(b.from)) && isNearlyZero(cross(b.to));
 }
 
 /**
@@ -533,10 +533,14 @@ function liesOn(cell: Address, segment: Segment): boolean {
   const ex = cell.col - segment.from.col;
   const ey = cell.row - segment.from.row;
 
-  if (dx * ey - dy * ex !== 0) return false;
+  if (!isNearlyZero(dx * ey - dy * ex)) return false;
 
+  // 端にちょうど乗っているものは「途中」ではない (呼ぶ側が端を外している)。
   const along = ex * dx + ey * dy;
-  return along > 0 && along < dx * dx + dy * dy;
+  const length = dx * dx + dy * dy;
+  if (isNearlyZero(along) || isNearlyZero(along - length)) return false;
+
+  return along > 0 && along < length;
 }
 
 /** 配線の途中に乗っている端 1 つ。 */

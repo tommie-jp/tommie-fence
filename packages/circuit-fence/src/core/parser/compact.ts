@@ -1,6 +1,6 @@
 import { fail, fenceError, ok, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
-import { formatAddress, isSameAddress, parseAddress } from '../model/address.ts';
+import { addressHint, formatAddress, isSameAddress, parseAddress } from '../model/address.ts';
 import type { Address, WireOperator } from '../model/address.ts';
 import {
   DEFAULT_NOTE_ALIGN, DEFAULT_NOTE_SIZE, NOTE_ALIGNS, NOTE_COLOR_NAMES, NOTE_LEADINGS,
@@ -42,11 +42,14 @@ const readAddress = (token: string, line: number, points: Points = NO_POINTS): R
   const address = parseAddress(token);
   if (address !== null) return ok(address);
 
+  // 近い書き間違いには、直せる形の案内を先に返す (`a1.5` → `a_1.5`)。
+  const near = addressHint(token);
+  if (near !== null) return fail(`${safeToken(token)} は番地の形ではありません (${near})`, line);
+
   // 番地の形でもないなら、名前のつもりで書かれた可能性がある。
   // 名前を 1 つでも書いてある図では、そちらの案内も添える。
-  const hint = points.size === 0
-    ? `行 a〜z + 列 1〜${LIMITS.columns}`
-    : `行 a〜z + 列 1〜${LIMITS.columns}。points: に書いた名前でもありません`;
+  const form = `行 a〜z + 列 1〜${LIMITS.columns}。交点の間は a_1.5 / a.5_1.5`;
+  const hint = points.size === 0 ? form : `${form}。points: に書いた名前でもありません`;
   return fail(`${safeToken(token)} は番地の形ではありません (${hint})`, line);
 };
 
@@ -218,16 +221,28 @@ export function parseWireLine(
   return ok(wires);
 }
 
-/** 配線の端。`a3` のような番地か、`U1.out` のような足。 */
+/**
+ * 配線の端。`a3` のような番地か、`U1.out` のような足。
+ *
+ * **番地として読める綴りは番地**。交点の間の番地 (`a_1.5`) は足と同じく `.` を
+ * 含むが、足の綴りに `_` の区切りは無いので、取り違えは起きない
+ * (`U1.5` は番地の形ではないので、これまでどおり DIP の 5 番ピンのまま)。
+ */
 function readEndpoint(token: string, line: number, points: Points): Result<Endpoint> {
+  const named = points.get(token);
+  if (named !== undefined) return ok({ kind: 'cell', address: named });
+
+  const address = parseAddress(token);
+  if (address !== null) return ok({ kind: 'cell', address });
+
   const pin = PIN_REFERENCE.exec(token);
   if (pin) {
     const [, part = '', name = ''] = pin;
     return ok({ kind: 'pin', part, pin: name });
   }
 
-  const address = readAddress(token, line, points);
-  return address.ok ? ok({ kind: 'cell', address: address.value }) : address;
+  const failed = readAddress(token, line, points);
+  return failed.ok ? ok({ kind: 'cell', address: failed.value }) : failed;
 }
 
 /** 注釈の種類。図に重ねる印 3 つと、字を置くもの 2 つ。 */

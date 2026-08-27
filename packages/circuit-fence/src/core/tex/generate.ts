@@ -1,5 +1,5 @@
 import { LIMITS } from '../limits.ts';
-import { DEFAULT_PITCH, cornerOf, formatAddress, toPoint } from '../model/address.ts';
+import { DEFAULT_PITCH, cornerOf, formatAddress, texNameOfAddress, toPoint } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
@@ -426,8 +426,10 @@ function drawGrid(
 
   // 使っている番地を覆う範囲。grid-to が書いてあれば、そこまで広げる
   // (部品を動かす先が見えるように)。
-  const lastRow = Math.max(0, ...used.map((cell) => cell.row), corner?.row ?? 0);
-  const lastCol = Math.max(0, ...used.map((cell) => cell.col), corner?.col ?? 0);
+  // 点は交点の上にだけ打つ (間の番地に点を打つと、格子と番地の対応が崩れる)。
+  // 間に置いた部品まで覆えるように、はみ出したぶんは次の交点まで切り上げる。
+  const lastRow = Math.ceil(Math.max(0, ...used.map((cell) => cell.row), corner?.row ?? 0));
+  const lastCol = Math.ceil(Math.max(0, ...used.map((cell) => cell.col), corner?.col ?? 0));
 
   const wanted = (lastRow + 1) * (lastCol + 1);
   if (wanted > LIMITS.gridCells) {
@@ -481,14 +483,14 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
   );
   if (part.value !== null) options.push(`a^=${annotationOf(part.value, unitOf(part.type), target)}`);
 
-  const drawn = `\\draw (${formatAddress(part.from)}) to[${options.join(', ')}] (${formatAddress(part.to)});`;
+  const drawn = `\\draw (${texNameOfAddress(part.from)}) to[${options.join(', ')}] (${texNameOfAddress(part.to)});`;
   if (type?.inner === undefined) return [drawn];
 
   return [drawn, ...sourceInner(type.inner, toPoint(part.from, pitch), toPoint(part.to, pitch))];
 }
 
 function drawOneTerminal(part: OneTerminalPart, target: TexTarget): string {
-  const at = formatAddress(part.at);
+  const at = texNameOfAddress(part.at);
   const symbol = symbolFor(part.type, target);
   const id = escapeTex(part.id);
 
@@ -520,7 +522,7 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
   const options = [symbol, ...optionsFor(part.type, target)];
   const turned = part.orientation === null ? null : ORIENTATION_TEX[part.orientation];
   if (turned !== undefined && turned !== null) options.push(turned);
-  const at = formatAddress(part.at);
+  const at = texNameOfAddress(part.at);
   const name = nodeNameOf(part.id);
   const annotation = part.value === null ? null : annotationOf(part.value, NO_UNIT, target);
   // 箱で描く IC は型番を中に書く (回路図の慣習どおり)。
@@ -581,9 +583,9 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
     messages.push('grid-to は grid: on のときに効きます');
   }
 
-  for (const [name, cell] of cells) {
+  for (const cell of cells.values()) {
     const { x, y } = toPoint(cell.address, pitch);
-    lines.push(`\\coordinate (${name}) at (${num(x)},${num(y)});`);
+    lines.push(`\\coordinate (${texNameOfAddress(cell.address)}) at (${num(x)},${num(y)});`);
   }
 
   const drawings: { readonly tex: string; readonly line: number }[] = [
@@ -599,8 +601,8 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
     lineMap.set(lines.length, drawing.line);
   }
 
-  for (const [name, cell] of cells) {
-    if (cell.ends >= JUNCTION_ENDS) lines.push(`\\node[circ] at (${name}) {};`);
+  for (const cell of cells.values()) {
+    if (cell.ends >= JUNCTION_ENDS) lines.push(`\\node[circ] at (${texNameOfAddress(cell.address)}) {};`);
   }
 
   // 注釈はいちばん最後に描く。図の上に重ねる印と字なので、回路にも黒丸にも

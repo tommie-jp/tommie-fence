@@ -1,0 +1,31 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{grounds/scale=1.36}
+\foreach \x in {0,2,4,6} {\foreach \y in {0,-2,-4} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\coordinate (a1) at (0,0);
+\coordinate (a-2p5) at (3,0);
+\coordinate (c-2p5) at (3,-4);
+\coordinate (a4) at (6,0);
+\draw (a1) node[ocirc]{} node[above left]{IN}; % line 3
+\draw (a1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (a-2p5); % line 4
+\draw (a-2p5) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (c-2p5); % line 5
+\node[ground] at (c-2p5) {}; % line 6
+\draw (a4) node[ocirc]{} node[above left]{OUT}; % line 7
+\draw (a-2p5) -- (a4); % line 9
+\node[circ] at (a-2p5) {};
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(8.778,0.853);
+\end{circuitikz}
+\end{document}

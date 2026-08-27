@@ -1,6 +1,6 @@
 // フェンス構文から TeX 生成までで共有する型。DOM にも Node にも依存しない。
 
-import { formatAddress } from './model/address.ts';
+import { formatAddress, texNameOfAddress } from './model/address.ts';
 import type { Address, WireOperator } from './model/address.ts';
 import type { NoteAlign, NoteLeading, NoteSize } from './notes.ts';
 
@@ -126,7 +126,7 @@ export const nameOfEndpoint = (endpoint: Endpoint): string =>
  */
 export const texNameOfEndpoint = (endpoint: Endpoint): string =>
   endpoint.kind === 'cell'
-    ? formatAddress(endpoint.address)
+    ? texNameOfAddress(endpoint.address)
     : `${nodeNameOf(endpoint.part)}.${endpoint.pin}`;
 
 /** `style:` に書ける図の見た目。null は「書かれていない」= 既定のまま。 */

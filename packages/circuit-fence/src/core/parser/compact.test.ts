@@ -602,3 +602,38 @@ describe('行送りの語が書ける場所', () => {
     expect(textNoteProblem('text b1 nope', 'ここ').message).not.toContain('tight');
   });
 });
+
+describe('addresses between the cells', () => {
+  test('places a part on an address written between two cells', () => {
+    expect(partOf('resistor a_1.5 a_3.5 10k')).toMatchObject({
+      from: { row: 0, col: 0.5 },
+      to: { row: 0, col: 2.5 },
+    });
+  });
+
+  test('reads a wire that ends between two cells', () => {
+    expect(wireOf('a.5_1 -- a.5_3')).toEqual({
+      from: { kind: 'cell', address: { row: 0.5, col: 0 } },
+      to: { kind: 'cell', address: { row: 0.5, col: 2 } },
+      operator: '--',
+      line: 5,
+    });
+  });
+
+  test('still reads a pin written with a number as a pin, not as an address', () => {
+    expect(wireOf('U1.5 -| e4')).toMatchObject({ from: { kind: 'pin', part: 'U1', pin: '5' } });
+    expect(wireOf('Q1.B -- c3')).toMatchObject({ from: { kind: 'pin', part: 'Q1', pin: 'B' } });
+  });
+
+  test('points to the separator when a decimal is written without one', () => {
+    expect(messageOf('resistor a1.5 a3').message).toContain('a_1.5');
+  });
+
+  test('points to the decimal when a fraction is written', () => {
+    expect(messageOf('resistor a.1/4_2 a3').message).toContain('.25');
+  });
+
+  test('points to the plain spelling when the separator carries no decimal', () => {
+    expect(messageOf('resistor a_1 a3').message).toContain('a1');
+  });
+});

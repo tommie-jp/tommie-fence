@@ -40,7 +40,7 @@ wires:
 
 ```text
 circuit: 17 行目: 種類 resistr は知りません (resistor のことですか?)
-circuit: 18 行目: z0 は番地の形ではありません (行 a〜z + 列 1〜99)
+circuit: 18 行目: z0 は番地の形ではありません (行 a〜z + 列 1〜99。交点の間は a_1.5 / a.5_1.5)
 circuit: 19 行目: inductor の両端が同じ番地です (a5)
 circuit: 20 行目: 部品 V1: 値はプレビューの TeX にフォントがありません (circuit-fence render --emit-tex で .tex に書き出すと LaTeX で組めます)
 ```
