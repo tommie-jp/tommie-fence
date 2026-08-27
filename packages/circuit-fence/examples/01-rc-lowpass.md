@@ -7,14 +7,14 @@
 title: RC ローパス
 parts:
   IN:  port a1
-  R1:  resistor a1 a3 10k
-  C1:  capacitor a3 c3 100n
-  OUT: port a4
-  G1:  ground c3
+  R1:  resistor a1 a2 10k
+  C1:  capacitor a2 b2 100n
+  OUT: port a3
+  G1:  ground b2
 wires:
-  - a3 -- a4
+  - a2 -- a3
 notes:
-  - source a5 blue
+  - source a4 blue
 style:
   grid: on
 ```

@@ -10,14 +10,14 @@
 title: 色の上書き
 parts:
   IN:  port a1
-  R1:  resistor a1 a3 10k
-  C1:  capacitor a3 c3 100n
-  OUT: port a4
-  G1:  ground c3
+  R1:  resistor a1 a2 10k
+  C1:  capacitor a2 b2 100n
+  OUT: port a3
+  G1:  ground b2
 wires:
-  - a3 -- a4
+  - a2 -- a3
 notes:
-  - source a5 blue
+  - source a4 blue
 style:
   ink-color: '#14532d'
   paper-color: '#f0fdf4'
@@ -32,14 +32,14 @@ style:
 title: pitch と wire-width
 parts:
   IN:  port a1
-  R1:  resistor a1 a3 10k
-  C1:  capacitor a3 c3 100n
-  OUT: port a4
-  G1:  ground c3
+  R1:  resistor a1 a2 10k
+  C1:  capacitor a2 b2 100n
+  OUT: port a3
+  G1:  ground b2
 wires:
-  - a3 -- a4
+  - a2 -- a3
 notes:
-  - source a5 blue
+  - source a4 blue
 style:
   grid: on
   pitch: 1.2
@@ -81,14 +81,14 @@ style:
 title: 出力の横幅
 parts:
   IN:  port a1
-  R1:  resistor a1 a3 10k
-  C1:  capacitor a3 c3 100n
-  OUT: port a4
-  G1:  ground c3
+  R1:  resistor a1 a2 10k
+  C1:  capacitor a2 b2 100n
+  OUT: port a3
+  G1:  ground b2
 wires:
-  - a3 -- a4
+  - a2 -- a3
 notes:
-  - source a5 blue
+  - source a4 blue
 style:
   grid: on
   width: 320
@@ -102,14 +102,14 @@ style:
 title: 版の刻印
 parts:
   IN:  port a1
-  R1:  resistor a1 a3 10k
-  C1:  capacitor a3 c3 100n
-  OUT: port a4
-  G1:  ground c3
+  R1:  resistor a1 a2 10k
+  C1:  capacitor a2 b2 100n
+  OUT: port a3
+  G1:  ground b2
 wires:
-  - a3 -- a4
+  - a2 -- a3
 notes:
-  - source a5 blue
+  - source a4 blue
 style:
   grid: on
   stamp: on

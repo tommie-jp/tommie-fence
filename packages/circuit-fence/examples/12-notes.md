@@ -7,14 +7,14 @@
 title: 注釈
 parts:
   IN:  port a1
-  R1:  resistor a1 a3 10k
-  C1:  capacitor a3 c3 100n
-  OUT: port a4
-  G1:  ground c3
+  R1:  resistor a1 a2 10k
+  C1:  capacitor a2 b2 100n
+  OUT: port a3
+  G1:  ground b2
 wires:
-  - a3 -- a4
+  - a2 -- a3
 notes:
-  - source a5 blue
+  - source a4 blue
   - circle R1
   - text c1: ここでカットオフ 159 Hz
 style:
@@ -41,7 +41,7 @@ style:
 印は書かなければ赤、字は書かなければ図のほかの文字と同じ色。
 
 ```circuit
-title: 注釈の色
+title: 図18 注釈の色
 parts:
   R1: resistor a1 a3
   R2: resistor a5 a7
@@ -79,7 +79,7 @@ parts:
 wires:
   - c1 -- c4
 notes:
-  - source a5 blue
+  - source a4 blue
   - circle D1 orange
   - text d1: LED の順方向電圧は 2 V ぐらい
   - text e1: 電流は (9 - 2) / 470 で 15 mA
@@ -93,7 +93,7 @@ style:
 書かなければ普通の大きさ。
 
 ```circuit
-title: 字の大きさ
+title: 図15 字の大きさ
 parts:
   R1: resistor a1 a3 10k
 notes:
@@ -117,7 +117,7 @@ pt の直接指定は書けない。色と同じで、**実機に通した指定
 書かなければ `left` で、番地が字の左端になる。`bold` は太字。
 
 ```circuit
-title: 寄せと太字
+title: 図16 寄せと太字
 parts:
   R1: resistor a1 a5 10k
 notes:
@@ -143,15 +143,15 @@ style:
 `- arrow 起点 終点 [色]` は指し棒で、両端とも**部品 ID か番地**。
 
 ```circuit
-title: 枠と指し棒
+title: 図14 枠と指し棒
 parts:
   IN:  port a1
-  R1:  resistor a1 a3 10k
-  C1:  capacitor a3 c3 100n
-  OUT: port a4
-  G1:  ground c3
+  R1:  resistor a1 a2 10k
+  C1:  capacitor a2 b2 100n
+  OUT: port a3
+  G1:  ground b2
 wires:
-  - a3 -- a4
+  - a2 -- a3
 notes:
   - box a1 c3 blue
   - text d2 blue large center: box a1 c3 blue
@@ -173,7 +173,7 @@ style:
 1 行ずつ指しながら説明したいときは `loose`。
 
 ```circuit
-title: 行送り
+title: 図17 行送り
 parts:
   R1: resistor a1 a3 10k
 notes:

@@ -7,7 +7,7 @@ Markdown の ` ```circuit ` フェンスに YAML を書くと、Markdown プレ�
 (LLM に書かせるときはこの 1 枚を渡す)。
 
 ```circuit
-title: 回路図01 circuit フェンスの書き方
+title: 図01 circuit フェンスの書き方
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
@@ -42,7 +42,7 @@ style:
 書かなくてもよい (番地をそのまま書けば今までどおり)。
 
 ```circuit
-title: 回路図02 番地に名前を付ける
+title: 図02 番地に名前を付ける
 points:
   vin: a1
   fb:  b2
@@ -217,7 +217,7 @@ DIP の IC は**足の本数が種類の名前に入っている** (`dip8` か�
 `+up` にすると帰還を下に回せるので線が交差しにくい。
 
 ```circuit
-title: 回路図03 オペアンプの向き
+title: 図08 オペアンプの向き
 parts:
   IN:  port b1
   Rb:  resistor b3 e3 100k
@@ -341,7 +341,7 @@ ID は記号の下 (縦置きなら左)、値は反対側に出る。
 | `\|-` | 先に縦、それから横 |
 
 ```circuit
-title: 回路図04 配線でつなぐ
+title: 図11 配線でつなぐ
 parts:
   R1: resistor a1 a3
   R2: resistor a5 a7
@@ -375,7 +375,7 @@ wires:
 そのまま引く。
 
 ```circuit
-title: 回路図05 斜めに置く
+title: 図12 斜めに置く
 parts:
   R1: resistor a1 c4
   R2: resistor c4 a7
@@ -405,17 +405,17 @@ style:
 | 書き出し | `- source 番地 [色や大きさ]` | フェンスの中身そのもの |
 
 ```circuit
-title: 回路図06 注釈
+title: 図13 注釈
 parts:
   IN:  port a1
-  R1:  resistor a1 a3 10k
-  C1:  capacitor a3 c3 100n
-  OUT: port a4
-  G1:  ground c3
+  R1:  resistor a1 a2 10k
+  C1:  capacitor a2 b2 100n
+  OUT: port a3
+  G1:  ground b2
 wires:
-  - a3 -- a4
+  - a2 -- a3
 notes:
-  - source a5 blue
+  - source a4 blue
   - circle R1
   - text c1: ここでカットオフ 159 Hz
 style:
@@ -592,7 +592,7 @@ CLI の標準エラーでも同じ形で出る。
 図の上に 1 行の題を載せる。書かなくてもよい。
 
 ```yaml
-title: 回路図01 circuit フェンスの書き方
+title: 図01 circuit フェンスの書き方
 ```
 
 **題だけは `notes:` の字では置けない**。番地は `a1` が最上段で、その上が無いため。
@@ -605,7 +605,7 @@ title: 回路図01 circuit フェンスの書き方
 
 書ける字は注釈の字と同じ。英数字と `. + - / ( ) _ % :` と日本語、
 それに `µ` `Ω` `°`。`\` `$` `,` `=` は書けない。`:` が書けるので、
-`title: "回路図02 R1: resistor の書き方"` のように部品の 1 行も題にできる
+`title: "図02 R1: resistor の書き方"` のように部品の 1 行も題にできる
 (YAML がマップとして読まないよう `"…"` で囲む)。
 
 長さは 60 文字まで。折り返しは用意していないので、これを超える題は
@@ -693,20 +693,20 @@ style:
 (色は 1 つで、点だけを薄めて描いている)。
 
 ```circuit
-title: 回路図07 グリッド
+title: 図19 グリッド
 parts:
   IN:  port a1
-  R1:  resistor a1 a3 10k
-  C1:  capacitor a3 c3 100n
-  OUT: port a4
-  G1:  ground c3
+  R1:  resistor a1 a2 10k
+  C1:  capacitor a2 b2 100n
+  OUT: port a3
+  G1:  ground b2
 wires:
-  - a3 -- a4
+  - a2 -- a3
 notes:
-  - source a5 blue
+  - source a4 blue
 style:
   grid: on
-  grid-to: d5
+  grid-to: c4
 ```
 
 `grid-to` を書くと、使っていない範囲までグリッドが伸びる。
@@ -732,17 +732,17 @@ style:
 `stamp: on` にすると、その図を組んだ処理系の版が右下に出る。
 
 ```circuit
-title: 回路図08 版の刻印
+title: 図20 版の刻印
 parts:
   IN:  port a1
-  R1:  resistor a1 a3 10k
-  C1:  capacitor a3 c3 100n
-  OUT: port a4
-  G1:  ground c3
+  R1:  resistor a1 a2 10k
+  C1:  capacitor a2 b2 100n
+  OUT: port a3
+  G1:  ground b2
 wires:
-  - a3 -- a4
+  - a2 -- a3
 notes:
-  - source a5 blue
+  - source a4 blue
 style:
   grid: on
   stamp: on
