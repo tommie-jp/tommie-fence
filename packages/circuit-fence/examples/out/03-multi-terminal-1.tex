@@ -5,46 +5,46 @@
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\foreach \x in {0,2,4,6,8,10,12,14} {\foreach \y in {0,-2,-4,-6,-8,-10,-12} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
-\node[gray, font=\scriptsize] at (0,0.84) {1};
-\node[gray, font=\scriptsize] at (2,0.84) {2};
-\node[gray, font=\scriptsize] at (4,0.84) {3};
-\node[gray, font=\scriptsize] at (6,0.84) {4};
-\node[gray, font=\scriptsize] at (8,0.84) {5};
-\node[gray, font=\scriptsize] at (10,0.84) {6};
-\node[gray, font=\scriptsize] at (12,0.84) {7};
-\node[gray, font=\scriptsize] at (14,0.84) {8};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
-\coordinate (b2) at (2,-2);
-\coordinate (b5) at (8,-2);
-\coordinate (b8) at (14,-2);
-\coordinate (f2) at (2,-10);
-\coordinate (f5) at (8,-10);
-\coordinate (f8) at (14,-10);
-\coordinate (a2) at (2,0);
-\coordinate (c2) at (2,-4);
-\coordinate (b1) at (0,-2);
-\coordinate (a5) at (8,0);
-\coordinate (c5) at (8,-4);
-\coordinate (b4) at (6,-2);
-\coordinate (a8) at (14,0);
-\coordinate (c8) at (14,-4);
-\coordinate (b7) at (12,-2);
-\coordinate (e2) at (2,-8);
-\coordinate (g2) at (2,-12);
-\coordinate (f1) at (0,-10);
-\coordinate (e5) at (8,-8);
-\coordinate (g5) at (8,-12);
-\coordinate (f4) at (6,-10);
-\coordinate (e8) at (14,-8);
-\coordinate (g8) at (14,-12);
-\coordinate (f7) at (12,-10);
+\foreach \x in {0,1.2,2.4,3.6,4.8,6,7.2,8.4} {\foreach \y in {0,-1.2,-2.4,-3.6,-4.8,-6,-7.2} {\fill[gray, opacity=0.35] (\x,\y) circle (0.66pt);}}
+\node[gray, font=\scriptsize] at (0,0.504) {1};
+\node[gray, font=\scriptsize] at (1.2,0.504) {2};
+\node[gray, font=\scriptsize] at (2.4,0.504) {3};
+\node[gray, font=\scriptsize] at (3.6,0.504) {4};
+\node[gray, font=\scriptsize] at (4.8,0.504) {5};
+\node[gray, font=\scriptsize] at (6,0.504) {6};
+\node[gray, font=\scriptsize] at (7.2,0.504) {7};
+\node[gray, font=\scriptsize] at (8.4,0.504) {8};
+\node[gray, font=\scriptsize, anchor=east] at (-0.504,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.504,-1.2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.504,-2.4) {c};
+\node[gray, font=\scriptsize, anchor=east] at (-0.504,-3.6) {d};
+\node[gray, font=\scriptsize, anchor=east] at (-0.504,-4.8) {e};
+\node[gray, font=\scriptsize, anchor=east] at (-0.504,-6) {f};
+\node[gray, font=\scriptsize, anchor=east] at (-0.504,-7.2) {g};
+\coordinate (b2) at (1.2,-1.2);
+\coordinate (b5) at (4.8,-1.2);
+\coordinate (b8) at (8.4,-1.2);
+\coordinate (f2) at (1.2,-6);
+\coordinate (f5) at (4.8,-6);
+\coordinate (f8) at (8.4,-6);
+\coordinate (a2) at (1.2,0);
+\coordinate (c2) at (1.2,-2.4);
+\coordinate (b1) at (0,-1.2);
+\coordinate (a5) at (4.8,0);
+\coordinate (c5) at (4.8,-2.4);
+\coordinate (b4) at (3.6,-1.2);
+\coordinate (a8) at (8.4,0);
+\coordinate (c8) at (8.4,-2.4);
+\coordinate (b7) at (7.2,-1.2);
+\coordinate (e2) at (1.2,-4.8);
+\coordinate (g2) at (1.2,-7.2);
+\coordinate (f1) at (0,-6);
+\coordinate (e5) at (4.8,-4.8);
+\coordinate (g5) at (4.8,-7.2);
+\coordinate (f4) at (3.6,-6);
+\coordinate (e8) at (8.4,-4.8);
+\coordinate (g8) at (8.4,-7.2);
+\coordinate (f7) at (7.2,-6);
 \node[npn] (part-Q1) at (b2) {}; % line 2
 \node[pnp] (part-Q2) at (b5) {}; % line 3
 \node[nigbt] (part-Q3) at (b8) {}; % line 4
@@ -69,17 +69,17 @@
 \draw (e8) -| (part-Q4.collector); % line 24
 \draw (g8) -| (part-Q4.emitter); % line 25
 \draw (f7) -| (part-Q4.gate); % line 26
-\path (2,-6.395) rectangle (3.693,-5.605); % line 28
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (2,-6) {X}; % line 28
-\path (8,-6.395) rectangle (9.693,-5.605); % line 29
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-6) {X}; % line 29
-\path (14,-6.395) rectangle (16.032,-5.605); % line 30
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (14,-6) {X}; % line 30
-\path (2,-14.395) rectangle (3.863,-13.605); % line 31
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (2,-14) {X}; % line 31
-\path (8,-14.395) rectangle (9.863,-13.605); % line 32
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (8,-14) {X}; % line 32
-\path (14,-14.395) rectangle (16.032,-13.605); % line 33
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (14,-14) {X}; % line 33
+\path (1.2,-4.193) rectangle (3.74,-3.007); % line 28
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1.2,-3.6) {X}; % line 28
+\path (4.8,-4.193) rectangle (7.34,-3.007); % line 29
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,-3.6) {X}; % line 29
+\path (8.4,-4.193) rectangle (11.448,-3.007); % line 30
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8.4,-3.6) {X}; % line 30
+\path (1.2,-8.993) rectangle (3.994,-7.807); % line 31
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1.2,-8.4) {X}; % line 31
+\path (4.8,-8.993) rectangle (7.594,-7.807); % line 32
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,-8.4) {X}; % line 32
+\path (8.4,-8.993) rectangle (11.448,-7.807); % line 33
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8.4,-8.4) {X}; % line 33
 \end{circuitikz}
 \end{document}

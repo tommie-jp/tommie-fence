@@ -15,7 +15,7 @@ wires:
 notes:
   - source a5 blue
   - circle R1
-  - text d1: ここでカットオフ 159 Hz
+  - text c1: ここでカットオフ 159 Hz
 style:
   grid: on
 ```
@@ -54,10 +54,10 @@ notes:
   - text b5 blue: blue
   - text b9 green: green
   - text b13 orange: orange
-  - text c1 blue: "R1: resistor a1 a3"
-  - text c5 blue: "R2: resistor a5 a7"
-  - text c9 blue: "R3: resistor a9 a11"
-  - text c13 blue: "R4: resistor a13 a15"
+  - text c1 blue large: "R1: resistor a1 a3"
+  - text c5 blue large: "R2: resistor a5 a7"
+  - text c9 blue large: "R3: resistor a9 a11"
+  - text c13 blue large: "R4: resistor a13 a15"
 style:
   grid: on
 ```
@@ -148,7 +148,7 @@ wires:
   - a3 -- a4
 notes:
   - box a1 c3 blue
-  - text d2 blue: box a1 c3 blue
+  - text d2 blue center: box a1 c3 blue
   - arrow c6 R1
   - text c6 red: arrow c6 R1
   - source a9 blue

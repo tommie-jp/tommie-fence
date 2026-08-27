@@ -24,7 +24,7 @@ wires:
   - U1.out -- b7 -- b8
   - d7 -- b7
 notes:
-  - source a9 blue tiny
+  - source a9 blue large
 style:
   grid: on
 ```

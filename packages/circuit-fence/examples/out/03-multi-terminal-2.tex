@@ -5,28 +5,28 @@
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\foreach \x in {0,2,4,6,8,10,12,14,16} {\foreach \y in {0,-2,-4} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
-\node[gray, font=\scriptsize] at (0,0.84) {1};
-\node[gray, font=\scriptsize] at (2,0.84) {2};
-\node[gray, font=\scriptsize] at (4,0.84) {3};
-\node[gray, font=\scriptsize] at (6,0.84) {4};
-\node[gray, font=\scriptsize] at (8,0.84) {5};
-\node[gray, font=\scriptsize] at (10,0.84) {6};
-\node[gray, font=\scriptsize] at (12,0.84) {7};
-\node[gray, font=\scriptsize] at (14,0.84) {8};
-\node[gray, font=\scriptsize] at (16,0.84) {9};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
-\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
-\coordinate (b2) at (2,-2);
-\coordinate (b7) at (12,-2);
+\foreach \x in {0,1.2,2.4,3.6,4.8,6,7.2,8.4,9.6} {\foreach \y in {0,-1.2,-2.4} {\fill[gray, opacity=0.35] (\x,\y) circle (0.66pt);}}
+\node[gray, font=\scriptsize] at (0,0.504) {1};
+\node[gray, font=\scriptsize] at (1.2,0.504) {2};
+\node[gray, font=\scriptsize] at (2.4,0.504) {3};
+\node[gray, font=\scriptsize] at (3.6,0.504) {4};
+\node[gray, font=\scriptsize] at (4.8,0.504) {5};
+\node[gray, font=\scriptsize] at (6,0.504) {6};
+\node[gray, font=\scriptsize] at (7.2,0.504) {7};
+\node[gray, font=\scriptsize] at (8.4,0.504) {8};
+\node[gray, font=\scriptsize] at (9.6,0.504) {9};
+\node[gray, font=\scriptsize, anchor=east] at (-0.504,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.504,-1.2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.504,-2.4) {c};
+\coordinate (b2) at (1.2,-1.2);
+\coordinate (b7) at (7.2,-1.2);
 \coordinate (a1) at (0,0);
-\coordinate (c1) at (0,-4);
-\coordinate (b4) at (6,-2);
-\coordinate (a6) at (10,0);
-\coordinate (c6) at (10,-4);
-\coordinate (a9) at (16,0);
-\coordinate (c9) at (16,-4);
+\coordinate (c1) at (0,-2.4);
+\coordinate (b4) at (3.6,-1.2);
+\coordinate (a6) at (6,0);
+\coordinate (c6) at (6,-2.4);
+\coordinate (a9) at (9.6,0);
+\coordinate (c9) at (9.6,-2.4);
 \node[plain amp] (part-U1) at (b2) {}; % line 2
 \node[font=\scriptsize, anchor=north] at (part-U1.south) {$\mathrm{LM358}$}; % line 2
 \draw ($(part-U1.+)+(0.44,-0.13)$) -- ++(0.28,0); % line 2
@@ -41,9 +41,9 @@
 \draw (c6) -| (part-T1.A2); % line 9
 \draw (a9) -| (part-T1.B1); % line 10
 \draw (c9) -| (part-T1.B2); % line 11
-\path (0,-6.395) rectangle (3.048,-5.605); % line 13
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (0,-6) {X}; % line 13
-\path (10,-6.395) rectangle (13.895,-5.605); % line 14
-\node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (10,-6) {X}; % line 14
+\path (0,-4.193) rectangle (4.572,-3.007); % line 13
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-3.6) {X}; % line 13
+\path (6,-4.193) rectangle (11.842,-3.007); % line 14
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-3.6) {X}; % line 14
 \end{circuitikz}
 \end{document}

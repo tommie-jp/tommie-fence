@@ -31,14 +31,15 @@ wires:
   - g8 -| Q4.E
   - f7 -| Q4.G
 notes:
-  - text d2 blue: "Q1: npn b2"
-  - text d5 blue: "Q2: pnp b5"
-  - text d8 blue: "Q3: nigbt b8"
-  - text h2 blue: "M1: nmos f2"
-  - text h5 blue: "M2: pmos f5"
-  - text h8 blue: "Q4: pigbt f8"
+  - text d2 blue large: "Q1: npn b2"
+  - text d5 blue large: "Q2: pnp b5"
+  - text d8 blue large: "Q3: nigbt b8"
+  - text h2 blue large: "M1: nmos f2"
+  - text h5 blue large: "M2: pmos f5"
+  - text h8 blue large: "Q4: pigbt f8"
 style:
   grid: on
+  pitch: 1.2
 ```
 
 上の段がバイポーラと IGBT、下の段が MOSFET。**記号の下の青い行が、
@@ -72,10 +73,11 @@ wires:
   - a9 -| T1.B1
   - c9 -| T1.B2
 notes:
-  - text d1 blue: "U1: opamp b2 LM358"
-  - text d6 blue: "T1: transformer b7 1to1"
+  - text d1 blue large: "U1: opamp b2 LM358"
+  - text d6 blue large: "T1: transformer b7 1to1"
 style:
   grid: on
+  pitch: 1.2
 ```
 
 **足へは `-|` か `|-` で引く**。足は記号ごとに決まった位置にあって格子の上に
@@ -115,14 +117,15 @@ wires:
   - k5 -| M4.S
   - j4 -| M4.G
 notes:
-  - text d2 blue: "J1: njfet b2"
-  - text d5 blue: "J2: pjfet b5"
-  - text h2 blue: "M1: nmos-e f2"
-  - text h5 blue: "M2: pmos-e f5"
-  - text l2 blue: "M3: nmos-d j2"
-  - text l5 blue: "M4: pmos-d j5"
+  - text d2 blue large: "J1: njfet b2"
+  - text d5 blue large: "J2: pjfet b5"
+  - text h2 blue large: "M1: nmos-e f2"
+  - text h5 blue large: "M2: pmos-e f5"
+  - text l2 blue large: "M3: nmos-d j2"
+  - text l5 blue large: "M4: pmos-d j5"
 style:
   grid: on
+  pitch: 1.2
 ```
 
 左が N チャネル、右が P チャネル。上から接合型 (`njfet` / `pjfet`)、
@@ -146,9 +149,9 @@ wires:
   - T1.g |- d3
   - T2.g |- g3
 notes:
-  - text c1 blue: "P1: potentiometer b1 b5 10k"
-  - text f1 blue: "T1: thyristor e1 e5"
-  - text i1 blue: "T2: triac h1 h5"
+  - text c1 blue large: "P1: potentiometer b1 b5 10k"
+  - text f1 blue large: "T1: thyristor e1 e5"
+  - text i1 blue large: "T2: triac h1 h5"
 style:
   grid: on
 ```

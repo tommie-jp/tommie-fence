@@ -37,14 +37,14 @@ wires:
   - e13 |- U8.in
   - U8.out -| f16
 notes:
-  - text d1 blue: "U1: and b2 7408"
-  - text d5 blue: "U2: or b6 7432"
-  - text d9 blue: "U3: nand b10 7400"
-  - text d13 blue: "U4: nor b14 7402"
-  - text h1 blue: "U5: xor f2 7486"
-  - text h5 blue: "U6: xnor f6 74266"
-  - text h9 blue: "U7: not f10 7404"
-  - text h13 blue: "U8: buffer f14 7407"
+  - text d1 blue large: "U1: and b2 7408"
+  - text d5 blue large: "U2: or b6 7432"
+  - text d9 blue large: "U3: nand b10 7400"
+  - text d13 blue large: "U4: nor b14 7402"
+  - text h1 blue large: "U5: xor f2 7486"
+  - text h5 blue large: "U6: xnor f6 74266"
+  - text h9 blue large: "U7: not f10 7404"
+  - text h13 blue large: "U8: buffer f14 7407"
 style:
   grid: on
 ```
@@ -67,9 +67,10 @@ wires:
   - U1.5 -| e4
   - U1.8 -| a4
 notes:
-  - text f1 blue: "U1: dip8 c2 NE555"
+  - text f1 blue large: "U1: dip8 c2 NE555"
 style:
   grid: on
+  pitch: 1
 ```
 
 足の番号は DIP の実物と同じで、左上が 1、左を下りて、右下から上がって戻る
@@ -87,7 +88,7 @@ wires:
   - S1.1 -| a4
   - S1.2 -| c4
 notes:
-  - text d1 blue: "S1: spdt b2"
+  - text d1 blue large: "S1: spdt b2"
 style:
   grid: on
 ```

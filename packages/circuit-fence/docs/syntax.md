@@ -230,7 +230,7 @@ wires:
   - U1.out -- c7 -- c9
   - d7 -- c7
 notes:
-  - source a10 blue
+  - source a10 blue large
 style:
   grid: on
 ```
@@ -411,7 +411,7 @@ wires:
 notes:
   - source a5 blue
   - circle R1
-  - text e1: ここでカットオフ 159 Hz
+  - text c1: ここでカットオフ 159 Hz
 style:
   grid: on
 ```
