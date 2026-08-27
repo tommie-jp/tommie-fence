@@ -109,4 +109,16 @@ describe('examples/errors', () => {
     expect(shown.length).toBeGreaterThan(0);
     for (const line of shown) expect(source).toContain(line);
   });
+
+  // お知らせ (読めてはいるが伝えたいこと) も同じ扱い。図が描けるぶん、
+  // 文面がずれても気づきにくいので、こちらこそ見張る。
+  test.each(brokenDocuments)('%s に貼ってあるお知らせが実際に出るものと一致する', (name) => {
+    const source = readFileSync(join(BROKEN, name), 'utf8');
+
+    const shown = extractCircuitFences(source).flatMap((fence) =>
+      shiftErrors(compileCircuit(fence.source).notices, fence.line).map(errorLine),
+    );
+
+    for (const line of shown) expect(source).toContain(line);
+  });
 });

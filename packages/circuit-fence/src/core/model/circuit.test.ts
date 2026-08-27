@@ -253,6 +253,98 @@ describe('足のある配線の上に見える端', () => {
   });
 });
 
+describe('注釈の指し先が部品 ID にも番地にも読めるとき', () => {
+  const warn = (...rows: string[]) => build(...rows).notices.map((notice) => notice.message);
+
+  test('says which of the two it took when both are on the figure', () => {
+    // C1 という部品がある図では、番地 c1 を指せない (部品のほうが勝つ)。
+    // c1 にも何か置いてあるときだけ、指し違えたのかもしれないと言える。
+    const messages = warn(
+      'parts:', '  C1: capacitor a1 a3', '  R9: resistor c1 c3', 'notes:', '  - circle C1',
+    );
+
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toContain('C1');
+    expect(messages[0]).toContain('c1');
+  });
+
+  test('says nothing when nothing sits at the address it could mean', () => {
+    // ID はたいてい番地の形にもなる (R1 は行 r の 1 列目)。空の番地まで
+    // 言い出すと、正しく書いた印のほとんどに口を出すことになる。
+    const { errors, notices } = build(
+      'parts:', '  C1: capacitor a1 a3', 'notes:', '  - circle C1',
+    );
+
+    expect([...errors, ...notices]).toEqual([]);
+  });
+
+  test('says nothing when no part claims that address', () => {
+    const { errors, notices } = build(
+      'parts:', '  R1: resistor a1 a3', 'notes:', '  - circle c1',
+    );
+
+    expect([...errors, ...notices]).toEqual([]);
+  });
+
+  test('warns for both ends of an arrow', () => {
+    const messages = warn(
+      'parts:', '  C1: capacitor a1 a3', '  D2: diode c1 c3', '  R9: resistor d2 d4',
+      'notes:', '  - arrow C1 D2',
+    );
+
+    expect(messages).toHaveLength(2);
+  });
+});
+
+describe('足へまっすぐ引いた配線', () => {
+  const warn = (...rows: string[]) => build(...rows).notices.map((notice) => notice.message);
+
+  test('says a -- into an off-centre pin comes in slanted', () => {
+    // + は記号の中心線から外れた高さにあるので、まっすぐ引くと斜めに入る。
+    const messages = warn('parts:', '  U1: opamp c5', 'wires:', '  - U1.+ -- c3');
+
+    expect(messages.some((message) => message.includes('|-'))).toBe(true);
+  });
+
+  test('says nothing for a pin that sits on the symbol centre line', () => {
+    // out は横の中心線に出るので、同じ行の番地へはまっすぐ引ける (04 の書き方)。
+    const { errors, notices } = build('parts:', '  U1: opamp c5', 'wires:', '  - U1.out -- c7');
+
+    expect([...errors, ...notices]).toEqual([]);
+  });
+
+  test('says nothing for the vertical pins of a transistor', () => {
+    const { errors, notices } = build(
+      'parts:', '  Q1: npn c3', 'wires:', '  - Q1.C -- a3', '  - Q1.E -- e3', '  - Q1.B -- c1',
+    );
+
+    expect([...errors, ...notices]).toEqual([]);
+  });
+
+  test('says a centre line pin still slants when the cell is off its axis', () => {
+    // out は横の中心線に出るが、行が違えば斜めになる。足の名前だけでは決まらない。
+    const messages = warn('parts:', '  U1: opamp c5', 'wires:', '  - U1.out -- d7');
+
+    expect(messages).toHaveLength(1);
+  });
+
+  test('says nothing when the wire is drawn with a bend', () => {
+    const { errors, notices } = build('parts:', '  U1: opamp c5', 'wires:', '  - U1.+ |- c3');
+
+    expect([...errors, ...notices]).toEqual([]);
+  });
+
+  test('says nothing about the wiper of a two terminal part', () => {
+    // ワイパーは記号の真上に出る。両端を番地で置く部品なので、
+    // 中心線は置いた 1 つの交点では決まらない (当て推量で言わない)。
+    const { errors, notices } = build(
+      'parts:', '  P1: potentiometer b1 b5', 'wires:', '  - P1.w -- a3',
+    );
+
+    expect([...errors, ...notices]).toEqual([]);
+  });
+});
+
 describe('重なりの検出', () => {
   const messages = (...rows: string[]) => build(...rows).errors.map((error) => error.message);
 

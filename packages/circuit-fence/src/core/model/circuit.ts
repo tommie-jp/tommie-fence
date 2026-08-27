@@ -1,7 +1,7 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { cornerOf, formatAddress, isSameAddress, parseAddress } from './address.ts';
-import { lookupPartType, lookupPin, pinHint } from '../parts.ts';
+import { lookupPartType, lookupPin, pinAxis, pinHint } from '../parts.ts';
 import type { Address } from './address.ts';
 import type { FenceDocument } from '../parser/parseFence.ts';
 import { isDrawable, isSourceDrawable } from '../tex/escape.ts';
@@ -118,17 +118,21 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
 }
 
 /**
+ * その注釈が書いた指し先。字と枠は番地しか書けず、番地はその場に何も
+ * 無くても図の上の場所として成り立つので、指し先を持たない。
+ */
+const noteTargetsOf = (note: NoteSpec): readonly string[] =>
+  note.kind === 'circle' ? [note.target] : note.kind === 'arrow' ? [note.from, note.to] : [];
+
+/**
  * 注釈の指し先があるか。無ければ理由を積んで、その注釈だけ落とす。
  *
- * 指し先を書くのは印 (`circle`) と指し棒 (`arrow`) だけ。字と枠は番地しか
- * 書けず、番地はその場に何も無くても図の上の場所として成り立つ。
+ * 指し先を書くのは印 (`circle`) と指し棒 (`arrow`) だけ。
  */
 function hasAnchor(note: NoteSpec, byId: ReadonlyMap<string, PartSpec>, errors: FenceError[]): boolean {
-  const targets = note.kind === 'circle' ? [note.target] : note.kind === 'arrow' ? [note.from, note.to] : [];
-
   // 1 行に 2 つ書き間違えても、返すのは最初の 1 つだけ。同じ行を 2 度指しても
   // 直す場所は増えない。
-  const missing = targets.find((target) => resolveNoteTarget(target, byId) === null);
+  const missing = noteTargetsOf(note).find((target) => resolveNoteTarget(target, byId) === null);
   if (missing !== undefined) {
     errors.push(
       fenceError(`注釈の指す先 ${safeToken(missing)} がありません (部品 ID か番地で書きます)`, note.line),
@@ -281,6 +285,86 @@ function ambiguousTouches(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>)
   }
 
   errors.push(...touchesOnBodies(circuit, ends));
+  errors.push(...slantedIntoPins(circuit, byId));
+  errors.push(...ambiguousNoteTargets(circuit, byId));
+
+  return errors;
+}
+
+/**
+ * 部品 ID にも番地にも読める指し先。
+ *
+ * 指し先は**部品を先に探す**ので、`C1` という部品がある図では番地 c1 を
+ * 指せない。図には部品を囲んだ丸が出るだけで、番地を指したつもりの人には
+ * 何も返らない。どちらを取ったかを伝える (図は変えない)。
+ *
+ * 言うのは**その番地にも何か置いてあるとき**だけ。行は a〜z あるので
+ * ID はたいてい番地の形にもなり (`R1` は行 r の 1 列目)、空の番地まで
+ * 言い出すと正しく書いた印のほとんどに口を出すことになる。
+ */
+function ambiguousNoteTargets(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>): FenceError[] {
+  const errors: FenceError[] = [];
+  const used = endpointsOf(circuit);
+
+  for (const note of circuit.notes) {
+    for (const target of noteTargetsOf(note)) {
+      const address = parseAddress(target);
+      if (address === null || !byId.has(target)) continue;
+      if (!used.some((cell) => isSameAddress(cell, address))) continue;
+
+      errors.push(
+        fenceError(
+          `注釈の指す先 ${safeToken(target)} は部品を指しています` +
+            ` (番地 ${formatAddress(address)} のつもりなら、部品 ID と重ならない名前にします)`,
+          note.line,
+        ),
+      );
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * `--` で足へ引いていて、**斜めに入る**ところ。
+ *
+ * 足は記号ごとに決まった位置にあり、格子の上に無い。`--` は 2 点を
+ * まっすぐ結ぶので、中心線に乗っていない足へ引くと斜めに入る。
+ * 図は書いたとおりに描く (勝手に折らない) が、回路図としては直角に入るのが
+ * 普通なので、`|-` / `-|` を添えて伝える。
+ *
+ * まっすぐ引けるのは、足が中心線に乗っていて、相手の番地がその軸に
+ * 揃っているときだけ (`U1.out -- c7` のような書き方)。軸は表から引く
+ * (parts.ts の pinAxis)。両端とも足のときと、両端を番地で置く 2 端子部品の
+ * 足 (ワイパー・ゲート) は**見ない** — 中心線がどこかを決められないので、
+ * 当て推量で口を出さない。
+ */
+function slantedIntoPins(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>): FenceError[] {
+  const errors: FenceError[] = [];
+
+  for (const wire of circuit.wires) {
+    if (wire.operator !== '--') continue;
+
+    const pin = wire.from.kind === 'pin' ? wire.from : wire.to.kind === 'pin' ? wire.to : null;
+    const cell = cellOf(wire.from) ?? cellOf(wire.to);
+    if (pin === null || cell === null) continue;
+
+    const part = byId.get(pin.part);
+    if (part === undefined || part.kind !== 'multi-terminal') continue;
+
+    const type = lookupPartType(part.type);
+    const axis = type === null ? null : pinAxis(type, pin.pin);
+    if (axis === 'h' && cell.row === part.at.row) continue;
+    if (axis === 'v' && cell.col === part.at.col) continue;
+
+    errors.push(
+      fenceError(
+        `${safeToken(nameOfEndpoint(pin))} へ -- で引くと斜めに入ります` +
+          ` (|- か -| なら直角に入ります)`,
+        wire.line,
+      ),
+    );
+  }
 
   return errors;
 }

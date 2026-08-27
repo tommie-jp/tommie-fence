@@ -53,7 +53,13 @@ const normaliseColor = (text: string): string => {
 
 const readColor = (raw: unknown, key: string, messages: StyleMessage[]): string | null => {
   if (typeof raw !== 'string' || !HEX_COLOR.test(raw)) {
-    messages.push({ message: `style の ${key} は色として読めません (#rgb か #rrggbb で書きます)`, key });
+    // 値が空で届くのは `ink-color: #333` と書いたとき。YAML は `#` から先を
+    // コメントとして落とすので、書き方だけを返すと**そう書いた本人には
+    // 堂々巡り**になる。引用符が要ることのほうを伝える。
+    const hint = raw === null || raw === undefined
+      ? '# から先は YAML のコメントになります。"#333" のように "…" で囲みます'
+      : '#rgb か #rrggbb で書きます';
+    messages.push({ message: `style の ${key} は色として読めません (${hint})`, key });
     return null;
   }
   return normaliseColor(raw);

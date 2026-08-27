@@ -69,6 +69,14 @@ describe('validateStyle', () => {
     expect(valueOf({ 'ink-color': 'red' }).inkColor).toBeNull();
   });
 
+  test('says to quote a colour that YAML read as a comment', () => {
+    // `ink-color: #333` は `#` から先がコメントになり、値が空で届く。
+    // 「#rgb で書きます」とだけ返すと、そう書いた人には堂々巡りになる。
+    const message = messagesOf({ 'ink-color': null })[0]?.message ?? '';
+
+    expect(message).toContain('"');
+  });
+
   test('names the item it does not know and lists the ones it does', () => {
     const messages = messagesOf({ 'hole-size': 4 });
 

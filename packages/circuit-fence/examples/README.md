@@ -32,6 +32,7 @@
 | [errors/02-overlap.md](errors/02-overlap.md) | 重なりの検出 |
 | [errors/03-japanese.md](errors/03-japanese.md) | 日本語の値と `--emit-tex` |
 | [errors/04-notes.md](errors/04-notes.md) | 注釈 (`:` の引用符 / 指し先 / 色 / 使える字 / 見た目の言葉) |
+| [errors/05-hints.md](errors/05-hints.md) | 読めているが思ったとおりに出ないもの (お知らせ) |
 
 図にならない行が入っているので、`npm run examples` の対象からは外してある
 (CLI は `examples/` の直下しか見ない)。貼ってあるエラーの文面が古びないよう、
