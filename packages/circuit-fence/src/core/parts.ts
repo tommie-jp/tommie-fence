@@ -305,7 +305,13 @@ export const PART_TYPES = {
   isource: { kind: 'two-terminal', symbol: 'I', unitTex: AMPERE, unitSi: SI_AMPERE },
   battery: { kind: 'two-terminal', symbol: 'battery1', unitTex: VOLT, unitSi: SI_VOLT },
   /** 太陽電池。 */
-  solar: { kind: 'two-terminal', symbol: 'pvsource', unitTex: VOLT, unitSi: SI_VOLT },
+  /**
+   * 太陽電池。circuitikz は**電池と逆向き**に描く (先に書いた番地が − 側)。
+   * ほかの極性のある部品はどれも先に書いた番地が + なので、`invert` で揃える。
+   * フェンスの 1.0 でも手元の 1.6 系でも同じ向きに描かれると実機で確かめた
+   * ので、版差ではなく記号の性質。**両方の的に同じ指定を出す** (約束 7)。
+   */
+  solar: { kind: 'two-terminal', symbol: 'pvsource', options: ['invert'], unitTex: VOLT, unitSi: SI_VOLT },
 
   // 回路を切るもの・光るもの・鳴るもの
   /** `switch` は a 接点 (押すと閉じる)、`-nc` が付くほうは b 接点。 */
