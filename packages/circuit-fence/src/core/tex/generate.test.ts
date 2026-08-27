@@ -402,7 +402,19 @@ describe('多端子部品', () => {
     expect(tex).not.toContain('{$-$}');
     expect(tex).not.toContain('{{-}}');
     // 横棒が 2 本 (+ と -) と、+ の縦棒が 1 本。
-    expect(tex.match(/\\draw \(\$\(part-U1\./g)).toHaveLength(3);
+    expect(tex.match(/\\draw \(\$\(\$\(part-U1\./g)).toHaveLength(3);
+  });
+
+  test('sets the plus and the minus in from their pins, toward each other', () => {
+    const { tex } = generate('parts:', '  U1: opamp c5');
+
+    // ± は足のアンカーから**もう一方の足のほうへ**寄せて置く。外へ寄せると
+    // 三角形の縁と足の線に挟まれて、どちらの足の印か読めなくなる。
+    // 向き (`+up`) で足が入れ替わっても、寄せる先が足そのものなので付いていく。
+    expect(tex).toContain('($(part-U1.+)!');
+    expect(tex).toContain('!(part-U1.-)$)');
+    expect(tex).toContain('($(part-U1.-)!');
+    expect(tex).toContain('!(part-U1.+)$)');
   });
 
   test('gives the plus and minus the same bar, so they balance', () => {

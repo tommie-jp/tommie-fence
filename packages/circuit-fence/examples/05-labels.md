@@ -10,19 +10,19 @@ ID は先頭 1 文字が本体、残りが添字になる (回路図の慣習ど
 title: 図01 ID と値の出方
 parts:
   R1:    resistor a1 a2 10k
-  Rload: resistor a3 a4 4.7
-  R:     resistor a5 a6 1M
+  Rload: resistor a5 a6 4.7
+  R:     resistor a9 a10 1M
   L1:    inductor c1 c2 10m
-  C1:    capacitor c3 c4 2.2u
-  D1:    diode c5 c6 1N4148
+  C1:    capacitor c5 c6 2.2u
+  D1:    diode c9 c10 1N4148
 notes:
   - text b1 blue: "R1: resistor a1 a2 10k"
-  - text b3 blue: "Rload: resistor a3 a4 4.7"
-  - text b5 blue: "R: resistor a5 a6 1M"
+  - text b5 blue: "Rload: resistor a5 a6 4.7"
+  - text b9 blue: "R: resistor a9 a10 1M"
   - text d1 blue: "L1: inductor c1 c2 10m"
-  - text d3 blue: "C1: capacitor c3 c4 2.2u"
-  - text d5 blue: "D1: diode c5 c6 1N4148"
-  - source a7 blue
+  - text d5 blue: "C1: capacitor c5 c6 2.2u"
+  - text d9 blue: "D1: diode c9 c10 1N4148"
+  - source a13 blue
 style:
   grid: on
 ```

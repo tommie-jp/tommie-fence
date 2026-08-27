@@ -281,7 +281,13 @@ const JUNCTION_ENDS = 3;
  */
 const SIGN_BAR = 0.28;
 const SIGN_DX = 0.44;
-const SIGN_DY = 0.13;
+
+/**
+ * ± を置く高さ。足のアンカーから、**もう一方の足のほうへ**この割合だけ寄せる。
+ * 外へ寄せると三角形の縁と足の線に挟まれて、どちらの足の印か読めなくなる。
+ * 割合で書くのは、向き (`+up`) で足が入れ替わっても付いていくため。
+ */
+const SIGN_SHIFT = 0.22;
 
 /**
  * オペアンプの ± を線で描く。
@@ -293,13 +299,17 @@ const SIGN_DY = 0.13;
 function amplifierSigns(name: string): string[] {
   const bar = num(SIGN_BAR);
   const dx = num(SIGN_DX);
+  const shift = num(SIGN_SHIFT);
+  // 足から足へ引いた線の上で、足の側に寄せた点 (calc の !割合! で取る)。
+  const plus = `($(${name}.+)!${shift}!(${name}.-)$)`;
+  const minus = `($(${name}.-)!${shift}!(${name}.+)$)`;
 
   return [
     // + は横棒と縦棒。縦棒は横棒の真ん中から上下へ伸ばす。
-    `\\draw ($(${name}.+)+(${dx},${num(-SIGN_DY)})$) -- ++(${bar},0);`,
-    `\\draw ($(${name}.+)+(${num(SIGN_DX + SIGN_BAR / 2)},${num(-SIGN_DY - SIGN_BAR / 2)})$) -- ++(0,${bar});`,
+    `\\draw ($${plus}+(${dx},0)$) -- ++(${bar},0);`,
+    `\\draw ($${plus}+(${num(SIGN_DX + SIGN_BAR / 2)},${num(-SIGN_BAR / 2)})$) -- ++(0,${bar});`,
     // - は横棒だけ。+ と同じ長さ・同じ太さになる。
-    `\\draw ($(${name}.-)+(${dx},${num(SIGN_DY)})$) -- ++(${bar},0);`,
+    `\\draw ($${minus}+(${dx},0)$) -- ++(${bar},0);`,
   ];
 }
 

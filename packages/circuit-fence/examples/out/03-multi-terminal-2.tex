@@ -29,22 +29,44 @@
 \coordinate (c9) at (9.6,-2.4);
 \node[plain amp] (part-U1) at (b2) {}; % line 3
 \node[font=\scriptsize, anchor=north] at (part-U1.south) {$\mathrm{LM358}$}; % line 3
-\draw ($(part-U1.+)+(0.44,-0.13)$) -- ++(0.28,0); % line 3
-\draw ($(part-U1.+)+(0.58,-0.27)$) -- ++(0,0.28); % line 3
-\draw ($(part-U1.-)+(0.44,0.13)$) -- ++(0.28,0); % line 3
+\draw ($($(part-U1.+)!0.22!(part-U1.-)$)+(0.44,0)$) -- ++(0.28,0); % line 3
+\draw ($($(part-U1.+)!0.22!(part-U1.-)$)+(0.58,-0.14)$) -- ++(0,0.28); % line 3
+\draw ($($(part-U1.-)!0.22!(part-U1.+)$)+(0.44,0)$) -- ++(0.28,0); % line 3
 \node[transformer core] (part-T1) at (b7) {}; % line 4
 \node[font=\scriptsize, anchor=north] at (part-T1.south) {$\mathrm{1to1}$}; % line 4
-\draw (a1) -| (part-U1.+); % line 6
-\draw (c1) -| (part-U1.-); % line 7
+\draw (a1) |- (part-U1.-); % line 6
+\draw (c1) |- (part-U1.+); % line 7
 \draw (part-U1.out) -| (b4); % line 8
-\draw (a6) -| (part-T1.A1); % line 9
-\draw (c6) -| (part-T1.A2); % line 10
-\draw (a9) -| (part-T1.B1); % line 11
-\draw (c9) -| (part-T1.B2); % line 12
+\draw (a6) |- (part-T1.A1); % line 9
+\draw (c6) |- (part-T1.A2); % line 10
+\draw (a9) |- (part-T1.B1); % line 11
+\draw (c9) |- (part-T1.B2); % line 12
 \path (0,-4.193) rectangle (4.572,-3.007); % line 14
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-3.6) {X}; % line 14
 \path (6,-4.193) rectangle (11.842,-3.007); % line 15
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-3.6) {X}; % line 15
+\path (12,-10.329) rectangle (23.286,0.593); % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,0) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-0.487) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-0.974) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-1.46) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-1.947) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-2.434) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-2.921) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-3.408) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-3.895) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-4.381) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-4.868) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-5.355) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-5.842) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-6.329) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-6.816) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-7.302) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-7.789) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-8.276) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-8.763) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-9.25) {X}; % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-9.737) {X}; % line 16
 \node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(8.778,0.853);
 \end{circuitikz}

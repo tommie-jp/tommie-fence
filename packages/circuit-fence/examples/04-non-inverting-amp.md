@@ -15,7 +15,7 @@ parts:
   R3:  resistor d4 d7 10k
   OUT: port b8
 wires:
-  - b3 -| U1.+
+  - b3 |- U1.+
   - d4 |- U1.-
   - U1.out -- b7 -- b8
   - d7 -- b7

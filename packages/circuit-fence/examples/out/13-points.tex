@@ -34,9 +34,9 @@
 \draw (b3) to[R, l_=$R_{b}$, a^=$100\,\mathrm{k}\Omega$] (e3); % line 8
 \node[ground] at (e3) {}; % line 9
 \node[plain amp, noinv input up] (part-U1) at (b5) {}; % line 10
-\draw ($(part-U1.+)+(0.44,-0.13)$) -- ++(0.28,0); % line 10
-\draw ($(part-U1.+)+(0.58,-0.27)$) -- ++(0,0.28); % line 10
-\draw ($(part-U1.-)+(0.44,0.13)$) -- ++(0.28,0); % line 10
+\draw ($($(part-U1.+)!0.22!(part-U1.-)$)+(0.44,0)$) -- ++(0.28,0); % line 10
+\draw ($($(part-U1.+)!0.22!(part-U1.-)$)+(0.58,-0.14)$) -- ++(0,0.28); % line 10
+\draw ($($(part-U1.-)!0.22!(part-U1.+)$)+(0.44,0)$) -- ++(0.28,0); % line 10
 \draw (d4) to[R, l_=$R_{2}$, a^=$1\,\mathrm{k}\Omega$] (e4); % line 11
 \node[ground] at (e4) {}; % line 12
 \draw (d4) to[R, l_=$R_{3}$, a^=$10\,\mathrm{k}\Omega$] (d7); % line 13

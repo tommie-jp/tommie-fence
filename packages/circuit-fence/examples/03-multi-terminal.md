@@ -38,6 +38,7 @@ notes:
   - text g.5_2 blue center: "M1: nmos f2"
   - text g.5_5 blue center: "M2: pmos f5"
   - text g.5_8 blue center: "Q4: pigbt f8"
+  - source a10 blue
 style:
   grid: on
   pitch: 1.2
@@ -67,16 +68,17 @@ parts:
   U1: opamp b2 LM358
   T1: transformer b7 1to1
 wires:
-  - a1 -| U1.+
-  - c1 -| U1.-
+  - a1 |- U1.-
+  - c1 |- U1.+
   - U1.out -| b4
-  - a6 -| T1.A1
-  - c6 -| T1.A2
-  - a9 -| T1.B1
-  - c9 -| T1.B2
+  - a6 |- T1.A1
+  - c6 |- T1.A2
+  - a9 |- T1.B1
+  - c9 |- T1.B2
 notes:
   - text d1 blue: "U1: opamp b2 LM358"
   - text d6 blue: "T1: transformer b7 1to1"
+  - source a11 blue
 style:
   grid: on
   pitch: 1.2

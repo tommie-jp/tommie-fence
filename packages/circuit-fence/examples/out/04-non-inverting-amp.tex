@@ -34,14 +34,14 @@
 \draw (b3) to[R, l_=$R_{b}$, a^=$100\,\mathrm{k}\Omega$] (e3); % line 5
 \node[ground] at (e3) {}; % line 6
 \node[plain amp, noinv input up] (part-U1) at (b5) {}; % line 7
-\draw ($(part-U1.+)+(0.44,-0.13)$) -- ++(0.28,0); % line 7
-\draw ($(part-U1.+)+(0.58,-0.27)$) -- ++(0,0.28); % line 7
-\draw ($(part-U1.-)+(0.44,0.13)$) -- ++(0.28,0); % line 7
+\draw ($($(part-U1.+)!0.22!(part-U1.-)$)+(0.44,0)$) -- ++(0.28,0); % line 7
+\draw ($($(part-U1.+)!0.22!(part-U1.-)$)+(0.58,-0.14)$) -- ++(0,0.28); % line 7
+\draw ($($(part-U1.-)!0.22!(part-U1.+)$)+(0.44,0)$) -- ++(0.28,0); % line 7
 \draw (d4) to[R, l_=$R_{2}$, a^=$1\,\mathrm{k}\Omega$] (e4); % line 8
 \node[ground] at (e4) {}; % line 9
 \draw (d4) to[R, l_=$R_{3}$, a^=$10\,\mathrm{k}\Omega$] (d7); % line 10
 \draw (b8) node[ocirc]{} node[above left]{OUT}; % line 11
-\draw (b3) -| (part-U1.+); % line 13
+\draw (b3) |- (part-U1.+); % line 13
 \draw (d4) |- (part-U1.-); % line 14
 \draw (part-U1.out) -- (b7); % line 15
 \draw (b7) -- (b8); % line 15
