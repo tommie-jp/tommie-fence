@@ -2,8 +2,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, resolve } from 'node:path';
 import {
-  applyNotes, compileCircuit, errorLine, extractCircuitFences, messageLine, recolorSvg, resizeSvg,
-  shiftErrors,
+  STAMP_TEXT, compileCircuit, errorLine, extractCircuitFences, finishSvg, messageLine, shiftErrors,
 } from '../core/index.ts';
 import type { FenceError, Net } from '../core/index.ts';
 import { renderTex } from '../host/texSvg.ts';
@@ -182,9 +181,10 @@ async function runJob(job: Job): Promise<number> {
   }
 
   const svgPath = join(job.directory, `${job.stem}.svg`);
-  // プレビューと同じ注釈・色・大きさを当ててから書き出す。
-  // auto のときの線は currentColor のままで、単体で開けば地の文字色 (黒) になる。
-  writeFileSync(svgPath, `${resizeSvg(recolorSvg(applyNotes(outcome.svg, notes), theme), width)}\n`);
+  // プレビューと同じ注釈・色・大きさを当ててから書き出す (仕上げの順番は
+  // core/render/finish.ts が持っている)。auto のときの線は currentColor の
+  // ままで、単体で開けば地の文字色 (黒) になる。
+  writeFileSync(svgPath, `${finishSvg(outcome.svg, { notes, theme, width })}\n`);
   console.log(`${job.label} → ${svgPath}`);
   reportNetlist(netlist);
   reportErrors(errors);
@@ -197,6 +197,11 @@ async function main(argv: readonly string[]): Promise<number> {
   if (!parsed.ok) {
     reportProblem(`${parsed.message}\n\n${USAGE}`);
     return 2;
+  }
+
+  if (parsed.value.command === 'version') {
+    console.log(STAMP_TEXT);
+    return 0;
   }
 
   const { command, targets, outDir, emitTex: texOnly } = parsed.value;

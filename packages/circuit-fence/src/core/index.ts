@@ -112,6 +112,8 @@ export function compileCircuit(source: string, options: CompileOptions = {}): Co
 
 export { recolorSvg, resizeSvg, scaleSvgToText, DEFAULT_THEME } from './render/theme.ts';
 export { applyNotes } from './render/noteText.ts';
+export { finishSvg, markSvg } from './render/finish.ts';
+export { STAMP_TEXT, VERSION } from './version.ts';
 export type { Theme } from './render/theme.ts';
 export { errorLine, messageLine, renderErrorBanner, renderErrorCard } from './render/errorCard.ts';
 export { shiftErrors } from './errors.ts';

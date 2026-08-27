@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
 import { NOTE_ALIGNS, NOTE_COLOR_NAMES, NOTE_LEADINGS, NOTE_SIZE_NAMES } from './notes.ts';
 import { PART_ALIASES, partTypeNames } from './parts.ts';
+import { STYLE_KEYS } from './parser/style.ts';
 import { THEME_NAMES } from './render/theme.ts';
 
 /**
@@ -34,5 +35,9 @@ describe('docs/cheatsheet.md', () => {
 
   test('names every theme', () => {
     expect(THEME_NAMES.filter((name) => !mentions(name))).toEqual([]);
+  });
+
+  test('names every item style: can carry', () => {
+    expect(STYLE_KEYS.filter((name) => !mentions(name))).toEqual([]);
   });
 });

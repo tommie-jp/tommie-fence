@@ -3,6 +3,14 @@ import { parseArgs } from './args.ts';
 
 const parse = (...argv: string[]) => parseArgs(argv);
 
+/** 描く・調べる指定として読めたときの中身。版だけを答える指定はここには来ない。 */
+const commandOf = (...argv: string[]) => {
+  const result = parse(...argv);
+  if (!result.ok) throw new Error(result.message);
+  if (result.value.command === 'version') throw new Error('版を答える指定でした');
+  return result.value;
+};
+
 describe('parseArgs', () => {
   test('reads the files to draw', () => {
     expect(parse('render', 'examples')).toEqual({
@@ -12,27 +20,19 @@ describe('parseArgs', () => {
   });
 
   test('reads several files', () => {
-    const result = parse('render', 'a.md', 'b.md');
-
-    expect(result.ok && result.value.targets).toEqual(['a.md', 'b.md']);
+    expect(commandOf('render', 'a.md', 'b.md').targets).toEqual(['a.md', 'b.md']);
   });
 
   test('reads where to write the drawings', () => {
-    const result = parse('render', 'examples', '--out', 'examples/out');
-
-    expect(result.ok && result.value.outDir).toBe('examples/out');
+    expect(commandOf('render', 'examples', '--out', 'examples/out').outDir).toBe('examples/out');
   });
 
   test('reads the switch that writes latex instead of drawing', () => {
-    const result = parse('render', 'examples', '--emit-tex');
-
-    expect(result.ok && result.value.emitTex).toBe(true);
+    expect(commandOf('render', 'examples', '--emit-tex').emitTex).toBe(true);
   });
 
   test('draws unless it is told to write latex', () => {
-    const result = parse('render', 'examples');
-
-    expect(result.ok && result.value.emitTex).toBe(false);
+    expect(commandOf('render', 'examples').emitTex).toBe(false);
   });
 
   test('asks for a command it knows', () => {
@@ -79,5 +79,29 @@ describe('parseArgs の check', () => {
       ok: true,
       value: { command: 'render', targets: ['examples'], outDir: null, emitTex: false },
     });
+  });
+});
+
+describe('parseArgs の --version', () => {
+  test('reads the switch that only prints the version', () => {
+    expect(parse('--version')).toEqual({ ok: true, value: { command: 'version' } });
+    expect(parse('-v')).toEqual({ ok: true, value: { command: 'version' } });
+  });
+
+  test('takes it as a command only when it comes first', () => {
+    // どこに書いても効くことにすると、`check docs -v` が何も調べずに
+    // 0 で終わり、CI の関門が黙って通る。
+    expect(parse('check', 'docs', '-v').ok).toBe(false);
+    expect(parse('render', 'examples', '--version').ok).toBe(false);
+  });
+
+  test('says which option it did not know when the version flag came late', () => {
+    const result = parse('check', 'docs', '-v');
+
+    expect(result.ok === false && result.message).toContain('-v');
+  });
+
+  test('still asks for a command when none is given', () => {
+    expect(parse().ok).toBe(false);
   });
 });

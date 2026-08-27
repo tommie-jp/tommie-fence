@@ -10,13 +10,19 @@ export type RenderCommand = {
   readonly emitTex: boolean;
 };
 
+/** 版を答えるだけ。図も検証もしないので、渡すものが何も無い。 */
+export type VersionCommand = { readonly command: 'version' };
+
+export type Command = RenderCommand | VersionCommand;
+
 export type ArgsResult =
-  | { readonly ok: true; readonly value: RenderCommand }
+  | { readonly ok: true; readonly value: Command }
   | { readonly ok: false; readonly message: string };
 
 export const USAGE = `使い方:
   circuit-fence render <ファイルかディレクトリ...> [--out <出力先>] [--emit-tex]
   circuit-fence check  <ファイルかディレクトリ...>
+  circuit-fence --version
 
   .md からは \`\`\`circuit フェンスを取り出し、.yaml はそのまま 1 枚の図として描きます。
   1 枚につき .tex と .svg を書き出します (.tex は LaTeX に渡せる完成した原稿)。
@@ -28,12 +34,22 @@ export const USAGE = `使い方:
 
   check は何も書き出さず、読めなかった行とネットリストだけを出します。
   図を描かないぶん速いので、書きながら回すときや CI で使えます。
-  読めなかった行が 1 つでもあれば 0 以外で終わります。`;
+  読めなかった行が 1 つでもあれば 0 以外で終わります。
+
+  --version は処理系の版を出します。図に刻むなら style: stamp: on を書きます
+  (字は処理系が埋めるので、手で書いて古びることがありません)。`;
 
 const invalid = (message: string): ArgsResult => ({ ok: false, message });
 
+const VERSION_FLAGS = ['--version', '-v'];
+
 export function parseArgs(argv: readonly string[]): ArgsResult {
   const [written, ...rest] = argv;
+
+  // 版を訊く指定は**先頭に書いたときだけ**。どこに書いても効くことにすると、
+  // `check docs -v` が何も調べずに 0 で終わり、CI の関門が黙って通る
+  // (`-v` を verbose のつもりで書くのはありがちな取り違え)。
+  if (written !== undefined && VERSION_FLAGS.includes(written)) return { ok: true, value: { command: 'version' } };
   if (written !== 'render' && written !== 'check') return invalid('render か check を指定します');
   const command = written;
 

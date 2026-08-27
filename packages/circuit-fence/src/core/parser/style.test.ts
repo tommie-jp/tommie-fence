@@ -94,4 +94,21 @@ describe('validateStyle', () => {
   test('asks for a theme name or a map when given something else', () => {
     expect(messagesOf(['dark'])[0]?.key).toBeNull();
   });
+
+  test('reads the version stamp switch', () => {
+    expect(valueOf({ stamp: true })).toMatchObject({ stamp: true });
+    expect(valueOf({ stamp: 'on' })).toMatchObject({ stamp: true });
+    expect(valueOf({ stamp: 'off' })).toMatchObject({ stamp: false });
+  });
+
+  test('leaves the stamp unwritten when nothing says otherwise', () => {
+    expect(valueOf({}).stamp).toBeNull();
+  });
+
+  test('asks for on or off when the stamp is written as something else', () => {
+    const messages = messagesOf({ stamp: 'yes' });
+
+    expect(messages[0]?.key).toBe('stamp');
+    expect(messages[0]?.message).toContain('on');
+  });
 });

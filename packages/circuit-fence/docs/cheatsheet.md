@@ -116,10 +116,12 @@ style:             # 任意。見た目
 | `standard` | `american` / `european` | `american` |
 | `wire-width` | 0.2〜4 (pt) | `0.8` |
 | `width` | 120〜4000 (ドット) | 読み手の字に合わせる |
+| `stamp` | `on` / `off` | `off` |
 | `ink-color` / `paper-color` / `grid-color` | `"#rgb"` / `"#rrggbb"` | テーマの色 |
 
 テーマだけなら `style: dark` の 1 行でよい。
 **色は `"…"` で囲む** (`#` から先は YAML のコメント)。
+`stamp: on` は処理系の版を右下に刻む (**字は書かない**。処理系が埋める)。
 
 ## よく踏むところ
 
@@ -133,9 +135,11 @@ style:             # 任意。見た目
 
 ```bash
 circuit-fence check <ファイルかディレクトリ...>
+circuit-fence --version
 ```
 
-図を描かず、読めなかった行とネットリストだけを出す (速い)。
+`check` は図を描かず、読めなかった行とネットリストだけを出す (速い)。
 読めなかった行があれば 0 以外で終わる。
+`--version` は処理系の版を出す。
 
 図を書き出すのは `render`、手元の LaTeX 用の `.tex` は `render --emit-tex`。

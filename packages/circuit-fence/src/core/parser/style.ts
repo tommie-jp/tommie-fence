@@ -19,6 +19,7 @@ export const EMPTY_STYLE: StyleSpec = {
   standard: null,
   wireWidth: null,
   width: null,
+  stamp: null,
 };
 
 /**
@@ -39,9 +40,10 @@ const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 
 const STANDARDS = ['american', 'european'] as const;
 
-const KEYS = [
+/** `style:` に書ける項目。知らない項目を返すときの一覧でもある。 */
+export const STYLE_KEYS = [
   'theme', 'ink-color', 'paper-color', 'grid-color',
-  'grid', 'grid-to', 'pitch', 'standard', 'wire-width', 'width',
+  'grid', 'grid-to', 'pitch', 'standard', 'wire-width', 'width', 'stamp',
 ] as const;
 
 const isRecord = (raw: unknown): raw is Record<string, unknown> =>
@@ -139,8 +141,10 @@ function withKey(
       return { ...style, wireWidth: size(STYLE_RANGES.wireWidth) ?? style.wireWidth };
     case 'width':
       return { ...style, width: size(STYLE_RANGES.width) ?? style.width };
+    case 'stamp':
+      return { ...style, stamp: readFlag(raw, key, messages) ?? style.stamp };
     default:
-      messages.push({ message: `style の知らない項目です: ${safeToken(key)} (使えるのは ${KEYS.join(', ')})`, key });
+      messages.push({ message: `style の知らない項目です: ${safeToken(key)} (使えるのは ${STYLE_KEYS.join(', ')})`, key });
       return style;
   }
 }
@@ -164,7 +168,7 @@ export function validateStyle(
   if (!isRecord(raw)) {
     return {
       value: base,
-      messages: [{ message: `style はテーマ名か、${KEYS.join(' / ')} のマップで書きます`, key: null }],
+      messages: [{ message: `style はテーマ名か、${STYLE_KEYS.join(' / ')} のマップで書きます`, key: null }],
     };
   }
 

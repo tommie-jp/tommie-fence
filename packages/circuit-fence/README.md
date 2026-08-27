@@ -91,6 +91,16 @@ xelatex -output-directory tex tex/notes.tex
 オペアンプが本物の記号になる)。番地も配線も同じなので、プレビューで位置を
 確かめてから書き出せる。書き方は [docs/syntax.md](docs/syntax.md)。
 
+処理系の版は `--version` で出せる。
+
+```bash
+node dist/cli.cjs --version
+```
+
+図に刻むなら `style: stamp: on` を書く。**字は書かない** — 番号は処理系が
+埋めるので、更新すれば刻印も一緒に新しくなる。刻まない図にも、版は
+`.svg` の根に `data-circuit-fence` として必ず入っている。
+
 ## 開発
 
 ```bash
@@ -106,7 +116,7 @@ npm run examples   # examples の図を作り直す (変えたら出力もコミ
 
 Phase 3。2 端子部品 40 種・1 端子の記号 4 種・多端子部品 29 種、
 `--` / `-|` / `|-` の配線、足の参照 (`U1.out`)、分岐の黒丸、T 字の接続、
-重なりの検出、`style:` (グリッド表示・テーマ・大きさ)、
+重なりの検出、`style:` (グリッド表示・テーマ・大きさ・版の刻印)、
 `notes:` (印・枠・指し棒・字・フェンスの書き出し)、
 `--emit-tex` での `.tex` 書き出しまで。
 

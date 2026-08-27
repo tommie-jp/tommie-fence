@@ -1,12 +1,11 @@
 import { describe, expect, test } from 'vitest';
+import { EMPTY_STYLE } from '../parser/style.ts';
 import {
   DEFAULT_THEME_NAME, THEME_NAMES, recolorSvg, resizeSvg, resolveTheme, scaleSvgToText,
 } from './theme.ts';
 
-const EMPTY = {
-  theme: null, inkColor: null, paperColor: null, gridColor: null,
-  grid: null, gridTo: null, pitch: null, standard: null, wireWidth: null, width: null,
-};
+/** 何も書かれていない `style:`。写して持つと項目が増えたときにずれる。 */
+const EMPTY = EMPTY_STYLE;
 
 const svg = (body: string): string => `<svg viewBox="0 0 10 10" width="100" height="80">${body}</svg>`;
 

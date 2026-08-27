@@ -88,3 +88,26 @@ style:
   grid: on
   width: 320
 ```
+
+`stamp: on` は、その図を組んだ処理系の版を右下に刻む。**字は書かない** —
+処理系が埋めるので、拡張機能を更新すれば刻印も一緒に新しくなる。
+資料に貼った図が、どの版で描いたものかを後から辿れる。
+
+```circuit
+parts:
+  IN:  port a1
+  R1:  resistor a1 a3 10k
+  C1:  capacitor a3 c3 100n
+  OUT: port a4
+  G1:  ground c3
+wires:
+  - a3 -- a4
+notes:
+  - source a6 blue
+style:
+  grid: on
+  stamp: on
+```
+
+刻まないときも、版は書き出した `.svg` の根に `data-circuit-fence` として
+必ず入っている (図の見た目は変わらない)。

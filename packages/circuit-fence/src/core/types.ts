@@ -144,6 +144,11 @@ export type StyleSpec = {
   readonly wireWidth: number | null;
   /** 出力の横ドット数。図の中身ではなく貼り先の都合なので、テーマとは分ける。 */
   readonly width: number | null;
+  /**
+   * 図の隅に処理系のバージョンを刻むか。
+   * **字は書き手に書かせない** (処理系が埋めるので古びない)。書けるのは出す/出さないだけ。
+   */
+  readonly stamp: boolean | null;
 };
 
 /**

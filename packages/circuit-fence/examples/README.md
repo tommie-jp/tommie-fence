@@ -17,7 +17,7 @@
 | [06-bends.md](06-bends.md) | 配線の `--` / `-\|` / `\|-`、分岐の黒丸と T 字、1 行につないで書く |
 | [07-diagonal.md](07-diagonal.md) | 斜めに置く |
 | [08-themes.md](08-themes.md) | `theme` (`auto` / `light` / `dark` / `mono`) |
-| [09-style.md](09-style.md) | 色の上書き / `pitch` / `wire-width` / `standard` / `width` |
+| [09-style.md](09-style.md) | 色の上書き / `pitch` / `wire-width` / `standard` / `width` / `stamp` |
 | [10-grid.md](10-grid.md) | `grid` / `grid-to` |
 | [11-logic.md](11-logic.md) | ロジックゲート / DIP の IC / 切り替えスイッチ |
 | [12-notes.md](12-notes.md) | `notes:` の印・枠・指し棒・字、色、大きさ、寄せ、日本語 |

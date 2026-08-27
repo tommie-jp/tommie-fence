@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { buildCircuit } from '../model/circuit.ts';
 import { parseFence } from '../parser/parseFence.ts';
+import { VERSION } from '../version.ts';
 import { generateTex, standaloneTex } from './generate.ts';
 
 const generate = (...rows: string[]) => {
@@ -623,5 +624,50 @@ describe('グラウンドの記号の大きさ', () => {
     const scale = (tex: string): string | undefined => /grounds\/scale=[\d.]+/.exec(tex)?.[0];
 
     expect(scale(latex)).toBe(scale(fence));
+  });
+});
+
+describe('generateTex のバージョン刻印', () => {
+  const STAMPED = ['parts:', '  R1: resistor a1 a3', 'style:', '  stamp: on'];
+
+  test('writes nothing when the stamp was not asked for', () => {
+    expect(generate('parts:', '  R1: resistor a1 a3').tex).not.toContain('circuit-fence');
+  });
+
+  test('stamps the version of the tool that generated the figure', () => {
+    expect(generate(...STAMPED).tex).toContain(`circuit-fence ${VERSION}`);
+  });
+
+  test('hangs the stamp off the finished drawing, not the grid', () => {
+    // 図がどこまで広がったかは描き終わるまで決まらない。番地から測ると、
+    // ラベルや注釈がはみ出したぶんに刻印が重なる。
+    expect(generate(...STAMPED).tex).toContain('current bounding box.south east');
+  });
+
+  test('stamps last so the whole drawing is inside the box it measures', () => {
+    const lines = (generate(...STAMPED, 'notes:', '  - text c1 "あ"').tex ?? '').split('\n');
+    const stamp = lines.findIndex((line) => line.includes('circuit-fence'));
+
+    expect(stamp).toBeGreaterThan(-1);
+    expect(lines[stamp + 1]).toBe('\\end{circuitikz}');
+  });
+
+  test('draws the stamp in the grid colour so it stays subordinate to the circuit', () => {
+    // gray は描き上がった SVG でグリッドの色に塗り替わる (render/theme.ts)。
+    expect(generate(...STAMPED).tex).toContain('gray');
+  });
+
+  test('writes the same stamp into the exported tex', () => {
+    // 刻印は ASCII だけなので、フェンスの制約は何も強いない (約束 7)。
+    const line = (tex: string): string | undefined =>
+      tex.split('\n').find((row) => row.includes('circuit-fence'));
+
+    expect(line(generateLatex(...STAMPED).tex ?? '')).toBe(line(generate(...STAMPED).tex ?? ''));
+  });
+
+  test('carries no line number, because no line of the fence is to blame for it', () => {
+    const stamped = (generate(...STAMPED).tex ?? '').split('\n').find((row) => row.includes('circuit-fence'));
+
+    expect(stamped).not.toContain('% line');
   });
 });

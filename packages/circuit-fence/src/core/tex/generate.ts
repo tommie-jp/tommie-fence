@@ -7,6 +7,7 @@ import { lookupPartType, optionsFor, symbolFor } from '../parts.ts';
 import type { SourceInner } from '../parts.ts';
 import { EMPTY_STYLE } from '../parser/style.ts';
 import { cellOf as addressOf, nodeNameOf, texNameOfEndpoint } from '../types.ts';
+import { STAMP_TEXT } from '../version.ts';
 import type {
   MultiTerminalPart, NoteOverlay, PartSpec, StyleSpec, TexTarget, TwoTerminalPart, OneTerminalPart,
 } from '../types.ts';
@@ -142,6 +143,25 @@ const headerOf = (
 ];
 
 const FOOTER = ['\\end{circuitikz}', '\\end{document}'];
+
+/** 刻印と図の間に空ける幅 (pt)。字がグラウンドの記号にくっつかない最小限。 */
+const STAMP_INSET = 2;
+
+/**
+ * 図の隅に、その図を組んだ処理系のバージョンを刻む (`style: stamp: on`)。
+ *
+ * **置き場所は番地から測らない**。図がどこまで広がるかは、ラベルも注釈も
+ * 描き終わるまで決まらないので、TikZ に測らせた `current bounding box` の
+ * 右下に掛ける (実機で確認済み。だから**いちばん最後に書く**)。
+ *
+ * `gray` で描くのはグリッドと同じ扱いにするため。描き上がった SVG で
+ * グリッドの色に塗り替わり (render/theme.ts)、回路より薄く出る。
+ *
+ * 字は ASCII だけなので、フェンスと書き出す `.tex` で分ける理由がない (約束 7)。
+ */
+const drawStamp = (): string =>
+  `\\node[gray, anchor=north east, font=\\tiny, inner sep=${num(STAMP_INSET)}pt]`
+  + ` at (current bounding box.south east) {${escapeTex(STAMP_TEXT)}};`;
 
 /**
  * 生成した TeX を、LaTeX にそのまま渡せる 1 本の原稿にする。
@@ -592,6 +612,10 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
     lines.push(`${drawing.tex} % line ${drawing.line}`);
     lineMap.set(lines.length, drawing.line);
   }
+
+  // 刻印は注釈より後。図がどこまで広がったかを測ってから掛ける。
+  // フェンスのどの行から来たものでもないので `% line` は付けない。
+  if (style.stamp === true) lines.push(drawStamp());
 
   lines.push(...FOOTER);
 

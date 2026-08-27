@@ -1,6 +1,6 @@
 import MarkdownIt from 'markdown-it';
 import { describe, expect, test, vi } from 'vitest';
-import { compileCircuit } from '../core/index.ts';
+import { VERSION, compileCircuit } from '../core/index.ts';
 import { hashOf } from '../host/hash.ts';
 import { circuitPlugin } from './markdownItPlugin.ts';
 import type { FigureSource } from './markdownItPlugin.ts';
@@ -72,6 +72,14 @@ describe('circuitPlugin', () => {
 
     expect(html).toContain('id="drawn"');
     expect(html).not.toContain('circuit-pending');
+  });
+
+  test('says which version drew the figure it shows', () => {
+    // 書き手には知りようのない値なので、処理系が必ず埋める
+    // (`style: stamp: on` は図に見せるかどうかだけを決める)。
+    const figures: FigureSource = { lookup: () => ({ svg: '<svg id="drawn"/>' }), enqueue: () => {} };
+
+    expect(md(figures).render(RC)).toContain(`data-circuit-fence="${VERSION}"`);
   });
 
   test('does not ask again for a drawing it already has', () => {
