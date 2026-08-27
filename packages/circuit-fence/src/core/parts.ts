@@ -4,8 +4,8 @@
  * 種類を増やすときはここに 1 行足す。
  *
  * **記号は実機でコンパイルを確かめたものだけを載せる** (CLAUDE.md 約束 6)。
- * フェンスの TeX で通らない記号は、素の記号 + 書き足しに置き換えてから載せる。
- * 実測で引っかかったのは次の 4 つ。
+ * 通らない記号・図が壊れる記号は、素の記号 + 書き足しに置き換えてから載せる。
+ * 実測で引っかかったのは次の 3 種類。
  *
  * 落ちるもの (例外ではなく**プロセスごと落ちる**。フォントが無いため):
  *
@@ -20,6 +20,11 @@
  * - `thRn` / `thRp` (NTC / PTC サーミスタ) → 中の θ が tiny の数式フォントで、
  *   その大きさの字形が無く `#` で出る。素の `thR` にして、
  *   NTC / PTC の区別は ID の下の行に書く (mark)
+ *
+ * 記号そのものが**横に置くと寝る**もの (フェンスに限らず circuitikz の描き方):
+ *
+ * - `V` / `sV` / `sqV` / `vsourcetri` (丸い電源) → 丸だけの `esource` にして、
+ *   + と - や波形は自分で描く (inner。理由は「電源」の頭)
  */
 
 import type { TexTarget } from './types.ts';
@@ -30,6 +35,9 @@ import type { TexTarget } from './types.ts';
  * サイリスタのゲート)。どちらも配線から `U1.out` の形で指せる。
  */
 export type PartKind = 'two-terminal' | 'one-terminal' | 'multi-terminal';
+
+/** 丸い電源の中身。直流は + と -、あとは 1 周期ぶんの波形。 */
+export type SourceInner = 'dc' | 'sine' | 'square' | 'triangle';
 
 export type PartType = {
   readonly kind: PartKind;
@@ -47,6 +55,11 @@ export type PartType = {
    * 省くと symbol をそのまま使う (代替が要らない種類はこちら)。
    */
   readonly latexSymbol?: string;
+  /**
+   * 丸の中に自分で描く中身。丸だけの `esource` に置き換えた電源が持つ
+   * (理由は下の「電源」の頭)。描くのは `tex/generate.ts` の sourceInner。
+   */
+  readonly inner?: SourceInner;
   /**
    * 書ける名前 → circuitikz のアンカー名。
    * 回路図の慣習の短い名前 (`B` `C` `E`) も、アンカー名そのものも通す。
@@ -219,10 +232,18 @@ export const PART_TYPES = {
   triac: { kind: 'two-terminal', symbol: 'triac', ...NO_UNIT, pins: GATE_PINS },
 
   // 電源
-  vsource: { kind: 'two-terminal', symbol: 'V', unitTex: VOLT, unitSi: SI_VOLT },
-  sine: { kind: 'two-terminal', symbol: 'sV', unitTex: VOLT, unitSi: SI_VOLT },
-  square: { kind: 'two-terminal', symbol: 'sqV', unitTex: VOLT, unitSi: SI_VOLT },
-  triangle: { kind: 'two-terminal', symbol: 'vsourcetri', unitTex: VOLT, unitSi: SI_VOLT },
+  //
+  // circuitikz の丸い電源 (`V` / `sV` / `sqV` / `vsourcetri`) は、**丸の中身を
+  // 90 度回して描く**。縦に置いたときに + と - が上下へ正しく並ぶ描き方で、
+  // 横に置くと - が縦棒になり、波形も縦に寝る (フェンスの TeX でも手元の
+  // LaTeX 1.6.6 でも同じ。どちらも実機で確認した)。番地で置くこの記法では
+  // 電源を横に引くほうが多いので、丸だけの `esource` に置き換えて、
+  // 中身は自分で描く (下の inner。`op amp` の ± と同じやり方)。
+  // **フェンスの都合ではないので書き出す `.tex` も同じ形にする** (約束 7)。
+  vsource: { kind: 'two-terminal', symbol: 'esource', inner: 'dc', unitTex: VOLT, unitSi: SI_VOLT },
+  sine: { kind: 'two-terminal', symbol: 'esource', inner: 'sine', unitTex: VOLT, unitSi: SI_VOLT },
+  square: { kind: 'two-terminal', symbol: 'esource', inner: 'square', unitTex: VOLT, unitSi: SI_VOLT },
+  triangle: { kind: 'two-terminal', symbol: 'esource', inner: 'triangle', unitTex: VOLT, unitSi: SI_VOLT },
   isource: { kind: 'two-terminal', symbol: 'I', unitTex: AMPERE, unitSi: SI_AMPERE },
   battery: { kind: 'two-terminal', symbol: 'battery1', unitTex: VOLT, unitSi: SI_VOLT },
   /** 太陽電池。 */

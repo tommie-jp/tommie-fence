@@ -437,6 +437,71 @@ describe('多端子部品', () => {
   });
 });
 
+describe('丸い電源の記号', () => {
+  test('swaps the round sources for the empty circle', () => {
+    // circuitikz の V / sV / sqV / vsourcetri は**中身を 90 度回して**描く
+    // (縦置き前提)。横に置くと - が縦棒になり、波形も寝る。
+    for (const [type, symbol] of [['vsource', 'V'], ['sine', 'sV'], ['square', 'sqV'], ['triangle', 'vsourcetri']]) {
+      const { tex } = generate('parts:', `  V1: ${type} a1 a3 5`);
+
+      expect(tex).toContain('to[esource');
+      expect(tex).not.toContain(`to[${symbol},`);
+    }
+  });
+
+  test('draws the plus and minus of the dc source as lines', () => {
+    const { tex } = generate('parts:', '  V1: vsource a1 a3 5');
+
+    // オペアンプの ± と同じ理由で字では書かない (フェンスのフォントでは
+    // $-$ が別の字形になり、テキストの - は + に対して細くて短い)。
+    expect(tex).not.toContain('{$-$}');
+    // 横棒が 2 本 (+ と -) と、+ の縦棒が 1 本。
+    expect(tex.match(/^\\draw \([-\d.]+,[-\d.]+\) -- \+\+\(/gm)).toHaveLength(3);
+  });
+
+  test('puts the plus on the side of the address written first', () => {
+    // ecap や battery と同じ約束。先に書いた番地が + 側。
+    const { tex } = generate('parts:', '  V1: vsource a1 a3 5');
+    const xs = [...tex.matchAll(/^\\draw \(([-\d.]+),[-\d.]+\) -- \+\+\([-\d.]+,0\);/gm)]
+      .map((match) => Number(match[1]));
+
+    // a1 は x=0、a3 は x=4。丸の真ん中 (x=2) より a1 寄りが + の横棒。
+    expect(Math.min(...xs)).toBeLessThan(2);
+    expect(Math.max(...xs)).toBeGreaterThan(2);
+  });
+
+  test('keeps the minus bar horizontal, which is what the circuitikz symbol does not', () => {
+    const { tex } = generate('parts:', '  V1: vsource a1 a3 5');
+
+    // - は横棒 1 本。縦棒は + のぶんの 1 本だけ。
+    expect(tex.match(/-- \+\+\(0,[-\d.]+\);/g)).toHaveLength(1);
+  });
+
+  test('draws the waveform of the ac sources across the circle', () => {
+    // 波形は figure の座標系に描く。斜めに置いても波は水平のままで、
+    // 計器の straight instruments と同じ読み方になる。
+    expect(generate('parts:', '  V1: sine a1 a3 5').tex).toContain(' sin ++(');
+    expect(generate('parts:', '  V1: square a1 a3 5').tex).toMatch(/\(1\.82,0\) -- \+\+\(0,0\.18\)/);
+    expect(generate('parts:', '  V1: triangle a1 a3 5').tex).toMatch(/\(1\.82,0\) -- \+\+\(0\.09,0\.135\)/);
+  });
+
+  test('draws the same symbol in the tex it writes out', () => {
+    // フェンスの都合ではなく circuitikz の描き方の問題なので、
+    // 書き出す .tex も同じ形にする (約束 7)。
+    const { tex } = generateLatex('parts:', '  V1: vsource a1 a3 5');
+
+    expect(tex).toContain('to[esource');
+    expect(tex).not.toContain('to[V,');
+  });
+
+  test('keeps the id and the value on the symbol', () => {
+    const { tex } = generate('parts:', '  V1: vsource a1 a3 5');
+
+    expect(tex).toContain('l_=$V_{1}$');
+    expect(tex).toContain('5\\,\\mathrm{V}');
+  });
+});
+
 describe('電源レールの記号', () => {
   test('writes the id inside the rail symbol', () => {
     // 端子は白丸の横に名前を添えるが、レールは矢印の先に名前が出る。

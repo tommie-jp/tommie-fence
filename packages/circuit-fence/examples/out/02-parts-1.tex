@@ -65,8 +65,12 @@
 \draw (c1) to[D, l_=$D_{1}$, a^=$\mathrm{1N4148}$] (c3); % line 6
 \draw (c5) to[leD, l_=$D_{2}$] (c7); % line 7
 \draw (c9) to[zD, l_=$D_{3}$, a^=$\mathrm{5V1}$] (c11); % line 8
-\draw (e1) to[V, l_=$V_{1}$, a^=$5\,\mathrm{V}$] (e3); % line 9
-\draw (e5) to[sV, l_=$V_{2}$, a^=$1\,\mathrm{V}$] (e7); % line 10
+\draw (e1) to[esource, l_=$V_{1}$, a^=$5\,\mathrm{V}$] (e3); % line 9
+\draw (1.73,-8) -- ++(0.2,0); % line 9
+\draw (1.83,-8.1) -- ++(0,0.2); % line 9
+\draw (2.07,-8) -- ++(0.2,0); % line 9
+\draw (e5) to[esource, l_=$V_{2}$, a^=$1\,\mathrm{V}$] (e7); % line 10
+\draw (9.82,-8) sin ++(0.09,0.09) cos ++(0.09,-0.09) sin ++(0.09,-0.09) cos ++(0.09,0.09); % line 10
 \draw (e9) to[I, l_=$I_{1}$, a^=$20\,\mathrm{m}\mathrm{A}$] (e11); % line 11
 \draw (g1) to[battery1, l_=$B_{1}$, a^=$9\,\mathrm{V}$] (g3); % line 12
 \draw (g5) to[nos, l_=$S_{1}$] (g7); % line 13

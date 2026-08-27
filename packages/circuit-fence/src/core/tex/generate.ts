@@ -4,6 +4,7 @@ import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
 import { lookupPartType, symbolFor } from '../parts.ts';
+import type { SourceInner } from '../parts.ts';
 import { EMPTY_STYLE } from '../parser/style.ts';
 import { cellOf as addressOf, nodeNameOf, texNameOfEndpoint } from '../types.ts';
 import type {
@@ -47,6 +48,12 @@ const DEFAULT_WIRE_WIDTH = 0.8;
 
 /** 既定の記号の流儀。実機で検証したのは american のほう。 */
 const DEFAULT_STANDARD = 'american';
+
+/**
+ * 2 端子の記号の長さ (cm)。丸い電源の中身を描くのにも要るので定数にしてある
+ * (circuitikz の記号の大きさはこの長さに対する割合で決まる)。
+ */
+const BIPOLE_LENGTH = 1.2;
 
 /**
  * 標準の TeX フォントに字形が無い字を組むフォント。
@@ -96,7 +103,7 @@ const headerOf = (
   ...colors,
   '\\begin{document}',
   `\\begin{circuitikz}[${style.standard ?? DEFAULT_STANDARD}, line width=${num(style.wireWidth ?? DEFAULT_WIRE_WIDTH)}pt]`,
-  '\\ctikzset{bipoles/length=1.2cm}',
+  `\\ctikzset{bipoles/length=${num(BIPOLE_LENGTH)}cm}`,
 ];
 
 const FOOTER = ['\\end{circuitikz}', '\\end{document}'];
@@ -259,6 +266,77 @@ function amplifierSigns(name: string): string[] {
   ];
 }
 
+/** 丸い電源の記号の直径 (記号の長さに対する割合)。circuitikz の esource と同じ。 */
+const SOURCE_CIRCLE = 0.6;
+
+/**
+ * 丸い電源の中身の大きさ (TikZ の単位)。波はここを半周期ぶんの幅として描く。
+ * circuitikz が丸の中に描いているのと同じ値 (半径の半分) にしてあるので、
+ * 記号を置き換えても大きさは変わらず、向きだけが変わる。
+ */
+const SOURCE_UNIT = SOURCE_CIRCLE * BIPOLE_LENGTH / 4;
+
+/** 直流電源の + と - の、横棒の長さと丸の真ん中からのずらし (TikZ の単位)。 */
+const SOURCE_SIGN_BAR = 0.2;
+const SOURCE_SIGN_GAP = 0.17;
+
+type Point = { readonly x: number; readonly y: number };
+
+/** 直流電源の + と -。オペアンプの ± と同じで、字ではなく線で描く。 */
+function directCurrentSigns(mid: Point, ux: number, uy: number): string[] {
+  const gap = SOURCE_SIGN_GAP;
+  const half = SOURCE_SIGN_BAR / 2;
+  const bar = num(SOURCE_SIGN_BAR);
+  // 先に書いた番地が + 側 (ecap や battery と同じ約束)。
+  const plus = { x: mid.x - ux * gap, y: mid.y - uy * gap };
+  const minus = { x: mid.x + ux * gap, y: mid.y + uy * gap };
+
+  return [
+    `\\draw (${num(plus.x - half)},${num(plus.y)}) -- ++(${bar},0);`,
+    `\\draw (${num(plus.x)},${num(plus.y - half)}) -- ++(0,${bar});`,
+    // - は横棒だけ。+ と同じ長さ・同じ太さになる。
+    `\\draw (${num(minus.x - half)},${num(minus.y)}) -- ++(${bar},0);`,
+  ];
+}
+
+/**
+ * 丸い電源の中身を描く。circuitikz の記号は中身を 90 度回して描くので
+ * (parts.ts の「電源」の頭)、丸だけの `esource` に自分で描き足す。
+ *
+ * 波形は**図の座標系にまっすぐ**描く。縦にも斜めにも置ける記法なので、
+ * 記号と一緒に波を回すと読めなくなる (circuitikz が計器にしているのと同じ
+ * 扱い。straight instruments)。+ と - だけは配線の向きに沿って並べる。
+ */
+function sourceInner(inner: SourceInner, from: Point, to: Point): string[] {
+  const span = Math.hypot(to.x - from.x, to.y - from.y);
+  // 番地が同じなら記号そのものが出ない。中身も描かない。
+  if (span === 0) return [];
+
+  const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
+  // 波はどれも丸の左端から右端まで、1 周期ぶん。
+  const start = `\\draw (${num(mid.x - SOURCE_UNIT)},${num(mid.y)})`;
+  const one = num(SOURCE_UNIT);
+  const up = num(SOURCE_UNIT / 2);
+  const down = num(-SOURCE_UNIT / 2);
+
+  switch (inner) {
+    case 'dc':
+      return directCurrentSigns(mid, (to.x - from.x) / span, (to.y - from.y) / span);
+    case 'sine':
+      return [`${start} sin ++(${up},${up}) cos ++(${up},${down}) sin ++(${up},${down}) cos ++(${up},${up});`];
+    case 'square':
+      return [
+        `${start} -- ++(0,${one}) -- ++(${one},0) -- ++(0,${num(-2 * SOURCE_UNIT)})`
+        + ` -- ++(${one},0) -- ++(0,${one});`,
+      ];
+    case 'triangle':
+      return [
+        `${start} -- ++(${up},${num(0.75 * SOURCE_UNIT)}) -- ++(${one},${num(-1.5 * SOURCE_UNIT)})`
+        + ` -- ++(${up},${num(0.75 * SOURCE_UNIT)});`,
+      ];
+  }
+}
+
 /**
  * グリッドの点の濃さ。行英字・列数字は同じ色をそのまま (濃く) 使うので、
  * 点だけをこのぶん薄める。図の主役は回路で、点は位置の目安でしかない。
@@ -329,7 +407,7 @@ function drawGrid(
   ];
 }
 
-function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget): string {
+function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number): string[] {
   // ラベルは `l_` (下・左)、値は `a^` (上・右) と向かい合わせに置く。
   // どちらも既定の側に置くと、LED のように上へ張り出す記号とラベルが重なる
   // (回路図の定石。実機で重なりを確認して決めた)。
@@ -348,7 +426,10 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget): string {
   );
   if (part.value !== null) options.push(`a^=${annotationOf(part.value, unitOf(part.type), target)}`);
 
-  return `\\draw (${formatAddress(part.from)}) to[${options.join(', ')}] (${formatAddress(part.to)});`;
+  const drawn = `\\draw (${formatAddress(part.from)}) to[${options.join(', ')}] (${formatAddress(part.to)});`;
+  if (type?.inner === undefined) return [drawn];
+
+  return [drawn, ...sourceInner(type.inner, toPoint(part.from, pitch), toPoint(part.to, pitch))];
 }
 
 function drawOneTerminal(part: OneTerminalPart, target: TexTarget): string {
@@ -401,9 +482,9 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
   return [node, ...number, ...amplifierSigns(name)];
 }
 
-const drawPart = (part: PartSpec, target: TexTarget): string[] =>
+const drawPart = (part: PartSpec, target: TexTarget, pitch: number): string[] =>
   part.kind === 'two-terminal'
-    ? [drawTwoTerminal(part, target)]
+    ? drawTwoTerminal(part, target, pitch)
     : part.kind === 'one-terminal'
       ? [drawOneTerminal(part, target)]
       : drawMultiTerminal(part, target);
@@ -448,7 +529,7 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
   }
 
   const drawings: { readonly tex: string; readonly line: number }[] = [
-    ...circuit.parts.flatMap((part) => drawPart(part, target).map((tex) => ({ tex, line: part.line }))),
+    ...circuit.parts.flatMap((part) => drawPart(part, target, pitch).map((tex) => ({ tex, line: part.line }))),
     ...circuit.wires.map((wire) => ({
       tex: `\\draw (${texNameOfEndpoint(wire.from)}) ${wire.operator} (${texNameOfEndpoint(wire.to)});`,
       line: wire.line,

@@ -89,8 +89,10 @@
 \draw (e1) to[sD, l_=$D_{5}$, a^=$\mathrm{1N5819}$] (e3); % line 10
 \draw (e5) to[pD, l_=$D_{6}$] (e7); % line 11
 \draw (e9) to[biD, l_=$D_{7}$] (e11); % line 12
-\draw (e13) to[sqV, l_=$V_{3}$, a^=$5\,\mathrm{V}$] (e15); % line 13
-\draw (g1) to[vsourcetri, l_=$V_{4}$, a^=$1\,\mathrm{V}$] (g3); % line 14
+\draw (e13) to[esource, l_=$V_{3}$, a^=$5\,\mathrm{V}$] (e15); % line 13
+\draw (25.82,-8) -- ++(0,0.18) -- ++(0.18,0) -- ++(0,-0.36) -- ++(0.18,0) -- ++(0,0.18); % line 13
+\draw (g1) to[esource, l_=$V_{4}$, a^=$1\,\mathrm{V}$] (g3); % line 14
+\draw (1.82,-12) -- ++(0.09,0.135) -- ++(0.18,-0.27) -- ++(0.09,0.135); % line 14
 \draw (g5) to[pvsource, l_=$P_{V1}$, a^=$0.6\,\mathrm{V}$] (g7); % line 15
 \draw (g9) to[ncs, l_=$S_{2}$] (g11); % line 16
 \draw (g13) to[nopb, l_=$S_{3}$] (g15); % line 17
