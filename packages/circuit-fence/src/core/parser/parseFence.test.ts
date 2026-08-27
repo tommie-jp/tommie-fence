@@ -237,3 +237,83 @@ describe('parseFence の notes', () => {
     expect(result.errors[0]?.message).not.toContain('at line');
   });
 });
+
+describe('parseFence の points', () => {
+  test('reads a name for an address and uses it where an address goes', () => {
+    const result = parseFence(lines(
+      'points:', '  vin: a1', 'parts:', '  R1: resistor vin a3',
+    ));
+
+    expect(result.errors).toEqual([]);
+    expect(result.doc?.parts[0]).toMatchObject({ from: { row: 0, col: 0 } });
+  });
+
+  test('reads a name written after it was used', () => {
+    // YAML のマップに順はないので、points: を下に書いても通す。
+    const result = parseFence(lines(
+      'parts:', '  R1: resistor vin a3', 'points:', '  vin: a1',
+    ));
+
+    expect(result.errors).toEqual([]);
+    expect(result.doc?.parts[0]).toMatchObject({ from: { row: 0, col: 0 } });
+  });
+
+  test('uses names in wires, notes and grid-to as well', () => {
+    const result = parseFence(lines(
+      'points:', '  fb: d4',
+      'parts:', '  R1: resistor a1 a3',
+      'wires:', '  - a3 -- fb',
+      'notes:', '  - box fb fb', '  - text fb: ここ',
+      'style:', '  grid-to: fb',
+    ));
+
+    expect(result.errors).toEqual([]);
+    expect(result.doc?.wires[0]).toMatchObject({ to: { kind: 'cell', address: { row: 3, col: 3 } } });
+    expect(result.doc?.style.gridTo).toMatchObject({ row: 3, col: 3 });
+  });
+
+  test('reports a name it does not know on the line that used it', () => {
+    const result = parseFence(lines('parts:', '  R1: resistor vin a3'));
+
+    expect(result.errors[0]?.line).toBe(2);
+    expect(result.errors[0]?.message).toContain('vin');
+  });
+
+  test('refuses a name that is already an address', () => {
+    // a1 という名前を許すと、どちらの意味で書いたのか読めなくなる。
+    const result = parseFence(lines('points:', '  a1: c5'));
+
+    expect(result.errors[0]?.line).toBe(2);
+    expect(result.errors[0]?.message).toContain('a1');
+  });
+
+  test('refuses a point written twice', () => {
+    const result = parseFence(lines('points:', '  vin: a1', '  vin: a3'));
+
+    expect(result.errors[0]?.line).toBe(3);
+  });
+
+  test('refuses a point that shares its name with a part', () => {
+    const result = parseFence(lines(
+      'points:', '  R1: c5', 'parts:', '  R1: resistor a1 a3',
+    ));
+
+    expect(result.errors.some((error) => error.message.includes('R1'))).toBe(true);
+  });
+
+  test('asks for an address when the value is not one', () => {
+    const result = parseFence(lines('points:', '  vin: zz'));
+
+    expect(result.errors[0]?.message).toContain('zz');
+  });
+
+  test('stops reading points once the limit is reached', () => {
+    const rows = ['points:'];
+    // p1 などは番地の形なので名前に使えない (行 p の 1 列目)。
+    for (let index = 0; index <= LIMITS.points; index += 1) rows.push(`  vin${index}: a1`);
+
+    const result = parseFence(lines(...rows));
+
+    expect(result.errors[0]?.message).toContain(`${LIMITS.points}`);
+  });
+});

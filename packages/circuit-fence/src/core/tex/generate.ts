@@ -548,7 +548,7 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
   // 注釈はいちばん最後に描く。図の上に重ねる印と字なので、回路にも黒丸にも
   // 隠れないようにする。
   const notes = circuit.notes.flatMap((note) =>
-    drawNote(note, byId, pitch, target, listing).map((tex) => ({ tex, line: note.line })),
+    drawNote(note, byId, pitch, target, listing, circuit.points).map((tex) => ({ tex, line: note.line })),
   );
   for (const drawing of notes) {
     lines.push(`${drawing.tex} % line ${drawing.line}`);

@@ -2,8 +2,11 @@ import { LineCounter, isAlias, isMap, isScalar, isSeq, parseDocument } from 'yam
 import type { Document, Node, Pair, ParsedNode } from 'yaml';
 import { fail, fenceError, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
+import { parseAddress } from '../model/address.ts';
+import type { Address } from '../model/address.ts';
 import type { FenceError, NoteSpec, PartSpec, Result, StyleSpec, WireSpec } from '../types.ts';
-import { parseCompactPart, parseNoteLine, parseNoteText, parseWireLine } from './compact.ts';
+import { NO_POINTS, parseCompactPart, parseNoteLine, parseNoteText, parseWireLine } from './compact.ts';
+import type { Points } from './compact.ts';
 import { EMPTY_STYLE, validateStyle } from './style.ts';
 
 const MAX_YAML_MESSAGE = 120;
@@ -28,9 +31,14 @@ const YAML_HINTS: Readonly<Record<string, string>> = {
 const YAML_POSITION = /\s+at line \d+, column \d+:?\s*$/;
 
 /** フェンスの一番外側に書けるキー。読めなかったときの案内はここから作る。 */
-const TOP_LEVEL_KEYS = ['parts', 'wires', 'notes', 'style'] as const;
+const TOP_LEVEL_KEYS = ['points', 'parts', 'wires', 'notes', 'style'] as const;
 
 export type FenceDocument = {
+  /**
+   * 番地に付けた名前。番地が書ける場所ならどこでも使える。
+   * 図には出ないが、名前の付いた節点はネットリストにその名前で出る。
+   */
+  readonly points: Points;
   /**
    * フェンスの中身そのもの。`- source` の注釈が図に書き出す。
    * 書き写すのではなくここから作るので、フェンスを直すと書き出しも動く。
@@ -90,7 +98,7 @@ export function parseFence(source: string): ParseResult {
   let style: StyleSpec = EMPTY_STYLE;
 
   const contents = parsed.contents;
-  if (contents === null) return { doc: { source, parts, wires, notes, style }, errors };
+  if (contents === null) return { doc: { source, points: NO_POINTS, parts, wires, notes, style }, errors };
   if (!isMap(contents)) {
     return {
       doc: null,
@@ -98,22 +106,29 @@ export function parseFence(source: string): ParseResult {
     };
   }
 
+  // 名前は**先に全部集める**。YAML のマップに順は無いので、`points:` を
+  // parts: より下に書いても同じように引けないと、書く順を覚えることになる。
+  const points = collectPoints(contents, { errors, lineOf });
+
   for (const pair of contents.items) {
     const key = scalarText(pair.key) ?? '';
     const line = lineOf(pair.key);
 
-    if (key === 'parts') {
-      collectParts(pair.value as ParsedNode | null, { parts, errors, lineOf });
+    if (key === 'points') {
+      // 上で読んである。ここで 2 度読むと理由も 2 度出る。
+      continue;
+    } else if (key === 'parts') {
+      collectParts(pair.value as ParsedNode | null, { parts, errors, lineOf, points });
     } else if (key === 'wires') {
-      collectWires(pair.value as ParsedNode | null, { wires, errors, lineOf });
+      collectWires(pair.value as ParsedNode | null, { wires, errors, lineOf, points });
     } else if (key === 'notes') {
-      collectNotes(pair.value as ParsedNode | null, { notes, errors, lineOf });
+      collectNotes(pair.value as ParsedNode | null, { notes, errors, lineOf, points });
     } else if (key === 'style') {
       // `style: *base` のように書けるので、別名は指し先まで開いてから読む。
       const written = pair.value as ParsedNode | null;
       const node = (isAlias(written) ? written.resolve(parsed as Document) : written) as ParsedNode | null;
       // style: が 2 回書かれたら、前に読めたものの上に重ねる (捨てない)。
-      const validated = validateStyle(node?.toJSON() as unknown, style);
+      const validated = validateStyle(node?.toJSON() as unknown, style, points);
       style = validated.value;
       // 理由はそれを書いた項目の行に付ける (style: の行だけを指しても直す場所が分からない)。
       const keyLine = styleKeyLines(node, lineOf);
@@ -130,7 +145,111 @@ export function parseFence(source: string): ParseResult {
     }
   }
 
-  return { doc: { source, parts, wires, notes, style }, errors };
+  // 名前と部品 ID が同じだと、注釈の指し先がどちらを指すのか決められない。
+  errors.push(...collidingPoints(contents, parts, lineOf));
+
+  return { doc: { source, points, parts, wires, notes, style }, errors };
+}
+
+/**
+ * `points:` を読む。名前 → 番地の表にする。
+ *
+ * 名前に**番地の形は許さない** (`a1: c5`)。許すと `a1` と書いたときに
+ * どちらの意味なのかを解決の順で決めることになり、書いた人には見えない。
+ */
+function collectPoints(
+  contents: ParsedNode | null,
+  context: { errors: FenceError[]; lineOf: LineOf },
+): Points {
+  const { errors, lineOf } = context;
+  const points = new Map<string, Address>();
+  if (!isMap(contents)) return points;
+
+  for (const pair of contents.items) {
+    if (scalarText(pair.key) !== 'points') continue;
+
+    const node = pair.value as ParsedNode | null;
+    if (!isMap(node)) {
+      errors.push(fenceError('points は「名前: 番地」のマップで書きます', lineOf(node) ?? lineOf(pair.key)));
+      continue;
+    }
+
+    for (const item of node.items) {
+      const name = scalarText(item.key);
+      const line = lineOf(item.key) ?? 1;
+
+      if (points.size >= LIMITS.points) {
+        errors.push(fenceError(`番地の名前は ${LIMITS.points} 個までです。ここから先は読んでいません`, line));
+        return points;
+      }
+      if (name === null || !isReferenceable(name)) {
+        errors.push(
+          fenceError(
+            `番地の名前 ${safeToken(name ?? '')} は使えません (英数字と _ - だけの ${LIMITS.idLength} 文字まで)`,
+            line,
+          ),
+        );
+        continue;
+      }
+      if (parseAddress(name) !== null) {
+        errors.push(
+          fenceError(`番地の名前 ${safeToken(name)} は番地そのものです (番地と読み分けられません)`, line),
+        );
+        continue;
+      }
+      if (points.has(name)) {
+        errors.push(fenceError(`番地の名前 ${safeToken(name)} が二重に書かれています`, line));
+        continue;
+      }
+
+      const written = scalarText(item.value);
+      const address = written === null ? null : parseAddress(written);
+      if (address === null) {
+        errors.push(
+          fenceError(
+            `番地の名前 ${safeToken(name)} の行き先は番地で書きます` +
+              ` (${safeToken(written ?? '')} は番地の形ではありません)`,
+            line,
+          ),
+        );
+        continue;
+      }
+
+      points.set(name, address);
+    }
+  }
+
+  return points;
+}
+
+/**
+ * 番地の名前と同じ ID の部品。**注釈の指し先**は部品 ID か番地のどちらでも
+ * 書けるので、同じ名前が両方にあるとどちらを指したのか決められない。
+ * 図は描けるので、名前を変えてもらうよう名前のほうの行で伝える。
+ */
+function collidingPoints(
+  contents: ParsedNode | null,
+  parts: readonly PartSpec[],
+  lineOf: LineOf,
+): FenceError[] {
+  if (!isMap(contents)) return [];
+
+  const ids = new Set(parts.map((part) => part.id));
+  const errors: FenceError[] = [];
+  for (const pair of contents.items) {
+    if (scalarText(pair.key) !== 'points') continue;
+    const node = pair.value as ParsedNode | null;
+    if (!isMap(node)) continue;
+
+    for (const item of node.items) {
+      const name = scalarText(item.key);
+      if (name === null || !ids.has(name)) continue;
+      errors.push(
+        fenceError(`番地の名前 ${safeToken(name)} は部品 ID と同じです (どちらを指すか決められません)`, lineOf(item.key)),
+      );
+    }
+  }
+  return errors;
 }
 
 /**
@@ -167,9 +286,9 @@ function styleKeyLines(node: ParsedNode | null, lineOf: LineOf): Map<string, num
 
 function collectParts(
   node: ParsedNode | null,
-  context: { parts: PartSpec[]; errors: FenceError[]; lineOf: LineOf },
+  context: { parts: PartSpec[]; errors: FenceError[]; lineOf: LineOf; points: Points },
 ): void {
-  const { parts, errors, lineOf } = context;
+  const { parts, errors, lineOf, points } = context;
   if (!isMap(node)) {
     errors.push(fenceError('parts は「ID: 内容」のマップで書きます', lineOf(node)));
     return;
@@ -210,7 +329,7 @@ function collectParts(
     // ID は読めたので、中身が読めなくても二重定義は二重定義として報告する。
     seen.add(id);
 
-    const part = parseCompactPart(id, text, line);
+    const part = parseCompactPart(id, text, line, points);
     if (part.ok) parts.push(part.value);
     else errors.push(part.error);
   }
@@ -218,9 +337,9 @@ function collectParts(
 
 function collectWires(
   node: ParsedNode | null,
-  context: { wires: WireSpec[]; errors: FenceError[]; lineOf: LineOf },
+  context: { wires: WireSpec[]; errors: FenceError[]; lineOf: LineOf; points: Points },
 ): void {
-  const { wires, errors, lineOf } = context;
+  const { wires, errors, lineOf, points } = context;
   if (!isSeq(node)) {
     errors.push(fenceError('wires は「- 端点 -- 端点」を並べたリストで書きます', lineOf(node)));
     return;
@@ -235,7 +354,7 @@ function collectWires(
       continue;
     }
 
-    const parsed = parseWireLine(text, line);
+    const parsed = parseWireLine(text, line, points);
     if (!parsed.ok) {
       errors.push(parsed.error);
       continue;
@@ -262,9 +381,9 @@ function collectWires(
  */
 function collectNotes(
   node: ParsedNode | null,
-  context: { notes: NoteSpec[]; errors: FenceError[]; lineOf: LineOf },
+  context: { notes: NoteSpec[]; errors: FenceError[]; lineOf: LineOf; points: Points },
 ): void {
-  const { notes, errors, lineOf } = context;
+  const { notes, errors, lineOf, points } = context;
   if (!isSeq(node)) {
     errors.push(fenceError('notes は「- circle 部品ID」や「- text 番地: 文字」を並べたリストで書きます', lineOf(node)));
     return;
@@ -278,16 +397,16 @@ function collectNotes(
       return;
     }
 
-    const note = readNote(item as ParsedNode | null, line, lineOf);
+    const note = readNote(item as ParsedNode | null, line, lineOf, points);
     if (note.ok) notes.push(note.value);
     else errors.push(note.error);
   }
 }
 
 /** 注釈 1 項目。書かれた形 (文字列かマップか) で読み方を選ぶ。 */
-function readNote(item: ParsedNode | null, line: number, lineOf: LineOf): Result<NoteSpec> {
+function readNote(item: ParsedNode | null, line: number, lineOf: LineOf, points: Points): Result<NoteSpec> {
   const text = scalarText(item);
-  if (text !== null) return parseNoteLine(text, line);
+  if (text !== null) return parseNoteLine(text, line, points);
 
   if (isMap(item) && item.items.length === 1) {
     const pair = item.items[0];
@@ -298,7 +417,7 @@ function readNote(item: ParsedNode | null, line: number, lineOf: LineOf): Result
     if (head === null) return fail('注釈の種類と場所は文字列で書きます', keyLine);
     // 数や真偽値をそのまま渡すと `1.0` が `1` になって図に出る。引用してもらう。
     if (body === null) return fail('注釈の文字は文字列で書きます (数だけのときは引用符で囲みます)', keyLine);
-    return parseNoteText(head, body, keyLine);
+    return parseNoteText(head, body, keyLine, points);
   }
 
   return fail('注釈は「- circle 部品ID」か「- text 番地: 文字」で書きます', line);

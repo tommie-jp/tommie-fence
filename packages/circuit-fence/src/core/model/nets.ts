@@ -124,7 +124,7 @@ export function computeNets(circuit: Circuit): Net[] {
   const groups = [...byRoot.values()];
   // 名前の付いたネットを先に押さえておく。ポートを N1 と名付けた図でも
   // 別のネットに同じ N1 を振らないため。
-  const named = groups.map(nameOf);
+  const named = groups.map((group) => nameOf(group) ?? pointNameOf(group, circuit.points));
   const taken = new Set<string>();
 
   let anonymous = 0;
@@ -150,6 +150,22 @@ function claim(candidate: string, taken: Set<string>): string {
   for (let suffix = 2; taken.has(name); suffix += 1) name = `${candidate}-${suffix}`;
   taken.add(name);
   return name;
+}
+
+/**
+ * 番地に付けた名前 (`points:`) から取るネットの名前。
+ *
+ * **図に出る名前 (ポート・グラウンド) が無いときだけ**引く。図と
+ * ネットリストを突き合わせるための出力なので、図に見えている名前を先に取る。
+ * 同じネットに名前が 2 つ乗っていたら、書いた順で先のほうを使う
+ * (並べると番地の綴りより長くなり、突き合わせにくい)。
+ */
+function pointNameOf(group: readonly Member[], points: ReadonlyMap<string, Address>): string | null {
+  const cells = new Set(group.map((member) => member.cell));
+  for (const [name, address] of points) {
+    if (cells.has(cellOf(address))) return name;
+  }
+  return null;
 }
 
 /**

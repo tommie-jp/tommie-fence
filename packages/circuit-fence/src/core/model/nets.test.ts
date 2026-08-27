@@ -173,3 +173,32 @@ describe('電源レールの名前', () => {
     expect(nets.map((net) => net.name)).toEqual(['V5', 'V3', 'N1']);
   });
 });
+
+describe('computeNets の番地の名前', () => {
+  test('names a net after the point sitting on it', () => {
+    const nets = netsOf(
+      'points:', '  fb: a3',
+      'parts:', '  R1: resistor a1 a3', '  R2: resistor a3 a5',
+    );
+
+    expect(nets.some((net) => net.name === 'fb')).toBe(true);
+  });
+
+  test('lets a port keep the name when both are on the net', () => {
+    // 名前は図に出ないが、ポートの名前は図に出る。図と突き合わせるための
+    // 出力なので、図に見えているほうを優先する。
+    const nets = netsOf(
+      'points:', '  fb: a1',
+      'parts:', '  IN: port a1', '  R1: resistor a1 a3',
+    );
+
+    expect(nets.some((net) => net.name === 'IN')).toBe(true);
+    expect(nets.some((net) => net.name === 'fb')).toBe(false);
+  });
+
+  test('leaves unnamed nets on the numbered names', () => {
+    const nets = netsOf('parts:', '  R1: resistor a1 a3', '  R2: resistor a3 a5');
+
+    expect(nets.some((net) => net.name.startsWith('N'))).toBe(true);
+  });
+});

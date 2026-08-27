@@ -683,3 +683,33 @@ describe('指し棒 (arrow) の指し先', () => {
     expect(circuit.notes).toHaveLength(1);
   });
 });
+
+describe('番地の名前 (points)', () => {
+  test('lets a note point at a named cell', () => {
+    const { circuit, errors } = build(
+      'points:', '  fb: c3',
+      'parts:', '  R1: resistor a1 a3',
+      'notes:', '  - circle fb',
+    );
+
+    expect(errors).toEqual([]);
+    expect(circuit.notes).toHaveLength(1);
+  });
+
+  test('carries the names through to the circuit', () => {
+    const { circuit } = build('points:', '  fb: c3', 'parts:', '  R1: resistor a1 a3');
+
+    expect(circuit.points.get('fb')).toEqual({ row: 2, col: 2 });
+  });
+
+  test('resolves an arrow written with a name at both ends', () => {
+    const { circuit, errors } = build(
+      'points:', '  vin: a1', '  vout: c5',
+      'parts:', '  R1: resistor a1 a3',
+      'notes:', '  - arrow vin vout',
+    );
+
+    expect(errors).toEqual([]);
+    expect(circuit.notes).toHaveLength(1);
+  });
+});

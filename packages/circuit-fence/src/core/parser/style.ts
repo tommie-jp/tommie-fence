@@ -2,6 +2,8 @@ import { safeToken } from '../errors.ts';
 import { STYLE_RANGES } from '../limits.ts';
 import type { StyleRange } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
+import { NO_POINTS } from './compact.ts';
+import type { Points } from './compact.ts';
 import { THEME_NAMES } from '../render/theme.ts';
 import type { StyleSpec } from '../types.ts';
 
@@ -98,7 +100,13 @@ const readChoice = (
 };
 
 /** 1 項目を読んで指定に足す。読めなければ理由を積んで、それまでの指定をそのまま返す。 */
-function withKey(style: StyleSpec, key: string, raw: unknown, messages: StyleMessage[]): StyleSpec {
+function withKey(
+  style: StyleSpec,
+  key: string,
+  raw: unknown,
+  messages: StyleMessage[],
+  points: Points,
+): StyleSpec {
   const size = (range: StyleRange): number | null => readSize(raw, key, range, messages);
   const color = (): string | null => readColor(raw, key, messages);
 
@@ -114,8 +122,10 @@ function withKey(style: StyleSpec, key: string, raw: unknown, messages: StyleMes
     case 'grid':
       return { ...style, grid: readFlag(raw, key, messages) ?? style.grid };
     case 'grid-to': {
-      const address = typeof raw === 'string' ? parseAddress(raw) : null;
-      if (address === null) {
+      // 番地の名前 (`points:`) も書ける。番地が書ける場所はどこでも同じ。
+      const named = typeof raw === 'string' ? points.get(raw) : undefined;
+      const address = named ?? (typeof raw === 'string' ? parseAddress(raw) : null);
+      if (address === undefined || address === null) {
         messages.push({ message: `style の ${key} は番地で書きます (グリッドの右下、たとえば e12)`, key });
         return style;
       }
@@ -139,7 +149,11 @@ function withKey(style: StyleSpec, key: string, raw: unknown, messages: StyleMes
  * フェンスの `style:` を検証済みの指定に変える。
  * 読めなかった項目は捨てて残りは活かし、捨てた理由は 1 件ずつ返す。
  */
-export function validateStyle(raw: unknown, base: StyleSpec = EMPTY_STYLE): StyleValidation {
+export function validateStyle(
+  raw: unknown,
+  base: StyleSpec = EMPTY_STYLE,
+  points: Points = NO_POINTS,
+): StyleValidation {
   // `style: dark` の 1 行記法。テーマだけ選ぶのがいちばん多い書き方なので短く書ける。
   if (typeof raw === 'string') {
     const messages: StyleMessage[] = [];
@@ -158,7 +172,7 @@ export function validateStyle(raw: unknown, base: StyleSpec = EMPTY_STYLE): Styl
   // style: が 2 回書かれることがある。後に書いたほうで上書きし、
   // 書かなかった項目は前のまま残す (parts と同じで、読めたものは捨てない)。
   let value = base;
-  for (const [key, item] of Object.entries(raw)) value = withKey(value, key, item, messages);
+  for (const [key, item] of Object.entries(raw)) value = withKey(value, key, item, messages, points);
 
   return { value, messages };
 }

@@ -3,6 +3,8 @@ import { LIMITS } from '../limits.ts';
 import { cornerOf, formatAddress, isSameAddress, parseAddress } from './address.ts';
 import { lookupPartType, lookupPin, pinAxis, pinHint } from '../parts.ts';
 import type { Address } from './address.ts';
+import { NO_POINTS } from '../parser/compact.ts';
+import type { Points } from '../parser/compact.ts';
 import type { FenceDocument } from '../parser/parseFence.ts';
 import { isDrawable, isSourceDrawable } from '../tex/escape.ts';
 import { cellOf, nameOfEndpoint } from '../types.ts';
@@ -12,6 +14,11 @@ import type {
 
 /** 検証を通った図。ここから先 (ネットリスト導出・TeX 生成) は形を疑わない。 */
 export type Circuit = {
+  /**
+   * 番地に付けた名前。図には出ないが、注釈の指し先として引け、
+   * 名前の乗った節点はネットリストにその名前で出る (nets.ts)。
+   */
+  readonly points: Points;
   readonly parts: readonly PartSpec[];
   readonly wires: readonly WireSpec[];
   /**
@@ -36,9 +43,15 @@ export type NoteAnchor =
 export function resolveNoteTarget(
   target: string,
   byId: ReadonlyMap<string, PartSpec>,
+  points: Points = NO_POINTS,
 ): NoteAnchor | null {
   const part = byId.get(target);
   if (part !== undefined) return { kind: 'part', part };
+
+  // 番地の名前 (`points:`) も指せる。名前に番地の形は許していないので、
+  // ここで引く順が図の意味を変えることはない。
+  const named = points.get(target);
+  if (named !== undefined) return { kind: 'cell', address: named };
 
   const address = parseAddress(target);
   return address === null ? null : { kind: 'cell', address };
@@ -108,9 +121,9 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
   // 1 つ落としても残りは描く。
   const sourceLines = doc.source.replace(/\s+$/, '').split('\n');
   const notes = doc.notes.filter(
-    (note) => hasAnchor(note, byId, errors) && canWriteSource(note, sourceLines, errors),
+    (note) => hasAnchor(note, byId, errors, doc.points) && canWriteSource(note, sourceLines, errors),
   );
-  const circuit: Circuit = { parts, wires, notes };
+  const circuit: Circuit = { points: doc.points, parts, wires, notes };
 
   errors.push(...overlaps(parts));
 
@@ -129,10 +142,15 @@ const noteTargetsOf = (note: NoteSpec): readonly string[] =>
  *
  * 指し先を書くのは印 (`circle`) と指し棒 (`arrow`) だけ。
  */
-function hasAnchor(note: NoteSpec, byId: ReadonlyMap<string, PartSpec>, errors: FenceError[]): boolean {
+function hasAnchor(
+  note: NoteSpec,
+  byId: ReadonlyMap<string, PartSpec>,
+  errors: FenceError[],
+  points: Points,
+): boolean {
   // 1 行に 2 つ書き間違えても、返すのは最初の 1 つだけ。同じ行を 2 度指しても
   // 直す場所は増えない。
-  const missing = noteTargetsOf(note).find((target) => resolveNoteTarget(target, byId) === null);
+  const missing = noteTargetsOf(note).find((target) => resolveNoteTarget(target, byId, points) === null);
   if (missing !== undefined) {
     errors.push(
       fenceError(`注釈の指す先 ${safeToken(missing)} がありません (部品 ID か番地で書きます)`, note.line),
@@ -140,7 +158,7 @@ function hasAnchor(note: NoteSpec, byId: ReadonlyMap<string, PartSpec>, errors: 
     return false;
   }
 
-  return note.kind !== 'arrow' || hasLength(note, byId, errors);
+  return note.kind !== 'arrow' || hasLength(note, byId, errors, points);
 }
 
 /**
@@ -150,9 +168,14 @@ function hasAnchor(note: NoteSpec, byId: ReadonlyMap<string, PartSpec>, errors: 
  * 部品 ID と番地でも同じ 1 点を指せる (`G1: ground c3` があるとき
  * `arrow G1 c3` は長さ 0)。字で比べると、そこがすり抜ける。
  */
-function hasLength(note: ArrowNote, byId: ReadonlyMap<string, PartSpec>, errors: FenceError[]): boolean {
-  const from = resolveNoteTarget(note.from, byId);
-  const to = resolveNoteTarget(note.to, byId);
+function hasLength(
+  note: ArrowNote,
+  byId: ReadonlyMap<string, PartSpec>,
+  errors: FenceError[],
+  points: Points,
+): boolean {
+  const from = resolveNoteTarget(note.from, byId, points);
+  const to = resolveNoteTarget(note.to, byId, points);
   if (from === null || to === null) return true;
 
   if (!isSameAddress(noteAnchorCell(from), noteAnchorCell(to))) return true;

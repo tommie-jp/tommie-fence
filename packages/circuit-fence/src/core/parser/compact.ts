@@ -23,11 +23,31 @@ const PIN_REFERENCE = /^([\w-]+)\.([^\s.]+)$/;
 /** 書ける向き。今のところオペアンプの ± の上下だけ。 */
 export const ORIENTATIONS = ['+up', '+down'] as const;
 
-const readAddress = (token: string, line: number): Result<Address> => {
+/**
+ * 番地に付けた名前 (`points:`) の表。番地が書ける場所ならどこでも引く。
+ * 名前が無いフェンスでは空の表が渡る (呼ぶ側で場合分けしない)。
+ */
+export type Points = ReadonlyMap<string, Address>;
+
+export const NO_POINTS: Points = new Map();
+
+/**
+ * 番地を読む。**名前を先に引き、無ければ番地として読む**。
+ * 名前には番地の形を許していない (parseFence) ので、どちらとも読める字はない。
+ */
+const readAddress = (token: string, line: number, points: Points = NO_POINTS): Result<Address> => {
+  const named = points.get(token);
+  if (named !== undefined) return ok(named);
+
   const address = parseAddress(token);
-  return address === null
-    ? fail(`${safeToken(token)} は番地の形ではありません (行 a〜z + 列 1〜${LIMITS.columns})`, line)
-    : ok(address);
+  if (address !== null) return ok(address);
+
+  // 番地の形でもないなら、名前のつもりで書かれた可能性がある。
+  // 名前を 1 つでも書いてある図では、そちらの案内も添える。
+  const hint = points.size === 0
+    ? `行 a〜z + 列 1〜${LIMITS.columns}`
+    : `行 a〜z + 列 1〜${LIMITS.columns}。points: に書いた名前でもありません`;
+  return fail(`${safeToken(token)} は番地の形ではありません (${hint})`, line);
 };
 
 /**
@@ -40,6 +60,7 @@ type PartHead = {
   readonly type: PartTypeName;
   readonly written: string;
   readonly line: number;
+  readonly points: Points;
 };
 
 /**
@@ -47,7 +68,12 @@ type PartHead = {
  * 両端が斜めでも通す (circuitikz は任意の角度に引ける)。同じ番地どうしだけは
  * 向きも長さも決まらないので通さない。
  */
-export function parseCompactPart(id: string, text: string, line: number): Result<PartSpec> {
+export function parseCompactPart(
+  id: string,
+  text: string,
+  line: number,
+  points: Points = NO_POINTS,
+): Result<PartSpec> {
   const tokens = text.trim().split(/\s+/).filter((token) => token.length > 0);
   const [written, ...rest] = tokens;
 
@@ -65,7 +91,7 @@ export function parseCompactPart(id: string, text: string, line: number): Result
     return fail(`種類 ${safeToken(written)} は知りません (${hint})`, line);
   }
 
-  const head: PartHead = { id, type: typeName, written, line };
+  const head: PartHead = { id, type: typeName, written, line, points };
   if (type.kind === 'two-terminal') return readTwoTerminal(head, rest);
   return type.kind === 'one-terminal' ? readOneTerminal(head, rest) : readMultiTerminal(head, rest);
 }
@@ -75,13 +101,13 @@ export function parseCompactPart(id: string, text: string, line: number): Result
  * 番地のあとに来るのは向きか値。向きは決まった語なので見分けられる。
  */
 function readMultiTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
-  const { id, type, written, line } = head;
+  const { id, type, written, line, points } = head;
   const shape = `${safeToken(written)} は「種類 番地 [向き] [型番]」で書きます`;
 
   const [atToken, ...extra] = rest;
   if (atToken === undefined) return fail(shape, line);
 
-  const at = readAddress(atToken, line);
+  const at = readAddress(atToken, line, points);
   if (!at.ok) return at;
 
   let orientation: string | null = null;
@@ -103,16 +129,16 @@ function readMultiTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
 }
 
 function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
-  const { id, type, written, line } = head;
+  const { id, type, written, line, points } = head;
   const [fromToken, toToken, value, ...extra] = rest;
 
   if (fromToken === undefined || toToken === undefined || extra.length > 0) {
     return fail(`${safeToken(written)} は「種類 番地 番地 [値]」で書きます`, line);
   }
 
-  const from = readAddress(fromToken, line);
+  const from = readAddress(fromToken, line, points);
   if (!from.ok) return from;
-  const to = readAddress(toToken, line);
+  const to = readAddress(toToken, line, points);
   if (!to.ok) return to;
 
   if (isSameAddress(from.value, to.value)) {
@@ -126,14 +152,14 @@ function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
 }
 
 function readOneTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
-  const { id, type, written, line } = head;
+  const { id, type, written, line, points } = head;
   const [atToken, ...extra] = rest;
 
   if (atToken === undefined || extra.length > 0) {
     return fail(`${safeToken(written)} は「種類 番地」で書きます`, line);
   }
 
-  const at = readAddress(atToken, line);
+  const at = readAddress(atToken, line, points);
   if (!at.ok) return at;
 
   return ok({ kind: 'one-terminal', id, type, at: at.value, line });
@@ -154,7 +180,11 @@ const WIRE_FORM = '「端点 -- 端点 [-- 端点 …]」';
  * 区間の並びしか見ないので、黒丸も T 字もネットリストもそのまま使える。
  * どの区間も行番号は書かれた 1 行のまま (折り返した先を指しても直しに行けない)。
  */
-export function parseWireLine(text: string, line: number): Result<readonly WireSpec[]> {
+export function parseWireLine(
+  text: string,
+  line: number,
+  points: Points = NO_POINTS,
+): Result<readonly WireSpec[]> {
   // 端点 n 個と演算子 n-1 個が交互に並ぶので、割った結果は必ず奇数長になる。
   const tokens = text.trim().split(WIRE_OPERATOR);
   if (tokens.length < 3 || tokens.length % 2 === 0) {
@@ -168,7 +198,7 @@ export function parseWireLine(text: string, line: number): Result<readonly WireS
     // 返しても、どこが空なのか読めない。書き方のほうを返す。
     if (token.length === 0) return fail(`配線は ${WIRE_FORM} で書きます`, line);
 
-    const endpoint = readEndpoint(token, line);
+    const endpoint = readEndpoint(token, line, points);
     if (!endpoint.ok) return endpoint;
     endpoints.push(endpoint.value);
   }
@@ -189,14 +219,14 @@ export function parseWireLine(text: string, line: number): Result<readonly WireS
 }
 
 /** 配線の端。`a3` のような番地か、`U1.out` のような足。 */
-function readEndpoint(token: string, line: number): Result<Endpoint> {
+function readEndpoint(token: string, line: number, points: Points): Result<Endpoint> {
   const pin = PIN_REFERENCE.exec(token);
   if (pin) {
     const [, part = '', name = ''] = pin;
     return ok({ kind: 'pin', part, pin: name });
   }
 
-  const address = readAddress(token, line);
+  const address = readAddress(token, line, points);
   return address.ok ? ok({ kind: 'cell', address: address.value }) : address;
 }
 
@@ -293,7 +323,11 @@ function readTextStyle(tokens: readonly string[], line: number): Result<NoteText
  * `circle R1 red` の 1 行を読む (`notes:` に文字列で並べた項目)。
  * 指し先が部品 ID か番地かはここでは決めない (部品の表を持っていないため)。
  */
-export function parseNoteLine(text: string, line: number): Result<NoteSpec> {
+export function parseNoteLine(
+  text: string,
+  line: number,
+  points: Points = NO_POINTS,
+): Result<NoteSpec> {
   const tokens = text.trim().split(/\s+/).filter((token) => token.length > 0);
   const [kind, ...rest] = tokens;
 
@@ -304,11 +338,11 @@ export function parseNoteLine(text: string, line: number): Result<NoteSpec> {
     case 'circle':
       return readCircleNote(rest, line);
     case 'box':
-      return readBoxNote(rest, line);
+      return readBoxNote(rest, line, points);
     case 'arrow':
       return readArrowNote(rest, line);
     case 'source':
-      return readSourceNote(rest, line);
+      return readSourceNote(rest, line, points);
     default:
       return fail(`注釈の種類 ${safeToken(kind)} は知りません (${noteKindList()} が使えます)`, line);
   }
@@ -336,15 +370,15 @@ function readCircleNote(rest: readonly string[], line: number): Result<NoteSpec>
  * `box a1 c3 blue` を読む。2 つの番地が枠の対角になる。
  * 同じ番地を 2 回書くのは書き間違いではない (1 マスだけを囲むということ)。
  */
-function readBoxNote(rest: readonly string[], line: number): Result<NoteSpec> {
+function readBoxNote(rest: readonly string[], line: number, points: Points): Result<NoteSpec> {
   const [fromToken, toToken, colorToken, ...extra] = rest;
   if (fromToken === undefined || toToken === undefined || extra.length > 0) {
     return fail(`box は ${BOX_FORM} で書きます`, line);
   }
 
-  const from = readAddress(fromToken, line);
+  const from = readAddress(fromToken, line, points);
   if (!from.ok) return from;
-  const to = readAddress(toToken, line);
+  const to = readAddress(toToken, line, points);
   if (!to.ok) return to;
 
   const color = readMarkColor(colorToken, `box は ${BOX_FORM}`, line);
@@ -374,11 +408,11 @@ const notReferenceable = (token: string): string =>
  * `source a6 blue tiny` を読む。中身はフェンス自身から作るので、
  * ここでは場所と見た目だけ。見た目の言葉は字の注釈と同じものが使える。
  */
-function readSourceNote(rest: readonly string[], line: number): Result<NoteSpec> {
+function readSourceNote(rest: readonly string[], line: number, points: Points): Result<NoteSpec> {
   const [atToken, ...words] = rest;
   if (atToken === undefined) return fail(`source は ${SOURCE_FORM} で書きます`, line);
 
-  const at = readAddress(atToken, line);
+  const at = readAddress(atToken, line, points);
   if (!at.ok) return at;
 
   const style = readTextStyle(words, line);
@@ -389,7 +423,12 @@ function readSourceNote(rest: readonly string[], line: number): Result<NoteSpec>
  * `text b1 blue: ここで分圧する` を読む。`head` が `:` の左、`body` が右。
  * 字は的を問わず日本語まで通す (フェンスでは TeX に渡さないため。escape.ts)。
  */
-export function parseNoteText(head: string, body: string, line: number): Result<NoteSpec> {
+export function parseNoteText(
+  head: string,
+  body: string,
+  line: number,
+  points: Points = NO_POINTS,
+): Result<NoteSpec> {
   const tokens = head.trim().split(/\s+/).filter((token) => token.length > 0);
   const [kind, atToken, ...words] = tokens;
 
@@ -403,7 +442,7 @@ export function parseNoteText(head: string, body: string, line: number): Result<
   }
   if (atToken === undefined) return fail(`text は ${TEXT_FORM} で書きます`, line);
 
-  const at = readAddress(atToken, line);
+  const at = readAddress(atToken, line, points);
   if (!at.ok) return at;
 
   if (body.trim().length === 0) return fail(`注釈の文字がありません (${TEXT_FORM} で書きます)`, line);

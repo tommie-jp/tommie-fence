@@ -13,6 +13,7 @@ import { toPoint } from '../model/address.ts';
 import type { Point } from '../model/address.ts';
 import { noteAnchorCell, resolveNoteTarget } from '../model/circuit.ts';
 import type { Circuit, NoteAnchor } from '../model/circuit.ts';
+import type { Points } from '../parser/compact.ts';
 import {
   NOTE_INK, NOTE_MARK_COLOR, NOTE_MARK_TEXT, hexDigits, noteColor, noteFontTex, noteLine,
   noteMonoWidth, noteSpan, noteWidth, texAnchorOf, texColorOf,
@@ -211,9 +212,14 @@ function trimSegment(from: Point, to: Point, fromGap: number, toGap: number): re
 }
 
 /** 図に重ねる指し棒。起点から終点へ、先端の付いた線を 1 本引く。 */
-function drawArrowNote(note: ArrowNote, byId: ReadonlyMap<string, PartSpec>, pitch: number): string[] {
-  const from = resolveNoteTarget(note.from, byId);
-  const to = resolveNoteTarget(note.to, byId);
+function drawArrowNote(
+  note: ArrowNote,
+  byId: ReadonlyMap<string, PartSpec>,
+  pitch: number,
+  points: Points,
+): string[] {
+  const from = resolveNoteTarget(note.from, byId, points);
+  const to = resolveNoteTarget(note.to, byId, points);
   // 指し先の無い注釈は buildCircuit が落としている。ここに来るのは検証漏れ。
   if (from === null || to === null) return [];
 
@@ -237,13 +243,14 @@ export function drawNote(
   pitch: number,
   target: TexTarget,
   listing: string[],
+  points: Points,
 ): string[] {
   if (note.kind === 'text') return drawTextNote(note, pitch, target);
   if (note.kind === 'source') return drawSourceNote(note, pitch, target, listing);
   if (note.kind === 'box') return drawBoxNote(note, pitch);
-  if (note.kind === 'arrow') return drawArrowNote(note, byId, pitch);
+  if (note.kind === 'arrow') return drawArrowNote(note, byId, pitch, points);
 
-  const anchor = resolveNoteTarget(note.target, byId);
+  const anchor = resolveNoteTarget(note.target, byId, points);
   // 指し先の無い注釈は buildCircuit が落としている。ここに来るのは検証漏れ。
   if (anchor === null) return [];
 
