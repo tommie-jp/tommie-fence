@@ -6,18 +6,18 @@
 title: 斜めに置く
 parts:
   IN:  port a1
-  R1:  resistor a1 c4
-  R2:  resistor c4 a7
-  OUT: port a7
+  R1:  resistor a1 b3
+  R2:  resistor b3 a5
+  OUT: port a5
 wires:
-  - a1 -- a7
+  - a1 -- a5
 notes:
-  - source a8 blue
+  - source a6 blue
 style:
   grid: on
 ```
 
-`R1` は `a1` から `c4` へ、`R2` は `c4` から `a7` へ斜めに寝る。
+`R1` は `a1` から `b3` へ、`R2` は `b3` から `a5` へ斜めに寝る。
 配線の `--` も 2 点の間をまっすぐ引くので、斜めのまま通る。
 
 通らないのは両端が同じ番地のときだけ (向きも長さも決まらないため)。

@@ -9,14 +9,14 @@ ID は先頭 1 文字が本体、残りが添字になる (回路図の慣習ど
 ```circuit
 title: ID と値の出方
 parts:
-  R1:    resistor a1 a3 10k
-  Rload: resistor a5 a7 4.7
-  R:     resistor a9 a11 1M
-  L1:    inductor c1 c3 10m
-  C1:    capacitor c5 c7 2.2u
-  D1:    diode c9 c11 1N4148
+  R1:    resistor a1 a2 10k
+  Rload: resistor a4 a5 4.7
+  R:     resistor a7 a8 1M
+  L1:    inductor b1 b2 10m
+  C1:    capacitor b4 b5 2.2u
+  D1:    diode b7 b8 1N4148
 notes:
-  - source a12 blue
+  - source a9 blue
 style:
   grid: on
 ```
