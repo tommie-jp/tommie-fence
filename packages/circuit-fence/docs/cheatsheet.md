@@ -115,7 +115,7 @@ style:             # 任意。見た目
 | `pitch` | 0.5〜5 (cm) | `2` |
 | `standard` | `american` / `european` | `american` |
 | `wire-width` | 0.2〜4 (pt) | `0.8` |
-| `width` | 120〜4000 (ドット) | 図のまま |
+| `width` | 120〜4000 (ドット) | 読み手の字に合わせる |
 | `ink-color` / `paper-color` / `grid-color` | `"#rgb"` / `"#rrggbb"` | テーマの色 |
 
 テーマだけなら `style: dark` の 1 行でよい。

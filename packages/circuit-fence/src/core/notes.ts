@@ -100,8 +100,14 @@ export const noteFontTex = (size: NoteSize, bold: boolean): string =>
 /** 1 pt を cm にした値。場所取りの見積りに使うだけなので、SVG と同じ 1/72 in で足りる。 */
 const PT_TO_CM = 2.54 / 72;
 
+/**
+ * その大きさの 1 em (pt)。**SVG の viewBox と font-size はこれと同じ物差し**
+ * (`normal` の注釈は font-size="8" で出る)。図の外寸を字の大きさで割るのに使う。
+ */
+export const notePt = (size: NoteSize): number => NOTE_SIZES[size].pt;
+
 /** その大きさの 1 em (cm)。図で場所をどれだけ取るかの物差し。 */
-export const noteEm = (size: NoteSize): number => NOTE_SIZES[size].pt * PT_TO_CM;
+export const noteEm = (size: NoteSize): number => notePt(size) * PT_TO_CM;
 
 /** 行送りが 1 em の何倍か。詰めすぎず、図より高くならない値。 */
 const LINE_HEIGHT = 1.4;

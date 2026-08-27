@@ -1,7 +1,7 @@
 import type { MarkdownIt, RendererRule } from 'markdown-it';
 import {
   applyNotes, compileCircuit, recolorSvg, renderErrorBanner, renderErrorCard, renderNetlist, resizeSvg,
-  shiftErrors,
+  scaleSvgToText, shiftErrors,
 } from '../core/index.ts';
 import type { FenceError, Theme } from '../core/index.ts';
 import { hashOf } from '../host/hash.ts';
@@ -58,6 +58,17 @@ export const circuitPlugin =
     return md;
   };
 
+/**
+ * プレビューに出す図の大きさ。
+ *
+ * 外寸をドットで書いた図は、書いたとおりの大きさのまま。書いていない図だけ、
+ * **読み手の地の文に合わせる** (注釈の `normal` が周りの文章と同じ大きさになる)。
+ * ここで分かれるのはプレビューだけの都合で、CLI が書き出す SVG は素の大きさ —
+ * 貼り先の字の大きさをこちらから決めるべきではない。
+ */
+const sizedFor = (svg: string, width: number | null): string =>
+  width === null ? scaleSvgToText(svg) : resizeSvg(svg, width);
+
 /** フェンスの中の行番号を Markdown の行番号へ。 */
 function bodyOf(
   source: string,
@@ -78,7 +89,7 @@ function bodyOf(
     figure === undefined
       ? PENDING
       : 'svg' in figure
-        ? resizeSvg(recolorSvg(applyNotes(figure.svg, notes), theme), width)
+        ? sizedFor(recolorSvg(applyNotes(figure.svg, notes), theme), width)
         : '';
   const drawingErrors = figure !== undefined && 'errors' in figure ? figure.errors : [];
 

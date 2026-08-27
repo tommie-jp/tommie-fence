@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { DEFAULT_THEME_NAME, THEME_NAMES, resizeSvg, recolorSvg, resolveTheme } from './theme.ts';
+import {
+  DEFAULT_THEME_NAME, THEME_NAMES, recolorSvg, resizeSvg, resolveTheme, scaleSvgToText,
+} from './theme.ts';
 
 const EMPTY = {
   theme: null, inkColor: null, paperColor: null, gridColor: null,
@@ -99,5 +101,44 @@ describe('resizeSvg', () => {
 
   test('leaves a drawing it cannot measure alone', () => {
     expect(resizeSvg('<svg viewBox="0 0 10 10"></svg>', 200)).toBe('<svg viewBox="0 0 10 10"></svg>');
+  });
+});
+
+/**
+ * 図の大きさを、読み手のプレビューの地の文に合わせる。
+ * SVG の viewBox の 1 は、図の中の font-size の 1 と同じ物差し
+ * (注釈の `normal` は font-size="8" で出る)。
+ */
+describe('scaleSvgToText', () => {
+  const DRAWING = '<svg viewBox="0 0 80 40" width="106.667" height="53.333"></svg>';
+
+  test('writes the outside size in em, so it follows the reader\'s text size', () => {
+    expect(scaleSvgToText(svg(''))).toMatch(/width="[\d.]+em"/);
+  });
+
+  // 1 em = normal の注釈。これで書き出しが地の文と同じ大きさで読める。
+  test('makes one em the size a normal note is drawn at', () => {
+    expect(scaleSvgToText(DRAWING)).toContain('width="10em"');
+  });
+
+  test('takes the height along, so the drawing keeps its shape', () => {
+    expect(scaleSvgToText(DRAWING)).toContain('height="5em"');
+  });
+
+  test('leaves the coordinates alone, so the drawing does not move', () => {
+    expect(scaleSvgToText(svg(''))).toContain('viewBox="0 0 10 10"');
+  });
+
+  // プレビューの CSP は inline style を落とすことがある。属性なら CSP の外にある。
+  test('writes the size as an attribute rather than an inline style', () => {
+    expect(scaleSvgToText(DRAWING)).not.toContain('style=');
+  });
+
+  test('leaves a drawing without a viewBox alone', () => {
+    expect(scaleSvgToText('<svg width="100" height="80"></svg>')).toBe('<svg width="100" height="80"></svg>');
+  });
+
+  test('leaves a drawing it cannot measure alone', () => {
+    expect(scaleSvgToText('<svg viewBox="0 0 80 40"></svg>')).toBe('<svg viewBox="0 0 80 40"></svg>');
   });
 });

@@ -1,3 +1,4 @@
+import { DEFAULT_NOTE_SIZE, notePt } from '../notes.ts';
 import type { StyleSpec } from '../types.ts';
 
 /**
@@ -93,17 +94,47 @@ export function recolorSvg(svg: string, theme: Theme): string {
 
 const WIDTH = /(<svg[^>]*?)\swidth="([\d.]+)"([^>]*?)\sheight="([\d.]+)"/;
 
-/**
- * 出力の横ドット数だけを変える。viewBox は触らないので、図の中身は動かず
- * 縦横比も保たれる (48 と同じ考え方)。
- */
-export function resizeSvg(svg: string, width: number | null): string {
-  if (width === null) return svg;
+const round3 = (value: number): number => Math.round(value * 1000) / 1000;
 
-  return svg.replace(WIDTH, (whole, head: string, w: string, middle: string, h: string) => {
+/**
+ * 外寸だけを書き直す。viewBox は触らないので、図の中身は動かず縦横比も保たれる
+ * (48 と同じ考え方)。単位は**属性に書く** — プレビューの CSP は inline style を
+ * 落とすことがあるが、表現属性は CSP の外にあるので必ず効く (実測)。
+ *
+ * 測れない図は触らない。外寸を書き直せないだけで図は出るので、
+ * これまでどおりの大きさで出す。
+ */
+const withOuterSize = (svg: string, width: number, unit: string): string =>
+  svg.replace(WIDTH, (whole, head: string, w: string, middle: string, h: string) => {
     const natural = Number(w);
     if (!Number.isFinite(natural) || natural <= 0) return whole;
-    const height = Math.round((Number(h) * width) / natural * 1000) / 1000;
-    return `${head} width="${width}"${middle} height="${height}"`;
+    const height = round3((Number(h) * width) / natural);
+    return `${head} width="${width}${unit}"${middle} height="${height}${unit}"`;
   });
+
+/** 出力の横ドット数だけを変える。 */
+export function resizeSvg(svg: string, width: number | null): string {
+  return width === null ? svg : withOuterSize(svg, width, '');
+}
+
+const VIEWBOX = /<svg\b[^>]*\sviewBox="[-\d.]+\s+[-\d.]+\s+([\d.]+)\s+[-\d.]+"/;
+
+/**
+ * 図の外寸を em で書き直す。**注釈の `normal` が、読み手のプレビューの
+ * 地の文と同じ大きさになる**倍率にする。
+ *
+ * エンジンが出す図はドットで外寸が書いてあるので、素のままだと注釈の字が
+ * 周りの文章より小さく出る (`normal` は 8pt = 10.7 ドット、プレビューの
+ * 地の文は既定 14 ドット)。**合わせる層はここ (表示) しかない** — TeX の指定を
+ * 変えても、読み手が字の大きさを変えれば同じだけずれる。
+ *
+ * viewBox の 1 は図の中の font-size の 1 と同じ物差しなので (`normal` の注釈は
+ * font-size="8" で出る)、viewBox の幅を `normal` の pt で割った値をそのまま
+ * em にすればよい。1 em = normal になり、読み手の設定にも拡大にも付いてくる。
+ */
+export function scaleSvgToText(svg: string): string {
+  const viewBox = Number(VIEWBOX.exec(svg)?.[1]);
+  if (!Number.isFinite(viewBox) || viewBox <= 0) return svg;
+
+  return withOuterSize(svg, round3(viewBox / notePt(DEFAULT_NOTE_SIZE)), 'em');
 }

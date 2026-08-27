@@ -141,6 +141,30 @@ describe('circuitPlugin', () => {
     expect(html).toContain('circuit-auto');
   });
 
+  // プレビューの図は読み手の地の文に合わせる。既定のままだと、注釈の字が
+  // 周りの文章より小さく出て読みにくい。
+  test('sizes the drawing by the size of the reader\'s own text', () => {
+    const figures: FigureSource = {
+      lookup: () => ({ svg: '<svg viewBox="0 0 80 40" width="106.667" height="53.333"></svg>' }),
+      enqueue: () => {},
+    };
+    const html = md(figures).render(RC);
+
+    expect(html).toContain('width="10em"');
+  });
+
+  // 外寸をドットで書いた図は、書いたとおりの大きさのままにする。
+  test('leaves a fence that asked for a width in dots at that width', () => {
+    const figures: FigureSource = {
+      lookup: () => ({ svg: '<svg viewBox="0 0 80 40" width="106.667" height="53.333"></svg>' }),
+      enqueue: () => {},
+    };
+    const html = md(figures).render('```circuit\nparts:\n  R1: resistor a1 a3\nstyle:\n  width: 200\n```');
+
+    expect(html).toContain('width="200"');
+    expect(html).not.toContain('em"');
+  });
+
   test('sizes the drawing to the width the fence asked for', () => {
     const figures: FigureSource = {
       lookup: () => ({ svg: '<svg viewBox="0 0 10 8" width="100" height="80"></svg>' }),

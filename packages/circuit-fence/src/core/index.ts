@@ -110,7 +110,7 @@ export function compileCircuit(source: string, options: CompileOptions = {}): Co
   };
 }
 
-export { recolorSvg, resizeSvg, DEFAULT_THEME } from './render/theme.ts';
+export { recolorSvg, resizeSvg, scaleSvgToText, DEFAULT_THEME } from './render/theme.ts';
 export { applyNotes } from './render/noteText.ts';
 export type { Theme } from './render/theme.ts';
 export { errorLine, messageLine, renderErrorBanner, renderErrorCard } from './render/errorCard.ts';
