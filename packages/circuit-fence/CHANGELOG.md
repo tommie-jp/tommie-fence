@@ -7,6 +7,13 @@
 
 ### Added
 
+- **ライブラリの出口 `circuit-fence/core` を足した**。コア (YAML → 検証 →
+  circuitikz TeX) を、サーバーやスクリプトから `npm pack` の tarball 経由で
+  読み込める (`exports` に ESM / CJS / 型定義)。中身は同期の純関数のままで、
+  描画エンジン (node-tikzjax) はこの出口に含まれない — TeX → SVG は
+  呼ぶ側の描画キューにつなぐ (CLI と同じ流れ)。VS Code 拡張の入り口
+  (`main` / `browser`) は変わらない。
+
 - **図に題を載せる `title:` を足した**。`title: 回路図01 circuit フェンスの書き方`
   の 1 行で、図の左上に太字で出る。**この 1 つだけは `notes:` の字では置けない** —
   番地は `a1` が最上段で、その上が無いため。置き場所は番地から測らず、TikZ に

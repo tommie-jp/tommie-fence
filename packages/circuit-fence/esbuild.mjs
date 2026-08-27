@@ -45,6 +45,27 @@ const targets = [
     platform: 'node',
     external: [TEX_ENGINE],
   },
+  // ここから 2 つはライブラリの出口 (`circuit-fence/core`)。サーバー側描画の
+  // ように、YAML → TeX の変換だけを外から呼ぶためのもの。core は DOM にも
+  // node: にも依存しないので neutral で束ねられる。yaml は束ねない —
+  // ESM 出力に CJS 実装が混ざると dynamic require で落ちるため、依存として
+  // 呼ぶ側の node_modules に任せる (dependencies に載っているので必ず居る)。
+  {
+    entryPoints: ['src/core/index.ts'],
+    outfile: 'dist/core.mjs',
+    format: 'esm',
+    platform: 'neutral',
+    target: 'es2022',
+    external: ['yaml'],
+  },
+  {
+    entryPoints: ['src/core/index.ts'],
+    outfile: 'dist/core.cjs',
+    format: 'cjs',
+    platform: 'neutral',
+    target: 'es2022',
+    external: ['yaml'],
+  },
 ];
 
 for (const target of targets) {

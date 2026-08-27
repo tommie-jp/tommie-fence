@@ -101,6 +101,26 @@ node dist/cli.cjs --version
 埋めるので、更新すれば刻印も一緒に新しくなる。刻まない図にも、版は
 `.svg` の根に `data-circuit-fence` として必ず入っている。
 
+### プログラムから使う (`circuit-fence/core`)
+
+コア (YAML → 検証 → circuitikz TeX) は同期の純関数のまま、
+ライブラリとして読み込める。サーバー側で自前の描画キューに
+つなぐときはこちらを使う。
+
+```js
+import { compileCircuit, VERSION } from 'circuit-fence/core'
+
+const { tex, errors } = compileCircuit(source)
+// tex を node-tikzjax に渡すと SVG になる (CLI と同じ流れ)。
+// errors は行番号つき。描画エンジンはこの出口には含まれない
+```
+
+npm レジストリには公開していないので、使う側へは tarball で渡す。
+
+```bash
+npm pack   # ビルドと型定義の書き出しを済ませて circuit-fence-<版>.tgz を作る
+```
+
 ## 開発
 
 ```bash

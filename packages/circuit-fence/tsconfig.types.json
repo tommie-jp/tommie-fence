@@ -1,0 +1,19 @@
+{
+  // ライブラリの出口 (`circuit-fence/core`) の型定義だけを書き出す設定。
+  // 実装は esbuild が束ねる (dist/core.mjs / core.cjs) ので、tsc は .d.ts 専用。
+  // ソースの import の `.ts` 拡張子は .d.ts にそのまま残るが、使う側の
+  // TypeScript は宣言ファイルの中の相対指定子を隣の .d.ts に解決するので
+  // 問題にならない (bundler / nodenext の両解決で実測)。
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "rootDir": "src/core",
+    "outDir": "dist/types",
+    // core は Node の API を使わない約束 (CLAUDE.md 1)。型からも外して見張る。
+    "types": []
+  },
+  "include": ["src/core"],
+  "exclude": ["src/**/*.test.ts"]
+}

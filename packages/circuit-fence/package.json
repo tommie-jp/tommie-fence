@@ -28,6 +28,17 @@
   ],
   "main": "./dist/extension.cjs",
   "browser": "./dist/extension.web.cjs",
+  "exports": {
+    "./core": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/core.mjs",
+      "require": "./dist/core.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
   "bin": {
     "circuit-fence": "./dist/cli.cjs"
   },
@@ -54,6 +65,8 @@
   "scripts": {
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
+    "types": "tsc -p tsconfig.types.json",
+    "prepack": "rm -rf dist && node esbuild.mjs --production && npm run types",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
