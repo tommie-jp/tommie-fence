@@ -56,6 +56,37 @@ const DEFAULT_STANDARD = 'american';
 const BIPOLE_LENGTH = 1.2;
 
 /**
+ * グラウンドの記号の中の、横棒 3 本の間隔 (pt)。**記号の側で決め打ち**で、
+ * 線の太さでは変わらない (circuitikz 1.0 / 1.6.6 とも実測)。
+ */
+const GROUND_BAR_SPACING = 1.991;
+
+/**
+ * 横棒の太さ = 線の太さ × これ (circuitikz の `monopoles/ground/thickness` の既定)。
+ * 棒だけが線と一緒に太るので、線を太くすると隙間が先に無くなる。
+ */
+const GROUND_BAR_THICKNESS = 2;
+
+/** 横棒の間に残したい白 (pt)。circuitikz の既定の線 (0.4pt) で残る隙間に合わせた。 */
+const GROUND_BAR_GAP = 1.1;
+
+/**
+ * グラウンドの記号を広げる倍率。
+ *
+ * 3 本の横棒の間隔は記号の側で決まっているのに、棒の太さは線に付いてくる。
+ * 既定の 0.8pt では隙間が棒の 1/4 しか残らず、**棒が 1 つの塊に見える**。
+ * 棒どうしの白が残る大きさまで記号を広げる (細い線なら既定のまま = 1)。
+ *
+ * 太さのほう (`monopoles/ground/thickness`) を細くする手もあるが、
+ * 線が太いほど棒が相対的に細くなり、記号だけ痩せて見える。
+ * 大きさを変えるほうが、線の太さによらず同じ形で出る。
+ */
+const groundScale = (wireWidth: number): number => {
+  const wanted = (GROUND_BAR_THICKNESS * wireWidth + GROUND_BAR_GAP) / GROUND_BAR_SPACING;
+  return Math.max(1, Math.round(wanted * 100) / 100);
+};
+
+/**
  * 標準の TeX フォントに字形が無い字を組むフォント。
  * 書き出す `.tex` に、そういう字が実際に出てくるときだけ書く
  * (**この 1 行だけが相手の環境で落ちうる**ので、要らないなら書かない)。
@@ -90,6 +121,7 @@ const headerOf = (
   needsMono: boolean,
   needsArrows: boolean,
   colors: readonly string[],
+  groundWidening: number,
 ): string[] => [
   '\\usepackage{circuitikz}',
   // オペアンプの ± をアンカーからずらして置くのに要る。
@@ -104,6 +136,9 @@ const headerOf = (
   '\\begin{document}',
   `\\begin{circuitikz}[${style.standard ?? DEFAULT_STANDARD}, line width=${num(style.wireWidth ?? DEFAULT_WIRE_WIDTH)}pt]`,
   `\\ctikzset{bipoles/length=${num(BIPOLE_LENGTH)}cm}`,
+  // グラウンドがあって、線が太くて棒が潰れるときだけ書く
+  // (図に入る書き方を無条件には増やさない。約束 6)。
+  ...(groundWidening > 1 ? [`\\ctikzset{grounds/scale=${num(groundWidening)}}`] : []),
 ];
 
 const FOOTER = ['\\end{circuitikz}', '\\end{document}'];
@@ -512,6 +547,9 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
     needs.monoFont,
     needs.arrowTips,
     noteColorLines(circuit, target),
+    circuit.parts.some((part) => part.type === 'ground')
+      ? groundScale(style.wireWidth ?? DEFAULT_WIRE_WIDTH)
+      : 1,
   );
   const cells = cellsOf(circuit);
   const byId = new Map(circuit.parts.map((part) => [part.id, part]));

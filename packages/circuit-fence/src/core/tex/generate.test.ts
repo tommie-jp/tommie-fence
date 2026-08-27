@@ -36,6 +36,7 @@ describe('generateTex', () => {
         '\\begin{document}',
         '\\begin{circuitikz}[american, line width=0.8pt]',
         '\\ctikzset{bipoles/length=1.2cm}',
+        '\\ctikzset{grounds/scale=1.36}',
         '\\coordinate (a1) at (0,0);',
         '\\coordinate (a3) at (4,0);',
         '\\coordinate (c3) at (4,-4);',
@@ -56,14 +57,14 @@ describe('generateTex', () => {
   test('maps each drawing line back to the line of YAML it came from', () => {
     const { lineMap } = generate(...RC_LOWPASS);
 
-    // 定型が 5 行 (usepackage / calc / document / circuitikz / ctikzset)、
+    // 定型が 6 行 (usepackage / calc / document / circuitikz / ctikzset 2 つ)、
     // そのあと座標 4 行。図はその次から。
-    expect(lineMap.get(10)).toBe(2);
-    expect(lineMap.get(11)).toBe(3);
-    expect(lineMap.get(15)).toBe(8);
+    expect(lineMap.get(11)).toBe(2);
+    expect(lineMap.get(12)).toBe(3);
+    expect(lineMap.get(16)).toBe(8);
     // 定型と座標の行は YAML のどの行でもない。
     expect(lineMap.get(1)).toBeUndefined();
-    expect(lineMap.get(6)).toBeUndefined();
+    expect(lineMap.get(7)).toBeUndefined();
   });
 
   test('puts the plus plate of an electrolytic capacitor on the address written first', () => {
@@ -574,5 +575,53 @@ describe('記号の向きが版で違う部品', () => {
 
     expect(tex).toContain('to[vR, l_=$R_{2}$');
     expect(tex).not.toContain('mirror');
+  });
+});
+
+/**
+ * グラウンドの記号は、3 本の横棒の間隔が記号の側で決め打ちになっている。
+ * 線を太くすると棒だけが太って間隔を食い潰し、**棒が 1 つの塊に見える**
+ * (既定の 0.8pt で隙間が棒の 1/4 しか残らないと実測)。
+ * 潰れない大きさまで記号を広げる。
+ */
+describe('グラウンドの記号の大きさ', () => {
+  const GROUND = ['parts:', '  R1: resistor a1 c1', '  G1: ground c1'];
+
+  test('widens the ground at the default line width', () => {
+    const { tex } = generate(...GROUND);
+
+    expect(tex).toContain('grounds/scale=');
+  });
+
+  test('leaves the ground alone when the lines are thin enough', () => {
+    // 細い線なら記号の既定のままで隙間が残る。書き方を無条件には増やさない。
+    const { tex } = generate(...GROUND, 'style:', '  wire-width: 0.4');
+
+    expect(tex).not.toContain('grounds/scale=');
+  });
+
+  test('says nothing about grounds in a figure that has none', () => {
+    const { tex } = generate('parts:', '  R1: resistor a1 a3');
+
+    expect(tex).not.toContain('grounds/scale=');
+  });
+
+  test('widens it further as the lines get thicker', () => {
+    const scaleOf = (width: string): number => {
+      const { tex } = generate(...GROUND, 'style:', `  wire-width: ${width}`);
+      return Number(/grounds\/scale=([\d.]+)/.exec(tex ?? '')?.[1] ?? '1');
+    };
+
+    expect(scaleOf('2')).toBeGreaterThan(scaleOf('0.8'));
+    expect(scaleOf('4')).toBeGreaterThan(scaleOf('2'));
+  });
+
+  test('writes the same widening into the exported tex', () => {
+    // 出る図が的で食い違うと、プレビューで確かめてから書き出せなくなる (約束 7)。
+    const fence = generate(...GROUND).tex ?? '';
+    const latex = generateLatex(...GROUND).tex ?? '';
+    const scale = (tex: string): string | undefined => /grounds\/scale=[\d.]+/.exec(tex)?.[0];
+
+    expect(scale(latex)).toBe(scale(fence));
   });
 });
