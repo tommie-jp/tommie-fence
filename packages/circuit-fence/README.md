@@ -37,7 +37,9 @@ wires:
 ## 使い方
 
 Markdown を開いてプレビュー (`Ctrl+Shift+V`) を出す。
-書き方は [docs/syntax.md](docs/syntax.md)。
+書き方は [docs/syntax.md](docs/syntax.md)、
+1 画面ぶんの早見表は [docs/cheatsheet.md](docs/cheatsheet.md)
+(LLM に書かせるときはこの 1 枚を渡す)。
 
 組んでいる間は `style: grid: on` にすると、部品を置ける位置が点で出る。
 行は左に英字、列は上に数字で、ブレッドボードと同じ読み方。
@@ -70,6 +72,13 @@ node dist/cli.cjs render examples --out examples/out
 
 1 枚につき `.tex` と `.svg` を書き出す。`.tex` は LaTeX にそのまま渡せる。
 ネットリストは標準出力に出る。
+
+図が要らないときは `check` で、読めなかった行とネットリストだけを出せる。
+1 枚 1 秒の描画を待たないので、書きながら回すときと CI で使う。
+
+```bash
+node dist/cli.cjs check examples
+```
 
 日本語や単位が要る図は `--emit-tex` で、手元の xelatex 用の `.tex` を書き出す。
 

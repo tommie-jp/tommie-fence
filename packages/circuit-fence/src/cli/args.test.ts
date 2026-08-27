@@ -7,7 +7,7 @@ describe('parseArgs', () => {
   test('reads the files to draw', () => {
     expect(parse('render', 'examples')).toEqual({
       ok: true,
-      value: { targets: ['examples'], outDir: null, emitTex: false },
+      value: { command: 'render', targets: ['examples'], outDir: null, emitTex: false },
     });
   });
 
@@ -53,5 +53,31 @@ describe('parseArgs', () => {
   test('asks for the directory that --out needs', () => {
     expect(parse('render', 'a.md', '--out')).toMatchObject({ ok: false });
     expect(parse('render', 'a.md', '--out', '--x')).toMatchObject({ ok: false });
+  });
+});
+
+describe('parseArgs の check', () => {
+  test('reads the command that only validates', () => {
+    expect(parse('check', 'examples')).toEqual({
+      ok: true,
+      value: { command: 'check', targets: ['examples'], outDir: null, emitTex: false },
+    });
+  });
+
+  test('asks for something to check', () => {
+    expect(parse('check').ok).toBe(false);
+  });
+
+  test('refuses the options that only make sense when drawing', () => {
+    // 何も書き出さないコマンドなので、書き出し先を受けると嘘になる。
+    expect(parse('check', 'a.md', '--out', 'tex').ok).toBe(false);
+    expect(parse('check', 'a.md', '--emit-tex').ok).toBe(false);
+  });
+
+  test('still reads render as before', () => {
+    expect(parse('render', 'examples')).toEqual({
+      ok: true,
+      value: { command: 'render', targets: ['examples'], outDir: null, emitTex: false },
+    });
   });
 });

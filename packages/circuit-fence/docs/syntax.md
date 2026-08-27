@@ -3,6 +3,9 @@
 Markdown の ` ```circuit ` フェンスに YAML を書くと、Markdown プレビュー
 (`Ctrl+Shift+V`) で回路図になる。
 
+1 画面に収めた早見表は [cheatsheet.md](cheatsheet.md)
+(LLM に書かせるときはこの 1 枚を渡す)。
+
 ```circuit
 parts:
   IN:  port a1
@@ -647,11 +650,25 @@ style:
 
 ```bash
 circuit-fence render <ファイルかディレクトリ...> [--out <出力先>] [--emit-tex]
+circuit-fence check  <ファイルかディレクトリ...>
 ```
 
 `.md` からは ` ```circuit ` フェンスを取り出し、`.yaml` はそのまま 1 枚として扱う。
 1 枚につき `.tex` と `.svg` が出る。ネットリストは標準出力に、読めなかった行は
 プレビューと同じ文面で標準エラーに出る。
+
+### `check` — 図を描かずに確かめる
+
+何も書き出さず、読めなかった行とネットリストだけを出す。
+図を描かないので WASM の TeX を回さず、`examples` 全部でも 0.1 秒で終わる。
+書きながら回すときと、CI で文法だけを見るときのための道。
+
+```bash
+circuit-fence check notes.md
+```
+
+見るものは描くときとまったく同じなので、ここで通った図はプレビューでも
+同じことを言われない。読めなかった行が 1 つでもあれば 0 以外で終わる。
 
 ### `--emit-tex` — 手元の LaTeX で組む
 

@@ -122,6 +122,31 @@ function emitTex(job: Job): number {
   return errors.length;
 }
 
+/**
+ * 1 枚**調べるだけ**。何も書き出さず、読めなかった行とネットリストを出す。
+ *
+ * 図を描かないので WASM の TeX を回さない (1 枚 1 秒近くかかる)。
+ * 書きながら回すときと、CI で文法だけを見るときのための道。
+ * 見るものは描くときとまったく同じ (compileCircuit を同じ的で呼ぶ) ので、
+ * ここで通った図はプレビューでも同じことを言われない。
+ */
+function checkJob(job: Job): number {
+  const { tex, netlist, errors: raw, notices } = compileCircuit(job.source);
+  const errors = shiftErrors(raw, job.line);
+
+  if (tex === null) {
+    reportProblem(`${job.label}: 図にできませんでした`);
+    reportErrors(errors);
+    return Math.max(errors.length, 1);
+  }
+
+  console.log(`${job.label}: 読めました`);
+  reportNetlist(netlist);
+  reportErrors(errors);
+  reportNotices(shiftErrors(notices, job.line));
+  return errors.length;
+}
+
 /** 1 枚描く。図にできなかった数を返す。 */
 async function runJob(job: Job): Promise<number> {
   const { tex, lineMap, netlist, theme, width, notes, errors: raw, notices } = compileCircuit(job.source);
@@ -174,7 +199,7 @@ async function main(argv: readonly string[]): Promise<number> {
     return 2;
   }
 
-  const { targets, outDir, emitTex: texOnly } = parsed.value;
+  const { command, targets, outDir, emitTex: texOnly } = parsed.value;
   let failed = 0;
 
   try {
@@ -186,6 +211,12 @@ async function main(argv: readonly string[]): Promise<number> {
 
     for (const target of targets.flatMap(collectFiles)) {
       for (const job of jobsFor(target, outDir)) {
+        // check は何も書き出さないので、書き出し先の重なりは起きない。
+        if (command === 'check') {
+          failed += checkJob(job);
+          continue;
+        }
+
         const path = join(job.directory, job.stem);
         const owner = written.get(path);
         if (owner !== undefined) {
