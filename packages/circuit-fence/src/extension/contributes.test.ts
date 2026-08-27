@@ -63,3 +63,31 @@ describe('extension manifest', () => {
     expect(syntax.injectionSelector).toBe('L:text.html.markdown');
   });
 });
+
+/**
+ * 配るときのファイルの選び方。
+ *
+ * .vsix と npm の tarball で入れるものが違うので、選び方を 2 つ持っている。
+ * **`.vscodeignore` と package.json の `files` は同居できない** — vsce が
+ * 「どちらの流儀か決められない」として .vsix の作成を断る (実際に止まった)。
+ * npm 側は `.npmignore` で表す。vsce は `.vscodeignore` があればそちらだけを
+ * 見るので、この 2 つはぶつからない。
+ */
+describe('配るときのファイルの選び方', () => {
+  test('vsce が読む .vscodeignore がある', () => {
+    expect(readText('.vscodeignore')).toContain('node_modules');
+  });
+
+  test('npm が読む .npmignore が dist だけを残している', () => {
+    const rules = readText('.npmignore')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0 && !line.startsWith('#'));
+
+    expect(rules).toEqual(['/*', '!/dist']);
+  });
+
+  test('package.json に files を書かない (.vscodeignore と併用できない)', () => {
+    expect(Object.keys(read('package.json') as object)).not.toContain('files');
+  });
+});

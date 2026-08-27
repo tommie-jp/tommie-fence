@@ -1,0 +1,11 @@
+# npm pack で配るのは dist だけ。
+#
+# **package.json の `files` は使えない** — vsce が「.vscodeignore と files の
+# 併用は支持しない」として .vsix の作成を断る (実際に ./doBuild.sh が止まった)。
+# .vscodeignore のほうは外せない: node-tikzjax は WASM とフォントを実ファイルで
+# 持ち歩くので node_modules を丸ごと同梱する必要があり、その細かい出し入れは
+# files では書けない。そこで npm 側だけ .npmignore で表す。
+#
+# vsce は .vscodeignore があるとそちらだけを見るので、この2つはぶつからない。
+/*
+!/dist
