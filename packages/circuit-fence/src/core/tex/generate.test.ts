@@ -557,6 +557,22 @@ describe('記号だけでは見分けが付かない部品', () => {
   test('carries the options a symbol needs into the bipole', () => {
     const { tex } = generate('parts:', '  M1: ohmmeter a1 a3');
 
-    expect(tex).toContain('\\draw (a1) to[rmeterwa, t={$\\Omega$}, l_=$M_{1}$] (a3); % line 2');
+    expect(tex).toContain('\\draw (a1) to[rmeter, t={$\\Omega$}, l_=$M_{1}$] (a3); % line 2');
+  });
+});
+
+describe('記号の向きが版で違う部品', () => {
+  test('turns the variable resistor arrow up in the fence', () => {
+    // フェンスの circuitikz 1.0 だけ矢先が左下を向く。上下を返して直す。
+    expect(generate('parts:', '  R2: resistor-var a1 a3 10k').tex)
+      .toContain('\\draw (a1) to[vR, mirror, l_=$R_{2}$, a^=$10\\,\\mathrm{k}\\Omega$] (a3);');
+  });
+
+  test('leaves it alone in the tex it writes out', () => {
+    // 手元の LaTeX (1.6.6) は最初から右上を向く。返すと逆に寝る。
+    const { tex } = generateLatex('parts:', '  R2: resistor-var a1 a3 10k');
+
+    expect(tex).toContain('to[vR, l_=$R_{2}$');
+    expect(tex).not.toContain('mirror');
   });
 });

@@ -78,7 +78,7 @@
 \coordinate (k7) at (12,-20);
 \coordinate (k9) at (16,-20);
 \coordinate (k11) at (20,-20);
-\draw (a1) to[vR, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (a3); % line 2
+\draw (a1) to[vR, mirror, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (a3); % line 2
 \draw (a5) to[varcap, l_=$D_{4}$, a^=$33\,\mathrm{p}\mathrm{F}$] (a7); % line 3
 \draw (a9) to[piezoelectric, l_=$X_{1}$, a^=$16\,\mathrm{M}\mathrm{Hz}$] (a11); % line 4
 \draw (a13) to[phR, l_=$R_{3}$] (a15); % line 5
@@ -100,9 +100,9 @@
 \draw (i5) to[reed, l_=$S_{5}$] (i7); % line 19
 \draw (i9) to[loudspeaker, l_=$L_{S1}$] (i11); % line 20
 \draw (i13) to[mic, l_=$M_{K1}$] (i15); % line 21
-\draw (k1) to[ammeter, l_=$A_{1}$] (k3); % line 22
-\draw (k5) to[voltmeter, l_=$V_{5}$] (k7); % line 23
-\draw (k9) to[rmeterwa, t={$\Omega$}, l_=$M_{1}$] (k11); % line 24
+\draw (k1) to[rmeter, t={$\mathrm{A}$}, l_=$A_{1}$] (k3); % line 22
+\draw (k5) to[rmeter, t={$\mathrm{V}$}, l_=$V_{5}$] (k7); % line 23
+\draw (k9) to[rmeter, t={$\Omega$}, l_=$M_{1}$] (k11); % line 24
 \path (0,-2.395) rectangle (4.403,-1.605); % line 26
 \node[anchor=west, inner sep=0, circuitnotemark, font=\footnotesize] at (0,-2) {X}; % line 26
 \path (8,-2.395) rectangle (11.556,-1.605); % line 27

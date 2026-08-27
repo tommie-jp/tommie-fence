@@ -203,13 +203,29 @@ describe('記事によく出る部品', () => {
     }
   });
 
-  test('draws the ohmmeter as a plain round meter with an omega in it', () => {
-    // circuitikz の ohmmeter は Ω を**太字の数式**で描き、そのフォントが無くて
-    // プロセスごと落ちる。普通の太さの Ω なら出る (どちらも実測)。
-    const type = lookupPartType('ohmmeter');
+  test('draws the three meters as one circle with one letter in it', () => {
+    // 回路図の慣習は丸に字だけ。circuitikz の ammeter / voltmeter は指針の矢が
+    // 入り、ohmmeter は Ω が**太字の数式**でフォントが無くて落ちる (実測)。
+    // 3 つとも矢の無い rmeter に字を渡して、見た目を揃える。
+    expect(lookupPartType('ammeter')?.symbol).toBe('rmeter');
+    expect(lookupPartType('ammeter')?.options).toEqual(['t={$\\mathrm{A}$}']);
+    expect(lookupPartType('voltmeter')?.options).toEqual(['t={$\\mathrm{V}$}']);
+    expect(lookupPartType('ohmmeter')?.options).toEqual(['t={$\\Omega$}']);
+  });
 
-    expect(type?.symbol).toBe('rmeterwa');
-    expect(type?.options).toEqual(['t={$\\Omega$}']);
+  test('draws the transformer with the core the usual symbol carries', () => {
+    // circuitikz の transformer は**空芯**。よく見るのは鉄芯の 2 本が入るほう。
+    expect(lookupPartType('transformer')?.symbol).toBe('transformer core');
+  });
+
+  test('turns the variable resistor arrow the way it is usually drawn', () => {
+    // フェンスの circuitikz 1.0 は矢先を左下に描く。上下を返すと右上を向く。
+    // 手元の LaTeX (1.6.6 で確認) は最初から右上なので、そちらには足さない。
+    const type = lookupPartType('resistor-var');
+
+    expect(type?.symbol).toBe('vR');
+    expect(type?.options).toEqual(['mirror']);
+    expect(type?.latexOptions).toEqual([]);
   });
 
   test('tells the NTC and the PTC thermistor apart with letters', () => {
@@ -236,6 +252,8 @@ describe('記事によく出る部品', () => {
     // NTC / PTC サーミスタは落ちないが、中の θ が `#` で出る (どちらも実測)。
     const symbols = Object.values(PART_TYPES).map((type) => type.symbol);
 
+    expect(symbols).not.toContain('ammeter');
+    expect(symbols).not.toContain('voltmeter');
     expect(symbols).not.toContain('ohmmeter');
     expect(symbols).not.toContain('thRn');
     expect(symbols).not.toContain('thRp');

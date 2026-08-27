@@ -3,7 +3,7 @@ import { DEFAULT_PITCH, cornerOf, formatAddress, toPoint } from '../model/addres
 import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
-import { lookupPartType, symbolFor } from '../parts.ts';
+import { lookupPartType, optionsFor, symbolFor } from '../parts.ts';
 import type { SourceInner } from '../parts.ts';
 import { EMPTY_STYLE } from '../parser/style.ts';
 import { cellOf as addressOf, nodeNameOf, texNameOfEndpoint } from '../types.ts';
@@ -413,7 +413,7 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
   // (回路図の定石。実機で重なりを確認して決めた)。
   const type = lookupPartType(part.type);
   // 種類そのものに要るオプション (抵抗計の Ω など) は記号のすぐ後ろ。
-  const options = [symbolFor(part.type, target), ...(type?.options ?? [])];
+  const options = [symbolFor(part.type, target), ...optionsFor(part.type, target)];
   // 足を指せる種類だけ、記号そのものに名前を付ける (`P1.w` の行き先になる)。
   // 指せない種類にまで付けると、要らない名前で TeX が太る。
   if (type?.pins !== undefined) options.push(`n=${nodeNameOf(part.id)}`);
@@ -462,7 +462,7 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
   const type = lookupPartType(part.type);
   const symbol = symbolFor(part.type, target);
   // 種類そのものに要るオプション (DIP の足の本数) が先、書かれた向きが後。
-  const options = [symbol, ...(type?.options ?? [])];
+  const options = [symbol, ...optionsFor(part.type, target)];
   const turned = part.orientation === null ? null : ORIENTATION_TEX[part.orientation];
   if (turned !== undefined && turned !== null) options.push(turned);
   const at = formatAddress(part.at);

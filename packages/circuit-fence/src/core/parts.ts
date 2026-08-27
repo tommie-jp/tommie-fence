@@ -11,7 +11,7 @@
  *
  * - `eC` (電解コンデンサ) → 曲板の `cC` で描く (`ecap`)
  * - `ohmmeter` (抵抗計) → Ω が**太字の数式**で、その太字数式フォントが無い。
- *   丸に字を書くだけの `rmeterwa` に普通の太さの Ω を渡す
+ *   丸に字を書くだけの `rmeter` に普通の太さの Ω を渡す
  *   (普通の太さの Ω は出る。値のラベルの Ω と同じもの)
  *
  * 落ちないが**字形が壊れる**もの:
@@ -21,10 +21,15 @@
  *   その大きさの字形が無く `#` で出る。素の `thR` にして、
  *   NTC / PTC の区別は ID の下の行に書く (mark)
  *
- * 記号そのものが**横に置くと寝る**もの (フェンスに限らず circuitikz の描き方):
+ * 落ちも壊れもしないが、**回路図の慣習と形が違う**もの:
  *
- * - `V` / `sV` / `sqV` / `vsourcetri` (丸い電源) → 丸だけの `esource` にして、
- *   + と - や波形は自分で描く (inner。理由は「電源」の頭)
+ * - `V` / `sV` / `sqV` / `vsourcetri` (丸い電源) → 中身を 90 度回して描くので
+ *   横に引くと寝る。丸だけの `esource` にして中身は自分で描く (inner)
+ * - `ammeter` / `voltmeter` (電流計・電圧計) → 丸に指針の矢が入る。
+ *   矢の無い `rmeter` に字を渡す (抵抗計と揃う)
+ * - `transformer` (トランス) → 空芯。鉄芯の入る `transformer core` にする
+ * - `vR` (可変抵抗) → **フェンスの circuitikz 1.0 だけ**矢先が左下を向く。
+ *   フェンスでだけ `mirror` を足して右上へ返す (latexOptions)
  */
 
 import type { TexTarget } from './types.ts';
@@ -67,10 +72,16 @@ export type PartType = {
    */
   readonly pins?: Readonly<Record<string, string>>;
   /**
-   * 記号に必ず付ける circuitikz のオプション (DIP の足の本数など)。
+   * 記号に必ず付ける circuitikz のオプション (DIP の足の本数、計器の中の字など)。
    * 書き手が触れるものではないので、向き (`+up`) とは別に持つ。
    */
   readonly options?: readonly string[];
+  /**
+   * 書き出す `.tex` で使うオプション。**circuitikz の版で記号の向きが違う**
+   * 種類だけが持つ (フェンスは 1.0 で固定、手元の LaTeX はもっと新しい)。
+   * 省くと options をそのまま使う。出る図はどちらも同じ形になる。
+   */
+  readonly latexOptions?: readonly string[];
   /**
    * 型番を記号の**中**に書く種類。省くと記号の下に出る。
    * 箱で描く IC は中に書ける (そのほうが回路図の慣習に近い)。
@@ -181,8 +192,15 @@ const dipchip = (count: number): PartType => ({
 export const PART_TYPES = {
   // 受動部品
   resistor: { kind: 'two-terminal', symbol: 'R', unitTex: OHM, unitSi: SI_OHM },
-  /** 2 端子の可変抵抗。3 本目の足が要るなら potentiometer のほう。 */
-  'resistor-var': { kind: 'two-terminal', symbol: 'vR', unitTex: OHM, unitSi: SI_OHM },
+  /**
+   * 2 端子の可変抵抗。3 本目の足が要るなら potentiometer のほう。
+   * 矢は回路図の慣習どおり右上を向かせる。**フェンスの circuitikz 1.0 だけが
+   * 矢先を左下に描く**ので、上下を返して直す (1.6.6 では直っていると実測)。
+   */
+  'resistor-var': {
+    kind: 'two-terminal', symbol: 'vR', options: ['mirror'], latexOptions: [],
+    unitTex: OHM, unitSi: SI_OHM,
+  },
   /**
    * ポテンショメータ (3 端子の可変抵抗)。両端は番地で置き、ワイパーは
    * `P1.w` で指す。**ワイパーは記号の上側に出る**ので、線は上へ引く。
@@ -261,16 +279,16 @@ export const PART_TYPES = {
   speaker: { kind: 'two-terminal', symbol: 'loudspeaker', ...NO_UNIT },
   mic: { kind: 'two-terminal', symbol: 'mic', ...NO_UNIT },
 
-  // 測るもの。3 つとも丸に矢印 + 字で、見た目が揃う。
-  ammeter: { kind: 'two-terminal', symbol: 'ammeter', ...NO_UNIT },
-  voltmeter: { kind: 'two-terminal', symbol: 'voltmeter', ...NO_UNIT },
-  /**
-   * 抵抗計。circuitikz の `ohmmeter` は Ω を**太字の数式**で描き、
-   * その太字数式フォントがフェンスの TeX に無いので**プロセスごと落ちる**。
-   * 丸に字を書くだけの `rmeterwa` に、普通の太さの Ω を渡して代わりにする
-   * (普通の太さなら出ると実測で確認。電流計・電圧計と同じ見た目になる)。
-   */
-  ohmmeter: { kind: 'two-terminal', symbol: 'rmeterwa', options: ['t={$\\Omega$}'], ...NO_UNIT },
+  // 測るもの。3 つとも**丸に字だけ**で描く (回路図の慣習)。
+  //
+  // circuitikz の `ammeter` / `voltmeter` は丸に指針の矢が入り、字も太字になる。
+  // `ohmmeter` は Ω が**太字の数式**で、その太字数式フォントがフェンスの TeX に
+  // 無いので**プロセスごと落ちる**。矢の無い `rmeter` に字を渡せば 3 つとも
+  // 素直な丸 + 字になり、見た目も揃う (普通の太さの Ω は出ると実測で確認。
+  // 値のラベルの Ω と同じもの)。
+  ammeter: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${AMPERE}$}`], ...NO_UNIT },
+  voltmeter: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${VOLT}$}`], ...NO_UNIT },
+  ohmmeter: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${OHM}$}`], ...NO_UNIT },
 
   // 記号
   port: { kind: 'one-terminal', symbol: 'ocirc', idLabel: 'beside', ...NO_UNIT },
@@ -311,7 +329,12 @@ export const PART_TYPES = {
    * 書き出す `.tex` では latexSymbol に戻すだけで本物の記号になる。
    */
   opamp: { kind: 'multi-terminal', symbol: 'plain amp', latexSymbol: 'op amp', ...NO_UNIT, pins: AMP_PINS },
-  transformer: { kind: 'multi-terminal', symbol: 'transformer', ...NO_UNIT, pins: TRANSFORMER_PINS },
+  /**
+   * トランス。circuitikz の `transformer` は**空芯** (巻線 2 つだけ) で、
+   * 記事によく出るのは鉄芯の 2 本が入るほう。アンカーは同じなので
+   * `transformer core` にしても足の指し方は変わらない。
+   */
+  transformer: { kind: 'multi-terminal', symbol: 'transformer core', ...NO_UNIT, pins: TRANSFORMER_PINS },
   nigbt: { kind: 'multi-terminal', symbol: 'nigbt', ...NO_UNIT, pins: IGBT_PINS },
   pigbt: { kind: 'multi-terminal', symbol: 'pigbt', ...NO_UNIT, pins: IGBT_PINS },
   /** 切り替えスイッチ (c 接点)。 */
@@ -402,6 +425,17 @@ export function symbolFor(typeName: string, target: TexTarget): string {
   const type = lookupPartType(typeName);
   if (type === null) return typeName;
   return target === 'latex' ? (type.latexSymbol ?? type.symbol) : type.symbol;
+}
+
+/**
+ * その記号に必ず付ける circuitikz のオプション。
+ * **circuitikz の版で向きが違う記号があるので、書き出す `.tex` では別を使う**
+ * ことがある (持っていない種類はどちらでも同じ)。
+ */
+export function optionsFor(typeName: string, target: TexTarget): readonly string[] {
+  const type = lookupPartType(typeName);
+  if (type === null) return [];
+  return (target === 'latex' ? type.latexOptions : undefined) ?? type.options ?? [];
 }
 
 /**
