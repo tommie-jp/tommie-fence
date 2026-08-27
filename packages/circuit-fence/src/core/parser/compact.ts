@@ -139,36 +139,53 @@ function readOneTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
   return ok({ kind: 'one-terminal', id, type, at: at.value, line });
 }
 
+/** 配線 1 行の書き方。端点はいくつ並べてもよい。 */
+const WIRE_FORM = '「端点 -- 端点 [-- 端点 …]」';
+
 /**
- * `a3 -- a4` の 1 行を読む。演算子は TikZ と同じ 3 つ。
+ * `a3 -- a4` や `b1 -- b3 |- U1.+` の 1 行を読む。演算子は TikZ と同じ 3 つ。
  *
  * - `--` まっすぐ。端点が揃っていなくてもそのまま斜めに引く (勝手に折らない)
  * - `-|` 先に横、それから縦
  * - `|-` 先に縦、それから横
+ *
+ * 端点は 3 つ以上並べられる。1 行が 1 本の信号経路として読めるようにするための
+ * 書き方で、**ここで隣どうしの 1 区間ずつに開いて返す**。中間モデルから先は
+ * 区間の並びしか見ないので、黒丸も T 字もネットリストもそのまま使える。
+ * どの区間も行番号は書かれた 1 行のまま (折り返した先を指しても直しに行けない)。
  */
-export function parseWireSpec(text: string, line: number): Result<WireSpec> {
-  const parts = text.trim().split(WIRE_OPERATOR);
-
-  if (parts.length !== 3) {
-    return fail('配線は「端点 -- 端点」で書きます', line);
+export function parseWireLine(text: string, line: number): Result<readonly WireSpec[]> {
+  // 端点 n 個と演算子 n-1 個が交互に並ぶので、割った結果は必ず奇数長になる。
+  const tokens = text.trim().split(WIRE_OPERATOR);
+  if (tokens.length < 3 || tokens.length % 2 === 0) {
+    return fail(`配線は ${WIRE_FORM} で書きます`, line);
   }
 
-  const [fromToken = '', operator = '', toToken = ''] = parts;
+  const endpoints: Endpoint[] = [];
+  for (let index = 0; index < tokens.length; index += 2) {
+    const token = tokens[index] ?? '';
+    // 端点を書き忘れた (`a1 -- a3 --`)。空の字を「番地の形ではありません」と
+    // 返しても、どこが空なのか読めない。書き方のほうを返す。
+    if (token.length === 0) return fail(`配線は ${WIRE_FORM} で書きます`, line);
 
-  const from = readEndpoint(fromToken, line);
-  if (!from.ok) return from;
-  const to = readEndpoint(toToken, line);
-  if (!to.ok) return to;
-
-  if (
-    from.value.kind === 'cell' &&
-    to.value.kind === 'cell' &&
-    isSameAddress(from.value.address, to.value.address)
-  ) {
-    return fail(`配線の両端が同じ番地です (${formatAddress(from.value.address)})`, line);
+    const endpoint = readEndpoint(token, line);
+    if (!endpoint.ok) return endpoint;
+    endpoints.push(endpoint.value);
   }
 
-  return ok({ from: from.value, to: to.value, operator: operator as WireOperator, line });
+  const wires: WireSpec[] = [];
+  for (const [index, from] of endpoints.slice(0, -1).entries()) {
+    const to = endpoints[index + 1];
+    const operator = tokens[index * 2 + 1];
+    if (to === undefined || operator === undefined) continue;
+
+    if (from.kind === 'cell' && to.kind === 'cell' && isSameAddress(from.address, to.address)) {
+      return fail(`配線の両端が同じ番地です (${formatAddress(from.address)})`, line);
+    }
+    wires.push({ from, to, operator: operator as WireOperator, line });
+  }
+
+  return ok(wires);
 }
 
 /** 配線の端。`a3` のような番地か、`U1.out` のような足。 */

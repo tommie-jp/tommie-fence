@@ -14,7 +14,7 @@
 | [03-multi-terminal.md](03-multi-terminal.md) | 多端子部品と足の名前、型番、FET の種類、2 端子の足 |
 | [04-non-inverting-amp.md](04-non-inverting-amp.md) | オペアンプの向き (`+up`)、足への引き方 |
 | [05-labels.md](05-labels.md) | ID の出方 / 値の出方 |
-| [06-bends.md](06-bends.md) | 配線の `--` / `-\|` / `\|-`、分岐の黒丸と T 字 |
+| [06-bends.md](06-bends.md) | 配線の `--` / `-\|` / `\|-`、分岐の黒丸と T 字、1 行につないで書く |
 | [07-diagonal.md](07-diagonal.md) | 斜めに置く |
 | [08-themes.md](08-themes.md) | `theme` (`auto` / `light` / `dark` / `mono`) |
 | [09-style.md](09-style.md) | 色の上書き / `pitch` / `wire-width` / `standard` / `width` |

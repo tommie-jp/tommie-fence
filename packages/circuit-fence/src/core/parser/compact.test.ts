@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { LIMITS } from '../limits.ts';
-import { parseCompactPart, parseNoteLine, parseNoteText, parseWireSpec } from './compact.ts';
+import { parseCompactPart, parseNoteLine, parseNoteText, parseWireLine } from './compact.ts';
 
 const partOf = (text: string, id = 'R1') => {
   const result = parseCompactPart(id, text, 2);
@@ -93,19 +93,26 @@ describe('parseCompactPart', () => {
   });
 });
 
-const wireOf = (text: string) => {
-  const result = parseWireSpec(text, 5);
+const wiresOf = (text: string) => {
+  const result = parseWireLine(text, 5);
   if (!result.ok) throw new Error(`読めませんでした: ${result.error.message}`);
   return result.value;
 };
 
+/** 1 本だけ書いた行。つないだ数が 1 でないと、取り違えたまま通ってしまう。 */
+const wireOf = (text: string) => {
+  const wires = wiresOf(text);
+  if (wires.length !== 1) throw new Error(`1 本のはずが ${wires.length} 本でした`);
+  return wires[0];
+};
+
 const wireMessageOf = (text: string) => {
-  const result = parseWireSpec(text, 5);
+  const result = parseWireLine(text, 5);
   if (result.ok) throw new Error('読めてしまいました');
   return result.error;
 };
 
-describe('parseWireSpec', () => {
+describe('parseWireLine', () => {
   test('reads a straight wire between two addresses', () => {
     expect(wireOf('a3 -- a4')).toEqual({
       from: { kind: 'cell', address: { row: 0, col: 2 } },
@@ -155,10 +162,6 @@ describe('parseWireSpec', () => {
     expect(wireMessageOf('a3 a4').message).toContain('--');
   });
 
-  test('rejects a wire with more than two endpoints', () => {
-    expect(wireMessageOf('a1 -- a3 -- a5').message).toContain('--');
-  });
-
   test('names the endpoint it could not read', () => {
     expect(wireMessageOf('a3 -- zz').message).toContain('zz');
   });
@@ -172,6 +175,52 @@ describe('parseWireSpec', () => {
       from: { kind: 'cell', address: { row: 0, col: 2 } },
       to: { kind: 'cell', address: { row: 1, col: 4 } },
     });
+  });
+});
+
+describe('parseWireLine のつなぎ書き', () => {
+  test('reads three endpoints as two segments', () => {
+    const wires = wiresOf('a1 -- a3 -- a5');
+
+    expect(wires).toHaveLength(2);
+    expect(wires[0]).toMatchObject({
+      from: { kind: 'cell', address: { row: 0, col: 0 } },
+      to: { kind: 'cell', address: { row: 0, col: 2 } },
+    });
+    expect(wires[1]).toMatchObject({
+      from: { kind: 'cell', address: { row: 0, col: 2 } },
+      to: { kind: 'cell', address: { row: 0, col: 4 } },
+    });
+  });
+
+  test('keeps each operator with the segment it was written on', () => {
+    // 1 行に別の演算子を混ぜられないと、経路として書く意味が薄い。
+    const wires = wiresOf('b1 -- b3 |- U1.+');
+
+    expect(wires[0]).toMatchObject({ operator: '--' });
+    expect(wires[1]).toMatchObject({ operator: '|-', to: { kind: 'pin', part: 'U1', pin: '+' } });
+  });
+
+  test('gives every segment the line the chain was written on', () => {
+    // 帯に出る行は書いた 1 行。折り返した先を指しても直しに行けない。
+    for (const wire of wiresOf('a1 -- a3 -- a5 -- c5')) expect(wire.line).toBe(5);
+  });
+
+  test('reads a chain written without spaces', () => {
+    expect(wiresOf('a1--a3|-c5')).toHaveLength(2);
+  });
+
+  test('rejects a chain that ends with an operator', () => {
+    expect(wireMessageOf('a1 -- a3 --').message).toContain('端点');
+  });
+
+  test('names the endpoint it could not read in the middle of a chain', () => {
+    expect(wireMessageOf('a1 -- zz -- a5').message).toContain('zz');
+  });
+
+  test('rejects a segment that goes nowhere inside a chain', () => {
+    // 通しで見ると a1 から c5 へ向かっているが、途中の 1 区間は向きが決まらない。
+    expect(wireMessageOf('a1 -- a3 -- a3 -- c5').message).toContain('a3');
   });
 });
 

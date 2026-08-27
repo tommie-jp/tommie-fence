@@ -3,7 +3,7 @@ import type { Document, Node, Pair, ParsedNode } from 'yaml';
 import { fail, fenceError, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
 import type { FenceError, NoteSpec, PartSpec, Result, StyleSpec, WireSpec } from '../types.ts';
-import { parseCompactPart, parseNoteLine, parseNoteText, parseWireSpec } from './compact.ts';
+import { parseCompactPart, parseNoteLine, parseNoteText, parseWireLine } from './compact.ts';
 import { EMPTY_STYLE, validateStyle } from './style.ts';
 
 const MAX_YAML_MESSAGE = 120;
@@ -230,18 +230,23 @@ function collectWires(
     const text = scalarText(item);
     const line = lineOf(item as Node) ?? 1;
 
-    if (wires.length >= LIMITS.wires) {
-      errors.push(fenceError(`配線は ${LIMITS.wires} 本までです。ここから先は描いていません`, line));
-      return;
-    }
     if (text === null) {
       errors.push(fenceError('配線は 1 行の文字列で書きます', line));
       continue;
     }
 
-    const wire = parseWireSpec(text, line);
-    if (wire.ok) wires.push(wire.value);
-    else errors.push(wire.error);
+    const parsed = parseWireLine(text, line);
+    if (!parsed.ok) {
+      errors.push(parsed.error);
+      continue;
+    }
+
+    // つなぎ書きは 1 行が何区間にもなるので、行の数ではなく引く本数で頭を打たせる。
+    if (wires.length + parsed.value.length > LIMITS.wires) {
+      errors.push(fenceError(`配線は ${LIMITS.wires} 本までです。ここから先は描いていません`, line));
+      return;
+    }
+    wires.push(...parsed.value);
   }
 }
 

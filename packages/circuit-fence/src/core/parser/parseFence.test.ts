@@ -114,6 +114,24 @@ describe('parseFence', () => {
     expect(result.errors[0]?.message).toContain(`${LIMITS.wires}`);
   });
 
+  test('counts a chain as the segments it draws, not as one line', () => {
+    // 1 行に何点でも書けるので、行数で数えると上限をすり抜けられる。
+    const result = parseFence(lines('wires:', '  - a1 -- a3 -- a5 -- a7'));
+
+    expect(result.doc?.wires).toHaveLength(3);
+  });
+
+  test('stops before a chain that would go past the limit', () => {
+    const rows = ['wires:'];
+    for (let index = 0; index < LIMITS.wires - 1; index += 1) rows.push('  - a1 -- a3');
+    rows.push('  - a1 -- a3 -- a5');
+
+    const result = parseFence(lines(...rows));
+
+    expect(result.doc?.wires).toHaveLength(LIMITS.wires - 1);
+    expect(result.errors[0]?.message).toContain(`${LIMITS.wires}`);
+  });
+
   test('reads the parts that were written even when one of them is broken', () => {
     const result = parseFence(lines('parts:', '  R1:', '    type: resistor', '  C1: capacitor a3 c3 100n'));
 
