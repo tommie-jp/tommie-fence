@@ -37,14 +37,14 @@ wires:
   - e13 |- U8.in
   - U8.out -| f16
 notes:
-  - text d1 blue large: "U1: and b2 7408"
-  - text d5 blue large: "U2: or b6 7432"
-  - text d9 blue large: "U3: nand b10 7400"
-  - text d13 blue large: "U4: nor b14 7402"
-  - text h1 blue large: "U5: xor f2 7486"
-  - text h5 blue large: "U6: xnor f6 74266"
-  - text h9 blue large: "U7: not f10 7404"
-  - text h13 blue large: "U8: buffer f14 7407"
+  - text c2 blue large center: "U1: and b2 7408"
+  - text c6 blue large center: "U2: or b6 7432"
+  - text c10 blue large center: "U3: nand b10 7400"
+  - text c14 blue large center: "U4: nor b14 7402"
+  - text g2 blue large center: "U5: xor f2 7486"
+  - text g6 blue large center: "U6: xnor f6 74266"
+  - text g10 blue large center: "U7: not f10 7404"
+  - text g14 blue large center: "U8: buffer f14 7407"
 style:
   grid: on
 ```
