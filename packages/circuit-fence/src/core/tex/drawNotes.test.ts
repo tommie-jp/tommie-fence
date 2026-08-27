@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { buildCircuit } from '../model/circuit.ts';
+import { noteSourceLine } from '../notes.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { generateTex } from './generate.ts';
 
@@ -171,6 +172,17 @@ describe('generateTex の書き出し (source)', () => {
     const step = (ys[0] ?? 0) - (ys[1] ?? 0);
     expect(step).toBeGreaterThan(0);
     expect(step).toBeLessThan(1);
+  });
+
+  // 書き出しは字が続けて並ぶので、地の文と同じ行送りだと間が空いて読みにくい。
+  test('packs the listing by its own, tighter line send', () => {
+    const { tex } = write(...R);
+    const ys = [...tex.matchAll(/circuitnotemark, font=\\footnotesize\] at \((-?[\d.]+),(-?[\d.]+)\)/g)].map(
+      (match) => Number(match[2]),
+    );
+
+    const step = (ys[0] ?? 0) - (ys[1] ?? 0);
+    expect(step).toBeCloseTo(noteSourceLine('normal'), 3);
   });
 
   test('takes room for the whole block, so the last line is not cut off', () => {

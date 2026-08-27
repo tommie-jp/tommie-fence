@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   DEFAULT_NOTE_ALIGN, DEFAULT_NOTE_SIZE, NOTE_ALIGNS, NOTE_COLOR_NAMES, NOTE_COLORS, NOTE_INK,
   NOTE_MARK_COLOR, NOTE_SIZE_NAMES, isNoteAlign, isNoteSize, noteColor, noteEm, noteFontTex,
-  noteLine, noteSpan, noteWidth, svgTextAnchorOf, texAnchorOf, texColorOf,
+  noteLine, noteSourceLine, noteSpan, noteWidth, svgTextAnchorOf, texAnchorOf, texColorOf,
 } from './notes.ts';
 import type { NoteSize } from './notes.ts';
 
@@ -93,6 +93,24 @@ describe('注釈の大きさ', () => {
 
   test('行送りも字の大きさで決まる', () => {
     expect(noteLine('huge')).toBeGreaterThan(noteLine('tiny'));
+  });
+
+  test('書き出しの行送りも字の大きさで決まる', () => {
+    expect(noteSourceLine('huge')).toBeGreaterThan(noteSourceLine('tiny'));
+  });
+
+  // 書き出しは字が続けて並ぶので、地の文と同じ行送りだと間が空いて読みにくい。
+  test('書き出しの行送りは地の文より詰める', () => {
+    for (const size of LADDER) {
+      expect(noteSourceLine(size)).toBeLessThan(noteLine(size));
+    }
+  });
+
+  // 詰めすぎると上の行の下がりと下の行の上がりが噛む。
+  test('書き出しの行送りでも、字が上下でぶつからない', () => {
+    for (const size of LADDER) {
+      expect(noteSourceLine(size)).toBeGreaterThan(noteEm(size));
+    }
   });
 });
 

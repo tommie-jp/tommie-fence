@@ -13,9 +13,9 @@ parts:
 wires:
   - a3 -- a4
 notes:
-  - source a6 blue
+  - source a5 blue
   - circle R1
-  - text e1: ここでカットオフ 159 Hz
+  - text d1: ここでカットオフ 159 Hz
 style:
   grid: on
 ```

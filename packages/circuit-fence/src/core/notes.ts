@@ -112,6 +112,18 @@ const LINE_HEIGHT = 1.4;
  */
 export const noteLine = (size: NoteSize): number => noteEm(size) * LINE_HEIGHT;
 
+/**
+ * 書き出し (`source`) の行送りが 1 em の何倍か。**地の文より詰める**。
+ *
+ * 地の文の 1.4 は、図の中に 1 行ぽつんと置く字に合わせた値。書き出しは
+ * 何行も続けて並ぶので、そのまま送ると行の間だけが目立って塊として読めない。
+ * 1 em を割ると上の行の下がりと下の行の上がりが噛むので、そこまでは詰めない。
+ */
+const SOURCE_LINE_HEIGHT = 1.15;
+
+/** 書き出しの行送り (cm)。等幅で何行も並べる前提で、地の文より詰めてある。 */
+export const noteSourceLine = (size: NoteSize): number => noteEm(size) * SOURCE_LINE_HEIGHT;
+
 /** 半角 1 文字の幅 (em)。少し多めに見て、図が字を切らないようにする。 */
 const HALF_WIDTH = 0.6;
 

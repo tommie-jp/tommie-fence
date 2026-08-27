@@ -16,7 +16,7 @@ import type { Circuit, NoteAnchor } from '../model/circuit.ts';
 import type { Points } from '../parser/compact.ts';
 import {
   NOTE_INK, NOTE_MARK_COLOR, NOTE_MARK_TEXT, hexDigits, noteColor, noteFontTex, noteLine,
-  noteMonoWidth, noteSpan, noteWidth, texAnchorOf, texColorOf,
+  noteMonoWidth, noteSourceLine, noteSpan, noteWidth, texAnchorOf, texColorOf,
 } from '../notes.ts';
 import type {
   ArrowNote, BoxNote, NoteOverlay, NoteSpec, NoteTextStyle, PartSpec, SourceNote, TexTarget,
@@ -131,11 +131,14 @@ function drawTextNote(note: TextNote, pitch: number, target: TexTarget): string[
 /**
  * 元のフェンスの書き出し。1 行ずつ、**格子ではなく字の行送り**で下へ並べる。
  * 格子の刻みで送ると、数行書いただけで図より書き出しのほうが高くなる。
+ *
+ * 送りは地の文より詰めた書き出し用のもの (`noteSourceLine`)。上下に取る余白は
+ * 詰めない — 余白は字が縁で切れないための実測値で、行の間隔とは別のもの。
  */
 function drawSourceNote(note: SourceNote, pitch: number, target: TexTarget, lines: string[]): string[] {
   const { x, y } = toPoint(note.at, pitch);
   const options = styleOptions(note, target);
-  const step = noteLine(note.size);
+  const step = noteSourceLine(note.size);
   const at = (index: number): string => `at (${num(x)},${num(y - step * index)})`;
 
   if (target === 'latex') {
