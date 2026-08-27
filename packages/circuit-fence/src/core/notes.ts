@@ -68,16 +68,22 @@ export const NOTE_MARK_TEXT = 'X';
  * 例外ではなくプロセスごと落ちるので、図に入る大きさは実機で確かめたものに
  * 限る (約束 6。5 段とも 1 段 = 1 プロセスで通してある)。
  *
- * TeX 側の名前とはわざとずらしてある。フェンスの既定は `\footnotesize` で、
- * TeX の `\normalsize` より 2 段小さいところに座っているため
- * (ここを揃えると、既定を変えずに「大」を足せない)。
+ * TeX 側の名前とはわざとずらしてある。フェンスの既定は `\large` で、
+ * TeX の `\normalsize` より 1 段大きいところに座っているため
+ * (ここを揃えると、既定を変えずに「小」も「大」も足せない)。
+ *
+ * 既定を `\footnotesize` (8pt) から `\large` (12pt) へ上げた (2026-08-27)。
+ * 図を貼って読むとき 8pt では小さく、書き手がほとんどの注釈に `large` と
+ * 書き足していた。**書かないときに欲しい大きさ**が既定であるべきなので、
+ * 段ごと 1.5 倍ずらして名前と見た目の対応を保った (極小は既定の 2/3、
+ * 極大は約 2 倍、という比は動かしていない)。
  */
 const NOTE_SIZES = {
-  tiny: { tex: '\\tiny', pt: 5 },
-  small: { tex: '\\scriptsize', pt: 7 },
-  normal: { tex: '\\footnotesize', pt: 8 },
-  large: { tex: '\\large', pt: 12 },
-  huge: { tex: '\\LARGE', pt: 17.28 },
+  tiny: { tex: '\\footnotesize', pt: 8 },
+  small: { tex: '\\normalsize', pt: 10 },
+  normal: { tex: '\\large', pt: 12 },
+  large: { tex: '\\LARGE', pt: 17.28 },
+  huge: { tex: '\\Huge', pt: 24.88 },
 } as const;
 
 export type NoteSize = keyof typeof NOTE_SIZES;

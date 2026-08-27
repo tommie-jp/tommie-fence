@@ -1,8 +1,17 @@
 import { describe, expect, test } from 'vitest';
 import { buildCircuit } from '../model/circuit.ts';
-import { noteSourceLine } from '../notes.ts';
+import { noteFontTex, noteSourceLine } from '../notes.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { generateTex } from './generate.ts';
+
+/** 既定の段の TeX 名。表から引く — 段をずらしてもテストが古びないように。 */
+const NORMAL = noteFontTex('normal', false);
+
+/** 目印を置いた行から座標を拾う。既定の段で組まれている。 */
+const MARKED_AT = new RegExp(
+  `circuitnotemark, font=${NORMAL.replace(/\\/g, '\\\\')}\\] at \\((-?[\\d.]+),(-?[\\d.]+)\\)`,
+  'g',
+);
 
 // 注釈は generateTex を通した出力で見る。図に出るかどうかが確かめたいことで、
 // 描く関数を単体で呼んでも「回路の上に重なっているか」は分からない。
@@ -74,7 +83,7 @@ describe('generateTex の注釈の字', () => {
 
     expect(tex).not.toContain('ここで分圧する');
     expect(tex).toContain('\\definecolor{circuitnotemark}{HTML}{FE00FE}');
-    expect(tex).toContain('\\node[anchor=west, inner sep=0, circuitnotemark, font=\\footnotesize] at (0,-2) {X};');
+    expect(tex).toContain(`\\node[anchor=west, inner sep=0, circuitnotemark, font=${NORMAL}] at (0,-2) {X};`);
     expect(notes).toEqual([{ text: 'ここで分圧する', color: '#000000', mono: false, bold: false, align: 'left' }]);
   });
 
@@ -121,7 +130,7 @@ describe('generateTex の注釈の字', () => {
     const { tex } = generateLatex(...R, 'notes:', '  - text b1 blue: ここ');
 
     expect(tex).toContain('\\definecolor{circuitnoteblue}{HTML}{4C8EDA}');
-    expect(tex).toContain('anchor=west, inner sep=0, circuitnoteblue, font=\\footnotesize');
+    expect(tex).toContain(`anchor=west, inner sep=0, circuitnoteblue, font=${NORMAL}`);
   });
 });
 
@@ -164,7 +173,7 @@ describe('generateTex の書き出し (source)', () => {
   // 格子の刻み (既定 2cm) で送ると、数行書いただけで図より書き出しが高くなる。
   test('packs the lines by the height of the type, not by the grid', () => {
     const { tex } = write(...R);
-    const ys = [...tex.matchAll(/circuitnotemark, font=\\footnotesize\] at \((-?[\d.]+),(-?[\d.]+)\)/g)].map(
+    const ys = [...tex.matchAll(MARKED_AT)].map(
       (match) => Number(match[2]),
     );
 
@@ -177,7 +186,7 @@ describe('generateTex の書き出し (source)', () => {
   // 書き出しは字が続けて並ぶので、地の文と同じ行送りだと間が空いて読みにくい。
   test('packs the listing by its own, tighter line send', () => {
     const { tex } = write(...R);
-    const ys = [...tex.matchAll(/circuitnotemark, font=\\footnotesize\] at \((-?[\d.]+),(-?[\d.]+)\)/g)].map(
+    const ys = [...tex.matchAll(MARKED_AT)].map(
       (match) => Number(match[2]),
     );
 
@@ -187,7 +196,7 @@ describe('generateTex の書き出し (source)', () => {
 
   test('sends the lines by the leading the note asks for', () => {
     const stepOf = (tex: string): number => {
-      const ys = [...tex.matchAll(/circuitnotemark, font=\\footnotesize\] at \((-?[\d.]+),(-?[\d.]+)\)/g)].map(
+      const ys = [...tex.matchAll(MARKED_AT)].map(
         (match) => Number(match[2]),
       );
       return (ys[0] ?? 0) - (ys[1] ?? 0);
@@ -248,8 +257,20 @@ describe('generateTex の注釈の見た目', () => {
   const R = ['parts:', '  R1: resistor a1 a3 10k'];
 
   test('sets the size the note asks for', () => {
-    expect(generate(...R, 'notes:', '  - text b1 huge: ここ').tex).toContain('font=\\LARGE');
-    expect(generate(...R, 'notes:', '  - text b1 tiny: ここ').tex).toContain('font=\\tiny');
+    // 綴りは表から引く。段をずらしてもテストが古びない。
+    for (const size of ['tiny', 'small', 'normal', 'large', 'huge'] as const) {
+      const written = size === 'normal' ? '' : ` ${size}`;
+      const { tex } = generate(...R, 'notes:', `  - text b1${written}: ここ`);
+
+      expect(tex, size).toContain(`font=${noteFontTex(size, false)}`);
+    }
+  });
+
+  test('gives every step a size of its own, so the five names are told apart', () => {
+    const sizes = ['tiny', 'small', 'normal', 'large', 'huge'] as const;
+    const drawn = sizes.map((size) => noteFontTex(size, false));
+
+    expect(new Set(drawn).size).toBe(sizes.length);
   });
 
   // 目印は 1 文字なので、これが図に取っておく高さと幅の物差しになる。
@@ -266,7 +287,7 @@ describe('generateTex の注釈の見た目', () => {
   test('sets bold as a font of its own and hands it to the SVG', () => {
     const { tex, notes } = generate(...R, 'notes:', '  - text b1 bold: ここ');
 
-    expect(tex).toContain('font=\\footnotesize\\bfseries');
+    expect(tex).toContain(`font=${noteFontTex('normal', true)}`);
     expect(notes[0]).toMatchObject({ bold: true });
   });
 
@@ -313,7 +334,7 @@ describe('generateTex の注釈の見た目', () => {
 
   test('sets the same size and weight in the TeX that goes to LaTeX', () => {
     expect(generateLatex(...R, 'notes:', '  - text b1 huge bold: ここ').tex).toContain(
-      'font=\\LARGE\\bfseries',
+      `font=${noteFontTex('huge', true)}`,
     );
   });
 });

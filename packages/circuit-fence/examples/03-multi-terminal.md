@@ -32,12 +32,12 @@ wires:
   - g8 -| Q4.E
   - f7 -| Q4.G
 notes:
-  - text d2 blue large center: "Q1: npn b2"
-  - text d5 blue large center: "Q2: pnp b5"
-  - text d8 blue large center: "Q3: nigbt b8"
-  - text h2 blue large center: "M1: nmos f2"
-  - text h5 blue large center: "M2: pmos f5"
-  - text h8 blue large center: "Q4: pigbt f8"
+  - text d2 blue center: "Q1: npn b2"
+  - text d5 blue center: "Q2: pnp b5"
+  - text d8 blue center: "Q3: nigbt b8"
+  - text h2 blue center: "M1: nmos f2"
+  - text h5 blue center: "M2: pmos f5"
+  - text h8 blue center: "Q4: pigbt f8"
 style:
   grid: on
   pitch: 1.2
@@ -75,8 +75,8 @@ wires:
   - a9 -| T1.B1
   - c9 -| T1.B2
 notes:
-  - text d1 blue large: "U1: opamp b2 LM358"
-  - text d6 blue large: "T1: transformer b7 1to1"
+  - text d1 blue: "U1: opamp b2 LM358"
+  - text d6 blue: "T1: transformer b7 1to1"
 style:
   grid: on
   pitch: 1.2
@@ -120,12 +120,12 @@ wires:
   - k5 -| M4.S
   - j4 -| M4.G
 notes:
-  - text d2 blue large center: "J1: njfet b2"
-  - text d5 blue large center: "J2: pjfet b5"
-  - text h2 blue large center: "M1: nmos-e f2"
-  - text h5 blue large center: "M2: pmos-e f5"
-  - text l2 blue large center: "M3: nmos-d j2"
-  - text l5 blue large center: "M4: pmos-d j5"
+  - text d2 blue center: "J1: njfet b2"
+  - text d5 blue center: "J2: pjfet b5"
+  - text h2 blue center: "M1: nmos-e f2"
+  - text h5 blue center: "M2: pmos-e f5"
+  - text l2 blue center: "M3: nmos-d j2"
+  - text l5 blue center: "M4: pmos-d j5"
 style:
   grid: on
   pitch: 1.2
@@ -153,9 +153,9 @@ wires:
   - T1.g |- d3
   - T2.g |- g3
 notes:
-  - text c1 blue large: "P1: potentiometer b1 b5 10k"
-  - text f1 blue large: "T1: thyristor e1 e5"
-  - text i1 blue large: "T2: triac h1 h5"
+  - text c1 blue: "P1: potentiometer b1 b5 10k"
+  - text f1 blue: "T1: thyristor e1 e5"
+  - text i1 blue: "T2: triac h1 h5"
 style:
   grid: on
 ```

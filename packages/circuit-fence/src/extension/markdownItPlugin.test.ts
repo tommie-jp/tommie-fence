@@ -1,6 +1,7 @@
 import MarkdownIt from 'markdown-it';
 import { describe, expect, test, vi } from 'vitest';
 import { VERSION, compileCircuit } from '../core/index.ts';
+import { DEFAULT_NOTE_SIZE, notePt } from '../core/notes.ts';
 import { hashOf } from '../host/hash.ts';
 import { circuitPlugin } from './markdownItPlugin.ts';
 import type { FigureSource } from './markdownItPlugin.ts';
@@ -158,7 +159,8 @@ describe('circuitPlugin', () => {
     };
     const html = md(figures).render(RC);
 
-    expect(html).toContain('width="10em"');
+    // 倍率は表から引く (注釈の段をずらしてもテストが古びない)。
+    expect(html).toContain(`width="${Math.round((80 / notePt(DEFAULT_NOTE_SIZE)) * 1000) / 1000}em"`);
   });
 
   // 外寸をドットで書いた図は、書いたとおりの大きさのままにする。

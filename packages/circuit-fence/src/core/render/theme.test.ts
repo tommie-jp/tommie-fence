@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { NOTE_COLORS } from '../notes.ts';
+import { DEFAULT_NOTE_SIZE, NOTE_COLORS, notePt } from '../notes.ts';
 import { EMPTY_STYLE } from '../parser/style.ts';
 import {
   DEFAULT_THEME_NAME, THEME_NAMES, recolorSvg, resizeSvg, resolveTheme, scaleSvgToText,
@@ -117,12 +117,15 @@ describe('scaleSvgToText', () => {
   });
 
   // 1 em = normal の注釈。これで書き出しが地の文と同じ大きさで読める。
+  // 倍率は表から引く (段をずらしてもテストが古びない)。
+  const em = (viewBox: number): string => String(Math.round((viewBox / notePt(DEFAULT_NOTE_SIZE)) * 1000) / 1000);
+
   test('makes one em the size a normal note is drawn at', () => {
-    expect(scaleSvgToText(DRAWING)).toContain('width="10em"');
+    expect(scaleSvgToText(DRAWING)).toContain(`width="${em(80)}em"`);
   });
 
   test('takes the height along, so the drawing keeps its shape', () => {
-    expect(scaleSvgToText(DRAWING)).toContain('height="5em"');
+    expect(scaleSvgToText(DRAWING)).toContain(`height="${em(40)}em"`);
   });
 
   test('leaves the coordinates alone, so the drawing does not move', () => {

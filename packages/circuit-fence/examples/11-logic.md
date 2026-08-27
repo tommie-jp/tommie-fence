@@ -38,14 +38,14 @@ wires:
   - d10 |- U8.in
   - U8.out -| e12
 notes:
-  - text c2 blue large center: "U1: and b2 7408"
-  - text c5 blue large center: "U2: or b5 7432"
-  - text c8 blue large center: "U3: nand b8 7400"
-  - text c11 blue large center: "U4: nor b11 7402"
-  - text f2 blue large center: "U5: xor e2 7486"
-  - text f5 blue large center: "U6: xnor e5 74266"
-  - text f8 blue large center: "U7: not e8 7404"
-  - text f11 blue large center: "U8: buffer e11 7407"
+  - text c2 blue center: "U1: and b2 7408"
+  - text c5 blue center: "U2: or b5 7432"
+  - text c8 blue center: "U3: nand b8 7400"
+  - text c11 blue center: "U4: nor b11 7402"
+  - text f2 blue center: "U5: xor e2 7486"
+  - text f5 blue center: "U6: xnor e5 74266"
+  - text f8 blue center: "U7: not e8 7404"
+  - text f11 blue center: "U8: buffer e11 7407"
 style:
   grid: on
 ```
@@ -69,7 +69,7 @@ wires:
   - U1.5 -| e4
   - U1.8 -| a4
 notes:
-  - text f1 blue large: "U1: dip8 c2 NE555"
+  - text f1 blue: "U1: dip8 c2 NE555"
 style:
   grid: on
   pitch: 1
@@ -91,7 +91,7 @@ wires:
   - S1.1 -| a4
   - S1.2 -| c4
 notes:
-  - text d1 blue large: "S1: spdt b2"
+  - text d1 blue: "S1: spdt b2"
 style:
   grid: on
 ```

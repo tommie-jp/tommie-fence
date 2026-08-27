@@ -43,7 +43,7 @@ parts:
 wires:
   - a3 -- a5 -- a7
 notes:
-  - source a10 blue large
+  - source a10 blue
 style:
   grid: on
 ```

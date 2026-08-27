@@ -149,20 +149,20 @@ parts:
   F1: fuse g9 g11 3A
   P1: lamp i1 i3
 notes:
-  - text b1 blue large: "R1: resistor a1 a3 10k"
-  - text b5 blue large: "C1: capacitor a5 a7 100n"
-  - text b9 blue large: "C2: ecap a9 a11 100u"
-  - text b13 blue large: "L1: inductor a13 a15 10m"
-  - text d1 blue large: "D1: diode c1 c3 1N4148"
-  - text d5 blue large: "D2: led c5 c7"
-  - text d9 blue large: "D3: zener c9 c11 5V1"
-  - text f1 blue large: "V1: vsource e1 e3 5"
-  - text f5 blue large: "V2: sine e5 e7 1"
-  - text f9 blue large: "I1: isource e9 e11 20m"
-  - text h1 blue large: "B1: battery g1 g3 9"
-  - text h5 blue large: "S1: switch g5 g7"
-  - text h9 blue large: "F1: fuse g9 g11 3A"
-  - text j1 blue large: "P1: lamp i1 i3"
+  - text b1 blue: "R1: resistor a1 a3 10k"
+  - text b5 blue: "C1: capacitor a5 a7 100n"
+  - text b9 blue: "C2: ecap a9 a11 100u"
+  - text b13 blue: "L1: inductor a13 a15 10m"
+  - text d1 blue: "D1: diode c1 c3 1N4148"
+  - text d5 blue: "D2: led c5 c7"
+  - text d9 blue: "D3: zener c9 c11 5V1"
+  - text f1 blue: "V1: vsource e1 e3 5"
+  - text f5 blue: "V2: sine e5 e7 1"
+  - text f9 blue: "I1: isource e9 e11 20m"
+  - text h1 blue: "B1: battery g1 g3 9"
+  - text h5 blue: "S1: switch g5 g7"
+  - text h9 blue: "F1: fuse g9 g11 3A"
+  - text j1 blue: "P1: lamp i1 i3"
 style:
   grid: on
 ```
@@ -194,29 +194,29 @@ parts:
   V5:  voltmeter k5 k7
   M1:  ohmmeter k9 k11
 notes:
-  - text b1 blue large: "R2: resistor-var a1 a3 10k"
-  - text b5 blue large: "D4: varicap a5 a7 33p"
-  - text b9 blue large: "X1: crystal a9 a11 16M"
-  - text b13 blue large: "R3: photoresistor a13 a15"
-  - text d1 blue large: "R4: thermistor c1 c3 10k"
-  - text d5 blue large: "R5: thermistor-ntc c5 c7 10k"
-  - text d9 blue large: "R6: thermistor-ptc c9 c11"
-  - text d13 blue large: "R7: varistor c13 c15 470V"
-  - text f1 blue large: "D5: schottky e1 e3 1N5819"
-  - text f5 blue large: "D6: photodiode e5 e7"
-  - text f9 blue large: "D7: diac e9 e11"
-  - text f13 blue large: "V3: square e13 e15 5"
-  - text h1 blue large: "V4: triangle g1 g3 1"
-  - text h5 blue large: "PV1: solar g5 g7 0.6"
-  - text h9 blue large: "S2: switch-nc g9 g11"
-  - text h13 blue large: "S3: button g13 g15"
-  - text j1 blue large: "S4: button-nc i1 i3"
-  - text j5 blue large: "S5: reed i5 i7"
-  - text j9 blue large: "LS1: speaker i9 i11"
-  - text j13 blue large: "MK1: mic i13 i15"
-  - text l1 blue large: "A1: ammeter k1 k3"
-  - text l5 blue large: "V5: voltmeter k5 k7"
-  - text l9 blue large: "M1: ohmmeter k9 k11"
+  - text b1 blue: "R2: resistor-var a1 a3 10k"
+  - text b5 blue: "D4: varicap a5 a7 33p"
+  - text b9 blue: "X1: crystal a9 a11 16M"
+  - text b13 blue: "R3: photoresistor a13 a15"
+  - text d1 blue: "R4: thermistor c1 c3 10k"
+  - text d5 blue: "R5: thermistor-ntc c5 c7 10k"
+  - text d9 blue: "R6: thermistor-ptc c9 c11"
+  - text d13 blue: "R7: varistor c13 c15 470V"
+  - text f1 blue: "D5: schottky e1 e3 1N5819"
+  - text f5 blue: "D6: photodiode e5 e7"
+  - text f9 blue: "D7: diac e9 e11"
+  - text f13 blue: "V3: square e13 e15 5"
+  - text h1 blue: "V4: triangle g1 g3 1"
+  - text h5 blue: "PV1: solar g5 g7 0.6"
+  - text h9 blue: "S2: switch-nc g9 g11"
+  - text h13 blue: "S3: button g13 g15"
+  - text j1 blue: "S4: button-nc i1 i3"
+  - text j5 blue: "S5: reed i5 i7"
+  - text j9 blue: "LS1: speaker i9 i11"
+  - text j13 blue: "MK1: mic i13 i15"
+  - text l1 blue: "A1: ammeter k1 k3"
+  - text l5 blue: "V5: voltmeter k5 k7"
+  - text l9 blue: "M1: ohmmeter k9 k11"
 style:
   grid: on
 ```
@@ -316,12 +316,12 @@ wires:
   - k5 -| M4.S
   - j4 -| M4.G
 notes:
-  - text d2 blue large center: "J1: njfet b2"
-  - text d5 blue large center: "J2: pjfet b5"
-  - text h2 blue large center: "M1: nmos-e f2"
-  - text h5 blue large center: "M2: pmos-e f5"
-  - text l2 blue large center: "M3: nmos-d j2"
-  - text l5 blue large center: "M4: pmos-d j5"
+  - text d2 blue center: "J1: njfet b2"
+  - text d5 blue center: "J2: pjfet b5"
+  - text h2 blue center: "M1: nmos-e f2"
+  - text h5 blue center: "M2: pmos-e f5"
+  - text l2 blue center: "M3: nmos-d j2"
+  - text l5 blue center: "M4: pmos-d j5"
 style:
   grid: on
   pitch: 1.2
@@ -365,14 +365,14 @@ wires:
   - d10 |- U8.in
   - U8.out -| e12
 notes:
-  - text c2 blue large center: "U1: and b2 7408"
-  - text c5 blue large center: "U2: or b5 7432"
-  - text c8 blue large center: "U3: nand b8 7400"
-  - text c11 blue large center: "U4: nor b11 7402"
-  - text f2 blue large center: "U5: xor e2 7486"
-  - text f5 blue large center: "U6: xnor e5 74266"
-  - text f8 blue large center: "U7: not e8 7404"
-  - text f11 blue large center: "U8: buffer e11 7407"
+  - text c2 blue center: "U1: and b2 7408"
+  - text c5 blue center: "U2: or b5 7432"
+  - text c8 blue center: "U3: nand b8 7400"
+  - text c11 blue center: "U4: nor b11 7402"
+  - text f2 blue center: "U5: xor e2 7486"
+  - text f5 blue center: "U6: xnor e5 74266"
+  - text f8 blue center: "U7: not e8 7404"
+  - text f11 blue center: "U8: buffer e11 7407"
 style:
   grid: on
 ```
@@ -390,7 +390,7 @@ wires:
   - U1.5 -| e4
   - U1.8 -| a4
 notes:
-  - text f1 blue large: "U1: dip8 c2 NE555"
+  - text f1 blue: "U1: dip8 c2 NE555"
 style:
   grid: on
   pitch: 1
@@ -416,7 +416,7 @@ wires:
   - U1.out -- c7 -- c9
   - d7 -- c7
 notes:
-  - source a10 blue large
+  - source a10 blue
 style:
   grid: on
 ```
@@ -459,9 +459,9 @@ wires:
   - T1.g |- d3
   - T2.g |- g3
 notes:
-  - text c1 blue large: "P1: potentiometer b1 b5 10k"
-  - text f1 blue large: "T1: thyristor e1 e5"
-  - text i1 blue large: "T2: triac h1 h5"
+  - text c1 blue: "P1: potentiometer b1 b5 10k"
+  - text f1 blue: "T1: thyristor e1 e5"
+  - text i1 blue: "T2: triac h1 h5"
 style:
   grid: on
 ```
@@ -492,10 +492,10 @@ parts:
   G1:  ground a7
   IN:  port a10
 notes:
-  - text b1 blue large: "VCC: vcc a1"
-  - text b4 blue large: "VEE: vee a4"
-  - text b7 blue large: "G1: ground a7"
-  - text b10 blue large: "IN: port a10"
+  - text b1 blue: "VCC: vcc a1"
+  - text b4 blue: "VEE: vee a4"
+  - text b7 blue: "G1: ground a7"
+  - text b10 blue: "IN: port a10"
 style:
   grid: on
 ```
@@ -679,10 +679,10 @@ wires:
   - a2 -- a3
 notes:
   - box a1 c3 blue
-  - text d2 blue large center: box a1 c3 blue
+  - text d2 blue center: box a1 c3 blue
   - arrow c6 R1
   - text c6 red: arrow c6 R1
-  - source a7 blue large
+  - source a7 blue
 style:
   grid: on
   grid-to: c6
@@ -830,14 +830,14 @@ notes:
   - circle R2 blue
   - circle R3 green
   - circle R4 orange
-  - text b2 red large center: red
-  - text b6 blue large center: blue
-  - text c1 blue large: "R1: resistor a1 a3"
-  - text c5 blue large: "R2: resistor a5 a7"
-  - text e2 green large center: green
-  - text e6 orange large center: orange
-  - text f1 blue large: "R3: resistor d1 d3"
-  - text f5 blue large: "R4: resistor d5 d7"
+  - text b2 red center: red
+  - text b6 blue center: blue
+  - text c1 blue: "R1: resistor a1 a3"
+  - text c5 blue: "R2: resistor a5 a7"
+  - text e2 green center: green
+  - text e6 orange center: orange
+  - text f1 blue: "R3: resistor d1 d3"
+  - text f5 blue: "R4: resistor d5 d7"
 style:
   grid: on
 ```
@@ -965,9 +965,9 @@ style:
 
 合わせる先を表示に置いてあるのは、TeX の側では合わせようがないため。
 図はドットで外寸が書かれた SVG で出てくるので、そのまま貼ると注釈の字が
-周りの文章より小さい (`normal` は 8pt = 10.7 ドット、プレビューの地の文は
-既定 14 ドット)。TeX の指定をいくつにしても、読み手が字の大きさを変えれば
-同じだけずれる。
+周りの文章と噛み合わない (`normal` は 12pt = 16 ドットで動かないのに、
+プレビューの地の文は既定 14 ドットで読み手が変えられる)。TeX の指定を
+いくつにしても、読み手が字の大きさを変えれば同じだけずれる。
 
 `width` を書いた図は、書いたとおりのドット数のまま。パネルより広い図は
 どちらもパネルの幅まで縮む (縦横比はそのまま)。CLI が書き出す SVG は

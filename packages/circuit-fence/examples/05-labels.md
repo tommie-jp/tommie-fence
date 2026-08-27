@@ -22,7 +22,7 @@ notes:
   - text d1 blue: "L1: inductor c1 c2 10m"
   - text d3 blue: "C1: capacitor c3 c4 2.2u"
   - text d5 blue: "D1: diode c5 c6 1N4148"
-  - source a7 blue large
+  - source a7 blue
 style:
   grid: on
 ```

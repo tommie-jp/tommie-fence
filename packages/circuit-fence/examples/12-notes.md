@@ -52,14 +52,14 @@ notes:
   - circle R2 blue
   - circle R3 green
   - circle R4 orange
-  - text b2 red large center: red
-  - text b6 blue large center: blue
-  - text c1 blue large: "R1: resistor a1 a3"
-  - text c5 blue large: "R2: resistor a5 a7"
-  - text e2 green large center: green
-  - text e6 orange large center: orange
-  - text f1 blue large: "R3: resistor d1 d3"
-  - text f5 blue large: "R4: resistor d5 d7"
+  - text b2 red center: red
+  - text b6 blue center: blue
+  - text c1 blue: "R1: resistor a1 a3"
+  - text c5 blue: "R2: resistor a5 a7"
+  - text e2 green center: green
+  - text e6 orange center: orange
+  - text f1 blue: "R3: resistor d1 d3"
+  - text f5 blue: "R4: resistor d5 d7"
 style:
   grid: on
 ```
@@ -79,7 +79,7 @@ parts:
 wires:
   - c1 -- c4
 notes:
-  - source a4 blue
+  - source a5 blue
   - circle D1 orange
   - text d1: LED の順方向電圧は 2 V ぐらい
   - text e1: 電流は (9 - 2) / 470 で 15 mA
@@ -154,10 +154,10 @@ wires:
   - a2 -- a3
 notes:
   - box a1 c3 blue
-  - text d2 blue large center: box a1 c3 blue
+  - text d2 blue center: box a1 c3 blue
   - arrow c6 R1
   - text c6 red: arrow c6 R1
-  - source a7 blue large
+  - source a7 blue
 style:
   grid: on
   grid-to: c6
