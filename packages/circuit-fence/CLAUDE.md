@@ -70,6 +70,7 @@ VS Code 拡張機能。全体像は [README.md](README.md)、
 4. **Markdown は lint を通す**:
    `npx markdownlint-cli 'README.md' 'CHANGELOG.md' 'docs/*.md' 'examples/**/*.md'`。
    設定は `.markdownlint.json` (MD013 行長・MD033 インライン HTML は無効)。
-5. **サンプルは再生成してコミット**: 描画を変えたら `npm run examples` を実行し、
-   `examples/out` の差分も一緒にコミットする (`.tex` はスナップショットテストの
-   期待値であり、ドキュメントが参照する図でもある)。
+5. **サンプルは再生成してコミット**: 描画を変えたら `npm run examples` と
+   `npm run docs` を実行し、`examples/out` と `docs/out` の差分も一緒に
+   コミットする (`.tex` はスナップショットテストの期待値であり、
+   ドキュメントが参照する図でもある)。

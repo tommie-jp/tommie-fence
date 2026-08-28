@@ -11,8 +11,10 @@ import { extractCircuitFences } from './fences.ts';
  * 独立させる** (2026-08-27 決定) — 通し番号にすると、1 つのファイルに図を
  * 足しただけで関係のないファイルまで振り直しになる。
  *
- * 01-syntax.md は**貼った図を持たず、フェンスを直に書く**。番号を通しで振れて、
- * プレビューでそのまま描き直せるため。ただし同じ図が examples にもあるので、
+ * 01-syntax.md はフェンスを直に書き、**自分のフェンスを描いた図** (docs/out)
+ * だけをその直後に貼る (2026-08-28 決定 — GitHub はフェンスを描画しないため)。
+ * examples の図は貼らない — 図には題番号が焼き込まれていて、examples 側の
+ * 番号を名乗るとこちらの体系が崩れる。同じ図が examples にもあるので、
  * **題が同じなら中身も同じ**であることをここで見張る (片方だけ直すと、
  * 同じ名前の図が 2 通りの姿で出てしまう)。
  */
@@ -62,11 +64,14 @@ describe('図の番号', () => {
     expect(numbers).toEqual(wanted);
   });
 
-  test('01-syntax.md は図を貼らず、フェンスを直に書いている', () => {
-    // 貼ると、その図は examples 側の番号を名乗るので通し番号が崩れる。
-    const embedded = readFileSync(join(ROOT, 'docs', '01-syntax.md'), 'utf8').match(/^!\[.*?\]\(.*?\.png\)/gm);
+  test('01-syntax.md は自分で描いた図だけを貼っている', () => {
+    // examples の図を貼ると、その図が examples 側の番号を名乗って体系が崩れる。
+    // フェンスと図の対応そのものは syntaxDoc.test.ts が見張る。
+    const images = [
+      ...readFileSync(join(ROOT, 'docs', '01-syntax.md'), 'utf8').matchAll(/!\[.*?\]\(([^)]*)\)/g),
+    ].map((image) => image[1] ?? '');
 
-    expect(embedded).toBeNull();
+    expect(images.filter((path) => !/^out\/01-syntax-\d+\.png$/.test(path))).toEqual([]);
   });
 
   test('同じ題の図はどこに書いてあっても中身が同じ', () => {

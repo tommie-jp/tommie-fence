@@ -1,0 +1,91 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnoteink}{HTML}{000000}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\coordinate (c3) at (4,-4);
+\coordinate (c6) at (10,-4);
+\coordinate (c9) at (16,-4);
+\coordinate (g3) at (4,-12);
+\coordinate (g6) at (10,-12);
+\coordinate (g9) at (16,-12);
+\coordinate (b3) at (4,-2);
+\coordinate (d3) at (4,-6);
+\coordinate (c2) at (2,-4);
+\coordinate (b6) at (10,-2);
+\coordinate (d6) at (10,-6);
+\coordinate (c5) at (8,-4);
+\coordinate (b9) at (16,-2);
+\coordinate (d9) at (16,-6);
+\coordinate (c8) at (14,-4);
+\coordinate (f3) at (4,-10);
+\coordinate (h3) at (4,-14);
+\coordinate (g2) at (2,-12);
+\coordinate (f6) at (10,-10);
+\coordinate (h6) at (10,-14);
+\coordinate (g5) at (8,-12);
+\coordinate (f9) at (16,-10);
+\coordinate (h9) at (16,-14);
+\coordinate (g8) at (14,-12);
+\node[njfet] (part-J1) at (c3) {}; % line 3
+\node[pjfet] (part-J2) at (c6) {}; % line 4
+\node[nigfete] (part-M1) at (c9) {}; % line 5
+\node[pigfete] (part-M2) at (g3) {}; % line 6
+\node[nigfetd] (part-M3) at (g6) {}; % line 7
+\node[pigfetd] (part-M4) at (g9) {}; % line 8
+\draw (b3) -| (part-J1.drain); % line 10
+\draw (d3) -| (part-J1.source); % line 11
+\draw (c2) -| (part-J1.gate); % line 12
+\draw (b6) -| (part-J2.drain); % line 13
+\draw (d6) -| (part-J2.source); % line 14
+\draw (c5) -| (part-J2.gate); % line 15
+\draw (b9) -| (part-M1.drain); % line 16
+\draw (d9) -| (part-M1.source); % line 17
+\draw (c8) -| (part-M1.gate); % line 18
+\draw (f3) -| (part-M2.drain); % line 19
+\draw (h3) -| (part-M2.source); % line 20
+\draw (g2) -| (part-M2.gate); % line 21
+\draw (f6) -| (part-M3.drain); % line 22
+\draw (h6) -| (part-M3.source); % line 23
+\draw (g5) -| (part-M3.gate); % line 24
+\draw (f9) -| (part-M4.drain); % line 25
+\draw (h9) -| (part-M4.source); % line 26
+\draw (g8) -| (part-M4.gate); % line 27
+\draw[circuitnoteink] (1,-0.2) -- (19,-0.2); % line 29
+\draw[circuitnoteink] (1,-8.2) -- (19,-8.2); % line 30
+\draw[circuitnoteink] (1,-16.2) -- (19,-16.2); % line 31
+\draw[circuitnoteink] (1,-0.2) -- (1,-16.2); % line 32
+\draw[circuitnoteink] (7,-0.2) -- (7,-16.2); % line 33
+\draw[circuitnoteink] (13,-0.2) -- (13,-16.2); % line 34
+\draw[circuitnoteink] (19,-0.2) -- (19,-16.2); % line 35
+\path (1.936,-1.393) rectangle (6.064,-0.207); % line 36
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4,-0.8) {X}; % line 36
+\path (2.476,-7.993) rectangle (5.524,-6.807); % line 37
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4,-7.4) {X}; % line 37
+\path (7.936,-1.393) rectangle (12.064,-0.207); % line 38
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-0.8) {X}; % line 38
+\path (8.476,-7.993) rectangle (11.524,-6.807); % line 39
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-7.4) {X}; % line 39
+\path (13.651,-1.393) rectangle (18.35,-0.207); % line 40
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-0.8) {X}; % line 40
+\path (14.349,-7.993) rectangle (17.651,-6.807); % line 41
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-7.4) {X}; % line 41
+\path (1.651,-9.393) rectangle (6.349,-8.207); % line 42
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4,-8.8) {X}; % line 42
+\path (2.349,-15.993) rectangle (5.651,-14.807); % line 43
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4,-15.4) {X}; % line 43
+\path (7.651,-9.393) rectangle (12.349,-8.207); % line 44
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-8.8) {X}; % line 44
+\path (8.349,-15.993) rectangle (11.651,-14.807); % line 45
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-15.4) {X}; % line 45
+\path (13.651,-9.393) rectangle (18.35,-8.207); % line 46
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-8.8) {X}; % line 46
+\path (14.349,-15.993) rectangle (17.651,-14.807); % line 47
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-15.4) {X}; % line 47
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(6.614,0.853);
+\end{circuitikz}
+\end{document}
