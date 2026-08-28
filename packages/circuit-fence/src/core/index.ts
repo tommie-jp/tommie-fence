@@ -110,7 +110,7 @@ export function compileCircuit(source: string, options: CompileOptions = {}): Co
   };
 }
 
-export { recolorSvg, resizeSvg, scaleSvgToText, DEFAULT_THEME } from './render/theme.ts';
+export { recolorSvg, resizeSvg, scaleSvgToText, DEFAULT_THEME, LIGHT_THEME } from './render/theme.ts';
 export { applyNotes } from './render/noteText.ts';
 export { finishSvg, markSvg } from './render/finish.ts';
 export { STAMP_TEXT, VERSION } from './version.ts';
@@ -118,7 +118,7 @@ export type { Theme } from './render/theme.ts';
 export { errorLine, messageLine, renderErrorBanner, renderErrorCard } from './render/errorCard.ts';
 export { shiftErrors } from './errors.ts';
 export { renderNetlist } from './render/netlistHtml.ts';
-export { extractCircuitFences } from './fences.ts';
+export { extractCircuitFences, outputStem } from './fences.ts';
 export type { FenceBlock } from './fences.ts';
 export type { Net } from './model/nets.ts';
 export type { FenceError, NoteOverlay, TexTarget } from './types.ts';

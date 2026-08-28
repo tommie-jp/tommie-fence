@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { extractCircuitFences } from './fences.ts';
+import { extractCircuitFences, outputStem } from './fences.ts';
 
 describe('extractCircuitFences', () => {
   test('finds a circuit fence and reports the line it opens on', () => {
@@ -58,5 +58,22 @@ describe('extractCircuitFences', () => {
 
   test('returns an empty list when the document has no fence', () => {
     expect(extractCircuitFences('plain text')).toEqual([]);
+  });
+});
+
+/**
+ * 書き出すファイルの名前。CLI・貼った図・スナップショットの期待値が
+ * **同じ規則を 3 通りに書き写していた**ので、ここに 1 つ置いて全部から引く。
+ */
+describe('outputStem', () => {
+  test('numbers the outputs when the document has more than one figure', () => {
+    expect(outputStem('08-themes', 0, 4)).toBe('08-themes-1');
+    expect(outputStem('08-themes', 3, 4)).toBe('08-themes-4');
+  });
+
+  test('keeps the bare name when the document has exactly one figure', () => {
+    // 連番を付けると 1 枚しかない図まで `-1` を名乗る。CLI の jobsFor が
+    // 昔からこう書き分けているので、貼る側もここを見て同じ名前を作る。
+    expect(outputStem('01-rc-lowpass', 0, 1)).toBe('01-rc-lowpass');
   });
 });

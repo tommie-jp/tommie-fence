@@ -45,12 +45,22 @@ const AUTO: Theme = {
   monochrome: false, followsEditor: true,
 };
 
+/**
+ * 明るい地に決め打ちしたテーマ。
+ *
+ * **`auto` の図を単体のファイルとして出すときの逃げ場**でもある。線が
+ * `currentColor` のままでは、フェンスの外 (`<img>` や画像ビューア) で
+ * 継承する色が無く黒に落ちるので、書き出す図はこの ink に落とす
+ * (scripts/figures.mjs)。値をあちらに書き写さずに済むよう名前を付けてある。
+ */
+export const LIGHT_THEME: Theme = {
+  name: 'light', ink: '#1f2328', paper: '#ffffff', grid: '#8c959f',
+  monochrome: false, followsEditor: false,
+};
+
 const THEMES: Record<string, Theme> = {
   auto: AUTO,
-  light: {
-    name: 'light', ink: '#1f2328', paper: '#ffffff', grid: '#8c959f',
-    monochrome: false, followsEditor: false,
-  },
+  light: LIGHT_THEME,
   dark: {
     name: 'dark', ink: '#e6edf3', paper: '#0d1117', grid: '#7d8590',
     monochrome: false, followsEditor: false,

@@ -2,7 +2,8 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, resolve } from 'node:path';
 import {
-  STAMP_TEXT, compileCircuit, errorLine, extractCircuitFences, finishSvg, messageLine, shiftErrors,
+  STAMP_TEXT, compileCircuit, errorLine, extractCircuitFences, finishSvg, messageLine, outputStem,
+  shiftErrors,
 } from '../core/index.ts';
 import type { FenceError, Net } from '../core/index.ts';
 import { renderTex } from '../host/texSvg.ts';
@@ -46,7 +47,7 @@ function jobsFor(path: string, outDir: string | null): Job[] {
   const fences = extractCircuitFences(source);
   return fences.map((fence, index) => ({
     source: fence.source,
-    stem: fences.length === 1 ? stem : `${stem}-${index + 1}`,
+    stem: outputStem(stem, index, fences.length),
     directory,
     label: `${stem} (${fence.line} 行目)`,
     line: fence.line,

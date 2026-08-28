@@ -62,3 +62,13 @@ export function extractCircuitFences(markdown: string): FenceBlock[] {
 
   return blocks;
 }
+
+/**
+ * 1 枚の図を書き出すときのファイル名 (拡張子を除く)。
+ *
+ * 1 つの `.md` に図が 2 枚以上あるときだけ連番を付ける。CLI が書き出す名前で
+ * あり、`.md` に貼る画像の名前であり、スナップショットの期待値を探す名前でも
+ * あるので、**規則はここにだけ置く** (3 通りに書き写していた経緯がある)。
+ */
+export const outputStem = (stem: string, index: number, count: number): string =>
+  count === 1 ? stem : `${stem}-${index + 1}`;
