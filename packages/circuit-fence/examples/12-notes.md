@@ -166,6 +166,33 @@ style:
 部品を指した指し棒は、印 (`circle`) と同じ丸の縁で止まる。
 真ん中まで伸ばすと、先端が記号の下に隠れて何を指しているか分からなくなるため。
 
+## 直線 (`line`) と実線の枠
+
+`- line 起点 終点 [色]` は指し棒と同じ書き方で、**先端の矢が付かない**。
+表の罫線や区切りのように、向きを持たない線を引くためのもの。
+枠は `solid` を書くと破線ではなく実線になる。
+
+```circuit
+title: 図07 直線と実線の枠
+parts:
+  R1: resistor b2 b4 10k
+  R2: resistor d2 d4 4.7k
+notes:
+  - box a1 e5 ink solid
+  - line a1 a5 ink
+  - line c1 c5 ink
+  - line e1 e5 ink
+  - text b.5_1 blue left: line で仕切る
+  - text f1 blue: box a1 e5 ink solid
+  - source a8 blue
+style:
+  grid: on
+```
+
+枠 (`box`) は角の番地の外へ余白を取るので、隣り合う枠は近づけると重なる。
+**線には余白が無い**ので、細かく仕切りたいときはこちらを使う
+(文法リファレンスの部品一覧の表は、この線で 1 部品 1 マスに区切ってある)。
+
 ## 書き出しの行送り
 
 `- source` にだけ、行送りを選ぶ `tight` / `loose` が書ける。
@@ -173,7 +200,7 @@ style:
 1 行ずつ指しながら説明したいときは `loose`。
 
 ```circuit
-title: 図07 行送り
+title: 図08 行送り
 parts:
   R1: resistor a1 a2 10k
 notes:

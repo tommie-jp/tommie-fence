@@ -3,8 +3,8 @@ import { LIMITS, isReferenceable } from '../limits.ts';
 import { addressHint, formatAddress, isSameAddress, parseAddress } from '../model/address.ts';
 import type { Address, WireOperator } from '../model/address.ts';
 import {
-  DEFAULT_NOTE_ALIGN, DEFAULT_NOTE_SIZE, NOTE_ALIGNS, NOTE_COLOR_NAMES, NOTE_LEADINGS,
-  NOTE_SIZE_NAMES, isNoteAlign, isNoteLeading, isNoteSize, noteColor,
+  DEFAULT_NOTE_ALIGN, DEFAULT_NOTE_SIZE, NOTE_ALIGNS, NOTE_BOX_SOLID, NOTE_COLOR_NAMES,
+  NOTE_KINDS, NOTE_LEADINGS, NOTE_SIZE_NAMES, isNoteAlign, isNoteLeading, isNoteSize, noteColor,
 } from '../notes.ts';
 import type { NoteAlign, NoteLeading, NoteSize } from '../notes.ts';
 import { closestPartType, lookupPartType, partTypeNames, resolvePartTypeName } from '../parts.ts';
@@ -333,14 +333,8 @@ function readEndpoint(token: string, line: number, points: Points): Result<Endpo
   return fail(addressProblem(token, points), line);
 }
 
-/** 注釈の種類。図に重ねる印 3 つと、字を置くもの 2 つ。 */
-const NOTE_KINDS = ['circle', 'box', 'arrow', 'line', 'text', 'source'] as const;
-
 /** 印の既定の色。目立たせるために書くものなので、書かなければ赤。 */
 const DEFAULT_MARK_COLOR = 'red';
-
-/** 枠を実線で引く語。既定は破線 (回路の線と見分けるため)。 */
-const SOLID_WORD = 'solid';
 
 /** 太字にする語。大きさや寄せと違って 1 語しかないので、表を持たない。 */
 const BOLD_WORD = 'bold';
@@ -492,7 +486,7 @@ function readMarkColor(token: string | undefined, form: string, line: number): R
   if (isNoteSize(token) || isNoteAlign(token) || token === BOLD_WORD) {
     return fail(`${form} で書きます (${safeToken(token)} は字の注釈にだけ書けます)`, line);
   }
-  if (token === SOLID_WORD) {
+  if (token === NOTE_BOX_SOLID) {
     return fail(`${form} で書きます (${safeToken(token)} は枠 (box) にだけ書けます)`, line);
   }
   return readNoteColor(token, line);
@@ -523,8 +517,8 @@ function readBoxNote(rest: readonly string[], line: number, points: Points): Res
   if (!to.ok) return to;
 
   // 色と線の引き方は**順不同**。見た目の語をどこでも順不同で読むのと同じ。
-  const solid = words.includes(SOLID_WORD);
-  const colorToken = words.find((word) => word !== SOLID_WORD);
+  const solid = words.includes(NOTE_BOX_SOLID);
+  const colorToken = words.find((word) => word !== NOTE_BOX_SOLID);
   const color = readMarkColor(colorToken, `box は ${BOX_FORM}`, line);
   return color.ok
     ? ok({ kind: 'box', from: from.value, to: to.value, color: color.value, solid, line })

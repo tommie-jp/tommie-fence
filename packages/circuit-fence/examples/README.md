@@ -19,7 +19,7 @@
 | 例 | 01-syntax.md の項目 |
 | --- | --- |
 | [01-rc-lowpass.md](01-rc-lowpass.md) | 番地 / 部品 / 配線 / ネットリスト |
-| [02-parts.md](02-parts.md) | 2 端子部品 37 種、1 端子の記号 4 種 |
+| [02-parts.md](02-parts.md) | 2 端子部品 44 種、1 端子の記号 4 種 |
 | [03-multi-terminal.md](03-multi-terminal.md) | 多端子部品と足の名前、型番、FET の種類、2 端子の足 |
 | [04-non-inverting-amp.md](04-non-inverting-amp.md) | オペアンプの向き (`+up`)、足への引き方 |
 | [05-labels.md](05-labels.md) | ID の出方 / 値の出方 |
@@ -29,7 +29,7 @@
 | [09-style.md](09-style.md) | 色の上書き / `pitch` / `wire-width` / `standard` / `width` / `stamp` |
 | [10-grid.md](10-grid.md) | `grid` / `grid-to` |
 | [11-logic.md](11-logic.md) | ロジックゲート / DIP の IC / 切り替えスイッチ |
-| [12-notes.md](12-notes.md) | `notes:` の印・枠・指し棒・字、色、大きさ、寄せ、日本語 |
+| [12-notes.md](12-notes.md) | `notes:` の印・枠・指し棒・直線・字、実線の枠、色、大きさ、寄せ、日本語 |
 | [13-points.md](13-points.md) | `points:` (番地に名前を付ける) |
 | [14-half-step.md](14-half-step.md) | 交点の間の番地 (`a_1.5` `a.5_1`) |
 | [15-arrows.md](15-arrows.md) | 電流の矢と電圧の符号 (`i=` `v=`) |

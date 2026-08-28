@@ -1,44 +1,52 @@
 \documentclass{standalone}
 \usepackage{circuitikz}
 \usetikzlibrary{calc}
+\definecolor{circuitnoteink}{HTML}{000000}
 \definecolor{circuitnotemark}{HTML}{FE00FE}
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\coordinate (a1) at (0,0);
-\coordinate (a2) at (1,0);
-\draw (a1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (a2); % line 3
-\path (2,-0.593) rectangle (3.27,0.593); % line 5
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large\bfseries] at (2,0) {X}; % line 5
-\path (2,-6.249) rectangle (9.612,-0.407); % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,-1) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,-1.423) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,-1.847) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,-2.27) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,-2.693) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,-3.117) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,-3.54) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,-3.963) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,-4.387) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,-4.81) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,-5.233) {X}; % line 6
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,-5.657) {X}; % line 6
-\path (9,-0.593) rectangle (10.27,0.593); % line 7
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large\bfseries] at (9,0) {X}; % line 7
-\path (9,-8.112) rectangle (16.612,-0.407); % line 8
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (9,-1) {X}; % line 8
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (9,-1.593) {X}; % line 8
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (9,-2.185) {X}; % line 8
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (9,-2.778) {X}; % line 8
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (9,-3.371) {X}; % line 8
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (9,-3.963) {X}; % line 8
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (9,-4.556) {X}; % line 8
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (9,-5.149) {X}; % line 8
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (9,-5.741) {X}; % line 8
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (9,-6.334) {X}; % line 8
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (9,-6.927) {X}; % line 8
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (9,-7.519) {X}; % line 8
+\foreach \x in {0,2,4,6} {\foreach \y in {0,-2,-4,-6} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
+\coordinate (b2) at (2,-2);
+\coordinate (b4) at (6,-2);
+\coordinate (d2) at (2,-6);
+\coordinate (d4) at (6,-6);
+\draw (b2) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (b4); % line 3
+\draw (d2) to[R, l_=$R_{2}$, a^=$4.7\,\mathrm{k}\Omega$] (d4); % line 4
+\draw[circuitnoteink, rounded corners=3pt] (-0.7,-8.7) rectangle (8.7,0.7); % line 6
+\draw[circuitnoteink] (0,0) -- (8,0); % line 7
+\draw[circuitnoteink] (0,-4) -- (8,-4); % line 8
+\draw[circuitnoteink] (0,-8) -- (8,-8); % line 9
+\path (0,-3.593) rectangle (3.048,-2.407); % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-3) {X}; % line 10
+\path (0,-10.593) rectangle (4.826,-9.407); % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-10) {X}; % line 11
+\path (14,-7.895) rectangle (23.914,0.593); % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,0) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-0.487) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-0.974) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-1.46) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-1.947) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-2.434) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-2.921) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-3.408) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-3.895) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-4.381) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-4.868) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-5.355) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-5.842) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-6.329) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-6.816) {X}; % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-7.302) {X}; % line 12
 \node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
-\path (circuittitle.south west) rectangle ++(4.298,0.853);
+\path (circuittitle.south west) rectangle ++(6.858,0.853);
 \end{circuitikz}
 \end{document}
