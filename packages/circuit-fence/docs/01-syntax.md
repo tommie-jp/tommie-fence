@@ -565,10 +565,46 @@ style:
 `q` (npn か pnp か決まらない) のように**指すものが 1 つに決まらないもの**は
 略記を持たない。
 
+```circuit
+title: 図11 略記で書いた図
+parts:
+  V1: dc b1 d1 9
+  S1: sw b1 b2
+  R1: r b2 b3 10k
+  C1: c b3 d3 100n
+  G1: gnd d3
+wires:
+  - d1 -- d3
+notes:
+  - source a5 blue
+style:
+  grid: on
+```
+
+書いたのは略記だが、図に出るのも**ネットリストに出るのも正式名**。
+`V1: dc b1 d1 9` は `V1: vsource b1 d1 9` と 1 バイトも違わない図になる。
+
 ### ID の出方
 
 先頭 1 文字が本体、残りが添字になる (回路図の慣習どおり)。
 `R1` は R の添字 1、`Rload` は R の添字 load、`R` はそのまま。
+
+```circuit
+title: 図12 ID の出方
+parts:
+  R1:    resistor a1 a2
+  Rload: resistor a4 a5
+  R:     resistor a7 a8
+  Vcc2:  vsource c1 c2
+notes:
+  - source a10 blue
+style:
+  grid: on
+```
+
+添字は**先頭以外の全部**なので、`Vcc2` は V の添字 cc2 になる。
+2 字を本体にしたい (添字にしたくない) ときは
+[ラベル](#ラベルを-id-と別に書く--l字)を書く。
 
 ### ラベルを ID と別に書く — `l=字`
 
@@ -578,12 +614,21 @@ style:
 
 `$…$` で囲むと**数式の部分集合**が使える。教科書と同じ綴りで書ける。
 
-```text
-E:  sine b1 d1 l=$\dot{E}$        フェーザの点
-SW: switch b1 b2 l=$\mathrm{SW}$  立体 (添字にならない 2 字の本体)
-Z:  resistor b2 b3 l=$\dot{Z}_L$  点と添字
-R:  resistor b3 d3 l=RL           囲まなければ ID と同じ組み方
+```circuit
+title: 図13 ラベルを ID と別に書く
+parts:
+  E:  sine b1 d1 l=$\dot{E}$
+  SW: switch b1 b2 l=$\mathrm{SW}$
+  Z:  resistor b2 b3 l=$\dot{Z}_L$
+  R:  resistor b3 d3 l=RL
+wires:
+  - d1 -- d3
+style:
+  grid: on
 ```
+
+配線から指す名前もネットリストの名前も ID (`E` `SW` `Z` `R`) のまま。
+図に出る字だけが変わる。
 
 読めるのは次だけ。空白は書けない (部品の 1 行は空白で区切って読むため)。
 
@@ -600,9 +645,10 @@ R:  resistor b3 d3 l=RL           囲まなければ ID と同じ組み方
 
 `l=` は `i=` `v=` と同じ読み方をする。**書き方は 1 つで、置き場所が 3 つ**。
 
-`$…$` を使ったフェンスは、注釈の書き出し (`- source`) では図に出せない。
-書き出しは書き手の YAML そのものを図に置くので、TeX が自分の記法として読む字
-(`\` `$` `{` `}`) はそこでも通さない。
+**上の 図13 に書き出し (`- source`) が無いのはそのため**。`$…$` を使った
+フェンスは図に書き出せない — 書き出しは書き手の YAML そのものを図に置くので、
+TeX が自分の記法として読む字 (`\` `$` `{` `}`) はそこでも通さない。
+書き出しだけが落ちて、その行が行番号つきで返る。
 
 ### 値の出方
 
@@ -622,9 +668,19 @@ ID は記号の下 (縦置きなら左)、値は反対側に出る。
 教科書の回路図は、記号よりも「どこを流れる電流を i と呼ぶか」
 「どちらを + と数えるか」を図で決める。
 
-```text
-R: resistor b2 b3 i=i      b2 から b3 へ流れる向きの矢
-C: capacitor b3 d3 v=vC    b3 が + 側
+```circuit
+title: 図14 電流の矢と電圧の符号
+parts:
+  E: battery b1 d1
+  S: switch b1 b2
+  R: resistor b2 b3 i=i
+  C: capacitor b3 d3 v=vC
+wires:
+  - d1 -- d3
+notes:
+  - source a5 blue
+style:
+  grid: on
 ```
 
 **向きは先に書いた番地が基準**で、
@@ -659,7 +715,7 @@ C: capacitor b3 d3 v=vC    b3 が + 側
 | `\|-` | 先に縦、それから横 |
 
 ```circuit
-title: 図11 配線でつなぐ
+title: 図15 配線でつなぐ
 parts:
   R1: resistor a1 a3
   R2: resistor a5 a7
@@ -693,7 +749,7 @@ wires:
 そのまま引く。
 
 ```circuit
-title: 図12 斜めに置く
+title: 図16 斜めに置く
 parts:
   IN:  port a1
   R1:  resistor a1 b3
@@ -725,7 +781,7 @@ style:
 | 書き出し | `- source 番地 [色や大きさ]` | フェンスの中身そのもの |
 
 ```circuit
-title: 図13 注釈
+title: 図17 注釈
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
@@ -752,6 +808,25 @@ style:
 `C1` という部品がある図では番地 c1 を指せない (部品のほうが勝つ)。
 **その番地にも何か置いてあるとき**は、どちらを取ったかをお知らせで伝える。
 
+```circuit
+title: 図18 印
+parts:
+  R1: resistor a1 a2 10k
+  C1: capacitor a4 b4 100n
+notes:
+  - circle R1
+  - circle C1 blue
+  - circle b1 green
+  - text c1 green center: circle b1 green
+  - source a6 blue
+style:
+  grid: on
+  grid-to: c5
+```
+
+`circle R1` は部品を指すので記号の真ん中に、`circle b1` は番地を指すので
+その交点に出る。**何も置いていない番地でも指せる** (図の上の場所なので)。
+
 ### 枠 — `- box 番地 番地 [色]`
 
 2 つの番地を対角にした枠を破線で引く。「この一角がフィルタ部」のように、
@@ -761,6 +836,25 @@ style:
 角に書けるのは**番地だけ**。部品 ID は書けない (2 端子部品は番地の間隔とは
 別の長さで描かれるので、記号がどこまで広がっているかを枠の側では決められない)。
 同じ番地を 2 回書くと、その 1 マスだけを囲む。
+
+```circuit
+title: 図19 枠
+parts:
+  IN:  port a1
+  R1:  resistor a1 a2 10k
+  C1:  capacitor a2 b2 100n
+  OUT: port a3
+  G1:  ground b2
+wires:
+  - a2 -- a3
+notes:
+  - box a1 c3 blue
+  - text d2 blue center: box a1 c3 blue
+  - source a5 blue
+style:
+  grid: on
+  grid-to: c4
+```
 
 ### 指し棒 — `- arrow 起点 終点 [色]`
 
@@ -773,25 +867,22 @@ style:
 起点と終点が同じところだと向きが決まらないので、行番号つきで返る。
 
 ```circuit
-title: 図14 枠と指し棒
+title: 図20 指し棒
 parts:
-  IN:  port a1
-  R1:  resistor a1 a2 10k
-  C1:  capacitor a2 b2 100n
-  OUT: port a3
-  G1:  ground b2
-wires:
-  - a2 -- a3
+  R1: resistor a1 a2 10k
+  C1: capacitor a4 b4 100n
 notes:
-  - box a1 c3 blue
-  - text d2 blue center: box a1 c3 blue
-  - arrow b4 R1
-  - text b4 red: R1のコメント
-  - source a7 blue
+  - arrow b1 R1
+  - text b1 red center: R1のコメント
+  - arrow c4 C1 blue
+  - text c4 blue center: C1へ
+  - source a6 blue
 style:
   grid: on
-  grid-to: c6
+  grid-to: c5
 ```
+
+部品を指した端は記号の縁で止まり、番地を指した端はその交点まで伸びる。
 
 ### 字 — `- text 番地 [色や大きさ]: 文字`
 
@@ -827,7 +918,7 @@ TeX に組ませるので、どちらでも同じ字が出る。
 1 行しかない `text` に書いても効かないので、書いたら行番号つきで返る。
 
 ```circuit
-title: 図15 字の大きさ
+title: 図21 字の大きさ
 parts:
   R1: resistor a1 a2 10k
 notes:
@@ -849,7 +940,7 @@ style:
 寄せは、番地を字の左端・真ん中・右端のどこにするかを決める。
 
 ```circuit
-title: 図16 寄せと太字
+title: 図22 寄せと太字
 parts:
   R1: resistor a1 a2 10k
 notes:
@@ -890,7 +981,7 @@ style:
 | `loose` | 字の注釈と同じ | 1 行ずつ指しながら説明する |
 
 ```circuit
-title: 図17 行送り
+title: 図23 行送り
 parts:
   R1: resistor a1 a2 10k
 notes:
@@ -930,7 +1021,7 @@ style:
 指し棒で描くとき — に使う。
 
 ```circuit
-title: 図18 注釈の色
+title: 図24 注釈の色
 parts:
   R1: resistor a1 a3
   R2: resistor a4 a6
@@ -1103,7 +1194,7 @@ style:
 (色は 1 つで、点だけを薄めて描いている)。
 
 ```circuit
-title: 図19 グリッド
+title: 図25 グリッド
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
@@ -1142,7 +1233,7 @@ style:
 `stamp: on` にすると、その図を組んだ処理系の版が右下に出る。
 
 ```circuit
-title: 図20 版の刻印
+title: 図26 版の刻印
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
