@@ -589,22 +589,43 @@ style:
 
 DIP の IC は**足の本数が種類の名前に入っている** (`dip8` から `dip40` まで)。
 足は番号で指し (`U1.1`)、型番は記号の**中**に出る。
+一覧では型番を書いていないが、書けば箱の中に入る。
+足への配線は [../examples/11-logic.md](../examples/11-logic.md) で見せている。
 
 ```circuit
-title: 図08 DIP の IC
+title: 図08 DIP の IC の記号
 parts:
-  U1: dip8 c2 NE555
-wires:
-  - a1 |- U1.1
-  - e1 |- U1.4
-  - U1.5 -| e4
-  - U1.8 -| a4
+  U1: dip8 f3
+  U2: dip14 f6
+  U3: dip16 f9
+  U4: dip20 f12
+  U5: dip28 f15
+  U6: dip40 f18
 notes:
-  - text f1 blue: "U1: dip8 c2 NE555"
-  - source a6 blue
+  - line a.1_1.5 a.1_19.5 ink
+  - line k.1_1.5 k.1_19.5 ink
+  - line a.1_1.5 k.1_1.5 ink
+  - line a.1_4.5 k.1_4.5 ink
+  - line a.1_7.5 k.1_7.5 ink
+  - line a.1_10.5 k.1_10.5 ink
+  - line a.1_13.5 k.1_13.5 ink
+  - line a.1_16.5 k.1_16.5 ink
+  - line a.1_19.5 k.1_19.5 ink
+  - text a.4_3 blue center: 72 DIP (8 ピン)
+  - text j.7_3 blue center: "U1: dip8 f3"
+  - text a.4_6 blue center: 73 DIP (14 ピン)
+  - text j.7_6 blue center: "U2: dip14 f6"
+  - text a.4_9 blue center: 74 DIP (16 ピン)
+  - text j.7_9 blue center: "U3: dip16 f9"
+  - text a.4_12 blue center: 75 DIP (20 ピン)
+  - text j.7_12 blue center: "U4: dip20 f12"
+  - text a.4_15 blue center: 76 DIP (28 ピン)
+  - text j.7_15 blue center: "U5: dip28 f15"
+  - text a.4_18 blue center: 77 DIP (40 ピン)
+  - text j.7_18 blue center: "U6: dip40 f18"
 style:
-  grid: on
-  pitch: 1
+  grid: off
+  pitch: 1.2
 ```
 
 向きは今のところオペアンプの `+up` / `+down` だけ (± の上下)。
