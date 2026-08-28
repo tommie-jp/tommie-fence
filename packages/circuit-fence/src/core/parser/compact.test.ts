@@ -389,6 +389,21 @@ describe('parseNoteLine', () => {
   test('turns down a word that only text can take', () => {
     expect(noteProblem('circle R1 huge').message).toContain('circle は');
   });
+  // 罫線を引きたいときは実線のほうがよい (表の枠など)。既定は破線のまま。
+  test('reads the word that makes a box solid', () => {
+    expect(noteOf('box a1 c3 solid')).toMatchObject({ kind: 'box', solid: true });
+    expect(noteOf('box a1 c3 ink solid')).toMatchObject({ color: 'ink', solid: true });
+    expect(noteOf('box a1 c3 ink')).toMatchObject({ color: 'ink', solid: false });
+  });
+
+  test('reads those words in any order', () => {
+    expect(noteOf('box a1 c3 solid ink')).toMatchObject({ color: 'ink', solid: true });
+  });
+
+  test('keeps solid to boxes (the mark and the pointer have no line style)', () => {
+    expect(noteProblem('circle R1 solid').message).toContain('solid');
+  });
+
 });
 
 describe('parseNoteLine の box', () => {
@@ -398,6 +413,7 @@ describe('parseNoteLine の box', () => {
       from: { row: 0, col: 0 },
       to: { row: 2, col: 2 },
       color: 'red',
+      solid: false,
       line: 2,
     });
   });

@@ -183,7 +183,7 @@ function drawBoxNote(note: BoxNote, pitch: number): string[] {
   const top = Math.max(from.y, to.y) + BOX_PAD;
 
   return [
-    `\\draw[${texColorOf(note.color)}, dashed, rounded corners=${num(BOX_CORNER)}pt]` +
+    `\\draw[${texColorOf(note.color)}${note.solid ? '' : ', dashed'}, rounded corners=${num(BOX_CORNER)}pt]` +
       ` (${num(left)},${num(bottom)}) rectangle (${num(right)},${num(top)});`,
   ];
 }

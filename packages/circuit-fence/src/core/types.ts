@@ -200,6 +200,11 @@ export type BoxNote = {
   readonly to: Address;
   /** パレットの色の名前。書かなかったときは既定の色が入る。 */
   readonly color: string;
+  /**
+   * 実線で引くか。既定は破線 — 回路の線と見分けが付くようにするため。
+   * 罫線 (表の枠) を引きたいときだけ実線にする。
+   */
+  readonly solid: boolean;
   readonly line: number;
 };
 

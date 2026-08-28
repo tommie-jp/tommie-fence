@@ -325,6 +325,9 @@ const NOTE_KINDS = ['circle', 'box', 'arrow', 'text', 'source'] as const;
 /** 印の既定の色。目立たせるために書くものなので、書かなければ赤。 */
 const DEFAULT_MARK_COLOR = 'red';
 
+/** 枠を実線で引く語。既定は破線 (回路の線と見分けるため)。 */
+const SOLID_WORD = 'solid';
+
 /** 太字にする語。大きさや寄せと違って 1 語しかないので、表を持たない。 */
 const BOLD_WORD = 'bold';
 
@@ -472,6 +475,9 @@ function readMarkColor(token: string | undefined, form: string, line: number): R
   if (isNoteSize(token) || isNoteAlign(token) || token === BOLD_WORD) {
     return fail(`${form} で書きます (${safeToken(token)} は字の注釈にだけ書けます)`, line);
   }
+  if (token === SOLID_WORD) {
+    return fail(`${form} で書きます (${safeToken(token)} は枠 (box) にだけ書けます)`, line);
+  }
   return readNoteColor(token, line);
 }
 
@@ -489,8 +495,8 @@ function readCircleNote(rest: readonly string[], line: number): Result<NoteSpec>
  * 同じ番地を 2 回書くのは書き間違いではない (1 マスだけを囲むということ)。
  */
 function readBoxNote(rest: readonly string[], line: number, points: Points): Result<NoteSpec> {
-  const [fromToken, toToken, colorToken, ...extra] = rest;
-  if (fromToken === undefined || toToken === undefined || extra.length > 0) {
+  const [fromToken, toToken, ...words] = rest;
+  if (fromToken === undefined || toToken === undefined || words.length > 2) {
     return fail(`box は ${BOX_FORM} で書きます`, line);
   }
 
@@ -499,8 +505,13 @@ function readBoxNote(rest: readonly string[], line: number, points: Points): Res
   const to = readAddress(toToken, line, points);
   if (!to.ok) return to;
 
+  // 色と線の引き方は**順不同**。見た目の語をどこでも順不同で読むのと同じ。
+  const solid = words.includes(SOLID_WORD);
+  const colorToken = words.find((word) => word !== SOLID_WORD);
   const color = readMarkColor(colorToken, `box は ${BOX_FORM}`, line);
-  return color.ok ? ok({ kind: 'box', from: from.value, to: to.value, color: color.value, line }) : color;
+  return color.ok
+    ? ok({ kind: 'box', from: from.value, to: to.value, color: color.value, solid, line })
+    : color;
 }
 
 /**
