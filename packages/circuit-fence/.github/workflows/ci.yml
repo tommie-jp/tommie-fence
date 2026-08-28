@@ -19,6 +19,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run examples
+      - run: npm run docs
       # .tex はどの環境でも同じバイト列になるので、差分が出たらコミットし忘れ。
-      # SVG は node-tikzjax のバージョンで変わりうるため、PNG ともども一致は求めない。
-      - run: git diff --exit-code -- 'examples/out/*.tex'
+      # SVG は node-tikzjax のバージョンで、PNG はフォント環境で変わりうるため、
+      # 一致は求めない。
+      - run: git diff --exit-code -- 'examples/out/*.tex' 'docs/out/*.tex'
