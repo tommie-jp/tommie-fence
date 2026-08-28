@@ -25,6 +25,8 @@ style:
   grid: on
 ```
 
+![図01 色の上書き](out/09-style-1.png)
+
 `pitch` は 1 マスの大きさ (cm、0.5〜5)、`wire-width` は線の太さ (pt、0.2〜4)。
 詰めて太くすると、小さく貼っても読める。
 
@@ -46,6 +48,8 @@ style:
   wire-width: 1.6
 ```
 
+![図02 pitch と wire-width](out/09-style-2.png)
+
 `standard` は記号の流儀。既定の `american` は抵抗がギザギザ。
 
 ```circuit
@@ -60,6 +64,8 @@ style:
   standard: american
 ```
 
+![図03 記号の流儀 american](out/09-style-3.png)
+
 `european` にすると抵抗が箱になる (IEC の流儀)。
 
 ```circuit
@@ -73,6 +79,8 @@ style:
   grid: on
   standard: european
 ```
+
+![図04 記号の流儀 european](out/09-style-4.png)
 
 `width` は出力の横ドット数 (120〜4000)。図の中身は動かさず、外寸だけ変える。
 資料の段幅に合わせたいときに使う。
@@ -94,6 +102,8 @@ style:
   width: 320
 ```
 
+![図05 出力の横幅](out/09-style-5.png)
+
 `stamp: on` は、その図を組んだ処理系の版を右下に刻む。**字は書かない** —
 処理系が埋めるので、拡張機能を更新すれば刻印も一緒に新しくなる。
 資料に貼った図が、どの版で描いたものかを後から辿れる。
@@ -114,6 +124,8 @@ style:
   grid: on
   stamp: on
 ```
+
+![図06 版の刻印](out/09-style-6.png)
 
 刻まないときも、版は書き出した `.svg` の根に `data-circuit-fence` として
 必ず入っている (図の見た目は変わらない)。

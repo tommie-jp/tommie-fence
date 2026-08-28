@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
 import { extractCircuitFences } from './fences.ts';
@@ -11,12 +11,14 @@ import { extractCircuitFences } from './fences.ts';
  * 独立させる** (2026-08-27 決定) — 通し番号にすると、1 つのファイルに図を
  * 足しただけで関係のないファイルまで振り直しになる。
  *
- * 01-syntax.md はフェンスを直に書き、**自分のフェンスを描いた図** (docs/out)
- * だけをその直後に貼る (2026-08-28 決定 — GitHub はフェンスを描画しないため)。
- * examples の図は貼らない — 図には題番号が焼き込まれていて、examples 側の
- * 番号を名乗るとこちらの体系が崩れる。同じ図が examples にもあるので、
+ * どの `.md` も**自分のフェンスを描いた図だけ**をその直後に貼る
+ * (2026-08-28 決定 — GitHub はフェンスを描画しないため)。他所の図を貼ると、
+ * 題番号が図に焼き込まれているぶん、その図が向こうの番号を名乗って
+ * こちらの体系が崩れる。同じ図が docs と examples の両方にあるので、
  * **題が同じなら中身も同じ**であることをここで見張る (片方だけ直すと、
  * 同じ名前の図が 2 通りの姿で出てしまう)。
+ *
+ * 貼った図とフェンスの対応そのものは embeddedFigures.test.ts が見る。
  */
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -64,14 +66,13 @@ describe('図の番号', () => {
     expect(numbers).toEqual(wanted);
   });
 
-  test('01-syntax.md は自分で描いた図だけを貼っている', () => {
-    // examples の図を貼ると、その図が examples 側の番号を名乗って体系が崩れる。
-    // フェンスと図の対応そのものは syntaxDoc.test.ts が見張る。
+  test.each(withFigures)('%s は自分で描いた図だけを貼っている', (path) => {
     const images = [
-      ...readFileSync(join(ROOT, 'docs', '01-syntax.md'), 'utf8').matchAll(/!\[.*?\]\(([^)]*)\)/g),
+      ...readFileSync(join(ROOT, path), 'utf8').matchAll(/!\[.*?\]\(([^)]*)\)/g),
     ].map((image) => image[1] ?? '');
+    const own = new RegExp(`^out/${basename(path, '.md')}(-\\d+)?\\.png$`);
 
-    expect(images.filter((path) => !/^out\/01-syntax-\d+\.png$/.test(path))).toEqual([]);
+    expect(images.filter((image) => !own.test(image))).toEqual([]);
   });
 
   test('同じ題の図はどこに書いてあっても中身が同じ', () => {

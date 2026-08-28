@@ -50,6 +50,8 @@ style:
   grid: on
 ```
 
+![図01 ロジックゲート](out/11-logic-1.png)
+
 上の段が `and` / `or` / `nand` / `nor`、下の段が `xor` / `xnor` / `not` /
 `buffer`。`not` と `buffer` は入力が 1 本なので、足の名前は `in` と `out`。
 番地の後ろに書いた型番は記号の下に出る。
@@ -76,6 +78,8 @@ style:
   pitch: 1
 ```
 
+![図02 DIP の IC](out/11-logic-2.png)
+
 足の番号は DIP の実物と同じで、左上が 1、左を下りて、右下から上がって戻る
 (8 ピンなら左が 1〜4、右が 5〜8)。
 
@@ -97,3 +101,5 @@ notes:
 style:
   grid: on
 ```
+
+![図03 切り替えスイッチ](out/11-logic-3.png)

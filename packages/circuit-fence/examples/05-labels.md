@@ -27,6 +27,8 @@ style:
   grid: on
 ```
 
+![図01 ID と値の出方](out/05-labels-1.png)
+
 | 書いたもの | 図に出るもの |
 | --- | --- |
 | `R1: resistor … 10k` | R₁ / 10 kΩ |
@@ -69,6 +71,8 @@ notes:
 style:
   grid: on
 ```
+
+![図02 ラベルを ID と別に書く](out/05-labels-2.png)
 
 上の段がラベル無し、下の段が同じ部品にラベルを書いたもの。
 

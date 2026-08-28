@@ -23,6 +23,8 @@ style:
   grid: on
 ```
 
+![図01 テーマ auto](out/08-themes-1.png)
+
 `light` / `dark` は明暗を決め打ちする。ノートの見た目を固定したいとき。
 
 ```circuit
@@ -42,6 +44,8 @@ style:
   grid: on
 ```
 
+![図02 テーマ light](out/08-themes-2.png)
+
 ```circuit
 title: 図03 テーマ dark
 parts:
@@ -58,6 +62,8 @@ style:
   theme: dark
   grid: on
 ```
+
+![図03 テーマ dark](out/08-themes-3.png)
 
 `mono` は黒一色。資料に貼るときや印刷するとき。
 
@@ -77,6 +83,8 @@ style:
   theme: mono
   grid: on
 ```
+
+![図04 テーマ mono](out/08-themes-4.png)
 
 **`mono` は注釈の色も潰す**。この 4 枚はどれも `- source a4 blue` と書いて
 あるが、`mono` だけ書き出しが黒で出る。「黒一色」と言っている以上、注釈だけ

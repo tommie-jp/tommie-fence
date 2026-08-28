@@ -23,6 +23,8 @@ style:
   grid: on
 ```
 
+![図01 電流の矢と電圧の符号](out/15-arrows-1.png)
+
 字は ID と同じ組み方で、先頭 1 文字が本体・残りが添字になる
 (`i=i1` は i の添字 1、`v=vC` は v の添字 C)。
 
@@ -38,6 +40,8 @@ notes:
 style:
   grid: on
 ```
+
+![図02 番地を入れ替えて矢を返す](out/15-arrows-2.png)
 
 ## 値と並べて書けるか
 
@@ -60,3 +64,5 @@ notes:
 style:
   grid: on
 ```
+
+![図03 値と電流の矢は並べて書ける](out/15-arrows-3.png)
