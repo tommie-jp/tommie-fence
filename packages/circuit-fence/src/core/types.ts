@@ -54,8 +54,12 @@ export type TwoTerminalPart = {
    * 注釈 (`notes:`) ではなく部品の一部として持つ。
    */
   readonly current: string | null;
+  /** 矢を to → from に返すか (`i<=`)。極性で番地の順が決まる部品のための逃げ道。 */
+  readonly currentReversed: boolean;
   /** 電圧の符号に添える字 (`v=vC` の `vC`)。**from が +**。向きの規則は極性と同じ。 */
   readonly voltage: string | null;
+  /** + を to 側にするか (`v<=`)。理由は電流と同じ。 */
+  readonly voltageReversed: boolean;
   /**
    * 図に出るラベル (`l=$\dot{E}$` の `$\dot{E}$`)。書かなければ ID がそのまま出る。
    * **ID を置き換えるのは図の見た目だけ**で、配線から指す名前もネット名も ID のまま。

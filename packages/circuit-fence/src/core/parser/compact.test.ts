@@ -24,7 +24,9 @@ describe('parseCompactPart', () => {
       to: { row: 0, col: 2 },
       value: '10k',
       current: null,
+      currentReversed: false,
       voltage: null,
+      voltageReversed: false,
       label: null,
       line: 2,
     });
@@ -45,6 +47,21 @@ describe('parseCompactPart', () => {
   test('reads a value and a current arrow together, in either order', () => {
     expect(partOf('resistor a1 a3 10k i=i1')).toMatchObject({ value: '10k', current: 'i1' });
     expect(partOf('resistor a1 a3 i=i1 10k')).toMatchObject({ value: '10k', current: 'i1' });
+  });
+
+  // 極性のある部品は番地の順が極性で決まるので、矢だけを逆にしたいときに
+  // 番地を入れ替えられない (ツェナーの逆電流など)。`<` を付けて向きを返す。
+  test('reads the reversed forms of the arrows', () => {
+    expect(partOf('zener a1 c1 i<=IZ')).toMatchObject({ current: 'IZ', currentReversed: true });
+    expect(partOf('capacitor a1 c1 v<=vC')).toMatchObject({ voltage: 'vC', voltageReversed: true });
+  });
+
+  test('reads the plain forms as pointing from the address written first', () => {
+    expect(partOf('resistor a1 a3 i=I')).toMatchObject({ current: 'I', currentReversed: false });
+  });
+
+  test('rejects the same arrow written in both directions', () => {
+    expect(messageOf('resistor a1 a3 i=I i<=I').message).toContain('i');
   });
 
   test('names the key it does not know and lists the ones it does', () => {

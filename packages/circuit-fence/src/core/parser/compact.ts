@@ -145,6 +145,13 @@ function readMultiTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
 const PART_TAGS = { i: '電流', v: '電圧', l: 'ラベル' } as const;
 type PartTag = keyof typeof PART_TAGS;
 
+/**
+ * 矢を返す形 (`i<=` `v<=`)。**極性のある部品のための逃げ道**で、
+ * 向きのない部品では番地を入れ替えるほうを使う (綴りを 1 つに保つ)。
+ * 極性のある部品は番地の順が極性で決まるので、入れ替えでは返せない。
+ */
+const REVERSED = '<';
+
 const tagList = (): string =>
   Object.entries(PART_TAGS)
     .map(([key, name]) => `${key}= ${name}`)
@@ -170,6 +177,7 @@ function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
   }
 
   const tags: { -readonly [K in PartTag]: string | null } = { i: null, v: null, l: null };
+  const reversed: { -readonly [K in PartTag]: boolean } = { i: false, v: false, l: false };
   let value: string | null = null;
 
   for (const token of extra) {
@@ -186,17 +194,21 @@ function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
       continue;
     }
 
-    const key = token.slice(0, at);
+    const tag = token.slice(0, at);
     const label = token.slice(at + 1);
+    // 末尾の `<` は「矢を返す」印。ラベル (`l=`) には向きが無いので付けられない。
+    const back = tag.endsWith(REVERSED) && tag !== 'l<';
+    const key = back ? tag.slice(0, -1) : tag;
     if (!isPartTag(key)) {
       // `=` は safeToken が落とす字なので、鍵だけ通して等号は外で足す。
-      return fail(`${safeToken(key)}= は知りません (${tagList()} が使えます)`, line);
+      return fail(`${safeToken(tag)}= は知りません (${tagList()} が使えます)`, line);
     }
     if (tags[key] !== null) return fail(`${key}= を 2 回書いています`, line);
     if (label === '') return fail(`${key}= の字がありません`, line);
     const checked = checkLabelLength(label, `${key}= の字`, line);
     if (checked !== null) return checked;
     tags[key] = label;
+    reversed[key] = back;
   }
 
   // 値・電流・電圧は circuitikz が図の同じ側に出す (実機で確認)。
@@ -214,7 +226,9 @@ function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
     to: to.value,
     value,
     current: tags.i,
+    currentReversed: reversed.i,
     voltage: tags.v,
+    voltageReversed: reversed.v,
     label: tags.l,
     line,
   });
