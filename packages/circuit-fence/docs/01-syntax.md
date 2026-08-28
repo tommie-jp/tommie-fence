@@ -119,190 +119,183 @@ style:
 
 ### 2 端子部品 — `ID: 種類 番地 番地 [値] [l=字] [i=字] [v=字]`
 
-| 種類 | 何 | 値の単位 | 例 |
-| --- | --- | --- | --- |
-| `resistor` | 抵抗 | Ω | `R1: resistor a1 a3 10k` |
-| `resistor-var` | 可変抵抗 (2 端子) | Ω | `R2: resistor-var a1 a3 10k` |
-| `potentiometer` | ポテンショメータ (3 端子) | Ω | `P1: potentiometer b1 b5 10k` |
-| `capacitor` | コンデンサ | F | `C1: capacitor a3 c3 100n` |
-| `ecap` | 電解コンデンサ | F | `C2: ecap a5 c5 100u` |
-| `varicap` | バリキャップ | F | `D4: varicap a5 a7 33p` |
-| `inductor` | コイル | H | `L1: inductor a5 a7 10m` |
-| `photoresistor` | CdS セル | Ω | `R3: photoresistor a13 a15` |
-| `thermistor` | サーミスタ | Ω | `R4: thermistor c1 c3 10k` |
-| `thermistor-ntc` | NTC サーミスタ | Ω | `R5: thermistor-ntc c5 c7 10k` |
-| `thermistor-ptc` | PTC サーミスタ | Ω | `R6: thermistor-ptc c9 c11` |
-| `varistor` | バリスタ | (型番) | `R7: varistor c13 c15 470V` |
-| `crystal` | 水晶振動子 | Hz | `X1: crystal a9 a11 16M` |
-| `diode` | ダイオード | (型番) | `D1: diode c1 c3 1N4148` |
-| `led` | LED | (型番) | `D2: led c5 c7` |
-| `zener` | ツェナー | (型番) | `D3: zener c9 c11 5V1` |
-| `schottky` | ショットキー | (型番) | `D5: schottky e1 e3 1N5819` |
-| `photodiode` | フォトダイオード | (型番) | `D6: photodiode e5 e7` |
-| `diac` | ダイアック | (型番) | `D7: diac e9 e11` |
-| `thyristor` | サイリスタ (SCR) | (型番) | `T1: thyristor d1 d5` |
-| `triac` | トライアック | (型番) | `T2: triac f1 f5` |
-| `vsource` | 直流電源 | V | `V1: vsource e1 e3 5` |
-| `sine` | 交流電源 (正弦波) | V | `V2: sine e5 e7 1` |
-| `square` | 方形波電源 | V | `V3: square e13 e15 5` |
-| `triangle` | 三角波電源 | V | `V4: triangle g1 g3 1` |
-| `isource` | 定電流源 | A | `I1: isource e9 e11 20m` |
-| `battery` | 電池 | V | `B1: battery g1 g3 9` |
-| `solar` | 太陽電池 | V | `PV1: solar g5 g7 0.6` |
-| `switch` | スイッチ (a 接点) | (なし) | `S1: switch g5 g7` |
-| `switch-nc` | スイッチ (b 接点) | (なし) | `S2: switch-nc g9 g11` |
-| `button` | 押しボタン (a 接点) | (なし) | `S3: button g13 g15` |
-| `button-nc` | 押しボタン (b 接点) | (なし) | `S4: button-nc i1 i3` |
-| `reed` | リードスイッチ | (なし) | `S5: reed i5 i7` |
-| `fuse` | ヒューズ | (定格) | `F1: fuse g9 g11 3A` |
-| `lamp` | ランプ | (なし) | `P1: lamp i1 i3` |
-| `speaker` | スピーカー | (なし) | `LS1: speaker i9 i11` |
-| `mic` | マイク | (なし) | `MK1: mic i13 i15` |
-| `ammeter` | 電流計 | (なし) | `A1: ammeter k1 k3` |
-| `voltmeter` | 電圧計 | (なし) | `V5: voltmeter k5 k7` |
-| `ohmmeter` | 抵抗計 | (なし) | `M1: ohmmeter k9 k11` |
-| `wattmeter` | 電力計 | (なし) | `W1: wattmeter k13 k15` |
-| `galvanometer` | 検流計 | (なし) | `G1: galvanometer m1 m3` |
-| `detector` | 検出器 (交流ブリッジ) | (なし) | `D8: detector m5 m7` |
+| 部品番号 | 種類 | 部品名 | 値の単位 | 例 |
+| --- | --- | --- | --- | --- |
+| 01 | `resistor` | 抵抗 | Ω | `R1: resistor a1 a3 10k` |
+| 02 | `resistor-var` | 可変抵抗 (2 端子) | Ω | `R2: resistor-var a1 a3 10k` |
+| 03 | `potentiometer` | ポテンショメータ (3 端子) | Ω | `P1: potentiometer b1 b5 10k` |
+| 04 | `capacitor` | コンデンサ | F | `C1: capacitor a3 c3 100n` |
+| 05 | `ecap` | 電解コンデンサ | F | `C2: ecap a5 c5 100u` |
+| 06 | `varicap` | バリキャップ | F | `D4: varicap a5 a7 33p` |
+| 07 | `inductor` | コイル | H | `L1: inductor a5 a7 10m` |
+| 08 | `photoresistor` | CdS セル | Ω | `R3: photoresistor a13 a15` |
+| 09 | `thermistor` | サーミスタ | Ω | `R4: thermistor c1 c3 10k` |
+| 10 | `thermistor-ntc` | NTC サーミスタ | Ω | `R5: thermistor-ntc c5 c7 10k` |
+| 11 | `thermistor-ptc` | PTC サーミスタ | Ω | `R6: thermistor-ptc c9 c11` |
+| 12 | `varistor` | バリスタ | (型番) | `R7: varistor c13 c15 470V` |
+| 13 | `crystal` | 水晶振動子 | Hz | `X1: crystal a9 a11 16M` |
+| 14 | `diode` | ダイオード | (型番) | `D1: diode c1 c3 1N4148` |
+| 15 | `led` | LED | (型番) | `D2: led c5 c7` |
+| 16 | `zener` | ツェナー | (型番) | `D3: zener c9 c11 5V1` |
+| 17 | `schottky` | ショットキー | (型番) | `D5: schottky e1 e3 1N5819` |
+| 18 | `photodiode` | フォトダイオード | (型番) | `D6: photodiode e5 e7` |
+| 19 | `diac` | ダイアック | (型番) | `D7: diac e9 e11` |
+| 20 | `thyristor` | サイリスタ (SCR) | (型番) | `T1: thyristor d1 d5` |
+| 21 | `triac` | トライアック | (型番) | `T2: triac f1 f5` |
+| 22 | `vsource` | 直流電源 | V | `V1: vsource e1 e3 5` |
+| 23 | `sine` | 交流電源 (正弦波) | V | `V2: sine e5 e7 1` |
+| 24 | `square` | 方形波電源 | V | `V3: square e13 e15 5` |
+| 25 | `triangle` | 三角波電源 | V | `V4: triangle g1 g3 1` |
+| 26 | `isource` | 定電流源 | A | `I1: isource e9 e11 20m` |
+| 27 | `battery` | 電池 | V | `B1: battery g1 g3 9` |
+| 28 | `solar` | 太陽電池 | V | `PV1: solar g5 g7 0.6` |
+| 29 | `switch` | スイッチ (a 接点) | (なし) | `S1: switch g5 g7` |
+| 30 | `switch-nc` | スイッチ (b 接点) | (なし) | `S2: switch-nc g9 g11` |
+| 31 | `button` | 押しボタン (a 接点) | (なし) | `S3: button g13 g15` |
+| 32 | `button-nc` | 押しボタン (b 接点) | (なし) | `S4: button-nc i1 i3` |
+| 33 | `reed` | リードスイッチ | (なし) | `S5: reed i5 i7` |
+| 34 | `fuse` | ヒューズ | (定格) | `F1: fuse g9 g11 3A` |
+| 35 | `lamp` | ランプ | (なし) | `P1: lamp i1 i3` |
+| 36 | `speaker` | スピーカー | (なし) | `LS1: speaker i9 i11` |
+| 37 | `mic` | マイク | (なし) | `MK1: mic i13 i15` |
+| 38 | `ammeter` | 電流計 | (なし) | `A1: ammeter k1 k3` |
+| 39 | `voltmeter` | 電圧計 | (なし) | `V5: voltmeter k5 k7` |
+| 40 | `ohmmeter` | 抵抗計 | (なし) | `M1: ohmmeter k9 k11` |
+| 41 | `wattmeter` | 電力計 | (なし) | `W1: wattmeter k13 k15` |
+| 42 | `galvanometer` | 検流計 | (なし) | `G1: galvanometer m1 m3` |
+| 43 | `detector` | 検出器 (交流ブリッジ) | (なし) | `D8: detector m5 m7` |
 
 ```circuit
-title: 図03 使える部品
+title: 図03 2 端子部品
 parts:
-  R1: resistor b1 b3 10k
-  C1: capacitor b4 b6 100n
-  C2: ecap b7 b9 100u
-  L1: inductor b10 b12 10m
-  D1: diode d1 d3 1N4148
-  D2: led d4 d6
-  D3: zener d7 d9 5V1
-  V1: vsource f1 f3 5
-  V2: sine f4 f6 1
-  I1: isource f7 f9 20m
-  B1: battery h1 h3 9
-  S1: switch h4 h6
-  F1: fuse h7 h9 3A
-  P1: lamp j1 j3
+  R1:  resistor b1 b3 10k
+  R2:  resistor-var b4 b6 10k
+  C1:  capacitor b7 b9 100n
+  C2:  ecap b10 b12 100u
+  D4:  varicap d1 d3 33p
+  L1:  inductor d4 d6 10m
+  R3:  photoresistor d7 d9
+  R4:  thermistor d10 d12 10k
+  R5:  thermistor-ntc f1 f3 10k
+  R6:  thermistor-ptc f4 f6
+  R7:  varistor f7 f9 470V
+  X1:  crystal f10 f12 16M
+  D1:  diode h1 h3 1N4148
+  D2:  led h4 h6
+  D3:  zener h7 h9 5V1
+  D5:  schottky h10 h12 1N5819
+  D6:  photodiode j1 j3
+  D7:  diac j4 j6
+  V1:  vsource j7 j9 5
+  V2:  sine j10 j12 1
+  V3:  square l1 l3 5
+  V4:  triangle l4 l6 1
+  I1:  isource l7 l9 20m
+  B1:  battery l10 l12 9
+  PV1: solar n1 n3 0.6
+  S1:  switch n4 n6
+  S2:  switch-nc n7 n9
+  S3:  button n10 n12
+  S4:  button-nc p1 p3
+  S5:  reed p4 p6
+  F1:  fuse p7 p9 3A
+  P1:  lamp p10 p12
+  LS1: speaker r1 r3
+  MK1: mic r4 r6
+  A1:  ammeter r7 r9
+  V5:  voltmeter r10 r12
+  M1:  ohmmeter t1 t3
+  W1:  wattmeter t4 t6
+  G1:  galvanometer t7 t9
+  D8:  detector t10 t12
 notes:
-  - text a.5_2 blue center: 抵抗
+  - text a.4_2 blue center: 01 抵抗
   - text b.7_2 blue center: "R1: resistor b1 b3 10k"
-  - text a.5_5 blue center: コンデンサ
-  - text b.7_5 blue center: "C1: capacitor b4 b6 100n"
-  - text a.5_8 blue center: 電解コンデンサ
-  - text b.7_8 blue center: "C2: ecap b7 b9 100u"
-  - text a.5_11 blue center: コイル
-  - text b.7_11 blue center: "L1: inductor b10 b12 10m"
-  - text c.5_2 blue center: ダイオード
-  - text d.7_2 blue center: "D1: diode d1 d3 1N4148"
-  - text c.5_5 blue center: LED
-  - text d.7_5 blue center: "D2: led d4 d6"
-  - text c.5_8 blue center: ツェナー
-  - text d.7_8 blue center: "D3: zener d7 d9 5V1"
-  - text e.5_2 blue center: 直流電源
-  - text f.7_2 blue center: "V1: vsource f1 f3 5"
-  - text e.5_5 blue center: 交流電源
-  - text f.7_5 blue center: "V2: sine f4 f6 1"
-  - text e.5_8 blue center: 定電流源
-  - text f.7_8 blue center: "I1: isource f7 f9 20m"
-  - text g.5_2 blue center: 電池
-  - text h.7_2 blue center: "B1: battery h1 h3 9"
-  - text g.5_5 blue center: スイッチ
-  - text h.7_5 blue center: "S1: switch h4 h6"
-  - text g.5_8 blue center: ヒューズ
-  - text h.7_8 blue center: "F1: fuse h7 h9 3A"
-  - text i.5_2 blue center: ランプ
-  - text j.7_2 blue center: "P1: lamp j1 j3"
+  - text a.4_5 blue center: 02 可変抵抗
+  - text b.7_5 blue center: "R2: resistor-var b4 b6 10k"
+  - text a.4_8 blue center: 04 コンデンサ
+  - text b.7_8 blue center: "C1: capacitor b7 b9 100n"
+  - text a.4_11 blue center: 05 電解コンデンサ
+  - text b.7_11 blue center: "C2: ecap b10 b12 100u"
+  - text c.4_2 blue center: 06 バリキャップ
+  - text d.7_2 blue center: "D4: varicap d1 d3 33p"
+  - text c.4_5 blue center: 07 コイル
+  - text d.7_5 blue center: "L1: inductor d4 d6 10m"
+  - text c.4_8 blue center: 08 CdS セル
+  - text d.7_8 blue center: "R3: photoresistor d7 d9"
+  - text c.4_11 blue center: 09 サーミスタ
+  - text d.7_11 blue center: "R4: thermistor d10 d12 10k"
+  - text e.4_2 blue center: 10 NTC サーミスタ
+  - text f.7_2 blue center: "R5: thermistor-ntc f1 f3 10k"
+  - text e.4_5 blue center: 11 PTC サーミスタ
+  - text f.7_5 blue center: "R6: thermistor-ptc f4 f6"
+  - text e.4_8 blue center: 12 バリスタ
+  - text f.7_8 blue center: "R7: varistor f7 f9 470V"
+  - text e.4_11 blue center: 13 水晶振動子
+  - text f.7_11 blue center: "X1: crystal f10 f12 16M"
+  - text g.4_2 blue center: 14 ダイオード
+  - text h.7_2 blue center: "D1: diode h1 h3 1N4148"
+  - text g.4_5 blue center: 15 LED
+  - text h.7_5 blue center: "D2: led h4 h6"
+  - text g.4_8 blue center: 16 ツェナー
+  - text h.7_8 blue center: "D3: zener h7 h9 5V1"
+  - text g.4_11 blue center: 17 ショットキー
+  - text h.7_11 blue center: "D5: schottky h10 h12 1N5819"
+  - text i.4_2 blue center: 18 フォトダイオード
+  - text j.7_2 blue center: "D6: photodiode j1 j3"
+  - text i.4_5 blue center: 19 ダイアック
+  - text j.7_5 blue center: "D7: diac j4 j6"
+  - text i.4_8 blue center: 22 直流電源
+  - text j.7_8 blue center: "V1: vsource j7 j9 5"
+  - text i.4_11 blue center: 23 交流電源
+  - text j.7_11 blue center: "V2: sine j10 j12 1"
+  - text k.4_2 blue center: 24 方形波電源
+  - text l.7_2 blue center: "V3: square l1 l3 5"
+  - text k.4_5 blue center: 25 三角波電源
+  - text l.7_5 blue center: "V4: triangle l4 l6 1"
+  - text k.4_8 blue center: 26 定電流源
+  - text l.7_8 blue center: "I1: isource l7 l9 20m"
+  - text k.4_11 blue center: 27 電池
+  - text l.7_11 blue center: "B1: battery l10 l12 9"
+  - text m.4_2 blue center: 28 太陽電池
+  - text n.7_2 blue center: "PV1: solar n1 n3 0.6"
+  - text m.4_5 blue center: 29 スイッチ
+  - text n.7_5 blue center: "S1: switch n4 n6"
+  - text m.4_8 blue center: 30 b 接点スイッチ
+  - text n.7_8 blue center: "S2: switch-nc n7 n9"
+  - text m.4_11 blue center: 31 押しボタン
+  - text n.7_11 blue center: "S3: button n10 n12"
+  - text o.4_2 blue center: 32 b 接点ボタン
+  - text p.7_2 blue center: "S4: button-nc p1 p3"
+  - text o.4_5 blue center: 33 リードスイッチ
+  - text p.7_5 blue center: "S5: reed p4 p6"
+  - text o.4_8 blue center: 34 ヒューズ
+  - text p.7_8 blue center: "F1: fuse p7 p9 3A"
+  - text o.4_11 blue center: 35 ランプ
+  - text p.7_11 blue center: "P1: lamp p10 p12"
+  - text q.4_2 blue center: 36 スピーカー
+  - text r.7_2 blue center: "LS1: speaker r1 r3"
+  - text q.4_5 blue center: 37 マイク
+  - text r.7_5 blue center: "MK1: mic r4 r6"
+  - text q.4_8 blue center: 38 電流計
+  - text r.7_8 blue center: "A1: ammeter r7 r9"
+  - text q.4_11 blue center: 39 電圧計
+  - text r.7_11 blue center: "V5: voltmeter r10 r12"
+  - text s.4_2 blue center: 40 抵抗計
+  - text t.7_2 blue center: "M1: ohmmeter t1 t3"
+  - text s.4_5 blue center: 41 電力計
+  - text t.7_5 blue center: "W1: wattmeter t4 t6"
+  - text s.4_8 blue center: 42 検流計
+  - text t.7_8 blue center: "G1: galvanometer t7 t9"
+  - text s.4_11 blue center: 43 検出器
+  - text t.7_11 blue center: "D8: detector t10 t12"
 style:
   grid: on
 ```
 
-```circuit
-title: 図04 そのほかの 2 端子部品
-parts:
-  R2:  resistor-var b1 b3 10k
-  D4:  varicap b4 b6 33p
-  X1:  crystal b7 b9 16M
-  R3:  photoresistor b10 b12
-  R4:  thermistor d1 d3 10k
-  R5:  thermistor-ntc d4 d6 10k
-  R6:  thermistor-ptc d7 d9
-  R7:  varistor d10 d12 470V
-  D5:  schottky f1 f3 1N5819
-  D6:  photodiode f4 f6
-  D7:  diac f7 f9
-  V3:  square f10 f12 5
-  V4:  triangle h1 h3 1
-  PV1: solar h4 h6 0.6
-  S2:  switch-nc h7 h9
-  S3:  button h10 h12
-  S4:  button-nc j1 j3
-  S5:  reed j4 j6
-  LS1: speaker j7 j9
-  MK1: mic j10 j12
-  A1:  ammeter l1 l3
-  V5:  voltmeter l4 l6
-  M1:  ohmmeter l7 l9
-  W1:  wattmeter l10 l12
-  G1:  galvanometer n1 n3
-  D8:  detector n4 n6
-notes:
-  - text a.5_2 blue center: 可変抵抗
-  - text b.7_2 blue center: "R2: resistor-var b1 b3 10k"
-  - text a.5_5 blue center: バリキャップ
-  - text b.7_5 blue center: "D4: varicap b4 b6 33p"
-  - text a.5_8 blue center: 水晶振動子
-  - text b.7_8 blue center: "X1: crystal b7 b9 16M"
-  - text a.5_11 blue center: CdS セル
-  - text b.7_11 blue center: "R3: photoresistor b10 b12"
-  - text c.5_2 blue center: サーミスタ
-  - text d.7_2 blue center: "R4: thermistor d1 d3 10k"
-  - text c.5_5 blue center: NTC サーミスタ
-  - text d.7_5 blue center: "R5: thermistor-ntc d4 d6 10k"
-  - text c.5_8 blue center: PTC サーミスタ
-  - text d.7_8 blue center: "R6: thermistor-ptc d7 d9"
-  - text c.5_11 blue center: バリスタ
-  - text d.7_11 blue center: "R7: varistor d10 d12 470V"
-  - text e.5_2 blue center: ショットキー
-  - text f.7_2 blue center: "D5: schottky f1 f3 1N5819"
-  - text e.5_5 blue center: フォトダイオード
-  - text f.7_5 blue center: "D6: photodiode f4 f6"
-  - text e.5_8 blue center: ダイアック
-  - text f.7_8 blue center: "D7: diac f7 f9"
-  - text e.5_11 blue center: 方形波電源
-  - text f.7_11 blue center: "V3: square f10 f12 5"
-  - text g.5_2 blue center: 三角波電源
-  - text h.7_2 blue center: "V4: triangle h1 h3 1"
-  - text g.5_5 blue center: 太陽電池
-  - text h.7_5 blue center: "PV1: solar h4 h6 0.6"
-  - text g.5_8 blue center: b 接点スイッチ
-  - text h.7_8 blue center: "S2: switch-nc h7 h9"
-  - text g.5_11 blue center: 押しボタン
-  - text h.7_11 blue center: "S3: button h10 h12"
-  - text i.5_2 blue center: b 接点ボタン
-  - text j.7_2 blue center: "S4: button-nc j1 j3"
-  - text i.5_5 blue center: リードスイッチ
-  - text j.7_5 blue center: "S5: reed j4 j6"
-  - text i.5_8 blue center: スピーカー
-  - text j.7_8 blue center: "LS1: speaker j7 j9"
-  - text i.5_11 blue center: マイク
-  - text j.7_11 blue center: "MK1: mic j10 j12"
-  - text k.5_2 blue center: 電流計
-  - text l.7_2 blue center: "A1: ammeter l1 l3"
-  - text k.5_5 blue center: 電圧計
-  - text l.7_5 blue center: "V5: voltmeter l4 l6"
-  - text k.5_8 blue center: 抵抗計
-  - text l.7_8 blue center: "M1: ohmmeter l7 l9"
-  - text k.5_11 blue center: 電力計
-  - text l.7_11 blue center: "W1: wattmeter l10 l12"
-  - text m.5_2 blue center: 検流計
-  - text n.7_2 blue center: "G1: galvanometer n1 n3"
-  - text m.5_5 blue center: 検出器
-  - text n.7_5 blue center: "D8: detector n4 n6"
-style:
-  grid: on
-```
-
-記号の下の青い行は、その記号を出すために書いた 1 行そのもの
-([注釈](#注釈-notes) で重ねてある)。
+記号の上が部品番号と部品名、下が**その記号を出すために書いた 1 行そのもの**
+([注釈](#注釈-notes) で重ねてある)。番号は上の表と同じ順で、
+表と図を突き合わせるためのもの (フェンスには書かない)。
 
 ### 向きのある部品は、先に書いた番地が + 側
 
@@ -368,7 +361,7 @@ FET は**足の名前がどれも同じ**なので、記号だけ後から差し
 `-d` (デプレッション型。チャネルがつながる) を使う。
 
 ```circuit
-title: 図05 FET の種類
+title: 図04 FET の種類
 parts:
   J1: njfet b2
   J2: pjfet b5
@@ -411,7 +404,7 @@ style:
 `not` と `buffer` は入力が 1 本なので `in`。
 
 ```circuit
-title: 図06 ロジックゲート
+title: 図05 ロジックゲート
 parts:
   U1: and b2 7408
   U2: or b5 7432
@@ -461,7 +454,7 @@ DIP の IC は**足の本数が種類の名前に入っている** (`dip8` か�
 足は番号で指し (`U1.1`)、型番は記号の**中**に出る。
 
 ```circuit
-title: 図07 DIP の IC
+title: 図06 DIP の IC
 parts:
   U1: dip8 c2 NE555
 wires:
@@ -481,7 +474,7 @@ style:
 `+up` にすると帰還を下に回せるので線が交差しにくい。
 
 ```circuit
-title: 図08 オペアンプの向き
+title: 図07 オペアンプの向き
 parts:
   IN:  port b1
   Rb:  resistor b3 e3 100k
@@ -530,7 +523,7 @@ style:
 | `thyristor` / `triac` | `g` (`gate`) |
 
 ```circuit
-title: 図09 2 端子でも足を持つもの
+title: 図08 2 端子でも足を持つもの
 parts:
   P1: potentiometer b1 b3 10k
   T1: thyristor e1 e3
@@ -566,7 +559,7 @@ style:
 (`5V` と `3V3` を同じネットにしてしまうため)。つなぐなら配線を引く。
 
 ```circuit
-title: 図10 1 端子の記号
+title: 図09 1 端子の記号
 parts:
   VCC: vcc a1
   VEE: vee a3
@@ -606,7 +599,7 @@ style:
 略記を持たない。
 
 ```circuit
-title: 図11 略記で書いた図
+title: 図10 略記で書いた図
 parts:
   V1: dc b1 d1 9
   S1: sw b1 b2
@@ -630,7 +623,7 @@ style:
 `R1` は R の添字 1、`Rload` は R の添字 load、`R` はそのまま。
 
 ```circuit
-title: 図12 ID の出方
+title: 図11 ID の出方
 parts:
   R1:    resistor a1 a2
   Rload: resistor a4 a5
@@ -659,7 +652,7 @@ style:
 `$…$` で囲むと**数式の部分集合**が使える。教科書と同じ綴りで書ける。
 
 ```circuit
-title: 図13 ラベルを ID と別に書く
+title: 図12 ラベルを ID と別に書く
 parts:
   E:   sine a1 a2
   SW:  switch a4 a5
@@ -722,7 +715,7 @@ ID は記号の下 (縦置きなら左)、値は反対側に出る。
 「どちらを + と数えるか」を図で決める。
 
 ```circuit
-title: 図14 電流の矢と電圧の符号
+title: 図13 電流の矢と電圧の符号
 parts:
   E: battery b1 d1
   S: switch b1 b2
@@ -768,7 +761,7 @@ style:
 | `\|-` | 先に縦、それから横 |
 
 ```circuit
-title: 図15 配線でつなぐ
+title: 図14 配線でつなぐ
 parts:
   R1: resistor a1 a3
   R2: resistor a5 a7
@@ -802,7 +795,7 @@ wires:
 そのまま引く。
 
 ```circuit
-title: 図16 斜めに置く
+title: 図15 斜めに置く
 parts:
   IN:  port a1
   R1:  resistor a1 b3
@@ -834,7 +827,7 @@ style:
 | 書き出し | `- source 番地 [色や大きさ]` | フェンスの中身そのもの |
 
 ```circuit
-title: 図17 注釈
+title: 図16 注釈
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
@@ -862,7 +855,7 @@ style:
 **その番地にも何か置いてあるとき**は、どちらを取ったかをお知らせで伝える。
 
 ```circuit
-title: 図18 印
+title: 図17 印
 parts:
   R1: resistor a1 a2 10k
   C1: capacitor a4 b4 100n
@@ -891,7 +884,7 @@ style:
 同じ番地を 2 回書くと、その 1 マスだけを囲む。
 
 ```circuit
-title: 図19 枠
+title: 図18 枠
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
@@ -920,7 +913,7 @@ style:
 起点と終点が同じところだと向きが決まらないので、行番号つきで返る。
 
 ```circuit
-title: 図20 指し棒
+title: 図19 指し棒
 parts:
   R1: resistor a1 a2 10k
   C1: capacitor a4 b4 100n
@@ -971,7 +964,7 @@ TeX に組ませるので、どちらでも同じ字が出る。
 1 行しかない `text` に書いても効かないので、書いたら行番号つきで返る。
 
 ```circuit
-title: 図21 字の大きさ
+title: 図20 字の大きさ
 parts:
   R1: resistor a1 a2 10k
 notes:
@@ -993,7 +986,7 @@ style:
 寄せは、番地を字の左端・真ん中・右端のどこにするかを決める。
 
 ```circuit
-title: 図22 寄せと太字
+title: 図21 寄せと太字
 parts:
   R1: resistor a1 a2 10k
 notes:
@@ -1034,7 +1027,7 @@ style:
 | `loose` | 字の注釈と同じ | 1 行ずつ指しながら説明する |
 
 ```circuit
-title: 図23 行送り
+title: 図22 行送り
 parts:
   R1: resistor a1 a2 10k
 notes:
@@ -1074,7 +1067,7 @@ style:
 指し棒で描くとき — に使う。
 
 ```circuit
-title: 図24 注釈の色
+title: 図23 注釈の色
 parts:
   R1: resistor a1 a3
   R2: resistor a4 a6
@@ -1247,7 +1240,7 @@ style:
 (色は 1 つで、点だけを薄めて描いている)。
 
 ```circuit
-title: 図25 グリッド
+title: 図24 グリッド
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
@@ -1280,7 +1273,7 @@ style:
 番地を読みながら説明するときに字を大きくする。
 
 ```circuit
-title: 図26 グリッドの字の大きさと色
+title: 図25 グリッドの字の大きさと色
 parts:
   R1: resistor a1 a3 10k
   C1: capacitor a3 c3 100n
@@ -1310,7 +1303,7 @@ style:
 `stamp: on` にすると、その図を組んだ処理系の版が右下に出る。
 
 ```circuit
-title: 図27 版の刻印
+title: 図26 版の刻印
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
