@@ -54,20 +54,27 @@ ID は記号の下 (縦置きなら左)、値は反対側に出る。
 ```circuit
 title: 図02 ラベルを ID と別に書く
 parts:
-  E:  sine b1 d1 l=$\dot{E}$
-  SW: switch b1 b2 l=$\mathrm{SW}$
-  Z:  resistor b2 b3 l=$\dot{Z}_L$
-  R:  resistor b3 d3 l=RL
-wires:
-  - d1 -- d3
+  E:   sine a1 a2
+  SW:  switch a4 a5
+  Z:   resistor a7 a8
+  R:   resistor a10 a11
+  E1:  sine c1 c2 l=$\dot{E}$
+  SW1: switch c4 c5 l=$\mathrm{SW}$
+  Z1:  resistor c7 c8 l=$\dot{Z}_L$
+  R1:  resistor c10 c11 l=RL
 notes:
-  - source a5 blue
+  - text a.7_1 blue left: ラベル無し (ID がそのまま出る)
+  - text c.7_1 blue left: ラベル有り (図に出る字だけが変わる)
+  - source a13 blue
 style:
   grid: on
 ```
 
+上の段がラベル無し、下の段が同じ部品にラベルを書いたもの。
+
 | 書いたもの | 図に出るもの |
 | --- | --- |
+| (ラベル無しの ID `SW`) | S_W (ID の規則どおり添字になる) |
 | `l=$\dot{E}$` | Ė (フェーザの点) |
 | `l=$\mathrm{SW}$` | SW (立体。添字にならない) |
 | `l=$\dot{Z}_L$` | Ż_L (点と添字) |

@@ -160,6 +160,11 @@ describe('generateTex', () => {
     expect(generate('parts:', '  C1: capacitor a1 c1').tex).not.toContain('voltage/distance');
   });
 
+  // 符号は素子の脇でよいが、字まで記号にくっつくと読みにくい。字だけ離す。
+  test('holds the voltage label off the symbol', () => {
+    expect(generate('parts:', '  C1: capacitor a1 c1 v=vC').tex).toContain('voltage/american label distance=1.4');
+  });
+
   test('draws the same arrows in the tex it writes out', () => {
     const tex = generateLatex('parts:', '  R1: resistor a1 a3 i=i1').tex;
 

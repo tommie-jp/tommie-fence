@@ -143,10 +143,13 @@ const headerOf = (
   // グラウンドがあって、線が太くて棒が潰れるときだけ書く
   // (図に入る書き方を無条件には増やさない。約束 6)。
   ...(groundWidening > 1 ? [`\\ctikzset{grounds/scale=${num(groundWidening)}}`] : []),
-  // 電圧の + と − を素子側へ寄せる。既定のままだと 2 マスの部品では端に付き、
-  // どの素子の電圧か読めない。**電圧があるときだけ**書く (約束 6)。
-  // 値は実機で見て決めた (1.0 と手元の LaTeX で同じ形になることも確認)。
-  ...(hasVoltage ? ['\\ctikzset{voltage/distance from node=.7}'] : []),
+  // 電圧の + と − を素子側へ寄せ、字のほうは記号から少し離す。既定のままだと
+  // 符号が 2 マス先の端に付き (どの素子の電圧か読めない)、字は記号にくっつく。
+  // **電圧があるときだけ**書く (約束 6)。どちらの値も実機で見て決めた
+  // (1.0 と手元の LaTeX で同じ形になることも確認)。
+  ...(hasVoltage
+    ? ['\\ctikzset{voltage/distance from node=.7}', '\\ctikzset{voltage/american label distance=1.4}']
+    : []),
 ];
 
 const FOOTER = ['\\end{circuitikz}', '\\end{document}'];
