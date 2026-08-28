@@ -561,13 +561,27 @@ describe('フェンスの書き出し (source)', () => {
     expect(circuit.notes).toHaveLength(1);
   });
 
-  // 書き出すのは書き手の書いた YAML そのもの。TeX が記法として読む字が
-  // 混じることがあるので、書き出しだけ落として**その字のある行**を返す。
-  test('drops the note and points at the line TeX could not be trusted with', () => {
+  // TeX が記法として読む字 (\ $ { } ^) は通すのではなく綴り直すので、
+  // ラベルの数式 (`l=$\dot{E}$`) を書いたフェンスも書き出せる。
+  test('keeps a source note even when the fence carries TeX notation', () => {
+    const { circuit, errors } = build(
+      'parts:',
+      '  R1: resistor a1 a3 l=$\\dot{E}$',
+      'notes:',
+      '  - source b1',
+    );
+
+    expect(errors).toEqual([]);
+    expect(circuit.notes).toHaveLength(1);
+  });
+
+  // 書き出しに使えない字 (フォントに無い絵文字など) は今までどおり落として、
+  // **その字のある行**を返す。
+  test('drops the note and points at the line it cannot write out', () => {
     const { circuit, errors } = build(
       'parts:',
       '  R1: resistor a1 a3',
-      '# \\usepackage{}',
+      '# 😀',
       'notes:',
       '  - source b1',
     );
@@ -575,12 +589,6 @@ describe('フェンスの書き出し (source)', () => {
     expect(circuit.notes).toEqual([]);
     expect(errors[0]?.line).toBe(3);
     expect(errors[0]?.message).toContain('書き出せない字');
-  });
-
-  test('draws the circuit even when the fence cannot be written out', () => {
-    const { circuit } = build('parts:', '  R1: resistor a1 a3', '# $x$', 'notes:', '  - source b1');
-
-    expect(circuit.parts).toHaveLength(1);
   });
 });
 

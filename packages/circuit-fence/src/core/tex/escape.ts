@@ -51,11 +51,14 @@ const NOTE_DRAWABLE = new RegExp(`^[${ASCII_DRAWABLE}${UNICODE_DRAWABLE}:]*$`, '
  * YAML とフェンスの記法に出てくる字 (`` ` `` `|` `"` `'` `#` `,` `=` `[` `]`
  * `!` `?` `;` `<` `>` `*` `@` `&` `~`) を足してある。
  *
- * `\` `$` `{` `}` `^` は**足さない**。TeX が自分の記法として読む字を
- * 通さないという約束 (CLAUDE.md 3) は、書き出しでも動かさない。
- * これらを書いたフェンスは、書き出しだけ落として行番号つきで理由を返す。
+ * TeX が自分の記法として読む字 (`\` `$` `{` `}` `^`) も足してある。ただし
+ * **通すのではなく綴り直す** (`\` → `\textbackslash{}` など。escapeTexListing)。
+ * 約束 3 が禁じているのは「ユーザーの字から任意の TeX を作らせること」なので、
+ * 一文字ずつ無害な綴りに直すこの道はその狙いを崩さない。
+ * これを足すまでは、ラベルの数式 (`l=$\dot{E}$`) を書いたフェンスだけ
+ * 図に書き出せなかった。
  */
-const SOURCE_EXTRA = ':`|"\'#,=\\[\\]!?;<>*@&~';
+const SOURCE_EXTRA = ':`|"\'#,=\\[\\]!?;<>*@&~\\\\$${}^';
 const SOURCE_DRAWABLE = new RegExp(`^[${ASCII_DRAWABLE}${UNICODE_DRAWABLE}${SOURCE_EXTRA}]*$`, 'u');
 
 const DRAWABLE: Readonly<Record<TexTarget, RegExp>> = {
@@ -99,7 +102,10 @@ export const escapeTex = (text: string): string => text.replace(/[_%]/g, (char) 
  */
 const LISTING_ESCAPES: Record<string, string> = {
   _: '\\_', '%': '\\%', '&': '\\&', '#': '\\#', '~': '\\textasciitilde{}', ' ': '\\ ',
+  // TeX の記法そのものの字。**通さずに綴り直す**ので、書き手の字から
+  // 命令が組み上がることはない (約束 3)。
+  '\\': '\\textbackslash{}', $: '\\$', '{': '\\{', '}': '\\}', '^': '\\textasciicircum{}',
 };
 
 export const escapeTexListing = (text: string): string =>
-  text.replace(/[_%&#~ ]/g, (char) => LISTING_ESCAPES[char] ?? char);
+  text.replace(/[_%&#~ \\$${}^]/g, (char) => LISTING_ESCAPES[char] ?? char);

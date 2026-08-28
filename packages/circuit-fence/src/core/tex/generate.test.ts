@@ -153,6 +153,13 @@ describe('generateTex', () => {
     expect(generate('parts:', '  C1: capacitor a1 c1 v=vC').tex).toContain('v^>=$v_{C}$');
   });
 
+  // 既定のままだと + と − が素子から離れて出る (2 マスの部品では端に付く)。
+  // 教科書の図は記号のすぐ脇なので、素子側へ寄せる。実機で値を見て決めた。
+  test('pulls the voltage poles toward the symbol, only when a voltage is drawn', () => {
+    expect(generate('parts:', '  C1: capacitor a1 c1 v=vC').tex).toContain('voltage/distance from node=.7');
+    expect(generate('parts:', '  C1: capacitor a1 c1').tex).not.toContain('voltage/distance');
+  });
+
   test('draws the same arrows in the tex it writes out', () => {
     const tex = generateLatex('parts:', '  R1: resistor a1 a3 i=i1').tex;
 

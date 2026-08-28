@@ -105,4 +105,14 @@ describe('escapeTexListing', () => {
   test('leaves the characters a listing needs alone', () => {
     expect(escapeTexListing('- a3 -| a4 "x" [1]')).toContain('-|');
   });
+
+  // ラベルの数式 (`l=$\dot{E}$`) を書いたフェンスも、そのまま図に書き出したい。
+  // 通すのではなく**綴り直す**ので、TeX の記法として読まれることはない (約束 3)。
+  test('spells out the math a label carries', () => {
+    expect(escapeTexListing('l=$\\dot{E}$')).toBe('l=\\$\\textbackslash{}dot\\{E\\}\\$');
+  });
+
+  test('spells out the hat too', () => {
+    expect(escapeTexListing('a^b')).toBe('a\\textasciicircum{}b');
+  });
 });

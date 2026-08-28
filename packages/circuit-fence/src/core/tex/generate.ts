@@ -125,6 +125,7 @@ const headerOf = (
   needsArrows: boolean,
   colors: readonly string[],
   groundWidening: number,
+  hasVoltage: boolean,
 ): string[] => [
   '\\usepackage{circuitikz}',
   // オペアンプの ± をアンカーからずらして置くのに要る。
@@ -142,6 +143,10 @@ const headerOf = (
   // グラウンドがあって、線が太くて棒が潰れるときだけ書く
   // (図に入る書き方を無条件には増やさない。約束 6)。
   ...(groundWidening > 1 ? [`\\ctikzset{grounds/scale=${num(groundWidening)}}`] : []),
+  // 電圧の + と − を素子側へ寄せる。既定のままだと 2 マスの部品では端に付き、
+  // どの素子の電圧か読めない。**電圧があるときだけ**書く (約束 6)。
+  // 値は実機で見て決めた (1.0 と手元の LaTeX で同じ形になることも確認)。
+  ...(hasVoltage ? ['\\ctikzset{voltage/distance from node=.7}'] : []),
 ];
 
 const FOOTER = ['\\end{circuitikz}', '\\end{document}'];
@@ -600,6 +605,7 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
     circuit.parts.some((part) => part.type === 'ground')
       ? groundScale(style.wireWidth ?? DEFAULT_WIRE_WIDTH)
       : 1,
+    circuit.parts.some((part) => part.kind === 'two-terminal' && part.voltage !== null),
   );
   const cells = cellsOf(circuit);
   const byId = new Map(circuit.parts.map((part) => [part.id, part]));
