@@ -57,7 +57,7 @@ style:             # 任意。見た目
   `thyristor` `triac`
 - 電源 `vsource` `sine` `square` `triangle` `isource` `battery` `solar`
 - 開閉・出力・計器 `switch` `switch-nc` `button` `button-nc` `reed` `fuse`
-  `lamp` `speaker` `mic` `ammeter` `voltmeter` `ohmmeter` `wattmeter`
+  `lamp` `speaker` `mic` `short` `ammeter` `voltmeter` `ohmmeter` `wattmeter`
   `galvanometer` `detector`
 - 1 端子 `port` `ground` `vcc` `vee`
 - 能動 `npn` `pnp` `nigbt` `pigbt` `nmos` `pmos` `njfet` `pjfet`

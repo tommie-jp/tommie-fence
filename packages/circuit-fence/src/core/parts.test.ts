@@ -204,6 +204,12 @@ describe('記事によく出る部品', () => {
     }
   });
 
+  // 素の線。記号を持たないので、電流の矢 (i=) を線の途中に置くために使う。
+  test('carries a plain wire that can hold a current arrow', () => {
+    expect(lookupPartType('short')?.kind).toBe('two-terminal');
+    expect(lookupPartType('short')?.symbol).toBe('short');
+  });
+
   test('draws every meter as one circle with one letter in it', () => {
     // 回路図の慣習は丸に字だけ。circuitikz の ammeter / voltmeter は指針の矢が
     // 入り、ohmmeter は Ω が**太字の数式**でフォントが無くて落ちる (実測)。

@@ -346,6 +346,13 @@ export const PART_TYPES = {
   galvanometer: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${GALVANO}$}`], ...NO_UNIT },
   detector: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${DETECT}$}`], ...NO_UNIT },
 
+  /**
+   * 素の線。記号を描かず、両端をつなぐだけ。電流の矢 (`i=`) を線の途中に
+   * 置きたいときに使う (「電源から出る電流」のように、どの素子にも属さない矢)。
+   * 値は持たない — 線そのものに測るものが無い。
+   */
+  short: { kind: 'two-terminal', symbol: 'short', ...NO_UNIT },
+
   // 記号
   port: { kind: 'one-terminal', symbol: 'ocirc', idLabel: 'beside', ...NO_UNIT },
   ground: { kind: 'one-terminal', symbol: 'ground', ...NO_UNIT },
