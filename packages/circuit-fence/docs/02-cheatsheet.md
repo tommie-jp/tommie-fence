@@ -127,7 +127,7 @@ style:             # 任意。見た目
 | 項目 | 値 | 既定 |
 | --- | --- | --- |
 | `theme` | `auto` / `light` / `dark` / `mono` | `auto` |
-| `grid` | `on` / `off` | `off` |
+| `grid` | `on` / `off` [大きさ] [色] | `off` |
 | `grid-to` | 番地 | 使っている範囲 |
 | `pitch` | 0.5〜5 (cm) | `2` |
 | `standard` | `american` / `european` | `american` |
@@ -135,6 +135,9 @@ style:             # 任意。見た目
 | `width` | 120〜4000 (ドット) | 読み手の字に合わせる |
 | `stamp` | `on` / `off` | `off` |
 | `ink-color` / `paper-color` / `grid-color` | `"#rgb"` / `"#rrggbb"` | テーマの色 |
+
+`grid: on large red` のように、`on` のあとへ行英字と列数字の大きさと色を
+順不同で書ける (語は注釈と同じ並び。変わるのは字だけで、点は `grid-color`)。
 
 テーマだけなら `style: dark` の 1 行でよい。
 **色は `"…"` で囲む** (`#` から先は YAML のコメント)。

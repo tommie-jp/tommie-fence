@@ -13,6 +13,7 @@ import type {
 import {
   drawNote, drawStamp, drawTitle, listingOf, noteColorLines, noteNeeds, noteOverlays,
 } from './drawNotes.ts';
+import { noteFontTex, texColorOf } from '../notes.ts';
 import { escapeTex, hasUnicode } from './escape.ts';
 import { isMathLabel, mathInnerOf, mathLabelTex } from './mathLabel.ts';
 import { num } from './num.ts';
@@ -472,12 +473,18 @@ function drawGrid(
   const dotSize = num(Math.max(0.4, pitch * 0.55));
   const margin = num(pitch * 0.42);
 
+  // 行英字と列数字は読んで数えるものなので、大きさと色を選べる。
+  // 書かなければ既定 (点と同じ色・点より 1 段小さい字) のまま。
+  const labelColor = style.gridLabelColor === null ? 'gray' : texColorOf(style.gridLabelColor);
+  const labelFont = style.gridLabelSize === null ? '\\scriptsize' : noteFontTex(style.gridLabelSize, false);
+  const labelStyle = `${labelColor}, font=${labelFont}`;
+
   const columnLabels = xs.map(
-    (x, col) => `\\node[gray, font=\\scriptsize] at (${num(x)},${margin}) {${col + 1}};`,
+    (x, col) => `\\node[${labelStyle}] at (${num(x)},${margin}) {${col + 1}};`,
   );
   const rowLabels = ys.map(
     (y, row) =>
-      `\\node[gray, font=\\scriptsize, anchor=east] at (-${margin},${num(y)}) {${formatAddress({ row, col: 0 })[0] ?? ''}};`,
+      `\\node[${labelStyle}, anchor=east] at (-${margin},${num(y)}) {${formatAddress({ row, col: 0 })[0] ?? ''}};`,
   );
 
   return [
@@ -604,7 +611,8 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
     valuesNeedUnicodeFont(circuit) || needs.unicodeFont,
     needs.monoFont,
     needs.arrowTips,
-    noteColorLines(circuit, target),
+    // グリッドの字に選んだ色も宣言に混ぜる (注釈と同じパレットから引く)。
+    noteColorLines(circuit, target, style.grid === true && style.gridLabelColor !== null ? [style.gridLabelColor] : []),
     circuit.parts.some((part) => part.type === 'ground')
       ? groundScale(style.wireWidth ?? DEFAULT_WIRE_WIDTH)
       : 1,

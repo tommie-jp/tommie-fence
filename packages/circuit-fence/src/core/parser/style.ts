@@ -4,6 +4,8 @@ import type { StyleRange } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
 import { NO_POINTS } from './compact.ts';
 import type { Points } from './compact.ts';
+import { NOTE_COLOR_NAMES, NOTE_SIZE_NAMES, isNoteSize, noteColor } from '../notes.ts';
+import type { NoteSize } from '../notes.ts';
 import { THEME_NAMES } from '../render/theme.ts';
 import type { StyleSpec } from '../types.ts';
 
@@ -14,6 +16,8 @@ export const EMPTY_STYLE: StyleSpec = {
   paperColor: null,
   gridColor: null,
   grid: null,
+  gridLabelSize: null,
+  gridLabelColor: null,
   gridTo: null,
   pitch: null,
   standard: null,
@@ -90,6 +94,44 @@ const readFlag = (raw: unknown, key: string, messages: StyleMessage[]): boolean 
   return null;
 };
 
+/**
+ * `grid: on large red` の 1 行。**語は順不同**で、大きさと色は注釈と同じ並び
+ * (書き手が覚えることを増やさない)。書かなければ既定のまま。
+ */
+const readGrid = (
+  raw: unknown,
+  key: string,
+  messages: StyleMessage[],
+): { on: boolean | null; size: NoteSize | null; color: string | null } => {
+  if (typeof raw !== 'string') return { on: readFlag(raw, key, messages), size: null, color: null };
+
+  const [flag, ...words] = raw.trim().split(/\s+/).filter((word) => word.length > 0);
+  const on = readFlag(flag, key, messages);
+  if (on === null) return { on: null, size: null, color: null };
+
+  let size: NoteSize | null = null;
+  let color: string | null = null;
+  for (const word of words) {
+    if (isNoteSize(word)) {
+      size = word;
+      continue;
+    }
+    if (noteColor(word) !== null) {
+      color = word;
+      continue;
+    }
+    messages.push({
+      message:
+        `style の ${key} の ${safeToken(word)} は知りません `
+        + `(大きさ: ${NOTE_SIZE_NAMES.join(' / ')}、色: ${NOTE_COLOR_NAMES.join(' / ')} が使えます)`,
+      key,
+    });
+    return { on, size: null, color: null };
+  }
+
+  return { on, size, color };
+};
+
 const readChoice = (
   raw: unknown,
   key: string,
@@ -121,8 +163,15 @@ function withKey(
       return { ...style, paperColor: color() ?? style.paperColor };
     case 'grid-color':
       return { ...style, gridColor: color() ?? style.gridColor };
-    case 'grid':
-      return { ...style, grid: readFlag(raw, key, messages) ?? style.grid };
+    case 'grid': {
+      const grid = readGrid(raw, key, messages);
+      return {
+        ...style,
+        grid: grid.on ?? style.grid,
+        gridLabelSize: grid.size ?? style.gridLabelSize,
+        gridLabelColor: grid.color ?? style.gridLabelColor,
+      };
+    }
     case 'grid-to': {
       // 番地の名前 (`points:`) も書ける。番地が書ける場所はどこでも同じ。
       const named = typeof raw === 'string' ? points.get(raw) : undefined;

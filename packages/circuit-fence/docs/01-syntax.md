@@ -1187,7 +1187,7 @@ style:
 | `ink-color` | 線と文字の色 (`#rgb` か `#rrggbb`) | テーマの色 |
 | `paper-color` | 端子の白丸など、地の色で塗るところ | テーマの色 |
 | `grid-color` | グリッドの色 (点はこの色を薄めて描く) | テーマの色 |
-| `grid` | `on` / `off` | `off` |
+| `grid` | `on` / `off` [大きさ] [色] | `off` |
 | `grid-to` | グリッドを伸ばす先の番地 (`e12`) | 使っている範囲 |
 | `pitch` | 1 マスの大きさ (cm、0.5〜5) | `2` |
 | `standard` | `american` / `european` | `american` |
@@ -1266,6 +1266,30 @@ style:
 `grid-to` を書くと、使っていない範囲までグリッドが伸びる。
 部品を動かす先が見えるので、番地を書き換えながら組むときに使う。
 
+#### 行英字と列数字の大きさ・色
+
+`on` のあとに**大きさと色**を書ける (`grid: on large red`)。
+語は注釈と同じ並びで、**順不同**。書かなければ既定のまま。
+
+| 語 | 使える値 |
+| --- | --- |
+| 大きさ | `tiny` / `small` / `normal` / `large` / `huge` |
+| 色 | `red` / `blue` / `green` / `orange` / `ink` |
+
+変わるのは**字だけ**で、点は `grid-color` のまま。図を大きく貼るときや、
+番地を読みながら説明するときに字を大きくする。
+
+```circuit
+title: 図26 グリッドの字の大きさと色
+parts:
+  R1: resistor a1 a3 10k
+  C1: capacitor a3 c3 100n
+notes:
+  - source a5 blue
+style:
+  grid: on large red
+```
+
 資料に貼る図では `grid: off` に戻してもよい。この文法リファレンスの図は、
 どの番地に何を置いたかを数えられるように付けたままにしてある。
 
@@ -1286,7 +1310,7 @@ style:
 `stamp: on` にすると、その図を組んだ処理系の版が右下に出る。
 
 ```circuit
-title: 図26 版の刻印
+title: 図27 版の刻印
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k

@@ -20,6 +20,33 @@ describe('validateStyle', () => {
     expect(valueOf({ grid: false })).toMatchObject({ grid: false });
   });
 
+  // グリッドの行英字と列数字は、図の上で読んで数えるもの。図に合わせて
+  // 大きさと色を選べる。語は注釈と同じ並びを使う (覚えることを増やさない)。
+  test('reads the size and colour written after the grid switch', () => {
+    expect(valueOf({ grid: 'on large red' })).toMatchObject({
+      grid: true,
+      gridLabelSize: 'large',
+      gridLabelColor: 'red',
+    });
+  });
+
+  test('reads those words in any order', () => {
+    expect(valueOf({ grid: 'on red large' })).toMatchObject({ gridLabelSize: 'large', gridLabelColor: 'red' });
+  });
+
+  test('leaves the size and colour unset when only the switch is written', () => {
+    expect(valueOf({ grid: 'on' })).toMatchObject({ grid: true, gridLabelSize: null, gridLabelColor: null });
+  });
+
+  test('names the word it does not know and lists the ones it does', () => {
+    const messages = messagesOf({ grid: 'on enormous' });
+
+    expect(messages[0]?.key).toBe('grid');
+    expect(messages[0]?.message).toContain('enormous');
+    expect(messages[0]?.message).toContain('large');
+    expect(messages[0]?.message).toContain('red');
+  });
+
   test('reads how far the grid should reach', () => {
     expect(valueOf({ 'grid-to': 'e12' })).toMatchObject({ gridTo: { row: 4, col: 11 } });
   });

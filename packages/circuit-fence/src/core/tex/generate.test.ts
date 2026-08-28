@@ -175,6 +175,21 @@ describe('generateTex', () => {
     expect(generate('parts:', '  R1: resistor a1 a3 1/2W').tex).toContain('a^=$\\mathrm{1/2W}$');
   });
 
+  // グリッドの行英字と列数字は読んで数えるもの。図に合わせて選べる。
+  test('draws the grid labels in the size and colour the style asked for', () => {
+    const tex = generate('parts:', '  R1: resistor a1 a3', 'style:', '  grid: on large red').tex;
+
+    expect(tex).toContain('circuitnotered, font=\\LARGE');
+    // 点のほうは grid-color のまま (字だけを選ぶ)。
+    expect(tex).toContain('\\fill[gray, opacity=');
+  });
+
+  test('leaves the grid labels as they were when no word is written', () => {
+    const tex = generate('parts:', '  R1: resistor a1 a3', 'style:', '  grid: on').tex;
+
+    expect(tex).toContain('gray, font=\\scriptsize');
+  });
+
   test('scales the coordinates with the pitch', () => {
     const tex = generateTex(
       buildCircuit(parseFence('parts:\n  R1: resistor a1 b3\n')!.doc!).circuit,

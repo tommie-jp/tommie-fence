@@ -361,8 +361,12 @@ const STAMP_COLOR = 'gray';
  * 注釈に使う色の宣言。**実際に使う色だけ**書く。
  * 名前も値もパレットの表から作るので、書き手の字は TeX に入らない (約束 3)。
  */
-export function noteColorLines(circuit: Circuit, target: TexTarget): string[] {
-  const names = new Set<string>();
+export function noteColorLines(
+  circuit: Circuit,
+  target: TexTarget,
+  extra: readonly string[] = [],
+): string[] {
+  const names = new Set<string>(extra);
   for (const note of circuit.notes) {
     // 図形として描く注釈は、どちらの的でも TeX が色を塗る。
     if (note.kind === 'circle' || note.kind === 'box' || note.kind === 'arrow') names.add(note.color);

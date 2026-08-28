@@ -150,6 +150,13 @@ export type StyleSpec = {
   readonly gridColor: string | null;
   /** 部品を置ける位置を見せるか。 */
   readonly grid: boolean | null;
+  /**
+   * グリッドの行英字と列数字の大きさ。null は既定 (点より 1 段小さい字)。
+   * 語は注釈と同じ並びを使う (書き手が覚えることを増やさない)。
+   */
+  readonly gridLabelSize: NoteSize | null;
+  /** 同じく色。null は `grid-color` (点と同じ色) のまま。 */
+  readonly gridLabelColor: string | null;
   /** グリッドを描く範囲の右下。省略時は使っている番地の範囲。 */
   readonly gridTo: Address | null;
   readonly pitch: number | null;
