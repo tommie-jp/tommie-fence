@@ -139,6 +139,14 @@ describe('generateTex', () => {
     expect(tex).toContain('\\usepackage{fontspec}');
   });
 
+  // 素の線は記号を描かないので、名前を出す先が無い。ID は書かない。
+  test('leaves the plain wire without a name in the figure', () => {
+    const tex = generate('parts:', '  SH: short a1 a3 i=I').tex;
+
+    expect(tex).toContain('to[short, i>^=$I$]');
+    expect(tex).not.toContain('l_=$S_{H}$');
+  });
+
   test('draws the current arrow from the address written first', () => {
     // `i>` は from → to の向き。番地を入れ替えれば矢も返る (実機で確認)。
     expect(generate('parts:', '  R1: resistor a1 a3 i=i').tex).toContain('i>^=$i$');

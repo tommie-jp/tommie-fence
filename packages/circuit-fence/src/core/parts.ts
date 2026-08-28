@@ -118,6 +118,11 @@ export type PartType = {
    * 数式モードに置くので、単位の綴りは必ず立体にする
    * (`F` のままだと変数の F になって斜体で出る)。
    */
+  /**
+   * 図に ID を出さないか。記号を描かない種類 (`short`) だけ true —
+   * 名前を出す先が無いので、書くとただの浮いた字になる。
+   */
+  readonly nameless?: boolean;
   readonly unitTex: string | null;
   /**
    * 同じ単位の siunitx での綴り。書き出す `.tex` でだけ使う。
@@ -351,7 +356,7 @@ export const PART_TYPES = {
    * 置きたいときに使う (「電源から出る電流」のように、どの素子にも属さない矢)。
    * 値は持たない — 線そのものに測るものが無い。
    */
-  short: { kind: 'two-terminal', symbol: 'short', ...NO_UNIT },
+  short: { kind: 'two-terminal', symbol: 'short', nameless: true, ...NO_UNIT },
 
   // 記号
   port: { kind: 'one-terminal', symbol: 'ocirc', idLabel: 'beside', ...NO_UNIT },

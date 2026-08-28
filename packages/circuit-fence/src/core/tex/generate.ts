@@ -507,8 +507,11 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
   // 記号だけでは見分けが付かない種類は、ID の下にもう 1 行書く (`l2_` は
   // 2 行を組んで下に置く circuitikz の書き方。`and` が行の区切り)。
   // ラベルを書いてあれば図ではそちらを出す。配線から指す名前もネット名も ID のまま。
-  const label = labelOf(part.label ?? part.id, part.id);
-  options.push(type?.mark === undefined ? `l_=${label}` : `l2_=${label} and ${type.mark}`);
+  // 記号を描かない種類 (素の線) は、名前を出す先が無いので書かない。
+  if (type?.nameless !== true) {
+    const label = labelOf(part.label ?? part.id, part.id);
+    options.push(type?.mark === undefined ? `l_=${label}` : `l2_=${label} and ${type.mark}`);
+  }
   if (part.value !== null) options.push(`a^=${annotationOf(part.value, unitOf(part.type), target)}`);
   // 電流の矢は from → to、電圧の + は from の側。**どちらも極性と同じ規則**
   // (先に書いた番地が + 側) なので、書き手が覚えることは増えない。
