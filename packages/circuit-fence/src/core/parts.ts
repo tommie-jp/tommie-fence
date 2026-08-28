@@ -203,6 +203,8 @@ const HENRY = '\\mathrm{H}';
 const VOLT = '\\mathrm{V}';
 const AMPERE = '\\mathrm{A}';
 const WATT = '\\mathrm{W}';
+const GALVANO = '\\mathrm{G}';
+const DETECT = '\\mathrm{D}';
 const HERTZ = '\\mathrm{Hz}';
 
 const SI_OHM = '\\ohm';
@@ -339,6 +341,10 @@ export const PART_TYPES = {
   // 電力計。二電力計法のように 2 つ並べて書くので、ID の添字で見分ける
   // (`W1` `W2`)。W は普通の太さの立体なので、Ω と違って字形は壊れない (実測)。
   wattmeter: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${WATT}$}`], ...NO_UNIT },
+  // 検流計と検出器。ブリッジ回路の平衡を見る計器で、値は持たない
+  // (振れが零かどうかしか読まない)。G は直流のブリッジ、D は交流のブリッジ。
+  galvanometer: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${GALVANO}$}`], ...NO_UNIT },
+  detector: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${DETECT}$}`], ...NO_UNIT },
 
   // 記号
   port: { kind: 'one-terminal', symbol: 'ocirc', idLabel: 'beside', ...NO_UNIT },

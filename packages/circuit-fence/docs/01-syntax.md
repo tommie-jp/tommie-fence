@@ -162,6 +162,8 @@ style:
 | `voltmeter` | 電圧計 | (なし) | `V5: voltmeter k5 k7` |
 | `ohmmeter` | 抵抗計 | (なし) | `M1: ohmmeter k9 k11` |
 | `wattmeter` | 電力計 | (なし) | `W1: wattmeter k13 k15` |
+| `galvanometer` | 検流計 | (なし) | `G1: galvanometer m1 m3` |
+| `detector` | 検出器 (交流ブリッジ) | (なし) | `D8: detector m5 m7` |
 
 ```circuit
 title: 図03 使える部品
@@ -226,6 +228,8 @@ parts:
   V5:  voltmeter k4 k6
   M1:  ohmmeter k7 k9
   W1:  wattmeter k10 k12
+  G1:  galvanometer m1 m3
+  D8:  detector m4 m6
 notes:
   - text a.7_1 blue: "R2: resistor-var a1 a3 10k"
   - text a.7_4 blue: "D4: varicap a4 a6 33p"
@@ -251,6 +255,8 @@ notes:
   - text k.7_4 blue: "V5: voltmeter k4 k6"
   - text k.7_7 blue: "M1: ohmmeter k7 k9"
   - text k.7_10 blue: "W1: wattmeter k10 k12"
+  - text m.7_1 blue: "G1: galvanometer m1 m3"
+  - text m.7_4 blue: "D8: detector m4 m6"
 style:
   grid: on
 ```
@@ -286,9 +292,9 @@ circuitikz の記号をそのまま使わず、**回路図の慣習の形に寄�
   丸の中身を**縦置き前提で 90 度回して**描くので、横に引くと − が縦棒になり、
   波形も縦に寝る。丸だけの記号にして、+ と − や波形は自分で描いている。
   **波形は図に対していつも水平**なので、縦にも斜めにも置ける
-- **計器 4 つ** (`ammeter` / `voltmeter` / `ohmmeter` / `wattmeter`) — **丸に字だけ**で描く。
+- **計器 6 つ** (`ammeter` / `voltmeter` / `ohmmeter` / `wattmeter` / `galvanometer` / `detector`) — **丸に字だけ**で描く。
   circuitikz の電流計・電圧計は丸に指針の矢が入り、抵抗計は Ω が太字の数式で
-  フォントが無くて**プロセスごと落ちる**。矢の無い記号に字を渡して 4 つ揃えた
+  フォントが無くて**プロセスごと落ちる**。矢の無い記号に字を渡して 6 つ揃えた
 - **可変抵抗** (`resistor-var`) — 矢は右上を向く。プレビューの circuitikz だけ
   矢先が左下を向くので、そちらでだけ上下を返している (出る図は書き出しと同じ)
 - **NTC / PTC サーミスタ** — 記号の中の θ が小さすぎて字形が無く `#` で出る。

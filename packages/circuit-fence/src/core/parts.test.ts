@@ -199,7 +199,7 @@ describe('記事によく出る部品', () => {
   });
 
   test('carries the meters and the parts that make a sound', () => {
-    for (const name of ['ammeter', 'voltmeter', 'ohmmeter', 'wattmeter', 'speaker', 'mic']) {
+    for (const name of ['ammeter', 'voltmeter', 'ohmmeter', 'wattmeter', 'galvanometer', 'detector', 'speaker', 'mic']) {
       expect(lookupPartType(name)?.kind).toBe('two-terminal');
     }
   });
@@ -213,6 +213,8 @@ describe('記事によく出る部品', () => {
     expect(lookupPartType('voltmeter')?.options).toEqual(['t={$\\mathrm{V}$}']);
     expect(lookupPartType('ohmmeter')?.options).toEqual(['t={$\\Omega$}']);
     expect(lookupPartType('wattmeter')?.options).toEqual(['t={$\\mathrm{W}$}']);
+    expect(lookupPartType('galvanometer')?.options).toEqual(['t={$\\mathrm{G}$}']);
+    expect(lookupPartType('detector')?.options).toEqual(['t={$\\mathrm{D}$}']);
   });
 
   test('draws the transformer with the core the usual symbol carries', () => {
