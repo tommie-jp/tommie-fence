@@ -1008,6 +1008,30 @@ style:
 
 部品を指した端は記号の縁で止まり、番地を指した端はその交点まで伸びる。
 
+### 直線 — `- line 起点 終点 [色]`
+
+指し棒と同じ書き方で、**先端の矢が付かない**。表の罫線や区切りのように、
+向きを持たない線を引くためのもの。両端の決まりも指し棒と同じで、
+部品を指した端は記号の縁で止まり、番地を指した端はその交点まで伸びる。
+
+```circuit
+title: 図20 直線
+parts:
+  R1: resistor b2 b4 10k
+  R2: resistor d2 d4 4.7k
+notes:
+  - line a1 a5 ink
+  - line c1 c5 ink
+  - line e1 e5 ink
+  - text a.5_1 blue left: 罫線で仕切る
+  - source a7 blue
+style:
+  grid: on
+```
+
+枠 (`box`) は角の番地の外へ余白を取るので、隣り合う枠は近づけると重なる。
+**線には余白が無い**ので、細かく仕切りたいときはこちらを使う。
+
 ### 字 — `- text 番地 [色や大きさ]: 文字`
 
 番地が字の**左端**になる (寄せを書けば真ん中や右端にできる)。
@@ -1042,7 +1066,7 @@ TeX に組ませるので、どちらでも同じ字が出る。
 1 行しかない `text` に書いても効かないので、書いたら行番号つきで返る。
 
 ```circuit
-title: 図20 字の大きさ
+title: 図21 字の大きさ
 parts:
   R1: resistor a1 a2 10k
 notes:
@@ -1064,7 +1088,7 @@ style:
 寄せは、番地を字の左端・真ん中・右端のどこにするかを決める。
 
 ```circuit
-title: 図21 寄せと太字
+title: 図22 寄せと太字
 parts:
   R1: resistor a1 a2 10k
 notes:
@@ -1105,7 +1129,7 @@ style:
 | `loose` | 字の注釈と同じ | 1 行ずつ指しながら説明する |
 
 ```circuit
-title: 図22 行送り
+title: 図23 行送り
 parts:
   R1: resistor a1 a2 10k
 notes:
@@ -1145,7 +1169,7 @@ style:
 指し棒で描くとき — に使う。
 
 ```circuit
-title: 図23 注釈の色
+title: 図24 注釈の色
 parts:
   R1: resistor a1 a3
   R2: resistor a4 a6
@@ -1318,7 +1342,7 @@ style:
 (色は 1 つで、点だけを薄めて描いている)。
 
 ```circuit
-title: 図24 グリッド
+title: 図25 グリッド
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
@@ -1351,7 +1375,7 @@ style:
 番地を読みながら説明するときに字を大きくする。
 
 ```circuit
-title: 図25 グリッドの字の大きさと色
+title: 図26 グリッドの字の大きさと色
 parts:
   R1: resistor a1 a3 10k
   C1: capacitor a3 c3 100n
@@ -1381,7 +1405,7 @@ style:
 `stamp: on` にすると、その図を組んだ処理系の版が右下に出る。
 
 ```circuit
-title: 図26 版の刻印
+title: 図27 版の刻印
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k

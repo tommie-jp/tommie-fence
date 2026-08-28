@@ -320,7 +320,7 @@ function readEndpoint(token: string, line: number, points: Points): Result<Endpo
 }
 
 /** 注釈の種類。図に重ねる印 3 つと、字を置くもの 2 つ。 */
-const NOTE_KINDS = ['circle', 'box', 'arrow', 'text', 'source'] as const;
+const NOTE_KINDS = ['circle', 'box', 'arrow', 'line', 'text', 'source'] as const;
 
 /** 印の既定の色。目立たせるために書くものなので、書かなければ赤。 */
 const DEFAULT_MARK_COLOR = 'red';
@@ -343,6 +343,7 @@ const TEXT_FORM = '「- text 番地 [色や大きさ]: 文字」';
 const CIRCLE_FORM = '「- circle 部品IDか番地 [色]」';
 const BOX_FORM = '「- box 番地 番地 [色]」';
 const ARROW_FORM = '「- arrow 起点 終点 [色]」';
+const LINE_FORM = '「- line 起点 終点 [色]」';
 const SOURCE_FORM = '「- source 番地 [色や大きさ]」';
 
 /** 字を持たない注釈の書き方。`:` を書いてしまった人に、正しい形を返すのに使う。 */
@@ -459,6 +460,8 @@ export function parseNoteLine(
       return readBoxNote(rest, line, points);
     case 'arrow':
       return readArrowNote(rest, line);
+    case 'line':
+      return readLineNote(rest, line);
     case 'source':
       return readSourceNote(rest, line, points);
     default:
@@ -528,6 +531,19 @@ function readArrowNote(rest: readonly string[], line: number): Result<NoteSpec> 
 
   const color = readMarkColor(colorToken, `arrow は ${ARROW_FORM}`, line);
   return color.ok ? ok({ kind: 'arrow', from: fromToken, to: toToken, color: color.value, line }) : color;
+}
+
+/** `line a1 a5 ink` を読む。指し棒と同じ形で、矢が付かないだけ。 */
+function readLineNote(rest: readonly string[], line: number): Result<NoteSpec> {
+  const [fromToken, toToken, colorToken, ...extra] = rest;
+  if (fromToken === undefined || toToken === undefined || extra.length > 0) {
+    return fail(`line は ${LINE_FORM} で書きます`, line);
+  }
+  if (!isNoteTarget(fromToken)) return fail(notReferenceable(fromToken), line);
+  if (!isNoteTarget(toToken)) return fail(notReferenceable(toToken), line);
+
+  const color = readMarkColor(colorToken, `line は ${LINE_FORM}`, line);
+  return color.ok ? ok({ kind: 'line', from: fromToken, to: toToken, color: color.value, line }) : color;
 }
 
 /**

@@ -390,6 +390,25 @@ describe('parseNoteLine', () => {
     expect(noteProblem('circle R1 huge').message).toContain('circle は');
   });
   // 罫線を引きたいときは実線のほうがよい (表の枠など)。既定は破線のまま。
+  // 罫線を引くための直線。指し棒と同じ書き方で、先端の矢が付かないだけ。
+  test('reads a line between two addresses', () => {
+    expect(noteOf('line a1 a5')).toEqual({
+      kind: 'line',
+      from: 'a1',
+      to: 'a5',
+      color: 'red',
+      line: 2,
+    });
+  });
+
+  test('reads the colour a line is drawn in', () => {
+    expect(noteOf('line a1 a5 ink')).toMatchObject({ kind: 'line', color: 'ink' });
+  });
+
+  test('rejects a line whose ends are written as something else', () => {
+    expect(noteProblem('line a1').message).toContain('line');
+  });
+
   test('reads the word that makes a box solid', () => {
     expect(noteOf('box a1 c3 solid')).toMatchObject({ kind: 'box', solid: true });
     expect(noteOf('box a1 c3 ink solid')).toMatchObject({ color: 'ink', solid: true });

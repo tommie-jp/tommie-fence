@@ -262,7 +262,20 @@ export type SourceNote = {
   readonly line: number;
 } & NoteTextStyle;
 
-export type NoteSpec = CircleNote | TextNote | SourceNote | BoxNote | ArrowNote;
+/**
+ * 図に重ねる直線 1 本。指し棒 (`arrow`) と同じ書き方で、先端の矢が付かない。
+ * 表の罫線や区切りのように、**向きを持たない線**を引くためのもの。
+ */
+export type LineNote = {
+  readonly kind: 'line';
+  readonly from: string;
+  readonly to: string;
+  /** パレットの色の名前。書かなかったときは既定の色が入る。 */
+  readonly color: string;
+  readonly line: number;
+};
+
+export type NoteSpec = CircleNote | TextNote | SourceNote | BoxNote | ArrowNote | LineNote;
 
 /**
  * 描き上がった SVG に差し込む字 1 つ。書いた順に、TeX が置いた目印へ当てる。

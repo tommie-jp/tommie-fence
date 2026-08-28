@@ -21,7 +21,7 @@ import {
 import type { NoteSize } from '../notes.ts';
 import { STAMP_TEXT } from '../version.ts';
 import type {
-  ArrowNote, BoxNote, NoteOverlay, NoteSpec, NoteTextStyle, PartSpec, SourceNote, TexTarget,
+  ArrowNote, BoxNote, LineNote, NoteOverlay, NoteSpec, NoteTextStyle, PartSpec, SourceNote, TexTarget,
   TextNote,
 } from '../types.ts';
 import { escapeTex, escapeTexListing, hasUnicode } from './escape.ts';
@@ -219,7 +219,7 @@ function trimSegment(from: Point, to: Point, fromGap: number, toGap: number): re
 
 /** 図に重ねる指し棒。起点から終点へ、先端の付いた線を 1 本引く。 */
 function drawArrowNote(
-  note: ArrowNote,
+  note: ArrowNote | LineNote,
   byId: ReadonlyMap<string, PartSpec>,
   pitch: number,
   points: Points,
@@ -236,8 +236,10 @@ function drawArrowNote(
     arrowGap(to),
   );
 
+  // 線 (`line`) は矢の付かない指し棒。向きを持たないので先端の形を書かない。
+  const tip = note.kind === 'arrow' ? `, ${ARROW_TIP}` : '';
   return [
-    `\\draw[${texColorOf(note.color)}, ${ARROW_TIP}]` +
+    `\\draw[${texColorOf(note.color)}${tip}]` +
       ` (${num(start.x)},${num(start.y)}) -- (${num(end.x)},${num(end.y)});`,
   ];
 }
@@ -254,7 +256,7 @@ export function drawNote(
   if (note.kind === 'text') return drawTextNote(note, pitch, target);
   if (note.kind === 'source') return drawSourceNote(note, pitch, target, listing);
   if (note.kind === 'box') return drawBoxNote(note, pitch);
-  if (note.kind === 'arrow') return drawArrowNote(note, byId, pitch, points);
+  if (note.kind === 'arrow' || note.kind === 'line') return drawArrowNote(note, byId, pitch, points);
 
   const anchor = resolveNoteTarget(note.target, byId, points);
   // 指し先の無い注釈は buildCircuit が落としている。ここに来るのは検証漏れ。
@@ -369,7 +371,7 @@ export function noteColorLines(
   const names = new Set<string>(extra);
   for (const note of circuit.notes) {
     // 図形として描く注釈は、どちらの的でも TeX が色を塗る。
-    if (note.kind === 'circle' || note.kind === 'box' || note.kind === 'arrow') names.add(note.color);
+    if (note.kind !== 'text' && note.kind !== 'source') names.add(note.color);
     // フェンスの字は目印の色で置くので、パレットの色は要らない (SVG で塗る)。
     else if (target === 'latex' && note.color !== null) names.add(note.color);
   }

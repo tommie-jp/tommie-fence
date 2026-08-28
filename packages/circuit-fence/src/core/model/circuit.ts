@@ -10,7 +10,8 @@ import { isDrawable, isSourceDrawable } from '../tex/escape.ts';
 import { isMathLabel, mathInnerOf, mathLabelTex } from '../tex/mathLabel.ts';
 import { cellOf, nameOfEndpoint } from '../types.ts';
 import type {
-  ArrowNote, Endpoint, FenceError, MultiTerminalPart, NoteSpec, PartSpec, TexTarget, TwoTerminalPart, WireSpec,
+  ArrowNote, Endpoint, FenceError, LineNote, MultiTerminalPart, NoteSpec, PartSpec, TexTarget, TwoTerminalPart,
+  WireSpec,
 } from '../types.ts';
 
 /** 検証を通った図。ここから先 (ネットリスト導出・TeX 生成) は形を疑わない。 */
@@ -145,7 +146,11 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
  * 無くても図の上の場所として成り立つので、指し先を持たない。
  */
 const noteTargetsOf = (note: NoteSpec): readonly string[] =>
-  note.kind === 'circle' ? [note.target] : note.kind === 'arrow' ? [note.from, note.to] : [];
+  note.kind === 'circle'
+    ? [note.target]
+    : note.kind === 'arrow' || note.kind === 'line'
+      ? [note.from, note.to]
+      : [];
 
 /**
  * 注釈の指し先があるか。無ければ理由を積んで、その注釈だけ落とす。
@@ -168,7 +173,7 @@ function hasAnchor(
     return false;
   }
 
-  return note.kind !== 'arrow' || hasLength(note, byId, errors, points);
+  return (note.kind !== 'arrow' && note.kind !== 'line') || hasLength(note, byId, errors, points);
 }
 
 /**
@@ -179,7 +184,7 @@ function hasAnchor(
  * `arrow G1 c3` は長さ 0)。字で比べると、そこがすり抜ける。
  */
 function hasLength(
-  note: ArrowNote,
+  note: ArrowNote | LineNote,
   byId: ReadonlyMap<string, PartSpec>,
   errors: FenceError[],
   points: Points,
@@ -191,7 +196,10 @@ function hasLength(
   if (!isSameAddress(noteAnchorCell(from), noteAnchorCell(to))) return true;
 
   errors.push(
-    fenceError(`指し棒の起点と終点が同じところです (${safeToken(note.from)})`, note.line),
+    fenceError(
+      `${note.kind === 'line' ? '線' : '指し棒'}の起点と終点が同じところです (${safeToken(note.from)})`,
+      note.line,
+    ),
   );
   return false;
 }
