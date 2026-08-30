@@ -12,7 +12,7 @@
  * いまは知らないキーも知らない語も行番号つきで返るので、そこは足りている。
  * 構文が変わったことは semver の minor と CHANGELOG が表す。
  */
-export const VERSION = '0.2.0';
+export const VERSION = '0.3.0';
 
 /**
  * 図の隅に刻む字 (`style: stamp: on`)。名前まで書く。
