@@ -1,3 +1,5 @@
+import { normalizeNewlines } from './newlines.ts';
+
 export type FenceBlock = {
   /** フェンスの中身 (末尾は改行で終わる)。 */
   readonly source: string;
@@ -32,7 +34,9 @@ export function extractCircuitFences(markdown: string): FenceBlock[] {
   const blocks: FenceBlock[] = [];
   let open: OpenFence | null = null;
 
-  for (const [index, raw] of markdown.split('\n').entries()) {
+  // 読む前に改行を揃える。CRLF のままだと開き記号の行が `(.*)$` に
+  // 引っかからず、フェンスを 1 つも見つけないまま黙って終わる。
+  for (const [index, raw] of normalizeNewlines(markdown).split('\n').entries()) {
     if (open) {
       const closing = CLOSING_LINE.exec(raw);
       const marker = closing?.[1];

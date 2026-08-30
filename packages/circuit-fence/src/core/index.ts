@@ -2,6 +2,7 @@ import { fenceError } from './errors.ts';
 import { buildCircuit } from './model/circuit.ts';
 import { computeNets } from './model/nets.ts';
 import type { Net } from './model/nets.ts';
+import { normalizeNewlines } from './newlines.ts';
 import { parseFence } from './parser/parseFence.ts';
 import { DEFAULT_THEME, resolveTheme } from './render/theme.ts';
 import type { Theme } from './render/theme.ts';
@@ -58,8 +59,11 @@ export type CompileOptions = {
   readonly target?: TexTarget;
 };
 
-export function compileCircuit(source: string, options: CompileOptions = {}): CompileResult {
+export function compileCircuit(fence: string, options: CompileOptions = {}): CompileResult {
   const target = options.target ?? 'fence';
+  // 読む前に改行を揃える。ここから先は `\n` だけを見ればよい
+  // (行を trim して読むところと、1 字ずつ検めるところで食い違わせない)。
+  const source = normalizeNewlines(fence);
   const { doc, errors } = parseFence(source);
 
   if (doc === null) {

@@ -2,6 +2,10 @@ import { describe, expect, test } from 'vitest';
 import { compileCircuit } from './index.ts';
 
 const lines = (...rows: string[]): string => `${rows.join('\n')}\n`;
+/** 同じフェンスを Windows の改行 (CRLF) で書いたもの。 */
+const crlf = (source: string): string => source.replace(/\n/g, '\r\n');
+/** 同じフェンスを古い Mac の改行 (CR だけ) で書いたもの。 */
+const cr = (source: string): string => source.replace(/\n/g, '\r');
 
 describe('compileCircuit', () => {
   test('asks for a part when the fence is empty', () => {
@@ -265,5 +269,41 @@ describe('compileCircuit の書き出し (source)', () => {
       '  - source b1',
       '```',
     ]);
+  });
+});
+
+// 改行の書き方は**書き手の間違いではない**。Windows で書いた `.md` も、
+// 編集画面を通して保存されたノートも CRLF で来るので、入口で揃える。
+describe('compileCircuit の改行', () => {
+  const fence = lines('parts:', '  R1: resistor a1 a3 10k', 'notes:', '  - source b1');
+
+  test('writes the fence out even when it was saved with CRLF', () => {
+    // 行末の \r は図に書き出せない字なので、揃えないと source の注釈だけが落ちる。
+    const result = compileCircuit(crlf(fence));
+
+    expect(result.errors).toEqual([]);
+    expect(result.notes.map((note) => note.text)).toEqual(
+      compileCircuit(fence).notes.map((note) => note.text),
+    );
+  });
+
+  test('draws a fence written with CRLF exactly like the same fence with LF', () => {
+    expect(compileCircuit(crlf(fence)).tex).toBe(compileCircuit(fence).tex);
+  });
+
+  test('draws a fence written with CR alone exactly like the same fence with LF', () => {
+    const result = compileCircuit(cr(fence));
+
+    expect(result.errors).toEqual([]);
+    expect(result.tex).toBe(compileCircuit(fence).tex);
+  });
+
+  test('keeps the line numbers of the broken lines when the fence came with CRLF', () => {
+    // 揃えても行数は変わらない。ずれると図の下の帯が別の行を指す。
+    const broken = lines('parts:', '  R1: resistor a1 a3', '  R2: resistr b1 b3');
+
+    expect(compileCircuit(crlf(broken)).errors.map((error) => error.line)).toEqual(
+      compileCircuit(broken).errors.map((error) => error.line),
+    );
   });
 });

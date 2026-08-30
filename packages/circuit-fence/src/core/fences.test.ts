@@ -8,6 +8,15 @@ describe('extractCircuitFences', () => {
     expect(extractCircuitFences(markdown)).toEqual([{ source: 'parts:\n', line: 3 }]);
   });
 
+  // Windows で書いた `.md` は CRLF で来る。揃えないと開き記号の行が
+  // `(.*)$` に引っかからず、**フェンスを 1 つも見つけないまま黙って終わる**
+  // (CLI が図を 1 枚も書き出さないのに何も言わない状態になっていた)。
+  test('finds a circuit fence in a document saved with CRLF', () => {
+    const markdown = ['# title', '', '```circuit', 'parts:', '```', ''].join('\r\n');
+
+    expect(extractCircuitFences(markdown)).toEqual([{ source: 'parts:\n', line: 3 }]);
+  });
+
   test('ignores fences written in another language', () => {
     const markdown = ['```yaml', 'parts:', '```'].join('\n');
 
