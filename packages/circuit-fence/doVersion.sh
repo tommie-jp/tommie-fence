@@ -66,8 +66,8 @@ npx vitest run src/core/version.test.ts
 echo
 echo "==> $old → $new"
 
-if grep -rFq -- "$old" README.md CHANGELOG.md docs/*.md; then
+if grep -rFq -- "$old" README.md README.ja.md CHANGELOG.md docs/*.md; then
   echo "    まだ $old と書いてある文書があります (手で直してください):"
-  grep -rFn -- "$old" README.md CHANGELOG.md docs/*.md | sed 's/^/      /'
+  grep -rFn -- "$old" README.md README.ja.md CHANGELOG.md docs/*.md | sed 's/^/      /'
 fi
 echo "    CHANGELOG.md の [Unreleased] を $new の節に移すのも手作業です"

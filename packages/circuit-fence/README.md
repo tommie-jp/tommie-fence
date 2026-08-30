@@ -1,7 +1,9 @@
 # Circuit Fence
 
-Markdown の ` ```circuit ` フェンス (YAML) を回路図としてレンダリングする
-VS Code 拡張機能。
+[English](README.md) | [日本語](README.ja.md)
+
+A VS Code extension that renders ` ```circuit ` fences (YAML) in Markdown
+as circuit diagrams.
 
 ```yaml
 parts:
@@ -14,145 +16,159 @@ wires:
   - a2 -- a3
 ```
 
-![RC ローパス](examples/out/01-rc-lowpass.png)
+![RC low-pass](examples/out/01-rc-lowpass.png)
 
-座標計算も `\coordinate` も `\node[circ]` も書かない。
-分岐の黒丸は自動で付く。
+No coordinate arithmetic, no `\coordinate`, no `\node[circ]`.
+Junction dots appear on their own.
 
-## なぜあるか
+## Why it exists
 
-回路図をテキストで描く手段は枯れている (CircuiTikZ / Schemdraw / Lcapy)。
-この拡張が張り合うのは 2 点だけ。
+Drawing circuits from text is a solved problem
+(CircuiTikZ / Schemdraw / Lcapy). This extension competes on two points only.
 
-1. **位置を番地で直接書ける** — `R1: resistor a1 a3 10k` と書けば
-   そこに置かれる。制約グラフもレイアウト用のダミーノードも要らない。
-   図を直してもネットリストの節点名が動かない。
-2. **間違いが行番号で返る** — 読めた部品は描き、読めなかった行は
-   Markdown の行番号つきで図の下に出る。LLM に書かせて自己修正させるとき、
-   ここが効く。
+1. **Positions are written directly as addresses** — write
+   `R1: resistor a1 a3 10k` and that is where it goes. No constraint graph,
+   no dummy nodes for layout. Fixing the diagram doesn't move the node names
+   in the netlist.
+2. **Mistakes come back as line numbers** — the parts that parsed are drawn,
+   and the lines that failed are listed under the diagram with their Markdown
+   line numbers. This is what pays off when an LLM writes the fence and
+   corrects itself.
 
-回路の解析 (伝達関数・過渡応答) が要るなら [Lcapy](https://lcapy.readthedocs.io/)
-を使う。そこは張り合わない。
+If you need circuit analysis (transfer functions, transient response), use
+[Lcapy](https://lcapy.readthedocs.io/). We don't compete there.
 
-## 使い方
+## Usage
 
-Markdown を開いてプレビュー (`Ctrl+Shift+V`) を出す。
-書き方は [docs/01-syntax.md](docs/01-syntax.md)、
-1 画面ぶんの早見表は [docs/02-cheatsheet.md](docs/02-cheatsheet.md)
-(LLM に書かせるときはこの 1 枚を渡す)。
+Open a Markdown file and show the preview (`Ctrl+Shift+V`).
+The syntax is in [docs/01-syntax.md](docs/01-syntax.md) (Japanese), and a
+one-screen cheatsheet in [docs/02-cheatsheet.md](docs/02-cheatsheet.md)
+(Japanese) — hand that single page to an LLM when you have it write the fence.
 
-組んでいる間は `style: grid: on` にすると、部品を置ける位置が点で出る。
-行は左に英字、列は上に数字で、ブレッドボードと同じ読み方。
+While you are laying things out, `style: grid: on` marks every address a part
+can sit on with a dot. Rows are letters down the left, columns are numbers
+across the top: the same way you read a breadboard.
 
-![グリッド](examples/out/10-grid.png)
+![Grid](examples/out/10-grid.png)
 
-色は既定でエディタに追従する (明るいテーマでも暗いテーマでも読める)。
-`style: theme:` で `light` / `dark` / `mono` に決め打ちもできる。
+Colors follow the editor by default (readable under both light and dark
+themes). `style: theme:` pins them to `light` / `dark` / `mono` instead.
 
-`notes:` を書くと、図の上に印と字を重ねられる。部品を丸で囲む (`circle`)、
-図の一角を枠で囲む (`box`)、指し棒を引く (`arrow`)、罫線や区切りの直線を引く
-(`line`)、好きな番地に説明を書く (`text`) の 5 つ。**注釈の字はプレビューでも
-日本語が出る** (部品の値と違って、フェンスの TeX に字を渡していないため)。
-字は大きさ (極小から極大まで 5 段)・寄せ・太字も選べる。
+`notes:` overlays marks and text on the diagram. There are five: circle a part
+(`circle`), frame a corner of the diagram (`box`), draw a pointer (`arrow`),
+rule a line or a divider (`line`), and write a caption at any address
+(`text`). **Note text renders Japanese even in the preview** — unlike part
+values, it is never handed to the fence's TeX. Size (five steps from tiny to
+huge), alignment, and bold are all selectable.
 
-`- source 番地` は、**そのフェンスの中身をそのまま図に並べる**。プレビューでは
-フェンスが図に差し替わって書いた YAML が見えなくなるので、図と並べて読める。
+`- source <address>` **lays the fence's own text into the diagram**. The
+preview replaces the fence with the picture, so the YAML you wrote is off
+screen; this puts it back, side by side with the result.
 
-![注釈](examples/out/12-notes-1.png)
+![Notes](examples/out/12-notes-1.png)
 
-教科書の回路図は、記号よりも「どこを流れる電流を i と呼ぶか」「どちらを +
-と数えるか」を図で決める。2 端子部品の行に `i=字` `v=字` を続けて書くと、
-電流の矢と電圧の符号が付く (`R: resistor b2 b3 i=i`)。**向きは先に書いた番地が
-基準**で、返したいときは番地を入れ替えるか `i<=` と書く。図に出るラベルだけを
-ID と別にしたいときは `l=字` を書く (`l=$\dot{E}$` でフェーザの点も打てる)。
+A textbook schematic settles less about symbols than about which current is
+called i and which end counts as +. Append `i=<label>` or `v=<label>` to a
+two-terminal part's line to get the current arrow and the voltage signs
+(`R: resistor b2 b3 i=i`). **The direction is measured from the address
+written first**; to reverse it, swap the addresses or write `i<=`. To give a
+part a drawn label separate from its ID, write `l=<label>`
+(`l=$\dot{E}$` puts the phasor dot on).
 
-![電流の矢と電圧の符号](examples/out/15-arrows-1.png)
+![Current arrows and voltage signs](examples/out/15-arrows-1.png)
 
-同じ節点を何か所からも指す図は、`points:` で番地に名前を付けておくと、
-動かすときに直すのが 1 行で済む (`vin: a1` と書けば、番地を書ける場所なら
-どこでも `vin` で書ける)。交点と交点の間に置きたいときは `a_1.5` のように、
-`_` で行と列を切って小数を書く。
+When several places point at the same node, naming the address under `points:`
+makes moving it a one-line edit (write `vin: a1` and `vin` works anywhere an
+address does). To sit between two grid points, split the row from the column
+with `_` and write a fraction: `a_1.5`.
 
-図は TeX (WASM) で描くので、LaTeX をインストールしなくてよい。
-1 枚あたり 1 秒ほどかかり、描けるまで「図を描いています…」が出る。
-描けた図は覚えておくので、2 度目からは待たない。
+Diagrams are drawn by TeX (WASM), so there is no LaTeX to install. Each takes
+about a second, and a "drawing the diagram…" placeholder stands in until it
+lands. Finished diagrams are remembered, so you don't wait the second time.
 
-### コマンドラインから
+### From the command line
 
 ```bash
 node dist/cli.cjs render examples --out examples/out
 ```
 
-1 枚につき `.tex` と `.svg` を書き出す。`.tex` は LaTeX にそのまま渡せる。
-ネットリストは標準出力に出る。
+Writes a `.tex` and an `.svg` per diagram. The `.tex` goes straight to LaTeX.
+The netlist goes to stdout.
 
-図が要らないときは `check` で、読めなかった行とネットリストだけを出せる。
-1 枚 1 秒の描画を待たないので、書きながら回すときと CI で使う。
+When you don't need the picture, `check` prints just the unreadable lines and
+the netlist. It skips the one-second-per-diagram rendering, which is what you
+want while writing and in CI.
 
 ```bash
 node dist/cli.cjs check examples
 ```
 
-日本語や単位が要る図は `--emit-tex` で、手元の xelatex 用の `.tex` を書き出す。
+For diagrams that need Japanese or typeset units, `--emit-tex` writes a `.tex`
+for your local xelatex.
 
 ```bash
 node dist/cli.cjs render notes.md --emit-tex --out tex
 xelatex -output-directory tex tex/notes.tex
 ```
 
-プレビューとの違いは 3 つだけ (日本語の値が通る・単位が siunitx で µF になる・
-オペアンプが本物の記号になる)。番地も配線も同じなので、プレビューで位置を
-確かめてから書き出せる。書き方は [docs/01-syntax.md](docs/01-syntax.md)。
+It differs from the preview in exactly three ways: Japanese values get
+through, units go through siunitx (so µF prints properly), and the op-amp
+becomes the real symbol. Addresses and wires are identical, so you can settle
+the layout in the preview and then emit. Details in
+[docs/01-syntax.md](docs/01-syntax.md) (Japanese).
 
-処理系の版は `--version` で出せる。
+`--version` prints the version of the toolchain.
 
 ```bash
 node dist/cli.cjs --version
 ```
 
-図に刻むなら `style: stamp: on` を書く。**字は書かない** — 番号は処理系が
-埋めるので、更新すれば刻印も一緒に新しくなる。刻まない図にも、版は
-`.svg` の根に `data-circuit-fence` として必ず入っている。
+To stamp it onto the diagram, write `style: stamp: on`. **Don't write the text
+yourself** — the toolchain fills the number in, so the stamp is renewed
+whenever you update. Even an unstamped diagram always carries the version on
+the root of the `.svg`, as `data-circuit-fence`.
 
-### プログラムから使う (`circuit-fence/core`)
+### From your own code (`circuit-fence/core`)
 
-コア (YAML → 検証 → circuitikz TeX) は同期の純関数のまま、
-ライブラリとして読み込める。サーバー側で自前の描画キューに
-つなぐときはこちらを使う。
+The core (YAML → validation → circuitikz TeX) stays a synchronous pure
+function and loads as a library. Use it when you are feeding the output into
+your own rendering queue on a server.
 
 ```js
 import { compileCircuit, VERSION } from 'circuit-fence/core'
 
 const { tex, errors } = compileCircuit(source)
-// tex を node-tikzjax に渡すと SVG になる (CLI と同じ流れ)。
-// errors は行番号つき。描画エンジンはこの出口には含まれない
+// Hand tex to node-tikzjax and you get SVG (the path the CLI takes).
+// errors carry line numbers. The rendering engine is not part of this entry point
 ```
 
-npm レジストリには公開していないので、使う側へは tarball で渡す。
+It is not published to the npm registry, so hand consumers a tarball.
 
 ```bash
-npm pack   # ビルドと型定義の書き出しを済ませて circuit-fence-<版>.tgz を作る
+npm pack   # builds, emits the type definitions, and makes circuit-fence-<version>.tgz
 ```
 
-## 開発
+## Development
 
 ```bash
 npm install
-npm run check      # 型チェック + テスト
-npm run examples   # examples の図を作り直す (変えたら出力もコミットする)
-./doBuild.sh       # .vsix を作って VS Code に入れ直す
+npm run check      # typecheck + tests
+npm run examples   # rebuild the diagrams under examples (commit the output too)
+./doBuild.sh       # build the .vsix and reinstall it into VS Code
 ```
 
-設計上の約束と運用ルールは [CLAUDE.md](CLAUDE.md)。
+Design commitments and working rules are in [CLAUDE.md](CLAUDE.md) (Japanese).
 
-## 状態
+## Status
 
-Phase 3。部品は全 77 種類 (1 端子の記号 4 種・2 端子部品 44 種・多端子部品 29 種)。
-`--` / `-|` / `|-` の配線、足の参照 (`U1.out`)、分岐の黒丸、T 字の接続、
-重なりの検出、`points:` (番地に名前)、交点の間の番地 (`a_1.5`)、
-2 端子部品の `l=` (図に出るラベル) と `i=` / `v=` (電流の矢と電圧の符号)、
-`title:` (図の上の題)、`style:` (グリッド表示・テーマ・大きさ・版の刻印)、
-`notes:` (印・枠・指し棒・直線・字・フェンスの書き出し)、
-`--emit-tex` での `.tex` 書き出しまで。
+Phase 3. 77 parts in all (4 one-terminal symbols, 44 two-terminal parts,
+29 multi-terminal parts). Done so far: `--` / `-|` / `|-` wires, pin
+references (`U1.out`), junction dots, T connections, overlap detection,
+`points:` (names for addresses), addresses between grid points (`a_1.5`),
+`l=` (the drawn label) and `i=` / `v=` (current arrows and voltage signs) on
+two-terminal parts, `title:` (a title above the diagram), `style:` (grid
+display, theme, size, version stamp), `notes:` (marks, frames, pointers,
+lines, text, and dumping the fence source), and `.tex` output via
+`--emit-tex`.
 
-![非反転アンプ](examples/out/04-non-inverting-amp.png)
+![Non-inverting amplifier](examples/out/04-non-inverting-amp.png)

@@ -1,8 +1,8 @@
 # プロジェクト指示 (circuit-fence)
 
 Markdown の ` ```circuit ` フェンス (YAML) を回路図としてレンダリングする
-VS Code 拡張機能。全体像は [README.md](README.md)、
-文法は [docs/01-syntax.md](docs/01-syntax.md)。
+VS Code 拡張機能。全体像は [README.ja.md](README.ja.md) (英語は
+[README.md](README.md))、文法は [docs/01-syntax.md](docs/01-syntax.md)。
 
 ## このプロジェクトの存在理由
 
@@ -68,9 +68,13 @@ VS Code 拡張機能。全体像は [README.md](README.md)、
 3. **TDD**: テストを先に書いて落とし、実装で通す。`npm run check` (型チェック +
    テスト) を通してからコミットする。カバレッジは 80% 以上を維持する。
 4. **Markdown は lint を通す**:
-   `npx markdownlint-cli 'README.md' 'CHANGELOG.md' 'docs/*.md' 'examples/**/*.md'`。
+   `npx markdownlint-cli 'README.md' 'README.ja.md' 'CHANGELOG.md' 'docs/*.md' 'examples/**/*.md'`。
    設定は `.markdownlint.json` (MD013 行長・MD033 インライン HTML は無効)。
-5. **サンプルは再生成してコミット**: 描画を変えたら `npm run examples` と
+5. **README は 2 本を同時に直す**: `README.md` が英語、`README.ja.md` が日本語。
+   **日本語が正で、英語が追随する** (書くのが日本語のため)。節の構成は
+   2 本で 1 対 1 に保ち、片方だけ節が増えた状態でコミットしない。
+   日本語のままのドキュメントへ英語から張るリンクには "(Japanese)" を添える。
+6. **サンプルは再生成してコミット**: 描画を変えたら `npm run examples` と
    `npm run docs` を実行し、`examples/out` と `docs/out` の差分も一緒に
    コミットする (`.tex` はスナップショットテストの期待値であり、
    `.md` が貼る図でもある)。**PNG は手元のフォント環境で焼ける** —
