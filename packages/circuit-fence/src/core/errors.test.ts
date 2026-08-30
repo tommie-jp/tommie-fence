@@ -69,6 +69,13 @@ describe('snippetOf', () => {
     expect(snippetOf('a\u009b31mb')).toBe('a 31mb');
   });
 
+  test('turns the characters that split a line into spaces', () => {
+    // 帯は white-space: pre で組むので、U+2028 は帯の中で行を割る。
+    // 1 行のはずの中身が 2 行になると、印だけが別のところに残る。
+    expect(snippetOf('a\u2028b')).toBe('a b');
+    expect(snippetOf('a\u2029b')).toBe('a b');
+  });
+
   test('turns the characters that reorder text into spaces', () => {
     // U+202E から先は右から左に並び替わる。書いていない行を見せる字は通さない。
     expect(snippetOf('a\u202eb')).toBe('a b');

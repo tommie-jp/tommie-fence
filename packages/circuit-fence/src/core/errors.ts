@@ -78,9 +78,10 @@ export const shiftErrors = (errors: readonly FenceError[], offset: number): Fenc
  *   escapeHtml はこの帯を消す**ので、ここで空白に替えておかないと
  *   そこから先の桁が 1 つずつずれて `<mark>` が別の字に当たる。
  * - 並べ替えと幅ゼロ — U+202E から先が右から左に並び替わり、書いていない行を
- *   見せられる。幅ゼロの字も、桁と見た目を食い違わせる。
+ *   見せられる。行を割る U+2028 / U+2029 は、帯を white-space: pre で組む
+ *   ので中身を 2 行にする。幅ゼロの字も、桁と見た目を食い違わせる。
  */
-const CONTROL = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/gu;
+const CONTROL = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2028-\u2029\u2066-\u2069\ufeff]/gu;
 
 /**
  * 行の中身をエラーに載せるときの唯一の入口。
