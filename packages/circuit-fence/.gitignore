@@ -18,6 +18,7 @@ node_modules/
 dist/
 /out/
 *.vsix
+*.tgz
 *.tsbuildinfo
 
 # テスト生成物
