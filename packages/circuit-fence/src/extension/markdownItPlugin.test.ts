@@ -203,11 +203,13 @@ describe('circuitPlugin', () => {
     expect(html).toContain('resistr');
   });
 
-  test('does not let the fence content escape into the surrounding html', () => {
+  // 読めなかった行は**中身ごと**帯に出す (行番号だけでは照らす先がないため)。
+  // 出るのは他人の書いた字なので、markup として読まれないことがここの見どころ。
+  test('shows the fence content only as escaped text, never as markup', () => {
     const html = md().render('```circuit\n"</div><img src=x onerror=alert(1)>": resistor a1 a3\n```');
 
+    expect(html).toContain('&lt;/div&gt;&lt;img src=x onerror=alert(1)&gt;');
     expect(html).not.toContain('<img');
-    expect(html).not.toContain('onerror=');
     expect(html.match(/<div/g)).toHaveLength(html.match(/<\/div>/g)?.length ?? 0);
   });
 });

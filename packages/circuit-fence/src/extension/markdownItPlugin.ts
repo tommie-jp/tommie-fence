@@ -1,6 +1,7 @@
 import type { MarkdownIt, RendererRule } from 'markdown-it';
 import {
-  compileCircuit, finishSvg, renderErrorBanner, renderErrorCard, renderNetlist, shiftErrors,
+  attachSourceText, compileCircuit, finishSvg, renderErrorBanner, renderErrorCard, renderNetlist,
+  shiftErrors,
 } from '../core/index.ts';
 import type { FenceError, Theme } from '../core/index.ts';
 import { hashOf } from '../host/hash.ts';
@@ -84,7 +85,10 @@ function bodyOf(
       : 'svg' in figure
         ? finishSvg(figure.svg, { notes, theme, width, fitToText: true })
         : '';
-  const drawingErrors = figure !== undefined && 'errors' in figure ? figure.errors : [];
+  // 描く道から返る行は core を通っていないので、中身はここで添える
+  // (compileCircuit が返したものはもう添わっている)。
+  const drawingErrors =
+    figure !== undefined && 'errors' in figure ? attachSourceText(figure.errors, source) : [];
 
   return {
     html:

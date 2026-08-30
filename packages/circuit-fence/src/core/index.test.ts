@@ -307,3 +307,72 @@ describe('compileCircuit の改行', () => {
     );
   });
 });
+
+describe('compileCircuit が返す行の中身', () => {
+  test('attaches the line to every error, so the reader never has to count lines', () => {
+    const result = compileCircuit(lines('parts:', '  R1: resistr a1 a3'));
+
+    expect(result.errors[0]?.text).toBe('  R1: resistr a1 a3');
+  });
+
+  test('points at the spelling it could not read', () => {
+    const result = compileCircuit(lines('parts:', '  R1: resistr a1 a3'));
+    const [error] = result.errors;
+
+    expect(error?.column).toBe(7);
+    expect(error?.span).toBe(7);
+  });
+
+  test('points at the address it could not read', () => {
+    const result = compileCircuit(lines('parts:', '  R1: resistor a1 a9z'));
+    const [error] = result.errors;
+
+    expect(error?.text).toBe('  R1: resistor a1 a9z');
+    expect(error?.column).toBe(19);
+    expect(error?.span).toBe(3);
+  });
+
+  test('attaches the line to a notice as well, which is read the same way', () => {
+    // お知らせも行番号で返るものなので、照らす先が要るのはエラーと同じ。
+    const result = compileCircuit(
+      lines(
+        'parts:',
+        '  R1: resistor a1 a5 10k',
+        '  R2: resistor c1 c5 20k',
+        'wires:',
+        '  - a1 -- c1',
+        '  - a3 -- c3',
+        '  - a5 -- c5',
+      ),
+    );
+    const [notice] = result.notices;
+
+    expect(result.errors).toEqual([]);
+    expect(notice?.line).toBe(2);
+    expect(notice?.text).toBe('  R1: resistor a1 a5 10k');
+  });
+
+  test('never lets the raw spelling through to the output', () => {
+    const result = compileCircuit(lines('parts:', '  R1: resistr a1 a3'));
+
+    for (const error of result.errors) expect(error.token).toBeUndefined();
+  });
+
+  test('points at the column YAML itself reported, instead of hunting for a spelling', () => {
+    // `: ` を引用符なしで書いた行。注釈に部品の書き方を写すと必ず踏む形。
+    const result = compileCircuit(
+      lines('parts:', '  R1: resistor a1 a3', 'notes:', '  - text b1: R1: resistor a1 a3'),
+    );
+    const [error] = result.errors;
+
+    expect(error?.message).toContain('YAML');
+    expect(error?.text).toBe('  - text b1: R1: resistor a1 a3');
+    expect(error?.column).toBe(14);
+  });
+
+  test('leaves the content off when the line YAML points at has nothing on it', () => {
+    // 閉じ忘れの `[` は、yaml が末尾 (中身の無い行) を指す。無い行は添えようがない。
+    const result = compileCircuit(lines('parts:', '  R1: [a, b'));
+
+    expect(result.errors[0]?.text).toBeUndefined();  });
+});

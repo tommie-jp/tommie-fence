@@ -42,7 +42,7 @@ const readAddress = (token: string, line: number, points: Points = NO_POINTS): R
   const address = parseAddress(token);
   if (address !== null) return ok(address);
 
-  return fail(addressProblem(token, points), line);
+  return fail(addressProblem(token, points), line, token);
 };
 
 /**
@@ -98,7 +98,7 @@ export function parseCompactPart(
     // 種類が増えるほど羅列は読みにくいので、近いものがあればそれだけを添える。
     const closest = closestPartType(written);
     const hint = closest === null ? `${typeList()} が使えます` : `${closest} のことですか?`;
-    return fail(`種類 ${safeToken(written)} は知りません (${hint})`, line);
+    return fail(`種類 ${safeToken(written)} は知りません (${hint})`, line, written);
   }
 
   const head: PartHead = { id, type: typeName, written, line, points };
@@ -201,7 +201,7 @@ function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
     const key = back ? tag.slice(0, -1) : tag;
     if (!isPartTag(key)) {
       // `=` は safeToken が落とす字なので、鍵だけ通して等号は外で足す。
-      return fail(`${safeToken(tag)}= は知りません (${tagList()} が使えます)`, line);
+      return fail(`${safeToken(tag)}= は知りません (${tagList()} が使えます)`, line, token);
     }
     if (tags[key] !== null) return fail(`${key}= を 2 回書いています`, line);
     if (label === '') return fail(`${key}= の字がありません`, line);
@@ -330,7 +330,7 @@ function readEndpoint(token: string, line: number, points: Points): Result<Endpo
 
   // ここまで来た綴りは番地でも足でもない。案内だけを返す
   // (番地としての読み直しは済んでいる)。
-  return fail(addressProblem(token, points), line);
+  return fail(addressProblem(token, points), line, token);
 }
 
 /** 印の既定の色。目立たせるために書くものなので、書かなければ赤。 */
@@ -388,11 +388,18 @@ const LEADING_BELONGS = `書き出し (source) にだけ書けます`;
 
 const readNoteColor = (token: string, line: number): Result<string> =>
   noteColor(token) === null
-    ? fail(`注釈の色 ${safeToken(token)} は知りません (${NOTE_COLOR_NAMES.join(' / ')} が使えます)`, line)
+    ? fail(`注釈の色 ${safeToken(token)} は知りません (${NOTE_COLOR_NAMES.join(' / ')} が使えます)`, line, token)
     : ok(token);
 
 const writtenTwice = (what: string, first: string, second: string, line: number): FenceError =>
-  fenceError(`注釈の${what}が二重に書かれています (${safeToken(first)} と ${safeToken(second)})`, line);
+  fenceError(
+    `注釈の${what}が二重に書かれています (${safeToken(first)} と ${safeToken(second)})`,
+    line,
+    null,
+    // 指すのは**後に書いたほう**。同じ語を 2 度書いたときだけ先のほうに立つが、
+    // どちらを消しても直るので迷わせない。
+    second,
+  );
 
 /** 注釈に添えられた語ぜんぶ。行送りは書き出しにしか無いので、字の見た目と分けて返す。 */
 type NoteWords = {
@@ -429,11 +436,11 @@ function readNoteWords(tokens: readonly string[], line: number, forSource: boole
       if (bold) return { ok: false, error: writtenTwice('太字', BOLD_WORD, token, line) };
       bold = true;
     } else if (isNoteLeading(token)) {
-      if (!forSource) return fail(`${safeToken(token)} は${LEADING_BELONGS}`, line);
+      if (!forSource) return fail(`${safeToken(token)} は${LEADING_BELONGS}`, line, token);
       if (leading !== null) return { ok: false, error: writtenTwice('行送り', leading, token, line) };
       leading = token;
     } else {
-      return fail(`注釈の言葉 ${safeToken(token)} は知りません (${wordHint(forSource)} が使えます)`, line);
+      return fail(`注釈の言葉 ${safeToken(token)} は知りません (${wordHint(forSource)} が使えます)`, line, token);
     }
   }
 
@@ -473,7 +480,7 @@ export function parseNoteLine(
     case 'source':
       return readSourceNote(rest, line, points);
     default:
-      return fail(`注釈の種類 ${safeToken(kind)} は知りません (${noteKindList()} が使えます)`, line);
+      return fail(`注釈の種類 ${safeToken(kind)} は知りません (${noteKindList()} が使えます)`, line, kind);
   }
 }
 
@@ -481,13 +488,13 @@ export function parseNoteLine(
 function readMarkColor(token: string | undefined, form: string, line: number): Result<string> {
   if (token === undefined) return ok(DEFAULT_MARK_COLOR);
   if (isNoteLeading(token)) {
-    return fail(`${form} で書きます (${safeToken(token)} は${LEADING_BELONGS})`, line);
+    return fail(`${form} で書きます (${safeToken(token)} は${LEADING_BELONGS})`, line, token);
   }
   if (isNoteSize(token) || isNoteAlign(token) || token === BOLD_WORD) {
-    return fail(`${form} で書きます (${safeToken(token)} は字の注釈にだけ書けます)`, line);
+    return fail(`${form} で書きます (${safeToken(token)} は字の注釈にだけ書けます)`, line, token);
   }
   if (token === NOTE_BOX_SOLID) {
-    return fail(`${form} で書きます (${safeToken(token)} は枠 (box) にだけ書けます)`, line);
+    return fail(`${form} で書きます (${safeToken(token)} は枠 (box) にだけ書けます)`, line, token);
   }
   return readNoteColor(token, line);
 }
@@ -495,7 +502,7 @@ function readMarkColor(token: string | undefined, form: string, line: number): R
 function readCircleNote(rest: readonly string[], line: number): Result<NoteSpec> {
   const [target, colorToken, ...extra] = rest;
   if (target === undefined || extra.length > 0) return fail(`circle は ${CIRCLE_FORM} で書きます`, line);
-  if (!isNoteTarget(target)) return fail(notReferenceable(target), line);
+  if (!isNoteTarget(target)) return fail(notReferenceable(target), line, target);
 
   const color = readMarkColor(colorToken, `circle は ${CIRCLE_FORM}`, line);
   return color.ok ? ok({ kind: 'circle', target, color: color.value, line }) : color;
@@ -534,8 +541,8 @@ function readArrowNote(rest: readonly string[], line: number): Result<NoteSpec> 
   if (fromToken === undefined || toToken === undefined || extra.length > 0) {
     return fail(`arrow は ${ARROW_FORM} で書きます`, line);
   }
-  if (!isNoteTarget(fromToken)) return fail(notReferenceable(fromToken), line);
-  if (!isNoteTarget(toToken)) return fail(notReferenceable(toToken), line);
+  if (!isNoteTarget(fromToken)) return fail(notReferenceable(fromToken), line, fromToken);
+  if (!isNoteTarget(toToken)) return fail(notReferenceable(toToken), line, toToken);
 
   const color = readMarkColor(colorToken, `arrow は ${ARROW_FORM}`, line);
   return color.ok ? ok({ kind: 'arrow', from: fromToken, to: toToken, color: color.value, line }) : color;
@@ -547,8 +554,8 @@ function readLineNote(rest: readonly string[], line: number): Result<NoteSpec> {
   if (fromToken === undefined || toToken === undefined || extra.length > 0) {
     return fail(`line は ${LINE_FORM} で書きます`, line);
   }
-  if (!isNoteTarget(fromToken)) return fail(notReferenceable(fromToken), line);
-  if (!isNoteTarget(toToken)) return fail(notReferenceable(toToken), line);
+  if (!isNoteTarget(fromToken)) return fail(notReferenceable(fromToken), line, fromToken);
+  if (!isNoteTarget(toToken)) return fail(notReferenceable(toToken), line, toToken);
 
   const color = readMarkColor(colorToken, `line は ${LINE_FORM}`, line);
   return color.ok ? ok({ kind: 'line', from: fromToken, to: toToken, color: color.value, line }) : color;
@@ -600,7 +607,7 @@ export function parseNoteText(
     // 「種類を知りません」と返すと、直すのは種類ではないのに種類を疑わせる。
     const form = kind === undefined ? null : lineFormOf(kind);
     return form === null
-      ? fail(`注釈の種類 ${safeToken(kind ?? '')} は知りません (${noteKindList()} が使えます)`, line)
+      ? fail(`注釈の種類 ${safeToken(kind ?? '')} は知りません (${noteKindList()} が使えます)`, line, kind)
       : fail(`${kind} は ${form} の 1 行で書きます (文字は付きません)`, line);
   }
   if (atToken === undefined) return fail(`text は ${TEXT_FORM} で書きます`, line);

@@ -2,8 +2,8 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, resolve } from 'node:path';
 import {
-  STAMP_TEXT, compileCircuit, errorLine, extractCircuitFences, finishSvg, messageLine, outputStem,
-  shiftErrors,
+  STAMP_TEXT, attachSourceText, compileCircuit, errorLine, extractCircuitFences, finishSvg, messageLine,
+  outputStem, shiftErrors, snippetLines,
 } from '../core/index.ts';
 import type { FenceError, Net } from '../core/index.ts';
 import { renderTex } from '../host/texSvg.ts';
@@ -66,7 +66,11 @@ const reportProblem = (message: string): void => console.error(`circuit: ${messa
 
 const reportErrors = (errors: readonly FenceError[]): void => {
   // errorLine が名札を持っているので、ここでは字下げだけして並べる。
-  for (const error of errors) console.error(`  ${errorLine(error)}`);
+  // 続けて出す行の中身も同じだけ字下げして、1 件のかたまりに見せる。
+  for (const error of errors) {
+    console.error(`  ${errorLine(error)}`);
+    for (const row of snippetLines(error)) console.error(`  ${row}`);
+  }
 };
 
 /**
@@ -78,7 +82,10 @@ const reportErrors = (errors: readonly FenceError[]): void => {
  */
 const reportNotices = (notices: readonly FenceError[], show = true): void => {
   if (!show) return;
-  for (const notice of notices) console.log(`  お知らせ: ${messageLine(notice)}`);
+  for (const notice of notices) {
+    console.log(`  お知らせ: ${messageLine(notice)}`);
+    for (const row of snippetLines(notice)) console.log(`  ${row}`);
+  }
 };
 
 const firstLine = (text: string): string => text.split('\n', 1)[0] ?? '';
@@ -178,9 +185,12 @@ async function runJob(job: Job): Promise<number> {
   const outcome = await renderTex(tex);
   if (!outcome.ok) {
     const failures = shiftErrors(
-      outcome.kind === 'tex-log'
-        ? texErrors(outcome.log, lineMap, outcome.preambleLines)
-        : [{ message: outcome.message, line: null }],
+      attachSourceText(
+        outcome.kind === 'tex-log'
+          ? texErrors(outcome.log, lineMap, outcome.preambleLines)
+          : [{ message: outcome.message, line: null }],
+        job.source,
+      ),
       job.line,
     );
     reportProblem(`${job.label} → ${texPath} (SVG は書けませんでした)`);

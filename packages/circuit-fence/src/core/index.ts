@@ -1,4 +1,4 @@
-import { fenceError } from './errors.ts';
+import { attachSourceText, fenceError } from './errors.ts';
 import { buildCircuit } from './model/circuit.ts';
 import { computeNets } from './model/nets.ts';
 import type { Net } from './model/nets.ts';
@@ -66,6 +66,11 @@ export function compileCircuit(fence: string, options: CompileOptions = {}): Com
   const source = normalizeNewlines(fence);
   const { doc, errors } = parseFence(source);
 
+  // 読めなかった行の中身は**ここで添える**。行番号を Markdown の行へずらす前で、
+  // かつフェンスの中身を持っている場所はここしかない。
+  const withSource = (items: readonly FenceError[]): readonly FenceError[] =>
+    attachSourceText(items, source);
+
   if (doc === null) {
     return {
       tex: null,
@@ -74,7 +79,7 @@ export function compileCircuit(fence: string, options: CompileOptions = {}): Com
       theme: DEFAULT_THEME,
       width: null,
       notes: [],
-      errors,
+      errors: withSource(errors),
       notices: [],
       // style: ごと読めていないので、既定 (出す) のまま返す。
       debug: true,
@@ -99,7 +104,7 @@ export function compileCircuit(fence: string, options: CompileOptions = {}): Com
       notes: [],
       errors: nothingWritten
         ? [fenceError('部品がありません (parts: に「ID: 種類 番地 番地 値」を並べます)', null)]
-        : [...errors, ...themeErrors],
+        : withSource([...errors, ...themeErrors]),
       notices: [],
       debug: doc.style.debug !== false,
     };
@@ -119,10 +124,10 @@ export function compileCircuit(fence: string, options: CompileOptions = {}): Com
     theme,
     width: doc.style.width,
     notes,
-    errors: [...errors, ...modelErrors, ...themeErrors],
+    errors: withSource([...errors, ...modelErrors, ...themeErrors]),
     // 図は組めたが指定が効かなかったところ。行は style の項目に付けられない
     // ので (どの項目かは文面で分かる) 行なしで出す。
-    notices: [...texMessages.map((message) => fenceError(message, null)), ...notices],
+    notices: withSource([...texMessages.map((message) => fenceError(message, null)), ...notices]),
     debug: doc.style.debug !== false,
   };
 }
@@ -133,7 +138,8 @@ export { finishSvg, markSvg } from './render/finish.ts';
 export { STAMP_TEXT, VERSION } from './version.ts';
 export type { Theme } from './render/theme.ts';
 export { errorLine, messageLine, renderErrorBanner, renderErrorCard } from './render/errorCard.ts';
-export { shiftErrors } from './errors.ts';
+export { snippetLines } from './render/errorText.ts';
+export { attachSourceText, shiftErrors } from './errors.ts';
 export { renderNetlist } from './render/netlistHtml.ts';
 export { extractCircuitFences, outputStem } from './fences.ts';
 export type { FenceBlock } from './fences.ts';

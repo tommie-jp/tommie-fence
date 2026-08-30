@@ -49,11 +49,41 @@ describe('renderErrorBanner', () => {
     expect(html).toContain('&lt;img');
   });
 
+  test('shows the line the reader has to go and fix, not just its number', () => {
+    // プレビューではフェンスが図に差し替わるので、行番号だけでは照らす先がない。
+    const html = renderErrorBanner([{ message: '種類 resistr は知りません', line: 2, text: '  R1: resistr a1 a3' }]);
+
+    expect(html).toContain('R1: resistr a1 a3');
+  });
+
+  test('marks the spelling that could not be read', () => {
+    const html = renderErrorBanner([
+      { message: '種類 resistr は知りません', line: 2, text: '  R1: resistr a1 a3', column: 7, span: 7 },
+    ]);
+
+    expect(html).toContain('<mark>resistr</mark>');
+  });
+
+  test('escapes the line content too, which is written by someone else', () => {
+    const html = renderErrorBanner([{ message: '読めません', line: 1, text: '<img src=x onerror=alert(1)>' }]);
+
+    expect(html).not.toContain('<img');
+    expect(html).toContain('&lt;img');
+  });
+
+  test('escapes the line content around a mark as well', () => {
+    const html = renderErrorBanner([{ message: '読めません', line: 1, text: '<a><b><c>', column: 4, span: 3 }]);
+
+    expect(html).not.toContain('<a>');
+    expect(html).toContain('&lt;a&gt;<mark>&lt;b&gt;</mark>&lt;c&gt;');
+  });
+
+  // 1 件が行の中身と印で 2〜3 行を使うようになったので、並べる数は少ない。
   test('sums up the tail instead of printing every error', () => {
     const errors = Array.from({ length: 12 }, (_, index) => fenceError(`エラー ${index}`, index + 1));
     const html = renderErrorBanner(errors);
 
-    expect(html).toContain('ほかに 4 件');
+    expect(html).toContain('ほかに 7 件');
     expect(html).not.toContain('エラー 9');
   });
 });

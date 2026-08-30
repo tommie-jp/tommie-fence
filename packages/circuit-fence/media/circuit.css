@@ -27,6 +27,30 @@
   margin: 0.15em 0;
 }
 
+/* 読めなかった行の中身。プレビューではフェンスが図に差し替わって元の行が
+   見えないので、行番号だけでは照らす先がない。1 行のまま出し、長い行は
+   帯の中で横に送る (折り返すと帯が図より高くなる)。 */
+.circuit-error-line {
+  display: block;
+  margin: 0.1em 0 0.3em;
+  padding: 0.1em 0.4em;
+  overflow-x: auto;
+  border-left: 2px solid var(--vscode-editorError-foreground, #a1260d);
+  background: var(--vscode-textCodeBlock-background, rgba(127, 127, 127, 0.12));
+  color: var(--vscode-editor-foreground, inherit);
+  font-family: var(--vscode-editor-font-family, monospace);
+  white-space: pre;
+}
+
+/* エラー箇所。字の色ではなく地の色で示す (帯そのものが赤なので、
+   赤を重ねても場所が浮かび上がらない)。 */
+.circuit-error-line mark {
+  padding: 0;
+  border-radius: 2px;
+  background: var(--vscode-editorError-foreground, #a1260d);
+  color: var(--vscode-editor-background, #fff);
+}
+
 .circuit-error-card {
   padding: 0.6em 0.9em;
   border: 1px solid var(--vscode-editorError-foreground, #a1260d);

@@ -158,3 +158,31 @@ describe('validateStyle', () => {
     expect(messages[0]?.message).toContain('on');
   });
 });
+
+// 読めなかった値の綴り。行の中でどこを指すかを決めるのに使う (errors.ts が桁に畳む)。
+describe('validateStyle が返す綴り', () => {
+  test('hands back the value, which is the half the reader has to fix', () => {
+    const messages = messagesOf({ theme: 'darkk' });
+
+    expect(messages[0]?.token).toBe('darkk');
+  });
+
+  test('hands back the item name when nothing was written there at all', () => {
+    const messages = messagesOf({ nosuch: 1 });
+
+    expect(messages[0]?.token).toBe('nosuch');
+  });
+
+  test('hands back nothing for a value written as a number, which need not match the line', () => {
+    // `pitch: 1.50` を String(1.5) で探すと見つからない。指せないほうを選ぶ。
+    const messages = messagesOf({ pitch: 99 });
+
+    expect(messages[0]?.token).toBeUndefined();
+  });
+
+  test('hands back the word it did not know among the grid words', () => {
+    const messages = messagesOf({ grid: 'on nosuch' });
+
+    expect(messages[0]?.token).toBe('nosuch');
+  });
+});

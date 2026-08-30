@@ -30,10 +30,18 @@ Drawing circuits from text is a solved problem
    `R1: resistor a1 a3 10k` and that is where it goes. No constraint graph,
    no dummy nodes for layout. Fixing the diagram doesn't move the node names
    in the netlist.
-2. **Mistakes come back as line numbers** — the parts that parsed are drawn,
-   and the lines that failed are listed under the diagram with their Markdown
-   line numbers. This is what pays off when an LLM writes the fence and
-   corrects itself.
+2. **Mistakes come back as line numbers and line content** — the parts that
+   parsed are drawn, and the lines that failed are listed under the diagram
+   with their Markdown line numbers, **the content of that line**, and **a mark
+   under the spelling that could not be read**. The preview replaces the fence
+   with the drawing, so a number alone leaves nothing to check it against.
+   This is what pays off when an LLM writes the fence and corrects itself.
+
+   ```text
+     circuit: 4 行目: 種類 resistr は知りません (resistor のことですか?)
+         R1: resistr a1 a3 10k
+             ^^^^^^^
+   ```
 
 If you need circuit analysis (transfer functions, transient response), use
 [Lcapy](https://lcapy.readthedocs.io/). We don't compete there.

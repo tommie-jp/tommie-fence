@@ -19,6 +19,25 @@ export type FenceError = {
    * そこだけ置き去りになる。数のまま持って、出すときに組み立てる。
    */
   readonly related?: number | null;
+  /**
+   * その行の中身。**行番号だけでは書いた行と照らせない** (プレビューではフェンスが
+   * 図に差し替わって元の行が見えず、CLI では手元にファイルを開いていないことがある)。
+   * 添えるのは errors.ts の `attachSourceText` だけで、必ず `snippetOf` を通す。
+   */
+  readonly text?: string;
+  /**
+   * `text` の中の読めなかったところ。桁は 1 始まりで、単位は `text.slice()` と
+   * 同じ (UTF-16 の要素)。**指せるときだけ入る** — 行だけ分かって桁が分からない
+   * エラーのほうが多いので、無いことを普通の状態として扱う。
+   */
+  readonly column?: number;
+  readonly span?: number;
+  /**
+   * 読めなかった綴りそのもの。**エラーを作る側の入口専用**で、
+   * `attachSourceText` が行の中を探して桁に畳んだあと落とす。
+   * 生の入力なので、出す側には届かない形にしておく (約束 3)。
+   */
+  readonly token?: string;
 };
 
 export type Result<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: FenceError };

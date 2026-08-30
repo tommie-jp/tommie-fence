@@ -1,6 +1,6 @@
 import { LineCounter, isAlias, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Document, Node, Pair, ParsedNode } from 'yaml';
-import { fail, fenceError, safeToken } from '../errors.ts';
+import { fail, fenceError, fenceErrorAt, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
@@ -89,10 +89,9 @@ export function parseFence(source: string): ParseResult {
           .replace(YAML_POSITION, '')
           .slice(0, MAX_YAML_MESSAGE);
         const hint = YAML_HINTS[error.code];
-        return fenceError(
-          `YAML の構文エラー: ${reason}${hint === undefined ? '' : ` ${hint}`}`,
-          lineCounter.linePos(error.pos[0]).line,
-        );
+        // 桁は yaml が数えたものをそのまま使う (こちらで綴りを探し直す必要がない)。
+        const { line, col } = lineCounter.linePos(error.pos[0]);
+        return fenceErrorAt(`YAML の構文エラー: ${reason}${hint === undefined ? '' : ` ${hint}`}`, line, col);
       }),
     };
   }
@@ -144,12 +143,19 @@ export function parseFence(source: string): ParseResult {
       errors.push(...duplicateStyleKeys(node, lineOf));
       errors.push(
         ...validated.messages.map((item) =>
-          fenceError(item.message, (item.key === null ? null : keyLine.get(item.key)) ?? line),
+          fenceError(
+            item.message,
+            (item.key === null ? null : keyLine.get(item.key)) ?? line,
+            null,
+            // 直すのは値のほう。綴りが行に見つからない (数で書かれた) ときは
+            // 項目名で指す — キャレットが立たないよりは近くを指すほうがよい。
+            item.token ?? item.key ?? undefined,
+          ),
         ),
       );
     } else {
       errors.push(
-        fenceError(`知らないキーです: ${safeToken(key)} (${TOP_LEVEL_KEYS.join(' / ')} が使えます)`, line),
+        fenceError(`知らないキーです: ${safeToken(key)} (${TOP_LEVEL_KEYS.join(' / ')} が使えます)`, line, null, key),
       );
     }
   }
@@ -186,7 +192,7 @@ function readTitle(node: ParsedNode | null, line: number | null, errors: FenceEr
     return null;
   }
   if (!isNoteDrawable(written)) {
-    errors.push(fenceError(`title に図へ描けない字があります: ${safeToken(written)}`, line));
+    errors.push(fenceError(`title に図へ描けない字があります: ${safeToken(written)}`, line, null, written));
     return null;
   }
   return written;
@@ -228,18 +234,20 @@ function collectPoints(
           fenceError(
             `番地の名前 ${safeToken(name ?? '')} は使えません (英数字と _ - だけの ${LIMITS.idLength} 文字まで)`,
             line,
+            null,
+            name ?? undefined,
           ),
         );
         continue;
       }
       if (parseAddress(name) !== null) {
         errors.push(
-          fenceError(`番地の名前 ${safeToken(name)} は番地そのものです (番地と読み分けられません)`, line),
+          fenceError(`番地の名前 ${safeToken(name)} は番地そのものです (番地と読み分けられません)`, line, null, name),
         );
         continue;
       }
       if (points.has(name)) {
-        errors.push(fenceError(`番地の名前 ${safeToken(name)} が二重に書かれています`, line));
+        errors.push(fenceError(`番地の名前 ${safeToken(name)} が二重に書かれています`, line, null, name));
         continue;
       }
 
@@ -251,6 +259,8 @@ function collectPoints(
             `番地の名前 ${safeToken(name)} の行き先は番地で書きます` +
               ` (${safeToken(written ?? '')} は番地の形ではありません)`,
             line,
+            null,
+            written ?? undefined,
           ),
         );
         continue;
@@ -286,7 +296,12 @@ function collidingPoints(
       const name = scalarText(item.key);
       if (name === null || !ids.has(name)) continue;
       errors.push(
-        fenceError(`番地の名前 ${safeToken(name)} は部品 ID と同じです (どちらを指すか決められません)`, lineOf(item.key)),
+        fenceError(
+          `番地の名前 ${safeToken(name)} は部品 ID と同じです (どちらを指すか決められません)`,
+          lineOf(item.key),
+          null,
+          name,
+        ),
       );
     }
   }
@@ -306,7 +321,9 @@ function duplicateStyleKeys(node: ParsedNode | null, lineOf: LineOf): FenceError
   for (const pair of node.items) {
     const key = scalarText(pair.key);
     if (key === null) continue;
-    if (seen.has(key)) errors.push(fenceError(`style の ${safeToken(key)} が二重に書かれています`, lineOf(pair.key)));
+    if (seen.has(key)) {
+      errors.push(fenceError(`style の ${safeToken(key)} が二重に書かれています`, lineOf(pair.key), null, key));
+    }
     seen.add(key);
   }
   return errors;
@@ -352,12 +369,12 @@ function collectParts(
     }
     if (!isReferenceable(id)) {
       errors.push(
-        fenceError(`部品 ID ${safeToken(id)} は使えません (英数字と _ - だけの ${LIMITS.idLength} 文字まで)`, line),
+        fenceError(`部品 ID ${safeToken(id)} は使えません (英数字と _ - だけの ${LIMITS.idLength} 文字まで)`, line, null, id),
       );
       continue;
     }
     if (seen.has(id)) {
-      errors.push(fenceError(`部品 ${safeToken(id)} が二重に定義されています`, line));
+      errors.push(fenceError(`部品 ${safeToken(id)} が二重に定義されています`, line, null, id));
       continue;
     }
 

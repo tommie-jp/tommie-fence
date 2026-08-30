@@ -32,7 +32,20 @@ export const EMPTY_STYLE: StyleSpec = {
  * 行番号は YAML の節を持っている側 (parseFence) が key から引く
  * (`style:` の行だけを指しても、どれを直せばいいか分からないため)。
  */
-export type StyleMessage = { readonly message: string; readonly key: string | null };
+export type StyleMessage = {
+  readonly message: string;
+  readonly key: string | null;
+  /**
+   * 読めなかった値の綴り。**直すのは値のほう**なので、行の中ではここを指したい
+   * (`theme: darkk` で `theme` を指しても、読み手はもう見ている)。
+   * 数や真偽値で書かれた値は綴りが行と一致しないので持たない — 呼ぶ側が
+   * 項目名で代わりに指す。
+   */
+  readonly token?: string;
+};
+
+/** 行の中で指せる形の値だけを綴りとして持つ。 */
+const tokenOf = (raw: unknown): string | undefined => (typeof raw === 'string' ? raw : undefined);
 
 export type StyleValidation = { readonly value: StyleSpec; readonly messages: readonly StyleMessage[] };
 
@@ -68,7 +81,7 @@ const readColor = (raw: unknown, key: string, messages: StyleMessage[]): string 
     const hint = raw === null || raw === undefined
       ? '# から先は YAML のコメントになります。"#333" のように "…" で囲みます'
       : '#rgb か #rrggbb で書きます';
-    messages.push({ message: `style の ${key} は色として読めません (${hint})`, key });
+    messages.push({ message: `style の ${key} は色として読めません (${hint})`, key, token: tokenOf(raw) });
     return null;
   }
   return normaliseColor(raw);
@@ -76,7 +89,11 @@ const readColor = (raw: unknown, key: string, messages: StyleMessage[]): string 
 
 const readSize = (raw: unknown, key: string, range: StyleRange, messages: StyleMessage[]): number | null => {
   if (typeof raw !== 'number' || !Number.isFinite(raw)) {
-    messages.push({ message: `style の ${key} は ${range.min}〜${range.max} の数値で書きます`, key });
+    messages.push({
+      message: `style の ${key} は ${range.min}〜${range.max} の数値で書きます`,
+      key,
+      token: tokenOf(raw),
+    });
     return null;
   }
   const clamped = Math.min(Math.max(raw, range.min), range.max);
@@ -91,7 +108,7 @@ const readFlag = (raw: unknown, key: string, messages: StyleMessage[]): boolean 
   if (typeof raw === 'boolean') return raw;
   if (raw === 'on') return true;
   if (raw === 'off') return false;
-  messages.push({ message: `style の ${key} は on か off です`, key });
+  messages.push({ message: `style の ${key} は on か off です`, key, token: tokenOf(raw) });
   return null;
 };
 
@@ -126,6 +143,7 @@ const readGrid = (
         `style の ${key} の ${safeToken(word)} は知りません `
         + `(大きさ: ${NOTE_SIZE_NAMES.join(' / ')}、色: ${NOTE_COLOR_NAMES.join(' / ')} が使えます)`,
       key,
+      token: word,
     });
     return { on, size: null, color: null };
   }
@@ -140,7 +158,7 @@ const readChoice = (
   messages: StyleMessage[],
 ): string | null => {
   if (typeof raw === 'string' && allowed.includes(raw)) return raw;
-  messages.push({ message: `style の ${key} は ${allowed.join(' か ')} です`, key });
+  messages.push({ message: `style の ${key} は ${allowed.join(' か ')} です`, key, token: tokenOf(raw) });
   return null;
 };
 
@@ -178,7 +196,11 @@ function withKey(
       const named = typeof raw === 'string' ? points.get(raw) : undefined;
       const address = named ?? (typeof raw === 'string' ? parseAddress(raw) : null);
       if (address === undefined || address === null) {
-        messages.push({ message: `style の ${key} は番地で書きます (グリッドの右下、たとえば e12)`, key });
+        messages.push({
+          message: `style の ${key} は番地で書きます (グリッドの右下、たとえば e12)`,
+          key,
+          token: tokenOf(raw),
+        });
         return style;
       }
       return { ...style, gridTo: address };
@@ -196,7 +218,11 @@ function withKey(
     case 'debug':
       return { ...style, debug: readFlag(raw, key, messages) ?? style.debug };
     default:
-      messages.push({ message: `style の知らない項目です: ${safeToken(key)} (使えるのは ${STYLE_KEYS.join(', ')})`, key });
+      messages.push({
+        message: `style の知らない項目です: ${safeToken(key)} (使えるのは ${STYLE_KEYS.join(', ')})`,
+        key,
+        token: key,
+      });
       return style;
   }
 }
