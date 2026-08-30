@@ -186,6 +186,23 @@ describe('circuitPlugin', () => {
     expect(html).toContain('viewBox="0 0 10 8"');
   });
 
+  // お知らせは図の下の帯に errors と一緒に出る。`debug: off` はその帯から
+  // お知らせだけを外す — 読めなかった行は黙らせない。
+  test('shows a notice under the drawing', () => {
+    const html = md().render('```circuit\nparts:\n  R1: resistor a1 a3\nstyle:\n  grid-to: e5\n```');
+
+    expect(html).toContain('grid-to');
+  });
+
+  test('hides the notices when the fence says debug: off, and keeps the errors', () => {
+    const html = md().render(
+      '```circuit\nparts:\n  R1: resistor a1 a3\n  R2: resistr a2 a4\nstyle:\n  grid-to: e5\n  debug: off\n```',
+    );
+
+    expect(html).not.toContain('grid-to');
+    expect(html).toContain('resistr');
+  });
+
   test('does not let the fence content escape into the surrounding html', () => {
     const html = md().render('```circuit\n"</div><img src=x onerror=alert(1)>": resistor a1 a3\n```');
 

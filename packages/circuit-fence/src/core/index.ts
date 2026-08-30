@@ -31,6 +31,15 @@ export type CompileResult = {
    * 読めなかったわけではないので、CLI の終了コードには数えない。
    */
   readonly notices: readonly FenceError[];
+  /**
+   * 上の `notices` を読み手に出すか (`style: debug`)。既定は true。
+   *
+   * **数えるのはここまでで、黙らせるのは出す側**。false でも notices は
+   * そのまま返す — 呼ぶ側が独自に拾える形を残しておかないと、
+   * 「出さない」が「無かったことにする」に化ける (約束 5)。
+   * 読めなかった行 (`errors`) はこの切り替えの対象ではない。
+   */
+  readonly debug: boolean;
 };
 
 const EMPTY_LINE_MAP: ReadonlyMap<number, number> = new Map();
@@ -63,6 +72,8 @@ export function compileCircuit(source: string, options: CompileOptions = {}): Co
       notes: [],
       errors,
       notices: [],
+      // style: ごと読めていないので、既定 (出す) のまま返す。
+      debug: true,
     };
   }
 
@@ -86,6 +97,7 @@ export function compileCircuit(source: string, options: CompileOptions = {}): Co
         ? [fenceError('部品がありません (parts: に「ID: 種類 番地 番地 値」を並べます)', null)]
         : [...errors, ...themeErrors],
       notices: [],
+      debug: doc.style.debug !== false,
     };
   }
 
@@ -107,6 +119,7 @@ export function compileCircuit(source: string, options: CompileOptions = {}): Co
     // 図は組めたが指定が効かなかったところ。行は style の項目に付けられない
     // ので (どの項目かは文面で分かる) 行なしで出す。
     notices: [...texMessages.map((message) => fenceError(message, null)), ...notices],
+    debug: doc.style.debug !== false,
   };
 }
 

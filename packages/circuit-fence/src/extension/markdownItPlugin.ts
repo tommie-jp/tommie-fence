@@ -63,7 +63,7 @@ function bodyOf(
   figures: FigureSource,
   offset: number,
 ): { readonly html: string; readonly theme: Theme } {
-  const { tex, lineMap, netlist, theme, width, notes, errors, notices } = compileCircuit(source);
+  const { tex, lineMap, netlist, theme, width, notes, errors, notices, debug } = compileCircuit(source);
   if (tex === null) return { html: renderErrorCard(shiftErrors(errors, offset)), theme };
 
   const hash = hashOf(tex);
@@ -90,7 +90,11 @@ function bodyOf(
     html:
       drawing +
       renderNetlist(netlist) +
-      renderErrorBanner(shiftErrors([...errors, ...drawingErrors, ...notices], offset)),
+      // `debug: off` の図はお知らせを帯に出さない。読めなかった行は残す
+      // (黙らせられるのは「描けてはいる」ものだけ)。
+      renderErrorBanner(
+        shiftErrors([...errors, ...drawingErrors, ...(debug ? notices : [])], offset),
+      ),
     theme,
   };
 }

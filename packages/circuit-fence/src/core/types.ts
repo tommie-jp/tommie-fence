@@ -173,6 +173,11 @@ export type StyleSpec = {
    * **字は書き手に書かせない** (処理系が埋めるので古びない)。書けるのは出す/出さないだけ。
    */
   readonly stamp: boolean | null;
+  /**
+   * お知らせ (読めてはいるが思ったとおりには出ない、の類) を出すか。null は既定の on。
+   * **消えるのはお知らせだけ**で、読めなかった行は必ず出る。
+   */
+  readonly debug: boolean | null;
 };
 
 /**

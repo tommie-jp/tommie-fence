@@ -127,6 +127,41 @@ describe('compileCircuit の style', () => {
     expect(result.notices.some((notice) => notice.message.includes('grid-to'))).toBe(true);
   });
 
+  // debug は**お知らせを出すかどうか**だけの切り替え。core は off でも
+  // 今までどおり数え上げて返す (消すのは出す側)。ホストが独自に拾えるように
+  // しておかないと、握りつぶしになる (約束 5)。
+  test('shows notices unless the fence says otherwise', () => {
+    const result = compileCircuit(lines('parts:', '  R1: resistor a1 a3', 'style:', '  grid-to: e5'));
+
+    expect(result.debug).toBe(true);
+  });
+
+  test('still works out the notices when debug is off', () => {
+    const result = compileCircuit(
+      lines('parts:', '  R1: resistor a1 a3', 'style:', '  grid-to: e5', '  debug: off'),
+    );
+
+    expect(result.debug).toBe(false);
+    expect(result.notices.some((notice) => notice.message.includes('grid-to'))).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  test('keeps returning the errors when debug is off', () => {
+    // 黙らせられるのはお知らせだけ。読めなかった行は必ず返す。
+    const result = compileCircuit(
+      lines('parts:', '  R1: resistor a1 a3', '  R2: resistr a2 a4', 'style:', '  debug: off'),
+    );
+
+    expect(result.errors).toHaveLength(1);
+    expect(result.debug).toBe(false);
+  });
+
+  test('shows notices when the fence could not be read at all', () => {
+    const result = compileCircuit(lines('parts:', '  IN: port a1 5V'));
+
+    expect(result.debug).toBe(true);
+  });
+
   test('keeps the paper colour the fence asked for, instead of following the editor', () => {
     const result = compileCircuit(
       lines('parts:', '  R1: resistor a1 a3', 'style:', '  paper-color: "#ffffff"'),

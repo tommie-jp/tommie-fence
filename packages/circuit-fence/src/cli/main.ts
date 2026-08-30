@@ -69,8 +69,15 @@ const reportErrors = (errors: readonly FenceError[]): void => {
   for (const error of errors) console.error(`  ${errorLine(error)}`);
 };
 
-/** 図が描けたうえでの補足。読めなかったわけではないので終了コードには数えない。 */
-const reportNotices = (notices: readonly FenceError[]): void => {
+/**
+ * 図が描けたうえでの補足。読めなかったわけではないので終了コードには数えない。
+ *
+ * `style: debug: off` と書いた図では出さない。ただし**それに従うのは
+ * 描く道だけ** — `check` は文法を調べに行くために回すものなので、
+ * 黙らせる指定より「見つけたことは言う」を優先する (最後の網になる)。
+ */
+const reportNotices = (notices: readonly FenceError[], show = true): void => {
+  if (!show) return;
   for (const notice of notices) console.log(`  お知らせ: ${messageLine(notice)}`);
 };
 
@@ -97,7 +104,7 @@ const reportTexClash = (label: string, path: string): void =>
  * (描いたものを後から書き換えるのではなく、別の的に向けて組み直す)。
  */
 function emitTex(job: Job): number {
-  const { tex, netlist, errors: raw, notices } = compileCircuit(job.source, { target: 'latex' });
+  const { tex, netlist, errors: raw, notices, debug } = compileCircuit(job.source, { target: 'latex' });
   // 行番号は Markdown の行で返す。プレビューの帯とも、図に書き出した番号とも揃う。
   const errors = shiftErrors(raw, job.line);
 
@@ -118,7 +125,7 @@ function emitTex(job: Job): number {
   console.log(`${job.label} → ${texPath} (xelatex で組んでください)`);
   reportNetlist(netlist);
   reportErrors(errors);
-  reportNotices(shiftErrors(notices, job.line));
+  reportNotices(shiftErrors(notices, job.line), debug);
   return errors.length;
 }
 
@@ -149,7 +156,7 @@ function checkJob(job: Job): number {
 
 /** 1 枚描く。図にできなかった数を返す。 */
 async function runJob(job: Job): Promise<number> {
-  const { tex, lineMap, netlist, theme, width, notes, errors: raw, notices } = compileCircuit(job.source);
+  const { tex, lineMap, netlist, theme, width, notes, errors: raw, notices, debug } = compileCircuit(job.source);
   const errors = shiftErrors(raw, job.line);
 
   if (tex === null) {
@@ -189,7 +196,7 @@ async function runJob(job: Job): Promise<number> {
   console.log(`${job.label} → ${svgPath}`);
   reportNetlist(netlist);
   reportErrors(errors);
-  reportNotices(shiftErrors(notices, job.line));
+  reportNotices(shiftErrors(notices, job.line), debug);
   return errors.length;
 }
 

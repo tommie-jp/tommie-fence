@@ -138,4 +138,23 @@ describe('validateStyle', () => {
     expect(messages[0]?.key).toBe('stamp');
     expect(messages[0]?.message).toContain('on');
   });
+
+  // お知らせ (図は描けたが思ったとおりには出ない、の類) を出すかどうか。
+  // 既定は on — 黙らせるほうを書き手に選ばせる。
+  test('reads the notice switch', () => {
+    expect(valueOf({ debug: true })).toMatchObject({ debug: true });
+    expect(valueOf({ debug: 'on' })).toMatchObject({ debug: true });
+    expect(valueOf({ debug: 'off' })).toMatchObject({ debug: false });
+  });
+
+  test('leaves the notice switch unwritten when nothing says otherwise', () => {
+    expect(valueOf({}).debug).toBeNull();
+  });
+
+  test('asks for on or off when the notice switch is written as something else', () => {
+    const messages = messagesOf({ debug: 'quiet' });
+
+    expect(messages[0]?.key).toBe('debug');
+    expect(messages[0]?.message).toContain('on');
+  });
 });
