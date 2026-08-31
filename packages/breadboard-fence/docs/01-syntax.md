@@ -72,7 +72,8 @@ wires:
   - ボード外の機器 — `device`
 - 略記でも書ける → [種類の略記](#種類の略記)。図・部品リスト・エラーには
   正式名だけが出る。
-- 配線の色: red, black, white, gray, orange, yellow, green, blue, purple, brown, pink。
+- 配線の色: red, black, white, gray (grey も可), orange, yellow, green, blue,
+  purple, brown, pink。
   知らない色名は図に書き込まず、行番号つきのエラーにする
   → [エラーとお知らせの出方](#エラーとお知らせの出方)。
 - コンデンサは `capacitor/ceramic` のように姿を選べる → [部品の姿](#部品の姿-variant)。
