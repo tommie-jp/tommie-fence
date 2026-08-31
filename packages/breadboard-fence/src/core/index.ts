@@ -200,6 +200,12 @@ function resolveNotes(
   const resolved: ResolvedNote[] = [];
 
   for (const spec of specs) {
+    // 場所の語を書いたものは、指し先を持たない (図の外の帯に流す)。
+    if (spec.place !== null) {
+      resolved.push({ spec, anchors: [] });
+      continue;
+    }
+
     const anchors: NoteAnchor[] = [];
     let failed = false;
 

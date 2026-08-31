@@ -18,6 +18,22 @@ export type NoteSize = (typeof NOTE_SIZES)[number];
 export const NOTE_ALIGNS = ['left', 'center', 'right'] as const;
 export type NoteAlign = (typeof NOTE_ALIGNS)[number];
 
+/**
+ * 字を図の外に置く場所。**番地を書かなかったときの既定**でもある。
+ *
+ * 板の番地はどれも実在の穴に縛られているので、**板の外を指す番地が存在しない**。
+ * 図の説明や書き写し用の写しを板の上に重ねると、穴と印字に重なって読みにくい。
+ * 場所の語を 1 つ置いて、板の下の帯に流せるようにする。
+ */
+export const NOTE_PLACES = ['below'] as const;
+export type NotePlace = (typeof NOTE_PLACES)[number];
+
+/** 場所を書かなかったときはここ。板の下、部品リストの後ろ。 */
+export const DEFAULT_PLACE: NotePlace = 'below';
+
+/** 字を図の外に置ける種類。印や枠は指し先があってこそなので、板の上にしか置けない。 */
+export const PLACEABLE_KINDS: ReadonlySet<NoteKind> = new Set<NoteKind>(['text', 'source']);
+
 /** 行送り。`source` にだけ書ける (1 行の `text` では意味を持たないため)。 */
 export const NOTE_LEADINGS = ['tight', 'loose'] as const;
 export type NoteLeading = (typeof NOTE_LEADINGS)[number];

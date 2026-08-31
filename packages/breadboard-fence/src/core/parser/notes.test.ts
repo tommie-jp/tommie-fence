@@ -63,6 +63,35 @@ describe('parseNoteLine', () => {
     expect(noteOf('circle R1').color).toBe('red');
   });
 
+  test('places text and source outside the board when no address is written', () => {
+    // 板の番地はどれも実在の穴に縛られていて、板の外を指す番地が存在しない。
+    expect(noteOf('source')).toMatchObject({ kind: 'source', place: 'below', targets: [] });
+    expect(noteOf('text', 'ひとこと')).toMatchObject({ place: 'below', targets: [], text: 'ひとこと' });
+  });
+
+  test('takes below written out, and reads the words after it', () => {
+    expect(noteOf('source below tiny tight')).toMatchObject({
+      place: 'below', targets: [], size: 'tiny', leading: 'tight',
+    });
+  });
+
+  test('reads a leading word as a word, not as a place', () => {
+    // 見た目の語の並びは閉じているので、ここは割り切れる。
+    expect(noteOf('source tiny')).toMatchObject({ place: 'below', size: 'tiny' });
+    expect(noteOf('text blue right', 'x')).toMatchObject({ place: 'below', color: 'blue', align: 'right' });
+  });
+
+  test('keeps the address when one is written', () => {
+    expect(noteOf('source j3 tiny')).toMatchObject({ place: null, targets: ['j3'], size: 'tiny' });
+    expect(noteOf('text a5 blue', 'x')).toMatchObject({ place: null, targets: ['a5'] });
+  });
+
+  test('refuses a place on a kind that has to point at something', () => {
+    // 印や枠は指し先があってこそなので、図の外には置けない。
+    expect(errorOf('circle below').message).toContain('below');
+    expect(errorOf('box below a5').message).toContain('below');
+  });
+
   test('reports a kind it does not know', () => {
     expect(errorOf('underline R1').message).toContain('circle');
   });

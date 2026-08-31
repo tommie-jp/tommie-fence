@@ -325,6 +325,51 @@ describe('renderBreadboard', () => {
     expect(svg).toContain('R1: resistor a5 a10 330');
   });
 
+  test('puts a source with no address in a band under the drawing', () => {
+    // 板の番地はどれも実在の穴に縛られているので、板の外を指す番地が存在しない。
+    // 板の上に重ねると穴と印字に重なるので、場所の語を書いたものは帯へ流す。
+    const outside = renderBreadboard('parts:\n  R1: resistor a5 a10 330\nnotes:\n  - source tiny\n');
+    const bare = renderBreadboard('parts:\n  R1: resistor a5 a10 330\n');
+    const heightOf = (svg: string) => Number(/viewBox="0 0 [\d.]+ ([\d.]+)"/.exec(svg)?.[1]);
+
+    expect(outside.errors).toEqual([]);
+    expect(outside.svg).toContain('```breadboard');
+    // 帯のぶんだけ高くなり、板そのものの高さは変わらない。
+    expect(heightOf(outside.svg)).toBeGreaterThan(heightOf(bare.svg) ?? 0);
+  });
+
+  test('places text under the drawing when no address is written', () => {
+    const { svg, errors } = renderBreadboard(
+      'parts:\n  R1: resistor a5 a10 330\nnotes:\n  - text: 仮組み\n',
+    );
+
+    expect(errors).toEqual([]);
+    expect(svg).toContain('仮組み');
+  });
+
+  test('draws the same thing whether below is written out or left off', () => {
+    // `source` はフェンス自身を書き出すので、行が違えば図も違う。字で比べる。
+    const bare = renderBreadboard('parts:\n  R1: resistor a5 a10\nnotes:\n  - text tiny: ひとこと\n');
+    const spelt = renderBreadboard('parts:\n  R1: resistor a5 a10\nnotes:\n  - text below tiny: ひとこと\n');
+
+    expect(spelt.errors).toEqual([]);
+    expect(spelt.svg).toBe(bare.svg);
+  });
+
+  test('still lets a source sit on the board when an address is written', () => {
+    const placed = renderBreadboard('parts:\n  R1: resistor a5 a10\nnotes:\n  - source j3 tiny\n');
+    const outside = renderBreadboard('parts:\n  R1: resistor a5 a10\nnotes:\n  - source tiny\n');
+
+    expect(placed.errors).toEqual([]);
+    expect(placed.svg).not.toBe(outside.svg);
+  });
+
+  test('refuses a point named after the place word', () => {
+    const { errors } = renderBreadboard('points:\n  below: a5\nparts:\n  R1: resistor a5 a10\n');
+
+    expect(errors[0]?.message).toContain('場所の語');
+  });
+
   test('keeps notes out of the circuit', () => {
     const bare = renderBreadboard('parts:\n  R1: resistor a5 a10 330\n');
     const noted = renderBreadboard(

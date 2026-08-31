@@ -107,11 +107,15 @@ notes:
   - arrow d22 R1                 # 指し棒
   - line +t20 -t20 green         # 直線
   - text d24 large bold: 電流を決めるのはここ
-  - source f3 tiny               # フェンスそのものを書き出す
+  - source tiny                  # フェンスそのものを書き出す (板の下の帯へ)
+  - text: 仮組み。あとで直す       # 番地を書かなければ板の下
 ```
 
 語 (順不同): 色 `red blue green orange ink` / 大きさ `tiny small normal large huge` /
 寄せ `left center right` / `bold` / `solid` (box) / 行送り `tight loose` (source)
+
+**`text` と `source` は番地を書かなければ板の下の帯に置く** (`below` が既定)。
+`- source below tiny` と書き出しても同じ。場所を書けるのはこの 2 つだけ。
 
 ## 見た目
 
@@ -146,7 +150,7 @@ style:
 - **`board: full` は 63 列。** half (30 列) のつもりで 40 列に置くとはみ出す。
 - 迂回ヒントを書く行は端点を 2 つだけにする。
 - **値と `l=` の両方は書けない** (図に出るのは値)。
-- 点の名前に**番地の形・レール名 (`-t`)・ハイフンだけの語**は使えない。
+- 点の名前に**番地の形・レール名 (`-t`)・ハイフンだけの語・`below`** は使えない。
 
 ## 直し方
 

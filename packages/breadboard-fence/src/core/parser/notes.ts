@@ -2,9 +2,10 @@ import { fail, ok, safeToken } from '../errors.ts';
 import { LIMITS, clampText, isReferenceable } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
 import {
-  DEFAULT_MARK_COLOR, NOTE_ALIGNS, NOTE_COLORS, NOTE_KINDS, NOTE_LEADINGS, NOTE_SIZES, noteTargetCount,
+  DEFAULT_MARK_COLOR, DEFAULT_PLACE, NOTE_ALIGNS, NOTE_COLORS, NOTE_KINDS, NOTE_LEADINGS, NOTE_PLACES,
+  NOTE_SIZES, PLACEABLE_KINDS, noteTargetCount,
 } from '../notes.ts';
-import type { NoteAlign, NoteColor, NoteKind, NoteLeading, NoteSize } from '../notes.ts';
+import type { NoteAlign, NoteColor, NoteKind, NoteLeading, NotePlace, NoteSize } from '../notes.ts';
 import type { NoteSpec, Result } from '../types.ts';
 
 /** その種類が受け取れる語。ここに無い語を書いたら、黙って捨てずに報告する。 */
@@ -39,6 +40,8 @@ function slotOf(word: string): WordSlot | null {
 /** 指し先として書ける形か。部品があるか・穴が板の中かは、あとで図を組むときに見る。 */
 const isNoteTarget = (token: string): boolean => parseAddress(token) !== null || isReferenceable(token);
 
+const isPlace = (token: string): token is NotePlace => (NOTE_PLACES as readonly string[]).includes(token);
+
 /**
  * 注釈 1 つを読む。
  *
@@ -71,7 +74,17 @@ export function parseNoteLine(head: string, text: string | null, line: number): 
     return fail(`${kind} に字は書けません (字を置くのは text です)`, line);
   }
 
-  const wanted = noteTargetCount(kind);
+  // 字を置く種類は、番地の代わりに場所を書ける。**どちらも書かなければ場所の既定**。
+  // 見た目の語 (`tiny` など) が先頭に来たときは場所ではなく語として読む
+  // (語の並びは閉じているので、ここで割り切れる)。
+  const placeable = PLACEABLE_KINDS.has(kind);
+  const first = rest[0];
+  const placed = placeable && (first === undefined || isPlace(first) || slotOf(first) !== null);
+  if (!placeable && first !== undefined && isPlace(first)) {
+    return fail(`${kind} に ${first} は書けません (字を図の外に置けるのは text と source です)`, line, first);
+  }
+
+  const wanted = placed ? 0 : noteTargetCount(kind);
   const targets = rest.slice(0, wanted);
   if (targets.length !== wanted) {
     return fail(`${kind} は指し先を ${wanted} つ書きます (今は ${targets.length} つ)`, line);
@@ -82,12 +95,15 @@ export function parseNoteLine(head: string, text: string | null, line: number): 
     }
   }
 
-  const words = readWords(kind, rest.slice(wanted), line);
+  // 場所の語そのものは、読んだら語の並びから外す。
+  const tail = rest.slice(wanted);
+  const words = readWords(kind, first !== undefined && isPlace(first) ? tail.slice(1) : tail, line);
   if (!words.ok) return words;
 
   return ok({
     kind,
     targets,
+    place: placed ? DEFAULT_PLACE : null,
     // 印は赤が既定。字だけは既定を置かず、図の文字色にそのまま従わせる。
     color: words.value.color ?? (kind === 'text' || kind === 'source' ? null : DEFAULT_MARK_COLOR),
     size: words.value.size,

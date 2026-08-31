@@ -1,6 +1,6 @@
 // フェンス構文からレンダリングまでで共有する型。DOM にも Node にも依存しない。
 
-import type { NoteAlign, NoteColor, NoteKind, NoteLeading, NoteSize } from './notes.ts';
+import type { NoteAlign, NoteColor, NoteKind, NoteLeading, NotePlace, NoteSize } from './notes.ts';
 
 export const HOLE_ROWS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] as const;
 export type HoleRow = (typeof HOLE_ROWS)[number];
@@ -132,8 +132,13 @@ export type WireSpec = {
  */
 export type NoteSpec = {
   readonly kind: NoteKind;
-  /** 部品 ID か穴番地。circle / text / source は 1 つ、box / arrow / line は 2 つ。 */
+  /**
+   * 部品 ID か穴番地。circle は 1 つ、box / arrow / line は 2 つ。
+   * `text` / `source` は**場所を書かなければ空**で、`place` のほうが効く。
+   */
   readonly targets: readonly string[];
+  /** 図の外に置く場所。番地を書いたときは null。 */
+  readonly place: NotePlace | null;
   readonly color: NoteColor | null;
   readonly size: NoteSize | null;
   readonly align: NoteAlign | null;

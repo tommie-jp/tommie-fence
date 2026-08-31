@@ -61,8 +61,15 @@ export function renderNotes(
   theme: RenderTheme,
   sourceLines: readonly string[],
 ): string {
-  return notes.map((note) => renderNote(note, layout, theme, sourceLines)).join('');
+  return onBoard(notes).map((note) => renderNote(note, layout, theme, sourceLines)).join('');
 }
+
+/** 板の上に重ねる注釈と、図の外に置く注釈。場所の語を書いたものが後者。 */
+export const onBoard = (notes: readonly ResolvedNote[]): readonly ResolvedNote[] =>
+  notes.filter((note) => note.spec.place === null);
+
+export const placedOutside = (notes: readonly ResolvedNote[]): readonly ResolvedNote[] =>
+  notes.filter((note) => note.spec.place !== null);
 
 /**
  * 注釈が図の下へどこまで伸びるか。**字は板の外へはみ出しても切らずに、
@@ -75,7 +82,7 @@ export function notesBottom(
   sourceLines: readonly string[],
 ): number {
   let bottom = 0;
-  for (const note of notes) {
+  for (const note of onBoard(notes)) {
     const { spec } = note;
     if (spec.kind !== 'text' && spec.kind !== 'source') continue;
     const anchor = note.anchors[0];
@@ -92,6 +99,66 @@ export function notesBottom(
 function linesOf(spec: NoteSpec, sourceLines: readonly string[]): readonly string[] {
   if (spec.kind === 'source') return sourceLines;
   return (spec.text ?? '').split('\n');
+}
+
+/** 図の外の帯の、上下と、注釈どうしの間に入れる余白。 */
+const BAND_PAD = 10;
+const BAND_GAP = 8;
+
+/**
+ * 板の外に置いた字が使う高さ。板の上に重ねるものと違って**画布を伸ばすのではなく、
+ * 自分の帯を持つ** (部品リストと同じ立て付け)。
+ */
+export function outsideNotesHeight(
+  notes: readonly ResolvedNote[],
+  theme: RenderTheme,
+  sourceLines: readonly string[],
+): number {
+  const placed = placedOutside(notes);
+  if (placed.length === 0) return 0;
+
+  const blocks = placed.map((note) => blockHeight(note.spec, theme, sourceLines));
+  return BAND_PAD * 2 + blocks.reduce((sum, height) => sum + height, 0) + BAND_GAP * (blocks.length - 1);
+}
+
+const blockHeight = (spec: NoteSpec, theme: RenderTheme, sourceLines: readonly string[]): number => {
+  const size = fontSizeOf(spec, theme);
+  const step = size * noteLeading(spec.leading, spec.kind);
+  return step * (linesOf(spec, sourceLines).length - 1) + size;
+};
+
+/**
+ * 板の外に置いた字。板の下、部品リストの後ろに、書いた順に積む。
+ *
+ * 板の番地はどれも実在の穴に縛られているので、**板の外を指す番地が存在しない**。
+ * 図の説明や書き写し用の写しを板の上に重ねると穴と印字に重なるので、
+ * 場所の語を書いたものはここへ流す。
+ */
+export function renderOutsideNotes(
+  notes: readonly ResolvedNote[],
+  x: number,
+  top: number,
+  width: number,
+  theme: RenderTheme,
+  sourceLines: readonly string[],
+): string {
+  const placed = placedOutside(notes);
+  if (placed.length === 0) return '';
+
+  let y = top + BAND_PAD;
+  const drawn: string[] = [];
+  for (const note of placed) {
+    const { spec } = note;
+    const size = fontSizeOf(spec, theme);
+    const align: NoteAlign = spec.align ?? 'left';
+    const step = size * noteLeading(spec.leading, spec.kind);
+    // 帯の中では、寄せに応じて基準の x が端から端へ動く。
+    const at = align === 'left' ? x : align === 'right' ? x + width : x + width / 2;
+
+    drawn.push(textLines(spec, linesOf(spec, sourceLines), at, y + size * 0.8, step, width, theme));
+    y += blockHeight(spec, theme, sourceLines) + BAND_GAP;
+  }
+  return drawn.join('');
 }
 
 function renderNote(
@@ -207,21 +274,42 @@ function renderText(
   const size = fontSizeOf(spec, theme);
   const align: NoteAlign = spec.align ?? 'left';
   const step = size * noteLeading(spec.leading, spec.kind);
+  const room = roomFor(anchor.center.x, align, layout);
+
+  return textLines(spec, lines, anchor.center.x, anchor.center.y, step, room, theme, true);
+}
+
+/**
+ * 字を 1 行ずつ置く。板の上でも図の外でも同じ描き方で、違うのは
+ * 基準の座標と、`…` に切るときの残り幅だけ。
+ */
+function textLines(
+  spec: NoteSpec,
+  lines: readonly string[],
+  x: number,
+  baseline: number,
+  step: number,
+  room: number,
+  theme: RenderTheme,
+  halo = false,
+): string {
+  const size = fontSizeOf(spec, theme);
+  const align: NoteAlign = spec.align ?? 'left';
   const mono = spec.kind === 'source';
   // `fit` の目安は「字の大きさを 1 とした幅」。等幅の英数字は比例フォントの
   // 見積もり (0.55) より広いので、そのぶん早めに切る。
-  const room = roomFor(anchor.center.x, align, layout) / (size * (mono ? 1.1 : 1));
+  const limit = room / (size * (mono ? 1.1 : 1));
 
   return lines
     .map((text, index) =>
-      svgText(anchor.center.x, anchor.center.y + step * index, fit(text, room), {
+      svgText(x, baseline + step * index, fit(text, limit), {
         'font-size': num(size),
         ...(spec.bold ? { 'font-weight': 700 } : {}),
         ...(mono ? { 'font-family': MONO_FAMILY, 'xml:space': 'preserve' } : {}),
         fill: textColorOf(spec, theme),
         anchor: ANCHORS[align],
-        halo: theme.palette.textHalo,
-        haloWidth: haloWidth(theme),
+        // 帯の中は下地が無地なので縁取りは要らない。板に重ねるときだけ敷く。
+        ...(halo ? { halo: theme.palette.textHalo, haloWidth: haloWidth(theme) } : {}),
       }),
     )
     .join('');

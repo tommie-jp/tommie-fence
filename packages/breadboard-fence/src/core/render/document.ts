@@ -3,7 +3,7 @@ import type { Board, PartsListMode, PlacedPart, Point } from '../types.ts';
 import { renderBoard } from './board.ts';
 import type { DevicePlacement } from './devices.ts';
 import { renderDevice } from './devices.ts';
-import { notesBottom, renderNotes } from './notes.ts';
+import { notesBottom, outsideNotesHeight, renderNotes, renderOutsideNotes } from './notes.ts';
 import type { ResolvedNote } from './notes.ts';
 import { renderPart } from './parts.ts';
 import { partsListHeight, renderPartsList } from './partsList.ts';
@@ -45,7 +45,9 @@ export function renderDocument(input: DocumentInput): string {
   // 注釈の字は板の下へはみ出すことがある (`- source` はフェンス全体を書き出す)。
   // 切らずに画布のほうを伸ばす。横は板の幅で `…` に切る (render/notes.ts)。
   const figure = Math.max(layout.height, notesBottom(input.notes, theme, input.sourceLines) + OUTER_PAD);
-  const height = head + figure + list;
+  // 板の外に置いた字は、画布を伸ばすのではなく自分の帯を持つ (部品リストと同じ)。
+  const outside = outsideNotesHeight(input.notes, theme, input.sourceLines);
+  const height = head + figure + list + outside;
 
   // 座標系 (viewBox) は動かさず、外側の大きさだけを指定の横幅に合わせる。
   // ピッチを変えるとレイアウトも配線の経路も総取り替えになるので、拡大縮小はここだけで済ませる。
@@ -75,6 +77,7 @@ export function renderDocument(input: DocumentInput): string {
     // 注釈は板・部品・配線の上に重ねる。回路の一員ではないので最後に置く。
     renderNotes(input.notes, layout, theme, input.sourceLines),
     renderPartsList(listed, layout.board.x, figure, layout.board.width, theme),
+    renderOutsideNotes(input.notes, layout.board.x, figure + list, layout.board.width, theme, input.sourceLines),
   ].filter(Boolean);
 
   const shifted = head === 0
