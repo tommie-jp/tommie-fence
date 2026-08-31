@@ -2,6 +2,7 @@ import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
 import { caption, fitToBoard, partLabel, pinPoints, pointOfPin } from './partCommon.ts';
 import { element, num, svgText } from './svg.ts';
+import { textWidth } from './textFit.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
 
@@ -9,9 +10,17 @@ import { textScale } from './theme.ts';
 const stub = (point: Point, fill: string, dy = -3): string =>
   element('rect', { x: num(point.x - 3), y: num(point.y + dy), width: 6, height: 6, fill });
 
-/** パッケージの幅からはみ出さないところまで字を詰める。 */
+/** 本体の枠と字の間に残す余白。 */
+const CHIP_LABEL_PAD = 14;
+
+/**
+ * パッケージの幅からはみ出さないところまで字を詰める。
+ * **幅は文字数ではなく `textWidth` で数える**。全角を半角の幅で数えていたときは、
+ * 日本語のラベルが枠から飛び出していた (dip8 の本体 78px に対して字が 95px)。
+ * 板の上の字はどこも同じ物差しで数える (部品リスト・キャプションと共通)。
+ */
 const fittedFontSize = (text: string, width: number, scale: number): number =>
-  Math.min(scale * 9.5, (width - 14) / (text.length * 0.58));
+  Math.min(scale * 9.5, (width - CHIP_LABEL_PAD) / textWidth(text));
 
 export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
   const anchor = part.pins[0]?.address;

@@ -3,6 +3,17 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Fixed
+
+- **DIP と 1 列ヘッダのラベルが、日本語だと本体の枠から飛び出していた。**
+  枠に収まる字の大きさを `文字数 × 半角の幅` で見積もっていたため、全角の
+  ラベルを 1.7 倍ほど小さく数えていた (dip8 の本体 78px に対して字が 95px)。
+  部品リストやキャプションと同じ `render/textFit.ts` の物差しに揃えた。
+  英数字だけのラベルも見積もりが 0.58 → 0.55 に揃うぶん**わずかに大きくなる**
+  (`examples/out/10-bh-ad2.svg` の `U1 NJM4556A` が 10.03 → 10.58)。
+
 ## [0.3.0] - 2026-09-01
 
 ### Added

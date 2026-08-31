@@ -739,6 +739,26 @@ describe('renderBreadboard', () => {
     expect(textWidth(text) * Number(size)).toBeLessThanOrEqual(Number(x));
   });
 
+  test('shrinks a chip label until it fits the package body, full width or not', () => {
+    // 本体の枠は `packages.ts` が chipBody を #14171c の縁で描く 1 枚だけ。
+    const bodyWidth = (svg: string): number =>
+      Number(/width="([\d.]+)"/.exec(/<rect[^>]*stroke="#14171c"[^>]*\/>/.exec(svg)?.[0] ?? '')?.[1]);
+
+    for (const [source, needle] of [
+      ['parts:\n  U1: dip8 @ e5 NJM4556A\n', 'NJM'],
+      ['parts:\n  U1: dip8 @ e5 日本語のラベル\n', '日本語'],
+      ['parts:\n  M1: sip4 @ a20 l=有機ELディスプレイ\n', '有機'],
+    ] as const) {
+      const { svg } = renderBreadboard(source);
+      const [, size = '', text = ''] =
+        [...svg.matchAll(/<text[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)]
+          .find((match) => (match[2] ?? '').includes(needle)) ?? [];
+
+      // 全角を半角の幅で数えると、字が本体の枠から飛び出す。
+      expect(textWidth(text) * Number(size), text).toBeLessThanOrEqual(bodyWidth(svg));
+    }
+  });
+
   test('keeps what it could not read out of the drawing itself', () => {
     const { svg, errorHtml, errors } = renderBreadboard(
       ['parts:', '  R1: resistor a5 a10 330', 'wires:', '  - a5 -- nowhere'].join('\n'),
