@@ -1,7 +1,9 @@
 # Breadboard Fence
 
-Markdown の ` ```breadboard ` フェンスに YAML で配線を書くと、VS Code のプレビューに
-ブレッドボードの実体配線図がレンダリングされる拡張機能。
+[English](README.md) | [日本語](README.ja.md)
+
+A VS Code extension that renders ` ```breadboard ` fences (YAML) in Markdown
+as breadboard wiring diagrams.
 
 ````markdown
 ```breadboard
@@ -16,10 +18,10 @@ wires:
 ```
 ````
 
-![LED と抵抗の配線図](examples/out/01-led.png)
+![An LED and a resistor on a breadboard](examples/out/01-led.png)
 
-図と同時に、**穴の導通からネットリストを導出**する。描いた図が意図した回路に
-なっているかを機械的に突き合わせられる。
+Along with the drawing it **derives a netlist from the strips inside the board**,
+so what you drew can be checked mechanically against the circuit you meant.
 
 ```text
 +t : R1.1
@@ -27,231 +29,244 @@ N1 : R1.2, D1.A
 -t : D1.K
 ```
 
-## なぜあるか
+## Why this exists
 
-回路図 (schematic) をテキストで描く手段は枯れている (CircuiTikZ、Schemdraw)。
-一方で**ブレッドボードの実体配線図をテキストから描く手段は空白地帯**だった
-(Mermaid / PlantUML / Kroki いずれも非対応)。実験の手順メモに「どの穴に挿すか」を
-そのまま書き残せると、後から再現できる。
+Drawing a schematic from text is a solved problem (CircuiTikZ, Schemdraw).
+Drawing the **breadboard itself** from text was not: Mermaid, PlantUML and Kroki
+all leave it alone. Writing "which hole does it go in" straight into the notes of
+an experiment is what makes that experiment reproducible later.
 
-文法は LLM に書かせても崩れないことを狙って、
-**絶対座標を書かせない・接続は名前ベース・配置は穴番地**の 3 点を守っている。
+The grammar aims to survive being written by an LLM, which comes down to three
+rules: **no absolute coordinates, connections by name, placement by hole address.**
 
-## 使い方
+## Getting started
 
-必要なのは **VS Code 1.75 以上**だけ。Marketplace には出していないので、
-[Releases](https://github.com/tommie-jp/breadboard-fence/releases) から
-`.vsix` を落として入れる (自分で作ることもできる → [開発](#開発))。
+All you need is **VS Code 1.75 or newer**. It is not on the Marketplace, so grab
+the `.vsix` from
+[Releases](https://github.com/tommie-jp/breadboard-fence/releases)
+(or build your own — see [Development](#development)).
 
-`.vsix` の中身は素の JavaScript で、プラットフォーム別のバイナリを含まない
-(実行時の依存は YAML パーサだけ)。**同じファイルがどの環境でも使える**ので、
-Releases の asset も 1 つしかない。違うのは「どこに入れるか」だけ。
+The `.vsix` is plain JavaScript with no platform-specific binaries (the only
+runtime dependency is a YAML parser). **The same file works everywhere**, which
+is why a Release carries exactly one asset. Only the *where* differs.
 
-| 環境 | 拡張が動く場所 | インストール |
+| Environment | Where the extension runs | Install |
 | --- | --- | --- |
-| Windows | Windows 側 | PowerShell で `code --install-extension (Get-Item breadboard-fence-*.vsix).FullName` |
-| WSL2 | **WSL 側** (`~/.vscode-server/extensions`) | WSL のシェルで `code --install-extension breadboard-fence-*.vsix` |
-| Linux / macOS | そのマシン | `code --install-extension breadboard-fence-*.vsix` |
-| Remote-SSH / Dev Container / Codespaces | **接続先** | 接続先のシェルで上と同じコマンド |
-| VSCodium / Cursor | そのマシン | `code` の代わりに `codium` / `cursor` を使う |
+| Windows | Windows side | PowerShell: `code --install-extension (Get-Item breadboard-fence-*.vsix).FullName` |
+| WSL2 | **WSL side** (`~/.vscode-server/extensions`) | From a WSL shell: `code --install-extension breadboard-fence-*.vsix` |
+| Linux / macOS | That machine | `code --install-extension breadboard-fence-*.vsix` |
+| Remote-SSH / Dev Container / Codespaces | **The remote** | Same command from the remote's shell |
+| VSCodium / Cursor | That machine | Use `codium` / `cursor` instead of `code` |
 
-落としたファイルが壊れていないかは、同じ Release の `SHA256SUMS` で確かめられる。
+To check the download, the same Release carries `SHA256SUMS`.
 
 ```bash
 sha256sum -c SHA256SUMS
 ```
 
-ブラウザ版 (vscode.dev / github.dev) でも動くようにビルドしてあるが、**web の
-拡張ホストは `.vsix` の手動インストールを受け付けない**。Marketplace に出すまでは、
-展開した拡張を HTTPS で配信して `Developer: Install Extension from Location...`
-に URL を渡すサイドロードだけが手段になる。
+It is also built for the browser (vscode.dev / github.dev), but **the web
+extension host refuses a hand-installed `.vsix`**. Until it is on the
+Marketplace, the only route there is to serve the unpacked extension over HTTPS
+and hand the URL to `Developer: Install Extension from Location...`.
 
-入れたら Markdown を開いて Markdown プレビュー
-(`Ctrl+Shift+V` / macOS は `Cmd+Shift+V`) を出す。
+Once installed, open a Markdown file and show the Markdown preview
+(`Ctrl+Shift+V`, or `Cmd+Shift+V` on macOS).
 
-`code` が PATH に無いときは、拡張ビュー (`Ctrl+Shift+X`) の右上の `...` →
-「VSIX からのインストール」でも同じことができる
-(macOS ならコマンドパレットの `Shell Command: Install 'code' command in PATH` で
-`code` を通せる)。
+If `code` is not on your PATH, the extensions view (`Ctrl+Shift+X`) has the same
+thing under `...` → "Install from VSIX" (on macOS the command palette's
+`Shell Command: Install 'code' command in PATH` puts `code` there).
 
-### 更新するとき
+### Updating
 
-**ソースを直しただけでは、入っている拡張は変わらない。** `.vsix` を作り直して
-入れ直すまで、プレビューは前のビルドのまま動く。
+**Editing the source does not change the extension you have installed.** The
+preview keeps running the previous build until you rebuild the `.vsix` and
+install it again.
 
 ```bash
-./doBuild.sh                             # 検査 → .vsix を作る → 入れ直す
+./doBuild.sh                             # check → build the .vsix → reinstall
 ```
 
-手でやるなら次の 2 つ。
+By hand, that is these two:
 
 ```bash
 npm run package
 code --install-extension breadboard-fence-0.2.0.vsix --force
 ```
 
-- バージョン番号を上げずに入れ直すときは `--force` が要る。
-- 入れ直したら**ウィンドウを再読み込みする** (コマンドパレットの
-  `Developer: Reload Window`)。プレビューを開き直すだけでは古いままのことがある。
-- 拡張が古いと、後から入った文法が「知らないキーです」というエラーで出る。
-  文法を足したつもりが図に反映されないときは、まずここを疑う。
+- Reinstalling without bumping the version needs `--force`.
+- After reinstalling, **reload the window** (`Developer: Reload Window` in the
+  command palette). Reopening the preview is not always enough.
+- An out-of-date extension reports newer grammar as "unknown key". When syntax
+  you just added does not show up in the drawing, suspect this first.
 
-### Windows で気をつけること
+### Notes for Windows
 
-- Node.js は `winget install OpenJS.NodeJS.LTS` で入る。
-- PowerShell と cmd はワイルドカードを展開せず `breadboard-fence-*.vsix` を
-  そのまま渡してしまう。上の表のように `Get-Item` で実体のパスにするか、
-  ファイル名を直接書く。
+- Node.js installs with `winget install OpenJS.NodeJS.LTS`.
+- PowerShell and cmd do not expand wildcards and will pass
+  `breadboard-fence-*.vsix` through literally. Use `Get-Item` as in the table
+  above, or write the file name out.
 
-### WSL2 で気をつけること
+### Notes for WSL2
 
-- この拡張は**ワークスペース側 (WSL) で動く**。Windows 側に入れただけでは
-  WSL のウィンドウでフェンスが図にならない。拡張ビューに
-  「WSL: &lt;ディストリ&gt; にインストール」のボタンが出たら押す。
-- リポジトリは Linux 側 (`~/breadboard-fence` など) に置く。`/mnt/c/...` の下は
-  ファイルアクセスが遅く、`npm install` とテストが目に見えて重くなる。
-- **Windows と WSL で `node_modules` を共有しない**。esbuild と sharp は
-  プラットフォーム別のバイナリを入れるので、片方で `npm install` したものは
-  もう片方で動かない。混ざったら `rm -rf node_modules && npm install` でやり直す。
+- This extension **runs on the workspace side (WSL)**. Installing it on the
+  Windows side alone leaves fences unrendered in a WSL window. Press the
+  "Install in WSL: &lt;distro&gt;" button when the extensions view offers it.
+- Keep the repository on the Linux side (`~/breadboard-fence` or similar). Under
+  `/mnt/c/...` file access is slow enough that `npm install` and the tests drag.
+- **Do not share `node_modules` between Windows and WSL.** esbuild and sharp
+  install platform-specific binaries, so what one installs the other cannot run.
+  If they get mixed, `rm -rf node_modules && npm install`.
 
 ### CLI
 
-GitHub に貼れるスタンドアロン SVG を書き出せる。事前に `npm run build`
-(または `npm run package`) が要る。コマンドは PowerShell でも同じ。
+Writes standalone SVG you can paste into GitHub. Needs `npm run build` (or
+`npm run package`) first. The commands are the same in PowerShell.
 
 ```bash
-node dist/cli.cjs render examples --out examples/out   # 図を書き出す
-node dist/cli.cjs check examples                       # 書かずに検証だけ
+node dist/cli.cjs render examples --out examples/out   # write the drawings
+node dist/cli.cjs check examples                       # validate, write nothing
 ```
 
-`check` は何も書かず、ネットリストと読めなかったところだけを出す
-(読めない行が 1 つでもあれば終了コードは 1)。図を貼る前の下読みと CI 向けで、
-LLM に書かせて直させるループでは書き出しの分だけ回転が速い。
+`check` writes nothing and prints only the netlist and what it could not read
+(exit code 1 if a single line failed). It is meant for reading over a fence
+before pasting it, and for CI; in a write-and-fix loop with an LLM it turns
+around faster by the cost of the write.
 
-引数はファイルでもディレクトリでもよく、展開は CLI 側でやる
-(ワイルドカードを展開しないシェルでもそのまま動く)。`--out` を省くと入力と同じ
-場所に書く。`npm run examples` は PNG も書き出すが、こちらは sharp
-(プラットフォーム別のバイナリ) が要るので開発環境でだけ使う。
+Arguments can be files or directories, and expansion happens inside the CLI (so
+shells that do not expand wildcards work as-is). Without `--out` it writes beside
+the input. `npm run examples` also writes PNGs, but that needs sharp (a
+platform-specific binary), so it is for development machines only.
 
-## 文法
+## Grammar
 
-[docs/01-syntax.md](docs/01-syntax.md) に全文法と図、
-[docs/02-cheatsheet.md](docs/02-cheatsheet.md) に 1 画面の早見表がある。要点だけ:
+[docs/01-syntax.md](docs/01-syntax.md) has the whole grammar with drawings, and
+[docs/02-cheatsheet.md](docs/02-cheatsheet.md) is a one-screen cheatsheet
+(both in Japanese). The essentials:
 
-| 要素 | 書き方 | 例 |
+| Element | How to write it | Example |
 | --- | --- | --- |
-| ボード | `board: half` (30 列) / `full` (63 列)。レールの並び・行ラベルの大小・列番号の間引きはマップで選べる | `board: half` |
-| 穴番地 | 行 `a`〜`e` / `f`〜`j` + 列番号 | `a5`, `j30` |
-| レール番地 | `+`/`-` + `t`/`b` + 列番号 | `+t5`, `-b20` |
-| 2 端子部品 | `ID: 種類 穴 穴 値` | `R1: resistor a5 a10 10k` |
-| 極性 | 穴にピン名を付ける | `D1: led b12(A) b13(K) red` |
-| 3 端子部品 | 足の数だけ穴を書く | `Q1: transistor h9(B) h10(C) h11(E) 2SC1815` |
-| DIP | ピン 1 の穴だけ書けば残りは自動 | `U1: dip8 @ e5 NJM4556A` |
-| ボード外の機器 | マップ形式で `type: device` | 下のサンプル参照 |
-| 配線 | `- 端点 -- 端点 [-- 端点 …] [色]` | `- a10 -- b12 -- b20 red` |
-| 迂回ヒント | 角括弧で道順を指定 (20 = 穴 1 つ) | `- j20 -- -b20 black [v-20]` |
-| 部品リスト | 図の下に自動で出る。消すときだけ書く | `parts-list: none` |
-| 押しボタン | 溝をまたいで 4 本足。ピン 1a の穴を書く | `SW1: button @ e5` |
-| マイコンボード | ピン 1 の穴を書く。ピン名は実物の印字 | `MCU: pico2 @ h5` |
-| 種類の略記 | よく書く種類は短い綴りでも書ける | `R1: r a5 a10 10k` |
-| 題 | 図の左上に 1 行 | `title: 図01 LED を点ける` |
-| 注釈 | 図の上に印と字を重ねる | `- circle R1` |
-| 点の名前 | `points:` で番地に名前を付ける | `vin: a5` |
+| Board | `board: half` (30 columns) / `full` (63). Rail order, row-label case and column numbering are selectable as a map | `board: half` |
+| Hole address | Row `a`–`e` / `f`–`j` + column | `a5`, `j30` |
+| Rail address | `+`/`-` + `t`/`b` + column | `+t5`, `-b20` |
+| Two-lead part | `ID: type hole hole value` | `R1: resistor a5 a10 10k` |
+| Polarity | Tag the hole with a pin name | `D1: led b12(A) b13(K) red` |
+| Three-lead part | One hole per leg | `Q1: transistor h9(B) h10(C) h11(E) 2SC1815` |
+| DIP | Write pin 1's hole; the rest follows | `U1: dip8 @ e5 NJM4556A` |
+| Off-board device | Map form with `type: device` | see the examples |
+| Wire | `- end -- end [-- end …] [colour]` | `- a10 -- b12 -- b20 red` |
+| Routing hint | A detour in brackets (20 = one hole) | `- j20 -- -b20 black [v-20]` |
+| Parts list | Printed under the drawing by default; write this to drop it | `parts-list: none` |
+| Pushbutton | Four legs across the ravine; write pin 1a's hole | `SW1: button @ e5` |
+| Microcontroller board | Write pin 1's hole; pin names match the silkscreen | `MCU: pico2 @ h5` |
+| Shorthand | Common types have a short spelling | `R1: r a5 a10 10k` |
+| Title | One line at the top left of the drawing | `title: 図01 LED を点ける` |
+| Note | Marks and text laid over the drawing | `- circle R1` |
+| Named point | Give a hole address a name with `points:` | `vin: a5` |
 
-部品は 2 本足が resistor / capacitor / led / diode / buzzer / crystal / inductor /
-photoresistor / thermistor / thermistor-ntc / thermistor-ptc / varistor /
-zener / schottky / photodiode / varicap / diac / reed / fuse / lamp、
-3 本足が transistor / potentiometer / slide-switch / thyristor / triac、
-まとまった足を持つものが button (タクトスイッチ) / dipN / sipN、
-マイコンボードが pico / pico-w / pico2 / pico2-w、
-ボード外の機器が device。
-名前は回路図フェンス
-([circuit-fence](https://github.com/tommie-jp/circuit-fence)) と揃えてあるので、
-同じノートで両方を書くときに覚え直さなくてよい。
+Two-lead types are resistor / capacitor / led / diode / buzzer / crystal /
+inductor / photoresistor / thermistor / thermistor-ntc / thermistor-ptc /
+varistor / zener / schottky / photodiode / varicap / diac / reed / fuse / lamp;
+three-lead types are transistor / potentiometer / slide-switch / thyristor /
+triac; the packaged ones are button (a tactile switch) / dipN / sipN;
+the boards are pico / pico-w / pico2 / pico2-w; and off-board things are device.
+The names match the schematic fence
+([circuit-fence](https://github.com/tommie-jp/circuit-fence)), so writing both in
+the same note does not mean learning two vocabularies.
 
-抵抗の値はカラーコードとして描かれ、コンデンサに `(+)` `(-)` を付けると
-電解コンデンサとして帯が付く。**極性・向きのある 2 端子は、書かなければ
-先に書いた穴が + 側 (アノード)。**
+A resistor's value is drawn as its colour code, and a capacitor tagged `(+)` `(-)`
+is drawn as an electrolytic with its stripe. **For a two-lead part with a
+polarity, the hole written first is the plus side (the anode)** unless you say
+otherwise.
 
-## サンプル
+## Examples
 
-**番号は読む順**。上から下へ、最小の回路から実験回路まで難しくなる。
-目次と図の付け方は [examples/README.md](examples/README.md)。
+**The numbers are the reading order**: the circuits get harder from top to
+bottom. The index and the rules for the drawings are in
+[examples/README.md](examples/README.md). The prose is in Japanese; the fences
+and the drawings speak for themselves.
 
-| ファイル | 内容 |
+| File | What it shows |
 | --- | --- |
-| [01-led.md](examples/01-led.md) | 抵抗と LED だけの最小例 |
-| [02-themes.md](examples/02-themes.md) | 同じ回路を 5 つのテーマで描き比べる (`style:`) |
-| [03-board-variants.md](examples/03-board-variants.md) | ボードの印字を手元の実物に寄せる (`board:` のマップ形式) |
-| [04-parts-list.md](examples/04-parts-list.md) | 図の下の部品リストと、その消し方 (`parts-list:`) |
-| [05-capacitors.md](examples/05-capacitors.md) | 部品の姿を選ぶ (`capacitor/ceramic`、LED の大きさ、TO-220) |
-| [06-switches.md](examples/06-switches.md) | タクトスイッチ・半固定抵抗・スライドスイッチ |
-| [07-pico.md](examples/07-pico.md) | Raspberry Pi Pico に LED とボタンをつなぐ |
-| [08-emitter-follower.md](examples/08-emitter-follower.md) | 2SC1815 のエミッタフォロワ (電源 5V、スピーカー出力) |
-| [09-am-radio.md](examples/09-am-radio.md) | 1 石中波ラジオ (高周波増幅 + 検波、バーアンテナとポリバリコン) |
-| [10-bh-ad2.md](examples/10-bh-ad2.md) | B-H カーブ測定回路 (オペアンプ・測定器・トロイダルコア) |
-| [11-sensors.md](examples/11-sensors.md) | CdS・サーミスタの分圧、ダイオードの仲間、ガラス封止の部品 |
-| [12-notes.md](examples/12-notes.md) | 図の題と注釈 (印・枠・指し棒・字・フェンスの書き出し) |
-| [13-points.md](examples/13-points.md) | 番地に名前を付ける (`points:`)、配線をつないで書く、`l=` |
+| [01-led.md](examples/01-led.md) | The smallest example: a resistor and an LED |
+| [02-themes.md](examples/02-themes.md) | The same circuit in all five themes (`style:`) |
+| [03-board-variants.md](examples/03-board-variants.md) | Matching the silkscreen of the board on your desk (`board:` as a map) |
+| [04-parts-list.md](examples/04-parts-list.md) | The parts list under the drawing, and how to drop it (`parts-list:`) |
+| [05-capacitors.md](examples/05-capacitors.md) | Choosing a package (`capacitor/ceramic`, LED sizes, TO-220) |
+| [06-switches.md](examples/06-switches.md) | Tactile switch, trimmer, slide switch |
+| [07-pico.md](examples/07-pico.md) | An LED and a button on a Raspberry Pi Pico |
+| [08-emitter-follower.md](examples/08-emitter-follower.md) | A 2SC1815 emitter follower (5V, into an 8Ω speaker) |
+| [09-am-radio.md](examples/09-am-radio.md) | A one-transistor AM radio (RF stage + detector, ferrite rod and varicon) |
+| [10-bh-ad2.md](examples/10-bh-ad2.md) | A B-H curve rig (op-amp, instrument, toroid) |
+| [11-sensors.md](examples/11-sensors.md) | CdS and thermistor dividers, the diode family, glass-bodied parts |
+| [12-notes.md](examples/12-notes.md) | Titles and notes (rings, boxes, arrows, text, writing the fence out) |
+| [13-points.md](examples/13-points.md) | Naming hole addresses (`points:`), chained wires, `l=` |
 
-![1 石中波ラジオの配線図](examples/out/09-am-radio.png)
+![A one-transistor AM radio on a breadboard](examples/out/09-am-radio.png)
 
-## 仕組み
+## How it works
 
-描画コアは **DOM にも Node の API にも依存しない同期の純関数**
-`renderBreadboard(source) => { svg, netlist, errors, notices, errorHtml }` で、
-外部リソースを参照しない完結した SVG 文字列を返す。VS Code のプレビュー・CLI・
-別アプリのサーバー側描画のどこから呼んでも同じ絵になる。
+The rendering core is a **synchronous pure function that touches neither the DOM
+nor any Node API** —
+`renderBreadboard(source) => { svg, netlist, errors, notices, errorHtml }` —
+returning a self-contained SVG string that references nothing external. The VS
+Code preview, the CLI and a server-side render in another app all get the same
+picture.
 
-**読めなかったところは SVG に書き込まない。** 図の SVG は図だけなので、
-GitHub や別のノートに貼っても報告が付いてこない。言うことは `errorHtml`
-(プレビュー用の HTML) と `errors` / `notices` (生のデータ) に入る。
-図が 1 枚も組めなかったときは `svg` が空文字列になる。
+**Nothing that failed to read is written into the SVG.** The drawing is only the
+drawing, so pasting it into GitHub or another note does not drag the diagnostics
+along. What it has to say lands in `errorHtml` (for the preview) and in `errors`
+/ `notices` (as data). When no drawing could be assembled at all, `svg` is empty.
 
-| ディレクトリ | 中身 |
+| Directory | What is in it |
 | --- | --- |
-| `src/core/` | 描画コア (parser / model / placement / router / render) |
-| `src/extension/` | VS Code 拡張 (markdown-it の fence ルールを差し替えるだけ) |
-| `src/cli/` | SVG 書き出しコマンド |
-| `syntaxes/` | フェンス内 YAML のシンタックスハイライト (injection grammar) |
+| `src/core/` | The rendering core (parser / model / placement / router / render) |
+| `src/extension/` | The VS Code extension (it only swaps markdown-it's fence rule) |
+| `src/cli/` | The SVG writer |
+| `syntaxes/` | Syntax highlighting for the YAML inside a fence (injection grammar) |
 
-実行時の依存は YAML パーサ 1 つだけ。バンドルは拡張・CLI ともに約 180 KB
-(圧縮した `.vsix` は 133 KB)。
+The only runtime dependency is a YAML parser. Both bundles come to about 180 KB
+(the compressed `.vsix` is 133 KB).
 
-## 開発
+## Development
 
-Node.js 20 以上が要る (拡張を使うだけなら要らない)。
+Needs Node.js 20 or newer (not needed just to use the extension).
 
 ```bash
 npm install
-npm test          # ユニットテスト
-npm run check     # 型チェック + テスト
+npm test          # unit tests
+npm run check     # type check + tests
 npm run examples  # examples/*.md → examples/out/*.svg (+ PNG)
-npm run package   # breadboard-fence-x.y.z.vsix を作る
-./doBuild.sh      # 上 3 つをまとめて、VS Code に入れ直すところまで
+npm run docs      # docs/01-syntax.md → docs/out/*.svg
+npm run package   # build breadboard-fence-x.y.z.vsix
+./doBuild.sh      # the three above, through to reinstalling in VS Code
 ```
 
-VS Code で F5 を押すと拡張機能をデバッグ実行し、`examples/` を開いた
-ウィンドウが立ち上がる。
+Pressing F5 in VS Code debugs the extension and opens a window on `examples/`.
 
-図の描画を変えると `examples/out` のスナップショットテストが落ちる。
-`npm run examples` で作り直し、git diff で図の変化を確認してからコミットする。
+Changing how things are drawn fails the `examples/out` snapshot tests. Rebuild
+with `npm run examples` and `npm run docs`, then review the change with git diff
+before committing.
 
-### リリース
+**Japanese is the source of truth for this README; English follows it.** Edit
+[README.ja.md](README.ja.md) first, then bring [README.md](README.md) into line.
+Keep the two in the same sections.
 
-`package.json` の version と [CHANGELOG.md](CHANGELOG.md) を更新してから、
-一致するタグを push する。`.github/workflows/release.yml` が検査 → `.vsix` の作成 →
-Release の作成までをやる。リリースノートは CHANGELOG の該当バージョンの節から取る。
+### Releasing
+
+Update the version in `package.json` and [CHANGELOG.md](CHANGELOG.md), then push
+a matching tag. `.github/workflows/release.yml` runs the checks, builds the
+`.vsix` and creates the Release; the release notes come from that version's
+section of the CHANGELOG.
 
 ```bash
 npm version 0.2.0 --no-git-tag-version   # package.json / package-lock.json
-$EDITOR CHANGELOG.md                     # ## [0.2.0] の節を書く
+$EDITOR CHANGELOG.md                     # write the ## [0.2.0] section
 npm run check
 git commit -am "chore: v0.2.0"
 git tag -a v0.2.0 -m "v0.2.0"
 git push origin main v0.2.0
 ```
 
-## ライセンス
+## License
 
 [MIT](LICENSE)

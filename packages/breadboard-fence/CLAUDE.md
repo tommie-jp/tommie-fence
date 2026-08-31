@@ -1,7 +1,8 @@
 # プロジェクト指示 (breadboard-fence)
 
 Markdown の ` ```breadboard ` フェンスをブレッドボード実体配線図としてレンダリングする
-VS Code 拡張機能。全体像は [README.md](README.md)、文法は [docs/01-syntax.md](docs/01-syntax.md)。
+VS Code 拡張機能。全体像は [README.ja.md](README.ja.md) (英語は
+[README.md](README.md))、文法は [docs/01-syntax.md](docs/01-syntax.md)。
 
 ## 設計上の約束
 
@@ -40,3 +41,6 @@ VS Code 拡張機能。全体像は [README.md](README.md)、文法は [docs/01-
 6. **図は再生成してコミット**: 描画を変えたら `npm run examples` と `npm run docs` を
    実行し、`examples/out` と `docs/out` の差分も一緒にコミットする
    (スナップショットテストの期待値であり、文書が貼っている図でもある)。
+7. **README は日本語が正、英語が追随**: 先に `README.ja.md` を直してから
+   `README.md` を合わせる。節の構成は 2 本で同じに保つ
+   (Marketplace の詳細ページになるのは英語の `README.md`)。
