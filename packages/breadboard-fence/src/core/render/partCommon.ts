@@ -1,6 +1,7 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point } from '../types.ts';
 import { TEXT_HALO_WIDTH, num, svgText } from './svg.ts';
+import { fit } from './textFit.ts';
 import type { TextOptions } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
 import { BASE_HOLE_SIZE, textScale } from './theme.ts';
@@ -21,6 +22,31 @@ export const ROUND_CAPTION_GAP = 14;
 
 // ラベルと値の長さはパーサ側 (limits.ts) で切ってあるので、ここでは組み立てるだけ。
 export const caption = (part: PlacedPart): string => [part.id, part.value ?? part.label ?? ''].join(' ').trim();
+
+/**
+ * 板からはみ出す字を切る。使える幅は**置き方 (anchor) と、そこから近いほうの板の端まで**で決まる。
+ *
+ * `limits.ts` が切っているのは**文字数** (60) で、幅ではない。全角 60 文字は
+ * 既定のテーマで 750px あり、half サイズの画布 (664px) には最初から入らない。
+ * 切らずに置くと viewBox の外へ出て**黙って消える**ので、読む側は切れたことにも
+ * 気づけない。切った跡を `…` で残すのは部品リストと同じ約束。
+ *
+ * 画布ではなく板を境にするのは、字が画布の縁に貼り付くと読みにくいため。
+ * 板の外の余白 (OUTER_MARGIN) は、はみ出したときの逃げしろとして空けておく。
+ */
+export function fitToBoard(
+  text: string,
+  x: number,
+  fontSize: number,
+  layout: Layout,
+  // 中央揃え (部品の真上) と右揃え (Pico の左に出すラベル) だけ。
+  // 左揃えのキャプションはまだ無いので、要るようになってから足す。
+  anchor: 'middle' | 'end' = 'middle',
+): string {
+  const left = x - layout.board.x;
+  const room = anchor === 'end' ? left : Math.min(left, layout.board.x + layout.board.width - x) * 2;
+  return fit(text, Math.max(0, room) / fontSize);
+}
 
 export const midpoint = (a: Point, b: Point): Point => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
 

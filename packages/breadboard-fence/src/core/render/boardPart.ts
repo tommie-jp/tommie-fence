@@ -1,7 +1,7 @@
 import type { Layout } from '../model/layout.ts';
 import { lookupBoardPart } from '../parts/boards.ts';
 import type { PlacedPart, Rect } from '../types.ts';
-import { caption, pinPoints } from './partCommon.ts';
+import { caption, fitToBoard, pinPoints } from './partCommon.ts';
 import { element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
@@ -95,8 +95,11 @@ export function renderBoardPart(part: PlacedPart, layout: Layout, theme: RenderT
     })
     .join('');
 
-  const label = svgText(center.x - chipSide / 2 - 10, center.y + 4, caption(part), {
-    'font-size': num(scale * 10),
+  // 基板の左に右揃えで置くので、伸びるのは左だけ。画布の左端で切る。
+  const labelX = center.x - chipSide / 2 - 10;
+  const labelSize = scale * 10;
+  const label = svgText(labelX, center.y + 4, fitToBoard(caption(part), labelX, labelSize, layout, 'end'), {
+    'font-size': num(labelSize),
     fill: palette.chipText,
     anchor: 'end',
   });

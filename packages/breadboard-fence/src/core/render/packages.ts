@@ -1,6 +1,6 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
-import { caption, partLabel, pinPoints, pointOfPin } from './partCommon.ts';
+import { caption, fitToBoard, partLabel, pinPoints, pointOfPin } from './partCommon.ts';
 import { element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
@@ -170,7 +170,7 @@ export function renderPushbutton(part: PlacedPart, layout: Layout, theme: Render
     cx: num(center.x), cy: num(center.y), r: num(0.45 * layout.pitch),
     fill: '#c9cfd8', stroke: '#6b7280',
   });
-  const label = partLabel(center.x, body.y - 5, caption(part), theme);
+  const label = partLabel(center.x, body.y - 5, fitToBoard(caption(part), center.x, theme.metrics.textSize, layout), theme);
 
   return `${shell}${bridges}${stubs}${button}${label}`;
 }

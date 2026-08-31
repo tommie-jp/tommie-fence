@@ -1,4 +1,5 @@
-import { LIMITS, clampText } from '../limits.ts';
+import { LIMITS } from '../limits.ts';
+import { fit, textWidth } from './textFit.ts';
 import type { PlacedPart } from '../types.ts';
 import { TEXT_HALO_WIDTH, element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
@@ -13,25 +14,6 @@ const PAD_RATIO = 0.9;
 const CAP_RATIO = 0.8;
 /** 列と列の間。字の大きさの何倍か。 */
 const COLUMN_GAP = 1.5;
-
-/**
- * 1 文字の幅 (字の大きさに対する比)。DOM が無いので実測はできない。
- * 全角はほぼ字の大きさそのまま、英数字はその半分強として見積もる。
- * 全角を英数字と同じ幅で数えると、日本語のラベルが板からはみ出して読めなくなる。
- */
-const WIDE_WIDTH = 1;
-const NARROW_WIDTH = 0.55;
-
-/**
- * 全角 (東アジアの文字と全角記号)。ここに無い文字は英数字と同じ幅とみなす。
- *
- * 後半は BMP の外 (サロゲートペア) の全角で、絵文字と CJK 拡張 B 以降がここに入る。
- * `textWidth` はコードポイントで数えているので、残るのは幅の見積もりだけの問題だった。
- * 割り当ての無い穴も範囲ごと全角に寄せてある。**広く見積もるほうが安全**で、
- * 多く数えれば `fit()` が早めに切るだけだが、少なく数えると板からはみ出す。
- */
-const WIDE =
-  /[ᄀ-ᅟ⺀-〾ぁ-㏿㐀-䶿一-鿿ꀀ-꓏가-힣豈-﫿︰-﹯＀-｠￠-￦\u{16FE0}-\u{1B2FF}\u{1F000}-\u{1FAFF}\u{20000}-\u{3FFFD}]/u;
 
 /** 板にこれだけの幅も残っていない列は、出さずに諦める (字の大きさに対する比)。 */
 const MIN_COLUMN_WIDTH = 4;
@@ -66,26 +48,7 @@ const typeOf = (part: PlacedPart): string =>
 const rowsOf = (parts: readonly PlacedPart[]): readonly Row[] =>
   parts.map((part) => ({ id: part.id, type: typeOf(part), value: valueOf(part) }));
 
-/** 字の大きさを 1 とした文字列の幅。 */
-const textWidth = (text: string): number =>
-  [...text].reduce((sum, char) => sum + (WIDE.test(char) ? WIDE_WIDTH : NARROW_WIDTH), 0);
-
 const widest = (values: readonly string[]): number => Math.max(0, ...values.map(textWidth));
-
-/** 幅に収まらない字は落として `…` を付ける。切った跡が残らないと、値が嘘になる。 */
-function fit(text: string, limit: number): string {
-  if (textWidth(text) <= limit) return text;
-
-  let width = 0;
-  let count = 0;
-  for (const char of text) {
-    width += textWidth(char);
-    // `…` のぶんを空けておく (詰めると今度はそれがはみ出す)。
-    if (width > limit - WIDE_WIDTH) break;
-    count += 1;
-  }
-  return clampText(text, count);
-}
 
 const lineHeight = (theme: RenderTheme): number => theme.metrics.textSize * LINE_RATIO;
 

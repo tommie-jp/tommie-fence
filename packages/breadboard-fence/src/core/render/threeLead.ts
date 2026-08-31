@@ -1,6 +1,6 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point } from '../types.ts';
-import { LEG_NAME_GAP, ROUND_CAPTION_GAP, caption, haloWidth, partLabel, pinPoints } from './partCommon.ts';
+import { LEG_NAME_GAP, ROUND_CAPTION_GAP, caption, fitToBoard, haloWidth, partLabel, pinPoints } from './partCommon.ts';
 import { element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
 
@@ -46,7 +46,8 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
         : '';
     })
     .join('');
-  const label = partLabel(center.x, center.y + towardRavine * (reach + ROUND_CAPTION_GAP), caption(part), theme);
+  const text = fitToBoard(caption(part), center.x, theme.metrics.textSize, layout);
+  const label = partLabel(center.x, center.y + towardRavine * (reach + ROUND_CAPTION_GAP), text, theme);
 
   return `${shellOf(part, center, reach, towardRavine, theme)}${legs}${names}${label}`;
 }

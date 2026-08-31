@@ -1,7 +1,7 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart } from '../types.ts';
 import { DEFAULT_LED_COLOR, bandColor, ledColor } from './palette.ts';
-import { LEAD_WIDTH, caption, labelYOf, midpoint, partLabel } from './partCommon.ts';
+import { LEAD_WIDTH, caption, fitToBoard, labelYOf, midpoint, partLabel } from './partCommon.ts';
 import { element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
 import { parseOhms, resistorBandColors } from './values.ts';
@@ -25,7 +25,8 @@ export function renderTwoLead(part: PlacedPart, layout: Layout, theme: RenderThe
     x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y),
     stroke: palette.lead, 'stroke-width': LEAD_WIDTH,
   });
-  const label = partLabel(center.x, labelYOf(part, center, layout), caption(part), theme);
+  const text = fitToBoard(caption(part), center.x, theme.metrics.textSize, layout);
+  const label = partLabel(center.x, labelYOf(part, center, layout), text, theme);
   // 3 引数 rotate() を読まないレンダラがあるので translate と rotate に分ける。
   const body = element(
     'g',

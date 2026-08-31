@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { renderBreadboard } from './index.ts';
+import { textWidth } from './render/textFit.ts';
 import { DEFAULT_LED_COLOR, DEFAULT_WIRE_COLOR } from './render/palette.ts';
 
 const led = `board: half
@@ -11,6 +12,11 @@ wires:
   - a10 -- b12
   - c13 -- -t13 black
 `;
+
+/** 図の中の 1 つのキャプションを x・字の大きさ・中身に割る。 */
+const caption = (svg: string, prefix: string): RegExpMatchArray | undefined =>
+  [...svg.matchAll(/<text[^>]*x="([\d.-]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)]
+    .find((match) => (match[3] ?? '').startsWith(prefix));
 
 describe('renderBreadboard', () => {
   test('renders the led example as a standalone svg', () => {
@@ -255,6 +261,29 @@ describe('renderBreadboard', () => {
     expect(errors.map((error) => error.message)).toEqual([
       expect.stringContaining('value'),
     ]);
+  });
+
+  test('cuts a caption that would run off the canvas, and marks where it cut', () => {
+    const value = 'あ'.repeat(60);
+    const { svg } = renderBreadboard(`parts:\n  R1: resistor a25 a30 ${value}\n`);
+    const width = Number(/viewBox="0 0 ([\d.]+)/.exec(svg)?.[1]);
+    const [, x = '', size = '', text = ''] = caption(svg, 'R1 ') ?? [];
+    // キャプションは部品の中心に置くので、使えるのは近いほうの端までの倍。
+    const room = Math.min(Number(x), width - Number(x)) * 2;
+
+    expect(text.endsWith('…')).toBe(true);
+    expect(textWidth(text) * Number(size)).toBeLessThanOrEqual(room);
+    // 切っていることそのもの: 値の 60 文字がそのまま出ていたら板の 1.2 倍になる。
+    expect([...text].length).toBeLessThan([...value].length);
+  });
+
+  test('cuts a board caption that hangs off the left edge the same way', () => {
+    const { svg } = renderBreadboard(`parts:\n  MCU: pico2 @ h5 ${'あ'.repeat(60)}\n`);
+    const [, x = '', size = '', text = ''] = caption(svg, 'MCU ') ?? [];
+
+    // Pico のラベルは基板の左に右揃えで置くので、伸びるのは左だけ。
+    expect(text.endsWith('…')).toBe(true);
+    expect(textWidth(text) * Number(size)).toBeLessThanOrEqual(Number(x));
   });
 
   test('keeps the error banner under the parts list so the drawing reads top to bottom', () => {
