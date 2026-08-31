@@ -46,6 +46,21 @@ export function validatePointName(name: string, line: number): FenceError | null
 }
 
 /**
+ * 点の値が穴番地の形をしているか。**ここで見ないと、置き換わったあとの番地で
+ * エラーが出る**。報告に添える行には書いた名前 (`vin`) しか無いので、
+ * 「hello はありません」と言われて行のどこにも `hello` が無い、という
+ * 直す場所を探せない報告になる。板の中かどうかは、板が決まってから見る。
+ */
+export function validatePointAddress(name: string, addr: string, line: number): FenceError | null {
+  if (parseAddress(addr)) return null;
+  return fenceError(
+    `点 ${safeToken(name)} の値が穴番地として読めません: ${safeToken(addr)} (a5 や +t5 のように書きます)`,
+    line,
+    addr,
+  );
+}
+
+/**
  * 名前を番地に置き換える。**番地が書ける場所すべて**が対象で、
  * 部品の穴・配線の端点・注釈の指し先のどこでも同じように使える。
  *

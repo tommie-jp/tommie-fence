@@ -352,6 +352,41 @@ describe('renderBreadboard', () => {
     expect(errors[0]?.message).toContain('ボードの外');
   });
 
+  test('keeps an arrow pointing at its target even when the two rings overlap', () => {
+    // 隣の行の部品どうしは中心間 20px で、囲みは上下 11px ずつ。
+    // 両端を別々に引っ込めると始点が終点を追い越し、矢じりが逆を向く。
+    const { svg } = renderBreadboard(
+      'parts:\n  R1: resistor a5 a10\n  R2: resistor b5 b10\nnotes:\n  - arrow R1 R2\n',
+    );
+    const line = /<line x1="[\d.]+" y1="([\d.]+)" x2="[\d.]+" y2="([\d.]+)"[^>]*stroke="#e5534b"/.exec(svg);
+
+    // R2 は R1 より下の行なので、終点のほうが下に来る。
+    expect(Number(line?.[2])).toBeGreaterThan(Number(line?.[1]));
+    expect(svg).toContain('<polygon');
+  });
+
+  test('still draws an arrowhead when the target hole sits under the part', () => {
+    // 部品の囲みの中にある穴を指すと、両端が同じ点に落ちて矢じりが消えていた。
+    const { svg } = renderBreadboard('parts:\n  R1: resistor a5 a10\nnotes:\n  - arrow R1 a5\n');
+
+    expect(svg).toContain('<polygon');
+  });
+
+  test('reports a point whose value is not a hole where it was written', () => {
+    // 置き換えてから報告すると、行のどこにも無い綴りを名指すことになる。
+    const { errors } = renderBreadboard('points:\n  vin: hello\nparts:\n  R1: resistor vin a5\n');
+
+    expect(errors[0]?.line).toBe(2);
+    expect(errors[0]?.text).toContain('hello');
+    expect(errors[0]?.at).toBeDefined();
+  });
+
+  test('shows a japanese spelling in the message instead of calling it punctuation', () => {
+    const { errors } = renderBreadboard('parts:\n  R1: resistor a5 a10\nnotes:\n  - circle 抵抗\n');
+
+    expect(errors[0]?.message).toContain('抵抗');
+  });
+
   test('runs the line of a note to the hole itself, not short of it', () => {
     // 穴は目的地そのものなので、手前で止めるとどの穴か分からなくなる。
     // レール 2 本のように近い 2 点を結ぶと、止めた線は消えてしまう。
@@ -465,7 +500,15 @@ describe('renderBreadboard', () => {
     expect(errors).toEqual([]);
     expect(notices).toHaveLength(1);
     expect(notices[0]?.message).toContain('2N3904');
-    expect(notices[0]?.message).toContain('値ではなく穴として');
+    expect(notices[0]?.message).toContain('穴として読みました');
+  });
+
+  test('says it whichever side of the line the eaten word sits on', () => {
+    // `led red b1` のように点の名前が先に来ても、値は残らないので同じ話。
+    const { notices } = renderBreadboard('points:\n  red: c1\nparts:\n  D1: led red b1\n');
+
+    expect(notices).toHaveLength(1);
+    expect(notices[0]?.message).toContain('red');
   });
 
   test('stays quiet when the value is written as well as the point names', () => {

@@ -10,11 +10,18 @@ const MAX_TOKEN_LENGTH = 32;
  * 長さも切り詰める (描画側の escapeXml と合わせて二重の防御)。
  */
 export const safeToken = (text: string): string => {
-  const kept = text.replace(/[^\w.+\-/#]+/gu, ' ').trim();
+  // **どの字体の文字も残す。** `\w` は ASCII だけなので、それで濾すと
+  // `抵抗` や `résistor` が丸ごと落ちて、行のどこにも無い綴りを名指すことになる。
+  // 図と HTML を守っているのは escapeXml のほうなので、ここで落とすのは
+  // マークアップになりうる記号だけでよい。
+  const kept = text.replace(/[^\p{L}\p{N}_.+\-/#]+/gu, ' ').trim();
   // 記号だけの綴り (`@` や `()`) は全部落ちて空になる。空のまま文に埋めると
   // 「点の名前  は使えません」と、何を指しているのか分からない文になる。
   if (kept === '') return '(記号)';
-  return kept.length > MAX_TOKEN_LENGTH ? `${kept.slice(0, MAX_TOKEN_LENGTH)}…` : kept;
+  const characters = [...kept];
+  return characters.length > MAX_TOKEN_LENGTH
+    ? `${characters.slice(0, MAX_TOKEN_LENGTH).join('')}…`
+    : kept;
 };
 
 /**

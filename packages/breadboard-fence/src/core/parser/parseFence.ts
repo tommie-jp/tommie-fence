@@ -13,7 +13,7 @@ import { splitPartType } from '../parts/variants.ts';
 import { parseCompactPart, parseHoleToken, parseWireSpec } from './compact.ts';
 import { parseNoteLine } from './notes.ts';
 import {
-  conflictingNames, resolveNoteTargets, resolveParts, resolveWires, validatePointName,
+  conflictingNames, resolveNoteTargets, resolveParts, resolveWires, validatePointAddress, validatePointName,
 } from './points.ts';
 import type { PointDef } from './points.ts';
 import { validateExpandedPart } from './schema.ts';
@@ -193,6 +193,14 @@ function collectPoints(
     const addr = scalarText(pair.value);
     if (addr === null) {
       errors.push(fenceError(`点 ${safeToken(name)} の値は穴番地で書きます`, line));
+      continue;
+    }
+    // 読めない番地は**登録しない**。置き換えてしまうと、使った行の報告が
+    // 書いていない綴りを名指すことになる。登録しなければ、使った行は
+    // 「そんな穴はありません」と自分の言葉で言える。
+    const badAddress = validatePointAddress(name, addr, lineOf(pair.value as Node) ?? line);
+    if (badAddress) {
+      errors.push(badAddress);
       continue;
     }
     points.set(name, { addr, line });
@@ -382,9 +390,9 @@ function collectParts(
       const eaten = result.value.eatenValue;
       if (eaten != null) {
         errors.push(notice(
-          `部品 ${safeToken(id)}: ${safeToken(eaten)} は points: の名前なので、値ではなく穴として読みました`,
+          `部品 ${safeToken(id)}: 値がありません (${safeToken(eaten)} は points: の名前なので穴として読みました)`,
           line,
-          eaten,
+          eaten.includes(' ') ? undefined : eaten,
         ));
       }
       continue;

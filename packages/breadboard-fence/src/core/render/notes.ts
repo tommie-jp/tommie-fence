@@ -131,13 +131,37 @@ function renderBox(from: NoteAnchor, to: NoteAnchor, solid: boolean, color: stri
   });
 }
 
+/** 縁で止めたあとに残す線の長さ。矢じりが収まるだけは要る。 */
+const MIN_LINK = ARROW_HEAD + 3;
+
 /**
  * 指し棒と直線。**両端は指し先を囲む楕円の縁で止める**ので、
  * 部品を指しても字や本体に重ならない。
+ *
+ * 両端を別々に引っ込めると、**囲みが重なったときに始点が終点を追い越す**。
+ * 隣の行の部品どうし (中心間 20px、半径は上下 11px ずつ) は必ずそうなり、
+ * 線が裏返って矢じりが逆を向く。引っ込める量の合計を線の長さで頭打ちにして、
+ * 足りないときは両端から同じ割合で削る。
  */
 function renderLink(from: NoteAnchor, to: NoteAnchor, head: boolean, color: string): string {
-  const start = edgePoint(from, to.center);
-  const end = edgePoint(to, from.center);
+  const dx = to.center.x - from.center.x;
+  const dy = to.center.y - from.center.y;
+  const length = Math.hypot(dx, dy);
+  if (length === 0) return '';
+
+  const ux = dx / length;
+  const uy = dy / length;
+  const room = Math.max(0, length - MIN_LINK);
+  let head1 = reachOf(from, ux, uy);
+  let head2 = reachOf(to, -ux, -uy);
+  if (head1 + head2 > room) {
+    const shrink = room / (head1 + head2);
+    head1 *= shrink;
+    head2 *= shrink;
+  }
+
+  const start = { x: from.center.x + ux * head1, y: from.center.y + uy * head1 };
+  const end = { x: to.center.x - ux * head2, y: to.center.y - uy * head2 };
   const line = element('line', {
     x1: num(start.x), y1: num(start.y), x2: num(end.x), y2: num(end.y),
     stroke: color, 'stroke-width': MARK_WIDTH, 'stroke-linecap': 'round',
@@ -145,21 +169,10 @@ function renderLink(from: NoteAnchor, to: NoteAnchor, head: boolean, color: stri
   return head ? line + arrowHead(start, end, color) : line;
 }
 
-/** 楕円の中心から `toward` へ向かう半直線が、楕円と交わる点。 */
-function edgePoint(anchor: NoteAnchor, toward: Point): Point {
-  if (!anchor.part) return anchor.center;
-
-  const dx = toward.x - anchor.center.x;
-  const dy = toward.y - anchor.center.y;
-  const length = Math.hypot(dx, dy);
-  if (length === 0 || anchor.rx === 0 || anchor.ry === 0) return anchor.center;
-
-  const ux = dx / length;
-  const uy = dy / length;
-  const scale = 1 / Math.hypot(ux / anchor.rx, uy / anchor.ry);
-  // 指し先が遠くないときは、縁を越えて反対側へ突き抜けないようにする。
-  const reach = Math.min(scale, length);
-  return { x: anchor.center.x + ux * reach, y: anchor.center.y + uy * reach };
+/** 中心から `(ux, uy)` の向きへ、楕円の縁までの距離。穴を指したときは 0。 */
+function reachOf(anchor: NoteAnchor, ux: number, uy: number): number {
+  if (!anchor.part || anchor.rx === 0 || anchor.ry === 0) return 0;
+  return 1 / Math.hypot(ux / anchor.rx, uy / anchor.ry);
 }
 
 function arrowHead(from: Point, to: Point, color: string): string {

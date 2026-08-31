@@ -1,3 +1,5 @@
+import { normalizeNewlines } from './newlines.ts';
+
 export type FenceBlock = {
   /** フェンスの中身 (末尾は改行で終わる)。 */
   readonly source: string;
@@ -32,7 +34,12 @@ export function extractBreadboardFences(markdown: string): FenceBlock[] {
   const blocks: FenceBlock[] = [];
   let open: OpenFence | null = null;
 
-  for (const [index, raw] of markdown.split('\n').entries()) {
+  // **CRLF はここで揃えないと 1 つも見つからない。** 開き記号の行は
+  // `(.*)$` で言語名を取るが、JavaScript の `.` は行終端 (`\r` を含む) に
+  // 当たらないので、`” ```breadboard\r ”` がどの枝にも入らず黙って素通りする。
+  // 閉じ記号の行だけは `\s*$` が `\r` を食うので通り、食い違いに気づけない。
+  // 行数は変わらないので、行番号はそのまま使える。
+  for (const [index, raw] of normalizeNewlines(markdown).split('\n').entries()) {
     if (open) {
       const closing = CLOSING_LINE.exec(raw);
       const marker = closing?.[1];

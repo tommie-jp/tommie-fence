@@ -68,8 +68,8 @@ export function parseCompactPart(
   const holes: HoleRef[] = [];
   const words: string[] = [];
   let label: string | null = null;
-  // 番地の形ではなく、点の名前だから穴として読んだ最後の語。
-  let byName: string | null = null;
+  // 番地の形ではなく、点の名前だから穴として読んだ語。
+  const byName: string[] = [];
 
   for (const token of rest) {
     const tagged = LABEL_TAG.exec(token);
@@ -81,10 +81,9 @@ export function parseCompactPart(
     const named = TAGGED_HOLE.exec(token);
     const addr = named?.[1] ?? token;
     if (isHoleToken(addr, isPoint)) {
-      byName = parseAddress(addr) === null ? token : null;
+      if (parseAddress(addr) === null) byName.push(token);
       holes.push(parseHoleToken(token, holes.length));
     } else {
-      byName = null;
       words.push(token);
     }
   }
@@ -101,7 +100,10 @@ export function parseCompactPart(
     // c1 に生えて、それ自体は正しく見える別の回路になる。
     // 番地の形は書き手が避けられる閉じた語彙だが、点の名前は任意の語なので、
     // 値に使いたくなる語ほどぶつかりやすい。
-    eatenValue: value === '' ? byName : null,
+    //
+    // **値が 1 語も残らなかったときだけ**言う。点の名前を穴に使うのは正しい
+    // 書き方なので、値も書いてあるならそちらが本来の姿で、言うことは無い。
+    eatenValue: value === '' && byName.length > 0 ? byName.join(' ') : null,
   });
 }
 
