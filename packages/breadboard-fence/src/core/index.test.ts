@@ -417,6 +417,17 @@ describe('renderBreadboard', () => {
     expect(netlist.map((net) => net.name)).not.toContain('vcc');
   });
 
+  test('never gives two nets the same name, even when a point is called N1', () => {
+    // ネット名が重なると、図と意図した回路の突き合わせがそこで成立しなくなる。
+    const { netlist } = renderBreadboard(
+      'points:\n  N1: a20\nparts:\n  R1: resistor a5 a10 330\n  R2: resistor a20 a24 1k\n',
+    );
+    const names = netlist.map((net) => net.name);
+
+    expect(names).toContain('N1');
+    expect(new Set(names).size).toBe(names.length);
+  });
+
   test('reports a point name that is written like a hole or clashes with a part', () => {
     const address = renderBreadboard('points:\n  a5: b5\nparts:\n  R1: resistor a5 a10 330\n');
     const clash = renderBreadboard('points:\n  R1: b5\nparts:\n  R1: resistor a5 a10 330\n');

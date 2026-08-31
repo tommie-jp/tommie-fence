@@ -67,7 +67,16 @@ export function computeNets(input: NetInput): Net[] {
     else refsByRoot.set(root, [member.ref]);
   }
 
+  // `points:` に `N1` のような名前を書かれても、連番と同じ名前を 2 つ出さない。
+  // ネット名が重なると「図と意図した回路の突き合わせ」がそこで成立しなくなる。
+  const taken = new Set((input.names ?? []).map(([, name]) => name));
   let anonymous = 0;
+  const nextName = (): string => {
+    let name = `N${(anonymous += 1)}`;
+    while (taken.has(name)) name = `N${(anonymous += 1)}`;
+    return name;
+  };
+
   return [...refsByRoot].map(([root, refs]) => {
     const strips = stripsByRoot.get(root) ?? [root];
     const rails = strips
@@ -79,6 +88,6 @@ export function computeNets(input: NetInput): Net[] {
     // 名前は定義順に当てる。同じネットに 2 つ乗っていたら先に書いたほうを使う。
     const here = new Set(strips);
     const named = (input.names ?? []).find(([strip]) => here.has(strip));
-    return { name: named?.[1] ?? `N${(anonymous += 1)}`, strips, refs };
+    return { name: named?.[1] ?? nextName(), strips, refs };
   });
 }
