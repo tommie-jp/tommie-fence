@@ -7,6 +7,8 @@ import { placeParts } from './place.ts';
 const board = createBoard('half');
 
 const spec = (over: Partial<PartSpec> & Pick<PartSpec, 'id' | 'type'>): PartSpec => ({
+  // 書かれたままの綴りは、略記を使わなければ種類そのもの。
+  written: over.variant == null ? over.type : `${over.type}/${over.variant}`,
   holes: [],
   value: null,
   label: null,

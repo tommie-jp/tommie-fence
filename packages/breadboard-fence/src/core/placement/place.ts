@@ -83,7 +83,7 @@ function variantError(part: PlacedPart): FenceError | null {
         `部品 ${safeToken(part.id)}: ${safeToken(part.type)} の姿は選べません ` +
         `(姿を選べるのは ${typesWithVariants().join(', ')})`,
       line: part.line,
-      token: `${part.type}/${variant}`,
+      token: part.written,
     };
   }
   if (!allowed.includes(variant)) {
@@ -92,7 +92,7 @@ function variantError(part: PlacedPart): FenceError | null {
         `知らない姿です: ${safeToken(variant)} ` +
         `(${safeToken(part.type)} に使えるのは ${allowed.join(', ')})`,
       line: part.line,
-      token: `${part.type}/${variant}`,
+      token: part.written,
     };
   }
 
@@ -177,13 +177,14 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
     return fail(
       `知らない部品の種類です: ${safeToken(spec.type)} (${describeUnknownType(spec.type)})`,
       spec.line,
-      spec.type,
+      spec.written,
     );
   }
 
   const base: PartBase = {
     id: spec.id,
     type: spec.type,
+    written: spec.written,
     variant: spec.variant,
     value: spec.value,
     label: spec.label,

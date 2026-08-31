@@ -51,7 +51,9 @@ export function parseCompactPart(
 
   const { type, variant, problem } = splitPartType(typeToken);
   if (problem) return fail(`部品 ${safeToken(id)}: ${problem}`, line);
-  const base: PartSpec = { id, type, variant, holes: [], value: null, label: null, at: null, pins: null, line };
+  const base: PartSpec = {
+    id, type, written: typeToken, variant, holes: [], value: null, label: null, at: null, pins: null, line,
+  };
 
   if (rest[0] === '@') {
     const target = rest[1];
@@ -68,8 +70,8 @@ export function parseCompactPart(
   const holes: HoleRef[] = [];
   const words: string[] = [];
   let label: string | null = null;
-  // 番地の形ではなく、点の名前だから穴として読んだ語。
-  const byName: string[] = [];
+  // 穴として読んだ語を、番地の形だったか点の名前だったかと一緒に覚えておく。
+  const sources: { token: string; byName: boolean }[] = [];
 
   for (const token of rest) {
     const tagged = LABEL_TAG.exec(token);
@@ -81,7 +83,7 @@ export function parseCompactPart(
     const named = TAGGED_HOLE.exec(token);
     const addr = named?.[1] ?? token;
     if (isHoleToken(addr, isPoint)) {
-      if (parseAddress(addr) === null) byName.push(token);
+      sources.push({ token, byName: parseAddress(addr) === null });
       holes.push(parseHoleToken(token, holes.length));
     } else {
       words.push(token);
@@ -95,16 +97,40 @@ export function parseCompactPart(
     holes,
     label,
     value: value ? clampText(value, LIMITS.labelLength) : null,
-    // 値のつもりで書いた語が点の名前と同じだと、**黙って別の回路の図が出る**。
-    // `points: {2N3904: c1}` があると `Q1: transistor a5 a6 2N3904` の 3 本目が
-    // c1 に生えて、それ自体は正しく見える別の回路になる。
-    // 番地の形は書き手が避けられる閉じた語彙だが、点の名前は任意の語なので、
-    // 値に使いたくなる語ほどぶつかりやすい。
-    //
-    // **値が 1 語も残らなかったときだけ**言う。点の名前を穴に使うのは正しい
-    // 書き方なので、値も書いてあるならそちらが本来の姿で、言うことは無い。
-    eatenValue: value === '' && byName.length > 0 ? byName.join(' ') : null,
+    notes: unusedNotes(value, label, sources),
   });
+}
+
+/**
+ * 読めはしたが、書いたとおりには図に出ない指定。図は書いたとおりに描いたうえで、
+ * 理由だけをお知らせに回す。
+ */
+function unusedNotes(
+  value: string,
+  label: string | null,
+  sources: readonly { token: string; byName: boolean }[],
+): string[] {
+  const notes: string[] = [];
+
+  // 図に出るキャプションは値を先に見るので、両方書くとラベルが消える
+  // (部品リストの値も図と同じ字である約束なので、ラベルを勝たせるわけにいかない)。
+  if (value !== '' && label !== null) {
+    notes.push(`値とラベルの両方が書かれています。図に出るのは値 (${safeToken(value)}) です`);
+  }
+
+  // 値のつもりで書いた語が点の名前と同じだと、**黙って別の回路の図が出る**。
+  // `points: {2N3904: c1}` があると `Q1: transistor a5 a6 2N3904` の 3 本目が
+  // c1 に生えて、それ自体は正しく見える別の回路になる。
+  //
+  // 言うのは**値の位置 (行の最後) にある語が名前で、ほかに番地も書かれている**
+  // ときだけ。穴を全部名前で書くのは `points:` の本来の使い方で、
+  // そこで鳴らすと正しい入力にお知らせが出続ける。
+  const last = sources[sources.length - 1];
+  if (value === '' && last?.byName === true && sources.some((source) => !source.byName)) {
+    notes.push(`値がありません (${safeToken(last.token)} は points: の名前なので穴として読みました)`);
+  }
+
+  return notes;
 }
 
 const HINT_GROUP = /\[([^\]]*)\]\s*$/;

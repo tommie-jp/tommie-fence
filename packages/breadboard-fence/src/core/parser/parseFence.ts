@@ -115,8 +115,11 @@ export function parseFence(source: string): ParseResult {
     if (key === 'title') {
       const written = scalarText(pair.value);
       // 題は 1 行のスカラー。折り返さないので、長い題は切って `…` を残す。
-      if (written === null) errors.push(fenceError('title は 1 行の文字列で書きます', line));
-      else title = clampText(written.trim(), LIMITS.titleLength);
+      // 数字だけの題 (`title: 555`) は YAML が数値にするので字として届かない。
+      // 注釈の字と同じ案内を添える (片方だけ案内が無いと揃わない)。
+      if (written === null) {
+        errors.push(fenceError('title は 1 行の文字列で書きます (数字だけのときは "555" のように囲みます)', line));
+      } else title = clampText(written.trim(), LIMITS.titleLength);
     } else if (key === 'points') {
       // 先読みで済ませてある。
     } else if (key === 'board') {
@@ -387,14 +390,9 @@ function collectParts(
         continue;
       }
       parts.push(result.value);
-      const eaten = result.value.eatenValue;
-      if (eaten != null) {
-        errors.push(notice(
-          `部品 ${safeToken(id)}: 値がありません (${safeToken(eaten)} は points: の名前なので穴として読みました)`,
-          line,
-          eaten.includes(' ') ? undefined : eaten,
-        ));
-      }
+      // 描けた部品は残したまま、使われなかった指定だけを同じ行で言う
+      // (マップ形式の expandPart と同じ立て付け)。
+      errors.push(...(result.value.notes ?? []).map((item) => notice(`部品 ${safeToken(id)}: ${item}`, line)));
       continue;
     }
 
@@ -424,7 +422,8 @@ function expandPart(id: string, raw: unknown, line: number) {
   return {
     ok: true as const,
     value: {
-      id, type, variant, holes: holes.map(parseHoleToken), value, label, at, pins, line,
+      id, type, written: validated.value.type, variant,
+      holes: holes.map(parseHoleToken), value, label, at, pins, line,
     } satisfies PartSpec,
     // 「描けたが使われなかった指定」はお知らせ。部品そのものは今までどおり描く。
     notes: validated.notes.map((item) => notice(`部品 ${safeToken(id)}: ${item}`, line)),
@@ -453,9 +452,19 @@ function collectWires(
       continue;
     }
     const result = parseWireSpec(text, line);
-    // つないで書いた 1 行は区間ごとに開かれる。上限は区間の数で数えるので、
-    // 「配線 500 本」の意味は書き方によらず変わらない。
-    if (result.ok) wires.push(...result.value);
-    else errors.push(result.error);
+    if (!result.ok) {
+      errors.push(result.error);
+      continue;
+    }
+
+    // つないで書いた 1 行は区間ごとに開かれるので、**開いたあとの数で頭を打たせる**。
+    // 行の数だけ見ていると、1 行に端点を 2 万個並べたフェンスが上限を素通りして
+    // 図が 2 万本になる (実測で描画に 19.6 秒。同期処理なので拡張ホストが止まる)。
+    const room = LIMITS.wires - wires.length;
+    wires.push(...result.value.slice(0, room));
+    if (result.value.length > room) {
+      errors.push(fenceError(`配線は ${LIMITS.wires} 本までです。ここから先は描いていません`, line));
+      return;
+    }
   }
 }

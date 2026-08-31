@@ -93,6 +93,11 @@ export function validateExpandedPart(raw: unknown): Validation {
   if (!isDevice && at !== null) {
     notes.push('at は機器 (device) にだけ使います。板に挿す部品の位置は holes で決まります');
   }
+  // 図に出るキャプションは値を先に見るので、両方書くとラベルが消える
+  // (部品リストの値は図と同じ字である約束なので、ラベルを勝たせるわけにいかない)。
+  if (!isDevice && value !== null && label !== null) {
+    notes.push(`値とラベルの両方が書かれています。図に出るのは値 (${safeToken(value)}) です`);
+  }
 
   const keptValue = isDevice ? null : value;
 

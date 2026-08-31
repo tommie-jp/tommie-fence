@@ -93,6 +93,12 @@ export type HoleRef = { readonly addr: string; readonly tag: string };
 export type PartSpec = {
   readonly id: string;
   readonly type: string;
+  /**
+   * 書かれたままの種類の綴り (`c/foo`)。略記を畳んだあとの `type` とは違うことがある。
+   * **報告で行の中の綴りを指すのに要る** — 畳んだ綴りは行のどこにも無いので、
+   * それで探すと印が消えるか、たまたま同じ字が並んだ別の語を指す。
+   */
+  readonly written: string;
   /** 姿 (`capacitor/ceramic` の `/` の後ろ)。書かれなければ null で、種類ごとの既定で描く。 */
   readonly variant: string | null;
   readonly holes: readonly HoleRef[];
@@ -101,11 +107,11 @@ export type PartSpec = {
   readonly at: 'top' | 'bottom' | null;
   readonly pins: readonly string[] | null;
   /**
-   * 値のつもりで書いた語が `points:` の名前と同じだったために、
-   * 値ではなく穴として読まれた語。**黙って別の回路の図が出る**入口なので、
-   * 図は書いたとおりに描いたうえでお知らせに出す。
+   * 読めはしたが、書いたとおりには図に出ない指定の理由。
+   * **図は書いたとおりに描いたうえで**お知らせに出す
+   * (マップ形式の `schema.ts` が返すものと同じ立て付け)。
    */
-  readonly eatenValue?: string | null;
+  readonly notes?: readonly string[];
   readonly line: number;
 };
 
@@ -192,6 +198,8 @@ export type PinBridge = readonly [string, string];
 export type PlacedPart = {
   readonly id: string;
   readonly type: string;
+  /** 書かれたままの種類の綴り。報告で行の中の綴りを指すのに使う。 */
+  readonly written: string;
   /** 姿。`placement/place.ts` で種類に合うことを確かめてある。 */
   readonly variant: string | null;
   readonly kind: PartKind;

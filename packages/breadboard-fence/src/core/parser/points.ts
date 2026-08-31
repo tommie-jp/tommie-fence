@@ -1,6 +1,7 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
+import { RAIL_ROWS } from '../types.ts';
 import type { FenceError, NoteSpec, PartSpec, WireSpec } from '../types.ts';
 
 /** 名前と、それが書かれた行。名前の重なりを行番号つきで報告するために行を持つ。 */
@@ -41,6 +42,12 @@ export function validatePointName(name: string, line: number): FenceError | null
   // 番地の形を禁じるのと同じ理由 — 1 つの語に 2 つの意味を持たせない。
   if (/^-+$/.test(name)) {
     return fenceError(`点の名前にハイフンだけの語は使えません: ${safeToken(name)}`, line);
+  }
+  // レールの名前はネットリストにそのまま出る。同じ名前を点に付けると、
+  // **同じ名前のネットが 2 つ出て**突き合わせがそこで成立しなくなる。
+  // (`+t` は `+` が名前に使えないので通らないが、`-t` `-b` は素通りしていた。)
+  if ((RAIL_ROWS as readonly string[]).includes(name.toLowerCase())) {
+    return fenceError(`点の名前にレールの名前は使えません: ${safeToken(name)}`, line);
   }
   return null;
 }

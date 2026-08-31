@@ -419,6 +419,12 @@ describe('renderBreadboard', () => {
     expect(heightOf(renderBreadboard(long).svg)).toBeGreaterThan(heightOf(renderBreadboard(short).svg) ?? 0);
   });
 
+  test('says how to quote a title that is only digits', () => {
+    const { errors } = renderBreadboard('title: 555\nparts:\n  R1: resistor a5 a10\n');
+
+    expect(errors[0]?.message).toContain('囲みます');
+  });
+
   test('says how to quote a note whose text is only digits', () => {
     // `- text a5: 100` は YAML が数値にするので字として届かない。
     // 「形で書きます」だけだと、囲めば直ることに気づけない。
@@ -503,20 +509,39 @@ describe('renderBreadboard', () => {
     expect(notices[0]?.message).toContain('穴として読みました');
   });
 
-  test('says it whichever side of the line the eaten word sits on', () => {
-    // `led red b1` のように点の名前が先に来ても、値は残らないので同じ話。
-    const { notices } = renderBreadboard('points:\n  red: c1\nparts:\n  D1: led red b1\n');
+  test('stays quiet when the holes are simply all written as point names', () => {
+    // `points:` の本来の使い方。値の無い抵抗も普通なので、ここで鳴らすと
+    // 正しい入力にお知らせが出続ける。
+    const bare = renderBreadboard('points:\n  vin: a5\n  gnd: a10\nparts:\n  R1: resistor vin gnd\n');
+    const mixed = renderBreadboard('points:\n  vin: a5\nparts:\n  R1: resistor vin a10\n');
+    const valued = renderBreadboard('points:\n  vin: a5\nparts:\n  R1: resistor vin a10 10k\n');
 
-    expect(notices).toHaveLength(1);
-    expect(notices[0]?.message).toContain('red');
+    expect(bare.notices).toEqual([]);
+    expect(mixed.notices).toEqual([]);
+    expect(valued.notices).toEqual([]);
   });
 
-  test('stays quiet when the value is written as well as the point names', () => {
-    const { notices } = renderBreadboard(
-      'points:\n  vin: a1\n  fb: a5\nparts:\n  R1: resistor vin fb 10k\n',
+  test('says when a label is written next to a value, since only the value is drawn', () => {
+    const line = renderBreadboard('parts:\n  R1: resistor a5 a10 10k l=Load\n');
+    const map = renderBreadboard(
+      'parts:\n  R1:\n    type: resistor\n    holes: [a5, a10]\n    value: 10k\n    label: Load\n',
     );
 
-    expect(notices).toEqual([]);
+    for (const result of [line, map]) {
+      expect(result.errors).toEqual([]);
+      expect(result.notices).toHaveLength(1);
+      expect(result.notices[0]?.message).toContain('図に出るのは値');
+      expect(result.svg).not.toContain('Load');
+    }
+  });
+
+  test('counts the segments of a chained wire against the limit, not the lines', () => {
+    // 1 行に端点を並べただけで上限を素通りすると、拡張ホストが止まるほどの
+    // 図が 1 枚の Markdown から作れてしまう (実測で 19.6 秒)。
+    const chain = Array.from({ length: 2001 }, (_, index) => `a${(index % 60) + 1}`).join(' -- ');
+    const { errors } = renderBreadboard(`board: full\nparts:\n  R1: resistor a1 a5\nwires:\n  - ${chain}\n`);
+
+    expect(errors.some((error) => error.message.includes('500 本まで'))).toBe(true);
   });
 
   test('refuses a point named with hyphens alone, which is the wire separator', () => {
