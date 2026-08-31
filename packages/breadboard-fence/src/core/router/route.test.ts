@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest';
 import { parseAddress } from '../model/address.ts';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
-import { pathHitsAny } from './geometry.ts';
+import { LIMITS } from '../limits.ts';
+import { countCrossings, pathHitsAny } from './geometry.ts';
 import { routeWire, routeWires } from './route.ts';
 
 const layout = createLayout(createBoard('half'));
@@ -146,6 +147,54 @@ describe('routeWires', () => {
 
     expect(path?.[0]).toEqual(at('a5'));
     expect(path?.at(-1)).toEqual(at('a20'));
+  });
+});
+
+describe('routeWires keeping wires from crossing each other', () => {
+  const request = (from: string, to: string) => ({ from: at(from), to: at(to), hints: [] });
+
+  // どちらも -t と a の間のレーン (y=67) を通り、x も重なる。
+  // 一方はレーンの上の穴から、もう一方は下の穴から来る。
+  const fromAbove = request('-t3', '-t20');
+  const fromBelow = request('a3', 'a20');
+
+  test('sends wires that come from opposite sides to opposite sides of the lane', () => {
+    const [above, below] = routeWires([fromAbove, fromBelow], layout);
+
+    expect(above?.[1]?.y).not.toBe(below?.[1]?.y);
+    expect(countCrossings([above!, below!])).toBe(0);
+  });
+
+  test('does not care which of the two was written first', () => {
+    const [below, above] = routeWires([fromBelow, fromAbove], layout);
+
+    expect(countCrossings([above!, below!])).toBe(0);
+  });
+
+  test('still runs a lone wire down the middle of its lane', () => {
+    const [only] = routeWires([fromBelow], layout);
+    const lane = layout.lanes.find((candidate) => candidate.y === only?.[1]?.y);
+
+    expect(lane).toBeDefined();
+  });
+
+  test('gives the same answer every time it is asked', () => {
+    const wires = [request('a5', 'a20'), request('b6', 'b19'), fromAbove, fromBelow];
+
+    expect(routeWires(wires, layout)).toEqual(routeWires(wires, layout));
+  });
+
+  test('routes a figure at the wire limit without stalling the render', () => {
+    const many = Array.from({ length: LIMITS.wires }, (_, index) => {
+      const column = (index % 28) + 1;
+      return request(`a${column}`, `j${column + 2}`);
+    });
+
+    const started = Date.now();
+    const paths = routeWires(many, layout);
+
+    expect(paths).toHaveLength(LIMITS.wires);
+    expect(Date.now() - started).toBeLessThan(2000);
   });
 });
 

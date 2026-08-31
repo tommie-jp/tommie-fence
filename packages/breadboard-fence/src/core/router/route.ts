@@ -126,6 +126,11 @@ export function routeWires(
 /**
  * 同じレーンで x が重なる配線に別のスロットを配る。
  * 左端の順に見て、空いている一番内側のスロットを使う (区間グラフの貪欲彩色)。
+ *
+ * **どちら側から来た配線かでスロットの上下を選ぶ。** レーンより上の穴だけを結ぶ配線を
+ * 上側に、下の穴だけを結ぶ配線を下側に置くと、**上から来た配線の縦の区間が
+ * 下から来た配線の横の区間まで届かない**ので、この 2 つは決して交差しない。
+ * 側を見ずに交互に振っていたころは、どちらに転ぶかが書いた順まかせだった。
  */
 function assignSlots(
   requests: readonly WireRequest[],
@@ -137,24 +142,42 @@ function assignSlots(
     .filter(({ index }) => lanes[index] !== null)
     .sort((a, b) => a.left - b.left);
 
-  const takenByLane = new Map<number, number[]>();
+  // 1 レーンに全部の配線が集まっても足りるだけの段を用意する。
+  const upward = slotLevels(order.length, -1);
+  const downward = slotLevels(order.length, 1);
+  const takenByLane = new Map<number, Map<number, number>>();
 
   for (const { index, left, right } of order) {
-    const laneKey = lanes[index]!.y;
-    const taken = takenByLane.get(laneKey) ?? [];
-    let slot = taken.findIndex((end) => end + SLOT_GAP <= left);
-    if (slot === -1) slot = taken.length;
-    taken[slot] = right;
-    takenByLane.set(laneKey, taken);
-    offsets[index] = slotOffset(slot);
+    const lane = lanes[index]!;
+    const taken = takenByLane.get(lane.y) ?? new Map<number, number>();
+    const levels = comesFromBelow(requests[index]!, lane) ? downward : upward;
+    const level = levels.find((candidate) => (taken.get(candidate) ?? -Infinity) + SLOT_GAP <= left) ?? 0;
+
+    taken.set(level, right);
+    takenByLane.set(lane.y, taken);
+    offsets[index] = level * SLOT_SPACING;
   }
 
   return offsets;
 }
 
-/** スロット 0 を中央に、以降は上下へ交互に振る。 */
-const slotOffset = (slot: number): number =>
-  slot === 0 ? 0 : (slot % 2 === 1 ? -1 : 1) * Math.ceil(slot / 2) * SLOT_SPACING;
+/**
+ * 両端ともレーンより下の穴か。**片側だけの配線はレーンを跨ぐので、どのみち
+ * 反対側の横の区間を切る**。数えるのは「跨がない」と言い切れるものだけにする。
+ */
+const comesFromBelow = (request: WireRequest, lane: Lane): boolean =>
+  request.from.y > lane.y && request.to.y > lane.y;
+
+/**
+ * 段の試し順。**どちらの側の配線も中央 (0) から試す**ので、
+ * 1 本しか通らないレーンは今までどおりレーンの真上を走る。
+ * 埋まっていたときに伸びる向きだけが側によって変わる。
+ */
+const slotLevels = (count: number, first: -1 | 1): readonly number[] => {
+  const levels = [0];
+  for (let step = 1; step <= count; step += 1) levels.push(first * step, -first * step);
+  return levels;
+};
 
 function followHints(from: Point, to: Point, hints: readonly WireHint[]): readonly Point[] {
   const points: Point[] = [from];
