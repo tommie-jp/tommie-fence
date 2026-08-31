@@ -984,3 +984,44 @@ describe('renderBreadboard', () => {
     }
   });
 });
+
+describe('parts that share a hole with a wire endpoint', () => {
+  const fence = (part: string, wire: string) =>
+    ['parts:', `  ${part}`, 'wires:', `  - ${wire}`].join('\n');
+
+  test('slides the part one row away so the wire keeps its written hole', () => {
+    // 図07 の形。配線は j20 から下のレールへ直行し、Re は i 行へ寄る。
+    const { svg, errors, notices } = renderBreadboard(fence('Re: resistor j17 j20 100', 'j20 -- -b20 black'));
+
+    expect(errors).toEqual([]);
+    expect(notices).toEqual([]);
+    expect(svg).toContain('x1="362" y1="260" x2="422" y2="260"');
+    expect(svg).toContain('M 422 280 L 422 314');
+  });
+
+  test('keeps the netlist identical to writing the slid holes by hand', () => {
+    const auto = renderBreadboard(fence('Re: resistor j17 j20 100', 'j20 -- -b20 black'));
+    const manual = renderBreadboard(fence('Re: resistor i17 i20 100', 'j20 -- -b20 black'));
+
+    expect(auto.netlist).toEqual(manual.netlist);
+  });
+
+  test('a pin reference means "at that pin" and does not push the part away', () => {
+    const { svg, notices } = renderBreadboard(fence('Re: resistor j17 j20 100', 'Re.2 -- -b20 black'));
+
+    expect(notices).toEqual([]);
+    expect(svg).toContain('x1="362" y1="280" x2="422" y2="280"');
+    expect(svg).toContain('M 422 280 L 422 314');
+  });
+
+  test('reports the unbuildable hole when the part cannot make room', () => {
+    // f はブロックの最上行。下のレールへ出る配線から上へは逃げられない。
+    const { svg, errors, notices } = renderBreadboard(fence('Re: resistor f17 f20 100', 'f20 -- -b20 black'));
+
+    expect(errors).toEqual([]);
+    expect(notices).toHaveLength(1);
+    expect(notices[0]?.message).toContain('f20');
+    // 図は書かれたまま (f 行 = y 200) 描く。
+    expect(svg).toContain('x1="362" y1="200" x2="422" y2="200"');
+  });
+});

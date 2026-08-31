@@ -98,6 +98,9 @@ wires:
 
 色: `red black white gray` (`grey` も可) `orange yellow green blue purple brown pink`
 
+端点が部品の足と同じ穴なら、部品のほうが同じ列の空いた行へ寄って描かれる
+(実物では同じ穴に挿せないため。ピン参照 `U1.7` では寄らない)。
+
 ## 注釈
 
 ```yaml

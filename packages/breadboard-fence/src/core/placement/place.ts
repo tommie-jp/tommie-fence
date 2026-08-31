@@ -115,7 +115,7 @@ function variantError(part: PlacedPart): FenceError | null {
  */
 const COVERING_KINDS: ReadonlySet<PartKind> = new Set<PartKind>(['switch', 'dip', 'sip', 'board']);
 
-function coveredHoles(part: PlacedPart): Address[] {
+export function coveredHoles(part: PlacedPart): Address[] {
   if (!COVERING_KINDS.has(part.kind)) return [];
 
   const holes = part.pins

@@ -154,6 +154,7 @@ platform-specific binary), so it is for development machines only.
 | DIP | Write pin 1's hole; the rest follows | `U1: dip8 @ e5 NJM4556A` |
 | Off-board device | Map form with `type: device` | see the examples |
 | Wire | `- end -- end [-- end …] [colour]` | `- a10 -- b12 -- b20 red` |
+| Wire into a lead's hole | The part slides to a free row in the same columns (same nets) | `- j20 -- -b20 black` |
 | Routing hint | A detour in brackets (20 = one hole) | `- j20 -- -b20 black [v-20]` |
 | Parts list | Printed under the drawing by default; write this to drop it | `parts-list: none` |
 | Pushbutton | Four legs across the ravine; write pin 1a's hole | `SW1: button @ e5` |

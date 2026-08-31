@@ -9,7 +9,9 @@ import { computeNets } from './model/nets.ts';
 import type { NetMember } from './model/nets.ts';
 import { parseFence } from './parser/parseFence.ts';
 import { placeParts } from './placement/place.ts';
-import { routeWires } from './router/route.ts';
+import { relocateParts } from './placement/relocate.ts';
+import type { WireEnd } from './placement/relocate.ts';
+import { exitSide, routeWires } from './router/route.ts';
 import { renderDocument } from './render/document.ts';
 import type { RenderedWire } from './render/document.ts';
 import { layoutDevices } from './render/devices.ts';
@@ -87,12 +89,18 @@ export function renderBreadboard(input: string): RenderResult {
   const style = resolved.style;
   errors.push(...resolved.messages.map((message) => fenceError(message, parsed.doc?.style.line ?? null)));
 
-  const parts = placement.parts;
-  const devices = parts.filter((part) => part.kind === 'device');
+  const placed = placement.parts;
+  const devices = placed.filter((part) => part.kind === 'device');
   const layout = createLayout(board, {
     deviceTop: devices.some((device) => device.at !== 'bottom'),
     deviceBottom: devices.some((device) => device.at === 'bottom'),
   });
+
+  // 配線と足が同じ穴を取り合う部品を、同じ列の空いた行へ寄せる。
+  // resolveWire より前に済ませるので、ピン参照 (`Re.2`) の配線は寄せた後の穴に付く。
+  const relocation = relocateParts(placed, wireEnds(parsed.doc.wires, placed, board, layout));
+  errors.push(...relocation.errors);
+  const parts = relocation.parts;
 
   const wires: ResolvedWire[] = [];
   for (const spec of parsed.doc.wires) {
@@ -330,6 +338,90 @@ function internalLinks(parts: readonly PlacedPart[]): (readonly [StripId, StripI
       return a && b ? [[a, b] as const] : [];
     });
   });
+}
+
+/**
+ * 部品の寄せ (`relocateParts`) が見る、配線が塞ぐ穴とそこからの出口の向き。
+ *
+ * - ピン参照 (`U1.7`) は「そのピンにつなぐ」という明示なので、穴の取り合いに数えない。
+ * - 端点が解決できない配線も数えない (どのみち描かれない)。報告は resolveWire の
+ *   本番の解決に任せ、ここでは黙って読み捨てる — 同じエラーを 2 度出さないため。
+ * - 迂回ヒント付きは作者が経路を手で持っているので、読み取れる出だしの向き
+ *   (最初の `v` ヒント) だけを使い、着地側は向き不明として穴だけ塞ぐ。
+ */
+function wireEnds(
+  specs: readonly WireSpec[],
+  parts: readonly PlacedPart[],
+  board: Board,
+  layout: Layout,
+): WireEnd[] {
+  const ends: WireEnd[] = [];
+
+  for (const spec of specs) {
+    const from = resolveEndpoint(spec.from, parts, board, spec.line);
+    const to = resolveEndpoint(spec.to, parts, board, spec.line);
+    if (!from.ok || !to.ok) continue;
+
+    const holeEnd = (text: string, self: Endpoint, other: Endpoint, isFrom: boolean): void => {
+      if (PIN_REF.test(text)) return;
+      if (self.kind !== 'hole' || self.address.kind !== 'hole') return;
+
+      const selfPoint = layout.point(self.address);
+      const otherPoint = endpointPoint(other, parts, layout, selfPoint.x);
+      ends.push({ address: self.address, ...endExit(spec.hints, isFrom, selfPoint, otherPoint, layout) });
+    };
+
+    holeEnd(spec.from, from.value, to.value, true);
+    holeEnd(spec.to, to.value, from.value, false);
+  }
+
+  return ends;
+}
+
+type EndExit = Pick<WireEnd, 'exit' | 'away'>;
+
+/**
+ * 端点からの出口の向きと、部品を寄せるなら見た目に良い側。
+ * 縦に走らない端点 (`none`) では、反対側の端点から遠ざかる側を良い側とする。
+ */
+function endExit(
+  hints: readonly WireHint[],
+  isFrom: boolean,
+  selfPoint: Point,
+  otherPoint: Point | null,
+  layout: Layout,
+): EndExit {
+  if (hints.length > 0) return hintExit(hints, isFrom);
+  if (!otherPoint) return { exit: 'unknown', away: null };
+
+  const exit = exitSide(selfPoint, otherPoint, layout);
+  if (exit !== 'none') return { exit, away: exit === 'up' ? 'down' : 'up' };
+  if (otherPoint.y === selfPoint.y) return { exit, away: null };
+  return { exit, away: otherPoint.y > selfPoint.y ? 'up' : 'down' };
+}
+
+/** 迂回ヒント付きの配線の出口。読み取れるのは書き出しのヒントだけで、着地側は不明。 */
+function hintExit(hints: readonly WireHint[], isFrom: boolean): EndExit {
+  const first = hints[0];
+  if (!isFrom || !first || first.delta === 0) return { exit: 'unknown', away: null };
+  if (first.axis === 'h') return { exit: 'none', away: null };
+  return first.delta < 0 ? { exit: 'up', away: 'down' } : { exit: 'down', away: 'up' };
+}
+
+/**
+ * 出口の向きを決めるための端点の座標。ボード外の機器はまだ箱の位置が決まっていないので、
+ * 帯の中央の高さで代える (向きの判定には上下だけが要る)。
+ */
+function endpointPoint(
+  endpoint: Endpoint,
+  parts: readonly PlacedPart[],
+  layout: Layout,
+  fallbackX: number,
+): Point | null {
+  if (endpoint.kind === 'hole') return layout.point(endpoint.address);
+  const at = parts.find((part) => part.id === endpoint.partId)?.at ?? 'top';
+  const band = at === 'bottom' ? layout.deviceBands.bottom : layout.deviceBands.top;
+  return band ? { x: fallbackX, y: band.y + band.height / 2 } : null;
 }
 
 function resolveWire(

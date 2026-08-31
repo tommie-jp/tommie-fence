@@ -39,7 +39,7 @@ parts:
   R1: resistor f5 f10 330
   D1: led g12(A) g13(K) red
 wires:
-  - +b5 -- f5 red
+  - +b5 -- j5 red
   - f10 -- g12
   - i13 -- -b13 black
 ```
