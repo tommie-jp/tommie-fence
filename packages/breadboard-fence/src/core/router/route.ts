@@ -52,8 +52,11 @@ const isDirect = (from: Point, to: Point, layout: Layout): boolean =>
   Math.abs(from.x - to.x) < SAME_COLUMN_TOLERANCE
   || Math.hypot(to.x - from.x, to.y - from.y) <= SHORT_HOP_PITCHES * layout.pitch;
 
-/** 部品をよけて登るときの寄り道。`x` は登る列、`jogY` は横に振る高さ。 */
-type Escape = { readonly jogY: number; readonly x: number } | null;
+/**
+ * 部品をよけて登るときの寄り道。`x` は登る列、`jogY` は横に振る高さ。
+ * `column` と `row` は、この寄り道が押さえる道すじ (呼ぶ側が控える)。
+ */
+type Escape = { readonly jogY: number; readonly x: number; readonly column: Claim; readonly row: Claim } | null;
 type Escapes = { readonly entry: Escape; readonly exit: Escape };
 
 function buildPath(from: Point, to: Point, lane: Lane, offset: number, escapes: Escapes): readonly Point[] {
@@ -79,18 +82,31 @@ const JOG_FRACTIONS = [1 / 2, 1 / 4];
  * どの穴とどの穴がつながっているのか読めなくなる。
  */
 type Span = { readonly low: number; readonly high: number };
-type Reservations = { readonly columns: Map<number, Span[]>; readonly rows: Map<number, Span[]> };
+/** 押さえた道すじ 1 本。`at` は列なら x、行なら y。 */
+type Claim = { readonly at: number; readonly span: Span };
+type Reservations = { readonly columns: readonly Claim[]; readonly rows: readonly Claim[] };
 
-const noReservations = (): Reservations => ({ columns: new Map(), rows: new Map() });
+const noReservations: Reservations = { columns: [], rows: [] };
 
 const span = (a: number, b: number): Span => ({ low: Math.min(a, b), high: Math.max(a, b) });
 
-const isFree = (lanes: Map<number, Span[]>, at: number, want: Span): boolean =>
-  (lanes.get(at) ?? []).every((held) => Math.min(held.high, want.high) <= Math.max(held.low, want.low));
+/**
+ * 近すぎる道すじが無いか。**同じ座標だけを見ては足りない**:
+ * 1px ずれた 2 本は、線の太さのぶん重なって 1 本の太い線に見える。
+ * 列は穴の格子に乗るので離れるが、行は端点とレーンの隔たりで決まるので端数が出る。
+ */
+const CLAIM_CLEARANCE = 6;
 
-const hold = (lanes: Map<number, Span[]>, at: number, want: Span): void => {
-  lanes.set(at, [...(lanes.get(at) ?? []), want]);
-};
+const isFree = (claims: readonly Claim[], at: number, want: Span): boolean =>
+  claims.every((claim) =>
+    Math.abs(claim.at - at) >= CLAIM_CLEARANCE
+    || Math.min(claim.span.high, want.high) <= Math.max(claim.span.low, want.low));
+
+/** 決めた寄り道を控えに足した、新しい控え。 */
+const commit = (held: Reservations, escape: Escape): Reservations =>
+  escape === null
+    ? held
+    : { columns: [...held.columns, escape.column], rows: [...held.rows, escape.row] };
 
 /**
  * 部品をよけて登る道を探す。まっすぐ上げられるなら `null` (寄り道なし)。
@@ -101,7 +117,10 @@ const hold = (lanes: Map<number, Span[]>, at: number, want: Span): void => {
  * (板の外の機器のピンは格子に乗っていないので、端点からずらすと列を踏む)。
  * 同じ理由で、寄り道は板の中だけを使う。
  *
- * 通った列と行は `held` に控えて、別の配線が同じところに重ならないようにする。
+ * **押さえた道すじは返り値に入れて返す** (`held` は読むだけ)。
+ * 呼ぶ側が控えるので、entry と exit のどちらが先かが呼ぶ側のコードに見える。
+ * ここで黙って書き換えると、2 つの呼び出しを入れ替えただけで
+ * 重なった寄り道ができあがり、しかもどのテストも落ちない。
  *
  * どこも塞がっていればまっすぐに戻す。逃げ場の無い盤面で無理に曲げるより、
  * 突き抜けさせて部品を上に描くほうが読める (描画順が最後の砦で、
@@ -109,6 +128,7 @@ const hold = (lanes: Map<number, Span[]>, at: number, want: Span): void => {
  */
 function escapeOf(
   end: Point,
+  otherEnd: Point,
   lane: Lane,
   layout: Layout,
   obstacles: readonly Rect[],
@@ -124,13 +144,17 @@ function escapeOf(
 
   if (obstacles.length === 0 || !blocked(...asPoints(end.x, climb(end.y)))) return null;
 
-  const gap = Math.abs(lane.y - end.y);
   const toward = Math.sign(lane.y - end.y) || 1;
+  // 振る高さは端点とレーンの**厚みの手前**に収める。行き着く高さはスロットで
+  // 上下するので、中心までを目安にすると、混んだレーンでは通り越してから
+  // 戻ってくる鉤のような折れ線になる。
+  const room = Math.abs(lane.y - end.y) - lane.halfHeight;
+  // 寄り道でレーンを走る区間が変わる。**増えたときだけ断る**:
+  // 内側へ寄って短くなるぶんまで断ると、通せる寄り道を捨てて部品を突き抜ける。
+  const onLaneNow = obstaclesOnLane(lane, ...bounds(end.x, otherEnd.x), obstacles);
 
   for (const fraction of JOG_FRACTIONS) {
-    // 振る高さは端点とレーンの間に収める。はみ出すと、レーンを通り越してから
-    // 戻ってくる鉤のような折れ線になる (レールの行のようにレーンが近いところで起きる)。
-    const hop = Math.min(layout.pitch * fraction, gap / 2);
+    const hop = Math.min(layout.pitch * fraction, room / 2);
     if (hop <= 0) continue;
 
     const jogY = end.y + toward * hop;
@@ -141,22 +165,20 @@ function escapeOf(
       const x = halfColumn(end.x, step, layout);
       if (!onBoard(x, layout)) continue;
 
-      const reach = climb(jogY);
-      const jog = span(end.x, x);
-      if (!isFree(held.columns, x, reach) || !isFree(held.rows, jogY, jog)) continue;
-      if (blocked(stub, { x, y: jogY }) || blocked(...asPoints(x, reach))) continue;
-      // 横に振ったぶんレーンを走る区間が伸びる。**伸びた先も見る**:
-      // 見ないと、1 つ目の部品をよけて 2 つ目の上に乗ることがある。
-      if (blockedOnLane(lane, jog.low, jog.high, obstacles)) continue;
+      const column = { at: x, span: climb(jogY) };
+      const row = { at: jogY, span: span(end.x, x) };
+      if (!isFree(held.columns, x, column.span) || !isFree(held.rows, jogY, row.span)) continue;
+      if (blocked(stub, { x, y: jogY }) || blocked(...asPoints(x, column.span))) continue;
+      if (obstaclesOnLane(lane, ...bounds(x, otherEnd.x), obstacles) > onLaneNow) continue;
 
-      hold(held.columns, x, reach);
-      hold(held.rows, jogY, jog);
-      return { jogY, x };
+      return { jogY, x, column, row };
     }
   }
 
   return null;
 }
+
+const bounds = (a: number, b: number): [number, number] => [Math.min(a, b), Math.max(a, b)];
 
 /** 穴の格子から数えた列の位置。`step` に 0.5 を渡せば列と列のちょうど間。 */
 const halfColumn = (x: number, step: number, layout: Layout): number => {
@@ -188,14 +210,17 @@ export function routeWires(
   // 控えは図で 1 つ。**行き先のレーンが違っても、通る列と高さが重なれば 1 本に見える**ので、
   // レーンごとに分けて持つと見落とす。区間で見るので、高さの重ならない登り道は
   // 同じ列を使えて、譲る要りのない配線が遠くへ追いやられることもない。
-  const held = noReservations();
+  let held = noReservations;
   const escapes = requests.map((request, index): Escapes => {
     const lane = lanes[index];
     if (!lane) return { entry: null, exit: null };
-    return {
-      entry: escapeOf(request.from, lane, layout, obstacles, held),
-      exit: escapeOf(request.to, lane, layout, obstacles, held),
-    };
+
+    const entry = escapeOf(request.from, request.to, lane, layout, obstacles, held);
+    held = commit(held, entry);
+    const exit = escapeOf(request.to, request.from, lane, layout, obstacles, held);
+    held = commit(held, exit);
+
+    return { entry, exit };
   });
 
   const offsets = assignSlots(requests, lanes, escapes);
@@ -240,15 +265,11 @@ function assignSlots(
     .sort((a, b) => a.left - b.left);
 
   const takenByLane = new Map<number, Map<number, Slot>>();
-  const levelsByLane = new Map<string, readonly number[]>();
 
   for (const { index, left, right } of order) {
     const lane = lanes[index]!;
     const taken = takenByLane.get(lane.y) ?? new Map<number, Slot>();
-    const fromBelow = comesFromBelow(requests[index]!, lane);
-    const levelKey = `${lane.y}|${fromBelow}`;
-    const levels = levelsByLane.get(levelKey) ?? slotLevels(lane, fromBelow);
-    levelsByLane.set(levelKey, levels);
+    const levels = slotLevels(lane, comesFromBelow(requests[index]!, lane));
 
     const free = levels.find((candidate) => (taken.get(candidate)?.right ?? -Infinity) + SLOT_GAP <= left);
     const level = free ?? mostRoom(levels, taken);
@@ -359,6 +380,3 @@ const obstaclesOnLane = (lane: Lane, left: number, right: number, obstacles: rea
     rect,
     OBSTACLE_MARGIN,
   )).length;
-
-const blockedOnLane = (lane: Lane, left: number, right: number, obstacles: readonly Rect[]): boolean =>
-  obstaclesOnLane(lane, left, right, obstacles) > 0;

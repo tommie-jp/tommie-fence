@@ -99,9 +99,11 @@ describe('three lead shells', () => {
   ])('draws the body of %s exactly as wide as bodyHalfWidth reports', (line) => {
     const part = place(line);
     const half = bodyHalfWidth(part, layout);
-    const svg = renderPart(part, layout, theme);
+    // 胴は最初に描く矩形。TO-220 は放熱タブも同じ幅で続くので、
+    // 幅と位置を別々に探すと、胴が縮んでもタブのほうに当たって気づけない。
+    const body = /<rect [^>]*\/>/.exec(renderPart(part, layout, theme))?.[0] ?? '';
 
-    expect(svg).toContain(`x="${num(centerX(part) - half)}" y=`);
-    expect(svg).toContain(`width="${num(half * 2)}"`);
+    expect(body).toContain(`x="${num(centerX(part) - half)}"`);
+    expect(body).toContain(`width="${num(half * 2)}"`);
   });
 });

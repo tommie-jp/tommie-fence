@@ -3,7 +3,7 @@ import type { PlacedPart, Point, Rect } from '../types.ts';
 import { boardBodyRect, renderBoardPart } from './boardPart.ts';
 import { renderDip, renderPushbutton, renderSip, sipBarRect, switchBodyRect } from './packages.ts';
 import {
-  CAPTION_DROP, CAPTION_HEIGHT, ROUND_CAPTION_GAP, caption, charWidth, labelYOf,
+  CAPTION_DROP, CAPTION_HEIGHT, LEG_NAME_GAP, ROUND_CAPTION_GAP, caption, charWidth, labelYOf,
 } from './partCommon.ts';
 import { bodyHalfHeight, bodyHalfWidth, renderThreeLead } from './threeLead.ts';
 import { renderTwoLead } from './twoLead.ts';
@@ -44,12 +44,10 @@ export function partObstacles(part: PlacedPart, layout: Layout, theme: RenderThe
     const center = points[1] ?? points[0]!;
     // 本体に、上下へ出したピン名とラベルを足した高さ。字が伸びればここも伸びる。
     const reach = CAPTION_DROP * textScale(theme);
-    // 胴と字は**別の矩形で渡す**。長いキャプションの幅を胴の高さいっぱいに広げると、
-    // 何も描いていないところまで塞いで、空いているレーンを配線に諦めさせてしまう。
-    const label = captionWidth(part, theme);
-    const height = textScale(theme) * CAPTION_HEIGHT;
-    // 3 本足のキャプションは胴の外、溝の側に置く (threeLead.ts と同じ勘定)。
-    const labelY = center.y + (center.y < layout.ravineY ? 1 : -1) * (halfHeight + ROUND_CAPTION_GAP);
+    // 胴・キャプション・足の名前を**別々の矩形で渡す**。いちばん広いものに合わせて
+    // 1 つの箱にすると、何も描いていないところまで塞いで、
+    // 空いているレーンを配線に諦めさせてしまう。
+    const toRavine = center.y < layout.ravineY ? 1 : -1;
 
     return [
       {
@@ -58,26 +56,54 @@ export function partObstacles(part: PlacedPart, layout: Layout, theme: RenderThe
         width: halfWidth * 2,
         height: halfHeight * 2 + reach * 2,
       },
-      { x: center.x - label / 2, y: labelY - height + 3, width: label, height },
+      // キャプションは胴の外、溝の側 (threeLead.ts と同じ勘定)。
+      captionBand(center.x, center.y + toRavine * (halfHeight + ROUND_CAPTION_GAP), captionWidth(part, theme), theme),
+      // 足の名前は反対側に並ぶ。名前が長ければ胴からはみ出す。
+      ...legNameBands(part, points, center, halfHeight, toRavine, theme),
     ];
   }
 
   const center = { x: (left + right) / 2, y: (top + bottom) / 2 };
   const width = Math.max(captionWidth(part, theme), right - left);
-  const height = textScale(theme) * CAPTION_HEIGHT;
-  const labelY = labelYOf(part, center, layout);
 
-  return [{ x: center.x - width / 2, y: labelY - height + 3, width, height }];
+  return [captionBand(center.x, labelYOf(part, center, layout), width, theme)];
+}
+
+/** 字 1 行が占める帯。`baseline` は字の基準線で、字はそこから上へ伸びる。 */
+function captionBand(centerX: number, baseline: number, width: number, theme: RenderTheme): Rect {
+  const height = textScale(theme) * CAPTION_HEIGHT;
+  return { x: centerX - width / 2, y: baseline - height + 3, width, height };
 }
 
 /**
- * キャプションが図の上で占める横幅。**コードポイントで数える**
- * (サロゲートペアを 2 文字と数えると、その字のぶんだけ領域が広がる)。
- * 全角は半角より広いが、狭く見ておくほうが安全側 —
- * 広く取りすぎると、空いているレーンまで配線に諦めさせてしまう。
+ * 3 本足の足の名前が占める帯。**レーンにいちばん近い字**なので、
+ * ここを見落とすと配線が名前の上を走る (`B` のような 1 字なら胴に隠れるが、
+ * 長い名前を付けると横にはみ出す)。
+ */
+function legNameBands(
+  part: PlacedPart,
+  points: readonly Point[],
+  center: Point,
+  halfHeight: number,
+  toRavine: number,
+  theme: RenderTheme,
+): Rect[] {
+  const baseline = center.y - toRavine * (halfHeight + LEG_NAME_GAP);
+  return part.pins.flatMap((pin, index) => {
+    const point = points[index];
+    if (!point) return [];
+    return [captionBand(point.x, baseline, [...pin.name].length * charWidth(theme), theme)];
+  });
+}
+
+/**
+ * 字が図の上で占める横幅。**コードポイントで数え、ラテン文字より広いものは 2 文字ぶん**。
+ * サロゲートペアを 2 と数えると絵文字だけ広がり、1 と数えると漢字も絵文字も狭くなる。
+ * 狭く見るほうが危ない側で、塞ぎ損ねた字の上を配線が走る。
  */
 const captionWidth = (part: PlacedPart, theme: RenderTheme): number =>
-  [...caption(part)].length * charWidth(theme);
+  [...caption(part)].reduce((sum, char) => sum + ((char.codePointAt(0) ?? 0) > 0xff ? 2 : 1), 0)
+  * charWidth(theme);
 
 export function renderPart(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
   if (part.kind === 'dip') return renderDip(part, layout, theme);

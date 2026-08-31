@@ -1,32 +1,33 @@
 import { describe, expect, test } from 'vitest';
-import { countCrossings, crossings, pathHitsAny, segmentHitsRect } from './geometry.ts';
+import { boxHitsRect, pathHitsAny } from './geometry.ts';
+import { countCrossings, crossings } from './crossings.test-utils.ts';
 
 const rect = { x: 100, y: 100, width: 40, height: 20 };
 
-describe('segmentHitsRect', () => {
+describe('boxHitsRect', () => {
   test('reports a vertical segment that runs through the middle of the rectangle', () => {
-    expect(segmentHitsRect({ x: 120, y: 0 }, { x: 120, y: 300 }, rect, 0)).toBe(true);
+    expect(boxHitsRect({ x: 120, y: 0 }, { x: 120, y: 300 }, rect, 0)).toBe(true);
   });
 
   test('reports a horizontal segment that runs through the middle of the rectangle', () => {
-    expect(segmentHitsRect({ x: 0, y: 110 }, { x: 300, y: 110 }, rect, 0)).toBe(true);
+    expect(boxHitsRect({ x: 0, y: 110 }, { x: 300, y: 110 }, rect, 0)).toBe(true);
   });
 
   test('lets a segment pass beside the rectangle', () => {
-    expect(segmentHitsRect({ x: 200, y: 0 }, { x: 200, y: 300 }, rect, 0)).toBe(false);
+    expect(boxHitsRect({ x: 200, y: 0 }, { x: 200, y: 300 }, rect, 0)).toBe(false);
   });
 
   test('lets a segment stop short of the rectangle', () => {
-    expect(segmentHitsRect({ x: 120, y: 0 }, { x: 120, y: 90 }, rect, 0)).toBe(false);
+    expect(boxHitsRect({ x: 120, y: 0 }, { x: 120, y: 90 }, rect, 0)).toBe(false);
   });
 
   test('does not count a segment that only touches the edge', () => {
-    expect(segmentHitsRect({ x: 100, y: 0 }, { x: 100, y: 300 }, rect, 0)).toBe(false);
+    expect(boxHitsRect({ x: 100, y: 0 }, { x: 100, y: 300 }, rect, 0)).toBe(false);
   });
 
   test('counts a near miss once a margin is asked for', () => {
-    expect(segmentHitsRect({ x: 145, y: 0 }, { x: 145, y: 300 }, rect, 0)).toBe(false);
-    expect(segmentHitsRect({ x: 145, y: 0 }, { x: 145, y: 300 }, rect, 10)).toBe(true);
+    expect(boxHitsRect({ x: 145, y: 0 }, { x: 145, y: 300 }, rect, 0)).toBe(false);
+    expect(boxHitsRect({ x: 145, y: 0 }, { x: 145, y: 300 }, rect, 10)).toBe(true);
   });
 });
 

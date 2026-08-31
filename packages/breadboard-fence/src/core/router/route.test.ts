@@ -4,7 +4,8 @@ import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
 import { LIMITS } from '../limits.ts';
 import type { Point } from '../types.ts';
-import { countCrossings, pathHitsAny } from './geometry.ts';
+import { pathHitsAny } from './geometry.ts';
+import { countCrossings } from './crossings.test-utils.ts';
 import { routeWire, routeWires } from './route.ts';
 
 const layout = createLayout(createBoard('half'));
