@@ -145,7 +145,7 @@ platform-specific binary), so it is for development machines only.
 
 | Element | How to write it | Example |
 | --- | --- | --- |
-| Board | `board: half` (30 columns) / `full` (63). Rail order, row-label case and column numbering are selectable as a map | `board: half` |
+| Board | `board: mini` (17 columns) / `half` (30) / `full` (63). Power rails (present or not, and their order), row-label case and column numbering are selectable as a map | `board: half` |
 | Hole address | Row `a`–`e` / `f`–`j` + column | `a5`, `j30` |
 | Rail address | `+`/`-` + `t`/`b` + column | `+t5`, `-b20` |
 | Two-lead part | `ID: type hole hole value` | `R1: resistor a5 a10 10k` |

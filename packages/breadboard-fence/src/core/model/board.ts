@@ -2,13 +2,13 @@ import { DEFAULT_BOARD, RAIL_ROWS } from '../types.ts';
 import type { Address, Board, BoardSize, BoardSpec, RailOrder, RailRow, StripId } from '../types.ts';
 import { formatAddress, isTopBlock } from './address.ts';
 
-const COLUMNS: Record<BoardSize, number> = { half: 30, full: 63 };
+const COLUMNS: Record<BoardSize, number> = { mini: 17, half: 30, full: 63 };
 
 /**
  * サイズごとのレールの既定。実物の系列に合わせる: 400 / 830 穴にはレールが付いており、
  * 170 穴のミニには無い。**サイズが決めるのはここまで**で、`rails` を書けば覆せる。
  */
-const DEFAULT_RAILS: Record<BoardSize, RailOrder | null> = { half: RAIL_ROWS, full: RAIL_ROWS };
+const DEFAULT_RAILS: Record<BoardSize, RailOrder | null> = { mini: null, half: RAIL_ROWS, full: RAIL_ROWS };
 
 export const defaultRails = (size: BoardSize): RailOrder | null => DEFAULT_RAILS[size];
 

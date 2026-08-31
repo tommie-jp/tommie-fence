@@ -97,6 +97,22 @@ describe('parseFence', () => {
     expect(doc?.board.rails).toEqual(['+t', '-t', '+b', '-b']);
   });
 
+  test('a later board size keeps the rails written earlier', () => {
+    // サイズの既定でレールを上書きしてよいのは、レールを一度も書いていないときだけ。
+    const { doc, errors } = parseFence('board:\n  rails: "+-+-"\nboard: half\n');
+
+    expect(errors).toEqual([]);
+    expect(doc?.board.rails).toEqual(['+t', '-t', '+b', '-b']);
+  });
+
+  test('a later mini size keeps the rails written earlier', () => {
+    const { doc, errors } = parseFence('board:\n  rails: "+--+"\nboard: mini\n');
+
+    expect(errors).toEqual([]);
+    expect(doc?.board.size).toBe('mini');
+    expect(doc?.board.rails).toEqual(['+t', '-t', '-b', '+b']);
+  });
+
   test('an unreadable later board keeps the earlier value', () => {
     const { doc, errors } = parseFence('board: full\nboard: giant\n');
 
@@ -112,10 +128,51 @@ describe('parseFence', () => {
     expect(errors[0]?.message).toContain('wiring');
   });
 
-  test('reports an unknown board size', () => {
+  test('reports an unknown board size and names every size it knows', () => {
     const { errors } = parseFence('board: enormous\n');
 
     expect(errors[0]?.line).toBe(1);
+    for (const size of ['mini', 'half', 'full']) {
+      expect(errors[0]?.message).toContain(size);
+    }
+  });
+
+  test('reads the mini size and leaves it without power rails', () => {
+    // 170 穴のミニは実物にレールが無い。サイズが決めるのは既定までで、rails を書けば覆せる。
+    const { doc, errors } = parseFence('board: mini\n');
+
+    expect(errors).toEqual([]);
+    expect(doc?.board.size).toBe('mini');
+    expect(doc?.board.rails).toBeNull();
+  });
+
+  test('puts rails on a mini board when they are written', () => {
+    const { doc, errors } = parseFence('board:\n  size: mini\n  rails: "+--+"\n');
+
+    expect(errors).toEqual([]);
+    expect(doc?.board.rails).toEqual(['+t', '-t', '-b', '+b']);
+  });
+
+  test('takes the rails off a half board when none is written', () => {
+    const { doc, errors } = parseFence('board:\n  rails: none\n');
+
+    expect(errors).toEqual([]);
+    expect(doc?.board.size).toBe('half');
+    expect(doc?.board.rails).toBeNull();
+  });
+
+  test('keeps the written rails whichever order the board entries come in', () => {
+    const { doc, errors } = parseFence('board:\n  rails: "+--+"\n  size: mini\n');
+
+    expect(errors).toEqual([]);
+    expect(doc?.board.rails).toEqual(['+t', '-t', '-b', '+b']);
+  });
+
+  test('offers none when the rails cannot be read', () => {
+    const { errors } = parseFence('board:\n  rails: "++--"\n');
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toContain('none');
   });
 
   test('shows the parts list below the drawing when it is not written', () => {

@@ -23,7 +23,8 @@ export type Point = { readonly x: number; readonly y: number };
 
 export type Rect = { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
 
-export const BOARD_SIZES = ['half', 'full'] as const;
+/** 実売のサイズ系列に合わせた 3 段。mini は 170 穴 (17 列)、half は 400 穴、full は 830 穴。 */
+export const BOARD_SIZES = ['mini', 'half', 'full'] as const;
 export type BoardSize = (typeof BOARD_SIZES)[number];
 
 /** レール 4 本の上から下への並び。既定は実物で最も普及した +--+ (RAIL_ROWS の順)。 */

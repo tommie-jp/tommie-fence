@@ -8,6 +8,7 @@ import { typesWithVariants, variantsOf } from './parts/variants.ts';
 import { knownPartTypes } from './placement/footprints.ts';
 import { STYLE_KEYS } from './parser/style.ts';
 import { THEME_NAMES } from './render/theme.ts';
+import { BOARD_SIZES } from './types.ts';
 import { wireColorNames } from './render/palette.ts';
 import { TOP_LEVEL_KEYS } from './parser/parseFence.ts';
 
@@ -45,6 +46,10 @@ describe('docs/02-cheatsheet.md', () => {
 
   test('names every word a note can take', () => {
     [...NOTE_KINDS, ...NOTE_COLORS, ...NOTE_SIZES, ...NOTE_ALIGNS, ...NOTE_LEADINGS].forEach(listed('注釈の語'));
+  });
+
+  test('names every board size', () => {
+    BOARD_SIZES.forEach(listed('ボードのサイズ'));
   });
 
   test('names every style key and theme', () => {

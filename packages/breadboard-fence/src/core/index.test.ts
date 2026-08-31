@@ -391,6 +391,24 @@ describe('renderBreadboard', () => {
     expect(svg).toContain('<ellipse');
   });
 
+  test('reports a rail address used on a board that has no rails', () => {
+    // 列は板の中なので「ボードの外」では直す手がかりにならない。レールが無いことを言う。
+    const { errors } = renderBreadboard('board: mini\nwires:\n  - +t5 -- a5\n');
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.line).toBe(3);
+    expect(errors[0]?.message).toContain('レール');
+  });
+
+  test('draws a mini board with rails when the fence asks for them', () => {
+    const { svg, errors } = renderBreadboard(
+      'board:\n  size: mini\n  rails: "+--+"\nwires:\n  - +t5 -- a5\n',
+    );
+
+    expect(errors).toEqual([]);
+    expect(svg).not.toBe('');
+  });
+
   test('reports a note pointing outside the board', () => {
     const { errors } = renderBreadboard('parts:\n  R1: resistor a5 a10 330\nnotes:\n  - circle a99\n');
 

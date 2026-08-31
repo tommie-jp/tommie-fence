@@ -2,7 +2,7 @@ import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Node, Pair, ParsedNode } from 'yaml';
 import { fenceError, notice, safeToken } from '../errors.ts';
 import { LIMITS, clampText, isReferenceable } from '../limits.ts';
-import { railOrder } from '../model/board.ts';
+import { defaultRails, railOrder } from '../model/board.ts';
 import {
   BOARD_SIZES, COLUMN_NUMBERS, DEFAULT_BOARD, DEFAULT_PARTS_LIST, LETTER_CASES, PARTS_LIST_MODES,
 } from '../types.ts';
@@ -64,6 +64,8 @@ export function parseFence(source: string): ParseResult {
   const wires: WireSpec[] = [];
   const notes: NoteSpec[] = [];
   let board: BoardSpec = DEFAULT_BOARD;
+  // レールを自分で書いたか。書いていれば、あとから size を書かれても既定で潰さない。
+  let boardRailsWritten = false;
   let style: StyleSpec = EMPTY_STYLE;
   let partsList: PartsListMode = DEFAULT_PARTS_LIST;
   let title: string | null = null;
@@ -123,7 +125,9 @@ export function parseFence(source: string): ParseResult {
     } else if (key === 'points') {
       // 先読みで済ませてある。
     } else if (key === 'board') {
-      board = collectBoard(pair.value as ParsedNode | null, board, errors, lineOf, line);
+      const collected = collectBoard(pair.value as ParsedNode | null, board, boardRailsWritten, errors, lineOf, line);
+      board = collected.spec;
+      boardRailsWritten = collected.railsWritten;
     } else if (key === 'style') {
       const node = pair.value as ParsedNode | null;
       const validated = validateStyle(node?.toJSON() as unknown, line);
@@ -268,34 +272,53 @@ function collectNotes(
   }
 }
 
+const SIZE_LIST = BOARD_SIZES.join(' / ');
+
+/**
+ * 読んだ `board:` と、**レールをどこかで自分で書いたか**。
+ * サイズの既定でレールを上書きしてよいのは書いていないときだけなので、
+ * `board:` が 2 回書かれても消えないように持ち越す。
+ */
+type CollectedBoard = { readonly spec: BoardSpec; readonly railsWritten: boolean };
+
 /**
  * `board:` はサイズだけのスカラーでも、サイズと印字のマップでも書ける。
  * 読めなかった項目は直前の値のまま報告する (書けたところは捨てない)。
  * キーが 2 回書かれたときは parts と同じく後勝ちで重ねる。
+ *
+ * **レールの有無はサイズと直交**で、`rails` を書けばどのサイズにも付けられ、
+ * `rails: none` でどのサイズからも外せる。サイズが決めるのは書かなかったときの既定だけ。
  */
 function collectBoard(
   node: ParsedNode | null,
   current: BoardSpec,
+  wroteRails: boolean,
   errors: FenceError[],
   lineOf: LineOf,
   fallbackLine: number | null,
-): BoardSpec {
+): CollectedBoard {
+  const kept = { spec: current, railsWritten: wroteRails };
+
   const scalar = scalarText(node);
   if (scalar !== null) {
     const size = pick(BOARD_SIZES, scalar);
-    if (size) return { ...current, size };
-    errors.push(fenceError('board は half か full です', lineOf(node) ?? fallbackLine));
-    return current;
+    // 自分で書いたレールは、あとからサイズを書き換えても残す。
+    if (size) return { ...kept, spec: { ...current, size, rails: wroteRails ? current.rails : defaultRails(size) } };
+    errors.push(fenceError(`board は ${SIZE_LIST} です`, lineOf(node) ?? fallbackLine));
+    return kept;
   }
 
   if (!isMap(node)) {
     errors.push(
-      fenceError('board は half / full か、size / rails / letters / numbers のマップで書きます', lineOf(node) ?? fallbackLine),
+      fenceError(`board は ${SIZE_LIST} か、size / rails / letters / numbers のマップで書きます`, lineOf(node) ?? fallbackLine),
     );
-    return current;
+    return kept;
   }
 
   let spec = current;
+  let sizeWritten = false;
+  let railsWritten = wroteRails;
+
   for (const pair of node.items) {
     const key = scalarText(pair.key) ?? '';
     const keyLine = lineOf(pair.key) ?? fallbackLine;
@@ -303,14 +326,21 @@ function collectBoard(
 
     if (key === 'size') {
       const size = pick(BOARD_SIZES, value);
-      if (size) spec = { ...spec, size };
-      else errors.push(fenceError('board の size は half か full です', keyLine));
+      if (size) {
+        spec = { ...spec, size };
+        sizeWritten = true;
+      } else errors.push(fenceError(`board の size は ${SIZE_LIST} です`, keyLine));
     } else if (key === 'rails') {
-      const order = value === null ? null : railOrder(value);
-      if (order) spec = { ...spec, rails: order };
-      else {
+      const order = value === 'none' ? null : railOrder(value ?? '');
+      if (order || value === 'none') {
+        spec = { ...spec, rails: order };
+        railsWritten = true;
+      } else {
         errors.push(
-          fenceError('board の rails は "+--+" のように 4 文字で書きます (上下それぞれ + と - を 1 つずつ)', keyLine),
+          fenceError(
+            'board の rails は "+--+" のように 4 文字か none で書きます (上下それぞれ + と - を 1 つずつ)',
+            keyLine,
+          ),
         );
       }
     } else if (key === 'letters') {
@@ -327,7 +357,11 @@ function collectBoard(
       );
     }
   }
-  return spec;
+
+  // サイズだけ書き換えたなら、レールもそのサイズの実物に合わせる (mini は無し、それ以外は有り)。
+  // rails を書けばそちらが勝つので、同じマップの中でも別の board: でも、書く順は問わない。
+  if (sizeWritten && !railsWritten) spec = { ...spec, rails: defaultRails(spec.size) };
+  return { spec, railsWritten };
 }
 
 /** style のマップの、項目名 → その項目が書かれた行。 */

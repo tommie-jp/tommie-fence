@@ -9,6 +9,7 @@ import { knownPartTypes } from './placement/footprints.ts';
 import { TOP_LEVEL_KEYS } from './parser/parseFence.ts';
 import { STYLE_KEYS } from './parser/style.ts';
 import { THEME_NAMES } from './render/theme.ts';
+import { BOARD_SIZES } from './types.ts';
 import { wireColorNames } from './render/palette.ts';
 import { VERSION } from './version.ts';
 
@@ -52,6 +53,10 @@ describe('docs/01-syntax.md', () => {
 
   test('注釈の語が全部載っている', () => {
     [...NOTE_KINDS, ...NOTE_COLORS, ...NOTE_SIZES, ...NOTE_ALIGNS, ...NOTE_LEADINGS].forEach(listed('注釈の語'));
+  });
+
+  test('ボードのサイズが全部載っている', () => {
+    BOARD_SIZES.forEach(listed('ボードのサイズ'));
   });
 
   test('style の項目とテーマが全部載っている', () => {

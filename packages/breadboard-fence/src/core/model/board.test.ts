@@ -18,6 +18,15 @@ describe('createBoard', () => {
     expect(createBoard('full').columns).toBe(63);
   });
 
+  test('gives a mini board 17 columns', () => {
+    // 170 穴 = 17 列 × 10 行。
+    expect(createBoard('mini').columns).toBe(17);
+  });
+
+  test('leaves a mini board without power rails, as the real thing is sold', () => {
+    expect(createBoard('mini').rails).toBeNull();
+  });
+
   test('fills the printing options with the defaults when only a size is given', () => {
     expect(createBoard('half')).toEqual({ ...DEFAULT_BOARD, columns: 30 });
   });
