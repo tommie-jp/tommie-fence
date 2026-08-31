@@ -85,6 +85,10 @@ export const knownPartTypes = (): readonly string[] => [
  * ならないので、そこは範囲そのものを言う。
  */
 export function describeUnknownType(type: string): string {
+  // `capacitor/` や `/ceramic` は書きかけ。パーサは姿に割らずに丸ごと渡してくるので、
+  // 全部の種類を並べるより、書き方そのものを見せたほうが直る。
+  if (type.includes('/')) return '姿は「種類/姿」の形で書きます (例: capacitor/ceramic)';
+
   const dip = DIP_PATTERN.exec(type);
   if (dip) return `dip のピン数は ${DIP_MIN_PINS}〜${DIP_MAX_PINS} の偶数です`;
 

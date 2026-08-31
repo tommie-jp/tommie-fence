@@ -98,6 +98,12 @@ describe('describeUnknownType', () => {
     expect(describeUnknownType('sip41')).toContain('2〜40');
   });
 
+  test('shows how a look is written, instead of listing every type', () => {
+    // `capacitor/` は書きかけ。全部の種類を並べても直す手がかりにならない。
+    expect(describeUnknownType('capacitor/')).toContain('種類/姿');
+    expect(describeUnknownType('/ceramic')).toContain('種類/姿');
+  });
+
   test('falls back to listing what can be drawn when nothing is close', () => {
     const message = describeUnknownType('flux-capacitor');
 
