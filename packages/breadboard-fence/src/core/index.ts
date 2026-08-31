@@ -11,7 +11,7 @@ import { parseFence } from './parser/parseFence.ts';
 import { placeParts } from './placement/place.ts';
 import { relocateParts } from './placement/relocate.ts';
 import type { WireEnd } from './placement/relocate.ts';
-import { exitSide, routeWires } from './router/route.ts';
+import { routeWire, routeWires } from './router/route.ts';
 import { renderDocument } from './render/document.ts';
 import type { RenderedWire } from './render/document.ts';
 import { layoutDevices } from './render/devices.ts';
@@ -21,8 +21,9 @@ import { partObstacles } from './render/parts.ts';
 import { renderErrorBanner, renderErrorCard } from './render/errorHtml.ts';
 import { DEFAULT_WIRE_COLOR, wireColor as lookupWireColor, wireColorNames } from './render/palette.ts';
 import { resolveStyle } from './render/theme.ts';
+import { HOLE_ROWS } from './types.ts';
 import type {
-  Address, Board, FenceError, Net, NoteSpec, PlacedPart, Point, Result, StripId, WireHint, WireSpec,
+  Address, Board, FenceError, Net, NoteSpec, PlacedPart, Point, Rect, Result, StripId, WireHint, WireSpec,
 } from './types.ts';
 
 export type RenderResult = {
@@ -53,7 +54,7 @@ export type RenderResult = {
 };
 
 type Endpoint =
-  | { readonly kind: 'hole'; readonly address: Address }
+  | { readonly kind: 'hole'; readonly address: Address; readonly viaPin: boolean }
   | { readonly kind: 'device'; readonly partId: string; readonly pin: string };
 
 type ResolvedWire = {
@@ -98,7 +99,9 @@ export function renderBreadboard(input: string): RenderResult {
 
   // 配線と足が同じ穴を取り合う部品を、同じ列の空いた行へ寄せる。
   // resolveWire より前に済ませるので、ピン参照 (`Re.2`) の配線は寄せた後の穴に付く。
-  const relocation = relocateParts(placed, wireEnds(parsed.doc.wires, placed, board, layout));
+  const preObstacles = placed.flatMap((part) => partObstacles(part, layout, style.theme));
+  const plan = planWires(parsed.doc.wires, placed, board, layout, preObstacles);
+  const relocation = relocateParts(placed, plan.ends, plan.corridor);
   errors.push(...relocation.errors);
   const parts = relocation.parts;
 
@@ -340,88 +343,127 @@ function internalLinks(parts: readonly PlacedPart[]): (readonly [StripId, StripI
   });
 }
 
+/** 部品の寄せ (`relocateParts`) が見る盤面: 配線が塞ぐ穴と、縦に走って通り過ぎる穴。 */
+type WirePlan = { readonly ends: readonly WireEnd[]; readonly corridor: readonly Address[] };
+
 /**
- * 部品の寄せ (`relocateParts`) が見る、配線が塞ぐ穴とそこからの出口の向き。
+ * 配線ごとに**暫定の経路を 1 本引き**、その折れ線から端点の出口の向きと通り道の穴を読む。
+ * 向きだけを規則で推測していたころは、ブロックをまたぐ直行や迂回ヒントの実際の経路と
+ * ずれて、通り道に部品を寄せたり、空いている行を塞いだりしていた。
  *
- * - ピン参照 (`U1.7`) は「そのピンにつなぐ」という明示なので、穴の取り合いに数えない。
- * - 端点が解決できない配線も数えない (どのみち描かれない)。報告は resolveWire の
+ * - ピン参照 (`U1.7`) の端点は「そのピンにつなぐ」という明示なので、穴の取り合いに
+ *   数えない。ただしその配線の通り道は数える (線は同じように引かれる)。
+ * - 端点が解決できない配線は数えない (どのみち描かれない)。報告は resolveWire の
  *   本番の解決に任せ、ここでは黙って読み捨てる — 同じエラーを 2 度出さないため。
- * - 迂回ヒント付きは作者が経路を手で持っているので、読み取れる出だしの向き
- *   (最初の `v` ヒント) だけを使い、着地側は向き不明として穴だけ塞ぐ。
+ * - 暫定経路は寄せる前の部品を障害物に使う。寄せた後の本番の経路とは
+ *   スロット割り当てや寄り道のぶんだけずれるが、通る列と向きはほぼ変わらない。
  */
-function wireEnds(
+function planWires(
   specs: readonly WireSpec[],
   parts: readonly PlacedPart[],
   board: Board,
   layout: Layout,
-): WireEnd[] {
+  obstacles: readonly Rect[],
+): WirePlan {
   const ends: WireEnd[] = [];
+  const corridor: Address[] = [];
 
   for (const spec of specs) {
     const from = resolveEndpoint(spec.from, parts, board, spec.line);
     const to = resolveEndpoint(spec.to, parts, board, spec.line);
     if (!from.ok || !to.ok) continue;
 
-    const holeEnd = (text: string, self: Endpoint, other: Endpoint, isFrom: boolean): void => {
-      if (PIN_REF.test(text)) return;
-      if (self.kind !== 'hole' || self.address.kind !== 'hole') return;
+    const fromPoint = endpointPoint(from.value, to.value, parts, layout);
+    const toPoint = endpointPoint(to.value, from.value, parts, layout);
+    const path = fromPoint && toPoint
+      ? routeWire(fromPoint, toPoint, layout, { hints: spec.hints, obstacles })
+      : null;
+    if (path) corridor.push(...pathCorridor(path, board, layout));
 
-      const selfPoint = layout.point(self.address);
-      const otherPoint = endpointPoint(other, parts, layout, selfPoint.x);
-      ends.push({ address: self.address, ...endExit(spec.hints, isFrom, selfPoint, otherPoint, layout) });
+    const holeEnd = (self: Endpoint, atStart: boolean): void => {
+      if (self.kind !== 'hole' || self.viaPin) return;
+      const otherPoint = atStart ? toPoint : fromPoint;
+      ends.push({ address: self.address, ...endExit(path, atStart, layout.point(self.address), otherPoint) });
     };
-
-    holeEnd(spec.from, from.value, to.value, true);
-    holeEnd(spec.to, to.value, from.value, false);
+    holeEnd(from.value, true);
+    holeEnd(to.value, false);
   }
 
-  return ends;
+  return { ends, corridor };
 }
 
 type EndExit = Pick<WireEnd, 'exit' | 'away'>;
 
+const UNKNOWN_EXIT: EndExit = { exit: 'unknown', away: null };
+
 /**
- * 端点からの出口の向きと、部品を寄せるなら見た目に良い側。
- * 縦に走らない端点 (`none`) では、反対側の端点から遠ざかる側を良い側とする。
+ * 経路の端の 1 区間から、配線が端点のどちら側に付いているかを読む。
+ * 縦に走らない端点 (`none`) では、反対側の端点から遠ざかる側を「見た目に良い側」とする。
  */
 function endExit(
-  hints: readonly WireHint[],
-  isFrom: boolean,
+  path: readonly Point[] | null,
+  atStart: boolean,
   selfPoint: Point,
   otherPoint: Point | null,
-  layout: Layout,
 ): EndExit {
-  if (hints.length > 0) return hintExit(hints, isFrom);
-  if (!otherPoint) return { exit: 'unknown', away: null };
+  if (!path || path.length < 2 || !otherPoint) return UNKNOWN_EXIT;
 
-  const exit = exitSide(selfPoint, otherPoint, layout);
-  if (exit !== 'none') return { exit, away: exit === 'up' ? 'down' : 'up' };
-  if (otherPoint.y === selfPoint.y) return { exit, away: null };
-  return { exit, away: otherPoint.y > selfPoint.y ? 'up' : 'down' };
+  const end = atStart ? path[0]! : path[path.length - 1]!;
+  const neighbor = atStart ? path[1]! : path[path.length - 2]!;
+  // 隣の点が横へずれていれば、この端では縦に走らない (斜めの短いホップや横のヒント)。
+  if (Math.abs(neighbor.x - end.x) > SAME_POINT_TOLERANCE || neighbor.y === end.y) {
+    if (otherPoint.y === selfPoint.y) return { exit: 'none', away: null };
+    return { exit: 'none', away: otherPoint.y > selfPoint.y ? 'up' : 'down' };
+  }
+  const exit = neighbor.y > end.y ? 'down' : 'up';
+  return { exit, away: exit === 'up' ? 'down' : 'up' };
 }
 
-/** 迂回ヒント付きの配線の出口。読み取れるのは書き出しのヒントだけで、着地側は不明。 */
-function hintExit(hints: readonly WireHint[], isFrom: boolean): EndExit {
-  const first = hints[0];
-  if (!isFrom || !first || first.delta === 0) return { exit: 'unknown', away: null };
-  if (first.axis === 'h') return { exit: 'none', away: null };
-  return first.delta < 0 ? { exit: 'up', away: 'down' } : { exit: 'down', away: 'up' };
+/** 同じ列とみなす座標の揺れ。穴は 20px 間隔なので、これで取り違えは起きない。 */
+const SAME_POINT_TOLERANCE = 0.5;
+
+/**
+ * 経路の縦の区間が**通り過ぎる**穴 (両端は含まない)。
+ * 寄せた部品の足がここに入ると、線が足の上を走って挿さっているように見える。
+ */
+function pathCorridor(path: readonly Point[], board: Board, layout: Layout): Address[] {
+  const rows = HOLE_ROWS.map((row) => ({ row, y: layout.rowY(row) }));
+  const holes: Address[] = [];
+
+  for (let index = 0; index + 1 < path.length; index += 1) {
+    const [a, b] = [path[index]!, path[index + 1]!];
+    if (Math.abs(a.x - b.x) > SAME_POINT_TOLERANCE) continue;
+
+    const col = Math.round((a.x - layout.colX(1)) / layout.pitch) + 1;
+    if (col < 1 || col > board.columns) continue;
+    if (Math.abs(layout.colX(col) - a.x) > SAME_POINT_TOLERANCE) continue;
+
+    const low = Math.min(a.y, b.y);
+    const high = Math.max(a.y, b.y);
+    for (const { row, y } of rows) {
+      if (y > low && y < high) holes.push({ kind: 'hole', row, col });
+    }
+  }
+
+  return holes;
 }
 
 /**
- * 出口の向きを決めるための端点の座標。ボード外の機器はまだ箱の位置が決まっていないので、
- * 帯の中央の高さで代える (向きの判定には上下だけが要る)。
+ * 端点の座標。ボード外の機器はまだ箱の位置が決まっていないので、帯の中央の高さと
+ * 反対側の端点の x で代える (暫定経路には上下の向きが効けばよい)。
  */
 function endpointPoint(
   endpoint: Endpoint,
+  other: Endpoint,
   parts: readonly PlacedPart[],
   layout: Layout,
-  fallbackX: number,
 ): Point | null {
   if (endpoint.kind === 'hole') return layout.point(endpoint.address);
   const at = parts.find((part) => part.id === endpoint.partId)?.at ?? 'top';
   const band = at === 'bottom' ? layout.deviceBands.bottom : layout.deviceBands.top;
-  return band ? { x: fallbackX, y: band.y + band.height / 2 } : null;
+  if (!band) return null;
+  const anchorX = other.kind === 'hole' ? layout.point(other.address).x : layout.colX(1);
+  return { x: anchorX, y: band.y + band.height / 2 };
 }
 
 function resolveWire(
@@ -462,7 +504,7 @@ function resolveEndpoint(
     const pin = part.pins.find((candidate) => candidate.name === pinName);
     if (!pin) return fail(`配線の端点 ${safeToken(text)}: そのピンはありません${nearbyPins(part, pinName)}`, line, text);
     return pin.address
-      ? ok({ kind: 'hole', address: pin.address })
+      ? ok({ kind: 'hole', address: pin.address, viaPin: true })
       : ok({ kind: 'device', partId, pin: pinName });
   }
 
@@ -470,7 +512,7 @@ function resolveEndpoint(
   if (!address) return fail(`配線の端点として読めません: ${safeToken(text)}`, line, text);
   const reason = offBoardReason(board, address);
   if (reason) return fail(reason, line);
-  return ok({ kind: 'hole', address });
+  return ok({ kind: 'hole', address, viaPin: false });
 }
 
 /** 同じ書き出しのピンが 40 本並ぶ (Pico の GND) ので、書き間違いには候補を添える。 */

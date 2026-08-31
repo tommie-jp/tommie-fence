@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { createBoard } from '../model/board.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
-import type { HoleAddress, PartSpec } from '../types.ts';
+import type { Address, PartSpec } from '../types.ts';
 import { placeParts } from './place.ts';
 import { relocateParts } from './relocate.ts';
 import type { WireEnd } from './relocate.ts';
@@ -9,7 +9,8 @@ import type { WireEnd } from './relocate.ts';
 const board = createBoard('half');
 
 const spec = (over: Partial<PartSpec> & Pick<PartSpec, 'id' | 'type'>): PartSpec => ({
-  written: over.type,
+  // 書かれたままの綴りは、略記を使わなければ種類そのもの (place.test.ts と同じ形)。
+  written: over.variant == null ? over.type : `${over.type}/${over.variant}`,
   holes: [],
   value: null,
   label: null,
@@ -32,7 +33,9 @@ const end = (
   addr: string,
   exit: WireEnd['exit'],
   away: WireEnd['away'] = exit === 'up' ? 'down' : exit === 'down' ? 'up' : null,
-): WireEnd => ({ address: parseAddress(addr) as HoleAddress, exit, away });
+): WireEnd => ({ address: parseAddress(addr) as Address, exit, away });
+
+const corridor = (...addrs: string[]): Address[] => addrs.map((addr) => parseAddress(addr) as Address);
 
 const pinsOf = (part: { pins: readonly { address: unknown }[] }) =>
   part.pins.map((pin) => (pin.address ? formatAddress(pin.address as never) : null));
@@ -106,10 +109,11 @@ describe('relocateParts', () => {
     // そこには寄せない。c13 自体も配線の穴なので、d 行まで滑る。
     const parts = place(spec({ id: 'D1', type: 'led', holes: holes('b12', 'b13') }));
 
-    const { parts: moved, errors } = relocateParts(parts, [
-      end('b12', 'none', 'down'),
-      end('c13', 'up'),
-    ]);
+    const { parts: moved, errors } = relocateParts(
+      parts,
+      [end('b12', 'none', 'down'), end('c13', 'up')],
+      corridor('b13', 'a13'),
+    );
 
     expect(errors).toEqual([]);
     expect(pinsOf(moved[0]!)).toEqual(['d12', 'd13']);
@@ -119,13 +123,34 @@ describe('relocateParts', () => {
     // j10 からブロックを登り切る配線が f10〜i10 の上を通り、寄せ先を全部塞ぐ。
     const parts = place(spec({ id: 'R1', type: 'resistor', holes: holes('g5', 'g10') }));
 
-    const { parts: moved, errors } = relocateParts(parts, [
-      end('g5', 'none', 'down'),
-      end('j10', 'up'),
-    ]);
+    const { parts: moved, errors } = relocateParts(
+      parts,
+      [end('g5', 'none', 'down'), end('j10', 'up')],
+      corridor('f10', 'g10', 'h10', 'i10'),
+    );
 
     expect(pinsOf(moved[0]!)).toEqual(['g5', 'g10']);
     expect(errors).toHaveLength(1);
+  });
+
+  test('does not hide a wire dot under the body', () => {
+    // b7 に別の配線がつながっている。b 行へ寄せると胴の下に点が埋まるので、c 行まで滑る。
+    const parts = place(spec({ id: 'R1', type: 'resistor', holes: holes('a5', 'a10') }));
+
+    const { parts: moved, errors } = relocateParts(parts, [end('a5', 'up'), end('b7', 'none')]);
+
+    expect(errors).toEqual([]);
+    expect(pinsOf(moved[0]!)).toEqual(['c5', 'c10']);
+  });
+
+  test('reports a wire plugged into the same rail hole as a rail lead', () => {
+    const parts = place(spec({ id: 'Re', type: 'resistor', holes: holes('j11', '-b11') }));
+
+    const { parts: moved, errors } = relocateParts(parts, [end('-b11', 'none')]);
+
+    expect(pinsOf(moved[0]!)).toEqual(['j11', '-b11']);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toContain('-b11');
   });
 
   test('later parts see the ledger updated by earlier moves', () => {

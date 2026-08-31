@@ -1014,6 +1014,39 @@ describe('parts that share a hole with a wire endpoint', () => {
     expect(svg).toContain('M 422 280 L 422 314');
   });
 
+  test('slides symmetrically when the hinted wire is written in reverse', () => {
+    // 同じ配線を逆順に書いても、経路の端から向きを読むので結果は変わらない。
+    const { svg, errors, notices } = renderBreadboard(
+      fence('Re: resistor j17 j20 100', '-b20 -- j20 black [v-14]'),
+    );
+
+    expect(errors).toEqual([]);
+    expect(notices).toEqual([]);
+    expect(svg).toContain('x1="362" y1="260" x2="422" y2="260"');
+  });
+
+  test('does not slide a part into a wire crossing from the other block', () => {
+    // e10 から下のレールへの直行はブロックをまたいで f10〜j10 の上を走る。
+    // その通り道へは寄せず、寄せ先が無いのでお知らせを出す。
+    const { notices } = renderBreadboard([
+      'parts:',
+      '  R1: resistor g6 g10',
+      'wires:',
+      '  - g6 -- -b6 black',
+      '  - e10 -- -b10 red',
+    ].join('\n'));
+
+    expect(notices).toHaveLength(1);
+    expect(notices[0]?.message).toContain('g6');
+  });
+
+  test('reports a wire plugged into the same rail hole as a rail lead', () => {
+    const { notices } = renderBreadboard(fence('Re: resistor j11 -b11 47', '-b11 -- j15 black'));
+
+    expect(notices).toHaveLength(1);
+    expect(notices[0]?.message).toContain('-b11');
+  });
+
   test('reports the unbuildable hole when the part cannot make room', () => {
     // f はブロックの最上行。下のレールへ出る配線から上へは逃げられない。
     const { svg, errors, notices } = renderBreadboard(fence('Re: resistor f17 f20 100', 'f20 -- -b20 black'));

@@ -180,27 +180,6 @@ function escapeOf(
 
 const bounds = (a: number, b: number): [number, number] => [Math.min(a, b), Math.max(a, b)];
 
-/**
- * 端点 from から配線が縦にどちらへ出て行くか。部品の寄せ (`placement/relocate.ts`) が
- * 「配線の通り道に部品を置かない」を決めるのに使う。
- *
- * **同じ列を縦に走るときだけ up / down を返す** (同じ列の直行と、レーンへの登り降り)。
- * 横へ逃げる短いホップは列に留まらないので、どちら側の穴も塞がない (none)。
- *
- * レーンは**障害物を見ずに**選ぶ。ここで要るのは実際の経路ではなく出だしの向きで、
- * 障害物ペナルティで遠いレーンへ逃げる例外まで追うと、寄せた部品で障害物が動き、
- * 向きがまた変わる循環になる。
- */
-export function exitSide(from: Point, to: Point, layout: Layout): 'up' | 'down' | 'none' {
-  if (isDirect(from, to, layout)) {
-    if (Math.abs(from.x - to.x) >= layout.pitch / 2 || to.y === from.y) return 'none';
-    return to.y > from.y ? 'down' : 'up';
-  }
-  const lane = chooseLane(from, to, layout, []);
-  if (lane.y === from.y) return 'none';
-  return lane.y > from.y ? 'down' : 'up';
-}
-
 /** 穴の格子から数えた列の位置。`step` に 0.5 を渡せば列と列のちょうど間。 */
 const halfColumn = (x: number, step: number, layout: Layout): number => {
   const origin = layout.colX(1);

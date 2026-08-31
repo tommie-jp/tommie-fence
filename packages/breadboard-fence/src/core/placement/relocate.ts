@@ -1,19 +1,19 @@
 import { notice, safeToken } from '../errors.ts';
-import { formatAddress } from '../model/address.ts';
+import { formatAddress, isTopBlock } from '../model/address.ts';
 import { HOLE_ROWS } from '../types.ts';
-import type { FenceError, HoleAddress, HoleRow, PlacedPart } from '../types.ts';
-import { coveredHoles } from './place.ts';
+import type { Address, FenceError, HoleAddress, HoleRow, PlacedPart } from '../types.ts';
+import { occupiedHoles } from './place.ts';
 
 /**
- * 配線の端点 1 つ。
+ * 配線の端点 1 つ。穴でもレールでもよい (レールの穴も実物では 1 本しか挿せない)。
  *
  * - `exit` はその穴から配線が縦にどちらへ走るか。`none` は縦に走らない
- *   (横へ逃げる短いホップ)、`unknown` は読み取れない (迂回ヒントの着地側など)。
+ *   (横へ逃げる短いホップ)、`unknown` は読み取れない (端点の座標が決まらないなど)。
  * - `away` は部品を寄せるならどちらが見た目に良いか (反対側の端点から遠ざかる側)。
  *   `exit` と違って強制ではなく、塞がっていれば逆へも寄る。
  */
 export type WireEnd = {
-  readonly address: HoleAddress;
+  readonly address: Address;
   readonly exit: 'up' | 'down' | 'none' | 'unknown';
   readonly away: 'up' | 'down' | null;
 };
@@ -28,10 +28,15 @@ const SLIDABLE_KINDS: ReadonlySet<string> = new Set(['two-lead', 'three-lead']);
 
 const BLOCK_ROWS = HOLE_ROWS.length / 2;
 
+type Side = 'up' | 'down';
+
+/** 行の並びは a が上。up は行位置が減る向き。 */
+const DELTA: Record<Side, number> = { up: -1, down: 1 };
+
 const rowIndex = (row: HoleRow): number => HOLE_ROWS.indexOf(row);
 
 /** その行が入るブロック (a–e / f–j) の先頭の行位置。 */
-const blockStart = (row: HoleRow): number => (rowIndex(row) < BLOCK_ROWS ? 0 : BLOCK_ROWS);
+const blockStart = (row: HoleRow): number => (isTopBlock(row) ? 0 : BLOCK_ROWS);
 
 /** 同じ列のまま行だけずらした穴。ブロックを出るなら null (ストリップが変わってしまう)。 */
 const shifted = (address: HoleAddress, delta: number): HoleAddress | null => {
@@ -42,23 +47,12 @@ const shifted = (address: HoleAddress, delta: number): HoleAddress | null => {
   return row ? { ...address, row } : null;
 };
 
-/** 行の並びは a が上。up は行位置が減る向き。 */
-const DELTA = { up: -1, down: 1 } as const;
-
-/**
- * 縦に走る配線が通り過ぎる穴。端点からブロックの端まで
- * (レーンとレールはブロックの外にあるので、走り抜ける行はここで全部)。
- */
-function corridorOf(end: WireEnd): string[] {
-  if (end.exit !== 'up' && end.exit !== 'down') return [];
-  const holes: string[] = [];
-  for (let step = 1; step < BLOCK_ROWS; step += 1) {
-    const hole = shifted(end.address, DELTA[end.exit] * step);
-    if (!hole) break;
-    holes.push(formatAddress(hole));
-  }
-  return holes;
-}
+/** 寄せ探しが見る盤面。partHoles だけは、部品が動くたびに付け替える。 */
+type Ledger = {
+  readonly wireHoles: ReadonlyMap<string, readonly WireEnd[]>;
+  readonly corridors: ReadonlySet<string>;
+  readonly partHoles: Set<string>;
+};
 
 /**
  * 配線の端点と足が同じ穴を取り合う部品を、同じ列のまま空いている行へ寄せる。
@@ -71,82 +65,110 @@ function corridorOf(end: WireEnd): string[] {
  * - 寄せられないときは書かれたまま描き、**お知らせで実物に挿せないことだけ言う**。
  *   黙って通すと、図を写した人がその穴の前で手が止まる。
  */
-export function relocateParts(parts: readonly PlacedPart[], ends: readonly WireEnd[]): RelocateResult {
+export function relocateParts(
+  parts: readonly PlacedPart[],
+  ends: readonly WireEnd[],
+  // 配線が縦に走って通り過ぎる穴。実際に引く折れ線から呼ぶ側が数える
+  // (ここで向きから推測すると、ブロックをまたぐ直行や迂回ヒントの経路とずれる)。
+  corridor: readonly Address[] = [],
+): RelocateResult {
   if (ends.length === 0) return { parts, errors: [] };
 
   // 配線が塞ぐ穴 (端点そのもの) と、縦に走って通り過ぎる穴。
   const wireHoles = new Map<string, WireEnd[]>();
   for (const wireEnd of ends) {
     const name = formatAddress(wireEnd.address);
-    wireHoles.set(name, [...(wireHoles.get(name) ?? []), wireEnd]);
+    const bucket = wireHoles.get(name);
+    if (bucket) bucket.push(wireEnd);
+    else wireHoles.set(name, [wireEnd]);
   }
-  const corridors = new Set(ends.flatMap(corridorOf));
+  const corridors = new Set(corridor.map(formatAddress));
 
-  // 部品が塞ぐ穴の台帳 (ピン + 本体の下)。部品が動いたら付け替える。
+  // 部品が塞ぐ穴の台帳 (足 + 本体の下)。
   const partHoles = new Set<string>();
   for (const part of parts) {
-    for (const pin of part.pins) if (pin.address) partHoles.add(formatAddress(pin.address));
-    for (const address of coveredHoles(part)) partHoles.add(formatAddress(address));
+    for (const address of occupiedHoles(part)) partHoles.add(formatAddress(address));
   }
 
+  const ledger: Ledger = { wireHoles, corridors, partHoles };
   const errors: FenceError[] = [];
-  let anyMoved = false;
 
   const result = parts.map((part) => {
     const sharedEnds = part.pins.flatMap((pin) =>
-      pin.address?.kind === 'hole' ? wireHoles.get(formatAddress(pin.address)) ?? [] : []);
+      pin.address ? wireHoles.get(formatAddress(pin.address)) ?? [] : []);
     if (sharedEnds.length === 0) return part;
 
-    const giveUp = (): PlacedPart => {
-      const holes = [...new Set(sharedEnds.map((end) => formatAddress(end.address)))];
-      errors.push(notice(
-        `部品 ${safeToken(part.id)}: ${holes.join(', ')} に足と配線の両方がつながっています` +
-        ' (実物では同じ穴に挿せません)',
-        part.line,
-      ));
-      return part;
-    };
-
-    if (sharedEnds.some((end) => end.exit === 'unknown')) return giveUp();
-    if (!SLIDABLE_KINDS.has(part.kind)) return giveUp();
-    const holes = part.pins.map((pin) => pin.address);
-    if (!holes.every((address): address is HoleAddress => address?.kind === 'hole')) return giveUp();
-
-    // 縦に走る配線の側は禁止 (寄せるとその通り道に入る)。両側が塞がれば寄せられない。
-    const forbidden = new Set(sharedEnds.flatMap((end) =>
-      end.exit === 'up' || end.exit === 'down' ? [DELTA[end.exit]] : []));
-    if (forbidden.size === 2) return giveUp();
-
-    // 試す向き: 禁止の反対。禁止が無ければ、見た目に良い側 (away) から両方。
-    const preferred = sharedEnds.find((end) => end.away !== null)?.away ?? 'up';
-    const candidates = forbidden.size === 1
-      ? [-[...forbidden][0]!]
-      : [DELTA[preferred], -DELTA[preferred]];
-
-    const own = new Set(holes.map(formatAddress));
-    for (const direction of candidates) {
-      for (let step = 1; step < BLOCK_ROWS; step += 1) {
-        const targets = holes.map((address) => shifted(address, direction * step));
-        // どれかの足がブロックを出たら、それより先も出たままなのでこの向きは打ち切る。
-        if (!targets.every((target): target is HoleAddress => target !== null)) break;
-
-        const names = targets.map(formatAddress);
-        const blocked = names.some((name) =>
-          wireHoles.has(name) || corridors.has(name) || (partHoles.has(name) && !own.has(name)));
-        if (blocked) continue;
-
-        for (const name of own) partHoles.delete(name);
-        for (const name of names) partHoles.add(name);
-        anyMoved = true;
-        return {
-          ...part,
-          pins: part.pins.map((pin, index) => ({ ...pin, address: targets[index]! })),
-        };
-      }
-    }
-
-    return giveUp();
+    const slid = slideAside(part, sharedEnds, ledger);
+    if (!slid) errors.push(unbuildable(part, sharedEnds));
+    return slid ?? part;
   });
 
+  const anyMoved = result.some((part, index) => part !== parts[index]);
   return { parts: anyMoved ? result : parts, errors };
 }
+
+/** 寄せた先の姿。寄せられなければ null (呼ぶ側がお知らせを出す)。 */
+function slideAside(part: PlacedPart, sharedEnds: readonly WireEnd[], ledger: Ledger): PlacedPart | null {
+  if (sharedEnds.some((end) => end.exit === 'unknown')) return null;
+  if (!SLIDABLE_KINDS.has(part.kind)) return null;
+  const holes = part.pins.map((pin) => pin.address);
+  if (!holes.every((address): address is HoleAddress => address?.kind === 'hole')) return null;
+
+  // 縦に走る配線の側は禁止 (寄せるとその通り道に入る)。両側が塞がれば寄せられない。
+  // 禁止が無ければ、見た目に良い側 (away) から両方を試す。
+  const forbidden = new Set<Side>(sharedEnds.flatMap((end) =>
+    end.exit === 'up' || end.exit === 'down' ? [end.exit] : []));
+  const preferred = sharedEnds.find((end) => end.away !== null)?.away ?? 'up';
+  const order: readonly Side[] = preferred === 'up' ? ['up', 'down'] : ['down', 'up'];
+  const candidates = order.filter((side) => !forbidden.has(side));
+
+  const own = new Set(holes.map(formatAddress));
+  for (const side of candidates) {
+    for (let step = 1; step < BLOCK_ROWS; step += 1) {
+      const targets = holes.map((address) => shifted(address, DELTA[side] * step));
+      // どれかの足がブロックを出たら、それより先も出たままなのでこの向きは打ち切る。
+      if (!targets.every((target): target is HoleAddress => target !== null)) break;
+
+      // 足の穴に加えて、胴の下に隠れる穴 (足の間) も見る。そこに配線の点や
+      // 他の足があると、胴の絵の下に埋まって何が挿さっているのか読めなくなる。
+      const names = [...targets.map(formatAddress), ...betweenLeads(targets)];
+      const blocked = names.some((name) =>
+        ledger.wireHoles.has(name) || ledger.corridors.has(name)
+        || (ledger.partHoles.has(name) && !own.has(name)));
+      if (blocked) continue;
+
+      for (const name of own) ledger.partHoles.delete(name);
+      for (const name of names) ledger.partHoles.add(name);
+      return {
+        ...part,
+        pins: part.pins.map((pin, index) => ({ ...pin, address: targets[index]! })),
+      };
+    }
+  }
+
+  return null;
+}
+
+/** 足が 1 行に並ぶ部品の、足と足の間の穴。胴がその上に描かれる。 */
+function betweenLeads(targets: readonly HoleAddress[]): string[] {
+  const rows = new Set(targets.map((target) => target.row));
+  if (rows.size !== 1 || targets.length < 2) return [];
+
+  const cols = targets.map((target) => target.col);
+  const taken = new Set(cols);
+  const row = targets[0]!.row;
+  const holes: string[] = [];
+  for (let col = Math.min(...cols) + 1; col < Math.max(...cols); col += 1) {
+    if (!taken.has(col)) holes.push(formatAddress({ kind: 'hole', row, col }));
+  }
+  return holes;
+}
+
+const unbuildable = (part: PlacedPart, sharedEnds: readonly WireEnd[]): FenceError => {
+  const holes = [...new Set(sharedEnds.map((end) => formatAddress(end.address)))];
+  return notice(
+    `部品 ${safeToken(part.id)}: ${holes.join(', ')} に足と配線の両方がつながっています` +
+    ' (実物では同じ穴に挿せません)',
+    part.line,
+  );
+};

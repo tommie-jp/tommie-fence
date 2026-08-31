@@ -115,6 +115,14 @@ function variantError(part: PlacedPart): FenceError | null {
  */
 const COVERING_KINDS: ReadonlySet<PartKind> = new Set<PartKind>(['switch', 'dip', 'sip', 'board']);
 
+/** 部品が塞いでいる穴ぜんぶ (足の穴 + 本体の下)。寄せ (relocate.ts) の台帳がこれを数える。 */
+export function occupiedHoles(part: PlacedPart): Address[] {
+  return [
+    ...part.pins.flatMap((pin) => (pin.address ? [pin.address] : [])),
+    ...coveredHoles(part),
+  ];
+}
+
 export function coveredHoles(part: PlacedPart): Address[] {
   if (!COVERING_KINDS.has(part.kind)) return [];
 
