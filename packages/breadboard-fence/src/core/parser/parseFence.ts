@@ -17,7 +17,7 @@ import {
 } from './points.ts';
 import type { PointDef } from './points.ts';
 import { validateExpandedPart } from './schema.ts';
-import { EMPTY_STYLE, validateStyle } from './style.ts';
+import { EMPTY_STYLE, mergeStyle, validateStyle } from './style.ts';
 
 /** 列挙にある値ならその型で返す。列挙は types.ts の as const 配列なので、二重定義にならない。 */
 const pick = <T extends string>(allowed: readonly T[], value: string | null): T | null =>
@@ -124,7 +124,8 @@ export function parseFence(source: string): ParseResult {
     } else if (key === 'style') {
       const node = pair.value as ParsedNode | null;
       const validated = validateStyle(node?.toJSON() as unknown, line);
-      style = validated.value;
+      // 2 回書かれたら重ねる (board と同じ)。置き換えると先の指定が黙って消える。
+      style = mergeStyle(style, validated.value);
       // 理由はそれを書いた項目の行に付ける (style: の行だけを指しても直す場所が分からない)。
       const keyLine = styleKeyLines(node, lineOf);
       errors.push(

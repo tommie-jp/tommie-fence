@@ -135,6 +135,30 @@ function withKey(style: StyleSpec, key: string, raw: unknown, messages: StyleMes
 }
 
 /**
+ * `style:` が 2 回書かれたときに重ねる。**後に書いたほうが勝つが、
+ * 書かれていない項目は前のまま残す** (`board:` と同じ扱い)。
+ * まるごと置き換えると `style: dark` のあとに `style: {text-size: 20}` と
+ * 書いたときにテーマが黙って消える。
+ */
+export function mergeStyle(previous: StyleSpec, next: StyleSpec): StyleSpec {
+  const pick = <T>(a: T | null, b: T | null): T | null => a ?? b;
+  return {
+    theme: pick(next.theme, previous.theme),
+    textSize: pick(next.textSize, previous.textSize),
+    textColor: pick(next.textColor, previous.textColor),
+    textBackground: pick(next.textBackground, previous.textBackground),
+    wireWidth: pick(next.wireWidth, previous.wireWidth),
+    boardColor: pick(next.boardColor, previous.boardColor),
+    holeSize: pick(next.holeSize, previous.holeSize),
+    holeColor: pick(next.holeColor, previous.holeColor),
+    width: pick(next.width, previous.width),
+    debug: pick(next.debug, previous.debug),
+    stamp: pick(next.stamp, previous.stamp),
+    line: next.line ?? previous.line,
+  };
+}
+
+/**
  * フェンスの `style:` を検証済みの指定に変える。
  * 読めなかった項目は捨てて残りは活かし、捨てた理由は 1 件ずつ返す。
  */

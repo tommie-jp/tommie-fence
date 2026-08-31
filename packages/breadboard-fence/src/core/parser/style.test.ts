@@ -1,8 +1,22 @@
 import { describe, expect, test } from 'vitest';
-import { EMPTY_STYLE, validateStyle } from './style.ts';
+import { EMPTY_STYLE, mergeStyle, validateStyle } from './style.ts';
 
 const styleOf = (raw: unknown) => validateStyle(raw, 2).value;
 const messagesOf = (raw: unknown) => validateStyle(raw, 2).messages;
+
+describe('mergeStyle', () => {
+  test('keeps what the earlier style set, so nothing disappears quietly', () => {
+    // `style: dark` のあとに `style: {text-size: 20}` と書いてもテーマは残る。
+    const merged = mergeStyle(styleOf('dark'), styleOf({ 'text-size': 20 }));
+
+    expect(merged.theme).toBe('dark');
+    expect(merged.textSize).toBe(20);
+  });
+
+  test('lets the later style win on the keys it writes', () => {
+    expect(mergeStyle(styleOf('dark'), styleOf('mono')).theme).toBe('mono');
+  });
+});
 
 describe('validateStyle', () => {
   test('reads a bare theme name written as a scalar', () => {
