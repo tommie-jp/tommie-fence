@@ -68,6 +68,9 @@ export function parseCompactPart(
   const holes: HoleRef[] = [];
   const words: string[] = [];
   let label: string | null = null;
+  // 番地の形ではなく、点の名前だから穴として読んだ最後の語。
+  let byName: string | null = null;
+
   for (const token of rest) {
     const tagged = LABEL_TAG.exec(token);
     if (tagged) {
@@ -76,14 +79,30 @@ export function parseCompactPart(
       continue;
     }
     const named = TAGGED_HOLE.exec(token);
-    if (TAGGED_HOLE.test(token) ? isHoleToken(named?.[1] ?? '', isPoint) : isHoleToken(token, isPoint)) {
+    const addr = named?.[1] ?? token;
+    if (isHoleToken(addr, isPoint)) {
+      byName = parseAddress(addr) === null ? token : null;
       holes.push(parseHoleToken(token, holes.length));
-    } else words.push(token);
+    } else {
+      byName = null;
+      words.push(token);
+    }
   }
 
   const value = words.join(' ');
 
-  return ok({ ...base, holes, label, value: value ? clampText(value, LIMITS.labelLength) : null });
+  return ok({
+    ...base,
+    holes,
+    label,
+    value: value ? clampText(value, LIMITS.labelLength) : null,
+    // 値のつもりで書いた語が点の名前と同じだと、**黙って別の回路の図が出る**。
+    // `points: {2N3904: c1}` があると `Q1: transistor a5 a6 2N3904` の 3 本目が
+    // c1 に生えて、それ自体は正しく見える別の回路になる。
+    // 番地の形は書き手が避けられる閉じた語彙だが、点の名前は任意の語なので、
+    // 値に使いたくなる語ほどぶつかりやすい。
+    eatenValue: value === '' ? byName : null,
+  });
 }
 
 const HINT_GROUP = /\[([^\]]*)\]\s*$/;

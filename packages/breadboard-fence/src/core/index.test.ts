@@ -447,6 +447,40 @@ describe('renderBreadboard', () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
+  test('says when a point name ate the word that was meant as the value', () => {
+    // `points: {2N3904: c1}` があると、3 本目の足が離れた c1 に生えて
+    // **それ自体は正しく見える別の回路**になる。黙って通してはいけない場所。
+    const { errors, notices } = renderBreadboard(
+      'points:\n  "2N3904": c1\nparts:\n  Q1: transistor a5 a6 2N3904\n',
+    );
+
+    expect(errors).toEqual([]);
+    expect(notices).toHaveLength(1);
+    expect(notices[0]?.message).toContain('2N3904');
+    expect(notices[0]?.message).toContain('値ではなく穴として');
+  });
+
+  test('stays quiet when the value is written as well as the point names', () => {
+    const { notices } = renderBreadboard(
+      'points:\n  vin: a1\n  fb: a5\nparts:\n  R1: resistor vin fb 10k\n',
+    );
+
+    expect(notices).toEqual([]);
+  });
+
+  test('refuses a point named with hyphens alone, which is the wire separator', () => {
+    // 部品と注釈では使えるのに配線の端点でだけ使えない、という穴を塞ぐ。
+    const { errors } = renderBreadboard('points:\n  "--": a1\nparts:\n  R1: resistor -- a5\n');
+
+    expect(errors[0]?.message).toContain('ハイフン');
+  });
+
+  test('shows something in the message when the name is punctuation only', () => {
+    const { errors } = renderBreadboard('points:\n  "@": a1\nparts:\n  R1: resistor a5 a10\n');
+
+    expect(errors[0]?.message).toContain('(記号)');
+  });
+
   test('reports a point name that is written like a hole or clashes with a part', () => {
     const address = renderBreadboard('points:\n  a5: b5\nparts:\n  R1: resistor a5 a10 330\n');
     const clash = renderBreadboard('points:\n  R1: b5\nparts:\n  R1: resistor a5 a10 330\n');

@@ -35,6 +35,13 @@ export function validatePointName(name: string, line: number): FenceError | null
   if (parseAddress(name)) {
     return fenceError(`点の名前に番地の形は使えません: ${safeToken(name)}`, line);
   }
+  // `--` は配線の区切りそのもの。名前として通すと**部品と注釈では使えるのに
+  // 配線の端点でだけ使えない**という穴が空く (`- -- -- a10` は形のエラーになり、
+  // しかもエラーが出るのは points: の行ではないので原因に気づけない)。
+  // 番地の形を禁じるのと同じ理由 — 1 つの語に 2 つの意味を持たせない。
+  if (/^-+$/.test(name)) {
+    return fenceError(`点の名前にハイフンだけの語は使えません: ${safeToken(name)}`, line);
+  }
   return null;
 }
 

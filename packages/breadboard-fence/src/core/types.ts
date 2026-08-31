@@ -100,6 +100,12 @@ export type PartSpec = {
   readonly label: string | null;
   readonly at: 'top' | 'bottom' | null;
   readonly pins: readonly string[] | null;
+  /**
+   * 値のつもりで書いた語が `points:` の名前と同じだったために、
+   * 値ではなく穴として読まれた語。**黙って別の回路の図が出る**入口なので、
+   * 図は書いたとおりに描いたうえでお知らせに出す。
+   */
+  readonly eatenValue?: string | null;
   readonly line: number;
 };
 

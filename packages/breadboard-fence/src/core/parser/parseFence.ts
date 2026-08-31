@@ -364,8 +364,19 @@ function collectParts(
     const compact = scalarText(pair.value);
     if (compact !== null) {
       const result = parseCompactPart(id, compact, line, isPoint);
-      if (result.ok) parts.push(result.value);
-      else errors.push(result.error);
+      if (!result.ok) {
+        errors.push(result.error);
+        continue;
+      }
+      parts.push(result.value);
+      const eaten = result.value.eatenValue;
+      if (eaten != null) {
+        errors.push(notice(
+          `部品 ${safeToken(id)}: ${safeToken(eaten)} は points: の名前なので、値ではなく穴として読みました`,
+          line,
+          eaten,
+        ));
+      }
       continue;
     }
 

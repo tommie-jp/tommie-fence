@@ -11,6 +11,9 @@ const MAX_TOKEN_LENGTH = 32;
  */
 export const safeToken = (text: string): string => {
   const kept = text.replace(/[^\w.+\-/#]+/gu, ' ').trim();
+  // 記号だけの綴り (`@` や `()`) は全部落ちて空になる。空のまま文に埋めると
+  // 「点の名前  は使えません」と、何を指しているのか分からない文になる。
+  if (kept === '') return '(記号)';
   return kept.length > MAX_TOKEN_LENGTH ? `${kept.slice(0, MAX_TOKEN_LENGTH)}…` : kept;
 };
 
