@@ -3,7 +3,7 @@ import type { PlacedPart, Point, Rect } from '../types.ts';
 import { boardBodyRect, renderBoardPart } from './boardPart.ts';
 import { renderDip, renderPushbutton, renderSip, sipBarRect, switchBodyRect } from './packages.ts';
 import { CAPTION_DROP, CAPTION_HEIGHT, caption, charWidth, labelYOf } from './partCommon.ts';
-import { bodyHalfHeight, renderThreeLead } from './threeLead.ts';
+import { bodyHalfHeight, bodyHalfWidth, renderThreeLead } from './threeLead.ts';
 import { renderTwoLead } from './twoLead.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
@@ -35,11 +35,19 @@ export function partObstacles(part: PlacedPart, layout: Layout, theme: RenderThe
   }
 
   if (part.kind === 'three-lead') {
-    const radius = bodyHalfHeight(part, layout);
+    const halfHeight = bodyHalfHeight(part, layout);
+    // 胴は姿によって縦より横に広い (TO-220・半固定抵抗・スライドスイッチ)。
+    // 丸の半径で作っていたころは、その差のぶんだけ配線が本体の上を通っていた。
+    const halfWidth = bodyHalfWidth(part, layout);
     const center = points[1] ?? points[0]!;
     // 本体に、上下へ出したピン名とラベルを足した高さ。字が伸びればここも伸びる。
     const reach = CAPTION_DROP * textScale(theme);
-    return [{ x: center.x - radius, y: center.y - radius - reach, width: radius * 2, height: radius * 2 + reach * 2 }];
+    return [{
+      x: center.x - halfWidth,
+      y: center.y - halfHeight - reach,
+      width: halfWidth * 2,
+      height: halfHeight * 2 + reach * 2,
+    }];
   }
 
   const center = { x: (left + right) / 2, y: (top + bottom) / 2 };

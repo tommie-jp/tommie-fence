@@ -18,6 +18,21 @@ export function bodyHalfHeight(part: PlacedPart, layout: Layout): number {
   return 0.95 * layout.pitch;
 }
 
+/**
+ * 胴の横幅の半分。**丸い TO-92 以外は縦より横に広い**。
+ * 配線がよける領域 (`render/parts.ts` の `partObstacles`) と、
+ * 下のシェル描画の両方がここから幅を取る。**係数を 2 か所に持たない**:
+ * 分けて持っていたころは障害物だけが丸の半径のままで、
+ * 横に広い胴 (TO-220・半固定抵抗・スライドスイッチ) の上を配線が通っていた。
+ */
+export function bodyHalfWidth(part: PlacedPart, layout: Layout): number {
+  const reach = bodyHalfHeight(part, layout);
+  if (part.type === 'potentiometer') return reach * 1.2;
+  if (part.type === 'slide-switch') return reach * 1.6;
+  if (part.variant === 'to220') return reach * 1.15;
+  return reach;
+}
+
 export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
   const points = pinPoints(part, layout);
   const center = points?.[1];
@@ -49,19 +64,20 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
   const text = fitToBoard(caption(part), center.x, theme.metrics.textSize, layout);
   const label = partLabel(center.x, center.y + towardRavine * (reach + ROUND_CAPTION_GAP), text, theme);
 
-  return `${shellOf(part, center, reach, towardRavine, theme)}${legs}${names}${label}`;
+  return `${shellOf(part, center, reach, bodyHalfWidth(part, layout), towardRavine, theme)}${legs}${names}${label}`;
 }
 
 function shellOf(
   part: PlacedPart,
   center: Point,
   reach: number,
+  halfWidth: number,
   towardRavine: number,
   theme: RenderTheme,
 ): string {
-  if (part.type === 'potentiometer') return potentiometerShell(center, reach);
-  if (part.type === 'slide-switch') return slideSwitchShell(center, reach);
-  if (part.variant === 'to220') return to220Shell(center, reach, towardRavine, theme);
+  if (part.type === 'potentiometer') return potentiometerShell(center, reach, halfWidth);
+  if (part.type === 'slide-switch') return slideSwitchShell(center, reach, halfWidth);
+  if (part.variant === 'to220') return to220Shell(center, reach, halfWidth, towardRavine, theme);
   return element('circle', {
     cx: num(center.x), cy: num(center.y), r: num(reach),
     fill: theme.palette.chipBody, stroke: '#14171c',
@@ -73,8 +89,13 @@ function shellOf(
  * **タブは溝側に描く**: 反対側にはピン名が並ぶため。
  * どちら向きに寝かせるか (タブが上か下か) は実装の都合で、実物の向きの主張ではない。
  */
-function to220Shell(center: Point, reach: number, towardRavine: number, theme: RenderTheme): string {
-  const halfWidth = reach * 1.15;
+function to220Shell(
+  center: Point,
+  reach: number,
+  halfWidth: number,
+  towardRavine: number,
+  theme: RenderTheme,
+): string {
   const tabHeight = reach * 0.8;
   const tabY = towardRavine > 0 ? center.y + reach - tabHeight : center.y - reach;
 
@@ -95,9 +116,9 @@ function to220Shell(center: Point, reach: number, towardRavine: number, theme: R
 }
 
 /** 半固定抵抗。上から見た四角い本体と、回すためのねじの頭。 */
-function potentiometerShell(center: Point, reach: number): string {
+function potentiometerShell(center: Point, reach: number, halfWidth: number): string {
   const shell = element('rect', {
-    x: num(center.x - reach * 1.2), y: num(center.y - reach), width: num(reach * 2.4), height: num(reach * 2), rx: 3,
+    x: num(center.x - halfWidth), y: num(center.y - reach), width: num(halfWidth * 2), height: num(reach * 2), rx: 3,
     fill: '#2b6fd4', stroke: '#1b4a91',
   });
   const head = element('circle', {
@@ -110,17 +131,21 @@ function potentiometerShell(center: Point, reach: number): string {
   return shell + head + slot;
 }
 
+/** つまみが走る溝の幅。胴の内側に収めて、端で切れないようにする。 */
+const SLOT_WIDTH_RATIO = 0.6875;
+
 /**
  * スライドスイッチ。**つまみは真ん中に描く**:
  * どちらに倒して使うかは図では決まらないので、片側に寄せると嘘になる。
  */
-function slideSwitchShell(center: Point, reach: number): string {
+function slideSwitchShell(center: Point, reach: number, halfWidth: number): string {
   const shell = element('rect', {
-    x: num(center.x - reach * 1.6), y: num(center.y - reach), width: num(reach * 3.2), height: num(reach * 2), rx: 3,
+    x: num(center.x - halfWidth), y: num(center.y - reach), width: num(halfWidth * 2), height: num(reach * 2), rx: 3,
     fill: '#e8ebf0', stroke: '#8a929c',
   });
+  const slotHalf = halfWidth * SLOT_WIDTH_RATIO;
   const slot = element('rect', {
-    x: num(center.x - reach * 1.1), y: num(center.y - 5), width: num(reach * 2.2), height: 10, rx: 5,
+    x: num(center.x - slotHalf), y: num(center.y - 5), width: num(slotHalf * 2), height: 10, rx: 5,
     fill: '#3f4650',
   });
   const knob = element('rect', {
