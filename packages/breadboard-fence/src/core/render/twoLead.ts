@@ -113,19 +113,30 @@ function capacitorBody(part: PlacedPart, span: number): string {
 }
 
 /**
- * 極性の印が付く側の足。**片方にしか印が無くても、2 本足なら反対側が決まる**。
+ * 印が付く側の足。**片方にしか印が無くても、2 本足なら反対側が決まる**。
  *
- * どちらにも印が無ければ**先に書いた穴が + 側**とする。これはフェンス全体に
- * かかる 1 文の規則で、`led` と `diode` の「2 つ目がカソード」も同じ規則の別の顔。
- * ここを「常に 2 本目」にしていると、**印がプラス側に付くタンタルだけ向きが逆**になる。
+ * どちらにも印が無ければ**先に書いた穴が + 側 (アノード)** とする。
+ * これはフェンス全体にかかる 1 文の規則で、コンデンサの `(+)` `(-)` も
+ * ダイオードの `(A)` `(K)` も同じ規則の別の顔。**片方だけ見て決めると、
+ * 反対側だけを書いた図 (`diode a5 a10(A)`) が逆向きに描かれる。**
+ *
+ * @param whenBare どちらの印も無いときに返す足 (0 = 先に書いた穴)
  */
-function polarityIndex(part: PlacedPart, mark: '+' | '-'): number {
-  const found = part.pins.findIndex((pin) => pin.name === mark);
+function markedIndex(part: PlacedPart, mark: string, opposite: string, whenBare: number): number {
+  const names = part.pins.map((pin) => pin.name.toUpperCase());
+  const found = names.indexOf(mark);
   if (found !== -1) return found;
-  const opposite = part.pins.findIndex((pin) => pin.name === (mark === '-' ? '+' : '-'));
-  if (opposite !== -1) return 1 - opposite;
-  return mark === '+' ? 0 : 1;
+  const other = names.indexOf(opposite);
+  if (other !== -1) return 1 - other;
+  return whenBare;
 }
+
+/** 電解の帯 (マイナス側) とタンタルの印 (プラス側)。既定の向きは規則から決まる。 */
+const polarityIndex = (part: PlacedPart, mark: '+' | '-'): number =>
+  mark === '+' ? markedIndex(part, '+', '-', 0) : markedIndex(part, '-', '+', 1);
+
+/** カソード側の足。ダイオードの帯と LED の平らな面がここを見る。 */
+const cathodeIndex = (part: PlacedPart): number => markedIndex(part, 'K', 'A', 1);
 
 /** フィルム・積層セラミックの角い胴。無極性のコンデンサの既定の姿。 */
 function filmCapBody(span: number): string {
@@ -185,7 +196,7 @@ function domeBody(part: PlacedPart, color: string, edge = '#7a2018'): string {
   // 3mm は 5mm の形をそのまま縮める (5mm と省略時は今までの数字にそのまま戻る)。
   const scale = part.variant === '3mm' ? 6.5 / LED_RADIUS : 1;
   // カソード側の平らな面。部品の向きに合わせたいので、本体と同じ回転の中で置く。
-  const flatX = (part.pins[0]?.name.toUpperCase() === 'K' ? -6 : 6) * scale;
+  const flatX = (cathodeIndex(part) === 0 ? -6 : 6) * scale;
   const dome = element('circle', {
     cx: 0, cy: num(-4 * scale), r: num(LED_RADIUS * scale), fill: color, 'fill-opacity': 0.85, stroke: edge,
   });
@@ -211,7 +222,7 @@ type DiodeLook = {
  */
 function diodeBody(part: PlacedPart, span: number, look: DiodeLook): string {
   const width = Math.min(span * (look.narrow ? 0.4 : 0.55), look.narrow ? 22 : 30);
-  const cathode = part.pins[0]?.name.toUpperCase() === 'K' ? -1 : 1;
+  const cathode = cathodeIndex(part) === 0 ? -1 : 1;
   const shell = element('rect', {
     x: num(-width / 2), y: -6.5, width: num(width), height: 13, rx: 2.5,
     fill: look.fill, stroke: look.stroke,

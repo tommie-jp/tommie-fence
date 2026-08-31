@@ -201,6 +201,25 @@ describe('renderBreadboard', () => {
     expect(left.svg).not.toBe(right.svg);
   });
 
+  test('takes the anode mark as fixing the cathode on the other lead', () => {
+    // 2 本足なので、片方に印があれば反対側は決まる。片方だけ見て決めていると、
+    // 反対側だけを書いた図 (`diode a5 a10(A)`) が逆向きに描かれる。
+    const marked = renderBreadboard('parts-list: none\nparts:\n  D1: diode a5 a10(A) 1N4148\n');
+    const both = renderBreadboard('parts-list: none\nparts:\n  D1: diode a5(K) a10(A) 1N4148\n');
+    const bare = renderBreadboard('parts-list: none\nparts:\n  D1: diode a5 a10 1N4148\n');
+
+    expect(marked.errors).toEqual([]);
+    expect(marked.svg).toBe(both.svg);
+    expect(marked.svg).not.toBe(bare.svg);
+  });
+
+  test('turns the flat face of a led the same way', () => {
+    const marked = renderBreadboard('parts-list: none\nparts:\n  D1: led a5 a10(A) red\n');
+    const both = renderBreadboard('parts-list: none\nparts:\n  D1: led a5(K) a10(A) red\n');
+
+    expect(marked.svg).toBe(both.svg);
+  });
+
   test('reads an electrolytic written without polarity as plus on the first hole', () => {
     const bare = renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/electrolytic b5 b8 10u\n');
     const marked = renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/electrolytic b5(+) b8(-) 10u\n');
