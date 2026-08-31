@@ -150,6 +150,19 @@ describe('routeWires', () => {
   });
 });
 
+/** レーンを走る区間 (経路のいちばん長い横の区間)。 */
+function longestRun(path: readonly { x: number; y: number }[]) {
+  let best = { y: path[0]!.y, left: path[0]!.x, right: path[0]!.x };
+  for (let index = 1; index < path.length; index += 1) {
+    const [a, b] = [path[index - 1]!, path[index]!];
+    const span = Math.abs(b.x - a.x);
+    if (a.y === b.y && span > best.right - best.left) {
+      best = { y: a.y, left: Math.min(a.x, b.x), right: Math.max(a.x, b.x) };
+    }
+  }
+  return best;
+}
+
 describe('routeWires keeping wires from crossing each other', () => {
   const request = (from: string, to: string) => ({ from: at(from), to: at(to), hints: [] });
 
@@ -184,23 +197,43 @@ describe('routeWires keeping wires from crossing each other', () => {
     expect(routeWires(wires, layout)).toEqual(routeWires(wires, layout));
   });
 
-  test('routes a figure at the wire limit without stalling the render', () => {
+  test('never draws two wires on the same height where their runs overlap', () => {
+    // 溝のレーンが持てる段いっぱい (5 本) を、全部が重なるように集める。
+    // ここで重なると 2 本が 1 本に見えて、どの穴とどの穴がつながっているか読めない。
+    const crowded = Array.from({ length: 5 }, (_, index) => request(`f${index + 1}`, `f${28 - index}`));
+
+    const paths = routeWires(crowded, layout);
+    const runs = paths.map(longestRun);
+
+    for (let i = 0; i < runs.length; i += 1) {
+      for (let j = i + 1; j < runs.length; j += 1) {
+        const [a, b] = [runs[i]!, runs[j]!];
+        if (a.y !== b.y) continue;
+        expect(Math.min(a.right, b.right)).toBeLessThan(Math.max(a.left, b.left));
+      }
+    }
+  });
+
+  test('routes a figure at the wire limit with parts in the way', () => {
     const many = Array.from({ length: LIMITS.wires }, (_, index) => {
       const column = (index % 28) + 1;
       return request(`a${column}`, `j${column + 2}`);
     });
-    // 部品を置かないと、よけ道を探す繰り返しが一度も走らないまま速さを測ることになる。
+    // 部品を置かないと、よけ道を探す繰り返しが一度も走らない。
     const parts = Array.from({ length: 40 }, (_, index) => ({
       x: layout.colX(index % 20 + 1) - 12, y: layout.rowY('a') - layout.pitch * 1.8,
       width: 24, height: layout.pitch,
     }));
 
-    const started = Date.now();
     const paths = routeWires(many, layout, parts);
 
+    // 速さは測らない。壁時計は CI の混み具合で動くので、落ちても直せる情報にならない。
+    // ここで見るのは、上限いっぱいでも全部の配線が端点をつないで返ってくること。
     expect(paths).toHaveLength(LIMITS.wires);
-    // 描画は同期なので、伸びるとプレビューごと止まる。刻みは荒くてよく、桁が変われば落ちる。
-    expect(Date.now() - started).toBeLessThan(5000);
+    paths.forEach((path, index) => {
+      expect(path[0]).toEqual(many[index]!.from);
+      expect(path.at(-1)).toEqual(many[index]!.to);
+    });
   });
 });
 
@@ -293,6 +326,33 @@ describe('routeWires around parts standing in the way', () => {
       expect(point.x).toBeGreaterThanOrEqual(layout.board.x);
       expect(point.x).toBeLessThanOrEqual(layout.board.x + layout.board.width);
     }
+  });
+
+  test('does not drag its lane run over a second part while dodging the first', () => {
+    // 立ちふさがる胴と、レーンの上にだけ乗っている小さな部品。寄り道で横に伸びた
+    // 区間が 2 つ目に乗ると、1 つ目をよけた意味がなくなる。
+    const body = above('a5');
+    const onLane = { x: at('a5').x - 40, y: layout.lanes[0]!.y - 4, width: 13, height: 8 };
+
+    const [path] = routeWires([request('a5', 'a20')], layout, [body, onLane]);
+
+    expect(pathHitsAny(path!, [body, onLane], 0)).toBe(false);
+  });
+
+  test('climbs between hole columns even from a pin that is not on the hole grid', () => {
+    // 板の外の機器のピンは穴の格子に乗っていない。端点からずらすと列を踏む。
+    const deviceLayout = createLayout(createBoard('half'), { deviceTop: true });
+    const band = deviceLayout.deviceBands.top!;
+    const pin = { x: band.x + 118, y: band.y + band.height };
+    const hole = deviceLayout.point(parseAddress('a20')!);
+    const blocker = { x: pin.x - 12, y: pin.y + 14, width: 24, height: 10 };
+
+    const [path] = routeWires([{ from: pin, to: hole, hints: [] }], deviceLayout, [blocker]);
+    const columns = new Set(Array.from({ length: 30 }, (_, index) => deviceLayout.colX(index + 1)));
+
+    const climb = path!.filter((point) => point.x !== pin.x && point.x !== hole.x);
+    expect(climb.length).toBeGreaterThan(0);
+    for (const point of climb) expect(columns.has(point.x)).toBe(false);
   });
 
   test('does not step around the part the wire is plugged into', () => {

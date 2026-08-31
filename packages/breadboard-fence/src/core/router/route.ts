@@ -43,10 +43,11 @@ export function routeWire(from: Point, to: Point, layout: Layout, options: Route
   const obstacles = options.obstacles ?? [];
   const lane = chooseLane(from, to, layout, obstacles);
   const taken = new Set<number>();
-  const entry = escapeOf(from, lane.y, layout, obstacles, taken);
-  const exit = escapeOf(to, lane.y, layout, obstacles, taken);
 
-  return buildPath(from, to, lane, options.offset ?? 0, { entry, exit });
+  return buildPath(from, to, lane, options.offset ?? 0, {
+    entry: escapeOf(from, lane, layout, obstacles, taken),
+    exit: escapeOf(to, lane, layout, obstacles, taken),
+  });
 }
 
 const isDirect = (from: Point, to: Point, layout: Layout): boolean =>
@@ -70,15 +71,19 @@ const leg = (end: Point, laneY: number, escape: Escape): readonly Point[] =>
 
 /** 横のずれ先。**穴の列と列の間だけ**を近い順に試す。 */
 const DETOUR_STEPS = [0.5, -0.5, 1.5, -1.5, 2.5, -2.5];
+/** 横に振る高さの候補。穴 1 つぶんの半分と、その半分。どちらも行と行の間に収まる。 */
+const JOG_FRACTIONS = [1 / 2, 1 / 4];
 
 /**
  * 部品をよけて登る道を探す。まっすぐ上げられるなら `null` (寄り道なし)。
  *
  * ずれ先を**穴の列の間に限る**のは、列の真上を横切ると、通り道の穴に挿さっているように
  * 見えるため。どの穴に入っているかを読ませるのがこの図の役目なので、
- * 穴の中心を通る線は引かない。同じ理由で、寄り道は板の中だけを使う。
+ * 穴の中心を通る線は引かない。**列は端点からではなく穴の格子から数える**
+ * (板の外の機器のピンは格子に乗っていないので、端点からずらすと列を踏む)。
+ * 同じ理由で、寄り道は板の中だけを使う。
  *
- * 使った列は `taken` に控えて、同じレーンの別の配線が同じ列を登らないようにする
+ * 使った列は `taken` に控えて、同じレーンの同じ側の別の配線が同じ列を登らないようにする
  * (重なると 2 本が 1 本に見えて、どの穴とどの穴がつながっているのか読めなくなる)。
  *
  * どこも塞がっていればまっすぐに戻す。逃げ場の無い盤面で無理に曲げるより、
@@ -87,30 +92,47 @@ const DETOUR_STEPS = [0.5, -0.5, 1.5, -1.5, 2.5, -2.5];
  */
 function escapeOf(
   end: Point,
-  laneY: number,
+  lane: Lane,
   layout: Layout,
   obstacles: readonly Rect[],
   taken: Set<number>,
 ): Escape {
   const blocked = (a: Point, b: Point): boolean => segmentHitsAny(a, b, obstacles, OBSTACLE_MARGIN);
-  if (obstacles.length === 0 || !blocked(end, { x: end.x, y: laneY })) return null;
+  // 登り着く高さはスロットの割り当てで上下する。**厚みのぶん余計に見ておく**:
+  // ここで見た高さより先まで引かれると、通したはずの道に部品が入っていることがある。
+  const climbTo = (x: number, from: number): readonly [Point, Point] => [
+    { x, y: Math.min(from, lane.y - lane.halfHeight) },
+    { x, y: Math.max(from, lane.y + lane.halfHeight) },
+  ];
 
-  // 穴から出てすぐ横に振る。振る高さは穴 1 つぶんの半分で、隣の行に食い込ませない。
-  const jogY = end.y + (Math.sign(laneY - end.y) || 1) * (layout.pitch / 2);
-  const stub = { x: end.x, y: jogY };
-  if (blocked(end, stub)) return null;
+  if (obstacles.length === 0 || !blocked(...climbTo(end.x, end.y))) return null;
 
-  for (const step of DETOUR_STEPS) {
-    const x = end.x + step * layout.pitch;
-    if (taken.has(x) || !onBoard(x, layout)) continue;
-    if (blocked(stub, { x, y: jogY }) || blocked({ x, y: jogY }, { x, y: laneY })) continue;
+  for (const fraction of JOG_FRACTIONS) {
+    const jogY = end.y + (Math.sign(lane.y - end.y) || 1) * (layout.pitch * fraction);
+    const stub = { x: end.x, y: jogY };
+    if (blocked(end, stub)) continue;
 
-    taken.add(x);
-    return { jogY, x };
+    for (const step of DETOUR_STEPS) {
+      const x = halfColumn(end.x, step, layout);
+      if (taken.has(x) || !onBoard(x, layout)) continue;
+      if (blocked(stub, { x, y: jogY }) || blocked(...climbTo(x, jogY))) continue;
+      // 横に振ったぶんレーンを走る区間が伸びる。**伸びた先も見る**:
+      // 見ないと、1 つ目の部品をよけて 2 つ目の上に乗ることがある。
+      if (blocked({ x: end.x, y: lane.y }, { x, y: lane.y })) continue;
+
+      taken.add(x);
+      return { jogY, x };
+    }
   }
 
   return null;
 }
+
+/** 穴の格子から数えた列の位置。`step` に 0.5 を渡せば列と列のちょうど間。 */
+const halfColumn = (x: number, step: number, layout: Layout): number => {
+  const origin = layout.colX(1);
+  return origin + (Math.round((x - origin) / layout.pitch) + step) * layout.pitch;
+};
 
 const onBoard = (x: number, layout: Layout): boolean =>
   x >= layout.board.x && x <= layout.board.x + layout.board.width;
@@ -133,15 +155,23 @@ export function routeWires(
       : chooseLane(request.from, request.to, layout, obstacles),
   );
 
-  const takenByLane = new Map<number, Set<number>>();
+  // 登る列はレーンの**側ごと**に控える。上へ登る道と下へ降りる道は高さが重ならないので、
+  // 同じ列を使っても 1 本には見えない。まとめて数えると、譲る要りのない配線が
+  // 遠くへ追いやられ、しまいには寄り道そのものを諦めることになる。
+  const takenByLane = new Map<string, Set<number>>();
+  const columnsFor = (lane: Lane, end: Point): Set<number> => {
+    const key = `${lane.y}|${end.y > lane.y ? 'below' : 'above'}`;
+    const taken = takenByLane.get(key) ?? new Set<number>();
+    takenByLane.set(key, taken);
+    return taken;
+  };
+
   const escapes = requests.map((request, index): Escapes => {
     const lane = lanes[index];
     if (!lane) return { entry: null, exit: null };
-    const taken = takenByLane.get(lane.y) ?? new Set<number>();
-    takenByLane.set(lane.y, taken);
     return {
-      entry: escapeOf(request.from, lane.y, layout, obstacles, taken),
-      exit: escapeOf(request.to, lane.y, layout, obstacles, taken),
+      entry: escapeOf(request.from, lane, layout, obstacles, columnsFor(lane, request.from)),
+      exit: escapeOf(request.to, lane, layout, obstacles, columnsFor(lane, request.to)),
     };
   });
 
@@ -187,18 +217,24 @@ function assignSlots(
     .sort((a, b) => a.left - b.left);
 
   const takenByLane = new Map<number, Map<number, number>>();
+  const levelsByLane = new Map<string, readonly number[]>();
 
   for (const { index, left, right } of order) {
     const lane = lanes[index]!;
     const taken = takenByLane.get(lane.y) ?? new Map<number, number>();
-    const levels = slotLevels(lane, comesFromBelow(requests[index]!, lane));
+    const fromBelow = comesFromBelow(requests[index]!, lane);
+    const levelKey = `${lane.y}|${fromBelow}`;
+    const levels = levelsByLane.get(levelKey) ?? slotLevels(lane, fromBelow);
+    levelsByLane.set(levelKey, levels);
     const free = levels.find((candidate) => (taken.get(candidate) ?? -Infinity) + SLOT_GAP <= left);
 
     // 段を使い切ったら、いちばん早く終わっている段に重ねる (重なりがいちばん短くて済む)。
     const level = free ?? levels.reduce((best, candidate) =>
       (taken.get(candidate) ?? -Infinity) < (taken.get(best) ?? -Infinity) ? candidate : best);
 
-    taken.set(level, right);
+    // 段が塞がっている範囲は**伸ばす**。重ねたときに短い配線で上書きすると、
+    // その段はもう空いていることになり、次の配線が先客の上に乗る。
+    taken.set(level, Math.max(taken.get(level) ?? -Infinity, right));
     takenByLane.set(lane.y, taken);
     offsets[index] = level * SLOT_SPACING;
   }
@@ -265,7 +301,10 @@ function chooseLane(from: Point, to: Point, layout: Layout, obstacles: readonly 
     : (lane: Lane) => Math.abs(lane.y - top) + Math.abs(lane.y - bottom);
   const cost = (lane: Lane) => distance(lane) + OBSTACLE_PENALTY * obstaclesOnLane(lane, left, right, obstacles);
 
-  return candidates.reduce((best, lane) => (cost(lane) < cost(best) ? lane : best));
+  // 部品の数だけ数える計算なので、勝ち残っているレーンのぶんを毎回引き直さない。
+  return candidates
+    .map((lane) => ({ lane, cost: cost(lane) }))
+    .reduce((best, candidate) => (candidate.cost < best.cost ? candidate : best)).lane;
 }
 
 /** そのレーンを left..right まで走ったときに当たる部品の数。 */

@@ -43,7 +43,7 @@ export function partObstacles(part: PlacedPart, layout: Layout, theme: RenderThe
     // 本体に、上下へ出したピン名とラベルを足した高さ。字が伸びればここも伸びる。
     const reach = CAPTION_DROP * textScale(theme);
     // 横も同じで、胴からはみ出したキャプションの上を配線に通させない (2 本足と同じ扱い)。
-    const width = Math.max(halfWidth * 2, caption(part).length * charWidth(theme));
+    const width = Math.max(halfWidth * 2, captionWidth(part, theme));
     return [{
       x: center.x - width / 2,
       y: center.y - halfHeight - reach,
@@ -53,12 +53,21 @@ export function partObstacles(part: PlacedPart, layout: Layout, theme: RenderThe
   }
 
   const center = { x: (left + right) / 2, y: (top + bottom) / 2 };
-  const width = Math.max(caption(part).length * charWidth(theme), right - left);
+  const width = Math.max(captionWidth(part, theme), right - left);
   const height = textScale(theme) * CAPTION_HEIGHT;
   const labelY = labelYOf(part, center, layout);
 
   return [{ x: center.x - width / 2, y: labelY - height + 3, width, height }];
 }
+
+/**
+ * キャプションが図の上で占める横幅。**コードポイントで数える**
+ * (サロゲートペアを 2 文字と数えると、その字のぶんだけ領域が広がる)。
+ * 全角は半角より広いが、狭く見ておくほうが安全側 —
+ * 広く取りすぎると、空いているレーンまで配線に諦めさせてしまう。
+ */
+const captionWidth = (part: PlacedPart, theme: RenderTheme): number =>
+  [...caption(part)].length * charWidth(theme);
 
 export function renderPart(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
   if (part.kind === 'dip') return renderDip(part, layout, theme);
