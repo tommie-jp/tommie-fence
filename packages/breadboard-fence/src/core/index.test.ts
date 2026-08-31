@@ -384,6 +384,14 @@ describe('renderBreadboard', () => {
     expect(heightOf(renderBreadboard(long).svg)).toBeGreaterThan(heightOf(renderBreadboard(short).svg) ?? 0);
   });
 
+  test('says how to quote a note whose text is only digits', () => {
+    // `- text a5: 100` は YAML が数値にするので字として届かない。
+    // 「形で書きます」だけだと、囲めば直ることに気づけない。
+    const { errors } = renderBreadboard('parts:\n  R1: resistor a5 a10\nnotes:\n  - text a5: 100\n');
+
+    expect(errors[0]?.message).toContain('囲みます');
+  });
+
   test('reports a note written in a shape it cannot read', () => {
     const { errors } = renderBreadboard('parts:\n  R1: resistor a5 a10 330\nnotes:\n  - circle R1 crimson\n');
 

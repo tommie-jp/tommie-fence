@@ -236,6 +236,15 @@ function collectNotes(
         push(parseNoteLine(head, text, lineOf(pair?.key) ?? line));
         continue;
       }
+      // 数字だけの字 (`- text a5: 100`) は YAML が数値にするので、字として届かない。
+      // 「形で書きます」だけだと、囲めば直ることに気づけない。
+      if (head !== null && isScalar(pair?.value)) {
+        errors.push(fenceError(
+          '注釈の字は文字列で書きます (数字だけのときは "100" のように囲みます)',
+          lineOf(pair?.key) ?? line,
+        ));
+        continue;
+      }
     }
 
     errors.push(fenceError('注釈は「- circle R1」か「- text a5: 字」の形で書きます', line));
