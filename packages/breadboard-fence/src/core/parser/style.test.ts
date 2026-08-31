@@ -29,6 +29,7 @@ describe('validateStyle', () => {
       'hole-size': 6,
       'hole-color': '#010101',
       debug: 'off',
+      stamp: 'on',
       width: 1200,
     });
 
@@ -43,6 +44,7 @@ describe('validateStyle', () => {
       holeColor: '#010101',
       width: 1200,
       debug: false,
+      stamp: true,
       line: 2,
     });
   });

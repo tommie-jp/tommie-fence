@@ -59,17 +59,20 @@ function main(argv: readonly string[]): number {
     return 2;
   }
 
-  const { targets, outDir } = parsed.value;
+  const { command, targets, outDir } = parsed.value;
+  const writing = command === 'render';
   let failed = 0;
 
   try {
-    if (outDir) mkdirSync(outDir, { recursive: true });
+    if (writing && outDir) mkdirSync(outDir, { recursive: true });
 
     for (const target of targets.flatMap(collectFiles)) {
       for (const job of jobsFor(target, outDir)) {
         const { svg, netlist, errors, notices } = renderBreadboard(job.source);
-        // 図が 1 つも組めなければ SVG は空。空のファイルを置くより、書かないほうがよい。
-        if (svg) {
+        if (!writing) {
+          console.log(job.label);
+        } else if (svg) {
+          // 図が 1 つも組めなければ SVG は空。空のファイルを置くより、書かないほうがよい。
           writeFileSync(job.outPath, `${svg}\n`);
           console.log(`${job.label} → ${job.outPath}`);
         } else {

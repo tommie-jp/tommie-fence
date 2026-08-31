@@ -2,10 +2,24 @@ import { describe, expect, test } from 'vitest';
 import { parseArgs } from './args.ts';
 
 describe('parseArgs', () => {
+  test('reads the check command, which writes nothing', () => {
+    expect(parseArgs(['check', 'examples'])).toEqual({
+      ok: true,
+      value: { command: 'check', targets: ['examples'], outDir: null },
+    });
+  });
+
+  test('refuses an output directory for check, since it writes nothing', () => {
+    const result = parseArgs(['check', 'examples', '--out', 'dist']);
+
+    expect(result.ok).toBe(false);
+    expect(result.ok === false && result.message).toContain('--out');
+  });
+
   test('reads the targets of a render command', () => {
     const result = parseArgs(['render', 'examples']);
 
-    expect(result.ok && result.value).toEqual({ targets: ['examples'], outDir: null });
+    expect(result.ok && result.value).toEqual({ command: 'render', targets: ['examples'], outDir: null });
   });
 
   test('keeps every target when no output directory is given', () => {
@@ -17,13 +31,13 @@ describe('parseArgs', () => {
   test('takes the output directory out of the targets', () => {
     const result = parseArgs(['render', 'examples', '--out', 'build']);
 
-    expect(result.ok && result.value).toEqual({ targets: ['examples'], outDir: 'build' });
+    expect(result.ok && result.value).toEqual({ command: 'render', targets: ['examples'], outDir: 'build' });
   });
 
   test('accepts the output directory before the targets', () => {
     const result = parseArgs(['render', '--out', 'build', 'a.md', 'b.md']);
 
-    expect(result.ok && result.value).toEqual({ targets: ['a.md', 'b.md'], outDir: 'build' });
+    expect(result.ok && result.value).toEqual({ command: 'render', targets: ['a.md', 'b.md'], outDir: 'build' });
   });
 
   test('reports a command it does not know', () => {

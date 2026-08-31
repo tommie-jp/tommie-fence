@@ -1,0 +1,158 @@
+# breadboard フェンス 早見表
+
+**1 画面に収めた全形式。** LLM に書かせるときは、これをそのままプロンプトに貼る。
+詳しい説明と図は [01-syntax.md](01-syntax.md)。
+
+## かたち
+
+````text
+```breadboard
+title: 図01 …          # 任意。図の左上に載る 1 行
+points:                # 任意。番地に名前を付ける
+  vin: a5
+board: half            # half (30 列、既定) / full (63 列)
+style: dark            # テーマ名か、下の表のマップ
+parts-list: below      # below (既定) / none
+parts:                 # ID: 種類 番地 … [値] [l=ラベル]
+  R1: resistor a5 a10 10k
+wires:                 # - 端点 -- 端点 [-- 端点 …] [色] [迂回ヒント]
+  - +t5 -- a5 red
+notes:                 # 任意。図に重ねる印と字
+  - circle R1
+```
+````
+
+## 番地
+
+| 形 | 意味 |
+| --- | --- |
+| `a5` … `j30` | 穴。行 `a`〜`e` が上ブロック、`f`〜`j` が下ブロック。大小どちらでも可 |
+| `+t5` `-t5` `-b5` `+b5` | レール。極性 + 上下 + 列 |
+| `U1.7` `AD2.V+` | ピン参照 (配線の端点にだけ書ける) |
+| `vin` | `points:` で付けた名前 |
+
+**同じ列の穴は導通している** (a5〜e5 が 1 つのネット、f5〜j5 が別のネット)。
+
+## 部品
+
+| 形 | 書き方 | 例 |
+| --- | --- | --- |
+| 2 本足 | `ID: 種類 穴 穴 [値]` | `R1: resistor a5 a10 10k` |
+| 3 本足 | `ID: 種類 穴 穴 穴 [値]` | `Q1: transistor h9(B) h10(C) h11(E) 2SC1815` |
+| タクトスイッチ | `ID: button @ 穴` | `SW1: button @ e5` |
+| DIP / ヘッダ | `ID: dipN @ 穴 [ラベル]` | `U1: dip8 @ e5 NJM4556A` |
+| マイコンボード | `ID: 種類 @ 穴` | `MCU: pico2 @ h5` |
+| ボード外の機器 | マップ形式 (下記) | |
+
+穴にピン名を付けるときは `a5(A)`。付けなければ左から `1` `2` `3`。
+
+### 種類
+
+```text
+2 本足   resistor capacitor led diode buzzer crystal inductor
+         photoresistor thermistor thermistor-ntc thermistor-ptc varistor
+         zener schottky photodiode varicap diac reed fuse lamp
+3 本足   transistor potentiometer slide-switch thyristor triac
+まとまり  button dipN (4〜40 の偶数) sipN (2〜40)
+ボード    pico pico-w pico2 pico2-w
+ボード外  device
+```
+
+### 姿 (`種類/姿`)
+
+```text
+capacitor/ceramic  capacitor/film  capacitor/electrolytic  capacitor/tantalum
+led/3mm  led/5mm
+transistor/to92  transistor/to220   thyristor/…  triac/…
+```
+
+### 略記 (読んだ直後に正式名へ畳む)
+
+```text
+r=resistor  c=capacitor  l=inductor  d=diode  ec=ecap=capacitor/electrolytic
+pot=potentiometer  ldr=photoresistor  ntc=thermistor-ntc  ptc=thermistor-ptc
+xtal=crystal  scr=thyristor  btn=pushbutton=button
+```
+
+### ボード外の機器 (マップ形式)
+
+```yaml
+parts:
+  AD2:
+    type: device
+    at: top            # top (既定) / bottom
+    label: Analog Discovery 2
+    pins: [W1, GND]
+```
+
+マップ形式で書けるキーは `type` `at` `label` `value` `pins` `holes` の 6 つ。
+
+## 配線
+
+```yaml
+wires:
+  - +t5 -- a5 red                # 端点 2 つ
+  - b10 -- b14 -- b21 orange     # つないで書く (区間ごとに開かれる)
+  - j20 -- -b20 black [v-20]     # 迂回ヒント。20 が穴 1 つぶん
+```
+
+色: `red black white gray` (`grey` も可) `orange yellow green blue purple brown pink`
+
+## 注釈
+
+```yaml
+notes:
+  - circle R1                    # 指し先を囲む楕円
+  - box a5 e12 blue solid        # 枠 (既定は破線)
+  - arrow d22 R1                 # 指し棒
+  - line +t20 -t20 green         # 直線
+  - text d24 large bold: 電流を決めるのはここ
+  - source f3 tiny               # フェンスそのものを書き出す
+```
+
+語 (順不同): 色 `red blue green orange ink` / 大きさ `tiny small normal large huge` /
+寄せ `left center right` / `bold` / `solid` (box) / 行送り `tight loose` (source)
+
+## 見た目
+
+```yaml
+style:
+  theme: dark          # classic dark high-contrast mono presentation (既定)
+  text-size: 13        # 6〜24
+  text-color: "#e2e8f0"
+  text-background: "#2b3038"
+  wire-width: 5        # 1〜8
+  board-color: "#2b3038"
+  hole-size: 6         # 2〜14
+  hole-color: "#0d1014"
+  width: 1200          # 120〜4000
+  debug: on            # on (既定) / off。お知らせを出すか
+  stamp: off           # on / off (既定)。右下に版を刻むか
+```
+
+## 落とし穴
+
+- **色は `"…"` で囲む。** `text-color: #333` は `#` から先が YAML のコメントになり、
+  値が空で届く。
+- **`text` の字は `:` の後ろ。** `- text a5 "R1: …"` は黙ってマップとして読まれる。
+- **部品の値に番地の形の語は使えない** (`J5` など)。番地として読まれる。
+  `330` `10k` のような値は番地の形にならないので安全。
+- **極性・向きのある 2 端子は、先に書いた穴が + 側 (アノード)。**
+  書かなくても向きは決まる。
+- **タクトスイッチは同じ側の 2 本が押す前からつながっている。**
+  `e5` と `e7` を回路の両端に使うと最初から短絡している。
+- **`board: full` は 63 列。** half (30 列) のつもりで 40 列に置くとはみ出す。
+- 迂回ヒントを書く行は端点を 2 つだけにする。
+
+## 直し方
+
+読めなかった行は、行番号・行の中身・綴りの下の印つきで返る。
+
+```text
+breadboard: 2 行目: 知らない部品の種類です: resistr (resistor のことですか?)
+      R1: resistr a5 a10 10k
+          ^^^^^^^
+```
+
+`breadboard-fence check <ファイル>` で、図を書かずに検証とネットリストだけ出せる
+(読めない行があれば終了コードは 1)。

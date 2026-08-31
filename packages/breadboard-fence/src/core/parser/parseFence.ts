@@ -25,7 +25,7 @@ const pick = <T extends string>(allowed: readonly T[], value: string | null): T 
 const MAX_YAML_MESSAGE = 120;
 
 /** フェンスの一番外側に書けるキー。読めなかったときの案内はここから作る。 */
-const TOP_LEVEL_KEYS = ['title', 'points', 'board', 'style', 'parts', 'parts-list', 'wires', 'notes'] as const;
+export const TOP_LEVEL_KEYS = ['title', 'points', 'board', 'style', 'parts', 'parts-list', 'wires', 'notes'] as const;
 
 export type ParseResult = { readonly doc: FenceDocument | null; readonly errors: readonly FenceError[] };
 

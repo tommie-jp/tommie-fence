@@ -7,9 +7,10 @@ import { notesBottom, renderNotes } from './notes.ts';
 import type { ResolvedNote } from './notes.ts';
 import { renderPart } from './parts.ts';
 import { partsListHeight, renderPartsList } from './partsList.ts';
-import { element, num } from './svg.ts';
+import { element, num, svgText } from './svg.ts';
 import type { RenderStyle } from './theme.ts';
 import { renderTitle, titleHeight } from './title.ts';
+import { VERSION, stampText } from '../version.ts';
 import { renderWire } from './wires.ts';
 
 export type RenderedWire = { readonly points: readonly Point[]; readonly color: string };
@@ -80,11 +81,28 @@ export function renderDocument(input: DocumentInput): string {
     ? body
     : [element('g', { transform: `translate(0 ${num(head)})` }, body.join('\n'))];
 
+  // 刻まない図にも版を属性で残す。あとから「どの版が描いた図か」を
+  // 図そのものに聞けるようにしておく (見た目は変えない)。
+  const open = `<svg xmlns="http://www.w3.org/2000/svg" width="${num(layout.width * scale)}"`
+    + ` height="${num(height * scale)}" viewBox="0 0 ${num(layout.width)} ${num(height)}"`
+    + ` data-breadboard-fence="${VERSION}" role="img">`;
+
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${num(layout.width * scale)}" height="${num(height * scale)}" viewBox="0 0 ${num(layout.width)} ${num(height)}" role="img">`,
+    open,
     ...[canvas].filter(Boolean),
     renderTitle(input.title, layout.board.x, layout.board.width, theme),
     ...shifted,
+    style.stamp ? renderStamp(layout, height, theme) : '',
     '</svg>',
   ].filter(Boolean).join('\n');
+}
+
+/** 右下に小さく刻む版。字は書けない (処理系が埋めるものなので)。 */
+function renderStamp(layout: Layout, height: number, theme: RenderStyle['theme']): string {
+  return svgText(layout.board.x + layout.board.width, height - 4, stampText(), {
+    'font-size': num(theme.metrics.textSize * 0.7),
+    fill: theme.palette.partText,
+    'fill-opacity': 0.55,
+    anchor: 'end',
+  });
 }

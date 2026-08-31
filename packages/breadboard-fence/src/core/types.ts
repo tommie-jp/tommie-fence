@@ -153,6 +153,8 @@ export type StyleSpec = {
   readonly width: number | null;
   /** お知らせを図の下に出すか。読めなかった行はこれに関わらず必ず出る。 */
   readonly debug: boolean | null;
+  /** 図の右下に処理系の版を刻むか。 */
+  readonly stamp: boolean | null;
   /** `style:` が書かれた行。読めなかった項目の報告に使う。 */
   readonly line: number | null;
 };

@@ -14,6 +14,7 @@ export const EMPTY_STYLE: StyleSpec = {
   holeColor: null,
   width: null,
   debug: null,
+  stamp: null,
   line: null,
 };
 
@@ -37,9 +38,9 @@ export type StyleValidation = { readonly value: StyleSpec; readonly messages: re
  */
 const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 
-const KEYS = [
+export const STYLE_KEYS = [
   'theme', 'text-size', 'text-color', 'text-background',
-  'wire-width', 'board-color', 'hole-size', 'hole-color', 'width', 'debug',
+  'wire-width', 'board-color', 'hole-size', 'hole-color', 'width', 'debug', 'stamp',
 ] as const;
 
 const isRecord = (raw: unknown): raw is Record<string, unknown> =>
@@ -125,8 +126,10 @@ function withKey(style: StyleSpec, key: string, raw: unknown, messages: StyleMes
       return { ...style, width: size(STYLE_RANGES.width) ?? style.width };
     case 'debug':
       return { ...style, debug: readFlag(raw, key, messages) ?? style.debug };
+    case 'stamp':
+      return { ...style, stamp: readFlag(raw, key, messages) ?? style.stamp };
     default:
-      messages.push({ message: `style の知らない項目です: ${safeToken(key)} (使えるのは ${KEYS.join(', ')})`, key });
+      messages.push({ message: `style の知らない項目です: ${safeToken(key)} (使えるのは ${STYLE_KEYS.join(', ')})`, key });
       return style;
   }
 }
@@ -142,7 +145,7 @@ export function validateStyle(raw: unknown, line: number | null): StyleValidatio
   if (typeof raw === 'string') return { value: { ...base, theme: raw }, messages: [] };
 
   if (!isRecord(raw)) {
-    return { value: base, messages: [{ message: `style はテーマ名か、${KEYS.join(' / ')} のマップで書きます`, key: null }] };
+    return { value: base, messages: [{ message: `style はテーマ名か、${STYLE_KEYS.join(' / ')} のマップで書きます`, key: null }] };
   }
 
   const messages: StyleMessage[] = [];

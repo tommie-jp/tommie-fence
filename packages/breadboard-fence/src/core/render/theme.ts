@@ -54,6 +54,8 @@ export type RenderStyle = {
   readonly width: number | null;
   /** お知らせを図の下に出すか。既定は出す。 */
   readonly debug: boolean;
+  /** 図の右下に処理系の版を刻むか。既定は刻まない。 */
+  readonly stamp: boolean;
 };
 
 export type StyleResolution = { readonly style: RenderStyle; readonly messages: readonly string[] };
@@ -305,6 +307,7 @@ export function resolveStyle(spec: StyleSpec): StyleResolution {
       theme: withOverrides(named ?? DEFAULT_THEME, spec),
       width: spec.width,
       debug: spec.debug ?? true,
+      stamp: spec.stamp ?? false,
     },
     messages,
   };

@@ -120,8 +120,13 @@ GitHub に貼れるスタンドアロン SVG を書き出せる。事前に `npm
 (または `npm run package`) が要る。コマンドは PowerShell でも同じ。
 
 ```bash
-node dist/cli.cjs render examples --out examples/out
+node dist/cli.cjs render examples --out examples/out   # 図を書き出す
+node dist/cli.cjs check examples                       # 書かずに検証だけ
 ```
+
+`check` は何も書かず、ネットリストと読めなかったところだけを出す
+(読めない行が 1 つでもあれば終了コードは 1)。図を貼る前の下読みと CI 向けで、
+LLM に書かせて直させるループでは書き出しの分だけ回転が速い。
 
 引数はファイルでもディレクトリでもよく、展開は CLI 側でやる
 (ワイルドカードを展開しないシェルでもそのまま動く)。`--out` を省くと入力と同じ
@@ -130,7 +135,8 @@ node dist/cli.cjs render examples --out examples/out
 
 ## 文法
 
-[docs/syntax.md](docs/syntax.md) に一覧と出力例がある。要点だけ:
+[docs/01-syntax.md](docs/01-syntax.md) に一覧と出力例、
+[docs/02-cheatsheet.md](docs/02-cheatsheet.md) に 1 画面の早見表がある。要点だけ:
 
 | 要素 | 書き方 | 例 |
 | --- | --- | --- |

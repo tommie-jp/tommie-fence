@@ -7,6 +7,9 @@
 npm run examples   # examples/*.md → examples/out/*.svg (+ ネットリストを標準出力へ)
 ```
 
+1 画面に収めた早見表は [02-cheatsheet.md](02-cheatsheet.md)
+(LLM に書かせるときは、そちらをプロンプトに貼る)。
+
 Markdown には次のように書く。VS Code のプレビュー (`Ctrl+Shift+V`) で図になる。
 
 ````markdown
@@ -140,6 +143,7 @@ style:
   hole-color: "#0d1014"
   width: 1200        # 出力の横ドット数 (120〜4000)。縦は figure の比から決まる
   debug: off         # on (既定) / off。お知らせを図の下に出すか
+  stamp: on          # on / off (既定)。図の右下に処理系の版を刻むか
 ```
 
 - 色は **`#rgb` か `#rrggbb` だけ**。名前や `rgb()` は書式エラーにする
@@ -151,6 +155,10 @@ style:
 - 範囲を外れた数値は端まで寄せて描き、そのことを行番号つきでお知らせに出す。
 - `debug: off` で伏せられるのは**お知らせだけ**。読めなかった行は伏せられない
   → [エラーとお知らせの出方](#エラーとお知らせの出方)。
+- `stamp: on` は右下に `breadboard-fence 0.2.0` と小さく刻む。**字は選べない**
+  (処理系が埋めるものなので)。刻まない図にも SVG の根に
+  `data-breadboard-fence` が入るので、あとから「どの版が描いた図か」を
+  図そのものに聞ける。
 - テーマの配色は 1.0 までは調整することがある。`classic` だけは変えない
   (`style: classic` と書いた図の見え方を固定しておくため)。
 
