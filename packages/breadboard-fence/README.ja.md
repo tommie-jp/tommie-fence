@@ -89,7 +89,7 @@ sha256sum -c SHA256SUMS
 
 ```bash
 npm run package
-code --install-extension breadboard-fence-0.2.0.vsix --force
+code --install-extension breadboard-fence-0.3.0.vsix --force
 ```
 
 - バージョン番号を上げずに入れ直すときは `--force` が要る。

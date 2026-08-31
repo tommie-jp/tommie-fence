@@ -90,7 +90,7 @@ By hand, that is these two:
 
 ```bash
 npm run package
-code --install-extension breadboard-fence-0.2.0.vsix --force
+code --install-extension breadboard-fence-0.3.0.vsix --force
 ```
 
 - Reinstalling without bumping the version needs `--force`.
