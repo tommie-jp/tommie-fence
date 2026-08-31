@@ -201,6 +201,88 @@ describe('renderBreadboard', () => {
     expect(left.svg).not.toBe(right.svg);
   });
 
+  test('reads an electrolytic written without polarity as plus on the first hole', () => {
+    const bare = renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/electrolytic b5 b8 10u\n');
+    const marked = renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/electrolytic b5(+) b8(-) 10u\n');
+
+    expect(bare.errors).toEqual([]);
+    expect(bare.svg).toBe(marked.svg);
+  });
+
+  test('marks a tantalum written without polarity on the first hole, not the second', () => {
+    // 電解の帯とタンタルの印は逆側に付く。既定を「常に 2 本目」にすると、
+    // 印を書かなかったタンタルだけ向きが逆になる。
+    const bare = renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/tantalum b5 b8 10u\n');
+    const marked = renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/tantalum b5(+) b8(-) 10u\n');
+
+    expect(bare.errors).toEqual([]);
+    expect(bare.svg).toBe(marked.svg);
+  });
+
+  test('folds a shorthand into the full type name before anything else sees it', () => {
+    const short = renderBreadboard('parts:\n  R1: r a5 a10 10k\n');
+    const full = renderBreadboard('parts:\n  R1: resistor a5 a10 10k\n');
+
+    expect(short.errors).toEqual([]);
+    // 図も部品リストも正式名で出るので、略記で書いてもバイト単位で同じになる。
+    expect(short.svg).toBe(full.svg);
+  });
+
+  test('opens the shorthand that carries a look into both halves', () => {
+    const short = renderBreadboard('parts-list: none\nparts:\n  C1: ec b5(+) b8(-) 100u\n');
+    const full = renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/electrolytic b5(+) b8(-) 100u\n');
+
+    expect(short.errors).toEqual([]);
+    expect(short.svg).toBe(full.svg);
+  });
+
+  test('reports a look written after a shorthand that already carries one', () => {
+    const { errors } = renderBreadboard('parts:\n  C1: ec/tantalum b5(+) b8(-) 100u\n');
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.line).toBe(2);
+    expect(errors[0]?.message).toContain('capacitor/electrolytic');
+  });
+
+  test('still draws the button under the name published in 0.2.0', () => {
+    const old = renderBreadboard('parts:\n  SW1: pushbutton @ e5\n');
+    const now = renderBreadboard('parts:\n  SW1: button @ e5\n');
+
+    expect(old.errors).toEqual([]);
+    expect(old.svg).toBe(now.svg);
+  });
+
+  test('draws every part type the grammar knows', () => {
+    const twoLead = [
+      'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc', 'varistor',
+      'zener', 'schottky', 'photodiode', 'varicap', 'diac', 'reed', 'fuse', 'lamp',
+    ];
+
+    for (const [index, type] of twoLead.entries()) {
+      const { svg, errors } = renderBreadboard(`parts:\n  X${index}: ${type} a5 a8\n`);
+
+      expect(errors, type).toEqual([]);
+      expect(svg, type).toContain('<svg');
+    }
+  });
+
+  test('draws the thyristor and the triac on three legs, in either package', () => {
+    for (const type of ['thyristor', 'triac']) {
+      const to92 = renderBreadboard(`parts:\n  Q1: ${type} a5(A) a6(G) a7(K)\n`);
+      const to220 = renderBreadboard(`parts:\n  Q1: ${type}/to220 a5(A) a6(G) a7(K)\n`);
+
+      expect(to92.errors, type).toEqual([]);
+      expect(to220.errors, type).toEqual([]);
+      expect(to220.svg, type).not.toBe(to92.svg);
+    }
+  });
+
+  test('offers the nearest name when a type is misspelled', () => {
+    const { errors } = renderBreadboard('parts:\n  R1: resistr a5 a10 10k\n');
+
+    expect(errors[0]?.message).toContain('resistor のことですか');
+  });
+
   test('lets a wire refer to a pin named after its polarity', () => {
     const { netlist, errors } = renderBreadboard(
       ['parts:', '  C1: capacitor b5(-) b12(+) 47uF', 'wires:', '  - C1.+ -- -t12 black'].join('\n'),

@@ -28,7 +28,8 @@ export function parseCompactPart(id: string, spec: string, line: number): Result
   const [typeToken, ...rest] = tokens;
   if (!typeToken) return fail(`部品 ${safeToken(id)} の内容が空です`, line);
 
-  const { type, variant } = splitPartType(typeToken);
+  const { type, variant, problem } = splitPartType(typeToken);
+  if (problem) return fail(`部品 ${safeToken(id)}: ${problem}`, line);
   const base: PartSpec = { id, type, variant, holes: [], value: null, label: null, at: null, pins: null, line };
 
   if (rest[0] === '@') {

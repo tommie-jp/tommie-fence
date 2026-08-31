@@ -238,23 +238,23 @@ describe('placeParts', () => {
     expect(errors[0]?.message).toContain('30');
   });
 
-  test('straddles the ravine with the four legs of a pushbutton', () => {
-    const { parts, errors } = placeParts([spec({ id: 'SW1', type: 'pushbutton', holes: holes('e5') })], board);
+  test('straddles the ravine with the four legs of a button', () => {
+    const { parts, errors } = placeParts([spec({ id: 'SW1', type: 'button', holes: holes('e5') })], board);
 
     expect(errors).toEqual([]);
     expect(pinMap(parts[0]!)).toEqual({ '1a': 'e5', '1b': 'e7', '2a': 'f5', '2b': 'f7' });
   });
 
-  test('bridges the two legs that sit on the same side of a pushbutton', () => {
-    const { parts } = placeParts([spec({ id: 'SW1', type: 'pushbutton', holes: holes('e5') })], board);
+  test('bridges the two legs that sit on the same side of a button', () => {
+    const { parts } = placeParts([spec({ id: 'SW1', type: 'button', holes: holes('e5') })], board);
 
     // 押していなくてもつながっている組。押すと 1 と 2 の側がつながる。
     expect(parts[0]?.bridges).toEqual([['1a', '1b'], ['2a', '2b']]);
   });
 
-  test('reports a pushbutton anchored in a row that does not touch the ravine', () => {
+  test('reports a button anchored in a row that does not touch the ravine', () => {
     const { parts, errors } = placeParts(
-      [spec({ id: 'SW1', type: 'pushbutton', holes: holes('a5'), line: 2 })],
+      [spec({ id: 'SW1', type: 'button', holes: holes('a5'), line: 2 })],
       board,
     );
 
@@ -301,10 +301,10 @@ describe('placeParts', () => {
     expect(errors[0]?.message).toContain('30');
   });
 
-  test('claims the hole under the body of a pushbutton', () => {
+  test('claims the hole under the body of a button', () => {
     const { parts, errors } = placeParts(
       [
-        spec({ id: 'SW1', type: 'pushbutton', holes: holes('e5') }),
+        spec({ id: 'SW1', type: 'button', holes: holes('e5') }),
         // e6 は足の穴ではないが、本体の下なので何も挿せない。
         spec({ id: 'R1', type: 'resistor', holes: holes('e6', 'e10'), line: 3 }),
       ],
@@ -399,15 +399,16 @@ describe('placeParts', () => {
     expect(errors[0]?.message).toContain('capacitor');
   });
 
-  test('reports an electrolytic that does not say which lead is the minus', () => {
-    // マイナス側に帯を描くので、どちらの足かが決まらないと図が嘘になる。
-    const { errors } = placeParts(
+  test('takes an electrolytic without polarity marks, since the first hole is the plus', () => {
+    // 「極性・向きのある 2 端子は、先に書いた穴が + 側」という 1 文の規則で向きが決まる。
+    // led / diode は最初からこの規則で描いていたので、電解だけタグ必須なのは食い違いだった。
+    const { parts, errors } = placeParts(
       [spec({ id: 'C1', type: 'capacitor', variant: 'electrolytic', holes: holes('a5', 'a10') })],
       board,
     );
 
-    expect(errors).toHaveLength(1);
-    expect(errors[0]?.message).toContain('(-)');
+    expect(errors).toEqual([]);
+    expect(parts).toHaveLength(1);
   });
 
   test('reports a polarity mark on a look that has none', () => {

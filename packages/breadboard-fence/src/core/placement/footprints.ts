@@ -1,5 +1,7 @@
 import type { BoardPart } from '../parts/boards.ts';
 import { boardPartNames, lookupBoardPart } from '../parts/boards.ts';
+import { aliasNames } from '../parts/aliases.ts';
+import { safeToken } from '../errors.ts';
 
 /** 部品の形。ここに無い種類は描けないので配置時にエラーにする。 */
 export type Footprint =
@@ -12,9 +14,24 @@ export type Footprint =
   | { readonly kind: 'board'; readonly board: BoardPart }
   | { readonly kind: 'device' };
 
-const TWO_LEAD_TYPES = new Set(['resistor', 'capacitor', 'led', 'diode', 'buzzer', 'crystal', 'inductor']);
-const THREE_LEAD_TYPES = new Set(['transistor', 'potentiometer', 'slide-switch']);
-const SWITCH_TYPES = new Set(['pushbutton']);
+/**
+ * 2 本足の部品。名前は circuit-fence と揃えてある (同じノートで両方のフェンスを
+ * 書くときに、頭の中の語彙を 1 つで済ませるため)。
+ */
+const TWO_LEAD_TYPES = new Set([
+  'resistor', 'capacitor', 'led', 'diode', 'buzzer', 'crystal', 'inductor',
+  // 抵抗体を円板に固めた部品。値は抵抗なので、キャプションの読み方も抵抗と同じ。
+  'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc', 'varistor',
+  // ダイオードの仲間。実物はどれも同じ形の胴で、カソード帯の位置が意味を持つ。
+  'zener', 'schottky', 'photodiode', 'varicap', 'diac',
+  // ガラス管・玉に封じた部品。
+  'reed', 'fuse', 'lamp',
+]);
+const THREE_LEAD_TYPES = new Set([
+  'transistor', 'potentiometer', 'slide-switch', 'thyristor', 'triac',
+]);
+/** タクトスイッチ。v0.2.0 の `pushbutton` は略記として `button` に畳んでから来る。 */
+const SWITCH_TYPES = new Set(['button']);
 
 const DIP_PATTERN = /^dip(\d+)$/;
 const DIP_MIN_PINS = 4;
@@ -59,3 +76,75 @@ export const knownPartTypes = (): readonly string[] => [
   ...boardPartNames(),
   'device',
 ];
+
+/**
+ * 知らない種類だったときの案内。**種類が 30 を超えたので全部並べても読めない**ので、
+ * 書き間違いに見えるものは候補を 1 つだけ返す (circuit-fence と同じ手口)。
+ *
+ * ピン数だけが範囲外の `dip9` に「dipN のことですか」と返しても直す手がかりに
+ * ならないので、そこは範囲そのものを言う。
+ */
+export function describeUnknownType(type: string): string {
+  const dip = DIP_PATTERN.exec(type);
+  if (dip) return `dip のピン数は ${DIP_MIN_PINS}〜${DIP_MAX_PINS} の偶数です`;
+
+  const sip = SIP_PATTERN.exec(type);
+  if (sip) return `sip のピン数は ${SIP_MIN_PINS}〜${SIP_MAX_PINS} です`;
+
+  const near = closestPartType(type);
+  if (near) return `${near} のことですか?`;
+  return `使えるのは ${knownPartTypes().join(', ')}`;
+}
+
+/**
+ * 書き間違いの候補。**略記も候補に入れる**: 打てば通る綴りなので、
+ * `pushbuton` には `pushbutton` を返すのが一番近い直し方になる。
+ */
+export function closestPartType(wanted: string): string | null {
+  const budget = editBudget(wanted);
+  if (budget === 0) return null;
+
+  let best: string | null = null;
+  let bestDistance = budget + 1;
+  for (const candidate of [...knownPartTypes(), ...aliasNames()]) {
+    const distance = editDistance(wanted.toLowerCase(), candidate.toLowerCase(), bestDistance);
+    if (distance < bestDistance) {
+      best = candidate;
+      bestDistance = distance;
+    }
+  }
+  return best === null ? null : safeToken(best);
+}
+
+/**
+ * 何文字までの違いを「書き間違い」と見なすか。短い綴りに広い許容を与えると、
+ * 無関係な名前 (`x` → `r`) を自信たっぷりに勧めてしまう。
+ */
+function editBudget(wanted: string): number {
+  if (wanted.length <= 3) return 0;
+  return wanted.length <= 6 ? 1 : 2;
+}
+
+/** レーベンシュタイン距離。`limit` を超えると分かった時点で打ち切る。 */
+function editDistance(a: string, b: string, limit: number): number {
+  if (Math.abs(a.length - b.length) >= limit) return limit;
+
+  let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= a.length; i += 1) {
+    const row = [i];
+    let best = i;
+    for (let j = 1; j <= b.length; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      const value = Math.min(
+        (previous[j] ?? 0) + 1,
+        (row[j - 1] ?? 0) + 1,
+        (previous[j - 1] ?? 0) + cost,
+      );
+      row.push(value);
+      best = Math.min(best, value);
+    }
+    if (best >= limit) return limit;
+    previous = row;
+  }
+  return previous[b.length] ?? limit;
+}

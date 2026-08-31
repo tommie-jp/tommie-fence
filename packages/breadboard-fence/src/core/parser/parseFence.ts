@@ -251,7 +251,8 @@ function expandPart(id: string, raw: unknown, line: number) {
   }
 
   const { at, label, value, pins, holes } = validated.value;
-  const { type, variant } = splitPartType(validated.value.type);
+  const { type, variant, problem } = splitPartType(validated.value.type);
+  if (problem) return { ok: false as const, error: fenceError(`部品 ${safeToken(id)}: ${problem}`, line) };
   return {
     ok: true as const,
     value: {

@@ -145,16 +145,24 @@ node dist/cli.cjs render examples --out examples/out
 | 配線 | `- 端点 -- 端点 [色]` | `- a10 -- b12 red` |
 | 迂回ヒント | 角括弧で道順を指定 (20 = 穴 1 つ) | `- j20 -- -b20 black [v-20]` |
 | 部品リスト | 図の下に自動で出る。消すときだけ書く | `parts-list: none` |
-| 押しボタン | 溝をまたいで 4 本足。ピン 1a の穴を書く | `SW1: pushbutton @ e5` |
+| 押しボタン | 溝をまたいで 4 本足。ピン 1a の穴を書く | `SW1: button @ e5` |
 | マイコンボード | ピン 1 の穴を書く。ピン名は実物の印字 | `MCU: pico2 @ h5` |
+| 種類の略記 | よく書く種類は短い綴りでも書ける | `R1: r a5 a10 10k` |
 
-部品は 2 本足が resistor / capacitor / led / diode / buzzer / crystal / inductor、
-3 本足が transistor / potentiometer / slide-switch、
-まとまった足を持つものが pushbutton (タクトスイッチ) / dipN / sipN、
+部品は 2 本足が resistor / capacitor / led / diode / buzzer / crystal / inductor /
+photoresistor / thermistor / thermistor-ntc / thermistor-ptc / varistor /
+zener / schottky / photodiode / varicap / diac / reed / fuse / lamp、
+3 本足が transistor / potentiometer / slide-switch / thyristor / triac、
+まとまった足を持つものが button (タクトスイッチ) / dipN / sipN、
 マイコンボードが pico / pico-w / pico2 / pico2-w、
 ボード外の機器が device。
+名前は回路図フェンス
+([circuit-fence](https://github.com/tommie-jp/circuit-fence)) と揃えてあるので、
+同じノートで両方を書くときに覚え直さなくてよい。
+
 抵抗の値はカラーコードとして描かれ、コンデンサに `(+)` `(-)` を付けると
-電解コンデンサとして帯が付く。
+電解コンデンサとして帯が付く。**極性・向きのある 2 端子は、書かなければ
+先に書いた穴が + 側 (アノード)。**
 
 ## サンプル
 
@@ -172,6 +180,7 @@ node dist/cli.cjs render examples --out examples/out
 | [08-emitter-follower.md](examples/08-emitter-follower.md) | 2SC1815 のエミッタフォロワ (電源 5V、スピーカー出力) |
 | [09-am-radio.md](examples/09-am-radio.md) | 1 石中波ラジオ (高周波増幅 + 検波、バーアンテナとポリバリコン) |
 | [10-bh-ad2.md](examples/10-bh-ad2.md) | B-H カーブ測定回路 (オペアンプ・測定器・トロイダルコア) |
+| [11-sensors.md](examples/11-sensors.md) | CdS・サーミスタの分圧、ダイオードの仲間、ガラス封止の部品 |
 
 ![1 石中波ラジオの配線図](examples/out/09-am-radio.png)
 

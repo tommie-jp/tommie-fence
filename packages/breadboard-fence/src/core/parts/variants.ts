@@ -7,7 +7,17 @@
  * 「コンデンサだ」と分かるのは色、「どのコンデンサか」は形で読ませる。
  */
 
-export type PartType = { readonly type: string; readonly variant: string | null };
+import { resolveAlias } from './aliases.ts';
+
+export type PartType = {
+  readonly type: string;
+  readonly variant: string | null;
+  /**
+   * 読めたが受け取れない書き方の理由。行番号を持っているのは呼ぶ側なので、
+   * ここでは文面だけ返して報告は任せる。null なら何も問題はない。
+   */
+  readonly problem: string | null;
+};
 
 /**
  * 種類ごとに選べる姿。ここに無い種類には `/…` を書けない。
@@ -19,6 +29,9 @@ const VARIANTS: Record<string, readonly string[]> = {
   led: ['3mm', '5mm'],
   // TO-92 は丸い小信号用、TO-220 は放熱タブつき。足の並びはどちらもピン名で示す。
   transistor: ['to92', 'to220'],
+  // サイリスタとトライアックも同じ 2 つのパッケージで売られている。
+  thyristor: ['to92', 'to220'],
+  triac: ['to92', 'to220'],
 };
 
 /**
@@ -35,7 +48,27 @@ const POLAR_VARIANTS: ReadonlySet<string> = new Set(['electrolytic', 'tantalum']
  */
 export function splitPartType(token: string): PartType {
   const slash = token.indexOf('/');
-  if (slash <= 0 || slash === token.length - 1) return { type: token, variant: null };
+  const half = slash <= 0 || slash === token.length - 1;
+  const head = half ? token : token.slice(0, slash);
+  const written = half ? null : token.slice(slash + 1);
+
+  const expanded = resolveAlias(head);
+  if (expanded === null) return { type: head, variant: written, problem: null };
+
+  // 略記の畳んだ先は表の中の綴りなので、姿の切り出しに失敗することはない。
+  const opened = splitOnSlash(expanded);
+  if (opened.variant !== null && written !== null) {
+    return {
+      ...opened,
+      problem: `略記 ${head} は ${expanded} の略なので、姿は続けて書けません`,
+    };
+  }
+  return { type: opened.type, variant: written ?? opened.variant, problem: null };
+}
+
+function splitOnSlash(token: string): { type: string; variant: string | null } {
+  const slash = token.indexOf('/');
+  if (slash <= 0) return { type: token, variant: null };
   return { type: token.slice(0, slash), variant: token.slice(slash + 1) };
 }
 

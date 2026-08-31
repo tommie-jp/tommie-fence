@@ -7,7 +7,7 @@
 ```breadboard
 board: half
 parts:
-  SW1: pushbutton @ e5
+  SW1: button @ e5
   R1: resistor j5 j10 330
   D1: led i12(A) i14(K) red
 wires:
@@ -16,7 +16,7 @@ wires:
   - i14 -- -b14 black
 ```
 
-`pushbutton @ e5` は溝をまたいで 4 本足を挿す。占める穴は `e5` `e7` `f5` `f7` で、
+`button @ e5` は溝をまたいで 4 本足を挿す。占める穴は `e5` `e7` `f5` `f7` で、
 足の名前は溝の手前側が `1a` `1b`、向こう側が `2a` `2b`。
 
 **同じ側の 2 本は、押していなくても中でつながっている。** 図の中の細い線がそれで、

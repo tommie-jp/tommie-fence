@@ -7,7 +7,7 @@ import type {
 } from '../types.ts';
 import type { BoardPart } from '../parts/boards.ts';
 import { isPolarVariant, typesWithVariants, variantsOf } from '../parts/variants.ts';
-import { knownPartTypes, lookupFootprint } from './footprints.ts';
+import { describeUnknownType, lookupFootprint } from './footprints.ts';
 
 export type PlaceResult = { readonly parts: readonly PlacedPart[]; readonly errors: readonly FenceError[] };
 
@@ -63,9 +63,14 @@ type Claim = { readonly id: string; readonly body: boolean };
 const POLARITY_MARKS: ReadonlySet<string> = new Set(['+', '-']);
 
 /**
- * 書かれた姿がその種類に合うか。**極性はピン名と姿の両方から決まる**ので、
- * 食い違ったら描かずに報告する。向きの分からない電解や、極性のないセラミックに
- * `(+)` が付いた図は、そのまま組むと部品を壊すため。
+ * 書かれた姿がその種類に合うか。**極性のない部品に極性が付いていたら**報告する
+ * (そのまま組むと部品を壊すため)。
+ *
+ * 逆に「向きのある姿にピン名が無い」のはエラーにしない。
+ * **極性・向きのある 2 端子は、先に書いた穴が + 側 (アノード)** という規則が
+ * フェンス全体にかかっているので、書かなくても向きは決まる (circuit-fence と同じ
+ * 1 文の規則)。led と diode は最初からこの規則で描いていたので、
+ * 電解とタンタルだけがタグ必須という食い違いをここで畳んだ。
  */
 function variantError(part: PlacedPart): FenceError | null {
   const { variant } = part;
@@ -90,14 +95,7 @@ function variantError(part: PlacedPart): FenceError | null {
   }
 
   // ここから先の variant は表にある名前なので、そのまま文面に出してよい。
-  if (isPolarVariant(variant)) {
-    // 2 本足なので、どちらか片方に印があれば反対側は決まる。
-    if (part.pins.some((pin) => POLARITY_MARKS.has(pin.name))) return null;
-    return {
-      message: `部品 ${safeToken(part.id)}: ${variant} は向きがあるので、極性を穴に書きます (例: a5(+) a10(-))`,
-      line: part.line,
-    };
-  }
+  if (isPolarVariant(variant)) return null;
   if (part.pins.some((pin) => POLARITY_MARKS.has(pin.name))) {
     return {
       message: `部品 ${safeToken(part.id)}: ${variant} は無極性なので (+) (-) は書けません`,
@@ -174,10 +172,7 @@ function findConflict(
 function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
   const footprint = lookupFootprint(spec.type);
   if (!footprint) {
-    return fail(
-      `知らない部品の種類です: ${safeToken(spec.type)} (使えるのは ${knownPartTypes().join(', ')})`,
-      spec.line,
-    );
+    return fail(`知らない部品の種類です: ${safeToken(spec.type)} (${describeUnknownType(spec.type)})`, spec.line);
   }
 
   const base: PartBase = {
@@ -349,10 +344,10 @@ function placeSip(spec: PartSpec, board: Board, base: PartBase, pinCount: number
  * その組を bridges で申告する。ここを黙っていると、図から導いたネットリストが実物と食い違う。
  */
 function placeSwitch(spec: PartSpec, board: Board, base: PartBase): Result<PlacedPart> {
-  const anchor = anchorHole(spec, board, 'pushbutton @ e5');
+  const anchor = anchorHole(spec, board, 'button @ e5');
   if (!anchor.ok) return anchor;
   if (anchor.value.row !== 'e' && anchor.value.row !== 'f') {
-    return fail(`部品 ${safeToken(spec.id)}: pushbutton は溝をまたぐので e 行か f 行に置きます`, spec.line);
+    return fail(`部品 ${safeToken(spec.id)}: button は溝をまたぐので e 行か f 行に置きます`, spec.line);
   }
 
   const overflow = rightEdge(spec, board, anchor.value.col + SWITCH_SPAN);

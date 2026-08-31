@@ -7,6 +7,29 @@
 
 ### Added
 
+- **部品を 15 種類足した。** 名前は回路図フェンス
+  ([circuit-fence](https://github.com/tommie-jp/circuit-fence)) と揃えてある。
+  同じノートで両方のフェンスを書くときに、語彙を覚え直さずに済むようにするため。
+  - 2 本足のセンサー — `photoresistor` (CdS) / `thermistor` /
+    `thermistor-ntc` / `thermistor-ptc` / `varistor`。
+    サーミスタの 3 つは**同じ黒い円板で印 (`N` / `P`) だけが違う**。
+    実物も形では見分けられないので、図でも印と部品リストの種類名に読ませる。
+  - ダイオードの仲間 — `zener` / `schottky` / `photodiode` / `varicap` / `diac`。
+    `photodiode` は砲弾型 (LED と同じ形)、`diac` は対称な素子なので**帯を描かない**。
+  - ガラス封止と玉 — `reed` / `fuse` / `lamp`。リードスイッチの接点は
+    **開いた状態**で描く (磁石が無い平常時と食い違わせないため)。
+  - 3 本足 — `thyristor` / `triac`。`transistor` と同じ `to92` / `to220` の姿を選べる。
+- **種類の略記**を足した。`r` `c` `l` `d` `ec` `ecap` `pot` `ldr` `ntc` `ptc`
+  `xtal` `scr` `btn` `pushbutton` の 14 個。**読んだ直後に正式名へ畳む**ので、
+  図・部品リスト・ネットリスト・エラーには正式名しか出ない
+  (`R1: r a5 a10 10k` は `R1: resistor a5 a10 10k` とバイト単位で同じ図になる)。
+  `ec` だけは姿まで含み、`capacitor/electrolytic` に開く。
+- **書き間違いに候補を出すようにした**。`resistr` と書くと
+  「resistor のことですか?」と返る。種類が 30 を超えて、
+  今までのように全部並べても読めなくなったため。ピン数だけが範囲外の `dip9` には
+  候補ではなく範囲 (`4〜40 の偶数`) を言う。
+- 例を 1 つ足した。[examples/11-sensors.md](examples/11-sensors.md) —
+  CdS とサーミスタの分圧、ダイオードの仲間、ガラス封止の部品。
 - 例を 1 つ足した。[examples/09-am-radio.md](examples/09-am-radio.md) —
   バーアンテナとポリバリコンで同調し、**検波の前に 1 石で高周波を増幅する**中波ラジオ。
   `diode` の向き・`capacitor/ceramic` の姿・ボード外の機器 4 台 (アンテナ・バリコン・
@@ -14,6 +37,18 @@
 
 ### Changed
 
+- **タクトスイッチの正式名を `pushbutton` から `button` に変えた。**
+  circuit-fence が `button` で公開済みで、そちらに揃えたほうが語彙が 1 つで済む。
+  **`pushbutton` は略記として残す**ので、v0.2.0 で書いた図はそのまま描ける。
+  変わるのは図の下の部品リストに出る種類名だけ。
+- **極性を書かなかった 2 端子の向きを 1 つの規則にまとめた。**
+  「極性・向きのある 2 端子は、先に書いた穴が + 側 (アノード)」。
+  `led` と `diode` は最初からこの規則で描いていたのに、
+  `capacitor/electrolytic` と `capacitor/tantalum` だけが
+  「極性を書かないとエラー」で、同じフェンスの中に規則が 2 つある状態だった。
+  **今までエラーだった書き方が通るようになるだけ**で、
+  受理されていた書き方の図は変わらない。
+  タンタルは印がプラス側に付くので、既定の向きも電解とは逆側になる。
 - `examples/08` をエミッタ接地アンプからエミッタフォロワに差し替えた
   (`08-common-emitter.md` → [08-emitter-follower.md](examples/08-emitter-follower.md))。
   同じ 1 石でも**電圧を増やす段と電流だけを増やす段**が並ぶより、

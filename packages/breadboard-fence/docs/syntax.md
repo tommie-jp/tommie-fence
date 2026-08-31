@@ -33,7 +33,7 @@ wires:
 | 3 端子部品 | 足の数だけ穴を書く | `Q1: transistor h9(B) h10(C) h11(E) 2SC1815` |
 | DIP 部品 | `ID: dipN @ 穴 ラベル` | `U1: dip8 @ e5 NJM4556A` |
 | 1 列ヘッダ | `ID: sipN @ 穴 ラベル`。足名は `pins:` で付ける | `M1: sip4 @ a20 OLED` |
-| 押しボタン | `ID: pushbutton @ 穴`。溝をまたぐ 4 本足 | `SW1: pushbutton @ e5` |
+| 押しボタン | `ID: button @ 穴`。溝をまたぐ 4 本足 | `SW1: button @ e5` |
 | マイコンボード | `ID: 種類 @ 穴`。ピン名は実物の印字 | `MCU: pico2 @ h5` |
 | ボード外の機器 | マップ形式で `type: device` + `at:` + `pins:` | 下の例 2 |
 | 配線 | `- 端点 -- 端点 [色]` | `- a10 -- b12 red` |
@@ -43,16 +43,22 @@ wires:
 
 - 部品の種類:
   - 2 本足 — `resistor` / `capacitor` / `led` / `diode` / `buzzer` / `crystal` / `inductor`
-  - 3 本足 — `transistor` / `potentiometer` / `slide-switch`
-  - まとまった足 — `pushbutton` / `dipN` / `sipN`
+  - 2 本足 (センサー) — `photoresistor` / `thermistor` / `thermistor-ntc` /
+    `thermistor-ptc` / `varistor`
+  - 2 本足 (ダイオードの仲間) — `zener` / `schottky` / `photodiode` / `varicap` / `diac`
+  - 2 本足 (ガラス封止) — `reed` / `fuse` / `lamp`
+  - 3 本足 — `transistor` / `potentiometer` / `slide-switch` / `thyristor` / `triac`
+  - まとまった足 — `button` / `dipN` / `sipN`
   - マイコンボード — `pico` / `pico-w` / `pico2` / `pico2-w`
   - ボード外の機器 — `device`
+- 略記でも書ける → [種類の略記](#種類の略記)。図・部品リスト・エラーには
+  正式名だけが出る。
 - 配線の色: red, black, white, gray, orange, yellow, green, blue, purple, brown, pink。
   知らない色名は図に書き込まず、行番号つきのエラーにする。
 - コンデンサは `capacitor/ceramic` のように姿を選べる → [部品の姿](#部品の姿-variant)。
   姿を書かずに `(+)` `(-)` を付けたときは電解として描き、マイナス側に帯を出す。
-- `diode` は `(A)` `(K)` を付けるとその向きにカソード帯を描く。付けないときは
-  **2 つ目の穴をカソード**として描く (`led` と同じ約束)。
+- **極性・向きのある 2 端子は、先に書いた穴が + 側 (アノード)** →
+  [極性と向き](#極性と向き)。
 - `transistor` は TO-92 の丸い本体で描く。**パッケージの平らな面の向きは図では示さない**
   (足の並びは品種ごとに違うため)。どの穴がどの足かはピン名で示す。
 - ボード外の機器 (`device`) が箱に出すのは **`label` (書かなければ ID)** だけ。
@@ -174,6 +180,52 @@ parts-list: none    # below (既定) / none
 | --- | --- |
 | ![部品リストつき](../examples/out/04-parts-list-1.svg) | ![部品リストなし](../examples/out/04-parts-list-2.svg) |
 
+## 種類の略記
+
+よく書く種類には短い綴りがある。**読んだ直後に正式名へ畳む**ので、
+図・部品リスト・ネットリスト・エラーには正式名だけが出る。
+`R1: r a5 a10 10k` と `R1: resistor a5 a10 10k` は同じ図になる。
+
+| 略記 | 正式名 | 略記 | 正式名 |
+| --- | --- | --- | --- |
+| `r` | `resistor` | `ldr` | `photoresistor` |
+| `c` | `capacitor` | `ntc` | `thermistor-ntc` |
+| `l` | `inductor` | `ptc` | `thermistor-ptc` |
+| `d` | `diode` | `xtal` | `crystal` |
+| `ec` / `ecap` | `capacitor/electrolytic` | `scr` | `thyristor` |
+| `pot` | `potentiometer` | `btn` / `pushbutton` | `button` |
+
+- **`ec` は姿まで含む**唯一の略記。電解コンデンサは種類ではなく `capacitor` の
+  姿なので、1 語が「種類 + 姿」に開く。`ec/tantalum` のように姿を重ねて書くと、
+  どちらを採るかが決まらないので行番号つきで報告する。
+- `pushbutton` は v0.2.0 で正式名として公開した綴り。正式名は
+  回路図フェンス (circuit-fence) と揃えて `button` にしたが、
+  **一度公開した名前は書いた図を壊さない**ので略記として残してある。
+- グラウンドや電源の略記は無い。板の上ではレール (`+t5` `-b20`) がその役をしていて、
+  挿す部品としては存在しないため。
+
+## 極性と向き
+
+**極性・向きのある 2 端子は、先に書いた穴が + 側 (アノード)。**
+これがフェンス全体にかかる 1 つの規則で、ピン名を書かなかったときの向きを決める。
+
+```yaml
+parts:
+  D1: diode a3 a6 1N4148          # a3 がアノード、a6 がカソード
+  C1: capacitor/electrolytic a9 a12 100u   # a9 が +
+  D2: led a15 a18 red             # a15 がアノード
+```
+
+- ピン名 (`(A)` `(K)` `(+)` `(-)`) を書けば、そちらが優先される。
+  **2 本足なので片方だけ書けば反対側は決まる**。
+- 迷うところや、あとで読み返す図では書いておくとよい。図と食い違ったときに
+  ネットリストの `D1.A` で突き合わせられる。
+- **印が付く側は部品によって違う**。電解コンデンサの帯はマイナス側、
+  タンタルの印はプラス側、ダイオードの帯はカソード側。どれも
+  「先に書いた穴が + 側」から向きが決まり、そのうえで各部品の流儀で印が付く。
+- `diac` のように向きの無い部品には印を描かない。
+- `buzzer` は圧電式なら無極性なので、`(+)` を書いたときだけ印を出す。
+
 ## 部品の姿 (variant)
 
 種類に `/` で続けて書くと、その部品を**実物のどのかたちで描くか**を選べる。
@@ -197,6 +249,8 @@ parts:
 | | `tantalum` | 黄色い粒。**プラス側**に印 |
 | `led` | `3mm` / `5mm` | 玉の大きさ。既定は `5mm` |
 | `transistor` | `to92` / `to220` | 丸い胴 (既定) / 放熱タブつきの角い胴 |
+| `thyristor` | `to92` / `to220` | 同上 |
+| `triac` | `to92` / `to220` | 同上 |
 
 - **色は種類のもの、形が姿のもの**。図の中で「コンデンサだ」と分かるのは色で、
   「どのコンデンサか」は形で読ませる。
@@ -204,7 +258,8 @@ parts:
   同じ `0.1u` でもどれを買うかはそこで決まるため。
 - **電解の帯はマイナス側、タンタルの印はプラス側**で、同じコンデンサでも印の意味が逆。
   取り違えると壊れるので、形から先に見分けられるようにしてある。
-- **極性は姿とピン名の両方から決まる**。食い違う書き方は描かずに報告する。
+- **無極性の姿に極性を書いたときは描かずに報告する** (そのまま組むと壊れるため)。
+  向きを書かなかったときの決まりは [極性と向き](#極性と向き)。
 
 | 書き方 | 結果 |
 | --- | --- |
@@ -212,7 +267,7 @@ parts:
 | `capacitor a5(+) a8(-)` | 電解の缶 (今までどおり) |
 | `capacitor/electrolytic a5(+) a8(-)` | 電解の缶 |
 | `capacitor/electrolytic a5(+) a8` | 電解の缶。2 本足なので、片方書けば反対側は決まる |
-| `capacitor/electrolytic a5 a8` | エラー。どちらが `-` か決まらないと帯が描けない |
+| `capacitor/electrolytic a5 a8` | 電解の缶。先に書いた `a5` が + 側 |
 | `capacitor/ceramic a5(+) a8(-)` | エラー。無極性の部品に極性を書いている |
 
 - 姿を書かなければ**今までどおりの図**になる。`/…` を足す前に描いた図の
@@ -235,12 +290,12 @@ parts:
 
 ```yaml
 parts:
-  SW1: pushbutton @ e5                    # 溝をまたぐ 4 本足
+  SW1: button @ e5                        # 溝をまたぐ 4 本足
   VR1: potentiometer e8(1) e9(W) e10(3) 10k
   SW2: slide-switch e3(1) e4(C) e5(2)
 ```
 
-### 押しボタン (pushbutton)
+### 押しボタン (button)
 
 6mm 角のタクトスイッチ。`@` にはピン `1a` の穴を書く。溝をまたぐので
 **`e` 行か `f` 行**に置く。占めるのは `e5` `e7` `f5` `f7` の 4 つで、足の名前は

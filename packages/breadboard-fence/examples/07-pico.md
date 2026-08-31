@@ -16,7 +16,7 @@ parts:
   D2: diode a2(A) a6(K) 1N5817
   R1: resistor j28 j32 330
   D1: led j35(A) j37(K) red
-  SW1: pushbutton @ e42
+  SW1: button @ e42
 wires:
   # 電源: 電池 → ショットキーダイオード → VSYS、3V3(OUT) → 上の + レール
   - BT1.+ -- a2 orange

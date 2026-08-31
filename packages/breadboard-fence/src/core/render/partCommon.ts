@@ -60,10 +60,13 @@ export const charWidth = (theme: RenderTheme): number => textScale(theme) * CHAR
 export const haloWidth = (theme: RenderTheme): number =>
   TEXT_HALO_WIDTH * textScale(theme) + (theme.metrics.holeSize - BASE_HOLE_SIZE) * 1.25;
 
+/** 砲弾型で描く部品。丸が大きいぶん、上に置くラベルを少し離す。 */
+const DOME_TYPES: ReadonlySet<string> = new Set(['led', 'photodiode']);
+
 /** ラベルは溝の側に置く。盤の端は列番号の印字があり、そこに重ねると両方読めなくなる。 */
 export function labelYOf(part: PlacedPart, center: Point, layout: Layout): number {
   if (center.y < layout.ravineY) return center.y + CAPTION_DROP;
-  return center.y - (part.type === 'led' ? LED_CAPTION_RISE : CAPTION_RISE);
+  return center.y - (DOME_TYPES.has(part.type) ? LED_CAPTION_RISE : CAPTION_RISE);
 }
 
 /** 板と穴の上に載る部品の字。縁取りを敷いて、下の穴に食われないようにする。 */
