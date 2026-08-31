@@ -1,18 +1,24 @@
 import type { Point, Rect } from '../types.ts';
 
 /**
- * 配線が矩形 (部品の本体やラベル) を横切るかどうか。
- * 経路は縦か横の線分だけでできているので、斜めは考えない。
+ * 2 点が張る矩形が、部品の矩形と重なるかどうか。
  *
- * **触れているだけでは横切ったことにしない**: 端点が部品の縁にちょうど載る配線
+ * **触れているだけでは重なったことにしない**: 端点が部品の縁にちょうど載る配線
  * (部品の足から出る配線がまさにそれ) まで避け始めると、どこにも引けなくなる。
  */
-export function segmentHitsRect(a: Point, b: Point, rect: Rect, margin: number): boolean {
+export function boxHitsRect(a: Point, b: Point, rect: Rect, margin: number): boolean {
   return Math.min(a.x, b.x) < rect.x + rect.width + margin
     && Math.max(a.x, b.x) > rect.x - margin
     && Math.min(a.y, b.y) < rect.y + rect.height + margin
     && Math.max(a.y, b.y) > rect.y - margin;
 }
+
+/**
+ * 配線が矩形 (部品の本体やラベル) を横切るかどうか。
+ * 経路は縦か横の線分だけでできているので、張る矩形がそのまま線分になる。
+ */
+export const segmentHitsRect = (a: Point, b: Point, rect: Rect, margin: number): boolean =>
+  boxHitsRect(a, b, rect, margin);
 
 export const segmentHitsAny = (
   a: Point,
@@ -42,18 +48,21 @@ const terminals = (path: readonly Point[]): string[] => {
 };
 
 /**
- * 2 本の配線が交わる回数。**両端の穴で出会うぶんは数えない**:
+ * 2 本の配線が交わる回数。**同じ穴で出会うぶんは数えない**:
  * 同じ穴につながる 2 本が根元で重なるのは交差ではなく分岐で、
  * ここを数えると避けようのないものを避けようとしてしまう。
+ *
+ * 見逃すのは**両方の端点が揃っている**ところだけ。片方の端点にすぎない点は、
+ * もう片方にとってはただの通り道なので数える (穴の上を素通りしている)。
  */
 export function crossings(first: readonly Point[], second: readonly Point[]): number {
-  const holes = new Set([...terminals(first), ...terminals(second)]);
+  const shared = new Set(terminals(first).filter((point) => terminals(second).includes(point)));
   let count = 0;
 
   for (let i = 1; i < first.length; i += 1) {
     for (let j = 1; j < second.length; j += 1) {
       const at = crossingPoint(first[i - 1]!, first[i]!, second[j - 1]!, second[j]!);
-      if (at && !holes.has(key(at.x, at.y))) count += 1;
+      if (at && !shared.has(key(at.x, at.y))) count += 1;
     }
   }
 

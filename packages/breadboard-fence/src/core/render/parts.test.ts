@@ -61,11 +61,25 @@ describe('partObstacles for three lead parts', () => {
     expect(rect!.x + rect!.width).toBeGreaterThanOrEqual(center + half - EPSILON);
   });
 
-  test('covers a caption that sticks out past the body, as it does for two lead parts', () => {
+  test('covers a caption that sticks out past the body with a band of its own', () => {
     const part = place('SW1: slide-switch a3 a4 a5 l="SPDT 6A 125VAC"');
-    const [rect] = partObstacles(part, layout, theme);
+    const [body, label] = partObstacles(part, layout, theme);
 
-    expect(rect!.width).toBeGreaterThan(bodyHalfWidth(part, layout) * 2);
+    expect(body!.width).toBe(bodyHalfWidth(part, layout) * 2);
+    expect(label!.width).toBeGreaterThan(body!.width);
+    // 字の帯は字の高さぶんだけ。胴の高さいっぱいに広げると、何も描いていない
+    // ところまで塞いで、空いているレーンを配線に諦めさせてしまう。
+    expect(label!.height).toBeLessThan(body!.height);
+  });
+
+  test('puts the caption band where the caption is actually drawn', () => {
+    const part = place('VR1: potentiometer a3 a4 a5 10k');
+    const [, label] = partObstacles(part, layout, theme);
+    const svg = renderPart(part, layout, theme);
+    const baseline = Number(/<text x="[\d.]+" y="([\d.]+)"[^>]*>VR1 10k</.exec(svg)?.[1]);
+
+    expect(baseline).toBeGreaterThanOrEqual(label!.y);
+    expect(baseline).toBeLessThanOrEqual(label!.y + label!.height);
   });
 
   test('gives the wide slide switch a wider obstacle than the round transistor', () => {

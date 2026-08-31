@@ -2,7 +2,9 @@ import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
 import { boardBodyRect, renderBoardPart } from './boardPart.ts';
 import { renderDip, renderPushbutton, renderSip, sipBarRect, switchBodyRect } from './packages.ts';
-import { CAPTION_DROP, CAPTION_HEIGHT, caption, charWidth, labelYOf } from './partCommon.ts';
+import {
+  CAPTION_DROP, CAPTION_HEIGHT, ROUND_CAPTION_GAP, caption, charWidth, labelYOf,
+} from './partCommon.ts';
 import { bodyHalfHeight, bodyHalfWidth, renderThreeLead } from './threeLead.ts';
 import { renderTwoLead } from './twoLead.ts';
 import type { RenderTheme } from './theme.ts';
@@ -42,14 +44,22 @@ export function partObstacles(part: PlacedPart, layout: Layout, theme: RenderThe
     const center = points[1] ?? points[0]!;
     // 本体に、上下へ出したピン名とラベルを足した高さ。字が伸びればここも伸びる。
     const reach = CAPTION_DROP * textScale(theme);
-    // 横も同じで、胴からはみ出したキャプションの上を配線に通させない (2 本足と同じ扱い)。
-    const width = Math.max(halfWidth * 2, captionWidth(part, theme));
-    return [{
-      x: center.x - width / 2,
-      y: center.y - halfHeight - reach,
-      width,
-      height: halfHeight * 2 + reach * 2,
-    }];
+    // 胴と字は**別の矩形で渡す**。長いキャプションの幅を胴の高さいっぱいに広げると、
+    // 何も描いていないところまで塞いで、空いているレーンを配線に諦めさせてしまう。
+    const label = captionWidth(part, theme);
+    const height = textScale(theme) * CAPTION_HEIGHT;
+    // 3 本足のキャプションは胴の外、溝の側に置く (threeLead.ts と同じ勘定)。
+    const labelY = center.y + (center.y < layout.ravineY ? 1 : -1) * (halfHeight + ROUND_CAPTION_GAP);
+
+    return [
+      {
+        x: center.x - halfWidth,
+        y: center.y - halfHeight - reach,
+        width: halfWidth * 2,
+        height: halfHeight * 2 + reach * 2,
+      },
+      { x: center.x - label / 2, y: labelY - height + 3, width: label, height },
+    ];
   }
 
   const center = { x: (left + right) / 2, y: (top + bottom) / 2 };

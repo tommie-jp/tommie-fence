@@ -67,6 +67,14 @@ describe('crossings', () => {
     expect(crossings(first, second)).toBe(0);
   });
 
+  test('counts a wire running straight over the hole where another one ends', () => {
+    // 一方にとっては端点でも、素通りしているほうにとってはただの交差。
+    const ending = [{ x: 0, y: 100 }, { x: 200, y: 100 }];
+    const passing = [{ x: 200, y: 0 }, { x: 200, y: 300 }];
+
+    expect(crossings(ending, passing)).toBe(1);
+  });
+
   test('counts a wire that ends on the middle of another as a crossing', () => {
     const through = [{ x: 0, y: 100 }, { x: 200, y: 100 }];
     const ending = [{ x: 50, y: 0 }, { x: 50, y: 100 }, { x: 90, y: 100 }];

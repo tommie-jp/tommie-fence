@@ -3,11 +3,13 @@ import { parseAddress } from '../model/address.ts';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
 import { LIMITS } from '../limits.ts';
+import type { Point } from '../types.ts';
 import { countCrossings, pathHitsAny } from './geometry.ts';
 import { routeWire, routeWires } from './route.ts';
 
 const layout = createLayout(createBoard('half'));
 const at = (text: string) => layout.point(parseAddress(text)!);
+const request = (from: string, to: string) => ({ from: at(from), to: at(to), hints: [] });
 
 describe('routeWire', () => {
   test('returns a straight two point path when both ends share a column', () => {
@@ -109,8 +111,6 @@ describe('routeWire', () => {
 });
 
 describe('routeWires', () => {
-  const request = (from: string, to: string) => ({ from: at(from), to: at(to), hints: [] });
-
   test('keeps parallel wires that share a lane apart', () => {
     const [first, second] = routeWires([request('a5', 'a20'), request('b6', 'b19')], layout);
 
@@ -164,8 +164,6 @@ function longestRun(path: readonly { x: number; y: number }[]) {
 }
 
 describe('routeWires keeping wires from crossing each other', () => {
-  const request = (from: string, to: string) => ({ from: at(from), to: at(to), hints: [] });
-
   // どちらも -t と a の間のレーン (y=67) を通り、x も重なる。
   // 一方はレーンの上の穴から、もう一方は下の穴から来る。
   const fromAbove = request('-t3', '-t20');
@@ -197,21 +195,35 @@ describe('routeWires keeping wires from crossing each other', () => {
     expect(routeWires(wires, layout)).toEqual(routeWires(wires, layout));
   });
 
-  test('never draws two wires on the same height where their runs overlap', () => {
-    // 溝のレーンが持てる段いっぱい (5 本) を、全部が重なるように集める。
-    // ここで重なると 2 本が 1 本に見えて、どの穴とどの穴がつながっているか読めない。
-    const crowded = Array.from({ length: 5 }, (_, index) => request(`f${index + 1}`, `f${28 - index}`));
+  /** 全部が重なる配線を、溝のレーンに n 本集める。 */
+  const crowd = (count: number) =>
+    Array.from({ length: count }, (_, index) => request(`f${index + 1}`, `f${28 - index}`));
 
-    const paths = routeWires(crowded, layout);
+  const sameHeightPairs = (paths: readonly (readonly Point[])[]) => {
     const runs = paths.map(longestRun);
-
+    const pairs: [number, number][] = [];
     for (let i = 0; i < runs.length; i += 1) {
       for (let j = i + 1; j < runs.length; j += 1) {
         const [a, b] = [runs[i]!, runs[j]!];
-        if (a.y !== b.y) continue;
-        expect(Math.min(a.right, b.right)).toBeLessThan(Math.max(a.left, b.left));
+        if (a.y === b.y && Math.min(a.right, b.right) > Math.max(a.left, b.left)) pairs.push([i, j]);
       }
     }
+    return pairs;
+  };
+
+  test('uses every slot the lane can hold before letting any two wires share a height', () => {
+    // 溝のレーンの厚みで持てるのは 5 段。5 本までは 1 本も重ならない。
+    const paths = routeWires(crowd(5), layout);
+
+    expect(new Set(paths.map((path) => longestRun(path).y)).size).toBe(5);
+    expect(sameHeightPairs(paths)).toEqual([]);
+  });
+
+  test('doubles up only as much as it must once the lane is full', () => {
+    // 6 本目からは重ねるしかない。**増えるのは 1 組ずつ**で、
+    // 塞がっている範囲を上書きして「空いている」ことにしてしまうと一気に崩れる。
+    expect(sameHeightPairs(routeWires(crowd(6), layout))).toHaveLength(1);
+    expect(sameHeightPairs(routeWires(crowd(7), layout))).toHaveLength(2);
   });
 
   test('routes a figure at the wire limit with parts in the way', () => {
@@ -238,8 +250,6 @@ describe('routeWires keeping wires from crossing each other', () => {
 });
 
 describe('routeWires around parts standing in the way', () => {
-  const request = (from: string, to: string) => ({ from: at(from), to: at(to), hints: [] });
-
   /**
    * ある穴の真上 (レーンへ出ていく縦の道) に立つ部品。
    * 穴からは 1 行ぶん空けてある — 実物の部品は挿さっている穴の上に胴を持つので、

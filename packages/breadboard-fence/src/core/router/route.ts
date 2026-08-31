@@ -1,6 +1,6 @@
 import type { Lane, Layout } from '../model/layout.ts';
 import type { Point, Rect, WireHint } from '../types.ts';
-import { segmentHitsAny, segmentHitsRect } from './geometry.ts';
+import { boxHitsRect, segmentHitsAny } from './geometry.ts';
 
 export type RouteOptions = {
   /** 平行に走る配線が重ならないように、レーンから上下にずらす量。 */
@@ -35,19 +35,17 @@ const dedupe = (points: readonly Point[]): readonly Point[] =>
 /**
  * 2 点をつなぐジャンパの通り道を決める。
  * ジャンパはボードの上に載るので穴は避けず、「縦に出て、穴の無い横レーンを通り、縦に入る」形にする。
+ *
+ * **部品をよけて登る寄り道はここでは決めない** (`routeWires` の仕事)。
+ * 寄り道は図の中の他の配線と場所を取り合うので、1 本だけを見て決められない。
+ * ここで見る `obstacles` は、通るレーンを選ぶところまで。
  */
 export function routeWire(from: Point, to: Point, layout: Layout, options: RouteOptions = {}): readonly Point[] {
   if (options.hints && options.hints.length > 0) return dedupe(followHints(from, to, options.hints));
   if (isDirect(from, to, layout)) return [from, to];
 
-  const obstacles = options.obstacles ?? [];
-  const lane = chooseLane(from, to, layout, obstacles);
-  const taken = new Set<number>();
-
-  return buildPath(from, to, lane, options.offset ?? 0, {
-    entry: escapeOf(from, lane, layout, obstacles, taken),
-    exit: escapeOf(to, lane, layout, obstacles, taken),
-  });
+  const lane = chooseLane(from, to, layout, options.obstacles ?? []);
+  return buildPath(from, to, lane, options.offset ?? 0, { entry: null, exit: null });
 }
 
 const isDirect = (from: Point, to: Point, layout: Layout): boolean =>
@@ -75,6 +73,26 @@ const DETOUR_STEPS = [0.5, -0.5, 1.5, -1.5, 2.5, -2.5];
 const JOG_FRACTIONS = [1 / 2, 1 / 4];
 
 /**
+ * 寄り道が使った道すじ。列 (縦に登る) と行 (横に振る) を、**重なった区間まで**控える。
+ * 列の番号だけを控えていたころは、行き先のレーンが違う 2 本が同じ列の同じ高さに乗ったり、
+ * 振る高さが同じ 2 本の横の区間が重なったりしていた。重なると 2 本が 1 本に見えて、
+ * どの穴とどの穴がつながっているのか読めなくなる。
+ */
+type Span = { readonly low: number; readonly high: number };
+type Reservations = { readonly columns: Map<number, Span[]>; readonly rows: Map<number, Span[]> };
+
+const noReservations = (): Reservations => ({ columns: new Map(), rows: new Map() });
+
+const span = (a: number, b: number): Span => ({ low: Math.min(a, b), high: Math.max(a, b) });
+
+const isFree = (lanes: Map<number, Span[]>, at: number, want: Span): boolean =>
+  (lanes.get(at) ?? []).every((held) => Math.min(held.high, want.high) <= Math.max(held.low, want.low));
+
+const hold = (lanes: Map<number, Span[]>, at: number, want: Span): void => {
+  lanes.set(at, [...(lanes.get(at) ?? []), want]);
+};
+
+/**
  * 部品をよけて登る道を探す。まっすぐ上げられるなら `null` (寄り道なし)。
  *
  * ずれ先を**穴の列の間に限る**のは、列の真上を横切ると、通り道の穴に挿さっているように
@@ -83,8 +101,7 @@ const JOG_FRACTIONS = [1 / 2, 1 / 4];
  * (板の外の機器のピンは格子に乗っていないので、端点からずらすと列を踏む)。
  * 同じ理由で、寄り道は板の中だけを使う。
  *
- * 使った列は `taken` に控えて、同じレーンの同じ側の別の配線が同じ列を登らないようにする
- * (重なると 2 本が 1 本に見えて、どの穴とどの穴がつながっているのか読めなくなる)。
+ * 通った列と行は `held` に控えて、別の配線が同じところに重ならないようにする。
  *
  * どこも塞がっていればまっすぐに戻す。逃げ場の無い盤面で無理に曲げるより、
  * 突き抜けさせて部品を上に描くほうが読める (描画順が最後の砦で、
@@ -95,32 +112,45 @@ function escapeOf(
   lane: Lane,
   layout: Layout,
   obstacles: readonly Rect[],
-  taken: Set<number>,
+  held: Reservations,
 ): Escape {
   const blocked = (a: Point, b: Point): boolean => segmentHitsAny(a, b, obstacles, OBSTACLE_MARGIN);
   // 登り着く高さはスロットの割り当てで上下する。**厚みのぶん余計に見ておく**:
   // ここで見た高さより先まで引かれると、通したはずの道に部品が入っていることがある。
-  const climbTo = (x: number, from: number): readonly [Point, Point] => [
-    { x, y: Math.min(from, lane.y - lane.halfHeight) },
-    { x, y: Math.max(from, lane.y + lane.halfHeight) },
-  ];
+  const climb = (from: number): Span =>
+    span(Math.min(from, lane.y - lane.halfHeight), Math.max(from, lane.y + lane.halfHeight));
+  const asPoints = (x: number, reach: Span): readonly [Point, Point] =>
+    [{ x, y: reach.low }, { x, y: reach.high }];
 
-  if (obstacles.length === 0 || !blocked(...climbTo(end.x, end.y))) return null;
+  if (obstacles.length === 0 || !blocked(...asPoints(end.x, climb(end.y)))) return null;
+
+  const gap = Math.abs(lane.y - end.y);
+  const toward = Math.sign(lane.y - end.y) || 1;
 
   for (const fraction of JOG_FRACTIONS) {
-    const jogY = end.y + (Math.sign(lane.y - end.y) || 1) * (layout.pitch * fraction);
+    // 振る高さは端点とレーンの間に収める。はみ出すと、レーンを通り越してから
+    // 戻ってくる鉤のような折れ線になる (レールの行のようにレーンが近いところで起きる)。
+    const hop = Math.min(layout.pitch * fraction, gap / 2);
+    if (hop <= 0) continue;
+
+    const jogY = end.y + toward * hop;
     const stub = { x: end.x, y: jogY };
     if (blocked(end, stub)) continue;
 
     for (const step of DETOUR_STEPS) {
       const x = halfColumn(end.x, step, layout);
-      if (taken.has(x) || !onBoard(x, layout)) continue;
-      if (blocked(stub, { x, y: jogY }) || blocked(...climbTo(x, jogY))) continue;
+      if (!onBoard(x, layout)) continue;
+
+      const reach = climb(jogY);
+      const jog = span(end.x, x);
+      if (!isFree(held.columns, x, reach) || !isFree(held.rows, jogY, jog)) continue;
+      if (blocked(stub, { x, y: jogY }) || blocked(...asPoints(x, reach))) continue;
       // 横に振ったぶんレーンを走る区間が伸びる。**伸びた先も見る**:
       // 見ないと、1 つ目の部品をよけて 2 つ目の上に乗ることがある。
-      if (blocked({ x: end.x, y: lane.y }, { x, y: lane.y })) continue;
+      if (blockedOnLane(lane, jog.low, jog.high, obstacles)) continue;
 
-      taken.add(x);
+      hold(held.columns, x, reach);
+      hold(held.rows, jogY, jog);
       return { jogY, x };
     }
   }
@@ -155,23 +185,16 @@ export function routeWires(
       : chooseLane(request.from, request.to, layout, obstacles),
   );
 
-  // 登る列はレーンの**側ごと**に控える。上へ登る道と下へ降りる道は高さが重ならないので、
-  // 同じ列を使っても 1 本には見えない。まとめて数えると、譲る要りのない配線が
-  // 遠くへ追いやられ、しまいには寄り道そのものを諦めることになる。
-  const takenByLane = new Map<string, Set<number>>();
-  const columnsFor = (lane: Lane, end: Point): Set<number> => {
-    const key = `${lane.y}|${end.y > lane.y ? 'below' : 'above'}`;
-    const taken = takenByLane.get(key) ?? new Set<number>();
-    takenByLane.set(key, taken);
-    return taken;
-  };
-
+  // 控えは図で 1 つ。**行き先のレーンが違っても、通る列と高さが重なれば 1 本に見える**ので、
+  // レーンごとに分けて持つと見落とす。区間で見るので、高さの重ならない登り道は
+  // 同じ列を使えて、譲る要りのない配線が遠くへ追いやられることもない。
+  const held = noReservations();
   const escapes = requests.map((request, index): Escapes => {
     const lane = lanes[index];
     if (!lane) return { entry: null, exit: null };
     return {
-      entry: escapeOf(request.from, lane, layout, obstacles, columnsFor(lane, request.from)),
-      exit: escapeOf(request.to, lane, layout, obstacles, columnsFor(lane, request.to)),
+      entry: escapeOf(request.from, lane, layout, obstacles, held),
+      exit: escapeOf(request.to, lane, layout, obstacles, held),
     };
   });
 
@@ -216,31 +239,48 @@ function assignSlots(
     .filter(({ index }) => lanes[index] !== null)
     .sort((a, b) => a.left - b.left);
 
-  const takenByLane = new Map<number, Map<number, number>>();
+  const takenByLane = new Map<number, Map<number, Slot>>();
   const levelsByLane = new Map<string, readonly number[]>();
 
   for (const { index, left, right } of order) {
     const lane = lanes[index]!;
-    const taken = takenByLane.get(lane.y) ?? new Map<number, number>();
+    const taken = takenByLane.get(lane.y) ?? new Map<number, Slot>();
     const fromBelow = comesFromBelow(requests[index]!, lane);
     const levelKey = `${lane.y}|${fromBelow}`;
     const levels = levelsByLane.get(levelKey) ?? slotLevels(lane, fromBelow);
     levelsByLane.set(levelKey, levels);
-    const free = levels.find((candidate) => (taken.get(candidate) ?? -Infinity) + SLOT_GAP <= left);
 
-    // 段を使い切ったら、いちばん早く終わっている段に重ねる (重なりがいちばん短くて済む)。
-    const level = free ?? levels.reduce((best, candidate) =>
-      (taken.get(candidate) ?? -Infinity) < (taken.get(best) ?? -Infinity) ? candidate : best);
+    const free = levels.find((candidate) => (taken.get(candidate)?.right ?? -Infinity) + SLOT_GAP <= left);
+    const level = free ?? mostRoom(levels, taken);
+    const held = taken.get(level);
 
     // 段が塞がっている範囲は**伸ばす**。重ねたときに短い配線で上書きすると、
     // その段はもう空いていることになり、次の配線が先客の上に乗る。
-    taken.set(level, Math.max(taken.get(level) ?? -Infinity, right));
+    taken.set(level, {
+      right: Math.max(held?.right ?? -Infinity, right),
+      wires: (held?.wires ?? 0) + 1,
+    });
     takenByLane.set(lane.y, taken);
     offsets[index] = level * SLOT_SPACING;
   }
 
   return offsets;
 }
+
+/** 段 1 つの埋まり具合。`right` は塞がっている右端、`wires` は載っている本数。 */
+type Slot = { readonly right: number; readonly wires: number };
+
+/**
+ * 段を使い切ったときに重ねる先。**載っている本数の少ない段から**選び、
+ * 同じなら早く終わっているほう (重なりが短くて済む)。
+ * 端だけを見ていたころは同じ段に積み上がり、3 本 4 本が 1 本に見えていた。
+ */
+const mostRoom = (levels: readonly number[], taken: ReadonlyMap<number, Slot>): number =>
+  levels.reduce((best, candidate) => {
+    const [a, b] = [taken.get(candidate), taken.get(best)];
+    if ((a?.wires ?? 0) !== (b?.wires ?? 0)) return (a?.wires ?? 0) < (b?.wires ?? 0) ? candidate : best;
+    return (a?.right ?? -Infinity) < (b?.right ?? -Infinity) ? candidate : best;
+  });
 
 /**
  * 両端ともレーンより下の穴か。**片側だけの配線はレーンを跨ぐので、どのみち
@@ -307,7 +347,18 @@ function chooseLane(from: Point, to: Point, layout: Layout, obstacles: readonly 
     .reduce((best, candidate) => (candidate.cost < best.cost ? candidate : best)).lane;
 }
 
-/** そのレーンを left..right まで走ったときに当たる部品の数。 */
+/**
+ * そのレーンを left..right まで走ったときに当たる部品の数。
+ * **見るのは中心線ではなくレーンの厚み**。スロットの割り当てで配線は厚みのぶん上下するので、
+ * 中心だけを見ていると、少しずれた高さに置いてある部品のラベルの上を走ってしまう。
+ */
 const obstaclesOnLane = (lane: Lane, left: number, right: number, obstacles: readonly Rect[]): number =>
-  obstacles.filter((rect) =>
-    segmentHitsRect({ x: left, y: lane.y }, { x: right, y: lane.y }, rect, OBSTACLE_MARGIN)).length;
+  obstacles.filter((rect) => boxHitsRect(
+    { x: left, y: lane.y - lane.halfHeight },
+    { x: right, y: lane.y + lane.halfHeight },
+    rect,
+    OBSTACLE_MARGIN,
+  )).length;
+
+const blockedOnLane = (lane: Lane, left: number, right: number, obstacles: readonly Rect[]): boolean =>
+  obstaclesOnLane(lane, left, right, obstacles) > 0;
