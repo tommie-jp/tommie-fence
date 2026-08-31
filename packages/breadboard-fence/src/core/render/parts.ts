@@ -42,10 +42,12 @@ export function partObstacles(part: PlacedPart, layout: Layout, theme: RenderThe
     const center = points[1] ?? points[0]!;
     // 本体に、上下へ出したピン名とラベルを足した高さ。字が伸びればここも伸びる。
     const reach = CAPTION_DROP * textScale(theme);
+    // 横も同じで、胴からはみ出したキャプションの上を配線に通させない (2 本足と同じ扱い)。
+    const width = Math.max(halfWidth * 2, caption(part).length * charWidth(theme));
     return [{
-      x: center.x - halfWidth,
+      x: center.x - width / 2,
       y: center.y - halfHeight - reach,
-      width: halfWidth * 2,
+      width,
       height: halfHeight * 2 + reach * 2,
     }];
   }

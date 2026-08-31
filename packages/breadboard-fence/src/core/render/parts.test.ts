@@ -61,6 +61,13 @@ describe('partObstacles for three lead parts', () => {
     expect(rect!.x + rect!.width).toBeGreaterThanOrEqual(center + half - EPSILON);
   });
 
+  test('covers a caption that sticks out past the body, as it does for two lead parts', () => {
+    const part = place('SW1: slide-switch a3 a4 a5 l="SPDT 6A 125VAC"');
+    const [rect] = partObstacles(part, layout, theme);
+
+    expect(rect!.width).toBeGreaterThan(bodyHalfWidth(part, layout) * 2);
+  });
+
   test('gives the wide slide switch a wider obstacle than the round transistor', () => {
     const [wide] = partObstacles(place('SW1: slide-switch a3 a4 a5'), layout, theme);
     const [round] = partObstacles(place('Q1: transistor a3 a4 a5'), layout, theme);

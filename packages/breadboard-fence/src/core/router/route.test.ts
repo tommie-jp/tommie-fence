@@ -189,24 +189,35 @@ describe('routeWires keeping wires from crossing each other', () => {
       const column = (index % 28) + 1;
       return request(`a${column}`, `j${column + 2}`);
     });
+    // 部品を置かないと、よけ道を探す繰り返しが一度も走らないまま速さを測ることになる。
+    const parts = Array.from({ length: 40 }, (_, index) => ({
+      x: layout.colX(index % 20 + 1) - 12, y: layout.rowY('a') - layout.pitch * 1.8,
+      width: 24, height: layout.pitch,
+    }));
 
     const started = Date.now();
-    const paths = routeWires(many, layout);
+    const paths = routeWires(many, layout, parts);
 
     expect(paths).toHaveLength(LIMITS.wires);
-    expect(Date.now() - started).toBeLessThan(2000);
+    // 描画は同期なので、伸びるとプレビューごと止まる。刻みは荒くてよく、桁が変われば落ちる。
+    expect(Date.now() - started).toBeLessThan(5000);
   });
 });
 
 describe('routeWires around parts standing in the way', () => {
   const request = (from: string, to: string) => ({ from: at(from), to: at(to), hints: [] });
 
-  /** ある穴の真上 (レーンへ出ていく縦の道) をふさぐ部品。 */
-  const above = (hole: string) => {
-    const point = at(hole);
-    const top = layout.rowY('a') - layout.pitch * 1.4;
-    return { x: point.x - 12, y: top, width: 24, height: layout.rowY('a') - top - 4 };
-  };
+  /**
+   * ある穴の真上 (レーンへ出ていく縦の道) に立つ部品。
+   * 穴からは 1 行ぶん空けてある — 実物の部品は挿さっている穴の上に胴を持つので、
+   * 隣の穴から出る配線には穴 1 つぶんの逃げしろが残る。
+   */
+  const above = (hole: string) => ({
+    x: at(hole).x - 12,
+    y: layout.rowY('a') - layout.pitch * 1.8,
+    width: 24,
+    height: layout.pitch,
+  });
 
   test('steps aside instead of running the wire through a part on its way out', () => {
     const blocker = above('a5');
@@ -248,6 +259,40 @@ describe('routeWires around parts standing in the way', () => {
 
     // 逃げ場が無いときは今までどおり突き抜ける (部品を上に描いて読ませる)。
     expect(path).toHaveLength(4);
+  });
+
+  test('climbs between two hole columns so the detour does not read as a connection', () => {
+    const [path] = routeWires([request('a5', 'a20')], layout, [above('a5')]);
+    const columns = new Set(Array.from({ length: 30 }, (_, index) => layout.colX(index + 1)));
+
+    // 寄り道した縦の道は穴の列と列の間を通る。列の真上を走ると、
+    // 通り道の穴に挿さっているように見えてしまう。
+    const climb = path!.filter((point) => point.x !== at('a5').x && point.x !== at('a20').x);
+    expect(climb.length).toBeGreaterThan(0);
+    for (const point of climb) expect(columns.has(point.x)).toBe(false);
+  });
+
+  test('sends two wires that both have to step aside up different columns', () => {
+    const blockers = [above('a5'), above('a8')];
+
+    const [first, second] = routeWires([request('a5', 'a20'), request('a8', 'a25')], layout, blockers);
+    const climbX = (path: readonly { x: number }[], hole: string) =>
+      path.map((point) => point.x).filter((x) => x !== at(hole).x);
+
+    // 同じ列を登ると 2 本が 1 本に見えて、どの穴とどの穴がつながっているか読めなくなる。
+    const shared = climbX(first!, 'a5').filter((x) => climbX(second!, 'a8').includes(x));
+    expect(shared).toEqual([]);
+  });
+
+  test('keeps the detour on the board even for a hole at the very edge', () => {
+    const blocker = above('a1');
+
+    const [path] = routeWires([request('a1', 'a20')], layout, [blocker]);
+
+    for (const point of path!) {
+      expect(point.x).toBeGreaterThanOrEqual(layout.board.x);
+      expect(point.x).toBeLessThanOrEqual(layout.board.x + layout.board.width);
+    }
   });
 
   test('does not step around the part the wire is plugged into', () => {
