@@ -4,6 +4,7 @@
 出力は 8Ω の小型スピーカー。**電圧は増やさず、電流だけを増やす**段の実験回路。
 
 ```breadboard
+title: 図01 エミッタフォロワ
 # 電源: 上下の赤レール = +5V、青レール = GND (左端で上下を渡している)
 board: half
 parts:
@@ -44,6 +45,8 @@ wires:
   - SPK.+ -- f19 blue
   - SPK.- -- -t22 black
 ```
+
+![図01 エミッタフォロワ](out/08-emitter-follower.svg)
 
 ## 回路の読み方
 

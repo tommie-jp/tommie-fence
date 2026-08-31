@@ -3,6 +3,7 @@
 いちばん小さな例。電源レールから抵抗を通して LED を光らせる。
 
 ```breadboard
+title: 図01 LED と抵抗
 board: half
 parts:
   R1: resistor a5 a10 330
@@ -12,6 +13,8 @@ wires:
   - a10 -- b12
   - c13 -- -t13 black
 ```
+
+![図01 LED と抵抗](out/01-led.svg)
 
 読み方:
 

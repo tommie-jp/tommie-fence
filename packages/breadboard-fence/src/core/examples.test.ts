@@ -12,7 +12,10 @@ import { renderBreadboard } from './index.ts';
  */
 const EXAMPLES = fileURLToPath(new URL('../../examples/', import.meta.url));
 
-const markdownFiles = readdirSync(EXAMPLES).filter((name) => name.endsWith('.md')).sort();
+// README.md は目次で、フェンスを持たない (図の規約はそこに書いてある)。
+const markdownFiles = readdirSync(EXAMPLES)
+  .filter((name) => name.endsWith('.md') && name !== 'README.md')
+  .sort();
 
 describe('examples', () => {
   test('there is at least one example to check', () => {

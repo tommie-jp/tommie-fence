@@ -1,14 +1,11 @@
-# フェンス構文と出力例
+# フェンス構文
 
 実装済みの文法と、その出力。
 図の生成は [src/core/](../src/core/) の純関数 `renderBreadboard(source)` が担当する。
 
-```bash
-npm run examples   # examples/*.md → examples/out/*.svg (+ ネットリストを標準出力へ)
-```
-
 1 画面に収めた早見表は [02-cheatsheet.md](02-cheatsheet.md)
 (LLM に書かせるときは、そちらをプロンプトに貼る)。
+回路ごとの実例は [examples/](../examples/)。
 
 Markdown には次のように書く。VS Code のプレビュー (`Ctrl+Shift+V`) で図になる。
 
@@ -21,6 +18,21 @@ wires:
   - +t5 -- a5 red
 ```
 ````
+
+**この文書のフェンスはすべて本物**で、直後にそのフェンスを描いた図を貼ってある
+([out/](out/))。GitHub のようにフェンスが描画されない場所で、
+書き方と出力を対で読むためのもの。作り直しは `npm run docs`。
+
+```breadboard
+title: 図01 最小の例
+board: half
+parts:
+  R1: resistor a5 a10 330
+wires:
+  - +t5 -- a5 red
+```
+
+![図01 最小の例](out/01-syntax-1.svg)
 
 ## 文法
 
@@ -40,7 +52,7 @@ wires:
 | 1 列ヘッダ | `ID: sipN @ 穴 ラベル`。足名は `pins:` で付ける | `M1: sip4 @ a20 OLED` |
 | 押しボタン | `ID: button @ 穴`。溝をまたぐ 4 本足 | `SW1: button @ e5` |
 | マイコンボード | `ID: 種類 @ 穴`。ピン名は実物の印字 | `MCU: pico2 @ h5` |
-| ボード外の機器 | マップ形式で `type: device` + `at:` + `pins:` | 下の例 2 |
+| ボード外の機器 | マップ形式で `type: device` + `at:` + `pins:` → [ボード外の機器](#ボード外の機器-device) | `at: top` |
 | 配線 | `- 端点 -- 端点 [-- 端点 …] [色]` | `- a10 -- b12 red` |
 | ピン参照 | `部品ID.ピン名` を端点に書ける | `U1.7`, `AD2.V+` |
 | ラベル | `l=字` で図に出るラベルだけを差し替える (値と両方は書けない) | `M1: sip4 @ a20 l=OLED` |
@@ -88,13 +100,21 @@ wires:
 **番地系はどの印字でも共通**で、変わるのは図の見た目だけ。
 並べた図は [examples/03-board-variants.md](../examples/03-board-variants.md)。
 
-```yaml
+```breadboard
+title: 図02 ボードの印字を手元の実物に寄せる
 board:
-  size: full        # half (既定) / full
+  size: half        # half (既定) / full
   rails: "+-+-"     # レール 4 本の上から順の極性。既定 "+--+"
   letters: upper    # lower (既定) / upper
   numbers: all      # every-5 (既定) / all
+parts:
+  R1: resistor a5 a10 330
+wires:
+  - +t5 -- a5 red
+  - a10 -- -b10 black
 ```
+
+![図02 ボードの印字を手元の実物に寄せる](out/01-syntax-2.svg)
 
 - `rails` は上外・上内・下内・下外の 4 文字で、上下それぞれに `+` と `-` を 1 つずつ。
   書けるのは `+--+` `+-+-` `-++-` `-+-+` の 4 通り。YAML の解釈事故を避けるため引用符を推奨。
@@ -116,9 +136,19 @@ board:
 **省略したときは `presentation`** で描く (そのままスライドや記事に貼れる大きさ)。
 並べた図は [examples/02-themes.md](../examples/02-themes.md)。
 
-```yaml
+```breadboard
+title: 図03 テーマを選ぶ
 style: dark
+parts:
+  R1: resistor a5 a10 330
+  D1: led b12(A) b13(K) red
+wires:
+  - +t5 -- a5 red
+  - a10 -- b12
+  - c13 -- -t13 black
 ```
+
+![図03 テーマを選ぶ](out/01-syntax-3.svg)
 
 | テーマ | 用途 |
 | --- | --- |
@@ -134,7 +164,8 @@ style: dark
 
 テーマを土台にして、気になるところだけ上書きできる。
 
-```yaml
+```breadboard
+title: 図04 テーマを上書きする
 style:
   theme: dark        # 省略すると presentation
   text-size: 13      # 部品のラベル (6〜24)
@@ -144,10 +175,21 @@ style:
   board-color: "#2b3038"
   hole-size: 6       # 穴の大きさ (2〜14)
   hole-color: "#0d1014"
-  width: 1200        # 出力の横ドット数 (120〜4000)。縦は figure の比から決まる
   debug: off         # on (既定) / off。お知らせを図の下に出すか
   stamp: on          # on / off (既定)。図の右下に処理系の版を刻むか
+parts:
+  R1: resistor a5 a10 330
+  D1: led b12(A) b13(K) red
+wires:
+  - +t5 -- a5 red
+  - a10 -- b12
+  - c13 -- -t13 black
 ```
+
+![図04 テーマを上書きする](out/01-syntax-4.svg)
+
+`width` (出力の横ドット数、120〜4000) もここに書ける。上の図では貼る大きさを
+変えないために省いてある。
 
 - 色は **`#rgb` か `#rrggbb` だけ**。名前や `rgb()` は書式エラーにする
   (検証していない値を図に書き込まないため)。名前で選びたいときはテーマを使う。
@@ -174,9 +216,26 @@ style:
 図だけを渡された人が、何を用意すればよいか図の外を見ずに分かるようにするため、
 **既定で出る**。並べた図は [examples/04-parts-list.md](../examples/04-parts-list.md)。
 
-```yaml
-parts-list: none    # below (既定) / none
+```breadboard
+title: 図05 部品リスト (既定)
+parts:
+  R1: resistor a5 a10 330
+  C1: capacitor/ceramic a14 a17 0.1u
+  D1: led b20(A) b21(K) red
 ```
+
+![図05 部品リスト (既定)](out/01-syntax-5.svg)
+
+```breadboard
+title: 図06 部品リストを消す
+parts-list: none    # below (既定) / none
+parts:
+  R1: resistor a5 a10 330
+  C1: capacitor/ceramic a14 a17 0.1u
+  D1: led b20(A) b21(K) red
+```
+
+![図06 部品リストを消す](out/01-syntax-6.svg)
 
 | 値 | 意味 |
 | --- | --- |
@@ -198,18 +257,23 @@ parts-list: none    # below (既定) / none
   ブレッドボード 1 枚に挿さる部品数より十分多いので、実際に頭を打つことはない。
 - リストは図と同じ 1 枚の SVG の中にある。貼り先で図とリストがはぐれることはない。
 
-| 既定 (below) | `parts-list: none` |
-| --- | --- |
-| ![部品リストつき](../examples/out/04-parts-list-1.svg) | ![部品リストなし](../examples/out/04-parts-list-2.svg) |
-
 ## 配線 (wires)
 
-```yaml
+```breadboard
+title: 図07 配線の書き方
+parts:
+  R1: resistor a5 a10 330
+  D1: led a14(A) a17(K) red
+  D2: led a21(A) a24(K) green
+  Re: resistor j17 j20 100
 wires:
   - +t5 -- b5 red                 # 端点 2 つ
   - b10 -- b14 -- b21 orange      # つないで書く (区間ごとに開かれる)
   - j20 -- -b20 black [v-20]      # 迂回ヒント (20 = 穴 1 つぶん)
+  - -t17 -- b17 -- b24 black
 ```
+
+![図07 配線の書き方](out/01-syntax-7.svg)
 
 - 端点は**穴番地・レール番地・ピン参照 (`U1.7`)・点の名前**のどれでもよい。
 - **端点は 3 つ以上つなげて書ける。** 隣り合う端点ごとの区間に開かれるので、
@@ -224,9 +288,15 @@ wires:
 
 図の左上に 1 行だけ載る題。
 
-```yaml
-title: 図01 LED を点ける
+```breadboard
+title: 図08 題は図の左上に載る
+parts:
+  R1: resistor a5 a10 330
+wires:
+  - +t5 -- a5 red
 ```
+
+![図08 題は図の左上に載る](out/01-syntax-8.svg)
 
 - **大きさ・太さ・色は選べない。** 選べるようにすると題ではなく注釈になる。
   字を自由に置きたいときは [注釈](#注釈-notes) の `text` がある。
@@ -239,17 +309,22 @@ title: 図01 LED を点ける
 穴番地に名前を付けると、節点を動かすときの編集が 1 箇所で済む。
 並べた図は [examples/13-points.md](../examples/13-points.md)。
 
-```yaml
+```breadboard
+title: 図09 番地に名前を付ける
 points:
   vin: a3
   fb:  a8
 parts:
   R1: resistor vin fb 10k
+  R2: resistor b8 b13 4k7
 wires:
   - +t3 -- vin red
+  - c13 -- -t13 black
 notes:
   - circle fb blue
 ```
+
+![図09 番地に名前を付ける](out/01-syntax-9.svg)
 
 - **番地が書ける場所すべて**で使える。部品の穴・配線の端点・注釈の指し先のどれでも同じ。
 - `points:` はフェンスのどこに書いてもよい。**部品より下に書いても解決する。**
@@ -280,15 +355,21 @@ notes:
 
 図の上に印と字を重ねる。並べた図は [examples/12-notes.md](../examples/12-notes.md)。
 
-```yaml
+```breadboard
+title: 図10 印・枠・指し棒・字
+parts:
+  R1: resistor a5 a10 330
+  D1: led a14(A) a17(K) red
 notes:
   - circle R1
   - box g3 h20 blue solid
   - arrow d22 R1
-  - line +t20 -t20 green
+  - line +t26 -t26 green
   - text d24 red bold: 電流を決めるのはここ
-  - source j3 tiny
+  - text i3 blue: この段はまだ組んでいない
 ```
+
+![図10 印・枠・指し棒・字](out/01-syntax-10.svg)
 
 | 書き方 | 出るもの |
 | --- | --- |
@@ -332,9 +413,23 @@ notes:
 - **注釈は回路の一員ではない。** ネットにもネットリストにも部品リストにも数えない。
   注釈を足しても、図から導いたネットリストは 1 行も変わらない。
 
-![印と字](../examples/out/12-notes-1.svg)
+```breadboard
+title: 図11 色と大きさと寄せ
+parts-list: none
+parts:
+  R1: resistor a5 a10 330
+notes:
+  - circle R1 blue
+  - text c3 tiny: tiny の字
+  - text d3 small green: small の字
+  - text e3 normal: normal の字
+  - text g3 large orange: large の字
+  - text i3 huge ink bold: huge
+  - text c20 center blue: 中央ぞろえ
+  - text i28 right red: 右ぞろえ
+```
 
-![色と大きさと寄せ](../examples/out/12-notes-2.svg)
+![図11 色と大きさと寄せ](out/01-syntax-11.svg)
 
 ## 種類の略記
 
@@ -360,17 +455,32 @@ notes:
 - グラウンドや電源の略記は無い。板の上ではレール (`+t5` `-b20`) がその役をしていて、
   挿す部品としては存在しないため。
 
+```breadboard
+title: 図12 略記で書いても図は同じ
+parts:
+  R1: r a5 a10 10k
+  C1: ec a14(+) a17(-) 100u
+  D1: d a21(A) a24(K) 1N4148
+  SW1: btn @ e27
+```
+
+![図12 略記で書いても図は同じ](out/01-syntax-12.svg)
+
 ## 極性と向き
 
 **極性・向きのある 2 端子は、先に書いた穴が + 側 (アノード)。**
 これがフェンス全体にかかる 1 つの規則で、ピン名を書かなかったときの向きを決める。
 
-```yaml
+```breadboard
+title: 図13 極性は先に書いた穴が + 側
 parts:
   D1: diode a3 a6 1N4148          # a3 がアノード、a6 がカソード
   C1: capacitor/electrolytic a9 a12 100u   # a9 が +
   D2: led a15 a18 red             # a15 がアノード
+  C2: capacitor/tantalum a21 a24 10u       # a21 が + (印はプラス側)
 ```
+
+![図13 極性は先に書いた穴が + 側](out/01-syntax-13.svg)
 
 - ピン名 (`(A)` `(K)` `(+)` `(-)`) を書けば、そちらが優先される。
   **2 本足なので片方だけ書けば反対側は決まる**。
@@ -388,14 +498,16 @@ parts:
 同じ `capacitor` でもセラミックと電解では板の上の姿が違い、図から実物を
 探すときに効く。並べた図は [examples/05-capacitors.md](../examples/05-capacitors.md)。
 
-```yaml
+```breadboard
+title: 図14 コンデンサの 4 つの姿
 parts:
   C1: capacitor/ceramic a5 a8 0.1u
   C2: capacitor/film a12 a15 0.47u
   C3: capacitor/electrolytic a19(+) a22(-) 100u
-  D1: led/3mm b5(A) b7(K) red
-  Q1: transistor/to220 e25(B) e26(C) e27(E) 2SD880
+  C4: capacitor/tantalum a26(+) a29(-) 10u
 ```
+
+![図14 コンデンサの 4 つの姿](out/01-syntax-14.svg)
 
 | 種類 | 選べる姿 | 描かれ方 |
 | --- | --- | --- |
@@ -437,20 +549,34 @@ parts:
 - **パッケージの向き (TO-92 の平らな面、TO-220 のタブの向き) は図では主張しない。**
   足の並びは品種ごとに違うため、どの穴がどの足かはピン名で示す。
 
-![コンデンサの姿](../examples/out/05-capacitors-1.svg)
+```breadboard
+title: 図15 LED とトランジスタの姿
+parts:
+  D1: led/5mm a5(A) a7(K) red
+  D2: led/3mm a11(A) a13(K) green
+  Q1: transistor/to92 f5(B) f6(C) f7(E) 2SC1815
+  Q2: transistor/to220 f14(B) f15(C) f16(E) 2SD880
+```
 
-![LED とトランジスタの姿](../examples/out/05-capacitors-3.svg)
+![図15 LED とトランジスタの姿](out/01-syntax-15.svg)
 
 ## スイッチと可変抵抗
 
 並べた図は [examples/06-switches.md](../examples/06-switches.md)。
 
-```yaml
+```breadboard
+title: 図16 タクトスイッチ
 parts:
   SW1: button @ e5                        # 溝をまたぐ 4 本足
-  VR1: potentiometer e8(1) e9(W) e10(3) 10k
-  SW2: slide-switch e3(1) e4(C) e5(2)
+  R1: resistor j5 j10 330
+  D1: led i12(A) i14(K) red
+wires:
+  - +t5 -- a5 red
+  - j10 -- i12 orange
+  - i14 -- -b14 black
 ```
+
+![図16 タクトスイッチ](out/01-syntax-16.svg)
 
 ### 押しボタン (button)
 
@@ -467,8 +593,6 @@ parts:
 N1 : SW1.2a, SW1.2b, R1.1
 ```
 
-![タクトスイッチで LED を点ける](../examples/out/06-switches-1.svg)
-
 ### 半固定抵抗とスライドスイッチ
 
 どちらも 3 本足なので、`transistor` と同じく足の穴を並べて書く。名前を付けなければ
@@ -481,7 +605,22 @@ N1 : SW1.2a, SW1.2b, R1.1
 3 本足の部品は**溝寄りの行 (`e` / `f`) に挿す**と、足の名前が板の列番号とぶつからず、
 配線も外側の空いた行から取れる。
 
-![半固定抵抗とスライドスイッチ](../examples/out/06-switches-2.svg)
+```breadboard
+title: 図17 半固定抵抗とスライドスイッチ
+parts:
+  SW2: slide-switch e3(1) e4(C) e5(2)
+  VR1: potentiometer e8(1) e9(W) e10(3) 10k
+  R1: resistor c13 c16 330
+  D1: led c20(A) c22(K) green
+wires:
+  - +t3 -- a3 red
+  - b4 -- b8 orange
+  - b9 -- b13 yellow
+  - b16 -- b20 green
+  - b22 -- -t22 black
+```
+
+![図17 半固定抵抗とスライドスイッチ](out/01-syntax-17.svg)
 
 ## 1 列ヘッダ (sipN)
 
@@ -491,14 +630,20 @@ N1 : SW1.2a, SW1.2b, R1.1
 足に名前を付けるときはマップ形式で `pins:` を書く。**書いた名前がそのまま図に出て、
 `M1.SCL` として配線からも指せる**。書かなければ左から `1` `2` … になる。
 
-```yaml
+```breadboard
+title: 図18 1 列ヘッダのモジュール
 parts:
   M1:
     type: sip4
     holes: [a20]
     pins: [GND, VCC, SCL, SDA]
     label: OLED
+wires:
+  - M1.GND -- -t20 black
+  - M1.VCC -- +t21 red
 ```
+
+![図18 1 列ヘッダのモジュール](out/01-syntax-18.svg)
 
 `pins:` の本数がヘッダの本数と違うときは、行番号つきのエラーにする。
 
@@ -507,12 +652,21 @@ parts:
 `pico` / `pico-w` / `pico2` / `pico2-w` の 4 つ。**40 ピンの並びはシリーズで共通**なので、
 書き方は種類名を替えるだけ。ソース: [examples/07-pico.md](../examples/07-pico.md)
 
-```yaml
+```breadboard
+title: 図19 Pico を挿す
+board: full
 parts:
   MCU: pico2 @ h5
+  R1: resistor j26 j30 330
+  D1: led i32(A) i34(K) red
+wires:
+  - b9 -- +t9 red         # 3V3 (36 番) は c 行の 9 列目に落ちる
+  - j24 -- j26 orange     # GP15 の列から抵抗へ
+  - j30 -- i32 orange
+  - i34 -- -b34 black
 ```
 
-![Pico に電源と LED とボタンをつなぐ](../examples/out/07-pico.svg)
+![図19 Pico を挿す](out/01-syntax-19.svg)
 
 - `@` に書くのは**ピン 1 (GP0) の穴**だけ。基板の幅は 0.7 インチ (穴 7 つぶん) なので、
   ピンの 2 列は上下ブロックの**同じ位置の行** (`a`↔`f`、`b`↔`g`、`c`↔`h`、`d`↔`i`、
@@ -544,99 +698,65 @@ GND は 7 本あって名前が重なるので、**ピン番号を付けて区�
 33 番だけは実物の印字どおり `AGND`。`MCU.GND` のように書くと、
 候補を添えた行番号つきのエラーになる。
 
-## 出力例 1: LED と抵抗
+## ボード外の機器 (device)
 
-ソース: [examples/01-led.md](../examples/01-led.md)
+測定器・電池・スピーカーなど、板に挿さないものは `device` として板の上下の帯に置く。
+マップ形式で書き、`pins:` に並べた名前が箱の下に出て `AD2.W1` として配線から指せる。
 
-![LED と抵抗の配線図](../examples/out/01-led.svg)
-
-穴の導通から導いたネットリスト:
-
-```text
-+t : R1.1
-N1 : R1.2, D1.A
--t : D1.K
+```breadboard
+title: 図20 ボード外の機器をつなぐ
+parts:
+  AD2:
+    type: device
+    at: top
+    label: Analog Discovery 2
+    pins: [W1, GND]
+  BAT:
+    type: device
+    at: bottom
+    label: 電池 3V
+    pins: ["+", "-"]
+  R1: resistor a5 a10 330
+  D1: led b14(A) b15(K) red
+wires:
+  - AD2.W1 -- a5 yellow
+  - AD2.GND -- -t5 black
+  - a10 -- b14 orange
+  - BAT.+ -- +b15 red
+  - BAT.- -- -b15 black
 ```
 
-## 出力例 2: B-H 測定回路
+![図20 ボード外の機器をつなぐ](out/01-syntax-20.svg)
 
-B-H カーブ測定回路 (NJM4556A のフォロワ 2 回路を 1Ω 2 本で並列合流 +
-電流センス + RC 積分器)。DIP 配置・ボード外の機器・ピン参照・レール電源を全部使う。
-ソース: [examples/10-bh-ad2.md](../examples/10-bh-ad2.md)
+- `at:` は**上下どちらの帯に置くか**だけ。左右の位置は、つながる穴の平均から自動で決まる。
+  省略すると `top`。
+- 箱に出るのは **`label` (書かなければ ID)** だけ。`value` は図のどこにも出ないので、
+  書くとお知らせに出して図からは落とす。
+- ピン名に `+` `-` を使うときは YAML の都合で `"+"` のように囲む。
 
-![B-H 測定回路の配線図](../examples/out/10-bh-ad2.svg)
+## 実例集
 
-ネットリスト (意図した回路と一致することを確認済み):
+回路ごとの図と解説は [examples/](../examples/) にある。
+**どのフェンスにも、そのフェンスを描いた図が付いている**ので、
+GitHub でもそのまま読める。
 
-```text
-N1    : U1.1, U1.2, R1.1        # OUT1 → IN1- (フォロワ帰還)
-N2    : U1.3, U1.5, AD2.W1      # W1 → IN1+ / IN2+
-+t    : U1.4, AD2.V-            # -5V
-N3    : U1.6, U1.7, R2.1        # OUT2 → IN2-
-+b    : U1.8, AD2.V+            # +5V
-N4    : R1.2, R2.2, T1.N1a      # 1Ω 2 本の合流点 → 1 次巻線
-N5    : Rs.1, AD2.1+, T1.N1b    # 電流センス上端 = CH1+
--t/-b : Rs.2, C1.2, AD2.GND, AD2.1-, AD2.2-, T1.N2b   # GND
-N6    : R3.1, T1.N2a            # 2 次巻線 → 積分 R
-N7    : R3.2, C1.1, AD2.2+      # 積分 C 上端 = CH2+
-```
-
-ネットは**配線だけがつなぐ** (部品はネットとネットの間の枝) という SPICE と同じ規約で、
-穴の縦列とレールの導通から機械的に導出している。意図した回路との突き合わせに使える。
-
-## 出力例 3: テーマ
-
-同じ回路を 5 つのテーマで描いたもの。ソース: [examples/02-themes.md](../examples/02-themes.md)
-
-| classic | dark |
+| ファイル | 内容 |
 | --- | --- |
-| ![classic](../examples/out/02-themes-1.svg) | ![dark](../examples/out/02-themes-2.svg) |
+| [01-led.md](../examples/01-led.md) | 抵抗と LED だけの最小例 |
+| [02-themes.md](../examples/02-themes.md) | 同じ回路を 5 つのテーマで描き比べる |
+| [03-board-variants.md](../examples/03-board-variants.md) | ボードの印字を手元の実物に寄せる |
+| [04-parts-list.md](../examples/04-parts-list.md) | 図の下の部品リストと、その消し方 |
+| [05-capacitors.md](../examples/05-capacitors.md) | 部品の姿を選ぶ |
+| [06-switches.md](../examples/06-switches.md) | タクトスイッチ・半固定抵抗・スライドスイッチ |
+| [07-pico.md](../examples/07-pico.md) | Raspberry Pi Pico に LED とボタンをつなぐ |
+| [08-emitter-follower.md](../examples/08-emitter-follower.md) | 2SC1815 のエミッタフォロワ |
+| [09-am-radio.md](../examples/09-am-radio.md) | 1 石中波ラジオ (高周波増幅 + 検波) |
+| [10-bh-ad2.md](../examples/10-bh-ad2.md) | B-H カーブ測定回路 (オペアンプ・測定器) |
+| [11-sensors.md](../examples/11-sensors.md) | CdS・サーミスタ、ダイオードの仲間 |
+| [12-notes.md](../examples/12-notes.md) | 図の題と注釈 |
+| [13-points.md](../examples/13-points.md) | 番地に名前を付ける、配線をつないで書く |
 
-| high-contrast | mono |
-| --- | --- |
-| ![high-contrast](../examples/out/02-themes-3.svg) | ![mono](../examples/out/02-themes-4.svg) |
-
-`presentation` と、テーマを個別に上書きした例:
-
-| presentation | dark + 上書き |
-| --- | --- |
-| ![presentation](../examples/out/02-themes-5.svg) | ![dark を上書き](../examples/out/02-themes-6.svg) |
-
-## 出力例 4: エミッタフォロワ
-
-2SC1815 1 石、電源 5V、入力 50Ω、出力 8Ω スピーカーのバッファ段。
-トランジスタと電解コンデンサ、部品を縦にレールへ挿す書き方 (`Re: resistor j11 -b11 47`) の例。
-ソースと回路の解説: [examples/08-emitter-follower.md](../examples/08-emitter-follower.md)
-
-![エミッタフォロワの配線図](../examples/out/08-emitter-follower.svg)
-
-```text
-N1    : Q1.B, R1.1, R2.1, C1.+     # ベース (分圧バイアス + 入力結合)
-+t/+b : Q1.C, R1.2                 # +5V (コレクタは直結)
-N2    : Q1.E, Re.1, C2.+           # エミッタ (出力)
--t/-b : Re.2, R2.2, IN.GND, SPK.-
-N3    : C1.-, IN.SIG               # 入力
-N4    : C2.-, SPK.+                # 出力
-```
-
-## 出力例 5: 1 石中波ラジオ
-
-バーアンテナとポリバリコンで同調し、検波の前に 1 石で高周波を増幅する中波ラジオ。
-`diode` の向き (`i12(A) i17(K)`)、`capacitor/ceramic` の姿、ボード外の機器 4 台
-(アンテナ・バリコン・イヤホン・電池) を上下の帯に分けて置く例。
-ソースと回路の解説: [examples/09-am-radio.md](../examples/09-am-radio.md)
-
-![1 石中波ラジオの配線図](../examples/out/09-am-radio.svg)
-
-```text
-N5    : ANT.1a, VC.A               # 同調回路 (1 次巻線 ∥ ポリバリコン)
-N1    : C1.1, ANT.2a               # 2 次巻線 → 結合コンデンサ
-N2    : C1.2, Q1.B, Rb.1           # ベース (コレクタ帰還バイアス)
-N3    : Q1.C, Rb.2, Rc.1, D1.A     # コレクタ (負荷抵抗 + 検波ダイオード)
-N4    : D1.K, C3.1, R3.1, EAR.1    # 検波出力 → イヤホン
-+t/+b : Rc.2, C4.1, BAT.+          # +3V
--t/-b : Q1.E, C4.2, C3.2, R3.2, ANT.1b, ANT.2b, VC.E, EAR.2, BAT.-
-```
+読めなくしてある例は [examples/errors/](../examples/errors/)。
 
 ## エラーとお知らせの出方
 
@@ -692,6 +812,10 @@ CLI はプレビューの見え方の指定に従わないので、どちらも�
 
 - 部品の追加 (7 セグ LED、ロータリーエンコーダ、Pico 以外のマイコンボードなど)
 - 姿の追加 (`capacitor/mica`、`resistor` のワット数、`dipN` のソケットの有無など)
-- wokwi-elements からの見た目の取り込み (今は全部この図の自前の簡略描画)
 - 配線が部品の上を通るときの避け方 (今は部品を配線の上に描いて読めるようにしている)
 - 配線の交差を減らす経路探索 (今は横レーンのスロット割り当てまで)
+- 本体が広い 3 本足 (TO-220・半固定抵抗) の配線よけ。障害物を丸の半径から作っているので、
+  実際の幅より狭い
+
+部品の見た目は**すべて自前の簡略描画**で、外部の素材は使っていない
+(マイコンボードまで自前で足りたので、素材の取り込みは当面やらない)。

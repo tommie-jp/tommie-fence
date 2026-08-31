@@ -7,6 +7,7 @@ CdS セル・サーミスタ・ダイオードの仲間・ガラス封止の部�
 ## 明るさと温度を分圧で取り出す
 
 ```breadboard
+title: 図01 明るさと温度を分圧で取り出す
 board: half
 parts:
   CDS1: photoresistor a3 a7 GL5528
@@ -22,6 +23,8 @@ wires:
   - i14 -- -b14 black
 ```
 
+![図01 明るさと温度を分圧で取り出す](out/11-sensors-1.svg)
+
 どちらも上を素子、下を固定抵抗にした分圧で、真ん中 (`b7` / `i7` の列) が出力。
 CdS は明るいほど抵抗が下がり、NTC サーミスタは温かいほど下がる。
 
@@ -33,6 +36,7 @@ CdS は明るいほど抵抗が下がり、NTC サーミスタは温かいほど
 ## ダイオードの仲間
 
 ```breadboard
+title: 図02 ダイオードの仲間
 board: half
 parts:
   D1: diode a3(A) a6(K) 1N4148
@@ -42,6 +46,8 @@ parts:
   D5: varicap a27(A) a30(K) 33p
   DC1: diac f3 f6 DB3
 ```
+
+![図02 ダイオードの仲間](out/11-sensors-2.svg)
 
 **極性・向きのある 2 端子は、先に書いた穴が + 側 (アノード)。**
 `(A)` `(K)` を書かなくてもこの規則で向きが決まる。書けば図と食い違わないことを
@@ -54,6 +60,7 @@ parts:
 ## ガラス管・玉・円板
 
 ```breadboard
+title: 図03 ガラス管・玉・円板
 board: half
 parts:
   RE1: reed a3 a6
@@ -63,6 +70,8 @@ parts:
   Q1: thyristor f4(A) f5(G) f6(K) 2P4M
   Q2: triac/to220 f12(1) f13(G) f14(2) BT136
 ```
+
+![図03 ガラス管・玉・円板](out/11-sensors-3.svg)
 
 - `reed` の接点は**開いた状態**で描く。磁石を近づけたときだけ閉じるので、
   閉じた図にすると平常時と食い違う。

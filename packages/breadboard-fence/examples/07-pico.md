@@ -5,6 +5,7 @@ Pico をブレッドボードにまたがせて、LED とタクトスイッチ�
 書き方は種類名を替えるだけ。
 
 ```breadboard
+title: 図01 Pico に LED とボタンをつなぐ
 board: full
 parts:
   MCU: pico2 @ h5
@@ -32,6 +33,8 @@ wires:
   - a42 -- -t42 black
   - -t50 -- -b50 black
 ```
+
+![図01 Pico に LED とボタンをつなぐ](out/07-pico.svg)
 
 ## 読み方
 

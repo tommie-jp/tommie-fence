@@ -9,6 +9,7 @@
 貼り先の背景がそのまま透ける。既定ではないので、使うときは名前で選ぶ。
 
 ```breadboard
+title: 図01 classic
 board: half
 style: classic
 parts:
@@ -20,6 +21,8 @@ wires:
   - c13 -- -t13 black
 ```
 
+![図01 classic](out/02-themes-1.svg)
+
 ## dark
 
 暗い文書やスライドに貼るためのテーマ。板が暗いと穴が塗りでは読めなくなるので、
@@ -27,6 +30,7 @@ wires:
 黒や紺の線が板に沈まないようにしている。
 
 ```breadboard
+title: 図02 dark
 board: half
 style: dark
 parts:
@@ -38,6 +42,8 @@ wires:
   - c13 -- -t13 black
 ```
 
+![図02 dark](out/02-themes-2.svg)
+
 ## high-contrast
 
 プロジェクタの投影や、コピーを重ねたときの劣化に耐えるテーマ。
@@ -45,6 +51,7 @@ wires:
 白や黄色の線も白い板の上で追える。
 
 ```breadboard
+title: 図03 high-contrast
 board: half
 style: high-contrast
 parts:
@@ -56,6 +63,8 @@ wires:
   - c13 -- -t13 black
 ```
 
+![図03 high-contrast](out/02-themes-3.svg)
+
 ## mono
 
 白黒印刷向け。板と印字をグレーに落とす。
@@ -63,6 +72,7 @@ wires:
 グレーにすると「何色の線を挿すか」「何オームか」が読めなくなるため。
 
 ```breadboard
+title: 図04 mono
 board: half
 style: mono
 parts:
@@ -74,6 +84,8 @@ wires:
   - c13 -- -t13 black
 ```
 
+![図04 mono](out/02-themes-4.svg)
+
 ## presentation
 
 **既定のテーマ。`style:` を書かなければこれになる。**
@@ -82,6 +94,7 @@ wires:
 classic と違って**地は白で塗る** — 暗いスライドに貼ったときに余白だけ透けないようにするため。
 
 ```breadboard
+title: 図05 presentation
 board: half
 style: presentation
 parts:
@@ -93,11 +106,14 @@ wires:
   - c13 -- -t13 black
 ```
 
+![図05 presentation](out/02-themes-5.svg)
+
 ## 個別に変える
 
 テーマを土台にして、気になるところだけ上書きできる。
 
 ```breadboard
+title: 図06 テーマを個別に変える
 board: half
 style:
   theme: dark
@@ -112,3 +128,5 @@ wires:
   - a10 -- b12
   - c13 -- -t13 black
 ```
+
+![図06 テーマを個別に変える](out/02-themes-6.svg)

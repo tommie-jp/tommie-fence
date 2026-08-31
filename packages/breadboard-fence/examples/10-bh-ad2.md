@@ -7,6 +7,7 @@ NJM4556A の 2 回路をボルテージフォロワにして 1Ω 2 本で並列�
 DIP 部品・ボード外の機器・ピン参照・電源レールを全部使う、文法のストレステスト。
 
 ```breadboard
+title: 図01 B-H カーブ測定回路
 # レール割当: 上+ = -5V / 下+ = +5V (各電源ピンに近い側)。青レールは両方 GND。
 board: half
 parts:
@@ -53,6 +54,8 @@ wires:
   - AD2.2+ -- f27 blue
   - AD2.2- -- -t26 blue
 ```
+
+![図01 B-H カーブ測定回路](out/10-bh-ad2.svg)
 
 `breadboard-fence render examples --out examples/out` を実行すると、
 図と一緒に**穴の導通から導いたネットリスト**が出る。

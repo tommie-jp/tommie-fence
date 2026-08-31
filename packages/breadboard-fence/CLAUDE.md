@@ -31,7 +31,12 @@ VS Code 拡張機能。全体像は [README.md](README.md)、文法は [docs/01-
 3. **TDD**: テストを先に書いて落とし、実装で通す。`npm run check` (型チェック + テスト)
    を通してからコミットする。カバレッジは 80% 以上を維持する。
 4. **Markdown は lint を通す**:
-   `npx markdownlint-cli 'README.md' 'docs/*.md' 'examples/*.md' 'examples/errors/*.md' 'CHANGELOG.md'`。
-5. **サンプルは再生成してコミット**: 描画を変えたら `npm run examples` を実行し、
-   `examples/out` の差分も一緒にコミットする (スナップショットテストの期待値であり、
-   README と文法メモが参照している図でもある)。
+   `npx markdownlint-cli 'README.md' 'CHANGELOG.md' 'docs/*.md' 'examples/*.md' 'examples/errors/*.md'`。
+5. **図はフェンスの直後に貼る**: `docs/01-syntax.md` と `examples/*.md` のフェンスは
+   すべて本物で、直後に**そのフェンスを描いた図**を貼る。どの図にも
+   `title: 図NN タイトル` を付け、**番号は .md ごとに 01 から**数え直す。
+   **他所の図は流用しない** (題番号が焼き込まれているので体系が崩れる)。
+   規約は `embeddedFigures.test.ts` と `figureNumbers.test.ts` が見張る。
+6. **図は再生成してコミット**: 描画を変えたら `npm run examples` と `npm run docs` を
+   実行し、`examples/out` と `docs/out` の差分も一緒にコミットする
+   (スナップショットテストの期待値であり、文書が貼っている図でもある)。

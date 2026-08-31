@@ -23,6 +23,8 @@ notes:
   - text i3 blue: この段はまだ組んでいない
 ```
 
+![図01 LED を点ける](out/12-notes-1.svg)
+
 - `circle` は指し先を囲む。**部品を指すと部品を囲む楕円**、穴を指すと穴 1 つの丸。
 - `arrow` と `line` は 2 点を結ぶ。部品を指した端は囲みの縁で止まり、
   **穴を指した端は穴そのものまで届く** (手前で止めるとどの穴か分からなくなるため)。
@@ -33,6 +35,7 @@ notes:
 ## 色・大きさ・寄せ
 
 ```breadboard
+title: 図02 色と大きさと寄せ
 board: half
 parts-list: none
 parts:
@@ -49,6 +52,8 @@ notes:
   - text i28 right red: 右ぞろえ
 ```
 
+![図02 色と大きさと寄せ](out/12-notes-2.svg)
+
 - 色は `red` `blue` `green` `orange` `ink`。`ink` は図の文字色で、テーマに従う。
   **印・枠・指し棒の既定は `red`**、字の既定は図の文字色。
 - 大きさは `tiny` `small` `normal` `large` `huge`。
@@ -62,6 +67,7 @@ notes:
 ## フェンスそのものを図に書き込む
 
 ```breadboard
+title: 図03 フェンスそのものを書き込む
 board: half
 parts-list: none
 parts:
@@ -74,6 +80,8 @@ wires:
 notes:
   - source j3 tiny
 ```
+
+![図03 フェンスそのものを書き込む](out/12-notes-3.svg)
 
 `source` はそのフェンスの中身を、囲みつきで図の上に書き出す。
 図だけを渡された人がそのまま書き写せるのが値打ちなので、**行番号は添えない**。

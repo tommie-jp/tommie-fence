@@ -135,7 +135,7 @@ LLM に書かせて直させるループでは書き出しの分だけ回転が�
 
 ## 文法
 
-[docs/01-syntax.md](docs/01-syntax.md) に一覧と出力例、
+[docs/01-syntax.md](docs/01-syntax.md) に全文法と図、
 [docs/02-cheatsheet.md](docs/02-cheatsheet.md) に 1 画面の早見表がある。要点だけ:
 
 | 要素 | 書き方 | 例 |
@@ -176,6 +176,7 @@ zener / schottky / photodiode / varicap / diac / reed / fuse / lamp、
 ## サンプル
 
 **番号は読む順**。上から下へ、最小の回路から実験回路まで難しくなる。
+目次と図の付け方は [examples/README.md](examples/README.md)。
 
 | ファイル | 内容 |
 | --- | --- |

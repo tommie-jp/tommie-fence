@@ -5,6 +5,7 @@
 ## タクトスイッチで LED を点ける
 
 ```breadboard
+title: 図01 タクトスイッチで LED を点ける
 board: half
 parts:
   SW1: button @ e5
@@ -15,6 +16,8 @@ wires:
   - j10 -- i12 orange
   - i14 -- -b14 black
 ```
+
+![図01 タクトスイッチで LED を点ける](out/06-switches-1.svg)
 
 `button @ e5` は溝をまたいで 4 本足を挿す。占める穴は `e5` `e7` `f5` `f7` で、
 足の名前は溝の手前側が `1a` `1b`、向こう側が `2a` `2b`。
@@ -35,6 +38,7 @@ N2 : R1.2, D1.A
 ## 半固定抵抗とスライドスイッチ
 
 ```breadboard
+title: 図02 半固定抵抗とスライドスイッチ
 board: half
 parts:
   SW2: slide-switch e3(1) e4(C) e5(2)
@@ -48,6 +52,8 @@ wires:
   - b16 -- b20 green
   - b22 -- -t22 black
 ```
+
+![図02 半固定抵抗とスライドスイッチ](out/06-switches-2.svg)
 
 - どちらも足の穴を並べて書く (3 本足なので `transistor` と同じ書き方)。
 - 足の名前は `a9(W)` のように穴に付ける。付けなければ左から `1` `2` `3`。
