@@ -1,6 +1,6 @@
 import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Node, Pair, ParsedNode } from 'yaml';
-import { fenceError, safeToken } from '../errors.ts';
+import { fenceError, notice, safeToken } from '../errors.ts';
 import { LIMITS, clampText, isReferenceable } from '../limits.ts';
 import { railOrder } from '../model/board.ts';
 import {
@@ -128,9 +128,10 @@ export function parseFence(source: string): ParseResult {
       // 理由はそれを書いた項目の行に付ける (style: の行だけを指しても直す場所が分からない)。
       const keyLine = styleKeyLines(node, lineOf);
       errors.push(
-        ...validated.messages.map((item) =>
-          fenceError(item.message, (item.key === null ? null : keyLine.get(item.key)) ?? line),
-        ),
+        ...validated.messages.map((item) => {
+          const at = (item.key === null ? null : keyLine.get(item.key)) ?? line;
+          return item.notice === true ? notice(item.message, at) : fenceError(item.message, at);
+        }),
       );
     } else if (key === 'parts-list') {
       const mode = pick(PARTS_LIST_MODES, scalarText(pair.value));
@@ -145,7 +146,7 @@ export function parseFence(source: string): ParseResult {
       collectNotes(pair.value as ParsedNode | null, { notes, errors, lineOf });
     } else {
       errors.push(
-        fenceError(`知らないキーです: ${safeToken(key)} (${TOP_LEVEL_KEYS.join(' / ')} が使えます)`, line),
+        fenceError(`知らないキーです: ${safeToken(key)} (${TOP_LEVEL_KEYS.join(' / ')} が使えます)`, line, key),
       );
     }
   }
@@ -396,7 +397,8 @@ function expandPart(id: string, raw: unknown, line: number) {
     value: {
       id, type, variant, holes: holes.map(parseHoleToken), value, label, at, pins, line,
     } satisfies PartSpec,
-    notes: validated.notes.map((note) => fenceError(`部品 ${safeToken(id)}: ${note}`, line)),
+    // 「描けたが使われなかった指定」はお知らせ。部品そのものは今までどおり描く。
+    notes: validated.notes.map((item) => notice(`部品 ${safeToken(id)}: ${item}`, line)),
   };
 }
 

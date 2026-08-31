@@ -78,7 +78,7 @@ export function parseNoteLine(head: string, text: string | null, line: number): 
   }
   for (const target of targets) {
     if (!isNoteTarget(target)) {
-      return fail(`注釈の指し先として読めません: ${safeToken(target)} (部品 ID か穴番地を書きます)`, line);
+      return fail(`注釈の指し先として読めません: ${safeToken(target)} (部品 ID か穴番地を書きます)`, line, target);
     }
   }
 
@@ -126,7 +126,7 @@ function readWords(kind: NoteKind, tokens: readonly string[], line: number): Res
       if (isNoteTarget(token)) {
         return fail(`${kind} は指し先を ${noteTargetCount(kind)} つ書きます (${safeToken(token)} が余っています)`, line);
       }
-      return fail(`注釈の知らない語です: ${safeToken(token)}`, line);
+      return fail(`注釈の知らない語です: ${safeToken(token)}`, line, token);
     }
     if (!allowed.includes(slot)) {
       return fail(`${kind} に ${token} は書けません (書けるのは ${allowed.map((s) => SLOT_NAMES[s]).join(' / ')})`, line);

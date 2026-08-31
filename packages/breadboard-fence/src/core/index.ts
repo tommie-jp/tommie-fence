@@ -1,4 +1,5 @@
-import { fail, fenceError, ok, safeToken } from './errors.ts';
+import { attachSourceText, fail, fenceError, notice, ok, safeToken } from './errors.ts';
+import { normalizeNewlines } from './newlines.ts';
 import { LIMITS } from './limits.ts';
 import { formatAddress, parseAddress } from './model/address.ts';
 import { createBoard, devicePinStrip, isOnBoard, stripOf } from './model/board.ts';
@@ -15,7 +16,7 @@ import { layoutDevices } from './render/devices.ts';
 import type { DevicePlacement } from './render/devices.ts';
 import type { NoteAnchor, ResolvedNote } from './render/notes.ts';
 import { partObstacles } from './render/parts.ts';
-import { renderErrorCard } from './render/errorCard.ts';
+import { renderErrorBanner, renderErrorCard } from './render/errorHtml.ts';
 import { DEFAULT_WIRE_COLOR, wireColor as lookupWireColor, wireColorNames } from './render/palette.ts';
 import { resolveStyle } from './render/theme.ts';
 import type {
@@ -23,7 +24,10 @@ import type {
 } from './types.ts';
 
 export type RenderResult = {
-  /** それ自体で完結した SVG。外部リソースもスクリプトも参照しない。 */
+  /**
+   * それ自体で完結した SVG。外部リソースもスクリプトも参照しない。
+   * **図が 1 つも組めなかったときは空文字列**で、言うことは `errorHtml` に入る。
+   */
   readonly svg: string;
   /**
    * 穴の導通から導いたネットリスト。意図した回路との突き合わせに使える。
@@ -31,7 +35,19 @@ export type RenderResult = {
    * 画面に出す側で必ずエスケープすること (React のテキスト描画ならそのままでよい)。
    */
   readonly netlist: readonly Net[];
+  /** 読めなかったところ。行番号と、行の中身と、綴りを指す印を持つ。 */
   readonly errors: readonly FenceError[];
+  /**
+   * 読めてはいるが、思ったとおりには出ないところ。
+   * `style: debug: off` で `errorHtml` からは伏せられるが、ここには必ず入る。
+   */
+  readonly notices: readonly FenceError[];
+  /**
+   * 図の下に貼る帯 (図は描けた) か、カード (図が組めなかった) の HTML。
+   * 言うことが無ければ空文字列。**図の SVG には何も書き込まない**ので、
+   * 書き出した SVG を貼ったときに報告が付いてこない。
+   */
+  readonly errorHtml: string;
 };
 
 type Endpoint =
@@ -53,10 +69,13 @@ const PIN_REF = /^([\w-]+)\.(\S+)$/;
  * フェンスの中身 1 つを図とネットリストに変換する。DOM も Node も使わない同期の純関数なので、
  * VS Code のプレビュー・CLI・サーバー側描画のどこからでも同じように呼べる。
  */
-export function renderBreadboard(source: string): RenderResult {
+export function renderBreadboard(input: string): RenderResult {
+  // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
+  const source = normalizeNewlines(input);
   const parsed = parseFence(source);
   if (!parsed.doc) {
-    return { svg: renderErrorCard(parsed.errors), netlist: [], errors: parsed.errors };
+    const reported = attachSourceText(parsed.errors, source);
+    return { svg: '', netlist: [], errors: reported, notices: [], errorHtml: renderErrorCard(reported) };
   }
 
   const errors: FenceError[] = [...parsed.errors];
@@ -119,10 +138,22 @@ export function renderBreadboard(source: string): RenderResult {
     notes,
     sourceLines: notes.some((note) => note.spec.kind === 'source') ? sourceListing(source) : [],
     partsList: parsed.doc.partsList,
-    errors,
   });
 
-  return { svg, netlist, errors };
+  return { svg, netlist, ...report(errors, source, style.debug) };
+}
+
+/**
+ * 読めなかったところと、お知らせを分けて返す。**伏せられるのはお知らせだけ**で、
+ * 読めなかった行は `debug: off` でも必ず出す (黙って消えるほうが困る)。
+ */
+function report(errors: readonly FenceError[], source: string, debug: boolean) {
+  const reported = attachSourceText(errors, source);
+  const hard = reported.filter((error) => error.notice !== true);
+  const notices = reported.filter((error) => error.notice === true);
+  const shown = debug ? reported : hard;
+
+  return { errors: hard, notices, errorHtml: renderErrorBanner(shown) };
 }
 
 /**
@@ -204,7 +235,11 @@ function resolveNoteTarget(
 
   if (part) {
     if (address) {
-      errors.push(fenceError(`注釈の ${safeToken(target)} は部品を指しています (穴 ${formatAddress(address)} ではありません)`, spec.line));
+      errors.push(notice(
+        `注釈の ${safeToken(target)} は部品を指しています (穴 ${formatAddress(address)} ではありません)`,
+        spec.line,
+        target,
+      ));
     }
     const anchor = anchorOfPart(part, placements, layout);
     if (anchor) return anchor;
@@ -221,7 +256,7 @@ function resolveNoteTarget(
     return { center: point, rx: NOTE_HOLE_RADIUS, ry: NOTE_HOLE_RADIUS, part: false };
   }
 
-  errors.push(fenceError(`注釈の指し先 ${safeToken(target)}: そんな部品も穴もありません`, spec.line));
+  errors.push(fenceError(`注釈の指し先 ${safeToken(target)}: そんな部品も穴もありません`, spec.line, target));
   return null;
 }
 
@@ -322,16 +357,16 @@ function resolveEndpoint(
   if (ref) {
     const [, partId = '', pinName = ''] = ref;
     const part = parts.find((candidate) => candidate.id === partId);
-    if (!part) return fail(`配線の端点 ${safeToken(text)}: そんな部品はありません`, line);
+    if (!part) return fail(`配線の端点 ${safeToken(text)}: そんな部品はありません`, line, text);
     const pin = part.pins.find((candidate) => candidate.name === pinName);
-    if (!pin) return fail(`配線の端点 ${safeToken(text)}: そのピンはありません${nearbyPins(part, pinName)}`, line);
+    if (!pin) return fail(`配線の端点 ${safeToken(text)}: そのピンはありません${nearbyPins(part, pinName)}`, line, text);
     return pin.address
       ? ok({ kind: 'hole', address: pin.address })
       : ok({ kind: 'device', partId, pin: pinName });
   }
 
   const address = parseAddress(text);
-  if (!address) return fail(`配線の端点として読めません: ${safeToken(text)}`, line);
+  if (!address) return fail(`配線の端点として読めません: ${safeToken(text)}`, line, text);
   if (!isOnBoard(board, address)) {
     return fail(`${formatAddress(address)} はボードの外です (1〜${board.columns} 列)`, line);
   }
@@ -386,5 +421,5 @@ function preferredDeviceX(
 
 export { extractBreadboardFences } from './fences.ts';
 export type { FenceBlock } from './fences.ts';
-export { errorLine } from './render/errorCard.ts';
+export { errorLine, errorText } from './render/errorText.ts';
 export type { FenceError, Net } from './types.ts';

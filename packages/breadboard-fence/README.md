@@ -192,9 +192,14 @@ zener / schottky / photodiode / varicap / diac / reed / fuse / lamp、
 ## 仕組み
 
 描画コアは **DOM にも Node の API にも依存しない同期の純関数**
-`renderBreadboard(source) => { svg, netlist, errors }` で、外部リソースを
-参照しない完結した SVG 文字列を返す。VS Code のプレビュー・CLI・
+`renderBreadboard(source) => { svg, netlist, errors, notices, errorHtml }` で、
+外部リソースを参照しない完結した SVG 文字列を返す。VS Code のプレビュー・CLI・
 別アプリのサーバー側描画のどこから呼んでも同じ絵になる。
+
+**読めなかったところは SVG に書き込まない。** 図の SVG は図だけなので、
+GitHub や別のノートに貼っても報告が付いてこない。言うことは `errorHtml`
+(プレビュー用の HTML) と `errors` / `notices` (生のデータ) に入る。
+図が 1 枚も組めなかったときは `svg` が空文字列になる。
 
 | ディレクトリ | 中身 |
 | --- | --- |

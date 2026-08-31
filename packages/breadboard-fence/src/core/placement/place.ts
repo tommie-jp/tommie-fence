@@ -83,6 +83,7 @@ function variantError(part: PlacedPart): FenceError | null {
         `部品 ${safeToken(part.id)}: ${safeToken(part.type)} の姿は選べません ` +
         `(姿を選べるのは ${typesWithVariants().join(', ')})`,
       line: part.line,
+      token: `${part.type}/${variant}`,
     };
   }
   if (!allowed.includes(variant)) {
@@ -91,6 +92,7 @@ function variantError(part: PlacedPart): FenceError | null {
         `知らない姿です: ${safeToken(variant)} ` +
         `(${safeToken(part.type)} に使えるのは ${allowed.join(', ')})`,
       line: part.line,
+      token: `${part.type}/${variant}`,
     };
   }
 
@@ -172,7 +174,11 @@ function findConflict(
 function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
   const footprint = lookupFootprint(spec.type);
   if (!footprint) {
-    return fail(`知らない部品の種類です: ${safeToken(spec.type)} (${describeUnknownType(spec.type)})`, spec.line);
+    return fail(
+      `知らない部品の種類です: ${safeToken(spec.type)} (${describeUnknownType(spec.type)})`,
+      spec.line,
+      spec.type,
+    );
   }
 
   const base: PartBase = {
@@ -375,7 +381,7 @@ function placeSwitch(spec: PartSpec, board: Board, base: PartBase): Result<Place
 
 function resolveHole(text: string, board: Board, line: number): Result<Address> {
   const address = parseAddress(text);
-  if (!address) return fail(`穴番地として読めません: ${safeToken(text)} (a5 や +t5 のように書きます)`, line);
+  if (!address) return fail(`穴番地として読めません: ${safeToken(text)} (a5 や +t5 のように書きます)`, line, text);
   if (!isOnBoard(board, address)) {
     return fail(`${formatAddress(address)} はボードの外です (1〜${board.columns} 列)`, line);
   }

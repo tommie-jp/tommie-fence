@@ -21,9 +21,10 @@ export function breadboardPlugin(md: MarkdownIt): MarkdownIt {
     // VS Code が付けた data-line / code-line を残したままクラスを足す
     // (消すとエディタとプレビューのスクロール同期が切れる)。
     token.attrJoin('class', 'breadboard');
-    const { svg } = renderBreadboard(token.content);
+    // 図は SVG、読めなかったところは図の外の HTML。字は core 側でエスケープ済み。
+    const { svg, errorHtml } = renderBreadboard(token.content);
 
-    return `<div${self.renderAttrs(token)}>${svg}</div>\n`;
+    return `<div${self.renderAttrs(token)}>${svg}${errorHtml}</div>\n`;
   };
 
   return md;

@@ -492,7 +492,7 @@ describe('renderBreadboard', () => {
   });
 
   test('names an off board device in the list by the same label its box carries', () => {
-    const { svg, errors } = renderBreadboard(
+    const { svg, errors, notices } = renderBreadboard(
       [
         'parts:',
         '  AD2:',
@@ -507,11 +507,10 @@ describe('renderBreadboard', () => {
 
     // 機器の箱と部品リストの 2 か所に、同じ名前で出る。
     expect(texts.filter((text) => text === 'Analog Discovery 2')).toHaveLength(2);
-    // value は機器のどこにも出ない。出ないものを黙って捨てず、帯で理由を言う。
+    // value は機器のどこにも出ない。出ないものを黙って捨てず、お知らせで理由を言う。
     expect(texts).not.toContain('波形発生器');
-    expect(errors.map((error) => error.message)).toEqual([
-      expect.stringContaining('value'),
-    ]);
+    expect(errors).toEqual([]);
+    expect(notices.map((item) => item.message)).toEqual([expect.stringContaining('value')]);
   });
 
   test('cuts a caption that would run off the canvas, and marks where it cut', () => {
@@ -537,27 +536,66 @@ describe('renderBreadboard', () => {
     expect(textWidth(text) * Number(size)).toBeLessThanOrEqual(Number(x));
   });
 
-  test('keeps the error banner under the parts list so the drawing reads top to bottom', () => {
-    const { svg } = renderBreadboard(
+  test('keeps what it could not read out of the drawing itself', () => {
+    const { svg, errorHtml, errors } = renderBreadboard(
       ['parts:', '  R1: resistor a5 a10 330', 'wires:', '  - a5 -- nowhere'].join('\n'),
     );
-    const texts = [...svg.matchAll(/<text[^>]*y="([\d.]+)"[^>]*>([^<]*)<\/text>/g)].map((match) => ({
-      y: Number(match[1]),
-      text: match[2] ?? '',
-    }));
 
-    const listed = texts.find((item) => item.text === 'resistor');
-    const banner = texts.find((item) => item.text.includes('行目'));
-    expect(listed).toBeDefined();
-    expect(Number(banner?.y)).toBeGreaterThan(Number(listed?.y));
+    // 図の SVG は図だけ。GitHub や別のノートに貼っても報告が付いてこない。
+    expect(svg).not.toContain('行目');
+    expect(errors).toHaveLength(1);
+    expect(errorHtml).toContain('breadboard-errors');
+    expect(errorHtml).toContain('4 行目');
   });
 
-  test('reports the parse error and still returns a drawable error card', () => {
-    const { svg, errors } = renderBreadboard('parts:\n  R1: [unclosed\n');
+  test('returns no drawing at all when the fence cannot be read, and says so in html', () => {
+    const { svg, errorHtml, errors } = renderBreadboard('parts:\n  R1: [unclosed\n');
 
     expect(errors.length).toBeGreaterThan(0);
-    expect(svg.startsWith('<svg')).toBe(true);
-    expect(svg).toContain('</svg>');
+    expect(svg).toBe('');
+    expect(errorHtml).toContain('breadboard-error-card');
+  });
+
+  test('adds the line itself and a mark under the spelling it could not read', () => {
+    const { errors, errorHtml } = renderBreadboard('parts:\n  R1: resistr a5 a10 10k\n');
+
+    expect(errors[0]?.text).toBe('  R1: resistr a5 a10 10k');
+    expect(errors[0]?.at).toEqual({ column: 6, length: 7 });
+    // 印は本文の下に、同じ桁で並ぶ。
+    expect(errorHtml).toContain('      ^^^^^^^');
+  });
+
+  test('does not point at a spelling that appears twice on the line', () => {
+    // どちらでもない場所を指すより、指さないほうがまだ正しい。
+    const { errors } = renderBreadboard('parts:\n  resistr: resistr a5 a10\n');
+
+    expect(errors[0]?.at).toBeUndefined();
+  });
+
+  test('replaces invisible characters one for one so the mark stays on its column', () => {
+    const { errors } = renderBreadboard('parts:\n  R1:\u200b resistr a5 a10\n');
+
+    expect(errors[0]?.text).toContain('·');
+    expect([...(errors[0]?.text ?? '')].length).toBe(21);
+  });
+
+  test('hides notices when debug is off, but never hides what it could not read', () => {
+    const source = [
+      'style:', '  debug: off', '  text-size: 99',
+      'parts:', '  R1: resistor a5 a10 330', 'wires:', '  - a5 -- nowhere', '',
+    ].join('\n');
+    const { errorHtml, errors, notices } = renderBreadboard(source);
+
+    expect(notices).toHaveLength(1);
+    expect(errorHtml).not.toContain('text-size');
+    expect(errors).toHaveLength(1);
+    expect(errorHtml).toContain('nowhere');
+  });
+
+  test('reads a fence written with CRLF the same as one with newlines', () => {
+    const source = 'parts:\n  R1: resistor a5 a10 330\n';
+
+    expect(renderBreadboard(source.replace(/\n/g, '\r\n')).svg).toBe(renderBreadboard(source).svg);
   });
 
   test('reports a wire endpoint that names a part pin which does not exist', () => {

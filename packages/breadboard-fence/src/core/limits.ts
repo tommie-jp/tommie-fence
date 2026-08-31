@@ -24,6 +24,8 @@ export const LIMITS = {
   sourceLines: 80,
   /** `points:` に置ける名前の数。 */
   points: 100,
+  /** 報告に添える行の中身の長さ。長い行を丸ごと載せると帯が読めなくなる。 */
+  snippetLength: 120,
 } as const;
 
 /**

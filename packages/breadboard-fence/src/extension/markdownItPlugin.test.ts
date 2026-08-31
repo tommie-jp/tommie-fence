@@ -14,6 +14,15 @@ describe('breadboardPlugin', () => {
     expect(html).not.toContain('<code');
   });
 
+  test('puts what it could not read next to the drawing, not inside it', () => {
+    const html = md().render('```breadboard\nparts:\n  R1: resistr a5 a10\n```');
+
+    expect(html).toContain('<svg');
+    expect(html).toContain('breadboard-errors');
+    // 図の SVG そのものには報告が入らない。
+    expect(html.slice(0, html.indexOf('</svg>'))).not.toContain('行目');
+  });
+
   test('applies the theme the fence asks for', () => {
     const html = md().render('```breadboard\nboard: half\nstyle: dark\n```');
 
@@ -30,10 +39,10 @@ describe('breadboardPlugin', () => {
     expect(html).not.toContain('<svg');
   });
 
-  test('renders an error card instead of throwing when the fence is invalid', () => {
+  test('renders an error card in html instead of throwing when the fence is invalid', () => {
     const html = md().render('```breadboard\nparts:\n  R1: [unclosed\n```');
 
-    expect(html).toContain('<svg');
+    expect(html).toContain('breadboard-error-card');
   });
 
   test('keeps working when the fence is empty', () => {

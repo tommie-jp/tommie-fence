@@ -69,8 +69,22 @@ export type StripId = string;
 
 export type Net = { readonly name: string; readonly strips: readonly StripId[]; readonly refs: readonly string[] };
 
-/** 行番号は 1 始まり。位置が特定できないときだけ null。 */
-export type FenceError = { readonly message: string; readonly line: number | null };
+/**
+ * 読めなかったところと、読めてはいるが思ったとおりに出ないところ。
+ * 行番号は 1 始まりで、位置が特定できないときだけ null。
+ */
+export type FenceError = {
+  readonly message: string;
+  readonly line: number | null;
+  /** 読めなかった綴り。行の中で 1 か所に決まるときだけ、報告に印が付く。 */
+  readonly token?: string;
+  /** その行の中身。`attachSourceText` が添える。 */
+  readonly text?: string;
+  /** 行の中で指す範囲 (0 始まりの桁と、コードポイントで数えた長さ)。 */
+  readonly at?: { readonly column: number; readonly length: number };
+  /** お知らせ (読めているが思ったとおりに出ない)。`style: debug: off` で伏せられる。 */
+  readonly notice?: boolean;
+};
 
 export type Result<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: FenceError };
 
@@ -137,6 +151,8 @@ export type StyleSpec = {
   readonly holeSize: number | null;
   readonly holeColor: string | null;
   readonly width: number | null;
+  /** お知らせを図の下に出すか。読めなかった行はこれに関わらず必ず出る。 */
+  readonly debug: boolean | null;
   /** `style:` が書かれた行。読めなかった項目の報告に使う。 */
   readonly line: number | null;
 };

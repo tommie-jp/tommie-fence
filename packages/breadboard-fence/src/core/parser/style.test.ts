@@ -28,6 +28,7 @@ describe('validateStyle', () => {
       'board-color': '#f0f0f0',
       'hole-size': 6,
       'hole-color': '#010101',
+      debug: 'off',
       width: 1200,
     });
 
@@ -41,8 +42,23 @@ describe('validateStyle', () => {
       holeSize: 6,
       holeColor: '#010101',
       width: 1200,
+      debug: false,
       line: 2,
     });
+  });
+
+  test('reads the switch that hides the notices', () => {
+    expect(styleOf({ debug: 'off' }).debug).toBe(false);
+    expect(styleOf({ debug: 'on' }).debug).toBe(true);
+    expect(messagesOf({ debug: 'yes' })[0]?.message).toContain('on');
+  });
+
+  test('adds how to quote a colour that yaml ate as a comment', () => {
+    // `text-color: #333` は `#` から先がコメントになり、値が空で届く。
+    // 書いた本人には書いたとおりに見えるので、ここで言わないと直しようがない。
+    const message = messagesOf({ 'text-color': null })[0]?.message ?? '';
+
+    expect(message).toContain('"…"');
   });
 
   test('names the unknown key and keeps the keys it could read', () => {

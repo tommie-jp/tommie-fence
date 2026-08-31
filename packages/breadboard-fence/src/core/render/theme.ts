@@ -52,6 +52,8 @@ export type RenderStyle = {
   readonly theme: RenderTheme;
   /** 出力の横ドット数。null なら viewBox の座標をそのまま px として出す。 */
   readonly width: number | null;
+  /** お知らせを図の下に出すか。既定は出す。 */
+  readonly debug: boolean;
 };
 
 export type StyleResolution = { readonly style: RenderStyle; readonly messages: readonly string[] };
@@ -299,7 +301,11 @@ export function resolveStyle(spec: StyleSpec): StyleResolution {
   }
 
   return {
-    style: { theme: withOverrides(named ?? DEFAULT_THEME, spec), width: spec.width },
+    style: {
+      theme: withOverrides(named ?? DEFAULT_THEME, spec),
+      width: spec.width,
+      debug: spec.debug ?? true,
+    },
     messages,
   };
 }

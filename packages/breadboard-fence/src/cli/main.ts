@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, resolve } from 'node:path';
-import { errorLine, extractBreadboardFences, renderBreadboard } from '../core/index.ts';
+import { errorText, extractBreadboardFences, renderBreadboard } from '../core/index.ts';
 import type { FenceError, Net } from '../core/index.ts';
 import { USAGE, parseArgs } from './args.ts';
 
@@ -43,8 +43,13 @@ function reportNetlist(netlist: readonly Net[]): void {
   for (const net of netlist) console.log(`    ${net.name.padEnd(width)} : ${net.refs.join(', ')}`);
 }
 
-const reportErrors = (errors: readonly FenceError[]): void => {
-  for (const error of errors) console.error(`  エラー: ${errorLine(error)}`);
+/**
+ * 読めなかったところとお知らせを標準エラーへ。**プレビューの帯と同じ文面**で、
+ * 行番号・行の中身・綴りを指す印まで揃える (直す場所を探す手間を減らす)。
+ * `style: debug: off` はプレビューの見え方の指定なので、ここでは伏せない。
+ */
+const reportErrors = (errors: readonly FenceError[], notices: readonly FenceError[]): void => {
+  for (const error of [...errors, ...notices]) console.error(errorText(error));
 };
 
 function main(argv: readonly string[]): number {
@@ -62,11 +67,16 @@ function main(argv: readonly string[]): number {
 
     for (const target of targets.flatMap(collectFiles)) {
       for (const job of jobsFor(target, outDir)) {
-        const { svg, netlist, errors } = renderBreadboard(job.source);
-        writeFileSync(job.outPath, `${svg}\n`);
-        console.log(`${job.label} → ${job.outPath}`);
+        const { svg, netlist, errors, notices } = renderBreadboard(job.source);
+        // 図が 1 つも組めなければ SVG は空。空のファイルを置くより、書かないほうがよい。
+        if (svg) {
+          writeFileSync(job.outPath, `${svg}\n`);
+          console.log(`${job.label} → ${job.outPath}`);
+        } else {
+          console.log(`${job.label} → 図を組めませんでした`);
+        }
         reportNetlist(netlist);
-        reportErrors(errors);
+        reportErrors(errors, notices);
         failed += errors.length;
       }
     }

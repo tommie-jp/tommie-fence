@@ -13,6 +13,7 @@ export const EMPTY_STYLE: StyleSpec = {
   holeSize: null,
   holeColor: null,
   width: null,
+  debug: null,
   line: null,
 };
 
@@ -20,7 +21,12 @@ export const EMPTY_STYLE: StyleSpec = {
  * 読めなかった理由と、それがどの項目のものか。
  * 行番号は YAML の節を持っている側 (parseFence) が key から引く。
  */
-export type StyleMessage = { readonly message: string; readonly key: string | null };
+export type StyleMessage = {
+  readonly message: string;
+  readonly key: string | null;
+  /** 読めてはいるが、書いたとおりには出ないという知らせ (端へ寄せた、など)。 */
+  readonly notice?: boolean;
+};
 
 export type StyleValidation = { readonly value: StyleSpec; readonly messages: readonly StyleMessage[] };
 
@@ -33,7 +39,7 @@ const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 
 const KEYS = [
   'theme', 'text-size', 'text-color', 'text-background',
-  'wire-width', 'board-color', 'hole-size', 'hole-color', 'width',
+  'wire-width', 'board-color', 'hole-size', 'hole-color', 'width', 'debug',
 ] as const;
 
 const isRecord = (raw: unknown): raw is Record<string, unknown> =>
@@ -48,10 +54,24 @@ const normaliseColor = (text: string): string => {
 const readColor = (raw: unknown, key: string, messages: StyleMessage[]): string | null => {
   if (typeof raw !== 'string' || !HEX_COLOR.test(raw)) {
     // 読めなかった値は図に書き戻さない (配線の色名と同じ扱い)。書ける形だけを示す。
-    messages.push({ message: `style の ${key} は色として読めません (#rgb か #rrggbb で書きます)`, key });
+    //
+    // **値が空なら、たいてい YAML のコメントに食われている**。`text-color: #333` は
+    // `#` から先がコメントなので値が null になり、書いた本人には書いたとおりに見える。
+    // ここで気づけないと直しようがないので、囲み方まで添える。
+    const eaten = raw === null || raw === undefined
+      ? ' (`#` から始まる値は "…" で囲みます。囲まないと YAML のコメントになります)'
+      : '';
+    messages.push({ message: `style の ${key} は色として読めません (#rgb か #rrggbb で書きます)${eaten}`, key });
     return null;
   }
   return normaliseColor(raw);
+};
+
+const readFlag = (raw: unknown, key: string, messages: StyleMessage[]): boolean | null => {
+  if (raw === 'on') return true;
+  if (raw === 'off') return false;
+  messages.push({ message: `style の ${key} は on か off です`, key });
+  return null;
 };
 
 const readSize = (raw: unknown, key: string, range: StyleRange, messages: StyleMessage[]): number | null => {
@@ -62,7 +82,11 @@ const readSize = (raw: unknown, key: string, range: StyleRange, messages: StyleM
   const clamped = Math.min(Math.max(raw, range.min), range.max);
   // 範囲外は捨てずに端へ寄せる。書いた意図 (もっと大きく / 小さく) は残るほうがよい。
   if (clamped !== raw) {
-    messages.push({ message: `style の ${key} は ${range.min}〜${range.max} です (${clamped} にしました)`, key });
+    messages.push({
+      message: `style の ${key} は ${range.min}〜${range.max} です (${clamped} にしました)`,
+      key,
+      notice: true,
+    });
   }
   return clamped;
 };
@@ -99,6 +123,8 @@ function withKey(style: StyleSpec, key: string, raw: unknown, messages: StyleMes
       return { ...style, holeColor: color() ?? style.holeColor };
     case 'width':
       return { ...style, width: size(STYLE_RANGES.width) ?? style.width };
+    case 'debug':
+      return { ...style, debug: readFlag(raw, key, messages) ?? style.debug };
     default:
       messages.push({ message: `style の知らない項目です: ${safeToken(key)} (使えるのは ${KEYS.join(', ')})`, key });
       return style;

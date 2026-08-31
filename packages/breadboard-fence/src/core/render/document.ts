@@ -1,9 +1,8 @@
 import type { Layout } from '../model/layout.ts';
-import type { Board, FenceError, PartsListMode, PlacedPart, Point } from '../types.ts';
+import type { Board, PartsListMode, PlacedPart, Point } from '../types.ts';
 import { renderBoard } from './board.ts';
 import type { DevicePlacement } from './devices.ts';
 import { renderDevice } from './devices.ts';
-import { bannerHeight, renderErrorBanner } from './errorCard.ts';
 import { notesBottom, renderNotes } from './notes.ts';
 import type { ResolvedNote } from './notes.ts';
 import { renderPart } from './parts.ts';
@@ -30,7 +29,6 @@ export type DocumentInput = {
   /** `- source` が図に書き出すフェンスの中身 (囲みつき)。 */
   readonly sourceLines: readonly string[];
   readonly partsList: PartsListMode;
-  readonly errors: readonly FenceError[];
 };
 
 /**
@@ -38,16 +36,15 @@ export type DocumentInput = {
  * VS Code のプレビュー・CLI・他アプリのどこに貼っても同じ絵になる。
  */
 export function renderDocument(input: DocumentInput): string {
-  const { layout, errors, style } = input;
+  const { layout, style } = input;
   const { theme } = style;
   const listed = input.partsList === 'none' ? [] : input.parts;
   const list = partsListHeight(listed, theme);
-  const banner = bannerHeight(errors);
   const head = titleHeight(input.title, theme);
   // 注釈の字は板の下へはみ出すことがある (`- source` はフェンス全体を書き出す)。
   // 切らずに画布のほうを伸ばす。横は板の幅で `…` に切る (render/notes.ts)。
   const figure = Math.max(layout.height, notesBottom(input.notes, theme, input.sourceLines) + OUTER_PAD);
-  const height = head + figure + list + banner;
+  const height = head + figure + list;
 
   // 座標系 (viewBox) は動かさず、外側の大きさだけを指定の横幅に合わせる。
   // ピッチを変えるとレイアウトも配線の経路も総取り替えになるので、拡大縮小はここだけで済ませる。
@@ -61,8 +58,8 @@ export function renderDocument(input: DocumentInput): string {
   // 交差したところで後の配線の縁取りが先の配線を塗り潰してしまう。
   const wires = input.wires.map((wire) => renderWire(wire.points, wire.color, theme));
 
-  // 題の下に図・部品リスト・エラー帯が続く。中は座標をずらさず、
-  // 題のぶんだけ全体を 1 つの g で下げる (図の中の座標計算に題が混ざらない)。
+  // 題の下に図と部品リストが続く。中は座標をずらさず、題のぶんだけ全体を
+  // 1 つの g で下げる (図の中の座標計算に題が混ざらない)。
   const body = [
     renderBoard(input.board, layout, theme),
     ...wires.map((wire) => wire.halo),
@@ -77,7 +74,6 @@ export function renderDocument(input: DocumentInput): string {
     // 注釈は板・部品・配線の上に重ねる。回路の一員ではないので最後に置く。
     renderNotes(input.notes, layout, theme, input.sourceLines),
     renderPartsList(listed, layout.board.x, figure, layout.board.width, theme),
-    renderErrorBanner(errors, layout.board.x, figure + list, layout.board.width, theme.palette),
   ].filter(Boolean);
 
   const shifted = head === 0
