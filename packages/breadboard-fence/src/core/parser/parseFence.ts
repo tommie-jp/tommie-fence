@@ -12,6 +12,10 @@ import type {
 import { splitPartType } from '../parts/variants.ts';
 import { parseCompactPart, parseHoleToken, parseWireSpec } from './compact.ts';
 import { parseNoteLine } from './notes.ts';
+import {
+  conflictingNames, resolveNoteTargets, resolveParts, resolveWires, validatePointName,
+} from './points.ts';
+import type { PointDef } from './points.ts';
 import { validateExpandedPart } from './schema.ts';
 import { EMPTY_STYLE, validateStyle } from './style.ts';
 
@@ -21,7 +25,7 @@ const pick = <T extends string>(allowed: readonly T[], value: string | null): T 
 const MAX_YAML_MESSAGE = 120;
 
 /** フェンスの一番外側に書けるキー。読めなかったときの案内はここから作る。 */
-const TOP_LEVEL_KEYS = ['title', 'board', 'style', 'parts', 'parts-list', 'wires', 'notes'] as const;
+const TOP_LEVEL_KEYS = ['title', 'points', 'board', 'style', 'parts', 'parts-list', 'wires', 'notes'] as const;
 
 export type ParseResult = { readonly doc: FenceDocument | null; readonly errors: readonly FenceError[] };
 
@@ -64,7 +68,25 @@ export function parseFence(source: string): ParseResult {
   let partsList: PartsListMode = DEFAULT_PARTS_LIST;
   let title: string | null = null;
 
-  const document = (): FenceDocument => ({ title, board, style, partsList, parts, wires, notes });
+  const points = new Map<string, PointDef>();
+
+  /**
+   * 点の名前は**全部読み終えてから**番地に置き換える。`points:` はフェンスの
+   * どこに書いてもよく、部品より下に書かれていることもあるため。
+   */
+  const document = (): FenceDocument => {
+    errors.push(...conflictingNames(points, parts));
+    return {
+      title,
+      board,
+      style,
+      partsList,
+      points: new Map([...points].map(([name, def]) => [name, def.addr])),
+      parts: resolveParts(parts, points),
+      wires: resolveWires(wires, points),
+      notes: resolveNoteTargets(notes, points),
+    };
+  };
 
   const contents = parsed.contents;
   if (contents === null) return { doc: document(), errors };
@@ -75,6 +97,17 @@ export function parseFence(source: string): ParseResult {
     };
   }
 
+  // 点の名前は**部品を読む前に**揃えておく。1 行の記法は「番地に見える語は穴、
+  // それ以外は値」で割っており、名前が穴だと分かっていないと値に紛れてしまう。
+  // `points:` はフェンスのどこに書いてもよいので、そのための先読み。
+  for (const pair of contents.items) {
+    if (scalarText(pair.key) !== 'points') continue;
+    collectPoints(pair.value as ParsedNode | null, {
+      points, errors, lineOf, fallbackLine: lineOf(pair.key),
+    });
+  }
+  const isPoint = (token: string): boolean => points.has(token);
+
   for (const pair of contents.items) {
     const key = scalarText(pair.key) ?? '';
     const line = lineOf(pair.key);
@@ -84,6 +117,8 @@ export function parseFence(source: string): ParseResult {
       // 題は 1 行のスカラー。折り返さないので、長い題は切って `…` を残す。
       if (written === null) errors.push(fenceError('title は 1 行の文字列で書きます', line));
       else title = clampText(written.trim(), LIMITS.titleLength);
+    } else if (key === 'points') {
+      // 先読みで済ませてある。
     } else if (key === 'board') {
       board = collectBoard(pair.value as ParsedNode | null, board, errors, lineOf, line);
     } else if (key === 'style') {
@@ -103,7 +138,7 @@ export function parseFence(source: string): ParseResult {
       if (mode) partsList = mode;
       else errors.push(fenceError('parts-list は below か none です', lineOf(pair.value as Node) ?? line));
     } else if (key === 'parts') {
-      collectParts(pair.value as ParsedNode | null, { parts, errors, lineOf });
+      collectParts(pair.value as ParsedNode | null, { parts, errors, lineOf, isPoint });
     } else if (key === 'wires') {
       collectWires(pair.value as ParsedNode | null, { wires, errors, lineOf });
     } else if (key === 'notes') {
@@ -119,6 +154,48 @@ export function parseFence(source: string): ParseResult {
 }
 
 type LineOf = (node: Node | Pair | null | undefined) => number | null;
+
+/** `points:` は「名前: 番地」のマップ。番地が正しいかは、使った側で見る。 */
+function collectPoints(
+  node: ParsedNode | null,
+  context: { points: Map<string, PointDef>; errors: FenceError[]; lineOf: LineOf; fallbackLine: number | null },
+): void {
+  const { points, errors, lineOf, fallbackLine } = context;
+  if (!isMap(node)) {
+    errors.push(fenceError('points は「名前: 番地」のマップで書きます', lineOf(node) ?? fallbackLine));
+    return;
+  }
+
+  for (const pair of node.items) {
+    const name = scalarText(pair.key);
+    const line = lineOf(pair.key) ?? fallbackLine ?? 1;
+    if (points.size >= LIMITS.points) {
+      errors.push(fenceError(`点は ${LIMITS.points} 個までです。ここから先は読んでいません`, line));
+      return;
+    }
+    if (name === null) {
+      errors.push(fenceError('点の名前は文字列で書きます', line));
+      continue;
+    }
+
+    const bad = validatePointName(name, line);
+    if (bad) {
+      errors.push(bad);
+      continue;
+    }
+    if (points.has(name)) {
+      errors.push(fenceError(`点 ${safeToken(name)} が二重に定義されています`, line));
+      continue;
+    }
+
+    const addr = scalarText(pair.value);
+    if (addr === null) {
+      errors.push(fenceError(`点 ${safeToken(name)} の値は穴番地で書きます`, line));
+      continue;
+    }
+    points.set(name, { addr, line });
+  }
+}
 
 /**
  * 注釈を読む。**`text` だけが「1 項目のマップ」**で来る。
@@ -246,9 +323,9 @@ function styleKeyLines(node: ParsedNode | null, lineOf: LineOf): Map<string, num
 
 function collectParts(
   node: ParsedNode | null,
-  context: { parts: PartSpec[]; errors: FenceError[]; lineOf: LineOf },
+  context: { parts: PartSpec[]; errors: FenceError[]; lineOf: LineOf; isPoint: (token: string) => boolean },
 ): void {
-  const { parts, errors, lineOf } = context;
+  const { parts, errors, lineOf, isPoint } = context;
   if (!isMap(node)) {
     errors.push(fenceError('parts は「ID: 内容」のマップで書きます', lineOf(node)));
     return;
@@ -285,7 +362,7 @@ function collectParts(
 
     const compact = scalarText(pair.value);
     if (compact !== null) {
-      const result = parseCompactPart(id, compact, line);
+      const result = parseCompactPart(id, compact, line, isPoint);
       if (result.ok) parts.push(result.value);
       else errors.push(result.error);
       continue;
@@ -345,7 +422,9 @@ function collectWires(
       continue;
     }
     const result = parseWireSpec(text, line);
-    if (result.ok) wires.push(result.value);
+    // つないで書いた 1 行は区間ごとに開かれる。上限は区間の数で数えるので、
+    // 「配線 500 本」の意味は書き方によらず変わらない。
+    if (result.ok) wires.push(...result.value);
     else errors.push(result.error);
   }
 }

@@ -105,6 +105,7 @@ export function renderBreadboard(source: string): RenderResult {
       ...wires.map((wire) => [stripOfEndpoint(wire.from), stripOfEndpoint(wire.to)] as const),
       ...internalLinks(parts),
     ],
+    names: pointStrips(parsed.doc.points, board),
   });
 
   const svg = renderDocument({
@@ -122,6 +123,19 @@ export function renderBreadboard(source: string): RenderResult {
   });
 
   return { svg, netlist, errors };
+}
+
+/**
+ * `points:` で名前を付けた穴の導通グループを、書かれた順に返す。
+ * 節点に名前を書いたなら、ネットリストにも同じ名前が出るほうが突き合わせやすい
+ * (図を見ずに、書いた回路と機械的に照合する用途で効く)。
+ */
+function pointStrips(points: ReadonlyMap<string, string>, board: Board): (readonly [StripId, string])[] {
+  return [...points].flatMap(([name, addr]) => {
+    const address = parseAddress(addr);
+    if (!address || !isOnBoard(board, address)) return [];
+    return [[stripOf(address), name] as const];
+  });
 }
 
 /**

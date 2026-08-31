@@ -6,6 +6,11 @@ export type NetMember = { readonly ref: string; readonly strip: StripId };
 export type NetInput = {
   readonly members: readonly NetMember[];
   readonly links: readonly (readonly [StripId, StripId])[];
+  /**
+   * `points:` で名前を付けた穴の導通グループ。**定義順**で渡す。
+   * 節点に名前を書いたなら、ネットリストにも同じ名前が出るほうが突き合わせやすい。
+   */
+  readonly names?: readonly (readonly [StripId, string])[];
 };
 
 const RAIL_ORDER: readonly string[] = RAIL_ROWS;
@@ -69,10 +74,11 @@ export function computeNets(input: NetInput): Net[] {
       .map(railName)
       .filter((name): name is string => name !== null)
       .sort((a, b) => RAIL_ORDER.indexOf(a) - RAIL_ORDER.indexOf(b));
-    return {
-      name: rails.length > 0 ? rails.join('/') : `N${(anonymous += 1)}`,
-      strips,
-      refs,
-    };
+    if (rails.length > 0) return { name: rails.join('/'), strips, refs };
+
+    // 名前は定義順に当てる。同じネットに 2 つ乗っていたら先に書いたほうを使う。
+    const here = new Set(strips);
+    const named = (input.names ?? []).find(([strip]) => here.has(strip));
+    return { name: named?.[1] ?? `N${(anonymous += 1)}`, strips, refs };
   });
 }

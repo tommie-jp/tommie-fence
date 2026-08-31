@@ -147,6 +147,8 @@ export type FenceDocument = {
   readonly board: BoardSpec;
   readonly style: StyleSpec;
   readonly partsList: PartsListMode;
+  /** `points:` の名前 → 穴番地。番地はもう部品や配線に埋め込んであり、ネット名に使う。 */
+  readonly points: ReadonlyMap<string, string>;
   readonly parts: readonly PartSpec[];
   readonly wires: readonly WireSpec[];
   readonly notes: readonly NoteSpec[];

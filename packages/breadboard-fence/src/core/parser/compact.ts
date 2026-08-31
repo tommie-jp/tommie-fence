@@ -7,6 +7,21 @@ import type { HoleRef, PartSpec, Result, WireHint, WireSpec } from '../types.ts'
 // `b12(A)` `f11(+)` — ピン名には極性の記号も使う。
 const TAGGED_HOLE = /^([+\-\w]+)\(([+\-\w]+)\)$/;
 
+/**
+ * `l=OLED` — 図に出るラベルだけを差し替える (マップ形式の `label:` と同じ意味)。
+ * **空白は含められない**ので、語をまたぐラベルはマップ形式で書く。
+ * 1 行の記法は空白で語を割っており、ここだけ別の割り方をすると読み方が 2 つになる。
+ */
+const LABEL_TAG = /^l=(.+)$/;
+
+/**
+ * その語を穴として読むか。番地の形か、`points:` で名前を付けた点なら穴。
+ * それ以外は値の語として集める (この規則があるので、部品の値に `J5` のような
+ * 番地の形をした語は使えない)。
+ */
+const isHoleToken = (token: string, isPoint: (token: string) => boolean): boolean =>
+  parseAddress(token) !== null || isPoint(token);
+
 /** `b12(A)` のような極性タグ付きの穴。タグが無ければ 1 から始まる番号をピン名にする。 */
 export function parseHoleToken(token: string, index: number): HoleRef {
   const tagged = TAGGED_HOLE.exec(token);
@@ -23,7 +38,13 @@ export function parseHoleToken(token: string, index: number): HoleRef {
  * ボード外の機器 (device) はピン名を並べる必要があるので、1 行では書けない。
  * parseFence 側でマップ形式として読む。
  */
-export function parseCompactPart(id: string, spec: string, line: number): Result<PartSpec> {
+export function parseCompactPart(
+  id: string,
+  spec: string,
+  line: number,
+  // `points:` で名前を付けた穴。番地の形をしていない語でも穴として読む。
+  isPoint: (token: string) => boolean = () => false,
+): Result<PartSpec> {
   const tokens = spec.trim().split(/\s+/).filter(Boolean);
   const [typeToken, ...rest] = tokens;
   if (!typeToken) return fail(`部品 ${safeToken(id)} の内容が空です`, line);
@@ -36,21 +57,33 @@ export function parseCompactPart(id: string, spec: string, line: number): Result
     const target = rest[1];
     if (!target) return fail(`部品 ${safeToken(id)}: @ の後ろに穴番地か top / bottom が要ります`, line);
     const joined = rest.slice(2).join(' ');
-    const label = joined ? clampText(joined, LIMITS.labelLength) : null;
+    // `@` の後ろの残りはそのままラベルだが、`l=` と書いても同じ意味に読む
+    // (1 行の記法の中で、ラベルの書き方が 2 通りに見えないようにする)。
+    const written = LABEL_TAG.exec(joined)?.[1] ?? joined;
+    const label = written ? clampText(written, LIMITS.labelLength) : null;
     if (target === 'top' || target === 'bottom') return ok({ ...base, at: target, label });
     return ok({ ...base, holes: [{ addr: target, tag: '1' }], label });
   }
 
   const holes: HoleRef[] = [];
   const words: string[] = [];
+  let label: string | null = null;
   for (const token of rest) {
-    if (TAGGED_HOLE.test(token) || parseAddress(token)) holes.push(parseHoleToken(token, holes.length));
-    else words.push(token);
+    const tagged = LABEL_TAG.exec(token);
+    if (tagged) {
+      if (label !== null) return fail(`部品 ${safeToken(id)}: l= が 2 回書かれています`, line);
+      label = clampText(tagged[1] ?? '', LIMITS.labelLength);
+      continue;
+    }
+    const named = TAGGED_HOLE.exec(token);
+    if (TAGGED_HOLE.test(token) ? isHoleToken(named?.[1] ?? '', isPoint) : isHoleToken(token, isPoint)) {
+      holes.push(parseHoleToken(token, holes.length));
+    } else words.push(token);
   }
 
   const value = words.join(' ');
 
-  return ok({ ...base, holes, value: value ? clampText(value, LIMITS.labelLength) : null });
+  return ok({ ...base, holes, label, value: value ? clampText(value, LIMITS.labelLength) : null });
 }
 
 const HINT_GROUP = /\[([^\]]*)\]\s*$/;
@@ -58,8 +91,15 @@ const HINT = /^([vh])([+-]?\d+)$/;
 // 迂回の距離は盤の外まで伸ばしても意味がない。桁あふれで NaN を作らせないための上限でもある。
 const MAX_HINT_DELTA = 2000;
 
-/** `a10 -- b12 red [v-20, h30]` の 1 行を読む。角括弧の中は迂回ヒント。 */
-export function parseWireSpec(text: string, line: number): Result<WireSpec> {
+/**
+ * `a10 -- b12 red [v-20, h30]` の 1 行を読む。角括弧の中は迂回ヒント。
+ *
+ * 端点は 3 つ以上つなげて書ける (`+t5 -- a5 -- a10 red`)。1 行が 1 本の信号の道として
+ * 読めるようにするためで、**隣り合う端点ごとの区間にパーサの中で開く**。
+ * 中間のモデルから先は今までどおり 2 点の配線しか見ないので、
+ * ネットリストも経路探索も触らずに済む。行番号は書かれた 1 行のまま。
+ */
+export function parseWireSpec(text: string, line: number): Result<readonly WireSpec[]> {
   const group = HINT_GROUP.exec(text.trim());
   const hints: WireHint[] = [];
   for (const token of (group?.[1] ?? '').split(/[,\s]+/).filter(Boolean)) {
@@ -74,12 +114,37 @@ export function parseWireSpec(text: string, line: number): Result<WireSpec> {
 
   const head = group ? text.trim().slice(0, group.index) : text;
   const tokens = head.trim().split(/\s+/).filter(Boolean);
-  const [from, separator, to, ...rest] = tokens;
 
-  if (separator !== '--' || !from || !to || tokens.filter((token) => token === '--').length !== 1) {
-    return fail('配線は「端点 -- 端点 [色]」の形で書きます', line);
+  // `端点 -- 端点 [-- 端点 …]` は端点 n 個と `--` が n-1 個で、必ず奇数長になる。
+  const chain: string[] = [];
+  let index = 0;
+  for (; index < tokens.length; index += 1) {
+    const token = tokens[index] ?? '';
+    if (index % 2 === 0) {
+      if (token === '--') break;
+      chain.push(token);
+    } else if (token !== '--') break;
+  }
+  const rest = tokens.slice(index);
+
+  if (chain.length < 2 || index % 2 === 0) {
+    return fail('配線は「端点 -- 端点 [-- 端点 …] [色]」の形で書きます', line);
   }
   if (rest.length > 1) return fail('配線の行に余分な語があります (色は 1 語だけ書けます)', line);
 
-  return ok({ from, to, color: rest[0] ?? null, hints, line });
+  const color = rest[0] ?? null;
+  // 迂回ヒントは 1 区間ぶんの道順なので、どの区間のことか決まらない書き方は受け取らない。
+  if (hints.length > 0 && chain.length > 2) {
+    return fail('迂回ヒントを書く配線は、端点を 2 つだけにします (どの区間の道順か決まらないため)', line);
+  }
+
+  const wires = chain.slice(0, -1).map((from, at) => ({
+    from,
+    to: chain[at + 1] ?? '',
+    color,
+    hints,
+    line,
+  } satisfies WireSpec));
+
+  return ok(wires);
 }

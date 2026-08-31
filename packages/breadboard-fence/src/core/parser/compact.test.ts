@@ -103,25 +103,25 @@ describe('parseWireSpec', () => {
   test('parses both endpoints and the colour', () => {
     const result = parseWireSpec('a10 -- b12 red', 11);
 
-    expect(result.ok && result.value).toEqual({ from: 'a10', to: 'b12', color: 'red', hints: [], line: 11 });
+    expect(result.ok && result.value).toEqual([{ from: 'a10', to: 'b12', color: 'red', hints: [], line: 11 }]);
   });
 
   test('leaves the colour unset when the wire does not name one', () => {
     const result = parseWireSpec('a10 -- b12', 11);
 
-    expect(result.ok && result.value.color).toBeNull();
+    expect(result.ok && result.value[0]?.color).toBeNull();
   });
 
   test('accepts a part pin reference as an endpoint', () => {
     const result = parseWireSpec('U1.7 -- +t14 red', 12);
 
-    expect(result.ok && result.value).toMatchObject({ from: 'U1.7', to: '+t14' });
+    expect(result.ok && result.value[0]).toMatchObject({ from: 'U1.7', to: '+t14' });
   });
 
   test('reads a routing hint written after the colour', () => {
     const result = parseWireSpec('j20 -- -b20 black [v-20]', 14);
 
-    expect(result.ok && result.value).toMatchObject({
+    expect(result.ok && result.value[0]).toMatchObject({
       from: 'j20',
       to: '-b20',
       color: 'black',
@@ -134,14 +134,14 @@ describe('parseWireSpec', () => {
     const spaces = parseWireSpec('a1 -- b5 [v-20 h30]', 1);
 
     const expected = [{ axis: 'v', delta: -20 }, { axis: 'h', delta: 30 }];
-    expect(commas.ok && commas.value.hints).toEqual(expected);
-    expect(spaces.ok && spaces.value.hints).toEqual(expected);
+    expect(commas.ok && commas.value[0]?.hints).toEqual(expected);
+    expect(spaces.ok && spaces.value[0]?.hints).toEqual(expected);
   });
 
   test('leaves the hints empty when the wire has none', () => {
     const result = parseWireSpec('a10 -- b12 red', 1);
 
-    expect(result.ok && result.value.hints).toEqual([]);
+    expect(result.ok && result.value[0]?.hints).toEqual([]);
   });
 
   test('reports a hint that is not a move along an axis', () => {
@@ -163,7 +163,29 @@ describe('parseWireSpec', () => {
     expect(!result.ok && result.error.line).toBe(11);
   });
 
-  test('reports a wire with more than two endpoints', () => {
-    expect(parseWireSpec('a1 -- b2 -- c3', 11).ok).toBe(false);
+  test('opens a chain of endpoints into one segment per neighbouring pair', () => {
+    const result = parseWireSpec('+t5 -- a5 -- a10 red', 11);
+
+    // 1 行が 1 本の信号の道として読める。中間のモデルから先は 2 点の配線しか見ない。
+    expect(result.ok && result.value).toEqual([
+      { from: '+t5', to: 'a5', color: 'red', hints: [], line: 11 },
+      { from: 'a5', to: 'a10', color: 'red', hints: [], line: 11 },
+    ]);
+  });
+
+  test('keeps the line number of the written line on every segment', () => {
+    const result = parseWireSpec('a1 -- b2 -- c3 -- d4', 7);
+
+    expect(result.ok && result.value.map((wire) => wire.line)).toEqual([7, 7, 7]);
+  });
+
+  test('reports a routing hint on a chain, since the segment it means is not decided', () => {
+    expect(parseWireSpec('a1 -- b2 -- c3 [v-20]', 11).ok).toBe(false);
+    expect(parseWireSpec('a1 -- b2 [v-20]', 11).ok).toBe(true);
+  });
+
+  test('reports a chain that ends on a separator', () => {
+    expect(parseWireSpec('a1 -- b2 --', 11).ok).toBe(false);
+    expect(parseWireSpec('-- a1', 11).ok).toBe(false);
   });
 });

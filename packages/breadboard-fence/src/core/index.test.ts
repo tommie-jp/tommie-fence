@@ -372,6 +372,86 @@ describe('renderBreadboard', () => {
     expect(errors[0]?.message).toContain('crimson');
   });
 
+  test('lets a name stand in for a hole everywhere a hole can be written', () => {
+    const named = renderBreadboard([
+      'points:',
+      '  vin: a5',
+      '  out: a10',
+      'parts:',
+      '  R1: resistor vin out 330',
+      'wires:',
+      '  - +t5 -- vin red',
+      'notes:',
+      '  - circle out',
+      '',
+    ].join('\n'));
+    const plain = renderBreadboard([
+      'parts:',
+      '  R1: resistor a5 a10 330',
+      'wires:',
+      '  - +t5 -- a5 red',
+      'notes:',
+      '  - circle a10',
+      '',
+    ].join('\n'));
+
+    expect(named.errors).toEqual([]);
+    expect(named.svg).toBe(plain.svg);
+  });
+
+  test('puts a point name into the netlist so the circuit can be matched by name', () => {
+    const { netlist } = renderBreadboard(
+      'points:\n  fb: a10\nparts:\n  R1: resistor a5 a10 330\n  R2: resistor a10 a14 1k\n',
+    );
+
+    expect(netlist.map((net) => net.name)).toContain('fb');
+  });
+
+  test('keeps the rail name when a point sits on a rail net', () => {
+    // レールの名前は極性そのものなので、点の名前より先に立てる。
+    const { netlist } = renderBreadboard(
+      'points:\n  vcc: a5\nparts:\n  R1: resistor a5 a10 330\nwires:\n  - +t5 -- b5\n',
+    );
+
+    expect(netlist.map((net) => net.name)).toContain('+t');
+    expect(netlist.map((net) => net.name)).not.toContain('vcc');
+  });
+
+  test('reports a point name that is written like a hole or clashes with a part', () => {
+    const address = renderBreadboard('points:\n  a5: b5\nparts:\n  R1: resistor a5 a10 330\n');
+    const clash = renderBreadboard('points:\n  R1: b5\nparts:\n  R1: resistor a5 a10 330\n');
+
+    expect(address.errors[0]?.message).toContain('番地の形');
+    expect(clash.errors[0]?.message).toContain('部品 ID');
+  });
+
+  test('resolves a point defined after the parts that use it', () => {
+    const { errors } = renderBreadboard('parts:\n  R1: resistor vin a10 330\npoints:\n  vin: a5\n');
+
+    expect(errors).toEqual([]);
+  });
+
+  test('draws a chain of endpoints as one wire per neighbouring pair', () => {
+    const chain = renderBreadboard(
+      'parts:\n  R1: resistor a5 a10 330\nwires:\n  - +t5 -- b5 -- b10 -- -t10 red\n',
+    );
+    const split = renderBreadboard([
+      'parts:', '  R1: resistor a5 a10 330', 'wires:',
+      '  - +t5 -- b5 red', '  - b5 -- b10 red', '  - b10 -- -t10 red', '',
+    ].join('\n'));
+
+    expect(chain.errors).toEqual([]);
+    expect(chain.svg).toBe(split.svg);
+  });
+
+  test('takes a label written next to the value on the one line form', () => {
+    const tagged = renderBreadboard('parts:\n  M1: sip4 @ a20 l=OLED\n');
+    const mapped = renderBreadboard('parts:\n  M1:\n    type: sip4\n    holes: [a20]\n    label: OLED\n');
+
+    expect(tagged.errors).toEqual([]);
+    expect(tagged.svg).toBe(mapped.svg);
+  });
+
   test('lets a wire refer to a pin named after its polarity', () => {
     const { netlist, errors } = renderBreadboard(
       ['parts:', '  C1: capacitor b5(-) b12(+) 47uF', 'wires:', '  - C1.+ -- -t12 black'].join('\n'),

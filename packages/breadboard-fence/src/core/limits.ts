@@ -22,6 +22,8 @@ export const LIMITS = {
   titleLength: 60,
   /** `- source` が図に書き出すフェンスの行数。 */
   sourceLines: 80,
+  /** `points:` に置ける名前の数。 */
+  points: 100,
 } as const;
 
 /**

@@ -142,7 +142,7 @@ node dist/cli.cjs render examples --out examples/out
 | 3 端子部品 | 足の数だけ穴を書く | `Q1: transistor h9(B) h10(C) h11(E) 2SC1815` |
 | DIP | ピン 1 の穴だけ書けば残りは自動 | `U1: dip8 @ e5 NJM4556A` |
 | ボード外の機器 | マップ形式で `type: device` | 下のサンプル参照 |
-| 配線 | `- 端点 -- 端点 [色]` | `- a10 -- b12 red` |
+| 配線 | `- 端点 -- 端点 [-- 端点 …] [色]` | `- a10 -- b12 -- b20 red` |
 | 迂回ヒント | 角括弧で道順を指定 (20 = 穴 1 つ) | `- j20 -- -b20 black [v-20]` |
 | 部品リスト | 図の下に自動で出る。消すときだけ書く | `parts-list: none` |
 | 押しボタン | 溝をまたいで 4 本足。ピン 1a の穴を書く | `SW1: button @ e5` |
@@ -150,6 +150,7 @@ node dist/cli.cjs render examples --out examples/out
 | 種類の略記 | よく書く種類は短い綴りでも書ける | `R1: r a5 a10 10k` |
 | 題 | 図の左上に 1 行 | `title: 図01 LED を点ける` |
 | 注釈 | 図の上に印と字を重ねる | `- circle R1` |
+| 点の名前 | `points:` で番地に名前を付ける | `vin: a5` |
 
 部品は 2 本足が resistor / capacitor / led / diode / buzzer / crystal / inductor /
 photoresistor / thermistor / thermistor-ntc / thermistor-ptc / varistor /
@@ -184,6 +185,7 @@ zener / schottky / photodiode / varicap / diac / reed / fuse / lamp、
 | [10-bh-ad2.md](examples/10-bh-ad2.md) | B-H カーブ測定回路 (オペアンプ・測定器・トロイダルコア) |
 | [11-sensors.md](examples/11-sensors.md) | CdS・サーミスタの分圧、ダイオードの仲間、ガラス封止の部品 |
 | [12-notes.md](examples/12-notes.md) | 図の題と注釈 (印・枠・指し棒・字・フェンスの書き出し) |
+| [13-points.md](examples/13-points.md) | 番地に名前を付ける (`points:`)、配線をつないで書く、`l=` |
 
 ![1 石中波ラジオの配線図](examples/out/09-am-radio.png)
 
