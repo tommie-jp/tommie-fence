@@ -82,6 +82,23 @@ describe('renderBoard', () => {
     }
   });
 
+  test('leaves the rails out entirely when the board has none', () => {
+    const markup = renderSpec({ rails: null });
+    const holes = markup.match(/<rect[^>]*rx="1"/g) ?? [];
+    const texts = textsOf(markup);
+
+    expect(holes).toHaveLength(10 * board.columns);
+    expect(texts).not.toContain('+');
+    expect(texts).not.toContain('−');
+  });
+
+  test('still prints the row letters and column numbers without rails', () => {
+    const texts = textsOf(renderSpec({ rails: null }));
+
+    expect(texts.filter((text) => text === 'a')).toHaveLength(2);
+    expect(texts.filter((text) => text === '30')).toHaveLength(2);
+  });
+
   test('moves the rail stripes and signs with the configured arrangement', () => {
     const markup = renderSpec({ rails: railOrder('+-+-')! });
     const signYs = (sign: string): number[] =>

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { DEFAULT_BOARD } from '../types.ts';
 import { parseAddress } from './address.ts';
-import { createBoard, isOnBoard, railOrder, stripOf } from './board.ts';
+import { createBoard, isOnBoard, offBoardReason, railOrder, stripOf } from './board.ts';
 
 const at = (text: string) => {
   const address = parseAddress(text);
@@ -33,6 +33,11 @@ describe('createBoard', () => {
   test('rejects rails that are not a permutation of the four rail rows', () => {
     // 素通しすると欠けたレールが y=0 に無言で描かれるので、宣言した不変条件はここで落とす。
     expect(() => createBoard({ ...DEFAULT_BOARD, rails: ['+t', '-t', '-t', '+b'] })).toThrow();
+  });
+
+  test('keeps a board that has no power rails railless', () => {
+    // レールは実物でも両面テープ留めの独立ストリップで、剥がした板が実在する。
+    expect(createBoard({ ...DEFAULT_BOARD, rails: null }).rails).toBeNull();
   });
 });
 
@@ -92,5 +97,28 @@ describe('isOnBoard', () => {
 
   test('accepts that same column on a full size board', () => {
     expect(isOnBoard(createBoard('full'), at('a31'))).toBe(true);
+  });
+
+  test('rejects a rail address on a board without rails', () => {
+    expect(isOnBoard(createBoard({ ...DEFAULT_BOARD, rails: null }), at('+t5'))).toBe(false);
+  });
+});
+
+describe('offBoardReason', () => {
+  test('gives no reason for an address the board has', () => {
+    expect(offBoardReason(createBoard('half'), at('a30'))).toBeNull();
+    expect(offBoardReason(createBoard('half'), at('+t30'))).toBeNull();
+  });
+
+  test('names the columns the board actually has', () => {
+    expect(offBoardReason(createBoard('half'), at('a31'))).toContain('1〜30 列');
+  });
+
+  test('says the board has no rails rather than blaming the column', () => {
+    // 列は板の中なので「ボードの外」では直す手がかりにならない。
+    const reason = offBoardReason(createBoard({ ...DEFAULT_BOARD, rails: null }), at('+t5'));
+
+    expect(reason).toContain('レール');
+    expect(reason).not.toContain('列');
   });
 });

@@ -29,7 +29,10 @@ export function renderBoard(board: Board, layout: Layout, theme: RenderTheme): s
     element('rect', { x: num(x), y: num(layout.ravineY - 6), width: num(width), height: 12, fill: palette.ravine }),
   ];
 
-  board.rails.forEach((rail, index) => {
+  // レールを外した板では縞も ± の印字もレールの穴も無い。
+  const rails = board.rails ?? [];
+
+  rails.forEach((rail, index) => {
     const color = railColor(rail, palette);
     // 色の線は上下のペアを挟むように、ペアの 1 本目の上・2 本目の下に引く。
     const stripeY = layout.rowY(rail) + (index % 2 === 0 ? -STRIPE_GAP : STRIPE_GAP);
@@ -50,7 +53,7 @@ export function renderBoard(board: Board, layout: Layout, theme: RenderTheme): s
     }
   });
 
-  for (const row of [...board.rails, ...HOLE_ROWS]) {
+  for (const row of [...rails, ...HOLE_ROWS]) {
     for (let col = 1; col <= board.columns; col += 1) {
       parts.push(
         element('rect', {

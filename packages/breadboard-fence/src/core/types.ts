@@ -41,7 +41,12 @@ export type ColumnNumbers = (typeof COLUMN_NUMBERS)[number];
  */
 export type BoardSpec = {
   readonly size: BoardSize;
-  readonly rails: RailOrder;
+  /**
+   * 電源レールの並び。**null はレールが無いボード** (170 穴のミニなど)。
+   * 実物でもレールは両面テープ留めの独立ストリップで、剥がしたり継ぎ足したりできるので、
+   * サイズとは独立に持つ。
+   */
+  readonly rails: RailOrder | null;
   readonly letters: LetterCase;
   readonly numbers: ColumnNumbers;
 };

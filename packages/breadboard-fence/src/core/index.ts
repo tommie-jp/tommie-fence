@@ -2,7 +2,7 @@ import { attachSourceText, fail, fenceError, notice, ok, safeToken } from './err
 import { normalizeNewlines } from './newlines.ts';
 import { LIMITS } from './limits.ts';
 import { formatAddress, parseAddress } from './model/address.ts';
-import { createBoard, devicePinStrip, isOnBoard, stripOf } from './model/board.ts';
+import { createBoard, devicePinStrip, isOnBoard, offBoardReason, stripOf } from './model/board.ts';
 import { createLayout } from './model/layout.ts';
 import type { Layout } from './model/layout.ts';
 import { computeNets } from './model/nets.ts';
@@ -256,8 +256,9 @@ function resolveNoteTarget(
   }
 
   if (address) {
-    if (!isOnBoard(board, address)) {
-      errors.push(fenceError(`${formatAddress(address)} はボードの外です (1〜${board.columns} 列)`, spec.line));
+    const reason = offBoardReason(board, address);
+    if (reason) {
+      errors.push(fenceError(reason, spec.line));
       return null;
     }
     const point = layout.point(address);
@@ -375,9 +376,8 @@ function resolveEndpoint(
 
   const address = parseAddress(text);
   if (!address) return fail(`配線の端点として読めません: ${safeToken(text)}`, line, text);
-  if (!isOnBoard(board, address)) {
-    return fail(`${formatAddress(address)} はボードの外です (1〜${board.columns} 列)`, line);
-  }
+  const reason = offBoardReason(board, address);
+  if (reason) return fail(reason, line);
   return ok({ kind: 'hole', address });
 }
 

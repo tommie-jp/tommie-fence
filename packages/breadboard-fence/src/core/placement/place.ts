@@ -1,6 +1,6 @@
 import { fail, ok, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
-import { isOnBoard } from '../model/board.ts';
+import { offBoardReason } from '../model/board.ts';
 import { HOLE_ROWS } from '../types.ts';
 import type {
   Address, Board, FenceError, HoleAddress, HoleRow, PartKind, PartSpec, PlacedPart, PlacedPin, Result,
@@ -383,8 +383,7 @@ function placeSwitch(spec: PartSpec, board: Board, base: PartBase): Result<Place
 function resolveHole(text: string, board: Board, line: number): Result<Address> {
   const address = parseAddress(text);
   if (!address) return fail(`穴番地として読めません: ${safeToken(text)} (a5 や +t5 のように書きます)`, line, text);
-  if (!isOnBoard(board, address)) {
-    return fail(`${formatAddress(address)} はボードの外です (1〜${board.columns} 列)`, line);
-  }
+  const reason = offBoardReason(board, address);
+  if (reason) return fail(reason, line);
   return ok(address);
 }

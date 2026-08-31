@@ -11,6 +11,8 @@ const BOARD_PAD_Y = 16;
 const RAIL_TO_BLOCK = 1.7 * PITCH;
 const RAVINE = 0.8 * PITCH;
 const BLOCK_TO_RAIL = RAIL_TO_BLOCK;
+// レールの無い板でも、列番号と配線レーンの居場所は要る。板の縁からブロックまでを同じだけ空ける。
+const EDGE_TO_BLOCK = RAIL_TO_BLOCK;
 const DEVICE_HEIGHT = 62;
 const DEVICE_GAP = 54;
 
@@ -48,17 +50,22 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
     y += DEVICE_GAP;
   }
 
-  // レールの縦位置は 4 スロット固定で、どの極性がどこに来るかだけが board.rails で動く。
-  const [railTopOuter, railTopInner, railBottomInner, railBottomOuter] = board.rails;
-
   const boardY = y;
-  y += BOARD_PAD_Y;
-  lanes.push({ y: y - BOARD_PAD_Y / 2, halfHeight: 4 });
-  rowY.set(railTopOuter, y);
-  y += PITCH;
-  rowY.set(railTopInner, y);
-  lanes.push({ y: y + RAIL_TO_BLOCK / 2, halfHeight: RAIL_TO_BLOCK / 2 - 5 });
-  y += RAIL_TO_BLOCK;
+  // レールの縦位置は 4 スロット固定で、どの極性がどこに来るかだけが board.rails で動く。
+  // レールを外した板 (board.rails が null) では、その 4 スロットごと無くなる。
+  if (board.rails) {
+    const [railTopOuter, railTopInner] = board.rails;
+    y += BOARD_PAD_Y;
+    lanes.push({ y: y - BOARD_PAD_Y / 2, halfHeight: 4 });
+    rowY.set(railTopOuter, y);
+    y += PITCH;
+    rowY.set(railTopInner, y);
+    lanes.push({ y: y + RAIL_TO_BLOCK / 2, halfHeight: RAIL_TO_BLOCK / 2 - 5 });
+    y += RAIL_TO_BLOCK;
+  } else {
+    lanes.push({ y: y + EDGE_TO_BLOCK / 2, halfHeight: EDGE_TO_BLOCK / 2 - 5 });
+    y += EDGE_TO_BLOCK;
+  }
 
   for (const row of HOLE_ROWS) {
     rowY.set(row, y);
@@ -68,13 +75,19 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   lanes.push({ y: ravineY, halfHeight: RAVINE / 2 });
 
   y -= PITCH;
-  lanes.push({ y: y + BLOCK_TO_RAIL / 2, halfHeight: BLOCK_TO_RAIL / 2 - 4 });
-  y += BLOCK_TO_RAIL;
-  rowY.set(railBottomInner, y);
-  y += PITCH;
-  rowY.set(railBottomOuter, y);
-  lanes.push({ y: y + BOARD_PAD_Y / 2, halfHeight: 4 });
-  y += BOARD_PAD_Y;
+  if (board.rails) {
+    const [, , railBottomInner, railBottomOuter] = board.rails;
+    lanes.push({ y: y + BLOCK_TO_RAIL / 2, halfHeight: BLOCK_TO_RAIL / 2 - 4 });
+    y += BLOCK_TO_RAIL;
+    rowY.set(railBottomInner, y);
+    y += PITCH;
+    rowY.set(railBottomOuter, y);
+    lanes.push({ y: y + BOARD_PAD_Y / 2, halfHeight: 4 });
+    y += BOARD_PAD_Y;
+  } else {
+    lanes.push({ y: y + EDGE_TO_BLOCK / 2, halfHeight: EDGE_TO_BLOCK / 2 - 4 });
+    y += EDGE_TO_BLOCK;
+  }
 
   const boardHeight = y - boardY;
   const boardWidth = BOARD_PAD_X * 2 + (board.columns - 1) * PITCH;

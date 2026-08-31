@@ -78,3 +78,46 @@ describe('createLayout', () => {
     expect(createLayout(createBoard('full')).width).toBeGreaterThan(createLayout(board).width);
   });
 });
+
+describe('createLayout without power rails', () => {
+  const railless = createBoard({ ...DEFAULT_BOARD, rails: null });
+  // 列番号は a の上と j の下に出る。板の縁に食い込むと読めないので、この余白は要る。
+  const COLUMN_NUMBER_ROOM = 24;
+
+  test('drops the height the four rail rows took', () => {
+    expect(createLayout(railless).height).toBeLessThan(createLayout(board).height);
+  });
+
+  test('keeps the hole block spaced as it is on a board with rails', () => {
+    const layout = createLayout(railless);
+
+    expect(layout.rowY('b') - layout.rowY('a')).toBe(layout.pitch);
+    expect(layout.ravineY).toBeGreaterThan(layout.rowY('e'));
+    expect(layout.ravineY).toBeLessThan(layout.rowY('f'));
+  });
+
+  test('keeps room inside the plate for the column numbers', () => {
+    const layout = createLayout(railless);
+
+    expect(layout.rowY('a') - layout.board.y).toBeGreaterThanOrEqual(COLUMN_NUMBER_ROOM);
+    expect(layout.board.y + layout.board.height - layout.rowY('j')).toBeGreaterThanOrEqual(COLUMN_NUMBER_ROOM);
+  });
+
+  test('still offers a wire lane above and below the hole block', () => {
+    // レールが消えてもレールとブロックの間のレーンごと消すと、迂回の逃げ場が無くなる。
+    const layout = createLayout(railless);
+
+    expect(layout.lanes.some((lane) => lane.y < layout.rowY('a'))).toBe(true);
+    expect(layout.lanes.some((lane) => lane.y > layout.rowY('j'))).toBe(true);
+  });
+
+  test('keeps every hole inside the canvas', () => {
+    const layout = createLayout(railless);
+
+    for (const text of ['a1', 'j30']) {
+      const point = layout.point(at(text));
+      expect(point.y).toBeGreaterThan(0);
+      expect(point.y).toBeLessThan(layout.height);
+    }
+  });
+});
