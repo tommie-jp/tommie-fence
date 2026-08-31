@@ -1,5 +1,6 @@
 import type { Lane, Layout } from '../model/layout.ts';
 import type { Point, Rect, WireHint } from '../types.ts';
+import { segmentHitsAny } from './geometry.ts';
 
 export type RouteOptions = {
   /** 平行に走る配線が重ならないように、レーンから上下にずらす量。 */
@@ -39,17 +40,63 @@ export function routeWire(from: Point, to: Point, layout: Layout, options: Route
   if (options.hints && options.hints.length > 0) return dedupe(followHints(from, to, options.hints));
   if (isDirect(from, to, layout)) return [from, to];
 
-  const lane = chooseLane(from, to, layout, options.obstacles ?? []);
-  return buildPath(from, to, lane, options.offset ?? 0);
+  const obstacles = options.obstacles ?? [];
+  const lane = chooseLane(from, to, layout, obstacles);
+  return buildPath(from, to, lane, options.offset ?? 0, layout, obstacles);
 }
 
 const isDirect = (from: Point, to: Point, layout: Layout): boolean =>
   Math.abs(from.x - to.x) < SAME_COLUMN_TOLERANCE
   || Math.hypot(to.x - from.x, to.y - from.y) <= SHORT_HOP_PITCHES * layout.pitch;
 
-function buildPath(from: Point, to: Point, lane: Lane, offset: number): readonly Point[] {
+function buildPath(
+  from: Point,
+  to: Point,
+  lane: Lane,
+  offset: number,
+  layout: Layout,
+  obstacles: readonly Rect[],
+): readonly Point[] {
   const y = lane.y + clamp(offset, lane.halfHeight);
-  return dedupe([from, { x: from.x, y }, { x: to.x, y }, to]);
+  const entry = approach(from, y, layout, obstacles);
+  const exit = approach(to, y, layout, obstacles);
+  return dedupe([...entry, ...[...exit].reverse()]);
+}
+
+/** 端点からレーンへ出るのに使ってよい横のずれ。穴の列の半分刻みで、2 ピッチまで。 */
+const DETOUR_STEPS = [0.5, -0.5, 1, -1, 1.5, -1.5, 2, -2];
+
+/**
+ * 穴からレーンまでの登り口。まっすぐ上げるのが基本で、
+ * **その道に部品が立っているときだけ横にずれてから登る**。
+ *
+ * 横に振る高さは 2 つ試す。まず穴 1 つぶんの半分だけ出たところ (隣の行に食い込まない)。
+ * そこも部品の中なら、穴と同じ高さで振る — 部品は穴のすぐ上に立つので、
+ * 半分出た時点でもう胴の中、ということが起きる。
+ *
+ * ずれ先は穴の列の間を近い順に試し、どこも塞がっていればまっすぐに戻す。
+ * 逃げ場の無い盤面で無理に曲げるより、突き抜けさせて部品を上に描くほうが読める
+ * (描画順が最後の砦で、この関数はその手前で避けられるものだけを避ける)。
+ */
+function approach(end: Point, laneY: number, layout: Layout, obstacles: readonly Rect[]): readonly Point[] {
+  const straight = [end, { x: end.x, y: laneY }];
+  const blocked = (a: Point, b: Point): boolean => segmentHitsAny(a, b, obstacles, OBSTACLE_MARGIN);
+  if (obstacles.length === 0 || !blocked(end, straight[1]!)) return straight;
+
+  const towardLane = Math.sign(laneY - end.y) || 1;
+
+  for (const jogY of [end.y + towardLane * (layout.pitch / 2), end.y]) {
+    const stub = { x: end.x, y: jogY };
+    if (blocked(end, stub)) continue;
+
+    for (const step of DETOUR_STEPS) {
+      const corner = { x: end.x + step * layout.pitch, y: jogY };
+      const top = { x: corner.x, y: laneY };
+      if (!blocked(stub, corner) && !blocked(corner, top)) return [end, stub, corner, top];
+    }
+  }
+
+  return straight;
 }
 
 /**
@@ -71,7 +118,7 @@ export function routeWires(
   return requests.map((request, index) => {
     const lane = lanes[index];
     return lane
-      ? buildPath(request.from, request.to, lane, offsets[index] ?? 0)
+      ? buildPath(request.from, request.to, lane, offsets[index] ?? 0, layout, obstacles)
       : routeWire(request.from, request.to, layout, { hints: request.hints, obstacles });
   });
 }

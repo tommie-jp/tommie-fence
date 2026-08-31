@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { parseAddress } from '../model/address.ts';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
+import { pathHitsAny } from './geometry.ts';
 import { routeWire, routeWires } from './route.ts';
 
 const layout = createLayout(createBoard('half'));
@@ -145,5 +146,67 @@ describe('routeWires', () => {
 
     expect(path?.[0]).toEqual(at('a5'));
     expect(path?.at(-1)).toEqual(at('a20'));
+  });
+});
+
+describe('routeWires around parts standing in the way', () => {
+  const request = (from: string, to: string) => ({ from: at(from), to: at(to), hints: [] });
+
+  /** ある穴の真上 (レーンへ出ていく縦の道) をふさぐ部品。 */
+  const above = (hole: string) => {
+    const point = at(hole);
+    const top = layout.rowY('a') - layout.pitch * 1.4;
+    return { x: point.x - 12, y: top, width: 24, height: layout.rowY('a') - top - 4 };
+  };
+
+  test('steps aside instead of running the wire through a part on its way out', () => {
+    const blocker = above('a5');
+
+    const [path] = routeWires([request('a5', 'a20')], layout, [blocker]);
+
+    expect(pathHitsAny(path!, [blocker], 0)).toBe(false);
+  });
+
+  test('still starts and ends at the two holes after stepping aside', () => {
+    const blocker = above('a5');
+
+    const [path] = routeWires([request('a5', 'a20')], layout, [blocker]);
+
+    expect(path?.[0]).toEqual(at('a5'));
+    expect(path?.at(-1)).toEqual(at('a20'));
+  });
+
+  test('leaves the wire alone when nothing stands in its way', () => {
+    const [plain] = routeWires([request('a5', 'a20')], layout);
+    const [elsewhere] = routeWires([request('a5', 'a20')], layout, [above('a25')]);
+
+    expect(elsewhere).toEqual(plain);
+  });
+
+  test('keeps the detour close to the hole rather than wandering off', () => {
+    const blocker = above('a5');
+
+    const [path] = routeWires([request('a5', 'a20')], layout, [blocker]);
+    const detour = Math.max(...path!.map((point) => Math.abs(point.x - at('a5').x)));
+
+    expect(detour).toBeLessThanOrEqual(Math.abs(at('a20').x - at('a5').x));
+  });
+
+  test('goes straight through when the part is too wide to step around', () => {
+    const wall = { x: 0, y: layout.rowY('a') - layout.pitch * 1.4, width: layout.width, height: layout.pitch };
+
+    const [path] = routeWires([request('a5', 'a20')], layout, [wall]);
+
+    // 逃げ場が無いときは今までどおり突き抜ける (部品を上に描いて読ませる)。
+    expect(path).toHaveLength(4);
+  });
+
+  test('does not step around the part the wire is plugged into', () => {
+    // 真ん中の足から出る配線は、自分の胴の中から始まる。避けようがないので曲げない。
+    const own = { x: at('a5').x - 20, y: layout.rowY('a') - 20, width: 40, height: 40 };
+
+    const [path] = routeWires([request('a5', 'a20')], layout, [own]);
+
+    expect(path).toHaveLength(4);
   });
 });
