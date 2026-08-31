@@ -151,7 +151,9 @@ function report(errors: readonly FenceError[], source: string, debug: boolean) {
   const reported = attachSourceText(errors, source);
   const hard = reported.filter((error) => error.notice !== true);
   const notices = reported.filter((error) => error.notice === true);
-  const shown = debug ? reported : hard;
+  // 読めなかった行を先に並べる。直さないと図が出ないのはこちらなので、
+  // お知らせに埋もれると探すことになる (CLI の並びとも揃える)。
+  const shown = debug ? [...hard, ...notices] : hard;
 
   return { errors: hard, notices, errorHtml: renderErrorBanner(shown) };
 }

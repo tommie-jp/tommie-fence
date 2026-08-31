@@ -579,6 +579,14 @@ describe('renderBreadboard', () => {
     expect([...(errors[0]?.text ?? '')].length).toBe(21);
   });
 
+  test('puts what it could not read before the notices, so it is not buried', () => {
+    const { errorHtml } = renderBreadboard(
+      ['style:', '  text-size: 99', 'parts:', '  R1: resistr a5 a10', ''].join('\n'),
+    );
+
+    expect(errorHtml.indexOf('resistr')).toBeLessThan(errorHtml.indexOf('text-size'));
+  });
+
   test('hides notices when debug is off, but never hides what it could not read', () => {
     const source = [
       'style:', '  debug: off', '  text-size: 99',
