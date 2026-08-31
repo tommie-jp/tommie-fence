@@ -97,6 +97,23 @@ describe('validateExpandedPart', () => {
     expect(result.ok && result.notes.join('')).toContain('value');
   });
 
+  test('reports a placement on a part that goes on the board, not off it', () => {
+    const result = validateExpandedPart({ type: 'resistor', at: 'top', holes: ['a5', 'a10'] });
+
+    // 挿す場所は holes で決まる。at は帯 (機器) にしか効かないので落として言う。
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.value.holes).toEqual(['a5', 'a10']);
+    expect(result.ok && result.value.at).toBeNull();
+    expect(result.ok && result.notes.join('')).toContain('at');
+  });
+
+  test('says nothing about at when the part is an off board device', () => {
+    const result = validateExpandedPart({ type: 'device', at: 'bottom', pins: ['1'] });
+
+    expect(result.ok && result.value.at).toBe('bottom');
+    expect(result.ok && result.notes).toEqual([]);
+  });
+
   test('says nothing about value when the part is not a device', () => {
     const result = validateExpandedPart({ type: 'resistor', value: '330', holes: ['a5', 'a10'] });
 

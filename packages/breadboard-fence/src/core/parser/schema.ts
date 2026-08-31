@@ -56,6 +56,7 @@ export function validateExpandedPart(raw: unknown): Validation {
   if (raw.at !== undefined && raw.at !== 'top' && raw.at !== 'bottom') {
     return invalid('at は top か bottom です');
   }
+  const at = raw.at ?? null;
 
   const label = raw.label === undefined ? null : asText(raw.label);
   if (raw.label !== undefined && label === null) return invalid('label は文字列です');
@@ -78,22 +79,31 @@ export function validateExpandedPart(raw: unknown): Validation {
   const holes = raw.holes === undefined ? [] : asTextList(raw.holes);
   if (holes === null) return invalid('holes は穴番地の配列です');
 
-  // 機器の値は図のどこにも出ない (`render/devices.ts` の captionOf は `label ?? id`、
-  // 部品リストの valueOf も機器はラベルしか見ない)。受理だけして黙って捨てると
-  // 書いた人には何も伝わらないので、機器は描いたまま値だけを落として理由を返す。
+  // 機器かどうかで、書いても図に出ない項目が入れ替わる。受理だけして黙って捨てると
+  // 書いた人には何も伝わらないので、**描ける部分は残したまま**落とした理由を返す。
+  //   value — 箱に出るのは `label ?? id` (`render/devices.ts` の captionOf)。
+  //           部品リストの valueOf も、機器はラベルしか見ない。
+  //   at    — 読むのは機器を上下の帯に振り分けるところだけ
+  //           (`render/devices.ts` と `index.ts`)。板に挿す部品の位置は holes で決まる。
+  const isDevice = type === 'device';
   const notes: string[] = [];
-  const drops = type === 'device' && value !== null;
-  if (drops) notes.push('機器 (device) に value は使いません。箱に出す名前は label に書きます');
-  const kept = drops ? null : value;
+  if (isDevice && value !== null) {
+    notes.push('機器 (device) に value は使いません。箱に出す名前は label に書きます');
+  }
+  if (!isDevice && at !== null) {
+    notes.push('at は機器 (device) にだけ使います。板に挿す部品の位置は holes で決まります');
+  }
+
+  const keptValue = isDevice ? null : value;
 
   return {
     ok: true,
     notes,
     value: {
       type,
-      at: raw.at ?? null,
+      at: isDevice ? at : null,
       label: label === null ? null : clampText(label, LIMITS.labelLength),
-      value: kept === null ? null : clampText(kept, LIMITS.labelLength),
+      value: keptValue === null ? null : clampText(keptValue, LIMITS.labelLength),
       pins,
       holes,
     },
