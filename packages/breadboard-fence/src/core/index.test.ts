@@ -283,6 +283,95 @@ describe('renderBreadboard', () => {
     expect(errors[0]?.message).toContain('resistor のことですか');
   });
 
+  test('draws every kind of note without complaining', () => {
+    const { svg, errors } = renderBreadboard([
+      'parts:',
+      '  R1: resistor a5 a10 330',
+      'notes:',
+      '  - circle R1',
+      '  - box c3 e12 blue solid',
+      '  - arrow c20 R1 green',
+      '  - line +t1 +t30 orange',
+      '  - text d20 large bold: ここで分圧する',
+      '  - source g3 tiny tight',
+      '',
+    ].join('\n'));
+
+    expect(errors).toEqual([]);
+    expect(svg).toContain('<ellipse');
+    expect(svg).toContain('<polygon');
+    expect(svg).toContain('ここで分圧する');
+    // source はフェンスそのものを囲みつきで書き出す。
+    expect(svg).toContain('```breadboard');
+    expect(svg).toContain('R1: resistor a5 a10 330');
+  });
+
+  test('keeps notes out of the circuit', () => {
+    const bare = renderBreadboard('parts:\n  R1: resistor a5 a10 330\n');
+    const noted = renderBreadboard(
+      'parts:\n  R1: resistor a5 a10 330\nnotes:\n  - circle R1\n  - text d20: ここ\n',
+    );
+
+    // 注釈は印と字であって、板に挿すものではない。ネットにも部品リストにも入らない。
+    expect(noted.netlist).toEqual(bare.netlist);
+    expect(noted.svg).toContain('<ellipse');
+  });
+
+  test('reports a note pointing at nothing, and keeps drawing the rest', () => {
+    const { svg, errors } = renderBreadboard(
+      'parts:\n  R1: resistor a5 a10 330\nnotes:\n  - circle R9\n  - circle R1\n',
+    );
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.line).toBe(4);
+    expect(svg).toContain('<ellipse');
+  });
+
+  test('reports a note pointing outside the board', () => {
+    const { errors } = renderBreadboard('parts:\n  R1: resistor a5 a10 330\nnotes:\n  - circle a99\n');
+
+    expect(errors[0]?.message).toContain('ボードの外');
+  });
+
+  test('runs the line of a note to the hole itself, not short of it', () => {
+    // 穴は目的地そのものなので、手前で止めるとどの穴か分からなくなる。
+    // レール 2 本のように近い 2 点を結ぶと、止めた線は消えてしまう。
+    const { svg } = renderBreadboard('parts:\n  R1: resistor a5 a10 330\nnotes:\n  - line +t22 -t22\n');
+    const line = /<line[^>]*stroke="#e5534b"[^>]*\/>/.exec(svg)?.[0] ?? '';
+    const y1 = Number(/y1="([\d.]+)"/.exec(line)?.[1]);
+    const y2 = Number(/y2="([\d.]+)"/.exec(line)?.[1]);
+
+    expect(Math.abs(y2 - y1)).toBeGreaterThan(10);
+  });
+
+  test('puts the title above the drawing and makes the sheet taller', () => {
+    const bare = renderBreadboard('parts-list: none\nparts:\n  R1: resistor a5 a10 330\n');
+    const titled = renderBreadboard('title: 図01 分圧\nparts-list: none\nparts:\n  R1: resistor a5 a10 330\n');
+    const heightOf = (svg: string) => Number(/height="([\d.]+)"/.exec(svg)?.[1]);
+
+    expect(titled.errors).toEqual([]);
+    expect(titled.svg).toContain('図01 分圧');
+    expect(heightOf(titled.svg)).toBeGreaterThan(heightOf(bare.svg) ?? 0);
+  });
+
+  test('grows the sheet so a long source note is not cut off at the bottom', () => {
+    // 板の下の行に置いた source は、フェンス全体を書き出すので板からはみ出す。
+    // 切らずに画布のほうを伸ばす (切ると書き写せなくなり、この注釈の値打ちが消える)。
+    const parts = Array.from({ length: 10 }, (_, index) => `  R${index}: resistor a${index + 1} c${index + 1} 330`);
+    const long = ['parts:', ...parts, 'notes:', '  - source j3', ''].join('\n');
+    const short = ['parts:', ...parts, ''].join('\n');
+    const heightOf = (svg: string) => Number(/viewBox="0 0 [\d.]+ ([\d.]+)"/.exec(svg)?.[1]);
+
+    expect(heightOf(renderBreadboard(long).svg)).toBeGreaterThan(heightOf(renderBreadboard(short).svg) ?? 0);
+  });
+
+  test('reports a note written in a shape it cannot read', () => {
+    const { errors } = renderBreadboard('parts:\n  R1: resistor a5 a10 330\nnotes:\n  - circle R1 crimson\n');
+
+    expect(errors[0]?.line).toBe(4);
+    expect(errors[0]?.message).toContain('crimson');
+  });
+
   test('lets a wire refer to a pin named after its polarity', () => {
     const { netlist, errors } = renderBreadboard(
       ['parts:', '  C1: capacitor b5(-) b12(+) 47uF', 'wires:', '  - C1.+ -- -t12 black'].join('\n'),

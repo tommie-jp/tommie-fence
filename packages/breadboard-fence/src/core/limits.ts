@@ -16,6 +16,12 @@ export const LIMITS = {
   pinNameLength: 24,
   idLength: 32,
   labelLength: 60,
+  /** 注釈の数と 1 つの字数。回路図フェンスと同じ数に揃えてある。 */
+  notes: 200,
+  noteLength: 60,
+  titleLength: 60,
+  /** `- source` が図に書き出すフェンスの行数。 */
+  sourceLines: 80,
 } as const;
 
 /**

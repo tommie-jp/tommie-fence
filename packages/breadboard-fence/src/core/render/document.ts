@@ -4,21 +4,31 @@ import { renderBoard } from './board.ts';
 import type { DevicePlacement } from './devices.ts';
 import { renderDevice } from './devices.ts';
 import { bannerHeight, renderErrorBanner } from './errorCard.ts';
+import { notesBottom, renderNotes } from './notes.ts';
+import type { ResolvedNote } from './notes.ts';
 import { renderPart } from './parts.ts';
 import { partsListHeight, renderPartsList } from './partsList.ts';
 import { element, num } from './svg.ts';
 import type { RenderStyle } from './theme.ts';
+import { renderTitle, titleHeight } from './title.ts';
 import { renderWire } from './wires.ts';
 
 export type RenderedWire = { readonly points: readonly Point[]; readonly color: string };
 
+/** 画布を伸ばしたときに、いちばん下の字と縁の間に残す余白。 */
+const OUTER_PAD = 14;
+
 export type DocumentInput = {
+  readonly title: string | null;
   readonly board: Board;
   readonly layout: Layout;
   readonly style: RenderStyle;
   readonly parts: readonly PlacedPart[];
   readonly devices: ReadonlyMap<string, DevicePlacement>;
   readonly wires: readonly RenderedWire[];
+  readonly notes: readonly ResolvedNote[];
+  /** `- source` が図に書き出すフェンスの中身 (囲みつき)。 */
+  readonly sourceLines: readonly string[];
   readonly partsList: PartsListMode;
   readonly errors: readonly FenceError[];
 };
@@ -33,7 +43,11 @@ export function renderDocument(input: DocumentInput): string {
   const listed = input.partsList === 'none' ? [] : input.parts;
   const list = partsListHeight(listed, theme);
   const banner = bannerHeight(errors);
-  const height = layout.height + list + banner;
+  const head = titleHeight(input.title, theme);
+  // 注釈の字は板の下へはみ出すことがある (`- source` はフェンス全体を書き出す)。
+  // 切らずに画布のほうを伸ばす。横は板の幅で `…` に切る (render/notes.ts)。
+  const figure = Math.max(layout.height, notesBottom(input.notes, theme, input.sourceLines) + OUTER_PAD);
+  const height = head + figure + list + banner;
 
   // 座標系 (viewBox) は動かさず、外側の大きさだけを指定の横幅に合わせる。
   // ピッチを変えるとレイアウトも配線の経路も総取り替えになるので、拡大縮小はここだけで済ませる。
@@ -47,8 +61,9 @@ export function renderDocument(input: DocumentInput): string {
   // 交差したところで後の配線の縁取りが先の配線を塗り潰してしまう。
   const wires = input.wires.map((wire) => renderWire(wire.points, wire.color, theme));
 
+  // 題の下に図・部品リスト・エラー帯が続く。中は座標をずらさず、
+  // 題のぶんだけ全体を 1 つの g で下げる (図の中の座標計算に題が混ざらない)。
   const body = [
-    canvas,
     renderBoard(input.board, layout, theme),
     ...wires.map((wire) => wire.halo),
     ...wires.map((wire) => wire.line),
@@ -59,13 +74,21 @@ export function renderDocument(input: DocumentInput): string {
         const placement = input.devices.get(part.id);
         return placement ? renderDevice(part, placement, theme) : '';
       }),
-    renderPartsList(listed, layout.board.x, layout.height, layout.board.width, theme),
-    renderErrorBanner(errors, layout.board.x, layout.height + list, layout.board.width, theme.palette),
-  ];
+    // 注釈は板・部品・配線の上に重ねる。回路の一員ではないので最後に置く。
+    renderNotes(input.notes, layout, theme, input.sourceLines),
+    renderPartsList(listed, layout.board.x, figure, layout.board.width, theme),
+    renderErrorBanner(errors, layout.board.x, figure + list, layout.board.width, theme.palette),
+  ].filter(Boolean);
+
+  const shifted = head === 0
+    ? body
+    : [element('g', { transform: `translate(0 ${num(head)})` }, body.join('\n'))];
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${num(layout.width * scale)}" height="${num(height * scale)}" viewBox="0 0 ${num(layout.width)} ${num(height)}" role="img">`,
-    ...body.filter(Boolean),
+    ...[canvas].filter(Boolean),
+    renderTitle(input.title, layout.board.x, layout.board.width, theme),
+    ...shifted,
     '</svg>',
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }

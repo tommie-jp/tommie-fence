@@ -1,5 +1,7 @@
 // フェンス構文からレンダリングまでで共有する型。DOM にも Node にも依存しない。
 
+import type { NoteAlign, NoteColor, NoteKind, NoteLeading, NoteSize } from './notes.ts';
+
 export const HOLE_ROWS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] as const;
 export type HoleRow = (typeof HOLE_ROWS)[number];
 
@@ -98,6 +100,27 @@ export type WireSpec = {
   readonly line: number;
 };
 
+/**
+ * フェンスの `notes:` に書かれた注釈 1 つ。**回路の一員ではない**ので、
+ * ネットにも部品リストにも数えない。語彙は `src/core/notes.ts`。
+ */
+export type NoteSpec = {
+  readonly kind: NoteKind;
+  /** 部品 ID か穴番地。circle / text / source は 1 つ、box / arrow / line は 2 つ。 */
+  readonly targets: readonly string[];
+  readonly color: NoteColor | null;
+  readonly size: NoteSize | null;
+  readonly align: NoteAlign | null;
+  readonly bold: boolean;
+  /** `box` の枠を実線にする。既定は破線。 */
+  readonly solid: boolean;
+  /** `source` の行送り。 */
+  readonly leading: NoteLeading | null;
+  /** `text` に書かれた字。それ以外は null。 */
+  readonly text: string | null;
+  readonly line: number;
+};
+
 export type StyleRange = { readonly min: number; readonly max: number };
 
 /**
@@ -119,11 +142,14 @@ export type StyleSpec = {
 };
 
 export type FenceDocument = {
+  /** 図の左上に載せる 1 行の題。書かなければ null。 */
+  readonly title: string | null;
   readonly board: BoardSpec;
   readonly style: StyleSpec;
   readonly partsList: PartsListMode;
   readonly parts: readonly PartSpec[];
   readonly wires: readonly WireSpec[];
+  readonly notes: readonly NoteSpec[];
 };
 
 export type PartKind = 'two-lead' | 'three-lead' | 'switch' | 'dip' | 'sip' | 'board' | 'device';

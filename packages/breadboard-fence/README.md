@@ -148,6 +148,8 @@ node dist/cli.cjs render examples --out examples/out
 | 押しボタン | 溝をまたいで 4 本足。ピン 1a の穴を書く | `SW1: button @ e5` |
 | マイコンボード | ピン 1 の穴を書く。ピン名は実物の印字 | `MCU: pico2 @ h5` |
 | 種類の略記 | よく書く種類は短い綴りでも書ける | `R1: r a5 a10 10k` |
+| 題 | 図の左上に 1 行 | `title: 図01 LED を点ける` |
+| 注釈 | 図の上に印と字を重ねる | `- circle R1` |
 
 部品は 2 本足が resistor / capacitor / led / diode / buzzer / crystal / inductor /
 photoresistor / thermistor / thermistor-ntc / thermistor-ptc / varistor /
@@ -181,6 +183,7 @@ zener / schottky / photodiode / varicap / diac / reed / fuse / lamp、
 | [09-am-radio.md](examples/09-am-radio.md) | 1 石中波ラジオ (高周波増幅 + 検波、バーアンテナとポリバリコン) |
 | [10-bh-ad2.md](examples/10-bh-ad2.md) | B-H カーブ測定回路 (オペアンプ・測定器・トロイダルコア) |
 | [11-sensors.md](examples/11-sensors.md) | CdS・サーミスタの分圧、ダイオードの仲間、ガラス封止の部品 |
+| [12-notes.md](examples/12-notes.md) | 図の題と注釈 (印・枠・指し棒・字・フェンスの書き出し) |
 
 ![1 石中波ラジオの配線図](examples/out/09-am-radio.png)
 

@@ -1,16 +1,17 @@
 import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Node, Pair, ParsedNode } from 'yaml';
 import { fenceError, safeToken } from '../errors.ts';
-import { LIMITS, isReferenceable } from '../limits.ts';
+import { LIMITS, clampText, isReferenceable } from '../limits.ts';
 import { railOrder } from '../model/board.ts';
 import {
   BOARD_SIZES, COLUMN_NUMBERS, DEFAULT_BOARD, DEFAULT_PARTS_LIST, LETTER_CASES, PARTS_LIST_MODES,
 } from '../types.ts';
 import type {
-  BoardSpec, FenceDocument, FenceError, PartSpec, PartsListMode, StyleSpec, WireSpec,
+  BoardSpec, FenceDocument, FenceError, NoteSpec, PartSpec, PartsListMode, Result, StyleSpec, WireSpec,
 } from '../types.ts';
 import { splitPartType } from '../parts/variants.ts';
 import { parseCompactPart, parseHoleToken, parseWireSpec } from './compact.ts';
+import { parseNoteLine } from './notes.ts';
 import { validateExpandedPart } from './schema.ts';
 import { EMPTY_STYLE, validateStyle } from './style.ts';
 
@@ -20,7 +21,7 @@ const pick = <T extends string>(allowed: readonly T[], value: string | null): T 
 const MAX_YAML_MESSAGE = 120;
 
 /** フェンスの一番外側に書けるキー。読めなかったときの案内はここから作る。 */
-const TOP_LEVEL_KEYS = ['board', 'style', 'parts', 'parts-list', 'wires'] as const;
+const TOP_LEVEL_KEYS = ['title', 'board', 'style', 'parts', 'parts-list', 'wires', 'notes'] as const;
 
 export type ParseResult = { readonly doc: FenceDocument | null; readonly errors: readonly FenceError[] };
 
@@ -57,12 +58,16 @@ export function parseFence(source: string): ParseResult {
   const errors: FenceError[] = [];
   const parts: PartSpec[] = [];
   const wires: WireSpec[] = [];
+  const notes: NoteSpec[] = [];
   let board: BoardSpec = DEFAULT_BOARD;
   let style: StyleSpec = EMPTY_STYLE;
   let partsList: PartsListMode = DEFAULT_PARTS_LIST;
+  let title: string | null = null;
+
+  const document = (): FenceDocument => ({ title, board, style, partsList, parts, wires, notes });
 
   const contents = parsed.contents;
-  if (contents === null) return { doc: { board, style, partsList, parts, wires }, errors };
+  if (contents === null) return { doc: document(), errors };
   if (!isMap(contents)) {
     return {
       doc: null,
@@ -74,7 +79,12 @@ export function parseFence(source: string): ParseResult {
     const key = scalarText(pair.key) ?? '';
     const line = lineOf(pair.key);
 
-    if (key === 'board') {
+    if (key === 'title') {
+      const written = scalarText(pair.value);
+      // 題は 1 行のスカラー。折り返さないので、長い題は切って `…` を残す。
+      if (written === null) errors.push(fenceError('title は 1 行の文字列で書きます', line));
+      else title = clampText(written.trim(), LIMITS.titleLength);
+    } else if (key === 'board') {
       board = collectBoard(pair.value as ParsedNode | null, board, errors, lineOf, line);
     } else if (key === 'style') {
       const node = pair.value as ParsedNode | null;
@@ -96,6 +106,8 @@ export function parseFence(source: string): ParseResult {
       collectParts(pair.value as ParsedNode | null, { parts, errors, lineOf });
     } else if (key === 'wires') {
       collectWires(pair.value as ParsedNode | null, { wires, errors, lineOf });
+    } else if (key === 'notes') {
+      collectNotes(pair.value as ParsedNode | null, { notes, errors, lineOf });
     } else {
       errors.push(
         fenceError(`知らないキーです: ${safeToken(key)} (${TOP_LEVEL_KEYS.join(' / ')} が使えます)`, line),
@@ -103,10 +115,59 @@ export function parseFence(source: string): ParseResult {
     }
   }
 
-  return { doc: { board, style, partsList, parts, wires }, errors };
+  return { doc: document(), errors };
 }
 
 type LineOf = (node: Node | Pair | null | undefined) => number | null;
+
+/**
+ * 注釈を読む。**`text` だけが「1 項目のマップ」**で来る。
+ * YAML のプレーンスカラーには `: ` を書けないので、
+ * `- text a5 "R1: resistor …"` は黙ってマップとして読まれてエラーにもならない。
+ * 字を値の側に置けば、引用が要るかどうかを YAML 自身に決めさせられる。
+ */
+function collectNotes(
+  node: ParsedNode | null,
+  context: { notes: NoteSpec[]; errors: FenceError[]; lineOf: LineOf },
+): void {
+  const { notes, errors, lineOf } = context;
+  if (!isSeq(node)) {
+    errors.push(fenceError('notes は「- circle R1」のように並べたリストで書きます', lineOf(node)));
+    return;
+  }
+
+  for (const item of node.items) {
+    const line = lineOf(item as Node) ?? 1;
+    if (notes.length >= LIMITS.notes) {
+      errors.push(fenceError(`注釈は ${LIMITS.notes} 個までです。ここから先は描いていません`, line));
+      return;
+    }
+
+    const scalar = scalarText(item);
+    if (scalar !== null) {
+      push(parseNoteLine(scalar, null, line));
+      continue;
+    }
+
+    // `- text a5 blue: ここで分圧する` は 1 項目のマップとして読まれる。
+    if (isMap(item) && item.items.length === 1) {
+      const pair = item.items[0];
+      const head = scalarText(pair?.key);
+      const text = scalarText(pair?.value);
+      if (head !== null && text !== null) {
+        push(parseNoteLine(head, text, lineOf(pair?.key) ?? line));
+        continue;
+      }
+    }
+
+    errors.push(fenceError('注釈は「- circle R1」か「- text a5: 字」の形で書きます', line));
+  }
+
+  function push(result: Result<NoteSpec>): void {
+    if (result.ok) notes.push(result.value);
+    else errors.push(result.error);
+  }
+}
 
 /**
  * `board:` はサイズだけのスカラーでも、サイズと印字のマップでも書ける。

@@ -1,7 +1,9 @@
 import { fail, fenceError, ok, safeToken } from './errors.ts';
+import { LIMITS } from './limits.ts';
 import { formatAddress, parseAddress } from './model/address.ts';
 import { createBoard, devicePinStrip, isOnBoard, stripOf } from './model/board.ts';
 import { createLayout } from './model/layout.ts';
+import type { Layout } from './model/layout.ts';
 import { computeNets } from './model/nets.ts';
 import type { NetMember } from './model/nets.ts';
 import { parseFence } from './parser/parseFence.ts';
@@ -10,12 +12,14 @@ import { routeWires } from './router/route.ts';
 import { renderDocument } from './render/document.ts';
 import type { RenderedWire } from './render/document.ts';
 import { layoutDevices } from './render/devices.ts';
+import type { DevicePlacement } from './render/devices.ts';
+import type { NoteAnchor, ResolvedNote } from './render/notes.ts';
 import { partObstacles } from './render/parts.ts';
 import { renderErrorCard } from './render/errorCard.ts';
 import { DEFAULT_WIRE_COLOR, wireColor as lookupWireColor, wireColorNames } from './render/palette.ts';
 import { resolveStyle } from './render/theme.ts';
 import type {
-  Address, Board, FenceError, Net, PlacedPart, Point, Result, StripId, WireHint, WireSpec,
+  Address, Board, FenceError, Net, NoteSpec, PlacedPart, Point, Result, StripId, WireHint, WireSpec,
 } from './types.ts';
 
 export type RenderResult = {
@@ -93,6 +97,8 @@ export function renderBreadboard(source: string): RenderResult {
     color: drawable[index]?.color ?? DEFAULT_WIRE_COLOR,
   }));
 
+  const notes = resolveNotes(parsed.doc.notes, parts, placements, board, layout, errors);
+
   const netlist = computeNets({
     members: netMembers(parts),
     links: [
@@ -102,10 +108,140 @@ export function renderBreadboard(source: string): RenderResult {
   });
 
   const svg = renderDocument({
-    board, layout, style, parts, devices: placements, wires: rendered, partsList: parsed.doc.partsList, errors,
+    title: parsed.doc.title,
+    board,
+    layout,
+    style,
+    parts,
+    devices: placements,
+    wires: rendered,
+    notes,
+    sourceLines: notes.some((note) => note.spec.kind === 'source') ? sourceListing(source) : [],
+    partsList: parsed.doc.partsList,
+    errors,
   });
 
   return { svg, netlist, errors };
+}
+
+/**
+ * `- source` が図に書き出すフェンスの中身。**行番号は添えない**:
+ * この注釈の値打ちは「図を見た人がそのまま書き写せる」ことなので、
+ * 番号が混ざると写したものが動かなくなる。
+ */
+function sourceListing(source: string): string[] {
+  const lines = source.split('\n');
+  while (lines.length > 0 && (lines[lines.length - 1] ?? '').trim() === '') lines.pop();
+
+  const kept = lines.slice(0, LIMITS.sourceLines);
+  if (lines.length > kept.length) kept.push(`… ほかに ${lines.length - kept.length} 行`);
+  return ['```breadboard', ...kept, '```'];
+}
+
+/** 注釈 1 つぶんの、指し先を囲む形。穴 1 つならこの半径の丸になる。 */
+const NOTE_HOLE_RADIUS = 11;
+const NOTE_PART_PAD = 11;
+
+function resolveNotes(
+  specs: readonly NoteSpec[],
+  parts: readonly PlacedPart[],
+  placements: ReadonlyMap<string, DevicePlacement>,
+  board: Board,
+  layout: Layout,
+  errors: FenceError[],
+): ResolvedNote[] {
+  const resolved: ResolvedNote[] = [];
+
+  for (const spec of specs) {
+    const anchors: NoteAnchor[] = [];
+    let failed = false;
+
+    for (const target of spec.targets) {
+      const anchor = resolveNoteTarget(target, spec, parts, placements, board, layout, errors);
+      if (!anchor) {
+        failed = true;
+        break;
+      }
+      anchors.push(anchor);
+    }
+
+    if (!failed) resolved.push({ spec, anchors });
+  }
+
+  return resolved;
+}
+
+/**
+ * 指し先を図の上の形に落とす。**部品 ID を先に探し、無ければ穴番地として読む**。
+ * 両方に読めるときは、どちらのつもりか分からないので添えて知らせる
+ * (部品に `a5` のような名前を付けたときだけ起きる)。
+ */
+function resolveNoteTarget(
+  target: string,
+  spec: NoteSpec,
+  parts: readonly PlacedPart[],
+  placements: ReadonlyMap<string, DevicePlacement>,
+  board: Board,
+  layout: Layout,
+  errors: FenceError[],
+): NoteAnchor | null {
+  const part = parts.find((candidate) => candidate.id === target);
+  const address = parseAddress(target);
+
+  if (part) {
+    if (address) {
+      errors.push(fenceError(`注釈の ${safeToken(target)} は部品を指しています (穴 ${formatAddress(address)} ではありません)`, spec.line));
+    }
+    const anchor = anchorOfPart(part, placements, layout);
+    if (anchor) return anchor;
+    errors.push(fenceError(`注釈の指し先 ${safeToken(target)} は図に出ていません`, spec.line));
+    return null;
+  }
+
+  if (address) {
+    if (!isOnBoard(board, address)) {
+      errors.push(fenceError(`${formatAddress(address)} はボードの外です (1〜${board.columns} 列)`, spec.line));
+      return null;
+    }
+    const point = layout.point(address);
+    return { center: point, rx: NOTE_HOLE_RADIUS, ry: NOTE_HOLE_RADIUS, part: false };
+  }
+
+  errors.push(fenceError(`注釈の指し先 ${safeToken(target)}: そんな部品も穴もありません`, spec.line));
+  return null;
+}
+
+function anchorOfPart(
+  part: PlacedPart,
+  placements: ReadonlyMap<string, DevicePlacement>,
+  layout: Layout,
+): NoteAnchor | null {
+  const points = part.pins.flatMap((pin) => (pin.address ? [layout.point(pin.address)] : []));
+  if (points.length === 0) {
+    // ボード外の機器は帯の中の箱そのものを囲む。
+    const rect = placements.get(part.id)?.rect;
+    if (!rect) return null;
+    return {
+      center: { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 },
+      rx: rect.width / 2 + 4,
+      ry: rect.height / 2 + 4,
+      part: true,
+    };
+  }
+
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+  const left = Math.min(...xs);
+  const right = Math.max(...xs);
+  const top = Math.min(...ys);
+  const bottom = Math.max(...ys);
+
+  return {
+    center: { x: (left + right) / 2, y: (top + bottom) / 2 },
+    rx: (right - left) / 2 + NOTE_PART_PAD,
+    ry: (bottom - top) / 2 + NOTE_PART_PAD,
+    part: true,
+  };
 }
 
 function netMembers(parts: readonly PlacedPart[]): NetMember[] {
