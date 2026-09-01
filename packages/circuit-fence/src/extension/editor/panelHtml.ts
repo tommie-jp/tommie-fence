@@ -58,6 +58,13 @@ const STYLE = `
   body.cf-nodes .cf-parts { pointer-events: none; opacity: 0.5; }
   .cf-mode { margin: 0 0 8px; }
   .cf-mode label { margin-right: 12px; }
+  .cf-history { margin: 0 0 8px; }
+  .cf-history button {
+    margin-right: 6px; padding: 2px 10px; border: 0; cursor: pointer; font: inherit; font-size: 12px;
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+  }
+  .cf-history button:disabled { opacity: 0.4; cursor: default; }
   .cf-status { margin-top: 8px; min-height: 1.4em; }
 `;
 
@@ -155,8 +162,35 @@ const SCRIPT = `
     if (cell) drop(cell.dataset.address);
   });
 
+  /** 戻す・やり直すは拡張側の履歴に頼む (webview には文書が無い)。 */
+  const step = (kind) => {
+    const button = document.querySelector(kind === 'undo' ? '.cf-undo' : '.cf-redo');
+    if (button && button.disabled) return;
+    vscode.postMessage({ kind: kind });
+  };
+
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('.cf-undo, .cf-redo');
+    if (!button) return;
+    step(button.classList.contains('cf-undo') ? 'undo' : 'redo');
+  });
+
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') release();
+    if (event.key === 'Escape') {
+      release();
+      return;
+    }
+    // **パネルにフォーカスがあると VS Code の Ctrl+Z は届かない。**
+    // ここで受けて、拡張側が覚えている履歴を巻き戻す。
+    if (!event.ctrlKey && !event.metaKey) return;
+    const key = event.key.toLowerCase();
+    if (key === 'z' && !event.shiftKey) {
+      event.preventDefault();
+      step('undo');
+    } else if ((key === 'z' && event.shiftKey) || key === 'y') {
+      event.preventDefault();
+      step('redo');
+    }
   });
 
   window.addEventListener('message', (event) => {
@@ -166,6 +200,10 @@ const SCRIPT = `
       setHeld(null);
     }
     if (message.kind === 'status') status().textContent = message.text;
+    if (message.kind === 'history') {
+      document.querySelector('.cf-undo').disabled = !message.canUndo;
+      document.querySelector('.cf-redo').disabled = !message.canRedo;
+    }
   });
 
   // 持ち方の切り替え。**掴む物が違えば意味も違う**ので、同じ操作に混ぜない
@@ -194,6 +232,9 @@ export const panelHtml = ({ cspSource, nonce, mapHtml }: PanelHtmlOptions): stri
   + `<p class="cf-mode">`
   + `<label><input type="radio" name="cf-mode" value="part" checked> 部品を動かす</label>`
   + `<label><input type="radio" name="cf-mode" value="node"> 節点を動かす</label></p>`
+  + `<p class="cf-history">`
+  + `<button class="cf-undo" disabled title="Ctrl+Z">元に戻す</button>`
+  + `<button class="cf-redo" disabled title="Ctrl+Shift+Z">やり直す</button></p>`
   + `<p class="cf-note">クリックするか掴んで、置きたい交点で放します。`
   + `部品は 1 つだけ動いて接続が変わり、節点は交点ごと動いて接続は保たれます。`
   + `図は書き換えのあと数秒で描き直ります。</p>`

@@ -131,22 +131,28 @@ const isKey = (text: string, candidate: Candidate): boolean =>
   text[candidate.column + candidate.length] === ':';
 
 /**
- * 行の中で**素の綴りで**書かれた番地を全部。名前 (`points:` が付けたもの) は
- * 拾わない — 名前は行き先の 1 行を直せば付いてくる。
+ * 行の中で番地を指している綴りを全部。既定では**素の綴りだけ**で、
+ * `points:` が付けた名前は拾わない (名前は行き先の 1 行を直せば付いてくるので、
+ * 書き換える側はこちらを使う)。どこから指されているかを**数える**ときは
+ * `points` を渡して名前も拾う。
  *
  * 配線の行に使う。**端点と演算子しか無い行なので、番地に読める綴りはすべて端点**。
  * 数珠つなぎ (`a1 -- a3 -- a5`) とフロー形式 (`[a1 -- a3, a3 -- b5]`) は
  * モデルの上では同じ形になり、綴りが 1 つか 2 つかはモデルからは決まらない。
  */
-export function addressTokensOn(lineText: string): readonly AddressToken[] {
+export function addressTokensOn(
+  lineText: string,
+  points?: ReadonlyMap<string, Address>,
+): readonly AddressToken[] {
   const comment = COMMENT.exec(lineText);
   const scanned = comment === null ? lineText : lineText.slice(0, comment.index);
 
+  const resolve = (text: string): Address | null => parseAddress(text) ?? points?.get(text) ?? null;
   return [...scanned.matchAll(/[^\s:]+/g)]
-    .flatMap((match) => candidatesOf(match.index ?? 0, match[0], (text) => parseAddress(text) !== null))
+    .flatMap((match) => candidatesOf(match.index ?? 0, match[0], (text) => resolve(text) !== null))
     .filter((candidate) => !isKey(scanned, candidate))
     .flatMap((candidate) => {
-      const address = parseAddress(candidate.text);
+      const address = resolve(candidate.text);
       return address === null ? [] : [{ column: candidate.column, length: candidate.length, address }];
     });
 }

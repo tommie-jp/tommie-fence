@@ -76,3 +76,26 @@ describe('置き先の当たり判定', () => {
     expect(html).not.toContain('dragstart');
   });
 });
+
+describe('元に戻す・やり直す', () => {
+  test('offers both buttons, off until there is something to undo', () => {
+    expect(html).toContain('<button class="cf-undo" disabled');
+    expect(html).toContain('<button class="cf-redo" disabled');
+  });
+
+  test('takes Ctrl+Z itself, since VS Code cannot reach the editor from here', () => {
+    // パネルにフォーカスがあると activeTextEditor が無く、VS Code の undo は届かない。
+    expect(html).toContain("if (!event.ctrlKey && !event.metaKey) return;");
+    expect(html).toContain("step('undo')");
+    expect(html).toContain("step('redo')");
+  });
+
+  test('asks the extension, which is the side that holds the document', () => {
+    expect(html).toContain('vscode.postMessage({ kind: kind })');
+  });
+
+  test('turns the buttons on and off from what the extension reports', () => {
+    expect(html).toContain("message.kind === 'history'");
+    expect(html).toContain('disabled = !message.canUndo');
+  });
+});

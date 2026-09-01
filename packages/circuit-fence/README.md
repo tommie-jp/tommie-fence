@@ -177,8 +177,10 @@ usually **that one line** (bare spellings of the same address come along too).
 
 **Nothing stops you before the move.** It compares the netlist before and after
 and lists the connections the move broke and the ones it made **after** applying
-it (undo with `Ctrl+Z`). Your comments and formatting survive: only the address
-spelling is replaced. The drawing catches up a few seconds after the edit.
+it. Undo from the map's own button or `Ctrl+Z` — the panel keeps its own history,
+because VS Code's undo cannot reach the editor while the panel has focus. Your
+comments and formatting survive: only the address spelling is replaced. The
+drawing catches up a few seconds after the edit.
 
 More in [docs/03-部品と節点を動かす.md](docs/03-部品と節点を動かす.md) (Japanese).
 

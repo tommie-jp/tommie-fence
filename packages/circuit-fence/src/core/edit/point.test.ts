@@ -242,6 +242,17 @@ describe('movePoint (1 行に 2 つ以上)', () => {
   test('still rewrites a chained wire once, where the spelling appears once', () => {
     expect(moved('wires:\n  - a1 -- a3 -- b5\n', 'a3', 'b3')).toContain('  - a1 -- b3 -- b5');
   });
+
+  test('counts each written spelling, so the list does not promise the wrong number', () => {
+    // 数珠つなぎは真ん中が 1 つ、フロー形式は 2 つ。書き換える数と揃える。
+    const chained = movableNodes('wires:\n  - a1 -- a3 -- b5\n');
+    const flow = movableNodes('wires: [a1 -- a3, a3 -- b5]\n');
+    const usesAt = (nodes: ReturnType<typeof movableNodes>, at: string) =>
+      nodes.find((node) => formatAddress(node.address) === at)?.uses;
+
+    expect(usesAt(chained, 'a3')).toBe(1);
+    expect(usesAt(flow, 'a3')).toBe(2);
+  });
 });
 
 describe('movePoint (定義だけの名前)', () => {

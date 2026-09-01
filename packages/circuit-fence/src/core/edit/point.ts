@@ -4,10 +4,9 @@ import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { addressTokensOn, addressesOf, applyEdits, diffOf, fail, isOnGrid, locateTokens } from './shared.ts';
-import { cellOf } from '../types.ts';
 import type { Edit, MoveResult } from './shared.ts';
+import { cellOf } from '../types.ts';
 import type { Circuit } from '../model/circuit.ts';
-import type { WireSpec } from '../types.ts';
 
 /**
  * 節点を別の番地へ動かす。**部品を動かすのとは掴む物が違う** — あちらは
@@ -39,36 +38,14 @@ export type NodeRef = {
 };
 
 /**
- * 配線の端点を、**行ごとに・書かれた順で 1 回ずつ**。
- * 数珠つなぎ (`a1 -- a3 -- a5`) は 1 行から配線が 2 本できるが、中間の綴りは
- * 1 つしか無い — 配線ごとに数えると同じ綴りを 2 回書き換えて図が壊れる。
+ * フェンスの中で番地が書かれている場所を、番地の綴りごとに数える。
  *
- * **数珠つなぎの続きかどうかは端点で見る。** フロー形式
- * (`wires: [a1 -- a3, b1 -- b5]`) も 1 行に配線が 2 本になるが、こちらは
- * 独立した 2 本で、始点を落とすと b1 が黙って取り残される。
- * 前の配線の終点と同じ番地から始まるものだけを続きとみなす。
+ * **配線は行の字から数える。** 数珠つなぎ (`a1 -- a3 -- a5`) とフロー形式
+ * (`[a1 -- a3, a3 -- b5]`) はモデルの上では同じ形になり、真ん中の綴りが
+ * 1 つか 2 つかはモデルからは決まらない。書き換える数と食い違うと、
+ * 一覧の「N か所」が嘘になる。
  */
-function writtenWireCells(wires: readonly WireSpec[]): Map<number, Address[]> {
-  const byLine = new Map<number, Address[]>();
-  let previous: { readonly line: number; readonly to: Address | null } | null = null;
-
-  for (const wire of wires) {
-    const cells = byLine.get(wire.line) ?? [];
-    const from = cellOf(wire.from);
-    const to = cellOf(wire.to);
-    const chained = previous !== null && previous.line === wire.line
-      && previous.to !== null && from !== null
-      && formatAddress(previous.to) === formatAddress(from);
-    if (from !== null && !chained) cells.push(from);
-    if (to !== null) cells.push(to);
-    byLine.set(wire.line, cells);
-    previous = { line: wire.line, to };
-  }
-  return byLine;
-}
-
-/** フェンスの中で番地が書かれている場所を、番地の綴りごとに数える。 */
-function usesOf(doc: Circuit): Map<string, { address: Address; uses: number }> {
+function usesOf(doc: Circuit, lines: readonly string[]): Map<string, { address: Address; uses: number }> {
   const found = new Map<string, { address: Address; uses: number }>();
 
   const add = (address: Address): void => {
@@ -78,7 +55,12 @@ function usesOf(doc: Circuit): Map<string, { address: Address; uses: number }> {
   };
 
   for (const part of doc.parts) for (const address of addressesOf(part)) add(address);
-  for (const cells of writtenWireCells(doc.wires).values()) for (const cell of cells) add(cell);
+  for (const line of new Set(doc.wires.map((wire) => wire.line))) {
+    const text = lines[line - 1];
+    if (text === undefined) continue;
+    // 名前で書かれた端も「指している場所」なので数える (書き換えはしない)。
+    for (const token of addressTokensOn(text, doc.points)) add(token.address);
+  }
   return found;
 }
 
@@ -86,7 +68,7 @@ function usesOf(doc: Circuit): Map<string, { address: Address; uses: number }> {
  * 掴める節点。パース済みのモデルから引く (呼ぶ側はたいてい直前に
  * パースしているので、ここでパースし直さない)。
  */
-export function nodesOf(doc: Circuit): readonly NodeRef[] {
+export function nodesOf(doc: Circuit, source: string): readonly NodeRef[] {
   const nameAt = new Map<string, string>();
   for (const [name, address] of doc.points) {
     const key = formatAddress(address);
@@ -95,7 +77,7 @@ export function nodesOf(doc: Circuit): readonly NodeRef[] {
     if (!nameAt.has(key)) nameAt.set(key, name);
   }
 
-  const found = usesOf(doc);
+  const found = usesOf(doc, source.split('\n'));
   // **定義しただけの名前も節点。** まだ何も来ていなくても `fb: c3` の行は
   // 書かれているので、動かせないと嘘になる (uses は 0 のまま見せる)。
   for (const address of doc.points.values()) {
@@ -114,8 +96,9 @@ export function nodesOf(doc: Circuit): readonly NodeRef[] {
  * 嘘の位置を見せると、掴めるように見えて書き換えだけが黙って失敗する。
  */
 export function movableNodes(source: string): readonly NodeRef[] {
-  const { doc } = parseFence(normalizeNewlines(source));
-  return doc ? nodesOf(doc) : [];
+  const normalized = normalizeNewlines(source);
+  const { doc } = parseFence(normalized);
+  return doc ? nodesOf(doc, normalized) : [];
 }
 
 /** 行の中の 1 つの綴り。桁は 0 始まり。 */
@@ -254,7 +237,7 @@ export function movePoint(source: string, at: Address, to: Address): MoveResult 
     return { ok: true, value: { edits: [], diff: { lost: [], gained: [] } } };
   }
 
-  const node = nodesOf(doc).find((one) => formatAddress(one.address) === formatAddress(at));
+  const node = nodesOf(doc, normalized).find((one) => formatAddress(one.address) === formatAddress(at));
   if (!node) {
     return fail(`${formatAddress(at)} には動かせる節点がありません (何も書かれていません)`, null);
   }
@@ -293,7 +276,7 @@ export function movePoint(source: string, at: Address, to: Address): MoveResult 
   // **動かし残しを黙って通さない。** 行の形が読めずに 1 か所でも取り逃すと、
   // 節点が割れて接続だけが変わる。当てたあとに古い番地が残っていたら断る。
   const remaining = applied.doc !== null
-    && nodesOf(applied.doc).some((one) => formatAddress(one.address) === formatAddress(at));
+    && nodesOf(applied.doc, after).some((one) => formatAddress(one.address) === formatAddress(at));
   if (remaining) {
     return fail(`${formatAddress(at)} を書いている場所を全部は書き換えられませんでした (書き方を見て手で直します)`, null);
   }

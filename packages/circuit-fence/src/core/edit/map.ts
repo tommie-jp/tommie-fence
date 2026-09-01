@@ -125,7 +125,8 @@ function wireLinesOf(doc: Circuit): WireLine[] {
 
 /** フェンス本文から升目のモデルを作る。**読めなければ空**で、嘘の位置を見せない。 */
 export function gridMap(source: string): GridMap {
-  const { doc } = parseFence(normalizeNewlines(source));
+  const normalized = normalizeNewlines(source);
+  const { doc } = parseFence(normalized);
   if (!doc) {
     return { rows: MIN_ROWS, cols: MIN_COLS, chips: [], dots: [], wires: [], skipped: [], readable: false };
   }
@@ -151,7 +152,7 @@ export function gridMap(source: string): GridMap {
     });
   }
 
-  const dots: Dot[] = nodesOf(doc)
+  const dots: Dot[] = nodesOf(doc, normalized)
     .filter((node) => isOnCrossing(node.address))
     .map((node) => ({ row: node.address.row, col: node.address.col, name: node.name, uses: node.uses }));
 

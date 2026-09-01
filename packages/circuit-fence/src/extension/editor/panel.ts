@@ -5,7 +5,8 @@ import { parseAddress } from '../../core/model/address.ts';
 import { movePart } from '../../core/edit/move.ts';
 import { movePoint } from '../../core/edit/point.ts';
 import { describeDiff } from './movePart.ts';
-import { applyToDocument } from './vscodePort.ts';
+import { applyChanges, applyToDocument } from './vscodePort.ts';
+import { createHistory, invert } from './history.ts';
 import { makeNonce, panelHtml } from './panelHtml.ts';
 
 /**
@@ -27,6 +28,13 @@ let panel: vscode.WebviewPanel | null = null;
 /** 覚えているフェンス。文書は URI で、フェンスは開き記号の行で引き直す。 */
 let bound: { readonly uri: vscode.Uri; readonly line: number } | null = null;
 
+/**
+ * マップでの移動の履歴。**VS Code の `Ctrl+Z` はエディタにフォーカスが要る**ので、
+ * 掴んで動かしている間はパネルから届かない。当てた書き換えを覚えて逆を当てる。
+ * 別の文書へ移ったら忘れる (覚えている桁が別の文書を指してしまう)。
+ */
+const history = createHistory();
+
 const markdownEditor = (): vscode.TextEditor | null => {
   const editor = vscode.window.activeTextEditor;
   return editor?.document.languageId === 'markdown' ? editor : null;
@@ -47,6 +55,8 @@ function currentFence(): FenceNow | null {
   if (editor) {
     const fence = fenceAt(editor.document.getText(), editor.selection.active.line + 1);
     if (fence) {
+      // 別の文書へ移ったら履歴は捨てる (覚えている桁が別の文書を指す)。
+      if (bound !== null && bound.uri.toString() !== editor.document.uri.toString()) history.clear();
       bound = { uri: editor.document.uri, line: fence.line };
       return { document: editor.document, source: fence.source, line: fence.line };
     }
@@ -100,7 +110,7 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
     mapHtml: now.html,
   });
 
-  view.onDidDispose(() => { panel = null; bound = null; }, null, context.subscriptions);
+  view.onDidDispose(() => { panel = null; bound = null; history.clear(); }, null, context.subscriptions);
 
   view.webview.onDidReceiveMessage(
     async (message: { kind: string; part?: string; from?: string; to?: string }) => {
@@ -111,6 +121,11 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
       }
       if (message.kind === 'moveNode' && message.from && message.to) {
         await applyNodeMove(message.from, message.to);
+        refresh();
+        return;
+      }
+      if (message.kind === 'undo' || message.kind === 'redo') {
+        await stepBack(message.kind);
         refresh();
       }
     },
@@ -133,7 +148,10 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
 
 function refresh(): void {
   if (!panel) return;
+  // **地図を組んでから履歴の状態を送る。** 別の文書へ移ったときに履歴を
+  // 捨てるのはこの中なので、先に送るとボタンが有効なまま取り残される。
   const now = mapHtmlNow();
+  void panel.webview.postMessage({ kind: 'history', ...history.state() });
   if (now) {
     void panel.webview.postMessage({ kind: 'map', html: now.html });
     return;
@@ -193,10 +211,11 @@ async function applyNodeMove(written: string, target: string): Promise<void> {
     return;
   }
   const applied = await applyToDocument(fence.document, fence.line, result.value.edits);
-  if (!applied) {
+  if (applied === null) {
     say('書き換えられませんでした');
     return;
   }
+  history.push({ label: `${written} の節点を ${target} へ`, changes: applied });
   told(`${written} の節点を ${target} へ動かしました`, describeDiff(result.value.diff));
 }
 
@@ -222,9 +241,43 @@ async function applyMove(partId: string, written: string): Promise<void> {
   }
 
   const applied = await applyToDocument(fence.document, fence.line, result.value.edits);
-  if (!applied) {
+  if (applied === null) {
     say('書き換えられませんでした');
     return;
   }
+  history.push({ label: `${partId} を ${written} へ`, changes: applied });
   told(`${partId} を ${written} へ動かしました`, describeDiff(result.value.diff));
+}
+
+/**
+ * 1 歩戻す / やり直す。**当ててから履歴を動かす** — 先に動かすと、
+ * 当てられなかったときに履歴が嘘になる。
+ *
+ * 当てられないのは、覚えたあとに手で書き換えられたとき。**黙って当てない**
+ * (覚えている桁はもう別の場所を指している)。その 1 歩は捨てて、
+ * エディタの `Ctrl+Z` を使ってもらう。
+ */
+async function stepBack(kind: 'undo' | 'redo'): Promise<void> {
+  const undoing = kind === 'undo';
+  const step = undoing ? history.takeUndo() : history.takeRedo();
+  if (step === null) {
+    say(undoing ? '戻せる移動がありません' : 'やり直せる移動がありません');
+    return;
+  }
+
+  const fence = fenceNow();
+  if (!fence) return;
+
+  // 戻すのは逆向き、やり直すのはそのまま。
+  const changes = undoing ? invert(step).changes : step.changes;
+  if (!(await applyChanges(fence.document, changes))) {
+    if (undoing) history.dropUndo();
+    else history.dropRedo();
+    say(`${step.label} は戻せません (そのあと手で書き換えられています)。エディタの Ctrl+Z を使います`);
+    return;
+  }
+
+  if (undoing) history.commitUndo();
+  else history.commitRedo();
+  say(undoing ? `${step.label} を戻しました` : `${step.label} をやり直しました`);
 }
