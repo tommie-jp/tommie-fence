@@ -9,7 +9,7 @@
 | --- | --- | --- |
 | circuit-fence | ` ```circuit ` | 回路図 — 部品を番地で置き、ネットリストを導出する |
 | breadboard-fence | ` ```breadboard ` | ブレッドボード実体配線図 — ボード内部の導通からネットリストを導出する |
-| perfboard-fence (予定) | ` ```perfboard ` | ユニバーサル基板の配線図 — ブレッドボードの盤面モデルが土台 |
+| perfboard-fence (骨格) | ` ```perfboard ` | ユニバーサル基板の配線図 — 全穴が独立していて、導通は配線でしか生まれない |
 
 言語は別、作法は同じ: YAML をホストにしたフェンス、番地で書く位置、
 Markdown の行番号とその行の中身で返るエラー。
@@ -22,16 +22,17 @@ Markdown の行番号とその行の中身で返るエラー。
 `packages/` 配下へ取り込み済み。全コミットがここにあり、
 `git log packages/circuit-fence` で最初のコミットまで遡れる。
 リリースと版タグは元のリポジトリに残る。こちらで打つ版タグはパッケージ名を
-接頭辞にする (`circuit-fence-v0.4.0`)。3 つのパッケージは npm workspaces で
+接頭辞にする (`circuit-fence-v0.4.0`)。4 つのパッケージは npm workspaces で
 リポジトリ直下からビルド・テスト・パッケージできる。
-`perfboard-fence` はまだ無い。
+`perfboard-fence` は骨格だけで、まだ図を描かない
+(フェンスを見つけて、読めなかったところを行番号つきで返すところまで)。
 
 ```text
 tommie-fence
 ├── packages/fence-kit          共有: 改行の正規化、フェンス抽出、markup のエスケープ
 ├── packages/circuit-fence
 ├── packages/breadboard-fence
-└── packages/perfboard-fence    (予定)
+└── packages/perfboard-fence    (骨格。まだ描かない)
 ```
 
 `fence-kit` に入れるのは、**実際に重複してから引き上げたものだけ**。

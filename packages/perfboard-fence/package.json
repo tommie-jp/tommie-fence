@@ -1,0 +1,75 @@
+{
+  "name": "perfboard-fence",
+  "displayName": "Perfboard Fence",
+  "description": "Markdown の ```perfboard フェンスをユニバーサル基板の実体配線図としてプレビューする",
+  "version": "0.0.1",
+  "license": "MIT",
+  "private": true,
+  "publisher": "tommie",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tommie-jp/tommie-fence.git",
+    "directory": "packages/perfboard-fence"
+  },
+  "type": "module",
+  "engines": {
+    "vscode": "^1.75.0",
+    "node": ">=20"
+  },
+  "categories": [
+    "Programming Languages",
+    "Visualization"
+  ],
+  "keywords": [
+    "markdown",
+    "perfboard",
+    "stripboard",
+    "electronics",
+    "diagram"
+  ],
+  "main": "./dist/extension.cjs",
+  "browser": "./dist/extension.web.cjs",
+  "activationEvents": [],
+  "contributes": {
+    "markdown.markdownItPlugins": true,
+    "markdown.previewStyles": [
+      "./media/perfboard.css"
+    ],
+    "grammars": [
+      {
+        "scopeName": "markdown.perfboard.codeblock",
+        "path": "./syntaxes/perfboard-injection.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml"
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "vscode:prepublish": "node esbuild.mjs --production",
+    "check": "npm run typecheck && npm run test"
+  },
+  "dependencies": {
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/vscode": "^1.75.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "@vscode/vsce": "^3.9.2",
+    "esbuild": "^0.28.2",
+    "fence-kit": "*",
+    "markdown-it": "^15.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

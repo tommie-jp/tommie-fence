@@ -11,14 +11,18 @@
 - `packages/breadboard-fence` — ` ```breadboard ` フェンス。ブレッドボード実体配線図
 - `packages/fence-kit` — 3 つで重複している部分の置き場。ビルド工程を持たず、
   使う側の esbuild が束ねる
-- (予定) `packages/perfboard-fence` — ユニバーサル基板。breadboard の盤面モデルが土台
+- `packages/perfboard-fence` — ` ```perfboard ` フェンス。ユニバーサル基板。
+  **骨格だけ** (Phase 0)。全穴が独立しているので、breadboard の `board` /
+  `layout` / `place` / `router` はそのままでは使えない。**実測すると土台に
+  なるのは盤面モデルではなく描画層のほう** (52 の docs/05)
 
 言語は別、作法は同じ。**先回りして共通化しない** — 実際に重複してから引き上げる。
 いま fence-kit にあるのは、実測で重複が確かめられたものだけ:
 改行を揃える処理、フェンスの取り出し (言語名は引数)、markup のエスケープと
 要素の組み立て。**描画は入っていない** — circuit は TeX に描かせるので
 SVG を直に組み立てるコードを持たず、共有できるのが breadboard と
-(これから作る) perfboard の 2 つだけだから。
+perfboard の 2 つだけだから。perfboard が描き始める Phase 1〜3 で、
+要ったものから 1 つずつ引き上げる。
 
 ## コマンドはリポジトリ直下で
 

@@ -9,7 +9,7 @@ monorepo: schematic, breadboard, and perfboard.
 | --- | --- | --- |
 | circuit-fence | ` ```circuit ` | Schematics — parts placed by grid address, netlist derived |
 | breadboard-fence | ` ```breadboard ` | Breadboard wiring diagrams — netlist derived from the strips inside the board |
-| perfboard-fence (planned) | ` ```perfboard ` | Perfboard layouts, built on the breadboard model |
+| perfboard-fence (skeleton) | ` ```perfboard ` | Perfboard layouts — every hole independent, connections made only by wires |
 
 The languages are separate; the manners are shared: YAML-hosted fences,
 positions written as addresses, and mistakes reported with Markdown line
@@ -23,16 +23,17 @@ This repository is being assembled. The histories of
 imported under `packages/` — every commit is here, so
 `git log packages/circuit-fence` reaches back to the first one. The releases
 and version tags stay in those repositories; versions tagged here are prefixed
-with the package name (`circuit-fence-v0.4.0`). The three packages build, test
-and package from the repository root through npm workspaces;
-`perfboard-fence` does not exist yet.
+with the package name (`circuit-fence-v0.4.0`). The four packages build, test
+and package from the repository root through npm workspaces.
+`perfboard-fence` is a skeleton: it finds the fence and reports what it could
+not read, with line numbers, but draws nothing yet.
 
 ```text
 tommie-fence
 ├── packages/fence-kit          shared: newline normalisation, fence extraction, markup escaping
 ├── packages/circuit-fence
 ├── packages/breadboard-fence
-└── packages/perfboard-fence    (planned)
+└── packages/perfboard-fence    (skeleton; draws nothing yet)
 ```
 
 `fence-kit` only holds code that was **already duplicated** — nothing is put

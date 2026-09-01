@@ -1,0 +1,58 @@
+/* Markdown プレビューでの図の置き方。
+   拡張が previewStyles を 1 つも contribute しないと、拡張フォルダが webview の
+   localResourceRoots に入らないという事情もあってここに置いている。 */
+
+.perfboard {
+  margin: 1em 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.perfboard svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 読めなかったところは図の外に出す。SVG に描き込んでいた頃と違い、
+   字が選べて折り返しも効き、印の桁は等幅の pre がそのまま合わせてくれる。 */
+
+.perfboard-errors,
+.perfboard-error-card {
+  border: 1px solid var(--vscode-inputValidation-errorBorder, #d1544a);
+  background: var(--vscode-inputValidation-errorBackground, #fff0ee);
+  border-radius: 6px;
+  margin: 0.6em auto 0;
+  max-width: 100%;
+  padding: 0.6em 0.9em;
+  text-align: left;
+}
+
+.perfboard-error-title {
+  font-weight: bold;
+  margin: 0 0 0.4em;
+}
+
+.perfboard-error-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.perfboard-error-item + .perfboard-error-item {
+  margin-top: 0.5em;
+}
+
+/* お知らせは「読めてはいるが思ったとおりに出ない」もの。
+   読めなかった行と同じ強さで出すと、直すべきものが埋もれる。 */
+
+.perfboard-notice {
+  opacity: 0.8;
+}
+
+.perfboard-error-source {
+  font-family: var(--vscode-editor-font-family, ui-monospace, monospace);
+  font-size: 0.9em;
+  margin: 0.2em 0 0;
+  overflow-x: auto;
+  white-space: pre;
+}
