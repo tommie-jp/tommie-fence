@@ -1,21 +1,43 @@
 import { LineCounter, isMap, isScalar, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
 import { fenceError, safeToken } from '../errors.ts';
+import { createBoard, parseBoardSize } from '../model/board.ts';
+import { LIMITS } from '../limits.ts';
 import { TOP_LEVEL_KEYS } from '../types.ts';
-import type { FenceDocument, FenceError } from '../types.ts';
+import type { Board, FenceDocument, FenceError } from '../types.ts';
 
 /** yaml のメッセージはライブラリ側の文言なので、載せる長さを切る。 */
 const MAX_YAML_MESSAGE = 120;
 
+const BOARD_HINT = `board: は板の大きさを 列x行 で書きます (例: board: 28x18)。`
+  + `上限は ${LIMITS.cols}x${LIMITS.rows} です`;
+
 export type ParseResult = { readonly doc: FenceDocument | null; readonly errors: readonly FenceError[] };
 
-const scalarText = (node: unknown): string | null =>
-  isScalar(node) && typeof node.value === 'string' ? node.value : null;
+const scalarText = (node: unknown): string | null => {
+  if (!isScalar(node)) return null;
+  if (typeof node.value === 'string') return node.value;
+  if (typeof node.value === 'number') return String(node.value);
+  return null;
+};
+
+/**
+ * **書かれたとおりの綴り**を元の字面から切り出す。解決後の値では駄目で、
+ * `0x18` は YAML が 16 進の 24 として読むので、そのまま名指すと
+ * **行のどこにも無い綴り**を指すことになり、印 (`locate`) も付かなくなる。
+ * `1.10` が `1.1` に丸まるのも同じ穴。
+ */
+const writtenText = (node: unknown, source: string): string | null => {
+  const range = (node as { range?: readonly [number, number, number] } | null)?.range;
+  if (!range) return null;
+  const text = source.slice(range[0], range[1]).trim();
+  return text === '' ? null : text;
+};
 
 /**
  * フェンスの中身 (YAML) を読む。エラーはすべて行番号つきで返す。
  *
- * **Phase 0 で読むのは `board:` だけ。** 残りのキーは語彙として認めるが
+ * **Phase 1 で読むのは `board:` だけ。** 残りのキーは語彙として認めるが
  * 中身を見ない (見られるようになった Phase で足す)。知らないキーを名指すのは
  * ここから始める — 綴り間違いが黙って無視されるのが一番たちが悪い。
  */
@@ -59,7 +81,7 @@ export function parseFence(source: string): ParseResult {
   }
 
   const errors: FenceError[] = [];
-  let board: string | null = null;
+  let board: Board | null = null;
   let boardWritten = false;
 
   for (const pair of root.items) {
@@ -83,19 +105,26 @@ export function parseFence(source: string): ParseResult {
     }
     boardWritten = true;
 
-    const name = scalarText(pair.value);
-    if (name === null) {
-      errors.push(fenceError('board: には板の名前を 1 つ書きます', at));
+    const value = scalarText(pair.value);
+    if (value === null) {
+      errors.push(fenceError(BOARD_HINT, at));
       continue;
     }
-    board = name;
+    const size = parseBoardSize(value);
+    if (size === null) {
+      // 名指すのは書かれた字面。読むのは解決後の値。
+      const written = writtenText(pair.value, source) ?? value;
+      errors.push(fenceError(`${safeToken(written)} は板の大きさとして読めません。${BOARD_HINT}`, at, written));
+      continue;
+    }
+    board = createBoard(size);
   }
 
   if (board === null) {
     // 板が決まらないと穴の数が決まらないので、番地も配置も読めない。
-    // **`board:` と書いてあって値が無いときは言わない** — すぐ上で言っている。
+    // **`board:` と書いてあって読めなかったときは言わない** — すぐ上で言っている。
     if (!boardWritten) {
-      errors.push(fenceError('board: が要ります (どの板に載せるかで穴の数が決まります)', contentLine));
+      errors.push(fenceError(`board: が要ります。${BOARD_HINT}`, contentLine));
     }
     return { doc: null, errors };
   }

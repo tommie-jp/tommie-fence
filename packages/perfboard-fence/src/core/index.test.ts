@@ -25,29 +25,36 @@ describe('renderPerfboard', () => {
   });
 
   test('does not throw on anything it is given', () => {
-    for (const input of ['', ' ', 'board: akizuki-c', '- 1', 'a: '.repeat(500)]) {
+    for (const input of ['', ' ', 'board: 28x18', 'board: 0x0', '- 1', 'a: '.repeat(500)]) {
       expect(() => renderPerfboard(input)).not.toThrow();
     }
   });
-  test('does not call a fence it could read "unreadable"', () => {
-    const result = renderPerfboard('board: akizuki-c\n');
+  test('draws the board when the fence is well formed, and says nothing', () => {
+    const result = renderPerfboard('board: 28x18\n');
 
+    expect(result.svg).toContain('<svg');
+    expect(result.svg).toContain('data-perfboard-fence');
     expect(result.errors).toEqual([]);
-    expect(result.notices).toHaveLength(1);
-    expect(result.errorHtml).toContain('perfboard-notice');
-    expect(result.errorHtml).not.toContain('perfboard-error-card');
+    expect(result.notices).toEqual([]);
+    expect(result.errorHtml).toBe('');
   });
 
-  test('puts the board name through safeToken before naming it', () => {
+  test('draws one hole for every hole on the board', () => {
+    const result = renderPerfboard('board: 6x4\n');
+
+    expect(result.svg.match(/<circle /g)).toHaveLength(24);
+  });
+
+  test('puts an unreadable size through safeToken before naming it', () => {
     const result = renderPerfboard('board: "</span><img src=x>"\n');
 
     expect(result.errorHtml).not.toContain('<img');
-    expect(result.notices[0]?.message).not.toContain('<');
+    expect(result.errors[0]?.message).not.toContain('<');
   });
 
-  test('cuts a board name that is too long to name', () => {
+  test('cuts a size that is too long to name', () => {
     const result = renderPerfboard(`board: ${'x'.repeat(300)}\n`);
 
-    expect(result.notices[0]?.message.length).toBeLessThan(120);
+    expect(result.errors[0]?.message.length).toBeLessThan(200);
   });
 });

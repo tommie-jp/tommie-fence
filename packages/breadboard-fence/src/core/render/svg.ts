@@ -1,9 +1,9 @@
-import { element, escapeMarkup } from 'fence-kit';
-import type { Attributes } from 'fence-kit';
+import { TEXT_HALO_WIDTH, element, escapeMarkup, num, svgText } from 'fence-kit';
+import type { Attributes, TextOptions } from 'fence-kit';
 import type { Point } from '../types.ts';
 
-export type { Attributes };
-export { element };
+export type { Attributes, TextOptions };
+export { element, num, svgText, TEXT_HALO_WIDTH };
 
 /**
  * 図に載る文字列は必ずここを通す。VS Code の Markdown プレビューは
@@ -14,9 +14,6 @@ export { element };
  * `escapeHtml` という名前で同じ実装が複製されていた)。
  */
 export const escapeXml = escapeMarkup;
-
-/** 座標の桁を落として出力を安定させる (同じ入力なら同じ文字列 = プレビューの差分更新が軽い)。 */
-export const num = (value: number): string => String(Math.round(value * 100) / 100);
 
 const point = (p: Point): string => `${num(p.x)} ${num(p.y)}`;
 
@@ -49,31 +46,4 @@ export function roundedPath(points: readonly Point[], radius: number): string {
   commands.push(`L ${point(path[path.length - 1]!)}`);
 
   return commands.join(' ');
-}
-
-/** 既定の字の大きさ (10) に対する縁取りの太さ。字を大きくする側が比例して広げる。 */
-export const TEXT_HALO_WIDTH = 3;
-
-export type TextOptions = Attributes & {
-  readonly anchor?: 'start' | 'middle' | 'end';
-  /** 穴や配線の上に載る文字を読めるようにする縁取りの色。 */
-  readonly halo?: string;
-  /** 縁取りの太さ。字を大きくしたときに広げないと、下の穴が字に透ける。 */
-  readonly haloWidth?: number;
-};
-
-export function svgText(x: number, y: number, content: string, options: TextOptions = {}): string {
-  const { anchor = 'middle', halo, haloWidth = TEXT_HALO_WIDTH, ...rest } = options;
-  return element(
-    'text',
-    {
-      x: num(x),
-      y: num(y),
-      'text-anchor': anchor,
-      'font-family': 'ui-sans-serif, system-ui, sans-serif',
-      ...(halo ? { stroke: halo, 'stroke-width': num(haloWidth), 'paint-order': 'stroke' } : {}),
-      ...rest,
-    },
-    escapeXml(content),
-  );
 }

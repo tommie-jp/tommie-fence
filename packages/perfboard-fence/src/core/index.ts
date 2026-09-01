@@ -1,7 +1,11 @@
 import { normalizeNewlines } from 'fence-kit';
-import { attachSourceText, safeToken } from './errors.ts';
+import { attachSourceText } from './errors.ts';
+import { createLayout } from './model/layout.ts';
 import { parseFence } from './parser/parseFence.ts';
+import { renderBoard } from './render/board.ts';
+import { renderDocument } from './render/document.ts';
 import { renderErrorBanner, renderErrorCard } from './render/errorHtml.ts';
+import { THEME } from './render/theme.ts';
 import type { FenceError } from './types.ts';
 
 export type RenderResult = {
@@ -26,8 +30,8 @@ export type RenderResult = {
  * フェンスの中身 1 つを図に変換する。DOM も Node も使わない同期の純関数なので、
  * VS Code のプレビュー・CLI・サーバー側描画のどこからでも同じように呼べる。
  *
- * **Phase 0 はまだ図を組まない。** 盤面と番地は Phase 1 で入る
- * (52 の docs/05)。ここで返せるのは、読めたかどうかの報告だけ。
+ * **Phase 1 で描けるのは板と穴まで。** 部品は Phase 2、配線とネットリストは
+ * Phase 3 で入る (52 の docs/05)。
  */
 export function renderPerfboard(input: string): RenderResult {
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
@@ -39,23 +43,15 @@ export function renderPerfboard(input: string): RenderResult {
     return { svg: '', errors, notices: [], errorHtml: renderErrorCard(errors) };
   }
 
-  // 読めたが、まだ描くものが無い。**黙って空を返さない** — 何も出ないときに
-  // 「拡張が壊れている」のか「これから作る」のかが読み手に分かる必要がある。
-  //
-  // ただし**お知らせであってエラーではない**。読めたフェンスを
-  // 「読めませんでした」のカードで返すと、`errors.length` を見る側
-  // (CLI の終了コード、帯かカードかの選び分け) が正しい入力を壊れ扱いする。
-  const pending: FenceError = {
-    message: `盤面 ${safeToken(parsed.doc.board)} はまだ描けません (作りかけのパッケージです)`,
-    line: null,
-    notice: true,
-  };
+  const { board } = parsed.doc;
+  const layout = createLayout(board);
+  const svg = renderDocument(layout, renderBoard(board, layout, THEME));
 
   const errors = attachSourceText(parsed.errors, source);
-  const notices = [pending];
-  return { svg: '', errors, notices, errorHtml: renderErrorBanner([...errors, ...notices]) };
+  return { svg, errors, notices: [], errorHtml: renderErrorBanner(errors) };
 }
 
 export { extractPerfboardFences } from './fences.ts';
 export type { FenceBlock } from './fences.ts';
 export type { FenceError } from './types.ts';
+export { VERSION } from './version.ts';

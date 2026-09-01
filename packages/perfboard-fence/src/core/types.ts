@@ -25,10 +25,31 @@ export const TOP_LEVEL_KEYS = ['title', 'points', 'board', 'style', 'parts', 'wi
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
 
+/** 穴の番地。行も列も 1 始まり。行の名前は `a` `b` … `aa` (address.ts)。 */
+export type Address = { readonly row: number; readonly col: number };
+
+/** 板の大きさ。列 × 行 (板の呼び方と同じ順)。 */
+export type BoardSize = { readonly cols: number; readonly rows: number };
+
 /**
- * 読めたフェンス。Phase 0 では板の名前だけを持つ。
+ * 板。**大きさしか持たない**のが breadboard との違いで、あちらは
+ * ストリップ (列の 5 穴の導通) と電源レールを持つ。
+ */
+export type Board = BoardSize;
+
+/**
+ * 導通グループの名前。ユニバーサル基板では穴 1 つが 1 グループになる
+ * (`hole:2,3`)。ネットは配線がこれをつないだ結果として出る。
+ */
+export type StripId = string;
+
+export type Point = { readonly x: number; readonly y: number };
+export type Rect = { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
+
+/**
+ * 読めたフェンス。Phase 1 では板だけを持つ。
  * 部品・配線・注釈は Phase 2 以降でここに足す。
  */
 export type FenceDocument = {
-  readonly board: string;
+  readonly board: Board;
 };

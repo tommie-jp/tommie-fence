@@ -5,8 +5,8 @@
 A VS Code extension that previews a ` ```perfboard ` fence (YAML) in Markdown as
 a perfboard wiring diagram.
 
-**It is a skeleton so far.** It finds the fence and reports what it could not
-read, with line numbers. Nothing is drawn yet.
+**It draws the board and its holes so far.** Write `board:` and you get a board
+of that size. Parts and wires are still to come.
 
 ## What it is for
 
@@ -15,7 +15,7 @@ chose yourself** — and keeping the drawing and the build order inside the same
 lab notebook.
 
 ```yaml
-board: akizuki-c
+board: 28x18
 parts:
   R1: resistor b3 b7 10k
   D1: led c5 c9
@@ -23,8 +23,10 @@ wires:
   - b7 -- c5
 ```
 
-- Positions are **grid addresses** (`b3`), not coordinate pairs, so a diff means
-  something and an LLM has less to get wrong
+- Positions are **grid addresses** (`b3` — row b, column 3), not coordinate
+  pairs, so a diff means something and an LLM has less to get wrong. Row letters
+  carry the way a spreadsheet's do, so a board taller than 26 rows keeps reading
+  (`aa`, `ab`)
 - **Wires are drawn by hand.** No auto-router — it does not suit a use where a
   person decides what goes where. What you write is what is drawn, which makes
   the result a soldering order
@@ -51,7 +53,15 @@ and the content of the offending line.
 | Recognising a ` ```perfboard ` fence | works |
 | Reporting an empty fence or a YAML syntax error with its line | works |
 | Naming a key it does not know | works |
-| Board, addresses, parts, wires, netlist | **still to come** |
+| **Drawing the board and its holes** (`board: 28x18`) | works |
+| **Addresses** (`b3`, and `aa3` past 26 rows) | works |
+| Parts, wires, netlist, ERC | **still to come** |
+
+The board size is written **columns by rows** — the order the board itself is
+sold in (`72×47.5mm` is long side by short side). There are no named boards
+(`akizuki-c` and such) yet: the vendor's pages give dimensions and pitch but
+never the hole count, so until someone counts a real board, you write the size
+you see on yours.
 
 ## Development
 
