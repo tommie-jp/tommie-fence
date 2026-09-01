@@ -161,20 +161,14 @@ function fenceNow(): FenceNow | null {
 }
 
 /**
- * **接続が変わるときだけ確認する。** 変わらない移動で毎回止めると、
- * 番地の振り直しという本来の用途で邪魔になる。放したら false。
+ * 動かしたあとのお知らせ。接続が変わったらそれも添える。
+ *
+ * **確認では止めない** (2026-09-02 の決め)。掴んで放すたびにモーダルが出ると、
+ * 動かすという本来の用途で邪魔になる。変化を黙らせはしない — 帯に出す。
+ * 戻したければ Ctrl+Z (書き換えは普通の編集として当たる)。
  */
-async function agreed(changed: string | null, headline: string): Promise<boolean> {
-  if (changed === null) return true;
-  const answer = await vscode.window.showWarningMessage(
-    `${headline}。${changed}`,
-    { modal: true },
-    '動かす',
-  );
-  if (answer === '動かす') return true;
-  say('やめました');
-  return false;
-}
+const told = (done: string, changed: string | null): void =>
+  say(`${done}${changed === null ? '' : `。${changed}`}`);
 
 /** マップから来た「どの節点を・どの番地へ」。**交点ごと動くので接続は保たれる。** */
 async function applyNodeMove(written: string, target: string): Promise<void> {
@@ -197,10 +191,12 @@ async function applyNodeMove(written: string, target: string): Promise<void> {
     say(`節点はすでに ${written} にあります`);
     return;
   }
-  if (!(await agreed(describeDiff(result.value.diff), `${written} の節点を ${target} へ`))) return;
-
   const applied = await applyToDocument(fence.document, fence.line, result.value.edits);
-  say(applied ? `${written} の節点を ${target} へ動かしました` : '書き換えられませんでした');
+  if (!applied) {
+    say('書き換えられませんでした');
+    return;
+  }
+  told(`${written} の節点を ${target} へ動かしました`, describeDiff(result.value.diff));
 }
 
 /** マップから来た「どの部品を・どの番地へ」を書き換えに落とす。 */
@@ -224,8 +220,10 @@ async function applyMove(partId: string, written: string): Promise<void> {
     return;
   }
 
-  if (!(await agreed(describeDiff(result.value.diff), `${partId} を ${written} へ`))) return;
-
   const applied = await applyToDocument(fence.document, fence.line, result.value.edits);
-  say(applied ? `${partId} を ${written} へ動かしました` : '書き換えられませんでした');
+  if (!applied) {
+    say('書き換えられませんでした');
+    return;
+  }
+  told(`${partId} を ${written} へ動かしました`, describeDiff(result.value.diff));
 }

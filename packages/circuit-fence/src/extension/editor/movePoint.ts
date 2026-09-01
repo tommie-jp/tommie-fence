@@ -70,16 +70,14 @@ export async function runMovePoint(port: EditorPort): Promise<void> {
     return;
   }
 
-  // **接続が変わるときだけ確認する。** 節点ごと動かすぶんには接続は保たれる
-  // ので、普通は何も聞かずに通る。聞くのは寄せた先で何かとつながるとき。
-  const changed = describeDiff(result.value.diff);
-  if (changed !== null && !(await port.confirm(`${here} の節点を ${written.trim()} へ。${changed}`))) return;
-
+  // **確認では止めない** (2026-09-02 の決め)。節点ごと動かせば接続は保たれ、
+  // 寄せた先で何かとつながったときだけ、動かしたあとのお知らせに添える。
   if (await port.apply(fence.line, result.value.edits)) {
     // 名前があっても、生の綴りで書いた場所が混ざっていれば 1 行では済まない。
     const how = node.name !== null && result.value.edits.length === 1
       ? `${node.name} の 1 行を書き換えました`
       : `${result.value.edits.length} か所を書き換えました`;
-    port.info(`${here} の節点を ${written.trim()} へ動かしました (${how})`);
+    const changed = describeDiff(result.value.diff);
+    port.info(`${here} の節点を ${written.trim()} へ動かしました (${how})${changed === null ? '' : `。${changed}`}`);
   }
 }

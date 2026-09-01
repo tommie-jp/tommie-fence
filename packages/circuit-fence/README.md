@@ -173,10 +173,10 @@ connections change with it; a node takes everything written at that crossing, so
 the connections are kept. When `points:` has named the node, the rewrite is
 usually **that one line** (bare spellings of the same address come along too).
 
-Moving a part compares the netlist before and after and **lists the connections
-the move breaks and the ones it makes** (it does not ask when nothing changes).
-Your comments and formatting survive: only the address spelling is replaced. The
-drawing catches up a few seconds after the edit.
+**Nothing stops you before the move.** It compares the netlist before and after
+and lists the connections the move broke and the ones it made **after** applying
+it (undo with `Ctrl+Z`). Your comments and formatting survive: only the address
+spelling is replaced. The drawing catches up a few seconds after the edit.
 
 More in [docs/03-部品と節点を動かす.md](docs/03-部品と節点を動かす.md) (Japanese).
 

@@ -59,9 +59,6 @@ export function createEditorPort(): EditorPort {
     prompt: async (placeholder, value) =>
       (await vscode.window.showInputBox({ prompt: placeholder, value })) ?? null,
 
-    confirm: async (message) =>
-      (await vscode.window.showWarningMessage(message, { modal: true }, '動かす')) === '動かす',
-
     apply: async (fenceLine: number, edits: readonly Edit[]) => {
       const editor = markdownEditor();
       if (!editor) return false;

@@ -21,7 +21,6 @@ const portOf = (over: Partial<EditorPort> = {}): EditorPort => ({
   // 一覧の並びは番地順。`c3` の節点が先に来る。
   pick: async (items) => items[0] ?? null,
   prompt: async () => 'c4',
-  confirm: async () => true,
   apply: async () => true,
   info: () => {},
   warn: () => {},
@@ -61,22 +60,22 @@ describe('runMovePoint', () => {
     expect(prompt).toHaveBeenCalledWith(expect.any(String), 'c3');
   });
 
-  test('does not ask when the move keeps every connection as it was', async () => {
-    const confirm = vi.fn(async () => true);
-    await runMovePoint(portOf({ confirm }));
+  test('keeps the report plain when the move keeps every connection as it was', async () => {
+    const info = vi.fn();
+    await runMovePoint(portOf({ info }));
 
-    // 節点ごと動かせば接続は保たれる。毎回止めると本来の使い方で邪魔になる。
-    expect(confirm).not.toHaveBeenCalled();
+    expect(info).toHaveBeenCalledWith(expect.not.stringContaining('接続'));
   });
 
-  test('asks before a move that joins the node to something already there', async () => {
-    const confirm = vi.fn(async () => false);
+  test('moves without stopping and reports what joined', async () => {
+    // 確認で止めない (2026-09-02 の決め)。接続の変化は動かしたあとに添える。
+    const info = vi.fn();
     const apply = vi.fn(async () => true);
     // e1 には R3 の端が来ている。同じ交点 = 接続なので、寄せるとつながる。
-    await runMovePoint(portOf({ confirm, apply, prompt: async () => 'e1' }));
+    await runMovePoint(portOf({ info, apply, prompt: async () => 'e1' }));
 
-    expect(confirm).toHaveBeenCalledOnce();
-    expect(apply).not.toHaveBeenCalled();
+    expect(apply).toHaveBeenCalledOnce();
+    expect(info).toHaveBeenCalledWith(expect.stringContaining('つながった接続'));
   });
 
   test('says why nothing happened when the fence cannot be read', async () => {

@@ -17,7 +17,6 @@ const portOf = (over: Partial<EditorPort> = {}): EditorPort => ({
   document: () => ({ text: MARKDOWN, line: 5 }),
   pick: async (items) => items[0] ?? null,
   prompt: async () => 'b1',
-  confirm: async () => true,
   apply: async () => true,
   info: () => {},
   warn: () => {},
@@ -29,11 +28,11 @@ describe('describeDiff', () => {
     expect(describeDiff({ lost: [], gained: [] })).toBeNull();
   });
 
-  test('names what comes apart and what joins', () => {
+  test('names what came apart and what joined', () => {
     const text = describeDiff({ lost: [['R1.2', 'C1.1']], gained: [['R1.1', 'C1.2']] })!;
 
-    expect(text).toContain('離れる接続: R1.2 — C1.1');
-    expect(text).toContain('つながる接続: R1.1 — C1.2');
+    expect(text).toContain('離れた接続: R1.2 — C1.1');
+    expect(text).toContain('つながった接続: R1.1 — C1.2');
   });
 });
 
@@ -55,27 +54,26 @@ describe('runMovePart', () => {
     expect(prompt).toHaveBeenCalledWith(expect.any(String), 'a1');
   });
 
-  test('asks before a move that changes what is connected', async () => {
-    const confirm = vi.fn(async () => false);
+  test('moves without stopping and reports what changed', async () => {
+    // 確認で止めない (2026-09-02 の決め)。接続の変化は動かしたあとに添える。
+    const info = vi.fn();
     const apply = vi.fn(async () => true);
 
-    await runMovePart(portOf({ confirm, apply }));
+    await runMovePart(portOf({ info, apply }));
 
-    expect(confirm).toHaveBeenCalledOnce();
-    expect(apply).not.toHaveBeenCalled();
+    expect(apply).toHaveBeenCalledOnce();
+    expect(info).toHaveBeenCalledWith(expect.stringContaining('離れた接続'));
   });
 
-  test('does not ask when the move keeps every connection', async () => {
-    const confirm = vi.fn(async () => true);
+  test('keeps the report plain when the move changes no connection', async () => {
+    const info = vi.fn();
     const apply = vi.fn(async () => true);
-    // C1 を丸ごと下へ動かすと R1 と離れるので、離れない例として R1 と C1 を
-    // つないでいない図を使う。
     const document = () => ({ text: '```circuit\nparts:\n  R1: resistor a1 a3\n```\n', line: 3 });
 
-    await runMovePart(portOf({ document, confirm, apply, prompt: async () => 'c1' }));
+    await runMovePart(portOf({ document, info, apply, prompt: async () => 'c1' }));
 
-    expect(confirm).not.toHaveBeenCalled();
     expect(apply).toHaveBeenCalledOnce();
+    expect(info).toHaveBeenCalledWith(expect.not.stringContaining('接続'));
   });
 
   test('says so when the cursor is not in a fence', async () => {
