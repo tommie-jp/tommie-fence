@@ -17,16 +17,20 @@ numbers and the content of the offending line.
 
 ## Status
 
-This repository is being assembled. The histories of
-[circuit-fence](https://github.com/tommie-jp/circuit-fence) and
-[breadboard-fence](https://github.com/tommie-jp/breadboard-fence) have been
-imported under `packages/` — every commit is here, so
-`git log packages/circuit-fence` reaches back to the first one. The releases
-and version tags stay in those repositories; versions tagged here are prefixed
-with the package name (`circuit-fence-v0.4.0`). The four packages build, test
-and package from the repository root through npm workspaces.
-`perfboard-fence` is a skeleton: it finds the fence and reports what it could
-not read, with line numbers, but draws nothing yet.
+**This is the new home of circuit-fence and breadboard-fence.** The two
+original repositories ([circuit-fence](https://github.com/tommie-jp/circuit-fence)
+and [breadboard-fence](https://github.com/tommie-jp/breadboard-fence)) were
+archived on 2026-09-01. Every commit came along, so
+`git log packages/circuit-fence` reaches back to the first one.
+
+**Releases come from here.** Version tags are prefixed with the package name
+(`breadboard-fence-v0.4.0`, `circuit-fence-v0.3.1`). The archived repositories
+keep their releases up to `v0.3.0`; everything after that is on the
+[releases page](https://github.com/tommie-jp/tommie-fence/releases).
+
+The four packages build, test and package from the repository root through npm
+workspaces. `perfboard-fence` is a skeleton: it finds the fence and reports what
+it could not read, with line numbers, but draws nothing yet.
 
 ```text
 tommie-fence

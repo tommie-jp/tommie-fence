@@ -16,15 +16,19 @@ Markdown の行番号とその行の中身で返るエラー。
 
 ## 状況
 
-このリポジトリは組み立て中。
-[circuit-fence](https://github.com/tommie-jp/circuit-fence) と
-[breadboard-fence](https://github.com/tommie-jp/breadboard-fence) の履歴は
-`packages/` 配下へ取り込み済み。全コミットがここにあり、
+**ここが circuit-fence と breadboard-fence の新しい家。** 元の 2 つの
+リポジトリ ([circuit-fence](https://github.com/tommie-jp/circuit-fence) /
+[breadboard-fence](https://github.com/tommie-jp/breadboard-fence)) は
+2026-09-01 に archive した。履歴は全コミットがこちらにあり、
 `git log packages/circuit-fence` で最初のコミットまで遡れる。
-リリースと版タグは元のリポジトリに残る。こちらで打つ版タグはパッケージ名を
-接頭辞にする (`circuit-fence-v0.4.0`)。4 つのパッケージは npm workspaces で
-リポジトリ直下からビルド・テスト・パッケージできる。
-`perfboard-fence` は骨格だけで、まだ図を描かない
+
+**リリースはここから出る。** 版タグはパッケージ名を接頭辞にする
+(`breadboard-fence-v0.4.0` / `circuit-fence-v0.3.1`)。archive したリポジトリに
+残るのは `v0.3.0` までで、それ以降は
+[Releases](https://github.com/tommie-jp/tommie-fence/releases) にある。
+
+4 つのパッケージは npm workspaces でリポジトリ直下からビルド・テスト・
+パッケージできる。`perfboard-fence` は骨格だけで、まだ図を描かない
 (フェンスを見つけて、読めなかったところを行番号つきで返すところまで)。
 
 ```text
