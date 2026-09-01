@@ -3,7 +3,10 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
-## [Unreleased]
+## [0.1.0] - 2026-09-01
+
+**最初のリリース。** ` ```perfboard ` フェンスで、2 本足の部品なら
+置いて・つないで・検証して・書き出すところまで動く。
 
 ### Added
 
