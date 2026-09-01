@@ -17,11 +17,14 @@ numbers and the content of the offending line.
 
 ## Status
 
-This repository is being assembled. The extensions still live in their
-original repositories —
+This repository is being assembled. The histories of
 [circuit-fence](https://github.com/tommie-jp/circuit-fence) and
-[breadboard-fence](https://github.com/tommie-jp/breadboard-fence) —
-and their histories will be imported here under `packages/`.
+[breadboard-fence](https://github.com/tommie-jp/breadboard-fence) have been
+imported under `packages/` — every commit is here, so
+`git log packages/circuit-fence` reaches back to the first one. The releases
+and version tags stay in those repositories; versions tagged here are prefixed
+with the package name (`circuit-fence-v0.4.0`). The build is not wired up
+across packages yet.
 
 ```text
 tommie-fence
