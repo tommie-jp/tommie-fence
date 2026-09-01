@@ -3,6 +3,21 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.3.1] - 2026-09-01
+
+**図もエラーの文面も変わらない。** モノレポ (tommie-fence) へ移したことに伴う
+内側の整理だけで、利用者から見た振る舞いは 0.3.0 のまま。
+
+### Changed
+
+- 改行の正規化・フェンスの取り出し・markup のエスケープを、共有パッケージ
+  `fence-kit` へ移した。`escapeXml` と `escapeHtml` は**名前が違うだけの同一実装**
+  だったので 1 つにまとめた。出力は `.tex` までバイト単位で無差分であることを
+  確かめてある。
+- `repository` を `tommie-jp/tommie-fence` に直した。README の図とリンクは
+  `vsce` がここを基準に絶対 URL へ書き換えるので、旧リポジトリを指したままだと
+  archive 後に古い場所を指し続ける。
+
 ## [0.3.0] - 2026-08-31
 
 図は 1 ドットも変わらないが、**組み込んで使う側から見た出力の形が変わる**ので
