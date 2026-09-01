@@ -37,6 +37,19 @@ tommie-fence
 `fence-kit` に入れるのは、**実際に重複してから引き上げたものだけ**。
 使う側の esbuild が束ねるので、ビルド工程も実行時の依存も持たない。
 
+## ドキュメント
+
+文法リファレンスと作例は、パッケージごとに持っている。
+
+| パッケージ | 文法 | 早見表 | 例 |
+| --- | --- | --- | --- |
+| circuit-fence | [docs/01-syntax.md](packages/circuit-fence/docs/01-syntax.md) | [docs/02-cheatsheet.md](packages/circuit-fence/docs/02-cheatsheet.md) | [examples/](packages/circuit-fence/examples/) — 回路 15 本、エラー例 5 本 |
+| breadboard-fence | [docs/01-syntax.md](packages/breadboard-fence/docs/01-syntax.md) | [docs/02-cheatsheet.md](packages/breadboard-fence/docs/02-cheatsheet.md) | [examples/](packages/breadboard-fence/examples/) — 回路 13 本、エラー例 2 本 |
+
+例はどのフェンスの直後にも**そのフェンスを描いた図** (`examples/out/`) を貼って
+あるので、Markdown プレビューで開くとそのまま読み物になる。作り直しは
+`npm run examples --workspace=<パッケージ>`。
+
 ## 開発
 
 `npm install` はリポジトリ直下で 1 回。lock も 1 本だけ。
