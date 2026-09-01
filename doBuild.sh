@@ -59,22 +59,27 @@ extension_packages() {
   done
 }
 
+# **一覧は先に変数へ取る。** `extension_packages | grep -q` と繋ぐと、grep が
+# 見つけた時点で降りて上流が SIGPIPE で死に、`pipefail` がその 141 を
+# パイプラインの結果にする。一覧の**最後**の名前だけが通り、それより前の名前は
+# 「.vsix にできません」と断られる (実際に踏んだ)。
+extensions="$(extension_packages)"
+
 # **拡張を持つものだけを受ける。** ディレクトリの有無だけ見ると、fence-kit を
 # 渡されたときに写して install したあと vsce の中まで進んでから落ちる。
-if [ -n "$pkg" ] && ! extension_packages | grep -qx "$pkg"; then
-  echo "$pkg は .vsix にできません ($(extension_packages | tr '\n' ' ')から選んでください)" >&2
+if [ -n "$pkg" ] && ! printf '%s\n' "$extensions" | grep -qx "$pkg"; then
+  echo "$pkg は .vsix にできません ($(printf '%s\n' "$extensions" | tr '\n' ' ')から選んでください)" >&2
   exit 2
 fi
 
 # パッケージを書かなければ全部。1 つだけ作りたいときに名前を書く。
 if [ -z "$pkg" ]; then
-  packages="$(extension_packages)"
-  if [ -z "$packages" ]; then
+  if [ -z "$extensions" ]; then
     echo "拡張を持つパッケージがありません" >&2
     exit 1
   fi
-  echo "==> 全部作り直します: $(echo "$packages" | tr '\n' ' ')"
-  for one in $packages; do
+  echo "==> 全部作り直します: $(printf '%s' "$extensions" | tr '\n' ' ')"
+  for one in $extensions; do
     echo
     echo "############ $one ############"
     "$script" "$one" "$@"
