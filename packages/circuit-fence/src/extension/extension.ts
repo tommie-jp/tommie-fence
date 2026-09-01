@@ -1,9 +1,12 @@
 import * as vscode from 'vscode';
 import { renderTex } from '../host/texSvg.ts';
 import { activateWith } from './activate.ts';
+import { registerEditorCommands } from './editor/commands.ts';
 
 /** デスクトップ版の入口。描画は WASM の TeX (node-tikzjax)。 */
-export function activate() {
+export function activate(context: vscode.ExtensionContext) {
+  registerEditorCommands(context);
+
   return activateWith({
     render: renderTex,
     refresh: () => {

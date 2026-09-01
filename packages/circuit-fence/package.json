@@ -58,7 +58,31 @@
           "meta.embedded.block.yaml": "yaml"
         }
       }
-    ]
+    ],
+    "commands": [
+      {
+        "command": "circuit-fence.movePart",
+        "title": "Circuit Fence: 部品を動かす",
+        "category": "Circuit Fence"
+      },
+      {
+        "command": "circuit-fence.openMap",
+        "title": "Circuit Fence: 部品を動かす (マップ)",
+        "category": "Circuit Fence"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "circuit-fence.movePart",
+          "when": "editorLangId == markdown"
+        },
+        {
+          "command": "circuit-fence.openMap",
+          "when": "editorLangId == markdown"
+        }
+      ]
+    }
   },
   "scripts": {
     "build": "node esbuild.mjs",

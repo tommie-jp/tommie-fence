@@ -156,6 +156,23 @@ It is not published to the npm registry, so hand consumers a tarball.
 npm pack   # builds, emits the type definitions, and makes circuit-fence-<version>.tgz
 ```
 
+## Moving parts
+
+Parts can be moved to another address while you look at the drawing. Because the
+fence **writes positions as grid addresses**, moving a part comes down to
+swapping the address spelling inside its line.
+
+- `Circuit Fence: 部品を動かす (マップ)` — opens a grid panel beside the editor;
+  grab a part and drop it on the crossing you want
+- `Circuit Fence: 部品を動かす` — pick a part, type the address to move it to
+
+It compares the netlist before and after and **lists the connections the move
+breaks and the ones it makes** (it does not ask when nothing changes). Your
+comments and formatting survive: only the address spelling is replaced. The
+drawing catches up a few seconds after the edit.
+
+More in [docs/03-部品を動かす.md](docs/03-部品を動かす.md) (Japanese).
+
 ## Development
 
 This package lives in a monorepo, so **run the commands from the repository
