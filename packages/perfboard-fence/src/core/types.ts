@@ -46,10 +46,34 @@ export type StripId = string;
 export type Point = { readonly x: number; readonly y: number };
 export type Rect = { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
 
+/** 書かれたままの部品 1 つ。**綴りを落とさない** — 報告が行の中を指せなくなる。 */
+export type PartSpec = {
+  readonly id: string;
+  /** 略記を畳んだあとの正式名。図・部品リスト・エラーにはこれしか出さない。 */
+  readonly type: string;
+  readonly variant: string | null;
+  /** 書かれたままの種類の綴り (`r`)。報告で行の中を指すのに要る。 */
+  readonly written: string;
+  /** 書かれたままの穴 (`b3`)。板に載るかは placement が見る。 */
+  readonly holes: readonly string[];
+  readonly value: string | null;
+  readonly line: number | null;
+};
+
+/** 板に載せた部品。足は番地と導通グループの両方を持つ。 */
+export type PlacedPart = {
+  readonly id: string;
+  readonly type: string;
+  readonly variant: string | null;
+  readonly value: string | null;
+  readonly pins: readonly { readonly address: Address; readonly strip: StripId }[];
+};
+
 /**
- * 読めたフェンス。Phase 1 では板だけを持つ。
- * 部品・配線・注釈は Phase 2 以降でここに足す。
+ * 読めたフェンス。Phase 2 では板と部品まで。
+ * 配線・注釈は Phase 3 以降でここに足す。
  */
 export type FenceDocument = {
   readonly board: Board;
+  readonly parts: readonly PartSpec[];
 };

@@ -30,6 +30,16 @@ export const fenceError = (message: string, line: number | null, token?: string)
   token === undefined ? { message, line } : { message, line, token };
 
 /**
+ * お知らせ。**読めてはいるが、思ったとおりには出ない**というときに使う。
+ * エラーと同じ帯に出すが区別は残す — 直さないと図が出ないものと、
+ * 直さなくても図は出るものとでは、次にやることが違う。
+ */
+export const notice = (message: string, line: number | null, token?: string): FenceError => ({
+  ...fenceError(message, line, token),
+  notice: true,
+});
+
+/**
  * 制御文字・双方向制御・幅ゼロの文字。そのまま見せると桁がずれるうえ、
  * 双方向制御は**見えている並びと実際の並びを食い違わせられる**ので必ず置き換える。
  */

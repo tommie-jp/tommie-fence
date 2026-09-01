@@ -1,3 +1,5 @@
+import { BAND_COLORS, DEFAULT_LED_COLOR, LED_COLORS, bandColor, ledColor } from 'fence-kit';
+
 // ここにあるのは**実物の色そのもの**、つまり意味を持つ色だけ。
 // 配線の被覆・抵抗のカラーコード・LED の発光色は、テーマで塗り替えると図が嘘になるので、
 // 板や印字の配色 (`theme.ts` の Palette) とは別に置いて、テーマから触らせない。
@@ -32,33 +34,8 @@ const lookupColor = (table: Record<string, string>, name: string): string | null
 
 export const wireColor = (name: string): string | null => lookupColor(WIRE_COLORS, name.toLowerCase());
 
-/** カラーコードの帯の色。 */
-export const BAND_COLORS: Record<string, string> = {
-  black: '#1b1d21',
-  brown: '#6b4423',
-  red: '#c92c22',
-  orange: '#e07b1e',
-  yellow: '#e3c700',
-  green: '#2a9d4b',
-  blue: '#2b6fd4',
-  violet: '#7b4bb7',
-  gray: '#8a929c',
-  white: '#f2f2ef',
-  gold: '#c9a227',
-  silver: '#c0c4c9',
-};
-
-export const LED_COLORS: Record<string, string> = {
-  red: '#e0392c',
-  green: '#37b34a',
-  blue: '#2f7ff0',
-  yellow: '#f2c200',
-  white: '#eef1f5',
-  orange: '#f07c1e',
-};
-
-export const DEFAULT_LED_COLOR = LED_COLORS.red as string;
-
-export const ledColor = (name: string): string | null => lookupColor(LED_COLORS, name.toLowerCase());
-
-export const bandColor = (name: string): string => lookupColor(BAND_COLORS, name) ?? (BAND_COLORS.black as string);
+/**
+ * 部品の色 (カラーコードの帯・LED の発光色) は fence-kit にある。
+ * 実物の色そのものなので盤面に依らず、perfboard も同じものを使う。
+ */
+export { BAND_COLORS, DEFAULT_LED_COLOR, LED_COLORS, bandColor, ledColor };

@@ -1,10 +1,11 @@
 import { LineCounter, isMap, isScalar, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
-import { fenceError, safeToken } from '../errors.ts';
+import { fenceError, notice, safeToken } from '../errors.ts';
 import { createBoard, parseBoardSize } from '../model/board.ts';
 import { LIMITS } from '../limits.ts';
+import { parsePartLine } from './parts.ts';
 import { TOP_LEVEL_KEYS } from '../types.ts';
-import type { Board, FenceDocument, FenceError } from '../types.ts';
+import type { Board, FenceDocument, FenceError, PartSpec } from '../types.ts';
 
 /** yaml のメッセージはライブラリ側の文言なので、載せる長さを切る。 */
 const MAX_YAML_MESSAGE = 120;
@@ -81,8 +82,48 @@ export function parseFence(source: string): ParseResult {
   }
 
   const errors: FenceError[] = [];
+  const parts: PartSpec[] = [];
   let board: Board | null = null;
   let boardWritten = false;
+  let partsWritten = false;
+
+  /**
+   * `parts:` は「名前 → 部品 1 行」の並び。**読めた部品は捨てない** ので、
+   * 落ちた行だけを報告して残りは通す。
+   */
+  const readParts = (node: unknown, keyLine: number | null): void => {
+    if (!isMap(node)) {
+      errors.push(fenceError('parts: は `名前: 部品 穴 穴 値` の並びにします', keyLine));
+      return;
+    }
+    for (const item of node.items) {
+      const id = scalarText(item.key);
+      const line = lineOf((item.value ?? item.key) as Node);
+      if (id === null) {
+        errors.push(fenceError('部品の名前は文字で書きます', lineOf(item.key as Node)));
+        continue;
+      }
+      const written = scalarText(item.value);
+      if (written === null) {
+        errors.push(fenceError(`${safeToken(id)} の中身が書かれていません (例: resistor b3 b7 10k)`, line));
+        continue;
+      }
+      const result = parsePartLine(id, written);
+      if (!result.ok) {
+        errors.push({ ...result.error, line });
+        continue;
+      }
+      // **姿は読むが、まだ描き分けない。** 黙って捨てると、書いた人は
+      // 電解と積層の違いが図に出ているつもりのまま終わる。
+      if (result.value.variant !== null) {
+        errors.push(notice(
+          `姿はまだ描き分けません: ${result.value.type}/${result.value.variant} (図は同じ形で出ます)`,
+          line,
+        ));
+      }
+      parts.push({ ...result.value, line });
+    }
+  };
 
   for (const pair of root.items) {
     const key = scalarText(pair.key);
@@ -93,6 +134,18 @@ export function parseFence(source: string): ParseResult {
     if (!(TOP_LEVEL_KEYS as readonly string[]).includes(key)) {
       const known = TOP_LEVEL_KEYS.join(' / ');
       errors.push(fenceError(`知らないキーです: ${safeToken(key)} (書けるのは ${known})`, lineOf(pair.key as Node), key));
+      continue;
+    }
+    if (key === 'parts') {
+      const keyLine = lineOf(pair.key as Node);
+      if (partsWritten) {
+        // board: が 2 つあると言うのに parts: は黙って混ぜる、では
+        // 「置き換えたはず」と思った人に両方描かれた図が出る。
+        errors.push(fenceError('parts: が 2 つあります (1 つにまとめます)', keyLine, key));
+        continue;
+      }
+      partsWritten = true;
+      readParts(pair.value, keyLine);
       continue;
     }
     if (key !== 'board') continue;
@@ -129,5 +182,5 @@ export function parseFence(source: string): ParseResult {
     return { doc: null, errors };
   }
 
-  return { doc: { board }, errors };
+  return { doc: { board, parts }, errors };
 }

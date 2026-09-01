@@ -106,4 +106,44 @@ describe('parseFence', () => {
 
     expect(parsed.errors[0]?.line).toBe(2);
   });
+  test('reads parts, with the line each one is on', () => {
+    const parsed = parseFence('board: 10x6\nparts:\n  R1: resistor b3 b7 10k\n  D1: led c5 c7\n');
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.doc?.parts).toHaveLength(2);
+    expect(parsed.doc?.parts[0]).toMatchObject({ id: 'R1', type: 'resistor', value: '10k', line: 3 });
+    expect(parsed.doc?.parts[1]).toMatchObject({ id: 'D1', type: 'led', line: 4 });
+  });
+
+  test('keeps the parts it could read when one line is wrong', () => {
+    const parsed = parseFence('board: 10x6\nparts:\n  R1: resistr b3 b7\n  D1: led c5 c7\n');
+
+    expect(parsed.doc?.parts.map((part) => part.id)).toEqual(['D1']);
+    expect(parsed.errors[0]?.line).toBe(3);
+    expect(parsed.errors[0]?.token).toBe('resistr');
+  });
+
+  test('says parts: must be a mapping of name to part', () => {
+    const parsed = parseFence('board: 10x6\nparts:\n  - resistor b3 b7\n');
+
+    expect(parsed.errors[0]?.message).toContain('名前');
+  });
+
+  test('takes a fence with no parts at all', () => {
+    expect(parseFence('board: 10x6\n').doc?.parts).toEqual([]);
+  });
+  test('reports a second parts: instead of merging the two in silence', () => {
+    // board: は 2 つあると言うのに parts: は黙って混ぜる、では読む人が
+    // 「置き換えたはず」と思ったまま両方描かれる。
+    const parsed = parseFence('board: 10x6\nparts:\n  R1: resistor b3 b7\nparts:\n  R2: resistor c1 c4\n');
+
+    expect(parsed.errors.some((e) => e.message.includes('2 つ'))).toBe(true);
+  });
+
+  test('says a package it cannot draw yet is not drawn, rather than ignoring it', () => {
+    const parsed = parseFence('board: 10x6\nparts:\n  C1: capacitor/electrolytic a1 a4\n');
+
+    expect(parsed.doc?.parts[0]?.variant).toBe('electrolytic');
+    expect(parsed.errors.some((e) => e.notice === true && e.message.includes('electrolytic'))).toBe(true);
+  });
 });

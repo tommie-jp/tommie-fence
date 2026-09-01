@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | circuit | 回路 15 本 + わざと壊した例 5 本 | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 回路 13 本 + わざと壊した例 2 本 | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
-| perfboard | まだ無い (板と穴まで描ける段階) | [packages/perfboard-fence/](../packages/perfboard-fence/README.ja.md) |
+| perfboard | まだ無い (板・穴・2 本足の部品まで描ける段階) | [packages/perfboard-fence/](../packages/perfboard-fence/README.ja.md) |
 
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。
@@ -99,16 +99,20 @@ VS Code のプレビュー (`Ctrl+Shift+V`) ではフェンス自体が図にな
 
 ## perfboard — ユニバーサル基板
 
-**まだ板と穴までしか描かない。** 部品と配線はこれから
+**まだ板・穴・2 本足の部品までしか描かない。** 配線はこれから
 ([packages/perfboard-fence](../packages/perfboard-fence/README.ja.md))。
 
 ```yaml
-board: 8x5
+board: 12x7
+parts:
+  R1: resistor b2 b6 10k
+  D1: led d2 d4 blue
 ```
 
 板の大きさは**列 × 行**で書く (板が「72×47.5mm」と長辺 × 短辺で売られるのと
-同じ順)。これで 8 列 5 行の板が、行の名前 (`a`〜`e`) と列の番号 (`1`〜`8`) を
-添えて出る。番地は `b3` の形で、行が 26 を超える板では `aa3` と続く。
+同じ順)。番地は `b3` の形で、行が 26 を超える板では `aa3` と続く。
+部品は 2 つの穴を結ぶ線の上に寝る。抵抗は値が読めればカラーコードを塗り、
+LED は書かれた色で光る。
 
 **ブレッドボードとの違いは物理そのもの**で、ユニバーサル基板は全穴が独立して
 いる。導通は配線でしか生まれないので、繋ぎ忘れが図の上で沈黙する。

@@ -17,6 +17,14 @@ export type Palette = {
   readonly land: string;
   /** 行と列の名前。 */
   readonly label: string;
+  /** 部品の足 (リード線)。 */
+  readonly lead: string;
+  /** 部品の胴。**実物の色を持つ部品 (LED・カラーコード) はここを使わない** — 
+   * あちらは fence-kit の色で、テーマから触らせない。 */
+  readonly body: string;
+  readonly bodyEdge: string;
+  /** 部品の名前と値。 */
+  readonly caption: string;
 };
 
 export type Metrics = {
@@ -36,6 +44,10 @@ export const THEME: Theme = {
     hole: '#8b7f5e',
     land: '#c8a44a',
     label: '#6d6552',
+    lead: '#9aa0a6',
+    body: '#efe4cd',
+    bodyEdge: '#b6a887',
+    caption: '#3c3730',
   },
   metrics: {
     holeSize: 4,

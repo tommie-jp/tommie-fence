@@ -17,4 +17,18 @@ export const LIMITS = {
    */
   cols: 120,
   rows: 120,
+  /** 板に載せられる部品の数。実在の基板を大きく超えているが、必ず頭を打たせる。 */
+  parts: 200,
+  /** 図に出る値・ラベルの長さ。 */
+  labelLength: 60,
 } as const;
+
+/** 配線から `R1` の形で参照できる名前か。参照できない名前は書き間違いとして弾く。 */
+export const isReferenceable = (name: string): boolean =>
+  /^[\w-]+$/.test(name) && name.length > 0 && name.length <= LIMITS.idLength;
+
+/** 図に載る文字の長さを切る。サロゲートペアを割らないようコードポイントで数える。 */
+export function clampText(text: string, max: number): string {
+  const characters = [...text];
+  return characters.length > max ? `${characters.slice(0, max).join('')}…` : text;
+}

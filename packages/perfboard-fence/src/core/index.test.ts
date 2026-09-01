@@ -57,4 +57,30 @@ describe('renderPerfboard', () => {
 
     expect(result.errors[0]?.message.length).toBeLessThan(200);
   });
+  test('draws the parts on the board', () => {
+    const result = renderPerfboard('board: 10x6\nparts:\n  R1: resistor b3 b7 10k\n');
+
+    expect(result.errors).toEqual([]);
+    expect(result.svg).toContain('>R1 10k</text>');
+    expect(result.svg).toContain('<line ');
+  });
+
+  test('keeps drawing the board when a part could not be read', () => {
+    const result = renderPerfboard('board: 10x6\nparts:\n  R1: resistor b3 b99\n');
+
+    // 板は描けている。読めなかったのは部品 1 つなので、帯で言う。
+    expect(result.svg).toContain('<svg');
+    expect(result.errorHtml).toContain('perfboard-errors');
+    expect(result.errorHtml).not.toContain('perfboard-error-card');
+    expect(result.errors[0]?.message).toContain('b99');
+    expect(result.errors[0]?.text).toBe('  R1: resistor b3 b99');
+  });
+  test('lists what it could not read in the order it appears', () => {
+    // 行順に並べないと、帯の打ち切り (8 件) で後ろの段の報告から先に消える。
+    const result = renderPerfboard(
+      'board: 10x6\nparts:\n  R1: resistor b3 b99\n  R2: resistr c1 c4\n',
+    );
+
+    expect(result.errors.map((e) => e.line)).toEqual([3, 4]);
+  });
 });
