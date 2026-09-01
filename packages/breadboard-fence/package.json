@@ -8,7 +8,8 @@
   "publisher": "tommie",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tommie-jp/breadboard-fence.git"
+    "url": "https://github.com/tommie-jp/tommie-fence.git",
+    "directory": "packages/breadboard-fence"
   },
   "type": "module",
   "engines": {

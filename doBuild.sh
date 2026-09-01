@@ -117,9 +117,24 @@ echo "==> 作業場で依存を入れる (単独のリポジトリと同じ形�
 # --install-links: file: の依存を実体で置く (symlink だと vsce が辿れない)。
 (cd "$stage/$pkg" && npm install --install-links --no-audit --no-fund --silent)
 
-echo "==> $vsix を作る"
+# vsce は README の相対リンクを絶対 URL へ書き換える。基準の既定はリポジトリの
+# 直下なので、モノレポでは `packages/<パッケージ>` の分だけ足りず、Marketplace と
+# 拡張ページの図が 404 になる (単一リポジトリだった頃は既定で合っていた)。
+# package.json の repository.directory から基準を作って渡す。
+read -r base_content base_images <<<"$(node -p "
+  const p = require('./packages/$pkg/package.json');
+  const url = String(p.repository?.url ?? '').replace(/^git\+/, '').replace(/\.git\$/, '');
+  if (!url) throw new Error('packages/$pkg/package.json に repository.url がありません');
+  const dir = p.repository?.directory ? '/' + p.repository.directory : '';
+  [url + '/blob/HEAD' + dir, url + '/raw/HEAD' + dir].join(' ');
+")"
+
+echo "==> $vsix を作る (README の相対リンクの基準: $base_content)"
 # vsce package が vscode:prepublish (esbuild --production) を呼ぶ。
-(cd "$stage/$pkg" && npx vsce package --out "$out")
+(cd "$stage/$pkg" && npx vsce package \
+  --baseContentUrl "$base_content" \
+  --baseImagesUrl "$base_images" \
+  --out "$out")
 
 if [ "$do_install" -eq 0 ]; then
   echo "==> できあがり: $out"

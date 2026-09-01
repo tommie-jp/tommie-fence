@@ -8,7 +8,8 @@
   "publisher": "tommie",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tommie-jp/circuit-fence.git"
+    "url": "https://github.com/tommie-jp/tommie-fence.git",
+    "directory": "packages/circuit-fence"
   },
   "type": "module",
   "engines": {

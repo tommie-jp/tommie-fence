@@ -42,7 +42,12 @@ no build step and no runtime dependency of its own.
 ## Documentation
 
 Each package carries its own reference and a set of worked examples. The prose
-is Japanese; the fences themselves are language-neutral.
+is Japanese; the fences themselves are language-neutral. **[examples/](examples/README.md)
+is the gallery** — every fence next to the drawing it produces.
+
+[![RC low-pass](packages/circuit-fence/examples/out/01-rc-lowpass.png)](examples/README.md)
+
+[![An LED and a resistor on a breadboard](packages/breadboard-fence/examples/out/01-led.png)](examples/README.md)
 
 | Package | Reference | Cheatsheet | Examples |
 | --- | --- | --- | --- |

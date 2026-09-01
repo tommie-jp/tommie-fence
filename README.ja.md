@@ -40,6 +40,12 @@ tommie-fence
 ## ドキュメント
 
 文法リファレンスと作例は、パッケージごとに持っている。
+**[examples/](examples/README.ja.md) が入口** —
+どのフェンスにも、そのフェンスを描いた図が並べてある。
+
+[![RC ローパス](packages/circuit-fence/examples/out/01-rc-lowpass.png)](examples/README.ja.md)
+
+[![ブレッドボードの LED と抵抗](packages/breadboard-fence/examples/out/01-led.png)](examples/README.ja.md)
 
 | パッケージ | 文法 | 早見表 | 例 |
 | --- | --- | --- | --- |

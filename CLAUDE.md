@@ -54,13 +54,20 @@ npm run examples --workspace=circuit-fence   # 図を作り直す
    `circuit-fence-v0.4.0`。旧リポジトリの `v0.3.0` 形式は archive 側に残る。
 5. **CI はリポジトリ直下の `.github/workflows` だけが動く**。
    パッケージの中に置いても GitHub は読まない。
-6. **マージは fast-forward のみ**。作業ブランチを切ってコミットし、
+6. **README の図と相対リンクは `vsce` が絶対 URL へ書き換える**。基準の既定は
+   リポジトリ直下なので、モノレポでは `packages/<パッケージ>` の分が足りない。
+   `doBuild.sh` が `package.json` の `repository.directory` から基準を作って
+   `--baseContentUrl` / `--baseImagesUrl` で渡している。**パッケージを別の
+   深さへ動かすなら `repository.directory` も直す** — 忘れると Marketplace と
+   拡張ページの図が黙って 404 になる (ローカルの相対リンクは正しいままなので
+   気づけない)。`examples/` をパッケージの外へ出せないのも同じ理由。
+7. **マージは fast-forward のみ**。作業ブランチを切ってコミットし、
    `git merge --ff-only` で main に取り込み、ブランチを消す。
-7. **コミットは conventional commits 形式**。
-8. **Markdown は lint を通す**:
-   `npx markdownlint-cli 'README.md' 'README.ja.md' 'CLAUDE.md'`。
+8. **コミットは conventional commits 形式**。
+9. **Markdown は lint を通す**:
+   `npx markdownlint-cli 'README.md' 'README.ja.md' 'CLAUDE.md' 'examples/*.md'`。
    パッケージの中は各パッケージの CLAUDE.md の指定に従う。
-9. **README は日本語が正、英語が追随**。節の構成は 2 本で 1 対 1 に保つ。
+10. **README は日本語が正、英語が追随**。節の構成は 2 本で 1 対 1 に保つ。
 
 ## パッケージ間で違っていて、揃えていないもの
 
