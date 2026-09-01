@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | circuit | 回路 15 本 + わざと壊した例 5 本 | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 回路 13 本 + わざと壊した例 2 本 | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
-| perfboard | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) — 回路 5 本 + わざと壊した例 1 本 | [packages/perfboard-fence/](../packages/perfboard-fence/README.ja.md) |
+| perfboard | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) — 回路 8 本 + わざと壊した例 1 本 | [packages/perfboard-fence/](../packages/perfboard-fence/README.ja.md) |
 
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。
@@ -99,19 +99,22 @@ VS Code のプレビュー (`Ctrl+Shift+V`) ではフェンス自体が図にな
 
 ## perfboard — ユニバーサル基板
 
-**3 本足・DIP はまだ置けない。** 板・穴・2 本足の部品・配線・ネットリストまで
-([packages/perfboard-fence](../packages/perfboard-fence/README.ja.md))。
+**一通り書ける。** 2 本足・3 本足・DIP・SIP の部品、板の外の機器、注釈、
+テーマまで ([packages/perfboard-fence](../packages/perfboard-fence/README.ja.md))。
 
 ```yaml
 board: 14x8
-points:
-  VCC: a1
 parts:
   R1: resistor b3 b6 1k
   D1: led b9 b11 red
+  BAT:
+    type: device
+    label: 電池 3V
+    pins: + -
 wires:
-  - VCC -- b3 red
+  - BAT.+ -- b3
   - b6 -- b9 orange
+  - b11 -- BAT.-
 ```
 
 板の大きさは**列 × 行**で書く (板が「72×47.5mm」と長辺 × 短辺で売られるのと
@@ -125,6 +128,10 @@ LED は書かれた色で光る。配線は 2 つの穴をまっすぐ結ぶ —
 裏を返すと繋ぎ忘れが図の上で沈黙するので、そこは **ERC が見張る** —
 どこにもつながっていない足、配線で短絡した部品、部品の足を 1 つもつないで
 いない配線を、行番号つきで名指す。
+
+電池やスピーカーのように**盤面に載らないもの**は `device` として板の外の帯に
+置き、配線からは `BAT.+` の形で指す。**板の上に線は引かない** — 板に線が出ると、
+そこに挿す場所があるように見えてしまう。導通だけがネットリストに効く。
 
 例は [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md)、
 文法は [docs/01-syntax.md](../packages/perfboard-fence/docs/01-syntax.md)。

@@ -9,7 +9,7 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | --- | --- | --- |
 | circuit | 15 circuits + 5 deliberately broken | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 13 circuits + 2 deliberately broken | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
-| perfboard | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) — 5 circuits + 1 deliberately broken | [packages/perfboard-fence/](../packages/perfboard-fence/README.md) |
+| perfboard | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) — 8 circuits + 1 deliberately broken | [packages/perfboard-fence/](../packages/perfboard-fence/README.md) |
 
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for
@@ -102,20 +102,23 @@ A bench circuit with an op-amp, instruments and a toroidal core
 
 ## perfboard — perfboard layouts
 
-**Three-lead parts and DIPs are still to come.** The board, its holes, two-lead
-parts, wires and the netlist all work
+**It all writes now:** two- and three-lead parts, DIP and SIP packages, things
+off the board, annotations and themes
 ([packages/perfboard-fence](../packages/perfboard-fence/README.md)).
 
 ```yaml
 board: 14x8
-points:
-  VCC: a1
 parts:
   R1: resistor b3 b6 1k
   D1: led b9 b11 red
+  BAT:
+    type: device
+    label: 3V cell
+    pins: + -
 wires:
-  - VCC -- b3 red
+  - BAT.+ -- b3
   - b6 -- b9 orange
+  - b11 -- BAT.-
 ```
 
 The size is written **columns by rows** — the order the board itself is sold in
@@ -132,6 +135,11 @@ the wires you wrote. The flip side is that a missing connection is silent in the
 picture, which is what **the ERC watches** — it names an unconnected pin, a part
 the wiring shorts out, and a wire that reaches no pin at all, each with the line
 it was written on.
+
+Anything that does not sit on the board — a battery, a speaker — is written as a
+`device` and drawn in a band beside it, then wired to as `BAT.+`. **No line is
+drawn onto the board**: one there would suggest a hole to solder into. Only the
+connection reaches the netlist.
 
 The worked circuits are in
 [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md)

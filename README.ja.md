@@ -9,7 +9,7 @@
 | --- | --- | --- |
 | circuit-fence | ` ```circuit ` | 回路図 — 部品を番地で置き、ネットリストを導出する |
 | breadboard-fence | ` ```breadboard ` | ブレッドボード実体配線図 — ボード内部の導通からネットリストを導出する |
-| perfboard-fence (骨格) | ` ```perfboard ` | ユニバーサル基板の配線図 — 全穴が独立していて、導通は配線でしか生まれない |
+| perfboard-fence | ` ```perfboard ` | ユニバーサル基板の配線図 — 全穴が独立していて、導通は配線でしか生まれない |
 
 言語は別、作法は同じ: YAML をホストにしたフェンス、番地で書く位置、
 Markdown の行番号とその行の中身で返るエラー。
@@ -28,15 +28,14 @@ Markdown の行番号とその行の中身で返るエラー。
 [Releases](https://github.com/tommie-jp/tommie-fence/releases) にある。
 
 4 つのパッケージは npm workspaces でリポジトリ直下からビルド・テスト・
-パッケージできる。`perfboard-fence` は骨格だけで、まだ図を描かない
-(フェンスを見つけて、読めなかったところを行番号つきで返すところまで)。
+パッケージできる。
 
 ```text
 tommie-fence
 ├── packages/fence-kit          共有: 改行の正規化、フェンス抽出、markup のエスケープ
 ├── packages/circuit-fence
 ├── packages/breadboard-fence
-└── packages/perfboard-fence    (骨格。まだ描かない)
+└── packages/perfboard-fence
 ```
 
 `fence-kit` に入れるのは、**実際に重複してから引き上げたものだけ**。

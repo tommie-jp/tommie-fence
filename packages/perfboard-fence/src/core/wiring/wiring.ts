@@ -1,12 +1,25 @@
 import { computeNets } from 'fence-kit';
 import type { Net, NetMember } from 'fence-kit';
-import { fenceError, safeToken } from '../errors.ts';
+import { fenceError, notice, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import { holeStrip, offBoardReason } from '../model/board.ts';
-import type { Address, Board, FenceError, PlacedPart, RoutedWire, StripId, WireSpec } from '../types.ts';
+import type {
+  Address, Board, DeviceSpec, FenceError, PlacedPart, RoutedWire, StripId, WireSpec,
+} from '../types.ts';
 
-export type Wiring = { readonly wires: readonly RoutedWire[]; readonly errors: readonly FenceError[] };
+export type Wiring = {
+  readonly wires: readonly RoutedWire[];
+  /** 板の外の機器につながる端。図には線を引かず、ネットにだけ効く。 */
+  readonly deviceLinks: readonly (readonly [StripId, StripId])[];
+  readonly errors: readonly FenceError[];
+};
+
+/** 板の外の機器の足の導通グループ。**穴とは別の名前空間**にする。 */
+export const devicePinStrip = (id: string, pin: string): StripId => `pin:${id}.${pin}`;
+
+// `BAT.+` の形。穴の番地に `.` は現れないので、綴りだけで分かれる。
+const PIN_REF = /^([\w-]+)\.(\S+)$/;
 
 /**
  * 配線の端を番地に直す。名前 (`points:` で付けたもの) もここで引く。
@@ -18,9 +31,45 @@ export function resolveWires(
   specs: readonly WireSpec[],
   points: ReadonlyMap<string, Address>,
   board: Board,
+  devices: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
 ): Wiring {
   const wires: RoutedWire[] = [];
+  const deviceLinks: (readonly [StripId, StripId])[] = [];
   const errors: FenceError[] = [];
+
+  /**
+   * `BAT.+` を機器の足として読む。**機器の足でなければ undefined**、
+   * 機器の足のつもりだが引けなければ null (理由は帯に出す)。
+   *
+   * 点は番地にも `points:` の名前にも現れないので、`.` を含む綴りは
+   * 機器の足のつもりしかありえない。**番地として読めないと言って返さない** —
+   * 名前を間違えた人が、番地の話をされて次に何をすべきか分からなくなる。
+   */
+  const devicePin = (written: string, line: number | null): StripId | null | undefined => {
+    const found = PIN_REF.exec(written);
+    if (!found) return undefined;
+    const [, id = '', pin = ''] = found;
+    const pins = devices.get(id);
+    if (!pins) {
+      // **書かれた綴りごと名指す。** 点の前だけを返すと、`1.5` のような
+      // 書き間違いに対して「そんな機器はありません: 1」と、書いていない語を指す。
+      errors.push(fenceError(
+        `${safeToken(written)} を機器の足として読みました。そんな機器はありません: ${safeToken(id)}`,
+        line,
+        written,
+      ));
+      return null;
+    }
+    if (!pins.has(pin)) {
+      errors.push(fenceError(
+        `${safeToken(id)} に ${safeToken(pin)} という足はありません (${[...pins].map(safeToken).join(' / ')})`,
+        line,
+        written,
+      ));
+      return null;
+    }
+    return devicePinStrip(id, pin);
+  };
 
   const resolve = (written: string, line: number | null): Address | null => {
     const named = points.get(written);
@@ -43,11 +92,53 @@ export function resolveWires(
     return address;
   };
 
+  /** 板の上の端を導通グループに直す。読めなければ null。 */
+  const holeStripOf = (written: string, line: number | null): StripId | null => {
+    const address = resolve(written, line);
+    return address === null ? null : holeStrip(address);
+  };
+
   for (const spec of specs) {
-    if (wires.length >= LIMITS.wires) {
+    // **機器へつなぐぶんも数える。** 線を引かないだけで導通は増えるので、
+    // `wires` だけを数えると上限を素通りして `computeNets` に無限に積める。
+    if (wires.length + deviceLinks.length >= LIMITS.wires) {
       errors.push(fenceError(`配線が多すぎます (${LIMITS.wires} 本まで)`, spec.line));
       break;
     }
+
+    // **機器の足は板の上に無い。** 図には線を引かず、導通だけをつなぐ。
+    // 端は 1 つずつ見る — 両端まとめて見ると、同じ報告が 1 行に 2 度出て、
+    // 帯の打ち切り (8 件) で本物の報告を押し出す。
+    const fromPin = devicePin(spec.from, spec.line);
+    if (fromPin === null) continue;
+    const toPin = devicePin(spec.to, spec.line);
+    if (toPin === null) continue;
+
+    if (fromPin !== undefined || toPin !== undefined) {
+      const from = fromPin ?? holeStripOf(spec.from, spec.line);
+      if (from === null) continue;
+      const to = toPin ?? holeStripOf(spec.to, spec.line);
+      if (to === null) continue;
+
+      if (from === to) {
+        // 板の上の配線と同じ。導通を何も足さず、図にも何も出ない。
+        errors.push(fenceError(`配線の両端が同じところです (${safeToken(spec.from)})`, spec.line));
+        continue;
+      }
+      deviceLinks.push([from, to]);
+
+      // **書いた色が黙って消えない**ようにする。線を引かない配線なので
+      // 色は図に出ず、何も言わないと「効かない指定」を書き続けることになる。
+      // つながらなかった配線については言わない (直す先はそちらではない)。
+      if (spec.color !== null) {
+        errors.push(notice(
+          `機器へつなぐ配線は板の上に線を引かないので、色 (${safeToken(spec.color)}) は図に出ません`,
+          spec.line,
+        ));
+      }
+      continue;
+    }
+
     const from = resolve(spec.from, spec.line);
     const to = resolve(spec.to, spec.line);
     if (from === null || to === null) continue;
@@ -60,7 +151,7 @@ export function resolveWires(
     wires.push({ from, to, color: spec.color, line: spec.line });
   }
 
-  return { wires, errors };
+  return { wires, deviceLinks, errors };
 }
 
 /**
@@ -85,10 +176,22 @@ export const netlistOf = (
   parts: readonly PlacedPart[],
   wires: readonly RoutedWire[],
   points: readonly (readonly [Address, string])[],
+  devices: readonly DeviceSpec[] = [],
+  deviceLinks: readonly (readonly [StripId, StripId])[] = [],
 ): Net[] =>
   computeNets({
-    members: membersOf(parts),
-    links: wires.map((wire) => [holeStrip(wire.from), holeStrip(wire.to)] as const),
+    members: [
+      ...membersOf(parts),
+      // 機器の足も回路の端子。板の上に無いだけで、ネットには乗る。
+      ...devices.flatMap((device) => device.pins.map((pin) => ({
+        ref: `${device.id}.${pin}`,
+        strip: devicePinStrip(device.id, pin),
+      }))),
+    ],
+    links: [
+      ...wires.map((wire) => [holeStrip(wire.from), holeStrip(wire.to)] as const),
+      ...deviceLinks,
+    ],
     names: points.map(([address, name]) => [holeStrip(address), name] as const),
   });
 

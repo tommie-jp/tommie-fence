@@ -25,7 +25,15 @@ const THREE_LEAD = new Set([
 ]);
 
 /** まだ置けないが、名前は知っている種類。「知らない」と言うと綴りを疑わせてしまう。 */
-const NOT_YET = new Set(['button', 'device']);
+const NOT_YET = new Set(['button']);
+
+/**
+ * 1 行では書けない種類。**板の外の機器は入れ子で書く** — 足の名前の並びを
+ * 持つので 1 行に畳めない。知らない種類として弾くと、書き方を探しに行かせる。
+ */
+const NESTED = new Set(['device']);
+
+export const isNestedType = (type: string): boolean => NESTED.has(type);
 
 const ALIASES: Record<string, string> = {
   q: 'transistor',
@@ -74,10 +82,10 @@ const own = (table: Record<string, unknown>, key: string): boolean => Object.has
 export const isTwoLead = (type: string): boolean => TWO_LEAD.has(type);
 export const isThreeLead = (type: string): boolean => THREE_LEAD.has(type);
 export const isKnownType = (type: string): boolean =>
-  TWO_LEAD.has(type) || THREE_LEAD.has(type) || NOT_YET.has(type);
+  TWO_LEAD.has(type) || THREE_LEAD.has(type) || NOT_YET.has(type) || NESTED.has(type);
 export const placeableNames = (): readonly string[] => [...TWO_LEAD, ...THREE_LEAD];
 export const knownNames = (): readonly string[] =>
-  [...TWO_LEAD, ...THREE_LEAD, ...NOT_YET, ...Object.keys(ALIASES)];
+  [...TWO_LEAD, ...THREE_LEAD, ...NOT_YET, ...NESTED, ...Object.keys(ALIASES)];
 
 export type PartType = {
   readonly type: string;

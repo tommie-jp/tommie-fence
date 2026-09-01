@@ -5,7 +5,8 @@
 A VS Code extension that previews a ` ```perfboard ` fence (YAML) in Markdown as
 a perfboard wiring diagram.
 
-Two-lead, three-lead, DIP and SIP parts all place, wire, check and write out.
+Two-lead, three-lead, DIP and SIP parts place, wire up to things off the board,
+take annotations, check and write out.
 
 ## What it is for
 
@@ -18,8 +19,13 @@ board: akizuki-c
 parts:
   R1: resistor b3 b7 10k
   D1: led c5 c9
+  BAT:
+    type: device
+    pins: + -
 wires:
+  - BAT.+ -- b3
   - b7 -- c5
+  - c9 -- BAT.-
 ```
 
 - Positions are **grid addresses** (`b3` — row b, column 3), not coordinate
@@ -33,6 +39,9 @@ wires:
   perfboard is independent, so a missing connection is silent in the picture.
   That is what the ERC watches — it names an unconnected pin, with the line it
   was written on
+- Things that do not sit on the board — a battery, a speaker — are written as a
+  `device` and drawn in a band beside it. They join the netlist, but no wire is
+  drawn onto the board (a line there would suggest a hole to solder into)
 
 ## How it differs from its siblings
 
@@ -65,7 +74,9 @@ and the content of the offending line.
 | **Figure titles** (`title:`) | works |
 | **CLI** (`render` / `check`) | works |
 | **Three-lead parts, DIP, SIP** | works |
-| `device` (things off the board), `notes:`, `style:` | **still to come** |
+| **Things off the board** (`device`: batteries, speakers…) | works |
+| **Annotations** (`notes:`: rings, boxes, arrows, text) | works |
+| **Theme and width** (`style:`: `light` / `dark` / `mono`) | works |
 
 A board is written as a **hole count** or as a **name**. The count is columns by
 rows — the order the board itself is sold in (`72×47mm` is long side by short

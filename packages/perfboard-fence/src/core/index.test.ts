@@ -295,4 +295,155 @@ describe('renderPerfboard', () => {
     // 箱で描く部品は胴の矩形が出る。2 本足の胴 (回転する g) にはならない。
     expect(svg).not.toContain('rotate(');
   });
+  test('paints the theme that was written', () => {
+    const dark = renderPerfboard('board: 10x6\nstyle: dark\n');
+
+    expect(dark.errors).toEqual([]);
+    expect(dark.svg).toContain('#2f3a33');
+  });
+
+  test('takes style as a mapping too', () => {
+    const result = renderPerfboard('board: 10x6\nstyle:\n  theme: mono\n  stamp: true\n');
+
+    expect(result.errors).toEqual([]);
+    // 根の `data-perfboard-fence` は刻印を出さなくても必ずあるので、字のほうを見る。
+    expect(result.svg).toMatch(/<text[^>]*>perfboard-fence /);
+  });
+
+  test('scales the canvas without moving the drawing', () => {
+    const plain = renderPerfboard('board: 10x6\n');
+    const wide = renderPerfboard('board: 10x6\nstyle:\n  width: 900\n');
+
+    expect(wide.svg).toContain('width="900"');
+    // viewBox は変わらない — 番地と実寸の対応が動かない。
+    const box = /viewBox="([^"]+)"/.exec(plain.svg)?.[1];
+    expect(wide.svg).toContain(`viewBox="${box}"`);
+  });
+
+  test('hides notices with debug off, but never the lines it could not read', () => {
+    const fence = 'board: 10x6\nstyle:\n  debug: false\nparts:\n  R1: resistor b3 b7\n  R2: resistr c1 c4\n';
+    const result = renderPerfboard(fence);
+
+    expect(result.notices.length).toBeGreaterThan(0);
+    // 数えるのはここまでで、伏せるのは出すところだけ。
+    expect(result.errorHtml).not.toContain('perfboard-notice');
+    expect(result.errorHtml).toContain('resistr');
+  });
+
+  test('names a style it cannot read, with the line', () => {
+    const result = renderPerfboard('board: 10x6\nstyle: neon\n');
+
+    expect(result.errors[0]?.message).toContain('neon');
+    expect(result.errors[0]?.line).toBe(2);
+  });
+  test('draws the notes on top of everything', () => {
+    const result = renderPerfboard([
+      'board: 12x8',
+      'points:',
+      '  VCC: a1',
+      'parts:',
+      '  R1: resistor b3 b7 10k',
+      'wires:',
+      '  - VCC -- b3',
+      'notes:',
+      '  - mark b7 red',
+      '  - box c2 e8 blue',
+      '  - arrow g2 b7',
+      '  - text f3 ここを直す',
+      '',
+    ].join('\n'));
+
+    expect(result.errors).toEqual([]);
+    expect(result.svg).toContain('>ここを直す</text>');
+    expect(result.svg).toContain('<polyline');
+    // 印は部品より後ろ (= 上) に出る。指したものが隠れると意味が無い。
+    expect(result.svg.indexOf('R1 10k')).toBeLessThan(result.svg.indexOf('ここを直す'));
+  });
+
+  test('keeps drawing when a note cannot be placed', () => {
+    const result = renderPerfboard('board: 10x6\nnotes:\n  - mark z99\n');
+
+    expect(result.svg).toContain('<svg');
+    expect(result.errors[0]?.line).toBe(3);
+  });
+
+  test('does not let a note into the netlist', () => {
+    // 注釈は回路の一員ではない。
+    const withNote = renderPerfboard('board: 10x6\nparts:\n  R1: resistor b3 b7\nnotes:\n  - mark b3\n');
+    const without = renderPerfboard('board: 10x6\nparts:\n  R1: resistor b3 b7\n');
+
+    expect(withNote.netlist).toEqual(without.netlist);
+  });
+
+  test('escapes what a note says', () => {
+    const result = renderPerfboard('board: 10x6\nnotes:\n  - text b3 "<img src=x>"\n');
+
+    expect(result.svg).not.toContain('<img');
+    expect(result.svg).toContain('&lt;img');
+  });
+});
+
+describe('板の外の機器', () => {
+  const fence = [
+    'board: 12x8',
+    'parts:',
+    '  R1: resistor b3 b7 1k',
+    '  BAT:',
+    '    type: device',
+    '    at: top',
+    '    label: 電池 3V',
+    '    pins: + -',
+    'wires:',
+    '  - BAT.+ -- b3',
+    '  - BAT.- -- b7',
+    '',
+  ].join('\n');
+
+  test('draws the device off the board and puts its pins on the netlist', () => {
+    const result = renderPerfboard(fence);
+
+    expect(result.errors).toEqual([]);
+    expect(result.svg).toContain('電池 3V');
+    expect(result.netlist.flatMap((net) => net.refs)).toContain('BAT.+');
+  });
+
+  test('joins the part to the device without drawing a wire onto the board', () => {
+    const result = renderPerfboard(fence);
+    const joined = result.netlist.find((net) => net.refs.includes('R1.1'));
+
+    expect(joined?.refs).toContain('BAT.+');
+  });
+
+  test('says a device pin nothing reaches is unconnected', () => {
+    const result = renderPerfboard(fence.replace('  - BAT.- -- b7\n', ''));
+    const said = result.notices.map((one) => one.message).join('\n');
+
+    expect(said).toContain('BAT.-');
+    expect(said).toContain('板の外');
+  });
+
+  test('shows how to write a device when it is written on one line', () => {
+    const result = renderPerfboard('board: 12x8\nparts:\n  BAT: device b3 b4\n');
+
+    expect(result.errors[0]?.message).toContain('入れ子で書きます');
+  });
+});
+
+describe('style: の報告の行', () => {
+  test('points at the line the offending key was written on, with its caret', () => {
+    // まとめて `style:` の行に返すと、3 行下の綴りを直しに行かせるうえ、
+    // その行に無い語を探すことになってキャレットも消える。
+    const result = renderPerfboard('board: 10x6\nstyle:\n  theme: mono\n  width: 5\n  bogus: 1\n');
+    const width = result.errors.find((one) => one.message.includes('width'));
+    const bogus = result.errors.find((one) => one.message.includes('bogus'));
+
+    expect(width?.line).toBe(4);
+    expect(bogus?.line).toBe(5);
+    expect(bogus?.text).toBe('  bogus: 1');
+  });
+
+  test('reads on and off, which yaml itself hands over as text', () => {
+    expect(renderPerfboard('board: 10x6\nstyle:\n  stamp: on\n').errors).toEqual([]);
+    expect(renderPerfboard('board: 10x6\nstyle:\n  stamp: on\n').svg).toContain('perfboard-fence 0');
+  });
 });

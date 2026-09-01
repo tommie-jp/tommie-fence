@@ -6,11 +6,16 @@ import { boardNames } from '../model/catalog.ts';
 import { LIMITS } from '../limits.ts';
 import { parsePartLine } from './parts.ts';
 import { parseWireLine } from './wires.ts';
+import { EMPTY_STYLE, parseStyle } from './style.ts';
+import { parseNoteLine } from './notes.ts';
+import { parseDevice } from './devices.ts';
 import { isReferenceable } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
 import { isSeq } from 'yaml';
 import { TOP_LEVEL_KEYS } from '../types.ts';
-import type { Board, FenceDocument, FenceError, PartSpec, PointSpec, WireSpec } from '../types.ts';
+import type {
+  Board, DeviceSpec, FenceDocument, FenceError, NoteSpec, PartSpec, PointSpec, StyleSpec, WireSpec,
+} from '../types.ts';
 
 /** yaml のメッセージはライブラリ側の文言なので、載せる長さを切る。 */
 const MAX_YAML_MESSAGE = 120;
@@ -89,10 +94,15 @@ export function parseFence(source: string): ParseResult {
 
   const errors: FenceError[] = [];
   const parts: PartSpec[] = [];
+  const devices: DeviceSpec[] = [];
   const wires: WireSpec[] = [];
   const points: PointSpec[] = [];
   let board: Board | null = null;
   let title: string | null = null;
+  let style: StyleSpec = EMPTY_STYLE;
+  let styleWritten = false;
+  const notes: NoteSpec[] = [];
+  let notesWritten = false;
   let boardWritten = false;
   let titleWritten = false;
   let partsWritten = false;
@@ -118,6 +128,32 @@ export function parseFence(source: string): ParseResult {
         continue;
       }
       wires.push({ ...result.value, line });
+    }
+  };
+
+  /** `notes:` は 1 行 1 つの並び。回路には関わらないので、落ちても図は出る。 */
+  const readNotes = (node: unknown, keyLine: number | null): void => {
+    if (!isSeq(node)) {
+      errors.push(fenceError('notes: は `- mark b3` のような並びにします', keyLine));
+      return;
+    }
+    for (const item of node.items) {
+      const line = lineOf(item as Node);
+      if (notes.length >= LIMITS.notes) {
+        errors.push(fenceError(`注釈が多すぎます (${LIMITS.notes} 個まで)`, line));
+        break;
+      }
+      const written = scalarText(item);
+      if (written === null) {
+        errors.push(fenceError('注釈は 1 行に 1 つ書きます (例: - mark b3)', line));
+        continue;
+      }
+      const result = parseNoteLine(written);
+      if (!result.ok) {
+        errors.push({ ...result.error, line });
+        continue;
+      }
+      notes.push({ ...result.value, line });
     }
   };
 
@@ -169,6 +205,10 @@ export function parseFence(source: string): ParseResult {
       errors.push(fenceError('parts: は `名前: 部品 穴 穴 値` の並びにします', keyLine));
       return;
     }
+    // **同じ名前は 1 つだけ。** YAML の重複キーは読み飛ばさせている
+    // (`uniqueKeys: false`) ので、ここで見ないと部品と機器が同じ名前で並び、
+    // ネットリストに同じ足の名前が 2 つ載る — 突き合わせの相手が壊れる。
+    const ids = new Set<string>();
     for (const item of node.items) {
       const id = scalarText(item.key);
       const line = lineOf((item.value ?? item.key) as Node);
@@ -176,6 +216,23 @@ export function parseFence(source: string): ParseResult {
         errors.push(fenceError('部品の名前は文字で書きます', lineOf(item.key as Node)));
         continue;
       }
+      if (ids.has(id)) {
+        errors.push(fenceError(`部品の名前が重なっています: ${safeToken(id)}`, line, id));
+        continue;
+      }
+      ids.add(id);
+      // **入れ子なら板の外の機器**。1 行に畳めない情報 (足の名前の並び) を持つ。
+      if (isMap(item.value)) {
+        const entries = (item.value as { toJSON?: () => unknown }).toJSON?.() as Record<string, unknown> | undefined;
+        const device = parseDevice(id, entries ?? {});
+        if (!device.ok) {
+          errors.push({ ...device.error, line });
+          continue;
+        }
+        devices.push({ ...device.value, line });
+        continue;
+      }
+
       const written = scalarText(item.value);
       if (written === null) {
         errors.push(fenceError(`${safeToken(id)} の中身が書かれていません (例: resistor b3 b7 10k)`, line));
@@ -238,6 +295,31 @@ export function parseFence(source: string): ParseResult {
       title = written.trim() === '' ? null : written;
       continue;
     }
+    if (key === 'style') {
+      const at = lineOf((pair.value ?? pair.key) as Node);
+      if (styleWritten) {
+        errors.push(fenceError('style: が 2 つあります (1 つにまとめます)', at, key));
+        continue;
+      }
+      styleWritten = true;
+      // 項目ごとの行を控えておく。報告は書かれた行に返す。
+      const styleLines = new Map<string, number | null>();
+      if (isMap(pair.value)) {
+        for (const item of pair.value.items) {
+          const name = scalarText(item.key);
+          if (name !== null) styleLines.set(name, lineOf((item.value ?? item.key) as Node));
+        }
+      }
+      // YAML の節点を素の値に落としてから読む (style は入れ子を持たない)。
+      const read = parseStyle(
+        (pair.value as { toJSON?: () => unknown } | null)?.toJSON?.() ?? null,
+        at,
+        styleLines,
+      );
+      style = read.style;
+      errors.push(...read.errors);
+      continue;
+    }
     if (key === 'wires') {
       const keyLine = lineOf(pair.key as Node);
       if (wiresWritten) {
@@ -246,6 +328,16 @@ export function parseFence(source: string): ParseResult {
       }
       wiresWritten = true;
       readWires(pair.value, keyLine);
+      continue;
+    }
+    if (key === 'notes') {
+      const keyLine = lineOf(pair.key as Node);
+      if (notesWritten) {
+        errors.push(fenceError('notes: が 2 つあります (1 つにまとめます)', keyLine, key));
+        continue;
+      }
+      notesWritten = true;
+      readNotes(pair.value, keyLine);
       continue;
     }
     if (key === 'points') {
@@ -294,5 +386,5 @@ export function parseFence(source: string): ParseResult {
     return { doc: null, errors };
   }
 
-  return { doc: { board, title, parts, wires, points }, errors };
+  return { doc: { board, title, style, parts, devices, wires, points, notes }, errors };
 }

@@ -33,6 +33,7 @@ const run = (
     wires: wires as readonly RoutedWire[],
     netlist,
     namedStrips: new Set(namedPairs.map(([address]) => holeStrip(address))),
+    devices: [],
   });
 };
 

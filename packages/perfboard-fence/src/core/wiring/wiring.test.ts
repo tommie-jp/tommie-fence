@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { netlistOf, resolveWires } from './wiring.ts';
 import { createBoard } from '../model/board.ts';
+import { LIMITS } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
 import { holeStrip } from '../model/board.ts';
 import type { PlacedPart, WireSpec } from '../types.ts';
@@ -91,5 +92,104 @@ describe('netlistOf', () => {
     const names = netlistOf([part('R1', ['b3', 'b7'])], [], []).map((net) => net.name);
 
     expect(names.sort()).toEqual(['N1', 'N2']);
+  });
+});
+
+describe('板の外の機器', () => {
+  const devices = new Map([['BAT', new Set(['+', '-'])]]);
+  const bat = {
+    id: 'BAT', at: 'top' as const, label: 'BAT', pins: ['+', '-'], line: null,
+  };
+
+  test('joins a hole to a device pin without drawing a wire', () => {
+    // **機器は板の上に無い。** 線を引くと、挿す場所があるように見えてしまう。
+    const { wires, deviceLinks, errors } = resolveWires([wire('b3', 'BAT.+')], new Map(), board, devices);
+
+    expect(errors).toEqual([]);
+    expect(wires).toEqual([]);
+    expect(deviceLinks).toHaveLength(1);
+  });
+
+  test('puts the part and the device pin on the same net', () => {
+    const { wires, deviceLinks } = resolveWires([wire('b3', 'BAT.+')], new Map(), board, devices);
+    const nets = netlistOf([part('R1', ['b3', 'b7'])], wires, [], [bat], deviceLinks);
+    const joined = nets.find((net) => net.refs.includes('R1.1'));
+
+    expect(joined?.refs).toContain('BAT.+');
+  });
+
+  test('names a device it has not been told about, with the whole endpoint', () => {
+    // 番地として読めないと言うと、名前を間違えた人が番地の話を聞かされる。
+    // 点の前だけを返すと、`1.5` のような綴りで「書いていない語」を指してしまう。
+    const { errors } = resolveWires([wire('b3', 'PSU.+')], new Map(), board, devices);
+
+    expect(errors[0]?.message).toContain('そんな機器はありません');
+    expect(errors[0]?.message).toContain('PSU.+');
+  });
+
+  test('says a bad device name once, not once per end', () => {
+    // 帯は 8 件で打ち切る。同じ行から同じ報告が 2 度出ると、本物が押し出される。
+    const { errors } = resolveWires([wire('PSU.+', 'PSU.-')], new Map(), board, devices);
+
+    expect(errors).toHaveLength(1);
+  });
+
+  test('refuses a wire whose two ends are the same device pin', () => {
+    const { deviceLinks, errors } = resolveWires([wire('BAT.+', 'BAT.+')], new Map(), board, devices);
+
+    expect(deviceLinks).toEqual([]);
+    expect(errors[0]?.message).toContain('両端が同じ');
+  });
+
+  test('counts device links against the wire limit', () => {
+    // 線を引かないだけで導通は増える。数えないと頭打ちを素通りする。
+    const many = Array.from({ length: LIMITS.wires + 20 }, () => wire('BAT.+', 'BAT.-'));
+    const { deviceLinks, errors } = resolveWires(many, new Map(), board, devices);
+
+    expect(deviceLinks.length).toBe(LIMITS.wires);
+    expect(errors.some((one) => one.message.includes('配線が多すぎます'))).toBe(true);
+  });
+
+  test('names a pin the device has not got, and lists the ones it has', () => {
+    const { errors } = resolveWires([wire('b3', 'BAT.gnd')], new Map(), board, devices);
+
+    expect(errors[0]?.message).toContain('という足はありません');
+    expect(errors[0]?.message).toContain('+ / -');
+  });
+
+  test('still reports an unreadable hole at the other end', () => {
+    const { deviceLinks, errors } = resolveWires([wire('z99', 'BAT.+')], new Map(), board, devices);
+
+    expect(deviceLinks).toEqual([]);
+    expect(errors).toHaveLength(1);
+  });
+
+  test('joins two device pins to each other', () => {
+    const { deviceLinks, errors } = resolveWires([wire('BAT.+', 'BAT.-')], new Map(), board, devices);
+
+    expect(errors).toEqual([]);
+    expect(deviceLinks).toHaveLength(1);
+  });
+});
+
+describe('機器へつなぐ配線の色', () => {
+  const devices = new Map([['BAT', new Set(['+', '-'])]]);
+
+  test('says a colour written there will not show, instead of dropping it', () => {
+    const spec = { from: 'b3', to: 'BAT.+', color: 'red', line: 4 };
+    const { deviceLinks, errors } = resolveWires([spec], new Map(), board, devices);
+
+    expect(deviceLinks).toHaveLength(1);
+    expect(errors[0]?.notice).toBe(true);
+    expect(errors[0]?.message).toContain('色');
+  });
+
+  test('keeps quiet about the colour when the wire did not connect anyway', () => {
+    // 直す先は色ではなく読めなかった端。**同じ行に 2 件出すと本物が埋もれる。**
+    const spec = { from: 'z99', to: 'BAT.+', color: 'red', line: 4 };
+    const { errors } = resolveWires([spec], new Map(), board, devices);
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.notice).not.toBe(true);
   });
 });

@@ -191,3 +191,24 @@ describe('parseFence', () => {
     expect(parsed.errors.some((e) => e.notice === true && e.message.includes('electrolytic'))).toBe(true);
   });
 });
+
+describe('parts: の名前の重なり', () => {
+  test('refuses a name written twice, whether or not the two are the same shape', () => {
+    // YAML の重複キーは読み飛ばさせている (`uniqueKeys: false`) ので、
+    // ここで見ないとネットリストに同じ足の名前が 2 つ載る。
+    const both = parseFence('board: 10x6\nparts:\n  R1: resistor b3 b7\n  R1:\n    type: device\n    pins: 1 2\n');
+
+    expect(both.errors.some((one) => one.message.includes('名前が重なっています'))).toBe(true);
+    expect(both.doc?.parts).toHaveLength(1);
+    expect(both.doc?.devices).toHaveLength(0);
+  });
+
+  test('refuses the same device declared twice', () => {
+    const twice = parseFence(
+      'board: 10x6\nparts:\n  BAT:\n    type: device\n    pins: + -\n  BAT:\n    type: device\n    pins: A B\n',
+    );
+
+    expect(twice.doc?.devices).toHaveLength(1);
+    expect(twice.errors.some((one) => one.message.includes('名前が重なっています'))).toBe(true);
+  });
+});

@@ -9,7 +9,7 @@ monorepo: schematic, breadboard, and perfboard.
 | --- | --- | --- |
 | circuit-fence | ` ```circuit ` | Schematics — parts placed by grid address, netlist derived |
 | breadboard-fence | ` ```breadboard ` | Breadboard wiring diagrams — netlist derived from the strips inside the board |
-| perfboard-fence (skeleton) | ` ```perfboard ` | Perfboard layouts — every hole independent, connections made only by wires |
+| perfboard-fence | ` ```perfboard ` | Perfboard layouts — every hole independent, connections made only by wires |
 
 The languages are separate; the manners are shared: YAML-hosted fences,
 positions written as addresses, and mistakes reported with Markdown line
@@ -29,15 +29,14 @@ keep their releases up to `v0.3.0`; everything after that is on the
 [releases page](https://github.com/tommie-jp/tommie-fence/releases).
 
 The four packages build, test and package from the repository root through npm
-workspaces. `perfboard-fence` is a skeleton: it finds the fence and reports what
-it could not read, with line numbers, but draws nothing yet.
+workspaces.
 
 ```text
 tommie-fence
 ├── packages/fence-kit          shared: newline normalisation, fence extraction, markup escaping
 ├── packages/circuit-fence
 ├── packages/breadboard-fence
-└── packages/perfboard-fence    (skeleton; draws nothing yet)
+└── packages/perfboard-fence
 ```
 
 `fence-kit` only holds code that was **already duplicated** — nothing is put

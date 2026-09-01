@@ -3,7 +3,7 @@ import { notice, safeToken } from '../errors.ts';
 import { formatAddress } from '../model/address.ts';
 import { holeStrip } from '../model/board.ts';
 import { pinRef } from '../wiring/wiring.ts';
-import type { FenceError, PlacedPart, RoutedWire, StripId } from '../types.ts';
+import type { DeviceSpec, FenceError, PlacedPart, RoutedWire, StripId } from '../types.ts';
 
 /**
  * ERC — 図のとおりに組んだら動かない、という指摘。
@@ -26,6 +26,18 @@ export type ErcInput = {
   readonly netlist: readonly Net[];
   /** `points:` で名前を付けた穴。**基板の外へ出る意思表示**として扱う。 */
   readonly namedStrips: ReadonlySet<StripId>;
+  /** 板の外の機器。足は盤面に無いが、つなぎ忘れは部品と同じように沈黙する。 */
+  readonly devices: readonly DeviceSpec[];
+};
+
+/** つなぎ忘れを見るまとまり。部品も機器も「名前 + 端子の並び」として同じに見る。 */
+type Terminals = {
+  readonly id: string;
+  readonly line: number | null;
+  /** 端子の名前と、それがどこにあるか (穴の番地、または板の外)。 */
+  readonly pins: readonly (readonly [string, string])[];
+  /** つながっていなかったときに添える一言。 */
+  readonly hint: string;
 };
 
 /**
@@ -36,6 +48,25 @@ export type ErcInput = {
  * つなぎ忘れと言うと、正しい図が毎回叱られることになる
  * (boardwright の `external: true` にあたる)。
  */
+const PART_HINT = '全穴が独立しているので、配線を書くまで挿しただけではつながりません';
+const DEVICE_HINT = '板の外の機器なので、配線を書かないとどの穴にも届きません';
+
+const terminalsOf = (input: ErcInput): Terminals[] => [
+  ...input.parts.map((part) => ({
+    id: part.id,
+    line: part.line,
+    pins: part.pins.map((pin, index) =>
+      [pinRef(part, index), formatAddress(pin.address)] as const),
+    hint: PART_HINT,
+  })),
+  ...input.devices.map((device) => ({
+    id: device.id,
+    line: device.line,
+    pins: device.pins.map((pin) => [`${device.id}.${pin}`, '板の外'] as const),
+    hint: DEVICE_HINT,
+  })),
+];
+
 function unwiredPins(input: ErcInput): FenceError[] {
   const netOf = new Map<string, Net>();
   for (const net of input.netlist) {
@@ -43,14 +74,13 @@ function unwiredPins(input: ErcInput): FenceError[] {
   }
 
   const found: FenceError[] = [];
-  for (const part of input.parts) {
+  for (const { id, line, pins, hint } of terminalsOf(input)) {
     const loose: string[] = [];
-    for (const [index, pin] of part.pins.entries()) {
-      const ref = pinRef(part, index);
+    for (const [ref, where] of pins) {
       const net = netOf.get(ref);
       if (!net || net.refs.length > 1) continue;
       if (net.strips.some((strip) => input.namedStrips.has(strip))) continue;
-      loose.push(`${safeToken(ref)} (${formatAddress(pin.address)})`);
+      loose.push(`${safeToken(ref)} (${where})`);
     }
     if (loose.length === 0) continue;
 
@@ -60,9 +90,8 @@ function unwiredPins(input: ErcInput): FenceError[] {
       ? `${loose.slice(0, MAX_SHOWN_PINS).join('、')} ほか ${loose.length - MAX_SHOWN_PINS} 本`
       : loose.join('、');
     found.push(notice(
-      `${safeToken(part.id)} の ${loose.length} 本の足がどこにもつながっていません (${shown})`
-      + '。全穴が独立しているので、配線を書くまで挿しただけではつながりません',
-      part.line,
+      `${safeToken(id)} の ${loose.length} 本の足がどこにもつながっていません (${shown})。${hint}`,
+      line,
     ));
   }
   return found;

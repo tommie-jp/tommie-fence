@@ -1,3 +1,4 @@
+import { THEME_NAMES } from './limits.ts';
 /**
  * perfboard フェンスの型。**ブレッドボードと分けてある理由は物理**で、
  * ユニバーサル基板は全穴が独立している (列が最初から導通していない)。
@@ -73,6 +74,54 @@ export type PlacedPart = {
   readonly pins: readonly { readonly address: Address; readonly strip: StripId }[];
 };
 
+/** 板の外の機器を置く側。 */
+export type DeviceSide = 'top' | 'bottom';
+
+/**
+ * 板の外の機器。**盤面には載らない**ので部品とは別に持つ。
+ * 配線からは `BAT.+` の形で指す。
+ */
+export type DeviceSpec = {
+  readonly id: string;
+  readonly at: DeviceSide;
+  readonly label: string;
+  readonly pins: readonly string[];
+  /** 書かれていた行。ERC のお知らせを書いた場所に返すために持つ。 */
+  readonly line: number | null;
+};
+
+/** 書かれたままの注釈 1 つ。 */
+export type NoteSpec = {
+  readonly kind: 'mark' | 'box' | 'arrow' | 'text';
+  readonly from: string;
+  readonly to: string | null;
+  readonly color: string | null;
+  readonly text: string | null;
+  readonly line: number | null;
+};
+
+/** 番地に直した注釈。 */
+export type ResolvedNote = {
+  readonly kind: NoteSpec['kind'];
+  readonly from: Address;
+  readonly to: Address | null;
+  readonly color: string | null;
+  readonly text: string | null;
+};
+
+/** `style:` に書かれた項目。**書かれたものだけ**を持ち、既定はテーマが決める。 */
+/** 選べるテーマの名前。**実装のある名前と型で結ぶ** (render/theme.ts の `THEMES`)。 */
+export type ThemeName = (typeof THEME_NAMES)[number];
+
+export type StyleSpec = {
+  readonly theme: ThemeName | null;
+  readonly width: number | null;
+  /** お知らせを図の下に出すか。読めなかった行はこれに関わらず必ず出る。 */
+  readonly debug: boolean | null;
+  /** 図の右下に処理系の版を刻むか。 */
+  readonly stamp: boolean | null;
+};
+
 /** `points:` の 1 行。**行番号を落とさない** — 落とすと報告が行を指せなくなる。 */
 export type PointSpec = {
   readonly name: string;
@@ -108,4 +157,7 @@ export type FenceDocument = {
   readonly wires: readonly WireSpec[];
   /** `points:` で名前を付けた穴。**定義順**で持つ (ネット名の当て方が定義順)。 */
   readonly points: readonly PointSpec[];
+  readonly style: StyleSpec;
+  readonly notes: readonly NoteSpec[];
+  readonly devices: readonly DeviceSpec[];
 };

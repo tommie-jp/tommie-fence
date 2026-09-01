@@ -14,6 +14,8 @@ GitHub のようにフェンスが描画されない場所で、書き方と出�
 | [04-points.md](04-points.md) | 穴に名前を付ける (`points:`) |
 | [05-erc.md](05-erc.md) | 図のとおりに組むと動かないところ (ERC と当たり判定) |
 | [06-ic.md](06-ic.md) | DIP・SIP・3 本足の部品 |
+| [07-device.md](07-device.md) | 板の外の機器 (`device`。電池・スピーカーなど) |
+| [08-notes.md](08-notes.md) | 注釈 (`notes:`) と、テーマ・幅 (`style:`) |
 
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではない。

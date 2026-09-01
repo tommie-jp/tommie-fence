@@ -48,3 +48,35 @@ describe('createLayout', () => {
     expect(wide.height).toBe(layout.height);
   });
 });
+
+describe('板の外の機器の帯', () => {
+  const board = createBoard({ cols: 10, rows: 6 });
+  const plain = createLayout(board);
+
+  test('空けなければ帯は無い', () => {
+    expect(plain.deviceBands).toEqual({ top: null, bottom: null });
+  });
+
+  test('上に空けると板が下がり、画布が伸びる', () => {
+    const withTop = createLayout(board, { deviceTop: true });
+
+    expect(withTop.board.y).toBeGreaterThan(plain.board.y);
+    expect(withTop.height).toBeGreaterThan(plain.height);
+    expect(withTop.deviceBands.top?.y).toBeLessThan(withTop.board.y);
+  });
+
+  test('下に空けても板は動かず、画布だけ伸びる', () => {
+    const withBottom = createLayout(board, { deviceBottom: true });
+
+    expect(withBottom.board.y).toBe(plain.board.y);
+    expect(withBottom.height).toBeGreaterThan(plain.height);
+    expect(withBottom.deviceBands.bottom?.y).toBeGreaterThan(withBottom.board.y);
+  });
+
+  test('帯は板と同じ幅', () => {
+    const both = createLayout(board, { deviceTop: true, deviceBottom: true });
+
+    expect(both.deviceBands.top?.width).toBe(both.board.width);
+    expect(both.deviceBands.bottom?.width).toBe(both.board.width);
+  });
+});

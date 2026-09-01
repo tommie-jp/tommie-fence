@@ -7,6 +7,8 @@ import { renderBoard } from './render/board.ts';
 import { renderParts } from './render/parts.ts';
 import { renderWires } from './render/wires.ts';
 import { renderTitle } from './render/title.ts';
+import { renderNotes } from './render/notes.ts';
+import { layoutDevices, renderDevices } from './render/devices.ts';
 import { netlistOf, resolveWires } from './wiring/wiring.ts';
 import { checkErc } from './erc/erc.ts';
 import { checkFit } from './placement/collide.ts';
@@ -16,8 +18,8 @@ import { offBoardReason } from './model/board.ts';
 import { fenceError, notice, safeToken } from './errors.ts';
 import { renderDocument } from './render/document.ts';
 import { renderErrorBanner, renderErrorCard } from './render/errorHtml.ts';
-import { THEME } from './render/theme.ts';
-import type { Address, FenceError } from './types.ts';
+import { resolveStyle } from './render/theme.ts';
+import type { Address, FenceError, ResolvedNote } from './types.ts';
 import type { Net } from 'fence-kit';
 
 /** 行の無いものを先に、あとは行の順に。同じ行なら見つけた順を保つ。 */
@@ -70,7 +72,16 @@ export function renderPerfboard(input: string): RenderResult {
   }
 
   const { board, title } = parsed.doc;
-  const layout = createLayout(board, { title: title !== null });
+  const style = resolveStyle(parsed.doc.style);
+  const THEME = style.theme;
+  const { devices } = parsed.doc;
+  const layout = createLayout(board, {
+    title: title !== null,
+    deviceTop: devices.some((device) => device.at === 'top'),
+    deviceBottom: devices.some((device) => device.at === 'bottom'),
+  });
+  const placedDevices = layoutDevices(devices, layout);
+  const devicePins = new Map(devices.map((device) => [device.id, new Set(device.pins)]));
   const placement = placeParts(parsed.doc.parts, board);
 
   const pointErrors: FenceError[] = [];
@@ -89,8 +100,27 @@ export function renderPerfboard(input: string): RenderResult {
     named.push([address, name]);
   }
 
-  const wiring = resolveWires(parsed.doc.wires, points, board);
-  const netlist = netlistOf(placement.parts, wiring.wires, named);
+  // 注釈は回路の一員ではないので、読めなくても図は出る。
+  const noteErrors: FenceError[] = [];
+  const notes: ResolvedNote[] = [];
+  for (const note of parsed.doc.notes) {
+    const from = parseAddress(note.from);
+    const to = note.to === null ? null : parseAddress(note.to);
+    // 見るのは書かれた番地だけ (`to` を書かない印では `from` 1 つ)。
+    const written = note.to === null ? [from] : [from, to];
+    const offBoard = written.some((address) => address === null || offBoardReason(board, address) !== null);
+    if (from === null || offBoard) {
+      noteErrors.push(fenceError(
+        `注釈の番地を板に置けません: ${safeToken(note.to === null ? note.from : `${note.from} ${note.to}`)}`,
+        note.line,
+      ));
+      continue;
+    }
+    notes.push({ kind: note.kind, from, to, color: note.color, text: note.text });
+  }
+
+  const wiring = resolveWires(parsed.doc.wires, points, board, devicePins);
+  const netlist = netlistOf(placement.parts, wiring.wires, named, devices, wiring.deviceLinks);
 
   // **読めなかったところがあるうちは ERC を掛けない。** 落ちた配線を勘定に
   // 入れないまま「つながっていません」と言うと、**書いた配線について書き忘れを
@@ -105,6 +135,7 @@ export function renderPerfboard(input: string): RenderResult {
         wires: wiring.wires,
         netlist,
         namedStrips: new Set(named.map(([address]) => holeStrip(address))),
+        devices,
       }),
       ...checkFit(placement.parts, layout),
     ];
@@ -115,20 +146,29 @@ export function renderPerfboard(input: string): RenderResult {
     renderTitle(title, layout, THEME)
       + renderBoard(board, layout, THEME)
       + renderWires(wiring.wires, layout, THEME)
-      + renderParts(placement.parts, layout, THEME),
+      + renderDevices(placedDevices.placed, THEME)
+      + renderParts(placement.parts, layout, THEME)
+      // 注釈は一番上。**指したものが下に隠れると印の意味が無くなる。**
+      + renderNotes(notes, layout, THEME),
+    { theme: THEME, width: style.width, stamp: style.stamp },
   );
 
   // **行順に並べる。** 段ごとに集めた順のままだと、帯の打ち切り (8 件) で
   // 後ろの段の報告から先に消え、行を追って直せなくなる。
   const collected = [
-    ...parsed.errors, ...pointErrors, ...placement.errors, ...wiring.errors, ...erc,
+    ...parsed.errors, ...pointErrors, ...placement.errors, ...wiring.errors, ...noteErrors,
+    ...placedDevices.notices, ...erc,
   ];
   const reported = attachSourceText(byLine(collected), source);
   const errors = reported.filter((error) => error.notice !== true);
   const notices = reported.filter((error) => error.notice === true);
   // **帯は読めなかったものを先に。** ERC のお知らせは足 1 本につき 1 件出るので、
   // 行順のまま並べると打ち切りで**直さないと図が出ないほうが消える**。
-  return { svg, netlist, errors, notices, errorHtml: renderErrorBanner([...errors, ...notices]) };
+  //
+  // `style: debug: off` で伏せられるのは**お知らせだけ**。読めなかった行は
+  // この切り替えの対象ではない (伏せると「無かったこと」に化ける)。
+  const shown = style.debug ? [...errors, ...notices] : errors;
+  return { svg, netlist, errors, notices, errorHtml: renderErrorBanner(shown) };
 }
 
 export { extractPerfboardFences } from './fences.ts';

@@ -6,10 +6,10 @@ Markdown の ` ```perfboard ` フェンスをユニバーサル基板の実体�
 
 ## いまどこまで来ているか
 
-**Phase 6 まで。** 2 本足の部品なら、置いて・つないで・検証して・書き出す
-ところまで一通り動く。板は穴数でも名前 (`akizuki-c`) でも書ける。
+**Phase 6 とその先の 4 つまで。** 2 本足・3 本足・DIP・SIP を置き、板の外の
+機器 (`device`) につなぎ、注釈 (`notes:`) を付け、テーマと幅 (`style:`) を
+選べる。板は穴数でも名前 (`akizuki-c`) でも書ける。
 文法は [docs/01-syntax.md](docs/01-syntax.md)、例は [examples/](examples/README.md)。
-3 本足・DIP、`device` (基板外の機器)、`notes:`、`style:` はまだ無い。
 フェーズ分けと、何をどこから持ってくるかの実測は
 `~/52-tommie-fence/docs/05-perfboard-fenceの起こし方.md` にある (private)。
 
