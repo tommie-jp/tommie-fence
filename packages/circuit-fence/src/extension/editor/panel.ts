@@ -4,7 +4,7 @@ import { parseAddress } from '../../core/model/address.ts';
 import { movePart } from '../../core/edit/move.ts';
 import { movePoint } from '../../core/edit/point.ts';
 import { describeDiff } from './movePart.ts';
-import { createEditorPort } from './vscodePort.ts';
+import { applyToDocument } from './vscodePort.ts';
 import { makeNonce, panelHtml } from './panelHtml.ts';
 
 /**
@@ -13,23 +13,64 @@ import { makeNonce, panelHtml } from './panelHtml.ts';
  * 図そのものではなくマップを掴ませる理由は `core/edit/map.ts` の頭書き。
  * ドラッグ中は選択の見た目だけが動き、**放したとき 1 回だけ**書き換えて
  * コンパイルする (TeX → SVG は 1 図 1 秒前後かかるので追従させない)。
+ *
+ * **パネルは開いたフェンスの文書を覚える。** 「いまアクティブな Markdown」を
+ * 毎回探すと、パネルを Markdown と同じタブグループに入れた配置で詰む —
+ * パネルを前に出した時点で Markdown が隠れてアクティブでなくなり、
+ * 掴むたびに「エディタが前に出ていません」で止まる (実際に踏まれた)。
+ * カーソルが別のフェンスに入ったら覚え直す (マップの乗り換えは今までどおり)。
  */
 
 let panel: vscode.WebviewPanel | null = null;
+
+/** 覚えているフェンス。文書は URI で、フェンスは開き記号の行で引き直す。 */
+let bound: { readonly uri: vscode.Uri; readonly line: number } | null = null;
 
 const markdownEditor = (): vscode.TextEditor | null => {
   const editor = vscode.window.activeTextEditor;
   return editor?.document.languageId === 'markdown' ? editor : null;
 };
 
-/** いまカーソルのあるフェンスからマップを組む。無ければ null。 */
-function mapHtmlNow(): { html: string; fenceLine: number } | null {
-  const editor = markdownEditor();
-  if (!editor) return null;
+type FenceNow = {
+  readonly document: vscode.TextDocument;
+  readonly source: string;
+  readonly line: number;
+};
 
-  const fence = fenceAt(editor.document.getText(), editor.selection.active.line + 1);
+/**
+ * いま掴めるフェンス。アクティブな Markdown のカーソルにフェンスがあれば
+ * そちらへ乗り換え、無ければ覚えている文書のフェンスを引き直す。
+ */
+function currentFence(): FenceNow | null {
+  const editor = markdownEditor();
+  if (editor) {
+    const fence = fenceAt(editor.document.getText(), editor.selection.active.line + 1);
+    if (fence) {
+      bound = { uri: editor.document.uri, line: fence.line };
+      return { document: editor.document, source: fence.source, line: fence.line };
+    }
+  }
+
+  if (bound === null) return null;
+  const remembered = bound;
+  const document = vscode.workspace.textDocuments.find(
+    (one) => one.uri.toString() === remembered.uri.toString(),
+  );
+  if (!document) return null;
+
+  // 開き記号の行で引き直す。フェンスの中の書き換えでは動かない行だが、
+  // 上に行が足されてずれたら見失う (そのときは掴み直してもらう)。
+  const fence = fenceAt(document.getText(), remembered.line);
   if (!fence) return null;
-  return { html: renderMapHtml(gridMap(fence.source)), fenceLine: fence.line };
+  bound = { uri: document.uri, line: fence.line };
+  return { document, source: fence.source, line: fence.line };
+}
+
+/** いま掴めるフェンスからマップを組む。無ければ null。 */
+function mapHtmlNow(): { html: string } | null {
+  const fence = currentFence();
+  if (!fence) return null;
+  return { html: renderMapHtml(gridMap(fence.source)) };
 }
 
 export function openMapPanel(context: vscode.ExtensionContext): void {
@@ -58,7 +99,7 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
     mapHtml: now.html,
   });
 
-  view.onDidDispose(() => { panel = null; }, null, context.subscriptions);
+  view.onDidDispose(() => { panel = null; bound = null; }, null, context.subscriptions);
 
   view.webview.onDidReceiveMessage(
     async (message: { kind: string; part?: string; from?: string; to?: string }) => {
@@ -77,10 +118,11 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
   );
 
   // 手で書き換えたときもマップを追いつかせる。デバウンスは要らない
-  // (組むのはパース済みモデルからで、TeX は通らない)。
+  // (組むのはパース済みモデルからで、TeX は通らない)。覚えている文書は
+  // 隠れていても追う (パネルの書き換え自体がこの経路で反映される)。
   const listeners = [
     vscode.workspace.onDidChangeTextDocument((event) => {
-      if (event.document === markdownEditor()?.document) refresh();
+      if (event.document.uri.toString() === bound?.uri.toString()) refresh();
     }),
     vscode.window.onDidChangeTextEditorSelection(() => refresh()),
   ];
@@ -99,8 +141,8 @@ function refresh(): void {
   // できないのに掴めてしまい、返る文面も的を外す。
   void panel.webview.postMessage({
     kind: 'map',
-    html: '<p class="cf-note">カーソルが circuit フェンスの外にあります。'
-      + 'フェンスの中へ戻すとマップが出ます。</p>',
+    html: '<p class="cf-note">フェンスを見失いました (元の Markdown を閉じたか、'
+      + 'フェンスの行がずれました)。circuit フェンスの中にカーソルを置くとマップが出ます。</p>',
   });
 }
 
@@ -108,20 +150,14 @@ const say = (text: string): void => {
   if (panel) void panel.webview.postMessage({ kind: 'status', text });
 };
 
-/** いま掴めるフェンス。エディタが前に出ていない・フェンスの外なら理由を返す。 */
-function fenceNow(): { source: string; line: number } | null {
-  const editor = markdownEditor();
-  if (!editor) {
-    // **黙って戻らない。** webview は「…」を出したまま待ってしまう。
-    say('Markdown のエディタが前に出ていません');
-    return null;
-  }
-  const fence = fenceAt(editor.document.getText(), editor.selection.active.line + 1);
+/** いま掴めるフェンス。見失っていたら理由を言う (**黙って戻らない** — webview は「…」のまま待ってしまう)。 */
+function fenceNow(): FenceNow | null {
+  const fence = currentFence();
   if (!fence) {
-    say('カーソルが circuit フェンスの外にあります (フェンスの中へ戻します)');
+    say('フェンスを見失いました。circuit フェンスの中にカーソルを置いて掴み直します');
     return null;
   }
-  return { source: fence.source, line: fence.line };
+  return fence;
 }
 
 /**
@@ -163,7 +199,7 @@ async function applyNodeMove(written: string, target: string): Promise<void> {
   }
   if (!(await agreed(describeDiff(result.value.diff), `${written} の節点を ${target} へ`))) return;
 
-  const applied = await createEditorPort().apply(fence.line, result.value.edits);
+  const applied = await applyToDocument(fence.document, fence.line, result.value.edits);
   say(applied ? `${written} の節点を ${target} へ動かしました` : '書き換えられませんでした');
 }
 
@@ -190,6 +226,6 @@ async function applyMove(partId: string, written: string): Promise<void> {
 
   if (!(await agreed(describeDiff(result.value.diff), `${partId} を ${written} へ`))) return;
 
-  const applied = await createEditorPort().apply(fence.line, result.value.edits);
+  const applied = await applyToDocument(fence.document, fence.line, result.value.edits);
   say(applied ? `${partId} を ${written} へ動かしました` : '書き換えられませんでした');
 }
