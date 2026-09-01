@@ -1058,3 +1058,54 @@ describe('parts that share a hole with a wire endpoint', () => {
     expect(svg).toContain('x1="362" y1="200" x2="422" y2="200"');
   });
 });
+
+describe('wires that join two holes in the same row', () => {
+  /**
+   * その点から始まる配線の折れ線。**「まっすぐでないこと」を無いことで確かめない**:
+   * 座標の定数がずれても黙って通ってしまうので、経路そのものを取り出して見る。
+   */
+  const wireFrom = (svg: string, start: string): string => {
+    const paths = [...svg.matchAll(/ d="(M [^"]+)"/g)].map((match) => match[1]!);
+    const found = paths.find((path) => path.startsWith(`M ${start} `));
+    expect(found).toBeDefined();
+    return found!;
+  };
+
+  test('lays one straight jumper along the row instead of climbing out to a lane', () => {
+    const { svg } = renderBreadboard('wires:\n  - b10 -- b14 orange\n');
+
+    expect(wireFrom(svg, '222 104')).toBe('M 222 104 L 302 104');
+  });
+
+  test('goes around a part whose body lies over the holes in between', () => {
+    // 2 本足の部品の障害物はキャプションの帯だけなので、足の内側に収まる配線は
+    // 胴の上をまっすぐ通れてしまう。塞がった穴のほうで気づく。
+    const { svg } = renderBreadboard('parts:\n  R1: resistor a5 a20\nwires:\n  - a9 -- a16\n');
+
+    // レーンへ回ると角が丸められる。まっすぐなら L が 1 つあるだけ。
+    expect(wireFrom(svg, '202 84')).toContain('Q');
+  });
+
+  test('goes around a part standing upright in a hole it would cover', () => {
+    // a5–c5 の抵抗は b5 の上に胴を描く。足の並びを 1 行に限ると、そこを突き抜ける。
+    const { svg } = renderBreadboard('parts:\n  R1: resistor a5 c5\nwires:\n  - b1 -- b10\n');
+
+    expect(wireFrom(svg, '42 104')).toContain('Q');
+  });
+
+  test('goes around a part that was slid into the holes it would cover', () => {
+    // R1 は a9 の配線に押されて b 行へ寄る。寄った先はまっすぐな配線の下。
+    const { svg } = renderBreadboard(
+      'parts:\n  R1: resistor a9 a10\nwires:\n  - a9 -- +t9\n  - b8 -- b11\n',
+    );
+
+    expect(wireFrom(svg, '182 104')).toContain('Q');
+  });
+
+  test('goes around a part whose legs both sit on the same rail', () => {
+    // レールは行の格子に乗らないので、足の間の穴を別に数えないと胴を突き抜ける。
+    const { svg } = renderBreadboard('parts:\n  R1: resistor +t5 +t20\nwires:\n  - +t8 -- +t15\n');
+
+    expect(wireFrom(svg, '182 30')).toContain('Q');
+  });
+});

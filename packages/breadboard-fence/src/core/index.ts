@@ -8,7 +8,7 @@ import type { Layout } from './model/layout.ts';
 import { computeNets } from './model/nets.ts';
 import type { NetMember } from './model/nets.ts';
 import { parseFence } from './parser/parseFence.ts';
-import { placeParts } from './placement/place.ts';
+import { drawnOverHoles, placeParts } from './placement/place.ts';
 import { relocateParts } from './placement/relocate.ts';
 import type { WireEnd } from './placement/relocate.ts';
 import { routeWire, routeWires } from './router/route.ts';
@@ -122,7 +122,11 @@ export function renderBreadboard(input: string): RenderResult {
     ...parts.flatMap((part) => partObstacles(part, layout, style.theme)),
     ...[...placements.values()].map((device) => device.rect),
   ];
-  const rendered: RenderedWire[] = routeWires(drawable, layout, obstacles).map((points, index) => ({
+  // 部品の絵が載っている穴。行に沿ってまっすぐ引く配線がこの上を通らないようにする
+  // (通ると、その部品にもつながっているように見える)。
+  const partHoles = parts.flatMap((part) =>
+    drawnOverHoles(part).map((address) => layout.point(address)));
+  const rendered: RenderedWire[] = routeWires(drawable, layout, { obstacles, partHoles }).map((points, index) => ({
     points,
     color: drawable[index]?.color ?? DEFAULT_WIRE_COLOR,
   }));

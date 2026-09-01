@@ -33,7 +33,7 @@ describe('routeWire', () => {
   });
 
   test('still uses a lane once the two holes are far apart', () => {
-    const path = routeWire(at('d5'), at('d20'), layout);
+    const path = routeWire(at('d5'), at('e20'), layout);
 
     expect(path).toHaveLength(4);
   });
@@ -65,8 +65,8 @@ describe('routeWire', () => {
   });
 
   test('shifts the lane when an offset is given so parallel wires do not overlap', () => {
-    const straight = routeWire(at('a5'), at('a20'), layout);
-    const shifted = routeWire(at('a5'), at('a20'), layout, { offset: 6 });
+    const straight = routeWire(at('a5'), at('b20'), layout);
+    const shifted = routeWire(at('a5'), at('b20'), layout, { offset: 6 });
 
     expect(shifted[1]?.y).not.toBe(straight[1]?.y);
   });
@@ -113,19 +113,19 @@ describe('routeWire', () => {
 
 describe('routeWires', () => {
   test('keeps parallel wires that share a lane apart', () => {
-    const [first, second] = routeWires([request('a5', 'a20'), request('b6', 'b19')], layout);
+    const [first, second] = routeWires([request('a5', 'b20'), request('b6', 'a19')], layout);
 
     expect(first?.[1]?.y).not.toBe(second?.[1]?.y);
   });
 
   test('reuses the same height for wires that never overlap', () => {
-    const [first, second] = routeWires([request('a1', 'a5'), request('a20', 'a25')], layout);
+    const [first, second] = routeWires([request('a1', 'b5'), request('a20', 'b25')], layout);
 
     expect(first?.[1]?.y).toBe(second?.[1]?.y);
   });
 
   test('returns one path per wire in the order they were given', () => {
-    const paths = routeWires([request('a5', 'a20'), request('a5', 'j5'), request('b6', 'b19')], layout);
+    const paths = routeWires([request('a5', 'b20'), request('a5', 'j5'), request('b6', 'a19')], layout);
 
     expect(paths).toHaveLength(3);
     expect(paths[1]).toEqual([at('a5'), at('j5')]);
@@ -135,7 +135,7 @@ describe('routeWires', () => {
     const ravine = { x: 0, y: layout.ravineY - 8, width: layout.width, height: 16 };
 
     const [plain] = routeWires([request('+t5', 'j20')], layout);
-    const [avoiding] = routeWires([request('+t5', 'j20')], layout, [ravine]);
+    const [avoiding] = routeWires([request('+t5', 'j20')], layout, { obstacles: [ravine] });
 
     expect(plain?.[1]?.y).toBe(layout.ravineY);
     expect(avoiding?.[1]?.y).not.toBe(layout.ravineY);
@@ -144,7 +144,7 @@ describe('routeWires', () => {
   test('still routes when every lane is blocked', () => {
     const everywhere = { x: 0, y: 0, width: layout.width, height: layout.height };
 
-    const [path] = routeWires([request('a5', 'a20')], layout, [everywhere]);
+    const [path] = routeWires([request('a5', 'a20')], layout, { obstacles: [everywhere] });
 
     expect(path?.[0]).toEqual(at('a5'));
     expect(path?.at(-1)).toEqual(at('a20'));
@@ -169,22 +169,25 @@ describe('routeWires keeping wires from crossing each other', () => {
   // 一方はレーンの上の穴から、もう一方は下の穴から来る。
   const fromAbove = request('-t3', '-t20');
   const fromBelow = request('a3', 'a20');
+  // どれも同じ行の 2 穴だが、**またぐ穴に足が挿さっている**ので
+  // まっすぐには結べず、レーンへ出る。ここで見たいのはレーンの使い方のほう。
+  const plugged = { partHoles: [at('-t10'), at('a10'), at('b12'), at('f14')] };
 
   test('sends wires that come from opposite sides to opposite sides of the lane', () => {
-    const [above, below] = routeWires([fromAbove, fromBelow], layout);
+    const [above, below] = routeWires([fromAbove, fromBelow], layout, plugged);
 
     expect(above?.[1]?.y).not.toBe(below?.[1]?.y);
     expect(countCrossings([above!, below!])).toBe(0);
   });
 
   test('does not care which of the two was written first', () => {
-    const [below, above] = routeWires([fromBelow, fromAbove], layout);
+    const [below, above] = routeWires([fromBelow, fromAbove], layout, plugged);
 
     expect(countCrossings([above!, below!])).toBe(0);
   });
 
   test('still runs a lone wire down the middle of its lane', () => {
-    const [only] = routeWires([fromBelow], layout);
+    const [only] = routeWires([fromBelow], layout, plugged);
     const lane = layout.lanes.find((candidate) => candidate.y === only?.[1]?.y);
 
     expect(lane).toBeDefined();
@@ -193,7 +196,7 @@ describe('routeWires keeping wires from crossing each other', () => {
   test('gives the same answer every time it is asked', () => {
     const wires = [request('a5', 'a20'), request('b6', 'b19'), fromAbove, fromBelow];
 
-    expect(routeWires(wires, layout)).toEqual(routeWires(wires, layout));
+    expect(routeWires(wires, layout, plugged)).toEqual(routeWires(wires, layout, plugged));
   });
 
   /** 全部が重なる配線を、溝のレーンに n 本集める。 */
@@ -214,7 +217,7 @@ describe('routeWires keeping wires from crossing each other', () => {
 
   test('uses every slot the lane can hold before letting any two wires share a height', () => {
     // 溝のレーンの厚みで持てるのは 5 段。5 本までは 1 本も重ならない。
-    const paths = routeWires(crowd(5), layout);
+    const paths = routeWires(crowd(5), layout, plugged);
 
     expect(new Set(paths.map((path) => longestRun(path).y)).size).toBe(5);
     expect(sameHeightPairs(paths)).toEqual([]);
@@ -223,8 +226,8 @@ describe('routeWires keeping wires from crossing each other', () => {
   test('doubles up only as much as it must once the lane is full', () => {
     // 6 本目からは重ねるしかない。**増えるのは 1 組ずつ**で、
     // 塞がっている範囲を上書きして「空いている」ことにしてしまうと一気に崩れる。
-    expect(sameHeightPairs(routeWires(crowd(6), layout))).toHaveLength(1);
-    expect(sameHeightPairs(routeWires(crowd(7), layout))).toHaveLength(2);
+    expect(sameHeightPairs(routeWires(crowd(6), layout, plugged))).toHaveLength(1);
+    expect(sameHeightPairs(routeWires(crowd(7), layout, plugged))).toHaveLength(2);
   });
 
   test('routes a figure at the wire limit with parts in the way', () => {
@@ -238,7 +241,7 @@ describe('routeWires keeping wires from crossing each other', () => {
       width: 24, height: layout.pitch,
     }));
 
-    const paths = routeWires(many, layout, parts);
+    const paths = routeWires(many, layout, { obstacles: parts });
 
     // 速さは測らない。壁時計は CI の混み具合で動くので、落ちても直せる情報にならない。
     // ここで見るのは、上限いっぱいでも全部の配線が端点をつないで返ってくること。
@@ -247,6 +250,108 @@ describe('routeWires keeping wires from crossing each other', () => {
       expect(path[0]).toEqual(many[index]!.from);
       expect(path.at(-1)).toEqual(many[index]!.to);
     });
+  });
+});
+
+describe('routeWires connecting two holes in the same row', () => {
+  test('runs straight along the row instead of climbing out to a lane', () => {
+    const [path] = routeWires([request('b10', 'b14')], layout);
+
+    expect(path).toEqual([at('b10'), at('b14')]);
+  });
+
+  test('stays straight however far apart the two holes are', () => {
+    const [path] = routeWires([request('b2', 'b28')], layout);
+
+    expect(path).toEqual([at('b2'), at('b28')]);
+  });
+
+  test('climbs out to a lane when a part body lies along the row', () => {
+    const body = { x: at('b11').x - 10, y: layout.rowY('b') - 9, width: 60, height: 18 };
+
+    const [path] = routeWires([request('b10', 'b14')], layout, { obstacles: [body] });
+
+    expect(path).toHaveLength(4);
+  });
+
+  test('ignores a label that only grazes the row', () => {
+    // 部品のラベルは行と行の隙間に置かれ、下の縁が隣の行に 1px 掛かる。
+    // 掛かっただけで断ると、ラベルのある部品の隣の行はどこもまっすぐ通れない。
+    const label = { x: at('b5').x, y: layout.rowY('a') + 7, width: 200, height: 14 };
+
+    const [path] = routeWires([request('b10', 'b14')], layout, { obstacles: [label] });
+
+    expect(path).toEqual([at('b10'), at('b14')]);
+  });
+
+  test('climbs out to a lane when a part leg sits in a hole it would cover', () => {
+    const [path] = routeWires([request('b10', 'b14')], layout, { partHoles: [at('b12')] });
+
+    expect(path).toHaveLength(4);
+  });
+
+  test('runs straight past a leg that sits in one of its own two holes', () => {
+    const [path] = routeWires([request('b10', 'b14')], layout, { partHoles: [at('b10')] });
+
+    expect(path).toEqual([at('b10'), at('b14')]);
+  });
+
+  test('climbs out to a lane when a part body lies over the holes between its legs', () => {
+    // 2 本足の部品の障害物はキャプションの帯だけで、胴は入っていない。
+    // 足と足の間に収まる配線は、塞がった穴のほうでしか気づけない。
+    const across = [at('b9'), at('b10'), at('b11'), at('b12'), at('b13'), at('b14'), at('b15')];
+
+    const [path] = routeWires([request('b10', 'b14')], layout, { partHoles: across });
+
+    expect(path).toHaveLength(4);
+  });
+
+  test('hops straight to a nearby hole when nothing sits between', () => {
+    const [path] = routeWires([request('b10', 'b13')], layout);
+
+    expect(path).toEqual([at('b10'), at('b13')]);
+  });
+
+  test('climbs out to a lane even for a short hop once a hole it covers is taken', () => {
+    // 短いホップも同じ規則で見る。3 ピッチかどうかで、胴や足の上を
+    // 通ってよいかが変わる理由は無い。
+    const [path] = routeWires([request('b10', 'b13')], layout, { partHoles: [at('b11')] });
+
+    expect(path).toHaveLength(4);
+  });
+
+  test('climbs out to a lane when another wire ends in a hole it would cover', () => {
+    const [covering, other] = routeWires([request('b10', 'b14'), request('b12', 'j12')], layout);
+
+    expect(covering).toHaveLength(4);
+    expect(other).toEqual([at('b12'), at('j12')]);
+  });
+
+  test('lets two runs share the hole where they meet', () => {
+    const [first, second] = routeWires([request('b10', 'b14'), request('b14', 'b18')], layout);
+
+    expect(first).toEqual([at('b10'), at('b14')]);
+    expect(second).toEqual([at('b14'), at('b18')]);
+  });
+
+  test('sends the second of two runs that would land on the same line out to a lane', () => {
+    const [first, second] = routeWires([request('b10', 'b14'), request('b10', 'b14')], layout);
+
+    expect(first).toEqual([at('b10'), at('b14')]);
+    expect(second).toHaveLength(4);
+  });
+
+  test('does not lay a wire along the edge of a device band', () => {
+    // 板の外の機器のピンは行に乗っていない。高さが揃っていても「同じ行」ではないので、
+    // 帯の縁に線を這わせても、どの穴につながっているのかは読めない。
+    const deviceLayout = createLayout(createBoard('half'), { deviceTop: true });
+    const band = deviceLayout.deviceBands.top!;
+    const from = { x: band.x + 20, y: band.y + band.height };
+    const to = { x: band.x + 160, y: band.y + band.height };
+
+    const [path] = routeWires([{ from, to, hints: [] }], deviceLayout);
+
+    expect(path?.length).toBeGreaterThan(2);
   });
 });
 
@@ -266,7 +371,7 @@ describe('routeWires around parts standing in the way', () => {
   test('steps aside instead of running the wire through a part on its way out', () => {
     const blocker = above('a5');
 
-    const [path] = routeWires([request('a5', 'a20')], layout, [blocker]);
+    const [path] = routeWires([request('a5', 'b20')], layout, { obstacles: [blocker] });
 
     expect(pathHitsAny(path!, [blocker], 0)).toBe(false);
   });
@@ -274,15 +379,15 @@ describe('routeWires around parts standing in the way', () => {
   test('still starts and ends at the two holes after stepping aside', () => {
     const blocker = above('a5');
 
-    const [path] = routeWires([request('a5', 'a20')], layout, [blocker]);
+    const [path] = routeWires([request('a5', 'b20')], layout, { obstacles: [blocker] });
 
     expect(path?.[0]).toEqual(at('a5'));
-    expect(path?.at(-1)).toEqual(at('a20'));
+    expect(path?.at(-1)).toEqual(at('b20'));
   });
 
   test('leaves the wire alone when nothing stands in its way', () => {
-    const [plain] = routeWires([request('a5', 'a20')], layout);
-    const [elsewhere] = routeWires([request('a5', 'a20')], layout, [above('a25')]);
+    const [plain] = routeWires([request('a5', 'b20')], layout);
+    const [elsewhere] = routeWires([request('a5', 'b20')], layout, { obstacles: [above('a25')] });
 
     expect(elsewhere).toEqual(plain);
   });
@@ -290,28 +395,28 @@ describe('routeWires around parts standing in the way', () => {
   test('keeps the detour close to the hole rather than wandering off', () => {
     const blocker = above('a5');
 
-    const [path] = routeWires([request('a5', 'a20')], layout, [blocker]);
+    const [path] = routeWires([request('a5', 'b20')], layout, { obstacles: [blocker] });
     const detour = Math.max(...path!.map((point) => Math.abs(point.x - at('a5').x)));
 
-    expect(detour).toBeLessThanOrEqual(Math.abs(at('a20').x - at('a5').x));
+    expect(detour).toBeLessThanOrEqual(Math.abs(at('b20').x - at('a5').x));
   });
 
   test('goes straight through when the part is too wide to step around', () => {
     const wall = { x: 0, y: layout.rowY('a') - layout.pitch * 1.4, width: layout.width, height: layout.pitch };
 
-    const [path] = routeWires([request('a5', 'a20')], layout, [wall]);
+    const [path] = routeWires([request('a5', 'b20')], layout, { obstacles: [wall] });
 
     // 逃げ場が無いときは今までどおり突き抜ける (部品を上に描いて読ませる)。
     expect(path).toHaveLength(4);
   });
 
   test('climbs between two hole columns so the detour does not read as a connection', () => {
-    const [path] = routeWires([request('a5', 'a20')], layout, [above('a5')]);
+    const [path] = routeWires([request('a5', 'b20')], layout, { obstacles: [above('a5')] });
     const columns = new Set(Array.from({ length: 30 }, (_, index) => layout.colX(index + 1)));
 
     // 寄り道した縦の道は穴の列と列の間を通る。列の真上を走ると、
     // 通り道の穴に挿さっているように見えてしまう。
-    const climb = path!.filter((point) => point.x !== at('a5').x && point.x !== at('a20').x);
+    const climb = path!.filter((point) => point.x !== at('a5').x && point.x !== at('b20').x);
     expect(climb.length).toBeGreaterThan(0);
     for (const point of climb) expect(columns.has(point.x)).toBe(false);
   });
@@ -319,7 +424,7 @@ describe('routeWires around parts standing in the way', () => {
   test('sends two wires that both have to step aside up different columns', () => {
     const blockers = [above('a5'), above('a8')];
 
-    const [first, second] = routeWires([request('a5', 'a20'), request('a8', 'a25')], layout, blockers);
+    const [first, second] = routeWires([request('a5', 'b20'), request('a8', 'b25')], layout, { obstacles: blockers });
     const climbX = (path: readonly { x: number }[], hole: string) =>
       path.map((point) => point.x).filter((x) => x !== at(hole).x);
 
@@ -331,7 +436,7 @@ describe('routeWires around parts standing in the way', () => {
   test('keeps the detour on the board even for a hole at the very edge', () => {
     const blocker = above('a1');
 
-    const [path] = routeWires([request('a1', 'a20')], layout, [blocker]);
+    const [path] = routeWires([request('a1', 'b20')], layout, { obstacles: [blocker] });
 
     for (const point of path!) {
       expect(point.x).toBeGreaterThanOrEqual(layout.board.x);
@@ -345,7 +450,7 @@ describe('routeWires around parts standing in the way', () => {
     const body = above('a5');
     const onLane = { x: at('a5').x - 40, y: layout.lanes[0]!.y - 4, width: 13, height: 8 };
 
-    const [path] = routeWires([request('a5', 'a20')], layout, [body, onLane]);
+    const [path] = routeWires([request('a5', 'b20')], layout, { obstacles: [body, onLane] });
 
     expect(pathHitsAny(path!, [body, onLane], 0)).toBe(false);
   });
@@ -358,7 +463,7 @@ describe('routeWires around parts standing in the way', () => {
     const hole = deviceLayout.point(parseAddress('a20')!);
     const blocker = { x: pin.x - 12, y: pin.y + 14, width: 24, height: 10 };
 
-    const [path] = routeWires([{ from: pin, to: hole, hints: [] }], deviceLayout, [blocker]);
+    const [path] = routeWires([{ from: pin, to: hole, hints: [] }], deviceLayout, { obstacles: [blocker] });
     const columns = new Set(Array.from({ length: 30 }, (_, index) => deviceLayout.colX(index + 1)));
 
     const climb = path!.filter((point) => point.x !== pin.x && point.x !== hole.x);
@@ -370,7 +475,7 @@ describe('routeWires around parts standing in the way', () => {
     // 真ん中の足から出る配線は、自分の胴の中から始まる。避けようがないので曲げない。
     const own = { x: at('a5').x - 20, y: layout.rowY('a') - 20, width: 40, height: 40 };
 
-    const [path] = routeWires([request('a5', 'a20')], layout, [own]);
+    const [path] = routeWires([request('a5', 'b20')], layout, { obstacles: [own] });
 
     expect(path).toHaveLength(4);
   });

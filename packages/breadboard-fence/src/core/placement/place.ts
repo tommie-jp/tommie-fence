@@ -3,7 +3,8 @@ import { formatAddress, parseAddress } from '../model/address.ts';
 import { offBoardReason } from '../model/board.ts';
 import { HOLE_ROWS } from '../types.ts';
 import type {
-  Address, Board, FenceError, HoleAddress, HoleRow, PartKind, PartSpec, PlacedPart, PlacedPin, Result,
+  Address, Board, FenceError, HoleAddress, HoleRow, PartKind, PartSpec, PlacedPart, PlacedPin,
+  RailAddress, Result,
 } from '../types.ts';
 import type { BoardPart } from '../parts/boards.ts';
 import { isPolarVariant, typesWithVariants, variantsOf } from '../parts/variants.ts';
@@ -123,17 +124,41 @@ export function occupiedHoles(part: PlacedPart): Address[] {
   ];
 }
 
-export function coveredHoles(part: PlacedPart): Address[] {
-  if (!COVERING_KINDS.has(part.kind)) return [];
+/**
+ * 部品の絵が載っている穴。足の穴と、足が張る矩形の中の穴。
+ *
+ * `occupiedHoles` と分けてあるのは、見ているものが違うから。あちらは
+ * 「実物で足を挿せない穴」なので、胴が板から浮く 2 本足の下は数えない。
+ * こちらは「図の上で絵に埋まっている穴」で、浮いていようと絵が載っていれば数える。
+ * 行に沿ってまっすぐ引く配線が、ここを通ると部品につながって見えてしまう。
+ *
+ * **縦や斜めに挿した部品も数える。** `resistor a5 c5` の胴は b5 の上に描かれるので、
+ * 足の並びを 1 行に限ると、その胴を配線がまっすぐ突き抜ける。
+ */
+export function drawnOverHoles(part: PlacedPart): Address[] {
+  return [
+    ...part.pins.flatMap((pin) => (pin.address ? [pin.address] : [])),
+    ...spannedHoles(part),
+  ];
+}
 
-  const holes = part.pins
-    .map((pin) => pin.address)
-    .filter((address): address is HoleAddress => address?.kind === 'hole');
+export function coveredHoles(part: PlacedPart): Address[] {
+  return COVERING_KINDS.has(part.kind) ? spannedHoles(part) : [];
+}
+
+/** 足が張る矩形の中の穴 (足の穴そのものは除く)。 */
+function spannedHoles(part: PlacedPart): Address[] {
+  const pins = part.pins.flatMap((pin) => (pin.address ? [pin.address] : []));
+  const rails = pins.filter((address): address is RailAddress => address.kind === 'rail');
+  // 足が全部レールに並ぶ部品。レールは行の格子に乗らないので別に数える。
+  if (rails.length >= 2 && rails.length === pins.length) return spannedOnRail(rails);
+
+  const holes = pins.filter((address): address is HoleAddress => address.kind === 'hole');
   if (holes.length === 0) return [];
 
   const rows = holes.map((hole) => HOLE_ROWS.indexOf(hole.row));
   const cols = holes.map((hole) => hole.col);
-  const pins = new Set(holes.map(formatAddress));
+  const own = new Set(holes.map(formatAddress));
 
   const covered: Address[] = [];
   for (let row = Math.min(...rows); row <= Math.max(...rows); row += 1) {
@@ -141,10 +166,23 @@ export function coveredHoles(part: PlacedPart): Address[] {
     if (!name) continue;
     for (let col = Math.min(...cols); col <= Math.max(...cols); col += 1) {
       const address: Address = { kind: 'hole', row: name, col };
-      if (!pins.has(formatAddress(address))) covered.push(address);
+      if (!own.has(formatAddress(address))) covered.push(address);
     }
   }
   return covered;
+}
+
+/** 同じレールに並ぶ足の間。足が別々のレールに散っていれば、間に穴は無い。 */
+function spannedOnRail(rails: readonly RailAddress[]): Address[] {
+  const [{ polarity, side }] = rails as [RailAddress];
+  if (rails.some((rail) => rail.polarity !== polarity || rail.side !== side)) return [];
+
+  const cols = rails.map((rail) => rail.col);
+  const between: Address[] = [];
+  for (let col = Math.min(...cols) + 1; col < Math.max(...cols); col += 1) {
+    between.push({ kind: 'rail', polarity, side, col });
+  }
+  return between;
 }
 
 function findConflict(

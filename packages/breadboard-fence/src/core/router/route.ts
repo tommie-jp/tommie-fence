@@ -11,13 +11,20 @@ export type RouteOptions = {
   readonly obstacles?: readonly Rect[];
 };
 
+export type RouteWiresOptions = {
+  /** 横切りたくない領域 (部品の本体やラベル)。 */
+  readonly obstacles?: readonly Rect[];
+  /** 部品の絵が載っている穴。**またぐ穴が空いているか**を見るのに使う。 */
+  readonly partHoles?: readonly Point[];
+};
+
 export type WireRequest = {
   readonly from: Point;
   readonly to: Point;
   readonly hints: readonly WireHint[];
 };
 
-const SAME_COLUMN_TOLERANCE = 0.5;
+const SAME_AXIS_TOLERANCE = 0.5;
 /** これより近い穴どうしは、実物の短いジャンパと同じでレーンを経由せず直接つなぐ。 */
 const SHORT_HOP_PITCHES = 3;
 const SLOT_SPACING = 4;
@@ -42,15 +49,88 @@ const dedupe = (points: readonly Point[]): readonly Point[] =>
  */
 export function routeWire(from: Point, to: Point, layout: Layout, options: RouteOptions = {}): readonly Point[] {
   if (options.hints && options.hints.length > 0) return dedupe(followHints(from, to, options.hints));
-  if (isDirect(from, to, layout)) return [from, to];
+  const obstacles = options.obstacles ?? [];
+  if (isStraight(from, to, layout, obstacles)) return [from, to];
 
-  const lane = chooseLane(from, to, layout, options.obstacles ?? []);
+  const lane = chooseLane(from, to, layout, obstacles);
   return buildPath(from, to, lane, options.offset ?? 0, { entry: null, exit: null });
 }
 
+/**
+ * レーンへ回らずに 2 点を直に結べるか。
+ *
+ * **同じ行の 2 穴は行に沿って 1 本引く。** 実物のジャンパは板の上に寝るので、
+ * それがいちばん近い姿になる。長く伸びるぶんだけ胴を避けるが、
+ * **短いジャンパでは胴を見ない**: 穴 1 つぶんの線をレーンまで回すと、
+ * よけた胴より figure を汚す大回りになる。突き抜けさせて部品を上に描くほうが読める。
+ *
+ * **またぐ穴が空いているかはここでは見ない** (`routeWires` の仕事)。
+ * 図の中の他の配線がどの穴で終わっているかは、1 本だけを見て決められない。
+ */
+const isStraight = (from: Point, to: Point, layout: Layout, obstacles: readonly Rect[]): boolean =>
+  sameBoardRow(from, to, layout)
+    ? isShortHop(from, to, layout) || !crossesBody(from, to, obstacles)
+    : isDirect(from, to, layout);
+
+/** 実物の短いジャンパと同じで、レーンを経由せず直接つなぐ近さか。 */
+const isShortHop = (from: Point, to: Point, layout: Layout): boolean =>
+  Math.hypot(to.x - from.x, to.y - from.y) <= SHORT_HOP_PITCHES * layout.pitch;
+
 const isDirect = (from: Point, to: Point, layout: Layout): boolean =>
-  Math.abs(from.x - to.x) < SAME_COLUMN_TOLERANCE
-  || Math.hypot(to.x - from.x, to.y - from.y) <= SHORT_HOP_PITCHES * layout.pitch;
+  Math.abs(from.x - to.x) < SAME_AXIS_TOLERANCE || isShortHop(from, to, layout);
+
+/**
+ * 板の同じ行の穴どうしか。**板の外の機器のピンは行に乗っていない**ので、
+ * 高さが揃っていても同じ行ではない。帯の縁に線を這わせても、
+ * どの穴につながっているのかは読めない。
+ */
+const sameBoardRow = (from: Point, to: Point, layout: Layout): boolean =>
+  Math.abs(from.y - to.y) < SAME_AXIS_TOLERANCE && onBoardRow(from, layout) && onBoardRow(to, layout);
+
+const onBoardRow = (point: Point, layout: Layout): boolean =>
+  point.y >= layout.board.y && point.y <= layout.board.y + layout.board.height;
+
+/**
+ * 行にわずかに掛かっているだけの帯を、行を塞いだものとして数えないための遊び。
+ * 部品のラベルは行と行の隙間に置くので、縁が隣の行まで届く。そこで断ると、
+ * ラベルのある部品の隣の行はどこもまっすぐ通れなくなる。
+ *
+ * 隠れたラベルは読めなくならない。**描く順が板 → 配線 → 部品**なので、
+ * 掛かったぶんは縁取りごと配線の上に乗る。
+ */
+const ROW_GRAZE = 5;
+
+/**
+ * 行をまっすぐ走ったときに突き抜ける胴。**行をまたぐ厚みのあるものだけ**を数える。
+ *
+ * ここでは余白を取らない (`OBSTACLE_MARGIN` を渡さない)。配線が走るのは穴の高さで、
+ * 隣の穴に挿さった部品の帯とは端で触れ合うのが普通だから。3px の余白を付けると、
+ * 部品の隣の穴から出る配線がどれも「胴を突き抜ける」ことになってしまう。
+ */
+const crossesBody = (from: Point, to: Point, obstacles: readonly Rect[]): boolean =>
+  obstacles.some((rect) =>
+    rect.height > ROW_GRAZE * 2
+    && boxHitsRect(from, to, { ...rect, y: rect.y + ROW_GRAZE, height: rect.height - ROW_GRAZE * 2 }, 0));
+
+/**
+ * またぐ穴が空いているか。**線は下を通る穴を隠す**ので、そこに部品の足や
+ * 別の配線の端が来ていると、そこにもつながっているように見えてしまう。
+ *
+ * 端点そのものは数えない。同じ穴で出会う 2 本 (`b10 -- b14 -- b21` の b14) は
+ * もともとつながっているし、自分の端は隠しても読み違えようがない。
+ *
+ * 数えるのは**そこで終わっているもの**だけで、縦に通り過ぎる配線は数えない。
+ * 通り過ぎるだけなら隠れるものが無く、十字は交差として読める。ここで断ると、
+ * レールへ落とす配線 1 本ごとに行が使えなくなる。「まっすぐな配線は他の配線の
+ * 端を隠さない」が保たれるので、十字に見えたものは必ず素通りだと言える。
+ */
+function coversTakenHole(from: Point, to: Point, taken: readonly Point[]): boolean {
+  const [left, right] = bounds(from.x, to.x);
+  return taken.some((point) =>
+    Math.abs(point.y - from.y) < SAME_AXIS_TOLERANCE
+    && point.x > left + SAME_AXIS_TOLERANCE
+    && point.x < right - SAME_AXIS_TOLERANCE);
+}
 
 /**
  * 部品をよけて登るときの寄り道。`x` は登る列、`jogY` は横に振る高さ。
@@ -199,18 +279,39 @@ const onBoard = (x: number, layout: Layout): boolean =>
 export function routeWires(
   requests: readonly WireRequest[],
   layout: Layout,
-  obstacles: readonly Rect[] = [],
+  options: RouteWiresOptions = {},
 ): readonly (readonly Point[])[] {
-  const lanes = requests.map((request) =>
-    request.hints.length > 0 || isDirect(request.from, request.to, layout)
-      ? null
-      : chooseLane(request.from, request.to, layout, obstacles),
-  );
+  const obstacles = options.obstacles ?? [];
+  // 塞がっている穴。部品の絵が載っている穴と、図の中のすべての配線の端。
+  const taken = [...(options.partHoles ?? []), ...requests.flatMap((request) => [request.from, request.to])];
 
   // 控えは図で 1 つ。**行き先のレーンが違っても、通る列と高さが重なれば 1 本に見える**ので、
   // レーンごとに分けて持つと見落とす。区間で見るので、高さの重ならない登り道は
   // 同じ列を使えて、譲る要りのない配線が遠くへ追いやられることもない。
   let held = noReservations;
+
+  // まっすぐ結ぶぶんを先に決めて、行を控える。**寄り道より先**にするのは、
+  // 振る高さが行から穴 1/4 ぶん (5px) しか離れないことがあり、
+  // まっすぐ引いた線のすぐ脇を並走すると 2 本が 1 本の太い線に見えるため。
+  //
+  // 段のほうは控えを読まなくてよい。レーンの厚みが `RAIL_TO_BLOCK / 2 - 5` の形で
+  // 決めてあり (`model/layout.ts`)、**いちばん端の段でも隣の行から 5px 空く**。
+  // 段どうしの 4px より広いので、行の上の線とはもともと離れている。
+  const lanes = requests.map((request): Lane | null => {
+    if (request.hints.length > 0) return null;
+
+    if (sameBoardRow(request.from, request.to, layout)) {
+      const row = straightRow(request, layout, obstacles, taken, held);
+      if (row) {
+        held = { ...held, rows: [...held.rows, row] };
+        return null;
+      }
+    } else if (isDirect(request.from, request.to, layout)) {
+      return null;
+    }
+    return chooseLane(request.from, request.to, layout, obstacles);
+  });
+
   const escapes = requests.map((request, index): Escapes => {
     const lane = lanes[index];
     if (!lane) return { entry: null, exit: null };
@@ -231,6 +332,29 @@ export function routeWires(
       ? buildPath(request.from, request.to, lane, offsets[index] ?? 0, escapes[index]!)
       : routeWire(request.from, request.to, layout, { hints: request.hints, obstacles });
   });
+}
+
+/**
+ * まっすぐ結べる同じ行の配線が押さえる行。結べないなら `null` でレーンへ回す。
+ * 呼ぶ側が `sameBoardRow` を確かめてから渡す。
+ *
+ * 1 本だけでは決まらない条件が 2 つ。**またぐ穴が空いていること**と、
+ * **同じ高さの同じ区間を先客が使っていないこと** (同じ 2 穴を結ぶ 2 本目は、
+ * まっすぐ引くと 1 本目にそのまま重なって見えなくなる)。
+ */
+function straightRow(
+  request: WireRequest,
+  layout: Layout,
+  obstacles: readonly Rect[],
+  taken: readonly Point[],
+  held: Reservations,
+): Claim | null {
+  const { from, to } = request;
+  if (!isStraight(from, to, layout, obstacles)) return null;
+  if (coversTakenHole(from, to, taken)) return null;
+
+  const row: Claim = { at: from.y, span: span(from.x, to.x) };
+  return isFree(held.rows, row.at, row.span) ? row : null;
 }
 
 /** レーンを走る区間の左右。寄り道した配線は、振った先が端になる。 */
@@ -273,13 +397,13 @@ function assignSlots(
 
     const free = levels.find((candidate) => (taken.get(candidate)?.right ?? -Infinity) + SLOT_GAP <= left);
     const level = free ?? mostRoom(levels, taken);
-    const held = taken.get(level);
+    const slot = taken.get(level);
 
     // 段が塞がっている範囲は**伸ばす**。重ねたときに短い配線で上書きすると、
     // その段はもう空いていることになり、次の配線が先客の上に乗る。
     taken.set(level, {
-      right: Math.max(held?.right ?? -Infinity, right),
-      wires: (held?.wires ?? 0) + 1,
+      right: Math.max(slot?.right ?? -Infinity, right),
+      wires: (slot?.wires ?? 0) + 1,
     });
     takenByLane.set(lane.y, taken);
     offsets[index] = level * SLOT_SPACING;
@@ -340,7 +464,7 @@ function followHints(from: Point, to: Point, hints: readonly WireHint[]): readon
   }
 
   // 最後の指示が縦なら次は横に振ってから入る。斜めに突っ込ませない。
-  if (Math.abs(current.x - to.x) > SAME_COLUMN_TOLERANCE && Math.abs(current.y - to.y) > SAME_COLUMN_TOLERANCE) {
+  if (Math.abs(current.x - to.x) > SAME_AXIS_TOLERANCE && Math.abs(current.y - to.y) > SAME_AXIS_TOLERANCE) {
     points.push(lastAxis === 'v' ? { x: to.x, y: current.y } : { x: current.x, y: to.y });
   }
 
