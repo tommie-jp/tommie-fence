@@ -62,12 +62,12 @@ export function movePart(source: string, partId: string, to: Address): MoveResul
   const lineText = lines[part.line - 1];
   if (lineText === undefined) return fail(`${partId} の行が見つかりません`, part.line);
 
-  const tokens = locateTokens(lineText, addresses, doc.points);
-  if (tokens === null) {
+  const located = locateTokens(lineText, addresses, doc.points);
+  if (located === null) {
     return fail(`${partId} の行から番地を見つけられませんでした`, part.line);
   }
 
-  const edits = tokens.map((token, index) => ({
+  const edits = located.tokens.map((token, index) => ({
     line: part.line,
     column: token.column,
     length: token.length,

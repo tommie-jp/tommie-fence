@@ -58,7 +58,21 @@ describe('持ち方の切り替え', () => {
 
   test('lets only the thing being grabbed take the click', () => {
     // 部品の升にも節点は立つ。どちらも掴めると、掴んだつもりと違うものが動く。
-    expect(html).toContain('body:not(.cf-nodes) .cf-dot { pointer-events: none;');
-    expect(html).toContain('body.cf-nodes .cf-chip { pointer-events: none;');
+    expect(html).toContain('body:not(.cf-nodes) .cf-marks { pointer-events: none;');
+    expect(html).toContain('body.cf-nodes .cf-parts { pointer-events: none;');
+  });
+});
+
+describe('置き先の当たり判定', () => {
+  test('turns the drop targets on only while something is held', () => {
+    // いつも効かせると部品を掴めず、いつも切ると埋まった升へ置けない。
+    expect(html).toContain('.cf-hits { pointer-events: none; }');
+    expect(html).toContain('body.cf-holding .cf-hits { pointer-events: all; }');
+  });
+
+  test('watches the pointer instead of HTML drag, which SVG does not support', () => {
+    expect(html).toContain("addEventListener('pointerdown'");
+    expect(html).toContain("addEventListener('pointerup'");
+    expect(html).not.toContain('dragstart');
   });
 });

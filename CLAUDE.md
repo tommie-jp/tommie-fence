@@ -90,5 +90,5 @@ npm run examples --workspace=circuit-fence   # 図を作り直す
 | `previewRefresher` | ある | ない | 回路図は描画が非同期 (TeX → SVG) なので、描き上がってからプレビューを促す仕組みが要る。フェンスに依存しないので `fence-kit` の候補 |
 | ライブラリの出口 | `circuit-fence/core` を `exports` で公開 | なし | サーバー側描画から呼ぶ要望があったのは回路図だけ |
 | 実行時の依存 | `yaml` + `node-tikzjax` | `yaml` だけ | 同上 |
-| 図の組み立て | TeX (circuitikz) に描かせて後から色を塗り替える | SVG を直に組み立てる | だから `svg` `palette` `textFit` `title` にあたるものが circuit には無い。`theme` は名前が同じだけで別物 (circuit は塗り替えの色、breadboard は色 + 穴の寸法) |
+| 図の組み立て | TeX (circuitikz) に描かせて後から色を塗り替える | SVG を直に組み立てる | だから `svg` `palette` `textFit` `title` にあたるものが circuit には無い。`theme` は名前が同じだけで別物 (circuit は塗り替えの色、breadboard は色 + 穴の寸法)。**例外は移動エディタのマップ** (`core/edit/mapSvg.ts`) — あれは公開する図ではなく掴むための UI なので SVG を組み立てる。図と競わせない (記号の正確さは TeX が正) |
 | エラーの帯のキャレット | 全角を 2 桁と数えて位置を合わせる | 桁数だけ合わせる | 同じ `errorText.ts` という名前で別実装。**circuit の方が正しい**ので、揃えるなら breadboard を寄せる (未着手) |

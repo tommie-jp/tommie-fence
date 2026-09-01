@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { fenceAt, gridMap, renderMapHtml } from './map.ts';
+import { fenceAt, gridMap } from './map.ts';
+import { renderMapHtml } from './mapSvg.ts';
 
 const RC = [
   'parts:',
@@ -45,6 +46,55 @@ describe('gridMap', () => {
 
     expect(map.chips).toEqual([]);
     expect(map.skipped).toEqual(['R1']);
+  });
+});
+
+describe('gridMap の配線', () => {
+  const linesOf = (source: string) => gridMap(source).wires;
+
+  test('draws a straight wire between the crossings it joins', () => {
+    expect(linesOf('wires:\n  - a1 -- a3\n')).toEqual([
+      { from: { row: 0, col: 0 }, to: { row: 0, col: 2 }, approximate: false },
+    ]);
+  });
+
+  test('breaks a bent wire at its corner, so the map can follow it', () => {
+    // `-|` は先に横。角は from の行・to の列。
+    expect(linesOf('wires:\n  - a1 -| c3\n')).toEqual([
+      { from: { row: 0, col: 0 }, to: { row: 0, col: 2 }, approximate: false },
+      { from: { row: 0, col: 2 }, to: { row: 2, col: 2 }, approximate: false },
+    ]);
+  });
+
+  test('draws each leg of a chained wire', () => {
+    expect(linesOf('wires:\n  - a1 -- a3 -- c3\n')).toHaveLength(2);
+  });
+
+  test('keeps a half-step endpoint where it was written', () => {
+    expect(linesOf('wires:\n  - a_1.5 -- a3\n')[0]?.from).toEqual({ row: 0, col: 0.5 });
+  });
+
+  test('approximates a pin end at the part, since only TeX knows where the leg is', () => {
+    const lines = linesOf('parts:\n  Q1: npn b2\nwires:\n  - Q1.C -- a4\n');
+
+    expect(lines).toHaveLength(1);
+    expect(lines[0]?.from).toEqual({ row: 1, col: 1 });
+    expect(lines[0]?.approximate).toBe(true);
+  });
+
+  test('leaves out a wire to a part that is not there', () => {
+    // 書き間違いはエラーの帯の仕事。ここで当てずっぽうの線を引かない。
+    expect(linesOf('wires:\n  - Q9.C -- a4\n')).toEqual([]);
+  });
+
+  test('has no wires at all when the fence cannot be read', () => {
+    expect(linesOf('parts: [')).toEqual([]);
+  });
+
+  test('sizes the grid to hold a wire that reaches past every part', () => {
+    const map = gridMap('parts:\n  R1: resistor a1 b1\nwires:\n  - b1 -- b9\n');
+
+    expect(map.cols).toBeGreaterThan(8);
   });
 });
 

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { fenceAt, gridMap, renderMapHtml } from '../../core/edit/map.ts';
+import { fenceAt, gridMap } from '../../core/edit/map.ts';
+import { renderMapHtml } from '../../core/edit/mapSvg.ts';
 import { parseAddress } from '../../core/model/address.ts';
 import { movePart } from '../../core/edit/move.ts';
 import { movePoint } from '../../core/edit/point.ts';

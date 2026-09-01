@@ -1,11 +1,13 @@
-import { escapeMarkup } from 'fence-kit';
 import { extractCircuitFences } from '../fences.ts';
 import type { FenceBlock } from '../fences.ts';
 import { LIMITS } from '../limits.ts';
-import { formatAddress } from '../model/address.ts';
+import { cornerOf } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
+import { cellOf } from '../types.ts';
+import type { Circuit } from '../model/circuit.ts';
+import type { Endpoint } from '../types.ts';
 import { nodesOf } from './point.ts';
 import { addressesOf } from './shared.ts';
 
@@ -19,6 +21,9 @@ import { addressesOf } from './shared.ts';
  * (図は数秒後に描き直る)。
  */
 
+/** 升目の上の 1 点。**番地と同じ形**だが、こちらは描くための座標。 */
+export type Cell = { readonly row: number; readonly col: number };
+
 /** マップに置く部品 1 つ。 */
 export type Chip = {
   readonly id: string;
@@ -26,7 +31,21 @@ export type Chip = {
   readonly row: number;
   readonly col: number;
   /** 2 端子部品のもう一方の端。1 端子・多端子は null。 */
-  readonly to: { readonly row: number; readonly col: number } | null;
+  readonly to: Cell | null;
+};
+
+/**
+ * マップに引く線 1 本。折れた配線は角で 2 本に割ってある
+ * (描く側が向きを気にしなくて済む)。
+ */
+export type WireLine = {
+  readonly from: Cell;
+  readonly to: Cell;
+  /**
+   * ピンの端を部品の升で近似したか。**正しい足の位置は TeX しか知らない**
+   * (記号の形から決まる)。描く側はここを見て破線にする。
+   */
+  readonly approximate: boolean;
 };
 
 /** マップに置く節点 1 つ。**掴む物が部品とは違う**ので、チップとは別に持つ。 */
@@ -45,6 +64,8 @@ export type GridMap = {
   readonly chips: readonly Chip[];
   /** 掴める節点。交点の間にあるものは載らない (チップと同じ理由)。 */
   readonly dots: readonly Dot[];
+  /** 引く線。部品の形と違い、**書かれたとおりの位置**に引ける。 */
+  readonly wires: readonly WireLine[];
   /** 升目に載らないので出さなかった部品 (交点の間に置かれたもの)。 */
   readonly skipped: readonly string[];
   /** フェンスを読めたか。読めなければマップは空。 */
@@ -59,10 +80,55 @@ const MIN_COLS = 6;
 const isOnCrossing = (address: Address): boolean =>
   Number.isInteger(address.row) && Number.isInteger(address.col);
 
+const cellAt = (address: Address): Cell => ({ row: address.row, col: address.col });
+
+/**
+ * 引く線。折れは角で 2 本に割る。
+ *
+ * **ピンの端は部品の升で近似する。** 足の正しい位置は記号の形から決まるので
+ * TeX しか知らない (docs/03 に書いた既知の限界と同じ根)。描かないと配線が
+ * 消えて見えるので、「だいたいここ」として引いて破線で断る。
+ * 指す先の部品が無い配線は引かない — 書き間違いはエラーの帯の仕事で、
+ * ここで当てずっぽうの線を足すと誤りが図らしく見えてしまう。
+ */
+function wireLinesOf(doc: Circuit): WireLine[] {
+  const anchorAt = new Map<string, Address>();
+  for (const part of doc.parts) {
+    const anchor = addressesOf(part)[0];
+    if (anchor !== undefined) anchorAt.set(part.id, anchor);
+  }
+
+  const resolve = (endpoint: Endpoint): { cell: Address; approximate: boolean } | null => {
+    const written = cellOf(endpoint);
+    if (written !== null) return { cell: written, approximate: false };
+    const anchor = endpoint.kind === 'pin' ? anchorAt.get(endpoint.part) : undefined;
+    return anchor === undefined ? null : { cell: anchor, approximate: true };
+  };
+
+  const lines: WireLine[] = [];
+  for (const wire of doc.wires) {
+    const from = resolve(wire.from);
+    const to = resolve(wire.to);
+    if (from === null || to === null) continue;
+
+    const approximate = from.approximate || to.approximate;
+    const corner = cornerOf(from.cell, to.cell, wire.operator);
+    if (corner === null) {
+      lines.push({ from: cellAt(from.cell), to: cellAt(to.cell), approximate });
+      continue;
+    }
+    lines.push({ from: cellAt(from.cell), to: cellAt(corner), approximate });
+    lines.push({ from: cellAt(corner), to: cellAt(to.cell), approximate });
+  }
+  return lines;
+}
+
 /** フェンス本文から升目のモデルを作る。**読めなければ空**で、嘘の位置を見せない。 */
 export function gridMap(source: string): GridMap {
   const { doc } = parseFence(normalizeNewlines(source));
-  if (!doc) return { rows: MIN_ROWS, cols: MIN_COLS, chips: [], dots: [], skipped: [], readable: false };
+  if (!doc) {
+    return { rows: MIN_ROWS, cols: MIN_COLS, chips: [], dots: [], wires: [], skipped: [], readable: false };
+  }
 
   const chips: Chip[] = [];
   const skipped: string[] = [];
@@ -89,73 +155,21 @@ export function gridMap(source: string): GridMap {
     .filter((node) => isOnCrossing(node.address))
     .map((node) => ({ row: node.address.row, col: node.address.col, name: node.name, uses: node.uses }));
 
-  // **升目は点も覆う。** 配線だけが届く交点はチップに現れないので、部品だけを
-  // 見て決めると端の点が升の外へ落ちて掴めなくなる。
-  const used = [...chips.flatMap((chip) => [chip, chip.to].filter((cell) => cell !== null)), ...dots];
-  const rows = Math.min(26, Math.max(MIN_ROWS, ...used.map((cell) => cell.row + 1 + MARGIN)));
-  const cols = Math.min(LIMITS.columns, Math.max(MIN_COLS, ...used.map((cell) => cell.col + 1 + MARGIN)));
+  const wires = wireLinesOf(doc);
 
-  return { rows, cols, chips, dots, skipped, readable: true };
-}
+  // **升目は点と線も覆う。** 配線だけが届く交点はチップに現れないので、
+  // 部品だけを見て決めると端が升の外へ落ちて掴めなくなる。
+  // 端数の番地は切り上げて数える (`a_1.5` は 2 列目まで要る)。
+  const used: readonly Cell[] = [
+    ...chips.flatMap((chip) => [chip, chip.to].filter((cell) => cell !== null)),
+    ...dots,
+    ...wires.flatMap((wire) => [wire.from, wire.to]),
+  ];
+  const span = (of: (cell: Cell) => number): number[] => used.map((cell) => Math.ceil(of(cell)) + 1 + MARGIN);
+  const rows = Math.min(26, Math.max(MIN_ROWS, ...span((cell) => cell.row)));
+  const cols = Math.min(LIMITS.columns, Math.max(MIN_COLS, ...span((cell) => cell.col)));
 
-const cellAddress = (row: number, col: number): string => formatAddress({ row, col });
-
-/**
- * 升目の HTML。**webview に渡す本体**で、ここも純関数
- * (vscode を知らないので、そのままユニットテストに掛かる)。
- *
- * フェンスから来た字は必ずエスケープする。webview は拡張が渡した HTML を
- * サニタイズしない (プレビューと同じ約束)。
- */
-export function renderMapHtml(map: GridMap): string {
-  if (!map.readable) {
-    return '<p class="cf-note">フェンスを読めません。エラーを直すとマップが出ます。</p>';
-  }
-
-  // **同じ交点に 2 つ来たら両方出す。** この文法では同じ番地 = 接続なので
-  // 普通に起きる。片方を隠すと、掴んで出すこともできなくなる。
-  const chipsAt = new Map<string, Chip[]>();
-  for (const chip of map.chips) {
-    const key = `${chip.row},${chip.col}`;
-    chipsAt.set(key, [...(chipsAt.get(key) ?? []), chip]);
-  }
-  const farEnd = new Set(map.chips.filter((chip) => chip.to).map((chip) => `${chip.to?.row},${chip.to?.col}`));
-  const dotAt = new Map(map.dots.map((dot) => [`${dot.row},${dot.col}`, dot]));
-
-  const rows: string[] = [];
-  for (let row = 0; row < map.rows; row += 1) {
-    const cells: string[] = [];
-    for (let col = 0; col < map.cols; col += 1) {
-      const address = cellAddress(row, col);
-      const here = chipsAt.get(`${row},${col}`) ?? [];
-      const far = farEnd.has(`${row},${col}`) ? ' cf-far' : '';
-      const inner = here
-        .map((chip) => `<button class="cf-chip" data-part="${escapeMarkup(chip.id)}"`
-          + ` title="${escapeMarkup(`${chip.id} (${chip.type}) ${address}`)}">${escapeMarkup(chip.id)}</button>`)
-        .join('');
-      // **節点の点はチップの下に敷く。** 部品の升にも節点は立つので、
-      // 隠すと「名前の付いた節点だけ掴めない」という穴が空く。
-      const dot = dotAt.get(`${row},${col}`);
-      const mark = dot === undefined
-        ? ''
-        : `<button class="cf-dot" data-node="${escapeMarkup(address)}"`
-          + ` title="${escapeMarkup(`${address}${dot.name === null ? '' : ` (${dot.name})`} — ${dot.uses} か所`)}">`
-          + `${escapeMarkup(dot.name ?? '')}</button>`;
-      cells.push(
-        `<td class="cf-cell${far}" data-address="${escapeMarkup(address)}"`
-        + ` title="${escapeMarkup(address)}">${mark}${inner}</td>`,
-      );
-    }
-    rows.push(`<tr><th class="cf-row">${escapeMarkup(cellAddress(row, 0).slice(0, 1))}</th>${cells.join('')}</tr>`);
-  }
-
-  const heads = Array.from({ length: map.cols }, (_, col) => `<th class="cf-col">${col + 1}</th>`).join('');
-  const skipped = map.skipped.length === 0
-    ? ''
-    : `<p class="cf-note">交点の間に置いた部品はマップに出ません: ${escapeMarkup(map.skipped.join(', '))}</p>`;
-
-  return `<table class="cf-map"><thead><tr><th></th>${heads}</tr></thead>`
-    + `<tbody>${rows.join('')}</tbody></table>${skipped}`;
+  return { rows, cols, chips, dots, wires, skipped, readable: true };
 }
 
 /** カーソルのある行 (1 始まり) を含む circuit フェンス。無ければ null。 */

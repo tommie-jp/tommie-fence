@@ -104,9 +104,10 @@ function candidatesOf(
 
   const pieces: Candidate[] = [];
   let last = 0;
-  // 配線の演算子とフロー形式の区切り。stateful な `g` 付き正規表現を
-  // 使い回さない (lastIndex が持ち越されて取りこぼす) ため、ここで作る。
-  for (const match of token.matchAll(/--|-\||\|-|[[\],]/g)) {
+  // 配線の演算子とフロー形式の区切り (`[` `]` `{` `}` `,`)。stateful な
+  // `g` 付き正規表現を使い回さない (lastIndex が持ち越されて取りこぼす) ため、
+  // ここで作る。
+  for (const match of token.matchAll(/--|-\||\|-|[[\]{},]/g)) {
     const index = match.index ?? 0;
     if (index > last) pieces.push({ column: column + last, length: index - last, text: token.slice(last, index) });
     last = index + match[0].length;
@@ -117,9 +118,46 @@ function candidatesOf(
   return pieces;
 }
 
+/** 行の中で番地に読めた綴り 1 つ。 */
+export type AddressToken = { readonly column: number; readonly length: number; readonly address: Address };
+
+/**
+ * 鍵 (`R1:` の `R1`) は端子ではない。**`C1` は番地 `c1` としても読める**ので、
+ * 見分けないと部品の名前のほうを書き換えてしまう。
+ * 綴りの直後が `:` かどうかで決める — フロー形式 (`{R1: …, R2: …}`) でも
+ * 行の頭でも同じ規則で効く (「行の最初のコロンより後ろ」では効かなかった)。
+ */
+const isKey = (text: string, candidate: Candidate): boolean =>
+  text[candidate.column + candidate.length] === ':';
+
+/**
+ * 行の中で**素の綴りで**書かれた番地を全部。名前 (`points:` が付けたもの) は
+ * 拾わない — 名前は行き先の 1 行を直せば付いてくる。
+ *
+ * 配線の行に使う。**端点と演算子しか無い行なので、番地に読める綴りはすべて端点**。
+ * 数珠つなぎ (`a1 -- a3 -- a5`) とフロー形式 (`[a1 -- a3, a3 -- b5]`) は
+ * モデルの上では同じ形になり、綴りが 1 つか 2 つかはモデルからは決まらない。
+ */
+export function addressTokensOn(lineText: string): readonly AddressToken[] {
+  const comment = COMMENT.exec(lineText);
+  const scanned = comment === null ? lineText : lineText.slice(0, comment.index);
+
+  return [...scanned.matchAll(/[^\s:]+/g)]
+    .flatMap((match) => candidatesOf(match.index ?? 0, match[0], (text) => parseAddress(text) !== null))
+    .filter((candidate) => !isKey(scanned, candidate))
+    .flatMap((candidate) => {
+      const address = parseAddress(candidate.text);
+      return address === null ? [] : [{ column: candidate.column, length: candidate.length, address }];
+    });
+}
+
 /**
  * 行の中から、並んだ番地を指しているトークンを左から順に消し込む。
  * 見つからない番地が 1 つでもあれば null (半端に見つけて当てると図が壊れる)。
+ *
+ * `from` から先だけを見る。**1 行に部品が 2 つ以上あるとき** (フロー形式の
+ * `parts: {R1: …, R2: …}`) に、前の部品が消し込んだ続きから探すため。
+ * 頭から探し直すと同じ綴りを二度拾い、後ろの部品を取り逃す。
  *
  * **モデルは行番号を持つが、行内の桁は持たない。** 桁を全トークンへ運ぶ改修は
  * 使い手がここしか無いので割に合わない — 行を走査して探す。
@@ -133,21 +171,21 @@ export function locateTokens(
   lineText: string,
   addresses: readonly Address[],
   points: ReadonlyMap<string, Address>,
-): readonly { column: number; length: number }[] | null {
+  from = 0,
+): { readonly tokens: readonly { column: number; length: number }[]; readonly end: number } | null {
   // **コメントは先に切り落とす。** 中に `:` があると下の「頭の名前」の目印を
   // 取り違え、端子より右から探し始めて正しい移動を断ってしまう。
   const comment = COMMENT.exec(lineText);
   const scanned = comment === null ? lineText : lineText.slice(0, comment.index);
 
   const resolve = (text: string): Address | null => parseAddress(text) ?? points.get(text) ?? null;
-  const candidates = [...scanned.matchAll(/[^\s:]+/g)].flatMap((match) =>
-    candidatesOf(match.index ?? 0, match[0], (text) => resolve(text) !== null));
+  const candidates = [...scanned.matchAll(/[^\s:]+/g)]
+    .flatMap((match) => candidatesOf(match.index ?? 0, match[0], (text) => resolve(text) !== null))
+    // 鍵は端子ではない (`C1: capacitor c1 d3` の `C1` を書き換えない)。
+    .filter((candidate) => !isKey(scanned, candidate));
 
   const found: { column: number; length: number }[] = [];
-  // **行の頭の名前より後ろだけを見る。** `C1:` は番地 `c1` としても読めるので、
-  // 頭から探すと部品の名前のほうを書き換えてしまう (`d1: capacitor c1 d3`)。
-  const colon = scanned.indexOf(':');
-  let cursor = colon === -1 ? 0 : colon + 1;
+  let cursor = from;
 
   for (const address of addresses) {
     const wanted = formatAddress(address);
@@ -166,7 +204,7 @@ export function locateTokens(
     cursor = hit.column + hit.length;
   }
 
-  return found;
+  return { tokens: found, end: cursor };
 }
 
 /** 編集を当てる。**右から当てる**ので、同じ行の桁がずれない。 */

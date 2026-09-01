@@ -164,7 +164,9 @@ down to swapping the address spelling inside a line.
 
 - `Circuit Fence: 部品を動かす (マップ)` — opens a grid panel beside the editor;
   grab and drop on the crossing you want. A switch at the top changes what you
-  grab from parts to nodes
+  grab from parts to nodes. The grid draws **part shapes and wires** (the
+  drawing stays the authority on symbols; the map is a likeness for seeing what
+  sits where)
 - `Circuit Fence: 部品を動かす` — pick a part, type the address to move it to
 - `Circuit Fence: 節点を動かす` — pick a node, type the address to move it to
 

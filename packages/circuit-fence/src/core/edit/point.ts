@@ -3,7 +3,7 @@ import { formatAddress, parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import { addressesOf, applyEdits, diffOf, fail, isOnGrid, locateTokens } from './shared.ts';
+import { addressTokensOn, addressesOf, applyEdits, diffOf, fail, isOnGrid, locateTokens } from './shared.ts';
 import { cellOf } from '../types.ts';
 import type { Edit, MoveResult } from './shared.ts';
 import type { Circuit } from '../model/circuit.ts';
@@ -137,23 +137,46 @@ function bareTokens(doc: Circuit, source: string, wanted: Address): readonly Tok
   const target = formatAddress(wanted);
   const found: Token[] = [];
 
-  const scan = (line: number, addresses: readonly Address[]): void => {
-    const text = lines[line - 1];
-    if (text === undefined || addresses.length === 0) return;
-    const tokens = locateTokens(text, addresses, doc.points);
-    if (tokens === null) return;
-    tokens.forEach((token, index) => {
-      const address = addresses[index];
+  // **1 行に部品が 2 つ以上あることがある** (フロー形式の `parts: {R1: …, R2: …}`)。
+  // 行ごとに続きの桁を覚えておかないと、同じ綴りを二度拾って後ろを取り逃す。
+  const cursors = new Map<number, number>();
+  for (const part of doc.parts) {
+    const text = lines[part.line - 1];
+    if (text === undefined) continue;
+    const located = locateTokens(text, addressesOf(part), doc.points, cursors.get(part.line) ?? 0);
+    if (located === null) continue;
+    cursors.set(part.line, located.end);
+
+    located.tokens.forEach((token, index) => {
+      const address = addressesOf(part)[index];
       if (address === undefined || formatAddress(address) !== target) return;
       // 名前で書かれた端はここでは触らない — 名前の行き先を直せば付いてくる。
       if (parseAddress(text.slice(token.column, token.column + token.length)) === null) return;
-      found.push({ line, column: token.column, length: token.length });
+      found.push({ line: part.line, column: token.column, length: token.length });
     });
-  };
+  }
 
-  for (const part of doc.parts) scan(part.line, addressesOf(part));
-  for (const [line, cells] of writtenWireCells(doc.wires)) scan(line, cells);
-  return found;
+  // **配線は行の字から拾う。** 端点の並びをモデルから当てにすると、数珠つなぎと
+  // フロー形式を区別できない (どちらも同じ形になる) ので、綴りが 2 つある側で
+  // 片方を置き去りにする。配線の行には端点と演算子しか無いので、番地に読める
+  // 綴りはすべて端点。
+  for (const line of new Set(doc.wires.map((wire) => wire.line))) {
+    const text = lines[line - 1];
+    if (text === undefined) continue;
+    for (const token of addressTokensOn(text)) {
+      if (formatAddress(token.address) !== target) continue;
+      found.push({ line, column: token.column, length: token.length });
+    }
+  }
+
+  // 同じ場所を 2 度書き換えない (当てる範囲が重なると編集そのものが壊れる)。
+  const seen = new Set<string>();
+  return found.filter((token) => {
+    const key = `${token.line},${token.column}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 /**

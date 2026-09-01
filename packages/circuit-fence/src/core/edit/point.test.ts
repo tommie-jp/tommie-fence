@@ -223,6 +223,27 @@ describe('movePoint (書き方のゆれ)', () => {
   });
 });
 
+describe('movePoint (1 行に 2 つ以上)', () => {
+  test('rewrites both parts written on one flow-style line', () => {
+    // 行ごとに探し直すと、2 つ目の部品の綴りを取り逃す。
+    const written = 'parts: {R1: resistor a1 b1, R2: resistor a1 c1}\n';
+
+    expect(moved(written, 'a1', 'a2')).toBe('parts: {R1: resistor a2 b1, R2: resistor a2 c1}\n');
+  });
+
+  test('rewrites both ends when two flow wires share a crossing', () => {
+    // 数珠つなぎ (`a1 -- a3 -- b5`) とはモデルの上で同じ形になる。綴りが 1 つか
+    // 2 つかは行の字を見ないと決まらない。
+    const written = 'wires: [a1 -- a3, a3 -- b5]\n';
+
+    expect(moved(written, 'a3', 'b3')).toBe('wires: [a1 -- b3, b3 -- b5]\n');
+  });
+
+  test('still rewrites a chained wire once, where the spelling appears once', () => {
+    expect(moved('wires:\n  - a1 -- a3 -- b5\n', 'a3', 'b3')).toContain('  - a1 -- b3 -- b5');
+  });
+});
+
 describe('movePoint (定義だけの名前)', () => {
   const DEFINED = 'points:\n  fb: c3\nparts:\n  R1: resistor a1 b1\n';
 
