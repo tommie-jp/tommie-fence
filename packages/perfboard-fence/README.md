@@ -15,7 +15,7 @@ chose yourself** — and keeping the drawing and the build order inside the same
 lab notebook.
 
 ```yaml
-board: 28x18
+board: akizuki-c
 parts:
   R1: resistor b3 b7 10k
   D1: led c5 c9
@@ -54,7 +54,7 @@ and the content of the offending line.
 | Recognising a ` ```perfboard ` fence | works |
 | Reporting an empty fence or a YAML syntax error with its line | works |
 | Naming a key it does not know | works |
-| **Drawing the board and its holes** (`board: 28x18`) | works |
+| **Drawing the board and its holes** (`board: 25x15` / `board: akizuki-c`) | works |
 | **Addresses** (`b3`, and `aa3` past 26 rows) | works |
 | **Placing two-lead parts** (17 kinds: resistors, LEDs, capacitors…) | works |
 | **Resistor colour codes** and LED colours | works |
@@ -68,11 +68,16 @@ and the content of the offending line.
 | Three-lead parts, DIP, SIP | **still to come** |
 | `device` (things off the board), `notes:`, `style:` | **still to come** |
 
-The board size is written **columns by rows** — the order the board itself is
-sold in (`72×47.5mm` is long side by short side). There are no named boards
-(`akizuki-c` and such) yet: the vendor's pages give dimensions and pitch but
-never the hole count, so until someone counts a real board, you write the size
-you see on yours.
+A board is written as a **hole count** or as a **name**. The count is columns by
+rows — the order the board itself is sold in (`72×47mm` is long side by short
+side). The names are `akizuki-b`, `akizuki-c` and `akizuki-d`, and writing the
+physical size (`72x47mm`, `7.2x4.7cm`) picks the same board.
+
+**Hole counts are never computed from millimetres.** The border varies from
+board to board and from edge to edge, with the mounting holes sitting in it, so
+dividing by 2.54 does not give the count. Only boards counted off a product
+photo can be named; write a size that has not been counted and you get the
+nearest board it knows, not a guess.
 
 ## How to write it
 

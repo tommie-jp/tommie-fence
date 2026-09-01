@@ -1,7 +1,8 @@
 import { LineCounter, isMap, isScalar, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
 import { fenceError, notice, safeToken } from '../errors.ts';
-import { createBoard, parseBoardSize } from '../model/board.ts';
+import { resolveBoard } from '../model/board.ts';
+import { boardNames } from '../model/catalog.ts';
 import { LIMITS } from '../limits.ts';
 import { parsePartLine } from './parts.ts';
 import { parseWireLine } from './wires.ts';
@@ -14,7 +15,8 @@ import type { Board, FenceDocument, FenceError, PartSpec, PointSpec, WireSpec } 
 /** yaml のメッセージはライブラリ側の文言なので、載せる長さを切る。 */
 const MAX_YAML_MESSAGE = 120;
 
-const BOARD_HINT = `board: は板の大きさを 列x行 で書きます (例: board: 28x18)。`
+const BOARD_HINT = `board: は穴数を 列x行 で書くか (例: board: 25x15)、`
+  + `板の名前を書きます (${boardNames().join(' / ')})。`
   + `上限は ${LIMITS.cols}x${LIMITS.rows} です`;
 
 export type ParseResult = { readonly doc: FenceDocument | null; readonly errors: readonly FenceError[] };
@@ -271,14 +273,16 @@ export function parseFence(source: string): ParseResult {
       errors.push(fenceError(BOARD_HINT, at));
       continue;
     }
-    const size = parseBoardSize(value);
-    if (size === null) {
-      // 名指すのは書かれた字面。読むのは解決後の値。
-      const written = writtenText(pair.value, source) ?? value;
-      errors.push(fenceError(`${safeToken(written)} は板の大きさとして読めません。${BOARD_HINT}`, at, written));
+    // 名指すのは書かれた字面。読むのは解決後の値。
+    const written = writtenText(pair.value, source) ?? value;
+    const found = resolveBoard(value);
+    if (!found.ok) {
+      errors.push(fenceError(`${safeToken(written)}: ${found.reason}`, at, written));
       continue;
     }
-    board = createBoard(size);
+    board = found.board;
+    // 単位の書き忘れは**図が出てしまう**取り違えなので、エラーではなくお知らせ。
+    if (found.notice !== null) errors.push(notice(found.notice, at, written));
   }
 
   if (board === null) {

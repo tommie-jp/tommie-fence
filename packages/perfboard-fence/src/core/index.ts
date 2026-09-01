@@ -52,8 +52,8 @@ export type RenderResult = {
  * フェンスの中身 1 つを図に変換する。DOM も Node も使わない同期の純関数なので、
  * VS Code のプレビュー・CLI・サーバー側描画のどこからでも同じように呼べる。
  *
- * **Phase 5 まで。** 板・穴・2 本足の部品・配線を描き、ネットリストを導き、
- * ERC と当たり判定をかける。3 本足・DIP、注釈、CLI は次の Phase (52 の docs/05)。
+ * **Phase 6 まで。** 板・穴・2 本足の部品・配線を描き、ネットリストを導き、
+ * ERC と当たり判定をかけ、題を付けて書き出す。3 本足・DIP、注釈は次 (52 の docs/05)。
  */
 export function renderPerfboard(input: string): RenderResult {
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
@@ -61,8 +61,12 @@ export function renderPerfboard(input: string): RenderResult {
   const parsed = parseFence(source);
 
   if (!parsed.doc) {
-    const errors = attachSourceText(parsed.errors, source);
-    return { svg: '', netlist: [], errors, notices: [], errorHtml: renderErrorCard(errors) };
+    // **お知らせは図が出せないときも硬いエラーにしない。** 混ぜると CLI の
+    // 終了コードとカードの色分けが、直さなくても図が出るものを壊れ扱いする。
+    const reported = attachSourceText(parsed.errors, source);
+    const errors = reported.filter((error) => error.notice !== true);
+    const notices = reported.filter((error) => error.notice === true);
+    return { svg: '', netlist: [], errors, notices, errorHtml: renderErrorCard([...errors, ...notices]) };
   }
 
   const { board, title } = parsed.doc;

@@ -57,12 +57,54 @@ describe('parseFence', () => {
     expect(parsed.errors[0]?.message).toContain('列x行');
   });
 
-  test('names a size it cannot read, and shows how to write one', () => {
+  test('names a board it cannot read, and shows how to write one', () => {
+    const parsed = parseFence('board: elegoo-5x7\n');
+
+    expect(parsed.doc).toBeNull();
+    expect(parsed.errors[0]?.message).toContain('elegoo-5x7');
+    expect(parsed.errors[0]?.message).toContain('akizuki-c');
+  });
+
+  test('reads a board written by name', () => {
     const parsed = parseFence('board: akizuki-c\n');
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.doc?.board).toEqual({ cols: 25, rows: 15 });
+  });
+
+  test('reads a board written as the size it is sold at', () => {
+    // 秋月は同じ C タイプを 72×47mm と 72×47.5mm の両方で書いている。
+    for (const spelling of ['72x47mm', '72x47.5mm', '7.2x4.7cm', 'c']) {
+      const parsed = parseFence(`board: ${spelling}\n`);
+
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.doc?.board).toEqual({ cols: 25, rows: 15 });
+    }
+  });
+
+  test('offers the nearest board when a rounded size is not one it has', () => {
+    // 7×5cm は汎用基板の呼び名。**丸めて秋月 C に当てない** — 別の板で穴数も違う。
+    const parsed = parseFence('board: 7x5cm\n');
 
     expect(parsed.doc).toBeNull();
     expect(parsed.errors[0]?.message).toContain('akizuki-c');
-    expect(parsed.errors[0]?.message).toContain('28x18');
+    expect(parsed.errors[0]?.token).toBe('7x5cm');
+  });
+
+  test('draws a bare size as holes but says so when it is also a board size', () => {
+    // `72x47` は 72 列 × 47 行 (3,384 穴) として黙って通る。図は出るので
+    // エラーではなくお知らせだが、言わないと**別物の図に気づけない**。
+    const parsed = parseFence('board: 72x47\n');
+
+    expect(parsed.doc?.board).toEqual({ cols: 72, rows: 47 });
+    expect(parsed.errors).toHaveLength(1);
+    expect(parsed.errors[0]?.notice).toBe(true);
+    expect(parsed.errors[0]?.message).toContain('akizuki-c');
+    expect(parsed.errors[0]?.line).toBe(1);
+  });
+
+  test('says nothing extra about a hole count that is no board size', () => {
+    expect(parseFence('board: 25x15\n').errors).toEqual([]);
   });
 
   test('names the size as it was written, not as yaml resolved it', () => {
@@ -81,11 +123,13 @@ describe('parseFence', () => {
     expect(parsed.errors[0]?.token).toBe('1.10');
   });
 
-  test('refuses a board too big to be a real one', () => {
+  test('says a board is too big rather than that it could not be read', () => {
+    // 直す手が違う。`offBoardReason` が行と列を言い分けるのと同じ理由。
     const parsed = parseFence('board: 1000x1000\n');
 
     expect(parsed.doc).toBeNull();
-    expect(parsed.errors[0]?.message).toContain('列x行');
+    expect(parsed.errors[0]?.message).toContain('大きすぎ');
+    expect(parsed.errors[0]?.message).toContain('120x120');
   });
 
   test('reports a second board: instead of letting the last one win in silence', () => {
