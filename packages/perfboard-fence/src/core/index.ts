@@ -7,9 +7,11 @@ import { renderBoard } from './render/board.ts';
 import { renderParts } from './render/parts.ts';
 import { renderWires } from './render/wires.ts';
 import { netlistOf, resolveWires } from './wiring/wiring.ts';
+import { checkErc } from './erc/erc.ts';
+import { holeStrip } from './model/board.ts';
 import { parseAddress } from './model/address.ts';
 import { offBoardReason } from './model/board.ts';
-import { fenceError, safeToken } from './errors.ts';
+import { fenceError, notice, safeToken } from './errors.ts';
 import { renderDocument } from './render/document.ts';
 import { renderErrorBanner, renderErrorCard } from './render/errorHtml.ts';
 import { THEME } from './render/theme.ts';
@@ -48,8 +50,8 @@ export type RenderResult = {
  * フェンスの中身 1 つを図に変換する。DOM も Node も使わない同期の純関数なので、
  * VS Code のプレビュー・CLI・サーバー側描画のどこからでも同じように呼べる。
  *
- * **Phase 3 で描けるのは板・穴・2 本足の部品・配線まで。** ERC は Phase 4、
- * 注釈と CLI は Phase 6 で入る (52 の docs/05)。
+ * **Phase 4 まで。** 板・穴・2 本足の部品・配線を描き、ネットリストを導き、
+ * ERC をかける。3 本足・DIP、注釈、CLI は次の Phase (52 の docs/05)。
  */
 export function renderPerfboard(input: string): RenderResult {
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
@@ -84,6 +86,20 @@ export function renderPerfboard(input: string): RenderResult {
   const wiring = resolveWires(parsed.doc.wires, points, board);
   const netlist = netlistOf(placement.parts, wiring.wires, named);
 
+  // **読めなかったところがあるうちは ERC を掛けない。** 落ちた配線を勘定に
+  // 入れないまま「つながっていません」と言うと、**書いた配線について書き忘れを
+  // 指摘する**ことになる。掛けなかったことは黙らずに言う。
+  const hardErrors = [...parsed.errors, ...pointErrors, ...placement.errors, ...wiring.errors]
+    .filter((error) => error.notice !== true);
+  const erc = hardErrors.length > 0
+    ? [notice('読めなかったところがあるので ERC は掛けていません (直すと掛かります)', null)]
+    : checkErc({
+      parts: placement.parts,
+      wires: wiring.wires,
+      netlist,
+      namedStrips: new Set(named.map(([address]) => holeStrip(address))),
+    });
+
   // 配線は板の上、部品の下。線が部品の胴を隠すと、何が載っているか読めなくなる。
   const svg = renderDocument(
     layout,
@@ -94,11 +110,15 @@ export function renderPerfboard(input: string): RenderResult {
 
   // **行順に並べる。** 段ごとに集めた順のままだと、帯の打ち切り (8 件) で
   // 後ろの段の報告から先に消え、行を追って直せなくなる。
-  const collected = [...parsed.errors, ...pointErrors, ...placement.errors, ...wiring.errors];
+  const collected = [
+    ...parsed.errors, ...pointErrors, ...placement.errors, ...wiring.errors, ...erc,
+  ];
   const reported = attachSourceText(byLine(collected), source);
   const errors = reported.filter((error) => error.notice !== true);
   const notices = reported.filter((error) => error.notice === true);
-  return { svg, netlist, errors, notices, errorHtml: renderErrorBanner(reported) };
+  // **帯は読めなかったものを先に。** ERC のお知らせは足 1 本につき 1 件出るので、
+  // 行順のまま並べると打ち切りで**直さないと図が出ないほうが消える**。
+  return { svg, netlist, errors, notices, errorHtml: renderErrorBanner([...errors, ...notices]) };
 }
 
 export { extractPerfboardFences } from './fences.ts';

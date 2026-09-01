@@ -32,7 +32,8 @@ wires:
   the result a soldering order
 - What it derives is the **netlist** and the **errors**. Every hole on a
   perfboard is independent, so a missing connection is silent in the picture.
-  That is the part worth having a machine watch
+  That is what the ERC watches — it names an unconnected pin, with the line it
+  was written on
 
 ## How it differs from its siblings
 
@@ -60,8 +61,9 @@ and the content of the offending line.
 | **Drawing wires** (`- b7 -- c5 red`) | works |
 | **Deriving the netlist** | works |
 | **Naming holes** (`points:`) | works |
+| **ERC** (unwired pins, shorted parts, wires that connect nothing) | works |
 | Three-lead parts, DIP, SIP | **still to come** |
-| ERC (unwired pins, shorts, floating nets) | **still to come** |
+| `device` (things off the board), notes, CLI | **still to come** |
 
 The board size is written **columns by rows** — the order the board itself is
 sold in (`72×47.5mm` is long side by short side). There are no named boards

@@ -9,7 +9,7 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | --- | --- | --- |
 | circuit | 15 circuits + 5 deliberately broken | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 13 circuits + 2 deliberately broken | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
-| perfboard | none yet (it draws the board, its holes, two-lead parts and wires) | [packages/perfboard-fence/](../packages/perfboard-fence/README.md) |
+| perfboard | none yet (board, holes, two-lead parts, wires and ERC all work) | [packages/perfboard-fence/](../packages/perfboard-fence/README.md) |
 
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for
@@ -129,8 +129,9 @@ every hole sits on the same grid.
 **The difference from a breadboard is physical**: every hole on a perfboard is
 independent. Placing a part connects nothing, and the netlist comes only from
 the wires you wrote. The flip side is that a missing connection is silent in the
-picture, which is what the planned ERC (every pin wired / shorts / floating
-nets) is there to watch.
+picture, which is what **the ERC watches** — it names an unconnected pin, a part
+the wiring shorts out, and a wire that reaches no pin at all, each with the line
+it was written on.
 
 Example `.md` files arrive once the package has an `npm run examples`.
 

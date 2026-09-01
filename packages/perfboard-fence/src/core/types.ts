@@ -60,12 +60,16 @@ export type PartSpec = {
   readonly line: number | null;
 };
 
-/** 板に載せた部品。足は番地と導通グループの両方を持つ。 */
+/**
+ * 板に載せた部品。足は番地と導通グループの両方を持つ。
+ * **行番号を運ぶ** — ERC の報告が「どの行の部品か」を言えないと直せない。
+ */
 export type PlacedPart = {
   readonly id: string;
   readonly type: string;
   readonly variant: string | null;
   readonly value: string | null;
+  readonly line: number | null;
   readonly pins: readonly { readonly address: Address; readonly strip: StripId }[];
 };
 
@@ -84,11 +88,12 @@ export type WireSpec = {
   readonly line: number | null;
 };
 
-/** 端を番地に直した配線。 */
+/** 端を番地に直した配線。**行番号を運ぶ** (理由は PlacedPart と同じ)。 */
 export type RoutedWire = {
   readonly from: Address;
   readonly to: Address;
   readonly color: string | null;
+  readonly line: number | null;
 };
 
 /**

@@ -10,7 +10,7 @@ import type { RoutedWire } from '../types.ts';
 const layout = createLayout(createBoard({ cols: 10, rows: 6 }));
 
 const wire = (from: string, to: string, color: string | null = null): RoutedWire =>
-  ({ from: parseAddress(from)!, to: parseAddress(to)!, color });
+  ({ from: parseAddress(from)!, to: parseAddress(to)!, color, line: null });
 
 describe('renderWires', () => {
   test('runs a straight line from hole to hole', () => {

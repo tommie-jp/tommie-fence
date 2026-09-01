@@ -132,4 +132,80 @@ describe('renderPerfboard', () => {
     expect(result.errors[0]?.line).toBe(3);
     expect(result.errors[0]?.text).toBe('  VCC: z99');
   });
+  test('says a pin no wire reaches is not connected, without calling the fence unreadable', () => {
+    const result = renderPerfboard('board: 10x6\nparts:\n  R1: resistor b3 b7\n');
+
+    expect(result.errors).toEqual([]);
+    expect(result.notices).toHaveLength(2);
+    expect(result.notices[0]?.line).toBe(3);
+    expect(result.errorHtml).toContain('perfboard-notice');
+    // 図は描けている。ERC が言うのは「そのとおりに組むと動かない」こと。
+    expect(result.svg).toContain('<svg');
+  });
+
+  test('says nothing once every pin is wired', () => {
+    const result = renderPerfboard([
+      'board: 10x6',
+      'points:',
+      '  VCC: a1',
+      '  GND: a10',
+      'parts:',
+      '  R1: resistor b3 b7',
+      '  D1: led c3 c7',
+      'wires:',
+      '  - VCC -- b3',
+      '  - b7 -- c3',
+      '  - c7 -- GND',
+      '',
+    ].join('\n'));
+
+    expect(result.errors).toEqual([]);
+    expect(result.notices).toEqual([]);
+    expect(result.errorHtml).toBe('');
+  });
+
+  test('says a part the wiring jumps over is shorted', () => {
+    const result = renderPerfboard([
+      'board: 10x6',
+      'points:',
+      '  VCC: a1',
+      'parts:',
+      '  R1: resistor b3 b7',
+      'wires:',
+      '  - VCC -- b3',
+      '  - b3 -- b7',
+      '',
+    ].join('\n'));
+
+    expect(result.notices.some((n) => n.message.includes('短絡') && n.line === 5)).toBe(true);
+  });
+  test('keeps the hard errors in the banner when ERC has a lot to say', () => {
+    // お知らせが行順で先に来ると、帯の打ち切り (8 件) で**読めなかった行が
+    // 消える**。直さないと図が出ないもののほうが先。
+    const parts = Array.from({ length: 6 }, (_, i) => `  R${i}: resistor b${i + 1} c${i + 1}`);
+    const result = renderPerfboard(
+      ['board: 10x6', 'parts:', ...parts, 'wires:', '  - z99 -- b1', ''].join('\n'),
+    );
+
+    expect(result.errors.length).toBeGreaterThan(0);
+    expect(result.errorHtml).toContain(result.errors[0]!.message);
+  });
+
+  test('does not run ERC while something could not be read', () => {
+    // 落ちた配線を勘定に入れずに「つながっていません」と言うと、**書いた配線に
+    // ついて書き忘れを指摘する**ことになる。
+    const result = renderPerfboard([
+      'board: 10x6',
+      'parts:',
+      '  R1: resistor b3 b7',
+      'wires:',
+      '  - b3 -- z99',
+      '',
+    ].join('\n'));
+
+    expect(result.errors.length).toBeGreaterThan(0);
+    expect(result.notices.some((n) => n.message.includes('つながっていません'))).toBe(false);
+    // 黙って掛けないのではなく、掛けていないと言う。
+    expect(result.notices.some((n) => n.message.includes('ERC'))).toBe(true);
+  });
 });

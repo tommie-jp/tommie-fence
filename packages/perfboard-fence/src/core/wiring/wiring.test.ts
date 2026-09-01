@@ -14,6 +14,7 @@ const part = (id: string, holes: readonly string[]): PlacedPart => ({
   type: 'resistor',
   variant: null,
   value: null,
+  line: null,
   pins: holes.map((hole) => {
     const address = parseAddress(hole)!;
     return { address, strip: holeStrip(address) };

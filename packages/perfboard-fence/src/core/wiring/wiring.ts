@@ -57,14 +57,19 @@ export function resolveWires(
       errors.push(fenceError(`配線の両端が同じ穴です (${formatAddress(from)})`, spec.line));
       continue;
     }
-    wires.push({ from, to, color: spec.color });
+    wires.push({ from, to, color: spec.color, line: spec.line });
   }
 
   return { wires, errors };
 }
 
-/** 足の名前。2 本足は 1 / 2 の順で、書いた順そのまま。 */
-const pinRef = (part: PlacedPart, index: number): string => `${part.id}.${index + 1}`;
+/**
+ * 足の名前。2 本足は 1 / 2 の順で、書いた順そのまま。
+ *
+ * **ネットリストと ERC で同じものを使う。** 別々に持つと、片方を直したときに
+ * 突き合わせが黙って外れ、ERC が何も言わなくなる (返るのは空なのでテストも通る)。
+ */
+export const pinRef = (part: PlacedPart, index: number): string => `${part.id}.${index + 1}`;
 
 const membersOf = (parts: readonly PlacedPart[]): NetMember[] =>
   parts.flatMap((part) => part.pins.map((pin, index) => ({ ref: pinRef(part, index), strip: pin.strip })));

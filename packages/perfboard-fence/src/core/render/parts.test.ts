@@ -14,6 +14,7 @@ const part = (over: Partial<PlacedPart> & { holes: readonly string[] }): PlacedP
   type: over.type ?? 'resistor',
   variant: over.variant ?? null,
   value: over.value ?? null,
+  line: over.line ?? null,
   pins: over.holes.map((hole) => ({ address: parseAddress(hole)!, strip: hole })),
 });
 
@@ -75,7 +76,11 @@ describe('renderParts', () => {
   });
 
   test('draws nothing for a part with no pins', () => {
-    expect(renderParts([{ id: 'R1', type: 'resistor', variant: null, value: null, pins: [] }], layout, THEME))
+    expect(renderParts(
+      [{ id: 'R1', type: 'resistor', variant: null, value: null, line: null, pins: [] }],
+      layout,
+      THEME,
+    ))
       .toBe('');
   });
   test('cuts a caption that would run off the board, and marks the cut', () => {
