@@ -29,6 +29,9 @@
   ],
   "main": "./dist/extension.cjs",
   "browser": "./dist/extension.web.cjs",
+  "bin": {
+    "perfboard-fence": "./dist/cli.cjs"
+  },
   "activationEvents": [],
   "contributes": {
     "markdown.markdownItPlugins": true,
@@ -56,7 +59,9 @@
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "vscode:prepublish": "node esbuild.mjs --production",
-    "check": "npm run typecheck && npm run test"
+    "check": "npm run typecheck && npm run test",
+    "examples": "npm run build && node dist/cli.cjs render examples --out examples/out && node scripts/png.mjs",
+    "docs": "npm run build && node dist/cli.cjs render docs/01-syntax.md --out docs/out"
   },
   "dependencies": {
     "yaml": "^2.9.0"
@@ -69,6 +74,7 @@
     "esbuild": "^0.28.2",
     "fence-kit": "*",
     "markdown-it": "^15.0.0",
+    "sharp": "^0.35.3",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"
   }

@@ -28,6 +28,10 @@ jobs:
           - pkg: breadboard-fence
             docs: false
             generated: "'packages/breadboard-fence/examples/out/*.svg'"
+          # perfboard-fence: SVG は決まる。docs にも図があるので両方作り直す。
+          - pkg: perfboard-fence
+            docs: true
+            generated: "'packages/perfboard-fence/examples/out/*.svg' 'packages/perfboard-fence/docs/out/*.svg'"
     name: check (${{ matrix.pkg }})
     steps:
       - uses: actions/checkout@v7

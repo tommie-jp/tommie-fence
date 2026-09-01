@@ -90,7 +90,9 @@ export function parseFence(source: string): ParseResult {
   const wires: WireSpec[] = [];
   const points: PointSpec[] = [];
   let board: Board | null = null;
+  let title: string | null = null;
   let boardWritten = false;
+  let titleWritten = false;
   let partsWritten = false;
   let wiresWritten = false;
   let pointsWritten = false;
@@ -217,6 +219,23 @@ export function parseFence(source: string): ParseResult {
       readParts(pair.value, keyLine);
       continue;
     }
+    if (key === 'title') {
+      const at = lineOf((pair.value ?? pair.key) as Node);
+      if (titleWritten) {
+        errors.push(fenceError('title: が 2 つあります (題は 1 つです)', at, key));
+        continue;
+      }
+      titleWritten = true;
+      const written = scalarText(pair.value);
+      if (written === null) {
+        errors.push(fenceError('title: には図の題を 1 行で書きます', at));
+        continue;
+      }
+      // **空の題は無題**。`""` をそのまま通すと、題の帯だけ空けて何も書かれない
+      // 空白が板の上に残る。
+      title = written.trim() === '' ? null : written;
+      continue;
+    }
     if (key === 'wires') {
       const keyLine = lineOf(pair.key as Node);
       if (wiresWritten) {
@@ -271,5 +290,5 @@ export function parseFence(source: string): ParseResult {
     return { doc: null, errors };
   }
 
-  return { doc: { board, parts, wires, points }, errors };
+  return { doc: { board, title, parts, wires, points }, errors };
 }

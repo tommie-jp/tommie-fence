@@ -102,6 +102,8 @@ export type RoutedWire = {
  */
 export type FenceDocument = {
   readonly board: Board;
+  /** 図の上に出す題。書かれていなければ null。 */
+  readonly title: string | null;
   readonly parts: readonly PartSpec[];
   readonly wires: readonly WireSpec[];
   /** `points:` で名前を付けた穴。**定義順**で持つ (ネット名の当て方が定義順)。 */

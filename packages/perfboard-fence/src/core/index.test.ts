@@ -232,4 +232,25 @@ describe('renderPerfboard', () => {
 
     expect(result.notices.some((n) => n.message.includes('間隔が狭すぎます') && n.line === 3)).toBe(true);
   });
+  test('puts the title above the board and makes room for it', () => {
+    const withTitle = renderPerfboard('board: 10x6\ntitle: 図01 ためし\n');
+    const without = renderPerfboard('board: 10x6\n');
+
+    expect(withTitle.svg).toContain('>図01 ためし</text>');
+    expect(withTitle.errors).toEqual([]);
+    // 題のぶんだけ画布が伸びる (板に重ねない)。
+    expect(withTitle.svg.length).toBeGreaterThan(without.svg.length);
+  });
+
+  test('reports a second title: instead of letting the last one win', () => {
+    const result = renderPerfboard('board: 10x6\ntitle: A\ntitle: B\n');
+
+    expect(result.errors.some((e) => e.message.includes('2 つ') && e.line === 3)).toBe(true);
+  });
+  test('takes an empty title as no title, rather than reserving a blank band', () => {
+    const empty = renderPerfboard('board: 10x6\ntitle: ""\n');
+    const none = renderPerfboard('board: 10x6\n');
+
+    expect(empty.svg).toBe(none.svg);
+  });
 });

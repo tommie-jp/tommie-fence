@@ -5,7 +5,8 @@
 Markdown の ` ```perfboard ` フェンス (YAML) を、ユニバーサル基板の実体配線図として
 プレビューする VS Code 拡張。
 
-**まだ 3 本足・DIP は置けません。** 板・穴・2 本足の部品・配線・ネットリストまでです。
+**まだ 3 本足・DIP は置けません。** 2 本足の部品なら、置いて・つないで・
+検証して・書き出すところまで一通り動きます。
 
 ## 何を目指しているか
 
@@ -57,22 +58,39 @@ Markdown の行番号とその行の中身で返るエラー)。
 | **`points:` で穴に名前を付ける** | できる |
 | **ERC** (未結線の足・短絡した部品・空中配線) | できる |
 | **当たり判定** (胴の重なり) と足の間隔 | できる |
+| **図の題** (`title:`) | できる |
+| **CLI** (`render` / `check`) | できる |
 | 3 本足・DIP・SIP | **これから** |
-| `device` (基板外の機器)・注釈・CLI | **これから** |
+| `device` (基板外の機器)・`notes:`・`style:` | **これから** |
 
 板の大きさは**列 × 行**で書きます (板が「72×47.5mm」と長辺 × 短辺で
 売られているのと同じ順)。名前の付いた板 (`akizuki-c` など) はまだありません —
 秋月の商品ページは寸法とピッチしか書いておらず、穴数の一次情報が無いので、
 実物で数えるまでは書く人が自分の板を見て書きます。
 
+## 書き方
+
+文法は [docs/01-syntax.md](docs/01-syntax.md)、回路 1 つずつの例は
+[examples/](examples/README.md)。
+
+## CLI
+
+```bash
+node dist/cli.cjs render examples --out examples/out   # 図を書き出す
+node dist/cli.cjs check examples                       # 書かずに検証だけ
+```
+
+`check` はネットリストと言うことだけを出す。読めない行が 1 つでもあれば
+終了コードは 1 になるので、CI や LLM の自己修正ループから回せる。
+
 ## 開発
 
 リポジトリ直下から回す (npm workspaces)。
 
 ```bash
-npm run check --workspace=perfboard-fence   # 型チェック + テスト
-npm run build --workspace=perfboard-fence   # dist/ を作る
-./doBuild.sh perfboard-fence                # .vsix を作って VS Code に入れ直す
+npm run check --workspace=perfboard-fence      # 型チェック + テスト
+npm run examples --workspace=perfboard-fence   # 図を作り直す
+./doBuild.sh perfboard-fence                   # .vsix を作って VS Code に入れ直す
 ```
 
 ## ライセンス

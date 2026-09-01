@@ -12,7 +12,7 @@
 - `packages/fence-kit` — 3 つで重複している部分の置き場。ビルド工程を持たず、
   使う側の esbuild が束ねる
 - `packages/perfboard-fence` — ` ```perfboard ` フェンス。ユニバーサル基板。
-  **板・穴・2 本足の部品・配線・ネットリスト・ERC・当たり判定まで** (Phase 5)。
+  **2 本足の部品なら一通り動く** (Phase 6。文法リファレンスと例と CLI まで)。
   全穴が独立しているので、breadboard の `board` / `layout` / `place` /
   `router` はそのままでは使えない。**実測すると土台に
   なるのは盤面モデルではなく描画層のほう** (52 の docs/05)
@@ -37,13 +37,15 @@ npm install
 npm run check                                # 全パッケージの型チェック + テスト
 npm run check --workspace=circuit-fence      # 1 つだけ
 npm run examples --workspace=circuit-fence   # 図を作り直す
-./doBuild.sh circuit-fence                   # .vsix を作って VS Code に入れ直す
+./doBuild.sh                                 # 全部の .vsix を作って入れ直す
+./doBuild.sh circuit-fence                   # 1 つだけ
 ./doVersion.sh circuit-fence minor           # 版を上げる
 ```
 
 ## 約束
 
-1. **`vsce` を直に呼ばない**。`.vsix` を作るのは `./doBuild.sh <パッケージ>` だけ。
+1. **`vsce` を直に呼ばない**。`.vsix` を作るのは `./doBuild.sh` だけ
+   (パッケージ名を書かなければ**拡張を持つパッケージを全部**作る)。
    workspaces は依存を直下の `node_modules` へ巻き上げるので、パッケージの中で
    `vsce package` を走らせると依存を外に探しに行き、同じファイルを 2 通りの経路で
    拾って「同じパスが 2 つある」と言って止まる。`doBuild.sh` はパッケージ単体を

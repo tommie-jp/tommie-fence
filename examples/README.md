@@ -9,7 +9,7 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | --- | --- | --- |
 | circuit | 15 circuits + 5 deliberately broken | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 13 circuits + 2 deliberately broken | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
-| perfboard | none yet (board, holes, two-lead parts, wires, ERC and fit checks all work) | [packages/perfboard-fence/](../packages/perfboard-fence/README.md) |
+| perfboard | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) — 5 circuits + 1 deliberately broken | [packages/perfboard-fence/](../packages/perfboard-fence/README.md) |
 
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for
@@ -133,7 +133,10 @@ picture, which is what **the ERC watches** — it names an unconnected pin, a pa
 the wiring shorts out, and a wire that reaches no pin at all, each with the line
 it was written on.
 
-Example `.md` files arrive once the package has an `npm run examples`.
+The worked circuits are in
+[packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md)
+and the grammar in
+[docs/01-syntax.md](../packages/perfboard-fence/docs/01-syntax.md).
 
 ## Why the files are not kept here
 

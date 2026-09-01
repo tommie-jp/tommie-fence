@@ -5,8 +5,8 @@
 A VS Code extension that previews a ` ```perfboard ` fence (YAML) in Markdown as
 a perfboard wiring diagram.
 
-**Three-lead parts and DIPs are still to come.** The board, its holes,
-two-lead parts, wires and the netlist all work.
+**Three-lead parts and DIPs are still to come.** For two-lead parts the whole
+loop works: place, wire, check, and write out.
 
 ## What it is for
 
@@ -63,8 +63,10 @@ and the content of the offending line.
 | **Naming holes** (`points:`) | works |
 | **ERC** (unwired pins, shorted parts, wires that connect nothing) | works |
 | **Collision checks** (overlapping bodies) and lead spacing | works |
+| **Figure titles** (`title:`) | works |
+| **CLI** (`render` / `check`) | works |
 | Three-lead parts, DIP, SIP | **still to come** |
-| `device` (things off the board), notes, CLI | **still to come** |
+| `device` (things off the board), `notes:`, `style:` | **still to come** |
 
 The board size is written **columns by rows** — the order the board itself is
 sold in (`72×47.5mm` is long side by short side). There are no named boards
@@ -72,14 +74,29 @@ sold in (`72×47.5mm` is long side by short side). There are no named boards
 never the hole count, so until someone counts a real board, you write the size
 you see on yours.
 
+## How to write it
+
+The grammar is in [docs/01-syntax.md](docs/01-syntax.md) (Japanese), and the
+worked circuits are in [examples/](examples/README.md).
+
+## CLI
+
+```bash
+node dist/cli.cjs render examples --out examples/out   # write the drawings
+node dist/cli.cjs check examples                       # check without writing
+```
+
+`check` prints the netlist and whatever it has to say. It exits non-zero if any
+line could not be read, so it drives CI and an LLM's self-correcting loop.
+
 ## Development
 
 Run everything from the repository root (npm workspaces).
 
 ```bash
-npm run check --workspace=perfboard-fence   # typecheck + tests
-npm run build --workspace=perfboard-fence   # write dist/
-./doBuild.sh perfboard-fence                # build the .vsix, reinstall into VS Code
+npm run check --workspace=perfboard-fence      # typecheck + tests
+npm run examples --workspace=perfboard-fence   # rebuild the drawings
+./doBuild.sh perfboard-fence                   # build the .vsix, reinstall into VS Code
 ```
 
 ## License

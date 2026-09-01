@@ -54,13 +54,22 @@ jobs:
       - name: 生成物が作り直し済みか確かめる
         run: |
           npm run examples --workspace="$PKG"
-          if [ "$PKG" = circuit-fence ]; then
-            npm run docs --workspace="$PKG"
-            git diff --exit-code -- \
-              "packages/$PKG/examples/out/*.tex" "packages/$PKG/docs/out/*.tex"
-          else
-            git diff --exit-code -- "packages/$PKG/examples/out/*.svg"
-          fi
+          case "$PKG" in
+            circuit-fence)
+              # SVG は node-tikzjax の版で、PNG はフォント環境で変わる。
+              npm run docs --workspace="$PKG"
+              git diff --exit-code -- \
+                "packages/$PKG/examples/out/*.tex" "packages/$PKG/docs/out/*.tex"
+              ;;
+            perfboard-fence)
+              npm run docs --workspace="$PKG"
+              git diff --exit-code -- \
+                "packages/$PKG/examples/out/*.svg" "packages/$PKG/docs/out/*.svg"
+              ;;
+            *)
+              git diff --exit-code -- "packages/$PKG/examples/out/*.svg"
+              ;;
+          esac
 
       - name: CHANGELOG から該当バージョンの節を抜き出す
         run: |

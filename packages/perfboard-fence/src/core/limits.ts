@@ -25,6 +25,8 @@ export const LIMITS = {
   wires: 500,
   /** `points:` に置ける名前の数。 */
   points: 100,
+  /** 図の題の長さ。 */
+  titleLength: 60,
 } as const;
 
 /** 配線から `R1` の形で参照できる名前か。参照できない名前は書き間違いとして弾く。 */

@@ -6,8 +6,10 @@ Markdown の ` ```perfboard ` フェンスをユニバーサル基板の実体�
 
 ## いまどこまで来ているか
 
-**Phase 5 まで。** 板・穴・2 本足の部品・配線を描き、ネットリストを導き、
-ERC と当たり判定をかける。3 本足・DIP、`device`、注釈、CLI はまだ無い。
+**Phase 6 まで。** 2 本足の部品なら、置いて・つないで・検証して・書き出す
+ところまで一通り動く。文法は [docs/01-syntax.md](docs/01-syntax.md)、
+例は [examples/](examples/README.md)。
+3 本足・DIP、`device` (基板外の機器)、`notes:`、`style:` はまだ無い。
 フェーズ分けと、何をどこから持ってくるかの実測は
 `~/52-tommie-fence/docs/05-perfboard-fenceの起こし方.md` にある (private)。
 
@@ -68,6 +70,17 @@ npm run coverage --workspace=perfboard-fence   # カバレッジ (80% 以上を�
 npm run build --workspace=perfboard-fence
 ```
 
+**図はフェンスの直後に貼る**: `docs/01-syntax.md` と `examples/*.md` の
+フェンスはすべて本物で、直後に**そのフェンスを描いた図**を貼る。どの図にも
+`title: 図NN タイトル` を付け、**番号は .md ごとに 01 から**数え直す。
+規約は `src/core/examples.test.ts` が見張る。
+
+**図は再生成してコミット**: 描画を変えたら
+`npm run examples --workspace=perfboard-fence` と
+`npm run docs --workspace=perfboard-fence` を実行し、`examples/out` と
+`docs/out` の差分も一緒にコミットする (スナップショットテストの期待値であり、
+文書が貼っている図でもある)。
+
 **Markdown は lint を通す**:
-`npx markdownlint-cli 'README.md' 'README.ja.md' 'CLAUDE.md'`。
+`npx markdownlint-cli 'README.md' 'README.ja.md' 'CHANGELOG.md' 'CLAUDE.md' 'docs/*.md' 'examples/*.md' 'examples/errors/*.md'`。
 設定は `.markdownlint.json` (MD013 行長・MD033 インライン HTML は無効)。

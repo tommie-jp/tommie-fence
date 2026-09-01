@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | circuit | 回路 15 本 + わざと壊した例 5 本 | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 回路 13 本 + わざと壊した例 2 本 | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
-| perfboard | まだ無い (板・穴・2 本足の部品・配線・ERC・当たり判定まで動く段階) | [packages/perfboard-fence/](../packages/perfboard-fence/README.ja.md) |
+| perfboard | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) — 回路 5 本 + わざと壊した例 1 本 | [packages/perfboard-fence/](../packages/perfboard-fence/README.ja.md) |
 
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。
@@ -126,7 +126,8 @@ LED は書かれた色で光る。配線は 2 つの穴をまっすぐ結ぶ —
 どこにもつながっていない足、配線で短絡した部品、部品の足を 1 つもつないで
 いない配線を、行番号つきで名指す。
 
-例の `.md` は、`npm run examples` を持つところまで進んだら足す。
+例は [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md)、
+文法は [docs/01-syntax.md](../packages/perfboard-fence/docs/01-syntax.md)。
 
 ## なぜ実体をここに置かないか
 

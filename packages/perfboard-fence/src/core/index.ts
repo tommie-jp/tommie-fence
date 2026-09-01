@@ -6,6 +6,7 @@ import { placeParts } from './placement/place.ts';
 import { renderBoard } from './render/board.ts';
 import { renderParts } from './render/parts.ts';
 import { renderWires } from './render/wires.ts';
+import { renderTitle } from './render/title.ts';
 import { netlistOf, resolveWires } from './wiring/wiring.ts';
 import { checkErc } from './erc/erc.ts';
 import { checkFit } from './placement/collide.ts';
@@ -64,8 +65,8 @@ export function renderPerfboard(input: string): RenderResult {
     return { svg: '', netlist: [], errors, notices: [], errorHtml: renderErrorCard(errors) };
   }
 
-  const { board } = parsed.doc;
-  const layout = createLayout(board);
+  const { board, title } = parsed.doc;
+  const layout = createLayout(board, { title: title !== null });
   const placement = placeParts(parsed.doc.parts, board);
 
   const pointErrors: FenceError[] = [];
@@ -107,7 +108,8 @@ export function renderPerfboard(input: string): RenderResult {
   // 配線は板の上、部品の下。線が部品の胴を隠すと、何が載っているか読めなくなる。
   const svg = renderDocument(
     layout,
-    renderBoard(board, layout, THEME)
+    renderTitle(title, layout, THEME)
+      + renderBoard(board, layout, THEME)
       + renderWires(wiring.wires, layout, THEME)
       + renderParts(placement.parts, layout, THEME),
   );
@@ -129,4 +131,5 @@ export { extractPerfboardFences } from './fences.ts';
 export type { FenceBlock } from './fences.ts';
 export type { FenceError } from './types.ts';
 export type { Net } from 'fence-kit';
+export { errorText } from './render/errorText.ts';
 export { VERSION } from './version.ts';

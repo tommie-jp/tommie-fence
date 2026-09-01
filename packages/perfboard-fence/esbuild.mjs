@@ -8,8 +8,6 @@ const production = process.argv.includes('--production');
  * 読み込むためと、依存の yaml が CJS 実装を持ち込む
  * (ESM 出力だと dynamic require で落ちる) ため。
  * package.json は "type": "module" なので拡張子は .cjs にする。
- *
- * CLI (dist/cli.cjs) はまだ無い。Phase 6 で足す。
  */
 const targets = [
   {
@@ -28,6 +26,13 @@ const targets = [
     platform: 'browser',
     target: 'es2022',
     external: ['vscode'],
+  },
+  {
+    // shebang は src/cli/main.ts の 1 行目にあり、esbuild がそのまま先頭に残す。
+    entryPoints: ['src/cli/main.ts'],
+    outfile: 'dist/cli.cjs',
+    format: 'cjs',
+    platform: 'node',
   },
 ];
 
