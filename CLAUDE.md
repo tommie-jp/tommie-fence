@@ -9,10 +9,16 @@
 
 - `packages/circuit-fence` — ` ```circuit ` フェンス。回路図 (circuitikz / TeX)
 - `packages/breadboard-fence` — ` ```breadboard ` フェンス。ブレッドボード実体配線図
+- `packages/fence-kit` — 3 つで重複している部分の置き場。ビルド工程を持たず、
+  使う側の esbuild が束ねる
 - (予定) `packages/perfboard-fence` — ユニバーサル基板。breadboard の盤面モデルが土台
-- (予定) `packages/fence-kit` — 3 つで重複している部分の置き場
 
 言語は別、作法は同じ。**先回りして共通化しない** — 実際に重複してから引き上げる。
+いま fence-kit にあるのは、実測で重複が確かめられたものだけ:
+改行を揃える処理、フェンスの取り出し (言語名は引数)、markup のエスケープと
+要素の組み立て。**描画は入っていない** — circuit は TeX に描かせるので
+SVG を直に組み立てるコードを持たず、共有できるのが breadboard と
+(これから作る) perfboard の 2 つだけだから。
 
 ## コマンドはリポジトリ直下で
 
@@ -38,9 +44,11 @@ npm run examples --workspace=circuit-fence   # 図を作り直す
    devDependencies を直下へ集約しない (各パッケージに置いたままにする)。
    パッケージのビルドが要るファイルは、そのパッケージの中に置く
    (`esbuild.mjs` を共通化しないのはこれが理由)。
-3. **パッケージ間で依存するときは esbuild で束ねる**。`fence-kit` を作ったら、
-   external にせず束ねる。外に置くと、1 の作業場での install が npm 上に無い
-   パッケージを探しに行って失敗する。
+3. **パッケージ間で依存するときは esbuild で束ねる**。`fence-kit` は
+   external にしない。`.vsix` に実体は入らないので、依存の種類としては
+   **devDependencies が正しい** (実行時には要らない)。
+   `doBuild.sh` は作業場へ写すとき、モノレポ内の依存を隣に置いて
+   `file:` 指定に書き換える。npm 上に無いパッケージを探しに行かせないため。
 4. **版はパッケージごとに独立**。揃えない (揃えると直していないパッケージまで
    版が上がって CHANGELOG が嘘になる)。**タグはパッケージ名を接頭辞にする**:
    `circuit-fence-v0.4.0`。旧リポジトリの `v0.3.0` 形式は archive 側に残る。
@@ -64,3 +72,5 @@ npm run examples --workspace=circuit-fence   # 図を作り直す
 | `previewRefresher` | ある | ない | 回路図は描画が非同期 (TeX → SVG) なので、描き上がってからプレビューを促す仕組みが要る。フェンスに依存しないので `fence-kit` の候補 |
 | ライブラリの出口 | `circuit-fence/core` を `exports` で公開 | なし | サーバー側描画から呼ぶ要望があったのは回路図だけ |
 | 実行時の依存 | `yaml` + `node-tikzjax` | `yaml` だけ | 同上 |
+| 図の組み立て | TeX (circuitikz) に描かせて後から色を塗り替える | SVG を直に組み立てる | だから `svg` `palette` `textFit` `title` にあたるものが circuit には無い。`theme` は名前が同じだけで別物 (circuit は塗り替えの色、breadboard は色 + 穴の寸法) |
+| エラーの帯のキャレット | 全角を 2 桁と数えて位置を合わせる | 桁数だけ合わせる | 同じ `errorText.ts` という名前で別実装。**circuit の方が正しい**ので、揃えるなら breadboard を寄せる (未着手) |

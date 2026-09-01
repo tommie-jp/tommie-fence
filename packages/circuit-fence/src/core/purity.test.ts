@@ -13,8 +13,17 @@ import { describe, expect, test } from 'vitest';
 // **許すものだけを並べて、それ以外は落とす**。
 const CORE_DIR = fileURLToPath(new URL('.', import.meta.url));
 
-/** core が外から持ってきてよいもの。 */
-const ALLOWED = new Set(['yaml']);
+/**
+ * core が外から持ってきてよいもの。
+ *
+ * `fence-kit` を許すのは、**実行時の依存が増えないから**。同じモノレポの
+ * パッケージで、それ自身の実行時依存はゼロ、DOM も Node の API も使わず、
+ * esbuild が束ねるので出来上がりに `require` は残らない
+ * (external にしない理由は直下の CLAUDE.md の約束 3)。
+ * ここが守りたいのは「配るものが重くなる / ガワに依存する」ことの禁止で、
+ * ファイルがどのパッケージに置いてあるかではない。
+ */
+const ALLOWED = new Set(['yaml', 'fence-kit']);
 
 // import と export の両方、静的も動的も、引用符はどちらも拾う。
 const SPECIFIER = /(?:\bfrom|\bimport|\brequire)\s*\(?\s*['"]([^'"]+)['"]/g;

@@ -15,12 +15,12 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces",
     "test": "npm run test --workspaces",
     "coverage": "npm run coverage --workspaces",
-    "examples": "npm run examples --workspaces",
-    "docs": "npm run docs --workspaces",
+    "examples": "npm run examples --workspaces --if-present",
+    "docs": "npm run docs --workspaces --if-present",
     "check": "npm run typecheck && npm run test"
   }
 }

@@ -1,23 +1,19 @@
+import { element, escapeMarkup } from 'fence-kit';
+import type { Attributes } from 'fence-kit';
 import type { Point } from '../types.ts';
 
-const ESCAPES: Record<string, string> = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&apos;',
-};
-
-// XML 1.0 が載せられない文字 (タブ・改行・復帰以外の制御文字)。
-// 1 つ混ざるだけで図全体がパースできなくなるので、エスケープではなく捨てる。
-const ILLEGAL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g;
+export type { Attributes };
+export { element };
 
 /**
  * 図に載る文字列は必ずここを通す。VS Code の Markdown プレビューは
  * 拡張が返した HTML をサニタイズしないので、エスケープが唯一の防御になる。
+ *
+ * 中身は fence-kit にある。5 文字の実体参照と制御文字の切り捨ては XML と
+ * HTML で同じで、分けると片方だけ直す事故が起きる (実際、circuit 側に
+ * `escapeHtml` という名前で同じ実装が複製されていた)。
  */
-export const escapeXml = (text: string): string =>
-  text.replace(ILLEGAL, '').replace(/[&<>"']/g, (char) => ESCAPES[char] ?? char);
+export const escapeXml = escapeMarkup;
 
 /** 座標の桁を落として出力を安定させる (同じ入力なら同じ文字列 = プレビューの差分更新が軽い)。 */
 export const num = (value: number): string => String(Math.round(value * 100) / 100);
@@ -54,17 +50,6 @@ export function roundedPath(points: readonly Point[], radius: number): string {
 
   return commands.join(' ');
 }
-
-export type Attributes = Record<string, string | number | undefined>;
-
-const attributes = (attrs: Attributes): string =>
-  Object.entries(attrs)
-    .filter(([, value]) => value !== undefined)
-    .map(([name, value]) => ` ${name}="${escapeXml(String(value))}"`)
-    .join('');
-
-export const element = (name: string, attrs: Attributes, children?: string): string =>
-  children === undefined ? `<${name}${attributes(attrs)}/>` : `<${name}${attributes(attrs)}>${children}</${name}>`;
 
 /** 既定の字の大きさ (10) に対する縁取りの太さ。字を大きくする側が比例して広げる。 */
 export const TEXT_HALO_WIDTH = 3;

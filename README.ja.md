@@ -22,17 +22,20 @@ Markdown の行番号とその行の中身で返るエラー。
 `packages/` 配下へ取り込み済み。全コミットがここにあり、
 `git log packages/circuit-fence` で最初のコミットまで遡れる。
 リリースと版タグは元のリポジトリに残る。こちらで打つ版タグはパッケージ名を
-接頭辞にする (`circuit-fence-v0.4.0`)。2 つのパッケージは npm workspaces で
+接頭辞にする (`circuit-fence-v0.4.0`)。3 つのパッケージは npm workspaces で
 リポジトリ直下からビルド・テスト・パッケージできる。
-`fence-kit` と `perfboard-fence` はまだ無い。
+`perfboard-fence` はまだ無い。
 
 ```text
 tommie-fence
-├── packages/fence-kit          共有: フェンス抽出、行番号エラー、SVG/theme、CLI 雛形
+├── packages/fence-kit          共有: 改行の正規化、フェンス抽出、markup のエスケープ
 ├── packages/circuit-fence
 ├── packages/breadboard-fence
-└── packages/perfboard-fence
+└── packages/perfboard-fence    (予定)
 ```
+
+`fence-kit` に入れるのは、**実際に重複してから引き上げたものだけ**。
+使う側の esbuild が束ねるので、ビルド工程も実行時の依存も持たない。
 
 ## 開発
 

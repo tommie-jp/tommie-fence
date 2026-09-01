@@ -1,30 +1,14 @@
-const ESCAPES: Record<string, string> = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&apos;',
-};
+import { escapeMarkup } from 'fence-kit';
 
-// HTML に載せられない文字 (タブ・改行・復帰以外の制御文字)。
-// エスケープしても意味を持たないので捨てる。
-const ILLEGAL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g;
+export type { Attributes } from 'fence-kit';
+export { element } from 'fence-kit';
 
 /**
  * 図の周りに置く文字列は必ずここを通す。VS Code の Markdown プレビューは
  * 拡張が返した HTML をサニタイズしないので、エスケープが唯一の防御になる。
+ *
+ * 中身は fence-kit にある。5 文字の実体参照と制御文字の切り捨ては XML と
+ * HTML で同じで、分けると片方だけ直す事故が起きる (実際、breadboard 側に
+ * `escapeXml` という名前で同じ実装が複製されていた)。
  */
-export const escapeHtml = (text: string): string =>
-  text.replace(ILLEGAL, '').replace(/[&<>"']/g, (char) => ESCAPES[char] ?? char);
-
-export type Attributes = Record<string, string | number | undefined>;
-
-const attributes = (attrs: Attributes): string =>
-  Object.entries(attrs)
-    .filter(([, value]) => value !== undefined)
-    .map(([name, value]) => ` ${name}="${escapeHtml(String(value))}"`)
-    .join('');
-
-/** children は組み立て済みの HTML として扱う (エスケープは値を入れる側の責任)。 */
-export const element = (name: string, attrs: Attributes, children: string): string =>
-  `<${name}${attributes(attrs)}>${children}</${name}>`;
+export const escapeHtml = escapeMarkup;

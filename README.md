@@ -23,17 +23,21 @@ This repository is being assembled. The histories of
 imported under `packages/` — every commit is here, so
 `git log packages/circuit-fence` reaches back to the first one. The releases
 and version tags stay in those repositories; versions tagged here are prefixed
-with the package name (`circuit-fence-v0.4.0`). The two packages build, test
-and package from the repository root through npm workspaces; `fence-kit` and
-`perfboard-fence` do not exist yet.
+with the package name (`circuit-fence-v0.4.0`). The three packages build, test
+and package from the repository root through npm workspaces;
+`perfboard-fence` does not exist yet.
 
 ```text
 tommie-fence
-├── packages/fence-kit          shared: fence extraction, line-numbered errors, SVG/theme, CLI scaffold
+├── packages/fence-kit          shared: newline normalisation, fence extraction, markup escaping
 ├── packages/circuit-fence
 ├── packages/breadboard-fence
-└── packages/perfboard-fence
+└── packages/perfboard-fence    (planned)
 ```
+
+`fence-kit` only holds code that was **already duplicated** — nothing is put
+there in advance. The packages that use it bundle it with esbuild, so it has
+no build step and no runtime dependency of its own.
 
 ## Development
 

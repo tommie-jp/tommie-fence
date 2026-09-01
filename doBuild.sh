@@ -62,21 +62,64 @@ stage="$(mktemp -d)"
 # 作業場は必ず片付ける。途中で失敗しても残さない。
 trap 'rm -rf "$stage"' EXIT
 
-echo "==> $pkg を作業場へ写す"
+# パッケージを 1 つ、作業場の中の同名の場所へ写す。
 # dist と生成物は写さない。vsce が prepublish で作り直す。
-tar -C "packages/$pkg" \
-  --exclude=./node_modules --exclude=./dist --exclude=./coverage \
-  --exclude='./*.vsix' --exclude='./*.tgz' \
-  -cf - . | tar -C "$stage" -xf -
+copy_package() {
+  mkdir -p "$stage/$1"
+  tar -C "packages/$1" \
+    --exclude=./node_modules --exclude=./dist --exclude=./coverage \
+    --exclude='./*.vsix' --exclude='./*.tgz' \
+    -cf - . | tar -C "$stage/$1" -xf -
+}
+
+# 依存のうち、このモノレポの中にあるもの (fence-kit など)。
+workspace_deps() {
+  node -p "
+    const pkg = require('./packages/$1/package.json');
+    const fs = require('fs');
+    Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })
+      .filter((name) => fs.existsSync('packages/' + name))
+      .join('\n')
+  "
+}
+
+echo "==> $pkg を作業場へ写す"
+copy_package "$pkg"
+
+deps="$(workspace_deps "$pkg")"
+if [ -n "$deps" ]; then
+  echo "==> 同じモノレポの依存も写す: $(echo "$deps" | tr '\n' ' ')"
+  for dep in $deps; do
+    copy_package "$dep"
+    # 作業場には workspaces の親が無いので `*` は npm を探しに行って失敗する。
+    # 隣に置いた実体を file: で指す形に書き換える。
+    node -e "
+      const fs = require('fs');
+      const f = '$stage/$pkg/package.json';
+      const j = JSON.parse(fs.readFileSync(f, 'utf8'));
+      for (const field of ['dependencies', 'devDependencies']) {
+        if (j[field]?.['$dep']) j[field]['$dep'] = 'file:../$dep';
+      }
+      fs.writeFileSync(f, JSON.stringify(j, null, 2) + '\n');
+    "
+    # 入れ子の依存までは面倒を見ない。増えたらここで気づけるように止める。
+    nested="$(workspace_deps "$dep")"
+    if [ -n "$nested" ]; then
+      echo "$dep がモノレポ内の依存を持っている ($nested)。写す順番を考える必要がある" >&2
+      exit 1
+    fi
+  done
+fi
 
 echo "==> 作業場で依存を入れる (単独のリポジトリと同じ形にする)"
 # devDependencies も要る。vsce が prepublish で esbuild を呼ぶため。
 # パッケージが単体で install できる状態を保つのは、この段取りの前提。
-(cd "$stage" && npm install --no-audit --no-fund --silent)
+# --install-links: file: の依存を実体で置く (symlink だと vsce が辿れない)。
+(cd "$stage/$pkg" && npm install --install-links --no-audit --no-fund --silent)
 
 echo "==> $vsix を作る"
 # vsce package が vscode:prepublish (esbuild --production) を呼ぶ。
-(cd "$stage" && npx vsce package --out "$out")
+(cd "$stage/$pkg" && npx vsce package --out "$out")
 
 if [ "$do_install" -eq 0 ]; then
   echo "==> できあがり: $out"

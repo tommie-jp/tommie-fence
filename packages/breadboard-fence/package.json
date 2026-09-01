@@ -70,6 +70,7 @@
     "@vitest/coverage-v8": "^4.1.11",
     "@vscode/vsce": "^3.9.2",
     "esbuild": "^0.28.2",
+    "fence-kit": "*",
     "markdown-it": "^15.0.0",
     "sharp": "^0.35.3",
     "typescript": "^5.9.3",

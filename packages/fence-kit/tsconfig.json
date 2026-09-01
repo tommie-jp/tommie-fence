@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    // fence-kit 本体は Node の API を使わない (使う側がブラウザでも動くため)。
+    // それを見張るのは `types` ではなく `src/purity.test.ts` — テスト自身が
+    // ファイルを読むのに node:fs を使うので、型だけ外すと通らなくなる。
+    "types": ["node"]
+  },
+  "include": ["src", "vitest.config.ts"]
+}
