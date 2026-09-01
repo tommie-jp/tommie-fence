@@ -4,6 +4,7 @@ import {
 import { LIMITS, clampText } from '../limits.ts';
 import type { Layout } from '../model/layout.ts';
 import { BODY_HEIGHT, DOME_SIZE, bodyRect } from '../placement/geometry.ts';
+import { footprintOf } from '../parts/footprint.ts';
 import type { PlacedPart } from '../types.ts';
 import type { Theme } from './theme.ts';
 
@@ -121,5 +122,64 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
   return `${lead}${body}${label}`;
 }
 
+/** ノッチの半径 (DIP の 1 番ピン側の切り欠き)。 */
+const NOTCH = 4;
+
+/**
+ * 箱で描く部品か。**足の数ではなく形で決める** — `sip2` は足が 2 本でも
+ * パッケージなので、軸物のように傾けて描いてはいけない。
+ */
+const isBoxed = (part: PlacedPart): boolean => {
+  const kind = footprintOf(part.type)?.kind;
+  return kind === 'dip' || kind === 'sip' || kind === 'three-lead';
+};
+
+/**
+ * 足が 3 本以上ある部品。**足を囲む箱**として描き、足は穴まで短い線で出す。
+ *
+ * DIP は 1 番ピン側にノッチを描く。実物と同じ向きの目印が無いと、
+ * **図を見ながら挿すときに 180 度回して挿せてしまう**。
+ */
+function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
+  const rect = bodyRect(part, layout);
+  const first = part.pins[0];
+  if (!rect || !first) return '';
+
+  const leads = part.pins
+    .map((pin) => {
+      const point = layout.point(pin.address);
+      return element('circle', {
+        cx: num(point.x), cy: num(point.y), r: num(LEAD_WIDTH),
+        fill: theme.palette.lead,
+      });
+    })
+    .join('');
+
+  const body = element('rect', {
+    x: num(rect.cx - rect.width / 2), y: num(rect.cy - rect.height / 2),
+    width: num(rect.width), height: num(rect.height), rx: 3,
+    fill: theme.palette.body, stroke: theme.palette.bodyEdge, 'stroke-width': 1,
+    'fill-opacity': theme.metrics.bodyOpacity,
+  });
+
+  // ノッチは 1 番ピンの側の辺の真ん中。DIP でだけ描く (SIP と 3 本足には無い)。
+  const footprint = footprintOf(part.type);
+  const notch = footprint?.kind !== 'dip' ? '' : element('circle', {
+    cx: num(rect.cx - rect.width / 2 + NOTCH), cy: num(rect.cy),
+    r: NOTCH, fill: theme.palette.plate, stroke: theme.palette.bodyEdge, 'stroke-width': 1,
+  });
+
+  const text = fitToBoard(caption(part), rect.cx, theme.metrics.textSize, layout);
+  const label = svgText(rect.cx, rect.cy + rect.height / 2 + CAPTION_DROP, text, {
+    fill: theme.palette.caption,
+    'font-size': num(theme.metrics.textSize),
+    halo: theme.palette.plate,
+  });
+
+  return `${body}${notch}${leads}${label}`;
+}
+
 export const renderParts = (parts: readonly PlacedPart[], layout: Layout, theme: Theme): string =>
-  parts.map((part) => renderTwoLead(part, layout, theme)).join('');
+  parts
+    .map((part) => (isBoxed(part) ? renderBox(part, layout, theme) : renderTwoLead(part, layout, theme)))
+    .join('');

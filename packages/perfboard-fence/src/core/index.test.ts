@@ -136,8 +136,11 @@ describe('renderPerfboard', () => {
     const result = renderPerfboard('board: 10x6\nparts:\n  R1: resistor b3 b7\n');
 
     expect(result.errors).toEqual([]);
-    expect(result.notices).toHaveLength(2);
+    // **部品ごとに 1 件**にまとめる (足 1 本ずつではない)。
+    expect(result.notices).toHaveLength(1);
     expect(result.notices[0]?.line).toBe(3);
+    expect(result.notices[0]?.message).toContain('R1.1');
+    expect(result.notices[0]?.message).toContain('R1.2');
     expect(result.errorHtml).toContain('perfboard-notice');
     // 図は描けている。ERC が言うのは「そのとおりに組むと動かない」こと。
     expect(result.svg).toContain('<svg');
@@ -252,5 +255,44 @@ describe('renderPerfboard', () => {
     const none = renderPerfboard('board: 10x6\n');
 
     expect(empty.svg).toBe(none.svg);
+  });
+  test('does not throw when two one-anchor parts overlap', () => {
+    // **プレビューは try/catch を持たない。** ここで投げると Markdown 全体が
+    // 真っ白になる。
+    const fence = 'board: 12x8\nparts:\n  A: sip3 b3\n  B: sip3 b2\n';
+
+    expect(() => renderPerfboard(fence)).not.toThrow();
+    expect(renderPerfboard(fence).errors.length).toBeGreaterThan(0);
+  });
+
+  test('takes a part number that reads like an address on any part', () => {
+    // 型番は番地とそっくり (`C1815` は c 行 1815 列)。**板に載らない桁数**なので
+    // 足の書き間違いではありえない。
+    for (const line of ['  Q1: transistor b3 b4 b5 C1815', '  Q2: transistor c3 c4 c5 A1015']) {
+      expect(renderPerfboard(`board: 12x8\nparts:\n${line}\n`).errors).toEqual([]);
+    }
+  });
+
+  test('still refuses an extra hole that could really be one', () => {
+    const result = renderPerfboard('board: 12x8\nparts:\n  Q1: transistor b3 b4 b5 b6\n');
+
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  test('says an ic has unwired pins once, not once per pin', () => {
+    // DIP の余った足は普通のこと。1 本ずつ言うと**正しい図が毎回叱られる**。
+    const result = renderPerfboard('board: 16x10\nparts:\n  U1: dip8 c4\n');
+    const unwired = result.notices.filter((n) => n.message.includes('つながっていません'));
+
+    expect(unwired).toHaveLength(1);
+    expect(unwired[0]?.message).toContain('U1');
+    expect(unwired[0]?.message).toContain('8');
+  });
+
+  test('draws a sip2 as a package, not as an axial part', () => {
+    const svg = renderPerfboard('board: 12x8\nparts:\n  J1: sip2 b3\n').svg;
+
+    // 箱で描く部品は胴の矩形が出る。2 本足の胴 (回転する g) にはならない。
+    expect(svg).not.toContain('rotate(');
   });
 });

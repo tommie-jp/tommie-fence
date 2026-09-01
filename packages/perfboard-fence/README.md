@@ -5,8 +5,7 @@
 A VS Code extension that previews a ` ```perfboard ` fence (YAML) in Markdown as
 a perfboard wiring diagram.
 
-**Three-lead parts and DIPs are still to come.** For two-lead parts the whole
-loop works: place, wire, check, and write out.
+Two-lead, three-lead, DIP and SIP parts all place, wire, check and write out.
 
 ## What it is for
 
@@ -65,7 +64,7 @@ and the content of the offending line.
 | **Collision checks** (overlapping bodies) and lead spacing | works |
 | **Figure titles** (`title:`) | works |
 | **CLI** (`render` / `check`) | works |
-| Three-lead parts, DIP, SIP | **still to come** |
+| **Three-lead parts, DIP, SIP** | works |
 | `device` (things off the board), `notes:`, `style:` | **still to come** |
 
 A board is written as a **hole count** or as a **name**. The count is columns by

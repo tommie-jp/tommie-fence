@@ -96,3 +96,34 @@ describe('overlaps', () => {
     expect(overlaps(a, b)).toBe(overlaps(b, a));
   });
 });
+
+describe('足が 3 本以上ある部品', () => {
+  const many = (holes: readonly string[], type: string): PlacedPart => ({
+    id: 'U1',
+    type,
+    variant: null,
+    value: null,
+    line: null,
+    pins: holes.map((hole) => ({ address: at(hole), strip: holeStrip(at(hole)) })),
+  });
+
+  test('takes a box around the pins, not a body along two of them', () => {
+    const rect = bodyRect(many(['b3', 'b4', 'b5', 'e5', 'e4', 'e3'], 'dip6'), layout)!;
+
+    // 3 ピッチ離れた 2 列をまたぐので、縦は横より狭くならない。
+    expect(rect.angle).toBe(0);
+    expect(rect.height).toBeGreaterThan(layout.pitch * 2);
+    expect(rect.width).toBeGreaterThan(layout.pitch * 2);
+  });
+
+  test('centres the box on the pins', () => {
+    const rect = bodyRect(many(['b3', 'b4', 'b5'], 'transistor'), layout)!;
+
+    expect(rect.cx).toBe(layout.point(at('b4')).x);
+    expect(rect.cy).toBe(layout.point(at('b4')).y);
+  });
+
+  test('is null when the part has no pins at all', () => {
+    expect(bodyRect(many([], 'dip8'), layout)).toBeNull();
+  });
+});

@@ -118,27 +118,45 @@ wires:
 
 **名前**は英数字と `_` `-` で 32 字まで。配線から指せる形にする。
 
-**種類**は 17 種類。
+**種類**は 2 本足が 17、3 本足が 6、それに `dipN` と `sipN`。
 
 ```text
-resistor  capacitor  led  diode  inductor  crystal  buzzer
-photoresistor  thermistor  thermistor-ntc  thermistor-ptc  varistor
-zener  schottky  photodiode  fuse  lamp
+2 本足  resistor  capacitor  led  diode  inductor  crystal  buzzer
+        photoresistor  thermistor  thermistor-ntc  thermistor-ptc  varistor
+        zener  schottky  photodiode  fuse  lamp
+3 本足  transistor  potentiometer  thyristor  triac  slide-switch  regulator
+パッケージ  dip4〜dip40 (偶数)  sip2〜sip40
 ```
 
-略記も書ける (`r` `c` `l` `d` `ec` `ecap` `ldr` `ntc` `ptc` `xtal`)。
+**書く穴の数は形が決まる。**
+
+| 形 | 書く穴 | 足の位置 |
+| --- | --- | --- |
+| 2 本足 | 2 つ | 書かれたとおり |
+| 3 本足 | 3 つ | 書かれたとおり (足は曲げられる) |
+| `dipN` | 1 つ (1 番ピン) | パッケージが決める。2 列の間隔は 300 mil = 3 穴 |
+| `sipN` | 1 つ (1 番ピン) | パッケージが決める。1 列に並ぶ |
+
+DIP の番号は実物と同じ付き方 — 1 番ピンから右へ、折り返して下の列を左へ戻る。
+図には 1 番ピン側の切り欠きを描く (**無いと 180 度回して挿せてしまう**)。
+
+略記も書ける (`r` `c` `l` `d` `q` `tr` `pot` `scr` `reg` `ec` `ecap` `ldr`
+`ntc` `ptc` `xtal`)。
 **畳んだ先の正式名しか出口には出ない** — 図・エラー・ネットリストは正式名で揃う。
 
 **姿**は種類のあとに `/` で書く (`capacitor/ceramic`)。
 書ける姿は `capacitor` が `ceramic` `film` `electrolytic` `tantalum`、
-`led` が `3mm` `5mm`。**まだ描き分けない**ので、書くとその旨のお知らせが出る。
+`led` が `3mm` `5mm`、3 本足の 4 種が `to92` `to220`。
+**まだ描き分けない**ので、書くとその旨のお知らせが出る。
 
 **値**は残り全部。空白を含んでよい (`100n 50V`)。
 抵抗として読める値ならカラーコードを塗る (`10k` `4k7` `2.2M` `220`)。
 読めない値では帯を描かない — 実物と違う帯は、図を信じた人を間違えさせる。
 LED は値を色として読む (`red` `green` `blue` `yellow` `white` `orange`)。
 
-**穴は 2 つだけ。** 3 つ目を書くと、黙って値にせずエラーにする。
+**書く穴の数を超えたら、黙って値にせずエラーにする。** ただし穴を 1 つしか
+書かない形 (DIP / SIP) では見ない — そこの次のトークンは型番で、型番は番地と
+そっくりの綴りをしている (`NE555` は ne 行 555 列としても読める)。
 
 ## 配線 (`wires:`)
 

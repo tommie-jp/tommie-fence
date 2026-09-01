@@ -3,6 +3,17 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Added
+
+- **3 本足の部品と DIP / SIP を置けるようになった。** 3 本足 (`transistor`
+  `potentiometer` など 6 種) は穴を 3 つ書く — 足は曲げられるので、列に並べても
+  三角に開いても挿さり、どちらで書いたかを図に出したい。
+  `dipN` / `sipN` は**アンカーを 1 つだけ**書く (足の位置はパッケージが決めていて、
+  書く人が選べない)。DIP の 2 列の間隔は 300 mil = 3 穴、番号は実物と同じ
+  付き方で、図には 1 番ピン側の切り欠きを描く。
+
 ## [0.1.0] - 2026-09-01
 
 **最初のリリース。** ` ```perfboard ` フェンスで、2 本足の部品なら

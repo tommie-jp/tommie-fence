@@ -17,6 +17,9 @@ import type { FenceError, PlacedPart, RoutedWire, StripId } from '../types.ts';
  * 構造的に起きない**ので置き換えている (下の「短絡した部品」)。
  */
 
+/** 1 件の中に並べる足の数。多ピンの IC で行が伸びきらないように切る。 */
+const MAX_SHOWN_PINS = 4;
+
 export type ErcInput = {
   readonly parts: readonly PlacedPart[];
   readonly wires: readonly RoutedWire[];
@@ -41,18 +44,26 @@ function unwiredPins(input: ErcInput): FenceError[] {
 
   const found: FenceError[] = [];
   for (const part of input.parts) {
+    const loose: string[] = [];
     for (const [index, pin] of part.pins.entries()) {
       const ref = pinRef(part, index);
       const net = netOf.get(ref);
       if (!net || net.refs.length > 1) continue;
       if (net.strips.some((strip) => input.namedStrips.has(strip))) continue;
-
-      found.push(notice(
-        `${safeToken(ref)} (${formatAddress(pin.address)}) がどこにもつながっていません`
-        + '。全穴が独立しているので、配線を書くまで挿しただけではつながりません',
-        part.line,
-      ));
+      loose.push(`${safeToken(ref)} (${formatAddress(pin.address)})`);
     }
+    if (loose.length === 0) continue;
+
+    // **部品ごとに 1 件。** DIP の余った足は普通のことなので、1 本ずつ言うと
+    // 正しい図が毎回叱られ、帯の打ち切りで本物の指摘まで押し出す。
+    const shown = loose.length > MAX_SHOWN_PINS
+      ? `${loose.slice(0, MAX_SHOWN_PINS).join('、')} ほか ${loose.length - MAX_SHOWN_PINS} 本`
+      : loose.join('、');
+    found.push(notice(
+      `${safeToken(part.id)} の ${loose.length} 本の足がどこにもつながっていません (${shown})`
+      + '。全穴が独立しているので、配線を書くまで挿しただけではつながりません',
+      part.line,
+    ));
   }
   return found;
 }
@@ -79,7 +90,8 @@ function shortedParts(input: ErcInput): FenceError[] {
     if (first === undefined || !nets.every((net) => net === first)) continue;
 
     found.push(notice(
-      `${safeToken(part.id)} の両足が同じネットに来ています (配線で短絡しています)`,
+      `${safeToken(part.id)} の足 ${part.pins.length} 本が全部同じネットに来ています`
+      + ' (配線で短絡しています)',
       part.line,
     ));
   }

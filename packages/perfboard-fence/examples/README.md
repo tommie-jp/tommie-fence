@@ -13,6 +13,7 @@ GitHub のようにフェンスが描画されない場所で、書き方と出�
 | [03-wires.md](03-wires.md) | 配線 (`wires:`) と、そこから出るネットリスト |
 | [04-points.md](04-points.md) | 穴に名前を付ける (`points:`) |
 | [05-erc.md](05-erc.md) | 図のとおりに組むと動かないところ (ERC と当たり判定) |
+| [06-ic.md](06-ic.md) | DIP・SIP・3 本足の部品 |
 
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではない。

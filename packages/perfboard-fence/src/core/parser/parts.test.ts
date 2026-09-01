@@ -43,10 +43,44 @@ describe('parsePartLine', () => {
   });
 
   test('names a type it cannot place, rather than drawing nothing', () => {
-    const result = parsePartLine('Q1', 'transistor b3 b5 b7');
+    // 名前は知っているが置けないもの。**綴りを疑わせない。**
+    const result = parsePartLine('SW1', 'button b3 b5');
 
     expect(result.ok).toBe(false);
-    expect(!result.ok && result.error.message).toContain('transistor');
+    expect(!result.ok && result.error.message).toContain('button');
+    expect(!result.ok && result.error.message).toContain('まだ置けません');
+  });
+
+  test('places a three-lead part written with three holes', () => {
+    const result = parsePartLine('Q1', 'transistor b3 b4 b5 2SC1815');
+
+    expect(result.ok && result.value.holes).toEqual(['b3', 'b4', 'b5']);
+    expect(result.ok && result.value.value).toBe('2SC1815');
+  });
+
+  test('places a dip from one anchor, because the package fixes the rest', () => {
+    const result = parsePartLine('U1', 'dip8 b3 NE555');
+
+    expect(result.ok && result.value.holes).toEqual(['b3']);
+    expect(result.ok && result.value.value).toBe('NE555');
+  });
+
+  test('says how many holes a part wants when too few are written', () => {
+    const result = parsePartLine('Q1', 'transistor b3 b4');
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).toContain('3 つ');
+  });
+
+  test('takes a part number that reads like an address, on a one-anchor part', () => {
+    // **型番は番地とそっくり** (`NE555` は ne 行 555 列としても読める)。
+    // 穴を 1 つしか書かない形では足を増やしようが無いので、番地として弾かない。
+    expect(parsePartLine('U1', 'dip8 b3 NE555').ok).toBe(true);
+    expect(parsePartLine('U1', 'sip3 b3 LM358').ok).toBe(true);
+  });
+
+  test('still refuses an extra hole on a part whose legs are written out', () => {
+    expect(parsePartLine('Q1', 'transistor b3 b4 b5 b6').ok).toBe(false);
   });
 
   test('names a type it does not know at all', () => {

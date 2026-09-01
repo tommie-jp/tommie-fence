@@ -1,4 +1,5 @@
 import type { Layout } from '../model/layout.ts';
+import { footprintOf } from '../parts/footprint.ts';
 import type { PlacedPart, Point } from '../types.ts';
 
 /**
@@ -15,6 +16,8 @@ export const BODY_HEIGHT = 11;
 export const BODY_INSET = 9;
 /** 玉の直径 (LED)。**足の間隔で変わらない。** */
 export const DOME_SIZE = BODY_HEIGHT + 2;
+/** 足が 3 本以上ある部品の胴を、足の囲みからどれだけ詰めるか。 */
+const BOX_INSET = 4;
 
 /**
  * 玉で描く部品 — **胴が足の間を跨がない形**。丸い本体から足が 2 本出るので、
@@ -50,8 +53,44 @@ export function spanOf(part: PlacedPart): number | null {
   );
 }
 
-/** 胴の長方形。足が 2 本そろっていなければ null。 */
+/**
+ * 足が 3 本以上ある部品の胴。**足を囲む矩形**を軸に沿って取る。
+ * 2 本足のように傾けないのは、パッケージが格子に沿って載るため。
+ */
+function boxRect(part: PlacedPart, layout: Layout): OrientedRect | null {
+  const points = part.pins.map((pin) => layout.point(pin.address));
+  if (points.length === 0) return null;
+
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+  const left = Math.min(...xs);
+  const right = Math.max(...xs);
+  const top = Math.min(...ys);
+  const bottom = Math.max(...ys);
+
+  return {
+    cx: (left + right) / 2,
+    cy: (top + bottom) / 2,
+    // 足の穴に胴が掛からないよう、端から少し詰める。
+    width: Math.max(right - left + BODY_HEIGHT - BOX_INSET, BODY_HEIGHT),
+    height: Math.max(bottom - top + BODY_HEIGHT - BOX_INSET, BODY_HEIGHT),
+    angle: 0,
+  };
+}
+
+/**
+ * 箱で囲む部品か。**足の数ではなく形で決める** — `sip2` は足が 2 本でも
+ * パッケージ。描画 (`render/parts.ts`) と同じ判定を使う。
+ */
+const isBoxed = (part: PlacedPart): boolean => {
+  const kind = footprintOf(part.type)?.kind;
+  return kind === 'dip' || kind === 'sip' || kind === 'three-lead';
+};
+
+/** 胴の長方形。足が 1 本も無ければ null。 */
 export function bodyRect(part: PlacedPart, layout: Layout): OrientedRect | null {
+  if (isBoxed(part) || part.pins.length > 2) return boxRect(part, layout);
+
   const [first, second] = part.pins;
   if (!first || !second) return null;
 

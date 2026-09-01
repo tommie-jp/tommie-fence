@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { isTwoLead, splitPartType, twoLeadNames } from './types.ts';
+import { isThreeLead, isTwoLead, placeableNames, splitPartType } from './types.ts';
 
 describe('splitPartType', () => {
   test('reads a bare type', () => {
@@ -42,14 +42,25 @@ describe('isTwoLead', () => {
     expect(isTwoLead('capacitor')).toBe(true);
   });
 
-  test('does not claim parts it cannot place yet', () => {
-    // 3 本足・DIP・SIP は Phase 2 の次。**知らないふりをせず、置けないと言う。**
+  test('keeps three-lead parts out of the two-lead set', () => {
     expect(isTwoLead('transistor')).toBe(false);
     expect(isTwoLead('dip8')).toBe(false);
   });
 
   test('lists the names it knows, for the "did you mean" hint', () => {
-    expect(twoLeadNames()).toContain('resistor');
-    expect(twoLeadNames().length).toBeGreaterThan(5);
+    expect(placeableNames()).toContain('resistor');
+    expect(placeableNames()).toContain('transistor');
+    expect(placeableNames().length).toBeGreaterThan(5);
+  });
+});
+
+describe('isThreeLead', () => {
+  test('knows the parts whose three legs are written out', () => {
+    expect(isThreeLead('transistor')).toBe(true);
+    expect(isThreeLead('potentiometer')).toBe(true);
+  });
+
+  test('does not claim two-lead parts', () => {
+    expect(isThreeLead('resistor')).toBe(false);
   });
 });

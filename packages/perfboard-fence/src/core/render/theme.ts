@@ -35,6 +35,8 @@ export type Metrics = {
   readonly textSize: number;
   /** 配線の濃さ。少し透かして、下の穴の位置が読めるようにする。 */
   readonly wireOpacity: number;
+  /** 箱で描く部品の胴の濃さ。**足の穴を隠しきらない**ように少し透かす。 */
+  readonly bodyOpacity: number;
 };
 
 export type Theme = { readonly palette: Palette; readonly metrics: Metrics };
@@ -56,5 +58,6 @@ export const THEME: Theme = {
     landSize: 9,
     textSize: 9,
     wireOpacity: 0.9,
+    bodyOpacity: 0.92,
   },
 };

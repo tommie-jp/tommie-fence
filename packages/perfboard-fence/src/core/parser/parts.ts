@@ -1,7 +1,8 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
-import { isKnownType, isTwoLead, splitPartType, twoLeadNames } from '../parts/types.ts';
+import { footprintOf } from '../parts/footprint.ts';
+import { isKnownType, placeableNames, splitPartType } from '../parts/types.ts';
 import type { FenceError, PartSpec } from '../types.ts';
 
 export type Parsed<T> =
@@ -11,14 +12,17 @@ export type Parsed<T> =
 const fail = (message: string, token?: string): Parsed<never> =>
   ({ ok: false, error: fenceError(message, null, token) });
 
-/** 2 本足の部品が要る穴の数。3 本足を入れるときはここが種類ごとになる。 */
-const TWO_LEAD_HOLES = 2;
-
 /**
  * 1 行から読み取れるところまで。**行番号は持たない** — それを知っているのは
  * YAML の節点を見ている呼ぶ側なので、あちらが足す。
  */
 export type WrittenPart = Omit<PartSpec, 'line'>;
+
+/** どんな板にも載りうる番地か。載らない桁のものは型番とみなす。 */
+function plausibleHole(token: string): boolean {
+  const address = parseAddress(token);
+  return address !== null && address.col <= LIMITS.cols && address.row <= LIMITS.rows;
+}
 
 /**
  * `resistor b3 b7 10k` のような 1 行を読む。行番号は呼ぶ側が持っているので、
@@ -39,18 +43,26 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
   const { type, variant, problem } = splitPartType(written);
   if (problem !== null) return fail(problem, written);
 
-  if (!isTwoLead(type)) {
+  const footprint = footprintOf(type);
+  if (footprint === null) {
     // **知らないふりをしない。** 名前は知っているが置けないものと、
     // 綴りを疑うべきものとでは、次にやることが違う。
     const message = isKnownType(type)
-      ? `${safeToken(written)} はまだ置けません (いま置けるのは 2 本足の部品だけです)`
-      : `知らない部品の種類です: ${safeToken(written)} (${twoLeadNames().slice(0, 6).join(' / ')} など)`;
+      ? `${safeToken(written)} はまだ置けません`
+      : `知らない部品の種類です: ${safeToken(written)}`
+        + ` (${placeableNames().slice(0, 6).join(' / ')} / dipN / sipN など)`;
     return fail(message, written);
   }
 
-  const holes = rest.slice(0, TWO_LEAD_HOLES);
-  if (holes.length < TWO_LEAD_HOLES) {
-    return fail(`${safeToken(written)} は足が 2 本なので、穴を 2 つ書きます (例: ${type} b3 b7)`, written);
+  const holes = rest.slice(0, footprint.holes);
+  if (holes.length < footprint.holes) {
+    // **書く穴の数は形が決める。** DIP と SIP はアンカー 1 つだけ
+    // (足の位置はパッケージが決めていて、書く人が選べない)。
+    const example = footprint.holes === 1 ? `${type} b3` : `${type} ${['b3', 'b5', 'b7'].slice(0, footprint.holes).join(' ')}`;
+    return fail(
+      `${safeToken(written)} は穴を ${footprint.holes} つ書きます (例: ${example})`,
+      written,
+    );
   }
   for (const hole of holes) {
     if (parseAddress(hole) === null) {
@@ -59,13 +71,17 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
   }
 
   // 残りは丸ごと値。`100n 50V` のように空白を含む書き方をそのまま通す。
-  const tail = rest.slice(TWO_LEAD_HOLES);
-  // **番地に見えるものを黙って値にしない。** 3 本目の足を書いたつもりの人が、
+  const tail = rest.slice(footprint.holes);
+  // **番地に見えるものを黙って値にしない。** 足を 1 本多く書いたつもりの人が、
   // 「値 b9」の図を見て気づけないまま終わる。
-  const stray = tail.find((token) => parseAddress(token) !== null);
+  //
+  // ただし**どんな板にも載らない番地は足の書き間違いではない**。型番は番地と
+  // そっくりの綴りをしていて (`NE555` は ne 行 555 列、`C1815` は c 行 1815 列)、
+  // 番地として弾くと正しい図が毎回叱られる。上限を超える列は型番のほう。
+  const stray = tail.find((token) => plausibleHole(token));
   if (stray !== undefined) {
     return fail(
-      `${safeToken(written)} は足が 2 本なので、3 つ目の穴は書けません: ${safeToken(stray)}`,
+      `${safeToken(written)} が書く穴は ${footprint.holes} つです。余分な番地: ${safeToken(stray)}`,
       stray,
     );
   }

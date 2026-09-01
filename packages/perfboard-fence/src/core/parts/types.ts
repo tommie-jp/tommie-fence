@@ -19,12 +19,20 @@ const TWO_LEAD = new Set([
   'fuse', 'lamp',
 ]);
 
-/** まだ置けないが、名前は知っている種類。「知らない」と言うと綴りを疑わせてしまう。 */
-const NOT_YET = new Set([
-  'transistor', 'potentiometer', 'slide-switch', 'thyristor', 'triac', 'button', 'device',
+/** 3 本足の部品。**足の位置は書かれたとおり** — 実物の足は曲げられる。 */
+const THREE_LEAD = new Set([
+  'transistor', 'potentiometer', 'thyristor', 'triac', 'slide-switch', 'regulator',
 ]);
 
+/** まだ置けないが、名前は知っている種類。「知らない」と言うと綴りを疑わせてしまう。 */
+const NOT_YET = new Set(['button', 'device']);
+
 const ALIASES: Record<string, string> = {
+  q: 'transistor',
+  tr: 'transistor',
+  pot: 'potentiometer',
+  scr: 'thyristor',
+  reg: 'regulator',
   r: 'resistor',
   c: 'capacitor',
   l: 'inductor',
@@ -43,6 +51,11 @@ const ALIASES: Record<string, string> = {
 const VARIANTS: Record<string, readonly string[]> = {
   capacitor: ['ceramic', 'film', 'electrolytic', 'tantalum'],
   led: ['3mm', '5mm'],
+  // TO-92 は丸い小信号用、TO-220 は放熱タブつき。足の並びは書かれた穴で示す。
+  transistor: ['to92', 'to220'],
+  thyristor: ['to92', 'to220'],
+  triac: ['to92', 'to220'],
+  regulator: ['to92', 'to220'],
 };
 
 /**
@@ -59,9 +72,12 @@ export const isAxial = (type: string): boolean => AXIAL.has(type);
 const own = (table: Record<string, unknown>, key: string): boolean => Object.hasOwn(table, key);
 
 export const isTwoLead = (type: string): boolean => TWO_LEAD.has(type);
-export const isKnownType = (type: string): boolean => TWO_LEAD.has(type) || NOT_YET.has(type);
-export const twoLeadNames = (): readonly string[] => [...TWO_LEAD];
-export const knownNames = (): readonly string[] => [...TWO_LEAD, ...NOT_YET, ...Object.keys(ALIASES)];
+export const isThreeLead = (type: string): boolean => THREE_LEAD.has(type);
+export const isKnownType = (type: string): boolean =>
+  TWO_LEAD.has(type) || THREE_LEAD.has(type) || NOT_YET.has(type);
+export const placeableNames = (): readonly string[] => [...TWO_LEAD, ...THREE_LEAD];
+export const knownNames = (): readonly string[] =>
+  [...TWO_LEAD, ...THREE_LEAD, ...NOT_YET, ...Object.keys(ALIASES)];
 
 export type PartType = {
   readonly type: string;

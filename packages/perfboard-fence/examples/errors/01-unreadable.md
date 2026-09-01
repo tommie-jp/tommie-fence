@@ -24,7 +24,15 @@ parts:
 ```perfboard
 board: 10x6
 parts:
-  Q1: transistor b3 b5 b7
+  SW1: button b3 b5
+```
+
+書く穴の数は形が決める。3 本足は 3 つ、DIP と SIP はアンカー 1 つ。
+
+```perfboard
+board: 10x6
+parts:
+  Q1: transistor b3 b4
 ```
 
 板の外を指したとき。**行が足りないのか列が足りないのか**を言い分ける。

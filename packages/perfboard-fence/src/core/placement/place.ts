@@ -2,6 +2,7 @@ import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import { holeStrip, offBoardReason } from '../model/board.ts';
+import { footprintOf, pinsOf } from '../parts/footprint.ts';
 import type { Address, Board, FenceError, PartSpec, PlacedPart, StripId } from '../types.ts';
 
 export type Placement = { readonly parts: readonly PlacedPart[]; readonly errors: readonly FenceError[] };
@@ -50,7 +51,19 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     }
     if (rejected) continue;
 
-    const strips = addresses.map(holeStrip);
+    // **足の位置は形が決める。** DIP と SIP は書かれたアンカーから広げる。
+    const footprint = footprintOf(spec.type);
+    const pins = footprint === null ? addresses : pinsOf(footprint, addresses);
+    const offPin = pins.find((address) => offBoardReason(board, address) !== null);
+    if (offPin) {
+      errors.push(fenceError(
+        `${safeToken(spec.id)} の足が板からはみ出します (${offBoardReason(board, offPin)})`,
+        spec.line,
+      ));
+      continue;
+    }
+
+    const strips = pins.map(holeStrip);
     if (new Set(strips).size !== strips.length) {
       errors.push(fenceError(
         `${safeToken(spec.id)} の足が同じ穴に来ています (${spec.holes.map(safeToken).join(' ')})`,
@@ -62,11 +75,12 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     const clash = strips.findIndex((strip) => takenBy.has(strip));
     if (clash !== -1) {
       const strip = strips[clash] as StripId;
-      const address = addresses[clash] as Address;
+      // **索引は展開後の足に当てる。** 書かれた穴は DIP / SIP では 1 つしか
+      // 無いので、そちらを引くと範囲外になって投げる (プレビューが真っ白になる)。
+      const address = pins[clash] as Address;
       errors.push(fenceError(
         `${formatAddress(address)} には ${takenBy.get(strip)} の足が入っています (1 つの穴に挿せる足は 1 本)`,
         spec.line,
-        spec.holes[clash],
       ));
       continue;
     }
@@ -79,7 +93,7 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
       variant: spec.variant,
       value: spec.value,
       line: spec.line,
-      pins: addresses.map((address) => ({ address, strip: holeStrip(address) })),
+      pins: pins.map((address) => ({ address, strip: holeStrip(address) })),
     });
   }
 
