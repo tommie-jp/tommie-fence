@@ -62,6 +62,7 @@ and the content of the offending line.
 | **Deriving the netlist** | works |
 | **Naming holes** (`points:`) | works |
 | **ERC** (unwired pins, shorted parts, wires that connect nothing) | works |
+| **Collision checks** (overlapping bodies) and lead spacing | works |
 | Three-lead parts, DIP, SIP | **still to come** |
 | `device` (things off the board), notes, CLI | **still to come** |
 

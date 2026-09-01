@@ -208,4 +208,28 @@ describe('renderPerfboard', () => {
     // 黙って掛けないのではなく、掛けていないと言う。
     expect(result.notices.some((n) => n.message.includes('ERC'))).toBe(true);
   });
+  test('says two parts whose bodies cross cannot both be fitted', () => {
+    const result = renderPerfboard([
+      'board: 12x8',
+      'points:',
+      '  VCC: a1',
+      'parts:',
+      '  R1: resistor b3 b7',
+      '  R2: resistor a5 c5',
+      'wires:',
+      '  - VCC -- b3',
+      '',
+    ].join('\n'));
+
+    expect(result.errors).toEqual([]);
+    expect(result.notices.some((n) => n.message.includes('胴が重なっています') && n.line === 6)).toBe(true);
+    // 図は描けている。言っているのは「実物では両方を挿せない」こと。
+    expect(result.svg).toContain('<svg');
+  });
+
+  test('says an axial part will not go into two holes this close', () => {
+    const result = renderPerfboard('board: 10x6\nparts:\n  R1: resistor b3 b4\n');
+
+    expect(result.notices.some((n) => n.message.includes('間隔が狭すぎます') && n.line === 3)).toBe(true);
+  });
 });

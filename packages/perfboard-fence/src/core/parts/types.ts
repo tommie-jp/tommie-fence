@@ -45,6 +45,17 @@ const VARIANTS: Record<string, readonly string[]> = {
   led: ['3mm', '5mm'],
 };
 
+/**
+ * **軸物** — 胴の両端から足が出る形。足を曲げて挿すので、胴そのものより
+ * 狭い間隔には入らない。ラジアル (足が同じ側から出る形。LED・コンデンサ・
+ * サーミスタなど) は足の間隔が 2.54mm で作られているので、ここには入れない。
+ */
+const AXIAL = new Set([
+  'resistor', 'diode', 'zener', 'schottky', 'photodiode', 'inductor', 'fuse',
+]);
+
+export const isAxial = (type: string): boolean => AXIAL.has(type);
+
 const own = (table: Record<string, unknown>, key: string): boolean => Object.hasOwn(table, key);
 
 export const isTwoLead = (type: string): boolean => TWO_LEAD.has(type);

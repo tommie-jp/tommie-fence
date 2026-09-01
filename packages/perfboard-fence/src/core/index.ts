@@ -8,6 +8,7 @@ import { renderParts } from './render/parts.ts';
 import { renderWires } from './render/wires.ts';
 import { netlistOf, resolveWires } from './wiring/wiring.ts';
 import { checkErc } from './erc/erc.ts';
+import { checkFit } from './placement/collide.ts';
 import { holeStrip } from './model/board.ts';
 import { parseAddress } from './model/address.ts';
 import { offBoardReason } from './model/board.ts';
@@ -50,8 +51,8 @@ export type RenderResult = {
  * フェンスの中身 1 つを図に変換する。DOM も Node も使わない同期の純関数なので、
  * VS Code のプレビュー・CLI・サーバー側描画のどこからでも同じように呼べる。
  *
- * **Phase 4 まで。** 板・穴・2 本足の部品・配線を描き、ネットリストを導き、
- * ERC をかける。3 本足・DIP、注釈、CLI は次の Phase (52 の docs/05)。
+ * **Phase 5 まで。** 板・穴・2 本足の部品・配線を描き、ネットリストを導き、
+ * ERC と当たり判定をかける。3 本足・DIP、注釈、CLI は次の Phase (52 の docs/05)。
  */
 export function renderPerfboard(input: string): RenderResult {
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
@@ -92,13 +93,16 @@ export function renderPerfboard(input: string): RenderResult {
   const hardErrors = [...parsed.errors, ...pointErrors, ...placement.errors, ...wiring.errors]
     .filter((error) => error.notice !== true);
   const erc = hardErrors.length > 0
-    ? [notice('読めなかったところがあるので ERC は掛けていません (直すと掛かります)', null)]
-    : checkErc({
-      parts: placement.parts,
-      wires: wiring.wires,
-      netlist,
-      namedStrips: new Set(named.map(([address]) => holeStrip(address))),
-    });
+    ? [notice('読めなかったところがあるので ERC と当たり判定は掛けていません (直すと掛かります)', null)]
+    : [
+      ...checkErc({
+        parts: placement.parts,
+        wires: wiring.wires,
+        netlist,
+        namedStrips: new Set(named.map(([address]) => holeStrip(address))),
+      }),
+      ...checkFit(placement.parts, layout),
+    ];
 
   // 配線は板の上、部品の下。線が部品の胴を隠すと、何が載っているか読めなくなる。
   const svg = renderDocument(

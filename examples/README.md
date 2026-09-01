@@ -9,7 +9,7 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | --- | --- | --- |
 | circuit | 15 circuits + 5 deliberately broken | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 13 circuits + 2 deliberately broken | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
-| perfboard | none yet (board, holes, two-lead parts, wires and ERC all work) | [packages/perfboard-fence/](../packages/perfboard-fence/README.md) |
+| perfboard | none yet (board, holes, two-lead parts, wires, ERC and fit checks all work) | [packages/perfboard-fence/](../packages/perfboard-fence/README.md) |
 
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for

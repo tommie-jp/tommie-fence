@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | circuit | 回路 15 本 + わざと壊した例 5 本 | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 回路 13 本 + わざと壊した例 2 本 | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
-| perfboard | まだ無い (板・穴・2 本足の部品・配線・ERC まで動く段階) | [packages/perfboard-fence/](../packages/perfboard-fence/README.ja.md) |
+| perfboard | まだ無い (板・穴・2 本足の部品・配線・ERC・当たり判定まで動く段階) | [packages/perfboard-fence/](../packages/perfboard-fence/README.ja.md) |
 
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。

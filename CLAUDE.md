@@ -12,7 +12,7 @@
 - `packages/fence-kit` — 3 つで重複している部分の置き場。ビルド工程を持たず、
   使う側の esbuild が束ねる
 - `packages/perfboard-fence` — ` ```perfboard ` フェンス。ユニバーサル基板。
-  **板・穴・2 本足の部品・配線・ネットリスト・ERC まで** (Phase 4)。
+  **板・穴・2 本足の部品・配線・ネットリスト・ERC・当たり判定まで** (Phase 5)。
   全穴が独立しているので、breadboard の `board` / `layout` / `place` /
   `router` はそのままでは使えない。**実測すると土台に
   なるのは盤面モデルではなく描画層のほう** (52 の docs/05)

@@ -3,21 +3,16 @@ import {
 } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Layout } from '../model/layout.ts';
-import type { PlacedPart, Point } from '../types.ts';
+import { BODY_HEIGHT, DOME_SIZE, bodyRect } from '../placement/geometry.ts';
+import type { PlacedPart } from '../types.ts';
 import type { Theme } from './theme.ts';
 
 const LEAD_WIDTH = 2;
-/** 胴の高さ。ピッチ (20) の中に収まる太さ。 */
-const BODY_HEIGHT = 11;
-/** 胴が穴に掛からないよう、両端から詰める幅。 */
-const BODY_INSET = 9;
 /** キャプションを胴のどれだけ下に置くか。 */
 const CAPTION_DROP = 14;
 /** カラーコードの帯の幅と、胴の端から空ける幅。 */
 const BAND_WIDTH = 3;
 const BAND_MARGIN = 2;
-
-const midpoint = (a: Point, b: Point): Point => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
 
 /** 図に出す名前と値。値が無ければ名前だけ。 */
 const caption = (part: PlacedPart): string =>
@@ -66,10 +61,13 @@ function resistorBody(part: PlacedPart, width: number, theme: Theme): string {
   return shell + stripes;
 }
 
-/** LED の玉。色は書かれた値から引き、知らない色でも既定で描く (足の位置は変わらない)。 */
+/**
+ * LED の玉。色は書かれた値から引き、知らない色でも既定で描く (足の位置は変わらない)。
+ * 大きさは当たり判定と同じ定数から取る (`placement/geometry.ts`)。
+ */
 const ledBody = (part: PlacedPart): string =>
   element('circle', {
-    cx: 0, cy: 0, r: num(BODY_HEIGHT / 2 + 1),
+    cx: 0, cy: 0, r: num(DOME_SIZE / 2),
     fill: (part.value === null ? null : ledColor(part.value)) ?? DEFAULT_LED_COLOR,
     stroke: '#00000033', 'stroke-width': 1,
   });
@@ -92,14 +90,16 @@ const bodyOf = (part: PlacedPart, width: number, theme: Theme): string => {
  */
 function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
   const [first, second] = part.pins;
-  if (!first || !second) return '';
+  const rect = bodyRect(part, layout);
+  if (!first || !second || !rect) return '';
 
   const from = layout.point(first.address);
   const to = layout.point(second.address);
-  const center = midpoint(from, to);
-  const angle = (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
-  const span = Math.hypot(to.x - from.x, to.y - from.y);
-  const width = Math.max(span - BODY_INSET * 2, BODY_HEIGHT);
+  // **胴の形は当たり判定と同じものを使う** (placement/geometry.ts)。
+  // 別々に持つと、図では重なって見えるのに何も言わない、が起きる。
+  const center = { x: rect.cx, y: rect.cy };
+  const angle = (rect.angle * 180) / Math.PI;
+  const width = rect.width;
 
   const lead = element('line', {
     x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y),
