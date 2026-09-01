@@ -145,11 +145,15 @@ npm pack   # ビルドと型定義の書き出しを済ませて circuit-fence-<
 
 ## 開発
 
+モノレポの一部なので、**コマンドはリポジトリ直下で実行する**
+(`npm install` 1 回で全パッケージ分が入る)。
+
 ```bash
 npm install
-npm run check      # 型チェック + テスト
-npm run examples   # examples の図を作り直す (変えたら出力もコミットする)
-./doBuild.sh       # .vsix を作って VS Code に入れ直す
+npm run check --workspace=circuit-fence      # 型チェック + テスト
+npm run examples --workspace=circuit-fence   # examples の図を作り直す (変えたら出力もコミットする)
+./doBuild.sh circuit-fence                   # .vsix を作って VS Code に入れ直す
+./doVersion.sh circuit-fence minor           # 版を上げる (package.json と写しを揃える)
 ```
 
 設計上の約束と運用ルールは [CLAUDE.md](CLAUDE.md)。

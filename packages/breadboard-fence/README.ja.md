@@ -82,15 +82,20 @@ sha256sum -c SHA256SUMS
 入れ直すまで、プレビューは前のビルドのまま動く。
 
 ```bash
-./doBuild.sh                             # 検査 → .vsix を作る → 入れ直す
+# リポジトリ直下で
+./doBuild.sh breadboard-fence            # 検査 → .vsix を作る → 入れ直す
 ```
 
-手でやるなら次の 2 つ。
+入れ直しだけ手でやるなら次の 2 つ。
 
 ```bash
-npm run package
-code --install-extension breadboard-fence-0.3.0.vsix --force
+./doBuild.sh breadboard-fence --no-install
+code --install-extension packages/breadboard-fence/breadboard-fence-0.3.0.vsix --force
 ```
+
+`.vsix` を作るのに `doBuild.sh` を通すのは、**workspaces が依存を
+リポジトリ直下へ巻き上げるため `vsce` を直に呼ぶと失敗するから**
+(パッケージ単体を作業場へ写して詰め直す段取りが要る)。
 
 - バージョン番号を上げずに入れ直すときは `--force` が要る。
 - 入れ直したら**ウィンドウを再読み込みする** (コマンドパレットの
@@ -118,10 +123,12 @@ code --install-extension breadboard-fence-0.3.0.vsix --force
 
 ### CLI
 
-GitHub に貼れるスタンドアロン SVG を書き出せる。事前に `npm run build`
-(または `npm run package`) が要る。コマンドは PowerShell でも同じ。
+GitHub に貼れるスタンドアロン SVG を書き出せる。事前に
+`npm run build --workspace=breadboard-fence` が要る。
+コマンドは PowerShell でも同じ。
 
 ```bash
+cd packages/breadboard-fence
 node dist/cli.cjs render examples --out examples/out   # 図を書き出す
 node dist/cli.cjs check examples                       # 書かずに検証だけ
 ```
@@ -226,13 +233,14 @@ GitHub や別のノートに貼っても報告が付いてこない。言うこ�
 Node.js 20 以上が要る (拡張を使うだけなら要らない)。
 
 ```bash
+# すべてリポジトリ直下で。npm install 1 回で全パッケージ分が入る
 npm install
-npm test          # ユニットテスト
-npm run check     # 型チェック + テスト
-npm run examples  # examples/*.md → examples/out/*.svg (+ PNG)
-npm run docs      # docs/01-syntax.md → docs/out/*.svg
-npm run package   # breadboard-fence-x.y.z.vsix を作る
-./doBuild.sh      # 上 3 つをまとめて、VS Code に入れ直すところまで
+npm test --workspace=breadboard-fence          # ユニットテスト
+npm run check --workspace=breadboard-fence     # 型チェック + テスト
+npm run examples --workspace=breadboard-fence  # examples/*.md → examples/out/*.svg (+ PNG)
+npm run docs --workspace=breadboard-fence      # docs/01-syntax.md → docs/out/*.svg
+./doBuild.sh breadboard-fence                  # 上をまとめて、VS Code に入れ直すところまで
+./doVersion.sh breadboard-fence minor          # 版を上げる (package.json と写しを揃える)
 ```
 
 VS Code で F5 を押すと拡張機能をデバッグ実行し、`examples/` を開いた

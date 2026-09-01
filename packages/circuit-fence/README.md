@@ -158,11 +158,15 @@ npm pack   # builds, emits the type definitions, and makes circuit-fence-<versio
 
 ## Development
 
+This package lives in a monorepo, so **run the commands from the repository
+root** (one `npm install` covers every package).
+
 ```bash
 npm install
-npm run check      # typecheck + tests
-npm run examples   # rebuild the diagrams under examples (commit the output too)
-./doBuild.sh       # build the .vsix and reinstall it into VS Code
+npm run check --workspace=circuit-fence      # typecheck + tests
+npm run examples --workspace=circuit-fence   # rebuild the diagrams under examples (commit the output too)
+./doBuild.sh circuit-fence                   # build the .vsix and reinstall it into VS Code
+./doVersion.sh circuit-fence minor           # bump the version (package.json and its copy together)
 ```
 
 Design commitments and working rules are in [CLAUDE.md](CLAUDE.md) (Japanese).

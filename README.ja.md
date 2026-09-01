@@ -22,7 +22,9 @@ Markdown の行番号とその行の中身で返るエラー。
 `packages/` 配下へ取り込み済み。全コミットがここにあり、
 `git log packages/circuit-fence` で最初のコミットまで遡れる。
 リリースと版タグは元のリポジトリに残る。こちらで打つ版タグはパッケージ名を
-接頭辞にする (`circuit-fence-v0.4.0`)。パッケージ横断のビルドはまだ未整備。
+接頭辞にする (`circuit-fence-v0.4.0`)。2 つのパッケージは npm workspaces で
+リポジトリ直下からビルド・テスト・パッケージできる。
+`fence-kit` と `perfboard-fence` はまだ無い。
 
 ```text
 tommie-fence
@@ -31,6 +33,24 @@ tommie-fence
 ├── packages/breadboard-fence
 └── packages/perfboard-fence
 ```
+
+## 開発
+
+`npm install` はリポジトリ直下で 1 回。lock も 1 本だけ。
+
+```bash
+npm install
+npm run check                                # 全パッケージの型チェック + テスト
+npm run check --workspace=circuit-fence      # 1 つだけ
+npm run examples --workspace=circuit-fence   # 図を作り直す
+./doBuild.sh circuit-fence                   # .vsix を作って VS Code に入れ直す
+./doVersion.sh circuit-fence minor           # 版を上げる
+```
+
+**`vsce` は直に呼ばない。** workspaces は依存を直下の `node_modules` へ
+巻き上げるので、`vsce package` はパッケージの外へ依存を探しに行き、同じ
+ファイルを 2 通りの経路で拾って詰めるのを拒む。`doBuild.sh` はパッケージ単体を
+作業場へ写して単独で install してから詰める。`.vsix` を作る道はこれだけ。
 
 ## ライセンス
 

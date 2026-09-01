@@ -1,0 +1,88 @@
+name: Release
+
+# タグを打つのがリリースの合図。バージョンの出所を package.json とタグの 2 つに
+# 分けないよう、両者の一致を確かめてからパッケージする。
+#
+# モノレポなので、タグはどのパッケージの版かを名前で表す:
+#   circuit-fence-v0.4.0 / breadboard-fence-v0.4.0
+# (旧リポジトリの `v0.3.0` 形式のタグは、archive したあちらに残る)
+on:
+  push:
+    tags: ['*-v[0-9]+.[0-9]+.[0-9]+']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+
+      - name: タグからパッケージと版を取り出し、package.json と一致することを確かめる
+        run: |
+          tag="$GITHUB_REF_NAME"
+          pkg="${tag%-v*}"
+          ver="${tag##*-v}"
+          if [ ! -d "packages/$pkg" ]; then
+            echo "タグ $tag のパッケージ $pkg が packages/ にない" >&2
+            exit 1
+          fi
+          have="$(node -p "require('./packages/$pkg/package.json').version")"
+          if [ "$have" != "$ver" ]; then
+            echo "タグ $tag と packages/$pkg/package.json の $have が食い違っている" >&2
+            exit 1
+          fi
+          echo "PKG=$pkg" >> "$GITHUB_ENV"
+          echo "VER=$ver" >> "$GITHUB_ENV"
+
+      # doBuild.sh が型チェックとテストを通してから、作業場へ写して .vsix を作る。
+      # (workspaces の巻き上げのまま vsce を呼ぶと同じパスを 2 度拾って止まるため)
+      - name: .vsix を作る
+        run: |
+          ./doBuild.sh "$PKG" --no-install
+          cd "packages/$PKG"
+          test -f "$PKG-$VER.vsix"
+          sha256sum "$PKG-$VER.vsix" > SHA256SUMS
+
+      - name: 生成物が作り直し済みか確かめる
+        run: |
+          npm run examples --workspace="$PKG"
+          if [ "$PKG" = circuit-fence ]; then
+            npm run docs --workspace="$PKG"
+            git diff --exit-code -- \
+              "packages/$PKG/examples/out/*.tex" "packages/$PKG/docs/out/*.tex"
+          else
+            git diff --exit-code -- "packages/$PKG/examples/out/*.svg"
+          fi
+
+      - name: CHANGELOG から該当バージョンの節を抜き出す
+        run: |
+          cd "packages/$PKG"
+          extract() {
+            awk -v head="$1" '
+              $0 ~ "^## \\[" head "\\]" { found = 1; next }
+              /^## \[/ { found = 0 }
+              found' CHANGELOG.md
+          }
+          extract "$VER" > notes.md
+          # 版の節をまだ切っていなければ Unreleased で出す
+          # (タグを打った後にここで落ちると、リリースだけが無い状態になるため)。
+          if ! grep -q '[^[:space:]]' notes.md; then extract Unreleased > notes.md; fi
+          # どちらも空なら、書くことが無いままリリースしない。
+          grep -q '[^[:space:]]' notes.md
+
+      - name: Release を作る
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd "packages/$PKG"
+          gh release create "$GITHUB_REF_NAME" \
+            "$PKG-$VER.vsix" SHA256SUMS \
+            --verify-tag --title "$GITHUB_REF_NAME" --notes-file notes.md

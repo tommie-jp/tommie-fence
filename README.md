@@ -23,8 +23,9 @@ This repository is being assembled. The histories of
 imported under `packages/` — every commit is here, so
 `git log packages/circuit-fence` reaches back to the first one. The releases
 and version tags stay in those repositories; versions tagged here are prefixed
-with the package name (`circuit-fence-v0.4.0`). The build is not wired up
-across packages yet.
+with the package name (`circuit-fence-v0.4.0`). The two packages build, test
+and package from the repository root through npm workspaces; `fence-kit` and
+`perfboard-fence` do not exist yet.
 
 ```text
 tommie-fence
@@ -33,6 +34,26 @@ tommie-fence
 ├── packages/breadboard-fence
 └── packages/perfboard-fence
 ```
+
+## Development
+
+One `npm install` at the root covers every package, and there is a single
+lockfile.
+
+```bash
+npm install
+npm run check                                # typecheck + tests, all packages
+npm run check --workspace=circuit-fence      # just one
+npm run examples --workspace=circuit-fence   # rebuild the drawings
+./doBuild.sh circuit-fence                   # build the .vsix, reinstall into VS Code
+./doVersion.sh circuit-fence minor           # bump the version
+```
+
+**Do not call `vsce` directly.** Workspaces hoist dependencies to the root
+`node_modules`, and `vsce package` then walks outside the package and picks up
+the same file by two routes, refusing to pack. `doBuild.sh` copies the package
+out and installs it on its own first, which is why it is the only supported way
+to build a `.vsix`.
 
 ## License
 

@@ -70,7 +70,6 @@
     "coverage": "vitest run --coverage",
     "examples": "npm run build && node dist/cli.cjs render examples --out examples/out && node scripts/figures.mjs examples examples/out",
     "docs": "npm run build && node dist/cli.cjs render docs/01-syntax.md --out docs/out && node scripts/figures.mjs docs/01-syntax.md docs/out",
-    "package": "npm run build && vsce package",
     "vscode:prepublish": "node esbuild.mjs --production",
     "check": "npm run typecheck && npm run test"
   },

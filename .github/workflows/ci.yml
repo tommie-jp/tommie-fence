@@ -1,0 +1,43 @@
+name: CI
+
+# GitHub がワークフローを読むのはリポジトリ直下の .github/workflows だけ。
+# 取り込んだ packages/*/.github は動かないので、ここに 1 本化してある。
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      # 片方が落ちても、もう片方の結果は見たい。
+      fail-fast: false
+      matrix:
+        include:
+          # 生成物のうち、どの環境でも同じバイト列になるものだけ差分を見る。
+          # circuit-fence: SVG は node-tikzjax の版で、PNG はフォント環境で変わる。
+          # breadboard-fence: SVG は決まるが、PNG はフォントの描画で変わる。
+          - pkg: circuit-fence
+            docs: true
+            generated: "'packages/circuit-fence/examples/out/*.tex' 'packages/circuit-fence/docs/out/*.tex'"
+          - pkg: breadboard-fence
+            docs: false
+            generated: "'packages/breadboard-fence/examples/out/*.svg'"
+    name: check (${{ matrix.pkg }})
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          # lock はリポジトリ直下の 1 本だけ (npm workspaces)。
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run typecheck --workspace=${{ matrix.pkg }}
+      - run: npm test --workspace=${{ matrix.pkg }}
+      - run: npm run examples --workspace=${{ matrix.pkg }}
+      - if: matrix.docs
+        run: npm run docs --workspace=${{ matrix.pkg }}
+      # 差分が出たら、図の作り直しをコミットし忘れている。
+      - run: git diff --exit-code -- ${{ matrix.generated }}

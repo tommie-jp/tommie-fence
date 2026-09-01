@@ -4,6 +4,11 @@ Markdown の ` ```circuit ` フェンス (YAML) を回路図としてレンダ�
 VS Code 拡張機能。全体像は [README.ja.md](README.ja.md) (英語は
 [README.md](README.md))、文法は [docs/01-syntax.md](docs/01-syntax.md)。
 
+**tommie-fence モノレポの 1 パッケージ**。`npm` のコマンドはリポジトリ直下で
+`--workspace=circuit-fence` を付けて実行する。`.vsix` を作るのは直下の
+`./doBuild.sh circuit-fence`、版を上げるのは `./doVersion.sh circuit-fence`。
+**`vsce` を直に呼ばない** — workspaces が依存を直下へ巻き上げるため失敗する。
+
 ## このプロジェクトの存在理由
 
 回路図をテキストで描く手段自体は枯れている (CircuiTikZ / Schemdraw / Lcapy)。
@@ -65,8 +70,9 @@ VS Code 拡張機能。全体像は [README.ja.md](README.ja.md) (英語は
 1. **マージは fast-forward のみ**: マージコミットを作らない。作業ブランチを切って
    コミットし、`git merge --ff-only` で main に取り込み、ブランチを消す。
 2. **コミットは conventional commits 形式** (`feat:` / `fix:` / `docs:` / `chore:` など)。
-3. **TDD**: テストを先に書いて落とし、実装で通す。`npm run check` (型チェック +
-   テスト) を通してからコミットする。カバレッジは 80% 以上を維持する。
+3. **TDD**: テストを先に書いて落とし、実装で通す。
+   `npm run check --workspace=circuit-fence` (型チェック + テスト) を通してから
+   コミットする。カバレッジは 80% 以上を維持する。
 4. **Markdown は lint を通す**:
    `npx markdownlint-cli 'README.md' 'README.ja.md' 'CHANGELOG.md' 'docs/*.md' 'examples/**/*.md'`。
    設定は `.markdownlint.json` (MD013 行長・MD033 インライン HTML は無効)。
@@ -74,8 +80,10 @@ VS Code 拡張機能。全体像は [README.ja.md](README.ja.md) (英語は
    **日本語が正で、英語が追随する** (書くのが日本語のため)。節の構成は
    2 本で 1 対 1 に保ち、片方だけ節が増えた状態でコミットしない。
    日本語のままのドキュメントへ英語から張るリンクには "(Japanese)" を添える。
-6. **サンプルは再生成してコミット**: 描画を変えたら `npm run examples` と
-   `npm run docs` を実行し、`examples/out` と `docs/out` の差分も一緒に
+6. **サンプルは再生成してコミット**: 描画を変えたら
+   `npm run examples --workspace=circuit-fence` と
+   `npm run docs --workspace=circuit-fence` を実行し、
+   `examples/out` と `docs/out` の差分も一緒に
    コミットする (`.tex` はスナップショットテストの期待値であり、
    `.md` が貼る図でもある)。**PNG は手元のフォント環境で焼ける** —
    TeX フォント (cmr10 など) の無いマシンで作り直すと `Ω` が化けた図が

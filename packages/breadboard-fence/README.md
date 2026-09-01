@@ -83,15 +83,20 @@ preview keeps running the previous build until you rebuild the `.vsix` and
 install it again.
 
 ```bash
-./doBuild.sh                             # check → build the .vsix → reinstall
+# from the repository root
+./doBuild.sh breadboard-fence            # check → build the .vsix → reinstall
 ```
 
-By hand, that is these two:
+To do the reinstall by hand, that is these two:
 
 ```bash
-npm run package
-code --install-extension breadboard-fence-0.3.0.vsix --force
+./doBuild.sh breadboard-fence --no-install
+code --install-extension packages/breadboard-fence/breadboard-fence-0.3.0.vsix --force
 ```
+
+Building the `.vsix` goes through `doBuild.sh` because **workspaces hoist the
+dependencies to the repository root, so calling `vsce` directly fails** — the
+package has to be copied out and packed on its own.
 
 - Reinstalling without bumping the version needs `--force`.
 - After reinstalling, **reload the window** (`Developer: Reload Window` in the
@@ -119,10 +124,12 @@ code --install-extension breadboard-fence-0.3.0.vsix --force
 
 ### CLI
 
-Writes standalone SVG you can paste into GitHub. Needs `npm run build` (or
-`npm run package`) first. The commands are the same in PowerShell.
+Writes standalone SVG you can paste into GitHub. Needs
+`npm run build --workspace=breadboard-fence` first. The commands are the same
+in PowerShell.
 
 ```bash
+cd packages/breadboard-fence
 node dist/cli.cjs render examples --out examples/out   # write the drawings
 node dist/cli.cjs check examples                       # validate, write nothing
 ```
@@ -233,13 +240,14 @@ The only runtime dependency is a YAML parser. Both bundles come to about 180 KB
 Needs Node.js 20 or newer (not needed just to use the extension).
 
 ```bash
+# all from the repository root; one npm install covers every package
 npm install
-npm test          # unit tests
-npm run check     # type check + tests
-npm run examples  # examples/*.md → examples/out/*.svg (+ PNG)
-npm run docs      # docs/01-syntax.md → docs/out/*.svg
-npm run package   # build breadboard-fence-x.y.z.vsix
-./doBuild.sh      # the three above, through to reinstalling in VS Code
+npm test --workspace=breadboard-fence          # unit tests
+npm run check --workspace=breadboard-fence     # type check + tests
+npm run examples --workspace=breadboard-fence  # examples/*.md → examples/out/*.svg (+ PNG)
+npm run docs --workspace=breadboard-fence      # docs/01-syntax.md → docs/out/*.svg
+./doBuild.sh breadboard-fence                  # the above, through to reinstalling in VS Code
+./doVersion.sh breadboard-fence minor          # bump the version (package.json and its copy together)
 ```
 
 Pressing F5 in VS Code debugs the extension and opens a window on `examples/`.
