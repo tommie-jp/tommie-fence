@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | circuit | 回路 15 本 + わざと壊した例 5 本 | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 回路 13 本 + わざと壊した例 2 本 | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
+| perfboard | まだ無い (板と穴まで描ける段階) | [packages/perfboard-fence/](../packages/perfboard-fence/README.ja.md) |
 
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。
@@ -15,36 +16,105 @@ VS Code のプレビュー (`Ctrl+Shift+V`) ではフェンス自体が図にな
 
 ## circuit — 回路図
 
+部品を番地で置き、配線を `--` で引くと、ネットリストまで出る。
+座標計算も分岐の黒丸の手打ちも要らない。
+
+### RC ローパス
+
 [![RC ローパス](../packages/circuit-fence/examples/out/01-rc-lowpass.png)](../packages/circuit-fence/examples/01-rc-lowpass.md)
 
-部品を番地で置き、配線を `--` で引くと、ネットリストまで出る。
-上は [01-rc-lowpass.md](../packages/circuit-fence/examples/01-rc-lowpass.md)。
+いちばん小さい例。番地・部品・配線・ネットリストが一通り出てくる
+([01-rc-lowpass.md](../packages/circuit-fence/examples/01-rc-lowpass.md))。
 
-- [04-non-inverting-amp.md](../packages/circuit-fence/examples/04-non-inverting-amp.md)
-  — オペアンプの向きと足への引き方
-- [11-logic.md](../packages/circuit-fence/examples/11-logic.md)
-  — ロジックゲート、DIP の IC、切り替えスイッチ
-- [15-arrows.md](../packages/circuit-fence/examples/15-arrows.md)
-  — 電流の矢と電圧の符号 (`i=` `v=`)
-- [errors/](../packages/circuit-fence/examples/errors/)
-  — 読めなかったときに何が出るか (行番号つきのエラー)
+### 非反転増幅回路
+
+[![非反転増幅回路](../packages/circuit-fence/examples/out/04-non-inverting-amp.png)](../packages/circuit-fence/examples/04-non-inverting-amp.md)
+
+オペアンプの向き (`+up`) と、足の名前への配線の引き方
+([04-non-inverting-amp.md](../packages/circuit-fence/examples/04-non-inverting-amp.md))。
+
+### ロジックゲート
+
+[![ロジックゲート](../packages/circuit-fence/examples/out/11-logic-1.png)](../packages/circuit-fence/examples/11-logic.md)
+
+ゲート記号、DIP の IC、切り替えスイッチ
+([11-logic.md](../packages/circuit-fence/examples/11-logic.md))。
+
+### 電流の矢と電圧の符号
+
+[![電流の矢と電圧の符号](../packages/circuit-fence/examples/out/15-arrows-1.png)](../packages/circuit-fence/examples/15-arrows.md)
+
+`i=` と `v=` で、解析の向きを図に書き込む
+([15-arrows.md](../packages/circuit-fence/examples/15-arrows.md))。
+
+### そのほか
+
+- [02-parts.md](../packages/circuit-fence/examples/02-parts.md) — 2 端子部品 44 種と 1 端子の記号 4 種
+- [08-themes.md](../packages/circuit-fence/examples/08-themes.md) — `auto` / `light` / `dark` / `mono`
+- [12-notes.md](../packages/circuit-fence/examples/12-notes.md) — 印・枠・指し棒・字の注釈
+- [14-half-step.md](../packages/circuit-fence/examples/14-half-step.md) — 交点の間の番地 (`a_1.5`)
+- [errors/](../packages/circuit-fence/examples/errors/) — 読めなかったときに何が出るか
 
 ## breadboard — ブレッドボード実体配線図
 
-[![LED と抵抗](../packages/breadboard-fence/examples/out/01-led.png)](../packages/breadboard-fence/examples/01-led.md)
-
-穴の番地に部品を挿すと、ボード内部の導通からネットリストが出る。
-上は [01-led.md](../packages/breadboard-fence/examples/01-led.md)。
+穴の番地に部品を挿すと、**ボード内部の導通から**ネットリストが出る。
 **番号は読む順**で、最小の回路から実験回路まで難しくなる。
 
-- [07-pico.md](../packages/breadboard-fence/examples/07-pico.md)
-  — Raspberry Pi Pico に LED とボタンをつなぐ
-- [09-am-radio.md](../packages/breadboard-fence/examples/09-am-radio.md)
-  — 1 石中波ラジオ (バーアンテナとポリバリコン)
-- [10-bh-ad2.md](../packages/breadboard-fence/examples/10-bh-ad2.md)
-  — B-H カーブ測定回路 (オペアンプ・測定器・トロイダルコア)
-- [errors/](../packages/breadboard-fence/examples/errors/)
-  — わざと読めなく書いたもの
+### LED と抵抗
+
+[![LED と抵抗](../packages/breadboard-fence/examples/out/01-led.png)](../packages/breadboard-fence/examples/01-led.md)
+
+いちばん小さい例。抵抗 1 本と LED 1 個
+([01-led.md](../packages/breadboard-fence/examples/01-led.md))。
+
+### Raspberry Pi Pico
+
+[![Raspberry Pi Pico](../packages/breadboard-fence/examples/out/07-pico.png)](../packages/breadboard-fence/examples/07-pico.md)
+
+マイコンボードを板にまたがせて、LED とボタンをつなぐ
+([07-pico.md](../packages/breadboard-fence/examples/07-pico.md))。
+
+### 1 石中波ラジオ
+
+[![1 石中波ラジオ](../packages/breadboard-fence/examples/out/09-am-radio.png)](../packages/breadboard-fence/examples/09-am-radio.md)
+
+板の外の機器 (バーアンテナ・ポリバリコン・イヤホン・電池) を `device` で置き、
+図の下に部品リストを出した例
+([09-am-radio.md](../packages/breadboard-fence/examples/09-am-radio.md))。
+
+### B-H カーブ測定回路
+
+[![B-H カーブ測定回路](../packages/breadboard-fence/examples/out/10-bh-ad2.png)](../packages/breadboard-fence/examples/10-bh-ad2.md)
+
+オペアンプ・測定器・トロイダルコアを含む実験回路
+([10-bh-ad2.md](../packages/breadboard-fence/examples/10-bh-ad2.md))。
+
+### そのほか
+
+- [03-board-variants.md](../packages/breadboard-fence/examples/03-board-variants.md) — 板の印字を手元の実物に寄せる
+- [05-capacitors.md](../packages/breadboard-fence/examples/05-capacitors.md) — 部品の姿を選ぶ (`capacitor/ceramic` など)
+- [11-sensors.md](../packages/breadboard-fence/examples/11-sensors.md) — CdS・サーミスタ・ダイオードの仲間
+- [13-points.md](../packages/breadboard-fence/examples/13-points.md) — 番地に名前を付ける (`points:`)
+- [errors/](../packages/breadboard-fence/examples/errors/) — わざと読めなく書いたもの
+
+## perfboard — ユニバーサル基板
+
+**まだ板と穴までしか描かない。** 部品と配線はこれから
+([packages/perfboard-fence](../packages/perfboard-fence/README.ja.md))。
+
+```yaml
+board: 8x5
+```
+
+板の大きさは**列 × 行**で書く (板が「72×47.5mm」と長辺 × 短辺で売られるのと
+同じ順)。これで 8 列 5 行の板が、行の名前 (`a`〜`e`) と列の番号 (`1`〜`8`) を
+添えて出る。番地は `b3` の形で、行が 26 を超える板では `aa3` と続く。
+
+**ブレッドボードとの違いは物理そのもの**で、ユニバーサル基板は全穴が独立して
+いる。導通は配線でしか生まれないので、繋ぎ忘れが図の上で沈黙する。
+そこは ERC (全ピン結線済みか / ショート / 浮きネット) に見張らせる予定。
+
+例の `.md` は、`npm run examples` を持つところまで進んだら足す。
 
 ## なぜ実体をここに置かないか
 

@@ -9,6 +9,7 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | --- | --- | --- |
 | circuit | 15 circuits + 5 deliberately broken | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 13 circuits + 2 deliberately broken | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
+| perfboard | none yet (it draws the board and its holes) | [packages/perfboard-fence/](../packages/perfboard-fence/README.md) |
 
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for
@@ -17,36 +18,108 @@ drawing.
 
 ## circuit — schematics
 
+Parts are placed by grid address and wired with `--`; the netlist follows.
+No coordinate arithmetic, no hand-placed junction dots.
+
+### RC low-pass
+
 [![RC low-pass](../packages/circuit-fence/examples/out/01-rc-lowpass.png)](../packages/circuit-fence/examples/01-rc-lowpass.md)
 
-Parts are placed by grid address and wired with `--`; the netlist follows.
-Above is [01-rc-lowpass.md](../packages/circuit-fence/examples/01-rc-lowpass.md).
+The smallest example: addresses, parts, wires and a netlist in one go
+([01-rc-lowpass.md](../packages/circuit-fence/examples/01-rc-lowpass.md)).
 
-- [04-non-inverting-amp.md](../packages/circuit-fence/examples/04-non-inverting-amp.md)
-  — op-amp orientation and wiring to named pins
-- [11-logic.md](../packages/circuit-fence/examples/11-logic.md)
-  — logic gates, DIP ICs, changeover switches
-- [15-arrows.md](../packages/circuit-fence/examples/15-arrows.md)
-  — current arrows and voltage signs (`i=`, `v=`)
-- [errors/](../packages/circuit-fence/examples/errors/)
-  — what comes back when a fence cannot be read (errors with line numbers)
+### Non-inverting amplifier
+
+[![Non-inverting amplifier](../packages/circuit-fence/examples/out/04-non-inverting-amp.png)](../packages/circuit-fence/examples/04-non-inverting-amp.md)
+
+Op-amp orientation (`+up`) and wiring to named pins
+([04-non-inverting-amp.md](../packages/circuit-fence/examples/04-non-inverting-amp.md)).
+
+### Logic gates
+
+[![Logic gates](../packages/circuit-fence/examples/out/11-logic-1.png)](../packages/circuit-fence/examples/11-logic.md)
+
+Gate symbols, DIP ICs and changeover switches
+([11-logic.md](../packages/circuit-fence/examples/11-logic.md)).
+
+### Current arrows and voltage signs
+
+[![Current arrows and voltage signs](../packages/circuit-fence/examples/out/15-arrows-1.png)](../packages/circuit-fence/examples/15-arrows.md)
+
+`i=` and `v=` write the direction you are solving for into the drawing
+([15-arrows.md](../packages/circuit-fence/examples/15-arrows.md)).
+
+### More
+
+- [02-parts.md](../packages/circuit-fence/examples/02-parts.md) — 44 two-terminal parts and 4 one-terminal symbols
+- [08-themes.md](../packages/circuit-fence/examples/08-themes.md) — `auto` / `light` / `dark` / `mono`
+- [12-notes.md](../packages/circuit-fence/examples/12-notes.md) — marks, frames, pointers and text
+- [14-half-step.md](../packages/circuit-fence/examples/14-half-step.md) — addresses between crossings (`a_1.5`)
+- [errors/](../packages/circuit-fence/examples/errors/) — what comes back when a fence cannot be read
 
 ## breadboard — breadboard wiring diagrams
 
+Parts go into numbered holes, and the netlist is derived **from the strips
+inside the board**. **The numbering is the reading order**, from the smallest
+circuit to bench ones.
+
+### An LED and a resistor
+
 [![An LED and a resistor](../packages/breadboard-fence/examples/out/01-led.png)](../packages/breadboard-fence/examples/01-led.md)
 
-Parts go into numbered holes, and the netlist is derived from the strips inside
-the board. Above is [01-led.md](../packages/breadboard-fence/examples/01-led.md).
-**The numbering is the reading order**, from the smallest circuit to bench ones.
+The smallest example: one resistor, one LED
+([01-led.md](../packages/breadboard-fence/examples/01-led.md)).
 
-- [07-pico.md](../packages/breadboard-fence/examples/07-pico.md)
-  — an LED and a button on a Raspberry Pi Pico
-- [09-am-radio.md](../packages/breadboard-fence/examples/09-am-radio.md)
-  — a one-transistor AM radio (ferrite rod antenna, tuning capacitor)
-- [10-bh-ad2.md](../packages/breadboard-fence/examples/10-bh-ad2.md)
-  — a B-H curve rig (op-amp, instruments, toroidal core)
-- [errors/](../packages/breadboard-fence/examples/errors/)
-  — fences written wrong on purpose
+### Raspberry Pi Pico
+
+[![Raspberry Pi Pico](../packages/breadboard-fence/examples/out/07-pico.png)](../packages/breadboard-fence/examples/07-pico.md)
+
+A microcontroller board straddling the board, with an LED and a button
+([07-pico.md](../packages/breadboard-fence/examples/07-pico.md)).
+
+### A one-transistor AM radio
+
+[![A one-transistor AM radio](../packages/breadboard-fence/examples/out/09-am-radio.png)](../packages/breadboard-fence/examples/09-am-radio.md)
+
+Things off the board (ferrite rod antenna, tuning capacitor, earphone, battery)
+placed as `device`, with the parts list under the drawing
+([09-am-radio.md](../packages/breadboard-fence/examples/09-am-radio.md)).
+
+### A B-H curve rig
+
+[![A B-H curve rig](../packages/breadboard-fence/examples/out/10-bh-ad2.png)](../packages/breadboard-fence/examples/10-bh-ad2.md)
+
+A bench circuit with an op-amp, instruments and a toroidal core
+([10-bh-ad2.md](../packages/breadboard-fence/examples/10-bh-ad2.md)).
+
+### More
+
+- [03-board-variants.md](../packages/breadboard-fence/examples/03-board-variants.md) — matching the silkscreen of the board on your desk
+- [05-capacitors.md](../packages/breadboard-fence/examples/05-capacitors.md) — choosing a package (`capacitor/ceramic` and so on)
+- [11-sensors.md](../packages/breadboard-fence/examples/11-sensors.md) — CdS cells, thermistors, the diode family
+- [13-points.md](../packages/breadboard-fence/examples/13-points.md) — naming holes (`points:`)
+- [errors/](../packages/breadboard-fence/examples/errors/) — fences written wrong on purpose
+
+## perfboard — perfboard layouts
+
+**It draws the board and its holes so far.** Parts and wires are still to come
+([packages/perfboard-fence](../packages/perfboard-fence/README.md)).
+
+```yaml
+board: 8x5
+```
+
+The size is written **columns by rows** — the order the board itself is sold in
+(`72×47.5mm` is long side by short side). That gives a board 8 columns wide and
+5 rows tall, labelled `a`–`e` down the side and `1`–`8` across the top.
+Addresses read `b3`, and carry on as `aa3` on a board taller than 26 rows.
+
+**The difference from a breadboard is physical**: every hole on a perfboard is
+independent, so only a wire makes a connection and a missing one is silent in
+the picture. That is what the planned ERC (every pin wired / shorts / floating
+nets) is there to watch.
+
+Example `.md` files arrive once the package has an `npm run examples`.
 
 ## Why the files are not kept here
 
