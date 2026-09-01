@@ -43,3 +43,22 @@ describe('makeNonce', () => {
     expect(makeNonce()).not.toBe(makeNonce());
   });
 });
+
+describe('持ち方の切り替え', () => {
+  const html = panelHtml({ cspSource: 'vscode-resource:', nonce: 'n0nce', mapHtml: '<table></table>' });
+
+  test('offers both things to grab, since they do not mean the same move', () => {
+    expect(html).toContain('value="part"');
+    expect(html).toContain('value="node"');
+  });
+
+  test('starts on parts, which is the move that was there first', () => {
+    expect(html).toContain('value="part" checked');
+  });
+
+  test('lets only the thing being grabbed take the click', () => {
+    // 部品の升にも節点は立つ。どちらも掴めると、掴んだつもりと違うものが動く。
+    expect(html).toContain('body:not(.cf-nodes) .cf-dot { pointer-events: none;');
+    expect(html).toContain('body.cf-nodes .cf-chip { pointer-events: none;');
+  });
+});

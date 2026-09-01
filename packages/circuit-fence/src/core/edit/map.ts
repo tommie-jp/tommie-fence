@@ -6,7 +6,8 @@ import { formatAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import type { PartSpec } from '../types.ts';
+import { nodesOf } from './point.ts';
+import { addressesOf } from './shared.ts';
 
 /**
  * 部品を掴むための**グリッドマップ**。パース済みモデルから即時に描ける
@@ -28,10 +29,22 @@ export type Chip = {
   readonly to: { readonly row: number; readonly col: number } | null;
 };
 
+/** マップに置く節点 1 つ。**掴む物が部品とは違う**ので、チップとは別に持つ。 */
+export type Dot = {
+  readonly row: number;
+  readonly col: number;
+  /** `points:` が付けた名前。無ければ null。 */
+  readonly name: string | null;
+  /** その番地を書いている場所の数。 */
+  readonly uses: number;
+};
+
 export type GridMap = {
   readonly rows: number;
   readonly cols: number;
   readonly chips: readonly Chip[];
+  /** 掴める節点。交点の間にあるものは載らない (チップと同じ理由)。 */
+  readonly dots: readonly Dot[];
   /** 升目に載らないので出さなかった部品 (交点の間に置かれたもの)。 */
   readonly skipped: readonly string[];
   /** フェンスを読めたか。読めなければマップは空。 */
@@ -46,13 +59,10 @@ const MIN_COLS = 6;
 const isOnCrossing = (address: Address): boolean =>
   Number.isInteger(address.row) && Number.isInteger(address.col);
 
-const addressesOf = (part: PartSpec): readonly Address[] =>
-  part.kind === 'two-terminal' ? [part.from, part.to] : [part.at];
-
 /** フェンス本文から升目のモデルを作る。**読めなければ空**で、嘘の位置を見せない。 */
 export function gridMap(source: string): GridMap {
   const { doc } = parseFence(normalizeNewlines(source));
-  if (!doc) return { rows: MIN_ROWS, cols: MIN_COLS, chips: [], skipped: [], readable: false };
+  if (!doc) return { rows: MIN_ROWS, cols: MIN_COLS, chips: [], dots: [], skipped: [], readable: false };
 
   const chips: Chip[] = [];
   const skipped: string[] = [];
@@ -75,11 +85,17 @@ export function gridMap(source: string): GridMap {
     });
   }
 
-  const used = chips.flatMap((chip) => [chip, chip.to].filter((cell) => cell !== null));
+  const dots: Dot[] = nodesOf(doc)
+    .filter((node) => isOnCrossing(node.address))
+    .map((node) => ({ row: node.address.row, col: node.address.col, name: node.name, uses: node.uses }));
+
+  // **升目は点も覆う。** 配線だけが届く交点はチップに現れないので、部品だけを
+  // 見て決めると端の点が升の外へ落ちて掴めなくなる。
+  const used = [...chips.flatMap((chip) => [chip, chip.to].filter((cell) => cell !== null)), ...dots];
   const rows = Math.min(26, Math.max(MIN_ROWS, ...used.map((cell) => cell.row + 1 + MARGIN)));
   const cols = Math.min(LIMITS.columns, Math.max(MIN_COLS, ...used.map((cell) => cell.col + 1 + MARGIN)));
 
-  return { rows, cols, chips, skipped, readable: true };
+  return { rows, cols, chips, dots, skipped, readable: true };
 }
 
 const cellAddress = (row: number, col: number): string => formatAddress({ row, col });
@@ -104,6 +120,7 @@ export function renderMapHtml(map: GridMap): string {
     chipsAt.set(key, [...(chipsAt.get(key) ?? []), chip]);
   }
   const farEnd = new Set(map.chips.filter((chip) => chip.to).map((chip) => `${chip.to?.row},${chip.to?.col}`));
+  const dotAt = new Map(map.dots.map((dot) => [`${dot.row},${dot.col}`, dot]));
 
   const rows: string[] = [];
   for (let row = 0; row < map.rows; row += 1) {
@@ -116,9 +133,17 @@ export function renderMapHtml(map: GridMap): string {
         .map((chip) => `<button class="cf-chip" data-part="${escapeMarkup(chip.id)}"`
           + ` title="${escapeMarkup(`${chip.id} (${chip.type}) ${address}`)}">${escapeMarkup(chip.id)}</button>`)
         .join('');
+      // **節点の点はチップの下に敷く。** 部品の升にも節点は立つので、
+      // 隠すと「名前の付いた節点だけ掴めない」という穴が空く。
+      const dot = dotAt.get(`${row},${col}`);
+      const mark = dot === undefined
+        ? ''
+        : `<button class="cf-dot" data-node="${escapeMarkup(address)}"`
+          + ` title="${escapeMarkup(`${address}${dot.name === null ? '' : ` (${dot.name})`} — ${dot.uses} か所`)}">`
+          + `${escapeMarkup(dot.name ?? '')}</button>`;
       cells.push(
         `<td class="cf-cell${far}" data-address="${escapeMarkup(address)}"`
-        + ` title="${escapeMarkup(address)}">${inner}</td>`,
+        + ` title="${escapeMarkup(address)}">${mark}${inner}</td>`,
       );
     }
     rows.push(`<tr><th class="cf-row">${escapeMarkup(cellAddress(row, 0).slice(0, 1))}</th>${cells.join('')}</tr>`);

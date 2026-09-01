@@ -1,55 +1,24 @@
-import { compileCircuit } from '../index.ts';
-import { fenceError } from '../errors.ts';
-import { LIMITS } from '../limits.ts';
-import { formatAddress, parseAddress } from '../model/address.ts';
+import { formatAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import type { FenceError, PartSpec } from '../types.ts';
+import { LIMITS } from '../limits.ts';
+import { addressesOf, applyEdits, diffOf, fail, isOnGrid, locateTokens } from './shared.ts';
+import type { MoveResult } from './shared.ts';
 
 /**
- * 部品を別の番地へ動かす。**フェンス本文 → 編集の並び**を返す純関数で、
+ * 部品を別の番地へ動かす。**フェンス本文 -> 編集の並び**を返す純関数で、
  * vscode を知らない (設計上の約束 1)。
  *
  * **YAML を組み直さない。** 番地の綴りだけを行の中で差し替える。
  * 組み直すと手書きのコメント・整形・並び順が正規化されて、移動と関係のない
  * 差分で diff が膨れる。
+ *
+ * 編集の当て方とネットリストの突き合わせは `shared.ts` — **節点を動かすほうと
+ * 同じものを使う** (別々に持つと、片方だけ直したときにもう片方が黙って古くなる)。
  */
 
-/** 行の中の 1 か所の差し替え。行は 1 始まり、桁は 0 始まり。 */
-export type Edit = {
-  readonly line: number;
-  readonly column: number;
-  readonly length: number;
-  readonly text: string;
-};
-
-/** つながっている端子の組。名前は並べ替えて持つ (向きは意味を持たない)。 */
-export type Connection = readonly [string, string];
-
-/** 移動で離れる接続と生まれる接続。 */
-export type NetDiff = { readonly lost: readonly Connection[]; readonly gained: readonly Connection[] };
-
-export type Move = { readonly edits: readonly Edit[]; readonly diff: NetDiff };
-
-export type MoveResult =
-  | { readonly ok: true; readonly value: Move }
-  | { readonly ok: false; readonly error: FenceError };
-
-const LAST_ROW = 25;
-
-const fail = (message: string, line: number | null): MoveResult =>
-  ({ ok: false, error: fenceError(message, line) });
-
-/** 格子の内側か。`formatAddress` は範囲外を丸めるので、動かす前にここで見る。 */
-const isOnGrid = (address: Address): boolean =>
-  address.row >= 0 && address.row <= LAST_ROW && address.col >= 0 && address.col <= LIMITS.columns - 1;
-
-/** 部品が持つ番地。**先頭がアンカー** — 動かす量はここで決まる。 */
-function addressesOf(part: PartSpec): readonly Address[] {
-  if (part.kind === 'two-terminal') return [part.from, part.to];
-  return [part.at];
-}
+export type { Edit, NetDiff } from './shared.ts';
 
 /** 掴める部品の名前。読めないフェンスでは空。 */
 export function movablePartIds(source: string): readonly string[] {
@@ -62,96 +31,6 @@ export function anchorOf(source: string, partId: string): Address | null {
   const { doc } = parseFence(normalizeNewlines(source));
   const part = doc?.parts.find((candidate) => candidate.id === partId);
   return part ? (addressesOf(part)[0] as Address) : null;
-}
-
-/**
- * 行の中から、その番地を指しているトークンを左から順に見つける。
- *
- * **モデルは行番号を持つが、行内の桁は持たない。** 桁を全トークンへ運ぶ改修は
- * 使い手がここしか無いので割に合わない — 行を走査して探す。
- * 番地の綴りは文法が一意に縛っているので、これで足りる
- * (`points:` の名前で書かれた端子も、名前から引いて同じ番地に落ちる)。
- */
-function locateTokens(
-  lineText: string,
-  addresses: readonly Address[],
-  points: ReadonlyMap<string, Address>,
-): readonly { column: number; length: number }[] | null {
-  const found: { column: number; length: number }[] = [];
-  // **行の頭の名前より後ろだけを見る。** `C1:` は番地 `c1` としても読めるので、
-  // 頭から探すと部品の名前のほうを書き換えてしまう (`d1: capacitor c1 d3`)。
-  const colon = lineText.indexOf(':');
-  let cursor = colon === -1 ? 0 : colon + 1;
-
-  for (const address of addresses) {
-    const wanted = formatAddress(address);
-    let hit: { column: number; length: number } | null = null;
-
-    for (const match of [...lineText.matchAll(/[^\s:]+/g)]) {
-      const column = match.index ?? 0;
-      if (column < cursor) continue;
-      const token = match[0];
-      // 書かれたのが番地そのものか、その番地を指す `points:` の名前か。
-      const resolved = parseAddress(token) ?? points.get(token) ?? null;
-      if (resolved === null || formatAddress(resolved) !== wanted) continue;
-      hit = { column, length: token.length };
-      break;
-    }
-
-    if (hit === null) return null;
-    found.push(hit);
-    cursor = hit.column + hit.length;
-  }
-
-  return found;
-}
-
-/**
- * 組を 1 つの綴りにするときの区切り。**端子の名前に現れない字**を選ぶ。
- * 生のバイトを直に書かない — 見えない字がソースに残ると、git が binary 扱いに
- * して差分もレビューも効かなくなる (実際に踏んだ)。
- */
-const SEPARATOR = '\u0000';
-
-/** ネットリストを「つながっている端子の組」の集合にする。 */
-function connectionsOf(source: string): Set<string> {
-  const pairs = new Set<string>();
-  for (const net of compileCircuit(source).netlist) {
-    const refs = [...net.refs].sort();
-    for (let i = 0; i < refs.length; i += 1) {
-      for (let j = i + 1; j < refs.length; j += 1) pairs.add(`${refs[i]}${SEPARATOR}${refs[j]}`);
-    }
-  }
-  return pairs;
-}
-
-const toConnections = (keys: readonly string[]): Connection[] =>
-  keys.map((key) => key.split(SEPARATOR) as unknown as Connection);
-
-/** 移動の前後でネットリストを比べ、離れる接続と生まれる接続を出す。 */
-function diffOf(before: string, after: string): NetDiff {
-  const was = connectionsOf(before);
-  const now = connectionsOf(after);
-
-  return {
-    lost: toConnections([...was].filter((pair) => !now.has(pair)).sort()),
-    gained: toConnections([...now].filter((pair) => !was.has(pair)).sort()),
-  };
-}
-
-/** 編集を当てる。**右から当てる**ので、同じ行の桁がずれない。 */
-export function applyEdits(source: string, edits: readonly Edit[]): string {
-  if (edits.length === 0) return source;
-
-  const lines = normalizeNewlines(source).split('\n');
-  const ordered = [...edits].sort((a, b) => b.line - a.line || b.column - a.column);
-
-  for (const edit of ordered) {
-    const text = lines[edit.line - 1];
-    if (text === undefined) continue;
-    lines[edit.line - 1] = text.slice(0, edit.column) + edit.text + text.slice(edit.column + edit.length);
-  }
-  return lines.join('\n');
 }
 
 export function movePart(source: string, partId: string, to: Address): MoveResult {

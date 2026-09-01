@@ -156,22 +156,29 @@ It is not published to the npm registry, so hand consumers a tarball.
 npm pack   # builds, emits the type definitions, and makes circuit-fence-<version>.tgz
 ```
 
-## Moving parts
+## Moving parts and nodes
 
-Parts can be moved to another address while you look at the drawing. Because the
-fence **writes positions as grid addresses**, moving a part comes down to
-swapping the address spelling inside its line.
+Parts and nodes can be moved to another address while you look at the drawing.
+Because the fence **writes positions as grid addresses**, moving something comes
+down to swapping the address spelling inside a line.
 
 - `Circuit Fence: 部品を動かす (マップ)` — opens a grid panel beside the editor;
-  grab a part and drop it on the crossing you want
+  grab and drop on the crossing you want. A switch at the top changes what you
+  grab from parts to nodes
 - `Circuit Fence: 部品を動かす` — pick a part, type the address to move it to
+- `Circuit Fence: 節点を動かす` — pick a node, type the address to move it to
 
-It compares the netlist before and after and **lists the connections the move
-breaks and the ones it makes** (it does not ask when nothing changes). Your
-comments and formatting survive: only the address spelling is replaced. The
+**What you grab decides what the move means.** A part moves on its own and the
+connections change with it; a node takes everything written at that crossing, so
+the connections are kept. When `points:` has named the node, the rewrite is
+usually **that one line** (bare spellings of the same address come along too).
+
+Moving a part compares the netlist before and after and **lists the connections
+the move breaks and the ones it makes** (it does not ask when nothing changes).
+Your comments and formatting survive: only the address spelling is replaced. The
 drawing catches up a few seconds after the edit.
 
-More in [docs/03-部品を動かす.md](docs/03-部品を動かす.md) (Japanese).
+More in [docs/03-部品と節点を動かす.md](docs/03-部品と節点を動かす.md) (Japanese).
 
 ## Development
 

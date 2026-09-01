@@ -119,3 +119,44 @@ describe('同じ交点に 2 つ', () => {
     expect(html).toContain('data-part="R1"');
   });
 });
+
+describe('節点の点', () => {
+  const source = 'points:\n  fb: c3\nparts:\n  R1: resistor a1 b1\n  R2: resistor fb d3\n';
+
+  test('marks every crossing something is written at', () => {
+    const dots = gridMap(source).dots.map((dot) => `${dot.row},${dot.col}`);
+
+    expect(dots).toContain('0,0');
+    expect(dots).toContain('2,2');
+  });
+
+  test('carries the name, so the map can show what a one-line move would touch', () => {
+    const fb = gridMap(source).dots.find((dot) => dot.row === 2 && dot.col === 2);
+
+    expect(fb?.name).toBe('fb');
+    expect(fb?.uses).toBe(1);
+  });
+
+  test('leaves the dot under the chip, so a node on a part is still grabbable', () => {
+    const html = renderMapHtml(gridMap(source));
+
+    // 同じ升にチップと点の両方が出る。隠すと名前の付いた節点だけ掴めなくなる。
+    expect(html).toContain('cf-dot');
+    expect(html).toContain('data-node="c3"');
+    expect(html).toContain('cf-chip');
+  });
+
+  test('has no dots at all when the fence cannot be read', () => {
+    expect(gridMap('parts: [').dots).toEqual([]);
+  });
+
+  test('covers a crossing only a wire reaches, so its dot is on the map', () => {
+    // 部品は a1〜b1 に収まるが、配線が j9 まで届く。升目が部品だけを見て
+    // 決まると、j9 の点が升の外に落ちて掴めなくなる。
+    const map = gridMap('parts:\n  R1: resistor a1 b1\nwires:\n  - b1 -- j9\n');
+
+    expect(map.rows).toBeGreaterThan(9);
+    expect(map.cols).toBeGreaterThan(8);
+    expect(renderMapHtml(map)).toContain('data-node="j9"');
+  });
+});

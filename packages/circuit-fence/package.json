@@ -66,6 +66,11 @@
         "category": "Circuit Fence"
       },
       {
+        "command": "circuit-fence.movePoint",
+        "title": "Circuit Fence: 節点を動かす",
+        "category": "Circuit Fence"
+      },
+      {
         "command": "circuit-fence.openMap",
         "title": "Circuit Fence: 部品を動かす (マップ)",
         "category": "Circuit Fence"
@@ -75,6 +80,10 @@
       "commandPalette": [
         {
           "command": "circuit-fence.movePart",
+          "when": "editorLangId == markdown"
+        },
+        {
+          "command": "circuit-fence.movePoint",
           "when": "editorLangId == markdown"
         },
         {

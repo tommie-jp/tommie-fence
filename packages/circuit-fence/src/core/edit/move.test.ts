@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { applyEdits, movePart, movablePartIds } from './move.ts';
+import { movePart, movablePartIds } from './move.ts';
+import { applyEdits } from './shared.ts';
 import { parseAddress } from '../model/address.ts';
 
 const at = (text: string) => parseAddress(text)!;

@@ -3,6 +3,10 @@ import { escapeMarkup } from 'fence-kit';
 /**
  * マップのパネルの外側 (HTML の殻)。**純関数**なのでそのままテストに掛かる。
  *
+ * 掴む物は 2 つ — 部品のチップと、節点の点。**同じ操作に混ぜない**ので
+ * 持ち方を切り替えさせる (部品は 1 つだけ動いて接続が変わり、節点は交点ごと
+ * 動いて接続が保たれる。掴む物が違えば意味も違う、で曖昧さが消える)。
+ *
  * webview は拡張が渡した HTML をサニタイズしないので、フェンスから来た字は
  * すべて `renderMapHtml` 側でエスケープ済みのものだけを受け取る。
  * ここが足すのは殻とスクリプトだけで、外から来た字を素で入れる場所は無い。
@@ -26,6 +30,18 @@ const STYLE = `
     font: inherit; font-size: 11px;
   }
   .cf-chip.cf-held { cursor: grabbing; outline: 2px solid var(--vscode-focusBorder); }
+  .cf-dot {
+    position: absolute; margin: -5px 0 0 -5px; width: 10px; height: 10px; padding: 0;
+    border: 0; border-radius: 50%; cursor: grab; font-size: 0;
+    background: var(--vscode-charts-blue, var(--vscode-focusBorder));
+  }
+  .cf-dot.cf-held { cursor: grabbing; outline: 2px solid var(--vscode-focusBorder); outline-offset: 2px; }
+  /* 節点を掴むときだけ点を前に出す。部品の升では点がチップに隠れるため。 */
+  .cf-cell { position: relative; }
+  body:not(.cf-nodes) .cf-dot { pointer-events: none; opacity: 0.45; }
+  body.cf-nodes .cf-chip { pointer-events: none; opacity: 0.5; }
+  .cf-mode { margin: 0 0 8px; }
+  .cf-mode label { margin-right: 12px; }
   .cf-status { margin-top: 8px; min-height: 1.4em; }
 `;
 
@@ -35,7 +51,10 @@ const STYLE = `
  */
 const SCRIPT = `
   const vscode = acquireVsCodeApi();
+  // 掴んでいるもの。**部品と節点は掴む物が違う**ので、種類ごと覚える。
   let held = null;
+
+  const nodeMode = () => document.body.classList.contains('cf-nodes');
 
   const status = () => document.querySelector('.cf-status');
   const clear = () => {
@@ -43,20 +62,33 @@ const SCRIPT = `
     document.querySelectorAll('.cf-target').forEach((el) => el.classList.remove('cf-target'));
   };
 
-  const hold = (id, chip) => {
+  const hold = (kind, id, element) => {
     clear();
-    held = id;
-    chip.classList.add('cf-held');
-    status().textContent = id + ' を掴みました。置きたい交点をクリックします (Esc で放す)';
+    held = { kind: kind, id: id };
+    element.classList.add('cf-held');
+    const what = kind === 'node' ? id + ' の節点' : id;
+    status().textContent = what + ' を掴みました。置きたい交点をクリックします (Esc で放す)';
   };
 
   const drop = (address) => {
     if (held === null) return;
-    vscode.postMessage({ kind: 'move', part: held, to: address });
-    status().textContent = held + ' を ' + address + ' へ…';
+    const what = held.kind === 'node' ? held.id + ' の節点' : held.id;
+    vscode.postMessage(
+      held.kind === 'node'
+        ? { kind: 'moveNode', from: held.id, to: address }
+        : { kind: 'move', part: held.id, to: address },
+    );
+    status().textContent = what + ' を ' + address + ' へ…';
     held = null;
     clear();
   };
+
+  /** 掴める物。いまの持ち方に合うものだけを返す。 */
+  const grabbable = (target) =>
+    (nodeMode() ? target.closest('.cf-dot') : target.closest('.cf-chip'));
+
+  const idOf = (element) => element.dataset.node ?? element.dataset.part;
+  const kindOf = (element) => (element.classList.contains('cf-dot') ? 'node' : 'part');
 
   document.addEventListener('click', (event) => {
     const cell = event.target.closest('.cf-cell');
@@ -66,17 +98,17 @@ const SCRIPT = `
       drop(cell.dataset.address);
       return;
     }
-    const chip = event.target.closest('.cf-chip');
-    if (chip) hold(chip.dataset.part, chip);
+    const grab = grabbable(event.target);
+    if (grab) hold(kindOf(grab), idOf(grab), grab);
   });
 
   // ドラッグでも同じ道を通る。掴んだ時点と放した時点しか見ないので、
   // 途中で再コンパイルは起きない。
   document.addEventListener('dragstart', (event) => {
-    const chip = event.target.closest('.cf-chip');
-    if (!chip) return;
-    hold(chip.dataset.part, chip);
-    event.dataTransfer.setData('text/plain', chip.dataset.part);
+    const grab = grabbable(event.target);
+    if (!grab) return;
+    hold(kindOf(grab), idOf(grab), grab);
+    event.dataTransfer.setData('text/plain', idOf(grab));
   });
   document.addEventListener('dragover', (event) => {
     const cell = event.target.closest('.cf-cell');
@@ -103,13 +135,23 @@ const SCRIPT = `
     const message = event.data;
     if (message.kind === 'map') {
       document.querySelector('.cf-body').innerHTML = message.html;
-      document.querySelectorAll('.cf-chip').forEach((chip) => { chip.draggable = true; });
+      document.querySelectorAll('.cf-chip, .cf-dot').forEach((one) => { one.draggable = true; });
       held = null;
     }
     if (message.kind === 'status') status().textContent = message.text;
   });
 
-  document.querySelectorAll('.cf-chip').forEach((chip) => { chip.draggable = true; });
+  document.querySelectorAll('.cf-chip, .cf-dot').forEach((one) => { one.draggable = true; });
+
+  // 持ち方の切り替え。**掴む物が違えば意味も違う**ので、同じ操作に混ぜない
+  // (部品は 1 つだけ動いて接続が変わる、節点は交点ごと動いて接続が保たれる)。
+  document.addEventListener('change', (event) => {
+    if (event.target.name !== 'cf-mode') return;
+    document.body.classList.toggle('cf-nodes', event.target.value === 'node');
+    held = null;
+    clear();
+    status().textContent = '';
+  });
 `;
 
 export type PanelHtmlOptions = {
@@ -125,8 +167,12 @@ export const panelHtml = ({ cspSource, nonce, mapHtml }: PanelHtmlOptions): stri
   `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">`
   + `<meta http-equiv="Content-Security-Policy" content="default-src 'none';`
   + ` style-src ${escapeMarkup(cspSource)} 'unsafe-inline'; script-src 'nonce-${escapeMarkup(nonce)}';">`
-  + `<style>${STYLE}</style><title>部品を動かす</title></head><body>`
-  + `<p class="cf-note">部品をクリックするか掴んで、置きたい交点で放します。`
+  + `<style>${STYLE}</style><title>部品と節点を動かす</title></head><body>`
+  + `<p class="cf-mode">`
+  + `<label><input type="radio" name="cf-mode" value="part" checked> 部品を動かす</label>`
+  + `<label><input type="radio" name="cf-mode" value="node"> 節点を動かす</label></p>`
+  + `<p class="cf-note">クリックするか掴んで、置きたい交点で放します。`
+  + `部品は 1 つだけ動いて接続が変わり、節点は交点ごと動いて接続は保たれます。`
   + `図は書き換えのあと数秒で描き直ります。</p>`
   + `<div class="cf-body">${mapHtml}</div>`
   + `<p class="cf-status"></p>`

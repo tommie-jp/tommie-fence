@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { fenceAt, gridMap, renderMapHtml } from '../../core/edit/map.ts';
 import { parseAddress } from '../../core/model/address.ts';
 import { movePart } from '../../core/edit/move.ts';
+import { movePoint } from '../../core/edit/point.ts';
 import { describeDiff } from './movePart.ts';
 import { createEditorPort } from './vscodePort.ts';
 import { makeNonce, panelHtml } from './panelHtml.ts';
@@ -46,7 +47,7 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
 
   panel = vscode.window.createWebviewPanel(
     'circuitFenceMap',
-    '部品を動かす',
+    '部品と節点を動かす',
     { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
     { enableScripts: true, retainContextWhenHidden: true },
   );
@@ -59,11 +60,21 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
 
   view.onDidDispose(() => { panel = null; }, null, context.subscriptions);
 
-  view.webview.onDidReceiveMessage(async (message: { kind: string; part?: string; to?: string }) => {
-    if (message.kind !== 'move' || !message.part || !message.to) return;
-    await applyMove(message.part, message.to);
-    refresh();
-  }, null, context.subscriptions);
+  view.webview.onDidReceiveMessage(
+    async (message: { kind: string; part?: string; from?: string; to?: string }) => {
+      if (message.kind === 'move' && message.part && message.to) {
+        await applyMove(message.part, message.to);
+        refresh();
+        return;
+      }
+      if (message.kind === 'moveNode' && message.from && message.to) {
+        await applyNodeMove(message.from, message.to);
+        refresh();
+      }
+    },
+    null,
+    context.subscriptions,
+  );
 
   // 手で書き換えたときもマップを追いつかせる。デバウンスは要らない
   // (組むのはパース済みモデルからで、TeX は通らない)。
@@ -97,20 +108,70 @@ const say = (text: string): void => {
   if (panel) void panel.webview.postMessage({ kind: 'status', text });
 };
 
-/** マップから来た「どの部品を・どの番地へ」を書き換えに落とす。 */
-async function applyMove(partId: string, written: string): Promise<void> {
+/** いま掴めるフェンス。エディタが前に出ていない・フェンスの外なら理由を返す。 */
+function fenceNow(): { source: string; line: number } | null {
   const editor = markdownEditor();
   if (!editor) {
     // **黙って戻らない。** webview は「…」を出したまま待ってしまう。
     say('Markdown のエディタが前に出ていません');
-    return;
+    return null;
   }
-
   const fence = fenceAt(editor.document.getText(), editor.selection.active.line + 1);
   if (!fence) {
     say('カーソルが circuit フェンスの外にあります (フェンスの中へ戻します)');
+    return null;
+  }
+  return { source: fence.source, line: fence.line };
+}
+
+/**
+ * **接続が変わるときだけ確認する。** 変わらない移動で毎回止めると、
+ * 番地の振り直しという本来の用途で邪魔になる。放したら false。
+ */
+async function agreed(changed: string | null, headline: string): Promise<boolean> {
+  if (changed === null) return true;
+  const answer = await vscode.window.showWarningMessage(
+    `${headline}。${changed}`,
+    { modal: true },
+    '動かす',
+  );
+  if (answer === '動かす') return true;
+  say('やめました');
+  return false;
+}
+
+/** マップから来た「どの節点を・どの番地へ」。**交点ごと動くので接続は保たれる。** */
+async function applyNodeMove(written: string, target: string): Promise<void> {
+  const fence = fenceNow();
+  if (!fence) return;
+
+  const at = parseAddress(written);
+  const to = parseAddress(target);
+  if (at === null || to === null) {
+    say(`番地として読めません: ${at === null ? written : target}`);
     return;
   }
+
+  const result = movePoint(fence.source, at, to);
+  if (!result.ok) {
+    say(result.error.message);
+    return;
+  }
+  if (result.value.edits.length === 0) {
+    say(`節点はすでに ${written} にあります`);
+    return;
+  }
+  if (!(await agreed(describeDiff(result.value.diff), `${written} の節点を ${target} へ`))) return;
+
+  const applied = await createEditorPort().apply(fence.line, result.value.edits);
+  say(applied ? `${written} の節点を ${target} へ動かしました` : '書き換えられませんでした');
+}
+
+/** マップから来た「どの部品を・どの番地へ」を書き換えに落とす。 */
+async function applyMove(partId: string, written: string): Promise<void> {
+  const fence = fenceNow();
+  if (!fence) return;
+
   const to = parseAddress(written);
   if (to === null) {
     say(`番地として読めません: ${written}`);
@@ -127,20 +188,7 @@ async function applyMove(partId: string, written: string): Promise<void> {
     return;
   }
 
-  // **接続が変わるときだけ確認する。** 変わらない移動で毎回止めると、
-  // 番地の振り直しという本来の用途で邪魔になる。
-  const changed = describeDiff(result.value.diff);
-  if (changed !== null) {
-    const answer = await vscode.window.showWarningMessage(
-      `${partId} を ${written} へ。${changed}`,
-      { modal: true },
-      '動かす',
-    );
-    if (answer !== '動かす') {
-      say('やめました');
-      return;
-    }
-  }
+  if (!(await agreed(describeDiff(result.value.diff), `${partId} を ${written} へ`))) return;
 
   const applied = await createEditorPort().apply(fence.line, result.value.edits);
   say(applied ? `${partId} を ${written} へ動かしました` : '書き換えられませんでした');
