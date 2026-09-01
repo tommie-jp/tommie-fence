@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | circuit | 回路 15 本 + わざと壊した例 5 本 | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 回路 13 本 + わざと壊した例 2 本 | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
-| perfboard | まだ無い (板・穴・2 本足の部品まで描ける段階) | [packages/perfboard-fence/](../packages/perfboard-fence/README.ja.md) |
+| perfboard | まだ無い (板・穴・2 本足の部品・配線まで描ける段階) | [packages/perfboard-fence/](../packages/perfboard-fence/README.ja.md) |
 
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。
@@ -99,24 +99,31 @@ VS Code のプレビュー (`Ctrl+Shift+V`) ではフェンス自体が図にな
 
 ## perfboard — ユニバーサル基板
 
-**まだ板・穴・2 本足の部品までしか描かない。** 配線はこれから
+**3 本足・DIP はまだ置けない。** 板・穴・2 本足の部品・配線・ネットリストまで
 ([packages/perfboard-fence](../packages/perfboard-fence/README.ja.md))。
 
 ```yaml
-board: 12x7
+board: 14x8
+points:
+  VCC: a1
 parts:
-  R1: resistor b2 b6 10k
-  D1: led d2 d4 blue
+  R1: resistor b3 b6 1k
+  D1: led b9 b11 red
+wires:
+  - VCC -- b3 red
+  - b6 -- b9 orange
 ```
 
 板の大きさは**列 × 行**で書く (板が「72×47.5mm」と長辺 × 短辺で売られるのと
 同じ順)。番地は `b3` の形で、行が 26 を超える板では `aa3` と続く。
 部品は 2 つの穴を結ぶ線の上に寝る。抵抗は値が読めればカラーコードを塗り、
-LED は書かれた色で光る。
+LED は書かれた色で光る。配線は 2 つの穴をまっすぐ結ぶ — ブレッドボードの
+ような経路探索は要らない (溝もレールも無く、どの穴も同じ格子の上にある)。
 
 **ブレッドボードとの違いは物理そのもの**で、ユニバーサル基板は全穴が独立して
-いる。導通は配線でしか生まれないので、繋ぎ忘れが図の上で沈黙する。
-そこは ERC (全ピン結線済みか / ショート / 浮きネット) に見張らせる予定。
+いる。挿しただけでは何もつながらず、ネットリストは書いた配線からだけ出る。
+裏を返すと繋ぎ忘れが図の上で沈黙するので、そこは ERC
+(全ピン結線済みか / ショート / 浮きネット) に見張らせる予定。
 
 例の `.md` は、`npm run examples` を持つところまで進んだら足す。
 

@@ -33,6 +33,8 @@ export type Metrics = {
   /** ランドの外径。 */
   readonly landSize: number;
   readonly textSize: number;
+  /** 配線の濃さ。少し透かして、下の穴の位置が読めるようにする。 */
+  readonly wireOpacity: number;
 };
 
 export type Theme = { readonly palette: Palette; readonly metrics: Metrics };
@@ -53,5 +55,6 @@ export const THEME: Theme = {
     holeSize: 4,
     landSize: 9,
     textSize: 9,
+    wireOpacity: 0.9,
   },
 };

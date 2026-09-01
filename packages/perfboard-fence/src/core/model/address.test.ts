@@ -64,3 +64,29 @@ describe('formatAddress', () => {
     }
   });
 });
+
+describe('bounds', () => {
+  test('refuses a row label longer than any real board needs', () => {
+    // **無限ループの入口だった。** 200 字を超える行ラベルは rowIndex が
+    // Infinity になり、rowLabel の桁下げが終わらなくなる。
+    expect(parseAddress(`${'a'.repeat(230)}1`)).toBeNull();
+    expect(rowIndex('a'.repeat(230))).toBeNull();
+  });
+
+  test('still takes the labels a real board uses', () => {
+    // 実在する一番大きい板 (秋月 A タイプ) でも 44 行 = `ar`。
+    expect(parseAddress('ar1')).not.toBeNull();
+    expect(parseAddress('zzzz1')).not.toBeNull();
+  });
+
+  test('refuses a column number too long to be a column', () => {
+    expect(parseAddress(`b${'9'.repeat(30)}`)).toBeNull();
+  });
+
+  test('formats a row label in bounded time, whatever it is given', () => {
+    expect(rowLabel(Number.POSITIVE_INFINITY)).toBe('');
+    expect(rowLabel(Number.NaN)).toBe('');
+    expect(rowLabel(0)).toBe('');
+    expect(rowLabel(-1)).toBe('');
+  });
+});

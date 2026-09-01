@@ -83,4 +83,53 @@ describe('renderPerfboard', () => {
 
     expect(result.errors.map((e) => e.line)).toEqual([3, 4]);
   });
+  test('draws the wires and derives the netlist', () => {
+    const result = renderPerfboard([
+      'board: 10x6',
+      'points:',
+      '  VCC: a1',
+      'parts:',
+      '  R1: resistor b3 b7 10k',
+      '  D1: led c3 c7',
+      'wires:',
+      '  - b7 -- c3 red',
+      '  - b3 -- VCC',
+      '',
+    ].join('\n'));
+
+    expect(result.errors).toEqual([]);
+    expect(result.svg.match(/<line /g)?.length).toBeGreaterThanOrEqual(2);
+
+    // R1.2 と D1.1 は配線 1 本で 1 つのネットになる。
+    const joined = result.netlist.find((net) => net.refs.length === 2);
+    expect([...(joined?.refs ?? [])].sort()).toEqual(['D1.1', 'R1.2']);
+    // points: の名前がネットの名前になる。
+    expect(result.netlist.map((net) => net.name)).toContain('VCC');
+  });
+
+  test('leaves every pin its own net when nothing is wired', () => {
+    // **ここがブレッドボードとの分かれ目。** 全穴独立なので、挿しただけでは
+    // 何もつながらない。
+    const result = renderPerfboard('board: 10x6\nparts:\n  R1: resistor b3 b7\n');
+
+    expect(result.netlist).toHaveLength(2);
+  });
+
+  test('says nothing about a netlist when it could not read the fence', () => {
+    expect(renderPerfboard('').netlist).toEqual([]);
+  });
+  test('does not hang on a row label no board could have', { timeout: 5000 }, () => {
+    const long = `${'a'.repeat(300)}1`;
+
+    expect(() => renderPerfboard(`board: 10x6\nwires:\n  - ${long} -- b3\n`)).not.toThrow();
+    expect(() => renderPerfboard(`board: 10x6\npoints:\n  VCC: ${long}\n`)).not.toThrow();
+    expect(() => renderPerfboard(`board: 10x6\nparts:\n  R1: resistor ${long} b3\n`)).not.toThrow();
+  });
+
+  test('gives a point that is off the board the line it was written on', () => {
+    const result = renderPerfboard('board: 10x6\npoints:\n  VCC: z99\n');
+
+    expect(result.errors[0]?.line).toBe(3);
+    expect(result.errors[0]?.text).toBe('  VCC: z99');
+  });
 });

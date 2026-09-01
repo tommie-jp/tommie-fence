@@ -1,4 +1,4 @@
-import { fenceError } from '../errors.ts';
+import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import { holeStrip, offBoardReason } from '../model/board.ts';
@@ -29,7 +29,7 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     }
     if (ids.has(spec.id)) {
       // 名前が重なると、配線がどちらを指しているのか決まらない。
-      errors.push(fenceError(`部品の名前が重なっています: ${spec.id}`, spec.line, spec.id));
+      errors.push(fenceError(`部品の名前が重なっています: ${safeToken(spec.id)}`, spec.line, spec.id));
       continue;
     }
 
@@ -38,7 +38,9 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     for (const hole of spec.holes) {
       const address = parseAddress(hole);
       // 番地として読めることは parser が見ているので、ここで見るのは板に載るかだけ。
-      const reason = address === null ? `穴の番地として読めません: ${hole}` : offBoardReason(board, address);
+      const reason = address === null
+        ? `穴の番地として読めません: ${safeToken(hole)}`
+        : offBoardReason(board, address);
       if (address === null || reason !== null) {
         errors.push(fenceError(reason ?? '', spec.line, hole));
         rejected = true;
@@ -50,7 +52,10 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
 
     const strips = addresses.map(holeStrip);
     if (new Set(strips).size !== strips.length) {
-      errors.push(fenceError(`${spec.id} の足が同じ穴に来ています (${spec.holes.join(' ')})`, spec.line));
+      errors.push(fenceError(
+        `${safeToken(spec.id)} の足が同じ穴に来ています (${spec.holes.map(safeToken).join(' ')})`,
+        spec.line,
+      ));
       continue;
     }
 

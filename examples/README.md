@@ -9,7 +9,7 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | --- | --- | --- |
 | circuit | 15 circuits + 5 deliberately broken | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 13 circuits + 2 deliberately broken | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
-| perfboard | none yet (it draws the board, its holes and two-lead parts) | [packages/perfboard-fence/](../packages/perfboard-fence/README.md) |
+| perfboard | none yet (it draws the board, its holes, two-lead parts and wires) | [packages/perfboard-fence/](../packages/perfboard-fence/README.md) |
 
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for
@@ -102,25 +102,34 @@ A bench circuit with an op-amp, instruments and a toroidal core
 
 ## perfboard — perfboard layouts
 
-**It draws the board, its holes and two-lead parts so far.** Wires are still to
-come ([packages/perfboard-fence](../packages/perfboard-fence/README.md)).
+**Three-lead parts and DIPs are still to come.** The board, its holes, two-lead
+parts, wires and the netlist all work
+([packages/perfboard-fence](../packages/perfboard-fence/README.md)).
 
 ```yaml
-board: 12x7
+board: 14x8
+points:
+  VCC: a1
 parts:
-  R1: resistor b2 b6 10k
-  D1: led d2 d4 blue
+  R1: resistor b3 b6 1k
+  D1: led b9 b11 red
+wires:
+  - VCC -- b3 red
+  - b6 -- b9 orange
 ```
 
 The size is written **columns by rows** — the order the board itself is sold in
 (`72×47.5mm` is long side by short side). Addresses read `b3`, and carry on as
 `aa3` on a board taller than 26 rows. A part lies along the line between its two
 holes; a resistor gets its colour code when the value reads as a resistance, and
-an LED glows in the colour that was written.
+an LED glows in the colour that was written. A wire runs straight between two
+holes — no routing to work out, since there is no ravine and no power rail and
+every hole sits on the same grid.
 
 **The difference from a breadboard is physical**: every hole on a perfboard is
-independent, so only a wire makes a connection and a missing one is silent in
-the picture. That is what the planned ERC (every pin wired / shorts / floating
+independent. Placing a part connects nothing, and the netlist comes only from
+the wires you wrote. The flip side is that a missing connection is silent in the
+picture, which is what the planned ERC (every pin wired / shorts / floating
 nets) is there to watch.
 
 Example `.md` files arrive once the package has an `npm run examples`.

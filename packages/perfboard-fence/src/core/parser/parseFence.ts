@@ -4,8 +4,12 @@ import { fenceError, notice, safeToken } from '../errors.ts';
 import { createBoard, parseBoardSize } from '../model/board.ts';
 import { LIMITS } from '../limits.ts';
 import { parsePartLine } from './parts.ts';
+import { parseWireLine } from './wires.ts';
+import { isReferenceable } from '../limits.ts';
+import { parseAddress } from '../model/address.ts';
+import { isSeq } from 'yaml';
 import { TOP_LEVEL_KEYS } from '../types.ts';
-import type { Board, FenceDocument, FenceError, PartSpec } from '../types.ts';
+import type { Board, FenceDocument, FenceError, PartSpec, PointSpec, WireSpec } from '../types.ts';
 
 /** yaml のメッセージはライブラリ側の文言なので、載せる長さを切る。 */
 const MAX_YAML_MESSAGE = 120;
@@ -83,9 +87,74 @@ export function parseFence(source: string): ParseResult {
 
   const errors: FenceError[] = [];
   const parts: PartSpec[] = [];
+  const wires: WireSpec[] = [];
+  const points: PointSpec[] = [];
   let board: Board | null = null;
   let boardWritten = false;
   let partsWritten = false;
+  let wiresWritten = false;
+  let pointsWritten = false;
+
+  /** `wires:` は 1 行 1 本の並び。読めた配線は捨てない。 */
+  const readWires = (node: unknown, keyLine: number | null): void => {
+    if (!isSeq(node)) {
+      errors.push(fenceError('wires: は `- 穴 -- 穴` の並びにします', keyLine));
+      return;
+    }
+    for (const item of node.items) {
+      const line = lineOf(item as Node);
+      const written = scalarText(item);
+      if (written === null) {
+        errors.push(fenceError('配線は 1 行に 1 本書きます (例: - b7 -- c5)', line));
+        continue;
+      }
+      const result = parseWireLine(written);
+      if (!result.ok) {
+        errors.push({ ...result.error, line });
+        continue;
+      }
+      wires.push({ ...result.value, line });
+    }
+  };
+
+  /**
+   * `points:` は「名前 → 番地」の並び。**番地の代わりに書ける名前**を作るだけで、
+   * 図には出ない (出るのはネットリストの名前として)。
+   */
+  const readPoints = (node: unknown, keyLine: number | null): void => {
+    if (!isMap(node)) {
+      errors.push(fenceError('points: は `名前: 番地` の並びにします', keyLine));
+      return;
+    }
+    for (const item of node.items) {
+      const line = lineOf((item.value ?? item.key) as Node);
+      const name = scalarText(item.key);
+      const written = scalarText(item.value);
+      if (name === null || written === null) {
+        errors.push(fenceError('points: は `名前: 番地` の形で書きます (例: VCC: a1)', line));
+        continue;
+      }
+      if (points.length >= LIMITS.points) {
+        errors.push(fenceError(`points: が多すぎます (${LIMITS.points} 個まで)`, line));
+        break;
+      }
+      if (!isReferenceable(name)) {
+        errors.push(fenceError(`点の名前に使えません: ${safeToken(name)}`, line, name));
+        continue;
+      }
+      // **番地の綴りを名前にしない。** `b3: c5` と書けてしまうと、`b3` が
+      // どちらを指すのか読む人にも処理にも決まらなくなる。
+      if (parseAddress(name) !== null) {
+        errors.push(fenceError(`番地と同じ綴りは点の名前にできません: ${safeToken(name)}`, line, name));
+        continue;
+      }
+      if (points.some((point) => point.name === name)) {
+        errors.push(fenceError(`点の名前が重なっています: ${safeToken(name)}`, line, name));
+        continue;
+      }
+      points.push({ name, written, line });
+    }
+  };
 
   /**
    * `parts:` は「名前 → 部品 1 行」の並び。**読めた部品は捨てない** ので、
@@ -148,6 +217,26 @@ export function parseFence(source: string): ParseResult {
       readParts(pair.value, keyLine);
       continue;
     }
+    if (key === 'wires') {
+      const keyLine = lineOf(pair.key as Node);
+      if (wiresWritten) {
+        errors.push(fenceError('wires: が 2 つあります (1 つにまとめます)', keyLine, key));
+        continue;
+      }
+      wiresWritten = true;
+      readWires(pair.value, keyLine);
+      continue;
+    }
+    if (key === 'points') {
+      const keyLine = lineOf(pair.key as Node);
+      if (pointsWritten) {
+        errors.push(fenceError('points: が 2 つあります (1 つにまとめます)', keyLine, key));
+        continue;
+      }
+      pointsWritten = true;
+      readPoints(pair.value, keyLine);
+      continue;
+    }
     if (key !== 'board') continue;
 
     const at = lineOf((pair.value ?? pair.key) as Node);
@@ -182,5 +271,5 @@ export function parseFence(source: string): ParseResult {
     return { doc: null, errors };
   }
 
-  return { doc: { board, parts }, errors };
+  return { doc: { board, parts, wires, points }, errors };
 }

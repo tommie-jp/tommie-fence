@@ -5,8 +5,8 @@
 A VS Code extension that previews a ` ```perfboard ` fence (YAML) in Markdown as
 a perfboard wiring diagram.
 
-**It draws the board, its holes and two-lead parts so far.** Wires and the
-netlist are still to come.
+**Three-lead parts and DIPs are still to come.** The board, its holes,
+two-lead parts, wires and the netlist all work.
 
 ## What it is for
 
@@ -57,8 +57,11 @@ and the content of the offending line.
 | **Addresses** (`b3`, and `aa3` past 26 rows) | works |
 | **Placing two-lead parts** (17 kinds: resistors, LEDs, capacitors…) | works |
 | **Resistor colour codes** and LED colours | works |
+| **Drawing wires** (`- b7 -- c5 red`) | works |
+| **Deriving the netlist** | works |
+| **Naming holes** (`points:`) | works |
 | Three-lead parts, DIP, SIP | **still to come** |
-| Wires, netlist, ERC | **still to come** |
+| ERC (unwired pins, shorts, floating nets) | **still to come** |
 
 The board size is written **columns by rows** — the order the board itself is
 sold in (`72×47.5mm` is long side by short side). There are no named boards

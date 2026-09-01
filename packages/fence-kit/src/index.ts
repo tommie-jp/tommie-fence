@@ -16,7 +16,12 @@ export type { FenceBlock } from './fences.ts';
 export { escapeMarkup, element } from './markup.ts';
 export { num, svgText, TEXT_HALO_WIDTH } from './svg.ts';
 export { parseOhms, resistorBandColors } from './values.ts';
-export { BAND_COLORS, LED_COLORS, DEFAULT_LED_COLOR, bandColor, ledColor } from './colors.ts';
+export {
+  BAND_COLORS, LED_COLORS, WIRE_COLORS, DEFAULT_LED_COLOR, DEFAULT_WIRE_COLOR,
+  bandColor, ledColor, wireColor, wireColorNames,
+} from './colors.ts';
 export { fit, textWidth } from './textFit.ts';
+export { computeNets } from './nets.ts';
+export type { Net, NetInput, NetMember, StripId } from './nets.ts';
 export type { TextOptions } from './svg.ts';
 export type { Attributes } from './markup.ts';

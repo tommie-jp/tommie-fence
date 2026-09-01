@@ -3,8 +3,20 @@ import type { Address } from '../types.ts';
 const ALPHABET = 26;
 const CODE_A = 'a'.charCodeAt(0);
 
-const ADDRESS = /^([a-z]+)([0-9]+)$/;
-const ROW_LABEL = /^[a-z]+$/;
+/**
+ * 行の名前と列の番号の長さの上限。
+ *
+ * **上限が無いと止まらなくなる。** 200 字を超える行ラベルは `rowIndex` が
+ * 桁あふれして `Infinity` になり、`rowLabel` の桁下げ (`(n-1)/26`) が
+ * `Infinity` のまま減らないので `while` が終わらない。
+ * 4 字あれば 26^4 = 456,976 行まで名前が付き、実在する板 (最大 44 行) の
+ * はるか先まで届く。
+ */
+const MAX_ROW_LETTERS = 4;
+const MAX_COL_DIGITS = 4;
+
+const ADDRESS = new RegExp(`^([a-z]{1,${MAX_ROW_LETTERS}})([0-9]{1,${MAX_COL_DIGITS}})$`);
+const ROW_LABEL = new RegExp(`^[a-z]{1,${MAX_ROW_LETTERS}}$`);
 
 /**
  * 行の名前。1 行目が `a`、26 行目が `z`、27 行目が `aa`。
@@ -15,7 +27,10 @@ const ROW_LABEL = /^[a-z]+$/;
  * この数え方が既に知られているから。
  */
 export function rowLabel(index: number): string {
-  let remaining = index;
+  // 呼ぶ側が番地を通していれば来ないが、**ここが止まらないと図も止まる**ので、
+  // 数として扱えないものは空で返す (上の桁あふれの経緯)。
+  if (!Number.isFinite(index) || index < 1) return '';
+  let remaining = Math.floor(index);
   let label = '';
   while (remaining > 0) {
     const digit = (remaining - 1) % ALPHABET;

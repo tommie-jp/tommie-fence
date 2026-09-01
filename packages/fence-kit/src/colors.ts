@@ -14,6 +14,28 @@
 const lookupColor = (table: Record<string, string>, name: string): string | null =>
   Object.hasOwn(table, name) ? table[name] ?? null : null;
 
+/** 配線の色名。ここに無い名前は書式エラーにして既定色で描く (属性への流し込みを防ぐ)。 */
+export const WIRE_COLORS: Record<string, string> = {
+  red: '#d33a2f',
+  black: '#23272e',
+  white: '#f4f4f2',
+  gray: '#8a929c',
+  grey: '#8a929c',
+  orange: '#e08a1e',
+  yellow: '#d9b800',
+  green: '#2a9d4b',
+  blue: '#2b6fd4',
+  purple: '#7b4bb7',
+  brown: '#7a5c2e',
+  pink: '#e06c9f',
+};
+
+export const DEFAULT_WIRE_COLOR = WIRE_COLORS.gray as string;
+
+export const wireColorNames = (): readonly string[] => Object.keys(WIRE_COLORS);
+
+export const wireColor = (name: string): string | null => lookupColor(WIRE_COLORS, name.toLowerCase());
+
 /** カラーコードの帯の色。 */
 export const BAND_COLORS: Record<string, string> = {
   black: '#1b1d21',

@@ -69,11 +69,36 @@ export type PlacedPart = {
   readonly pins: readonly { readonly address: Address; readonly strip: StripId }[];
 };
 
+/** `points:` の 1 行。**行番号を落とさない** — 落とすと報告が行を指せなくなる。 */
+export type PointSpec = {
+  readonly name: string;
+  readonly written: string;
+  readonly line: number | null;
+};
+
+/** 書かれたままの配線 1 本。端は番地とも `points:` の名前とも取れる。 */
+export type WireSpec = {
+  readonly from: string;
+  readonly to: string;
+  readonly color: string | null;
+  readonly line: number | null;
+};
+
+/** 端を番地に直した配線。 */
+export type RoutedWire = {
+  readonly from: Address;
+  readonly to: Address;
+  readonly color: string | null;
+};
+
 /**
- * 読めたフェンス。Phase 2 では板と部品まで。
- * 配線・注釈は Phase 3 以降でここに足す。
+ * 読めたフェンス。Phase 3 では板・部品・配線・点の名前まで。
+ * 注釈と ERC は次の Phase でここに足す。
  */
 export type FenceDocument = {
   readonly board: Board;
   readonly parts: readonly PartSpec[];
+  readonly wires: readonly WireSpec[];
+  /** `points:` で名前を付けた穴。**定義順**で持つ (ネット名の当て方が定義順)。 */
+  readonly points: readonly PointSpec[];
 };
