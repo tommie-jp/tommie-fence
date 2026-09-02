@@ -1,6 +1,6 @@
 import {
-  DEFAULT_LED_COLOR, bandColor, capacitorCode, element, fit, ledColor, num, parsePicofarads,
-  parseResistor, resistorBands, svgText,
+  DEFAULT_LED_COLOR, bandColor, capacitorCode, element, fit, inductorCode, ledColor, num,
+  parseMicrohenries, parsePicofarads, parseResistor, resistorBands, svgText,
 } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Layout } from '../model/layout.ts';
@@ -71,20 +71,59 @@ function partLabel(
     'font-size': num(size),
     halo: theme.palette.plate,
   };
-  // 胴が縦向きか。斜めは、傾きの大きいほうに寄せる。
-  const upright = Math.abs(Math.sin(rect.angle)) > Math.abs(Math.cos(rect.angle));
-  if (!upright) {
+  // **横に寝ている胴はそのまま下に書く。** 図の大半はこれなので、傾きの計算に
+  // 巻き込まないでおく (`sin` の丸めで字が 0.01 度ずれるようなことも起きない)。
+  const tilt = turned(rect.angle);
+  if (Math.abs(tilt) < UPRIGHT) {
     return svgText(pins.x, rect.cy + rect.height / 2 + CAPTION_GAP, fitToBoard(text, pins.x, size, layout), style);
   }
 
-  // 縦のときは胴の右脇に、時計回りに 90 度回して置く。
-  const at = { x: rect.cx + rect.height / 2 + CAPTION_GAP, y: pins.y };
+  // **傾いた胴には字も同じだけ傾ける。** 斜めに置いた部品の名前だけ水平だと、
+  // どの部品の名前なのかが胴と離れて読めなくなる (胴の上に重なることもある)。
+  // 置くのは胴の脇 — 字の下側にあたる向きへ、胴の厚みのぶんだけ寄せる。
+  const away = beside(tilt);
+  // 回した字は真ん中で置くので、**字の厚みの半分だけ余分に**逃がす
+  // (横向きの字は下端で置くため、その半分が要らない)。
+  const gap = rect.height / 2 + CAPTION_GAP + size / 2;
+  const at = { x: pins.x + away.x * gap, y: pins.y + away.y * gap };
+  const room = Math.abs(Math.sin(tilt)) > Math.abs(Math.cos(tilt))
+    ? fitDown(text, at.y, size, layout)
+    : fitToBoard(text, at.x, size, layout);
+
   return element(
     'g',
-    { transform: `translate(${num(at.x)} ${num(at.y)}) rotate(90)` },
-    svgText(0, 0, fitDown(text, at.y, size, layout), { ...style, 'dominant-baseline': 'middle' }),
+    { transform: `translate(${num(at.x)} ${num(at.y)}) rotate(${num(degrees(tilt))})` },
+    svgText(0, 0, room, { ...style, 'dominant-baseline': 'middle' }),
   );
 }
+
+/** これより寝ていれば横向きの字として書く (1 度ぶん。丸めの揺れを拾わない)。 */
+const UPRIGHT = Math.PI / 180;
+
+/**
+ * 字を回す角。**上下がひっくり返らない向きへ畳む** — 実物の部品は
+ * どちら向きに挿しても同じものなので、名前が逆さまに出る理由がない。
+ */
+function turned(angle: number): number {
+  const half = Math.PI / 2;
+  const folded = Math.atan2(Math.sin(angle), Math.cos(angle));
+  if (folded > half) return folded - Math.PI;
+  if (folded < -half) return folded + Math.PI;
+  return folded;
+}
+
+/**
+ * 字を置く向き (胴からどちらへ寄せるか)。字の下側にあたる向きで、
+ * **真上に立った胴だけは右脇**にする (左に寄せると板の外へ出ていきやすい)。
+ */
+function beside(tilt: number): { readonly x: number; readonly y: number } {
+  const perpendicular = { x: -Math.sin(tilt), y: Math.cos(tilt) };
+  return perpendicular.y < 1e-9 && perpendicular.x < 0
+    ? { x: -perpendicular.x, y: -perpendicular.y }
+    : perpendicular;
+}
+
+const degrees = (radians: number): number => (radians * 180) / Math.PI;
 
 /**
  * 抵抗の胴。値が抵抗として読めるときだけカラーコードを塗る。
@@ -139,6 +178,10 @@ const SMA_METAL_EDGE = '#7f868d';
 const SMA_DIELECTRIC = '#f2f3f5';
 /** アースの足。胴と同じ銀だと 1 つの塊に見えるので、少し濃くして際を出す。 */
 const SMA_GROUND = '#9aa2ab';
+/** 腕を板に留めた半田。**ランドの銀と同じ**なので、接点として読める。 */
+const SMA_SOLDER = '#d7dce1';
+/** 接点の印の半径。腕の厚みに収まる大きさ。 */
+const CONTACT = 3.5;
 /** 中心導体。オスはピン (金)、メスは穴 (暗い口)。 */
 const SMA_PIN = '#d8b64a';
 const SMA_SOCKET = '#2b2f33';
@@ -230,12 +273,22 @@ function smaEdgeBody(part: PlacedPart, width: number, edgeX: number, legX: numbe
     ].map(([x = 0, y = 0]) => `${num(x)},${num(y)}`).join(' '),
     fill: SMA_GROUND, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
   });
+  // **アースが板に触れるのは腕の 2 点。** そこが半田付けするところなので、
+  // 穴と同じように接点の印を出す — 印が無いと、凹の口のどこを付けるのかが
+  // 図から読めない (アースは穴に挿さらないので、埋まる穴も出ない)。
+  const contacts = [-1, 1]
+    .map((side) => element('circle', {
+      cx: num(groundEnd - CONTACT), cy: num(side * (armHalf - armThick / 2)), r: num(CONTACT),
+      fill: SMA_SOLDER, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
+    }))
+    .join('');
+
   // 信号線は**凹の谷から出る凸**。アースより先の穴まで届く。
   const centre = element('rect', {
     x: num(edgeX), y: -2.5, width: num(width / 2 - edgeX), height: 5, rx: 1, fill: SMA_PIN,
   });
 
-  return `${barrel}${threads}${plain}${base}${face}${mating}${centre}${ground}`;
+  return `${barrel}${threads}${plain}${base}${face}${mating}${centre}${ground}${contacts}`;
 }
 
 /**
@@ -272,6 +325,17 @@ const genericBody = (width: number, theme: Theme): string =>
   });
 
 /**
+ * インダクタの胴。**実物と同じ 3 桁コードを刷る** (`100u` なら `101`、µH 基準)。
+ *
+ * 実物には色帯のものもあるが、**帯にすると抵抗と見分けが付かない** — 同じ形の
+ * 胴なので、色だけの違いでは読めない。
+ */
+function inductorBody(part: PlacedPart, width: number, theme: Theme): string {
+  const henries = part.value === null ? null : parseMicrohenries(part.value);
+  return codedBody(part, width, theme, henries === null ? null : inductorCode(henries));
+}
+
+/**
  * コンデンサの胴。**実物と同じ 3 桁コードを刷る** (`100n` なら `104`)。
  * 手元の部品箱から選ぶときに見るのはこの数字なので、値の綴りより刷り字のほうが
  * 突き合わせやすい。
@@ -280,13 +344,18 @@ const genericBody = (width: number, theme: Theme): string =>
  * (`104` が `10` に見えると 10pF)。
  */
 function capacitorBody(part: PlacedPart, width: number, theme: Theme): string {
-  const shell = genericBody(width, theme);
   const farads = part.value === null ? null : parsePicofarads(part.value);
-  const code = farads === null ? null : capacitorCode(farads);
+  return codedBody(part, width, theme, farads === null ? null : capacitorCode(farads));
+}
+
+/** 3 桁コードを刷った胴。刷れないときは地の胴だけ。 */
+function codedBody(_part: PlacedPart, width: number, theme: Theme, code: string | null): string {
+  const shell = genericBody(width, theme);
   if (code === null) return shell;
 
   const size = BODY_HEIGHT * 0.75;
   // 3 桁ぶんの幅が無ければ刷らない (等幅ではないので少し余裕を見る)。
+  // **切れた `104` は `10` (= 10pF) に読める。**
   if (width < size * code.length * 0.8) return shell;
 
   return shell + svgText(0, size * 0.36, code, {
@@ -304,6 +373,7 @@ const bodyOf = (
   if (part.type === 'resistor') return resistorBody(part, width, theme);
   if (part.type === 'led') return ledBody(part);
   if (part.type === 'capacitor') return capacitorBody(part, width, theme);
+  if (part.type === 'inductor') return inductorBody(part, width, theme);
   if (part.type === 'sma') {
     return mount === null ? smaBody(part) : smaEdgeBody(part, width, mount.edgeX, mount.legX);
   }

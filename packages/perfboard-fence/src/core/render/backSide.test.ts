@@ -3,10 +3,12 @@ import { backSideLayout, renderBackSide } from './backSide.ts';
 import { THEME } from './theme.ts';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
+import { parseAddress } from '../model/address.ts';
 import { placeParts } from '../placement/place.ts';
 
 const board = createBoard({ cols: 16, rows: 8 });
 const labels = { row: 'alpha', col: 'numeric', case: 'upper', sides: ['left', 'top'] } as const;
+const at = (text: string) => parseAddress(text)!;
 
 const dip = placeParts(
   [{ id: 'IC1', type: 'dip8', variant: null, holes: ['b3'], value: null, written: 'dip8 b3', line: 1 }],
@@ -46,5 +48,26 @@ describe('裏返した板の縁の銅箔', () => {
 
     // 銅箔は角丸の矩形。板 1 枚と、行ごとに左右 1 つずつ。
     expect((svg.match(/<rect /g) ?? []).length).toBe(1 + slotted.rows * 2);
+  });
+});
+
+describe('半田面の重ね順', () => {
+  test('draws the parts behind the wires and the joints, and dims them', () => {
+    // 半田面で見るのは半田付けする穴と、そこを渡るジャンパ。部品は板の向こう側。
+    const board = createBoard({ cols: 16, rows: 8 });
+    const layout = backSideLayout(board, labels);
+    const svg = renderBackSide(
+      board,
+      layout,
+      { wires: [{ from: at('b3'), to: at('b6'), color: null, line: 1 }], parts: dip, soldered: [at('b3')] },
+      THEME,
+      labels,
+      0,
+    );
+
+    expect(svg).toContain('opacity="0.35"');
+    // 部品 → 配線 → 半田点 の順に並ぶ (あとに書いたものが手前)。
+    expect(svg.indexOf('opacity="0.35"')).toBeLessThan(svg.indexOf('<line'));
+    expect(svg.lastIndexOf('<line')).toBeLessThan(svg.lastIndexOf('<circle'));
   });
 });

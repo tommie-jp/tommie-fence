@@ -237,14 +237,56 @@ export function parsePicofarads(text: string): number | null {
  * 3 桁に丸めると別の容量になる値も null — 実物と違う数字は、図を信じた人を
  * 間違えさせる。
  */
-export function capacitorCode(picofarads: number): string | null {
-  if (!Number.isFinite(picofarads) || picofarads < 10) return null;
+export const capacitorCode = (picofarads: number): string | null => threeDigitCode(picofarads);
 
-  const exponent = Math.floor(Math.log10(picofarads)) - 1;
-  const digits = Math.round(picofarads / 10 ** exponent);
+/**
+ * 3 桁コード。**基準の単位で「数字 2 桁 + 0 の数」**に書いたもの。
+ * コンデンサは pF 基準 (`100n` = 100,000pF → `104`)、インダクタは µH 基準
+ * (`100u` = 100µH → `101`)。実物の胴にはこれが刷ってある。
+ *
+ * **基準の 10 倍未満は 3 桁で書けない** (実物も `4.7` のように直に刷る) ので null。
+ * 3 桁に丸めると別の値になるものも null — 実物と違う数字は、図を信じた人を
+ * 間違えさせる。
+ */
+function threeDigitCode(value: number): string | null {
+  if (!Number.isFinite(value) || value < 10) return null;
+
+  const exponent = Math.floor(Math.log10(value)) - 1;
+  const digits = Math.round(value / 10 ** exponent);
   if (digits < 10 || digits > 99 || exponent < 0 || exponent > 9) return null;
-  // 丸めで別の容量になっていないか。**近い値へ寄せない。**
-  if (Math.abs(digits * 10 ** exponent - picofarads) > picofarads * 1e-9) return null;
+  // 丸めで別の値になっていないか。**近い値へ寄せない。**
+  if (Math.abs(digits * 10 ** exponent - value) > value * 1e-9) return null;
 
   return `${digits}${exponent}`;
 }
+
+/** インダクタンスの単位。**基準は µH** — 3 桁のコードが µH で書かれているため。 */
+const HENRY_UNITS: Record<string, number> = { n: 1e-3, u: 1, µ: 1, μ: 1, m: 1e3, h: 1e6 };
+
+const HENRY_PLAIN = /^([0-9]+(?:\.[0-9]+)?)\s*([nuµμmh]?)h?$/i;
+const HENRY_INFIX = /^([0-9]+)([nuµμm])([0-9]+)h?$/i;
+
+/** `100u` `10m` `4u7` などのインダクタンスをマイクロヘンリーに直す。読めなければ null。 */
+export function parseMicrohenries(text: string): number | null {
+  const cleaned = text.trim();
+
+  const infix = HENRY_INFIX.exec(cleaned);
+  if (infix) {
+    const [, whole, unit, fraction] = infix;
+    return Number(`${whole}.${fraction}`) * (HENRY_UNITS[(unit ?? 'u').toLowerCase()] ?? 1);
+  }
+
+  const plain = HENRY_PLAIN.exec(cleaned);
+  if (!plain) return null;
+  const [, digits, unit] = plain;
+  const value = Number(digits) * (unit ? HENRY_UNITS[unit.toLowerCase()] ?? 1 : 1);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+/**
+ * インダクタの 3 桁コード。**µH 基準** (`100u` なら `101`)。
+ *
+ * 実物の軸物インダクタには色帯のものもあるが、**帯にすると抵抗と見分けが付かない**
+ * ので、図では数字で書く (形が同じ胴なので、色だけの違いでは読めない)。
+ */
+export const inductorCode = (microhenries: number): string | null => threeDigitCode(microhenries);

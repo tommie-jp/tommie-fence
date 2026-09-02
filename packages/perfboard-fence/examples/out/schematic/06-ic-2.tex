@@ -1,0 +1,60 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{grounds/scale=1.36}
+\foreach \x in {0,2,4,6,8,10,12,14,16} {\foreach \y in {0,-2,-4,-6,-8,-10,-12,-14,-16} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize] at (8,0.84) {5};
+\node[gray, font=\scriptsize] at (10,0.84) {6};
+\node[gray, font=\scriptsize] at (12,0.84) {7};
+\node[gray, font=\scriptsize] at (14,0.84) {8};
+\node[gray, font=\scriptsize] at (16,0.84) {9};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-14) {h};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-16) {i};
+\coordinate (b1) at (0,-2);
+\coordinate (c3) at (4,-4);
+\coordinate (e3) at (4,-8);
+\coordinate (g3) at (4,-12);
+\coordinate (e6) at (10,-8);
+\coordinate (g6) at (10,-12);
+\coordinate (i6) at (10,-16);
+\coordinate (g9) at (16,-12);
+\coordinate (b6) at (10,-2);
+\coordinate (b3) at (4,-2);
+\coordinate (e5) at (8,-8);
+\draw (b1) node[ocirc]{} node[above left]{VCC}; % line 3
+\draw (c3) to[potentiometer, n=part-VR1, l_=$V_{R1}$, a^=$10\,\mathrm{k}\Omega$] (e3); % line 4
+\node[ground] at (g3) {}; % line 5
+\node[npn] (part-Q1) at (e6) {}; % line 6
+\node[font=\scriptsize, anchor=north] at (part-Q1.south) {$\mathrm{2SC1815}$}; % line 6
+\draw (g6) to[R, l_=$R_{1}$, a^=$1\,\mathrm{k}\Omega$] (i6); % line 7
+\node[ground] at (i6) {}; % line 8
+\draw (g9) node[ocirc]{} node[above left]{OUT}; % line 9
+\draw (b1) -- (b6); % line 11
+\draw (b3) -- (c3); % line 12
+\draw (e3) -- (g3); % line 13
+\draw (part-VR1.wiper) -| (e5); % line 14
+\draw (e5) |- (part-Q1.base); % line 15
+\draw (b6) |- (part-Q1.collector); % line 16
+\draw (part-Q1.emitter) -| (g6); % line 17
+\draw (g6) -- (g9); % line 18
+\node[circ] at (g6) {};
+\node[circ] at (b3) {};
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(8.778,0.853);
+\end{circuitikz}
+\end{document}

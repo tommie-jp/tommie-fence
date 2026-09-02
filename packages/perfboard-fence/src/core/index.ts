@@ -8,6 +8,7 @@ import { renderSlots } from './render/slots.ts';
 import { renderJoints } from './render/joints.ts';
 import { renderParts } from './render/parts.ts';
 import { renderDeviceWires, renderWires } from './render/wires.ts';
+import { crossingPoints } from './render/crossings.ts';
 import { renderTitle } from './render/title.ts';
 import { renderNotes } from './render/notes.ts';
 import { renderSourceListing, sourceBandSize, sourceListing } from './render/sourceListing.ts';
@@ -228,6 +229,20 @@ export function renderPerfboard(input: string): RenderResult {
   const spillBottom = extent === null ? 0 : Math.max(0, extent.maxY + OVERHANG_MARGIN - layout.height);
   const spilled = spillLeft > 0 || spillTop > 0 || spillRight > 0 || spillBottom > 0;
 
+  // **途中で交差する線は跨いで引く。** 板の上の線も、機器へ引いた線も同じ図の
+  // 中で交わるので、まとめて数える (前半が板の上、後半が機器)。
+  const devicePin = new Map(placedDevices.placed.map((one) => [one.device.id, one.pins]));
+  const hops = crossingPoints([
+    ...wiring.wires.map((wire) => ({
+      from: layout.point(wire.from), to: layout.point(wire.to),
+    })),
+    ...wiring.deviceWires.map((wire) => ({
+      // 帯に置けなかった機器の線は引かれないので、交差もしない。
+      from: devicePin.get(wire.device)?.get(wire.pin) ?? layout.point(wire.hole),
+      to: layout.point(wire.hole),
+    })),
+  ]);
+
   // 配線は板の上、部品の下。線が部品の胴を隠すと、何が載っているか読めなくなる。
   const drawn = renderTitle(title, layout, THEME)
       + renderBoard(board, layout, PLATE, style.labels)
@@ -237,10 +252,12 @@ export function renderPerfboard(input: string): RenderResult {
       // 半田付けした穴。**配線と部品の前に敷く** — 線の先が半田の玉に入って
       // 見えるほうが、実物の見た目に近い。
       + renderJoints(soldered, layout, PLATE)
-      + renderWires(wiring.wires, layout, PLATE)
+      + renderWires(wiring.wires, layout, PLATE, hops.slice(0, wiring.wires.length))
       // 機器へつなぐ線も板の上まで引く。**どの穴へ行くのかが図に出ないと、
       // 帯に浮いた箱と板が結び付かない。**
-      + renderDeviceWires(wiring.deviceWires, placedDevices.placed, layout, THEME)
+      + renderDeviceWires(
+        wiring.deviceWires, placedDevices.placed, layout, THEME, hops.slice(wiring.wires.length),
+      )
       + renderDevices(placedDevices.placed, THEME)
       + renderParts(placement.parts, layout, PLATE)
       // 注釈は一番上。**指したものが下に隠れると印の意味が無くなる。**

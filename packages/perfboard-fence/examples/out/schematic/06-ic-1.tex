@@ -1,0 +1,80 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{grounds/scale=1.36}
+\foreach \x in {0,2,4,6,8,10,12,14,16,18} {\foreach \y in {0,-2,-4,-6,-8,-10,-12,-14,-16,-18} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize] at (8,0.84) {5};
+\node[gray, font=\scriptsize] at (10,0.84) {6};
+\node[gray, font=\scriptsize] at (12,0.84) {7};
+\node[gray, font=\scriptsize] at (14,0.84) {8};
+\node[gray, font=\scriptsize] at (16,0.84) {9};
+\node[gray, font=\scriptsize] at (18,0.84) {10};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-14) {h};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-16) {i};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-18) {j};
+\coordinate (b1) at (0,-2);
+\coordinate (e5) at (8,-8);
+\coordinate (g3) at (4,-12);
+\coordinate (f2) at (2,-10);
+\coordinate (h2) at (2,-14);
+\coordinate (j2) at (2,-18);
+\coordinate (h6) at (10,-14);
+\coordinate (j6) at (10,-18);
+\coordinate (b10) at (18,-2);
+\coordinate (d10) at (18,-6);
+\coordinate (f10) at (18,-10);
+\coordinate (h10) at (18,-14);
+\coordinate (g4) at (6,-12);
+\coordinate (g9) at (16,-12);
+\coordinate (f9) at (16,-10);
+\coordinate (b7) at (12,-2);
+\coordinate (d8) at (14,-6);
+\draw (b1) node[ocirc]{} node[above left]{VCC}; % line 3
+\node[dipchip, num pins=8, font=\scriptsize] (part-U1) at (e5) {$\mathrm{NE555}$}; % line 4
+\node[ground] at (g3) {}; % line 5
+\draw (f2) to[R, l_=$R_{3}$, a^=$330\,\Omega$] (h2); % line 6
+\draw (h2) to[leD, l_=$D_{1}$, a^=$\mathrm{red}$] (j2); % line 7
+\node[ground] at (j2) {}; % line 8
+\draw (h6) to[C, l_=$C_{2}$, a^=$10\,\mathrm{n}\mathrm{F}$] (j6); % line 9
+\node[ground] at (j6) {}; % line 10
+\draw (b10) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (d10); % line 11
+\draw (d10) to[R, l_=$R_{2}$, a^=$47\,\mathrm{k}\Omega$] (f10); % line 12
+\draw (f10) to[C, l_=$C_{1}$, a^=$10\,\mathrm{u}\mathrm{F}$] (h10); % line 13
+\node[ground] at (h10) {}; % line 14
+\draw (b1) -- (b10); % line 16
+\draw (part-U1.pin 4) -| (b1); % line 17
+\draw (part-U1.pin 1) -| (g3); % line 18
+\draw (part-U1.pin 3) -| (f2); % line 19
+\draw (part-U1.pin 2) -| (g4); % line 20
+\draw (g4) -- (g9); % line 21
+\draw (g9) -- (f9); % line 22
+\draw (part-U1.pin 8) -| (b7); % line 23
+\draw (part-U1.pin 7) -| (d8); % line 24
+\draw (d8) -- (d10); % line 25
+\draw (part-U1.pin 6) -| (f9); % line 26
+\draw (f9) -- (f10); % line 27
+\draw (part-U1.pin 5) -| (h6); % line 28
+\node[circ] at (b1) {};
+\node[circ] at (d10) {};
+\node[circ] at (f10) {};
+\node[circ] at (f9) {};
+\node[circ] at (b7) {};
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(15.453,0.853);
+\end{circuitikz}
+\end{document}

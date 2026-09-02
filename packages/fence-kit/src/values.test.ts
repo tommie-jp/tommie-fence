@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
-  capacitorCode, parseOhms, parsePicofarads, parseResistor, resistorBandColors, resistorBands,
+  capacitorCode, inductorCode, parseMicrohenries, parseOhms, parsePicofarads, parseResistor,
+  resistorBandColors, resistorBands,
 } from './values.ts';
 
 describe('parseOhms', () => {
@@ -139,5 +140,24 @@ describe('コンデンサの 3 桁コード', () => {
 
   test('answers null for a spelling it cannot read', () => {
     for (const text of ['', 'red', '10k?', 'abc']) expect(parsePicofarads(text)).toBeNull();
+  });
+});
+
+describe('インダクタの 3 桁コード', () => {
+  test('reads the spellings an inductor is written with', () => {
+    expect(parseMicrohenries('100u')).toBe(100);
+    expect(parseMicrohenries('10m')).toBe(10000);
+    expect(parseMicrohenries('4u7')).toBe(4.7);
+    expect(parseMicrohenries('470')).toBe(470);
+  });
+
+  test('writes the code in microhenries, the way the part is printed', () => {
+    expect(inductorCode(100)).toBe('101');
+    expect(inductorCode(10000)).toBe('103');
+    expect(inductorCode(22)).toBe('220');
+  });
+
+  test('answers null below ten, where the part prints the value itself', () => {
+    expect(inductorCode(4.7)).toBeNull();
   });
 });
