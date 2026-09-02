@@ -102,6 +102,32 @@ nearest board it knows, not a guess.
 The grammar is in [docs/01-syntax.md](docs/01-syntax.md) (Japanese), and the
 worked circuits are in [examples/](examples/README.md).
 
+## Grabbing the drawing
+
+Parts and holes can be dragged around while you look at the drawing. Because the
+fence **writes positions as hole addresses**, moving something comes down to
+swapping a spelling inside a line.
+
+- Pick **`perfboard Editor`** from the list at the top of a `.md` tab and the tab
+  itself becomes the drawing's editor. To open it beside the text instead:
+  `Perfboard Fence: 図を掴んで動かす (マップ)`
+- **You grab the drawing itself** — not a separate grid. A transparent hit layer
+  sits over the holes, and **the grid is uniform**, so an address and the picture
+  can never disagree
+- The tool at the top decides **what you grab**. A part moves on its own and the
+  connections change with it; a node (a hole) takes everything written at it, so
+  the connections are kept
+- **Nothing stops you before the move.** It compares the netlist before and after
+  and lists what broke and what joined. Every hole is independent here, so a
+  change always means a wire or a lead
+- **ERC notices land in the same band, and clicking one jumps to that line.**
+  A missing connection is silent in the drawing on this board, so having the fix
+  and the edit in one window matters more here
+- **The YAML is never rebuilt**: your comments and formatting survive
+
+Placing, deleting and renaming are still done in text.
+More in [docs/02-図を掴んで動かす.md](docs/02-図を掴んで動かす.md) (Japanese).
+
 ## CLI
 
 ```bash

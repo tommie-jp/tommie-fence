@@ -186,6 +186,30 @@ is drawn as an electrolytic with its stripe. **For a two-lead part with a
 polarity, the hole written first is the plus side (the anode)** unless you say
 otherwise.
 
+## Grabbing the drawing
+
+Parts and holes can be dragged around while you look at the drawing. Because the
+fence **writes positions as hole addresses**, moving something comes down to
+swapping a spelling inside a line.
+
+- Pick **`breadboard Editor`** from the list at the top of a `.md` tab and the
+  tab itself becomes the drawing's editor. To open it beside the text instead:
+  `Breadboard Fence: 図を掴んで動かす (マップ)`
+- **You grab the drawing itself** — not a separate grid. A transparent hit layer
+  sits over the holes, so what you see and what you grab never disagree
+- The tool at the top decides **what you grab**. A part moves on its own and the
+  connections change with it; a node (a hole) takes everything written at it, so
+  the connections are kept
+- **Nothing stops you before the move.** It compares the netlist before and after
+  and lists the connections the move broke and the ones it made. Holes in the
+  same column are already connected, so sliding within one strip says nothing
+- Unreadable lines and notices land in the same band, and **clicking one jumps to
+  that line**
+- **The YAML is never rebuilt**: your comments and formatting survive
+
+Placing, deleting and renaming are still done in text.
+More in [docs/03-図を掴んで動かす.md](docs/03-図を掴んで動かす.md) (Japanese).
+
 ## Examples
 
 **The numbers are the reading order**: the circuits get harder from top to
