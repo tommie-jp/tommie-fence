@@ -18,7 +18,7 @@ import { markdownEditor } from './vscodePort.ts';
 let panel: vscode.WebviewPanel | null = null;
 let session: Session | null = null;
 
-export function openMapPanel(context: vscode.ExtensionContext): void {
+export function openMapPanel(): void {
   const editor = markdownEditor();
   const fence = editor === null ? null : fenceAt(editor.document.getText(), editor.selection.active.line + 1);
   if (editor === null || fence === null) {
@@ -49,11 +49,13 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
     view: live.view(),
     undo: 'own',
   });
-  attachSession(view, live, context);
-  view.onDidDispose(() => {
+  attachSession(view, live);
+  // 閉じたら自分自身もほどく (context.subscriptions へ積むと済んだ分が溜まる)。
+  const closed = view.onDidDispose(() => {
     panel = null;
     session = null;
-  }, null, context.subscriptions);
+    closed.dispose();
+  });
 
   panel = view;
   session = live;

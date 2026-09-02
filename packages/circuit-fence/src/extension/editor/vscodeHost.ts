@@ -33,6 +33,22 @@ function highlight(uri: string, ranges: readonly LitRange[]): void {
 }
 
 /**
+ * その文書をテキストエディタで見せる。**もう見えていれば何もしない** —
+ * 帯の行を押すたびにタブが増えたり、開き直しで見ている所が飛んだりしない。
+ *
+ * 見えていないときに開くのは、**タブそのものがマップだと、その文書の
+ * テキストエディタが 1 つも開いていないことがある**ため。そのままでは
+ * 光らせる先が無く、帯の行は押しても何も起きない行になる。
+ * 押すのは「そこへ行く」という申し出なので、前に出してよい。
+ */
+async function showDocument(uri: string, line: number): Promise<void> {
+  if (vscode.window.visibleTextEditors.some((editor) => editor.document.uri.toString() === uri)) return;
+  const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(uri));
+  const at = new vscode.Range(line, 0, line, 0);
+  await vscode.window.showTextDocument(document, { viewColumn: vscode.ViewColumn.Beside, selection: at });
+}
+
+/**
  * `undo` は `own` (パネル: 自前の履歴) か `vscode` (カスタムエディタ: そのタブの
  * 文書へ VS Code の undo が届く)。後者は `executeCommand('undo')` を呼ぶだけ —
  * アクティブなエディタがカスタムエディタなら、VS Code がその資源の undo に回す。
@@ -45,6 +61,7 @@ export function createSessionHost(webview: vscode.Webview, undo: 'own' | 'vscode
     applyEdits: applyToDocument,
     applyChanges,
     highlight,
+    showDocument,
   };
   if (undo === 'own') return base;
   return {
@@ -57,11 +74,13 @@ export function createSessionHost(webview: vscode.Webview, undo: 'own' | 'vscode
  * セッションを webview に結ぶ。webview からの知らせ、文書の書き換え、
  * カーソルの移動を流し込み、閉じたら全部ほどく。
  *
- * 手で書き換えたときもマップを追いつかせる。デバウンスは要らない
- * (組むのはパース済みモデルからで、TeX は通らない)。覚えている文書は
- * 隠れていても追う (マップの書き換え自体がこの経路で反映される)。
+ * 手で書き換えたときもマップを追いつかせる。**デバウンスは置いていない** —
+ * 組み直すのはパース済みモデルからで、帯のために compile も通るが (TeX の
+ * 生成まで。描画はしない)、いちばん大きい例 (152 行) で 1 回 5 ms 前後。
+ * 打鍵ごとでも足りている。覚えている文書は隠れていても追う
+ * (マップの書き換え自体がこの経路で反映される)。
  */
-export function attachSession(panel: vscode.WebviewPanel, session: Session, context: vscode.ExtensionContext): void {
+export function attachSession(panel: vscode.WebviewPanel, session: Session): void {
   const listeners = [
     panel.webview.onDidReceiveMessage((message: Incoming) => {
       session.handle(message).catch((error: unknown) => {
@@ -74,11 +93,18 @@ export function attachSession(panel: vscode.WebviewPanel, session: Session, cont
       if (session.isBoundTo(event.document.uri.toString())) session.refresh();
     }),
     vscode.window.onDidChangeTextEditorSelection((event) => {
+      // **Markdown のカーソルだけを追う。** 関わりのないファイルでカーソルを
+      // 動かしただけで組み直すと、掴んでいたものが黙って外れる
+      // (マップを入れ替えると webview は掴みを捨てる)。
+      if (event.textEditor.document.languageId !== 'markdown') return;
       if (session.follows(event.textEditor.document.uri.toString())) session.refresh();
     }),
   ];
-  panel.onDidDispose(() => {
+  // **閉じたら自分自身もほどく。** context.subscriptions へ積むと、開いて
+  // 閉じるたびに済んだ listener が溜まる (窓を作り直すまで消えない)。
+  const closed = panel.onDidDispose(() => {
     for (const one of listeners) one.dispose();
     session.dispose();
-  }, null, context.subscriptions);
+    closed.dispose();
+  });
 }

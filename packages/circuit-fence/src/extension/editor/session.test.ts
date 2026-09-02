@@ -41,7 +41,9 @@ const RC = [
 const BAD = ['# ノート', '', '```circuit', 'parts:', '  R1: resistr a1 a3', '```', ''].join('\n');
 
 const SECOND = ['', '```circuit', 'parts:', '  L1: inductor b1 b3 1m', '```', ''].join('\n');
+const THIRD = ['', '```circuit', 'parts:', '  D1: diode c1 c3', '```', ''].join('\n');
 const TWO = RC + SECOND;
+const THREE = TWO + THIRD;
 
 /** vscode の `applyEdit` の代わり。**当てる前に照合する**ところまで同じ。 */
 const patch = (document: Doc, changes: readonly Change[]): boolean => {
@@ -282,6 +284,34 @@ describe('フェンスを選ぶ', () => {
     expect(last(host, 'map')?.picker).toContain('value="10" selected');
   });
 
+  test('keeps the chosen fence while the cursor stays in the fence it was in', async () => {
+    // 選んだ直後の何気ないカーソル移動 (打鍵でも動く) で選択が捨てられると、
+    // カーソルの居ないフェンスは一覧から選べない。
+    const doc = docOf(A, THREE);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+    await session.handle({ kind: 'fence', line: 10 });
+
+    host.editor = at(doc, 6);
+    session.refresh();
+
+    expect(last(host, 'map')?.html).toContain('data-part="L1"');
+  });
+
+  test('follows again once the cursor enters a different fence', async () => {
+    const doc = docOf(A, THREE);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+    await session.handle({ kind: 'fence', line: 10 });
+
+    host.editor = at(doc, 16);
+    session.refresh();
+
+    expect(last(host, 'map')?.html).toContain('data-part="D1"');
+  });
+
   test('says so when the line has no fence', async () => {
     const doc = docOf(A, TWO);
     const host = hostOf([doc], at(doc, 5));
@@ -484,5 +514,60 @@ describe('読めなかったところを帯に出す', () => {
     await session.handle({ kind: 'goto' });
 
     expect(host.lit).toHaveLength(before);
+  });
+});
+
+describe('帯の行を押したら、その行を見せる', () => {
+  test('asks for the text editor first, since the tab itself can be the map', () => {
+    // circuit Editor ではその文書のテキストエディタが 1 つも開いていないことがある。
+    // 光らせるだけでは、見える所に何も起きない。
+    const doc = docOf(A, BAD);
+    const shown: { uri: string; line: number }[] = [];
+    const host = hostOf([doc], null, {
+      showDocument: async (uri: string, line: number) => { shown.push({ uri, line }); },
+    });
+    const session = createSession(host, { pinned: doc });
+    session.view();
+
+    return session.handle({ kind: 'goto', line: 5 }).then(() => {
+      expect(shown).toEqual([{ uri: A, line: 4 }]);
+      expect(host.lit.at(-1)).toEqual({ uri: A, ranges: [{ line: 4, start: 0, end: '  R1: resistr a1 a3'.length }] });
+    });
+  });
+
+  test('works without a host that can show documents', async () => {
+    const doc = docOf(A, BAD);
+    const host = hostOf([doc], at(doc, 4));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'goto', line: 5 });
+
+    expect(host.lit.at(-1)?.ranges).toHaveLength(1);
+  });
+});
+
+describe('読めない知らせ', () => {
+  test('says something when the map sends a move without a target', async () => {
+    // webview は「R1 を b1 へ…」を出したまま待つ。黙って戻ると点が消えない。
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'move', part: 'R1' });
+
+    expect(last(host, 'status')?.text).toContain('読めません');
+  });
+
+  test('says something when the map sends a node move without a source', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'moveNode', to: 'b1' });
+
+    expect(last(host, 'status')?.text).toContain('読めません');
   });
 });

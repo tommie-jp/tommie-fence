@@ -236,6 +236,13 @@ describe('読めなかったところの帯', () => {
     expect(html).toContain('.cf-issue.cf-notice');
   });
 
+  test('keeps the error mark on when the cursor points at that symbol', () => {
+    // 同じ強さの規則は後に書いたほうが勝つ。読めなかったのは文書の事実なので、
+    // 触れている印・持っている印 (どちらも一時のもの) より後に置く。
+    expect(html.indexOf('.cf-bad .cf-glyph')).toBeGreaterThan(html.indexOf('.cf-aim .cf-glyph'));
+    expect(html.indexOf('.cf-bad .cf-glyph')).toBeGreaterThan(html.indexOf('.cf-held .cf-glyph'));
+  });
+
   test('marks the same thing on the map, so the row and the symbol agree', () => {
     expect(html).toContain('.cf-wire.cf-bad');
     expect(html).toContain('.cf-bad .cf-glyph');

@@ -1,5 +1,6 @@
 import type { FenceError } from '../types.ts';
 import { markRange, relatedLine } from '../errors.ts';
+import type { Attributes } from './html.ts';
 import { element, escapeHtml } from './html.ts';
 
 /**
@@ -23,12 +24,13 @@ export const errorLine = (error: FenceError): string => `${PREFIX}${messageLine(
 
 /**
  * 読めなかった行の中身。**プレビューではフェンスが図に差し替わる**ので、
- * 行番号だけでは読み手に照らす先がない。
+ * 行番号だけでは読み手に照らす先がない。マップの帯 (`edit/issues.ts`) も
+ * 同じ事情なので、**ここを通す** — 印の位置を 2 か所で数えると食い違う。
  *
  * 中身は他人が書いた字なので、`<mark>` の前後も中も 1 つずつエスケープを通す
  * (組み立ててから通すと `<mark>` 自身が消える)。
  */
-function snippetHtml(error: FenceError): string {
+export function snippetHtml(error: FenceError, attrs: Attributes = {}): string {
   const { text } = error;
   if (text === undefined) return '';
 
@@ -40,13 +42,13 @@ function snippetHtml(error: FenceError): string {
         element('mark', {}, escapeHtml(text.slice(range[0], range[1]))) +
         escapeHtml(text.slice(range[1]));
 
-  return element('code', { class: 'circuit-error-line' }, body);
+  return element('code', attrs, body);
 }
 
 const listItems = (errors: readonly FenceError[]): string => {
   const shown = errors
     .slice(0, MAX_SHOWN)
-    .map((error) => element('li', {}, escapeHtml(errorLine(error)) + snippetHtml(error)));
+    .map((error) => element('li', {}, escapeHtml(errorLine(error)) + snippetHtml(error, { class: 'circuit-error-line' })));
   const rest = errors.length > MAX_SHOWN ? [element('li', {}, `ほかに ${errors.length - MAX_SHOWN} 件`)] : [];
   return [...shown, ...rest].join('');
 };

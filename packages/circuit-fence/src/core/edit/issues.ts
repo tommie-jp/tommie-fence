@@ -1,7 +1,7 @@
 import { element, escapeMarkup } from 'fence-kit';
-import { markRange, shiftError } from '../errors.ts';
+import { shiftError } from '../errors.ts';
 import { compileCircuit } from '../index.ts';
-import { messageLine } from '../render/errorCard.ts';
+import { messageLine, snippetHtml } from '../render/errorCard.ts';
 import type { FenceError } from '../types.ts';
 
 /**
@@ -15,9 +15,11 @@ import type { FenceError } from '../types.ts';
  *
  * 帯の markup をプレビューの `renderErrorBanner` と分けてあるのは、
  * **行をクリックしてエディタへ飛べる**ようにするため (`data-line`) と、
- * webview 側の色 (`--vscode-*`) を使うため。文面の組み立て (`messageLine`) と
- * 印の位置 (`markRange`) は**あちらと同じものを通す** — 2 か所で数えると、
- * 片方だけ直したときに黙って食い違う。
+ * webview 側の色 (`--vscode-*`) を使うため。**中身は 1 つずつ向こうを通す** —
+ * 文面 (`messageLine`)、行のずらし (`shiftError`)、読めなかった行の中身と
+ * 印の位置 (`snippetHtml`)。2 か所で数えると、片方だけ直したときに黙って
+ * 食い違う (相手の行がずれないまま出ていたのが実際に踏まれた)。
+ * こちらに残るのは**並べ方だけ** — 行の目印、種類ごとの色、並べる件数。
  */
 
 /** 読めなかったところ 1 件と、それがエラーかお知らせか。 */
@@ -30,6 +32,10 @@ export type Issue = {
 /**
  * 並べる件数。**帯が伸びてマップを押し出さない**ように頭を打つ
  * (1 件が行の中身も出すので 2〜3 行を使う)。溢れた数は最後に出す。
+ *
+ * 図の下の帯 (`errorCard.ts`) より多いのは**わざと** — あちらは図のすぐ下に
+ * 割り込むので短いほうがよく、こちらは直すための窓なので、一度に見えるほど
+ * 直しやすい。揃える理由が無い。
  */
 const MAX_SHOWN = 12;
 
@@ -57,24 +63,6 @@ export const shiftIssues = (issues: readonly Issue[], offset: number): readonly 
   issues.map((issue) => ({ ...issue, error: shiftError(issue.error, offset) }));
 
 /**
- * 読めなかった行の中身。**行番号だけでは照らす先がない** — マップを見ている
- * 間はフェンスの字が視界に無い。他人の書いた字なので、`<mark>` の前後も中も
- * 1 つずつエスケープを通す (組み立ててから通すと `<mark>` 自身が消える)。
- */
-function snippet(error: FenceError): string {
-  const { text } = error;
-  if (text === undefined) return '';
-
-  const range = markRange(error);
-  const body = range === null
-    ? escapeMarkup(text)
-    : escapeMarkup(text.slice(0, range[0]))
-      + element('mark', {}, escapeMarkup(text.slice(range[0], range[1])))
-      + escapeMarkup(text.slice(range[1]));
-  return element('code', {}, body);
-}
-
-/**
  * 帯 1 件。**行が分かっているものだけがクリックできる** (`data-line`)。
  * 分からないものに手掛かりを付けると、押しても何も起きない行ができる。
  */
@@ -85,7 +73,7 @@ const row = (issue: Issue): string =>
       class: `cf-issue cf-${issue.kind}`,
       ...(issue.error.line === null ? {} : { 'data-line': issue.error.line }),
     },
-    escapeMarkup(messageLine(issue.error)) + snippet(issue.error),
+    escapeMarkup(messageLine(issue.error)) + snippetHtml(issue.error),
   );
 
 /** マップの下に貼る帯。言うことが無ければ何も出さない。 */

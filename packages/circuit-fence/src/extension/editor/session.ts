@@ -14,6 +14,7 @@ import { createHistory, invert } from './history.ts';
 import type { Change } from './history.ts';
 import { describeDiff } from './movePart.ts';
 import { renderFencePicker } from './panelHtml.ts';
+import type { MapViewHtml } from './panelHtml.ts';
 
 /**
  * マップの**セッション** — webview 1 つと文書 1 つの間の段取り。
@@ -43,7 +44,7 @@ export type LitRange = { readonly line: number; readonly start: number; readonly
 
 /** webview へ送るもの。 */
 export type Outgoing =
-  | { readonly kind: 'map'; readonly html: string; readonly picker: string; readonly issues: string }
+  | ({ readonly kind: 'map' } & MapView)
   | { readonly kind: 'history'; readonly canUndo: boolean; readonly canRedo: boolean }
   | { readonly kind: 'status'; readonly text: string }
   | { readonly kind: 'aim'; readonly what?: 'part' | 'node' | 'wire'; readonly id?: string };
@@ -72,18 +73,21 @@ export type SessionHost<D extends DocLike> = {
   readonly applyChanges: (document: D, changes: readonly Change[]) => Promise<boolean>;
   /** その文書を見せているエディタで光らせる。空なら消す。 */
   readonly highlight: (uri: string, ranges: readonly LitRange[]) => void;
+  /**
+   * その文書をテキストエディタで見せる (もう見えていれば何もしない)。
+   * **タブそのものがマップのときは、その文書のテキストエディタが 1 つも
+   * 開いていないことがある** — 光らせるだけでは見える所に何も起きない。
+   */
+  readonly showDocument?: (uri: string, line: number) => Promise<void>;
   /** VS Code の undo に頼めるとき (カスタムエディタ)。無ければ自前の履歴を持つ。 */
   readonly nativeUndo?: (kind: 'undo' | 'redo') => Promise<void>;
 };
 
-export type MapView = {
-  /** 升目 (エスケープ済み)。フェンスが無ければその旨の 1 文。 */
-  readonly html: string;
-  /** フェンスの一覧 (2 つ以上のときだけ。無ければ空)。 */
-  readonly picker: string;
-  /** 読めなかったところとお知らせの帯。言うことが無ければ空。 */
-  readonly issues: string;
-};
+/**
+ * マップの頭と中身。**殻が受け取る形そのもの** (`panelHtml.ts` の `MapViewHtml`)。
+ * 3 か所で同じ形を書くと、片方にだけ足した欄が黙って落ちる。
+ */
+export type MapView = MapViewHtml;
 
 export type Session = {
   /** いまのマップ (最初の HTML に入れる分)。 */
@@ -133,6 +137,14 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
   let bound: { readonly uri: string; readonly line: number } | null = null;
   /** いま光らせている文書。別の文書へ移るときに消す先。 */
   let lit: string | null = null;
+  /**
+   * 最後に見たカーソルのフェンス。**別のフェンスへ入ったときだけ乗り換える**
+   * ため。同じフェンスの中で動いただけで乗り換えると、一覧で選んだフェンスが
+   * 次の打鍵で捨てられ、カーソルの居ないフェンスを選べなくなる。
+   * カーソルが見えないとき (webview にフォーカスがある) は**書き換えない** —
+   * 空に戻すと、エディタへ戻った瞬間に「入った」と数えてしまう。
+   */
+  let seen: { readonly uri: string; readonly line: number } | null = null;
 
   const uriOf = (document: D): string => document.uri.toString();
   const say = (message: string): void => host.post({ kind: 'status', text: message });
@@ -179,8 +191,13 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
     if (followCursor) {
       const under = fenceUnderCursor();
       if (under !== null) {
-        rebind(under.document, under.line);
-        return under;
+        const at = { uri: uriOf(under.document), line: under.line };
+        const entered = seen === null || seen.uri !== at.uri || seen.line !== at.line;
+        seen = at;
+        if (entered) {
+          rebind(under.document, under.line);
+          return under;
+        }
       }
     }
 
@@ -227,9 +244,14 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
   }
 
   /**
-   * 帯の 1 行を押されたら、その行をエディタで光らせて見せる。
+   * 帯の 1 行を押されたら、その行をエディタで見せて光らせる。
    * **書き換えはしない** — 直すのは書き手の仕事で、こちらは場所を指すだけ。
    * 光を消さないので `refresh` は呼ばない (呼ぶと自分で消してしまう)。
+   *
+   * **先にテキストエディタを見せてもらう。** タブそのものがマップのときは、
+   * その文書のテキストエディタが 1 つも開いていないことがあり、光らせるだけでは
+   * 見える所に何も起きない (押しても動かない行になる)。押すのは「そこへ行く」と
+   * いう申し出なので、開いて前に出してよい (掴んでいる最中の光とは別の話)。
    *
    * **行は文書の中に収める。** 閉じていないフェンスの YAML エラーは本文の
    * 1 行先に出るので、打ちかけのフェンスが文末にあると帯は最後の行より先を
@@ -237,13 +259,15 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
    * 行が無いからと黙って何もしないと**押しても動かない行**ができるため
    * (そのエラーは文末の話なので、最後の行が指す先として正しい)。
    */
-  function goTo(message: Incoming): void {
+  async function goTo(message: Incoming): Promise<void> {
     const line = typeof message.line === 'number' ? message.line : null;
-    const document = bound === null ? pinned : documentOf(bound.uri);
-    if (line === null || document === null) return;
+    // 帯は組んだマップから来るので、そのときに覚えたフェンスがある。
+    const document = bound === null ? null : documentOf(bound.uri);
+    if (line === null || bound === null || document === null) return;
 
     // 帯の行は Markdown の 1 始まり、光らせる先は vscode の 0 始まり。
     const at = Math.min(Math.max(line - 1, 0), document.lineCount - 1);
+    await host.showDocument?.(bound.uri, at);
     light([{ line: at, start: 0, end: document.lineAt(at).text.length }]);
   }
 
@@ -336,12 +360,19 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
 
   /** マップから来た「何を・どこへ」。部品は 1 つだけ動き、節点は交点ごと動く。 */
   async function move(message: Incoming): Promise<void> {
+    // **黙って戻らない。** webview は「R1 を b1 へ…」を出したまま待っている。
     const written = text(message.to);
-    if (written === null) return;
+    if (written === null) {
+      say('マップからの知らせを読めませんでした (置き先がありません)');
+      return;
+    }
 
     if (message.kind === 'move') {
       const part = text(message.part);
-      if (part === null) return;
+      if (part === null) {
+        say('マップからの知らせを読めませんでした (部品がありません)');
+        return;
+      }
       const to = parseAddress(written);
       if (to === null) {
         say(`番地として読めません: ${written}`);
@@ -356,7 +387,10 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
     }
 
     const from = text(message.from);
-    if (from === null) return;
+    if (from === null) {
+      say('マップからの知らせを読めませんでした (どの節点かがありません)');
+      return;
+    }
     const at = parseAddress(from);
     const to = parseAddress(written);
     if (at === null || to === null) {
@@ -471,7 +505,7 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
           pickFence(message);
           return;
         case 'goto':
-          goTo(message);
+          await goTo(message);
           return;
         default:
           return;

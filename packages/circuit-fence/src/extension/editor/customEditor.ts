@@ -18,14 +18,19 @@ import { attachSession, createSessionHost } from './vscodeHost.ts';
 
 export const MAP_EDITOR = 'circuit-fence.map';
 
-/** 開いているカスタムエディタ (文書の URI → パネル)。文書 1 つに 1 つ。 */
-const open = new Map<string, vscode.WebviewPanel>();
+/**
+ * 開いているカスタムエディタ (文書の URI → パネル)。**1 つの文書に何枚も
+ * 開ける** (エディタを分割すれば同じ文書の 2 枚目が立つ) ので、1 枚だけを
+ * 覚えると、2 枚目を閉じたときに 1 枚目まで見失う。
+ */
+const open = new Map<string, Set<vscode.WebviewPanel>>();
 
 /** その文書のカスタムエディタが開いていれば前に出す。 */
 export function revealMapEditor(uri: string): boolean {
-  const panel = open.get(uri);
-  if (panel === undefined) return false;
-  panel.reveal();
+  const panels = open.get(uri);
+  const first = panels === undefined ? undefined : [...panels][0];
+  if (first === undefined) return false;
+  first.reveal();
   return true;
 }
 
@@ -42,11 +47,16 @@ export function registerMapEditor(context: vscode.ExtensionContext): void {
         undo: 'vscode',
       });
 
-      open.set(uri, panel);
-      panel.onDidDispose(() => {
-        if (open.get(uri) === panel) open.delete(uri);
-      }, null, context.subscriptions);
-      attachSession(panel, session, context);
+      const panels = open.get(uri) ?? new Set<vscode.WebviewPanel>();
+      panels.add(panel);
+      open.set(uri, panels);
+      // 閉じたら自分自身もほどく (context.subscriptions へ積むと済んだ分が溜まる)。
+      const closed = panel.onDidDispose(() => {
+        panels.delete(panel);
+        if (panels.size === 0) open.delete(uri);
+        closed.dispose();
+      });
+      attachSession(panel, session);
     },
   };
 

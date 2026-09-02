@@ -190,7 +190,8 @@ comments and formatting survive: only the address spelling is replaced. The
 drawing catches up a few seconds after the edit.
 
 **What could not be read is listed under the map.** Clicking a row lights up
-that line in the editor, and the parts and wires written on an unreadable line
+that line in the editor (opening one beside the map if none is showing the
+document), and the parts and wires written on an unreadable line
 turn red on the map as well. The band under the drawing shows only in the
 preview, which is usually hidden while you drag.
 

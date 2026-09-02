@@ -42,13 +42,6 @@ const STYLE = `
   .cf-dot-mark { fill: var(--cf-node); }
   .cf-dot-name { fill: var(--cf-node); font-size: 9px; }
 
-  /* 読めなかった行に書かれたもの。**帯と絵で同じものを指す** — 行番号だけでは
-     どの記号のことか、字と突き合わせないと分からない。お知らせには印を付けない
-     (読めてはいるので、同じ赤で囲むと間違いに見える)。 */
-  .cf-bad .cf-glyph, .cf-bad .cf-glyph-line, .cf-bad .cf-lead,
-  .cf-wire.cf-bad { stroke: var(--cf-bad); }
-  .cf-bad .cf-name { fill: var(--cf-bad); }
-
   /* エディタのカーソルが指しているもの。掴んでいる印とは別の色にして、
      「いま触れているもの」と「持っているもの」を取り違えないようにする。 */
   .cf-aim .cf-glyph, .cf-aim .cf-glyph-line, .cf-aim .cf-lead,
@@ -62,6 +55,15 @@ const STYLE = `
   .cf-held .cf-glyph, .cf-held .cf-glyph-line, .cf-held .cf-lead { stroke: var(--vscode-focusBorder); }
   .cf-held .cf-name { fill: var(--vscode-focusBorder); }
   .cf-held .cf-dot-mark { stroke: var(--vscode-focusBorder); stroke-width: 3; }
+
+  /* 読めなかった行に書かれたもの。**帯と絵で同じものを指す** — 行番号だけでは
+     どの記号のことか、字と突き合わせないと分からない。お知らせには印を付けない
+     (読めてはいるので、同じ赤で囲むと間違いに見える)。
+     **触れている印・持っている印より後に置く** (同じ強さなら後が勝つ) —
+     直そうとしてカーソルを置いた瞬間に赤が消えると、どれが悪いのか見失う。 */
+  .cf-bad .cf-glyph, .cf-bad .cf-glyph-line, .cf-bad .cf-lead,
+  .cf-wire.cf-bad { stroke: var(--cf-bad); }
+  .cf-bad .cf-name { fill: var(--cf-bad); }
 
   /* 置き先は**ドラッグの間だけ**効かせる。いつも効かせると部品を掴めず、
      いつも切ると埋まった升へ置けない (同じ番地に置くのは正当な操作)。 */
