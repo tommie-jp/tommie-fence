@@ -137,7 +137,7 @@ style:
   back: on
 title: 図05 SMA を板の縁に載せる (6 dB アッテネータ)
 points:
-  GND: h1
+  GND: h2
 parts:
   J1: sma/female-edge e1 d0 f0
   J2: sma/female-edge e16 f17
@@ -150,7 +150,6 @@ wires:
   - e8 -- e11
   - e14 -- e16
   - h8 -- h2 black
-  - h2 -- GND black
   - f0 -- f2 black
   - f2 -- h2 black
   - f17 -- f15 black
