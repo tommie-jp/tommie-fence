@@ -3,6 +3,7 @@ import { aimAt, fenceAt, gridMap } from '../../core/edit/map.ts';
 import { renderMapHtml } from '../../core/edit/mapSvg.ts';
 import { formatAddress, parseAddress } from '../../core/model/address.ts';
 import { movePart, partSpans } from '../../core/edit/move.ts';
+import { strippedIndent } from '../../core/edit/shared.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import { describeDiff } from './movePart.ts';
 import { applyChanges, applyToDocument } from './vscodePort.ts';
@@ -197,9 +198,11 @@ function highlight(spans: readonly { line: number; column: number; length: numbe
   const fence = spans.length === 0 ? null : currentFence();
 
   const ranges = fence === null ? [] : spans.map((span) => {
-    // フェンスの中の行 → Markdown の行 (書き換えと同じ手口)。
+    // フェンスの中の行 → Markdown の行 (書き換えと同じ手口)。剥がされた
+    // 字下げは行ごとに違うので、行ごとに数えて足し戻す。
     const line = fence.line + span.line - 1;
-    const indent = (/^ {0,3}/.exec(fence.document.lineAt(fence.line - 1).text)?.[0] ?? '').length;
+    const opening = fence.document.lineAt(fence.line - 1).text;
+    const indent = strippedIndent(opening, fence.document.lineAt(line).text);
     return new vscode.Range(line, span.column + indent, line, span.column + indent + span.length);
   });
 
@@ -243,9 +246,10 @@ function sendAim(): void {
     return;
   }
 
-  // Markdown の行 → フェンスの中の行。字下げのぶん桁を戻す。
-  const indent = (/^ {0,3}/.exec(editor.document.lineAt(fence.line - 1).text)?.[0] ?? '').length;
-  const line = editor.selection.active.line + 1 - fence.line;
+  // Markdown の行 → フェンスの中の行。剥がされた字下げのぶん桁を戻す。
+  const at = editor.selection.active.line;
+  const indent = strippedIndent(editor.document.lineAt(fence.line - 1).text, editor.document.lineAt(at).text);
+  const line = at + 1 - fence.line;
   const aim = aimAt(fence.source, line, Math.max(0, editor.selection.active.character - indent));
   if (aim === null) {
     void panel.webview.postMessage({ kind: 'aim' });

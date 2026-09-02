@@ -62,6 +62,14 @@ describe('renderMapHtml が描くもの', () => {
     expect(new Set(bodies).size).toBe(2);
   });
 
+  test('offsets a pair written end-for-end, which is the same two crossings', () => {
+    // `a1 a3` と `a3 a1` は同じ 2 交点。並びで鍵を作ると別物になり、重なる。
+    const svg = draw('parts:\n  R1: resistor a1 c1\n  C1: capacitor c1 a1\n');
+    const bodies = svg.match(/translate\([-\d.]+,[-\d.]+\) rotate\(/g) ?? [];
+
+    expect(new Set(bodies).size).toBe(2);
+  });
+
   test('offsets two standing parts on one crossing, so neither hides the other', () => {
     const svg = draw('parts:\n  IN: port a1\n  G1: ground a1\n');
 

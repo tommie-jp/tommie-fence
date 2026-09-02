@@ -169,8 +169,10 @@ function bareTokens(doc: Circuit, source: string, wanted: Address): readonly Tok
  * 決まっているので、入れ子の深さを当てにした探し方をしない。
  */
 export function pointEntries(source: string): readonly (Span & { readonly address: Address })[] {
+  // **読むのも切り出すのも正規化した字から。** 別々にすると CRLF で桁がずれる。
+  const normalized = normalizeNewlines(source);
   const lineCounter = new LineCounter();
-  const document = parseDocument(normalizeNewlines(source), { lineCounter, uniqueKeys: false });
+  const document = parseDocument(normalized, { lineCounter, uniqueKeys: false });
   if (document.errors.length > 0 || !isMap(document.contents)) return [];
 
   const found: (Span & { address: Address })[] = [];
@@ -184,7 +186,7 @@ export function pointEntries(source: string): readonly (Span & { readonly addres
       const address = parseAddress(value.value.trim());
       if (address === null) continue;
 
-      const text = source.slice(value.range[0], value.range[1]);
+      const text = normalized.slice(value.range[0], value.range[1]);
       const match = /\S+/.exec(text);
       if (!match) continue;
       const { line, col } = lineCounter.linePos(value.range[0] + match.index);

@@ -157,9 +157,10 @@ function nudgesOf(chips: readonly Chip[]): Map<Chip, number> {
   const seen = new Map<string, number>();
   const nudges = new Map<Chip, number>();
   for (const chip of chips) {
-    const key = chip.to === null
-      ? `${chip.row},${chip.col}`
-      : `${chip.row},${chip.col}-${chip.to.row},${chip.to.col}`;
+    // **端点の並びで鍵を作らない。** `a1 c1` と `c1 a1` は同じ 2 交点なので、
+    // 並びのままだと別物になって重なる (まさに並列の RC で起きる)。
+    const here = `${chip.row},${chip.col}`;
+    const key = chip.to === null ? here : [here, `${chip.to.row},${chip.to.col}`].sort().join('-');
     const index = seen.get(key) ?? 0;
     seen.set(key, index + 1);
     nudges.set(chip, index * 7);

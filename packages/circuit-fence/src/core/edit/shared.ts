@@ -83,6 +83,19 @@ export function diffOf(before: string, after: string): NetDiff {
   };
 }
 
+/**
+ * フェンスの取り出しがその行から剥がした字下げ。**行ごとに数える。**
+ *
+ * 取り出しは開き記号の字下げぶん「まで」を剥がすので、開き記号より浅い行からは
+ * 剥がした量が少ない。開き記号の量を一律に足し戻すと、その行だけ桁が右へずれて
+ * **別の場所を書き換える**。
+ */
+export const strippedIndent = (opening: string, lineText: string): number =>
+  Math.min(
+    (/^ {0,3}/.exec(opening)?.[0] ?? '').length,
+    (/^ */.exec(lineText)?.[0] ?? '').length,
+  );
+
 /** 部品が持つ番地。**先頭がアンカー。** 3 か所で別々に持つと部品の種類を足したとき片方が黙って古くなる。 */
 export function addressesOf(part: PartSpec): readonly Address[] {
   if (part.kind === 'two-terminal') return [part.from, part.to];

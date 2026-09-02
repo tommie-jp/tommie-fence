@@ -320,3 +320,13 @@ describe('movePoint が断るとき', () => {
     expect(movePoint('parts: [', at('a1'), at('a2')).ok).toBe(false);
   });
 });
+
+describe('movePoint (CRLF)', () => {
+  test('moves a named node written with Windows newlines', () => {
+    // 正規化した字でパースして元の字から切り出すと、桁が改行のぶんずれる。
+    const written = 'points:\r\n  fb: c3\r\nparts:\r\n  R1: resistor fb d3\r\n';
+    const result = movePoint(written, at('c3'), at('c4'));
+
+    expect(result.ok && applyEdits(written, result.value.edits)).toContain('  fb: c4');
+  });
+});

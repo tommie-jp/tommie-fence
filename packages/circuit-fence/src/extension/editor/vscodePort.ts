@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import type { Edit } from '../../core/edit/move.ts';
+import { strippedIndent } from '../../core/edit/shared.ts';
 import { changesOf } from './history.ts';
 import type { Change } from './history.ts';
 import type { DocumentView, EditorPort } from './movePart.ts';
@@ -53,7 +54,6 @@ export async function applyToDocument(
   // 字下げぶん (最大 3 つ) を本文から剥がすので、桁を足し戻さないと
   // 書き換えが左へ寄る (箇条書きの中のフェンスで起きる)。
   const opening = document.lineAt(fenceLine - 1).text;
-  const indent = (/^ {0,3}/.exec(opening)?.[0] ?? '').length;
 
   // **綴りの長さが変わると、同じ行の後ろの桁がずれる** (`a9 b9` → `a10 b10`)。
   // 当てたあとの桁を控えるのは `changesOf` の仕事 (そちらはテストに掛かる)。
@@ -62,7 +62,7 @@ export async function applyToDocument(
     // (`shiftErrors` と同じ手口)。どちらも 1 始まりなので +fenceLine、
     // vscode は 0 始まりなので -1。
     const line = fenceLine + one.line - 1;
-    const column = one.column + indent;
+    const column = one.column + strippedIndent(opening, document.lineAt(line).text);
     const range = new vscode.Range(line, column, line, column + one.length);
     return { line, column, before: document.getText(range), after: one.text };
   }));

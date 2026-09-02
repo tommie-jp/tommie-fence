@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { nodeSpans } from './point.ts';
 import { partSpans } from './move.ts';
 import { aimAt } from './map.ts';
+import { strippedIndent } from './shared.ts';
 import { parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 
@@ -150,5 +151,23 @@ describe('aimAt が見ない行', () => {
 
   test('still aims at the part on its own line', () => {
     expect(aimAt(NOTED, 3, 3)).toEqual({ kind: 'part', id: 'C1' });
+  });
+});
+
+describe('strippedIndent', () => {
+  test('gives back what the fence extractor took off that line', () => {
+    // 開き記号が 2 字下がっていても、剥がすのは**その行にある空白まで**。
+    expect(strippedIndent('  ```circuit', '  R1: resistor a1 a3')).toBe(2);
+  });
+
+  test('takes less from a line shallower than the opening marker', () => {
+    // 一律に開き記号の量を足し戻すと、この行だけ桁が右へずれる。
+    expect(strippedIndent('  ```circuit', 'parts:')).toBe(0);
+    expect(strippedIndent('   ```circuit', ' parts:')).toBe(1);
+  });
+
+  test('never takes more than the three columns a fence may be indented', () => {
+    expect(strippedIndent('```circuit', '    deep')).toBe(0);
+    expect(strippedIndent('  ```circuit', '        deep')).toBe(2);
   });
 });
