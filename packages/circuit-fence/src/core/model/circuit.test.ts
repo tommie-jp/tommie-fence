@@ -367,6 +367,32 @@ describe('足へまっすぐ引いた配線', () => {
     expect([...errors, ...notices]).toEqual([]);
   });
 
+  test('turns the centre line with the symbol, so a rotated pin reads straight', () => {
+    // r90 で base は左から**上**へ回るので、同じ列の番地からはまっすぐ入る。
+    // 向きを見ずに足の名前だけで決めると、正しく引いた線に口を出す。
+    const { errors, notices } = build(
+      'parts:', '  Q1: npn c5 r90', 'wires:', '  - Q1.B -- a5',
+    );
+
+    expect([...errors, ...notices]).toEqual([]);
+  });
+
+  test('says a rotated pin slants when the wire keeps the old axis', () => {
+    // 回す前ならまっすぐだった引き方。回したあとは斜めになる。
+    const messages = warn('parts:', '  Q1: npn c5 r90', 'wires:', '  - Q1.B -- c1');
+
+    expect(messages.some((message) => message.includes('|-'))).toBe(true);
+  });
+
+  test('turns the centre line for a mirrored symbol as well', () => {
+    // 左右反転しても out は横の中心線のまま (辺は右から左へ移るだけ)。
+    const { errors, notices } = build(
+      'parts:', '  U1: opamp c5 mirror', 'wires:', '  - U1.out -- c3',
+    );
+
+    expect([...errors, ...notices]).toEqual([]);
+  });
+
   test('says a centre line pin still slants when the cell is off its axis', () => {
     // out は横の中心線に出るが、行が違えば斜めになる。足の名前だけでは決まらない。
     const messages = warn('parts:', '  U1: opamp c5', 'wires:', '  - U1.out -- d7');

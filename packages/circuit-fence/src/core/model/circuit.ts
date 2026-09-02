@@ -395,7 +395,9 @@ function slantedIntoPins(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>):
     if (part === undefined || part.kind !== 'multi-terminal') continue;
 
     const type = lookupPartType(part.type);
-    const axis = type === null ? null : pinAxis(type, pin.pin);
+    // **向きを渡す。** 記号を回すと足の乗る中心線も回るので、渡さないと
+    // 回した部品では正しく引いた線に「斜めです」と言い、斜めの線を黙って通す。
+    const axis = type === null ? null : pinAxis(type, pin.pin, part.turn);
     // 交点の間の番地は 1/100 刻みの小数なので、丸めの残りを 0 として見る
     // (`===` だと、揃っている線に「斜めです」と言ってしまう)。
     if (axis === 'h' && isNearlyZero(cell.row - part.at.row)) continue;
