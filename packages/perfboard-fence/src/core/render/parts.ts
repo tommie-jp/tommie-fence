@@ -20,7 +20,10 @@ const CAPTION_GAP = 8;
  * 色が読み取りにくく、印刷や縮小で消える。
  */
 const BAND_WIDTH = 6;
-const BAND_MARGIN = 2;
+/** 帯どうしの隙間。**狭いほど実物に近い** — 実物の帯はほとんど隣り合っている。 */
+const BAND_GAP = 2;
+/** 胴の両端に残す地の色。ここが無いと、帯が胴の縁で切れているように見える。 */
+const BAND_END = 5;
 
 /** 図に出す名前と値。値が無ければ名前だけ。 */
 const caption = (part: PlacedPart): string =>
@@ -101,15 +104,18 @@ function resistorBody(part: PlacedPart, width: number, theme: Theme): string {
     : resistorBands(read.ohms, { tolerance: read.tolerance, tempco: read.tempco });
   if (bands === null) return shell;
 
-  // **帯は胴の幅に比例させる。** 間隔を決め打つと、隣り合う穴に挿した短い部品で
-  // 帯が胴から出て、板の地や隣の穴の上に乗る。
-  const inner = width - BAND_MARGIN * 2;
-  // 帯どうしが触れない幅までは太くする (帯 1 本ぶんの隙間を残す)。
-  const bandWidth = Math.min(BAND_WIDTH, inner / (bands.length * 1.7));
-  const step = (inner - bandWidth) / (bands.length - 1);
+  // **帯はひとかたまりで胴の真ん中に置く。** 実物の帯は隣り合っていて、
+  // 胴の両端には地の色が残る — 端まで広げると、帯が縁で切れて見える。
+  // 入りきらない短い胴では、隙間ではなく**帯のほうを細くする**
+  // (隙間を詰めると 2 色が 1 本に見え、読み違いになる)。
+  const room = Math.max(width - BAND_END * 2, 1);
+  const gaps = BAND_GAP * (bands.length - 1);
+  const bandWidth = Math.max(Math.min(BAND_WIDTH, (room - gaps) / bands.length), 1);
+  const step = bandWidth + BAND_GAP;
+  const start = -(bandWidth * bands.length + gaps) / 2;
   const stripes = bands
     .map((name, index) => element('rect', {
-      x: num(-width / 2 + BAND_MARGIN + index * step), y: num(-BODY_HEIGHT / 2 + 1),
+      x: num(start + index * step), y: num(-BODY_HEIGHT / 2 + 1),
       width: num(bandWidth), height: BODY_HEIGHT - 2, fill: bandColor(name),
     }))
     .join('');
