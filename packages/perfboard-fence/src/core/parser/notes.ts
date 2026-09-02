@@ -1,5 +1,6 @@
-import { wireColorNames } from 'fence-kit';
+import { colorHint, isColor } from '../color.ts';
 import { fenceError, safeToken } from '../errors.ts';
+import { parseAddress } from '../model/address.ts';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Parsed } from './parts.ts';
 
@@ -7,17 +8,22 @@ import type { Parsed } from './parts.ts';
  * `notes:` の 1 行。**図に印を付けて、文章から指せるようにする**ためのもので、
  * 回路の一員ではない (ネットにもネットリストにも出ない)。
  *
- * 印は 4 つ。`mark` (丸)、`box` (枠)、`arrow` (指し棒)、`text` (字)。
+ * 印は 5 つ。`mark` (丸)、`box` (枠)、`arrow` (指し棒)、`text` (字)、
+ * `source` (そのフェンスの中身の書き出し)。
  *
  * **色は `text` には書けない。** 字は残り全部を言葉として取るので、色を許すと
  * 「色の名前で始まる注釈」が黙って色になる。区別の付かない書き方を作らない。
+ * **`source` には書ける** — 言葉を取らないので、色と紛れる余地がない。
  */
 
-export type NoteKind = 'mark' | 'box' | 'arrow' | 'text';
+import type { NoteKind } from '../types.ts';
+
+export type { NoteKind };
 
 export type WrittenNote = {
   readonly kind: NoteKind;
-  readonly from: string;
+  /** 指し先の番地。**`source` は板の外に出すので null**。 */
+  readonly from: string | null;
   /** `box` と `arrow` の 2 つ目の番地。ほかは null。 */
   readonly to: string | null;
   readonly color: string | null;
@@ -25,8 +31,8 @@ export type WrittenNote = {
   readonly text: string | null;
 };
 
-/** 印ごとに、番地をいくつ書くか。 */
-const HOLES: Record<NoteKind, number> = { mark: 1, box: 2, arrow: 2, text: 1 };
+/** 印ごとに、番地をいくつ書くか。**書き出しは板の外なので 0**。 */
+const HOLES: Record<NoteKind, number> = { mark: 1, box: 2, arrow: 2, text: 1, source: 0 };
 
 const KINDS = Object.keys(HOLES) as readonly NoteKind[];
 
@@ -49,7 +55,9 @@ export function parseNoteLine(line: string): Parsed<WrittenNote> {
   if (holes.length < wanted) {
     return fail(`${kind} は番地を ${wanted} つ書きます`, kind);
   }
-  const [from = '', to = null] = holes;
+  const [first = null, second = null] = holes;
+  const from = wanted === 0 ? null : first;
+  const to = wanted === 2 ? second : null;
   const tail = rest.slice(wanted);
 
   if (kind === 'text') {
@@ -59,17 +67,29 @@ export function parseNoteLine(line: string): Parsed<WrittenNote> {
   }
 
   if (tail.length === 0) {
-    return { ok: true, value: { kind, from, to: wanted === 2 ? to : null, color: null, text: null } };
+    return { ok: true, value: { kind, from, to, color: null, text: null } };
   }
   if (tail.length > 1) {
     // **余った言葉を黙って捨てない。** 色を 2 つ書いた人が、片方が効いて
     // いないことに気づけない。
-    return fail(`${kind} に書けるのは番地 ${wanted} つと色 1 つだけです`, tail[1]);
+    return fail(
+      wanted === 0
+        ? `${kind} に書けるのは色 1 つだけです`
+        : `${kind} に書けるのは番地 ${wanted} つと色 1 つだけです`,
+      tail[1],
+    );
   }
 
-  const color = (tail[0] as string).toLowerCase();
-  if (!wireColorNames().includes(color)) {
-    return fail(`知らない色です: ${safeToken(color)} (${wireColorNames().slice(0, 6).join(' / ')} など)`, tail[0]);
+  const written = tail[0] as string;
+  const color = written.toLowerCase();
+  if (!isColor(color)) {
+    // **綴りは書かれたまま返す** (小文字に直して返すと、探す字と違う字を見せる)。
+    // 番地を書いた人には、色の話ではなく**置き場所は選べない**ことを言う —
+    // 書き出しは図の下の帯に出るので、番地を書いても動かせない。
+    if (wanted === 0 && parseAddress(written) !== null) {
+      return fail(`${kind} に番地は書けません (図の下に出します): ${safeToken(written)}`, written);
+    }
+    return fail(`知らない色です: ${safeToken(written)} (${colorHint()})`, written);
   }
-  return { ok: true, value: { kind, from, to: wanted === 2 ? to : null, color, text: null } };
+  return { ok: true, value: { kind, from, to, color, text: null } };
 }

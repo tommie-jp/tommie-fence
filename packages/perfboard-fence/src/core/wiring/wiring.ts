@@ -10,9 +10,24 @@ import type {
 
 export type Wiring = {
   readonly wires: readonly RoutedWire[];
-  /** 板の外の機器につながる端。図には線を引かず、ネットにだけ効く。 */
+  /** 板の外の機器につながる端。導通に効く。 */
   readonly deviceLinks: readonly (readonly [StripId, StripId])[];
+  /**
+   * 機器の足と穴を結ぶ配線。**図に線を引くために持つ** — どの穴へ行くのかが
+   * 図に出ないと、電池の線を挿す先が読む人に分からない (breadboard も引く)。
+   * 機器どうしを結んだ配線は板に触れないので、ここには入らない。
+   */
+  readonly deviceWires: readonly DeviceWire[];
   readonly errors: readonly FenceError[];
+};
+
+/** 機器の足 1 つと、板の穴 1 つを結ぶ配線。 */
+export type DeviceWire = {
+  readonly device: string;
+  readonly pin: string;
+  readonly hole: Address;
+  readonly color: string | null;
+  readonly line: number | null;
 };
 
 /** 板の外の機器の足の導通グループ。**穴とは別の名前空間**にする。 */
@@ -35,6 +50,7 @@ export function resolveWires(
 ): Wiring {
   const wires: RoutedWire[] = [];
   const deviceLinks: (readonly [StripId, StripId])[] = [];
+  const deviceWires: DeviceWire[] = [];
   const errors: FenceError[] = [];
 
   /**
@@ -45,6 +61,14 @@ export function resolveWires(
    * 機器の足のつもりしかありえない。**番地として読めないと言って返さない** —
    * 名前を間違えた人が、番地の話をされて次に何をすべきか分からなくなる。
    */
+  /** `BAT.+` の綴りを ID と足に割る。機器の足でなければ null。 */
+  const pinParts = (written: string): { readonly id: string; readonly pin: string } | null => {
+    const found = PIN_REF.exec(written);
+    if (!found) return null;
+    const [, id = '', pin = ''] = found;
+    return { id, pin };
+  };
+
   const devicePin = (written: string, line: number | null): StripId | null | undefined => {
     const found = PIN_REF.exec(written);
     if (!found) return undefined;
@@ -106,7 +130,8 @@ export function resolveWires(
       break;
     }
 
-    // **機器の足は板の上に無い。** 図には線を引かず、導通だけをつなぐ。
+    // **機器の足は板の上に無い。** それでも穴との間には線を引く — どの穴へ
+    // 行くのかが図に出ないと、電池の線を挿す先が読む人に分からない。
     // 端は 1 つずつ見る — 両端まとめて見ると、同じ報告が 1 行に 2 度出て、
     // 帯の打ち切り (8 件) で本物の報告を押し出す。
     const fromPin = devicePin(spec.from, spec.line);
@@ -127,12 +152,24 @@ export function resolveWires(
       }
       deviceLinks.push([from, to]);
 
-      // **書いた色が黙って消えない**ようにする。線を引かない配線なので
-      // 色は図に出ず、何も言わないと「効かない指定」を書き続けることになる。
-      // つながらなかった配線については言わない (直す先はそちらではない)。
-      if (spec.color !== null) {
+      // 片端だけが機器の足なら、その足と穴を結ぶ線を引く。
+      // **両端とも機器なら板に触れない**ので線は無く、書いた色も図に出ない。
+      const fromParts = fromPin === undefined ? null : pinParts(spec.from);
+      const toParts = toPin === undefined ? null : pinParts(spec.to);
+      const pin = fromParts ?? toParts;
+      const holeWritten = fromParts === null ? spec.from : spec.to;
+
+      if (pin !== null && (fromParts === null || toParts === null)) {
+        const hole = resolve(holeWritten, spec.line);
+        // ここへ来た時点で穴は読めている (上の `holeStripOf` が通っている)。
+        if (hole !== null) {
+          deviceWires.push({ device: pin.id, pin: pin.pin, hole, color: spec.color, line: spec.line });
+        }
+      } else if (spec.color !== null) {
+        // **書いた色が黙って消えない**ようにする。機器どうしを結んだ配線は
+        // 板に触れないので図に線が無く、色の指定は効かない。
         errors.push(notice(
-          `機器へつなぐ配線は板の上に線を引かないので、色 (${safeToken(spec.color)}) は図に出ません`,
+          `機器どうしを結ぶ配線は板に触れないので、色 (${safeToken(spec.color)}) は図に出ません`,
           spec.line,
         ));
       }
@@ -151,7 +188,7 @@ export function resolveWires(
     wires.push({ from, to, color: spec.color, line: spec.line });
   }
 
-  return { wires, deviceLinks, errors };
+  return { wires, deviceLinks, deviceWires, errors };
 }
 
 /**

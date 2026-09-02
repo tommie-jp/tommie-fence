@@ -3,7 +3,8 @@ import {
 } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Layout } from '../model/layout.ts';
-import { BODY_HEIGHT, DOME_SIZE, bodyRect } from '../placement/geometry.ts';
+import { BODY_HEIGHT, DOME_SIZE, SMA_SIZE, bodyRect } from '../placement/geometry.ts';
+import { isEdgeMount } from '../parts/types.ts';
 import { footprintOf } from '../parts/footprint.ts';
 import type { PlacedPart } from '../types.ts';
 import type { Theme } from './theme.ts';
@@ -11,6 +12,8 @@ import type { Theme } from './theme.ts';
 const LEAD_WIDTH = 2;
 /** キャプションを胴のどれだけ下に置くか。 */
 const CAPTION_DROP = 14;
+/** 胴の下端からキャプションまで。**胴の大きさで変わる部品**があるので、下端から測る。 */
+const CAPTION_GAP = 8;
 /** カラーコードの帯の幅と、胴の端から空ける幅。 */
 const BAND_WIDTH = 3;
 const BAND_MARGIN = 2;
@@ -73,15 +76,141 @@ const ledBody = (part: PlacedPart): string =>
     stroke: '#00000033', 'stroke-width': 1,
   });
 
+/** 同軸コネクタの金物と、中の絶縁体の色。**実物の色**なのでテーマから触らせない。 */
+const SMA_METAL = '#b9bfc6';
+const SMA_METAL_EDGE = '#7f868d';
+const SMA_DIELECTRIC = '#f2f3f5';
+/** 中心導体。オスはピン (金)、メスは穴 (暗い口)。 */
+const SMA_PIN = '#d8b64a';
+const SMA_SOCKET = '#2b2f33';
+/** 胴に書く姿の名前。金物の上に載るので、明るい地に読める濃さにする。 */
+const SMA_LABEL = '#2b2f33';
+/** 端面実装のねじ部の長さと、足の手前で胴を切る量。**姿の名前もこれで置き場所を決める**。 */
+const SMA_THREAD = 34;
+const SMA_LEG_GAP = 7;
+
+/**
+ * SMA コネクタ。**胴は足の間隔で変わらない**金物なので、六角の胴 (6.35mm) の
+ * 大きさで描く。オスは中心にピンが立ち、メスは中心が穴 — **姿で描き分ける**ので、
+ * 図を見た人が合う相手を取り違えない。
+ */
+function smaBody(part: PlacedPart): string {
+  const half = SMA_SIZE / 2;
+  const shell = element('rect', {
+    x: num(-half), y: num(-half), width: num(SMA_SIZE), height: num(SMA_SIZE), rx: 6,
+    fill: SMA_METAL, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
+  });
+  // 合わせ面の丸は少し上へ。**胴の下半分は姿の名前 (2 行) の場所**にする。
+  const faceY = -half * 0.34;
+  const barrel = element('circle', {
+    cx: 0, cy: num(faceY), r: num(half * 0.46), fill: SMA_DIELECTRIC,
+    stroke: SMA_METAL_EDGE, 'stroke-width': 1,
+  });
+  const male = part.variant === 'male';
+  const centre = element('circle', {
+    cx: 0, cy: num(faceY), r: num(male ? 4 : 5),
+    fill: male ? SMA_PIN : SMA_SOCKET,
+    ...(male ? {} : { stroke: SMA_METAL_EDGE, 'stroke-width': 1 }),
+  });
+  return `${shell}${barrel}${centre}`;
+}
+
+/**
+ * 端面実装 (横置き) の SMA。板の縁に載せて、**首から先を板の外へ出す**形。
+ * 上から見た姿なので、ねじ山は胴の横筋として出し、合わせ面は先端に来る。
+ *
+ * 胴の形は当たり判定と同じ矩形に収める (`placement/geometry.ts`) — はみ出して
+ * 描くと、図では重なって見えるのに何も言わない、が起きる。
+ */
+function smaEdgeBody(part: PlacedPart, width: number, legX: number): string {
+  const half = SMA_SIZE / 2;
+  const tip = -width / 2;
+  // ねじ (1/4-36UNS) は胴より細い。実物の図面どおり、ねじ部・胴・足の 3 段に分ける。
+  const threadLength = SMA_THREAD;
+  const threadHalf = half * 0.66;
+  const bodyStart = tip + threadLength;
+  // 胴は GND の足の手前で切る。**足がどの穴に入るか**が図に出ないと、
+  // 端面実装は「板の縁に載っている」だけの絵になる。
+  const bodyEnd = legX - SMA_LEG_GAP;
+  const male = part.variant === 'male-edge';
+
+  const barrel = element('rect', {
+    x: num(tip), y: num(-threadHalf), width: num(threadLength), height: num(threadHalf * 2), rx: 2,
+    fill: SMA_METAL, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
+  });
+  // ねじ山。**筋の向きで「ねじ部」と分かる**ようにする (胴には筋を引かない)。
+  const threads = [6, 12, 18, 24, 30]
+    .map((offset) => element('line', {
+      x1: num(tip + offset), y1: num(-threadHalf + 2), x2: num(tip + offset), y2: num(threadHalf - 2),
+      stroke: SMA_METAL_EDGE, 'stroke-width': 1,
+    }))
+    .join('');
+
+  const body = element('rect', {
+    x: num(bodyStart), y: num(-half), width: num(bodyEnd - bodyStart), height: num(SMA_SIZE), rx: 3,
+    fill: SMA_METAL, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
+  });
+
+  // 合わせ面。メスは中心が穴、オスは中心のピンがねじの先へ出る。
+  const face = element('rect', {
+    x: num(tip + 3), y: num(-threadHalf * 0.55), width: 3, height: num(threadHalf * 1.1), rx: 1,
+    fill: SMA_DIELECTRIC,
+  });
+  const mating = male
+    ? element('rect', { x: num(tip - 6), y: -2, width: 9, height: 4, rx: 1, fill: SMA_PIN })
+    : element('rect', { x: num(tip + 3), y: -3, width: 3, height: 6, fill: SMA_SOCKET });
+
+  // 板に挿さる足。**GND の脚は GND の穴の上**に、中心導体はその先の穴まで伸びる。
+  const ground = element('rect', {
+    x: num(bodyEnd), y: -6, width: 14, height: 12, rx: 2,
+    fill: SMA_METAL, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
+  });
+  const centre = element('rect', {
+    x: num(legX), y: -2, width: num(width / 2 - legX), height: 4, rx: 1, fill: SMA_PIN,
+  });
+
+  return `${barrel}${threads}${body}${face}${mating}${centre}${ground}`;
+}
+
+/**
+ * コネクタの胴に書く姿の名前。**オスとメスは形の細部でしか違わない**ので、
+ * 字でも言う — 図を見て買う人・挿す人が、合う相手を取り違えないように。
+ *
+ * **胴と一緒に回さない。** 板の右の縁に載せたコネクタは胴が 180 度回るので、
+ * 一緒に回すと鏡文字になる。字はいつも水平に置く。
+ */
+function smaBadge(part: PlacedPart, at: { x: number; y: number }, edge: boolean, theme: Theme): string {
+  if (part.type !== 'sma' || part.variant === null) return '';
+
+  const male = part.variant.startsWith('male');
+  const size = theme.metrics.textSize;
+  // **2 行に分ける。** 1 行だと横置きでは足や配線に被り、縦置きでは胴に入らず
+  // `SMA fem…` と切れる。胴に収まる幅は「SMA」も「female」も 6 字ぶんで足りる。
+  const room = (edge ? SMA_SIZE - 4 : SMA_SIZE - 6) / size;
+  const first = at.y + (edge ? -size * 0.2 : SMA_SIZE * 0.16);
+  const step = size * 1.15;
+
+  return [male ? 'SMA' : 'SMA', male ? 'male' : 'female']
+    .map((line, index) => svgText(at.x, first + step * index, fit(line, room), {
+      fill: SMA_LABEL,
+      'font-size': num(size),
+      halo: SMA_METAL,
+    }))
+    .join('');
+}
+
 const genericBody = (width: number, theme: Theme): string =>
   element('rect', {
     x: num(-width / 2), y: num(-BODY_HEIGHT / 2), width: num(width), height: BODY_HEIGHT,
     rx: 3, fill: theme.palette.body, stroke: theme.palette.bodyEdge, 'stroke-width': 1,
   });
 
-const bodyOf = (part: PlacedPart, width: number, theme: Theme): string => {
+const bodyOf = (part: PlacedPart, width: number, theme: Theme, legX = 0): string => {
   if (part.type === 'resistor') return resistorBody(part, width, theme);
   if (part.type === 'led') return ledBody(part);
+  if (part.type === 'sma') {
+    return isEdgeMount(part.type, part.variant) ? smaEdgeBody(part, width, legX) : smaBody(part);
+  }
   return genericBody(width, theme);
 };
 
@@ -107,19 +236,35 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
     stroke: theme.palette.lead, 'stroke-width': LEAD_WIDTH,
   });
   // 3 引数 rotate() を読まないレンダラがあるので translate と rotate に分ける。
+  // 端面実装は胴が足の外へ張り出すので、**足がどこに来るか**を局所座標で渡す
+  // (胴の中心と足の中点がずれるのはこの姿だけ)。
+  const legX = ((to.x - center.x) * Math.cos(rect.angle) + (to.y - center.y) * Math.sin(rect.angle));
   const body = element(
     'g',
     { transform: `translate(${num(center.x)} ${num(center.y)}) rotate(${num(angle)})` },
-    bodyOf(part, width, theme),
+    bodyOf(part, width, theme, legX),
   );
-  const text = fitToBoard(caption(part), center.x, theme.metrics.textSize, layout);
-  const label = svgText(center.x, center.y + CAPTION_DROP, text, {
-    fill: theme.palette.caption,
+  // **キャプションは足の真ん中の下**。胴の中心に置くと、板の外へ張り出す部品
+  // (端面実装の SMA) で字が板から出て、地に紛れるか幅ゼロで `…` に切られる。
+  // 縦は胴の下端から測る — 中心から一定の距離だと、胴の大きい部品で字が胴に載る。
+  const pinMiddle = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
+  const text = fitToBoard(caption(part), pinMiddle.x, theme.metrics.textSize, layout);
+  const label = svgText(pinMiddle.x, rect.cy + rect.height / 2 + CAPTION_GAP, text, {
+    fill: theme.palette.plateText,
     'font-size': num(theme.metrics.textSize),
     halo: theme.palette.plate,
   });
 
-  return `${lead}${body}${label}`;
+  // 姿の名前は**胴のブロックの真ん中**に置く。全体の中心だとねじ部まで含むので
+  // 板の外へ寄りすぎ、足の側だと配線に被る。
+  const edge = isEdgeMount(part.type, part.variant);
+  const blockX = edge ? (-width / 2 + SMA_THREAD + legX - SMA_LEG_GAP) / 2 : 0;
+  const badgeAt = {
+    x: rect.cx + blockX * Math.cos(rect.angle),
+    y: rect.cy + blockX * Math.sin(rect.angle),
+  };
+
+  return `${lead}${body}${smaBadge(part, badgeAt, edge, theme)}${label}`;
 }
 
 /** ノッチの半径 (DIP の 1 番ピン側の切り欠き)。 */
@@ -163,15 +308,22 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
   });
 
   // ノッチは 1 番ピンの側の辺の真ん中。DIP でだけ描く (SIP と 3 本足には無い)。
+  //
+  // **どちらの辺かは 1 番ピンの位置から決める。** 箱の左端に決め打つと、
+  // 板を裏返した図 (`style: back`) で列の並びが入れ替わったときに反対の端へ出て、
+  // **図のとおりに挿した IC が 180 度回る** — この印はそれを防ぐためにある。
   const footprint = footprintOf(part.type);
+  const left = rect.cx - rect.width / 2;
+  const right = rect.cx + rect.width / 2;
+  const nearFirst = layout.point(first.address).x < rect.cx ? left + NOTCH : right - NOTCH;
   const notch = footprint?.kind !== 'dip' ? '' : element('circle', {
-    cx: num(rect.cx - rect.width / 2 + NOTCH), cy: num(rect.cy),
+    cx: num(nearFirst), cy: num(rect.cy),
     r: NOTCH, fill: theme.palette.plate, stroke: theme.palette.bodyEdge, 'stroke-width': 1,
   });
 
   const text = fitToBoard(caption(part), rect.cx, theme.metrics.textSize, layout);
   const label = svgText(rect.cx, rect.cy + rect.height / 2 + CAPTION_DROP, text, {
-    fill: theme.palette.caption,
+    fill: theme.palette.plateText,
     'font-size': num(theme.metrics.textSize),
     halo: theme.palette.plate,
   });

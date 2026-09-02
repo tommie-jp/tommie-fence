@@ -2,6 +2,8 @@ import { LineCounter, isMap, isScalar, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
 import { fenceError, notice, safeToken } from '../errors.ts';
 import { resolveBoard } from '../model/board.ts';
+import { isLandColor, isPlateColor, landNames, plateNames } from '../render/finish.ts';
+import { drawsVariant } from '../parts/types.ts';
 import { boardNames } from '../model/catalog.ts';
 import { LIMITS } from '../limits.ts';
 import { parsePartLine } from './parts.ts';
@@ -23,6 +25,12 @@ const MAX_YAML_MESSAGE = 120;
 const BOARD_HINT = `board: は穴数を 列x行 で書くか (例: board: 25x15)、`
   + `板の名前を書きます (${boardNames().join(' / ')})。`
   + `上限は ${LIMITS.cols}x${LIMITS.rows} です`;
+
+/** `board:` をマップで書いたときに置ける項目。 */
+const BOARD_KEYS = ['size', 'slots', 'color', 'land'] as const;
+
+/** `on` / `off` は YAML 1.2 では字。`style:` と同じ受け方を board にも与える。 */
+const FLAG_WORDS: Record<string, boolean> = { on: true, off: false };
 
 export type ParseResult = { readonly doc: FenceDocument | null; readonly errors: readonly FenceError[] };
 
@@ -243,9 +251,10 @@ export function parseFence(source: string): ParseResult {
         errors.push({ ...result.error, line });
         continue;
       }
-      // **姿は読むが、まだ描き分けない。** 黙って捨てると、書いた人は
+      // **描き分けない姿は、そう言う。** 黙って捨てると、書いた人は
       // 電解と積層の違いが図に出ているつもりのまま終わる。
-      if (result.value.variant !== null) {
+      // `sma` は姿で形が変わる (オス/メス・縦置き/横置き) ので言わない。
+      if (result.value.variant !== null && !drawsVariant(result.value.type)) {
         errors.push(notice(
           `姿はまだ描き分けません: ${result.value.type}/${result.value.variant} (図は同じ形で出ます)`,
           line,
@@ -360,19 +369,93 @@ export function parseFence(source: string): ParseResult {
     }
     boardWritten = true;
 
-    const value = scalarText(pair.value);
+    // **板はスカラーでもマップでも書ける。** 大きさだけならスカラー、
+    // 銅箔のように板そのものの性質を足すときはマップ (`size:` に同じ綴りを書く)。
+    let sizeNode: unknown = pair.value;
+    let slots = false;
+    let color: string | null = null;
+    let land: string | null = null;
+    let slotColor: string | null = null;
+    if (isMap(pair.value)) {
+      let sizeSeen = false;
+      let bad = false;
+      for (const item of (pair.value as { items: Pair[] }).items) {
+        const name = scalarText(item.key);
+        const itemAt = lineOf((item.value ?? item.key) as Node);
+        if (name === null || !(BOARD_KEYS as readonly string[]).includes(name)) {
+          errors.push(fenceError(
+            `知らない board の項目です: ${safeToken(name ?? '')} (${BOARD_KEYS.join(' / ')})`,
+            itemAt,
+            name ?? undefined,
+          ));
+          bad = true;
+          continue;
+        }
+        if (name === 'size') {
+          sizeNode = item.value;
+          sizeSeen = true;
+          continue;
+        }
+        const written = scalarText(item.value);
+        if (name === 'color' || name === 'land') {
+          // 板の色とランドの色。**表を分けてある** — 板に `gold`、ランドに `green` と
+          // 書けてしまうと、綴りは通るのに実物にない板が出る。
+          const ok = name === 'color' ? isPlateColor(written ?? '') : isLandColor(written ?? '');
+          if (!ok) {
+            const names = name === 'color' ? plateNames() : landNames();
+            errors.push(fenceError(
+              `board の ${name} は ${names.join(' / ')} か #RRGGBB で書きます: ${safeToken(written ?? '')}`,
+              itemAt,
+              name,
+            ));
+            bad = true;
+            continue;
+          }
+          if (name === 'color') color = written;
+          else land = written;
+          continue;
+        }
+
+        // slots: 短いほうの両端に並ぶスロット用の銅箔。**既定は描かない。**
+        // **色を書けば描く** — 銅箔を出すかどうかと、その色は 1 つの指定で足りる。
+        const flag = typeof written === 'string' ? FLAG_WORDS[written.trim().toLowerCase()] : undefined;
+        if (flag === undefined) {
+          if (written !== null && isLandColor(written)) {
+            slots = true;
+            slotColor = written;
+            continue;
+          }
+          errors.push(fenceError(
+            `board の slots は on / off か、銅箔の色 (${landNames().join(' / ')} か #RRGGBB) で書きます`,
+            itemAt,
+            name,
+          ));
+          bad = true;
+          continue;
+        }
+        slots = flag;
+      }
+      if (!sizeSeen) {
+        // 大きさを当てて描くと、**書いていない板の図が黙って出る**。
+        errors.push(fenceError(`board: をマップで書くときは size: に大きさを書きます。${BOARD_HINT}`, at));
+        continue;
+      }
+      if (bad) continue;
+    }
+
+    const value = scalarText(sizeNode);
     if (value === null) {
       errors.push(fenceError(BOARD_HINT, at));
       continue;
     }
     // 名指すのは書かれた字面。読むのは解決後の値。
-    const written = writtenText(pair.value, source) ?? value;
+    const written = writtenText(sizeNode as Node, source) ?? value;
     const found = resolveBoard(value);
     if (!found.ok) {
       errors.push(fenceError(`${safeToken(written)}: ${found.reason}`, at, written));
       continue;
     }
-    board = found.board;
+    board = { ...found.board, slots, color, land, slotColor };
     // 単位の書き忘れは**図が出てしまう**取り違えなので、エラーではなくお知らせ。
     if (found.notice !== null) errors.push(notice(found.notice, at, written));
   }

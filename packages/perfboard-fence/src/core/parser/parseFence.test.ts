@@ -47,7 +47,7 @@ describe('parseFence', () => {
   test('keeps the document when the fence is well formed', () => {
     const parsed = parseFence('board: 28x18\n');
 
-    expect(parsed.doc?.board).toEqual({ cols: 28, rows: 18 });
+    expect(parsed.doc?.board).toEqual({ cols: 28, rows: 18, slots: false, color: null, land: null, slotColor: null });
     expect(parsed.errors).toEqual([]);
   });
   test('says once that board: has no value, not twice that it is missing', () => {
@@ -69,16 +69,16 @@ describe('parseFence', () => {
     const parsed = parseFence('board: akizuki-c\n');
 
     expect(parsed.errors).toEqual([]);
-    expect(parsed.doc?.board).toEqual({ cols: 25, rows: 15 });
+    expect(parsed.doc?.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null });
   });
 
   test('reads a board written as the size it is sold at', () => {
-    // 秋月は同じ C タイプを 72×47mm と 72×47.5mm の両方で書いている。
-    for (const spelling of ['72x47mm', '72x47.5mm', '7.2x4.7cm', 'c']) {
+    // **数えた綴りだけ**が別名。72×47.5mm は「C タイプ」でも別の板 (27 × 17)。
+    for (const spelling of ['72x47mm', '7.2x4.7cm', 'c']) {
       const parsed = parseFence(`board: ${spelling}\n`);
 
       expect(parsed.errors).toEqual([]);
-      expect(parsed.doc?.board).toEqual({ cols: 25, rows: 15 });
+      expect(parsed.doc?.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null });
     }
   });
 
@@ -96,7 +96,7 @@ describe('parseFence', () => {
     // エラーではなくお知らせだが、言わないと**別物の図に気づけない**。
     const parsed = parseFence('board: 72x47\n');
 
-    expect(parsed.doc?.board).toEqual({ cols: 72, rows: 47 });
+    expect(parsed.doc?.board).toEqual({ cols: 72, rows: 47, slots: false, color: null, land: null, slotColor: null });
     expect(parsed.errors).toHaveLength(1);
     expect(parsed.errors[0]?.notice).toBe(true);
     expect(parsed.errors[0]?.message).toContain('akizuki-c');
@@ -210,5 +210,73 @@ describe('parts: の名前の重なり', () => {
 
     expect(twice.doc?.devices).toHaveLength(1);
     expect(twice.errors.some((one) => one.message.includes('名前が重なっています'))).toBe(true);
+  });
+});
+
+describe('board: のマップ形式 (スロット用の銅箔)', () => {
+  test('takes the size under `size:`, the way the scalar form is written', () => {
+    const parsed = parseFence('board:\n  size: 12x7\n');
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.doc?.board).toEqual({ cols: 12, rows: 7, slots: false, color: null, land: null, slotColor: null });
+  });
+
+  test('takes a name there too, since it is the same spelling as before', () => {
+    expect(parseFence('board:\n  size: akizuki-c\n').doc?.board)
+      .toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null });
+  });
+
+  test('draws the slot copper when it was asked for', () => {
+    const parsed = parseFence('board:\n  size: 12x7\n  slots: on\n');
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.doc?.board.slots).toBe(true);
+  });
+
+  test('leaves it off in the scalar form, which is the common board', () => {
+    expect(parseFence('board: 12x7\n').doc?.board.slots).toBe(false);
+  });
+
+  test('says what belongs in the map instead of ignoring a stray key', () => {
+    const parsed = parseFence('board:\n  size: 12x7\n  colour: red\n');
+
+    expect(parsed.errors[0]?.message).toContain('colour');
+  });
+
+  test('says the size is missing rather than drawing a board it guessed', () => {
+    expect(parseFence('board:\n  slots: on\n').errors.length).toBeGreaterThan(0);
+  });
+});
+
+describe('board: の色', () => {
+  test('takes the resist colour and the plating, which default to green and silver', () => {
+    const parsed = parseFence('board:\n  size: 12x7\n  color: blue\n  land: gold\n');
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.doc?.board).toMatchObject({ color: 'blue', land: 'gold' });
+  });
+
+  test('leaves them unwritten when they were not written, so the theme decides', () => {
+    expect(parseFence('board: 12x7\n').doc?.board).toMatchObject({ color: null, land: null });
+  });
+
+  test('takes a hex spelling for a colour it has no name for', () => {
+    expect(parseFence('board:\n  size: 12x7\n  color: "#123456"\n').doc?.board.color).toBe('#123456');
+  });
+
+  test('does not take a plating name as a resist colour', () => {
+    // 表を分けてある。通してしまうと、綴りは読めるのに実物にない板が出る。
+    expect(parseFence('board:\n  size: 12x7\n  color: gold\n').errors[0]?.message).toContain('color');
+  });
+
+  test('reads a colour on slots as "draw them, in this colour"', () => {
+    const parsed = parseFence('board:\n  size: 12x7\n  slots: gold\n');
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.doc?.board).toMatchObject({ slots: true, slotColor: 'gold' });
+  });
+
+  test('says what slots takes when it is neither a flag nor a colour', () => {
+    expect(parseFence('board:\n  size: 12x7\n  slots: chartreuse\n').errors[0]?.message).toContain('slots');
   });
 });

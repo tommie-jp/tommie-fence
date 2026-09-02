@@ -12,8 +12,8 @@ export const LIMITS = {
   idLength: 32,
   /**
    * 板の大きさの上限。実在する一番大きい板 (秋月 A タイプ 155×114mm) でも
-   * 61 × 44 穴なので十分な余裕がある。上限が無いと、フェンス 1 つで
-   * 巨大な SVG を作らせられる。
+   * 55 × 40 穴 (外形図に 2200 穴と書いてある) なので十分な余裕がある。
+   * 上限が無いと、フェンス 1 つで巨大な SVG を作らせられる。
    */
   cols: 120,
   rows: 120,
@@ -33,10 +33,26 @@ export const LIMITS = {
   /** 注釈の数と、1 つの字数。 */
   notes: 200,
   noteLength: 60,
+  /**
+   * `- source` が図に書き出すフェンスの行数。長いフェンスをそのまま書き出すと、
+   * 図より書き出しのほうが高くなる。**切ったことは図に書く**ので黙って消えない。
+   */
+  sourceLines: 80,
+  /**
+   * 書き出す 1 行の長さ。**行数だけ止めても足りない** — 4,000 字の 1 行で
+   * 画布が 2 万 px に伸びる (`cols` / `rows` に上限を置いたのと同じ穴)。
+   */
+  sourceLineLength: 160,
 } as const;
 
 /** 選べるテーマ。**既定は light**。 */
 export const THEME_NAMES = ['light', 'dark', 'mono'] as const;
+
+/** 軸の名前の振り方。**既定は行が alpha・列が numeric** (今までの図と同じ)。 */
+export const LABEL_KINDS = ['alpha', 'numeric'] as const;
+
+/** 英字の大小。**既定は upper** (板のシルクが大文字なので、そちらに合わせる)。 */
+export const LABEL_CASES = ['upper', 'lower'] as const;
 
 /** `style:` に書ける大きさの範囲。図として成立する幅に収める。 */
 export const STYLE_RANGES = {

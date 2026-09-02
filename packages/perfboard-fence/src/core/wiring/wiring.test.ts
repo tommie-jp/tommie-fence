@@ -173,13 +173,21 @@ describe('板の外の機器', () => {
 });
 
 describe('機器へつなぐ配線の色', () => {
-  const devices = new Map([['BAT', new Set(['+', '-'])]]);
+  const devices = new Map([['BAT', new Set(['+', '-'])], ['SPK', new Set(['1', '2'])]]);
 
-  test('says a colour written there will not show, instead of dropping it', () => {
+  test('draws the colour that was written, the way a wire between two holes does', () => {
     const spec = { from: 'b3', to: 'BAT.+', color: 'red', line: 4 };
-    const { deviceLinks, errors } = resolveWires([spec], new Map(), board, devices);
+    const { deviceLinks, deviceWires, errors } = resolveWires([spec], new Map(), board, devices);
 
     expect(deviceLinks).toHaveLength(1);
+    expect(deviceWires[0]?.color).toBe('red');
+    expect(errors).toEqual([]);
+  });
+
+  test('says a colour will not show between two devices, which never touch the board', () => {
+    const spec = { from: 'SPK.1', to: 'BAT.+', color: 'red', line: 4 };
+    const { errors } = resolveWires([spec], new Map(), board, devices);
+
     expect(errors[0]?.notice).toBe(true);
     expect(errors[0]?.message).toContain('色');
   });
@@ -191,5 +199,45 @@ describe('機器へつなぐ配線の色', () => {
 
     expect(errors).toHaveLength(1);
     expect(errors[0]?.notice).not.toBe(true);
+  });
+});
+
+describe('機器へつなぐ配線 (図に線を引く)', () => {
+  const devices = new Map([['BAT', new Set(['+', '-'])], ['SPK', new Set(['1', '2'])]]);
+  const wide = createBoard({ cols: 12, rows: 8 });
+
+  test('keeps the hole and the pin, so the line can be drawn to the right hole', () => {
+    const { deviceWires } = resolveWires(
+      [{ from: 'BAT.+', to: 'c4', color: 'red', line: 3 }], new Map(), wide, devices,
+    );
+
+    expect(deviceWires).toEqual([
+      { device: 'BAT', pin: '+', hole: { row: 3, col: 4 }, color: 'red', line: 3 },
+    ]);
+  });
+
+  test('reads it the same way round when the hole was written first', () => {
+    const { deviceWires } = resolveWires(
+      [{ from: 'c12', to: 'BAT.-', color: null, line: 4 }], new Map(), wide, devices,
+    );
+
+    expect(deviceWires[0]).toMatchObject({ device: 'BAT', pin: '-', hole: { row: 3, col: 12 } });
+  });
+
+  test('draws nothing between two devices, which never touch the board', () => {
+    const { deviceWires, deviceLinks } = resolveWires(
+      [{ from: 'BAT.+', to: 'SPK.1', color: null, line: 5 }], new Map(), wide, devices,
+    );
+
+    expect(deviceWires).toEqual([]);
+    expect(deviceLinks.length).toBe(1);
+  });
+
+  test('says nothing about a colour it now draws', () => {
+    const { errors } = resolveWires(
+      [{ from: 'BAT.+', to: 'c4', color: 'red', line: 3 }], new Map(), wide, devices,
+    );
+
+    expect(errors).toEqual([]);
   });
 });

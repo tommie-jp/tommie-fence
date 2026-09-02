@@ -17,6 +17,9 @@ const TWO_LEAD = new Set([
   'zener', 'schottky', 'photodiode',
   // ガラス管・玉に封じた部品。
   'fuse', 'lamp',
+  // 同軸コネクタ。**足は中心導体と GND の 2 本**で書く (実物は GND が 4 本だが、
+  // 図とネットリストで意味を持つのは「どこが中心でどこが GND か」の 2 つ)。
+  'sma',
 ]);
 
 /** 3 本足の部品。**足の位置は書かれたとおり** — 実物の足は曲げられる。 */
@@ -64,6 +67,10 @@ const VARIANTS: Record<string, readonly string[]> = {
   thyristor: ['to92', 'to220'],
   triac: ['to92', 'to220'],
   regulator: ['to92', 'to220'],
+  // オスは中心にピンが立ち、メスは中心が穴。**姿で描き分ける** —
+  // 図を見て挿す人が、合う相手を取り違えないように。
+  // `-edge` は端面実装 (横置き)。板の縁から**胴が外へ張り出す**。
+  sma: ['male', 'female', 'male-edge', 'female-edge'],
 };
 
 /**
@@ -122,3 +129,18 @@ export function splitPartType(written: string): PartType {
   }
   return { type, variant, problem: null };
 }
+
+/**
+ * 端面実装 (横置き) の姿か。**胴が足の外へ張り出す**ので、描画も当たり判定も
+ * 形が変わる。判定はここ 1 か所 — 別々に持つと、図と当たり判定が食い違う。
+ */
+export const isEdgeMount = (type: string, variant: string | null): boolean =>
+  type === 'sma' && variant !== null && variant.endsWith('-edge');
+
+/**
+ * 姿で図の形が変わる種類。**ここに無い種類は「まだ描き分けません」と言う** —
+ * 黙って捨てると、書いた人は違いが図に出ているつもりのまま終わる。
+ */
+const DRAWS_VARIANT = new Set(['sma']);
+
+export const drawsVariant = (type: string): boolean => DRAWS_VARIANT.has(type);

@@ -6,7 +6,7 @@ const at = (text: string) => parseAddress(text)!;
 
 describe('createBoard', () => {
   test('keeps the size it was given', () => {
-    expect(createBoard({ cols: 28, rows: 18 })).toEqual({ cols: 28, rows: 18 });
+    expect(createBoard({ cols: 28, rows: 18 })).toEqual({ cols: 28, rows: 18, slots: false, color: null, land: null, slotColor: null });
   });
 });
 
@@ -18,18 +18,27 @@ describe('offBoardReason', () => {
     expect(offBoardReason(board, at('r28'))).toBeNull();
   });
 
+  test('lets an address just outside the board through, so the edge copper can be wired', () => {
+    // 縁の銅箔は穴の格子のちょうど 1 つ外。指せないとそこへ配線を引けない。
+    for (const written of ['a0', 'a-1', '01', '-a1', 'a29', 's1']) {
+      expect(offBoardReason(board, at(written))).toBeNull();
+    }
+  });
+
   test('says which way it ran off, because the fix is different', () => {
-    expect(offBoardReason(board, at('a29'))).toContain('28 列');
-    expect(offBoardReason(board, at('s1'))).toContain('18 行');
+    expect(offBoardReason(board, at('a33'))).toContain('28 列');
+    expect(offBoardReason(board, at('w1'))).toContain('18 行');
   });
 
   test('names the address it is talking about', () => {
-    expect(offBoardReason(board, at('a29'))).toContain('a29');
+    expect(offBoardReason(board, at('a33'))).toContain('a33');
   });
 
-  test('isOnBoard agrees with it', () => {
+  test('isOnBoard is about the holes, not about what can be written', () => {
     expect(isOnBoard(board, at('r28'))).toBe(true);
     expect(isOnBoard(board, at('s29'))).toBe(false);
+    // 板の外は書けるが、穴の上ではない。
+    expect(isOnBoard(board, at('a0'))).toBe(false);
   });
 });
 
@@ -49,20 +58,20 @@ describe('resolveBoard', () => {
     // 秋月 C タイプは 72×47mm、つまり長辺 × 短辺。板の呼び方と同じ順にする。
     const found = resolveBoard('28x18');
 
-    expect(found.ok && found.board).toEqual({ cols: 28, rows: 18 });
+    expect(found.ok && found.board).toEqual({ cols: 28, rows: 18, slots: false, color: null, land: null, slotColor: null });
   });
 
   test('takes the multiplication sign the reports themselves print', () => {
     // 報告も docs の表も `25×15` と書く。読めないと、写して貼った人が転ぶ。
     const found = resolveBoard('25×15');
 
-    expect(found.ok && found.board).toEqual({ cols: 25, rows: 15 });
+    expect(found.ok && found.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null });
   });
 
   test('takes a capital X and spaces around it', () => {
     const found = resolveBoard('28 X 18');
 
-    expect(found.ok && found.board).toEqual({ cols: 28, rows: 18 });
+    expect(found.ok && found.board).toEqual({ cols: 28, rows: 18, slots: false, color: null, land: null, slotColor: null });
   });
 
   test('refuses a size that is not two numbers', () => {
@@ -74,7 +83,7 @@ describe('resolveBoard', () => {
   test('reads a hole count as a hole count', () => {
     const found = resolveBoard('25x15');
 
-    expect(found.ok && found.board).toEqual({ cols: 25, rows: 15 });
+    expect(found.ok && found.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null });
     expect(found.ok && found.named).toBeNull();
     expect(found.ok && found.notice).toBeNull();
   });
@@ -82,7 +91,7 @@ describe('resolveBoard', () => {
   test('reads a name from the catalogue', () => {
     const found = resolveBoard('akizuki-c');
 
-    expect(found.ok && found.board).toEqual({ cols: 25, rows: 15 });
+    expect(found.ok && found.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null });
     expect(found.ok && found.named?.key).toBe('akizuki-c');
   });
 
@@ -95,7 +104,7 @@ describe('resolveBoard', () => {
     // ミリのつもりで書いた人に、**黙って別物の図が出る**。
     const found = resolveBoard('72x47');
 
-    expect(found.ok && found.board).toEqual({ cols: 72, rows: 47 });
+    expect(found.ok && found.board).toEqual({ cols: 72, rows: 47, slots: false, color: null, land: null, slotColor: null });
     expect(found.ok && found.notice).toContain('穴数として読みました');
     expect(found.ok && found.notice).toContain('akizuki-c');
   });

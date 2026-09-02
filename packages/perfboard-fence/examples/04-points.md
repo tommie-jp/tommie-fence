@@ -18,6 +18,8 @@ wires:
   - b6 -- d6
   - b6 -- OUT
   - d9 -- GND
+notes:
+  - source blue
 ```
 
 ![図01 points で名前を付ける](out/04-points.svg)

@@ -80,3 +80,54 @@ describe('板の外の機器の帯', () => {
     expect(both.deviceBands.bottom?.width).toBe(both.board.width);
   });
 });
+
+describe('書き出し (`- source`) の帯', () => {
+  const plain = createLayout(board);
+  const withSource = createLayout(board, { source: { width: 300, height: 120 } });
+
+  test('is not there at all when nothing asked for it', () => {
+    expect(plain.sourceBand).toBeNull();
+  });
+
+  test('sits below the board, and grows the canvas by its own height', () => {
+    expect(withSource.sourceBand?.y).toBeGreaterThan(plain.board.y + plain.board.height);
+    expect(withSource.height).toBeGreaterThan(plain.height + 120);
+  });
+
+  test('leaves the board where it was, so the drawing above does not move', () => {
+    expect(withSource.board).toEqual(plain.board);
+  });
+
+  test('widens the canvas for a listing wider than the board, rather than cutting it', () => {
+    const narrow = createBoard({ cols: 4, rows: 6 });
+    const wide = createLayout(narrow, { source: { width: 600, height: 60 } });
+
+    expect(wide.width).toBeGreaterThanOrEqual(600);
+    expect(wide.sourceBand?.width).toBeGreaterThanOrEqual(600);
+  });
+
+  test('goes under the band of devices, not on top of it', () => {
+    const both = createLayout(board, { deviceBottom: true, source: { width: 300, height: 120 } });
+    const bottom = both.deviceBands.bottom!;
+
+    expect(both.sourceBand?.y).toBeGreaterThanOrEqual(bottom.y + bottom.height);
+  });
+});
+
+describe('裏返した板 (半田面)', () => {
+  const front = createLayout(board);
+  const back = createLayout(board, { mirror: true });
+
+  test('turns the columns over, so column 1 comes out on the right', () => {
+    expect(back.colX(1)).toBe(front.colX(board.cols));
+    expect(back.colX(board.cols)).toBe(front.colX(1));
+  });
+
+  test('leaves the rows where they are — the board turns over, not upside down', () => {
+    expect(back.rowY(3)).toBe(front.rowY(3));
+  });
+
+  test('is the same size as the front, so the two read as one board', () => {
+    expect({ width: back.width, height: back.height }).toEqual({ width: front.width, height: front.height });
+  });
+});

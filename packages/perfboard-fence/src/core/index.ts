@@ -1,24 +1,28 @@
-import { normalizeNewlines } from 'fence-kit';
+import { element, normalizeNewlines, num } from 'fence-kit';
 import { attachSourceText } from './errors.ts';
 import { createLayout } from './model/layout.ts';
 import { parseFence } from './parser/parseFence.ts';
 import { placeParts } from './placement/place.ts';
 import { renderBoard } from './render/board.ts';
+import { renderSlots } from './render/slots.ts';
 import { renderParts } from './render/parts.ts';
-import { renderWires } from './render/wires.ts';
+import { renderDeviceWires, renderWires } from './render/wires.ts';
 import { renderTitle } from './render/title.ts';
 import { renderNotes } from './render/notes.ts';
+import { renderSourceListing, sourceBandSize, sourceListing } from './render/sourceListing.ts';
+import { backSideLayout, renderBackSide } from './render/backSide.ts';
 import { layoutDevices, renderDevices } from './render/devices.ts';
 import { netlistOf, resolveWires } from './wiring/wiring.ts';
 import { checkErc } from './erc/erc.ts';
 import { checkFit } from './placement/collide.ts';
+import { drawnExtent } from './placement/geometry.ts';
 import { holeStrip } from './model/board.ts';
 import { parseAddress } from './model/address.ts';
 import { offBoardReason } from './model/board.ts';
 import { fenceError, notice, safeToken } from './errors.ts';
 import { renderDocument } from './render/document.ts';
 import { renderErrorBanner, renderErrorCard } from './render/errorHtml.ts';
-import { resolveStyle } from './render/theme.ts';
+import { resolveStyle, themeForBoard } from './render/theme.ts';
 import type { Address, FenceError, ResolvedNote } from './types.ts';
 import type { Net } from 'fence-kit';
 
@@ -74,11 +78,23 @@ export function renderPerfboard(input: string): RenderResult {
   const { board, title } = parsed.doc;
   const style = resolveStyle(parsed.doc.style);
   const THEME = style.theme;
+  // 板・ランド・スロットの色は**板の性質**。板の側を描くものにだけ渡す
+  // (題や書き出しは紙の上の字なので、板の色に引きずられない)。
+  const PLATE = themeForBoard(parsed.doc.board, THEME);
   const { devices } = parsed.doc;
+
+  // 書き出し (`- source`) は板の上に置かないので、帯の分だけ画布を伸ばす。
+  // **図を組む前に測る** — 帯の大きさが決まらないと板の置き場所も決まらない。
+  const sourceNotes = parsed.doc.notes.filter((note) => note.kind === 'source');
+  const listing = sourceNotes.length > 0 ? sourceListing(source) : [];
+  // 半田面は自分の寸法を持つので、**先に測ってから**表の図に場所を空けさせる。
+  const back = style.back ? backSideLayout(board) : null;
   const layout = createLayout(board, {
     title: title !== null,
     deviceTop: devices.some((device) => device.at === 'top'),
     deviceBottom: devices.some((device) => device.at === 'bottom'),
+    source: listing.length > 0 ? sourceBandSize(listing, THEME) : null,
+    back: back === null ? null : { height: back.height },
   });
   const placedDevices = layoutDevices(devices, layout);
   const devicePins = new Map(devices.map((device) => [device.id, new Set(device.pins)]));
@@ -104,19 +120,27 @@ export function renderPerfboard(input: string): RenderResult {
   const noteErrors: FenceError[] = [];
   const notes: ResolvedNote[] = [];
   for (const note of parsed.doc.notes) {
-    const from = parseAddress(note.from);
+    // 書き出しは板の外に出すので、指し先の番地を持たない。帯は別に描く。
+    if (note.kind === 'source') continue;
+    const from = parseAddress(note.from ?? '');
     const to = note.to === null ? null : parseAddress(note.to);
     // 見るのは書かれた番地だけ (`to` を書かない印では `from` 1 つ)。
     const written = note.to === null ? [from] : [from, to];
     const offBoard = written.some((address) => address === null || offBoardReason(board, address) !== null);
     if (from === null || offBoard) {
       noteErrors.push(fenceError(
-        `注釈の番地を板に置けません: ${safeToken(note.to === null ? note.from : `${note.from} ${note.to}`)}`,
+        `注釈の番地を板に置けません: ${safeToken(note.to === null ? note.from ?? '' : `${note.from} ${note.to}`)}`,
         note.line,
       ));
       continue;
     }
     notes.push({ kind: note.kind, from, to, color: note.color, text: note.text });
+  }
+
+  // **同じ書き出しを 2 枚重ねない。** 2 つ目を書いた人には、消えたのではなく
+  // 1 つしか描かないことを言う (黙って捨てると、色を書き直したつもりが効かない)。
+  for (const extra of sourceNotes.slice(1)) {
+    noteErrors.push(notice('書き出し (source) は 1 つだけ描きます (後のものは描いていません)', extra.line));
   }
 
   const wiring = resolveWires(parsed.doc.wires, points, board, devicePins);
@@ -127,7 +151,11 @@ export function renderPerfboard(input: string): RenderResult {
   // 指摘する**ことになる。掛けなかったことは黙らずに言う。
   const hardErrors = [...parsed.errors, ...pointErrors, ...placement.errors, ...wiring.errors]
     .filter((error) => error.notice !== true);
-  const erc = hardErrors.length > 0
+  // **`erc: off` は「伏せる」ではなく「見ない」。** 書いた人が外したのだから、
+  // 外したことをこちらから言い足さない (`debug: off` との違いは文法の説明に書く)。
+  const erc = !style.check
+    ? []
+    : hardErrors.length > 0
     ? [notice('読めなかったところがあるので ERC と当たり判定は掛けていません (直すと掛かります)', null)]
     : [
       ...checkErc({
@@ -140,17 +168,86 @@ export function renderPerfboard(input: string): RenderResult {
       ...checkFit(placement.parts, layout),
     ];
 
+  // **画布からはみ出す部品ぶん、画布を広げる。** 端面実装のコネクタは板の外へ
+  // 張り出すので、板の寸法だけで画布を決めると図が黙って切れる。
+  // 配線や注釈も板の外を指せるので、部品の胴と一緒に見る。
+  const pointsOn = (on: typeof layout) => [
+    ...wiring.wires.flatMap((wire) => [on.point(wire.from), on.point(wire.to)]),
+    ...notes.flatMap((note) => (note.to === null
+      ? [on.point(note.from)]
+      : [on.point(note.from), on.point(note.to)])),
+  ];
+  const front = drawnExtent(placement.parts, layout, pointsOn(layout));
+  // **半田面も数える。** 裏返すと張り出す向きが逆になるので、表だけ見て決めると
+  // 裏の板でコネクタが切れる。
+  const behind = back === null || layout.backTop === null
+    ? null
+    : drawnExtent(placement.parts, back, pointsOn(back));
+  const shifted = behind === null || layout.backTop === null ? null : {
+    minX: behind.minX,
+    maxX: behind.maxX,
+    minY: behind.minY + layout.backTop,
+    maxY: behind.maxY + layout.backTop,
+  };
+  const extent = front === null || shifted === null
+    ? front ?? shifted
+    : {
+      minX: Math.min(front.minX, shifted.minX),
+      maxX: Math.max(front.maxX, shifted.maxX),
+      minY: Math.min(front.minY, shifted.minY),
+      maxY: Math.max(front.maxY, shifted.maxY),
+    };
+  // 線の太さと印の丸のぶんを見込む (端がちょうど画布の縁に来ると欠ける)。
+  const OVERHANG_MARGIN = 12;
+  const spillLeft = extent === null ? 0 : Math.max(0, OVERHANG_MARGIN - extent.minX);
+  const spillTop = extent === null ? 0 : Math.max(0, OVERHANG_MARGIN - extent.minY);
+  const spillRight = extent === null ? 0 : Math.max(0, extent.maxX + OVERHANG_MARGIN - layout.width);
+  const spillBottom = extent === null ? 0 : Math.max(0, extent.maxY + OVERHANG_MARGIN - layout.height);
+  const spilled = spillLeft > 0 || spillTop > 0 || spillRight > 0 || spillBottom > 0;
+
   // 配線は板の上、部品の下。線が部品の胴を隠すと、何が載っているか読めなくなる。
+  const drawn = renderTitle(title, layout, THEME)
+      + renderBoard(board, layout, PLATE, style.labels)
+      // スロット用の銅箔は板の上、配線の下。**挿す穴ではない**ので、
+      // 部品や線に隠れても困らない。
+      + renderSlots(board, layout, PLATE)
+      + renderWires(wiring.wires, layout, PLATE)
+      // 機器へつなぐ線も板の上まで引く。**どの穴へ行くのかが図に出ないと、
+      // 帯に浮いた箱と板が結び付かない。**
+      + renderDeviceWires(wiring.deviceWires, placedDevices.placed, layout, THEME)
+      + renderDevices(placedDevices.placed, THEME)
+      + renderParts(placement.parts, layout, PLATE)
+      // 注釈は一番上。**指したものが下に隠れると印の意味が無くなる。**
+      + renderNotes(notes, layout, PLATE)
+      // 書き出しは板の外の帯。図とは重ならないので、順番はどこでもよい。
+      + (layout.sourceBand === null
+        ? ''
+        : renderSourceListing(listing, layout.sourceBand, THEME, sourceNotes[0]?.color ?? null))
+      // 半田面は板のすぐ下。裏返すのは板 (列の並び) だけで、字はそのまま。
+      + (back === null || layout.backTop === null
+        ? ''
+        : renderBackSide(
+          board,
+          back,
+          { wires: wiring.wires, parts: placement.parts },
+          PLATE,
+          style.labels,
+          layout.backTop,
+        ));
+
   const svg = renderDocument(
     layout,
-    renderTitle(title, layout, THEME)
-      + renderBoard(board, layout, THEME)
-      + renderWires(wiring.wires, layout, THEME)
-      + renderDevices(placedDevices.placed, THEME)
-      + renderParts(placement.parts, layout, THEME)
-      // 注釈は一番上。**指したものが下に隠れると印の意味が無くなる。**
-      + renderNotes(notes, layout, THEME),
-    { theme: THEME, width: style.width, stamp: style.stamp },
+    spilled
+      ? element('g', { transform: `translate(${num(spillLeft)} ${num(spillTop)})` }, drawn)
+      : drawn,
+    {
+      theme: THEME,
+      width: style.width,
+      stamp: style.stamp,
+      canvas: spilled
+        ? { width: layout.width + spillLeft + spillRight, height: layout.height + spillTop + spillBottom }
+        : null,
+    },
   );
 
   // **行順に並べる。** 段ごとに集めた順のままだと、帯の打ち切り (8 件) で

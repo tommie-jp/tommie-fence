@@ -17,30 +17,36 @@ export type DocumentOptions = {
   readonly width?: number | null;
   /** 図の右下に処理系の版を刻むか。 */
   readonly stamp?: boolean;
+  /**
+   * 画布の大きさ。**書かなければ板の寸法なり**。半田面を足したときのように、
+   * 1 つの `layout` に収まらないものを並べるときだけ外から渡す。
+   */
+  readonly canvas?: { readonly width: number; readonly height: number } | null;
 };
 
 /** 刻印を板の縁からどれだけ内へ置くか。 */
 const STAMP_INSET = 4;
 
 export function renderDocument(layout: Layout, body: string, options: DocumentOptions): string {
-  const { theme, width = null, stamp = false } = options;
+  const { theme, width = null, stamp = false, canvas: given = null } = options;
+  const size = given ?? { width: layout.width, height: layout.height };
 
   // **`width` は画布の大きさだけを変える。** viewBox はそのままなので、
   // 図の中身 (番地と実寸の対応) は動かない。
-  const scale = width === null ? 1 : width / layout.width;
+  const scale = width === null ? 1 : width / size.width;
 
   // **地はいちばん下に敷く。** 地を決めたテーマ (dark / mono) は、貼った先の
   // 背景に関わらず読めなければならない — 板の外の字は地の上に乗るため。
   const canvas = theme.palette.canvas === null
     ? ''
     : element('rect', {
-      x: 0, y: 0, width: num(layout.width), height: num(layout.height), fill: theme.palette.canvas,
+      x: 0, y: 0, width: num(size.width), height: num(size.height), fill: theme.palette.canvas,
     });
 
   const stamped = stamp
     ? svgText(
       layout.board.x + layout.board.width - STAMP_INSET,
-      layout.height - STAMP_INSET,
+      size.height - STAMP_INSET,
       `perfboard-fence ${VERSION}`,
       { anchor: 'end', fill: theme.palette.label, 'font-size': num(theme.metrics.textSize) },
     )
@@ -50,9 +56,9 @@ export function renderDocument(layout: Layout, body: string, options: DocumentOp
     'svg',
     {
       xmlns: 'http://www.w3.org/2000/svg',
-      viewBox: `0 0 ${num(layout.width)} ${num(layout.height)}`,
-      width: num(layout.width * scale),
-      height: num(layout.height * scale),
+      viewBox: `0 0 ${num(size.width)} ${num(size.height)}`,
+      width: num(size.width * scale),
+      height: num(size.height * scale),
       'data-perfboard-fence': VERSION,
       role: 'img',
     },

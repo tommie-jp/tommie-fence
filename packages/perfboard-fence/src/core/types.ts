@@ -33,10 +33,26 @@ export type Address = { readonly row: number; readonly col: number };
 export type BoardSize = { readonly cols: number; readonly rows: number };
 
 /**
- * 板。**大きさしか持たない**のが breadboard との違いで、あちらは
- * ストリップ (列の 5 穴の導通) と電源レールを持つ。
+ * 板。**導通を持たない**のが breadboard との違いで、あちらはストリップ
+ * (列の 5 穴の導通) と電源レールを持つ。ここにあるのは大きさと、
+ * 図に描くだけのもの (スロット用の銅箔) だけ。
  */
-export type Board = BoardSize;
+export type Board = BoardSize & {
+  /**
+   * 短いほうの両端にスロット用の銅箔を描くか。**既定は描かない。**
+   * 穴ではないので挿せず、ネットにもネットリストにも出ない。
+   */
+  readonly slots: boolean;
+  /**
+   * 板 (レジスト) の色。**既定は緑。** 書かれていなければテーマが決める。
+   * 板の色は実物の性質なので、テーマ (図の配色) ではなくここに持つ。
+   */
+  readonly color: string | null;
+  /** 穴の銅箔 (ランド) の色。**既定は銀** (はんだメッキ)。 */
+  readonly land: string | null;
+  /** スロットの銅箔の色。**既定はランドと同じ** (同じめっきなので)。 */
+  readonly slotColor: string | null;
+};
 
 /**
  * 導通グループの名前。ユニバーサル基板では穴 1 つが 1 グループになる
@@ -90,19 +106,29 @@ export type DeviceSpec = {
   readonly line: number | null;
 };
 
+/**
+ * 注釈の種類。**`source` だけは板の上に置かない** — フェンスの中身を丸ごと
+ * 書き出すものなので、板に重ねると穴も部品も読めなくなる。図の下に帯を持つ。
+ */
+export type NoteKind = 'mark' | 'box' | 'arrow' | 'text' | 'source';
+
+/** 板の上に置く注釈の種類。指し先の番地を必ず持つ。 */
+export type OnBoardNoteKind = Exclude<NoteKind, 'source'>;
+
 /** 書かれたままの注釈 1 つ。 */
 export type NoteSpec = {
-  readonly kind: 'mark' | 'box' | 'arrow' | 'text';
-  readonly from: string;
+  readonly kind: NoteKind;
+  /** 指し先の番地。**`source` は板の外に出すので null**。 */
+  readonly from: string | null;
   readonly to: string | null;
   readonly color: string | null;
   readonly text: string | null;
   readonly line: number | null;
 };
 
-/** 番地に直した注釈。 */
+/** 番地に直した注釈。板の上に置くものだけがここへ来る。 */
 export type ResolvedNote = {
-  readonly kind: NoteSpec['kind'];
+  readonly kind: OnBoardNoteKind;
   readonly from: Address;
   readonly to: Address | null;
   readonly color: string | null;
@@ -120,6 +146,31 @@ export type StyleSpec = {
   readonly debug: boolean | null;
   /** 図の右下に処理系の版を刻むか。 */
   readonly stamp: boolean | null;
+  /**
+   * ERC と当たり判定を掛けるか。**既定は掛ける。**
+   * `debug: off` が「見つけたものを伏せる」のに対し、これは**そもそも見ない**。
+   */
+  readonly check: boolean | null;
+  /** 板の外に出す名前の付け方。書かれた項目だけを持つ。 */
+  readonly labels: LabelSpec | null;
+  /** 半田面 (裏返した板) も描くか。**既定は描かない。** */
+  readonly back: boolean | null;
+};
+
+/** 軸の名前を英字で振るか、数字で振るか。 */
+export type LabelKind = 'alpha' | 'numeric';
+
+/** 英字の大小。 */
+export type LabelCase = 'upper' | 'lower';
+
+/**
+ * 板の外の名前の付け方。**印字だけを変える** — 番地 (`b3`) は行が英字・
+ * 列が数字のまま動かない。手元の板のシルクに寄せるためのもの。
+ */
+export type LabelSpec = {
+  readonly row: LabelKind | null;
+  readonly col: LabelKind | null;
+  readonly case: LabelCase | null;
 };
 
 /** `points:` の 1 行。**行番号を落とさない** — 落とすと報告が行を指せなくなる。 */

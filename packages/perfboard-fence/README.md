@@ -38,10 +38,11 @@ wires:
 - What it derives is the **netlist** and the **errors**. Every hole on a
   perfboard is independent, so a missing connection is silent in the picture.
   That is what the ERC watches — it names an unconnected pin, with the line it
-  was written on
+  was written on. For a drawing of part of a circuit, `style: check: off` turns
+  the checks off (they are on by default)
 - Things that do not sit on the board — a battery, a speaker — are written as a
-  `device` and drawn in a band beside it. They join the netlist, but no wire is
-  drawn onto the board (a line there would suggest a hole to solder into)
+  `device` and drawn in a band beside it, **with a line from the pin to the hole**
+  (without it, the box in the band and the board never join up)
 
 ## How it differs from its siblings
 
@@ -76,12 +77,19 @@ and the content of the offending line.
 | **Three-lead parts, DIP, SIP** | works |
 | **Things off the board** (`device`: batteries, speakers…) | works |
 | **Annotations** (`notes:`: rings, boxes, arrows, text) | works |
+| **Writing the fence into the drawing** (`notes: - source`) | works |
 | **Theme and width** (`style:`: `light` / `dark` / `mono`) | works |
+| **Turning the ERC off** (`style: check: off`; on by default) | works |
+| **The solder side** (`style: back: on`; off by default) | works |
+| **Axis labels** (`style: labels:`: letters/digits, upper/lower) | works |
+| **Slot copper** (`board: slots: on`; off by default) | works |
+| **Board and pad colours** (`board: color:` / `land:`; green and silver) | works |
 
 A board is written as a **hole count** or as a **name**. The count is columns by
 rows — the order the board itself is sold in (`72×47mm` is long side by short
-side). The names are `akizuki-b`, `akizuki-c` and `akizuki-d`, and writing the
-physical size (`72x47mm`, `7.2x4.7cm`) picks the same board.
+side). The names are `akizuki-a`, `akizuki-b`, `akizuki-c` and
+`akizuki-d`, and writing the physical size (`72x47mm`, `7.2x4.7cm`) picks the
+same board.
 
 **Hole counts are never computed from millimetres.** The border varies from
 board to board and from edge to edge, with the mounting holes sitting in it, so

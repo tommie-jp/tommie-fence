@@ -21,19 +21,20 @@ describe('renderBoard', () => {
   });
 
   test('names every row down the left and every column across the top', () => {
-    for (const label of ['a', 'b', 'c', 'd']) {
+    // 英字は**大文字が既定**。板のシルク (秋月 C タイプの A・E・J・O) に合わせている。
+    for (const label of ['A', 'B', 'C', 'D']) {
       expect(svg).toContain(`>${label}</text>`);
     }
     for (const label of ['1', '2', '3', '4', '5', '6']) {
       expect(svg).toContain(`>${label}</text>`);
     }
-    expect(svg).not.toContain('>e</text>');
+    expect(svg).not.toContain('>E</text>');
     expect(svg).not.toContain('>7</text>');
   });
 
   test('puts the row label to the left of the first hole, on its line', () => {
     const y = layout.rowY(2);
-    expect(svg).toMatch(new RegExp(`<text x="[0-9.]+" y="[0-9.]*${y}[0-9.]*"[^>]*>b</text>`));
+    expect(svg).toMatch(new RegExp(`<text x="[0-9.]+" y="[0-9.]*${y}[0-9.]*"[^>]*>B</text>`));
   });
 
   test('leaves the hole the size the theme says', () => {
@@ -54,8 +55,17 @@ describe('renderBoard', () => {
     const tall = createBoard({ cols: 2, rows: 28 });
     const drawn = renderBoard(tall, createLayout(tall), THEME);
 
-    expect(drawn).toContain('>z</text>');
-    expect(drawn).toContain('>aa</text>');
-    expect(drawn).toContain('>ab</text>');
+    expect(drawn).toContain('>Z</text>');
+    expect(drawn).toContain('>AA</text>');
+    expect(drawn).toContain('>AB</text>');
+  });
+
+  test('takes the kind of name each axis was given, and the case of the letters', () => {
+    // 手元の板のシルクに寄せるためのもの。**番地は変わらない** (`b3` のまま)。
+    const drawn = renderBoard(board, layout, THEME, { row: 'numeric', col: 'alpha', case: 'lower' });
+
+    expect(drawn).toContain('>2</text>');
+    expect(drawn).toContain('>c</text>');
+    expect(drawn).not.toContain('>B</text>');
   });
 });

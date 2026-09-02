@@ -1,6 +1,6 @@
 import { fenceError, safeToken } from '../errors.ts';
-import { STYLE_RANGES, THEME_NAMES } from '../limits.ts';
-import type { FenceError, StyleSpec, ThemeName } from '../types.ts';
+import { LABEL_CASES, LABEL_KINDS, STYLE_RANGES, THEME_NAMES } from '../limits.ts';
+import type { FenceError, LabelSpec, StyleSpec, ThemeName } from '../types.ts';
 
 /**
  * `style:` を読む。**書かれた項目だけを持つ** — 書かれなかったものは null で、
@@ -16,9 +16,17 @@ export const EMPTY_STYLE: StyleSpec = {
   width: null,
   debug: null,
   stamp: null,
+  check: null,
+  labels: null,
+  back: null,
 };
 
-const KEYS = ['theme', 'width', 'debug', 'stamp'] as const;
+const KEYS = ['theme', 'width', 'debug', 'stamp', 'check', 'labels', 'back'] as const;
+
+/** `labels:` に書ける項目。書かれなかった軸は null のままで、既定が埋める。 */
+const LABEL_KEYS = ['row', 'col', 'case'] as const;
+
+const EMPTY_LABELS: LabelSpec = { row: null, col: null, case: null };
 
 type Reader = (value: unknown) => { value: unknown } | { problem: string };
 
@@ -50,11 +58,41 @@ const asFlag = (key: string): Reader => (value) => {
   return word === undefined ? { problem: `${key} は on か off で書きます` } : { value: word };
 };
 
+/**
+ * `labels:` を読む。**印字だけの話で、番地は変わらない** — 行が英字・列が数字と
+ * いう番地の形は動かないので、ここで書けるのは板の外に出す名前の付け方だけ。
+ */
+const asLabels: Reader = (value) => {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return { problem: `labels: は ${LABEL_KEYS.join(' / ')} の並びで書きます` };
+  }
+  const entries = value as Record<string, unknown>;
+  const labels: Record<string, unknown> = { ...EMPTY_LABELS };
+
+  for (const key of Object.keys(entries)) {
+    if (!(LABEL_KEYS as readonly string[]).includes(key)) {
+      return { problem: `知らない labels の項目です: ${safeToken(key)} (${LABEL_KEYS.join(' / ')})` };
+    }
+    const written = entries[key];
+    const allowed: readonly string[] = key === 'case' ? LABEL_CASES : LABEL_KINDS;
+    if (typeof written !== 'string' || !allowed.includes(written)) {
+      return {
+        problem: `labels の ${key} は ${allowed.join(' / ')} で書きます: ${safeToken(String(written))}`,
+      };
+    }
+    labels[key] = written;
+  }
+  return { value: labels as LabelSpec };
+};
+
 const READERS: Record<string, Reader> = {
   theme: asTheme,
   width: asWidth,
   debug: asFlag('debug'),
   stamp: asFlag('stamp'),
+  check: asFlag('check'),
+  labels: asLabels,
+  back: asFlag('back'),
 };
 
 export type StyleResult = { readonly style: StyleSpec; readonly errors: readonly FenceError[] };

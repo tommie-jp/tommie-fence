@@ -1,4 +1,4 @@
-import { wireColorNames } from 'fence-kit';
+import { colorHint, isColor } from '../color.ts';
 import { fenceError, safeToken } from '../errors.ts';
 import type { Parsed } from './parts.ts';
 
@@ -27,12 +27,9 @@ export function parseWireLine(line: string): Parsed<WrittenWire> {
   if (color === undefined) return { ok: true, value: { from, to, color: null } };
 
   // **知らない色を素通ししない。** 色は stroke 属性へ流れるので、
-  // 持っている名前だけを通す関門をここに置く。
-  if (!wireColorNames().includes(color.toLowerCase())) {
-    return fail(
-      `知らない配線の色です: ${safeToken(color)} (${wireColorNames().slice(0, 6).join(' / ')} など)`,
-      color,
-    );
+  // 持っている名前か `#RRGGBB` の綴りだけを通す関門をここに置く。
+  if (!isColor(color)) {
+    return fail(`知らない配線の色です: ${safeToken(color)} (${colorHint()})`, color);
   }
   return { ok: true, value: { from, to, color: color.toLowerCase() } };
 }

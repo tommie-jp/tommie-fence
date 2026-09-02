@@ -17,6 +17,8 @@ wires:
   - VCC -- b3 red
   - b6 -- b9 orange
   - b11 -- GND black
+notes:
+  - source blue
 ```
 
 ![図01 配線](out/03-wires-1.svg)
@@ -50,6 +52,8 @@ wires:
   - VCC -- b3 red
   - b6 -- h10 blue
   - h10 -- GND black
+notes:
+  - source blue
 ```
 
 ![図02 斜めの配線](out/03-wires-2.svg)

@@ -1,4 +1,5 @@
-import { element, fit, num, svgText, wireColor } from 'fence-kit';
+import { element, fit, num, svgText } from 'fence-kit';
+import { colorValue } from '../color.ts';
 import type { Layout } from '../model/layout.ts';
 import type { ResolvedNote } from '../types.ts';
 import type { Theme } from './theme.ts';
@@ -17,7 +18,7 @@ const STROKE = 2;
 const TEXT_RISE = 12;
 
 const colorOf = (note: ResolvedNote, theme: Theme): string =>
-  (note.color === null ? null : wireColor(note.color)) ?? theme.palette.caption;
+  (note.color === null ? null : colorValue(note.color)) ?? theme.palette.plateText;
 
 /**
  * 字をどちら向きに伸ばすと一番多く入るか。**盤の端に置いた注釈が 1 字に

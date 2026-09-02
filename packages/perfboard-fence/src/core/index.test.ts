@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { renderPerfboard } from './index.ts';
+import { THEME } from './render/theme.ts';
 
 describe('renderPerfboard', () => {
   test('returns a card instead of a drawing when the fence is empty', () => {
@@ -299,7 +300,7 @@ describe('renderPerfboard', () => {
     const dark = renderPerfboard('board: 10x6\nstyle: dark\n');
 
     expect(dark.errors).toEqual([]);
-    expect(dark.svg).toContain('#2f3a33');
+    expect(dark.svg).toContain('#1c4a31');
   });
 
   test('takes style as a mapping too', () => {
@@ -445,5 +446,143 @@ describe('style: の報告の行', () => {
   test('reads on and off, which yaml itself hands over as text', () => {
     expect(renderPerfboard('board: 10x6\nstyle:\n  stamp: on\n').errors).toEqual([]);
     expect(renderPerfboard('board: 10x6\nstyle:\n  stamp: on\n').svg).toContain('perfboard-fence 0');
+  });
+});
+
+describe('書き出し (notes: - source)', () => {
+  const fence = 'board: 12x7\nparts:\n  R1: resistor b3 b6 1k\nwires:\n  - b3 -- b6\nnotes:\n  - source blue\n';
+
+  test('writes the fence itself into the drawing, so it can be copied back', () => {
+    const result = renderPerfboard(fence);
+
+    expect(result.svg).toContain('R1: resistor b3 b6 1k');
+    expect(result.svg).toContain('```perfboard');
+    expect(result.errors).toEqual([]);
+  });
+
+  test('makes the drawing taller than the same fence without it', () => {
+    const withSource = renderPerfboard(fence);
+    const without = renderPerfboard(fence.replace('notes:\n  - source blue\n', ''));
+
+    expect(withSource.svg.length).toBeGreaterThan(without.svg.length);
+  });
+
+  test('is not part of the circuit — it changes no net', () => {
+    const withSource = renderPerfboard(fence);
+    const without = renderPerfboard(fence.replace('notes:\n  - source blue\n', ''));
+
+    expect(withSource.netlist).toEqual(without.netlist);
+  });
+
+  test('says so when a second one is written, rather than stacking the same listing twice', () => {
+    const result = renderPerfboard(`${fence}  - source\n`);
+
+    expect(result.notices.some((one) => one.message.includes('書き出し'))).toBe(true);
+  });
+});
+
+describe('ERC の切り替え (style: check)', () => {
+  // どこにもつながっていない抵抗。既定では ERC がこれを名指す。
+  const loose = 'board: 12x7\nparts:\n  R1: resistor b3 b6 1k\n';
+
+  test('runs by default, so a missing connection is not silent', () => {
+    const result = renderPerfboard(loose);
+
+    expect(result.notices.some((one) => one.message.includes('つながっていません'))).toBe(true);
+  });
+
+  test('stops checking when it is turned off, rather than only hiding what it found', () => {
+    const result = renderPerfboard(`style:\n  check: off\n${loose}`);
+
+    expect(result.notices).toEqual([]);
+    expect(result.svg).toContain('<svg');
+  });
+
+  test('draws exactly the same picture either way — the switch is about what is said', () => {
+    const on = renderPerfboard(`style:\n  check: on\n${loose}`);
+    const off = renderPerfboard(`style:\n  check: off\n${loose}`);
+
+    expect(off.svg).toBe(on.svg);
+  });
+
+  test('keeps reporting what could not be read, which is not the ERC talking', () => {
+    const result = renderPerfboard(`style:\n  check: off\nboard: 12x7\nparts:\n  R1: resistor zz9 b6 1k\n`);
+
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+});
+
+describe('半田面 (style: back)', () => {
+  const fence = 'board: 12x7\nparts:\n  R1: resistor b3 b6 1k\nwires:\n  - b3 -- b6\n';
+
+  // 板そのものは縁の色で数える (部品の胴も角丸の矩形なので、形では見分けられない)。
+  // 板そのものは縁の色で数える (部品の胴も角丸の矩形なので、形では見分けられない)。
+  const plates = (svg: string): number => svg.match(new RegExp(`stroke="${THEME.palette.plateEdge}"`, 'g'))?.length ?? 0;
+
+  test('is not drawn unless it was asked for', () => {
+    const result = renderPerfboard(fence);
+
+    expect(result.svg).not.toContain('半田面');
+    expect(plates(result.svg)).toBe(1);
+  });
+
+  test('adds a second board under the first, named so it cannot be mistaken', () => {
+    const result = renderPerfboard(`style:\n  back: on\n${fence}`);
+
+    expect(result.svg).toContain('半田面');
+    expect(plates(result.svg)).toBe(2);
+    expect(result.errors).toEqual([]);
+  });
+
+  test('turns the columns over, so column 1 comes out on the right', () => {
+    const result = renderPerfboard(`style:\n  back: on\nboard: 4x2\n`);
+    const [, panel = ''] = result.svg.split('<g transform="translate(0 ');
+    const columns = [...panel.matchAll(/<text x="([0-9.]+)"[^>]*>([1-4])<\/text>/g)]
+      .map(([, x = '0', label = '']) => ({ x: Number(x), label }));
+
+    expect(columns.length).toBe(4);
+    expect(columns.find((one) => one.label === '1')?.x)
+      .toBeGreaterThan(columns.find((one) => one.label === '4')?.x ?? 0);
+  });
+
+  test('makes the canvas taller, so the second board is not cut off', () => {
+    const plain = renderPerfboard(fence);
+    const withBack = renderPerfboard(`style:\n  back: on\n${fence}`);
+    const heightOf = (svg: string): number => Number(/viewBox="0 0 [0-9.]+ ([0-9.]+)/.exec(svg)?.[1] ?? 0);
+
+    expect(heightOf(withBack.svg)).toBeGreaterThan(heightOf(plain.svg) * 1.8);
+  });
+
+  test('changes nothing about the circuit — the netlist is the same', () => {
+    const plain = renderPerfboard(fence);
+    const withBack = renderPerfboard(`style:\n  back: on\n${fence}`);
+
+    expect(withBack.netlist).toEqual(plain.netlist);
+  });
+});
+
+describe('板の外の番地', () => {
+  test('wires to the slot copper, which sits one step outside the holes', () => {
+    // 縁の銅箔は `0` 列。**電気的につながる**ので、ネットにもそう出る。
+    const result = renderPerfboard(
+      'board:\n  size: 12x7\n  slots: on\nparts:\n  R1: resistor c3 c6 1k\nwires:\n  - c3 -- c0\n  - c6 -- g6\n',
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.netlist.some((net) => net.refs.includes('R1.1'))).toBe(true);
+  });
+
+  test('grows the canvas so what is outside the board is not cut off', () => {
+    const inside = renderPerfboard('board: 12x7\nparts:\n  R1: resistor c3 c6 1k\nwires:\n  - c3 -- a3\n');
+    const outside = renderPerfboard('board: 12x7\nparts:\n  R1: resistor c3 c6 1k\nwires:\n  - c3 -- c-2\n');
+    const widthOf = (svg: string): number => Number(/viewBox="0 0 ([0-9.]+)/.exec(svg)?.[1] ?? 0);
+
+    expect(widthOf(outside.svg)).toBeGreaterThan(widthOf(inside.svg));
+  });
+
+  test('refuses an address far away from the board, which would stretch the canvas', () => {
+    const result = renderPerfboard('board: 12x7\nwires:\n  - c3 -- c-40\n');
+
+    expect(result.errors[0]?.message).toContain('離れすぎ');
   });
 });

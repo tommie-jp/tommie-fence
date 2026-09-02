@@ -9,7 +9,32 @@ import { boardNames, describeBoard, lookupBoard, nearestBoard, parseMillimetres 
 // (報告も表も `25×15` と書くので、読めないと食い違う)。
 const SIZE = /^\s*([0-9]+)\s*[xX×]\s*([0-9]+)\s*$/;
 
-export const createBoard = (size: BoardSize): Board => ({ cols: size.cols, rows: size.rows });
+/** 板の仕上げ。書かれていないものは null で、テーマの既定 (緑と銀) が出る。 */
+export type BoardFinish = {
+  readonly slots?: boolean;
+  readonly color?: string | null;
+  readonly land?: string | null;
+  readonly slotColor?: string | null;
+};
+
+export const createBoard = (size: BoardSize, finish: BoardFinish = {}): Board => ({
+  cols: size.cols,
+  rows: size.rows,
+  slots: finish.slots ?? false,
+  color: finish.color ?? null,
+  land: finish.land ?? null,
+  slotColor: finish.slotColor ?? null,
+});
+
+/**
+ * スロット用の銅箔を並べる辺。**短いほうの両端**で、列が多ければ左右
+ * (`sides`)、行が多ければ上下 (`ends`)。銅箔が無ければ null。
+ *
+ * **場所を決めるのはここ 1 か所。** 寸法 (`createLayout`) と描画
+ * (`render/slots.ts`) が別々に決めると、板の余白と銅箔の位置が食い違う。
+ */
+export const slotEdges = (board: Board): 'sides' | 'ends' | null =>
+  !board.slots ? null : board.cols >= board.rows ? 'sides' : 'ends';
 
 /**
  * `board:` の値。読めたときは板と、名前で書かれたならその板、
@@ -87,21 +112,38 @@ export function resolveBoard(text: string): BoardResolution {
 }
 
 /**
- * 番地がこの板に無い理由。載るなら null。
+ * 板の外へ出てよい距離 (穴の数)。**縁の銅箔 (1 つ外) と、そこへ寄せる足**が
+ * 書ければ足りる。無制限にすると、番地 1 つで画布をいくらでも伸ばせる
+ * (`cols` / `rows` に上限を置いたのと同じ理由)。
+ */
+export const OFF_BOARD_REACH = 4;
+
+/**
+ * 番地がこの板から離れすぎている理由。置けるなら null。
+ *
+ * **板の外は指せる。** 縁の銅箔 (スロット) は穴の格子のちょうど 1 つ外に
+ * 並んでいるし、端面実装のコネクタは板から張り出す。指せないと、
+ * それらへ配線を引けない。ただし**離れすぎは断る** (上の `OFF_BOARD_REACH`)。
+ *
  * **報告する側はこれをそのまま出す**: 行が足りないのか列が足りないのかで
  * 直す手が違うので、どちらなのかを言い分けないと手がかりにならない。
  */
 export function offBoardReason(board: Board, address: Address): string | null {
-  if (address.col > board.cols) {
-    return `${formatAddress(address)} は板の外です (1〜${board.cols} 列)`;
+  const reach = OFF_BOARD_REACH;
+  if (address.col > board.cols + reach || address.col < 1 - reach) {
+    return `${formatAddress(address)} は板から離れすぎです`
+      + ` (板は 1〜${board.cols} 列、外は ${reach} つ先まで)`;
   }
-  if (address.row > board.rows) {
-    return `${formatAddress(address)} は板の外です (a〜${rowLabel(board.rows)} の ${board.rows} 行)`;
+  if (address.row > board.rows + reach || address.row < 1 - reach) {
+    return `${formatAddress(address)} は板から離れすぎです`
+      + ` (板は a〜${rowLabel(board.rows)} の ${board.rows} 行、外は ${reach} つ先まで)`;
   }
   return null;
 }
 
-export const isOnBoard = (board: Board, address: Address): boolean => offBoardReason(board, address) === null;
+/** 板の穴の上か。**板の外の番地は穴ではない** — 縁の銅箔や、板から張り出す先。 */
+export const isOnBoard = (board: Board, address: Address): boolean =>
+  address.col >= 1 && address.col <= board.cols && address.row >= 1 && address.row <= board.rows;
 
 /**
  * 番地が属する導通グループ。**ユニバーサル基板は全穴が独立している**ので、

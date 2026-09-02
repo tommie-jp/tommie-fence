@@ -57,3 +57,49 @@ describe('parseNoteLine', () => {
     expect(parseNoteLine('   ').ok).toBe(false);
   });
 });
+
+describe('source', () => {
+  test('reads a bare source, which takes no hole at all', () => {
+    expect(parseNoteLine('source')).toEqual({
+      ok: true,
+      value: { kind: 'source', from: null, to: null, color: null, text: null },
+    });
+  });
+
+  test('takes a colour, since it has no words to confuse it with', () => {
+    expect(parseNoteLine('source blue').ok && parseNoteLine('source blue')).toMatchObject({
+      value: { kind: 'source', color: 'blue' },
+    });
+  });
+
+  test('refuses a hole, so nobody writes one expecting it to move', () => {
+    const result = parseNoteLine('source b3');
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).toContain('b3');
+  });
+
+  test('refuses a colour it cannot draw', () => {
+    expect(parseNoteLine('source chartreuse').ok).toBe(false);
+  });
+});
+
+describe('source の断り方 (レビューで出た穴)', () => {
+  test('says it is a colour it does not know, not that a hole was written', () => {
+    const result = parseNoteLine('source chartreuse');
+
+    expect(!result.ok && result.error.message).toContain('知らない色');
+  });
+
+  test('says a hole cannot be written when one was', () => {
+    const result = parseNoteLine('source b3');
+
+    expect(!result.ok && result.error.message).toContain('番地は書けません');
+  });
+
+  test('quotes the spelling as it was written, so the caret lands on it', () => {
+    const result = parseNoteLine('source B3');
+
+    expect(!result.ok && result.error.message).toContain('B3');
+  });
+});

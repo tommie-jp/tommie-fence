@@ -4,6 +4,7 @@ import { renderParts } from './parts.ts';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
 import { parseAddress } from '../model/address.ts';
+import { placeParts } from '../placement/place.ts';
 import type { PlacedPart } from '../types.ts';
 
 const board = createBoard({ cols: 10, rows: 6 });
@@ -110,5 +111,77 @@ describe('renderParts', () => {
       expect(band.x).toBeGreaterThanOrEqual(shell.x);
       expect(band.right).toBeLessThanOrEqual(shell.right);
     }
+  });
+});
+
+describe('SMA コネクタ', () => {
+  const sma = (variant: string | null) => placeParts(
+    [{ id: 'J1', type: 'sma', variant, holes: ['c4', 'c6'], value: null, written: 'sma c4 c6', line: 1 }],
+    board,
+  ).parts;
+
+  test('draws a pin in the middle of a male one and a socket in a female one', () => {
+    const male = renderParts(sma('male'), layout, THEME);
+    const female = renderParts(sma('female'), layout, THEME);
+
+    // 合う相手を取り違えないように、姿で描き分ける。
+    expect(male).not.toBe(female);
+    expect(male).toContain('#d8b64a');
+    expect(female).toContain('#2b2f33');
+  });
+
+  test('keeps the body the same size however far apart the legs are', () => {
+    // 金物なので、足を広げても胴は伸びない (玉の部品と同じ扱い)。
+    const near = renderParts(sma('female'), layout, THEME);
+    const far = renderParts(
+      placeParts(
+        [{ id: 'J1', type: 'sma', variant: 'female', holes: ['c4', 'c9'], value: null, written: 'sma c4 c9', line: 1 }],
+        board,
+      ).parts,
+      layout,
+      THEME,
+    );
+    const widthOf = (svg: string): string => /<rect x="[-0-9.]+" y="[-0-9.]+" width="([0-9.]+)"/.exec(svg)?.[1] ?? '';
+
+    expect(widthOf(far)).toBe(widthOf(near));
+  });
+});
+
+describe('SMA の横置き (端面実装)', () => {
+  const edge = (variant: string) => placeParts(
+    [{ id: 'J1', type: 'sma', variant, holes: ['c4', 'c2'], value: null, written: `sma/${variant} c4 c2`, line: 1 }],
+    board,
+  ).parts;
+
+  test('reaches past the GND leg, which is the end that sits at the board edge', () => {
+    const svg = renderParts(edge('female-edge'), layout, THEME);
+    const body = /<g transform="translate\(([-0-9.]+) /.exec(svg);
+    const gnd = layout.point(parseAddress('c2')!);
+    const centre = layout.point(parseAddress('c4')!);
+
+    // 胴の中心は GND (c2) より外側 — 中心導体 (c4) から見て向こう側にある。
+    expect(Number(body?.[1])).toBeLessThan(gnd.x);
+    expect(gnd.x).toBeLessThan(centre.x);
+  });
+
+  test('draws threads, which the upright form has none of', () => {
+    const flat = renderParts(edge('female-edge'), layout, THEME);
+    const upright = renderParts(
+      placeParts(
+        [{ id: 'J1', type: 'sma', variant: 'female', holes: ['c4', 'c2'], value: null, written: 'sma c4 c2', line: 1 }],
+        board,
+      ).parts,
+      layout,
+      THEME,
+    );
+
+    expect((flat.match(/<line /g) ?? []).length).toBeGreaterThan((upright.match(/<line /g) ?? []).length);
+  });
+
+  test('keeps the caption over the legs, not over the body that hangs off the board', () => {
+    const svg = renderParts(edge('male-edge'), layout, THEME);
+    const label = /<text x="([0-9.]+)"[^>]*>J1<\/text>/.exec(svg);
+
+    expect(Number(label?.[1])).toBe((layout.point(parseAddress('c4')!).x + layout.point(parseAddress('c2')!).x) / 2);
   });
 });

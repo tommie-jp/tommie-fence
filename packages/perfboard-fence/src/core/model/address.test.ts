@@ -47,7 +47,8 @@ describe('parseAddress', () => {
   });
 
   test('refuses what is not an address', () => {
-    for (const text of ['3b', 'b', '3', 'b0', 'b-1', 'b 3', '', 'b3c', '+t5']) {
+    // `b0` `b-1` は**板の外の番地**として読めるようになった (下の describe を見る)。
+    for (const text of ['3b', 'b', '3', 'b 3', '', 'b3c', '+t5', '-3b']) {
       expect(parseAddress(text)).toBeNull();
     }
   });
@@ -84,9 +85,55 @@ describe('bounds', () => {
   });
 
   test('formats a row label in bounded time, whatever it is given', () => {
+    // 桁あふれで `while` が終わらなくなった件の見張り。0 と負は板の外の行として読む。
     expect(rowLabel(Number.POSITIVE_INFINITY)).toBe('');
+    expect(rowLabel(Number.NEGATIVE_INFINITY)).toBe('');
     expect(rowLabel(Number.NaN)).toBe('');
-    expect(rowLabel(0)).toBe('');
-    expect(rowLabel(-1)).toBe('');
+    expect(rowLabel(0)).toBe('0');
+    expect(rowLabel(-1)).toBe('-a');
+  });
+});
+
+describe('板の外の番地', () => {
+  test('reads a column at or left of the first one', () => {
+    // 板の外を指せないと、縁の銅箔やコネクタの張り出す先を書けない。
+    expect(parseAddress('a0')).toEqual({ row: 1, col: 0 });
+    expect(parseAddress('a-1')).toEqual({ row: 1, col: -1 });
+    expect(parseAddress('b-12')).toEqual({ row: 2, col: -12 });
+  });
+
+  test('reads a row at or above the first one, written with a minus', () => {
+    expect(parseAddress('01')).toEqual({ row: 0, col: 1 });
+    expect(parseAddress('-a1')).toEqual({ row: -1, col: 1 });
+    expect(parseAddress('-b2')).toEqual({ row: -2, col: 2 });
+  });
+
+  test('reads both sides at once, the way the examples are written', () => {
+    expect(parseAddress('00')).toEqual({ row: 0, col: 0 });
+    expect(parseAddress('0-3')).toEqual({ row: 0, col: -3 });
+    expect(parseAddress('-B-2')).toEqual({ row: -2, col: -2 });
+  });
+
+  test('writes those addresses back the way they were written', () => {
+    for (const written of ['a-1', '00', '0-3', '-a1', '-b-2', 'b3']) {
+      expect(formatAddress(parseAddress(written)!)).toBe(written);
+    }
+  });
+
+  test('refuses a spelling that is not a row and a column', () => {
+    // `-12` は行が読めない (行は英字か 0)。読めない綴りを通すと、
+    // どこを指しているのか書いた人にも読む人にも決まらない。
+    for (const bad of ['-12', '--a1', 'a--1', '-', '0', 'a', '1', 'a1-']) {
+      expect(parseAddress(bad)).toBeNull();
+    }
+  });
+
+  test('keeps the counting continuous across zero', () => {
+    // …-B(-2) -A(-1) 0 A(1) B(2)… と、間を空けずに並ぶ。
+    expect(rowIndex('-a')).toBe(-1);
+    expect(rowIndex('0')).toBe(0);
+    expect(rowLabel(0)).toBe('0');
+    expect(rowLabel(-1)).toBe('-a');
+    expect(rowLabel(-27)).toBe('-aa');
   });
 });

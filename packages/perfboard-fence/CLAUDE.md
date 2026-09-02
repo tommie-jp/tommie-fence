@@ -8,7 +8,9 @@ Markdown の ` ```perfboard ` フェンスをユニバーサル基板の実体�
 
 **Phase 6 とその先の 4 つまで。** 2 本足・3 本足・DIP・SIP を置き、板の外の
 機器 (`device`) につなぎ、注釈 (`notes:`) を付け、テーマと幅 (`style:`) を
-選べる。板は穴数でも名前 (`akizuki-c`) でも書ける。
+選べる。板は穴数でも名前 (`akizuki-c`) でも書ける。注釈には**書き出し**
+(`- source`。フェンスの中身を図の下に写す) があり、ERC は `style: check: off`
+で外せる (**既定は掛ける**)。
 文法は [docs/01-syntax.md](docs/01-syntax.md)、例は [examples/](examples/README.md)。
 フェーズ分けと、何をどこから持ってくるかの実測は
 `~/52-tommie-fence/docs/05-perfboard-fenceの起こし方.md` にある (private)。

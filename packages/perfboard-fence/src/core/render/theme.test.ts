@@ -52,12 +52,12 @@ describe('resolveStyle', () => {
     expect(resolveStyle(written).theme).toBe(THEME);
   });
 
-  test('says notices by default, and stamps nothing', () => {
-    expect(resolveStyle(EMPTY_STYLE)).toMatchObject({ debug: true, stamp: false, width: null });
+  test('says notices by default, checks by default, and stamps nothing', () => {
+    expect(resolveStyle(EMPTY_STYLE)).toMatchObject({ debug: true, stamp: false, check: true, width: null });
   });
 
   test('takes what was written', () => {
-    expect(resolveStyle({ theme: 'mono', width: 800, debug: false, stamp: true }))
-      .toMatchObject({ width: 800, debug: false, stamp: true });
+    expect(resolveStyle({ theme: 'mono', width: 800, debug: false, stamp: true, check: false, labels: null, back: null }))
+      .toMatchObject({ width: 800, debug: false, stamp: true, check: false });
   });
 });

@@ -56,3 +56,55 @@ describe('parseStyle', () => {
     expect(parseStyle(42, 1).errors.length).toBe(1);
   });
 });
+
+describe('check', () => {
+  test('is not written unless it was written, so the default lives in one place', () => {
+    expect(parseStyle({ theme: 'dark' }, 1).style.check).toBeNull();
+  });
+
+  test('reads on and off, the way debug does', () => {
+    expect(parseStyle({ check: 'off' }, 1)).toMatchObject({ style: { check: false }, errors: [] });
+    expect(parseStyle({ check: 'on' }, 1)).toMatchObject({ style: { check: true }, errors: [] });
+    expect(parseStyle({ check: false }, 1)).toMatchObject({ style: { check: false }, errors: [] });
+  });
+
+  test('says how to write it when it cannot be read', () => {
+    const { errors } = parseStyle({ check: 'maybe' }, 3);
+
+    expect(errors[0]?.message).toContain('on か off');
+    expect(errors[0]?.line).toBe(3);
+  });
+});
+
+describe('labels', () => {
+  test('is not written unless it was written', () => {
+    expect(parseStyle({ theme: 'dark' }, 1).style.labels).toBeNull();
+  });
+
+  test('takes a kind per axis, and the case of the letters', () => {
+    const { style, errors } = parseStyle({ labels: { row: 'numeric', col: 'alpha', case: 'lower' } }, 1);
+
+    expect(errors).toEqual([]);
+    expect(style.labels).toEqual({ row: 'numeric', col: 'alpha', case: 'lower' });
+  });
+
+  test('keeps the axes that were not written open, so the default fills them', () => {
+    expect(parseStyle({ labels: { col: 'alpha' } }, 1).style.labels)
+      .toEqual({ row: null, col: 'alpha', case: null });
+  });
+
+  test('names a kind it does not know instead of guessing', () => {
+    const { errors } = parseStyle({ labels: { row: 'roman' } }, 4);
+
+    expect(errors[0]?.message).toContain('roman');
+    expect(errors[0]?.line).toBe(4);
+  });
+
+  test('names an item it does not know inside labels', () => {
+    expect(parseStyle({ labels: { rows: 'alpha' } }, 1).errors[0]?.message).toContain('rows');
+  });
+
+  test('says how to write labels when it is not a map', () => {
+    expect(parseStyle({ labels: 'alpha' }, 1).errors[0]?.message).toContain('labels');
+  });
+});

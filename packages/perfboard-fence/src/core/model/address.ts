@@ -15,8 +15,17 @@ const CODE_A = 'a'.charCodeAt(0);
 const MAX_ROW_LETTERS = 4;
 const MAX_COL_DIGITS = 4;
 
-const ADDRESS = new RegExp(`^([a-z]{1,${MAX_ROW_LETTERS}})([0-9]{1,${MAX_COL_DIGITS}})$`);
-const ROW_LABEL = new RegExp(`^[a-z]{1,${MAX_ROW_LETTERS}}$`);
+/**
+ * 番地の綴り。**行は英字・`0`・`-英字`、列は数・`0`・`-数`。**
+ *
+ * 板の外を指せないと、縁の銅箔や、板から張り出す部品の行き先を書けない。
+ * 0 を挟んで **…-B -A 0 A B…** と間を空けずに並べるので、板の中と外で
+ * 数え方が変わらない (`a1` の左隣は `a0`、その左は `a-1`)。
+ */
+const ADDRESS = new RegExp(
+  `^(0|-?[a-z]{1,${MAX_ROW_LETTERS}})(0|-?[0-9]{1,${MAX_COL_DIGITS}})$`,
+);
+const ROW_LABEL = new RegExp(`^(0|-?[a-z]{1,${MAX_ROW_LETTERS}})$`);
 
 /**
  * 行の名前。1 行目が `a`、26 行目が `z`、27 行目が `aa`。
@@ -29,7 +38,10 @@ const ROW_LABEL = new RegExp(`^[a-z]{1,${MAX_ROW_LETTERS}}$`);
 export function rowLabel(index: number): string {
   // 呼ぶ側が番地を通していれば来ないが、**ここが止まらないと図も止まる**ので、
   // 数として扱えないものは空で返す (上の桁あふれの経緯)。
-  if (!Number.isFinite(index) || index < 1) return '';
+  if (!Number.isFinite(index)) return '';
+  // 0 行と、その上 (負の行)。板の外を指すための綴りで、間は空いていない。
+  if (index === 0) return '0';
+  if (index < 0) return `-${rowLabel(-index)}`;
   let remaining = Math.floor(index);
   let label = '';
   while (remaining > 0) {
@@ -43,6 +55,11 @@ export function rowLabel(index: number): string {
 /** 行の名前を番号に戻す。行の名前でなければ null。 */
 export function rowIndex(label: string): number | null {
   if (!ROW_LABEL.test(label)) return null;
+  if (label === '0') return 0;
+  if (label.startsWith('-')) {
+    const positive = rowIndex(label.slice(1));
+    return positive === null ? null : -positive;
+  }
   let index = 0;
   for (const char of label) {
     index = index * ALPHABET + (char.charCodeAt(0) - CODE_A + 1);
@@ -62,7 +79,7 @@ export function parseAddress(text: string): Address | null {
   const [, label = '', digits = ''] = found;
   const row = rowIndex(label);
   const col = Number(digits);
-  if (row === null || col < 1) return null;
+  if (row === null || !Number.isFinite(col)) return null;
   return { row, col };
 }
 

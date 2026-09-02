@@ -1,8 +1,11 @@
 import { element, num, svgText } from 'fence-kit';
-import { rowLabel } from '../model/address.ts';
+import { axisLabel } from './labels.ts';
 import type { Layout } from '../model/layout.ts';
 import type { Board } from '../types.ts';
-import type { Theme } from './theme.ts';
+import type { ResolvedLabels, Theme } from './theme.ts';
+
+/** 名前の付け方を書かなかったとき (図を組まずに板だけ描くとき) の既定。 */
+const DEFAULT_LABELS: ResolvedLabels = { row: 'alpha', col: 'numeric', case: 'upper' };
 
 /** 名前を板の縁からどれだけ外へ置くか。 */
 const LABEL_OFFSET = 8;
@@ -14,7 +17,12 @@ const LABEL_OFFSET = 8;
  * 別の円を重ねると要素数が倍になり、大きい板 (120 × 120 = 14,400 穴) で
  * SVG がそのぶん重くなる。
  */
-export function renderBoard(board: Board, layout: Layout, theme: Theme): string {
+export function renderBoard(
+  board: Board,
+  layout: Layout,
+  theme: Theme,
+  labels: ResolvedLabels = DEFAULT_LABELS,
+): string {
   const { palette, metrics } = theme;
   const { x, y, width, height } = layout.board;
 
@@ -49,21 +57,23 @@ export function renderBoard(board: Board, layout: Layout, theme: Theme): string 
     }
   }
 
-  const labels: string[] = [];
+  const drawn: string[] = [];
   for (let row = 1; row <= board.rows; row += 1) {
-    labels.push(svgText(x - LABEL_OFFSET, layout.rowY(row), rowLabel(row), {
-      anchor: 'end',
+    // **縦に並ぶ名前は中央に寄せる。** 右端で揃えると、桁の違う名前 (`9` と `10`、
+    // `Z` と `AA`) が左へはみ出して、列の名前と揃わない。
+    drawn.push(svgText(x - LABEL_OFFSET, layout.rowY(row), axisLabel(row, labels.row, labels.case), {
+      anchor: 'middle',
       fill: palette.label,
       'font-size': num(metrics.textSize),
       'dominant-baseline': 'middle',
     }));
   }
   for (let col = 1; col <= board.cols; col += 1) {
-    labels.push(svgText(layout.colX(col), y - LABEL_OFFSET, String(col), {
+    drawn.push(svgText(layout.colX(col), y - LABEL_OFFSET, axisLabel(col, labels.col, labels.case), {
       fill: palette.label,
       'font-size': num(metrics.textSize),
     }));
   }
 
-  return `${plate}${holes.join('')}${labels.join('')}`;
+  return `${plate}${holes.join('')}${drawn.join('')}`;
 }

@@ -47,12 +47,17 @@ describe('lookupBoard', () => {
     expect(lookupBoard('72X47MM')).toBe(lookupBoard('akizuki-c'));
   });
 
-  test('finds the same board under every size the shop sells it as', () => {
-    // 秋月は同じ C タイプを 72×47mm・72×47.5mm・72×48mm の 3 通りで書いている
-    // (2026-09-01 に商品一覧で実見)。**実寸を厳密な鍵にはできない。**
-    for (const spelling of ['72x47mm', '72x47.5mm', '72x48mm', '7.2x4.7cm']) {
+  test('reads the spellings that name the board it counted', () => {
+    for (const spelling of ['72x47mm', '7.2x4.7cm']) {
       expect(lookupBoard(spelling)).toBe(lookupBoard('akizuki-c'));
     }
+  });
+
+  test('does not take a near spelling for the board it counted', () => {
+    // 「C タイプ」でも 72×47.5mm は**別の板**で、外形図の格子は 27 × 17。
+    // 同じ呼び名に寄せると、違う穴数の図が黙って出る。
+    expect(lookupBoard('72x47.5mm')).toBeNull();
+    expect(lookupBoard('72x48mm')).toBeNull();
   });
 
   test('does not know a size it has never counted', () => {
@@ -67,15 +72,16 @@ describe('lookupBoard', () => {
   });
 
   test('every board it knows has a plausible grid for its size', () => {
-    // 穴は 2.54mm 間隔なので、穴の広がりは板より小さく、縁は 0〜6mm に収まる。
+    // 穴は 2.54mm 間隔なので、穴の広がりは板より小さく、縁は板の端まで届かない。
+    // 上限は 10mm — A タイプの外形図で左右の余白が 8.9mm あり、6mm では狭すぎた。
     for (const board of catalogBoards()) {
       const [mmWide, mmTall] = board.mm[0]!;
       const marginX = (mmWide - (board.cols - 1) * 2.54) / 2;
       const marginY = (mmTall - (board.rows - 1) * 2.54) / 2;
       expect(marginX).toBeGreaterThan(0);
       expect(marginY).toBeGreaterThan(0);
-      expect(marginX).toBeLessThan(6);
-      expect(marginY).toBeLessThan(6);
+      expect(marginX).toBeLessThan(10);
+      expect(marginY).toBeLessThan(10);
     }
   });
 });
