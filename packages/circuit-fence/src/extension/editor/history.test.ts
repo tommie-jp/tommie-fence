@@ -1,33 +1,25 @@
 import { describe, expect, test } from 'vitest';
-import { changesOf, createHistory, invert } from './history.ts';
+import { createHistory, sameBody } from './history.ts';
 import type { Step } from './history.ts';
 
 const step = (label: string): Step => ({
   label,
-  changes: [{ line: 3, from: { column: 6, text: 'a1' }, to: { column: 6, text: 'b2' } }],
+  before: ['parts:', '  R1: resistor a1 a3 10k'],
+  after: ['parts:', '  R1: resistor b1 b3 10k'],
 });
 
-describe('invert', () => {
-  test('swaps what was there for what was written, so it can be put back', () => {
-    expect(invert(step('R1')).changes[0]).toEqual({
-      line: 3, from: { column: 6, text: 'b2' }, to: { column: 6, text: 'a1' },
-    });
+describe('sameBody', () => {
+  test('says yes when the fence still holds what was written', () => {
+    expect(sameBody(step('R1').after, ['parts:', '  R1: resistor b1 b3 10k'])).toBe(true);
   });
 
-  test('carries each side with its own column, since a longer spelling shifts the rest', () => {
-    // `a9 b9` を `a10 b10` にすると、行の後ろの綴りは 1 桁ずれた場所にある。
-    const shifted: Step = {
-      label: 'R1',
-      changes: [{ line: 0, from: { column: 16, text: 'b9' }, to: { column: 17, text: 'b10' } }],
-    };
-
-    expect(invert(shifted).changes[0]).toEqual({
-      line: 0, from: { column: 17, text: 'b10' }, to: { column: 16, text: 'b9' },
-    });
+  test('says no when a line was changed by hand', () => {
+    expect(sameBody(step('R1').after, ['parts:', '  R1: resistor b1 b5 10k'])).toBe(false);
   });
 
-  test('keeps the label, so the panel can say what it is undoing', () => {
-    expect(invert(step('R1 を b2 へ')).label).toBe('R1 を b2 へ');
+  test('says no when a line was added, which is what columns could not see', () => {
+    // 桁で覚えていたころは、行が増えると覚えている桁が別の行を指した。
+    expect(sameBody(step('R1').after, ['parts:', '  C1: capacitor a1 a3', '  R1: resistor b1 b3 10k'])).toBe(false);
   });
 });
 
@@ -103,42 +95,5 @@ describe('createHistory', () => {
     history.clear();
 
     expect(history.state()).toEqual({ canUndo: false, canRedo: false });
-  });
-});
-
-describe('changesOf', () => {
-  test('keeps both sides at the same column when nothing changes length', () => {
-    const changes = changesOf([{ line: 4, column: 13, before: 'a1', after: 'b1' }]);
-
-    expect(changes[0]).toEqual({ line: 4, from: { column: 13, text: 'a1' }, to: { column: 13, text: 'b1' } });
-  });
-
-  test('shifts what follows on the line when a spelling gets longer', () => {
-    // `R1: resistor a9 b9` を a10 へ。当てたあと `b10` は 1 桁右にいる。
-    const changes = changesOf([
-      { line: 0, column: 13, before: 'a9', after: 'a10' },
-      { line: 0, column: 16, before: 'b9', after: 'b10' },
-    ]);
-
-    expect(changes[1]?.from.column).toBe(16);
-    expect(changes[1]?.to.column).toBe(17);
-  });
-
-  test('shifts back when a spelling gets shorter', () => {
-    const changes = changesOf([
-      { line: 0, column: 13, before: 'a10', after: 'a9' },
-      { line: 0, column: 17, before: 'b10', after: 'b9' },
-    ]);
-
-    expect(changes[1]?.to.column).toBe(16);
-  });
-
-  test('does not let one line shift another', () => {
-    const changes = changesOf([
-      { line: 0, column: 13, before: 'a9', after: 'a10' },
-      { line: 1, column: 13, before: 'b9', after: 'b10' },
-    ]);
-
-    expect(changes[1]?.to.column).toBe(13);
   });
 });

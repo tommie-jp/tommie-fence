@@ -8,10 +8,10 @@ import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import type { Span } from '../../core/edit/shared.ts';
 import { extractCircuitFences } from '../../core/fences.ts';
 import { formatAddress, parseAddress } from '../../core/model/address.ts';
+import { fenceBody } from './docEdits.ts';
 import { indentOn } from './documentLike.ts';
 import type { DocLike, EditorLike } from './documentLike.ts';
-import { createHistory, invert } from './history.ts';
-import type { Change } from './history.ts';
+import { createHistory, sameBody } from './history.ts';
 import { describeDiff } from './movePart.ts';
 import { renderFencePicker } from './panelHtml.ts';
 import type { MapViewHtml } from './panelHtml.ts';
@@ -67,10 +67,13 @@ export type SessionHost<D extends DocLike> = {
   readonly activeEditor: () => EditorLike<D> | null;
   /** 開いている文書を URI で引く。閉じられていれば null。 */
   readonly openDocument: (uri: string) => D | null;
-  /** フェンスの中の編集を Markdown の行へずらして当てる。当てた中身を返す (履歴が逆を当てる)。 */
-  readonly applyEdits: (document: D, fenceLine: number, edits: readonly Edit[]) => Promise<readonly Change[] | null>;
-  /** 覚えておいた書き換えを当て直す。字が控えと合わなければ当てずに false。 */
-  readonly applyChanges: (document: D, changes: readonly Change[]) => Promise<boolean>;
+  /** フェンスの中の編集を Markdown の行へずらして当てる。 */
+  readonly applyEdits: (document: D, fenceLine: number, edits: readonly Edit[]) => Promise<boolean>;
+  /**
+   * フェンスの本文を丸ごと書き戻す (戻す・やり直す)。`count` 行を `body` にする。
+   * **照合は呼ぶ側で済ませてある** (`sameBody`)。
+   */
+  readonly replaceBody: (document: D, fenceLine: number, count: number, body: readonly string[]) => Promise<boolean>;
   /** その文書を見せているエディタで光らせる。空なら消す。 */
   readonly highlight: (uri: string, ranges: readonly LitRange[]) => void;
   /**
@@ -348,12 +351,20 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       return;
     }
 
-    const applied = await host.applyEdits(fence.document, fence.line, result.value.edits);
-    if (applied === null) {
+    // **当てる前の本文を控える。** 履歴は桁ではなく本文で覚える (行の増減に耐える)。
+    const before = fenceBody(fence.document, fence.line, fence.source);
+    if (!(await host.applyEdits(fence.document, fence.line, result.value.edits))) {
       say('書き換えられませんでした');
       return;
     }
-    if (ownHistory) history.push({ label: request.label, changes: applied });
+    if (ownHistory) {
+      // 当てたあとの姿も控える。**見失ったら積まない** — 嘘の控えを積むと、
+      // 次の「戻す」が関わりのない字を書き換える。
+      const now = fenceAt(fence.document.getText(), fence.line);
+      if (now !== null) {
+        history.push({ label: request.label, before, after: fenceBody(fence.document, fence.line, now.source) });
+      }
+    }
     const changed = describeDiff(result.value.diff);
     say(`${request.label}動かしました${changed === null ? '' : `。${changed}`}`);
   }
@@ -409,7 +420,8 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
    *
    * 自前なら**当ててから履歴を動かす** — 先に動かすと、当てられなかったときに
    * 履歴が嘘になる。当てられないのは、覚えたあとに手で書き換えられたとき。
-   * **黙って当てない** (覚えている桁はもう別の場所を指している)。
+   * **黙って当てない** — 本文を丸ごと書き戻すので、当てると手で書いた分まで
+   * 消える。フェンスのどこか 1 行でも違えば断り、エディタの `Ctrl+Z` へ回す。
    */
   async function stepBack(kind: 'undo' | 'redo'): Promise<void> {
     if (host.nativeUndo !== undefined) {
@@ -429,8 +441,13 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       return;
     }
 
-    const changes = undoing ? invert(step).changes : step.changes;
-    if (!(await host.applyChanges(fence.document, changes))) {
+    // 戻すなら「後」から「前」へ、やり直すなら「前」から「後」へ。
+    const expected = undoing ? step.after : step.before;
+    const wanted = undoing ? step.before : step.after;
+    const now = fenceBody(fence.document, fence.line, fence.source);
+    const applied = sameBody(now, expected)
+      && await host.replaceBody(fence.document, fence.line, expected.length, wanted);
+    if (!applied) {
       if (undoing) history.dropUndo();
       else history.dropRedo();
       say(`${step.label} は戻せません (そのあと手で書き換えられています)。エディタの Ctrl+Z を使います`);

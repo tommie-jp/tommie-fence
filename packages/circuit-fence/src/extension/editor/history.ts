@@ -1,72 +1,34 @@
 /**
- * マップでの移動の履歴。**vscode を知らない**ので、そのままテストに掛かる
- * (当てるのは `vscodePort` の仕事)。
+ * マップでの編集の履歴。**vscode を知らない**ので、そのままテストに掛かる
+ * (当てるのは host の仕事)。
  *
  * VS Code の `Ctrl+Z` は**エディタにフォーカスが要る**。マップのパネルで
  * 掴んで動かしている間はフォーカスがパネル側にあり、戻すのに一度エディタを
- * 触らないといけなかった。パネルからも戻せるように、当てた書き換えを
- * 覚えておいて逆を当てる。
+ * 触らないといけなかった。パネルからも戻せるように、書き換えの前後を
+ * 覚えておいて戻す。タブそのものがマップのときは VS Code の undo が届くので、
+ * この履歴は持たない (`nativeUndo`)。
  *
- * 覚えるのは**マップでの移動だけ**。コマンド (QuickPick) から動かすときは
+ * 覚えるのは**マップでの編集だけ**。コマンド (QuickPick) から動かすときは
  * エディタにフォーカスがあるので、そちらは VS Code の `Ctrl+Z` が効く。
- */
-
-/** 書き換えの片側。**桁は側ごとに持つ** (下の `Change` の注記)。 */
-export type Side = { readonly column: number; readonly text: string };
-
-/**
- * 文書に当てた 1 か所の書き換え。行も桁も 0 始まり (vscode に合わせる)。
  *
- * **両側がそれぞれ自分の桁を持つ。** 同じ行で先の綴りの長さが変わると、
- * 後ろの綴りは別の桁へ動く (`a9 b9` → `a10 b10` で `b10` は 1 桁右)。
- * 片方の桁だけで覚えると、戻すときに照合が落ちて「手で書き換えられた」と
- * 誤って断ってしまう。
+ * **控えるのはフェンスの本文そのもの** (桁では覚えない)。桁で覚えると、
+ * 部品や配線を足す・消すで行がずれた瞬間に照合が立たなくなり、覚えている
+ * 桁が別の行を指す。本文は文書から読んだ生の行なので、字下げも行末の空白も
+ * そのまま戻る。
  */
-export type Change = {
-  readonly line: number;
-  /** いまそこにあるはずの字と、その桁。**当てる前に照合する。** */
-  readonly from: Side;
-  readonly to: Side;
+
+/** 1 回の編集。本文はフェンスの中の生の行 (文書から読んだまま)。 */
+export type Step = {
+  readonly label: string;
+  /** 編集の前にそこにあった本文。戻すときに書き戻す。 */
+  readonly before: readonly string[];
+  /** 編集の後にそこにあるはずの本文。**当てる前に照合する。** */
+  readonly after: readonly string[];
 };
 
-/** 1 回の移動。 */
-export type Step = { readonly label: string; readonly changes: readonly Change[] };
-
-/** 逆向きの書き換え。戻すのも「やり直す」のも、これを当てるだけ。 */
-export const invert = (step: Step): Step => ({
-  label: step.label,
-  changes: step.changes.map((change) => ({ line: change.line, from: change.to, to: change.from })),
-});
-
-/** 当てる前の 1 か所。桁は文書のもの (0 始まり)。 */
-export type Replacement = {
-  readonly line: number;
-  readonly column: number;
-  readonly before: string;
-  readonly after: string;
-};
-
-/**
- * 当てる前の書き換えを、両側の桁つきの `Change` にする。
- *
- * **同じ行で先の綴りの長さが変わると、後ろの綴りは別の桁へ動く**
- * (`a9 b9` → `a10 b10` で `b10` は 1 桁右)。当てたあとの桁を控えないと、
- * 戻すときの照合が落ちて「手で書き換えられた」と誤って断ってしまう。
- */
-export function changesOf(replacements: readonly Replacement[]): readonly Change[] {
-  const shifts = new Map<number, number>();
-  return [...replacements]
-    .sort((a, b) => a.line - b.line || a.column - b.column)
-    .map((one) => {
-      const shift = shifts.get(one.line) ?? 0;
-      shifts.set(one.line, shift + (one.after.length - one.before.length));
-      return {
-        line: one.line,
-        from: { column: one.column, text: one.before },
-        to: { column: one.column + shift, text: one.after },
-      };
-    });
-}
+/** 本文が控えと同じか。**当てる前に必ず通す** (合わなければ手で書き換えられている)。 */
+export const sameBody = (a: readonly string[], b: readonly string[]): boolean =>
+  a.length === b.length && a.every((line, index) => line === b[index]);
 
 export type History = {
   readonly push: (step: Step) => void;

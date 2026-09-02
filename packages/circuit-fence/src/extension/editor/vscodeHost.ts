@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { Incoming, LitRange, Session, SessionHost } from './session.ts';
-import { applyChanges, applyToDocument, markdownEditor } from './vscodePort.ts';
+import { applyToDocument, markdownEditor, replaceBody } from './vscodePort.ts';
 
 /**
  * `SessionHost` の vscode 版と、セッションを webview に結ぶ配線。
@@ -59,7 +59,7 @@ export function createSessionHost(webview: vscode.Webview, undo: 'own' | 'vscode
     activeEditor: markdownEditor,
     openDocument: (uri) => vscode.workspace.textDocuments.find((one) => one.uri.toString() === uri) ?? null,
     applyEdits: applyToDocument,
-    applyChanges,
+    replaceBody,
     highlight,
     showDocument,
   };

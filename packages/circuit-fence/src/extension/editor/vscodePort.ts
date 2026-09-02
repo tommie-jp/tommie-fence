@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import type { Edit } from '../../core/edit/move.ts';
 import { changesForFence } from './docEdits.ts';
-import type { Change } from './history.ts';
+import type { Change } from './docEdits.ts';
 import type { DocumentView, EditorPort } from './movePart.ts';
 
 /**
@@ -42,17 +42,38 @@ export async function applyChanges(
  * 掴んだ時点で Markdown が後ろに隠れていることがある (同じタブグループに
  * 入れた配置)。当て先は呼ぶ側が覚えている文書で決める。
  *
- * 当てた中身 (元の字と入れた字) を返す。**パネルの履歴がこれを覚えて逆を当てる** —
- * VS Code の `Ctrl+Z` はエディタにフォーカスが要るので、パネルからは届かない。
  * 行と桁の計算は `changesForFence` (vscode を知らず、テストに掛かる)。
+ * 戻すための控えはここでは作らない — パネルの履歴はフェンスの本文で覚える
+ * (`history.ts`。桁で覚えると行の増減で照合が立たない)。
  */
 export async function applyToDocument(
   document: vscode.TextDocument,
   fenceLine: number,
   edits: readonly Edit[],
-): Promise<readonly Change[] | null> {
-  const changes = changesForFence(document, fenceLine, edits);
-  return (await applyChanges(document, changes)) ? changes : null;
+): Promise<boolean> {
+  return applyChanges(document, changesForFence(document, fenceLine, edits));
+}
+
+/**
+ * フェンスの本文を丸ごと書き戻す (戻す・やり直す)。`fenceLine` から `count` 行を
+ * `body` にする (行は 0 始まり)。
+ *
+ * **文書の改行で綴じる。** `\n` で綴じると、CRLF の文書に LF の行が混ざる
+ * (見た目には出ないまま、次の差分が全行に付く)。
+ */
+export async function replaceBody(
+  document: vscode.TextDocument,
+  fenceLine: number,
+  count: number,
+  body: readonly string[],
+): Promise<boolean> {
+  if (count <= 0 || fenceLine + count > document.lineCount) return false;
+  const last = fenceLine + count - 1;
+  const range = new vscode.Range(fenceLine, 0, last, document.lineAt(last).text.length);
+  const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+  const edit = new vscode.WorkspaceEdit();
+  edit.replace(document.uri, range, body.join(eol));
+  return vscode.workspace.applyEdit(edit);
 }
 
 export function createEditorPort(): EditorPort {
@@ -72,7 +93,7 @@ export function createEditorPort(): EditorPort {
     apply: async (fenceLine: number, edits: readonly Edit[]) => {
       const editor = markdownEditor();
       if (!editor) return false;
-      return (await applyToDocument(editor.document, fenceLine, edits)) !== null;
+      return applyToDocument(editor.document, fenceLine, edits);
     },
 
     info: (message) => {

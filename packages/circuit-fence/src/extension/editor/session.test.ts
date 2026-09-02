@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 import { changesForFence } from './docEdits.ts';
+import type { Change } from './docEdits.ts';
 import type { DocLike, EditorLike } from './documentLike.ts';
-import type { Change } from './history.ts';
 import { createSession } from './session.ts';
 import type { LitRange, Outgoing, SessionHost } from './session.ts';
 
@@ -81,11 +81,14 @@ const hostOf = (docs: readonly Doc[], editor: EditorLike<Doc> | null, over: Part
     post: (message) => { fake.sent.push(message); },
     activeEditor: () => fake.editor,
     openDocument: (uri) => fake.docs.find((one) => one.uri.toString() === uri) ?? null,
-    applyEdits: async (document, fenceLine, edits) => {
-      const changes = changesForFence(document, fenceLine, edits);
-      return patch(document, changes) ? changes : null;
+    applyEdits: async (document, fenceLine, edits) => patch(document, changesForFence(document, fenceLine, edits)),
+    // 本文の入れ替え。**vscode と同じく行の範囲を丸ごと差し替える。**
+    replaceBody: async (document, fenceLine, count, body) => {
+      const lines = document.getText().split('\n');
+      if (count <= 0 || fenceLine + count > lines.length) return false;
+      document.set([...lines.slice(0, fenceLine), ...body, ...lines.slice(fenceLine + count)].join('\n'));
+      return true;
     },
-    applyChanges: async (document, changes) => patch(document, changes),
     highlight: (uri, ranges) => { fake.lit.push({ uri, ranges }); },
     ...over,
   };
@@ -241,6 +244,39 @@ describe('戻す・やり直す (自前の履歴)', () => {
 
     expect(doc.getText()).toContain('b1 b5');
     expect(last(host, 'status')?.text).toContain('戻せません');
+  });
+
+  test('refuses when another line of the fence was edited by hand', async () => {
+    // 本文を丸ごと書き戻すので、当てると手で書いた分まで消える。触っていない
+    // 行の直しでも断る (エディタの Ctrl+Z なら、そこだけ戻せる)。
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+    await session.handle({ kind: 'move', part: 'R1', to: 'b1' });
+    doc.set(doc.getText().replace('title: RC', 'title: RC 回路'));
+
+    await session.handle({ kind: 'undo' });
+
+    expect(doc.getText()).toContain('title: RC 回路');
+    expect(doc.getText()).toContain('b1 b3');
+    expect(last(host, 'status')?.text).toContain('戻せません');
+  });
+
+  test('puts an indented fence back exactly as it was written', async () => {
+    // 控えは文書から読んだ生の行。字下げを組み直さないので、そのまま戻る。
+    const indented = ['- item', '', '  ```circuit', '  parts:',
+      '    R1: resistor a1 a3 10k', '  ```', ''].join('\n');
+    const doc = docOf(A, indented);
+    const host = hostOf([doc], at(doc, 4));
+    const session = createSession(host);
+    session.view();
+    await session.handle({ kind: 'move', part: 'R1', to: 'b1' });
+    expect(doc.getText()).toContain('    R1: resistor b1 b3 10k');
+
+    await session.handle({ kind: 'undo' });
+
+    expect(doc.getText()).toBe(indented);
   });
 
   test('says when there is nothing to undo', async () => {
