@@ -52,7 +52,7 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     if (rejected) continue;
 
     // **足の位置は形が決める。** DIP と SIP は書かれたアンカーから広げる。
-    const footprint = footprintOf(spec.type);
+    const footprint = footprintOf(spec.type, spec.variant);
     const pins = footprint === null ? addresses : pinsOf(footprint, addresses);
     const offPin = pins.find((address) => offBoardReason(board, address) !== null);
     if (offPin) {

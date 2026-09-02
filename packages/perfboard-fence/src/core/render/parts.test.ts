@@ -3,9 +3,9 @@ import { THEME } from './theme.ts';
 import { renderParts } from './parts.ts';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
-import { parseAddress } from '../model/address.ts';
+import { formatAddress, parseAddress } from '../model/address.ts';
 import { placeParts } from '../placement/place.ts';
-import { edgeMountOf } from '../placement/geometry.ts';
+import { SMA_SIZE, edgeMountOf } from '../placement/geometry.ts';
 import type { PlacedPart } from '../types.ts';
 
 const board = createBoard({ cols: 10, rows: 6 });
@@ -150,17 +150,17 @@ describe('SMA コネクタ', () => {
 
 describe('SMA の横置き (端面実装)', () => {
   const edge = (variant: string) => placeParts(
-    [{ id: 'J1', type: 'sma', variant, holes: ['c4', 'c2'], value: null, written: `sma/${variant} c4 c2`, line: 1 }],
+    [{ id: 'J1', type: 'sma', variant, holes: ['c4', 'b2', 'd2'], value: null, written: `sma/${variant} c4 b2 d2`, line: 1 }],
     board,
   ).parts;
 
   test('reaches past the GND leg, which is the end that sits at the board edge', () => {
     const svg = renderParts(edge('female-edge'), layout, THEME);
     const body = /<g transform="translate\(([-0-9.]+) /.exec(svg);
-    const gnd = layout.point(parseAddress('c2')!);
+    const gnd = layout.point(parseAddress('b2')!);
     const centre = layout.point(parseAddress('c4')!);
 
-    // 胴の中心は GND (c2) より外側 — 中心導体 (c4) から見て向こう側にある。
+    // 胴の中心は凹の先端 (2 列目) より外側 — 中心導体 (c4) から見て向こう側にある。
     expect(Number(body?.[1])).toBeLessThan(gnd.x);
     expect(gnd.x).toBeLessThan(centre.x);
   });
@@ -183,13 +183,13 @@ describe('SMA の横置き (端面実装)', () => {
     const svg = renderParts(edge('male-edge'), layout, THEME);
     const label = /<text x="([0-9.]+)"[^>]*>J1<\/text>/.exec(svg);
 
-    expect(Number(label?.[1])).toBe((layout.point(parseAddress('c4')!).x + layout.point(parseAddress('c2')!).x) / 2);
+    expect(Number(label?.[1])).toBe((layout.point(parseAddress('c4')!).x + layout.point(parseAddress('b2')!).x) / 2);
   });
 });
 
 describe('SMA 横置きの足の形', () => {
   const edge = placeParts(
-    [{ id: 'J1', type: 'sma', variant: 'female-edge', holes: ['c4', 'c2'], value: null, written: 'sma/female-edge c4 c2', line: 1 }],
+    [{ id: 'J1', type: 'sma', variant: 'female-edge', holes: ['c4', 'b2', 'd2'], value: null, written: 'sma/female-edge c4 b2 d2', line: 1 }],
     board,
   ).parts;
 
@@ -220,6 +220,61 @@ describe('SMA 横置きの足の形', () => {
 
     expect(mount.edgeX).toBeLessThan(mount.legX);
     expect(layout.board.x).toBeCloseTo(mount.rect.cx + mount.edgeX, 5);
+  });
+});
+
+describe('SMA 横置きの 3 本足 (凹の両端)', () => {
+  const edge = placeParts(
+    [{ id: 'J1', type: 'sma', variant: 'female-edge', holes: ['c4', 'b2', 'd2'], value: null, written: 'sma/female-edge c4 b2 d2', line: 1 }],
+    board,
+  ).parts;
+
+  test('takes three pins — the centre conductor and the two tips of the notch', () => {
+    expect(edge[0]?.pins.map((pin) => formatAddress(pin.address))).toEqual(['c4', 'b2', 'd2']);
+  });
+
+  test('keeps the body level — the axis follows the board edge, not the legs', () => {
+    const mount = edgeMountOf(edge[0]!, layout)!;
+
+    expect(mount.rect.angle).toBe(0);
+    expect(mount.rect.cy).toBe(layout.point(parseAddress('c4')!).y);
+  });
+
+  test('puts one contact mark on each tip pin, above and below the centre line', () => {
+    const svg = renderParts(edge, layout, THEME);
+    const ys = [...svg.matchAll(/<circle cx="[-0-9.]+" cy="([-0-9.]+)" r="[0-9.]+" fill="#d7dce1"/g)]
+      .map((match) => Number(match[1]))
+      .sort((one, other) => one - other);
+
+    expect(ys).toEqual([-layout.pitch, layout.pitch]);
+  });
+
+  test('keeps the arms as they were — the tips only reach the pads, not the holes', () => {
+    const svg = renderParts(edge, layout, THEME);
+    const points = /<polygon points="([^"]+)"/.exec(svg)?.[1] ?? '';
+    const ys = points.split(' ').map((pair) => Number(pair.split(',')[1]));
+
+    expect(Math.max(...ys)).toBeLessThan(layout.pitch);
+    expect(Math.min(...ys)).toBeCloseTo(-Math.max(...ys), 5);
+  });
+
+  test('draws no lead line between the legs — it would read as a short', () => {
+    const svg = renderParts(edge, layout, THEME);
+    const c4 = layout.point(parseAddress('c4')!);
+    const b2 = layout.point(parseAddress('b2')!);
+
+    expect(svg).not.toContain(`<line x1="${c4.x}" y1="${c4.y}" x2="${b2.x}" y2="${b2.y}"`);
+  });
+
+  test('is still one edge mount, not a box, when it sits on the right-hand edge', () => {
+    const right = placeParts(
+      [{ id: 'J2', type: 'sma', variant: 'female-edge', holes: ['c7', 'b9', 'd9'], value: null, written: 'sma/female-edge c7 b9 d9', line: 1 }],
+      board,
+    ).parts;
+    const mount = edgeMountOf(right[0]!, layout)!;
+
+    expect(Math.abs(mount.rect.angle)).toBeCloseTo(Math.PI, 5);
+    expect(mount.rect.height).toBe(SMA_SIZE);
   });
 });
 

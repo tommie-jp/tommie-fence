@@ -4,6 +4,7 @@ import { fenceError, notice, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import { holeStrip, offBoardReason } from '../model/board.ts';
+import { isEdgeMount } from '../parts/types.ts';
 import type {
   Address, Board, DeviceSpec, FenceError, PlacedPart, RoutedWire, StripId, WireSpec,
 } from '../types.ts';
@@ -203,11 +204,26 @@ const membersOf = (parts: readonly PlacedPart[]): NetMember[] =>
   parts.flatMap((part) => part.pins.map((pin, index) => ({ ref: pinRef(part, index), strip: pin.strip })));
 
 /**
+ * 部品の中でつながっている足。**端面実装のコネクタの凹の両端**は 1 つの金物
+ * なので、片方に配線を付ければもう片方も同じネットに乗る。
+ * ほかの部品にはこれが無い — 部品はネットとネットの間の枝で、足どうしは
+ * つながない。
+ */
+const innerLinks = (parts: readonly PlacedPart[]): readonly (readonly [StripId, StripId])[] =>
+  parts.flatMap((part) => {
+    const [, upper, lower] = part.pins;
+    return isEdgeMount(part.type, part.variant) && upper && lower
+      ? [[upper.strip, lower.strip] as const]
+      : [];
+  });
+
+/**
  * ネットリスト。**穴は 1 つずつ独立している**ので、つなぐのは配線だけ。
  * ブレッドボードは列の 5 穴が最初から導通していて、同じ列に挿すだけで
  * 1 つのネットになるが、ここでは配線を書かないと何もつながらない。
  *
- * 部品そのものはネットとネットの間の枝なので、足どうしはつながない。
+ * 部品そのものはネットとネットの間の枝なので、足どうしはつながない
+ * (例外は `innerLinks`)。
  */
 export const netlistOf = (
   parts: readonly PlacedPart[],
@@ -228,6 +244,7 @@ export const netlistOf = (
     links: [
       ...wires.map((wire) => [holeStrip(wire.from), holeStrip(wire.to)] as const),
       ...deviceLinks,
+      ...innerLinks(parts),
     ],
     names: points.map(([address, name]) => [holeStrip(address), name] as const),
   });

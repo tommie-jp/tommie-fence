@@ -43,7 +43,8 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
   const { type, variant, problem } = splitPartType(written);
   if (problem !== null) return fail(problem, written);
 
-  const footprint = footprintOf(type);
+  // 姿で足の数が変わる (端面実装の `sma` は 3 本)。
+  const footprint = footprintOf(type, variant);
   if (footprint === null) {
     // **知らないふりをしない。** 名前は知っているが置けないものと、
     // 書き方が違うだけのものと、綴りを疑うべきものとでは、次にやることが違う。
@@ -63,7 +64,10 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
   if (holes.length < footprint.holes) {
     // **書く穴の数は形が決める。** DIP と SIP はアンカー 1 つだけ
     // (足の位置はパッケージが決めていて、書く人が選べない)。
-    const example = footprint.holes === 1 ? `${type} b3` : `${type} ${['b3', 'b5', 'b7'].slice(0, footprint.holes).join(' ')}`;
+    // 端面実装は中心導体・凹の上の先端・下の先端。先端は中心線の上下の縁の銅箔。
+    const example = footprint.kind === 'edge'
+      ? `${written} c1 b0 d0`
+      : footprint.holes === 1 ? `${type} b3` : `${type} ${['b3', 'b5', 'b7'].slice(0, footprint.holes).join(' ')}`;
     return fail(
       `${safeToken(written)} は穴を ${footprint.holes} つ書きます (例: ${example})`,
       written,

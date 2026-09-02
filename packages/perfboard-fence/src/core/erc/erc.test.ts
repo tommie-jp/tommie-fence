@@ -69,6 +69,29 @@ describe('未結線のピン', () => {
   });
 });
 
+describe('部品の中でつながった足 (端面実装の凹の両端)', () => {
+  const edge: PlacedPart = {
+    id: 'J1', type: 'sma', variant: 'female-edge', value: null, line: 3,
+    pins: ['c1', 'b0', 'd0'].map((hole) => ({ address: at(hole), strip: holeStrip(at(hole)) })),
+  };
+
+  test('is satisfied by a wire to either tip — the other rides along', () => {
+    const found = run([edge, part('R1', ['c3', 'c7'])], [['c1', 'c3'], ['d0', 'c7']]);
+
+    expect(found).toEqual([]);
+  });
+
+  test('still calls the tips loose when no wire reaches either of them', () => {
+    // 凹の両端どうしはつながっているが、それは相手ではない。
+    const found = run([edge, part('R1', ['c3', 'c7'])], [['c1', 'c3']]);
+    const text = found.map((e) => e.message).join(' ');
+
+    expect(text).toContain('J1.2');
+    expect(text).toContain('J1.3');
+    expect(found.every((e) => e.line === 3 || e.line === 1)).toBe(true);
+  });
+});
+
 describe('短絡した部品', () => {
   test('names a part whose two pins landed on one net', () => {
     // **boardwright の「同じ穴が 2 ネットに属していないか」は、この盤面では

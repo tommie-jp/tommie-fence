@@ -115,3 +115,26 @@ describe('parsePartLine', () => {
     expect(parsePartLine('D1', 'led c5 c9 red').ok).toBe(true);
   });
 });
+
+describe('端面実装の sma は 3 本足', () => {
+  test('takes the centre conductor and the two tips of the notch', () => {
+    const result = parsePartLine('J1', 'sma/female-edge c1 b0 d0');
+
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.value.holes).toEqual(['c1', 'b0', 'd0']);
+  });
+
+  test('asks for three holes, showing where the tips go, when only two are written', () => {
+    // 2 本足のまま中心線に足を書かせると、アースの穴が中心導体の真下に埋まる。
+    const result = parsePartLine('J1', 'sma/female-edge c1 c0');
+
+    expect(result.ok).toBe(false);
+    expect(result.ok === false && result.error.message).toContain('穴を 3 つ');
+    expect(result.ok === false && result.error.message).toContain('c1 b0 d0');
+  });
+
+  test('leaves the upright sma at two holes', () => {
+    expect(parsePartLine('J1', 'sma/female c3 c5').ok).toBe(true);
+  });
+});
+

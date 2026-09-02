@@ -78,7 +78,9 @@ function unwiredPins(input: ErcInput): FenceError[] {
     const loose: string[] = [];
     for (const [ref, where] of pins) {
       const net = netOf.get(ref);
-      if (!net || net.refs.length > 1) continue;
+      // **自分の足しか乗っていないネットは、つながっていない。** 凹の両端のように
+      // 部品の中でつながった足どうしは 1 つのネットに並ぶが、それは相手ではない。
+      if (!net || net.refs.some((other) => !other.startsWith(`${id}.`))) continue;
       if (net.strips.some((strip) => input.namedStrips.has(strip))) continue;
       loose.push(`${safeToken(ref)} (${where})`);
     }

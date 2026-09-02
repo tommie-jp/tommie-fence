@@ -241,3 +241,27 @@ describe('機器へつなぐ配線 (図に線を引く)', () => {
     expect(errors).toEqual([]);
   });
 });
+
+describe('端面実装の凹の両端', () => {
+  const edge: PlacedPart = {
+    id: 'J1', type: 'sma', variant: 'female-edge', value: null, line: 1,
+    pins: ['c1', 'b0', 'd0'].map((hole) => ({ address: parseAddress(hole)!, strip: holeStrip(parseAddress(hole)!) })),
+  };
+
+  test('sit on one net without a wire — they are one piece of metal', () => {
+    const nets = netlistOf([edge], [], []);
+    const tips = nets.find((net) => net.refs.includes('J1.2'));
+
+    expect(tips?.refs).toEqual(['J1.2', 'J1.3']);
+    // 中心導体は別のネットのまま。
+    expect(tips?.refs).not.toContain('J1.1');
+  });
+
+  test('leave an upright sma alone — its two pins are two different things', () => {
+    const upright: PlacedPart = { ...edge, variant: 'female', pins: edge.pins.slice(0, 2) };
+    const nets = netlistOf([upright], [], []);
+
+    expect(nets.every((net) => net.refs.length === 1)).toBe(true);
+  });
+});
+

@@ -41,49 +41,66 @@ export const SMA_BARREL = SMA_THREAD + SMA_PLAIN + SMA_BASE;
  * 端面実装の胴の置き方。**描画も当たり判定もここから取る** — 別々に測ると、
  * 図では板の縁に載っているのに当たり判定は別の場所、ということが起きる。
  *
- * `edgeX` は**板の縁**、`legX` は **GND の足**の、胴の中心から測った位置
- * (局所座標。+x は先端から足へ向かう向き)。
+ * 足は 3 本 — **中心導体と、凹の両端の先端** (`parts/footprint.ts`)。
+ * `edgeX` は**板の縁**、`legX` は**凹の先端**の、胴の中心から測った軸に沿う
+ * 位置 (局所座標。+x は先端から中心導体へ向かう向き)。`tips` は凹の 2 つの
+ * 先端の、中心線からのずれ (局所座標の y。胴と一緒に回る)。
+ *
+ * **軸は板の縁に垂直。** 足どうしを結んだ線で向きを決めると、先端が中心線の
+ * 上下にあるぶん胴が斜めになる。列が違えば横向き、同じなら縦向き。
  */
 export type EdgeMount = {
   readonly rect: OrientedRect;
   readonly edgeX: number;
   readonly legX: number;
+  readonly tips: readonly number[];
 };
 
 export function edgeMountOf(part: PlacedPart, layout: Layout): EdgeMount | null {
-  const [first, second] = part.pins;
-  if (!first || !second) return null;
+  const [first, ...rest] = part.pins;
+  const tip = rest[0];
+  if (!first || !tip) return null;
 
-  const from = layout.point(first.address);
-  const to = layout.point(second.address);
-  const length = Math.hypot(to.x - from.x, to.y - from.y);
-  if (length === 0) return null;
+  const centre = layout.point(first.address);
+  const ground = layout.point(tip.address);
 
-  // +x は GND の足 → 中心導体の足 の向き。先端はその反対側にある。
-  const ux = (from.x - to.x) / length;
-  const uy = (from.y - to.y) / length;
-  // GND の足から測った、板の縁までの距離。**板の角を全部見て一番外**を取るので、
+  // 列が違えば横向き (板の左右の縁)、同じなら縦向き (上下の縁)。
+  const sideways = tip.address.col !== first.address.col;
+  const step = sideways ? centre.x - ground.x : centre.y - ground.y;
+  if (step === 0) return null;
+
+  // +x は先端 → 中心導体の向き (板の内側)。
+  const ux = sideways ? Math.sign(step) : 0;
+  const uy = sideways ? 0 : Math.sign(step);
+
+  // **中心導体を 0 として軸に沿って測る。** 板の角を全部見て一番外を取るので、
   // 板のどの辺に載せても (図を裏返しても) 同じ辺が出る。
+  const along = (px: number, py: number): number => (px - centre.x) * ux + (py - centre.y) * uy;
+  const across = (px: number, py: number): number => -(px - centre.x) * uy + (py - centre.y) * ux;
   const { x, y, width, height } = layout.board;
   const edge = Math.min(...[
     [x, y], [x + width, y], [x, y + height], [x + width, y + height],
-  ].map(([cx = 0, cy = 0]) => (cx - to.x) * ux + (cy - to.y) * uy));
+  ].map(([cx = 0, cy = 0]) => along(cx, cy)));
 
-  // 胴は「台座の右端 = 板の縁」から外へ 3 段。足の側は中心導体の穴まで。
+  // 胴は「台座の右端 = 板の縁」から外へ 3 段。内側の端は中心導体の穴。
   const outer = edge - SMA_BARREL;
-  const middle = (outer + length) / 2;
+  const middle = outer / 2;
 
   return {
     rect: {
-      cx: to.x + ux * middle,
-      cy: to.y + uy * middle,
-      width: length - outer,
+      cx: centre.x + ux * middle,
+      cy: centre.y + uy * middle,
+      width: -outer,
       height: SMA_SIZE,
-      // 局所座標の +x は**先端から足へ** (u と同じ向き)。先端が -width/2 に来る。
+      // 局所座標の +x は**先端から中心導体へ** (u と同じ向き)。先端が -width/2。
       angle: Math.atan2(uy, ux),
     },
     edgeX: edge - middle,
-    legX: -middle,
+    legX: along(ground.x, ground.y) - middle,
+    tips: rest.map((pin) => {
+      const at = layout.point(pin.address);
+      return across(at.x, at.y);
+    }),
   };
 }
 
@@ -165,6 +182,11 @@ const isBoxed = (part: PlacedPart): boolean => {
 
 /** 胴の長方形。足が 1 本も無ければ null。 */
 export function bodyRect(part: PlacedPart, layout: Layout): OrientedRect | null {
+  // **端面実装は足が 3 本でも箱ではない。** 置き方は `edgeMountOf` が決める。
+  if (isEdgeMount(part.type, part.variant)) {
+    const mount = edgeMountOf(part, layout);
+    if (mount !== null) return mount.rect;
+  }
   if (isBoxed(part) || part.pins.length > 2) return boxRect(part, layout);
 
   const [first, second] = part.pins;
@@ -174,12 +196,6 @@ export function bodyRect(part: PlacedPart, layout: Layout): OrientedRect | null 
   const to = layout.point(second.address);
   const center = midpoint(from, to);
   const length = Math.hypot(to.x - from.x, to.y - from.y);
-
-  // **端面実装は胴が板の縁から外へ張り出す。** 置き方は `edgeMountOf` が決める。
-  if (isEdgeMount(part.type, part.variant)) {
-    const mount = edgeMountOf(part, layout);
-    if (mount !== null) return mount.rect;
-  }
 
   // **描かれている形をそのまま返す。** 玉やコネクタは足を広げても本体が伸びないので、
   // 足の間隔から胴を作ると、離れた部品と重なっていると言い出す。

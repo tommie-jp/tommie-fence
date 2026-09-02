@@ -1,5 +1,5 @@
 import type { Address } from '../types.ts';
-import { isThreeLead, isTwoLead } from './types.ts';
+import { isEdgeMount, isThreeLead, isTwoLead } from './types.ts';
 
 /**
  * 部品の形。**何個の穴を書くか**と、**足がどこに来るか**の 2 つを決める。
@@ -9,9 +9,14 @@ import { isThreeLead, isTwoLead } from './types.ts';
  *
  * DIP と SIP は**アンカー 1 つだけ書く**。足の位置はパッケージが決めていて、
  * 書く人が選べないため — 16 個の穴を書かせるのは、選べないものを書かせること。
+ *
+ * 端面実装のコネクタ (`sma/*-edge`) は **3 本足** — 中心導体と、凹の両端の先端。
+ * 実物の凹は板の縁を上下から挟み、半田付けするのは腕の先端の 2 点で、
+ * 中心導体の行ではなくその上下の行の銅箔に来る。2 本足のまま中心線に足を
+ * 書かせると、アースの穴が中心導体の真下に埋まって信号線とつながって見えた。
  */
 
-export type FootprintKind = 'two-lead' | 'three-lead' | 'dip' | 'sip';
+export type FootprintKind = 'two-lead' | 'three-lead' | 'edge' | 'dip' | 'sip';
 
 export type Footprint = {
   readonly kind: FootprintKind;
@@ -33,8 +38,9 @@ const DIP_MAX_PINS = 40;
 const SIP_MIN_PINS = 2;
 const SIP_MAX_PINS = 40;
 
-/** 種類から形を引く。置けない種類は null。 */
-export function footprintOf(type: string): Footprint | null {
+/** 種類から形を引く。置けない種類は null。**姿で足の数が変わる**のは端面実装だけ。 */
+export function footprintOf(type: string, variant: string | null = null): Footprint | null {
+  if (isEdgeMount(type, variant)) return { kind: 'edge', pins: 3, holes: 3 };
   if (isTwoLead(type)) return { kind: 'two-lead', pins: 2, holes: 2 };
   if (isThreeLead(type)) return { kind: 'three-lead', pins: 3, holes: 3 };
 
@@ -67,7 +73,7 @@ export function pinsOf(footprint: Footprint, holes: readonly Address[]): readonl
   const anchor = holes[0];
   if (!anchor) return [];
 
-  if (footprint.kind === 'two-lead' || footprint.kind === 'three-lead') {
+  if (footprint.kind === 'two-lead' || footprint.kind === 'three-lead' || footprint.kind === 'edge') {
     return holes.slice(0, footprint.pins);
   }
 

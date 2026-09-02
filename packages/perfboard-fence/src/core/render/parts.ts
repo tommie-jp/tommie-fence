@@ -232,7 +232,13 @@ function smaBody(part: PlacedPart): string {
  * 胴の形は当たり判定と同じ矩形に収める (`placement/geometry.ts`) — はみ出して
  * 描くと、図では重なって見えるのに何も言わない、が起きる。
  */
-function smaEdgeBody(part: PlacedPart, width: number, edgeX: number, legX: number): string {
+function smaEdgeBody(
+  part: PlacedPart,
+  width: number,
+  edgeX: number,
+  legX: number,
+  tips: readonly number[],
+): string {
   const half = SMA_SIZE / 2;
   const tip = -width / 2;
   // 左から**ねじ部・ねじなし・台座**。ねじ部とねじなしは同じ太さの筒で、
@@ -284,12 +290,13 @@ function smaEdgeBody(part: PlacedPart, width: number, edgeX: number, legX: numbe
     ].map(([x = 0, y = 0]) => `${num(x)},${num(y)}`).join(' '),
     fill: SMA_GROUND, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
   });
-  // **アースが板に触れるのは腕の 2 点。** そこが半田付けするところなので、
-  // 穴と同じように接点の印を出す — 印が無いと、凹の口のどこを付けるのかが
-  // 図から読めない (アースは穴に挿さらないので、埋まる穴も出ない)。
-  const contacts = [-1, 1]
-    .map((side) => element('circle', {
-      cx: num(groundEnd - CONTACT), cy: num(side * (armHalf - armThick / 2)), r: num(CONTACT),
+  // **アースの足は凹の両端の先端** (`parts/footprint.ts`)。そこが半田付けする
+  // ところなので、**足の番地の上に**接点の印を出す — 配線が届く先と印が別の
+  // 場所にあると、どちらへ付けるのか読めない。腕の形はそのまま (先端が
+  // 上下の行の銅箔に触れる)。
+  const contacts = tips
+    .map((tip) => element('circle', {
+      cx: num(legX), cy: num(tip), r: num(CONTACT),
       fill: SMA_SOLDER, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
     }))
     .join('');
@@ -439,14 +446,16 @@ const bodyOf = (
   part: PlacedPart,
   width: number,
   theme: Theme,
-  mount: { readonly edgeX: number; readonly legX: number } | null,
+  mount: { readonly edgeX: number; readonly legX: number; readonly tips: readonly number[] } | null,
 ): string => {
   if (part.type === 'resistor') return resistorBody(part, width, theme);
   if (part.type === 'led') return ledBody(part, theme);
   if (part.type === 'capacitor') return capacitorBody(part, width, theme);
   if (part.type === 'inductor') return inductorBody(part, width, theme);
   if (part.type === 'sma') {
-    return mount === null ? smaBody(part) : smaEdgeBody(part, width, mount.edgeX, mount.legX);
+    return mount === null
+      ? smaBody(part)
+      : smaEdgeBody(part, width, mount.edgeX, mount.legX, mount.tips);
   }
   return genericBody(width, theme);
 };
@@ -468,14 +477,17 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
   const angle = (rect.angle * 180) / Math.PI;
   const width = rect.width;
 
-  const lead = element('line', {
-    x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y),
-    stroke: theme.palette.lead, 'stroke-width': LEAD_WIDTH,
-  });
   // 3 引数 rotate() を読まないレンダラがあるので translate と rotate に分ける。
   // 端面実装は胴が板の縁から外へ張り出すので、**板の縁と足がどこに来るか**を
   // 局所座標で渡す (胴の中心と足の中点がずれるのはこの姿だけ)。
   const mount = isEdgeMount(part.type, part.variant) ? edgeMountOf(part, layout) : null;
+  // **端面実装に足の線は引かない。** 足を結ぶ線は「胴の両端から出たリード」の絵で、
+  // 金物のコネクタでは中心導体と凹の先端を結ぶ線に見える (先端は中心線の上下に
+  // あるので、斜めに渡って余計にそう読める)。
+  const lead = mount !== null ? '' : element('line', {
+    x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y),
+    stroke: theme.palette.lead, 'stroke-width': LEAD_WIDTH,
+  });
   const body = element(
     'g',
     { transform: `translate(${num(center.x)} ${num(center.y)}) rotate(${num(angle)})` },
@@ -484,7 +496,10 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
   // **キャプションは足の真ん中の下**。胴の中心に置くと、板の外へ張り出す部品
   // (端面実装の SMA) で字が板から出て、地に紛れるか幅ゼロで `…` に切られる。
   // 縦は胴の下端から測る — 中心から一定の距離だと、胴の大きい部品で字が胴に載る。
-  const pinMiddle = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
+  // 端面実装は 2 本目の足が中心線の上下にあるので、**中心導体の行**で測る。
+  const pinMiddle = mount === null
+    ? { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 }
+    : { x: (from.x + to.x) / 2, y: from.y };
   const label = partLabel(caption(part), rect, pinMiddle, theme, layout);
 
   // 姿の名前は**胴のブロックの真ん中**に置く。全体の中心だとねじ部まで含むので
