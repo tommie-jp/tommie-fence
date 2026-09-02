@@ -33,6 +33,33 @@
   },
   "activationEvents": [],
   "contributes": {
+    "customEditors": [
+      {
+        "viewType": "breadboard-fence.map",
+        "displayName": "breadboard Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.md"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
+    "commands": [
+      {
+        "command": "breadboard-fence.openMap",
+        "title": "Breadboard Fence: 図を掴んで動かす (マップ)",
+        "category": "Breadboard Fence"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "breadboard-fence.openMap",
+          "when": "editorLangId == markdown"
+        }
+      ]
+    },
     "markdown.markdownItPlugins": true,
     "markdown.previewStyles": [
       "./media/breadboard.css"
@@ -53,7 +80,7 @@
   "scripts": {
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.webview.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",

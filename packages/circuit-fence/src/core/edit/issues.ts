@@ -1,4 +1,5 @@
-import { element, escapeMarkup } from 'fence-kit';
+import { renderIssues as renderBand } from 'fence-kit';
+import type { IssueRow } from 'fence-kit';
 import { shiftError } from '../errors.ts';
 import { compileCircuit } from '../index.ts';
 import { messageLine, snippetHtml } from '../render/errorCard.ts';
@@ -30,16 +31,6 @@ export type Issue = {
 };
 
 /**
- * 並べる件数。**帯が伸びてマップを押し出さない**ように頭を打つ
- * (1 件が行の中身も出すので 2〜3 行を使う)。溢れた数は最後に出す。
- *
- * 図の下の帯 (`errorCard.ts`) より多いのは**わざと** — あちらは図のすぐ下に
- * 割り込むので短いほうがよく、こちらは直すための窓なので、一度に見えるほど
- * 直しやすい。揃える理由が無い。
- */
-const MAX_SHOWN = 12;
-
-/**
  * フェンス本文の読めなかったところとお知らせ。行はフェンスの中の行 (1 始まり)。
  *
  * **お知らせは `style: debug: off` で伏せられる** (図の下の帯と同じ規則)。
@@ -63,26 +54,18 @@ export const shiftIssues = (issues: readonly Issue[], offset: number): readonly 
   issues.map((issue) => ({ ...issue, error: shiftError(issue.error, offset) }));
 
 /**
- * 帯 1 件。**行が分かっているものだけがクリックできる** (`data-line`)。
- * 分からないものに手掛かりを付けると、押しても何も起きない行ができる。
+ * 帯に並べる形にする。**並べ方 (行の目印・件数の頭打ち) は fence-kit** で、
+ * こちらが作るのは文面と、読めなかった行の見せ方だけ。
+ * 中身は 1 つずつプレビューと同じものを通す (`messageLine` / `snippetHtml`) —
+ * 2 か所で数えると、片方だけ直したときに黙って食い違う。
  */
-const row = (issue: Issue): string =>
-  element(
-    'li',
-    {
-      class: `cf-issue cf-${issue.kind}`,
-      ...(issue.error.line === null ? {} : { 'data-line': issue.error.line }),
-    },
-    escapeMarkup(messageLine(issue.error)) + snippetHtml(issue.error),
-  );
+export const issueRows = (issues: readonly Issue[]): readonly IssueRow[] =>
+  issues.map((issue) => ({
+    kind: issue.kind,
+    line: issue.error.line,
+    text: messageLine(issue.error),
+    snippet: snippetHtml(issue.error),
+  }));
 
-/** マップの下に貼る帯。言うことが無ければ何も出さない。 */
-export function renderIssues(issues: readonly Issue[]): string {
-  if (issues.length === 0) return '';
-
-  const shown = issues.slice(0, MAX_SHOWN).map(row);
-  const rest = issues.length > MAX_SHOWN
-    ? [element('li', { class: 'cf-issue' }, `ほかに ${issues.length - MAX_SHOWN} 件`)]
-    : [];
-  return element('ul', { class: 'cf-issues' }, [...shown, ...rest].join(''));
-}
+/** マップの下に貼る帯。 */
+export const renderIssues = (issues: readonly Issue[]): string => renderBand(issueRows(issues));

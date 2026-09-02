@@ -1,0 +1,48 @@
+import type { IssueRow } from 'fence-kit';
+import { escapeXml } from '../render/svg.ts';
+import { errorLine } from '../render/errorText.ts';
+import { renderBreadboard } from '../index.ts';
+import type { FenceError } from '../types.ts';
+
+/**
+ * マップの下の帯に出す、読めなかったところとお知らせ。
+ *
+ * **並べ方は fence-kit** (行の目印・件数の頭打ち・webview の class)。
+ * ここが作るのは**文面と、読めなかった行の見せ方**だけ — 言い回しも
+ * 桁の数え方もフェンスごとに違う。
+ */
+
+/** 印の桁を合わせるための、行の中身と `^`。プレビューの `sourceRows` と同じ数え方。 */
+function snippetOf(error: FenceError): string {
+  const { text, at } = error;
+  if (text === undefined) return '';
+  if (at === undefined) return `<pre class="cf-snippet">${escapeXml(text)}</pre>`;
+
+  const mark = `${' '.repeat(at.column)}${'^'.repeat(Math.max(1, at.length))}`;
+  return `<pre class="cf-snippet">${escapeXml(text)}\n${escapeXml(mark)}</pre>`;
+}
+
+/**
+ * フェンス本文の読めなかったところとお知らせ。行はフェンスの中の行 (1 始まり)。
+ *
+ * **お知らせは `style: debug: off` で伏せられる** (図の下の帯と同じ規則)。
+ * 読めなかった行は伏せられない — 伏せると直せるはずの間違いに気づけなくなる。
+ */
+export function issuesOf(source: string): readonly IssueRow[] {
+  const { errors, notices } = renderBreadboard(source);
+  const rowOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => ({
+    kind,
+    line: error.line,
+    text: errorLine(error),
+    snippet: snippetOf(error),
+  });
+
+  return [...errors.map(rowOf('error')), ...notices.map(rowOf('notice'))];
+}
+
+/**
+ * フェンスの中の行を Markdown の行へずらす。押すとその行へ飛べるようにするため。
+ * **行の分からないものはそのまま** (足すと嘘の行を指す)。
+ */
+export const shiftIssues = (issues: readonly IssueRow[], offset: number): readonly IssueRow[] =>
+  issues.map((issue) => (issue.line === null ? issue : { ...issue, line: issue.line + offset - 1 }));
