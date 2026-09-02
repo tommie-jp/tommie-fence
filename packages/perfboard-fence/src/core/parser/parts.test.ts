@@ -124,13 +124,25 @@ describe('端面実装の sma は 3 本足', () => {
     expect(result.ok && result.value.holes).toEqual(['c1', 'b0', 'd0']);
   });
 
-  test('asks for three holes, showing where the tips go, when only two are written', () => {
-    // 2 本足のまま中心線に足を書かせると、アースの穴が中心導体の真下に埋まる。
-    const result = parsePartLine('J1', 'sma/female-edge c1 c0');
+  test('lets one tip be left out — the other is decided across the centre line', () => {
+    const result = parsePartLine('J1', 'sma/female-edge c1 d0');
+
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.value.holes).toEqual(['c1', 'd0']);
+  });
+
+  test('does not swallow a value as the third hole when only one tip is written', () => {
+    const result = parsePartLine('J1', 'sma/female-edge c1 d0 50');
+
+    expect(result.ok && result.value.holes).toEqual(['c1', 'd0']);
+    expect(result.ok && result.value.value).toBe('50');
+  });
+
+  test('asks for the centre and a tip when only the centre is written', () => {
+    const result = parsePartLine('J1', 'sma/female-edge c1');
 
     expect(result.ok).toBe(false);
-    expect(result.ok === false && result.error.message).toContain('穴を 3 つ');
-    expect(result.ok === false && result.error.message).toContain('c1 b0 d0');
+    expect(result.ok === false && result.error.message).toContain('片方だけでよい');
   });
 
   test('leaves the upright sma at two holes', () => {

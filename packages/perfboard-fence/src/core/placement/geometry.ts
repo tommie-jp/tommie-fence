@@ -64,8 +64,12 @@ export function edgeMountOf(part: PlacedPart, layout: Layout): EdgeMount | null 
   const centre = layout.point(first.address);
   const ground = layout.point(tip.address);
 
-  // 列が違えば横向き (板の左右の縁)、同じなら縦向き (上下の縁)。
-  const sideways = tip.address.col !== first.address.col;
+  // **2 つの先端が同じ列に並んでいれば横向き** (板の左右の縁)、同じ行なら縦向き。
+  // 先端が 1 つしか無いときは、中心導体と列が違えば横向きとみなす。
+  const other = rest[1];
+  const sideways = other === undefined
+    ? tip.address.col !== first.address.col
+    : other.address.col === tip.address.col;
   const step = sideways ? centre.x - ground.x : centre.y - ground.y;
   if (step === 0) return null;
 

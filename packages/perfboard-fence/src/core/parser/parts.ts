@@ -60,14 +60,22 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
     );
   }
 
-  const holes = rest.slice(0, footprint.holes);
-  if (holes.length < footprint.holes) {
+  // **番地に見える語だけを穴として取る。** 省いてよい足のある形 (端面実装) では、
+  // 3 つ目が値のこともある。
+  const wanted = footprint.minHoles ?? footprint.holes;
+  const holes = rest.slice(0, footprint.holes)
+    .filter((token, index) => index < wanted || plausibleHole(token));
+  if (holes.length < wanted) {
     // **書く穴の数は形が決める。** DIP と SIP はアンカー 1 つだけ
     // (足の位置はパッケージが決めていて、書く人が選べない)。
-    // 端面実装は中心導体・凹の上の先端・下の先端。先端は中心線の上下の縁の銅箔。
-    const example = footprint.kind === 'edge'
-      ? `${written} c1 b0 d0`
-      : footprint.holes === 1 ? `${type} b3` : `${type} ${['b3', 'b5', 'b7'].slice(0, footprint.holes).join(' ')}`;
+    // 端面実装は中心導体と凹の先端 — 先端は片方だけでよい (もう片方は反対側に決まる)。
+    if (footprint.kind === 'edge') {
+      return fail(
+        `${safeToken(written)} は中心導体と凹の先端の穴を書きます (例: ${written} e1 f0。先端は片方だけでよい)`,
+        written,
+      );
+    }
+    const example = footprint.holes === 1 ? `${type} b3` : `${type} ${['b3', 'b5', 'b7'].slice(0, footprint.holes).join(' ')}`;
     return fail(
       `${safeToken(written)} は穴を ${footprint.holes} つ書きます (例: ${example})`,
       written,
@@ -80,7 +88,7 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
   }
 
   // 残りは丸ごと値。`100n 50V` のように空白を含む書き方をそのまま通す。
-  const tail = rest.slice(footprint.holes);
+  const tail = rest.slice(holes.length);
   // **番地に見えるものを黙って値にしない。** 足を 1 本多く書いたつもりの人が、
   // 「値 b9」の図を見て気づけないまま終わる。
   //

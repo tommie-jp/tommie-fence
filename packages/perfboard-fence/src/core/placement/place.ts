@@ -52,8 +52,19 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     if (rejected) continue;
 
     // **足の位置は形が決める。** DIP と SIP は書かれたアンカーから広げる。
+    // 端面実装は書かなかった凹の先端を、中心線を挟んで反対側に補う。
     const footprint = footprintOf(spec.type, spec.variant);
-    const pins = footprint === null ? addresses : pinsOf(footprint, addresses);
+    const pins = footprint === null ? addresses : pinsOf(footprint, addresses, board);
+    if (footprint?.kind === 'edge' && pins.length < footprint.pins) {
+      // 先端が中心導体と同じ行 (列) に書かれている。実物の凹は中心導体を
+      // 上下から挟んでいて、先端が中心線に来ることは無い。
+      errors.push(fenceError(
+        `${safeToken(spec.id)} の凹の先端は中心導体の上下の行 (左右の列) に書きます`
+        + ` (例: sma/female-edge e1 f0)`,
+        spec.line,
+      ));
+      continue;
+    }
     const offPin = pins.find((address) => offBoardReason(board, address) !== null);
     if (offPin) {
       errors.push(fenceError(

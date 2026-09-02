@@ -17,6 +17,17 @@ import type { Theme } from './theme.ts';
 /** ランドの外径からどれだけ広げるか (半径)。盛り上がったぶん。 */
 const GROW = 1.5;
 
+/**
+ * 半田の玉 1 つ。**部品の上に半田を描きたいところ**からも呼ぶ (端面実装の凹の
+ * 先端 — 足の印の上に半田が乗る)。ここと `renderJoints` で同じ形にしておかないと、
+ * 同じ穴の半田が場所によって違う大きさに見える。
+ */
+export const jointMark = (x: number, y: number, theme: Theme): string =>
+  element('circle', {
+    cx: num(x), cy: num(y), r: num(theme.metrics.landSize / 2 + GROW),
+    fill: theme.palette.land, stroke: darken(theme.palette.land, 0.25), 'stroke-width': 1,
+  });
+
 export function renderJoints(holes: readonly Address[], layout: Layout, theme: Theme): string {
   // 同じ穴に足と配線が来ることは普通にあるので、番地で 1 つに畳む。
   // 重ねて描くと縁が濃くなり、その穴だけ違う部品のように見える。
@@ -29,10 +40,7 @@ export function renderJoints(holes: readonly Address[], layout: Layout, theme: T
     seen.add(key);
 
     const { x, y } = layout.point(hole);
-    drawn.push(element('circle', {
-      cx: num(x), cy: num(y), r: num(theme.metrics.landSize / 2 + GROW),
-      fill: theme.palette.land, stroke: darken(theme.palette.land, 0.25), 'stroke-width': 1,
-    }));
+    drawn.push(jointMark(x, y, theme));
   }
 
   return drawn.join('');

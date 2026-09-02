@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { DIP_ROW_SPAN, footprintOf, pinsOf } from './footprint.ts';
+import { DIP_ROW_SPAN, edgeSideOf, footprintOf, mirroredTip, pinsOf } from './footprint.ts';
 import { parseAddress } from '../model/address.ts';
 
 const at = (text: string) => parseAddress(text)!;
@@ -71,3 +71,41 @@ describe('pinsOf', () => {
     expect(pinsOf({ kind: 'dip', pins: 8, holes: 1 }, [])).toEqual([]);
   });
 });
+
+describe('端面実装の凹の先端', () => {
+  const at = (text: string) => parseAddress(text)!;
+  const board = { cols: 16, rows: 8 };
+  const edge = footprintOf('sma', 'female-edge')!;
+
+  test('is a three-pin footprint that lets one tip be left out', () => {
+    expect(edge).toMatchObject({ kind: 'edge', pins: 3, holes: 3, minHoles: 2 });
+  });
+
+  test('fills in the other tip across the centre line on a side edge', () => {
+    // 左の縁: 中心導体 e1、書いた先端 f0 → 反対側は d0。
+    expect(pinsOf(edge, [at('e1'), at('f0')], board)).toEqual([at('e1'), at('f0'), at('d0')]);
+    expect(pinsOf(edge, [at('e1'), at('d0')], board)).toEqual([at('e1'), at('d0'), at('f0')]);
+  });
+
+  test('fills in across the centre column on a top or bottom edge', () => {
+    // 上の縁: 中心導体 b5、書いた先端 a4 → 反対側は a6。
+    expect(mirroredTip(at('b5'), at('a4'), board)).toEqual(at('a6'));
+    expect(edgeSideOf(at('b5'), at('a4'), board)).toBe('top');
+  });
+
+  test('keeps three written tips as they are', () => {
+    expect(pinsOf(edge, [at('e1'), at('d0'), at('f0')], board)).toEqual([at('e1'), at('d0'), at('f0')]);
+  });
+
+  test('cannot mirror a tip that sits on the centre line', () => {
+    expect(mirroredTip(at('e1'), at('e0'), board)).toBeNull();
+    expect(pinsOf(edge, [at('e1'), at('e0')], board)).toHaveLength(2);
+  });
+
+  test('picks the side the tip faces when the corner is equally near', () => {
+    // 左上の角: 中心導体 b1 は左の縁にも上の縁にも同じだけ近い。
+    expect(edgeSideOf(at('b1'), at('c0'), board)).toBe('left');
+    expect(edgeSideOf(at('b1'), at('a2'), board)).toBe('top');
+  });
+});
+

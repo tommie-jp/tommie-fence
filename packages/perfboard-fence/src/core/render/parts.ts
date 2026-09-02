@@ -11,6 +11,7 @@ import { hatchFill } from './hatch.ts';
 import { isEdgeMount } from '../parts/types.ts';
 import { footprintOf } from '../parts/footprint.ts';
 import type { PlacedPart } from '../types.ts';
+import { jointMark } from './joints.ts';
 import type { Theme } from './theme.ts';
 
 const LEAD_WIDTH = 2;
@@ -238,6 +239,7 @@ function smaEdgeBody(
   edgeX: number,
   legX: number,
   tips: readonly number[],
+  theme: Theme,
 ): string {
   const half = SMA_SIZE / 2;
   const tip = -width / 2;
@@ -291,14 +293,15 @@ function smaEdgeBody(
     fill: SMA_GROUND, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
   });
   // **アースの足は凹の両端の先端** (`parts/footprint.ts`)。そこが半田付けする
-  // ところなので、**足の番地の上に**接点の印を出す — 配線が届く先と印が別の
-  // 場所にあると、どちらへ付けるのか読めない。腕の形はそのまま (先端が
-  // 上下の行の銅箔に触れる)。
+  // ところなので、**足の番地の上に**足の印を出し、**その上に半田の玉を乗せる** —
+  // 足が半田の下に来るのが実物の重なり (ほかの部品の足も同じ)。配線が届く先と
+  // 印が別の場所にあると、どちらへ付けるのか読めない。腕の形はそのまま
+  // (先端が上下の行の銅箔に触れる)。
   const contacts = tips
     .map((tip) => element('circle', {
       cx: num(legX), cy: num(tip), r: num(CONTACT),
       fill: SMA_SOLDER, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
-    }))
+    }) + jointMark(legX, tip, theme))
     .join('');
 
   // 信号線は**凹の谷から出る凸**。アースより先の穴まで届く。
@@ -455,7 +458,7 @@ const bodyOf = (
   if (part.type === 'sma') {
     return mount === null
       ? smaBody(part)
-      : smaEdgeBody(part, width, mount.edgeX, mount.legX, mount.tips);
+      : smaEdgeBody(part, width, mount.edgeX, mount.legX, mount.tips, theme);
   }
   return genericBody(width, theme);
 };

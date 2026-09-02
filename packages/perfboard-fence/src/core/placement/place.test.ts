@@ -71,3 +71,26 @@ describe('placeParts', () => {
     expect(errors.some((e) => e.message.includes('多すぎ'))).toBe(true);
   });
 });
+
+describe('端面実装の凹の先端', () => {
+  const sma = (holes: readonly string[]): PartSpec => ({
+    id: 'J1', type: 'sma', variant: 'female-edge', written: 'sma/female-edge', holes, value: null, line: 4,
+  });
+
+  test('fills in the tip that was left out', () => {
+    const { parts, errors } = placeParts([sma(['c1', 'd0'])], board);
+
+    expect(errors).toEqual([]);
+    expect(parts[0]?.pins).toHaveLength(3);
+  });
+
+  test('refuses a tip written on the centre line, pointing at the line', () => {
+    // 実物の腕は中心導体を上下から挟んでいて、中心線には来ない。
+    const { parts, errors } = placeParts([sma(['c1', 'c0'])], board);
+
+    expect(parts).toEqual([]);
+    expect(errors[0]?.message).toContain('上下の行');
+    expect(errors[0]?.line).toBe(4);
+  });
+});
+

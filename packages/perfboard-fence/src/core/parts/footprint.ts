@@ -1,4 +1,4 @@
-import type { Address } from '../types.ts';
+import type { Address, Board } from '../types.ts';
 import { isEdgeMount, isThreeLead, isTwoLead } from './types.ts';
 
 /**
@@ -14,6 +14,8 @@ import { isEdgeMount, isThreeLead, isTwoLead } from './types.ts';
  * 実物の凹は板の縁を上下から挟み、半田付けするのは腕の先端の 2 点で、
  * 中心導体の行ではなくその上下の行の銅箔に来る。2 本足のまま中心線に足を
  * 書かせると、アースの穴が中心導体の真下に埋まって信号線とつながって見えた。
+ * **先端は片方だけ書けばよい** — 凹は 1 つの金物で、書かなかったほうは
+ * 中心線を挟んで反対側に決まる (`pinsOf` が補う)。
  */
 
 export type FootprintKind = 'two-lead' | 'three-lead' | 'edge' | 'dip' | 'sip';
@@ -24,6 +26,8 @@ export type Footprint = {
   readonly pins: number;
   /** フェンスに書く穴の数。 */
   readonly holes: number;
+  /** 省いてよい足があるとき、書く穴の最小の数。無ければ `holes` と同じ。 */
+  readonly minHoles?: number;
 };
 
 /** DIP の 2 列の間隔 (穴の数)。300 mil = 7.62mm = 3 ピッチ。 */
@@ -40,7 +44,7 @@ const SIP_MAX_PINS = 40;
 
 /** 種類から形を引く。置けない種類は null。**姿で足の数が変わる**のは端面実装だけ。 */
 export function footprintOf(type: string, variant: string | null = null): Footprint | null {
-  if (isEdgeMount(type, variant)) return { kind: 'edge', pins: 3, holes: 3 };
+  if (isEdgeMount(type, variant)) return { kind: 'edge', pins: 3, holes: 3, minHoles: 2 };
   if (isTwoLead(type)) return { kind: 'two-lead', pins: 2, holes: 2 };
   if (isThreeLead(type)) return { kind: 'three-lead', pins: 3, holes: 3 };
 
@@ -69,12 +73,24 @@ export function footprintOf(type: string, variant: string | null = null): Footpr
  * そこから右へ数えて、折り返して下の列を左へ戻る。実物のノッチと同じ向きで、
  * ここを変えるとデータシートのピン番号と図が食い違う。
  */
-export function pinsOf(footprint: Footprint, holes: readonly Address[]): readonly Address[] {
+export function pinsOf(
+  footprint: Footprint,
+  holes: readonly Address[],
+  board: Pick<Board, 'cols' | 'rows'> | null = null,
+): readonly Address[] {
   const anchor = holes[0];
   if (!anchor) return [];
 
-  if (footprint.kind === 'two-lead' || footprint.kind === 'three-lead' || footprint.kind === 'edge') {
+  if (footprint.kind === 'two-lead' || footprint.kind === 'three-lead') {
     return holes.slice(0, footprint.pins);
+  }
+
+  if (footprint.kind === 'edge') {
+    const [, tip, other] = holes;
+    if (tip === undefined) return [anchor];
+    if (other !== undefined || board === null) return holes.slice(0, footprint.pins);
+    const mirrored = mirroredTip(anchor, tip, board);
+    return mirrored === null ? [anchor, tip] : [anchor, tip, mirrored];
   }
 
   if (footprint.kind === 'sip') {
@@ -95,3 +111,52 @@ export function pinsOf(footprint: Footprint, holes: readonly Address[]): readonl
   }));
   return [...top, ...bottom];
 }
+
+/** 端面実装のコネクタが載る辺。 */
+export type EdgeSide = 'left' | 'right' | 'top' | 'bottom';
+
+/**
+ * 端面実装のコネクタが**どの辺に載っているか**。中心導体から一番近い縁で決める —
+ * ただし**先端が中心導体より外側にある辺だけ**を候補にする。板の角に近い
+ * コネクタで左右と上下が同じ距離になっても、先端の側で決まる。
+ *
+ * 足どうしを結んだ線で決めないのは、先端が中心線の上下 (左右) にあるので、
+ * その線は必ず斜めになるため (`placement/geometry.ts` の `edgeMountOf` と同じ理由)。
+ * 決められないときは null (先端が中心導体と同じ穴など)。
+ */
+export function edgeSideOf(
+  centre: Address,
+  tip: Address,
+  board: Pick<Board, 'cols' | 'rows'>,
+): EdgeSide | null {
+  const candidates: readonly (readonly [EdgeSide, number, boolean])[] = [
+    ['left', centre.col - 1, tip.col < centre.col],
+    ['right', board.cols - centre.col, tip.col > centre.col],
+    ['top', centre.row - 1, tip.row < centre.row],
+    ['bottom', board.rows - centre.row, tip.row > centre.row],
+  ];
+  const outward = candidates.filter(([, , faces]) => faces);
+  if (outward.length === 0) return null;
+  return outward.reduce((best, one) => (one[1] < best[1] ? one : best))[0];
+}
+
+/**
+ * 書かれた先端の、中心線を挟んだ反対側。**辺に沿った向きに写す** — 左右の縁なら
+ * 行を、上下の縁なら列を裏返す。先端が中心線の上に乗っていれば写しようが
+ * 無いので null (置く側が断る)。
+ */
+export function mirroredTip(
+  centre: Address,
+  tip: Address,
+  board: Pick<Board, 'cols' | 'rows'>,
+): Address | null {
+  const side = edgeSideOf(centre, tip, board);
+  if (side === null) return null;
+
+  const acrossRows = side === 'left' || side === 'right';
+  if (acrossRows ? tip.row === centre.row : tip.col === centre.col) return null;
+  return acrossRows
+    ? { row: 2 * centre.row - tip.row, col: tip.col }
+    : { row: tip.row, col: 2 * centre.col - tip.col };
+}
+

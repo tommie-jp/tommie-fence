@@ -249,6 +249,16 @@ describe('SMA 横置きの 3 本足 (凹の両端)', () => {
     expect(ys).toEqual([-layout.pitch, layout.pitch]);
   });
 
+  test('lays the solder over the tip pins, the way it sits on any other leg', () => {
+    const svg = renderParts(edge, layout, THEME);
+    const pin = svg.indexOf('fill="#d7dce1"');
+    const solder = svg.indexOf(`fill="${THEME.palette.land}"`, pin);
+
+    expect(pin).toBeGreaterThan(-1);
+    // 足の印のあとに半田の玉が来る (あとに描いたものが上に乗る)。
+    expect(solder).toBeGreaterThan(pin);
+  });
+
   test('keeps the arms as they were — the tips only reach the pads, not the holes', () => {
     const svg = renderParts(edge, layout, THEME);
     const points = /<polygon points="([^"]+)"/.exec(svg)?.[1] ?? '';
