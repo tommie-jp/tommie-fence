@@ -61,6 +61,8 @@ function drawLabels(map: GridMap): string {
 const drawWire = (wire: WireLine): string =>
   element('line', {
     class: wire.approximate ? 'cf-wire cf-approx' : 'cf-wire',
+    // 書かれた行。エディタのカーソルが来たとき、この線を光らせる目印。
+    'data-line': wire.line,
     x1: num(x(wire.from.col)), y1: num(y(wire.from.row)),
     x2: num(x(wire.to.col)), y2: num(y(wire.to.row)),
   });

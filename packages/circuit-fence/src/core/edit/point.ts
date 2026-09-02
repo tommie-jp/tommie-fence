@@ -4,7 +4,7 @@ import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { addressTokensOn, addressesOf, applyEdits, diffOf, fail, isOnGrid, locateTokens } from './shared.ts';
-import type { Edit, MoveResult } from './shared.ts';
+import type { Edit, MoveResult, Span } from './shared.ts';
 import { cellOf } from '../types.ts';
 import type { Circuit } from '../model/circuit.ts';
 
@@ -163,21 +163,17 @@ function bareTokens(doc: Circuit, source: string, wanted: Address): readonly Tok
 }
 
 /**
- * `points:` の中で、その番地を行き先に書いている行。
- * **名前の付いた節点はここだけを直す** — 名前で指している部品と配線は
- * 綴りを変えずに付いてくるので、触る必要がない。
+ * `points:` が書いている「名前 → 番地」の行き先。行と桁つきで返す。
  *
  * `visit` ではなく直下の対をたどる。`points:` は文書の頭のマップの直下と
  * 決まっているので、入れ子の深さを当てにした探し方をしない。
  */
-function pointTokens(source: string, wanted: Address): readonly Token[] {
+export function pointEntries(source: string): readonly (Span & { readonly address: Address })[] {
   const lineCounter = new LineCounter();
-  const document = parseDocument(source, { lineCounter, uniqueKeys: false });
+  const document = parseDocument(normalizeNewlines(source), { lineCounter, uniqueKeys: false });
   if (document.errors.length > 0 || !isMap(document.contents)) return [];
 
-  const target = formatAddress(wanted);
-  const found: Token[] = [];
-
+  const found: (Span & { address: Address })[] = [];
   for (const pair of document.contents.items) {
     if (!isScalar(pair.key) || pair.key.value !== 'points') continue;
     if (!isMap(pair.value)) continue;
@@ -186,17 +182,50 @@ function pointTokens(source: string, wanted: Address): readonly Token[] {
       const value = item.value;
       if (!isScalar(value) || typeof value.value !== 'string' || !value.range) continue;
       const address = parseAddress(value.value.trim());
-      if (address === null || formatAddress(address) !== target) continue;
+      if (address === null) continue;
 
       const text = source.slice(value.range[0], value.range[1]);
       const match = /\S+/.exec(text);
       if (!match) continue;
       const { line, col } = lineCounter.linePos(value.range[0] + match.index);
-      found.push({ line, column: col - 1, length: match[0].length });
+      found.push({ line, column: col - 1, length: match[0].length, address });
     }
   }
-
   return found;
+}
+
+/**
+ * その番地を行き先に書いている `points:` の行。
+ * **名前の付いた節点はここだけを直す** — 名前で指している部品と配線は
+ * 綴りを変えずに付いてくるので、触る必要がない。
+ */
+function pointTokens(source: string, wanted: Address): readonly Token[] {
+  const target = formatAddress(wanted);
+  return pointEntries(source)
+    .filter((entry) => formatAddress(entry.address) === target)
+    .map(({ line, column, length }) => ({ line, column, length }));
+}
+
+/**
+ * その節点を書いている場所 (名前の行き先と、素の綴り)。
+ * **書き換えるのと同じ場所**を返す — 光る場所と動く場所を食い違わせない。
+ */
+function spansOf(doc: Circuit, source: string, at: Address): readonly Span[] {
+  const found = [...pointTokens(source, at), ...bareTokens(doc, source, at)];
+  const seen = new Set<string>();
+  return found.filter((span) => {
+    const key = `${span.line},${span.column}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/** 上と同じものをフェンス本文から。読めないフェンスでは空。 */
+export function nodeSpans(source: string, at: Address): readonly Span[] {
+  const normalized = normalizeNewlines(source);
+  const { doc } = parseFence(normalized);
+  return doc ? spansOf(doc, normalized, at) : [];
 }
 
 /**
@@ -256,7 +285,7 @@ export function movePoint(source: string, at: Address, to: Address): MoveResult 
   // **名前の行き先と、生の綴りで書いた場所の両方。** 名前で指している部品と
   // 配線は `points:` の 1 行に付いてくるが、同じ番地を生の綴りでも書いていたら
   // そこも運ぶ — 置いていくと接続が切れて「丸ごと運ぶ」の約束が破れる。
-  const tokens = [...pointTokens(normalized, at), ...bareTokens(doc, normalized, at)];
+  const tokens = spansOf(doc, normalized, at);
   if (tokens.length === 0) {
     return fail(`${formatAddress(at)} を書いている場所を見つけられませんでした`, null);
   }

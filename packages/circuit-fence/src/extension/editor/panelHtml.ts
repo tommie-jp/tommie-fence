@@ -39,6 +39,13 @@ const STYLE = `
   .cf-dot-mark { fill: var(--cf-node); }
   .cf-dot-name { fill: var(--cf-node); font-size: 9px; }
 
+  /* エディタのカーソルが指しているもの。掴んでいる印とは別の色にして、
+     「いま触れているもの」と「持っているもの」を取り違えないようにする。 */
+  .cf-aim .cf-glyph, .cf-aim .cf-glyph-line, .cf-aim .cf-lead,
+  .cf-wire.cf-aim { stroke: var(--vscode-charts-orange, var(--cf-node)); stroke-width: 2.5; }
+  .cf-aim .cf-name { fill: var(--vscode-charts-orange, var(--cf-node)); }
+  .cf-aim .cf-dot-mark { stroke: var(--vscode-charts-orange, var(--cf-node)); stroke-width: 3; }
+
   .cf-chip, .cf-dot { cursor: grab; }
   .cf-held { cursor: grabbing; }
   .cf-held .cf-glyph, .cf-held .cf-glyph-line, .cf-held .cf-lead { stroke: var(--vscode-focusBorder); }
@@ -94,13 +101,18 @@ const SCRIPT = `
     document.querySelectorAll('.cf-held').forEach((el) => el.classList.remove('cf-held'));
   };
 
+  /** 掴んだものをエディタで光らせてもらう (拡張だけが文書を触れる)。 */
+  const tell = (kind, id) => vscode.postMessage({ kind: 'select', what: kind, id: id });
+
   const release = () => {
     setHeld(null);
+    tell();
     status().textContent = '';
   };
 
   const hold = (kind, id, element) => {
     setHeld({ kind: kind, id: id });
+    tell(kind, id);
     element.classList.add('cf-held');
     const what = kind === 'node' ? id + ' の節点' : id;
     status().textContent = what + ' を掴みました。置きたい交点をクリックします (Esc で放す)';
@@ -116,6 +128,7 @@ const SCRIPT = `
     );
     const said = what + ' を ' + address + ' へ…';
     setHeld(null);
+    tell();
     status().textContent = said;
   };
 
@@ -200,11 +213,28 @@ const SCRIPT = `
       setHeld(null);
     }
     if (message.kind === 'status') status().textContent = message.text;
+    if (message.kind === 'aim') aim(message.what, message.id);
     if (message.kind === 'history') {
       document.querySelector('.cf-undo').disabled = !message.canUndo;
       document.querySelector('.cf-redo').disabled = !message.canRedo;
     }
   });
+
+  /**
+   * エディタのカーソルが指しているものを光らせる (掴んだものをエディタで
+   * 光らせるのと逆向き)。**掴む印とは別の class** — 持っているものと
+   * 触れているものを取り違えない。
+   */
+  const aim = (what, id) => {
+    document.querySelectorAll('.cf-aim').forEach((el) => el.classList.remove('cf-aim'));
+    if (!what || id === undefined) return;
+    const selector = what === 'part'
+      ? '.cf-chip[data-part="' + CSS.escape(id) + '"]'
+      : what === 'node'
+        ? '.cf-dot[data-node="' + CSS.escape(id) + '"]'
+        : '.cf-wire[data-line="' + CSS.escape(id) + '"]';
+    document.querySelectorAll(selector).forEach((el) => el.classList.add('cf-aim'));
+  };
 
   // 持ち方の切り替え。**掴む物が違えば意味も違う**ので、同じ操作に混ぜない
   // (部品は 1 つだけ動いて接続が変わる、節点は交点ごと動いて接続が保たれる)。

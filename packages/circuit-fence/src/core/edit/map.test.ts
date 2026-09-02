@@ -54,15 +54,15 @@ describe('gridMap の配線', () => {
 
   test('draws a straight wire between the crossings it joins', () => {
     expect(linesOf('wires:\n  - a1 -- a3\n')).toEqual([
-      { from: { row: 0, col: 0 }, to: { row: 0, col: 2 }, approximate: false },
+      { from: { row: 0, col: 0 }, to: { row: 0, col: 2 }, approximate: false, line: 2 },
     ]);
   });
 
   test('breaks a bent wire at its corner, so the map can follow it', () => {
     // `-|` は先に横。角は from の行・to の列。
     expect(linesOf('wires:\n  - a1 -| c3\n')).toEqual([
-      { from: { row: 0, col: 0 }, to: { row: 0, col: 2 }, approximate: false },
-      { from: { row: 0, col: 2 }, to: { row: 2, col: 2 }, approximate: false },
+      { from: { row: 0, col: 0 }, to: { row: 0, col: 2 }, approximate: false, line: 2 },
+      { from: { row: 0, col: 2 }, to: { row: 2, col: 2 }, approximate: false, line: 2 },
     ]);
   });
 

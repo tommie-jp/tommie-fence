@@ -99,3 +99,25 @@ describe('元に戻す・やり直す', () => {
     expect(html).toContain('disabled = !message.canUndo');
   });
 });
+
+describe('エディタと光を合わせる', () => {
+  test('tells the extension what was grabbed, so the editor can light it up', () => {
+    expect(html).toContain("vscode.postMessage({ kind: 'select', what: kind, id: id })");
+  });
+
+  test('clears the light when the grab is released', () => {
+    expect(html).toContain('tell();');
+  });
+
+  test('lights up what the editor cursor points at, in its own colour', () => {
+    // 掴んでいる印と同じ色にすると、持っているものと触れているものを取り違える。
+    expect(html).toContain("message.kind === 'aim'");
+    expect(html).toContain('.cf-aim .cf-glyph');
+    expect(html).toContain('cf-wire.cf-aim');
+  });
+
+  test('escapes the id before putting it in a selector', () => {
+    // フェンスから来た名前がそのまま selector に入ると、壊れた selector で落ちる。
+    expect(html).toContain('CSS.escape(id)');
+  });
+});

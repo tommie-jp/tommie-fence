@@ -8,8 +8,8 @@ import { parseFence } from '../parser/parseFence.ts';
 import { cellOf } from '../types.ts';
 import type { Circuit } from '../model/circuit.ts';
 import type { Endpoint } from '../types.ts';
-import { nodesOf } from './point.ts';
-import { addressesOf } from './shared.ts';
+import { nodesOf, pointEntries } from './point.ts';
+import { addressTokensOn, addressesOf, locateTokens } from './shared.ts';
 
 /**
  * 部品を掴むための**グリッドマップ**。パース済みモデルから即時に描ける
@@ -41,6 +41,8 @@ export type Chip = {
 export type WireLine = {
   readonly from: Cell;
   readonly to: Cell;
+  /** 書かれた行 (1 始まり)。エディタのカーソルと突き合わせるための目印。 */
+  readonly line: number;
   /**
    * ピンの端を部品の升で近似したか。**正しい足の位置は TeX しか知らない**
    * (記号の形から決まる)。描く側はここを見て破線にする。
@@ -112,13 +114,14 @@ function wireLinesOf(doc: Circuit): WireLine[] {
     if (from === null || to === null) continue;
 
     const approximate = from.approximate || to.approximate;
+    const line = wire.line;
     const corner = cornerOf(from.cell, to.cell, wire.operator);
     if (corner === null) {
-      lines.push({ from: cellAt(from.cell), to: cellAt(to.cell), approximate });
+      lines.push({ from: cellAt(from.cell), to: cellAt(to.cell), approximate, line });
       continue;
     }
-    lines.push({ from: cellAt(from.cell), to: cellAt(corner), approximate });
-    lines.push({ from: cellAt(corner), to: cellAt(to.cell), approximate });
+    lines.push({ from: cellAt(from.cell), to: cellAt(corner), approximate, line });
+    lines.push({ from: cellAt(corner), to: cellAt(to.cell), approximate, line });
   }
   return lines;
 }
@@ -171,6 +174,65 @@ export function gridMap(source: string): GridMap {
   const cols = Math.min(LIMITS.columns, Math.max(MIN_COLS, ...span((cell) => cell.col)));
 
   return { rows, cols, chips, dots, wires, skipped, readable: true };
+}
+
+/**
+ * エディタのカーソルが指しているもの。**マップ側で光らせる**ために使う
+ * (掴んだものをエディタで光らせるのと逆向き)。
+ *
+ * 番地の綴りの上なら節点、それ以外は行が持っているもの (部品か配線)。
+ * **行の上ならどこでも同じ答え**にする — 値の上とラベルの上で違う物を指すと、
+ * 光るものがカーソルを動かすたびに入れ替わって読みにくい。
+ */
+export type Aim =
+  | { readonly kind: 'part'; readonly id: string }
+  | { readonly kind: 'node'; readonly address: Address }
+  | { readonly kind: 'wire'; readonly line: number };
+
+/** フェンスの中の行 (1 始まり) と桁 (0 始まり) で引く。指すものが無ければ null。 */
+export function aimAt(source: string, line: number, column: number): Aim | null {
+  const normalized = normalizeNewlines(source);
+  const { doc } = parseFence(normalized);
+  if (!doc) return null;
+
+  const text = normalized.split('\n')[line - 1];
+  if (text === undefined) return null;
+
+  const covers = (span: { column: number; length: number }): boolean =>
+    column >= span.column && column <= span.column + span.length;
+
+  // **`points:` の行き先も節点。** 名前を付けた行にカーソルを置いたときに指す。
+  for (const entry of pointEntries(normalized)) {
+    if (entry.line === line && covers(entry)) return { kind: 'node', address: entry.address };
+  }
+
+  // 部品の行なら、その行の部品。1 行に 2 つ以上あるときは桁で選ぶ。
+  const here = doc.parts.filter((part) => part.line === line);
+
+  // **番地を探すのは `parts:` と `wires:` の行だけ。** `title:` や `notes:` や
+  // `style:` にも番地に見える字は書けるが、あれは節点を指していない
+  // (`circle C1 red` の C1 は部品の名前。書き換え側で実際に踏んだ罠と同じ根)。
+  const onWire = doc.wires.some((wire) => wire.line === line);
+  if (here.length > 0 || onWire) {
+    for (const token of addressTokensOn(text, doc.points)) {
+      if (covers(token)) return { kind: 'node', address: token.address };
+    }
+  }
+  if (here.length > 0) {
+    let cursor = 0;
+    let last = here[0] as (typeof here)[number];
+    for (const part of here) {
+      const located = locateTokens(text, addressesOf(part), doc.points, cursor);
+      if (located === null) break;
+      last = part;
+      if (column <= located.end) return { kind: 'part', id: part.id };
+      cursor = located.end;
+    }
+    return { kind: 'part', id: last.id };
+  }
+
+  const wire = doc.wires.find((one) => one.line === line);
+  return wire === undefined ? null : { kind: 'wire', line };
 }
 
 /** カーソルのある行 (1 始まり) を含む circuit フェンス。無ければ null。 */

@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { fenceAt, gridMap } from '../../core/edit/map.ts';
+import { aimAt, fenceAt, gridMap } from '../../core/edit/map.ts';
 import { renderMapHtml } from '../../core/edit/mapSvg.ts';
-import { parseAddress } from '../../core/model/address.ts';
-import { movePart } from '../../core/edit/move.ts';
-import { movePoint } from '../../core/edit/point.ts';
+import { formatAddress, parseAddress } from '../../core/model/address.ts';
+import { movePart, partSpans } from '../../core/edit/move.ts';
+import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import { describeDiff } from './movePart.ts';
 import { applyChanges, applyToDocument } from './vscodePort.ts';
 import { createHistory, invert } from './history.ts';
@@ -34,6 +34,15 @@ let bound: { readonly uri: vscode.Uri; readonly line: number } | null = null;
  * 別の文書へ移ったら忘れる (覚えている桁が別の文書を指してしまう)。
  */
 const history = createHistory();
+
+/**
+ * マップで掴んだものをエディタで光らせる印。**1 つだけ作って使い回す** —
+ * 作るたびに新しい型ができ、消し忘れが積もる。
+ */
+const HIGHLIGHT = vscode.window.createTextEditorDecorationType({
+  backgroundColor: new vscode.ThemeColor('editor.findMatchHighlightBackground'),
+  borderRadius: '2px',
+});
 
 const markdownEditor = (): vscode.TextEditor | null => {
   const editor = vscode.window.activeTextEditor;
@@ -94,6 +103,8 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
   if (panel) {
     panel.reveal(vscode.ViewColumn.Beside);
     void panel.webview.postMessage({ kind: 'map', html: now.html });
+    // 中身を入れ替えると印が消えるので、指しているものを送り直す。
+    sendAim();
     return;
   }
 
@@ -110,10 +121,15 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
     mapHtml: now.html,
   });
 
-  view.onDidDispose(() => { panel = null; bound = null; history.clear(); }, null, context.subscriptions);
+  view.onDidDispose(() => {
+    highlight([]);
+    panel = null;
+    bound = null;
+    history.clear();
+  }, null, context.subscriptions);
 
   view.webview.onDidReceiveMessage(
-    async (message: { kind: string; part?: string; from?: string; to?: string }) => {
+    async (message: { kind: string; part?: string; from?: string; to?: string; what?: string; id?: string }) => {
       if (message.kind === 'move' && message.part && message.to) {
         await applyMove(message.part, message.to);
         refresh();
@@ -127,7 +143,9 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
       if (message.kind === 'undo' || message.kind === 'redo') {
         await stepBack(message.kind);
         refresh();
+        return;
       }
+      if (message.kind === 'select') showSelection(message.what, message.id);
     },
     null,
     context.subscriptions,
@@ -154,6 +172,11 @@ function refresh(): void {
   void panel.webview.postMessage({ kind: 'history', ...history.state() });
   if (now) {
     void panel.webview.postMessage({ kind: 'map', html: now.html });
+    // **マップを入れ替えると webview は掴みを捨てる。** こちらの光も消さないと、
+    // 掴んでいないのにエディタが光ったままになる。
+    highlight([]);
+    // 印も消えるので、カーソルが指しているものを送り直す。
+    sendAim();
     return;
   }
   // **古いマップを出しっぱなしにしない。** 残したまま置くと、書き換えは
@@ -162,6 +185,76 @@ function refresh(): void {
     kind: 'map',
     html: '<p class="cf-note">フェンスを見失いました (元の Markdown を閉じたか、'
       + 'フェンスの行がずれました)。circuit フェンスの中にカーソルを置くとマップが出ます。</p>',
+  });
+}
+
+/**
+ * マップで掴んだものをエディタで光らせる。**フォーカスは動かさない** —
+ * 掴んでいる最中にエディタが前へ出ると、マップが隠れて置けなくなる。
+ * 見えていないエディタには何もしない (光らせる先が無い)。
+ */
+function highlight(spans: readonly { line: number; column: number; length: number }[]): void {
+  const fence = spans.length === 0 ? null : currentFence();
+
+  const ranges = fence === null ? [] : spans.map((span) => {
+    // フェンスの中の行 → Markdown の行 (書き換えと同じ手口)。
+    const line = fence.line + span.line - 1;
+    const indent = (/^ {0,3}/.exec(fence.document.lineAt(fence.line - 1).text)?.[0] ?? '').length;
+    return new vscode.Range(line, span.column + indent, line, span.column + indent + span.length);
+  });
+
+  // **見えているエディタは全部触る。** 光らせる先だけを見ると、別の文書へ
+  // 乗り換えたときに前の文書の光が永久に取り残される。
+  for (const editor of vscode.window.visibleTextEditors) {
+    const mine = bound !== null && editor.document.uri.toString() === bound.uri.toString();
+    editor.setDecorations(HIGHLIGHT, mine ? ranges : []);
+    const first = mine ? ranges[0] : undefined;
+    // 見えていないところにあるときだけ寄せる。勝手にスクロールし続けない。
+    if (first) editor.revealRange(first, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+  }
+}
+
+/** マップから来た「これを掴んだ」。`what` が無ければ光を消す。 */
+function showSelection(what: string | undefined, id: string | undefined): void {
+  const fence = currentFence();
+  if (!fence || what === undefined || id === undefined) {
+    highlight([]);
+    return;
+  }
+  if (what === 'node') {
+    const address = parseAddress(id);
+    highlight(address === null ? [] : nodeSpans(fence.source, address));
+    return;
+  }
+  highlight(partSpans(fence.source, id));
+}
+
+/**
+ * エディタのカーソルが指しているものをマップで光らせる (掴んだものを
+ * エディタで光らせるのと逆向き)。マップを組み直すたびに送る —
+ * 中身を入れ替えると印も消えるため。
+ */
+function sendAim(): void {
+  if (!panel) return;
+  const editor = markdownEditor();
+  const fence = editor === null ? null : fenceAt(editor.document.getText(), editor.selection.active.line + 1);
+  if (!editor || !fence) {
+    void panel.webview.postMessage({ kind: 'aim' });
+    return;
+  }
+
+  // Markdown の行 → フェンスの中の行。字下げのぶん桁を戻す。
+  const indent = (/^ {0,3}/.exec(editor.document.lineAt(fence.line - 1).text)?.[0] ?? '').length;
+  const line = editor.selection.active.line + 1 - fence.line;
+  const aim = aimAt(fence.source, line, Math.max(0, editor.selection.active.character - indent));
+  if (aim === null) {
+    void panel.webview.postMessage({ kind: 'aim' });
+    return;
+  }
+  void panel.webview.postMessage({
+    kind: 'aim',
+    what: aim.kind,
+    id: aim.kind === 'part' ? aim.id : aim.kind === 'node' ? formatAddress(aim.address) : String(aim.line),
   });
 }
 
@@ -258,15 +351,17 @@ async function applyMove(partId: string, written: string): Promise<void> {
  * エディタの `Ctrl+Z` を使ってもらう。
  */
 async function stepBack(kind: 'undo' | 'redo'): Promise<void> {
+  // **フェンスを先に確かめる。** 履歴を捨てるのは `currentFence` の中なので、
+  // 先に取り出すと、別の文書へ切り替わった瞬間の 1 歩を当ててしまう。
+  const fence = fenceNow();
+  if (!fence) return;
+
   const undoing = kind === 'undo';
   const step = undoing ? history.takeUndo() : history.takeRedo();
   if (step === null) {
     say(undoing ? '戻せる移動がありません' : 'やり直せる移動がありません');
     return;
   }
-
-  const fence = fenceNow();
-  if (!fence) return;
 
   // 戻すのは逆向き、やり直すのはそのまま。
   const changes = undoing ? invert(step).changes : step.changes;

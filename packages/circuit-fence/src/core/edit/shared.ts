@@ -22,6 +22,12 @@ export type Edit = {
   readonly text: string;
 };
 
+/**
+ * フェンスの中の 1 か所。行は 1 始まり、桁は 0 始まり (`Edit` と同じ数え方)。
+ * **どこに書かれているかを指す**だけで、書き換えの中身は持たない。
+ */
+export type Span = { readonly line: number; readonly column: number; readonly length: number };
+
 /** つながっている端子の組。名前は並べ替えて持つ (向きは意味を持たない)。 */
 export type Connection = readonly [string, string];
 

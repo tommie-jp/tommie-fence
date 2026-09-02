@@ -4,7 +4,7 @@ import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { LIMITS } from '../limits.ts';
 import { addressesOf, applyEdits, diffOf, fail, isOnGrid, locateTokens } from './shared.ts';
-import type { MoveResult } from './shared.ts';
+import type { MoveResult, Span } from './shared.ts';
 
 /**
  * 部品を別の番地へ動かす。**フェンス本文 -> 編集の並び**を返す純関数で、
@@ -78,4 +78,46 @@ export function movePart(source: string, partId: string, to: Address): MoveResul
     ok: true,
     value: { edits, diff: diffOf(normalized, applyEdits(normalized, edits)) },
   };
+}
+
+/**
+ * その部品を書いている場所 (名前と、端子の綴り)。
+ *
+ * マップで掴んだものをエディタで光らせるために使う。**書き換えと同じ探し方**を
+ * 通すので、光る場所と動く場所が食い違わない。
+ */
+export function partSpans(source: string, partId: string): readonly Span[] {
+  const normalized = normalizeNewlines(source);
+  const { doc } = parseFence(normalized);
+  if (!doc) return [];
+
+  const lines = normalized.split('\n');
+  // 1 行に部品が 2 つ以上あることがある (フロー形式)。順に消し込む。
+  const cursors = new Map<number, number>();
+
+  for (const part of doc.parts) {
+    const text = lines[part.line - 1];
+    if (text === undefined) continue;
+    const from = cursors.get(part.line) ?? 0;
+    const located = locateTokens(text, addressesOf(part), doc.points, from);
+    if (located === null) continue;
+    cursors.set(part.line, located.end);
+    if (part.id !== partId) continue;
+
+    const key = keySpanOf(text, partId, from);
+    return [
+      ...(key === null ? [] : [{ line: part.line, ...key }]),
+      ...located.tokens.map((token) => ({ line: part.line, ...token })),
+    ];
+  }
+  return [];
+}
+
+/** 行の中の `名前:` の名前のほう。前後が綴りの続きでないところだけを見る。 */
+function keySpanOf(text: string, id: string, from: number): { column: number; length: number } | null {
+  for (let at = text.indexOf(id, from); at !== -1; at = text.indexOf(id, at + 1)) {
+    const before = text[at - 1] ?? ' ';
+    if (text[at + id.length] === ':' && !/[\w.-]/.test(before)) return { column: at, length: id.length };
+  }
+  return null;
 }
