@@ -8,6 +8,9 @@ import { insertPart, insertWire, nextPartId } from '../../core/edit/insert.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import { deletePart, deleteWire } from '../../core/edit/remove.ts';
 import type { LineEdit, NetDiff, Span } from '../../core/edit/shared.ts';
+import { partFields, setField } from '../../core/edit/field.ts';
+import type { PartFields, PartField } from '../../core/edit/field.ts';
+import { renamePart } from '../../core/edit/rename.ts';
 import { flipPart, turnPart } from '../../core/edit/turn.ts';
 import { extractCircuitFences } from '../../core/fences.ts';
 import { formatAddress, parseAddress } from '../../core/model/address.ts';
@@ -51,7 +54,9 @@ export type Outgoing =
   | ({ readonly kind: 'map' } & MapView)
   | { readonly kind: 'history'; readonly canUndo: boolean; readonly canRedo: boolean }
   | { readonly kind: 'status'; readonly text: string }
-  | { readonly kind: 'aim'; readonly what?: 'part' | 'node' | 'wire'; readonly id?: string };
+  | { readonly kind: 'aim'; readonly what?: 'part' | 'node' | 'wire'; readonly id?: string }
+  /** 選んだ部品の欄の中身。null は「欄を閉じる」 (部品を選んでいない)。 */
+  | { readonly kind: 'fields'; readonly part: PartFields | null };
 
 /** webview から来るもの。中身は信用せず、使う前に形を確かめる。 */
 export type Incoming = {
@@ -66,6 +71,8 @@ export type Incoming = {
   readonly operator?: unknown;
   readonly type?: unknown;
   readonly at?: unknown;
+  readonly field?: unknown;
+  readonly text?: unknown;
 };
 
 export type SessionHost<D extends DocLike> = {
@@ -133,7 +140,7 @@ type FenceNow<D> = { readonly document: D; readonly source: string; readonly lin
 
 type Planned = ReturnType<typeof movePart> | ReturnType<typeof movePoint>
   | ReturnType<typeof deletePart> | ReturnType<typeof turnPart> | ReturnType<typeof insertWire>
-  | ReturnType<typeof insertPart>;
+  | ReturnType<typeof insertPart> | ReturnType<typeof setField> | ReturnType<typeof renamePart>;
 
 /** 書き換えの中身。行の出し入れを持たない `Move` も、ここでは同じ形で扱う。 */
 type Changes = {
@@ -457,6 +464,48 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
   /** ID がそのまま図に出る種類の名前を訊く。既定の候補を入れておく。 */
   const NAME_HINTS: Readonly<Record<string, string>> = { port: 'IN', vcc: 'VCC', vee: 'VEE' };
 
+  /** 欄の名前 (お知らせに出す)。 */
+  const FIELD_NAMES: Readonly<Record<PartField, string>> = { type: '種類', value: '値', label: 'ラベル' };
+
+  /**
+   * 欄の書き換え。**1 部品 = 1 行の文法なので、行の中のトークン差し替えに落ちる。**
+   * 名前だけは 3 か所 (鍵・配線の足・注釈) に散るので別の道を通る。
+   */
+  async function editField(message: Incoming): Promise<void> {
+    const part = text(message.part);
+    const field = text(message.field);
+    const written = text(message.text) ?? '';
+    if (part === null || (field !== 'type' && field !== 'value' && field !== 'label')) {
+      say('マップからの知らせを読めませんでした (どの欄かがありません)');
+      return;
+    }
+
+    const name = FIELD_NAMES[field];
+    await run({
+      label: `${part} の${name}を`,
+      done: () => (written === '' ? `${part} の${name}を消しました` : `${part} の${name}を ${written} にしました`),
+      already: `${part} の${name}は変わりません`,
+      plan: (source) => setField(source, part, field, written),
+    });
+  }
+
+  /** 名前を変える。鍵・配線の足・注釈の指し先を一緒に書き換える。 */
+  async function rename(message: Incoming): Promise<void> {
+    const from = text(message.part);
+    const to = text(message.text);
+    if (from === null || to === null || to === '') {
+      say('マップからの知らせを読めませんでした (新しい名前がありません)');
+      return;
+    }
+
+    await run({
+      label: `${from} を ${to} に`,
+      done: () => `${from} を ${to} に改名しました`,
+      already: `${from} の名前は変わりません`,
+      plan: (source) => renamePart(source, from, to),
+    });
+  }
+
   /** マップから来た「この部品をここへ」。ID は接頭辞から付け、要るときだけ訊く。 */
   async function addPart(message: Incoming): Promise<void> {
     const type = text(message.type);
@@ -622,6 +671,9 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       return { line, start, end: start + span.length };
     });
 
+  /** 欄に出す中身。部品を選んでいないあいだは閉じておく。 */
+  const sendFields = (part: PartFields | null): void => host.post({ kind: 'fields', part });
+
   /** マップから来た「これを掴んだ」。`what` が無ければ光を消す。 */
   function showSelection(message: Incoming): void {
     const what = text(message.what);
@@ -629,8 +681,10 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
     const fence = what === null || id === null ? null : currentFence(true);
     if (fence === null || what === null || id === null) {
       light([]);
+      sendFields(null);
       return;
     }
+    if (what !== 'part') sendFields(null);
     if (what === 'node') {
       const address = parseAddress(id);
       light(address === null ? [] : rangesOf(fence, nodeSpans(fence.source, address)));
@@ -644,6 +698,7 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       return;
     }
     light(rangesOf(fence, partSpans(fence.source, id)));
+    sendFields(partFields(fence.source, id));
   }
 
   /** 一覧で選んだフェンスへ。**選んだ直後はカーソルを見ない** (別のフェンスにいることがある)。 */
@@ -670,6 +725,14 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
         case 'move':
         case 'moveNode':
           await move(message);
+          refreshWith(true);
+          return;
+        case 'setField':
+          await editField(message);
+          refreshWith(true);
+          return;
+        case 'rename':
+          await rename(message);
           refreshWith(true);
           return;
         case 'addPart':

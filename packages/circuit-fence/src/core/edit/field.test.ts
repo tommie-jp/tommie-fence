@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { setField } from './field.ts';
+import { partFields, setField } from './field.ts';
 import { applyRewrite } from './shared.ts';
 
 const RC = [
@@ -100,5 +100,34 @@ describe('setField', () => {
   test('says so when there is no such part, and refuses a fence it cannot read', () => {
     expect(setField(RC, 'R9', 'value', '1k').ok).toBe(false);
     expect(setField('parts:\n  R1: [unclosed\n', 'R1', 'value', '1k').ok).toBe(false);
+  });
+});
+
+describe('partFields', () => {
+  test('reads what the fields hold now, so the form can show it', () => {
+    expect(partFields(RC, 'R1')).toEqual({
+      id: 'R1', type: 'resistor', kind: 'two-terminal', value: '10k', label: '',
+    });
+  });
+
+  test('reads the label as the grammar read it, not as it was spelled', () => {
+    const source = ['parts:', '  R1: resistor a1 a3 10k l=R_1', ''].join('\n');
+
+    expect(partFields(source, 'R1')?.label).toBe('R_1');
+  });
+
+  test('leaves empty what the part does not carry', () => {
+    expect(partFields(RC, 'G1')).toEqual({
+      id: 'G1', type: 'ground', kind: 'one-terminal', value: '', label: '',
+    });
+  });
+
+  test('gives a multi-terminal part its type number as the value', () => {
+    expect(partFields(RC, 'U1')?.value).toBe('LM358');
+  });
+
+  test('has nothing for a part that is not there, or a fence it cannot read', () => {
+    expect(partFields(RC, 'R9')).toBeNull();
+    expect(partFields('parts:\n  R1: [unclosed\n', 'R1')).toBeNull();
   });
 });

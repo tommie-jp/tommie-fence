@@ -158,6 +158,33 @@ describe('部品のパレット', () => {
   });
 });
 
+describe('欄 (インスペクタ)', () => {
+  test('has a field for each thing one line of the grammar carries', () => {
+    // 1 部品 = 1 行なので、欄もその行の綴りに 1 対 1 で並ぶ。
+    expect(html).toContain('<input class="cf-field" name="id"');
+    expect(html).toContain('<input class="cf-field" name="type"');
+    expect(html).toContain('<input class="cf-field" name="value"');
+    expect(html).toContain('<input class="cf-field" name="label"');
+  });
+
+  test('stays out of the way until a part is picked', () => {
+    expect(html).toContain('<form class="cf-inspector" hidden>');
+  });
+
+  test('offers the type names it knows, so they need not be remembered', () => {
+    expect(html).toContain('<datalist id="cf-type-names">');
+    expect(html).toContain('<option value="resistor"/>');
+  });
+
+  test('greys out a field the part has no room for', () => {
+    expect(html).toContain('.cf-field:disabled');
+  });
+
+  test('says how the form is used', () => {
+    expect(html).toContain('<b>F2</b> で名前へ');
+  });
+});
+
 describe('renderFencePicker', () => {
   const fences = [{ line: 3, title: 'RC' }, { line: 10, title: null }];
 

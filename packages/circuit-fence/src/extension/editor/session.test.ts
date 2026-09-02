@@ -844,3 +844,77 @@ describe('部品を置く', () => {
     expect(doc.getText()).toBe(RC);
   });
 });
+
+describe('欄 (インスペクタ)', () => {
+  const opened = () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+    return { doc, host, session };
+  };
+
+  test('sends what the fields hold when a part is picked', () => {
+    const { host, session } = opened();
+
+    session.handle({ kind: 'select', what: 'part', id: 'R1' });
+
+    expect(last(host, 'fields')?.part).toMatchObject({ id: 'R1', type: 'resistor', value: '10k' });
+  });
+
+  test('closes the form when something that has no fields is picked', async () => {
+    const { host, session } = opened();
+    await session.handle({ kind: 'select', what: 'part', id: 'R1' });
+
+    await session.handle({ kind: 'select', what: 'node', id: 'a1' });
+
+    expect(last(host, 'fields')?.part).toBeNull();
+  });
+
+  test('writes a field the form changed', async () => {
+    const { doc, host, session } = opened();
+
+    await session.handle({ kind: 'setField', part: 'R1', field: 'value', text: '4k7' });
+
+    expect(doc.getText()).toContain('R1:  resistor a1 a3 4k7');
+    expect(last(host, 'status')?.text).toContain('値を 4k7 に');
+  });
+
+  test('takes a field away when the form was emptied', async () => {
+    const { doc, session } = opened();
+
+    await session.handle({ kind: 'setField', part: 'R1', field: 'value', text: '' });
+
+    expect(doc.getText()).toContain('R1:  resistor a1 a3\n');
+  });
+
+  test('renames a part, carrying what points at it', async () => {
+    const doc = docOf(A, NPN);
+    const host = hostOf([doc], at(doc, 4));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'rename', part: 'Q1', text: 'T1' });
+
+    expect(doc.getText()).toContain('T1: npn b5');
+    expect(doc.getText()).toContain('a1 -- T1.b');
+    expect(last(host, 'status')?.text).toContain('改名しました');
+  });
+
+  test('says why a rename was refused, rather than half-doing it', async () => {
+    const { doc, host, session } = opened();
+
+    await session.handle({ kind: 'rename', part: 'R1', text: 'C1' });
+
+    expect(doc.getText()).toBe(RC);
+    expect(last(host, 'status')?.text).toContain('もう使われています');
+  });
+
+  test('says something when the form sends a field it cannot read', async () => {
+    const { host, session } = opened();
+
+    await session.handle({ kind: 'setField', part: 'R1', field: 'colour', text: 'red' });
+
+    expect(last(host, 'status')?.text).toContain('読めませんでした');
+  });
+});

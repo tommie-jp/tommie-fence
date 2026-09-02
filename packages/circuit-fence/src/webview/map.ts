@@ -127,6 +127,12 @@ document.addEventListener('pointerup', (event) => {
 document.addEventListener('pointercancel', () => { run({ kind: 'cancel' }); });
 
 document.addEventListener('keydown', (event) => {
+  // 欄へ飛ぶ鍵。**DOM だけの話**なので状態遷移には渡さない。
+  if (event.key === 'F2' && state.picked?.kind === 'part') {
+    event.preventDefault();
+    fieldInput('id')?.focus();
+    return;
+  }
   const handled = run({
     kind: 'key',
     key: event.key,
@@ -164,6 +170,17 @@ document.addEventListener('change', (event) => {
   const target = event.target as HTMLSelectElement | HTMLInputElement | null;
   if (target === null) return;
 
+  // 欄。名前だけは 3 か所に散るので別の道 (`rename`)。
+  if (target.classList.contains('cf-field')) {
+    const part = state.picked?.kind === 'part' ? state.picked.id : null;
+    if (part === null) return;
+    const written = target.value.trim();
+    vscode.postMessage(target.name === 'id'
+      ? { kind: 'rename', part, text: written }
+      : { kind: 'setField', part, field: target.name, text: written });
+    return;
+  }
+
   // フェンスの一覧。選んだ行を拡張へ (どのフェンスを出すかは拡張が覚える)。
   if (target.classList.contains('cf-fence')) {
     vscode.postMessage({ kind: 'fence', line: Number(target.value) });
@@ -190,11 +207,47 @@ function aim(what: string | undefined, id: string | undefined): void {
   for (const element of document.querySelectorAll(selector)) element.classList.add('cf-aim');
 }
 
+/** 欄に出す中身 (`core/edit/field.ts` の `PartFields`)。 */
+type Fields = {
+  readonly id: string;
+  readonly type: string;
+  readonly kind: 'two-terminal' | 'one-terminal' | 'multi-terminal';
+  readonly value: string;
+  readonly label: string;
+};
+
+const fieldInput = (name: string): HTMLInputElement | null =>
+  document.querySelector<HTMLInputElement>(`.cf-field[name="${name}"]`);
+
+/**
+ * 選んだ部品の欄を出す。**打っている最中の欄は書き換えない** —
+ * 書き換えのたびに送り直されるので、上書きすると打てなくなる。
+ */
+function showFields(part: Fields | null): void {
+  const form = document.querySelector<HTMLFormElement>('.cf-inspector');
+  if (form === null) return;
+  form.hidden = part === null;
+  if (part === null) return;
+
+  const fill = (name: string, value: string, enabled: boolean): void => {
+    const input = fieldInput(name);
+    if (input === null) return;
+    input.disabled = !enabled;
+    if (document.activeElement !== input) input.value = value;
+  };
+  fill('id', part.id, true);
+  fill('type', part.type, true);
+  // 1 端子は「種類 番地」だけ、多端子に l= は無い (文法にその場所が無い)。
+  fill('value', part.value, part.kind !== 'one-terminal');
+  fill('label', part.label, part.kind === 'two-terminal');
+}
+
 type Incoming =
   | { readonly kind: 'map'; readonly html: string; readonly picker: string; readonly issues: string }
   | { readonly kind: 'status'; readonly text: string }
   | { readonly kind: 'aim'; readonly what?: string; readonly id?: string }
-  | { readonly kind: 'history'; readonly canUndo: boolean; readonly canRedo: boolean };
+  | { readonly kind: 'history'; readonly canUndo: boolean; readonly canRedo: boolean }
+  | { readonly kind: 'fields'; readonly part: Fields | null };
 
 const fill = (selector: string, html: string): void => {
   const target = document.querySelector(selector);
@@ -207,9 +260,17 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
     fill('.cf-body', message.html);
     fill('.cf-fences', message.picker);
     fill('.cf-band', message.issues);
-    // 要素が入れ替わるので掴みを捨てる (印の付いた要素はもう無い)。
-    run({ kind: 'refresh' });
+    // **掴んでいたものが残っていれば掴んだまま。** 書き換えのたびに組み直る
+    // ので、そのたびに離すと欄で値を直せない。消えていれば捨てる。
+    if (state.picked !== null && shownFor(state.picked) !== null) {
+      mark(state.picked);
+      // 光と欄も送り直してもらう (拡張側は何を掴んでいるかを覚えていない)。
+      vscode.postMessage({ kind: 'select', what: state.picked.kind, id: state.picked.id });
+    } else {
+      run({ kind: 'refresh' });
+    }
   }
+  if (message.kind === 'fields') showFields(message.part);
   if (message.kind === 'status') setStatus(message.text);
   if (message.kind === 'aim') aim(message.what, message.id);
   if (message.kind === 'history') {
@@ -234,3 +295,6 @@ document.addEventListener('input', (event) => {
     row.classList.toggle('cf-hidden', wanted !== '' && !find.includes(wanted));
   }
 });
+
+// 欄で Enter を押したときに送り直さない (`change` が既に当てている)。
+document.addEventListener('submit', (event) => { event.preventDefault(); });

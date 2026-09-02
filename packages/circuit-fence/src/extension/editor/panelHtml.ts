@@ -1,6 +1,6 @@
 import { escapeMarkup } from 'fence-kit';
 import type { FenceEntry } from '../../core/edit/fenceList.ts';
-import { renderPalette } from '../../core/edit/palette.ts';
+import { renderPalette, renderTypeOptions } from '../../core/edit/palette.ts';
 
 /**
  * マップのパネルの外側 (HTML の殻と見た目)。**純関数**なのでそのまま
@@ -112,6 +112,17 @@ const STYLE = `
   }
   .cf-history button:disabled { opacity: 0.4; cursor: default; }
   .cf-status { margin-top: 8px; min-height: 1.4em; }
+
+  /* 選んだ部品の欄。**1 部品 = 1 行**なので、欄も 1 行に並ぶ。 */
+  .cf-inspector { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 0; }
+  .cf-inspector label { font-size: 12px; color: var(--vscode-descriptionForeground); }
+  .cf-field {
+    margin-left: 4px; padding: 1px 4px; font: inherit; font-size: 12px;
+    background: var(--vscode-input-background); color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+  }
+  /* その部品には書けない欄 (1 端子の値、多端子の l=)。消さずに触れなくする。 */
+  .cf-field:disabled { opacity: 0.4; }
 
   /* 部品のパレット。**折り畳める**ので、閉じていれば升目が全幅になる。 */
   .cf-palette { margin: 0 0 8px; }
@@ -231,8 +242,16 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     + `<b>節点</b>: 交点に来ているものが丸ごと動き、接続は保たれます。`
     + `<b>部品を置く</b>: パレットで選ぶと置く道具になります`
     + ` (2 端子は交点から交点へドラッグ、ほかは交点をクリック。<b>Esc</b> でやめます)。`
+    + `部品を選ぶと下に<b>欄</b>が出ます (名前・種類・値・ラベル。`
+    + `<b>F2</b> で名前へ、<b>Enter</b> か欄を離れたときに当たります)。`
     + `図は書き換えのあと数秒で描き直ります。</p>`
     + `<div class="cf-body">${view.html}</div>`
+    + `<form class="cf-inspector" hidden>`
+    + `<label>名前 <input class="cf-field" name="id" size="8" title="F2"></label>`
+    + `<label>種類 <input class="cf-field" name="type" size="12" list="cf-type-names"></label>`
+    + `<label>値 <input class="cf-field" name="value" size="8"></label>`
+    + `<label>ラベル <input class="cf-field" name="label" size="8"></label>`
+    + `</form>${renderTypeOptions('cf-type-names')}`
     + `<div class="cf-band">${view.issues}</div>`
     + `<p class="cf-status"></p>`
     + `<script nonce="${escapeMarkup(nonce)}" src="${escapeMarkup(scriptUri)}"></script></body></html>`;

@@ -189,6 +189,10 @@ VS Code's undo cannot reach the editor while the panel has focus). Your
 comments and formatting survive: only the address spelling is replaced. The
 drawing catches up a few seconds after the edit.
 
+**Edit fields.** Selecting a part opens a small form under the map (name, type,
+value, label). It applies on `Enter` or when the field loses focus, and renaming
+carries the wires that point at its pins and the notes that point at it.
+
 **Place parts.** Pick a type from the palette at the top and it becomes the
 placing tool: drag between two crossings for a two-terminal part, click one
 crossing for the rest. Ids are numbered per prefix from the smallest unused

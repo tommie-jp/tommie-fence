@@ -84,3 +84,14 @@ export function renderPalette(): string {
       + element('ul', { class: 'cf-types' }, rows),
   );
 }
+
+/**
+ * 欄で種類を打つときの候補。**パレットと同じ表から**出すので、
+ * 選べる種類と打てる種類が食い違わない。
+ */
+export const renderTypeOptions = (id: string): string =>
+  element(
+    'datalist',
+    { id },
+    partTypeNames().map((type) => element('option', { value: type })).join(''),
+  );

@@ -21,6 +21,34 @@ import type { Edit, RewriteResult } from './shared.ts';
 
 export type PartField = 'type' | 'value' | 'label';
 
+/** 欄に出す、いまの中身。**書き換えと同じ読み方**を通す (食い違わない)。 */
+export type PartFields = {
+  readonly id: string;
+  readonly type: string;
+  /** 端子の数。欄に出せるものが変わる (1 端子は値もラベルも書けない)。 */
+  readonly kind: PartSpec['kind'];
+  readonly value: string;
+  readonly label: string;
+};
+
+/**
+ * その部品の欄のいまの中身。**モデルから読む**ので、書いた綴りではなく
+ * 読めた値が出る (`l=R_1` の `R_1`)。無い欄は空文字。
+ */
+export function partFields(source: string, partId: string): PartFields | null {
+  const { doc } = parseFence(normalizeNewlines(source));
+  const part = doc?.parts.find((candidate) => candidate.id === partId);
+  if (part === undefined) return null;
+
+  return {
+    id: part.id,
+    type: part.type,
+    kind: part.kind,
+    value: (part.kind === 'one-terminal' ? null : part.value) ?? '',
+    label: (part.kind === 'two-terminal' ? part.label : null) ?? '',
+  };
+}
+
 /** 行末コメントを落とした行 (`#` は行頭か空白の直後だけコメント)。 */
 const uncommented = (text: string): string => {
   const comment = /(^|\s)#/.exec(text);
