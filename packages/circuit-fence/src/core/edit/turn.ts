@@ -2,7 +2,9 @@ import { formatAddress } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { LIMITS } from '../limits.ts';
-import { applyRewrite, diffOf, fail, isOnGrid, locatePart } from './shared.ts';
+import {
+  applyRewrite, diffOf, fail, isOnGrid, isRepeatedName, locatePart, repeatedNameReason,
+} from './shared.ts';
 import type { Edit, RewriteResult } from './shared.ts';
 
 /**
@@ -41,6 +43,7 @@ function twoTerminal(source: string, partId: string, what: string) {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   if (!doc) return fail(`フェンスを読めないので${what}できません (先にエラーを直します)`, null);
+  if (isRepeatedName(doc, partId)) return fail(repeatedNameReason(partId, '回す'), null);
 
   const part = doc.parts.find((candidate) => candidate.id === partId);
   if (!part) return fail(`部品が見つかりません: ${partId}`, null);

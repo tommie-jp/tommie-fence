@@ -189,3 +189,21 @@ describe('1 行に部品が 2 つ以上あるとき (フロー形式)', () => {
     );
   });
 });
+
+describe('同じ名前が 2 つ以上ある記号', () => {
+  const TWO_RAILS = 'parts:\n  VCC: vcc a1\n  VCC: vcc c1\n  R1: resistor a1 a3\n';
+
+  test('refuses to move one of them, rather than moving whichever came first', () => {
+    // 光る場所は正しいので、取り違えを黙って通すと目で見て気づけない。
+    const result = movePart(TWO_RAILS, 'VCC', at('e1'));
+
+    expect(result.ok).toBe(false);
+    expect(result.ok === false && result.error.message).toContain('決められません');
+  });
+
+  test('still moves a part whose name is its own', () => {
+    const result = movePart(TWO_RAILS, 'R1', at('a5'));
+
+    expect(result.ok).toBe(true);
+  });
+});

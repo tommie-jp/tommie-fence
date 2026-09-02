@@ -8,6 +8,7 @@ import type { FenceError, NoteSpec, PartSpec, Result, StyleSpec, WireSpec } from
 import { isNoteDrawable } from '../tex/escape.ts';
 import { NO_POINTS, parseCompactPart, parseNoteLine, parseNoteText, parseWireLine } from './compact.ts';
 import type { Points } from './compact.ts';
+import { namesNet } from '../parts.ts';
 import { EMPTY_STYLE, validateStyle } from './style.ts';
 
 const MAX_YAML_MESSAGE = 120;
@@ -373,24 +374,45 @@ function collectParts(
       );
       continue;
     }
-    if (seen.has(id)) {
+    const text = scalarText(pair.value);
+    // **中身まで読んでから二重定義を見る。** 同じ名前を 2 度書けるかどうかは
+    // 種類で決まるので、種類が読めるまでは決められない。
+    const part = text === null ? null : parseCompactPart(id, text, line, points);
+
+    if (seen.has(id) && !repeatsName(parts, id, part)) {
       errors.push(fenceError(`部品 ${safeToken(id)} が二重に定義されています`, line, null, id));
       continue;
     }
-
-    const text = scalarText(pair.value);
-    if (text === null) {
-      errors.push(fenceError(`部品 ${safeToken(id)} の内容は「種類 番地 番地 値」の 1 行で書きます`, line));
-      continue;
-    }
-
     // ID は読めたので、中身が読めなくても二重定義は二重定義として報告する。
     seen.add(id);
 
-    const part = parseCompactPart(id, text, line, points);
+    if (part === null) {
+      errors.push(fenceError(`部品 ${safeToken(id)} の内容は「種類 番地 番地 値」の 1 行で書きます`, line));
+      continue;
+    }
     if (part.ok) parts.push(part.value);
     else errors.push(part.error);
   }
+}
+
+/**
+ * 同じ名前をもう一度書いてよいか。**ID がそのまま図に出る記号
+ * (`port` / `vcc` / `vee`) だけ**が、同じ名前を何度でも名乗れる。
+ *
+ * 電源やグラウンドを同じ名前で何か所にも描くのは回路図の書き方そのもので、
+ * 名前が同じなら同じ節点として数える (`model/nets.ts`)。ほかの部品の ID は
+ * 配線から指すための名前なので、重なると**どちらを指したのか決められない**。
+ *
+ * **先に書かれたほうも同じ仲間でなければ断る** (`VCC: resistor` のあとの
+ * `VCC: vcc` は、書いた人が名前を取り違えている)。
+ */
+function repeatsName(
+  parts: readonly PartSpec[],
+  id: string,
+  part: Result<PartSpec> | null,
+): boolean {
+  if (part === null || !part.ok || !namesNet(part.value.type)) return false;
+  return parts.every((other) => other.id !== id || namesNet(other.type));
 }
 
 function collectWires(

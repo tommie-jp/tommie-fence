@@ -3,7 +3,9 @@ import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { LIMITS } from '../limits.ts';
-import { addressesOf, applyEdits, diffOf, fail, isOnGrid, keySpanOf, locatePart } from './shared.ts';
+import {
+  addressesOf, applyEdits, diffOf, fail, isOnGrid, isRepeatedName, keySpanOf, locatePart, repeatedNameReason,
+} from './shared.ts';
 import type { MoveResult, Span } from './shared.ts';
 
 /**
@@ -37,6 +39,7 @@ export function movePart(source: string, partId: string, to: Address): MoveResul
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   if (!doc) return fail('フェンスを読めないので動かせません (先にエラーを直します)', null);
+  if (isRepeatedName(doc, partId)) return fail(repeatedNameReason(partId, '動かす'), null);
 
   const part = doc.parts.find((candidate) => candidate.id === partId);
   if (!part) return fail(`部品が見つかりません: ${partId}`, null);

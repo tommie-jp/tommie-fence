@@ -165,6 +165,24 @@ describe('電源レールの名前', () => {
     expect(nets[0]).toMatchObject({ name: 'V5', refs: ['V5', 'R1.1'] });
   });
 
+  test('joins rails that carry the same name, the way a schematic is read', () => {
+    // `VCC` を何か所にも描くのは回路図の書き方そのもの。離して描いても
+    // 指しているネットは 1 つで、端子は 1 回だけ並ぶ。
+    const nets = netsOf(
+      'parts:', '  VCC: vcc a1', '  VCC: vcc c1',
+      '  R1: resistor a1 a3', '  R2: resistor c1 c3',
+    );
+
+    expect(nets[0]).toMatchObject({ name: 'VCC', refs: ['VCC', 'R1.1', 'R2.1'] });
+  });
+
+  test('joins ports of the same name too — the id is the net name for those as well', () => {
+    const nets = netsOf('parts:', '  IN: port a1', '  IN: port c1', '  R1: resistor a1 a3');
+
+    expect(nets[0]).toMatchObject({ name: 'IN' });
+    expect(nets.filter((net) => net.name === 'IN')).toHaveLength(1);
+  });
+
   test('keeps two rails apart until they are wired', () => {
     // グラウンドだけが「離して描いても同じ節点」。レールは自動でつながない
     // (5V と 3V3 を同じネットにしてしまうため)。

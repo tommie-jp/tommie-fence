@@ -70,6 +70,22 @@ export const LAST_ROW = 25;
 export const fail = (message: string, line: number | null): { readonly ok: false; readonly error: FenceError } =>
   ({ ok: false, error: fenceError(message, line) });
 
+/**
+ * その名前の記号が 2 つ以上あるか。**`port` / `vcc` / `vee` は同じ名前を何度でも
+ * 書ける** (`VCC` を何か所にも描くのは回路図の書き方) ので、名前だけでは
+ * どれを直すのかが決まらない。
+ *
+ * **掴んだつもりと違う記号を黙って書き換えない。** 光る場所は正しいので、
+ * 取り違えは目で見て気づけない (フロー形式で後ろの部品を取り逃していた件と
+ * 同じ型の穴)。決められないことは、決められないと言う。
+ */
+export const isRepeatedName = (doc: Circuit, partId: string): boolean =>
+  doc.parts.filter((part) => part.id === partId).length > 1;
+
+/** 上の断り文。**どの操作でも同じ言い方**にする (直し方が 1 つなので)。 */
+export const repeatedNameReason = (partId: string, what: string): string =>
+  `${partId} は同じ名前で 2 つ以上あります (どれを${what}か決められません。フェンスの行を直します)`;
+
 /** 格子の内側か。`formatAddress` は範囲外を丸めるので、動かす前にここで見る。 */
 export const isOnGrid = (address: Address): boolean =>
   address.row >= 0 && address.row <= LAST_ROW && address.col >= 0 && address.col <= LIMITS.columns - 1;

@@ -87,6 +87,28 @@ describe('parseFence', () => {
     expect(result.errors[0]?.message).toContain('二重');
   });
 
+  test('takes the same name twice for a symbol whose id is the drawn name', () => {
+    // 電源やグラウンドを同じ名前で何か所にも描くのは回路図の書き方そのもの。
+    const result = parseFence(lines('parts:', '  VCC: vcc a1', '  VCC: vcc c1'));
+
+    expect(result.errors).toEqual([]);
+    expect(result.doc?.parts).toHaveLength(2);
+  });
+
+  test('still refuses the same name when the id is what a wire points at', () => {
+    // 抵抗の ID は配線から指すための名前なので、重なると指せなくなる。
+    const result = parseFence(lines('parts:', '  R1: resistor a1 a3', '  R1: vcc c1'));
+
+    expect(result.errors[0]?.message).toContain('二重');
+  });
+
+  test('refuses a repeat whose first use was not a symbol of that kind', () => {
+    // `VCC: resistor` のあとの `VCC: vcc` は、書いた人が名前を取り違えている。
+    const result = parseFence(lines('parts:', '  VCC: resistor a1 a3', '  VCC: vcc c1'));
+
+    expect(result.errors[0]?.message).toContain('二重');
+  });
+
   test('asks for one line of text when a part is written as a map', () => {
     const result = parseFence(lines('parts:', '  R1:', '    type: resistor'));
 

@@ -2,7 +2,7 @@ import { cornerOf, formatAddress } from './address.ts';
 import type { Address } from './address.ts';
 import { wireContacts } from './circuit.ts';
 import type { Circuit } from './circuit.ts';
-import { lookupPartType } from '../parts.ts';
+import { namesNet } from '../parts.ts';
 import { cellOf as addressOf, nameOfEndpoint } from '../types.ts';
 import type { Endpoint, PartSpec } from '../types.ts';
 
@@ -113,6 +113,20 @@ export function computeNets(circuit: Circuit): Net[] {
   const grounds = members.filter((member) => member.part.type === 'ground');
   for (const ground of grounds.slice(1)) union(grounds[0]!.cell, ground.cell);
 
+  // **同じ名前の記号どうしも同じ節点。** `VCC` を何か所にも描くのは回路図の
+  // 書き方そのもので、離して描いても指しているネットは 1 つ。名前が違えば
+  // 結ばない — そこは今までどおりで、5V と 3V3 を一緒にしないための線引き。
+  const byName = new Map<string, Member[]>();
+  for (const member of members) {
+    if (!namesNet(member.part.type)) continue;
+    const group = byName.get(member.part.id);
+    if (group) group.push(member);
+    else byName.set(member.part.id, [member]);
+  }
+  for (const group of byName.values()) {
+    for (const rest of group.slice(1)) union(group[0]!.cell, rest.cell);
+  }
+
   const byRoot = new Map<CellId, Member[]>();
   for (const member of members) {
     const root = find(member.cell);
@@ -136,7 +150,9 @@ export function computeNets(circuit: Circuit): Net[] {
 
   return groups.map((group, index) => ({
     name: claim(named[index] ?? nextAnonymous(), taken),
-    refs: group.map((member) => member.ref),
+    // **同じ名前の記号は 1 つの端子として並べる。** `VCC` を 3 か所に描いた図で
+    // `VCC, VCC, VCC` と並ぶと、突き合わせるときに何が 3 つあるのか読めない。
+    refs: [...new Set(group.map((member) => member.ref))],
   }));
 }
 
@@ -178,9 +194,9 @@ function pointNameOf(group: readonly Member[], points: ReadonlyMap<string, Addre
 function nameOf(group: readonly Member[]): string | null {
   if (group.some((member) => member.part.type === 'ground')) return 'GND';
 
-  const named = group
-    .filter((member) => lookupPartType(member.part.type)?.idLabel !== undefined)
-    .map((member) => member.ref)
+  const named = [...new Set(group
+    .filter((member) => namesNet(member.part.type))
+    .map((member) => member.ref))]
     .sort();
   return named.length > 0 ? named.join('/') : null;
 }

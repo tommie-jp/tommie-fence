@@ -2,7 +2,8 @@ import { isReferenceable, LIMITS } from '../limits.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import type { NoteSpec } from '../types.ts';
-import { fail, keySpanOf } from './shared.ts';
+import { namesNet } from '../parts.ts';
+import { fail, isRepeatedName, keySpanOf, repeatedNameReason } from './shared.ts';
 import type { Edit, RewriteResult } from './shared.ts';
 
 /**
@@ -44,6 +45,8 @@ export function renamePart(source: string, from: string, to: string): RewriteRes
   const { doc } = parseFence(normalized);
   if (!doc) return fail('フェンスを読めないので名前を変えられません (先にエラーを直します)', null);
 
+  if (isRepeatedName(doc, from)) return fail(repeatedNameReason(from, '変える'), null);
+
   const part = doc.parts.find((candidate) => candidate.id === from);
   if (!part) return fail(`部品が見つかりません: ${from}`, null);
   if (from === to) return { ok: true, value: { edits: [], lines: [], diff: { lost: [], gained: [] } } };
@@ -51,7 +54,14 @@ export function renamePart(source: string, from: string, to: string): RewriteRes
   if (!isReferenceable(to)) {
     return fail(`部品 ID ${to} は使えません (英数字と _ - だけの ${LIMITS.idLength} 文字まで)`, part.line);
   }
-  if (doc.parts.some((other) => other.id === to)) return fail(`部品 ID ${to} はもう使われています`, part.line);
+  // **同じ名前を名乗れる記号どうしなら通す** (`port` / `vcc` / `vee`)。
+  // 名前を揃えるのは「同じネットにする」という意思表示で、書き手がやりたいこと
+  // そのもの — 断ると、フェンスを手で直すしかなくなる。
+  const merges = namesNet(part.type)
+    && doc.parts.every((other) => other.id !== to || namesNet(other.type));
+  if (!merges && doc.parts.some((other) => other.id === to)) {
+    return fail(`部品 ID ${to} はもう使われています`, part.line);
+  }
   if (doc.points.has(to)) return fail(`${to} は番地の名前として使われています`, part.line);
 
   const lines = normalized.split('\n');

@@ -1,7 +1,7 @@
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import type { FenceError, NoteSpec, WireSpec } from '../types.ts';
-import { diffOf, applyRewrite, fail } from './shared.ts';
+import { applyRewrite, diffOf, fail, isRepeatedName, repeatedNameReason } from './shared.ts';
 import type { LineEdit, Rewrite } from './shared.ts';
 
 /**
@@ -64,6 +64,8 @@ export function deletePart(source: string, partId: string): RemovalResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   if (!doc) return fail('フェンスを読めないので消せません (先にエラーを直します)', null);
+
+  if (isRepeatedName(doc, partId)) return fail(repeatedNameReason(partId, '消す'), null);
 
   const part = doc.parts.find((candidate) => candidate.id === partId);
   if (!part) return fail(`部品が見つかりません: ${partId}`, null);

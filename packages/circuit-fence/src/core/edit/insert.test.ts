@@ -212,3 +212,21 @@ describe('レビューで出た穴', () => {
     expect(result.ok).toBe(true);
   });
 });
+
+describe('同じ名前をもう一度置く', () => {
+  const RAIL = 'parts:\n  VCC: vcc a1\n  R1: resistor a1 a3\n';
+
+  test('takes a second rail of the same name — that is how a schematic is drawn', () => {
+    const result = insertPart(RAIL, { id: 'VCC', type: 'vcc', at: [cell('e1')] });
+
+    expect(result.ok).toBe(true);
+  });
+
+  test('still refuses a name that a wire points at', () => {
+    const result = insertPart(RAIL, { id: 'R1', type: 'resistor', at: [cell('e1'), cell('e3')] });
+
+    expect(result.ok).toBe(false);
+    expect(result.ok === false && result.error.message).toContain('もう使われています');
+  });
+});
+

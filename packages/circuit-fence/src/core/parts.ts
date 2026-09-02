@@ -776,6 +776,18 @@ export function lookupPin(type: PartType, pin: string): string | null {
  * その種類に向きを書ける範囲。**表に無ければ種類で決まる** —
  * 多端子は回転も反転もでき、2 端子 (番地の順が向き) と残りの 1 端子は書けない。
  */
+/**
+ * **ID がそのまま図に出て、乗っているネットの名前にもなる**種類か
+ * (`port` / `vcc` / `vee`)。ほかの部品の ID は配線から指すための番号で、
+ * 図に出ても名前ではない。
+ *
+ * この 3 つだけは**同じ名前を何度でも書ける** — 電源やグラウンドを同じ名前で
+ * 何か所にも描くのは回路図の書き方そのもので、名前が同じなら同じ節点として
+ * 数える (`model/nets.ts`)。判定はここ 1 か所 — 別々に持つと、書けるものと
+ * つながるものが食い違う。
+ */
+export const namesNet = (type: string): boolean => lookupPartType(type)?.idLabel !== undefined;
+
 export const orientOf = (type: PartType): Orient =>
   type.orient ?? (type.kind === 'multi-terminal' ? TURNS : NO_ORIENT);
 

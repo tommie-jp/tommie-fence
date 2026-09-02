@@ -2,7 +2,7 @@ import { formatAddress } from '../model/address.ts';
 import type { Address, WireOperator } from '../model/address.ts';
 import { isReferenceable, LIMITS } from '../limits.ts';
 import { normalizeNewlines } from '../newlines.ts';
-import { lookupPartType, lookupPin, PART_PREFIXES } from '../parts.ts';
+import { lookupPartType, lookupPin, namesNet, PART_PREFIXES } from '../parts.ts';
 import type { PartTypeName } from '../parts.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { fieldProblem } from './field.ts';
@@ -129,7 +129,14 @@ export function insertPart(source: string, spec: NewPart): RewriteResult {
   if (!isReferenceable(spec.id)) {
     return fail(`部品 ID ${spec.id} は使えません (英数字と _ - だけの ${LIMITS.idLength} 文字まで)`, null);
   }
-  if (doc.parts.some((part) => part.id === spec.id)) return fail(`部品 ID ${spec.id} はもう使われています`, null);
+  // **同じ名前を名乗れる記号は重ねて置ける** (`port` / `vcc` / `vee`)。
+  // `VCC` を何か所にも描くのは回路図の書き方そのもので、名前が同じなら
+  // 同じ節点として数える (`model/nets.ts`)。
+  const repeatable = namesNet(spec.type)
+    && doc.parts.every((part) => part.id !== spec.id || namesNet(part.type));
+  if (!repeatable && doc.parts.some((part) => part.id === spec.id)) {
+    return fail(`部品 ID ${spec.id} はもう使われています`, null);
+  }
   if (doc.points.has(spec.id)) return fail(`${spec.id} は番地の名前として使われています`, null);
 
   const type = lookupPartType(spec.type);

@@ -4,7 +4,9 @@ import { normalizeNewlines } from '../newlines.ts';
 import { ORIENTATIONS } from '../parser/compact.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { lookupPartType } from '../parts.ts';
-import { applyRewrite, diffOf, fail, keySpanOf, locatePart } from './shared.ts';
+import {
+  applyRewrite, diffOf, fail, isRepeatedName, keySpanOf, locatePart, repeatedNameReason,
+} from './shared.ts';
 import type { Edit, RewriteResult } from './shared.ts';
 
 /**
@@ -98,6 +100,7 @@ export function setField(source: string, partId: string, field: PartField, text:
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   if (!doc) return fail('フェンスを読めないので書き換えられません (先にエラーを直します)', null);
+  if (isRepeatedName(doc, partId)) return fail(repeatedNameReason(partId, '書き換える'), null);
 
   const part = doc.parts.find((candidate) => candidate.id === partId);
   if (!part) return fail(`部品が見つかりません: ${partId}`, null);
