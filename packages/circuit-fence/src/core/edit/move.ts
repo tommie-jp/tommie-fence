@@ -3,10 +3,8 @@ import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { LIMITS } from '../limits.ts';
-import { addressesOf, applyEdits, diffOf, fail, isOnGrid, locateTokens } from './shared.ts';
+import { addressesOf, applyEdits, diffOf, fail, isOnGrid, locatePart } from './shared.ts';
 import type { MoveResult, Span } from './shared.ts';
-import type { Circuit } from '../model/circuit.ts';
-import type { PartSpec } from '../types.ts';
 
 /**
  * 部品を別の番地へ動かす。**フェンス本文 -> 編集の並び**を返す純関数で、
@@ -102,39 +100,6 @@ export function partSpans(source: string, partId: string): readonly Span[] {
     ...(key === null ? [] : [{ line: part.line, ...key }]),
     ...tokens.map((token) => ({ line: part.line, ...token })),
   ];
-}
-
-/**
- * その部品の端子が行のどこに書かれているか。**動かす側と光らせる側で 1 つ**
- * にしてある — 別々に持っていたとき、`movePart` だけが行の頭から探していて、
- * フロー形式 (`parts: {R1: …, R2: …}`) で**掴んでいないほうの部品**を
- * 書き換えていた (光る場所は正しいので、目で見て気づけない)。
- *
- * 1 行に部品が 2 つ以上並ぶので、同じ行に先に書かれた部品が消し込んだ続きから
- * 探す。頭から探し直すと前の部品の綴りを二度拾い、後ろの部品を取り逃す。
- */
-function locatePart(
-  doc: Circuit,
-  lines: readonly string[],
-  partId: string,
-): {
-  readonly part: PartSpec;
-  readonly text: string;
-  readonly from: number;
-  readonly tokens: readonly { readonly column: number; readonly length: number }[];
-} | null {
-  const cursors = new Map<number, number>();
-
-  for (const part of doc.parts) {
-    const text = lines[part.line - 1];
-    if (text === undefined) continue;
-    const from = cursors.get(part.line) ?? 0;
-    const located = locateTokens(text, addressesOf(part), doc.points, from);
-    if (located === null) continue;
-    cursors.set(part.line, located.end);
-    if (part.id === partId) return { part, text, from, tokens: located.tokens };
-  }
-  return null;
 }
 
 /** 行の中の `名前:` の名前のほう。前後が綴りの続きでないところだけを見る。 */
