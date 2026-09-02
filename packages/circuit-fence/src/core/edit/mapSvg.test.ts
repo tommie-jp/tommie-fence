@@ -114,3 +114,18 @@ describe('読めなかった行の印', () => {
     expect(draw('parts:\n  R1: resistor a1 a3\n')).not.toContain('cf-bad');
   });
 });
+
+describe('配線を掴む', () => {
+  test('lays a fat invisible line over each wire, since 1.5px is too thin to hit', () => {
+    const svg = draw('wires:\n  - a1 -- a3\n');
+
+    expect(svg).toContain('cf-wire-hits');
+    expect(svg).toContain('class="cf-wire-hit" data-line="2"');
+  });
+
+  test('puts the grab layer under the parts, so a part still takes the click', () => {
+    const svg = draw('parts:\n  R1: resistor a1 a3\nwires:\n  - a1 -- c1\n');
+
+    expect(svg.indexOf('cf-wire-hits')).toBeLessThan(svg.indexOf('cf-parts'));
+  });
+});

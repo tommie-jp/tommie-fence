@@ -58,6 +58,19 @@ function drawLabels(map: GridMap): string {
 }
 
 /**
+ * 配線を掴むための当たり判定。**見える線は細すぎて押せない** (1.5) ので、
+ * 同じ経路に太い透明な線を重ねる。見える線と分けてあるのは、太くすると
+ * 図が変わってしまうため。
+ */
+const grabWire = (wire: WireLine): string =>
+  element('line', {
+    class: 'cf-wire-hit',
+    'data-line': wire.line,
+    x1: num(x(wire.from.col)), y1: num(y(wire.from.row)),
+    x2: num(x(wire.to.col)), y2: num(y(wire.to.row)),
+  });
+
+/**
  * 引いた線。ピンで書いた端は近似なので破線にして、正確な位置を約束しない。
  * 読めなかった行に書かれていれば印を足す (**帯と絵で同じものを指す**)。
  */
@@ -206,6 +219,9 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE): string {
     drawGrid(map)
       + drawLabels(map)
       + layer('cf-wires', map.wires.map((wire) => drawWire(wire, bad)).join(''))
+      // 掴む層は見える線より後、部品より前。上に描いたものからクリックを取るので、
+      // 部品と節点が先に取り、配線はその隙間で取る。
+      + layer('cf-wire-hits', map.wires.map(grabWire).join(''))
       + layer('cf-marks', map.dots.map(drawDot).join(''))
       + layer('cf-parts', map.chips.map((chip) => drawChip(chip, nudges.get(chip) ?? 0, bad)).join(''))
       + drawHits(map),

@@ -1,4 +1,5 @@
 import type { Edit } from '../../core/edit/move.ts';
+import type { Rewrite } from '../../core/edit/shared.ts';
 import { indentOn } from './documentLike.ts';
 import type { DocLike } from './documentLike.ts';
 
@@ -75,4 +76,52 @@ export function changesForFence(document: DocLike, fenceLine: number, edits: rea
     const column = one.column + indentOn(document, fenceLine, line);
     return { line, column, before: document.lineAt(line).text.slice(column, column + one.length), after: one.text };
   }));
+}
+
+/** フェンスの開き記号の字下げ (最大 3 つ)。**足す行はこれを頭に付ける。** */
+const fenceIndent = (document: DocLike, fenceLine: number): string =>
+  /^ {0,3}/.exec(document.lineAt(fenceLine - 1).text)?.[0] ?? '';
+
+/**
+ * 書き換えを当てたあとのフェンスの本文 (生の行)。**行の出し入れがある書き換えは
+ * これを通す** — 桁の書き換え (`changesForFence`) では行を出し入れできない。
+ *
+ * 行の中の差し替えは行ごとに右から当てる (同じ行の桁がずれない)。桁は
+ * フェンスの中のものなので、その行が剥がされた字下げのぶん右へ戻す。
+ * 足す行は**開き記号の字下げ**を頭に付ける (中の行に合わせると、深く書かれた
+ * 行の隣に足したときだけ深くなる)。
+ */
+export function bodyAfter(
+  document: DocLike,
+  fenceLine: number,
+  source: string,
+  rewrite: Rewrite,
+): readonly string[] {
+  const body = fenceBody(document, fenceLine, source);
+  const edited = body.map((text, index) => {
+    const on = [...rewrite.edits].filter((edit) => edit.line === index + 1).sort((a, b) => b.column - a.column);
+    if (on.length === 0) return text;
+    const indent = indentOn(document, fenceLine, fenceLine + index);
+    return on.reduce(
+      (now, edit) => now.slice(0, edit.column + indent) + edit.text + now.slice(edit.column + indent + edit.length),
+      text,
+    );
+  });
+  if (rewrite.lines.length === 0) return edited;
+
+  const pad = fenceIndent(document, fenceLine);
+  const dropped = new Set(rewrite.lines.filter((one) => one.kind === 'delete').map((one) => one.line));
+  const added = new Map<number, string[]>();
+  for (const one of rewrite.lines) {
+    if (one.kind !== 'insert') continue;
+    added.set(one.line, [...(added.get(one.line) ?? []), `${pad}${one.text}`]);
+  }
+
+  const out: string[] = [];
+  edited.forEach((text, index) => {
+    out.push(...(added.get(index + 1) ?? []));
+    if (!dropped.has(index + 1)) out.push(text);
+  });
+  out.push(...(added.get(edited.length + 1) ?? []));
+  return out;
 }

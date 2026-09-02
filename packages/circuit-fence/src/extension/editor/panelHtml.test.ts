@@ -248,3 +248,40 @@ describe('読めなかったところの帯', () => {
     expect(html).toContain('.cf-bad .cf-glyph');
   });
 });
+
+describe('選んで消す・回す', () => {
+  test('lets a wire be picked, since deleting one needs a way to say which', () => {
+    expect(html).toContain("target.closest('.cf-wire-hit')");
+    expect(html).toContain('.cf-wire-hit { stroke: transparent;');
+  });
+
+  test('never drags a wire, which cannot be moved', () => {
+    // 置き先が光ると「動かせる」と読めてしまう。端の付け替えは別の話。
+    expect(html).toContain("if (kind !== 'wire') setDragging(true);");
+  });
+
+  test('marks the wire that is drawn, not the invisible line that was hit', () => {
+    expect(html).toContain(".cf-wire[data-line=\"' + CSS.escape(id) + '\"]");
+  });
+
+  test('asks the extension to delete what is picked', () => {
+    // 行ごと消えるので、文書を持っている側が本文を書き戻す。
+    expect(html).toContain("vscode.postMessage({ kind: 'delete', what: picked.kind, id: picked.id })");
+  });
+
+  test('turns with R and flips with M, the keys KiCad uses', () => {
+    expect(html).toContain("kind: 'turn', part: picked.id, quarters: event.shiftKey ? -1 : 1");
+    expect(html).toContain("kind: 'flip', part: picked.id");
+  });
+
+  test('keeps its keys out of the way while nothing is picked or a control has focus', () => {
+    // 一覧は頭文字で選べる。打鍵を横取りすると選べなくなる。
+    expect(html).toContain("event.ctrlKey || event.metaKey || event.altKey || picked === null || typing(event)");
+    expect(html).toContain("['INPUT', 'SELECT', 'TEXTAREA'].includes");
+  });
+
+  test('says what the keys do, so they can be found without the docs', () => {
+    expect(html).toContain('<b>R</b> で回し');
+    expect(html).toContain('<b>Delete</b> で消します');
+  });
+});

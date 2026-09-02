@@ -40,6 +40,9 @@ const RC = [
 
 const BAD = ['# ノート', '', '```circuit', 'parts:', '  R1: resistr a1 a3', '```', ''].join('\n');
 
+const NPN = ['# ノート', '', '```circuit', 'parts:', '  Q1: npn b5', '  R1: resistor a1 a3',
+  'wires:', '  - a1 -- Q1.b', '```', ''].join('\n');
+
 const SECOND = ['', '```circuit', 'parts:', '  L1: inductor b1 b3 1m', '```', ''].join('\n');
 const THIRD = ['', '```circuit', 'parts:', '  D1: diode c1 c3', '```', ''].join('\n');
 const TWO = RC + SECOND;
@@ -603,6 +606,104 @@ describe('読めない知らせ', () => {
     session.view();
 
     await session.handle({ kind: 'moveNode', to: 'b1' });
+
+    expect(last(host, 'status')?.text).toContain('読めません');
+  });
+});
+
+describe('消す・回す', () => {
+  test('takes the part out of the fence and says so', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'delete', what: 'part', id: 'R1' });
+
+    expect(doc.getText()).not.toContain('R1');
+    expect(doc.getText()).toContain('C1');
+    expect(last(host, 'status')?.text).toContain('消しました');
+  });
+
+  test('says how many wires went with the part', async () => {
+    const doc = docOf(A, NPN);
+    const host = hostOf([doc], at(doc, 4));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'delete', what: 'part', id: 'Q1' });
+
+    expect(doc.getText()).not.toContain('Q1.b');
+    expect(last(host, 'status')?.text).toContain('配線 1 本');
+  });
+
+  test('takes out the wire written on that line', async () => {
+    const doc = docOf(A, NPN);
+    const host = hostOf([doc], at(doc, 4));
+    const session = createSession(host);
+    session.view();
+
+    // 帯もマップも、配線はフェンスの中の行で指す (5 行目 = wires: の次)。
+    await session.handle({ kind: 'delete', what: 'wire', id: '5' });
+
+    expect(doc.getText()).not.toContain('a1 -- Q1.b');
+    expect(doc.getText()).toContain('Q1: npn b5');
+  });
+
+  test('undoes a delete, because the copy is the whole body', async () => {
+    // 桁の控えでは行の増減を戻せなかった。本文の控えなら 1 歩で戻る。
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+    await session.handle({ kind: 'delete', what: 'part', id: 'R1' });
+
+    await session.handle({ kind: 'undo' });
+
+    expect(doc.getText()).toBe(RC);
+  });
+
+  test('turns a two-terminal part a quarter clockwise', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'turn', part: 'R1', quarters: 1 });
+
+    expect(doc.getText()).toContain('R1:  resistor a1 c1 10k');
+  });
+
+  test('flips the two ends round', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'flip', part: 'R1' });
+
+    expect(doc.getText()).toContain('R1:  resistor a3 a1 10k');
+  });
+
+  test('says why a part that has no orientation cannot be turned', async () => {
+    const doc = docOf(A, NPN);
+    const host = hostOf([doc], at(doc, 4));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'turn', part: 'Q1', quarters: 1 });
+
+    expect(doc.getText()).toBe(NPN);
+    expect(last(host, 'status')?.text).toContain('2 端子');
+  });
+
+  test('says something when the map sends a delete it cannot read', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'delete', what: 'part' });
 
     expect(last(host, 'status')?.text).toContain('読めません');
   });

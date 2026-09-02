@@ -28,6 +28,10 @@ const STYLE = `
 
   /* 見えるだけの層は当たり判定を持たない。 */
   .cf-grid, .cf-axes, .cf-wires { pointer-events: none; }
+  /* 配線を掴む層 (太い透明な線)。**部品を掴むときだけ**効かせる —
+     節点を掴んでいるときに配線が割り込むと、掴んだつもりと違うものが選ばれる。 */
+  .cf-wire-hit { stroke: transparent; stroke-width: 8; fill: none; cursor: pointer; }
+  body.cf-nodes .cf-wire-hits { pointer-events: none; }
   .cf-grid-dot { fill: var(--vscode-panel-border); }
   .cf-axis { fill: var(--vscode-descriptionForeground); font-size: 9px; }
 
@@ -55,6 +59,7 @@ const STYLE = `
   .cf-held .cf-glyph, .cf-held .cf-glyph-line, .cf-held .cf-lead { stroke: var(--vscode-focusBorder); }
   .cf-held .cf-name { fill: var(--vscode-focusBorder); }
   .cf-held .cf-dot-mark { stroke: var(--vscode-focusBorder); stroke-width: 3; }
+  .cf-wire.cf-held { stroke: var(--vscode-focusBorder); stroke-width: 2.5; }
 
   /* 読めなかった行に書かれたもの。**帯と絵で同じものを指す** — 行番号だけでは
      どの記号のことか、字と突き合わせないと分からない。お知らせには印を付けない
@@ -162,12 +167,17 @@ const SCRIPT = `
     status().textContent = '';
   };
 
+  const HINTS = {
+    part: ' を選びました。ドラッグで動かし、R で回し、M で反転、Delete で消します',
+    node: ' の節点を選びました。ドラッグして置きたい交点で放します',
+    wire: ' 行目の配線を選びました。Delete で消します',
+  };
+
   const pick = (kind, id, element) => {
     picked = { kind: kind, id: id };
-    mark(element);
+    mark(shownFor(kind, id, element));
     tell(kind, id);
-    const what = kind === 'node' ? id + ' の節点' : id;
-    status().textContent = what + ' を選びました。ドラッグして置きたい交点で放します';
+    status().textContent = id + HINTS[kind];
   };
 
   const drop = (address) => {
@@ -184,12 +194,24 @@ const SCRIPT = `
     status().textContent = what + ' を ' + address + ' へ…';
   };
 
-  /** 掴める物。いまの持ち方に合うものだけを返す。 */
+  /**
+   * 掴める物。いまの持ち方に合うものだけを返す。**配線は部品と同じ持ち方**で
+   * 選べる (動かせはしないが、消すには選ぶ手立てが要る)。
+   */
   const grabbable = (target) =>
-    (nodeMode() ? target.closest('.cf-dot') : target.closest('.cf-chip'));
+    (nodeMode()
+      ? target.closest('.cf-dot')
+      : (target.closest('.cf-chip') ?? target.closest('.cf-wire-hit')));
 
-  const idOf = (element) => element.dataset.node ?? element.dataset.part;
-  const kindOf = (element) => (element.classList.contains('cf-dot') ? 'node' : 'part');
+  const idOf = (element) => element.dataset.node ?? element.dataset.part ?? element.dataset.line;
+  const kindOf = (element) =>
+    (element.classList.contains('cf-dot')
+      ? 'node'
+      : element.classList.contains('cf-wire-hit') ? 'wire' : 'part');
+
+  /** 選んだ印を付ける先。配線は掴む線ではなく**見える線**に付ける。 */
+  const shownFor = (kind, id, element) =>
+    (kind === 'wire' ? document.querySelector('.cf-wire[data-line="' + CSS.escape(id) + '"]') : element);
 
   /** 放した所の升。**当たり判定を切る前に引く** (切ると座標から引けなくなる)。 */
   const cellUnder = (event) => {
@@ -208,9 +230,12 @@ const SCRIPT = `
       if (picked !== null && event.target.closest('.cf-map')) clearPick();
       return;
     }
+    const kind = kindOf(grab);
     pressed = { x: event.clientX, y: event.clientY };
-    pick(kindOf(grab), idOf(grab), grab);
-    setDragging(true);
+    pick(kind, idOf(grab), grab);
+    // **配線は動かせない** (端の付け替えは別の話)。掴んだつもりで置き先が
+    // 光ると、動かせると読めてしまう。
+    if (kind !== 'wire') setDragging(true);
   });
 
   document.addEventListener('pointerup', (event) => {
@@ -221,7 +246,8 @@ const SCRIPT = `
       return;
     }
     // **その場で放したのは「選んだ」だけ。** 動かすのはドラッグだけにする。
-    const moved = Math.abs(event.clientX - from.x) + Math.abs(event.clientY - from.y) > 6;
+    const moved = picked.kind !== 'wire'
+      && Math.abs(event.clientX - from.x) + Math.abs(event.clientY - from.y) > 6;
     const cell = moved ? cellUnder(event) : null;
     setDragging(false);
     if (cell) drop(cell.dataset.address);
@@ -252,9 +278,44 @@ const SCRIPT = `
     step(button.classList.contains('cf-undo') ? 'undo' : 'redo');
   });
 
+  /** 選んでいるものを消す。**行ごと消える**ので、拡張側が本文を書き戻す。 */
+  const remove = () => {
+    if (picked === null || picked.kind === 'node') return;
+    vscode.postMessage({ kind: 'delete', what: picked.kind, id: picked.id });
+    status().textContent = picked.id + ' を消しています…';
+    picked = null;
+    mark(null);
+  };
+
+  /** 回す・反転する。2 端子の向きは番地の順そのものなので、番地が書き換わる。 */
+  const turn = (message) => {
+    if (picked === null || picked.kind !== 'part') return;
+    vscode.postMessage(message);
+    status().textContent = picked.id + ' を…';
+  };
+
+  /** 欄に字を打っている最中か。**打鍵を横取りしない** (一覧は頭文字で選べる)。 */
+  const typing = (event) =>
+    ['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target && event.target.tagName);
+
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       clearPick();
+      return;
+    }
+    if (event.ctrlKey || event.metaKey || event.altKey || picked === null || typing(event)) {
+      // 下の undo / redo へ (鍵の組み合わせはそちらが見る)。
+    } else if (event.key === 'Delete' || event.key === 'Backspace') {
+      event.preventDefault();
+      remove();
+      return;
+    } else if (event.key === 'r' || event.key === 'R') {
+      event.preventDefault();
+      turn({ kind: 'turn', part: picked.id, quarters: event.shiftKey ? -1 : 1 });
+      return;
+    } else if (event.key === 'm' || event.key === 'M') {
+      event.preventDefault();
+      turn({ kind: 'flip', part: picked.id });
       return;
     }
     // **パネルにフォーカスがあると VS Code の Ctrl+Z は届かない。**
@@ -373,6 +434,8 @@ export const panelHtml = ({ cspSource, nonce, view, undo }: PanelHtmlOptions): s
     + `<p class="cf-note"><b>ドラッグして</b>置きたい交点で放すと動きます`
     + ` (クリックは選ぶだけ — エディタの書いてある場所が光ります)。`
     + `部品は 1 つだけ動いて接続が変わり、節点は交点ごと動いて接続は保たれます。`
+    + `選んでから <b>R</b> で回し、<b>M</b> で反転、<b>Delete</b> で消します`
+    + ` (配線は線をクリックして選びます)。`
     + `図は書き換えのあと数秒で描き直ります。</p>`
     + `<div class="cf-body">${view.html}</div>`
     + `<div class="cf-band">${view.issues}</div>`

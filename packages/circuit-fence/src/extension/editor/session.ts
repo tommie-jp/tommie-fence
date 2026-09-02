@@ -5,10 +5,12 @@ import { renderMapHtml } from '../../core/edit/mapSvg.ts';
 import { movePart, partSpans } from '../../core/edit/move.ts';
 import type { Edit } from '../../core/edit/move.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
-import type { Span } from '../../core/edit/shared.ts';
+import { deletePart, deleteWire } from '../../core/edit/remove.ts';
+import type { LineEdit, NetDiff, Span } from '../../core/edit/shared.ts';
+import { flipPart, turnPart } from '../../core/edit/turn.ts';
 import { extractCircuitFences } from '../../core/fences.ts';
 import { formatAddress, parseAddress } from '../../core/model/address.ts';
-import { fenceBody } from './docEdits.ts';
+import { bodyAfter, fenceBody } from './docEdits.ts';
 import { indentOn } from './documentLike.ts';
 import type { DocLike, EditorLike } from './documentLike.ts';
 import { createHistory, sameBody } from './history.ts';
@@ -58,6 +60,7 @@ export type Incoming = {
   readonly what?: unknown;
   readonly id?: unknown;
   readonly line?: unknown;
+  readonly quarters?: unknown;
 };
 
 export type SessionHost<D extends DocLike> = {
@@ -118,13 +121,25 @@ const NONE = '<p class="cf-note">この文書に circuit フェンスがあり�
 
 type FenceNow<D> = { readonly document: D; readonly source: string; readonly line: number };
 
-type Planned = ReturnType<typeof movePart> | ReturnType<typeof movePoint>;
+type Planned = ReturnType<typeof movePart> | ReturnType<typeof movePoint>
+  | ReturnType<typeof deletePart> | ReturnType<typeof turnPart>;
 
-/** 「何を・どこへ」を書き換えに落とす前の 1 件。部品と節点の違いは `plan` の中だけ。 */
+/** 書き換えの中身。行の出し入れを持たない `Move` も、ここでは同じ形で扱う。 */
+type Changes = {
+  readonly edits: readonly Edit[];
+  readonly lines: readonly LineEdit[];
+  readonly diff: NetDiff;
+  /** 部品と一緒に消えた配線の本数 (消すときだけ)。 */
+  readonly wires?: number;
+};
+
+/** 1 つの操作を書き換えに落とす前の 1 件。何をするかの違いは `plan` の中だけ。 */
 type Request = {
-  /** 「R1 を b3 へ」。お知らせと履歴の札に使う。 */
+  /** 「R1 を b3 へ」。履歴の札に使う。 */
   readonly label: string;
-  /** 動かす先がいまの場所だったときの一言。 */
+  /** 済んだときの一言 (接続の変化はこのあとに足す)。 */
+  readonly done: (changes: Changes) => string;
+  /** 何も変わらなかったときの一言。 */
   readonly already: string;
   readonly plan: (source: string) => Planned;
 };
@@ -346,14 +361,25 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       say(result.error.message);
       return;
     }
-    if (result.value.edits.length === 0) {
+    const changes: Changes = { lines: [], ...result.value };
+    if (changes.edits.length === 0 && changes.lines.length === 0) {
       say(request.already);
       return;
     }
 
     // **当てる前の本文を控える。** 履歴は桁ではなく本文で覚える (行の増減に耐える)。
     const before = fenceBody(fence.document, fence.line, fence.source);
-    if (!(await host.applyEdits(fence.document, fence.line, result.value.edits))) {
+    // 行の出し入れがあるときは本文を丸ごと書き戻す (桁の書き換えでは行を出し入れ
+    // できない)。行の中だけの差し替えは今までどおり最小の差分で当てる。
+    const applied = changes.lines.length === 0
+      ? await host.applyEdits(fence.document, fence.line, changes.edits)
+      : await host.replaceBody(
+        fence.document,
+        fence.line,
+        before.length,
+        bodyAfter(fence.document, fence.line, fence.source, changes),
+      );
+    if (!applied) {
       say('書き換えられませんでした');
       return;
     }
@@ -365,8 +391,8 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
         history.push({ label: request.label, before, after: fenceBody(fence.document, fence.line, now.source) });
       }
     }
-    const changed = describeDiff(result.value.diff);
-    say(`${request.label}動かしました${changed === null ? '' : `。${changed}`}`);
+    const changed = describeDiff(changes.diff);
+    say(`${request.done(changes)}${changed === null ? '' : `。${changed}`}`);
   }
 
   /** マップから来た「何を・どこへ」。部品は 1 つだけ動き、節点は交点ごと動く。 */
@@ -391,6 +417,7 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       }
       await run({
         label: `${part} を ${written} へ`,
+        done: () => `${part} を ${written} へ動かしました`,
         already: `${part} はすでに ${written} にあります`,
         plan: (source) => movePart(source, part, to),
       });
@@ -410,9 +437,63 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
     }
     await run({
       label: `${from} の節点を ${written} へ`,
+      done: () => `${from} の節点を ${written} へ動かしました`,
       already: `節点はすでに ${from} にあります`,
       plan: (source) => movePoint(source, at, to),
     });
+  }
+
+  /** マップから来た「これを消す」。部品は足を指す配線も連れていく。 */
+  async function remove(message: Incoming): Promise<void> {
+    const what = text(message.what);
+    const id = text(message.id);
+    if (id === null || (what !== 'part' && what !== 'wire')) {
+      say('マップからの知らせを読めませんでした (何を消すかがありません)');
+      return;
+    }
+
+    if (what === 'wire') {
+      const line = Number(id);
+      await run({
+        label: `${line} 行目の配線を`,
+        done: () => `${line} 行目の配線を消しました`,
+        already: '消すものがありません',
+        plan: (source) => deleteWire(source, line),
+      });
+      return;
+    }
+
+    await run({
+      label: `${id} を`,
+      // **一緒に消えた配線の本数を言う。** 黙って消すと気づけない。
+      done: (changes) => `${id} を消しました${changes.wires ? ` (配線 ${changes.wires} 本も一緒に)` : ''}`,
+      already: '消すものがありません',
+      plan: (source) => deletePart(source, id),
+    });
+  }
+
+  /** マップから来た「これを回す / 反転する」。2 端子は番地の順が向きそのもの。 */
+  async function turn(message: Incoming): Promise<void> {
+    const part = text(message.part);
+    if (part === null) {
+      say('マップからの知らせを読めませんでした (どの部品かがありません)');
+      return;
+    }
+    const quarters = typeof message.quarters === 'number' ? message.quarters : 0;
+
+    await run(message.kind === 'flip'
+      ? {
+        label: `${part} を反転`,
+        done: () => `${part} を反転しました`,
+        already: `${part} は反転できません`,
+        plan: (source) => flipPart(source, part),
+      }
+      : {
+        label: `${part} を回転`,
+        done: () => `${part} を${quarters < 0 ? '反時計回り' : '時計回り'}に回しました`,
+        already: `${part} は回せません`,
+        plan: (source) => turnPart(source, part, quarters),
+      });
   }
 
   /**
@@ -481,6 +562,13 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       light(address === null ? [] : rangesOf(fence, nodeSpans(fence.source, address)));
       return;
     }
+    if (what === 'wire') {
+      // 配線はフェンスの中の行で指す (1 行 = 1 本の経路)。行ごと光らせる。
+      const at = fence.line + Number(id) - 1;
+      const inside = Number.isInteger(Number(id)) && at >= 0 && at < fence.document.lineCount;
+      light(inside ? [{ line: at, start: 0, end: fence.document.lineAt(at).text.length }] : []);
+      return;
+    }
     light(rangesOf(fence, partSpans(fence.source, id)));
   }
 
@@ -508,6 +596,15 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
         case 'move':
         case 'moveNode':
           await move(message);
+          refreshWith(true);
+          return;
+        case 'delete':
+          await remove(message);
+          refreshWith(true);
+          return;
+        case 'turn':
+        case 'flip':
+          await turn(message);
           refreshWith(true);
           return;
         case 'undo':

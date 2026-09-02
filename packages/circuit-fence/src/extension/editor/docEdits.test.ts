@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { changesForFence, changesOf, fenceBody } from './docEdits.ts';
+import { bodyAfter, changesForFence, changesOf, fenceBody } from './docEdits.ts';
 import { indentOn } from './documentLike.ts';
 
 const docOf = (lines: readonly string[]) => ({
@@ -117,5 +117,47 @@ describe('fenceBody', () => {
     const document = docOf(['```circuit', 'parts:']);
 
     expect(fenceBody(document, 1, 'parts:\n')).toEqual(['parts:']);
+  });
+});
+
+describe('bodyAfter', () => {
+  const document = docOf(['- item', '  ```circuit', '  parts:', '    R1: resistor a1 a3', '  ```']);
+  const source = 'parts:\n  R1: resistor a1 a3';
+  const empty = { lost: [], gained: [] };
+
+  test('replaces inside a line, giving back the indent the fence stripped', () => {
+    const rewrite = { edits: [{ line: 2, column: 18, length: 2, text: 'b1' }], lines: [], diff: empty };
+
+    expect(bodyAfter(document, 2, source, rewrite)).toEqual(['  parts:', '    R1: resistor a1 b1']);
+  });
+
+  test('takes a line out', () => {
+    const rewrite = { edits: [], lines: [{ kind: 'delete' as const, line: 2 }], diff: empty };
+
+    expect(bodyAfter(document, 2, source, rewrite)).toEqual(['  parts:']);
+  });
+
+  test('puts a new line in with the indent of the fence opening', () => {
+    const rewrite = {
+      edits: [],
+      lines: [{ kind: 'insert' as const, line: 3, text: '  C1: capacitor b1 b3' }],
+      diff: empty,
+    };
+
+    expect(bodyAfter(document, 2, source, rewrite)).toEqual([
+      '  parts:', '    R1: resistor a1 a3', '    C1: capacitor b1 b3',
+    ]);
+  });
+
+  test('applies the replacements before the lines move, since both count the old body', () => {
+    const rewrite = {
+      edits: [{ line: 2, column: 18, length: 2, text: 'b1' }],
+      lines: [{ kind: 'insert' as const, line: 2, text: '  C1: capacitor b1 b3' }],
+      diff: empty,
+    };
+
+    expect(bodyAfter(document, 2, source, rewrite)).toEqual([
+      '  parts:', '    C1: capacitor b1 b3', '    R1: resistor a1 b1',
+    ]);
   });
 });

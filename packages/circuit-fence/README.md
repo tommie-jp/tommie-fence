@@ -189,6 +189,12 @@ VS Code's undo cannot reach the editor while the panel has focus). Your
 comments and formatting survive: only the address spelling is replaced. The
 drawing catches up a few seconds after the edit.
 
+**Select, then delete or turn.** Click on the map to select, `Delete` removes,
+`R` turns a quarter clockwise and `M` flips. Removal takes whole lines: deleting
+a part takes the wires that point at its pins with it, and the band says how
+many. Only two-terminal parts turn — their orientation is the order of the two
+addresses, so turning needs no change to the grammar.
+
 **What could not be read is listed under the map.** Clicking a row lights up
 that line in the editor (opening one beside the map if none is showing the
 document), and the parts and wires written on an unreadable line
