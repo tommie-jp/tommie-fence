@@ -38,14 +38,25 @@ export type Aim = {
   readonly id: string;
 };
 
+/** 欄の名前。3 つとも「1 部品 = 1 行」の行の中の綴りに落ちる。 */
+export type PartField = 'type' | 'value' | 'label';
+
 /** 選んだ部品の欄。**中身は素通し** — 殻は webview へ渡すだけで、意味を見ない。 */
 export type PartFields = {
   readonly id: string;
   readonly type: string;
-  /** 端子の数。欄に出せるものが変わる (フェンスごとの語)。 */
-  readonly kind: string;
   readonly value: string;
   readonly label: string;
+  /**
+   * **書ける欄をフェンスが決める。** 種類ごとにどの欄があるかは文法の語彙の
+   * 話で、殻の持ち物ではない (`kind` を渡して殻が判じる形にしていたら、
+   * circuit の語 (`one-terminal`) が他のフェンスにも要ることになっていた)。
+   *
+   * ここに載っていても**書き換えが断られることはある** — 値と `v=` のように、
+   * 同じ行の別の綴りとの兼ね合いで決まるものがあるため。理由は書き換えの
+   * 答え (`EditResult`) が返す。
+   */
+  readonly can: readonly PartField[];
 };
 
 /** 置く部品。番地は**書かれた綴り**で渡す。 */

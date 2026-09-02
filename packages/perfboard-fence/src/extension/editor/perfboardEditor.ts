@@ -1,9 +1,12 @@
 import { renderIssues } from 'fence-kit';
 import type { EditResult, FenceEditor } from 'fence-kit';
 import { normalizeNewlines } from 'fence-kit';
+import { partFields, setField } from '../../core/edit/field.ts';
+import type { PartField } from '../../core/edit/field.ts';
 import { issuesOf, shiftIssues } from '../../core/edit/issues.ts';
 import { aimAt, fenceAt } from '../../core/edit/map.ts';
 import { insertWire } from '../../core/edit/insert.ts';
+import { renamePart } from '../../core/edit/rename.ts';
 import { movePart, movablePartIds, partSpans } from '../../core/edit/move.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import { deletePart, deleteWire } from '../../core/edit/remove.ts';
@@ -54,8 +57,7 @@ export function createPerfboardEditor(): FenceEditor {
       return at === null ? [] : nodeSpans(source, at);
     },
 
-    // 欄 (インスペクタ) はまだ無い。**null は「欄を閉じる」**なので黙って閉じる。
-    fieldsOf: () => null,
+    fieldsOf: partFields,
 
     // 部品の ID は配線から指すための名前なので重ならない — 名札はそのまま名前。
     nameOf: (handle) => handle,
@@ -93,10 +95,16 @@ export function createPerfboardEditor(): FenceEditor {
       return insertWire(source, at, target);
     },
 
+    rename: renamePart,
+
+    setField: (source, handle, field, text) => (
+      field === 'type' || field === 'value'
+        ? setField(source, handle, field as PartField, text)
+        : { ok: false, error: { message: `この文法に ${field} の欄はありません`, line: null } }
+    ),
+
     // 残りは第 2 段の続き (52 の docs/13 の手順 6)。**できないことは、できないと言う。**
     addPart: () => notYet('部品を置くの'),
-    rename: () => notYet('名前を変えるの'),
-    setField: () => notYet('欄の書き換えは'),
     turn: () => notYet('回すの'),
     flip: () => notYet('反転は'),
   };

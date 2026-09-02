@@ -26,11 +26,25 @@ export type PartField = 'type' | 'value' | 'label';
 export type PartFields = {
   readonly id: string;
   readonly type: string;
-  /** 端子の数。欄に出せるものが変わる (1 端子は値もラベルも書けない)。 */
-  readonly kind: PartSpec['kind'];
   readonly value: string;
   readonly label: string;
+  /**
+   * 書ける欄。**端子の数で決まる** (1 端子は値もラベルも書けない、
+   * ラベルは 2 端子だけ)。殻へは種類の語ではなくこの一覧を渡す —
+   * `one-terminal` のような circuit の語を、ほかのフェンスにも持ち込ませない。
+   *
+   * ここに `value` が載っていても、`v=` が書かれていれば書き換えは断られる
+   * (図の同じ側に出るので並べられない)。その兼ね合いは行を見ないと決まらない。
+   */
+  readonly can: readonly PartField[];
 };
+
+/** その部品に書ける欄。 */
+const fieldsFor = (kind: PartSpec['kind']): readonly PartField[] => [
+  'type',
+  ...(kind === 'one-terminal' ? [] : ['value' as const]),
+  ...(kind === 'two-terminal' ? ['label' as const] : []),
+];
 
 /**
  * その部品の欄のいまの中身。**モデルから読む**ので、書いた綴りではなく
@@ -44,9 +58,9 @@ export function partFields(source: string, handle: string): PartFields | null {
   return {
     id: part.id,
     type: part.type,
-    kind: part.kind,
     value: (part.kind === 'one-terminal' ? null : part.value) ?? '',
     label: (part.kind === 'two-terminal' ? part.label : null) ?? '',
+    can: fieldsFor(part.kind),
   };
 }
 

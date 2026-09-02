@@ -211,9 +211,10 @@ function aim(what: string | undefined, id: string | undefined): void {
 type Fields = {
   readonly id: string;
   readonly type: string;
-  readonly kind: 'two-terminal' | 'one-terminal' | 'multi-terminal';
   readonly value: string;
   readonly label: string;
+  /** 書ける欄。**フェンスが決める** (種類の語彙は殻の持ち物ではない)。 */
+  readonly can: readonly ('type' | 'value' | 'label')[];
 };
 
 const fieldInput = (name: string): HTMLInputElement | null =>
@@ -238,8 +239,9 @@ function showFields(part: Fields | null): void {
   fill('id', part.id, true);
   fill('type', part.type, true);
   // 1 端子は「種類 番地」だけ、多端子に l= は無い (文法にその場所が無い)。
-  fill('value', part.value, part.kind !== 'one-terminal');
-  fill('label', part.label, part.kind === 'two-terminal');
+  // **書ける欄はフェンスが決める。** 殻は種類の語を知らない。
+  fill('value', part.value, part.can.includes('value'));
+  fill('label', part.label, part.can.includes('label'));
 }
 
 type Incoming =
