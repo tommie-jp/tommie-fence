@@ -89,7 +89,7 @@ wires:
   - a10 -- b12
   - c13 -- -t13 black
 notes:
-  - source blue
+  - source ink
 ```
 
 ![図04 mono](out/02-themes-4.svg)
