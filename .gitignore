@@ -15,6 +15,10 @@ Thumbs.db
 # Node / TypeScript ビルド生成物
 # (examples/out の SVG は README とメモから参照するのでコミット対象)
 node_modules/
+# Make が使う場所: 作り直しの記録 (印) と、.vsix を詰める作業場。
+# 作業場は依存を入れたまま残す (2 回目からの install を速くするため) ので
+# 1 GB 近くなる。捨てるのは `make clean`。
+/.build/
 dist/
 /out/
 *.vsix

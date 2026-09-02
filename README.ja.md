@@ -78,6 +78,18 @@ npm run examples --workspace=circuit-fence   # 図を作り直す
 ファイルを 2 通りの経路で拾って詰めるのを拒む。`doBuild.sh` はパッケージ単体を
 作業場へ写して単独で install してから詰める。`.vsix` を作る道はこれだけ。
 
+段取りは `Makefile` が持っていて、`doBuild.sh` は引数を make の目標に訳すだけ。
+**触っていないパッケージは作り直さない。** make を直に呼んでもよい:
+
+```bash
+make                  # .vsix を全部作る (変わったものだけ)
+make install          # 上に加えて VS Code に入れ直す
+make circuit-fence    # 1 つだけ
+make CHECK=0 install  # 型チェックとテストを飛ばす
+make clean            # 作り直しの記録・作業場・.vsix を捨てる
+make help             # 目標の一覧
+```
+
 ## ライセンス
 
 MIT

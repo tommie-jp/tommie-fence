@@ -12,23 +12,14 @@
 #   ./doBuild.sh circuit-fence --no-install  .vsix を作るだけ (配布物を用意するとき)
 #   ./doBuild.sh -h                          この説明を出す
 #
+# **触っていないものは作り直さない。** 段取りは Makefile が持っていて、ここは
+# 引数を make の目標に訳すだけ。make を直に呼んでもよい (`make help`)。
 # 拡張を持たないパッケージ (fence-kit) は飛ばす。package.json に
 # contributes が無いものがそれ。
-#
-# なぜ隔離して詰めるか (ここがモノレポ化で変わったところ):
-# npm workspaces は依存をリポジトリ直下の node_modules へ巻き上げる。すると
-# `vsce package` はパッケージの外へ依存を探しに行き、同じファイルを 2 通りの
-# 経路で拾って「同じパスが 2 つある」と言って止まる。パッケージ単体を作業場へ
-# 写して単独で install すれば、単一リポジトリだった頃と同じ形になり、これが
-# 起きない。詳しくは 52 の docs/03。
-#
 set -euo pipefail
 
-# **自分の絶対パスを先に確定させる。** cd したあとの `$0` は、相対パスで
-# 呼ばれると解決できない (`./tommie-fence/doBuild.sh` のように呼ばれると死ぬ)。
-script="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
-cd "$(dirname "$script")"
-root="$PWD"
+cd "$(dirname "$0")"
+self="$(basename "$0")"
 
 run_checks=1
 do_install=1
@@ -37,7 +28,7 @@ for arg in "$@"; do
   case "$arg" in
     --fast) run_checks=0 ;;
     --no-install) do_install=0 ;;
-    -h|--help) sed -n '3,16p' "$script" | sed 's/^#\( \|$\)//'; exit 0 ;;
+    -h|--help) sed -n '3,18p' "$self" | sed 's/^#\( \|$\)//'; exit 0 ;;
     -*) echo "知らない引数です: $arg (--fast / --no-install が使えます)" >&2; exit 2 ;;
     *)
       if [ -n "$pkg" ]; then
@@ -49,145 +40,25 @@ for arg in "$@"; do
   esac
 done
 
-# 拡張を持つパッケージだけを並べる (fence-kit は .vsix にならない)。
-extension_packages() {
-  for dir in packages/*/; do
-    name="$(basename "$dir")"
-    if node -e "process.exit(require('./packages/$name/package.json').contributes ? 0 : 1)" 2>/dev/null; then
-      echo "$name"
-    fi
-  done
-}
-
-# **一覧は先に変数へ取る。** `extension_packages | grep -q` と繋ぐと、grep が
-# 見つけた時点で降りて上流が SIGPIPE で死に、`pipefail` がその 141 を
-# パイプラインの結果にする。一覧の**最後**の名前だけが通り、それより前の名前は
-# 「.vsix にできません」と断られる (実際に踏んだ)。
-extensions="$(extension_packages)"
-
 # **拡張を持つものだけを受ける。** ディレクトリの有無だけ見ると、fence-kit を
 # 渡されたときに写して install したあと vsce の中まで進んでから落ちる。
-if [ -n "$pkg" ] && ! printf '%s\n' "$extensions" | grep -qx "$pkg"; then
-  echo "$pkg は .vsix にできません ($(printf '%s\n' "$extensions" | tr '\n' ' ')から選んでください)" >&2
-  exit 2
-fi
-
-# パッケージを書かなければ全部。1 つだけ作りたいときに名前を書く。
-if [ -z "$pkg" ]; then
-  if [ -z "$extensions" ]; then
-    echo "拡張を持つパッケージがありません" >&2
-    exit 1
+# 一覧の出所は package.json (Makefile 経由で scripts/packages.mjs が読む)。
+if [ -n "$pkg" ]; then
+  extensions="$(make -s print-extensions)"
+  if ! printf '%s\n' $extensions | grep -qx "$pkg"; then
+    echo "$pkg は .vsix にできません ($extensions から選んでください)" >&2
+    exit 2
   fi
-  echo "==> 全部作り直します: $(printf '%s' "$extensions" | tr '\n' ' ')"
-  for one in $extensions; do
-    echo
-    echo "############ $one ############"
-    "$script" "$one" "$@"
-  done
-  exit 0
 fi
 
-if [ "$run_checks" -eq 1 ]; then
-  echo "==> 型チェックとテスト ($pkg)"
-  npm run check --workspace="$pkg"
+# 目標の名前に訳す。install- が付くと VS Code に入れ直すところまで行く。
+if [ -n "$pkg" ]; then
+  goal="$pkg"
+else
+  goal="all"
+fi
+if [ "$do_install" -eq 1 ]; then
+  goal="install${pkg:+-$pkg}"
 fi
 
-vsix="$(node -p "const p = require('./packages/$pkg/package.json'); p.name + '-' + p.version + '.vsix'")"
-out="$root/packages/$pkg/$vsix"
-
-stage="$(mktemp -d)"
-# 作業場は必ず片付ける。途中で失敗しても残さない。
-trap 'rm -rf "$stage"' EXIT
-
-# パッケージを 1 つ、作業場の中の同名の場所へ写す。
-# dist と生成物は写さない。vsce が prepublish で作り直す。
-copy_package() {
-  mkdir -p "$stage/$1"
-  tar -C "packages/$1" \
-    --exclude=./node_modules --exclude=./dist --exclude=./coverage \
-    --exclude='./*.vsix' --exclude='./*.tgz' \
-    -cf - . | tar -C "$stage/$1" -xf -
-}
-
-# 依存のうち、このモノレポの中にあるもの (fence-kit など)。
-workspace_deps() {
-  node -p "
-    const pkg = require('./packages/$1/package.json');
-    const fs = require('fs');
-    Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })
-      .filter((name) => fs.existsSync('packages/' + name))
-      .join('\n')
-  "
-}
-
-echo "==> $pkg を作業場へ写す"
-copy_package "$pkg"
-
-deps="$(workspace_deps "$pkg")"
-if [ -n "$deps" ]; then
-  echo "==> 同じモノレポの依存も写す: $(echo "$deps" | tr '\n' ' ')"
-  for dep in $deps; do
-    copy_package "$dep"
-    # 作業場には workspaces の親が無いので `*` は npm を探しに行って失敗する。
-    # 隣に置いた実体を file: で指す形に書き換える。
-    node -e "
-      const fs = require('fs');
-      const f = '$stage/$pkg/package.json';
-      const j = JSON.parse(fs.readFileSync(f, 'utf8'));
-      for (const field of ['dependencies', 'devDependencies']) {
-        if (j[field]?.['$dep']) j[field]['$dep'] = 'file:../$dep';
-      }
-      fs.writeFileSync(f, JSON.stringify(j, null, 2) + '\n');
-    "
-    # 入れ子の依存までは面倒を見ない。増えたらここで気づけるように止める。
-    nested="$(workspace_deps "$dep")"
-    if [ -n "$nested" ]; then
-      echo "$dep がモノレポ内の依存を持っている ($nested)。写す順番を考える必要がある" >&2
-      exit 1
-    fi
-  done
-fi
-
-echo "==> 作業場で依存を入れる (単独のリポジトリと同じ形にする)"
-# devDependencies も要る。vsce が prepublish で esbuild を呼ぶため。
-# パッケージが単体で install できる状態を保つのは、この段取りの前提。
-# --install-links: file: の依存を実体で置く (symlink だと vsce が辿れない)。
-(cd "$stage/$pkg" && npm install --install-links --no-audit --no-fund --silent)
-
-# vsce は README の相対リンクを絶対 URL へ書き換える。基準の既定はリポジトリの
-# 直下なので、モノレポでは `packages/<パッケージ>` の分だけ足りず、Marketplace と
-# 拡張ページの図が 404 になる (単一リポジトリだった頃は既定で合っていた)。
-# package.json の repository.directory から基準を作って渡す。
-read -r base_content base_images <<<"$(node -p "
-  const p = require('./packages/$pkg/package.json');
-  const url = String(p.repository?.url ?? '').replace(/^git\+/, '').replace(/\.git\$/, '');
-  if (!url) throw new Error('packages/$pkg/package.json に repository.url がありません');
-  const dir = p.repository?.directory ? '/' + p.repository.directory : '';
-  [url + '/blob/HEAD' + dir, url + '/raw/HEAD' + dir].join(' ');
-")"
-
-echo "==> $vsix を作る (README の相対リンクの基準: $base_content)"
-# vsce package が vscode:prepublish (esbuild --production) を呼ぶ。
-(cd "$stage/$pkg" && npx vsce package \
-  --baseContentUrl "$base_content" \
-  --baseImagesUrl "$base_images" \
-  --out "$out")
-
-if [ "$do_install" -eq 0 ]; then
-  echo "==> できあがり: $out"
-  exit 0
-fi
-
-if ! command -v code >/dev/null 2>&1; then
-  echo "==> code コマンドが PATH にありません。$out を手で入れてください" >&2
-  echo "    拡張ビュー (Ctrl+Shift+X) の右上 ... → 「VSIX からのインストール」" >&2
-  exit 1
-fi
-
-echo "==> VS Code に入れ直す"
-# バージョン番号を上げずに中身だけ差し替えるので --force が要る。
-code --install-extension "$out" --force
-
-echo
-echo "==> 入れ直しました。最後にウィンドウを再読み込みしてください"
-echo "    Ctrl+Shift+P → 「Developer: Reload Window」"
+exec make CHECK="$run_checks" "$goal"

@@ -43,14 +43,33 @@ npm run examples --workspace=circuit-fence   # 図を作り直す
 ./doVersion.sh circuit-fence minor           # 版を上げる
 ```
 
+**触っていないものは作り直さない。** 段取りは `Makefile` が持っていて、
+`doBuild.sh` は引数を make の目標に訳すだけ。make を直に呼んでもよい:
+
+```bash
+make                  # .vsix を全部作る (変わったものだけ)
+make install          # 上に加えて VS Code に入れ直す (doBuild.sh の既定)
+make circuit-fence    # 1 つだけ
+make CHECK=0 install  # 型チェックとテストを飛ばす (doBuild.sh --fast と同じ)
+make clean            # 作り直しの記録・作業場・.vsix を捨てる
+make help             # 目標の一覧
+```
+
+作り直しが要るかどうかは、入力ファイル (`git ls-files` に見えているもの) と
+`.vsix` の新しさで決まる。印と作業場は `.build/` に置く (`.gitignore` 済み)。
+**作業場は依存を入れたまま残す** — 2 回目からの `npm install` が
+5.4 秒 → 0.6 秒になるため。1 GB 近くなるので、片付けるときは `make clean`。
+
 ## 約束
 
-1. **`vsce` を直に呼ばない**。`.vsix` を作るのは `./doBuild.sh` だけ
-   (パッケージ名を書かなければ**拡張を持つパッケージを全部**作る)。
+1. **`vsce` を直に呼ばない**。`.vsix` を作るのは `./doBuild.sh` (と、その中身の
+   `make`) だけ (パッケージ名を書かなければ**拡張を持つパッケージを全部**作る)。
    workspaces は依存を直下の `node_modules` へ巻き上げるので、パッケージの中で
    `vsce package` を走らせると依存を外に探しに行き、同じファイルを 2 通りの経路で
-   拾って「同じパスが 2 つある」と言って止まる。`doBuild.sh` はパッケージ単体を
-   作業場へ写して単独で install してから詰める。
+   拾って「同じパスが 2 つある」と言って止まる。`scripts/vsix.sh` はパッケージ単体を
+   作業場へ写して単独で install してから詰める。**役割は 3 つに分けてある**:
+   `doBuild.sh` が入口、`Makefile` が何をいつ作り直すか、
+   `scripts/vsix.sh` が 1 つのパッケージの詰め方。
 2. **パッケージは単体で install できる形を保つ**。1 の段取りが成り立つ前提。
    devDependencies を直下へ集約しない (各パッケージに置いたままにする)。
    パッケージのビルドが要るファイルは、そのパッケージの中に置く
@@ -58,8 +77,11 @@ npm run examples --workspace=circuit-fence   # 図を作り直す
 3. **パッケージ間で依存するときは esbuild で束ねる**。`fence-kit` は
    external にしない。`.vsix` に実体は入らないので、依存の種類としては
    **devDependencies が正しい** (実行時には要らない)。
-   `doBuild.sh` は作業場へ写すとき、モノレポ内の依存を隣に置いて
+   `scripts/vsix.sh` は作業場へ写すとき、モノレポ内の依存を隣に置いて
    `file:` 指定に書き換える。npm 上に無いパッケージを探しに行かせないため。
+   **npm は `file:` の依存を「中身が変わっただけ」では写し直さない**ので、
+   詰める前に `node_modules` の側へ写し直している (これを外すと `fence-kit` の
+   直しが `.vsix` に入らない)。
 4. **版はパッケージごとに独立**。揃えない (揃えると直していないパッケージまで
    版が上がって CHANGELOG が嘘になる)。**タグはパッケージ名を接頭辞にする**:
    `circuit-fence-v0.4.0`。旧リポジトリの `v0.3.0` 形式は archive 側に残る。
@@ -67,7 +89,7 @@ npm run examples --workspace=circuit-fence   # 図を作り直す
    パッケージの中に置いても GitHub は読まない。
 6. **README の図と相対リンクは `vsce` が絶対 URL へ書き換える**。基準の既定は
    リポジトリ直下なので、モノレポでは `packages/<パッケージ>` の分が足りない。
-   `doBuild.sh` が `package.json` の `repository.directory` から基準を作って
+   `scripts/vsix.sh` が `package.json` の `repository.directory` から基準を作って
    `--baseContentUrl` / `--baseImagesUrl` で渡している。**パッケージを別の
    深さへ動かすなら `repository.directory` も直す** — 忘れると Marketplace と
    拡張ページの図が黙って 404 になる (ローカルの相対リンクは正しいままなので

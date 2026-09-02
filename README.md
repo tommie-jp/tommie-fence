@@ -82,6 +82,19 @@ the same file by two routes, refusing to pack. `doBuild.sh` copies the package
 out and installs it on its own first, which is why it is the only supported way
 to build a `.vsix`.
 
+The `Makefile` holds the steps; `doBuild.sh` only translates its arguments into
+make goals. **Packages you have not touched are not rebuilt.** You can call make
+directly:
+
+```bash
+make                  # build every .vsix (only what changed)
+make install          # the above, plus reinstalling into VS Code
+make circuit-fence    # just one
+make CHECK=0 install  # skip the typecheck and the tests
+make clean            # drop the rebuild marks, the staging area, the .vsix files
+make help             # list the goals
+```
+
 ## License
 
 MIT
