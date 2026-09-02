@@ -42,6 +42,7 @@ GitHub のようにフェンスが描画されない場所で、ソースと図�
 | [13-points.md](13-points.md) | `points:` (番地に名前を付ける) |
 | [14-half-step.md](14-half-step.md) | 交点の間の番地 (`a_1.5` `a.5_1`) |
 | [15-arrows.md](15-arrows.md) | 電流の矢と電圧の符号 (`i=` `v=`) |
+| [16-orientation.md](16-orientation.md) | 記号の向き (`r90` / `r180` / `r270` / `mirror`) |
 
 ## わざと壊してある例
 

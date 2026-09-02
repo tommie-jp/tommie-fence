@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
 import { NOTE_ALIGNS, NOTE_COLOR_NAMES, NOTE_LEADINGS, NOTE_SIZE_NAMES } from './notes.ts';
 import { PART_ALIASES, partTypeNames } from './parts.ts';
+import { ORIENTATIONS } from './parser/compact.ts';
 import { TOP_LEVEL_KEYS } from './parser/parseFence.ts';
 import { STYLE_KEYS } from './parser/style.ts';
 import { THEME_NAMES } from './render/theme.ts';
@@ -26,6 +27,10 @@ describe('docs/02-cheatsheet.md', () => {
 
   test('names every abbreviation', () => {
     expect(Object.keys(PART_ALIASES).filter((name) => !mentions(name))).toEqual([]);
+  });
+
+  test('names every word a part can be turned with', () => {
+    expect(ORIENTATIONS.filter((name) => !mentions(name))).toEqual([]);
   });
 
   test('names every word a note can carry', () => {

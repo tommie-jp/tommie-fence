@@ -85,6 +85,15 @@ part a drawn label separate from its ID, write `l=<label>`
 
 ![Current arrows and voltage signs](examples/out/15-arrows-1.png)
 
+Multi-terminal parts and `ground` can be turned: write `r90`, `r180` or `r270`
+(clockwise) and `mirror` (left to right) after the address (`Q1: npn c5 r90`).
+There is no word for a vertical flip — write `mirror` and `r180` together.
+**Pins turn with the symbol**, so a wire that names one (`Q1.B`) needs no
+edit. Two-terminal parts carry no such word: **the order of their two
+addresses is the direction**.
+
+![Turning a symbol](examples/out/16-orientation-1.png)
+
 When several places point at the same node, naming the address under `points:`
 makes moving it a one-line edit (write `vin: a1` and `vin` works anywhere an
 address does). To sit between two grid points, split the row from the column
@@ -237,7 +246,8 @@ Phase 3. 77 parts in all (4 one-terminal symbols, 44 two-terminal parts,
 29 multi-terminal parts). Done so far: `--` / `-|` / `|-` wires, pin
 references (`U1.out`), junction dots, T connections, overlap detection,
 `points:` (names for addresses), addresses between grid points (`a_1.5`),
-`l=` (the drawn label) and `i=` / `v=` (current arrows and voltage signs) on
+orientation for multi-terminal parts and `ground` (`r90` / `r180` / `r270` /
+`mirror`), `l=` (the drawn label) and `i=` / `v=` (current arrows and voltage signs) on
 two-terminal parts, `title:` (a title above the diagram), `style:` (grid
 display, theme, size, version stamp), `notes:` (marks, frames, pointers,
 lines, text, and dumping the fence source), and `.tex` output via
