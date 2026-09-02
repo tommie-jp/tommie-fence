@@ -191,8 +191,8 @@ const SMA_DIELECTRIC = '#f2f3f5';
 const SMA_GROUND = '#9aa2ab';
 /** 腕を板に留めた半田。**ランドの銀と同じ**なので、接点として読める。 */
 const SMA_SOLDER = '#d7dce1';
-/** 接点の印の半径。**中心導体 (厚み 5) の脇に出る**大きさにする。 */
-const CONTACT = 5;
+/** 接点の印の半径。腕の厚みに収まる大きさ。 */
+const CONTACT = 3.5;
 /** 中心導体。オスはピン (金)、メスは穴 (暗い口)。 */
 const SMA_PIN = '#d8b64a';
 const SMA_SOCKET = '#2b2f33';
@@ -284,25 +284,22 @@ function smaEdgeBody(part: PlacedPart, width: number, edgeX: number, legX: numbe
     ].map(([x = 0, y = 0]) => `${num(x)},${num(y)}`).join(' '),
     fill: SMA_GROUND, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
   });
-  // **アースの足は凹の口の中に来る。** そこが半田付けするところなので、白い接点の
-  // 印を出す — アースは穴に挿さらないので埋まった穴が出ず (`index.ts` の `onArms`)、
-  // 印が無いと凹のどこを付けるのかが図から読めない。
-  //
-  // **印は 1 つ、足の番地の上に置く。** 腕の上下に 2 つ出していたころは、
-  // 配線が届く先 (足の番地) とは別の場所に印があり、どちらへ付けるのか読めなかった。
-  const contacts = element('circle', {
-    cx: num(legX), cy: 0, r: num(CONTACT),
-    fill: SMA_SOLDER, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
-  });
+  // **アースが板に触れるのは腕の 2 点。** そこが半田付けするところなので、
+  // 穴と同じように接点の印を出す — 印が無いと、凹の口のどこを付けるのかが
+  // 図から読めない (アースは穴に挿さらないので、埋まる穴も出ない)。
+  const contacts = [-1, 1]
+    .map((side) => element('circle', {
+      cx: num(groundEnd - CONTACT), cy: num(side * (armHalf - armThick / 2)), r: num(CONTACT),
+      fill: SMA_SOLDER, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
+    }))
+    .join('');
 
-  // 信号線は**凹の口から出て**、アースより先の穴まで届く。**アースの接点より
-  // 先から描く** — 接点の上を渡らせると、アースと中心導体がつながって見える
-  // (実物の中心導体はアースの腕の間を通っていて、触れていない)。
+  // 信号線は**凹の谷から出る凸**。アースより先の穴まで届く。
   const centre = element('rect', {
-    x: num(groundEnd), y: -2.5, width: num(width / 2 - groundEnd), height: 5, rx: 1, fill: SMA_PIN,
+    x: num(edgeX), y: -2.5, width: num(width / 2 - edgeX), height: 5, rx: 1, fill: SMA_PIN,
   });
 
-  return `${barrel}${threads}${plain}${base}${face}${mating}${ground}${contacts}${centre}`;
+  return `${barrel}${threads}${plain}${base}${face}${mating}${centre}${ground}${contacts}`;
 }
 
 /**
