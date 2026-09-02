@@ -809,6 +809,20 @@ describe('部品を置く', () => {
     expect(doc.getText()).toBe(RC);
   });
 
+  test('says so when the name was confirmed empty, which is not a refusal', async () => {
+    // 取り消し (null) と空で確定 (空文字) を同じ扱いにすると、置かれなかった
+    // 理由が分からないまま webview が待ちの表示で残る。
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5), { ask: async () => '' });
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'addPart', type: 'port', at: ['c5'] });
+
+    expect(doc.getText()).toBe(RC);
+    expect(host.sent.some((message) => JSON.stringify(message).includes('空にはできません'))).toBe(true);
+  });
+
   test('says so when it cannot ask, rather than making a name up', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));

@@ -72,12 +72,15 @@ export async function runMovePoint(port: EditorPort): Promise<void> {
 
   // **確認では止めない** (2026-09-02 の決め)。節点ごと動かせば接続は保たれ、
   // 寄せた先で何かとつながったときだけ、動かしたあとのお知らせに添える。
-  if (await port.apply(fence.line, result.value.edits)) {
-    // 名前があっても、生の綴りで書いた場所が混ざっていれば 1 行では済まない。
-    const how = node.name !== null && result.value.edits.length === 1
-      ? `${node.name} の 1 行を書き換えました`
-      : `${result.value.edits.length} か所を書き換えました`;
-    const changed = describeDiff(result.value.diff);
-    port.info(`${here} の節点を ${written.trim()} へ動かしました (${how})${changed === null ? '' : `。${changed}`}`);
+  // **当たらなかったときは黙らない** (`movePart` と同じ扱い)。
+  if (!await port.apply(fence.line, result.value.edits)) {
+    port.warn('書き換えられませんでした (そのあと文書が書き換わったかもしれません)');
+    return;
   }
+  // 名前があっても、生の綴りで書いた場所が混ざっていれば 1 行では済まない。
+  const how = node.name !== null && result.value.edits.length === 1
+    ? `${node.name} の 1 行を書き換えました`
+    : `${result.value.edits.length} か所を書き換えました`;
+  const changed = describeDiff(result.value.diff);
+  port.info(`${here} の節点を ${written.trim()} へ動かしました (${how})${changed === null ? '' : `。${changed}`}`);
 }

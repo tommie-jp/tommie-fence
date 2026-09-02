@@ -91,8 +91,12 @@ export async function runMovePart(port: EditorPort): Promise<void> {
   }
 
   // 編集はフェンスの中の行番号。Markdown の行へずらすのは port の仕事。
-  if (await port.apply(fence.line, result.value.edits)) {
-    const changed = describeDiff(result.value.diff);
-    port.info(`${partId} を ${written.trim()} へ動かしました${changed === null ? '' : `。${changed}`}`);
+  // **当たらなかったときは黙らない。** 選んで番地まで打った人が、成功も失敗も
+  // 分からずに終わる (`session.ts` の `run` と同じ扱いにする)。
+  if (!await port.apply(fence.line, result.value.edits)) {
+    port.warn('書き換えられませんでした (そのあと文書が書き換わったかもしれません)');
+    return;
   }
+  const changed = describeDiff(result.value.diff);
+  port.info(`${partId} を ${written.trim()} へ動かしました${changed === null ? '' : `。${changed}`}`);
 }

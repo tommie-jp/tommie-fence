@@ -126,3 +126,18 @@ describe('runMovePart', () => {
     expect(apply).not.toHaveBeenCalled();
   });
 });
+
+describe('書き換えが当たらなかったとき', () => {
+  test('says so, instead of ending with neither a success nor a failure', () => {
+    // 選んで番地まで打った人が、成功も失敗も分からないまま終わるのが一番困る。
+    // 入力を待つ間に文書が書き換わると `apply` は実際に false を返す。
+    const warn = vi.fn();
+    const info = vi.fn();
+
+    return runMovePart(portOf({ apply: async () => false, warn, info })).then(() => {
+      expect(warn).toHaveBeenCalledOnce();
+      expect(warn.mock.calls[0]?.[0]).toContain('書き換えられませんでした');
+      expect(info).not.toHaveBeenCalled();
+    });
+  });
+});

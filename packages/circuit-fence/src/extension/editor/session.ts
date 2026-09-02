@@ -530,8 +530,15 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
     const id = numbered ?? (host.ask === undefined
       ? null
       : await host.ask(`${type} の名前`, NAME_HINTS[type] ?? ''));
-    if (id === null || id === '') {
+    if (id === null) {
+      // 取り消し (Esc) は断りなので黙って戻る。訊く手立てが無いときだけ言う。
       if (numbered === null && host.ask === undefined) say(`${type} の名前を訊けませんでした`);
+      return;
+    }
+    if (id === '') {
+      // **空で確定したのは断りではない。** 黙って戻ると、置かれなかった理由が
+      // 分からないまま webview が待ちの表示のまま残る。
+      say(`${type} の名前を空にはできません`);
       return;
     }
 

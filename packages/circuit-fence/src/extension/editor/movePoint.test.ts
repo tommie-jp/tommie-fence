@@ -137,3 +137,16 @@ describe('runMovePoint', () => {
     expect(apply).not.toHaveBeenCalled();
   });
 });
+
+describe('節点の書き換えが当たらなかったとき', () => {
+  test('says so, the way moving a part does', () => {
+    const warn = vi.fn();
+    const info = vi.fn();
+
+    return runMovePoint(portOf({ apply: async () => false, warn, info })).then(() => {
+      expect(warn).toHaveBeenCalledOnce();
+      expect(warn.mock.calls[0]?.[0]).toContain('書き換えられませんでした');
+      expect(info).not.toHaveBeenCalled();
+    });
+  });
+});
