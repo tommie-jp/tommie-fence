@@ -113,18 +113,19 @@ export type DeviceSpec = {
 };
 
 /**
- * 注釈の種類。**`source` だけは板の上に置かない** — フェンスの中身を丸ごと
- * 書き出すものなので、板に重ねると穴も部品も読めなくなる。図の下に帯を持つ。
+ * 注釈の種類。**`source` と `parts` だけは板の上に置かない** — フェンスの中身
+ * や部品表を丸ごと書き出すものなので、板に重ねると穴も部品も読めなくなる。
+ * どちらも図の下に自分の帯を持つ。
  */
-export type NoteKind = 'mark' | 'box' | 'arrow' | 'text' | 'source';
+export type NoteKind = 'mark' | 'box' | 'arrow' | 'text' | 'source' | 'parts';
 
 /** 板の上に置く注釈の種類。指し先の番地を必ず持つ。 */
-export type OnBoardNoteKind = Exclude<NoteKind, 'source'>;
+export type OnBoardNoteKind = Exclude<NoteKind, 'source' | 'parts'>;
 
 /** 書かれたままの注釈 1 つ。 */
 export type NoteSpec = {
   readonly kind: NoteKind;
-  /** 指し先の番地。**`source` は板の外に出すので null**。 */
+  /** 指し先の番地。**`source` と `parts` は板の外に出すので null**。 */
   readonly from: string | null;
   readonly to: string | null;
   readonly color: string | null;

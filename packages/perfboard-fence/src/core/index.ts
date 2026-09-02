@@ -11,6 +11,7 @@ import { renderDeviceWires, renderWires } from './render/wires.ts';
 import { crossingPoints } from './render/crossings.ts';
 import { renderTitle } from './render/title.ts';
 import { renderNotes } from './render/notes.ts';
+import { partsListSize, partsListing, renderPartsList } from './render/partsList.ts';
 import { renderSourceListing, sourceBandSize, sourceListing } from './render/sourceListing.ts';
 import { backSideLayout, renderBackSide } from './render/backSide.ts';
 import { deviceOverhang, layoutDevices, renderDevices } from './render/devices.ts';
@@ -89,6 +90,10 @@ export function renderPerfboard(input: string): RenderResult {
   // **図を組む前に測る** — 帯の大きさが決まらないと板の置き場所も決まらない。
   const sourceNotes = parsed.doc.notes.filter((note) => note.kind === 'source');
   const listing = sourceNotes.length > 0 ? sourceListing(source) : [];
+  // 部品表も板の外に出すので、**図を組む前に測る** (書き出しと同じ理由)。
+  // 板に載せる前の部品から作る — 載せられなかった部品も、揃えるものには変わりない。
+  const listNotes = parsed.doc.notes.filter((note) => note.kind === 'parts');
+  const listed = listNotes.length > 0 ? partsListing(parsed.doc.parts, devices) : [];
   // 半田面は自分の寸法を持つので、**先に測ってから**表の図に場所を空けさせる。
   const back = style.back ? backSideLayout(board, style.labels) : null;
   // 番地で置いた機器のはみ出しを**先に測る**。板の寸法だけで組むと、
@@ -100,6 +105,7 @@ export function renderPerfboard(input: string): RenderResult {
     deviceTop: devices.some((device) => device.where === null && device.at === 'top'),
     deviceBottom: devices.some((device) => device.where === null && device.at === 'bottom'),
     source: listing.length > 0 ? sourceBandSize(listing, THEME) : null,
+    list: listed.length > 0 ? partsListSize(listed, THEME) : null,
     back: back === null ? null : { height: back.height },
     labelRight: style.labels.sides.includes('right'),
     labelBottom: style.labels.sides.includes('bottom'),
@@ -130,8 +136,8 @@ export function renderPerfboard(input: string): RenderResult {
   const noteErrors: FenceError[] = [];
   const notes: ResolvedNote[] = [];
   for (const note of parsed.doc.notes) {
-    // 書き出しは板の外に出すので、指し先の番地を持たない。帯は別に描く。
-    if (note.kind === 'source') continue;
+    // 書き出しと部品表は板の外に出すので、指し先の番地を持たない。帯は別に描く。
+    if (note.kind === 'source' || note.kind === 'parts') continue;
     const from = parseAddress(note.from ?? '');
     const to = note.to === null ? null : parseAddress(note.to);
     // 見るのは書かれた番地だけ (`to` を書かない印では `from` 1 つ)。
@@ -151,6 +157,9 @@ export function renderPerfboard(input: string): RenderResult {
   // 1 つしか描かないことを言う (黙って捨てると、色を書き直したつもりが効かない)。
   for (const extra of sourceNotes.slice(1)) {
     noteErrors.push(notice('書き出し (source) は 1 つだけ描きます (後のものは描いていません)', extra.line));
+  }
+  for (const extra of listNotes.slice(1)) {
+    noteErrors.push(notice('部品表 (parts) は 1 つだけ描きます (後のものは描いていません)', extra.line));
   }
 
   const wiring = resolveWires(parsed.doc.wires, points, board, devicePins);
@@ -262,7 +271,10 @@ export function renderPerfboard(input: string): RenderResult {
       + renderParts(placement.parts, layout, PLATE)
       // 注釈は一番上。**指したものが下に隠れると印の意味が無くなる。**
       + renderNotes(notes, layout, PLATE)
-      // 書き出しは板の外の帯。図とは重ならないので、順番はどこでもよい。
+      // 部品表と書き出しは板の外の帯。図とは重ならないので、順番はどこでもよい。
+      + (layout.listBand === null
+        ? ''
+        : renderPartsList(listed, layout.listBand, THEME, listNotes[0]?.color ?? null))
       + (layout.sourceBand === null
         ? ''
         : renderSourceListing(listing, layout.sourceBand, THEME, sourceNotes[0]?.color ?? null))

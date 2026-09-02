@@ -84,6 +84,29 @@ describe('source', () => {
   });
 });
 
+describe('parts', () => {
+  test('reads a bare parts, which takes no hole at all', () => {
+    expect(parseNoteLine('parts')).toEqual({
+      ok: true,
+      value: { kind: 'parts', from: null, to: null, color: null, text: null },
+    });
+  });
+
+  test('takes a colour, the way the listing does', () => {
+    expect(parseNoteLine('parts blue')).toMatchObject({
+      ok: true,
+      value: { kind: 'parts', color: 'blue' },
+    });
+  });
+
+  test('says the table cannot be placed, rather than calling the address an unknown colour', () => {
+    const result = parseNoteLine('parts b3');
+
+    expect(result.ok).toBe(false);
+    expect(result.ok === false && result.error.message).toContain('番地は書けません');
+  });
+});
+
 describe('source の断り方 (レビューで出た穴)', () => {
   test('says it is a colour it does not know, not that a hole was written', () => {
     const result = parseNoteLine('source chartreuse');

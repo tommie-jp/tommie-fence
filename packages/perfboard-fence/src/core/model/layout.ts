@@ -41,6 +41,11 @@ export type LayoutOptions = {
    */
   readonly back?: { readonly height: number } | null;
   /**
+   * 部品表 (`- parts`) が要る大きさ。書き出しと同じく板の下に自分の帯を持つ。
+   * 板より広くなることがあるので、幅も見て画布を広げる。
+   */
+  readonly list?: { readonly width: number; readonly height: number } | null;
+  /**
    * 穴の名前を右と下にも出すか。**出す辺には余白が要る** — 板の寸法だけで
    * 画布を決めると、右と下の名前が画布の外へ出て黙って切れる。
    */
@@ -69,6 +74,8 @@ export type Layout = {
   readonly titleBaseline: number;
   /** 板の外の機器を置く帯。空けていなければ null。 */
   readonly deviceBands: { readonly top: Band | null; readonly bottom: Band | null };
+  /** 部品表を出す帯。部品表が無ければ null。 */
+  readonly listBand: Band | null;
   /** フェンスの中身を書き出す帯。書き出しが無ければ null。 */
   readonly sourceBand: Band | null;
   /** 半田面の板を置く上端 (この分だけ下へずらして描く)。出さなければ null。 */
@@ -92,6 +99,7 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   const topBand = options.deviceTop === true ? DEVICE_BAND + DEVICE_GAP : 0;
   const bottomBand = options.deviceBottom === true ? DEVICE_BAND + DEVICE_GAP : 0;
   const source = options.source ?? null;
+  const list = options.list ?? null;
   const back = options.back ?? null;
   const deviceAbove = Math.max(0, options.deviceAbove ?? 0);
   const deviceBelow = Math.max(0, options.deviceBelow ?? 0);
@@ -118,17 +126,22 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   // 切るのではなく画布のほうを広げる。
   const labelRight = options.labelRight === true ? LABEL_GUTTER : 0;
   const labelBottom = options.labelBottom === true ? LABEL_GUTTER : 0;
-  const bandWidth = Math.max(boardWidth + labelRight, source?.width ?? 0);
-  // 縦の積み方: 題 → 上の機器 → 板 → 下の機器 → 半田面 → 書き出し。
+  const bandWidth = Math.max(boardWidth + labelRight, source?.width ?? 0, list?.width ?? 0);
+  // 縦の積み方: 題 → 上の機器 → 板 → 下の機器 → 半田面 → 部品表 → 書き出し。
   // **板 2 枚を続けて置く** — 間に写しが挟まると、表と裏が別の図に見える。
+  // **部品表は書き出しより上**。写しは「同じ図をもう一度出す」ためのもので
+  // 図そのものの続きではないので、いちばん下に置く。
   const backTop = boardY + boardHeight + labelBottom + bottomBand + deviceBelow + BACK_GAP;
   const backBand = back === null ? 0 : BACK_GAP + back.height;
-  const sourceTop = boardY + boardHeight + labelBottom + bottomBand + deviceBelow + backBand + SOURCE_GAP;
+  const belowBoard = boardY + boardHeight + labelBottom + bottomBand + deviceBelow + backBand;
+  const listTop = belowBoard + SOURCE_GAP;
+  const listBand = list === null ? 0 : SOURCE_GAP + list.height;
+  const sourceTop = belowBoard + listBand + SOURCE_GAP;
 
   return {
     pitch: PITCH,
     width: boardX + bandWidth + OUTER_MARGIN,
-    height: boardY + boardHeight + labelBottom + bottomBand + deviceBelow + backBand
+    height: belowBoard + listBand
       + (source === null ? 0 : SOURCE_GAP + source.height) + OUTER_MARGIN,
     board: { x: boardX, y: boardY, width: boardWidth, height: boardHeight },
     titleBaseline: OUTER_MARGIN + titleBand - 6,
@@ -140,6 +153,9 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
         ? { x: boardX, y: boardY + boardHeight + DEVICE_GAP, width: boardWidth, height: DEVICE_BAND }
         : null,
     },
+    listBand: list === null
+      ? null
+      : { x: boardX, y: listTop, width: bandWidth, height: list.height },
     sourceBand: source === null
       ? null
       : { x: boardX, y: sourceTop, width: bandWidth, height: source.height },

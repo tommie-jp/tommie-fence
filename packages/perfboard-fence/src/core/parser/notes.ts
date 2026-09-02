@@ -8,12 +8,12 @@ import type { Parsed } from './parts.ts';
  * `notes:` の 1 行。**図に印を付けて、文章から指せるようにする**ためのもので、
  * 回路の一員ではない (ネットにもネットリストにも出ない)。
  *
- * 印は 5 つ。`mark` (丸)、`box` (枠)、`arrow` (指し棒)、`text` (字)、
- * `source` (そのフェンスの中身の書き出し)。
+ * 印は 6 つ。`mark` (丸)、`box` (枠)、`arrow` (指し棒)、`text` (字)、
+ * `source` (そのフェンスの中身の書き出し)、`parts` (部品表)。
  *
  * **色は `text` には書けない。** 字は残り全部を言葉として取るので、色を許すと
  * 「色の名前で始まる注釈」が黙って色になる。区別の付かない書き方を作らない。
- * **`source` には書ける** — 言葉を取らないので、色と紛れる余地がない。
+ * **`source` と `parts` には書ける** — 言葉を取らないので、色と紛れる余地がない。
  */
 
 import type { NoteKind } from '../types.ts';
@@ -22,7 +22,7 @@ export type { NoteKind };
 
 export type WrittenNote = {
   readonly kind: NoteKind;
-  /** 指し先の番地。**`source` は板の外に出すので null**。 */
+  /** 指し先の番地。**`source` と `parts` は板の外に出すので null**。 */
   readonly from: string | null;
   /** `box` と `arrow` の 2 つ目の番地。ほかは null。 */
   readonly to: string | null;
@@ -31,8 +31,8 @@ export type WrittenNote = {
   readonly text: string | null;
 };
 
-/** 印ごとに、番地をいくつ書くか。**書き出しは板の外なので 0**。 */
-const HOLES: Record<NoteKind, number> = { mark: 1, box: 2, arrow: 2, text: 1, source: 0 };
+/** 印ごとに、番地をいくつ書くか。**書き出しと部品表は板の外なので 0**。 */
+const HOLES: Record<NoteKind, number> = { mark: 1, box: 2, arrow: 2, text: 1, source: 0, parts: 0 };
 
 const KINDS = Object.keys(HOLES) as readonly NoteKind[];
 

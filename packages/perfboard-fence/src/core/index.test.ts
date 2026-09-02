@@ -481,6 +481,46 @@ describe('書き出し (notes: - source)', () => {
   });
 });
 
+describe('部品表 (notes: - parts)', () => {
+  const fence = 'board: 12x7\nparts:\n  R1: resistor b3 b6 10k\nwires:\n  - b3 -- b6\nnotes:\n  - parts\n';
+
+  test('lists what has to be gathered, with the colour code spelled out', () => {
+    const result = renderPerfboard(fence);
+
+    expect(result.svg).toContain('茶黒橙茶');
+    expect(result.svg).toContain('部品');
+    expect(result.errors).toEqual([]);
+  });
+
+  test('makes the drawing taller than the same fence without it', () => {
+    const withList = renderPerfboard(fence);
+    const without = renderPerfboard(fence.replace('notes:\n  - parts\n', ''));
+
+    expect(withList.svg.length).toBeGreaterThan(without.svg.length);
+  });
+
+  test('is not part of the circuit — it changes no net', () => {
+    const withList = renderPerfboard(fence);
+    const without = renderPerfboard(fence.replace('notes:\n  - parts\n', ''));
+
+    expect(withList.netlist).toEqual(without.netlist);
+  });
+
+  test('says so when a second one is written, rather than stacking the same table twice', () => {
+    const result = renderPerfboard(`${fence}  - parts\n`);
+
+    expect(result.notices.some((one) => one.message.includes('部品表'))).toBe(true);
+  });
+
+  test('stands together with the listing, one above the other', () => {
+    const both = renderPerfboard(fence.replace('  - parts\n', '  - parts\n  - source\n'));
+
+    expect(both.svg).toContain('茶黒橙茶');
+    expect(both.svg).toContain('```perfboard');
+    expect(both.errors).toEqual([]);
+  });
+});
+
 describe('ERC の切り替え (style: check)', () => {
   // どこにもつながっていない抵抗。既定では ERC がこれを名指す。
   const loose = 'board: 12x7\nparts:\n  R1: resistor b3 b6 1k\n';
