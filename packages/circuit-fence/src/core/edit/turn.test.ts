@@ -13,6 +13,18 @@ const RC = [
   '',
 ].join('\n');
 
+/** 向きの語で回す種類を集めたもの (2 端子は番地の順で回るので別)。 */
+const TURNABLE = [
+  'parts:',
+  '  Q1: npn b2 2SC1815',
+  '  U1: opamp b5 +up',
+  '  G1: ground b8',
+  '  T1: transformer b11',
+  '  U2: dip8 e2',
+  '  VCC: vcc e5',
+  '',
+].join('\n');
+
 const turned = (source: string, id: string, quarters: number) => {
   const result = turnPart(source, id, quarters);
   if (!result.ok) throw new Error(result.error.message);
@@ -55,15 +67,51 @@ describe('turnPart', () => {
     expect(result.ok === false && result.error.message).toContain('格子の外');
   });
 
-  test('refuses a one-terminal part, which needs a word in the grammar', () => {
-    const result = turnPart(RC, 'G1', 1);
-
-    expect(result.ok).toBe(false);
-    expect(result.ok === false && result.error.message).toContain('向き');
+  test('writes the word on a multi-terminal part that had no orientation', () => {
+    // 番地の順では回せないので、文法の語のほうを書く。型番はそのまま。
+    expect(turned(TURNABLE, 'Q1', 1).source).toContain('  Q1: npn b2 r90 2SC1815');
   });
 
-  test('refuses a multi-terminal part for the same reason', () => {
-    expect(turnPart(RC, 'Q1', 1).ok).toBe(false);
+  test('advances the word that is already there', () => {
+    const once = turned(TURNABLE, 'Q1', 1).source;
+
+    expect(turned(once, 'Q1', 1).source).toContain('  Q1: npn b2 r180 2SC1815');
+  });
+
+  test('takes the word away again when the symbol comes back upright', () => {
+    const thrice = turned(turned(turned(TURNABLE, 'Q1', 1).source, 'Q1', 1).source, 'Q1', 1).source;
+
+    expect(turned(thrice, 'Q1', 1).source).toBe(TURNABLE);
+  });
+
+  test('turns a multi-terminal part the other way', () => {
+    expect(turned(TURNABLE, 'Q1', -1).source).toContain('  Q1: npn b2 r270 2SC1815');
+  });
+
+  test('leaves the sign word alone, which is a different key', () => {
+    expect(turned(TURNABLE, 'U1', 1).source).toContain('  U1: opamp b5 r90 +up');
+  });
+
+  test('turns ground, the one one-terminal symbol that can be turned', () => {
+    expect(turned(TURNABLE, 'G1', 1).source).toContain('  G1: ground b8 r90');
+  });
+
+  test('refuses a symbol the table says cannot be turned', () => {
+    // トランスは回すと巻線と鉄心がばらける (反転はできる)。
+    const result = turnPart(TURNABLE, 'T1', 1);
+
+    expect(result.ok).toBe(false);
+    expect(result.ok === false && result.error.message).toContain('transformer');
+  });
+
+  test('refuses a power rail, whose up and down are its meaning', () => {
+    expect(turnPart(TURNABLE, 'VCC', 1).ok).toBe(false);
+  });
+
+  test('does nothing for a whole circle, so no step is stacked', () => {
+    const result = turnPart(TURNABLE, 'Q1', 4);
+
+    expect(result.ok && result.value.edits).toEqual([]);
   });
 
   test('says so when there is no such part', () => {
@@ -98,8 +146,23 @@ describe('flipPart', () => {
     expect(flipped(flipped(RC, 'R1').source, 'R1').source).toBe(RC);
   });
 
-  test('refuses a multi-terminal part, which needs mirror in the grammar', () => {
-    expect(flipPart(RC, 'Q1').ok).toBe(false);
+  test('writes mirror on a multi-terminal part, keeping the model number', () => {
+    expect(flipped(TURNABLE, 'Q1').source).toContain('  Q1: npn b2 mirror 2SC1815');
+  });
+
+  test('takes mirror away again on the second flip', () => {
+    expect(flipped(flipped(TURNABLE, 'Q1').source, 'Q1').source).toBe(TURNABLE);
+  });
+
+  test('refuses to mirror a DIP, whose pin numbers would read backwards', () => {
+    const result = flipPart(TURNABLE, 'U2');
+
+    expect(result.ok).toBe(false);
+    expect(result.ok === false && result.error.message).toContain('dip8');
+  });
+
+  test('refuses to mirror ground, which is symmetric and would not change', () => {
+    expect(flipPart(TURNABLE, 'G1').ok).toBe(false);
   });
 });
 

@@ -121,6 +121,37 @@ function candidatesOf(
   return pieces;
 }
 
+/** 行末コメントを落とした行。`#` から後ろは YAML が読まない。 */
+const uncommented = (text: string): string => {
+  const comment = COMMENT.exec(text);
+  return comment === null ? text : text.slice(0, comment.index);
+};
+
+/** 行の中の空白で切った綴り 1 つ。 */
+export type Token = { readonly column: number; readonly text: string };
+
+/** その桁より後ろの綴り。コメントは見ない (書き換えの的にしない)。 */
+export const tokensFrom = (text: string, at: number): readonly Token[] =>
+  [...uncommented(text).matchAll(/\S+/g)]
+    .map((match) => ({ column: match.index ?? 0, text: match[0] }))
+    .filter((token) => token.column >= at);
+
+/**
+ * 綴り 1 つを足す・差し替える・消す編集。空の字を渡すと**消す**。
+ *
+ * **欄 (`field.ts`) と向きの語 (`turn.ts`) が同じものを通す** — 別々に持つと、
+ * 消したあとに空白が 2 つ残る類の直しが片方にだけ入る。
+ */
+export function wordEdit(line: number, found: Token | null, text: string, append: number): readonly Edit[] {
+  if (found === null) {
+    return text === '' ? [] : [{ line, column: append, length: 0, text: ` ${text}` }];
+  }
+  return text === ''
+    // 前の空白ごと消す (消したあとに空白が 2 つ残らない)。
+    ? [{ line, column: found.column - 1, length: found.text.length + 1, text: '' }]
+    : [{ line, column: found.column, length: found.text.length, text }];
+}
+
 /** 行の中で番地に読めた綴り 1 つ。 */
 export type AddressToken = { readonly column: number; readonly length: number; readonly address: Address };
 

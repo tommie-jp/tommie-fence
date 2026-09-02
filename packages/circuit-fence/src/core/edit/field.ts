@@ -5,8 +5,8 @@ import { ORIENTATIONS } from '../parser/compact.ts';
 import { nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { lookupPartType } from '../parts.ts';
-import { applyRewrite, diffOf, fail, keySpanOf, locatePart } from './shared.ts';
-import type { Edit, RewriteResult } from './shared.ts';
+import { applyRewrite, diffOf, fail, keySpanOf, locatePart, tokensFrom, wordEdit } from './shared.ts';
+import type { Edit, RewriteResult, Token } from './shared.ts';
 
 /**
  * 部品の欄 (種類・値・ラベル) を書き換える。**フェンス本文 → 書き換えの並び**を
@@ -48,30 +48,6 @@ export function partFields(source: string, handle: string): PartFields | null {
     value: (part.kind === 'one-terminal' ? null : part.value) ?? '',
     label: (part.kind === 'two-terminal' ? part.label : null) ?? '',
   };
-}
-
-/** 行末コメントを落とした行 (`#` は行頭か空白の直後だけコメント)。 */
-const uncommented = (text: string): string => {
-  const comment = /(^|\s)#/.exec(text);
-  return comment === null ? text : text.slice(0, comment.index);
-};
-
-type Token = { readonly column: number; readonly text: string };
-
-const tokensFrom = (text: string, at: number): readonly Token[] =>
-  [...uncommented(text).matchAll(/\S+/g)]
-    .map((match) => ({ column: match.index ?? 0, text: match[0] }))
-    .filter((token) => token.column >= at);
-
-/** 欄 1 つを書き換える編集。無い欄は足し、空の字なら消す。 */
-function editFor(line: number, found: Token | null, text: string, append: number): readonly Edit[] {
-  if (found === null) {
-    return text === '' ? [] : [{ line, column: append, length: 0, text: ` ${text}` }];
-  }
-  return text === ''
-    // 前の空白ごと消す (消したあとに空白が 2 つ残らない)。
-    ? [{ line, column: found.column - 1, length: found.text.length + 1, text: '' }]
-    : [{ line, column: found.column, length: found.text.length, text }];
 }
 
 const WHITESPACE = /\s/;
@@ -167,7 +143,7 @@ function fieldEdits(context: Context): Found {
     // ラベルは値のうしろに足す (書く順の慣習に合わせる)。
     const end = tail.at(-1);
     const append = end === undefined ? after : end.column + end.text.length;
-    return found(editFor(line, written, text === '' ? '' : `l=${text}`, append));
+    return found(wordEdit(line, written, text === '' ? '' : `l=${text}`, append));
   }
 
   if (part.kind === 'one-terminal') return fail(`${part.id} には値を書けません (「種類 番地」だけ)`, line);
@@ -180,5 +156,5 @@ function fieldEdits(context: Context): Found {
   const written = tail.find((token) => (
     !token.text.includes('=') && !(ORIENTATIONS as readonly string[]).includes(token.text)
   )) ?? null;
-  return found(editFor(line, written, text, after));
+  return found(wordEdit(line, written, text, after));
 }

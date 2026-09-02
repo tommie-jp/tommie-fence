@@ -44,6 +44,9 @@ const BAD = ['# ノート', '', '```circuit', 'parts:', '  R1: resistr a1 a3', '
 const NPN = ['# ノート', '', '```circuit', 'parts:', '  Q1: npn b5', '  R1: resistor a1 a3',
   'wires:', '  - a1 -- Q1.b', '```', ''].join('\n');
 
+/** 向きを書けない記号 (上下がその記号の意味そのもの)。 */
+const VCC = ['# ノート', '', '```circuit', 'parts:', '  VCC: vcc b5', '```', ''].join('\n');
+
 const SECOND = ['', '```circuit', 'parts:', '  L1: inductor b1 b3 1m', '```', ''].join('\n');
 const THIRD = ['', '```circuit', 'parts:', '  D1: diode c1 c3', '```', ''].join('\n');
 const TWO = RC + SECOND;
@@ -690,7 +693,7 @@ describe('消す・回す', () => {
     expect(doc.getText()).toContain('R1:  resistor a3 a1 10k');
   });
 
-  test('says why a part that has no orientation cannot be turned', async () => {
+  test('turns a multi-terminal part by writing the orientation word', async () => {
     const doc = docOf(A, NPN);
     const host = hostOf([doc], at(doc, 4));
     const session = sessionOf(host);
@@ -698,8 +701,19 @@ describe('消す・回す', () => {
 
     await session.handle({ kind: 'turn', part: 'Q1', quarters: 1 });
 
-    expect(doc.getText()).toBe(NPN);
-    expect(last(host, 'status')?.text).toContain('2 端子');
+    expect(doc.getText()).toContain('  Q1: npn b5 r90');
+  });
+
+  test('says why a symbol that cannot be turned was left alone', async () => {
+    const doc = docOf(A, VCC);
+    const host = hostOf([doc], at(doc, 4));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'turn', part: 'VCC', quarters: 1 });
+
+    expect(doc.getText()).toBe(VCC);
+    expect(last(host, 'status')?.text).toContain('回せません');
   });
 
   test('says something when the map sends a delete it cannot read', async () => {

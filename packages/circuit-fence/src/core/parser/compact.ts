@@ -34,6 +34,20 @@ const MIRROR = 'mirror';
  */
 export const ORIENTATIONS = [...SIGNS, ...Object.keys(ROTATIONS), MIRROR] as const;
 
+/**
+ * 回転の角度 → 語。**0 は空** (向きを書かないのと同じなので、語を消す)。
+ * 語と角度の対応を知るのはこのファイルだけにする — 書き換える側 (`edit/turn.ts`)
+ * が自前の表を持つと、語を足したときに片方だけ古くなる。
+ */
+export const rotationWord = (rotate: Turn['rotate']): string =>
+  Object.keys(ROTATIONS).find((word) => ROTATIONS[word] === rotate) ?? '';
+
+/** その綴りが回転の語か。 */
+export const isRotationWord = (token: string): boolean => Object.hasOwn(ROTATIONS, token);
+
+/** 左右反転の語。 */
+export const MIRROR_WORD = MIRROR;
+
 /** 読み取った向き。`turn` が回転と反転、`orientation` が ± の並び。 */
 type Turned = { readonly turn: Turn; readonly orientation: string | null };
 

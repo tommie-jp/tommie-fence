@@ -214,8 +214,11 @@ a line is added to `wires:` (hold `Shift` as you let go to bend sideways first).
 **Select, then delete or turn.** Click on the map to select, `Delete` removes,
 `R` turns a quarter clockwise and `M` flips. Removal takes whole lines: deleting
 a part takes the wires that point at its pins with it, and the band says how
-many. Only two-terminal parts turn — their orientation is the order of the two
-addresses, so turning needs no change to the grammar.
+many. **What gets rewritten depends on what you grabbed** — a two-terminal part
+has its far end moved (the order of its two addresses *is* its orientation),
+while a multi-terminal part or `ground` has its orientation word (`r90`,
+`mirror`) rewritten. Symbols that carry no orientation (`port`, `vcc`, `vee`)
+are refused with the reason.
 
 **What could not be read is listed under the map.** Clicking a row lights up
 that line in the editor (opening one beside the map if none is showing the
