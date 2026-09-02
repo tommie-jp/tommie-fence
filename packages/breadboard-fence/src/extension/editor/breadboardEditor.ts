@@ -2,6 +2,7 @@ import { renderIssues } from 'fence-kit';
 import type { EditResult, FenceEditor } from 'fence-kit';
 import { issuesOf, shiftIssues } from '../../core/edit/issues.ts';
 import { aimAt, fenceAt } from '../../core/edit/map.ts';
+import { insertWire } from '../../core/edit/insert.ts';
 import { movePart, movablePartIds, partSpans } from '../../core/edit/move.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import { deletePart, deleteWire } from '../../core/edit/remove.ts';
@@ -87,9 +88,16 @@ export function createBreadboardEditor(): FenceEditor {
     deletePart,
     deleteWire,
 
+    addWire: (source, from, to) => {
+      const at = readAddress(from);
+      const target = readAddress(to);
+      if (at === null) return unreadable(from);
+      if (target === null) return unreadable(to);
+      return insertWire(source, at, target);
+    },
+
     // 残りは第 2 段の続き (52 の docs/13 の手順 6)。**できないことは、できないと言う。**
     addPart: () => notYet('部品を置くの'),
-    addWire: () => notYet('配線を引くの'),
     rename: () => notYet('名前を変えるの'),
     setField: () => notYet('欄の書き換えは'),
     turn: () => notYet('回すの'),

@@ -3,6 +3,7 @@ import type { EditResult, FenceEditor } from 'fence-kit';
 import { normalizeNewlines } from 'fence-kit';
 import { issuesOf, shiftIssues } from '../../core/edit/issues.ts';
 import { aimAt, fenceAt } from '../../core/edit/map.ts';
+import { insertWire } from '../../core/edit/insert.ts';
 import { movePart, movablePartIds, partSpans } from '../../core/edit/move.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import { deletePart, deleteWire } from '../../core/edit/remove.ts';
@@ -26,6 +27,8 @@ const notYet = (what: string): EditResult =>
 const unreadable = (written: string): EditResult =>
   ({ ok: false, error: { message: `穴として読めません: ${written}`, line: null } });
 
+const readAddress = (written: string) => parseAddress(written);
+
 export function createPerfboardEditor(): FenceEditor {
   return {
     language: 'perfboard',
@@ -47,7 +50,7 @@ export function createPerfboardEditor(): FenceEditor {
 
     spansOf: (source, what, id) => {
       if (what !== 'node') return partSpans(source, id);
-      const at = parseAddress(id);
+      const at = readAddress(id);
       return at === null ? [] : nodeSpans(source, at);
     },
 
@@ -63,7 +66,7 @@ export function createPerfboardEditor(): FenceEditor {
     typeNames: () => '',
 
     movePart: (source, handle, to) => {
-      const at = parseAddress(to);
+      const at = readAddress(to);
       if (at === null) return unreadable(to);
       if (!movablePartIds(source).includes(handle)) {
         return { ok: false, error: { message: `動かせる部品ではありません: ${handle}`, line: null } };
@@ -72,8 +75,8 @@ export function createPerfboardEditor(): FenceEditor {
     },
 
     movePoint: (source, from, to) => {
-      const at = parseAddress(from);
-      const target = parseAddress(to);
+      const at = readAddress(from);
+      const target = readAddress(to);
       if (at === null) return unreadable(from);
       if (target === null) return unreadable(to);
       return movePoint(source, at, target);
@@ -82,9 +85,16 @@ export function createPerfboardEditor(): FenceEditor {
     deletePart,
     deleteWire,
 
+    addWire: (source, from, to) => {
+      const at = readAddress(from);
+      const target = readAddress(to);
+      if (at === null) return unreadable(from);
+      if (target === null) return unreadable(to);
+      return insertWire(source, at, target);
+    },
+
     // 残りは第 2 段の続き (52 の docs/13 の手順 6)。**できないことは、できないと言う。**
     addPart: () => notYet('部品を置くの'),
-    addWire: () => notYet('配線を引くの'),
     rename: () => notYet('名前を変えるの'),
     setField: () => notYet('欄の書き換えは'),
     turn: () => notYet('回すの'),

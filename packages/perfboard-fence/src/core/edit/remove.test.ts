@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { applyLineEdits } from 'fence-kit';
 import { deletePart, deleteWire } from './remove.ts';
 
 const BOARD = `board: 12x7
@@ -15,11 +16,7 @@ notes:
 /** 消したあとの本文 (行の出し入れを当てる)。 */
 const after = (source: string, result: ReturnType<typeof deletePart>): string => {
   if (!result.ok) throw new Error(result.error.message);
-  const rows = source.split('\n');
-  for (const edit of [...result.value.lines].sort((a, b) => b.line - a.line)) {
-    if (edit.kind === 'delete') rows.splice(edit.line - 1, 1);
-  }
-  return rows.join('\n');
+  return applyLineEdits(source, result.value.lines);
 };
 
 describe('deletePart', () => {

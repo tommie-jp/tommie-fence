@@ -1,3 +1,4 @@
+import { applyLineEdits } from 'fence-kit';
 import type { Edit, LineEdit, NetDiff } from 'fence-kit';
 import { renderBreadboard } from '../index.ts';
 import { normalizeNewlines } from '../newlines.ts';
@@ -59,15 +60,8 @@ export function diffAfter(source: string, edits: readonly Edit[]): NetDiff {
 export function diffAfterLines(source: string, lines: readonly LineEdit[]): NetDiff {
   if (lines.length === 0) return { lost: [], gained: [] };
 
-  const rows = normalizeNewlines(source).split('\n');
-  // 後ろから当てると、前の行番号がずれない。
-  for (const edit of [...lines].sort((a, b) => b.line - a.line)) {
-    if (edit.kind === 'delete') rows.splice(edit.line - 1, 1);
-    else rows.splice(edit.line - 1, 0, edit.text);
-  }
-
   const was = connectionsOf(source);
-  const now = connectionsOf(rows.join('\n'));
+  const now = connectionsOf(applyLineEdits(normalizeNewlines(source), lines));
   return {
     lost: toPairs([...was].filter((pair) => !now.has(pair)).sort()),
     gained: toPairs([...now].filter((pair) => !was.has(pair)).sort()),

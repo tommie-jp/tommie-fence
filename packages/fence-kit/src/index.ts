@@ -49,7 +49,10 @@ export type { Change, Replacement } from './editor/docEdits.ts';
 export { bodyAfter, changesForFence, fenceBody } from './editor/docEdits.ts';
 export { indentOn } from './editor/documentLike.ts';
 export type { DocLike, EditorLike } from './editor/documentLike.ts';
-export { FLOW_REFUSAL, dropLines, insertLines, isKeyLine, keyLineOf } from './editor/lines.ts';
+export {
+  FLOW_REFUSAL, afterLastLine, appendUnderKey, applyLineEdits, dropLines, indentOf, insertLines,
+  isFlowKey, isKeyLine, keyLineOf,
+} from './editor/lines.ts';
 export { renderIssues } from './editor/issues.ts';
 export type { IssueRow } from './editor/issues.ts';
 export { TYPE_LIST_ID, makeNonce, panelHtml, renderFencePicker } from './editor/panelHtml.ts';
