@@ -30,6 +30,8 @@ const RC = [
   '',
 ].join('\n');
 
+const BAD = ['# ノート', '', '```circuit', 'parts:', '  R1: resistr a1 a3', '```', ''].join('\n');
+
 const SECOND = ['', '```circuit', 'parts:', '  L1: inductor b1 b3 1m', '```', ''].join('\n');
 const TWO = RC + SECOND;
 
@@ -398,5 +400,67 @@ describe('光らせる', () => {
     session.dispose();
 
     expect(host.lit.at(-1)).toEqual({ uri: A, ranges: [] });
+  });
+});
+
+describe('読めなかったところを帯に出す', () => {
+  test('says nothing when the fence reads cleanly', () => {
+    const doc = docOf(A, RC);
+    const session = createSession(hostOf([doc], at(doc, 5)));
+
+    expect(session.view().issues).toBe('');
+  });
+
+  test('points at the Markdown line, not the line inside the fence', () => {
+    const doc = docOf(A, BAD);
+    const session = createSession(hostOf([doc], at(doc, 4)));
+
+    const { issues } = session.view();
+
+    expect(issues).toContain('data-line="5"');
+    expect(issues).toContain('5 行目');
+    expect(issues).toContain('resistr');
+  });
+
+  test('marks the offending part on the map as well as in the band', () => {
+    const doc = docOf(A, ['# x', '', '```circuit', 'parts:', '  R1: resistor a1 a3',
+      'wires:', '  - a1 -- zz9', '```', ''].join('\n'));
+    const session = createSession(hostOf([doc], at(doc, 4)));
+
+    expect(session.view().html).toContain('data-part="R1"');
+    expect(session.view().issues).toContain('cf-error');
+  });
+
+  test('sends the band along with the map', () => {
+    const doc = docOf(A, BAD);
+    const host = hostOf([doc], at(doc, 4));
+    const session = createSession(host);
+
+    session.refresh();
+
+    expect(last(host, 'map')?.issues).toContain('data-line="5"');
+  });
+
+  test('lights the whole line when the band is clicked', async () => {
+    const doc = docOf(A, BAD);
+    const host = hostOf([doc], at(doc, 4));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'goto', line: 5 });
+
+    expect(host.lit.at(-1)).toEqual({ uri: A, ranges: [{ line: 4, start: 0, end: '  R1: resistr a1 a3'.length }] });
+  });
+
+  test('ignores a click on a row that carries no line', async () => {
+    const doc = docOf(A, BAD);
+    const host = hostOf([doc], at(doc, 4));
+    const session = createSession(host);
+    session.view();
+    const before = host.lit.length;
+
+    await session.handle({ kind: 'goto' });
+
+    expect(host.lit).toHaveLength(before);
   });
 });

@@ -28,6 +28,12 @@ describe('gridMap', () => {
     expect(map.chips[0]?.to).toBeNull();
   });
 
+  test('carries the line each part was written on, so a bad line can be pointed at', () => {
+    const map = gridMap(RC);
+
+    expect(map.chips.map((chip) => chip.line)).toEqual([2, 3, 4]);
+  });
+
   test('sizes the grid to hold every part, with room to move into', () => {
     const map = gridMap(RC);
 

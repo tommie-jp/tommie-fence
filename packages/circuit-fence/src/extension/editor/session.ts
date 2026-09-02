@@ -1,4 +1,5 @@
 import { listFences } from '../../core/edit/fenceList.ts';
+import { issuesOf, renderIssues, shiftIssues } from '../../core/edit/issues.ts';
 import { aimAt, fenceAt, gridMap } from '../../core/edit/map.ts';
 import { renderMapHtml } from '../../core/edit/mapSvg.ts';
 import { movePart, partSpans } from '../../core/edit/move.ts';
@@ -42,7 +43,7 @@ export type LitRange = { readonly line: number; readonly start: number; readonly
 
 /** webview へ送るもの。 */
 export type Outgoing =
-  | { readonly kind: 'map'; readonly html: string; readonly picker: string }
+  | { readonly kind: 'map'; readonly html: string; readonly picker: string; readonly issues: string }
   | { readonly kind: 'history'; readonly canUndo: boolean; readonly canRedo: boolean }
   | { readonly kind: 'status'; readonly text: string }
   | { readonly kind: 'aim'; readonly what?: 'part' | 'node' | 'wire'; readonly id?: string };
@@ -80,6 +81,8 @@ export type MapView = {
   readonly html: string;
   /** フェンスの一覧 (2 つ以上のときだけ。無ければ空)。 */
   readonly picker: string;
+  /** 読めなかったところとお知らせの帯。言うことが無ければ空。 */
+  readonly issues: string;
 };
 
 export type Session = {
@@ -204,12 +207,38 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
 
   function viewNow(followCursor: boolean): MapView {
     const fence = currentFence(followCursor);
-    if (fence === null) return { html: pinned === null ? LOST : NONE, picker: '' };
+    if (fence === null) return { html: pinned === null ? LOST : NONE, picker: '', issues: '' };
 
+    const issues = issuesOf(fence.source);
+    // **絵に印を付けるのは読めなかった行だけ。** お知らせは読めているので、
+    // 同じ赤で囲むと「間違い」に見えてしまう (帯には別の色で並ぶ)。
+    const bad = new Set(
+      issues
+        .filter((issue) => issue.kind === 'error')
+        .map((issue) => issue.error.line)
+        .filter((line): line is number => line !== null),
+    );
     return {
-      html: renderMapHtml(gridMap(fence.source)),
+      html: renderMapHtml(gridMap(fence.source), bad),
       picker: renderFencePicker(listFences(fence.document.getText()), fence.line),
+      // 帯は Markdown の行で出す。押すとそこへ飛べる (フェンスの中の行では飛べない)。
+      issues: renderIssues(shiftIssues(issues, fence.line)),
     };
+  }
+
+  /**
+   * 帯の 1 行を押されたら、その行をエディタで光らせて見せる。
+   * **書き換えはしない** — 直すのは書き手の仕事で、こちらは場所を指すだけ。
+   * 光を消さないので `refresh` は呼ばない (呼ぶと自分で消してしまう)。
+   */
+  function goTo(message: Incoming): void {
+    const line = typeof message.line === 'number' ? message.line : null;
+    const document = bound === null ? pinned : documentOf(bound.uri);
+    if (line === null || document === null) return;
+
+    // 帯の行は Markdown の 1 始まり、光らせる先は vscode の 0 始まり。
+    const at = line - 1;
+    light([{ line: at, start: 0, end: document.lineAt(at).text.length }]);
   }
 
   /**
@@ -434,6 +463,9 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
           return;
         case 'fence':
           pickFence(message);
+          return;
+        case 'goto':
+          goTo(message);
           return;
         default:
           return;

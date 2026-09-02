@@ -20,6 +20,8 @@ const STYLE = `
     --cf-paper: var(--vscode-editor-background);
     --cf-ink: var(--vscode-foreground);
     --cf-node: var(--vscode-charts-blue, var(--vscode-focusBorder));
+    --cf-bad: var(--vscode-editorError-foreground, #f14c4c);
+    --cf-iffy: var(--vscode-editorWarning-foreground, #cca700);
   }
   .cf-note { color: var(--vscode-descriptionForeground); margin: 6px 0; }
   .cf-map { width: 100%; height: auto; user-select: none; touch-action: none; }
@@ -39,6 +41,13 @@ const STYLE = `
   .cf-mark { fill: var(--cf-ink); font-size: 9px; }
   .cf-dot-mark { fill: var(--cf-node); }
   .cf-dot-name { fill: var(--cf-node); font-size: 9px; }
+
+  /* 読めなかった行に書かれたもの。**帯と絵で同じものを指す** — 行番号だけでは
+     どの記号のことか、字と突き合わせないと分からない。お知らせには印を付けない
+     (読めてはいるので、同じ赤で囲むと間違いに見える)。 */
+  .cf-bad .cf-glyph, .cf-bad .cf-glyph-line, .cf-bad .cf-lead,
+  .cf-wire.cf-bad { stroke: var(--cf-bad); }
+  .cf-bad .cf-name { fill: var(--cf-bad); }
 
   /* エディタのカーソルが指しているもの。掴んでいる印とは別の色にして、
      「いま触れているもの」と「持っているもの」を取り違えないようにする。 */
@@ -82,6 +91,33 @@ const STYLE = `
   .cf-history button:disabled { opacity: 0.4; cursor: default; }
   .cf-status { margin-top: 8px; min-height: 1.4em; }
 
+  /* 読めなかったところとお知らせ。**マップと同じ窓に出す** — 図の下の帯は
+     プレビューにしか出ず、掴んでいる間は隠れていることが多い。 */
+  .cf-issues { list-style: none; margin: 8px 0 0; padding: 0; font-size: 12px; }
+  .cf-issue {
+    margin-top: 2px; padding: 3px 8px;
+    border-left: 3px solid var(--vscode-panel-border);
+  }
+  .cf-issue.cf-error {
+    border-left-color: var(--cf-bad);
+    background: var(--vscode-inputValidation-errorBackground, transparent);
+  }
+  .cf-issue.cf-notice {
+    border-left-color: var(--cf-iffy);
+    background: var(--vscode-inputValidation-warningBackground, transparent);
+  }
+  /* 行の分かっているものだけが押せる。分からないものに指を出すと、
+     押しても何も起きない行ができる (renderIssues が data-line を付けない)。 */
+  .cf-issue[data-line] { cursor: pointer; }
+  .cf-issue[data-line]:hover { outline: 1px solid var(--vscode-focusBorder); }
+  .cf-issue code {
+    display: block; margin-top: 2px; white-space: pre-wrap;
+    font-family: var(--vscode-editor-font-family, monospace);
+  }
+  .cf-issue mark {
+    background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33));
+    color: inherit;
+  }
 `;
 
 /**
@@ -203,6 +239,12 @@ const SCRIPT = `
   };
 
   document.addEventListener('click', (event) => {
+    // 帯の 1 行。**書き換えはしない** — 直すのは書き手の仕事で、こちらは場所を指すだけ。
+    const row = event.target.closest('.cf-issue[data-line]');
+    if (row) {
+      vscode.postMessage({ kind: 'goto', line: Number(row.dataset.line) });
+      return;
+    }
     const button = event.target.closest('.cf-undo, .cf-redo');
     if (!button) return;
     step(button.classList.contains('cf-undo') ? 'undo' : 'redo');
@@ -233,6 +275,7 @@ const SCRIPT = `
     if (message.kind === 'map') {
       document.querySelector('.cf-body').innerHTML = message.html;
       document.querySelector('.cf-fences').innerHTML = message.picker;
+      document.querySelector('.cf-band').innerHTML = message.issues;
       picked = null;
       pressed = null;
       setDragging(false);
@@ -281,6 +324,8 @@ export type MapViewHtml = {
   readonly html: string;
   /** `renderFencePicker` が組んだ一覧 (エスケープ済み。1 つなら空)。 */
   readonly picker: string;
+  /** `renderIssues` が組んだ帯 (エスケープ済み。言うことが無ければ空)。 */
+  readonly issues: string;
 };
 
 export type PanelHtmlOptions = {
@@ -328,6 +373,7 @@ export const panelHtml = ({ cspSource, nonce, view, undo }: PanelHtmlOptions): s
     + `部品は 1 つだけ動いて接続が変わり、節点は交点ごと動いて接続は保たれます。`
     + `図は書き換えのあと数秒で描き直ります。</p>`
     + `<div class="cf-body">${view.html}</div>`
+    + `<div class="cf-band">${view.issues}</div>`
     + `<p class="cf-status"></p>`
     + `<script nonce="${escapeMarkup(nonce)}">${SCRIPT}</script></body></html>`;
 };

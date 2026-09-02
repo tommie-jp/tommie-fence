@@ -4,7 +4,7 @@ import { makeNonce, panelHtml, renderFencePicker } from './panelHtml.ts';
 const html = panelHtml({
   cspSource: 'vscode-resource:',
   nonce: 'abc123',
-  view: { html: '<table></table>', picker: ''},
+  view: { html: '<table></table>', picker: '', issues: '' },
   undo: 'own',
 });
 
@@ -24,7 +24,7 @@ describe('panelHtml', () => {
   });
 
   test('escapes what it is given, so a source cannot break out of an attribute', () => {
-    const sneaky = panelHtml({ cspSource: '"><script>x</script>', nonce: 'n', view: { html: '', picker: ''}, undo: 'own' });
+    const sneaky = panelHtml({ cspSource: '"><script>x</script>', nonce: 'n', view: { html: '', picker: '', issues: '' }, undo: 'own' });
 
     expect(sneaky.match(/<script/g)).toHaveLength(1);
     expect(sneaky).toContain('&quot;&gt;&lt;script&gt;');
@@ -119,7 +119,7 @@ describe('元に戻す・やり直す (自前の履歴)', () => {
 });
 
 describe('元に戻す・やり直す (VS Code に頼む)', () => {
-  const native = panelHtml({ cspSource: 'vscode-resource:', nonce: 'n', view: { html: '', picker: ''}, undo: 'vscode' });
+  const native = panelHtml({ cspSource: 'vscode-resource:', nonce: 'n', view: { html: '', picker: '', issues: '' }, undo: 'vscode' });
 
   test('lets Ctrl+Z through to VS Code instead of taking it', () => {
     // カスタムエディタでは VS Code の undo がそのタブの文書へ届く。横取りすると届かなくなる。
@@ -138,7 +138,7 @@ describe('フェンスを選ぶ', () => {
     const many = panelHtml({
       cspSource: 'vscode-resource:',
       nonce: 'n',
-      view: { html: '', picker: '<select class="cf-fence"></select>'},
+      view: { html: '', picker: '<select class="cf-fence"></select>', issues: '' },
       undo: 'own',
     });
 
@@ -192,5 +192,52 @@ describe('エディタと光を合わせる', () => {
   test('escapes the id before putting it in a selector', () => {
     // フェンスから来た名前がそのまま selector に入ると、壊れた selector で落ちる。
     expect(html).toContain('CSS.escape(id)');
+  });
+});
+
+describe('読めなかったところの帯', () => {
+  const band = '<ul class="cf-issues"><li class="cf-issue cf-error" data-line="5">5 行目</li></ul>';
+  const withIssues = panelHtml({
+    cspSource: 'vscode-resource:',
+    nonce: 'n',
+    view: { html: '<svg></svg>', picker: '', issues: band },
+    undo: 'own',
+  });
+
+  test('puts the band under the map, where the editing is happening', () => {
+    // 図の下の帯はプレビューにしか出ない。掴んでいる間はプレビューが隠れている。
+    expect(withIssues).toContain(`<div class="cf-band">${band}</div>`);
+    expect(withIssues.indexOf('cf-band')).toBeGreaterThan(withIssues.indexOf('class="cf-body"'));
+  });
+
+  test('keeps the band empty when the fence reads cleanly', () => {
+    expect(html).toContain('<div class="cf-band"></div>');
+  });
+
+  test('swaps the band together with the map', () => {
+    expect(html).toContain("document.querySelector('.cf-band').innerHTML = message.issues");
+  });
+
+  test('asks the extension to show the line when a row is clicked', () => {
+    // 直すのは書き手の仕事。webview は場所を指すだけ (文書は拡張しか触れない)。
+    expect(html).toContain("vscode.postMessage({ kind: 'goto', line: Number(row.dataset.line) })");
+  });
+
+  test('still has one click handler, so a click on the map never drops', () => {
+    expect(html.match(/addEventListener\('click'/g)).toHaveLength(1);
+  });
+
+  test('offers no pointer on a row that carries no line', () => {
+    expect(html).toContain('.cf-issue[data-line] { cursor: pointer;');
+  });
+
+  test('tells errors and notices apart, since a notice is not a mistake', () => {
+    expect(html).toContain('.cf-issue.cf-error');
+    expect(html).toContain('.cf-issue.cf-notice');
+  });
+
+  test('marks the same thing on the map, so the row and the symbol agree', () => {
+    expect(html).toContain('.cf-wire.cf-bad');
+    expect(html).toContain('.cf-bad .cf-glyph');
   });
 });

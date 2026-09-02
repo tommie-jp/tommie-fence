@@ -189,6 +189,11 @@ VS Code's undo cannot reach the editor while the panel has focus). Your
 comments and formatting survive: only the address spelling is replaced. The
 drawing catches up a few seconds after the edit.
 
+**What could not be read is listed under the map.** Clicking a row lights up
+that line in the editor, and the parts and wires written on an unreadable line
+turn red on the map as well. The band under the drawing shows only in the
+preview, which is usually hidden while you drag.
+
 More in [docs/03-部品と節点を動かす.md](docs/03-部品と節点を動かす.md) (Japanese).
 
 ## Development

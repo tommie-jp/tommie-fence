@@ -57,10 +57,13 @@ function drawLabels(map: GridMap): string {
   return layer('cf-axes', [...cols, ...rows].join(''));
 }
 
-/** 引いた線。ピンで書いた端は近似なので破線にして、正確な位置を約束しない。 */
-const drawWire = (wire: WireLine): string =>
+/**
+ * 引いた線。ピンで書いた端は近似なので破線にして、正確な位置を約束しない。
+ * 読めなかった行に書かれていれば印を足す (**帯と絵で同じものを指す**)。
+ */
+const drawWire = (wire: WireLine, bad: Bad): string =>
   element('line', {
-    class: wire.approximate ? 'cf-wire cf-approx' : 'cf-wire',
+    class: classOf(wire.approximate ? 'cf-wire cf-approx' : 'cf-wire', wire.line, bad),
     // 書かれた行。エディタのカーソルが来たとき、この線を光らせる目印。
     'data-line': wire.line,
     x1: num(x(wire.from.col)), y1: num(y(wire.from.row)),
@@ -121,12 +124,16 @@ function drawStanding(chip: Chip, nudge: number): string {
  * 掴める部品 1 つ。同じ升に何本も立つときは少しずらす — **同じ番地に 2 つは
  * この文法では接続**なので普通に起きるし、重ねると片方を掴めなくなる。
  */
-function drawChip(chip: Chip, nudge: number): string {
+function drawChip(chip: Chip, nudge: number, bad: Bad): string {
   const title = `${chip.id} (${chip.type}) ${formatAddress({ row: chip.row, col: chip.col })}`;
   const inner = chip.to === null ? drawStanding(chip, nudge) : drawSpan(chip, chip.to, nudge);
   const marked = element('title', {}, escapeMarkup(title))
     + (chip.to === null ? at(chip, inner) : inner);
-  return element('g', { class: 'cf-chip', 'data-part': chip.id }, marked);
+  return element(
+    'g',
+    { class: classOf('cf-chip', chip.line, bad), 'data-part': chip.id, 'data-line': chip.line },
+    marked,
+  );
 }
 
 /**
@@ -168,7 +175,17 @@ function nudgesOf(chips: readonly Chip[]): Map<Chip, number> {
   return nudges;
 }
 
-export function renderMapHtml(map: GridMap): string {
+/**
+ * 帯が名指した行。**絵の側にも印を付ける**ため、描くときに渡す —
+ * 行番号だけ出しても、どの記号のことかは字と突き合わせないと分からない。
+ */
+export type Bad = ReadonlySet<number>;
+
+const NONE: Bad = new Set();
+
+const classOf = (base: string, line: number, bad: Bad): string => (bad.has(line) ? `${base} cf-bad` : base);
+
+export function renderMapHtml(map: GridMap, bad: Bad = NONE): string {
   if (!map.readable) {
     return '<p class="cf-note">フェンスを読めません。エラーを直すとマップが出ます。</p>';
   }
@@ -188,9 +205,9 @@ export function renderMapHtml(map: GridMap): string {
     },
     drawGrid(map)
       + drawLabels(map)
-      + layer('cf-wires', map.wires.map(drawWire).join(''))
+      + layer('cf-wires', map.wires.map((wire) => drawWire(wire, bad)).join(''))
       + layer('cf-marks', map.dots.map(drawDot).join(''))
-      + layer('cf-parts', map.chips.map((chip) => drawChip(chip, nudges.get(chip) ?? 0)).join(''))
+      + layer('cf-parts', map.chips.map((chip) => drawChip(chip, nudges.get(chip) ?? 0, bad)).join(''))
       + drawHits(map),
   );
 

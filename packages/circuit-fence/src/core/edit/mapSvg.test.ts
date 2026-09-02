@@ -88,3 +88,29 @@ describe('renderMapHtml が描くもの', () => {
     expect(draw('parts: [')).toContain('読めません');
   });
 });
+
+describe('読めなかった行の印', () => {
+  const badly = (source: string, bad: readonly number[]): string =>
+    renderMapHtml(gridMap(source), new Set(bad));
+
+  test('carries the line a part was written on, so the band can point at it', () => {
+    expect(draw('parts:\n  R1: resistor a1 a3\n')).toContain('data-line="2"');
+  });
+
+  test('marks the part written on a line the band complained about', () => {
+    const svg = badly('parts:\n  R1: resistor a1 a3\n  C1: capacitor a3 c3\n', [2]);
+
+    expect(svg).toContain('class="cf-chip cf-bad" data-part="R1"');
+    expect(svg).toContain('class="cf-chip" data-part="C1"');
+  });
+
+  test('marks the wire written on a line the band complained about', () => {
+    const svg = badly('wires:\n  - a1 -- a3\n', [2]);
+
+    expect(svg).toContain('cf-wire cf-bad');
+  });
+
+  test('marks nothing when the fence reads cleanly', () => {
+    expect(draw('parts:\n  R1: resistor a1 a3\n')).not.toContain('cf-bad');
+  });
+});

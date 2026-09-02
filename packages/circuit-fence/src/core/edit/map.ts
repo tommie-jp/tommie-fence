@@ -32,6 +32,8 @@ export type Chip = {
   readonly col: number;
   /** 2 端子部品のもう一方の端。1 端子・多端子は null。 */
   readonly to: Cell | null;
+  /** 書かれた行 (1 始まり)。読めなかった行を印すのと、消すのに要る。 */
+  readonly line: number;
 };
 
 /**
@@ -152,6 +154,7 @@ export function gridMap(source: string): GridMap {
       row: (anchor as Address).row,
       col: (anchor as Address).col,
       to: far ? { row: far.row, col: far.col } : null,
+      line: part.line,
     });
   }
 
