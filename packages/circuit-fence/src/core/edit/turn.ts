@@ -1,10 +1,9 @@
 import { formatAddress } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
+import { nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { LIMITS } from '../limits.ts';
-import {
-  applyRewrite, diffOf, fail, isOnGrid, isRepeatedName, locatePart, repeatedNameReason,
-} from './shared.ts';
+import { applyRewrite, diffOf, fail, isOnGrid, locatePart } from './shared.ts';
 import type { Edit, RewriteResult } from './shared.ts';
 
 /**
@@ -39,19 +38,19 @@ function rewriteOf(source: string, edits: readonly Edit[]): RewriteResult {
 }
 
 /** 2 端子部品を 1 つ取り出す。回せるのはこれだけ。 */
-function twoTerminal(source: string, partId: string, what: string) {
+function twoTerminal(source: string, handle: string, what: string) {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   if (!doc) return fail(`フェンスを読めないので${what}できません (先にエラーを直します)`, null);
-  if (isRepeatedName(doc, partId)) return fail(repeatedNameReason(partId, '回す'), null);
 
-  const part = doc.parts.find((candidate) => candidate.id === partId);
+  const part = partOfHandle(doc.parts, handle);
+  const partId = nameOfHandle(handle);
   if (!part) return fail(`部品が見つかりません: ${partId}`, null);
   if (part.kind !== 'two-terminal') {
     return fail(`${partId} は向きを書く語が文法にないので${what}できません (2 端子の部品だけ)`, part.line);
   }
 
-  const located = locatePart(doc, normalized.split('\n'), partId);
+  const located = locatePart(doc, normalized.split('\n'), handle);
   if (located === null) return fail(`${partId} の行から番地を見つけられませんでした`, part.line);
 
   return { ok: true as const, normalized, part, tokens: located.tokens };

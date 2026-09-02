@@ -2,8 +2,9 @@ import { isReferenceable, LIMITS } from '../limits.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import type { NoteSpec } from '../types.ts';
+import { isRepeatedName, nameOfHandle, partOfHandle } from './handles.ts';
 import { namesNet } from '../parts.ts';
-import { fail, isRepeatedName, keySpanOf, repeatedNameReason } from './shared.ts';
+import { fail, keySpanOf, locatePart } from './shared.ts';
 import type { Edit, RewriteResult } from './shared.ts';
 
 /**
@@ -40,14 +41,13 @@ type Token = { readonly column: number; readonly text: string };
 const tokensOf = (text: string): readonly Token[] =>
   [...uncommented(text).matchAll(/\S+/g)].map((match) => ({ column: match.index ?? 0, text: match[0] }));
 
-export function renamePart(source: string, from: string, to: string): RewriteResult {
+export function renamePart(source: string, handle: string, to: string): RewriteResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   if (!doc) return fail('フェンスを読めないので名前を変えられません (先にエラーを直します)', null);
 
-  if (isRepeatedName(doc, from)) return fail(repeatedNameReason(from, '変える'), null);
-
-  const part = doc.parts.find((candidate) => candidate.id === from);
+  const part = partOfHandle(doc.parts, handle);
+  const from = nameOfHandle(handle);
   if (!part) return fail(`部品が見つかりません: ${from}`, null);
   if (from === to) return { ok: true, value: { edits: [], lines: [], diff: { lost: [], gained: [] } } };
 
@@ -67,11 +67,19 @@ export function renamePart(source: string, from: string, to: string): RewriteRes
   const lines = normalized.split('\n');
   const edits: Edit[] = [];
 
-  // 1. 鍵 (`R1:`)。1 行に部品が 2 つ並ぶ形でも、その部品の綴りだけを見る。
+  // 1. 鍵 (`R1:`)。1 行に部品が 2 つ並ぶ形でも、その部品の綴りだけを見る
+  //    (名札で 1 つに決めた部品の、行の中の位置から探す)。
   const text = lines[part.line - 1];
-  const key = text === undefined ? null : keySpanOf(text, from, 0);
+  const cursor = locatePart(doc, lines, handle)?.from ?? 0;
+  const key = text === undefined ? null : keySpanOf(text, from, cursor);
   if (key === null) return fail(`${from} を書いている場所が見つかりませんでした`, part.line);
   edits.push({ line: part.line, column: key.column, length: key.length, text: to });
+
+  // **同じ名前がまだ残るなら、指しているものは書き換えない。** `VCC` を 2 つ
+  // 描いた図で片方の名前を変えても、配線や注釈が指す `VCC` はもう 1 つのほう。
+  if (isRepeatedName(doc.parts, from)) {
+    return { ok: true, value: { edits, lines: [], diff: { lost: [], gained: [] } } };
+  }
 
   // 2. 配線の足 (`R1.b`)。綴りの頭だけを差し替える (足の名前は触らない)。
   for (const wire of doc.wires) {

@@ -2,11 +2,10 @@ import { LIMITS } from '../limits.ts';
 import type { PartSpec } from '../types.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { ORIENTATIONS } from '../parser/compact.ts';
+import { nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { lookupPartType } from '../parts.ts';
-import {
-  applyRewrite, diffOf, fail, isRepeatedName, keySpanOf, locatePart, repeatedNameReason,
-} from './shared.ts';
+import { applyRewrite, diffOf, fail, keySpanOf, locatePart } from './shared.ts';
 import type { Edit, RewriteResult } from './shared.ts';
 
 /**
@@ -37,10 +36,10 @@ export type PartFields = {
  * その部品の欄のいまの中身。**モデルから読む**ので、書いた綴りではなく
  * 読めた値が出る (`l=R_1` の `R_1`)。無い欄は空文字。
  */
-export function partFields(source: string, partId: string): PartFields | null {
+export function partFields(source: string, handle: string): PartFields | null {
   const { doc } = parseFence(normalizeNewlines(source));
-  const part = doc?.parts.find((candidate) => candidate.id === partId);
-  if (part === undefined) return null;
+  const part = doc === null ? null : partOfHandle(doc.parts, handle);
+  if (part === null) return null;
 
   return {
     id: part.id,
@@ -96,24 +95,24 @@ export function fieldProblem(text: string): string | null {
   return null;
 }
 
-export function setField(source: string, partId: string, field: PartField, text: string): RewriteResult {
+export function setField(source: string, handle: string, field: PartField, text: string): RewriteResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   if (!doc) return fail('フェンスを読めないので書き換えられません (先にエラーを直します)', null);
-  if (isRepeatedName(doc, partId)) return fail(repeatedNameReason(partId, '書き換える'), null);
 
-  const part = doc.parts.find((candidate) => candidate.id === partId);
+  const part = partOfHandle(doc.parts, handle);
+  const partId = nameOfHandle(handle);
   if (!part) return fail(`部品が見つかりません: ${partId}`, null);
 
   const lines = normalized.split('\n');
-  const shares = doc.parts.some((other) => other.line === part.line && other.id !== partId);
+  const shares = doc.parts.some((other) => other.line === part.line && other !== part);
   if (shares || /^\s*parts\s*:/.test(lines[part.line - 1] ?? '')) {
     return fail(`${partId}: フロー形式 (1 行に書いた形) の部品は欄を足せません。手で書きます`, part.line);
   }
   const problem = fieldProblem(text);
   if (problem !== null) return fail(problem, part.line);
 
-  const located = locatePart(doc, lines, partId);
+  const located = locatePart(doc, lines, handle);
   const lineText = lines[part.line - 1];
   if (located === null || lineText === undefined) {
     return fail(`${partId} の行から番地を見つけられませんでした`, part.line);

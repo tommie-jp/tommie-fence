@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { fenceAt, gridMap } from './map.ts';
+import { aimAt, fenceAt, gridMap } from './map.ts';
 import { renderMapHtml } from './mapSvg.ts';
 
 const RC = [
@@ -216,3 +216,22 @@ describe('節点の点', () => {
     expect(renderMapHtml(map)).toContain('data-node="j9"');
   });
 });
+
+describe('同じ名前の記号', () => {
+  const TWO_RAILS = 'parts:\n  VCC: vcc a1\n  VCC: vcc e1\n  R1: resistor a1 a3\n';
+
+  test('gives each chip a handle of its own, while showing the same name', () => {
+    const map = gridMap(TWO_RAILS);
+    const rails = map.chips.filter((chip) => chip.type === 'vcc');
+
+    expect(rails.map((chip) => chip.id)).toEqual(['VCC', 'VCC']);
+    expect(rails.map((chip) => chip.handle)).toEqual(['VCC', 'VCC#2']);
+  });
+
+  test('hands back the handle of the one the cursor is on, not the first of that name', () => {
+    // 3 行目は 2 つ目の VCC。名前で照らすと 1 つ目を拾ってしまう。
+    expect(aimAt(TWO_RAILS, 3, 3)).toEqual({ kind: 'part', id: 'VCC#2' });
+    expect(aimAt(TWO_RAILS, 2, 3)).toEqual({ kind: 'part', id: 'VCC' });
+  });
+});
+

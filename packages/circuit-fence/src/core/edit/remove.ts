@@ -1,7 +1,8 @@
 import { normalizeNewlines } from '../newlines.ts';
+import { isRepeatedName, nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import type { FenceError, NoteSpec, WireSpec } from '../types.ts';
-import { applyRewrite, diffOf, fail, isRepeatedName, repeatedNameReason } from './shared.ts';
+import { applyRewrite, diffOf, fail } from './shared.ts';
 import type { LineEdit, Rewrite } from './shared.ts';
 
 /**
@@ -60,36 +61,43 @@ const notePoints = (note: NoteSpec, partId: string): boolean => {
   return false;
 };
 
-export function deletePart(source: string, partId: string): RemovalResult {
+export function deletePart(source: string, handle: string): RemovalResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   if (!doc) return fail('フェンスを読めないので消せません (先にエラーを直します)', null);
 
-  if (isRepeatedName(doc, partId)) return fail(repeatedNameReason(partId, '消す'), null);
-
-  const part = doc.parts.find((candidate) => candidate.id === partId);
+  const part = partOfHandle(doc.parts, handle);
+  const partId = nameOfHandle(handle);
   if (!part) return fail(`部品が見つかりません: ${partId}`, null);
 
   const lines = normalized.split('\n');
-  const shares = doc.parts.some((other) => other.line === part.line && other.id !== partId);
+  const shares = doc.parts.some((other) => other.line === part.line && other !== part);
   if (shares || isKeyLine(lines[part.line - 1], 'parts')) return fail(`${partId}: ${FLOW}`, part.line);
 
+  // **同じ名前がまだ残るなら、指しているものは消さない。** `VCC` を 2 つ描いた
+  // 図で片方を消しても、配線や注釈が指す `VCC` はもう 1 つのほうで生き続ける。
+  const lastOfName = !isRepeatedName(doc.parts, part.id);
+
   // 足を指す配線も一緒に消す。**残すと読めない行になるだけ** (部品はもう無い)。
-  const wireLines = new Set(doc.wires.filter((wire) => touches(wire, partId)).map((wire) => wire.line));
+  const wireLines = new Set(
+    (lastOfName ? doc.wires.filter((wire) => touches(wire, part.id)) : []).map((wire) => wire.line),
+  );
   for (const line of wireLines) {
     if (isKeyLine(lines[line - 1], 'wires')) return fail(`${partId} の足を指す配線: ${FLOW}`, line);
   }
 
   // **その部品を指す注釈も一緒に消す。** 残しても指し先が無いので何も描かれず、
   // エラーもお知らせも出ない (配線を一緒に消すのと同じ理由)。
-  const noteLines = new Set(doc.notes.filter((note) => notePoints(note, partId)).map((note) => note.line));
+  const noteLines = new Set(
+    (lastOfName ? doc.notes.filter((note) => notePoints(note, part.id)) : []).map((note) => note.line),
+  );
   for (const line of noteLines) {
     if (isKeyLine(lines[line - 1], 'notes')) return fail(`${partId} を指す注釈: ${FLOW}`, line);
   }
 
   const drop = new Set<number>([part.line, ...wireLines, ...noteLines]);
   // **最後の 1 つを消したら鍵ごと。** 空の `parts:` / `wires:` は読めない。
-  if (doc.parts.every((other) => other.id === partId)) drop.add(keyLineOf(lines, 'parts'));
+  if (doc.parts.length === 1) drop.add(keyLineOf(lines, 'parts'));
   if (doc.wires.length > 0 && doc.wires.every((wire) => wireLines.has(wire.line))) {
     drop.add(keyLineOf(lines, 'wires'));
   }

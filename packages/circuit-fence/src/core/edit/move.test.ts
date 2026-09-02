@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { movePart, movablePartIds, partSpans } from './move.ts';
+import { anchorOf, movePart, movablePartIds, partSpans } from './move.ts';
 import { applyEdits } from './shared.ts';
 import { parseAddress } from '../model/address.ts';
 
@@ -193,12 +193,39 @@ describe('1 行に部品が 2 つ以上あるとき (フロー形式)', () => {
 describe('同じ名前が 2 つ以上ある記号', () => {
   const TWO_RAILS = 'parts:\n  VCC: vcc a1\n  VCC: vcc c1\n  R1: resistor a1 a3\n';
 
-  test('refuses to move one of them, rather than moving whichever came first', () => {
-    // 光る場所は正しいので、取り違えを黙って通すと目で見て気づけない。
+  test('names each of them, so the map can tell them apart', () => {
+    expect(movablePartIds(TWO_RAILS)).toEqual(['VCC', 'VCC#2', 'R1']);
+  });
+
+  test('moves the one the handle points at, not whichever came first', () => {
+    const result = movePart(TWO_RAILS, 'VCC#2', at('e1'));
+
+    expect(result.ok).toBe(true);
+    // 動くのは 3 行目 (2 つ目の VCC) だけ。
+    expect(result.ok && result.value.edits.map((edit) => edit.line)).toEqual([3]);
+  });
+
+  test('moves the first one when the handle carries no number', () => {
     const result = movePart(TWO_RAILS, 'VCC', at('e1'));
 
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.value.edits.map((edit) => edit.line)).toEqual([2]);
+  });
+
+  test('reads the anchor of the one the handle points at', () => {
+    expect(anchorOf(TWO_RAILS, 'VCC#2')).toEqual(at('c1'));
+    expect(anchorOf(TWO_RAILS, 'VCC')).toEqual(at('a1'));
+  });
+
+  test('lights up only that one in the editor', () => {
+    expect(partSpans(TWO_RAILS, 'VCC#2').every((span) => span.line === 3)).toBe(true);
+  });
+
+  test('says so when the number points at nothing', () => {
+    const result = movePart(TWO_RAILS, 'VCC#9', at('e1'));
+
     expect(result.ok).toBe(false);
-    expect(result.ok === false && result.error.message).toContain('決められません');
+    expect(result.ok === false && result.error.message).toContain('見つかりません');
   });
 
   test('still moves a part whose name is its own', () => {

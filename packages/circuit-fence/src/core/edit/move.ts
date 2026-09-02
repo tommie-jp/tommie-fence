@@ -1,10 +1,11 @@
 import { formatAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
+import { handleAt, nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { LIMITS } from '../limits.ts';
 import {
-  addressesOf, applyEdits, diffOf, fail, isOnGrid, isRepeatedName, keySpanOf, locatePart, repeatedNameReason,
+  addressesOf, applyEdits, diffOf, fail, isOnGrid, keySpanOf, locatePart,
 } from './shared.ts';
 import type { MoveResult, Span } from './shared.ts';
 
@@ -22,26 +23,29 @@ import type { MoveResult, Span } from './shared.ts';
 
 export type { Edit, NetDiff } from './shared.ts';
 
-/** 掴める部品の名前。読めないフェンスでは空。 */
+/**
+ * 掴める部品の**名札**。読めないフェンスでは空。
+ * 名前が重なっていなければ名前そのもの (`handles.ts`)。
+ */
 export function movablePartIds(source: string): readonly string[] {
   const { doc } = parseFence(normalizeNewlines(source));
-  return doc ? doc.parts.map((part) => part.id) : [];
+  return doc ? doc.parts.map((_, index) => handleAt(doc.parts, index)) : [];
 }
 
 /** 部品のいまの番地 (アンカー)。見つからなければ null。 */
-export function anchorOf(source: string, partId: string): Address | null {
+export function anchorOf(source: string, handle: string): Address | null {
   const { doc } = parseFence(normalizeNewlines(source));
-  const part = doc?.parts.find((candidate) => candidate.id === partId);
+  const part = doc === null ? null : partOfHandle(doc.parts, handle);
   return part ? (addressesOf(part)[0] as Address) : null;
 }
 
-export function movePart(source: string, partId: string, to: Address): MoveResult {
+export function movePart(source: string, handle: string, to: Address): MoveResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   if (!doc) return fail('フェンスを読めないので動かせません (先にエラーを直します)', null);
-  if (isRepeatedName(doc, partId)) return fail(repeatedNameReason(partId, '動かす'), null);
 
-  const part = doc.parts.find((candidate) => candidate.id === partId);
+  const part = partOfHandle(doc.parts, handle);
+  const partId = nameOfHandle(handle);
   if (!part) return fail(`部品が見つかりません: ${partId}`, null);
 
   const addresses = addressesOf(part);
@@ -65,7 +69,7 @@ export function movePart(source: string, partId: string, to: Address): MoveResul
   const lineText = lines[part.line - 1];
   if (lineText === undefined) return fail(`${partId} の行が見つかりません`, part.line);
 
-  const located = locatePart(doc, lines, partId);
+  const located = locatePart(doc, lines, handle);
   if (located === null) {
     return fail(`${partId} の行から番地を見つけられませんでした`, part.line);
   }
@@ -89,16 +93,17 @@ export function movePart(source: string, partId: string, to: Address): MoveResul
  * マップで掴んだものをエディタで光らせるために使う。**書き換えと同じ探し方**を
  * 通すので、光る場所と動く場所が食い違わない。
  */
-export function partSpans(source: string, partId: string): readonly Span[] {
+export function partSpans(source: string, handle: string): readonly Span[] {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   if (!doc) return [];
 
-  const located = locatePart(doc, normalized.split('\n'), partId);
+  const located = locatePart(doc, normalized.split('\n'), handle);
   if (located === null) return [];
 
   const { part, text, from, tokens } = located;
-  const key = keySpanOf(text, partId, from);
+  // **鍵は名前で探す。** 名札はマップの中だけの綴りで、行には書かれていない。
+  const key = keySpanOf(text, part.id, from);
   return [
     ...(key === null ? [] : [{ line: part.line, ...key }]),
     ...tokens.map((token) => ({ line: part.line, ...token })),

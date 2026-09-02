@@ -144,7 +144,9 @@ function drawChip(chip: Chip, nudge: number, bad: Bad): string {
     + (chip.to === null ? at(chip, inner) : inner);
   return element(
     'g',
-    { class: classOf('cf-chip', chip.line, bad), 'data-part': chip.id, 'data-line': chip.line },
+    // **掴むのは名札、見せるのは名前。** 同じ名前の記号が 2 つ以上あることが
+    // あるので、掴んだものを名前で指すと先に書いたほうを拾う (`handles.ts`)。
+    { class: classOf('cf-chip', chip.line, bad), 'data-part': chip.handle, 'data-line': chip.line },
     marked,
   );
 }

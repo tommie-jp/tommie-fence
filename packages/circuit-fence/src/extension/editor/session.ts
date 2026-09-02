@@ -2,6 +2,7 @@ import { listFences } from '../../core/edit/fenceList.ts';
 import { issuesOf, renderIssues, shiftIssues } from '../../core/edit/issues.ts';
 import { aimAt, fenceAt, gridMap } from '../../core/edit/map.ts';
 import { renderMapHtml } from '../../core/edit/mapSvg.ts';
+import { nameOfHandle } from '../../core/edit/handles.ts';
 import { movePart, partSpans } from '../../core/edit/move.ts';
 import type { Edit } from '../../core/edit/move.ts';
 import { insertPart, insertWire, nextPartId } from '../../core/edit/insert.ts';
@@ -423,8 +424,11 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
     }
 
     if (message.kind === 'move') {
-      const part = text(message.part);
-      if (part === null) {
+      const handle = text(message.part);
+      // **掴むのは名札、言うのは名前** (`core/edit/handles.ts`)。同じ名前の記号が
+      // 2 つ以上あることがあるので、指すときだけ名札を使う。
+      const part = handle === null ? null : nameOfHandle(handle);
+      if (handle === null || part === null) {
         say('マップからの知らせを読めませんでした (部品がありません)');
         return;
       }
@@ -437,7 +441,7 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
         label: `${part} を ${written} へ`,
         done: () => `${part} を ${written} へ動かしました`,
         already: `${part} はすでに ${written} にあります`,
-        plan: (source) => movePart(source, part, to),
+        plan: (source) => movePart(source, handle, to),
       });
       return;
     }
@@ -472,10 +476,11 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
    * 名前だけは 3 か所 (鍵・配線の足・注釈) に散るので別の道を通る。
    */
   async function editField(message: Incoming): Promise<void> {
-    const part = text(message.part);
+    const handle = text(message.part);
+    const part = handle === null ? null : nameOfHandle(handle);
     const field = text(message.field);
     const written = text(message.text) ?? '';
-    if (part === null || (field !== 'type' && field !== 'value' && field !== 'label')) {
+    if (handle === null || part === null || (field !== 'type' && field !== 'value' && field !== 'label')) {
       say('マップからの知らせを読めませんでした (どの欄かがありません)');
       return;
     }
@@ -485,15 +490,16 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       label: `${part} の${name}を`,
       done: () => (written === '' ? `${part} の${name}を消しました` : `${part} の${name}を ${written} にしました`),
       already: `${part} の${name}は変わりません`,
-      plan: (source) => setField(source, part, field, written),
+      plan: (source) => setField(source, handle, field, written),
     });
   }
 
   /** 名前を変える。鍵・配線の足・注釈の指し先を一緒に書き換える。 */
   async function rename(message: Incoming): Promise<void> {
-    const from = text(message.part);
+    const handle = text(message.part);
+    const from = handle === null ? null : nameOfHandle(handle);
     const to = text(message.text);
-    if (from === null || to === null || to === '') {
+    if (handle === null || from === null || to === null || to === '') {
       say('マップからの知らせを読めませんでした (新しい名前がありません)');
       return;
     }
@@ -502,7 +508,7 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       label: `${from} を ${to} に`,
       done: () => `${from} を ${to} に改名しました`,
       already: `${from} の名前は変わりません`,
-      plan: (source) => renamePart(source, from, to),
+      plan: (source) => renamePart(source, handle, to),
     });
   }
 
@@ -593,10 +599,11 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       return;
     }
 
+    const name = nameOfHandle(id);
     await run({
-      label: `${id} を`,
+      label: `${name} を`,
       // **一緒に消えた配線の本数を言う。** 黙って消すと気づけない。
-      done: (changes) => `${id} を消しました${changes.wires ? ` (配線 ${changes.wires} 本も一緒に)` : ''}`,
+      done: (changes) => `${name} を消しました${changes.wires ? ` (配線 ${changes.wires} 本も一緒に)` : ''}`,
       already: '消すものがありません',
       plan: (source) => deletePart(source, id),
     });
@@ -604,8 +611,9 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
 
   /** マップから来た「これを回す / 反転する」。2 端子は番地の順が向きそのもの。 */
   async function turn(message: Incoming): Promise<void> {
-    const part = text(message.part);
-    if (part === null) {
+    const handle = text(message.part);
+    const part = handle === null ? null : nameOfHandle(handle);
+    if (handle === null || part === null) {
       say('マップからの知らせを読めませんでした (どの部品かがありません)');
       return;
     }
@@ -616,13 +624,13 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
         label: `${part} を反転`,
         done: () => `${part} を反転しました`,
         already: `${part} は反転できません`,
-        plan: (source) => flipPart(source, part),
+        plan: (source) => flipPart(source, handle),
       }
       : {
         label: `${part} を回転`,
         done: () => `${part} を${quarters < 0 ? '反時計回り' : '時計回り'}に回しました`,
         already: `${part} は回せません`,
-        plan: (source) => turnPart(source, part, quarters),
+        plan: (source) => turnPart(source, handle, quarters),
       });
   }
 

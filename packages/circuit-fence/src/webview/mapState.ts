@@ -14,8 +14,18 @@
 
 export type Kind = 'part' | 'node' | 'wire';
 
-/** 選んでいるもの。**種類ごと覚える** (掴む物が違えば意味も違う)。 */
+/**
+ * 選んでいるもの。**種類ごと覚える** (掴む物が違えば意味も違う)。
+ *
+ * 部品の `id` は**名札** (`core/edit/handles.ts`) — 同じ名前の記号が 2 つ以上
+ * あることがあるので、掴んだものは名前ではなく名札で指す。人に見せる字は
+ * `shown` を通す (「VCC#2 を消しています」ではなく「VCC を消しています」)。
+ */
 export type Picked = { readonly kind: Kind; readonly id: string };
+
+/** 名札から、人に見せる名前を取る。番号は掴むためのもので、図には無い。 */
+const shown = (picked: Picked): string =>
+  picked.kind === 'part' ? picked.id.split('#')[0] ?? picked.id : picked.id;
 
 /** 道具。**選ぶ**が既定で、`Esc` でいつでもここへ戻る。 */
 export type Tool = 'select' | 'wire' | 'node' | 'part';
@@ -152,7 +162,7 @@ function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcom
   return outcome(
     { ...state, picked: on, pressed: { x: event.x, y: event.y } },
     [select(on)],
-    `${on.id}${HINTS[on.kind]}`,
+    `${shown(on)}${HINTS[on.kind]}`,
   );
 }
 
@@ -192,7 +202,7 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
     && Math.abs(event.x - pressed.x) + Math.abs(event.y - pressed.y) > DRAG;
   if (!moved || event.cell === null) return outcome({ ...state, pressed: null });
 
-  const what = picked.kind === 'node' ? `${picked.id} の節点` : picked.id;
+  const what = picked.kind === 'node' ? `${picked.id} の節点` : shown(picked);
   return outcome(
     { ...state, picked: null, pressed: null },
     [picked.kind === 'node'
@@ -237,7 +247,7 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
     return outcome(
       { ...state, picked: null, pressed: null },
       [{ kind: 'delete', what: picked.kind, id: picked.id }],
-      `${picked.id} を消しています…`,
+      `${shown(picked)} を消しています…`,
       true,
     );
   }
@@ -247,10 +257,15 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
   const key = event.key.toLowerCase();
   if (key === 'r') {
     const quarters = event.shift ? -1 : 1;
-    return outcome(state, [{ kind: 'turn', part: picked.id, quarters }], `${picked.id} を回しています…`, true);
+    return outcome(
+      state,
+      [{ kind: 'turn', part: picked.id, quarters }],
+      `${shown(picked)} を回しています…`,
+      true,
+    );
   }
   if (key === 'm') {
-    return outcome(state, [{ kind: 'flip', part: picked.id }], `${picked.id} を反転しています…`, true);
+    return outcome(state, [{ kind: 'flip', part: picked.id }], `${shown(picked)} を反転しています…`, true);
   }
   return outcome(state);
 }

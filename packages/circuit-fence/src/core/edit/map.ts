@@ -8,6 +8,7 @@ import { parseFence } from '../parser/parseFence.ts';
 import { cellOf } from '../types.ts';
 import type { Circuit } from '../model/circuit.ts';
 import type { Endpoint } from '../types.ts';
+import { handleAt, handleOf } from './handles.ts';
 import { nodesOf, pointEntries } from './point.ts';
 import { addressTokensOn, addressesOf, locateTokens } from './shared.ts';
 
@@ -26,7 +27,10 @@ export type Cell = { readonly row: number; readonly col: number };
 
 /** マップに置く部品 1 つ。 */
 export type Chip = {
+  /** 図に出る名前。**同じ名前の記号が 2 つ以上あることがある** (`handles.ts`)。 */
   readonly id: string;
+  /** 掴んだものを 1 つに指す名札。名前が重なっていなければ名前そのもの。 */
+  readonly handle: string;
   readonly type: string;
   readonly row: number;
   readonly col: number;
@@ -139,7 +143,7 @@ export function gridMap(source: string): GridMap {
   const chips: Chip[] = [];
   const skipped: string[] = [];
 
-  for (const part of doc.parts) {
+  for (const [index, part] of doc.parts.entries()) {
     const addresses = addressesOf(part);
     // **交点の間 (`a_1.5`) は升目に載らない。** 別の升へ寄せて見せると、
     // 掴んで動かしたとき書いた場所と違うところへ行く。
@@ -150,6 +154,7 @@ export function gridMap(source: string): GridMap {
     const [anchor, far] = addresses;
     chips.push({
       id: part.id,
+      handle: handleAt(doc.parts, index),
       type: part.type,
       row: (anchor as Address).row,
       col: (anchor as Address).col,
@@ -228,10 +233,10 @@ export function aimAt(source: string, line: number, column: number): Aim | null 
       const located = locateTokens(text, addressesOf(part), doc.points, cursor);
       if (located === null) break;
       last = part;
-      if (column <= located.end) return { kind: 'part', id: part.id };
+      if (column <= located.end) return { kind: 'part', id: handleOf(doc.parts, part) };
       cursor = located.end;
     }
-    return { kind: 'part', id: last.id };
+    return { kind: 'part', id: handleOf(doc.parts, last) };
   }
 
   const wire = doc.wires.find((one) => one.line === line);
