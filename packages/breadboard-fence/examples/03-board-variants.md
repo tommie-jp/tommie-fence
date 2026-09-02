@@ -21,6 +21,8 @@ wires:
   - +t5 -- a5 red
   - a10 -- b12
   - c13 -- -t13 black
+notes:
+  - source blue
 ```
 
 ![図01 既定の印字](out/03-board-variants-1.svg)
@@ -42,6 +44,8 @@ wires:
   - +b5 -- j5 red
   - f10 -- g12
   - i13 -- -b13 black
+notes:
+  - source blue
 ```
 
 ![図02 レールの並びを +-+- に](out/03-board-variants-2.svg)
@@ -63,6 +67,8 @@ wires:
   - +t5 -- A5 red
   - A10 -- B12
   - C13 -- -t13 black
+notes:
+  - source blue
 ```
 
 ![図03 大文字ラベルと全列番号](out/03-board-variants-3.svg)
@@ -88,6 +94,8 @@ wires:
   - BAT.+ -- a5 red
   - a10 -- b12
   - c13 -- BAT.- black
+notes:
+  - source blue
 ```
 
 ![図04 ミニボードに組む](out/03-board-variants-4.svg)
@@ -110,6 +118,8 @@ wires:
   - +t5 -- a5 red
   - a10 -- b12
   - c13 -- -t13 black
+notes:
+  - source blue
 ```
 
 ![図05 ミニボードにレールを継ぎ足す](out/03-board-variants-5.svg)
@@ -128,6 +138,8 @@ parts:
   D1: led b12(A) b13(K) red
 wires:
   - a10 -- b12
+notes:
+  - source blue
 ```
 
 ![図06 レールを剥がした half](out/03-board-variants-6.svg)

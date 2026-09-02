@@ -53,6 +53,8 @@ wires:
   - b9 -- b13 yellow
   - b16 -- b20 green
   - b22 -- -t22 black
+notes:
+  - source blue
 ```
 
 ![図02 半固定抵抗とスライドスイッチ](out/06-switches-2.svg)

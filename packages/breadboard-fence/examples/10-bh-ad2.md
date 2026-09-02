@@ -53,6 +53,8 @@ wires:
   - j30 -- -b29 black
   - AD2.2+ -- f27 blue
   - AD2.2- -- -t26 blue
+notes:
+  - source blue
 ```
 
 ![図01 B-H カーブ測定回路](out/10-bh-ad2.svg)

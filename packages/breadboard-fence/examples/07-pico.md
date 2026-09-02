@@ -32,6 +32,8 @@ wires:
   - j23 -- j42 blue
   - a42 -- -t42 black
   - -t50 -- -b50 black
+notes:
+  - source blue
 ```
 
 ![図01 Pico に LED とボタンをつなぐ](out/07-pico.svg)

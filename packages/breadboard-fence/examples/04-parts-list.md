@@ -24,6 +24,8 @@ wires:
   - +t5 -- a5 red
   - a10 -- b12
   - c13 -- -t13 black
+notes:
+  - source blue
 ```
 
 ![図01 部品リスト (既定)](out/04-parts-list-1.svg)
@@ -50,6 +52,8 @@ wires:
   - +t5 -- a5 red
   - a10 -- b12
   - c13 -- -t13 black
+notes:
+  - source blue
 ```
 
 ![図02 部品リストを消す](out/04-parts-list-2.svg)

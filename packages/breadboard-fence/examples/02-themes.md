@@ -19,6 +19,8 @@ wires:
   - +t5 -- a5 red
   - a10 -- b12
   - c13 -- -t13 black
+notes:
+  - source blue
 ```
 
 ![図01 classic](out/02-themes-1.svg)
@@ -40,6 +42,8 @@ wires:
   - +t5 -- a5 red
   - a10 -- b12
   - c13 -- -t13 black
+notes:
+  - source blue
 ```
 
 ![図02 dark](out/02-themes-2.svg)
@@ -61,6 +65,8 @@ wires:
   - +t5 -- a5 red
   - a10 -- b12
   - c13 -- -t13 black
+notes:
+  - source blue
 ```
 
 ![図03 high-contrast](out/02-themes-3.svg)
@@ -82,6 +88,8 @@ wires:
   - +t5 -- a5 red
   - a10 -- b12
   - c13 -- -t13 black
+notes:
+  - source blue
 ```
 
 ![図04 mono](out/02-themes-4.svg)
@@ -104,6 +112,8 @@ wires:
   - +t5 -- a5 red
   - a10 -- b12
   - c13 -- -t13 black
+notes:
+  - source blue
 ```
 
 ![図05 presentation](out/02-themes-5.svg)
@@ -127,6 +137,8 @@ wires:
   - +t5 -- a5 red
   - a10 -- b12
   - c13 -- -t13 black
+notes:
+  - source blue
 ```
 
 ![図06 テーマを個別に変える](out/02-themes-6.svg)

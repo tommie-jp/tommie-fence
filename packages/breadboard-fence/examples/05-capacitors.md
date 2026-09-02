@@ -13,6 +13,8 @@ parts:
   C2: capacitor/film a12 a15 0.47u
   C3: capacitor/electrolytic a19(+) a22(-) 100u
   C4: capacitor/tantalum a26(+) a29(-) 10u
+notes:
+  - source blue
 ```
 
 ![図01 コンデンサの 4 つの姿](out/05-capacitors-1.svg)
@@ -38,6 +40,8 @@ parts-list: none
 parts:
   C1: capacitor a5 a8 0.1u
   C2: capacitor a12(+) a15(-) 100u
+notes:
+  - source blue
 ```
 
 ![図02 姿を書かなかったとき](out/05-capacitors-2.svg)
@@ -57,6 +61,8 @@ parts:
   D2: led/3mm b11(A) b13(K) green
   Q1: transistor/to92 e18(B) e19(C) e20(E) 2SC1815
   Q2: transistor/to220 e25(B) e26(C) e27(E) 2SD880
+notes:
+  - source blue
 ```
 
 ![図03 LED とトランジスタの姿](out/05-capacitors-3.svg)

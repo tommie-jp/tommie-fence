@@ -20,6 +20,7 @@ wires:
 notes:
   - circle fb blue
   - text c8 blue: fb (分圧の出力)
+  - source blue
 ```
 
 ![図01 分圧の出力に名前を付ける](out/13-points-1.svg)
@@ -54,6 +55,8 @@ wires:
   - +t5 -- b5 red
   - b10 -- b14 -- b21 orange
   - -t17 -- b17 -- b24 black
+notes:
+  - source blue
 ```
 
 ![図02 配線を 1 行につないで書く](out/13-points-2.svg)
@@ -75,6 +78,8 @@ parts-list: none
 parts:
   M1: sip4 @ a20 l=OLED
   R1: resistor a5 a10 l=分圧の上側
+notes:
+  - source blue
 ```
 
 ![図03 ラベルだけを差し替える](out/13-points-3.svg)

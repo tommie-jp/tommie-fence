@@ -44,6 +44,8 @@ wires:
   # 出力はエミッタから
   - SPK.+ -- f19 blue
   - SPK.- -- -t22 black
+notes:
+  - source blue
 ```
 
 ![図01 エミッタフォロワ](out/08-emitter-follower.svg)

@@ -21,6 +21,7 @@ notes:
   - text d24 red: 電流を決めるのはここ
   - box g3 h20 blue
   - text i3 blue: この段はまだ組んでいない
+  - source blue
 ```
 
 ![図01 LED を点ける](out/12-notes-1.svg)
@@ -50,6 +51,7 @@ notes:
   - line +t20 -t20 green
   - text c20 center blue: 中央ぞろえ
   - text i28 right red: 右ぞろえ
+  - source blue
 ```
 
 ![図02 色と大きさと寄せ](out/12-notes-2.svg)

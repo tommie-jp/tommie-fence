@@ -21,6 +21,8 @@ wires:
   - +b3 -- i3 red
   - i7 -- i10 orange
   - i14 -- -b14 black
+notes:
+  - source blue
 ```
 
 ![図01 明るさと温度を分圧で取り出す](out/11-sensors-1.svg)
@@ -45,6 +47,8 @@ parts:
   D4: photodiode a21(A) a24(K)
   D5: varicap a27(A) a30(K) 33p
   DC1: diac f3 f6 DB3
+notes:
+  - source blue
 ```
 
 ![図02 ダイオードの仲間](out/11-sensors-2.svg)
@@ -69,6 +73,8 @@ parts:
   VZ1: varistor a21 a24 10D471K
   Q1: thyristor f4(A) f5(G) f6(K) 2P4M
   Q2: triac/to220 f12(1) f13(G) f14(2) BT136
+notes:
+  - source blue
 ```
 
 ![図03 ガラス管・玉・円板](out/11-sensors-3.svg)
