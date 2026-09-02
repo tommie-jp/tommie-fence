@@ -515,6 +515,12 @@ describe('orientOf', () => {
     }
   });
 
+  test('refuses to turn a transformer, whose windings come apart', () => {
+    // 落ちないが、回すと巻線と鉄心がばらけて図として読めない (実機で確認)。
+    // 反転は一次と二次が入れ替わるだけなので許す。
+    expect(orientOf(PART_TYPES.transformer!)).toMatchObject({ rotate: false, mirror: true });
+  });
+
   test('refuses a turn on a two terminal part, which turns by its addresses', () => {
     expect(orientOf(PART_TYPES.resistor!).rotate).toBe(false);
   });

@@ -102,6 +102,13 @@ const TURN_ONLY: Orient = { rotate: true, mirror: false, signs: false };
 /** オペアンプだけ ± の入れ替えを持つ。 */
 const AMP_ORIENT: Orient = { rotate: true, mirror: true, signs: true };
 
+/**
+ * 反転はできるが回せない。トランスは**回すと巻線と鉄心がばらける**
+ * (落ちないが図として読めない。実機で確認)。反転は一次と二次が入れ替わるだけで
+ * 図は保たれる。
+ */
+const MIRROR_ONLY: Orient = { rotate: false, mirror: true, signs: false };
+
 /** 時計回りに 90 度。左の足は上へ回る。 */
 const CLOCKWISE: Readonly<Record<PinSide, PinSide>> = {
   left: 'top', top: 'right', right: 'bottom', bottom: 'left',
@@ -473,7 +480,10 @@ export const PART_TYPES = {
    * 記事によく出るのは鉄芯の 2 本が入るほう。アンカーは同じなので
    * `transformer core` にしても足の指し方は変わらない。
    */
-  transformer: { kind: 'multi-terminal', symbol: 'transformer core', ...NO_UNIT, pins: TRANSFORMER_PINS },
+  transformer: {
+    kind: 'multi-terminal', symbol: 'transformer core', ...NO_UNIT,
+    pins: TRANSFORMER_PINS, orient: MIRROR_ONLY,
+  },
   nigbt: { kind: 'multi-terminal', symbol: 'nigbt', ...NO_UNIT, pins: IGBT_PINS, pinSide: IGBT_SIDE },
   pigbt: { kind: 'multi-terminal', symbol: 'pigbt', ...NO_UNIT, pins: IGBT_PINS, pinSide: IGBT_SIDE },
   /** 切り替えスイッチ (c 接点)。 */
