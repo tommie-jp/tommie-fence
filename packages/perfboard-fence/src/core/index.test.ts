@@ -481,6 +481,42 @@ describe('書き出し (notes: - source)', () => {
   });
 });
 
+describe('白黒の網と凡例 (style: mono)', () => {
+  const fence = 'board: 12x7\nstyle: mono\nparts:\n  R1: resistor b3 b6 10k\n'
+    + 'wires:\n  - b3 -- b1 red\n  - b1 -- b6 red\n';
+
+  test('moves a written colour into a line of its own, instead of leaving colour in a mono drawing', () => {
+    const result = renderPerfboard(fence);
+
+    expect(result.svg).toContain('stroke-dasharray');
+    // 赤い線そのものは出さない (白黒に色が 1 つだけ残ると、色で意味を持たせない が破れる)。
+    expect(result.svg).not.toContain('#d33a2f');
+  });
+
+  test('puts out a key for the colours it used, and only those', () => {
+    const result = renderPerfboard(fence);
+
+    expect(result.svg).toContain('pf-hatch-red');
+    expect(result.svg).toContain('>赤<');
+    expect(result.svg).not.toContain('pf-hatch-blue');
+  });
+
+  test('leaves the colour themes as they are — the key is only for mono', () => {
+    const result = renderPerfboard(fence.replace('style: mono\n', ''));
+
+    expect(result.svg).toContain('#d33a2f');
+    expect(result.svg).not.toContain('pf-hatch-red');
+  });
+
+  test('adds no key at all to a mono drawing that wrote no colour', () => {
+    const plain = renderPerfboard('board: 12x7\nstyle: mono\nparts:\n  C1: capacitor b3 b6\n'
+      + 'wires:\n  - b3 -- b6\n');
+
+    expect(plain.svg).not.toContain('pf-hatch');
+    expect(plain.svg).not.toContain('>色<');
+  });
+});
+
 describe('部品表 (notes: - parts)', () => {
   const fence = 'board: 12x7\nparts:\n  R1: resistor b3 b6 10k\nwires:\n  - b3 -- b6\nnotes:\n  - parts\n';
 

@@ -7,6 +7,7 @@ import type { Layout } from '../model/layout.ts';
 import {
   BODY_HEIGHT, DOME_SIZE, SMA_BASE, SMA_PLAIN, SMA_SIZE, bodyRect, edgeMountOf,
 } from '../placement/geometry.ts';
+import { hatchFill } from './hatch.ts';
 import { isEdgeMount } from '../parts/types.ts';
 import { footprintOf } from '../parts/footprint.ts';
 import type { PlacedPart } from '../types.ts';
@@ -152,10 +153,14 @@ function resistorBody(part: PlacedPart, width: number, theme: Theme): string {
   const bandWidth = Math.max(Math.min(BAND_WIDTH, (room - gaps) / bands.length), 1);
   const step = bandWidth + BAND_GAP;
   const start = -(bandWidth * bands.length + gaps) / 2;
+  // **白黒の図では帯も網に移す** (`hatch.ts`)。色を落とすと帯が読めなくなるが、
+  // 網なら凡例から引ける — 部品表の色欄 (`茶黒橙茶`) と合わせて、刷った図でも
+  // 手元の抵抗と読み合わせられる。
   const stripes = bands
     .map((name, index) => element('rect', {
       x: num(start + index * step), y: num(-BODY_HEIGHT / 2 + 1),
-      width: num(bandWidth), height: BODY_HEIGHT - 2, fill: bandColor(name),
+      width: num(bandWidth), height: BODY_HEIGHT - 2,
+      fill: theme.hatch === true ? hatchFill(name, theme.palette.caption) : bandColor(name),
     }))
     .join('');
   return shell + stripes;
@@ -164,13 +169,19 @@ function resistorBody(part: PlacedPart, width: number, theme: Theme): string {
 /**
  * LED の玉。色は書かれた値から引き、知らない色でも既定で描く (足の位置は変わらない)。
  * 大きさは当たり判定と同じ定数から取る (`placement/geometry.ts`)。
+ *
+ * **白黒の図では色を網に移す** (`hatch.ts`)。実物の色なのでテーマでは動かない
+ * ものだが、白黒に色が 1 つだけ残ると「色で意味を持たせない」が破れる。
  */
-const ledBody = (part: PlacedPart): string =>
-  element('circle', {
-    cx: 0, cy: 0, r: num(DOME_SIZE / 2),
-    fill: (part.value === null ? null : ledColor(part.value)) ?? DEFAULT_LED_COLOR,
-    stroke: '#00000033', 'stroke-width': 1,
+function ledBody(part: PlacedPart, theme: Theme): string {
+  const written = part.value === null ? null : part.value.toLowerCase();
+  const fill = theme.hatch === true && written !== null
+    ? hatchFill(written, theme.palette.caption)
+    : (written === null ? null : ledColor(written)) ?? DEFAULT_LED_COLOR;
+  return element('circle', {
+    cx: 0, cy: 0, r: num(DOME_SIZE / 2), fill, stroke: '#00000033', 'stroke-width': 1,
   });
+}
 
 /** 同軸コネクタの金物と、中の絶縁体の色。**実物の色**なのでテーマから触らせない。 */
 const SMA_METAL = '#b9bfc6';
@@ -431,7 +442,7 @@ const bodyOf = (
   mount: { readonly edgeX: number; readonly legX: number } | null,
 ): string => {
   if (part.type === 'resistor') return resistorBody(part, width, theme);
-  if (part.type === 'led') return ledBody(part);
+  if (part.type === 'led') return ledBody(part, theme);
   if (part.type === 'capacitor') return capacitorBody(part, width, theme);
   if (part.type === 'inductor') return inductorBody(part, width, theme);
   if (part.type === 'sma') {

@@ -1,5 +1,6 @@
 import { element, num } from 'fence-kit';
 import { wireStroke } from '../color.ts';
+import { hatchDash } from './hatch.ts';
 import type { Layout } from '../model/layout.ts';
 import type { Point, RoutedWire } from '../types.ts';
 import type { DeviceWire } from '../wiring/wiring.ts';
@@ -39,7 +40,7 @@ export const renderWires = (
       layout.point(wire.from),
       layout.point(wire.to),
       hops[index] ?? [],
-      wireStroke(wire.color, theme.palette.wire),
+      wire.color,
       theme,
     ))
     .join('');
@@ -68,13 +69,7 @@ export const renderDeviceWires = (
       const from = pins.get(wire.device)?.get(wire.pin);
       // 機器が帯に置けなかったとき (帯そのものが無いとき) は線も引けない。
       if (!from) return '';
-      return strand(
-        from,
-        layout.point(wire.hole),
-        hops[index] ?? [],
-        wireStroke(wire.color, theme.palette.wire),
-        theme,
-      );
+      return strand(from, layout.point(wire.hole), hops[index] ?? [], wire.color, theme);
     })
     .join('');
 };
@@ -89,14 +84,19 @@ function strand(
   from: Point,
   to: Point,
   hops: readonly Point[],
-  stroke: string,
+  color: string | null,
   theme: Theme,
 ): string {
+  // **白黒の図では色を線の型に移す** (`hatch.ts`)。塗り分けを落とすだけだと
+  // 「同じ色の線は同じ網」が読めなくなるので、形のほうに移して凡例で引かせる。
+  const dash = theme.hatch === true && color !== null ? hatchDash(color) : '';
   const ink = {
-    stroke,
+    stroke: theme.hatch === true ? theme.palette.wire : wireStroke(color, theme.palette.wire),
     'stroke-width': WIRE_WIDTH,
-    'stroke-linecap': 'round',
+    // 破線は端を丸めると隙間が埋まって実線に見える。
+    'stroke-linecap': dash === '' ? 'round' : 'butt',
     'stroke-opacity': theme.metrics.wireOpacity,
+    ...(dash === '' ? {} : { 'stroke-dasharray': dash }),
   };
   const path = hops.length === 0 ? null : hopPath(from, to, hops);
 

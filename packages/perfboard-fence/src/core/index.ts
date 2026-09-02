@@ -11,6 +11,8 @@ import { renderDeviceWires, renderWires } from './render/wires.ts';
 import { crossingPoints } from './render/crossings.ts';
 import { renderTitle } from './render/title.ts';
 import { renderNotes } from './render/notes.ts';
+import { hatchDefs } from './render/hatch.ts';
+import { legendColors, legendSize, paintedColors, renderLegend } from './render/legend.ts';
 import { partsListSize, partsListing, renderPartsList } from './render/partsList.ts';
 import { renderSourceListing, sourceBandSize, sourceListing } from './render/sourceListing.ts';
 import { backSideLayout, renderBackSide } from './render/backSide.ts';
@@ -94,11 +96,16 @@ export function renderPerfboard(input: string): RenderResult {
   // 板に載せる前の部品から作る — 載せられなかった部品も、揃えるものには変わりない。
   const listNotes = parsed.doc.notes.filter((note) => note.kind === 'parts');
   const listed = listNotes.length > 0 ? partsListing(parsed.doc.parts, devices) : [];
+  // **白黒の図では色を網と線の型に移す** (`render/hatch.ts`)。移した先が何色かは
+  // 図の中では言えないので、使った色の凡例を板のすぐ下に出す。
+  // 色つきのテーマでは見たままなので、帯そのものを出さない。
+  const painted = THEME.hatch === true ? legendColors(paintedColors(parsed.doc)) : [];
   // 半田面は自分の寸法を持つので、**先に測ってから**表の図に場所を空けさせる。
   const back = style.back ? backSideLayout(board, style.labels) : null;
   // 番地で置いた機器のはみ出しを**先に測る**。板の寸法だけで組むと、
   // 上は題に、下は書き出しや半田面に重なる。
-  const overhang = deviceOverhang(devices, createLayout(board, { title: title !== null }));
+  const bare = createLayout(board, { title: title !== null });
+  const overhang = deviceOverhang(devices, bare);
   const layout = createLayout(board, {
     title: title !== null,
     // 帯を空けるのは、番地で置いていない機器のぶんだけ。
@@ -106,6 +113,7 @@ export function renderPerfboard(input: string): RenderResult {
     deviceBottom: devices.some((device) => device.where === null && device.at === 'bottom'),
     source: listing.length > 0 ? sourceBandSize(listing, THEME) : null,
     list: listed.length > 0 ? partsListSize(listed, THEME) : null,
+    legend: painted.length > 0 ? legendSize(painted, THEME, bare.board.width) : null,
     back: back === null ? null : { height: back.height },
     labelRight: style.labels.sides.includes('right'),
     labelBottom: style.labels.sides.includes('bottom'),
@@ -271,7 +279,10 @@ export function renderPerfboard(input: string): RenderResult {
       + renderParts(placement.parts, layout, PLATE)
       // 注釈は一番上。**指したものが下に隠れると印の意味が無くなる。**
       + renderNotes(notes, layout, PLATE)
-      // 部品表と書き出しは板の外の帯。図とは重ならないので、順番はどこでもよい。
+      // 凡例・部品表・書き出しは板の外の帯。図とは重ならないので、順番はどこでもよい。
+      + (layout.legendBand === null
+        ? ''
+        : renderLegend(painted, layout.legendBand, THEME, bare.board.width))
       + (layout.listBand === null
         ? ''
         : renderPartsList(listed, layout.listBand, THEME, listNotes[0]?.color ?? null))
@@ -299,6 +310,8 @@ export function renderPerfboard(input: string): RenderResult {
       theme: THEME,
       width: style.width,
       stamp: style.stamp,
+      // 網は板の地の上に敷く (隙間から板が透けると、同じ網が違う濃さに見える)。
+      defs: hatchDefs(painted, THEME.palette.caption, PLATE.palette.plate),
       canvas: spilled
         ? { width: layout.width + spillLeft + spillRight, height: layout.height + spillTop + spillBottom }
         : null,

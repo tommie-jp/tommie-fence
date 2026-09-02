@@ -22,13 +22,18 @@ export type DocumentOptions = {
    * 1 つの `layout` に収まらないものを並べるときだけ外から渡す。
    */
   readonly canvas?: { readonly width: number; readonly height: number } | null;
+  /**
+   * 図の中で参照する定義 (`<defs>`)。いまのところ白黒の網だけ。
+   * **図が使ったものだけ**を渡す (使っていない定義を抱えた SVG を貼らせない)。
+   */
+  readonly defs?: string;
 };
 
 /** 刻印を板の縁からどれだけ内へ置くか。 */
 const STAMP_INSET = 4;
 
 export function renderDocument(layout: Layout, body: string, options: DocumentOptions): string {
-  const { theme, width = null, stamp = false, canvas: given = null } = options;
+  const { theme, width = null, stamp = false, canvas: given = null, defs = '' } = options;
   const size = given ?? { width: layout.width, height: layout.height };
 
   // **`width` は画布の大きさだけを変える。** viewBox はそのままなので、
@@ -62,6 +67,6 @@ export function renderDocument(layout: Layout, body: string, options: DocumentOp
       'data-perfboard-fence': VERSION,
       role: 'img',
     },
-    `${canvas}${body}${stamped}`,
+    `${defs}${canvas}${body}${stamped}`,
   );
 }

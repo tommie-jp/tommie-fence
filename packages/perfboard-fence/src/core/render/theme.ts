@@ -66,7 +66,18 @@ export type Metrics = {
   readonly bodyOpacity: number;
 };
 
-export type Theme = { readonly palette: Palette; readonly metrics: Metrics };
+/**
+ * **色を網と線の型に移すか** (`render/hatch.ts`)。白黒のテーマだけが true。
+ *
+ * 配線や LED の色は**実物の色**なのでテーマでは動かず、白黒の図にそこだけ
+ * 色が残っていた。落とすだけだと「同じ色の線は同じ網」が読めなくなるので、
+ * 色を形に移して、引き当てる凡例を図の下に出す。
+ */
+export type Theme = {
+  readonly palette: Palette;
+  readonly metrics: Metrics;
+  readonly hatch?: boolean;
+};
 
 const LIGHT: Palette = {
   canvas: null,
@@ -136,7 +147,7 @@ const METRICS: Metrics = {
 export const THEMES: Record<ThemeName, Theme> = {
   light: { palette: LIGHT, metrics: METRICS },
   dark: { palette: DARK, metrics: METRICS },
-  mono: { palette: MONO, metrics: METRICS },
+  mono: { palette: MONO, metrics: METRICS, hatch: true },
 };
 
 /** 既定のテーマ。`style:` で選ばなければこれ。 */

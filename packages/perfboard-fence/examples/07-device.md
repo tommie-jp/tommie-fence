@@ -11,7 +11,7 @@ parts:
   D1: led c10 c12 red
   BAT:
     type: device
-    at: -b4
+    at: -c4
     label: 電池 3V
     pins: + -
 wires:
@@ -72,17 +72,17 @@ parts:
   R3: resistor c14 f14 100
   BAT:
     type: device
-    at: -b1
+    at: -c1
     label: 電池 5V
     pins: + -
   IN:
     type: device
-    at: -b7
+    at: -c7
     label: 信号源
     pins: SIG GND
   SPK:
     type: device
-    at: k14
+    at: l14
     label: スピーカー 8Ω
     pins: + -
 wires:
