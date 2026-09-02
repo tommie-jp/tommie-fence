@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { TYPE_LIST_ID, makeNonce, panelHtml } from './panelHtml.ts';
+import { TYPE_LIST_ID, makeNonce, panelHtml } from 'fence-kit';
 import { createCircuitEditor } from './circuitEditor.ts';
-import { createSession } from './session.ts';
+import { createSession } from 'fence-kit';
 import { attachSession, createSessionHost, mapScriptUri } from './vscodeHost.ts';
 
 /**

@@ -21,5 +21,7 @@
     // ファイルを読むのに node:fs を使うので、型だけ外すと通らなくなる。
     "types": ["node"]
   },
-  "include": ["src", "vitest.config.ts"]
+  "include": ["src", "vitest.config.ts"],
+  // DOM を知るのは webview だけ (下の tsconfig.webview.json が見る)。
+  "exclude": ["src/editor/webview/map.ts"]
 }

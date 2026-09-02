@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
-import { describeDiff, runMovePart } from './movePart.ts';
+import { describeDiff } from 'fence-kit';
+import { runMovePart } from './movePart.ts';
 import type { EditorPort } from './movePart.ts';
 
 const MARKDOWN = [

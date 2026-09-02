@@ -1,10 +1,10 @@
-import type { Edit, LineEdit, NetDiff, Span } from 'fence-kit';
+import type { Edit, LineEdit, NetDiff, Span } from './edits.ts';
 import { bodyAfter, fenceBody } from './docEdits.ts';
 import { indentOn } from './documentLike.ts';
 import type { DocLike, EditorLike } from './documentLike.ts';
 import { createHistory, sameBody } from './history.ts';
-import { describeDiff } from './movePart.ts';
-import type { EditResult, FenceEditor, PartFields } from 'fence-kit';
+import { describeDiff } from './edits.ts';
+import type { EditResult, FenceEditor, PartFields } from './fenceEditor.ts';
 import { renderFencePicker } from './panelHtml.ts';
 import type { MapViewHtml } from './panelHtml.ts';
 

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { Incoming, LitRange, Session, SessionHost } from './session.ts';
+import type { Incoming, LitRange, Session, SessionHost } from 'fence-kit';
 import { applyToDocument, markdownEditor, replaceBody } from './vscodePort.ts';
 
 /**

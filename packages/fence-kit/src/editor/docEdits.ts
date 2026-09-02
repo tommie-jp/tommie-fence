@@ -1,4 +1,4 @@
-import type { Edit, Rewrite } from 'fence-kit';
+import type { Edit, Rewrite } from './edits.ts';
 import { indentOn } from './documentLike.ts';
 import type { DocLike } from './documentLike.ts';
 

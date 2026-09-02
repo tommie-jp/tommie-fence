@@ -55,3 +55,21 @@ export const strippedIndent = (opening: string, lineText: string): number =>
     (/^ {0,3}/.exec(opening)?.[0] ?? '').length,
     (/^ */.exec(lineText)?.[0] ?? '').length,
   );
+
+/**
+ * 接続の変化を、動かしたあとのお知らせに添える 1 文にする。無変化なら null。
+ *
+ * **黙らせない** — 動かすと接続が変わることがあるので、変わったら言う。
+ * 変わらなかったときに言わないのも同じ約束のうち (言うと嘘になる)。
+ */
+export function describeDiff(diff: NetDiff): string | null {
+  const parts: string[] = [];
+  if (diff.lost.length > 0) {
+    parts.push(`離れた接続: ${diff.lost.map((pair) => pair.join(' — ')).join(', ')}`);
+  }
+  if (diff.gained.length > 0) {
+    // 同じところに 2 つ来るのは**つながった**というお知らせ (禁止ではない)。
+    parts.push(`つながった接続: ${diff.gained.map((pair) => pair.join(' — ')).join(', ')}`);
+  }
+  return parts.length === 0 ? null : parts.join(' / ');
+}

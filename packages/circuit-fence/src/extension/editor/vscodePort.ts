@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import type { Edit } from '../../core/edit/move.ts';
-import { changesForFence } from './docEdits.ts';
-import type { Change } from './docEdits.ts';
+import { changesForFence } from 'fence-kit';
+import type { Change } from 'fence-kit';
 import type { DocumentView, EditorPort } from './movePart.ts';
 
 /**

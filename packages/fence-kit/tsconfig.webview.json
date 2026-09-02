@@ -1,0 +1,13 @@
+{
+  // webview の中で動くコードだけの設定。**ここだけが DOM を知る。**
+  // 本体の tsconfig に DOM を足すと、フェンスに依らないはずの部分が
+  // DOM を触っても型で気づけなくなる。
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": []
+  },
+  "include": ["src/editor/webview"],
+  // 本体の設定の exclude を打ち消す。
+  "exclude": []
+}

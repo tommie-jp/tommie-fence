@@ -1,10 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
-import { changesForFence } from './docEdits.ts';
-import type { Change } from './docEdits.ts';
-import type { DocLike, EditorLike } from './documentLike.ts';
+import { changesForFence, createSession } from 'fence-kit';
+import type { Change, DocLike, EditorLike, LitRange, Outgoing, SessionHost } from 'fence-kit';
 import { createCircuitEditor } from './circuitEditor.ts';
-import { createSession } from './session.ts';
-import type { LitRange, Outgoing, SessionHost } from './session.ts';
 
 /** 文字列を持つだけの文書。書き換えは `patch` が当てる。 */
 type Doc = DocLike & { readonly set: (text: string) => void };

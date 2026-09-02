@@ -1,8 +1,8 @@
+import { describeDiff } from 'fence-kit';
 import { movableNodes, movePoint } from '../../core/edit/point.ts';
 import type { NodeRef } from '../../core/edit/point.ts';
 import { fenceAt } from '../../core/edit/map.ts';
 import { formatAddress, parseAddress } from '../../core/model/address.ts';
-import { describeDiff } from './movePart.ts';
 import type { EditorPort } from './movePart.ts';
 
 /**

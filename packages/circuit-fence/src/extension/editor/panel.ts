@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { revealMapEditor } from './customEditor.ts';
-import { TYPE_LIST_ID, makeNonce, panelHtml } from './panelHtml.ts';
+import { TYPE_LIST_ID, makeNonce, panelHtml } from 'fence-kit';
 import { mapScriptUri } from './vscodeHost.ts';
 import { createCircuitEditor } from './circuitEditor.ts';
-import { createSession } from './session.ts';
-import type { Session } from './session.ts';
+import { createSession } from 'fence-kit';
+import type { Session } from 'fence-kit';
 import { attachSession, createSessionHost } from './vscodeHost.ts';
 import { markdownEditor } from './vscodePort.ts';
 

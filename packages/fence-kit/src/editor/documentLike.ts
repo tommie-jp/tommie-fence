@@ -1,4 +1,4 @@
-import { strippedIndent } from 'fence-kit';
+import { strippedIndent } from './edits.ts';
 
 /**
  * セッションが文書とエディタに求める最小の形。**vscode の `TextDocument` と

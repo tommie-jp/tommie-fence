@@ -16,7 +16,12 @@ const SRC_DIR = fileURLToPath(new URL('.', import.meta.url));
 const ALLOWED = new Set<string>();
 
 // import と export の両方、静的も動的も、引用符はどちらも拾う。
-const SPECIFIER = /(?:\bfrom|\bimport|\brequire)\s*\(?\s*['"]([^'"]+)['"]/g;
+//
+// **`from` と引用符の間に空白を要る**ことにしてある。詰めて書けるのは
+// 括弧を挟む動的 import だけなので、これで綴りは減らない。緩めると
+// `'.cf-from'` のような**字の中の from** を指し先と読んでしまう
+// (webview の class 名で実際に踏んだ)。
+const SPECIFIER = /\bfrom\s+['"]([^'"]+)['"]|\bimport\s+['"]([^'"]+)['"]|\b(?:import|require)\s*\(\s*['"]([^'"]+)['"]/g;
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -27,7 +32,7 @@ function sourceFiles(dir: string): string[] {
 }
 
 const specifiersOf = (source: string): string[] =>
-  [...source.matchAll(SPECIFIER)].map((match) => match[1] ?? '');
+  [...source.matchAll(SPECIFIER)].map((match) => match[1] ?? match[2] ?? match[3] ?? '');
 
 describe('fence-kit の依存', () => {
   const files = sourceFiles(SRC_DIR);
@@ -50,6 +55,14 @@ describe('fence-kit の依存', () => {
       );
       expect(outside.length, sample).toBeGreaterThan(0);
     }
+  });
+
+  test('字の中の from を指し先と読まない', () => {
+    // webview の class 名 `.cf-from` で実際に踏んだ。詰めて書かれた `from'`
+    // は指し先ではない (指し先の前には必ず空白が要る)。
+    const sample = "for (const el of document.querySelectorAll('.cf-from')) el.remove();";
+
+    expect(specifiersOf(sample)).toEqual([]);
   });
 
   test.each(files.map((path) => [path.slice(SRC_DIR.length), path]))(

@@ -1,5 +1,6 @@
 import { anchorOf, movePart, movablePartIds } from '../../core/edit/move.ts';
-import type { Edit, NetDiff } from '../../core/edit/move.ts';
+import type { Edit } from '../../core/edit/move.ts';
+import { describeDiff } from 'fence-kit';
 import { fenceAt } from '../../core/edit/map.ts';
 import { formatAddress, parseAddress } from '../../core/model/address.ts';
 
@@ -27,19 +28,6 @@ export type EditorPort = {
   readonly info: (message: string) => void;
   readonly warn: (message: string) => void;
 };
-
-/** 接続の変化を、動かしたあとのお知らせに添える 1 文にする。無変化なら null。 */
-export function describeDiff(diff: NetDiff): string | null {
-  const parts: string[] = [];
-  if (diff.lost.length > 0) {
-    parts.push(`離れた接続: ${diff.lost.map((pair) => pair.join(' — ')).join(', ')}`);
-  }
-  if (diff.gained.length > 0) {
-    // 同じ番地に 2 部品は**この文法では接続**。禁止ではなく、つながったというお知らせ。
-    parts.push(`つながった接続: ${diff.gained.map((pair) => pair.join(' — ')).join(', ')}`);
-  }
-  return parts.length === 0 ? null : parts.join(' / ');
-}
 
 /**
  * カーソルのあるフェンスの部品を 1 つ選び、移動先の番地を打たせて書き換える。
