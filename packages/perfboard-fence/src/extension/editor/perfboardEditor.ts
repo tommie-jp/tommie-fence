@@ -5,6 +5,7 @@ import { issuesOf, shiftIssues } from '../../core/edit/issues.ts';
 import { aimAt, fenceAt } from '../../core/edit/map.ts';
 import { movePart, movablePartIds, partSpans } from '../../core/edit/move.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
+import { deletePart, deleteWire } from '../../core/edit/remove.ts';
 import { extractPerfboardFences } from '../../core/fences.ts';
 import { renderPerfboard } from '../../core/index.ts';
 import { parseAddress } from '../../core/model/address.ts';
@@ -78,11 +79,12 @@ export function createPerfboardEditor(): FenceEditor {
       return movePoint(source, at, target);
     },
 
-    // 第 2 段で作る (52 の docs/13 の手順 6)。**できないことは、できないと言う。**
+    deletePart,
+    deleteWire,
+
+    // 残りは第 2 段の続き (52 の docs/13 の手順 6)。**できないことは、できないと言う。**
     addPart: () => notYet('部品を置くの'),
     addWire: () => notYet('配線を引くの'),
-    deletePart: () => notYet('部品を消すの'),
-    deleteWire: () => notYet('配線を消すの'),
     rename: () => notYet('名前を変えるの'),
     setField: () => notYet('欄の書き換えは'),
     turn: () => notYet('回すの'),
