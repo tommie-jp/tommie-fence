@@ -1,5 +1,5 @@
 import { element, escapeMarkup } from 'fence-kit';
-import { markRange } from '../errors.ts';
+import { markRange, shiftError } from '../errors.ts';
 import { compileCircuit } from '../index.ts';
 import { messageLine } from '../render/errorCard.ts';
 import type { FenceError } from '../types.ts';
@@ -48,15 +48,13 @@ export function issuesOf(source: string): readonly Issue[] {
 }
 
 /**
- * フェンスの中の行を Markdown の行へずらす。**プレビューと同じ手口**
- * (`shiftErrors`) だが、こちらは `Issue` を包んだまま運ぶ。
+ * フェンスの中の行を Markdown の行へずらす。**ずらし方はプレビューと同じ
+ * ものを通す** (`shiftError`) — こちらは `Issue` で包んだまま運ぶだけ。
+ * 自前で数えると、相手の行 (related) のように片方だけ置き去りになる。
  * 行の分からないものはそのまま (足すと嘘の行を指す)。
  */
 export const shiftIssues = (issues: readonly Issue[], offset: number): readonly Issue[] =>
-  issues.map((issue) => ({
-    ...issue,
-    error: issue.error.line === null ? issue.error : { ...issue.error, line: issue.error.line + offset },
-  }));
+  issues.map((issue) => ({ ...issue, error: shiftError(issue.error, offset) }));
 
 /**
  * 読めなかった行の中身。**行番号だけでは照らす先がない** — マップを見ている

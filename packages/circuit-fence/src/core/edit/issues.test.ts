@@ -65,6 +65,15 @@ describe('shiftIssues', () => {
     expect(shiftIssues(issues, 10)[0]?.error.line).toBe(12);
   });
 
+  test('moves the related line too, so it points at the Markdown line', () => {
+    const issues = issuesOf(fence('parts:', '  R1: resistor a1 a3', '  R2: resistor a1 a3'));
+
+    const shifted = shiftIssues(issues, 10);
+
+    expect(shifted[0]?.error.line).toBe(13);
+    expect(shifted[0]?.error.related).toBe(12);
+  });
+
   test('leaves an issue that has no line alone', () => {
     const issues = [{ kind: 'error' as const, error: { message: '読めません', line: null } }];
 

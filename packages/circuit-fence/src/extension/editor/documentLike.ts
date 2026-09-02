@@ -9,7 +9,9 @@ import { strippedIndent } from '../../core/edit/shared.ts';
 export type DocLike = {
   readonly uri: { toString(): string };
   getText(): string;
-  /** 行は 0 始まり (vscode に合わせる)。 */
+  /** 行の数。**`lineAt` を呼ぶ前に範囲を確かめるため**に要る (vscode は外で投げる)。 */
+  readonly lineCount: number;
+  /** 行は 0 始まり (vscode に合わせる)。**範囲の外は投げる**。 */
   lineAt(line: number): { readonly text: string };
 };
 

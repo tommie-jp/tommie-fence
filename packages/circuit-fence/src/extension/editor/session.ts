@@ -230,6 +230,12 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
    * 帯の 1 行を押されたら、その行をエディタで光らせて見せる。
    * **書き換えはしない** — 直すのは書き手の仕事で、こちらは場所を指すだけ。
    * 光を消さないので `refresh` は呼ばない (呼ぶと自分で消してしまう)。
+   *
+   * **行は文書の中に収める。** 閉じていないフェンスの YAML エラーは本文の
+   * 1 行先に出るので、打ちかけのフェンスが文末にあると帯は最後の行より先を
+   * 指す。そのまま `lineAt` を呼ぶと vscode が投げる。最後の行へ寄せるのは、
+   * 行が無いからと黙って何もしないと**押しても動かない行**ができるため
+   * (そのエラーは文末の話なので、最後の行が指す先として正しい)。
    */
   function goTo(message: Incoming): void {
     const line = typeof message.line === 'number' ? message.line : null;
@@ -237,7 +243,7 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
     if (line === null || document === null) return;
 
     // 帯の行は Markdown の 1 始まり、光らせる先は vscode の 0 始まり。
-    const at = line - 1;
+    const at = Math.min(Math.max(line - 1, 0), document.lineCount - 1);
     light([{ line: at, start: 0, end: document.lineAt(at).text.length }]);
   }
 

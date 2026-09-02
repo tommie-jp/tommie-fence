@@ -5,7 +5,13 @@ import { indentOn } from './documentLike.ts';
 const docOf = (lines: readonly string[]) => ({
   uri: 'file:///a.md',
   getText: () => lines.join('\n'),
-  lineAt: (line: number) => ({ text: lines[line] ?? '' }),
+  lineCount: lines.length,
+  // vscode に合わせて範囲の外は投げる (偽物が空文字を返すと外れた呼びが隠れる)。
+  lineAt: (line: number) => {
+    const text = lines[line];
+    if (text === undefined) throw new Error(`Illegal value for \`line\` (${line})`);
+    return { text };
+  },
 });
 
 describe('changesForFence', () => {

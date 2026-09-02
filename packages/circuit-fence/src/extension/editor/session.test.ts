@@ -13,7 +13,15 @@ const docOf = (uri: string, text: string): Doc => {
   return {
     uri,
     getText: () => current,
-    lineAt: (line: number) => ({ text: current.split('\n')[line] ?? '' }),
+    get lineCount() { return current.split('\n').length; },
+    // vscode の TextDocument は範囲の外で投げる。**偽物も投げる** —
+    // 空文字を返すと、範囲を外れて呼んでいることが試験で隠れる。
+    lineAt: (line: number) => {
+      const lines = current.split('\n');
+      const text = lines[line];
+      if (text === undefined) throw new Error(`Illegal value for \`line\` (${line})`);
+      return { text };
+    },
     set: (next: string) => { current = next; },
   };
 };
@@ -450,6 +458,20 @@ describe('読めなかったところを帯に出す', () => {
     await session.handle({ kind: 'goto', line: 5 });
 
     expect(host.lit.at(-1)).toEqual({ uri: A, ranges: [{ line: 4, start: 0, end: '  R1: resistr a1 a3'.length }] });
+  });
+
+  test('survives a row that points past the end of the document', async () => {
+    // 閉じていないフェンスの YAML エラーは本文の 1 行先に出る。文書が
+    // 2 行しかないのに帯は 3 行目を指すので、そのまま lineAt を呼ぶと
+    // vscode が投げる (実際に踏める: 打ちかけのフェンスが文末にあるとき)。
+    const doc = docOf(A, '```circuit\nparts: [');
+    const host = hostOf([doc], at(doc, 1));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'goto', line: 3 });
+
+    expect(host.lit.at(-1)).toEqual({ uri: A, ranges: [{ line: 1, start: 0, end: 'parts: ['.length }] });
   });
 
   test('ignores a click on a row that carries no line', async () => {

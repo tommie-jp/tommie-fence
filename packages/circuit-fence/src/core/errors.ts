@@ -51,21 +51,23 @@ export const fail = <T>(message: string, line: number | null, token?: string): R
 export const relatedLine = (error: FenceError): number | null => error.related ?? null;
 
 /**
- * フェンスの中の行番号を、Markdown の行番号へ移す。
- * 相手の行 (related) も一緒に動かす。ここを 1 か所にしておかないと、
- * 片方だけずれた行番号が出る。
+ * 読めなかったところ 1 件を、フェンスの中の行から Markdown の行へ移す。
+ * 相手の行 (related) も一緒に動かす。**ここを 1 か所にしておかないと、
+ * 片方だけずれた行番号が出る** — マップの帯 (`edit/issues.ts`) も通す。
  *
  * 行の中身と桁は**フェンスの行から取ったもの**なので動かさない。
  */
+export const shiftError = (error: FenceError, offset: number): FenceError => {
+  const related = relatedLine(error);
+  return {
+    ...error,
+    ...(error.line === null ? {} : { line: error.line + offset }),
+    ...(related === null ? {} : { related: related + offset }),
+  };
+};
+
 export const shiftErrors = (errors: readonly FenceError[], offset: number): FenceError[] =>
-  errors.map((error) => {
-    const related = relatedLine(error);
-    return {
-      ...error,
-      ...(error.line === null ? {} : { line: error.line + offset }),
-      ...(related === null ? {} : { related: related + offset }),
-    };
-  });
+  errors.map((error) => shiftError(error, offset));
 
 /**
  * 出口へ流してはいけない字。**1 文字を 1 文字に**置き換える
