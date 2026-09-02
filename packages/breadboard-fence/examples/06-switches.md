@@ -15,6 +15,8 @@ wires:
   - +t5 -- a5 red
   - j10 -- i12 orange
   - i14 -- -b14 black
+notes:
+  - source blue
 ```
 
 ![図01 タクトスイッチで LED を点ける](out/06-switches-1.svg)

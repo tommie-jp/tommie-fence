@@ -65,6 +65,8 @@ wires:
   - EAR.1 -- f17 blue
   - EAR.2 -- -t23 black
   - h22 -- -b22 black
+notes:
+  - source blue
 ```
 
 ![図01 1 石中波ラジオ](out/09-am-radio.svg)
