@@ -18,8 +18,8 @@ wires:
   - IN -- a3
   - a3 -- c3
   - c7 -- e7
-  - e10 -- e1
-  - e1 -- GND
+  - e10 -- e1 black
+  - e1 -- GND black
 notes:
   - mark c3 red
   - box b6 f11 blue
@@ -66,8 +66,8 @@ wires:
   - IN -- a3
   - a3 -- c3
   - c7 -- c9
-  - c11 -- c1
-  - c1 -- GND
+  - c11 -- c1 black
+  - c1 -- GND black
 notes:
   - source blue
 ```
@@ -93,8 +93,8 @@ wires:
   - IN -- a3
   - a3 -- c3
   - c7 -- c9
-  - c11 -- c1
-  - c1 -- GND
+  - c11 -- c1 black
+  - c1 -- GND black
 notes:
   - source
 ```
@@ -113,6 +113,7 @@ notes:
 ```perfboard
 board: 12x7
 style:
+  check: off
   labels:
     row: numeric
     col: alpha

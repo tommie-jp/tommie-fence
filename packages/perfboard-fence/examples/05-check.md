@@ -17,8 +17,8 @@ parts:
   R3: resistor e3 e4 1k
   D1: led g3 g5 green
 wires:
-  - VCC -- a3
-  - a3 -- b3
+  - VCC -- a3 red
+  - a3 -- b3 red
   - b7 -- b1
   - b1 -- h1
   - g10 -- g12

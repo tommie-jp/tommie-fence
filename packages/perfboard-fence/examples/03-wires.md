@@ -62,7 +62,7 @@ parts:
   R1: resistor b3 b6 10k
 wires:
   - VCC -- b3 red
-  - b6 -- h10 blue
+  - b6 -- h10 black
   - h10 -- GND black
 notes:
   - source blue

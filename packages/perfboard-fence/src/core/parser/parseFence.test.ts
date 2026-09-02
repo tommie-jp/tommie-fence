@@ -185,10 +185,19 @@ describe('parseFence', () => {
   });
 
   test('says a package it cannot draw yet is not drawn, rather than ignoring it', () => {
+    const parsed = parseFence('board: 10x6\nparts:\n  D1: led/5mm a1 a4\n');
+
+    expect(parsed.doc?.parts[0]?.variant).toBe('5mm');
+    expect(parsed.errors.some((e) => e.notice === true && e.message.includes('5mm'))).toBe(true);
+  });
+
+  test('stays quiet about a package it does draw', () => {
+    // コンデンサは姿ごとに色と形が変わる (`render/parts.ts`)。描き分けるものに
+    // 「描き分けません」と言うと、直しようのない帯が例に出たままになる。
     const parsed = parseFence('board: 10x6\nparts:\n  C1: capacitor/electrolytic a1 a4\n');
 
     expect(parsed.doc?.parts[0]?.variant).toBe('electrolytic');
-    expect(parsed.errors.some((e) => e.notice === true && e.message.includes('electrolytic'))).toBe(true);
+    expect(parsed.errors).toEqual([]);
   });
 });
 

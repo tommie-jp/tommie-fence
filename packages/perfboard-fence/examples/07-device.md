@@ -11,16 +11,16 @@ parts:
   D1: led c10 c12 red
   BAT:
     type: device
-    at: -c4
+    at: -b4
     label: 電池 3V
     pins: + -
 wires:
-  - BAT.+ -- a4
-  - a4 -- c4
+  - BAT.+ -- a4 red
+  - a4 -- c4 red
   - c8 -- c10
-  - BAT.- -- a5
-  - a5 -- a12
-  - a12 -- c12
+  - BAT.- -- a5 black
+  - a5 -- a12 black
+  - a12 -- c12 black
 notes:
   - source blue
 ```
@@ -54,49 +54,81 @@ N3 : D1.2, BAT.-
 その場所**に置ける (箱の左上がその番地)。入る側と出る側を分けると、信号の流れが
 図の上から下へ読める。
 
-下の図は `-e1` (板の上) と `n5` (板の下)。帯に並べると置きたかった場所と関係なく
+下の図は `-b1` `-b7` (板の上) と `k14` (板の下)。帯に並べると置きたかった場所と関係なく
 散るので、**並べ方を自分で決めたいときは番地で書く**。
 
 **足は穴の格子に載る**ので、機器の足からまず真下 (真上) の穴へ落として、そこから
-板の上を配線できる (`IN.sig -- a1`、`a1 -- b1`…)。斜めに 1 本で引くより、
+板の上を配線できる (`IN.SIG -- a7`、`a7 -- c7`…)。斜めに 1 本で引くより、
 どの穴を通っているかが読みやすい。
 
 ```perfboard
 board: 16x10
 title: 図02 入りと出を上下に分ける
 parts:
-  U1: dip8 d5 NE555
-  R1: resistor b3 b7 10k
-  C1: capacitor/ceramic h3 h5 10n
+  U1: dip8 d6 NE555
+  R1: resistor d12 g12 10k
+  C1: capacitor/electrolytic i12 j12 10u
+  C2: capacitor/ceramic i11 j11 10n
+  R3: resistor c14 f14 100
+  BAT:
+    type: device
+    at: -b1
+    label: 電池 5V
+    pins: + -
   IN:
     type: device
-    at: -e1
+    at: -b7
     label: 信号源
-    pins: sig gnd
+    pins: SIG GND
   SPK:
     type: device
-    at: n5
+    at: k14
     label: スピーカー 8Ω
-    pins: 1 2
+    pins: + -
 wires:
-  - IN.sig -- a1
-  - a1 -- b1
-  - b1 -- b3
-  - b7 -- b5
-  - b5 -- d5
-  - IN.gnd -- a2
-  - a2 -- h2
-  - h2 -- h3
-  - SPK.1 -- j5
-  - j5 -- h5
-  - SPK.2 -- j6
-  - j6 -- j8
-  - j8 -- g8
+  - BAT.+ -- a1 red
+  - a1 -- g1 red
+  - g1 -- g6 red
+  - g1 -- i1 red
+  - i1 -- i10 red
+  - i10 -- d10 red
+  - d10 -- d9 red
+  - d10 -- d12 red
+  - BAT.- -- a2 black
+  - a2 -- b2 black
+  - b2 -- d2 black
+  - d2 -- d6 black
+  - d2 -- j2 black
+  - IN.SIG -- a7
+  - a7 -- c7
+  - c7 -- d7
+  - IN.GND -- a8 black
+  - a8 -- b8 black
+  - b8 -- b2 black
+  - g7 -- h7 white
+  - g8 -- h8 white
+  - h7 -- h8 white
+  - h8 -- h12 white
+  - h12 -- g12 white
+  - h12 -- i12 white
+  - g9 -- g11 yellow
+  - g11 -- i11 yellow
+  - d8 -- c8 yellow
+  - c8 -- c14 yellow
+  - f14 -- j14 yellow
+  - SPK.+ -- j14 yellow
+  - SPK.- -- j15 black
+  - j2 -- j11 black
+  - j11 -- j12 black
+  - j12 -- j13 black
+  - j13 -- i13 black
+  - i13 -- i15 black
+  - i15 -- j15 black
 notes:
   - source blue
 ```
 
 ![図02 入りと出を上下に分ける](out/07-device-2.svg)
 
-足の名前は空白を含まなければ何でもよい (`+` `-` `sig` `gnd` `1` `2`)。
+足の名前は空白を含まなければ何でもよい (`+` `-` `SIG` `GND` など)。
 実物の端子に書いてある綴りをそのまま使うと、組むときに読み替えずに済む。

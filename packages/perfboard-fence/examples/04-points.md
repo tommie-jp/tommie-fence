@@ -14,13 +14,13 @@ parts:
   R1: resistor b3 b6 4k7
   C1: capacitor d6 d9 100n
 wires:
-  - VCC -- a3
-  - a3 -- b3
+  - VCC -- a3 red
+  - a3 -- b3 red
   - b6 -- d6
   - b6 -- b12
   - b12 -- OUT
-  - d9 -- d1
-  - d1 -- GND
+  - d9 -- d1 black
+  - d1 -- GND black
 notes:
   - source blue
 ```

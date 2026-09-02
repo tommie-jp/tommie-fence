@@ -107,11 +107,11 @@ parts:
 wires:
   - c3 -- e3
   - e3 -- e5
-  - c5 -- c1
-  - c1 -- GND
+  - c5 -- c1 black
+  - c1 -- GND black
   - e10 -- c10
-  - c12 -- c1
-  - c1 -- GND
+  - c12 -- c1 black
+  - c1 -- GND black
 ```
 
 ![図04 SMA コネクタ (オスとメス)](out/02-parts-4.svg)
@@ -146,11 +146,11 @@ wires:
   - c6 -- f6
   - f3 -- f1
   - c6 -- c8
-  - f8 -- h8
-  - h8 -- GND
-  - c0 -- f0
-  - f0 -- h0
-  - h0 -- GND
+  - f8 -- h8 black
+  - h8 -- GND black
+  - c0 -- f0 black
+  - f0 -- h0 black
+  - h0 -- GND black
 ```
 
 ![図05 SMA を板の縁に載せる (6 dB アッテネータ)](out/02-parts-5.svg)

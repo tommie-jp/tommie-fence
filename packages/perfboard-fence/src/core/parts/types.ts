@@ -141,6 +141,6 @@ export const isEdgeMount = (type: string, variant: string | null): boolean =>
  * 姿で図の形が変わる種類。**ここに無い種類は「まだ描き分けません」と言う** —
  * 黙って捨てると、書いた人は違いが図に出ているつもりのまま終わる。
  */
-const DRAWS_VARIANT = new Set(['sma']);
+const DRAWS_VARIANT = new Set(['sma', 'capacitor']);
 
 export const drawsVariant = (type: string): boolean => DRAWS_VARIANT.has(type);

@@ -336,32 +336,92 @@ function inductorBody(part: PlacedPart, width: number, theme: Theme): string {
 }
 
 /**
- * コンデンサの胴。**実物と同じ 3 桁コードを刷る** (`100n` なら `104`)。
- * 手元の部品箱から選ぶときに見るのはこの数字なので、値の綴りより刷り字のほうが
- * 突き合わせやすい。
+ * コンデンサの姿ごとの見た目。**実物の色と形**なので、SMA の金物と同じく
+ * テーマから触らせない (塗り替えると図が嘘になる)。
  *
- * **胴に入らない幅では刷らない。** 切れた数字は別の容量に読めてしまう
- * (`104` が `10` に見えると 10pF)。
+ * 積層セラミックは青い小判、フィルムは黄の箱、タンタルは橙の小判、
+ * アルミ電解は黒い缶。**部品箱から選ぶときに最初に見るのがこの色と形**で、
+ * 値は刷り字とキャプションのほうで読む。
+ */
+type CapacitorLook = {
+  readonly fill: string;
+  readonly edge: string;
+  /** 胴に刷る字の色。地の明るさで決まる。 */
+  readonly ink: string;
+  /** 角の丸み。小判 (`BODY_HEIGHT / 2`) か箱 (小さい値) か。 */
+  readonly round: number;
+};
+
+const CAPACITOR_LOOKS: Record<string, CapacitorLook> = {
+  ceramic: { fill: '#2f6fb5', edge: '#1d4a7d', ink: '#f2f5f8', round: BODY_HEIGHT / 2 },
+  film: { fill: '#d9b02c', edge: '#a07f14', ink: '#3a2f08', round: 2 },
+  tantalum: { fill: '#e08a1e', edge: '#a35f0c', ink: '#3a2205', round: BODY_HEIGHT / 2 },
+  electrolytic: { fill: '#20242b', edge: '#0b0d10', ink: '#e8ebee', round: 3 },
+};
+
+const capacitorLook = (variant: string | null): CapacitorLook | null =>
+  variant !== null && Object.hasOwn(CAPACITOR_LOOKS, variant) ? CAPACITOR_LOOKS[variant] ?? null : null;
+
+/** アルミ缶の縁。幅と、両端から空ける幅。 */
+const CAN_RING = 3;
+const CAN_INSET = 2;
+
+/**
+ * アルミ電解の缶の縁。**姿の違いを色だけに預けない** — 白黒で刷ると
+ * 地の色は消えるが、縁の輪は形として残る。
+ */
+const canRings = (width: number): string =>
+  width < (CAN_RING + CAN_INSET) * 3
+    ? ''
+    : [-1, 1]
+      .map((side) => element('rect', {
+        x: num(side < 0 ? -width / 2 + CAN_INSET : width / 2 - CAN_INSET - CAN_RING),
+        y: num(-BODY_HEIGHT / 2 + 1),
+        width: CAN_RING, height: BODY_HEIGHT - 2, rx: 1, fill: '#c3c8cf',
+      }))
+      .join('');
+
+/**
+ * コンデンサの胴。**姿を書いたら姿の色と形で描く** (`capacitor/ceramic`)。
+ * 書かなければ地の胴のまま — 姿の分からない部品を、あるように描かない。
+ *
+ * **実物と同じ 3 桁コードを刷る** (`100n` なら `104`)。手元の部品箱から
+ * 選ぶときに見るのはこの数字なので、値の綴りより刷り字のほうが突き合わせやすい。
+ * **アルミ電解にだけは刷らない** — 実物の缶に出ているのは容量そのもので、
+ * 3 桁コードではない (刷ると実物と違うものを図が言うことになる)。
  */
 function capacitorBody(part: PlacedPart, width: number, theme: Theme): string {
   const farads = part.value === null ? null : parsePicofarads(part.value);
-  return codedBody(part, width, theme, farads === null ? null : capacitorCode(farads));
+  const code = farads === null ? null : capacitorCode(farads);
+  const look = capacitorLook(part.variant);
+  if (look === null) return codedBody(part, width, theme, code);
+
+  const shell = element('rect', {
+    x: num(-width / 2), y: num(-BODY_HEIGHT / 2), width: num(width), height: BODY_HEIGHT,
+    rx: num(look.round), fill: look.fill, stroke: look.edge, 'stroke-width': 1,
+  });
+  return part.variant === 'electrolytic'
+    ? shell + canRings(width)
+    : shell + printedCode(width, code, look.ink);
 }
 
 /** 3 桁コードを刷った胴。刷れないときは地の胴だけ。 */
 function codedBody(_part: PlacedPart, width: number, theme: Theme, code: string | null): string {
-  const shell = genericBody(width, theme);
-  if (code === null) return shell;
+  return genericBody(width, theme) + printedCode(width, code, theme.palette.caption);
+}
+
+/**
+ * 胴に刷る 3 桁コード。**胴に入らない幅では刷らない** — 切れた数字は
+ * 別の容量に読めてしまう (`104` が `10` に見えると 10pF)。
+ */
+function printedCode(width: number, code: string | null, ink: string): string {
+  if (code === null) return '';
 
   const size = BODY_HEIGHT * 0.75;
   // 3 桁ぶんの幅が無ければ刷らない (等幅ではないので少し余裕を見る)。
-  // **切れた `104` は `10` (= 10pF) に読める。**
-  if (width < size * code.length * 0.8) return shell;
+  if (width < size * code.length * 0.8) return '';
 
-  return shell + svgText(0, size * 0.36, code, {
-    fill: theme.palette.caption,
-    'font-size': num(size),
-  });
+  return svgText(0, size * 0.36, code, { fill: ink, 'font-size': num(size) });
 }
 
 const bodyOf = (
