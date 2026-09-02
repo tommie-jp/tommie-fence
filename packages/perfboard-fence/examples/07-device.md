@@ -54,76 +54,81 @@ N3 : D1.2, BAT.-
 その場所**に置ける (箱の左上がその番地)。入る側と出る側を分けると、信号の流れが
 図の上から下へ読める。
 
-下の図は `-b1` `-b7` (板の上) と `k14` (板の下)。帯に並べると置きたかった場所と関係なく
-散るので、**並べ方を自分で決めたいときは番地で書く**。
+下の図は `-b1` `-b13` (板の上) と `n16` (板の下)。帯に並べると置きたかった場所と
+関係なく散るので、**並べ方を自分で決めたいときは番地で書く**。
 
 **足は穴の格子に載る**ので、機器の足からまず真下 (真上) の穴へ落として、そこから
-板の上を配線できる (`IN.SIG -- a7`、`a7 -- c7`…)。斜めに 1 本で引くより、
+板の上を配線できる (`IN.SIG -- a13`、`a13 -- a11`…)。斜めに 1 本で引くより、
 どの穴を通っているかが読みやすい。
 
 ```perfboard
-board: 16x10
+board: 18x12
 title: 図02 入りと出を上下に分ける
 parts:
-  U1: dip8 d6 NE555
-  R1: resistor d12 g12 10k
-  C1: capacitor/electrolytic i12 j12 10u
-  C2: capacitor/ceramic i11 j11 10n
-  R3: resistor c14 f14 100
+  U1: dip8 e8 NE555
+  R1: resistor j3 j6 10k
+  R2: resistor j9 j12 68k
+  C1: capacitor/ceramic j13 l13 10n
+  C2: capacitor/ceramic j18 l18 10n
+  R3: resistor c16 f16 100
   BAT:
     type: device
-    at: -c1
+    at: -b1
     label: 電池 5V
     pins: + -
   IN:
     type: device
-    at: -c7
+    at: -b13
     label: 信号源
     pins: SIG GND
   SPK:
     type: device
-    at: l14
+    at: n16
     label: スピーカー 8Ω
     pins: + -
 wires:
   - BAT.+ -- a1 red
-  - a1 -- g1 red
-  - g1 -- g6 red
-  - g1 -- i1 red
-  - i1 -- i10 red
-  - i10 -- d10 red
-  - d10 -- d9 red
-  - d10 -- d12 red
+  - a1 -- h1 red
+  - h1 -- h8 red
+  - h1 -- j1 red
+  - j1 -- j3 red
   - BAT.- -- a2 black
-  - a2 -- b2 black
-  - b2 -- d2 black
-  - d2 -- d6 black
-  - d2 -- j2 black
-  - IN.SIG -- a7
-  - a7 -- c7
-  - c7 -- d7
-  - IN.GND -- a8 black
-  - a8 -- b8 black
-  - b8 -- b2 black
-  - g7 -- h7 white
-  - g8 -- h8 white
-  - h7 -- h8 white
-  - h8 -- h12 white
-  - h12 -- g12 white
-  - h12 -- i12 white
-  - g9 -- g11 yellow
-  - g11 -- i11 yellow
-  - d8 -- c8 yellow
-  - c8 -- c14 yellow
-  - f14 -- j14 yellow
-  - SPK.+ -- j14 yellow
-  - SPK.- -- j15 black
-  - j2 -- j11 black
-  - j11 -- j12 black
-  - j12 -- j13 black
-  - j13 -- i13 black
-  - i13 -- i15 black
-  - i15 -- j15 black
+  - a2 -- e2 black
+  - e2 -- l2 black
+  - e8 -- e7 black
+  - e7 -- e2 black
+  - l2 -- l13 black
+  - l13 -- l14 black
+  - a14 -- k14 black
+  - k14 -- l14 black
+  - k14 -- k18 black
+  - k18 -- l18 black
+  - l18 -- l17 black
+  - SPK.- -- l17 black
+  - IN.GND -- a14 black
+  - IN.SIG -- a13
+  - a13 -- a11
+  - a11 -- e11
+  - e9 -- d9 white
+  - d9 -- c9 white
+  - c9 -- c13 white
+  - c13 -- i13 white
+  - i13 -- j13 white
+  - h10 -- i10 white
+  - i10 -- i12 white
+  - i12 -- j12 white
+  - j12 -- j13 white
+  - h9 -- i9 yellow
+  - i9 -- j9 yellow
+  - j6 -- j9 yellow
+  - h11 -- h12 yellow
+  - h12 -- h18 yellow
+  - h18 -- j18 yellow
+  - e10 -- d10 yellow
+  - d10 -- d16 yellow
+  - d16 -- c16 yellow
+  - f16 -- l16 yellow
+  - SPK.+ -- l16 yellow
 notes:
   - source blue
 ```
@@ -132,3 +137,8 @@ notes:
 
 足の名前は空白を含まなければ何でもよい (`+` `-` `SIG` `GND` など)。
 実物の端子に書いてある綴りをそのまま使うと、組むときに読み替えずに済む。
+
+中身は **NE555 の非安定マルチバイブレータ**で、`R1` `R2` `C1` が周波数を決める
+(1.44 / ((10k + 2×68k) × 10n) ≒ 1 kHz)。**信号源は 4 番ピン (RESET) を開け閉め
+する** — H の間だけ発振してスピーカーが鳴り、L で止まる。`C2` は 5 番ピン
+(CONT) の安定用、`R3` は 555 の出力電流を 8Ω に対して抑えるための直列抵抗。
