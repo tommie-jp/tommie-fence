@@ -16,49 +16,21 @@ import type { FenceError, PartSpec } from '../types.ts';
  * どれも vscode を知らない純関数 (設計上の約束 1)。
  */
 
-/** 行の中の 1 か所の差し替え。行は 1 始まり、桁は 0 始まり。 */
-export type Edit = {
-  readonly line: number;
-  readonly column: number;
-  readonly length: number;
-  readonly text: string;
-};
-
 /**
- * フェンスの中の 1 か所。行は 1 始まり、桁は 0 始まり (`Edit` と同じ数え方)。
- * **どこに書かれているかを指す**だけで、書き換えの中身は持たない。
+ * 行と桁の数え方は**3 つのフェンスで同じ**なので fence-kit にある。
+ * ここから再び輸出するのは、円環の書き換えを避けるため
+ * (`core/edit` の中は今までどおり `shared.ts` から取る)。
  */
-export type Span = { readonly line: number; readonly column: number; readonly length: number };
+import type { Connection, Edit, NetDiff, Rewrite } from 'fence-kit';
 
-/** つながっている端子の組。名前は並べ替えて持つ (向きは意味を持たない)。 */
-export type Connection = readonly [string, string];
-
-/** 移動で離れる接続と生まれる接続。 */
-export type NetDiff = { readonly lost: readonly Connection[]; readonly gained: readonly Connection[] };
+export { strippedIndent } from 'fence-kit';
+export type { Connection, Edit, LineEdit, NetDiff, Rewrite, Span } from 'fence-kit';
 
 export type Move = { readonly edits: readonly Edit[]; readonly diff: NetDiff };
 
 export type MoveResult =
   | { readonly ok: true; readonly value: Move }
   | { readonly ok: false; readonly error: FenceError };
-
-/**
- * 行そのものの出し入れ。行は 1 始まり (フェンスの中の行)。
- * **行の中の差し替え (`Edit`) と混ぜない** — 当て方が違う (桁を書き換えるか、
- * 行を出し入れするか) し、桁の履歴では行の増減を追えない。
- *
- * `insert` は**その行の前**に入れる (末尾へ足すときは行数 + 1)。
- */
-export type LineEdit =
-  | { readonly kind: 'insert'; readonly line: number; readonly text: string }
-  | { readonly kind: 'delete'; readonly line: number };
-
-/** 1 回の書き換え。行の中の差し替えと、行の出し入れの両方を持てる。 */
-export type Rewrite = {
-  readonly edits: readonly Edit[];
-  readonly lines: readonly LineEdit[];
-  readonly diff: NetDiff;
-};
 
 export type RewriteResult =
   | { readonly ok: true; readonly value: Rewrite }
@@ -107,19 +79,6 @@ export function diffOf(before: string, after: string): NetDiff {
     gained: toConnections([...now].filter((pair) => !was.has(pair)).sort()),
   };
 }
-
-/**
- * フェンスの取り出しがその行から剥がした字下げ。**行ごとに数える。**
- *
- * 取り出しは開き記号の字下げぶん「まで」を剥がすので、開き記号より浅い行からは
- * 剥がした量が少ない。開き記号の量を一律に足し戻すと、その行だけ桁が右へずれて
- * **別の場所を書き換える**。
- */
-export const strippedIndent = (opening: string, lineText: string): number =>
-  Math.min(
-    (/^ {0,3}/.exec(opening)?.[0] ?? '').length,
-    (/^ */.exec(lineText)?.[0] ?? '').length,
-  );
 
 /** 部品が持つ番地。**先頭がアンカー。** 3 か所で別々に持つと部品の種類を足したとき片方が黙って古くなる。 */
 export function addressesOf(part: PartSpec): readonly Address[] {

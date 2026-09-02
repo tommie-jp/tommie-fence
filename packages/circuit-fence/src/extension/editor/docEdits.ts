@@ -1,5 +1,4 @@
-import type { Edit } from '../../core/edit/move.ts';
-import type { Rewrite } from '../../core/edit/shared.ts';
+import type { Edit, Rewrite } from 'fence-kit';
 import { indentOn } from './documentLike.ts';
 import type { DocLike } from './documentLike.ts';
 

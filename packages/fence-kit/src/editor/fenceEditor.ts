@@ -1,5 +1,5 @@
-import type { FenceBlock } from 'fence-kit';
-import type { Edit, LineEdit, NetDiff, Span } from '../../core/edit/shared.ts';
+import type { FenceBlock } from '../fences.ts';
+import type { Edit, LineEdit, NetDiff, Span } from './edits.ts';
 
 /**
  * **殻がフェンスに求めるもの。** マップのセッション (`session.ts`) と webview は
@@ -13,7 +13,7 @@ import type { Edit, LineEdit, NetDiff, Span } from '../../core/edit/shared.ts';
  * フェンスごとに違う綴り (`a1` / `+t5` / `aa12`) が殻へ漏れる。
  *
  * 型のうち `Edit` / `LineEdit` / `NetDiff` / `Span` は**綴りに依らない**ので
- * いまは core から借りている。殻を fence-kit へ移すときに一緒に移る。
+ * 隣の `edits.ts` にある (行と桁の数え方は 3 つのフェンスで同じ)。
  */
 
 /** 文書の中のフェンス 1 つ (一覧に出す札)。 */

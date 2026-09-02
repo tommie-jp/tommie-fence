@@ -28,3 +28,8 @@ export { computeNets } from './nets.ts';
 export type { Net, NetInput, NetMember, StripId } from './nets.ts';
 export type { TextOptions } from './svg.ts';
 export type { Attributes } from './markup.ts';
+export { strippedIndent } from './editor/edits.ts';
+export type { Connection, Edit, LineEdit, NetDiff, Rewrite, Span } from './editor/edits.ts';
+export type {
+  Aim, EditChanges, EditResult, FenceEditor, FenceEntry, FenceView, NewPart, PartFields,
+} from './editor/fenceEditor.ts';

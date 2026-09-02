@@ -15,7 +15,7 @@ import { extractCircuitFences } from '../../core/fences.ts';
 import { formatAddress, parseAddress } from '../../core/model/address.ts';
 import type { Address } from '../../core/model/address.ts';
 import { renamePart } from '../../core/edit/rename.ts';
-import type { EditResult, FenceEditor, NewPart } from './fenceEditor.ts';
+import type { EditResult, FenceEditor, NewPart } from 'fence-kit';
 
 /**
  * circuit フェンスの編集エンジンを、殻が求める形 (`FenceEditor`) に束ねる。

@@ -1,5 +1,5 @@
 import { escapeMarkup } from 'fence-kit';
-import type { FenceEntry } from './fenceEditor.ts';
+import type { FenceEntry } from 'fence-kit';
 
 /**
  * マップのパネルの外側 (HTML の殻と見た目)。**純関数**なのでそのまま
