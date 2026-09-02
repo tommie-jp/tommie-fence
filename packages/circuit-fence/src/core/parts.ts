@@ -73,6 +73,9 @@ export type Turn = { readonly rotate: 0 | 90 | 180 | 270; readonly mirror: boole
 
 export const NO_TURN: Turn = { rotate: 0, mirror: false };
 
+/** 何か書かれているか (回っているか、反転しているか)。 */
+export const isTurned = (turn: Turn): boolean => turn.rotate !== 0 || turn.mirror;
+
 /**
  * 向きを書ける範囲。**回転と反転は別の欄**で持つ — 実機では、回すのは
  * 大丈夫でも反転すると字が鏡文字になる記号があった (DIP の足番号と型番)。

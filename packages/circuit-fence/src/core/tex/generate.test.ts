@@ -949,3 +949,106 @@ describe('generateTex for addresses between the cells', () => {
     expect(tex).toContain('\\foreach \\x in {0} {\\foreach \\y in {0,-2}');
   });
 });
+
+/**
+ * 向きの受け渡し。**書かれた語 → circuitikz のオプション**で、並びは
+ * `rotate` が先・`xscale` が後 (実機で確かめた「反転してから回す」の順)。
+ */
+describe('向き', () => {
+  test('turns a multi terminal part clockwise, the way the word reads', () => {
+    // 書き手には時計回りを見せる。TikZ の正は反時計回りなので符号を返す。
+    expect(generate('parts:', '  Q1: npn c3 r90').tex).toContain('\\node[npn, rotate=-90] (part-Q1)');
+    expect(generate('parts:', '  Q1: npn c3 r270').tex).toContain('rotate=-270');
+  });
+
+  test('mirrors left to right', () => {
+    expect(generate('parts:', '  Q1: npn c3 mirror').tex).toContain('\\node[npn, xscale=-1] (part-Q1)');
+  });
+
+  test('writes the rotation first, so the mirror happens first', () => {
+    // TikZ は後に書いたオプションを先に効かせる。逆順に書くと姿が変わる (実機で確認)。
+    expect(generate('parts:', '  Q1: npn c3 r90 mirror').tex).toContain('rotate=-90, xscale=-1');
+  });
+
+  test('leaves an unturned part exactly as it was', () => {
+    expect(generate('parts:', '  Q1: npn c3').tex).toContain('\\node[npn] (part-Q1) at (c3) {};');
+  });
+
+  test('turns a ground, which is the one terminal part that can turn', () => {
+    expect(generate('parts:', '  G1: ground c3 r90').tex).toContain('\\node[ground, rotate=-90] at (c3) {};');
+  });
+
+  test('keeps the op amp sign order alongside the turn', () => {
+    const { tex } = generate('parts:', '  U1: opamp c5 +up r90');
+
+    expect(tex).toContain('noinv input up');
+    expect(tex).toContain('rotate=-90');
+  });
+
+  /**
+   * 型番は別ノードなので**字は立ったまま**だが、掛けているアンカーは記号と
+   * 一緒に回る。回った先で下に来るアンカーを選び直す (実機で確認した挙動)。
+   */
+  describe('型番の掛け先', () => {
+    const anchorOf = (turn: string) => {
+      const { tex } = generate('parts:', `  Q1: npn c3 ${turn} 2SC1815`.trimEnd());
+      return /anchor=north\] at \(part-Q1\.(\w+)\)/.exec(tex)?.[1] ?? null;
+    };
+
+    test('hangs under the symbol however it is turned', () => {
+      expect(anchorOf('')).toBe('south');
+      expect(anchorOf('r90')).toBe('east');
+      expect(anchorOf('r180')).toBe('north');
+      expect(anchorOf('r270')).toBe('west');
+    });
+
+    test('swaps east and west when mirrored, since left and right change places', () => {
+      expect(anchorOf('mirror')).toBe('south');
+      expect(anchorOf('r90 mirror')).toBe('west');
+      expect(anchorOf('r270 mirror')).toBe('east');
+    });
+  });
+
+  /**
+   * 箱の中に書いた字は**記号と一緒に回る** (実機で確認。`r180` で逆さま)。
+   * 向きが付いたら、中心に立てた別ノードで書く。
+   */
+  describe('箱に書く型番', () => {
+    test('keeps the value inside the box while the box stands upright', () => {
+      expect(generate('parts:', '  U1: dip8 c3 NE555').tex).toContain('{$\\mathrm{NE555}$};');
+    });
+
+    test('lifts it out to an upright node once the box is turned', () => {
+      const { tex } = generate('parts:', '  U1: dip8 c3 r90 NE555');
+
+      expect(tex).toContain('\\node[dipchip, num pins=8, font=\\scriptsize, rotate=-90] (part-U1) at (c3) {};');
+      expect(tex).toContain('at (part-U1.center) {$\\mathrm{NE555}$};');
+    });
+  });
+
+  describe('オペアンプの ±', () => {
+    test('steps them in at a right angle to the pins once the symbol is turned', () => {
+      // 絶対値の横ずらしは 90 度に付いてこず、記号の外へ出た (実機で確認)。
+      // 中心へ寄せる形は + と − が重なったので、辺に直角に入る形にした。
+      expect(generate('parts:', '  U1: opamp c5 r90').tex).toContain('!0.44cm!-90:(part-U1.-)');
+    });
+
+    test('turns the step the other way when mirrored, since left and right swap', () => {
+      expect(generate('parts:', '  U1: opamp c5 mirror').tex).toContain('!0.44cm!90:(part-U1.-)');
+    });
+
+    test('draws them centred on the point, so a mirrored bar stays inside', () => {
+      // 点から右へ伸ばすと、反転した記号で横棒が縁をまたいで外へ出た (実測)。
+      expect(generate('parts:', '  U1: opamp c5 mirror').tex).toContain('+(-0.14,0)$) -- ++(0.28,0);');
+    });
+
+    test('leaves the upright symbol exactly as it was', () => {
+      // 立っているときの値は実物の回路図に寄せて詰めたもの。**図を変えない**
+      // のは向きを書いていない図の約束 (スナップショットも見張っている)。
+      const { tex } = generate('parts:', '  U1: opamp c5');
+
+      expect(tex).toContain('+(0.44,0)$) -- ++(0.28,0);');
+      expect(tex).not.toContain('part-U1.center');
+    });
+  });
+});

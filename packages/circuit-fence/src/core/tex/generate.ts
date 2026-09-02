@@ -3,8 +3,8 @@ import { DEFAULT_PITCH, cornerOf, formatAddress, texNameOfAddress, toPoint } fro
 import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
-import { lookupPartType, optionsFor, symbolFor } from '../parts.ts';
-import type { SourceInner } from '../parts.ts';
+import { isTurned, lookupPartType, optionsFor, symbolFor } from '../parts.ts';
+import type { SourceInner, Turn } from '../parts.ts';
 import { EMPTY_STYLE } from '../parser/style.ts';
 import { cellOf as addressOf, nodeNameOf, texNameOfEndpoint } from '../types.ts';
 import type {
@@ -328,7 +328,7 @@ const SIGN_SHIFT = 0.22;
  * になり、テキストの `{-}` は + に対して細くて短く、釣り合わない (どちらも実測)。
  * 線なら太さも長さも + と揃い、線の太さの指定にも一緒に従う。
  */
-function amplifierSigns(name: string): string[] {
+function amplifierSigns(name: string, turn: Turn): string[] {
   const bar = num(SIGN_BAR);
   const dx = num(SIGN_DX);
   const shift = num(SIGN_SHIFT);
@@ -336,12 +336,40 @@ function amplifierSigns(name: string): string[] {
   const plus = `($(${name}.+)!${shift}!(${name}.-)$)`;
   const minus = `($(${name}.-)!${shift}!(${name}.+)$)`;
 
+  // **向きが付いていない図は 1 バイトも変えない** (向きを書いた図だけが変わる)。
+  // 立っているときの横ずらしは実物の回路図に寄せて詰めた値なので、そのまま。
+  if (!isTurned(turn)) {
+    return [
+      // + は横棒と縦棒。縦棒は横棒の真ん中から上下へ伸ばす。
+      `\\draw ($${plus}+(${dx},0)$) -- ++(${bar},0);`,
+      `\\draw ($${plus}+(${num(SIGN_DX + SIGN_BAR / 2)},${num(-SIGN_BAR / 2)})$) -- ++(0,${bar});`,
+      // - は横棒だけ。+ と同じ長さ・同じ太さになる。
+      `\\draw ($${minus}+(${dx},0)$) -- ++(${bar},0);`,
+    ];
+  }
+
+  // 回した記号では、**足から足へ引いた線に直角な向き**へ同じ距離だけ入る。
+  // calc の `!長さ!角度:` は向きごと回るので、記号が何度回っても体の中へ入る。
+  //
+  // **中心へ寄せる形は採れなかった** — + と − が同じ点へ近づいて重なる
+  // (実測。0.75 まで寄せると 1 つの記号に見える)。直角なら足の間の高さが保たれる。
+  // 反転は左右の勝手が入れ替わるので、回す向きも入れ替える。
+  const hand = turn.mirror ? 1 : -1;
+  const into = (from: string, toward: string, quarter: number): string =>
+    `($${from}!${num(SIGN_DX)}cm!${quarter * hand}:(${name}.${toward})$)`;
+  const plusIn = into(plus, '-', 90);
+  const minusIn = into(minus, '+', -90);
+
+  // **回した図では点を中心に描く。** 立ちの図は点から右へ伸ばしているが、
+  // それだと反転した記号で横棒が縁をまたいで外へ出る (実測)。中心に描けば
+  // どちらへ入っても記号の内側に収まる。字は立てたまま (別の draw なので回らない)。
+  const half = num(SIGN_BAR / 2);
+  const centred = (at: string, dx: string, dy: string): string => `($${at}+(${dx},${dy})$)`;
+
   return [
-    // + は横棒と縦棒。縦棒は横棒の真ん中から上下へ伸ばす。
-    `\\draw ($${plus}+(${dx},0)$) -- ++(${bar},0);`,
-    `\\draw ($${plus}+(${num(SIGN_DX + SIGN_BAR / 2)},${num(-SIGN_BAR / 2)})$) -- ++(0,${bar});`,
-    // - は横棒だけ。+ と同じ長さ・同じ太さになる。
-    `\\draw ($${minus}+(${dx},0)$) -- ++(${bar},0);`,
+    `\\draw ${centred(plusIn, `-${half}`, '0')} -- ++(${bar},0);`,
+    `\\draw ${centred(plusIn, '0', `-${half}`)} -- ++(0,${bar});`,
+    `\\draw ${centred(minusIn, `-${half}`, '0')} -- ++(${bar},0);`,
   ];
 }
 
@@ -427,6 +455,38 @@ const ORIENTATION_TEX: Readonly<Record<string, string>> = {
   '+up': 'noinv input up',
   '+down': 'noinv input down',
 };
+
+/**
+ * 向きを circuitikz のオプションにする。**`rotate` を先に書く** —
+ * TikZ は後に書いたオプションを先に効かせるので、この並びで
+ * 「反転してから回す」になる (実機で確かめた。逆順だと姿が変わる)。
+ *
+ * 回転は書き手には**時計回り**で見せているので、TikZ へは符号を返して渡す。
+ */
+function turnOptions(turn: Turn): string[] {
+  return [
+    ...(turn.rotate === 0 ? [] : [`rotate=-${turn.rotate}`]),
+    ...(turn.mirror ? ['xscale=-1'] : []),
+  ];
+}
+
+/**
+ * 回った先で**下に来るアンカー**。型番はここに `anchor=north` で掛ける。
+ *
+ * 字そのものは別ノードなので立ったままだが、掛け先のアンカーは記号と一緒に
+ * 回る (実機で確認。`.south` のままだと `r90` で型番が左へ回った)。
+ */
+const UNDER: Readonly<Record<number, string>> = {
+  0: 'south', 90: 'east', 180: 'north', 270: 'west',
+};
+
+/** 左右反転は東と西を入れ替える (南北はそのまま)。 */
+const FLIPPED: Readonly<Record<string, string>> = { east: 'west', west: 'east' };
+
+function underAnchor(turn: Turn): string {
+  const anchor = UNDER[turn.rotate] ?? 'south';
+  return turn.mirror ? (FLIPPED[anchor] ?? anchor) : anchor;
+}
 
 /**
  * 部品を置ける位置を見せるグリッド。ブレッドボードと同じで、
@@ -533,7 +593,15 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
 
 function drawOneTerminal(part: OneTerminalPart, target: TexTarget): string {
   const at = texNameOfAddress(part.at);
-  const symbol = symbolFor(part.type, target);
+  // 記号に要るオプション → 書かれた向き、の順。1 端子はいまオプションを持つ
+  // 種類が無いので出力は変わらないが、**多端子と同じ道を通す** (種類に
+  // オプションが要るようになったとき、ここだけ落ちるのを防ぐ)。
+  // 回せるのは `ground` だけ (種類ごとの可否はモデルで見てある)。
+  const symbol = [
+    symbolFor(part.type, target),
+    ...optionsFor(part.type, target),
+    ...turnOptions(part.turn),
+  ].join(', ');
   const id = escapeTex(part.id);
 
   // 名前の出し方は種類ごとに決まっている (parts.ts の idLabel)。
@@ -564,21 +632,26 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
   const options = [symbol, ...optionsFor(part.type, target)];
   const turned = part.orientation === null ? null : ORIENTATION_TEX[part.orientation];
   if (turned !== undefined && turned !== null) options.push(turned);
+  options.push(...turnOptions(part.turn));
   const at = texNameOfAddress(part.at);
   const name = nodeNameOf(part.id);
   const annotation = part.value === null ? null : annotationOf(part.value, NO_UNIT, target);
-  // 箱で描く IC は型番を中に書く (回路図の慣習どおり)。
-  const inside = type?.valueInside === true ? (annotation ?? '') : '';
+  // 箱で描く IC は型番を中に書く (回路図の慣習どおり)。ただし**回した箱の中の
+  // 字は一緒に回る** (実機で確認。`r180` で逆さま) ので、向きが付いたら中心に
+  // 立てた別ノードへ移す。向きを書いた図だけが変わる。
+  const boxTurned = isTurned(part.turn);
+  const inside = type?.valueInside === true && !boxTurned ? (annotation ?? '') : '';
   const node = `\\node[${options.join(', ')}] (${name}) at (${at}) {${inside}};`;
-  // それ以外の型番は記号の南のアンカーに掛ける。`label=below:` はノードの
+  // それ以外の型番は記号の下に来るアンカーに掛ける。`label=below:` はノードの
   // (空の) 文字を基準にするので、記号の体の上に字が乗る (実機で確認)。
-  const number =
-    annotation === null || type?.valueInside === true
-      ? []
-      : [`\\node[font=\\scriptsize, anchor=north] at (${name}.south) {${annotation}};`];
+  const number = annotation === null
+    ? []
+    : type?.valueInside === true
+      ? (boxTurned ? [`\\node[font=\\scriptsize] at (${name}.center) {${annotation}};`] : [])
+      : [`\\node[font=\\scriptsize, anchor=north] at (${name}.${underAnchor(part.turn)}) {${annotation}};`];
   if (symbol !== 'plain amp') return [node, ...number];
 
-  return [node, ...number, ...amplifierSigns(name)];
+  return [node, ...number, ...amplifierSigns(name, part.turn)];
 }
 
 const drawPart = (part: PartSpec, target: TexTarget, pitch: number): string[] =>
