@@ -11,13 +11,16 @@ parts:
   D1: led c10 c12 red
   BAT:
     type: device
-    at: top
+    at: -c4
     label: 電池 3V
     pins: + -
 wires:
-  - BAT.+ -- c4
+  - BAT.+ -- a4
+  - a4 -- c4
   - c8 -- c10
-  - c12 -- BAT.-
+  - BAT.- -- a5
+  - a5 -- a12
+  - a12 -- c12
 notes:
   - source blue
 ```
@@ -54,6 +57,10 @@ N3 : D1.2, BAT.-
 下の図は `-e1` (板の上) と `n5` (板の下)。帯に並べると置きたかった場所と関係なく
 散るので、**並べ方を自分で決めたいときは番地で書く**。
 
+**足は穴の格子に載る**ので、機器の足からまず真下 (真上) の穴へ落として、そこから
+板の上を配線できる (`IN.sig -- a1`、`a1 -- b1`…)。斜めに 1 本で引くより、
+どの穴を通っているかが読みやすい。
+
 ```perfboard
 board: 16x10
 title: 図02 入りと出を上下に分ける
@@ -72,12 +79,19 @@ parts:
     label: スピーカー 8Ω
     pins: 1 2
 wires:
-  - IN.sig -- b3
+  - IN.sig -- a1
+  - a1 -- b1
+  - b1 -- b3
   - b7 -- b5
   - b5 -- d5
-  - IN.gnd -- h3
-  - h5 -- SPK.1
-  - g8 -- SPK.2
+  - IN.gnd -- a2
+  - a2 -- h2
+  - h2 -- h3
+  - SPK.1 -- j5
+  - j5 -- h5
+  - SPK.2 -- j6
+  - j6 -- j8
+  - j8 -- g8
 notes:
   - source blue
 ```

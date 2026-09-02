@@ -60,13 +60,19 @@ export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout): D
     const height = DEVICE_BOX_HEIGHT;
     // 板より上にあるなら足は下へ、下にあるなら足は上へ (板の側へ出す)。
     const above = at.y < layout.board.y + layout.board.height / 2;
-    const box: Band = { x: at.x, y: at.y, width, height };
+
+    // **足は穴の格子に載せる。** 1 本目が書いた番地の列に来て、そこから 1 穴ずつ。
+    // こうすると「その足のいちばん近い穴」が迷いなく決まり、配線を穴の番地で
+    // 書ける (帯に並べたときは箱の幅で割るので、穴とは揃わない)。
+    const columns = device.pins.map((_, pin) => layout.colX(address.col + pin));
+    const first = columns[0] ?? at.x;
+    const last = columns[columns.length - 1] ?? at.x;
+    const box: Band = { x: (first + last) / 2 - width / 2, y: at.y, width, height };
     const tip = above ? box.y + box.height + LEG : box.y - LEG;
-    const step = width / (device.pins.length + 1);
     placed.push({
       device: { ...device, at: above ? 'top' : 'bottom' },
       box,
-      pins: new Map(device.pins.map((name, pin) => [name, { x: box.x + step * (pin + 1), y: tip }])),
+      pins: new Map(device.pins.map((name, pin) => [name, { x: columns[pin] ?? at.x, y: tip }])),
     });
   }
 
@@ -126,22 +132,26 @@ function renderDevice(placed: PlacedDevice, theme: Theme): string {
     fill: theme.palette.body, stroke: theme.palette.bodyEdge, 'stroke-width': 1,
   });
 
-  // 足は箱の縁から出て、名前はその先の外側。**箱の中に書くと題と重なる。**
+  // 足は箱の縁から出る。**名前は箱の内側、足の付け根**に書く — 外側に書くと
+  // 板の列番号や配線に重なり、どの足の名前なのかも遠くなる。
   const edge = top ? box.y + box.height : box.y;
+  const size = theme.metrics.textSize;
+  const nameY = top ? edge - 4 : edge + size;
   const legs = [...placed.pins.entries()]
     .map(([name, point]) => element('line', {
       x1: num(point.x), y1: num(edge), x2: num(point.x), y2: num(point.y),
       stroke: theme.palette.lead, 'stroke-width': 2, 'stroke-linecap': 'round',
-    }) + svgText(point.x, point.y + (top ? PIN_LABEL - 3 : -4), name, {
+    }) + svgText(point.x, nameY, name, {
       fill: theme.palette.label,
-      'font-size': num(theme.metrics.textSize),
+      'font-size': num(size),
     }))
     .join('');
 
-  const label = fit(device.label, box.width / theme.metrics.textSize);
-  const caption = svgText(box.x + box.width / 2, box.y + box.height / 2, label, {
+  // 機器の名前は足の名前とぶつからない側へ寄せる (上の機器なら箱の上寄り)。
+  const label = fit(device.label, box.width / size);
+  const caption = svgText(box.x + box.width / 2, box.y + box.height / 2 + (top ? -size * 0.5 : size * 0.9), label, {
     fill: theme.palette.caption,
-    'font-size': num(theme.metrics.textSize),
+    'font-size': num(size),
     'dominant-baseline': 'middle',
   });
 

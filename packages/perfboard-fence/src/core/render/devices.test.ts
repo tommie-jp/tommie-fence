@@ -94,7 +94,7 @@ describe('renderDevices', () => {
 });
 
 describe('番地で置いた機器', () => {
-  test('puts the box where it was written, not in the band', () => {
+  test('puts the device where it was written, not in the band', () => {
     // 帯に並べると、書いた人が置きたかった場所と関係なく散る。
     const board = createBoard({ cols: 16, rows: 8 });
     const layout = createLayout(board, { deviceTop: false, deviceBottom: false });
@@ -102,8 +102,13 @@ describe('番地で置いた機器', () => {
     const at = layout.point(parseAddress('-c2')!);
 
     expect(placed).toHaveLength(1);
-    expect(placed[0]?.box.x).toBe(at.x);
     expect(placed[0]?.box.y).toBe(at.y);
+    // **足は穴の格子に載る。** 1 本目が書いた番地の列、次は 1 穴どなり。
+    expect(placed[0]?.pins.get('sig')?.x).toBe(layout.colX(2));
+    expect(placed[0]?.pins.get('gnd')?.x).toBe(layout.colX(3));
+    // 箱はその足の上に centered で載る。
+    expect(placed[0]!.box.x).toBeLessThan(layout.colX(2));
+    expect(placed[0]!.box.x + placed[0]!.box.width).toBeGreaterThan(layout.colX(3));
   });
 
   test('turns the legs toward the board, whichever side it was put on', () => {
