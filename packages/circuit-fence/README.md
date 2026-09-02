@@ -189,6 +189,12 @@ VS Code's undo cannot reach the editor while the panel has focus). Your
 comments and formatting survive: only the address spelling is replaced. The
 drawing catches up a few seconds after the edit.
 
+**Place parts.** Pick a type from the palette at the top and it becomes the
+placing tool: drag between two crossings for a two-terminal part, click one
+crossing for the rest. Ids are numbered per prefix from the smallest unused
+number (`R1`, then `R2`); only `port` / `vcc` / `vee`, whose id is drawn as a
+net name, are asked for. Search by type name, short form or Japanese name.
+
 **Draw wires.** With the wire tool (`W`), drag from one crossing to another and
 a line is added to `wires:` (hold `Shift` as you let go to bend sideways first).
 

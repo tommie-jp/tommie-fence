@@ -1,5 +1,6 @@
 import { escapeMarkup } from 'fence-kit';
 import type { FenceEntry } from '../../core/edit/fenceList.ts';
+import { renderPalette } from '../../core/edit/palette.ts';
 
 /**
  * マップのパネルの外側 (HTML の殻と見た目)。**純関数**なのでそのまま
@@ -75,12 +76,15 @@ const STYLE = `
 
   /* 置き先は**ドラッグの間だけ**効かせる。いつも効かせると部品を掴めず、
      いつも切ると埋まった升へ置けない (同じ番地に置くのは正当な操作)。
-     配線の道具は交点から引くので、そのあいだは押す前から効かせる。 */
+     配線と部品は交点を指して置くので、そのあいだは押す前から効かせる。 */
   .cf-cell { fill: transparent; }
   .cf-hits { pointer-events: none; }
-  body.cf-holding .cf-hits, body[data-tool="wire"] .cf-hits { pointer-events: all; }
+  body.cf-holding .cf-hits,
+  body[data-tool="wire"] .cf-hits,
+  body[data-tool="part"] .cf-hits { pointer-events: all; }
   body.cf-holding .cf-cell:hover,
-  body[data-tool="wire"] .cf-cell:hover { fill: var(--vscode-editor-inactiveSelectionBackground); }
+  body[data-tool="wire"] .cf-cell:hover,
+  body[data-tool="part"] .cf-cell:hover { fill: var(--vscode-editor-inactiveSelectionBackground); }
   /* 引きかけの配線の、押した交点。 */
   .cf-cell.cf-from { fill: var(--vscode-focusBorder); opacity: 0.35; }
 
@@ -108,6 +112,32 @@ const STYLE = `
   }
   .cf-history button:disabled { opacity: 0.4; cursor: default; }
   .cf-status { margin-top: 8px; min-height: 1.4em; }
+
+  /* 部品のパレット。**折り畳める**ので、閉じていれば升目が全幅になる。 */
+  .cf-palette { margin: 0 0 8px; }
+  .cf-palette summary { cursor: pointer; user-select: none; }
+  .cf-icons { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+  .cf-pick {
+    padding: 2px 6px; border: 1px solid transparent; border-radius: 3px;
+    background: none; color: inherit; font: inherit; font-size: 12px; cursor: pointer;
+  }
+  .cf-pick:hover { border-color: var(--vscode-focusBorder); }
+  /* いま置こうとしているもの。道具の帯と同じ「いまの状態」の印。 */
+  .cf-pick.cf-chosen {
+    border-color: var(--vscode-focusBorder);
+    background: var(--vscode-list-hoverBackground);
+  }
+  .cf-icons .cf-pick { padding: 2px; }
+  .cf-icon { width: 34px; height: 24px; }
+  .cf-icon .cf-mark { font-size: 9px; }
+  .cf-search {
+    width: 100%; box-sizing: border-box; font: inherit; font-size: 12px; padding: 2px 6px;
+    background: var(--vscode-input-background); color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+  }
+  .cf-types { list-style: none; margin: 6px 0 0; padding: 0; max-height: 150px; overflow-y: auto; }
+  .cf-types code { opacity: 0.7; font-size: 11px; }
+  .cf-types li.cf-hidden { display: none; }
 
   /* 読めなかったところとお知らせ。**マップと同じ窓に出す** — 図の下の帯は
      プレビューにしか出ず、掴んでいる間は隠れていることが多い。 */
@@ -188,6 +218,7 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     + `<label><input type="radio" name="cf-tool" value="select" checked> 選ぶ <kbd>V</kbd></label>`
     + `<label><input type="radio" name="cf-tool" value="wire"> 配線 <kbd>W</kbd></label>`
     + `<label><input type="radio" name="cf-tool" value="node"> 節点 <kbd>N</kbd></label></p>`
+    + renderPalette()
     + `<p class="cf-history">`
     + `<button class="cf-undo"${own ? ' disabled' : ''} title="Ctrl+Z">元に戻す</button>`
     + `<button class="cf-redo"${own ? ' disabled' : ''} title="Ctrl+Shift+Z">やり直す</button></p>`
@@ -198,6 +229,8 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     + `<b>配線</b>: 交点から交点へドラッグすると 1 本引きます`
     + ` (<b>Shift</b> を押しながら放すと先に横へ折ります)。`
     + `<b>節点</b>: 交点に来ているものが丸ごと動き、接続は保たれます。`
+    + `<b>部品を置く</b>: パレットで選ぶと置く道具になります`
+    + ` (2 端子は交点から交点へドラッグ、ほかは交点をクリック。<b>Esc</b> でやめます)。`
     + `図は書き換えのあと数秒で描き直ります。</p>`
     + `<div class="cf-body">${view.html}</div>`
     + `<div class="cf-band">${view.issues}</div>`

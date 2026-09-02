@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { insertPart, insertWire } from './insert.ts';
+import { insertPart, insertWire, nextPartId } from './insert.ts';
 import { applyRewrite } from './shared.ts';
 import { parseAddress } from '../model/address.ts';
 
@@ -139,5 +139,43 @@ describe('insertPart', () => {
     const source = ['parts: {R1: resistor a1 a3}', ''].join('\n');
 
     expect(insertPart(source, { id: 'C1', type: 'capacitor', at: [cell('c1'), cell('c3')] }).ok).toBe(false);
+  });
+});
+
+describe('nextPartId', () => {
+  test('names a new part from the prefix the docs use', () => {
+    expect(nextPartId(RC, 'capacitor')).toBe('C1');
+  });
+
+  test('takes the smallest number the prefix has not used yet', () => {
+    // RC には R1 が居るので、次の抵抗は R2。
+    expect(nextPartId(RC, 'resistor')).toBe('R2');
+  });
+
+  test('counts by prefix, not by type, the way the docs examples do', () => {
+    // P1 が lamp なら、ポテンショメータは P2 (同じ接頭辞を分け合う)。
+    const source = ['parts:', '  P1: lamp a1 a3', ''].join('\n');
+
+    expect(nextPartId(source, 'potentiometer')).toBe('P2');
+  });
+
+  test('fills a gap, since the number is only there to be unique', () => {
+    const source = ['parts:', '  R2: resistor a1 a3', ''].join('\n');
+
+    expect(nextPartId(source, 'resistor')).toBe('R1');
+  });
+
+  test('has no name to offer for the three that carry a net name', () => {
+    // port / vcc / vee の ID は図に出る名前そのもの。訊くしかない。
+    expect(nextPartId(RC, 'port')).toBeNull();
+    expect(nextPartId(RC, 'vcc')).toBeNull();
+  });
+
+  test('has nothing to offer for a type it does not know', () => {
+    expect(nextPartId(RC, 'flux-capacitor')).toBeNull();
+  });
+
+  test('has nothing to offer for a fence it cannot read', () => {
+    expect(nextPartId('parts:\n  R1: [unclosed\n', 'resistor')).toBeNull();
   });
 });

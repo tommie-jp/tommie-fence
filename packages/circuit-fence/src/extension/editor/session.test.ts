@@ -757,3 +757,90 @@ describe('配線を引く', () => {
     expect(last(host, 'status')?.text).toContain('番地として読めません');
   });
 });
+
+describe('部品を置く', () => {
+  test('writes a one-terminal part where the map said, naming it from the prefix', () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+
+    return session.handle({ kind: 'addPart', type: 'ground', at: ['c5'] }).then(() => {
+      expect(doc.getText()).toContain('G1: ground c5');
+      expect(last(host, 'status')?.text).toContain('置きました');
+    });
+  });
+
+  test('writes a two-terminal part between the two crossings', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'addPart', type: 'inductor', at: ['c1', 'c3'] });
+
+    expect(doc.getText()).toContain('L1: inductor c1 c3');
+  });
+
+  test('asks for the name of a part whose id is drawn as a net name', async () => {
+    // port / vcc / vee は ID がそのまま図に出る。勝手に決めない。
+    const doc = docOf(A, RC);
+    const asked: string[] = [];
+    const host = hostOf([doc], at(doc, 5), {
+      ask: async (prompt: string) => { asked.push(prompt); return 'OUT'; },
+    });
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'addPart', type: 'port', at: ['c5'] });
+
+    expect(asked[0]).toContain('port');
+    expect(doc.getText()).toContain('OUT: port c5');
+  });
+
+  test('places nothing when the name is refused', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5), { ask: async () => null });
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'addPart', type: 'port', at: ['c5'] });
+
+    expect(doc.getText()).toBe(RC);
+  });
+
+  test('says so when it cannot ask, rather than making a name up', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'addPart', type: 'vcc', at: ['c5'] });
+
+    expect(doc.getText()).toBe(RC);
+    expect(last(host, 'status')?.text).toContain('訊けませんでした');
+  });
+
+  test('says so when a crossing cannot be read as an address', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'addPart', type: 'ground', at: ['zz9'] });
+
+    expect(last(host, 'status')?.text).toContain('番地として読めません');
+  });
+
+  test('undoes a placed part, taking the line back out', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+    await session.handle({ kind: 'addPart', type: 'ground', at: ['c5'] });
+
+    await session.handle({ kind: 'undo' });
+
+    expect(doc.getText()).toBe(RC);
+  });
+});

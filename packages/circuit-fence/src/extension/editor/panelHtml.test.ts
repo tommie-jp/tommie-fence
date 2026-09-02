@@ -81,9 +81,9 @@ describe('道具の帯', () => {
     expect(html).toContain('body:not([data-tool="select"]) .cf-wire-hits { pointer-events: none; }');
   });
 
-  test('turns the crossings on for the wire tool before anything is pressed', () => {
-    // 配線は交点から引く。押した時点で升を読めないと、始まりが決まらない。
-    expect(html).toContain('body[data-tool="wire"] .cf-hits { pointer-events: all; }');
+  test('turns the crossings on for the wire and part tools before anything is pressed', () => {
+    // 配線も部品も交点を指して置く。押した時点で升を読めないと始まりが決まらない。
+    expect(html).toContain('body[data-tool="wire"] .cf-hits,\n  body[data-tool="part"] .cf-hits { pointer-events: all; }');
     expect(html).toContain('.cf-cell.cf-from');
   });
 
@@ -97,7 +97,7 @@ describe('置き先の当たり判定', () => {
   test('turns the drop targets on only while something is held', () => {
     // いつも効かせると部品を掴めず、いつも切ると埋まった升へ置けない。
     expect(html).toContain('.cf-hits { pointer-events: none; }');
-    expect(html).toContain('body.cf-holding .cf-hits, body[data-tool="wire"] .cf-hits { pointer-events: all; }');
+    expect(html).toContain('body.cf-holding .cf-hits,');
   });
 
   test('lays a fat invisible line over each wire, since 1.5px is too thin to hit', () => {
@@ -135,6 +135,26 @@ describe('フェンスを選ぶ', () => {
     const many = shell({ view: { html: '', picker: '<select class="cf-fence"></select>', issues: '' } });
 
     expect(many).toContain('<p class="cf-fences"><select class="cf-fence"></select></p>');
+  });
+});
+
+describe('部品のパレット', () => {
+  test('puts the palette in the head, folded away', () => {
+    // パネルはエディタの横に細く置かれる。閉じていれば升目が全幅になる。
+    expect(html).toContain('<details class="cf-palette">');
+    expect(html).toContain('data-type="resistor" data-ends="2"');
+  });
+
+  test('shows which one is being placed, like the tool band shows the tool', () => {
+    expect(html).toContain('.cf-pick.cf-chosen');
+  });
+
+  test('gives the search box a place to hide rows', () => {
+    expect(html).toContain('.cf-types li.cf-hidden { display: none; }');
+  });
+
+  test('says how placing works', () => {
+    expect(html).toContain('<b>部品を置く</b>: パレットで選ぶと置く道具になります');
   });
 });
 

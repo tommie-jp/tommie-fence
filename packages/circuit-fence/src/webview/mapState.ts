@@ -18,7 +18,14 @@ export type Kind = 'part' | 'node' | 'wire';
 export type Picked = { readonly kind: Kind; readonly id: string };
 
 /** 道具。**選ぶ**が既定で、`Esc` でいつでもここへ戻る。 */
-export type Tool = 'select' | 'wire' | 'node';
+export type Tool = 'select' | 'wire' | 'node' | 'part';
+
+/** パレットで選んだ、これから置く部品。 */
+export type Placing = {
+  readonly type: string;
+  /** 2 端子か (交点から交点へドラッグする。1 端子・多端子は 1 回の押しで置く)。 */
+  readonly twoEnds: boolean;
+};
 
 export type State = {
   readonly tool: Tool;
@@ -27,6 +34,8 @@ export type State = {
   readonly pressed: { readonly x: number; readonly y: number } | null;
   /** 配線の道具で押した交点 (引きかけの端)。放した交点との間に 1 本引く。 */
   readonly drawing: string | null;
+  /** パレットで選んだ部品。**`Esc` まで置き続ける** (何本も置くのが普通なので)。 */
+  readonly placing: Placing | null;
   /**
    * 戻す・やり直すを自分で持つか。パネルは持つ (フォーカスがあると VS Code の
    * `Ctrl+Z` がエディタに届かない)。タブそのものがマップのときは VS Code に任せる。
@@ -35,7 +44,7 @@ export type State = {
 };
 
 export const start = (ownUndo: boolean): State =>
-  ({ tool: 'select', picked: null, pressed: null, drawing: null, ownUndo });
+  ({ tool: 'select', picked: null, pressed: null, drawing: null, placing: null, ownUndo });
 
 /** webview で起きたこと。**DOM を読むのは呼ぶ側** (`map.ts`)。 */
 export type Event =
@@ -69,6 +78,8 @@ export type Event =
     readonly typing: boolean;
   }
   | { readonly kind: 'tool'; readonly tool: Tool }
+  /** パレットで部品を選んだ。 */
+  | { readonly kind: 'place'; readonly placing: Placing }
   /** マップを組み直した (要素が入れ替わるので掴みを捨てる)。 */
   | { readonly kind: 'refresh' };
 
@@ -108,6 +119,17 @@ const letGo = (state: State): Outcome =>
   outcome({ ...state, picked: null, pressed: null, drawing: null }, [select(null)], '', true);
 
 function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcome {
+  if (state.tool === 'part') {
+    // 2 端子は交点から交点へ。1 端子・多端子は放した交点に置くので、
+    // 押した時点では何も覚えない。
+    if (event.cell === null || !state.placing?.twoEnds) return outcome(state);
+    return outcome(
+      { ...state, drawing: event.cell, pressed: { x: event.x, y: event.y } },
+      [],
+      `${event.cell} から。放した交点までが ${state.placing.type} になります`,
+    );
+  }
+
   if (state.tool === 'wire') {
     // 配線は**交点から交点へ**。押した交点を覚え、放した交点との間に 1 本引く。
     if (event.cell === null) return outcome(state);
@@ -135,6 +157,21 @@ function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcom
 }
 
 function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Outcome {
+  if (state.tool === 'part' && state.placing !== null) {
+    const { type, twoEnds } = state.placing;
+    const from = state.drawing;
+    const clear = { ...state, drawing: null, pressed: null };
+    if (event.cell === null) return outcome(clear, [], '');
+    // **道具は置いたあとも続く** (何本も置くのが普通)。抜けるのは Esc。
+    if (!twoEnds) return outcome(clear, [{ kind: 'addPart', type, at: [event.cell] }], `${type} を ${event.cell} へ…`);
+    if (from === null || from === event.cell) return outcome(clear, [], '');
+    return outcome(
+      clear,
+      [{ kind: 'addPart', type, at: [from, event.cell] }],
+      `${type} を ${from} から ${event.cell} へ…`,
+    );
+  }
+
   if (state.drawing !== null) {
     const from = state.drawing;
     const clear = { ...state, drawing: null, pressed: null };
@@ -231,11 +268,18 @@ export function step(state: State, event: Event): Outcome {
       return onKey(state, event);
     case 'tool':
       return outcome(
-        { ...state, tool: event.tool, picked: null, pressed: null, drawing: null },
+        { ...state, tool: event.tool, picked: null, pressed: null, drawing: null, placing: null },
         [select(null)],
         '',
       );
+    case 'place':
+      return outcome(
+        { ...state, tool: 'part', placing: event.placing, picked: null, pressed: null, drawing: null },
+        [select(null)],
+        `${event.placing.type} を置きます。${event.placing.twoEnds ? '交点から交点へドラッグ' : '置きたい交点をクリック'} (Esc でやめる)`,
+      );
     case 'refresh':
+      // **置く道具は続ける** (組み直しは書き換えのたびに起きる)。
       return outcome({ ...state, picked: null, pressed: null, drawing: null });
     default:
       return outcome(state);

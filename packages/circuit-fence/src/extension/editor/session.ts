@@ -4,13 +4,14 @@ import { aimAt, fenceAt, gridMap } from '../../core/edit/map.ts';
 import { renderMapHtml } from '../../core/edit/mapSvg.ts';
 import { movePart, partSpans } from '../../core/edit/move.ts';
 import type { Edit } from '../../core/edit/move.ts';
-import { insertWire } from '../../core/edit/insert.ts';
+import { insertPart, insertWire, nextPartId } from '../../core/edit/insert.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import { deletePart, deleteWire } from '../../core/edit/remove.ts';
 import type { LineEdit, NetDiff, Span } from '../../core/edit/shared.ts';
 import { flipPart, turnPart } from '../../core/edit/turn.ts';
 import { extractCircuitFences } from '../../core/fences.ts';
 import { formatAddress, parseAddress } from '../../core/model/address.ts';
+import type { Address } from '../../core/model/address.ts';
 import { bodyAfter, fenceBody } from './docEdits.ts';
 import { indentOn } from './documentLike.ts';
 import type { DocLike, EditorLike } from './documentLike.ts';
@@ -63,6 +64,8 @@ export type Incoming = {
   readonly line?: unknown;
   readonly quarters?: unknown;
   readonly operator?: unknown;
+  readonly type?: unknown;
+  readonly at?: unknown;
 };
 
 export type SessionHost<D extends DocLike> = {
@@ -89,6 +92,11 @@ export type SessionHost<D extends DocLike> = {
   readonly showDocument?: (uri: string, line: number) => Promise<void>;
   /** VS Code の undo に頼めるとき (カスタムエディタ)。無ければ自前の履歴を持つ。 */
   readonly nativeUndo?: (kind: 'undo' | 'redo') => Promise<void>;
+  /**
+   * 名前を訊く。**ID がそのまま図に出る種類** (`port` / `vcc` / `vee`) を
+   * 置くときだけ使う。断られたら null。
+   */
+  readonly ask?: (prompt: string, value: string) => Promise<string | null>;
 };
 
 /**
@@ -124,7 +132,8 @@ const NONE = '<p class="cf-note">この文書に circuit フェンスがあり�
 type FenceNow<D> = { readonly document: D; readonly source: string; readonly line: number };
 
 type Planned = ReturnType<typeof movePart> | ReturnType<typeof movePoint>
-  | ReturnType<typeof deletePart> | ReturnType<typeof turnPart> | ReturnType<typeof insertWire>;
+  | ReturnType<typeof deletePart> | ReturnType<typeof turnPart> | ReturnType<typeof insertWire>
+  | ReturnType<typeof insertPart>;
 
 /** 書き換えの中身。行の出し入れを持たない `Move` も、ここでは同じ形で扱う。 */
 type Changes = {
@@ -445,6 +454,47 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
     });
   }
 
+  /** ID がそのまま図に出る種類の名前を訊く。既定の候補を入れておく。 */
+  const NAME_HINTS: Readonly<Record<string, string>> = { port: 'IN', vcc: 'VCC', vee: 'VEE' };
+
+  /** マップから来た「この部品をここへ」。ID は接頭辞から付け、要るときだけ訊く。 */
+  async function addPart(message: Incoming): Promise<void> {
+    const type = text(message.type);
+    const written = Array.isArray(message.at) ? message.at.map(text) : null;
+    if (type === null || written === null || written.some((one) => one === null)) {
+      say('マップからの知らせを読めませんでした (置く先がありません)');
+      return;
+    }
+
+    const at = written.map((one) => parseAddress(one as string));
+    const bad = at.indexOf(null);
+    if (bad >= 0) {
+      say(`番地として読めません: ${written[bad] as string}`);
+      return;
+    }
+
+    const fence = fenceNow();
+    if (fence === null) return;
+
+    // **ID がそのまま図に出る種類は訊く** (勝手に名前を決めない)。
+    const numbered = nextPartId(fence.source, type);
+    const id = numbered ?? (host.ask === undefined
+      ? null
+      : await host.ask(`${type} の名前`, NAME_HINTS[type] ?? ''));
+    if (id === null || id === '') {
+      if (numbered === null && host.ask === undefined) say(`${type} の名前を訊けませんでした`);
+      return;
+    }
+
+    const where = written.join(' ');
+    await run({
+      label: `${id} を`,
+      done: () => `${id} (${type}) を ${where} へ置きました`,
+      already: '置くものがありません',
+      plan: (source) => insertPart(source, { id, type, at: at as readonly Address[] }),
+    });
+  }
+
   /** マップから来た「ここからここへ 1 本」。配線は**交点から交点へ**引く。 */
   async function addWire(message: Incoming): Promise<void> {
     const from = text(message.from);
@@ -620,6 +670,10 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
         case 'move':
         case 'moveNode':
           await move(message);
+          refreshWith(true);
+          return;
+        case 'addPart':
+          await addPart(message);
           refreshWith(true);
           return;
         case 'addWire':

@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
 import { NOTE_BOX_SOLID, NOTE_KINDS } from './notes.ts';
+import { PART_NAMES, partTypeNames } from './parts.ts';
+import type { PartTypeName } from './parts.ts';
 
 /**
  * 文法リファレンス (docs/01-syntax.md) の注釈の一覧が、実装から遅れていないか。
@@ -40,5 +42,27 @@ describe('docs/01-syntax.md の注釈', () => {
 
   test('枠を実線で引く語が載っている', () => {
     expect(NOTES_SECTION).toContain(`\`${NOTE_BOX_SOLID}\``);
+  });
+});
+
+/**
+ * 部品の和名は**表が正**。パレットの検索がこの字を引くので、実装に持った表
+ * (`PART_NAMES`) と食い違うと、docs にある名前で探しても出てこなくなる。
+ */
+describe('docs/01-syntax.md の部品名', () => {
+  /** 一覧の表の行 (`| 05 | \`resistor\` | 抵抗 | Ω | 例 |`) から拾う。 */
+  const IN_DOC = new Map(
+    [...SYNTAX.matchAll(/^\|\s*\d+\s*\|\s*`([\w-]+)`\s*\|\s*([^|]+?)\s*\|/gm)]
+      .map((row) => [row[1] as string, row[2] as string]),
+  );
+
+  test('書ける種類が全部表に載っている', () => {
+    expect(partTypeNames().filter((name) => !IN_DOC.has(name))).toEqual([]);
+  });
+
+  test('パレットが引く和名が表の字と同じ', () => {
+    const drifted = partTypeNames().filter((name) => PART_NAMES[name as PartTypeName] !== IN_DOC.get(name));
+
+    expect(drifted).toEqual([]);
   });
 });

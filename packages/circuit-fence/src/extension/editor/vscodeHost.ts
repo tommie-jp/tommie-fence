@@ -70,6 +70,7 @@ export function createSessionHost(webview: vscode.Webview, undo: 'own' | 'vscode
     replaceBody,
     highlight,
     showDocument,
+    ask: async (prompt, value) => (await vscode.window.showInputBox({ prompt, value })) ?? null,
   };
   if (undo === 'own') return base;
   return {

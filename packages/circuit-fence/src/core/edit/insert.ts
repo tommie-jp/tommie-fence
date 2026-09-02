@@ -2,7 +2,8 @@ import { formatAddress } from '../model/address.ts';
 import type { Address, WireOperator } from '../model/address.ts';
 import { isReferenceable, LIMITS } from '../limits.ts';
 import { normalizeNewlines } from '../newlines.ts';
-import { lookupPartType, lookupPin } from '../parts.ts';
+import { lookupPartType, lookupPin, PART_PREFIXES } from '../parts.ts';
+import type { PartTypeName } from '../parts.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import type { Endpoint } from '../types.ts';
 import { applyRewrite, diffOf, fail, isOnGrid } from './shared.ts';
@@ -155,4 +156,27 @@ export function insertPart(source: string, spec: NewPart): RewriteResult {
   return last > 0
     ? addition(normalized, [{ kind: 'insert', line: last + 1, text: `${indentOf(lines, last)}${written}` }])
     : addition(normalized, [{ kind: 'insert', line: key + 1, text: `  ${written}` }]);
+}
+
+/**
+ * 置く部品に付ける ID。**接頭辞ごとに最小の未使用番号** (`P1` が lamp なら
+ * potentiometer は `P2`。docs の例がそう書いている)。
+ *
+ * `null` を返すのは 3 つのとき — 種類を知らない、フェンスを読めない、
+ * ID がそのままネットの名前になる種類 (`port` / `vcc` / `vee`)。
+ * **最後のは訊くしかない** (図に出る名前を勝手に決めない)。
+ */
+export function nextPartId(source: string, type: string): string | null {
+  const prefix = PART_PREFIXES[type as PartTypeName] ?? null;
+  if (prefix === null) return null;
+
+  const { doc } = parseFence(normalizeNewlines(source));
+  if (!doc) return null;
+
+  const used = new Set(doc.parts.map((part) => part.id));
+  for (let number = 1; number <= LIMITS.parts + 1; number += 1) {
+    const id = `${prefix}${number}`;
+    if (!used.has(id)) return id;
+  }
+  return null;
 }

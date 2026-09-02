@@ -241,3 +241,53 @@ describe('配線を引く', () => {
     expect(drawing.drawing).toBeNull();
   });
 });
+
+describe('部品を置く', () => {
+  const placing = (type: string, twoEnds: boolean): Event => ({ kind: 'place', placing: { type, twoEnds } });
+  const resistor = after(PANEL, placing('resistor', true));
+  const ground = after(PANEL, placing('ground', false));
+
+  test('takes the palette choice as a tool of its own', () => {
+    expect(resistor.tool).toBe('part');
+    expect(resistor.placing).toEqual({ type: 'resistor', twoEnds: true });
+    expect(step(PANEL, placing('resistor', true)).status).toContain('交点から交点へドラッグ');
+  });
+
+  test('places a one-terminal part where the crossing was clicked', () => {
+    const { send } = step(ground, release('c3', false));
+
+    expect(send).toEqual([{ kind: 'addPart', type: 'ground', at: ['c3'] }]);
+  });
+
+  test('drags a two-terminal part from crossing to crossing', () => {
+    const from = after(resistor, press(null, true, 'a1'));
+
+    expect(step(from, release('a3')).send).toEqual([
+      { kind: 'addPart', type: 'resistor', at: ['a1', 'a3'] },
+    ]);
+  });
+
+  test('places nothing when a two-terminal part was not dragged anywhere', () => {
+    // 両端が同じ番地の部品は文法が断る。押し間違いとして黙って捨てる。
+    const from = after(resistor, press(null, true, 'a1'));
+
+    expect(step(from, release('a1')).send).toEqual([]);
+  });
+
+  test('keeps placing after one is placed, since several are usually wanted', () => {
+    const from = after(resistor, press(null, true, 'a1'));
+
+    expect(step(from, release('a3')).state.placing).toEqual({ type: 'resistor', twoEnds: true });
+  });
+
+  test('leaves the placing tool with Escape', () => {
+    const { state } = step(ground, key('Escape'));
+
+    expect(state.tool).toBe('select');
+    expect(state.placing).toBeNull();
+  });
+
+  test('keeps placing when the map is drawn again after the edit', () => {
+    expect(step(ground, { kind: 'refresh' }).state.placing).not.toBeNull();
+  });
+});

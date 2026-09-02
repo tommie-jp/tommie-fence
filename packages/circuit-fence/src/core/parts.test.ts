@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import {
-  NO_TURN, PART_ALIASES, PART_TYPES,
+  NO_TURN, PART_ALIASES, PART_PREFIXES, PART_TYPES,
   closestPartType, lookupPartType, lookupPin, optionsFor, partTypeNames, pinAxis, pinHint,
   pinSideOf, resolvePartTypeName, symbolFor,
 } from './parts.ts';
+import type { PartTypeName } from './parts.ts';
 
 describe('PART_TYPES', () => {
   test('carries the two terminal parts a schematic is drawn with', () => {
@@ -458,5 +459,29 @@ describe('pinAxis', () => {
 
   test('is null where there is no side', () => {
     expect(pinAxis(PART_TYPES.opamp!, 'plus')).toBeNull();
+  });
+});
+
+describe('PART_PREFIXES', () => {
+  test('gives every part type a prefix to number from', () => {
+    const missing = partTypeNames().filter((name) => PART_PREFIXES[name as PartTypeName] === undefined);
+
+    expect(missing).toEqual([]);
+  });
+
+  test('asks for the name of the three whose id is a net name', () => {
+    // port / vcc / vee は ID がそのまま図に出て、ネットの名前にもなる。
+    expect(PART_PREFIXES.port).toBeNull();
+    expect(PART_PREFIXES.vcc).toBeNull();
+    expect(PART_PREFIXES.vee).toBeNull();
+  });
+
+  test('follows the ids the docs use in their examples', () => {
+    expect(PART_PREFIXES.resistor).toBe('R');
+    expect(PART_PREFIXES.capacitor).toBe('C');
+    expect(PART_PREFIXES.npn).toBe('Q');
+    expect(PART_PREFIXES.opamp).toBe('U');
+    // varicap は容量の部品だが、docs の例が D4 なので D。
+    expect(PART_PREFIXES.varicap).toBe('D');
   });
 });

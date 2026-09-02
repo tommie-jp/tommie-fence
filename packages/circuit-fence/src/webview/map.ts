@@ -1,5 +1,5 @@
 import { start, step } from './mapState.ts';
-import type { Event, Picked, State } from './mapState.ts';
+import type { Event, Picked, Placing, State } from './mapState.ts';
 
 /**
  * マップの webview の**DOM を触る側**。何が起きたかを読んで状態遷移
@@ -52,6 +52,7 @@ function run(event: Event): boolean {
   if (outcome.status !== null) setStatus(outcome.status);
   mark(state.picked);
   markFrom(state.drawing);
+  markChosen(state.placing);
   // 道具は CSS が見る目印にする (何が掴めるかは道具で変わる)。
   document.body.dataset.tool = state.tool;
   const tool = document.querySelector<HTMLInputElement>(`input[name="cf-tool"][value="${state.tool}"]`);
@@ -60,6 +61,15 @@ function run(event: Event): boolean {
   // 掴めず、いつも切ると埋まった升へ置けない (同じ番地に置くのは正当な操作)。
   document.body.classList.toggle('cf-holding', state.pressed !== null && state.picked?.kind !== 'wire');
   return outcome.handled;
+}
+
+/** いま置こうとしている部品。パレットのどれを押したかを見せる。 */
+function markChosen(placing: Placing | null): void {
+  for (const element of document.querySelectorAll('.cf-chosen')) element.classList.remove('cf-chosen');
+  if (placing === null) return;
+  for (const element of document.querySelectorAll(`.cf-pick[data-type="${CSS.escape(placing.type)}"]`)) {
+    element.classList.add('cf-chosen');
+  }
 }
 
 /** 引きかけの配線の、押した交点。放すまで印を出しておく。 */
@@ -129,6 +139,13 @@ document.addEventListener('keydown', (event) => {
 
 document.addEventListener('click', (event) => {
   const target = event.target as Element | null;
+
+  // パレット。選ぶと「置く」道具になり、`Esc` まで続く。
+  const pick = target?.closest<HTMLElement>('.cf-pick');
+  if (pick?.dataset.type !== undefined) {
+    run({ kind: 'place', placing: { type: pick.dataset.type, twoEnds: pick.dataset.ends === '2' } });
+    return;
+  }
 
   // 帯の 1 行。**書き換えはしない** — 直すのは書き手の仕事で、こちらは場所を指すだけ。
   const row = target?.closest<HTMLElement>('.cf-issue[data-line]');
@@ -200,5 +217,20 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
     const redo = document.querySelector<HTMLButtonElement>('.cf-redo');
     if (undo) undo.disabled = !message.canUndo;
     if (redo) redo.disabled = !message.canRedo;
+  }
+});
+
+/**
+ * パレットの検索。**種類名・略記・和名**のどれでも引ける (覚えている呼び方が
+ * 人による)。DOM を隠すだけなので、状態遷移には関わらない。
+ */
+document.addEventListener('input', (event) => {
+  const box = event.target as HTMLInputElement | null;
+  if (box === null || !box.classList.contains('cf-search')) return;
+
+  const wanted = box.value.trim().toLowerCase();
+  for (const row of document.querySelectorAll<HTMLElement>('.cf-types li')) {
+    const find = row.querySelector<HTMLElement>('.cf-pick')?.dataset.find ?? '';
+    row.classList.toggle('cf-hidden', wanted !== '' && !find.includes(wanted));
   }
 });
