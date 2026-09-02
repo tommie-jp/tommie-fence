@@ -22,6 +22,7 @@ dist/cli.cjs.map
 **/*.log
 esbuild.mjs
 tsconfig.json
+tsconfig.webview.json
 tsconfig.tsbuildinfo
 vitest.config.ts
 .markdownlint.json

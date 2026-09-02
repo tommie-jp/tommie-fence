@@ -1,0 +1,13 @@
+{
+  // webview の中で動くコードだけの設定。**ここだけが DOM を知る。**
+  // 根の tsconfig に DOM を足すと、描画コアが DOM を触っても型で気づけなくなる
+  // (CLAUDE.md の約束 10)。
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": []
+  },
+  "include": ["src/webview"],
+  // 根の設定の exclude (src/webview) を打ち消す。
+  "exclude": []
+}

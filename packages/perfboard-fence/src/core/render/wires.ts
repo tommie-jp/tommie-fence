@@ -34,15 +34,30 @@ export const renderWires = (
   layout: Layout,
   theme: Theme,
   hops: readonly (readonly Point[])[] = [],
+  edit = false,
 ): string =>
   wires
-    .map((wire, index) => strand(
-      layout.point(wire.from),
-      layout.point(wire.to),
-      hops[index] ?? [],
-      wire.color,
-      theme,
-    ))
+    .map((wire, index) => {
+      const drawn = strand(
+        layout.point(wire.from),
+        layout.point(wire.to),
+        hops[index] ?? [],
+        wire.color,
+        theme,
+      );
+      if (!edit) return drawn;
+      // 線は細くて掴めないので、**同じ道に太い透明な線**を重ねる。
+      const from = layout.point(wire.from);
+      const to = layout.point(wire.to);
+      const hit = element('line', {
+        class: 'cf-wire-hit',
+        x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y),
+        stroke: 'transparent',
+        'stroke-width': num(WIRE_WIDTH * 3),
+        'stroke-linecap': 'round',
+      });
+      return element('g', { class: 'cf-wire', 'data-line': String(wire.line ?? 0) }, drawn + hit);
+    })
     .join('');
 
 /**

@@ -29,6 +29,16 @@ const targets = [
   },
   {
     // shebang は src/cli/main.ts の 1 行目にあり、esbuild がそのまま先頭に残す。
+    // マップの webview の中で動くもの。**拡張ホストではなくブラウザで動く**ので
+    // 別に束ねる。中身は fence-kit にあり (3 つのフェンスで同じ)、
+    // 状態遷移は DOM を知らない純関数として node のテストに掛かっている。
+    entryPoints: ['src/webview/map.ts'],
+    outfile: 'dist/map.js',
+    format: 'iife',
+    platform: 'browser',
+    target: 'es2022',
+  },
+  {
     entryPoints: ['src/cli/main.ts'],
     outfile: 'dist/cli.cjs',
     format: 'cjs',

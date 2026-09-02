@@ -6,6 +6,7 @@ import { placeParts } from './placement/place.ts';
 import { renderBoard } from './render/board.ts';
 import { renderSlots } from './render/slots.ts';
 import { renderJoints } from './render/joints.ts';
+import { renderHits } from './render/hits.ts';
 import { renderParts } from './render/parts.ts';
 import { renderDeviceWires, renderWires } from './render/wires.ts';
 import { crossingPoints } from './render/crossings.ts';
@@ -22,13 +23,15 @@ import { checkErc } from './erc/erc.ts';
 import { checkFit } from './placement/collide.ts';
 import { drawnExtent } from './placement/geometry.ts';
 import { holeStrip } from './model/board.ts';
-import { parseAddress } from './model/address.ts';
+import { formatAddress, parseAddress } from './model/address.ts';
 import { offBoardReason } from './model/board.ts';
 import { fenceError, notice, safeToken } from './errors.ts';
 import { renderDocument } from './render/document.ts';
 import { renderErrorBanner, renderErrorCard } from './render/errorHtml.ts';
 import { resolveStyle, themeForBoard } from './render/theme.ts';
-import type { Address, FenceError, ResolvedNote } from './types.ts';
+import type {
+  Address, FenceError, PlacedPart, PointSpec, ResolvedNote, RoutedWire,
+} from './types.ts';
 import type { Net } from 'fence-kit';
 
 /** 行の無いものを先に、あとは行の順に。同じ行なら見つけた順を保つ。 */
@@ -66,7 +69,37 @@ export type RenderResult = {
  * **Phase 6 まで。** 板・穴・2 本足の部品・配線を描き、ネットリストを導き、
  * ERC と当たり判定をかけ、題を付けて書き出す。3 本足・DIP、注釈は次 (52 の docs/05)。
  */
-export function renderPerfboard(input: string): RenderResult {
+/** 描き方の選び (既定は今までどおり)。 */
+export type RenderOptions = {
+  /** 掴むための層を重ねる (マップのエディタ用)。**既定では出さない**。 */
+  readonly edit?: boolean;
+};
+
+/**
+ * 掴むための層に要るものを集める。**書かれている穴**に節点を立て、
+ * `points:` の名前を添える。
+ */
+function editLayer(
+  parts: readonly PlacedPart[],
+  wires: readonly RoutedWire[],
+  points: readonly PointSpec[],
+): { readonly used: ReadonlySet<string>; readonly names: ReadonlyMap<string, string> } {
+  const used = new Set<string>();
+  for (const part of parts) {
+    for (const pin of part.pins) used.add(formatAddress(pin.address));
+  }
+  for (const wire of wires) {
+    used.add(formatAddress(wire.from));
+    used.add(formatAddress(wire.to));
+  }
+
+  // `points:` は名前 → 番地。掴んだ番地から名前を引きたいので裏返す。
+  const names = new Map<string, string>();
+  for (const point of points) names.set(point.written, point.name);
+  return { used, names };
+}
+
+export function renderPerfboard(input: string, options: RenderOptions = {}): RenderResult {
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
   const source = normalizeNewlines(input);
   const parsed = parseFence(source);
@@ -269,14 +302,14 @@ export function renderPerfboard(input: string): RenderResult {
       // 半田付けした穴。**配線と部品の前に敷く** — 線の先が半田の玉に入って
       // 見えるほうが、実物の見た目に近い。
       + renderJoints(soldered, layout, PLATE)
-      + renderWires(wiring.wires, layout, PLATE, hops.slice(0, wiring.wires.length))
+      + renderWires(wiring.wires, layout, PLATE, hops.slice(0, wiring.wires.length), options.edit === true)
       // 機器へつなぐ線も板の上まで引く。**どの穴へ行くのかが図に出ないと、
       // 帯に浮いた箱と板が結び付かない。**
       + renderDeviceWires(
         wiring.deviceWires, placedDevices.placed, layout, THEME, hops.slice(wiring.wires.length),
       )
       + renderDevices(placedDevices.placed, THEME)
-      + renderParts(placement.parts, layout, PLATE)
+      + renderParts(placement.parts, layout, PLATE, options.edit === true)
       // 注釈は一番上。**指したものが下に隠れると印の意味が無くなる。**
       + renderNotes(notes, layout, PLATE)
       // 凡例・部品表・書き出しは板の外の帯。図とは重ならないので、順番はどこでもよい。
@@ -299,7 +332,14 @@ export function renderPerfboard(input: string): RenderResult {
           PLATE,
           style.labels,
           layout.backTop,
-        ));
+        ))
+      // 掴む層は**いちばん上**。下に敷くと、部品や配線が押しを先に取ってしまう。
+      + (options.edit === true
+        ? renderHits(board, layout, ...(() => {
+          const layer = editLayer(placement.parts, wiring.wires, parsed.doc.points);
+          return [layer.used, layer.names] as const;
+        })())
+        : '');
 
   const svg = renderDocument(
     layout,

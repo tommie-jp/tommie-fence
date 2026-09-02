@@ -34,6 +34,33 @@
   },
   "activationEvents": [],
   "contributes": {
+    "customEditors": [
+      {
+        "viewType": "perfboard-fence.map",
+        "displayName": "perfboard Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.md"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
+    "commands": [
+      {
+        "command": "perfboard-fence.openMap",
+        "title": "Perfboard Fence: 図を掴んで動かす (マップ)",
+        "category": "Perfboard Fence"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "perfboard-fence.openMap",
+          "when": "editorLangId == markdown"
+        }
+      ]
+    },
     "markdown.markdownItPlugins": true,
     "markdown.previewStyles": [
       "./media/perfboard.css"
@@ -54,7 +81,7 @@
   "scripts": {
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.webview.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",

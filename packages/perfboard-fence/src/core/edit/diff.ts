@@ -1,15 +1,15 @@
+import { normalizeNewlines } from 'fence-kit';
 import type { Edit, NetDiff } from 'fence-kit';
-import { renderBreadboard } from '../index.ts';
-import { normalizeNewlines } from '../newlines.ts';
+import { renderPerfboard } from '../index.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { applyEdits } from './shared.ts';
 
 /**
  * 書き換えの前と後で**接続がどう変わったか**。動かす操作はどれもこれを添える。
  *
- * **同じ列の 5 穴はつながっている**ので、1 つ動かすと意図せずつながることが
- * circuit より起きやすい。黙らせない (52 の docs/13 の決め 8)。
- * 逆に、同じ導通の中で寄っただけなら**何も言わない** — 言うと嘘になる。
+ * **全穴が独立している**ので、circuit や breadboard と違って「寄せただけ」で
+ * つながることは無い — 変わったら必ず配線か足の話になる。だからこそ黙らせない
+ * (52 の docs/13 の決め 8)。
  */
 
 /** 組を 1 つの綴りにするときの区切り。端子の名前に現れない字を選ぶ。 */
@@ -19,15 +19,16 @@ const SEPARATOR = ' ';
  * ネットリストを「つながっている端子の組」の集合にする。
  *
  * **名前を付けた穴も相手として数える。** 部品が 1 つしか来ていないネットでは
- * 端子の組ができず、`points:` の名前から離れても何も言えなくなる。
- * 名前は書き手が付けた目印なので、そこから離れたかどうかは知らせる値打ちがある。
+ * 端子の組ができず、`points:` の名前から離れても何も言えなくなる
+ * (`IN -- a2 -- b2` の b2 から R1 を外した、が黙る)。名前は書き手が付けた
+ * 目印なので、そこから離れたかどうかは知らせる値打ちがある。
  */
 function connectionsOf(source: string): Set<string> {
   const { doc } = parseFence(source);
-  const named = new Set(doc === null ? [] : doc.points.keys());
+  const named = new Set((doc?.points ?? []).map((point) => point.name));
 
   const pairs = new Set<string>();
-  for (const net of renderBreadboard(source).netlist) {
+  for (const net of renderPerfboard(source).netlist) {
     const refs = [...net.refs, ...(named.has(net.name) ? [net.name] : [])].sort();
     for (let i = 0; i < refs.length; i += 1) {
       for (let j = i + 1; j < refs.length; j += 1) pairs.add(`${refs[i]}${SEPARATOR}${refs[j]}`);

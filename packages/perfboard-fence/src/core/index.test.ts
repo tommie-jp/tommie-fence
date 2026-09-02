@@ -662,3 +662,50 @@ describe('板の外の番地', () => {
     expect(result.errors[0]?.message).toContain('離れすぎ');
   });
 });
+
+/**
+ * 掴むための層。**編集のときだけ**出す — 貼る図は 1 バイトも変えない
+ * (52 の docs/13 の決め 2)。
+ */
+describe('renderPerfboard の編集用の描き方', () => {
+  const LED = `board: 12x7
+points:
+  IN: a1
+parts:
+  R1: resistor b2 b6 10k
+wires:
+  - IN -- a2
+`;
+
+  test('draws exactly the same picture when nothing asks for the map', () => {
+    expect(renderPerfboard(LED).svg).toBe(renderPerfboard(LED, {}).svg);
+    expect(renderPerfboard(LED, { edit: false }).svg).toBe(renderPerfboard(LED).svg);
+  });
+
+  test('lays a cell over every hole when the map is asked for', () => {
+    const { svg } = renderPerfboard(LED, { edit: true });
+
+    expect(svg).toContain('<g class="cf-hits">');
+    expect(svg).toContain('data-address="b2"');
+  });
+
+  test('names each part where it is drawn, so it can be grabbed', () => {
+    expect(renderPerfboard(LED, { edit: true }).svg).toContain('data-part="R1"');
+  });
+
+  test('names each wire by the line it is written on', () => {
+    expect(renderPerfboard(LED, { edit: true }).svg).toContain('class="cf-wire" data-line="7"');
+  });
+
+  test('lays a fat invisible line over each wire, which is too thin to hit', () => {
+    expect(renderPerfboard(LED, { edit: true }).svg).toContain('class="cf-wire-hit"');
+  });
+
+  test('puts a node only where something is written, and carries its name', () => {
+    const { svg } = renderPerfboard(LED, { edit: true });
+
+    expect(svg).toContain('data-node="b2"');
+    expect(svg).toContain('data-name="IN"');
+    expect(svg).not.toContain('data-node="g12"');
+  });
+});

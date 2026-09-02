@@ -587,7 +587,20 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
   return `${body}${notch}${leads}${label}`;
 }
 
-export const renderParts = (parts: readonly PlacedPart[], layout: Layout, theme: Theme): string =>
+/**
+ * 板に載せた部品を全部。`edit` のときは**掴むための印**で 1 つずつ包む
+ * (図そのものをマップにするため。52 の docs/13)。既定では包まない —
+ * 貼る図は 1 バイトも変わらない。
+ */
+export const renderParts = (
+  parts: readonly PlacedPart[],
+  layout: Layout,
+  theme: Theme,
+  edit = false,
+): string =>
   parts
-    .map((part) => (isBoxed(part) ? renderBox(part, layout, theme) : renderTwoLead(part, layout, theme)))
+    .map((part) => {
+      const drawn = isBoxed(part) ? renderBox(part, layout, theme) : renderTwoLead(part, layout, theme);
+      return edit ? element('g', { class: 'cf-chip', 'data-part': part.id }, drawn) : drawn;
+    })
     .join('');
