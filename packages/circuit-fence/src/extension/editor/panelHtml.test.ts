@@ -38,8 +38,7 @@ describe('panelHtml', () => {
   });
 
   test('tells the reader how to use it', () => {
-    expect(html).toContain('置きたい交点');
-    expect(html).toContain('<b>ドラッグして</b>置きたい交点で放す');
+    expect(html).toContain('<b>選ぶ</b>: ドラッグして置きたい交点で放す');
     expect(html).toContain('クリックは選ぶだけ');
   });
 
@@ -63,21 +62,34 @@ describe('makeNonce', () => {
   });
 });
 
-describe('持ち方の切り替え', () => {
-  test('offers both things to grab, since they do not mean the same move', () => {
-    expect(html).toContain('value="part"');
+describe('道具の帯', () => {
+  test('offers the three tools, with the key each answers to', () => {
+    expect(html).toContain('value="select" checked');
+    expect(html).toContain('value="wire"');
     expect(html).toContain('value="node"');
+    expect(html).toContain('<kbd>W</kbd>');
   });
 
-  test('starts on parts, which is the move that was there first', () => {
-    expect(html).toContain('value="part" checked');
+  test('starts on picking, and says so on the body for the CSS to read', () => {
+    expect(html).toContain('<body data-tool="select"');
   });
 
-  test('lets only the thing being grabbed take the click', () => {
+  test('lets only what the tool grabs take the click', () => {
     // 部品の升にも節点は立つ。どちらも掴めると、掴んだつもりと違うものが動く。
-    expect(html).toContain('body:not(.cf-nodes) .cf-marks { pointer-events: none;');
-    expect(html).toContain('body.cf-nodes .cf-parts { pointer-events: none;');
-    expect(html).toContain('body.cf-nodes .cf-wire-hits { pointer-events: none; }');
+    expect(html).toContain('body:not([data-tool="node"]) .cf-marks { pointer-events: none;');
+    expect(html).toContain('body[data-tool="node"] .cf-parts { pointer-events: none;');
+    expect(html).toContain('body:not([data-tool="select"]) .cf-wire-hits { pointer-events: none; }');
+  });
+
+  test('turns the crossings on for the wire tool before anything is pressed', () => {
+    // 配線は交点から引く。押した時点で升を読めないと、始まりが決まらない。
+    expect(html).toContain('body[data-tool="wire"] .cf-hits { pointer-events: all; }');
+    expect(html).toContain('.cf-cell.cf-from');
+  });
+
+  test('says what each tool does', () => {
+    expect(html).toContain('<b>配線</b>: 交点から交点へドラッグ');
+    expect(html).toContain('<b>Shift</b> を押しながら放すと先に横へ折ります');
   });
 });
 
@@ -85,7 +97,7 @@ describe('置き先の当たり判定', () => {
   test('turns the drop targets on only while something is held', () => {
     // いつも効かせると部品を掴めず、いつも切ると埋まった升へ置けない。
     expect(html).toContain('.cf-hits { pointer-events: none; }');
-    expect(html).toContain('body.cf-holding .cf-hits { pointer-events: all; }');
+    expect(html).toContain('body.cf-holding .cf-hits, body[data-tool="wire"] .cf-hits { pointer-events: all; }');
   });
 
   test('lays a fat invisible line over each wire, since 1.5px is too thin to hit', () => {
@@ -101,7 +113,7 @@ describe('元に戻す・やり直す (自前の履歴)', () => {
 
   test('marks the page as keeping its own history, which the script reads', () => {
     // パネルにフォーカスがあると activeTextEditor が無く、VS Code の undo は届かない。
-    expect(html).toContain('<body class="cf-own-undo">');
+    expect(html).toContain('<body data-tool="select" class="cf-own-undo">');
   });
 });
 

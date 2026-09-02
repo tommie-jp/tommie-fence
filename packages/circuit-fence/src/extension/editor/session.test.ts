@@ -708,3 +708,52 @@ describe('消す・回す', () => {
     expect(last(host, 'status')?.text).toContain('読めません');
   });
 });
+
+describe('配線を引く', () => {
+  test('writes a new wire line into the fence', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'addWire', from: 'a1', to: 'c1' });
+
+    expect(doc.getText()).toContain('wires:');
+    expect(doc.getText()).toContain('- a1 -- c1');
+    expect(last(host, 'status')?.text).toContain('引きました');
+  });
+
+  test('bends the way the map asked', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'addWire', from: 'a1', to: 'c5', operator: '-|' });
+
+    expect(doc.getText()).toContain('- a1 -| c5');
+  });
+
+  test('undoes a drawn wire, taking the line back out', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+    await session.handle({ kind: 'addWire', from: 'a1', to: 'c1' });
+
+    await session.handle({ kind: 'undo' });
+
+    expect(doc.getText()).toBe(RC);
+  });
+
+  test('says so when an end cannot be read as an address', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = createSession(host);
+    session.view();
+
+    await session.handle({ kind: 'addWire', from: 'a1', to: 'zz9' });
+
+    expect(last(host, 'status')?.text).toContain('番地として読めません');
+  });
+});

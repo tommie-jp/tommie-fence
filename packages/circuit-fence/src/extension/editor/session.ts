@@ -4,6 +4,7 @@ import { aimAt, fenceAt, gridMap } from '../../core/edit/map.ts';
 import { renderMapHtml } from '../../core/edit/mapSvg.ts';
 import { movePart, partSpans } from '../../core/edit/move.ts';
 import type { Edit } from '../../core/edit/move.ts';
+import { insertWire } from '../../core/edit/insert.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import { deletePart, deleteWire } from '../../core/edit/remove.ts';
 import type { LineEdit, NetDiff, Span } from '../../core/edit/shared.ts';
@@ -61,6 +62,7 @@ export type Incoming = {
   readonly id?: unknown;
   readonly line?: unknown;
   readonly quarters?: unknown;
+  readonly operator?: unknown;
 };
 
 export type SessionHost<D extends DocLike> = {
@@ -122,7 +124,7 @@ const NONE = '<p class="cf-note">この文書に circuit フェンスがあり�
 type FenceNow<D> = { readonly document: D; readonly source: string; readonly line: number };
 
 type Planned = ReturnType<typeof movePart> | ReturnType<typeof movePoint>
-  | ReturnType<typeof deletePart> | ReturnType<typeof turnPart>;
+  | ReturnType<typeof deletePart> | ReturnType<typeof turnPart> | ReturnType<typeof insertWire>;
 
 /** 書き換えの中身。行の出し入れを持たない `Move` も、ここでは同じ形で扱う。 */
 type Changes = {
@@ -443,6 +445,28 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
     });
   }
 
+  /** マップから来た「ここからここへ 1 本」。配線は**交点から交点へ**引く。 */
+  async function addWire(message: Incoming): Promise<void> {
+    const from = text(message.from);
+    const to = text(message.to);
+    const at = from === null ? null : parseAddress(from);
+    const target = to === null ? null : parseAddress(to);
+    if (at === null || target === null) {
+      say(`番地として読めません: ${at === null ? from : to}`);
+      return;
+    }
+    // 折れ方は放したときの Shift で決まる (`|-` は欄から。まだ無い)。
+    const operator = message.operator === '-|' || message.operator === '|-' ? message.operator : '--';
+    const written = `${from} ${operator} ${to}`;
+
+    await run({
+      label: `${written} を`,
+      done: () => `${written} を引きました`,
+      already: '引くものがありません',
+      plan: (source) => insertWire(source, { kind: 'cell', address: at }, { kind: 'cell', address: target }, operator),
+    });
+  }
+
   /** マップから来た「これを消す」。部品は足を指す配線も連れていく。 */
   async function remove(message: Incoming): Promise<void> {
     const what = text(message.what);
@@ -596,6 +620,10 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
         case 'move':
         case 'moveNode':
           await move(message);
+          refreshWith(true);
+          return;
+        case 'addWire':
+          await addWire(message);
           refreshWith(true);
           return;
         case 'delete':

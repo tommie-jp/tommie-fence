@@ -84,6 +84,11 @@ export function insertWire(
     }
   }
 
+  // 長さ 0 の線は図に出ない (押し間違いでしか生まれない)。
+  if (from.kind === 'cell' && to.kind === 'cell' && formatAddress(from.address) === formatAddress(to.address)) {
+    return fail(`両端が同じ番地です (${formatAddress(from.address)})`, null);
+  }
+
   const lines = normalized.split('\n');
   if (isFlow(lines, 'wires')) return fail('フロー形式 (1 行に書いた形) の配線には足せません。手で書きます', null);
 

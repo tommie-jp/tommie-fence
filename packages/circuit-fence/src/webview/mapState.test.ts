@@ -9,9 +9,10 @@ const WIRE: Picked = { kind: 'wire', id: '5' };
 const after = (state: State, ...events: readonly Event[]): State =>
   events.reduce((now, event) => step(now, event).state, state);
 
-const press = (on: Picked | null, onMap = true): Event => ({ kind: 'press', on, x: 10, y: 10, onMap });
-const release = (cell: string | null, far = true): Event =>
-  ({ kind: 'release', x: far ? 60 : 10, y: 10, cell });
+const press = (on: Picked | null, onMap = true, cell: string | null = null): Event =>
+  ({ kind: 'press', on, cell, x: 10, y: 10, onMap });
+const release = (cell: string | null, far = true, shift = false): Event =>
+  ({ kind: 'release', x: far ? 60 : 10, y: 10, cell, shift });
 const key = (name: string, over: Partial<Extract<Event, { kind: 'key' }>> = {}): Event =>
   ({ kind: 'key', key: name, shift: false, modifier: false, typing: false, ...over });
 
@@ -51,7 +52,7 @@ describe('置く', () => {
   });
 
   test('moves a node by its own message, since the move means something else', () => {
-    const held = after(start(true), { kind: 'mode', mode: 'node' }, press({ kind: 'node', id: 'a1' }));
+    const held = after(start(true), { kind: 'tool', tool: 'node' }, press({ kind: 'node', id: 'a1' }));
 
     expect(step(held, release('b3')).send).toEqual([{ kind: 'moveNode', from: 'a1', to: 'b3' }]);
   });
@@ -101,7 +102,7 @@ describe('打鍵', () => {
   });
 
   test('does not delete a node, which is a crossing rather than a thing', () => {
-    const held = after(start(true), { kind: 'mode', mode: 'node' }, press({ kind: 'node', id: 'a1' }));
+    const held = after(start(true), { kind: 'tool', tool: 'node' }, press({ kind: 'node', id: 'a1' }));
 
     expect(step(held, key('Delete')).send).toEqual([]);
   });
@@ -152,15 +153,30 @@ describe('打鍵', () => {
   });
 });
 
-describe('持ち方と入れ替え', () => {
-  test('lets go when the way of grabbing changes', () => {
+describe('道具と入れ替え', () => {
+  test('lets go when the tool changes', () => {
     const held = after(PANEL, press(R1));
 
-    const { state, send } = step(held, { kind: 'mode', mode: 'node' });
+    const { state, send } = step(held, { kind: 'tool', tool: 'node' });
 
-    expect(state.mode).toBe('node');
+    expect(state.tool).toBe('node');
     expect(state.picked).toBeNull();
     expect(send).toEqual([{ kind: 'select' }]);
+  });
+
+  test('picks the tool from a key, the way KiCad does', () => {
+    expect(step(PANEL, key('w')).state.tool).toBe('wire');
+    expect(step(PANEL, key('n')).state.tool).toBe('node');
+    expect(step(after(PANEL, key('w')), key('v')).state.tool).toBe('select');
+  });
+
+  test('comes back to picking with Escape, so no tool is a trap', () => {
+    const drawing = after(PANEL, key('w'), press(null, true, 'a1'));
+
+    const { state } = step(drawing, key('Escape'));
+
+    expect(state.tool).toBe('select');
+    expect(state.drawing).toBeNull();
   });
 
   test('lets go when the map is drawn again, because the elements are new', () => {
@@ -169,10 +185,59 @@ describe('持ち方と入れ替え', () => {
     expect(step(held, { kind: 'refresh' }).state.picked).toBeNull();
   });
 
-  test('only grabs what the current way of grabbing allows', () => {
+  test('only grabs what the current tool allows', () => {
     // 部品の升にも節点は立つ。どちらも掴めると、掴んだつもりと違うものが動く。
-    const nodes = after(start(true), { kind: 'mode', mode: 'node' });
+    const nodes = after(start(true), { kind: 'tool', tool: 'node' });
 
     expect(step(nodes, press(R1)).state.picked).toBeNull();
+  });
+});
+
+describe('配線を引く', () => {
+  const wiring = after(PANEL, { kind: 'tool', tool: 'wire' });
+
+  test('remembers the crossing it was pressed on', () => {
+    const { state, status } = step(wiring, press(null, true, 'a1'));
+
+    expect(state.drawing).toBe('a1');
+    expect(status).toContain('a1 から');
+  });
+
+  test('asks for a wire between the two crossings when it is let go', () => {
+    const drawing = after(wiring, press(null, true, 'a1'));
+
+    expect(step(drawing, release('c3')).send).toEqual([
+      { kind: 'addWire', from: 'a1', to: 'c3', operator: '--' },
+    ]);
+  });
+
+  test('bends first sideways when Shift is held, the way the grammar writes it', () => {
+    const drawing = after(wiring, press(null, true, 'a1'));
+
+    expect(step(drawing, release('c3', true, true)).send[0]).toMatchObject({ operator: '-|' });
+  });
+
+  test('draws nothing when it is let go on the crossing it started from', () => {
+    // 長さ 0 の線は図に出ない。押し間違いの取り消しとして扱う。
+    const drawing = after(wiring, press(null, true, 'a1'));
+
+    expect(step(drawing, release('a1')).send).toEqual([]);
+    expect(step(drawing, release('a1')).state.drawing).toBeNull();
+  });
+
+  test('draws nothing when it is let go outside the grid', () => {
+    const drawing = after(wiring, press(null, true, 'a1'));
+
+    expect(step(drawing, release(null)).send).toEqual([]);
+  });
+
+  test('does not pick parts while the wire tool is out', () => {
+    expect(step(wiring, press(R1, true, 'a1')).state.picked).toBeNull();
+  });
+
+  test('forgets a half-drawn wire when the pointer is cancelled', () => {
+    const drawing = after(wiring, press(null, true, 'a1'), { kind: 'cancel' });
+
+    expect(drawing.drawing).toBeNull();
   });
 });

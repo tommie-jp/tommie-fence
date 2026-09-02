@@ -31,10 +31,10 @@ const STYLE = `
 
   /* 見えるだけの層は当たり判定を持たない。 */
   .cf-grid, .cf-axes, .cf-wires { pointer-events: none; }
-  /* 配線を掴む層 (太い透明な線)。**部品を掴むときだけ**効かせる —
-     節点を掴んでいるときに配線が割り込むと、掴んだつもりと違うものが選ばれる。 */
+  /* 配線を掴む層 (太い透明な線)。**「選ぶ」道具のときだけ**効かせる —
+     ほかの道具のときに配線が割り込むと、掴んだつもりと違うものが選ばれる。 */
   .cf-wire-hit { stroke: transparent; stroke-width: 8; fill: none; cursor: pointer; }
-  body.cf-nodes .cf-wire-hits { pointer-events: none; }
+  body:not([data-tool="select"]) .cf-wire-hits { pointer-events: none; }
   .cf-grid-dot { fill: var(--vscode-panel-border); }
   .cf-axis { fill: var(--vscode-descriptionForeground); font-size: 9px; }
 
@@ -74,24 +74,32 @@ const STYLE = `
   .cf-bad .cf-name { fill: var(--cf-bad); }
 
   /* 置き先は**ドラッグの間だけ**効かせる。いつも効かせると部品を掴めず、
-     いつも切ると埋まった升へ置けない (同じ番地に置くのは正当な操作)。 */
+     いつも切ると埋まった升へ置けない (同じ番地に置くのは正当な操作)。
+     配線の道具は交点から引くので、そのあいだは押す前から効かせる。 */
   .cf-cell { fill: transparent; }
   .cf-hits { pointer-events: none; }
-  body.cf-holding .cf-hits { pointer-events: all; }
-  body.cf-holding .cf-cell:hover { fill: var(--vscode-editor-inactiveSelectionBackground); }
+  body.cf-holding .cf-hits, body[data-tool="wire"] .cf-hits { pointer-events: all; }
+  body.cf-holding .cf-cell:hover,
+  body[data-tool="wire"] .cf-cell:hover { fill: var(--vscode-editor-inactiveSelectionBackground); }
+  /* 引きかけの配線の、押した交点。 */
+  .cf-cell.cf-from { fill: var(--vscode-focusBorder); opacity: 0.35; }
 
-  /* 掴む物に合う層だけがクリックを取る。部品の升にも節点は立つので、
+  /* 道具に合う層だけがクリックを取る。部品の升にも節点は立つので、
      どちらも掴めると掴んだつもりと違うものが動く。 */
-  body:not(.cf-nodes) .cf-marks { pointer-events: none; opacity: 0.45; }
-  body.cf-nodes .cf-parts { pointer-events: none; opacity: 0.5; }
+  body:not([data-tool="node"]) .cf-marks { pointer-events: none; opacity: 0.45; }
+  body[data-tool="node"] .cf-parts { pointer-events: none; opacity: 0.5; }
   .cf-fences { margin: 0 0 8px; }
   .cf-fences select {
     font: inherit; font-size: 12px; padding: 2px 6px;
     background: var(--vscode-dropdown-background); color: var(--vscode-dropdown-foreground);
     border: 1px solid var(--vscode-dropdown-border);
   }
-  .cf-mode { margin: 0 0 8px; }
-  .cf-mode label { margin-right: 12px; }
+  .cf-tools { margin: 0 0 8px; }
+  .cf-tools label { margin-right: 12px; }
+  .cf-tools kbd {
+    font: inherit; font-size: 11px; padding: 0 4px; opacity: 0.8;
+    border: 1px solid var(--vscode-panel-border); border-radius: 3px;
+  }
   .cf-history { margin: 0 0 8px; }
   .cf-history button {
     margin-right: 6px; padding: 2px 10px; border: 0; cursor: pointer; font: inherit; font-size: 12px;
@@ -174,19 +182,22 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     + `<meta http-equiv="Content-Security-Policy" content="default-src 'none';`
     + ` style-src ${escapeMarkup(cspSource)} 'unsafe-inline'; script-src 'nonce-${escapeMarkup(nonce)}';">`
     + `<style>${STYLE}</style><title>部品と節点を動かす</title></head>`
-    + `<body${own ? ' class="cf-own-undo"' : ''}>`
+    + `<body data-tool="select"${own ? ' class="cf-own-undo"' : ''}>`
     + `<p class="cf-fences">${view.picker}</p>`
-    + `<p class="cf-mode">`
-    + `<label><input type="radio" name="cf-mode" value="part" checked> 部品を動かす</label>`
-    + `<label><input type="radio" name="cf-mode" value="node"> 節点を動かす</label></p>`
+    + `<p class="cf-tools">`
+    + `<label><input type="radio" name="cf-tool" value="select" checked> 選ぶ <kbd>V</kbd></label>`
+    + `<label><input type="radio" name="cf-tool" value="wire"> 配線 <kbd>W</kbd></label>`
+    + `<label><input type="radio" name="cf-tool" value="node"> 節点 <kbd>N</kbd></label></p>`
     + `<p class="cf-history">`
     + `<button class="cf-undo"${own ? ' disabled' : ''} title="Ctrl+Z">元に戻す</button>`
     + `<button class="cf-redo"${own ? ' disabled' : ''} title="Ctrl+Shift+Z">やり直す</button></p>`
-    + `<p class="cf-note"><b>ドラッグして</b>置きたい交点で放すと動きます`
+    + `<p class="cf-note"><b>選ぶ</b>: ドラッグして置きたい交点で放すと動きます`
     + ` (クリックは選ぶだけ — エディタの書いてある場所が光ります)。`
-    + `部品は 1 つだけ動いて接続が変わり、節点は交点ごと動いて接続は保たれます。`
     + `選んでから <b>R</b> で回し、<b>M</b> で反転、<b>Delete</b> で消します`
     + ` (配線は線をクリックして選びます)。`
+    + `<b>配線</b>: 交点から交点へドラッグすると 1 本引きます`
+    + ` (<b>Shift</b> を押しながら放すと先に横へ折ります)。`
+    + `<b>節点</b>: 交点に来ているものが丸ごと動き、接続は保たれます。`
     + `図は書き換えのあと数秒で描き直ります。</p>`
     + `<div class="cf-body">${view.html}</div>`
     + `<div class="cf-band">${view.issues}</div>`

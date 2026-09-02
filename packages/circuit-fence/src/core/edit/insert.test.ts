@@ -57,6 +57,13 @@ describe('insertWire', () => {
     expect(insertWire(RC, at('a1'), { kind: 'cell', address: { row: 0, col: 200 } }).ok).toBe(false);
   });
 
+  test('refuses a wire whose two ends are the same crossing', () => {
+    // 長さ 0 の線は図に出ず、押し間違いでしか生まれない。
+    const result = insertWire(RC, at('a1'), at('a1'));
+
+    expect(result.ok === false && result.error.message).toContain('同じ');
+  });
+
   test('refuses a pin on a part that is not there', () => {
     const result = insertWire(RC, at('a1'), { kind: 'pin', part: 'Q9', pin: 'b' });
 

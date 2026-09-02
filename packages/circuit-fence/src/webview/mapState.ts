@@ -2,10 +2,10 @@
  * マップの webview の**状態遷移**。DOM も vscode も知らない純関数なので、
  * そのまま node のテストに掛かる (設計上の約束 1 と同じ考え方を webview にも)。
  *
- * 掴む物は 3 つ — 部品のチップ、節点の点、配線の線。**同じ操作に混ぜない**ので
- * 持ち方を切り替えさせる (部品は 1 つだけ動いて接続が変わり、節点は交点ごと
- * 動いて接続が保たれる。掴む物が違えば意味も違う、で曖昧さが消える)。
- * 配線は動かせないが、消すには選ぶ手立てが要るので部品と同じ持ち方で選べる。
+ * 道具は 3 つ — **選ぶ・配線・節点**。掴む物が違えば意味も違うので、同じ操作に
+ * 混ぜない (部品は 1 つだけ動いて接続が変わり、節点は交点ごと動いて接続が
+ * 保たれる)。配線は動かせないが、消すには選ぶ手立てが要るので「選ぶ」道具で
+ * 部品と一緒に選べる。
  *
  * **動かすのはドラッグだけ。** 選んでから別の場所をクリックする 2 段構えは
  * 廃止した (選んだあとの何気ないクリックがそのまま移動になり、置くつもりの
@@ -17,14 +17,16 @@ export type Kind = 'part' | 'node' | 'wire';
 /** 選んでいるもの。**種類ごと覚える** (掴む物が違えば意味も違う)。 */
 export type Picked = { readonly kind: Kind; readonly id: string };
 
-/** 掴む物の持ち方。 */
-export type Mode = 'part' | 'node';
+/** 道具。**選ぶ**が既定で、`Esc` でいつでもここへ戻る。 */
+export type Tool = 'select' | 'wire' | 'node';
 
 export type State = {
-  readonly mode: Mode;
+  readonly tool: Tool;
   readonly picked: Picked | null;
   /** 押した場所。放した場所が離れていればドラッグ、その場なら選んだだけ。 */
   readonly pressed: { readonly x: number; readonly y: number } | null;
+  /** 配線の道具で押した交点 (引きかけの端)。放した交点との間に 1 本引く。 */
+  readonly drawing: string | null;
   /**
    * 戻す・やり直すを自分で持つか。パネルは持つ (フォーカスがあると VS Code の
    * `Ctrl+Z` がエディタに届かない)。タブそのものがマップのときは VS Code に任せる。
@@ -33,7 +35,7 @@ export type State = {
 };
 
 export const start = (ownUndo: boolean): State =>
-  ({ mode: 'part', picked: null, pressed: null, ownUndo });
+  ({ tool: 'select', picked: null, pressed: null, drawing: null, ownUndo });
 
 /** webview で起きたこと。**DOM を読むのは呼ぶ側** (`map.ts`)。 */
 export type Event =
@@ -41,12 +43,21 @@ export type Event =
     readonly kind: 'press';
     /** 押した先にあった掴める物 (無ければ null)。 */
     readonly on: Picked | null;
+    /** 押した先の交点 (配線の道具が使う)。 */
+    readonly cell: string | null;
     readonly x: number;
     readonly y: number;
     /** マップの上を押したか (外を押しても選択は消さない)。 */
     readonly onMap: boolean;
   }
-  | { readonly kind: 'release'; readonly x: number; readonly y: number; readonly cell: string | null }
+  | {
+    readonly kind: 'release';
+    readonly x: number;
+    readonly y: number;
+    readonly cell: string | null;
+    /** 押しながら放したか (配線の折れ方を変える)。 */
+    readonly shift: boolean;
+  }
   | { readonly kind: 'cancel' }
   | {
     readonly kind: 'key';
@@ -57,7 +68,7 @@ export type Event =
     /** 欄に字を打っている最中か (打鍵を横取りしない)。 */
     readonly typing: boolean;
   }
-  | { readonly kind: 'mode'; readonly mode: Mode }
+  | { readonly kind: 'tool'; readonly tool: Tool }
   /** マップを組み直した (要素が入れ替わるので掴みを捨てる)。 */
   | { readonly kind: 'refresh' };
 
@@ -94,12 +105,22 @@ const outcome = (
 ): Outcome => ({ state, send, status, handled });
 
 const letGo = (state: State): Outcome =>
-  outcome({ ...state, picked: null, pressed: null }, [select(null)], '', true);
+  outcome({ ...state, picked: null, pressed: null, drawing: null }, [select(null)], '', true);
 
 function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcome {
-  // いまの持ち方に合う物だけを掴む。部品の升にも節点は立つので、どちらも
+  if (state.tool === 'wire') {
+    // 配線は**交点から交点へ**。押した交点を覚え、放した交点との間に 1 本引く。
+    if (event.cell === null) return outcome(state);
+    return outcome(
+      { ...state, drawing: event.cell, pressed: { x: event.x, y: event.y } },
+      [],
+      `${event.cell} から。放した交点まで引きます (Shift で先に横へ折る)`,
+    );
+  }
+
+  // いまの道具で掴める物だけを掴む。部品の升にも節点は立つので、どちらも
   // 掴めると掴んだつもりと違うものが動く。
-  const wanted = state.mode === 'node' ? ['node'] : ['part', 'wire'];
+  const wanted = state.tool === 'node' ? ['node'] : ['part', 'wire'];
   const on = event.on !== null && wanted.includes(event.on.kind) ? event.on : null;
 
   if (on === null) {
@@ -114,6 +135,18 @@ function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcom
 }
 
 function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Outcome {
+  if (state.drawing !== null) {
+    const from = state.drawing;
+    const clear = { ...state, drawing: null, pressed: null };
+    // 同じ交点で放したのは引きかけの取り消し (長さ 0 の線は図に出ない)。
+    if (event.cell === null || event.cell === from) return outcome(clear, [], '');
+    return outcome(
+      clear,
+      [{ kind: 'addWire', from, to: event.cell, operator: event.shift ? '-|' : '--' }],
+      `${from} から ${event.cell} へ…`,
+    );
+  }
+
   const { picked, pressed } = state;
   if (picked === null || pressed === null) return outcome({ ...state, pressed: null });
 
@@ -132,8 +165,15 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
   );
 }
 
+/** 道具の鍵 (KiCad の語彙に寄せる)。 */
+const TOOL_KEYS: Readonly<Record<string, Tool>> = { v: 'select', w: 'wire', n: 'node' };
+
 function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
-  if (event.key === 'Escape') return state.picked === null ? outcome(state) : letGo(state);
+  if (event.key === 'Escape') {
+    // **`Esc` は「選ぶ」へ戻る鍵**でもある (道具に入ったまま抜けられないと詰む)。
+    if (state.tool !== 'select') return step(state, { kind: 'tool', tool: 'select' });
+    return state.picked === null ? outcome(state) : letGo(state);
+  }
 
   if (event.modifier) {
     // **パネルにフォーカスがあると VS Code の Ctrl+Z は届かない。** ここで受けて、
@@ -145,8 +185,14 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
     return outcome(state);
   }
 
+  if (event.typing) return outcome(state);
+
+  // 道具は掴んでいなくても選べる (これから何をするかの話なので)。
+  const tool = TOOL_KEYS[event.key.toLowerCase()];
+  if (tool !== undefined) return { ...step(state, { kind: 'tool', tool }), handled: true };
+
   const { picked } = state;
-  if (picked === null || event.typing) return outcome(state);
+  if (picked === null) return outcome(state);
 
   if (event.key === 'Delete' || event.key === 'Backspace') {
     // 節点は交点であって物ではないので、消すものが無い。
@@ -180,13 +226,17 @@ export function step(state: State, event: Event): Outcome {
       return onRelease(state, event);
     case 'cancel':
       // 窓の外で放したときなど、放した知らせが来ないことがある。
-      return outcome({ ...state, pressed: null });
+      return outcome({ ...state, pressed: null, drawing: null });
     case 'key':
       return onKey(state, event);
-    case 'mode':
-      return outcome({ ...state, mode: event.mode, picked: null, pressed: null }, [select(null)], '');
+    case 'tool':
+      return outcome(
+        { ...state, tool: event.tool, picked: null, pressed: null, drawing: null },
+        [select(null)],
+        '',
+      );
     case 'refresh':
-      return outcome({ ...state, picked: null, pressed: null });
+      return outcome({ ...state, picked: null, pressed: null, drawing: null });
     default:
       return outcome(state);
   }

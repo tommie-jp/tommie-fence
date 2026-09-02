@@ -51,11 +51,22 @@ function run(event: Event): boolean {
   for (const message of outcome.send) vscode.postMessage(message);
   if (outcome.status !== null) setStatus(outcome.status);
   mark(state.picked);
-  document.body.classList.toggle('cf-nodes', state.mode === 'node');
+  markFrom(state.drawing);
+  // 道具は CSS が見る目印にする (何が掴めるかは道具で変わる)。
+  document.body.dataset.tool = state.tool;
+  const tool = document.querySelector<HTMLInputElement>(`input[name="cf-tool"][value="${state.tool}"]`);
+  if (tool) tool.checked = true;
   // 置き先の当たり判定は**ドラッグの間だけ**効かせる。いつも効かせると部品を
   // 掴めず、いつも切ると埋まった升へ置けない (同じ番地に置くのは正当な操作)。
   document.body.classList.toggle('cf-holding', state.pressed !== null && state.picked?.kind !== 'wire');
   return outcome.handled;
+}
+
+/** 引きかけの配線の、押した交点。放すまで印を出しておく。 */
+function markFrom(cell: string | null): void {
+  for (const element of document.querySelectorAll('.cf-from')) element.classList.remove('cf-from');
+  if (cell === null) return;
+  document.querySelector(`.cf-cell[data-address="${CSS.escape(cell)}"]`)?.classList.add('cf-from');
 }
 
 /** 押した先にある掴める物。**どれを掴めるかを決めるのは状態遷移のほう。** */
@@ -90,14 +101,16 @@ document.addEventListener('pointerdown', (event) => {
   run({
     kind: 'press',
     on: pickedAt(target),
+    // 配線の道具は交点から引くので、押した所の升も渡す。
+    cell: cellUnder(event),
     x: event.clientX,
     y: event.clientY,
-    onMap: target?.closest('.cf-map') !== null && target?.closest('.cf-map') !== undefined,
+    onMap: target?.closest('.cf-map') != null,
   });
 });
 
 document.addEventListener('pointerup', (event) => {
-  run({ kind: 'release', x: event.clientX, y: event.clientY, cell: cellUnder(event) });
+  run({ kind: 'release', x: event.clientX, y: event.clientY, cell: cellUnder(event), shift: event.shiftKey });
 });
 
 // 窓の外で放したときなど、放した知らせが来ないことがある。
@@ -139,7 +152,9 @@ document.addEventListener('change', (event) => {
     vscode.postMessage({ kind: 'fence', line: Number(target.value) });
     return;
   }
-  if (target.name === 'cf-mode') run({ kind: 'mode', mode: target.value === 'node' ? 'node' : 'part' });
+  if (target.name !== 'cf-tool') return;
+  const tool = target.value;
+  if (tool === 'select' || tool === 'wire' || tool === 'node') run({ kind: 'tool', tool });
 });
 
 /**

@@ -165,8 +165,8 @@ down to swapping the address spelling inside a line.
 - **circuit Editor** — pick it from the editor picker at the top of a `.md` tab
   (`Text Editor ▾`, or `View: Reopen Editor With...`) and the tab itself becomes
   the map. **Drag** onto the crossing you want (a click only selects, it never
-  moves). A switch at the top changes what you grab from parts to nodes; when
-  the document holds several fences, a list at the top picks one. The grid
+  moves). A band at the top picks the tool (`V` select, `W` wire, `N` node);
+  when the document holds several fences, a list at the top picks one. The grid
   draws **part shapes and wires** (the drawing stays the authority on symbols;
   the map is a likeness for seeing what sits where). Open the same document
   beside it as a text editor or Markdown preview: edits show up at once, and
@@ -188,6 +188,9 @@ VS Code's undo applies as usual; the side panel keeps its own history, because
 VS Code's undo cannot reach the editor while the panel has focus). Your
 comments and formatting survive: only the address spelling is replaced. The
 drawing catches up a few seconds after the edit.
+
+**Draw wires.** With the wire tool (`W`), drag from one crossing to another and
+a line is added to `wires:` (hold `Shift` as you let go to bend sideways first).
 
 **Select, then delete or turn.** Click on the map to select, `Delete` removes,
 `R` turns a quarter clockwise and `M` flips. Removal takes whole lines: deleting
