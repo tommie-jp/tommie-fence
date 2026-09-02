@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { changesForFence } from './docEdits.ts';
 import type { Change } from './docEdits.ts';
 import type { DocLike, EditorLike } from './documentLike.ts';
+import { createCircuitEditor } from './circuitEditor.ts';
 import { createSession } from './session.ts';
 import type { LitRange, Outgoing, SessionHost } from './session.ts';
 
@@ -107,12 +108,16 @@ const at = (document: Doc, line: number, character = 0): EditorLike<Doc> => ({
 const last = <K extends Outgoing['kind']>(host: Fake, kind: K): Extract<Outgoing, { kind: K }> | undefined =>
   host.sent.filter((message): message is Extract<Outgoing, { kind: K }> => message.kind === kind).at(-1);
 
+/** テストの呼び口。**フェンスのエディタは毎回同じもの**を渡す (殻の段取りを見るテストなので)。 */
+const sessionOf = <D extends DocLike>(host: SessionHost<D>, options: Parameters<typeof createSession<D>>[2] = {}) =>
+  createSession(host, createCircuitEditor(), options);
+
 const A = 'file:///a.md';
 
 describe('マップを組む', () => {
   test('draws the fence under the cursor, with nothing to pick when there is one fence', () => {
     const doc = docOf(A, RC);
-    const session = createSession(hostOf([doc], at(doc, 5)));
+    const session = sessionOf(hostOf([doc], at(doc, 5)));
 
     const view = session.view();
 
@@ -122,7 +127,7 @@ describe('マップを組む', () => {
 
   test('offers a picker when the document holds more than one fence', () => {
     const doc = docOf(A, TWO);
-    const session = createSession(hostOf([doc], at(doc, 5)));
+    const session = sessionOf(hostOf([doc], at(doc, 5)));
 
     const { picker } = session.view();
 
@@ -133,7 +138,7 @@ describe('マップを組む', () => {
   test('follows the cursor into another fence', () => {
     const doc = docOf(A, TWO);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     host.editor = at(doc, 11);
@@ -145,7 +150,7 @@ describe('マップを組む', () => {
   test('says so when the fence is lost, instead of leaving the old map', () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     host.editor = null;
@@ -157,7 +162,7 @@ describe('マップを組む', () => {
   test('sends history, then the map, then what the cursor points at', () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
 
     session.refresh();
 
@@ -170,7 +175,7 @@ describe('動かす', () => {
   test('rewrites the address and says what it did', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'move', part: 'R1', to: 'b1' });
@@ -183,7 +188,7 @@ describe('動かす', () => {
   test('moves a node with everything written at it', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'moveNode', from: 'a3', to: 'a4' });
@@ -196,7 +201,7 @@ describe('動かす', () => {
   test('refuses an address it cannot read, in words', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'move', part: 'R1', to: 'zz99x' });
@@ -209,7 +214,7 @@ describe('動かす', () => {
     // パネルを前に出すとアクティブなエディタが無くなる。覚えている文書へ当てる。
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     host.editor = null;
 
@@ -223,7 +228,7 @@ describe('戻す・やり直す (自前の履歴)', () => {
   test('undoes the last move from the map and reports the buttons', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     await session.handle({ kind: 'move', part: 'R1', to: 'b1' });
     expect(last(host, 'history')).toEqual({ kind: 'history', canUndo: true, canRedo: false });
@@ -238,7 +243,7 @@ describe('戻す・やり直す (自前の履歴)', () => {
   test('refuses when the text was edited by hand since, rather than breaking it', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     await session.handle({ kind: 'move', part: 'R1', to: 'b1' });
     doc.set(doc.getText().replace('b1 b3', 'b1 b5'));
@@ -254,7 +259,7 @@ describe('戻す・やり直す (自前の履歴)', () => {
     // 行の直しでも断る (エディタの Ctrl+Z なら、そこだけ戻せる)。
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     await session.handle({ kind: 'move', part: 'R1', to: 'b1' });
     doc.set(doc.getText().replace('title: RC', 'title: RC 回路'));
@@ -272,7 +277,7 @@ describe('戻す・やり直す (自前の履歴)', () => {
       '    R1: resistor a1 a3 10k', '  ```', ''].join('\n');
     const doc = docOf(A, indented);
     const host = hostOf([doc], at(doc, 4));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     await session.handle({ kind: 'move', part: 'R1', to: 'b1' });
     expect(doc.getText()).toContain('    R1: resistor b1 b3 10k');
@@ -285,7 +290,7 @@ describe('戻す・やり直す (自前の履歴)', () => {
   test('says when there is nothing to undo', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'redo' });
@@ -299,7 +304,7 @@ describe('戻す・やり直す (VS Code に頼む)', () => {
     const doc = docOf(A, RC);
     const nativeUndo = vi.fn(async () => {});
     const host = hostOf([doc], at(doc, 5), { nativeUndo });
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     await session.handle({ kind: 'move', part: 'R1', to: 'b1' });
 
@@ -314,7 +319,7 @@ describe('フェンスを選ぶ', () => {
   test('switches to the chosen fence even though the cursor sits in another', async () => {
     const doc = docOf(A, TWO);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'fence', line: 10 });
@@ -328,7 +333,7 @@ describe('フェンスを選ぶ', () => {
     // カーソルの居ないフェンスは一覧から選べない。
     const doc = docOf(A, THREE);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     await session.handle({ kind: 'fence', line: 10 });
 
@@ -341,7 +346,7 @@ describe('フェンスを選ぶ', () => {
   test('follows again once the cursor enters a different fence', async () => {
     const doc = docOf(A, THREE);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     await session.handle({ kind: 'fence', line: 10 });
 
@@ -354,7 +359,7 @@ describe('フェンスを選ぶ', () => {
   test('says so when the line has no fence', async () => {
     const doc = docOf(A, TWO);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'fence', line: 1 });
@@ -366,7 +371,7 @@ describe('フェンスを選ぶ', () => {
 describe('文書を固定する (カスタムエディタ)', () => {
   test('starts on the first fence without any editor', () => {
     const doc = docOf(A, TWO);
-    const session = createSession(hostOf([doc], null), { pinned: doc });
+    const session = sessionOf(hostOf([doc], null), { pinned: doc });
 
     expect(session.view().html).toContain('data-part="R1"');
     expect(session.view().picker).toContain('value="3" selected');
@@ -375,7 +380,7 @@ describe('文書を固定する (カスタムエディタ)', () => {
   test('does not follow the cursor into another document', () => {
     const doc = docOf(A, RC);
     const other = docOf('file:///b.md', '```circuit\nparts:\n  L1: inductor b1 b3 1m\n```\n');
-    const session = createSession(hostOf([doc, other], at(other, 2)), { pinned: doc });
+    const session = sessionOf(hostOf([doc, other], at(other, 2)), { pinned: doc });
 
     const view = session.view();
 
@@ -385,21 +390,21 @@ describe('文書を固定する (カスタムエディタ)', () => {
 
   test('follows the cursor within its own document', () => {
     const doc = docOf(A, TWO);
-    const session = createSession(hostOf([doc], at(doc, 11)), { pinned: doc });
+    const session = sessionOf(hostOf([doc], at(doc, 11)), { pinned: doc });
 
     expect(session.view().picker).toContain('value="10" selected');
   });
 
   test('says the document has no fence yet, rather than showing a blank page', () => {
     const empty = docOf('file:///e.md', '# なし\n');
-    const session = createSession(hostOf([empty], null), { pinned: empty });
+    const session = sessionOf(hostOf([empty], null), { pinned: empty });
 
     expect(session.view().html).toContain('circuit フェンスがありません');
   });
 
   test('tells the host which documents matter to it', () => {
     const doc = docOf(A, RC);
-    const session = createSession(hostOf([doc], null), { pinned: doc });
+    const session = sessionOf(hostOf([doc], null), { pinned: doc });
 
     expect(session.isBoundTo(A)).toBe(true);
     expect(session.follows(A)).toBe(true);
@@ -408,7 +413,7 @@ describe('文書を固定する (カスタムエディタ)', () => {
 
   test('follows every document when not pinned', () => {
     const doc = docOf(A, RC);
-    const session = createSession(hostOf([doc], at(doc, 5)));
+    const session = sessionOf(hostOf([doc], at(doc, 5)));
 
     expect(session.follows('file:///b.md')).toBe(true);
   });
@@ -418,7 +423,7 @@ describe('光らせる', () => {
   test('lights up where the grabbed part is written, in document lines', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'select', what: 'part', id: 'R1' });
@@ -433,7 +438,7 @@ describe('光らせる', () => {
   test('lights up a node by its address', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'select', what: 'node', id: 'a3' });
@@ -444,7 +449,7 @@ describe('光らせる', () => {
   test('clears the light when the grab is released', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     await session.handle({ kind: 'select', what: 'part', id: 'R1' });
 
@@ -457,7 +462,7 @@ describe('光らせる', () => {
     const doc = docOf(A, RC);
     const other = docOf('file:///b.md', RC);
     const host = hostOf([doc, other], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     await session.handle({ kind: 'select', what: 'part', id: 'R1' });
 
@@ -470,7 +475,7 @@ describe('光らせる', () => {
   test('clears the light when disposed', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     await session.handle({ kind: 'select', what: 'part', id: 'R1' });
 
@@ -483,14 +488,14 @@ describe('光らせる', () => {
 describe('読めなかったところを帯に出す', () => {
   test('says nothing when the fence reads cleanly', () => {
     const doc = docOf(A, RC);
-    const session = createSession(hostOf([doc], at(doc, 5)));
+    const session = sessionOf(hostOf([doc], at(doc, 5)));
 
     expect(session.view().issues).toBe('');
   });
 
   test('points at the Markdown line, not the line inside the fence', () => {
     const doc = docOf(A, BAD);
-    const session = createSession(hostOf([doc], at(doc, 4)));
+    const session = sessionOf(hostOf([doc], at(doc, 4)));
 
     const { issues } = session.view();
 
@@ -502,7 +507,7 @@ describe('読めなかったところを帯に出す', () => {
   test('marks the offending part on the map as well as in the band', () => {
     const doc = docOf(A, ['# x', '', '```circuit', 'parts:', '  R1: resistor a1 a3',
       'wires:', '  - a1 -- zz9', '```', ''].join('\n'));
-    const session = createSession(hostOf([doc], at(doc, 4)));
+    const session = sessionOf(hostOf([doc], at(doc, 4)));
 
     expect(session.view().html).toContain('data-part="R1"');
     expect(session.view().issues).toContain('cf-error');
@@ -511,7 +516,7 @@ describe('読めなかったところを帯に出す', () => {
   test('sends the band along with the map', () => {
     const doc = docOf(A, BAD);
     const host = hostOf([doc], at(doc, 4));
-    const session = createSession(host);
+    const session = sessionOf(host);
 
     session.refresh();
 
@@ -521,7 +526,7 @@ describe('読めなかったところを帯に出す', () => {
   test('lights the whole line when the band is clicked', async () => {
     const doc = docOf(A, BAD);
     const host = hostOf([doc], at(doc, 4));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'goto', line: 5 });
@@ -535,7 +540,7 @@ describe('読めなかったところを帯に出す', () => {
     // vscode が投げる (実際に踏める: 打ちかけのフェンスが文末にあるとき)。
     const doc = docOf(A, '```circuit\nparts: [');
     const host = hostOf([doc], at(doc, 1));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'goto', line: 3 });
@@ -546,7 +551,7 @@ describe('読めなかったところを帯に出す', () => {
   test('ignores a click on a row that carries no line', async () => {
     const doc = docOf(A, BAD);
     const host = hostOf([doc], at(doc, 4));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     const before = host.lit.length;
 
@@ -565,7 +570,7 @@ describe('帯の行を押したら、その行を見せる', () => {
     const host = hostOf([doc], null, {
       showDocument: async (uri: string, line: number) => { shown.push({ uri, line }); },
     });
-    const session = createSession(host, { pinned: doc });
+    const session = sessionOf(host, { pinned: doc });
     session.view();
 
     return session.handle({ kind: 'goto', line: 5 }).then(() => {
@@ -577,7 +582,7 @@ describe('帯の行を押したら、その行を見せる', () => {
   test('works without a host that can show documents', async () => {
     const doc = docOf(A, BAD);
     const host = hostOf([doc], at(doc, 4));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'goto', line: 5 });
@@ -591,7 +596,7 @@ describe('読めない知らせ', () => {
     // webview は「R1 を b1 へ…」を出したまま待つ。黙って戻ると点が消えない。
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'move', part: 'R1' });
@@ -602,7 +607,7 @@ describe('読めない知らせ', () => {
   test('says something when the map sends a node move without a source', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'moveNode', to: 'b1' });
@@ -615,7 +620,7 @@ describe('消す・回す', () => {
   test('takes the part out of the fence and says so', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'delete', what: 'part', id: 'R1' });
@@ -628,7 +633,7 @@ describe('消す・回す', () => {
   test('says how many wires went with the part', async () => {
     const doc = docOf(A, NPN);
     const host = hostOf([doc], at(doc, 4));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'delete', what: 'part', id: 'Q1' });
@@ -640,7 +645,7 @@ describe('消す・回す', () => {
   test('takes out the wire written on that line', async () => {
     const doc = docOf(A, NPN);
     const host = hostOf([doc], at(doc, 4));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     // 帯もマップも、配線はフェンスの中の行で指す (5 行目 = wires: の次)。
@@ -654,7 +659,7 @@ describe('消す・回す', () => {
     // 桁の控えでは行の増減を戻せなかった。本文の控えなら 1 歩で戻る。
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     await session.handle({ kind: 'delete', what: 'part', id: 'R1' });
 
@@ -666,7 +671,7 @@ describe('消す・回す', () => {
   test('turns a two-terminal part a quarter clockwise', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'turn', part: 'R1', quarters: 1 });
@@ -677,7 +682,7 @@ describe('消す・回す', () => {
   test('flips the two ends round', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'flip', part: 'R1' });
@@ -688,7 +693,7 @@ describe('消す・回す', () => {
   test('says why a part that has no orientation cannot be turned', async () => {
     const doc = docOf(A, NPN);
     const host = hostOf([doc], at(doc, 4));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'turn', part: 'Q1', quarters: 1 });
@@ -700,7 +705,7 @@ describe('消す・回す', () => {
   test('says something when the map sends a delete it cannot read', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'delete', what: 'part' });
@@ -713,7 +718,7 @@ describe('配線を引く', () => {
   test('writes a new wire line into the fence', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'addWire', from: 'a1', to: 'c1' });
@@ -726,7 +731,7 @@ describe('配線を引く', () => {
   test('bends the way the map asked', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'addWire', from: 'a1', to: 'c5', operator: '-|' });
@@ -737,7 +742,7 @@ describe('配線を引く', () => {
   test('undoes a drawn wire, taking the line back out', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     await session.handle({ kind: 'addWire', from: 'a1', to: 'c1' });
 
@@ -749,7 +754,7 @@ describe('配線を引く', () => {
   test('says so when an end cannot be read as an address', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'addWire', from: 'a1', to: 'zz9' });
@@ -762,7 +767,7 @@ describe('部品を置く', () => {
   test('writes a one-terminal part where the map said, naming it from the prefix', () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     return session.handle({ kind: 'addPart', type: 'ground', at: ['c5'] }).then(() => {
@@ -774,7 +779,7 @@ describe('部品を置く', () => {
   test('writes a two-terminal part between the two crossings', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'addPart', type: 'inductor', at: ['c1', 'c3'] });
@@ -789,7 +794,7 @@ describe('部品を置く', () => {
     const host = hostOf([doc], at(doc, 5), {
       ask: async (prompt: string) => { asked.push(prompt); return 'OUT'; },
     });
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'addPart', type: 'port', at: ['c5'] });
@@ -801,7 +806,7 @@ describe('部品を置く', () => {
   test('places nothing when the name is refused', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5), { ask: async () => null });
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'addPart', type: 'port', at: ['c5'] });
@@ -814,7 +819,7 @@ describe('部品を置く', () => {
     // 理由が分からないまま webview が待ちの表示で残る。
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5), { ask: async () => '' });
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'addPart', type: 'port', at: ['c5'] });
@@ -826,7 +831,7 @@ describe('部品を置く', () => {
   test('says so when it cannot ask, rather than making a name up', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'addPart', type: 'vcc', at: ['c5'] });
@@ -838,7 +843,7 @@ describe('部品を置く', () => {
   test('says so when a crossing cannot be read as an address', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'addPart', type: 'ground', at: ['zz9'] });
@@ -849,7 +854,7 @@ describe('部品を置く', () => {
   test('undoes a placed part, taking the line back out', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     await session.handle({ kind: 'addPart', type: 'ground', at: ['c5'] });
 
@@ -863,7 +868,7 @@ describe('欄 (インスペクタ)', () => {
   const opened = () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
     return { doc, host, session };
   };
@@ -905,7 +910,7 @@ describe('欄 (インスペクタ)', () => {
   test('renames a part, carrying what points at it', async () => {
     const doc = docOf(A, NPN);
     const host = hostOf([doc], at(doc, 4));
-    const session = createSession(host);
+    const session = sessionOf(host);
     session.view();
 
     await session.handle({ kind: 'rename', part: 'Q1', text: 'T1' });

@@ -6,6 +6,8 @@ const shell = (over: Partial<Parameters<typeof panelHtml>[0]> = {}): string => p
   nonce: 'abc123',
   scriptUri: 'vscode-resource://dist/map.js',
   view: { html: '<table></table>', picker: '', issues: '' },
+  // 帯はフェンスが組む (`FenceEditor`)。殻の試験では中身の分かる印を入れておく。
+  chrome: { palette: '<details class="cf-palette"></details>', typeNames: '<datalist id="cf-type-names"></datalist>' },
   undo: 'own',
   ...over,
 });
@@ -139,10 +141,10 @@ describe('フェンスを選ぶ', () => {
 });
 
 describe('部品のパレット', () => {
-  test('puts the palette in the head, folded away', () => {
-    // パネルはエディタの横に細く置かれる。閉じていれば升目が全幅になる。
-    expect(html).toContain('<details class="cf-palette">');
-    expect(html).toContain('data-type="resistor" data-ends="2"');
+  test('puts what the fence handed it into the head', () => {
+    // **中身は殻の持ち物ではない** (置ける部品はフェンスごとに違う)。
+    // 組むのは `FenceEditor.palette`。ここは受け取って入れるだけ。
+    expect(html).toContain('<details class="cf-palette"></details>');
   });
 
   test('shows which one is being placed, like the tool band shows the tool', () => {
@@ -171,9 +173,10 @@ describe('欄 (インスペクタ)', () => {
     expect(html).toContain('<form class="cf-inspector" hidden>');
   });
 
-  test('offers the type names it knows, so they need not be remembered', () => {
-    expect(html).toContain('<datalist id="cf-type-names">');
-    expect(html).toContain('<option value="resistor"/>');
+  test('offers the type names the fence handed it', () => {
+    // 種類の名前もフェンスの持ち物。欄の `list` と同じ名札を指していればよい。
+    expect(html).toContain('<datalist id="cf-type-names"></datalist>');
+    expect(html).toContain('list="cf-type-names"');
   });
 
   test('greys out a field the part has no room for', () => {

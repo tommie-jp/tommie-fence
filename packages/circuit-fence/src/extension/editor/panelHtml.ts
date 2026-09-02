@@ -1,6 +1,5 @@
 import { escapeMarkup } from 'fence-kit';
-import type { FenceEntry } from '../../core/edit/fenceList.ts';
-import { renderPalette, renderTypeOptions } from '../../core/edit/palette.ts';
+import type { FenceEntry } from './fenceEditor.ts';
 
 /**
  * マップのパネルの外側 (HTML の殻と見た目)。**純関数**なのでそのまま
@@ -189,6 +188,17 @@ export type MapViewHtml = {
   readonly issues: string;
 };
 
+/** フェンスが組む帯 (`FenceEditor.palette` / `typeNames` の答え)。 */
+export type PanelChrome = {
+  /** 置ける部品の一覧。 */
+  readonly palette: string;
+  /** 種類の名前の候補 (`datalist`)。欄の `list` が指す。 */
+  readonly typeNames: string;
+};
+
+/** 欄の種類が引く候補の名札。**組む側と引く側で同じ綴りを使う**ための 1 か所。 */
+export const TYPE_LIST_ID = 'cf-type-names';
+
 export type PanelHtmlOptions = {
   /** webview の CSP に載せる出所。 */
   readonly cspSource: string;
@@ -197,6 +207,11 @@ export type PanelHtmlOptions = {
   /** webview から見た `dist/map.js` の在り処 (`asWebviewUri` が作る)。 */
   readonly scriptUri: string;
   readonly view: MapViewHtml;
+  /**
+   * フェンスが組んだ帯。**殻は中身を知らない** — 置ける部品も種類の名前も
+   * フェンスごとに違うので、`FenceEditor` から受け取ってそのまま入れる。
+   */
+  readonly chrome: PanelChrome;
   /**
    * 戻す・やり直すを誰が持つか。`own` はパネル (VS Code の undo が届かないので
    * 自前の履歴)、`vscode` はカスタムエディタ (タブの文書へ undo が届く)。
@@ -217,7 +232,7 @@ export function renderFencePicker(fences: readonly FenceEntry[], line: number | 
   return `<label>フェンス <select class="cf-fence">${options}</select></label>`;
 }
 
-export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtmlOptions): string => {
+export const panelHtml = ({ cspSource, nonce, scriptUri, view, chrome, undo }: PanelHtmlOptions): string => {
   const own = undo === 'own';
   return `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">`
     + `<meta http-equiv="Content-Security-Policy" content="default-src 'none';`
@@ -229,7 +244,7 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     + `<label><input type="radio" name="cf-tool" value="select" checked> 選ぶ <kbd>V</kbd></label>`
     + `<label><input type="radio" name="cf-tool" value="wire"> 配線 <kbd>W</kbd></label>`
     + `<label><input type="radio" name="cf-tool" value="node"> 節点 <kbd>N</kbd></label></p>`
-    + renderPalette()
+    + chrome.palette
     + `<p class="cf-history">`
     + `<button class="cf-undo"${own ? ' disabled' : ''} title="Ctrl+Z">元に戻す</button>`
     + `<button class="cf-redo"${own ? ' disabled' : ''} title="Ctrl+Shift+Z">やり直す</button></p>`
@@ -248,10 +263,10 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     + `<div class="cf-body">${view.html}</div>`
     + `<form class="cf-inspector" hidden>`
     + `<label>名前 <input class="cf-field" name="id" size="8" title="F2"></label>`
-    + `<label>種類 <input class="cf-field" name="type" size="12" list="cf-type-names"></label>`
+    + `<label>種類 <input class="cf-field" name="type" size="12" list="${TYPE_LIST_ID}"></label>`
     + `<label>値 <input class="cf-field" name="value" size="8"></label>`
     + `<label>ラベル <input class="cf-field" name="label" size="8"></label>`
-    + `</form>${renderTypeOptions('cf-type-names')}`
+    + `</form>${chrome.typeNames}`
     + `<div class="cf-band">${view.issues}</div>`
     + `<p class="cf-status"></p>`
     + `<script nonce="${escapeMarkup(nonce)}" src="${escapeMarkup(scriptUri)}"></script></body></html>`;

@@ -1,26 +1,10 @@
-import { listFences } from '../../core/edit/fenceList.ts';
-import { issuesOf, renderIssues, shiftIssues } from '../../core/edit/issues.ts';
-import { aimAt, fenceAt, gridMap } from '../../core/edit/map.ts';
-import { renderMapHtml } from '../../core/edit/mapSvg.ts';
-import { nameOfHandle } from '../../core/edit/handles.ts';
-import { movePart, partSpans } from '../../core/edit/move.ts';
-import type { Edit } from '../../core/edit/move.ts';
-import { insertPart, insertWire, nextPartId } from '../../core/edit/insert.ts';
-import { movePoint, nodeSpans } from '../../core/edit/point.ts';
-import { deletePart, deleteWire } from '../../core/edit/remove.ts';
-import type { LineEdit, NetDiff, Span } from '../../core/edit/shared.ts';
-import { partFields, setField } from '../../core/edit/field.ts';
-import type { PartFields, PartField } from '../../core/edit/field.ts';
-import { renamePart } from '../../core/edit/rename.ts';
-import { flipPart, turnPart } from '../../core/edit/turn.ts';
-import { extractCircuitFences } from '../../core/fences.ts';
-import { formatAddress, parseAddress } from '../../core/model/address.ts';
-import type { Address } from '../../core/model/address.ts';
+import type { Edit, LineEdit, NetDiff, Span } from '../../core/edit/shared.ts';
 import { bodyAfter, fenceBody } from './docEdits.ts';
 import { indentOn } from './documentLike.ts';
 import type { DocLike, EditorLike } from './documentLike.ts';
 import { createHistory, sameBody } from './history.ts';
 import { describeDiff } from './movePart.ts';
+import type { EditResult, FenceEditor, PartFields } from './fenceEditor.ts';
 import { renderFencePicker } from './panelHtml.ts';
 import type { MapViewHtml } from './panelHtml.ts';
 
@@ -30,6 +14,10 @@ import type { MapViewHtml } from './panelHtml.ts';
  * **vscode を知らない。** 外の世界 (webview への送り口・エディタ・文書への
  * 書き換え・光らせる印) は `SessionHost` から渡してもらうので、そのまま
  * テストに掛かる (`movePart.ts` の `EditorPort` と同じ流儀)。
+ *
+ * **フェンスの文法も知らない。** 番地の綴りも部品行の形も `FenceEditor` の
+ * 向こう側にあり、やり取りは文字列だけ。だから circuit / breadboard /
+ * perfboard で同じ殻が使える (52 の docs/13)。
  *
  * 入口は 2 つ — コマンドで横に開くパネルと、`.md` のタブそのものを
  * マップにするカスタムエディタ。**中身は同じ** (直しを 2 か所にしない)。
@@ -132,16 +120,15 @@ export type SessionOptions<D extends DocLike> = {
   readonly pinned?: D;
 };
 
-const LOST = '<p class="cf-note">フェンスを見失いました (元の Markdown を閉じたか、'
-  + 'フェンスの行がずれました)。circuit フェンスの中にカーソルを置くとマップが出ます。</p>';
-const NONE = '<p class="cf-note">この文書に circuit フェンスがありません。'
-  + '<code>```circuit</code> のフェンスを書くとマップが出ます。</p>';
+const lostNote = (language: string): string =>
+  '<p class="cf-note">フェンスを見失いました (元の Markdown を閉じたか、'
+  + `フェンスの行がずれました)。${language} フェンスの中にカーソルを置くとマップが出ます。</p>`;
+
+const noneNote = (language: string): string =>
+  `<p class="cf-note">この文書に ${language} フェンスがありません。`
+  + `<code>\`\`\`${language}</code> のフェンスを書くとマップが出ます。</p>`;
 
 type FenceNow<D> = { readonly document: D; readonly source: string; readonly line: number };
-
-type Planned = ReturnType<typeof movePart> | ReturnType<typeof movePoint>
-  | ReturnType<typeof deletePart> | ReturnType<typeof turnPart> | ReturnType<typeof insertWire>
-  | ReturnType<typeof insertPart> | ReturnType<typeof setField> | ReturnType<typeof renamePart>;
 
 /** 書き換えの中身。行の出し入れを持たない `Move` も、ここでは同じ形で扱う。 */
 type Changes = {
@@ -160,12 +147,16 @@ type Request = {
   readonly done: (changes: Changes) => string;
   /** 何も変わらなかったときの一言。 */
   readonly already: string;
-  readonly plan: (source: string) => Planned;
+  readonly plan: (source: string) => EditResult;
 };
 
 const text = (value: unknown): string | null => (typeof value === 'string' ? value : null);
 
-export function createSession<D extends DocLike>(host: SessionHost<D>, options: SessionOptions<D> = {}): Session {
+export function createSession<D extends DocLike>(
+  host: SessionHost<D>,
+  editor: FenceEditor,
+  options: SessionOptions<D> = {},
+): Session {
   const pinned = options.pinned ?? null;
   const ownHistory = host.nativeUndo === undefined;
   const history = createHistory();
@@ -212,11 +203,11 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
 
   /** カーソルのあるフェンス。文書を固定していれば、その文書の中に限る。 */
   function fenceUnderCursor(): FenceNow<D> | null {
-    const editor = host.activeEditor();
-    if (editor === null) return null;
-    if (pinned !== null && uriOf(editor.document) !== uriOf(pinned)) return null;
-    const fence = fenceAt(editor.document.getText(), editor.selection.active.line + 1);
-    return fence === null ? null : { document: editor.document, source: fence.source, line: fence.line };
+    const active = host.activeEditor();
+    if (active === null) return null;
+    if (pinned !== null && uriOf(active.document) !== uriOf(pinned)) return null;
+    const fence = editor.fenceAt(active.document.getText(), active.selection.active.line + 1);
+    return fence === null ? null : { document: active.document, source: fence.source, line: fence.line };
   }
 
   /**
@@ -242,7 +233,7 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       const document = documentOf(bound.uri);
       // 開き記号の行で引き直す。フェンスの中の書き換えでは動かない行だが、
       // 上に行が足されてずれたら見失う (そのときは掴み直してもらう)。
-      const fence = document === null ? null : fenceAt(document.getText(), bound.line);
+      const fence = document === null ? null : editor.fenceAt(document.getText(), bound.line);
       if (document !== null && fence !== null) {
         bound = { uri: bound.uri, line: fence.line };
         return { document, source: fence.source, line: fence.line };
@@ -250,8 +241,8 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
     }
 
     if (pinned !== null) {
-      const first = extractCircuitFences(pinned.getText())[0];
-      if (first !== undefined) {
+      const first = editor.firstFence(pinned.getText());
+      if (first !== null) {
         rebind(pinned, first.line);
         return { document: pinned, source: first.source, line: first.line };
       }
@@ -261,22 +252,16 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
 
   function viewNow(followCursor: boolean): MapView {
     const fence = currentFence(followCursor);
-    if (fence === null) return { html: pinned === null ? LOST : NONE, picker: '', issues: '' };
+    if (fence === null) {
+      const note = pinned === null ? lostNote(editor.language) : noneNote(editor.language);
+      return { html: note, picker: '', issues: '' };
+    }
 
-    const issues = issuesOf(fence.source);
-    // **絵に印を付けるのは読めなかった行だけ。** お知らせは読めているので、
-    // 同じ赤で囲むと「間違い」に見えてしまう (帯には別の色で並ぶ)。
-    const bad = new Set(
-      issues
-        .filter((issue) => issue.kind === 'error')
-        .map((issue) => issue.error.line)
-        .filter((line): line is number => line !== null),
-    );
+    const view = editor.view(fence.source, fence.line);
     return {
-      html: renderMapHtml(gridMap(fence.source), bad),
-      picker: renderFencePicker(listFences(fence.document.getText()), fence.line),
-      // 帯は Markdown の行で出す。押すとそこへ飛べる (フェンスの中の行では飛べない)。
-      issues: renderIssues(shiftIssues(issues, fence.line)),
+      html: view.map,
+      picker: renderFencePicker(editor.fences(fence.document.getText()), fence.line),
+      issues: view.issues,
     };
   }
 
@@ -315,29 +300,25 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
    * (一覧で選んだ直後は、カーソルは別のフェンスにいることがある)。
    */
   function sendAim(): void {
-    const editor = host.activeEditor();
-    const fence = editor === null || bound === null || uriOf(editor.document) !== bound.uri
+    const active = host.activeEditor();
+    const fence = active === null || bound === null || uriOf(active.document) !== bound.uri
       ? null
-      : fenceAt(editor.document.getText(), editor.selection.active.line + 1);
-    if (editor === null || fence === null || bound === null || fence.line !== bound.line) {
+      : editor.fenceAt(active.document.getText(), active.selection.active.line + 1);
+    if (active === null || fence === null || bound === null || fence.line !== bound.line) {
       host.post({ kind: 'aim' });
       return;
     }
 
     // Markdown の行 → フェンスの中の行。字下げのぶん桁を戻す (行ごとに数える)。
-    const at = editor.selection.active.line;
-    const indent = indentOn(editor.document, fence.line, at);
+    const at = active.selection.active.line;
+    const indent = indentOn(active.document, fence.line, at);
     const line = at + 1 - fence.line;
-    const aim = aimAt(fence.source, line, Math.max(0, editor.selection.active.character - indent));
+    const aim = editor.aimAt(fence.source, line, Math.max(0, active.selection.active.character - indent));
     if (aim === null) {
       host.post({ kind: 'aim' });
       return;
     }
-    host.post({
-      kind: 'aim',
-      what: aim.kind,
-      id: aim.kind === 'part' ? aim.id : aim.kind === 'node' ? formatAddress(aim.address) : String(aim.line),
-    });
+    host.post({ kind: 'aim', what: aim.kind, id: aim.id });
   }
 
   function refreshWith(followCursor: boolean): void {
@@ -358,8 +339,8 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
     const fence = currentFence(true);
     if (fence === null) {
       say(pinned === null
-        ? 'フェンスを見失いました。circuit フェンスの中にカーソルを置いて掴み直します'
-        : 'この文書に circuit フェンスがありません');
+        ? `フェンスを見失いました。${editor.language} フェンスの中にカーソルを置いて掴み直します`
+        : `この文書に ${editor.language} フェンスがありません`);
     }
     return fence;
   }
@@ -380,7 +361,7 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       say(result.error.message);
       return;
     }
-    const changes: Changes = { lines: [], ...result.value };
+    const changes: Changes = { edits: [], lines: [], ...result.value };
     if (changes.edits.length === 0 && changes.lines.length === 0) {
       say(request.already);
       return;
@@ -405,7 +386,7 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
     if (ownHistory) {
       // 当てたあとの姿も控える。**見失ったら積まない** — 嘘の控えを積むと、
       // 次の「戻す」が関わりのない字を書き換える。
-      const now = fenceAt(fence.document.getText(), fence.line);
+      const now = editor.fenceAt(fence.document.getText(), fence.line);
       if (now !== null) {
         history.push({ label: request.label, before, after: fenceBody(fence.document, fence.line, now.source) });
       }
@@ -427,21 +408,16 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       const handle = text(message.part);
       // **掴むのは名札、言うのは名前** (`core/edit/handles.ts`)。同じ名前の記号が
       // 2 つ以上あることがあるので、指すときだけ名札を使う。
-      const part = handle === null ? null : nameOfHandle(handle);
+      const part = handle === null ? null : editor.nameOf(handle);
       if (handle === null || part === null) {
         say('マップからの知らせを読めませんでした (部品がありません)');
-        return;
-      }
-      const to = parseAddress(written);
-      if (to === null) {
-        say(`番地として読めません: ${written}`);
         return;
       }
       await run({
         label: `${part} を ${written} へ`,
         done: () => `${part} を ${written} へ動かしました`,
         already: `${part} はすでに ${written} にあります`,
-        plan: (source) => movePart(source, handle, to),
+        plan: (source) => editor.movePart(source, handle, written),
       });
       return;
     }
@@ -451,25 +427,16 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       say('マップからの知らせを読めませんでした (どの節点かがありません)');
       return;
     }
-    const at = parseAddress(from);
-    const to = parseAddress(written);
-    if (at === null || to === null) {
-      say(`番地として読めません: ${at === null ? from : written}`);
-      return;
-    }
     await run({
       label: `${from} の節点を ${written} へ`,
       done: () => `${from} の節点を ${written} へ動かしました`,
       already: `節点はすでに ${from} にあります`,
-      plan: (source) => movePoint(source, at, to),
+      plan: (source) => editor.movePoint(source, from, written),
     });
   }
 
-  /** ID がそのまま図に出る種類の名前を訊く。既定の候補を入れておく。 */
-  const NAME_HINTS: Readonly<Record<string, string>> = { port: 'IN', vcc: 'VCC', vee: 'VEE' };
-
   /** 欄の名前 (お知らせに出す)。 */
-  const FIELD_NAMES: Readonly<Record<PartField, string>> = { type: '種類', value: '値', label: 'ラベル' };
+  const FIELD_NAMES: Readonly<Record<string, string>> = { type: '種類', value: '値', label: 'ラベル' };
 
   /**
    * 欄の書き換え。**1 部品 = 1 行の文法なので、行の中のトークン差し替えに落ちる。**
@@ -477,27 +444,26 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
    */
   async function editField(message: Incoming): Promise<void> {
     const handle = text(message.part);
-    const part = handle === null ? null : nameOfHandle(handle);
+    const part = handle === null ? null : editor.nameOf(handle);
     const field = text(message.field);
     const written = text(message.text) ?? '';
-    if (handle === null || part === null || (field !== 'type' && field !== 'value' && field !== 'label')) {
+    const name = field === null ? undefined : FIELD_NAMES[field];
+    if (handle === null || part === null || field === null || name === undefined) {
       say('マップからの知らせを読めませんでした (どの欄かがありません)');
       return;
     }
-
-    const name = FIELD_NAMES[field];
     await run({
       label: `${part} の${name}を`,
       done: () => (written === '' ? `${part} の${name}を消しました` : `${part} の${name}を ${written} にしました`),
       already: `${part} の${name}は変わりません`,
-      plan: (source) => setField(source, handle, field, written),
+      plan: (source) => editor.setField(source, handle, field, written),
     });
   }
 
   /** 名前を変える。鍵・配線の足・注釈の指し先を一緒に書き換える。 */
   async function rename(message: Incoming): Promise<void> {
     const handle = text(message.part);
-    const from = handle === null ? null : nameOfHandle(handle);
+    const from = handle === null ? null : editor.nameOf(handle);
     const to = text(message.text);
     if (handle === null || from === null || to === null || to === '') {
       say('マップからの知らせを読めませんでした (新しい名前がありません)');
@@ -508,7 +474,7 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       label: `${from} を ${to} に`,
       done: () => `${from} を ${to} に改名しました`,
       already: `${from} の名前は変わりません`,
-      plan: (source) => renamePart(source, handle, to),
+      plan: (source) => editor.rename(source, handle, to),
     });
   }
 
@@ -521,21 +487,14 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       return;
     }
 
-    const at = written.map((one) => parseAddress(one as string));
-    const bad = at.indexOf(null);
-    if (bad >= 0) {
-      say(`番地として読めません: ${written[bad] as string}`);
-      return;
-    }
-
     const fence = fenceNow();
     if (fence === null) return;
 
     // **ID がそのまま図に出る種類は訊く** (勝手に名前を決めない)。
-    const numbered = nextPartId(fence.source, type);
+    const numbered = editor.nextId(fence.source, type);
     const id = numbered ?? (host.ask === undefined
       ? null
-      : await host.ask(`${type} の名前`, NAME_HINTS[type] ?? ''));
+      : await host.ask(`${type} の名前`, editor.nameHint(type)));
     if (id === null) {
       // 取り消し (Esc) は断りなので黙って戻る。訊く手立てが無いときだけ言う。
       if (numbered === null && host.ask === undefined) say(`${type} の名前を訊けませんでした`);
@@ -548,12 +507,13 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       return;
     }
 
-    const where = written.join(' ');
+    const at = written as readonly string[];
+    const where = at.join(' ');
     await run({
       label: `${id} を`,
       done: () => `${id} (${type}) を ${where} へ置きました`,
       already: '置くものがありません',
-      plan: (source) => insertPart(source, { id, type, at: at as readonly Address[] }),
+      plan: (source) => editor.addPart(source, { id, type, at }),
     });
   }
 
@@ -561,10 +521,8 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
   async function addWire(message: Incoming): Promise<void> {
     const from = text(message.from);
     const to = text(message.to);
-    const at = from === null ? null : parseAddress(from);
-    const target = to === null ? null : parseAddress(to);
-    if (at === null || target === null) {
-      say(`番地として読めません: ${at === null ? from : to}`);
+    if (from === null || to === null) {
+      say('マップからの知らせを読めませんでした (引く先がありません)');
       return;
     }
     // 折れ方は放したときの Shift で決まる (`|-` は欄から。まだ無い)。
@@ -575,7 +533,7 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       label: `${written} を`,
       done: () => `${written} を引きました`,
       already: '引くものがありません',
-      plan: (source) => insertWire(source, { kind: 'cell', address: at }, { kind: 'cell', address: target }, operator),
+      plan: (source) => editor.addWire(source, from, to, operator),
     });
   }
 
@@ -594,25 +552,25 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
         label: `${line} 行目の配線を`,
         done: () => `${line} 行目の配線を消しました`,
         already: '消すものがありません',
-        plan: (source) => deleteWire(source, line),
+        plan: (source) => editor.deleteWire(source, line),
       });
       return;
     }
 
-    const name = nameOfHandle(id);
+    const name = editor.nameOf(id);
     await run({
       label: `${name} を`,
       // **一緒に消えた配線の本数を言う。** 黙って消すと気づけない。
       done: (changes) => `${name} を消しました${changes.wires ? ` (配線 ${changes.wires} 本も一緒に)` : ''}`,
       already: '消すものがありません',
-      plan: (source) => deletePart(source, id),
+      plan: (source) => editor.deletePart(source, id),
     });
   }
 
   /** マップから来た「これを回す / 反転する」。2 端子は番地の順が向きそのもの。 */
   async function turn(message: Incoming): Promise<void> {
     const handle = text(message.part);
-    const part = handle === null ? null : nameOfHandle(handle);
+    const part = handle === null ? null : editor.nameOf(handle);
     if (handle === null || part === null) {
       say('マップからの知らせを読めませんでした (どの部品かがありません)');
       return;
@@ -624,13 +582,13 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
         label: `${part} を反転`,
         done: () => `${part} を反転しました`,
         already: `${part} は反転できません`,
-        plan: (source) => flipPart(source, handle),
+        plan: (source) => editor.flip(source, handle),
       }
       : {
         label: `${part} を回転`,
         done: () => `${part} を${quarters < 0 ? '反時計回り' : '時計回り'}に回しました`,
         already: `${part} は回せません`,
-        plan: (source) => turnPart(source, handle, quarters),
+        plan: (source) => editor.turn(source, handle, quarters),
       });
   }
 
@@ -701,8 +659,7 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
     }
     if (what !== 'part') sendFields(null);
     if (what === 'node') {
-      const address = parseAddress(id);
-      light(address === null ? [] : rangesOf(fence, nodeSpans(fence.source, address)));
+      light(rangesOf(fence, editor.spansOf(fence.source, 'node', id)));
       return;
     }
     if (what === 'wire') {
@@ -712,8 +669,8 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
       light(inside ? [{ line: at, start: 0, end: fence.document.lineAt(at).text.length }] : []);
       return;
     }
-    light(rangesOf(fence, partSpans(fence.source, id)));
-    sendFields(partFields(fence.source, id));
+    light(rangesOf(fence, editor.spansOf(fence.source, 'part', id)));
+    sendFields(editor.fieldsOf(fence.source, id));
   }
 
   /** 一覧で選んだフェンスへ。**選んだ直後はカーソルを見ない** (別のフェンスにいることがある)。 */
@@ -722,9 +679,9 @@ export function createSession<D extends DocLike>(host: SessionHost<D>, options: 
     const document = bound === null ? pinned : documentOf(bound.uri);
     if (line === null || document === null) return;
 
-    const fence = fenceAt(document.getText(), line);
+    const fence = editor.fenceAt(document.getText(), line);
     if (fence === null) {
-      say(`${line} 行目に circuit フェンスがありません`);
+      say(`${line} 行目に ${editor.language} フェンスがありません`);
       return;
     }
     rebind(document, fence.line);

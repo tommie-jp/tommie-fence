@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { makeNonce, panelHtml } from './panelHtml.ts';
+import { TYPE_LIST_ID, makeNonce, panelHtml } from './panelHtml.ts';
+import { createCircuitEditor } from './circuitEditor.ts';
 import { createSession } from './session.ts';
 import { attachSession, createSessionHost, mapScriptUri } from './vscodeHost.ts';
 
@@ -39,12 +40,14 @@ export function registerMapEditor(context: vscode.ExtensionContext): void {
     resolveCustomTextEditor(document, panel) {
       panel.webview.options = { enableScripts: true };
       const uri = document.uri.toString();
-      const session = createSession(createSessionHost(panel.webview, 'vscode'), { pinned: document });
+      const fence = createCircuitEditor();
+      const session = createSession(createSessionHost(panel.webview, 'vscode'), fence, { pinned: document });
       panel.webview.html = panelHtml({
         cspSource: panel.webview.cspSource,
         nonce: makeNonce(),
         scriptUri: mapScriptUri(panel.webview, context),
         view: session.view(),
+        chrome: { palette: fence.palette(), typeNames: fence.typeNames(TYPE_LIST_ID) },
         undo: 'vscode',
       });
 
