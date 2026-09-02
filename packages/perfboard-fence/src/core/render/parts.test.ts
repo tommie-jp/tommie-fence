@@ -222,3 +222,27 @@ describe('SMA 横置きの足の形', () => {
     expect(layout.board.x).toBeCloseTo(mount.rect.cx + mount.edgeX, 5);
   });
 });
+
+describe('縦に置いた部品のキャプション', () => {
+  test('turns the text a quarter clockwise, so it lies along the part', () => {
+    // 横のままだと、細長い部品の脇に長い字が伸びて隣の部品や配線に被る。
+    const upright = draw(part({ holes: ['b3', 'e3'], value: '10k' }));
+
+    expect(upright).toContain('rotate(90)');
+  });
+
+  test('leaves a part lying across the board with level text', () => {
+    expect(draw(part({ holes: ['b3', 'b6'], value: '10k' }))).not.toContain('rotate(90)');
+  });
+
+  test('puts the turned text beside the body, not on top of it', () => {
+    const upright = draw(part({ holes: ['b3', 'e3'], value: '10k' }));
+    // 胴の group も rotate(90) なので、**字を抱えているほう**を見る。
+    const at = /<g transform="translate\(([0-9.]+) ([0-9.]+)\) rotate\(90\)"><text/.exec(upright);
+    const hole = layout.point(parseAddress('b3')!);
+
+    expect(Number(at?.[1])).toBeGreaterThan(hole.x);
+    // 足の真ん中の高さに来る (胴の中心ではなく、部品そのものの位置)。
+    expect(Number(at?.[2])).toBeCloseTo((hole.y + layout.point(parseAddress('e3')!).y) / 2, 5);
+  });
+});

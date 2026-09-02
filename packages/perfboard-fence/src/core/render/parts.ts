@@ -13,8 +13,6 @@ import type { PlacedPart } from '../types.ts';
 import type { Theme } from './theme.ts';
 
 const LEAD_WIDTH = 2;
-/** キャプションを胴のどれだけ下に置くか。 */
-const CAPTION_DROP = 14;
 /** 胴の下端からキャプションまで。**胴の大きさで変わる部品**があるので、下端から測る。 */
 const CAPTION_GAP = 8;
 /**
@@ -41,6 +39,48 @@ function fitToBoard(text: string, x: number, fontSize: number, layout: Layout): 
   const { board } = layout;
   const room = Math.min(x - board.x, board.x + board.width - x) * 2;
   return fit(text, Math.max(0, room) / fontSize);
+}
+
+/** 縦に置いた部品のキャプションが、板の上下に収まる幅。 */
+function fitDown(text: string, y: number, fontSize: number, layout: Layout): string {
+  const { board } = layout;
+  const room = Math.min(y - board.y, board.y + board.height - y) * 2;
+  return fit(text, Math.max(0, room) / fontSize);
+}
+
+/**
+ * 部品のキャプション。**縦に置いた部品では字も縦にする** (時計回りに 90 度)。
+ *
+ * 横のままだと、細長い部品の脇に長い字が伸びて隣の部品や配線に被る。
+ * 字を部品と同じ向きに寝かせれば、どの部品の名前かが位置で分かる。
+ * **図ごと回さない** — 回すのは字の並びだけで、読む向きは左から右のまま。
+ */
+function partLabel(
+  text: string,
+  rect: { readonly cx: number; readonly cy: number; readonly height: number; readonly angle: number },
+  pins: { readonly x: number; readonly y: number },
+  theme: Theme,
+  layout: Layout,
+): string {
+  const size = theme.metrics.textSize;
+  const style = {
+    fill: theme.palette.plateText,
+    'font-size': num(size),
+    halo: theme.palette.plate,
+  };
+  // 胴が縦向きか。斜めは、傾きの大きいほうに寄せる。
+  const upright = Math.abs(Math.sin(rect.angle)) > Math.abs(Math.cos(rect.angle));
+  if (!upright) {
+    return svgText(pins.x, rect.cy + rect.height / 2 + CAPTION_GAP, fitToBoard(text, pins.x, size, layout), style);
+  }
+
+  // 縦のときは胴の右脇に、時計回りに 90 度回して置く。
+  const at = { x: rect.cx + rect.height / 2 + CAPTION_GAP, y: pins.y };
+  return element(
+    'g',
+    { transform: `translate(${num(at.x)} ${num(at.y)}) rotate(90)` },
+    svgText(0, 0, fitDown(text, at.y, size, layout), { ...style, 'dominant-baseline': 'middle' }),
+  );
 }
 
 /**
@@ -298,12 +338,7 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
   // (端面実装の SMA) で字が板から出て、地に紛れるか幅ゼロで `…` に切られる。
   // 縦は胴の下端から測る — 中心から一定の距離だと、胴の大きい部品で字が胴に載る。
   const pinMiddle = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
-  const text = fitToBoard(caption(part), pinMiddle.x, theme.metrics.textSize, layout);
-  const label = svgText(pinMiddle.x, rect.cy + rect.height / 2 + CAPTION_GAP, text, {
-    fill: theme.palette.plateText,
-    'font-size': num(theme.metrics.textSize),
-    halo: theme.palette.plate,
-  });
+  const label = partLabel(caption(part), rect, pinMiddle, theme, layout);
 
   // 姿の名前は**胴のブロックの真ん中**に置く。全体の中心だとねじ部まで含むので
   // 板の外へ寄りすぎ、足の側だと配線に被る。
@@ -373,12 +408,16 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
     r: NOTCH, fill: theme.palette.plate, stroke: theme.palette.bodyEdge, 'stroke-width': 1,
   });
 
-  const text = fitToBoard(caption(part), rect.cx, theme.metrics.textSize, layout);
-  const label = svgText(rect.cx, rect.cy + rect.height / 2 + CAPTION_DROP, text, {
-    fill: theme.palette.plateText,
-    'font-size': num(theme.metrics.textSize),
-    halo: theme.palette.plate,
-  });
+  // 箱は縦横のどちらにも伸びる。**縦長ならキャプションも縦**にする
+  // (2 本足の部品と同じ扱い)。
+  const tall = rect.height > rect.width;
+  const label = partLabel(
+    caption(part),
+    { cx: rect.cx, cy: rect.cy, height: tall ? rect.width : rect.height, angle: tall ? Math.PI / 2 : 0 },
+    { x: rect.cx, y: rect.cy },
+    theme,
+    layout,
+  );
 
   return `${body}${notch}${leads}${label}`;
 }
