@@ -9,7 +9,7 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | --- | --- | --- |
 | circuit | 15 circuits + 5 deliberately broken | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 13 circuits + 2 deliberately broken | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
-| perfboard | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) — 8 circuits + 1 deliberately broken | [packages/perfboard-fence/](../packages/perfboard-fence/README.md) |
+| perfboard | 8 circuits + 1 deliberately broken | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) |
 
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for
@@ -102,49 +102,49 @@ A bench circuit with an op-amp, instruments and a toroidal core
 
 ## perfboard — perfboard layouts
 
-**It all writes now:** two- and three-lead parts, DIP and SIP packages, things
-off the board, annotations and themes
-([packages/perfboard-fence](../packages/perfboard-fence/README.md)).
+Parts go into numbered holes and are wired with `--`. **Every hole is
+independent**, so placing a part connects nothing and the netlist comes only
+from the wires you wrote.
 
-```yaml
-board: 14x8
-parts:
-  R1: resistor b3 b6 1k
-  D1: led b9 b11 red
-  BAT:
-    type: device
-    label: 3V cell
-    pins: + -
-wires:
-  - BAT.+ -- b3
-  - b6 -- b9 orange
-  - b11 -- BAT.-
-```
+### Wires and the netlist
 
-The size is written **columns by rows** — the order the board itself is sold in
-(`72×47.5mm` is long side by short side). Addresses read `b3`, and carry on as
-`aa3` on a board taller than 26 rows. A part lies along the line between its two
-holes; a resistor gets its colour code when the value reads as a resistance, and
-an LED glows in the colour that was written. A wire runs straight between two
-holes — no routing to work out, since there is no ravine and no power rail and
-every hole sits on the same grid.
+[![Wires and the netlist](../packages/perfboard-fence/examples/out/03-wires-1.png)](../packages/perfboard-fence/examples/03-wires.md)
 
-**The difference from a breadboard is physical**: every hole on a perfboard is
-independent. Placing a part connects nothing, and the netlist comes only from
-the wires you wrote. The flip side is that a missing connection is silent in the
-picture, which is what **the ERC watches** — it names an unconnected pin, a part
-the wiring shorts out, and a wire that reaches no pin at all, each with the line
-it was written on.
+The smallest example: a wire runs straight between two holes, with no routing to
+work out ([03-wires.md](../packages/perfboard-fence/examples/03-wires.md)).
 
-Anything that does not sit on the board — a battery, a speaker — is written as a
-`device` and drawn in a band beside it, then wired to as `BAT.+`. **No line is
-drawn onto the board**: one there would suggest a hole to solder into. Only the
-connection reaches the netlist.
+### ICs and three-lead parts
 
-The worked circuits are in
-[packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md)
-and the grammar in
-[docs/01-syntax.md](../packages/perfboard-fence/docs/01-syntax.md).
+[![ICs and three-lead parts](../packages/perfboard-fence/examples/out/06-ic-1.png)](../packages/perfboard-fence/examples/06-ic.md)
+
+A DIP needs only pin 1 written; a transistor takes three holes
+([06-ic.md](../packages/perfboard-fence/examples/06-ic.md)).
+
+### Things off the board
+
+[![Things off the board](../packages/perfboard-fence/examples/out/07-device-2.png)](../packages/perfboard-fence/examples/07-device.md)
+
+A battery or a speaker is a `device`, drawn in a band beside the board and wired
+to as `SPK.1`. The line is drawn **from its pin to the hole**, so where to solder
+it is in the picture
+([07-device.md](../packages/perfboard-fence/examples/07-device.md)).
+
+### Watching for a missing connection (ERC)
+
+[![Watching for a missing connection (ERC)](../packages/perfboard-fence/examples/out/05-erc.png)](../packages/perfboard-fence/examples/05-erc.md)
+
+A missing connection is silent in the picture, so the ERC names an unconnected
+pin, a part the wiring shorts out and a wire that reaches no pin, each with the
+line it was written on
+([05-erc.md](../packages/perfboard-fence/examples/05-erc.md)).
+
+### More
+
+- [01-board.md](../packages/perfboard-fence/examples/01-board.md) — board size (columns by rows) and names (`akizuki-c`), addresses past 26 rows
+- [02-parts.md](../packages/perfboard-fence/examples/02-parts.md) — resistor colour codes, LED colours, parts lying at an angle
+- [04-points.md](../packages/perfboard-fence/examples/04-points.md) — naming holes (`points:`)
+- [08-notes.md](../packages/perfboard-fence/examples/08-notes.md) — annotations (`notes:`), themes and width (`style:`)
+- [errors/](../packages/perfboard-fence/examples/errors/) — fences written wrong on purpose
 
 ## Why the files are not kept here
 

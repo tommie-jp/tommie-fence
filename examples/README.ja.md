@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | circuit | 回路 15 本 + わざと壊した例 5 本 | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 回路 13 本 + わざと壊した例 2 本 | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
-| perfboard | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) — 回路 8 本 + わざと壊した例 1 本 | [packages/perfboard-fence/](../packages/perfboard-fence/README.ja.md) |
+| perfboard | 回路 8 本 + わざと壊した例 1 本 | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) |
 
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。
@@ -99,42 +99,46 @@ VS Code のプレビュー (`Ctrl+Shift+V`) ではフェンス自体が図にな
 
 ## perfboard — ユニバーサル基板
 
-**一通り書ける。** 2 本足・3 本足・DIP・SIP の部品、板の外の機器、注釈、
-テーマまで ([packages/perfboard-fence](../packages/perfboard-fence/README.ja.md))。
+穴の番地に部品を置き、配線を `--` で引く。**全穴が独立している**ので、
+挿しただけでは何もつながらず、ネットリストは書いた配線からだけ出る。
 
-```yaml
-board: 14x8
-parts:
-  R1: resistor b3 b6 1k
-  D1: led b9 b11 red
-  BAT:
-    type: device
-    label: 電池 3V
-    pins: + -
-wires:
-  - BAT.+ -- b3
-  - b6 -- b9 orange
-  - b11 -- BAT.-
-```
+### 配線とネットリスト
 
-板の大きさは**列 × 行**で書く (板が「72×47.5mm」と長辺 × 短辺で売られるのと
-同じ順)。番地は `b3` の形で、行が 26 を超える板では `aa3` と続く。
-部品は 2 つの穴を結ぶ線の上に寝る。抵抗は値が読めればカラーコードを塗り、
-LED は書かれた色で光る。配線は 2 つの穴をまっすぐ結ぶ — ブレッドボードの
-ような経路探索は要らない (溝もレールも無く、どの穴も同じ格子の上にある)。
+[![配線とネットリスト](../packages/perfboard-fence/examples/out/03-wires-1.png)](../packages/perfboard-fence/examples/03-wires.md)
 
-**ブレッドボードとの違いは物理そのもの**で、ユニバーサル基板は全穴が独立して
-いる。挿しただけでは何もつながらず、ネットリストは書いた配線からだけ出る。
-裏を返すと繋ぎ忘れが図の上で沈黙するので、そこは **ERC が見張る** —
-どこにもつながっていない足、配線で短絡した部品、部品の足を 1 つもつないで
-いない配線を、行番号つきで名指す。
+いちばん小さい例。2 つの穴をまっすぐ結ぶだけで、経路探索は要らない
+([03-wires.md](../packages/perfboard-fence/examples/03-wires.md))。
 
-電池やスピーカーのように**盤面に載らないもの**は `device` として板の外の帯に
-置き、配線からは `BAT.+` の形で指す。**板の上に線は引かない** — 板に線が出ると、
-そこに挿す場所があるように見えてしまう。導通だけがネットリストに効く。
+### IC と 3 本足の部品
 
-例は [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md)、
-文法は [docs/01-syntax.md](../packages/perfboard-fence/docs/01-syntax.md)。
+[![IC と 3 本足の部品](../packages/perfboard-fence/examples/out/06-ic-1.png)](../packages/perfboard-fence/examples/06-ic.md)
+
+DIP は 1 番ピンだけ書けば足が並ぶ。トランジスタは穴を 3 つ書く
+([06-ic.md](../packages/perfboard-fence/examples/06-ic.md))。
+
+### 板の外の機器
+
+[![板の外の機器](../packages/perfboard-fence/examples/out/07-device-2.png)](../packages/perfboard-fence/examples/07-device.md)
+
+電池やスピーカーは `device` として板の外の帯に置き、`SPK.1` の形で指す。
+線は**その足から穴まで**引かれるので、どこへ半田付けするかが図に出る
+([07-device.md](../packages/perfboard-fence/examples/07-device.md))。
+
+### つなぎ忘れを見張る (ERC)
+
+[![つなぎ忘れを見張る (ERC)](../packages/perfboard-fence/examples/out/05-erc.png)](../packages/perfboard-fence/examples/05-erc.md)
+
+繋ぎ忘れは図の上で沈黙するので、浮いた足・短絡した部品・部品につながらない
+配線を行番号つきで名指す
+([05-erc.md](../packages/perfboard-fence/examples/05-erc.md))。
+
+### そのほか
+
+- [01-board.md](../packages/perfboard-fence/examples/01-board.md) — 板の穴数 (列 × 行) と名前 (`akizuki-c`)、26 行を超える板の番地
+- [02-parts.md](../packages/perfboard-fence/examples/02-parts.md) — 抵抗のカラーコード、LED の色、斜めに置く
+- [04-points.md](../packages/perfboard-fence/examples/04-points.md) — 穴に名前を付ける (`points:`)
+- [08-notes.md](../packages/perfboard-fence/examples/08-notes.md) — 注釈 (`notes:`) と、テーマ・幅 (`style:`)
+- [errors/](../packages/perfboard-fence/examples/errors/) — わざと読めなく書いたもの
 
 ## なぜ実体をここに置かないか
 
