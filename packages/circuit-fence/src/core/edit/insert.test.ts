@@ -1,0 +1,136 @@
+import { describe, expect, test } from 'vitest';
+import { insertPart, insertWire } from './insert.ts';
+import { applyRewrite } from './shared.ts';
+import { parseAddress } from '../model/address.ts';
+
+const at = (text: string) => ({ kind: 'cell' as const, address: parseAddress(text)! });
+const cell = (text: string) => parseAddress(text)!;
+
+const RC = [
+  'title: RC',
+  'parts:',
+  '  R1: resistor a1 a3 10k',
+  '  Q1: npn b5',
+  'wires:',
+  '  - a3 -- b1',
+  '',
+].join('\n');
+
+const added = (source: string, result: ReturnType<typeof insertWire>) => {
+  if (!result.ok) throw new Error(result.error.message);
+  return { ...result.value, source: applyRewrite(source, result.value) };
+};
+
+describe('insertWire', () => {
+  test('adds a line after the wires already written, in the same shape', () => {
+    const { source } = added(RC, insertWire(RC, at('a1'), at('c1')));
+
+    expect(source).toBe([
+      'title: RC', 'parts:', '  R1: resistor a1 a3 10k', '  Q1: npn b5',
+      'wires:', '  - a3 -- b1', '  - a1 -- c1', '',
+    ].join('\n'));
+  });
+
+  test('writes the operator it was given', () => {
+    expect(added(RC, insertWire(RC, at('a1'), at('c5'), '-|')).source).toContain('  - a1 -| c5');
+  });
+
+  test('can hang a wire on a pin of a part', () => {
+    const wire = insertWire(RC, at('a1'), { kind: 'pin', part: 'Q1', pin: 'b' });
+
+    expect(added(RC, wire).source).toContain('  - a1 -- Q1.b');
+  });
+
+  test('makes the key when the fence has no wires yet', () => {
+    const source = ['parts:', '  R1: resistor a1 a3', ''].join('\n');
+
+    expect(added(source, insertWire(source, at('a3'), at('c3'))).source).toBe(
+      ['parts:', '  R1: resistor a1 a3', 'wires:', '  - a3 -- c3', ''].join('\n'),
+    );
+  });
+
+  test('says which connections the new wire made', () => {
+    expect(added(RC, insertWire(RC, at('a1'), at('c1'))).diff.gained.length).toBeGreaterThan(0);
+  });
+
+  test('refuses an address off the grid', () => {
+    expect(insertWire(RC, at('a1'), { kind: 'cell', address: { row: 0, col: 200 } }).ok).toBe(false);
+  });
+
+  test('refuses a pin on a part that is not there', () => {
+    const result = insertWire(RC, at('a1'), { kind: 'pin', part: 'Q9', pin: 'b' });
+
+    expect(result.ok === false && result.error.message).toContain('Q9');
+  });
+
+  test('refuses a pin the part does not have', () => {
+    const result = insertWire(RC, at('a1'), { kind: 'pin', part: 'Q1', pin: 'zz' });
+
+    expect(result.ok).toBe(false);
+  });
+
+  test('refuses wires written in flow style, which have no line of their own', () => {
+    const source = ['parts:', '  R1: resistor a1 a3', 'wires: [a1 -- a3]', ''].join('\n');
+
+    expect(insertWire(source, at('a1'), at('c1')).ok === false).toBe(true);
+  });
+
+  test('refuses a fence it cannot read', () => {
+    expect(insertWire('parts:\n  R1: [unclosed\n', at('a1'), at('a3')).ok).toBe(false);
+  });
+});
+
+describe('insertPart', () => {
+  const part = (source: string, spec: Parameters<typeof insertPart>[1]) => added(source, insertPart(source, spec));
+
+  test('adds a line after the parts already written', () => {
+    const { source } = part(RC, { id: 'C1', type: 'capacitor', at: [cell('c1'), cell('c3')] });
+
+    expect(source).toBe([
+      'title: RC', 'parts:', '  R1: resistor a1 a3 10k', '  Q1: npn b5', '  C1: capacitor c1 c3',
+      'wires:', '  - a3 -- b1', '',
+    ].join('\n'));
+  });
+
+  test('writes the value when it is given', () => {
+    expect(part(RC, { id: 'C1', type: 'capacitor', at: [cell('c1'), cell('c3')], value: '100n' }).source)
+      .toContain('  C1: capacitor c1 c3 100n');
+  });
+
+  test('makes the key before the wires when the fence has no parts yet', () => {
+    const source = ['wires:', '  - a1 -- a3', ''].join('\n');
+
+    expect(part(source, { id: 'G1', type: 'ground', at: [cell('a3')] }).source).toBe(
+      ['parts:', '  G1: ground a3', 'wires:', '  - a1 -- a3', ''].join('\n'),
+    );
+  });
+
+  test('refuses an id that is already taken', () => {
+    const result = insertPart(RC, { id: 'R1', type: 'capacitor', at: [cell('c1'), cell('c3')] });
+
+    expect(result.ok === false && result.error.message).toContain('R1');
+  });
+
+  test('refuses an id the grammar does not allow', () => {
+    expect(insertPart(RC, { id: 'a b', type: 'ground', at: [cell('c1')] }).ok).toBe(false);
+  });
+
+  test('refuses a type it does not know', () => {
+    expect(insertPart(RC, { id: 'Z1', type: 'flux-capacitor', at: [cell('c1')] }).ok).toBe(false);
+  });
+
+  test('refuses the wrong number of addresses for the type', () => {
+    expect(insertPart(RC, { id: 'C1', type: 'capacitor', at: [cell('c1')] }).ok).toBe(false);
+    expect(insertPart(RC, { id: 'G2', type: 'ground', at: [cell('c1'), cell('c3')] }).ok).toBe(false);
+  });
+
+  test('refuses an address off the grid', () => {
+    expect(insertPart(RC, { id: 'G2', type: 'ground', at: [{ row: 99, col: 1 }] }).ok).toBe(false);
+  });
+
+  test('refuses parts written in flow style', () => {
+    const source = ['parts: {R1: resistor a1 a3}', ''].join('\n');
+
+    expect(insertPart(source, { id: 'C1', type: 'capacitor', at: [cell('c1'), cell('c3')] }).ok).toBe(false);
+  });
+});
