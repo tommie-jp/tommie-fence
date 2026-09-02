@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { movePart, movablePartIds } from './move.ts';
+import { movePart, movablePartIds, partSpans } from './move.ts';
 import { applyEdits } from './shared.ts';
 import { parseAddress } from '../model/address.ts';
 
@@ -162,5 +162,30 @@ describe('部品の名前と番地の綴りが同じとき', () => {
     const source = ['parts:', '  A3:  resistor a1 a3 1k', ''].join('\n');
 
     expect(moved(source, 'A3', 'b1').source).toContain('  A3:  resistor b1 b3 1k');
+  });
+});
+
+describe('1 行に部品が 2 つ以上あるとき (フロー形式)', () => {
+  const FLOW = 'parts: {R1: resistor a1 a3, R2: resistor a3 a5}\n';
+
+  test('moves the part that was grabbed, not the one written before it', () => {
+    // 頭から探し直すと、先に書かれた R1 の `a3` を二度拾って**掴んでいないほう**が
+    // 動く。partSpans は続きの桁から探しているので、光る場所と動く場所が食い違う。
+    expect(moved(FLOW, 'R2', 'b5').source).toBe('parts: {R1: resistor a1 a3, R2: resistor b5 b7}\n');
+  });
+
+  test('still moves the first part on the line', () => {
+    expect(moved(FLOW, 'R1', 'b1').source).toBe('parts: {R1: resistor b1 b3, R2: resistor a3 a5}\n');
+  });
+
+  test('lights up the same spelling it rewrites', () => {
+    // partSpans が返す桁と、movePart が書き換える桁は同じでなければならない。
+    // partSpans の頭は名前 (`R2:` のほう) なので、端子はその次から。
+    const terminals = partSpans(FLOW, 'R2').slice(1);
+    const result = movePart(FLOW, 'R2', at('b5'));
+
+    expect(result.ok && result.value.edits.map((edit) => edit.column)).toEqual(
+      terminals.map((span) => span.column),
+    );
   });
 });
