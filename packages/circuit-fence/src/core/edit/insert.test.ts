@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { insertPart, insertWire, nextPartId } from './insert.ts';
 import { applyRewrite } from './shared.ts';
+import { compileCircuit } from '../index.ts';
 import { parseAddress } from '../model/address.ts';
 
 const at = (text: string) => ({ kind: 'cell' as const, address: parseAddress(text)! });
@@ -177,5 +178,37 @@ describe('nextPartId', () => {
 
   test('has nothing to offer for a fence it cannot read', () => {
     expect(nextPartId('parts:\n  R1: [unclosed\n', 'resistor')).toBeNull();
+  });
+});
+
+describe('レビューで出た穴', () => {
+  test('adds a wire to a sequence written at column 0, which is valid YAML', () => {
+    // 字下げ 0 桁を「無い」と読んで 2 つ空けると、足した行が前の値に畳み込まれ、
+    // フェンスが読めなくなる (図がまるごと消える)。
+    const source = 'parts:\n  R1: resistor a1 a3 10k\nwires:\n- a1 -- a3\n';
+    const result = insertWire(source, at('a1'), at('d1'));
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const written = applyRewrite(source, result.value);
+
+    expect(written).toContain('\n- a1 -- d1');
+    expect(compileCircuit(written).errors).toEqual([]);
+  });
+
+  test('refuses a value that YAML would eat, the way setField does', () => {
+    const source = 'parts:\n  R1: resistor a1 a3 10k\n';
+
+    // `#hi` はコメントとして飲まれ、`10 k` は行を壊し、`l=x` は札になる。
+    for (const value of ['#hi', '10 k', 'l=x']) {
+      expect(insertPart(source, { id: 'R2', type: 'resistor', at: [cell('c1'), cell('c3')], value }).ok).toBe(false);
+    }
+  });
+
+  test('still takes an ordinary value', () => {
+    const source = 'parts:\n  R1: resistor a1 a3 10k\n';
+    const result = insertPart(source, { id: 'R2', type: 'resistor', at: [cell('c1'), cell('c3')], value: '4k7' });
+
+    expect(result.ok).toBe(true);
   });
 });

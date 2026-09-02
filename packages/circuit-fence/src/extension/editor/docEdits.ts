@@ -62,7 +62,13 @@ export function changesOf(replacements: readonly Replacement[]): readonly Change
  * 閉じていないフェンスは文書の終わりで止める (`lineAt` は範囲の外で投げる)。
  */
 export function fenceBody(document: DocLike, fenceLine: number, source: string): readonly string[] {
-  const end = Math.min(fenceLine + source.split('\n').length, document.lineCount);
+  // `source` は各行に改行を付けて繋いだものなので、`split` の末尾に空の要素が
+  // 1 つ増える。そのまま数えると**閉じ記号の行まで控えに入り**、元に戻すときに
+  // その行を書き換え、閉じ記号を直した人には「手で書き換えられています」と
+  // 言って元に戻せなくなる。
+  const body = source.split('\n');
+  if (body.at(-1) === '') body.pop();
+  const end = Math.min(fenceLine + body.length, document.lineCount);
   return Array.from({ length: Math.max(0, end - fenceLine) }, (_, index) => document.lineAt(fenceLine + index).text);
 }
 export function changesForFence(document: DocLike, fenceLine: number, edits: readonly Edit[]): readonly Change[] {

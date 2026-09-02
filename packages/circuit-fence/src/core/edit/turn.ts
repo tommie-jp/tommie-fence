@@ -1,5 +1,4 @@
 import { formatAddress } from '../model/address.ts';
-import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { LIMITS } from '../limits.ts';
@@ -55,18 +54,23 @@ function twoTerminal(source: string, partId: string, what: string) {
   return { ok: true as const, normalized, part, tokens: located.tokens };
 }
 
-/** 番地 2 つを、その部品の行に書き戻す編集 (綴りの長さが変わっても桁は当たる)。 */
+/**
+ * 端の綴りを書き戻す編集 (綴りの長さが変わっても桁は当たる)。
+ *
+ * **書かれたままでよい端は触らない** (`null` を渡す)。`points:` の名前で
+ * 書かれた端を番地に直すと、名前が外れて**あとで点を動かしても部品が
+ * 付いてこない**。ネットの差分は空なので、何も言わずに切れる。
+ */
 const editsFor = (
   line: number,
   tokens: readonly { readonly column: number; readonly length: number }[],
-  addresses: readonly Address[],
+  texts: readonly (string | null)[],
 ): readonly Edit[] =>
-  tokens.map((token, index) => ({
-    line,
-    column: token.column,
-    length: token.length,
-    text: formatAddress(addresses[index] as Address),
-  }));
+  tokens.flatMap((token, index) => {
+    const text = texts[index];
+    if (text === undefined || text === null) return [];
+    return [{ line, column: token.column, length: token.length, text }];
+  });
 
 export function turnPart(source: string, partId: string, quarters: number): RewriteResult {
   const found = twoTerminal(source, partId, '回');
@@ -84,8 +88,12 @@ export function turnPart(source: string, partId: string, quarters: number): Rewr
       part.line,
     );
   }
+  // **一周は何もしない。** 同じ字を書き戻すと、呼ぶ側の「変わっていない」判定を
+  // 素通りして、書類が汚れ・元に戻す段が積まれ・「動かしました」と言われる。
+  if (to.row === part.to.row && to.col === part.to.col) return rewriteOf(normalized, []);
 
-  return rewriteOf(normalized, editsFor(part.line, tokens, [part.from, to]));
+  // アンカーは書かれたまま (名前で書かれていれば名前のまま)。動くのは反対の端だけ。
+  return rewriteOf(normalized, editsFor(part.line, tokens, [null, formatAddress(to)]));
 }
 
 export function flipPart(source: string, partId: string): RewriteResult {
@@ -96,5 +104,12 @@ export function flipPart(source: string, partId: string): RewriteResult {
   if (part.kind !== 'two-terminal') return fail(`${partId} は反転できません`, part.line);
 
   // 端の入れ替え。**同じ 2 つの升を使う**ので、接続は変わらない (極性だけが変わる)。
-  return rewriteOf(normalized, editsFor(part.line, tokens, [part.to, part.from]));
+  // **綴りごと入れ替える** — 番地に直すと `points:` の名前が外れる。
+  const line = normalized.split('\n')[part.line - 1] ?? '';
+  const spelling = (index: number): string => {
+    const token = tokens[index];
+    return token === undefined ? '' : line.slice(token.column, token.column + token.length);
+  };
+
+  return rewriteOf(normalized, editsFor(part.line, tokens, [spelling(1), spelling(0)]));
 }

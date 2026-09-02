@@ -118,3 +118,39 @@ describe('deleteWire', () => {
     expect(result.ok === false && result.error.message).toContain('フロー形式');
   });
 });
+
+describe('部品を消したときの注釈 (レビューで出た穴)', () => {
+  const source = [
+    'parts:',
+    '  R1: resistor a1 a3 10k',
+    '  C1: capacitor c1 c3 100n',
+    'wires:',
+    '  - a3 -- c1',
+    'notes:',
+    '  - circle R1 red',
+    '  - arrow R1 C1',
+    '  - circle C1 blue',
+  ].join('\n');
+
+  test('takes the notes that point at the part with it', () => {
+    // 残しても何も描かれず、エラーもお知らせも出ない。配線を一緒に消すのと同じ理由。
+    const result = deletePart(source, 'R1');
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const written = applyRewrite(source, result.value);
+
+    expect(written).not.toContain('circle R1');
+    expect(written).not.toContain('arrow R1');
+    expect(written).toContain('circle C1 blue');
+  });
+
+  test('drops the notes: key when nothing is left under it', () => {
+    const only = 'parts:\n  R1: resistor a1 a3 10k\nnotes:\n  - circle R1 red\n';
+    const result = deletePart(only, 'R1');
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(applyRewrite(only, result.value)).not.toContain('notes:');
+  });
+});

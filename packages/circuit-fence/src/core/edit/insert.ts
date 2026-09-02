@@ -5,6 +5,7 @@ import { normalizeNewlines } from '../newlines.ts';
 import { lookupPartType, lookupPin, PART_PREFIXES } from '../parts.ts';
 import type { PartTypeName } from '../parts.ts';
 import { parseFence } from '../parser/parseFence.ts';
+import { fieldProblem } from './field.ts';
 import type { Endpoint } from '../types.ts';
 import { applyRewrite, diffOf, fail, isOnGrid } from './shared.ts';
 import type { LineEdit, RewriteResult } from './shared.ts';
@@ -40,9 +41,18 @@ const isFlow = (lines: readonly string[], key: string): boolean => {
   return line > 0 && (lines[line - 1] ?? '').replace(new RegExp(`^\\s*${key}\\s*:`), '').trim() !== '';
 };
 
-/** その行 (1 始まり) の字下げ。足す行は**既にある行に合わせる**。無ければ空白 2 つ。 */
-const indentOf = (lines: readonly string[], line: number): string =>
-  (/^\s*/.exec(lines[line - 1] ?? '')?.[0] ?? '') || '  ';
+/**
+ * その行 (1 始まり) の字下げ。足す行は**既にある行に合わせる**。
+ *
+ * **0 桁は「字下げが無い」ではない。** YAML の並びは列 0 にも書けるので、
+ * そこへ 2 つ空けて足すと、足した行が前の値に畳み込まれてフェンスが読めなくなる
+ * (図がまるごと消える)。行そのものが無いときだけ 2 つにする。
+ */
+const indentOf = (lines: readonly string[], line: number): string => {
+  const text = lines[line - 1];
+  if (text === undefined) return '  ';
+  return /^\s*/.exec(text)?.[0] ?? '';
+};
 
 /** 末尾の空行より前。鍵ごと足すときの行き先 (末尾の空行の後ろに書かない)。 */
 const afterLast = (lines: readonly string[]): number => {
@@ -133,6 +143,13 @@ export function insertPart(source: string, spec: NewPart): RewriteResult {
 
   const lines = normalized.split('\n');
   if (isFlow(lines, 'parts')) return fail('フロー形式 (1 行に書いた形) の部品には足せません。手で書きます', null);
+
+  // **値は `setField` と同じ関所を通す。** ここだけ素通しにすると、
+  // 空白で行が壊れ、`#` で値が黙って消え、`l=` が札になる。
+  if (spec.value !== undefined) {
+    const problem = fieldProblem(spec.value);
+    if (problem !== null) return fail(problem, null);
+  }
 
   const written = [
     `${spec.id}:`,

@@ -102,3 +102,44 @@ describe('flipPart', () => {
     expect(flipPart(RC, 'Q1').ok).toBe(false);
   });
 });
+
+describe('名前で書かれた端 (レビューで出た穴)', () => {
+  const named = [
+    'points:',
+    '  vin: a1',
+    '  vout: a3',
+    'parts:',
+    '  R1: resistor vin vout 10k',
+  ].join('\n');
+
+  test('flips by swapping the spellings, so the names survive', () => {
+    // 番地に書き換えると points: の名前が外れ、あとで点を動かしても部品が付いてこない。
+    // ネットの差分は空なので、何も言わずに切れる。
+    const result = flipPart(named, 'R1');
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(applyRewrite(named, result.value)).toContain('R1: resistor vout vin 10k');
+  });
+
+  test('turns without touching the anchor, which does not move', () => {
+    const result = turnPart(named, 'R1', 1);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const written = applyRewrite(named, result.value);
+
+    expect(written).toContain('R1: resistor vin ');
+    expect(written).not.toContain('resistor a1 ');
+  });
+
+  test('does nothing at all when asked to turn by a whole circle', () => {
+    // 同じ字を書き戻す編集を返すと、呼ぶ側の「何も変わっていない」判定を素通りして、
+    // 書類が汚れ・元に戻す段が積まれ・「動かしました」と言われる。
+    const result = turnPart(named, 'R1', 0);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.edits).toEqual([]);
+  });
+});

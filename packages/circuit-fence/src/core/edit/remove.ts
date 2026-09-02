@@ -1,6 +1,6 @@
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import type { FenceError, WireSpec } from '../types.ts';
+import type { FenceError, NoteSpec, WireSpec } from '../types.ts';
 import { diffOf, applyRewrite, fail } from './shared.ts';
 import type { LineEdit, Rewrite } from './shared.ts';
 
@@ -47,6 +47,19 @@ function removal(source: string, drop: ReadonlySet<number>, wires: number): Remo
   return { ok: true, value: { ...rewrite, diff: diffOf(source, applyRewrite(source, rewrite)), wires } };
 }
 
+/**
+ * その注釈がこの部品を指しているか。**指し先を綴りで持つ注釈だけ**が当たる
+ * (番地で書いた枠は、部品が消えても指し先の升が残る)。
+ */
+const notePoints = (note: NoteSpec, partId: string): boolean => {
+  if (note.kind === 'circle') return note.target === partId;
+  if (note.kind === 'arrow' || note.kind === 'line') {
+    return note.from === partId || note.to === partId;
+  }
+  // 枠と字と書き出しは番地で置くので、部品が消えても指し先の升は残る。
+  return false;
+};
+
 export function deletePart(source: string, partId: string): RemovalResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
@@ -65,11 +78,21 @@ export function deletePart(source: string, partId: string): RemovalResult {
     if (isKeyLine(lines[line - 1], 'wires')) return fail(`${partId} の足を指す配線: ${FLOW}`, line);
   }
 
-  const drop = new Set<number>([part.line, ...wireLines]);
+  // **その部品を指す注釈も一緒に消す。** 残しても指し先が無いので何も描かれず、
+  // エラーもお知らせも出ない (配線を一緒に消すのと同じ理由)。
+  const noteLines = new Set(doc.notes.filter((note) => notePoints(note, partId)).map((note) => note.line));
+  for (const line of noteLines) {
+    if (isKeyLine(lines[line - 1], 'notes')) return fail(`${partId} を指す注釈: ${FLOW}`, line);
+  }
+
+  const drop = new Set<number>([part.line, ...wireLines, ...noteLines]);
   // **最後の 1 つを消したら鍵ごと。** 空の `parts:` / `wires:` は読めない。
   if (doc.parts.every((other) => other.id === partId)) drop.add(keyLineOf(lines, 'parts'));
   if (doc.wires.length > 0 && doc.wires.every((wire) => wireLines.has(wire.line))) {
     drop.add(keyLineOf(lines, 'wires'));
+  }
+  if (doc.notes.length > 0 && doc.notes.every((note) => noteLines.has(note.line))) {
+    drop.add(keyLineOf(lines, 'notes'));
   }
   drop.delete(0);
 

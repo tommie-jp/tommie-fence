@@ -131,3 +131,24 @@ describe('partFields', () => {
     expect(partFields('parts:\n  R1: [unclosed\n', 'R1')).toBeNull();
   });
 });
+
+describe('YAML に食われる綴りを断る (レビューで出た穴)', () => {
+  const source = 'parts:\n  R1: resistor a1 a3 10k\n';
+
+  test('refuses a value starting with #, which YAML eats as a comment', () => {
+    // 通すと `R1: resistor a1 a3 #hi` になり、値は黙って消える。
+    // エラーもネットの差分も出ないので、書いた人は書けたつもりで終わる。
+    const result = setField(source, 'R1', 'value', '#hi');
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).toContain('#');
+  });
+
+  test('refuses one anywhere a comment would start, not just at the head', () => {
+    expect(setField(source, 'R1', 'value', '10k#hi').ok).toBe(false);
+  });
+
+  test('still takes an ordinary value', () => {
+    expect(setField(source, 'R1', 'value', '4k7').ok).toBe(true);
+  });
+});

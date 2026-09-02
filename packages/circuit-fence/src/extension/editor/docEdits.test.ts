@@ -118,6 +118,17 @@ describe('fenceBody', () => {
 
     expect(fenceBody(document, 1, 'parts:\n')).toEqual(['parts:']);
   });
+
+  test('stops before the closing marker, which is not part of the body', () => {
+    // 取り出した本文は行ごとに改行が付いているので、数え方を間違えると
+    // 閉じ記号まで控えに入る。入ると、元に戻すときにその行を書き換え、
+    // 閉じ記号を直した人には「手で書き換えられています」と言って戻せなくなる。
+    const document = docOf(['```circuit', 'parts:', '  R1: resistor a1 a3', '```', 'あと']);
+
+    expect(fenceBody(document, 1, 'parts:\n  R1: resistor a1 a3\n')).toEqual([
+      'parts:', '  R1: resistor a1 a3',
+    ]);
+  });
 });
 
 describe('bodyAfter', () => {

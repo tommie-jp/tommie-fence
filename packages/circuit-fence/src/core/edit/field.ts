@@ -75,6 +75,25 @@ function editFor(line: number, found: Token | null, text: string, append: number
 
 const WHITESPACE = /\s/;
 
+/**
+ * 欄に書ける字か。書けないなら理由、書けるなら null。
+ *
+ * **`#` を断るのが要**。`R1: resistor a1 a3 #hi` と書けてしまうと、YAML は
+ * そこから後ろをコメントとして読むので、**値が黙って消える** — エラーも
+ * ネットの差分も出ないので、書いた人は書けたつもりのまま終わる。
+ *
+ * 部品を足すとき (`insert.ts`) も同じ関所を通す。別々に持つと、片方だけが
+ * 通してしまう。
+ */
+export function fieldProblem(text: string): string | null {
+  if (text === '') return null;
+  if (WHITESPACE.test(text)) return '空白を含む字は書けません (1 綴りで書きます)';
+  if (text.includes('#')) return '# を含む字は書けません (そこから後ろがコメントとして消えます)';
+  if (text.includes('=')) return '= を含む字は書けません (l= の札と紛れます)';
+  if ([...text].length > LIMITS.valueLength) return `長すぎます (${LIMITS.valueLength} 文字まで)`;
+  return null;
+}
+
 export function setField(source: string, partId: string, field: PartField, text: string): RewriteResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
@@ -88,10 +107,8 @@ export function setField(source: string, partId: string, field: PartField, text:
   if (shares || /^\s*parts\s*:/.test(lines[part.line - 1] ?? '')) {
     return fail(`${partId}: フロー形式 (1 行に書いた形) の部品は欄を足せません。手で書きます`, part.line);
   }
-  if (WHITESPACE.test(text)) return fail('空白を含む字は書けません (1 綴りで書きます)', part.line);
-  if ([...text].length > LIMITS.valueLength) {
-    return fail(`長すぎます (${LIMITS.valueLength} 文字まで)`, part.line);
-  }
+  const problem = fieldProblem(text);
+  if (problem !== null) return fail(problem, part.line);
 
   const located = locatePart(doc, lines, partId);
   const lineText = lines[part.line - 1];
