@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import {
   NO_TURN, PART_ALIASES, PART_PREFIXES, PART_TYPES,
-  closestPartType, lookupPartType, lookupPin, optionsFor, partTypeNames, pinAxis, pinHint,
-  pinSideOf, resolvePartTypeName, symbolFor,
+  closestPartType, lookupPartType, lookupPin, optionsFor, orientOf, partTypeNames, pinAxis,
+  pinHint, pinSideOf, resolvePartTypeName, symbolFor,
 } from './parts.ts';
 import type { PartTypeName } from './parts.ts';
 
@@ -483,5 +483,39 @@ describe('PART_PREFIXES', () => {
     expect(PART_PREFIXES.opamp).toBe('U');
     // varicap は容量の部品だが、docs の例が D4 なので D。
     expect(PART_PREFIXES.varicap).toBe('D');
+  });
+});
+
+/**
+ * 向きを書ける範囲。**回転と反転を別の欄で持つ** — 実機で、回すのは大丈夫でも
+ * 反転すると字が鏡文字になる記号があると分かったため (docs の実機の記録)。
+ */
+describe('orientOf', () => {
+  test('lets a multi terminal part turn and mirror', () => {
+    expect(orientOf(PART_TYPES.npn!)).toMatchObject({ rotate: true, mirror: true });
+  });
+
+  test('refuses to mirror a chip, whose pin numbers would read backwards', () => {
+    expect(orientOf(PART_TYPES.dip8!)).toMatchObject({ rotate: true, mirror: false });
+  });
+
+  test('lets ground turn but not mirror, since it is symmetric', () => {
+    expect(orientOf(PART_TYPES.ground!)).toMatchObject({ rotate: true, mirror: false });
+  });
+
+  test('gives the sign order to the op amp alone', () => {
+    expect(orientOf(PART_TYPES.opamp!).signs).toBe(true);
+    expect(orientOf(PART_TYPES.npn!).signs).toBe(false);
+  });
+
+  test('refuses every turn where standing upright is the meaning', () => {
+    // vcc / vee は上下が意味そのもの。port は形が無い。
+    for (const name of ['vcc', 'vee', 'port'] as const) {
+      expect(orientOf(PART_TYPES[name])).toEqual({ rotate: false, mirror: false, signs: false });
+    }
+  });
+
+  test('refuses a turn on a two terminal part, which turns by its addresses', () => {
+    expect(orientOf(PART_TYPES.resistor!).rotate).toBe(false);
   });
 });

@@ -3,6 +3,7 @@
 import { formatAddress, texNameOfAddress } from './model/address.ts';
 import type { Address, WireOperator } from './model/address.ts';
 import type { NoteAlign, NoteLeading, NoteSize } from './notes.ts';
+import type { Turn } from './parts.ts';
 
 /**
  * 読めなかったところ 1 件。line は元の YAML の行 (1 始まり)。
@@ -93,6 +94,8 @@ export type OneTerminalPart = {
   readonly id: string;
   readonly type: string;
   readonly at: Address;
+  /** 記号の向き。書けるのは `ground` だけ (parts.ts の `orient`)。 */
+  readonly turn: Turn;
   readonly line: number;
 };
 
@@ -108,10 +111,13 @@ export type MultiTerminalPart = {
   /** 型番など。単位は補わない。 */
   readonly value: string | null;
   /**
-   * 記号の向き。**書かれた語のまま** (`+up`) 持つ。
+   * オペアンプの ± の並び。**書かれた語のまま** (`+up`) 持つ。
    * circuitikz の綴りに直すのは TeX 生成の仕事なので、ここには入れない。
+   * 回転と反転は下の `turn` — ± の入れ替えは回転では書けない別の鍵。
    */
   readonly orientation: string | null;
+  /** 記号の向き。回転は時計回り、`mirror` は左右反転 (parts.ts の `Turn`)。 */
+  readonly turn: Turn;
   readonly line: number;
 };
 

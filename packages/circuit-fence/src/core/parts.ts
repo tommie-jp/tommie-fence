@@ -73,6 +73,32 @@ export type Turn = { readonly rotate: 0 | 90 | 180 | 270; readonly mirror: boole
 
 export const NO_TURN: Turn = { rotate: 0, mirror: false };
 
+/**
+ * 向きを書ける範囲。**回転と反転は別の欄**で持つ — 実機では、回すのは
+ * 大丈夫でも反転すると字が鏡文字になる記号があった (DIP の足番号と型番)。
+ * **落ちるからではなく読めなくなるから**外すので、種類ごとに分けて要る。
+ */
+export type Orient = {
+  readonly rotate: boolean;
+  readonly mirror: boolean;
+  /** オペアンプの `+up` / `+down`。± の入れ替えは回転では書けない別の鍵。 */
+  readonly signs: boolean;
+};
+
+const NO_ORIENT: Orient = { rotate: false, mirror: false, signs: false };
+
+/** 多端子の既定。回しても反転しても字が壊れない記号。 */
+const TURNS: Orient = { rotate: true, mirror: true, signs: false };
+
+/**
+ * 回せるが反転できない。DIP は足番号も型番も鏡文字になり、
+ * `ground` は左右対称で図が変わらない (書けても効かない語を通さない)。
+ */
+const TURN_ONLY: Orient = { rotate: true, mirror: false, signs: false };
+
+/** オペアンプだけ ± の入れ替えを持つ。 */
+const AMP_ORIENT: Orient = { rotate: true, mirror: true, signs: true };
+
 /** 時計回りに 90 度。左の足は上へ回る。 */
 const CLOCKWISE: Readonly<Record<PinSide, PinSide>> = {
   left: 'top', top: 'right', right: 'bottom', bottom: 'left',
@@ -122,6 +148,12 @@ export type PartType = {
    * 置いた 1 つの交点では決まらないため。
    */
   readonly pinSide?: Readonly<Record<string, PinSide>>;
+  /**
+   * 向きを書ける範囲。**省くと種類で決まる** (多端子は回転も反転も可、
+   * それ以外は不可)。表に書くのは既定から外れるものだけ — 実機で字が壊れる
+   * 記号を後から外せるよう、種類ごとに上書きできる形にしてある。
+   */
+  readonly orient?: Orient;
   /**
    * 記号に必ず付ける circuitikz のオプション (DIP の足の本数、計器の中の字など)。
    * 書き手が触れるものではないので、向き (`+up`) とは別に持つ。
@@ -259,6 +291,8 @@ const NO_UNIT = { unitTex: null, unitSi: null } as const;
  * (文法に本数の欄を足すより、`dip8` と書けるほうが短い)。
  */
 const dipchip = (count: number): PartType => ({
+  // 反転すると足番号も型番も鏡文字になる (実機で確認)。回転だけ許す。
+  orient: TURN_ONLY,
   kind: 'multi-terminal',
   symbol: 'dipchip',
   // 型番は箱の中に書くので、既定の大きさだと足の番号に重なる (実機で確認)。
@@ -391,7 +425,7 @@ export const PART_TYPES = {
 
   // 記号
   port: { kind: 'one-terminal', symbol: 'ocirc', idLabel: 'beside', ...NO_UNIT },
-  ground: { kind: 'one-terminal', symbol: 'ground', ...NO_UNIT },
+  ground: { kind: 'one-terminal', symbol: 'ground', ...NO_UNIT, orient: TURN_ONLY },
   /**
    * 電源レール。名前は記号そのものの文字として出る。
    * グラウンドと違って**離して描いても自動ではつながらない**
@@ -427,7 +461,10 @@ export const PART_TYPES = {
    * **アンカー名は op amp と同じ**なので、
    * 書き出す `.tex` では latexSymbol に戻すだけで本物の記号になる。
    */
-  opamp: { kind: 'multi-terminal', symbol: 'plain amp', latexSymbol: 'op amp', ...NO_UNIT, pins: AMP_PINS, pinSide: AMP_SIDE },
+  opamp: {
+    kind: 'multi-terminal', symbol: 'plain amp', latexSymbol: 'op amp', ...NO_UNIT,
+    pins: AMP_PINS, pinSide: AMP_SIDE, orient: AMP_ORIENT,
+  },
   /**
    * トランス。circuitikz の `transformer` は**空芯** (巻線 2 つだけ) で、
    * 記事によく出るのは鉄芯の 2 本が入るほう。アンカーは同じなので
@@ -721,6 +758,13 @@ export function lookupPin(type: PartType, pin: string): string | null {
   const wanted = pin.toLowerCase();
   return Object.hasOwn(pins, wanted) ? (pins[wanted] ?? null) : null;
 }
+
+/**
+ * その種類に向きを書ける範囲。**表に無ければ種類で決まる** —
+ * 多端子は回転も反転もでき、2 端子 (番地の順が向き) と残りの 1 端子は書けない。
+ */
+export const orientOf = (type: PartType): Orient =>
+  type.orient ?? (type.kind === 'multi-terminal' ? TURNS : NO_ORIENT);
 
 /** その種類に書けるピン名 (短い名前と正式名の両方)。 */
 export const pinNames = (type: PartType): readonly string[] => Object.keys(type.pins ?? {});

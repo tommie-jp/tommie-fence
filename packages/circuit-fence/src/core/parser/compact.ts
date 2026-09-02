@@ -7,8 +7,8 @@ import {
   NOTE_KINDS, NOTE_LEADINGS, NOTE_SIZE_NAMES, isNoteAlign, isNoteLeading, isNoteSize, noteColor,
 } from '../notes.ts';
 import type { NoteAlign, NoteLeading, NoteSize } from '../notes.ts';
-import { closestPartType, lookupPartType, partTypeNames, resolvePartTypeName } from '../parts.ts';
-import type { PartTypeName } from '../parts.ts';
+import { NO_TURN, closestPartType, lookupPartType, partTypeNames, resolvePartTypeName } from '../parts.ts';
+import type { PartTypeName, Turn } from '../parts.ts';
 import { isNoteDrawable } from '../tex/escape.ts';
 import type { Endpoint, FenceError, NoteSpec, NoteTextStyle, PartSpec, Result, WireSpec } from '../types.ts';
 
@@ -20,8 +20,47 @@ const typeList = (): string => partTypeNames().join(' / ');
 /** `U1.out` `Q1.B` の形。部品 ID と足の名前を分ける。 */
 const PIN_REFERENCE = /^([\w-]+)\.([^\s.]+)$/;
 
-/** 書ける向き。今のところオペアンプの ± の上下だけ。 */
-export const ORIENTATIONS = ['+up', '+down'] as const;
+/** オペアンプの ± の並び。回転では書けない別の鍵なので、回転と併記できる。 */
+const SIGNS = ['+up', '+down'] as const;
+
+/** 回転の語 → **時計回り**の角度。`r0` は書かない (向きを書かないのと同じ)。 */
+const ROTATIONS: Readonly<Record<string, 90 | 180 | 270>> = { r90: 90, r180: 180, r270: 270 };
+
+const MIRROR = 'mirror';
+
+/**
+ * 向きの語。**値ではないもの**の一覧として外からも引く (`edit/field.ts`)。
+ * ここに足した語は、値を拾う側でも自動で値から外れる。
+ */
+export const ORIENTATIONS = [...SIGNS, ...Object.keys(ROTATIONS), MIRROR] as const;
+
+/** 読み取った向き。`turn` が回転と反転、`orientation` が ± の並び。 */
+type Turned = { readonly turn: Turn; readonly orientation: string | null };
+
+const NO_TURNED: Turned = { turn: NO_TURN, orientation: null };
+
+/**
+ * 向きの語を 1 つ読む。語でなければ null (値かもしれない)、
+ * **同じ種類を 2 回書いていたら `'twice'`**。
+ *
+ * 後勝ちで黙らない — `r90 r180` と書いた人がどちらのつもりかは決められない。
+ */
+function withTurn(got: Turned, token: string): Turned | 'twice' | null {
+  const rotate = ROTATIONS[token];
+  if (rotate !== undefined) {
+    return got.turn.rotate === 0 ? { ...got, turn: { ...got.turn, rotate } } : 'twice';
+  }
+  if (token === MIRROR) {
+    return got.turn.mirror ? 'twice' : { ...got, turn: { ...got.turn, mirror: true } };
+  }
+  if ((SIGNS as readonly string[]).includes(token)) {
+    return got.orientation === null ? { ...got, orientation: token } : 'twice';
+  }
+  return null;
+}
+
+const turnTwice = (written: string): string =>
+  `${safeToken(written)} に向きが 2 つ書かれています (回転・mirror・± はそれぞれ 1 つまで)`;
 
 /**
  * 番地に付けた名前 (`points:`) の表。番地が書ける場所ならどこでも引く。
@@ -120,12 +159,14 @@ function readMultiTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
   const at = readAddress(atToken, line, points);
   if (!at.ok) return at;
 
-  let orientation: string | null = null;
+  let turned: Turned = NO_TURNED;
   let value: string | null = null;
 
   for (const token of extra) {
-    if ((ORIENTATIONS as readonly string[]).includes(token)) {
-      orientation = token;
+    const next = withTurn(turned, token);
+    if (next === 'twice') return fail(turnTwice(written), line);
+    if (next !== null) {
+      turned = next;
       continue;
     }
     if (value !== null) return fail(shape, line);
@@ -135,7 +176,10 @@ function readMultiTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
     value = token;
   }
 
-  return ok({ kind: 'multi-terminal', id, type, at: at.value, value, orientation, line });
+  return ok({
+    kind: 'multi-terminal', id, type, at: at.value, value,
+    orientation: turned.orientation, turn: turned.turn, line,
+  });
 }
 
 /**
@@ -243,16 +287,25 @@ function checkLabelLength(text: string, subject: string, line: number): Result<P
 
 function readOneTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
   const { id, type, written, line, points } = head;
+  const shape = `${safeToken(written)} は「種類 番地」で書きます`;
   const [atToken, ...extra] = rest;
 
-  if (atToken === undefined || extra.length > 0) {
-    return fail(`${safeToken(written)} は「種類 番地」で書きます`, line);
+  if (atToken === undefined) return fail(shape, line);
+
+  // 番地のあとに書けるのは向きの語だけ (書けるのは `ground`。種類ごとの
+  // 可否は表引きで見るので、ここでは形だけを見る)。± は多端子の鍵なので通さない。
+  let turned: Turned = NO_TURNED;
+  for (const token of extra) {
+    const next = withTurn(turned, token);
+    if (next === 'twice') return fail(turnTwice(written), line);
+    if (next === null || next.orientation !== null) return fail(shape, line);
+    turned = next;
   }
 
   const at = readAddress(atToken, line, points);
   if (!at.ok) return at;
 
-  return ok({ kind: 'one-terminal', id, type, at: at.value, line });
+  return ok({ kind: 'one-terminal', id, type, at: at.value, turn: turned.turn, line });
 }
 
 /** 配線 1 行の書き方。端点はいくつ並べてもよい。 */

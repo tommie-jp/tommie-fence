@@ -1,7 +1,7 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { addressHint, cornerOf, formatAddress, isNearlyZero, isSameAddress, parseAddress } from './address.ts';
-import { lookupPartType, lookupPin, pinAxis, pinHint } from '../parts.ts';
+import { lookupPartType, lookupPin, orientOf, pinAxis, pinHint } from '../parts.ts';
 import type { Address } from './address.ts';
 import { NO_POINTS } from '../parser/compact.ts';
 import type { Points } from '../parser/compact.ts';
@@ -10,7 +10,8 @@ import { isDrawable, isSourceDrawable } from '../tex/escape.ts';
 import { isMathLabel, mathInnerOf, mathLabelTex } from '../tex/mathLabel.ts';
 import { cellOf, nameOfEndpoint } from '../types.ts';
 import type {
-  ArrowNote, Endpoint, FenceError, LineNote, MultiTerminalPart, NoteSpec, PartSpec, TexTarget, TwoTerminalPart,
+  ArrowNote, Endpoint, FenceError, LineNote, MultiTerminalPart, NoteSpec, OneTerminalPart, PartSpec, TexTarget,
+  TwoTerminalPart,
   WireSpec,
 } from '../types.ts';
 
@@ -662,7 +663,7 @@ export function wireContacts(circuit: Circuit): WireContact[] {
  * (1 つでも素通りすると、そこから任意の TeX を書けてしまう)。
  */
 function checkPart(part: PartSpec, errors: FenceError[], target: TexTarget): PartSpec {
-  const oriented = part.kind === 'multi-terminal' ? checkOrientation(part, errors) : part;
+  const oriented = part.kind === 'two-terminal' ? part : checkOrientation(part, errors);
   const checked = oriented.kind === 'two-terminal' ? checkLabels(oriented, errors, target) : oriented;
   if (checked.kind === 'one-terminal' || checked.value === null) return checked;
   if (isDrawable(checked.value, target)) return checked;
@@ -705,12 +706,43 @@ function checkLabels(part: TwoTerminalPart, errors: FenceError[], target: TexTar
   };
 }
 
-/** 向きはオペアンプにしかない。ほかに書くと circuitikz が知らないキーになる。 */
-function checkOrientation(part: MultiTerminalPart, errors: FenceError[]): MultiTerminalPart {
-  if (part.orientation === null || part.type === 'opamp') return part;
+/**
+ * 書かれた向きが、その種類に書けるものか。**表引き** (`parts.ts` の `orient`)。
+ *
+ * **回転と反転は別々に見る。** 回せても反転すると字が鏡文字になる記号があり
+ * (DIP の足番号と型番)、左右対称で反転しても図が変わらない記号もある
+ * (`ground`)。書けない向きは**落として**から先へ渡す — TeX には検証済みの形
+ * しか渡さない (設計上の約束 5)。
+ */
+function checkOrientation<P extends MultiTerminalPart | OneTerminalPart>(
+  part: P,
+  errors: FenceError[],
+): P {
+  const type = lookupPartType(part.type);
+  const orient = type === null ? null : orientOf(type);
+  if (orient === null) return part;
+
+  let turn = part.turn;
+  if (turn.rotate !== 0 && !orient.rotate) {
+    errors.push(fenceError(
+      `${safeToken(part.type)} は回せません (向きを書けるのは多端子部品と ground です)`,
+      part.line,
+    ));
+    turn = { ...turn, rotate: 0 };
+  }
+  if (turn.mirror && !orient.mirror) {
+    errors.push(fenceError(
+      `${safeToken(part.type)} に mirror は書けません${orient.rotate ? ' (回転だけ書けます)' : ''}`,
+      part.line,
+    ));
+    turn = { ...turn, mirror: false };
+  }
+
+  if (part.kind !== 'multi-terminal') return { ...part, turn };
+  if (part.orientation === null || orient.signs) return { ...part, turn };
 
   errors.push(
     fenceError(`${safeToken(part.type)} に向き ${safeToken(part.orientation)} は書けません (opamp だけ)`, part.line),
   );
-  return { ...part, orientation: null };
+  return { ...part, orientation: null, turn };
 }

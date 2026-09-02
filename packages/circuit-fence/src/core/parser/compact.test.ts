@@ -102,6 +102,7 @@ describe('parseCompactPart', () => {
       id: 'IN',
       type: 'port',
       at: { row: 0, col: 0 },
+      turn: { rotate: 0, mirror: false },
       line: 2,
     });
   });
@@ -310,6 +311,64 @@ describe('parseCompactPart の種類', () => {
     // 略記のまま流すと、グラウンドやオペアンプを名前で見分けている先が壊れる。
     expect(partOf('gnd c3', 'G1')).toMatchObject({ kind: 'one-terminal', type: 'ground' });
     expect(partOf('op c5 +up', 'U1')).toMatchObject({ kind: 'multi-terminal', type: 'opamp', orientation: '+up' });
+  });
+
+  /**
+   * 向きの語。**回転と反転は別の語**で、1 行に回転 1 つと `mirror` 1 つまで
+   * (順不同)。オペアンプの `+up` / `+down` は ± の入れ替えで、回転では書けない
+   * 別の鍵なので併記できる。
+   */
+  describe('向き', () => {
+    test('reads a rotation, clockwise the way the drawing turns', () => {
+      expect(partOf('npn c3 r90', 'Q1')).toMatchObject({ turn: { rotate: 90, mirror: false } });
+      expect(partOf('npn c3 r180', 'Q1')).toMatchObject({ turn: { rotate: 180, mirror: false } });
+      expect(partOf('npn c3 r270', 'Q1')).toMatchObject({ turn: { rotate: 270, mirror: false } });
+    });
+
+    test('reads a mirror on its own', () => {
+      expect(partOf('npn c3 mirror', 'Q1')).toMatchObject({ turn: { rotate: 0, mirror: true } });
+    });
+
+    test('reads a rotation and a mirror together, in either order', () => {
+      const both = { rotate: 90, mirror: true };
+
+      expect(partOf('npn c3 r90 mirror', 'Q1')).toMatchObject({ turn: both });
+      expect(partOf('npn c3 mirror r90', 'Q1')).toMatchObject({ turn: both });
+    });
+
+    test('stands still when nothing is written', () => {
+      expect(partOf('npn c3', 'Q1')).toMatchObject({ turn: { rotate: 0, mirror: false } });
+    });
+
+    test('keeps the value apart from the words, wherever it sits', () => {
+      expect(partOf('npn c3 r90 2SC1815', 'Q1')).toMatchObject({ turn: { rotate: 90 }, value: '2SC1815' });
+      expect(partOf('npn c3 2SC1815 r90', 'Q1')).toMatchObject({ turn: { rotate: 90 }, value: '2SC1815' });
+    });
+
+    test('carries the sign order of an op amp as its own key', () => {
+      // ± の入れ替えは回転では書けない (別の鍵)。回転と併記できる。
+      expect(partOf('opamp c5 +up r90', 'U1')).toMatchObject({ orientation: '+up', turn: { rotate: 90 } });
+    });
+
+    test('refuses two rotations, instead of letting the last one win', () => {
+      const message = messageOf('npn c3 r90 r180', 'Q1').message;
+
+      expect(message).toContain('向き');
+      expect(messageOf('npn c3 r90 r180', 'Q1').line).toBe(2);
+    });
+
+    test('refuses two mirrors and two sign orders too', () => {
+      expect(messageOf('npn c3 mirror mirror', 'Q1').message).toContain('向き');
+      expect(messageOf('opamp c5 +up +down', 'U1').message).toContain('向き');
+    });
+
+    test('lets a one terminal part carry a turn, which ground needs', () => {
+      expect(partOf('ground c3 r90', 'G1')).toMatchObject({ kind: 'one-terminal', turn: { rotate: 90 } });
+    });
+
+    test('still refuses a stray token on a one terminal part', () => {
+      expect(messageOf('ground c3 huh', 'G1').message).toContain('「種類 番地」');
+    });
   });
 
   test('reads a pin on a part written with its abbreviation', () => {

@@ -296,6 +296,52 @@ describe('注釈の指し先が部品 ID にも番地にも読めるとき', () 
   });
 });
 
+/**
+ * 向きが書ける種類かどうかは**表で見る** (parts.ts の `orient`)。
+ * 回転と反転を別の欄で見るのは、回せても反転すると字が鏡文字になる記号が
+ * あるため (docs の実機の記録)。
+ */
+describe('書ける向きかどうか', () => {
+  const errorsOf = (...rows: string[]) => build(...rows).errors.map((error) => error.message);
+
+  test('turns a multi terminal part and a ground', () => {
+    const { errors } = build('parts:', '  Q1: npn c3 r90', '  G1: ground e3 r180');
+
+    expect(errors).toEqual([]);
+  });
+
+  test('mirrors a transistor, whose symbol carries no text', () => {
+    expect(build('parts:', '  Q1: npn c3 mirror').errors).toEqual([]);
+  });
+
+  test('refuses to mirror a chip, naming the line', () => {
+    // 足番号も型番も鏡文字になる (実機で確認)。回転はできる。
+    const { errors } = build('parts:', '  U1: dip8 c3 mirror');
+
+    expect(errors[0]?.message).toContain('mirror');
+    expect(errors[0]?.line).toBe(2);
+    expect(build('parts:', '  U1: dip8 c3 r90').errors).toEqual([]);
+  });
+
+  test('refuses to turn a part whose upright pose is the meaning', () => {
+    const messages = errorsOf('parts:', '  VCC: vcc a1 r90');
+
+    expect(messages[0]).toContain('vcc');
+    expect(messages).toHaveLength(1);
+  });
+
+  test('keeps the sign order to the op amp, as before', () => {
+    expect(errorsOf('parts:', '  Q1: npn c3 +up')[0]).toContain('opamp');
+    expect(build('parts:', '  U1: opamp c5 +up r90').errors).toEqual([]);
+  });
+
+  test('drops the turn it refused, so the drawing never sees it', () => {
+    const { circuit } = build('parts:', '  U1: dip8 c3 mirror');
+
+    expect(circuit.parts[0]).toMatchObject({ turn: { rotate: 0, mirror: false } });
+  });
+});
+
 describe('足へまっすぐ引いた配線', () => {
   const warn = (...rows: string[]) => build(...rows).notices.map((notice) => notice.message);
 
