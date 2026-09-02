@@ -148,9 +148,10 @@ wires:
   - c6 -- c8
   - f8 -- h8 black
   - h8 -- GND black
-  - c0 -- f0 black
-  - f0 -- h0 black
-  - h0 -- GND black
+  - c0 -- d2 black
+  - d2 -- g2 black
+  - f0 -- g2 black
+  - g2 -- GND black
 ```
 
 ![図05 SMA を板の縁に載せる (6 dB アッテネータ)](out/02-parts-5.svg)
