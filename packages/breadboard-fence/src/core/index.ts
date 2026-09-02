@@ -23,7 +23,8 @@ import { DEFAULT_WIRE_COLOR, wireColor as lookupWireColor, wireColorNames } from
 import { resolveStyle } from './render/theme.ts';
 import { HOLE_ROWS } from './types.ts';
 import type {
-  Address, Board, FenceError, Net, NoteSpec, PlacedPart, Point, Rect, Result, StripId, WireHint, WireSpec,
+  Address, Board, FenceError, Net, NoteSpec, PartSpec, PlacedPart, Point, Rect, Result, StripId, WireHint,
+  WireSpec,
 } from './types.ts';
 
 export type RenderResult = {
@@ -79,14 +80,18 @@ const PIN_REF = /^([\w-]+)\.(\S+)$/;
  * `points:` の名前を添える (番地 → 名前。表は名前 → 番地なので裏返す)。
  */
 function editLayer(
-  parts: readonly PlacedPart[],
+  parts: readonly PartSpec[],
   wires: readonly ResolvedWire[],
   points: ReadonlyMap<string, string>,
 ): { readonly used: ReadonlySet<string>; readonly names: ReadonlyMap<string, string> } {
   const used = new Set<string>();
+  // **書かれた番地に節点を立てる。** 足と同じ穴へ配線が来ていると、部品のほうが
+  // 同じ列の空いた行へ寄って描かれる — けれど掴んで動かすのは**書いてある綴り**
+  // なので、寄った先に立てると掴んだつもりと違うものが動く (52 の docs/13)。
   for (const part of parts) {
-    for (const pin of part.pins) {
-      if (pin.address !== null) used.add(formatAddress(pin.address));
+    for (const hole of part.holes) {
+      const address = parseAddress(points.get(hole.addr) ?? hole.addr);
+      if (address !== null) used.add(formatAddress(address));
     }
   }
   for (const wire of wires) {
@@ -181,7 +186,7 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
   });
 
   const svg = renderDocument({
-    edit: options.edit === true ? editLayer(parts, wires, parsed.doc.points) : null,
+    edit: options.edit === true ? editLayer(parsed.doc.parts, wires, parsed.doc.points) : null,
     title: parsed.doc.title,
     board,
     layout,

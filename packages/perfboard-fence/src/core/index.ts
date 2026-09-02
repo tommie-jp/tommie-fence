@@ -30,7 +30,7 @@ import { renderDocument } from './render/document.ts';
 import { renderErrorBanner, renderErrorCard } from './render/errorHtml.ts';
 import { resolveStyle, themeForBoard } from './render/theme.ts';
 import type {
-  Address, FenceError, PlacedPart, PointSpec, ResolvedNote, RoutedWire,
+  Address, FenceError, PartSpec, PointSpec, ResolvedNote, RoutedWire,
 } from './types.ts';
 import type { Net } from 'fence-kit';
 
@@ -80,13 +80,19 @@ export type RenderOptions = {
  * `points:` の名前を添える。
  */
 function editLayer(
-  parts: readonly PlacedPart[],
+  parts: readonly PartSpec[],
   wires: readonly RoutedWire[],
   points: readonly PointSpec[],
 ): { readonly used: ReadonlySet<string>; readonly names: ReadonlyMap<string, string> } {
   const used = new Set<string>();
+  // **書かれた番地に節点を立てる。** 掴んで動かすのは書いてある綴りなので、
+  // 描いた位置ではなく書いた位置に立てる (breadboard で実際に食い違った)。
+  // この板は足を寄せないので今は同じだが、揃えておく (52 の docs/13)。
   for (const part of parts) {
-    for (const pin of part.pins) used.add(formatAddress(pin.address));
+    for (const hole of part.holes) {
+      const address = parseAddress(hole);
+      if (address !== null) used.add(formatAddress(address));
+    }
   }
   for (const wire of wires) {
     used.add(formatAddress(wire.from));
@@ -336,7 +342,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       // 掴む層は**いちばん上**。下に敷くと、部品や配線が押しを先に取ってしまう。
       + (options.edit === true
         ? renderHits(board, layout, ...(() => {
-          const layer = editLayer(placement.parts, wiring.wires, parsed.doc.points);
+          const layer = editLayer(parsed.doc.parts, wiring.wires, parsed.doc.points);
           return [layer.used, layer.names] as const;
         })())
         : '');
