@@ -1,12 +1,12 @@
 import type { Edit, NetDiff, Span } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
-import { renderBreadboard } from '../index.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import { createBoard } from '../model/board.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { HOLE_ROWS } from '../types.ts';
 import type { Address, FenceError, HoleRow, PartSpec } from '../types.ts';
+import { diffAfter } from './diff.ts';
 import { locateTokens } from './shared.ts';
 
 /**
@@ -161,45 +161,5 @@ export function movePart(source: string, id: string, to: Address): MoveResult {
     edits.push({ line: found.part.line, column: token.column, length: token.length, text: written });
   }
 
-  return { ok: true, value: { edits, diff: diffOf(source, edits) } };
-}
-
-/** 組を 1 つの綴りにするときの区切り。**端子の名前に現れない字**を選ぶ。 */
-const SEPARATOR = ' ';
-
-/** ネットリストを「つながっている端子の組」の集合にする。 */
-function connectionsOf(source: string): Set<string> {
-  const pairs = new Set<string>();
-  for (const net of renderBreadboard(source).netlist) {
-    const refs = [...net.refs].sort();
-    for (let i = 0; i < refs.length; i += 1) {
-      for (let j = i + 1; j < refs.length; j += 1) pairs.add(`${refs[i]}${SEPARATOR}${refs[j]}`);
-    }
-  }
-  return pairs;
-}
-
-/**
- * 動かす前と後で接続を比べる。**同じ列の 5 穴はつながっている**ので、
- * 1 つ動かすと意図せずつながることが circuit より起きやすい。黙らせない。
- */
-function diffOf(source: string, edits: readonly Edit[]): NetDiff {
-  if (edits.length === 0) return { lost: [], gained: [] };
-
-  const lines = normalizeNewlines(source).split('\n');
-  for (const edit of [...edits].sort((a, b) => b.column - a.column)) {
-    const text = lines[edit.line - 1];
-    if (text === undefined) continue;
-    lines[edit.line - 1] = text.slice(0, edit.column) + edit.text + text.slice(edit.column + edit.length);
-  }
-
-  const was = connectionsOf(source);
-  const now = connectionsOf(lines.join('\n'));
-  const toPairs = (keys: readonly string[]): NetDiff['lost'] =>
-    keys.map((key) => key.split(SEPARATOR) as unknown as NetDiff['lost'][number]);
-
-  return {
-    lost: toPairs([...was].filter((pair) => !now.has(pair)).sort()),
-    gained: toPairs([...now].filter((pair) => !was.has(pair)).sort()),
-  };
+  return { ok: true, value: { edits, diff: diffAfter(source, edits) } };
 }
