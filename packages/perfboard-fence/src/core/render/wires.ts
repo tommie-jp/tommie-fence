@@ -24,7 +24,7 @@ export const renderWires = (wires: readonly RoutedWire[], layout: Layout, theme:
       const to = layout.point(wire.to);
       return element('line', {
         x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y),
-        stroke: wireStroke(wire.color),
+        stroke: wireStroke(wire.color, theme.palette.wire),
         'stroke-width': WIRE_WIDTH,
         'stroke-linecap': 'round',
         'stroke-opacity': theme.metrics.wireOpacity,
@@ -58,7 +58,7 @@ export const renderDeviceWires = (
       const to = layout.point(wire.hole);
       return element('line', {
         x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y),
-        stroke: wireStroke(wire.color),
+        stroke: wireStroke(wire.color, theme.palette.wire),
         'stroke-width': WIRE_WIDTH,
         'stroke-linecap': 'round',
         'stroke-opacity': theme.metrics.wireOpacity,

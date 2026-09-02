@@ -15,9 +15,11 @@ parts:
   R1: resistor c3 c7 10k
   C1: capacitor/ceramic e7 e10 100n
 wires:
-  - IN -- c3
+  - IN -- a3
+  - a3 -- c3
   - c7 -- e7
-  - e10 -- GND
+  - e10 -- e1
+  - e1 -- GND
 notes:
   - mark c3 red
   - box b6 f11 blue
@@ -61,9 +63,11 @@ parts:
   R1: resistor c3 c7 10k
   D1: led c9 c11 green
 wires:
-  - IN -- c3
+  - IN -- a3
+  - a3 -- c3
   - c7 -- c9
-  - c11 -- GND
+  - c11 -- c1
+  - c1 -- GND
 notes:
   - source blue
 ```
@@ -86,9 +90,11 @@ parts:
   R1: resistor c3 c7 10k
   D1: led c9 c11 green
 wires:
-  - IN -- c3
+  - IN -- a3
+  - a3 -- c3
   - c7 -- c9
-  - c11 -- GND
+  - c11 -- c1
+  - c1 -- GND
 notes:
   - source
 ```
@@ -111,22 +117,29 @@ style:
     row: numeric
     col: alpha
     case: lower
-title: 図04 行を数字、列を英字にする
+    sides: all
+title: 図04 行を数字・列を英字にして、四辺に出す
 points:
   IN: a1
 parts:
   R1: resistor c3 c7 10k
 wires:
-  - IN -- c3
+  - IN -- a3
+  - a3 -- c3
 notes:
   - source blue
 ```
 
-![図04 行を数字、列を英字にする](out/08-notes-4.svg)
+![図04 行を数字・列を英字にして、四辺に出す](out/08-notes-4.svg)
 
 **番地の書き方は変わらない。** どう印字しても `c3` は c 行 3 列で、
 フェンスに書く綴りは動かない — 動くのは板の外に出る名前だけ。
 既定は**行が英字・列が数字**で、上の図02・図03 がその形。
+
+**名前を出す辺は `sides:` で選ぶ。** 既定は**左と上だけ** — 四辺に出すと、
+小さい板では名前のほうが板より目立つ。大きい板で端から数え直したいときに
+`sides: all` (上の図) や `sides: left top right` のように増やす。
+`none` で消せる。
 
 ## 半田面 (`back:`)
 
@@ -145,9 +158,11 @@ parts:
   R1: resistor c3 c7 1k
   D1: led c9 c11 red
 wires:
-  - VCC -- c3 red
+  - VCC -- a3 red
+  - a3 -- c3 red
   - c7 -- c9
-  - c11 -- GND black
+  - c11 -- c1 black
+  - c1 -- GND black
 notes:
   - source blue
 ```

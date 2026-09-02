@@ -54,6 +54,12 @@ export const LABEL_KINDS = ['alpha', 'numeric'] as const;
 /** 英字の大小。**既定は upper** (板のシルクが大文字なので、そちらに合わせる)。 */
 export const LABEL_CASES = ['upper', 'lower'] as const;
 
+/**
+ * 穴の名前を出す辺。**既定は左と上だけ** — 4 辺に出すと、小さい板では
+ * 名前のほうが板より目立つ。大きい板で端から数え直したいときに増やす。
+ */
+export const LABEL_SIDES = ['left', 'right', 'top', 'bottom'] as const;
+
 /** `style:` に書ける大きさの範囲。図として成立する幅に収める。 */
 export const STYLE_RANGES = {
   // 上限は、フェンス 1 つで巨大なラスタ画像を作らせないための頭打ちでもある。

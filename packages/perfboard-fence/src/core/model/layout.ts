@@ -40,6 +40,12 @@ export type LayoutOptions = {
    * 半田面は自分の `Layout` を持つので、その `height` をそのまま渡す。
    */
   readonly back?: { readonly height: number } | null;
+  /**
+   * 穴の名前を右と下にも出すか。**出す辺には余白が要る** — 板の寸法だけで
+   * 画布を決めると、右と下の名前が画布の外へ出て黙って切れる。
+   */
+  readonly labelRight?: boolean;
+  readonly labelBottom?: boolean;
 };
 
 /** 板の外の機器を並べる帯。 */
@@ -100,17 +106,19 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   // **書き出しは板より広くなることがある。** 板が細いフェンス (`4x30` など) で
   // 板幅に切ると書き出しが `…` だらけになり、写して動かすという値打ちが消える。
   // 切るのではなく画布のほうを広げる。
-  const bandWidth = Math.max(boardWidth, source?.width ?? 0);
+  const labelRight = options.labelRight === true ? LABEL_GUTTER : 0;
+  const labelBottom = options.labelBottom === true ? LABEL_GUTTER : 0;
+  const bandWidth = Math.max(boardWidth + labelRight, source?.width ?? 0);
   // 縦の積み方: 題 → 上の機器 → 板 → 下の機器 → 半田面 → 書き出し。
   // **板 2 枚を続けて置く** — 間に写しが挟まると、表と裏が別の図に見える。
-  const backTop = boardY + boardHeight + bottomBand + BACK_GAP;
+  const backTop = boardY + boardHeight + labelBottom + bottomBand + BACK_GAP;
   const backBand = back === null ? 0 : BACK_GAP + back.height;
-  const sourceTop = boardY + boardHeight + bottomBand + backBand + SOURCE_GAP;
+  const sourceTop = boardY + boardHeight + labelBottom + bottomBand + backBand + SOURCE_GAP;
 
   return {
     pitch: PITCH,
     width: boardX + bandWidth + OUTER_MARGIN,
-    height: boardY + boardHeight + bottomBand + backBand
+    height: boardY + boardHeight + labelBottom + bottomBand + backBand
       + (source === null ? 0 : SOURCE_GAP + source.height) + OUTER_MARGIN,
     board: { x: boardX, y: boardY, width: boardWidth, height: boardHeight },
     titleBaseline: OUTER_MARGIN + titleBand - 6,

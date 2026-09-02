@@ -5,6 +5,7 @@ import { parseFence } from './parser/parseFence.ts';
 import { placeParts } from './placement/place.ts';
 import { renderBoard } from './render/board.ts';
 import { renderSlots } from './render/slots.ts';
+import { renderJoints } from './render/joints.ts';
 import { renderParts } from './render/parts.ts';
 import { renderDeviceWires, renderWires } from './render/wires.ts';
 import { renderTitle } from './render/title.ts';
@@ -88,13 +89,15 @@ export function renderPerfboard(input: string): RenderResult {
   const sourceNotes = parsed.doc.notes.filter((note) => note.kind === 'source');
   const listing = sourceNotes.length > 0 ? sourceListing(source) : [];
   // 半田面は自分の寸法を持つので、**先に測ってから**表の図に場所を空けさせる。
-  const back = style.back ? backSideLayout(board) : null;
+  const back = style.back ? backSideLayout(board, style.labels) : null;
   const layout = createLayout(board, {
     title: title !== null,
     deviceTop: devices.some((device) => device.at === 'top'),
     deviceBottom: devices.some((device) => device.at === 'bottom'),
     source: listing.length > 0 ? sourceBandSize(listing, THEME) : null,
     back: back === null ? null : { height: back.height },
+    labelRight: style.labels.sides.includes('right'),
+    labelBottom: style.labels.sides.includes('bottom'),
   });
   const placedDevices = layoutDevices(devices, layout);
   const devicePins = new Map(devices.map((device) => [device.id, new Set(device.pins)]));
@@ -170,6 +173,14 @@ export function renderPerfboard(input: string): RenderResult {
 
   // **画布からはみ出す部品ぶん、画布を広げる。** 端面実装のコネクタは板の外へ
   // 張り出すので、板の寸法だけで画布を決めると図が黙って切れる。
+  // **半田付けする穴。** 足が入った穴と、配線が来た穴のどちらも埋まる。
+  // 埋めた穴と空いた穴が同じ形だと、どこを付けるのか図から読めない。
+  const soldered = [
+    ...placement.parts.flatMap((part) => part.pins.map((pin) => pin.address)),
+    ...wiring.wires.flatMap((wire) => [wire.from, wire.to]),
+    ...wiring.deviceWires.map((wire) => wire.hole),
+  ];
+
   // 配線や注釈も板の外を指せるので、部品の胴と一緒に見る。
   const pointsOn = (on: typeof layout) => [
     ...wiring.wires.flatMap((wire) => [on.point(wire.from), on.point(wire.to)]),
@@ -211,6 +222,9 @@ export function renderPerfboard(input: string): RenderResult {
       // スロット用の銅箔は板の上、配線の下。**挿す穴ではない**ので、
       // 部品や線に隠れても困らない。
       + renderSlots(board, layout, PLATE)
+      // 半田付けした穴。**配線と部品の前に敷く** — 線の先が半田の玉に入って
+      // 見えるほうが、実物の見た目に近い。
+      + renderJoints(soldered, layout, PLATE)
       + renderWires(wiring.wires, layout, PLATE)
       // 機器へつなぐ線も板の上まで引く。**どの穴へ行くのかが図に出ないと、
       // 帯に浮いた箱と板が結び付かない。**
@@ -229,7 +243,7 @@ export function renderPerfboard(input: string): RenderResult {
         : renderBackSide(
           board,
           back,
-          { wires: wiring.wires, parts: placement.parts },
+          { wires: wiring.wires, parts: placement.parts, soldered },
           PLATE,
           style.labels,
           layout.backTop,

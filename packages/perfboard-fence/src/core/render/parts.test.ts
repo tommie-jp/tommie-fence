@@ -5,6 +5,7 @@ import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
 import { parseAddress } from '../model/address.ts';
 import { placeParts } from '../placement/place.ts';
+import { edgeMountOf } from '../placement/geometry.ts';
 import type { PlacedPart } from '../types.ts';
 
 const board = createBoard({ cols: 10, rows: 6 });
@@ -183,5 +184,41 @@ describe('SMA の横置き (端面実装)', () => {
     const label = /<text x="([0-9.]+)"[^>]*>J1<\/text>/.exec(svg);
 
     expect(Number(label?.[1])).toBe((layout.point(parseAddress('c4')!).x + layout.point(parseAddress('c2')!).x) / 2);
+  });
+});
+
+describe('SMA 横置きの足の形', () => {
+  const edge = placeParts(
+    [{ id: 'J1', type: 'sma', variant: 'female-edge', holes: ['c4', 'c2'], value: null, written: 'sma/female-edge c4 c2', line: 1 }],
+    board,
+  ).parts;
+
+  test('puts ground above and below, with the centre conductor between them', () => {
+    // 実物は板の縁を挟んで上下にアースが伸び、その間から中心導体が出る (凹)。
+    const svg = renderParts(edge, layout, THEME);
+    // アースの脚だけが胴の 1/3 の太さ (8)。ほかの段はもっと太い。
+    const arms = [...svg.matchAll(/<rect x="[-0-9.]+" y="([-0-9.]+)" width="[0-9.]+" height="8"/g)]
+      .map(([, y = '0']) => Number(y) + 4);
+
+    expect(arms.length).toBe(2);
+    // 上下に 1 つずつ、軸を挟んで同じだけ離れている。
+    expect(arms[0]! + arms[1]!).toBeCloseTo(0, 5);
+    expect(arms[0]!).toBeLessThan(0);
+  });
+
+  test('reaches the centre conductor further in than the ground, so it is the convex one', () => {
+    const svg = renderParts(edge, layout, THEME);
+    const centre = /<rect x="([-0-9.]+)" y="-2" width="([0-9.]+)"[^>]*fill="#d8b64a"/.exec(svg);
+    const arm = /<rect x="[-0-9.]+" y="[-0-9.]+" width="([0-9.]+)" height="8"/.exec(svg);
+
+    expect(Number(centre?.[2])).toBeGreaterThan(Number(arm?.[1]));
+  });
+
+  test('lands the base on the edge of the board, not over the holes', () => {
+    // 台座の右端が板の縁。実物もそこで板を挟む。
+    const mount = edgeMountOf(edge[0]!, layout)!;
+
+    expect(mount.edgeX).toBeLessThan(mount.legX);
+    expect(layout.board.x).toBeCloseTo(mount.rect.cx + mount.edgeX, 5);
   });
 });

@@ -3,7 +3,9 @@ import {
 } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Layout } from '../model/layout.ts';
-import { BODY_HEIGHT, DOME_SIZE, SMA_SIZE, bodyRect } from '../placement/geometry.ts';
+import {
+  BODY_HEIGHT, DOME_SIZE, SMA_BASE, SMA_PLAIN, SMA_SIZE, bodyRect, edgeMountOf,
+} from '../placement/geometry.ts';
 import { isEdgeMount } from '../parts/types.ts';
 import { footprintOf } from '../parts/footprint.ts';
 import type { PlacedPart } from '../types.ts';
@@ -85,9 +87,6 @@ const SMA_PIN = '#d8b64a';
 const SMA_SOCKET = '#2b2f33';
 /** 胴に書く姿の名前。金物の上に載るので、明るい地に読める濃さにする。 */
 const SMA_LABEL = '#2b2f33';
-/** 端面実装のねじ部の長さと、足の手前で胴を切る量。**姿の名前もこれで置き場所を決める**。 */
-const SMA_THREAD = 34;
-const SMA_LEG_GAP = 7;
 
 /**
  * SMA コネクタ。**胴は足の間隔で変わらない**金物なので、六角の胴 (6.35mm) の
@@ -122,54 +121,57 @@ function smaBody(part: PlacedPart): string {
  * 胴の形は当たり判定と同じ矩形に収める (`placement/geometry.ts`) — はみ出して
  * 描くと、図では重なって見えるのに何も言わない、が起きる。
  */
-function smaEdgeBody(part: PlacedPart, width: number, legX: number): string {
+function smaEdgeBody(part: PlacedPart, width: number, edgeX: number, legX: number): string {
   const half = SMA_SIZE / 2;
   const tip = -width / 2;
-  // ねじ (1/4-36UNS) は胴より細い。実物の図面どおり、ねじ部・胴・足の 3 段に分ける。
-  const threadLength = SMA_THREAD;
-  const threadHalf = half * 0.66;
-  const bodyStart = tip + threadLength;
-  // 胴は GND の足の手前で切る。**足がどの穴に入るか**が図に出ないと、
-  // 端面実装は「板の縁に載っている」だけの絵になる。
-  const bodyEnd = legX - SMA_LEG_GAP;
+  // 左から**ねじ部・ねじなし・台座**。ねじ部とねじなしは同じ太さの筒で、
+  // 台座だけが太い。**台座の右端が板の縁**に来る (実物もそこで板を挟む)。
+  const baseFrom = edgeX - SMA_BASE;
+  const plainFrom = baseFrom - SMA_PLAIN;
+  const barrelHalf = half * 0.62;
   const male = part.variant === 'male-edge';
 
-  const barrel = element('rect', {
-    x: num(tip), y: num(-threadHalf), width: num(threadLength), height: num(threadHalf * 2), rx: 2,
+  const metal = (x: number, wide: number, tall: number, round: number): string => element('rect', {
+    x: num(x), y: num(-tall / 2), width: num(wide), height: num(tall), rx: round,
     fill: SMA_METAL, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
   });
-  // ねじ山。**筋の向きで「ねじ部」と分かる**ようにする (胴には筋を引かない)。
+
+  const barrel = metal(tip, plainFrom - tip, barrelHalf * 2, 2);
+  const plain = metal(plainFrom, SMA_PLAIN, barrelHalf * 2, 1);
+  const base = metal(baseFrom, SMA_BASE, SMA_SIZE, 3);
+
+  // ねじ山はねじ部だけに立てる。**ねじなしと見分けが付く**ようにするため。
   const threads = [6, 12, 18, 24, 30]
+    .filter((offset) => tip + offset < plainFrom - 2)
     .map((offset) => element('line', {
-      x1: num(tip + offset), y1: num(-threadHalf + 2), x2: num(tip + offset), y2: num(threadHalf - 2),
+      x1: num(tip + offset), y1: num(-barrelHalf + 2), x2: num(tip + offset), y2: num(barrelHalf - 2),
       stroke: SMA_METAL_EDGE, 'stroke-width': 1,
     }))
     .join('');
 
-  const body = element('rect', {
-    x: num(bodyStart), y: num(-half), width: num(bodyEnd - bodyStart), height: num(SMA_SIZE), rx: 3,
-    fill: SMA_METAL, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
-  });
-
   // 合わせ面。メスは中心が穴、オスは中心のピンがねじの先へ出る。
   const face = element('rect', {
-    x: num(tip + 3), y: num(-threadHalf * 0.55), width: 3, height: num(threadHalf * 1.1), rx: 1,
+    x: num(tip + 3), y: num(-barrelHalf * 0.55), width: 3, height: num(barrelHalf * 1.1), rx: 1,
     fill: SMA_DIELECTRIC,
   });
   const mating = male
     ? element('rect', { x: num(tip - 6), y: -2, width: 9, height: 4, rx: 1, fill: SMA_PIN })
     : element('rect', { x: num(tip + 3), y: -3, width: 3, height: 6, fill: SMA_SOCKET });
 
-  // 板に挿さる足。**GND の脚は GND の穴の上**に、中心導体はその先の穴まで伸びる。
-  const ground = element('rect', {
-    x: num(bodyEnd), y: -6, width: 14, height: 12, rx: 2,
+  // 板に載る側は**凹の形**。上下にアースが伸び、その間から中心導体が凸に出る。
+  const armThick = half * 0.32;
+  const armEnd = legX + 8;
+  const arm = (y: number): string => element('rect', {
+    x: num(edgeX), y: num(y), width: num(Math.max(armEnd - edgeX, 10)), height: num(armThick), rx: 1,
     fill: SMA_METAL, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
   });
+  // 中心導体は**アースより先まで**伸びて、その先の穴に入る。
   const centre = element('rect', {
-    x: num(legX), y: -2, width: num(width / 2 - legX), height: 4, rx: 1, fill: SMA_PIN,
+    x: num(edgeX), y: -2, width: num(width / 2 - edgeX), height: 4, rx: 1, fill: SMA_PIN,
   });
 
-  return `${barrel}${threads}${body}${face}${mating}${centre}${ground}`;
+  return `${barrel}${threads}${plain}${base}${face}${mating}`
+    + `${arm(-half * 0.62)}${arm(half * 0.62 - armThick)}${centre}`;
 }
 
 /**
@@ -190,7 +192,7 @@ function smaBadge(part: PlacedPart, at: { x: number; y: number }, edge: boolean,
   const first = at.y + (edge ? -size * 0.2 : SMA_SIZE * 0.16);
   const step = size * 1.15;
 
-  return [male ? 'SMA' : 'SMA', male ? 'male' : 'female']
+  return ['SMA', male ? 'male' : 'female']
     .map((line, index) => svgText(at.x, first + step * index, fit(line, room), {
       fill: SMA_LABEL,
       'font-size': num(size),
@@ -205,11 +207,16 @@ const genericBody = (width: number, theme: Theme): string =>
     rx: 3, fill: theme.palette.body, stroke: theme.palette.bodyEdge, 'stroke-width': 1,
   });
 
-const bodyOf = (part: PlacedPart, width: number, theme: Theme, legX = 0): string => {
+const bodyOf = (
+  part: PlacedPart,
+  width: number,
+  theme: Theme,
+  mount: { readonly edgeX: number; readonly legX: number } | null,
+): string => {
   if (part.type === 'resistor') return resistorBody(part, width, theme);
   if (part.type === 'led') return ledBody(part);
   if (part.type === 'sma') {
-    return isEdgeMount(part.type, part.variant) ? smaEdgeBody(part, width, legX) : smaBody(part);
+    return mount === null ? smaBody(part) : smaEdgeBody(part, width, mount.edgeX, mount.legX);
   }
   return genericBody(width, theme);
 };
@@ -236,13 +243,13 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
     stroke: theme.palette.lead, 'stroke-width': LEAD_WIDTH,
   });
   // 3 引数 rotate() を読まないレンダラがあるので translate と rotate に分ける。
-  // 端面実装は胴が足の外へ張り出すので、**足がどこに来るか**を局所座標で渡す
-  // (胴の中心と足の中点がずれるのはこの姿だけ)。
-  const legX = ((to.x - center.x) * Math.cos(rect.angle) + (to.y - center.y) * Math.sin(rect.angle));
+  // 端面実装は胴が板の縁から外へ張り出すので、**板の縁と足がどこに来るか**を
+  // 局所座標で渡す (胴の中心と足の中点がずれるのはこの姿だけ)。
+  const mount = isEdgeMount(part.type, part.variant) ? edgeMountOf(part, layout) : null;
   const body = element(
     'g',
     { transform: `translate(${num(center.x)} ${num(center.y)}) rotate(${num(angle)})` },
-    bodyOf(part, width, theme, legX),
+    bodyOf(part, width, theme, mount),
   );
   // **キャプションは足の真ん中の下**。胴の中心に置くと、板の外へ張り出す部品
   // (端面実装の SMA) で字が板から出て、地に紛れるか幅ゼロで `…` に切られる。
@@ -257,8 +264,10 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
 
   // 姿の名前は**胴のブロックの真ん中**に置く。全体の中心だとねじ部まで含むので
   // 板の外へ寄りすぎ、足の側だと配線に被る。
-  const edge = isEdgeMount(part.type, part.variant);
-  const blockX = edge ? (-width / 2 + SMA_THREAD + legX - SMA_LEG_GAP) / 2 : 0;
+  const edge = mount !== null;
+  // 姿の名前は**板の外に出ている胴の真ん中**に置く。台座は 1mm しかないので
+  // そこに寄せると板に掛かり、足の側に寄せると配線に被る。
+  const blockX = mount === null ? 0 : (-width / 2 + mount.edgeX) / 2;
   const badgeAt = {
     x: rect.cx + blockX * Math.cos(rect.angle),
     y: rect.cy + blockX * Math.sin(rect.angle),

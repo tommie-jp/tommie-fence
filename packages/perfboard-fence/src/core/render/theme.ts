@@ -1,5 +1,5 @@
-import { LAND_COLORS, PLATE_COLORS, darken, landValue, plateValue, textOn } from './finish.ts';
-import type { Board, LabelCase, LabelKind, StyleSpec, ThemeName } from '../types.ts';
+import { LAND_COLORS, PLATE_COLORS, darken, landValue, plateValue, textOn, wireOn } from './finish.ts';
+import type { Board, LabelCase, LabelKind, LabelSide, StyleSpec, ThemeName } from '../types.ts';
 
 /**
  * 板と印字の配色と寸法。
@@ -47,6 +47,11 @@ export type Palette = {
   readonly plateText: string;
   /** スロット用の銅箔。既定はランドと同じ (同じめっきなので)。 */
   readonly slot: string;
+  /**
+   * **色を書かなかった配線の色。** 板の明るさから決める — 既定を 1 つの灰色に
+   * 固定すると、同じ濃さの板で線が沈む。書かれた色はこれに関わらずそのまま。
+   */
+  readonly wire: string;
 };
 
 export type Metrics = {
@@ -78,6 +83,7 @@ const LIGHT: Palette = {
   caption: '#3c3730',
   plateText: textOn(PLATE_COLORS.green as string),
   slot: LAND_COLORS.silver as string,
+  wire: wireOn(PLATE_COLORS.green as string),
 };
 
 /** 暗い背景のノート向け。**板は暗い緑**にする (緑のレジストを暗所で見た色)。 */
@@ -94,6 +100,7 @@ const DARK: Palette = {
   caption: '#dfe6e1',
   plateText: '#e8efe9',
   slot: '#9aa3ab',
+  wire: '#e6ebef',
 };
 
 /** 白黒で刷る資料向け。**色で意味を持たせない** — 形と濃さだけで読ませる。 */
@@ -110,6 +117,7 @@ const MONO: Palette = {
   caption: '#1a1a1a',
   plateText: '#1a1a1a',
   slot: '#b4b4b4',
+  wire: '#3a3a3a',
 };
 
 const METRICS: Metrics = {
@@ -156,6 +164,8 @@ export type ResolvedLabels = {
   readonly row: LabelKind;
   readonly col: LabelKind;
   readonly case: LabelCase;
+  /** 名前を出す辺。**既定は左と上だけ**。 */
+  readonly sides: readonly LabelSide[];
 };
 
 export function resolveStyle(style: StyleSpec): ResolvedStyle {
@@ -175,6 +185,8 @@ export function resolveStyle(style: StyleSpec): ResolvedStyle {
       row: style.labels?.row ?? 'alpha',
       col: style.labels?.col ?? 'numeric',
       case: style.labels?.case ?? 'upper',
+      // **既定は左と上だけ。** 4 辺に出すと、小さい板では名前のほうが目立つ。
+      sides: style.labels?.sides ?? ['left', 'top'],
     },
     // **既定は描かない。** 要るのは実際に半田付けするときだけで、
     // 図の高さが倍になる (貼る先で場所を取る)。
@@ -206,6 +218,8 @@ export function themeForBoard(board: Board, theme: Theme): Theme {
         // 穴は板に開いた影。板の色から作らないと、色を変えたとき穴だけ取り残される。
         hole: darken(plate, 0.7),
         plateText: textOn(plate),
+        // 板が変われば、色を書かなかった線の色も変わる。
+        wire: wireOn(plate),
       }),
       // ランドを変えたらスロットも同じめっき。別に書かれていればそちらが勝つ。
       ...(land === null ? {} : { land, slot: land }),

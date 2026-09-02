@@ -1,6 +1,6 @@
 import { fenceError, safeToken } from '../errors.ts';
-import { LABEL_CASES, LABEL_KINDS, STYLE_RANGES, THEME_NAMES } from '../limits.ts';
-import type { FenceError, LabelSpec, StyleSpec, ThemeName } from '../types.ts';
+import { LABEL_CASES, LABEL_KINDS, LABEL_SIDES, STYLE_RANGES, THEME_NAMES } from '../limits.ts';
+import type { FenceError, LabelSide, LabelSpec, StyleSpec, ThemeName } from '../types.ts';
 
 /**
  * `style:` を読む。**書かれた項目だけを持つ** — 書かれなかったものは null で、
@@ -24,9 +24,31 @@ export const EMPTY_STYLE: StyleSpec = {
 const KEYS = ['theme', 'width', 'debug', 'stamp', 'check', 'labels', 'back'] as const;
 
 /** `labels:` に書ける項目。書かれなかった軸は null のままで、既定が埋める。 */
-const LABEL_KEYS = ['row', 'col', 'case'] as const;
+const LABEL_KEYS = ['row', 'col', 'case', 'sides'] as const;
 
-const EMPTY_LABELS: LabelSpec = { row: null, col: null, case: null };
+const EMPTY_LABELS: LabelSpec = { row: null, col: null, case: null, sides: null };
+
+/**
+ * `sides:` に書ける言葉。**空白区切りで並べる** (`left top`)。`all` は 4 辺、
+ * `none` は出さない。書き方を 1 つに保つため、YAML の並び (`[left, top]`) は
+ * 受けない — 機器の足 (`pins`) と同じ理由で、`-` に続く空白が箱の始まりに読まれる。
+ */
+function readSides(written: unknown): readonly LabelSide[] | string {
+  if (typeof written !== 'string') return `labels の sides は ${LABEL_SIDES.join(' / ')} を空白で並べます`;
+  const words = written.trim().toLowerCase().split(/\s+/).filter((word) => word !== '');
+  if (words.length === 1 && words[0] === 'all') return [...LABEL_SIDES];
+  if (words.length === 1 && words[0] === 'none') return [];
+
+  const sides: LabelSide[] = [];
+  for (const word of words) {
+    if (!(LABEL_SIDES as readonly string[]).includes(word)) {
+      return `labels の sides に書けない言葉です: ${safeToken(word)}`
+        + ` (${LABEL_SIDES.join(' / ')} か all / none)`;
+    }
+    if (!sides.includes(word as LabelSide)) sides.push(word as LabelSide);
+  }
+  return sides;
+}
 
 type Reader = (value: unknown) => { value: unknown } | { problem: string };
 
@@ -74,6 +96,12 @@ const asLabels: Reader = (value) => {
       return { problem: `知らない labels の項目です: ${safeToken(key)} (${LABEL_KEYS.join(' / ')})` };
     }
     const written = entries[key];
+    if (key === 'sides') {
+      const sides = readSides(written);
+      if (typeof sides === 'string') return { problem: sides };
+      labels[key] = sides;
+      continue;
+    }
     const allowed: readonly string[] = key === 'case' ? LABEL_CASES : LABEL_KINDS;
     if (typeof written !== 'string' || !allowed.includes(written)) {
       return {

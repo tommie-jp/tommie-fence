@@ -27,9 +27,12 @@ export const colorValue = (text: string): string | null => {
   return HEX.test(written) ? written : wireColor(written);
 };
 
-/** 配線の色。書かれていない・読めないときは既定の灰色。 */
-export const wireStroke = (color: string | null): string =>
-  (color === null ? null : colorValue(color)) ?? DEFAULT_WIRE_COLOR;
+/**
+ * 配線の色。**書かれた色はそのまま**、書かれていない・読めないときは既定。
+ * 既定は板の色から決まる (`render/finish.ts` の `wireOn`) ので、呼ぶ側が渡す。
+ */
+export const wireStroke = (color: string | null, fallback: string = DEFAULT_WIRE_COLOR): string =>
+  (color === null ? null : colorValue(color)) ?? fallback;
 
 /** 報告に添える例。**全部は並べない** — 帯が読めなくなる。 */
 export const colorHint = (): string => `${wireColorNames().slice(0, 6).join(' / ')} など、または #ff0000`;

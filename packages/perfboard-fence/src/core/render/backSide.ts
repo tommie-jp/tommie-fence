@@ -3,10 +3,11 @@ import { createLayout } from '../model/layout.ts';
 import { renderBoard } from './board.ts';
 import { renderParts } from './parts.ts';
 import { renderSlots } from './slots.ts';
+import { renderJoints } from './joints.ts';
 import { renderTitle } from './title.ts';
 import { renderWires } from './wires.ts';
 import type { Layout } from '../model/layout.ts';
-import type { Board, PlacedPart, RoutedWire } from '../types.ts';
+import type { Address, Board, PlacedPart, RoutedWire } from '../types.ts';
 import type { ResolvedLabels, Theme } from './theme.ts';
 
 /**
@@ -29,12 +30,22 @@ import type { ResolvedLabels, Theme } from './theme.ts';
 export const BACK_CAPTION = '半田面 (裏返した板)';
 
 /** 半田面の板を置くための寸法。表と同じ形なので、大きさも同じ。 */
-export const backSideLayout = (board: Board): Layout => createLayout(board, { mirror: true, title: true });
+export const backSideLayout = (board: Board, labels: ResolvedLabels): Layout =>
+  createLayout(board, {
+    mirror: true,
+    title: true,
+    labelRight: labels.sides.includes('right'),
+    labelBottom: labels.sides.includes('bottom'),
+  });
 
 export function renderBackSide(
   board: Board,
   layout: Layout,
-  content: { readonly wires: readonly RoutedWire[]; readonly parts: readonly PlacedPart[] },
+  content: {
+    readonly wires: readonly RoutedWire[];
+    readonly parts: readonly PlacedPart[];
+    readonly soldered: readonly Address[];
+  },
   theme: Theme,
   labels: ResolvedLabels,
   top: number,
@@ -43,6 +54,8 @@ export function renderBackSide(
     + renderBoard(board, layout, theme, labels)
     // 縁の銅箔は板そのものの持ち物なので、**裏返しても同じ場所にある**。
     + renderSlots(board, layout, theme)
+    // **半田付けするのはこちらの面**。表と同じ穴が埋まる。
+    + renderJoints(content.soldered, layout, theme)
     + renderWires(content.wires, layout, theme)
     + renderParts(content.parts, layout, theme);
 

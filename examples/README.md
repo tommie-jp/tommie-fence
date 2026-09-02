@@ -131,12 +131,12 @@ it is in the picture
 
 ### Watching for a missing connection (ERC)
 
-[![Watching for a missing connection (ERC)](../packages/perfboard-fence/examples/out/05-erc.png)](../packages/perfboard-fence/examples/05-erc.md)
+[![Watching for a missing connection (ERC)](../packages/perfboard-fence/examples/out/05-check.png)](../packages/perfboard-fence/examples/05-check.md)
 
 A missing connection is silent in the picture, so the ERC names an unconnected
 pin, a part the wiring shorts out and a wire that reaches no pin, each with the
 line it was written on
-([05-erc.md](../packages/perfboard-fence/examples/05-erc.md)).
+([05-check.md](../packages/perfboard-fence/examples/05-check.md)).
 
 ### More
 

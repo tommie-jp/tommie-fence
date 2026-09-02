@@ -69,7 +69,8 @@ parts:
     pins: 1 2
 wires:
   - IN.sig -- b3
-  - b7 -- d5
+  - b7 -- b5
+  - b5 -- d5
   - IN.gnd -- h3
   - h5 -- SPK.1
   - g8 -- SPK.2

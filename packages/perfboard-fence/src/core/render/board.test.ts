@@ -62,10 +62,42 @@ describe('renderBoard', () => {
 
   test('takes the kind of name each axis was given, and the case of the letters', () => {
     // 手元の板のシルクに寄せるためのもの。**番地は変わらない** (`b3` のまま)。
-    const drawn = renderBoard(board, layout, THEME, { row: 'numeric', col: 'alpha', case: 'lower' });
+    const drawn = renderBoard(board, layout, THEME, { row: 'numeric', col: 'alpha', case: 'lower', sides: ['left', 'top'] });
 
     expect(drawn).toContain('>2</text>');
     expect(drawn).toContain('>c</text>');
     expect(drawn).not.toContain('>B</text>');
+  });
+});
+
+describe('名前を出す辺', () => {
+  const sidesOf = (sides: readonly ('left' | 'right' | 'top' | 'bottom')[]): string =>
+    renderBoard(board, layout, THEME, { row: 'alpha', col: 'numeric', case: 'upper', sides });
+
+  test('writes the names on the left and top only, by default', () => {
+    const svg = sidesOf(['left', 'top']);
+
+    expect((svg.match(/>A<\/text>/g) ?? []).length).toBe(1);
+    expect((svg.match(/>1<\/text>/g) ?? []).length).toBe(1);
+  });
+
+  test('writes them on both sides when both sides were asked for', () => {
+    const svg = sidesOf(['left', 'right', 'top', 'bottom']);
+
+    expect((svg.match(/>A<\/text>/g) ?? []).length).toBe(2);
+    expect((svg.match(/>1<\/text>/g) ?? []).length).toBe(2);
+  });
+
+  test('puts the second row of names past the far edge of the board', () => {
+    const svg = sidesOf(['right', 'bottom']);
+    const rowAt = /<text x="([0-9.]+)"[^>]*>A<\/text>/.exec(svg);
+    const colAt = /<text x="[0-9.]+" y="([0-9.]+)"[^>]*>1<\/text>/.exec(svg);
+
+    expect(Number(rowAt?.[1])).toBeGreaterThan(layout.board.x + layout.board.width);
+    expect(Number(colAt?.[1])).toBeGreaterThan(layout.board.y + layout.board.height);
+  });
+
+  test('writes none at all when none were asked for', () => {
+    expect(sidesOf([])).not.toContain('</text>');
   });
 });

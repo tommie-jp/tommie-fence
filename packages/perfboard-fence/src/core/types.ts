@@ -163,6 +163,9 @@ export type LabelKind = 'alpha' | 'numeric';
 /** 英字の大小。 */
 export type LabelCase = 'upper' | 'lower';
 
+/** 穴の名前を出す辺。行は左右、列は上下に出る。 */
+export type LabelSide = 'left' | 'right' | 'top' | 'bottom';
+
 /**
  * 板の外の名前の付け方。**印字だけを変える** — 番地 (`b3`) は行が英字・
  * 列が数字のまま動かない。手元の板のシルクに寄せるためのもの。
@@ -171,6 +174,8 @@ export type LabelSpec = {
   readonly row: LabelKind | null;
   readonly col: LabelKind | null;
   readonly case: LabelCase | null;
+  /** 名前を出す辺。書かなければ既定 (左と上)。 */
+  readonly sides: readonly LabelSide[] | null;
 };
 
 /** `points:` の 1 行。**行番号を落とさない** — 落とすと報告が行を指せなくなる。 */

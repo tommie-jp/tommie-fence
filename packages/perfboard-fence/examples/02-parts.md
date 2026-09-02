@@ -14,12 +14,17 @@ parts:
   D1: led d2 d4 green
   L1: inductor d6 d10 100u
 wires:
-  - IN -- b2
+  - IN -- a2
+  - a2 -- b2
   - b6 -- b8
-  - b11 -- OUT
-  - b6 -- d2
+  - b11 -- b12
+  - b12 -- OUT
+  - b6 -- c6
+  - c6 -- c2
+  - c2 -- d2
   - d4 -- d6
-  - d10 -- OUT
+  - d10 -- d12
+  - d12 -- OUT
 notes:
   - source blue
 ```
@@ -43,12 +48,16 @@ parts:
   D1: led d2 d4 blue
   D2: led d6 d8 yellow
 wires:
-  - IN -- b2
+  - IN -- a2
+  - a2 -- b2
   - b5 -- b7
-  - b10 -- OUT
-  - IN -- d2
+  - b10 -- b14
+  - b14 -- OUT
+  - IN -- a2
+  - a2 -- d2
   - d4 -- d6
-  - d8 -- OUT
+  - d8 -- d14
+  - d14 -- OUT
 notes:
   - source blue
 ```
@@ -66,8 +75,10 @@ points:
 parts:
   R1: resistor b2 e5 1k
 wires:
-  - IN -- b2
-  - e5 -- OUT
+  - IN -- a2
+  - a2 -- b2
+  - e5 -- h5
+  - h5 -- OUT
 notes:
   - source blue
 ```
@@ -91,10 +102,13 @@ parts:
   J2: sma/male c10 c12
   R1: resistor e5 e10 50
 wires:
-  - c3 -- e5
-  - c5 -- GND
+  - c3 -- e3
+  - e3 -- e5
+  - c5 -- c1
+  - c1 -- GND
   - e10 -- c10
-  - c12 -- GND
+  - c12 -- c1
+  - c1 -- GND
 ```
 
 ![図04 SMA コネクタ (オスとメス)](out/02-parts-4.svg)
@@ -104,8 +118,10 @@ wires:
 当たり判定は胴の大きさで見る (隣に部品を置くと重なりとして言われる)。
 
 `-edge` を付けると**横置き** (端面実装)。板の縁に載せて、首から先を板の外へ出す。
-図は実物の外形図と同じ 3 段 — **ねじ部** (1/4-36UNS の筋)、**胴**、そして
-**足** (GND の脚とその先の中心導体)。
+図は実物の外形図と同じ 3 段 — 左から**ねじ部** (1/4-36UNS の筋)、**ねじなし**、
+**台座**。**台座の右端が板の縁**に来る (実物もそこで板を挟む。台座の厚さは 1mm)。
+そこから先は**凹の形**で、**上下にアース**が伸び、その間から**中心導体が凸に**
+出て、先の穴に入る。
 
 ```perfboard
 board:
@@ -124,8 +140,10 @@ wires:
   - c3 -- c6
   - c10 -- f10
   - f10 -- f3
-  - c0 -- GND
-  - f0 -- GND
+  - c0 -- c1
+  - c1 -- GND
+  - f0 -- f1
+  - f1 -- GND
 ```
 
 ![図05 SMA を板の縁に載せる (横置き)](out/02-parts-5.svg)

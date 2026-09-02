@@ -5,7 +5,9 @@ import type { Board } from '../types.ts';
 import type { ResolvedLabels, Theme } from './theme.ts';
 
 /** 名前の付け方を書かなかったとき (図を組まずに板だけ描くとき) の既定。 */
-const DEFAULT_LABELS: ResolvedLabels = { row: 'alpha', col: 'numeric', case: 'upper' };
+const DEFAULT_LABELS: ResolvedLabels = {
+  row: 'alpha', col: 'numeric', case: 'upper', sides: ['left', 'top'],
+};
 
 /** 名前を板の縁からどれだけ外へ置くか。 */
 const LABEL_OFFSET = 8;
@@ -57,22 +59,34 @@ export function renderBoard(
     }
   }
 
+  // **名前は書かれた辺にだけ出す。** 既定は左と上だけで、4 辺に出すと
+  // 小さい板では名前のほうが板より目立つ。
   const drawn: string[] = [];
-  for (let row = 1; row <= board.rows; row += 1) {
-    // **縦に並ぶ名前は中央に寄せる。** 右端で揃えると、桁の違う名前 (`9` と `10`、
-    // `Z` と `AA`) が左へはみ出して、列の名前と揃わない。
-    drawn.push(svgText(x - LABEL_OFFSET, layout.rowY(row), axisLabel(row, labels.row, labels.case), {
+  const rowLabelAt = (at: number, row: number): string =>
+    svgText(at, layout.rowY(row), axisLabel(row, labels.row, labels.case), {
+      // **縦に並ぶ名前は中央に寄せる。** 右端で揃えると、桁の違う名前 (`9` と `10`、
+      // `Z` と `AA`) が左へはみ出して、列の名前と揃わない。
       anchor: 'middle',
       fill: palette.label,
       'font-size': num(metrics.textSize),
       'dominant-baseline': 'middle',
-    }));
-  }
-  for (let col = 1; col <= board.cols; col += 1) {
-    drawn.push(svgText(layout.colX(col), y - LABEL_OFFSET, axisLabel(col, labels.col, labels.case), {
+    });
+  const colLabelAt = (at: number, col: number): string =>
+    svgText(layout.colX(col), at, axisLabel(col, labels.col, labels.case), {
       fill: palette.label,
       'font-size': num(metrics.textSize),
-    }));
+    });
+
+  for (let row = 1; row <= board.rows; row += 1) {
+    if (labels.sides.includes('left')) drawn.push(rowLabelAt(x - LABEL_OFFSET, row));
+    if (labels.sides.includes('right')) drawn.push(rowLabelAt(x + width + LABEL_OFFSET, row));
+  }
+  for (let col = 1; col <= board.cols; col += 1) {
+    if (labels.sides.includes('top')) drawn.push(colLabelAt(y - LABEL_OFFSET, col));
+    // 下の名前はベースラインが板から離れる向きに来るので、字の高さぶん下げる。
+    if (labels.sides.includes('bottom')) {
+      drawn.push(colLabelAt(y + height + LABEL_OFFSET + metrics.textSize * 0.8, col));
+    }
   }
 
   return `${plate}${holes.join('')}${drawn.join('')}`;

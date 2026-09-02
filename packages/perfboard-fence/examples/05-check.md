@@ -17,14 +17,16 @@ parts:
   R3: resistor e3 e4 1k
   D1: led g3 g5 green
 wires:
-  - VCC -- b3
-  - b7 -- h1
+  - VCC -- a3
+  - a3 -- b3
+  - b7 -- b1
+  - b1 -- h1
   - g10 -- g12
 notes:
   - source blue
 ```
 
-![図01 わざと壊した配置](out/05-erc.svg)
+![図01 わざと壊した配置](out/05-check.svg)
 
 この図はこう言われる。
 

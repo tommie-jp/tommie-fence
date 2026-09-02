@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { darken, isLandColor, isPlateColor, plateValue } from './finish.ts';
+import { darken, isLandColor, isPlateColor, plateValue, wireOn } from './finish.ts';
 
 describe('板の仕上げの色', () => {
   test('reads the resist colours by name, green first among them', () => {
@@ -39,5 +39,18 @@ describe('darken', () => {
 
   test('takes the short spelling too', () => {
     expect(darken('#fff')).toBe(darken('#ffffff'));
+  });
+});
+
+describe('配線の既定色', () => {
+  test('is light on a dark board and dark on a light board', () => {
+    // 既定を 1 つの灰色に固定すると、同じ濃さの板で線が沈む。
+    expect(wireOn('#2c7a4b')).not.toBe(wireOn('#e8eaec'));
+  });
+
+  test('follows the board, so changing the resist changes the default line', () => {
+    expect(wireOn('#ffffff')).toBe(wireOn('#e8eaec'));
+    expect(wireOn('#000000')).toBe(wireOn('#2c7a4b'));
+    expect(wireOn('#ffffff')).not.toBe(wireOn('#000000'));
   });
 });

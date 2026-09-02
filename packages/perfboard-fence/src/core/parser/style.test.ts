@@ -85,12 +85,12 @@ describe('labels', () => {
     const { style, errors } = parseStyle({ labels: { row: 'numeric', col: 'alpha', case: 'lower' } }, 1);
 
     expect(errors).toEqual([]);
-    expect(style.labels).toEqual({ row: 'numeric', col: 'alpha', case: 'lower' });
+    expect(style.labels).toEqual({ row: 'numeric', col: 'alpha', case: 'lower', sides: null });
   });
 
   test('keeps the axes that were not written open, so the default fills them', () => {
     expect(parseStyle({ labels: { col: 'alpha' } }, 1).style.labels)
-      .toEqual({ row: null, col: 'alpha', case: null });
+      .toEqual({ row: null, col: 'alpha', case: null, sides: null });
   });
 
   test('names a kind it does not know instead of guessing', () => {
@@ -106,5 +106,33 @@ describe('labels', () => {
 
   test('says how to write labels when it is not a map', () => {
     expect(parseStyle({ labels: 'alpha' }, 1).errors[0]?.message).toContain('labels');
+  });
+});
+
+describe('labels の sides', () => {
+  test('takes the sides as words, so the names can go round the board', () => {
+    expect(parseStyle({ labels: { sides: 'left top right bottom' } }, 1).style.labels?.sides)
+      .toEqual(['left', 'top', 'right', 'bottom']);
+  });
+
+  test('takes all and none as shorthands', () => {
+    expect(parseStyle({ labels: { sides: 'all' } }, 1).style.labels?.sides?.length).toBe(4);
+    expect(parseStyle({ labels: { sides: 'none' } }, 1).style.labels?.sides).toEqual([]);
+  });
+
+  test('leaves it unwritten when it was not written, so the default (left and top) fills it', () => {
+    expect(parseStyle({ labels: { row: 'alpha' } }, 1).style.labels?.sides).toBeNull();
+  });
+
+  test('names a word it does not know instead of dropping it', () => {
+    const { errors } = parseStyle({ labels: { sides: 'left middle' } }, 2);
+
+    expect(errors[0]?.message).toContain('middle');
+    expect(errors[0]?.line).toBe(2);
+  });
+
+  test('does not repeat a side written twice', () => {
+    expect(parseStyle({ labels: { sides: 'left left top' } }, 1).style.labels?.sides)
+      .toEqual(['left', 'top']);
   });
 });

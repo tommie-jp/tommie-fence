@@ -27,10 +27,65 @@ const BOX_INSET = 4;
 export const SMA_SIZE = 50;
 
 /**
- * 端面実装 (横置き) のコネクタが、中心導体の足より外へ張り出す長さ。
+ * 端面実装 (横置き) のコネクタの、板の外へ出る 3 段の長さ。
+ * 左から**ねじ部・ねじなし・台座**で、台座の右端が板の縁に来る。
  * 実物は全長 13.5mm のうち 3.8mm が足の側なので、外へ出るのは 9.7mm ぶん。
  */
-export const SMA_BARREL = 76;
+export const SMA_THREAD = 34;
+export const SMA_PLAIN = 34;
+/** 台座の厚さは 1mm (2.54mm = 20px なので 8px)。板を挟む板金の厚みぶん。 */
+export const SMA_BASE = 8;
+export const SMA_BARREL = SMA_THREAD + SMA_PLAIN + SMA_BASE;
+
+/**
+ * 端面実装の胴の置き方。**描画も当たり判定もここから取る** — 別々に測ると、
+ * 図では板の縁に載っているのに当たり判定は別の場所、ということが起きる。
+ *
+ * `edgeX` は**板の縁**、`legX` は **GND の足**の、胴の中心から測った位置
+ * (局所座標。+x は先端から足へ向かう向き)。
+ */
+export type EdgeMount = {
+  readonly rect: OrientedRect;
+  readonly edgeX: number;
+  readonly legX: number;
+};
+
+export function edgeMountOf(part: PlacedPart, layout: Layout): EdgeMount | null {
+  const [first, second] = part.pins;
+  if (!first || !second) return null;
+
+  const from = layout.point(first.address);
+  const to = layout.point(second.address);
+  const length = Math.hypot(to.x - from.x, to.y - from.y);
+  if (length === 0) return null;
+
+  // +x は GND の足 → 中心導体の足 の向き。先端はその反対側にある。
+  const ux = (from.x - to.x) / length;
+  const uy = (from.y - to.y) / length;
+  // GND の足から測った、板の縁までの距離。**板の角を全部見て一番外**を取るので、
+  // 板のどの辺に載せても (図を裏返しても) 同じ辺が出る。
+  const { x, y, width, height } = layout.board;
+  const edge = Math.min(...[
+    [x, y], [x + width, y], [x, y + height], [x + width, y + height],
+  ].map(([cx = 0, cy = 0]) => (cx - to.x) * ux + (cy - to.y) * uy));
+
+  // 胴は「台座の右端 = 板の縁」から外へ 3 段。足の側は中心導体の穴まで。
+  const outer = edge - SMA_BARREL;
+  const middle = (outer + length) / 2;
+
+  return {
+    rect: {
+      cx: to.x + ux * middle,
+      cy: to.y + uy * middle,
+      width: length - outer,
+      height: SMA_SIZE,
+      // 局所座標の +x は**先端から足へ** (u と同じ向き)。先端が -width/2 に来る。
+      angle: Math.atan2(uy, ux),
+    },
+    edgeX: edge - middle,
+    legX: -middle,
+  };
+}
 
 /**
  * **胴が足の間を跨がない部品** — 足を遠くへ広げても本体の大きさが変わらない形。
@@ -120,21 +175,10 @@ export function bodyRect(part: PlacedPart, layout: Layout): OrientedRect | null 
   const center = midpoint(from, to);
   const length = Math.hypot(to.x - from.x, to.y - from.y);
 
-  // **端面実装は胴が足の外へ張り出す。** 実物は GND の脚が板の縁に来て、
-  // 中心導体がその内側まで伸びるので、**張り出すのは GND (2 本目の足) の側**。
-  if (isEdgeMount(part.type, part.variant) && length > 0) {
-    const ux = (to.x - from.x) / length;
-    const uy = (to.y - from.y) / length;
-    const tip = { x: to.x + ux * SMA_BARREL, y: to.y + uy * SMA_BARREL };
-    const middle = midpoint(from, tip);
-    return {
-      cx: middle.x,
-      cy: middle.y,
-      width: length + SMA_BARREL,
-      height: SMA_SIZE,
-      // 局所座標の +x は**先端から足へ**。先端が -width/2 に来る。
-      angle: Math.atan2(from.y - tip.y, from.x - tip.x),
-    };
+  // **端面実装は胴が板の縁から外へ張り出す。** 置き方は `edgeMountOf` が決める。
+  if (isEdgeMount(part.type, part.variant)) {
+    const mount = edgeMountOf(part, layout);
+    if (mount !== null) return mount.rect;
   }
 
   // **描かれている形をそのまま返す。** 玉やコネクタは足を広げても本体が伸びないので、

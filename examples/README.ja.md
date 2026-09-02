@@ -126,11 +126,11 @@ DIP は 1 番ピンだけ書けば足が並ぶ。トランジスタは穴を 3 �
 
 ### つなぎ忘れを見張る (ERC)
 
-[![つなぎ忘れを見張る (ERC)](../packages/perfboard-fence/examples/out/05-erc.png)](../packages/perfboard-fence/examples/05-erc.md)
+[![つなぎ忘れを見張る (ERC)](../packages/perfboard-fence/examples/out/05-check.png)](../packages/perfboard-fence/examples/05-check.md)
 
 繋ぎ忘れは図の上で沈黙するので、浮いた足・短絡した部品・部品につながらない
 配線を行番号つきで名指す
-([05-erc.md](../packages/perfboard-fence/examples/05-erc.md))。
+([05-check.md](../packages/perfboard-fence/examples/05-check.md))。
 
 ### そのほか
 

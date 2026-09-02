@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { DEFAULT_WIRE_COLOR, WIRE_COLORS } from 'fence-kit';
+import { WIRE_COLORS } from 'fence-kit';
 import { THEME } from './theme.ts';
 import { renderWires } from './wires.ts';
 import { createBoard } from '../model/board.ts';
@@ -28,8 +28,9 @@ describe('renderWires', () => {
     expect(renderWires([wire('b3', 'c5', 'red')], layout, THEME)).toContain(WIRE_COLORS.red as string);
   });
 
-  test('uses the default colour when none was written', () => {
-    expect(renderWires([wire('b3', 'c5')], layout, THEME)).toContain(DEFAULT_WIRE_COLOR);
+  test('uses the colour the board asks for when none was written', () => {
+    // 既定は板の色から決まる (fence-kit の一律の灰色ではない)。
+    expect(renderWires([wire('b3', 'c5')], layout, THEME)).toContain(THEME.palette.wire);
   });
 
   test('rounds the ends, so a wire looks soldered rather than cut off', () => {
@@ -44,5 +45,18 @@ describe('renderWires', () => {
     const svg = renderWires([wire('b3', 'c5'), wire('d1', 'd4')], layout, THEME);
 
     expect(svg.match(/<line /g)).toHaveLength(2);
+  });
+});
+
+describe('色を書かなかった配線', () => {
+  // 板の色が変われば既定の線の色も変わる (`render/finish.ts` の `wireOn`)。
+  const onBoard = { ...THEME, palette: { ...THEME.palette, wire: '#123456' } };
+
+  test('takes the colour the board asks for, not a fixed grey', () => {
+    expect(renderWires([wire('b3', 'c5')], layout, onBoard)).toContain('#123456');
+  });
+
+  test('still draws a written colour as written, however the board looks', () => {
+    expect(renderWires([wire('b3', 'c5', 'red')], layout, onBoard)).not.toContain('#123456');
   });
 });
