@@ -1,5 +1,6 @@
 import {
-  DEFAULT_LED_COLOR, bandColor, element, fit, ledColor, num, parseOhms, resistorBandColors, svgText,
+  DEFAULT_LED_COLOR, bandColor, capacitorCode, element, fit, ledColor, num, parsePicofarads,
+  parseResistor, resistorBands, svgText,
 } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Layout } from '../model/layout.ts';
@@ -16,8 +17,11 @@ const LEAD_WIDTH = 2;
 const CAPTION_DROP = 14;
 /** 胴の下端からキャプションまで。**胴の大きさで変わる部品**があるので、下端から測る。 */
 const CAPTION_GAP = 8;
-/** カラーコードの帯の幅と、胴の端から空ける幅。 */
-const BAND_WIDTH = 3;
+/**
+ * カラーコードの帯の幅と、胴の端から空ける幅。**実物の帯は太い** — 細いと
+ * 色が読み取りにくく、印刷や縮小で消える。
+ */
+const BAND_WIDTH = 6;
 const BAND_MARGIN = 2;
 
 /** 図に出す名前と値。値が無ければ名前だけ。 */
@@ -49,14 +53,19 @@ function resistorBody(part: PlacedPart, width: number, theme: Theme): string {
     rx: 4, fill: theme.palette.body, stroke: theme.palette.bodyEdge, 'stroke-width': 1,
   });
 
-  const ohms = part.value === null ? null : parseOhms(part.value);
-  const bands = ohms === null ? null : resistorBandColors(ohms);
+  // 値のうしろに許容差と温度係数を書ける (`10k 1% 50ppm`)。帯の本数はそれで決まる —
+  // 2 桁なら 4 帯、3 桁要るなら 5 帯、温度係数を書いたら 6 帯。
+  const read = part.value === null ? null : parseResistor(part.value);
+  const bands = read === null
+    ? null
+    : resistorBands(read.ohms, { tolerance: read.tolerance, tempco: read.tempco });
   if (bands === null) return shell;
 
   // **帯は胴の幅に比例させる。** 間隔を決め打つと、隣り合う穴に挿した短い部品で
   // 帯が胴から出て、板の地や隣の穴の上に乗る。
   const inner = width - BAND_MARGIN * 2;
-  const bandWidth = Math.min(BAND_WIDTH, inner / (bands.length * 2));
+  // 帯どうしが触れない幅までは太くする (帯 1 本ぶんの隙間を残す)。
+  const bandWidth = Math.min(BAND_WIDTH, inner / (bands.length * 1.7));
   const step = (inner - bandWidth) / (bands.length - 1);
   const stripes = bands
     .map((name, index) => element('rect', {
@@ -82,6 +91,8 @@ const ledBody = (part: PlacedPart): string =>
 const SMA_METAL = '#b9bfc6';
 const SMA_METAL_EDGE = '#7f868d';
 const SMA_DIELECTRIC = '#f2f3f5';
+/** アースの足。胴と同じ銀だと 1 つの塊に見えるので、少し濃くして際を出す。 */
+const SMA_GROUND = '#9aa2ab';
 /** 中心導体。オスはピン (金)、メスは穴 (暗い口)。 */
 const SMA_PIN = '#d8b64a';
 const SMA_SOCKET = '#2b2f33';
@@ -158,20 +169,27 @@ function smaEdgeBody(part: PlacedPart, width: number, edgeX: number, legX: numbe
     ? element('rect', { x: num(tip - 6), y: -2, width: 9, height: 4, rx: 1, fill: SMA_PIN })
     : element('rect', { x: num(tip + 3), y: -3, width: 3, height: 6, fill: SMA_SOCKET });
 
-  // 板に載る側は**凹の形**。上下にアースが伸び、その間から中心導体が凸に出る。
-  const armThick = half * 0.32;
-  const armEnd = legX + 8;
-  const arm = (y: number): string => element('rect', {
-    x: num(edgeX), y: num(y), width: num(Math.max(armEnd - edgeX, 10)), height: num(armThick), rx: 1,
-    fill: SMA_METAL, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
+  // 板に載る側は 2 つの足。**アースが凹、信号線が凸**で、形でも見分けが付く
+  // ようにする — どちらも金物なので、色だけでは区別できない。
+  const armHalf = half * 0.62;
+  const armThick = half * 0.34;
+  const groundEnd = legX + 6;
+  const web = edgeX + 4;
+  // アースは口の開いた**凹**。上下の腕と、その間の谷が 1 つの部品に見える。
+  const ground = element('polygon', {
+    points: [
+      [edgeX, -armHalf], [groundEnd, -armHalf], [groundEnd, -armHalf + armThick],
+      [web, -armHalf + armThick], [web, armHalf - armThick],
+      [groundEnd, armHalf - armThick], [groundEnd, armHalf], [edgeX, armHalf],
+    ].map(([x = 0, y = 0]) => `${num(x)},${num(y)}`).join(' '),
+    fill: SMA_GROUND, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
   });
-  // 中心導体は**アースより先まで**伸びて、その先の穴に入る。
+  // 信号線は**凹の谷から出る凸**。アースより先の穴まで届く。
   const centre = element('rect', {
-    x: num(edgeX), y: -2, width: num(width / 2 - edgeX), height: 4, rx: 1, fill: SMA_PIN,
+    x: num(edgeX), y: -2.5, width: num(width / 2 - edgeX), height: 5, rx: 1, fill: SMA_PIN,
   });
 
-  return `${barrel}${threads}${plain}${base}${face}${mating}`
-    + `${arm(-half * 0.62)}${arm(half * 0.62 - armThick)}${centre}`;
+  return `${barrel}${threads}${plain}${base}${face}${mating}${centre}${ground}`;
 }
 
 /**
@@ -207,6 +225,30 @@ const genericBody = (width: number, theme: Theme): string =>
     rx: 3, fill: theme.palette.body, stroke: theme.palette.bodyEdge, 'stroke-width': 1,
   });
 
+/**
+ * コンデンサの胴。**実物と同じ 3 桁コードを刷る** (`100n` なら `104`)。
+ * 手元の部品箱から選ぶときに見るのはこの数字なので、値の綴りより刷り字のほうが
+ * 突き合わせやすい。
+ *
+ * **胴に入らない幅では刷らない。** 切れた数字は別の容量に読めてしまう
+ * (`104` が `10` に見えると 10pF)。
+ */
+function capacitorBody(part: PlacedPart, width: number, theme: Theme): string {
+  const shell = genericBody(width, theme);
+  const farads = part.value === null ? null : parsePicofarads(part.value);
+  const code = farads === null ? null : capacitorCode(farads);
+  if (code === null) return shell;
+
+  const size = BODY_HEIGHT * 0.75;
+  // 3 桁ぶんの幅が無ければ刷らない (等幅ではないので少し余裕を見る)。
+  if (width < size * code.length * 0.8) return shell;
+
+  return shell + svgText(0, size * 0.36, code, {
+    fill: theme.palette.caption,
+    'font-size': num(size),
+  });
+}
+
 const bodyOf = (
   part: PlacedPart,
   width: number,
@@ -215,6 +257,7 @@ const bodyOf = (
 ): string => {
   if (part.type === 'resistor') return resistorBody(part, width, theme);
   if (part.type === 'led') return ledBody(part);
+  if (part.type === 'capacitor') return capacitorBody(part, width, theme);
   if (part.type === 'sma') {
     return mount === null ? smaBody(part) : smaEdgeBody(part, width, mount.edgeX, mount.legX);
   }

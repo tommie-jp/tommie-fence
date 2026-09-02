@@ -3,6 +3,15 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Changed
+
+- **抵抗のカラーコードを 4 帯・5 帯・6 帯にした** (fence-kit と共通)。帯の本数は
+  値の桁数で決まり、許容差は値のうしろに書ける (`10k 5%`)。**書かなければ ±1%**
+  (金属皮膜の標準) なので、これまでの 3 帯に許容差の帯が 1 本増える。
+  温度係数を書くと 6 帯 (`10k 1% 50ppm`)。
+
 ## [0.4.0] - 2026-09-01
 
 ### Added

@@ -107,7 +107,7 @@ describe('renderParts', () => {
       .map(([, x, w]) => ({ x: Number(x), right: Number(x) + Number(w) }));
     const shell = boxes[0]!;
 
-    expect(boxes.length).toBe(4); // 胴 1 + 帯 3
+    expect(boxes.length).toBe(5); // 胴 1 + 帯 4 (数字 2 + 乗数 + 許容差)
     for (const band of boxes.slice(1)) {
       expect(band.x).toBeGreaterThanOrEqual(shell.x);
       expect(band.right).toBeLessThanOrEqual(shell.right);
@@ -193,25 +193,25 @@ describe('SMA 横置きの足の形', () => {
     board,
   ).parts;
 
-  test('puts ground above and below, with the centre conductor between them', () => {
-    // 実物は板の縁を挟んで上下にアースが伸び、その間から中心導体が出る (凹)。
+  test('draws ground as one concave piece, so it is not read as two loose legs', () => {
+    // アースは口の開いた凹。上下の腕と谷が 1 つの形になっている。
     const svg = renderParts(edge, layout, THEME);
-    // アースの脚だけが胴の 1/3 の太さ (8)。ほかの段はもっと太い。
-    const arms = [...svg.matchAll(/<rect x="[-0-9.]+" y="([-0-9.]+)" width="[0-9.]+" height="8"/g)]
-      .map(([, y = '0']) => Number(y) + 4);
+    const points = /<polygon points="([^"]+)"/.exec(svg)?.[1] ?? '';
+    const ys = points.split(' ').map((pair) => Number(pair.split(',')[1]));
 
-    expect(arms.length).toBe(2);
-    // 上下に 1 つずつ、軸を挟んで同じだけ離れている。
-    expect(arms[0]! + arms[1]!).toBeCloseTo(0, 5);
-    expect(arms[0]!).toBeLessThan(0);
+    expect(ys.length).toBe(8);
+    // 軸を挟んで上下に同じだけ広がる。
+    expect(Math.min(...ys)).toBeCloseTo(-Math.max(...ys), 5);
   });
 
   test('reaches the centre conductor further in than the ground, so it is the convex one', () => {
     const svg = renderParts(edge, layout, THEME);
-    const centre = /<rect x="([-0-9.]+)" y="-2" width="([0-9.]+)"[^>]*fill="#d8b64a"/.exec(svg);
-    const arm = /<rect x="[-0-9.]+" y="[-0-9.]+" width="([0-9.]+)" height="8"/.exec(svg);
+    const centre = /<rect x="([-0-9.]+)" y="-2.5" width="([0-9.]+)"[^>]*fill="#d8b64a"/.exec(svg);
+    const points = /<polygon points="([^"]+)"/.exec(svg)?.[1] ?? '';
+    const groundRight = Math.max(...points.split(' ').map((pair) => Number(pair.split(',')[0])));
+    const centreRight = Number(centre?.[1]) + Number(centre?.[2]);
 
-    expect(Number(centre?.[2])).toBeGreaterThan(Number(arm?.[1]));
+    expect(centreRight).toBeGreaterThan(groundRight);
   });
 
   test('lands the base on the edge of the board, not over the holes', () => {

@@ -3,4 +3,4 @@
  * **実物の部品の話で盤面に依らない**ので、perfboard も同じものを使う。
  * 呼び出し側を変えないよう、ここは名前をそのまま通すだけの包み。
  */
-export { parseOhms, resistorBandColors } from 'fence-kit';
+export { parseOhms, parseResistor, resistorBands } from 'fence-kit';

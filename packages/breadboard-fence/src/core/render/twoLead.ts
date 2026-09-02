@@ -4,7 +4,7 @@ import { DEFAULT_LED_COLOR, bandColor, ledColor } from './palette.ts';
 import { LEAD_WIDTH, caption, fitToBoard, labelYOf, midpoint, partLabel } from './partCommon.ts';
 import { element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
-import { parseOhms, resistorBandColors } from './values.ts';
+import { parseResistor, resistorBands } from './values.ts';
 
 /**
  * 2 本足の部品。**本体は 2 つの穴を結ぶ線の上に、その傾きのまま描く**ので、
@@ -80,8 +80,12 @@ function bodyOf(part: PlacedPart, span: number): string {
 
 function resistorBody(part: PlacedPart, span: number): string {
   const width = Math.min(span * 0.6, 38);
-  const ohms = part.value ? parseOhms(part.value) : null;
-  const bands = (ohms === null ? null : resistorBandColors(ohms)) ?? ['brown', 'black', 'black'];
+  // 値のうしろに許容差と温度係数を書ける (`10k 1% 50ppm`)。帯の本数はそれで決まる。
+  const read = part.value ? parseResistor(part.value) : null;
+  const bands = (read === null
+    ? null
+    : resistorBands(read.ohms, { tolerance: read.tolerance, tempco: read.tempco }))
+    ?? ['brown', 'black', 'black', 'gold'];
   const stripes = bands
     .map((band, index) =>
       element('rect', {
