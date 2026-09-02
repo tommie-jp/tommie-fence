@@ -22,6 +22,8 @@ import { checkErc } from './erc/erc.ts';
 import { checkFit } from './placement/collide.ts';
 import { drawnExtent } from './placement/geometry.ts';
 import { holeStrip } from './model/board.ts';
+import { formatAddress } from './model/address.ts';
+import { isEdgeMount } from './parts/types.ts';
 import { parseAddress } from './model/address.ts';
 import { offBoardReason } from './model/board.ts';
 import { fenceError, notice, safeToken } from './errors.ts';
@@ -197,13 +199,24 @@ export function renderPerfboard(input: string): RenderResult {
 
   // **画布からはみ出す部品ぶん、画布を広げる。** 端面実装のコネクタは板の外へ
   // 張り出すので、板の寸法だけで画布を決めると図が黙って切れる。
+  // **端面実装のコネクタのアースは穴に挿さらない。** 板の縁を凹の腕で挟んで、
+  // **腕の上の接点 (胴に描く白い丸) で半田付けする**ので、埋まる穴は出ない。
+  // 配線がそこへ来ても同じ — 付ける先は穴ではなく腕のほう。
+  // ここを埋めると、挿せない穴に足が入っているように見える。
+  const onArms = new Set(
+    placement.parts
+      .filter((part) => isEdgeMount(part.type, part.variant))
+      // 端面実装は「中心導体を先に、板の縁側の GND をあとに」書く (docs/01)。
+      .flatMap((part) => (part.pins[1] === undefined ? [] : [formatAddress(part.pins[1].address)])),
+  );
+
   // **半田付けする穴。** 足が入った穴と、配線が来た穴のどちらも埋まる。
   // 埋めた穴と空いた穴が同じ形だと、どこを付けるのか図から読めない。
   const soldered = [
     ...placement.parts.flatMap((part) => part.pins.map((pin) => pin.address)),
     ...wiring.wires.flatMap((wire) => [wire.from, wire.to]),
     ...wiring.deviceWires.map((wire) => wire.hole),
-  ];
+  ].filter((address) => !onArms.has(formatAddress(address)));
 
   // 配線や注釈も板の外を指せるので、部品の胴と一緒に見る。
   const pointsOn = (on: typeof layout) => [
