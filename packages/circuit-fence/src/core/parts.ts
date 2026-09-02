@@ -45,13 +45,43 @@ export type PartKind = 'two-terminal' | 'one-terminal' | 'multi-terminal';
 export type SourceInner = 'dc' | 'sine' | 'square' | 'triangle';
 
 /**
- * 足が乗っている記号の中心線。`h` は横、`v` は縦。
+ * 足が乗っている記号の中心線。`h` は横、`v` は縦。**辺から導く**もので、
+ * 表が持つのは辺のほう (`PinSide`) — 軸からは辺を復元できない。
  *
  * ここに載っている足だけが、置いた交点と**同じ行 (h) か同じ列 (v)** の番地へ
  * `--` でまっすぐ引ける。載っていない足は記号の縁の途中に出るので、
  * まっすぐ引くと斜めに入る。
  */
 export type PinAxis = 'h' | 'v';
+
+/**
+ * 足が出ている記号の辺。**向きに合わせて回る。**
+ *
+ * 軸 (`h` / `v`) ではなく辺を持つ理由は 2 つ — 回した記号の足がどちらを
+ * 向くかは辺でしか言えず、マップに描く足の把手にも辺が要る。
+ */
+export type PinSide = 'left' | 'right' | 'top' | 'bottom';
+
+/**
+ * 記号の向き。回転は**時計回り**の角度で、`mirror` は左右反転。
+ *
+ * **反転してから回す** (2026-09-02 に実機で確かめた)。TeX へは
+ * `rotate=..., xscale=-1` の順で書くとこの意味になる
+ * (TikZ は後に書いたオプションを先に効かせる)。
+ */
+export type Turn = { readonly rotate: 0 | 90 | 180 | 270; readonly mirror: boolean };
+
+export const NO_TURN: Turn = { rotate: 0, mirror: false };
+
+/** 時計回りに 90 度。左の足は上へ回る。 */
+const CLOCKWISE: Readonly<Record<PinSide, PinSide>> = {
+  left: 'top', top: 'right', right: 'bottom', bottom: 'left',
+};
+
+/** 左右反転。上下の辺はその辺のまま (反転しても上は上)。 */
+const MIRRORED: Readonly<Record<PinSide, PinSide>> = {
+  left: 'right', right: 'left', top: 'top', bottom: 'bottom',
+};
 
 export type PartType = {
   readonly kind: PartKind;
@@ -81,16 +111,17 @@ export type PartType = {
    */
   readonly pins?: Readonly<Record<string, string>>;
   /**
-   * 中心線に乗っている足 (circuitikz のアンカー名 → 軸)。乗らない足は書かない。
-   * `--` でまっすぐ引ける足はここに載っているものだけなので、載っていない足へ
-   * まっすぐ引いた配線には「斜めに入る」と伝える (model/circuit.ts)。
+   * 中心線に乗っている足 (circuitikz のアンカー名 → 出ている辺)。
+   * 乗らない足は書かない。`--` でまっすぐ引ける足はここに載っているものだけ
+   * なので、載っていない足へまっすぐ引いた配線には「斜めに入る」と伝える
+   * (model/circuit.ts)。**向きが付いたら辺は回る** (`pinSideOf`)。
    *
    * **記号と同じく実機の図で 1 つずつ確かめて載せる**。当てずっぽうを載せると、
    * 正しく書いた配線にまで口を出すか、斜めに入る配線を黙って通すかになる。
    * 両端を番地で置く 2 端子部品 (ワイパー・ゲート) は持たない — 中心線が
    * 置いた 1 つの交点では決まらないため。
    */
-  readonly pinAxis?: Readonly<Record<string, PinAxis>>;
+  readonly pinSide?: Readonly<Record<string, PinSide>>;
   /**
    * 記号に必ず付ける circuitikz のオプション (DIP の足の本数、計器の中の字など)。
    * 書き手が触れるものではないので、向き (`+up`) とは別に持つ。
@@ -150,15 +181,15 @@ const FET_PINS = {
  * 3 本足の能動素子の中心線。制御端子は横、あとの 2 本は縦に出る。
  * BJT・FET・IGBT で同じ形 (実機の図で確かめた)。
  */
-const BJT_AXIS = { base: 'h', collector: 'v', emitter: 'v' } as const;
-const FET_AXIS = { gate: 'h', drain: 'v', source: 'v' } as const;
-const IGBT_AXIS = { gate: 'h', collector: 'v', emitter: 'v' } as const;
+const BJT_SIDE = { base: 'left', collector: 'top', emitter: 'bottom' } as const;
+const FET_SIDE = { gate: 'left', drain: 'top', source: 'bottom' } as const;
+const IGBT_SIDE = { gate: 'left', collector: 'top', emitter: 'bottom' } as const;
 
 /** オペアンプ。circuitikz のアンカーがそのまま記号になっている。 */
 const AMP_PINS = { '+': '+', '-': '-', out: 'out' } as const;
 
 /** 出口だけが横の中心線に出る。± は三角形の縁の、中心から外れた高さ。 */
-const AMP_AXIS = { out: 'h' } as const;
+const AMP_SIDE = { out: 'right' } as const;
 
 /** IGBT。制御端子はゲートだが、あとの 2 本はバイポーラと同じ呼び名。 */
 const IGBT_PINS = {
@@ -178,10 +209,10 @@ const GATE2_PINS = {
 const GATE1_PINS = { in: 'in', a: 'in', out: 'out', y: 'out' } as const;
 
 /** 2 入力ゲートは出口だけが中心線。入力 2 本は上下に振り分けられている。 */
-const GATE2_AXIS = { out: 'h' } as const;
+const GATE2_SIDE = { out: 'right' } as const;
 
 /** 1 入力ゲートは入口も出口も中心線に乗る。 */
-const GATE1_AXIS = { in: 'h', out: 'h' } as const;
+const GATE1_SIDE = { in: 'left', out: 'right' } as const;
 
 /** 切り替えスイッチ。共通が `in`、行き先が 2 つ。 */
 const SPDT_PINS = {
@@ -191,7 +222,7 @@ const SPDT_PINS = {
 } as const;
 
 /** 共通の端だけが中心線。行き先 2 つは上下に振り分けられている。 */
-const SPDT_AXIS = { in: 'h' } as const;
+const SPDT_SIDE = { in: 'left' } as const;
 
 /** ポテンショメータの 3 本目。2 端子の記号にアンカーが 1 つ生えている。 */
 const WIPER_PINS = { w: 'wiper', wiper: 'wiper' } as const;
@@ -370,10 +401,10 @@ export const PART_TYPES = {
   vee: { kind: 'one-terminal', symbol: 'vee', idLabel: 'inside', ...NO_UNIT },
 
   // 多端子。値は型番なので単位を足さない。
-  npn: { kind: 'multi-terminal', symbol: 'npn', ...NO_UNIT, pins: BJT_PINS, pinAxis: BJT_AXIS },
-  pnp: { kind: 'multi-terminal', symbol: 'pnp', ...NO_UNIT, pins: BJT_PINS, pinAxis: BJT_AXIS },
-  nmos: { kind: 'multi-terminal', symbol: 'nmos', ...NO_UNIT, pins: FET_PINS, pinAxis: FET_AXIS },
-  pmos: { kind: 'multi-terminal', symbol: 'pmos', ...NO_UNIT, pins: FET_PINS, pinAxis: FET_AXIS },
+  npn: { kind: 'multi-terminal', symbol: 'npn', ...NO_UNIT, pins: BJT_PINS, pinSide: BJT_SIDE },
+  pnp: { kind: 'multi-terminal', symbol: 'pnp', ...NO_UNIT, pins: BJT_PINS, pinSide: BJT_SIDE },
+  nmos: { kind: 'multi-terminal', symbol: 'nmos', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
+  pmos: { kind: 'multi-terminal', symbol: 'pmos', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
   /**
    * FET の残り。書くほうは回路図の言葉 (接合型 = `jfet`、エンハンスメント型 =
    * `-e`、デプレッション型 = `-d`)、描くほうは circuitikz の綴り (`igfet`)。
@@ -383,12 +414,12 @@ export const PART_TYPES = {
    * circuitikz 1.0 には**デプレッション型 + ボディ端子の記号が無い** (実測)。
    * ボディ端子つきは載せていない (足がゲートと同じ側に出て図が読みにくい)。
    */
-  njfet: { kind: 'multi-terminal', symbol: 'njfet', ...NO_UNIT, pins: FET_PINS, pinAxis: FET_AXIS },
-  pjfet: { kind: 'multi-terminal', symbol: 'pjfet', ...NO_UNIT, pins: FET_PINS, pinAxis: FET_AXIS },
-  'nmos-e': { kind: 'multi-terminal', symbol: 'nigfete', ...NO_UNIT, pins: FET_PINS, pinAxis: FET_AXIS },
-  'pmos-e': { kind: 'multi-terminal', symbol: 'pigfete', ...NO_UNIT, pins: FET_PINS, pinAxis: FET_AXIS },
-  'nmos-d': { kind: 'multi-terminal', symbol: 'nigfetd', ...NO_UNIT, pins: FET_PINS, pinAxis: FET_AXIS },
-  'pmos-d': { kind: 'multi-terminal', symbol: 'pigfetd', ...NO_UNIT, pins: FET_PINS, pinAxis: FET_AXIS },
+  njfet: { kind: 'multi-terminal', symbol: 'njfet', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
+  pjfet: { kind: 'multi-terminal', symbol: 'pjfet', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
+  'nmos-e': { kind: 'multi-terminal', symbol: 'nigfete', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
+  'pmos-e': { kind: 'multi-terminal', symbol: 'pigfete', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
+  'nmos-d': { kind: 'multi-terminal', symbol: 'nigfetd', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
+  'pmos-d': { kind: 'multi-terminal', symbol: 'pigfetd', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
   /**
    * circuitikz の `op amp` は記号の中の小さな ± に 5pt の太字数式フォントが要り、
    * フェンス側の TeX には無い。例外ではなく**プロセスごと落ちる** (実測)。
@@ -396,27 +427,27 @@ export const PART_TYPES = {
    * **アンカー名は op amp と同じ**なので、
    * 書き出す `.tex` では latexSymbol に戻すだけで本物の記号になる。
    */
-  opamp: { kind: 'multi-terminal', symbol: 'plain amp', latexSymbol: 'op amp', ...NO_UNIT, pins: AMP_PINS, pinAxis: AMP_AXIS },
+  opamp: { kind: 'multi-terminal', symbol: 'plain amp', latexSymbol: 'op amp', ...NO_UNIT, pins: AMP_PINS, pinSide: AMP_SIDE },
   /**
    * トランス。circuitikz の `transformer` は**空芯** (巻線 2 つだけ) で、
    * 記事によく出るのは鉄芯の 2 本が入るほう。アンカーは同じなので
    * `transformer core` にしても足の指し方は変わらない。
    */
   transformer: { kind: 'multi-terminal', symbol: 'transformer core', ...NO_UNIT, pins: TRANSFORMER_PINS },
-  nigbt: { kind: 'multi-terminal', symbol: 'nigbt', ...NO_UNIT, pins: IGBT_PINS, pinAxis: IGBT_AXIS },
-  pigbt: { kind: 'multi-terminal', symbol: 'pigbt', ...NO_UNIT, pins: IGBT_PINS, pinAxis: IGBT_AXIS },
+  nigbt: { kind: 'multi-terminal', symbol: 'nigbt', ...NO_UNIT, pins: IGBT_PINS, pinSide: IGBT_SIDE },
+  pigbt: { kind: 'multi-terminal', symbol: 'pigbt', ...NO_UNIT, pins: IGBT_PINS, pinSide: IGBT_SIDE },
   /** 切り替えスイッチ (c 接点)。 */
-  spdt: { kind: 'multi-terminal', symbol: 'spdt', ...NO_UNIT, pins: SPDT_PINS, pinAxis: SPDT_AXIS },
+  spdt: { kind: 'multi-terminal', symbol: 'spdt', ...NO_UNIT, pins: SPDT_PINS, pinSide: SPDT_SIDE },
 
   // ロジックゲート。入力は番号でも `a` / `b` でも呼べる。
-  and: { kind: 'multi-terminal', symbol: 'and port', ...NO_UNIT, pins: GATE2_PINS, pinAxis: GATE2_AXIS },
-  or: { kind: 'multi-terminal', symbol: 'or port', ...NO_UNIT, pins: GATE2_PINS, pinAxis: GATE2_AXIS },
-  nand: { kind: 'multi-terminal', symbol: 'nand port', ...NO_UNIT, pins: GATE2_PINS, pinAxis: GATE2_AXIS },
-  nor: { kind: 'multi-terminal', symbol: 'nor port', ...NO_UNIT, pins: GATE2_PINS, pinAxis: GATE2_AXIS },
-  xor: { kind: 'multi-terminal', symbol: 'xor port', ...NO_UNIT, pins: GATE2_PINS, pinAxis: GATE2_AXIS },
-  xnor: { kind: 'multi-terminal', symbol: 'xnor port', ...NO_UNIT, pins: GATE2_PINS, pinAxis: GATE2_AXIS },
-  not: { kind: 'multi-terminal', symbol: 'not port', ...NO_UNIT, pins: GATE1_PINS, pinAxis: GATE1_AXIS },
-  buffer: { kind: 'multi-terminal', symbol: 'buffer port', ...NO_UNIT, pins: GATE1_PINS, pinAxis: GATE1_AXIS },
+  and: { kind: 'multi-terminal', symbol: 'and port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE },
+  or: { kind: 'multi-terminal', symbol: 'or port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE },
+  nand: { kind: 'multi-terminal', symbol: 'nand port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE },
+  nor: { kind: 'multi-terminal', symbol: 'nor port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE },
+  xor: { kind: 'multi-terminal', symbol: 'xor port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE },
+  xnor: { kind: 'multi-terminal', symbol: 'xnor port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE },
+  not: { kind: 'multi-terminal', symbol: 'not port', ...NO_UNIT, pins: GATE1_PINS, pinSide: GATE1_SIDE },
+  buffer: { kind: 'multi-terminal', symbol: 'buffer port', ...NO_UNIT, pins: GATE1_PINS, pinSide: GATE1_SIDE },
 
   // DIP の IC。足の本数だけが違う。
   dip8: dipchip(8),
@@ -522,15 +553,31 @@ export function lookupPin(type: PartType, pin: string): string | null {
 export const pinNames = (type: PartType): readonly string[] => Object.keys(type.pins ?? {});
 
 /**
- * その足が乗っている中心線。乗っていなければ null。
+ * その足が出ている辺。中心線に乗っていなければ null。
  * 引くのは**アンカー名** (`base`) であって書かれた名前 (`B`) ではない
  * — 呼び名が何通りあっても足は 1 つなので、表も 1 つで足りる。
+ *
+ * 向きを渡すと**回した辺**を返す。順は「反転してから回す」(`Turn` の頭書き)。
  */
-export function pinAxis(type: PartType, anchor: string): PinAxis | null {
-  const axes = type.pinAxis;
-  if (axes === undefined) return null;
+export function pinSideOf(type: PartType, anchor: string, turn: Turn = NO_TURN): PinSide | null {
+  const sides = type.pinSide;
+  if (sides === undefined) return null;
+  const side = Object.hasOwn(sides, anchor) ? (sides[anchor] ?? null) : null;
+  if (side === null) return null;
 
-  return Object.hasOwn(axes, anchor) ? (axes[anchor] ?? null) : null;
+  const mirrored = turn.mirror ? MIRRORED[side] : side;
+  let turned = mirrored;
+  for (let done = 0; done < turn.rotate; done += 90) turned = CLOCKWISE[turned];
+  return turned;
+}
+
+/**
+ * その足が乗っている中心線。乗っていなければ null。**辺から導く** —
+ * 左右の辺に出る足は横の中心線、上下の辺に出る足は縦の中心線に乗る。
+ */
+export function pinAxis(type: PartType, anchor: string, turn: Turn = NO_TURN): PinAxis | null {
+  const side = pinSideOf(type, anchor, turn);
+  return side === null ? null : side === 'left' || side === 'right' ? 'h' : 'v';
 }
 
 /** 数字だけの足を範囲でまとめるかどうかの境目。これを超えると並べても読めない。 */

@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import {
-  PART_ALIASES, PART_TYPES,
-  closestPartType, lookupPartType, lookupPin, optionsFor, partTypeNames, pinHint,
-  resolvePartTypeName, symbolFor,
+  NO_TURN, PART_ALIASES, PART_TYPES,
+  closestPartType, lookupPartType, lookupPin, optionsFor, partTypeNames, pinAxis, pinHint,
+  pinSideOf, resolvePartTypeName, symbolFor,
 } from './parts.ts';
 
 describe('PART_TYPES', () => {
@@ -385,5 +385,78 @@ describe('フェンス向けと .tex 向けの違い', () => {
     );
 
     expect(different).toEqual(['resistor-var']);
+  });
+});
+
+/**
+ * 足が出ている辺と、そこから導く中心線。
+ *
+ * **持つのは辺のほうで、軸は辺から導く** (軸からは辺を復元できない)。
+ * 回した記号の足がどちらを向くかは辺でしか言えず、マップの足の把手も辺が要る。
+ */
+describe('pinSideOf', () => {
+  const npn = PART_TYPES.npn!;
+  const opamp = PART_TYPES.opamp!;
+
+  test('gives the side the pin leaves the symbol from', () => {
+    expect(pinSideOf(npn, 'base')).toBe('left');
+    expect(pinSideOf(npn, 'collector')).toBe('top');
+    expect(pinSideOf(npn, 'emitter')).toBe('bottom');
+    expect(pinSideOf(opamp, 'out')).toBe('right');
+  });
+
+  test('is null for a pin that is not on a centre line', () => {
+    // opamp の ± は縁の途中に出る。載せると、斜めに入る配線を黙って通す。
+    expect(pinSideOf(opamp, 'plus')).toBeNull();
+  });
+
+  test('is null for a type that has no table', () => {
+    expect(pinSideOf(PART_TYPES.resistor!, 'w')).toBeNull();
+  });
+
+  test('turns the side clockwise, the way the drawing turns', () => {
+    expect(pinSideOf(npn, 'base', { rotate: 90, mirror: false })).toBe('top');
+    expect(pinSideOf(npn, 'base', { rotate: 180, mirror: false })).toBe('right');
+    expect(pinSideOf(npn, 'base', { rotate: 270, mirror: false })).toBe('bottom');
+    expect(pinSideOf(npn, 'collector', { rotate: 90, mirror: false })).toBe('right');
+  });
+
+  test('swaps left and right when mirrored, and leaves top and bottom alone', () => {
+    expect(pinSideOf(npn, 'base', { rotate: 0, mirror: true })).toBe('right');
+    expect(pinSideOf(npn, 'collector', { rotate: 0, mirror: true })).toBe('top');
+    expect(pinSideOf(npn, 'emitter', { rotate: 0, mirror: true })).toBe('bottom');
+  });
+
+  /**
+   * **反転してから回す** (2026-09-02 に実機で確かめた並び)。TeX には
+   * `rotate=..., xscale=-1` の順で書くと、この意味になる
+   * (後に書いたオプションが先に効く)。
+   */
+  test('mirrors first and turns after, which is what the drawing does', () => {
+    expect(pinSideOf(npn, 'base', { rotate: 90, mirror: true })).toBe('bottom');
+    expect(pinSideOf(npn, 'base', { rotate: 270, mirror: true })).toBe('top');
+  });
+
+  test('leaves the side alone with no turn given', () => {
+    expect(pinSideOf(npn, 'base', NO_TURN)).toBe(pinSideOf(npn, 'base'));
+  });
+});
+
+describe('pinAxis', () => {
+  const npn = PART_TYPES.npn!;
+
+  test('reads the centre line off the side', () => {
+    expect(pinAxis(npn, 'base')).toBe('h');
+    expect(pinAxis(npn, 'collector')).toBe('v');
+    expect(pinAxis(PART_TYPES.opamp!, 'out')).toBe('h');
+  });
+
+  test('follows the turn, since a turned symbol has its pins on other sides', () => {
+    expect(pinAxis(npn, 'base', { rotate: 90, mirror: false })).toBe('v');
+    expect(pinAxis(npn, 'collector', { rotate: 90, mirror: false })).toBe('h');
+  });
+
+  test('is null where there is no side', () => {
+    expect(pinAxis(PART_TYPES.opamp!, 'plus')).toBeNull();
   });
 });
