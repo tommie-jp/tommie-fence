@@ -42,6 +42,18 @@
   },
   "activationEvents": [],
   "contributes": {
+    "customEditors": [
+      {
+        "viewType": "circuit-fence.map",
+        "displayName": "circuit Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.md"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
     "markdown.markdownItPlugins": true,
     "markdown.previewStyles": [
       "./media/circuit.css",

@@ -14,6 +14,8 @@ const manifest = read('package.json') as {
     grammars?: { scopeName: string; path: string; injectTo: string[]; embeddedLanguages: Record<string, string> }[];
     'markdown.previewStyles'?: string[];
     'markdown.markdownItPlugins'?: boolean;
+    customEditors?: { viewType: string; displayName: string; selector: { filenamePattern: string }[]; priority: string }[];
+    commands?: { command: string }[];
   };
 };
 
@@ -53,6 +55,26 @@ describe('extension manifest', () => {
 
     expect(grammar?.injectTo).toEqual(['text.html.markdown']);
     expect(grammar?.embeddedLanguages).toEqual({ 'meta.embedded.block.yaml': 'yaml' });
+  });
+
+  test('offers the map as a way to open markdown, without taking the default away', () => {
+    // タブの頭の開き方の一覧 (と Reopen Editor With...) は custom editor の登録から作られる。
+    const editor = manifest.contributes.customEditors?.[0];
+
+    expect(editor?.viewType).toBe('circuit-fence.map');
+    expect(editor?.displayName).toBe('circuit Editor');
+    expect(editor?.priority).toBe('option');
+  });
+
+  test('registers the map for *.md files, not for everything', () => {
+    // `*` は「未設定の汎用エディタ」として一覧から除かれる (VS Code の editorTypePicker)。
+    const editor = manifest.contributes.customEditors?.[0];
+
+    expect(editor?.selector).toEqual([{ filenamePattern: '*.md' }]);
+  });
+
+  test('keeps the command that opens the map beside the editor', () => {
+    expect(manifest.contributes.commands?.some((one) => one.command === 'circuit-fence.openMap')).toBe(true);
   });
 
   test('points at a grammar whose scope name matches the manifest', () => {

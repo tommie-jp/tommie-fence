@@ -1,4 +1,5 @@
 import { escapeMarkup } from 'fence-kit';
+import type { FenceEntry } from '../../core/edit/fenceList.ts';
 
 /**
  * マップのパネルの外側 (HTML の殻)。**純関数**なのでそのままテストに掛かる。
@@ -64,6 +65,12 @@ const STYLE = `
      どちらも掴めると掴んだつもりと違うものが動く。 */
   body:not(.cf-nodes) .cf-marks { pointer-events: none; opacity: 0.45; }
   body.cf-nodes .cf-parts { pointer-events: none; opacity: 0.5; }
+  .cf-fences { margin: 0 0 8px; }
+  .cf-fences select {
+    font: inherit; font-size: 12px; padding: 2px 6px;
+    background: var(--vscode-dropdown-background); color: var(--vscode-dropdown-foreground);
+    border: 1px solid var(--vscode-dropdown-border);
+  }
   .cf-mode { margin: 0 0 8px; }
   .cf-mode label { margin-right: 12px; }
   .cf-history { margin: 0 0 8px; }
@@ -74,6 +81,7 @@ const STYLE = `
   }
   .cf-history button:disabled { opacity: 0.4; cursor: default; }
   .cf-status { margin-top: 8px; min-height: 1.4em; }
+
 `;
 
 /**
@@ -207,6 +215,8 @@ const SCRIPT = `
     }
     // **パネルにフォーカスがあると VS Code の Ctrl+Z は届かない。**
     // ここで受けて、拡張側が覚えている履歴を巻き戻す。
+    // カスタムエディタでは VS Code の undo がそのタブの文書へ届くので、横取りせず通す。
+    if (!document.body.classList.contains('cf-own-undo')) return;
     if (!event.ctrlKey && !event.metaKey) return;
     const key = event.key.toLowerCase();
     if (key === 'z' && !event.shiftKey) {
@@ -222,6 +232,7 @@ const SCRIPT = `
     const message = event.data;
     if (message.kind === 'map') {
       document.querySelector('.cf-body').innerHTML = message.html;
+      document.querySelector('.cf-fences').innerHTML = message.picker;
       picked = null;
       pressed = null;
       setDragging(false);
@@ -253,39 +264,73 @@ const SCRIPT = `
   // 持ち方の切り替え。**掴む物が違えば意味も違う**ので、同じ操作に混ぜない
   // (部品は 1 つだけ動いて接続が変わる、節点は交点ごと動いて接続が保たれる)。
   document.addEventListener('change', (event) => {
+    // フェンスの一覧。選んだ行を拡張へ (どのフェンスを出すかは拡張が覚える)。
+    if (event.target.classList.contains('cf-fence')) {
+      vscode.postMessage({ kind: 'fence', line: Number(event.target.value) });
+      return;
+    }
     if (event.target.name !== 'cf-mode') return;
     document.body.classList.toggle('cf-nodes', event.target.value === 'node');
     clearPick();
   });
 `;
 
+/** 升目とその頭の一覧。セッションが組む (`Session.view`)。 */
+export type MapViewHtml = {
+  /** `renderMapHtml` が組んだ升目 (エスケープ済み)。 */
+  readonly html: string;
+  /** `renderFencePicker` が組んだ一覧 (エスケープ済み。1 つなら空)。 */
+  readonly picker: string;
+};
+
 export type PanelHtmlOptions = {
   /** webview の CSP に載せる出所。 */
   readonly cspSource: string;
   /** スクリプトを許す 1 回きりの札。 */
   readonly nonce: string;
-  /** `renderMapHtml` が組んだ升目 (エスケープ済み)。 */
-  readonly mapHtml: string;
+  readonly view: MapViewHtml;
+  /**
+   * 戻す・やり直すを誰が持つか。`own` はパネル (VS Code の undo が届かないので
+   * 自前の履歴)、`vscode` はカスタムエディタ (タブの文書へ undo が届く)。
+   */
+  readonly undo: 'own' | 'vscode';
 };
 
-export const panelHtml = ({ cspSource, nonce, mapHtml }: PanelHtmlOptions): string =>
-  `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">`
-  + `<meta http-equiv="Content-Security-Policy" content="default-src 'none';`
-  + ` style-src ${escapeMarkup(cspSource)} 'unsafe-inline'; script-src 'nonce-${escapeMarkup(nonce)}';">`
-  + `<style>${STYLE}</style><title>部品と節点を動かす</title></head><body>`
-  + `<p class="cf-mode">`
-  + `<label><input type="radio" name="cf-mode" value="part" checked> 部品を動かす</label>`
-  + `<label><input type="radio" name="cf-mode" value="node"> 節点を動かす</label></p>`
-  + `<p class="cf-history">`
-  + `<button class="cf-undo" disabled title="Ctrl+Z">元に戻す</button>`
-  + `<button class="cf-redo" disabled title="Ctrl+Shift+Z">やり直す</button></p>`
-  + `<p class="cf-note"><b>ドラッグして</b>置きたい交点で放すと動きます`
-  + ` (クリックは選ぶだけ — エディタの書いてある場所が光ります)。`
-  + `部品は 1 つだけ動いて接続が変わり、節点は交点ごと動いて接続は保たれます。`
-  + `図は書き換えのあと数秒で描き直ります。</p>`
-  + `<div class="cf-body">${mapHtml}</div>`
-  + `<p class="cf-status"></p>`
-  + `<script nonce="${escapeMarkup(nonce)}">${SCRIPT}</script></body></html>`;
+/**
+ * フェンスの一覧。**2 つ以上のときだけ**出す (1 つなら選ぶものが無い)。
+ * 題があれば題、無ければ行番号で呼ぶ。題はフェンスから来た字なのでエスケープする。
+ */
+export function renderFencePicker(fences: readonly FenceEntry[], line: number | null): string {
+  if (fences.length < 2) return '';
+  const options = fences.map((fence) => {
+    const label = fence.title === null ? `${fence.line} 行目のフェンス` : `${fence.title} (${fence.line} 行目)`;
+    return `<option value="${fence.line}"${fence.line === line ? ' selected' : ''}>${escapeMarkup(label)}</option>`;
+  }).join('');
+  return `<label>フェンス <select class="cf-fence">${options}</select></label>`;
+}
+
+export const panelHtml = ({ cspSource, nonce, view, undo }: PanelHtmlOptions): string => {
+  const own = undo === 'own';
+  return `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">`
+    + `<meta http-equiv="Content-Security-Policy" content="default-src 'none';`
+    + ` style-src ${escapeMarkup(cspSource)} 'unsafe-inline'; script-src 'nonce-${escapeMarkup(nonce)}';">`
+    + `<style>${STYLE}</style><title>部品と節点を動かす</title></head>`
+    + `<body${own ? ' class="cf-own-undo"' : ''}>`
+    + `<p class="cf-fences">${view.picker}</p>`
+    + `<p class="cf-mode">`
+    + `<label><input type="radio" name="cf-mode" value="part" checked> 部品を動かす</label>`
+    + `<label><input type="radio" name="cf-mode" value="node"> 節点を動かす</label></p>`
+    + `<p class="cf-history">`
+    + `<button class="cf-undo"${own ? ' disabled' : ''} title="Ctrl+Z">元に戻す</button>`
+    + `<button class="cf-redo"${own ? ' disabled' : ''} title="Ctrl+Shift+Z">やり直す</button></p>`
+    + `<p class="cf-note"><b>ドラッグして</b>置きたい交点で放すと動きます`
+    + ` (クリックは選ぶだけ — エディタの書いてある場所が光ります)。`
+    + `部品は 1 つだけ動いて接続が変わり、節点は交点ごと動いて接続は保たれます。`
+    + `図は書き換えのあと数秒で描き直ります。</p>`
+    + `<div class="cf-body">${view.html}</div>`
+    + `<p class="cf-status"></p>`
+    + `<script nonce="${escapeMarkup(nonce)}">${SCRIPT}</script></body></html>`;
+};
 
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
 

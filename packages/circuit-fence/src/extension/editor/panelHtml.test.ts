@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import { makeNonce, panelHtml } from './panelHtml.ts';
+import { makeNonce, panelHtml, renderFencePicker } from './panelHtml.ts';
 
-const html = panelHtml({ cspSource: 'vscode-resource:', nonce: 'abc123', mapHtml: '<table></table>' });
+const html = panelHtml({
+  cspSource: 'vscode-resource:',
+  nonce: 'abc123',
+  view: { html: '<table></table>', picker: ''},
+  undo: 'own',
+});
 
 describe('panelHtml', () => {
   test('puts the map inside', () => {
@@ -19,7 +24,7 @@ describe('panelHtml', () => {
   });
 
   test('escapes what it is given, so a source cannot break out of an attribute', () => {
-    const sneaky = panelHtml({ cspSource: '"><script>x</script>', nonce: 'n', mapHtml: '' });
+    const sneaky = panelHtml({ cspSource: '"><script>x</script>', nonce: 'n', view: { html: '', picker: ''}, undo: 'own' });
 
     expect(sneaky.match(/<script/g)).toHaveLength(1);
     expect(sneaky).toContain('&quot;&gt;&lt;script&gt;');
@@ -45,8 +50,6 @@ describe('makeNonce', () => {
 });
 
 describe('持ち方の切り替え', () => {
-  const html = panelHtml({ cspSource: 'vscode-resource:', nonce: 'n0nce', mapHtml: '<table></table>' });
-
   test('offers both things to grab, since they do not mean the same move', () => {
     expect(html).toContain('value="part"');
     expect(html).toContain('value="node"');
@@ -91,7 +94,7 @@ describe('置き先の当たり判定', () => {
   });
 });
 
-describe('元に戻す・やり直す', () => {
+describe('元に戻す・やり直す (自前の履歴)', () => {
   test('offers both buttons, off until there is something to undo', () => {
     expect(html).toContain('<button class="cf-undo" disabled');
     expect(html).toContain('<button class="cf-redo" disabled');
@@ -99,6 +102,7 @@ describe('元に戻す・やり直す', () => {
 
   test('takes Ctrl+Z itself, since VS Code cannot reach the editor from here', () => {
     // パネルにフォーカスがあると activeTextEditor が無く、VS Code の undo は届かない。
+    expect(html).toContain('<body class="cf-own-undo">');
     expect(html).toContain("if (!event.ctrlKey && !event.metaKey) return;");
     expect(html).toContain("step('undo')");
     expect(html).toContain("step('redo')");
@@ -111,6 +115,61 @@ describe('元に戻す・やり直す', () => {
   test('turns the buttons on and off from what the extension reports', () => {
     expect(html).toContain("message.kind === 'history'");
     expect(html).toContain('disabled = !message.canUndo');
+  });
+});
+
+describe('元に戻す・やり直す (VS Code に頼む)', () => {
+  const native = panelHtml({ cspSource: 'vscode-resource:', nonce: 'n', view: { html: '', picker: ''}, undo: 'vscode' });
+
+  test('lets Ctrl+Z through to VS Code instead of taking it', () => {
+    // カスタムエディタでは VS Code の undo がそのタブの文書へ届く。横取りすると届かなくなる。
+    expect(native).not.toContain('cf-own-undo"');
+    expect(native).toContain("if (!document.body.classList.contains('cf-own-undo')) return;");
+  });
+
+  test('keeps the buttons on, since VS Code holds the history', () => {
+    expect(native).toContain('<button class="cf-undo" title=');
+    expect(native).not.toContain('<button class="cf-undo" disabled');
+  });
+});
+
+describe('フェンスを選ぶ', () => {
+  test('puts the picker in the head, so a document with several fences can choose', () => {
+    const many = panelHtml({
+      cspSource: 'vscode-resource:',
+      nonce: 'n',
+      view: { html: '', picker: '<select class="cf-fence"></select>'},
+      undo: 'own',
+    });
+
+    expect(many).toContain('<p class="cf-fences"><select class="cf-fence"></select></p>');
+  });
+
+  test('sends the chosen fence to the extension', () => {
+    expect(html).toContain("vscode.postMessage({ kind: 'fence', line: Number(event.target.value) })");
+  });
+
+  test('swaps the picker together with the map', () => {
+    expect(html).toContain("document.querySelector('.cf-fences').innerHTML = message.picker");
+  });
+});
+
+describe('renderFencePicker', () => {
+  const fences = [{ line: 3, title: 'RC' }, { line: 10, title: null }];
+
+  test('is empty with one fence, since there is nothing to choose', () => {
+    expect(renderFencePicker([{ line: 3, title: 'RC' }], 3)).toBe('');
+  });
+
+  test('names each fence by its title, falling back to the line', () => {
+    const picker = renderFencePicker(fences, 3);
+
+    expect(picker).toContain('<option value="3" selected>RC (3 行目)</option>');
+    expect(picker).toContain('<option value="10">10 行目のフェンス</option>');
+  });
+
+  test('escapes the title, which comes from the fence', () => {
+    expect(renderFencePicker([{ line: 1, title: '<b>' }, { line: 5, title: null }], 1)).toContain('&lt;b&gt;');
   });
 });
 

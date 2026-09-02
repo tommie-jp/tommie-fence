@@ -162,13 +162,17 @@ Parts and nodes can be moved to another address while you look at the drawing.
 Because the fence **writes positions as grid addresses**, moving something comes
 down to swapping the address spelling inside a line.
 
-- `Circuit Fence: 部品を動かす (マップ)` — opens a grid panel beside the editor;
-  **drag** onto the crossing you want (a click only selects, it never moves).
-  A switch at the top changes what you grab from parts to nodes. The grid draws
-  **part shapes and wires** (the drawing stays the authority on symbols; the map
-  is a likeness for seeing what sits where). The map and the editor **point at
-  each other**: what you select lights up where it is written, and what the
-  cursor sits on lights up on the map
+- **circuit Editor** — pick it from the editor picker at the top of a `.md` tab
+  (`Text Editor ▾`, or `View: Reopen Editor With...`) and the tab itself becomes
+  the map. **Drag** onto the crossing you want (a click only selects, it never
+  moves). A switch at the top changes what you grab from parts to nodes; when
+  the document holds several fences, a list at the top picks one. The grid
+  draws **part shapes and wires** (the drawing stays the authority on symbols;
+  the map is a likeness for seeing what sits where). Open the same document
+  beside it as a text editor or Markdown preview: edits show up at once, and
+  the map and the editor **point at each other** — what you select lights up
+  where it is written, and what the cursor sits on lights up on the map
+- `Circuit Fence: 部品を動かす (マップ)` — opens the same map in a panel beside the editor
 - `Circuit Fence: 部品を動かす` — pick a part, type the address to move it to
 - `Circuit Fence: 節点を動かす` — pick a node, type the address to move it to
 
@@ -179,8 +183,9 @@ usually **that one line** (bare spellings of the same address come along too).
 
 **Nothing stops you before the move.** It compares the netlist before and after
 and lists the connections the move broke and the ones it made **after** applying
-it. Undo from the map's own button or `Ctrl+Z` — the panel keeps its own history,
-because VS Code's undo cannot reach the editor while the panel has focus. Your
+it. Undo with `Ctrl+Z` or the map's own button (when the tab itself is the map,
+VS Code's undo applies as usual; the side panel keeps its own history, because
+VS Code's undo cannot reach the editor while the panel has focus). Your
 comments and formatting survive: only the address spelling is replaced. The
 drawing catches up a few seconds after the edit.
 

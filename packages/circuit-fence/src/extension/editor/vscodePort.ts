@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import type { Edit } from '../../core/edit/move.ts';
-import { strippedIndent } from '../../core/edit/shared.ts';
-import { changesOf } from './history.ts';
+import { changesForFence } from './docEdits.ts';
 import type { Change } from './history.ts';
 import type { DocumentView, EditorPort } from './movePart.ts';
 
@@ -10,7 +9,8 @@ import type { DocumentView, EditorPort } from './movePart.ts';
  * (段取りそのものは `movePart.ts` にあり、そちらはテストに掛かっている)。
  */
 
-const markdownEditor = (): vscode.TextEditor | null => {
+/** アクティブな Markdown のエディタ。webview にフォーカスがあるときは無い。 */
+export const markdownEditor = (): vscode.TextEditor | null => {
   const editor = vscode.window.activeTextEditor;
   if (!editor) return null;
   return editor.document.languageId === 'markdown' ? editor : null;
@@ -44,29 +44,14 @@ export async function applyChanges(
  *
  * 当てた中身 (元の字と入れた字) を返す。**パネルの履歴がこれを覚えて逆を当てる** —
  * VS Code の `Ctrl+Z` はエディタにフォーカスが要るので、パネルからは届かない。
+ * 行と桁の計算は `changesForFence` (vscode を知らず、テストに掛かる)。
  */
 export async function applyToDocument(
   document: vscode.TextDocument,
   fenceLine: number,
   edits: readonly Edit[],
 ): Promise<readonly Change[] | null> {
-  // **字下げしたフェンスは桁もずれる。** フェンスの取り出しは開き記号の
-  // 字下げぶん (最大 3 つ) を本文から剥がすので、桁を足し戻さないと
-  // 書き換えが左へ寄る (箇条書きの中のフェンスで起きる)。
-  const opening = document.lineAt(fenceLine - 1).text;
-
-  // **綴りの長さが変わると、同じ行の後ろの桁がずれる** (`a9 b9` → `a10 b10`)。
-  // 当てたあとの桁を控えるのは `changesOf` の仕事 (そちらはテストに掛かる)。
-  const changes = changesOf(edits.map((one) => {
-    // フェンスの中の行 → Markdown の行。開き記号の行のぶんだけずらす
-    // (`shiftErrors` と同じ手口)。どちらも 1 始まりなので +fenceLine、
-    // vscode は 0 始まりなので -1。
-    const line = fenceLine + one.line - 1;
-    const column = one.column + strippedIndent(opening, document.lineAt(line).text);
-    const range = new vscode.Range(line, column, line, column + one.length);
-    return { line, column, before: document.getText(range), after: one.text };
-  }));
-
+  const changes = changesForFence(document, fenceLine, edits);
   return (await applyChanges(document, changes)) ? changes : null;
 }
 
