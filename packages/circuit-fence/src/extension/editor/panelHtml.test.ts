@@ -104,6 +104,8 @@ describe('置き先の当たり判定', () => {
 
   test('lays a fat invisible line over each wire, since 1.5px is too thin to hit', () => {
     expect(html).toContain('.cf-wire-hit { stroke: transparent; stroke-width: 8;');
+    // 箱から出る足。向きを書いたことが目で分かる唯一の手掛かり。
+    expect(html).toContain('.cf-pin { stroke: var(--cf-ink);');
   });
 });
 

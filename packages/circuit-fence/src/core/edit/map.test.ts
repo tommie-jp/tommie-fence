@@ -34,6 +34,47 @@ describe('gridMap', () => {
     expect(map.chips.map((chip) => chip.line)).toEqual([2, 3, 4]);
   });
 
+  test('carries the pins of a multi-terminal part, on the sides they leave by', () => {
+    const map = gridMap('parts:\n  Q1: npn b2\n');
+
+    expect(map.chips[0]?.pins).toEqual([
+      { name: 'B', side: 'left' },
+      { name: 'C', side: 'top' },
+      { name: 'E', side: 'bottom' },
+    ]);
+  });
+
+  test('turns the pins with the symbol, so the map shows which way it faces', () => {
+    const map = gridMap('parts:\n  Q1: npn b2 r90\n');
+
+    expect(map.chips[0]?.pins).toEqual([
+      { name: 'B', side: 'top' },
+      { name: 'C', side: 'right' },
+      { name: 'E', side: 'left' },
+    ]);
+  });
+
+  test('names a pin the way the reference does, not by the shortest alias', () => {
+    // `not` の足は `a` / `y` とも書けるが、代表の名前は `in` / `out`。
+    expect(gridMap('parts:\n  N1: not b2\n').chips[0]?.pins).toEqual([
+      { name: 'in', side: 'left' },
+      { name: 'out', side: 'right' },
+    ]);
+  });
+
+  test('leaves a DIP without pins, since none of its legs sit on a centre line', () => {
+    // **回しても升目の見た目は変わらない** (既知の限界。図のほうで確かめる)。
+    expect(gridMap('parts:\n  U1: dip8 b2 r90\n').chips[0]?.pins).toEqual([]);
+  });
+
+  test('gives a two-terminal part no pins, since its body already spans two cells', () => {
+    expect(gridMap('parts:\n  R1: resistor a1 a3\n').chips[0]?.pins).toEqual([]);
+  });
+
+  test('carries the turn itself, so a symbol with no pins can still show it', () => {
+    expect(gridMap('parts:\n  G1: ground b2 r90\n').chips[0]?.turn).toEqual({ rotate: 90, mirror: false });
+  });
+
   test('sizes the grid to hold every part, with room to move into', () => {
     const map = gridMap(RC);
 

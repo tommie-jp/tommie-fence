@@ -89,6 +89,31 @@ describe('renderMapHtml が描くもの', () => {
   });
 });
 
+describe('向き', () => {
+  test('draws a stub with its name for each pin of a multi-terminal part', () => {
+    const svg = draw('parts:\n  Q1: npn b2\n');
+
+    expect(svg).toContain('class="cf-pin"');
+    expect(svg).toContain('>B</text>');
+  });
+
+  test('moves the stub to the side the pin turned to', () => {
+    // 立っているとベースは左 (x が負) へ、r90 では上 (y が負) へ出る。
+    expect(draw('parts:\n  Q1: npn b2\n')).toContain('x2="-20"');
+    expect(draw('parts:\n  Q1: npn b2 r90\n')).toContain('y2="-15"');
+  });
+
+  test('turns a standing glyph that has no pins, so ground shows its direction', () => {
+    expect(draw('parts:\n  G1: ground b2 r90\n')).toContain('rotate(90)');
+  });
+
+  test('leaves the box unturned, since its shape says nothing (the pins do)', () => {
+    const svg = draw('parts:\n  Q1: npn b2 r90\n');
+
+    expect(svg).not.toContain('rotate(90)');
+  });
+});
+
 describe('読めなかった行の印', () => {
   const badly = (source: string, bad: readonly number[]): string =>
     renderMapHtml(gridMap(source), new Set(bad));

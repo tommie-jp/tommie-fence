@@ -45,13 +45,16 @@ const STYLE = `
   .cf-glyph { fill: var(--cf-paper); stroke: var(--cf-ink); stroke-width: 1.5; }
   .cf-glyph-line { fill: none; stroke: var(--cf-ink); stroke-width: 1.5; }
   .cf-name { fill: var(--cf-ink); font-size: 10px; }
+  /* 箱から出る足。**どちらを向いているか**を見せるためだけのもの。 */
+  .cf-pin { stroke: var(--cf-ink); stroke-width: 1.5; }
+  .cf-pin-name { fill: var(--vscode-descriptionForeground); font-size: 8px; }
   .cf-mark { fill: var(--cf-ink); font-size: 9px; }
   .cf-dot-mark { fill: var(--cf-node); }
   .cf-dot-name { fill: var(--cf-node); font-size: 9px; }
 
   /* エディタのカーソルが指しているもの。掴んでいる印とは別の色にして、
      「いま触れているもの」と「持っているもの」を取り違えないようにする。 */
-  .cf-aim .cf-glyph, .cf-aim .cf-glyph-line, .cf-aim .cf-lead,
+  .cf-aim .cf-glyph, .cf-aim .cf-glyph-line, .cf-aim .cf-lead, .cf-aim .cf-pin,
   .cf-wire.cf-aim { stroke: var(--vscode-charts-orange, var(--cf-node)); stroke-width: 2.5; }
   .cf-aim .cf-name { fill: var(--vscode-charts-orange, var(--cf-node)); }
   .cf-aim .cf-dot-mark { stroke: var(--vscode-charts-orange, var(--cf-node)); stroke-width: 3; }
@@ -59,7 +62,8 @@ const STYLE = `
   /* 選んだもの。ドラッグの間もこの印のまま (見た目を 2 通りに増やさない)。 */
   .cf-chip, .cf-dot { cursor: grab; }
   .cf-held { cursor: grabbing; }
-  .cf-held .cf-glyph, .cf-held .cf-glyph-line, .cf-held .cf-lead { stroke: var(--vscode-focusBorder); }
+  .cf-held .cf-glyph, .cf-held .cf-glyph-line, .cf-held .cf-lead,
+  .cf-held .cf-pin { stroke: var(--vscode-focusBorder); }
   .cf-held .cf-name { fill: var(--vscode-focusBorder); }
   .cf-held .cf-dot-mark { stroke: var(--vscode-focusBorder); stroke-width: 3; }
   .cf-wire.cf-held { stroke: var(--vscode-focusBorder); stroke-width: 2.5; }

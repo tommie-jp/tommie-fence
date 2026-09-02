@@ -817,6 +817,20 @@ export function pinSideOf(type: PartType, anchor: string, turn: Turn = NO_TURN):
  * その足が乗っている中心線。乗っていなければ null。**辺から導く** —
  * 左右の辺に出る足は横の中心線、上下の辺に出る足は縦の中心線に乗る。
  */
+/**
+ * その足を指すときの**代表の綴り** (`base` なら `B`、`out` なら `out`)。
+ * マップの箱に添える字で、**書くときに使う名前と同じもの**にする。
+ *
+ * **表に先に書いてあるものを採る。** 短いほうを選ぶと `not` の入口が `a`、
+ * 出口が `y` になり、文法リファレンスが `in` / `out` と書いているのと食い違う
+ * (どちらも書けるが、代表の名前は表の並びが持っている)。
+ * 1 文字のものは大文字にする — リファレンスの表と同じ見た目 (`B` `C` `E`)。
+ */
+export function mainPinName(type: PartType, anchor: string): string {
+  const first = Object.entries(type.pins ?? {}).find(([, target]) => target === anchor)?.[0] ?? anchor;
+  return first.length === 1 ? first.toUpperCase() : first;
+}
+
 export function pinAxis(type: PartType, anchor: string, turn: Turn = NO_TURN): PinAxis | null {
   const side = pinSideOf(type, anchor, turn);
   return side === null ? null : side === 'left' || side === 'right' ? 'h' : 'v';

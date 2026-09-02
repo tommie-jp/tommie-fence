@@ -5,6 +5,8 @@ import { cornerOf } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
+import { NO_TURN, lookupPartType, mainPinName, pinSideOf } from '../parts.ts';
+import type { PartType, PinSide, Turn } from '../parts.ts';
 import { cellOf } from '../types.ts';
 import type { Circuit } from '../model/circuit.ts';
 import type { Endpoint } from '../types.ts';
@@ -25,6 +27,12 @@ import { addressTokensOn, addressesOf, locateTokens } from './shared.ts';
 /** 升目の上の 1 点。**番地と同じ形**だが、こちらは描くための座標。 */
 export type Cell = { readonly row: number; readonly col: number };
 
+/**
+ * 箱から出る足 1 本。**辺は向きに合わせて回したあとのもの** —
+ * 箱そのものは回しても同じ形なので、**回ったことが目で分かるのはここだけ**。
+ */
+export type ChipPin = { readonly name: string; readonly side: PinSide };
+
 /** マップに置く部品 1 つ。 */
 export type Chip = {
   /** 図に出る名前。**同じ名前の記号が 2 つ以上あることがある** (`handles.ts`)。 */
@@ -38,6 +46,10 @@ export type Chip = {
   readonly to: Cell | null;
   /** 書かれた行 (1 始まり)。読めなかった行を印すのと、消すのに要る。 */
   readonly line: number;
+  /** 書かれた向き。2 端子は番地の順が向きなので、いつも立ったまま。 */
+  readonly turn: Turn;
+  /** 箱から出る足 (多端子だけ)。向きを写したあとの辺を持つ。 */
+  readonly pins: readonly ChipPin[];
 };
 
 /**
@@ -132,6 +144,19 @@ function wireLinesOf(doc: Circuit): WireLine[] {
   return lines;
 }
 
+/**
+ * 箱から出る足。**向きを写した辺**で返す (`pinSideOf` が回す)。
+ * 中心線に乗らない足 (オペアンプの ± など) は持たない — 辺が決まらないので、
+ * 描くと当てずっぽうの位置を約束することになる。
+ */
+function pinsOf(type: PartType | null, turn: Turn): readonly ChipPin[] {
+  if (type === null || type.pinSide === undefined) return [];
+  return Object.keys(type.pinSide).flatMap((anchor) => {
+    const side = pinSideOf(type, anchor, turn);
+    return side === null ? [] : [{ name: mainPinName(type, anchor), side }];
+  });
+}
+
 /** フェンス本文から升目のモデルを作る。**読めなければ空**で、嘘の位置を見せない。 */
 export function gridMap(source: string): GridMap {
   const normalized = normalizeNewlines(source);
@@ -152,6 +177,8 @@ export function gridMap(source: string): GridMap {
       continue;
     }
     const [anchor, far] = addresses;
+    // 2 端子部品は番地の順そのものが向きなので、向きの語を持たない。
+    const turn = part.kind === 'two-terminal' ? NO_TURN : part.turn;
     chips.push({
       id: part.id,
       handle: handleAt(doc.parts, index),
@@ -160,6 +187,8 @@ export function gridMap(source: string): GridMap {
       col: (anchor as Address).col,
       to: far ? { row: far.row, col: far.col } : null,
       line: part.line,
+      turn,
+      pins: pinsOf(lookupPartType(part.type), turn),
     });
   }
 

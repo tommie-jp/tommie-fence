@@ -1,7 +1,8 @@
 import { element, escapeMarkup, num, svgText } from 'fence-kit';
 import { formatAddress } from '../model/address.ts';
 import { drawGlyph, glyphOf } from './mapGlyphs.ts';
-import type { Chip, Cell, Dot, GridMap, WireLine } from './map.ts';
+import type { Chip, ChipPin, Cell, Dot, GridMap, WireLine } from './map.ts';
+import type { PinSide, Turn } from '../parts.ts';
 
 /**
  * マップの絵。**webview に渡す本体**で、ここも core の純関数
@@ -121,16 +122,71 @@ function drawSpan(chip: Chip, far: Cell, nudge: number): string {
   return lead + body + mark + name;
 }
 
+/**
+ * 記号を回す変換。**反転してから回す** (フェンスの意味と同じ順で、SVG は
+ * 右に書いたものから効くので `rotate` を先に書く)。
+ */
+function turnOf(turn: Turn): string {
+  const steps = [
+    ...(turn.rotate === 0 ? [] : [`rotate(${num(turn.rotate)})`]),
+    ...(turn.mirror ? ['scale(-1,1)'] : []),
+  ];
+  return steps.length === 0 ? '' : ` ${steps.join(' ')}`;
+}
+
+/**
+ * 箱から出る足 1 本の寸法。箱は 26x16 なので、縁は x が ±13、y が ±8。
+ * 字は棒の先の外側に置く (棒に重ねると読めない)。
+ */
+const PIN_AT: Readonly<Record<PinSide, {
+  readonly x1: number; readonly y1: number; readonly x2: number; readonly y2: number;
+  readonly tx: number; readonly ty: number; readonly anchor?: 'start' | 'end';
+}>> = {
+  // 箱は 26 幅で升 (34) をほぼ埋めるので、横向きの足の字は**棒の先**に置き、
+  // 隣の升の点に少しはみ出すのを縁取りで読ませる。棒の上へ寄せると、
+  // 字が箱の角に重なって読めなくなった (両方とも焼いて確かめた)。
+  left: { x1: -13, y1: 0, x2: -20, y2: 0, tx: -22, ty: 3, anchor: 'end' },
+  right: { x1: 13, y1: 0, x2: 20, y2: 0, tx: 22, ty: 3, anchor: 'start' },
+  top: { x1: 0, y1: -8, x2: 0, y2: -15, tx: 0, ty: -18 },
+  bottom: { x1: 0, y1: 8, x2: 0, y2: 15, tx: 0, ty: 24 },
+};
+
+/** 足 1 本。**字は回さない** (辺のほうが既に回してある)。 */
+function drawPin(pin: ChipPin): string {
+  const at = PIN_AT[pin.side];
+  const stub = element('line', {
+    class: 'cf-pin', x1: num(at.x1), y1: num(at.y1), x2: num(at.x2), y2: num(at.y2),
+  });
+  return stub + svgText(at.tx, at.ty, pin.name, {
+    class: 'cf-pin-name',
+    // 隣の升の点や升目の線に載るので、地の色で縁を取る (`cf-name` と同じ手)。
+    halo: 'var(--cf-paper)',
+    ...(at.anchor === undefined ? {} : { anchor: at.anchor }),
+  });
+}
+
 /** 1 端子と多端子は升の上に置く。箱に落ちた種類は名前を中に入れる。 */
 function drawStanding(chip: Chip, nudge: number): string {
   const glyph = glyphOf(chip.type);
   const inside = glyph.name === 'box';
-  const body = element('g', { transform: `translate(0,${num(nudge)})` }, drawGlyph(glyph.name));
+  // **箱は回さない。** 26x16 の矩形は回しても同じ意味しか持たず、縦横が
+  // 入れ替わると中に入れた名前がはみ出す。向きは足のほうが示す。
+  // 箱でない記号 (ground) は回して見せる — 足が無いので、回さないと
+  // 向きを書いたことが figure に一切出ない。**字は回さない** (逆さまになる)。
+  const spin = inside ? '' : turnOf(chip.turn);
+  const body = element('g', { transform: `translate(0,${num(nudge)})${spin}` }, drawGlyph(glyph.name));
+  const pins = chip.pins.length === 0
+    ? ''
+    : element(
+      'g',
+      { class: 'cf-pins', transform: `translate(0,${num(nudge)})` },
+      chip.pins.map(drawPin).join(''),
+    );
   const mark = glyph.mark === null ? '' : svgText(0, nudge + 4, glyph.mark, { class: 'cf-mark' });
   const name = inside
     ? svgText(0, nudge + 4, chip.id, { class: 'cf-name' })
     : svgText(0, nudge - 12, chip.id, { class: 'cf-name', halo: 'var(--cf-paper)' });
-  return body + mark + name;
+  return body + pins + mark + name;
 }
 
 /**
