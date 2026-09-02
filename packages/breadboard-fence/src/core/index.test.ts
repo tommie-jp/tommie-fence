@@ -1109,3 +1109,60 @@ describe('wires that join two holes in the same row', () => {
     expect(wireFrom(svg, '182 30')).toContain('Q');
   });
 });
+
+/**
+ * 掴むための層。**編集のときだけ**出す — 貼る図は 1 バイトも変えない
+ * (52 の docs/13 の決め 2)。
+ */
+describe('renderBreadboard の編集用の描き方', () => {
+  test('draws exactly the same picture when nothing asks for the map', () => {
+    expect(renderBreadboard(led).svg).toBe(renderBreadboard(led, {}).svg);
+    expect(renderBreadboard(led, { edit: false }).svg).toBe(renderBreadboard(led).svg);
+  });
+
+  test('lays a cell over every hole when the map is asked for', () => {
+    const { svg } = renderBreadboard(led, { edit: true });
+
+    expect(svg).toContain('<g class="cf-hits">');
+    expect(svg).toContain('data-address="a5"');
+  });
+
+  test('names each part where it is drawn, so it can be grabbed', () => {
+    const { svg } = renderBreadboard(led, { edit: true });
+
+    expect(svg).toContain('data-part="R1"');
+    expect(svg).toContain('data-part="D1"');
+  });
+
+  test('names each wire by the line it is written on', () => {
+    // 1 行 = 1 本の信号経路。消すのも選ぶのも行の単位 (circuit と同じ)。
+    const { svg } = renderBreadboard(led, { edit: true });
+
+    expect(svg).toContain('class="cf-wire" data-line="6"');
+  });
+
+  test('lays a fat invisible line over each wire, which is too thin to hit', () => {
+    const { svg } = renderBreadboard(led, { edit: true });
+
+    expect(svg).toContain('class="cf-wire-hit"');
+  });
+
+  test('puts a node only where something is written', () => {
+    const { svg } = renderBreadboard(led, { edit: true });
+
+    expect(svg).toContain('data-node="a5"');
+    // 何も書かれていない穴には節点を立てない (掴めるものだけを掴ませる)。
+    expect(svg).not.toContain('data-node="j30"');
+  });
+
+  test('carries the name points: gave a hole', () => {
+    const named = `board: half
+points:
+  vin: a5
+parts:
+  R1: resistor a5 a10 330
+`;
+
+    expect(renderBreadboard(named, { edit: true }).svg).toContain('data-name="vin"');
+  });
+});

@@ -62,6 +62,8 @@ type ResolvedWire = {
   readonly to: Endpoint;
   readonly color: string;
   readonly hints: readonly WireHint[];
+  /** 書かれた行 (1 始まり)。掴む印に使う (1 行 = 1 本の経路)。 */
+  readonly line: number;
 };
 
 // 穴番地に `.` は現れないので、ドットを含む端点はピン参照とみなす。
@@ -72,7 +74,41 @@ const PIN_REF = /^([\w-]+)\.(\S+)$/;
  * フェンスの中身 1 つを図とネットリストに変換する。DOM も Node も使わない同期の純関数なので、
  * VS Code のプレビュー・CLI・サーバー側描画のどこからでも同じように呼べる。
  */
-export function renderBreadboard(input: string): RenderResult {
+/**
+ * 掴むための層に要るものを集める。**書かれている穴**に節点を立て、
+ * `points:` の名前を添える (番地 → 名前。表は名前 → 番地なので裏返す)。
+ */
+function editLayer(
+  parts: readonly PlacedPart[],
+  wires: readonly ResolvedWire[],
+  points: ReadonlyMap<string, string>,
+): { readonly used: ReadonlySet<string>; readonly names: ReadonlyMap<string, string> } {
+  const used = new Set<string>();
+  for (const part of parts) {
+    for (const pin of part.pins) {
+      if (pin.address !== null) used.add(formatAddress(pin.address));
+    }
+  }
+  for (const wire of wires) {
+    // 機器の足は板の上に無いので、節点にはならない。
+    for (const end of [wire.from, wire.to]) {
+      if (end.kind === 'hole') used.add(formatAddress(end.address));
+    }
+  }
+
+  // `points:` は名前 → 番地。掴んだ番地から名前を引きたいので裏返す。
+  const names = new Map<string, string>();
+  for (const [name, addr] of points) names.set(addr, name);
+  return { used, names };
+}
+
+/** 描き方の選び (既定は今までどおり)。 */
+export type RenderOptions = {
+  /** 掴むための層を重ねる (マップのエディタ用)。**既定では出さない**。 */
+  readonly edit?: boolean;
+};
+
+export function renderBreadboard(input: string, options: RenderOptions = {}): RenderResult {
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
   const source = normalizeNewlines(input);
   const parsed = parseFence(source);
@@ -116,7 +152,7 @@ export function renderBreadboard(input: string): RenderResult {
   const drawable = wires.flatMap((wire) => {
     const from = pointOf(wire.from, layout.point, placements);
     const to = pointOf(wire.to, layout.point, placements);
-    return from && to ? [{ from, to, hints: wire.hints, color: wire.color }] : [];
+    return from && to ? [{ from, to, hints: wire.hints, color: wire.color, line: wire.line }] : [];
   });
   const obstacles = [
     ...parts.flatMap((part) => partObstacles(part, layout, style.theme)),
@@ -129,6 +165,8 @@ export function renderBreadboard(input: string): RenderResult {
   const rendered: RenderedWire[] = routeWires(drawable, layout, { obstacles, partHoles }).map((points, index) => ({
     points,
     color: drawable[index]?.color ?? DEFAULT_WIRE_COLOR,
+    // 掴む印は書かれた行 (1 行 = 1 本の経路)。
+    line: drawable[index]?.line ?? 0,
   }));
 
   const notes = resolveNotes(parsed.doc.notes, parts, placements, board, layout, errors);
@@ -143,6 +181,7 @@ export function renderBreadboard(input: string): RenderResult {
   });
 
   const svg = renderDocument({
+    edit: options.edit === true ? editLayer(parts, wires, parsed.doc.points) : null,
     title: parsed.doc.title,
     board,
     layout,
@@ -482,7 +521,7 @@ function resolveWire(
   if (!to.ok) errors.push(to.error);
   if (!from.ok || !to.ok) return null;
 
-  return { from: from.value, to: to.value, color: wireColor(spec, errors), hints: spec.hints };
+  return { from: from.value, to: to.value, color: wireColor(spec, errors), hints: spec.hints, line: spec.line };
 }
 
 function wireColor(spec: WireSpec, errors: FenceError[]): string {

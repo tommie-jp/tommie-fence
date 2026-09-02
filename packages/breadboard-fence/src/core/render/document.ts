@@ -5,15 +5,32 @@ import type { DevicePlacement } from './devices.ts';
 import { renderDevice } from './devices.ts';
 import { notesBottom, outsideNotesHeight, renderNotes, renderOutsideNotes } from './notes.ts';
 import type { ResolvedNote } from './notes.ts';
+import { renderHits } from './hits.ts';
 import { renderPart } from './parts.ts';
 import { partsListHeight, renderPartsList } from './partsList.ts';
-import { element, num, svgText } from './svg.ts';
+import { element, num, roundedPath, svgText } from './svg.ts';
 import type { RenderStyle } from './theme.ts';
 import { renderTitle, titleHeight } from './title.ts';
 import { VERSION, stampText } from '../version.ts';
 import { renderWire } from './wires.ts';
 
-export type RenderedWire = { readonly points: readonly Point[]; readonly color: string };
+export type RenderedWire = {
+  readonly points: readonly Point[];
+  readonly color: string;
+  /** 書かれた行 (1 始まり)。**掴むための印**に使う (1 行 = 1 本の経路)。 */
+  readonly line: number;
+};
+
+/**
+ * 掴むための層に要るもの。**渡されたときだけ**印と当たり判定を足す
+ * (貼る図は 1 バイトも変えない)。
+ */
+export type EditLayer = {
+  /** 何かが書かれている穴 (節点を立てる先)。 */
+  readonly used: ReadonlySet<string>;
+  /** `points:` が付けた名前 (番地 → 名前)。 */
+  readonly names: ReadonlyMap<string, string>;
+};
 
 /** 画布を伸ばしたときに、いちばん下の字と縁の間に残す余白。 */
 const OUTER_PAD = 14;
@@ -30,6 +47,8 @@ export type DocumentInput = {
   /** `- source` が図に書き出すフェンスの中身 (囲みつき)。 */
   readonly sourceLines: readonly string[];
   readonly partsList: PartsListMode;
+  /** 掴むための層。**null なら今までどおりの図**。 */
+  readonly edit?: EditLayer | null;
 };
 
 /**
@@ -59,15 +78,25 @@ export function renderDocument(input: DocumentInput): string {
 
   // 縁取りは全部先に敷いてから線を重ねる。1 本ずつ「縁取り→線」で描くと、
   // 交差したところで後の配線の縁取りが先の配線を塗り潰してしまう。
+  const edit = input.edit ?? null;
   const wires = input.wires.map((wire) => renderWire(wire.points, wire.color, theme));
+
+  /** 掴む印を付ける包み。編集でなければ**そのまま返す** (図を変えない)。 */
+  const marked = (svg: string, attributes: Record<string, string>): string =>
+    (edit === null || svg === '' ? svg : element('g', attributes, svg));
 
   // 題の下に図と部品リストが続く。中は座標をずらさず、題のぶんだけ全体を
   // 1 つの g で下げる (図の中の座標計算に題が混ざらない)。
   const body = [
     renderBoard(input.board, layout, theme),
     ...wires.map((wire) => wire.halo),
-    ...wires.map((wire) => wire.line),
-    ...input.parts.filter((part) => part.kind !== 'device').map((part) => renderPart(part, layout, theme)),
+    // 配線は細くて掴めないので、見える線に**太い透明な線**を重ねる (circuit と同じ手)。
+    ...wires.map((wire, index) => marked(
+      wire.line + (edit === null ? '' : hitLineOf(input.wires[index]?.points ?? [], theme)),
+      { class: 'cf-wire', 'data-line': String(input.wires[index]?.line ?? 0) },
+    )),
+    ...input.parts.filter((part) => part.kind !== 'device').map((part) =>
+      marked(renderPart(part, layout, theme), { class: 'cf-chip', 'data-part': part.id })),
     ...input.parts
       .filter((part) => part.kind === 'device')
       .map((part) => {
@@ -78,6 +107,8 @@ export function renderDocument(input: DocumentInput): string {
     renderNotes(input.notes, layout, theme, input.sourceLines),
     renderPartsList(listed, layout.board.x, figure, layout.board.width, theme),
     renderOutsideNotes(input.notes, layout.board.x, figure + list, layout.board.width, theme, input.sourceLines),
+    // 掴む層は**いちばん上**。下に敷くと、部品や配線が押しを先に取ってしまう。
+    edit === null ? '' : renderHits(input.board, layout, edit.used, edit.names),
   ].filter(Boolean);
 
   const shifted = head === 0
@@ -98,6 +129,20 @@ export function renderDocument(input: DocumentInput): string {
     style.stamp ? renderStamp(layout, height, theme) : '',
     '</svg>',
   ].filter(Boolean).join('\n');
+}
+
+/** 配線を掴むための、太い透明な線。**見える線と同じ道**を通る。 */
+function hitLineOf(points: readonly Point[], theme: RenderStyle['theme']): string {
+  const path = roundedPath(points, 0);
+  return path === '' ? '' : element('path', {
+    class: 'cf-wire-hit',
+    d: path,
+    fill: 'none',
+    stroke: 'transparent',
+    'stroke-width': num(theme.metrics.wireWidth * 3),
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+  });
 }
 
 /** 右下に小さく刻む版。字は書けない (処理系が埋めるものなので)。 */
