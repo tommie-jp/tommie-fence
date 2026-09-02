@@ -18,6 +18,6 @@ export function registerEditorCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('circuit-fence.movePart', () => runMovePart(createEditorPort())),
     vscode.commands.registerCommand('circuit-fence.movePoint', () => runMovePoint(createEditorPort())),
-    vscode.commands.registerCommand('circuit-fence.openMap', () => openMapPanel()),
+    vscode.commands.registerCommand('circuit-fence.openMap', () => openMapPanel(context)),
   );
 }

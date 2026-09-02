@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { makeNonce, panelHtml } from './panelHtml.ts';
 import { createSession } from './session.ts';
-import { attachSession, createSessionHost } from './vscodeHost.ts';
+import { attachSession, createSessionHost, mapScriptUri } from './vscodeHost.ts';
 
 /**
  * `.md` のタブそのものをマップにするカスタムエディタ。タブの頭の開き方の一覧
@@ -43,6 +43,7 @@ export function registerMapEditor(context: vscode.ExtensionContext): void {
       panel.webview.html = panelHtml({
         cspSource: panel.webview.cspSource,
         nonce: makeNonce(),
+        scriptUri: mapScriptUri(panel.webview, context),
         view: session.view(),
         undo: 'vscode',
       });

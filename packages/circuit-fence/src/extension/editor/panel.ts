@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { fenceAt } from '../../core/edit/map.ts';
 import { revealMapEditor } from './customEditor.ts';
 import { makeNonce, panelHtml } from './panelHtml.ts';
+import { mapScriptUri } from './vscodeHost.ts';
 import { createSession } from './session.ts';
 import type { Session } from './session.ts';
 import { attachSession, createSessionHost } from './vscodeHost.ts';
@@ -18,7 +19,7 @@ import { markdownEditor } from './vscodePort.ts';
 let panel: vscode.WebviewPanel | null = null;
 let session: Session | null = null;
 
-export function openMapPanel(): void {
+export function openMapPanel(context: vscode.ExtensionContext): void {
   const editor = markdownEditor();
   const fence = editor === null ? null : fenceAt(editor.document.getText(), editor.selection.active.line + 1);
   if (editor === null || fence === null) {
@@ -46,6 +47,7 @@ export function openMapPanel(): void {
   view.webview.html = panelHtml({
     cspSource: view.webview.cspSource,
     nonce: makeNonce(),
+    scriptUri: mapScriptUri(view.webview, context),
     view: live.view(),
     undo: 'own',
   });

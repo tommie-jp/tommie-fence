@@ -38,6 +38,16 @@ const targets = [
     external: ['vscode'],
   },
   {
+    // マップの webview の中で動くもの。**拡張ホストではなくブラウザで動く**ので
+    // 別に束ねる。状態遷移 (webview/mapState.ts) は DOM を知らない純関数で、
+    // node のテストに掛かっている。CSP は nonce で許すので、外部ファイルでよい。
+    entryPoints: ['src/webview/map.ts'],
+    outfile: 'dist/map.js',
+    format: 'iife',
+    platform: 'browser',
+    target: 'es2022',
+  },
+  {
     // shebang は src/cli/main.ts の 1 行目にあり、esbuild がそのまま先頭に残す。
     entryPoints: ['src/cli/main.ts'],
     outfile: 'dist/cli.cjs',

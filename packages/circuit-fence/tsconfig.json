@@ -18,5 +18,7 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["src", "esbuild.mjs", "vitest.config.ts"]
+  "include": ["src", "esbuild.mjs", "vitest.config.ts"],
+  // webview は DOM を知る別の設定で見る (tsconfig.webview.json)。
+  "exclude": ["src/webview"]
 }

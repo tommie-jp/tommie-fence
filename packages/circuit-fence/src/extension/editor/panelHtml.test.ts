@@ -1,12 +1,16 @@
 import { describe, expect, test } from 'vitest';
 import { makeNonce, panelHtml, renderFencePicker } from './panelHtml.ts';
 
-const html = panelHtml({
+const shell = (over: Partial<Parameters<typeof panelHtml>[0]> = {}): string => panelHtml({
   cspSource: 'vscode-resource:',
   nonce: 'abc123',
+  scriptUri: 'vscode-resource://dist/map.js',
   view: { html: '<table></table>', picker: '', issues: '' },
   undo: 'own',
+  ...over,
 });
+
+const html = shell();
 
 describe('panelHtml', () => {
   test('puts the map inside', () => {
@@ -16,15 +20,18 @@ describe('panelHtml', () => {
   test('locks the webview down: nothing loads from outside, only our script runs', () => {
     expect(html).toContain("default-src 'none'");
     expect(html).toContain("script-src 'nonce-abc123'");
-    expect(html).toContain('<script nonce="abc123">');
+    expect(html).toContain('<script nonce="abc123"');
   });
 
-  test('has no script tag without the nonce', () => {
+  test('loads the script as a bundled file, so what it does can be tested', () => {
+    // 文字列に書いたスクリプトは「その字が入っているか」しか試せない。
+    // 中身は webview/mapState.ts にあり、node のテストに掛かっている。
+    expect(html).toContain('src="vscode-resource://dist/map.js"');
     expect(html.match(/<script/g)).toHaveLength(1);
   });
 
   test('escapes what it is given, so a source cannot break out of an attribute', () => {
-    const sneaky = panelHtml({ cspSource: '"><script>x</script>', nonce: 'n', view: { html: '', picker: '', issues: '' }, undo: 'own' });
+    const sneaky = shell({ cspSource: '"><script>x</script>', nonce: 'n' });
 
     expect(sneaky.match(/<script/g)).toHaveLength(1);
     expect(sneaky).toContain('&quot;&gt;&lt;script&gt;');
@@ -32,6 +39,13 @@ describe('panelHtml', () => {
 
   test('tells the reader how to use it', () => {
     expect(html).toContain('置きたい交点');
+    expect(html).toContain('<b>ドラッグして</b>置きたい交点で放す');
+    expect(html).toContain('クリックは選ぶだけ');
+  });
+
+  test('says what the keys do, so they can be found without the docs', () => {
+    expect(html).toContain('<b>R</b> で回し');
+    expect(html).toContain('<b>Delete</b> で消します');
   });
 });
 
@@ -63,6 +77,7 @@ describe('持ち方の切り替え', () => {
     // 部品の升にも節点は立つ。どちらも掴めると、掴んだつもりと違うものが動く。
     expect(html).toContain('body:not(.cf-nodes) .cf-marks { pointer-events: none;');
     expect(html).toContain('body.cf-nodes .cf-parts { pointer-events: none;');
+    expect(html).toContain('body.cf-nodes .cf-wire-hits { pointer-events: none; }');
   });
 });
 
@@ -73,24 +88,8 @@ describe('置き先の当たり判定', () => {
     expect(html).toContain('body.cf-holding .cf-hits { pointer-events: all; }');
   });
 
-  test('watches the pointer instead of HTML drag, which SVG does not support', () => {
-    expect(html).toContain("addEventListener('pointerdown'");
-    expect(html).toContain("addEventListener('pointerup'");
-    expect(html).not.toContain('dragstart');
-  });
-
-  test('moves only by dragging — a click never drops', () => {
-    // 選んでから別の場所をクリックする 2 段構えは廃止した。何気ないクリックが
-    // そのまま移動になり、置くつもりのない所へ飛ぶ。
-    const clickHandlers = html.match(/addEventListener\('click'/g) ?? [];
-
-    expect(clickHandlers).toHaveLength(1);        // 残るのは元に戻す / やり直すだけ
-    expect(html).toContain('const cell = moved ? cellUnder(event) : null;');
-  });
-
-  test('says so, so the reader does not wait for a second click', () => {
-    expect(html).toContain('<b>ドラッグして</b>置きたい交点で放す');
-    expect(html).toContain('クリックは選ぶだけ');
+  test('lays a fat invisible line over each wire, since 1.5px is too thin to hit', () => {
+    expect(html).toContain('.cf-wire-hit { stroke: transparent; stroke-width: 8;');
   });
 });
 
@@ -100,31 +99,17 @@ describe('元に戻す・やり直す (自前の履歴)', () => {
     expect(html).toContain('<button class="cf-redo" disabled');
   });
 
-  test('takes Ctrl+Z itself, since VS Code cannot reach the editor from here', () => {
+  test('marks the page as keeping its own history, which the script reads', () => {
     // パネルにフォーカスがあると activeTextEditor が無く、VS Code の undo は届かない。
     expect(html).toContain('<body class="cf-own-undo">');
-    expect(html).toContain("if (!event.ctrlKey && !event.metaKey) return;");
-    expect(html).toContain("step('undo')");
-    expect(html).toContain("step('redo')");
-  });
-
-  test('asks the extension, which is the side that holds the document', () => {
-    expect(html).toContain('vscode.postMessage({ kind: kind })');
-  });
-
-  test('turns the buttons on and off from what the extension reports', () => {
-    expect(html).toContain("message.kind === 'history'");
-    expect(html).toContain('disabled = !message.canUndo');
   });
 });
 
 describe('元に戻す・やり直す (VS Code に頼む)', () => {
-  const native = panelHtml({ cspSource: 'vscode-resource:', nonce: 'n', view: { html: '', picker: '', issues: '' }, undo: 'vscode' });
+  const native = shell({ undo: 'vscode', nonce: 'n' });
 
-  test('lets Ctrl+Z through to VS Code instead of taking it', () => {
-    // カスタムエディタでは VS Code の undo がそのタブの文書へ届く。横取りすると届かなくなる。
+  test('does not claim its own history, so Ctrl+Z goes through to VS Code', () => {
     expect(native).not.toContain('cf-own-undo"');
-    expect(native).toContain("if (!document.body.classList.contains('cf-own-undo')) return;");
   });
 
   test('keeps the buttons on, since VS Code holds the history', () => {
@@ -135,22 +120,9 @@ describe('元に戻す・やり直す (VS Code に頼む)', () => {
 
 describe('フェンスを選ぶ', () => {
   test('puts the picker in the head, so a document with several fences can choose', () => {
-    const many = panelHtml({
-      cspSource: 'vscode-resource:',
-      nonce: 'n',
-      view: { html: '', picker: '<select class="cf-fence"></select>', issues: '' },
-      undo: 'own',
-    });
+    const many = shell({ view: { html: '', picker: '<select class="cf-fence"></select>', issues: '' } });
 
     expect(many).toContain('<p class="cf-fences"><select class="cf-fence"></select></p>');
-  });
-
-  test('sends the chosen fence to the extension', () => {
-    expect(html).toContain("vscode.postMessage({ kind: 'fence', line: Number(event.target.value) })");
-  });
-
-  test('swaps the picker together with the map', () => {
-    expect(html).toContain("document.querySelector('.cf-fences').innerHTML = message.picker");
   });
 });
 
@@ -173,58 +145,39 @@ describe('renderFencePicker', () => {
   });
 });
 
-describe('エディタと光を合わせる', () => {
-  test('tells the extension what was grabbed, so the editor can light it up', () => {
-    expect(html).toContain("vscode.postMessage({ kind: 'select', what: kind, id: id })");
-  });
-
-  test('clears the light when the grab is released', () => {
-    expect(html).toContain('tell();');
-  });
-
-  test('lights up what the editor cursor points at, in its own colour', () => {
+describe('印の色', () => {
+  test('lights what the editor cursor points at in its own colour', () => {
     // 掴んでいる印と同じ色にすると、持っているものと触れているものを取り違える。
-    expect(html).toContain("message.kind === 'aim'");
     expect(html).toContain('.cf-aim .cf-glyph');
     expect(html).toContain('cf-wire.cf-aim');
   });
 
-  test('escapes the id before putting it in a selector', () => {
-    // フェンスから来た名前がそのまま selector に入ると、壊れた selector で落ちる。
-    expect(html).toContain('CSS.escape(id)');
+  test('marks what is held, wires included', () => {
+    expect(html).toContain('.cf-held .cf-glyph');
+    expect(html).toContain('.cf-wire.cf-held');
+  });
+
+  test('keeps the error mark on when the cursor points at that symbol', () => {
+    // 同じ強さの規則は後に書いたほうが勝つ。読めなかったのは文書の事実なので、
+    // 触れている印・持っている印 (どちらも一時のもの) より後に置く。
+    expect(html.indexOf('.cf-bad .cf-glyph')).toBeGreaterThan(html.indexOf('.cf-aim .cf-glyph'));
+    expect(html.indexOf('.cf-bad .cf-glyph')).toBeGreaterThan(html.indexOf('.cf-held .cf-glyph'));
   });
 });
 
 describe('読めなかったところの帯', () => {
   const band = '<ul class="cf-issues"><li class="cf-issue cf-error" data-line="5">5 行目</li></ul>';
-  const withIssues = panelHtml({
-    cspSource: 'vscode-resource:',
-    nonce: 'n',
-    view: { html: '<svg></svg>', picker: '', issues: band },
-    undo: 'own',
-  });
 
   test('puts the band under the map, where the editing is happening', () => {
     // 図の下の帯はプレビューにしか出ない。掴んでいる間はプレビューが隠れている。
+    const withIssues = shell({ view: { html: '<svg></svg>', picker: '', issues: band } });
+
     expect(withIssues).toContain(`<div class="cf-band">${band}</div>`);
     expect(withIssues.indexOf('cf-band')).toBeGreaterThan(withIssues.indexOf('class="cf-body"'));
   });
 
   test('keeps the band empty when the fence reads cleanly', () => {
     expect(html).toContain('<div class="cf-band"></div>');
-  });
-
-  test('swaps the band together with the map', () => {
-    expect(html).toContain("document.querySelector('.cf-band').innerHTML = message.issues");
-  });
-
-  test('asks the extension to show the line when a row is clicked', () => {
-    // 直すのは書き手の仕事。webview は場所を指すだけ (文書は拡張しか触れない)。
-    expect(html).toContain("vscode.postMessage({ kind: 'goto', line: Number(row.dataset.line) })");
-  });
-
-  test('still has one click handler, so a click on the map never drops', () => {
-    expect(html.match(/addEventListener\('click'/g)).toHaveLength(1);
   });
 
   test('offers no pointer on a row that carries no line', () => {
@@ -234,54 +187,5 @@ describe('読めなかったところの帯', () => {
   test('tells errors and notices apart, since a notice is not a mistake', () => {
     expect(html).toContain('.cf-issue.cf-error');
     expect(html).toContain('.cf-issue.cf-notice');
-  });
-
-  test('keeps the error mark on when the cursor points at that symbol', () => {
-    // 同じ強さの規則は後に書いたほうが勝つ。読めなかったのは文書の事実なので、
-    // 触れている印・持っている印 (どちらも一時のもの) より後に置く。
-    expect(html.indexOf('.cf-bad .cf-glyph')).toBeGreaterThan(html.indexOf('.cf-aim .cf-glyph'));
-    expect(html.indexOf('.cf-bad .cf-glyph')).toBeGreaterThan(html.indexOf('.cf-held .cf-glyph'));
-  });
-
-  test('marks the same thing on the map, so the row and the symbol agree', () => {
-    expect(html).toContain('.cf-wire.cf-bad');
-    expect(html).toContain('.cf-bad .cf-glyph');
-  });
-});
-
-describe('選んで消す・回す', () => {
-  test('lets a wire be picked, since deleting one needs a way to say which', () => {
-    expect(html).toContain("target.closest('.cf-wire-hit')");
-    expect(html).toContain('.cf-wire-hit { stroke: transparent;');
-  });
-
-  test('never drags a wire, which cannot be moved', () => {
-    // 置き先が光ると「動かせる」と読めてしまう。端の付け替えは別の話。
-    expect(html).toContain("if (kind !== 'wire') setDragging(true);");
-  });
-
-  test('marks the wire that is drawn, not the invisible line that was hit', () => {
-    expect(html).toContain(".cf-wire[data-line=\"' + CSS.escape(id) + '\"]");
-  });
-
-  test('asks the extension to delete what is picked', () => {
-    // 行ごと消えるので、文書を持っている側が本文を書き戻す。
-    expect(html).toContain("vscode.postMessage({ kind: 'delete', what: picked.kind, id: picked.id })");
-  });
-
-  test('turns with R and flips with M, the keys KiCad uses', () => {
-    expect(html).toContain("kind: 'turn', part: picked.id, quarters: event.shiftKey ? -1 : 1");
-    expect(html).toContain("kind: 'flip', part: picked.id");
-  });
-
-  test('keeps its keys out of the way while nothing is picked or a control has focus', () => {
-    // 一覧は頭文字で選べる。打鍵を横取りすると選べなくなる。
-    expect(html).toContain("event.ctrlKey || event.metaKey || event.altKey || picked === null || typing(event)");
-    expect(html).toContain("['INPUT', 'SELECT', 'TEXTAREA'].includes");
-  });
-
-  test('says what the keys do, so they can be found without the docs', () => {
-    expect(html).toContain('<b>R</b> で回し');
-    expect(html).toContain('<b>Delete</b> で消します');
   });
 });

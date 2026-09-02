@@ -33,6 +33,14 @@ function highlight(uri: string, ranges: readonly LitRange[]): void {
 }
 
 /**
+ * webview から見た `dist/map.js` の在り処。**束ねた 1 本を読み込ませる** —
+ * 中で動くものは `src/webview/` にあり、状態遷移は node のテストに掛かっている
+ * (文字列に書いたスクリプトは「その字が入っているか」しか試せない)。
+ */
+export const mapScriptUri = (webview: vscode.Webview, context: vscode.ExtensionContext): string =>
+  webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'dist', 'map.js')).toString();
+
+/**
  * その文書をテキストエディタで見せる。**もう見えていれば何もしない** —
  * 帯の行を押すたびにタブが増えたり、開き直しで見ている所が飛んだりしない。
  *

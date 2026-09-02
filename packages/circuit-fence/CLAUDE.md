@@ -65,6 +65,15 @@ VS Code 拡張機能。全体像は [README.ja.md](README.ja.md) (英語は
    どちらでも日本語が出る。この道を使うのは注釈だけで、値には広げない
    (値は circuitikz のラベルに乗るので、位置も大きさも TeX が決める)。
 
+8. **webview の中で動くものは `src/webview/` に置く**: 掴む・置く・消すの
+   決め事は `mapState.ts` に**純関数**で書き (DOM も vscode も知らないので
+   node のテストに掛かる)、DOM を触る側は `map.ts` に薄く保つ。esbuild が
+   `dist/map.js` へ束ね、パネルは `asWebviewUri` で読み込む。
+   **DOM の型を知るのはここだけ** (`tsconfig.webview.json`。根の設定に DOM を
+   足すと、core が DOM を触っても型で気づけなくなる)。HTML の殻に文字列で
+   スクリプトを書かない — テストが「その字が入っているか」しか見られず、
+   道具・パレット・インスペクタで膨らむ一方になる。
+
 ## 運用ルール
 
 1. **マージは fast-forward のみ**: マージコミットを作らない。作業ブランチを切って
