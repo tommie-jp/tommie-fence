@@ -1,5 +1,6 @@
 import { element, fit, num, svgText } from 'fence-kit';
 import { notice, safeToken } from '../errors.ts';
+import { parseAddress } from '../model/address.ts';
 import type { Band, Layout } from '../model/layout.ts';
 import type { DeviceSpec, FenceError, Point } from '../types.ts';
 import type { Theme } from './theme.ts';
@@ -21,6 +22,8 @@ const PIN_LABEL = 12;
 const PIN_GAP = 22;
 /** 箱の最小の幅。足が 1〜2 本でも名前が入るように。 */
 const MIN_WIDTH = 80;
+/** 番地で置いた機器の箱の高さ。帯に並べたものと同じ背丈にする。 */
+const DEVICE_BOX_HEIGHT = 34;
 /** 足 1 本ぶんがこれより狭くなったら、名前は読めない。 */
 const CRAMPED = PIN_GAP / 2;
 
@@ -45,9 +48,31 @@ export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout): D
   const placed: PlacedDevice[] = [];
   const notices: FenceError[] = [];
 
+  // **番地で置いた機器は帯に並べない。** 書いた場所へそのまま置く
+  // (箱の左上がその番地。足の位置は箱から決まる)。
+  for (const device of devices) {
+    if (device.where === null) continue;
+    const address = parseAddress(device.where);
+    if (address === null) continue;
+
+    const at = layout.point(address);
+    const width = Math.max(PIN_GAP * device.pins.length, MIN_WIDTH);
+    const height = DEVICE_BOX_HEIGHT;
+    // 板より上にあるなら足は下へ、下にあるなら足は上へ (板の側へ出す)。
+    const above = at.y < layout.board.y + layout.board.height / 2;
+    const box: Band = { x: at.x, y: at.y, width, height };
+    const tip = above ? box.y + box.height + LEG : box.y - LEG;
+    const step = width / (device.pins.length + 1);
+    placed.push({
+      device: { ...device, at: above ? 'top' : 'bottom' },
+      box,
+      pins: new Map(device.pins.map((name, pin) => [name, { x: box.x + step * (pin + 1), y: tip }])),
+    });
+  }
+
   for (const side of ['top', 'bottom'] as const) {
     const band = layout.deviceBands[side];
-    const here = devices.filter((device) => device.at === side);
+    const here = devices.filter((device) => device.where === null && device.at === side);
     if (!band || here.length === 0) continue;
 
     const wanted = here.map((device) => Math.max(PIN_GAP * device.pins.length, MIN_WIDTH));
@@ -125,3 +150,31 @@ function renderDevice(placed: PlacedDevice, theme: Theme): string {
 
 export const renderDevices = (placed: readonly PlacedDevice[], theme: Theme): string =>
   placed.map((one) => renderDevice(one, theme)).join('');
+
+/**
+ * 番地で置いた機器が、板の上と下へどれだけはみ出すか。
+ *
+ * **板からの距離は番地で決まっていて、板がどこに来ても変わらない**ので、
+ * 仮に組んだ寸法で一度測れば、その値をそのまま `createLayout` へ渡せる
+ * (測る → 空ける → 測り直す、の堂々巡りにならない)。
+ */
+export function deviceOverhang(
+  devices: readonly DeviceSpec[],
+  layout: Layout,
+): { readonly above: number; readonly below: number } {
+  let above = 0;
+  let below = 0;
+
+  for (const device of devices) {
+    if (device.where === null) continue;
+    const address = parseAddress(device.where);
+    if (address === null) continue;
+
+    const at = layout.point(address);
+    // 足と足の名前のぶんも数える (箱だけ空けると名前が板に重なる)。
+    above = Math.max(above, layout.board.y - at.y);
+    below = Math.max(below, at.y + DEVICE_BOX_HEIGHT + LEG + PIN_LABEL - (layout.board.y + layout.board.height));
+  }
+
+  return { above: Math.max(0, above), below: Math.max(0, below) };
+}

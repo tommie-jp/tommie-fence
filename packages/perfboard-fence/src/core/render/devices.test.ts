@@ -3,10 +3,15 @@ import { layoutDevices, renderDevices } from './devices.ts';
 import { THEME } from './theme.ts';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
+import { parseAddress } from '../model/address.ts';
 import type { DeviceSpec } from '../types.ts';
 
-const device = (id: string, pins: readonly string[], at: 'top' | 'bottom' = 'top'): DeviceSpec =>
-  ({ id, at, label: id, pins, line: 3 });
+const device = (
+  id: string,
+  pins: readonly string[],
+  at: 'top' | 'bottom' = 'top',
+  where: string | null = null,
+): DeviceSpec => ({ id, at, where, label: id, pins, line: 3 });
 
 const layoutFor = (devices: readonly DeviceSpec[], cols = 16) => createLayout(
   createBoard({ cols, rows: 8 }),
@@ -85,5 +90,42 @@ describe('renderDevices', () => {
 
     expect(svg).toContain('&lt;img');
     expect(svg).not.toContain('<img');
+  });
+});
+
+describe('番地で置いた機器', () => {
+  test('puts the box where it was written, not in the band', () => {
+    // 帯に並べると、書いた人が置きたかった場所と関係なく散る。
+    const board = createBoard({ cols: 16, rows: 8 });
+    const layout = createLayout(board, { deviceTop: false, deviceBottom: false });
+    const { placed } = layoutDevices([device('IN', ['sig', 'gnd'], 'top', '-c2')], layout);
+    const at = layout.point(parseAddress('-c2')!);
+
+    expect(placed).toHaveLength(1);
+    expect(placed[0]?.box.x).toBe(at.x);
+    expect(placed[0]?.box.y).toBe(at.y);
+  });
+
+  test('turns the legs toward the board, whichever side it was put on', () => {
+    const board = createBoard({ cols: 16, rows: 8 });
+    const layout = createLayout(board, { deviceTop: false, deviceBottom: false });
+    const above = layoutDevices([device('IN', ['sig'], 'top', '-c2')], layout).placed[0]!;
+    const below = layoutDevices([device('SPK', ['1'], 'top', 'm2')], layout).placed[0]!;
+
+    // 上に置いた機器の足は箱の下、下に置いた機器の足は箱の上へ出る。
+    expect(above.pins.get('sig')!.y).toBeGreaterThan(above.box.y);
+    expect(below.pins.get('1')!.y).toBeLessThan(below.box.y);
+  });
+
+  test('leaves the band alone for the devices that did not ask for a place', () => {
+    const board = createBoard({ cols: 16, rows: 8 });
+    const layout = createLayout(board, { deviceTop: true });
+    const { placed } = layoutDevices(
+      [device('IN', ['sig'], 'top', '-c2'), device('BAT', ['+', '-'])],
+      layout,
+    );
+
+    expect(placed).toHaveLength(2);
+    expect(placed.find((one) => one.device.id === 'BAT')?.box.y).toBe(layout.deviceBands.top?.y);
   });
 });

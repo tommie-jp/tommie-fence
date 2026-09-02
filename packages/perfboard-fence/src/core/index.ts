@@ -12,7 +12,7 @@ import { renderTitle } from './render/title.ts';
 import { renderNotes } from './render/notes.ts';
 import { renderSourceListing, sourceBandSize, sourceListing } from './render/sourceListing.ts';
 import { backSideLayout, renderBackSide } from './render/backSide.ts';
-import { layoutDevices, renderDevices } from './render/devices.ts';
+import { deviceOverhang, layoutDevices, renderDevices } from './render/devices.ts';
 import { netlistOf, resolveWires } from './wiring/wiring.ts';
 import { checkErc } from './erc/erc.ts';
 import { checkFit } from './placement/collide.ts';
@@ -90,14 +90,20 @@ export function renderPerfboard(input: string): RenderResult {
   const listing = sourceNotes.length > 0 ? sourceListing(source) : [];
   // 半田面は自分の寸法を持つので、**先に測ってから**表の図に場所を空けさせる。
   const back = style.back ? backSideLayout(board, style.labels) : null;
+  // 番地で置いた機器のはみ出しを**先に測る**。板の寸法だけで組むと、
+  // 上は題に、下は書き出しや半田面に重なる。
+  const overhang = deviceOverhang(devices, createLayout(board, { title: title !== null }));
   const layout = createLayout(board, {
     title: title !== null,
-    deviceTop: devices.some((device) => device.at === 'top'),
-    deviceBottom: devices.some((device) => device.at === 'bottom'),
+    // 帯を空けるのは、番地で置いていない機器のぶんだけ。
+    deviceTop: devices.some((device) => device.where === null && device.at === 'top'),
+    deviceBottom: devices.some((device) => device.where === null && device.at === 'bottom'),
     source: listing.length > 0 ? sourceBandSize(listing, THEME) : null,
     back: back === null ? null : { height: back.height },
     labelRight: style.labels.sides.includes('right'),
     labelBottom: style.labels.sides.includes('bottom'),
+    deviceAbove: overhang.above,
+    deviceBelow: overhang.below,
   });
   const placedDevices = layoutDevices(devices, layout);
   const devicePins = new Map(devices.map((device) => [device.id, new Set(device.pins)]));
@@ -188,7 +194,13 @@ export function renderPerfboard(input: string): RenderResult {
       ? [on.point(note.from)]
       : [on.point(note.from), on.point(note.to)])),
   ];
-  const front = drawnExtent(placement.parts, layout, pointsOn(layout));
+  // 機器の箱も数える。**番地で置いた機器は帯の外**へ出るので、板の寸法だけでは
+  // 画布が足りない (黙って切れる)。
+  const deviceCorners = placedDevices.placed.flatMap(({ box }) => [
+    { x: box.x, y: box.y },
+    { x: box.x + box.width, y: box.y + box.height + 14 },
+  ]);
+  const front = drawnExtent(placement.parts, layout, [...pointsOn(layout), ...deviceCorners]);
   // **半田面も数える。** 裏返すと張り出す向きが逆になるので、表だけ見て決めると
   // 裏の板でコネクタが切れる。
   const behind = back === null || layout.backTop === null

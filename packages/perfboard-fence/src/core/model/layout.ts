@@ -46,6 +46,14 @@ export type LayoutOptions = {
    */
   readonly labelRight?: boolean;
   readonly labelBottom?: boolean;
+  /**
+   * 番地で置いた機器が、板の上と下へはみ出す高さ。**帯とは別に空ける** —
+   * 空けないと、上は題に、下は書き出しや半田面に重なる。
+   * 板からの距離は番地で決まっていて、板がどこに来ても変わらないので、
+   * 一度測った値をそのまま渡してよい。
+   */
+  readonly deviceAbove?: number;
+  readonly deviceBelow?: number;
 };
 
 /** 板の外の機器を並べる帯。 */
@@ -85,8 +93,10 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   const bottomBand = options.deviceBottom === true ? DEVICE_BAND + DEVICE_GAP : 0;
   const source = options.source ?? null;
   const back = options.back ?? null;
+  const deviceAbove = Math.max(0, options.deviceAbove ?? 0);
+  const deviceBelow = Math.max(0, options.deviceBelow ?? 0);
   const boardX = OUTER_MARGIN + LABEL_GUTTER;
-  const boardY = OUTER_MARGIN + LABEL_GUTTER + titleBand + topBand;
+  const boardY = OUTER_MARGIN + LABEL_GUTTER + titleBand + topBand + deviceAbove;
 
   // **銅箔を並べる辺は、縁を 1 ピッチぶん広げる。** 銅箔は穴ではないので、
   // 穴と同じ間隔だけ離して置く — 詰めると穴の列の続きに見えて、挿せると読める。
@@ -111,14 +121,14 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   const bandWidth = Math.max(boardWidth + labelRight, source?.width ?? 0);
   // 縦の積み方: 題 → 上の機器 → 板 → 下の機器 → 半田面 → 書き出し。
   // **板 2 枚を続けて置く** — 間に写しが挟まると、表と裏が別の図に見える。
-  const backTop = boardY + boardHeight + labelBottom + bottomBand + BACK_GAP;
+  const backTop = boardY + boardHeight + labelBottom + bottomBand + deviceBelow + BACK_GAP;
   const backBand = back === null ? 0 : BACK_GAP + back.height;
-  const sourceTop = boardY + boardHeight + labelBottom + bottomBand + backBand + SOURCE_GAP;
+  const sourceTop = boardY + boardHeight + labelBottom + bottomBand + deviceBelow + backBand + SOURCE_GAP;
 
   return {
     pitch: PITCH,
     width: boardX + bandWidth + OUTER_MARGIN,
-    height: boardY + boardHeight + labelBottom + bottomBand + backBand
+    height: boardY + boardHeight + labelBottom + bottomBand + deviceBelow + backBand
       + (source === null ? 0 : SOURCE_GAP + source.height) + OUTER_MARGIN,
     board: { x: boardX, y: boardY, width: boardWidth, height: boardHeight },
     titleBaseline: OUTER_MARGIN + titleBand - 6,

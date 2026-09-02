@@ -8,7 +8,7 @@ describe('parseDevice', () => {
     const result = read({ type: 'device', at: 'bottom', label: '電池 3V', pins: ['+', '-'] });
 
     expect(result.ok && result.value).toEqual({
-      id: 'BAT', at: 'bottom', label: '電池 3V', pins: ['+', '-'], line: null,
+      id: 'BAT', at: 'bottom', where: null, label: '電池 3V', pins: ['+', '-'], line: null,
     });
   });
 
@@ -75,5 +75,27 @@ describe('入れ子を機器と決めつけない', () => {
     const result = read({ type: 'devise', pins: ['+'] });
 
     expect(!result.ok && result.error.message).toContain('devise');
+  });
+});
+
+describe('番地で置く機器', () => {
+  test('takes an address in at:, so the box goes where it was written', () => {
+    // 帯に並べると、置きたかった場所と関係なく散る。
+    expect(read({ type: 'device', at: '-e1', pins: ['sig', 'gnd'] }).ok
+      && read({ type: 'device', at: '-e1', pins: ['sig', 'gnd'] }))
+      .toMatchObject({ value: { where: '-e1' } });
+  });
+
+  test('still takes the sides, which put it in the band', () => {
+    expect(read({ type: 'device', at: 'bottom', pins: ['1'] }).ok
+      && read({ type: 'device', at: 'bottom', pins: ['1'] }))
+      .toMatchObject({ value: { at: 'bottom', where: null } });
+  });
+
+  test('refuses a spelling that is neither a side nor an address', () => {
+    const result = read({ type: 'device', at: 'middle', pins: ['1'] });
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).toContain('middle');
   });
 });

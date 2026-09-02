@@ -4,7 +4,7 @@ import { DEFAULT_LED_COLOR, bandColor, ledColor } from './palette.ts';
 import { LEAD_WIDTH, caption, fitToBoard, labelYOf, midpoint, partLabel } from './partCommon.ts';
 import { element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
-import { parseResistor, resistorBands } from './values.ts';
+import { capacitorCode, parsePicofarads, parseResistor, resistorBands } from './values.ts';
 
 /**
  * 2 本足の部品。**本体は 2 つの穴を結ぶ線の上に、その傾きのまま描く**ので、
@@ -110,8 +110,8 @@ function capacitorBody(part: PlacedPart, span: number): string {
   // 姿を省いたときの選び分けは `-` の有無だけで決める (既に書かれた図を動かさないため)。
   const variant = part.variant ?? (part.pins.some((pin) => pin.name === '-') ? 'electrolytic' : 'film');
 
-  if (variant === 'ceramic') return ceramicCapBody(span);
-  if (variant === 'film') return filmCapBody(span);
+  if (variant === 'ceramic') return ceramicCapBody(part, span);
+  if (variant === 'film') return filmCapBody(part, span);
   if (variant === 'tantalum') return tantalumCapBody(part, span);
   return electrolyticCapBody(part, span);
 }
@@ -142,22 +142,41 @@ const polarityIndex = (part: PlacedPart, mark: '+' | '-'): number =>
 /** カソード側の足。ダイオードの帯と LED の平らな面がここを見る。 */
 const cathodeIndex = (part: PlacedPart): number => markedIndex(part, 'K', 'A', 1);
 
+/**
+ * コンデンサの胴に刷る 3 桁コード (`100n` なら `104`)。
+ *
+ * **無極性のもの (セラミック・フィルム) にだけ刷る。** 実物の電解とタンタルは
+ * 容量をそのまま (`100µF`) 刷るので、3 桁コードを載せると別物の顔になる。
+ *
+ * 胴に入らない幅では刷らない — 切れた `104` は `10` (= 10pF) に読める。
+ */
+function capacitorCodeOn(part: PlacedPart, room: number, size: number): string {
+  const farads = part.value ? parsePicofarads(part.value) : null;
+  const code = farads === null ? null : capacitorCode(farads);
+  if (code === null || room < size * code.length * 0.7) return '';
+
+  return svgText(0, size * 0.35, code, { 'font-size': num(size), fill: '#4a3208' });
+}
+
 /** フィルム・積層セラミックの角い胴。無極性のコンデンサの既定の姿。 */
-function filmCapBody(span: number): string {
+function filmCapBody(part: PlacedPart, span: number): string {
   const width = Math.min(span * 0.55, 30);
-  return element('rect', {
+  const shell = element('rect', {
     x: num(-width / 2), y: -8, width: num(width), height: 16, rx: 3,
     fill: '#e3a72f', stroke: '#9c6f10',
   });
+  return shell + capacitorCodeOn(part, width - 4, 9);
 }
 
 /**
  * セラミックの円板。色はフィルムと同じ系統に置いて、**形だけで見分けさせる**。
  * LED の丸とは、足の線の上に中心が乗ることと、平らな面が無いことで区別できる。
  */
-function ceramicCapBody(span: number): string {
+function ceramicCapBody(part: PlacedPart, span: number): string {
   const radius = Math.min(span * 0.45, 9.5);
-  return element('circle', { cx: 0, cy: 0, r: num(radius), fill: '#d18b3c', stroke: '#8a5a22' });
+  const shell = element('circle', { cx: 0, cy: 0, r: num(radius), fill: '#d18b3c', stroke: '#8a5a22' });
+  // 円板は狭いので字も一回り小さく。入らなければ刷らない。
+  return shell + capacitorCodeOn(part, radius * 1.9, 7);
 }
 
 /** 電解の缶。マイナス側に帯を描く。逆挿しは壊れるので目立たせる。 */

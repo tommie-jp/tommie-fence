@@ -99,7 +99,13 @@ export type DeviceSide = 'top' | 'bottom';
  */
 export type DeviceSpec = {
   readonly id: string;
+  /** 板のどちら側の帯に置くか。番地で置いたときは、そこから決まる向き。 */
   readonly at: DeviceSide;
+  /**
+   * 番地で置いたときの、その番地 (書かれたまま)。帯に並べるなら null。
+   * **箱の左上がここに来る** — 足の位置は箱から決まる。
+   */
+  readonly where: string | null;
   readonly label: string;
   readonly pins: readonly string[];
   /** 書かれていた行。ERC のお知らせを書いた場所に返すために持つ。 */

@@ -1,5 +1,6 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, clampText, isPinName, isReferenceable } from '../limits.ts';
+import { parseAddress } from '../model/address.ts';
 import type { DeviceSpec, DeviceSide } from '../types.ts';
 import type { Parsed } from './parts.ts';
 
@@ -37,9 +38,19 @@ export function parseDevice(id: string, entries: Record<string, unknown>): Parse
     );
   }
 
+  // **`at:` は側か番地。** 番地で書けば、板の外の好きな場所に置ける
+  // (`-e1` のように板の上、`n5` のように板の下)。箱の左上がその番地に来る。
   const at = entries.at ?? 'top';
-  if (typeof at !== 'string' || !SIDES.includes(at as DeviceSide)) {
-    return fail(`機器を置ける側は ${SIDES.join(' / ')} です: ${safeToken(String(at))}`, String(at));
+  if (typeof at !== 'string') {
+    return fail(`機器を置ける側は ${SIDES.join(' / ')} か番地です: ${safeToken(String(at))}`, String(at));
+  }
+  const side = SIDES.includes(at as DeviceSide) ? (at as DeviceSide) : null;
+  const where = side === null ? at : null;
+  if (where !== null && parseAddress(where) === null) {
+    return fail(
+      `機器を置ける側は ${SIDES.join(' / ')} か番地です: ${safeToken(where)}`,
+      where,
+    );
   }
 
   const label = entries.label === undefined ? id : entries.label;
@@ -73,7 +84,13 @@ export function parseDevice(id: string, entries: Record<string, unknown>): Parse
   return {
     ok: true,
     value: {
-      id, at: at as DeviceSide, label: clampText(label, LIMITS.labelLength), pins: names, line: null,
+      id,
+      // 番地で置いたときの向きは、板のどちら側に来るかで決まる (図を組むときに見る)。
+      at: side ?? 'top',
+      where,
+      label: clampText(label, LIMITS.labelLength),
+      pins: names,
+      line: null,
     },
   };
 }

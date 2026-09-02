@@ -98,7 +98,7 @@ describe('netlistOf', () => {
 describe('板の外の機器', () => {
   const devices = new Map([['BAT', new Set(['+', '-'])]]);
   const bat = {
-    id: 'BAT', at: 'top' as const, label: 'BAT', pins: ['+', '-'], line: null,
+    id: 'BAT', at: 'top' as const, where: null, label: 'BAT', pins: ['+', '-'], line: null,
   };
 
   test('joins a hole to a device pin without drawing a wire', () => {
