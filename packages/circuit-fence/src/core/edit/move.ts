@@ -3,7 +3,7 @@ import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { LIMITS } from '../limits.ts';
-import { addressesOf, applyEdits, diffOf, fail, isOnGrid, locatePart } from './shared.ts';
+import { addressesOf, applyEdits, diffOf, fail, isOnGrid, keySpanOf, locatePart } from './shared.ts';
 import type { MoveResult, Span } from './shared.ts';
 
 /**
@@ -102,11 +102,3 @@ export function partSpans(source: string, partId: string): readonly Span[] {
   ];
 }
 
-/** 行の中の `名前:` の名前のほう。前後が綴りの続きでないところだけを見る。 */
-function keySpanOf(text: string, id: string, from: number): { column: number; length: number } | null {
-  for (let at = text.indexOf(id, from); at !== -1; at = text.indexOf(id, at + 1)) {
-    const before = text[at - 1] ?? ' ';
-    if (text[at + id.length] === ':' && !/[\w.-]/.test(before)) return { column: at, length: id.length };
-  }
-  return null;
-}

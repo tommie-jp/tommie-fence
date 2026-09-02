@@ -332,3 +332,12 @@ export function locatePart(
   }
   return null;
 }
+
+/** 行の中の `名前:` の名前のほう。前後が綴りの続きでないところだけを見る。 */
+export function keySpanOf(text: string, id: string, from: number): { column: number; length: number } | null {
+  for (let at = text.indexOf(id, from); at !== -1; at = text.indexOf(id, at + 1)) {
+    const before = text[at - 1] ?? ' ';
+    if (text[at + id.length] === ':' && !/[\w.-]/.test(before)) return { column: at, length: id.length };
+  }
+  return null;
+}
