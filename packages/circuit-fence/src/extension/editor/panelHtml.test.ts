@@ -75,6 +75,20 @@ describe('置き先の当たり判定', () => {
     expect(html).toContain("addEventListener('pointerup'");
     expect(html).not.toContain('dragstart');
   });
+
+  test('moves only by dragging — a click never drops', () => {
+    // 選んでから別の場所をクリックする 2 段構えは廃止した。何気ないクリックが
+    // そのまま移動になり、置くつもりのない所へ飛ぶ。
+    const clickHandlers = html.match(/addEventListener\('click'/g) ?? [];
+
+    expect(clickHandlers).toHaveLength(1);        // 残るのは元に戻す / やり直すだけ
+    expect(html).toContain('const cell = moved ? cellUnder(event) : null;');
+  });
+
+  test('says so, so the reader does not wait for a second click', () => {
+    expect(html).toContain('<b>ドラッグして</b>置きたい交点で放す');
+    expect(html).toContain('クリックは選ぶだけ');
+  });
 });
 
 describe('元に戻す・やり直す', () => {

@@ -46,13 +46,14 @@ const STYLE = `
   .cf-aim .cf-name { fill: var(--vscode-charts-orange, var(--cf-node)); }
   .cf-aim .cf-dot-mark { stroke: var(--vscode-charts-orange, var(--cf-node)); stroke-width: 3; }
 
+  /* 選んだもの。ドラッグの間もこの印のまま (見た目を 2 通りに増やさない)。 */
   .cf-chip, .cf-dot { cursor: grab; }
   .cf-held { cursor: grabbing; }
   .cf-held .cf-glyph, .cf-held .cf-glyph-line, .cf-held .cf-lead { stroke: var(--vscode-focusBorder); }
   .cf-held .cf-name { fill: var(--vscode-focusBorder); }
   .cf-held .cf-dot-mark { stroke: var(--vscode-focusBorder); stroke-width: 3; }
 
-  /* 置き先は**掴んでいる間だけ**効かせる。いつも効かせると部品を掴めず、
+  /* 置き先は**ドラッグの間だけ**効かせる。いつも効かせると部品を掴めず、
      いつも切ると埋まった升へ置けない (同じ番地に置くのは正当な操作)。 */
   .cf-cell { fill: transparent; }
   .cf-hits { pointer-events: none; }
@@ -76,60 +77,65 @@ const STYLE = `
 `;
 
 /**
- * 掴んで置く操作。**ドラッグ中は選択の見た目だけを動かし、確定は放したとき
- * 1 回**。図の描き直しは TeX → SVG で 1 秒前後かかるので、追従させない。
+ * 掴んで置く操作。**動かすのはドラッグだけ** — 選んでから別の場所をクリックする
+ * 2 段構えは廃止した (選んだあとの何気ないクリックがそのまま移動になり、
+ * 置くつもりのない所へ飛ぶ)。クリックは**選ぶだけ**で、エディタ側が光る。
+ *
+ * ドラッグ中は選択の見た目だけが動き、**放したとき 1 回だけ**書き換えて
+ * コンパイルする (TeX → SVG は 1 図 1 秒前後かかるので追従させない)。
  *
  * ドラッグは HTML5 の `draggable` ではなく**ポインタで見る** —
  * マップが SVG になり、`draggable` は SVG 要素に効かないため。
  */
 const SCRIPT = `
   const vscode = acquireVsCodeApi();
-  // 掴んでいるもの。**部品と節点は掴む物が違う**ので、種類ごと覚える。
-  let held = null;
-  // 押した場所。放した場所と近ければ「掴んだだけ」、離れていればドラッグ。
+  // 選んでいるもの。**部品と節点は掴む物が違う**ので、種類ごと覚える。
+  let picked = null;
+  // 押した場所。放した場所が離れていればドラッグ、その場なら選んだだけ。
   let pressed = null;
-  // 掴んだそのクリックで置かないための目印 (押した升がそのまま置き先になる)。
-  let grabbing = false;
 
   const nodeMode = () => document.body.classList.contains('cf-nodes');
   const status = () => document.querySelector('.cf-status');
 
-  /** 掴んでいる間だけ置き先の当たり判定を効かせる (CSS が見る目印)。 */
-  const setHeld = (next) => {
-    held = next;
-    document.body.classList.toggle('cf-holding', next !== null);
-    document.querySelectorAll('.cf-held').forEach((el) => el.classList.remove('cf-held'));
-  };
-
-  /** 掴んだものをエディタで光らせてもらう (拡張だけが文書を触れる)。 */
+  /** 選んだものをエディタで光らせてもらう (拡張だけが文書を触れる)。 */
   const tell = (kind, id) => vscode.postMessage({ kind: 'select', what: kind, id: id });
 
-  const release = () => {
-    setHeld(null);
+  const mark = (element) => {
+    document.querySelectorAll('.cf-held').forEach((el) => el.classList.remove('cf-held'));
+    if (element) element.classList.add('cf-held');
+  };
+
+  /** 置き先の当たり判定は**ドラッグの間だけ**効かせる (CSS が見る目印)。 */
+  const setDragging = (on) => document.body.classList.toggle('cf-holding', on);
+
+  const clearPick = () => {
+    picked = null;
+    mark(null);
+    setDragging(false);
     tell();
     status().textContent = '';
   };
 
-  const hold = (kind, id, element) => {
-    setHeld({ kind: kind, id: id });
+  const pick = (kind, id, element) => {
+    picked = { kind: kind, id: id };
+    mark(element);
     tell(kind, id);
-    element.classList.add('cf-held');
     const what = kind === 'node' ? id + ' の節点' : id;
-    status().textContent = what + ' を掴みました。置きたい交点をクリックします (Esc で放す)';
+    status().textContent = what + ' を選びました。ドラッグして置きたい交点で放します';
   };
 
   const drop = (address) => {
-    if (held === null) return;
-    const what = held.kind === 'node' ? held.id + ' の節点' : held.id;
+    if (picked === null) return;
+    const what = picked.kind === 'node' ? picked.id + ' の節点' : picked.id;
     vscode.postMessage(
-      held.kind === 'node'
-        ? { kind: 'moveNode', from: held.id, to: address }
-        : { kind: 'move', part: held.id, to: address },
+      picked.kind === 'node'
+        ? { kind: 'moveNode', from: picked.id, to: address }
+        : { kind: 'move', part: picked.id, to: address },
     );
-    const said = what + ' を ' + address + ' へ…';
-    setHeld(null);
+    picked = null;
+    mark(null);
     tell();
-    status().textContent = said;
+    status().textContent = what + ' を ' + address + ' へ…';
   };
 
   /** 掴める物。いまの持ち方に合うものだけを返す。 */
@@ -138,41 +144,47 @@ const SCRIPT = `
 
   const idOf = (element) => element.dataset.node ?? element.dataset.part;
   const kindOf = (element) => (element.classList.contains('cf-dot') ? 'node' : 'part');
-  const cellAt = (target) => target.closest('.cf-cell');
+
+  /** 放した所の升。**当たり判定を切る前に引く** (切ると座標から引けなくなる)。 */
+  const cellUnder = (event) => {
+    const direct = event.target.closest('.cf-cell');
+    if (direct) return direct;
+    // 触ったままのドラッグは押した要素へ暗黙に捕まるので、座標から引き直す。
+    const under = document.elementFromPoint(event.clientX, event.clientY);
+    return under ? under.closest('.cf-cell') : null;
+  };
 
   document.addEventListener('pointerdown', (event) => {
     if (event.button !== 0) return;
-    pressed = { x: event.clientX, y: event.clientY };
-    grabbing = false;
-    // **掴んでいる間は掴み直さない。** 埋まった升へ置くのは正当な操作なので、
-    // 部品の上でも置きに行く。
-    if (held !== null) return;
     const grab = grabbable(event.target);
-    if (!grab) return;
-    hold(kindOf(grab), idOf(grab), grab);
-    grabbing = true;
+    if (!grab) {
+      // マップの何もない所を押したら選び直し (選んだままだと光が残る)。
+      if (picked !== null && event.target.closest('.cf-map')) clearPick();
+      return;
+    }
+    pressed = { x: event.clientX, y: event.clientY };
+    pick(kindOf(grab), idOf(grab), grab);
+    setDragging(true);
   });
 
   document.addEventListener('pointerup', (event) => {
     const from = pressed;
     pressed = null;
-    if (held === null || from === null) return;
-    // その場で放したのは「掴んだ」だけ。置くのは次のクリック (クリック 2 回)。
+    if (picked === null || from === null) {
+      setDragging(false);
+      return;
+    }
+    // **その場で放したのは「選んだ」だけ。** 動かすのはドラッグだけにする。
     const moved = Math.abs(event.clientX - from.x) + Math.abs(event.clientY - from.y) > 6;
-    if (!moved) return;
-    const cell = cellAt(event.target);
+    const cell = moved ? cellUnder(event) : null;
+    setDragging(false);
     if (cell) drop(cell.dataset.address);
   });
 
-  document.addEventListener('click', (event) => {
-    // 掴んだクリックの続きでは置かない (押した升がそのまま置き先になる)。
-    if (grabbing) {
-      grabbing = false;
-      return;
-    }
-    if (held === null) return;
-    const cell = cellAt(event.target);
-    if (cell) drop(cell.dataset.address);
+  // 窓の外で放したときなど、放した知らせが来ないことがある。
+  document.addEventListener('pointercancel', () => {
+    pressed = null;
+    setDragging(false);
   });
 
   /** 戻す・やり直すは拡張側の履歴に頼む (webview には文書が無い)。 */
@@ -190,7 +202,7 @@ const SCRIPT = `
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
-      release();
+      clearPick();
       return;
     }
     // **パネルにフォーカスがあると VS Code の Ctrl+Z は届かない。**
@@ -210,7 +222,9 @@ const SCRIPT = `
     const message = event.data;
     if (message.kind === 'map') {
       document.querySelector('.cf-body').innerHTML = message.html;
-      setHeld(null);
+      picked = null;
+      pressed = null;
+      setDragging(false);
     }
     if (message.kind === 'status') status().textContent = message.text;
     if (message.kind === 'aim') aim(message.what, message.id);
@@ -241,7 +255,7 @@ const SCRIPT = `
   document.addEventListener('change', (event) => {
     if (event.target.name !== 'cf-mode') return;
     document.body.classList.toggle('cf-nodes', event.target.value === 'node');
-    release();
+    clearPick();
   });
 `;
 
@@ -265,7 +279,8 @@ export const panelHtml = ({ cspSource, nonce, mapHtml }: PanelHtmlOptions): stri
   + `<p class="cf-history">`
   + `<button class="cf-undo" disabled title="Ctrl+Z">元に戻す</button>`
   + `<button class="cf-redo" disabled title="Ctrl+Shift+Z">やり直す</button></p>`
-  + `<p class="cf-note">クリックするか掴んで、置きたい交点で放します。`
+  + `<p class="cf-note"><b>ドラッグして</b>置きたい交点で放すと動きます`
+  + ` (クリックは選ぶだけ — エディタの書いてある場所が光ります)。`
   + `部品は 1 つだけ動いて接続が変わり、節点は交点ごと動いて接続は保たれます。`
   + `図は書き換えのあと数秒で描き直ります。</p>`
   + `<div class="cf-body">${mapHtml}</div>`
