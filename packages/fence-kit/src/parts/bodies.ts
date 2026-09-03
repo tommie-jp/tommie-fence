@@ -42,13 +42,24 @@ export type BodyInk = {
 /** そのままの色で描く (色のある図)。 */
 export const REAL_INK: BodyInk = { paint: (color) => color };
 
+/** 水晶の缶。足より張り出す幅と、缶の高さ・持ち上げ。 */
+const CAN_OVERHANG = 6;
+const CAN_MIN_WIDTH = 26;
+const CAN_MAX_WIDTH = 44;
+const CAN_HEIGHT = 17;
+const CAN_LIFT = 3;
+
+/** コイルの芯の太さの半分と、巻線 1 本の幅・高さの半分。 */
+const CORE_HALF = 4.5;
+const TURN_WIDTH = 3;
+const TURN_HALF = 6.5;
+
 /** 抵抗の帯の幅と、胴の端に残す地の色。 */
 const BAND_WIDTH = 3.2;
 const BAND_EDGE = 0.5;
 
 /** 5mm 砲弾型が既定。3mm はひと回り小さいだけで、置き方も足の名前も変わらない。 */
 const LED_RADIUS = 8.5;
-const COIL_TURNS = 4;
 
 const domeScale = (part: BodyPart): number => (part.variant === '3mm' ? 6.5 / LED_RADIUS : 1);
 
@@ -332,32 +343,70 @@ function lampBody(span: number, ink: BodyInk): string {
   return bulb + filament + base;
 }
 
-/** HC-49 のような金属缶。中身は見えないので、缶であることだけを描く。 */
+/**
+ * 水晶振動子 (HC-49)。**缶から下に 2 本足が出る**部品なので、軸物のように
+ * 両端から足を出さない — 缶は足の上に立ち、そこから 2 本が板へ下りる。
+ *
+ * 缶は足より横に広い (実物の HC-49 は幅 11mm、足の間隔 4.88mm)。
+ * 抵抗やダイオードと違って**胴が足の間に収まらない**ので、幅は足の間隔ではなく
+ * 缶そのものの寸法で決める。
+ */
 function crystalBody(span: number, ink: BodyInk): string {
-  const width = Math.min(span * 0.6, 30);
-  const shell = element('rect', {
-    x: num(-width / 2), y: -8.5, width: num(width), height: 17, rx: 8.5,
-    fill: ink.paint('#b9c0c9'), stroke: ink.paint('#7c848e'),
+  const { width, height } = canOf(span);
+  const top = -(height + CAN_LIFT);
+  const metal = ink.paint('#b9c0c9');
+  const edge = ink.paint('#7c848e');
+
+  const can = element('rect', {
+    x: num(-width / 2), y: num(top), width: num(width), height: num(height), rx: 4,
+    fill: metal, stroke: edge,
+  });
+  // 缶の下の巻き締め (実物の縁)。ここから足が出る。
+  const seam = element('line', {
+    x1: num(-width / 2 + 1), y1: num(top + height - 3), x2: num(width / 2 - 1), y2: num(top + height - 3),
+    stroke: edge, 'stroke-width': 1,
   });
   const gloss = element('rect', {
-    x: num(-width / 2 + 5), y: -5.5, width: num(Math.max(width - 10, 2)), height: 3, rx: 1.5,
+    x: num(-width / 2 + 4), y: num(top + 3), width: num(Math.max(width - 8, 2)), height: 3, rx: 1.5,
     fill: ink.paint('#dfe4ee'),
   });
-  return shell + gloss;
+  // 足は缶の下から穴まで。**穴の位置は足の間隔そのもの**なので ±span/2。
+  const legs = [-1, 1]
+    .map((side) => element('line', {
+      x1: num((side * span) / 2), y1: num(top + height), x2: num((side * span) / 2), y2: 0,
+      stroke: edge, 'stroke-width': 1.6,
+    }))
+    .join('');
+
+  return legs + can + seam + gloss;
 }
+
+/** 缶の大きさ。**足の間隔より広い**が、狭い間隔でも潰さない下限を持つ。 */
+const canOf = (span: number): { readonly width: number; readonly height: number } =>
+  ({ width: Math.min(Math.max(span + CAN_OVERHANG * 2, CAN_MIN_WIDTH), CAN_MAX_WIDTH), height: CAN_HEIGHT });
 
 function inductorBody(span: number, ink: BodyInk): string {
   const width = Math.min(span * 0.6, 34);
-  const radius = width / (COIL_TURNS * 2);
-  // 足の向きに沿って山を並べる。sweep 1 は画面の時計回りなので、山は上に膨らむ。
-  const arcs = Array.from(
-    { length: COIL_TURNS },
-    () => `a ${num(radius)} ${num(radius)} 0 0 1 ${num(radius * 2)} 0`,
-  ).join(' ');
-  return element('path', {
-    d: `M ${num(-width / 2)} 0 ${arcs}`,
-    fill: 'none', stroke: ink.paint('#a9713a'), 'stroke-width': 3.4, 'stroke-linecap': 'round',
+  const core = element('rect', {
+    x: num(-width / 2), y: num(-CORE_HALF), width: num(width), height: num(CORE_HALF * 2),
+    rx: num(CORE_HALF), fill: ink.paint('#4a3a2c'), stroke: ink.paint('#2e241b'),
   });
+
+  // 巻線は胴の端から少し内側に、等間隔で。**芯より高く**描くので、巻き付いて
+  // いるように見える (端では芯が見えて、そこが線の出どころになる)。
+  const inset = CORE_HALF;
+  const room = Math.max(width - inset * 2, 1);
+  const turns = Math.max(3, Math.round(room / (TURN_WIDTH * 1.6)));
+  const step = turns === 1 ? 0 : room / (turns - 1);
+  const coils = Array.from({ length: turns }, (_, index) => {
+    const cx = -width / 2 + inset + index * step;
+    return element('rect', {
+      x: num(cx - TURN_WIDTH / 2), y: num(-TURN_HALF), width: num(TURN_WIDTH), height: num(TURN_HALF * 2),
+      rx: num(TURN_WIDTH / 2), fill: ink.paint('#c68b46'), stroke: ink.paint('#8a5c2a'), 'stroke-width': 0.7,
+    });
+  }).join('');
+
+  return core + coils;
 }
 
 /** 圧電・電磁ブザー。上から見た丸い缶と、音の出る穴。 */
@@ -472,13 +521,14 @@ export function bodySize(part: BodyPart, span: number): { readonly width: number
       return { width: Math.min(span * 0.6, 34), height: 13 };
     case 'lamp':
       return twice(Math.min(span * 0.42, 10));
-    case 'crystal':
-      return { width: Math.min(span * 0.6, 30), height: 17 };
-    // コイルは山が上へ膨らむだけなので、高さは山の半径ぶん。
-    case 'inductor': {
-      const width = Math.min(span * 0.6, 34);
-      return { width, height: width / COIL_TURNS };
+    // 缶は足の上に立つので、当たり判定は缶と足を合わせた高さで見る。
+    case 'crystal': {
+      const can = canOf(span);
+      return { width: can.width, height: can.height + CAN_LIFT };
     }
+    // 巻線が芯より高いので、高さは巻線のぶん。
+    case 'inductor':
+      return { width: Math.min(span * 0.6, 34), height: TURN_HALF * 2 };
     case 'buzzer':
       return twice(Math.min(span * 0.5, 15));
     default:
