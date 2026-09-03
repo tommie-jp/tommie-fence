@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { aimAt, fenceAt, gridMap } from './map.ts';
+import { aimAt, fenceAt, gridMap, partCells } from './map.ts';
 import { renderMapHtml } from './mapSvg.ts';
 
 const RC = [
@@ -276,3 +276,27 @@ describe('同じ名前の記号', () => {
   });
 });
 
+describe('partCells', () => {
+  test('lists the crossings a part is written on, in the order they are written', () => {
+    const rc = 'parts:\n  R1: resistor a1 a3 10k\n  G1: ground c5\n';
+
+    expect(partCells(rc, 'R1')).toEqual(['a1', 'a3']);
+    expect(partCells(rc, 'G1')).toEqual(['c5']);
+  });
+
+  test('reads a part the grid map leaves out, since a ghost must light where it lands', () => {
+    // 交点の間の番地は升目に載らない (掴めない) が、**置いた先としては正しい**。
+    expect(partCells('parts:\n  R1: resistor a_1.5 a3\n', 'R1')).toEqual(['a_1.5', 'a3']);
+  });
+
+  test('tells the repeated names apart by their handle', () => {
+    const twice = 'parts:\n  VCC: vcc a1\n  VCC: vcc b1\n';
+
+    expect(partCells(twice, 'VCC')).toEqual(['a1']);
+    expect(partCells(twice, 'VCC#2')).toEqual(['b1']);
+  });
+
+  test('is empty for a part that is not there', () => {
+    expect(partCells('parts:\n  R1: resistor a1 a3\n', 'R9')).toEqual([]);
+  });
+});

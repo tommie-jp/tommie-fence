@@ -1,4 +1,4 @@
-import { NOTHING, start, step } from './mapState.ts';
+import { NOTHING, start, step, topOf } from './mapState.ts';
 import type { Event, Focus, Picked, State, Under } from './mapState.ts';
 
 /**
@@ -131,16 +131,15 @@ function markSelected(picked: Picked | null): void {
   shownFor(picked)?.classList.add('cf-held');
 }
 
-/** カーソルの下で鍵の対象になるもの (持ち物が無いときだけ)。 */
+/**
+ * カーソルの下で鍵の対象になるもの (持ち物が無いときだけ)。**選ぶ順は
+ * 状態遷移と同じ `topOf`** — 別々に持つと、光っているものと押して選ばれる
+ * ものが食い違う。
+ */
 function markHover(now: State): void {
   unmark('cf-hover');
   if (now.carry !== null || now.tool !== 'select') return;
-  const target: Picked | null = now.under.part !== null
-    ? { kind: 'part', id: now.under.part }
-    : now.under.wire !== null
-      ? { kind: 'wire', id: now.under.wire }
-      : now.under.node !== null ? { kind: 'node', id: now.under.node } : null;
-  shownFor(target)?.classList.add('cf-hover');
+  shownFor(topOf(now.under))?.classList.add('cf-hover');
 }
 
 /** ゴースト — 置く・動かす先の穴を光らせる。置けないときは赤。 */
@@ -177,7 +176,8 @@ function paint(now: State): void {
   markChosen(now);
   markWireFrom(now);
   // 道具は CSS が見る目印にする (右の道具の列の光り方、カーソルの形)。
-  document.body.dataset.tool = now.tool;
+  // **「置く」は道具ではなく持ち物** (`carry`)。CSS から見た顔だけをここで作る。
+  document.body.dataset.tool = now.carry?.kind === 'place' ? 'place' : now.tool;
   document.body.classList.toggle('cf-carrying', now.carry !== null);
   setText('.kc-cell', now.under.cell ?? '');
 }
@@ -363,7 +363,6 @@ document.addEventListener('keydown', (event) => {
     key: event.key,
     shift: event.shiftKey,
     modifier: event.ctrlKey || event.metaKey || event.altKey,
-    typing: false,
   });
   if (handled) event.preventDefault();
   // 鍵で持ち上げたら、いまのカーソルの下にゴーストを出す。
@@ -389,7 +388,7 @@ document.addEventListener('click', (event) => {
   // 右の道具の列。鍵と同じことをする (鍵を知らなくても押せる)。
   const tool = target?.closest<HTMLElement>('.kc-tool');
   if (tool?.dataset.key !== undefined) {
-    run({ kind: 'key', key: tool.dataset.key, shift: false, modifier: false, typing: false });
+    run({ kind: 'key', key: tool.dataset.key, shift: false, modifier: false });
     return;
   }
 
@@ -512,9 +511,9 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
       run({ kind: 'refresh' });
     }
     // 組み直した図の上で、カーソルの下を取り直す (持ち物のゴーストも訊き直す)。
+    // **いったん空に戻す** — 同じ番地でも要素は入れ替わっているので、印を付け直す。
     run({ kind: 'hover', under: NOTHING });
     syncHover();
-    paint(state);
   }
   if (message.kind === 'ghost') {
     run({ kind: 'ghost', ghost: { key: message.key, cells: message.cells, ok: message.ok, why: message.why } });

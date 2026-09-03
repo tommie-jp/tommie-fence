@@ -69,8 +69,8 @@ const STYLE = `
   .kc-props h2 { margin: 0 0 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; opacity: 0.7; }
   .kc-props-hint { margin: 0; opacity: 0.7; line-height: 1.5; }
   .cf-inspector { display: flex; flex-direction: column; gap: 6px; margin: 0; }
-  /* hidden 属性は display の指定に負けるので、明示して隠す。 */
-  .cf-inspector[hidden], .kc-props-hint[hidden] { display: none; }
+  /* display: flex は hidden 属性の既定に勝つので、明示して隠す。 */
+  .cf-inspector[hidden] { display: none; }
   .cf-inspector label { display: flex; flex-direction: column; gap: 2px; color: var(--vscode-descriptionForeground); }
   .cf-field {
     padding: 2px 4px; font: inherit;
@@ -147,7 +147,6 @@ const STYLE = `
   /* 帯: 読めなかったところとお知らせ。折り畳める。 */
   .kc-band { flex: none; max-height: 30%; overflow-y: auto; border-top: 1px solid var(--kc-line); background: var(--kc-chrome); }
   .kc-band summary { padding: 3px 8px; cursor: pointer; user-select: none; opacity: 0.8; }
-  .kc-band > summary::after { content: ""; }
   .cf-issues { list-style: none; margin: 0; padding: 0 8px 6px; }
   .cf-issue { margin-top: 2px; padding: 3px 8px; border-left: 3px solid var(--kc-line); }
   .cf-issue.cf-error {

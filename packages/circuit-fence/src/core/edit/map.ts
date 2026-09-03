@@ -10,7 +10,7 @@ import type { PartType, PinSide, Turn } from '../parts.ts';
 import { cellOf } from '../types.ts';
 import type { Circuit } from '../model/circuit.ts';
 import type { Endpoint } from '../types.ts';
-import { handleAt, handleOf } from './handles.ts';
+import { handleAt, handleOf, partOfHandle } from './handles.ts';
 import { nodesOf, pointEntries } from './point.ts';
 import { addressTokensOn, addressesOf, locateTokens } from './shared.ts';
 
@@ -282,10 +282,15 @@ export function fenceAt(markdown: string, line: number): FenceBlock | null {
   return null;
 }
 
-/** その部品が載っている交点 (書かれた綴り)。ゴーストの光らせ先。無ければ空。 */
+/**
+ * その部品が載っている交点 (書かれた綴り)。ゴーストの光らせ先。無ければ空。
+ *
+ * **升目を組まずに、書かれた番地をそのまま読む。** `gridMap` を通すと
+ * 升目に載らない番地 (`a_1.5`) の部品が黙って空になり、置いたのに何も光らない。
+ * ホバーのたびに呼ばれるので、点や配線まで組み直す必要も無い。
+ */
 export function partCells(source: string, handle: string): readonly string[] {
-  const chip = gridMap(source).chips.find((one) => one.handle === handle);
-  if (chip === undefined) return [];
-  const cells = [{ row: chip.row, col: chip.col }, ...(chip.to === null ? [] : [chip.to])];
-  return cells.map((cell) => formatAddress(cell));
+  const { doc } = parseFence(normalizeNewlines(source));
+  const part = doc === null ? null : partOfHandle(doc.parts, handle);
+  return part === null ? [] : addressesOf(part).map(formatAddress);
 }

@@ -28,14 +28,14 @@ export type Kind = 'part' | 'node' | 'wire';
  */
 export type Picked = { readonly kind: Kind; readonly id: string };
 
-/** 名札から、人に見せる名前を取る。番号は掴むためのもので、図には無い。 */
-const shown = (picked: Picked): string =>
-  picked.kind === 'part' ? picked.id.split('#')[0] ?? picked.id : picked.id;
+/**
+ * 名札から、人に見せる名前を取る。番号は掴むためのもので、図には無い。
+ * 節点は番地、配線は行番号なので `#` を持たない — どれを渡しても同じ手で済む。
+ */
+export const shownName = (handle: string): string => handle.split('#')[0] ?? handle;
 
-const shownName = (handle: string): string => handle.split('#')[0] ?? handle;
-
-/** 道具。**選ぶ**が既定で、`Esc` でいつでもここへ戻る。`place` は持ち物が部品のとき。 */
-export type Tool = 'select' | 'wire' | 'place';
+/** 道具。**選ぶ**が既定で、`Esc` でいつでもここへ戻る。 */
+export type Tool = 'select' | 'wire';
 
 /**
  * カーソルの下にあるもの (DOM を読むのは `map.ts`)。**全部いっぺんに持つ** —
@@ -50,6 +50,21 @@ export type Under = {
 };
 
 export const NOTHING: Under = { cell: null, part: null, node: null, wire: null };
+
+/**
+ * カーソルの下で鍵の対象になるもの。**部品 > 配線 > 節点**の順 — 部品の升にも
+ * 節点は立つので、どれを掴んだつもりかは重なりの深いほうから決める。
+ * `kinds` を渡すとその種類だけを見る (消すのは部品と配線だけ、など)。
+ *
+ * **押す・ホバーの印・消すの 3 か所が同じ順を使う。** 別々に持つと、
+ * 光っているものと押して選ばれるものが食い違う。
+ */
+export function topOf(under: Under, kinds: readonly Kind[] = ['part', 'wire', 'node']): Picked | null {
+  if (kinds.includes('part') && under.part !== null) return { kind: 'part', id: under.part };
+  if (kinds.includes('wire') && under.wire !== null) return { kind: 'wire', id: under.wire };
+  if (kinds.includes('node') && under.node !== null) return { kind: 'node', id: under.node };
+  return null;
+}
 
 /** カーソルに付いているもの。 */
 export type Carry =
@@ -118,8 +133,6 @@ export type Event =
     readonly shift: boolean;
     /** Ctrl か Cmd (か Alt)。 */
     readonly modifier: boolean;
-    /** 欄に字を打っている最中か (打鍵を横取りしない)。 */
-    readonly typing: boolean;
   }
   | { readonly kind: 'tool'; readonly tool: Tool }
   /** パレットで部品を選んだ。 */
@@ -177,7 +190,7 @@ export function hint(state: State): string {
   if (under.wire !== null) return `${under.wire} 行目の配線: Del 消す`;
   if (under.node !== null) return `${under.node} の節点: G 引きずる (来ているものが丸ごと動く)`;
   if (selected !== null && selected.kind === 'part') {
-    return `${shown(selected)} を選んでいます: M 動かす / R 回す / X 反転 / E 属性 / Del 消す / Esc で外す`;
+    return `${shownName(selected.id)} を選んでいます: M 動かす / R 回す / X 反転 / E 属性 / Del 消す / Esc で外す`;
   }
   return 'A 部品を置く / W 配線 / M 動かす / G 引きずる (鍵はカーソルの下に効きます)';
 }
@@ -209,9 +222,9 @@ function previewAt(carry: Carry, cell: string | null): readonly Message[] {
 }
 
 /** 持ち物を持ち替える (ゴーストは訊き直す)。 */
-const carrying = (state: State, carry: Carry | null): Outcome => {
-  const next: State = { ...state, carry, ghost: null, pressed: null, tool: carry?.kind === 'place' ? 'place' : (carry === null && state.tool === 'place' ? 'select' : state.tool) };
-  return outcome(next, carry === null ? [] : previewAt(carry, state.under.cell));
+const carrying = (state: State, carry: Carry | null, handled = false): Outcome => {
+  const next: State = { ...state, carry, ghost: null, pressed: null };
+  return outcome(next, carry === null ? [] : previewAt(carry, state.under.cell), null, handled);
 };
 
 function onHover(state: State, under: Under): Outcome {
@@ -238,11 +251,7 @@ function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcom
     return outcome({ ...hovered, wireFrom: from, pressed });
   }
 
-  const on: Picked | null = event.under.part !== null
-    ? { kind: 'part', id: event.under.part }
-    : event.under.wire !== null
-      ? { kind: 'wire', id: event.under.wire }
-      : event.under.node !== null ? { kind: 'node', id: event.under.node } : null;
+  const on = topOf(event.under);
 
   if (on === null) {
     // マップの何もない所を押したら選び直し (選んだままだと光が残る)。
@@ -299,7 +308,7 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
       // 持ち上げた穴に戻したのは「選んだ」だけ。
       return carrying(clear, null);
     }
-    const done: State = { ...clear, carry: null, ghost: null, tool: 'select' };
+    const done: State = { ...clear, carry: null, ghost: null };
     if (carry.kind === 'move') {
       return outcome(done, [{ kind: 'move', part: carry.part, to: cell }], `${shownName(carry.part)} を ${cell} へ…`);
     }
@@ -327,7 +336,7 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
 /** 道具の鍵。 */
 function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
   if (event.key === 'Escape') {
-    if (state.carry !== null) return { ...carrying(state, null), handled: true };
+    if (state.carry !== null) return carrying(state, null, true);
     // 配線の引きかけは、道具を抜ける前に 1 点目だけを捨てる。
     if (state.wireFrom !== null) return outcome({ ...state, wireFrom: null, pressed: null }, [], null, true);
     if (state.tool !== 'select') return { ...step(state, { kind: 'tool', tool: 'select' }), handled: true };
@@ -345,8 +354,6 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
     return outcome(state);
   }
 
-  if (event.typing) return outcome(state);
-
   const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
 
   if (key === 'a') return outcome(state, [], null, true, 'search');
@@ -356,9 +363,9 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
   if (state.carry?.kind === 'place') {
     if (key === 'r') {
       const turn = state.carry.turn + (event.shift ? -1 : 1);
-      return { ...carrying(state, { ...state.carry, turn }), handled: true };
+      return carrying(state, { ...state.carry, turn }, true);
     }
-    if (key === 'x') return { ...carrying(state, { ...state.carry, flip: !state.carry.flip }), handled: true };
+    if (key === 'x') return carrying(state, { ...state.carry, flip: !state.carry.flip }, true);
     return outcome(state);
   }
   if (state.carry !== null) return outcome(state);
@@ -371,20 +378,19 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
   if (key === 'g') {
     const node = state.under.node ?? (state.selected?.kind === 'node' ? state.selected.id : null);
     if (node === null) return outcome(state);
-    return { ...carrying(state, { kind: 'drag', node, byPointer: false }), handled: true };
+    return carrying(state, { kind: 'drag', node, byPointer: false }, true);
   }
 
   if (key === 'Delete' || key === 'Backspace') {
-    const picked: Picked | null = state.selected !== null && state.selected.kind !== 'node'
+    // 節点は交点であって物ではないので、消すものが無い。
+    const picked = state.selected !== null && state.selected.kind !== 'node'
       ? state.selected
-      : state.under.part !== null
-        ? { kind: 'part', id: state.under.part }
-        : state.under.wire !== null ? { kind: 'wire', id: state.under.wire } : null;
+      : topOf(state.under, ['part', 'wire']);
     if (picked === null) return outcome(state);
     return outcome(
       { ...state, selected: null, pressed: null },
       [{ kind: 'delete', what: picked.kind, id: picked.id }],
-      `${shown(picked)} を消しています…`,
+      `${shownName(picked.id)} を消しています…`,
       true,
     );
   }
@@ -393,7 +399,7 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
   if (part === null) return outcome(state);
   const picked: Picked = { kind: 'part', id: part };
 
-  if (key === 'm') return { ...carrying({ ...state, selected: picked }, { kind: 'move', part, byPointer: false }), handled: true };
+  if (key === 'm') return carrying({ ...state, selected: picked }, { kind: 'move', part, byPointer: false }, true);
   if (key === 'r') {
     const quarters = event.shift ? -1 : 1;
     return outcome(state, [{ kind: 'turn', part, quarters }], `${shownName(part)} を回しています…`, true);
@@ -430,15 +436,14 @@ export function step(state: State, event: Event): Outcome {
     case 'key':
       return onKey(state, event);
     case 'tool':
-      if (event.tool === 'place') return outcome(state, [], null, false, 'search');
       return outcome(
         { ...state, tool: event.tool, carry: null, ghost: null, wireFrom: null, pressed: null, selected: null },
         [select(null)],
       );
     case 'place': {
       const carry: Carry = { kind: 'place', type: event.type, turn: 0, flip: false, twoEnds: event.twoEnds };
-      const cleared: State = { ...state, selected: null, wireFrom: null };
-      return { ...carrying(cleared, carry), send: [select(null), ...previewAt(carry, state.under.cell)] };
+      const lifted = carrying({ ...state, tool: 'select', selected: null, wireFrom: null }, carry);
+      return { ...lifted, send: [select(null), ...lifted.send] };
     }
     case 'ghost':
       return onGhost(state, event.ghost);

@@ -529,66 +529,53 @@ export function createSession<D extends DocLike>(
    */
   function preview(message: Incoming): void {
     const key = text(message.key) ?? '';
-    const what = text(message.what);
     const answer = (cells: readonly string[], ok: boolean, why = ''): void =>
       host.post({ kind: 'ghost', key, cells, ok, why });
 
     const fence = currentFence(true);
-    if (fence === null) {
-      answer([], false, '');
-      return;
-    }
-    const source = fence.source;
-
-    /** 試し当てのあとの本文。断られたらその理由。 */
-    const tried = (result: EditResult): string | { readonly why: string } =>
-      (result.ok ? applyRewrite(source, result.value) : { why: result.error.message });
-
-    if (what === 'place') {
-      const type = text(message.type);
-      const at = text(message.to);
-      if (type === null || at === null) {
-        answer([], false, '');
-        return;
-      }
-      // 名前は仮。**置く前なので何でもよい**が、既にある名前と重ならないように。
-      const after = tried(editor.addPart(source, { id: GHOST_ID, type, at: [at], ...orientationOf(message) }));
-      if (typeof after !== 'string') {
-        answer([at], false, after.why);
-        return;
-      }
-      answer(editor.cellsOf(after, GHOST_ID), true);
+    const plan = fence === null ? null : plannedFor(message, fence.source);
+    if (fence === null || plan === null) {
+      answer([], false);
       return;
     }
 
+    // **押したときと同じ書き換えを本文の写しに当てて**、そのあとの穴を読む。
+    // 見せた物と書かれる物が食い違わない (文書は触らないので何度でも呼べる)。
+    if (!plan.result.ok) {
+      answer([plan.at], false, plan.result.error.message);
+      return;
+    }
+    answer(plan.cells(applyRewrite(fence.source, plan.result.value)), true);
+  }
+
+  /** ゴーストの問い合わせ 1 件を、書き換えと「そのあとどの穴を読むか」に直す。 */
+  function plannedFor(
+    message: Incoming,
+    source: string,
+  ): { readonly result: EditResult; readonly at: string; readonly cells: (after: string) => readonly string[] } | null {
     const to = text(message.to);
-    if (what === 'move') {
-      const part = text(message.part);
-      if (part === null || to === null) {
-        answer([], false, '');
-        return;
-      }
-      const after = tried(editor.movePart(source, part, to));
-      if (typeof after !== 'string') {
-        answer([to], false, after.why);
-        return;
-      }
-      answer(editor.cellsOf(after, part), true);
-      return;
+    if (to === null) return null;
+
+    if (message.what === 'place') {
+      const type = text(message.type);
+      if (type === null) return null;
+      // 名前は仮。**置く前なので何でもよい**が、既にある名前と重ならないように。
+      const part = { id: GHOST_ID, type, at: [to], ...orientationOf(message) };
+      return { result: editor.addPart(source, part), at: to, cells: (after) => editor.cellsOf(after, GHOST_ID) };
     }
 
-    if (what === 'node') {
+    if (message.what === 'move') {
+      const handle = text(message.part);
+      if (handle === null) return null;
+      return { result: editor.movePart(source, handle, to), at: to, cells: (after) => editor.cellsOf(after, handle) };
+    }
+
+    if (message.what === 'node') {
       const from = text(message.from);
-      if (from === null || to === null) {
-        answer([], false, '');
-        return;
-      }
-      const after = tried(editor.movePoint(source, from, to));
-      answer([to], typeof after === 'string', typeof after === 'string' ? '' : after.why);
-      return;
+      // 節点は交点そのものなので、光るのは行き先の 1 つ (来ているものは動かない)。
+      return from === null ? null : { result: editor.movePoint(source, from, to), at: to, cells: () => [to] };
     }
-
-    answer([], false, '');
+    return null;
   }
 
   /** マップから来た「ここからここへ 1 本」。配線は**交点から交点へ**引く。 */

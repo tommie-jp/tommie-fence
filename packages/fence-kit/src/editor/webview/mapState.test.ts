@@ -18,7 +18,7 @@ const drag = (under: Under, far = true): Event => ({ kind: 'drag', under, x: far
 const release = (under: Under, far = true, shift = false): Event =>
   ({ kind: 'release', under, x: far ? 60 : 10, y: 10, shift });
 const key = (name: string, extra: Partial<Extract<Event, { kind: 'key' }>> = {}): Event =>
-  ({ kind: 'key', key: name, shift: false, modifier: false, typing: false, ...extra });
+  ({ kind: 'key', key: name, shift: false, modifier: false, ...extra });
 const place = (type: string, twoEnds = false): Event => ({ kind: 'place', type, twoEnds });
 
 describe('カーソルの下が対象 (KiCad の型 1)', () => {
@@ -143,7 +143,6 @@ describe('置く', () => {
   test('a pick from the palette becomes a thing on the cursor, and asks for its ghost', () => {
     const { state, send } = step(after(PANEL, hover(AT_B3)), place('transistor'));
 
-    expect(state.tool).toBe('place');
     expect(state.carry).toEqual({ kind: 'place', type: 'transistor', turn: 0, flip: false, twoEnds: false });
     expect(send).toContainEqual(
       { kind: 'preview', key: 'place:transistor:b3:0:0', what: 'place', type: 'transistor', to: 'b3', turn: 0, flip: false },
@@ -220,7 +219,17 @@ describe('置く', () => {
 
   test('A asks the page to open the chooser', () => {
     expect(step(PANEL, key('a')).focus).toBe('search');
-    expect(step(PANEL, { kind: 'tool', tool: 'place' }).focus).toBe('search');
+    expect(step(PANEL, key('a')).handled).toBe(true);
+  });
+
+  test('picking while the wire tool is out drops the half-drawn wire and the tool', () => {
+    const wiring = after(PANEL, key('w'), press(AT_B3), release(AT_B3, false));
+
+    const { state } = step(wiring, place('resistor', true));
+
+    expect(state.wireFrom).toBeNull();
+    expect(state.tool).toBe('select');
+    expect(state.carry?.kind).toBe('place');
   });
 });
 
@@ -277,10 +286,6 @@ describe('戻す・やり直す', () => {
 });
 
 describe('打鍵を横取りしない', () => {
-  test('ignores keys typed into a field', () => {
-    expect(step(after(PANEL, hover(ON_R1)), key('r', { typing: true })).send).toEqual([]);
-  });
-
   test('forgets the press and the pointer-lifted thing when the pointer is cancelled', () => {
     const dragged = after(PANEL, press(ON_R1), drag(AT_B3));
 
