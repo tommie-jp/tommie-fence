@@ -159,6 +159,7 @@ platform-specific binary), so it is for development machines only.
 | Polarity | Tag the hole with a pin name | `D1: led b12(A) b13(K) red` |
 | Three-lead part | One hole per leg | `Q1: transistor h9(B) h10(C) h11(E) 2SC1815` |
 | DIP | Write pin 1's hole; the rest follows | `U1: dip8 @ e5 NJM4556A` |
+| Orientation | `r180` on a part placed by one anchor (pin 1 moves to the other end) | `U1: dip8 @ e5 r180` |
 | Off-board device | Map form with `type: device` | see the examples |
 | Wire | `- end -- end [-- end …] [colour]` | `- a10 -- b12 -- b20 red` |
 | Wire into a lead's hole | The part slides to a free row in the same columns (same nets) | `- j20 -- -b20 black` |
@@ -202,9 +203,10 @@ swapping a spelling inside a line.
   with it; a node (a hole) takes everything written at it, so they are kept
 - **Placing, deleting, wiring, turning and editing names and values all work.**
   The palette searches by type name, abbreviation or Japanese name, and a new
-  part is named with the smallest free number for its prefix. Turning and
-  flipping work on two-lead parts, whose orientation *is* the order of the holes,
-  so the grammar needs no new word
+  part is named with the smallest free number for its prefix. **Turning (`R`) and
+  flipping (`M`) rewrite different things depending on what you grabbed** — a part
+  written as a row of holes moves its addresses, while one placed by a single
+  anchor gets its orientation word and its row rewritten
 - **Nothing stops you before the move.** It compares the netlist before and after
   and lists the connections the move broke and the ones it made. Holes in the
   same column are already connected, so sliding within one strip says nothing
@@ -212,7 +214,8 @@ swapping a spelling inside a line.
   that line**
 - **The YAML is never rebuilt**: your comments and formatting survive
 
-Turning parts with three or more leads is still done in text.
+A tactile switch cannot be turned and a single-row header cannot be flipped:
+both are symmetric, so the drawing would not change.
 More in [docs/03-図を掴んで動かす.md](docs/03-図を掴んで動かす.md) (Japanese).
 
 ## Examples
