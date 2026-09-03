@@ -146,6 +146,32 @@ export const isOnBoard = (board: Board, address: Address): boolean =>
   address.col >= 1 && address.col <= board.cols && address.row >= 1 && address.row <= board.rows;
 
 /**
+ * スロット用の銅箔の番地か。**穴の並びのすぐ外**の 1 列 (または 1 行) が
+ * それに当たる — 描く側 (`render/slots.ts`) が穴 1 つぶん離した所に置いている。
+ *
+ * `slots:` を書いていない板には無い (そこはただの余白)。
+ */
+export function isSlot(board: Board, address: Address): boolean {
+  const edges = slotEdges(board);
+  if (edges === null) return false;
+  return edges === 'sides'
+    ? (address.col === 0 || address.col === board.cols + 1)
+      && address.row >= 1 && address.row <= board.rows
+    : (address.row === 0 || address.row === board.rows + 1)
+      && address.col >= 1 && address.col <= board.cols;
+}
+
+/**
+ * 半田付けできる場所か。**穴とスロットの銅箔**が当たる。
+ *
+ * 部品の足は穴にしか挿さらない (銅箔には穴が無い) が、**配線は半田付けなので
+ * 銅箔にも付く** — 実物のスロットはそのために付いている (電源の引き回し)。
+ * だから置く先は `isOnBoard`、配線の端は `isSolderable` で見る。
+ */
+export const isSolderable = (board: Board, address: Address): boolean =>
+  isOnBoard(board, address) || isSlot(board, address);
+
+/**
  * 番地が属する導通グループ。**ユニバーサル基板は全穴が独立している**ので、
  * 穴 1 つがそのままグループになる。ブレッドボードは同じ列の 5 穴が内部で
  * つながっていて列がグループになるが、ここには内部の導通が無い。

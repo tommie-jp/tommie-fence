@@ -1,6 +1,7 @@
 import { element, num } from 'fence-kit';
 import { formatAddress } from '../model/address.ts';
 import type { Layout } from '../model/layout.ts';
+import { slotEdges } from '../model/board.ts';
 import type { Address, Board } from '../types.ts';
 
 /**
@@ -25,8 +26,13 @@ const DOT = 0.5;
  * 掴むための層。`used` は何かが書かれている穴 (節点の点を出す先)、
  * `names` は `points:` が付けた名前 (番地 → 名前)。
  *
- * 升は**板の穴だけ**に置く。板の外の番地 (`a0` や `-a-1`) は穴が無く、
- * 置いても掴む先にならない (配線の行き先としては書けるが、それは字で書く話)。
+ * 升は**半田付けできる所**に置く — 穴と、`slots:` を書いた板の縁の銅箔。
+ * 銅箔には穴が無いので部品は挿さらないが、**配線は半田付けなので付く**
+ * (実物のスロットはそのために付いている)。掴めないと、書ける配線が
+ * マップからだけ引けないことになる。
+ *
+ * それ以外の板の外 (`-a-1` など) には置かない。配線の行き先としては書けるが、
+ * そこは字で書く話で、押す先が無い。
  */
 export function renderHits(
   board: Board,
@@ -37,6 +43,17 @@ export function renderHits(
   const addresses: Address[] = [];
   for (let row = 1; row <= board.rows; row += 1) {
     for (let col = 1; col <= board.cols; col += 1) addresses.push({ row, col });
+  }
+  // 縁の銅箔。**描いてある所と同じ番地** (`render/slots.ts` が穴 1 つぶん外に置く)。
+  const edges = slotEdges(board);
+  if (edges === 'sides') {
+    for (let row = 1; row <= board.rows; row += 1) {
+      addresses.push({ row, col: 0 }, { row, col: board.cols + 1 });
+    }
+  } else if (edges === 'ends') {
+    for (let col = 1; col <= board.cols; col += 1) {
+      addresses.push({ row: 0, col }, { row: board.rows + 1, col });
+    }
   }
 
   const size = layout.pitch * CELL;

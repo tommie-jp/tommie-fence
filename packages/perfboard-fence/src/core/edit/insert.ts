@@ -3,7 +3,7 @@ import type { LineEdit, NetDiff } from 'fence-kit';
 import { fenceError } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { formatAddress } from '../model/address.ts';
-import { isOnBoard } from '../model/board.ts';
+import { isOnBoard, isSolderable } from '../model/board.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { holesOf, partPrefix } from '../parts/catalog.ts';
 import { resolveTypeName } from '../parts/types.ts';
@@ -45,7 +45,9 @@ export function insertWire(source: string, from: Address, to: Address): Addition
 
   const board = doc.board;
   for (const end of [from, to]) {
-    if (!isOnBoard(board, end)) return fail(`${formatAddress(end)} は板の外です`, null);
+    // **配線の端は半田付けできる所なら通す。** 穴のほかにスロットの銅箔がある
+    // (実物のスロットは電源を引き回すために付いている)。置く先は穴だけ。
+    if (!isSolderable(board, end)) return fail(`${formatAddress(end)} は板の外です`, null);
   }
   // 長さ 0 の線は図に出ない (押し間違いでしか生まれない)。
   if (formatAddress(from) === formatAddress(to)) {
