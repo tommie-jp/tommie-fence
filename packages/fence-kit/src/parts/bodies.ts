@@ -42,6 +42,10 @@ export type BodyInk = {
 /** そのままの色で描く (色のある図)。 */
 export const REAL_INK: BodyInk = { paint: (color) => color };
 
+/** CdS の受光面の折り返しの数と、豆電球のフィラメントの巻き数。 */
+const CDS_FINGERS = 5;
+const FILAMENT_TURNS = 3;
+
 /** 水晶の缶。足より張り出す幅と、缶の高さ・持ち上げ。 */
 const CAN_OVERHANG = 6;
 const CAN_MIN_WIDTH = 26;
@@ -273,20 +277,37 @@ function discBody(span: number, fill: string, stroke: string, ink: BodyInk, mark
   });
 }
 
-/** CdS セル。受光面の蛇行した抵抗体が、この部品の見分けどころそのもの。 */
+/**
+ * CdS セル。**受光面の櫛形の抵抗体**が、この部品の見分けどころそのもの。
+ *
+ * 前は山が 2 つの折れ線 (`W`) を 1 本引いていたが、それは**抵抗の回路記号**で
+ * あって実物ではない。実物は細い帯が何度も折り返して face を覆っている。
+ */
 function photoresistorBody(span: number, ink: BodyInk): string {
   const radius = Math.min(span * 0.45, 9.5);
   const disc = element('circle', {
     cx: 0, cy: 0, r: num(radius), fill: ink.paint('#d9c27a'), stroke: ink.paint('#8a7530'),
   });
-  const step = radius / 2.2;
-  const zigzag = element('path', {
-    d: `M ${num(-radius * 0.7)} ${num(-radius * 0.55)} `
-      + `l ${num(step)} ${num(radius * 1.1)} l ${num(step)} ${num(-radius * 1.1)} `
-      + `l ${num(step)} ${num(radius * 1.1)} l ${num(step)} ${num(-radius * 1.1)}`,
-    fill: 'none', stroke: ink.paint('#4a3c12'), 'stroke-width': 1.6, 'stroke-linejoin': 'round',
+
+  // 折り返す帯。**円に収まる範囲で**縦の指を並べ、上下を交互につなぐ。
+  const fingers = CDS_FINGERS;
+  const reach = radius * 0.72;
+  const step = (reach * 2) / (fingers - 1);
+  const top = -radius * 0.62;
+  const bottom = radius * 0.62;
+  const path = Array.from({ length: fingers }, (_, index) => {
+    const x = -reach + index * step;
+    const down = index % 2 === 0;
+    const start = index === 0 ? `M ${num(x)} ${num(down ? top : bottom)}` : '';
+    return `${start} L ${num(x)} ${num(down ? bottom : top)}`
+      + (index === fingers - 1 ? '' : ` L ${num(x + step)} ${num(down ? bottom : top)}`);
+  }).join(' ');
+
+  const track = element('path', {
+    d: path, fill: 'none', stroke: ink.paint('#4a3c12'),
+    'stroke-width': num(Math.max(radius * 0.13, 0.8)), 'stroke-linejoin': 'round', 'stroke-linecap': 'round',
   });
-  return disc + zigzag;
+  return disc + track;
 }
 
 /** ガラス管の胴。リードスイッチとヒューズが共有する。 */
@@ -324,23 +345,49 @@ function fuseBody(span: number, ink: BodyInk): string {
   return glassTube(width, 13, ink) + wire + cap(-width / 2 + 3) + cap(width / 2 - 3);
 }
 
-/** 豆電球。ガラス球とフィラメント、下に口金。 */
+/**
+ * 豆電球。**ガラス球と、下のねじ口金**。
+ *
+ * 前はフィラメントを大きな `Λ` で描いていたが、それは**回路記号の中の絵**で
+ * あって実物ではない。実物は細い線を巻いたフィラメントが 2 本の支柱に架かり、
+ * 下にねじ山の見える金属の口金が付く。
+ */
 function lampBody(span: number, ink: BodyInk): string {
   const radius = Math.min(span * 0.42, 10);
+  const glass = ink.paint('#f2eac2');
+  const metal = ink.paint('#b9c0c9');
+  const edge = ink.paint('#7c848e');
+  const wire = ink.paint('#a9713a');
+
   const bulb = element('circle', {
-    cx: 0, cy: num(-radius * 0.35), r: num(radius),
-    fill: ink.paint('#f2eac2'), stroke: ink.paint('#a99a54'), 'fill-opacity': 0.9,
+    cx: 0, cy: num(-radius * 0.45), r: num(radius), fill: glass, stroke: ink.paint('#a99a54'), 'fill-opacity': 0.9,
   });
-  const filament = element('path', {
-    d: `M ${num(-radius * 0.4)} ${num(radius * 0.15)} l ${num(radius * 0.4)} ${num(-radius * 0.7)} `
-      + `l ${num(radius * 0.4)} ${num(radius * 0.7)}`,
-    fill: 'none', stroke: ink.paint('#a9713a'), 'stroke-width': 1.6,
+  // 支柱 2 本と、その間に架かる巻きフィラメント。
+  const post = (side: number): string => element('line', {
+    x1: num(side * radius * 0.3), y1: num(radius * 0.2), x2: num(side * radius * 0.3), y2: num(-radius * 0.45),
+    stroke: wire, 'stroke-width': num(Math.max(radius * 0.1, 0.8)),
   });
+  const coil = element('path', {
+    d: `M ${num(-radius * 0.3)} ${num(-radius * 0.45)} `
+      + Array.from({ length: FILAMENT_TURNS }, () =>
+        `a ${num(radius * 0.1)} ${num(radius * 0.1)} 0 0 1 ${num((radius * 0.6) / FILAMENT_TURNS)} 0`).join(' '),
+    fill: 'none', stroke: wire, 'stroke-width': num(Math.max(radius * 0.12, 0.9)),
+  });
+  // ねじ口金。ねじ山を 2 本の線で示す (実物の見分けどころ)。
+  const baseTop = radius * 0.2;
+  const baseHeight = radius * 0.75;
   const base = element('rect', {
-    x: num(-radius * 0.6), y: num(radius * 0.25), width: num(radius * 1.2), height: num(radius * 0.6), rx: 1.5,
-    fill: ink.paint('#b9c0c9'), stroke: ink.paint('#7c848e'),
+    x: num(-radius * 0.62), y: num(baseTop), width: num(radius * 1.24), height: num(baseHeight), rx: 1.5,
+    fill: metal, stroke: edge,
   });
-  return bulb + filament + base;
+  const threads = [0.35, 0.65]
+    .map((at) => element('line', {
+      x1: num(-radius * 0.62), y1: num(baseTop + baseHeight * at),
+      x2: num(radius * 0.62), y2: num(baseTop + baseHeight * at),
+      stroke: edge, 'stroke-width': 0.8,
+    }))
+    .join('');
+  return bulb + post(-1) + post(1) + coil + base + threads;
 }
 
 /**

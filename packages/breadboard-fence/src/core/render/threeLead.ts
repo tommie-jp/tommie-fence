@@ -78,10 +78,32 @@ function shellOf(
   if (part.type === 'potentiometer') return potentiometerShell(center, reach, halfWidth);
   if (part.type === 'slide-switch') return slideSwitchShell(center, reach, halfWidth);
   if (part.variant === 'to220') return to220Shell(center, reach, halfWidth, towardRavine, theme);
-  return element('circle', {
+  return to92Shell(center, reach, towardRavine, theme);
+}
+
+/**
+ * TO-92。上から見ると**片側が平らな D 形**で、足はその平らな面の側に並ぶ。
+ * 丸だけで描くと**どちらが平らな面か分からず**、実物を差すときに裏返せてしまう
+ * (ピン名は書いてあるが、実物の胴には書いていない — 見分けは平らな面が本体)。
+ */
+function to92Shell(center: Point, reach: number, towardRavine: number, theme: RenderTheme): string {
+  // 平らな面は足の並ぶ側 (キャプションと反対)。
+  const flatY = center.y - towardRavine * reach * 0.62;
+  const body = element('circle', {
     cx: num(center.x), cy: num(center.y), r: num(reach),
     fill: theme.palette.chipBody, stroke: '#14171c',
   });
+  const half = Math.sqrt(Math.max(reach * reach - (reach * 0.62) ** 2, 0));
+  const flat = element('rect', {
+    x: num(center.x - half), y: num(towardRavine > 0 ? flatY : flatY - reach * 0.38),
+    width: num(half * 2), height: num(reach * 0.38),
+    fill: theme.palette.chipBody, stroke: 'none',
+  });
+  const edge = element('line', {
+    x1: num(center.x - half), y1: num(flatY), x2: num(center.x + half), y2: num(flatY),
+    stroke: '#14171c', 'stroke-width': 1.4,
+  });
+  return body + flat + edge;
 }
 
 /**
