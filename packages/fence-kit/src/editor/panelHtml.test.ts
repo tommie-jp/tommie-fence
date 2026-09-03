@@ -130,17 +130,20 @@ describe('道具の色', () => {
       [['w'], '--cf-joins'],
       [['m', 'g'], '--cf-moves'],
       [['r', 'x'], '--cf-turns'],
-      [['Delete'], '--cf-bad'],
+      [['Delete'], '--cf-drops'],
     ] as const) {
       for (const key of keys) expect(html).toContain(`.kc-tool[data-key="${key}"] .kc-glyph`);
       expect(html).toContain(`color: var(${color})`);
     }
   });
 
-  test('gives every colour a fallback, so the icons are coloured without a theme', () => {
-    for (const name of ['--cf-adds', '--cf-joins', '--cf-moves', '--cf-turns']) {
-      expect(html).toMatch(new RegExp(`${name}: var\\(--vscode-charts-\\w+, #`));
+  test('does not take the icon colours from the theme charts, which go pale', () => {
+    // グラフの系列色は明るいテーマで淡く出る (実機で「黄色は見にくい」)。
+    // 白地でも黒地でも読める濃さに決め打ちする。
+    for (const name of ['--cf-adds', '--cf-joins', '--cf-moves', '--cf-turns', '--cf-drops']) {
+      expect(html).toMatch(new RegExp(`${name}: #[0-9a-f]{6};`));
     }
+    expect(html).not.toContain('--vscode-charts-');
   });
 });
 

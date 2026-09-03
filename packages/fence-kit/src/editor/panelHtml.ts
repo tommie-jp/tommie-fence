@@ -27,20 +27,30 @@ const STYLE = `
     /* 記号の地。線の上に載る字の縁取りにも使う (図側から色名で引ける)。 */
     --cf-paper: var(--vscode-editor-background, Canvas);
     --cf-ink: var(--vscode-foreground, CanvasText);
-    --cf-node: var(--vscode-charts-blue, var(--vscode-focusBorder));
+    --cf-node: #1f6feb;
     /** 選んだものの色。**選択は一等分かりやすくする**ので、テーマが無い所でも
         必ず色が出るように、システムの強調色まで落とす。 */
     --cf-held: var(--vscode-focusBorder, Highlight);
     /* 道具の絵の色。**意味の同じ道具は同じ色**にする — 9 つに 9 色を配ると、
        色そのものが覚える手がかりにならない。増える / つなぐ / 動く / 向きが
-       変わる / 減る、の 5 つだけに分ける。 */
-    --cf-adds: var(--vscode-charts-green, #3fb950);
-    --cf-joins: var(--vscode-charts-blue, #4c8eda);
-    --cf-moves: var(--vscode-charts-orange, #d18616);
-    --cf-turns: var(--vscode-charts-purple, #b180d7);
+       変わる / 減る、の 5 つだけに分ける。
+
+       **テーマのグラフ色 (vscode-charts) は使わない。** あれは系列を見分ける
+       ための色で、明るいテーマだと淡く出る (実機で「黄色は見にくい」と
+       言われた。橙が黄色に寄っていた)。白地でも黒地でも読める濃さに決め打つ。
+       **この CSS はテンプレートリテラルの中**なので、コメントにバックティックを
+       書かない (書くと文字列がそこで切れて、ビルドが謎の構文エラーで落ちる)。 */
+    --cf-adds: #1f8b4c;
+    --cf-joins: #1f6feb;
+    --cf-moves: #b3541e;
+    --cf-turns: #7c3aed;
+    --cf-drops: #c62828;
+    /* カーソルの下のもの。**選んだもの (青) と別の色**にする — 触れているだけの
+       ものと選んだものが同じ色だと、どちらの状態か分からない。 */
+    --cf-aim: #b3541e;
     --cf-bad: var(--vscode-editorError-foreground, #f14c4c);
     --cf-iffy: var(--vscode-editorWarning-foreground, #cca700);
-    --cf-ghost: var(--vscode-charts-green, #4caf50);
+    --cf-ghost: #1f8b4c;
     --kc-line: var(--vscode-panel-border, #444);
     /* **最後はシステム色で受ける。** 変数の無い所 (VS Code の外) で
        透けると、浮かぶものが図の上で読めなくなる。 */
@@ -117,7 +127,7 @@ const STYLE = `
   .kc-tool[data-key="g"] .kc-glyph { color: var(--cf-moves); }
   .kc-tool[data-key="r"] .kc-glyph,
   .kc-tool[data-key="x"] .kc-glyph { color: var(--cf-turns); }
-  .kc-tool[data-key="Delete"] .kc-glyph { color: var(--cf-bad); }
+  .kc-tool[data-key="Delete"] .kc-glyph { color: var(--cf-drops); }
   /* 選んでいる道具は地が反転するので、絵の色は地に負けないよう地の色に戻す。 */
   body[data-tool="select"] .kc-tool[data-tool="select"] .kc-glyph,
   body[data-tool="wire"] .kc-tool[data-tool="wire"] .kc-glyph,
@@ -261,9 +271,9 @@ const STYLE = `
 
   /* エディタのカーソルが指しているもの。掴んでいる印とは別の色。 */
   .cf-aim .cf-glyph, .cf-aim .cf-glyph-line, .cf-aim .cf-lead, .cf-aim .cf-pin,
-  .cf-wire.cf-aim { stroke: var(--vscode-charts-orange, var(--cf-node)); stroke-width: 2.5; }
-  .cf-aim .cf-name { fill: var(--vscode-charts-orange, var(--cf-node)); }
-  .cf-aim .cf-dot-mark { stroke: var(--vscode-charts-orange, var(--cf-node)); stroke-width: 3; }
+  .cf-wire.cf-aim { stroke: var(--cf-aim); stroke-width: 2.5; }
+  .cf-aim .cf-name { fill: var(--cf-aim); }
+  .cf-aim .cf-dot-mark { stroke: var(--cf-aim); stroke-width: 3; }
 
   /* 選んだもの。**中の線を塗り替えるのは記号のマップ (circuit) だけに効く** —
      breadboard と perfboard の .cf-chip は実物の姿そのもので、塗り替える線が
