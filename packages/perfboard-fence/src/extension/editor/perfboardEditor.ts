@@ -67,21 +67,21 @@ export function createPerfboardEditor(): FenceEditor {
     typeNames: renderTypeOptions,
     nextId: nextPartId,
 
-    movePart: (source, handle, to) => {
+    movePart: (source, handle, to, trial) => {
       const at = readAddress(to);
       if (at === null) return unreadable(to);
       if (!movablePartIds(source).includes(handle)) {
         return { ok: false, error: { message: `動かせる部品ではありません: ${handle}`, line: null } };
       }
-      return movePart(source, handle, at);
+      return movePart(source, handle, at, trial?.preview === true);
     },
 
-    movePoint: (source, from, to) => {
+    movePoint: (source, from, to, trial) => {
       const at = readAddress(from);
       const target = readAddress(to);
       if (at === null) return unreadable(from);
       if (target === null) return unreadable(to);
-      return movePoint(source, at, target);
+      return movePoint(source, at, target, trial?.preview === true);
     },
 
     deletePart,
@@ -113,6 +113,7 @@ export function createPerfboardEditor(): FenceEditor {
         at: at as NonNullable<typeof at[number]>[],
         turn: part.turn ?? 0,
         flip: part.flip ?? false,
+        preview: part.preview ?? false,
       });
     },
     turn: turnPart,

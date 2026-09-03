@@ -74,6 +74,17 @@ export type NewPart = {
   /** 90 度を何回 (正が時計回り)。無ければ 0。 */
   readonly turn?: number;
   readonly flip?: boolean;
+} & Trial;
+
+/**
+ * **試し当て**の印。ゴーストは「どの穴を使うか」だけを見て捨てるので、
+ * 接続の変化 (`diff`) を数えない — 数えるには図を 2 枚組み直すことになり、
+ * 穴をまたぐたびに払うと拡張ホストが詰まる (置く・動かすの 5.3ms のうち 5.3ms)。
+ *
+ * 書き換えそのものは同じ関数を通る (見せた物と書かれる物を食い違わせない)。
+ */
+export type Trial = {
+  readonly preview?: boolean;
 };
 
 /** 1 回の書き換え。行の中の差し替えと、行の出し入れの両方を持てる。 */
@@ -141,8 +152,8 @@ export type FenceEditor = {
   /** 種類の名前の候補 (`datalist`)。欄で種類を打ち替えるときに出す。 */
   readonly typeNames: (listId: string) => string;
 
-  readonly movePart: (source: string, handle: string, to: string) => EditResult;
-  readonly movePoint: (source: string, from: string, to: string) => EditResult;
+  readonly movePart: (source: string, handle: string, to: string, trial?: Trial) => EditResult;
+  readonly movePoint: (source: string, from: string, to: string, trial?: Trial) => EditResult;
   readonly addPart: (source: string, part: NewPart) => EditResult;
   readonly addWire: (source: string, from: string, to: string, operator: string) => EditResult;
   readonly deletePart: (source: string, handle: string) => EditResult;

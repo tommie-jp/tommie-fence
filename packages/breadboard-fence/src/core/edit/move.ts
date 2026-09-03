@@ -134,7 +134,7 @@ export function partSpans(source: string, id: string): readonly Span[] {
     : located.tokens.map((token) => ({ line: found.part.line, column: token.column, length: token.length }));
 }
 
-export function movePart(source: string, id: string, to: Address): MoveResult {
+export function movePart(source: string, id: string, to: Address, trial = false): MoveResult {
   const found = locatePart(source, id);
   if (!isLocated(found)) return { ok: false, error: found.error };
 
@@ -170,5 +170,5 @@ export function movePart(source: string, id: string, to: Address): MoveResult {
     edits.push({ line: found.part.line, column: token.column, length: token.length, text: written });
   }
 
-  return { ok: true, value: { edits, diff: diffAfter(source, edits) } };
+  return { ok: true, value: { edits, diff: trial ? { lost: [], gained: [] } : diffAfter(source, edits) } };
 }

@@ -38,6 +38,8 @@ export type NewPart = {
   /** 置く前に回す (90 度を何回。正が時計回り) ・反転する。ゴーストの向きのまま書く。 */
   readonly turn?: number;
   readonly flip?: boolean;
+  /** ゴーストの試し当て。**接続の変化を数えない** (捨てるので。fence-kit の `Trial`)。 */
+  readonly preview?: boolean;
 };
 
 /**
@@ -71,7 +73,7 @@ function oriented(source: string, spec: NewPart, added: readonly LineEdit[]): Re
       return at === undefined ? null : placed.split('\n')[at - 1] ?? null;
     },
   });
-  return result.ok ? addition(source, result.lines) : { ok: false, error: result.error };
+  return result.ok ? addition(source, result.lines, spec.preview === true) : { ok: false, error: result.error };
 }
 
 /** 鍵の行 (1 始まり)。無ければ 0。 */
@@ -106,10 +108,15 @@ const afterLast = (lines: readonly string[]): number => {
 const spell = (endpoint: Endpoint): string =>
   (endpoint.kind === 'cell' ? formatAddress(endpoint.address) : `${endpoint.part}.${endpoint.pin}`);
 
-/** 足した行から書き換えを組み立て、前後のネットリストを比べる。 */
-function addition(source: string, lines: readonly LineEdit[]): RewriteResult {
+/**
+ * 足した行から書き換えを組み立て、前後のネットリストを比べる。
+ * **試し当て (ゴースト) では比べない** — 捨てる値のために図を 2 枚組み直さない。
+ */
+function addition(source: string, lines: readonly LineEdit[], trial = false): RewriteResult {
   const rewrite = { edits: [], lines, diff: { lost: [], gained: [] } };
-  return { ok: true, value: { ...rewrite, diff: diffOf(source, applyRewrite(source, rewrite)) } };
+  return trial
+    ? { ok: true, value: rewrite }
+    : { ok: true, value: { ...rewrite, diff: diffOf(source, applyRewrite(source, rewrite)) } };
 }
 
 const OFF_GRID = `格子の外へは置けません (a〜z の 26 行、1〜${LIMITS.columns} 列)`;

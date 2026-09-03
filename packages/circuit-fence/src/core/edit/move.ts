@@ -39,7 +39,7 @@ export function anchorOf(source: string, handle: string): Address | null {
   return part ? (addressesOf(part)[0] as Address) : null;
 }
 
-export function movePart(source: string, handle: string, to: Address): MoveResult {
+export function movePart(source: string, handle: string, to: Address, trial = false): MoveResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   if (!doc) return fail('フェンスを読めないので動かせません (先にエラーを直します)', null);
@@ -83,7 +83,7 @@ export function movePart(source: string, handle: string, to: Address): MoveResul
 
   return {
     ok: true,
-    value: { edits, diff: diffOf(normalized, applyEdits(normalized, edits)) },
+    value: { edits, diff: trial ? { lost: [], gained: [] } : diffOf(normalized, applyEdits(normalized, edits)) },
   };
 }
 

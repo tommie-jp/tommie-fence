@@ -31,7 +31,7 @@ export type { Attributes } from './markup.ts';
 export { describeDiff, strippedIndent } from './editor/edits.ts';
 export type { Connection, Edit, LineEdit, NetDiff, Rewrite, Span } from './editor/edits.ts';
 export type {
-  Aim, EditChanges, EditResult, FenceEditor, FenceEntry, FenceView, NewPart, PartField, PartFields,
+  Aim, EditChanges, EditResult, FenceEditor, FenceEntry, FenceView, NewPart, PartField, PartFields, Trial,
 } from './editor/fenceEditor.ts';
 
 /**

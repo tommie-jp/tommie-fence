@@ -256,7 +256,7 @@ function wouldSquash(doc: Circuit, at: Address, to: Address): string | null {
   return wire ? `${wire.line} 行目の配線` : null;
 }
 
-export function movePoint(source: string, at: Address, to: Address): MoveResult {
+export function movePoint(source: string, at: Address, to: Address, trial = false): MoveResult {
   const normalized = normalizeNewlines(source);
   const { doc, errors } = parseFence(normalized);
   if (!doc) return fail('フェンスを読めないので動かせません (先にエラーを直します)', null);
@@ -312,5 +312,5 @@ export function movePoint(source: string, at: Address, to: Address): MoveResult 
     return fail(`${formatAddress(at)} を書いている場所を全部は書き換えられませんでした (書き方を見て手で直します)`, null);
   }
 
-  return { ok: true, value: { edits, diff: diffOf(normalized, after) } };
+  return { ok: true, value: { edits, diff: trial ? { lost: [], gained: [] } : diffOf(normalized, after) } };
 }

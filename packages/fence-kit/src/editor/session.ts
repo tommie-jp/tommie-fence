@@ -257,6 +257,15 @@ export function createSession<D extends DocLike>(
     return null;
   }
 
+  /**
+   * 直前に組んだ姿。**同じ本文なら組み直さない。**
+   *
+   * 1 回の書き換えで組み直しが 2 度来る — 文書が変わった知らせと、操作を捌いた
+   * あとの 1 回。どちらも同じ本文を見るので、2 度目は同じ図を組み直して同じ
+   * HTML を送り直すだけになる (図 1 枚 6ms + webview の入れ替え)。
+   */
+  let lastView: { readonly key: string; readonly view: MapView } | null = null;
+
   function viewNow(followCursor: boolean): MapView {
     const fence = currentFence(followCursor);
     if (fence === null) {
@@ -264,12 +273,19 @@ export function createSession<D extends DocLike>(
       return { html: note, picker: '', issues: '' };
     }
 
+    // 一覧は文書全体から組むので、本文だけでなく文書も鍵に入れる。
+    const markdown = fence.document.getText();
+    const key = `${uriOf(fence.document)}\u0000${fence.line}\u0000${markdown}`;
+    if (lastView !== null && lastView.key === key) return lastView.view;
+
     const view = editor.view(fence.source, fence.line);
-    return {
+    const now: MapView = {
       html: view.map,
-      picker: renderFencePicker(editor.fences(fence.document.getText()), fence.line),
+      picker: renderFencePicker(editor.fences(markdown), fence.line),
       issues: view.issues,
     };
+    lastView = { key, view: now };
+    return now;
   }
 
   /**
@@ -328,12 +344,20 @@ export function createSession<D extends DocLike>(
     host.post({ kind: 'aim', what: aim.kind, id: aim.id });
   }
 
+  /** webview へ最後に送った姿。**同じものを送り直さない** (下の `refreshWith`)。 */
+  let posted: MapView | null = null;
+
   function refreshWith(followCursor: boolean): void {
     // **地図を組んでから履歴の状態を送る。** 別の文書へ移ったときに履歴を
     // 捨てるのはこの中なので、先に送るとボタンが有効なまま取り残される。
     const now = viewNow(followCursor);
     if (ownHistory) host.post({ kind: 'history', ...history.state() });
-    host.post({ kind: 'map', ...now });
+    // **同じ図なら送らない。** 送ると webview が中身を入れ替え、掴んでいたものと
+    // カーソルの下が捨てられる (見た目は同じなのに手つきだけが途切れる)。
+    if (posted !== now) {
+      posted = now;
+      host.post({ kind: 'map', ...now });
+    }
     // **マップを入れ替えると webview は掴みを捨てる。** こちらの光も消さないと、
     // 掴んでいないのにエディタが光ったままになる。
     light([]);
@@ -564,20 +588,26 @@ export function createSession<D extends DocLike>(
       const from = text(message.from);
       const at = from === null ? [to] : [from, to];
       // 名前は仮。**置く前なので何でもよい**が、既にある名前と重ならないように。
-      const part = { id: GHOST_ID, type, at, ...orientationOf(message) };
+      const part = { id: GHOST_ID, type, at, ...orientationOf(message), preview: true };
       return { result: editor.addPart(source, part), at: to, cells: (after) => editor.cellsOf(after, GHOST_ID) };
     }
 
     if (message.what === 'move') {
       const handle = text(message.part);
       if (handle === null) return null;
-      return { result: editor.movePart(source, handle, to), at: to, cells: (after) => editor.cellsOf(after, handle) };
+      return {
+        result: editor.movePart(source, handle, to, { preview: true }),
+        at: to,
+        cells: (after) => editor.cellsOf(after, handle),
+      };
     }
 
     if (message.what === 'node') {
       const from = text(message.from);
       // 節点は交点そのものなので、光るのは行き先の 1 つ (来ているものは動かない)。
-      return from === null ? null : { result: editor.movePoint(source, from, to), at: to, cells: () => [to] };
+      return from === null
+        ? null
+        : { result: editor.movePoint(source, from, to, { preview: true }), at: to, cells: () => [to] };
     }
     return null;
   }

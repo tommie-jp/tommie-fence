@@ -195,7 +195,7 @@ function shifted(address: Address, to: Address, columns: number): Address | null
   return address;
 }
 
-export function movePoint(source: string, at: Address, to: Address): MoveResult {
+export function movePoint(source: string, at: Address, to: Address, trial = false): MoveResult {
   const doc = scan(source);
   if (doc === null) return fail('フェンスを読めませんでした', null);
 
@@ -227,7 +227,7 @@ export function movePoint(source: string, at: Address, to: Address): MoveResult 
     .filter((one) => !one.byName)
     .map((one) => ({ line: one.line, column: one.column, length: one.length, text: written }));
 
-  return { ok: true, value: { edits, diff: diffAfter(source, edits) } };
+  return { ok: true, value: { edits, diff: trial ? { lost: [], gained: [] } : diffAfter(source, edits) } };
 }
 
 /** その節点を書いている場所の数と名前 (お知らせに使う)。 */

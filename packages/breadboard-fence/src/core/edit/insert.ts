@@ -76,7 +76,16 @@ export type NewPart = {
   readonly at: readonly Address[];
   readonly turn?: number;
   readonly flip?: boolean;
+  /** ゴーストの試し当て。**接続の変化を数えない** (捨てるので。fence-kit の `Trial`)。 */
+  readonly preview?: boolean;
 };
+
+/** 何も変わらなかったことにする差分 (試し当て)。 */
+const NO_DIFF: NetDiff = { lost: [], gained: [] };
+
+/** 接続の変化。**試し当てのときは数えない** — 図を 2 枚組み直すぶんが丸ごと浮く。 */
+const diffFor = (part: NewPart, source: string, lines: readonly LineEdit[]): NetDiff =>
+  (part.preview === true ? NO_DIFF : diffAfterLines(source, lines));
 
 /**
  * 押した穴 1 つから、残りの足を**同じ行の右へ**並べる。押した穴がアンカー
@@ -115,7 +124,7 @@ function oriented(source: string, part: NewPart, added: readonly LineEdit[]): Ad
     },
   });
   return result.ok
-    ? { ok: true, value: { edits: [], lines: result.lines, diff: diffAfterLines(source, result.lines) } }
+    ? { ok: true, value: { edits: [], lines: result.lines, diff: diffFor(part, source, result.lines) } }
     : { ok: false, error: result.error };
 }
 

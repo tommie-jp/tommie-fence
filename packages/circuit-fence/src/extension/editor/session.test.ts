@@ -774,6 +774,38 @@ describe('配線を引く', () => {
   });
 });
 
+describe('組み直し', () => {
+  test('does not rebuild or resend the map when the source has not changed', () => {
+    // 1 回の書き換えで組み直しが 2 度来る (文書が変わった知らせと、操作を捌いたあと)。
+    // 同じ本文なら図を組み直さず、webview へも送り直さない — 送ると中身が入れ替わり、
+    // 掴んでいたものとカーソルの下が捨てられる。
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    session.refresh();
+    const first = host.sent.filter((message) => message.kind === 'map').length;
+    session.refresh();
+    session.refresh();
+
+    expect(host.sent.filter((message) => message.kind === 'map').length).toBe(first);
+  });
+
+  test('sends the map again once the source really changed', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+    session.refresh();
+    const before = host.sent.filter((message) => message.kind === 'map').length;
+
+    await session.handle({ kind: 'addPart', type: 'ground', at: ['c5'] });
+
+    expect(host.sent.filter((message) => message.kind === 'map').length).toBe(before + 1);
+  });
+});
+
 describe('部品を置く', () => {
   test('writes a one-terminal part where the map said, naming it from the prefix', () => {
     const doc = docOf(A, RC);

@@ -203,6 +203,25 @@ describe('insertPart: 1 穴で置く (マップの 1 クリック)', () => {
     expect(placedAt('resistor', 'c10', { turn: 2 })).toContain('R2: resistor c10 c5');
   });
 
+  test('writes the same line for a trial, but does not count what it would connect', () => {
+    // ゴーストは穴しか見ずに捨てるので、**接続を数えるために図を 2 枚組み直さない**
+    // (置く・動かすの 5.3ms のほぼ全部がそれ)。書く行は本番と 1 字も変わらない。
+    const real = insertPart(WITH_WIRES, { id: 'Q1', type: 'transistor', at: [at('c5')] });
+    const trial = insertPart(WITH_WIRES, { id: 'Q1', type: 'transistor', at: [at('c5')], preview: true });
+
+    expect(trial.ok && trial.value.lines).toEqual(real.ok && real.value.lines);
+    expect(trial.ok && trial.value.diff).toEqual({ lost: [], gained: [] });
+    // 本番は「R1 とつながる」と言う (同じ列の穴なので)。
+    expect(real.ok && real.value.diff.gained).toEqual([['Q1.1', 'R1.1']]);
+  });
+
+  test('refuses a trial for the same reasons as the real thing', () => {
+    const trial = insertPart(WITH_WIRES, { id: 'Q9', type: 'transistor', at: [at('c29')], preview: true });
+
+    expect(trial.ok).toBe(false);
+    expect(!trial.ok && trial.error.message).toContain('2 穴');
+  });
+
   test('finds the line it wrote by reading the fence back, not by the spelling at the head', () => {
     // `points:` に同じ名前があると、行の頭が `Q1:` の行が 2 つになる。綴りで探すと
     // 先に書いてあるほうを掴み、置いた行が `Q1: c20` に化ける。

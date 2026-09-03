@@ -90,24 +90,31 @@ export function createCircuitEditor(): FenceEditor {
     palette: renderPalette,
     typeNames: renderTypeOptions,
 
-    movePart: (source, handle, to) => {
+    movePart: (source, handle, to, trial) => {
       const at = parseAddress(to);
-      return at === null ? unreadable(to) : movePart(source, handle, at);
+      return at === null ? unreadable(to) : movePart(source, handle, at, trial?.preview === true);
     },
 
-    movePoint: (source, from, to) => {
+    movePoint: (source, from, to, trial) => {
       const at = parseAddress(from);
       const target = parseAddress(to);
       if (at === null) return unreadable(from);
       if (target === null) return unreadable(to);
-      return movePoint(source, at, target);
+      return movePoint(source, at, target, trial?.preview === true);
     },
 
     addPart: (source, part: NewPart) => {
       const at = addresses(part.at);
       return typeof at === 'string'
         ? unreadable(at)
-        : insertPart(source, { id: part.id, type: part.type, at, turn: part.turn ?? 0, flip: part.flip ?? false });
+        : insertPart(source, {
+          id: part.id,
+          type: part.type,
+          at,
+          turn: part.turn ?? 0,
+          flip: part.flip ?? false,
+          preview: part.preview ?? false,
+        });
     },
 
     addWire: (source, from, to, operator) => {
