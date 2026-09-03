@@ -453,17 +453,16 @@ function flatCan(part: BodyPart, span: number, metal: string, edge: string, ink:
     x: num(-width / 2 + 4), y: num(-height / 2 + 3), width: num(Math.max(width - 8, 2)), height: 3, rx: 1.5,
     fill: ink.paint('#dfe4ee'),
   });
-  // 足の出口は**缶の内側**に置く。缶より広い間隔に挿したときは、そこから穴まで
-  // 足が伸びて見える (実物も足を開いて挿す)。缶が穴を覆う間隔なら線は出ない。
+  // 足の出口は**中心線の左と右**。足の穴は 2 つとも中心線の上に並ぶので、
+  // 足はそこへ向かって缶の両端から出る (下の角から出るのは実物と違う)。
+  // 缶より広い間隔に挿したときは、出口から穴まで足が伸びて見える。
   const legX = Math.min(span / 2, Math.max(width / 2 - 4, 1));
   const eyelets = [-1, 1]
-    .map((at) => element('circle', {
-      cx: num(at * legX), cy: num(height / 2 + CAN_BASE_EDGE / 2), r: 1.8, fill: edge,
-    }))
+    .map((at) => element('circle', { cx: num(at * legX), cy: 0, r: 2, fill: edge }))
     .join('');
   const legs = [-1, 1]
     .map((at) => element('line', {
-      x1: num(at * legX), y1: num(height / 2), x2: num((at * span) / 2), y2: 0,
+      x1: num(at * legX), y1: 0, x2: num((at * span) / 2), y2: 0,
       stroke: edge, 'stroke-width': 1.6,
     }))
     .join('');
