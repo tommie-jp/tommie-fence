@@ -173,15 +173,19 @@ down to swapping the address spelling inside a line.
 
 - **circuit Editor** — pick it from the editor picker at the top of a `.md` tab
   (`Text Editor ▾`, or `View: Reopen Editor With...`) and the tab itself becomes
-  the map. **Drag** onto the crossing you want (a click only selects, it never
-  moves). A band at the top picks the tool (`V` select, `W` wire, `N` node);
-  when the document holds several fences, a list at the top picks one. The grid
+  the map. **The interaction follows KiCad and is the same in all three
+  fences** — keys act on what is under the cursor: `M` lifts a part and a click
+  puts it down (dragging works too), `A` places a part, `W` draws a wire, `R` /
+  `X` turn and flip, `Esc` backs out. Tools sit in a column on the right,
+  properties on the left, a status row at the bottom. See fence-kit's
+  [docs/01-図を掴んで動かす.md](../fence-kit/docs/01-図を掴んで動かす.md).
+  When the document holds several fences, a list at the top picks one. The grid
   draws **part shapes and wires** (the drawing stays the authority on symbols;
   the map is a likeness for seeing what sits where). Open the same document
   beside it as a text editor or Markdown preview: edits show up at once, and
   the map and the editor **point at each other** — what you select lights up
   where it is written, and what the cursor sits on lights up on the map
-- `Circuit Fence: 部品を動かす (マップ)` — opens the same map in a panel beside the editor
+- `Circuit Fence: 図を掴んで動かす (マップ)` — opens the same map in a panel beside the editor
 - `Circuit Fence: 部品を動かす` — pick a part, type the address to move it to
 - `Circuit Fence: 節点を動かす` — pick a node, type the address to move it to
 
@@ -198,21 +202,23 @@ VS Code's undo cannot reach the editor while the panel has focus). Your
 comments and formatting survive: only the address spelling is replaced. The
 drawing catches up a few seconds after the edit.
 
-**Edit fields.** Selecting a part opens a small form under the map (name, type,
-value, label). It applies on `Enter` or when the field loses focus, and renaming
+**Edit fields.** Selecting a part (or pressing `E`) opens a form on the left
+(name, type, value, label). It applies on `Enter` or when the field loses focus, and renaming
 carries the wires that point at its pins and the notes that point at it.
 
-**Place parts.** Pick a type from the palette at the top and it becomes the
-placing tool: drag between two crossings for a two-terminal part, click one
-crossing for the rest. Ids are numbered per prefix from the smallest unused
-number (`R1`, then `R2`); only `port` / `vcc` / `vee`, whose id is drawn as a
-net name, are asked for. Search by type name, short form or Japanese name.
+**Place parts.** `A` opens a chooser over the canvas; pick a type and a ghost
+follows the cursor. Set its orientation with `R` / `X` and **place it with one
+click** (a two-terminal part spans two cells to the right; drag to choose the
+span). The same type stays on the cursor until `Esc`. Ids are numbered per
+prefix from the smallest unused number (`R1`, then `R2`); `port` / `vcc` /
+`vee`, whose id is drawn as a net name, get a default name (`IN` / `VCC` /
+`VEE`) to be fixed in the form. Search by type name, short form or Japanese name.
 
-**Draw wires.** With the wire tool (`W`), drag from one crossing to another and
-a line is added to `wires:` (hold `Shift` as you let go to bend sideways first).
+**Draw wires.** `W`, click one crossing, click another (or drag) and a line is
+added to `wires:` (hold `Shift` on the second click to bend sideways first).
 
-**Select, then delete or turn.** Click on the map to select, `Delete` removes,
-`R` turns a quarter clockwise and `M` flips. Removal takes whole lines: deleting
+**Delete or turn.** With the cursor on a part, `Delete` removes, `R` turns a
+quarter clockwise and `X` flips (a selected part takes precedence). Removal takes whole lines: deleting
 a part takes the wires that point at its pins with it, and the band says how
 many. **What gets rewritten depends on what you grabbed** — a two-terminal part
 has its far end moved (the order of its two addresses *is* its orientation),

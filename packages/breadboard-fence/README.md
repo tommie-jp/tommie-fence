@@ -198,13 +198,20 @@ swapping a spelling inside a line.
   `Breadboard Fence: 図を掴んで動かす (マップ)`
 - **You grab the drawing itself** — not a separate grid. A transparent hit layer
   sits over the holes, so what you see and what you grab never disagree
-- The band at the top switches **tools** — select, wire, node, and "place" once
-  you pick from the palette. A part moves on its own and the connections change
-  with it; a node (a hole) takes everything written at it, so they are kept
+- **The interaction follows KiCad and is the same in all three fences** — keys
+  act on what is under the cursor: `M` lifts a part and a click puts it down
+  (dragging works too), `A` places a part, `W` draws a wire, `G` drags a node.
+  Tools sit in a column on the right, properties on the left, a status row at
+  the bottom. See fence-kit's
+  [docs/01-図を掴んで動かす.md](../fence-kit/docs/01-図を掴んで動かす.md).
+  A part moves on its own and the connections change with it; a node (a hole)
+  takes everything written at it, so they are kept
 - **Placing, deleting, wiring, turning and editing names and values all work.**
-  The palette searches by type name, abbreviation or Japanese name, and a new
-  part is named with the smallest free number for its prefix. **Turning (`R`) and
-  flipping (`M`) rewrite different things depending on what you grabbed** — a part
+  `A` picks a type, a ghost follows the cursor and **one click places it** (a
+  two-lead part gets its default span, a three-lead part spreads two holes to
+  the right). Search by type name, abbreviation or Japanese name; a new part is
+  named with the smallest free number for its prefix. **Turning (`R`) and
+  flipping (`X`) rewrite different things depending on what you grabbed** — a part
   written as a row of holes moves its addresses, while one placed by a single
   anchor gets its orientation word and its row rewritten
 - **Nothing stops you before the move.** It compares the netlist before and after
