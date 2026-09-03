@@ -55,6 +55,8 @@ export {
 } from './editor/lines.ts';
 export { leadOffsets, leadSpan, needsRoom, orientInserted } from './editor/place.ts';
 export type { OrientResult, Rewritten } from './editor/place.ts';
+export { checkFenceEditor, paletteTwoEnds, paletteTypes } from './editor/contract.ts';
+export type { ContractFixture } from './editor/contract.ts';
 export { renderIssues } from './editor/issues.ts';
 export type { IssueRow } from './editor/issues.ts';
 export { TYPE_LIST_ID, makeNonce, panelHtml, renderFencePicker } from './editor/panelHtml.ts';
