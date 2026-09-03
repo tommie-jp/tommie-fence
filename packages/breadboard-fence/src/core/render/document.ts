@@ -104,7 +104,7 @@ export function renderDocument(input: DocumentInput): string {
         return placement ? renderDevice(part, placement, theme) : '';
       }),
     // 注釈は板・部品・配線の上に重ねる。回路の一員ではないので最後に置く。
-    renderNotes(input.notes, layout, theme, input.sourceLines),
+    renderNotes(input.notes, layout, theme, input.sourceLines, edit !== null),
     renderPartsList(listed, layout.board.x, figure, layout.board.width, theme),
     renderOutsideNotes(input.notes, layout.board.x, figure + list, layout.board.width, theme, input.sourceLines),
     // 掴む層は**いちばん上**。下に敷くと、部品や配線が押しを先に取ってしまう。

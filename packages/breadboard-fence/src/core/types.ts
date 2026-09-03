@@ -1,7 +1,7 @@
+import type { Turn } from './parts/orient.ts';
 // フェンス構文からレンダリングまでで共有する型。DOM にも Node にも依存しない。
 
-import type { Turn } from './parts/orient.ts';
-import type { NoteAlign, NoteColor, NoteKind, NoteLeading, NotePlace, NoteSize } from './notes.ts';
+import type { NoteAlign, NoteColor, NoteKind, NoteLeading, NotePlace, NoteSize, NoteTurn } from './notes.ts';
 
 export const HOLE_ROWS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] as const;
 export type HoleRow = (typeof HOLE_ROWS)[number];
@@ -158,6 +158,11 @@ export type NoteSpec = {
   readonly bold: boolean;
   /** `box` の枠を実線にする。既定は破線。 */
   readonly solid: boolean;
+  /**
+   * 字の向き (`text` だけ)。回るのは**指し先のまわり**で、`mirror` は字を
+   * 裏返さず**指し先の反対側へ移す** (鏡文字は読めない)。
+   */
+  readonly turn: NoteTurn;
   /** `source` の行送り。 */
   readonly leading: NoteLeading | null;
   /** `text` に書かれた字。それ以外は null。 */

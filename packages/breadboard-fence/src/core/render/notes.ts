@@ -55,13 +55,26 @@ const ANCHORS: Record<NoteAlign, 'start' | 'middle' | 'end'> = {
  * 注釈を図の上に重ねる。**板・部品・配線を描き終えたあと**に呼ぶ。
  * 注釈は回路の一員ではないので、ネットにも部品リストにも入らない。
  */
+/**
+ * 掴み手の名札。**注釈には名前が無いので行番号で指す** (配線と同じ考え方)。
+ * 部品と同じ `data-part` に載せるので、殻は注釈を部品として扱える —
+ * 選ぶ・動かす・複製する・消すが**そのまま通る**。
+ */
+export const noteHandle = (line: number): string => `note:${line}`;
+
 export function renderNotes(
   notes: readonly ResolvedNote[],
   layout: Layout,
   theme: RenderTheme,
   sourceLines: readonly string[],
+  edit = false,
 ): string {
-  return onBoard(notes).map((note) => renderNote(note, layout, theme, sourceLines)).join('');
+  return onBoard(notes).map((note) => {
+    const drawn = renderNote(note, layout, theme, sourceLines);
+    return edit
+      ? element('g', { class: 'cf-chip', 'data-part': noteHandle(note.spec.line) }, drawn)
+      : drawn;
+  }).join('');
 }
 
 /** 板の上に重ねる注釈と、図の外に置く注釈。場所の語を書いたものが後者。 */
@@ -275,8 +288,17 @@ function renderText(
   const align: NoteAlign = spec.align ?? 'left';
   const step = size * noteLeading(spec.leading, spec.kind);
   const room = roomFor(anchor.center.x, align, layout);
+  // **反転は字を裏返さない。** 鏡文字は読めないので、指し先の**反対側**へ移す。
+  // 上に何かあって字が重なるときに、下へ逃がすためのもの。
+  const baseline = anchor.center.y + (spec.turn.mirror ? step + size * 0.4 : 0);
 
-  return textLines(spec, lines, anchor.center.x, anchor.center.y, step, room, theme, true);
+  const drawn = textLines(spec, lines, anchor.center.x, baseline, step, room, theme, true);
+  // 回すのは**指し先のまわり**。字の真ん中で回すと、指した所から離れていく。
+  return spec.turn.rotate === 0
+    ? drawn
+    : element('g', {
+      transform: `rotate(${num(spec.turn.rotate)} ${num(anchor.center.x)} ${num(anchor.center.y)})`,
+    }, drawn);
 }
 
 /**

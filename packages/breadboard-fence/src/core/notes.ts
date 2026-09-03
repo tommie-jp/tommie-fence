@@ -88,3 +88,25 @@ export const noteLeading = (leading: NoteLeading | null, kind: NoteKind): number
 /** 指し先を 1 つだけ書く種類か。書く数が合っているかの検証に使う。 */
 export const noteTargetCount = (kind: NoteKind): number =>
   kind === 'box' || kind === 'arrow' || kind === 'line' ? 2 : 1;
+
+/**
+ * 字の向き。**部品と違って 4 方向とも回る** — 板の溝は部品の置き方を縛るが、
+ * 字は縛らない (`parts/orient.ts` の `Turn` は半周だけなので借りない)。
+ *
+ * 語は部品と同じ綴り (`r90` / `r180` / `r270` / `mirror`)。3 つのフェンスを
+ * 同じノートで書く人が覚え直さなくてよいようにするため。
+ */
+export type NoteTurn = { readonly rotate: 0 | 90 | 180 | 270; readonly mirror: boolean };
+
+export const NO_NOTE_TURN: NoteTurn = { rotate: 0, mirror: false };
+
+const NOTE_ROTATIONS: Readonly<Record<string, 90 | 180 | 270>> = { r90: 90, r180: 180, r270: 270 };
+
+export const NOTE_MIRROR_WORD = 'mirror';
+
+export const isNoteRotation = (word: string): boolean => word in NOTE_ROTATIONS;
+
+export const noteRotationOf = (word: string): NoteTurn['rotate'] | null => NOTE_ROTATIONS[word] ?? null;
+
+/** その角度を書く語。0 度は語を書かない (書かないのと同じ意味)。 */
+export const noteRotationWord = (rotate: NoteTurn['rotate']): string => (rotate === 0 ? '' : `r${rotate}`);

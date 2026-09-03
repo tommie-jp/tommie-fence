@@ -11,6 +11,10 @@ import { flipPart, turnPart } from '../../core/edit/turn.ts';
 import { movePart, movablePartIds, partSpans, stepCell } from '../../core/edit/move.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import { deletePart, deleteWire } from '../../core/edit/remove.ts';
+import {
+  deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans,
+  setNoteField, turnNote,
+} from '../../core/edit/note.ts';
 import { extractBreadboardFences } from '../../core/fences.ts';
 import { renderBreadboard } from '../../core/index.ts';
 import { parseAddress } from '../../core/model/address.ts';
@@ -52,17 +56,19 @@ export function createBreadboardEditor(): FenceEditor {
     aimAt,
 
     spansOf: (source, what, id) => {
+      if (isNoteHandle(id)) return noteSpans(source, id);
       if (what !== 'node') return partSpans(source, id);
       const at = readAddress(id);
       return at === null ? [] : nodeSpans(source, at);
     },
 
-    fieldsOf: partFields,
+    fieldsOf: (source, handle) => (isNoteHandle(handle) ? noteFields(source, handle) : partFields(source, handle)),
 
     // 名札は「同じ名前が 2 つ以上あるとき」に要る。breadboard の ID は
     // 配線から指すための名前なので重ならない — 名札はそのまま名前。
-    nameOf: (handle) => handle,
-    cellsOf: partCells,
+    // 注釈には名前が無いので、名札は行番号。人に見せるときは「注釈」と呼ぶ。
+    nameOf: (handle) => (isNoteHandle(handle) ? `注釈 (${noteLineOf(handle) ?? '?'} 行目)` : handle),
+    cellsOf: (source, handle) => (isNoteHandle(handle) ? noteCells(source, handle) : partCells(source, handle)),
     // 配線は穴から穴へ 1 本 (折れの綴りが文法に無い)。
     foldsWire: false,
     step: stepCell,
@@ -74,6 +80,7 @@ export function createBreadboardEditor(): FenceEditor {
     movePart: (source, handle, to, trial) => {
       const at = readAddress(to);
       if (at === null) return unreadable(to);
+      if (isNoteHandle(handle)) return moveNote(source, handle, at, trial?.preview === true);
       if (!movablePartIds(source).includes(handle)) {
         return { ok: false, error: { message: `動かせる部品ではありません: ${handle}`, line: null } };
       }
@@ -88,7 +95,7 @@ export function createBreadboardEditor(): FenceEditor {
       return movePoint(source, at, target, trial?.preview === true);
     },
 
-    deletePart,
+    deletePart: (source, handle) => (isNoteHandle(handle) ? deleteNote(source, handle) : deletePart(source, handle)),
     deleteWire,
 
     addWire: (source, from, to) => {
@@ -102,7 +109,9 @@ export function createBreadboardEditor(): FenceEditor {
     rename: renamePart,
 
     setField: (source, handle, field, text) => (
-      field === 'type' || field === 'value' || field === 'label'
+      isNoteHandle(handle)
+        ? setNoteField(source, handle, field, text)
+        : field === 'type' || field === 'value' || field === 'label'
         ? setField(source, handle, field as PartField, text)
         : { ok: false, error: { message: `書き換えられない欄です: ${field}`, line: null } }
     ),
@@ -120,8 +129,10 @@ export function createBreadboardEditor(): FenceEditor {
         preview: part.preview ?? false,
       });
     },
-    duplicate: duplicatePart,
-    turn: turnPart,
-    flip: flipPart,
+    duplicate: (source, handle, id) => (isNoteHandle(handle) ? duplicateNote(source, handle) : duplicatePart(source, handle, id)),
+    turn: (source, handle, quarters) => (
+      isNoteHandle(handle) ? turnNote(source, handle, quarters) : turnPart(source, handle, quarters)
+    ),
+    flip: (source, handle) => (isNoteHandle(handle) ? flipNote(source, handle) : flipPart(source, handle)),
   };
 }

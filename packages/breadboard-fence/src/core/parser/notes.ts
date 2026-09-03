@@ -2,26 +2,31 @@ import { fail, ok, safeToken } from '../errors.ts';
 import { LIMITS, clampText, isReferenceable } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
 import {
-  DEFAULT_MARK_COLOR, DEFAULT_PLACE, NOTE_ALIGNS, NOTE_COLORS, NOTE_KINDS, NOTE_LEADINGS, NOTE_PLACES,
-  NOTE_SIZES, PLACEABLE_KINDS, noteTargetCount,
+  DEFAULT_MARK_COLOR, DEFAULT_PLACE, NOTE_ALIGNS, NOTE_COLORS, NOTE_KINDS, NOTE_LEADINGS, NOTE_MIRROR_WORD,
+  NOTE_PLACES, NOTE_SIZES, PLACEABLE_KINDS, isNoteRotation, noteRotationOf, noteTargetCount,
 } from '../notes.ts';
-import type { NoteAlign, NoteColor, NoteKind, NoteLeading, NotePlace, NoteSize } from '../notes.ts';
+import type {
+  NoteAlign, NoteColor, NoteKind, NoteLeading, NotePlace, NoteSize, NoteTurn,
+} from '../notes.ts';
 import type { NoteSpec, Result } from '../types.ts';
 
+
 /** その種類が受け取れる語。ここに無い語を書いたら、黙って捨てずに報告する。 */
-type WordSlot = 'color' | 'size' | 'align' | 'bold' | 'solid' | 'leading';
+type WordSlot = 'color' | 'size' | 'align' | 'bold' | 'solid' | 'leading' | 'rotate' | 'mirror';
 
 const SLOTS: Record<NoteKind, readonly WordSlot[]> = {
   circle: ['color'],
   box: ['color', 'solid'],
   arrow: ['color'],
   line: ['color'],
-  text: ['color', 'size', 'align', 'bold'],
+  // **向きは字だけ。** 印や枠には表と裏が無い。語彙は部品と揃える。
+  text: ['color', 'size', 'align', 'bold', 'rotate', 'mirror'],
   source: ['color', 'size', 'align', 'bold', 'leading'],
 };
 
 const SLOT_NAMES: Record<WordSlot, string> = {
   color: '色', size: '大きさ', align: '寄せ', bold: '太字', solid: '実線', leading: '行送り',
+  rotate: '向き', mirror: '反転',
 };
 
 const isKind = (word: string): word is NoteKind => (NOTE_KINDS as readonly string[]).includes(word);
@@ -34,6 +39,8 @@ function slotOf(word: string): WordSlot | null {
   if ((NOTE_LEADINGS as readonly string[]).includes(word)) return 'leading';
   if (word === 'bold') return 'bold';
   if (word === 'solid') return 'solid';
+  if (isNoteRotation(word)) return 'rotate';
+  if (word === NOTE_MIRROR_WORD) return 'mirror';
   return null;
 }
 
@@ -108,6 +115,7 @@ export function parseNoteLine(head: string, text: string | null, line: number): 
     color: words.value.color ?? (kind === 'text' || kind === 'source' ? null : DEFAULT_MARK_COLOR),
     size: words.value.size,
     align: words.value.align,
+    turn: { rotate: words.value.rotate, mirror: words.value.mirror },
     bold: words.value.bold,
     solid: words.value.solid,
     leading: words.value.leading,
@@ -123,6 +131,10 @@ type Words = {
   bold: boolean;
   solid: boolean;
   leading: NoteLeading | null;
+  /** 字の向き。**時計回り**の角度で、語は部品と同じ (`r90` / `r180` / `r270`)。 */
+  rotate: NoteTurn['rotate'];
+  /** 字を指し先の反対側へ移すか (`mirror`)。**鏡文字にはしない** — 読めなくなる。 */
+  mirror: boolean;
 };
 
 /**
@@ -130,7 +142,10 @@ type Words = {
  * (`red blue` と書いた人は、どちらが効くかを当てにできない)。
  */
 function readWords(kind: NoteKind, tokens: readonly string[], line: number): Result<Words> {
-  const words: Words = { color: null, size: null, align: null, bold: false, solid: false, leading: null };
+  const words: Words = {
+    color: null, size: null, align: null, bold: false, solid: false, leading: null,
+    rotate: 0, mirror: false,
+  };
   const filled = new Set<WordSlot>();
   const allowed = SLOTS[kind];
 
@@ -157,6 +172,8 @@ function readWords(kind: NoteKind, tokens: readonly string[], line: number): Res
     else if (slot === 'align') words.align = token as NoteAlign;
     else if (slot === 'leading') words.leading = token as NoteLeading;
     else if (slot === 'bold') words.bold = true;
+    else if (slot === 'rotate') words.rotate = noteRotationOf(token) ?? 0;
+    else if (slot === 'mirror') words.mirror = true;
     else words.solid = true;
   }
 
