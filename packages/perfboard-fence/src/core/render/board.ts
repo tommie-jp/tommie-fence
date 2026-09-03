@@ -1,4 +1,5 @@
 import { element, num, svgText } from 'fence-kit';
+import { slotEdges } from '../model/board.ts';
 import { axisLabel } from './labels.ts';
 import type { Layout } from '../model/layout.ts';
 import type { Board } from '../types.ts';
@@ -77,11 +78,20 @@ export function renderBoard(
       'font-size': num(metrics.textSize),
     });
 
-  for (let row = 1; row <= board.rows; row += 1) {
+  // **スロットの銅箔にも番号を出す。** 配線の端は銅箔にも付けられるので、
+  // `slots: c0 -- c1` と書くには番号が要る。銅箔は穴の並びの外側 1 本
+  // (`0` と `最後 + 1`) にあり、`isSlot` と同じ数え方 (実機で指摘された)。
+  const edges = slotEdges(board);
+  const rowFrom = edges === 'ends' ? 0 : 1;
+  const rowTo = edges === 'ends' ? board.rows + 1 : board.rows;
+  const colFrom = edges === 'sides' ? 0 : 1;
+  const colTo = edges === 'sides' ? board.cols + 1 : board.cols;
+
+  for (let row = rowFrom; row <= rowTo; row += 1) {
     if (labels.sides.includes('left')) drawn.push(rowLabelAt(x - LABEL_OFFSET, row));
     if (labels.sides.includes('right')) drawn.push(rowLabelAt(x + width + LABEL_OFFSET, row));
   }
-  for (let col = 1; col <= board.cols; col += 1) {
+  for (let col = colFrom; col <= colTo; col += 1) {
     if (labels.sides.includes('top')) drawn.push(colLabelAt(y - LABEL_OFFSET, col));
     // 下の名前はベースラインが板から離れる向きに来るので、字の高さぶん下げる。
     if (labels.sides.includes('bottom')) {

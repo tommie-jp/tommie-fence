@@ -101,3 +101,36 @@ describe('名前を出す辺', () => {
     expect(sidesOf([])).not.toContain('</text>');
   });
 });
+
+describe('スロットの銅箔の番号', () => {
+  const numbered = (size: { cols: number; rows: number }, slots: boolean): string => {
+    const one = createBoard(size, { slots });
+    return renderBoard(one, createLayout(one), THEME);
+  };
+
+  test('numbers the copper outside the holes, so a wire can be written to it', () => {
+    // 配線の端は銅箔にも付く (`isSolderable`)。**番号が出ていないと書けない**
+    // ので、`slots:` を書いた板では穴の並びの外側 1 本にも番号を出す。
+    const wide = numbered({ cols: 6, rows: 4 }, true);
+
+    // 横長は左右が銅箔 (`slotEdges` が 'sides')。列は 0 から 7 まで。
+    expect(wide).toMatch(/>0<\/text>/);
+    expect(wide).toMatch(/>7<\/text>/);
+  });
+
+  test('numbers the rows instead when the copper runs along the ends', () => {
+    // 縦長は上下が銅箔。行が 0 と最後 + 1 まで伸びる (列は伸びない)。
+    const tall = numbered({ cols: 4, rows: 6 }, true);
+
+    expect(tall).toMatch(/>0<\/text>/);
+    expect(tall).toMatch(/>G<\/text>/);
+    expect(tall).not.toMatch(/>5<\/text>/);
+  });
+
+  test('leaves a board without the copper numbered as before', () => {
+    const plain = numbered({ cols: 6, rows: 4 }, false);
+
+    expect(plain).not.toMatch(/>0<\/text>/);
+    expect(plain).not.toMatch(/>7<\/text>/);
+  });
+});
