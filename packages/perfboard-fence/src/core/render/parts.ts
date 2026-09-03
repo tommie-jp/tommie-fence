@@ -1,11 +1,9 @@
-import {
-  DEFAULT_LED_COLOR, bandColor, capacitorCode, element, fit, inductorCode, ledColor, num,
-  parseMicrohenries, parsePicofarads, parseResistor, resistorBands, svgText,
-} from 'fence-kit';
+import { REAL_INK, drawBody, element, fit, hasBody, num, svgText } from 'fence-kit';
+import type { BodyInk, BodyPart } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Layout } from '../model/layout.ts';
 import {
-  BODY_HEIGHT, DOME_SIZE, SMA_BASE, SMA_PLAIN, SMA_SIZE, bodyRect, edgeMountOf,
+  BODY_HEIGHT, SMA_BASE, SMA_PLAIN, SMA_SIZE, bodyRect, edgeMountOf,
 } from '../placement/geometry.ts';
 import { hatchFill } from './hatch.ts';
 import { isEdgeMount } from '../parts/types.ts';
@@ -17,16 +15,6 @@ import type { Theme } from './theme.ts';
 const LEAD_WIDTH = 2;
 /** 胴の下端からキャプションまで。**胴の大きさで変わる部品**があるので、下端から測る。 */
 const CAPTION_GAP = 8;
-/**
- * カラーコードの帯の幅と、胴の端から空ける幅。**実物の帯は太い** — 細いと
- * 色が読み取りにくく、印刷や縮小で消える。
- */
-const BAND_WIDTH = 6;
-/** 帯どうしの隙間。**狭いほど実物に近い** — 実物の帯はほとんど隣り合っている。 */
-const BAND_GAP = 2;
-/** 胴の両端に残す地の色。ここが無いと、帯が胴の縁で切れているように見える。 */
-const BAND_END = 5;
-
 /** 図に出す名前と値。値が無ければ名前だけ。 */
 const caption = (part: PlacedPart): string =>
   part.value === null ? part.id : `${part.id} ${clampText(part.value, LIMITS.labelLength)}`;
@@ -126,63 +114,6 @@ function beside(tilt: number): { readonly x: number; readonly y: number } {
 }
 
 const degrees = (radians: number): number => (radians * 180) / Math.PI;
-
-/**
- * 抵抗の胴。値が抵抗として読めるときだけカラーコードを塗る。
- * **読めない値で帯を描かない** — 実物と違う帯は、図を信じた人を間違えさせる。
- */
-function resistorBody(part: PlacedPart, width: number, theme: Theme): string {
-  const shell = element('rect', {
-    x: num(-width / 2), y: num(-BODY_HEIGHT / 2), width: num(width), height: BODY_HEIGHT,
-    rx: 4, fill: theme.palette.body, stroke: theme.palette.bodyEdge, 'stroke-width': 1,
-  });
-
-  // 値のうしろに許容差と温度係数を書ける (`10k 1% 50ppm`)。帯の本数はそれで決まる —
-  // 2 桁なら 4 帯、3 桁要るなら 5 帯、温度係数を書いたら 6 帯。
-  const read = part.value === null ? null : parseResistor(part.value);
-  const bands = read === null
-    ? null
-    : resistorBands(read.ohms, { tolerance: read.tolerance, tempco: read.tempco });
-  if (bands === null) return shell;
-
-  // **帯はひとかたまりで胴の真ん中に置く。** 実物の帯は隣り合っていて、
-  // 胴の両端には地の色が残る — 端まで広げると、帯が縁で切れて見える。
-  // 入りきらない短い胴では、隙間ではなく**帯のほうを細くする**
-  // (隙間を詰めると 2 色が 1 本に見え、読み違いになる)。
-  const room = Math.max(width - BAND_END * 2, 1);
-  const gaps = BAND_GAP * (bands.length - 1);
-  const bandWidth = Math.max(Math.min(BAND_WIDTH, (room - gaps) / bands.length), 1);
-  const step = bandWidth + BAND_GAP;
-  const start = -(bandWidth * bands.length + gaps) / 2;
-  // **白黒の図では帯も網に移す** (`hatch.ts`)。色を落とすと帯が読めなくなるが、
-  // 網なら凡例から引ける — 部品表の色欄 (`茶黒橙茶`) と合わせて、刷った図でも
-  // 手元の抵抗と読み合わせられる。
-  const stripes = bands
-    .map((name, index) => element('rect', {
-      x: num(start + index * step), y: num(-BODY_HEIGHT / 2 + 1),
-      width: num(bandWidth), height: BODY_HEIGHT - 2,
-      fill: theme.hatch === true ? hatchFill(name, theme.palette.caption) : bandColor(name),
-    }))
-    .join('');
-  return shell + stripes;
-}
-
-/**
- * LED の玉。色は書かれた値から引き、知らない色でも既定で描く (足の位置は変わらない)。
- * 大きさは当たり判定と同じ定数から取る (`placement/geometry.ts`)。
- *
- * **白黒の図では色を網に移す** (`hatch.ts`)。実物の色なのでテーマでは動かない
- * ものだが、白黒に色が 1 つだけ残ると「色で意味を持たせない」が破れる。
- */
-function ledBody(part: PlacedPart, theme: Theme): string {
-  const written = part.value === null ? null : part.value.toLowerCase();
-  const fill = theme.hatch === true && written !== null
-    ? hatchFill(written, theme.palette.caption)
-    : (written === null ? null : ledColor(written)) ?? DEFAULT_LED_COLOR;
-  return element('circle', {
-    cx: 0, cy: 0, r: num(DOME_SIZE / 2), fill, stroke: '#00000033', 'stroke-width': 1,
-  });
-}
 
 /** 同軸コネクタの金物と、中の絶縁体の色。**実物の色**なのでテーマから触らせない。 */
 const SMA_METAL = '#b9bfc6';
@@ -346,121 +277,85 @@ const genericBody = (width: number, theme: Theme): string =>
   });
 
 /**
- * インダクタの胴。**実物と同じ 3 桁コードを刷る** (`100u` なら `101`、µH 基準)。
- *
- * 実物には色帯のものもあるが、**帯にすると抵抗と見分けが付かない** — 同じ形の
- * 胴なので、色だけの違いでは読めない。
+ * 白黒で刷る図の塗り。**名前のある色は網に移し、生の色は地の色に落とす** —
+ * 実物の色をそのまま残すと、白黒の図に色だけが残って「色で意味を持たせない」が
+ * 破れる (`hatch.ts` が解いた問題)。色のある図はそのまま通す。
  */
-function inductorBody(part: PlacedPart, width: number, theme: Theme): string {
-  const henries = part.value === null ? null : parseMicrohenries(part.value);
-  return codedBody(part, width, theme, henries === null ? null : inductorCode(henries));
+const inkOf = (theme: Theme): BodyInk => (theme.hatch === true
+  ? {
+    paint: (color, name) => (name === undefined
+      ? monoBodyColor(color, theme)
+      : hatchFill(name, theme.palette.caption)),
+  }
+  : REAL_INK);
+
+/**
+ * 白黒のときの、名前を持たない色の落とし先。**塗りか縁かを明るさで見分ける** —
+ * 濃い色は縁として引かれているので、地に落とすと形が消える。
+ */
+const monoBodyColor = (color: string, theme: Theme): string =>
+  (isDark(color) ? theme.palette.bodyEdge : theme.palette.body);
+
+/** その色は暗いか (16 進の 3 成分の平均で見る)。名前や `none` は暗くない扱い。 */
+function isDark(color: string): boolean {
+  const hex = /^#([0-9a-f]{6})$/i.exec(color)?.[1];
+  if (hex === undefined) return false;
+  const value = Number.parseInt(hex, 16);
+  const mean = (((value >> 16) & 255) + ((value >> 8) & 255) + (value & 255)) / 3;
+  return mean < 128;
 }
 
 /**
- * コンデンサの姿ごとの見た目。**実物の色と形**なので、SMA の金物と同じく
- * テーマから触らせない (塗り替えると図が嘘になる)。
- *
- * 積層セラミックは青い小判、フィルムは黄の箱、タンタルは橙の小判、
- * アルミ電解は黒い缶。**部品箱から選ぶときに最初に見るのがこの色と形**で、
- * 値は刷り字とキャプションのほうで読む。
+ * 胴の姿。**共有の形があればそれを使う** (`fence-kit/parts/bodies.ts`) —
+ * 実物の部品の話で板に依らないので、breadboard と同じ絵になる (52 の docs/18)。
+ * ここに残るのはこの板だけの姿 — 同軸コネクタと、姿を持たない種類の箱。
  */
-type CapacitorLook = {
-  readonly fill: string;
-  readonly edge: string;
-  /** 胴に刷る字の色。地の明るさで決まる。 */
-  readonly ink: string;
-  /** 角の丸み。小判 (`BODY_HEIGHT / 2`) か箱 (小さい値) か。 */
-  readonly round: number;
-};
-
-const CAPACITOR_LOOKS: Record<string, CapacitorLook> = {
-  ceramic: { fill: '#2f6fb5', edge: '#1d4a7d', ink: '#f2f5f8', round: BODY_HEIGHT / 2 },
-  film: { fill: '#d9b02c', edge: '#a07f14', ink: '#3a2f08', round: 2 },
-  tantalum: { fill: '#e08a1e', edge: '#a35f0c', ink: '#3a2205', round: BODY_HEIGHT / 2 },
-  electrolytic: { fill: '#20242b', edge: '#0b0d10', ink: '#e8ebee', round: 3 },
-};
-
-const capacitorLook = (variant: string | null): CapacitorLook | null =>
-  variant !== null && Object.hasOwn(CAPACITOR_LOOKS, variant) ? CAPACITOR_LOOKS[variant] ?? null : null;
-
-/** アルミ缶の縁。幅と、両端から空ける幅。 */
-const CAN_RING = 3;
-const CAN_INSET = 2;
-
-/**
- * アルミ電解の缶の縁。**姿の違いを色だけに預けない** — 白黒で刷ると
- * 地の色は消えるが、縁の輪は形として残る。
- */
-const canRings = (width: number): string =>
-  width < (CAN_RING + CAN_INSET) * 3
-    ? ''
-    : [-1, 1]
-      .map((side) => element('rect', {
-        x: num(side < 0 ? -width / 2 + CAN_INSET : width / 2 - CAN_INSET - CAN_RING),
-        y: num(-BODY_HEIGHT / 2 + 1),
-        width: CAN_RING, height: BODY_HEIGHT - 2, rx: 1, fill: '#c3c8cf',
-      }))
-      .join('');
-
-/**
- * コンデンサの胴。**姿を書いたら姿の色と形で描く** (`capacitor/ceramic`)。
- * 書かなければ地の胴のまま — 姿の分からない部品を、あるように描かない。
- *
- * **実物と同じ 3 桁コードを刷る** (`100n` なら `104`)。手元の部品箱から
- * 選ぶときに見るのはこの数字なので、値の綴りより刷り字のほうが突き合わせやすい。
- * **アルミ電解にだけは刷らない** — 実物の缶に出ているのは容量そのもので、
- * 3 桁コードではない (刷ると実物と違うものを図が言うことになる)。
- */
-function capacitorBody(part: PlacedPart, width: number, theme: Theme): string {
-  const farads = part.value === null ? null : parsePicofarads(part.value);
-  const code = farads === null ? null : capacitorCode(farads);
-  const look = capacitorLook(part.variant);
-  if (look === null) return codedBody(part, width, theme, code);
-
-  const shell = element('rect', {
-    x: num(-width / 2), y: num(-BODY_HEIGHT / 2), width: num(width), height: BODY_HEIGHT,
-    rx: num(look.round), fill: look.fill, stroke: look.edge, 'stroke-width': 1,
-  });
-  return part.variant === 'electrolytic'
-    ? shell + canRings(width)
-    : shell + printedCode(width, code, look.ink);
-}
-
-/** 3 桁コードを刷った胴。刷れないときは地の胴だけ。 */
-function codedBody(_part: PlacedPart, width: number, theme: Theme, code: string | null): string {
-  return genericBody(width, theme) + printedCode(width, code, theme.palette.caption);
-}
-
-/**
- * 胴に刷る 3 桁コード。**胴に入らない幅では刷らない** — 切れた数字は
- * 別の容量に読めてしまう (`104` が `10` に見えると 10pF)。
- */
-function printedCode(width: number, code: string | null, ink: string): string {
-  if (code === null) return '';
-
-  const size = BODY_HEIGHT * 0.75;
-  // 3 桁ぶんの幅が無ければ刷らない (等幅ではないので少し余裕を見る)。
-  if (width < size * code.length * 0.8) return '';
-
-  return svgText(0, size * 0.36, code, { fill: ink, 'font-size': num(size) });
-}
-
 const bodyOf = (
   part: PlacedPart,
   width: number,
   theme: Theme,
   mount: { readonly edgeX: number; readonly legX: number; readonly tips: readonly number[] } | null,
 ): string => {
-  if (part.type === 'resistor') return resistorBody(part, width, theme);
-  if (part.type === 'led') return ledBody(part, theme);
-  if (part.type === 'capacitor') return capacitorBody(part, width, theme);
-  if (part.type === 'inductor') return inductorBody(part, width, theme);
   if (part.type === 'sma') {
     return mount === null
       ? smaBody(part)
       : smaEdgeBody(part, width, mount.edgeX, mount.legX, mount.tips, theme);
   }
+  if (hasBody(part.type)) return drawBody(asBody(part), spanFor(part.type, width), inkOf(theme));
   return genericBody(width, theme);
+};
+
+/**
+ * 共有の形が読む姿。**この文法に極性の印は無い**ので、足の名前は空で渡す —
+ * 共有の側は「印が無ければ先に書いた穴が + 側」の規則で描く
+ * (breadboard で印を書かなかったときと同じ絵)。
+ */
+const asBody = (part: PlacedPart): BodyPart => ({
+  type: part.type,
+  value: part.value,
+  variant: part.variant,
+  pins: part.pins.map(() => ({ name: '' })),
+});
+
+/**
+ * 共有の形に渡す「足から足までの長さ」。**胴の幅から逆に引く** —
+ * こちらは当たり判定と同じ胴の幅 (`bodyRect`) を持っていて、共有の形は
+ * 足の間隔から胴を決めるので、同じ胴になる長さを渡す。
+ */
+const spanFor = (type: string, width: number): number => {
+  const ratio = SPAN_RATIO[type] ?? 0.6;
+  return width / ratio;
+};
+
+/**
+ * 種類ごとの「胴の幅 ÷ 足の間隔」。**共有の形の数式と同じ値**
+ * (`fence-kit/parts/bodies.ts` の `bodySize`)。
+ */
+const SPAN_RATIO: Record<string, number> = {
+  resistor: 0.6, capacitor: 0.55, crystal: 0.6, inductor: 0.6, buzzer: 0.5,
+  diode: 0.55, zener: 0.55, schottky: 0.55, diac: 0.55, varicap: 0.4,
+  photoresistor: 0.45, thermistor: 0.45, 'thermistor-ntc': 0.45, 'thermistor-ptc': 0.45,
+  varistor: 0.45, reed: 0.6, fuse: 0.6, lamp: 0.42,
 };
 
 /**

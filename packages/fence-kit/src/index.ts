@@ -24,6 +24,8 @@ export {
   bandColor, ledColor, wireColor, wireColorNames,
 } from './colors.ts';
 export { fit, textWidth } from './textFit.ts';
+export { REAL_INK, bodySize, drawBody, hasBody } from './parts/bodies.ts';
+export type { BodyInk, BodyPart } from './parts/bodies.ts';
 export { computeNets } from './nets.ts';
 export type { Net, NetInput, NetMember, StripId } from './nets.ts';
 export type { TextOptions } from './svg.ts';
