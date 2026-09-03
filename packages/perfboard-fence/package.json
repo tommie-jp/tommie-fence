@@ -28,6 +28,10 @@
     "diagram"
   ],
   "main": "./dist/extension.cjs",
+  "exports": {
+    "./core": "./src/core/index.ts",
+    "./package.json": "./package.json"
+  },
   "browser": "./dist/extension.web.cjs",
   "bin": {
     "perfboard-fence": "./dist/cli.cjs"

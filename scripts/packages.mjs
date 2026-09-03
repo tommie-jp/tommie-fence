@@ -33,9 +33,15 @@ const workspaceDeps = (name) => {
     .sort()
 }
 
+const extensions = packages.filter((name) => manifests.get(name).contributes)
+
 // 入れ子の依存までは面倒を見ない。増えたらここで気づけるように止める
 // (作業場へ写す順番を考える必要がある)。
-for (const name of packages) {
+//
+// **見るのは拡張だけ。** 写して単独で install するのは .vsix にするものだけで、
+// それ以外 (playground) は束ねて終わりなので、写す順番の問題が起きない。
+// 全パッケージを見ると、3 つのコアに依存する playground でここが鳴る。
+for (const name of extensions) {
   for (const dep of workspaceDeps(name)) {
     const nested = workspaceDeps(dep)
     if (nested.length > 0) {
@@ -45,8 +51,6 @@ for (const name of packages) {
     }
   }
 }
-
-const extensions = packages.filter((name) => manifests.get(name).contributes)
 
 const lines = [
   '# scripts/packages.mjs が作る。手で直さない。',

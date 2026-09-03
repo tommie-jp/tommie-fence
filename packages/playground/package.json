@@ -1,0 +1,31 @@
+{
+  "name": "playground",
+  "displayName": "tommie-fence playground",
+  "description": "3 つのフェンスをブラウザだけで試す静的なページ",
+  "version": "0.0.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "check": "npm run typecheck && npm run test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@vitest/coverage-v8": "^4.1.11",
+    "breadboard-fence": "*",
+    "circuit-fence": "*",
+    "esbuild": "^0.28.2",
+    "perfboard-fence": "*",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

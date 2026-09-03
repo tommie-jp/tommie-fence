@@ -47,7 +47,8 @@ tommie-fence
 ├── packages/fence-kit          共有: 改行の正規化、フェンス抽出、markup のエスケープ
 ├── packages/circuit-fence
 ├── packages/breadboard-fence
-└── packages/perfboard-fence
+├── packages/perfboard-fence
+└── packages/playground        3 つをブラウザで試す 1 枚の頁 (拡張ではない)
 ```
 
 `fence-kit` に入れるのは、**実際に重複してから引き上げたものだけ**。
@@ -81,6 +82,7 @@ npm install
 npm run check                                # 全パッケージの型チェック + テスト
 npm run check --workspace=circuit-fence      # 1 つだけ
 npm run examples --workspace=circuit-fence   # 図を作り直す
+npm run build --workspace=playground         # 試す頁を組む (dist/ に出る)
 ./doBuild.sh circuit-fence                   # .vsix を作って VS Code に入れ直す
 ./doVersion.sh circuit-fence minor           # 版を上げる
 ```

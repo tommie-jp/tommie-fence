@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>tommie-fence playground</title>
+    <meta
+      name="description"
+      content="Markdown のフェンスで電子工作の図を描く tommie-fence を、何も入れずにブラウザで試す"
+    />
+    <!-- 穴の並んだ板。外のファイルを増やさないよう data URI で埋める。 -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23f2efe6'/%3E%3Cg fill='%233f4650'%3E%3Ccircle cx='4.5' cy='4.5' r='1.4'/%3E%3Ccircle cx='11.5' cy='4.5' r='1.4'/%3E%3Ccircle cx='4.5' cy='11.5' r='1.4'/%3E%3Ccircle cx='11.5' cy='11.5' r='1.4'/%3E%3C/g%3E%3Cpath d='M4.5 4.5h7' stroke='%23c1440e' stroke-width='1.2'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="head">
+      <h1>tommie-fence <span>playground</span></h1>
+      <p class="lead">
+        Markdown のフェンスで電子工作の図を描く。左に書くと、右に出る。
+        <span lang="en">Markdown fences that draw electronics. Type on the left, see it on the right.</span>
+      </p>
+      <nav class="links">
+        <a href="https://github.com/tommie-jp/tommie-fence">GitHub</a>
+        <a href="https://codespaces.new/tommie-jp/tommie-fence?quickstart=1">VS Code で試す (Codespaces)</a>
+        <a href="https://github.com/tommie-jp/tommie-fence/releases">拡張を入れる (.vsix)</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="bar">
+        <div class="kinds" id="kinds" role="group" aria-label="フェンスの種類"></div>
+        <label class="pick">
+          例
+          <select id="example"></select>
+        </label>
+        <button type="button" id="share">リンクをコピー</button>
+        <span class="said" id="said" role="status"></span>
+      </div>
+
+      <div class="panes">
+        <section class="pane">
+          <h2><label for="source">フェンス</label></h2>
+          <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off"
+            placeholder="ここにフェンスの中身を書く"></textarea>
+        </section>
+
+        <section class="pane">
+          <h2>出るもの</h2>
+          <div class="out">
+            <div class="figure" id="figure"></div>
+            <p class="note" id="note" hidden></p>
+            <details id="tex" hidden>
+              <summary>circuitikz の TeX</summary>
+              <pre id="tex-body"></pre>
+            </details>
+            <div id="netlist"></div>
+            <pre class="messages" id="messages" hidden></pre>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <p>
+        図は書いたフェンスから作られ、どこにも送られない (この頁はすべてブラウザの中で動く)。
+        「リンクをコピー」はフェンスを URL に載せるだけで、預け先を持たない。
+      </p>
+      <p id="from"></p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>

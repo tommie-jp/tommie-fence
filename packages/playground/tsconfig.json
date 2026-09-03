@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    // ここは丸ごとブラウザで動くページなので、DOM を知る設定は 1 つでよい
+    // (拡張のように「拡張ホスト側」と「webview 側」に割れない)。
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    // esbuild.mjs と examples.mjs は node で動く (ページの側では使わない)。
+    "types": ["node"]
+  },
+  "include": ["src", "scripts", "esbuild.mjs", "vitest.config.ts"]
+}

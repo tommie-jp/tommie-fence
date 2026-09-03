@@ -50,7 +50,8 @@ tommie-fence
 ├── packages/fence-kit          shared: newline normalisation, fence extraction, markup escaping
 ├── packages/circuit-fence
 ├── packages/breadboard-fence
-└── packages/perfboard-fence
+├── packages/perfboard-fence
+└── packages/playground        one page that runs all three in a browser
 ```
 
 `fence-kit` only holds code that was **already duplicated** — nothing is put
@@ -86,6 +87,7 @@ npm install
 npm run check                                # typecheck + tests, all packages
 npm run check --workspace=circuit-fence      # just one
 npm run examples --workspace=circuit-fence   # rebuild the drawings
+npm run build --workspace=playground         # build the try-it page into dist/
 ./doBuild.sh circuit-fence                   # build the .vsix, reinstall into VS Code
 ./doVersion.sh circuit-fence minor           # bump the version
 ```
