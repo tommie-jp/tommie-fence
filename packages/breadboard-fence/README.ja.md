@@ -90,7 +90,7 @@ sha256sum -c SHA256SUMS
 
 ```bash
 ./doBuild.sh breadboard-fence --no-install
-code --install-extension packages/breadboard-fence/breadboard-fence-0.5.1.vsix --force
+code --install-extension packages/breadboard-fence/breadboard-fence-0.6.0.vsix --force
 ```
 
 `.vsix` を作るのに `doBuild.sh` を通すのは、**workspaces が依存を
