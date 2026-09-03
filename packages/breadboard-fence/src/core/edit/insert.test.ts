@@ -96,8 +96,15 @@ describe('nextPartId', () => {
   });
 
   test('has no name for a type it cannot place', () => {
-    expect(nextPartId(WITH_WIRES, 'dip8')).toBeNull();
+    // 板の外に並べる機器は穴を持たないので、置く先が無い。
+    expect(nextPartId(WITH_WIRES, 'device')).toBeNull();
     expect(nextPartId(WITH_WIRES, 'resistr')).toBeNull();
+  });
+
+  test('numbers a package the way its schematic symbol would be numbered', () => {
+    expect(nextPartId(WITH_WIRES, 'dip8')).toBe('U1');
+    expect(nextPartId(WITH_WIRES, 'pico-w')).toBe('U1');
+    expect(nextPartId(WITH_WIRES, 'sip4')).toBe('J1');
   });
 });
 

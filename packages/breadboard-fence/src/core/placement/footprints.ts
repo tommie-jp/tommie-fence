@@ -71,8 +71,23 @@ export function lookupFootprint(type: string): Footprint | null {
  * 足の数が決まっていて、そのまま置ける種類。**`dipN` / `sipN` / ボード / 機器は
  * 入らない** (ピン数や名前を選ばないと置けない)。マップのパレットが引く。
  */
+/**
+ * パレットに出す**パッケージ物**。`dipN` / `sipN` は数を選べるが、一覧に全部
+ * (4〜40) 並べても選べないので、**実物として売られている数**だけ出す。
+ * ここに無い数も種類の欄に打てば置ける (文法は今までどおり全部読む)。
+ */
+const DIP_SIZES: readonly number[] = [4, 6, 8, 14, 16, 18, 20, 24, 28, 40];
+const SIP_SIZES: readonly number[] = [2, 3, 4, 5, 6, 8, 10, 20, 40];
+
+/** アンカー 1 つで置く形 (`@ 穴` と書く)。マップからは 1 クリックで置ける。 */
+export const packageTypes = (): readonly string[] => [
+  ...DIP_SIZES.map((pins) => `dip${pins}`),
+  ...SIP_SIZES.map((pins) => `sip${pins}`),
+  ...boardPartNames(),
+];
+
 export const placeableTypes = (): readonly string[] => [
-  ...TWO_LEAD_TYPES, ...THREE_LEAD_TYPES, ...SWITCH_TYPES,
+  ...TWO_LEAD_TYPES, ...THREE_LEAD_TYPES, ...SWITCH_TYPES, ...packageTypes(),
 ];
 
 export const knownPartTypes = (): readonly string[] => [

@@ -96,8 +96,14 @@ describe('nextPartId', () => {
   });
 
   test('has no name for a type it cannot place', () => {
-    expect(nextPartId(WITH_WIRES, 'dip8')).toBeNull();
+    // 板の外に並べる機器は入れ子で書くので、1 行では置けない。
+    expect(nextPartId(WITH_WIRES, 'device')).toBeNull();
     expect(nextPartId(WITH_WIRES, 'resistr')).toBeNull();
+  });
+
+  test('numbers a package the way its schematic symbol would be numbered', () => {
+    expect(nextPartId(WITH_WIRES, 'dip8')).toBe('U1');
+    expect(nextPartId(WITH_WIRES, 'sip4')).toBe('J1');
   });
 });
 

@@ -8,7 +8,8 @@ import { createPerfboardEditor } from './perfboardEditor.ts';
  */
 const SOURCE = [
   'title: 契約',
-  'board: 24x18',
+  // パレットに出す中でいちばん大きい物 (40 ピン) が収まる板で見る。
+  'board: 44x30',
   'points:',
   '  vin: a1',
   'parts:',

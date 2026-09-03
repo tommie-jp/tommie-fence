@@ -1,11 +1,11 @@
-import { FLOW_REFUSAL, appendUnderKey, isFlowKey, leadOffsets, needsRoom, normalizeNewlines, orientInserted } from 'fence-kit';
+import { FLOW_REFUSAL, appendUnderKey, applyLineEdits, isFlowKey, leadOffsets, needsRoom, normalizeNewlines, orientInserted } from 'fence-kit';
 import type { LineEdit, NetDiff } from 'fence-kit';
 import { fenceError } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { formatAddress } from '../model/address.ts';
 import { isOnBoard } from '../model/board.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import { PART_PREFIXES, holesOf, isPlaceable } from '../parts/catalog.ts';
+import { holesOf, partPrefix } from '../parts/catalog.ts';
 import { resolveTypeName } from '../parts/types.ts';
 import type { Address, Board, FenceError } from '../types.ts';
 import { diffAfterLines } from './diff.ts';
@@ -129,9 +129,8 @@ function oriented(source: string, part: NewPart, added: readonly LineEdit[]): Ad
  * 知らない種類は null (名前の付けようがない)。
  */
 export function nextPartId(source: string, type: string): string | null {
-  const resolved = resolveTypeName(type);
-  if (!isPlaceable(resolved)) return null;
-  const prefix = PART_PREFIXES[resolved];
+  const prefix = partPrefix(resolveTypeName(type));
+  if (prefix === null) return null;
 
   const { doc } = parseFence(normalizeNewlines(source));
   const used = new Set((doc?.parts ?? []).map((part) => part.id));
@@ -184,6 +183,13 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
   const last = doc.parts.reduce((deepest, one) => Math.max(deepest, one.line ?? 0), 0);
   const holes = spelled.join(' ');
   const added = appendUnderKey(lines, 'parts', last, `${part.id}: ${type} ${holes}`);
+
+  // **穴 1 つで置く形 (DIP / SIP) は、足が書かれた穴より広がる。** 板に載るか
+  // どうかは並べてみないと分からないので、置いた姿を読み直して確かめる
+  // (足を並べて書く部品は上の `isOnBoard` で済んでいる)。
+  if (wanted === 1 && partCells(applyLineEdits(normalized, added), part.id).length === 0) {
+    return fail(`${part.type} は ${spelled[0] ?? ''} には収まりません (板から出ます)`, null);
+  }
 
   return oriented(normalized, part, added);
 }

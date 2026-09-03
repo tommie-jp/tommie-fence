@@ -90,7 +90,21 @@ export const isTwoLead = (type: string): boolean => TWO_LEAD.has(type);
 export const isThreeLead = (type: string): boolean => THREE_LEAD.has(type);
 export const isKnownType = (type: string): boolean =>
   TWO_LEAD.has(type) || THREE_LEAD.has(type) || NOT_YET.has(type) || NESTED.has(type);
-export const placeableNames = (): readonly string[] => [...TWO_LEAD, ...THREE_LEAD];
+/**
+ * パレットに出す**パッケージ物**。`dipN` / `sipN` は数を選べるが、一覧に全部
+ * 並べても選べないので、**実物として売られている数**だけ出す。ここに無い数も
+ * 種類の欄に打てば置ける (文法は今までどおり全部読む)。breadboard と同じ表。
+ */
+const DIP_SIZES: readonly number[] = [4, 6, 8, 14, 16, 18, 20, 24, 28, 40];
+const SIP_SIZES: readonly number[] = [2, 3, 4, 5, 6, 8, 10, 20, 40];
+
+/** アンカー 1 つで置く形。マップからは 1 クリックで置ける。 */
+export const packageNames = (): readonly string[] => [
+  ...DIP_SIZES.map((pins) => `dip${pins}`),
+  ...SIP_SIZES.map((pins) => `sip${pins}`),
+];
+
+export const placeableNames = (): readonly string[] => [...TWO_LEAD, ...THREE_LEAD, ...packageNames()];
 
 /** その種類を指せる略記 (`r` → resistor)。パレットの検索が引く。 */
 export const aliasesFor = (type: string): readonly string[] =>

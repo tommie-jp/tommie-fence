@@ -1,7 +1,6 @@
 import { element, escapeMarkup } from 'fence-kit';
-import { PART_NAMES, PLACEABLE, holesOf, isPlaceable } from '../parts/catalog.ts';
+import { PLACEABLE, holesOf, partName } from '../parts/catalog.ts';
 import { aliasesFor } from '../parts/types.ts';
-import type { PlaceableName } from '../parts/catalog.ts';
 
 /**
  * 置く部品を選ぶパレット。**core が組む** — 何が置けるかは部品の表そのもので、
@@ -27,7 +26,7 @@ const marks = (type: string): Record<string, string> => ({
  */
 export function renderPalette(): string {
   const rows = PLACEABLE().map((type) => {
-    const name = isPlaceable(type) ? PART_NAMES[type as PlaceableName] : type;
+    const name = partName(type);
     // 検索は**種類名・略記・和名**の 3 通りで引ける (覚えている呼び方が人による)。
     const find = [type, ...aliasesOf(type), name].join(' ');
     return element('li', {}, element(

@@ -1,4 +1,4 @@
-import { FLOW_REFUSAL, appendUnderKey, isFlowKey, leadOffsets, needsRoom, orientInserted } from 'fence-kit';
+import { FLOW_REFUSAL, appendUnderKey, applyLineEdits, isFlowKey, leadOffsets, needsRoom, orientInserted } from 'fence-kit';
 import type { LineEdit, NetDiff } from 'fence-kit';
 import { fenceError } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
@@ -8,7 +8,7 @@ import { createBoard } from '../model/board.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { resolveAlias } from '../parts/aliases.ts';
-import { PART_PREFIXES, holesOf, isAnchored, isPlaceable } from '../parts/catalog.ts';
+import { holesOf, isAnchored, partPrefix } from '../parts/catalog.ts';
 import type { Address, Board, FenceError } from '../types.ts';
 import { placeParts } from '../placement/place.ts';
 import { isLocated, locatePart } from './move.ts';
@@ -146,9 +146,8 @@ function onOneRail(at: readonly Address[]): string | null {
  * 知らない種類は null (名前の付けようがない)。
  */
 export function nextPartId(source: string, type: string): string | null {
-  const resolved = resolveAlias(type) ?? type;
-  if (!isPlaceable(resolved)) return null;
-  const prefix = PART_PREFIXES[resolved];
+  const prefix = partPrefix(resolveAlias(type) ?? type);
+  if (prefix === null) return null;
 
   const { doc } = parseFence(normalizeNewlines(source));
   const used = new Set((doc?.parts ?? []).map((part) => part.id));
@@ -208,6 +207,13 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
   const last = doc.parts.reduce((deepest, one) => Math.max(deepest, one.line), 0);
   const holes = isAnchored(type) ? `@ ${spelled[0] ?? ''}` : spelled.join(' ');
   const added = appendUnderKey(lines, 'parts', last, `${part.id}: ${type} ${holes}`);
+
+  // **アンカー 1 つで置く形は、足が書かれた穴より広がる。** 板に載るかどうかは
+  // 並べてみないと分からないので、置いた姿を読み直して確かめる
+  // (足を並べて書く部品は上の `isOnBoard` で済んでいる)。
+  if (isAnchored(type) && partCells(applyLineEdits(normalized, added), part.id).length === 0) {
+    return fail(`${part.type} は ${spelled[0] ?? ''} には収まりません (板から出ます)`, null);
+  }
 
   return oriented(normalized, part, added);
 }

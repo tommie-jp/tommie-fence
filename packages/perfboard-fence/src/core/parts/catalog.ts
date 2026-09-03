@@ -78,6 +78,29 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
 
 export const PLACEABLE = placeableNames;
 
+const DIP_NAME = /^dip(\d+)$/;
+const SIP_NAME = /^sip(\d+)$/;
+
+/**
+ * 人に見せる名前。**足を並べて書く部品は表から、パッケージ物は規則から**
+ * (breadboard と同じ理由 — `dipN` はピン数がいくつでも読めるので、表に
+ * 書き並べると「表に無い数」が名無しになる)。
+ */
+export function partName(type: string): string {
+  const dip = DIP_NAME.exec(type);
+  if (dip) return `DIP ${dip[1]} ピン`;
+  const sip = SIP_NAME.exec(type);
+  if (sip) return `ピンヘッダ ${sip[1]} ピン`;
+  return isPlaceable(type) ? PART_NAMES[type] : type;
+}
+
+/** ID の接頭辞。DIP は `U` (IC)、ピンヘッダは `J` (コネクタ)。 */
+export function partPrefix(type: string): string | null {
+  if (DIP_NAME.test(type)) return 'U';
+  if (SIP_NAME.test(type)) return 'J';
+  return isPlaceable(type) ? PART_PREFIXES[type] : null;
+}
+
 /**
  * その種類に書く穴の数。**形が決める** (`footprint.ts`)。
  * 姿で変わるもの (端面実装の `sma` は 3 本) は、既定の姿の数を返す。

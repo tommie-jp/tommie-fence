@@ -10,6 +10,7 @@
  */
 
 import { lookupFootprint, placeableTypes } from '../placement/footprints.ts';
+import { lookupBoardPart } from './boards.ts';
 
 /**
  * 置ける種類の名前。**一覧そのものは `footprints.ts` が正** — 足の数を決めて
@@ -25,6 +26,34 @@ export type PlaceableName =
   | 'button';
 
 export const PLACEABLE = placeableTypes;
+
+const DIP_NAME = /^dip(\d+)$/;
+const SIP_NAME = /^sip(\d+)$/;
+
+/**
+ * 人に見せる名前。**足を並べて書く部品は表から、パッケージ物は規則から**。
+ *
+ * `dipN` / `sipN` はピン数がいくつでも読める文法なので、表に書き並べると
+ * 「表に無い数」が名無しになる (パレットに出していない `dip22` を欄に打つ、など)。
+ * 規則で出せば、読める種類には必ず名前が付く。
+ */
+export function partName(type: string): string {
+  const dip = DIP_NAME.exec(type);
+  if (dip) return `DIP ${dip[1]} ピン`;
+  const sip = SIP_NAME.exec(type);
+  if (sip) return `ピンヘッダ ${sip[1]} ピン`;
+  return lookupBoardPart(type)?.name ?? (isPlaceable(type) ? PART_NAMES[type] : type);
+}
+
+/**
+ * ID の接頭辞。パッケージ物は規則で — DIP とマイコンボードは `U` (IC)、
+ * ピンヘッダは `J` (コネクタ)。回路図の慣習に合わせてある。
+ */
+export function partPrefix(type: string): string | null {
+  if (DIP_NAME.test(type) || lookupBoardPart(type) !== null) return 'U';
+  if (SIP_NAME.test(type)) return 'J';
+  return isPlaceable(type) ? PART_PREFIXES[type] : null;
+}
 
 /** 和名。**種類を足したら型エラーでここも要求される。** */
 export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
