@@ -5,8 +5,10 @@ import { isOnBoard } from '../model/board.ts';
 import { HOLE_ROWS } from '../types.ts';
 import type { Address, HoleRow } from '../types.ts';
 import { diffAfter } from './diff.ts';
+import { TURN_WORD, isTurned, orientOf } from '../parts/orient.ts';
+import { lookupFootprint } from '../placement/footprints.ts';
 import { isLocated, locatePart } from './move.ts';
-import type { MoveResult } from './move.ts';
+import type { Located, MoveResult } from './move.ts';
 import { locateTokens } from './shared.ts';
 
 /**
@@ -16,8 +18,15 @@ import { locateTokens } from './shared.ts';
  * **穴の順そのもの**なので、回すのは「先に書いた足のまわりに残りを 90 度動かす」、
  * 反転は「両端の入れ替え」で済む。
  *
- * **アンカー 1 つで置く形 (DIP / SIP / タクトスイッチ / ボード) は別の道。**
- * 足の位置を形が決めるので穴に向きが出ず、向きの語が要る (52 の docs/14)。
+ * **アンカー 1 つで置く形 (DIP / SIP / ボード) は別の道。** 足の位置を形が決めるので
+ * 穴に向きが出ない (52 の docs/14)。使う人にとってはどちらも「回す」「裏返す」の
+ * 1 つの操作なので、違いはここで吸収する。
+ *
+ * - **回す (`R`) は半周。** この板で書けるのは `r180` だけなので
+ *   (90 度は溝をまたぐ 2 列が同じ列に重なる)、`R` は語を出し入れする。
+ * - **裏返す (`M`) はアンカーの行を移す。** 溝の向こう側へ渡った形は
+ *   `@ f5` と書いたものそのもので、`mirror` の語は置いていない
+ *   (同じ置き方を 2 通りで書けるようにしないため)。
  */
 
 const fail = (message: string, line: number | null): MoveResult =>
@@ -90,7 +99,110 @@ const editsFor = (
       : [{ line, column: token.column, length: token.length, text }];
   });
 
+/**
+ * 語を 1 つ書き換える編集。**無ければ足し、消すなら前の空白ごと消す**
+ * (行末に余りを残さない)。
+ */
+function wordEdit(
+  line: number,
+  found: { readonly column: number; readonly length: number } | null,
+  text: string,
+  insertAt: number,
+): readonly Edit[] {
+  if (found !== null) {
+    const blank = text === '';
+    return [{
+      line,
+      column: blank ? found.column - 1 : found.column,
+      length: blank ? found.length + 1 : found.length,
+      text,
+    }];
+  }
+  return text === '' ? [] : [{ line, column: insertAt, length: 0, text: ` ${text}` }];
+}
+
+/** 語で回す部品か。**回すなら今の向きを返し、番地で回すなら null。** */
+function anchoredTurn(source: string, id: string): Located | null {
+  const found = locatePart(source, id);
+  if (!isLocated(found)) return null;
+  return orientOf(found.part.type) === 'half' ? found : null;
+}
+
+/**
+ * 向きの語を出し入れする。**穴は動かさない** — 1 つの穴を基準に置く形なので、
+ * 変わるのは向きだけで場所は変わらない。
+ */
+function turnByWord(source: string, found: Located, id: string): MoveResult {
+  const located = locateTokens(found.line, found.addresses, found.points);
+  const last = located?.tokens.at(-1);
+  if (last === undefined) {
+    return fail(`${safeToken(id)} の穴を行の中に見つけられませんでした`, found.part.line);
+  }
+
+  const after = last.column + last.length;
+  const written = [...found.line.slice(after).matchAll(/\S+/g)]
+    .map((match) => ({ column: after + (match.index ?? 0), length: match[0].length, text: match[0] }))
+    .find((token) => token.text === TURN_WORD) ?? null;
+
+  const edits = wordEdit(
+    found.part.line,
+    written,
+    isTurned(found.part.turn) ? '' : TURN_WORD,
+    after,
+  );
+  return { ok: true, value: { edits, diff: diffAfter(source, edits) } };
+}
+
+/**
+ * 溝の向こう側の行。**そこへ書き直したものが「裏返し」**。
+ * 1 列に並ぶ形 (SIP) には向こう側が無い。
+ */
+function flippedRow(type: string, row: HoleRow): HoleRow | null {
+  const kind = lookupFootprint(type)?.kind;
+  if (kind === 'dip') return row === 'e' ? 'f' : 'e';
+  if (kind !== 'board') return null;
+  return rowAt((HOLE_ROWS.indexOf(row) + HOLE_ROWS.length / 2) % HOLE_ROWS.length);
+}
+
+/** アンカーを溝の向こう側の行へ書き直す (`@ e5` → `@ f5`)。 */
+function flipByAnchor(source: string, found: Located, id: string): MoveResult {
+  const anchor = found.addresses[0];
+  const located = locateTokens(found.line, found.addresses, found.points);
+  const token = located?.tokens[0];
+  if (anchor === undefined || token === undefined) {
+    return fail(`${safeToken(id)} の穴を行の中に見つけられませんでした`, found.part.line);
+  }
+  if (anchor.kind !== 'hole') {
+    return fail(`${safeToken(id)} はレールに挿さっているので裏返せません`, found.part.line);
+  }
+
+  const row = flippedRow(found.part.type, anchor.row);
+  if (row === null) {
+    return fail(
+      `${safeToken(id)} は裏返せません (1 列に並ぶので、裏返しても同じ穴に同じ順で挿さります)`,
+      found.part.line,
+    );
+  }
+
+  const edits: readonly Edit[] = [{
+    line: found.part.line,
+    column: token.column,
+    length: token.length,
+    text: formatAddress({ kind: 'hole', row, col: anchor.col }),
+  }];
+  return { ok: true, value: { edits, diff: diffAfter(source, edits) } };
+}
+
 export function turnPart(source: string, id: string, quarters: number): MoveResult {
+  // **この板で回せるのは半周だけ。** 4 分の 1 の要求は、奇数回なら半周に畳む
+  // (2 回押せば元へ戻る)。90 度に相当する置き方がそもそも実物に無い。
+  const anchored = anchoredTurn(source, id);
+  if (anchored !== null) {
+    return quarters % 2 === 0
+      ? { ok: true, value: { edits: [], diff: { lost: [], gained: [] } } }
+      : turnByWord(source, anchored, id);
+  }
+
   const grabbed = writtenLeadsAt(source, id, '回');
   if (!grabbed.ok) return { ok: false, error: grabbed.error };
 
@@ -151,6 +263,9 @@ function writtenSpan(
 }
 
 export function flipPart(source: string, id: string): MoveResult {
+  const anchored = anchoredTurn(source, id);
+  if (anchored !== null) return flipByAnchor(source, anchored, id);
+
   const grabbed = writtenLeadsAt(source, id, '反転');
   if (!grabbed.ok) return { ok: false, error: grabbed.error };
 

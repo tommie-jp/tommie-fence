@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { LIMITS } from '../limits.ts';
 import { validateExpandedPart } from './schema.ts';
+import { NO_TURN } from '../parts/orient.ts';
 
 describe('validateExpandedPart', () => {
   test('accepts the fields an off board device needs', () => {
@@ -18,6 +19,7 @@ describe('validateExpandedPart', () => {
       label: 'Analog Discovery 2',
       value: null,
       pins: ['W1', 'GND'],
+      turn: NO_TURN,
       holes: [],
     });
   });
@@ -125,5 +127,20 @@ describe('validateExpandedPart', () => {
     const result = validateExpandedPart({ type: 'device', label: 'あ'.repeat(500), pins: ['P1'] });
 
     expect(result.ok && result.value.label?.length).toBeLessThanOrEqual(LIMITS.labelLength + 1);
+  });
+});
+
+describe('マップ形式の turn', () => {
+  test('reads the same word the one line form writes', () => {
+    const result = validateExpandedPart({ type: 'dip8', holes: ['e5'], turn: 'r180' });
+
+    expect(result.ok && result.value.turn).toEqual({ rotate: 180, mirror: false });
+  });
+
+  test('refuses the same words for the same reasons, so the two forms agree', () => {
+    // 書ける向きの決まりは `parts/orient.ts` の 1 か所。形ごとに食い違わない。
+    const result = validateExpandedPart({ type: 'dip8', holes: ['e5'], turn: 'r90' });
+
+    expect(!result.ok && result.message).toContain('溝をまたぐ');
   });
 });

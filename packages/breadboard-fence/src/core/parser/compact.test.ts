@@ -189,3 +189,75 @@ describe('parseWireSpec', () => {
     expect(parseWireSpec('-- a1', 11).ok).toBe(false);
   });
 });
+
+describe('向きの語 (アンカー 1 つで置く形)', () => {
+  const part = (spec: string) => parseCompactPart('U1', spec, 3);
+
+  test('reads the word that sits right after the anchor, keeping the label', () => {
+    const result = part('dip8 @ e5 r180 NJM4556A');
+
+    expect(result.ok && result.value.turn).toEqual({ rotate: 180, mirror: false });
+    expect(result.ok && result.value.label).toBe('NJM4556A');
+  });
+
+  test('reads it without the @ too, since the anchor can be written bare', () => {
+    expect(part('dip8 e5 r180').ok && parseCompactPart('U1', 'dip8 e5 r180', 3)).toBeTruthy();
+    const result = part('dip8 e5 r180');
+
+    expect(result.ok && result.value.turn.rotate).toBe(180);
+    expect(result.ok && result.value.holes.map((hole) => hole.addr)).toEqual(['e5']);
+  });
+
+  test('leaves a part with no word exactly as it was', () => {
+    const result = part('dip8 @ e5 NJM4556A');
+
+    expect(result.ok && result.value.turn).toEqual({ rotate: 0, mirror: false });
+    expect(result.ok && result.value.label).toBe('NJM4556A');
+  });
+
+  test('refuses a quarter turn, saying it is the ravine that forbids it', () => {
+    // 2 列は e 行と f 行に固定されている。90 度回すと同じ列に重なって挿せない。
+    const result = part('dip8 @ e5 r90');
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).toContain('溝をまたぐ');
+  });
+
+  test('refuses a quarter turn on a single row too, naming the short it would make', () => {
+    const result = parseCompactPart('J1', 'sip4 @ a20 r270', 3);
+
+    expect(!result.ok && result.error.message).toContain('同じ 5 穴');
+  });
+
+  test('refuses mirror, since the anchor row already says which side pin 1 is on', () => {
+    // 語を足すと `dip8 @ e5 mirror` と `dip8 @ f5` が同じ置き方の 2 通りになる。
+    const result = part('dip8 @ e5 mirror');
+
+    expect(!result.ok && result.error.message).toContain('反対の行');
+  });
+
+  test('refuses a word on a part whose holes already say the direction', () => {
+    const result = parseCompactPart('R1', 'resistor a5 a10 r180', 3);
+
+    expect(!result.ok && result.error.message).toContain('穴の順そのもの');
+  });
+
+  test('refuses the same word twice, rather than letting the last one win', () => {
+    expect(part('dip8 @ e5 r180 r180').ok).toBe(false);
+  });
+
+  test('refuses a word on an off board device, which is not in the board at all', () => {
+    const result = parseCompactPart('X1', 'device @ top r180', 3);
+
+    expect(!result.ok && result.error.message).toContain('板に挿していない');
+  });
+});
+
+describe('向きを書けない形の断り文', () => {
+  test('names the symmetry when the part is placed by an anchor but turns into itself', () => {
+    // 「穴の順そのもの」では嘘になる — スイッチはアンカー 1 つで置く形。
+    const result = parseCompactPart('SW1', 'button @ e5 r180', 3);
+
+    expect(!result.ok && result.error.message).toContain('対称');
+  });
+});

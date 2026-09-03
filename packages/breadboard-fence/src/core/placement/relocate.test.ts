@@ -5,6 +5,7 @@ import type { Address, PartSpec } from '../types.ts';
 import { placeParts } from './place.ts';
 import { relocateParts } from './relocate.ts';
 import type { WireEnd } from './relocate.ts';
+import { NO_TURN } from '../parts/orient.ts';
 
 const board = createBoard('half');
 
@@ -12,6 +13,7 @@ const spec = (over: Partial<PartSpec> & Pick<PartSpec, 'id' | 'type'>): PartSpec
   // 書かれたままの綴りは、略記を使わなければ種類そのもの (place.test.ts と同じ形)。
   written: over.variant == null ? over.type : `${over.type}/${over.variant}`,
   holes: [],
+  turn: NO_TURN,
   value: null,
   label: null,
   at: null,

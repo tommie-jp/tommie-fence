@@ -107,3 +107,35 @@ describe('three lead shells', () => {
     expect(body).toContain(`width="${num(half * 2)}"`);
   });
 });
+
+describe('1 番ピンの印は向きに付いてくる', () => {
+  /** 切り欠き (半径 4.5 の丸) の x。 */
+  const notchX = (line: string): number => {
+    const svg = renderPart(place(line), layout, theme);
+    return Number(/<circle cx="([-0-9.]+)"[^>]*r="4.5"/.exec(svg)?.[1]);
+  };
+
+  /** 部品が覆う升の左右の端。 */
+  const edges = (line: string) => {
+    const xs = place(line).pins.map((pin) => layout.point(pin.address!).x);
+    return { left: Math.min(...xs), right: Math.max(...xs) };
+  };
+
+  test('puts the notch on the left when pin 1 is written at the left', () => {
+    // ここを取り違えると、図のとおりに挿した IC が 180 度回る。
+    expect(notchX('U1: dip8 @ e5')).toBeLessThan(edges('U1: dip8 @ e5').left);
+  });
+
+  test('moves the notch to the right end when the chip is turned round', () => {
+    expect(notchX('U1: dip8 @ e5 r180')).toBeGreaterThan(edges('U1: dip8 @ e5 r180').right);
+  });
+
+  test('moves the usb connector with pin 1, since the cable goes in that end', () => {
+    // USB は 1 番ピンの側の端。付いてこないと、ケーブルを反対から挿すことになる。
+    const usbX = (line: string): number =>
+      Number(/<rect x="([-0-9.]+)"[^>]*fill="#c9cfd8"/.exec(renderPart(place(line), layout, theme))?.[1]);
+
+    expect(usbX('M1: pico @ h5')).toBeLessThan(edges('M1: pico @ h5').left);
+    expect(usbX('M1: pico @ h5 r180')).toBeGreaterThan(edges('M1: pico @ h5').left);
+  });
+});

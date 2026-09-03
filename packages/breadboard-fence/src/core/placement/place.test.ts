@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
+import { NO_TURN } from '../parts/orient.ts';
 import { createBoard } from '../model/board.ts';
 import { formatAddress } from '../model/address.ts';
-import type { PartSpec } from '../types.ts';
+import type { PartSpec, PlacedPart } from '../types.ts';
 import { placeParts } from './place.ts';
 
 const board = createBoard('half');
@@ -10,6 +11,7 @@ const spec = (over: Partial<PartSpec> & Pick<PartSpec, 'id' | 'type'>): PartSpec
   // 書かれたままの綴りは、略記を使わなければ種類そのもの。
   written: over.variant == null ? over.type : `${over.type}/${over.variant}`,
   holes: [],
+  turn: NO_TURN,
   value: null,
   label: null,
   at: null,
@@ -459,4 +461,43 @@ describe('placeParts', () => {
     expect(parts[0]?.variant).toBe('electrolytic');
   });
 
+});
+
+describe('向き (r180)', () => {
+  const at = (part: PlacedPart, name: string): string => {
+    const pin = part.pins.find((one) => one.name === name);
+    return pin?.address === null || pin === undefined ? '' : formatAddress(pin.address);
+  };
+
+  test('moves pin 1 to the far end of the other row, which no anchor can say', () => {
+    // 溝をまたぐので升は同じ (e/f 行 × 同じ 4 列)。変わるのは**どの升が 1 番か**。
+    // `@ f5` で言えるのは「1 番が f 行の左端」までで、右端は言えない。
+    const { parts } = placeParts([spec({
+      id: 'U1', type: 'dip8', holes: [{ addr: 'e5', tag: '1' }], turn: { rotate: 180, mirror: false },
+    })], board);
+
+    expect(at(parts[0]!, '1')).toBe('f8');
+    expect(at(parts[0]!, '5')).toBe('e5');
+  });
+
+  test('covers exactly the same holes as before, since the part did not move', () => {
+    const holes = (turn: { rotate: 0 | 180; mirror: false }) => placeParts([spec({
+      id: 'U1', type: 'dip8', holes: [{ addr: 'e5', tag: '1' }], turn,
+    })], board).parts[0]!.pins.map((pin) => formatAddress(pin.address!)).sort();
+
+    expect(holes({ rotate: 180, mirror: false })).toEqual(holes({ rotate: 0, mirror: false }));
+  });
+
+  test('reverses a single row part, whose holes make a line rather than a ring', () => {
+    const { parts } = placeParts([spec({
+      id: 'J1',
+      type: 'sip4',
+      holes: [{ addr: 'a20', tag: '1' }],
+      pins: ['VCC', 'SDA', 'SCL', 'GND'],
+      turn: { rotate: 180, mirror: false },
+    })], board);
+
+    expect(parts[0]!.pins.map((pin) => pin.name)).toEqual(['GND', 'SCL', 'SDA', 'VCC']);
+    expect(at(parts[0]!, 'VCC')).toBe('a23');
+  });
 });

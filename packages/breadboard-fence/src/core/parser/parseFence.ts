@@ -450,14 +450,14 @@ function expandPart(id: string, raw: unknown, line: number) {
     return { ok: false as const, error: fenceError(`部品 ${safeToken(id)}: ${validated.message}`, line) };
   }
 
-  const { at, label, value, pins, holes } = validated.value;
+  const { at, label, value, pins, holes, turn } = validated.value;
   const { type, variant, problem } = splitPartType(validated.value.type);
   if (problem) return { ok: false as const, error: fenceError(`部品 ${safeToken(id)}: ${problem}`, line) };
   return {
     ok: true as const,
     value: {
       id, type, written: validated.value.type, variant,
-      holes: holes.map(parseHoleToken), value, label, at, pins, line,
+      holes: holes.map(parseHoleToken), turn, value, label, at, pins, line,
     } satisfies PartSpec,
     // 「描けたが使われなかった指定」はお知らせ。部品そのものは今までどおり描く。
     notes: validated.notes.map((item) => notice(`部品 ${safeToken(id)}: ${item}`, line)),

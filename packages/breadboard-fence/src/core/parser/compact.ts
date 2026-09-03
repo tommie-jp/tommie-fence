@@ -1,6 +1,8 @@
 import { fail, ok, safeToken } from '../errors.ts';
 import { LIMITS, clampText } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
+import { NO_TURN, TURN_WORD, isOrientationWord, isTurned, refusalFor } from '../parts/orient.ts';
+import type { Turn } from '../parts/orient.ts';
 import { splitPartType } from '../parts/variants.ts';
 import type { HoleRef, PartSpec, Result, WireHint, WireSpec } from '../types.ts';
 
@@ -52,24 +54,32 @@ export function parseCompactPart(
   const { type, variant, problem } = splitPartType(typeToken);
   if (problem) return fail(`部品 ${safeToken(id)}: ${problem}`, line);
   const base: PartSpec = {
-    id, type, written: typeToken, variant, holes: [], value: null, label: null, at: null, pins: null, line,
+    id, type, written: typeToken, variant, holes: [], turn: NO_TURN,
+    value: null, label: null, at: null, pins: null, line,
   };
 
   if (rest[0] === '@') {
     const target = rest[1];
     if (!target) return fail(`部品 ${safeToken(id)}: @ の後ろに穴番地か top / bottom が要ります`, line);
-    const joined = rest.slice(2).join(' ');
+
+    // **向きの語は穴のすぐ後ろ。** 残りはラベルなので、ここで剥がさないと
+    // `r180` が図に出るラベルとして飲み込まれる。
+    const turn = takeTurn(id, type, rest.slice(2), line);
+    if (!turn.ok) return turn;
+
+    const joined = turn.value.rest.join(' ');
     // `@` の後ろの残りはそのままラベルだが、`l=` と書いても同じ意味に読む
     // (1 行の記法の中で、ラベルの書き方が 2 通りに見えないようにする)。
     const written = LABEL_TAG.exec(joined)?.[1] ?? joined;
     const label = written ? clampText(written, LIMITS.labelLength) : null;
     if (target === 'top' || target === 'bottom') return ok({ ...base, at: target, label });
-    return ok({ ...base, holes: [{ addr: target, tag: '1' }], label });
+    return ok({ ...base, holes: [{ addr: target, tag: '1' }], turn: turn.value.turn, label });
   }
 
   const holes: HoleRef[] = [];
   const words: string[] = [];
   let label: string | null = null;
+  let turn: Turn = NO_TURN;
   // 穴として読んだ語を、番地の形だったか点の名前だったかと一緒に覚えておく。
   const sources: { token: string; byName: boolean }[] = [];
 
@@ -78,6 +88,16 @@ export function parseCompactPart(
     if (tagged) {
       if (label !== null) return fail(`部品 ${safeToken(id)}: l= が 2 回書かれています`, line);
       label = clampText(tagged[1] ?? '', LIMITS.labelLength);
+      continue;
+    }
+    // **向きの語は値として拾わない。** `@` を書かずに `U1: dip8 e5 r180` とも
+    // 書けるので、ここでも読む。書けない部品に書かれていたら断る —
+    // 値の語として飲み込むと、書いた人には効かなかったことが伝わらない。
+    if (isOrientationWord(token)) {
+      const refusal = refusalFor(token, type);
+      if (refusal !== null) return fail(`部品 ${safeToken(id)}: ${refusal}`, line);
+      if (isTurned(turn)) return fail(`部品 ${safeToken(id)}: ${TURN_WORD} が 2 回書かれています`, line);
+      turn = { rotate: 180, mirror: false };
       continue;
     }
     const named = TAGGED_HOLE.exec(token);
@@ -95,10 +115,36 @@ export function parseCompactPart(
   return ok({
     ...base,
     holes,
+    turn,
     label,
     value: value ? clampText(value, LIMITS.labelLength) : null,
     notes: unusedNotes(value, label, sources),
   });
+}
+
+/**
+ * 穴の後ろに並んだ向きの語を剥がす。**書けない語は黙って読み飛ばさない** —
+ * ラベルに落とすと、書いた人には「効かなかった」ことすら伝わらない。
+ *
+ * 同じ語を 2 回書いたら断る (後勝ちにすると、消したつもりの語が効き続ける)。
+ */
+function takeTurn(
+  id: string,
+  type: string,
+  rest: readonly string[],
+  line: number,
+): Result<{ readonly turn: Turn; readonly rest: readonly string[] }> {
+  let turn: Turn = NO_TURN;
+  let taken = 0;
+  for (const token of rest) {
+    if (!isOrientationWord(token)) break;
+    const refusal = refusalFor(token, type);
+    if (refusal !== null) return fail(`部品 ${safeToken(id)}: ${refusal}`, line);
+    if (isTurned(turn)) return fail(`部品 ${safeToken(id)}: ${TURN_WORD} が 2 回書かれています`, line);
+    turn = { rotate: 180, mirror: false };
+    taken += 1;
+  }
+  return ok({ turn, rest: rest.slice(taken) });
 }
 
 /**

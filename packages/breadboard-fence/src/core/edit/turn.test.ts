@@ -106,3 +106,45 @@ describe('flipPart', () => {
     expect(!flipPart(LED, 'SW1').ok).toBe(true);
   });
 });
+
+describe('アンカー 1 つで置く形 (DIP / SIP / ボード)', () => {
+  // 足の位置を形が決めるので穴の順に向きが出ない。**回すのは語、裏返すのは行。**
+  const DIP = 'board: half\nparts:\n  U1: dip8 @ e5 NJM4556A\n';
+
+  test('writes the word instead of moving holes, since the hole is the anchor', () => {
+    expect(after(DIP, turnPart(DIP, 'U1', 1))).toContain('U1: dip8 @ e5 r180 NJM4556A');
+  });
+
+  test('takes the word away on the second turn, leaving no gap behind it', () => {
+    const turned = 'board: half\nparts:\n  U1: dip8 @ e5 r180 NJM4556A\n';
+
+    expect(after(turned, turnPart(turned, 'U1', 1))).toContain('U1: dip8 @ e5 NJM4556A');
+  });
+
+  test('folds a quarter turn into a half, because a quarter cannot be built', () => {
+    // 溝をまたぐ 2 列は 90 度回すと同じ列に重なる。**押して何も起きない道具に
+    // しない**ので、掴んで R を押したら半周ぶん回す。
+    const result = turnPart(DIP, 'U1', 2);
+
+    expect(result.ok && result.value.edits).toEqual([]);
+  });
+
+  test('flips by moving the anchor across the ravine, not by writing mirror', () => {
+    // 裏返した形は `@ f5` そのもの。語を足すと同じ置き方が 2 通りになる。
+    expect(after(DIP, flipPart(DIP, 'U1'))).toContain('U1: dip8 @ f5 NJM4556A');
+  });
+
+  test('flips a board to the paired row on the other block', () => {
+    const pico = 'board: full\nparts:\n  M1: pico @ h5\n';
+
+    expect(after(pico, flipPart(pico, 'M1'))).toContain('M1: pico @ c5');
+  });
+
+  test('refuses to flip a single row part, which would land on the same holes', () => {
+    const sip = 'board: half\nparts:\n  J1: sip4 @ a20\n';
+    const result = flipPart(sip, 'J1');
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).toContain('同じ順');
+  });
+});

@@ -1,5 +1,6 @@
 // フェンス構文からレンダリングまでで共有する型。DOM にも Node にも依存しない。
 
+import type { Turn } from './parts/orient.ts';
 import type { NoteAlign, NoteColor, NoteKind, NoteLeading, NotePlace, NoteSize } from './notes.ts';
 
 export const HOLE_ROWS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] as const;
@@ -108,6 +109,12 @@ export type PartSpec = {
   /** 姿 (`capacitor/ceramic` の `/` の後ろ)。書かれなければ null で、種類ごとの既定で描く。 */
   readonly variant: string | null;
   readonly holes: readonly HoleRef[];
+  /**
+   * 向き。**アンカー 1 つで置く形 (DIP / SIP / ボード) だけ**が持つ。
+   * 足を並べて書く部品の向きは穴の順そのものなので、語では書かない
+   * (`parts/orient.ts`)。
+   */
+  readonly turn: Turn;
   readonly value: string | null;
   readonly label: string | null;
   readonly at: 'top' | 'bottom' | null;

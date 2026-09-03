@@ -53,7 +53,15 @@ export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme):
     x: num(x0), y: num(y0), width: num(x1 - x0), height: num(y1 - y0), rx: 3,
     fill: palette.chipBody, stroke: '#14171c',
   });
-  const notch = element('circle', { cx: num(x0), cy: num((y0 + y1) / 2), r: 4.5, fill: palette.plate });
+  // **切り欠きはピン 1 の側の端。** `r180` で 1 番が反対の端へ行くと、実物では
+  // 切り欠きもそちらを向く。ここが付いてこないと、図のとおりに挿した IC が 180 度回る。
+  //
+  // **`pins[0]` は 1 番ピンとは限らない** — 升の並びは固定で、回すと名前のほうが
+  // 巡る (`placement/place.ts` の spun)。だから名前で引く。
+  const pinOne = points[part.pins.findIndex((pin) => pin.name === '1')] ?? anchorPoint;
+  const notch = element('circle', {
+    cx: num(pinOne.x < (x0 + x1) / 2 ? x0 : x1), cy: num((y0 + y1) / 2), r: 4.5, fill: palette.plate,
+  });
   const text = caption(part);
   const label = svgText((x0 + x1) / 2, (y0 + y1) / 2 + 3.5, text, {
     'font-size': num(fittedFontSize(text, x1 - x0, scale)),

@@ -109,14 +109,19 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
     expect(editor.turn(three, 'Q1', 1).ok).toBe(true);
   });
 
-  test('says why a part placed by one anchor was left alone', () => {
-    // 足の位置を形が決めるので、穴の順に向きが出ない。黙って何もしないと、
-    // 押しても動かない道具ができる。
+  test('turns a part placed by one anchor by writing the word, so R is one action', () => {
+    // 掴む人にとって「回す」は 1 つの操作。番地で回すか語で書くかは中で分ける。
     const dip = 'board: half\nparts:\n  U1: dip8 @ e5 NE555\n';
     const result = editor.turn(dip, 'U1', 1);
 
-    expect(result.ok).toBe(false);
-    expect(!result.ok && result.error.message).toContain('形が決める');
+    expect(result.ok && result.value.edits?.[0]?.text).toBe(' r180');
+  });
+
+  test('flips it by moving the anchor across the ravine, which is what mirror means here', () => {
+    const dip = 'board: half\nparts:\n  U1: dip8 @ e5 NE555\n';
+    const result = editor.flip(dip, 'U1');
+
+    expect(result.ok && result.value.edits?.[0]?.text).toBe('f5');
   });
 
   test('draws the band the map shows under the drawing', () => {

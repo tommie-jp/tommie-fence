@@ -7,6 +7,7 @@ import type {
   RailAddress, Result,
 } from '../types.ts';
 import type { BoardPart } from '../parts/boards.ts';
+import type { Turn } from '../parts/orient.ts';
 import { isPolarVariant, typesWithVariants, variantsOf } from '../parts/variants.ts';
 import { describeUnknownType, lookupFootprint } from './footprints.ts';
 
@@ -310,6 +311,15 @@ const rightEdge = (spec: PartSpec, board: Board, lastCol: number): FenceError | 
  * 溝をまたいで 2 列に並ぶピンを穴に落とす。ピン 1 から anchor の行を右へ進み、
  * 折り返して opposite の行を左へ戻る (実物のピン番号の回り方そのまま)。
  */
+/**
+ * **`r180` は名前を半周ずらす。** 穴は動かない — 2 列は溝をまたいで
+ * e 行と f 行に固定されているので、回しても部品が覆う升は同じ。変わるのは
+ * **どの升が 1 番ピンか**で、それは升の並びを一周とみなして半分だけ送るのと同じ
+ * (並びを逆にすると裏返しになってしまう。裏返しは行を書くほうで言う)。
+ */
+const spun = (names: readonly string[], turn: Turn): readonly string[] =>
+  (turn.rotate === 0 ? names : [...names.slice(names.length / 2), ...names.slice(0, names.length / 2)]);
+
 function dualRowPins(anchor: HoleAddress, oppositeRow: HoleRow, names: readonly string[]): PlacedPin[] {
   const half = names.length / 2;
   return names.map((name, index) => {
@@ -338,7 +348,12 @@ function placeDip(spec: PartSpec, board: Board, base: PartBase, pinCount: number
 
   const names = Array.from({ length: pinCount }, (_, index) => String(index + 1));
   const oppositeRow: HoleRow = anchor.value.row === 'e' ? 'f' : 'e';
-  return ok({ ...base, kind: 'dip', bridges: [], pins: dualRowPins(anchor.value, oppositeRow, names) });
+  return ok({
+    ...base,
+    kind: 'dip',
+    bridges: [],
+    pins: dualRowPins(anchor.value, oppositeRow, spun(names, spec.turn)),
+  });
 }
 
 /**
@@ -361,7 +376,7 @@ function placeBoard(spec: PartSpec, board: Board, base: PartBase, part: BoardPar
     bridges: [],
     // 何も書かれていなければ製品名を出す。図と部品リストに「何を挿すのか」が残る。
     label: base.label ?? (base.value === null ? part.name : null),
-    pins: dualRowPins(anchor.value, oppositeRow, part.pins),
+    pins: dualRowPins(anchor.value, oppositeRow, spun(part.pins, spec.turn)),
   });
 }
 
@@ -381,11 +396,14 @@ function placeSip(spec: PartSpec, board: Board, base: PartBase, pinCount: number
   const overflow = rightEdge(spec, board, anchor.value.col + pinCount - 1);
   if (overflow) return { ok: false, error: overflow };
 
+  // **1 列に並ぶ形の `r180` は名前を逆順にする。** 升は同じで、端が入れ替わる
+  // (2 列の形と違って一周にならないので、半周ではなく逆順)。
+  const ordered = spec.turn.rotate === 0 ? names : [...names].reverse();
   return ok({
     ...base,
     kind: 'sip',
     bridges: [],
-    pins: names.map((name, index) => ({
+    pins: ordered.map((name, index) => ({
       name,
       address: { kind: 'hole', row: anchor.value.row, col: anchor.value.col + index } satisfies Address,
     })),

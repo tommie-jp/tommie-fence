@@ -46,9 +46,17 @@ export function renderBoardPart(part: PlacedPart, layout: Layout, theme: RenderT
   const body = boardBodyRect(part, layout);
   const center = { x: body.x + body.width / 2, y: body.y + body.height / 2 };
 
+  // **USB はピン 1 の側の端。** `r180` で 1 番が反対の端へ行くと、実物では
+  // USB もそちらへ回る。ここが付いてこないと、図のとおりに挿した人が
+  // ケーブルを反対側から挿すことになる。
+  // **`pins[0]` は 1 番ピンとは限らない** — 升の並びは固定で、回すと名前のほうが
+  // 巡る (`placement/place.ts` の spun)。だから名前で引く。
+  const pinOneAt = part.pins.findIndex((pin) => pin.name === definition?.pins[0]);
+  const pinOneLeft = (points[pinOneAt] ?? points[0])!.x < center.x;
   // USB は基板の下から出ているので、本体より先に描いて縁を隠す。
   const usb = element('rect', {
-    x: num(body.x - USB_OVERHANG), y: num(center.y - (USB_HEIGHT / 2) * layout.pitch),
+    x: num(pinOneLeft ? body.x - USB_OVERHANG : body.x + body.width - USB_WIDTH),
+    y: num(center.y - (USB_HEIGHT / 2) * layout.pitch),
     width: num(USB_OVERHANG + USB_WIDTH), height: num(USB_HEIGHT * layout.pitch), rx: 2.5,
     fill: '#c9cfd8', stroke: '#8a929c',
   });
@@ -104,16 +112,16 @@ export function renderBoardPart(part: PlacedPart, layout: Layout, theme: RenderT
     anchor: 'end',
   });
 
-  return `${usb}${shell}${antenna(part, body, center.y, palette.chipPin)}${chip}${chipName}${stubs}${names}${label}`;
+  return `${usb}${shell}${antenna(part, body, center.y, palette.chipPin, pinOneLeft)}${chip}${chipName}${stubs}${names}${label}`;
 }
 
 /** 無線つきの版は USB と反対の端にアンテナが載っている。 */
-function antenna(part: PlacedPart, body: Rect, centerY: number, ink: string): string {
+function antenna(part: PlacedPart, body: Rect, centerY: number, ink: string, pinOneLeft: boolean): string {
   if (!lookupBoardPart(part.type)?.wireless) return '';
 
   const width = 20;
   const height = 30;
-  const x = body.x + body.width - width - 6;
+  const x = pinOneLeft ? body.x + body.width - width - 6 : body.x + 6;
   const outline = element('rect', {
     x: num(x), y: num(centerY - height / 2), width: num(width), height: num(height), rx: 2,
     fill: 'none', stroke: ink, 'stroke-width': 1.6,

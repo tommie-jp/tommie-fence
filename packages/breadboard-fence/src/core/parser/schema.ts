@@ -1,5 +1,8 @@
 import { safeToken } from '../errors.ts';
 import { LIMITS, clampText, isPinName } from '../limits.ts';
+import { NO_TURN, TURN_WORD, refusalFor } from '../parts/orient.ts';
+import { splitPartType } from '../parts/variants.ts';
+import type { Turn } from '../parts/orient.ts';
 
 /**
  * 部品を複数行のマップで書くときの形。
@@ -12,6 +15,7 @@ export type ExpandedPart = {
   readonly value: string | null;
   readonly pins: readonly string[] | null;
   readonly holes: readonly string[];
+  readonly turn: Turn;
 };
 
 /**
@@ -22,7 +26,7 @@ export type Validation =
   | { readonly ok: true; readonly value: ExpandedPart; readonly notes: readonly string[] }
   | { readonly ok: false; readonly message: string };
 
-const KNOWN_KEYS = ['type', 'at', 'label', 'value', 'pins', 'holes'] as const;
+const KNOWN_KEYS = ['type', 'at', 'label', 'value', 'pins', 'holes', 'turn'] as const;
 
 const invalid = (message: string): Validation => ({ ok: false, message });
 
@@ -99,6 +103,15 @@ export function validateExpandedPart(raw: unknown): Validation {
     notes.push(`値とラベルの両方が書かれています。図に出るのは値 (${safeToken(value)}) です`);
   }
 
+  // **向きは 1 行記法と同じ語で書く** (`turn: r180`)。書ける向きの決まりも
+  // 同じところ (`parts/orient.ts`) が持つので、形ごとに食い違わない。
+  const written = raw.turn === undefined ? null : asText(raw.turn);
+  if (raw.turn !== undefined && written === null) return invalid(`turn は ${TURN_WORD} と書きます`);
+  // 姿 (`/` の後ろ) を落としてから見る。書ける向きは種類が決めるため。
+  const refusal = written === null ? null : refusalFor(written.trim(), splitPartType(type).type);
+  if (refusal !== null) return invalid(refusal);
+  const turn: Turn = written === null ? NO_TURN : { rotate: 180, mirror: false };
+
   const keptValue = isDevice ? null : value;
 
   return {
@@ -111,6 +124,7 @@ export function validateExpandedPart(raw: unknown): Validation {
       value: keptValue === null ? null : clampText(keptValue, LIMITS.labelLength),
       pins,
       holes,
+      turn,
     },
   };
 }
