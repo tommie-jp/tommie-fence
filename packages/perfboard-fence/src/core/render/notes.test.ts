@@ -10,7 +10,7 @@ const layout = createLayout(createBoard({ cols: 12, rows: 8 }));
 const at = (hole: string) => parseAddress(hole)!;
 
 const note = (over: Partial<ResolvedNote> & Pick<ResolvedNote, 'kind' | 'from'>): ResolvedNote =>
-  ({ to: null, color: null, text: null, ...over });
+  ({ to: null, color: null, text: null, line: null, ...over });
 
 const draw = (one: ResolvedNote): string => renderNotes([one], layout, THEME);
 
@@ -63,5 +63,21 @@ describe('盤の端に置いた字', () => {
     expect(room('a1')).toContain('text-anchor="start"');
     expect(room('a12')).toContain('text-anchor="end"');
     expect(room('a6')).toContain('text-anchor="middle"');
+  });
+});
+
+describe('掴み手', () => {
+  test('marks each note with the line it was written on, so it can be grabbed', () => {
+    // **注釈には名前が無い。** 行そのもので指す (配線と同じ考え方)。
+    // 部品と同じ `data-part` に載せるので、殻は注釈を部品として扱える。
+    const svg = renderNotes([note({ kind: 'text', from: at('b3'), text: 'ここ', line: 7 })], layout, THEME, true);
+
+    expect(svg).toContain('class="cf-chip" data-part="note:7"');
+  });
+
+  test('leaves the drawing alone when it is not the editor asking', () => {
+    const svg = renderNotes([note({ kind: 'text', from: at('b3'), text: 'ここ', line: 7 })], layout, THEME);
+
+    expect(svg).not.toContain('cf-chip');
   });
 });

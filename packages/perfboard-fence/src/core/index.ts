@@ -197,7 +197,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       ));
       continue;
     }
-    notes.push({ kind: note.kind, from, to, color: note.color, text: note.text });
+    notes.push({ kind: note.kind, from, to, color: note.color, text: note.text, line: note.line });
   }
 
   // **同じ書き出しを 2 枚重ねない。** 2 つ目を書いた人には、消えたのではなく
@@ -317,7 +317,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       + renderDevices(placedDevices.placed, THEME)
       + renderParts(placement.parts, layout, PLATE, options.edit === true)
       // 注釈は一番上。**指したものが下に隠れると印の意味が無くなる。**
-      + renderNotes(notes, layout, PLATE)
+      + renderNotes(notes, layout, PLATE, options.edit === true)
       // 凡例・部品表・書き出しは板の外の帯。図とは重ならないので、順番はどこでもよい。
       + (layout.legendBand === null
         ? ''

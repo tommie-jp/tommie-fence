@@ -87,5 +87,22 @@ function renderNote(note: ResolvedNote, layout: Layout, theme: Theme): string {
   });
 }
 
-export const renderNotes = (notes: readonly ResolvedNote[], layout: Layout, theme: Theme): string =>
-  notes.map((note) => renderNote(note, layout, theme)).join('');
+/**
+ * 掴み手の名札。**注釈には名前が無いので行番号で指す** (配線と同じ考え方)。
+ * 部品と同じ `data-part` に載せるので、殻は注釈を部品として扱える —
+ * 選ぶ・動かす・複製する・消すが**そのまま通る**。
+ */
+export const noteHandle = (line: number): string => `note:${line}`;
+
+export const renderNotes = (
+  notes: readonly ResolvedNote[],
+  layout: Layout,
+  theme: Theme,
+  edit = false,
+): string =>
+  notes.map((note) => {
+    const drawn = renderNote(note, layout, theme);
+    return edit && note.line !== null
+      ? element('g', { class: 'cf-chip', 'data-part': noteHandle(note.line) }, drawn)
+      : drawn;
+  }).join('');

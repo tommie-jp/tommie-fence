@@ -8,6 +8,9 @@ import { issuesOf, shiftIssues } from '../../core/edit/issues.ts';
 import { aimAt, fenceAt } from '../../core/edit/map.ts';
 import { insertPart, insertWire, duplicatePart, nextPartId, partCells } from '../../core/edit/insert.ts';
 import { renamePart } from '../../core/edit/rename.ts';
+import {
+  deleteNote, duplicateNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans, setNoteField,
+} from '../../core/edit/note.ts';
 import { flipPart, turnPart } from '../../core/edit/turn.ts';
 import { movePart, movablePartIds, partSpans, stepCell } from '../../core/edit/move.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
@@ -30,6 +33,13 @@ const unreadable = (written: string): EditResult =>
 
 const readAddress = (written: string) => parseAddress(written);
 
+/**
+ * 注釈は「回せない・反転できない」。**字にも印にも表と裏が無い。**
+ * 黙って何もしないと鍵が壊れて見えるので、理由を言って断る。
+ */
+const noTurn = (what: string): EditResult =>
+  ({ ok: false, error: { message: `注釈は${what}せません (字にも印にも向きがありません)`, line: null } });
+
 export function createPerfboardEditor(): FenceEditor {
   return {
     language: 'perfboard',
@@ -50,16 +60,18 @@ export function createPerfboardEditor(): FenceEditor {
     aimAt,
 
     spansOf: (source, what, id) => {
+      if (isNoteHandle(id)) return noteSpans(source, id);
       if (what !== 'node') return partSpans(source, id);
       const at = readAddress(id);
       return at === null ? [] : nodeSpans(source, at);
     },
 
-    fieldsOf: partFields,
+    fieldsOf: (source, handle) => (isNoteHandle(handle) ? noteFields(source, handle) : partFields(source, handle)),
 
     // 部品の ID は配線から指すための名前なので重ならない — 名札はそのまま名前。
-    nameOf: (handle) => handle,
-    cellsOf: partCells,
+    // 注釈には名前が無いので、名札は行番号。人に見せるときは「注釈」と呼ぶ。
+    nameOf: (handle) => (isNoteHandle(handle) ? `注釈 (${noteLineOf(handle) ?? '?'} 行目)` : handle),
+    cellsOf: (source, handle) => (isNoteHandle(handle) ? noteCells(source, handle) : partCells(source, handle)),
     // 配線は穴から穴へ 1 本 (折れの綴りが文法に無い)。
     foldsWire: false,
     step: stepCell,
@@ -71,6 +83,7 @@ export function createPerfboardEditor(): FenceEditor {
     movePart: (source, handle, to, trial) => {
       const at = readAddress(to);
       if (at === null) return unreadable(to);
+      if (isNoteHandle(handle)) return moveNote(source, handle, at, trial?.preview === true);
       if (!movablePartIds(source).includes(handle)) {
         return { ok: false, error: { message: `動かせる部品ではありません: ${handle}`, line: null } };
       }
@@ -85,7 +98,7 @@ export function createPerfboardEditor(): FenceEditor {
       return movePoint(source, at, target, trial?.preview === true);
     },
 
-    deletePart,
+    deletePart: (source, handle) => (isNoteHandle(handle) ? deleteNote(source, handle) : deletePart(source, handle)),
     deleteWire,
 
     addWire: (source, from, to) => {
@@ -99,7 +112,9 @@ export function createPerfboardEditor(): FenceEditor {
     rename: renamePart,
 
     setField: (source, handle, field, text) => (
-      field === 'type' || field === 'value'
+      isNoteHandle(handle)
+        ? setNoteField(source, handle, field, text)
+        : field === 'type' || field === 'value'
         ? setField(source, handle, field as PartField, text)
         : { ok: false, error: { message: `この文法に ${field} の欄はありません`, line: null } }
     ),
@@ -117,8 +132,8 @@ export function createPerfboardEditor(): FenceEditor {
         preview: part.preview ?? false,
       });
     },
-    duplicate: duplicatePart,
-    turn: turnPart,
-    flip: flipPart,
+    duplicate: (source, handle, id) => (isNoteHandle(handle) ? duplicateNote(source, handle) : duplicatePart(source, handle, id)),
+    turn: (source, handle, quarters) => (isNoteHandle(handle) ? noTurn('回') : turnPart(source, handle, quarters)),
+    flip: (source, handle) => (isNoteHandle(handle) ? noTurn('反転') : flipPart(source, handle)),
   };
 }

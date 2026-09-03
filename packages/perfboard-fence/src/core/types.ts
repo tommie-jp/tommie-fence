@@ -144,6 +144,11 @@ export type ResolvedNote = {
   readonly to: Address | null;
   readonly color: string | null;
   readonly text: string | null;
+  /**
+   * 書かれた行。**注釈の掴み手はこれ** — 部品と違って名前が無いので、
+   * 行そのもので指す (配線と同じ考え方)。読めない行から来た注釈は null。
+   */
+  readonly line: number | null;
 };
 
 /** `style:` に書かれた項目。**書かれたものだけ**を持ち、既定はテーマが決める。 */
