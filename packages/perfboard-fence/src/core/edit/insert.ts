@@ -1,4 +1,4 @@
-import { FLOW_REFUSAL, appendUnderKey, applyEdits, applyLineEdits, isFlowKey, normalizeNewlines } from 'fence-kit';
+import { FLOW_REFUSAL, appendUnderKey, isFlowKey, leadOffsets, normalizeNewlines, orientInserted } from 'fence-kit';
 import type { LineEdit, NetDiff } from 'fence-kit';
 import { fenceError } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
@@ -11,6 +11,7 @@ import type { Address, Board, FenceError } from '../types.ts';
 import { diffAfterLines } from './diff.ts';
 import { flipPart, turnPart } from './turn.ts';
 import { placeParts } from '../placement/place.ts';
+import { isLocated, locatePart } from './move.ts';
 
 /**
  * 配線を 1 本足す。**行を 1 行足すだけ** — 1 配線 = 1 本の信号経路という
@@ -76,22 +77,17 @@ export type NewPart = {
 };
 
 /**
- * 2 本足を 1 穴で置くときの既定の間隔 (穴の数)。breadboard と同じ表 —
- * 書く人の手癖は板が変わっても同じ (resistor 5 / led 1 / ほか 3)。
- */
-const DEFAULT_SPAN: Readonly<Record<string, number>> = { resistor: 5, led: 1 };
-const FALLBACK_SPAN = 3;
-const spanOf = (type: string): number => DEFAULT_SPAN[type] ?? FALLBACK_SPAN;
-
-/**
  * 押した穴 1 つから、残りの足を**同じ行の右へ**並べる。押した穴がアンカー
- * (先に書く足)。右へ入らなければ断る (左へ折り返すと、押した場所で向きが変わる)。
+ * (先に書く足)。並べ方 (間隔) は `leadOffsets` が持つ — breadboard と同じ表なので
+ * fence-kit にある (書く人の手癖は板が変わっても同じ)。
+ *
+ * 右へ入らなければ断る (左へ折り返すと、押した場所で向きが変わる)。
  * この板はレールが無く全穴が独立なので、断るのは板の外だけ。
  */
 function spreadFrom(type: string, anchor: Address, wanted: number, board: Board): readonly Address[] | string {
   if (wanted <= 1) return [anchor];
-  const steps = wanted === 2 ? [0, spanOf(type)] : Array.from({ length: wanted }, (_, index) => index);
-  const holes: Address[] = steps.map((step) => ({ row: anchor.row, col: anchor.col + step }));
+  const holes: Address[] = leadOffsets(type, wanted)
+    .map((step) => ({ row: anchor.row, col: anchor.col + step }));
   const last = holes[holes.length - 1] ?? anchor;
   if (holes.some((hole) => !isOnBoard(board, hole))) {
     return `${formatAddress(anchor)} から右へ ${last.col - anchor.col} 穴ぶん要ります`
@@ -101,33 +97,22 @@ function spreadFrom(type: string, anchor: Address, wanted: number, board: Board)
 }
 
 /**
- * 置いた行を、置く前に回す・反転する。**回す側の関数をそのまま使う**
- * (`turnPart` / `flipPart`) ので、置いてから回したのと同じ行になる。
+ * 置いた行を、置く前に回す・反転する。段取りは fence-kit の `orientInserted` —
+ * **回す側の関数をそのまま通す**ので、置いてから回したのと同じ行になる。
+ * 直った行は**読み直して**探す (行の頭の綴りで探すと、同じ名前の `points:` を掴む)。
  */
 function oriented(source: string, part: NewPart, added: readonly LineEdit[]): AdditionResult {
-  const turn = part.turn ?? 0;
-  if (turn === 0 && !part.flip) {
-    return { ok: true, value: { edits: [], lines: added, diff: diffAfterLines(source, added) } };
-  }
-
-  let placed = applyLineEdits(source, added);
-  if (turn !== 0) {
-    const turned = turnPart(placed, part.id, turn);
-    if (!turned.ok) return { ok: false, error: turned.error };
-    placed = applyEdits(placed, turned.value.edits);
-  }
-  if (part.flip) {
-    const flipped = flipPart(placed, part.id);
-    if (!flipped.ok) return { ok: false, error: flipped.error };
-    placed = applyEdits(placed, flipped.value.edits);
-  }
-
-  const isOwn = (text: string): boolean => text.trimStart().startsWith(`${part.id}:`);
-  const final = placed.split('\n').find(isOwn);
-  const lines = added.map((one) => (one.kind === 'insert' && isOwn(one.text) && final !== undefined
-    ? { ...one, text: final }
-    : one));
-  return { ok: true, value: { edits: [], lines, diff: diffAfterLines(source, lines) } };
+  const result = orientInserted(source, added, part, {
+    turn: (placed, quarters) => turnPart(placed, part.id, quarters),
+    flip: (placed) => flipPart(placed, part.id),
+    lineOf: (placed) => {
+      const found = locatePart(placed, part.id);
+      return isLocated(found) ? found.line : null;
+    },
+  });
+  return result.ok
+    ? { ok: true, value: { edits: [], lines: result.lines, diff: diffAfterLines(source, result.lines) } }
+    : { ok: false, error: result.error };
 }
 
 /**

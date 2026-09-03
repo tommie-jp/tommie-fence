@@ -1,3 +1,4 @@
+import { normalizeNewlines } from '../newlines.ts';
 import type { Edit, LineEdit } from './edits.ts';
 
 /**
@@ -127,26 +128,37 @@ export function applyLineEdits(source: string, edits: readonly LineEdit[]): stri
  * 桁はフェンスの本文 (字下げを剥がした `source`) のもの。文書へ当てるときは
  * `docEdits.ts` が字下げを足し戻すが、ここは**本文の中だけで完結する**ので
  * そのまま当てられる (ゴーストや置く前の試し当てに使う)。
+ *
+ * **3 つのフェンスの `core/edit/shared.ts` はここから再輸出する。** 同じ当て方を
+ * 4 か所に持っていて、片方だけ直すともう片方が黙って古くなる。
  */
 export function applyEdits(source: string, edits: readonly Edit[]): string {
   if (edits.length === 0) return source;
 
-  const lines = source.split('\n');
-  return lines.map((text, index) => {
-    const on = edits.filter((edit) => edit.line === index + 1).sort((a, b) => b.column - a.column);
-    return on.reduce(
-      (now, edit) => now.slice(0, edit.column) + edit.text + now.slice(edit.column + edit.length),
-      text,
-    );
-  }).join('\n');
+  const lines = normalizeNewlines(source).split('\n');
+  const ordered = [...edits].sort((a, b) => b.line - a.line || b.column - a.column);
+
+  for (const edit of ordered) {
+    const text = lines[edit.line - 1];
+    // 本文の外を指す書き換えは当てない (行数を増やしてまで当てる意味がない)。
+    if (text === undefined) continue;
+    lines[edit.line - 1] = text.slice(0, edit.column) + edit.text + text.slice(edit.column + edit.length);
+  }
+  return lines.join('\n');
 }
 
 /**
- * 書き換えを丸ごと当てる (桁の差し替えのあと、行の出し入れ)。
+ * 書き換えを丸ごと当てる (桁の差し替えのあと、行の出し入れ)。行番号はどちらも
+ * **元の本文**のもの。
+ *
  * **本文の中で試し当てをするための 1 本** — 置く前のゴーストは、これで
  * 当てたあとの本文から穴を読む。文書を触らないので、押す前に何度でも呼べる。
+ * 片方だけの書き換えも渡せる (置くのは行だけ、動かすのは桁だけ)。
  */
 export const applyRewrite = (
   source: string,
   rewrite: { readonly edits?: readonly Edit[]; readonly lines?: readonly LineEdit[] },
-): string => applyLineEdits(applyEdits(source, rewrite.edits ?? []), rewrite.lines ?? []);
+): string => applyLineEdits(
+  applyEdits(normalizeNewlines(source), rewrite.edits ?? []),
+  rewrite.lines ?? [],
+);

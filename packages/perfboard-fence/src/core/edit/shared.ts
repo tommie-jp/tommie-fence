@@ -1,5 +1,3 @@
-import { normalizeNewlines } from 'fence-kit';
-import type { Edit } from 'fence-kit';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import type { Address } from '../types.ts';
 
@@ -116,17 +114,8 @@ export function locateTokens(
   return { tokens: found, end: cursor };
 }
 
-/** 編集を当てる。**右から当てる**ので、同じ行の桁がずれない。 */
-export function applyEdits(source: string, edits: readonly Edit[]): string {
-  if (edits.length === 0) return source;
-
-  const lines = normalizeNewlines(source).split('\n');
-  const ordered = [...edits].sort((a, b) => b.line - a.line || b.column - a.column);
-
-  for (const edit of ordered) {
-    const text = lines[edit.line - 1];
-    if (text === undefined) continue;
-    lines[edit.line - 1] = text.slice(0, edit.column) + edit.text + text.slice(edit.column + edit.length);
-  }
-  return lines.join('\n');
-}
+/**
+ * 編集を当てる。**中身は fence-kit にある** (3 つのフェンスで同じ当て方)。
+ * ここから再び輸出するのは、この階層から引く呼び出しを 1 か所に保つため。
+ */
+export { applyEdits } from 'fence-kit';

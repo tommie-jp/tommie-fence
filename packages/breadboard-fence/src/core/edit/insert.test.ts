@@ -192,6 +192,17 @@ describe('insertPart: 1 穴で置く (マップの 1 クリック)', () => {
     expect(placedAt('resistor', 'c10', { turn: 2 })).toContain('R2: resistor c10 c5');
   });
 
+  test('finds the line it wrote by reading the fence back, not by the spelling at the head', () => {
+    // `points:` に同じ名前があると、行の頭が `Q1:` の行が 2 つになる。綴りで探すと
+    // 先に書いてあるほうを掴み、置いた行が `Q1: c20` に化ける。
+    const named = 'board: half\npoints:\n  Q1: c20\nparts:\n  R1: resistor a5 a10 330\n';
+    const result = insertPart(named, { id: 'Q1', type: 'transistor', at: [at('b2')], turn: 1 });
+
+    expect(result.ok && applyLineEdits(named, result.value.lines))
+      .toContain('  R1: resistor a5 a10 330\n  Q1: transistor b2 c2 d2');
+    expect(result.ok && applyLineEdits(named, result.value.lines)).toContain('  Q1: c20');
+  });
+
   test('reports a turn that does not fit instead of writing a broken line', () => {
     const result = insertPart(WITH_WIRES, { id: 'Q1', type: 'transistor', at: [at('i5')], turn: 1 });
 

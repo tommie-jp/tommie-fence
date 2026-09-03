@@ -1,4 +1,4 @@
-import { FLOW_REFUSAL, appendUnderKey, applyEdits, applyLineEdits, isFlowKey } from 'fence-kit';
+import { FLOW_REFUSAL, appendUnderKey, isFlowKey, leadOffsets, orientInserted } from 'fence-kit';
 import type { LineEdit, NetDiff } from 'fence-kit';
 import { fenceError } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
@@ -11,6 +11,7 @@ import { resolveAlias } from '../parts/aliases.ts';
 import { PART_PREFIXES, holesOf, isAnchored, isPlaceable } from '../parts/catalog.ts';
 import type { Address, Board, FenceError } from '../types.ts';
 import { placeParts } from '../placement/place.ts';
+import { isLocated, locatePart } from './move.ts';
 import { diffAfterLines } from './diff.ts';
 import { flipPart, turnPart } from './turn.ts';
 
@@ -78,17 +79,9 @@ export type NewPart = {
 };
 
 /**
- * 2 本足を 1 穴で置くときの既定の間隔 (穴の数)。**examples の最頻値**から —
- * 種類ごとの実寸 (1/4W か 1/6W か) は知らないので、書かれてきた図の手癖に合わせる
- * (resistor は 55 件中 42 件が 5、led は 34 件中 19 件が 1)。
- */
-const DEFAULT_SPAN: Readonly<Record<string, number>> = { resistor: 5, led: 1 };
-const FALLBACK_SPAN = 3;
-const spanOf = (type: string): number => DEFAULT_SPAN[type] ?? FALLBACK_SPAN;
-
-/**
  * 押した穴 1 つから、残りの足を**同じ行の右へ**並べる。押した穴がアンカー
- * (先に書く足) で、動かす・回すが読むのと同じ側。
+ * (先に書く足) で、動かす・回すが読むのと同じ側。並べ方 (間隔) は
+ * `leadOffsets` が持つ — perfboard と同じ表なので fence-kit にある。
  *
  * - **レールには置かない。** 行が丸ごと 1 本の電位なので、足が全部同じ節点に
  *   入った図が黙って出る (`turn.ts` が「レールの足は回せない」と断るのと同じ理由)
@@ -99,8 +92,8 @@ function spreadFrom(type: string, anchor: Address, wanted: number, board: Board)
   if (anchor.kind !== 'hole') {
     return `${type} はレールには置けません (足が全部同じ電位になります)。穴を押します`;
   }
-  const steps = wanted === 2 ? [0, spanOf(type)] : Array.from({ length: wanted }, (_, index) => index);
-  const holes: Address[] = steps.map((step) => ({ kind: 'hole', row: anchor.row, col: anchor.col + step }));
+  const holes: Address[] = leadOffsets(type, wanted)
+    .map((step) => ({ kind: 'hole', row: anchor.row, col: anchor.col + step }));
   const last = holes[holes.length - 1] ?? anchor;
   if (holes.some((hole) => !isOnBoard(board, hole))) {
     return `${formatAddress(anchor)} から右へ ${last.col - anchor.col} 穴ぶん要ります`
@@ -110,38 +103,22 @@ function spreadFrom(type: string, anchor: Address, wanted: number, board: Board)
 }
 
 /**
- * 置いた行を、置く前に回す・反転する。**回す側の関数をそのまま使う**
- * (`turnPart` / `flipPart`) ので、置いてから回したのと同じ行になる。
- * 足した行は 1 行だけなので、回した結果はその行の中に収まる。
+ * 置いた行を、置く前に回す・反転する。段取りは fence-kit の `orientInserted` —
+ * **回す側の関数をそのまま通す**ので、置いてから回したのと同じ行になる。
+ * 直った行は**読み直して**探す (行の頭の綴りで探すと、同じ名前の `points:` を掴む)。
  */
-function oriented(
-  source: string,
-  part: NewPart,
-  added: readonly LineEdit[],
-): AdditionResult {
-  const turn = part.turn ?? 0;
-  if (turn === 0 && !part.flip) {
-    return { ok: true, value: { edits: [], lines: added, diff: diffAfterLines(source, added) } };
-  }
-
-  let placed = applyLineEdits(source, added);
-  if (turn !== 0) {
-    const turned = turnPart(placed, part.id, turn);
-    if (!turned.ok) return { ok: false, error: turned.error };
-    placed = applyEdits(placed, turned.value.edits);
-  }
-  if (part.flip) {
-    const flipped = flipPart(placed, part.id);
-    if (!flipped.ok) return { ok: false, error: flipped.error };
-    placed = applyEdits(placed, flipped.value.edits);
-  }
-
-  const isOwn = (text: string): boolean => text.trimStart().startsWith(`${part.id}:`);
-  const final = placed.split('\n').find(isOwn);
-  const lines = added.map((one) => (one.kind === 'insert' && isOwn(one.text) && final !== undefined
-    ? { ...one, text: final }
-    : one));
-  return { ok: true, value: { edits: [], lines, diff: diffAfterLines(source, lines) } };
+function oriented(source: string, part: NewPart, added: readonly LineEdit[]): AdditionResult {
+  const result = orientInserted(source, added, part, {
+    turn: (placed, quarters) => turnPart(placed, part.id, quarters),
+    flip: (placed) => flipPart(placed, part.id),
+    lineOf: (placed) => {
+      const found = locatePart(placed, part.id);
+      return isLocated(found) ? found.line : null;
+    },
+  });
+  return result.ok
+    ? { ok: true, value: { edits: [], lines: result.lines, diff: diffAfterLines(source, result.lines) } }
+    : { ok: false, error: result.error };
 }
 
 /**

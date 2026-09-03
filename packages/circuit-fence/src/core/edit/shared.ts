@@ -5,7 +5,6 @@ import { partOfHandle } from './handles.ts';
 import { LIMITS } from '../limits.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
-import { normalizeNewlines } from '../newlines.ts';
 import type { FenceError, PartSpec } from '../types.ts';
 
 /**
@@ -247,49 +246,17 @@ export function locateTokens(
   return { tokens: found, end: cursor };
 }
 
-/** 編集を当てる。**右から当てる**ので、同じ行の桁がずれない。 */
-export function applyEdits(source: string, edits: readonly Edit[]): string {
-  if (edits.length === 0) return source;
-
-  const lines = normalizeNewlines(source).split('\n');
-  const ordered = [...edits].sort((a, b) => b.line - a.line || b.column - a.column);
-
-  for (const edit of ordered) {
-    const text = lines[edit.line - 1];
-    if (text === undefined) continue;
-    lines[edit.line - 1] = text.slice(0, edit.column) + edit.text + text.slice(edit.column + edit.length);
-  }
-  return lines.join('\n');
-}
+/**
+ * 編集を当てる。**中身は fence-kit にある** (3 つのフェンスで同じ当て方)。
+ * ここから再び輸出するのは、この階層から引く呼び出しを 1 か所に保つため。
+ */
+export { applyEdits } from 'fence-kit';
 
 /**
- * 行の出し入れまで当てる。行の中の差し替えを先に当ててから、行を出し入れする
- * (行番号はどちらも**元の本文**のもの)。
- *
- * 1 度なめて組み直す。行ごとに当てると、消した行のぶん後ろの行番号がずれて
- * 数え直しが要る (同じ行へ 2 つ入れるときの順も崩れる)。
+ * 行の出し入れまで当てる。**中身は fence-kit にある** (行の中の差し替えと同じ理由)。
+ * あちらは片方だけの書き換えも受けるので、`Rewrite` をそのまま渡せる。
  */
-export function applyRewrite(source: string, rewrite: Rewrite): string {
-  const edited = applyEdits(source, rewrite.edits);
-  if (rewrite.lines.length === 0) return edited;
-
-  const lines = normalizeNewlines(edited).split('\n');
-  const dropped = new Set(rewrite.lines.filter((one) => one.kind === 'delete').map((one) => one.line));
-  const added = new Map<number, string[]>();
-  for (const one of rewrite.lines) {
-    if (one.kind !== 'insert') continue;
-    added.set(one.line, [...(added.get(one.line) ?? []), one.text]);
-  }
-
-  const out: string[] = [];
-  lines.forEach((text, index) => {
-    out.push(...(added.get(index + 1) ?? []));
-    if (!dropped.has(index + 1)) out.push(text);
-  });
-  // 末尾へ足す分 (行数 + 1 を指す `insert`)。
-  out.push(...(added.get(lines.length + 1) ?? []));
-  return out.join('\n');
-}
+export { applyRewrite } from 'fence-kit';
 
 /**
  * その部品の端子が行のどこに書かれているか。**動かす側と光らせる側で 1 つ**

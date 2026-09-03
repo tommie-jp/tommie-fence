@@ -7,10 +7,11 @@ import type { PartTypeName } from '../parts.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { fieldProblem } from './field.ts';
 import type { Endpoint } from '../types.ts';
-import { applyRewrite, diffOf, fail, isOnGrid } from './shared.ts';
+import { diffOf, fail, isOnGrid } from './shared.ts';
 import { flipPart, turnPart } from './turn.ts';
 import { handleAt } from './handles.ts';
 import type { LineEdit, RewriteResult } from './shared.ts';
+import { applyRewrite, orientInserted } from 'fence-kit';
 
 /**
  * 部品と配線を足す。**フェンス本文 → 書き換えの並び**を返す純関数で、
@@ -46,37 +47,31 @@ export type NewPart = {
 const DEFAULT_SPAN = 2;
 
 /**
- * 置いた行を、置く前に回す・反転する。**回す側の関数をそのまま使う**ので、
- * 置いてから回したのと同じ行になる。足した行は 1 行だけなので、回した結果は
- * その行に収まる。名札は**その名前の最後の部品** (足した行は末尾に付く)。
+ * 置いた行を、置く前に回す・反転する。段取りは fence-kit の `orientInserted` —
+ * **回す側の関数をそのまま通す**ので、置いてから回したのと同じ行になる。
+ *
+ * 名札と行は**読み直して**取る。同じ名前を何度でも置ける文法なので
+ * (`VCC` は何か所にあっても同じ節点)、指すのは**その名前の最後の部品** —
+ * 足した行は末尾に付く。行の頭の綴りで探すと `points:` の同名を掴む。
  */
 function oriented(source: string, spec: NewPart, added: readonly LineEdit[]): RewriteResult {
-  const turn = spec.turn ?? 0;
-  if (turn === 0 && !spec.flip) return addition(source, added);
-
-  let placed = applyRewrite(source, { edits: [], lines: added, diff: { lost: [], gained: [] } });
-  const handleOfNew = (): string => {
+  /** 置いた部品の名札と行番号。読み直せなければ null。 */
+  const placedPart = (placed: string): { readonly handle: string; readonly line: number } | null => {
     const parts = parseFence(placed).doc?.parts ?? [];
     const index = parts.map((part) => part.id).lastIndexOf(spec.id);
-    return index < 0 ? spec.id : handleAt(parts, index);
+    const part = parts[index];
+    return part === undefined ? null : { handle: handleAt(parts, index), line: part.line };
   };
-  if (turn !== 0) {
-    const turned = turnPart(placed, handleOfNew(), turn);
-    if (!turned.ok) return turned;
-    placed = applyRewrite(placed, turned.value);
-  }
-  if (spec.flip) {
-    const flipped = flipPart(placed, handleOfNew());
-    if (!flipped.ok) return flipped;
-    placed = applyRewrite(placed, flipped.value);
-  }
 
-  const isOwn = (text: string): boolean => text.trimStart().startsWith(`${spec.id}:`);
-  const final = placed.split('\n').filter(isOwn).at(-1);
-  const lines = added.map((one) => (one.kind === 'insert' && isOwn(one.text) && final !== undefined
-    ? { ...one, text: final }
-    : one));
-  return addition(source, lines);
+  const result = orientInserted(source, added, spec, {
+    turn: (placed, quarters) => turnPart(placed, placedPart(placed)?.handle ?? spec.id, quarters),
+    flip: (placed) => flipPart(placed, placedPart(placed)?.handle ?? spec.id),
+    lineOf: (placed) => {
+      const at = placedPart(placed)?.line;
+      return at === undefined ? null : placed.split('\n')[at - 1] ?? null;
+    },
+  });
+  return result.ok ? addition(source, result.lines) : { ok: false, error: result.error };
 }
 
 /** 鍵の行 (1 始まり)。無ければ 0。 */
@@ -236,6 +231,12 @@ export function insertPart(source: string, spec: NewPart): RewriteResult {
 }
 
 /**
+ * ID がそのままネットの名前になる種類の、既定の名前。**どれも `namesNet`** なので、
+ * 同じ名前を何度でも置ける (`VCC` は何か所にあっても同じ節点)。
+ */
+const NET_NAMES: Readonly<Record<string, string>> = { port: 'IN', vcc: 'VCC', vee: 'VEE' };
+
+/**
  * 置く部品に付ける ID。**接頭辞ごとに最小の未使用番号** (`P1` が lamp なら
  * potentiometer は `P2`。docs の例がそう書いている)。
  *
@@ -253,7 +254,7 @@ export function nextPartId(source: string, type: string): string | null {
     // **既定の名前で置く** (置く流れを窓で止めない。名前は欄で直す)。
     // `VCC` / `VEE` は何か所にあっても同じ節点なのでそのまま。`port` は
     // 別々の信号が普通なので、使われていれば番号を足す (`IN` → `IN2`)。
-    if (namesNet(type) && type !== 'port') return named;
+    if (type !== 'port') return named;
     if (!used.has(named)) return named;
     for (let number = 2; number <= LIMITS.parts + 1; number += 1) {
       if (!used.has(`${named}${number}`)) return `${named}${number}`;
@@ -270,5 +271,4 @@ export function nextPartId(source: string, type: string): string | null {
   return null;
 }
 
-/** ID がそのままネットの名前になる種類の、既定の名前。 */
-const NET_NAMES: Readonly<Record<string, string>> = { port: 'IN', vcc: 'VCC', vee: 'VEE' };
+
