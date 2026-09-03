@@ -14,6 +14,7 @@ export const EMPTY_STYLE: StyleSpec = {
   holeColor: null,
   width: null,
   debug: null,
+  check: null,
   stamp: null,
   line: null,
 };
@@ -40,7 +41,7 @@ const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 
 export const STYLE_KEYS = [
   'theme', 'text-size', 'text-color', 'text-background',
-  'wire-width', 'board-color', 'hole-size', 'hole-color', 'width', 'debug', 'stamp',
+  'wire-width', 'board-color', 'hole-size', 'hole-color', 'width', 'debug', 'stamp', 'check',
 ] as const;
 
 const isRecord = (raw: unknown): raw is Record<string, unknown> =>
@@ -126,6 +127,8 @@ function withKey(style: StyleSpec, key: string, raw: unknown, messages: StyleMes
       return { ...style, width: size(STYLE_RANGES.width) ?? style.width };
     case 'debug':
       return { ...style, debug: readFlag(raw, key, messages) ?? style.debug };
+    case 'check':
+      return { ...style, check: readFlag(raw, key, messages) ?? style.check };
     case 'stamp':
       return { ...style, stamp: readFlag(raw, key, messages) ?? style.stamp };
     default:
@@ -153,6 +156,7 @@ export function mergeStyle(previous: StyleSpec, next: StyleSpec): StyleSpec {
     holeColor: pick(next.holeColor, previous.holeColor),
     width: pick(next.width, previous.width),
     debug: pick(next.debug, previous.debug),
+    check: pick(next.check, previous.check),
     stamp: pick(next.stamp, previous.stamp),
     line: next.line ?? previous.line,
   };

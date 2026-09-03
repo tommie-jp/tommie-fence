@@ -44,6 +44,7 @@ describe('validateStyle', () => {
       'hole-color': '#010101',
       debug: 'off',
       stamp: 'on',
+      check: 'off',
       width: 1200,
     });
 
@@ -59,8 +60,16 @@ describe('validateStyle', () => {
       width: 1200,
       debug: false,
       stamp: true,
+      check: false,
       line: 2,
     });
+  });
+
+  test('reads the switch that turns the checks off', () => {
+    // **`debug: off` とは別のもの。** あちらは言うのをやめる、こちらは見るのをやめる。
+    expect(styleOf({ check: 'off' }).check).toBe(false);
+    expect(styleOf({ check: 'on' }).check).toBe(true);
+    expect(styleOf({}).check).toBe(null);
   });
 
   test('reads the switch that hides the notices', () => {

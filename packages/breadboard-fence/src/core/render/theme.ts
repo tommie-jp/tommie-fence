@@ -56,6 +56,8 @@ export type RenderStyle = {
   readonly debug: boolean;
   /** 図の右下に処理系の版を刻むか。既定は刻まない。 */
   readonly stamp: boolean;
+  /** 図の中身の検査を掛けるか。既定は掛ける (`check: off` で外す)。 */
+  readonly check: boolean;
 };
 
 export type StyleResolution = { readonly style: RenderStyle; readonly messages: readonly string[] };
@@ -308,6 +310,7 @@ export function resolveStyle(spec: StyleSpec): StyleResolution {
       width: spec.width,
       debug: spec.debug ?? true,
       stamp: spec.stamp ?? false,
+      check: spec.check ?? true,
     },
     messages,
   };

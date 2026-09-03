@@ -71,6 +71,9 @@ export function relocateParts(
   // 配線が縦に走って通り過ぎる穴。実際に引く折れ線から呼ぶ側が数える
   // (ここで向きから推測すると、ブロックをまたぐ直行や迂回ヒントの経路とずれる)。
   corridor: readonly Address[] = [],
+  // **`check: off` は「伏せる」ではなく「見ない」。** 寄せる仕事はそのまま
+  // 続ける (図の見え方が変わってしまう) が、寄せきれなかったことは言わない。
+  checking = true,
 ): RelocateResult {
   if (ends.length === 0) return { parts, errors: [] };
 
@@ -99,7 +102,7 @@ export function relocateParts(
     if (sharedEnds.length === 0) return part;
 
     const slid = slideAside(part, sharedEnds, ledger);
-    if (!slid) errors.push(unbuildable(part, sharedEnds));
+    if (!slid && checking) errors.push(unbuildable(part, sharedEnds));
     return slid ?? part;
   });
 

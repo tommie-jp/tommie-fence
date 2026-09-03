@@ -143,7 +143,7 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
   // resolveWire より前に済ませるので、ピン参照 (`Re.2`) の配線は寄せた後の穴に付く。
   const preObstacles = placed.flatMap((part) => partObstacles(part, layout, style.theme));
   const plan = planWires(parsed.doc.wires, placed, board, layout, preObstacles);
-  const relocation = relocateParts(placed, plan.ends, plan.corridor);
+  const relocation = relocateParts(placed, plan.ends, plan.corridor, style.check !== false);
   errors.push(...relocation.errors);
   const parts = relocation.parts;
 

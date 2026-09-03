@@ -133,12 +133,16 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
   );
   const circuit: Circuit = { points: doc.points, parts, wires, notes, title: doc.title };
 
-  errors.push(...overlaps(parts));
+  // **`check: off` は「伏せる」ではなく「見ない」。** 書いた人が外したのだから、
+  // 外したことをこちらから言い足さない (`debug: off` との違いは文法の説明に書く)。
+  // 外れるのは**読めているものへの検査**だけで、読めなかった行は必ず出る。
+  const checking = doc.style.check !== false;
+  if (checking) errors.push(...overlaps(parts));
 
   return {
     circuit,
     errors,
-    notices: [...ambiguousTouches(circuit, byId), ...pinLikeAddresses(circuit, byId)],
+    notices: checking ? [...ambiguousTouches(circuit, byId), ...pinLikeAddresses(circuit, byId)] : [],
   };
 }
 

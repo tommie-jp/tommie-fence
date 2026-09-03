@@ -25,6 +25,7 @@ export const EMPTY_STYLE: StyleSpec = {
   width: null,
   stamp: null,
   debug: null,
+  check: null,
 };
 
 /**
@@ -61,7 +62,7 @@ const STANDARDS = ['american', 'european'] as const;
 /** `style:` に書ける項目。知らない項目を返すときの一覧でもある。 */
 export const STYLE_KEYS = [
   'theme', 'ink-color', 'paper-color', 'grid-color',
-  'grid', 'grid-to', 'pitch', 'standard', 'wire-width', 'width', 'stamp', 'debug',
+  'grid', 'grid-to', 'pitch', 'standard', 'wire-width', 'width', 'stamp', 'debug', 'check',
 ] as const;
 
 const isRecord = (raw: unknown): raw is Record<string, unknown> =>
@@ -217,6 +218,8 @@ function withKey(
       return { ...style, stamp: readFlag(raw, key, messages) ?? style.stamp };
     case 'debug':
       return { ...style, debug: readFlag(raw, key, messages) ?? style.debug };
+    case 'check':
+      return { ...style, check: readFlag(raw, key, messages) ?? style.check };
     default:
       messages.push({
         message: `style の知らない項目です: ${safeToken(key)} (使えるのは ${STYLE_KEYS.join(', ')})`,

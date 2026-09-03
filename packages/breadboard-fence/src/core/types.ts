@@ -185,6 +185,14 @@ export type StyleSpec = {
   readonly debug: boolean | null;
   /** 図の右下に処理系の版を刻むか。 */
   readonly stamp: boolean | null;
+  /**
+   * 図の中身の検査を掛けるか (`check: off` で外す)。null は既定の on。
+   *
+   * **`debug: off` とは違う。** あちらは「言うのをやめる」、こちらは
+   * **「見るのをやめる」**。まだ描きかけの図で外す。外れるのは
+   * **読めているものへの検査**だけで、読めなかった行は必ず出る。
+   */
+  readonly check: boolean | null;
   /** `style:` が書かれた行。読めなかった項目の報告に使う。 */
   readonly line: number | null;
 };
