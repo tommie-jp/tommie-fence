@@ -121,6 +121,21 @@ describe('KiCad の配置', () => {
   });
 });
 
+describe('道具の説明', () => {
+  test('says what the tool acts on when the name alone does not tell them apart', () => {
+    // 動かすと引きずるは形が同じ (どちらも持ち上げて 1 クリック) なので、
+    // 名前と鍵だけでは一覧で見分けが付かない。相手を一言で言う。
+    expect(html).toContain('動かす (M) — 部品だけが動く');
+    expect(html).toContain('引きずる (G) — 穴に来ているものが丸ごと動く');
+  });
+
+  test('puts the same words on the right-click menu, so both places teach the same thing', () => {
+    const menu = /<menu class="kc-menu"[^>]*>([\s\S]*?)<\/menu>/.exec(html)?.[1] ?? '';
+
+    expect(menu).toContain('引きずる (G) — 穴に来ているものが丸ごと動く');
+  });
+});
+
 describe('選んだものの印', () => {
   test('marks the selection without relying on what is inside the part', () => {
     // circuit のマップは記号なので中の線に色を付ければ分かるが、breadboard と

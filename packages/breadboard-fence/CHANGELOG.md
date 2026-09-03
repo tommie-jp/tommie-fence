@@ -3,6 +3,15 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Changed
+
+- **道具の「動かす」と「引きずる」が何に効くのかをボタンに書いた。** どちらも
+  「持ち上げて 1 クリック」で形が同じなので、名前と鍵だけでは一覧で見分けが
+  付かなかった (実機で「何が違うのか」と訊かれた)。右の道具の列でも
+  右クリックの一覧でも、指すと相手が出る。
+
 ## [0.5.1] - 2026-09-04
 
 ### Fixed

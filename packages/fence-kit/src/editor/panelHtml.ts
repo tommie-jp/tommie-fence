@@ -352,14 +352,20 @@ type ToolButton = {
   readonly glyph: string;
   readonly name: string;
   readonly kbd: string;
+  /**
+   * 名前だけでは相手が分からない道具の一言。**動かすと引きずるは形が同じ**
+   * (どちらも持ち上げて 1 クリック) なので、名前と鍵しか出さないと一覧では
+   * 見分けが付かない (実機で「何が違うのか」と訊かれた)。
+   */
+  readonly hint?: string;
 };
 
 const TOOLS: readonly ToolButton[] = [
   { tool: 'select', key: 'Escape', glyph: '↖', name: '選ぶ', kbd: 'Esc' },
   { tool: 'place', key: 'a', glyph: '▣', name: '部品', kbd: 'A' },
   { tool: 'wire', key: 'w', glyph: '─', name: '配線', kbd: 'W' },
-  { key: 'm', glyph: '✥', name: '動かす', kbd: 'M' },
-  { key: 'g', glyph: '⤡', name: '引きずる', kbd: 'G' },
+  { key: 'm', glyph: '✥', name: '動かす', kbd: 'M', hint: '部品だけが動く (配線は元の穴に残る)' },
+  { key: 'g', glyph: '⤡', name: '引きずる', kbd: 'G', hint: '穴に来ているものが丸ごと動く (つながりは保たれる)' },
   { key: 'r', glyph: '↻', name: '回す', kbd: 'R' },
   { key: 'x', glyph: '⇔', name: '反転', kbd: 'X' },
   { key: 'd', modifier: true, glyph: '⧉', name: '複製', kbd: 'Ctrl+D' },
@@ -370,16 +376,19 @@ const TOOLS: readonly ToolButton[] = [
  * 右クリックの一覧。**道具の列と同じ表から組む** — 押せることが 2 通りの
  * 並びで違って見えると、鍵を覚える手がかりにならない。
  */
+const toolTitle = (one: ToolButton): string =>
+  escapeMarkup(`${one.name} (${one.kbd})${one.hint === undefined ? '' : ` — ${one.hint}`}`);
+
 const renderMenu = (): string => `<menu class="kc-menu" hidden>${TOOLS.map((one) => (
   `<li><button type="button" class="kc-tool kc-menu-item" data-key="${one.key}"`
-  + `${one.modifier === true ? ' data-modifier="1"' : ''}>`
+  + `${one.modifier === true ? ' data-modifier="1"' : ''} title="${toolTitle(one)}">`
   + `<span class="kc-glyph">${one.glyph}</span><span>${one.name}</span><kbd>${one.kbd}</kbd></button></li>`
 )).join('')}</menu>`;
 
 const renderTools = (): string => TOOLS.map((one) => (
   `<button type="button" class="kc-tool"${one.tool === undefined ? '' : ` data-tool="${one.tool}"`}`
   + ` data-key="${one.key}"${one.modifier === true ? ' data-modifier="1"' : ''}`
-  + ` title="${one.name} (${one.kbd})">`
+  + ` title="${toolTitle(one)}">`
   + `<span class="kc-glyph">${one.glyph}</span><span>${one.name}</span><kbd>${one.kbd}</kbd></button>`
 )).join('');
 
