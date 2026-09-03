@@ -658,23 +658,16 @@ export function createSession<D extends DocLike>(
     }
 
     const fields = editor.fieldsOf(fence.source, handle);
-    const anchor = editor.cellsOf(fence.source, handle)[0];
-    if (fields === null || anchor === undefined) {
-      say(`${editor.nameOf(handle)} は複製できません (穴で置かれていません)`);
-      return;
-    }
-    // **1 穴だけずらす。** 重ねると、置いたのに何も増えていないように見える。
-    const to = editor.step(anchor, 1, 1) ?? editor.step(anchor, 0, 1);
-    const id = editor.nextId(fence.source, fields.type);
-    if (to === null || id === null) {
-      say(`${editor.nameOf(handle)} の隣に置く場所がありません`);
+    const id = fields === null ? null : editor.nextId(fence.source, fields.type);
+    if (id === null) {
+      say(`${editor.nameOf(handle)} は複製できません (名前を付けられません)`);
       return;
     }
     await run({
       label: `${id} を`,
-      done: () => `${editor.nameOf(handle)} を ${id} として ${to} へ複製しました`,
+      done: () => `${editor.nameOf(handle)} を ${id} として複製しました`,
       already: '置くものがありません',
-      plan: (source) => editor.addPart(source, { id, type: fields.type, at: [to] }),
+      plan: (source) => editor.duplicate(source, handle, id),
     });
   }
 

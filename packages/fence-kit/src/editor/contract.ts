@@ -129,6 +129,15 @@ export function checkFenceEditor(editor: FenceEditor, fixture: ContractFixture):
     say(`${part} を動かしたのに ${moveTo} を返しません`);
   }
 
+  // **複製は行を写す。** 足の並びが形で決まる部品も、写せば正しい姿のまま。
+  const copyId = `${part}COPY`;
+  const copied = editor.duplicate(source, part, copyId);
+  if (!copied.ok) {
+    say(`${part} を複製できません (${failed(copied)})`);
+  } else if (editor.cellsOf(applyRewrite(source, copied.value), copyId).length === 0) {
+    say(`${part} を複製したのに ${copyId} の穴を返しません`);
+  }
+
   const removed = editor.deletePart(source, part);
   if (!removed.ok) {
     say(`${part} を消せません (${failed(removed)})`);

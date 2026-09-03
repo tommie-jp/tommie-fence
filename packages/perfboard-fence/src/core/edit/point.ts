@@ -2,7 +2,7 @@ import { normalizeNewlines } from 'fence-kit';
 import type { Edit, Span } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
-import { isOnBoard } from '../model/board.ts';
+import { isSolderable } from '../model/board.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import type { Address, Board } from '../types.ts';
 import { diffAfter } from './diff.ts';
@@ -176,7 +176,9 @@ export function movePoint(source: string, at: Address, to: Address, trial = fals
   const here = doc.written.filter((one) => same(one.address, at));
   if (here.length === 0) return fail(`${formatAddress(at)} には何も書かれていません`, null);
   if (same(at, to)) return { ok: true, value: { edits: [], diff: { lost: [], gained: [] } } };
-  if (!isOnBoard(doc.board, to)) return fail(`${formatAddress(to)} は板の外です`, null);
+  // **半田付けできる所なら通す** — 穴と、`slots:` を書いた板の縁の銅箔。
+  // 節点は配線の端でもあるので、穴だけに限ると銅箔へ寄せられない。
+  if (!isSolderable(doc.board, to)) return fail(`${formatAddress(to)} は板の外です`, null);
 
   // **縮退は断る。** 寄せた先に自分のもう一方の足がある部品は長さ 0 になり、
   // 図から消えてネットリストでは短絡になる。動かす前に名指して断る。

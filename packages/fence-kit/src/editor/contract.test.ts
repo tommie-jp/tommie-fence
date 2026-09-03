@@ -72,6 +72,9 @@ function fakeEditor(over: Partial<FenceEditor> = {}): FenceEditor {
     addPart: (_source, part) => ok([
       { kind: 'insert', line: 2, text: `${part.id}: ${part.type} ${part.at.join(' ')}` },
     ]),
+    duplicate: (source, handle, id) => (lineOf(source, handle) === null
+      ? no(`${handle} がありません`)
+      : ok([{ kind: 'insert', line: 2, text: `${id}: resistor b1 b3` }])),
     addWire: () => ok([]),
     deletePart: (source, handle) => (lineOf(source, handle) === null
       ? no(`${handle} がありません`)

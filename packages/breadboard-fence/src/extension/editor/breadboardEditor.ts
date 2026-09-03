@@ -5,7 +5,7 @@ import { partFields, setField } from '../../core/edit/field.ts';
 import type { PartField } from '../../core/edit/field.ts';
 import { issuesOf, shiftIssues } from '../../core/edit/issues.ts';
 import { aimAt, fenceAt } from '../../core/edit/map.ts';
-import { insertPart, insertWire, nextPartId, partCells } from '../../core/edit/insert.ts';
+import { insertPart, insertWire, duplicatePart, nextPartId, partCells } from '../../core/edit/insert.ts';
 import { renamePart } from '../../core/edit/rename.ts';
 import { flipPart, turnPart } from '../../core/edit/turn.ts';
 import { movePart, movablePartIds, partSpans, stepCell } from '../../core/edit/move.ts';
@@ -120,6 +120,7 @@ export function createBreadboardEditor(): FenceEditor {
         preview: part.preview ?? false,
       });
     },
+    duplicate: duplicatePart,
     turn: turnPart,
     flip: flipPart,
   };

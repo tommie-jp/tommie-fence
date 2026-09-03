@@ -163,6 +163,11 @@ export type FenceEditor = {
   readonly movePart: (source: string, handle: string, to: string, trial?: Trial) => EditResult;
   readonly movePoint: (source: string, from: string, to: string, trial?: Trial) => EditResult;
   readonly addPart: (source: string, part: NewPart) => EditResult;
+  /**
+   * 部品をもう 1 つ。**行を写して名前と穴だけ差し替える** — 足の並びが形で
+   * 決まる部品 (DIP・端面実装のコネクタ) は、置き直すとその並びを作り直せない。
+   */
+  readonly duplicate: (source: string, handle: string, id: string) => EditResult;
   readonly addWire: (source: string, from: string, to: string, operator: string) => EditResult;
   readonly deletePart: (source: string, handle: string) => EditResult;
   readonly deleteWire: (source: string, line: number) => EditResult;

@@ -59,3 +59,27 @@ describe('端面実装のコネクタ', () => {
     expect(!off.ok && off.error.message).toContain('板の外');
   });
 });
+
+describe('端面実装の複製', () => {
+  test('copies the arrangement, since an edge mount cannot be rebuilt from one hole', () => {
+    // 置き直す形にすると、足の並びが形で決まる部品は正しい姿を作り直せない。
+    const copied = editor.duplicate(SRC, 'J1', 'J2');
+
+    expect(copied.ok).toBe(true);
+    const line = copied.ok
+      ? copied.value.lines?.map((one) => (one.kind === 'insert' ? one.text : '')).join('')
+      : '';
+    // 種類も姿も残り、穴は 3 つとも斜めに 1 つずれる。
+    expect(line).toContain('J2: sma/female-edge');
+    expect(line).toContain('f2 e1 g1');
+  });
+
+  test('keeps the variant when duplicating any part written with one', () => {
+    const src = 'board: 25x15\nparts:\n  C1: capacitor/electrolytic c3 c8 47u\n';
+
+    const copied = editor.duplicate(src, 'C1', 'C2');
+
+    expect(copied.ok && copied.value.lines?.some((one) => one.kind === 'insert'
+      && one.text.includes('C2: capacitor/electrolytic') && one.text.includes('47u'))).toBe(true);
+  });
+});

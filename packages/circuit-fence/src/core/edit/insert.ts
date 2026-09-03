@@ -7,11 +7,12 @@ import type { PartTypeName } from '../parts.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { fieldProblem } from './field.ts';
 import type { Endpoint } from '../types.ts';
-import { diffOf, fail, isOnGrid } from './shared.ts';
+import { diffOf, fail, isOnGrid, locatePart } from './shared.ts';
 import { flipPart, turnPart } from './turn.ts';
 import { handleAt } from './handles.ts';
+import { stepCell } from './move.ts';
 import type { LineEdit, RewriteResult } from './shared.ts';
-import { applyRewrite, orientInserted } from 'fence-kit';
+import { applyEdits, applyRewrite, orientInserted } from 'fence-kit';
 
 /**
  * 部品と配線を足す。**フェンス本文 → 書き換えの並び**を返す純関数で、
@@ -280,4 +281,41 @@ export function nextPartId(source: string, type: string): string | null {
   return null;
 }
 
+/**
+ * 部品をもう 1 つ。**行をそのまま写して、名前と番地だけ差し替える。**
+ *
+ * 種類・向き・値・書き方がそのまま残るので、置き直す形では作り直せない部品
+ * (向きの語を持つ多端子) も正しい姿のままになる。ずらすのは斜めに 1 升 —
+ * 重ねると、増えたことが図で分からない。
+ */
+export function duplicatePart(source: string, handle: string, newId: string): RewriteResult {
+  const normalized = normalizeNewlines(source);
+  const { doc } = parseFence(normalized);
+  if (!doc) return fail('フェンスを読めないので複製できません (先にエラーを直します)', null);
+  if (!isReferenceable(newId)) {
+    return fail(`部品 ID ${newId} は使えません (英数字と _ - だけの ${LIMITS.idLength} 文字まで)`, null);
+  }
 
+  const lines = normalized.split('\n');
+  const found = locatePart(doc, lines, handle);
+  if (found === null) return fail(`部品が見つかりません: ${handle}`, null);
+  if (isFlow(lines, 'parts')) return fail('フロー形式 (1 行に書いた形) の部品には足せません。手で書きます', null);
+
+  const { text } = found;
+
+  const moved = found.tokens.map((token) => {
+    const written = text.slice(token.column, token.column + token.length);
+    return stepCell(written, 1, 1);
+  });
+  if (moved.some((one) => one === null)) return fail(`${handle} の隣に置く場所がありません`, found.part.line);
+
+  const shifted = applyEdits(text, found.tokens.map((token, index) => ({
+    line: 1, column: token.column, length: token.length, text: moved[index] ?? '',
+  })));
+  const renamed = shifted.replace(/^(\s*)[^\s:]+\s*:/, `$1${newId}:`);
+
+  const last = doc.parts.reduce((deepest, part) => Math.max(deepest, part.line), 0);
+  return addition(normalized, [
+    { kind: 'insert', line: last + 1, text: `${indentOf(lines, last)}${renamed.trim()}` },
+  ]);
+}

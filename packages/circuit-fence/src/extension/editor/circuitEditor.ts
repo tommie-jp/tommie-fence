@@ -5,7 +5,7 @@ import { nameOfHandle } from '../../core/edit/handles.ts';
 import { issuesOf, renderIssues, shiftIssues } from '../../core/edit/issues.ts';
 import { aimAt, fenceAt, gridMap, partCells } from '../../core/edit/map.ts';
 import { renderMapHtml } from '../../core/edit/mapSvg.ts';
-import { insertPart, insertWire, nextPartId } from '../../core/edit/insert.ts';
+import { duplicatePart, insertPart, insertWire, nextPartId } from '../../core/edit/insert.ts';
 import { movePart, partSpans, stepCell } from '../../core/edit/move.ts';
 import { renderPalette, renderTypeOptions } from '../../core/edit/palette.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
@@ -137,6 +137,7 @@ export function createCircuitEditor(): FenceEditor {
         : { ok: false, error: { message: `書き換えられない欄です: ${field}`, line: null } }
     ),
 
+    duplicate: duplicatePart,
     turn: turnPart,
     flip: flipPart,
   };

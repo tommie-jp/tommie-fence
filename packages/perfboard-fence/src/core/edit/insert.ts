@@ -1,17 +1,18 @@
-import { FLOW_REFUSAL, appendUnderKey, applyLineEdits, isFlowKey, leadOffsets, needsRoom, normalizeNewlines, orientInserted } from 'fence-kit';
+import { FLOW_REFUSAL, appendUnderKey, applyEdits, applyLineEdits, isFlowKey, leadOffsets, needsRoom, normalizeNewlines, orientInserted } from 'fence-kit';
 import type { LineEdit, NetDiff } from 'fence-kit';
-import { fenceError } from '../errors.ts';
+import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { formatAddress } from '../model/address.ts';
 import { isOnBoard, isSolderable } from '../model/board.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { holesOf, partPrefix } from '../parts/catalog.ts';
-import { resolveTypeName } from '../parts/types.ts';
+import { resolveTypeName, splitPartType } from '../parts/types.ts';
 import type { Address, Board, FenceError } from '../types.ts';
 import { diffAfterLines } from './diff.ts';
+import { locateTokens } from './shared.ts';
 import { flipPart, turnPart } from './turn.ts';
 import { placeParts } from '../placement/place.ts';
-import { isLocated, locatePart } from './move.ts';
+import { isLocated, locatePart, stepCell } from './move.ts';
 
 /**
  * 配線を 1 本足す。**行を 1 行足すだけ** — 1 配線 = 1 本の信号経路という
@@ -131,7 +132,8 @@ function oriented(source: string, part: NewPart, added: readonly LineEdit[]): Ad
  * 知らない種類は null (名前の付けようがない)。
  */
 export function nextPartId(source: string, type: string): string | null {
-  const prefix = partPrefix(resolveTypeName(type));
+  // **姿つきの綴りも引ける** (`sma/female-edge`)。欄に出るのは書かれた綴りそのもの。
+  const prefix = partPrefix(baseTypeOf(type));
   if (prefix === null) return null;
 
   const { doc } = parseFence(normalizeNewlines(source));
@@ -154,7 +156,9 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
   const { doc } = parseFence(normalized);
   if (doc === null) return fail('フェンスを読めないので置けません (先にエラーを直します)', null);
 
-  const type = resolveTypeName(part.type);
+  // **書かれた綴りはそのまま行に書き、足の数は種類から引く**。
+  const written = resolveTypeName(part.type);
+  const type = baseTypeOf(part.type);
   const wanted = holesOf(type);
   if (wanted === 0) return fail(`知らない部品の種類です: ${part.type}`, null);
   const anchor = part.at[0];
@@ -184,7 +188,7 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
 
   const last = doc.parts.reduce((deepest, one) => Math.max(deepest, one.line ?? 0), 0);
   const holes = spelled.join(' ');
-  const added = appendUnderKey(lines, 'parts', last, `${part.id}: ${type} ${holes}`);
+  const added = appendUnderKey(lines, 'parts', last, `${part.id}: ${written} ${holes}`);
 
   // **穴 1 つで置く形 (DIP / SIP) は、足が書かれた穴より広がる。** 板に載るか
   // どうかは並べてみないと分からないので、置いた姿を読み直して確かめる
@@ -196,6 +200,9 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
   return oriented(normalized, part, added);
 }
 
+/** 姿を落とした種類の名前 (`sma/female-edge` → `sma`)。 */
+const baseTypeOf = (written: string): string => splitPartType(written).type;
+
 /** その部品が使っている穴 (書かれた綴り)。ゴーストの光らせ先。無ければ空。 */
 export function partCells(source: string, id: string): readonly string[] {
   const { doc } = parseFence(normalizeNewlines(source));
@@ -203,4 +210,51 @@ export function partCells(source: string, id: string): readonly string[] {
   if (!doc || part === undefined) return [];
   const placed = placeParts([part], doc.board).parts[0];
   return placed === undefined ? [] : placed.pins.map((pin) => formatAddress(pin.address));
+}
+
+/**
+ * 部品をもう 1 つ。**行をそのまま写して、名前と穴だけ差し替える。**
+ *
+ * 種類・姿・値・書き方 (空白や `points:` の名前) がそのまま残るので、
+ * 足の並びを組み直す必要が無い — 端面実装のコネクタや DIP のように
+ * **足の並びが形で決まる部品**も、写せば正しい姿のままになる。
+ * 置き直す形にすると、その並びを作り直せない部品ができる。
+ *
+ * ずらすのは**斜めに 1 穴**。重ねると、増えたことが図で分からない。
+ */
+export function duplicatePart(source: string, id: string, newId: string): AdditionResult {
+  const normalized = normalizeNewlines(source);
+  const { doc } = parseFence(normalized);
+  if (doc === null) return fail('フェンスを読めないので複製できません (先にエラーを直します)', null);
+  if (doc.parts.some((one) => one.id === newId)) {
+    return fail(`その名前はもう使われています: ${newId}`, null);
+  }
+
+  const found = locatePart(normalized, id);
+  if (!isLocated(found)) return { ok: false, error: found.error };
+
+  const located = locateTokens(found.line, found.addresses, found.points);
+  if (located === null) return fail(`${safeToken(id)} の穴を行の中に見つけられませんでした`, null);
+
+  const moved = located.tokens.map((token) => {
+    const written = found.line.slice(token.column, token.column + token.length);
+    return stepCell(written, 1, 1);
+  });
+  const stuck = moved.indexOf(null);
+  if (stuck >= 0) {
+    return fail(`${safeToken(id)} の隣に置く場所がありません`, found.lineNumber);
+  }
+
+  // 穴の綴りを差し替えてから、鍵 (名前) を新しいものにする。
+  const shifted = applyEdits(found.line, located.tokens.map((token, index) => ({
+    line: 1, column: token.column, length: token.length, text: moved[index] ?? '',
+  })));
+  const renamed = shifted.replace(/^(\s*)[^\s:]+\s*:/, `$1${newId}:`);
+
+  const lines = normalized.split('\n');
+  if (isFlowKey(lines, 'parts')) return fail(`部品: ${FLOW_REFUSAL.replace('消せません', '足せません')}`, null);
+
+  const last = doc.parts.reduce((deepest, one) => Math.max(deepest, one.line ?? 0), 0);
+  const added = appendUnderKey(lines, 'parts', last, renamed.trim());
+  return { ok: true, value: { edits: [], lines: added, diff: diffAfterLines(normalized, added) } };
 }
