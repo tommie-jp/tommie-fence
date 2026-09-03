@@ -9,7 +9,8 @@ import { aimAt, fenceAt } from '../../core/edit/map.ts';
 import { insertPart, insertWire, duplicatePart, nextPartId, partCells } from '../../core/edit/insert.ts';
 import { renamePart } from '../../core/edit/rename.ts';
 import {
-  deleteNote, duplicateNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans, setNoteField,
+  deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans,
+  setNoteField, turnNote,
 } from '../../core/edit/note.ts';
 import { flipPart, turnPart } from '../../core/edit/turn.ts';
 import { movePart, movablePartIds, partSpans, stepCell } from '../../core/edit/move.ts';
@@ -32,13 +33,6 @@ const unreadable = (written: string): EditResult =>
   ({ ok: false, error: { message: `穴として読めません: ${written}`, line: null } });
 
 const readAddress = (written: string) => parseAddress(written);
-
-/**
- * 注釈は「回せない・反転できない」。**字にも印にも表と裏が無い。**
- * 黙って何もしないと鍵が壊れて見えるので、理由を言って断る。
- */
-const noTurn = (what: string): EditResult =>
-  ({ ok: false, error: { message: `注釈は${what}せません (字にも印にも向きがありません)`, line: null } });
 
 export function createPerfboardEditor(): FenceEditor {
   return {
@@ -133,7 +127,9 @@ export function createPerfboardEditor(): FenceEditor {
       });
     },
     duplicate: (source, handle, id) => (isNoteHandle(handle) ? duplicateNote(source, handle) : duplicatePart(source, handle, id)),
-    turn: (source, handle, quarters) => (isNoteHandle(handle) ? noTurn('回') : turnPart(source, handle, quarters)),
-    flip: (source, handle) => (isNoteHandle(handle) ? noTurn('反転') : flipPart(source, handle)),
+    turn: (source, handle, quarters) => (
+      isNoteHandle(handle) ? turnNote(source, handle, quarters) : turnPart(source, handle, quarters)
+    ),
+    flip: (source, handle) => (isNoteHandle(handle) ? flipNote(source, handle) : flipPart(source, handle)),
   };
 }

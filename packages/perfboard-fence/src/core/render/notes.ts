@@ -47,14 +47,25 @@ function renderNote(note: ResolvedNote, layout: Layout, theme: Theme): string {
   if (note.kind === 'text') {
     // 画布からはみ出した字は**黙って消える**ので、必ず幅で切る。
     // 測る相手は板ではなく画布 — 板の外にも余白があり、そこは使える。
-    const { anchor, room } = textRoom(from.x, layout.width);
+    // **縦に回した字は高さで測る** (横幅で切ると板の広い側で無駄に切れる)。
+    const sideways = note.turn.rotate === 90 || note.turn.rotate === 270;
+    const { anchor, room } = sideways
+      ? { anchor: 'middle' as const, room: layout.height }
+      : textRoom(from.x, layout.width);
     const text = fit(note.text ?? '', Math.max(0, room) / theme.metrics.textSize);
-    return svgText(from.x, from.y - TEXT_RISE, text, {
+    // **反転は字を裏返さない。** 鏡文字は読めないので、指す穴の**反対側**へ移す。
+    // 上に何かあって字が重なるときに、下へ逃がすためのもの。
+    const rise = note.turn.mirror ? -(TEXT_RISE + theme.metrics.textSize * 0.8) : TEXT_RISE;
+    const drawn = svgText(from.x, from.y - rise, text, {
       anchor,
       fill: stroke,
       'font-size': num(theme.metrics.textSize),
       halo: theme.palette.plate,
     });
+    // 回すのは**指す穴のまわり**。字の真ん中で回すと、指す先から離れていく。
+    return note.turn.rotate === 0
+      ? drawn
+      : element('g', { transform: `rotate(${num(note.turn.rotate)} ${num(from.x)} ${num(from.y)})` }, drawn);
   }
 
   const to = note.to === null ? from : layout.point(note.to);

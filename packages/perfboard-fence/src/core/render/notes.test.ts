@@ -5,12 +5,13 @@ import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
 import { parseAddress } from '../model/address.ts';
 import type { ResolvedNote } from '../types.ts';
+import { NO_TURN } from '../parts/orient.ts';
 
 const layout = createLayout(createBoard({ cols: 12, rows: 8 }));
 const at = (hole: string) => parseAddress(hole)!;
 
 const note = (over: Partial<ResolvedNote> & Pick<ResolvedNote, 'kind' | 'from'>): ResolvedNote =>
-  ({ to: null, color: null, text: null, line: null, ...over });
+  ({ to: null, color: null, text: null, line: null, turn: NO_TURN, ...over });
 
 const draw = (one: ResolvedNote): string => renderNotes([one], layout, THEME);
 
@@ -79,5 +80,32 @@ describe('掴み手', () => {
     const svg = renderNotes([note({ kind: 'text', from: at('b3'), text: 'ここ', line: 7 })], layout, THEME);
 
     expect(svg).not.toContain('cf-chip');
+  });
+});
+
+describe('text の向き', () => {
+  const words = (over: Partial<ResolvedNote> = {}): string =>
+    renderNotes([note({ kind: 'text', from: at('e5'), text: 'ここ', ...over })], layout, THEME);
+
+  test('turns the words around the hole they point at', () => {
+    // 字の真ん中で回すと、指す先から離れていく。
+    const point = layout.point(at('e5'));
+
+    expect(words({ turn: { rotate: 90, mirror: false } }))
+      .toContain(`rotate(90 ${point.x} ${point.y})`);
+  });
+
+  test('writes the words the usual way up when there is no turn', () => {
+    expect(words()).not.toContain('rotate(');
+  });
+
+  test('sends the words to the other side instead of mirroring them', () => {
+    // **鏡文字は読めない。** 反転は「指す穴の反対側へ移す」の意味にしてある。
+    const point = layout.point(at('e5'));
+    const above = /<text[^>]*y="([-0-9.]+)"/.exec(words())?.[1];
+    const below = /<text[^>]*y="([-0-9.]+)"/.exec(words({ turn: { rotate: 0, mirror: true } }))?.[1];
+
+    expect(Number(above)).toBeLessThan(point.y);
+    expect(Number(below)).toBeGreaterThan(point.y);
   });
 });

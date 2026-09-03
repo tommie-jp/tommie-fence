@@ -17,11 +17,22 @@ import type { Parsed } from './parts.ts';
  */
 
 import type { NoteKind } from '../types.ts';
+import { MIRROR_WORD, NO_TURN, isRotationWord, rotationOf } from '../parts/orient.ts';
+import type { Turn } from '../parts/orient.ts';
 
 export type { NoteKind };
 
 export type WrittenNote = {
   readonly kind: NoteKind;
+  /**
+   * 向き。**種類に `/` で続けて書く** (`text/r90`)。
+   *
+   * 部品は番地のあとに語で書く (`dip8 c3 r90`) が、**注釈の `text` は番地の
+   * あとが全部言葉**なので、そこに語を置くと「r90 で始まる注釈」と区別が
+   * 付かない。区別の付かない書き方は作らない (色を `text` に書けないのと
+   * 同じ理由) ので、**姿の区切りと同じ `/`** に載せる。
+   */
+  readonly turn: Turn;
   /** 指し先の番地。**`source` と `parts` は板の外に出すので null**。 */
   readonly from: string | null;
   /** `box` と `arrow` の 2 つ目の番地。ほかは null。 */
@@ -41,13 +52,35 @@ const fail = (message: string, token?: string): Parsed<never> =>
 
 const isKind = (word: string): word is NoteKind => (KINDS as readonly string[]).includes(word);
 
+/** 種類の語に付いた向き (`text/r90/mirror`)。読めない語はそのまま返して断らせる。 */
+function splitTurn(written: string): { readonly kind: string; readonly turn: Turn; readonly bad: string | null } {
+  const [kind = '', ...words] = written.split('/');
+  let turn = NO_TURN;
+  for (const word of words) {
+    if (isRotationWord(word)) turn = { ...turn, rotate: rotationOf(word) ?? turn.rotate };
+    else if (word === MIRROR_WORD) turn = { ...turn, mirror: true };
+    else return { kind, turn: NO_TURN, bad: word };
+  }
+  return { kind, turn, bad: null };
+}
+
 export function parseNoteLine(line: string): Parsed<WrittenNote> {
   const tokens = line.trim().split(/\s+/).filter((token) => token !== '');
-  const [kind, ...rest] = tokens;
+  const [head, ...rest] = tokens;
 
-  if (kind === undefined) return fail(`注釈が空です (${KINDS.join(' / ')} のどれかで書きます)`);
+  if (head === undefined) return fail(`注釈が空です (${KINDS.join(' / ')} のどれかで書きます)`);
+  const { kind, turn, bad } = splitTurn(head);
+  if (bad !== null) {
+    return fail(
+      `知らない向きです: ${safeToken(bad)} (r90 / r180 / r270 / ${MIRROR_WORD} が書けます)`,
+      head,
+    );
+  }
   if (!isKind(kind)) {
-    return fail(`知らない注釈です: ${safeToken(kind)} (${KINDS.join(' / ')})`, kind);
+    return fail(`知らない注釈です: ${safeToken(kind)} (${KINDS.join(' / ')})`, head);
+  }
+  if (kind !== 'text' && (turn.rotate !== 0 || turn.mirror)) {
+    return fail(`向きを書けるのは text だけです (${safeToken(kind)} に向きはありません)`, head);
   }
 
   const wanted = HOLES[kind];
@@ -63,11 +96,11 @@ export function parseNoteLine(line: string): Parsed<WrittenNote> {
   if (kind === 'text') {
     const text = tail.join(' ');
     if (text === '') return fail('text には図に出す言葉を書きます', kind);
-    return { ok: true, value: { kind, from, to: null, color: null, text: clampText(text, LIMITS.noteLength) } };
+    return { ok: true, value: { kind, turn, from, to: null, color: null, text: clampText(text, LIMITS.noteLength) } };
   }
 
   if (tail.length === 0) {
-    return { ok: true, value: { kind, from, to, color: null, text: null } };
+    return { ok: true, value: { kind, turn, from, to, color: null, text: null } };
   }
   if (tail.length > 1) {
     // **余った言葉を黙って捨てない。** 色を 2 つ書いた人が、片方が効いて
@@ -91,5 +124,5 @@ export function parseNoteLine(line: string): Parsed<WrittenNote> {
     }
     return fail(`知らない色です: ${safeToken(written)} (${colorHint()})`, written);
   }
-  return { ok: true, value: { kind, from, to, color, text: null } };
+  return { ok: true, value: { kind, turn, from, to, color, text: null } };
 }

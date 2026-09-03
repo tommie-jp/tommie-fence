@@ -197,7 +197,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       ));
       continue;
     }
-    notes.push({ kind: note.kind, from, to, color: note.color, text: note.text, line: note.line });
+    notes.push({ kind: note.kind, turn: note.turn, from, to, color: note.color, text: note.text, line: note.line });
   }
 
   // **同じ書き出しを 2 枚重ねない。** 2 つ目を書いた人には、消えたのではなく

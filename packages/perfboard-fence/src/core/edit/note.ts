@@ -4,6 +4,8 @@ import { fenceError, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import { isSolderable } from '../model/board.ts';
 import { createBoard } from '../model/board.ts';
+import { MIRROR_WORD, NO_TURN, rotationWord } from '../parts/orient.ts';
+import type { Turn } from '../parts/orient.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import type { Address, FenceError, NoteSpec } from '../types.ts';
 import { diffAfter, diffAfterLines } from './diff.ts';
@@ -219,3 +221,56 @@ export function setNoteField(source: string, handle: string, field: string, text
   }];
   return { ok: true, value: { edits, diff: diffAfter(source, edits) } };
 }
+
+/** 向きを書いた種類の語 (`text/r90/mirror`)。向きが無ければ種類だけ。 */
+const kindWord = (kind: string, turn: Turn): string =>
+  kind + (turn.rotate === 0 ? '' : `/${rotationWord(turn.rotate)}`) + (turn.mirror ? `/${MIRROR_WORD}` : '');
+
+/**
+ * 種類の語を書き換える編集。**行頭の `- ` と字下げは残す** —
+ * 頭から数えると目印の `-` を種類だと読んでしまう (実際に踏んだ)。
+ */
+function rewriteKind(found: Found, turn: Turn): NoteResult {
+  const marker = /^\s*-\s*/.exec(found.text)?.[0].length ?? 0;
+  const written = found.text.slice(marker).split(/\s/)[0] ?? '';
+  if (!written.startsWith(found.note.kind)) {
+    return fail(`${found.line} 行目の注釈の種類を行の中に見つけられませんでした`, found.line);
+  }
+  const edits: Edit[] = [{
+    line: found.line, column: marker, length: written.length, text: kindWord(found.note.kind, turn),
+  }];
+  return { ok: true, value: { edits, diff: { lost: [], gained: [] } } };
+}
+
+/**
+ * 注釈を回す。**回るのは字だけ** — 印や枠には向きが無いので断る。
+ * 回るのは**指す穴のまわり**で、字の真ん中ではない (指す先から離れないように)。
+ */
+export function turnNote(source: string, handle: string, quarters: number): NoteResult {
+  const found = locate(source, handle);
+  if (!isFound(found)) return fail(found.problem, found.line);
+  if (found.note.kind !== 'text') {
+    return fail(`${found.note.kind} の注釈は回せません (向きがあるのは text だけです)`, found.line);
+  }
+
+  const steps = (((found.note.turn.rotate / 90 + quarters) % 4) + 4) % 4;
+  const rotate = (steps * 90) as Turn['rotate'];
+  if (rotate === found.note.turn.rotate) return { ok: true, value: { edits: [], diff: { lost: [], gained: [] } } };
+  return rewriteKind(found, { ...found.note.turn, rotate });
+}
+
+/**
+ * 注釈を反転する。**字は裏返さない** — 鏡文字は読めないので、指す穴の
+ * 反対側へ移す (上に何かあって重なるときに下へ逃がすためのもの)。
+ */
+export function flipNote(source: string, handle: string): NoteResult {
+  const found = locate(source, handle);
+  if (!isFound(found)) return fail(found.problem, found.line);
+  if (found.note.kind !== 'text') {
+    return fail(`${found.note.kind} の注釈は反転できません (向きがあるのは text だけです)`, found.line);
+  }
+  return rewriteKind(found, { ...found.note.turn, mirror: !found.note.turn.mirror });
+}
+
+/** 向きの無い注釈。**書いていないのと同じ**。 */
+export const NOTE_NO_TURN = NO_TURN;

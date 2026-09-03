@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { applyEdits } from './shared.ts';
 import {
-  deleteNote, duplicateNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans, setNoteField,
+  deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans,
+  setNoteField, turnNote,
 } from './note.ts';
 import { parseAddress } from '../model/address.ts';
 
@@ -108,5 +109,41 @@ describe('noteFields / setNoteField', () => {
 
     expect(result.ok).toBe(false);
     expect(result.ok || result.error.message).toContain('言葉だけ');
+  });
+});
+
+describe('turnNote / flipNote', () => {
+  const TEXT = 'board: 12x8\nnotes:\n  - text c3 ここ\n';
+
+  test('writes the turn on the kind, so the words stay the words', () => {
+    expect(after(TEXT, turnNote(TEXT, 'note:3', 1))).toContain('- text/r90 c3 ここ');
+  });
+
+  test('comes back to where it started after four turns', () => {
+    let now = TEXT;
+    for (let quarter = 0; quarter < 4; quarter += 1) now = after(now, turnNote(now, 'note:3', 1));
+
+    expect(now).toBe(TEXT);
+  });
+
+  test('keeps both when both are written', () => {
+    const turned = after(TEXT, turnNote(TEXT, 'note:3', 1));
+
+    expect(after(turned, flipNote(turned, 'note:3'))).toContain('- text/r90/mirror c3 ここ');
+  });
+
+  test('takes the mirror off again', () => {
+    const flipped = after(TEXT, flipNote(TEXT, 'note:3'));
+
+    expect(after(flipped, flipNote(flipped, 'note:3'))).toContain('- text c3 ここ');
+  });
+
+  test('refuses a note that has no direction, rather than doing nothing', () => {
+    // 黙って何もしないと鍵が壊れて見える。
+    const mark = 'board: 12x8\nnotes:\n  - mark c3\n';
+    const result = turnNote(mark, 'note:3', 1);
+
+    expect(result.ok).toBe(false);
+    expect(result.ok || result.error.message).toContain('text だけ');
   });
 });
