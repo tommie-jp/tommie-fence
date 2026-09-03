@@ -3,7 +3,7 @@ import { partFields, setField } from '../../core/edit/field.ts';
 import type { PartField } from '../../core/edit/field.ts';
 import { nameOfHandle } from '../../core/edit/handles.ts';
 import { issuesOf, renderIssues, shiftIssues } from '../../core/edit/issues.ts';
-import { aimAt, fenceAt, gridMap } from '../../core/edit/map.ts';
+import { aimAt, fenceAt, gridMap, partCells } from '../../core/edit/map.ts';
 import { renderMapHtml } from '../../core/edit/mapSvg.ts';
 import { insertPart, insertWire, nextPartId } from '../../core/edit/insert.ts';
 import { movePart, partSpans } from '../../core/edit/move.ts';
@@ -28,9 +28,6 @@ import type { EditResult, FenceEditor, NewPart } from 'fence-kit';
 /** 番地として読めなかったときの断り。**綴りをそのまま見せる** (直す手がかり)。 */
 const unreadable = (written: string): EditResult =>
   ({ ok: false, error: { message: `番地として読めません: ${written}`, line: null } });
-
-/** ID がそのまま図に出る種類の、名前の既定の候補。 */
-const NAME_HINTS: Readonly<Record<string, string>> = { port: 'IN', vcc: 'VCC', vee: 'VEE' };
 
 /** 書ける欄。ほかの綴りが来たら断る (webview からの知らせは信用しない)。 */
 const FIELDS: readonly string[] = ['type', 'value', 'label'];
@@ -86,7 +83,9 @@ export function createCircuitEditor(): FenceEditor {
     fieldsOf: partFields,
     nameOf: nameOfHandle,
     nextId: nextPartId,
-    nameHint: (type) => NAME_HINTS[type] ?? '',
+    cellsOf: partCells,
+    // 配線は `-|` / `|-` で折れる (`Shift` を押しながら放す)。
+    foldsWire: true,
 
     palette: renderPalette,
     typeNames: renderTypeOptions,
@@ -108,7 +107,7 @@ export function createCircuitEditor(): FenceEditor {
       const at = addresses(part.at);
       return typeof at === 'string'
         ? unreadable(at)
-        : insertPart(source, { id: part.id, type: part.type, at });
+        : insertPart(source, { id: part.id, type: part.type, at, turn: part.turn ?? 0, flip: part.flip ?? false });
     },
 
     addWire: (source, from, to, operator) => {

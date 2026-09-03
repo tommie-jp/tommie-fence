@@ -4,6 +4,7 @@ import { indentOn } from './documentLike.ts';
 import type { DocLike, EditorLike } from './documentLike.ts';
 import { createHistory, sameBody } from './history.ts';
 import { describeDiff } from './edits.ts';
+import { applyRewrite } from './lines.ts';
 import type { EditResult, FenceEditor, PartFields } from './fenceEditor.ts';
 import { renderFencePicker } from './panelHtml.ts';
 import type { MapViewHtml } from './panelHtml.ts';
@@ -45,7 +46,12 @@ export type Outgoing =
   | { readonly kind: 'status'; readonly text: string }
   | { readonly kind: 'aim'; readonly what?: 'part' | 'node' | 'wire'; readonly id?: string }
   /** 選んだ部品の欄の中身。null は「欄を閉じる」 (部品を選んでいない)。 */
-  | { readonly kind: 'fields'; readonly part: PartFields | null };
+  | { readonly kind: 'fields'; readonly part: PartFields | null }
+  /**
+   * ゴースト — 置く・動かす前に、どの穴を使うか。`key` は webview が送った
+   * 問い合わせの札で、**古い答えを捨てる**ため (カーソルが先へ行っている)。
+   */
+  | { readonly kind: 'ghost'; readonly key: string; readonly cells: readonly string[]; readonly ok: boolean; readonly why: string };
 
 /** webview から来るもの。中身は信用せず、使う前に形を確かめる。 */
 export type Incoming = {
@@ -62,6 +68,9 @@ export type Incoming = {
   readonly at?: unknown;
   readonly field?: unknown;
   readonly text?: unknown;
+  readonly turn?: unknown;
+  readonly flip?: unknown;
+  readonly key?: unknown;
 };
 
 export type SessionHost<D extends DocLike> = {
@@ -88,11 +97,6 @@ export type SessionHost<D extends DocLike> = {
   readonly showDocument?: (uri: string, line: number) => Promise<void>;
   /** VS Code の undo に頼めるとき (カスタムエディタ)。無ければ自前の履歴を持つ。 */
   readonly nativeUndo?: (kind: 'undo' | 'redo') => Promise<void>;
-  /**
-   * 名前を訊く。**ID がそのまま図に出る種類** (`port` / `vcc` / `vee`) を
-   * 置くときだけ使う。断られたら null。
-   */
-  readonly ask?: (prompt: string, value: string) => Promise<string | null>;
 };
 
 /**
@@ -151,6 +155,9 @@ type Request = {
 };
 
 const text = (value: unknown): string | null => (typeof value === 'string' ? value : null);
+
+/** ゴーストの仮の名前。置く前の試し当てにだけ使う (本文には書かない)。 */
+const GHOST_ID = 'GHOST';
 
 export function createSession<D extends DocLike>(
   host: SessionHost<D>,
@@ -478,7 +485,16 @@ export function createSession<D extends DocLike>(
     });
   }
 
-  /** マップから来た「この部品をここへ」。ID は接頭辞から付け、要るときだけ訊く。 */
+  /** webview から来た向き (90 度を何回・反転するか)。無ければ回さない。 */
+  const orientationOf = (message: Incoming): { readonly turn: number; readonly flip: boolean } => ({
+    turn: typeof message.turn === 'number' && Number.isInteger(message.turn) ? message.turn : 0,
+    flip: message.flip === true,
+  });
+
+  /**
+   * マップから来た「この部品をここへ」。**名前は訊かない** — ID は接頭辞から付け、
+   * ID が図に出る種類も既定の名前で置く (置く流れを窓で止めない。名前は欄で直す)。
+   */
   async function addPart(message: Incoming): Promise<void> {
     const type = text(message.type);
     const written = Array.isArray(message.at) ? message.at.map(text) : null;
@@ -490,31 +506,89 @@ export function createSession<D extends DocLike>(
     const fence = fenceNow();
     if (fence === null) return;
 
-    // **ID がそのまま図に出る種類は訊く** (勝手に名前を決めない)。
-    const numbered = editor.nextId(fence.source, type);
-    const id = numbered ?? (host.ask === undefined
-      ? null
-      : await host.ask(`${type} の名前`, editor.nameHint(type)));
+    const id = editor.nextId(fence.source, type);
     if (id === null) {
-      // 取り消し (Esc) は断りなので黙って戻る。訊く手立てが無いときだけ言う。
-      if (numbered === null && host.ask === undefined) say(`${type} の名前を訊けませんでした`);
-      return;
-    }
-    if (id === '') {
-      // **空で確定したのは断りではない。** 黙って戻ると、置かれなかった理由が
-      // 分からないまま webview が待ちの表示のまま残る。
-      say(`${type} の名前を空にはできません`);
+      say(`${type} には名前を付けられません (知らない種類か、フェンスを読めません)`);
       return;
     }
 
     const at = written as readonly string[];
-    const where = at.join(' ');
+    const orientation = orientationOf(message);
     await run({
       label: `${id} を`,
-      done: () => `${id} (${type}) を ${where} へ置きました`,
+      done: () => `${id} (${type}) を ${at.join(' ')} へ置きました`,
       already: '置くものがありません',
-      plan: (source) => editor.addPart(source, { id, type, at }),
+      plan: (source) => editor.addPart(source, { id, type, at, ...orientation }),
     });
+  }
+
+  /**
+   * ゴースト — 置く・動かす前に「どの穴を使うか、置けるか」を答える。
+   * **押したときと同じ関数を本文の写しに試し当てて**、そのあとの穴を読むので、
+   * 見せた物と書かれる物が食い違わない。文書は触らない (何度でも呼べる)。
+   */
+  function preview(message: Incoming): void {
+    const key = text(message.key) ?? '';
+    const what = text(message.what);
+    const answer = (cells: readonly string[], ok: boolean, why = ''): void =>
+      host.post({ kind: 'ghost', key, cells, ok, why });
+
+    const fence = currentFence(true);
+    if (fence === null) {
+      answer([], false, '');
+      return;
+    }
+    const source = fence.source;
+
+    /** 試し当てのあとの本文。断られたらその理由。 */
+    const tried = (result: EditResult): string | { readonly why: string } =>
+      (result.ok ? applyRewrite(source, result.value) : { why: result.error.message });
+
+    if (what === 'place') {
+      const type = text(message.type);
+      const at = text(message.to);
+      if (type === null || at === null) {
+        answer([], false, '');
+        return;
+      }
+      // 名前は仮。**置く前なので何でもよい**が、既にある名前と重ならないように。
+      const after = tried(editor.addPart(source, { id: GHOST_ID, type, at: [at], ...orientationOf(message) }));
+      if (typeof after !== 'string') {
+        answer([at], false, after.why);
+        return;
+      }
+      answer(editor.cellsOf(after, GHOST_ID), true);
+      return;
+    }
+
+    const to = text(message.to);
+    if (what === 'move') {
+      const part = text(message.part);
+      if (part === null || to === null) {
+        answer([], false, '');
+        return;
+      }
+      const after = tried(editor.movePart(source, part, to));
+      if (typeof after !== 'string') {
+        answer([to], false, after.why);
+        return;
+      }
+      answer(editor.cellsOf(after, part), true);
+      return;
+    }
+
+    if (what === 'node') {
+      const from = text(message.from);
+      if (from === null || to === null) {
+        answer([], false, '');
+        return;
+      }
+      const after = tried(editor.movePoint(source, from, to));
+      answer([to], typeof after === 'string', typeof after === 'string' ? '' : after.why);
+      return;
+    }
+
+    answer([], false, '');
   }
 
   /** マップから来た「ここからここへ 1 本」。配線は**交点から交点へ**引く。 */
@@ -728,6 +802,9 @@ export function createSession<D extends DocLike>(
         case 'redo':
           await stepBack(message.kind);
           refreshWith(true);
+          return;
+        case 'preview':
+          preview(message);
           return;
         case 'select':
           showSelection(message);

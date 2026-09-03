@@ -8,6 +8,8 @@ import { parseFence } from '../parser/parseFence.ts';
 import { fieldProblem } from './field.ts';
 import type { Endpoint } from '../types.ts';
 import { applyRewrite, diffOf, fail, isOnGrid } from './shared.ts';
+import { flipPart, turnPart } from './turn.ts';
+import { handleAt } from './handles.ts';
 import type { LineEdit, RewriteResult } from './shared.ts';
 
 /**
@@ -26,10 +28,56 @@ import type { LineEdit, RewriteResult } from './shared.ts';
 export type NewPart = {
   readonly id: string;
   readonly type: string;
-  /** 番地。2 端子は 2 つ、1 端子・多端子は 1 つ。 */
+  /**
+   * 番地。2 端子は 2 つ、1 端子・多端子は 1 つ。**2 端子に 1 つだけ来たら、
+   * もう一方は右へ既定の間隔** (マップの 1 クリック。ドラッグなら 2 つ来る)。
+   */
   readonly at: readonly Address[];
   readonly value?: string;
+  /** 置く前に回す (90 度を何回。正が時計回り) ・反転する。ゴーストの向きのまま書く。 */
+  readonly turn?: number;
+  readonly flip?: boolean;
 };
+
+/**
+ * 2 端子を 1 番地で置くときの、もう一方までの距離 (升の数)。examples では
+ * 1 升と 2 升が拮抗している (61 件 / 55 件) が、1 升だと記号の胴が足に食われるので 2 にする。
+ */
+const DEFAULT_SPAN = 2;
+
+/**
+ * 置いた行を、置く前に回す・反転する。**回す側の関数をそのまま使う**ので、
+ * 置いてから回したのと同じ行になる。足した行は 1 行だけなので、回した結果は
+ * その行に収まる。名札は**その名前の最後の部品** (足した行は末尾に付く)。
+ */
+function oriented(source: string, spec: NewPart, added: readonly LineEdit[]): RewriteResult {
+  const turn = spec.turn ?? 0;
+  if (turn === 0 && !spec.flip) return addition(source, added);
+
+  let placed = applyRewrite(source, { edits: [], lines: added, diff: { lost: [], gained: [] } });
+  const handleOfNew = (): string => {
+    const parts = parseFence(placed).doc?.parts ?? [];
+    const index = parts.map((part) => part.id).lastIndexOf(spec.id);
+    return index < 0 ? spec.id : handleAt(parts, index);
+  };
+  if (turn !== 0) {
+    const turned = turnPart(placed, handleOfNew(), turn);
+    if (!turned.ok) return turned;
+    placed = applyRewrite(placed, turned.value);
+  }
+  if (spec.flip) {
+    const flipped = flipPart(placed, handleOfNew());
+    if (!flipped.ok) return flipped;
+    placed = applyRewrite(placed, flipped.value);
+  }
+
+  const isOwn = (text: string): boolean => text.trimStart().startsWith(`${spec.id}:`);
+  const final = placed.split('\n').filter(isOwn).at(-1);
+  const lines = added.map((one) => (one.kind === 'insert' && isOwn(one.text) && final !== undefined
+    ? { ...one, text: final }
+    : one));
+  return addition(source, lines);
+}
 
 /** 鍵の行 (1 始まり)。無ければ 0。 */
 const keyLineOf = (lines: readonly string[], key: string): number =>
@@ -143,10 +191,15 @@ export function insertPart(source: string, spec: NewPart): RewriteResult {
   if (!type) return fail(`知らない部品の種類です: ${spec.type}`, null);
 
   const wanted = type.kind === 'two-terminal' ? 2 : 1;
-  if (spec.at.length !== wanted) {
-    return fail(`${spec.type} は番地を ${wanted} つ書きます (${spec.at.length} つ渡されました)`, null);
+  const anchor = spec.at[0];
+  // **2 端子に番地 1 つなら、もう一方は右へ既定の間隔** (マップの 1 クリック)。
+  const at = wanted === 2 && spec.at.length === 1 && anchor !== undefined
+    ? [anchor, { row: anchor.row, col: anchor.col + DEFAULT_SPAN }]
+    : spec.at;
+  if (at.length !== wanted) {
+    return fail(`${spec.type} は番地を ${wanted} つ書きます (${at.length} つ渡されました)`, null);
   }
-  if (spec.at.some((address) => !isOnGrid(address))) return fail(OFF_GRID, null);
+  if (at.some((address) => !isOnGrid(address))) return fail(OFF_GRID, null);
 
   const lines = normalized.split('\n');
   if (isFlow(lines, 'parts')) return fail('フロー形式 (1 行に書いた形) の部品には足せません。手で書きます', null);
@@ -161,7 +214,7 @@ export function insertPart(source: string, spec: NewPart): RewriteResult {
   const written = [
     `${spec.id}:`,
     spec.type,
-    ...spec.at.map(formatAddress),
+    ...at.map(formatAddress),
     ...(spec.value === undefined ? [] : [spec.value]),
   ].join(' ');
 
@@ -169,38 +222,53 @@ export function insertPart(source: string, spec: NewPart): RewriteResult {
   if (key === 0) {
     // **`parts:` は `wires:` より前に置く。** 読む順が図の順と揃う。
     const before = ['wires', 'notes', 'style'].map((one) => keyLineOf(lines, one)).filter((line) => line > 0);
-    const at = before.length > 0 ? Math.min(...before) : afterLast(lines);
-    return addition(normalized, [
-      { kind: 'insert', line: at, text: 'parts:' },
-      { kind: 'insert', line: at, text: `  ${written}` },
+    const where = before.length > 0 ? Math.min(...before) : afterLast(lines);
+    return oriented(normalized, spec, [
+      { kind: 'insert', line: where, text: 'parts:' },
+      { kind: 'insert', line: where, text: `  ${written}` },
     ]);
   }
 
   const last = doc.parts.reduce((deepest, part) => Math.max(deepest, part.line), 0);
   return last > 0
-    ? addition(normalized, [{ kind: 'insert', line: last + 1, text: `${indentOf(lines, last)}${written}` }])
-    : addition(normalized, [{ kind: 'insert', line: key + 1, text: `  ${written}` }]);
+    ? oriented(normalized, spec, [{ kind: 'insert', line: last + 1, text: `${indentOf(lines, last)}${written}` }])
+    : oriented(normalized, spec, [{ kind: 'insert', line: key + 1, text: `  ${written}` }]);
 }
 
 /**
  * 置く部品に付ける ID。**接頭辞ごとに最小の未使用番号** (`P1` が lamp なら
  * potentiometer は `P2`。docs の例がそう書いている)。
  *
- * `null` を返すのは 3 つのとき — 種類を知らない、フェンスを読めない、
- * ID がそのままネットの名前になる種類 (`port` / `vcc` / `vee`)。
- * **最後のは訊くしかない** (図に出る名前を勝手に決めない)。
+ * `null` を返すのは 2 つのとき — 種類を知らない、フェンスを読めない。
+ * ID がそのままネットの名前になる種類 (`port` / `vcc` / `vee`) は
+ * **既定の名前で置く** (KiCad が `#PWR?` で置いてから直させるのと同じ)。
  */
 export function nextPartId(source: string, type: string): string | null {
-  const prefix = PART_PREFIXES[type as PartTypeName] ?? null;
-  if (prefix === null) return null;
-
   const { doc } = parseFence(normalizeNewlines(source));
   if (!doc) return null;
-
   const used = new Set(doc.parts.map((part) => part.id));
+
+  const named = NET_NAMES[type];
+  if (named !== undefined) {
+    // **既定の名前で置く** (置く流れを窓で止めない。名前は欄で直す)。
+    // `VCC` / `VEE` は何か所にあっても同じ節点なのでそのまま。`port` は
+    // 別々の信号が普通なので、使われていれば番号を足す (`IN` → `IN2`)。
+    if (namesNet(type) && type !== 'port') return named;
+    if (!used.has(named)) return named;
+    for (let number = 2; number <= LIMITS.parts + 1; number += 1) {
+      if (!used.has(`${named}${number}`)) return `${named}${number}`;
+    }
+    return null;
+  }
+
+  const prefix = PART_PREFIXES[type as PartTypeName] ?? null;
+  if (prefix === null) return null;
   for (let number = 1; number <= LIMITS.parts + 1; number += 1) {
     const id = `${prefix}${number}`;
     if (!used.has(id)) return id;
   }
   return null;
 }
+
+/** ID がそのままネットの名前になる種類の、既定の名前。 */
+const NET_NAMES: Readonly<Record<string, string>> = { port: 'IN', vcc: 'VCC', vee: 'VEE' };

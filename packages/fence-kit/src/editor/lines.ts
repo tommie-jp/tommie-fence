@@ -1,4 +1,4 @@
-import type { LineEdit } from './edits.ts';
+import type { Edit, LineEdit } from './edits.ts';
 
 /**
  * YAML の**行そのものを出し入れ**するときの共通の手口。
@@ -119,3 +119,34 @@ export function applyLineEdits(source: string, edits: readonly LineEdit[]): stri
   out.push(...(added.get(lines.length + 1) ?? []));
   return out.join('\n');
 }
+
+/**
+ * 行の中の差し替えを当てる。**同じ行は右から** (左から当てると、綴りの長さが
+ * 変わったとき後ろの桁がずれる — `a9 b9` → `a10 b10`)。
+ *
+ * 桁はフェンスの本文 (字下げを剥がした `source`) のもの。文書へ当てるときは
+ * `docEdits.ts` が字下げを足し戻すが、ここは**本文の中だけで完結する**ので
+ * そのまま当てられる (ゴーストや置く前の試し当てに使う)。
+ */
+export function applyEdits(source: string, edits: readonly Edit[]): string {
+  if (edits.length === 0) return source;
+
+  const lines = source.split('\n');
+  return lines.map((text, index) => {
+    const on = edits.filter((edit) => edit.line === index + 1).sort((a, b) => b.column - a.column);
+    return on.reduce(
+      (now, edit) => now.slice(0, edit.column) + edit.text + now.slice(edit.column + edit.length),
+      text,
+    );
+  }).join('\n');
+}
+
+/**
+ * 書き換えを丸ごと当てる (桁の差し替えのあと、行の出し入れ)。
+ * **本文の中で試し当てをするための 1 本** — 置く前のゴーストは、これで
+ * 当てたあとの本文から穴を読む。文書を触らないので、押す前に何度でも呼べる。
+ */
+export const applyRewrite = (
+  source: string,
+  rewrite: { readonly edits?: readonly Edit[]; readonly lines?: readonly LineEdit[] },
+): string => applyLineEdits(applyEdits(source, rewrite.edits ?? []), rewrite.lines ?? []);

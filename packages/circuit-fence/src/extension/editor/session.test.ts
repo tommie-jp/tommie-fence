@@ -798,57 +798,67 @@ describe('部品を置く', () => {
     expect(doc.getText()).toContain('L1: inductor c1 c3');
   });
 
-  test('asks for the name of a part whose id is drawn as a net name', async () => {
-    // port / vcc / vee は ID がそのまま図に出る。勝手に決めない。
-    const doc = docOf(A, RC);
-    const asked: string[] = [];
-    const host = hostOf([doc], at(doc, 5), {
-      ask: async (prompt: string) => { asked.push(prompt); return 'OUT'; },
-    });
-    const session = sessionOf(host);
-    session.view();
-
-    await session.handle({ kind: 'addPart', type: 'port', at: ['c5'] });
-
-    expect(asked[0]).toContain('port');
-    expect(doc.getText()).toContain('OUT: port c5');
-  });
-
-  test('places nothing when the name is refused', async () => {
-    const doc = docOf(A, RC);
-    const host = hostOf([doc], at(doc, 5), { ask: async () => null });
-    const session = sessionOf(host);
-    session.view();
-
-    await session.handle({ kind: 'addPart', type: 'port', at: ['c5'] });
-
-    expect(doc.getText()).toBe(RC);
-  });
-
-  test('says so when the name was confirmed empty, which is not a refusal', async () => {
-    // 取り消し (null) と空で確定 (空文字) を同じ扱いにすると、置かれなかった
-    // 理由が分からないまま webview が待ちの表示で残る。
-    const doc = docOf(A, RC);
-    const host = hostOf([doc], at(doc, 5), { ask: async () => '' });
-    const session = sessionOf(host);
-    session.view();
-
-    await session.handle({ kind: 'addPart', type: 'port', at: ['c5'] });
-
-    expect(doc.getText()).toBe(RC);
-    expect(host.sent.some((message) => JSON.stringify(message).includes('空にはできません'))).toBe(true);
-  });
-
-  test('says so when it cannot ask, rather than making a name up', async () => {
+  test('names a part whose id is drawn as a net name by its default, without asking', async () => {
+    // port / vcc / vee は ID がそのまま図に出る。窓で止めず、既定の名前で置いて欄で直す。
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'addPart', type: 'vcc', at: ['c5'] });
+    await session.handle({ kind: 'addPart', type: 'port', at: ['c5'] });
+    await session.handle({ kind: 'addPart', type: 'vcc', at: ['c1'] });
 
+    expect(doc.getText()).toContain('IN: port c5');
+    expect(doc.getText()).toContain('VCC: vcc c1');
+  });
+
+  test('writes the part turned and flipped as the ghost showed it', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'addPart', type: 'inductor', at: ['c1'], turn: 1, flip: false });
+
+    expect(doc.getText()).toContain('L1: inductor c1 e1');
+  });
+
+  test('answers a preview with the crossings the part would take, without touching the document', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'preview', key: 'k1', what: 'place', type: 'inductor', to: 'c1', turn: 0, flip: false });
+
+    const ghost = host.sent.find((message) => message.kind === 'ghost');
+    expect(ghost).toEqual({ kind: 'ghost', key: 'k1', cells: ['c1', 'c3'], ok: true, why: '' });
     expect(doc.getText()).toBe(RC);
-    expect(last(host, 'status')?.text).toContain('訊けませんでした');
+  });
+
+  test('answers a preview that cannot be placed with the reason, so it shows before the click', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'preview', key: 'k2', what: 'place', type: 'inductor', to: 'c99', turn: 0, flip: false });
+
+    const ghost = host.sent.find((message) => message.kind === 'ghost');
+    expect(ghost && 'ok' in ghost && ghost.ok).toBe(false);
+    expect(ghost && 'why' in ghost ? ghost.why : '').not.toBe('');
+  });
+
+  test('previews a move with the crossings after the move', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'preview', key: 'k3', what: 'move', part: 'R1', to: 'b1' });
+
+    const ghost = host.sent.find((message) => message.kind === 'ghost');
+    expect(ghost).toEqual({ kind: 'ghost', key: 'k3', cells: ['b1', 'b3'], ok: true, why: '' });
   });
 
   test('says so when a crossing cannot be read as an address', async () => {

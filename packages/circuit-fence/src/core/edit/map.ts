@@ -1,7 +1,7 @@
 import { extractCircuitFences } from '../fences.ts';
 import type { FenceBlock } from '../fences.ts';
 import { LIMITS } from '../limits.ts';
-import { cornerOf } from '../model/address.ts';
+import { cornerOf, formatAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
@@ -280,4 +280,12 @@ export function fenceAt(markdown: string, line: number): FenceBlock | null {
     if (line >= fence.line && line <= fence.line + bodyLines + 1) return fence;
   }
   return null;
+}
+
+/** その部品が載っている交点 (書かれた綴り)。ゴーストの光らせ先。無ければ空。 */
+export function partCells(source: string, handle: string): readonly string[] {
+  const chip = gridMap(source).chips.find((one) => one.handle === handle);
+  if (chip === undefined) return [];
+  const cells = [{ row: chip.row, col: chip.col }, ...(chip.to === null ? [] : [chip.to])];
+  return cells.map((cell) => formatAddress(cell));
 }

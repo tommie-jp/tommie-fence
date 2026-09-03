@@ -128,8 +128,27 @@ describe('insertPart', () => {
   });
 
   test('refuses the wrong number of addresses for the type', () => {
-    expect(insertPart(RC, { id: 'C1', type: 'capacitor', at: [cell('c1')] }).ok).toBe(false);
+    expect(insertPart(RC, { id: 'C2', type: 'capacitor', at: [cell('c1'), cell('c2'), cell('c3')] }).ok).toBe(false);
     expect(insertPart(RC, { id: 'G2', type: 'ground', at: [cell('c1'), cell('c3')] }).ok).toBe(false);
+  });
+
+  test('spreads a two-terminal part to the right when only one crossing came (the map\'s one click)', () => {
+    const result = insertPart(RC, { id: 'C2', type: 'capacitor', at: [cell('c1')] });
+
+    expect(result.ok && result.value.lines.map((one) => (one.kind === 'insert' ? one.text : '')).join())
+      .toContain('C2: capacitor c1 c3');
+  });
+
+  test('turns and flips before writing, so the line matches the ghost', () => {
+    const turned = insertPart(RC, { id: 'C2', type: 'capacitor', at: [cell('c1')], turn: 1 });
+    const flipped = insertPart(RC, { id: 'C2', type: 'capacitor', at: [cell('c1')], flip: true });
+    const standing = insertPart(RC, { id: 'G1', type: 'ground', at: [cell('c1')], turn: 1 });
+
+    const text = (result: typeof turned): string =>
+      (result.ok ? result.value.lines.map((one) => (one.kind === 'insert' ? one.text : '')).join() : '');
+    expect(text(turned)).toContain('C2: capacitor c1 e1');
+    expect(text(flipped)).toContain('C2: capacitor c3 c1');
+    expect(text(standing)).toContain('G1: ground c1 r90');
   });
 
   test('refuses an address off the grid', () => {
@@ -166,10 +185,14 @@ describe('nextPartId', () => {
     expect(nextPartId(source, 'resistor')).toBe('R1');
   });
 
-  test('has no name to offer for the three that carry a net name', () => {
-    // port / vcc / vee の ID は図に出る名前そのもの。訊くしかない。
-    expect(nextPartId(RC, 'port')).toBeNull();
-    expect(nextPartId(RC, 'vcc')).toBeNull();
+  test('offers the default net name for the three whose id is drawn, numbering ports that are taken', () => {
+    // port / vcc / vee の ID は図に出る名前そのもの。既定の名前で置いて、欄で直す。
+    expect(nextPartId(RC, 'port')).toBe('IN');
+    expect(nextPartId(RC, 'vcc')).toBe('VCC');
+    expect(nextPartId(RC, 'vee')).toBe('VEE');
+    expect(nextPartId(RC.replace('parts:', 'parts:\n  IN: port a1'), 'port')).toBe('IN2');
+    // VCC はどこにあっても同じ節点なので、2 つ目も VCC。
+    expect(nextPartId(RC.replace('parts:', 'parts:\n  VCC: vcc a1'), 'vcc')).toBe('VCC');
   });
 
   test('has nothing to offer for a type it does not know', () => {

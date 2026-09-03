@@ -59,11 +59,21 @@ export type PartFields = {
   readonly can: readonly PartField[];
 };
 
-/** 置く部品。番地は**書かれた綴り**で渡す。 */
+/**
+ * 置く部品。番地は**書かれた綴り**で渡す。
+ *
+ * **番地が 1 つなら、残りはフェンスが決める** (2 本足は既定の間隔で右へ、
+ * 3 本足は右へ 2 穴、アンカー 1 つの形はそのまま)。マップは押した穴を
+ * 1 つ送るだけでよく、穴の並べ方は板を知っている側が持つ。
+ * `turn` / `flip` は**置く前に**回す・反転する (ゴーストの向きのまま書く)。
+ */
 export type NewPart = {
   readonly id: string;
   readonly type: string;
   readonly at: readonly string[];
+  /** 90 度を何回 (正が時計回り)。無ければ 0。 */
+  readonly turn?: number;
+  readonly flip?: boolean;
 };
 
 /** 1 回の書き換え。行の中の差し替えと、行の出し入れの両方を持てる。 */
@@ -108,10 +118,23 @@ export type FenceEditor = {
    * **名札の綴りは、絵を描く側と編集する側の取り決め**なのでフェンスが持つ。
    */
   readonly nameOf: (handle: string) => string;
-  /** 置く部品に付ける ID。**訊くしかない種類は null** (ID が図に出るもの)。 */
+  /**
+   * 置く部品に付ける ID。**知らない種類だけ null。** ID がそのまま図に出る種類
+   * (circuit の `port` / `vcc`) も既定の名前で返す — 置く流れを窓で止めない
+   * (KiCad が `#PWR?` で置いてから直させるのと同じ)。名前は欄で直す。
+   */
   readonly nextId: (source: string, type: string) => string | null;
-  /** 名前を訊くときの既定の候補。無ければ空。 */
-  readonly nameHint: (type: string) => string;
+  /**
+   * その部品が使っている穴 (書かれた綴り)。**ゴーストの光らせ先。**
+   * 置く前の試し当て (`applyRewrite`) のあとに読むので、置いたときと同じ穴が光る。
+   * 無い部品や穴を持たない部品は空。
+   */
+  readonly cellsOf: (source: string, handle: string) => readonly string[];
+  /**
+   * 配線を `Shift` で折れるか (`-|`)。**殻の案内文はここから組む** —
+   * 決め打ちにすると、折れない板で「押しても何も起きない鍵」を案内することになる。
+   */
+  readonly foldsWire: boolean;
 
   /** パレット (置ける部品の一覧) の HTML。 */
   readonly palette: () => string;

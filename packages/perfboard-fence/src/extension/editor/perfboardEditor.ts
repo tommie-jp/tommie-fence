@@ -6,7 +6,7 @@ import { partFields, setField } from '../../core/edit/field.ts';
 import type { PartField } from '../../core/edit/field.ts';
 import { issuesOf, shiftIssues } from '../../core/edit/issues.ts';
 import { aimAt, fenceAt } from '../../core/edit/map.ts';
-import { insertPart, insertWire, nextPartId } from '../../core/edit/insert.ts';
+import { insertPart, insertWire, nextPartId, partCells } from '../../core/edit/insert.ts';
 import { renamePart } from '../../core/edit/rename.ts';
 import { flipPart, turnPart } from '../../core/edit/turn.ts';
 import { movePart, movablePartIds, partSpans } from '../../core/edit/move.ts';
@@ -59,8 +59,9 @@ export function createPerfboardEditor(): FenceEditor {
 
     // 部品の ID は配線から指すための名前なので重ならない — 名札はそのまま名前。
     nameOf: (handle) => handle,
-    // ID がそのまま図に出る種類は無い (どれも接頭辞で名前が付く)。
-    nameHint: () => '',
+    cellsOf: partCells,
+    // 配線は穴から穴へ 1 本 (折れの綴りが文法に無い)。
+    foldsWire: false,
 
     palette: renderPalette,
     typeNames: renderTypeOptions,
@@ -106,7 +107,13 @@ export function createPerfboardEditor(): FenceEditor {
       const at = part.at.map((one) => readAddress(one));
       const bad = at.indexOf(null);
       if (bad >= 0) return unreadable(part.at[bad] ?? '');
-      return insertPart(source, { id: part.id, type: part.type, at: at as NonNullable<typeof at[number]>[] });
+      return insertPart(source, {
+        id: part.id,
+        type: part.type,
+        at: at as NonNullable<typeof at[number]>[],
+        turn: part.turn ?? 0,
+        flip: part.flip ?? false,
+      });
     },
     turn: turnPart,
     flip: flipPart,

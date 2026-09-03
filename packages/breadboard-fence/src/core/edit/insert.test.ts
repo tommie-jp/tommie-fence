@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { applyLineEdits } from 'fence-kit';
 import { parseAddress } from '../model/address.ts';
 import type { Address } from '../types.ts';
-import { insertPart, insertWire, nextPartId } from './insert.ts';
+import { insertPart, insertWire, nextPartId, partCells } from './insert.ts';
 
 const at = (text: string): Address => {
   const address = parseAddress(text);
@@ -143,5 +143,72 @@ describe('insertPart', () => {
 
   test('refuses a hole off the board', () => {
     expect(insertPart(WITH_WIRES, { id: 'R2', type: 'resistor', at: [at('c5'), at('c63')] }).ok).toBe(false);
+  });
+});
+
+describe('insertPart: 1 穴で置く (マップの 1 クリック)', () => {
+  const placedAt = (type: string, hole: string, over: Partial<{ turn: number; flip: boolean }> = {}): string => {
+    const id = nextPartId(WITH_WIRES, type) ?? 'X1';
+    const result = insertPart(WITH_WIRES, { id, type, at: [at(hole)], ...over });
+    if (!result.ok) throw new Error(result.error.message);
+    return applyLineEdits(WITH_WIRES, result.value.lines);
+  };
+  const refused = (type: string, hole: string): string => {
+    const result = insertPart(WITH_WIRES, { id: 'X9', type, at: [at(hole)] });
+    if (result.ok) throw new Error('置けてしまいました');
+    return result.error.message;
+  };
+
+  test('spreads a three-lead part to the right of the hole that was pressed', () => {
+    expect(placedAt('transistor', 'c5')).toContain('Q1: transistor c5 c6 c7');
+  });
+
+  test('gives a two-lead part its default span, taken from how the examples write it', () => {
+    expect(placedAt('resistor', 'c5')).toContain('R2: resistor c5 c10');
+    expect(placedAt('led', 'c5')).toContain('D1: led c5 c6');
+    expect(placedAt('capacitor', 'c5')).toContain('C1: capacitor c5 c8');
+  });
+
+  test('keeps a one-hole part as it is', () => {
+    expect(placedAt('button', 'e5')).toContain('SW1: button @ e5');
+  });
+
+  test('refuses a rail, where every lead would share one net', () => {
+    expect(refused('transistor', '+t5')).toContain('レール');
+    expect(refused('resistor', '-b5')).toContain('レール');
+  });
+
+  test('refuses the right edge by saying how many holes are needed, rather than folding back', () => {
+    const message = refused('transistor', 'c29');
+
+    expect(message).toContain('c29');
+    expect(message).toContain('c31');
+    expect(message).toContain('2 穴');
+  });
+
+  test('turns and flips before writing, so the line matches the ghost', () => {
+    expect(placedAt('transistor', 'c5', { turn: 1 })).toContain('Q1: transistor c5 d5 e5');
+    expect(placedAt('transistor', 'c5', { flip: true })).toContain('Q1: transistor c7 c6 c5');
+    expect(placedAt('resistor', 'c10', { turn: 2 })).toContain('R2: resistor c10 c5');
+  });
+
+  test('reports a turn that does not fit instead of writing a broken line', () => {
+    const result = insertPart(WITH_WIRES, { id: 'Q1', type: 'transistor', at: [at('i5')], turn: 1 });
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).toContain('板の外');
+  });
+});
+
+describe('partCells', () => {
+  test('lists every hole a part occupies, including the pins a package decides', () => {
+    expect(partCells(WITH_WIRES, 'R1')).toEqual(['a5', 'a10']);
+
+    const dip = 'board: half\nparts:\n  U1: dip8 @ e5\n';
+    expect(partCells(dip, 'U1')).toEqual(['e5', 'e6', 'e7', 'e8', 'f8', 'f7', 'f6', 'f5']);
+  });
+
+  test('is empty for a part that is not there', () => {
+    expect(partCells(WITH_WIRES, 'R9')).toEqual([]);
   });
 });

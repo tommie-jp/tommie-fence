@@ -50,8 +50,8 @@ export { bodyAfter, changesForFence, fenceBody } from './editor/docEdits.ts';
 export { indentOn } from './editor/documentLike.ts';
 export type { DocLike, EditorLike } from './editor/documentLike.ts';
 export {
-  FLOW_REFUSAL, afterLastLine, appendUnderKey, applyLineEdits, dropLines, indentOf, insertLines,
-  isFlowKey, isKeyLine, keyLineOf,
+  FLOW_REFUSAL, afterLastLine, appendUnderKey, applyEdits, applyLineEdits, applyRewrite, dropLines, indentOf,
+  insertLines, isFlowKey, isKeyLine, keyLineOf,
 } from './editor/lines.ts';
 export { renderIssues } from './editor/issues.ts';
 export type { IssueRow } from './editor/issues.ts';
