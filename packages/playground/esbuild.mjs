@@ -59,10 +59,29 @@ const options = {
   logLevel: 'info',
 };
 
+/**
+ * マップの中 (iframe) で動く 1 本。**拡張と同じ形** — 束ねた 1 本を
+ * webview が読む。頁の側 (module) とは別の世界なので iife で出す。
+ */
+const mapOptions = {
+  entryPoints: ['src/map/webview.ts'],
+  outfile: 'dist/map.js',
+  bundle: true,
+  format: 'iife',
+  platform: 'browser',
+  target: 'es2022',
+  sourcemap: !production,
+  minify: production,
+  logLevel: 'info',
+};
+
 if (watch) {
-  // 見張るのは束ねるものだけ。HTML と CSS と例は build のたびに写す。
-  const context = await esbuild.context(options);
-  await context.watch();
+  // 見張るのは束ねるものだけ。HTML と CSS と例と TeX の資材は build のたびに写す。
+  for (const one of [options, mapOptions]) {
+    const context = await esbuild.context(one);
+    await context.watch();
+  }
 } else {
   await esbuild.build(options);
+  await esbuild.build(mapOptions);
 }

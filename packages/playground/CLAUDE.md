@@ -22,15 +22,21 @@
    資材 8.5 MB は circuit の図を初めて描くときに取りに行き、
    breadboard と perfboard しか見ない人には落とさせない。
    後処理 (`finishSvg`) はコアのものを通すので、描き上がりは拡張と揃う。
-3. **例は写さない。** `scripts/examples.mjs` が各パッケージの `examples/` から
+3. **マップは iframe を webview の代わりにする。** 拡張では VS Code が
+   webview を用意し、拡張ホストと `postMessage` で話す。その形をそのまま
+   写したので、**殻 (fence-kit) も文法も 1 行も変えずに動く**。
+   頁が肩代わりするのは 3 つ: 送り口 (`acquireVsCodeApi`)、色の変数
+   (`--vscode-*`)、そして文書 — テキスト欄の中身を「フェンスが 1 つだけ
+   書かれた Markdown」に見せる (`map/doc.ts`)。
+4. **例は写さない。** `scripts/examples.mjs` が各パッケージの `examples/` から
    フェンスを抜き出してビルド時に `dist/examples.json` を作る。
    ここに例の本文を置くと、直した日に 2 つが食い違う。
-4. **決め事は DOM を知らない場所に置く。** `main.ts` は打鍵を読んで結果を
+5. **決め事は DOM を知らない場所に置く。** `main.ts` は打鍵を読んで結果を
    映すだけの薄い層で、テストの対象は `share.ts` / `examples.ts` / `fences.ts`。
-5. **外から来た字は境界で確かめる。** URL のハッシュ (`share.ts`) と
+6. **外から来た字は境界で確かめる。** URL のハッシュ (`share.ts`) と
    `examples.json` (`examples.ts`) は、読めなければ null か空で返し、
    落とした数を画面に出す。黙って捨てない。
-6. **どこにも送らない。** 図もフェンスもブラウザの中だけで動く。
+7. **どこにも送らない。** 図もフェンスもブラウザの中だけで動く。
    共有は URL に載せるだけで、預け先を持たない。
 
 ## コマンド
@@ -56,6 +62,9 @@ TeX の資材 (`dist/tex/`) は **node_modules の node-tikzjax から写す**�
 - `src/share.ts` — URL のハッシュ (`#<種類>/<base64url>`)
 - `src/examples.ts` — `examples.json` の受け取り (形の確認)
 - `src/main.ts` — DOM。決め事は持たない
+- `src/map/` — 図を掴んで動かすマップ。`doc.ts` (テキスト欄を Markdown に
+  見せる) と `host.ts` (殻が求める外の世界) が純関数でテストがあり、
+  `webview.ts` は iframe の中で動く。**`import()` で読む**ので別のかたまり
 - `src/tex/` — circuit の図を描く一式 (node-tikzjax をブラウザへ移したもの)。
   `tar.ts` だけが純関数でテストがある。残りは fetch / WASM / DOM が要るので
   ブラウザで確かめる。**`import()` で読む**ので別のかたまりになる

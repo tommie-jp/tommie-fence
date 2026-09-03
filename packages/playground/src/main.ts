@@ -36,6 +36,8 @@ const els = {
   netlist: need('netlist'),
   messages: need('messages'),
   from: need('from'),
+  map: need<HTMLIFrameElement>('map'),
+  mapToggle: need<HTMLButtonElement>('map-toggle'),
 };
 
 let kind: Kind = 'breadboard';
@@ -147,6 +149,57 @@ function paint(): void {
   els.messages.textContent = output.messages.join('\n\n');
 }
 
+/**
+ * 図を掴んで動かすマップ。**拡張と同じ殻**を iframe の中で動かすので、
+ * 一式が要るのは開いたときだけ (`import()` で別のかたまりにする)。
+ */
+let map: { refresh: () => void; close: () => void } | null = null;
+
+function closeMap(): void {
+  map?.close();
+  map = null;
+  els.map.hidden = true;
+  els.mapToggle.setAttribute('aria-pressed', 'false');
+}
+
+async function showMap(): Promise<void> {
+  const { openMap } = await import('./map/index.ts');
+  // 開くまでの間に閉じられていたら、そのまま何もしない。
+  if (els.mapToggle.getAttribute('aria-pressed') !== 'true') return;
+
+  els.map.hidden = false;
+  map = openMap({
+    kind,
+    frame: els.map,
+    body: () => els.source.value,
+    setBody: (next) => {
+      els.source.value = next;
+      paint();
+      syncHash();
+    },
+  });
+}
+
+function toggleMap(): void {
+  if (map !== null || els.mapToggle.getAttribute('aria-pressed') === 'true') {
+    closeMap();
+    return;
+  }
+  els.mapToggle.setAttribute('aria-pressed', 'true');
+  void showMap();
+}
+
+/**
+ * 種類か中身が丸ごと入れ替わったときに、開いているマップを開き直す。
+ * **文法ごとに別のマップ**なので、開いたまま種類を変えると前の盤面が残る
+ * (共有リンクを貼られたときに実際に残った)。
+ */
+function reopenMap(): void {
+  if (map === null) return;
+  closeMap();
+  toggleMap();
+}
+
 function syncHash(): void {
   const source = els.source.value;
   const hash = source.trim() === '' ? '' : `#${encodeShare(kind, source)}`;
@@ -207,6 +260,7 @@ function showExample(index: number): void {
   if (example === undefined) return;
 
   els.source.value = example.source;
+  map?.refresh();
   els.example.value = String(index);
   showFrom(example);
   paint();
@@ -226,6 +280,7 @@ function setKind(next: Kind): void {
   fillExamples();
   // 文法が別なので、種類を変えたらその言語の最初の例に入れ替える。
   showExample(0);
+  reopenMap();
 }
 
 function buildKinds(): void {
@@ -264,10 +319,13 @@ function listen(): void {
     timer = window.setTimeout(() => {
       paint();
       syncHash();
+      // 手で書き換えたときもマップを組み直す (拡張と同じ)。
+      map?.refresh();
     }, QUIET_MS);
   });
 
   els.example.addEventListener('change', () => showExample(Number(els.example.value)));
+  els.mapToggle.addEventListener('click', toggleMap);
 
   // **共有リンクを、開いたままの頁に貼られたとき。** ハッシュだけの移動は
   // 頁を読み込み直さないので、ここで拾わないと何も起きない (実際に踏んだ)。
@@ -284,6 +342,7 @@ function listen(): void {
     els.source.value = shared.source;
     showFrom(null);
     paint();
+    reopenMap();
   });
 
   els.share.addEventListener('click', () => {

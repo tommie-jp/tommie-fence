@@ -81,6 +81,15 @@ textarea {
 .figure:empty { display: none; }
 .figure svg { display: block; max-width: 100%; height: auto; }
 
+/* マップは webview の代わり。中は別の頁 (fence-kit の殻) が動く。
+   **開いたら頁の幅いっぱいに置く。** 中の図はキャンバスの幅に合わせて
+   描かれるので、半分の幅に押し込めると図もその半分にしかならない
+   (属性の欄と道具の列が両端を取るぶん、さらに細くなる)。 */
+.map {
+  width: 100%; height: min(72vh, 680px); margin-bottom: 16px;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--paper);
+}
+
 .note {
   margin: 0; padding: 10px 12px; font-size: 0.9rem;
   color: var(--dim); background: var(--paper);

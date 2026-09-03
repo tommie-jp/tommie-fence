@@ -35,6 +35,7 @@
       "import": "./dist/core.mjs",
       "require": "./dist/core.cjs"
     },
+    "./editor": "./src/extension/editor/circuitEditor.ts",
     "./src/core": "./src/core/index.ts",
     "./package.json": "./package.json"
   },
