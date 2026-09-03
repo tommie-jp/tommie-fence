@@ -249,7 +249,9 @@ export function nextPartId(source: string, type: string): string | null {
   if (!doc) return null;
   const used = new Set(doc.parts.map((part) => part.id));
 
-  const named = NET_NAMES[type];
+  // **自分の持ち物だけを引く。** 素の添字だと `constructor` が Object.prototype から
+  // 拾えて、名前として関数が返る (同じ理由で `lookupPartType` も `hasOwn` を使う)。
+  const named = Object.hasOwn(NET_NAMES, type) ? NET_NAMES[type] : undefined;
   if (named !== undefined) {
     // **既定の名前で置く** (置く流れを窓で止めない。名前は欄で直す)。
     // `VCC` / `VEE` は何か所にあっても同じ節点なのでそのまま。`port` は

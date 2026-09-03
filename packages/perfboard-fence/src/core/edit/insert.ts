@@ -1,4 +1,4 @@
-import { FLOW_REFUSAL, appendUnderKey, isFlowKey, leadOffsets, normalizeNewlines, orientInserted } from 'fence-kit';
+import { FLOW_REFUSAL, appendUnderKey, isFlowKey, leadOffsets, needsRoom, normalizeNewlines, orientInserted } from 'fence-kit';
 import type { LineEdit, NetDiff } from 'fence-kit';
 import { fenceError } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
@@ -90,8 +90,7 @@ function spreadFrom(type: string, anchor: Address, wanted: number, board: Board)
     .map((step) => ({ row: anchor.row, col: anchor.col + step }));
   const last = holes[holes.length - 1] ?? anchor;
   if (holes.some((hole) => !isOnBoard(board, hole))) {
-    return `${formatAddress(anchor)} から右へ ${last.col - anchor.col} 穴ぶん要ります`
-      + ` (${formatAddress(anchor)} から ${formatAddress(last)} まで)。別の穴を押します`;
+    return needsRoom(formatAddress(anchor), formatAddress(last), last.col - anchor.col);
   }
   return holes;
 }

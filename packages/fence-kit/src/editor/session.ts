@@ -559,8 +559,12 @@ export function createSession<D extends DocLike>(
     if (message.what === 'place') {
       const type = text(message.type);
       if (type === null) return null;
+      // ドラッグで間隔を選んでいる最中は 1 本目の足も来る。**押したときと同じ穴を渡す**
+      // ので、ゴーストが見せる穴と書かれる穴が食い違わない。
+      const from = text(message.from);
+      const at = from === null ? [to] : [from, to];
       // 名前は仮。**置く前なので何でもよい**が、既にある名前と重ならないように。
-      const part = { id: GHOST_ID, type, at: [to], ...orientationOf(message) };
+      const part = { id: GHOST_ID, type, at, ...orientationOf(message) };
       return { result: editor.addPart(source, part), at: to, cells: (after) => editor.cellsOf(after, GHOST_ID) };
     }
 

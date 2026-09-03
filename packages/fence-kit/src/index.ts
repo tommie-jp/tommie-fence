@@ -53,7 +53,7 @@ export {
   FLOW_REFUSAL, afterLastLine, appendUnderKey, applyEdits, applyLineEdits, applyRewrite, dropLines, indentOf,
   insertLines, isFlowKey, isKeyLine, keyLineOf,
 } from './editor/lines.ts';
-export { leadOffsets, leadSpan, orientInserted } from './editor/place.ts';
+export { leadOffsets, leadSpan, needsRoom, orientInserted } from './editor/place.ts';
 export type { OrientResult, Rewritten } from './editor/place.ts';
 export { renderIssues } from './editor/issues.ts';
 export type { IssueRow } from './editor/issues.ts';

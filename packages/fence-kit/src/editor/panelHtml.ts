@@ -228,14 +228,18 @@ const STYLE = `
   .cf-wire.cf-bad { stroke: var(--cf-bad); }
   .cf-bad .cf-name { fill: var(--cf-bad); }
 
-  /* ゴースト: 置く・動かす先の穴。置けないときは赤。 */
-  .cf-cell.cf-ghost { fill: var(--cf-ghost); opacity: 0.45; }
-  .cf-cell.cf-ghost-bad { fill: var(--cf-bad); opacity: 0.45; }
-  /* 配線の 1 点目。 */
-  .cf-cell.cf-from { fill: var(--vscode-focusBorder); opacity: 0.35; }
   /* 穴に触れているとき (配線・持ち物のあいだ) は穴を薄く見せる。 */
   body[data-tool="wire"] .cf-cell:hover, body.cf-carrying .cf-cell:hover {
     fill: var(--vscode-editor-inactiveSelectionBackground);
+  }
+  /* ゴースト: 置く・動かす先の穴。置けないときは赤。**触れている印より後に、
+     同じ強さで置く** — カーソルの真下の穴 (まさに押そうとしている穴) が薄い色に
+     負けると、1 穴で置く部品はゴーストがまったく見えない。 */
+  body.cf-carrying .cf-cell.cf-ghost, .cf-cell.cf-ghost { fill: var(--cf-ghost); opacity: 0.45; }
+  body.cf-carrying .cf-cell.cf-ghost-bad, .cf-cell.cf-ghost-bad { fill: var(--cf-bad); opacity: 0.45; }
+  /* 配線の 1 点目。 */
+  body[data-tool="wire"] .cf-cell.cf-from, .cf-cell.cf-from {
+    fill: var(--vscode-focusBorder); opacity: 0.35;
   }
 `;
 

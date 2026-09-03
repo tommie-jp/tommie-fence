@@ -132,6 +132,22 @@ describe('持ち上げて、置く所で 1 クリック (KiCad の型 2)', () =>
     expect(after(PANEL, press(ON_WIRE), drag(AT_B3)).carry).toBeNull();
   });
 
+  test('turns and flips a lifted part, which the docs promise for anything on the cursor', () => {
+    const lifted = after(PANEL, hover(ON_R1), key('m'));
+
+    expect(step(lifted, key('r')).send).toEqual([{ kind: 'turn', part: 'R1', quarters: 1 }]);
+    expect(step(lifted, key('R', { shift: true })).send).toEqual([{ kind: 'turn', part: 'R1', quarters: -1 }]);
+    expect(step(lifted, key('x')).send).toEqual([{ kind: 'flip', part: 'R1' }]);
+    // 持ったままなので、置く先はまだ決まっていない。
+    expect(step(lifted, key('r')).state.carry).toEqual({ kind: 'move', part: 'R1', byPointer: false });
+  });
+
+  test('G takes the selected node over the hovered one, like every other key', () => {
+    const chosen = after(PANEL, press(ON_NODE), release(ON_NODE, false), hover(over({ cell: 'b9', node: 'b9' })));
+
+    expect(step(chosen, key('g')).state.carry).toEqual({ kind: 'drag', node: 'a3', byPointer: false });
+  });
+
   test('Escape puts a lifted part back', () => {
     const lifted = after(PANEL, hover(ON_R1), key('m'));
 
@@ -145,7 +161,7 @@ describe('置く', () => {
 
     expect(state.carry).toEqual({ kind: 'place', type: 'transistor', turn: 0, flip: false, twoEnds: false });
     expect(send).toContainEqual(
-      { kind: 'preview', key: 'place:transistor:b3:0:0', what: 'place', type: 'transistor', to: 'b3', turn: 0, flip: false },
+      { kind: 'preview', key: 'place:transistor::b3:0:0', what: 'place', type: 'transistor', to: 'b3', turn: 0, flip: false },
     );
   });
 
@@ -158,8 +174,8 @@ describe('置く', () => {
 
   test('keeps only the ghost it asked for, and drops a stale answer', () => {
     const carrying = after(PANEL, place('transistor'), hover(AT_B3));
-    const fresh = { key: 'place:transistor:b3:0:0', cells: ['b3', 'b4', 'b5'], ok: true, why: '' };
-    const stale = { ...fresh, key: 'place:transistor:b2:0:0' };
+    const fresh = { key: 'place:transistor::b3:0:0', cells: ['b3', 'b4', 'b5'], ok: true, why: '' };
+    const stale = { ...fresh, key: 'place:transistor::b2:0:0' };
 
     expect(step(carrying, { kind: 'ghost', ghost: fresh }).state.ghost).toEqual(fresh);
     expect(step(carrying, { kind: 'ghost', ghost: stale }).state.ghost).toBeNull();
@@ -173,7 +189,7 @@ describe('置く', () => {
     expect(send).toEqual([{ kind: 'addPart', type: 'transistor', at: ['b3'], turn: 0, flip: false }]);
     // **道具は置いたあとも続く** (何本も置くのが普通)。
     expect(state.carry?.kind).toBe('place');
-    expect(state.lastPlaced).toBe('transistor');
+    expect(state.lastPlaced).toEqual({ type: 'transistor', twoEnds: false });
   });
 
   test('turns and flips the thing on the cursor before it is placed', () => {
@@ -182,7 +198,7 @@ describe('置く', () => {
     const turned = after(carrying, key('r'), key('r'), key('R', { shift: true }), key('x'));
 
     expect(turned.carry).toEqual({ kind: 'place', type: 'transistor', turn: 1, flip: true, twoEnds: false });
-    expect(step(turned, key('r')).send[0]?.key).toBe('place:transistor:b3:2:1');
+    expect(step(turned, key('r')).send[0]?.key).toBe('place:transistor::b3:2:1');
     expect(step(after(turned, press(AT_B3)), release(AT_B3, false)).send)
       .toEqual([{ kind: 'addPart', type: 'transistor', at: ['b3'], turn: 1, flip: true }]);
   });
@@ -196,9 +212,27 @@ describe('置く', () => {
       .toEqual([{ kind: 'addPart', type: 'resistor', at: ['b3'], turn: 0, flip: false }]);
   });
 
+  test('asks for the ghost of the span while it is being dragged, not of the hole alone', () => {
+    // ドラッグ中に押した穴を落とすと、緑に光る穴と書かれる穴が食い違う。
+    const dragging = after(PANEL, place('resistor', true), hover(AT_B3), press(AT_B3));
+
+    const { send } = step(dragging, drag(over({ cell: 'b8' })));
+
+    expect(send).toEqual([{
+      kind: 'preview',
+      key: 'place:resistor:b3:b8:0:0',
+      what: 'place',
+      type: 'resistor',
+      to: 'b8',
+      turn: 0,
+      flip: false,
+      from: 'b3',
+    }]);
+  });
+
   test('says why when the ghost cannot be placed, before anything is clicked', () => {
     const carrying = after(PANEL, place('transistor'), hover(AT_B3));
-    const refused = { key: 'place:transistor:b3:0:0', cells: ['b3'], ok: false, why: '右へ 2 穴ぶん要ります' };
+    const refused = { key: 'place:transistor::b3:0:0', cells: ['b3'], ok: false, why: '右へ 2 穴ぶん要ります' };
 
     expect(step(carrying, { kind: 'ghost', ghost: refused }).status).toContain('右へ 2 穴ぶん要ります');
   });
@@ -210,10 +244,13 @@ describe('置く', () => {
     expect(state.tool).toBe('select');
   });
 
-  test('Insert puts the last placed type back on the cursor', () => {
-    const placed = after(PANEL, place('transistor'), hover(AT_B3), press(AT_B3), release(AT_B3, false), key('Escape'));
+  test('Insert puts the last placed type back on the cursor, arity and all', () => {
+    const placed = after(PANEL, place('resistor', true), hover(AT_B3), press(AT_B3), release(AT_B3, false), key('Escape'));
 
-    expect(step(placed, key('Insert')).state.carry?.kind).toBe('place');
+    // 足の数まで覚えないと、2 端子なのにドラッグで間隔を選べなくなる。
+    expect(step(placed, key('Insert')).state.carry).toEqual(
+      { kind: 'place', type: 'resistor', turn: 0, flip: false, twoEnds: true },
+    );
     expect(step(PANEL, key('Insert')).state.carry).toBeNull();
   });
 

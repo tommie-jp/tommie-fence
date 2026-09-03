@@ -65,10 +65,23 @@ function zoomAtCenter(factor: number): void {
   zoomAt(factor, (box?.width ?? 0) / 2, (box?.height ?? 0) / 2);
 }
 
+/**
+ * 全体を出す。**中身の高さに合わせる** — 図は箱の幅に合わせて描かれるので、
+ * 100% でも縦がはみ出ることがある (細いパネル、縦長の板)。キャンバスは
+ * スクロールしないので、ここで縮めないと下が永久に隠れる。
+ */
 function fit(): void {
   view.zoom = 1;
   view.x = 0;
   view.y = 0;
+  applyView();
+
+  const box = canvas()?.getBoundingClientRect();
+  const content = query<HTMLElement>('.cf-body')?.getBoundingClientRect();
+  if (box === undefined || content === undefined || content.height === 0) return;
+  const scale = Math.min(1, box.height / content.height);
+  if (scale >= 1) return;
+  view.zoom = Math.max(ZOOM_MIN, scale);
   applyView();
 }
 
@@ -215,9 +228,27 @@ function pick(button: HTMLElement): void {
   run({ kind: 'place', type, twoEnds: button.dataset.ends === '2' });
 }
 
+/**
+ * 欄へフォーカスを移したいが、**まだ欄が出ていないことがある** — 属性は拡張が
+ * 送り返してくるまで隠れているので、その場で `focus()` を呼んでも何も起きない。
+ * 出るまで覚えておいて、届いたときに移す。
+ */
+let wantsField = false;
+
+function focusIntoId(): void {
+  const field = fieldInput('id');
+  field?.focus();
+  field?.select();
+}
+
 function focusOn(focus: Focus | null): void {
   if (focus === 'search') openChooser();
-  if (focus === 'id') fieldInput('id')?.focus();
+  if (focus !== 'id') return;
+  if (query<HTMLFormElement>('.cf-inspector')?.hidden !== false) {
+    wantsField = true;
+    return;
+  }
+  focusIntoId();
 }
 
 // ---------------------------------------------------------------- 流す
@@ -243,6 +274,13 @@ function syncHover(): void {
   if (!sameUnder(under, state.under)) run({ kind: 'hover', under });
 }
 
+/**
+ * その出来事が起きた要素。**`document` に届いた出来事もある**ので、要素かどうかを
+ * 見てから返す (素で `closest` を呼ぶと落ちる)。
+ */
+const elementOf = (event: { readonly target: EventTarget | null }): Element | null =>
+  (event.target instanceof Element ? event.target : null);
+
 /** 欄に字を打っている最中か。**打鍵を横取りしない**。 */
 const typing = (target: EventTarget | null): boolean =>
   ['INPUT', 'SELECT', 'TEXTAREA'].includes((target as Element | null)?.tagName ?? '');
@@ -250,7 +288,7 @@ const typing = (target: EventTarget | null): boolean =>
 // ---------------------------------------------------------------- ポインタ
 
 document.addEventListener('pointerdown', (event) => {
-  const target = event.target as Element | null;
+  const target = elementOf(event);
   const onCanvas = target?.closest('.kc-canvas') != null && target?.closest('.kc-chooser') == null;
   // 中ボタン (か Space + 左) でパン。KiCad と同じ。
   if (onCanvas && (event.button === 1 || (event.button === 0 && spaceHeld))) {
@@ -265,6 +303,9 @@ document.addEventListener('pointerdown', (event) => {
 
 document.addEventListener('pointermove', (event) => {
   pointer = { x: event.clientX, y: event.clientY };
+  // **道具の列の上ではカーソルの下を捨てない。** 捨てると「部品にカーソルを置いて
+  // 回すボタンを押す」が効かなくなる (押した時点で対象が消えている)。
+  if (elementOf(event)?.closest('.kc-tools') != null) return;
   if (panning !== null) {
     view.x = panning.viewX + (event.clientX - panning.x);
     view.y = panning.viewY + (event.clientY - panning.y);
@@ -285,7 +326,7 @@ document.addEventListener('pointerup', (event) => {
     return;
   }
   if (event.button !== 0) return;
-  const target = event.target as Element | null;
+  const target = elementOf(event);
   if (target?.closest('.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status') && state.pressed === null) return;
   run({
     kind: 'release',
@@ -300,13 +341,13 @@ document.addEventListener('pointerup', (event) => {
 document.addEventListener('pointercancel', () => { panning = null; run({ kind: 'cancel' }); });
 
 document.addEventListener('dblclick', (event) => {
-  const target = event.target as Element | null;
+  const target = elementOf(event);
   if (target?.closest('.kc-canvas') == null) return;
   run({ kind: 'dblclick', under: underAt(event.clientX, event.clientY) });
 });
 
 document.addEventListener('wheel', (event) => {
-  const target = event.target as Element | null;
+  const target = elementOf(event);
   if (target?.closest('.kc-canvas') == null || target?.closest('.kc-chooser') != null) return;
   event.preventDefault();
   const at = inCanvas(event);
@@ -316,7 +357,7 @@ document.addEventListener('wheel', (event) => {
 // ---------------------------------------------------------------- 鍵
 
 document.addEventListener('keydown', (event) => {
-  const target = event.target as Element | null;
+  const target = elementOf(event);
 
   // 選択窓の検索欄。Enter で先頭の候補、Esc で閉じる。ほかは欄に任せる。
   if (target?.classList.contains('cf-search')) {
@@ -373,10 +414,15 @@ document.addEventListener('keyup', (event) => {
   if (event.key === ' ') spaceHeld = false;
 });
 
+// **窓の外へ出たら Space を離したことにする。** 押したまま別のタブへ移ると
+// `keyup` が届かず、戻ってきたあとの左クリックが全部「移動」になる。
+window.addEventListener('blur', () => { spaceHeld = false; panning = null; });
+document.addEventListener('visibilitychange', () => { spaceHeld = false; panning = null; });
+
 // ---------------------------------------------------------------- クリック (ボタン)
 
 document.addEventListener('click', (event) => {
-  const target = event.target as Element | null;
+  const target = elementOf(event);
 
   // パレット。選ぶと持ち物になり、`Esc` まで続く。
   const chosen = target?.closest<HTMLElement>('.cf-pick');
@@ -388,7 +434,7 @@ document.addEventListener('click', (event) => {
   // 右の道具の列。鍵と同じことをする (鍵を知らなくても押せる)。
   const tool = target?.closest<HTMLElement>('.kc-tool');
   if (tool?.dataset.key !== undefined) {
-    run({ kind: 'key', key: tool.dataset.key, shift: false, modifier: false });
+    run({ kind: 'key', key: tool.dataset.key, shift: event.shiftKey, modifier: false });
     return;
   }
 
@@ -467,7 +513,15 @@ function showFields(part: Fields | null): void {
   if (form === null) return;
   form.hidden = part === null;
   if (idle) idle.hidden = part !== null;
-  if (part === null) return;
+  if (part === null) {
+    wantsField = false;
+    return;
+  }
+  // 欄が出るのを待っていた `E` / ダブルクリックを、ここで果たす。
+  if (wantsField) {
+    wantsField = false;
+    focusIntoId();
+  }
 
   const fill = (name: string, value: string, enabled: boolean): void => {
     const input = fieldInput(name);

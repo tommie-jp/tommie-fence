@@ -30,6 +30,13 @@ export const leadSpan = (type: string): number => LEAD_SPANS[type] ?? FALLBACK_S
 export const leadOffsets = (type: string, holes: number): readonly number[] =>
   (holes === 2 ? [0, leadSpan(type)] : Array.from({ length: holes }, (_, index) => index));
 
+/**
+ * 右へ入りきらなかったときの断り。**綴りは呼ぶ側が作る** (板ごとに違う) が、
+ * 文面は 1 つ — breadboard と perfboard で同じことを別の字で断らない。
+ */
+export const needsRoom = (anchor: string, last: string, holes: number): string =>
+  `${anchor} から右へ ${holes} 穴ぶん要ります (${anchor} から ${last} まで)。別の穴を押します`;
+
 /** 回す・反転するの答え (各フェンスの `MoveResult` / `RewriteResult` がそのまま入る)。 */
 export type Rewritten<E> =
   | {

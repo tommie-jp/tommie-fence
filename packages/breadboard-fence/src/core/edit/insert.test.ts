@@ -178,6 +178,17 @@ describe('insertPart: 1 穴で置く (マップの 1 クリック)', () => {
     expect(refused('resistor', '-b5')).toContain('レール');
   });
 
+  test('refuses two leads in one rail, which wouldshort it out', () => {
+    const result = insertPart(WITH_WIRES, { id: 'R2', type: 'resistor', at: [at('+t5'), at('+t10')] });
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).toContain('短絡');
+  });
+
+  test('allows a part across the two rails, which is how a decoupling cap is written', () => {
+    expect(insertPart(WITH_WIRES, { id: 'C1', type: 'capacitor', at: [at('+t5'), at('-t5')] }).ok).toBe(true);
+  });
+
   test('refuses the right edge by saying how many holes are needed, rather than folding back', () => {
     const message = refused('transistor', 'c29');
 

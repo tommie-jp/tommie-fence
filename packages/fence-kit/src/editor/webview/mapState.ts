@@ -98,8 +98,8 @@ export type State = {
   /** 押した場所。放した場所が離れていればドラッグ、その場ならクリック。 */
   readonly pressed: { readonly x: number; readonly y: number; readonly cell: string | null } | null;
   readonly ghost: Ghost | null;
-  /** 直前に置いた種類 (`Insert` でもう 1 つ)。 */
-  readonly lastPlaced: string | null;
+  /** 直前に置いたもの (`Insert` でもう 1 つ)。足の数まで覚える。 */
+  readonly lastPlaced: { readonly type: string; readonly twoEnds: boolean } | null;
   /** 戻す・やり直すを自分で持つか (パネル)。タブそのものがマップなら VS Code に任せる。 */
   readonly ownUndo: boolean;
   /** 配線を `Shift` で折れるか (フェンスの能力表)。案内文に出す。 */
@@ -203,19 +203,45 @@ const outcome = (
   focus: Focus | null = null,
 ): Outcome => ({ state, send, status: status ?? hint(state), handled, focus });
 
+/**
+ * 間隔を選んでいる最中の 1 本目の足。2 端子を押したまま別の穴へ動かしている
+ * ときだけ立つ。**ゴーストと確定に同じ値を渡す**ための 1 か所。
+ */
+function spanFrom(state: State, carry: Carry, cell: string | null): string | null {
+  if (carry.kind !== 'place' || !carry.twoEnds) return null;
+  const from = state.pressed?.cell ?? null;
+  return from === null || from === cell ? null : from;
+}
+
 /** ゴーストの問い合わせの札。同じ札の答えだけを受け取る。 */
-function previewKey(carry: Carry, cell: string): string {
-  if (carry.kind === 'place') return `place:${carry.type}:${cell}:${carry.turn}:${carry.flip ? 1 : 0}`;
+function previewKey(carry: Carry, cell: string, from: string | null): string {
+  if (carry.kind === 'place') {
+    return `place:${carry.type}:${from ?? ''}:${cell}:${carry.turn}:${carry.flip ? 1 : 0}`;
+  }
   if (carry.kind === 'move') return `move:${carry.part}:${cell}`;
   return `node:${carry.node}:${cell}`;
 }
 
-/** 持ち物をカーソルの下の穴に当ててみる問い合わせ。穴が無ければ何も訊かない。 */
-function previewAt(carry: Carry, cell: string | null): readonly Message[] {
+/**
+ * 持ち物をカーソルの下の穴に当ててみる問い合わせ。穴が無ければ何も訊かない。
+ * **押したときと同じ穴を渡す** — ドラッグで間隔を選んでいる最中に押した穴を
+ * 落とすと、緑に光った穴と書かれる穴が食い違う。
+ */
+function previewAt(state: State, carry: Carry, cell: string | null): readonly Message[] {
   if (cell === null) return [];
-  const key = previewKey(carry, cell);
+  const from = spanFrom(state, carry, cell);
+  const key = previewKey(carry, cell, from);
   if (carry.kind === 'place') {
-    return [{ kind: 'preview', key, what: 'place', type: carry.type, to: cell, turn: carry.turn, flip: carry.flip }];
+    return [{
+      kind: 'preview',
+      key,
+      what: 'place',
+      type: carry.type,
+      to: cell,
+      turn: carry.turn,
+      flip: carry.flip,
+      ...(from === null ? {} : { from }),
+    }];
   }
   if (carry.kind === 'move') return [{ kind: 'preview', key, what: 'move', part: carry.part, to: cell }];
   return [{ kind: 'preview', key, what: 'node', from: carry.node, to: cell }];
@@ -224,13 +250,13 @@ function previewAt(carry: Carry, cell: string | null): readonly Message[] {
 /** 持ち物を持ち替える (ゴーストは訊き直す)。 */
 const carrying = (state: State, carry: Carry | null, handled = false): Outcome => {
   const next: State = { ...state, carry, ghost: null, pressed: null };
-  return outcome(next, carry === null ? [] : previewAt(carry, state.under.cell), null, handled);
+  return outcome(next, carry === null ? [] : previewAt(next, carry, state.under.cell), null, handled);
 };
 
 function onHover(state: State, under: Under): Outcome {
   const moved = under.cell !== state.under.cell;
   const next: State = { ...state, under, ghost: moved && under.cell === null ? null : state.ghost };
-  const ask = state.carry !== null && moved ? previewAt(state.carry, under.cell) : [];
+  const ask = state.carry !== null && moved ? previewAt(next, state.carry, under.cell) : [];
   return outcome(next, ask);
 }
 
@@ -262,9 +288,17 @@ function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcom
 }
 
 function onDrag(state: State, event: Extract<Event, { kind: 'drag' }>): Outcome {
+  // 持ち物があるままの引きずりは「間隔を選ぶ」。穴が変わるたびにゴーストを訊き直す
+  // (押した穴も一緒に渡すので、光る穴と書かれる穴が揃う)。
+  if (state.carry !== null) {
+    const moved = event.under.cell !== state.under.cell;
+    const next: State = { ...state, under: event.under };
+    return outcome(next, moved ? previewAt(next, state.carry, event.under.cell) : []);
+  }
+
   const hovered = onHover(state, event.under);
-  const { pressed, selected, carry } = hovered.state;
-  if (carry !== null || pressed === null || selected === null) return hovered;
+  const { pressed, selected } = hovered.state;
+  if (pressed === null || selected === null) return hovered;
   if (Math.abs(event.x - pressed.x) + Math.abs(event.y - pressed.y) <= DRAG) return hovered;
 
   // 押したまま離れたら持ち上げる (KiCad の M / G をドラッグでも)。配線は動かせない。
@@ -287,13 +321,13 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
 
   if (carry?.kind === 'place') {
     if (cell === null) return outcome(clear);
-    const traveled = pressed !== null && pressed.cell !== null && pressed.cell !== cell
-      && Math.abs(event.x - pressed.x) + Math.abs(event.y - pressed.y) > DRAG;
+    const from = spanFrom(state, carry, cell);
+    const traveled = from !== null && Math.abs(event.x - (pressed?.x ?? 0)) + Math.abs(event.y - (pressed?.y ?? 0)) > DRAG;
     // 2 端子はドラッグで間隔を選べる。ほかは押した穴 1 つ (並べ方は板が決める)。
-    const at = carry.twoEnds && traveled && pressed?.cell ? [pressed.cell, cell] : [cell];
+    const at = traveled && from !== null ? [from, cell] : [cell];
     // **道具は置いたあとも続く** (何本も置くのが普通)。抜けるのは Esc。
     return outcome(
-      { ...clear, lastPlaced: carry.type },
+      { ...clear, lastPlaced: { type: carry.type, twoEnds: carry.twoEnds } },
       [{ kind: 'addPart', type: carry.type, at, turn: carry.turn, flip: carry.flip }],
       `${carry.type} を ${at.join(' ')} へ…`,
     );
@@ -368,15 +402,28 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
     if (key === 'x') return carrying(state, { ...state.carry, flip: !state.carry.flip }, true);
     return outcome(state);
   }
+  // 持ち上げた部品も回せる。**書き換えは本文へ当たる** (持ち物は行き先だけなので)
+  // ので、ゴーストを訊き直して新しい形を見せる。
+  if (state.carry?.kind === 'move') {
+    const { part } = state.carry;
+    if (key === 'r') {
+      const quarters = event.shift ? -1 : 1;
+      return outcome(state, [{ kind: 'turn', part, quarters }], `${shownName(part)} を回しています…`, true);
+    }
+    if (key === 'x') return outcome(state, [{ kind: 'flip', part }], `${shownName(part)} を反転しています…`, true);
+  }
   if (state.carry !== null) return outcome(state);
 
   if (key === 'Insert') {
-    if (state.lastPlaced === null) return outcome(state);
-    return { ...step(state, { kind: 'place', type: state.lastPlaced, twoEnds: false }), handled: true };
+    const again = state.lastPlaced;
+    if (again === null) return outcome(state);
+    // **足の数まで覚える。** 種類だけ覚えると、2 端子なのにドラッグで間隔を選べなくなる。
+    return { ...step(state, { kind: 'place', ...again }), handled: true };
   }
 
   if (key === 'g') {
-    const node = state.under.node ?? (state.selected?.kind === 'node' ? state.selected.id : null);
+    // 選んでいればそちら (ほかの鍵と同じ順)。
+    const node = state.selected?.kind === 'node' ? state.selected.id : state.under.node;
     if (node === null) return outcome(state);
     return carrying(state, { kind: 'drag', node, byPointer: false }, true);
   }
@@ -414,7 +461,10 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
 /** 拡張のゴースト。**いま訊いているものの答えだけ**を受け取る (古い答えは捨てる)。 */
 function onGhost(state: State, ghost: Ghost): Outcome {
   const { carry, under } = state;
-  if (carry === null || under.cell === null || previewKey(carry, under.cell) !== ghost.key) return outcome(state);
+  const wanted = carry === null || under.cell === null
+    ? null
+    : previewKey(carry, under.cell, spanFrom(state, carry, under.cell));
+  if (wanted !== ghost.key) return outcome(state);
   return outcome({ ...state, ghost });
 }
 

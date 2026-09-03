@@ -1,4 +1,4 @@
-import { FLOW_REFUSAL, appendUnderKey, isFlowKey, leadOffsets, orientInserted } from 'fence-kit';
+import { FLOW_REFUSAL, appendUnderKey, isFlowKey, leadOffsets, needsRoom, orientInserted } from 'fence-kit';
 import type { LineEdit, NetDiff } from 'fence-kit';
 import { fenceError } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
@@ -83,9 +83,8 @@ export type NewPart = {
  * (先に書く足) で、動かす・回すが読むのと同じ側。並べ方 (間隔) は
  * `leadOffsets` が持つ — perfboard と同じ表なので fence-kit にある。
  *
- * - **レールには置かない。** 行が丸ごと 1 本の電位なので、足が全部同じ節点に
- *   入った図が黙って出る (`turn.ts` が「レールの足は回せない」と断るのと同じ理由)
- * - **右へ入らなければ断る。** 左へ折り返すと、押した場所によって向きが変わる
+ * **右へ入らなければ断る。** 左へ折り返すと、押した場所によって向きが変わる。
+ * レールをアンカーにしたときは足を並べる先が無い (行が丸ごと 1 本の電位)。
  */
 function spreadFrom(type: string, anchor: Address, wanted: number, board: Board): readonly Address[] | string {
   if (wanted <= 1) return [anchor];
@@ -96,8 +95,7 @@ function spreadFrom(type: string, anchor: Address, wanted: number, board: Board)
     .map((step) => ({ kind: 'hole', row: anchor.row, col: anchor.col + step }));
   const last = holes[holes.length - 1] ?? anchor;
   if (holes.some((hole) => !isOnBoard(board, hole))) {
-    return `${formatAddress(anchor)} から右へ ${last.col - anchor.col} 穴ぶん要ります`
-      + ` (${formatAddress(anchor)} から ${formatAddress(last)} まで)。別の穴を押します`;
+    return needsRoom(formatAddress(anchor), formatAddress(last), last.col - anchor.col);
   }
   return holes;
 }
@@ -119,6 +117,18 @@ function oriented(source: string, part: NewPart, added: readonly LineEdit[]): Ad
   return result.ok
     ? { ok: true, value: { edits: [], lines: result.lines, diff: diffAfterLines(source, result.lines) } }
     : { ok: false, error: result.error };
+}
+
+/** 2 本以上の足が乗ってしまったレール (`+t` など)。無ければ null。 */
+function onOneRail(at: readonly Address[]): string | null {
+  const seen = new Set<string>();
+  for (const hole of at) {
+    if (hole.kind !== 'rail') continue;
+    const line = `${hole.polarity}${hole.side}`;
+    if (seen.has(line)) return line;
+    seen.add(line);
+  }
+  return null;
 }
 
 /**
@@ -170,6 +180,12 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
 
   for (const hole of at) {
     if (!isOnBoard(board, hole)) return fail(`${formatAddress(hole)} は板の外です`, null);
+  }
+  // **同じレール行に 2 本は挿さない。** その行は丸ごと 1 本の電位なので、
+  // 部品が短絡した図が黙って出る (`+t5` と `-t5` は別のレールなので通す)。
+  const shorted = onOneRail(at);
+  if (shorted !== null) {
+    return fail(`${part.type} の足が 2 本とも ${shorted} レールに入ります (短絡になります)`, null);
   }
   // 同じ穴に 2 本の足は挿せない。
   const spelled = at.map((hole) => formatAddress(hole));
