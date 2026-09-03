@@ -98,12 +98,18 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
     expect(editor.nextId(LED, 'led')).toBe('D1');
   });
 
-  test('says so for what it cannot do yet, instead of doing nothing', () => {
-    // 黙って何もしないと、押しても動かない道具ができる。
-    const result = editor.turn(LED, 'R1', 1);
+  test('turns a two lead part by its addresses, with no grammar change', () => {
+    expect(editor.turn(LED, 'R1', 1).ok).toBe(true);
+    expect(editor.flip(LED, 'R1').ok).toBe(true);
+  });
+
+  test('says why a part it cannot turn was left alone', () => {
+    // 向きを書く語が文法に無い。黙って何もしないと、押しても動かない道具ができる。
+    const three = 'board: half\nparts:\n  Q1: transistor h9 h10 h11 2SC1815\n';
+    const result = editor.turn(three, 'Q1', 1);
 
     expect(result.ok).toBe(false);
-    expect(!result.ok && result.error.message).toContain('まだ');
+    expect(!result.ok && result.error.message).toContain('2 本足');
   });
 
   test('draws the band the map shows under the drawing', () => {

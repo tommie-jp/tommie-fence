@@ -7,6 +7,7 @@ import { issuesOf, shiftIssues } from '../../core/edit/issues.ts';
 import { aimAt, fenceAt } from '../../core/edit/map.ts';
 import { insertPart, insertWire, nextPartId } from '../../core/edit/insert.ts';
 import { renamePart } from '../../core/edit/rename.ts';
+import { flipPart, turnPart } from '../../core/edit/turn.ts';
 import { movePart, movablePartIds, partSpans } from '../../core/edit/move.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import { deletePart, deleteWire } from '../../core/edit/remove.ts';
@@ -25,10 +26,6 @@ import type { Address } from '../../core/types.ts';
  * 自分で SVG を組んでいて穴の座標が線形に出るので、図の上に透明な層を
  * 重ねるだけでよい (`renderBreadboard(source, { edit: true })`)。
  */
-
-/** まだ作っていない操作。**黙って何もしない**のではなく、そう言って断る。 */
-const notYet = (what: string): EditResult =>
-  ({ ok: false, error: { message: `${what}はまだマップからできません (テキストで書きます)`, line: null } });
 
 const unreadable = (written: string): EditResult =>
   ({ ok: false, error: { message: `穴として読めません: ${written}`, line: null } });
@@ -114,7 +111,7 @@ export function createBreadboardEditor(): FenceEditor {
       if (bad >= 0) return unreadable(part.at[bad] ?? '');
       return insertPart(source, { id: part.id, type: part.type, at: at as NonNullable<typeof at[number]>[] });
     },
-    turn: () => notYet('回すの'),
-    flip: () => notYet('反転は'),
+    turn: turnPart,
+    flip: flipPart,
   };
 }

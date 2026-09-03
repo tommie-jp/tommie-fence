@@ -5,7 +5,7 @@ import { createBoard } from '../model/board.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { HOLE_ROWS } from '../types.ts';
-import type { Address, FenceError, HoleRow, PartSpec } from '../types.ts';
+import type { Address, Board, FenceError, HoleRow, PartSpec } from '../types.ts';
 import { diffAfter } from './diff.ts';
 import { locateTokens } from './shared.ts';
 
@@ -63,16 +63,24 @@ const addressOf = (written: string, points: ReadonlyMap<string, string>): Addres
   return named === undefined ? null : parseAddress(named);
 };
 
-type Located = {
+export type Located = {
   readonly part: PartSpec;
   readonly line: string;
   readonly addresses: readonly Address[];
   readonly points: ReadonlyMap<string, Address>;
   readonly columns: number;
+  /** 板そのもの (回す側が「板の外か」を見るのに使う)。 */
+  readonly board: Board;
 };
 
-/** 動かす部品と、その行と、書かれた穴。読めなければ理由を返す。 */
-function locate(source: string, id: string): Located | { readonly error: FenceError } {
+/**
+ * 動かす部品と、その行と、書かれた穴。読めなければ理由を返す。
+ *
+ * **綴りの探し方はここ 1 か所。** 動かす側と回す側と光らせる側で別々に持つと、
+ * 1 行に部品が 2 つ並ぶフロー形式で片方だけが違う綴りを書き換える
+ * (circuit で実際に踏まれた型)。
+ */
+export function locatePart(source: string, id: string): Located | { readonly error: FenceError } {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   if (doc === null) return { error: fenceError('フェンスを読めませんでした', null) };
@@ -102,10 +110,11 @@ function locate(source: string, id: string): Located | { readonly error: FenceEr
     return { error: fenceError(`${safeToken(id)} は穴で置かれていないので動かせません`, part.line) };
   }
 
-  return { part, line, addresses, points, columns: createBoard(doc.board).columns };
+  const board = createBoard(doc.board);
+  return { part, line, addresses, points, columns: board.columns, board };
 }
 
-const isLocated = (found: Located | { error: FenceError }): found is Located => !('error' in found);
+export const isLocated = (found: Located | { error: FenceError }): found is Located => !('error' in found);
 
 /** マップで掴める部品の名前。読めないフェンスでは空。 */
 export function movablePartIds(source: string): readonly string[] {
@@ -116,7 +125,7 @@ export function movablePartIds(source: string): readonly string[] {
 
 /** その部品の穴が書かれている場所。エディタで光らせるのに使う。 */
 export function partSpans(source: string, id: string): readonly Span[] {
-  const found = locate(source, id);
+  const found = locatePart(source, id);
   if (!isLocated(found)) return [];
 
   const located = locateTokens(found.line, found.addresses, found.points);
@@ -126,7 +135,7 @@ export function partSpans(source: string, id: string): readonly Span[] {
 }
 
 export function movePart(source: string, id: string, to: Address): MoveResult {
-  const found = locate(source, id);
+  const found = locatePart(source, id);
   if (!isLocated(found)) return { ok: false, error: found.error };
 
   const anchor = found.addresses[0];
