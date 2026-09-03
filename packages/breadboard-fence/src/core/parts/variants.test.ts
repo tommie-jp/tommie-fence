@@ -58,6 +58,10 @@ describe('variantsOf', () => {
     expect(variantsOf('triac')).toEqual(['to92', 'to220']);
   });
 
+  test('lists the two crystal cans that are actually sold', () => {
+    expect(variantsOf('crystal')).toEqual(['hc49', 'cylinder']);
+  });
+
   test('is empty for a type that is only drawn one way', () => {
     expect(variantsOf('resistor')).toEqual([]);
   });
@@ -83,6 +87,6 @@ describe('isPolarVariant', () => {
 
 describe('typesWithVariants', () => {
   test('names the types whose look can be chosen', () => {
-    expect(typesWithVariants()).toEqual(['capacitor', 'led', 'transistor', 'thyristor', 'triac']);
+    expect(typesWithVariants()).toEqual(['capacitor', 'led', 'transistor', 'thyristor', 'triac', 'crystal']);
   });
 });

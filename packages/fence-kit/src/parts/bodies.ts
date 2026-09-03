@@ -53,6 +53,16 @@ const CAN_MAX_WIDTH = 44;
 const CAN_HEIGHT = 17;
 const CAN_LIFT = 3;
 
+/**
+ * 円筒型の水晶 (時計用の 32.768kHz などに多い 3mm 径 8mm 長)。
+ * HC-49 と同じ縮尺で持つ — 実物は径 3mm・長さ 8mm、HC-49 は幅 11mm。
+ */
+const TUBE_WIDTH = 9;
+const TUBE_HEIGHT = 24;
+
+/** 缶の下の口金 (巻き締め) の高さ。ここに足の出口の窪みが並ぶ。 */
+const CAN_COLLAR = 4;
+
 /** コイルの芯の太さの半分と、巻線 1 本の幅・高さの半分。 */
 const CORE_HALF = 4.5;
 const TURN_WIDTH = 3;
@@ -391,46 +401,99 @@ function lampBody(span: number, ink: BodyInk): string {
 }
 
 /**
- * 水晶振動子 (HC-49)。**缶から下に 2 本足が出る**部品なので、軸物のように
- * 両端から足を出さない — 缶は足の上に立ち、そこから 2 本が板へ下りる。
+ * 水晶振動子。**缶から下に 2 本足が出る**部品なので、軸物のように両端から足を
+ * 出さない — 缶は足の上に立ち、そこから 2 本が板へ下りる。
  *
- * 缶は足より横に広い (実物の HC-49 は幅 11mm、足の間隔 4.88mm)。
- * 抵抗やダイオードと違って**胴が足の間に収まらない**ので、幅は足の間隔ではなく
- * 缶そのものの寸法で決める。
+ * 姿は 2 通り。実物でよく出回っているのがこの 2 つで、**輪郭がまるで違う**ので
+ * 描き分ける。
+ *
+ * - `hc49` (既定) — 平たい缶。肩が丸く、下に口金がある。実物は幅 11mm、
+ *   足の間隔 4.88mm。**胴が足の間に収まらない**ので、幅は足の間隔ではなく
+ *   缶そのものの寸法で決める
+ * - `cylinder` — 円筒。径 3mm・長さ 8mm ほどの細い筒で、**足は同じ端から
+ *   2 本出て、穴の間隔まで開く**
  */
-function crystalBody(span: number, ink: BodyInk): string {
-  const { width, height } = canOf(span);
+function crystalBody(part: BodyPart, span: number, ink: BodyInk): string {
+  const { width, height } = canOf(part, span);
   const top = -(height + CAN_LIFT);
+  const bottom = top + height;
   const metal = ink.paint('#b9c0c9');
   const edge = ink.paint('#7c848e');
+  const round = part.variant === 'cylinder';
 
-  const can = element('rect', {
-    x: num(-width / 2), y: num(top), width: num(width), height: num(height), rx: 4,
+  const can = element('path', {
+    d: round ? tubeOutline(width, top, bottom) : canOutline(width, top, bottom),
     fill: metal, stroke: edge,
   });
-  // 缶の下の巻き締め (実物の縁)。ここから足が出る。
-  const seam = element('line', {
-    x1: num(-width / 2 + 1), y1: num(top + height - 3), x2: num(width / 2 - 1), y2: num(top + height - 3),
-    stroke: edge, 'stroke-width': 1,
-  });
-  const gloss = element('rect', {
-    x: num(-width / 2 + 4), y: num(top + 3), width: num(Math.max(width - 8, 2)), height: 3, rx: 1.5,
-    fill: ink.paint('#dfe4ee'),
-  });
-  // 足は缶の下から穴まで。**穴の位置は足の間隔そのもの**なので ±span/2。
+  // 足の出口。**缶の幅の内側**に収める (実物も缶の端からは出ない)。
+  const legX = Math.min(span / 2, Math.max(width / 2 - 4, 1));
+  const collarY = bottom - CAN_COLLAR;
+  // 口金 (巻き締め)。円筒は先端をかしめてあるだけなので線 1 本。
+  const collar = round
+    ? element('line', {
+      x1: num(-width / 2 + 1), y1: num(collarY), x2: num(width / 2 - 1), y2: num(collarY),
+      stroke: edge, 'stroke-width': 1,
+    })
+    : element('rect', {
+      x: num(-width / 2), y: num(collarY), width: num(width), height: num(CAN_COLLAR),
+      fill: ink.paint('#a2aab4'), stroke: edge,
+    });
+  // 足の出口の窪み。実物の HC-49 は口金にこの 2 つが見える。
+  const eyelets = round ? '' : [-1, 1]
+    .map((at) => element('circle', {
+      cx: num(at * legX), cy: num(collarY + CAN_COLLAR / 2), r: 1.6, fill: ink.paint('#7c848e'),
+    }))
+    .join('');
+  // つや。平たい缶は横に、円筒は縦に走る。
+  const gloss = round
+    ? element('rect', {
+      x: num(-width / 2 + 2), y: num(top + 3), width: 2.5, height: num(Math.max(height - 8, 2)), rx: 1.2,
+      fill: ink.paint('#dfe4ee'),
+    })
+    : element('rect', {
+      x: num(-width / 2 + 4), y: num(top + 3), width: num(Math.max(width - 8, 2)), height: 3, rx: 1.5,
+      fill: ink.paint('#dfe4ee'),
+    });
+  // 足は缶の出口から穴まで。**穴が缶より外なら開く** — 実物も足を開いて挿す。
   const legs = [-1, 1]
-    .map((side) => element('line', {
-      x1: num((side * span) / 2), y1: num(top + height), x2: num((side * span) / 2), y2: 0,
+    .map((at) => element('line', {
+      x1: num(at * legX), y1: num(bottom), x2: num((at * span) / 2), y2: 0,
       stroke: edge, 'stroke-width': 1.6,
     }))
     .join('');
 
-  return legs + can + seam + gloss;
+  return legs + can + collar + eyelets + gloss;
 }
 
-/** 缶の大きさ。**足の間隔より広い**が、狭い間隔でも潰さない下限を持つ。 */
-const canOf = (span: number): { readonly width: number; readonly height: number } =>
-  ({ width: Math.min(Math.max(span + CAN_OVERHANG * 2, CAN_MIN_WIDTH), CAN_MAX_WIDTH), height: CAN_HEIGHT });
+/**
+ * 平たい缶の輪郭。**肩が丸い**のが実物の見分けどころなので、上の 2 隅だけを
+ * 大きく落とす (`rect` の `rx` は 4 隅に同じ丸みしか付けられない)。
+ */
+function canOutline(width: number, top: number, bottom: number): string {
+  const half = width / 2;
+  const r = Math.min(half * 0.55, (bottom - top) * 0.5);
+  return `M ${num(-half)} ${num(bottom)} L ${num(-half)} ${num(top + r)}`
+    + ` Q ${num(-half)} ${num(top)} ${num(-half + r)} ${num(top)}`
+    + ` L ${num(half - r)} ${num(top)} Q ${num(half)} ${num(top)} ${num(half)} ${num(top + r)}`
+    + ` L ${num(half)} ${num(bottom)} Z`;
+}
+
+/** 円筒の輪郭。**上端は丸く、下端はかしめてあるので平ら**。 */
+function tubeOutline(width: number, top: number, bottom: number): string {
+  const half = width / 2;
+  return `M ${num(-half)} ${num(bottom)} L ${num(-half)} ${num(top + half)}`
+    + ` A ${num(half)} ${num(half)} 0 0 1 ${num(half)} ${num(top + half)}`
+    + ` L ${num(half)} ${num(bottom)} Z`;
+}
+
+/**
+ * 缶の大きさ。平たい缶は**足の間隔より広い**が、狭い間隔でも潰さない下限を持つ。
+ * 円筒は足の間隔によらず実物の太さのまま (細いのが見分けどころなので広げない)。
+ */
+const canOf = (part: BodyPart, span: number): { readonly width: number; readonly height: number } =>
+  (part.variant === 'cylinder'
+    ? { width: TUBE_WIDTH, height: TUBE_HEIGHT }
+    : { width: Math.min(Math.max(span + CAN_OVERHANG * 2, CAN_MIN_WIDTH), CAN_MAX_WIDTH), height: CAN_HEIGHT });
 
 function inductorBody(span: number, ink: BodyInk): string {
   const width = Math.min(span * 0.6, 34);
@@ -480,7 +543,7 @@ function buzzerBody(part: BodyPart, span: number, ink: BodyInk): string {
 const BODIES: Record<string, (part: BodyPart, span: number, ink: BodyInk) => string> = {
   resistor: resistorBody,
   capacitor: capacitorBody,
-  crystal: (_part, span, ink) => crystalBody(span, ink),
+  crystal: crystalBody,
   inductor: (_part, span, ink) => inductorBody(span, ink),
   buzzer: buzzerBody,
   led: (part, _span, ink) => domeBody(part, ledLook(part).color, ink, '#7a2018', ledLook(part).name),
@@ -570,7 +633,7 @@ export function bodySize(part: BodyPart, span: number): { readonly width: number
       return twice(Math.min(span * 0.42, 10));
     // 缶は足の上に立つので、当たり判定は缶と足を合わせた高さで見る。
     case 'crystal': {
-      const can = canOf(span);
+      const can = canOf(part, span);
       return { width: can.width, height: can.height + CAN_LIFT };
     }
     // 巻線が芯より高いので、高さは巻線のぶん。

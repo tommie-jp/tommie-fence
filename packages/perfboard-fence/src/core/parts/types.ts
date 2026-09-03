@@ -62,6 +62,8 @@ const ALIASES: Record<string, string> = {
 const VARIANTS: Record<string, readonly string[]> = {
   capacitor: ['ceramic', 'film', 'electrolytic', 'tantalum'],
   led: ['3mm', '5mm'],
+  // 平たい缶 (HC-49) と円筒 (時計用の 32.768kHz などに多い)。輪郭がまるで違う。
+  crystal: ['hc49', 'cylinder'],
   // TO-92 は丸い小信号用、TO-220 は放熱タブつき。足の並びは書かれた穴で示す。
   // `sot23-dip` は**面実装を載せた変換基板**。SOT-23 の足の間隔は 0.95mm で
   // 2.54mm の穴には届かないので、実物も変換基板に載せてから差す。

@@ -34,6 +34,8 @@ const VARIANTS: Record<string, readonly string[]> = {
   // サイリスタとトライアックも同じ 2 つのパッケージで売られている。
   thyristor: ['to92', 'to220'],
   triac: ['to92', 'to220'],
+  // 平たい缶 (HC-49) と円筒 (時計用の 32.768kHz などに多い)。輪郭がまるで違う。
+  crystal: ['hc49', 'cylinder'],
 };
 
 /**
