@@ -5,7 +5,7 @@
  * `package.json` と食い違わないことはテストで見張る。ビルド時に差し込む形にすると、
  * コアを直に import する側 (テストや他アプリのサーバー側描画) で値が入らない。
  */
-export const VERSION = '0.5.0';
+export const VERSION = '0.5.1';
 
 /** 図の右下に刻む字。`style: stamp: on` のときだけ出る。 */
 export const stampText = (): string => `breadboard-fence ${VERSION}`;

@@ -91,7 +91,7 @@ To do the reinstall by hand, that is these two:
 
 ```bash
 ./doBuild.sh breadboard-fence --no-install
-code --install-extension packages/breadboard-fence/breadboard-fence-0.5.0.vsix --force
+code --install-extension packages/breadboard-fence/breadboard-fence-0.5.1.vsix --force
 ```
 
 Building the `.vsix` goes through `doBuild.sh` because **workspaces hoist the
