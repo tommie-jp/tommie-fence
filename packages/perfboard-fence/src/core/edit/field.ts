@@ -29,6 +29,8 @@ export type PartFields = {
   readonly value: string;
   /** この文法には無い。殻の形に合わせて空で返す。 */
   readonly label: string;
+  /** 色は配線だけが持つ (部品の色は種類と値で決まる)。部品はいつも空。 */
+  readonly color: string;
   /**
    * 書き換えられる欄。**フェンスが決める** — どの部品にどの欄があるかは
    * 種類の語彙の話で、殻の持ち物ではない。
@@ -112,6 +114,7 @@ export function partFields(source: string, id: string): PartFields | null {
     type: part.written,
     value: part.value ?? '',
     label: '',
+    color: '',
     // **ラベルの欄はこの文法に無い。** 字を添えたいときは注釈で書く。
     can: ['type', 'value'],
   };

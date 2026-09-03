@@ -11,6 +11,7 @@ import { flipPart, turnPart } from '../../core/edit/turn.ts';
 import { movePart, movablePartIds, partSpans, stepCell } from '../../core/edit/move.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import { deletePart, deleteWire } from '../../core/edit/remove.ts';
+import { isWireHandle, renderColorOptions, setWireField, wireFields } from '../../core/edit/wireField.ts';
 import {
   deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans,
   setNoteField, turnNote,
@@ -62,7 +63,11 @@ export function createBreadboardEditor(): FenceEditor {
       return at === null ? [] : nodeSpans(source, at);
     },
 
-    fieldsOf: (source, handle) => (isNoteHandle(handle) ? noteFields(source, handle) : partFields(source, handle)),
+    fieldsOf: (source, handle) => {
+      if (isNoteHandle(handle)) return noteFields(source, handle);
+      if (isWireHandle(handle)) return wireFields(source, handle);
+      return partFields(source, handle);
+    },
 
     // 名札は「同じ名前が 2 つ以上あるとき」に要る。breadboard の ID は
     // 配線から指すための名前なので重ならない — 名札はそのまま名前。
@@ -75,6 +80,7 @@ export function createBreadboardEditor(): FenceEditor {
 
     palette: renderPalette,
     typeNames: renderTypeOptions,
+    colorNames: renderColorOptions,
     nextId: nextPartId,
 
     movePart: (source, handle, to, trial) => {
@@ -111,6 +117,8 @@ export function createBreadboardEditor(): FenceEditor {
     setField: (source, handle, field, text) => (
       isNoteHandle(handle)
         ? setNoteField(source, handle, field, text)
+        : isWireHandle(handle)
+        ? setWireField(source, handle, field, text)
         : field === 'type' || field === 'value' || field === 'label'
         ? setField(source, handle, field as PartField, text)
         : { ok: false, error: { message: `書き換えられない欄です: ${field}`, line: null } }

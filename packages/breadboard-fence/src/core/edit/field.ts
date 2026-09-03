@@ -25,6 +25,8 @@ export type PartFields = {
   readonly type: string;
   readonly value: string;
   readonly label: string;
+  /** 色は配線だけが持つ (部品の色は種類と値で決まる)。部品はいつも空。 */
+  readonly color: string;
   /**
    * 書き換えられる欄。**フェンスが決める** — どの部品にどの欄があるかは
    * 種類の語彙の話で、殻の持ち物ではない。
@@ -110,6 +112,7 @@ export function partFields(source: string, id: string): PartFields | null {
     type: part.written,
     value: part.value ?? '',
     label: part.label ?? '',
+    color: '',
     // **どの部品も 3 つとも書ける。** 種類ごとに欄が減る文法ではない。
     can: ['type', 'value', 'label'],
   };

@@ -198,6 +198,8 @@ export function noteFields(source: string, handle: string) {
     type: found.note.kind,
     value: found.note.text ?? '',
     label: '',
+    // 注釈の色は語で書く (欄からは直せない)。殻の形に合わせて空で返す。
+    color: '',
     can: found.note.kind === 'text' ? (['value'] as const) : ([] as const),
   };
 }

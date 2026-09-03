@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TYPE_LIST_ID, makeNonce, panelHtml } from 'fence-kit';
+import { COLOR_LIST_ID, TYPE_LIST_ID, makeNonce, panelHtml } from 'fence-kit';
 import { createPerfboardEditor } from './perfboardEditor.ts';
 import { createSession } from 'fence-kit';
 import { attachSession, createSessionHost, mapScriptUri } from './vscodeHost.ts';
@@ -47,7 +47,11 @@ export function registerMapEditor(context: vscode.ExtensionContext): void {
         nonce: makeNonce(),
         scriptUri: mapScriptUri(panel.webview, context),
         view: session.view(),
-        chrome: { palette: fence.palette(), typeNames: fence.typeNames(TYPE_LIST_ID) },
+        chrome: {
+          palette: fence.palette(),
+          typeNames: fence.typeNames(TYPE_LIST_ID),
+          colorNames: fence.colorNames(COLOR_LIST_ID),
+        },
         undo: 'vscode',
         foldsWire: fence.foldsWire,
       });

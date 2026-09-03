@@ -8,6 +8,7 @@ import { issuesOf, shiftIssues } from '../../core/edit/issues.ts';
 import { aimAt, fenceAt } from '../../core/edit/map.ts';
 import { insertPart, insertWire, duplicatePart, nextPartId, partCells } from '../../core/edit/insert.ts';
 import { renamePart } from '../../core/edit/rename.ts';
+import { isWireHandle, renderColorOptions, setWireField, wireFields } from '../../core/edit/wireField.ts';
 import {
   deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans,
   setNoteField, turnNote,
@@ -60,7 +61,11 @@ export function createPerfboardEditor(): FenceEditor {
       return at === null ? [] : nodeSpans(source, at);
     },
 
-    fieldsOf: (source, handle) => (isNoteHandle(handle) ? noteFields(source, handle) : partFields(source, handle)),
+    fieldsOf: (source, handle) => {
+      if (isNoteHandle(handle)) return noteFields(source, handle);
+      if (isWireHandle(handle)) return wireFields(source, handle);
+      return partFields(source, handle);
+    },
 
     // 部品の ID は配線から指すための名前なので重ならない — 名札はそのまま名前。
     // 注釈には名前が無いので、名札は行番号。人に見せるときは「注釈」と呼ぶ。
@@ -72,6 +77,7 @@ export function createPerfboardEditor(): FenceEditor {
 
     palette: renderPalette,
     typeNames: renderTypeOptions,
+    colorNames: renderColorOptions,
     nextId: nextPartId,
 
     movePart: (source, handle, to, trial) => {
@@ -108,6 +114,8 @@ export function createPerfboardEditor(): FenceEditor {
     setField: (source, handle, field, text) => (
       isNoteHandle(handle)
         ? setNoteField(source, handle, field, text)
+        : isWireHandle(handle)
+        ? setWireField(source, handle, field, text)
         : field === 'type' || field === 'value'
         ? setField(source, handle, field as PartField, text)
         : { ok: false, error: { message: `この文法に ${field} の欄はありません`, line: null } }

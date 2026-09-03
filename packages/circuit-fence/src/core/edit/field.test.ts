@@ -106,7 +106,7 @@ describe('setField', () => {
 describe('partFields', () => {
   test('reads what the fields hold now, so the form can show it', () => {
     expect(partFields(RC, 'R1')).toEqual({
-      id: 'R1', type: 'resistor', value: '10k', label: '', can: ['type', 'value', 'label'],
+      id: 'R1', type: 'resistor', value: '10k', label: '', color: '', can: ['type', 'value', 'label'],
     });
   });
 
@@ -119,7 +119,7 @@ describe('partFields', () => {
   test('leaves empty what the part does not carry', () => {
     // 1 端子は値もラベルも書けない。**書ける欄はフェンスが決めて渡す。**
     expect(partFields(RC, 'G1')).toEqual({
-      id: 'G1', type: 'ground', value: '', label: '', can: ['type'],
+      id: 'G1', type: 'ground', value: '', label: '', color: '', can: ['type'],
     });
   });
 

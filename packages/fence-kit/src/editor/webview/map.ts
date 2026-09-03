@@ -618,13 +618,15 @@ document.addEventListener('change', (event) => {
   if (target === null) return;
 
   // 欄。名前だけは 3 か所に散るので別の道 (`rename`)。
+  // **配線にも欄がある** (色)。何を選んでいるかを添えて、名札は拡張が組む —
+  // 名前の無いものをどう指すかは文法の話で、殻の持ち物ではない。
   if (target.classList.contains('cf-field')) {
-    const part = state.selected?.kind === 'part' ? state.selected.id : null;
-    if (part === null) return;
+    const picked = state.selected;
+    if (picked === null || picked.kind === 'node') return;
     const written = target.value.trim();
     vscode.postMessage(target.name === 'id'
-      ? { kind: 'rename', part, text: written }
-      : { kind: 'setField', part, field: target.name, text: written });
+      ? { kind: 'rename', part: picked.id, text: written }
+      : { kind: 'setField', what: picked.kind, part: picked.id, field: target.name, text: written });
     return;
   }
 
@@ -656,8 +658,10 @@ type Fields = {
   readonly type: string;
   readonly value: string;
   readonly label: string;
+  /** 色。**いまは配線だけ**が持つ。 */
+  readonly color: string;
   /** 書ける欄。**フェンスが決める** (種類の語彙は殻の持ち物ではない)。 */
-  readonly can: readonly ('type' | 'value' | 'label')[];
+  readonly can: readonly ('type' | 'value' | 'label' | 'color')[];
 };
 
 /**
@@ -686,11 +690,13 @@ function showFields(part: Fields | null): void {
     input.disabled = !enabled;
     if (document.activeElement !== input) input.value = value;
   };
-  fill('id', part.id, true);
-  fill('type', part.type, true);
+  // **名前を直せるのは名前のあるものだけ。** 配線と注釈は行で指すので直せない。
+  fill('id', part.id, part.can.includes('type'));
+  fill('type', part.type, part.can.includes('type'));
   // **書ける欄はフェンスが決める。** 殻は種類の語を知らない。
   fill('value', part.value, part.can.includes('value'));
   fill('label', part.label, part.can.includes('label'));
+  fill('color', part.color, part.can.includes('color'));
 }
 
 type Incoming =

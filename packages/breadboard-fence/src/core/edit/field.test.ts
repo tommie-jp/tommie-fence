@@ -21,7 +21,7 @@ const after = (source: string, result: ReturnType<typeof setField>): string => {
 describe('partFields', () => {
   test('reads what the fields hold now, so the form can show it', () => {
     expect(partFields(LED, 'D1')).toEqual({
-      id: 'D1', type: 'led', value: 'red', label: '状態', can: ['type', 'value', 'label'],
+      id: 'D1', type: 'led', value: 'red', label: '状態', color: '', can: ['type', 'value', 'label'],
     });
   });
 

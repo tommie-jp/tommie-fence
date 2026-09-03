@@ -39,7 +39,7 @@ export type Aim = {
 };
 
 /** 欄の名前。3 つとも「1 部品 = 1 行」の行の中の綴りに落ちる。 */
-export type PartField = 'type' | 'value' | 'label';
+export type PartField = 'type' | 'value' | 'label' | 'color';
 
 /** 選んだ部品の欄。**中身は素通し** — 殻は webview へ渡すだけで、意味を見ない。 */
 export type PartFields = {
@@ -47,6 +47,8 @@ export type PartFields = {
   readonly type: string;
   readonly value: string;
   readonly label: string;
+  /** 色。**いまは配線だけ**が持つ (部品の色は種類と値で決まる)。 */
+  readonly color: string;
   /**
    * **書ける欄をフェンスが決める。** 種類ごとにどの欄があるかは文法の語彙の
    * 話で、殻の持ち物ではない (`kind` を渡して殻が判じる形にしていたら、
@@ -123,6 +125,11 @@ export type FenceEditor = {
   readonly spansOf: (source: string, what: 'part' | 'node', id: string) => readonly Span[];
   /** 選んだ部品の欄の中身。部品でなければ null。 */
   readonly fieldsOf: (source: string, handle: string) => PartFields | null;
+  /**
+   * 色の候補 (`datalist`)。**書ける色はフェンスが決める** — 配線の色の並びは
+   * 板ごとに違う (circuit は線の色、板の 2 つは被覆の色)。
+   */
+  readonly colorNames: (listId: string) => string;
 
   /**
    * 掴んだ名札 (`VCC#2`) から、人に見せる名前 (`VCC`)。

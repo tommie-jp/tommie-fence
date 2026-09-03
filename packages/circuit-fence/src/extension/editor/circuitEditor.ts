@@ -16,6 +16,7 @@ import { formatAddress, parseAddress } from '../../core/model/address.ts';
 import type { Address } from '../../core/model/address.ts';
 import { renamePart } from '../../core/edit/rename.ts';
 import type { EditResult, FenceEditor, NewPart } from 'fence-kit';
+import { isWireHandle, renderColorOptions, wireFields } from '../../core/edit/wireField.ts';
 
 /**
  * circuit フェンスの編集エンジンを、殻が求める形 (`FenceEditor`) に束ねる。
@@ -80,7 +81,7 @@ export function createCircuitEditor(): FenceEditor {
       return at === null ? [] : nodeSpans(source, at);
     },
 
-    fieldsOf: partFields,
+    fieldsOf: (source, handle) => (isWireHandle(handle) ? wireFields(source, handle) : partFields(source, handle)),
     nameOf: nameOfHandle,
     nextId: nextPartId,
     cellsOf: partCells,
@@ -90,6 +91,7 @@ export function createCircuitEditor(): FenceEditor {
 
     palette: renderPalette,
     typeNames: renderTypeOptions,
+    colorNames: renderColorOptions,
 
     movePart: (source, handle, to, trial) => {
       const at = parseAddress(to);

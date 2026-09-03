@@ -47,7 +47,7 @@ function fakeEditor(over: Partial<FenceEditor> = {}): FenceEditor {
     spansOf: (source, _what, id) => (lineOf(source, id) === null ? [] : [{ line: 1, column: 0, length: 2 }]),
     fieldsOf: (source, handle) => (lineOf(source, handle) === null
       ? null
-      : { id: handle, type: 'resistor', value: '', label: '', can: ['type'] }),
+      : { id: handle, type: 'resistor', value: '', label: '', color: '', can: ['type'] }),
     nameOf: (handle) => handle,
     nextId: (_source, type) => (type === 'resistor' || type === 'led' ? 'X1' : null),
     cellsOf: (source, handle) => {
@@ -65,6 +65,7 @@ function fakeEditor(over: Partial<FenceEditor> = {}): FenceEditor {
     },
     palette: () => '<button data-type="resistor" data-ends="2"></button><button data-type="led"></button>',
     typeNames: () => '',
+    colorNames: () => '',
     movePart: (source, handle, to) => (lineOf(source, handle) === null
       ? no(`${handle} がありません`)
       : ok([{ kind: 'delete', line: 1 }, { kind: 'insert', line: 1, text: `${handle}: resistor ${to} a3` }])),

@@ -28,6 +28,8 @@ export type PartFields = {
   readonly type: string;
   readonly value: string;
   readonly label: string;
+  /** 色。**回路図の配線に色は書けない**ので、いつも空。 */
+  readonly color: string;
   /**
    * 書ける欄。**端子の数で決まる** (1 端子は値もラベルも書けない、
    * ラベルは 2 端子だけ)。殻へは種類の語ではなくこの一覧を渡す —
@@ -60,6 +62,7 @@ export function partFields(source: string, handle: string): PartFields | null {
     type: part.type,
     value: (part.kind === 'one-terminal' ? null : part.value) ?? '',
     label: (part.kind === 'two-terminal' ? part.label : null) ?? '',
+    color: '',
     can: fieldsFor(part.kind),
   };
 }

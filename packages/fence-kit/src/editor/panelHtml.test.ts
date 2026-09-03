@@ -7,7 +7,7 @@ const shell = (over: Partial<Parameters<typeof panelHtml>[0]> = {}): string => p
   scriptUri: 'vscode-resource://dist/map.js',
   view: { html: '<table></table>', picker: '', issues: '' },
   // 帯はフェンスが組む (`FenceEditor`)。殻の試験では中身の分かる印を入れておく。
-  chrome: { palette: '<details class="cf-palette"></details>', typeNames: '<datalist id="cf-type-names"></datalist>' },
+  chrome: { palette: '<details class="cf-palette"></details>', typeNames: '<datalist id="cf-type-names"></datalist>', colorNames: '<datalist id="cf-color-names"></datalist>' },
   undo: 'own',
   ...over,
 });

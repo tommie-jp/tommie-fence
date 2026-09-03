@@ -343,10 +343,15 @@ export type PanelChrome = {
   readonly palette: string;
   /** 種類の名前の候補 (`datalist`)。欄の `list` が指す。 */
   readonly typeNames: string;
+  /** 色の候補 (`datalist`)。配線を選んだときの色の欄が引く。 */
+  readonly colorNames: string;
 };
 
 /** 欄の種類が引く候補の名札。**組む側と引く側で同じ綴りを使う**ための 1 か所。 */
 export const TYPE_LIST_ID = 'cf-type-names';
+
+/** 色の候補の名札。**組む側と引く側で同じ綴りを使う**ための 1 か所。 */
+export const COLOR_LIST_ID = 'cf-color-names';
 
 export type PanelHtmlOptions = {
   /** webview の CSP に載せる出所。 */
@@ -458,8 +463,9 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, chrome, undo, fol
     + `<label>種類 <input class="cf-field" name="type" size="12" list="${TYPE_LIST_ID}"></label>`
     + `<label>値 <input class="cf-field" name="value" size="8"></label>`
     + `<label>ラベル <input class="cf-field" name="label" size="8"></label>`
+    + `<label>色 <input class="cf-field" name="color" size="8" list="${COLOR_LIST_ID}"></label>`
     + `</form>`
-    + `<p class="kc-props-hint">部品をクリック (か <kbd>E</kbd>) すると、名前・種類・値・ラベルの欄が出ます。`
+    + `<p class="kc-props-hint">部品や配線をクリック (か <kbd>E</kbd>) すると欄が出ます。`
     + `<kbd>Enter</kbd> か欄を離れたときに行へ当たります。</p>`
     + `</aside>`
     + `<div class="kc-canvas"><div class="cf-body">${view.html}</div>`
@@ -475,6 +481,7 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, chrome, undo, fol
     + `<footer class="kc-status"><span class="cf-status"></span>`
     + `<span class="kc-cell"></span><span class="kc-zoom">100 %</span></footer>`
     + chrome.typeNames
+    + chrome.colorNames
     + `<script nonce="${escapeMarkup(nonce)}" src="${escapeMarkup(scriptUri)}"></script></body></html>`;
 };
 

@@ -179,6 +179,12 @@ const text = (value: unknown): string | null => (typeof value === 'string' ? val
 /** ゴーストの仮の名前。置く前の試し当てにだけ使う (本文には書かない)。 */
 const GHOST_ID = 'GHOST';
 
+/**
+ * 配線 1 本を指す名札。**名前が無いものは書かれた行で指す。**
+ * 殻とフェンスの取り決めなので、綴りは 1 か所に置く。
+ */
+export const wireHandle = (line: string | null): string | null => (line === null ? null : `wire:${line}`);
+
 export function createSession<D extends DocLike>(
   host: SessionHost<D>,
   editor: FenceEditor,
@@ -487,14 +493,16 @@ export function createSession<D extends DocLike>(
   }
 
   /** 欄の名前 (お知らせに出す)。 */
-  const FIELD_NAMES: Readonly<Record<string, string>> = { type: '種類', value: '値', label: 'ラベル' };
+  const FIELD_NAMES: Readonly<Record<string, string>> = { type: '種類', value: '値', label: 'ラベル', color: '色' };
 
   /**
    * 欄の書き換え。**1 部品 = 1 行の文法なので、行の中のトークン差し替えに落ちる。**
    * 名前だけは 3 か所 (鍵・配線の足・注釈) に散るので別の道を通る。
    */
   async function editField(message: Incoming): Promise<void> {
-    const handle = text(message.part);
+    // **名前の無いものは行で指す。** 配線には名前が無いので、名札を殻が組む
+    // (綴りは 3 つのフェンスで同じ。注釈も同じ考え方)。
+    const handle = text(message.what) === 'wire' ? wireHandle(text(message.part)) : text(message.part);
     const part = handle === null ? null : editor.nameOf(handle);
     const field = text(message.field);
     const written = text(message.text) ?? '';
@@ -890,7 +898,7 @@ export function createSession<D extends DocLike>(
       sendFields(null);
       return;
     }
-    if (what !== 'part') sendFields(null);
+    if (what !== 'part' && what !== 'wire') sendFields(null);
     if (what === 'node') {
       light(rangesOf(fence, editor.spansOf(fence.source, 'node', id)));
       return;
@@ -900,6 +908,8 @@ export function createSession<D extends DocLike>(
       const at = fence.line + Number(id) - 1;
       const inside = Number.isInteger(Number(id)) && at >= 0 && at < fence.document.lineCount;
       light(inside ? [{ line: at, start: 0, end: fence.document.lineAt(at).text.length }] : []);
+      // **配線にも欄がある** (色)。部品と同じ道で送る。
+      sendFields(editor.fieldsOf(fence.source, wireHandle(id) ?? ''));
       return;
     }
     light(rangesOf(fence, editor.spansOf(fence.source, 'part', id)));

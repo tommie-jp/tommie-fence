@@ -66,5 +66,5 @@ export { checkFenceEditor, paletteTwoEnds, paletteTypes } from './editor/contrac
 export type { ContractFixture } from './editor/contract.ts';
 export { renderIssues } from './editor/issues.ts';
 export type { IssueRow } from './editor/issues.ts';
-export { TYPE_LIST_ID, makeNonce, panelHtml, renderFencePicker } from './editor/panelHtml.ts';
+export { COLOR_LIST_ID, TYPE_LIST_ID, makeNonce, panelHtml, renderFencePicker } from './editor/panelHtml.ts';
 export type { MapViewHtml, PanelChrome, PanelHtmlOptions } from './editor/panelHtml.ts';
