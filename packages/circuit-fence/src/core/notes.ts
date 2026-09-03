@@ -266,3 +266,18 @@ export const noteSpan = (
 
 /** 色の値から `#` を外した 6 桁。TeX の `\definecolor{...}{HTML}{...}` に渡す形。 */
 export const hexDigits = (color: string): string => color.slice(1).toUpperCase();
+
+/**
+ * 字の向き。語は 3 つのフェンスで同じ綴り (`r90` / `r180` / `r270`)。
+ *
+ * **`mirror` は書けない。** breadboard と perfboard は字を指し先の上に置くので
+ * 反対側へ逃がせるが、circuit は**指し先そのもの**に置くので移す側が無い。
+ * 語彙は揃えたうえで、意味の無いものは理由を言って断る。
+ */
+const NOTE_ROTATIONS: Readonly<Record<string, 90 | 180 | 270>> = { r90: 90, r180: 180, r270: 270 };
+
+export const NOTE_MIRROR_WORD = 'mirror';
+
+export const isNoteRotation = (word: string): boolean => word in NOTE_ROTATIONS;
+
+export const noteRotationOf = (word: string): 90 | 180 | 270 | null => NOTE_ROTATIONS[word] ?? null;

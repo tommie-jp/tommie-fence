@@ -52,6 +52,19 @@ const withAnchor = (attributes: string, align: NoteAlign): string => {
   return anchor === null ? attributes : `${attributes} text-anchor="${anchor}"`;
 };
 
+/**
+ * 回す。**回るのは指し先のまわり** — 目印の座標 (TeX が決めた点) がそのまま
+ * 指し先なので、そこを軸にする。字の真ん中で回すと指した所から離れていく。
+ */
+const withRotation = (attributes: string, rotate: number): string => {
+  if (rotate === 0) return attributes;
+  const x = /\bx="([-0-9.]+)"/.exec(attributes)?.[1];
+  const y = /\by="([-0-9.]+)"/.exec(attributes)?.[1];
+  return x === undefined || y === undefined
+    ? attributes
+    : `${attributes} transform="rotate(${rotate} ${x} ${y})"`;
+};
+
 /** エンジンが目印の色を掛けた器 (`<g>`)。中の字を差し替えたら、その色は用済み。 */
 const GROUP = /<g\b[^>]*>/g;
 const MARK_ATTRIBUTE = new RegExp(`\\s(?:fill|stroke)="${NOTE_MARK_COLOR}"`, 'g');
@@ -80,9 +93,12 @@ export function applyNotes(svg: string, notes: readonly NoteOverlay[]): string {
     index += 1;
     // 字下げは書き出しの意味そのものなので、SVG の既定 (空白を詰める) を止める。
     const space = note.mono ? ' xml:space="preserve"' : '';
-    const shown = withAnchor(
-      withWeight(withFont(withColor(attributes, note.color), note.mono), note.bold),
-      note.align,
+    const shown = withRotation(
+      withAnchor(
+        withWeight(withFont(withColor(attributes, note.color), note.mono), note.bold),
+        note.align,
+      ),
+      note.rotate,
     );
     return `<text${shown}${space}>${escapeHtml(note.text)}</text>`;
   });

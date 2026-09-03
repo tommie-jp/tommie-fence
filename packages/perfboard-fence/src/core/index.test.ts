@@ -350,7 +350,7 @@ describe('renderPerfboard', () => {
       '  - mark b7 red',
       '  - box c2 e8 blue',
       '  - arrow g2 b7',
-      '  - text f3 ここを直す',
+      '  - text f3: ここを直す',
       '',
     ].join('\n'));
 
@@ -377,7 +377,7 @@ describe('renderPerfboard', () => {
   });
 
   test('escapes what a note says', () => {
-    const result = renderPerfboard('board: 10x6\nnotes:\n  - text b3 "<img src=x>"\n');
+    const result = renderPerfboard('board: 10x6\nnotes:\n  - text b3: "<img src=x>"\n');
 
     expect(result.svg).not.toContain('<img');
     expect(result.svg).toContain('&lt;img');

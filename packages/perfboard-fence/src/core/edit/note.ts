@@ -200,45 +200,48 @@ export function noteFields(source: string, handle: string) {
   };
 }
 
-/** 注釈の言葉を書き換える。**残り全部が言葉**なので、番地の後ろを丸ごと差し替える。 */
+/** 字を書き換える。**`: ` の後ろが字**なので、そこから行末までを差し替える。 */
 export function setNoteField(source: string, handle: string, field: string, text: string): NoteResult {
   const found = locate(source, handle);
   if (!isFound(found)) return fail(found.problem, found.line);
-  if (field !== 'value') return fail(`注釈に直せる欄は言葉だけです (${safeToken(field)} は直せません)`, found.line);
-  if (found.note.kind !== 'text') return fail(`${found.note.kind} の注釈に言葉はありません`, found.line);
+  if (field !== 'value') return fail(`注釈に直せる欄は字だけです (${safeToken(field)} は直せません)`, found.line);
+  if (found.note.kind !== 'text') return fail(`${found.note.kind} の注釈に字はありません`, found.line);
 
-  const written = writtenAddresses(found.note);
-  const spans = tokensOf(found.text, written);
-  const last = spans[spans.length - 1];
-  if (last === undefined) return fail(`${found.line} 行目の注釈の番地を行の中に見つけられませんでした`, found.line);
+  const colon = found.text.indexOf(': ');
+  if (colon < 0) return fail(`${found.line} 行目の注釈に : がありません`, found.line);
 
-  const from = last.column + last.length;
-  const edits: Edit[] = [{
-    line: found.line,
-    column: from,
-    length: found.text.length - from,
-    text: text === '' ? '' : ` ${text}`,
-  }];
+  const from = colon + 2;
+  const edits: Edit[] = [{ line: found.line, column: from, length: found.text.length - from, text }];
   return { ok: true, value: { edits, diff: diffAfter(source, edits) } };
 }
 
-/** 向きを書いた種類の語 (`text/r90/mirror`)。向きが無ければ種類だけ。 */
-const kindWord = (kind: string, turn: Turn): string =>
-  kind + (turn.rotate === 0 ? '' : `/${rotationWord(turn.rotate)}`) + (turn.mirror ? `/${MIRROR_WORD}` : '');
-
-/**
- * 種類の語を書き換える編集。**行頭の `- ` と字下げは残す** —
- * 頭から数えると目印の `-` を種類だと読んでしまう (実際に踏んだ)。
- */
-function rewriteKind(found: Found, turn: Turn): NoteResult {
-  const marker = /^\s*-\s*/.exec(found.text)?.[0].length ?? 0;
-  const written = found.text.slice(marker).split(/\s/)[0] ?? '';
-  if (!written.startsWith(found.note.kind)) {
-    return fail(`${found.line} 行目の注釈の種類を行の中に見つけられませんでした`, found.line);
+/** いま書かれている向きの語と、その場所。無ければ `: ` の直前に足す。 */
+function turnWords(found: Found): { readonly column: number; readonly length: number } {
+  const words = [rotationWord(found.note.turn.rotate), found.note.turn.mirror ? MIRROR_WORD : '']
+    .filter((one) => one !== '');
+  if (words.length === 0) {
+    const colon = found.text.indexOf(': ');
+    return { column: colon < 0 ? found.text.length : colon, length: 0 };
   }
-  const edits: Edit[] = [{
-    line: found.line, column: marker, length: written.length, text: kindWord(found.note.kind, turn),
-  }];
+  const spans = tokensOf(found.text, words);
+  const first = spans[0];
+  const last = spans[spans.length - 1];
+  return first === undefined || last === undefined
+    ? { column: found.text.length, length: 0 }
+    : { column: first.column, length: last.column + last.length - first.column };
+}
+
+/** 向きの語を書き換える編集。語が無ければ `: ` の前に足し、消すときは空白ごと落とす。 */
+function rewriteTurn(found: Found, turn: Turn): NoteResult {
+  const at = turnWords(found);
+  const words = [rotationWord(turn.rotate), turn.mirror ? MIRROR_WORD : ''].filter((one) => one !== '');
+  const empty = words.length === 0;
+  const before = found.text.slice(0, at.column).endsWith(' ') ? 1 : 0;
+  const column = empty || at.length > 0 ? at.column - (empty ? before : 0) : at.column;
+  const length = at.length + (empty ? before : 0);
+  const text = empty ? '' : `${at.length > 0 ? '' : ' '}${words.join(' ')}`;
+
+  const edits: Edit[] = [{ line: found.line, column, length, text }];
   return { ok: true, value: { edits, diff: { lost: [], gained: [] } } };
 }
 
@@ -256,7 +259,7 @@ export function turnNote(source: string, handle: string, quarters: number): Note
   const steps = (((found.note.turn.rotate / 90 + quarters) % 4) + 4) % 4;
   const rotate = (steps * 90) as Turn['rotate'];
   if (rotate === found.note.turn.rotate) return { ok: true, value: { edits: [], diff: { lost: [], gained: [] } } };
-  return rewriteKind(found, { ...found.note.turn, rotate });
+  return rewriteTurn(found, { ...found.note.turn, rotate });
 }
 
 /**
@@ -269,7 +272,7 @@ export function flipNote(source: string, handle: string): NoteResult {
   if (found.note.kind !== 'text') {
     return fail(`${found.note.kind} の注釈は反転できません (向きがあるのは text だけです)`, found.line);
   }
-  return rewriteKind(found, { ...found.note.turn, mirror: !found.note.turn.mirror });
+  return rewriteTurn(found, { ...found.note.turn, mirror: !found.note.turn.mirror });
 }
 
 /** 向きの無い注釈。**書いていないのと同じ**。 */

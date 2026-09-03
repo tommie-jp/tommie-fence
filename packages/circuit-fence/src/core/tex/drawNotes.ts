@@ -405,9 +405,10 @@ export function noteOverlays(
     if (note.kind !== 'text' && note.kind !== 'source') return [];
     const color = noteColor(note.color) ?? NOTE_INK;
     const look = { color, bold: note.bold, align: note.align };
+    // **書き出しは回さない。** 何行もあるので、回すと図の外の帯に収まらない。
     return note.kind === 'text'
-      ? [{ text: note.text, mono: false, ...look }]
-      : listing.map((text) => ({ text, mono: true, ...look }));
+      ? [{ text: note.text, mono: false, rotate: note.rotate, ...look }]
+      : listing.map((text) => ({ text, mono: true, rotate: 0 as const, ...look }));
   });
 
   // 題は TeX のいちばん最後に置くので、差し込む並びでも末尾。
@@ -415,14 +416,14 @@ export function noteOverlays(
   // 黒のまま出て、そのあと recolorSvg がテーマの文字色に塗り替える)。
   const titled = circuit.title === null
     ? notes
-    : [...notes, { text: circuit.title, color: NOTE_INK, mono: false, bold: true, align: 'left' } as const];
+    : [...notes, { text: circuit.title, color: NOTE_INK, mono: false, bold: true, align: 'left', rotate: 0 } as const];
 
   // 刻印は題のさらに後 (題まで含めた箱の右下に掛かる)。右下に付くものなので、
   // 差し込む字は目印から**左へ**伸ばす。
   if (!stamped) return titled;
   return [
     ...titled,
-    { text: STAMP_TEXT, color: STAMP_COLOR, mono: false, bold: false, align: 'right' },
+    { text: STAMP_TEXT, color: STAMP_COLOR, mono: false, bold: false, align: 'right', rotate: 0 },
   ];
 }
 

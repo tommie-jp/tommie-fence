@@ -10,7 +10,7 @@ const BOARD = `board: 12x8
 parts:
   R1: resistor b2 b6 10k
 notes:
-  - text c3 ここから電源
+  - text c3: ここから電源
   - box e5 g7 blue
 `;
 
@@ -43,13 +43,13 @@ describe('注釈の掴み手', () => {
   });
 
   test('points at the whole line, so clicking it lights the line in the editor', () => {
-    expect(noteSpans(BOARD, 'note:5')).toEqual([{ line: 5, column: 0, length: 18 }]);
+    expect(noteSpans(BOARD, 'note:5')).toEqual([{ line: 5, column: 0, length: 19 }]);
   });
 });
 
 describe('moveNote', () => {
   test('moves the note to the hole that was clicked', () => {
-    expect(after(BOARD, moveNote(BOARD, 'note:5', at('g8')))).toContain('- text g8 ここから電源');
+    expect(after(BOARD, moveNote(BOARD, 'note:5', at('g8')))).toContain('- text g8: ここから電源');
   });
 
   test('carries the second hole along, so the shape does not change', () => {
@@ -76,8 +76,8 @@ describe('duplicateNote', () => {
   test('writes the copy one hole down, so the new one is visible', () => {
     const text = after(BOARD, duplicateNote(BOARD, 'note:5'));
 
-    expect(text).toContain('- text d3 ここから電源');
-    expect(text).toContain('- text c3 ここから電源');
+    expect(text).toContain('- text d3: ここから電源');
+    expect(text).toContain('- text c3: ここから電源');
   });
 });
 
@@ -87,7 +87,7 @@ describe('deleteNote', () => {
   });
 
   test('drops the notes: line too when the last one goes', () => {
-    const one = 'board: 12x8\nnotes:\n  - text c3 ここ\n';
+    const one = 'board: 12x8\nnotes:\n  - text c3: ここ\n';
 
     expect(after(one, deleteNote(one, 'note:3'))).not.toContain('notes:');
   });
@@ -101,22 +101,22 @@ describe('noteFields / setNoteField', () => {
 
   test('rewrites the words, keeping the hole', () => {
     expect(after(BOARD, setNoteField(BOARD, 'note:5', 'value', 'ここは GND')))
-      .toContain('- text c3 ここは GND');
+      .toContain('- text c3: ここは GND');
   });
 
   test('refuses a field the grammar does not have', () => {
     const result = setNoteField(BOARD, 'note:5', 'type', 'mark');
 
     expect(result.ok).toBe(false);
-    expect(result.ok || result.error.message).toContain('言葉だけ');
+    expect(result.ok || result.error.message).toContain('字だけ');
   });
 });
 
 describe('turnNote / flipNote', () => {
-  const TEXT = 'board: 12x8\nnotes:\n  - text c3 ここ\n';
+  const TEXT = 'board: 12x8\nnotes:\n  - text c3: ここ\n';
 
   test('writes the turn on the kind, so the words stay the words', () => {
-    expect(after(TEXT, turnNote(TEXT, 'note:3', 1))).toContain('- text/r90 c3 ここ');
+    expect(after(TEXT, turnNote(TEXT, 'note:3', 1))).toContain('- text c3 r90: ここ');
   });
 
   test('comes back to where it started after four turns', () => {
@@ -129,13 +129,13 @@ describe('turnNote / flipNote', () => {
   test('keeps both when both are written', () => {
     const turned = after(TEXT, turnNote(TEXT, 'note:3', 1));
 
-    expect(after(turned, flipNote(turned, 'note:3'))).toContain('- text/r90/mirror c3 ここ');
+    expect(after(turned, flipNote(turned, 'note:3'))).toContain('- text c3 r90 mirror: ここ');
   });
 
   test('takes the mirror off again', () => {
     const flipped = after(TEXT, flipNote(TEXT, 'note:3'));
 
-    expect(after(flipped, flipNote(flipped, 'note:3'))).toContain('- text c3 ここ');
+    expect(after(flipped, flipNote(flipped, 'note:3'))).toContain('- text c3: ここ');
   });
 
   test('refuses a note that has no direction, rather than doing nothing', () => {

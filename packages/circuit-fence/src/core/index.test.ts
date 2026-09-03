@@ -233,7 +233,7 @@ describe('compileCircuit の注釈', () => {
 
     expect(result.errors).toEqual([]);
     expect(result.notes).toEqual([
-      { text: 'ここで分圧する', color: '#e5534b', mono: false, bold: false, align: 'left' },
+      { text: 'ここで分圧する', color: '#e5534b', mono: false, bold: false, align: 'left', rotate: 0 },
     ]);
   });
 

@@ -11,6 +11,7 @@ import { NO_TURN, closestPartType, lookupPartType, partTypeNames, resolvePartTyp
 import type { PartTypeName, Turn } from '../parts.ts';
 import { isNoteDrawable } from '../tex/escape.ts';
 import type { Endpoint, FenceError, NoteSpec, NoteTextStyle, PartSpec, Result, WireSpec } from '../types.ts';
+import { NOTE_MIRROR_WORD, isNoteRotation, noteRotationOf } from '../notes.ts';
 
 /** 配線の演算子。TikZ と同じ 3 つだけ (学習コストを増やさない)。 */
 const WIRE_OPERATOR = /\s*(--|-\||\|-)\s*/;
@@ -488,6 +489,7 @@ function readNoteWords(tokens: readonly string[], line: number, forSource: boole
   let align: NoteAlign | null = null;
   let bold = false;
   let leading: NoteLeading | null = null;
+  let rotate: NoteTextStyle['rotate'] = 0;
 
   for (const token of tokens) {
     if (noteColor(token) !== null) {
@@ -502,6 +504,19 @@ function readNoteWords(tokens: readonly string[], line: number, forSource: boole
     } else if (token === BOLD_WORD) {
       if (bold) return { ok: false, error: writtenTwice('太字', BOLD_WORD, token, line) };
       bold = true;
+    } else if (isNoteRotation(token)) {
+      // **回るのは字だけ。** 書き出しは何行もあるので、回すと図の外の帯に収まらない。
+      if (forSource) return fail(`${safeToken(token)} は字の注釈 (text) にだけ書けます`, line, token);
+      if (rotate !== 0) return { ok: false, error: writtenTwice('向き', `r${rotate}`, token, line) };
+      rotate = noteRotationOf(token) ?? 0;
+    } else if (token === NOTE_MIRROR_WORD) {
+      // **circuit の字は指し先そのものに置く**ので、反転する側が無い
+      // (breadboard と perfboard は指し先の上に置くので、下へ逃がせる)。
+      return fail(
+        `${safeToken(token)} は書けません (字を指し先そのものに置くので、移す側がありません)`,
+        line,
+        token,
+      );
     } else if (isNoteLeading(token)) {
       if (!forSource) return fail(`${safeToken(token)} は${LEADING_BELONGS}`, line, token);
       if (leading !== null) return { ok: false, error: writtenTwice('行送り', leading, token, line) };
@@ -514,7 +529,7 @@ function readNoteWords(tokens: readonly string[], line: number, forSource: boole
   return {
     ok: true,
     value: {
-      style: { color, size: size ?? DEFAULT_NOTE_SIZE, align: align ?? DEFAULT_NOTE_ALIGN, bold },
+      style: { color, size: size ?? DEFAULT_NOTE_SIZE, align: align ?? DEFAULT_NOTE_ALIGN, bold, rotate },
       leading,
     },
   };

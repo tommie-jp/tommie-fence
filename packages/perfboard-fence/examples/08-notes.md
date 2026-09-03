@@ -24,7 +24,7 @@ notes:
   - mark c3 red
   - box b6 f11 blue
   - arrow g4 c5 red
-  - text g6 ここから電源
+  - text g6: ここから電源
   - source blue
 ```
 

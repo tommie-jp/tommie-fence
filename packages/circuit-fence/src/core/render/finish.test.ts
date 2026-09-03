@@ -69,7 +69,7 @@ describe('finishSvg', () => {
     // 色を書かなかった注釈は黒で出て、そのあと文字色に塗り替わる。
     // 順番が逆になると、注釈だけが黒のまま暗いテーマの地に沈む。
     const mark = `<text fill="${NOTE_MARK_COLOR}" font-family="cmr10">${NOTE_MARK_TEXT}</text>`;
-    const note: NoteOverlay = { text: 'あ', color: '#000000', mono: false, bold: false, align: 'left' };
+    const note: NoteOverlay = { text: 'あ', color: '#000000', mono: false, bold: false, align: 'left', rotate: 0 };
     const finished = finishSvg(SVG.replace('<g/>', `<g>${mark}</g>`), {
       notes: [note],
       theme: { ...DEFAULT_THEME, ink: '#e6edf3' },

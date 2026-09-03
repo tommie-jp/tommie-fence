@@ -15,6 +15,7 @@ const SVG = `<svg viewBox="0 0 10 10"><path d="M0 0"/>${marker('translate(1 2)')
 const note = (text: string, look: Partial<NoteOverlay> = {}): NoteOverlay => ({
   text,
   color: '#e5534b',
+  rotate: 0,
   mono: false,
   bold: false,
   align: 'left',

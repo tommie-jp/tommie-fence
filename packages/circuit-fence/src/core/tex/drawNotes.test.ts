@@ -84,7 +84,7 @@ describe('generateTex の注釈の字', () => {
     expect(tex).not.toContain('ここで分圧する');
     expect(tex).toContain('\\definecolor{circuitnotemark}{HTML}{FE00FE}');
     expect(tex).toContain(`\\node[anchor=west, inner sep=0, circuitnotemark, font=${NORMAL}] at (0,-2) {X};`);
-    expect(notes).toEqual([{ text: 'ここで分圧する', color: '#000000', mono: false, bold: false, align: 'left' }]);
+    expect(notes).toEqual([{ text: 'ここで分圧する', color: '#000000', mono: false, bold: false, align: 'left', rotate: 0 }]);
   });
 
   // TeX は字を渡されていないので幅を知らない。取っておかないと図の縁で切れる。
@@ -100,7 +100,7 @@ describe('generateTex の注釈の字', () => {
   test('gives the colour of a note that has none to the SVG as the ink black', () => {
     const { notes } = generate(...R, 'notes:', '  - text b1 green: ここ');
 
-    expect(notes).toEqual([{ text: 'ここ', color: '#2ea043', mono: false, bold: false, align: 'left' }]);
+    expect(notes).toEqual([{ text: 'ここ', color: '#2ea043', mono: false, bold: false, align: 'left', rotate: 0 }]);
   });
 
   test('hands the texts over in the order the marks are drawn', () => {

@@ -52,35 +52,49 @@ const fail = (message: string, token?: string): Parsed<never> =>
 
 const isKind = (word: string): word is NoteKind => (KINDS as readonly string[]).includes(word);
 
-/** 種類の語に付いた向き (`text/r90/mirror`)。読めない語はそのまま返して断らせる。 */
-function splitTurn(written: string): { readonly kind: string; readonly turn: Turn; readonly bad: string | null } {
-  const [kind = '', ...words] = written.split('/');
+/**
+ * `text` の語。**色と向きだけ**で、どちらも閉じた並び。
+ * 順不同に書けるので、語のほうからどの枠かを決める。
+ */
+function readWords(tokens: readonly string[]): Parsed<{ readonly color: string | null; readonly turn: Turn }> {
+  let color: string | null = null;
   let turn = NO_TURN;
-  for (const word of words) {
+  for (const token of tokens) {
+    const word = token.toLowerCase();
     if (isRotationWord(word)) turn = { ...turn, rotate: rotationOf(word) ?? turn.rotate };
     else if (word === MIRROR_WORD) turn = { ...turn, mirror: true };
-    else return { kind, turn: NO_TURN, bad: word };
+    else if (isColor(word)) {
+      if (color !== null) return fail(`注釈の色が 2 回書かれています: ${safeToken(token)}`, token);
+      color = word;
+    } else {
+      return fail(
+        `注釈の知らない語です: ${safeToken(token)}`
+        + ` (色か r90 / r180 / r270 / ${MIRROR_WORD} が書けます)`,
+        token,
+      );
+    }
   }
-  return { kind, turn, bad: null };
+  return { ok: true, value: { color, turn } };
 }
 
-export function parseNoteLine(line: string): Parsed<WrittenNote> {
+/**
+ * 注釈 1 つを読む。**`text` の字は `head` ではなく `text` に来る** —
+ * `- text c3 red: ここから電源` は 1 項目のマップとして読まれるため
+ * (3 つのフェンスで同じ形。`parser/parseFence.ts` が割って渡す)。
+ */
+export function parseNoteLine(line: string, written: string | null): Parsed<WrittenNote> {
   const tokens = line.trim().split(/\s+/).filter((token) => token !== '');
-  const [head, ...rest] = tokens;
+  const [kind, ...rest] = tokens;
 
-  if (head === undefined) return fail(`注釈が空です (${KINDS.join(' / ')} のどれかで書きます)`);
-  const { kind, turn, bad } = splitTurn(head);
-  if (bad !== null) {
-    return fail(
-      `知らない向きです: ${safeToken(bad)} (r90 / r180 / r270 / ${MIRROR_WORD} が書けます)`,
-      head,
-    );
-  }
+  if (kind === undefined) return fail(`注釈が空です (${KINDS.join(' / ')} のどれかで書きます)`);
   if (!isKind(kind)) {
-    return fail(`知らない注釈です: ${safeToken(kind)} (${KINDS.join(' / ')})`, head);
+    return fail(`知らない注釈です: ${safeToken(kind)} (${KINDS.join(' / ')})`, kind);
   }
-  if (kind !== 'text' && (turn.rotate !== 0 || turn.mirror)) {
-    return fail(`向きを書けるのは text だけです (${safeToken(kind)} に向きはありません)`, head);
+  if (kind === 'text' && written === null) {
+    return fail('text は「- text 番地 [語]: 字」の形で、字を : の後ろに書きます', kind);
+  }
+  if (kind !== 'text' && written !== null) {
+    return fail(`${kind} に字は書けません (字を置くのは text です)`, kind);
   }
 
   const wanted = HOLES[kind];
@@ -94,13 +108,23 @@ export function parseNoteLine(line: string): Parsed<WrittenNote> {
   const tail = rest.slice(wanted);
 
   if (kind === 'text') {
-    const text = tail.join(' ');
-    if (text === '') return fail('text には図に出す言葉を書きます', kind);
-    return { ok: true, value: { kind, turn, from, to: null, color: null, text: clampText(text, LIMITS.noteLength) } };
+    // **字は `: ` の後ろ**なので、番地のあとに残るのは語だけ。
+    // 語の並びが閉じたので、`text` にも色を書ける (以前は字と区別が付かなかった)。
+    const words = readWords(tail);
+    if (!words.ok) return words;
+    const text = (written ?? '').trim();
+    if (text === '') return fail('text には図に出す字を書きます', kind);
+    return {
+      ok: true,
+      value: {
+        kind, turn: words.value.turn, from, to: null,
+        color: words.value.color, text: clampText(text, LIMITS.noteLength),
+      },
+    };
   }
 
   if (tail.length === 0) {
-    return { ok: true, value: { kind, turn, from, to, color: null, text: null } };
+    return { ok: true, value: { kind, turn: NO_TURN, from, to, color: null, text: null } };
   }
   if (tail.length > 1) {
     // **余った言葉を黙って捨てない。** 色を 2 つ書いた人が、片方が効いて
@@ -113,16 +137,16 @@ export function parseNoteLine(line: string): Parsed<WrittenNote> {
     );
   }
 
-  const written = tail[0] as string;
-  const color = written.toLowerCase();
+  const word = tail[0] as string;
+  const color = word.toLowerCase();
   if (!isColor(color)) {
     // **綴りは書かれたまま返す** (小文字に直して返すと、探す字と違う字を見せる)。
     // 番地を書いた人には、色の話ではなく**置き場所は選べない**ことを言う —
     // 書き出しは図の下の帯に出るので、番地を書いても動かせない。
-    if (wanted === 0 && parseAddress(written) !== null) {
-      return fail(`${kind} に番地は書けません (図の下に出します): ${safeToken(written)}`, written);
+    if (wanted === 0 && parseAddress(word) !== null) {
+      return fail(`${kind} に番地は書けません (図の下に出します): ${safeToken(word)}`, word);
     }
-    return fail(`知らない色です: ${safeToken(written)} (${colorHint()})`, written);
+    return fail(`知らない色です: ${safeToken(word)} (${colorHint()})`, word);
   }
-  return { ok: true, value: { kind, turn, from, to, color, text: null } };
+  return { ok: true, value: { kind, turn: NO_TURN, from, to, color, text: null } };
 }

@@ -151,16 +151,36 @@ export function parseFence(source: string): ParseResult {
         break;
       }
       const written = scalarText(item);
-      if (written === null) {
-        errors.push(fenceError('注釈は 1 行に 1 つ書きます (例: - mark b3)', line));
+      if (written !== null) {
+        const result = parseNoteLine(written, null);
+        if (!result.ok) errors.push({ ...result.error, line });
+        else notes.push({ ...result.value, line });
         continue;
       }
-      const result = parseNoteLine(written);
-      if (!result.ok) {
-        errors.push({ ...result.error, line });
-        continue;
+
+      // **`- text c3 red: ここから電源` は 1 項目のマップとして読まれる。**
+      // YAML のプレーンスカラーにはコロンと空白の並びを書けないので、字は値の側に
+      // 置く (引用が要るかどうかを YAML が決める)。3 つのフェンスで同じ形。
+      if (isMap(item) && item.items.length === 1) {
+        const pair = item.items[0];
+        const head = scalarText(pair?.key);
+        const text = scalarText(pair?.value);
+        const at = lineOf(pair?.key as Node) ?? line;
+        if (head !== null && text !== null) {
+          const result = parseNoteLine(head, text);
+          if (!result.ok) errors.push({ ...result.error, line: at });
+          else notes.push({ ...result.value, line: at });
+          continue;
+        }
+        // 数字だけの字 (`- text c3: 100`) は YAML が数値にするので字として届かない。
+        // 「形で書きます」だけだと、囲めば直ることに気づけない。
+        if (head !== null) {
+          errors.push(fenceError('注釈の字は文字列で書きます (数字だけのときは "100" のように囲みます)', at));
+          continue;
+        }
       }
-      notes.push({ ...result.value, line });
+
+      errors.push(fenceError('注釈は「- mark b3」か「- text b3: 字」の形で書きます', line));
     }
   };
 

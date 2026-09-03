@@ -574,6 +574,7 @@ describe('parseNoteText', () => {
       size: 'normal',
       align: 'left',
       bold: false,
+      rotate: 0,
       line: 2,
     });
   });
@@ -696,6 +697,7 @@ describe('parseNoteLine の source', () => {
       size: 'normal',
       align: 'left',
       bold: false,
+      rotate: 0,
       leading: null,
       line: 2,
     });

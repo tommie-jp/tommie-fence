@@ -275,6 +275,11 @@ export type NoteTextStyle = {
   readonly color: string | null;
   readonly size: NoteSize;
   readonly align: NoteAlign;
+  /**
+   * 字を回す角度 (**時計回り**)。0 は回さない。
+   * TeX は目印の 1 文字しか置いていないので、回すのも差し込むときに行う。
+   */
+  readonly rotate: 0 | 90 | 180 | 270;
   readonly bold: boolean;
 };
 
@@ -338,4 +343,6 @@ export type NoteOverlay = {
    * 寄せは TeX では決められない (差し込むときに SVG の側で寄せる)。
    */
   readonly align: NoteAlign;
+  /** 字を回す角度 (**時計回り**)。0 は回さない。 */
+  readonly rotate: 0 | 90 | 180 | 270;
 };
