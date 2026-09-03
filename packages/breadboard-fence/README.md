@@ -197,9 +197,12 @@ swapping a spelling inside a line.
   `Breadboard Fence: 図を掴んで動かす (マップ)`
 - **You grab the drawing itself** — not a separate grid. A transparent hit layer
   sits over the holes, so what you see and what you grab never disagree
-- The tool at the top decides **what you grab**. A part moves on its own and the
-  connections change with it; a node (a hole) takes everything written at it, so
-  the connections are kept
+- The band at the top switches **tools** — select, wire, node, and "place" once
+  you pick from the palette. A part moves on its own and the connections change
+  with it; a node (a hole) takes everything written at it, so they are kept
+- **Placing, deleting, wiring and editing names and values all work.** The
+  palette searches by type name, abbreviation or Japanese name, and a new part is
+  named with the smallest free number for its prefix
 - **Nothing stops you before the move.** It compares the netlist before and after
   and lists the connections the move broke and the ones it made. Holes in the
   same column are already connected, so sliding within one strip says nothing
@@ -207,7 +210,7 @@ swapping a spelling inside a line.
   that line**
 - **The YAML is never rebuilt**: your comments and formatting survive
 
-Placing, deleting and renaming are still done in text.
+Rotating and mirroring are still done in text.
 More in [docs/03-図を掴んで動かす.md](docs/03-図を掴んで動かす.md) (Japanese).
 
 ## Examples
