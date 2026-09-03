@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
 import * as esbuild from 'esbuild';
 import { collectExamples } from './scripts/examples.mjs';
@@ -29,11 +30,28 @@ for (const name of ['index.html', 'style.css']) {
   await cp(`src/${name}`, `dist/${name}`);
 }
 
+// TeX の資材 (WASM・コアダンプ・スタイル・フォント) は **node_modules から写す**。
+// リポジトリには置かない — 8.5 MB のバイナリで、node-tikzjax が版ごとに持っている
+// ものをこちらで持ち直す理由が無い。落とすのは circuit の図を初めて描くときだけ。
+const require = createRequire(import.meta.url);
+const tikzjax = require.resolve('node-tikzjax/package.json').replace(/package\.json$/, '');
+await cp(`${tikzjax}tex`, 'dist/tex', { recursive: true });
+await cp(`${tikzjax}css`, 'dist/tex/css', { recursive: true });
+
+/**
+ * **TeX の一式は別のかたまりにする。** circuit の図を描くところ
+ * (`src/tex/`) は 400 KB 余りあり、breadboard と perfboard しか見ない人には
+ * 要らない。`main.ts` が `import()` で呼ぶので、esbuild が切り離してくれる
+ * (切り離しには ESM が要る。だから頁は `<script type="module">` で読む)。
+ */
 const options = {
   entryPoints: ['src/main.ts'],
-  outfile: 'dist/app.js',
+  outdir: 'dist',
+  entryNames: 'app',
+  chunkNames: 'chunk-[hash]',
   bundle: true,
-  format: 'iife',
+  splitting: true,
+  format: 'esm',
   platform: 'browser',
   target: 'es2022',
   sourcemap: !production,

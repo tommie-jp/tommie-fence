@@ -17,10 +17,10 @@ Markdown の行番号とその行の中身で返るエラー。
 ## 何も入れずに試す
 
 **[playground を開く](https://tommie-jp.github.io/tommie-fence/)** —
-アカウントも登録も要らない。左に書くと右に図が出る。例は 125 本入っていて、
-わざと壊した例で報告の出方も見られる。書いたフェンスは URL に載るので、
-そのまま人に渡せる。circuit の図だけは出せない (描画に TeX が要るため。
-読み取りとネットリストと TeX はここでも出る)。
+アカウントも登録も要らない。左に書くと右に図が出る。**3 つとも描ける** —
+回路図も、TeX を WebAssembly で走らせて同じ図を出す (資材を落とすのは
+circuit を初めて描くときだけ)。例は 125 本入っていて、わざと壊した例で
+報告の出方も見られる。書いたフェンスは URL に載るので、そのまま人に渡せる。
 
 [![Codespaces で開く](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
 

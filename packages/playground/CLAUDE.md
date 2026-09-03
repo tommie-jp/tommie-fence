@@ -17,9 +17,11 @@
 
 1. **3 つのコアを直に呼ぶ。** 描画の決め事はこちらに書かない
    (`fences.ts` が 3 つを 1 つの形に揃えるだけ)。文法も図もあちらが正。
-2. **circuit の図はここでは出せない。** WASM の TeX が要るため。
-   TeX とネットリストと報告までを出し、図の代わりに理由を書く。
-   web 版の拡張 (`extension.web.ts`) と同じ線。
+2. **circuit の図は TeX を持ってきて描く。** WASM の TeX
+   (node-tikzjax のもの) をブラウザで走らせる。**要るときだけ落とす** —
+   資材 8.5 MB は circuit の図を初めて描くときに取りに行き、
+   breadboard と perfboard しか見ない人には落とさせない。
+   後処理 (`finishSvg`) はコアのものを通すので、描き上がりは拡張と揃う。
 3. **例は写さない。** `scripts/examples.mjs` が各パッケージの `examples/` から
    フェンスを抜き出してビルド時に `dist/examples.json` を作る。
    ここに例の本文を置くと、直した日に 2 つが食い違う。
@@ -41,8 +43,11 @@ npm run build --workspace=playground    # dist/ を作る
 npx -y serve packages/playground/dist   # 手元で開く (python3 -m http.server でもよい)
 ```
 
-`npm run watch` は束ねるものだけを見張る。HTML と CSS と例は
-`npm run build` のたびに写す。
+`npm run watch` は束ねるものだけを見張る。HTML と CSS と例と
+TeX の資材は `npm run build` のたびに写す。
+
+TeX の資材 (`dist/tex/`) は **node_modules の node-tikzjax から写す**。
+リポジトリには置かない (8.5 MB のバイナリを二重に持たない)。
 
 ## 構成
 
@@ -51,5 +56,8 @@ npx -y serve packages/playground/dist   # 手元で開く (python3 -m http.serve
 - `src/share.ts` — URL のハッシュ (`#<種類>/<base64url>`)
 - `src/examples.ts` — `examples.json` の受け取り (形の確認)
 - `src/main.ts` — DOM。決め事は持たない
+- `src/tex/` — circuit の図を描く一式 (node-tikzjax をブラウザへ移したもの)。
+  `tar.ts` だけが純関数でテストがある。残りは fetch / WASM / DOM が要るので
+  ブラウザで確かめる。**`import()` で読む**ので別のかたまりになる
 - `scripts/examples.mjs` — 例を集める (ビルド時)
 - `src/index.html` / `src/style.css` — そのまま `dist/` へ写す

@@ -4,6 +4,7 @@ import { render } from './fences.ts';
 import { decodeShare, encodeShare } from './share.ts';
 import { forKind, parseExamples } from './examples.ts';
 import type { Example } from './examples.ts';
+import type { Output } from './fences.ts';
 
 /**
  * 画面を組み立てる層。**決め事はここに置かない** — 描画は `fences.ts`、
@@ -40,9 +41,63 @@ const els = {
 let kind: Kind = 'breadboard';
 let examples: readonly Example[] = [];
 
-const CIRCUIT_NOTE =
-  'circuit の図は WASM の TeX で描くので、この頁ではまだ出せません。' +
-  '読み取りとネットリストと TeX はここに出ます。図まで見るなら Codespaces か拡張で。';
+const reason = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/**
+ * 図の上に出す一言 (circuit の描画の進み具合と、描けなかった理由)。
+ * null で消す。
+ */
+function showNote(text: string | null): void {
+  els.note.hidden = text === null;
+  els.note.textContent = text ?? '';
+}
+
+/**
+ * **いま何枚目を描いているか。** 打鍵のたびに増える。描き上がったときに
+ * 番号が変わっていたら、その図はもう古いので捨てる (TeX は 1 枚 1 秒前後かかる)。
+ */
+let drawing = 0;
+
+/**
+ * circuit の図。TeX を WASM で走らせるので**非同期**で、資材 (4.8 MB) は
+ * 初めて描くときだけ落ちる。描き上がるまでは、前の図を消して一言だけ出す。
+ */
+const drawing0 = async (
+  tex: string,
+  finishing: NonNullable<Output['finishing']>,
+  say: (text: string) => void,
+): Promise<string> => {
+  const { drawTex } = await import('./tex/index.ts');
+  return drawTex(tex, finishing, say);
+};
+
+function paintCircuit(output: Output): void {
+  const token = (drawing += 1);
+  els.figure.replaceChildren();
+
+  if (output.tex === null || output.finishing === null) {
+    showNote('読めなかったので、図を組むところまで行けませんでした');
+    return;
+  }
+
+  const say = (text: string): void => {
+    if (token === drawing) showNote(text);
+  };
+
+  // **要るときに読む。** TeX を描く一式はここでしか使わないので、
+  // breadboard と perfboard しか見ない人には落とさせない。
+  drawing0(output.tex, output.finishing, say).then(
+    (svg) => {
+      if (token !== drawing) return;
+      els.figure.innerHTML = svg;
+      showNote(null);
+    },
+    (error: unknown) => {
+      if (token !== drawing) return;
+      showNote(`図を描けませんでした: ${reason(error)}`);
+    },
+  );
+}
 
 /** ネットリストを表にする。**中身は生のデータ**なので textContent で入れる。 */
 function paintNetlist(netlist: readonly { name: string; refs: readonly string[] }[]): void {
@@ -74,8 +129,14 @@ function paint(): void {
   // 組む前にエスケープしてある (拡張のプレビューも同じものを貼っている)。
   els.figure.innerHTML = output.svg;
 
-  els.note.hidden = kind !== 'circuit';
-  els.note.textContent = kind === 'circuit' ? CIRCUIT_NOTE : '';
+  // circuit だけは図が非同期で来る。**種類を変えた時点で番号を進めて**、
+  // 描きかけの図が後から割り込まないようにする。
+  if (kind === 'circuit') {
+    paintCircuit(output);
+  } else {
+    drawing += 1;
+    showNote(null);
+  }
 
   els.tex.hidden = output.tex === null;
   els.texBody.textContent = output.tex ?? '';

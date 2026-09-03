@@ -18,11 +18,12 @@ numbers and the content of the offending line.
 ## Try it without installing anything
 
 **[Open the playground](https://tommie-jp.github.io/tommie-fence/)** — no
-account, no sign-up. Type on the left, the drawing appears on the right. It
+account, no sign-up. Type on the left, the drawing appears on the right, and
+**all three fences draw** — schematics included, with TeX running in
+WebAssembly (the engine is fetched only the first time you draw a circuit). It
 carries 125 examples, including the deliberately broken ones that show how
 mistakes are reported. What you write goes into the URL, so a link is enough to
-hand it to someone. Only the circuit drawing is missing there (it needs TeX to
-render; the reading, the netlist and the TeX itself still come out).
+hand it to someone.
 
 [![Open in Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
 

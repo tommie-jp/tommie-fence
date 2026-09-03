@@ -14,6 +14,9 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23f2efe6'/%3E%3Cg fill='%233f4650'%3E%3Ccircle cx='4.5' cy='4.5' r='1.4'/%3E%3Ccircle cx='11.5' cy='4.5' r='1.4'/%3E%3Ccircle cx='4.5' cy='11.5' r='1.4'/%3E%3Ccircle cx='11.5' cy='11.5' r='1.4'/%3E%3C/g%3E%3Cpath d='M4.5 4.5h7' stroke='%23c1440e' stroke-width='1.2'/%3E%3C/svg%3E"
     />
     <link rel="stylesheet" href="style.css" />
+    <!-- circuit の図の字を組むフォント (TeX の Computer Modern)。
+         face は 140 個あるが、ブラウザは使う分しか落とさない。 -->
+    <link rel="stylesheet" href="tex/css/fonts.css" />
   </head>
   <body>
     <header class="head">
@@ -71,6 +74,6 @@
       <p id="from"></p>
     </footer>
 
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>
