@@ -126,6 +126,9 @@ const sameUnder = (a: Under, b: Under): boolean =>
 
 // ---------------------------------------------------------------- 印
 
+/** 選んだ枠と部品のあいだの余白 (図の座標)。穴 1 つより狭く取って、隣と紛れない。 */
+const HELD_PAD = 4;
+
 /** 選んだ印を付ける先。**配線は掴む線ではなく見える線**に付ける。 */
 function shownFor(picked: Picked | null): Element | null {
   if (picked === null) return null;
@@ -139,9 +142,37 @@ const unmark = (className: string): void => {
   for (const element of document.querySelectorAll(`.${className}`)) element.classList.remove(className);
 };
 
+/**
+ * 選んだものを囲む枠。**中の線を塗り替えるだけでは足りない** —
+ * circuit のマップは記号なので線に色を付ければ分かるが、breadboard と
+ * perfboard の `.cf-chip` は**実物の姿そのもの**で、中に塗り替える線が無く、
+ * あっても部品の色に紛れる (実機で「選択が分かりにくい」と指摘された)。
+ * 姿に依らない外枠なら、どのフェンスでも同じように分かる。
+ */
+function frameSelected(shown: Element | null): void {
+  document.querySelector('.cf-held-box')?.remove();
+  if (!(shown instanceof SVGGraphicsElement) || !shown.classList.contains('cf-chip')) return;
+
+  const box = shown.getBBox();
+  if (box.width === 0 && box.height === 0) return;
+  const frame = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  frame.setAttribute('class', 'cf-held-box');
+  frame.setAttribute('x', String(box.x - HELD_PAD));
+  frame.setAttribute('y', String(box.y - HELD_PAD));
+  frame.setAttribute('width', String(box.width + HELD_PAD * 2));
+  frame.setAttribute('height', String(box.height + HELD_PAD * 2));
+  // **同じ姿勢で描く**: getBBox は要素自身の transform を含まないので、写して合わせる。
+  const posture = shown.getAttribute('transform');
+  if (posture !== null) frame.setAttribute('transform', posture);
+  // 手前に置く。部品が重なっていても枠が隠れない (当たり判定は CSS で外す)。
+  shown.after(frame);
+}
+
 function markSelected(picked: Picked | null): void {
   unmark('cf-held');
-  shownFor(picked)?.classList.add('cf-held');
+  const shown = shownFor(picked);
+  shown?.classList.add('cf-held');
+  frameSelected(shown);
 }
 
 /**

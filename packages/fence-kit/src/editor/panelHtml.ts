@@ -28,6 +28,9 @@ const STYLE = `
     --cf-paper: var(--vscode-editor-background, Canvas);
     --cf-ink: var(--vscode-foreground, CanvasText);
     --cf-node: var(--vscode-charts-blue, var(--vscode-focusBorder));
+    /** 選んだものの色。**選択は一等分かりやすくする**ので、テーマが無い所でも
+        必ず色が出るように、システムの強調色まで落とす。 */
+    --cf-held: var(--vscode-focusBorder, Highlight);
     --cf-bad: var(--vscode-editorError-foreground, #f14c4c);
     --cf-iffy: var(--vscode-editorWarning-foreground, #cca700);
     --cf-ghost: var(--vscode-charts-green, #4caf50);
@@ -241,12 +244,27 @@ const STYLE = `
   .cf-aim .cf-name { fill: var(--vscode-charts-orange, var(--cf-node)); }
   .cf-aim .cf-dot-mark { stroke: var(--vscode-charts-orange, var(--cf-node)); stroke-width: 3; }
 
-  /* 選んだもの。 */
+  /* 選んだもの。**中の線を塗り替えるのは記号のマップ (circuit) だけに効く** —
+     breadboard と perfboard の .cf-chip は実物の姿そのもので、塗り替える線が
+     無い。姿に依らない印は下の 2 つ (光らせる・枠で囲む)。 */
   .cf-held .cf-glyph, .cf-held .cf-glyph-line, .cf-held .cf-lead,
-  .cf-held .cf-pin { stroke: var(--vscode-focusBorder); stroke-width: 2.5; }
-  .cf-held .cf-name { fill: var(--vscode-focusBorder); }
-  .cf-held .cf-dot-mark { stroke: var(--vscode-focusBorder); stroke-width: 3; }
-  .cf-wire.cf-held { stroke: var(--vscode-focusBorder); stroke-width: 2.5; }
+  .cf-held .cf-pin { stroke: var(--cf-held); stroke-width: 2.5; }
+  .cf-held .cf-name { fill: var(--cf-held); }
+  .cf-held .cf-dot-mark { stroke: var(--cf-held); stroke-width: 3; }
+  .cf-wire.cf-held { stroke: var(--cf-held); stroke-width: 2.5; }
+  /* 姿のまわりを光らせる。実物の色の上でも縁が立つ。 */
+  .cf-held {
+    filter: drop-shadow(0 0 2px var(--cf-held))
+            drop-shadow(0 0 5px var(--cf-held));
+  }
+  /* 囲む枠。**当たり判定は外す** — 枠の上でも下の部品を掴めるように。 */
+  .cf-held-box {
+    fill: none;
+    stroke: var(--cf-held);
+    stroke-width: 1.6;
+    stroke-dasharray: 5 3;
+    pointer-events: none;
+  }
 
   /* 読めなかった行に書かれたもの。**触れている印・持っている印より後に置く**。 */
   .cf-bad .cf-glyph, .cf-bad .cf-glyph-line, .cf-bad .cf-lead,

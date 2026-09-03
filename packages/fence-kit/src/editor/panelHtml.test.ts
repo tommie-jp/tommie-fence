@@ -121,6 +121,21 @@ describe('KiCad の配置', () => {
   });
 });
 
+describe('選んだものの印', () => {
+  test('marks the selection without relying on what is inside the part', () => {
+    // circuit のマップは記号なので中の線に色を付ければ分かるが、breadboard と
+    // perfboard の .cf-chip は実物の姿そのもので、塗り替える線が無い。
+    // **姿に依らない印** (光らせる・枠で囲む) が要る。
+    expect(html).toContain('.cf-held {');
+    expect(html).toContain('filter: drop-shadow');
+    expect(html).toContain('.cf-held-box {');
+  });
+
+  test('lets the frame be clicked through, so the part under it stays grabbable', () => {
+    expect(html).toMatch(/\.cf-held-box \{[^}]*pointer-events: none/s);
+  });
+});
+
 describe('makeNonce', () => {
   test('is long enough to be worth calling a nonce', () => {
     expect(makeNonce().length).toBe(32);
