@@ -1,5 +1,5 @@
 import { element, num } from 'fence-kit';
-import { formatAddress } from '../model/address.ts';
+import { formatAddress, parseAddress } from '../model/address.ts';
 import type { Layout } from '../model/layout.ts';
 import { slotEdges } from '../model/board.ts';
 import type { Address, Board } from '../types.ts';
@@ -54,6 +54,18 @@ export function renderHits(
     for (let col = 1; col <= board.cols; col += 1) {
       addresses.push({ row: 0, col }, { row: board.rows + 1, col });
     }
+  }
+
+  // **板の外でも、何かが書かれている所には升を立てる。** 端面実装のコネクタは
+  // 足が板の縁の外にあるのが正しい姿なので、そこを掴めないと節点を引きずれない。
+  // 書かれていない板の外には立てない (押す先が無い)。
+  const already = new Set(addresses.map((address) => formatAddress(address)));
+  for (const written of used) {
+    if (already.has(written)) continue;
+    const address = parseAddress(written);
+    if (address === null) continue;
+    already.add(written);
+    addresses.push(address);
   }
 
   const size = layout.pitch * CELL;

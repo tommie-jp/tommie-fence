@@ -1,13 +1,13 @@
 import type { Edit } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { formatAddress } from '../model/address.ts';
-import { isOnBoard } from '../model/board.ts';
+
 import { footprintOf, pinsOf } from '../parts/footprint.ts';
 import type { Address, FenceError } from '../types.ts';
 import { MIRROR_WORD, isRotationWord, orientOf, rotationWord } from '../parts/orient.ts';
 import type { Turn } from '../parts/orient.ts';
 import { diffAfter } from './diff.ts';
-import { isLocated, locatePart } from './move.ts';
+import { isLocated, locatePart, offBoardCheck } from './move.ts';
 import type { MoveResult } from './move.ts';
 import { locateTokens } from './shared.ts';
 
@@ -126,15 +126,12 @@ function turnByWord(source: string, id: string, next: Turn): MoveResult {
   // **回した先が板の穴に落ちることを見る。** 落ちなければ図は描けず、
   // 掴んで回した人には帯だけが残る。番地で回すときと同じように、ここで断る。
   const footprint = footprintOf(found.part.type, found.part.variant);
+  // **板から張り出す形だけが外に出られる** (`offBoardCheck`)。
   const outside = footprint === null
-    ? undefined
-    : pinsOf(footprint, found.addresses, found.board, next)
-      .find((address) => !isOnBoard(found.board, address));
-  if (outside !== undefined) {
-    return fail(
-      `${safeToken(id)} を回すと ${formatAddress(outside)} が板の外へ出ます`,
-      found.lineNumber,
-    );
+    ? null
+    : offBoardCheck(found, pinsOf(footprint, found.addresses, found.board, next));
+  if (outside !== null) {
+    return fail(`${safeToken(id)} を回すと足が置けません (${outside})`, found.lineNumber);
   }
 
   const was = found.part.turn;
@@ -200,15 +197,14 @@ export function turnPart(source: string, id: string, quarters: number): MoveResu
     return { row: anchor.row + delta.row, col: anchor.col + delta.col };
   });
 
-  for (const [index, landing] of landings.entries()) {
-    if (index === 0) continue;
-    if (landing === null || !isOnBoard(found.board, landing)) {
-      return fail(
-        `${safeToken(id)} を回すと ${landing === null ? '足' : formatAddress(landing)} が板の外へ出ます`,
-        found.lineNumber,
-      );
-    }
+  // **アンカー (先に書いた足) は動かない**ので `landings[0]` は null。
+  // 見るのは回った足だけ。
+  const moved = landings.slice(1);
+  if (moved.some((landing) => landing === null)) {
+    return fail(`${safeToken(id)} を回すと足を数えられません`, found.lineNumber);
   }
+  const why = offBoardCheck(found, moved as readonly Address[]);
+  if (why !== null) return fail(`${safeToken(id)} を回すと足が置けません (${why})`, found.lineNumber);
 
   // **一周は何もしない。** 同じ字を書き戻すと「動かしました」と嘘を言うことになる。
   const texts = landings.map((landing, index) => {

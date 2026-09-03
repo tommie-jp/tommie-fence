@@ -2,7 +2,8 @@ import type { Edit, NetDiff, Span } from 'fence-kit';
 import { normalizeNewlines } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
-import { isOnBoard } from '../model/board.ts';
+import { isOnBoard, offBoardReason } from '../model/board.ts';
+import { isEdgeMount } from '../parts/types.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import type { Address, Board, FenceError, PartSpec } from '../types.ts';
 import { diffAfter } from './diff.ts';
@@ -112,12 +113,12 @@ export function movePart(source: string, id: string, to: Address, trial = false)
     row: address.row + step.rows,
     col: address.col + step.cols,
   }));
-  const off = targets.find((address) => !isOnBoard(found.board, address));
-  if (off !== undefined) {
-    return fail(
-      `${safeToken(id)} を ${formatAddress(to)} へは動かせません (${formatAddress(off)} が板の外です)`,
-      found.lineNumber,
-    );
+  // **板から張り出す形だけが外に出られる。** 端面実装のコネクタは足が板の縁の
+  // 外にあるのが正しい姿なので、`isOnBoard` で見ると**書けるのに動かせない**
+  // 部品ができる (実機で踏んだ)。ほかの部品の足は穴に入っていなければならない。
+  const off = offBoardCheck(found, targets);
+  if (off !== null) {
+    return fail(`${safeToken(id)} を ${formatAddress(to)} へは動かせません (${off})`, found.lineNumber);
   }
 
   const located = locateTokens(found.line, found.addresses, found.points);
@@ -148,4 +149,20 @@ export function stepCell(written: string, rows: number, cols: number): string | 
   if (from === null) return null;
   const next = { row: from.row + rows, col: from.col + cols };
   return next.row < 0 || next.col < 0 ? null : formatAddress(next);
+}
+
+/**
+ * 足が置けない所に落ちていないか。**張り出す形かどうかで規則が変わる** —
+ * 端面実装のコネクタは板の縁の外に足があるのが正しい姿で、ほかの部品の足は
+ * 穴に入っていなければならない。置く側 (`placement/place.ts`) と同じ見方。
+ */
+export function offBoardCheck(
+  found: Located,
+  targets: readonly Address[],
+): string | null {
+  if (isEdgeMount(found.part.type, found.part.variant)) {
+    return targets.map((address) => offBoardReason(found.board, address)).find((why) => why !== null) ?? null;
+  }
+  const off = targets.find((address) => !isOnBoard(found.board, address));
+  return off === undefined ? null : `${formatAddress(off)} が板の外です`;
 }
