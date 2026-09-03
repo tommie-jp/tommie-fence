@@ -5,6 +5,8 @@ import { THEME_NAMES } from './limits.ts';
  * 52 の docs/05 に、どこが共有できてどこが別なのかの実測がある。
  */
 
+import type { Turn } from './parts/orient.ts';
+
 export type FenceError = {
   readonly message: string;
   readonly line: number | null;
@@ -74,6 +76,8 @@ export type PartSpec = {
   /** 書かれたままの穴 (`b3`)。板に載るかは placement が見る。 */
   readonly holes: readonly string[];
   readonly value: string | null;
+  /** 書かれた向き。**アンカー 1 つで置く形だけが持つ** (parts/orient.ts)。 */
+  readonly turn: Turn;
   readonly line: number | null;
 };
 

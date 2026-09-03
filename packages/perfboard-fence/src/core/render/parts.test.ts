@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { NO_TURN } from '../parts/orient.ts';
 import { THEME } from './theme.ts';
 import { renderParts } from './parts.ts';
 import { createBoard } from '../model/board.ts';
@@ -117,7 +118,7 @@ describe('renderParts', () => {
 
 describe('SMA コネクタ', () => {
   const sma = (variant: string | null) => placeParts(
-    [{ id: 'J1', type: 'sma', variant, holes: ['c4', 'c6'], value: null, written: 'sma c4 c6', line: 1 }],
+    [{ id: 'J1', type: 'sma', variant, holes: ['c4', 'c6'], value: null, written: 'sma c4 c6', turn: NO_TURN, line: 1 }],
     board,
   ).parts;
 
@@ -136,7 +137,7 @@ describe('SMA コネクタ', () => {
     const near = renderParts(sma('female'), layout, THEME);
     const far = renderParts(
       placeParts(
-        [{ id: 'J1', type: 'sma', variant: 'female', holes: ['c4', 'c9'], value: null, written: 'sma c4 c9', line: 1 }],
+        [{ id: 'J1', type: 'sma', variant: 'female', holes: ['c4', 'c9'], value: null, written: 'sma c4 c9', turn: NO_TURN, line: 1 }],
         board,
       ).parts,
       layout,
@@ -150,7 +151,7 @@ describe('SMA コネクタ', () => {
 
 describe('SMA の横置き (端面実装)', () => {
   const edge = (variant: string) => placeParts(
-    [{ id: 'J1', type: 'sma', variant, holes: ['c4', 'b2', 'd2'], value: null, written: `sma/${variant} c4 b2 d2`, line: 1 }],
+    [{ id: 'J1', type: 'sma', variant, holes: ['c4', 'b2', 'd2'], value: null, written: `sma/${variant} c4 b2 d2`, turn: NO_TURN, line: 1 }],
     board,
   ).parts;
 
@@ -169,7 +170,7 @@ describe('SMA の横置き (端面実装)', () => {
     const flat = renderParts(edge('female-edge'), layout, THEME);
     const upright = renderParts(
       placeParts(
-        [{ id: 'J1', type: 'sma', variant: 'female', holes: ['c4', 'c2'], value: null, written: 'sma c4 c2', line: 1 }],
+        [{ id: 'J1', type: 'sma', variant: 'female', holes: ['c4', 'c2'], value: null, written: 'sma c4 c2', turn: NO_TURN, line: 1 }],
         board,
       ).parts,
       layout,
@@ -189,7 +190,7 @@ describe('SMA の横置き (端面実装)', () => {
 
 describe('SMA 横置きの足の形', () => {
   const edge = placeParts(
-    [{ id: 'J1', type: 'sma', variant: 'female-edge', holes: ['c4', 'b2', 'd2'], value: null, written: 'sma/female-edge c4 b2 d2', line: 1 }],
+    [{ id: 'J1', type: 'sma', variant: 'female-edge', holes: ['c4', 'b2', 'd2'], value: null, written: 'sma/female-edge c4 b2 d2', turn: NO_TURN, line: 1 }],
     board,
   ).parts;
 
@@ -225,7 +226,7 @@ describe('SMA 横置きの足の形', () => {
 
 describe('SMA 横置きの 3 本足 (凹の両端)', () => {
   const edge = placeParts(
-    [{ id: 'J1', type: 'sma', variant: 'female-edge', holes: ['c4', 'b2', 'd2'], value: null, written: 'sma/female-edge c4 b2 d2', line: 1 }],
+    [{ id: 'J1', type: 'sma', variant: 'female-edge', holes: ['c4', 'b2', 'd2'], value: null, written: 'sma/female-edge c4 b2 d2', turn: NO_TURN, line: 1 }],
     board,
   ).parts;
 
@@ -278,7 +279,7 @@ describe('SMA 横置きの 3 本足 (凹の両端)', () => {
 
   test('is still one edge mount, not a box, when it sits on the right-hand edge', () => {
     const right = placeParts(
-      [{ id: 'J2', type: 'sma', variant: 'female-edge', holes: ['c7', 'b9', 'd9'], value: null, written: 'sma/female-edge c7 b9 d9', line: 1 }],
+      [{ id: 'J2', type: 'sma', variant: 'female-edge', holes: ['c7', 'b9', 'd9'], value: null, written: 'sma/female-edge c7 b9 d9', turn: NO_TURN, line: 1 }],
       board,
     ).parts;
     const mount = edgeMountOf(right[0]!, layout)!;

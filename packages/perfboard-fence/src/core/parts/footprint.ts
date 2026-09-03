@@ -1,3 +1,5 @@
+import { NO_TURN } from './orient.ts';
+import type { Turn } from './orient.ts';
 import type { Address, Board } from '../types.ts';
 import { isEdgeMount, isThreeLead, isTwoLead } from './types.ts';
 
@@ -73,10 +75,27 @@ export function footprintOf(type: string, variant: string | null = null): Footpr
  * そこから右へ数えて、折り返して下の列を左へ戻る。実物のノッチと同じ向きで、
  * ここを変えるとデータシートのピン番号と図が食い違う。
  */
+/**
+ * アンカーからの相対位置を、書かれた向きに回す。
+ *
+ * **反転してから回す** (circuit と同じ意味。52 の docs/11)。板は行が下へ、
+ * 列が右へ増えるので、時計回りは (行, 列) → (列, -行)。
+ * 反転は**左右**なので、列の符号だけが変わる。
+ */
+function turned(offset: { readonly row: number; readonly col: number }, turn: Turn) {
+  const mirrored = turn.mirror ? { row: offset.row, col: -offset.col } : offset;
+  const times = turn.rotate / 90;
+  return Array.from({ length: times }).reduce(
+    (spun: { readonly row: number; readonly col: number }) => ({ row: spun.col, col: -spun.row }),
+    mirrored,
+  );
+}
+
 export function pinsOf(
   footprint: Footprint,
   holes: readonly Address[],
   board: Pick<Board, 'cols' | 'rows'> | null = null,
+  turn: Turn = NO_TURN,
 ): readonly Address[] {
   const anchor = holes[0];
   if (!anchor) return [];
@@ -93,22 +112,21 @@ export function pinsOf(
     return mirrored === null ? [anchor, tip] : [anchor, tip, mirrored];
   }
 
+  // **アンカーは動かさない。** 回しても 1 番ピンの穴はそのままで、
+  // 残りがその周りを回る (動かすと「回す」が「移動」になる)。
+  const at = (offset: { readonly row: number; readonly col: number }): Address => {
+    const spun = turned(offset, turn);
+    return { row: anchor.row + spun.row, col: anchor.col + spun.col };
+  };
+
   if (footprint.kind === 'sip') {
-    return Array.from({ length: footprint.pins }, (_, index) => ({
-      row: anchor.row,
-      col: anchor.col + index,
-    }));
+    return Array.from({ length: footprint.pins }, (_, index) => at({ row: 0, col: index }));
   }
 
   const perSide = footprint.pins / 2;
-  const top = Array.from({ length: perSide }, (_, index) => ({
-    row: anchor.row,
-    col: anchor.col + index,
-  }));
-  const bottom = Array.from({ length: perSide }, (_, index) => ({
-    row: anchor.row + DIP_ROW_SPAN,
-    col: anchor.col + perSide - 1 - index,
-  }));
+  const top = Array.from({ length: perSide }, (_, index) => at({ row: 0, col: index }));
+  const bottom = Array.from({ length: perSide }, (_, index) =>
+    at({ row: DIP_ROW_SPAN, col: perSide - 1 - index }));
   return [...top, ...bottom];
 }
 

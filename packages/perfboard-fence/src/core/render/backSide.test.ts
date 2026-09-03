@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { NO_TURN } from '../parts/orient.ts';
 import { backSideLayout, renderBackSide } from './backSide.ts';
 import { THEME } from './theme.ts';
 import { createBoard } from '../model/board.ts';
@@ -11,7 +12,7 @@ const labels = { row: 'alpha', col: 'numeric', case: 'upper', sides: ['left', 't
 const at = (text: string) => parseAddress(text)!;
 
 const dip = placeParts(
-  [{ id: 'IC1', type: 'dip8', variant: null, holes: ['b3'], value: null, written: 'dip8 b3', line: 1 }],
+  [{ id: 'IC1', type: 'dip8', variant: null, holes: ['b3'], value: null, written: 'dip8 b3', turn: NO_TURN, line: 1 }],
   board,
 ).parts;
 

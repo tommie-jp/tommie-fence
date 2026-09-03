@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { NO_TURN } from '../parts/orient.ts';
 import { placeParts } from './place.ts';
 import { createBoard } from '../model/board.ts';
 import type { PartSpec } from '../types.ts';
@@ -12,6 +13,7 @@ const spec = (id: string, holes: readonly string[], line = 1): PartSpec => ({
   written: 'resistor',
   holes,
   value: null,
+  turn: NO_TURN,
   line,
 });
 
@@ -74,7 +76,7 @@ describe('placeParts', () => {
 
 describe('端面実装の凹の先端', () => {
   const sma = (holes: readonly string[]): PartSpec => ({
-    id: 'J1', type: 'sma', variant: 'female-edge', written: 'sma/female-edge', holes, value: null, line: 4,
+    id: 'J1', type: 'sma', variant: 'female-edge', written: 'sma/female-edge', holes, value: null, turn: NO_TURN, line: 4,
   });
 
   test('fills in the tip that was left out', () => {

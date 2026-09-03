@@ -2,6 +2,8 @@ import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
 import { footprintOf } from '../parts/footprint.ts';
+import { MIRROR_WORD, NO_TURN, isTurned, orientOf, rotationOf } from '../parts/orient.ts';
+import type { Turn } from '../parts/orient.ts';
 import { isKnownType, isNestedType, placeableNames, splitPartType } from '../parts/types.ts';
 import type { FenceError, PartSpec } from '../types.ts';
 
@@ -87,8 +89,35 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
     }
   }
 
-  // 残りは丸ごと値。`100n 50V` のように空白を含む書き方をそのまま通す。
-  const tail = rest.slice(holes.length);
+  // 残りは向きの語と値。**向きは決まった語なので見分けられる。**
+  const after = rest.slice(holes.length);
+  let turn: Turn = NO_TURN;
+  const tail: string[] = [];
+  for (const token of after) {
+    const rotate = rotationOf(token);
+    if (rotate !== null) {
+      // **同じ種類を 2 回書いたら断る。** 後勝ちで黙ると、どちらのつもりか
+      // 決められないまま図が出る。
+      if (turn.rotate !== 0) return fail(`${safeToken(written)} に回転が 2 つ書かれています`, token);
+      turn = { ...turn, rotate };
+      continue;
+    }
+    if (token === MIRROR_WORD) {
+      if (turn.mirror) return fail(`${safeToken(written)} に ${MIRROR_WORD} が 2 回書かれています`, token);
+      turn = { ...turn, mirror: true };
+      continue;
+    }
+    tail.push(token);
+  }
+
+  // **書けない形に向きを書いたら断る。** 足を並べて書く部品の向きは穴の順
+  // そのものなので、語と食い違うと、どちらが本当か決められなくなる。
+  if (isTurned(turn) && orientOf(type) === 'none') {
+    return fail(
+      `${safeToken(written)} に向きは書けません (足を並べて書く部品の向きは穴の順そのものです)`,
+      written,
+    );
+  }
   // **番地に見えるものを黙って値にしない。** 足を 1 本多く書いたつもりの人が、
   // 「値 b9」の図を見て気づけないまま終わる。
   //
@@ -105,6 +134,6 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
   const value = tail.join(' ');
   return {
     ok: true,
-    value: { id, type, variant, written, holes, value: value === '' ? null : value },
+    value: { id, type, variant, written, holes, value: value === '' ? null : value, turn },
   };
 }

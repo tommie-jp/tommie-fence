@@ -1,8 +1,9 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
-import { holeStrip, offBoardReason } from '../model/board.ts';
+import { holeStrip, isOnBoard, offBoardReason } from '../model/board.ts';
 import { footprintOf, pinsOf } from '../parts/footprint.ts';
+import { isTurned } from '../parts/orient.ts';
 import type { Address, Board, FenceError, PartSpec, PlacedPart, StripId } from '../types.ts';
 
 export type Placement = { readonly parts: readonly PlacedPart[]; readonly errors: readonly FenceError[] };
@@ -54,7 +55,7 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     // **足の位置は形が決める。** DIP と SIP は書かれたアンカーから広げる。
     // 端面実装は書かなかった凹の先端を、中心線を挟んで反対側に補う。
     const footprint = footprintOf(spec.type, spec.variant);
-    const pins = footprint === null ? addresses : pinsOf(footprint, addresses, board);
+    const pins = footprint === null ? addresses : pinsOf(footprint, addresses, board, spec.turn);
     if (footprint?.kind === 'edge' && pins.length < footprint.pins) {
       // 先端が中心導体と同じ行 (列) に書かれている。実物の凹は中心導体を
       // 上下から挟んでいて、先端が中心線に来ることは無い。
@@ -72,6 +73,22 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
         spec.line,
       ));
       continue;
+    }
+
+    // **アンカー 1 つで置く形の足は、板の穴に落ちること。**
+    // 板の外の番地は穴ではない (縁の銅箔や、板から張り出す先) ので、そこへ
+    // 足が来る図は実物では組めない。**回すと縁で踏みやすい**ので必ず見る
+    // (端面実装は先端が板の外に出るのが正しいので、この検査から外す)。
+    if (footprint !== null && (footprint.kind === 'dip' || footprint.kind === 'sip')) {
+      const outside = pins.find((address) => !isOnBoard(board, address));
+      if (outside !== undefined) {
+        errors.push(fenceError(
+          `${safeToken(spec.id)} の足 ${formatAddress(outside)} が板の穴ではありません`
+          + `${isTurned(spec.turn) ? ' (回した先が板から出ています)' : ''}`,
+          spec.line,
+        ));
+        continue;
+      }
     }
 
     const strips = pins.map(holeStrip);

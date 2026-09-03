@@ -109,3 +109,57 @@ describe('端面実装の凹の先端', () => {
   });
 });
 
+
+/**
+ * 向きは**ピンの並べ方**で表す。箱も切り欠きもキャプションもピンから決まるので
+ * (`placement/geometry.ts`)、ここが回れば図も付いてくる (52 の docs/14)。
+ */
+describe('回した DIP のピン', () => {
+  const at = (row: number, col: number) => ({ row, col });
+  const dip8 = { kind: 'dip', pins: 8, holes: 1 } as const;
+  const anchor = [at(3, 3)];
+
+  test('lays the pins out along the row when nothing is written', () => {
+    const pins = pinsOf(dip8, anchor, null, { rotate: 0, mirror: false });
+
+    expect(pins[0]).toEqual(at(3, 3));
+    expect(pins[3]).toEqual(at(3, 6));
+    // 反対側の列は逆順 (1 番の向かいが 8 番)。
+    expect(pins[7]).toEqual(at(6, 3));
+  });
+
+  test('turns the pins a quarter clockwise, leaving the anchor put', () => {
+    const pins = pinsOf(dip8, anchor, null, { rotate: 90, mirror: false });
+
+    // **アンカーは動かない。** 動かすと「回す」が「移動」になる。
+    expect(pins[0]).toEqual(at(3, 3));
+    // 右へ 3 だったピンは、時計回りで下へ 3。
+    expect(pins[3]).toEqual(at(6, 3));
+  });
+
+  test('turns them half way round', () => {
+    const pins = pinsOf(dip8, anchor, null, { rotate: 180, mirror: false });
+
+    expect(pins[3]).toEqual(at(3, 0));
+  });
+
+  test('mirrors left to right, which flips the column side only', () => {
+    const pins = pinsOf(dip8, anchor, null, { rotate: 0, mirror: true });
+
+    expect(pins[3]).toEqual(at(3, 0));
+    expect(pins[7]).toEqual(at(6, 3));
+  });
+
+  test('mirrors first and turns after, the way the word reads', () => {
+    // circuit と同じ意味 (52 の docs/11)。反転で左右が入れ替わってから回る。
+    const pins = pinsOf(dip8, anchor, null, { rotate: 90, mirror: true });
+
+    expect(pins[3]).toEqual(at(0, 3));
+  });
+
+  test('turns a sip along its one row', () => {
+    const pins = pinsOf({ kind: 'sip', pins: 4, holes: 1 }, anchor, null, { rotate: 90, mirror: false });
+
+    expect(pins[1]).toEqual(at(4, 3));
+  });
+});

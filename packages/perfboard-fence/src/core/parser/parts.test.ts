@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { NO_TURN } from '../parts/orient.ts';
 import { parsePartLine } from './parts.ts';
 
 describe('parsePartLine', () => {
@@ -12,6 +13,7 @@ describe('parsePartLine', () => {
         written: 'resistor',
         holes: ['b3', 'b7'],
         value: '10k',
+        turn: NO_TURN,
       },
     });
   });
@@ -150,3 +152,41 @@ describe('端面実装の sma は 3 本足', () => {
   });
 });
 
+
+/**
+ * 向きの語。**アンカー 1 つで置く形にだけ書ける** — 足を並べて書く部品の
+ * 向きは穴の順そのものなので、語と食い違うと決められなくなる (52 の docs/14)。
+ */
+describe('向きの語', () => {
+  test('reads a rotation on a part placed by one anchor', () => {
+    const read = parsePartLine('U1', 'dip8 c3 r90 NE555');
+
+    expect(read.ok && read.value.turn).toEqual({ rotate: 90, mirror: false });
+    expect(read.ok && read.value.value).toBe('NE555');
+  });
+
+  test('reads a mirror, and both together in either order', () => {
+    expect(parsePartLine('U1', 'dip8 c3 mirror').ok).toBe(true);
+    const both = parsePartLine('U1', 'dip8 c3 mirror r180');
+
+    expect(both.ok && both.value.turn).toEqual({ rotate: 180, mirror: true });
+  });
+
+  test('stands still when nothing is written', () => {
+    const read = parsePartLine('U1', 'dip8 c3');
+
+    expect(read.ok && read.value.turn).toEqual(NO_TURN);
+  });
+
+  test('refuses two of the same kind, instead of letting the last one win', () => {
+    expect(parsePartLine('U1', 'dip8 c3 r90 r180').ok).toBe(false);
+    expect(parsePartLine('U1', 'dip8 c3 mirror mirror').ok).toBe(false);
+  });
+
+  test('refuses a turn on a part whose holes already say which way it faces', () => {
+    const read = parsePartLine('R1', 'resistor b3 b7 r90');
+
+    expect(read.ok).toBe(false);
+    expect(!read.ok && read.error.message).toContain('穴の順');
+  });
+});
