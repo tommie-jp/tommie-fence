@@ -443,11 +443,22 @@ const isBoxed = (part: PlacedPart): boolean => {
  * 実物の話で板に依らないので、breadboard と同じ絵になる (52 の docs/18 の手順 4)。
  * ここに残るのは板の話 — 足の点、キャプション、どちら側に寄せるか。
  */
+/**
+ * 足が縦に並んでいるか。**両端の穴で見る** — 3 本が一直線でない書き方もできるが、
+ * 胴の向きを決めるのに要るのは並びのおおまかな向きだけ。
+ */
+function legsRunDown(part: PlacedPart, layout: Layout): boolean {
+  const ends = [part.pins.at(0), part.pins.at(-1)];
+  const [from, to] = ends.map((pin) => (pin ? layout.point(pin.address) : null));
+  if (from === null || to === null || from === undefined || to === undefined) return false;
+  return Math.abs(to.y - from.y) > Math.abs(to.x - from.x);
+}
+
 function renderPackage(part: PlacedPart, layout: Layout, theme: Theme): string {
   const rect = bodyRect(part, layout);
   if (!rect) return '';
 
-  const shell = drawPackage(asBody(part), {
+  const drawn = drawPackage(asBody(part), {
     cx: rect.cx,
     cy: rect.cy,
     reach: packageReach(asBody(part), layout.pitch),
@@ -457,6 +468,12 @@ function renderPackage(part: PlacedPart, layout: Layout, theme: Theme): string {
     plate: theme.palette.plate,
     chipBody: theme.palette.chipBody,
   }, inkOf(theme));
+  // **胴は足の並びに沿って回す。** 全穴が独立している板なので、3 本足を縦に
+  // 挿すこともできる。回さないと TO-92 の平らな面が足の 1 本を向いてしまい、
+  // 実物ではありえない向きになる (平らな面と足の並びは平行)。
+  const shell = legsRunDown(part, layout)
+    ? element('g', { transform: `rotate(90 ${num(rect.cx)} ${num(rect.cy)})` }, drawn)
+    : drawn;
 
   const leads = part.pins
     .map((pin) => {

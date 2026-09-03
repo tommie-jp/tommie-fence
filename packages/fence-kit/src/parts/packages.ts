@@ -63,6 +63,9 @@ export function packageHalfWidth(part: BodyPart, pitch: number): number {
   return reach;
 }
 
+/** 平らな面の位置 (中心からの距離。胴の半径に対する比)。実物の TO-92 なりの削り具合。 */
+const FLAT_AT = 0.62;
+
 /** つまみが走る溝の幅。胴の内側に収めて、端で切れないようにする。 */
 const SLOT_WIDTH_RATIO = 0.6875;
 
@@ -85,22 +88,18 @@ export function drawPackage(part: BodyPart, shape: PackageShape, ink: BodyInk = 
 function to92Shell(shape: PackageShape, ink: BodyInk): string {
   const { cx, cy, reach, side } = shape;
   // 平らな面はピン名の側 (キャプションの反対)。
-  const flatY = cy - side * reach * 0.62;
-  const half = Math.sqrt(Math.max(reach * reach - (reach * 0.62) ** 2, 0));
-  const body = element('circle', {
-    cx: num(cx), cy: num(cy), r: num(reach), fill: ink.paint(shape.chipBody), stroke: ink.paint('#14171c'),
+  const flatY = cy - side * reach * FLAT_AT;
+  const half = Math.sqrt(Math.max(reach * reach - (reach * FLAT_AT) ** 2, 0));
+  // **輪郭そのものを D にする。** 丸を描いてから平らな面の内側を胴と同じ色で
+  // 塗っていたことがあるが、同じ色では丸は削れず、弦が 1 本乗った丸のままだった
+  // (実機で「D 型になっていない」と指摘された)。弦の両端を大きいほうの弧で
+  // 結んで閉じる — 弧の向きは平らな面が上か下かで反転する。
+  const sweep = side > 0 ? 0 : 1;
+  const outline = `M ${num(cx - half)} ${num(flatY)}`
+    + ` A ${num(reach)} ${num(reach)} 0 1 ${sweep} ${num(cx + half)} ${num(flatY)} Z`;
+  return element('path', {
+    d: outline, fill: ink.paint(shape.chipBody), stroke: ink.paint('#14171c'), 'stroke-width': 1.2,
   });
-  const flat = element('rect', {
-    // 平らな面の内側 (胴の中心に向かう側) を塗って、丸を D 形に落とす。
-    x: num(cx - half), y: num(side > 0 ? flatY : flatY - reach * 0.38),
-    width: num(half * 2), height: num(reach * 0.38),
-    fill: ink.paint(shape.chipBody), stroke: 'none',
-  });
-  const edge = element('line', {
-    x1: num(cx - half), y1: num(flatY), x2: num(cx + half), y2: num(flatY),
-    stroke: ink.paint('#14171c'), 'stroke-width': 1.4,
-  });
-  return body + flat + edge;
 }
 
 /**
