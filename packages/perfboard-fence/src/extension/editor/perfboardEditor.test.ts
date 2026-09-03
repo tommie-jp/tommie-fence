@@ -107,12 +107,12 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
     expect(editor.turn(three, 'Q1', 1).ok).toBe(true);
   });
 
-  test('says why a part placed by one anchor was left alone', () => {
-    const dip = 'board: 12x7\nparts:\n  U1: dip8 c3 NE555\n';
+  test('turns a part placed by one anchor by writing the word, so R is one action', () => {
+    // 掴む人にとって「回す」は 1 つの操作。番地で回すか語で書くかは中で分ける。
+    const dip = 'board: 16x16\nparts:\n  U1: dip8 h8 NE555\n';
     const result = editor.turn(dip, 'U1', 1);
 
-    expect(result.ok).toBe(false);
-    expect(!result.ok && result.error.message).toContain('形が決める');
+    expect(result.ok && result.value.edits[0]?.text).toBe(' r90');
   });
 
   test('draws the band the map shows under the drawing', () => {

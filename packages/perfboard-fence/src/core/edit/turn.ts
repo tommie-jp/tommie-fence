@@ -2,7 +2,10 @@ import type { Edit } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { formatAddress } from '../model/address.ts';
 import { isOnBoard } from '../model/board.ts';
-import type { Address } from '../types.ts';
+import { footprintOf, pinsOf } from '../parts/footprint.ts';
+import type { Address, FenceError } from '../types.ts';
+import { MIRROR_WORD, isRotationWord, orientOf, rotationWord } from '../parts/orient.ts';
+import type { Turn } from '../parts/orient.ts';
 import { diffAfter } from './diff.ts';
 import { isLocated, locatePart } from './move.ts';
 import type { MoveResult } from './move.ts';
@@ -15,8 +18,9 @@ import { locateTokens } from './shared.ts';
  * **穴の順そのもの**なので、回すのは「先に書いた足のまわりに残りを 90 度動かす」、
  * 反転は「両端の入れ替え」で済む。
  *
- * **アンカー 1 つで置く形 (DIP / SIP / タクトスイッチ / ボード) は別の道。**
- * 足の位置を形が決めるので穴に向きが出ず、向きの語が要る (52 の docs/14)。
+ * **アンカー 1 つで置く形 (DIP / SIP) は語のほうを書き換える。** 足の位置を
+ * 形が決めるので穴に向きが出ない (52 の docs/14)。使う人にとってはどちらも
+ * 「回す」「裏返す」の 1 つの操作なので、違いはここで吸収する。
  */
 
 const fail = (message: string, line: number | null): MoveResult =>
@@ -36,10 +40,24 @@ function spin(delta: { readonly row: number; readonly col: number }, quarters: n
 }
 
 /**
+ * 語で回す部品か。**語で回すなら向きを返し、番地で回すなら null。**
+ * 読めなかったときだけ断りを返す (呼ぶ側がそのまま流す)。
+ */
+function anchoredTurn(
+  source: string,
+  id: string,
+): { readonly ok: true; readonly turn: Turn } | { readonly ok: false; readonly error: FenceError } | null {
+  const found = locatePart(source, id);
+  if (!isLocated(found)) return { ok: false, error: found.error };
+  return orientOf(found.part.type) === 'full' ? { ok: true, turn: found.part.turn } : null;
+}
+
+/**
  * 掴んだ部品と、その足。回すのも裏返すのもここを通る。
  *
  * **足を 2 つ以上書いている部品だけ**が通る。アンカー 1 つで置く形は
- * 穴に向きが出ないので、そう言って断る (`@ e5` の DIP など)。
+ * 手前で語の道へ分かれているので、ここへ来るのは向きの語も書けない形だけ —
+ * 穴に向きが出ないことを言って断る。
  */
 function writtenLeadsAt(source: string, id: string, what: string) {
   const found = locatePart(source, id);
@@ -83,7 +101,90 @@ const editsFor = (
       : [{ line, column: token.column, length: token.length, text }];
   });
 
+/** 90 度を `quarters` 回したあとの角度。一周は元に戻る。 */
+const spinBy = (rotate: Turn['rotate'], quarters: number): Turn['rotate'] =>
+  ((((rotate / 90 + quarters) % 4) + 4) % 4) * 90 as Turn['rotate'];
+
+/**
+ * 向きの語を書き換える (アンカー 1 つで置く形)。**穴は動かさない** —
+ * 1 つの穴を基準に置く形なので、変わるのは向きだけで場所は変わらない。
+ *
+ * 語は**最後の穴のすぐ後ろ**に足す (`ID: 種類 穴 [向き] [値]` の並び)。
+ * 呼ぶ側は回転か反転の**どちらか一方だけ**を変える — 両方を一度に変えると、
+ * 語が無いときに同じ桁へ 2 つ挿し込むことになる。
+ */
+function turnByWord(source: string, id: string, next: Turn): MoveResult {
+  const found = locatePart(source, id);
+  if (!isLocated(found)) return { ok: false, error: found.error };
+
+  const located = locateTokens(found.line, found.addresses, found.points);
+  const last = located?.tokens.at(-1);
+  if (last === undefined) {
+    return fail(`${safeToken(id)} の穴を行の中に見つけられませんでした`, found.lineNumber);
+  }
+
+  // **回した先が板の穴に落ちることを見る。** 落ちなければ図は描けず、
+  // 掴んで回した人には帯だけが残る。番地で回すときと同じように、ここで断る。
+  const footprint = footprintOf(found.part.type, found.part.variant);
+  const outside = footprint === null
+    ? undefined
+    : pinsOf(footprint, found.addresses, found.board, next)
+      .find((address) => !isOnBoard(found.board, address));
+  if (outside !== undefined) {
+    return fail(
+      `${safeToken(id)} を回すと ${formatAddress(outside)} が板の外へ出ます`,
+      found.lineNumber,
+    );
+  }
+
+  const was = found.part.turn;
+  const after = last.column + last.length;
+  const tail = [...found.line.slice(after).matchAll(/\S+/g)]
+    .map((match) => ({ column: after + (match.index ?? 0), length: match[0].length, text: match[0] }));
+
+  const edits: Edit[] = [];
+  if (next.rotate !== was.rotate) {
+    edits.push(...wordEdit(found.lineNumber, tail.find((one) => isRotationWord(one.text)) ?? null,
+      rotationWord(next.rotate), after));
+  }
+  if (next.mirror !== was.mirror) {
+    edits.push(...wordEdit(found.lineNumber, tail.find((one) => one.text === MIRROR_WORD) ?? null,
+      next.mirror ? MIRROR_WORD : '', after));
+  }
+
+  return { ok: true, value: { edits, diff: diffAfter(source, edits) } };
+}
+
+/**
+ * 語を 1 つ書き換える編集。**無ければ足し、空にするなら前の空白ごと消す**
+ * (行末に余りを残さない)。
+ */
+function wordEdit(
+  line: number,
+  found: { readonly column: number; readonly length: number } | null,
+  text: string,
+  insertAt: number,
+): readonly Edit[] {
+  if (found !== null) {
+    const blank = text === '';
+    return [{
+      line,
+      column: blank ? found.column - 1 : found.column,
+      length: blank ? found.length + 1 : found.length,
+      text,
+    }];
+  }
+  return text === '' ? [] : [{ line, column: insertAt, length: 0, text: ` ${text}` }];
+}
+
 export function turnPart(source: string, id: string, quarters: number): MoveResult {
+  const anchored = anchoredTurn(source, id);
+  if (anchored !== null) {
+    return anchored.ok
+      ? turnByWord(source, id, { ...anchored.turn, rotate: spinBy(anchored.turn.rotate, quarters) })
+      : { ok: false, error: anchored.error };
+  }
+
   const grabbed = writtenLeadsAt(source, id, '回');
   if (!grabbed.ok) return { ok: false, error: grabbed.error };
 
@@ -124,6 +225,13 @@ export function turnPart(source: string, id: string, quarters: number): MoveResu
 }
 
 export function flipPart(source: string, id: string): MoveResult {
+  const anchored = anchoredTurn(source, id);
+  if (anchored !== null) {
+    return anchored.ok
+      ? turnByWord(source, id, { ...anchored.turn, mirror: !anchored.turn.mirror })
+      : { ok: false, error: anchored.error };
+  }
+
   const grabbed = writtenLeadsAt(source, id, '反転');
   if (!grabbed.ok) return { ok: false, error: grabbed.error };
 

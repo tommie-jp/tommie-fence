@@ -54,13 +54,55 @@ describe('turnPart', () => {
     expect(after(BOARD, turnPart(BOARD, 'Q1', 1))).toContain('Q1: transistor d2 e2 f2 2SC1815');
   });
 
-  test('says why a part placed by one anchor cannot be turned', () => {
-    // 足の位置を形が決めるので、穴の順に向きが出ない (向きの語で回す)。
-    const dip = 'board: 12x7\nparts:\n  U1: dip8 c3 NE555\n';
-    const result = turnPart(dip, 'U1', 1);
+});
+
+describe('アンカー 1 つで置く形 (DIP / SIP)', () => {
+  // 足の位置を形が決めるので穴の順に向きが出ない。**語のほうを書き換える。**
+  const DIP = 'board: 16x16\nparts:\n  U1: dip8 h8 NE555\n';
+
+  test('writes the orientation word instead of moving holes, since the hole is the anchor', () => {
+    expect(after(DIP, turnPart(DIP, 'U1', 1))).toContain('U1: dip8 h8 r90 NE555');
+  });
+
+  test('puts the word right after the hole, so the value stays last', () => {
+    // `ID: 種類 穴 [向き] [値]` の並びを崩さない。
+    expect(after(DIP, flipPart(DIP, 'U1'))).toContain('U1: dip8 h8 mirror NE555');
+  });
+
+  test('rewrites the word that is already there, rather than adding a second one', () => {
+    const turned = 'board: 16x16\nparts:\n  U1: dip8 h8 r90 NE555\n';
+
+    expect(after(turned, turnPart(turned, 'U1', 1))).toContain('U1: dip8 h8 r180 NE555');
+  });
+
+  test('takes the word away on the way back round, leaving no gap behind it', () => {
+    // 0 度は語を書かない。**前の空白ごと消す** — 行末に余りを残さないため。
+    const turned = 'board: 16x16\nparts:\n  U1: dip8 h8 r270\n';
+
+    expect(after(turned, turnPart(turned, 'U1', 1))).toBe('board: 16x16\nparts:\n  U1: dip8 h8\n');
+  });
+
+  test('flips back by taking the mirror away', () => {
+    const flipped = 'board: 16x16\nparts:\n  U1: dip8 h8 mirror NE555\n';
+
+    expect(after(flipped, flipPart(flipped, 'U1'))).toContain('U1: dip8 h8 NE555');
+  });
+
+  test('keeps the rotation when flipping, changing only the one thing asked for', () => {
+    // 足す語は**穴のすぐ後ろ**なので、既にある回転より前に来る。読む側は
+    // 順を問わない (circuit-fence も同じ位置に足す — 3 つのフェンスで揃える)。
+    const turned = 'board: 16x16\nparts:\n  U1: dip8 h8 r90 NE555\n';
+
+    expect(after(turned, flipPart(turned, 'U1'))).toContain('U1: dip8 h8 mirror r90 NE555');
+  });
+
+  test('refuses a turn that walks the legs off the board, naming the hole', () => {
+    // 回すと縁を踏みやすい。**帯だけ残して図が消える**より、ここで断るほうがよい。
+    const edge = 'board: 16x16\nparts:\n  U1: dip8 a1\n';
+    const result = turnPart(edge, 'U1', 1);
 
     expect(result.ok).toBe(false);
-    expect(!result.ok && result.error.message).toContain('形が決める');
+    expect(!result.ok && result.error.message).toContain('板の外');
   });
 });
 
