@@ -63,7 +63,9 @@ const VARIANTS: Record<string, readonly string[]> = {
   capacitor: ['ceramic', 'film', 'electrolytic', 'tantalum'],
   led: ['3mm', '5mm'],
   // TO-92 は丸い小信号用、TO-220 は放熱タブつき。足の並びは書かれた穴で示す。
-  transistor: ['to92', 'to220'],
+  // `sot23-dip` は**面実装を載せた変換基板**。SOT-23 の足の間隔は 0.95mm で
+  // 2.54mm の穴には届かないので、実物も変換基板に載せてから差す。
+  transistor: ['to92', 'to220', 'sot23-dip'],
   thyristor: ['to92', 'to220'],
   triac: ['to92', 'to220'],
   regulator: ['to92', 'to220'],
@@ -159,9 +161,10 @@ export const isEdgeMount = (type: string, variant: string | null): boolean =>
   type === 'sma' && variant !== null && variant.endsWith('-edge');
 
 /**
- * 姿で図の形が変わる種類。**ここに無い種類は「まだ描き分けません」と言う** —
- * 黙って捨てると、書いた人は違いが図に出ているつもりのまま終わる。
+ * 姿の選べる種類と、その姿。**ここに載っている姿はすべて図の形が変わる**
+ * (`render/parts.ts`)。描き分けないまま姿だけ受け取ると、書いた人は違いが図に
+ * 出ているつもりで終わるので、**描けない姿はここに足さない**。
+ * `render/parts.test.ts` が「姿ごとに図が違う」ことを見張る。
  */
-const DRAWS_VARIANT = new Set(['sma', 'capacitor']);
-
-export const drawsVariant = (type: string): boolean => DRAWS_VARIANT.has(type);
+export const variantTable = (): readonly (readonly [string, readonly string[]])[] =>
+  Object.entries(VARIANTS).map(([type, looks]) => [type, looks] as const);

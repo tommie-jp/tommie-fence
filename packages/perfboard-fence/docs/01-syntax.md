@@ -241,9 +241,9 @@ DIP の番号は実物と同じ付き方 — 1 番ピンから右へ、折り返
 
 **姿**は種類のあとに `/` で書く (`capacitor/ceramic`)。
 書ける姿は `capacitor` が `ceramic` `film` `electrolytic` `tantalum`、
-`led` が `3mm` `5mm`、3 本足の 4 種が `to92` `to220`、
+`led` が `3mm` `5mm`、3 本足の 4 種が `to92` `to220` (トランジスタは `sot23-dip` も)、
 `sma` が `male` `female` `male-edge` `female-edge`。
-**`sma` 以外はまだ描き分けない**ので、書くとその旨のお知らせが出る。
+**書ける姿はすべて図の形が変わる** — 描き分けない姿は受け取らない。
 
 ### 同軸コネクタ (`sma`)
 

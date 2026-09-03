@@ -67,7 +67,7 @@ notes:                 # 任意。図に重ねる印と字
 ```text
 capacitor/ceramic  capacitor/film  capacitor/electrolytic  capacitor/tantalum
 led/3mm  led/5mm
-transistor/to92  transistor/to220   thyristor/…  triac/…
+transistor/to92  transistor/to220  transistor/sot23-dip  thyristor/…  triac/…
 ```
 
 ### 略記 (読んだ直後に正式名へ畳む)

@@ -1,4 +1,6 @@
-import { REAL_INK, drawBody, element, fit, hasBody, num, svgText } from 'fence-kit';
+import {
+  REAL_INK, drawBody, drawPackage, element, fit, hasBody, num, packageHalfWidth, packageReach, svgText,
+} from 'fence-kit';
 import type { BodyInk, BodyPart } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Layout } from '../model/layout.ts';
@@ -127,6 +129,12 @@ const SMA_SOLDER = '#d7dce1';
 const CONTACT = 3.5;
 /** 中心導体。オスはピン (金)、メスは穴 (暗い口)。 */
 const SMA_PIN = '#d8b64a';
+
+/** 中心導体が胴から出ている長さ (穴 1 つぶん)。**書かれた穴までは伸ばさない**。 */
+const SMA_PIN_REACH = 20;
+
+/** アースの腕より先へ出す分。凹 (アース) と凸 (信号) の見分けはこの差。 */
+const SMA_PIN_LEAD = 8;
 const SMA_SOCKET = '#2b2f33';
 /** 胴に書く姿の名前。金物の上に載るので、明るい地に読める濃さにする。 */
 const SMA_LABEL = '#2b2f33';
@@ -235,9 +243,13 @@ function smaEdgeBody(
     }) + jointMark(legX, tip, theme))
     .join('');
 
-  // 信号線は**凹の谷から出る凸**。アースより先の穴まで届く。
+  // 信号線は**凹の谷から出る凸**。アースの腕より先へ出ることが形の見分けだが、
+  // **書かれた穴までは伸ばさない** — 穴が板の奥にあるとき、そこまで伸ばした絵は
+  // 「長い棒の付いた部品」になって実物と違う (実機で指摘された)。
   const centre = element('rect', {
-    x: num(edgeX), y: -2.5, width: num(width / 2 - edgeX), height: 5, rx: 1, fill: SMA_PIN,
+    x: num(edgeX), y: -2.5,
+    width: num(Math.max(SMA_PIN_REACH, groundEnd + SMA_PIN_LEAD - edgeX)), height: 5, rx: 1,
+    fill: SMA_PIN,
   });
 
   return `${barrel}${threads}${plain}${base}${face}${mating}${centre}${ground}${contacts}`;
@@ -423,8 +435,47 @@ const NOTCH = 4;
  */
 const isBoxed = (part: PlacedPart): boolean => {
   const kind = footprintOf(part.type)?.kind;
-  return kind === 'dip' || kind === 'sip' || kind === 'three-lead';
+  return kind === 'dip' || kind === 'sip';
 };
+
+/**
+ * 3 本足の部品。**パッケージの姿は fence-kit にある** (`parts/packages.ts`) —
+ * 実物の話で板に依らないので、breadboard と同じ絵になる (52 の docs/18 の手順 4)。
+ * ここに残るのは板の話 — 足の点、キャプション、どちら側に寄せるか。
+ */
+function renderPackage(part: PlacedPart, layout: Layout, theme: Theme): string {
+  const rect = bodyRect(part, layout);
+  if (!rect) return '';
+
+  const shell = drawPackage(asBody(part), {
+    cx: rect.cx,
+    cy: rect.cy,
+    reach: packageReach(asBody(part), layout.pitch),
+    halfWidth: packageHalfWidth(asBody(part), layout.pitch),
+    // **キャプションを置く側**。この板に溝は無いので、行の増える向きに揃える。
+    side: 1,
+    plate: theme.palette.plate,
+    chipBody: theme.palette.chipBody,
+  }, inkOf(theme));
+
+  const leads = part.pins
+    .map((pin) => {
+      const point = layout.point(pin.address);
+      return element('circle', {
+        cx: num(point.x), cy: num(point.y), r: num(LEAD_WIDTH), fill: theme.palette.lead,
+      });
+    })
+    .join('');
+
+  const label = partLabel(
+    caption(part),
+    { cx: rect.cx, cy: rect.cy, height: packageReach(asBody(part), layout.pitch) * 2, angle: 0 },
+    { x: rect.cx, y: rect.cy },
+    theme,
+    layout,
+  );
+  return `${shell}${leads}${label}`;
+}
 
 /**
  * 足が 3 本以上ある部品。**足を囲む箱**として描き、足は穴まで短い線で出す。
@@ -506,7 +557,10 @@ export const renderParts = (
 ): string =>
   parts
     .map((part) => {
-      const drawn = isBoxed(part) ? renderBox(part, layout, theme) : renderTwoLead(part, layout, theme);
+      const kind = footprintOf(part.type, part.variant)?.kind;
+      const drawn = isBoxed(part)
+        ? renderBox(part, layout, theme)
+        : kind === 'three-lead' ? renderPackage(part, layout, theme) : renderTwoLead(part, layout, theme);
       return edit ? element('g', { class: 'cf-chip', 'data-part': part.id }, drawn) : drawn;
     })
     .join('');

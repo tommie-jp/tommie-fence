@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { NO_TURN } from '../parts/orient.ts';
+import { isTwoLead, variantTable } from '../parts/types.ts';
 import { THEME } from './theme.ts';
 import { renderParts } from './parts.ts';
 import { createBoard } from '../model/board.ts';
@@ -364,4 +365,19 @@ describe('DIP のノッチはパッケージの端に出る', () => {
     expect(y).toBeLessThan(middle(pins).y);
     expect(x).toBeCloseTo(middle(pins).x, 0);
   });
+});
+
+describe('姿ごとの描き分け', () => {
+  // **姿を受け取ったなら、図が変わること。** 受け取るだけで同じ形に描くと、
+  // 書いた人は違いが出ているつもりのまま終わる (以前は「まだ描き分けません」と
+  // お知らせを出していたが、全部の姿を描き分けるようになったので、
+  // 表そのものを約束にした)。
+  for (const [type, looks] of variantTable()) {
+    test(`draws every look of the ${type} differently`, () => {
+      const holes = isTwoLead(type) ? ['b3', 'b7'] : ['c3', 'b3', 'd3'];
+      const drawn = looks.map((variant) => draw(part({ id: 'X1', type, variant, holes })));
+
+      expect(new Set(drawn).size).toBe(looks.length);
+    });
+  }
 });

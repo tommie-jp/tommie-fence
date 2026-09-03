@@ -49,7 +49,8 @@ describe('variantsOf', () => {
 
   test('lists the looks of the parts whose package differs by size', () => {
     expect(variantsOf('led')).toEqual(['3mm', '5mm']);
-    expect(variantsOf('transistor')).toEqual(['to92', 'to220']);
+    // 面実装は変換基板に載せて差すので、姿は「変換基板ごと 1 つの部品」。
+    expect(variantsOf('transistor')).toEqual(['to92', 'to220', 'sot23-dip']);
   });
 
   test('gives the thyristor and the triac the same packages as the transistor', () => {

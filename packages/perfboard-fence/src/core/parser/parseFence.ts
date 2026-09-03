@@ -3,7 +3,6 @@ import type { Node, Pair } from 'yaml';
 import { fenceError, notice, safeToken } from '../errors.ts';
 import { resolveBoard } from '../model/board.ts';
 import { isLandColor, isPlateColor, landNames, plateNames } from '../render/finish.ts';
-import { drawsVariant } from '../parts/types.ts';
 import { boardNames } from '../model/catalog.ts';
 import { LIMITS } from '../limits.ts';
 import { parsePartLine } from './parts.ts';
@@ -250,15 +249,6 @@ export function parseFence(source: string): ParseResult {
       if (!result.ok) {
         errors.push({ ...result.error, line });
         continue;
-      }
-      // **描き分けない姿は、そう言う。** 黙って捨てると、書いた人は
-      // 電解と積層の違いが図に出ているつもりのまま終わる。
-      // `sma` は姿で形が変わる (オス/メス・縦置き/横置き) ので言わない。
-      if (result.value.variant !== null && !drawsVariant(result.value.type)) {
-        errors.push(notice(
-          `姿はまだ描き分けません: ${result.value.type}/${result.value.variant} (図は同じ形で出ます)`,
-          line,
-        ));
       }
       parts.push({ ...result.value, line });
     }

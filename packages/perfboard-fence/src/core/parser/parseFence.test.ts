@@ -184,20 +184,17 @@ describe('parseFence', () => {
     expect(parsed.errors.some((e) => e.message.includes('2 つ'))).toBe(true);
   });
 
-  test('says a package it cannot draw yet is not drawn, rather than ignoring it', () => {
-    const parsed = parseFence('board: 10x6\nparts:\n  D1: led/5mm a1 a4\n');
+  test('stays quiet about a look, because every look it accepts is drawn', () => {
+    // 書ける姿はすべて図の形が変わる (`parts/types.ts` の表と
+    // `render/parts.test.ts` の見張り)。描き分けるものに「描き分けません」と
+    // 言うと、直しようのない帯が例に出たままになる。
+    const cases = [['led/5mm', 'a1 a4'], ['capacitor/electrolytic', 'a1 a4'], ['transistor/sot23-dip', 'b3 a3 c3']];
+    for (const [written, holes] of cases) {
+      const parsed = parseFence(`board: 10x6\nparts:\n  X1: ${written} ${holes}\n`);
 
-    expect(parsed.doc?.parts[0]?.variant).toBe('5mm');
-    expect(parsed.errors.some((e) => e.notice === true && e.message.includes('5mm'))).toBe(true);
-  });
-
-  test('stays quiet about a package it does draw', () => {
-    // コンデンサは姿ごとに色と形が変わる (`render/parts.ts`)。描き分けるものに
-    // 「描き分けません」と言うと、直しようのない帯が例に出たままになる。
-    const parsed = parseFence('board: 10x6\nparts:\n  C1: capacitor/electrolytic a1 a4\n');
-
-    expect(parsed.doc?.parts[0]?.variant).toBe('electrolytic');
-    expect(parsed.errors).toEqual([]);
+      expect(parsed.doc?.parts[0]?.variant).toBe(written!.split('/')[1]);
+      expect(parsed.errors).toEqual([]);
+    }
   });
 });
 

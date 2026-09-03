@@ -37,6 +37,8 @@ export type Palette = {
    * あちらは fence-kit の色で、テーマから触らせない。 */
   readonly body: string;
   readonly bodyEdge: string;
+  /** 樹脂のパッケージ (TO-92 / TO-220) の胴。**テーマごとの黒**。 */
+  readonly chipBody: string;
   /** 部品の名前と値。**板の外に出す字** (題・書き出し) もこれ。 */
   readonly caption: string;
   /**
@@ -90,6 +92,7 @@ const LIGHT: Palette = {
   label: '#6d6552',
   lead: '#9aa0a6',
   body: '#efe4cd',
+  chipBody: '#2b2f36',
   bodyEdge: '#b6a887',
   caption: '#3c3730',
   plateText: textOn(PLATE_COLORS.green as string),
@@ -107,6 +110,7 @@ const DARK: Palette = {
   label: '#9aa79f',
   lead: '#8d949a',
   body: '#3c4740',
+  chipBody: '#12161b',
   bodyEdge: '#5c6b62',
   caption: '#dfe6e1',
   plateText: '#e8efe9',
@@ -124,6 +128,7 @@ const MONO: Palette = {
   label: '#4a4a4a',
   lead: '#7a7a7a',
   body: '#f2f2f2',
+  chipBody: '#000000',
   bodyEdge: '#5a5a5a',
   caption: '#1a1a1a',
   plateText: '#1a1a1a',

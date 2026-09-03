@@ -25,6 +25,8 @@ export {
 } from './colors.ts';
 export { fit, textWidth } from './textFit.ts';
 export { REAL_INK, bodySize, drawBody, hasBody } from './parts/bodies.ts';
+export { drawPackage, packageHalfWidth, packageReach } from './parts/packages.ts';
+export type { PackageShape } from './parts/packages.ts';
 export type { BodyInk, BodyPart } from './parts/bodies.ts';
 export { computeNets } from './nets.ts';
 export type { Net, NetInput, NetMember, StripId } from './nets.ts';
