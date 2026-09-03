@@ -864,7 +864,11 @@ describe('部品を置く', () => {
     await session.handle({ kind: 'preview', key: 'k1', what: 'place', type: 'inductor', to: 'c1', turn: 0, flip: false });
 
     const ghost = host.sent.find((message) => message.kind === 'ghost');
-    expect(ghost).toEqual({ kind: 'ghost', key: 'k1', cells: ['c1', 'c3'], ok: true, why: '' });
+    expect(ghost).toMatchObject({ kind: 'ghost', key: 'k1', cells: ['c1', 'c3'], ok: true, why: '' });
+    // **置く前の部品の絵も返す。** 図にまだ無い部品なので、写しの図から切り出す。
+    // 名前は置いたときに付くもの (`GHOST` ではない)。
+    expect(ghost?.chip).toContain('data-part="L1"');
+    expect(ghost?.from).toEqual(['c1', 'c3']);
     expect(doc.getText()).toBe(RC);
   });
 

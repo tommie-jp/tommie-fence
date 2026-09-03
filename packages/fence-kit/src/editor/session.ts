@@ -1,3 +1,4 @@
+import { chipOf } from './chip.ts';
 import type { Edit, LineEdit, NetDiff, Span } from './edits.ts';
 import { bodyAfter, fenceBody } from './docEdits.ts';
 import { indentOn } from './documentLike.ts';
@@ -58,11 +59,16 @@ export type Outgoing =
     readonly ok: boolean;
     readonly why: string;
     /**
-     * 動かす前の穴。**殻はこれで運んでいる部品の絵を行き先へずらす** —
-     * 行き先の穴を光らせるだけでは何が来るのか読み取れない (実機で指摘された)。
-     * 置く (`place`) には元の絵が無いので付かない。
+     * ゴーストの絵が「いま」占めている穴。**殻はこれを行き先へずらす**。
+     * 動かすときは元の穴、置くときは下の `chip` を描いたときの穴。
      */
     readonly from?: readonly string[];
+    /**
+     * 置く部品の絵 (`cf-chip` の markup)。**動かすときは付かない** —
+     * 図にある絵を webview が写せばよい。置く前の部品は図に無いので、
+     * 試し当てで作った写しの図から切り出して渡す。
+     */
+    readonly chip?: string;
   };
 
 /** webview から来るもの。中身は信用せず、使う前に形を確かめる。 */
@@ -567,8 +573,17 @@ export function createSession<D extends DocLike>(
    */
   function preview(message: Incoming): void {
     const key = text(message.key) ?? '';
-    const answer = (cells: readonly string[], ok: boolean, why = '', from?: readonly string[]): void =>
-      host.post({ kind: 'ghost', key, cells, ok, why, ...(from === undefined ? {} : { from }) });
+    const answer = (
+      cells: readonly string[],
+      ok: boolean,
+      why = '',
+      from?: readonly string[],
+      chip?: string,
+    ): void => host.post({
+      kind: 'ghost', key, cells, ok, why,
+      ...(from === undefined ? {} : { from }),
+      ...(chip === undefined ? {} : { chip }),
+    });
 
     const fence = currentFence(true);
     const plan = fence === null ? null : plannedFor(message, fence.source);
@@ -583,7 +598,15 @@ export function createSession<D extends DocLike>(
       answer([plan.at], false, plan.result.error.message, plan.from);
       return;
     }
-    answer(plan.cells(applyRewrite(fence.source, plan.result.value)), true, '', plan.from);
+    const after = applyRewrite(fence.source, plan.result.value);
+    const cells = plan.cells(after);
+    // **置く前の部品は図に無いので、写しの図から切り出して渡す。**
+    // 姿は種類と向きと足の数で決まり、場所では変わらないので**1 度描いて使い回す**
+    // (穴をまたぐたびに図を組み直すと、ゴーストの速さが元に戻ってしまう)。
+    const drawn = plan.shape === undefined || plan.ghostId === undefined
+      ? null
+      : ghostChip(plan.shape, plan.ghostId, after, fence.line, cells);
+    answer(cells, true, '', drawn?.from ?? plan.from, drawn?.chip);
   }
 
   /** ゴーストの問い合わせ 1 件を、書き換えと「そのあとどの穴を読むか」に直す。 */
@@ -596,6 +619,10 @@ export function createSession<D extends DocLike>(
     readonly cells: (after: string) => readonly string[];
     /** 動かす前の穴 (動かすときだけ)。 */
     readonly from?: readonly string[];
+    /** 姿を決めるもの (置くときだけ)。これが変わらなければ絵を描き直さない。 */
+    readonly shape?: string;
+    /** 写しの図の中でのゴーストの名前 (置くときだけ)。 */
+    readonly ghostId?: string;
   } | null {
     const to = text(message.to);
     if (to === null) return null;
@@ -608,8 +635,20 @@ export function createSession<D extends DocLike>(
       const from = text(message.from);
       const at = from === null ? [to] : [from, to];
       // 名前は仮。**置く前なので何でもよい**が、既にある名前と重ならないように。
-      const part = { id: GHOST_ID, type, at, ...orientationOf(message), preview: true };
-      return { result: editor.addPart(source, part), at: to, cells: (after) => editor.cellsOf(after, GHOST_ID) };
+      // **名前は置いたときに付くものを使う。** ゴーストにも名札が出るので、
+      // `GHOST` と書いてあると「そういう名前で置かれる」と読めてしまう。
+      // 空いている名前が無いときだけ仮の名前にする (図が出ないよりはよい)。
+      const id = editor.nextId(source, type) ?? GHOST_ID;
+      const part = { id, type, at, ...orientationOf(message), preview: true };
+      return {
+        result: editor.addPart(source, part),
+        at: to,
+        cells: (after) => editor.cellsOf(after, id),
+        // 足の数まで鍵に入れる (2 端子はドラッグで間隔が変わり、姿も変わる)。
+        // 名前も入れる — 本文が変われば次の名前が変わり、名札も変わる。
+        shape: [id, type, part.turn ?? 0, part.flip === true ? 1 : 0, at.length].join('\u0000'),
+        ghostId: id,
+      };
     }
 
     if (message.what === 'move') {
@@ -631,6 +670,27 @@ export function createSession<D extends DocLike>(
         : { result: editor.movePoint(source, from, to, { preview: true }), at: to, cells: () => [to] };
     }
     return null;
+  }
+
+  /**
+   * 置くゴーストの絵。**姿が変わったときだけ図を組み直す** —
+   * 場所を変えただけなら、前に描いた絵とそのときの穴を返して殻にずらさせる。
+   */
+  let lastGhost: { readonly shape: string; readonly chip: string; readonly from: readonly string[] } | null = null;
+
+  function ghostChip(
+    shape: string,
+    id: string,
+    after: string,
+    line: number,
+    cells: readonly string[],
+  ): { readonly chip: string; readonly from: readonly string[] } | null {
+    if (lastGhost !== null && lastGhost.shape === shape) return lastGhost;
+
+    const chip = chipOf(editor.view(after, line).map, id);
+    if (chip === null) return null;
+    lastGhost = { shape, chip, from: cells };
+    return lastGhost;
   }
 
   /** webview から来た数 (整数でなければ 0)。 */

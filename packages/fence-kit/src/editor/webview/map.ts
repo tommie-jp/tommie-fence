@@ -222,30 +222,52 @@ function middleOf(cells: readonly string[]): { readonly x: number; readonly y: n
  * なので姿は変わらず、拡張に問い合わせ直さずに済む (ゴーストは穴をまたぐたびに
  * 出るので、1 回でも図を組み直すと重くなる)。
  */
+/** 置く部品の絵。拡張が寄こした markup を図の中へ入れて、掴めなくする。 */
+let placedChip: { readonly markup: string; readonly node: SVGGraphicsElement } | null = null;
+
+function chipFrom(markup: string): SVGGraphicsElement | null {
+  if (placedChip?.markup === markup) return placedChip.node;
+  const holder = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  holder.innerHTML = markup;
+  const node = holder.firstElementChild;
+  if (!(node instanceof SVGGraphicsElement)) return null;
+  placedChip = { markup, node };
+  return node;
+}
+
 function markCarried(now: State): void {
   document.querySelector('.cf-ghost-part')?.remove();
   unmark('cf-lifted');
-  if (now.carry?.kind !== 'move' || now.ghost === null) return;
+  if (now.carry === null || now.ghost === null) return;
 
-  const chip = query<SVGGraphicsElement>(`.cf-chip[data-part="${CSS.escape(now.carry.part)}"]`);
-  if (chip === null) return;
+  // 動かすときは**図にある絵を写す**。置くときは拡張が寄こした絵を使う
+  // (図にまだ無い部品なので、写す先が無い)。
+  const held = now.carry.kind === 'move'
+    ? query<SVGGraphicsElement>(`.cf-chip[data-part="${CSS.escape(now.carry.part)}"]`)
+    : now.carry.kind === 'place' && now.ghost.chip !== undefined
+      ? chipFrom(now.ghost.chip)
+      : null;
+  if (held === null) return;
   // 持ち上げたものは薄くする。**行き先の絵と二重に見えない**ように。
-  chip.classList.add('cf-lifted');
+  if (now.carry.kind === 'move') held.classList.add('cf-lifted');
 
   const from = middleOf(now.ghost.from ?? []);
   const to = middleOf(now.ghost.cells);
   if (from === null || to === null) return;
 
-  const ghost = chip.cloneNode(true) as SVGGraphicsElement;
+  const ghost = held.cloneNode(true) as SVGGraphicsElement;
   // 掴む印は写さない (ゴーストは掴めない。名札が 2 つあると選ぶ先が狂う)。
   ghost.removeAttribute('data-part');
   for (const marked of ghost.querySelectorAll('[data-part]')) marked.removeAttribute('data-part');
   ghost.setAttribute('class', `cf-ghost-part${now.ghost.ok ? '' : ' cf-ghost-part-bad'}`);
   // **元の姿勢の前にずらしを足す** (部品が自分の transform を持っていても壊さない)。
-  const posture = chip.getAttribute('transform');
+  const posture = held.getAttribute('transform');
   const shift = `translate(${to.x - from.x} ${to.y - from.y})`;
   ghost.setAttribute('transform', posture === null ? shift : `${shift} ${posture}`);
-  chip.parentNode?.appendChild(ghost);
+  // **図の中へ入れる。** 置くときの絵は図の外で組んであるので、入れ先は
+  // 図にある部品の親 (無ければ図そのもの) にする。
+  const into = query('.cf-chip')?.parentNode ?? query('svg');
+  (into as Element | null)?.appendChild(ghost);
 }
 
 /** いま置こうとしている部品。パレットのどれを押したかを見せる。 */
@@ -675,6 +697,7 @@ type Incoming =
   | {
     readonly kind: 'ghost'; readonly key: string; readonly cells: readonly string[];
     readonly ok: boolean; readonly why: string; readonly from?: readonly string[];
+    readonly chip?: string;
   };
 
 const fill = (selector: string, html: string): void => {
@@ -703,7 +726,13 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
     syncHover();
   }
   if (message.kind === 'ghost') {
-    run({ kind: 'ghost', ghost: { key: message.key, cells: message.cells, ok: message.ok, why: message.why, from: message.from } });
+    run({
+      kind: 'ghost',
+      ghost: {
+        key: message.key, cells: message.cells, ok: message.ok, why: message.why,
+        from: message.from, chip: message.chip,
+      },
+    });
   }
   if (message.kind === 'fields') showFields(message.part);
   if (message.kind === 'status') setText('.cf-status', message.text);

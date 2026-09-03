@@ -86,8 +86,10 @@ export type Ghost = {
   readonly cells: readonly string[];
   readonly ok: boolean;
   readonly why: string;
-  /** 動かす前の穴 (動かすときだけ)。運んでいる部品の絵をここから行き先へずらす。 */
+  /** ゴーストの絵が「いま」占めている穴。ここから行き先へずらす。 */
   readonly from?: readonly string[];
+  /** 置く部品の絵 (置くときだけ)。図にまだ無い部品なので、拡張が切り出して寄こす。 */
+  readonly chip?: string;
 };
 
 export type State = {
