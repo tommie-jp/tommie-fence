@@ -112,7 +112,7 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
     const dip = 'board: 16x16\nparts:\n  U1: dip8 h8 NE555\n';
     const result = editor.turn(dip, 'U1', 1);
 
-    expect(result.ok && result.value.edits[0]?.text).toBe(' r90');
+    expect(result.ok && result.value.edits?.[0]?.text).toBe(' r90');
   });
 
   test('draws the band the map shows under the drawing', () => {

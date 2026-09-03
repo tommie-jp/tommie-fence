@@ -559,23 +559,34 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
     'fill-opacity': theme.metrics.bodyOpacity,
   });
 
-  // ノッチは 1 番ピンの側の辺の真ん中。DIP でだけ描く (SIP と 3 本足には無い)。
+  // 箱は縦横のどちらにも伸びる (回すと入れ替わる)。**短いほうの辺が
+  // パッケージの端**で、ノッチもキャプションの向きもそこから決まる。
+  const tall = rect.height > rect.width;
+
+  // ノッチは**パッケージの端の辺**の真ん中。DIP でだけ描く
+  // (SIP と 3 本足には無い)。
   //
-  // **どちらの辺かは 1 番ピンの位置から決める。** 箱の左端に決め打つと、
-  // 板を裏返した図 (`style: back`) で列の並びが入れ替わったときに反対の端へ出て、
-  // **図のとおりに挿した IC が 180 度回る** — この印はそれを防ぐためにある。
+  // **端は 1 番ピンと最終ピンの間。** 実物の切り欠きは 2 列の始まりと終わりが
+  // 並ぶ短い辺にあり、その中点を箱の縁へ寄せたところが印の位置になる。
+  // 箱の左端に決め打つと、板を裏返した図 (`style: back`) や回した DIP で
+  // 反対の端へ出て、**図のとおりに挿した IC が 180 度回る** —
+  // この印はそれを防ぐためにある。
+  //
+  // **どちらの軸かも中点が決める。** dip8 の箱は正方形 (4 穴 × 4 行) なので、
+  // 縦長か横長かでは決められない。
   const footprint = footprintOf(part.type);
-  const left = rect.cx - rect.width / 2;
-  const right = rect.cx + rect.width / 2;
-  const nearFirst = layout.point(first.address).x < rect.cx ? left + NOTCH : right - NOTCH;
+  const lastPin = part.pins[part.pins.length - 1];
+  const ends = [first, lastPin ?? first].map((pin) => layout.point(pin.address));
+  const mid = { x: (ends[0]!.x + ends[1]!.x) / 2, y: (ends[0]!.y + ends[1]!.y) / 2 };
+  const alongX = Math.abs(mid.x - rect.cx) >= Math.abs(mid.y - rect.cy);
+  const nearOn = (center: number, size: number, at: number): number =>
+    (at < center ? center - size / 2 + NOTCH : center + size / 2 - NOTCH);
   const notch = footprint?.kind !== 'dip' ? '' : element('circle', {
-    cx: num(nearFirst), cy: num(rect.cy),
+    cx: num(alongX ? nearOn(rect.cx, rect.width, mid.x) : rect.cx),
+    cy: num(alongX ? rect.cy : nearOn(rect.cy, rect.height, mid.y)),
     r: NOTCH, fill: theme.palette.plate, stroke: theme.palette.bodyEdge, 'stroke-width': 1,
   });
 
-  // 箱は縦横のどちらにも伸びる。**縦長ならキャプションも縦**にする
-  // (2 本足の部品と同じ扱い)。
-  const tall = rect.height > rect.width;
   const label = partLabel(
     caption(part),
     { cx: rect.cx, cy: rect.cy, height: tall ? rect.width : rect.height, angle: tall ? Math.PI / 2 : 0 },

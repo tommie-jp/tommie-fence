@@ -312,3 +312,56 @@ describe('縦に置いた部品のキャプション', () => {
     expect(Number(at?.[2])).toBeCloseTo((hole.y + layout.point(parseAddress('e3')!).y) / 2, 5);
   });
 });
+
+describe('DIP のノッチはパッケージの端に出る', () => {
+  const wide = createBoard({ cols: 16, rows: 16 });
+  const wideLayout = createLayout(wide);
+
+  /** 向きを書いて置いた DIP のノッチ (半径 4 の丸) の中心。 */
+  const notch = (written: string) => {
+    const spec = {
+      id: 'U1', type: 'dip8', variant: null, value: null, line: 1,
+      written: `dip8 ${written}`,
+    };
+    const [hole, ...words] = written.split(' ');
+    const turn = words.includes('r90')
+      ? { rotate: 90 as const, mirror: false }
+      : (words.includes('r180') ? { rotate: 180 as const, mirror: false } : NO_TURN);
+    const placed = placeParts([{ ...spec, holes: [hole!], turn }], wide).parts[0]!;
+    const svg = renderParts([placed], wideLayout, THEME);
+    const found = /<circle cx="([-0-9.]+)" cy="([-0-9.]+)" r="4"/.exec(svg);
+    return { x: Number(found?.[1]), y: Number(found?.[2]), pins: placed.pins };
+  };
+
+  /** ピンが覆う範囲の真ん中。 */
+  const middle = (pins: readonly { readonly address: { row: number; col: number } }[]) => {
+    const points = pins.map((pin) => wideLayout.point(pin.address));
+    return {
+      x: (Math.min(...points.map((p) => p.x)) + Math.max(...points.map((p) => p.x))) / 2,
+      y: (Math.min(...points.map((p) => p.y)) + Math.max(...points.map((p) => p.y))) / 2,
+    };
+  };
+
+  test('sits on the left when pin 1 is at the left end', () => {
+    // ここを取り違えると、図のとおりに挿した IC が 180 度回る。
+    const { x, y, pins } = notch('e5');
+
+    expect(x).toBeLessThan(middle(pins).x);
+    expect(y).toBeCloseTo(middle(pins).y, 0);
+  });
+
+  test('moves to the other end when the chip is turned round', () => {
+    const { x, pins } = notch('e5 r180');
+
+    expect(x).toBeGreaterThan(middle(pins).x);
+  });
+
+  test('moves to the top edge on a quarter turn, where the package now ends', () => {
+    // **dip8 の箱は正方形** (4 穴 × 4 行) なので、縦長か横長かでは決められない。
+    // 端は 1 番ピンと最終ピンの間にある。
+    const { x, y, pins } = notch('e5 r90');
+
+    expect(y).toBeLessThan(middle(pins).y);
+    expect(x).toBeCloseTo(middle(pins).x, 0);
+  });
+});
