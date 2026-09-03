@@ -59,16 +59,17 @@ describe('turnPart', () => {
     expect(!turnPart(rail, 'R1', 1).ok).toBe(true);
   });
 
-  test('says why a part with more than two leads cannot be turned', () => {
-    // 向きを書く語が文法に無い。**黙って何もしない**のではなく、そう言う。
-    const result = turnPart(LED, 'Q1', 1);
-
-    expect(result.ok).toBe(false);
-    expect(!result.ok && result.error.message).toContain('2 本足');
+  test('turns a three lead part too, since its holes are all written', () => {
+    // h9 h10 h11 は横並び。時計回りに 90 度で縦並びになる。
+    expect(after(LED, turnPart(LED, 'Q1', 1))).toContain('Q1: transistor h9(B) i9(C) j9(E) 2SC1815');
   });
 
-  test('says the same for a part placed by one anchor', () => {
-    expect(!turnPart(LED, 'SW1', 1).ok).toBe(true);
+  test('says why a part placed by one anchor cannot be turned', () => {
+    // 足の位置を形が決めるので、穴の順に向きが出ない。
+    const result = turnPart(LED, 'SW1', 1);
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).toContain('形が決める');
   });
 });
 
@@ -96,7 +97,12 @@ describe('flipPart', () => {
     expect(result.ok && result.value.diff.lost.length).toBeGreaterThan(0);
   });
 
-  test('says why a part with more than two leads cannot be flipped', () => {
-    expect(!flipPart(LED, 'Q1').ok).toBe(true);
+  test('reverses the leads of a three lead part, leaving the middle in place', () => {
+    // 実物を裏返したときと同じ — 両端が入れ替わり、真ん中はその場に残る。
+    expect(after(LED, flipPart(LED, 'Q1'))).toContain('Q1: transistor h11(E) h10(C) h9(B) 2SC1815');
+  });
+
+  test('says why a part placed by one anchor cannot be flipped', () => {
+    expect(!flipPart(LED, 'SW1').ok).toBe(true);
   });
 });

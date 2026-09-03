@@ -49,12 +49,18 @@ describe('turnPart', () => {
     expect(!result.ok && result.error.message).toContain('板の外');
   });
 
-  test('says why a part with more than two leads cannot be turned', () => {
-    // 向きを書く語が文法に無い。**黙って何もしない**のではなく、そう言う。
-    const result = turnPart(BOARD, 'Q1', 1);
+  test('turns a three lead part too, since its holes are all written', () => {
+    // d2 d3 d4 は横並び。時計回りに 90 度で縦並びになる。
+    expect(after(BOARD, turnPart(BOARD, 'Q1', 1))).toContain('Q1: transistor d2 e2 f2 2SC1815');
+  });
+
+  test('says why a part placed by one anchor cannot be turned', () => {
+    // 足の位置を形が決めるので、穴の順に向きが出ない (向きの語で回す)。
+    const dip = 'board: 12x7\nparts:\n  U1: dip8 c3 NE555\n';
+    const result = turnPart(dip, 'U1', 1);
 
     expect(result.ok).toBe(false);
-    expect(!result.ok && result.error.message).toContain('2 本足');
+    expect(!result.ok && result.error.message).toContain('形が決める');
   });
 });
 
@@ -80,7 +86,8 @@ describe('flipPart', () => {
     expect(result.ok && result.value.diff.lost.length).toBeGreaterThan(0);
   });
 
-  test('says why a part with more than two leads cannot be flipped', () => {
-    expect(!flipPart(BOARD, 'Q1').ok).toBe(true);
+  test('reverses the leads of a three lead part, leaving the middle in place', () => {
+    // 実物を裏返したときと同じ — 両端が入れ替わり、真ん中はその場に残る。
+    expect(after(BOARD, flipPart(BOARD, 'Q1'))).toContain('Q1: transistor d4 d3 d2 2SC1815');
   });
 });

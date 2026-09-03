@@ -10,14 +10,14 @@ import type { MoveResult } from './move.ts';
 import { locateTokens } from './shared.ts';
 
 /**
- * 2 本足の部品を回す・反転する。**フェンス本文 → 書き換えの並び**を返す純関数。
+ * 足を書いて置く部品を回す・反転する。**フェンス本文 → 書き換えの並び**を返す純関数。
  *
- * **文法は変えない。** 2 本足の向きは**穴の順そのもの**なので、回すのは
- * 「もう一方の足をアンカーの周りに 90 度動かす」、反転は「両端の入れ替え」で済む。
+ * **文法は変えない。** 足を並べて書く部品 (2 本足・3 本足) の向きは
+ * **穴の順そのもの**なので、回すのは「先に書いた足のまわりに残りを 90 度動かす」、
+ * 反転は「両端の入れ替え」で済む。
  *
- * **3 本足とタクトスイッチは回せない。** 1 つのアンカーで置く形は向きを表す語が
- * 要るが、この文法にはまだ無い (circuit は `r90` / `mirror` を足した。
- * こちらに入れるかは別の判断)。**黙って何もしない**のではなく、そう言って断る。
+ * **アンカー 1 つで置く形 (DIP / SIP / タクトスイッチ / ボード) は別の道。**
+ * 足の位置を形が決めるので穴に向きが出ず、向きの語が要る (52 の docs/14)。
  */
 
 const fail = (message: string, line: number | null): MoveResult =>
@@ -42,16 +42,22 @@ const rowIndex = (address: Address): number | null =>
 
 const rowAt = (index: number): HoleRow | null => HOLE_ROWS[index] ?? null;
 
-/** 掴んだ部品と、その 2 つの足。回すのも裏返すのもここを通る。 */
-function twoLeadAt(source: string, id: string, what: string) {
+/**
+ * 掴んだ部品と、その足。回すのも裏返すのもここを通る。
+ *
+ * **足を 2 つ以上書いている部品だけ**が通る。アンカー 1 つで置く形は
+ * 穴に向きが出ないので、そう言って断る (`@ e5` の DIP など)。
+ */
+function writtenLeadsAt(source: string, id: string, what: string) {
   const found = locatePart(source, id);
   if (!isLocated(found)) return { ok: false as const, error: found.error };
 
-  if (found.addresses.length !== 2) {
+  if (found.addresses.length < 2) {
     return {
       ok: false as const,
       error: fenceError(
-        `${safeToken(id)} は${what}せません (向きを書く語が文法にないので、${what}せるのは 2 本足の部品だけ)`,
+        `${safeToken(id)} は${what}せません`
+        + ` (足の位置を形が決める部品なので、穴の順に向きが出ません)`,
         found.part.line,
       ),
     };
@@ -85,34 +91,47 @@ const editsFor = (
   });
 
 export function turnPart(source: string, id: string, quarters: number): MoveResult {
-  const grabbed = twoLeadAt(source, id, '回');
+  const grabbed = writtenLeadsAt(source, id, '回');
   if (!grabbed.ok) return { ok: false, error: grabbed.error };
 
   const { found, tokens } = grabbed;
-  const [from, to] = found.addresses;
-  if (from === undefined || to === undefined) return fail(`${safeToken(id)} の足がありません`, found.part.line);
+  const anchor = found.addresses[0];
+  if (anchor === undefined) return fail(`${safeToken(id)} の足がありません`, found.part.line);
 
   // **レールは行が極性そのもの。** 数に落ちないので回しようがない。
-  const fromRow = rowIndex(from);
-  const toRow = rowIndex(to);
-  if (fromRow === null || toRow === null) {
+  const anchorRow = rowIndex(anchor);
+  if (anchorRow === null || found.addresses.some((one) => rowIndex(one) === null)) {
     return fail(`${safeToken(id)} はレールに挿さっているので回せません (穴どうしなら回せます)`, found.part.line);
   }
 
   // **アンカー (先に書いた足) は動かさない。** 動かすと「回す」が「移動」になる。
-  const delta = spin({ row: toRow - fromRow, col: to.col - from.col }, quarters);
-  const row = rowAt(fromRow + delta.row);
-  const landing: Address | null = row === null ? null : { kind: 'hole', row, col: from.col + delta.col };
-  if (landing === null || !isOnBoard(found.board, landing)) {
-    return fail(`${safeToken(id)} を回すと板の外へ出ます`, found.part.line);
+  const landings: (Address | null)[] = found.addresses.map((one, index) => {
+    if (index === 0) return null;
+    const row = rowIndex(one);
+    if (row === null) return null;
+    const delta = spin({ row: row - anchorRow, col: one.col - anchor.col }, quarters);
+    const landed = rowAt(anchorRow + delta.row);
+    return landed === null ? null : { kind: 'hole', row: landed, col: anchor.col + delta.col };
+  });
+
+  for (const [index, landing] of landings.entries()) {
+    if (index === 0) continue;
+    if (landing === null || !isOnBoard(found.board, landing)) {
+      return fail(`${safeToken(id)} を回すと板の外へ出ます`, found.part.line);
+    }
   }
 
   // **一周は何もしない。** 同じ字を書き戻すと「動かしました」と嘘を言うことになる。
-  if (formatAddress(landing) === formatAddress(to)) {
+  const texts = landings.map((landing, index) => {
+    const before = found.addresses[index];
+    if (landing === null || before === undefined) return null;
+    return formatAddress(landing) === formatAddress(before) ? null : formatAddress(landing);
+  });
+  if (texts.every((text) => text === null)) {
     return { ok: true, value: { edits: [], diff: { lost: [], gained: [] } } };
   }
 
-  const edits = editsFor(found.part.line, tokens, [null, formatAddress(landing)]);
+  const edits = editsFor(found.part.line, tokens, texts);
   return { ok: true, value: { edits, diff: diffAfter(source, edits) } };
 }
 
@@ -132,12 +151,14 @@ function writtenSpan(
 }
 
 export function flipPart(source: string, id: string): MoveResult {
-  const grabbed = twoLeadAt(source, id, '反転');
+  const grabbed = writtenLeadsAt(source, id, '反転');
   if (!grabbed.ok) return { ok: false, error: grabbed.error };
 
   const { found } = grabbed;
-  // 足の入れ替え。**同じ 2 つの穴を使う**ので、どの穴とどの穴がつながるかは
-  // 変わらない (変わるのは、どちらの足がどちらの穴に挿さるか = 極性)。
+  // 足の**並びを逆にする**。同じ穴を使うので、どの穴とどの穴がつながるかは
+  // 変わらない (変わるのは、どちらの足がどちらの穴に挿さるか)。
+  // 3 本足なら両端が入れ替わり、真ん中はその場に残る — 実物を裏返したときと同じ。
+  //
   // **綴りごと入れ替える** — 番地に直すと `points:` の名前が外れ、
   // 印 (`(A)`) を置いていくと別の意味の行になる。
   const spans = grabbed.tokens.map((token) => writtenSpan(found.line, token));
@@ -145,7 +166,8 @@ export function flipPart(source: string, id: string): MoveResult {
     const span = spans[index];
     return span === undefined ? '' : found.line.slice(span.column, span.column + span.length);
   };
+  const texts = spans.map((_, index) => spelling(spans.length - 1 - index));
 
-  const edits = editsFor(found.part.line, spans, [spelling(1), spelling(0)]);
+  const edits = editsFor(found.part.line, spans, texts);
   return { ok: true, value: { edits, diff: diffAfter(source, edits) } };
 }
