@@ -1,3 +1,4 @@
+import { crystalCan } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import { footprintOf } from '../parts/footprint.ts';
 import { isEdgeMount } from '../parts/types.ts';
@@ -201,6 +202,15 @@ export function bodyRect(part: PlacedPart, layout: Layout): OrientedRect | null 
   const center = midpoint(from, to);
   const length = Math.hypot(to.x - from.x, to.y - from.y);
 
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+
+  // **水晶の缶は足を覆う。** 他の 2 本足と違って足の内側に収まらないので、
+  // 足の間隔から外形を出す (描画と同じ `crystalCan` を読む)。
+  if (part.type === 'crystal') {
+    const can = crystalCan({ type: part.type, variant: part.variant, pins: [] }, length);
+    return { cx: center.x, cy: center.y, width: can.width, height: can.height, angle };
+  }
+
   // **描かれている形をそのまま返す。** 玉やコネクタは足を広げても本体が伸びないので、
   // 足の間隔から胴を作ると、離れた部品と重なっていると言い出す。
   const fixed = fixedSizeOf(part.type);
@@ -211,7 +221,7 @@ export function bodyRect(part: PlacedPart, layout: Layout): OrientedRect | null 
     cy: center.y,
     width,
     height: fixed?.height ?? BODY_HEIGHT,
-    angle: Math.atan2(to.y - from.y, to.x - from.x),
+    angle,
   };
 }
 

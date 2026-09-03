@@ -1,3 +1,4 @@
+import { bodySize } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point } from '../types.ts';
 import { TEXT_HALO_WIDTH, num, svgText } from './svg.ts';
@@ -63,9 +64,27 @@ export const haloWidth = (theme: RenderTheme): number =>
 /** 砲弾型で描く部品。丸が大きいぶん、上に置くラベルを少し離す。 */
 const DOME_TYPES: ReadonlySet<string> = new Set(['led', 'photodiode']);
 
+/**
+ * **胴が足の線に細く乗らない部品**。ほかの 2 本足は足の線の上に薄く乗るだけなので
+ * 定数の距離で足りるが、水晶の缶は**足の穴を覆う** (平たい缶) か**片側に高く立つ**
+ * (円筒) ので、既定の距離では字が胴に載る。ここだけ**胴の高さから測る**。
+ */
+const OVER_AXIS_TYPES: ReadonlySet<string> = new Set(['crystal']);
+
+/** 胴の高さ (足の線からどれだけ張り出しうるか)。字を胴の外へ置くのに要る。 */
+function bodyHeightOf(part: PlacedPart, layout: Layout): number {
+  const [first, second] = part.pins;
+  if (!first?.address || !second?.address) return 0;
+  const from = layout.point(first.address);
+  const to = layout.point(second.address);
+  return bodySize(part, Math.hypot(to.x - from.x, to.y - from.y)).height;
+}
+
 /** ラベルは溝の側に置く。盤の端は列番号の印字があり、そこに重ねると両方読めなくなる。 */
 export function labelYOf(part: PlacedPart, center: Point, layout: Layout): number {
-  if (center.y < layout.ravineY) return center.y + CAPTION_DROP;
+  const toRavine = center.y < layout.ravineY ? 1 : -1;
+  if (OVER_AXIS_TYPES.has(part.type)) return center.y + toRavine * bodyHeightOf(part, layout);
+  if (toRavine > 0) return center.y + CAPTION_DROP;
   return center.y - (DOME_TYPES.has(part.type) ? LED_CAPTION_RISE : CAPTION_RISE);
 }
 

@@ -24,7 +24,7 @@ export {
   bandColor, ledColor, wireColor, wireColorNames,
 } from './colors.ts';
 export { fit, textWidth } from './textFit.ts';
-export { REAL_INK, bodySize, drawBody, hasBody } from './parts/bodies.ts';
+export { REAL_INK, bodySize, crystalCan, drawBody, drawsOwnLeads, hasBody } from './parts/bodies.ts';
 export { drawPackage, packageHalfWidth, packageReach } from './parts/packages.ts';
 export type { PackageShape } from './parts/packages.ts';
 export type { BodyInk, BodyPart } from './parts/bodies.ts';

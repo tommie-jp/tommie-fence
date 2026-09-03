@@ -1,5 +1,6 @@
 import {
-  REAL_INK, drawBody, drawPackage, element, fit, hasBody, num, packageHalfWidth, packageReach, svgText,
+  REAL_INK, drawBody, drawPackage, drawsOwnLeads, element, fit, hasBody, num,
+  packageHalfWidth, packageReach, svgText,
 } from 'fence-kit';
 import type { BodyInk, BodyPart } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
@@ -10,7 +11,7 @@ import {
 import { hatchFill } from './hatch.ts';
 import { isEdgeMount } from '../parts/types.ts';
 import { footprintOf } from '../parts/footprint.ts';
-import type { PlacedPart } from '../types.ts';
+import type { PlacedPart, Point } from '../types.ts';
 import { jointMark } from './joints.ts';
 import type { Theme } from './theme.ts';
 
@@ -325,6 +326,7 @@ function isDark(color: string): boolean {
 const bodyOf = (
   part: PlacedPart,
   width: number,
+  span: number,
   theme: Theme,
   mount: { readonly edgeX: number; readonly legX: number; readonly tips: readonly number[] } | null,
 ): string => {
@@ -333,7 +335,7 @@ const bodyOf = (
       ? smaBody(part)
       : smaEdgeBody(part, width, mount.edgeX, mount.legX, mount.tips, theme);
   }
-  if (hasBody(part.type)) return drawBody(asBody(part), spanFor(part.type, width), inkOf(theme));
+  if (hasBody(part.type)) return drawBody(asBody(part), span, inkOf(theme));
   return genericBody(width, theme);
 };
 
@@ -353,11 +355,14 @@ const asBody = (part: PlacedPart): BodyPart => ({
  * 共有の形に渡す「足から足までの長さ」。**胴の幅から逆に引く** —
  * こちらは当たり判定と同じ胴の幅 (`bodyRect`) を持っていて、共有の形は
  * 足の間隔から胴を決めるので、同じ胴になる長さを渡す。
+ *
+ * **胴が足を覆う種類 (水晶) は逆に引けない**ので、本当の間隔をそのまま渡す。
+ * あちらの当たり判定も同じ間隔から出している (`bodyRect`)。
  */
-const spanFor = (type: string, width: number): number => {
-  const ratio = SPAN_RATIO[type] ?? 0.6;
-  return width / ratio;
-};
+const spanOf = (part: PlacedPart, from: Point, to: Point, width: number): number =>
+  (part.type === 'crystal'
+    ? Math.hypot(to.x - from.x, to.y - from.y)
+    : width / (SPAN_RATIO[part.type] ?? 0.6));
 
 /**
  * 種類ごとの「胴の幅 ÷ 足の間隔」。**共有の形の数式と同じ値**
@@ -391,17 +396,18 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
   // 端面実装は胴が板の縁から外へ張り出すので、**板の縁と足がどこに来るか**を
   // 局所座標で渡す (胴の中心と足の中点がずれるのはこの姿だけ)。
   const mount = isEdgeMount(part.type, part.variant) ? edgeMountOf(part, layout) : null;
-  // **端面実装に足の線は引かない。** 足を結ぶ線は「胴の両端から出たリード」の絵で、
-  // 金物のコネクタでは中心導体と凹の先端を結ぶ線に見える (先端は中心線の上下に
-  // あるので、斜めに渡って余計にそう読める)。
-  const lead = mount !== null ? '' : element('line', {
+  // **端面実装と、自分で足を描く胴 (水晶) には足の線を引かない。** 足を結ぶ線は
+  // 「胴の両端から出たリード」の絵で、金物のコネクタでは中心導体と凹の先端を結ぶ線に
+  // 見える (先端は中心線の上下にあるので、斜めに渡って余計にそう読める)。
+  // 水晶の足は缶の下から出るので、穴を渡る線は実物に無い。
+  const lead = mount !== null || drawsOwnLeads(part.type) ? '' : element('line', {
     x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y),
     stroke: theme.palette.lead, 'stroke-width': LEAD_WIDTH,
   });
   const body = element(
     'g',
     { transform: `translate(${num(center.x)} ${num(center.y)}) rotate(${num(angle)})` },
-    bodyOf(part, width, theme, mount),
+    bodyOf(part, width, spanOf(part, from, to, width), theme, mount),
   );
   // **キャプションは足の真ん中の下**。胴の中心に置くと、板の外へ張り出す部品
   // (端面実装の SMA) で字が板から出て、地に紛れるか幅ゼロで `…` に切られる。
@@ -444,14 +450,23 @@ const isBoxed = (part: PlacedPart): boolean => {
  * ここに残るのは板の話 — 足の点、キャプション、どちら側に寄せるか。
  */
 /**
- * 足が縦に並んでいるか。**両端の穴で見る** — 3 本が一直線でない書き方もできるが、
- * 胴の向きを決めるのに要るのは並びのおおまかな向きだけ。
+ * 胴を回す角度 (度。0 / 90 / 180 / 270)。**1 番ピンから最後のピンへ向く向き**を
+ * 見る — 「回す」(`R`) は足の番地を書き換えるので、その並びの向きがそのまま
+ * パッケージの向きになる。
+ *
+ * **180 度も別の向きとして数える。** 軸の傾きだけを見ていたころは、回しても
+ * TO-92 の平らな面が上を向いたままだった (実機で指摘された)。
+ *
+ * **画面の座標ではなく番地で数える。** 半田面 (裏返した板) は列を反転して
+ * 描くので、点の差で数えると裏だけ 180 度回ってしまう。向きは書かれた番地の
+ * ものであって、どちらから見るかで変わらない。
  */
-function legsRunDown(part: PlacedPart, layout: Layout): boolean {
-  const ends = [part.pins.at(0), part.pins.at(-1)];
-  const [from, to] = ends.map((pin) => (pin ? layout.point(pin.address) : null));
-  if (from === null || to === null || from === undefined || to === undefined) return false;
-  return Math.abs(to.y - from.y) > Math.abs(to.x - from.x);
+function packageAngle(part: PlacedPart): number {
+  const from = part.pins.at(0)?.address;
+  const to = part.pins.at(-1)?.address;
+  if (!from || !to) return 0;
+  const step = Math.round(Math.atan2(to.row - from.row, to.col - from.col) / (Math.PI / 2));
+  return ((step % 4) + 4) % 4 * 90;
 }
 
 function renderPackage(part: PlacedPart, layout: Layout, theme: Theme): string {
@@ -468,12 +483,14 @@ function renderPackage(part: PlacedPart, layout: Layout, theme: Theme): string {
     plate: theme.palette.plate,
     chipBody: theme.palette.chipBody,
   }, inkOf(theme));
-  // **胴は足の並びに沿って回す。** 全穴が独立している板なので、3 本足を縦に
-  // 挿すこともできる。回さないと TO-92 の平らな面が足の 1 本を向いてしまい、
-  // 実物ではありえない向きになる (平らな面と足の並びは平行)。
-  const shell = legsRunDown(part, layout)
-    ? element('g', { transform: `rotate(90 ${num(rect.cx)} ${num(rect.cy)})` }, drawn)
-    : drawn;
+  // **胴は足の並びに沿って回す。** 全穴が独立している板なので 3 本足をどの向きにも
+  // 挿せる。回さないと TO-92 の平らな面が足の 1 本を向いてしまい、実物ではありえない
+  // 向きになる (平らな面と足の並びは平行)。**キャプションは回さない** — 字は
+  // いつも横で読めるほうがよく、向きは胴の形が示す。
+  const angle = packageAngle(part);
+  const shell = angle === 0
+    ? drawn
+    : element('g', { transform: `rotate(${num(angle)} ${num(rect.cx)} ${num(rect.cy)})` }, drawn);
 
   const leads = part.pins
     .map((pin) => {

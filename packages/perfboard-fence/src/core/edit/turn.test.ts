@@ -21,6 +21,25 @@ describe('turnPart', () => {
     expect(after(BOARD, turnPart(BOARD, 'R1', 1))).toContain('R1: resistor b2 f2 10k');
   });
 
+  test('gives a three-lead part four different postures, so the flat face can face any way', () => {
+    // **回すたびにパッケージの向きが変わること。** 足の並びの傾きだけを見て
+    // 描いていたころは、180 度回しても TO-92 の平らな面が上を向いたままだった
+    // (実機で「回すを押しても切り込み面を下にできない」と言われた)。
+    // 板の真ん中に置く (縁だと回した先が板の外になる)。
+    const room = 'board: 12x9\nparts:\n  Q1: transistor e5 e4 e6 2SC1815\n';
+    const seen = new Set<string>();
+    let now = room;
+    for (let quarter = 0; quarter < 4; quarter += 1) {
+      const line = /Q1: transistor [^\n]+/.exec(now)?.[0] ?? '';
+      seen.add(line);
+      now = after(now, turnPart(now, 'Q1', 1));
+    }
+
+    expect(seen.size).toBe(4);
+    // 4 回で元に戻る。
+    expect(now).toBe(room);
+  });
+
   test('turns the other way when asked', () => {
     const flat = 'board: 12x7\nparts:\n  R1: resistor e2 e6 10k\n';
 
