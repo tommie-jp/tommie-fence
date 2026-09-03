@@ -1,6 +1,6 @@
 import { element, num, svgText } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
-import { VERSION } from '../version.ts';
+import { STAMP_TEXT, VERSION } from '../version.ts';
 import type { Theme } from './theme.ts';
 
 /**
@@ -52,7 +52,7 @@ export function renderDocument(layout: Layout, body: string, options: DocumentOp
     ? svgText(
       layout.board.x + layout.board.width - STAMP_INSET,
       size.height - STAMP_INSET,
-      `perfboard-fence ${VERSION}`,
+      STAMP_TEXT,
       { anchor: 'end', fill: theme.palette.label, 'font-size': num(theme.metrics.textSize) },
     )
     : '';

@@ -3,6 +3,17 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Changed
+
+- **CLI に `--version` が付いた。** 版を答えて終わる (図に刻むなら
+  `style: stamp: on`)。circuit にしか無かったものを 3 つに揃えた。
+
+- **CLI が空のディレクトリを黙って通さなくなった。** `.md` も `.yaml` も無い
+  指定を渡した CI が、何も検証しないまま緑になっていた (perfboard にしか
+  入っていなかった守りを 3 つに揃えた)。
+
 ## [0.5.0] - 2026-09-04
 
 ### Changed

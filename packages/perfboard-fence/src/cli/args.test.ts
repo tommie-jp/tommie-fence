@@ -1,48 +1,40 @@
 import { describe, expect, test } from 'vitest';
-import { parseArgs } from './args.ts';
+import { USAGE, parseArgs } from './args.ts';
 
+/**
+ * **読み取りの規則は fence-kit のテストが見張る** (`cli/args.test.ts`)。
+ * ここで見るのは、このフェンスがその口に繋がっていることと、
+ * 使い方の字がこのフェンスの綴りで書かれていること。
+ */
 describe('parseArgs', () => {
-  test('reads a command and its targets', () => {
-    expect(parseArgs(['render', 'examples'])).toEqual({
-      ok: true,
-      value: { command: 'render', targets: ['examples'], outDir: null },
+  test('goes through the shared reader, so render and check work the same way', () => {
+    const rendered = parseArgs(['render', 'docs', '--out', 'out']);
+    const checked = parseArgs(['check', 'docs']);
+
+    expect(rendered.ok && rendered.value).toEqual({
+      command: 'render', targets: ['docs'], outDir: 'out', flags: new Set(),
     });
+    expect(checked.ok && checked.value.command).toBe('check');
   });
 
-  test('reads where to write', () => {
-    const result = parseArgs(['render', 'examples', '--out', 'examples/out']);
+  test('answers the version, the way the other fences do', () => {
+    const result = parseArgs(['--version']);
 
-    expect(result.ok && result.value.outDir).toBe('examples/out');
-  });
-
-  test('takes more than one target', () => {
-    const result = parseArgs(['check', 'a.md', 'b.md']);
-
-    expect(result.ok && result.value.targets).toEqual(['a.md', 'b.md']);
-  });
-
-  test('refuses --out on check, which writes nothing', () => {
-    expect(parseArgs(['check', 'examples', '--out', 'x']).ok).toBe(false);
-  });
-
-  test('refuses --out with nothing after it', () => {
-    expect(parseArgs(['render', 'examples', '--out']).ok).toBe(false);
-    expect(parseArgs(['render', 'examples', '--out', '--force']).ok).toBe(false);
+    expect(result.ok && result.value.command).toBe('version');
   });
 
   test('refuses an option it does not know, instead of taking it as a file', () => {
-    const result = parseArgs(['render', '--force', 'examples']);
-
-    expect(result.ok).toBe(false);
-    expect(!result.ok && result.message).toContain('--force');
+    expect(parseArgs(['render', 'a.md', '--emit-tex'])).toEqual({
+      ok: false, message: '知らないオプションです: --emit-tex',
+    });
   });
+});
 
-  test('refuses a command it does not know', () => {
-    expect(parseArgs(['draw', 'examples']).ok).toBe(false);
-    expect(parseArgs([]).ok).toBe(false);
-  });
-
-  test('refuses a command with nothing to draw', () => {
-    expect(parseArgs(['render']).ok).toBe(false);
+describe('USAGE', () => {
+  test('names this fence and every command it takes', () => {
+    for (const line of ['perfboard-fence render', 'perfboard-fence check', 'perfboard-fence --version']) {
+      expect(USAGE).toContain(line);
+    }
+    expect(USAGE).toContain('```perfboard');
   });
 });

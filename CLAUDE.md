@@ -10,7 +10,9 @@
 - `packages/circuit-fence` — ` ```circuit ` フェンス。回路図 (circuitikz / TeX)
 - `packages/breadboard-fence` — ` ```breadboard ` フェンス。ブレッドボード実体配線図
 - `packages/fence-kit` — 3 つで重複している部分の置き場。ビルド工程を持たず、
-  使う側の esbuild が束ねる
+  使う側の esbuild が束ねる。入口は 3 つ: `fence-kit` (本体。**DOM も Node も
+  使わない**)、`fence-kit/cli` (**CLI 専用。ここだけ Node を使ってよい**)、
+  `fence-kit/webview`
 - `packages/perfboard-fence` — ` ```perfboard ` フェンス。ユニバーサル基板。
   **一通り動く** (2 本足・3 本足・DIP / SIP、板の外の機器、注釈、テーマ、
   文法リファレンスと例と CLI まで)。
@@ -26,7 +28,9 @@
 改行を揃える処理、フェンスの取り出し (言語名は引数)、markup のエスケープと
 要素の組み立て、**盤面に依らない SVG の部品** (`num` / `svgText`)、
 **実物の部品の話** (抵抗値とカラーコード、部品と配線の色、字幅の見積もり)、
-**ネットリストの組み立て** (`computeNets`。盤面ごとの事情は `preferredName` に寄せた)。
+**ネットリストの組み立て** (`computeNets`。盤面ごとの事情は `preferredName` に寄せた)、
+**CLI の共通部分** (`fence-kit/cli` — 引数の読み取り、入力ファイルの集め方、
+ネットリストの出し方)。
 図の中身 (板・部品・配線の形) は入っていない — circuit は TeX に描かせるので
 SVG を直に組み立てるコードを持たず、共有できるのが breadboard と
 perfboard の 2 つだけ。perfboard が描き進むあいだも、

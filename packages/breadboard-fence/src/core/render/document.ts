@@ -11,7 +11,7 @@ import { partsListHeight, renderPartsList } from './partsList.ts';
 import { element, num, roundedPath, svgText } from './svg.ts';
 import type { RenderStyle } from './theme.ts';
 import { renderTitle, titleHeight } from './title.ts';
-import { VERSION, stampText } from '../version.ts';
+import { STAMP_TEXT, VERSION } from '../version.ts';
 import { renderWire } from './wires.ts';
 
 export type RenderedWire = {
@@ -154,7 +154,7 @@ function hitLineOf(points: readonly Point[], line: number, theme: RenderStyle['t
 
 /** 右下に小さく刻む版。字は書けない (処理系が埋めるものなので)。 */
 function renderStamp(layout: Layout, height: number, theme: RenderStyle['theme']): string {
-  return svgText(layout.board.x + layout.board.width, height - 4, stampText(), {
+  return svgText(layout.board.x + layout.board.width, height - 4, STAMP_TEXT, {
     'font-size': num(theme.metrics.textSize * 0.7),
     fill: theme.palette.partText,
     'fill-opacity': 0.55,

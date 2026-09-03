@@ -1,45 +1,20 @@
 #!/usr/bin/env node
-import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
-import { basename, extname, join, resolve } from 'node:path';
-import { outputStem } from 'fence-kit';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { errorText, extractPerfboardFences, renderPerfboard } from '../core/index.ts';
-import type { FenceError, Net } from '../core/index.ts';
+import type { FenceError } from '../core/index.ts';
+import { collectFiles, readInput, reportNetlist } from 'fence-kit/cli';
+import { outputStem } from 'fence-kit';
+import { STAMP_TEXT } from '../core/version.ts';
 import { USAGE, parseArgs } from './args.ts';
 
 type Job = { readonly source: string; readonly outPath: string; readonly label: string };
 
-const isYaml = (path: string): boolean => ['.yaml', '.yml'].includes(extname(path));
-const isMarkdown = (path: string): boolean => ['.md', '.markdown'].includes(extname(path));
-
 const reason = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
-/**
- * **ディレクトリは 1 段だけ見る。** `examples/errors/` のようにわざと読めなく
- * 書いた置き場を、`render examples` が巻き込まないため (48 / 49 と同じ作法)。
- *
- * 1 つも見つからない指定は**黙って通さない**。空のディレクトリを渡した CI が、
- * 何も検証しないまま緑になる。
- */
-function collectFiles(target: string): string[] {
-  const stats = statSync(target);
-  if (!stats.isDirectory()) return [target];
-
-  const found = readdirSync(target)
-    .map((name) => join(target, name))
-    .filter((path) => statSync(path).isFile() && (isYaml(path) || isMarkdown(path)))
-    .sort();
-  if (found.length === 0) {
-    throw new Error(`${target} に .md も .yaml もありません (下の階層は見ません)`);
-  }
-  return found;
-}
-
 function jobsFor(path: string, outDir: string | null): Job[] {
-  const stem = basename(path, extname(path));
-  const directory = outDir ?? resolve(path, '..');
-  const source = readFileSync(path, 'utf8');
-
-  if (isYaml(path)) return [{ source, outPath: join(directory, `${stem}.svg`), label: stem }];
+  const { source, stem, directory, whole } = readInput(path, outDir);
+  if (whole) return [{ source, outPath: join(directory, `${stem}.svg`), label: stem }];
 
   const fences = extractPerfboardFences(source);
   // 名前の付け方は fence-kit にある (3 つのフェンスで同じもの。書き写さない)。
@@ -48,13 +23,6 @@ function jobsFor(path: string, outDir: string | null): Job[] {
     outPath: join(directory, `${outputStem(stem, index, fences.length)}.svg`),
     label: `${stem} (${fence.line} 行目)`,
   }));
-}
-
-function reportNetlist(netlist: readonly Net[]): void {
-  if (netlist.length === 0) return;
-  console.log('  ネットリスト:');
-  const width = Math.max(...netlist.map((net) => net.name.length));
-  for (const net of netlist) console.log(`    ${net.name.padEnd(width)} : ${net.refs.join(', ')}`);
 }
 
 /**
@@ -73,6 +41,12 @@ function main(argv: readonly string[]): number {
   if (!parsed.ok) {
     console.error(`${parsed.message}\n\n${USAGE}`);
     return 2;
+  }
+
+  // **版を訊かれたら答えて終わる。** 図も検証もしないので、下の段取りへ進まない。
+  if (parsed.value.command === 'version') {
+    console.log(STAMP_TEXT);
+    return 0;
   }
 
   const { command, targets, outDir } = parsed.value;

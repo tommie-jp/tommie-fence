@@ -15,6 +15,16 @@ const SRC_DIR = fileURLToPath(new URL('.', import.meta.url));
 /** fence-kit が外から持ってきてよいもの。**空のまま保つ**。 */
 const ALLOWED = new Set<string>();
 
+/**
+ * **CLI 専用の入口だけは Node の API を使ってよい** (`fence-kit/cli`)。
+ * ここから辿れるものはプレビューにも webview にも束ねられないので、
+ * 本体の約束 (DOM も Node も使わない) は保たれたまま。
+ * **本体の入口から `cli/` の中の Node を使うものを再輸出しない**ことが条件で、
+ * それは下のテストが見張る。
+ */
+const CLI_DIR = join(SRC_DIR, 'cli');
+const CLI_ALLOWED = new Set(['node:fs', 'node:path']);
+
 // import と export の両方、静的も動的も、引用符はどちらも拾う。
 //
 // **`from` と引用符の間に空白を要る**ことにしてある。詰めて書けるのは
@@ -69,11 +79,22 @@ describe('fence-kit の依存', () => {
     '%s は自分の中のファイルしか import しない',
     (_label, path) => {
       const specifiers = specifiersOf(readFileSync(path, 'utf8'));
+      const inCli = path.startsWith(CLI_DIR);
 
       for (const specifier of specifiers) {
-        const allowed = specifier.startsWith('.') || ALLOWED.has(specifier);
+        const allowed = specifier.startsWith('.')
+          || ALLOWED.has(specifier)
+          || (inCli && CLI_ALLOWED.has(specifier));
         expect(allowed, `${specifier} を import している`).toBe(true);
       }
     },
   );
+
+  test('本体の入口は CLI のものを再輸出しない', () => {
+    // ここが破れると、プレビューと webview の束に `node:fs` が入り込む。
+    // CLI が要るものは `fence-kit/cli` から取る。
+    const entry = readFileSync(join(SRC_DIR, 'index.ts'), 'utf8');
+
+    expect(specifiersOf(entry).filter((name) => name.includes('cli/'))).toEqual([]);
+  });
 });

@@ -1,15 +1,16 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, resolve } from 'node:path';
 import {
   STAMP_TEXT, attachSourceText, compileCircuit, errorLine, extractCircuitFences, finishSvg, messageLine,
   outputStem, shiftErrors, snippetLines,
 } from '../core/index.ts';
-import type { FenceError, Net } from '../core/index.ts';
+import type { FenceError } from '../core/index.ts';
 import { renderTex } from '../host/texSvg.ts';
 import { standaloneTex } from '../core/tex/generate.ts';
 import { texErrors } from '../core/tex/texLog.ts';
-import { USAGE, parseArgs } from './args.ts';
+import { collectFiles, reportNetlist } from 'fence-kit/cli';
+import { USAGE, emitsTex, parseArgs } from './args.ts';
 
 type Job = {
   readonly source: string;
@@ -24,18 +25,8 @@ type Job = {
 };
 
 const isYaml = (path: string): boolean => ['.yaml', '.yml'].includes(extname(path));
-const isMarkdown = (path: string): boolean => ['.md', '.markdown'].includes(extname(path));
 
 const reason = (error: unknown): string => (error instanceof Error ? error.message : String(error));
-
-function collectFiles(target: string): string[] {
-  const stats = statSync(target);
-  if (!stats.isDirectory()) return [target];
-  return readdirSync(target)
-    .map((name) => join(target, name))
-    .filter((path) => statSync(path).isFile() && (isYaml(path) || isMarkdown(path)))
-    .sort();
-}
 
 function jobsFor(path: string, outDir: string | null): Job[] {
   const stem = basename(path, extname(path));
@@ -52,13 +43,6 @@ function jobsFor(path: string, outDir: string | null): Job[] {
     label: `${stem} (${fence.line} 行目)`,
     line: fence.line,
   }));
-}
-
-function reportNetlist(netlist: readonly Net[]): void {
-  if (netlist.length === 0) return;
-  console.log('  ネットリスト:');
-  const width = Math.max(...netlist.map((net) => net.name.length));
-  for (const net of netlist) console.log(`    ${net.name.padEnd(width)} : ${net.refs.join(', ')}`);
 }
 
 /** 標準エラーへ出す 1 行。どのコマンドが言っているかが分かるよう名札を付ける。 */
@@ -222,7 +206,8 @@ async function main(argv: readonly string[]): Promise<number> {
     return 0;
   }
 
-  const { command, targets, outDir, emitTex: texOnly } = parsed.value;
+  const { command, targets, outDir } = parsed.value;
+  const texOnly = emitsTex(parsed.value);
   let failed = 0;
 
   try {

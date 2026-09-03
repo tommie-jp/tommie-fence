@@ -1,23 +1,15 @@
-export type RenderCommand = {
-  /**
-   * `render` は図を書き出す。`check` は**何も書き出さず**、
-   * 検証とネットリストだけを出す (WASM の TeX を回さないので速い)。
-   */
-  readonly command: 'render' | 'check';
-  readonly targets: readonly string[];
-  readonly outDir: string | null;
-  /** 図を描かず、手元の LaTeX に渡す `.tex` だけを書き出すか。 */
-  readonly emitTex: boolean;
-};
+/**
+ * CLI の引数。**読み取りは fence-kit にある** (`parseCliArgs`) — 3 つのフェンスで
+ * 同じ規則なので写しを持たない。ここに残るのは**このフェンスの使い方の字**と、
+ * このフェンスだけの決まり (`--emit-tex` と、check が何も書き出さないこと)。
+ */
+import { parseCliArgs } from 'fence-kit/cli';
+import type { ArgsResult, CliCommand } from 'fence-kit/cli';
 
-/** 版を答えるだけ。図も検証もしないので、渡すものが何も無い。 */
-export type VersionCommand = { readonly command: 'version' };
+export type { ArgsResult, CliCommand } from 'fence-kit/cli';
 
-export type Command = RenderCommand | VersionCommand;
-
-export type ArgsResult =
-  | { readonly ok: true; readonly value: Command }
-  | { readonly ok: false; readonly message: string };
+/** 図を描かず、手元の LaTeX に渡す `.tex` だけを書き出す指定。 */
+export const EMIT_TEX = '--emit-tex';
 
 export const USAGE = `使い方:
   circuit-fence render <ファイルかディレクトリ...> [--out <出力先>] [--emit-tex]
@@ -41,47 +33,17 @@ export const USAGE = `使い方:
 
 const invalid = (message: string): ArgsResult => ({ ok: false, message });
 
-const VERSION_FLAGS = ['--version', '-v'];
-
 export function parseArgs(argv: readonly string[]): ArgsResult {
-  const [written, ...rest] = argv;
+  const parsed = parseCliArgs(argv, [EMIT_TEX]);
+  if (!parsed.ok) return parsed;
 
-  // 版を訊く指定は**先頭に書いたときだけ**。どこに書いても効くことにすると、
-  // `check docs -v` が何も調べずに 0 で終わり、CI の関門が黙って通る
-  // (`-v` を verbose のつもりで書くのはありがちな取り違え)。
-  if (written !== undefined && VERSION_FLAGS.includes(written)) return { ok: true, value: { command: 'version' } };
-  if (written !== 'render' && written !== 'check') return invalid('render か check を指定します');
-  const command = written;
-
-  const targets: string[] = [];
-  let outDir: string | null = null;
-  let emitTex = false;
-
-  for (let index = 0; index < rest.length; index += 1) {
-    const argument = rest[index] ?? '';
-    if (argument === '--out') {
-      const value = rest[index + 1];
-      if (!value || value.startsWith('-')) return invalid('--out の後ろに出力先を書きます');
-      outDir = value;
-      index += 1;
-    } else if (argument === '--emit-tex') {
-      emitTex = true;
-    } else if (argument.startsWith('-')) {
-      return invalid(`知らないオプションです: ${argument}`);
-    } else {
-      targets.push(argument);
-    }
-  }
-
-  if (targets.length === 0) {
-    return invalid(
-      command === 'check' ? '調べるファイルかディレクトリを指定します' : '描画するファイルかディレクトリを指定します',
-    );
-  }
   // check は何も書き出さないので、書き出し先を受けると嘘になる。
-  if (command === 'check' && (outDir !== null || emitTex)) {
-    return invalid('check は何も書き出しません (--out と --emit-tex は render で使います)');
+  // **共有の読み取りは `--out` だけを断る**ので、`--emit-tex` はここで見る。
+  if (parsed.value.command === 'check' && parsed.value.flags.has(EMIT_TEX)) {
+    return invalid(`check は何も書き出しません (--out と ${EMIT_TEX} は render で使います)`);
   }
-
-  return { ok: true, value: { command, targets, outDir, emitTex } };
+  return parsed;
 }
+
+/** そのコマンドが `.tex` だけを書き出すか。 */
+export const emitsTex = (command: CliCommand): boolean => command.flags.has(EMIT_TEX);
