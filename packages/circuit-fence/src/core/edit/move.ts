@@ -1,4 +1,4 @@
-import { formatAddress } from '../model/address.ts';
+import { formatAddress, parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { handleAt, nameOfHandle, partOfHandle } from './handles.ts';
@@ -110,3 +110,14 @@ export function partSpans(source: string, handle: string): readonly Span[] {
   ];
 }
 
+
+/**
+ * その番地から `rows` 行・`cols` 列だけ離れた番地。格子の外は null。
+ * **交点の間 (`a_1.5`) からも数えられる** — 足すだけなので端数がそのまま乗る。
+ */
+export function stepCell(written: string, rows: number, cols: number): string | null {
+  const from = parseAddress(written);
+  if (from === null) return null;
+  const next = { row: from.row + rows, col: from.col + cols };
+  return isOnGrid(next) ? formatAddress(next) : null;
+}

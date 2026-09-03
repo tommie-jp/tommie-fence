@@ -96,6 +96,7 @@ const STYLE = `
     border: 1px solid transparent; border-radius: 4px; background: none; cursor: pointer;
   }
   .kc-tool .kc-glyph { font-size: 16px; line-height: 1; }
+  .kc-tool kbd { font-size: 9px; }
   .kc-tool:hover { border-color: var(--vscode-focusBorder); }
   body[data-tool="select"] .kc-tool[data-tool="select"],
   body[data-tool="wire"] .kc-tool[data-tool="wire"],
@@ -300,7 +301,18 @@ export function renderFencePicker(fences: readonly FenceEntry[], line: number | 
 }
 
 /** 右の道具の列。**鍵と同じ一覧** — 押すと同じ鍵を押したことになる。 */
-const TOOLS: readonly { readonly tool?: string; readonly key: string; readonly glyph: string; readonly name: string; readonly kbd: string }[] = [
+type ToolButton = {
+  /** 状態を持つ道具 (押している間ハイライトする)。 */
+  readonly tool?: string;
+  readonly key: string;
+  /** `Ctrl` を押しながらの鍵か (複製)。 */
+  readonly modifier?: boolean;
+  readonly glyph: string;
+  readonly name: string;
+  readonly kbd: string;
+};
+
+const TOOLS: readonly ToolButton[] = [
   { tool: 'select', key: 'Escape', glyph: '↖', name: '選ぶ', kbd: 'Esc' },
   { tool: 'place', key: 'a', glyph: '▣', name: '部品', kbd: 'A' },
   { tool: 'wire', key: 'w', glyph: '─', name: '配線', kbd: 'W' },
@@ -308,12 +320,14 @@ const TOOLS: readonly { readonly tool?: string; readonly key: string; readonly g
   { key: 'g', glyph: '⤡', name: '引きずる', kbd: 'G' },
   { key: 'r', glyph: '↻', name: '回す', kbd: 'R' },
   { key: 'x', glyph: '⇔', name: '反転', kbd: 'X' },
+  { key: 'd', modifier: true, glyph: '⧉', name: '複製', kbd: 'Ctrl+D' },
   { key: 'Delete', glyph: '✕', name: '消す', kbd: 'Del' },
 ];
 
 const renderTools = (): string => TOOLS.map((one) => (
   `<button type="button" class="kc-tool"${one.tool === undefined ? '' : ` data-tool="${one.tool}"`}`
-  + ` data-key="${one.key}" title="${one.name} (${one.kbd})">`
+  + ` data-key="${one.key}"${one.modifier === true ? ' data-modifier="1"' : ''}`
+  + ` title="${one.name} (${one.kbd})">`
   + `<span class="kc-glyph">${one.glyph}</span><span>${one.name}</span><kbd>${one.kbd}</kbd></button>`
 )).join('');
 

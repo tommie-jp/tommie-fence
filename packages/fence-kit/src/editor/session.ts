@@ -71,6 +71,8 @@ export type Incoming = {
   readonly turn?: unknown;
   readonly flip?: unknown;
   readonly key?: unknown;
+  readonly rows?: unknown;
+  readonly cols?: unknown;
 };
 
 export type SessionHost<D extends DocLike> = {
@@ -612,6 +614,70 @@ export function createSession<D extends DocLike>(
     return null;
   }
 
+  /** webview から来た数 (整数でなければ 0)。 */
+  const count = (value: unknown): number =>
+    (typeof value === 'number' && Number.isInteger(value) ? value : 0);
+
+  /**
+   * マップから来た「矢印で 1 穴」。**動かすのと同じ道**を通る (接続の変化も
+   * 同じように出る) が、行き先は殻ではなくフェンスが数える。
+   */
+  async function nudge(message: Incoming): Promise<void> {
+    const handle = text(message.part);
+    const part = handle === null ? null : editor.nameOf(handle);
+    const fence = handle === null ? null : fenceNow();
+    if (handle === null || part === null || fence === null) {
+      if (handle === null) say('マップからの知らせを読めませんでした (どの部品かがありません)');
+      return;
+    }
+
+    const anchor = editor.cellsOf(fence.source, handle)[0];
+    const to = anchor === undefined ? null : editor.step(anchor, count(message.rows), count(message.cols));
+    if (to === null) {
+      say(`${part} はこれ以上その向きへ動かせません`);
+      return;
+    }
+    await run({
+      label: `${part} を ${to} へ`,
+      done: () => `${part} を ${to} へ動かしました`,
+      already: `${part} はすでに ${to} にあります`,
+      plan: (source) => editor.movePart(source, handle, to),
+    });
+  }
+
+  /**
+   * マップから来た「これをもう 1 つ」。**種類と向きは元のまま、名前は次の番号**で、
+   * 1 穴ずらして置く。重ねて置くと図の上で見分けが付かない。
+   */
+  async function duplicate(message: Incoming): Promise<void> {
+    const handle = text(message.part);
+    const fence = handle === null ? null : fenceNow();
+    if (handle === null || fence === null) {
+      if (handle === null) say('マップからの知らせを読めませんでした (どの部品かがありません)');
+      return;
+    }
+
+    const fields = editor.fieldsOf(fence.source, handle);
+    const anchor = editor.cellsOf(fence.source, handle)[0];
+    if (fields === null || anchor === undefined) {
+      say(`${editor.nameOf(handle)} は複製できません (穴で置かれていません)`);
+      return;
+    }
+    // **1 穴だけずらす。** 重ねると、置いたのに何も増えていないように見える。
+    const to = editor.step(anchor, 1, 1) ?? editor.step(anchor, 0, 1);
+    const id = editor.nextId(fence.source, fields.type);
+    if (to === null || id === null) {
+      say(`${editor.nameOf(handle)} の隣に置く場所がありません`);
+      return;
+    }
+    await run({
+      label: `${id} を`,
+      done: () => `${editor.nameOf(handle)} を ${id} として ${to} へ複製しました`,
+      already: '置くものがありません',
+      plan: (source) => editor.addPart(source, { id, type: fields.type, at: [to] }),
+    });
+  }
+
   /** マップから来た「ここからここへ 1 本」。配線は**交点から交点へ**引く。 */
   async function addWire(message: Incoming): Promise<void> {
     const from = text(message.from);
@@ -812,6 +878,14 @@ export function createSession<D extends DocLike>(
           return;
         case 'delete':
           await remove(message);
+          refreshWith(true);
+          return;
+        case 'nudge':
+          await nudge(message);
+          refreshWith(true);
+          return;
+        case 'duplicate':
+          await duplicate(message);
           refreshWith(true);
           return;
         case 'turn':

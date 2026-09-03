@@ -88,6 +88,14 @@ export function checkFenceEditor(editor: FenceEditor, fixture: ContractFixture):
     }
   }
 
+  // --- 1 つ隣の穴 (矢印と複製が使う) ---
+  const right = editor.step(room, 0, 1);
+  if (right === null) say(`${room} の隣の穴を数えられません`);
+  else if (right === room) say(`${room} の隣が同じ穴になります`);
+  else if (editor.step(right, 0, -1) !== room) say(`${room} の隣の隣が元に戻りません`);
+  if (editor.step(room, 0, 0) !== room) say(`${room} から 0 だけ動かすと別の穴になります`);
+  if (editor.step('読めない綴り', 0, 1) !== null) say('読めない綴りの隣を返します');
+
   // --- 掴んで動かす・消す ---
   const moved = editor.movePart(source, part, moveTo);
   if (!moved.ok) {

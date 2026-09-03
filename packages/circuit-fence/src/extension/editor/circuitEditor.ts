@@ -6,7 +6,7 @@ import { issuesOf, renderIssues, shiftIssues } from '../../core/edit/issues.ts';
 import { aimAt, fenceAt, gridMap, partCells } from '../../core/edit/map.ts';
 import { renderMapHtml } from '../../core/edit/mapSvg.ts';
 import { insertPart, insertWire, nextPartId } from '../../core/edit/insert.ts';
-import { movePart, partSpans } from '../../core/edit/move.ts';
+import { movePart, partSpans, stepCell } from '../../core/edit/move.ts';
 import { renderPalette, renderTypeOptions } from '../../core/edit/palette.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import { deletePart, deleteWire } from '../../core/edit/remove.ts';
@@ -86,6 +86,7 @@ export function createCircuitEditor(): FenceEditor {
     cellsOf: partCells,
     // 配線は `-|` / `|-` で折れる (`Shift` を押しながら放す)。
     foldsWire: true,
+    step: stepCell,
 
     palette: renderPalette,
     typeNames: renderTypeOptions,

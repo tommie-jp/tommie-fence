@@ -9,7 +9,7 @@ import { aimAt, fenceAt } from '../../core/edit/map.ts';
 import { insertPart, insertWire, nextPartId, partCells } from '../../core/edit/insert.ts';
 import { renamePart } from '../../core/edit/rename.ts';
 import { flipPart, turnPart } from '../../core/edit/turn.ts';
-import { movePart, movablePartIds, partSpans } from '../../core/edit/move.ts';
+import { movePart, movablePartIds, partSpans, stepCell } from '../../core/edit/move.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import { deletePart, deleteWire } from '../../core/edit/remove.ts';
 import { extractPerfboardFences } from '../../core/fences.ts';
@@ -62,6 +62,7 @@ export function createPerfboardEditor(): FenceEditor {
     cellsOf: partCells,
     // 配線は穴から穴へ 1 本 (折れの綴りが文法に無い)。
     foldsWire: false,
+    step: stepCell,
 
     palette: renderPalette,
     typeNames: renderTypeOptions,

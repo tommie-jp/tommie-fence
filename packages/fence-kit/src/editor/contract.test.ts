@@ -47,6 +47,14 @@ function fakeEditor(over: Partial<FenceEditor> = {}): FenceEditor {
       return line === null ? [] : cellsOn(line);
     },
     foldsWire: false,
+    // `a1` の形。行は 1 字、列は数。
+    step: (cell, rows, cols) => {
+      const found = /^([a-z])(\d+)$/.exec(cell);
+      if (found === null) return null;
+      const row = String.fromCharCode((found[1] ?? 'a').charCodeAt(0) + rows);
+      const col = Number(found[2]) + cols;
+      return row < 'a' || row > 'z' || col < 1 ? null : `${row}${col}`;
+    },
     palette: () => '<button data-type="resistor" data-ends="2"></button><button data-type="led"></button>',
     typeNames: () => '',
     movePart: (source, handle, to) => (lineOf(source, handle) === null

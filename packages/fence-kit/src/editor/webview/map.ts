@@ -434,7 +434,7 @@ document.addEventListener('click', (event) => {
   // 右の道具の列。鍵と同じことをする (鍵を知らなくても押せる)。
   const tool = target?.closest<HTMLElement>('.kc-tool');
   if (tool?.dataset.key !== undefined) {
-    run({ kind: 'key', key: tool.dataset.key, shift: event.shiftKey, modifier: false });
+    run({ kind: 'key', key: tool.dataset.key, shift: event.shiftKey, modifier: tool.dataset.modifier === '1' });
     return;
   }
 

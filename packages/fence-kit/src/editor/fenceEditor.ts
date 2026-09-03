@@ -146,6 +146,14 @@ export type FenceEditor = {
    * 決め打ちにすると、折れない板で「押しても何も起きない鍵」を案内することになる。
    */
   readonly foldsWire: boolean;
+  /**
+   * その穴から `rows` 行・`cols` 列だけ離れた穴 (書かれた綴り)。板の外や、
+   * 数に落ちない綴り (レールの行) は null。
+   *
+   * **矢印で 1 穴動かす・複製を隣に置く**ために要る。殻は番地の綴りを知らないので、
+   * 「1 つ隣」を数えられるのはフェンスだけ。
+   */
+  readonly step: (cell: string, rows: number, cols: number) => string | null;
 
   /** パレット (置ける部品の一覧) の HTML。 */
   readonly palette: () => string;

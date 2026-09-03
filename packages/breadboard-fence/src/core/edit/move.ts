@@ -172,3 +172,29 @@ export function movePart(source: string, id: string, to: Address, trial = false)
 
   return { ok: true, value: { edits, diff: trial ? { lost: [], gained: [] } : diffAfter(source, edits) } };
 }
+
+/**
+ * その穴から `rows` 行・`cols` 列だけ離れた穴。板の外は null。
+ *
+ * **レールは行が極性そのもの**なので数に落ちない — 行を動かす指示は断り、
+ * 列だけなら同じレールの上を動く (`+t5` の隣は `+t6`)。
+ * 板の穴数は書いてある本文が決めるので、いちばん広い板 (`full`) で数える
+ * (狭い板へ置いたときは、当てる側の `movePart` が改めて断る)。
+ */
+export function stepCell(written: string, rows: number, cols: number): string | null {
+  const from = parseAddress(written);
+  if (from === null) return null;
+  if (from.kind !== 'hole') {
+    return rows !== 0 ? null : shiftedOn(from, 0, cols);
+  }
+  return shiftedOn(from, rows, cols);
+}
+
+/** 数え直した穴。行は `a`〜`j`、列は 1 から。 */
+function shiftedOn(from: Address, rows: number, cols: number): string | null {
+  const col = from.col + cols;
+  if (col < 1) return null;
+  if (from.kind !== 'hole') return formatAddress({ ...from, col });
+  const row = HOLE_ROWS[HOLE_ROWS.indexOf(from.row) + rows];
+  return row === undefined ? null : formatAddress({ kind: 'hole', row, col });
+}

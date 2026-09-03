@@ -270,6 +270,38 @@ describe('置く', () => {
   });
 });
 
+describe('続けて置く・1 穴ずつ', () => {
+  test('nudges the part under the cursor by one hole, letting the fence count the address', () => {
+    const hovering = after(PANEL, hover(ON_R1));
+
+    expect(step(hovering, key('ArrowRight')).send).toEqual([{ kind: 'nudge', part: 'R1', rows: 0, cols: 1 }]);
+    expect(step(hovering, key('ArrowUp')).send).toEqual([{ kind: 'nudge', part: 'R1', rows: -1, cols: 0 }]);
+    expect(step(hovering, key('ArrowDown')).send).toEqual([{ kind: 'nudge', part: 'R1', rows: 1, cols: 0 }]);
+    expect(step(hovering, key('ArrowLeft')).send).toEqual([{ kind: 'nudge', part: 'R1', rows: 0, cols: -1 }]);
+    // 矢印は選んだことにもする (続けて押せる)。
+    expect(step(hovering, key('ArrowRight')).state.selected).toEqual({ kind: 'part', id: 'R1' });
+  });
+
+  test('keeps the arrows for the page when there is nothing to nudge', () => {
+    expect(step(PANEL, key('ArrowRight')).send).toEqual([]);
+    expect(step(PANEL, key('ArrowRight')).handled).toBe(false);
+  });
+
+  test('duplicates with Ctrl+D, on the tab as well as in the panel', () => {
+    const hovering = after(PANEL, hover(ON_R1));
+    const onTab = after(start(false), hover(ON_R1));
+
+    expect(step(hovering, key('d', { modifier: true })).send).toEqual([{ kind: 'duplicate', part: 'R1' }]);
+    // 複製は VS Code と鍵を取り合わないので、タブそのものがマップでも効く。
+    expect(step(onTab, key('d', { modifier: true })).send).toEqual([{ kind: 'duplicate', part: 'R1' }]);
+    expect(step(onTab, key('d', { modifier: true })).handled).toBe(true);
+  });
+
+  test('says nothing on Ctrl+D with no part in reach', () => {
+    expect(step(PANEL, key('d', { modifier: true })).send).toEqual([]);
+  });
+});
+
 describe('配線', () => {
   test('W starts the wire tool; the first click sets the start, the second draws', () => {
     const wiring = after(PANEL, key('w'));

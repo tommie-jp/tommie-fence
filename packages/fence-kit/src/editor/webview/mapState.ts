@@ -159,6 +159,14 @@ export type Outcome = {
   readonly focus: Focus | null;
 };
 
+/** 矢印 1 回ぶんの動き。**画面の向きそのまま** (下が行の増える向き)。 */
+const ARROWS: Readonly<Record<string, { readonly rows: number; readonly cols: number }>> = {
+  ArrowUp: { rows: -1, cols: 0 },
+  ArrowDown: { rows: 1, cols: 0 },
+  ArrowLeft: { rows: 0, cols: -1 },
+  ArrowRight: { rows: 0, cols: 1 },
+};
+
 /** ドラッグと見なす距離。指で押すと数 px は動くので、0 では選べない。 */
 const DRAG = 6;
 
@@ -186,7 +194,9 @@ export function hint(state: State): string {
       ? '配線: 始まりの穴をクリック / Esc でやめる'
       : `${state.wireFrom} から: 終わりの穴をクリック${fold} / Esc でやめる`;
   }
-  if (under.part !== null) return `${shownName(under.part)}: M 動かす / G 引きずる / R 回す / X 反転 / E 属性 / Del 消す`;
+  if (under.part !== null) {
+    return `${shownName(under.part)}: M 動かす / 矢印で 1 穴 / R 回す / X 反転 / Ctrl+D 複製 / E 属性 / Del 消す`;
+  }
   if (under.wire !== null) return `${under.wire} 行目の配線: Del 消す`;
   if (under.node !== null) return `${under.node} の節点: G 引きずる (来ているものが丸ごと動く)`;
   if (selected !== null && selected.kind === 'part') {
@@ -379,6 +389,13 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
   }
 
   if (event.modifier) {
+    // 複製は掴んだ物に効く。**タブでもパネルでも同じ** (undo と違って VS Code と
+    // 取り合わない鍵なので、`ownUndo` を見ない)。
+    if (event.key.toLowerCase() === 'd') {
+      const part = partTarget(state);
+      if (part === null) return outcome(state);
+      return outcome(state, [{ kind: 'duplicate', part }], `${shownName(part)} をもう 1 つ…`, true);
+    }
     // **パネルにフォーカスがあると VS Code の Ctrl+Z は届かない。** ここで受けて、
     // 拡張側が覚えている履歴を巻き戻す。タブそのものがマップのときは横取りせず通す。
     if (!state.ownUndo) return outcome(state);
@@ -445,6 +462,17 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
   const part = partTarget(state);
   if (part === null) return outcome(state);
   const picked: Picked = { kind: 'part', id: part };
+
+  // 矢印で 1 穴。**行き先を数えるのは拡張** (綴りを知らない)。
+  const arrow = ARROWS[key];
+  if (arrow !== undefined) {
+    return outcome(
+      { ...state, selected: picked },
+      [{ kind: 'nudge', part, rows: arrow.rows, cols: arrow.cols }],
+      `${shownName(part)} を動かしています…`,
+      true,
+    );
+  }
 
   if (key === 'm') return carrying({ ...state, selected: picked }, { kind: 'move', part, byPointer: false }, true);
   if (key === 'r') {

@@ -138,3 +138,14 @@ export function movePart(source: string, id: string, to: Address, trial = false)
 
   return { ok: true, value: { edits, diff: trial ? { lost: [], gained: [] } : diffAfter(source, edits) } };
 }
+
+/**
+ * その穴から `rows` 行・`cols` 列だけ離れた穴。**格子が一様**なので、
+ * 行と列をそのまま足すだけ。板の外は当てる側 (`movePart`) が改めて断る。
+ */
+export function stepCell(written: string, rows: number, cols: number): string | null {
+  const from = parseAddress(written);
+  if (from === null) return null;
+  const next = { row: from.row + rows, col: from.col + cols };
+  return next.row < 0 || next.col < 0 ? null : formatAddress(next);
+}

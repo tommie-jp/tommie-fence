@@ -42,10 +42,16 @@ describe('panelHtml', () => {
 describe('KiCad の配置', () => {
   test('puts the tools in a column on the right, each with the key it stands for', () => {
     expect(html).toContain('<nav class="kc-tools">');
-    for (const [key, kbd] of [['Escape', 'Esc'], ['a', 'A'], ['w', 'W'], ['m', 'M'], ['g', 'G'], ['r', 'R'], ['x', 'X'], ['Delete', 'Del']]) {
+    const keys = [['Escape', 'Esc'], ['a', 'A'], ['w', 'W'], ['m', 'M'], ['g', 'G'], ['r', 'R'], ['x', 'X'], ['d', 'Ctrl+D'], ['Delete', 'Del']];
+    for (const [key, kbd] of keys) {
       expect(html).toContain(`data-key="${key}"`);
       expect(html).toContain(`<kbd>${kbd}</kbd>`);
     }
+  });
+
+  test('marks the button whose key needs Ctrl, so pressing it means the same thing', () => {
+    expect(html).toContain('data-key="d" data-modifier="1"');
+    expect(html).not.toContain('data-key="r" data-modifier="1"');
   });
 
   test('marks the three tools that have a state, so the CSS can light the current one', () => {
