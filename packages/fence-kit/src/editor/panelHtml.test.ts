@@ -121,6 +121,29 @@ describe('KiCad の配置', () => {
   });
 });
 
+describe('道具の色', () => {
+  test('paints the tools by what they do, not one colour each', () => {
+    // 9 つに 9 色を配ると、色そのものが覚える手がかりにならない。
+    // 増える / つなぐ / 動く / 向きが変わる / 減る、の 5 つに分ける。
+    for (const [keys, color] of [
+      [['a', 'd'], '--cf-adds'],
+      [['w'], '--cf-joins'],
+      [['m', 'g'], '--cf-moves'],
+      [['r', 'x'], '--cf-turns'],
+      [['Delete'], '--cf-bad'],
+    ] as const) {
+      for (const key of keys) expect(html).toContain(`.kc-tool[data-key="${key}"] .kc-glyph`);
+      expect(html).toContain(`color: var(${color})`);
+    }
+  });
+
+  test('gives every colour a fallback, so the icons are coloured without a theme', () => {
+    for (const name of ['--cf-adds', '--cf-joins', '--cf-moves', '--cf-turns']) {
+      expect(html).toMatch(new RegExp(`${name}: var\\(--vscode-charts-\\w+, #`));
+    }
+  });
+});
+
 describe('道具の説明', () => {
   test('says what the tool acts on when the name alone does not tell them apart', () => {
     // 動かすと引きずるは形が同じ (どちらも持ち上げて 1 クリック) なので、

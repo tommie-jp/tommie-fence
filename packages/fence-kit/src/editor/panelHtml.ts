@@ -31,6 +31,13 @@ const STYLE = `
     /** 選んだものの色。**選択は一等分かりやすくする**ので、テーマが無い所でも
         必ず色が出るように、システムの強調色まで落とす。 */
     --cf-held: var(--vscode-focusBorder, Highlight);
+    /* 道具の絵の色。**意味の同じ道具は同じ色**にする — 9 つに 9 色を配ると、
+       色そのものが覚える手がかりにならない。増える / つなぐ / 動く / 向きが
+       変わる / 減る、の 5 つだけに分ける。 */
+    --cf-adds: var(--vscode-charts-green, #3fb950);
+    --cf-joins: var(--vscode-charts-blue, #4c8eda);
+    --cf-moves: var(--vscode-charts-orange, #d18616);
+    --cf-turns: var(--vscode-charts-purple, #b180d7);
     --cf-bad: var(--vscode-editorError-foreground, #f14c4c);
     --cf-iffy: var(--vscode-editorWarning-foreground, #cca700);
     --cf-ghost: var(--vscode-charts-green, #4caf50);
@@ -101,6 +108,20 @@ const STYLE = `
     border: 1px solid transparent; border-radius: 4px; background: none; cursor: pointer;
   }
   .kc-tool .kc-glyph { font-size: 16px; line-height: 1; }
+  /* 絵に色を付ける。**道具の列と右クリックの一覧の両方**に効かせる
+     (同じ道具が 2 か所で違って見えると、色が手がかりにならない)。 */
+  .kc-tool[data-key="a"] .kc-glyph,
+  .kc-tool[data-key="d"] .kc-glyph { color: var(--cf-adds); }
+  .kc-tool[data-key="w"] .kc-glyph { color: var(--cf-joins); }
+  .kc-tool[data-key="m"] .kc-glyph,
+  .kc-tool[data-key="g"] .kc-glyph { color: var(--cf-moves); }
+  .kc-tool[data-key="r"] .kc-glyph,
+  .kc-tool[data-key="x"] .kc-glyph { color: var(--cf-turns); }
+  .kc-tool[data-key="Delete"] .kc-glyph { color: var(--cf-bad); }
+  /* 選んでいる道具は地が反転するので、絵の色は地に負けないよう地の色に戻す。 */
+  body[data-tool="select"] .kc-tool[data-tool="select"] .kc-glyph,
+  body[data-tool="wire"] .kc-tool[data-tool="wire"] .kc-glyph,
+  body[data-tool="place"] .kc-tool[data-tool="place"] .kc-glyph { color: inherit; }
   .kc-tool kbd { font-size: 9px; }
   .kc-tool:hover { border-color: var(--vscode-focusBorder); }
   body[data-tool="select"] .kc-tool[data-tool="select"],
