@@ -82,9 +82,25 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
     expect(editor.fieldsOf(LED, 'R1')?.can).toEqual(['type', 'value', 'label']);
   });
 
+  test('places a part from the palette', () => {
+    const result = editor.addPart(LED, { id: 'R2', type: 'resistor', at: ['c5', 'c10'] });
+
+    expect(result.ok).toBe(true);
+  });
+
+  test('offers a palette and the type names the fields can use', () => {
+    // **何が置けるかは部品の表そのもの。** webview 側に写しを持たない。
+    expect(editor.palette()).toContain('data-type="resistor" data-ends="2"');
+    expect(editor.typeNames('cf-type-names')).toContain('<option value="resistor"/>');
+  });
+
+  test('names a new part by its prefix', () => {
+    expect(editor.nextId(LED, 'led')).toBe('D1');
+  });
+
   test('says so for what it cannot do yet, instead of doing nothing', () => {
     // 黙って何もしないと、押しても動かない道具ができる。
-    const result = editor.addPart(LED, { id: 'R2', type: 'resistor', at: ['c5'] });
+    const result = editor.turn(LED, 'R1', 1);
 
     expect(result.ok).toBe(false);
     expect(!result.ok && result.error.message).toContain('まだ');

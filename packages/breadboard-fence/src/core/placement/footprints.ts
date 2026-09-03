@@ -67,6 +67,14 @@ export function lookupFootprint(type: string): Footprint | null {
   return null;
 }
 
+/**
+ * 足の数が決まっていて、そのまま置ける種類。**`dipN` / `sipN` / ボード / 機器は
+ * 入らない** (ピン数や名前を選ばないと置けない)。マップのパレットが引く。
+ */
+export const placeableTypes = (): readonly string[] => [
+  ...TWO_LEAD_TYPES, ...THREE_LEAD_TYPES, ...SWITCH_TYPES,
+];
+
 export const knownPartTypes = (): readonly string[] => [
   ...TWO_LEAD_TYPES,
   ...THREE_LEAD_TYPES,

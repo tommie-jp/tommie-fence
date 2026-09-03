@@ -1,11 +1,12 @@
 import { renderIssues } from 'fence-kit';
 import type { EditResult, FenceEditor } from 'fence-kit';
 import { normalizeNewlines } from 'fence-kit';
+import { renderPalette, renderTypeOptions } from '../../core/edit/palette.ts';
 import { partFields, setField } from '../../core/edit/field.ts';
 import type { PartField } from '../../core/edit/field.ts';
 import { issuesOf, shiftIssues } from '../../core/edit/issues.ts';
 import { aimAt, fenceAt } from '../../core/edit/map.ts';
-import { insertWire } from '../../core/edit/insert.ts';
+import { insertPart, insertWire, nextPartId } from '../../core/edit/insert.ts';
 import { renamePart } from '../../core/edit/rename.ts';
 import { movePart, movablePartIds, partSpans } from '../../core/edit/move.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
@@ -61,11 +62,12 @@ export function createPerfboardEditor(): FenceEditor {
 
     // 部品の ID は配線から指すための名前なので重ならない — 名札はそのまま名前。
     nameOf: (handle) => handle,
-    nextId: () => null,
+    // ID がそのまま図に出る種類は無い (どれも接頭辞で名前が付く)。
     nameHint: () => '',
 
-    palette: () => '',
-    typeNames: () => '',
+    palette: renderPalette,
+    typeNames: renderTypeOptions,
+    nextId: nextPartId,
 
     movePart: (source, handle, to) => {
       const at = readAddress(to);
@@ -103,8 +105,12 @@ export function createPerfboardEditor(): FenceEditor {
         : { ok: false, error: { message: `この文法に ${field} の欄はありません`, line: null } }
     ),
 
-    // 残りは第 2 段の続き (52 の docs/13 の手順 6)。**できないことは、できないと言う。**
-    addPart: () => notYet('部品を置くの'),
+    addPart: (source, part) => {
+      const at = part.at.map((one) => readAddress(one));
+      const bad = at.indexOf(null);
+      if (bad >= 0) return unreadable(part.at[bad] ?? '');
+      return insertPart(source, { id: part.id, type: part.type, at: at as NonNullable<typeof at[number]>[] });
+    },
     turn: () => notYet('回すの'),
     flip: () => notYet('反転は'),
   };

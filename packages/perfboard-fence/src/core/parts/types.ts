@@ -91,6 +91,13 @@ export const isThreeLead = (type: string): boolean => THREE_LEAD.has(type);
 export const isKnownType = (type: string): boolean =>
   TWO_LEAD.has(type) || THREE_LEAD.has(type) || NOT_YET.has(type) || NESTED.has(type);
 export const placeableNames = (): readonly string[] => [...TWO_LEAD, ...THREE_LEAD];
+
+/** その種類を指せる略記 (`r` → resistor)。パレットの検索が引く。 */
+export const aliasesFor = (type: string): readonly string[] =>
+  Object.entries(ALIASES).filter(([, name]) => name === type).map(([alias]) => alias);
+
+/** 略記を正式名に畳む。知らない綴りはそのまま返す (呼ぶ側が断る)。 */
+export const resolveTypeName = (type: string): string => (own(ALIASES, type) ? ALIASES[type] ?? type : type);
 export const knownNames = (): readonly string[] =>
   [...TWO_LEAD, ...THREE_LEAD, ...NOT_YET, ...NESTED, ...Object.keys(ALIASES)];
 
