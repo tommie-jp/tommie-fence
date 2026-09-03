@@ -205,12 +205,17 @@ function cellCentre(address: string): { readonly x: number; readonly y: number }
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
-/** 穴の集まりの真ん中。空なら null。 */
-function middleOf(cells: readonly string[]): { readonly x: number; readonly y: number } | null {
-  const points = cells.map(cellCentre).filter((one) => one !== null);
-  if (points.length === 0) return null;
-  const sum = points.reduce((into, one) => ({ x: into.x + one.x, y: into.y + one.y }), { x: 0, y: 0 });
-  return { x: sum.x / points.length, y: sum.y / points.length };
+/**
+ * ずらしの基準にする穴。**先頭の穴 (アンカー)** — 置くのも動かすのもアンカーが
+ * 押した穴に来る決まりなので、そこを合わせれば絵と穴が必ず揃う。
+ *
+ * **真ん中で合わせない。** 足の並べ方は板が決めるので、同じ部品でも板の端では
+ * 左へ伸びたり右へ伸びたりする。真ん中で合わせると、伸びる向きが変わった
+ * ときに絵が穴からずれる。
+ */
+function anchorOf(cells: readonly string[]): { readonly x: number; readonly y: number } | null {
+  const first = cells[0];
+  return first === undefined ? null : cellCentre(first);
 }
 
 /**
@@ -251,8 +256,8 @@ function markCarried(now: State): void {
   // 持ち上げたものは薄くする。**行き先の絵と二重に見えない**ように。
   if (now.carry.kind === 'move') held.classList.add('cf-lifted');
 
-  const from = middleOf(now.ghost.from ?? []);
-  const to = middleOf(now.ghost.cells);
+  const from = anchorOf(now.ghost.from ?? []);
+  const to = anchorOf(now.ghost.cells);
   if (from === null || to === null) return;
 
   const ghost = held.cloneNode(true) as SVGGraphicsElement;
