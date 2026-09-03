@@ -1,25 +1,30 @@
 /**
  * マップの webview の**状態遷移**。DOM も vscode も知らない純関数なので、
- * そのまま node のテストに掛かる (設計上の約束 1 と同じ考え方を webview にも)。
+ * そのまま node のテストに掛かる。
  *
- * 道具は 3 つ — **選ぶ・配線・節点**。掴む物が違えば意味も違うので、同じ操作に
- * 混ぜない (部品は 1 つだけ動いて接続が変わり、節点は交点ごと動いて接続が
- * 保たれる)。配線は動かせないが、消すには選ぶ手立てが要るので「選ぶ」道具で
- * 部品と一緒に選べる。
+ * **型は KiCad から借りる** (52 の docs/17)。
  *
- * **動かすのはドラッグだけ。** 選んでから別の場所をクリックする 2 段構えは
- * 廃止した (選んだあとの何気ないクリックがそのまま移動になり、置くつもりの
- * ない所へ飛ぶ)。クリックは選ぶだけで、エディタ側が光る。
+ * 1. **カーソルの下が対象。** 選んでいなければ、ホバーしている物に鍵が効く
+ *    (`M` 動かす / `G` 引きずる / `R` 回す / `X` 反転 / `Del` 消す / `E` 欄)。
+ * 2. **持ち上げて、置く所で 1 クリック。** 置く・動かす・引きずるは全部
+ *    「持ち物 (`carry`) がカーソルに付いてくる → クリックで確定」。ドラッグでも
+ *    同じ結果になる。**クリックだけでは動かない** (選んだあとの何気ないクリックが
+ *    移動になると、置くつもりのない所へ飛ぶ)。
+ * 3. **確定前に回せる。** 持ち物のまま `R` / `X` が効く。
+ * 4. **`Esc` は段階的。** 持ち物を捨てる → 道具を「選ぶ」へ → 選択を外す。
+ * 5. **続けて置く。** 置いたあと同じ種類がまたカーソルに付く。
+ *
+ * **ゴーストは拡張に訊く。** 持ち物があるとき、カーソルの下の穴が変わるたびに
+ * `preview` を送り、拡張が「どの穴を使うか・置けるか」を `ghost` で返す。
+ * 押したときと同じ関数を試し当てて答えるので、見せた物と書かれる物が
+ * 食い違わない。穴の並べ方 (2 本足の間隔、3 本足の広がり) はこちらは知らない。
  */
 
 export type Kind = 'part' | 'node' | 'wire';
 
 /**
  * 選んでいるもの。**種類ごと覚える** (掴む物が違えば意味も違う)。
- *
- * 部品の `id` は**名札** (`core/edit/handles.ts`) — 同じ名前の記号が 2 つ以上
- * あることがあるので、掴んだものは名前ではなく名札で指す。人に見せる字は
- * `shown` を通す (「VCC#2 を消しています」ではなく「VCC を消しています」)。
+ * 部品の `id` は**名札** (`VCC#2`)。人に見せる字は `shown` を通す。
  */
 export type Picked = { readonly kind: Kind; readonly id: string };
 
@@ -27,56 +32,85 @@ export type Picked = { readonly kind: Kind; readonly id: string };
 const shown = (picked: Picked): string =>
   picked.kind === 'part' ? picked.id.split('#')[0] ?? picked.id : picked.id;
 
-/** 道具。**選ぶ**が既定で、`Esc` でいつでもここへ戻る。 */
-export type Tool = 'select' | 'wire' | 'node' | 'part';
+const shownName = (handle: string): string => handle.split('#')[0] ?? handle;
 
-/** パレットで選んだ、これから置く部品。 */
-export type Placing = {
-  readonly type: string;
-  /** 2 端子か (交点から交点へドラッグする。1 端子・多端子は 1 回の押しで置く)。 */
-  readonly twoEnds: boolean;
+/** 道具。**選ぶ**が既定で、`Esc` でいつでもここへ戻る。`place` は持ち物が部品のとき。 */
+export type Tool = 'select' | 'wire' | 'place';
+
+/**
+ * カーソルの下にあるもの (DOM を読むのは `map.ts`)。**全部いっぺんに持つ** —
+ * 部品の升にも節点は立つので、どれを対象にするかは鍵が決める
+ * (`M` は部品、`G` は節点、`W` は穴)。
+ */
+export type Under = {
+  readonly cell: string | null;
+  readonly part: string | null;
+  readonly node: string | null;
+  readonly wire: string | null;
+};
+
+export const NOTHING: Under = { cell: null, part: null, node: null, wire: null };
+
+/** カーソルに付いているもの。 */
+export type Carry =
+  | {
+    readonly kind: 'place';
+    readonly type: string;
+    /** 90 度を何回 (正が時計回り)。置く前に `R` で回した分。 */
+    readonly turn: number;
+    readonly flip: boolean;
+    /** 2 端子か。ドラッグで間隔を選べるのはこれだけ (ほかは押した穴 1 つ)。 */
+    readonly twoEnds: boolean;
+  }
+  | { readonly kind: 'move'; readonly part: string; readonly byPointer: boolean }
+  | { readonly kind: 'drag'; readonly node: string; readonly byPointer: boolean };
+
+/** 拡張が答えたゴースト。`key` は問い合わせの札 (古い答えを捨てる)。 */
+export type Ghost = {
+  readonly key: string;
+  readonly cells: readonly string[];
+  readonly ok: boolean;
+  readonly why: string;
 };
 
 export type State = {
   readonly tool: Tool;
-  readonly picked: Picked | null;
-  /** 押した場所。放した場所が離れていればドラッグ、その場なら選んだだけ。 */
-  readonly pressed: { readonly x: number; readonly y: number } | null;
-  /** 配線の道具で押した交点 (引きかけの端)。放した交点との間に 1 本引く。 */
-  readonly drawing: string | null;
-  /** パレットで選んだ部品。**`Esc` まで置き続ける** (何本も置くのが普通なので)。 */
-  readonly placing: Placing | null;
-  /**
-   * 戻す・やり直すを自分で持つか。パネルは持つ (フォーカスがあると VS Code の
-   * `Ctrl+Z` がエディタに届かない)。タブそのものがマップのときは VS Code に任せる。
-   */
+  readonly selected: Picked | null;
+  readonly under: Under;
+  readonly carry: Carry | null;
+  /** 配線の 1 点目 (配線の道具)。2 点目のクリックで 1 本になる。 */
+  readonly wireFrom: string | null;
+  /** 押した場所。放した場所が離れていればドラッグ、その場ならクリック。 */
+  readonly pressed: { readonly x: number; readonly y: number; readonly cell: string | null } | null;
+  readonly ghost: Ghost | null;
+  /** 直前に置いた種類 (`Insert` でもう 1 つ)。 */
+  readonly lastPlaced: string | null;
+  /** 戻す・やり直すを自分で持つか (パネル)。タブそのものがマップなら VS Code に任せる。 */
   readonly ownUndo: boolean;
+  /** 配線を `Shift` で折れるか (フェンスの能力表)。案内文に出す。 */
+  readonly foldsWire: boolean;
 };
 
-export const start = (ownUndo: boolean): State =>
-  ({ tool: 'select', picked: null, pressed: null, drawing: null, placing: null, ownUndo });
+export const start = (ownUndo: boolean, foldsWire = false): State => ({
+  tool: 'select',
+  selected: null,
+  under: NOTHING,
+  carry: null,
+  wireFrom: null,
+  pressed: null,
+  ghost: null,
+  lastPlaced: null,
+  ownUndo,
+  foldsWire,
+});
 
 /** webview で起きたこと。**DOM を読むのは呼ぶ側** (`map.ts`)。 */
 export type Event =
-  | {
-    readonly kind: 'press';
-    /** 押した先にあった掴める物 (無ければ null)。 */
-    readonly on: Picked | null;
-    /** 押した先の交点 (配線の道具が使う)。 */
-    readonly cell: string | null;
-    readonly x: number;
-    readonly y: number;
-    /** マップの上を押したか (外を押しても選択は消さない)。 */
-    readonly onMap: boolean;
-  }
-  | {
-    readonly kind: 'release';
-    readonly x: number;
-    readonly y: number;
-    readonly cell: string | null;
-    /** 押しながら放したか (配線の折れ方を変える)。 */
-    readonly shift: boolean;
-  }
+  | { readonly kind: 'hover'; readonly under: Under }
+  | { readonly kind: 'press'; readonly under: Under; readonly x: number; readonly y: number; readonly onMap: boolean }
+  /** 押したまま動いた。 */
+  | { readonly kind: 'drag'; readonly under: Under; readonly x: number; readonly y: number }
+  | { readonly kind: 'release'; readonly under: Under; readonly x: number; readonly y: number; readonly shift: boolean }
   | { readonly kind: 'cancel' }
   | {
     readonly kind: 'key';
@@ -89,137 +123,216 @@ export type Event =
   }
   | { readonly kind: 'tool'; readonly tool: Tool }
   /** パレットで部品を選んだ。 */
-  | { readonly kind: 'place'; readonly placing: Placing }
-  /** マップを組み直した (要素が入れ替わるので掴みを捨てる)。 */
-  | { readonly kind: 'refresh' };
+  | { readonly kind: 'place'; readonly type: string; readonly twoEnds: boolean }
+  /** 拡張がゴーストを返した。 */
+  | { readonly kind: 'ghost'; readonly ghost: Ghost }
+  /** マップを組み直した (要素が入れ替わるので押しかけを捨てる)。 */
+  | { readonly kind: 'refresh' }
+  | { readonly kind: 'dblclick'; readonly under: Under };
 
 /** 拡張へ送る知らせ (`session.ts` の `Incoming` と同じ形)。 */
 export type Message = { readonly kind: string } & Readonly<Record<string, unknown>>;
 
+/** DOM 側に頼むフォーカスの移動。 */
+export type Focus = 'search' | 'id';
+
 export type Outcome = {
   readonly state: State;
   readonly send: readonly Message[];
-  /** 帯に出す一言。**null は「変えない」**、空文字は消す。 */
-  readonly status: string | null;
+  /** 帯に出す一言。 */
+  readonly status: string;
   /** その打鍵をこちらで握ったか (既定の動きを止めるかどうか)。 */
   readonly handled: boolean;
+  readonly focus: Focus | null;
 };
 
 /** ドラッグと見なす距離。指で押すと数 px は動くので、0 では選べない。 */
 const DRAG = 6;
 
-const HINTS: Readonly<Record<Kind, string>> = {
-  part: ' を選びました。ドラッグで動かし、R で回し、M で反転、Delete で消します',
-  node: ' の節点を選びました。ドラッグして置きたい交点で放します',
-  wire: ' 行目の配線を選びました。Delete で消します',
-};
-
-/** 選んだものをエディタで光らせてもらう (拡張だけが文書を触れる)。 */
 const select = (picked: Picked | null): Message =>
   (picked === null ? { kind: 'select' } : { kind: 'select', what: picked.kind, id: picked.id });
+
+/**
+ * いまの状態でできること (KiCad の状態行)。**状態から毎回組む** — 決め打ちの
+ * 案内文は、今の状態と関係ないことを言い続ける。
+ */
+export function hint(state: State): string {
+  const { carry, under, selected } = state;
+  if (carry !== null) {
+    const bad = state.ghost !== null && !state.ghost.ok && state.ghost.why !== '' ? ` — ${state.ghost.why}` : '';
+    if (carry.kind === 'place') {
+      const how = carry.twoEnds ? 'クリックで置く (ドラッグで間隔を選ぶ)' : 'クリックで置く';
+      return `${carry.type} を置きます: ${how} / R 回す / X 反転 / Esc でやめる${bad}`;
+    }
+    if (carry.kind === 'move') return `${shownName(carry.part)} を動かしています: 置きたい穴でクリック / Esc で戻す${bad}`;
+    return `${carry.node} の節点を引きずっています: 置きたい穴でクリック (接続は保たれます) / Esc で戻す${bad}`;
+  }
+  if (state.tool === 'wire') {
+    const fold = state.foldsWire ? ' (Shift で先に横へ折る)' : '';
+    return state.wireFrom === null
+      ? '配線: 始まりの穴をクリック / Esc でやめる'
+      : `${state.wireFrom} から: 終わりの穴をクリック${fold} / Esc でやめる`;
+  }
+  if (under.part !== null) return `${shownName(under.part)}: M 動かす / G 引きずる / R 回す / X 反転 / E 属性 / Del 消す`;
+  if (under.wire !== null) return `${under.wire} 行目の配線: Del 消す`;
+  if (under.node !== null) return `${under.node} の節点: G 引きずる (来ているものが丸ごと動く)`;
+  if (selected !== null && selected.kind === 'part') {
+    return `${shown(selected)} を選んでいます: M 動かす / R 回す / X 反転 / E 属性 / Del 消す / Esc で外す`;
+  }
+  return 'A 部品を置く / W 配線 / M 動かす / G 引きずる (鍵はカーソルの下に効きます)';
+}
 
 const outcome = (
   state: State,
   send: readonly Message[] = [],
   status: string | null = null,
   handled = false,
-): Outcome => ({ state, send, status, handled });
+  focus: Focus | null = null,
+): Outcome => ({ state, send, status: status ?? hint(state), handled, focus });
 
-const letGo = (state: State): Outcome =>
-  outcome({ ...state, picked: null, pressed: null, drawing: null }, [select(null)], '', true);
+/** ゴーストの問い合わせの札。同じ札の答えだけを受け取る。 */
+function previewKey(carry: Carry, cell: string): string {
+  if (carry.kind === 'place') return `place:${carry.type}:${cell}:${carry.turn}:${carry.flip ? 1 : 0}`;
+  if (carry.kind === 'move') return `move:${carry.part}:${cell}`;
+  return `node:${carry.node}:${cell}`;
+}
+
+/** 持ち物をカーソルの下の穴に当ててみる問い合わせ。穴が無ければ何も訊かない。 */
+function previewAt(carry: Carry, cell: string | null): readonly Message[] {
+  if (cell === null) return [];
+  const key = previewKey(carry, cell);
+  if (carry.kind === 'place') {
+    return [{ kind: 'preview', key, what: 'place', type: carry.type, to: cell, turn: carry.turn, flip: carry.flip }];
+  }
+  if (carry.kind === 'move') return [{ kind: 'preview', key, what: 'move', part: carry.part, to: cell }];
+  return [{ kind: 'preview', key, what: 'node', from: carry.node, to: cell }];
+}
+
+/** 持ち物を持ち替える (ゴーストは訊き直す)。 */
+const carrying = (state: State, carry: Carry | null): Outcome => {
+  const next: State = { ...state, carry, ghost: null, pressed: null, tool: carry?.kind === 'place' ? 'place' : (carry === null && state.tool === 'place' ? 'select' : state.tool) };
+  return outcome(next, carry === null ? [] : previewAt(carry, state.under.cell));
+};
+
+function onHover(state: State, under: Under): Outcome {
+  const moved = under.cell !== state.under.cell;
+  const next: State = { ...state, under, ghost: moved && under.cell === null ? null : state.ghost };
+  const ask = state.carry !== null && moved ? previewAt(state.carry, under.cell) : [];
+  return outcome(next, ask);
+}
+
+/** 鍵の対象になる部品。選んでいればそれ、無ければカーソルの下。 */
+const partTarget = (state: State): string | null =>
+  (state.selected?.kind === 'part' ? state.selected.id : state.under.part);
 
 function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcome {
-  if (state.tool === 'part') {
-    // 2 端子は交点から交点へ。1 端子・多端子は放した交点に置くので、
-    // 押した時点では何も覚えない。
-    if (event.cell === null || !state.placing?.twoEnds) return outcome(state);
+  const pressed = { x: event.x, y: event.y, cell: event.under.cell };
+  const hovered: State = { ...state, under: event.under };
+
+  // 持ち物があるあいだ、押すのは「ここに置く」の始まり (確定は放したとき)。
+  if (state.carry !== null) return outcome({ ...hovered, pressed });
+
+  if (state.tool === 'wire') {
+    if (event.under.cell === null) return outcome(hovered);
+    const from = state.wireFrom ?? event.under.cell;
+    return outcome({ ...hovered, wireFrom: from, pressed });
+  }
+
+  const on: Picked | null = event.under.part !== null
+    ? { kind: 'part', id: event.under.part }
+    : event.under.wire !== null
+      ? { kind: 'wire', id: event.under.wire }
+      : event.under.node !== null ? { kind: 'node', id: event.under.node } : null;
+
+  if (on === null) {
+    // マップの何もない所を押したら選び直し (選んだままだと光が残る)。
+    if (state.selected !== null && event.onMap) return outcome({ ...hovered, selected: null, pressed: null }, [select(null)]);
+    return outcome(hovered);
+  }
+  return outcome({ ...hovered, selected: on, pressed }, [select(on)]);
+}
+
+function onDrag(state: State, event: Extract<Event, { kind: 'drag' }>): Outcome {
+  const hovered = onHover(state, event.under);
+  const { pressed, selected, carry } = hovered.state;
+  if (carry !== null || pressed === null || selected === null) return hovered;
+  if (Math.abs(event.x - pressed.x) + Math.abs(event.y - pressed.y) <= DRAG) return hovered;
+
+  // 押したまま離れたら持ち上げる (KiCad の M / G をドラッグでも)。配線は動かせない。
+  if (selected.kind === 'part') {
+    const lifted = carrying(hovered.state, { kind: 'move', part: selected.id, byPointer: true });
+    return { ...lifted, state: { ...lifted.state, pressed } };
+  }
+  if (selected.kind === 'node') {
+    const lifted = carrying(hovered.state, { kind: 'drag', node: selected.id, byPointer: true });
+    return { ...lifted, state: { ...lifted.state, pressed } };
+  }
+  return hovered;
+}
+
+function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Outcome {
+  const hovered: State = { ...state, under: event.under };
+  const cell = event.under.cell;
+  const { carry, pressed } = state;
+  const clear: State = { ...hovered, pressed: null };
+
+  if (carry?.kind === 'place') {
+    if (cell === null) return outcome(clear);
+    const traveled = pressed !== null && pressed.cell !== null && pressed.cell !== cell
+      && Math.abs(event.x - pressed.x) + Math.abs(event.y - pressed.y) > DRAG;
+    // 2 端子はドラッグで間隔を選べる。ほかは押した穴 1 つ (並べ方は板が決める)。
+    const at = carry.twoEnds && traveled && pressed?.cell ? [pressed.cell, cell] : [cell];
+    // **道具は置いたあとも続く** (何本も置くのが普通)。抜けるのは Esc。
     return outcome(
-      { ...state, drawing: event.cell, pressed: { x: event.x, y: event.y } },
-      [],
-      `${event.cell} から。放した交点までが ${state.placing.type} になります`,
+      { ...clear, lastPlaced: carry.type },
+      [{ kind: 'addPart', type: carry.type, at, turn: carry.turn, flip: carry.flip }],
+      `${carry.type} を ${at.join(' ')} へ…`,
+    );
+  }
+
+  if (carry?.kind === 'move' || carry?.kind === 'drag') {
+    if (cell === null) {
+      // ドラッグで持ち上げた物を穴の外で放したら戻す。鍵で持ち上げた物は持ったまま。
+      return carry.byPointer ? carrying(clear, null) : outcome(clear);
+    }
+    if (carry.byPointer && pressed !== null && pressed.cell === cell) {
+      // 持ち上げた穴に戻したのは「選んだ」だけ。
+      return carrying(clear, null);
+    }
+    const done: State = { ...clear, carry: null, ghost: null, tool: 'select' };
+    if (carry.kind === 'move') {
+      return outcome(done, [{ kind: 'move', part: carry.part, to: cell }], `${shownName(carry.part)} を ${cell} へ…`);
+    }
+    return outcome(
+      { ...done, selected: null },
+      [{ kind: 'moveNode', from: carry.node, to: cell }],
+      `${carry.node} の節点を ${cell} へ…`,
     );
   }
 
   if (state.tool === 'wire') {
-    // 配線は**交点から交点へ**。押した交点を覚え、放した交点との間に 1 本引く。
-    if (event.cell === null) return outcome(state);
+    const from = state.wireFrom;
+    if (from === null || cell === null || cell === from) return outcome(clear);
+    const operator = event.shift && state.foldsWire ? '-|' : '--';
     return outcome(
-      { ...state, drawing: event.cell, pressed: { x: event.x, y: event.y } },
-      [],
-      `${event.cell} から。放した交点まで引きます (Shift で先に横へ折る)`,
+      { ...clear, wireFrom: null },
+      [{ kind: 'addWire', from, to: cell, operator }],
+      `${from} から ${cell} へ…`,
     );
   }
 
-  // いまの道具で掴める物だけを掴む。部品の升にも節点は立つので、どちらも
-  // 掴めると掴んだつもりと違うものが動く。
-  const wanted = state.tool === 'node' ? ['node'] : ['part', 'wire'];
-  const on = event.on !== null && wanted.includes(event.on.kind) ? event.on : null;
-
-  if (on === null) {
-    // マップの何もない所を押したら選び直し (選んだままだと光が残る)。
-    return state.picked !== null && event.onMap ? letGo(state) : outcome(state);
-  }
-  return outcome(
-    { ...state, picked: on, pressed: { x: event.x, y: event.y } },
-    [select(on)],
-    `${shown(on)}${HINTS[on.kind]}`,
-  );
+  return outcome(clear);
 }
 
-function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Outcome {
-  if (state.tool === 'part' && state.placing !== null) {
-    const { type, twoEnds } = state.placing;
-    const from = state.drawing;
-    const clear = { ...state, drawing: null, pressed: null };
-    if (event.cell === null) return outcome(clear, [], '');
-    // **道具は置いたあとも続く** (何本も置くのが普通)。抜けるのは Esc。
-    if (!twoEnds) return outcome(clear, [{ kind: 'addPart', type, at: [event.cell] }], `${type} を ${event.cell} へ…`);
-    if (from === null || from === event.cell) return outcome(clear, [], '');
-    return outcome(
-      clear,
-      [{ kind: 'addPart', type, at: [from, event.cell] }],
-      `${type} を ${from} から ${event.cell} へ…`,
-    );
-  }
-
-  if (state.drawing !== null) {
-    const from = state.drawing;
-    const clear = { ...state, drawing: null, pressed: null };
-    // 同じ交点で放したのは引きかけの取り消し (長さ 0 の線は図に出ない)。
-    if (event.cell === null || event.cell === from) return outcome(clear, [], '');
-    return outcome(
-      clear,
-      [{ kind: 'addWire', from, to: event.cell, operator: event.shift ? '-|' : '--' }],
-      `${from} から ${event.cell} へ…`,
-    );
-  }
-
-  const { picked, pressed } = state;
-  if (picked === null || pressed === null) return outcome({ ...state, pressed: null });
-
-  // **その場で放したのは「選んだ」だけ。** 配線は動かせない (端の付け替えは別の話)。
-  const moved = picked.kind !== 'wire'
-    && Math.abs(event.x - pressed.x) + Math.abs(event.y - pressed.y) > DRAG;
-  if (!moved || event.cell === null) return outcome({ ...state, pressed: null });
-
-  const what = picked.kind === 'node' ? `${picked.id} の節点` : shown(picked);
-  return outcome(
-    { ...state, picked: null, pressed: null },
-    [picked.kind === 'node'
-      ? { kind: 'moveNode', from: picked.id, to: event.cell }
-      : { kind: 'move', part: picked.id, to: event.cell }],
-    `${what} を ${event.cell} へ…`,
-  );
-}
-
-/** 道具の鍵 (KiCad の語彙に寄せる)。 */
-const TOOL_KEYS: Readonly<Record<string, Tool>> = { v: 'select', w: 'wire', n: 'node' };
-
+/** 道具の鍵。 */
 function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
   if (event.key === 'Escape') {
-    // **`Esc` は「選ぶ」へ戻る鍵**でもある (道具に入ったまま抜けられないと詰む)。
-    if (state.tool !== 'select') return step(state, { kind: 'tool', tool: 'select' });
-    return state.picked === null ? outcome(state) : letGo(state);
+    if (state.carry !== null) return { ...carrying(state, null), handled: true };
+    // 配線の引きかけは、道具を抜ける前に 1 点目だけを捨てる。
+    if (state.wireFrom !== null) return outcome({ ...state, wireFrom: null, pressed: null }, [], null, true);
+    if (state.tool !== 'select') return { ...step(state, { kind: 'tool', tool: 'select' }), handled: true };
+    if (state.selected === null) return outcome(state);
+    return outcome({ ...state, selected: null, pressed: null }, [select(null)], null, true);
   }
 
   if (event.modifier) {
@@ -234,68 +347,109 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
 
   if (event.typing) return outcome(state);
 
-  // 道具は掴んでいなくても選べる (これから何をするかの話なので)。
-  const tool = TOOL_KEYS[event.key.toLowerCase()];
-  if (tool !== undefined) return { ...step(state, { kind: 'tool', tool }), handled: true };
+  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
 
-  const { picked } = state;
-  if (picked === null) return outcome(state);
+  if (key === 'a') return outcome(state, [], null, true, 'search');
+  if (key === 'w') return { ...step(state, { kind: 'tool', tool: 'wire' }), handled: true };
 
-  if (event.key === 'Delete' || event.key === 'Backspace') {
-    // 節点は交点であって物ではないので、消すものが無い。
-    if (picked.kind === 'node') return outcome(state);
+  // 持ち物のまま回す・反転する (置く前に向きを決める)。
+  if (state.carry?.kind === 'place') {
+    if (key === 'r') {
+      const turn = state.carry.turn + (event.shift ? -1 : 1);
+      return { ...carrying(state, { ...state.carry, turn }), handled: true };
+    }
+    if (key === 'x') return { ...carrying(state, { ...state.carry, flip: !state.carry.flip }), handled: true };
+    return outcome(state);
+  }
+  if (state.carry !== null) return outcome(state);
+
+  if (key === 'Insert') {
+    if (state.lastPlaced === null) return outcome(state);
+    return { ...step(state, { kind: 'place', type: state.lastPlaced, twoEnds: false }), handled: true };
+  }
+
+  if (key === 'g') {
+    const node = state.under.node ?? (state.selected?.kind === 'node' ? state.selected.id : null);
+    if (node === null) return outcome(state);
+    return { ...carrying(state, { kind: 'drag', node, byPointer: false }), handled: true };
+  }
+
+  if (key === 'Delete' || key === 'Backspace') {
+    const picked: Picked | null = state.selected !== null && state.selected.kind !== 'node'
+      ? state.selected
+      : state.under.part !== null
+        ? { kind: 'part', id: state.under.part }
+        : state.under.wire !== null ? { kind: 'wire', id: state.under.wire } : null;
+    if (picked === null) return outcome(state);
     return outcome(
-      { ...state, picked: null, pressed: null },
+      { ...state, selected: null, pressed: null },
       [{ kind: 'delete', what: picked.kind, id: picked.id }],
       `${shown(picked)} を消しています…`,
       true,
     );
   }
 
-  // 回す・反転するのは部品だけ。**掴んだまま**にして、続けて回せるようにする。
-  if (picked.kind !== 'part') return outcome(state);
-  const key = event.key.toLowerCase();
+  const part = partTarget(state);
+  if (part === null) return outcome(state);
+  const picked: Picked = { kind: 'part', id: part };
+
+  if (key === 'm') return { ...carrying({ ...state, selected: picked }, { kind: 'move', part, byPointer: false }), handled: true };
   if (key === 'r') {
     const quarters = event.shift ? -1 : 1;
-    return outcome(
-      state,
-      [{ kind: 'turn', part: picked.id, quarters }],
-      `${shown(picked)} を回しています…`,
-      true,
-    );
+    return outcome(state, [{ kind: 'turn', part, quarters }], `${shownName(part)} を回しています…`, true);
   }
-  if (key === 'm') {
-    return outcome(state, [{ kind: 'flip', part: picked.id }], `${shown(picked)} を反転しています…`, true);
+  if (key === 'x') return outcome(state, [{ kind: 'flip', part }], `${shownName(part)} を反転しています…`, true);
+  if (key === 'e' || key === 'F2') {
+    return outcome({ ...state, selected: picked }, [select(picked)], null, true, 'id');
   }
   return outcome(state);
 }
 
+/** 拡張のゴースト。**いま訊いているものの答えだけ**を受け取る (古い答えは捨てる)。 */
+function onGhost(state: State, ghost: Ghost): Outcome {
+  const { carry, under } = state;
+  if (carry === null || under.cell === null || previewKey(carry, under.cell) !== ghost.key) return outcome(state);
+  return outcome({ ...state, ghost });
+}
+
 export function step(state: State, event: Event): Outcome {
   switch (event.kind) {
+    case 'hover':
+      return onHover(state, event.under);
     case 'press':
       return onPress(state, event);
+    case 'drag':
+      return onDrag(state, event);
     case 'release':
       return onRelease(state, event);
     case 'cancel':
       // 窓の外で放したときなど、放した知らせが来ないことがある。
-      return outcome({ ...state, pressed: null, drawing: null });
+      return state.carry !== null && state.carry.kind !== 'place' && state.carry.byPointer
+        ? carrying({ ...state, pressed: null }, null)
+        : outcome({ ...state, pressed: null });
     case 'key':
       return onKey(state, event);
     case 'tool':
+      if (event.tool === 'place') return outcome(state, [], null, false, 'search');
       return outcome(
-        { ...state, tool: event.tool, picked: null, pressed: null, drawing: null, placing: null },
+        { ...state, tool: event.tool, carry: null, ghost: null, wireFrom: null, pressed: null, selected: null },
         [select(null)],
-        '',
       );
-    case 'place':
-      return outcome(
-        { ...state, tool: 'part', placing: event.placing, picked: null, pressed: null, drawing: null },
-        [select(null)],
-        `${event.placing.type} を置きます。${event.placing.twoEnds ? '交点から交点へドラッグ' : '置きたい交点をクリック'} (Esc でやめる)`,
-      );
+    case 'place': {
+      const carry: Carry = { kind: 'place', type: event.type, turn: 0, flip: false, twoEnds: event.twoEnds };
+      const cleared: State = { ...state, selected: null, wireFrom: null };
+      return { ...carrying(cleared, carry), send: [select(null), ...previewAt(carry, state.under.cell)] };
+    }
+    case 'ghost':
+      return onGhost(state, event.ghost);
     case 'refresh':
-      // **置く道具は続ける** (組み直しは書き換えのたびに起きる)。
-      return outcome({ ...state, picked: null, pressed: null, drawing: null });
+      // **持ち物は続ける** (組み直しは書き換えのたびに起きる)。押しかけは捨てる。
+      return outcome({ ...state, selected: null, pressed: null });
+    case 'dblclick': {
+      if (event.under.part === null) return outcome(state);
+      const picked: Picked = { kind: 'part', id: event.under.part };
+      return outcome({ ...state, under: event.under, selected: picked }, [select(picked)], null, true, 'id');
+    }
     default:
       return outcome(state);
   }

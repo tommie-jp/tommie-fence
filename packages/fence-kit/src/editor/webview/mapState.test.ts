@@ -1,293 +1,299 @@
 import { describe, expect, test } from 'vitest';
-import { start, step } from './mapState.ts';
-import type { Event, Picked, State } from './mapState.ts';
+import { NOTHING, hint, start, step } from './mapState.ts';
+import type { Event, State, Under } from './mapState.ts';
 
 const PANEL = start(true);
-const R1: Picked = { kind: 'part', id: 'R1' };
-const WIRE: Picked = { kind: 'wire', id: '5' };
+const over = (part: Partial<Under>): Under => ({ ...NOTHING, ...part });
+const ON_R1 = over({ cell: 'a1', part: 'R1' });
+const ON_WIRE = over({ cell: 'a2', wire: '5' });
+const ON_NODE = over({ cell: 'a3', node: 'a3' });
+const AT_B3 = over({ cell: 'b3' });
 
 const after = (state: State, ...events: readonly Event[]): State =>
   events.reduce((now, event) => step(now, event).state, state);
 
-const press = (on: Picked | null, onMap = true, cell: string | null = null): Event =>
-  ({ kind: 'press', on, cell, x: 10, y: 10, onMap });
-const release = (cell: string | null, far = true, shift = false): Event =>
-  ({ kind: 'release', x: far ? 60 : 10, y: 10, cell, shift });
-const key = (name: string, over: Partial<Extract<Event, { kind: 'key' }>> = {}): Event =>
-  ({ kind: 'key', key: name, shift: false, modifier: false, typing: false, ...over });
+const hover = (under: Under): Event => ({ kind: 'hover', under });
+const press = (under: Under, onMap = true): Event => ({ kind: 'press', under, x: 10, y: 10, onMap });
+const drag = (under: Under, far = true): Event => ({ kind: 'drag', under, x: far ? 60 : 10, y: 10 });
+const release = (under: Under, far = true, shift = false): Event =>
+  ({ kind: 'release', under, x: far ? 60 : 10, y: 10, shift });
+const key = (name: string, extra: Partial<Extract<Event, { kind: 'key' }>> = {}): Event =>
+  ({ kind: 'key', key: name, shift: false, modifier: false, typing: false, ...extra });
+const place = (type: string, twoEnds = false): Event => ({ kind: 'place', type, twoEnds });
 
-describe('掴む', () => {
-  test('picks what was pressed and asks the editor to light it', () => {
-    const { state, send, status } = step(PANEL, press(R1));
+describe('カーソルの下が対象 (KiCad の型 1)', () => {
+  test('turns the part under the cursor without selecting it first', () => {
+    const hovering = after(PANEL, hover(ON_R1));
 
-    expect(state.picked).toEqual(R1);
+    expect(step(hovering, key('r')).send).toEqual([{ kind: 'turn', part: 'R1', quarters: 1 }]);
+    expect(step(hovering, key('R', { shift: true })).send).toEqual([{ kind: 'turn', part: 'R1', quarters: -1 }]);
+    expect(step(hovering, key('x')).send).toEqual([{ kind: 'flip', part: 'R1' }]);
+  });
+
+  test('prefers what is selected over what is hovered, so a sequence of keys sticks to one part', () => {
+    const held = after(PANEL, press(ON_R1), release(ON_R1, false), hover(over({ cell: 'c1', part: 'R2' })));
+
+    expect(step(held, key('r')).send).toEqual([{ kind: 'turn', part: 'R1', quarters: 1 }]);
+  });
+
+  test('deletes the hovered part or wire, and never a node', () => {
+    expect(step(after(PANEL, hover(ON_R1)), key('Delete')).send).toEqual([{ kind: 'delete', what: 'part', id: 'R1' }]);
+    expect(step(after(PANEL, hover(ON_WIRE)), key('Backspace')).send).toEqual([{ kind: 'delete', what: 'wire', id: '5' }]);
+    expect(step(after(PANEL, hover(ON_NODE)), key('Delete')).send).toEqual([]);
+  });
+
+  test('says what the keys would do to the thing under the cursor', () => {
+    expect(hint(after(PANEL, hover(ON_R1)))).toContain('R1');
+    expect(hint(after(PANEL, hover(ON_R1)))).toContain('M 動かす');
+    expect(hint(after(PANEL, hover(ON_NODE)))).toContain('G 引きずる');
+    expect(hint(PANEL)).toContain('A 部品');
+  });
+
+  test('shows the name, not the handle, when a handle carries a number', () => {
+    expect(hint(after(PANEL, hover(over({ cell: 'a1', part: 'VCC#2' }))))).toContain('VCC:');
+  });
+});
+
+describe('選ぶ', () => {
+  test('selects the part that was clicked and asks the editor to light it', () => {
+    const { state, send } = step(PANEL, press(ON_R1));
+
+    expect(state.selected).toEqual({ kind: 'part', id: 'R1' });
     expect(send).toEqual([{ kind: 'select', what: 'part', id: 'R1' }]);
-    expect(status).toContain('R1');
   });
 
-  test('lets go when the empty part of the map is pressed', () => {
-    const held = after(PANEL, press(R1));
-
-    const { state, send } = step(held, press(null));
-
-    expect(state.picked).toBeNull();
-    expect(send).toEqual([{ kind: 'select' }]);
+  test('picks a part before a wire before a node when they share the spot', () => {
+    expect(step(PANEL, press(over({ cell: 'a1', part: 'R1', node: 'a1', wire: '3' }))).state.selected?.kind).toBe('part');
+    expect(step(PANEL, press(over({ cell: 'a1', node: 'a1', wire: '3' }))).state.selected?.kind).toBe('wire');
+    expect(step(PANEL, press(over({ cell: 'a1', node: 'a1' }))).state.selected?.kind).toBe('node');
   });
 
-  test('keeps what it holds when the press was outside the map', () => {
-    const held = after(PANEL, press(R1));
+  test('lets go when the empty part of the map is pressed, but not outside the map', () => {
+    const held = after(PANEL, press(ON_R1), release(ON_R1, false));
 
-    expect(step(held, press(null, false)).state.picked).toEqual(R1);
+    expect(step(held, press(AT_B3)).state.selected).toBeNull();
+    expect(step(held, press(NOTHING, false)).state.selected).toEqual({ kind: 'part', id: 'R1' });
+  });
+
+  test('a click alone never moves anything', () => {
+    const held = after(PANEL, press(ON_R1), release(ON_R1, false));
+
+    expect(step(held, release(AT_B3, false)).send).toEqual([]);
+    expect(after(held, press(AT_B3), release(AT_B3, false)).selected).toBeNull();
+  });
+
+  test('opens the fields on a double click and on E', () => {
+    expect(step(PANEL, { kind: 'dblclick', under: ON_R1 }).focus).toBe('id');
+    expect(step(after(PANEL, hover(ON_R1)), key('e')).focus).toBe('id');
+    expect(step(after(PANEL, hover(ON_R1)), key('e')).state.selected).toEqual({ kind: 'part', id: 'R1' });
+  });
+});
+
+describe('持ち上げて、置く所で 1 クリック (KiCad の型 2)', () => {
+  test('M lifts the part under the cursor and asks for a ghost where the cursor is', () => {
+    const { state, send } = step(after(PANEL, hover(ON_R1)), key('m'));
+
+    expect(state.carry).toEqual({ kind: 'move', part: 'R1', byPointer: false });
+    expect(send).toEqual([{ kind: 'preview', key: 'move:R1:a1', what: 'move', part: 'R1', to: 'a1' }]);
+  });
+
+  test('a lifted part follows the cursor and is put down by a click', () => {
+    const lifted = after(PANEL, hover(ON_R1), key('m'), hover(AT_B3));
+
+    expect(step(lifted, press(AT_B3)).send).toEqual([]);
+    const { state, send } = step(after(lifted, press(AT_B3)), release(AT_B3, false));
+    expect(send).toEqual([{ kind: 'move', part: 'R1', to: 'b3' }]);
+    expect(state.carry).toBeNull();
+  });
+
+  test('dragging a selected part lifts it too, and drops it where the pointer is let go', () => {
+    const dragged = after(PANEL, press(ON_R1), drag(AT_B3));
+
+    expect(dragged.carry).toEqual({ kind: 'move', part: 'R1', byPointer: true });
+    expect(step(dragged, release(AT_B3)).send).toEqual([{ kind: 'move', part: 'R1', to: 'b3' }]);
+  });
+
+  test('a drag let go where it started, or off the holes, only selects', () => {
+    const dragged = after(PANEL, press(ON_R1), drag(AT_B3));
+
+    expect(step(dragged, release(ON_R1)).send).toEqual([]);
+    expect(step(dragged, release(over({}))).state.carry).toBeNull();
+  });
+
+  test('G drags the node under the cursor, keeping its connections, by its own message', () => {
+    const lifted = after(PANEL, hover(ON_NODE), key('g'));
+
+    expect(lifted.carry).toEqual({ kind: 'drag', node: 'a3', byPointer: false });
+    expect(step(after(lifted, hover(AT_B3), press(AT_B3)), release(AT_B3, false)).send)
+      .toEqual([{ kind: 'moveNode', from: 'a3', to: 'b3' }]);
+  });
+
+  test('a wire is never lifted, since it has no place to be put', () => {
+    expect(after(PANEL, press(ON_WIRE), drag(AT_B3)).carry).toBeNull();
+  });
+
+  test('Escape puts a lifted part back', () => {
+    const lifted = after(PANEL, hover(ON_R1), key('m'));
+
+    expect(step(lifted, key('Escape')).state.carry).toBeNull();
   });
 });
 
 describe('置く', () => {
-  test('sends the move when the pointer travelled and landed on a cell', () => {
-    const held = after(PANEL, press(R1));
+  test('a pick from the palette becomes a thing on the cursor, and asks for its ghost', () => {
+    const { state, send } = step(after(PANEL, hover(AT_B3)), place('transistor'));
 
-    const { state, send } = step(held, release('b3'));
-
-    expect(send).toEqual([{ kind: 'move', part: 'R1', to: 'b3' }]);
-    expect(state.picked).toBeNull();
+    expect(state.tool).toBe('place');
+    expect(state.carry).toEqual({ kind: 'place', type: 'transistor', turn: 0, flip: false, twoEnds: false });
+    expect(send).toContainEqual(
+      { kind: 'preview', key: 'place:transistor:b3:0:0', what: 'place', type: 'transistor', to: 'b3', turn: 0, flip: false },
+    );
   });
 
-  test('moves a node by its own message, since the move means something else', () => {
-    const held = after(start(true), { kind: 'tool', tool: 'node' }, press({ kind: 'node', id: 'a1' }));
+  test('asks for a new ghost only when the hole under the cursor changes', () => {
+    const carrying = after(PANEL, place('transistor'), hover(AT_B3));
 
-    expect(step(held, release('b3')).send).toEqual([{ kind: 'moveNode', from: 'a1', to: 'b3' }]);
+    expect(step(carrying, hover(over({ cell: 'b3', part: 'R1' }))).send).toEqual([]);
+    expect(step(carrying, hover(over({ cell: 'b4' }))).send).toHaveLength(1);
   });
 
-  test('does not move when the pointer was let go where it was pressed', () => {
-    // 選んだあとの何気ないクリックが移動になると、置くつもりのない所へ飛ぶ。
-    const held = after(PANEL, press(R1));
+  test('keeps only the ghost it asked for, and drops a stale answer', () => {
+    const carrying = after(PANEL, place('transistor'), hover(AT_B3));
+    const fresh = { key: 'place:transistor:b3:0:0', cells: ['b3', 'b4', 'b5'], ok: true, why: '' };
+    const stale = { ...fresh, key: 'place:transistor:b2:0:0' };
 
-    expect(step(held, release('b3', false)).send).toEqual([]);
-    expect(step(held, release('b3', false)).state.picked).toEqual(R1);
+    expect(step(carrying, { kind: 'ghost', ghost: fresh }).state.ghost).toEqual(fresh);
+    expect(step(carrying, { kind: 'ghost', ghost: stale }).state.ghost).toBeNull();
   });
 
-  test('never moves a wire, which has no place to be put', () => {
-    const held = after(PANEL, press(WIRE));
+  test('places with one click, sending the pressed hole and the orientation', () => {
+    const carrying = after(PANEL, place('transistor'), hover(AT_B3), press(AT_B3));
 
-    expect(step(held, release('b3')).send).toEqual([]);
+    const { state, send } = step(carrying, release(AT_B3, false));
+
+    expect(send).toEqual([{ kind: 'addPart', type: 'transistor', at: ['b3'], turn: 0, flip: false }]);
+    // **道具は置いたあとも続く** (何本も置くのが普通)。
+    expect(state.carry?.kind).toBe('place');
+    expect(state.lastPlaced).toBe('transistor');
   });
 
-  test('forgets the press when the pointer is cancelled', () => {
-    const held = after(PANEL, press(R1), { kind: 'cancel' });
+  test('turns and flips the thing on the cursor before it is placed', () => {
+    const carrying = after(PANEL, place('transistor'), hover(AT_B3));
 
-    expect(step(held, release('b3')).send).toEqual([]);
+    const turned = after(carrying, key('r'), key('r'), key('R', { shift: true }), key('x'));
+
+    expect(turned.carry).toEqual({ kind: 'place', type: 'transistor', turn: 1, flip: true, twoEnds: false });
+    expect(step(turned, key('r')).send[0]?.key).toBe('place:transistor:b3:2:1');
+    expect(step(after(turned, press(AT_B3)), release(AT_B3, false)).send)
+      .toEqual([{ kind: 'addPart', type: 'transistor', at: ['b3'], turn: 1, flip: true }]);
+  });
+
+  test('lets a two-lead part be dragged for its span, and still places it with a click', () => {
+    const carrying = after(PANEL, place('resistor', true), hover(AT_B3));
+
+    expect(step(after(carrying, press(AT_B3)), release(over({ cell: 'b8' }))).send)
+      .toEqual([{ kind: 'addPart', type: 'resistor', at: ['b3', 'b8'], turn: 0, flip: false }]);
+    expect(step(after(carrying, press(AT_B3)), release(AT_B3, false)).send)
+      .toEqual([{ kind: 'addPart', type: 'resistor', at: ['b3'], turn: 0, flip: false }]);
+  });
+
+  test('says why when the ghost cannot be placed, before anything is clicked', () => {
+    const carrying = after(PANEL, place('transistor'), hover(AT_B3));
+    const refused = { key: 'place:transistor:b3:0:0', cells: ['b3'], ok: false, why: '右へ 2 穴ぶん要ります' };
+
+    expect(step(carrying, { kind: 'ghost', ghost: refused }).status).toContain('右へ 2 穴ぶん要ります');
+  });
+
+  test('Escape drops the thing on the cursor and returns to picking', () => {
+    const { state } = step(after(PANEL, place('transistor')), key('Escape'));
+
+    expect(state.carry).toBeNull();
+    expect(state.tool).toBe('select');
+  });
+
+  test('Insert puts the last placed type back on the cursor', () => {
+    const placed = after(PANEL, place('transistor'), hover(AT_B3), press(AT_B3), release(AT_B3, false), key('Escape'));
+
+    expect(step(placed, key('Insert')).state.carry?.kind).toBe('place');
+    expect(step(PANEL, key('Insert')).state.carry).toBeNull();
+  });
+
+  test('A asks the page to open the chooser', () => {
+    expect(step(PANEL, key('a')).focus).toBe('search');
+    expect(step(PANEL, { kind: 'tool', tool: 'place' }).focus).toBe('search');
   });
 });
 
-describe('打鍵', () => {
-  test('lets go on Escape', () => {
-    const held = after(PANEL, press(R1));
+describe('配線', () => {
+  test('W starts the wire tool; the first click sets the start, the second draws', () => {
+    const wiring = after(PANEL, key('w'));
+    expect(wiring.tool).toBe('wire');
 
-    expect(step(held, key('Escape')).state.picked).toBeNull();
+    const started = after(wiring, press(AT_B3), release(AT_B3, false));
+    expect(started.wireFrom).toBe('b3');
+    expect(hint(started)).toContain('b3 から');
+
+    const { state, send } = step(after(started, press(over({ cell: 'b8' }))), release(over({ cell: 'b8' }), false));
+    expect(send).toEqual([{ kind: 'addWire', from: 'b3', to: 'b8', operator: '--' }]);
+    expect(state.wireFrom).toBeNull();
   });
 
-  test('deletes the part it holds', () => {
-    const held = after(PANEL, press(R1));
+  test('a drag from hole to hole draws in one gesture', () => {
+    const wiring = after(PANEL, key('w'), press(AT_B3));
 
-    const { send, state, handled } = step(held, key('Delete'));
-
-    expect(send).toEqual([{ kind: 'delete', what: 'part', id: 'R1' }]);
-    expect(state.picked).toBeNull();
-    expect(handled).toBe(true);
+    expect(step(wiring, release(over({ cell: 'b8' }))).send).toEqual([{ kind: 'addWire', from: 'b3', to: 'b8', operator: '--' }]);
   });
 
-  test('deletes the wire it holds, which is a whole line', () => {
-    const held = after(PANEL, press(WIRE));
+  test('folds with Shift only where the fence can write a fold', () => {
+    const folding = after(start(true, true), key('w'), press(AT_B3));
+    const straight = after(start(true, false), key('w'), press(AT_B3));
 
-    expect(step(held, key('Delete')).send).toEqual([{ kind: 'delete', what: 'wire', id: '5' }]);
+    expect(step(folding, release(over({ cell: 'b8' }), true, true)).send[0]?.operator).toBe('-|');
+    expect(step(straight, release(over({ cell: 'b8' }), true, true)).send[0]?.operator).toBe('--');
+    expect(hint(after(start(true, true), key('w'), press(AT_B3), release(AT_B3, false)))).toContain('Shift');
+    expect(hint(after(start(true, false), key('w'), press(AT_B3), release(AT_B3, false)))).not.toContain('Shift');
   });
 
-  test('does not delete a node, which is a crossing rather than a thing', () => {
-    const held = after(start(true), { kind: 'tool', tool: 'node' }, press({ kind: 'node', id: 'a1' }));
+  test('Escape first forgets the start, then leaves the tool', () => {
+    const started = after(PANEL, key('w'), press(AT_B3), release(AT_B3, false));
 
-    expect(step(held, key('Delete')).send).toEqual([]);
+    const forgot = step(started, key('Escape')).state;
+    expect(forgot.wireFrom).toBeNull();
+    expect(forgot.tool).toBe('wire');
+    expect(step(forgot, key('Escape')).state.tool).toBe('select');
   });
+});
 
-  test('turns with R and back with Shift+R, the keys KiCad uses', () => {
-    const held = after(PANEL, press(R1));
-
-    expect(step(held, key('r')).send).toEqual([{ kind: 'turn', part: 'R1', quarters: 1 }]);
-    expect(step(held, key('R', { shift: true })).send).toEqual([{ kind: 'turn', part: 'R1', quarters: -1 }]);
-  });
-
-  test('flips with M', () => {
-    const held = after(PANEL, press(R1));
-
-    expect(step(held, key('m')).send).toEqual([{ kind: 'flip', part: 'R1' }]);
-  });
-
-  test('keeps holding what it turned, so it can be turned again', () => {
-    const held = after(PANEL, press(R1));
-
-    expect(step(held, key('r')).state.picked).toEqual(R1);
-  });
-
-  test('does nothing with the keys while nothing is held', () => {
-    expect(step(PANEL, key('Delete')).send).toEqual([]);
-    expect(step(PANEL, key('r')).handled).toBe(false);
-  });
-
-  test('leaves the keys alone while a control has focus', () => {
-    // 一覧は頭文字で選べる。横取りすると選べなくなる。
-    const held = after(PANEL, press(R1));
-
-    expect(step(held, key('r', { typing: true })).handled).toBe(false);
-  });
-
-  test('takes Ctrl+Z itself when the panel keeps its own history', () => {
+describe('戻す・やり直す', () => {
+  test('asks the extension on Ctrl+Z / Ctrl+Y when the panel keeps its own history', () => {
     expect(step(PANEL, key('z', { modifier: true })).send).toEqual([{ kind: 'undo' }]);
-    expect(step(PANEL, key('z', { modifier: true, shift: true })).send).toEqual([{ kind: 'redo' }]);
+    expect(step(PANEL, key('Z', { modifier: true, shift: true })).send).toEqual([{ kind: 'redo' }]);
     expect(step(PANEL, key('y', { modifier: true })).send).toEqual([{ kind: 'redo' }]);
   });
 
-  test('lets Ctrl+Z through when VS Code holds the history', () => {
-    // タブそのものがマップのときは、その文書へ VS Code の undo が届く。
-    const tab = start(false);
-
-    expect(step(tab, key('z', { modifier: true })).send).toEqual([]);
-    expect(step(tab, key('z', { modifier: true })).handled).toBe(false);
+  test('lets Ctrl+Z through to VS Code when the tab itself is the map', () => {
+    expect(step(start(false), key('z', { modifier: true })).send).toEqual([]);
   });
 });
 
-describe('道具と入れ替え', () => {
-  test('lets go when the tool changes', () => {
-    const held = after(PANEL, press(R1));
-
-    const { state, send } = step(held, { kind: 'tool', tool: 'node' });
-
-    expect(state.tool).toBe('node');
-    expect(state.picked).toBeNull();
-    expect(send).toEqual([{ kind: 'select' }]);
+describe('打鍵を横取りしない', () => {
+  test('ignores keys typed into a field', () => {
+    expect(step(after(PANEL, hover(ON_R1)), key('r', { typing: true })).send).toEqual([]);
   });
 
-  test('picks the tool from a key, the way KiCad does', () => {
-    expect(step(PANEL, key('w')).state.tool).toBe('wire');
-    expect(step(PANEL, key('n')).state.tool).toBe('node');
-    expect(step(after(PANEL, key('w')), key('v')).state.tool).toBe('select');
+  test('forgets the press and the pointer-lifted thing when the pointer is cancelled', () => {
+    const dragged = after(PANEL, press(ON_R1), drag(AT_B3));
+
+    expect(step(dragged, { kind: 'cancel' }).state.carry).toBeNull();
+    expect(step(after(PANEL, hover(ON_R1), key('m')), { kind: 'cancel' }).state.carry?.kind).toBe('move');
   });
 
-  test('comes back to picking with Escape, so no tool is a trap', () => {
-    const drawing = after(PANEL, key('w'), press(null, true, 'a1'));
+  test('keeps the thing on the cursor across a redraw, but drops the selection', () => {
+    const carrying = after(PANEL, place('transistor'), press(ON_R1));
 
-    const { state } = step(drawing, key('Escape'));
+    const { state } = step(carrying, { kind: 'refresh' });
 
-    expect(state.tool).toBe('select');
-    expect(state.drawing).toBeNull();
-  });
-
-  test('lets go when the map is drawn again, because the elements are new', () => {
-    const held = after(PANEL, press(R1));
-
-    expect(step(held, { kind: 'refresh' }).state.picked).toBeNull();
-  });
-
-  test('only grabs what the current tool allows', () => {
-    // 部品の升にも節点は立つ。どちらも掴めると、掴んだつもりと違うものが動く。
-    const nodes = after(start(true), { kind: 'tool', tool: 'node' });
-
-    expect(step(nodes, press(R1)).state.picked).toBeNull();
-  });
-});
-
-describe('配線を引く', () => {
-  const wiring = after(PANEL, { kind: 'tool', tool: 'wire' });
-
-  test('remembers the crossing it was pressed on', () => {
-    const { state, status } = step(wiring, press(null, true, 'a1'));
-
-    expect(state.drawing).toBe('a1');
-    expect(status).toContain('a1 から');
-  });
-
-  test('asks for a wire between the two crossings when it is let go', () => {
-    const drawing = after(wiring, press(null, true, 'a1'));
-
-    expect(step(drawing, release('c3')).send).toEqual([
-      { kind: 'addWire', from: 'a1', to: 'c3', operator: '--' },
-    ]);
-  });
-
-  test('bends first sideways when Shift is held, the way the grammar writes it', () => {
-    const drawing = after(wiring, press(null, true, 'a1'));
-
-    expect(step(drawing, release('c3', true, true)).send[0]).toMatchObject({ operator: '-|' });
-  });
-
-  test('draws nothing when it is let go on the crossing it started from', () => {
-    // 長さ 0 の線は図に出ない。押し間違いの取り消しとして扱う。
-    const drawing = after(wiring, press(null, true, 'a1'));
-
-    expect(step(drawing, release('a1')).send).toEqual([]);
-    expect(step(drawing, release('a1')).state.drawing).toBeNull();
-  });
-
-  test('draws nothing when it is let go outside the grid', () => {
-    const drawing = after(wiring, press(null, true, 'a1'));
-
-    expect(step(drawing, release(null)).send).toEqual([]);
-  });
-
-  test('does not pick parts while the wire tool is out', () => {
-    expect(step(wiring, press(R1, true, 'a1')).state.picked).toBeNull();
-  });
-
-  test('forgets a half-drawn wire when the pointer is cancelled', () => {
-    const drawing = after(wiring, press(null, true, 'a1'), { kind: 'cancel' });
-
-    expect(drawing.drawing).toBeNull();
-  });
-});
-
-describe('部品を置く', () => {
-  const placing = (type: string, twoEnds: boolean): Event => ({ kind: 'place', placing: { type, twoEnds } });
-  const resistor = after(PANEL, placing('resistor', true));
-  const ground = after(PANEL, placing('ground', false));
-
-  test('takes the palette choice as a tool of its own', () => {
-    expect(resistor.tool).toBe('part');
-    expect(resistor.placing).toEqual({ type: 'resistor', twoEnds: true });
-    expect(step(PANEL, placing('resistor', true)).status).toContain('交点から交点へドラッグ');
-  });
-
-  test('places a one-terminal part where the crossing was clicked', () => {
-    const { send } = step(ground, release('c3', false));
-
-    expect(send).toEqual([{ kind: 'addPart', type: 'ground', at: ['c3'] }]);
-  });
-
-  test('drags a two-terminal part from crossing to crossing', () => {
-    const from = after(resistor, press(null, true, 'a1'));
-
-    expect(step(from, release('a3')).send).toEqual([
-      { kind: 'addPart', type: 'resistor', at: ['a1', 'a3'] },
-    ]);
-  });
-
-  test('places nothing when a two-terminal part was not dragged anywhere', () => {
-    // 両端が同じ番地の部品は文法が断る。押し間違いとして黙って捨てる。
-    const from = after(resistor, press(null, true, 'a1'));
-
-    expect(step(from, release('a1')).send).toEqual([]);
-  });
-
-  test('keeps placing after one is placed, since several are usually wanted', () => {
-    const from = after(resistor, press(null, true, 'a1'));
-
-    expect(step(from, release('a3')).state.placing).toEqual({ type: 'resistor', twoEnds: true });
-  });
-
-  test('leaves the placing tool with Escape', () => {
-    const { state } = step(ground, key('Escape'));
-
-    expect(state.tool).toBe('select');
-    expect(state.placing).toBeNull();
-  });
-
-  test('keeps placing when the map is drawn again after the edit', () => {
-    expect(step(ground, { kind: 'refresh' }).state.placing).not.toBeNull();
+    expect(state.carry?.kind).toBe('place');
+    expect(state.selected).toBeNull();
   });
 });

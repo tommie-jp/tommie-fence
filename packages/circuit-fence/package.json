@@ -35,6 +35,7 @@
       "import": "./dist/core.mjs",
       "require": "./dist/core.cjs"
     },
+    "./src/core": "./src/core/index.ts",
     "./package.json": "./package.json"
   },
   "bin": {
@@ -84,7 +85,7 @@
       },
       {
         "command": "circuit-fence.openMap",
-        "title": "Circuit Fence: 部品を動かす (マップ)",
+        "title": "Circuit Fence: 図を掴んで動かす (マップ)",
         "category": "Circuit Fence"
       }
     ],

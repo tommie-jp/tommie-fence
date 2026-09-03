@@ -15,97 +15,108 @@ const shell = (over: Partial<Parameters<typeof panelHtml>[0]> = {}): string => p
 const html = shell();
 
 describe('panelHtml', () => {
-  test('puts the map inside', () => {
-    expect(html).toContain('<table></table>');
+  test('puts the map inside the canvas, which is what zooms and pans', () => {
+    expect(html).toContain('<div class="kc-canvas"><div class="cf-body"><table></table></div>');
   });
 
   test('locks the webview down: nothing loads from outside, only our script runs', () => {
     expect(html).toContain("default-src 'none'");
     expect(html).toContain("script-src 'nonce-abc123'");
-    expect(html).toContain('<script nonce="abc123"');
+    expect(html).toContain('<script nonce="abc123" src="vscode-resource://dist/map.js">');
   });
 
   test('loads the script as a bundled file, so what it does can be tested', () => {
-    // 文字列に書いたスクリプトは「その字が入っているか」しか試せない。
-    // 中身は webview/mapState.ts にあり、node のテストに掛かっている。
+    // 文字列に書いたスクリプトはテストが「その字が入っているか」しか見られない。
+    expect(html).not.toContain('acquireVsCodeApi');
     expect(html).toContain('src="vscode-resource://dist/map.js"');
-    expect(html.match(/<script/g)).toHaveLength(1);
   });
 
   test('escapes what it is given, so a source cannot break out of an attribute', () => {
-    const sneaky = shell({ cspSource: '"><script>x</script>', nonce: 'n' });
+    const tricky = shell({ cspSource: 'x" onload="alert(1)', nonce: 'n"x', scriptUri: 'a"b' });
 
-    expect(sneaky.match(/<script/g)).toHaveLength(1);
-    expect(sneaky).toContain('&quot;&gt;&lt;script&gt;');
+    expect(tricky).not.toContain('onload="alert');
+    expect(tricky).toContain('&quot;');
+  });
+});
+
+describe('KiCad の配置', () => {
+  test('puts the tools in a column on the right, each with the key it stands for', () => {
+    expect(html).toContain('<nav class="kc-tools">');
+    for (const [key, kbd] of [['Escape', 'Esc'], ['a', 'A'], ['w', 'W'], ['m', 'M'], ['g', 'G'], ['r', 'R'], ['x', 'X'], ['Delete', 'Del']]) {
+      expect(html).toContain(`data-key="${key}"`);
+      expect(html).toContain(`<kbd>${kbd}</kbd>`);
+    }
   });
 
-  test('tells the reader how to use it', () => {
-    expect(html).toContain('<b>選ぶ</b>: ドラッグして置きたい交点で放す');
-    expect(html).toContain('クリックは選ぶだけ');
+  test('marks the three tools that have a state, so the CSS can light the current one', () => {
+    expect(html).toContain('data-tool="select"');
+    expect(html).toContain('data-tool="wire"');
+    expect(html).toContain('data-tool="place"');
+    expect(html).toContain('<body data-tool="select"');
   });
 
-  test('says what the keys do, so they can be found without the docs', () => {
-    expect(html).toContain('<b>R</b> で回し');
-    expect(html).toContain('<b>Delete</b> で消します');
+  test('has no V or N: KiCad has neither, and the shell follows KiCad', () => {
+    expect(html).not.toContain('<kbd>V</kbd>');
+    expect(html).not.toContain('<kbd>N</kbd>');
+    expect(html).not.toContain('name="cf-tool"');
+  });
+
+  test('puts the properties on the left, with a hint while nothing is picked', () => {
+    expect(html).toContain('<aside class="kc-props">');
+    expect(html).toContain('<form class="cf-inspector" hidden>');
+    expect(html).toContain('class="kc-props-hint"');
+  });
+
+  test('floats the chooser over the canvas, closed until A opens it', () => {
+    expect(html).toContain('<div class="kc-chooser" hidden>');
+    expect(html).toContain('<details class="cf-palette"></details>');
+    expect(html.indexOf('kc-chooser')).toBeGreaterThan(html.indexOf('kc-canvas'));
+  });
+
+  test('ends with a status row that shows the hint, the hole under the cursor and the zoom', () => {
+    expect(html).toContain('<footer class="kc-status"><span class="cf-status"></span>');
+    expect(html).toContain('<span class="kc-cell"></span>');
+    expect(html).toContain('<span class="kc-zoom">100 %</span>');
+  });
+
+  test('offers zoom in, zoom out and fit at the top', () => {
+    expect(html).toContain('class="kc-zoom-in"');
+    expect(html).toContain('class="kc-zoom-out"');
+    expect(html).toContain('class="kc-fit"');
+  });
+
+  test('uses a crosshair on the canvas, as KiCad does', () => {
+    expect(html).toContain('.kc-canvas { flex: 1; min-width: 0; position: relative; overflow: hidden; cursor: crosshair; }');
+  });
+
+  test('keeps every hit layer live, since what is under the cursor is read from the stack', () => {
+    expect(html).toContain('.cf-hits, .cf-marks, .cf-wire-hits { pointer-events: all; }');
+    expect(html).toContain('.cf-wire-hit { stroke: transparent; stroke-width: 8; fill: none; }');
+  });
+
+  test('tells the script whether the fence can fold a wire', () => {
+    expect(shell({ foldsWire: true })).toContain('data-folds="1"');
+    expect(shell({ foldsWire: false })).toContain('data-folds="0"');
+    expect(html).toContain('data-folds="0"');
+  });
+
+  test('keeps the long how-to out: the status row says what can be done now', () => {
+    expect(html).not.toContain('図は書き換えのあと数秒で描き直ります');
+    expect(html).not.toContain('class="cf-note"');
   });
 });
 
 describe('makeNonce', () => {
   test('is long enough to be worth calling a nonce', () => {
-    expect(makeNonce()).toHaveLength(32);
+    expect(makeNonce().length).toBe(32);
   });
 
   test('uses only characters that are safe in an attribute', () => {
-    expect(makeNonce()).toMatch(/^[a-z0-9]{32}$/);
+    expect(makeNonce()).toMatch(/^[a-z0-9]+$/);
   });
 
   test('is different each time', () => {
     expect(makeNonce()).not.toBe(makeNonce());
-  });
-});
-
-describe('道具の帯', () => {
-  test('offers the three tools, with the key each answers to', () => {
-    expect(html).toContain('value="select" checked');
-    expect(html).toContain('value="wire"');
-    expect(html).toContain('value="node"');
-    expect(html).toContain('<kbd>W</kbd>');
-  });
-
-  test('starts on picking, and says so on the body for the CSS to read', () => {
-    expect(html).toContain('<body data-tool="select"');
-  });
-
-  test('lets only what the tool grabs take the click', () => {
-    // 部品の升にも節点は立つ。どちらも掴めると、掴んだつもりと違うものが動く。
-    expect(html).toContain('body:not([data-tool="node"]) .cf-marks { pointer-events: none;');
-    expect(html).toContain('body[data-tool="node"] .cf-parts { pointer-events: none;');
-    expect(html).toContain('body:not([data-tool="select"]) .cf-wire-hits { pointer-events: none; }');
-  });
-
-  test('turns the crossings on for the wire and part tools before anything is pressed', () => {
-    // 配線も部品も交点を指して置く。押した時点で升を読めないと始まりが決まらない。
-    expect(html).toContain('body[data-tool="wire"] .cf-hits,\n  body[data-tool="part"] .cf-hits { pointer-events: all; }');
-    expect(html).toContain('.cf-cell.cf-from');
-  });
-
-  test('says what each tool does', () => {
-    expect(html).toContain('<b>配線</b>: 交点から交点へドラッグ');
-    expect(html).toContain('<b>Shift</b> を押しながら放すと先に横へ折ります');
-  });
-});
-
-describe('置き先の当たり判定', () => {
-  test('turns the drop targets on only while something is held', () => {
-    // いつも効かせると部品を掴めず、いつも切ると埋まった升へ置けない。
-    expect(html).toContain('.cf-hits { pointer-events: none; }');
-    expect(html).toContain('body.cf-holding .cf-hits,');
-  });
-
-  test('lays a fat invisible line over each wire, since 1.5px is too thin to hit', () => {
-    expect(html).toContain('.cf-wire-hit { stroke: transparent; stroke-width: 8;');
-    // 箱から出る足。向きを書いたことが目で分かる唯一の手掛かり。
-    expect(html).toContain('.cf-pin { stroke: var(--cf-ink);');
   });
 });
 
@@ -116,140 +127,61 @@ describe('元に戻す・やり直す (自前の履歴)', () => {
   });
 
   test('marks the page as keeping its own history, which the script reads', () => {
-    // パネルにフォーカスがあると activeTextEditor が無く、VS Code の undo は届かない。
-    expect(html).toContain('<body data-tool="select" class="cf-own-undo">');
+    expect(html).toContain('class="cf-own-undo"');
   });
 });
 
 describe('元に戻す・やり直す (VS Code に頼む)', () => {
-  const native = shell({ undo: 'vscode', nonce: 'n' });
+  const native = shell({ undo: 'vscode' });
 
   test('does not claim its own history, so Ctrl+Z goes through to VS Code', () => {
-    expect(native).not.toContain('cf-own-undo"');
+    expect(native).not.toContain('cf-own-undo');
   });
 
   test('keeps the buttons on, since VS Code holds the history', () => {
-    expect(native).toContain('<button class="cf-undo" title=');
+    expect(native).toContain('<button class="cf-undo" title');
     expect(native).not.toContain('<button class="cf-undo" disabled');
   });
 });
 
 describe('フェンスを選ぶ', () => {
   test('puts the picker in the head, so a document with several fences can choose', () => {
-    const many = shell({ view: { html: '', picker: '<select class="cf-fence"></select>', issues: '' } });
+    const picker = renderFencePicker([{ line: 3, title: 'RC' }, { line: 9, title: null }], 9);
 
-    expect(many).toContain('<p class="cf-fences"><select class="cf-fence"></select></p>');
-  });
-});
-
-describe('部品のパレット', () => {
-  test('puts what the fence handed it into the head', () => {
-    // **中身は殻の持ち物ではない** (置ける部品はフェンスごとに違う)。
-    // 組むのは `FenceEditor.palette`。ここは受け取って入れるだけ。
-    expect(html).toContain('<details class="cf-palette"></details>');
-  });
-
-  test('shows which one is being placed, like the tool band shows the tool', () => {
-    expect(html).toContain('.cf-pick.cf-chosen');
-  });
-
-  test('gives the search box a place to hide rows', () => {
-    expect(html).toContain('.cf-types li.cf-hidden { display: none; }');
-  });
-
-  test('says how placing works', () => {
-    expect(html).toContain('<b>部品を置く</b>: パレットで選ぶと置く道具になります');
+    expect(shell({ view: { html: '', picker, issues: '' } })).toContain(`<p class="cf-fences">${picker}</p>`);
   });
 });
 
 describe('欄 (インスペクタ)', () => {
   test('has a field for each thing one line of the grammar carries', () => {
-    // 1 部品 = 1 行なので、欄もその行の綴りに 1 対 1 で並ぶ。
-    expect(html).toContain('<input class="cf-field" name="id"');
-    expect(html).toContain('<input class="cf-field" name="type"');
-    expect(html).toContain('<input class="cf-field" name="value"');
-    expect(html).toContain('<input class="cf-field" name="label"');
-  });
-
-  test('stays out of the way until a part is picked', () => {
-    expect(html).toContain('<form class="cf-inspector" hidden>');
+    for (const name of ['id', 'type', 'value', 'label']) {
+      expect(html).toContain(`<input class="cf-field" name="${name}"`);
+    }
   });
 
   test('offers the type names the fence handed it', () => {
-    // 種類の名前もフェンスの持ち物。欄の `list` と同じ名札を指していればよい。
     expect(html).toContain('<datalist id="cf-type-names"></datalist>');
     expect(html).toContain('list="cf-type-names"');
   });
 
   test('greys out a field the part has no room for', () => {
-    expect(html).toContain('.cf-field:disabled');
-  });
-
-  test('says how the form is used', () => {
-    expect(html).toContain('<b>F2</b> で名前へ');
+    expect(html).toContain('.cf-field:disabled { opacity: 0.4; }');
   });
 });
 
 describe('renderFencePicker', () => {
-  const fences = [{ line: 3, title: 'RC' }, { line: 10, title: null }];
-
-  test('is empty with one fence, since there is nothing to choose', () => {
+  test('is empty for a single fence, which leaves nothing to choose', () => {
     expect(renderFencePicker([{ line: 3, title: 'RC' }], 3)).toBe('');
   });
 
-  test('names each fence by its title, falling back to the line', () => {
-    const picker = renderFencePicker(fences, 3);
+  test('names each fence by its title, or its line when it has none, and selects the current one', () => {
+    const picker = renderFencePicker([{ line: 3, title: 'RC' }, { line: 9, title: null }], 9);
 
-    expect(picker).toContain('<option value="3" selected>RC (3 行目)</option>');
-    expect(picker).toContain('<option value="10">10 行目のフェンス</option>');
+    expect(picker).toContain('<option value="3">RC (3 行目)</option>');
+    expect(picker).toContain('<option value="9" selected>9 行目のフェンス</option>');
   });
 
   test('escapes the title, which comes from the fence', () => {
-    expect(renderFencePicker([{ line: 1, title: '<b>' }, { line: 5, title: null }], 1)).toContain('&lt;b&gt;');
-  });
-});
-
-describe('印の色', () => {
-  test('lights what the editor cursor points at in its own colour', () => {
-    // 掴んでいる印と同じ色にすると、持っているものと触れているものを取り違える。
-    expect(html).toContain('.cf-aim .cf-glyph');
-    expect(html).toContain('cf-wire.cf-aim');
-  });
-
-  test('marks what is held, wires included', () => {
-    expect(html).toContain('.cf-held .cf-glyph');
-    expect(html).toContain('.cf-wire.cf-held');
-  });
-
-  test('keeps the error mark on when the cursor points at that symbol', () => {
-    // 同じ強さの規則は後に書いたほうが勝つ。読めなかったのは文書の事実なので、
-    // 触れている印・持っている印 (どちらも一時のもの) より後に置く。
-    expect(html.indexOf('.cf-bad .cf-glyph')).toBeGreaterThan(html.indexOf('.cf-aim .cf-glyph'));
-    expect(html.indexOf('.cf-bad .cf-glyph')).toBeGreaterThan(html.indexOf('.cf-held .cf-glyph'));
-  });
-});
-
-describe('読めなかったところの帯', () => {
-  const band = '<ul class="cf-issues"><li class="cf-issue cf-error" data-line="5">5 行目</li></ul>';
-
-  test('puts the band under the map, where the editing is happening', () => {
-    // 図の下の帯はプレビューにしか出ない。掴んでいる間はプレビューが隠れている。
-    const withIssues = shell({ view: { html: '<svg></svg>', picker: '', issues: band } });
-
-    expect(withIssues).toContain(`<div class="cf-band">${band}</div>`);
-    expect(withIssues.indexOf('cf-band')).toBeGreaterThan(withIssues.indexOf('class="cf-body"'));
-  });
-
-  test('keeps the band empty when the fence reads cleanly', () => {
-    expect(html).toContain('<div class="cf-band"></div>');
-  });
-
-  test('offers no pointer on a row that carries no line', () => {
-    expect(html).toContain('.cf-issue[data-line] { cursor: pointer;');
-  });
-
-  test('tells errors and notices apart, since a notice is not a mistake', () => {
-    expect(html).toContain('.cf-issue.cf-error');
-    expect(html).toContain('.cf-issue.cf-notice');
+    expect(renderFencePicker([{ line: 3, title: '<b>' }, { line: 9, title: null }], 3)).toContain('&lt;b&gt;');
   });
 });

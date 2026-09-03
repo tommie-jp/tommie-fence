@@ -1,13 +1,14 @@
-import { start, step } from './mapState.ts';
-import type { Event, Picked, Placing, State } from './mapState.ts';
+import { NOTHING, start, step } from './mapState.ts';
+import type { Event, Focus, Picked, State, Under } from './mapState.ts';
 
 /**
  * マップの webview の**DOM を触る側**。何が起きたかを読んで状態遷移
  * (`mapState.ts`) に渡し、返ってきたものを画面と拡張へ流すだけ。
  *
  * **ここは薄く保つ。** 決め事はすべて `mapState.ts` にあり、そちらは DOM も
- * vscode も知らない純関数として node のテストに掛かっている。道具・パレット・
- * インスペクタが増えても、増えるのはあちらで、こちらではない。
+ * vscode も知らない純関数として node のテストに掛かっている。ここにあるのは
+ * DOM だけの話 — カーソルの下に何があるか (`elementsFromPoint`)、ズームとパン、
+ * 選択窓の開け閉め、印の付け外し。
  *
  * webview は拡張が渡した HTML をサニタイズしないので、フェンスから来た字は
  * すべて拡張側でエスケープ済みのものだけを受け取る。
@@ -17,28 +18,209 @@ declare function acquireVsCodeApi(): { postMessage: (message: unknown) => void }
 
 const vscode = acquireVsCodeApi();
 
-let state: State = start(document.body.classList.contains('cf-own-undo'));
+let state: State = start(
+  document.body.classList.contains('cf-own-undo'),
+  document.body.dataset.folds === '1',
+);
 
-const statusBar = (): Element | null => document.querySelector('.cf-status');
+/** 最後に見たカーソルの位置。組み直しのあとにカーソルの下を取り直す。 */
+let pointer: { x: number; y: number } | null = null;
 
-const setStatus = (text: string): void => {
-  const bar = statusBar();
-  if (bar) bar.textContent = text;
+const query = <T extends Element>(selector: string): T | null => document.querySelector<T>(selector);
+
+const setText = (selector: string, text: string): void => {
+  const target = query(selector);
+  if (target) target.textContent = text;
 };
+
+// ---------------------------------------------------------------- ズーム・パン
+
+/** 図の見え方。**組み直しても保つ** (変形は図の外側の箱に掛ける)。 */
+const view = { zoom: 1, x: 0, y: 0 };
+const ZOOM_MIN = 0.25;
+const ZOOM_MAX = 8;
+const WHEEL_STEP = 1.1;
+const KEY_STEP = 1.25;
+
+const canvas = (): HTMLElement | null => query<HTMLElement>('.kc-canvas');
+
+function applyView(): void {
+  const body = query<HTMLElement>('.cf-body');
+  if (body) body.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.zoom})`;
+  setText('.kc-zoom', `${Math.round(view.zoom * 100)} %`);
+}
+
+/** カーソルの位置を中心にズーム (その点が動かないように平行移動を直す)。 */
+function zoomAt(factor: number, cx: number, cy: number): void {
+  const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, view.zoom * factor));
+  const ratio = next / view.zoom;
+  view.x = cx - (cx - view.x) * ratio;
+  view.y = cy - (cy - view.y) * ratio;
+  view.zoom = next;
+  applyView();
+}
+
+function zoomAtCenter(factor: number): void {
+  const box = canvas()?.getBoundingClientRect();
+  zoomAt(factor, (box?.width ?? 0) / 2, (box?.height ?? 0) / 2);
+}
+
+function fit(): void {
+  view.zoom = 1;
+  view.x = 0;
+  view.y = 0;
+  applyView();
+}
+
+/** キャンバスの中の座標 (ズームの中心に使う)。 */
+function inCanvas(event: { clientX: number; clientY: number }): { x: number; y: number } {
+  const box = canvas()?.getBoundingClientRect();
+  return { x: event.clientX - (box?.left ?? 0), y: event.clientY - (box?.top ?? 0) };
+}
+
+let panning: { x: number; y: number; viewX: number; viewY: number } | null = null;
+let spaceHeld = false;
+
+// ---------------------------------------------------------------- カーソルの下
+
+/**
+ * その位置にあるものを**全部**読む。層の重なりに頼らない (`elementsFromPoint` は
+ * 重なった要素を上から順に返す) ので、部品の升に立つ節点も、部品の下の配線も、
+ * どれも同時に分かる。どれを対象にするかは状態遷移が決める。
+ */
+function underAt(x: number, y: number): Under {
+  const stack = document.elementsFromPoint(x, y);
+  // 図の根は `.cf-body` の中の SVG (class はフェンスごとに違うので、箱で見る)。
+  if (!stack.some((element) => element.closest('.cf-body'))) return NOTHING;
+  const find = (selector: string, name: string): string | null => {
+    for (const element of stack) {
+      const hit = element.closest<HTMLElement>(selector);
+      const value = hit?.dataset[name];
+      if (value !== undefined) return value;
+    }
+    return null;
+  };
+  return {
+    cell: find('.cf-cell', 'address'),
+    part: find('.cf-chip', 'part'),
+    node: find('.cf-dot', 'node'),
+    wire: find('.cf-wire-hit', 'line'),
+  };
+}
+
+const sameUnder = (a: Under, b: Under): boolean =>
+  a.cell === b.cell && a.part === b.part && a.node === b.node && a.wire === b.wire;
+
+// ---------------------------------------------------------------- 印
 
 /** 選んだ印を付ける先。**配線は掴む線ではなく見える線**に付ける。 */
 function shownFor(picked: Picked | null): Element | null {
   if (picked === null) return null;
   const id = CSS.escape(picked.id);
-  if (picked.kind === 'part') return document.querySelector(`.cf-chip[data-part="${id}"]`);
-  if (picked.kind === 'node') return document.querySelector(`.cf-dot[data-node="${id}"]`);
-  return document.querySelector(`.cf-wire[data-line="${id}"]`);
+  if (picked.kind === 'part') return query(`.cf-chip[data-part="${id}"]`);
+  if (picked.kind === 'node') return query(`.cf-dot[data-node="${id}"]`);
+  return query(`.cf-wire[data-line="${id}"]`);
 }
 
-function mark(picked: Picked | null): void {
-  for (const element of document.querySelectorAll('.cf-held')) element.classList.remove('cf-held');
+const unmark = (className: string): void => {
+  for (const element of document.querySelectorAll(`.${className}`)) element.classList.remove(className);
+};
+
+function markSelected(picked: Picked | null): void {
+  unmark('cf-held');
   shownFor(picked)?.classList.add('cf-held');
 }
+
+/** カーソルの下で鍵の対象になるもの (持ち物が無いときだけ)。 */
+function markHover(now: State): void {
+  unmark('cf-hover');
+  if (now.carry !== null || now.tool !== 'select') return;
+  const target: Picked | null = now.under.part !== null
+    ? { kind: 'part', id: now.under.part }
+    : now.under.wire !== null
+      ? { kind: 'wire', id: now.under.wire }
+      : now.under.node !== null ? { kind: 'node', id: now.under.node } : null;
+  shownFor(target)?.classList.add('cf-hover');
+}
+
+/** ゴースト — 置く・動かす先の穴を光らせる。置けないときは赤。 */
+function markGhost(now: State): void {
+  unmark('cf-ghost');
+  unmark('cf-ghost-bad');
+  if (now.carry === null || now.ghost === null) return;
+  const className = now.ghost.ok ? 'cf-ghost' : 'cf-ghost-bad';
+  for (const cell of now.ghost.cells) {
+    query(`.cf-cell[data-address="${CSS.escape(cell)}"]`)?.classList.add(className);
+  }
+}
+
+/** いま置こうとしている部品。パレットのどれを押したかを見せる。 */
+function markChosen(now: State): void {
+  unmark('cf-chosen');
+  if (now.carry?.kind !== 'place') return;
+  for (const element of document.querySelectorAll(`.cf-pick[data-type="${CSS.escape(now.carry.type)}"]`)) {
+    element.classList.add('cf-chosen');
+  }
+}
+
+/** 配線の 1 点目。2 点目を押すまで印を出しておく。 */
+function markWireFrom(now: State): void {
+  unmark('cf-from');
+  if (now.wireFrom === null) return;
+  query(`.cf-cell[data-address="${CSS.escape(now.wireFrom)}"]`)?.classList.add('cf-from');
+}
+
+function paint(now: State): void {
+  markSelected(now.selected);
+  markHover(now);
+  markGhost(now);
+  markChosen(now);
+  markWireFrom(now);
+  // 道具は CSS が見る目印にする (右の道具の列の光り方、カーソルの形)。
+  document.body.dataset.tool = now.tool;
+  document.body.classList.toggle('cf-carrying', now.carry !== null);
+  setText('.kc-cell', now.under.cell ?? '');
+}
+
+// ---------------------------------------------------------------- 選択窓・欄
+
+const chooser = (): HTMLElement | null => query<HTMLElement>('.kc-chooser');
+const searchBox = (): HTMLInputElement | null => query<HTMLInputElement>('.cf-search');
+const fieldInput = (name: string): HTMLInputElement | null => query<HTMLInputElement>(`.cf-field[name="${name}"]`);
+
+function openChooser(): void {
+  const box = chooser();
+  if (box === null) return;
+  box.hidden = false;
+  const search = searchBox();
+  search?.focus();
+  search?.select();
+}
+
+function closeChooser(): void {
+  const box = chooser();
+  if (box === null) return;
+  box.hidden = true;
+  searchBox()?.blur();
+}
+
+/** 検索で残っている先頭の候補。`Enter` で置く。 */
+const firstPick = (): HTMLElement | null =>
+  query<HTMLElement>('.cf-types li:not(.cf-hidden) .cf-pick') ?? query<HTMLElement>('.cf-icons .cf-pick');
+
+function pick(button: HTMLElement): void {
+  const type = button.dataset.type;
+  if (type === undefined) return;
+  closeChooser();
+  run({ kind: 'place', type, twoEnds: button.dataset.ends === '2' });
+}
+
+function focusOn(focus: Focus | null): void {
+  if (focus === 'search') openChooser();
+  if (focus === 'id') fieldInput('id')?.focus();
+}
+
+// ---------------------------------------------------------------- 流す
 
 /**
  * 起きたことを流し、返ってきた状態を画面に映す。**その打鍵を握ったか**を返す
@@ -47,109 +229,167 @@ function mark(picked: Picked | null): void {
 function run(event: Event): boolean {
   const outcome = step(state, event);
   state = outcome.state;
-
   for (const message of outcome.send) vscode.postMessage(message);
-  if (outcome.status !== null) setStatus(outcome.status);
-  mark(state.picked);
-  markFrom(state.drawing);
-  markChosen(state.placing);
-  // 道具は CSS が見る目印にする (何が掴めるかは道具で変わる)。
-  document.body.dataset.tool = state.tool;
-  const tool = document.querySelector<HTMLInputElement>(`input[name="cf-tool"][value="${state.tool}"]`);
-  if (tool) tool.checked = true;
-  // 置き先の当たり判定は**ドラッグの間だけ**効かせる。いつも効かせると部品を
-  // 掴めず、いつも切ると埋まった升へ置けない (同じ番地に置くのは正当な操作)。
-  document.body.classList.toggle('cf-holding', state.pressed !== null && state.picked?.kind !== 'wire');
+  setText('.cf-status', outcome.status);
+  paint(state);
+  focusOn(outcome.focus);
   return outcome.handled;
 }
 
-/** いま置こうとしている部品。パレットのどれを押したかを見せる。 */
-function markChosen(placing: Placing | null): void {
-  for (const element of document.querySelectorAll('.cf-chosen')) element.classList.remove('cf-chosen');
-  if (placing === null) return;
-  for (const element of document.querySelectorAll(`.cf-pick[data-type="${CSS.escape(placing.type)}"]`)) {
-    element.classList.add('cf-chosen');
-  }
+/** カーソルの位置からカーソルの下を取り直す (組み直しのあとや、鍵で持ち上げたあと)。 */
+function syncHover(): void {
+  if (pointer === null) return;
+  const under = underAt(pointer.x, pointer.y);
+  if (!sameUnder(under, state.under)) run({ kind: 'hover', under });
 }
 
-/** 引きかけの配線の、押した交点。放すまで印を出しておく。 */
-function markFrom(cell: string | null): void {
-  for (const element of document.querySelectorAll('.cf-from')) element.classList.remove('cf-from');
-  if (cell === null) return;
-  document.querySelector(`.cf-cell[data-address="${CSS.escape(cell)}"]`)?.classList.add('cf-from');
-}
-
-/** 押した先にある掴める物。**どれを掴めるかを決めるのは状態遷移のほう。** */
-function pickedAt(target: Element | null): Picked | null {
-  if (target === null) return null;
-
-  const dot = target.closest<SVGElement>('.cf-dot');
-  if (dot?.dataset.node !== undefined) return { kind: 'node', id: dot.dataset.node };
-  const chip = target.closest<SVGElement>('.cf-chip');
-  if (chip?.dataset.part !== undefined) return { kind: 'part', id: chip.dataset.part };
-  const wire = target.closest<SVGElement>('.cf-wire-hit');
-  return wire?.dataset.line === undefined ? null : { kind: 'wire', id: wire.dataset.line };
-}
-
-/** 放した所の升。**当たり判定を切る前に引く** (切ると座標から引けなくなる)。 */
-function cellUnder(event: PointerEvent): string | null {
-  const target = event.target as Element | null;
-  const direct = target?.closest<SVGElement>('.cf-cell');
-  if (direct) return direct.dataset.address ?? null;
-  // 触ったままのドラッグは押した要素へ暗黙に捕まるので、座標から引き直す。
-  const under = document.elementFromPoint(event.clientX, event.clientY);
-  return under?.closest<SVGElement>('.cf-cell')?.dataset.address ?? null;
-}
-
-/** 欄に字を打っている最中か。**打鍵を横取りしない** (一覧は頭文字で選べる)。 */
+/** 欄に字を打っている最中か。**打鍵を横取りしない**。 */
 const typing = (target: EventTarget | null): boolean =>
   ['INPUT', 'SELECT', 'TEXTAREA'].includes((target as Element | null)?.tagName ?? '');
 
+// ---------------------------------------------------------------- ポインタ
+
 document.addEventListener('pointerdown', (event) => {
-  if (event.button !== 0) return;
   const target = event.target as Element | null;
-  run({
-    kind: 'press',
-    on: pickedAt(target),
-    // 配線の道具は交点から引くので、押した所の升も渡す。
-    cell: cellUnder(event),
-    x: event.clientX,
-    y: event.clientY,
-    onMap: target?.closest('.cf-map') != null,
-  });
+  const onCanvas = target?.closest('.kc-canvas') != null && target?.closest('.kc-chooser') == null;
+  // 中ボタン (か Space + 左) でパン。KiCad と同じ。
+  if (onCanvas && (event.button === 1 || (event.button === 0 && spaceHeld))) {
+    panning = { x: event.clientX, y: event.clientY, viewX: view.x, viewY: view.y };
+    event.preventDefault();
+    return;
+  }
+  if (event.button !== 0) return;
+  if (target?.closest('.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status')) return;
+  run({ kind: 'press', under: underAt(event.clientX, event.clientY), x: event.clientX, y: event.clientY, onMap: onCanvas });
+});
+
+document.addEventListener('pointermove', (event) => {
+  pointer = { x: event.clientX, y: event.clientY };
+  if (panning !== null) {
+    view.x = panning.viewX + (event.clientX - panning.x);
+    view.y = panning.viewY + (event.clientY - panning.y);
+    applyView();
+    return;
+  }
+  const under = underAt(event.clientX, event.clientY);
+  if ((event.buttons & 1) !== 0 && state.pressed !== null) {
+    run({ kind: 'drag', under, x: event.clientX, y: event.clientY });
+    return;
+  }
+  if (!sameUnder(under, state.under)) run({ kind: 'hover', under });
 });
 
 document.addEventListener('pointerup', (event) => {
-  run({ kind: 'release', x: event.clientX, y: event.clientY, cell: cellUnder(event), shift: event.shiftKey });
+  if (panning !== null) {
+    panning = null;
+    return;
+  }
+  if (event.button !== 0) return;
+  const target = event.target as Element | null;
+  if (target?.closest('.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status') && state.pressed === null) return;
+  run({
+    kind: 'release',
+    under: underAt(event.clientX, event.clientY),
+    x: event.clientX,
+    y: event.clientY,
+    shift: event.shiftKey,
+  });
 });
 
 // 窓の外で放したときなど、放した知らせが来ないことがある。
-document.addEventListener('pointercancel', () => { run({ kind: 'cancel' }); });
+document.addEventListener('pointercancel', () => { panning = null; run({ kind: 'cancel' }); });
+
+document.addEventListener('dblclick', (event) => {
+  const target = event.target as Element | null;
+  if (target?.closest('.kc-canvas') == null) return;
+  run({ kind: 'dblclick', under: underAt(event.clientX, event.clientY) });
+});
+
+document.addEventListener('wheel', (event) => {
+  const target = event.target as Element | null;
+  if (target?.closest('.kc-canvas') == null || target?.closest('.kc-chooser') != null) return;
+  event.preventDefault();
+  const at = inCanvas(event);
+  zoomAt(event.deltaY < 0 ? WHEEL_STEP : 1 / WHEEL_STEP, at.x, at.y);
+}, { passive: false });
+
+// ---------------------------------------------------------------- 鍵
 
 document.addEventListener('keydown', (event) => {
-  // 欄へ飛ぶ鍵。**DOM だけの話**なので状態遷移には渡さない。
-  if (event.key === 'F2' && state.picked?.kind === 'part') {
-    event.preventDefault();
-    fieldInput('id')?.focus();
+  const target = event.target as Element | null;
+
+  // 選択窓の検索欄。Enter で先頭の候補、Esc で閉じる。ほかは欄に任せる。
+  if (target?.classList.contains('cf-search')) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const first = firstPick();
+      if (first) pick(first);
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeChooser();
+      return;
+    }
     return;
   }
+  if (typing(target)) {
+    // 欄の Esc は欄を離れる (そのあとの Esc は状態遷移の Esc になる)。
+    if (event.key === 'Escape') (target as HTMLElement).blur();
+    return;
+  }
+
+  if (event.key === ' ') {
+    spaceHeld = true;
+    event.preventDefault();
+    return;
+  }
+  if (event.key === 'Home') {
+    event.preventDefault();
+    fit();
+    return;
+  }
+  if (event.key === '+' || event.key === '=') {
+    zoomAtCenter(KEY_STEP);
+    return;
+  }
+  if (event.key === '-') {
+    zoomAtCenter(1 / KEY_STEP);
+    return;
+  }
+
   const handled = run({
     kind: 'key',
     key: event.key,
     shift: event.shiftKey,
     modifier: event.ctrlKey || event.metaKey || event.altKey,
-    typing: typing(event.target),
+    typing: false,
   });
   if (handled) event.preventDefault();
+  // 鍵で持ち上げたら、いまのカーソルの下にゴーストを出す。
+  if (handled) syncHover();
 });
+
+document.addEventListener('keyup', (event) => {
+  if (event.key === ' ') spaceHeld = false;
+});
+
+// ---------------------------------------------------------------- クリック (ボタン)
 
 document.addEventListener('click', (event) => {
   const target = event.target as Element | null;
 
-  // パレット。選ぶと「置く」道具になり、`Esc` まで続く。
-  const pick = target?.closest<HTMLElement>('.cf-pick');
-  if (pick?.dataset.type !== undefined) {
-    run({ kind: 'place', placing: { type: pick.dataset.type, twoEnds: pick.dataset.ends === '2' } });
+  // パレット。選ぶと持ち物になり、`Esc` まで続く。
+  const chosen = target?.closest<HTMLElement>('.cf-pick');
+  if (chosen?.dataset.type !== undefined) {
+    pick(chosen);
+    return;
+  }
+
+  // 右の道具の列。鍵と同じことをする (鍵を知らなくても押せる)。
+  const tool = target?.closest<HTMLElement>('.kc-tool');
+  if (tool?.dataset.key !== undefined) {
+    run({ kind: 'key', key: tool.dataset.key, shift: false, modifier: false, typing: false });
     return;
   }
 
@@ -159,6 +399,11 @@ document.addEventListener('click', (event) => {
     vscode.postMessage({ kind: 'goto', line: Number(row.dataset.line) });
     return;
   }
+
+  if (target?.closest('.kc-zoom-in')) { zoomAtCenter(KEY_STEP); return; }
+  if (target?.closest('.kc-zoom-out')) { zoomAtCenter(1 / KEY_STEP); return; }
+  if (target?.closest('.kc-fit')) { fit(); return; }
+  if (target?.closest('.kc-chooser-close')) { closeChooser(); return; }
 
   // 戻す・やり直すは拡張側に頼む (webview には文書が無い)。
   const button = target?.closest<HTMLButtonElement>('.cf-undo, .cf-redo');
@@ -172,7 +417,7 @@ document.addEventListener('change', (event) => {
 
   // 欄。名前だけは 3 か所に散るので別の道 (`rename`)。
   if (target.classList.contains('cf-field')) {
-    const part = state.picked?.kind === 'part' ? state.picked.id : null;
+    const part = state.selected?.kind === 'part' ? state.selected.id : null;
     if (part === null) return;
     const written = target.value.trim();
     vscode.postMessage(target.name === 'id'
@@ -184,11 +429,7 @@ document.addEventListener('change', (event) => {
   // フェンスの一覧。選んだ行を拡張へ (どのフェンスを出すかは拡張が覚える)。
   if (target.classList.contains('cf-fence')) {
     vscode.postMessage({ kind: 'fence', line: Number(target.value) });
-    return;
   }
-  if (target.name !== 'cf-tool') return;
-  const tool = target.value;
-  if (tool === 'select' || tool === 'wire' || tool === 'node') run({ kind: 'tool', tool });
 });
 
 /**
@@ -197,7 +438,7 @@ document.addEventListener('change', (event) => {
  * 触れているものを取り違えない。
  */
 function aim(what: string | undefined, id: string | undefined): void {
-  for (const element of document.querySelectorAll('.cf-aim')) element.classList.remove('cf-aim');
+  unmark('cf-aim');
   if (what === undefined || id === undefined) return;
 
   const escaped = CSS.escape(id);
@@ -217,17 +458,16 @@ type Fields = {
   readonly can: readonly ('type' | 'value' | 'label')[];
 };
 
-const fieldInput = (name: string): HTMLInputElement | null =>
-  document.querySelector<HTMLInputElement>(`.cf-field[name="${name}"]`);
-
 /**
  * 選んだ部品の欄を出す。**打っている最中の欄は書き換えない** —
  * 書き換えのたびに送り直されるので、上書きすると打てなくなる。
  */
 function showFields(part: Fields | null): void {
-  const form = document.querySelector<HTMLFormElement>('.cf-inspector');
+  const form = query<HTMLFormElement>('.cf-inspector');
+  const idle = query<HTMLElement>('.kc-props-hint');
   if (form === null) return;
   form.hidden = part === null;
+  if (idle) idle.hidden = part !== null;
   if (part === null) return;
 
   const fill = (name: string, value: string, enabled: boolean): void => {
@@ -238,7 +478,6 @@ function showFields(part: Fields | null): void {
   };
   fill('id', part.id, true);
   fill('type', part.type, true);
-  // 1 端子は「種類 番地」だけ、多端子に l= は無い (文法にその場所が無い)。
   // **書ける欄はフェンスが決める。** 殻は種類の語を知らない。
   fill('value', part.value, part.can.includes('value'));
   fill('label', part.label, part.can.includes('label'));
@@ -249,10 +488,11 @@ type Incoming =
   | { readonly kind: 'status'; readonly text: string }
   | { readonly kind: 'aim'; readonly what?: string; readonly id?: string }
   | { readonly kind: 'history'; readonly canUndo: boolean; readonly canRedo: boolean }
-  | { readonly kind: 'fields'; readonly part: Fields | null };
+  | { readonly kind: 'fields'; readonly part: Fields | null }
+  | { readonly kind: 'ghost'; readonly key: string; readonly cells: readonly string[]; readonly ok: boolean; readonly why: string };
 
 const fill = (selector: string, html: string): void => {
-  const target = document.querySelector(selector);
+  const target = query(selector);
   if (target) target.innerHTML = html;
 };
 
@@ -262,22 +502,29 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
     fill('.cf-body', message.html);
     fill('.cf-fences', message.picker);
     fill('.cf-band', message.issues);
-    // **掴んでいたものが残っていれば掴んだまま。** 書き換えのたびに組み直る
+    applyView();
+    // **選んでいたものが残っていれば選んだまま。** 書き換えのたびに組み直る
     // ので、そのたびに離すと欄で値を直せない。消えていれば捨てる。
-    if (state.picked !== null && shownFor(state.picked) !== null) {
-      mark(state.picked);
-      // 光と欄も送り直してもらう (拡張側は何を掴んでいるかを覚えていない)。
-      vscode.postMessage({ kind: 'select', what: state.picked.kind, id: state.picked.id });
+    if (state.selected !== null && shownFor(state.selected) !== null) {
+      // 光と欄も送り直してもらう (拡張側は何を選んでいるかを覚えていない)。
+      vscode.postMessage({ kind: 'select', what: state.selected.kind, id: state.selected.id });
     } else {
       run({ kind: 'refresh' });
     }
+    // 組み直した図の上で、カーソルの下を取り直す (持ち物のゴーストも訊き直す)。
+    run({ kind: 'hover', under: NOTHING });
+    syncHover();
+    paint(state);
+  }
+  if (message.kind === 'ghost') {
+    run({ kind: 'ghost', ghost: { key: message.key, cells: message.cells, ok: message.ok, why: message.why } });
   }
   if (message.kind === 'fields') showFields(message.part);
-  if (message.kind === 'status') setStatus(message.text);
+  if (message.kind === 'status') setText('.cf-status', message.text);
   if (message.kind === 'aim') aim(message.what, message.id);
   if (message.kind === 'history') {
-    const undo = document.querySelector<HTMLButtonElement>('.cf-undo');
-    const redo = document.querySelector<HTMLButtonElement>('.cf-redo');
+    const undo = query<HTMLButtonElement>('.cf-undo');
+    const redo = query<HTMLButtonElement>('.cf-redo');
     if (undo) undo.disabled = !message.canUndo;
     if (redo) redo.disabled = !message.canRedo;
   }
@@ -300,3 +547,9 @@ document.addEventListener('input', (event) => {
 
 // 欄で Enter を押したときに送り直さない (`change` が既に当てている)。
 document.addEventListener('submit', (event) => { event.preventDefault(); });
+
+// パレットの `details` は選択窓の中では常に開いておく (窓そのものが開け閉めの単位)。
+for (const details of document.querySelectorAll<HTMLDetailsElement>('.kc-chooser details')) details.open = true;
+
+setText('.cf-status', step(state, { kind: 'hover', under: NOTHING }).status);
+applyView();

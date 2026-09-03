@@ -17,123 +17,113 @@ import type { FenceEntry } from './fenceEditor.ts';
  */
 
 const STYLE = `
+  /* KiCad の配置を借りる (52 の docs/17): 上に道具の帯、右に道具の列、左に属性、
+     下に状態行。色は VS Code のテーマに従う (KiCad 自身もテーマで色を変える)。 */
+  html, body { height: 100%; margin: 0; }
   body {
-    font-family: var(--vscode-font-family); padding: 8px 12px;
+    font-family: var(--vscode-font-family); font-size: 12px;
+    display: flex; flex-direction: column; overflow: hidden;
+    color: var(--vscode-foreground); background: var(--vscode-editor-background);
     /* 記号の地。線の上に載る字の縁取りにも使う (図側から色名で引ける)。 */
     --cf-paper: var(--vscode-editor-background);
     --cf-ink: var(--vscode-foreground);
     --cf-node: var(--vscode-charts-blue, var(--vscode-focusBorder));
     --cf-bad: var(--vscode-editorError-foreground, #f14c4c);
     --cf-iffy: var(--vscode-editorWarning-foreground, #cca700);
+    --cf-ghost: var(--vscode-charts-green, #4caf50);
+    --kc-line: var(--vscode-panel-border, #444);
+    --kc-chrome: var(--vscode-sideBar-background, var(--vscode-editor-background));
   }
-  .cf-note { color: var(--vscode-descriptionForeground); margin: 6px 0; }
-  .cf-map { width: 100%; height: auto; user-select: none; touch-action: none; }
+  button { font: inherit; color: inherit; }
+  kbd {
+    font: inherit; font-size: 10px; padding: 0 3px; opacity: 0.75;
+    border: 1px solid var(--kc-line); border-radius: 3px;
+  }
 
-  /* 見えるだけの層は当たり判定を持たない。 */
-  .cf-grid, .cf-axes, .cf-wires { pointer-events: none; }
-  /* 配線を掴む層 (太い透明な線)。**「選ぶ」道具のときだけ**効かせる —
-     ほかの道具のときに配線が割り込むと、掴んだつもりと違うものが選ばれる。 */
-  .cf-wire-hit { stroke: transparent; stroke-width: 8; fill: none; cursor: pointer; }
-  body:not([data-tool="select"]) .cf-wire-hits { pointer-events: none; }
-  .cf-grid-dot { fill: var(--vscode-panel-border); }
-  .cf-axis { fill: var(--vscode-descriptionForeground); font-size: 9px; }
-
-  .cf-wire, .cf-lead { stroke: var(--cf-ink); stroke-width: 1.5; fill: none; }
-  /* ピンの端は近似。実線で引くと持っていない精度を約束することになる。 */
-  .cf-wire.cf-approx { stroke-dasharray: 3 3; opacity: 0.6; }
-
-  .cf-glyph { fill: var(--cf-paper); stroke: var(--cf-ink); stroke-width: 1.5; }
-  .cf-glyph-line { fill: none; stroke: var(--cf-ink); stroke-width: 1.5; }
-  .cf-name { fill: var(--cf-ink); font-size: 10px; }
-  /* 箱から出る足。**どちらを向いているか**を見せるためだけのもの。 */
-  .cf-pin { stroke: var(--cf-ink); stroke-width: 1.5; }
-  .cf-pin-name { fill: var(--vscode-descriptionForeground); font-size: 8px; }
-  .cf-mark { fill: var(--cf-ink); font-size: 9px; }
-  .cf-dot-mark { fill: var(--cf-node); }
-  .cf-dot-name { fill: var(--cf-node); font-size: 9px; }
-
-  /* エディタのカーソルが指しているもの。掴んでいる印とは別の色にして、
-     「いま触れているもの」と「持っているもの」を取り違えないようにする。 */
-  .cf-aim .cf-glyph, .cf-aim .cf-glyph-line, .cf-aim .cf-lead, .cf-aim .cf-pin,
-  .cf-wire.cf-aim { stroke: var(--vscode-charts-orange, var(--cf-node)); stroke-width: 2.5; }
-  .cf-aim .cf-name { fill: var(--vscode-charts-orange, var(--cf-node)); }
-  .cf-aim .cf-dot-mark { stroke: var(--vscode-charts-orange, var(--cf-node)); stroke-width: 3; }
-
-  /* 選んだもの。ドラッグの間もこの印のまま (見た目を 2 通りに増やさない)。 */
-  .cf-chip, .cf-dot { cursor: grab; }
-  .cf-held { cursor: grabbing; }
-  .cf-held .cf-glyph, .cf-held .cf-glyph-line, .cf-held .cf-lead,
-  .cf-held .cf-pin { stroke: var(--vscode-focusBorder); }
-  .cf-held .cf-name { fill: var(--vscode-focusBorder); }
-  .cf-held .cf-dot-mark { stroke: var(--vscode-focusBorder); stroke-width: 3; }
-  .cf-wire.cf-held { stroke: var(--vscode-focusBorder); stroke-width: 2.5; }
-
-  /* 読めなかった行に書かれたもの。**帯と絵で同じものを指す** — 行番号だけでは
-     どの記号のことか、字と突き合わせないと分からない。お知らせには印を付けない
-     (読めてはいるので、同じ赤で囲むと間違いに見える)。
-     **触れている印・持っている印より後に置く** (同じ強さなら後が勝つ) —
-     直そうとしてカーソルを置いた瞬間に赤が消えると、どれが悪いのか見失う。 */
-  .cf-bad .cf-glyph, .cf-bad .cf-glyph-line, .cf-bad .cf-lead,
-  .cf-wire.cf-bad { stroke: var(--cf-bad); }
-  .cf-bad .cf-name { fill: var(--cf-bad); }
-
-  /* 置き先は**ドラッグの間だけ**効かせる。いつも効かせると部品を掴めず、
-     いつも切ると埋まった升へ置けない (同じ番地に置くのは正当な操作)。
-     配線と部品は交点を指して置くので、そのあいだは押す前から効かせる。 */
-  .cf-cell { fill: transparent; }
-  .cf-hits { pointer-events: none; }
-  body.cf-holding .cf-hits,
-  body[data-tool="wire"] .cf-hits,
-  body[data-tool="part"] .cf-hits { pointer-events: all; }
-  body.cf-holding .cf-cell:hover,
-  body[data-tool="wire"] .cf-cell:hover,
-  body[data-tool="part"] .cf-cell:hover { fill: var(--vscode-editor-inactiveSelectionBackground); }
-  /* 引きかけの配線の、押した交点。 */
-  .cf-cell.cf-from { fill: var(--vscode-focusBorder); opacity: 0.35; }
-
-  /* 道具に合う層だけがクリックを取る。部品の升にも節点は立つので、
-     どちらも掴めると掴んだつもりと違うものが動く。 */
-  body:not([data-tool="node"]) .cf-marks { pointer-events: none; opacity: 0.45; }
-  body[data-tool="node"] .cf-parts { pointer-events: none; opacity: 0.5; }
-  .cf-fences { margin: 0 0 8px; }
+  /* 上の帯: 戻す・やり直す、ズーム、フェンスの一覧。 */
+  .kc-top {
+    display: flex; align-items: center; gap: 6px; padding: 4px 8px;
+    border-bottom: 1px solid var(--kc-line); background: var(--kc-chrome);
+  }
+  .kc-top .kc-group { display: flex; gap: 2px; padding-right: 6px; border-right: 1px solid var(--kc-line); }
+  .kc-top button {
+    min-width: 26px; height: 24px; padding: 0 6px; border: 1px solid transparent; border-radius: 3px;
+    background: none; cursor: pointer;
+  }
+  .kc-top button:hover { border-color: var(--vscode-focusBorder); }
+  .kc-top button:disabled { opacity: 0.35; cursor: default; }
+  .kc-title { margin-left: auto; opacity: 0.7; }
+  .cf-fences { margin: 0; }
   .cf-fences select {
-    font: inherit; font-size: 12px; padding: 2px 6px;
+    font: inherit; padding: 1px 4px;
     background: var(--vscode-dropdown-background); color: var(--vscode-dropdown-foreground);
     border: 1px solid var(--vscode-dropdown-border);
   }
-  .cf-tools { margin: 0 0 8px; }
-  .cf-tools label { margin-right: 12px; }
-  .cf-tools kbd {
-    font: inherit; font-size: 11px; padding: 0 4px; opacity: 0.8;
-    border: 1px solid var(--vscode-panel-border); border-radius: 3px;
-  }
-  .cf-history { margin: 0 0 8px; }
-  .cf-history button {
-    margin-right: 6px; padding: 2px 10px; border: 0; cursor: pointer; font: inherit; font-size: 12px;
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-  }
-  .cf-history button:disabled { opacity: 0.4; cursor: default; }
-  .cf-status { margin-top: 8px; min-height: 1.4em; }
 
-  /* 選んだ部品の欄。**1 部品 = 1 行**なので、欄も 1 行に並ぶ。 */
-  .cf-inspector { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 0; }
-  .cf-inspector label { font-size: 12px; color: var(--vscode-descriptionForeground); }
+  /* 真ん中: 左に属性、図、右に道具の列。 */
+  .kc-main { flex: 1; min-height: 0; display: flex; }
+  .kc-props {
+    width: 170px; flex: none; padding: 8px; overflow-y: auto;
+    border-right: 1px solid var(--kc-line); background: var(--kc-chrome);
+  }
+  .kc-props h2 { margin: 0 0 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; opacity: 0.7; }
+  .kc-props-hint { margin: 0; opacity: 0.7; line-height: 1.5; }
+  .cf-inspector { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+  /* hidden 属性は display の指定に負けるので、明示して隠す。 */
+  .cf-inspector[hidden], .kc-props-hint[hidden] { display: none; }
+  .cf-inspector label { display: flex; flex-direction: column; gap: 2px; color: var(--vscode-descriptionForeground); }
   .cf-field {
-    margin-left: 4px; padding: 1px 4px; font: inherit; font-size: 12px;
+    padding: 2px 4px; font: inherit;
     background: var(--vscode-input-background); color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
   }
   /* その部品には書けない欄 (1 端子の値、多端子の l=)。消さずに触れなくする。 */
   .cf-field:disabled { opacity: 0.4; }
 
-  /* 部品のパレット。**折り畳める**ので、閉じていれば升目が全幅になる。 */
-  .cf-palette { margin: 0 0 8px; }
-  .cf-palette summary { cursor: pointer; user-select: none; }
-  .cf-icons { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+  .kc-canvas { flex: 1; min-width: 0; position: relative; overflow: hidden; cursor: crosshair; }
+  .cf-body { transform-origin: 0 0; will-change: transform; }
+  /* 図の根 (どのフェンスの SVG も)。ズーム 1 で箱の幅に収める。 */
+  .cf-body > svg { display: block; width: 100%; height: auto; user-select: none; touch-action: none; }
+  .cf-note { margin: 8px; color: var(--vscode-descriptionForeground); }
+
+  /* 右の道具の列 (KiCad の右ツールバー)。鍵を知らなくても押せる。 */
+  .kc-tools {
+    width: 64px; flex: none; display: flex; flex-direction: column; gap: 2px; padding: 6px 4px;
+    border-left: 1px solid var(--kc-line); background: var(--kc-chrome); overflow-y: auto;
+  }
+  .kc-tool {
+    display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 5px 2px;
+    border: 1px solid transparent; border-radius: 4px; background: none; cursor: pointer;
+  }
+  .kc-tool .kc-glyph { font-size: 16px; line-height: 1; }
+  .kc-tool:hover { border-color: var(--vscode-focusBorder); }
+  body[data-tool="select"] .kc-tool[data-tool="select"],
+  body[data-tool="wire"] .kc-tool[data-tool="wire"],
+  body[data-tool="place"] .kc-tool[data-tool="place"] {
+    background: var(--vscode-list-activeSelectionBackground);
+    color: var(--vscode-list-activeSelectionForeground);
+  }
+
+  /* 部品を選ぶ窓 (KiCad の Choose Symbol)。図の上に浮かぶ。 */
+  .kc-chooser {
+    position: absolute; top: 8px; left: 8px; width: 260px; max-height: calc(100% - 16px);
+    display: flex; flex-direction: column; cursor: default;
+    background: var(--vscode-editorWidget-background, var(--kc-chrome));
+    border: 1px solid var(--vscode-editorWidget-border, var(--kc-line)); border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  }
+  .kc-chooser[hidden] { display: none; }
+  .kc-chooser header {
+    display: flex; align-items: center; gap: 6px; padding: 6px 8px;
+    border-bottom: 1px solid var(--kc-line); font-weight: 600;
+  }
+  .kc-chooser-close { margin-left: auto; border: 0; background: none; cursor: pointer; }
+  .kc-chooser .cf-palette { padding: 6px 8px; overflow-y: auto; }
+  .kc-chooser summary { display: none; }
+  .cf-icons { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 6px; }
   .cf-pick {
     padding: 2px 6px; border: 1px solid transparent; border-radius: 3px;
-    background: none; color: inherit; font: inherit; font-size: 12px; cursor: pointer;
+    background: none; color: inherit; cursor: pointer; text-align: left;
   }
   .cf-pick:hover { border-color: var(--vscode-focusBorder); }
   /* いま置こうとしているもの。道具の帯と同じ「いまの状態」の印。 */
@@ -145,21 +135,21 @@ const STYLE = `
   .cf-icon { width: 34px; height: 24px; }
   .cf-icon .cf-mark { font-size: 9px; }
   .cf-search {
-    width: 100%; box-sizing: border-box; font: inherit; font-size: 12px; padding: 2px 6px;
+    width: 100%; box-sizing: border-box; font: inherit; padding: 3px 6px; margin: 0 0 4px;
     background: var(--vscode-input-background); color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
   }
-  .cf-types { list-style: none; margin: 6px 0 0; padding: 0; max-height: 150px; overflow-y: auto; }
+  .cf-types { list-style: none; margin: 0; padding: 0; max-height: 240px; overflow-y: auto; }
+  .cf-types li .cf-pick { width: 100%; }
   .cf-types code { opacity: 0.7; font-size: 11px; }
   .cf-types li.cf-hidden { display: none; }
 
-  /* 読めなかったところとお知らせ。**マップと同じ窓に出す** — 図の下の帯は
-     プレビューにしか出ず、掴んでいる間は隠れていることが多い。 */
-  .cf-issues { list-style: none; margin: 8px 0 0; padding: 0; font-size: 12px; }
-  .cf-issue {
-    margin-top: 2px; padding: 3px 8px;
-    border-left: 3px solid var(--vscode-panel-border);
-  }
+  /* 帯: 読めなかったところとお知らせ。折り畳める。 */
+  .kc-band { flex: none; max-height: 30%; overflow-y: auto; border-top: 1px solid var(--kc-line); background: var(--kc-chrome); }
+  .kc-band summary { padding: 3px 8px; cursor: pointer; user-select: none; opacity: 0.8; }
+  .kc-band > summary::after { content: ""; }
+  .cf-issues { list-style: none; margin: 0; padding: 0 8px 6px; }
+  .cf-issue { margin-top: 2px; padding: 3px 8px; border-left: 3px solid var(--kc-line); }
   .cf-issue.cf-error {
     border-left-color: var(--cf-bad);
     background: var(--vscode-inputValidation-errorBackground, transparent);
@@ -168,8 +158,7 @@ const STYLE = `
     border-left-color: var(--cf-iffy);
     background: var(--vscode-inputValidation-warningBackground, transparent);
   }
-  /* 行の分かっているものだけが押せる。分からないものに指を出すと、
-     押しても何も起きない行ができる (renderIssues が data-line を付けない)。 */
+  /* 行の分かっているものだけが押せる。 */
   .cf-issue[data-line] { cursor: pointer; }
   .cf-issue[data-line]:hover { outline: 1px solid var(--vscode-focusBorder); }
   .cf-issue code {
@@ -179,6 +168,75 @@ const STYLE = `
   .cf-issue mark {
     background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33));
     color: inherit;
+  }
+
+  /* 下の状態行 (KiCad のステータスバー): 左にいまできること、右に穴とズーム。 */
+  .kc-status {
+    flex: none; display: flex; align-items: center; gap: 12px; padding: 3px 8px; min-height: 1.5em;
+    border-top: 1px solid var(--kc-line); background: var(--vscode-statusBar-background, var(--kc-chrome));
+    color: var(--vscode-statusBar-foreground, inherit);
+  }
+  .cf-status { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kc-cell { min-width: 3em; font-family: var(--vscode-editor-font-family, monospace); }
+  .kc-zoom { min-width: 3.5em; text-align: right; }
+
+  /* ---- 図の中の層 ---- */
+  /* 見えるだけの層は当たり判定を持たない。 */
+  .cf-grid, .cf-axes, .cf-wires { pointer-events: none; }
+  /* 掴む層。**全部いつも効かせる** — カーソルの下は elementsFromPoint で重なりごと
+     読むので、道具ごとに層を切り替える必要が無い。 */
+  .cf-hits, .cf-marks, .cf-wire-hits { pointer-events: all; }
+  .cf-wire-hit { stroke: transparent; stroke-width: 8; fill: none; }
+  .cf-cell { fill: transparent; }
+  .cf-grid-dot { fill: var(--vscode-panel-border); }
+  .cf-axis { fill: var(--vscode-descriptionForeground); font-size: 9px; }
+
+  .cf-wire, .cf-lead { stroke: var(--cf-ink); stroke-width: 1.5; fill: none; }
+  /* ピンの端は近似。実線で引くと持っていない精度を約束することになる。 */
+  .cf-wire.cf-approx { stroke-dasharray: 3 3; opacity: 0.6; }
+
+  .cf-glyph { fill: var(--cf-paper); stroke: var(--cf-ink); stroke-width: 1.5; }
+  .cf-glyph-line { fill: none; stroke: var(--cf-ink); stroke-width: 1.5; }
+  .cf-name { fill: var(--cf-ink); font-size: 10px; }
+  .cf-pin { stroke: var(--cf-ink); stroke-width: 1.5; }
+  .cf-pin-name { fill: var(--vscode-descriptionForeground); font-size: 8px; }
+  .cf-mark { fill: var(--cf-ink); font-size: 9px; }
+  .cf-dot-mark { fill: var(--cf-node); }
+  .cf-dot-name { fill: var(--cf-node); font-size: 9px; }
+  /* 節点の点は、鍵の対象になるときだけ目立たせる (いつも濃いと図がうるさい)。 */
+  .cf-marks { opacity: 0.45; }
+
+  /* カーソルの下で鍵の対象になるもの。薄く縁取る (押す前に何に効くかが分かる)。 */
+  .cf-hover .cf-glyph, .cf-hover .cf-glyph-line, .cf-hover .cf-lead, .cf-hover .cf-pin,
+  .cf-wire.cf-hover { stroke: var(--vscode-focusBorder); stroke-width: 2.5; opacity: 0.9; }
+  .cf-hover .cf-dot-mark { stroke: var(--vscode-focusBorder); stroke-width: 3; }
+
+  /* エディタのカーソルが指しているもの。掴んでいる印とは別の色。 */
+  .cf-aim .cf-glyph, .cf-aim .cf-glyph-line, .cf-aim .cf-lead, .cf-aim .cf-pin,
+  .cf-wire.cf-aim { stroke: var(--vscode-charts-orange, var(--cf-node)); stroke-width: 2.5; }
+  .cf-aim .cf-name { fill: var(--vscode-charts-orange, var(--cf-node)); }
+  .cf-aim .cf-dot-mark { stroke: var(--vscode-charts-orange, var(--cf-node)); stroke-width: 3; }
+
+  /* 選んだもの。 */
+  .cf-held .cf-glyph, .cf-held .cf-glyph-line, .cf-held .cf-lead,
+  .cf-held .cf-pin { stroke: var(--vscode-focusBorder); stroke-width: 2.5; }
+  .cf-held .cf-name { fill: var(--vscode-focusBorder); }
+  .cf-held .cf-dot-mark { stroke: var(--vscode-focusBorder); stroke-width: 3; }
+  .cf-wire.cf-held { stroke: var(--vscode-focusBorder); stroke-width: 2.5; }
+
+  /* 読めなかった行に書かれたもの。**触れている印・持っている印より後に置く**。 */
+  .cf-bad .cf-glyph, .cf-bad .cf-glyph-line, .cf-bad .cf-lead,
+  .cf-wire.cf-bad { stroke: var(--cf-bad); }
+  .cf-bad .cf-name { fill: var(--cf-bad); }
+
+  /* ゴースト: 置く・動かす先の穴。置けないときは赤。 */
+  .cf-cell.cf-ghost { fill: var(--cf-ghost); opacity: 0.45; }
+  .cf-cell.cf-ghost-bad { fill: var(--cf-bad); opacity: 0.45; }
+  /* 配線の 1 点目。 */
+  .cf-cell.cf-from { fill: var(--vscode-focusBorder); opacity: 0.35; }
+  /* 穴に触れているとき (配線・持ち物のあいだ) は穴を薄く見せる。 */
+  body[data-tool="wire"] .cf-cell:hover, body.cf-carrying .cf-cell:hover {
+    fill: var(--vscode-editor-inactiveSelectionBackground);
   }
 `;
 
@@ -221,6 +279,8 @@ export type PanelHtmlOptions = {
    * 自前の履歴)、`vscode` はカスタムエディタ (タブの文書へ undo が届く)。
    */
   readonly undo: 'own' | 'vscode';
+  /** 配線を `Shift` で折れるか (`FenceEditor.foldsWire`)。案内文に出す。 */
+  readonly foldsWire?: boolean;
 };
 
 /**
@@ -236,43 +296,65 @@ export function renderFencePicker(fences: readonly FenceEntry[], line: number | 
   return `<label>フェンス <select class="cf-fence">${options}</select></label>`;
 }
 
-export const panelHtml = ({ cspSource, nonce, scriptUri, view, chrome, undo }: PanelHtmlOptions): string => {
+/** 右の道具の列。**鍵と同じ一覧** — 押すと同じ鍵を押したことになる。 */
+const TOOLS: readonly { readonly tool?: string; readonly key: string; readonly glyph: string; readonly name: string; readonly kbd: string }[] = [
+  { tool: 'select', key: 'Escape', glyph: '↖', name: '選ぶ', kbd: 'Esc' },
+  { tool: 'place', key: 'a', glyph: '▣', name: '部品', kbd: 'A' },
+  { tool: 'wire', key: 'w', glyph: '─', name: '配線', kbd: 'W' },
+  { key: 'm', glyph: '✥', name: '動かす', kbd: 'M' },
+  { key: 'g', glyph: '⤡', name: '引きずる', kbd: 'G' },
+  { key: 'r', glyph: '↻', name: '回す', kbd: 'R' },
+  { key: 'x', glyph: '⇔', name: '反転', kbd: 'X' },
+  { key: 'Delete', glyph: '✕', name: '消す', kbd: 'Del' },
+];
+
+const renderTools = (): string => TOOLS.map((one) => (
+  `<button type="button" class="kc-tool"${one.tool === undefined ? '' : ` data-tool="${one.tool}"`}`
+  + ` data-key="${one.key}" title="${one.name} (${one.kbd})">`
+  + `<span class="kc-glyph">${one.glyph}</span><span>${one.name}</span><kbd>${one.kbd}</kbd></button>`
+)).join('');
+
+export const panelHtml = ({ cspSource, nonce, scriptUri, view, chrome, undo, foldsWire = false }: PanelHtmlOptions): string => {
   const own = undo === 'own';
   return `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">`
     + `<meta http-equiv="Content-Security-Policy" content="default-src 'none';`
     + ` style-src ${escapeMarkup(cspSource)} 'unsafe-inline'; script-src 'nonce-${escapeMarkup(nonce)}';">`
-    + `<style>${STYLE}</style><title>部品と節点を動かす</title></head>`
-    + `<body data-tool="select"${own ? ' class="cf-own-undo"' : ''}>`
+    + `<style>${STYLE}</style><title>図を掴んで動かす</title></head>`
+    + `<body data-tool="select" data-folds="${foldsWire ? '1' : '0'}"${own ? ' class="cf-own-undo"' : ''}>`
+    + `<header class="kc-top">`
+    + `<span class="kc-group">`
+    + `<button class="cf-undo"${own ? ' disabled' : ''} title="元に戻す (Ctrl+Z)">↶</button>`
+    + `<button class="cf-redo"${own ? ' disabled' : ''} title="やり直す (Ctrl+Shift+Z)">↷</button></span>`
+    + `<span class="kc-group">`
+    + `<button class="kc-zoom-out" title="縮小 (-)">−</button>`
+    + `<button class="kc-zoom-in" title="拡大 (+)">＋</button>`
+    + `<button class="kc-fit" title="全体 (Home)">⤢</button></span>`
     + `<p class="cf-fences">${view.picker}</p>`
-    + `<p class="cf-tools">`
-    + `<label><input type="radio" name="cf-tool" value="select" checked> 選ぶ <kbd>V</kbd></label>`
-    + `<label><input type="radio" name="cf-tool" value="wire"> 配線 <kbd>W</kbd></label>`
-    + `<label><input type="radio" name="cf-tool" value="node"> 節点 <kbd>N</kbd></label></p>`
-    + chrome.palette
-    + `<p class="cf-history">`
-    + `<button class="cf-undo"${own ? ' disabled' : ''} title="Ctrl+Z">元に戻す</button>`
-    + `<button class="cf-redo"${own ? ' disabled' : ''} title="Ctrl+Shift+Z">やり直す</button></p>`
-    + `<p class="cf-note"><b>選ぶ</b>: ドラッグして置きたい交点で放すと動きます`
-    + ` (クリックは選ぶだけ — エディタの書いてある場所が光ります)。`
-    + `選んでから <b>R</b> で回し、<b>M</b> で反転、<b>Delete</b> で消します`
-    + ` (配線は線をクリックして選びます)。`
-    + `<b>配線</b>: 交点から交点へドラッグすると 1 本引きます`
-    + ` (<b>Shift</b> を押しながら放すと先に横へ折ります)。`
-    + `<b>節点</b>: 交点に来ているものが丸ごと動き、接続は保たれます。`
-    + `<b>部品を置く</b>: パレットで選ぶと置く道具になります`
-    + ` (2 端子は交点から交点へドラッグ、ほかは交点をクリック。<b>Esc</b> でやめます)。`
-    + `部品を選ぶと下に<b>欄</b>が出ます (名前・種類・値・ラベル。`
-    + `<b>F2</b> で名前へ、<b>Enter</b> か欄を離れたときに当たります)。`
-    + `図は書き換えのあと数秒で描き直ります。</p>`
-    + `<div class="cf-body">${view.html}</div>`
+    + `<span class="kc-title">ホイールで拡大・縮小、中ボタン (か Space + ドラッグ) で移動</span>`
+    + `</header>`
+    + `<div class="kc-main">`
+    + `<aside class="kc-props"><h2>属性</h2>`
     + `<form class="cf-inspector" hidden>`
-    + `<label>名前 <input class="cf-field" name="id" size="8" title="F2"></label>`
+    + `<label>名前 <input class="cf-field" name="id" size="8" title="E"></label>`
     + `<label>種類 <input class="cf-field" name="type" size="12" list="${TYPE_LIST_ID}"></label>`
     + `<label>値 <input class="cf-field" name="value" size="8"></label>`
     + `<label>ラベル <input class="cf-field" name="label" size="8"></label>`
-    + `</form>${chrome.typeNames}`
-    + `<div class="cf-band">${view.issues}</div>`
-    + `<p class="cf-status"></p>`
+    + `</form>`
+    + `<p class="kc-props-hint">部品をクリック (か <kbd>E</kbd>) すると、名前・種類・値・ラベルの欄が出ます。`
+    + `<kbd>Enter</kbd> か欄を離れたときに行へ当たります。</p>`
+    + `</aside>`
+    + `<div class="kc-canvas"><div class="cf-body">${view.html}</div>`
+    + `<div class="kc-chooser" hidden><header>部品を置く <kbd>Enter</kbd> で先頭を持つ`
+    + `<button type="button" class="kc-chooser-close" title="閉じる (Esc)">✕</button></header>`
+    + chrome.palette
+    + `</div></div>`
+    + `<nav class="kc-tools">${renderTools()}</nav>`
+    + `</div>`
+    + `<details class="kc-band" open><summary>読めなかった行とお知らせ</summary>`
+    + `<div class="cf-band">${view.issues}</div></details>`
+    + `<footer class="kc-status"><span class="cf-status"></span>`
+    + `<span class="kc-cell"></span><span class="kc-zoom">100 %</span></footer>`
+    + chrome.typeNames
     + `<script nonce="${escapeMarkup(nonce)}" src="${escapeMarkup(scriptUri)}"></script></body></html>`;
 };
 

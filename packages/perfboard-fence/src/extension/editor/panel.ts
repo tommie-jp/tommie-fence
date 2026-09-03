@@ -40,7 +40,7 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
 
   const view = vscode.window.createWebviewPanel(
     'perfboardFenceMap',
-    '部品と節点を動かす',
+    'perfboard Editor',
     { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
     { enableScripts: true, retainContextWhenHidden: true },
   );
@@ -52,6 +52,7 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
     view: live.view(),
     chrome: { palette: fence.palette(), typeNames: fence.typeNames(TYPE_LIST_ID) },
     undo: 'own',
+    foldsWire: fence.foldsWire,
   });
   attachSession(view, live);
   // 閉じたら自分自身もほどく (context.subscriptions へ積むと済んだ分が溜まる)。
