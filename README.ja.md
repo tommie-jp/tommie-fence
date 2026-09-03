@@ -14,6 +14,18 @@
 言語は別、作法は同じ: YAML をホストにしたフェンス、番地で書く位置、
 Markdown の行番号とその行の中身で返るエラー。
 
+## 何も入れずに試す
+
+[![Codespaces で開く](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
+
+ブラウザの中に VS Code が立ち上がり、3 つの拡張が入った状態で
+[examples/try-me.md](examples/try-me.ja.md) が開く。プレビュー
+(`Ctrl+Shift+V`) でフェンスが図になり、書き換えると図が付いてくる。
+GitHub のアカウントが要る (無料枠は月 120 コア時間)。
+
+拡張は Releases の `.vsix` から入る。**この場でソースからは組まない** —
+デモで見せるのは公開した版で、main の途中ではない。
+
 ## 状況
 
 **ここが circuit-fence と breadboard-fence の新しい家。** 元の 2 つの

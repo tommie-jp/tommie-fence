@@ -15,6 +15,20 @@ The languages are separate; the manners are shared: YAML-hosted fences,
 positions written as addresses, and mistakes reported with Markdown line
 numbers and the content of the offending line.
 
+## Try it without installing anything
+
+[![Open in Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
+
+VS Code opens in the browser with the three extensions installed and
+[examples/try-me.md](examples/try-me.md) in front of you. Open the Markdown
+preview (`Ctrl+Shift+V`) and the fences turn into drawings; edit one and the
+drawing follows. A GitHub account is needed (the free tier is 120 core-hours a
+month).
+
+The extensions come from the `.vsix` files on the releases page. **Nothing is
+built from source there** — the demo shows a released version, not the tip of
+main.
+
 ## Status
 
 **This is the new home of circuit-fence and breadboard-fence.** The two

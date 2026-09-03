@@ -1,0 +1,43 @@
+{
+  // ブラウザの中に本物の VS Code を立てて、3 つのフェンスをそのまま試すための構成。
+  // README のバッジ (codespaces.new/...) から来た人が、何も入れずに触れる形。
+  "name": "tommie-fence を試す",
+
+  // 素の Node で足りる。拡張は .vsix で入れるので、ここでビルドはしない。
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+
+  // 無料枠 (2 コア) で回ることを構成の側にも書いておく。
+  "hostRequirements": {
+    "cpus": 2
+  },
+
+  // 公開済みの .vsix を Releases から落とす。**ソースからは組まない** —
+  // デモで見せるのはリリースした版で、main の途中ではない。
+  // npm install も走らせないので、立ち上がりは数十秒で済む。
+  "onCreateCommand": ".devcontainer/demo-extensions.sh fetch",
+
+  // `extensions` にパスを書く経路が効かなかったときの保険。足りないものだけ入れる。
+  "postAttachCommand": ".devcontainer/demo-extensions.sh install",
+
+  "customizations": {
+    "vscode": {
+      // **Marketplace の ID ではなく .vsix のパス**を渡す。Marketplace には
+      // 出していないので ID では引けない。パスは onCreateCommand が用意する。
+      "extensions": [
+        "${containerWorkspaceFolder}/.devcontainer/vsix/circuit-fence.vsix",
+        "${containerWorkspaceFolder}/.devcontainer/vsix/breadboard-fence.vsix",
+        "${containerWorkspaceFolder}/.devcontainer/vsix/perfboard-fence.vsix"
+      ],
+      "settings": {
+        // 開いた直後に触ってほしいのは試すファイルなので、Welcome は出さない。
+        "workbench.startupEditor": "none",
+        "files.insertFinalNewline": true,
+        "editor.tabSize": 2
+      }
+    },
+    "codespaces": {
+      // 開いた瞬間に、フェンスの書かれたファイルが目の前にある状態にする。
+      "openFiles": ["examples/try-me.md"]
+    }
+  }
+}

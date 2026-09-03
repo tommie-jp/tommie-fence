@@ -35,3 +35,6 @@ coverage/
 # Playwright
 .playwright-mcp/
 test-results/
+
+# Codespaces のデモが落とす .vsix (Releases から取るのでコミットしない)
+/.devcontainer/vsix/
