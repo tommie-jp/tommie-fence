@@ -99,7 +99,10 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
   });
 
   test('turns a two lead part by its addresses, with no grammar change', () => {
-    expect(editor.turn(LED, 'R1', 1).ok).toBe(true);
+    // 軸は足の真ん中なので、回った先が板に収まる所に置く。
+    const room = 'board: half\nparts:\n  R1: resistor c5 c10 330\n';
+
+    expect(editor.turn(room, 'R1', 1).ok).toBe(true);
     expect(editor.flip(LED, 'R1').ok).toBe(true);
   });
 

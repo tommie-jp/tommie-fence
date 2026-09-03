@@ -118,7 +118,8 @@ function spreadFrom(type: string, anchor: Address, wanted: number, board: Board)
  */
 function oriented(source: string, part: NewPart, added: readonly LineEdit[]): AdditionResult {
   const result = orientInserted(source, added, part, {
-    turn: (placed, quarters) => turnPart(placed, part.id, quarters),
+    // **置く前の回しは押した穴を軸に。** 軸が動くと、押した穴に足が来ない。
+    turn: (placed, quarters) => turnPart(placed, part.id, quarters, 'anchor'),
     flip: (placed) => flipPart(placed, part.id),
     lineOf: (placed) => {
       const found = locatePart(placed, part.id);

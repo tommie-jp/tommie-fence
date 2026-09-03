@@ -257,6 +257,16 @@ const STYLE = `
     filter: drop-shadow(0 0 2px var(--cf-held))
             drop-shadow(0 0 5px var(--cf-held));
   }
+  /* 運んでいる部品の姿 (行き先に出す写し)。**当たり判定は外す** —
+     下の穴を掴めるように。置けないときは赤く濁らせる。 */
+  .cf-ghost-part { opacity: 0.75; pointer-events: none; }
+  .cf-ghost-part-bad {
+    opacity: 0.55;
+    filter: saturate(0.15) drop-shadow(0 0 2px var(--cf-bad)) drop-shadow(0 0 5px var(--cf-bad));
+  }
+  /* 持ち上げた元の姿。薄くして、行き先の写しと二重に見えないようにする。 */
+  .cf-lifted { opacity: 0.28; }
+
   /* 囲む枠。**当たり判定は外す** — 枠の上でも下の部品を掴めるように。 */
   .cf-held-box {
     fill: none;

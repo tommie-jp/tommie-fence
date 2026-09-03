@@ -1,6 +1,6 @@
 import type { Edit } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
-import { formatAddress } from '../model/address.ts';
+import { formatAddress, parseAddress } from '../model/address.ts';
 
 import { footprintOf, pinsOf } from '../parts/footprint.ts';
 import type { Address, FenceError } from '../types.ts';
@@ -37,6 +37,42 @@ function spin(delta: { readonly row: number; readonly col: number }, quarters: n
     (turned) => quarter(turned.row, turned.col),
     delta,
   );
+}
+
+
+/**
+ * 軸にする足の番号。**名前で書かれた足があればそこ** — `points:` の名前は場所を
+ * 指す約束なので、動かすと名前が外れる (番地に直すしかなくなり、あとで点を
+ * 動かしても部品が付いてこない)。無ければ足の真ん中。
+ */
+function pivotIndex(
+  lineText: string,
+  tokens: readonly { readonly column: number; readonly length: number }[],
+): number | null {
+  const named = tokens.findIndex(
+    (token) => parseAddress(lineText.slice(token.column, token.column + token.length)) === null,
+  );
+  return named < 0 ? null : named;
+}
+
+/**
+ * 回す軸。**足の真ん中** — KiCad の `R` も選んだものの中心を軸にする。
+ * 先に書いた足を軸にしていたころは、回すと胴が大きく振られて「移動」に見えた
+ * (実機で指摘された)。
+ *
+ * **端から端への差を 0 に向けて丸める** (`trunc`)。番地は整数なので、足の間隔が
+ * 奇数のときは真ん中が穴に来ない。0 に向けた丸めは符号の入れ替えと軸の入れ替えを
+ * すり抜けるので、**軸が回っても同じ穴に留まる** — つまり 4 回回すと元に戻る
+ * (真ん中に向かって丸めると、回すたびに軸が寄って戻らなくなる)。
+ */
+function pivotOf(addresses: readonly Address[]): Address | null {
+  const first = addresses[0];
+  const last = addresses[addresses.length - 1];
+  if (first === undefined || last === undefined) return null;
+  return {
+    row: first.row + Math.trunc((last.row - first.row) / 2),
+    col: first.col + Math.trunc((last.col - first.col) / 2),
+  };
 }
 
 /**
@@ -174,7 +210,23 @@ function wordEdit(
   return text === '' ? [] : [{ line, column: insertAt, length: 0, text: ` ${text}` }];
 }
 
-export function turnPart(source: string, id: string, quarters: number): MoveResult {
+/**
+ * 回す軸をどこに置くか。
+ *
+ * - `middle` (既定) — 足の真ん中。**掴んで回すとき**はこちら (KiCad と同じで、
+ *   胴がその場で回る)
+ * - `anchor` — 先に書いた足。**置く前に回すとき**はこちら。押した穴に足が来る
+ *   のが置くときの約束なので、軸が動くと「押した穴に置けない」ことになる
+ *   (KiCad も、運んでいる部品はカーソルを軸に回る)
+ */
+export type TurnAround = 'middle' | 'anchor';
+
+export function turnPart(
+  source: string,
+  id: string,
+  quarters: number,
+  around: TurnAround = 'middle',
+): MoveResult {
   const anchored = anchoredTurn(source, id);
   if (anchored !== null) {
     return anchored.ok
@@ -186,30 +238,25 @@ export function turnPart(source: string, id: string, quarters: number): MoveResu
   if (!grabbed.ok) return { ok: false, error: grabbed.error };
 
   const { found, tokens } = grabbed;
-  const anchor = found.addresses[0];
-  if (anchor === undefined) return fail(`${safeToken(id)} の足がありません`, found.lineNumber);
+  const named = pivotIndex(found.line, tokens);
+  const pivot = around === 'anchor' || named !== null
+    ? found.addresses[named ?? 0] ?? null
+    : pivotOf(found.addresses);
+  if (pivot === null) return fail(`${safeToken(id)} の足がありません`, found.lineNumber);
 
-  // **アンカー (先に書いた足) は動かさない。** 動かすと「回す」が「移動」になる。
-  // 格子が一様なので、回すのは行と列の差をそのまま回すだけ。
-  const landings: (Address | null)[] = found.addresses.map((one, index) => {
-    if (index === 0) return null;
-    const delta = spin({ row: one.row - anchor.row, col: one.col - anchor.col }, quarters);
-    return { row: anchor.row + delta.row, col: anchor.col + delta.col };
+  // 格子が一様なので、回すのは軸からの行と列の差をそのまま回すだけ。
+  const landings: Address[] = found.addresses.map((one) => {
+    const delta = spin({ row: one.row - pivot.row, col: one.col - pivot.col }, quarters);
+    return { row: pivot.row + delta.row, col: pivot.col + delta.col };
   });
 
-  // **アンカー (先に書いた足) は動かない**ので `landings[0]` は null。
-  // 見るのは回った足だけ。
-  const moved = landings.slice(1);
-  if (moved.some((landing) => landing === null)) {
-    return fail(`${safeToken(id)} を回すと足を数えられません`, found.lineNumber);
-  }
-  const why = offBoardCheck(found, moved as readonly Address[]);
+  const why = offBoardCheck(found, landings);
   if (why !== null) return fail(`${safeToken(id)} を回すと足が置けません (${why})`, found.lineNumber);
 
   // **一周は何もしない。** 同じ字を書き戻すと「動かしました」と嘘を言うことになる。
   const texts = landings.map((landing, index) => {
     const before = found.addresses[index];
-    if (landing === null || before === undefined) return null;
+    if (before === undefined) return null;
     return formatAddress(landing) === formatAddress(before) ? null : formatAddress(landing);
   });
   if (texts.every((text) => text === null)) {

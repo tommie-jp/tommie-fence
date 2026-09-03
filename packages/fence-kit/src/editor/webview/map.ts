@@ -197,6 +197,57 @@ function markGhost(now: State): void {
   }
 }
 
+/** 穴 1 つの真ん中 (図の座標)。当たり判定の四角から読む。 */
+function cellCentre(address: string): { readonly x: number; readonly y: number } | null {
+  const cell = query<SVGGraphicsElement>(`.cf-cell[data-address="${CSS.escape(address)}"]`);
+  if (cell === null) return null;
+  const box = cell.getBBox();
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+}
+
+/** 穴の集まりの真ん中。空なら null。 */
+function middleOf(cells: readonly string[]): { readonly x: number; readonly y: number } | null {
+  const points = cells.map(cellCentre).filter((one) => one !== null);
+  if (points.length === 0) return null;
+  const sum = points.reduce((into, one) => ({ x: into.x + one.x, y: into.y + one.y }), { x: 0, y: 0 });
+  return { x: sum.x / points.length, y: sum.y / points.length };
+}
+
+/**
+ * 運んでいる部品の姿を行き先に出す。**穴を光らせるだけでは何が来るのか
+ * 読み取れない** (実機で「移動するとき、選択した見た目で移動するようにする。
+ * 現在のピン表示は分かりにくい」と言われた)。
+ *
+ * **描き直さない — いま図にある絵を写して平行移動する。** 動かすのは平行移動
+ * なので姿は変わらず、拡張に問い合わせ直さずに済む (ゴーストは穴をまたぐたびに
+ * 出るので、1 回でも図を組み直すと重くなる)。
+ */
+function markCarried(now: State): void {
+  document.querySelector('.cf-ghost-part')?.remove();
+  unmark('cf-lifted');
+  if (now.carry?.kind !== 'move' || now.ghost === null) return;
+
+  const chip = query<SVGGraphicsElement>(`.cf-chip[data-part="${CSS.escape(now.carry.part)}"]`);
+  if (chip === null) return;
+  // 持ち上げたものは薄くする。**行き先の絵と二重に見えない**ように。
+  chip.classList.add('cf-lifted');
+
+  const from = middleOf(now.ghost.from ?? []);
+  const to = middleOf(now.ghost.cells);
+  if (from === null || to === null) return;
+
+  const ghost = chip.cloneNode(true) as SVGGraphicsElement;
+  // 掴む印は写さない (ゴーストは掴めない。名札が 2 つあると選ぶ先が狂う)。
+  ghost.removeAttribute('data-part');
+  for (const marked of ghost.querySelectorAll('[data-part]')) marked.removeAttribute('data-part');
+  ghost.setAttribute('class', `cf-ghost-part${now.ghost.ok ? '' : ' cf-ghost-part-bad'}`);
+  // **元の姿勢の前にずらしを足す** (部品が自分の transform を持っていても壊さない)。
+  const posture = chip.getAttribute('transform');
+  const shift = `translate(${to.x - from.x} ${to.y - from.y})`;
+  ghost.setAttribute('transform', posture === null ? shift : `${shift} ${posture}`);
+  chip.parentNode?.appendChild(ghost);
+}
+
 /** いま置こうとしている部品。パレットのどれを押したかを見せる。 */
 function markChosen(now: State): void {
   unmark('cf-chosen');
@@ -217,6 +268,7 @@ function paint(now: State): void {
   markSelected(now.selected);
   markHover(now);
   markGhost(now);
+  markCarried(now);
   markChosen(now);
   markWireFrom(now);
   // 道具は CSS が見る目印にする (右の道具の列の光り方、カーソルの形)。
@@ -620,7 +672,10 @@ type Incoming =
   | { readonly kind: 'aim'; readonly what?: string; readonly id?: string }
   | { readonly kind: 'history'; readonly canUndo: boolean; readonly canRedo: boolean }
   | { readonly kind: 'fields'; readonly part: Fields | null }
-  | { readonly kind: 'ghost'; readonly key: string; readonly cells: readonly string[]; readonly ok: boolean; readonly why: string };
+  | {
+    readonly kind: 'ghost'; readonly key: string; readonly cells: readonly string[];
+    readonly ok: boolean; readonly why: string; readonly from?: readonly string[];
+  };
 
 const fill = (selector: string, html: string): void => {
   const target = query(selector);
@@ -648,7 +703,7 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
     syncHover();
   }
   if (message.kind === 'ghost') {
-    run({ kind: 'ghost', ghost: { key: message.key, cells: message.cells, ok: message.ok, why: message.why } });
+    run({ kind: 'ghost', ghost: { key: message.key, cells: message.cells, ok: message.ok, why: message.why, from: message.from } });
   }
   if (message.kind === 'fields') showFields(message.part);
   if (message.kind === 'status') setText('.cf-status', message.text);

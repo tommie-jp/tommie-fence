@@ -18,23 +18,28 @@ const after = (source: string, result: ReturnType<typeof turnPart>): string => {
 };
 
 describe('turnPart', () => {
-  test('swings the far lead a quarter turn around the anchor', () => {
-    // a5 → a10 は右へ 5。時計回りに 90 度で下へ 5 (f5)。
-    expect(after(LED, turnPart(LED, 'R1', 1))).toContain('R1: resistor a5 f5 330');
+  test('turns around the middle of the leads, the way KiCad turns around the selection', () => {
+    // 先に書いた足を軸にしていたころは、回すと胴が大きく振られて「移動」に
+    // 見えた (実機で指摘された)。KiCad の R も選んだものの中心を軸にする。
+    // c5 → c10 の真ん中は c7。時計回りに 90 度で a7 と f7 (胴はその場に残る)。
+    const mid = 'board: half\nparts:\n  R1: resistor c5 c10 330\n';
+
+    expect(after(mid, turnPart(mid, 'R1', 1))).toContain('R1: resistor a7 f7 330');
   });
 
   test('turns the other way when asked', () => {
-    const flat = 'board: half\nparts:\n  R1: resistor f5 f10 330\n';
+    const flat = 'board: half\nparts:\n  R1: resistor e5 e10 330\n';
 
-    expect(after(flat, turnPart(flat, 'R1', -1))).toContain('R1: resistor f5 a5 330');
+    expect(after(flat, turnPart(flat, 'R1', -1))).toContain('R1: resistor g7 b7 330');
   });
 
-  test('leaves the anchor written exactly as it was', () => {
+  test('turns around a lead written by name, so the name never has to be rewritten', () => {
     // **名前で書かれた足を番地に直さない。** 直すと名前が外れ、あとで点を
-    // 動かしても部品が付いてこなくなる。
-    const named = LED.replace('resistor a5 a10', 'resistor vin a10');
+    // 動かしても部品が付いてこなくなる。名前は場所を指す約束なので、
+    // そこを軸にすれば書き換えずに済む (真ん中を軸にする規則より優先する)。
+    const named = 'board: half\npoints:\n  vin: c5\nparts:\n  R1: resistor vin c10 330\n';
 
-    expect(after(named, turnPart(named, 'R1', 1))).toContain('R1: resistor vin f5 330');
+    expect(after(named, turnPart(named, 'R1', 1))).toContain('R1: resistor vin h5 330');
   });
 
   test('does nothing for a full turn, rather than writing the same text back', () => {
@@ -60,8 +65,8 @@ describe('turnPart', () => {
   });
 
   test('turns a three lead part too, since its holes are all written', () => {
-    // h9 h10 h11 は横並び。時計回りに 90 度で縦並びになる。
-    expect(after(LED, turnPart(LED, 'Q1', 1))).toContain('Q1: transistor h9(B) i9(C) j9(E) 2SC1815');
+    // h9 h10 h11 は横並び。真ん中は h10。時計回りに 90 度で縦並びになる。
+    expect(after(LED, turnPart(LED, 'Q1', 1))).toContain('Q1: transistor g10(B) h10(C) i10(E) 2SC1815');
   });
 
   test('says why a part placed by one anchor cannot be turned', () => {

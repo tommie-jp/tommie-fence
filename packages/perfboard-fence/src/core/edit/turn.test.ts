@@ -16,9 +16,13 @@ const after = (source: string, result: ReturnType<typeof turnPart>): string => {
 };
 
 describe('turnPart', () => {
-  test('swings the far lead a quarter turn around the anchor', () => {
-    // b2 → b6 は右へ 4。時計回りに 90 度で下へ 4 (f2)。
-    expect(after(BOARD, turnPart(BOARD, 'R1', 1))).toContain('R1: resistor b2 f2 10k');
+  test('turns around the middle of the leads, the way KiCad turns around the selection', () => {
+    // 先に書いた足を軸にしていたころは、回すと胴が大きく振られて「移動」に
+    // 見えた (実機で指摘された)。KiCad の R も選んだものの中心を軸にする。
+    // e2 → e6 の真ん中は e4。時計回りに 90 度で g4 と c4 (胴はその場に残る)。
+    const flat = 'board: 12x9\nparts:\n  R1: resistor e2 e6 10k\n';
+
+    expect(after(flat, turnPart(flat, 'R1', 1))).toContain('R1: resistor c4 g4 10k');
   });
 
   test('gives a three-lead part four different postures, so the flat face can face any way', () => {
@@ -41,16 +45,16 @@ describe('turnPart', () => {
   });
 
   test('turns the other way when asked', () => {
-    const flat = 'board: 12x7\nparts:\n  R1: resistor e2 e6 10k\n';
+    const flat = 'board: 12x9\nparts:\n  R1: resistor e2 e6 10k\n';
 
-    expect(after(flat, turnPart(flat, 'R1', -1))).toContain('R1: resistor e2 a2 10k');
+    expect(after(flat, turnPart(flat, 'R1', -1))).toContain('R1: resistor g4 c4 10k');
   });
 
-  test('leaves the anchor untouched, so turning never becomes moving', () => {
-    // アンカーの綴りは 1 字も動かさない (動かすと「回す」が「移動」になる)。
-    const after1 = after(BOARD, turnPart(BOARD, 'R1', 1));
+  test('keeps the middle hole where it was, so turning never becomes moving', () => {
+    // **軸は動かない。** 3 本足なら真ん中の足がその穴に残る。
+    const flat = 'board: 12x9\nparts:\n  Q1: transistor e4 e3 e5 2SC1815\n';
 
-    expect(after1).toContain('R1: resistor b2 ');
+    expect(after(flat, turnPart(flat, 'Q1', 1))).toContain('Q1: transistor e4 d4 f4 2SC1815');
   });
 
   test('does nothing for a full turn, rather than writing the same text back', () => {
@@ -69,8 +73,8 @@ describe('turnPart', () => {
   });
 
   test('turns a three lead part too, since its holes are all written', () => {
-    // d2 d3 d4 は横並び。時計回りに 90 度で縦並びになる。
-    expect(after(BOARD, turnPart(BOARD, 'Q1', 1))).toContain('Q1: transistor d2 e2 f2 2SC1815');
+    // d2 d3 d4 は横並び。真ん中は d3。時計回りに 90 度で縦並びになる。
+    expect(after(BOARD, turnPart(BOARD, 'Q1', 1))).toContain('Q1: transistor c3 d3 e3 2SC1815');
   });
 
 });

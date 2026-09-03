@@ -51,7 +51,19 @@ export type Outgoing =
    * ゴースト — 置く・動かす前に、どの穴を使うか。`key` は webview が送った
    * 問い合わせの札で、**古い答えを捨てる**ため (カーソルが先へ行っている)。
    */
-  | { readonly kind: 'ghost'; readonly key: string; readonly cells: readonly string[]; readonly ok: boolean; readonly why: string };
+  | {
+    readonly kind: 'ghost';
+    readonly key: string;
+    readonly cells: readonly string[];
+    readonly ok: boolean;
+    readonly why: string;
+    /**
+     * 動かす前の穴。**殻はこれで運んでいる部品の絵を行き先へずらす** —
+     * 行き先の穴を光らせるだけでは何が来るのか読み取れない (実機で指摘された)。
+     * 置く (`place`) には元の絵が無いので付かない。
+     */
+    readonly from?: readonly string[];
+  };
 
 /** webview から来るもの。中身は信用せず、使う前に形を確かめる。 */
 export type Incoming = {
@@ -555,8 +567,8 @@ export function createSession<D extends DocLike>(
    */
   function preview(message: Incoming): void {
     const key = text(message.key) ?? '';
-    const answer = (cells: readonly string[], ok: boolean, why = ''): void =>
-      host.post({ kind: 'ghost', key, cells, ok, why });
+    const answer = (cells: readonly string[], ok: boolean, why = '', from?: readonly string[]): void =>
+      host.post({ kind: 'ghost', key, cells, ok, why, ...(from === undefined ? {} : { from }) });
 
     const fence = currentFence(true);
     const plan = fence === null ? null : plannedFor(message, fence.source);
@@ -568,17 +580,23 @@ export function createSession<D extends DocLike>(
     // **押したときと同じ書き換えを本文の写しに当てて**、そのあとの穴を読む。
     // 見せた物と書かれる物が食い違わない (文書は触らないので何度でも呼べる)。
     if (!plan.result.ok) {
-      answer([plan.at], false, plan.result.error.message);
+      answer([plan.at], false, plan.result.error.message, plan.from);
       return;
     }
-    answer(plan.cells(applyRewrite(fence.source, plan.result.value)), true);
+    answer(plan.cells(applyRewrite(fence.source, plan.result.value)), true, '', plan.from);
   }
 
   /** ゴーストの問い合わせ 1 件を、書き換えと「そのあとどの穴を読むか」に直す。 */
   function plannedFor(
     message: Incoming,
     source: string,
-  ): { readonly result: EditResult; readonly at: string; readonly cells: (after: string) => readonly string[] } | null {
+  ): {
+    readonly result: EditResult;
+    readonly at: string;
+    readonly cells: (after: string) => readonly string[];
+    /** 動かす前の穴 (動かすときだけ)。 */
+    readonly from?: readonly string[];
+  } | null {
     const to = text(message.to);
     if (to === null) return null;
 
@@ -601,6 +619,7 @@ export function createSession<D extends DocLike>(
         result: editor.movePart(source, handle, to, { preview: true }),
         at: to,
         cells: (after) => editor.cellsOf(after, handle),
+        from: editor.cellsOf(source, handle),
       };
     }
 

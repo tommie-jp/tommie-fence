@@ -890,7 +890,10 @@ describe('部品を置く', () => {
     await session.handle({ kind: 'preview', key: 'k3', what: 'move', part: 'R1', to: 'b1' });
 
     const ghost = host.sent.find((message) => message.kind === 'ghost');
-    expect(ghost).toEqual({ kind: 'ghost', key: 'k3', cells: ['b1', 'b3'], ok: true, why: '' });
+    // `from` は動かす前の穴。**殻はこれで運んでいる部品の絵を行き先へずらす**。
+    expect(ghost).toEqual({
+      kind: 'ghost', key: 'k3', cells: ['b1', 'b3'], ok: true, why: '', from: ['a1', 'a3'],
+    });
   });
 
   test('says so when a crossing cannot be read as an address', async () => {

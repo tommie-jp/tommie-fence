@@ -1,6 +1,6 @@
 import type { Edit } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
-import { formatAddress } from '../model/address.ts';
+import { formatAddress, parseAddress } from '../model/address.ts';
 import { isOnBoard } from '../model/board.ts';
 import { HOLE_ROWS } from '../types.ts';
 import type { Address, HoleRow } from '../types.ts';
@@ -193,7 +193,38 @@ function flipByAnchor(source: string, found: Located, id: string): MoveResult {
   return { ok: true, value: { edits, diff: diffAfter(source, edits) } };
 }
 
-export function turnPart(source: string, id: string, quarters: number): MoveResult {
+
+/**
+ * 軸にする足の番号。**名前で書かれた足があればそこ** — `points:` の名前は場所を
+ * 指す約束なので、動かすと名前が外れる (番地に直すしかなくなり、あとで点を
+ * 動かしても部品が付いてこない)。無ければ足の真ん中。
+ */
+function pivotIndex(
+  lineText: string,
+  tokens: readonly { readonly column: number; readonly length: number }[],
+): number | null {
+  const named = tokens.findIndex(
+    (token) => parseAddress(lineText.slice(token.column, token.column + token.length)) === null,
+  );
+  return named < 0 ? null : named;
+}
+
+/**
+ * 回す軸をどこに置くか。
+ *
+ * - `middle` (既定) — 足の真ん中。**掴んで回すとき**はこちら (KiCad と同じで、
+ *   胴がその場で回る)
+ * - `anchor` — 先に書いた足。**置く前に回すとき**はこちら。押した穴に足が来る
+ *   のが置くときの約束なので、軸が動くと「押した穴に置けない」ことになる
+ */
+export type TurnAround = 'middle' | 'anchor';
+
+export function turnPart(
+  source: string,
+  id: string,
+  quarters: number,
+  around: TurnAround = 'middle',
+): MoveResult {
   // **この板で回せるのは半周だけ。** 4 分の 1 の要求は、奇数回なら半周に畳む
   // (2 回押せば元へ戻る)。90 度に相当する置き方がそもそも実物に無い。
   const anchored = anchoredTurn(source, id);
@@ -207,27 +238,40 @@ export function turnPart(source: string, id: string, quarters: number): MoveResu
   if (!grabbed.ok) return { ok: false, error: grabbed.error };
 
   const { found, tokens } = grabbed;
-  const anchor = found.addresses[0];
-  if (anchor === undefined) return fail(`${safeToken(id)} の足がありません`, found.part.line);
+  const first = found.addresses[0];
+  const last = found.addresses[found.addresses.length - 1];
+  if (first === undefined || last === undefined) return fail(`${safeToken(id)} の足がありません`, found.part.line);
 
   // **レールは行が極性そのもの。** 数に落ちないので回しようがない。
-  const anchorRow = rowIndex(anchor);
-  if (anchorRow === null || found.addresses.some((one) => rowIndex(one) === null)) {
+  const firstRow = rowIndex(first);
+  const lastRow = rowIndex(last);
+  if (firstRow === null || lastRow === null || found.addresses.some((one) => rowIndex(one) === null)) {
     return fail(`${safeToken(id)} はレールに挿さっているので回せません (穴どうしなら回せます)`, found.part.line);
   }
 
-  // **アンカー (先に書いた足) は動かさない。** 動かすと「回す」が「移動」になる。
-  const landings: (Address | null)[] = found.addresses.map((one, index) => {
-    if (index === 0) return null;
+  // **軸は足の真ん中** (KiCad の `R` も選んだものの中心を軸にする)。先に書いた足を
+  // 軸にしていたころは、回すと胴が大きく振られて「移動」に見えた。
+  // 丸めは 0 に向ける — 符号と軸の入れ替えをすり抜けるので、軸が回っても同じ穴に
+  // 留まる (2 回押せば元に戻る)。
+  const named = pivotIndex(found.line, tokens);
+  const held = around === 'anchor' || named !== null ? found.addresses[named ?? 0] : undefined;
+  const heldRow = held === undefined ? null : rowIndex(held);
+  const pivotRow = held !== undefined && heldRow !== null
+    ? heldRow
+    : firstRow + Math.trunc((lastRow - firstRow) / 2);
+  const pivotCol = held === undefined
+    ? first.col + Math.trunc((last.col - first.col) / 2)
+    : held.col;
+
+  const landings: (Address | null)[] = found.addresses.map((one) => {
     const row = rowIndex(one);
     if (row === null) return null;
-    const delta = spin({ row: row - anchorRow, col: one.col - anchor.col }, quarters);
-    const landed = rowAt(anchorRow + delta.row);
-    return landed === null ? null : { kind: 'hole', row: landed, col: anchor.col + delta.col };
+    const delta = spin({ row: row - pivotRow, col: one.col - pivotCol }, quarters);
+    const landed = rowAt(pivotRow + delta.row);
+    return landed === null ? null : { kind: 'hole', row: landed, col: pivotCol + delta.col };
   });
 
-  for (const [index, landing] of landings.entries()) {
-    if (index === 0) continue;
+  for (const landing of landings) {
     if (landing === null || !isOnBoard(found.board, landing)) {
       return fail(`${safeToken(id)} を回すと板の外へ出ます`, found.part.line);
     }
