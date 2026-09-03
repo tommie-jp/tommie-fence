@@ -1,0 +1,59 @@
+name: Pages
+
+# 何も入れずに試せる頁 (packages/playground) を GitHub Pages へ上げる。
+# 中身は 3 つのフェンスの描画コアを束ねた 1 枚なので、**コアが変われば
+# 頁も変わる**。パッケージのどこかが動いたら組み直す。
+#
+# **Settings → Pages → Source を「GitHub Actions」にしておく必要がある**
+# (ブランチから配るのが既定のため。1 回だけの手作業)。
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/**'
+      - 'package-lock.json'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 上げるのは 1 度に 1 つ。走っている途中のものは打ち切ってよい
+# (最後に main にあるものが出れば足りる)。
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+
+      # 型チェックとテストを通してから組む。頁が壊れたまま出るのを防ぐ。
+      - run: npm run check --workspace=playground
+
+      # --production: minify する・.map を出さない (396 KB → 上げるのはこれだけ)。
+      - run: npm run build --workspace=playground -- --production
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: packages/playground/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

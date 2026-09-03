@@ -1,4 +1,4 @@
-import { cp, mkdir, writeFile } from 'node:fs/promises';
+import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
 import * as esbuild from 'esbuild';
 import { collectExamples } from './scripts/examples.mjs';
 
@@ -14,6 +14,10 @@ import { collectExamples } from './scripts/examples.mjs';
 const watch = process.argv.includes('--watch');
 const production = process.argv.includes('--production');
 
+// **前の組み立ての残りを消してから作る。** そのまま置いておくと、
+// production で作り直したあとも開発版の .map (2 MB) が残り、
+// Pages にはそれごと上がる。
+await rm('dist', { recursive: true, force: true });
 await mkdir('dist', { recursive: true });
 
 // 例はビルド時に集める。取りこぼしたら collectExamples が止める。

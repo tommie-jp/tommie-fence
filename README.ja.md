@@ -16,12 +16,18 @@ Markdown の行番号とその行の中身で返るエラー。
 
 ## 何も入れずに試す
 
+**[playground を開く](https://tommie-jp.github.io/tommie-fence/)** —
+アカウントも登録も要らない。左に書くと右に図が出る。例は 125 本入っていて、
+わざと壊した例で報告の出方も見られる。書いたフェンスは URL に載るので、
+そのまま人に渡せる。circuit の図だけは出せない (描画に TeX が要るため。
+読み取りとネットリストと TeX はここでも出る)。
+
 [![Codespaces で開く](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
 
-ブラウザの中に VS Code が立ち上がり、3 つの拡張が入った状態で
-[examples/try-me.md](examples/try-me.ja.md) が開く。プレビュー
-(`Ctrl+Shift+V`) でフェンスが図になり、書き換えると図が付いてくる。
-GitHub のアカウントが要る (無料枠は月 120 コア時間)。
+**3 つとも本物で動かすなら Codespaces。** ブラウザの中に VS Code が立ち上がり、
+3 つの拡張が入った状態で [examples/try-me.md](examples/try-me.ja.md) が開く。
+プレビュー (`Ctrl+Shift+V`) でフェンスが図になり、`.md` のタブそのものを
+図のエディタにもできる。GitHub のアカウントが要る (無料枠は月 120 コア時間)。
 
 拡張は Releases の `.vsix` から入る。**この場でソースからは組まない** —
 デモで見せるのは公開した版で、main の途中ではない。

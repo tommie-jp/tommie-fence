@@ -17,13 +17,20 @@ numbers and the content of the offending line.
 
 ## Try it without installing anything
 
+**[Open the playground](https://tommie-jp.github.io/tommie-fence/)** — no
+account, no sign-up. Type on the left, the drawing appears on the right. It
+carries 125 examples, including the deliberately broken ones that show how
+mistakes are reported. What you write goes into the URL, so a link is enough to
+hand it to someone. Only the circuit drawing is missing there (it needs TeX to
+render; the reading, the netlist and the TeX itself still come out).
+
 [![Open in Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
 
-VS Code opens in the browser with the three extensions installed and
-[examples/try-me.md](examples/try-me.md) in front of you. Open the Markdown
-preview (`Ctrl+Shift+V`) and the fences turn into drawings; edit one and the
-drawing follows. A GitHub account is needed (the free tier is 120 core-hours a
-month).
+**For all three for real, use Codespaces.** VS Code opens in the browser with
+the three extensions installed and [examples/try-me.md](examples/try-me.md) in
+front of you. Open the Markdown preview (`Ctrl+Shift+V`) and the fences turn
+into drawings; you can also turn the `.md` tab itself into a drawing editor. A
+GitHub account is needed (the free tier is 120 core-hours a month).
 
 The extensions come from the `.vsix` files on the releases page. **Nothing is
 built from source there** — the demo shows a released version, not the tip of
