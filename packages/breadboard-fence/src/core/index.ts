@@ -1,3 +1,4 @@
+import { keptSourceLines } from 'fence-kit';
 import { attachSourceText, fail, fenceError, notice, ok, safeToken } from './errors.ts';
 import { normalizeNewlines } from './newlines.ts';
 import { LIMITS } from './limits.ts';
@@ -235,12 +236,9 @@ function pointStrips(points: ReadonlyMap<string, string>, board: Board): (readon
  * この注釈の値打ちは「図を見た人がそのまま書き写せる」ことなので、
  * 番号が混ざると写したものが動かなくなる。
  */
-function sourceListing(source: string): string[] {
-  const lines = source.split('\n');
-  while (lines.length > 0 && (lines[lines.length - 1] ?? '').trim() === '') lines.pop();
-
-  const kept = lines.slice(0, LIMITS.sourceLines);
-  if (lines.length > kept.length) kept.push(`… ほかに ${lines.length - kept.length} 行`);
+function sourceListing(source: string): readonly string[] {
+  // 切り方は fence-kit にある (3 つのフェンスで同じもの)。
+  const kept = keptSourceLines(source, LIMITS.sourceLines);
   return ['```breadboard', ...kept, '```'];
 }
 

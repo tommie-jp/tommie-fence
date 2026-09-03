@@ -13,6 +13,7 @@
 export { normalizeNewlines } from './newlines.ts';
 export { extractFences, outputStem } from './fences.ts';
 export { stampText } from './stamp.ts';
+export { keptSourceLines } from './sourceListing.ts';
 export type { FenceBlock } from './fences.ts';
 export { escapeMarkup, element } from './markup.ts';
 export { num, svgText, TEXT_HALO_WIDTH } from './svg.ts';

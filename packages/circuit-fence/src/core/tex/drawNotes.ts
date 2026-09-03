@@ -26,6 +26,8 @@ import type {
 } from '../types.ts';
 import { escapeTex, escapeTexListing, hasUnicode } from './escape.ts';
 import { num } from './num.ts';
+import { keptSourceLines } from 'fence-kit';
+import { LIMITS } from '../limits.ts';
 
 /**
  * 注釈の丸の半径 (cm)。**部品の長さではなく記号の大きさ**に合わせた決め打ち
@@ -61,7 +63,7 @@ const ARROW_TIP = '-{Stealth[length=2.2mm]}';
  */
 export const listingOf = (source: string): string[] => [
   '```circuit',
-  ...source.replace(/\s+$/, '').split('\n'),
+  ...keptSourceLines(source, LIMITS.sourceLines),
   '```',
 ];
 

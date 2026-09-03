@@ -215,14 +215,10 @@ function hasLength(
 function canWriteSource(note: NoteSpec, sourceLines: readonly string[], errors: FenceError[]): boolean {
   if (note.kind !== 'source') return true;
 
-  if (sourceLines.length > LIMITS.sourceLines) {
-    errors.push(
-      fenceError(`フェンスが長すぎて図に書き出せません (${LIMITS.sourceLines} 行まで)`, note.line),
-    );
-    return false;
-  }
-
-  const bad = sourceLines.findIndex((text) => !isSourceDrawable(text));
+  // **長いフェンスは切って書き出す** (断らない)。以前は上限を超えると書き出しごと
+  // 落としていたが、breadboard と perfboard は切って「… ほかに N 行」と書いていた。
+  // 3 つで揃える — 断られるより、途中まで出て切れたと分かるほうが直しやすい。
+  const bad = sourceLines.slice(0, LIMITS.sourceLines).findIndex((text) => !isSourceDrawable(text));
   if (bad < 0) return true;
 
   errors.push(fenceError('この行に図へ書き出せない字があります (source の注釈は描いていません)', bad + 1));

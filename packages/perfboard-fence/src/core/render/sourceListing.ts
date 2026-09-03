@@ -1,3 +1,4 @@
+import { keptSourceLines } from 'fence-kit';
 import { colorValue } from '../color.ts';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Band } from '../model/layout.ts';
@@ -25,13 +26,10 @@ const FENCE = '```perfboard';
  * 黙って落とすと、写した人は足りないことに気づけない。
  */
 export function sourceListing(source: string): readonly string[] {
-  const lines = source.split('\n');
-  // 末尾の空行はフェンスに書かれていたものではない (改行の揃えで増える)。
-  while (lines.length > 0 && (lines[lines.length - 1] ?? '').trim() === '') lines.pop();
-
-  // 行数だけでなく**1 行の長さも止める**。長い 1 行は画布をいくらでも伸ばせる。
-  const kept = lines.slice(0, LIMITS.sourceLines).map((line) => clampText(line, LIMITS.sourceLineLength));
-  if (lines.length > kept.length) kept.push(`… ほかに ${lines.length - kept.length} 行`);
+  // 切り方は fence-kit にある (3 つのフェンスで同じもの)。
+  // **行数だけでなく 1 行の長さも止める** — 長い 1 行は画布をいくらでも伸ばせる。
+  const kept = keptSourceLines(source, LIMITS.sourceLines)
+    .map((line) => clampText(line, LIMITS.sourceLineLength));
   return [FENCE, ...kept, '```'];
 }
 
