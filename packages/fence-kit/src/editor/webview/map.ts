@@ -251,6 +251,44 @@ function focusOn(focus: Focus | null): void {
   focusIntoId();
 }
 
+// ---------------------------------------------------------------- 右クリック
+
+const menu = (): HTMLElement | null => query<HTMLElement>('.kc-menu');
+
+/**
+ * 右クリックの一覧を、押した所に出す。**中身は道具の列と同じ** — 鍵を知らなくても
+ * 全部できるようにするためのもので、新しい操作は増やさない。
+ *
+ * 押した所のものに効かせたいので、**開く前にカーソルの下を取り直す** (右クリックは
+ * ホバーを伴わずに来ることがある)。
+ */
+function openMenu(x: number, y: number): void {
+  const box = menu();
+  const frame = canvas()?.getBoundingClientRect();
+  if (box === null || frame === undefined) return;
+  run({ kind: 'hover', under: underAt(x, y) });
+
+  box.hidden = false;
+  // 枠からはみ出さない所へ (右下に出すのが既定)。
+  const size = box.getBoundingClientRect();
+  const left = Math.min(x - frame.left, Math.max(0, frame.width - size.width));
+  const top = Math.min(y - frame.top, Math.max(0, frame.height - size.height));
+  box.style.left = `${left}px`;
+  box.style.top = `${top}px`;
+}
+
+const closeMenu = (): void => {
+  const box = menu();
+  if (box !== null) box.hidden = true;
+};
+
+document.addEventListener('contextmenu', (event) => {
+  if (elementOf(event)?.closest('.kc-canvas') == null) return;
+  // webview には既定のメニューが無いので、出すのはこちらの仕事。
+  event.preventDefault();
+  openMenu(event.clientX, event.clientY);
+});
+
 // ---------------------------------------------------------------- 流す
 
 /**
@@ -289,6 +327,8 @@ const typing = (target: EventTarget | null): boolean =>
 
 document.addEventListener('pointerdown', (event) => {
   const target = elementOf(event);
+  // 一覧の外を押したら閉じる (中は `click` が拾う)。
+  if (target?.closest('.kc-menu') == null) closeMenu();
   const onCanvas = target?.closest('.kc-canvas') != null && target?.closest('.kc-chooser') == null;
   // 中ボタン (か Space + 左) でパン。KiCad と同じ。
   if (onCanvas && (event.button === 1 || (event.button === 0 && spaceHeld))) {
@@ -380,6 +420,11 @@ document.addEventListener('keydown', (event) => {
     return;
   }
 
+  if (event.key === 'Escape' && menu()?.hidden === false) {
+    event.preventDefault();
+    closeMenu();
+    return;
+  }
   if (event.key === ' ') {
     spaceHeld = true;
     event.preventDefault();
@@ -431,12 +476,14 @@ document.addEventListener('click', (event) => {
     return;
   }
 
-  // 右の道具の列。鍵と同じことをする (鍵を知らなくても押せる)。
+  // 右の道具の列と右クリックの一覧。鍵と同じことをする (鍵を知らなくても押せる)。
   const tool = target?.closest<HTMLElement>('.kc-tool');
   if (tool?.dataset.key !== undefined) {
+    closeMenu();
     run({ kind: 'key', key: tool.dataset.key, shift: event.shiftKey, modifier: tool.dataset.modifier === '1' });
     return;
   }
+  closeMenu();
 
   // 帯の 1 行。**書き換えはしない** — 直すのは書き手の仕事で、こちらは場所を指すだけ。
   const row = target?.closest<HTMLElement>('.cf-issue[data-line]');

@@ -79,6 +79,15 @@ describe('KiCad の配置', () => {
     expect(html.indexOf('kc-chooser')).toBeGreaterThan(html.indexOf('kc-canvas'));
   });
 
+  test('offers the same list on right-click, so the keys can be found without knowing them', () => {
+    expect(html).toContain('<menu class="kc-menu" hidden>');
+    // 道具の列と同じ表から組む (押せることが 2 通りの並びで違って見えない)。
+    const inColumn = [...html.matchAll(/class="kc-tool"[^>]*data-key="([^"]+)"/g)].map((one) => one[1]);
+    const inMenu = [...html.matchAll(/class="kc-tool kc-menu-item" data-key="([^"]+)"/g)].map((one) => one[1]);
+    expect(inMenu).toEqual(inColumn);
+    expect(inMenu).toContain('Delete');
+  });
+
   test('ends with a status row that shows the hint, the hole under the cursor and the zoom', () => {
     expect(html).toContain('<footer class="kc-status"><span class="cf-status"></span>');
     expect(html).toContain('<span class="kc-cell"></span>');

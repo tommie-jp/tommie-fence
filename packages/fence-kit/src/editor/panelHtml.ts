@@ -23,16 +23,18 @@ const STYLE = `
   body {
     font-family: var(--vscode-font-family); font-size: 12px;
     display: flex; flex-direction: column; overflow: hidden;
-    color: var(--vscode-foreground); background: var(--vscode-editor-background);
+    color: var(--vscode-foreground, CanvasText); background: var(--vscode-editor-background, Canvas);
     /* 記号の地。線の上に載る字の縁取りにも使う (図側から色名で引ける)。 */
-    --cf-paper: var(--vscode-editor-background);
-    --cf-ink: var(--vscode-foreground);
+    --cf-paper: var(--vscode-editor-background, Canvas);
+    --cf-ink: var(--vscode-foreground, CanvasText);
     --cf-node: var(--vscode-charts-blue, var(--vscode-focusBorder));
     --cf-bad: var(--vscode-editorError-foreground, #f14c4c);
     --cf-iffy: var(--vscode-editorWarning-foreground, #cca700);
     --cf-ghost: var(--vscode-charts-green, #4caf50);
     --kc-line: var(--vscode-panel-border, #444);
-    --kc-chrome: var(--vscode-sideBar-background, var(--vscode-editor-background));
+    /* **最後はシステム色で受ける。** 変数の無い所 (VS Code の外) で
+       透けると、浮かぶものが図の上で読めなくなる。 */
+    --kc-chrome: var(--vscode-sideBar-background, var(--vscode-editor-background, Canvas));
   }
   button { font: inherit; color: inherit; }
   kbd {
@@ -103,6 +105,28 @@ const STYLE = `
   body[data-tool="place"] .kc-tool[data-tool="place"] {
     background: var(--vscode-list-activeSelectionBackground);
     color: var(--vscode-list-activeSelectionForeground);
+  }
+
+  /* 右クリックの一覧。図の上に浮かぶ (webview には既定のメニューが無い)。 */
+  .kc-menu {
+    position: absolute; z-index: 2; margin: 0; padding: 3px; list-style: none; min-width: 150px;
+    background: var(--vscode-menu-background, var(--vscode-editorWidget-background, var(--kc-chrome)));
+    color: var(--vscode-menu-foreground, CanvasText);
+    border: 1px solid var(--vscode-menu-border, var(--kc-line)); border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  }
+  .kc-menu[hidden] { display: none; }
+  .kc-menu li { display: block; }
+  .kc-menu-item {
+    display: flex; align-items: center; gap: 8px; width: 100%; padding: 3px 8px;
+    flex-direction: row; border-radius: 3px;
+  }
+  .kc-menu-item .kc-glyph { width: 1.2em; text-align: center; }
+  .kc-menu-item kbd { margin-left: auto; }
+  .kc-menu-item:hover {
+    background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
+    color: var(--vscode-menu-selectionForeground, inherit);
+    border-color: transparent;
   }
 
   /* 部品を選ぶ窓 (KiCad の Choose Symbol)。図の上に浮かぶ。 */
@@ -324,6 +348,16 @@ const TOOLS: readonly ToolButton[] = [
   { key: 'Delete', glyph: '✕', name: '消す', kbd: 'Del' },
 ];
 
+/**
+ * 右クリックの一覧。**道具の列と同じ表から組む** — 押せることが 2 通りの
+ * 並びで違って見えると、鍵を覚える手がかりにならない。
+ */
+const renderMenu = (): string => `<menu class="kc-menu" hidden>${TOOLS.map((one) => (
+  `<li><button type="button" class="kc-tool kc-menu-item" data-key="${one.key}"`
+  + `${one.modifier === true ? ' data-modifier="1"' : ''}>`
+  + `<span class="kc-glyph">${one.glyph}</span><span>${one.name}</span><kbd>${one.kbd}</kbd></button></li>`
+)).join('')}</menu>`;
+
 const renderTools = (): string => TOOLS.map((one) => (
   `<button type="button" class="kc-tool"${one.tool === undefined ? '' : ` data-tool="${one.tool}"`}`
   + ` data-key="${one.key}"${one.modifier === true ? ' data-modifier="1"' : ''}`
@@ -361,6 +395,7 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, chrome, undo, fol
     + `<kbd>Enter</kbd> か欄を離れたときに行へ当たります。</p>`
     + `</aside>`
     + `<div class="kc-canvas"><div class="cf-body">${view.html}</div>`
+    + renderMenu()
     + `<div class="kc-chooser" hidden><header>部品を置く <kbd>Enter</kbd> で先頭を持つ`
     + `<button type="button" class="kc-chooser-close" title="閉じる (Esc)">✕</button></header>`
     + chrome.palette
