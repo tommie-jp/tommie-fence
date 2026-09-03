@@ -200,9 +200,11 @@ swapping a spelling inside a line.
 - The band at the top switches **tools** — select, wire, node, and "place" once
   you pick from the palette. A part moves on its own and the connections change
   with it; a node (a hole) takes everything written at it, so they are kept
-- **Placing, deleting, wiring and editing names and values all work.** The
-  palette searches by type name, abbreviation or Japanese name, and a new part is
-  named with the smallest free number for its prefix
+- **Placing, deleting, wiring, turning and editing names and values all work.**
+  The palette searches by type name, abbreviation or Japanese name, and a new
+  part is named with the smallest free number for its prefix. Turning and
+  flipping work on two-lead parts, whose orientation *is* the order of the holes,
+  so the grammar needs no new word
 - **Nothing stops you before the move.** It compares the netlist before and after
   and lists the connections the move broke and the ones it made. Holes in the
   same column are already connected, so sliding within one strip says nothing
@@ -210,7 +212,7 @@ swapping a spelling inside a line.
   that line**
 - **The YAML is never rebuilt**: your comments and formatting survive
 
-Rotating and mirroring are still done in text.
+Turning parts with three or more leads is still done in text.
 More in [docs/03-図を掴んで動かす.md](docs/03-図を掴んで動かす.md) (Japanese).
 
 ## Examples
