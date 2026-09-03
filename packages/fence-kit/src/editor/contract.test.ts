@@ -34,7 +34,15 @@ function fakeEditor(over: Partial<FenceEditor> = {}): FenceEditor {
     fences: () => [],
     fenceAt: () => null,
     firstFence: () => null,
-    view: () => ({ map: '<svg></svg>', issues: '' }),
+    // 掴むための印は殻が読むので、偽物にも本物と同じものを持たせる。
+    view: () => ({
+      map: '<svg>'
+        + '<rect class="cf-cell" data-address="a1"/>'
+        + '<g class="cf-chip" data-part="R1"></g>'
+        + '<g class="cf-wire" data-line="3"><line class="cf-wire-hit" data-line="3"/></g>'
+        + '</svg>',
+      issues: '',
+    }),
     aimAt: () => null,
     spansOf: (source, _what, id) => (lineOf(source, id) === null ? [] : [{ line: 1, column: 0, length: 2 }]),
     fieldsOf: (source, handle) => (lineOf(source, handle) === null
@@ -158,6 +166,19 @@ describe('checkFenceEditor', () => {
     const broken = fakeEditor({ deletePart: () => ok([]) });
 
     expect(checkFenceEditor(broken, FIXTURE)).toEqual(['R1 を消したのに、まだ穴を返します']);
+  });
+
+  test('catches a grab mark the webview would read but the map does not carry', () => {
+    // 外の `g` にだけ行番号を付けると、掴んでも配線を選べない (実機で踏んだ)。
+    const noMark = fakeEditor({
+      view: () => ({
+        map: '<svg><rect class="cf-cell" data-address="a1"/><g class="cf-chip" data-part="R1"></g>'
+          + '<g class="cf-wire" data-line="3"><line class="cf-wire-hit"/></g></svg>',
+        issues: '',
+      }),
+    });
+
+    expect(checkFenceEditor(noMark, FIXTURE)).toContain('配線の掴み手 (.cf-wire-hit) に data-line がありません');
   });
 
   test('catches a missing map, fields, spans, palette or foldsWire', () => {

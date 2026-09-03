@@ -92,7 +92,7 @@ export function renderDocument(input: DocumentInput): string {
     ...wires.map((wire) => wire.halo),
     // 配線は細くて掴めないので、見える線に**太い透明な線**を重ねる (circuit と同じ手)。
     ...wires.map((wire, index) => marked(
-      wire.line + (edit === null ? '' : hitLineOf(input.wires[index]?.points ?? [], theme)),
+      wire.line + (edit === null ? '' : hitLineOf(input.wires[index]?.points ?? [], input.wires[index]?.line ?? 0, theme)),
       { class: 'cf-wire', 'data-line': String(input.wires[index]?.line ?? 0) },
     )),
     ...input.parts.filter((part) => part.kind !== 'device').map((part) =>
@@ -131,11 +131,18 @@ export function renderDocument(input: DocumentInput): string {
   ].filter(Boolean).join('\n');
 }
 
-/** 配線を掴むための、太い透明な線。**見える線と同じ道**を通る。 */
-function hitLineOf(points: readonly Point[], theme: RenderStyle['theme']): string {
+/**
+ * 配線を掴むための、太い透明な線。**見える線と同じ道**を通る。
+ *
+ * **行番号は掴み手そのものに持たせる。** webview はカーソルの下にある要素から
+ * `data-line` を読むので、外の `g` にだけ付けると掴んでも行が分からない
+ * (配線を選べない・消せない、が起きる)。
+ */
+function hitLineOf(points: readonly Point[], line: number, theme: RenderStyle['theme']): string {
   const path = roundedPath(points, 0);
   return path === '' ? '' : element('path', {
     class: 'cf-wire-hit',
+    'data-line': String(line),
     d: path,
     fill: 'none',
     stroke: 'transparent',

@@ -47,10 +47,13 @@ export const renderWires = (
       );
       if (!edit) return drawn;
       // 線は細くて掴めないので、**同じ道に太い透明な線**を重ねる。
+      // **行番号は掴み手そのものに持たせる。** webview はカーソルの下にある要素から
+      // `data-line` を読むので、外の `g` にだけ付けると掴んでも行が分からない。
       const from = layout.point(wire.from);
       const to = layout.point(wire.to);
       const hit = element('line', {
         class: 'cf-wire-hit',
+        'data-line': String(wire.line ?? 0),
         x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y),
         stroke: 'transparent',
         'stroke-width': num(WIRE_WIDTH * 3),

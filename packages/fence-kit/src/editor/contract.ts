@@ -35,6 +35,29 @@ export const paletteTwoEnds = (markup: string, type: string): boolean =>
   new RegExp(`data-type="${type}"[^>]*data-ends="2"`).test(markup)
   || new RegExp(`data-ends="2"[^>]*data-type="${type}"`).test(markup);
 
+/**
+ * 掴むための印。**webview はカーソルの下にある要素からそのまま読む**ので、
+ * 外の `g` にだけ付けると掴めない (配線を選べない・消せない、が起きた)。
+ * 印そのものに載っていることを見る。
+ */
+function checkMarkup(map: string): readonly string[] {
+  const problems: string[] = [];
+  const marks: readonly (readonly [string, string, string])[] = [
+    ['cf-cell', 'data-address', '穴'],
+    ['cf-chip', 'data-part', '部品'],
+    ['cf-wire-hit', 'data-line', '配線の掴み手'],
+  ];
+  for (const [className, mark, what] of marks) {
+    const tags = [...map.matchAll(new RegExp(`<[a-z]+[^>]*class="[^"]*\\b${className}\\b[^"]*"[^>]*>`, 'g'))]
+      .map((found) => found[0]);
+    if (tags.length === 0) problems.push(`${what} (.${className}) が図にありません`);
+    else if (!tags.every((tag) => tag.includes(`${mark}=`))) {
+      problems.push(`${what} (.${className}) に ${mark} がありません`);
+    }
+  }
+  return problems;
+}
+
 const failed = (result: { readonly ok: boolean }): string =>
   ('error' in result && typeof result.error === 'object' && result.error !== null && 'message' in result.error
     ? String(result.error.message)
@@ -50,7 +73,9 @@ export function checkFenceEditor(editor: FenceEditor, fixture: ContractFixture):
   const { source, room, part, moveTo } = fixture;
 
   // --- 見本そのもの (これが読めないと以下が全部嘘になる) ---
-  if (editor.view(source, 1).map === '') say('見本の図が空です');
+  const map = editor.view(source, 1).map;
+  if (map === '') say('見本の図が空です');
+  for (const problem of checkMarkup(map)) say(problem);
   if (editor.cellsOf(source, part).length === 0) say(`見本の部品 ${part} の穴を返しません`);
   if (typeof editor.foldsWire !== 'boolean') say('foldsWire が真偽値ではありません');
 
