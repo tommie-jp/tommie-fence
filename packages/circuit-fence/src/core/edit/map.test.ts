@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { aimAt, fenceAt, gridMap, partCells } from './map.ts';
 import { lookupPartType, partTypeNames, pinPlaces } from '../parts.ts';
 import { renderMapHtml } from './mapSvg.ts';
+import { stepCell, stepsTo } from './move.ts';
 
 const RC = [
   'parts:',
@@ -146,13 +147,27 @@ describe('gridMap', () => {
     expect(gridMap('parts:\n  R1: [unclosed\n').chips).toEqual([]);
   });
 
-  test('leaves out a part on a half-step address, which the map cannot show', () => {
-    // 交点の間はマップの升目に載らない。**黙って別の升へ置かない** —
-    // 動かせない部品は出さないほうが、嘘の位置を見せるより良い。
+  test('shows a part on a half-step address where it is written, not on a neighbouring cell', () => {
+    // 交点の間 (`a_1.5`) も**書かれたところ**に出す。升へ寄せると、掴んで
+    // 動かしたとき書いた場所と違うところへ行く — 端数のまま置けば嘘がない。
     const map = gridMap('parts:\n  R1: resistor a_1.5 a_3.5 1k\n');
 
-    expect(map.chips).toEqual([]);
-    expect(map.skipped).toEqual(['R1']);
+    expect(map.chips).toHaveLength(1);
+    expect(map.chips[0]?.col).toBe(0.5);
+    expect(map.chips[0]?.to).toEqual({ row: 0, col: 2.5 });
+  });
+
+  test('lets an arrow key move a half-step part without losing the half', () => {
+    // 端数のまま 1 升ずらす。整数へ丸めると、押した覚えのない場所へ動く。
+    expect(stepCell('a_1.5', 0, 1)).toBe('a_2.5');
+    expect(stepsTo('a_1.5', 'a3')).toEqual({ rows: 0, cols: 1.5 });
+  });
+
+  test('makes room for the cell a half-step part reaches into', () => {
+    // 端数は切り上げて数える (`a_9.5` は 10 列目まで要る)。
+    const map = gridMap('parts:\n  R1: resistor a_9.5 a_11.5 1k\n');
+
+    expect(map.cols).toBeGreaterThanOrEqual(12);
   });
 });
 

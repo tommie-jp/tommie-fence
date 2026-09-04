@@ -636,7 +636,7 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {})
   // 接続点は線より先に数える (線の先をそこへ合わせるため)。
   const dots = pinPointsOf(map.chips, nudges);
 
-  const svg = element(
+  return element(
     'svg',
     {
       class: 'cf-map',
@@ -658,9 +658,4 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {})
       + layer('cf-notes', map.notes.map((note) => drawNote(note, look.noteFrame === true)).join(''))
       + drawHits(shown),
   );
-
-  const skipped = map.skipped.length === 0
-    ? ''
-    : `<p class="cf-note">交点の間に置いた部品はマップに出ません: ${escapeMarkup(map.skipped.join(', '))}</p>`;
-  return svg + skipped;
 }

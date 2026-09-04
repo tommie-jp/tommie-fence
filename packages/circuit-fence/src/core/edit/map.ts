@@ -116,12 +116,10 @@ export type GridMap = {
   readonly chips: readonly Chip[];
   /** 掴める注釈。升目に載らない所を指しているものは出さない (チップと同じ理由)。 */
   readonly notes: readonly MapNote[];
-  /** 掴める節点。交点の間にあるものは載らない (チップと同じ理由)。 */
+  /** 掴める節点。**交点の間 (`a_1.5`) も書かれたところに出る**。 */
   readonly dots: readonly Dot[];
   /** 引く線。部品の形と違い、**書かれたとおりの位置**に引ける。 */
   readonly wires: readonly WireLine[];
-  /** 升目に載らないので出さなかった部品 (交点の間に置かれたもの)。 */
-  readonly skipped: readonly string[];
   /** フェンスを読めたか。読めなければマップは空。 */
   readonly readable: boolean;
 };
@@ -130,9 +128,6 @@ export type GridMap = {
 const MARGIN = 2;
 const MIN_ROWS = 4;
 const MIN_COLS = 6;
-
-const isOnCrossing = (address: Address): boolean =>
-  Number.isInteger(address.row) && Number.isInteger(address.col);
 
 const cellAt = (address: Address): Cell => ({ row: address.row, col: address.col });
 
@@ -245,22 +240,17 @@ export function gridMap(source: string): GridMap {
   const { doc } = parseFence(normalized);
   if (!doc) {
     return {
-      rows: MIN_ROWS, cols: MIN_COLS, chips: [], notes: [], dots: [], wires: [], skipped: [], readable: false,
+      rows: MIN_ROWS, cols: MIN_COLS, chips: [], notes: [], dots: [], wires: [], readable: false,
     };
   }
 
   const chips: Chip[] = [];
-  const skipped: string[] = [];
 
   for (const [index, part] of doc.parts.entries()) {
-    const addresses = addressesOf(part);
-    // **交点の間 (`a_1.5`) は升目に載らない。** 別の升へ寄せて見せると、
-    // 掴んで動かしたとき書いた場所と違うところへ行く。
-    if (!addresses.every(isOnCrossing)) {
-      skipped.push(part.id);
-      continue;
-    }
-    const [anchor, far] = addresses;
+    // **交点の間 (`a_1.5`) も書かれたところに出す。** 升目の線は交点にしか
+    // 無いが、部品は線の間にも置ける — 近くの升へ寄せて見せると、掴んで
+    // 動かしたとき書いた場所と違うところへ行く。端数のまま置けば嘘がない。
+    const [anchor, far] = addressesOf(part);
     // 2 端子部品は番地の順そのものが向きなので、向きの語を持たない。
     const turn = part.kind === 'two-terminal' ? NO_TURN : part.turn;
     chips.push({
@@ -277,7 +267,6 @@ export function gridMap(source: string): GridMap {
   }
 
   const dots: Dot[] = nodesOf(doc, normalized)
-    .filter((node) => isOnCrossing(node.address))
     .map((node) => ({ row: node.address.row, col: node.address.col, name: node.name, uses: node.uses }));
 
   const wires = wireLinesOf(doc);
@@ -290,9 +279,7 @@ export function gridMap(source: string): GridMap {
     if (target === null) continue;
     const named = doc.parts.some((part) => part.id === target);
     const address = named ? null : parseAddress(target);
-    const cell = named
-      ? cellOfPart(doc, target)
-      : address !== null && isOnCrossing(address) ? cellAt(address) : null;
+    const cell = named ? cellOfPart(doc, target) : (address === null ? null : cellAt(address));
     if (cell === null) continue;
     notes.push({
       handle: `note:${note.line}`,
@@ -317,7 +304,7 @@ export function gridMap(source: string): GridMap {
   const rows = Math.min(26, Math.max(MIN_ROWS, ...span((cell) => cell.row)));
   const cols = Math.min(LIMITS.columns, Math.max(MIN_COLS, ...span((cell) => cell.col)));
 
-  return { rows, cols, chips, notes, dots, wires, skipped, readable: true };
+  return { rows, cols, chips, notes, dots, wires, readable: true };
 }
 
 /**
@@ -418,5 +405,5 @@ function cellOfPart(doc: { readonly parts: readonly PartSpec[] }, id: string): C
   const part = doc.parts.find((one) => one.id === id);
   if (part === undefined) return null;
   const anchor = addressesOf(part)[0];
-  return anchor === undefined || !isOnCrossing(anchor) ? null : cellAt(anchor);
+  return anchor === undefined ? null : cellAt(anchor);
 }
