@@ -69,7 +69,7 @@ style:             # 任意。見た目
 - 1 端子 `port` `ground` `vcc` `vee`
 - 能動 `npn` `pnp` `nigbt` `pigbt` `nmos` `pmos` `njfet` `pjfet`
   `nmos-e` `pmos-e` `nmos-d` `pmos-d` `opamp` `transformer`
-- 論理 `and` `or` `nand` `nor` `xor` `xnor` `not` `buffer` `spdt`
+- 論理 `and` `or` `nand` `nor` `xor` `xnor` `not` `buffer` `spdt` `slide-switch`
   `dip4` `dip6` `dip8` `dip14` `dip16` `dip18` `dip20` `dip24` `dip28` `dip40`
 - マイコンボード (足は実物の印字で `U1.GP0`)
   `pico` `pico-w` `pico2` `pico2-w`
@@ -89,6 +89,7 @@ style:             # 任意。見た目
 | 2 入力ゲート | `a` `b` (`1` `2`) / `out` |
 | `not` / `buffer` | `in` / `out` |
 | `spdt` | `in` (`c`) / `1` `2` |
+| `slide-switch` | 同上 (記号も同じ) |
 | `dipNN` | `1` 〜 足の本数 |
 | `potentiometer` | `w` |
 | `thyristor` / `triac` | `g` |

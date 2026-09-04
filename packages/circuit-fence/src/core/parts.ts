@@ -584,6 +584,16 @@ export const PART_TYPES = {
   pigbt: { kind: 'multi-terminal', symbol: 'pigbt', ...NO_UNIT, pins: IGBT_PINS, pinSide: IGBT_SIDE_P },
   /** 切り替えスイッチ (c 接点)。 */
   spdt: { kind: 'multi-terminal', symbol: 'spdt', ...NO_UNIT, pins: SPDT_PINS, pinSide: SPDT_SIDE, pinRow: SPDT_ROW },
+  /**
+   * スライドスイッチ。**回路図では切り替えスイッチと同じ記号**だが、種類は
+   * 分けてある — 実体配線図の 2 つが別の部品として持っているので、同じ回路を
+   * どちらでも書けるようにするため (52 の docs/21)。
+   * 別名にすると「回路図に置いたら名前が変わった」ことになる。
+   */
+  'slide-switch': {
+    kind: 'multi-terminal', symbol: 'spdt', ...NO_UNIT,
+    pins: SPDT_PINS, pinSide: SPDT_SIDE, pinRow: SPDT_ROW,
+  },
 
   // ロジックゲート。入力は番号でも `a` / `b` でも呼べる。
   and: { kind: 'multi-terminal', symbol: 'and port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE, pinRow: GATE2_ROW },
@@ -686,6 +696,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   nigbt: 'IGBT (N チャネル)',
   pigbt: 'IGBT (P チャネル)',
   spdt: '切り替えスイッチ',
+  'slide-switch': 'スライドスイッチ',
   and: 'AND ゲート',
   or: 'OR ゲート',
   nand: 'NAND ゲート',
@@ -783,6 +794,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   nigbt: 'Q',
   pigbt: 'Q',
   spdt: 'S',
+  'slide-switch': 'SW',
   and: 'U',
   or: 'U',
   nand: 'U',
