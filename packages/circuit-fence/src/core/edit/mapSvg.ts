@@ -1,4 +1,5 @@
 import { element, escapeMarkup, fit, num, svgText, textWidth } from 'fence-kit';
+import { LIMITS } from '../limits.ts';
 import { formatAddress } from '../model/address.ts';
 import { drawBox, drawGlyph, glyphOf, glyphSpan, legGap, namesInside } from './mapGlyphs.ts';
 import type { GlyphName } from './mapGlyphs.ts';
@@ -39,8 +40,25 @@ const layer = (klass: string, children: string): string =>
 const at = (cell: Cell, children: string, attrs: Record<string, string> = {}): string =>
   element('g', { ...attrs, transform: `translate(${num(x(cell.col))},${num(y(cell.row))})` }, children);
 
+/**
+ * 見せる升の数。**書かれた番地だけでなく、描いたものが届くところまで**出す。
+ * 40 本のボードは升 1 つに置くが箱は何行にも広がるので、書かれた番地の数だけ
+ * 点と見出しを出すと、部品の横に行の字が無い状態になる (実機で指摘された)。
+ *
+ * 伸ばせるのは**下と右だけ** — 行の名前は a から始まり、その上が無い。
+ */
+export type Shown = { readonly rows: number; readonly cols: number };
+
+const shownOf = (map: GridMap, room: Room): Shown => ({
+  rows: Math.min(MAX_ROWS, Math.max(map.rows, Math.ceil((room.bottom - EDGE - PAD_Y) / PITCH) + 1)),
+  cols: Math.min(LIMITS.columns, Math.max(map.cols, Math.ceil((room.right - EDGE - PAD_X) / PITCH) + 1)),
+});
+
+/** 行の名前は a〜z の 26 まで。 */
+const MAX_ROWS = 26;
+
 /** 交点の目印。**升目そのもの**で、置ける場所がここだと分かる。 */
-function drawGrid(map: GridMap): string {
+function drawGrid(map: Shown): string {
   const dots: string[] = [];
   for (let row = 0; row < map.rows; row += 1) {
     for (let col = 0; col < map.cols; col += 1) {
@@ -51,7 +69,7 @@ function drawGrid(map: GridMap): string {
 }
 
 /** 行と列の見出し (a〜z と 1〜99)。番地を目で数えられるように。 */
-function drawLabels(map: GridMap): string {
+function drawLabels(map: Shown): string {
   const cols = Array.from({ length: map.cols }, (_, col) =>
     svgText(x(col), AXIS_Y, String(col + 1), { class: 'cf-axis' }));
   const rows = Array.from({ length: map.rows }, (_, row) =>
@@ -549,7 +567,7 @@ function drawNote(note: MapNote, framed: boolean): string {
  * 置き先の当たり判定。**掴んでいる間だけ効く** (CSS で切り替える)。
  * いつも効かせると部品を掴めなくなり、いつも切ると置けなくなる。
  */
-function drawHits(map: GridMap): string {
+function drawHits(map: Shown): string {
   const cells: string[] = [];
   for (let row = 0; row < map.rows; row += 1) {
     for (let col = 0; col < map.cols; col += 1) {
@@ -613,6 +631,8 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {})
   // 升 1 つに置くが箱は 20 行ぶんあり、升目の大きさで切ると図が丸ごと外へ出る
   // (実機で「pico を置いても回路図が広がらない」)。
   const room = roomFor(map, nudges);
+  // 点と見出しは、画布に届くところまで出す (部品の横に行の字が無くならない)。
+  const shown = shownOf(map, room);
   // 接続点は線より先に数える (線の先をそこへ合わせるため)。
   const dots = pinPointsOf(map.chips, nudges);
 
@@ -626,8 +646,8 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {})
       preserveAspectRatio: 'xMinYMin meet',
       xmlns: 'http://www.w3.org/2000/svg',
     },
-    drawGrid(map)
-      + drawLabels(map)
+    drawGrid(shown)
+      + drawLabels(shown)
       + layer('cf-wires', map.wires.map((wire) => drawWire(wire, bad, dots)).join(''))
       // 掴む層は見える線より後、部品より前。上に描いたものからクリックを取るので、
       // 部品と節点が先に取り、配線はその隙間で取る。
@@ -636,7 +656,7 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {})
       + layer('cf-parts', map.chips.map((chip) => drawChip(chip, nudges.get(chip) ?? 0, bad)).join(''))
       // 注釈は部品の上。指したものが下に隠れると印の意味が無い (図と同じ順)。
       + layer('cf-notes', map.notes.map((note) => drawNote(note, look.noteFrame === true)).join(''))
-      + drawHits(map),
+      + drawHits(shown),
   );
 
   const skipped = map.skipped.length === 0

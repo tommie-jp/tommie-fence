@@ -230,6 +230,24 @@ describe('画布の広さ', () => {
     expect(boxOf('parts:\n  U1: pico b2\n')[1]).toBeLessThan(0);
   });
 
+  test('runs the row letters down beside a part that is taller than the cells', () => {
+    // 実機で「GND があると行英字が広がるのに、pico だけだと広がらない」。
+    // 点と見出しだけ升目の数で出していたので、部品の横に行の字が無かった。
+    const letters = (source: string): number =>
+      (draw(source).match(/class="cf-axis"/g) ?? []).length;
+
+    expect(letters('parts:\n  U1: pico b2\n')).toBeGreaterThan(letters('parts:\n  R1: resistor a1 a3\n'));
+  });
+
+  test('puts a hole to grab under the part it grew for', () => {
+    // 見出しだけ伸ばしても、そこへ置けなければ意味が無い。
+    const svg = draw('parts:\n  U1: pico b2\n');
+
+    // b2 に置いた 40 本の箱は f 行まで届く (升目そのものは 4 行しか無い)。
+    expect(svg).toContain('data-address="f1"');
+    expect(draw('parts:\n  R1: resistor a1 a3\n')).not.toContain('data-address="f1"');
+  });
+
   test('stays on the cells when nothing sticks out', () => {
     const [left, top] = boxOf('parts:\n  R1: resistor a1 a3\n');
 
