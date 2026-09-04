@@ -144,7 +144,12 @@ export const start = (ownUndo: boolean, foldsWire = false): State => ({
 /** webview で起きたこと。**DOM を読むのは呼ぶ側** (`map.ts`)。 */
 export type Event =
   | { readonly kind: 'hover'; readonly under: Under }
-  | { readonly kind: 'press'; readonly under: Under; readonly x: number; readonly y: number; readonly onMap: boolean }
+  | {
+    readonly kind: 'press'; readonly under: Under; readonly x: number; readonly y: number;
+    readonly onMap: boolean;
+    /** `Shift` を押しながらか。**選ぶ道具では出し入れ**になる。 */
+    readonly shift?: boolean;
+  }
   /** 押したまま動いた。 */
   | { readonly kind: 'drag'; readonly under: Under; readonly x: number; readonly y: number }
   | { readonly kind: 'release'; readonly under: Under; readonly x: number; readonly y: number; readonly shift: boolean }
@@ -323,6 +328,10 @@ function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcom
   }
 
   const on = topOf(event.under);
+
+  // **`Shift` を押しながら押すと、群れへの出し入れ。** 選び直さずに 1 つずつ
+  // 足したり外したりできる (領域で囲むだけでは、飛び飛びの組を作れない)。
+  if (event.shift === true && on !== null && on.kind === 'part') return onToggle(state, on, pressed);
 
   if (on === null) {
     // マップの何もない所を押したら選び直し (選んだままだと光が残る)。
@@ -553,6 +562,29 @@ export const pickedParts = (state: State): readonly string[] =>
   (state.also.length > 0
     ? state.also.filter((one) => one.kind === 'part').map((one) => one.id)
     : state.selected?.kind === 'part' ? [state.selected.id] : []);
+
+/**
+ * 群れへの出し入れ。**押したものが入っていれば外し、居なければ足す。**
+ *
+ * 群れは `selected` (先頭) と `also` (全部) で持つ。1 つになったら `also` を
+ * 空にして、今までの「1 つだけ選んだ」形へ戻す (`pickedParts` の約束)。
+ * 空になったら選び直し — 何も選んでいない状態と同じにする。
+ */
+function onToggle(state: State, on: Picked, pressed: State['pressed']): Outcome {
+  const group = state.also.length > 0 ? state.also : (state.selected === null ? [] : [state.selected]);
+  const inside = group.some((one) => one.kind === on.kind && one.id === on.id);
+  const next = inside
+    ? group.filter((one) => !(one.kind === on.kind && one.id === on.id))
+    : [...group, on];
+
+  const first = next[0] ?? null;
+  const said = inside ? `${shownName(on.id)} を外しました` : `${shownName(on.id)} を足しました`;
+  return outcome(
+    { ...state, selected: first, also: next.length > 1 ? next : [], pressed },
+    [select(first)],
+    `${said} (${next.length} 個)`,
+  );
+}
 
 function onPickMany(state: State, parts: readonly string[]): Outcome {
   const picked: Picked[] = parts.map((id) => ({ kind: 'part', id }));

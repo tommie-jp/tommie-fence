@@ -576,7 +576,7 @@ document.addEventListener('pointerdown', (event) => {
     && under.part === null && under.node === null && under.wire === null) {
     band = { x: event.clientX, y: event.clientY };
   }
-  run({ kind: 'press', under, x: event.clientX, y: event.clientY, onMap: onCanvas });
+  run({ kind: 'press', under, x: event.clientX, y: event.clientY, onMap: onCanvas, shift: event.shiftKey });
 });
 
 document.addEventListener('pointermove', (event) => {

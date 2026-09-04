@@ -302,6 +302,55 @@ describe('続けて置く・1 穴ずつ', () => {
   });
 });
 
+describe('Shift を押しながら選ぶ', () => {
+  const shiftPress = (under: Under): Event =>
+    ({ kind: 'press', under, x: 0, y: 0, onMap: true, shift: true });
+  const ON_C1 = over({ cell: 'a4', part: 'C1' });
+
+  test('adds the part to the group instead of starting over', () => {
+    // 実機で頼まれた。領域で囲むだけでは、飛び飛びの組が作れない。
+    const one = after(PANEL, press(ON_R1), release(ON_R1, false));
+    const two = after(one, shiftPress(ON_C1));
+
+    expect(two.also.map((one) => one.id)).toEqual(['R1', 'C1']);
+  });
+
+  test('takes it back out when it is already in the group', () => {
+    const many = after(PANEL, { kind: 'pickMany', parts: ['R1', 'C1', 'D1'] });
+    const fewer = after(many, shiftPress(ON_C1));
+
+    expect(fewer.also.map((one) => one.id)).toEqual(['R1', 'D1']);
+  });
+
+  test('falls back to the plain one-part shape when only one is left', () => {
+    // `also` は 2 つ以上のときだけ持つ (`pickedParts` の約束)。
+    const two = after(PANEL, { kind: 'pickMany', parts: ['R1', 'C1'] });
+    const one = after(two, shiftPress(ON_C1));
+
+    expect(one.selected).toEqual({ kind: 'part', id: 'R1' });
+    expect(one.also).toEqual([]);
+  });
+
+  test('ends up with nothing selected when the last one is taken out', () => {
+    const one = after(PANEL, press(ON_R1), release(ON_R1, false));
+
+    expect(after(one, shiftPress(ON_R1)).selected).toBeNull();
+  });
+
+  test('says how many are in the group, so the count is never a guess', () => {
+    const one = after(PANEL, press(ON_R1), release(ON_R1, false));
+
+    expect(step(one, shiftPress(ON_C1)).status).toContain('2 個');
+    expect(step(one, shiftPress(ON_R1)).status).toContain('0 個');
+  });
+
+  test('leaves the wire tool alone, where Shift already folds', () => {
+    const wiring = after(PANEL, key('w'));
+
+    expect(after(wiring, shiftPress(AT_B3)).wireFrom).toBe('b3');
+  });
+});
+
 describe('テキスト側のカーソルが指したもの', () => {
   test('takes the part the cursor sits on as the selected one, so its fields open', () => {
     // 実機で「カーソルを当てた部品の属性も表示して、変更できるように」。
