@@ -198,11 +198,12 @@ const SHAPE: Record<GlyphName, () => string> = {
   // 定電流源。丸の中の矢が向き (図と同じ)。
   'i-source': () => circle(SOURCE_R) + path('M-5,0 L5,0 M5,0 L2.2,-1.8 M5,0 L2.2,1.8'),
   // 太陽電池。**電池の極板に光の矢**が差す (図と同じで、丸の中に極板が入る)。
-  // 矢は左上から — 図は左下だが、升目は記号の下に名前を置くので重なる。
+  // 矢は**左下から**入る — 図と同じ側。名前は記号の張り出しの外へ逃がすので
+  // (`glyphTall`)、下に置いても重ならない。
   solar: () => circle(SOURCE_R)
     + path('M-2,-5 L-2,5 M2,-5 L2,5')
-    + path('M-13,-13 L-8.5,-8.5 M-8.5,-8.5 L-9.2,-11.2 M-8.5,-8.5 L-11.2,-9.2'
-      + ' M-9,-15 L-4.5,-10.5 M-4.5,-10.5 L-5.2,-13.2 M-4.5,-10.5 L-7.2,-11.2'),
+    + path('M-13,13 L-8.5,8.5 M-8.5,8.5 L-11.2,9.2 M-8.5,8.5 L-9.2,11.2'
+      + ' M-9,15 L-4.5,10.5 M-4.5,10.5 L-7.2,11.2 M-4.5,10.5 L-5.2,13.2'),
   // 直流電源。**丸の中に ＋ と − を横に並べる** (図 = circuitikz と同じ)。
   //
   // 中に置く字 (MARKS) ではなく**記号の一部**として描くこと。字は回さない
@@ -220,12 +221,14 @@ const SHAPE: Record<GlyphName, () => string> = {
   battery: () => path('M-3,-8 L-3,8 M3,-4 L3,4'),
   // 開いた接点。閉じた形にすると「切れる部品」に見えない。
   switch: () => path('M-9,0 L5,-8'),
-  // b 接点。**閉じた線を斜めの棒が横切る** (図と同じ)。棒が「押すと開く」の印。
-  'switch-nc': () => path('M-9,0 L9,0 M2,5 L8,-6'),
-  // 押しボタン (a 接点)。2 つの接点の上に、離れた押し板。
-  button: () => `${contacts()}${path('M-6,-7 L6,-7 M0,-7 L0,-3')}`,
-  // 押しボタン (b 接点)。押し板が接点に載っている。
-  'button-nc': () => `${contacts()}${path('M-6,-4 L6,-4 M0,-4 L0,0')}`,
+  // b 接点。**閉じた線の上にレバーが倒れ、そこを短い棒が横切る** (図と同じ)。
+  // 横切る棒が「押すと開く」の印 — 斜めの線だけだと a 接点の開いたレバーに見える。
+  'switch-nc': () => path('M-9,0 L9,0 M-1,2 L5,-7 M-0.5,-4.2 L4.5,-0.8'),
+  // 押しボタン (a 接点)。2 つの接点の**上に離れた**押し板と、そこから伸びる軸。
+  // **軸は上へ**出る (図と同じ) — 下へ出すと接点に届いて閉じた形に見える。
+  button: () => `${contacts()}${path('M-6,-5 L6,-5 M0,-5 L0,-9')}`,
+  // 押しボタン (b 接点)。押し板が接点に**載っている** (閉じている)。軸は上へ。
+  'button-nc': () => `${contacts()}${path('M-6,-2 L6,-2 M0,-2 L0,-7')}`,
   // リードスイッチ。ガラス管の中の接点。
   reed: () => element('ellipse', { class: 'cf-glyph', cx: 0, cy: 0, rx: 10, ry: 5 })
     + path('M-7,1 L6,-3'),
@@ -235,7 +238,7 @@ const SHAPE: Record<GlyphName, () => string> = {
   meter: () => circle(9),
   // 水晶。2 枚の極板に挟まれた板。
   crystal: () => `${path('M-6,-9 L-6,9 M6,-9 L6,9')}${box(6, 14)}`,
-  // ヒューズ。線の上の細い箱 (図と同じで、箱を線は貫かない)。
+  // ヒューズ。**線が箱を貫く** (図と同じ) — 溶断線が中を通っているのが記号。
   fuse: () => box(16, 8),
   // ランプ。丸に斜め十字。
   lamp: () => `${circle(8)}${path('M-5.7,-5.7 L5.7,5.7 M5.7,-5.7 L-5.7,5.7')}`,
@@ -243,9 +246,10 @@ const SHAPE: Record<GlyphName, () => string> = {
   speaker: () => path('M-7,-4 L7,-4 L7,4 L-7,4 Z M-4,-4 L-7,-10 L7,-10 L4,-4'),
   // 同軸コネクタ。丸の中の点が中心導体、外周が外皮 (図と同じ形)。
   coax: () => `${circle(8)}${element('circle', { class: 'cf-glyph-core', cx: 0, cy: 0, r: 2.2 })}`,
-  // マイク。線に丸が載り、線が丸の底を塞ぐ。
-  mic: () => element('circle', { class: 'cf-glyph', cx: 0, cy: -4, r: 6 })
-    + path('M-6,2 L6,2'),
+  // マイク。**線の上に丸が載り、天に振動板の棒**が渡る (図と同じ)。
+  // 棒を底へ置くと、線と重なって丸を塞いだ別の記号になる。
+  mic: () => element('circle', { class: 'cf-glyph', cx: 0, cy: -5, r: 5.5 })
+    + path('M-5.5,-10.5 L5.5,-10.5'),
   // バイポーラ。**丸は付かない** (図が付けていない)。ベースの棒と 2 本の足。
   //
   // **矢はエミッタの足に付き、向きが n 形と p 形を分ける** — npn は外へ、
@@ -319,7 +323,9 @@ const SPAN: Record<GlyphName, number> = {
   source: 9, 'dc-source': SOURCE_R, 'ac-source': SOURCE_R, 'square-source': SOURCE_R,
   'tri-source': SOURCE_R, 'i-source': SOURCE_R, solar: SOURCE_R, battery: 3, meter: 9,
   switch: 9, 'switch-nc': 9, button: 6, 'button-nc': 6, reed: HALF, spdt: HALF,
-  crystal: 6, fuse: 8, lamp: 8, speaker: 7, mic: 6, coax: 8,
+  crystal: 6, lamp: 8, speaker: 7, coax: 8,
+  // **線が記号を貫く**ので切らない (ヒューズは溶断線、マイクは丸の底)。
+  fuse: 0, mic: 0,
   bjt: 13, 'bjt-p': 13, fet: 13, 'fet-p': 13, 'fet-bulk': 13, 'fet-bulk-p': 13,
   jfet: 13, 'jfet-p': 13, igbt: 13, 'igbt-p': 13, opamp: 8,
   // 反転する形は**出口の丸の外側**まで取る。丸の手前から棒を出すと、
@@ -333,6 +339,34 @@ const SPAN: Record<GlyphName, number> = {
 };
 
 export const glyphSpan = (name: GlyphName): number => SPAN[name];
+
+/**
+ * 記号が**線と直交する向き**に張り出す長さ (原点から片側)。名前をその外へ
+ * 置くために要る — 決め打ちの距離だと、背の高い記号 (ダイアック・水晶・
+ * 電源の丸) に名前が乗る (実機で「diac の名前と図形が重なっている」)。
+ *
+ * **矢や光の線も入れて数える。** 胴だけで数えると、LED の矢の上に字が来る。
+ * `SPAN` と同じで、形を足したときに書き忘れると型で止まる。
+ */
+const TALL: Record<GlyphName, number> = {
+  resistor: 5, 'resistor-var': 8, potentiometer: 12, 'resistor-iec': 6, photoresistor: 11,
+  capacitor: 9, ecap: 9, varicap: 7, inductor: 3, transformer: 9,
+  diode: 7, schottky: 7, photodiode: 10, led: 10, zener: 10, thyristor: 8, diac: 8, triac: 9,
+  source: 9, 'dc-source': 9, 'ac-source': 9, 'square-source': 9, 'tri-source': 9,
+  'i-source': 9, solar: 15, battery: 8, meter: 9,
+  switch: 8, 'switch-nc': 8, button: 9, 'button-nc': 7, reed: 5, spdt: 6,
+  crystal: 9, fuse: 4, lamp: 8, speaker: 10, mic: 11, coax: 8,
+  bjt: 9, 'bjt-p': 9, fet: 9, 'fet-p': 9, 'fet-bulk': 9, 'fet-bulk-p': 9,
+  jfet: 9, 'jfet-p': 9, igbt: 9, 'igbt-p': 9, opamp: 9,
+  and: 9, 'and-inv': 9, or: 9, 'or-inv': 9, xor: 9, 'xor-inv': 9, buffer: 9, 'buffer-inv': 9,
+  ground: 8, port: 4, 'supply-up': 8, 'supply-down': 8,
+  // 線そのもの。張り出さない。
+  short: 0,
+  // 箱は足の本数で伸びるので、呼ぶ側が測る (`reachOf`)。
+  box: 12,
+};
+
+export const glyphTall = (name: GlyphName): number => TALL[name];
 
 /**
  * 同じ辺に並ぶ足の間隔。**記号が実際に足を描いている位置**で決まる —

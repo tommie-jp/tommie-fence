@@ -1,7 +1,9 @@
 import { element, escapeMarkup, fit, lookupBoardPart, num, svgText, textWidth } from 'fence-kit';
 import { LIMITS } from '../limits.ts';
 import { formatAddress, rowLetters } from '../model/address.ts';
-import { drawBox, drawGlyph, glyphOf, glyphSpan, leadsFromCentre, legGap, namesInside } from './mapGlyphs.ts';
+import {
+  drawBox, drawGlyph, glyphOf, glyphSpan, glyphTall, leadsFromCentre, legGap, namesInside,
+} from './mapGlyphs.ts';
 import type { GlyphName } from './mapGlyphs.ts';
 import type { Chip, ChipPin, Cell, Dot, GridMap, MapNote, WireLine } from './map.ts';
 import type { PinSide, Turn } from '../parts.ts';
@@ -260,10 +262,14 @@ function drawSpan(chip: Chip, far: Cell, nudge: number): string {
   // **名前を置く側は図と揃える** — 横置きは記号の下、縦置きは記号の左
   // (図では反対側が値の場所。実機で「文字列の位置が回路図と違う」)。
   const upright = Math.abs(y2 - y1) > Math.abs(x2 - x1);
-  const aside = asideOf(mx, chip.id);
+  // **記号の張り出しの外へ。** 決め打ちの距離だと、背の高い記号 (ダイアック・
+  // 水晶・電源の丸) に名前が乗る (実機で指摘された)。線と直交する向きの
+  // 張り出しは、縦置きでは横向きになるので、どちらの置き方でも同じ数を使う。
+  const clear = Math.max(NAME_BELOW, glyphTall(glyph.name) + NAME_CLEAR_TALL);
+  const aside = asideOf(mx, chip.id, clear);
   const name = upright
     ? svgText(aside.x, my + 4, chip.id, { class: 'cf-name', anchor: aside.anchor, halo: 'var(--cf-paper)' })
-    : svgText(mx, my + NAME_BELOW, chip.id, { class: 'cf-name', halo: 'var(--cf-paper)' });
+    : svgText(mx, my + clear, chip.id, { class: 'cf-name', halo: 'var(--cf-paper)' });
   return lead + body + mark + name;
 }
 
@@ -272,6 +278,9 @@ function drawSpan(chip: Chip, far: Cell, nudge: number): string {
  * 縦置きは左。升の半分 (17) より内側に収めて、隣の升へはみ出さないようにする。
  */
 const NAME_BELOW = 15;
+
+/** 記号の張り出しから名前までの隙間。字の高さ (10px) の半分より少し広く取る。 */
+const NAME_CLEAR_TALL = 8;
 
 /**
  * 品種の字 (`NTC`) を記号の下へ置く高さ。**名前のさらに下**に置く —
@@ -289,9 +298,9 @@ const NAME_FONT = 10;
  * — 1 列目に立てた部品の名前は、左に置くと行の見出しに重なって読めない
  * (実機で図に合わせたときに出た)。
  */
-function asideOf(mx: number, id: string): { readonly x: number; readonly anchor: 'start' | 'end' } {
-  const left = mx - NAME_ASIDE - textWidth(id) * NAME_FONT;
-  return left < EDGE ? { x: mx + NAME_ASIDE, anchor: 'start' } : { x: mx - NAME_ASIDE, anchor: 'end' };
+function asideOf(mx: number, id: string, aside: number): { readonly x: number; readonly anchor: 'start' | 'end' } {
+  const left = mx - aside - textWidth(id) * NAME_FONT;
+  return left < EDGE ? { x: mx + aside, anchor: 'start' } : { x: mx - aside, anchor: 'end' };
 }
 
 /**
