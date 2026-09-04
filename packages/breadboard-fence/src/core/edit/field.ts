@@ -17,7 +17,7 @@ import { locateTokens } from './shared.ts';
  * 名前 (`R1:`) だけは鍵と注釈の 2 か所に散るので別の道を通る (`rename.ts`)。
  */
 
-export type PartField = 'type' | 'value' | 'label';
+export type PartField = 'id' | 'type' | 'value' | 'label';
 
 /** 欄のいまの中身。**モデルから読む**ので、書いた綴りではなく読めた値が出る。 */
 export type PartFields = {
@@ -114,7 +114,7 @@ export function partFields(source: string, id: string): PartFields | null {
     label: part.label ?? '',
     color: '',
     // **どの部品も 3 つとも書ける。** 種類ごとに欄が減る文法ではない。
-    can: ['type', 'value', 'label'],
+    can: ['id', 'type', 'value', 'label'],
   };
 }
 

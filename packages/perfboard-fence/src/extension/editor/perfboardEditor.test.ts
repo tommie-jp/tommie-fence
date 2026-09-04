@@ -80,7 +80,7 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
 
   test('says which fields can be written, so the shell need not know the grammar', () => {
     // **ラベルの欄はこの文法に無い。** 字を添えたいときは注釈で書く。
-    expect(editor.fieldsOf(LED, 'R1')?.can).toEqual(['type', 'value']);
+    expect(editor.fieldsOf(LED, 'R1')?.can).toEqual(['id', 'type', 'value']);
   });
 
   test('places a part from the palette', () => {

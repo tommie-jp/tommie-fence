@@ -20,7 +20,7 @@ import type { Edit, RewriteResult, Token } from './shared.ts';
  * フロー形式 (`parts: {…}`) は行が部品 1 つに対応しないので断る。
  */
 
-export type PartField = 'type' | 'value' | 'label';
+export type PartField = 'id' | 'type' | 'value' | 'label';
 
 /** 欄に出す、いまの中身。**書き換えと同じ読み方**を通す (食い違わない)。 */
 export type PartFields = {
@@ -43,6 +43,8 @@ export type PartFields = {
 
 /** その部品に書ける欄。 */
 const fieldsFor = (kind: PartSpec['kind']): readonly PartField[] => [
+  // 名前を直せる印。**種類と別に持つ** — 配線は種類を直せるが名前は無い。
+  'id',
   'type',
   ...(kind === 'one-terminal' ? [] : ['value' as const]),
   ...(kind === 'two-terminal' ? ['label' as const] : []),

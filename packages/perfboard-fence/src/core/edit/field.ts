@@ -20,7 +20,7 @@ import { locateTokens } from './shared.ts';
  * 名前 (`R1:`) だけは鍵と注釈の 2 か所に散るので別の道を通る (`rename.ts`)。
  */
 
-export type PartField = 'type' | 'value';
+export type PartField = 'id' | 'type' | 'value';
 
 /** 欄のいまの中身。**モデルから読む**ので、書いた綴りではなく読めた値が出る。 */
 export type PartFields = {
@@ -116,7 +116,7 @@ export function partFields(source: string, id: string): PartFields | null {
     label: '',
     color: '',
     // **ラベルの欄はこの文法に無い。** 字を添えたいときは注釈で書く。
-    can: ['type', 'value'],
+    can: ['id', 'type', 'value'],
   };
 }
 

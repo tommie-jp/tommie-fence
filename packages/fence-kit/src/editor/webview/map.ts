@@ -736,8 +736,27 @@ type Fields = {
   /** 色。**いまは配線だけ**が持つ。 */
   readonly color: string;
   /** 書ける欄。**フェンスが決める** (種類の語彙は殻の持ち物ではない)。 */
-  readonly can: readonly ('type' | 'value' | 'label' | 'color')[];
+  readonly can: readonly ('id' | 'type' | 'value' | 'label' | 'color')[];
+  /** 種類の欄に出す候補。渡されたときだけ、その場で一覧を組み替える。 */
+  readonly kinds?: readonly string[];
 };
+
+/**
+ * 種類の欄が引く候補。**選ぶものが決まっているものだけ**その場で組み替える
+ * (配線の `--` / `-|` / `|-`)。渡されなければ種類の一覧に戻す。
+ */
+function showKinds(kinds: readonly string[]): void {
+  const input = fieldInput('type');
+  const list = query('#cf-kind-names');
+  if (input === null || list === null) return;
+  list.textContent = '';
+  for (const kind of kinds) {
+    const option = document.createElement('option');
+    option.value = kind;
+    list.append(option);
+  }
+  input.setAttribute('list', kinds.length === 0 ? 'cf-type-names' : 'cf-kind-names');
+}
 
 /**
  * 選んだ部品の欄を出す。**打っている最中の欄は書き換えない** —
@@ -765,9 +784,11 @@ function showFields(part: Fields | null): void {
     input.disabled = !enabled;
     if (document.activeElement !== input) input.value = value;
   };
-  // **名前を直せるのは名前のあるものだけ。** 配線と注釈は行で指すので直せない。
-  fill('id', part.id, part.can.includes('type'));
+  // **名前を直せるのは名前のあるものだけ。** 配線と注釈は行で指すので直せない
+  // (種類は直せるが名前は無い、という組み合わせがあるので印を分けてある)。
+  fill('id', part.id, part.can.includes('id'));
   fill('type', part.type, part.can.includes('type'));
+  showKinds(part.kinds ?? []);
   // **書ける欄はフェンスが決める。** 殻は種類の語を知らない。
   fill('value', part.value, part.can.includes('value'));
   fill('label', part.label, part.can.includes('label'));

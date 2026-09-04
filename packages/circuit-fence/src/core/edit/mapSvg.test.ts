@@ -251,6 +251,19 @@ describe('多端子部品の足', () => {
     expect(Number(hit?.[1] ?? 0)).toBeGreaterThan(Number(dot?.[1] ?? 0));
   });
 
+  test('runs the wire to the point, not to the middle of the cell', () => {
+    // 実機で「接続点から配線するように表示すること」。
+    const svg = draw('parts:\n  Q1: npn b2\nwires:\n  - Q1.C -- a5\n');
+    const dot = /class="cf-pin-dot" cx="([-\d.]+)" cy="([-\d.]+)"/;
+    const wire = /class="cf-wire cf-approx"[^>]*x1="([-\d.]+)" y1="([-\d.]+)"/.exec(svg);
+    // 記号の中の座標に、部品の升の座標を足したものが接続点。
+    const cell = { x: 20 + 34, y: 32 + 34 };
+    const legs = [...svg.matchAll(new RegExp(dot, 'g'))]
+      .map((one) => ({ x: cell.x + Number(one[1]), y: cell.y + Number(one[2]) }));
+
+    expect(legs.some((leg) => leg.x === Number(wire?.[1]) && leg.y === Number(wire?.[2]))).toBe(true);
+  });
+
   test('leaves a two-lead part alone, since its ends are the holes themselves', () => {
     expect(draw('parts:\n  R1: resistor a1 a3\n')).not.toContain('cf-pin-dot');
   });

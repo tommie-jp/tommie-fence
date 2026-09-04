@@ -381,6 +381,12 @@ export const TYPE_LIST_ID = 'cf-type-names';
 /** 色の候補の名札。**組む側と引く側で同じ綴りを使う**ための 1 か所。 */
 export const COLOR_LIST_ID = 'cf-color-names';
 
+/**
+ * 種類の欄が、選んだものによって引き替える候補の名札。**中身は空で出す** —
+ * 何を並べるかは選んだものが来てから決まる (配線なら `--` / `-|` / `|-`)。
+ */
+export const KIND_LIST_ID = 'cf-kind-names';
+
 export type PanelHtmlOptions = {
   /** webview の CSP に載せる出所。 */
   readonly cspSource: string;
@@ -492,6 +498,7 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, chrome, undo, fol
     + `<label>値 <input class="cf-field" name="value" size="8"></label>`
     + `<label>ラベル <input class="cf-field" name="label" size="8"></label>`
     + `<label>色 <input class="cf-field" name="color" size="8" list="${COLOR_LIST_ID}"></label>`
+    + `<datalist id="${KIND_LIST_ID}"></datalist>`
     + `</form>`
     + `<p class="kc-props-hint">部品や配線をクリック (か <kbd>E</kbd>) すると欄が出ます。`
     + `<kbd>Enter</kbd> か欄を離れたときに行へ当たります。</p>`

@@ -18,7 +18,7 @@ import type { Endpoint } from '../../core/types.ts';
 import { renamePart } from '../../core/edit/rename.ts';
 import type { MapLook } from '../../core/edit/mapSvg.ts';
 import type { EditResult, FenceEditor, NewPart } from 'fence-kit';
-import { isWireHandle, renderColorOptions, wireFields } from '../../core/edit/wireField.ts';
+import { isWireHandle, renderColorOptions, setWireField, wireFields } from '../../core/edit/wireField.ts';
 import {
   deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans,
   setNoteField, turnNote,
@@ -180,6 +180,8 @@ export function createCircuitEditor(look: LookSource = PLAIN): FenceEditor {
     setField: (source, handle, field, text) => (
       isNoteHandle(handle)
         ? setNoteField(source, handle, field, text)
+        : isWireHandle(handle)
+        ? setWireField(source, handle, field, text)
         : FIELDS.includes(field)
         ? setField(source, handle, field as PartField, text)
         : { ok: false, error: { message: `書き換えられない欄です: ${field}`, line: null } }

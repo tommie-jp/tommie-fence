@@ -5,7 +5,7 @@ import { cornerOf, formatAddress, parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import { NO_TURN, lookupPartType, mainPinName, pinPlaces } from '../parts.ts';
+import { NO_TURN, lookupPartType, lookupPin, mainPinName, pinPlaces } from '../parts.ts';
 import type { PartType, PinSide, Turn } from '../parts.ts';
 import { cellOf } from '../types.ts';
 import type { PartSpec } from '../types.ts';
@@ -67,7 +67,17 @@ export type WireLine = {
    * (記号の形から決まる)。描く側はここを見て破線にする。
    */
   readonly approximate: boolean;
+  /**
+   * その端が足なら、どの部品のどの足か (代表の綴り)。**升目の上では足の位置が
+   * 分かる**ので、描く側はここまで線を伸ばす — 升の真ん中で止めると、
+   * 押した接続点と線の先が食い違って見える (実機で指摘された)。
+   */
+  readonly fromPin: PinRef | null;
+  readonly toPin: PinRef | null;
 };
+
+/** 配線の端が指している足。名前は升目に出るものと同じ代表の綴り。 */
+export type PinRef = { readonly part: string; readonly name: string };
 
 /** マップに置く節点 1 つ。**掴む物が部品とは違う**ので、チップとは別に持つ。 */
 export type Dot = {
@@ -138,11 +148,25 @@ function wireLinesOf(doc: Circuit): WireLine[] {
     if (anchor !== undefined) anchorAt.set(part.id, anchor);
   }
 
-  const resolve = (endpoint: Endpoint): { cell: Address; approximate: boolean } | null => {
+  const typeOf = new Map<string, string>();
+  for (const part of doc.parts) typeOf.set(part.id, part.type);
+
+  /** 書かれた足の綴り (`C`) を、升目に出る代表の綴り (`C`) に直す。 */
+  const pinRefOf = (endpoint: Endpoint): PinRef | null => {
+    if (endpoint.kind !== 'pin') return null;
+    const type = lookupPartType(typeOf.get(endpoint.part) ?? '');
+    if (type === null || type === undefined) return null;
+    const anchor = lookupPin(type, endpoint.pin);
+    return anchor === null ? null : { part: endpoint.part, name: mainPinName(type, anchor) };
+  };
+
+  const resolve = (endpoint: Endpoint): {
+    cell: Address; approximate: boolean; pin: PinRef | null;
+  } | null => {
     const written = cellOf(endpoint);
-    if (written !== null) return { cell: written, approximate: false };
+    if (written !== null) return { cell: written, approximate: false, pin: null };
     const anchor = endpoint.kind === 'pin' ? anchorAt.get(endpoint.part) : undefined;
-    return anchor === undefined ? null : { cell: anchor, approximate: true };
+    return anchor === undefined ? null : { cell: anchor, approximate: true, pin: pinRefOf(endpoint) };
   };
 
   const lines: WireLine[] = [];
@@ -155,11 +179,19 @@ function wireLinesOf(doc: Circuit): WireLine[] {
     const line = wire.line;
     const corner = cornerOf(from.cell, to.cell, wire.operator);
     if (corner === null) {
-      lines.push({ from: cellAt(from.cell), to: cellAt(to.cell), approximate, line });
+      lines.push({
+        from: cellAt(from.cell), to: cellAt(to.cell), approximate, line,
+        fromPin: from.pin, toPin: to.pin,
+      });
       continue;
     }
-    lines.push({ from: cellAt(from.cell), to: cellAt(corner), approximate, line });
-    lines.push({ from: cellAt(corner), to: cellAt(to.cell), approximate, line });
+    // 折れた線は角で 2 本に割る。**足に付くのは外側の端だけ** (角は升の上)。
+    lines.push({
+      from: cellAt(from.cell), to: cellAt(corner), approximate, line, fromPin: from.pin, toPin: null,
+    });
+    lines.push({
+      from: cellAt(corner), to: cellAt(to.cell), approximate, line, fromPin: null, toPin: to.pin,
+    });
   }
   return lines;
 }

@@ -38,8 +38,13 @@ export type Aim = {
   readonly id: string;
 };
 
-/** 欄の名前。3 つとも「1 部品 = 1 行」の行の中の綴りに落ちる。 */
-export type PartField = 'type' | 'value' | 'label' | 'color';
+/**
+ * 欄の名前。3 つとも「1 部品 = 1 行」の行の中の綴りに落ちる。
+ *
+ * `id` は**名前を直せるか**。以前は種類 (`type`) と同じ印で判じていたが、
+ * 配線のように**名前は無いが種類はある**ものが出てきて分かれた。
+ */
+export type PartField = 'id' | 'type' | 'value' | 'label' | 'color';
 
 /** 選んだ部品の欄。**中身は素通し** — 殻は webview へ渡すだけで、意味を見ない。 */
 export type PartFields = {
@@ -59,6 +64,11 @@ export type PartFields = {
    * 答え (`EditResult`) が返す。
    */
   readonly can: readonly PartField[];
+  /**
+   * 種類の欄に出す候補。**選ぶものが決まっているとき**だけ渡す
+   * (配線の `--` / `-|` / `|-`)。空なら種類の一覧 (`typeNames`) を使う。
+   */
+  readonly kinds?: readonly string[];
 };
 
 /**

@@ -64,26 +64,74 @@ function drawLabels(map: GridMap): string {
  * 同じ経路に太い透明な線を重ねる。見える線と分けてあるのは、太くすると
  * 図が変わってしまうため。
  */
-const grabWire = (wire: WireLine): string =>
-  element('line', {
+const grabWire = (wire: WireLine, dots: PinPoints): string => {
+  const [x1, y1, x2, y2] = wireEnds(wire, dots);
+  return element('line', {
     class: 'cf-wire-hit',
     'data-line': wire.line,
-    x1: num(x(wire.from.col)), y1: num(y(wire.from.row)),
-    x2: num(x(wire.to.col)), y2: num(y(wire.to.row)),
+    x1: num(x1), y1: num(y1), x2: num(x2), y2: num(y2),
   });
+};
 
 /**
- * 引いた線。ピンで書いた端は近似なので破線にして、正確な位置を約束しない。
+ * 引いた線。ピンで書いた端は近似なので破線にして、正確な位置を約束しない
+ * (**図の足の位置は記号の形が決める**ので、升目のものとは限らない)。
  * 読めなかった行に書かれていれば印を足す (**帯と絵で同じものを指す**)。
  */
-const drawWire = (wire: WireLine, bad: Bad): string =>
-  element('line', {
+const drawWire = (wire: WireLine, bad: Bad, dots: PinPoints): string => {
+  const [x1, y1, x2, y2] = wireEnds(wire, dots);
+  return element('line', {
     class: classOf(wire.approximate ? 'cf-wire cf-approx' : 'cf-wire', wire.line, bad),
     // 書かれた行。エディタのカーソルが来たとき、この線を光らせる目印。
     'data-line': wire.line,
-    x1: num(x(wire.from.col)), y1: num(y(wire.from.row)),
-    x2: num(x(wire.to.col)), y2: num(y(wire.to.row)),
+    x1: num(x1), y1: num(y1), x2: num(x2), y2: num(y2),
   });
+};
+
+/** 升目に出ている足の接続点。部品の名前と足の名前で引く。 */
+type PinPoints = ReadonlyMap<string, { readonly x: number; readonly y: number }>;
+
+const pinKey = (part: string, name: string): string => `${part}\u0000${name}`;
+
+/**
+ * 線の両端。**足を指した端は接続点まで伸ばす** — 升の真ん中で止めると、
+ * 押した丸と線の先が食い違って見える (実機で指摘された)。
+ * 足が升目に出ていなければ (種類が読めないなど) 升の真ん中のまま。
+ */
+function wireEnds(wire: WireLine, dots: PinPoints): readonly [number, number, number, number] {
+  const at = (cell: { readonly row: number; readonly col: number }, pin: WireLine['fromPin']) => {
+    const dot = pin === null ? undefined : dots.get(pinKey(pin.part, pin.name));
+    return dot ?? { x: x(cell.col), y: y(cell.row) };
+  };
+  const from = at(wire.from, wire.fromPin);
+  const to = at(wire.to, wire.toPin);
+  return [from.x, from.y, to.x, to.y];
+}
+
+/**
+ * 升目に出したすべての接続点の場所。**描くときと同じ計算**を通すので、
+ * 丸と線の先が必ず揃う (別々に数えると、片方だけ直したときにずれる)。
+ */
+function pinPointsOf(chips: readonly Chip[], nudges: ReadonlyMap<Chip, number>): PinPoints {
+  const dots = new Map<string, { x: number; y: number }>();
+  for (const chip of chips) {
+    if (chip.to !== null || chip.pins.length === 0) continue;
+    const rows = rowsOf(chip.pins, chip.turn);
+    const glyph = glyphOf(chip.type).name;
+    const { halfW, halfH } = reachOf(rows, glyph);
+    const nudge = nudges.get(chip) ?? 0;
+    for (const [side, row] of rows) {
+      row.forEach((pin, at) => {
+        const spot = pinAt(side, at, row.length, halfW, halfH, legGap(glyph));
+        dots.set(pinKey(chip.id, pin.name), {
+          x: x(chip.col) + spot.x2,
+          y: y(chip.row) + nudge + spot.y2,
+        });
+      });
+    }
+  }
+  return dots;
+}
 
 /** 掴める節点。名前が付いていれば添える (**1 行で動く節点**の目印になる)。 */
 function drawDot(dot: Dot): string {
@@ -488,6 +536,8 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {})
   const width = Math.max(x(map.cols - 1) + EDGE, ...map.notes.map((note) => noteRight(note) + EDGE));
   const height = y(map.rows - 1) + EDGE;
   const nudges = nudgesOf(map.chips);
+  // 接続点は線より先に数える (線の先をそこへ合わせるため)。
+  const dots = pinPointsOf(map.chips, nudges);
 
   const svg = element(
     'svg',
@@ -500,10 +550,10 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {})
     },
     drawGrid(map)
       + drawLabels(map)
-      + layer('cf-wires', map.wires.map((wire) => drawWire(wire, bad)).join(''))
+      + layer('cf-wires', map.wires.map((wire) => drawWire(wire, bad, dots)).join(''))
       // 掴む層は見える線より後、部品より前。上に描いたものからクリックを取るので、
       // 部品と節点が先に取り、配線はその隙間で取る。
-      + layer('cf-wire-hits', map.wires.map(grabWire).join(''))
+      + layer('cf-wire-hits', map.wires.map((wire) => grabWire(wire, dots)).join(''))
       + layer('cf-marks', map.dots.map(drawDot).join(''))
       + layer('cf-parts', map.chips.map((chip) => drawChip(chip, nudges.get(chip) ?? 0, bad)).join(''))
       // 注釈は部品の上。指したものが下に隠れると印の意味が無い (図と同じ順)。

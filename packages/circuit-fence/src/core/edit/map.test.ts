@@ -136,16 +136,25 @@ describe('gridMap の配線', () => {
 
   test('draws a straight wire between the crossings it joins', () => {
     expect(linesOf('wires:\n  - a1 -- a3\n')).toEqual([
-      { from: { row: 0, col: 0 }, to: { row: 0, col: 2 }, approximate: false, line: 2 },
+      { from: { row: 0, col: 0 }, to: { row: 0, col: 2 }, approximate: false, line: 2, fromPin: null, toPin: null },
     ]);
   });
 
   test('breaks a bent wire at its corner, so the map can follow it', () => {
     // `-|` は先に横。角は from の行・to の列。
     expect(linesOf('wires:\n  - a1 -| c3\n')).toEqual([
-      { from: { row: 0, col: 0 }, to: { row: 0, col: 2 }, approximate: false, line: 2 },
-      { from: { row: 0, col: 2 }, to: { row: 2, col: 2 }, approximate: false, line: 2 },
+      { from: { row: 0, col: 0 }, to: { row: 0, col: 2 }, approximate: false, line: 2, fromPin: null, toPin: null },
+      { from: { row: 0, col: 2 }, to: { row: 2, col: 2 }, approximate: false, line: 2, fromPin: null, toPin: null },
     ]);
+  });
+
+  test('remembers which leg a wire ends on, so the line can reach the point', () => {
+    // 実機で「接続点から配線するように表示すること」。升の真ん中で止めると、
+    // 押した丸と線の先が食い違って見える。
+    const lines = linesOf('parts:\n  Q1: npn b2\nwires:\n  - Q1.C -- a5\n');
+
+    expect(lines[0]?.fromPin).toEqual({ part: 'Q1', name: 'C' });
+    expect(lines[0]?.toPin).toBeNull();
   });
 
   test('draws each leg of a chained wire', () => {
