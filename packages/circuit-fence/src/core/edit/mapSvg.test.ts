@@ -142,6 +142,34 @@ describe('読めなかった行の印', () => {
   });
 });
 
+describe('注釈', () => {
+  const NOTE = 'parts:\n  R1: resistor a1 a3\nnotes:\n  - text b1: ここ\n';
+
+  test('shows a text note as the words alone, with no frame around them', () => {
+    // 実機で「text に枠は要らない」。字がそのまま読めるものに枠を足すと、
+    // 字と枠の幅が食い違ったときに枠のほうが目立つ。
+    const svg = draw(NOTE);
+
+    expect(svg).toContain('ここ');
+    expect(svg).not.toContain('cf-note-tag');
+  });
+
+  test('keeps the frame on notes that have no words of their own', () => {
+    // `circle` などは種類の名を出すだけなので、枠が「これは札だ」と言う。
+    const svg = draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - circle R1\n');
+
+    expect(svg).toContain('cf-note-tag');
+  });
+
+  test('keeps the whole note on the tag, since the drawn words are cut', () => {
+    const long = `parts:\n  R1: resistor a1 a3\nnotes:\n  - text b1: ${'あ'.repeat(30)}\n`;
+    const svg = draw(long);
+
+    expect(svg).toContain('…');
+    expect(svg).toContain(`<title>${'あ'.repeat(30)}</title>`);
+  });
+});
+
 describe('配線を掴む', () => {
   test('lays a fat invisible line over each wire, since 1.5px is too thin to hit', () => {
     const svg = draw('wires:\n  - a1 -- a3\n');

@@ -248,20 +248,27 @@ const noteRight = (note: MapNote): number =>
 function drawNote(note: MapNote): string {
   const left = x(note.col) + PITCH * 0.18;
   const top = y(note.row) - PITCH * 0.42;
-  // **札は字に合わせて伸びる。** 決め打ちの幅だと、字がその左右へはみ出して
-  // 「字の途中に四角が乗っている」ようにしか見えない (実機で指摘された)。
   const { shown, width } = noteTag(note);
+  // **字の注釈に枠は付けない** (実機で「text に枠は要らない」)。書いた字が
+  // そのまま読めるものに枠を足すと、枠のほうが目立つ。字だけでは升目の点や
+  // 配線に載って読みにくいので、地の色で縁を取る (`cf-name` と同じ手)。
+  //
+  // **自分の字を持たない注釈 (`circle` など) には枠を残す。** あちらに出るのは
+  // 種類の名前なので、枠が「これは札で、図に出る字ではない」と言っている。
+  const bare = note.kind === 'text';
+  const frame = bare ? '' : element('rect', {
+    x: num(left), y: num(top), width: num(width), height: num(NOTE_HEIGHT), rx: 3,
+    class: 'cf-note-tag',
+  });
   return element(
     'g',
     { class: 'cf-chip cf-note-mark', 'data-part': note.handle, 'data-line': note.line },
     // 切った跡が `…` で残るので、**全文は乗せれば読める**ようにしておく。
-    element('title', {}, escapeMarkup(note.kind === 'text' ? note.text : note.kind))
-    + element('rect', {
-      x: num(left), y: num(top), width: num(width), height: num(NOTE_HEIGHT), rx: 3,
-      class: 'cf-note-tag',
-    })
+    element('title', {}, escapeMarkup(bare ? note.text : note.kind))
+    + frame
     + svgText(left + NOTE_PAD, top + NOTE_HEIGHT * 0.72, shown, {
       anchor: 'start', class: 'cf-note-text', 'font-size': num(NOTE_FONT),
+      ...(bare ? { halo: 'var(--cf-paper)' } : {}),
     }),
   );
 }
