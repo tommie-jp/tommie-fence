@@ -6,9 +6,10 @@ import type { DocLike, EditorLike } from './documentLike.ts';
 import { createHistory, sameBody } from './history.ts';
 import { describeDiff } from './edits.ts';
 import { applyRewrite } from './lines.ts';
-import type { EditResult, FenceEditor, PartFields } from './fenceEditor.ts';
+import type { EditResult, FenceEditor, FenceEntry, PartFields } from './fenceEditor.ts';
 import { renderFencePicker } from './panelHtml.ts';
 import type { MapViewHtml } from './panelHtml.ts';
+import type { FenceBlock } from '../fences.ts';
 
 /**
  * マップの**セッション** — webview 1 つと文書 1 つの間の段取り。
@@ -222,9 +223,61 @@ export const wireHandle = (line: string | null): string | null => (line === null
 
 export function createSession<D extends DocLike>(
   host: SessionHost<D>,
-  editor: FenceEditor,
+  fences: FenceEditor | readonly FenceEditor[],
   options: SessionOptions<D> = {},
 ): Session {
+  /**
+   * この殻が扱えるフェンス。**1 つ渡せば今までと同じ動き**で、いくつか渡すと
+   * 1 つの文書の中で言語をまたいで掴める (52 の docs/19)。
+   *
+   * **いまのフェンスの言語で引く。** どのフェンスの中にいるかが決まってから
+   * でないと、どの実装に訊けばよいか分からない。
+   */
+  const editors: readonly FenceEditor[] = Array.isArray(fences) ? fences : [fences as FenceEditor];
+  let editor: FenceEditor = editors[0] as FenceEditor;
+
+  /** その行を含むフェンス。**言語を横断して探し、当たった実装に乗り換える**。 */
+  function lookUp(markdown: string, line: number): FenceBlock | null {
+    for (const one of editors) {
+      const found = one.fenceAt(markdown, line);
+      if (found !== null) {
+        editor = one;
+        return found;
+      }
+    }
+    return null;
+  }
+
+  /** 文書の最初のフェンス。**どの言語でもよい**ので、行の早いものを採る。 */
+  function firstOf(markdown: string): FenceBlock | null {
+    let best: { readonly fence: FenceBlock; readonly editor: FenceEditor } | null = null;
+    for (const one of editors) {
+      const found = one.firstFence(markdown);
+      if (found !== null && (best === null || found.line < best.fence.line)) best = { fence: found, editor: one };
+    }
+    if (best === null) return null;
+    editor = best.editor;
+    return best.fence;
+  }
+
+  /**
+   * 文書の中のフェンスの一覧。**言語をまたいで行順に並べ、題に言語を添える** —
+   * 同じ `.md` に 2 つの言語があると、題だけでは見分けが付かない。
+   */
+  function allFences(markdown: string): readonly FenceEntry[] {
+    // 題があればそのまま、無ければ言語だけを出す (行番号は一覧が添える)。
+    const rows = editors.flatMap((one) => one.fences(markdown).map((entry) => ({
+      ...entry,
+      title: editors.length === 1
+        ? entry.title
+        : entry.title === null ? one.language : `${entry.title} (${one.language})`,
+    })));
+    return [...rows].sort((a, b) => a.line - b.line);
+  }
+
+  /** 扱える言語の名前 (お知らせの文面に出す)。 */
+  const languages = (): string => editors.map((one) => one.language).join(' / ');
+
   const pinned = options.pinned ?? null;
   const ownHistory = host.nativeUndo === undefined;
   const history = createHistory();
@@ -274,7 +327,7 @@ export function createSession<D extends DocLike>(
     const active = host.activeEditor();
     if (active === null) return null;
     if (pinned !== null && uriOf(active.document) !== uriOf(pinned)) return null;
-    const fence = editor.fenceAt(active.document.getText(), active.selection.active.line + 1);
+    const fence = lookUp(active.document.getText(), active.selection.active.line + 1);
     return fence === null ? null : { document: active.document, source: fence.source, line: fence.line };
   }
 
@@ -301,7 +354,7 @@ export function createSession<D extends DocLike>(
       const document = documentOf(bound.uri);
       // 開き記号の行で引き直す。フェンスの中の書き換えでは動かない行だが、
       // 上に行が足されてずれたら見失う (そのときは掴み直してもらう)。
-      const fence = document === null ? null : editor.fenceAt(document.getText(), bound.line);
+      const fence = document === null ? null : lookUp(document.getText(), bound.line);
       if (document !== null && fence !== null) {
         bound = { uri: bound.uri, line: fence.line };
         return { document, source: fence.source, line: fence.line };
@@ -309,7 +362,7 @@ export function createSession<D extends DocLike>(
     }
 
     if (pinned !== null) {
-      const first = editor.firstFence(pinned.getText());
+      const first = firstOf(pinned.getText());
       if (first !== null) {
         rebind(pinned, first.line);
         return { document: pinned, source: first.source, line: first.line };
@@ -330,7 +383,7 @@ export function createSession<D extends DocLike>(
   function viewNow(followCursor: boolean): MapView {
     const fence = currentFence(followCursor);
     if (fence === null) {
-      const note = pinned === null ? lostNote(editor.language) : noneNote(editor.language);
+      const note = pinned === null ? lostNote(languages()) : noneNote(languages());
       return { html: note, picker: '', issues: '' };
     }
 
@@ -342,7 +395,7 @@ export function createSession<D extends DocLike>(
     const view = editor.view(fence.source, fence.line);
     const now: MapView = {
       html: view.map,
-      picker: renderFencePicker(editor.fences(markdown), fence.line),
+      picker: renderFencePicker(allFences(markdown), fence.line),
       issues: view.issues,
     };
     lastView = { key, view: now };
@@ -387,7 +440,7 @@ export function createSession<D extends DocLike>(
     const active = host.activeEditor();
     const fence = active === null || bound === null || uriOf(active.document) !== bound.uri
       ? null
-      : editor.fenceAt(active.document.getText(), active.selection.active.line + 1);
+      : lookUp(active.document.getText(), active.selection.active.line + 1);
     if (active === null || fence === null || bound === null || fence.line !== bound.line) {
       host.post({ kind: 'aim' });
       return;
@@ -431,8 +484,8 @@ export function createSession<D extends DocLike>(
     const fence = currentFence(true);
     if (fence === null) {
       say(pinned === null
-        ? `フェンスを見失いました。${editor.language} フェンスの中にカーソルを置いて掴み直します`
-        : `この文書に ${editor.language} フェンスがありません`);
+        ? `フェンスを見失いました。${languages()} フェンスの中にカーソルを置いて掴み直します`
+        : `この文書に ${languages()} フェンスがありません`);
     }
     return fence;
   }
@@ -468,7 +521,7 @@ export function createSession<D extends DocLike>(
       return;
     }
     if (ownHistory) {
-      const now = editor.fenceAt(fence.document.getText(), fence.line);
+      const now = lookUp(fence.document.getText(), fence.line);
       if (now !== null) {
         history.push({ label, before, after: fenceBody(fence.document, fence.line, now.source) });
       }
@@ -512,7 +565,7 @@ export function createSession<D extends DocLike>(
     if (ownHistory) {
       // 当てたあとの姿も控える。**見失ったら積まない** — 嘘の控えを積むと、
       // 次の「戻す」が関わりのない字を書き換える。
-      const now = editor.fenceAt(fence.document.getText(), fence.line);
+      const now = lookUp(fence.document.getText(), fence.line);
       if (now !== null) {
         history.push({ label: request.label, before, after: fenceBody(fence.document, fence.line, now.source) });
       }
