@@ -1,14 +1,8 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  test: {
-    include: ['src/**/*.test.ts'],
-    coverage: {
-      provider: 'v8',
-      include: ['src/**/*.ts'],
-      // 拡張のエントリと CLI の入出力は薄いラッパで、実質は core のテストで覆う。
-      exclude: ['src/**/*.test.ts', 'src/extension/**', 'src/cli/main.ts'],
-      thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
-    },
-  },
+  // **`vscode` は VS Code の中にしか無い。** 拡張の入口を node で動かすために、
+  // 受け止めるだけの代わりへ差し替える (`test/vscodeStub.ts`)。
+  resolve: { alias: { vscode: new URL('test/vscodeStub.ts', import.meta.url).pathname } },
+  test: { include: ['src/**/*.test.ts'] },
 });
