@@ -2,6 +2,7 @@ import { element, escapeMarkup } from 'fence-kit';
 import { resolveAlias } from '../parts/aliases.ts';
 import { aliasNames } from '../parts/aliases.ts';
 import { PLACEABLE, holesOf, partName } from '../parts/catalog.ts';
+import { variantsOf } from '../parts/variants.ts';
 
 /**
  * 置く部品を選ぶパレット。**core が組む** — 何が置けるかは部品の表そのもので、
@@ -50,6 +51,12 @@ export function renderPalette(): string {
 /**
  * 欄で種類を打つときの候補。**パレットと同じ表から**出すので、
  * 選べる種類と打てる種類が食い違わない。
+ *
+ * **姿つきの綴りも並べる** (`crystal/cylinder`)。姿は種類のあとに `/` で書く
+ * ので、種類の欄でそのまま選べる — 姿を変えるためだけに本文へ戻らずに済む
+ * (実機で頼まれて足した)。
  */
-export const renderTypeOptions = (id: string): string =>
-  element('datalist', { id }, PLACEABLE().map((type) => element('option', { value: type })).join(''));
+export const renderTypeOptions = (id: string): string => {
+  const names = PLACEABLE().flatMap((type) => [type, ...variantsOf(type).map((look) => `${type}/${look}`)]);
+  return element('datalist', { id }, names.map((value) => element('option', { value })).join(''));
+};

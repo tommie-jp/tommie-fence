@@ -246,7 +246,11 @@ DIP の番号は実物と同じ付き方 — 1 番ピンから右へ、折り返
 **姿**は種類のあとに `/` で書く (`capacitor/ceramic`)。
 書ける姿は `capacitor` が `ceramic` `film` `electrolytic` `tantalum`、
 `led` が `3mm` `5mm`、3 本足の 4 種が `to92` `to220` (トランジスタは `sot23-dip` も)、
-`crystal` が `hc49` `cylinder`、`sma` が `male` `female` `male-edge` `female-edge`。
+`crystal` が `hc49` `cylinder`、`sma` が `male` `female` `male-edge` `female-edge`、
+`resistor` が `quarter` `half` (1/4W・1/2W)、
+ダイオードの仲間が `do35` `do41` (ガラス管・黒いプラスチック)、
+`inductor` が `axial` `radial` (軸物・立てた缶)、
+`potentiometer` が `trimmer` `knob` (半固定・ボリューム)。
 **書ける姿はすべて図の形が変わる** — 描き分けない姿は受け取らない。
 
 ### 同軸コネクタ (`sma`)

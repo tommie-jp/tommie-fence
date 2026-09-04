@@ -62,8 +62,13 @@ describe('variantsOf', () => {
     expect(variantsOf('crystal')).toEqual(['hc49', 'cylinder']);
   });
 
+  test('lists the wattages a resistor is sold in', () => {
+    // 1/4W は 6.5mm、1/2W は 9mm ほど。挿す穴の間隔も変わる。
+    expect(variantsOf('resistor')).toEqual(['quarter', 'half']);
+  });
+
   test('is empty for a type that is only drawn one way', () => {
-    expect(variantsOf('resistor')).toEqual([]);
+    expect(variantsOf('buzzer')).toEqual([]);
   });
 
   test('does not read a look off Object.prototype', () => {
@@ -87,6 +92,9 @@ describe('isPolarVariant', () => {
 
 describe('typesWithVariants', () => {
   test('names the types whose look can be chosen', () => {
-    expect(typesWithVariants()).toEqual(['capacitor', 'led', 'transistor', 'thyristor', 'triac', 'crystal']);
+    expect(typesWithVariants()).toEqual([
+      'capacitor', 'resistor', 'diode', 'zener', 'schottky', 'inductor', 'potentiometer',
+      'led', 'transistor', 'thyristor', 'triac', 'crystal',
+    ]);
   });
 });

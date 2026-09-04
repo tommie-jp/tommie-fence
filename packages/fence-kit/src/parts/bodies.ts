@@ -117,8 +117,15 @@ const cathodeIndex = (part: BodyPart): number => markedIndex(part, 'K', 'A', 1);
 const capacitorLook = (part: BodyPart): string =>
   part.variant ?? (part.pins.some((pin) => pin.name === '-') ? 'electrolytic' : 'film');
 
+/**
+ * 抵抗の胴の大きさ。**ワット数で実物の寸法が変わる** — 1/4W は 6.5mm、
+ * 1/2W は 9mm ほど。挿す穴の間隔も変わるので、姿として描き分ける値打ちがある。
+ */
+const resistorScale = (part: BodyPart): number => (part.variant === 'half' ? 1.35 : 1);
+
 function resistorBody(part: BodyPart, span: number, ink: BodyInk): string {
-  const width = Math.min(span * 0.6, 38);
+  const width = Math.min(span * 0.6, 38) * resistorScale(part);
+  const half = 6.5 * resistorScale(part);
   // 値のうしろに許容差と温度係数を書ける (`10k 1% 50ppm`)。帯の本数はそれで決まる。
   const read = part.value ? parseResistor(part.value) : null;
   const bands = (read === null
@@ -135,13 +142,14 @@ function resistorBody(part: BodyPart, span: number, ink: BodyInk): string {
   const stripes = bands
     .map((band, index) =>
       element('rect', {
-        x: num(start + index * (width / 5) * fit), y: -6, width: num(BAND_WIDTH * fit), height: 12,
+        x: num(start + index * (width / 5) * fit), y: num(-half + 0.5),
+        width: num(BAND_WIDTH * fit), height: num(half * 2 - 1),
         fill: ink.paint(bandColor(band), band),
       }),
     )
     .join('');
   const shell = element('rect', {
-    x: num(-width / 2), y: -6.5, width: num(width), height: 13, rx: 5,
+    x: num(-width / 2), y: num(-half), width: num(width), height: num(half * 2), rx: 5,
     fill: ink.paint('#e9d8a6'), stroke: ink.paint('#b08968'),
   });
   return shell + stripes;
@@ -266,17 +274,31 @@ type DiodeLook = {
  * ピン名 `(A)` `(K)` が無いときは **2 つ目の穴をカソード**として描く
  * (「先に書いた穴が + 側 (アノード)」の規則そのもの)。
  */
-function diodeBody(part: BodyPart, span: number, look: DiodeLook, ink: BodyInk): string {
+/**
+ * ダイオードのパッケージ。**`do35` はガラス管で細く、`do41` は黒いプラスチック**。
+ * 実物も 1A クラス (DO-41) と小信号 (DO-35) でこの 2 つに分かれる。
+ * 書かなければ種類なりの姿 (ツェナーはガラス、整流はプラスチック)。
+ */
+const diodeCase = (part: BodyPart, look: DiodeLook): DiodeLook => {
+  if (part.variant === 'do35') return { ...look, fill: '#c99a4a', stroke: '#8a6425', band: '#23272e', narrow: true };
+  if (part.variant === 'do41') return { ...look, fill: '#23272e', stroke: '#12151a', band: '#dfe4ee', narrow: false };
+  return look;
+};
+
+function diodeBody(part: BodyPart, span: number, written: DiodeLook, ink: BodyInk): string {
+  const look = diodeCase(part, written);
   const width = Math.min(span * (look.narrow === true ? 0.4 : 0.55), look.narrow === true ? 22 : 30);
+  const height = look.narrow === true ? 10 : 13;
   const cathode = cathodeIndex(part) === 0 ? -1 : 1;
   const shell = element('rect', {
-    x: num(-width / 2), y: -6.5, width: num(width), height: 13, rx: 2.5,
+    x: num(-width / 2), y: num(-height / 2), width: num(width), height: num(height), rx: 2.5,
     fill: ink.paint(look.fill), stroke: ink.paint(look.stroke),
   });
   if (look.band === null) return shell;
 
   const band = element('rect', {
-    x: num(cathode * (width / 2 - 4.6) - 1.7), y: -6.5, width: 3.4, height: 13, fill: ink.paint(look.band),
+    x: num(cathode * (width / 2 - 4.6) - 1.7), y: num(-height / 2), width: 3.4, height: num(height),
+    fill: ink.paint(look.band),
   });
   return shell + band;
 }
@@ -529,7 +551,27 @@ const canOf = (part: BodyPart, span: number): { readonly width: number; readonly
   return { width, height: width * CAN_ASPECT };
 };
 
-function inductorBody(span: number, ink: BodyInk): string {
+/**
+ * コイル。**軸物 (`axial`) と、立てた缶 (`radial`)**。実物もこの 2 つに
+ * 分かれる — 小さいものは芯に巻いた軸物、電源用は樹脂で固めた背の高い缶。
+ */
+function inductorBody(part: BodyPart, span: number, ink: BodyInk): string {
+  return part.variant === 'radial' ? drumBody(span, ink) : axialCoil(span, ink);
+}
+
+/** 立てた缶。上から見ると丸く、巻線は見えない (樹脂で固めてある)。 */
+function drumBody(span: number, ink: BodyInk): string {
+  const radius = Math.min(span * 0.42, 13);
+  const shell = element('circle', {
+    cx: 0, cy: 0, r: num(radius), fill: ink.paint('#3c3226'), stroke: ink.paint('#241d15'),
+  });
+  const top = element('circle', {
+    cx: 0, cy: 0, r: num(radius * 0.62), fill: 'none', stroke: ink.paint('#6b5a44'), 'stroke-width': 1.4,
+  });
+  return shell + top;
+}
+
+function axialCoil(span: number, ink: BodyInk): string {
   const width = Math.min(span * 0.6, 34);
   const core = element('rect', {
     x: num(-width / 2), y: num(-CORE_HALF), width: num(width), height: num(CORE_HALF * 2),
@@ -578,7 +620,7 @@ const BODIES: Record<string, (part: BodyPart, span: number, ink: BodyInk) => str
   resistor: resistorBody,
   capacitor: capacitorBody,
   crystal: crystalBody,
-  inductor: (_part, span, ink) => inductorBody(span, ink),
+  inductor: inductorBody,
   buzzer: buzzerBody,
   led: (part, _span, ink) => domeBody(part, ledLook(part).color, ink, '#7a2018', ledLook(part).name),
   // フォトダイオードは砲弾型で売られている。受光面が見えるように淡く塗り、
@@ -633,8 +675,10 @@ export function bodySize(part: BodyPart, span: number): { readonly width: number
     ({ width: radius * 2, height: radius * 2 });
 
   switch (part.type) {
-    case 'resistor':
-      return { width: Math.min(span * 0.6, 38), height: 13 };
+    case 'resistor': {
+      const scale = resistorScale(part);
+      return { width: Math.min(span * 0.6, 38) * scale, height: 13 * scale };
+    }
     case 'capacitor': {
       const look = capacitorLook(part);
       if (look === 'ceramic') return twice(Math.min(span * 0.45, 9.5));
@@ -649,7 +693,10 @@ export function bodySize(part: BodyPart, span: number): { readonly width: number
     case 'zener':
     case 'schottky':
     case 'diac':
-      return { width: Math.min(span * 0.55, 30), height: 13 };
+      // `do35` はガラス管で細い。当たり判定も描画と同じ数字を読む。
+      return part.variant === 'do35'
+        ? { width: Math.min(span * 0.4, 22), height: 10 }
+        : { width: Math.min(span * 0.55, 30), height: 13 };
     case 'varicap':
       return { width: Math.min(span * 0.4, 22), height: 13 };
     case 'photoresistor':
@@ -668,9 +715,11 @@ export function bodySize(part: BodyPart, span: number): { readonly width: number
     // 缶は足を覆う (平たい缶) か足の上に立つ (円筒)。どちらも `crystalCan` が持つ。
     case 'crystal':
       return crystalCan(part, span);
-    // 巻線が芯より高いので、高さは巻線のぶん。
+    // 巻線が芯より高いので、高さは巻線のぶん。立てた缶は丸いので直径。
     case 'inductor':
-      return { width: Math.min(span * 0.6, 34), height: TURN_HALF * 2 };
+      return part.variant === 'radial'
+        ? twice(Math.min(span * 0.42, 13))
+        : { width: Math.min(span * 0.6, 34), height: TURN_HALF * 2 };
     case 'buzzer':
       return twice(Math.min(span * 0.5, 15));
     default:

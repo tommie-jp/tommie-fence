@@ -393,14 +393,24 @@ describe('placeParts', () => {
     expect(errors[0]?.message).toContain('ceramic');
   });
 
-  test('reports a look on a type that is drawn only one way', () => {
+  test('reports a look the type does not have, and names the ones it does', () => {
     const { errors } = placeParts(
       [spec({ id: 'R1', type: 'resistor', variant: 'ceramic', holes: holes('a5', 'a10') })],
       board,
     );
 
     expect(errors).toHaveLength(1);
-    expect(errors[0]?.message).toContain('capacitor');
+    expect(errors[0]?.message).toContain('quarter');
+  });
+
+  test('reports a look on a type that is drawn only one way', () => {
+    const { errors } = placeParts(
+      [spec({ id: 'BZ1', type: 'buzzer', variant: 'ceramic', holes: holes('a5', 'a10') })],
+      board,
+    );
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toContain('姿は選べません');
   });
 
   test('takes an electrolytic without polarity marks, since the first hole is the plus', () => {

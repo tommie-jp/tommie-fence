@@ -575,6 +575,12 @@ parts:
 | `thyristor` | `to92` / `to220` | 同上 |
 | `triac` | `to92` / `to220` | 同上 |
 | `crystal` | `hc49` / `cylinder` | 平たい缶 (既定) / 細い円筒 |
+| `resistor` | `quarter` / `half` | 1/4W (既定) / 1/2W。実物なりに胴が大きくなる |
+| `diode` | `do35` / `do41` | 小信号のガラス管 / 1A クラスの黒いプラスチック |
+| `zener` | `do35` / `do41` | 同上 |
+| `schottky` | `do35` / `do41` | 同上 |
+| `inductor` | `axial` / `radial` | 芯に巻いた軸物 (既定) / 樹脂で固めた立てた缶 |
+| `potentiometer` | `trimmer` / `knob` | ねじで回す半固定 (既定) / 軸の立つボリューム |
 
 - **色は種類のもの、形が姿のもの**。図の中で「コンデンサだ」と分かるのは色で、
   「どのコンデンサか」は形で読ませる。

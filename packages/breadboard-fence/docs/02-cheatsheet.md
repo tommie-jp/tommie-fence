@@ -69,6 +69,8 @@ capacitor/ceramic  capacitor/film  capacitor/electrolytic  capacitor/tantalum
 led/3mm  led/5mm
 transistor/to92  transistor/to220  transistor/sot23-dip  thyristor/…  triac/…
 crystal/hc49  crystal/cylinder
+resistor/quarter  resistor/half        diode/do35  diode/do41  (zener/…  schottky/…)
+inductor/axial  inductor/radial        potentiometer/trimmer  potentiometer/knob
 ```
 
 ### 略記 (読んだ直後に正式名へ畳む)

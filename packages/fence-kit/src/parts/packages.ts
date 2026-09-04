@@ -56,7 +56,7 @@ export function packageReach(part: BodyPart, pitch: number): number {
  */
 export function packageHalfWidth(part: BodyPart, pitch: number): number {
   const reach = packageReach(part, pitch);
-  if (part.type === 'potentiometer') return reach * 1.2;
+  if (part.type === 'potentiometer') return part.variant === 'knob' ? reach : reach * 1.2;
   if (part.type === 'slide-switch') return reach * 1.6;
   if (part.variant === 'to220') return reach * 1.15;
   if (part.variant === 'sot23-dip') return reach * 1.35;
@@ -73,7 +73,9 @@ const SLOT_WIDTH_RATIO = 0.6875;
  * パッケージの胴。種類と姿で選ぶ。知らない組み合わせは TO-92 の丸。
  */
 export function drawPackage(part: BodyPart, shape: PackageShape, ink: BodyInk = REAL_INK): string {
-  if (part.type === 'potentiometer') return potentiometerShell(shape, ink);
+  if (part.type === 'potentiometer') {
+    return part.variant === 'knob' ? knobShell(shape, ink) : potentiometerShell(shape, ink);
+  }
   if (part.type === 'slide-switch') return slideSwitchShell(shape, ink);
   if (part.variant === 'to220') return to220Shell(shape, ink);
   if (part.variant === 'sot23-dip') return adapterShell(shape, ink);
@@ -183,6 +185,26 @@ function potentiometerShell(shape: PackageShape, ink: BodyInk): string {
     fill: ink.paint('#5a6472'),
   });
   return shell + head + slot;
+}
+
+/**
+ * つまみ付きの可変抵抗 (ボリューム)。**半固定と実物が違う** — 半固定はねじで
+ * 回す平たい四角、こちらは丸い胴から軸が立つ。上から見ると軸の丸が見える。
+ */
+function knobShell(shape: PackageShape, ink: BodyInk): string {
+  const { cx, cy, reach } = shape;
+  const body = element('circle', {
+    cx: num(cx), cy: num(cy), r: num(reach), fill: ink.paint('#5a6472'), stroke: ink.paint('#3b424c'),
+  });
+  const shaft = element('circle', {
+    cx: num(cx), cy: num(cy), r: num(reach * 0.45), fill: ink.paint('#c8ced7'), stroke: ink.paint('#8a929c'),
+  });
+  // 軸の頭の溝。回す向きが図から読めるようにする。
+  const slot = element('rect', {
+    x: num(cx - reach * 0.34), y: num(cy - 1.4), width: num(reach * 0.68), height: 2.8, rx: 1.2,
+    fill: ink.paint('#5a6472'),
+  });
+  return body + shaft + slot;
 }
 
 /**

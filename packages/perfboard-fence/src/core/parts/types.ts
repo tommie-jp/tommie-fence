@@ -61,6 +61,16 @@ const ALIASES: Record<string, string> = {
 /** 種類ごとに選べる姿。ここに無い種類には `/…` を書けない。 */
 const VARIANTS: Record<string, readonly string[]> = {
   capacitor: ['ceramic', 'film', 'electrolytic', 'tantalum'],
+  // 実物のワット数。1/4W は 6.5mm、1/2W は 9mm ほどで、挿す穴の間隔も変わる。
+  resistor: ['quarter', 'half'],
+  // 小信号のガラス管 (DO-35) と、1A クラスの黒いプラスチック (DO-41)。
+  diode: ['do35', 'do41'],
+  zener: ['do35', 'do41'],
+  schottky: ['do35', 'do41'],
+  // 芯に巻いた軸物と、樹脂で固めた立てた缶 (電源用)。
+  inductor: ['axial', 'radial'],
+  // ねじで回す半固定と、軸の立つボリューム。
+  potentiometer: ['trimmer', 'knob'],
   led: ['3mm', '5mm'],
   // 平たい缶 (HC-49) と円筒 (時計用の 32.768kHz などに多い)。輪郭がまるで違う。
   crystal: ['hc49', 'cylinder'],
