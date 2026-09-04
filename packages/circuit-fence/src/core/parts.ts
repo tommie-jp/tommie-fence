@@ -236,6 +236,16 @@ const BJT_SIDE = { base: 'left', collector: 'top', emitter: 'bottom' } as const;
 const FET_SIDE = { gate: 'left', drain: 'top', source: 'bottom' } as const;
 const IGBT_SIDE = { gate: 'left', collector: 'top', emitter: 'bottom' } as const;
 
+/**
+ * p 型 (pnp・p チャネル) は**上下が逆**。circuitikz が記号ごと裏返して描くので、
+ * コレクタ / ドレインが下、エミッタ / ソースが上に出る
+ * (実機の図で 12 種を 1 つずつ確かめた。実機で「S に配線したのに図では上の
+ * 接続点につながっている」と言われて見つけた)。
+ */
+const BJT_SIDE_P = { base: 'left', collector: 'bottom', emitter: 'top' } as const;
+const FET_SIDE_P = { gate: 'left', drain: 'bottom', source: 'top' } as const;
+const IGBT_SIDE_P = { gate: 'left', collector: 'bottom', emitter: 'top' } as const;
+
 /** オペアンプ。circuitikz のアンカーがそのまま記号になっている。 */
 const AMP_PINS = { '+': '+', '-': '-', out: 'out' } as const;
 
@@ -482,9 +492,9 @@ export const PART_TYPES = {
 
   // 多端子。値は型番なので単位を足さない。
   npn: { kind: 'multi-terminal', symbol: 'npn', ...NO_UNIT, pins: BJT_PINS, pinSide: BJT_SIDE },
-  pnp: { kind: 'multi-terminal', symbol: 'pnp', ...NO_UNIT, pins: BJT_PINS, pinSide: BJT_SIDE },
+  pnp: { kind: 'multi-terminal', symbol: 'pnp', ...NO_UNIT, pins: BJT_PINS, pinSide: BJT_SIDE_P },
   nmos: { kind: 'multi-terminal', symbol: 'nmos', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
-  pmos: { kind: 'multi-terminal', symbol: 'pmos', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
+  pmos: { kind: 'multi-terminal', symbol: 'pmos', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE_P },
   /**
    * FET の残り。書くほうは回路図の言葉 (接合型 = `jfet`、エンハンスメント型 =
    * `-e`、デプレッション型 = `-d`)、描くほうは circuitikz の綴り (`igfet`)。
@@ -495,11 +505,11 @@ export const PART_TYPES = {
    * ボディ端子つきは載せていない (足がゲートと同じ側に出て図が読みにくい)。
    */
   njfet: { kind: 'multi-terminal', symbol: 'njfet', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
-  pjfet: { kind: 'multi-terminal', symbol: 'pjfet', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
+  pjfet: { kind: 'multi-terminal', symbol: 'pjfet', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE_P },
   'nmos-e': { kind: 'multi-terminal', symbol: 'nigfete', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
-  'pmos-e': { kind: 'multi-terminal', symbol: 'pigfete', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
+  'pmos-e': { kind: 'multi-terminal', symbol: 'pigfete', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE_P },
   'nmos-d': { kind: 'multi-terminal', symbol: 'nigfetd', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
-  'pmos-d': { kind: 'multi-terminal', symbol: 'pigfetd', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
+  'pmos-d': { kind: 'multi-terminal', symbol: 'pigfetd', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE_P },
   /**
    * circuitikz の `op amp` は記号の中の小さな ± に 5pt の太字数式フォントが要り、
    * フェンス側の TeX には無い。例外ではなく**プロセスごと落ちる** (実測)。
@@ -521,7 +531,7 @@ export const PART_TYPES = {
     pins: TRANSFORMER_PINS, pinRow: TRANSFORMER_ROW, orient: MIRROR_ONLY,
   },
   nigbt: { kind: 'multi-terminal', symbol: 'nigbt', ...NO_UNIT, pins: IGBT_PINS, pinSide: IGBT_SIDE },
-  pigbt: { kind: 'multi-terminal', symbol: 'pigbt', ...NO_UNIT, pins: IGBT_PINS, pinSide: IGBT_SIDE },
+  pigbt: { kind: 'multi-terminal', symbol: 'pigbt', ...NO_UNIT, pins: IGBT_PINS, pinSide: IGBT_SIDE_P },
   /** 切り替えスイッチ (c 接点)。 */
   spdt: { kind: 'multi-terminal', symbol: 'spdt', ...NO_UNIT, pins: SPDT_PINS, pinSide: SPDT_SIDE, pinRow: SPDT_ROW },
 

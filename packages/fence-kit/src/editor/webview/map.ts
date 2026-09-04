@@ -1,4 +1,4 @@
-import { DRAG, NOTHING, start, step, topOf } from './mapState.ts';
+import { DRAG, NOTHING, endOf, start, step, topOf } from './mapState.ts';
 import type { Event, Focus, Picked, State, Under } from './mapState.ts';
 
 /**
@@ -93,6 +93,8 @@ function inCanvas(event: { clientX: number; clientY: number }): { x: number; y: 
 
 let panning: { x: number; y: number; viewX: number; viewY: number } | null = null;
 let spaceHeld = false;
+/** `Shift` を押しているか。**引いている線の影を折って見せる**ために持つ。 */
+let shiftHeld = false;
 
 // ---------------------------------------------------------------- カーソルの下
 
@@ -289,15 +291,59 @@ function markChosen(now: State): void {
 }
 
 /**
+ * 配線の端 1 つの場所 (図の座標)。**穴でも足でもよい** — 綴りはフェンスのもの
+ * なので、両方の名札を当たってみる。どちらでもなければ null。
+ */
+function endElement(spelling: string): SVGGraphicsElement | null {
+  const escaped = CSS.escape(spelling);
+  return query<SVGGraphicsElement>(`.cf-cell[data-address="${escaped}"]`)
+    ?? query<SVGGraphicsElement>(`.cf-pin-hit[data-pin="${escaped}"]`);
+}
+
+const centreOf = (element: SVGGraphicsElement): { readonly x: number; readonly y: number } => {
+  const box = element.getBBox();
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+};
+
+/**
  * 配線の 1 点目。2 点目を押すまで印を出しておく。
- * **穴でも足でもよい** — 綴りはフェンスのものなので、両方の名札を当たってみる。
  */
 function markWireFrom(now: State): void {
   unmark('cf-from');
   if (now.wireFrom === null) return;
-  const escaped = CSS.escape(now.wireFrom);
-  const at = query(`.cf-cell[data-address="${escaped}"]`) ?? query(`.cf-pin-hit[data-pin="${escaped}"]`);
-  at?.classList.add('cf-from');
+  endElement(now.wireFrom)?.classList.add('cf-from');
+}
+
+/** 引いている最中の配線の影。**引き終わると消える** ので、図には残らない。 */
+const GHOST_WIRE = 'cf-ghost-wire';
+
+/**
+ * 1 点目を押してから 2 点目を押すまでのあいだ、**引かれる線を先に見せる**
+ * (実機で頼まれた)。折れる指定 (`Shift`) も同じ形で見せるので、
+ * 押す前に「どちらに折れるか」が分かる。
+ *
+ * 線は**カーソルの下の穴・足まで**引く。生のカーソル位置まで引くと、
+ * 見えている線と実際に書かれる線が食い違う (書かれるのは穴と穴の間)。
+ */
+function markWireGhost(now: State): void {
+  document.querySelector(`.${GHOST_WIRE}`)?.remove();
+  const layer = query('.cf-wires');
+  const end = now.tool === 'wire' ? endOf(now.under) : null;
+  if (now.wireFrom === null || end === null || end === now.wireFrom || layer === null) return;
+
+  const start = endElement(now.wireFrom);
+  const finish = endElement(end);
+  if (start === null || finish === null) return;
+
+  const from = centreOf(start);
+  const to = centreOf(finish);
+  // 折れる指定は先に横 (`-|`)。折れない板では真っ直ぐのまま。
+  const corner = shiftHeld && now.foldsWire ? [{ x: to.x, y: from.y }] : [];
+  const points = [from, ...corner, to].map((at) => `${at.x},${at.y}`).join(' ');
+  const ghost = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+  ghost.setAttribute('class', GHOST_WIRE);
+  ghost.setAttribute('points', points);
+  layer.append(ghost);
 }
 
 function paint(now: State): void {
@@ -307,6 +353,7 @@ function paint(now: State): void {
   markCarried(now);
   markChosen(now);
   markWireFrom(now);
+  markWireGhost(now);
   // 道具は CSS が見る目印にする (右の道具の列の光り方、カーソルの形)。
   // **「置く」は道具ではなく持ち物** (`carry`)。CSS から見た顔だけをここで作る。
   document.body.dataset.tool = now.carry?.kind === 'place' ? 'place' : now.tool;
@@ -583,6 +630,12 @@ document.addEventListener('wheel', (event) => {
 
 document.addEventListener('keydown', (event) => {
   const target = elementOf(event);
+  // **折れ方は押している最中に切り替わる。** 影を折り直すだけなので、
+  // ここでは状態遷移を通さず塗り直す。
+  if (event.key === 'Shift' && !shiftHeld) {
+    shiftHeld = true;
+    paint(state);
+  }
 
   // 選択窓の検索欄。Enter で先頭の候補、Esc で閉じる。ほかは欄に任せる。
   if (target?.classList.contains('cf-search')) {
@@ -642,12 +695,20 @@ document.addEventListener('keydown', (event) => {
 
 document.addEventListener('keyup', (event) => {
   if (event.key === ' ') spaceHeld = false;
+  if (event.key === 'Shift' && shiftHeld) {
+    shiftHeld = false;
+    paint(state);
+  }
 });
 
 // **窓の外へ出たら Space を離したことにする。** 押したまま別のタブへ移ると
 // `keyup` が届かず、戻ってきたあとの左クリックが全部「移動」になる。
-window.addEventListener('blur', () => { spaceHeld = false; panning = null; });
-document.addEventListener('visibilitychange', () => { spaceHeld = false; panning = null; });
+window.addEventListener('blur', () => { spaceHeld = false; shiftHeld = false; panning = null; });
+document.addEventListener('visibilitychange', () => {
+  spaceHeld = false;
+  shiftHeld = false;
+  panning = null;
+});
 
 // ---------------------------------------------------------------- クリック (ボタン)
 

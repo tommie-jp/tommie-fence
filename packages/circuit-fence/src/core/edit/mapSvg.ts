@@ -64,29 +64,25 @@ function drawLabels(map: GridMap): string {
  * 同じ経路に太い透明な線を重ねる。見える線と分けてあるのは、太くすると
  * 図が変わってしまうため。
  */
-const grabWire = (wire: WireLine, dots: PinPoints): string => {
-  const [x1, y1, x2, y2] = wireEnds(wire, dots);
-  return element('line', {
+const grabWire = (wire: WireLine, dots: PinPoints): string =>
+  element('polyline', {
     class: 'cf-wire-hit',
     'data-line': wire.line,
-    x1: num(x1), y1: num(y1), x2: num(x2), y2: num(y2),
+    points: pathOf(wire, dots),
   });
-};
 
 /**
  * 引いた線。ピンで書いた端は近似なので破線にして、正確な位置を約束しない
  * (**図の足の位置は記号の形が決める**ので、升目のものとは限らない)。
  * 読めなかった行に書かれていれば印を足す (**帯と絵で同じものを指す**)。
  */
-const drawWire = (wire: WireLine, bad: Bad, dots: PinPoints): string => {
-  const [x1, y1, x2, y2] = wireEnds(wire, dots);
-  return element('line', {
+const drawWire = (wire: WireLine, bad: Bad, dots: PinPoints): string =>
+  element('polyline', {
     class: classOf(wire.approximate ? 'cf-wire cf-approx' : 'cf-wire', wire.line, bad),
     // 書かれた行。エディタのカーソルが来たとき、この線を光らせる目印。
     'data-line': wire.line,
-    x1: num(x1), y1: num(y1), x2: num(x2), y2: num(y2),
+    points: pathOf(wire, dots),
   });
-};
 
 /** 升目に出ている足の接続点。部品の名前と足の名前で引く。 */
 type PinPoints = ReadonlyMap<string, { readonly x: number; readonly y: number }>;
@@ -94,18 +90,36 @@ type PinPoints = ReadonlyMap<string, { readonly x: number; readonly y: number }>
 const pinKey = (part: string, name: string): string => `${part}\u0000${name}`;
 
 /**
- * 線の両端。**足を指した端は接続点まで伸ばす** — 升の真ん中で止めると、
+ * 線が通る点。**足を指した端は接続点まで伸ばす** — 升の真ん中で止めると、
  * 押した丸と線の先が食い違って見える (実機で指摘された)。
  * 足が升目に出ていなければ (種類が読めないなど) 升の真ん中のまま。
+ *
+ * **角は両端に合わせ直す。** `-|` と `|-` は直角に折れるという意味なので、
+ * 足へずらした端に角が付いてこないと、そこだけ斜めの線になる
+ * (実機で「斜め線を使わずに」と言われた)。角は元の升で「どちらの端と
+ * 行・列を共にするか」が決まっているので、その端の座標をそのまま貰う。
  */
-function wireEnds(wire: WireLine, dots: PinPoints): readonly [number, number, number, number] {
-  const at = (cell: { readonly row: number; readonly col: number }, pin: WireLine['fromPin']) => {
+function pathOf(wire: WireLine, dots: PinPoints): string {
+  const ends = wire.points.map((cell, index) => {
+    const pin = index === 0 ? wire.fromPin : index === wire.points.length - 1 ? wire.toPin : null;
     const dot = pin === null ? undefined : dots.get(pinKey(pin.part, pin.name));
-    return dot ?? { x: x(cell.col), y: y(cell.row) };
-  };
-  const from = at(wire.from, wire.fromPin);
-  const to = at(wire.to, wire.toPin);
-  return [from.x, from.y, to.x, to.y];
+    return { cell, at: dot ?? { x: x(cell.col), y: y(cell.row) } };
+  });
+
+  const drawn = ends.map((end, index) => {
+    // 角 (真ん中の点) だけは、行・列を共にする端から座標を貰う。
+    if (index === 0 || index === ends.length - 1) return end.at;
+    const before = ends[index - 1];
+    const after = ends[index + 1];
+    if (before === undefined || after === undefined) return end.at;
+    const shares = (side: typeof before, of: 'row' | 'col'): boolean => side.cell[of] === end.cell[of];
+    return {
+      x: shares(before, 'col') ? before.at.x : shares(after, 'col') ? after.at.x : end.at.x,
+      y: shares(before, 'row') ? before.at.y : shares(after, 'row') ? after.at.y : end.at.y,
+    };
+  });
+
+  return drawn.map((at) => `${num(at.x)},${num(at.y)}`).join(' ');
 }
 
 /**

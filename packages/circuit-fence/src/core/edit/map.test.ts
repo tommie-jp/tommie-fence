@@ -80,6 +80,22 @@ describe('gridMap', () => {
     expect(pins.slice(4).every((pin) => pin.side === 'bottom')).toBe(true);
   });
 
+  test('turns a p-type device over, since the figure draws it upside down', () => {
+    // 実機で「S に配線したのに図では上の接続点につながっている」。
+    // circuitikz は pnp・p チャネルを記号ごと裏返して描くので、
+    // コレクタ / ドレインが下、エミッタ / ソースが上に出る (12 種を図で確かめた)。
+    const sideOf = (source: string, name: string): string | undefined =>
+      gridMap(source).chips[0]?.pins.find((pin) => pin.name === name)?.side;
+
+    expect(sideOf('parts:\n  Q1: npn b2\n', 'C')).toBe('top');
+    expect(sideOf('parts:\n  Q1: pnp b2\n', 'C')).toBe('bottom');
+    expect(sideOf('parts:\n  Q1: pnp b2\n', 'E')).toBe('top');
+    expect(sideOf('parts:\n  J1: njfet b2\n', 'S')).toBe('bottom');
+    expect(sideOf('parts:\n  J1: pjfet b2\n', 'S')).toBe('top');
+    expect(sideOf('parts:\n  M1: pmos-d b2\n', 'D')).toBe('bottom');
+    expect(sideOf('parts:\n  M1: pigbt b2\n', 'E')).toBe('top');
+  });
+
   test('gives the opamp inputs a place too, though they sit off the centre line', () => {
     // `pinSide` は「まっすぐ引けるか」の表。置き場は別の表 (`pinRow`) で持つ。
     const pins = gridMap('parts:\n  U1: opamp b2\n').chips[0]?.pins ?? [];
@@ -136,15 +152,21 @@ describe('gridMap の配線', () => {
 
   test('draws a straight wire between the crossings it joins', () => {
     expect(linesOf('wires:\n  - a1 -- a3\n')).toEqual([
-      { from: { row: 0, col: 0 }, to: { row: 0, col: 2 }, approximate: false, line: 2, fromPin: null, toPin: null },
+      {
+        points: [{ row: 0, col: 0 }, { row: 0, col: 2 }],
+        approximate: false, line: 2, fromPin: null, toPin: null,
+      },
     ]);
   });
 
-  test('breaks a bent wire at its corner, so the map can follow it', () => {
-    // `-|` は先に横。角は from の行・to の列。
+  test('carries a bent wire as one line through its corner', () => {
+    // `-|` は先に横。角は from の行・to の列。**1 本で持つ** ので、
+    // 描く側が角を両端に合わせられる (足へずらした端でも直角のまま)。
     expect(linesOf('wires:\n  - a1 -| c3\n')).toEqual([
-      { from: { row: 0, col: 0 }, to: { row: 0, col: 2 }, approximate: false, line: 2, fromPin: null, toPin: null },
-      { from: { row: 0, col: 2 }, to: { row: 2, col: 2 }, approximate: false, line: 2, fromPin: null, toPin: null },
+      {
+        points: [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 2 }],
+        approximate: false, line: 2, fromPin: null, toPin: null,
+      },
     ]);
   });
 
@@ -162,14 +184,14 @@ describe('gridMap の配線', () => {
   });
 
   test('keeps a half-step endpoint where it was written', () => {
-    expect(linesOf('wires:\n  - a_1.5 -- a3\n')[0]?.from).toEqual({ row: 0, col: 0.5 });
+    expect(linesOf('wires:\n  - a_1.5 -- a3\n')[0]?.points[0]).toEqual({ row: 0, col: 0.5 });
   });
 
   test('approximates a pin end at the part, since only TeX knows where the leg is', () => {
     const lines = linesOf('parts:\n  Q1: npn b2\nwires:\n  - Q1.C -- a4\n');
 
     expect(lines).toHaveLength(1);
-    expect(lines[0]?.from).toEqual({ row: 1, col: 1 });
+    expect(lines[0]?.points[0]).toEqual({ row: 1, col: 1 });
     expect(lines[0]?.approximate).toBe(true);
   });
 

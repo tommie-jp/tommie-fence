@@ -343,6 +343,14 @@ const STYLE = `
     fill: var(--vscode-focusBorder); opacity: 0.35;
   }
 
+  /* 引いている最中の配線の影。**引いたら消える**ので、図には残らない。
+     置く部品のゴーストと同じ色にして、「まだ書かれていない」ことを揃える。 */
+  .cf-ghost-wire {
+    fill: none; stroke: var(--cf-ghost); stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 4 3; pointer-events: none;
+  }
+
   /* 多端子部品の足の先の接続点。**配線の道具のときだけ濃く出す** — いつも
      目立たせると、足の丸が記号より先に目に入って図として読みにくい。
      当たり判定は見た目より大きく取ってあり、そちらは常に透明。 */

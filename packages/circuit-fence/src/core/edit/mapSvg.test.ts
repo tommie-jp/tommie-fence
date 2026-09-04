@@ -254,14 +254,27 @@ describe('多端子部品の足', () => {
   test('runs the wire to the point, not to the middle of the cell', () => {
     // 実機で「接続点から配線するように表示すること」。
     const svg = draw('parts:\n  Q1: npn b2\nwires:\n  - Q1.C -- a5\n');
-    const dot = /class="cf-pin-dot" cx="([-\d.]+)" cy="([-\d.]+)"/;
-    const wire = /class="cf-wire cf-approx"[^>]*x1="([-\d.]+)" y1="([-\d.]+)"/.exec(svg);
+    const wire = /class="cf-wire cf-approx"[^>]*points="([-\d., ]+)"/.exec(svg);
+    const first = (wire?.[1] ?? '').split(' ')[0] ?? '';
     // 記号の中の座標に、部品の升の座標を足したものが接続点。
     const cell = { x: 20 + 34, y: 32 + 34 };
-    const legs = [...svg.matchAll(new RegExp(dot, 'g'))]
-      .map((one) => ({ x: cell.x + Number(one[1]), y: cell.y + Number(one[2]) }));
+    const legs = [...svg.matchAll(/class="cf-pin-dot" cx="([-\d.]+)" cy="([-\d.]+)"/g)]
+      .map((one) => `${cell.x + Number(one[1])},${cell.y + Number(one[2])}`);
 
-    expect(legs.some((leg) => leg.x === Number(wire?.[1]) && leg.y === Number(wire?.[2]))).toBe(true);
+    expect(legs).toContain(first);
+  });
+
+  test('keeps a bent wire square even when one end sits on a leg', () => {
+    // 実機で「斜め線を使わずに」。角を升の真ん中に置いたままだと、
+    // 足へずらした端との間だけ斜めになる。
+    const svg = draw('parts:\n  Q1: npn b2\nwires:\n  - Q1.C -| d6\n');
+    const points = (/class="cf-wire cf-approx"[^>]*points="([-\d., ]+)"/.exec(svg)?.[1] ?? '')
+      .split(' ').map((pair) => pair.split(',').map(Number));
+
+    expect(points).toHaveLength(3);
+    // `-|` は先に横 — 1 本目は水平、2 本目は垂直。
+    expect(points[0]?.[1]).toBe(points[1]?.[1]);
+    expect(points[1]?.[0]).toBe(points[2]?.[0]);
   });
 
   test('leaves a two-lead part alone, since its ends are the holes themselves', () => {

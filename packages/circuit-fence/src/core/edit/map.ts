@@ -58,8 +58,12 @@ export type Chip = {
  * (描く側が向きを気にしなくて済む)。
  */
 export type WireLine = {
-  readonly from: Cell;
-  readonly to: Cell;
+  /**
+   * 通る点 (2 つか 3 つ)。**折れる配線は角を挟んで 3 つ** —
+   * 1 本の折れ線として持つので、描く側が角を両端に合わせられる
+   * (別々の線にすると、足へずらした端のせいで角が外れて斜めになる)。
+   */
+  readonly points: readonly Cell[];
   /** 書かれた行 (1 始まり)。エディタのカーソルと突き合わせるための目印。 */
   readonly line: number;
   /**
@@ -178,20 +182,10 @@ function wireLinesOf(doc: Circuit): WireLine[] {
     const approximate = from.approximate || to.approximate;
     const line = wire.line;
     const corner = cornerOf(from.cell, to.cell, wire.operator);
-    if (corner === null) {
-      lines.push({
-        from: cellAt(from.cell), to: cellAt(to.cell), approximate, line,
-        fromPin: from.pin, toPin: to.pin,
-      });
-      continue;
-    }
-    // 折れた線は角で 2 本に割る。**足に付くのは外側の端だけ** (角は升の上)。
-    lines.push({
-      from: cellAt(from.cell), to: cellAt(corner), approximate, line, fromPin: from.pin, toPin: null,
-    });
-    lines.push({
-      from: cellAt(corner), to: cellAt(to.cell), approximate, line, fromPin: null, toPin: to.pin,
-    });
+    const points = corner === null
+      ? [cellAt(from.cell), cellAt(to.cell)]
+      : [cellAt(from.cell), cellAt(corner), cellAt(to.cell)];
+    lines.push({ points, approximate, line, fromPin: from.pin, toPin: to.pin });
   }
   return lines;
 }
@@ -280,7 +274,7 @@ export function gridMap(source: string): GridMap {
   const used: readonly Cell[] = [
     ...chips.flatMap((chip) => [chip, chip.to].filter((cell) => cell !== null)),
     ...dots,
-    ...wires.flatMap((wire) => [wire.from, wire.to]),
+    ...wires.flatMap((wire) => wire.points),
   ];
   const span = (of: (cell: Cell) => number): number[] => used.map((cell) => Math.ceil(of(cell)) + 1 + MARGIN);
   const rows = Math.min(26, Math.max(MIN_ROWS, ...span((cell) => cell.row)));
