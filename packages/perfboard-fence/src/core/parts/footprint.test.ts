@@ -163,3 +163,26 @@ describe('回した DIP のピン', () => {
     expect(pins[1]).toEqual(at(4, 3));
   });
 });
+
+describe('タクトスイッチ', () => {
+  test('places four legs in a square from one anchor', () => {
+    // 6mm 角のタクトスイッチ。**足の位置はパッケージが決める**ので、
+    // 書くのはアンカー 1 つだけ (DIP と同じ考え方)。
+    const footprint = footprintOf('button');
+
+    expect(footprint).toEqual({ kind: 'switch', pins: 4, holes: 1 });
+    expect(pinsOf(footprint!, [{ row: 2, col: 3 }])).toEqual([
+      { row: 2, col: 3 }, { row: 2, col: 5 },
+      { row: 4, col: 3 }, { row: 4, col: 5 },
+    ]);
+  });
+
+  test('turns the square around the anchor', () => {
+    const footprint = footprintOf('button-nc');
+    const turned = pinsOf(footprint!, [{ row: 2, col: 3 }], null, { rotate: 90, mirror: false });
+
+    // **アンカーは動かない。** 残りがその周りを回る。
+    expect(turned[0]).toEqual({ row: 2, col: 3 });
+    expect(new Set(turned.map((one) => `${one.row},${one.col}`)).size).toBe(4);
+  });
+});

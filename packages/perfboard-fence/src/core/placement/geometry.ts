@@ -182,7 +182,7 @@ function boxRect(part: PlacedPart, layout: Layout): OrientedRect | null {
  */
 const isBoxed = (part: PlacedPart): boolean => {
   const kind = footprintOf(part.type)?.kind;
-  return kind === 'dip' || kind === 'sip' || kind === 'board' || kind === 'three-lead';
+  return kind === 'dip' || kind === 'switch' || kind === 'sip' || kind === 'board' || kind === 'three-lead';
 };
 
 /** 胴の長方形。足が 1 本も無ければ null。 */

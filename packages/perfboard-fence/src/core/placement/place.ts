@@ -79,7 +79,9 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     // 板の外の番地は穴ではない (縁の銅箔や、板から張り出す先) ので、そこへ
     // 足が来る図は実物では組めない。**回すと縁で踏みやすい**ので必ず見る
     // (端面実装は先端が板の外に出るのが正しいので、この検査から外す)。
-    if (footprint !== null && (footprint.kind === 'dip' || footprint.kind === 'sip')) {
+    const anchored = footprint !== null
+      && (footprint.kind === 'dip' || footprint.kind === 'sip' || footprint.kind === 'switch');
+    if (anchored) {
       const outside = pins.find((address) => !isOnBoard(board, address));
       if (outside !== undefined) {
         errors.push(fenceError(

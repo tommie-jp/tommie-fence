@@ -4,7 +4,7 @@ import { parseAddress } from '../model/address.ts';
 import { footprintOf } from '../parts/footprint.ts';
 import { MIRROR_WORD, NO_TURN, isTurned, orientOf, rotationOf } from '../parts/orient.ts';
 import type { Turn } from '../parts/orient.ts';
-import { isKnownType, isNestedType, placeableNames, splitPartType } from '../parts/types.ts';
+import { isNestedType, placeableNames, splitPartType } from '../parts/types.ts';
 import type { FenceError, PartSpec } from '../types.ts';
 
 export type Parsed<T> =
@@ -54,7 +54,6 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
       // 書き方が違うだけなので、**そのまま書き写せる形**を見せる。
       return fail(`${safeToken(written)} は入れ子で書きます (type: device / at: top / pins: + -)`, written);
     }
-    if (isKnownType(type)) return fail(`${safeToken(written)} はまだ置けません`, written);
     return fail(
       `知らない部品の種類です: ${safeToken(written)}`
       + ` (${placeableNames().slice(0, 6).join(' / ')} / dipN / sipN など)`,

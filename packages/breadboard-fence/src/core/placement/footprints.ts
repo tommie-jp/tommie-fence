@@ -41,8 +41,13 @@ const THREE_LEAD_TYPES = new Set([
   // (同じ回路を 2 つのフェンスで書くときに語彙を 1 つで済ませるため)。
   'regulator',
 ]);
-/** タクトスイッチ。v0.2.0 の `pushbutton` は略記として `button` に畳んでから来る。 */
-const SWITCH_TYPES = new Set(['button']);
+/**
+ * タクトスイッチ。v0.2.0 の `pushbutton` は略記として `button` に畳んでから来る。
+ *
+ * **a 接点 (`button`) と b 接点 (`button-nc`) は同じ形**。実物も外から見て
+ * 見分けが付かず (印字で分かるだけ)、図で描き分けると実物に無い情報になる。
+ */
+const SWITCH_TYPES = new Set(['button', 'button-nc']);
 
 const DIP_PATTERN = /^dip(\d+)$/;
 const DIP_MIN_PINS = 4;

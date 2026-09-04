@@ -1,7 +1,7 @@
 import { NO_TURN } from './orient.ts';
 import type { Turn } from './orient.ts';
 import type { Address, Board } from '../types.ts';
-import { isEdgeMount, isThreeLead, isTwoLead } from './types.ts';
+import { isEdgeMount, isSwitch, isThreeLead, isTwoLead } from './types.ts';
 import { lookupBoardPart } from 'fence-kit';
 
 /**
@@ -21,7 +21,7 @@ import { lookupBoardPart } from 'fence-kit';
  * 中心線を挟んで反対側に決まる (`pinsOf` が補う)。
  */
 
-export type FootprintKind = 'two-lead' | 'three-lead' | 'edge' | 'dip' | 'sip' | 'board';
+export type FootprintKind = 'two-lead' | 'three-lead' | 'switch' | 'edge' | 'dip' | 'sip' | 'board';
 
 export type Footprint = {
   readonly kind: FootprintKind;
@@ -41,6 +41,13 @@ export const DIP_ROW_SPAN = 3;
  * **DIP と同じ並べ方で、間隔だけが違う** — 1 番が左上、右へ数えて折り返す。
  */
 export const BOARD_ROW_SPAN = 7;
+
+/**
+ * タクトスイッチの足が作る四角 (穴の数)。6mm 角の実物は 5.08mm 角の格子に
+ * 足が来るので、行も列も 2 穴。**breadboard と同じ数** (あちらは溝をまたぐので
+ * 行の側が溝の幅になる)。
+ */
+export const SWITCH_SPAN = 2;
 
 const DIP = /^dip([0-9]{1,2})$/;
 const SIP = /^sip([0-9]{1,2})$/;
@@ -62,6 +69,8 @@ export function footprintOf(type: string, variant: string | null = null): Footpr
 
   if (isTwoLead(type)) return { kind: 'two-lead', pins: 2, holes: 2 };
   if (isThreeLead(type)) return { kind: 'three-lead', pins: 3, holes: 3 };
+  // タクトスイッチ。**足の位置はパッケージが決める**ので、書くのはアンカー 1 つ。
+  if (isSwitch(type)) return { kind: 'switch', pins: 4, holes: 1 };
 
   const dip = DIP.exec(type);
   if (dip) {
@@ -134,6 +143,15 @@ export function pinsOf(
 
   if (footprint.kind === 'sip') {
     return Array.from({ length: footprint.pins }, (_, index) => at({ row: 0, col: index }));
+  }
+
+  // タクトスイッチは 4 本が四角に並ぶ。**上の 2 本が内部でつながり、下の 2 本も
+  // つながっている** (押すと 2 組が渡る)。並びは左上・右上・左下・右下。
+  if (footprint.kind === 'switch') {
+    return [
+      at({ row: 0, col: 0 }), at({ row: 0, col: SWITCH_SPAN }),
+      at({ row: SWITCH_SPAN, col: 0 }), at({ row: SWITCH_SPAN, col: SWITCH_SPAN }),
+    ];
   }
 
   const span = footprint.kind === 'board' ? BOARD_ROW_SPAN : DIP_ROW_SPAN;

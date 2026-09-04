@@ -44,13 +44,11 @@ describe('parsePartLine', () => {
     expect(parsePartLine('R1', 'resistor').ok).toBe(false);
   });
 
-  test('names a type it cannot place, rather than drawing nothing', () => {
-    // 名前は知っているが置けないもの。**綴りを疑わせない。**
-    const result = parsePartLine('SW1', 'button b3 b5');
+  test('places a tact switch from one anchor', () => {
+    // **足の位置はパッケージが決める**ので、書くのはアンカー 1 つ (DIP と同じ)。
+    const result = parsePartLine('SW1', 'button b3');
 
-    expect(result.ok).toBe(false);
-    expect(!result.ok && result.error.message).toContain('button');
-    expect(!result.ok && result.error.message).toContain('まだ置けません');
+    expect(result.ok && result.value.holes).toEqual(['b3']);
   });
 
   test('places a three-lead part written with three holes', () => {

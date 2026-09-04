@@ -433,7 +433,7 @@ const BOARD_EDGE = '#0b2637';
 const isBoxed = (part: PlacedPart): boolean => {
   const kind = footprintOf(part.type)?.kind;
   // マイコンボードも箱。**列の間隔が広い DIP** として同じ道を通る。
-  return kind === 'dip' || kind === 'sip' || kind === 'board';
+  return kind === 'dip' || kind === 'switch' || kind === 'sip' || kind === 'board';
 };
 
 /**
@@ -527,13 +527,16 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
   // **マイコンボードは基板の色で描く。** IC の樹脂と同じ色にすると、
   // 板の上にもう 1 枚の基板が載っていることが図から読めない。
   const board = lookupBoardPart(part.type);
+  // **タクトスイッチは黒い樹脂**。IC と同じ色にすると、図でどちらか分からない。
+  // 基板と同じで**透かさない** — 実物の胴は不透明で、下の穴には配線できない。
+  const tact = footprintOf(part.type)?.kind === 'switch';
   const body = element('rect', {
     x: num(rect.cx - rect.width / 2), y: num(rect.cy - rect.height / 2),
     width: num(rect.width), height: num(rect.height), rx: 3,
-    fill: board === null ? theme.palette.body : BOARD_FILL,
-    stroke: board === null ? theme.palette.bodyEdge : BOARD_EDGE,
+    fill: tact ? SWITCH_FILL : board === null ? theme.palette.body : BOARD_FILL,
+    stroke: tact ? SWITCH_EDGE : board === null ? theme.palette.bodyEdge : BOARD_EDGE,
     'stroke-width': 1,
-    ...(board === null ? { 'fill-opacity': theme.metrics.bodyOpacity } : {}),
+    ...(board === null && !tact ? { 'fill-opacity': theme.metrics.bodyOpacity } : {}),
   });
 
   // 箱は縦横のどちらにも伸びる (回すと入れ替わる)。**短いほうの辺が
@@ -572,7 +575,24 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
     layout,
   );
 
-  return `${body}${notch}${boardMarks(part, rect, layout)}${leads}${label}`;
+  return `${body}${notch}${boardMarks(part, rect, layout)}${switchMarks(part, rect)}${leads}${label}`;
+}
+
+/** タクトスイッチの樹脂。**IC より黒い** (実物も真っ黒な成型品)。 */
+const SWITCH_FILL = '#23272e';
+const SWITCH_EDGE = '#12151a';
+
+/**
+ * タクトスイッチの押しボタン。**胴の真ん中に立つ丸**が実物の見分けどころで、
+ * これが無いと黒い箱にしか見えない。スイッチでなければ何も足さない。
+ */
+function switchMarks(part: PlacedPart, rect: OrientedRect): string {
+  if (footprintOf(part.type)?.kind !== 'switch') return '';
+
+  return element('circle', {
+    cx: num(rect.cx), cy: num(rect.cy), r: num(Math.min(rect.width, rect.height) * 0.28),
+    fill: '#c9cfd8', stroke: '#6b7280', 'stroke-width': 1,
+  });
 }
 
 /** マイコンボードの上に載っているもの。基板でなければ何も足さない。 */

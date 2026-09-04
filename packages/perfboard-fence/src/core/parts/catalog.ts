@@ -18,6 +18,7 @@ export type PlaceableName =
   | 'zener' | 'schottky' | 'photodiode' | 'varicap' | 'diac'
   | 'reed' | 'fuse' | 'lamp' | 'sma'
   | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
+  | 'button' | 'button-nc'
   | 'transistor' | 'potentiometer' | 'thyristor' | 'triac' | 'slide-switch' | 'regulator';
 
 /** 和名。**種類を足したら型エラーでここも要求される。** */
@@ -55,6 +56,8 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   mic: 'マイク',
   switch: 'スイッチ (a 接点)',
   'switch-nc': 'スイッチ (b 接点)',
+  button: 'タクトスイッチ (a 接点)',
+  'button-nc': 'タクトスイッチ (b 接点)',
 };
 
 /**
@@ -95,6 +98,8 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   mic: 'MK',
   switch: 'SW',
   'switch-nc': 'SW',
+  button: 'SW',
+  'button-nc': 'SW',
 };
 
 export const PLACEABLE = placeableNames;

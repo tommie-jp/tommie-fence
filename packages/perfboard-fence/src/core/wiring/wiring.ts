@@ -1,5 +1,5 @@
-import { lookupBoardPart } from 'fence-kit';
-import { computeNets } from 'fence-kit';
+import { computeNets, lookupBoardPart } from 'fence-kit';
+import { footprintOf } from '../parts/footprint.ts';
 import type { Net, NetMember } from 'fence-kit';
 import { fenceError, notice, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
@@ -212,13 +212,25 @@ const membersOf = (parts: readonly PlacedPart[]): NetMember[] =>
   parts.flatMap((part) => part.pins.map((pin, index) => ({ ref: pinRef(part, index), strip: pin.strip })));
 
 /**
- * 部品の中でつながっている足。**端面実装のコネクタの凹の両端**は 1 つの金物
- * なので、片方に配線を付ければもう片方も同じネットに乗る。
+ * 部品の中でつながっている足。2 つある:
+ *
+ * - **端面実装のコネクタの凹の両端**は 1 つの金物なので、片方に配線を付ければ
+ *   もう片方も同じネットに乗る
+ * - **タクトスイッチは 4 本のうち 2 本ずつが内部でつながっている**。押すと
+ *   その 2 組が渡る。押していないときも組の中は導通しているので、
+ *   ネットリストでは 1 つの端子として数える
+ *
  * ほかの部品にはこれが無い — 部品はネットとネットの間の枝で、足どうしは
  * つながない。
  */
 const innerLinks = (parts: readonly PlacedPart[]): readonly (readonly [StripId, StripId])[] =>
   parts.flatMap((part) => {
+    if (footprintOf(part.type)?.kind === 'switch') {
+      const [one, two, three, four] = part.pins;
+      return one && two && three && four
+        ? [[one.strip, two.strip] as const, [three.strip, four.strip] as const]
+        : [];
+    }
     const [, upper, lower] = part.pins;
     return isEdgeMount(part.type, part.variant) && upper && lower
       ? [[upper.strip, lower.strip] as const]

@@ -72,7 +72,7 @@ wires:
   - 2 本足 (コネクタ) — `sma`
   - 3 本足 — `transistor` / `potentiometer` / `slide-switch` / `thyristor` / `triac` /
     `regulator`
-  - まとまった足 — `button` / `dipN` / `sipN`
+  - まとまった足 — `button` (a 接点) / `button-nc` (b 接点) / `dipN` / `sipN`
   - マイコンボード — `pico` / `pico-w` / `pico2` / `pico2-w`
   - ボード外の機器 — `device`
 - 略記でも書ける → [種類の略記](#種類の略記)。図・部品リスト・エラーには

@@ -24,7 +24,7 @@ export type PlaceableName =
   | 'reed' | 'fuse' | 'lamp' | 'sma'
   | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
   | 'transistor' | 'potentiometer' | 'slide-switch' | 'thyristor' | 'triac'
-  | 'regulator' | 'button';
+  | 'regulator' | 'button' | 'button-nc';
 
 export const PLACEABLE = placeableTypes;
 
@@ -85,7 +85,8 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   triac: 'トライアック',
   sma: 'SMA コネクタ',
   regulator: '三端子レギュレータ',
-  button: 'タクトスイッチ',
+  button: 'タクトスイッチ (a 接点)',
+  'button-nc': 'タクトスイッチ (b 接点)',
   battery: '電池',
   solar: '太陽電池',
   speaker: 'スピーカー',
@@ -128,6 +129,7 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   sma: 'J',
   regulator: 'U',
   button: 'SW',
+  'button-nc': 'SW',
   battery: 'B',
   solar: 'PV',
   speaker: 'LS',
