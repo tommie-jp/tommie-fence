@@ -10,11 +10,29 @@ describe('glyphOf', () => {
   });
 
   test('folds a family onto one shape when only the detail differs', () => {
-    // 記号として形が違うものは描き分け、細部だけが違うものは同じ形に落とす。
-    // ショットキーの棒の先や pnp の矢の向きは、この大きさでは読めない。
-    expect(glyphOf('schottky').name).toBe('diode');
-    expect(glyphOf('photodiode').name).toBe('diode');
+    // 落とすのは**同じ記号の中の細部**だけ。npn と pnp の違いは矢の向き、
+    // MOSFET の増強形と空乏形はチャネルの切れ方で、どちらもこの大きさでは読めない。
     expect(glyphOf('pnp').name).toBe(glyphOf('npn').name);
+    expect(glyphOf('nmos-e').name).toBe(glyphOf('nmos').name);
+    expect(glyphOf('pjfet').name).toBe(glyphOf('njfet').name);
+  });
+
+  test('draws the diodes the figure draws differently as different shapes', () => {
+    // 実機で図と升目を並べて見つけた組。**別の記号なので落とさない** —
+    // ショットキーは棒が S 字に折れ、受光は光の矢が内へ入る。
+    expect(glyphOf('schottky').name).toBe('schottky');
+    expect(glyphOf('photodiode').name).toBe('photodiode');
+    expect(drawGlyph('schottky')).not.toBe(drawGlyph('diode'));
+    expect(drawGlyph('photodiode')).not.toBe(drawGlyph('led'));
+  });
+
+  test('tells the three gate kinds apart, because the figure does', () => {
+    // 絶縁ゲート (棒が離れる) / 接合形 (チャネルが 1 本の棒) /
+    // IGBT (絶縁ゲート + 出口の矢) は別の記号。
+    expect(glyphOf('nmos').name).toBe('fet');
+    expect(glyphOf('njfet').name).toBe('jfet');
+    expect(glyphOf('nigbt').name).toBe('igbt');
+    expect(new Set([drawGlyph('fet'), drawGlyph('jfet'), drawGlyph('igbt')]).size).toBe(3);
   });
 
   test('gives the shapes that really differ their own drawing', () => {
@@ -58,9 +76,9 @@ describe('glyphOf', () => {
   });
 
   test('draws every meter as one circle, told apart by the letter inside', () => {
-    expect(glyphOf('ammeter')).toEqual({ name: 'meter', mark: 'A' });
-    expect(glyphOf('voltmeter')).toEqual({ name: 'meter', mark: 'V' });
-    expect(glyphOf('ohmmeter')).toEqual({ name: 'meter', mark: 'Ω' });
+    expect(glyphOf('ammeter')).toEqual({ name: 'meter', mark: { text: 'A' } });
+    expect(glyphOf('voltmeter')).toEqual({ name: 'meter', mark: { text: 'V' } });
+    expect(glyphOf('ohmmeter')).toEqual({ name: 'meter', mark: { text: 'Ω' } });
   });
 
   test('draws the parts the figure has its own symbol for, not a box', () => {
@@ -138,10 +156,23 @@ describe('直流電源の ＋ − (回路図に合わせる)', () => {
     expect(Math.hypot(maxX, maxY)).toBeLessThan(9 - 1.5);
   });
 
-  test('leaves the other sources alone', () => {
-    // 波形の電源は丸の中の字で描き分けている (~ ⊓ ∿)。丸のままにする
-    expect(glyphOf('sine')).toEqual({ name: 'source', mark: '~' });
-    expect(glyphOf('isource')).toEqual({ name: 'source', mark: 'I' });
+  test('draws the other sources with the wave the figure draws, not a letter', () => {
+    // **字ではなく形で描く。** 字は回さない作りなので、縦置きの電源で
+    // 波が向きを失う (`dc-source` と同じ理由。実機で図と並べて見つけた)。
+    expect(glyphOf('sine')).toEqual({ name: 'ac-source', mark: null });
+    expect(glyphOf('square')).toEqual({ name: 'square-source', mark: null });
+    expect(glyphOf('triangle')).toEqual({ name: 'tri-source', mark: null });
+    expect(glyphOf('isource')).toEqual({ name: 'i-source', mark: null });
+    expect(new Set([drawGlyph('ac-source'), drawGlyph('square-source'),
+      drawGlyph('tri-source'), drawGlyph('i-source')]).size).toBe(4);
+    // 素の丸は計器だけが使う (中の字で描き分ける)。
     expect(drawGlyph('source')).not.toContain('<path');
+  });
+
+  test('names the thermistor kinds, which the figure tells apart only by the letters', () => {
+    // 箱と斜めの線は 3 種とも同じ。図は箱の下に品種を書いて分けている。
+    expect(glyphOf('thermistor-ntc')).toEqual({ name: 'resistor-iec', mark: { text: 'NTC', below: true } });
+    expect(glyphOf('thermistor-ptc').mark?.text).toBe('PTC');
+    expect(glyphOf('thermistor').mark).toBe(null);
   });
 });

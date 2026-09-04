@@ -43,9 +43,15 @@ const WIRE = element('path', { class: 'cf-glyph-line', d: 'M-10,0 L10,0' });
 function icon(type: string): string {
   const glyph = glyphOf(type);
   const shape = drawGlyph(glyph.name) || WIRE;
+  // 品種の字 (`NTC`) は記号の下。**升目と同じ置き方**にして、一覧と図で
+  // 同じものが同じ形に見えるようにする。
   const mark = glyph.mark === null
     ? ''
-    : element('text', { class: 'cf-mark', x: 0, y: 3, 'text-anchor': 'middle' }, escapeMarkup(glyph.mark));
+    : element(
+      'text',
+      { class: 'cf-mark', x: 0, y: glyph.mark.below === true ? 10 : 3, 'text-anchor': 'middle' },
+      escapeMarkup(glyph.mark.text),
+    );
   return element(
     'svg',
     // 記号が縁で削れないだけの余白を取る (反転の丸と LED の矢が端に届く)。

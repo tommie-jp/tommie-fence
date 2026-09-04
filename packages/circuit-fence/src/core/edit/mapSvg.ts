@@ -252,7 +252,9 @@ function drawSpan(chip: Chip, far: Cell, nudge: number): string {
     { transform: `translate(${num(mx)},${num(my)}) rotate(${num(angle)})` },
     drawGlyph(glyph.name),
   );
-  const mark = glyph.mark === null ? '' : svgText(mx, my + 4, glyph.mark, { class: 'cf-mark' });
+  const mark = glyph.mark === null
+    ? ''
+    : svgText(mx, my + (glyph.mark.below === true ? MARK_BELOW : 4), glyph.mark.text, { class: 'cf-mark' });
   // **名前を置く側は図と揃える** — 横置きは記号の下、縦置きは記号の左
   // (図では反対側が値の場所。実機で「文字列の位置が回路図と違う」)。
   const upright = Math.abs(y2 - y1) > Math.abs(x2 - x1);
@@ -268,6 +270,13 @@ function drawSpan(chip: Chip, far: Cell, nudge: number): string {
  * 縦置きは左。升の半分 (17) より内側に収めて、隣の升へはみ出さないようにする。
  */
 const NAME_BELOW = 15;
+
+/**
+ * 品種の字 (`NTC`) を記号の下へ置く高さ。**名前のさらに下**に置く —
+ * 図も 2 行目として名前の下に書く (`l2_=`) ので、並びを揃える。
+ * 記号と名前の間に入れると、10px の字が 2 つ重なって両方読めない (実測)。
+ */
+const MARK_BELOW = NAME_BELOW + 9;
 const NAME_ASIDE = 14;
 
 /** 名前の字の大きさ (`.cf-name` の `font-size`)。はみ出すかを測るのに要る。 */
@@ -509,6 +518,55 @@ function standingNameReach(side: PinSide, id: string): number {
     : STAND_BELOW;
 }
 
+/** 切り欠きのある種類。**足の位置がパッケージで決まる箱**だけが持つ。 */
+const DIP_TYPE = /^dip\d+$/;
+
+/** 切り欠きの半径。箱の縁に半円で食い込む。 */
+const NOTCH = 3.5;
+
+/** その足が箱のどこに出ているか。**足の棒の根元**を返す (`pinAt` と同じ数え方)。 */
+function pinPointOf(
+  pin: ChipPin, rows: PinRows, halfW: number, halfH: number, gap: number,
+): { readonly x: number; readonly y: number } | null {
+  for (const [side, row] of rows) {
+    const at = row.indexOf(pin);
+    if (at < 0) continue;
+    const place = pinAt(side, at, row.length, halfW, halfH, gap);
+    return { x: place.x1, y: place.y1 };
+  }
+  return null;
+}
+
+/**
+ * DIP の切り欠き。**実物と同じ向きの目印**が無いと、図を見ながら挿すときに
+ * 180 度回して挿せてしまう (図が描いているのと同じ理由。実機で図と升目を
+ * 並べて、升目にだけ無いと分かった)。
+ *
+ * **場所は 1 番ピンと最終ピンの間**。実物の切り欠きは 2 列の始まりと終わりが
+ * 並ぶ短い辺にあり、その中点をいちばん近い縁へ寄せたところに来る。箱の上端に
+ * 決め打つと、回した DIP で反対の端へ出て印が嘘をつく。
+ */
+function notchOf(chip: Chip, rows: PinRows, halfW: number, halfH: number, gap: number): string {
+  if (!DIP_TYPE.test(chip.type)) return '';
+  // **列の頭どうしの間**。`chip.pins` の並びは列の順 (左の列を上から、次に右の列を
+  // 上から) なので、末尾は最終ピンではない — 数え違えると印が反対の端へ出る。
+  const heads = [...rows.values()].map((row) => row[0]);
+  const [from, to] = heads.map((pin) => (pin === undefined ? null : pinPointOf(pin, rows, halfW, halfH, gap)));
+  if (heads.length !== 2 || from === null || to === null || from === undefined || to === undefined) return '';
+
+  const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
+  const alongX = Math.abs(mid.x) >= Math.abs(mid.y);
+  const side = Math.sign(alongX ? mid.x : mid.y) || -1;
+  // 半円は**縁の外へ**膨らむ (図と同じ)。パッケージの端の丸い窪みが、
+  // 外から見ると出っ張りに見えるところ。
+  const d = alongX
+    ? `M${num(side * halfW)},${num(-NOTCH)} A${NOTCH},${NOTCH} 0 0 ${side > 0 ? 1 : 0}`
+      + ` ${num(side * halfW)},${num(NOTCH)}`
+    : `M${num(-NOTCH)},${num(side * halfH)} A${NOTCH},${NOTCH} 0 0 ${side > 0 ? 0 : 1}`
+      + ` ${num(NOTCH)},${num(side * halfH)}`;
+  return element('path', { class: 'cf-glyph-line', d });
+}
+
 /** 1 端子と多端子は空いている辺に名前を置く。箱に落ちた種類は名前を中に入れる。 */
 function drawStanding(chip: Chip, nudge: number): string {
   const glyph = glyphOf(chip.type);
@@ -521,7 +579,9 @@ function drawStanding(chip: Chip, nudge: number): string {
   // 向きを書いたことが figure に一切出ない。**字は回さない** (逆さまになる)。
   const spin = inside ? '' : turnOf(chip.turn);
   // 箱だけは足の本数で伸ばす (DIP は片側に何本も出る)。
-  const shape = inside ? drawBox(halfW, halfH) : drawGlyph(glyph.name);
+  const shape = inside
+    ? drawBox(halfW, halfH) + notchOf(chip, rows, halfW, halfH, legGap(glyph.name))
+    : drawGlyph(glyph.name);
   const body = element('g', { transform: `translate(0,${num(nudge)})${spin}` }, shape);
   const pins = chip.pins.length === 0
     ? ''
@@ -534,7 +594,9 @@ function drawStanding(chip: Chip, nudge: number): string {
             side, at, row.length, halfW, halfH, legGap(glyph.name), namesInside(glyph.name, side),
           )))).join(''),
     );
-  const mark = glyph.mark === null ? '' : svgText(0, nudge + 4, glyph.mark, { class: 'cf-mark' });
+  const mark = glyph.mark === null
+    ? ''
+    : svgText(0, nudge + (glyph.mark.below === true ? MARK_BELOW : 4), glyph.mark.text, { class: 'cf-mark' });
   // 名札は**足の無い辺**へ。足のある辺に出すと、棒と足の名前に重なる。
   const place = standingNameAt(nameSideOf(chip.pins));
   const name = inside
