@@ -645,6 +645,23 @@ export const PART_TYPES = {
   dip40: dipchip(40),
 
   /**
+   * ブザー。**circuitikz 1.0 にブザーの記号が無い** (`buzzer` `bell` `piezo`
+   * `sounder` を実機で当たって全部無かった)。音を出す部品として同じ仲間の
+   * スピーカーの記号で描く — 記号を自分で宣言する道もあるが、2 端子の記号は
+   * `\pgfcircdeclarebipole` の登録が要り、文書どおりの書き方が 1.0 では通らない
+   * (実機で確かめた)。**別の部品の記号を使っていることは文法リファレンスに書く。**
+   */
+  buzzer: { kind: 'two-terminal', symbol: 'loudspeaker', ...NO_UNIT },
+
+  /**
+   * 同軸コネクタ (SMA)。**circuitikz 1.0 に同軸コネクタの記号が無い**
+   * (`coax` `plug` `socket` `jack` は無く、`bnc` は通るが線しか描かない。
+   * 実機で確かめた)。記号の無いコネクタは**箱に名前**で描くのが回路図の
+   * 慣習なので、素の箱 (`generic`) に `J1` が付く形にする。
+   */
+  sma: { kind: 'two-terminal', symbol: 'generic', ...NO_UNIT },
+
+  /**
    * 三端子レギュレータ。**記号はこの拡張が宣言する** (`tex/shapes.ts`)。
    * 番号は実物の TO-220 と同じ 1=IN / 2=GND / 3=OUT で、**名前でも番号でも**
    * 書ける (実体配線図は番号で書くので、どちらでも通るようにしておく)。
@@ -785,6 +802,8 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   sip20: 'ピンヘッダ (20 ピン)',
   sip40: 'ピンヘッダ (40 ピン)',
   regulator: '三端子レギュレータ',
+  buzzer: 'ブザー',
+  sma: 'SMA コネクタ',
   // 製品名は実体配線図の 2 つと同じ字 (fence-kit の表)。
   pico: 'Pico',
   'pico-w': 'Pico W',
@@ -893,6 +912,8 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   sip20: 'J',
   sip40: 'J',
   regulator: 'U',
+  buzzer: 'B',
+  sma: 'J',
   pico: 'U',
   'pico-w': 'U',
   pico2: 'U',
