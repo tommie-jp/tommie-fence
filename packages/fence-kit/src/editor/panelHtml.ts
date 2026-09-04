@@ -307,6 +307,11 @@ const STYLE = `
     pointer-events: none;
   }
 
+  /* 注釈の札 (circuit のマップ)。図ではなく掴むための升目なので、印そのものは
+     描かず、指した升に小さな札を出す。 */
+  .cf-note-tag { fill: var(--cf-paper); stroke: var(--cf-ink); stroke-width: 1; opacity: 0.85; }
+  .cf-note-text { fill: var(--cf-ink); }
+
   /* 読めなかった行に書かれたもの。**触れている印・持っている印より後に置く**。 */
   .cf-bad .cf-glyph, .cf-bad .cf-glyph-line, .cf-bad .cf-lead,
   .cf-wire.cf-bad { stroke: var(--cf-bad); }

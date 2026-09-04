@@ -17,6 +17,10 @@ import type { Address } from '../../core/model/address.ts';
 import { renamePart } from '../../core/edit/rename.ts';
 import type { EditResult, FenceEditor, NewPart } from 'fence-kit';
 import { isWireHandle, renderColorOptions, wireFields } from '../../core/edit/wireField.ts';
+import {
+  deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans,
+  setNoteField, turnNote,
+} from '../../core/edit/note.ts';
 
 /**
  * circuit フェンスの編集エンジンを、殻が求める形 (`FenceEditor`) に束ねる。
@@ -76,15 +80,21 @@ export function createCircuitEditor(): FenceEditor {
     },
 
     spansOf: (source, what, id) => {
+      if (isNoteHandle(id)) return noteSpans(source, id);
       if (what !== 'node') return partSpans(source, id);
       const at = parseAddress(id);
       return at === null ? [] : nodeSpans(source, at);
     },
 
-    fieldsOf: (source, handle) => (isWireHandle(handle) ? wireFields(source, handle) : partFields(source, handle)),
-    nameOf: nameOfHandle,
+    fieldsOf: (source, handle) => {
+      if (isNoteHandle(handle)) return noteFields(source, handle);
+      if (isWireHandle(handle)) return wireFields(source, handle);
+      return partFields(source, handle);
+    },
+    // 注釈には名前が無いので、名札は行番号。人に見せるときは「注釈」と呼ぶ。
+    nameOf: (handle) => (isNoteHandle(handle) ? `注釈 (${noteLineOf(handle) ?? '?'} 行目)` : nameOfHandle(handle)),
     nextId: nextPartId,
-    cellsOf: partCells,
+    cellsOf: (source, handle) => (isNoteHandle(handle) ? noteCells(source, handle) : partCells(source, handle)),
     // 配線は `-|` / `|-` で折れる (`Shift` を押しながら放す)。
     foldsWire: true,
     step: stepCell,
@@ -95,7 +105,9 @@ export function createCircuitEditor(): FenceEditor {
 
     movePart: (source, handle, to, trial) => {
       const at = parseAddress(to);
-      return at === null ? unreadable(to) : movePart(source, handle, at, trial?.preview === true);
+      if (at === null) return unreadable(to);
+      if (isNoteHandle(handle)) return moveNote(source, handle, at);
+      return movePart(source, handle, at, trial?.preview === true);
     },
 
     movePoint: (source, from, to, trial) => {
@@ -129,18 +141,22 @@ export function createCircuitEditor(): FenceEditor {
       return insertWire(source, { kind: 'cell', address: at }, { kind: 'cell', address: target }, how);
     },
 
-    deletePart,
+    deletePart: (source, handle) => (isNoteHandle(handle) ? deleteNote(source, handle) : deletePart(source, handle)),
     deleteWire,
     rename: renamePart,
 
     setField: (source, handle, field, text) => (
-      FIELDS.includes(field)
+      isNoteHandle(handle)
+        ? setNoteField(source, handle, field, text)
+        : FIELDS.includes(field)
         ? setField(source, handle, field as PartField, text)
         : { ok: false, error: { message: `書き換えられない欄です: ${field}`, line: null } }
     ),
 
-    duplicate: duplicatePart,
-    turn: turnPart,
-    flip: flipPart,
+    duplicate: (source, handle, id) => (isNoteHandle(handle) ? duplicateNote(source, handle) : duplicatePart(source, handle, id)),
+    turn: (source, handle, quarters) => (
+      isNoteHandle(handle) ? turnNote(source, handle, quarters) : turnPart(source, handle, quarters)
+    ),
+    flip: (source, handle) => (isNoteHandle(handle) ? flipNote(source, handle) : flipPart(source, handle)),
   };
 }

@@ -1,7 +1,7 @@
-import { element, escapeMarkup, num, svgText } from 'fence-kit';
+import { element, escapeMarkup, fit, num, svgText } from 'fence-kit';
 import { formatAddress } from '../model/address.ts';
 import { drawGlyph, glyphOf } from './mapGlyphs.ts';
-import type { Chip, ChipPin, Cell, Dot, GridMap, WireLine } from './map.ts';
+import type { Chip, ChipPin, Cell, Dot, GridMap, MapNote, WireLine } from './map.ts';
 import type { PinSide, Turn } from '../parts.ts';
 
 /**
@@ -208,6 +208,28 @@ function drawChip(chip: Chip, nudge: number, bad: Bad): string {
 }
 
 /**
+ * 注釈。**印そのものは描かない** — マップは掴むための升目で、図ではない。
+ * 指した升の角に小さな札を出し、字の注釈はその字も少しだけ見せる
+ * (どの注釈かを選ぶのに要る)。
+ */
+function drawNote(note: MapNote): string {
+  const left = x(note.col) + PITCH * 0.18;
+  const top = y(note.row) - PITCH * 0.42;
+  const shown = note.kind === 'text' ? note.text : note.kind;
+  return element(
+    'g',
+    { class: 'cf-chip cf-note-mark', 'data-part': note.handle, 'data-line': note.line },
+    element('rect', {
+      x: num(left), y: num(top), width: num(PITCH * 0.62), height: num(PITCH * 0.34), rx: 3,
+      class: 'cf-note-tag',
+    })
+    + svgText(left + PITCH * 0.31, top + PITCH * 0.26, fit(shown, 8), {
+      anchor: 'middle', class: 'cf-note-text', 'font-size': '9',
+    }),
+  );
+}
+
+/**
  * 置き先の当たり判定。**掴んでいる間だけ効く** (CSS で切り替える)。
  * いつも効かせると部品を掴めなくなり、いつも切ると置けなくなる。
  */
@@ -282,6 +304,8 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE): string {
       + layer('cf-wire-hits', map.wires.map(grabWire).join(''))
       + layer('cf-marks', map.dots.map(drawDot).join(''))
       + layer('cf-parts', map.chips.map((chip) => drawChip(chip, nudges.get(chip) ?? 0, bad)).join(''))
+      // 注釈は部品の上。指したものが下に隠れると印の意味が無い (図と同じ順)。
+      + layer('cf-notes', map.notes.map(drawNote).join(''))
       + drawHits(map),
   );
 

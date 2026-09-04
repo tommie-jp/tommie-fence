@@ -1,13 +1,14 @@
 import { extractCircuitFences } from '../fences.ts';
 import type { FenceBlock } from '../fences.ts';
 import { LIMITS } from '../limits.ts';
-import { cornerOf, formatAddress } from '../model/address.ts';
+import { cornerOf, formatAddress, parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { NO_TURN, lookupPartType, mainPinName, pinSideOf } from '../parts.ts';
 import type { PartType, PinSide, Turn } from '../parts.ts';
 import { cellOf } from '../types.ts';
+import type { PartSpec } from '../types.ts';
 import type { Circuit } from '../model/circuit.ts';
 import type { Endpoint } from '../types.ts';
 import { handleAt, handleOf, partOfHandle } from './handles.ts';
@@ -78,10 +79,29 @@ export type Dot = {
   readonly uses: number;
 };
 
+/**
+ * マップに出す注釈 1 つ。**掴み手は書かれた行** — 注釈には名前が無いので、
+ * 行そのもので指す (配線と同じ考え方)。部品と同じ `data-part` に載せるので、
+ * 殻は注釈を部品として扱える (選ぶ・動かす・複製する・消すがそのまま通る)。
+ */
+export type MapNote = {
+  readonly handle: string;
+  readonly line: number;
+  readonly kind: string;
+  /** 字の注釈の言葉。ほかの印は空。 */
+  readonly text: string;
+  readonly row: number;
+  readonly col: number;
+  /** 部品を指しているか。**指しているものは動かさない** (名前が外れるため)。 */
+  readonly onPart: boolean;
+};
+
 export type GridMap = {
   readonly rows: number;
   readonly cols: number;
   readonly chips: readonly Chip[];
+  /** 掴める注釈。升目に載らない所を指しているものは出さない (チップと同じ理由)。 */
+  readonly notes: readonly MapNote[];
   /** 掴める節点。交点の間にあるものは載らない (チップと同じ理由)。 */
   readonly dots: readonly Dot[];
   /** 引く線。部品の形と違い、**書かれたとおりの位置**に引ける。 */
@@ -162,7 +182,9 @@ export function gridMap(source: string): GridMap {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   if (!doc) {
-    return { rows: MIN_ROWS, cols: MIN_COLS, chips: [], dots: [], wires: [], skipped: [], readable: false };
+    return {
+      rows: MIN_ROWS, cols: MIN_COLS, chips: [], notes: [], dots: [], wires: [], skipped: [], readable: false,
+    };
   }
 
   const chips: Chip[] = [];
@@ -198,6 +220,29 @@ export function gridMap(source: string): GridMap {
 
   const wires = wireLinesOf(doc);
 
+  // **注釈も掴める。** 図に重ねる印なので回路の一員ではないが、置き直したい
+  // ものではある。升目に載らない所を指しているものは出さない (チップと同じ理由)。
+  const notes: MapNote[] = [];
+  for (const note of doc.notes) {
+    const target = noteTargetOf(note);
+    if (target === null) continue;
+    const named = doc.parts.some((part) => part.id === target);
+    const address = named ? null : parseAddress(target);
+    const cell = named
+      ? cellOfPart(doc, target)
+      : address !== null && isOnCrossing(address) ? cellAt(address) : null;
+    if (cell === null) continue;
+    notes.push({
+      handle: `note:${note.line}`,
+      line: note.line,
+      kind: note.kind,
+      text: note.kind === 'text' ? note.text : '',
+      row: cell.row,
+      col: cell.col,
+      onPart: named,
+    });
+  }
+
   // **升目は点と線も覆う。** 配線だけが届く交点はチップに現れないので、
   // 部品だけを見て決めると端が升の外へ落ちて掴めなくなる。
   // 端数の番地は切り上げて数える (`a_1.5` は 2 列目まで要る)。
@@ -210,7 +255,7 @@ export function gridMap(source: string): GridMap {
   const rows = Math.min(26, Math.max(MIN_ROWS, ...span((cell) => cell.row)));
   const cols = Math.min(LIMITS.columns, Math.max(MIN_COLS, ...span((cell) => cell.col)));
 
-  return { rows, cols, chips, dots, wires, skipped, readable: true };
+  return { rows, cols, chips, notes, dots, wires, skipped, readable: true };
 }
 
 /**
@@ -293,4 +338,23 @@ export function partCells(source: string, handle: string): readonly string[] {
   const { doc } = parseFence(normalizeNewlines(source));
   const part = doc === null ? null : partOfHandle(doc.parts, handle);
   return part === null ? [] : addressesOf(part).map(formatAddress);
+}
+
+/** その注釈が指している綴り。**指し先を持たないもの (書き出し) は null**。 */
+function noteTargetOf(note: { readonly kind: string } & Record<string, unknown>): string | null {
+  if (note.kind === 'circle') return typeof note.target === 'string' ? note.target : null;
+  if (note.kind === 'text') return typeof note.at === 'object' && note.at !== null ? formatAddress(note.at as Address) : null;
+  if (note.kind === 'box') {
+    return typeof note.from === 'object' && note.from !== null ? formatAddress(note.from as Address) : null;
+  }
+  if (note.kind === 'arrow' || note.kind === 'line') return typeof note.from === 'string' ? note.from : null;
+  return null;
+}
+
+/** その部品が座っている升。2 端子は先に書いた足のほう (アンカー)。 */
+function cellOfPart(doc: { readonly parts: readonly PartSpec[] }, id: string): Cell | null {
+  const part = doc.parts.find((one) => one.id === id);
+  if (part === undefined) return null;
+  const anchor = addressesOf(part)[0];
+  return anchor === undefined || !isOnCrossing(anchor) ? null : cellAt(anchor);
 }
