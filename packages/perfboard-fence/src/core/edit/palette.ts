@@ -1,4 +1,4 @@
-import { element, escapeMarkup } from 'fence-kit';
+import { element, escapeMarkup, partIcon } from 'fence-kit';
 import { PLACEABLE, holesOf, partName } from '../parts/catalog.ts';
 import { aliasesFor } from '../parts/types.ts';
 import { variantTable } from '../parts/types.ts';
@@ -7,9 +7,10 @@ import { variantTable } from '../parts/types.ts';
  * 置く部品を選ぶパレット。**core が組む** — 何が置けるかは部品の表そのもので、
  * webview 側に写しを持つと種類を足したときに片方が古くなる。
  *
- * **アイコンは出さない。** この図の部品は実物の姿で描かれていて、小さな枠に
- * 落とすと胴の色と帯の位置が読めない別物になる (circuit の似顔絵は記号なので
- * 小さくしても意味が残る)。ここは**名前で選ぶ一覧**にして、検索で引く。
+ * **名前の前に実物の姿を出す** (`fence-kit` の `partIcon`)。以前は「小さな枠に
+ * 落とすと読めない別物になる」として出していなかったが、**胴はもともと小さい**
+ * ので縮めずに置ける。図と同じ関数で描くので、姿を直すとここも一緒に直る。
+ * 名前と検索はそのまま (覚えている呼び方が人によるため)。
  */
 
 /** その種類を指せる略記 (`r` → resistor)。検索で引けるようにする。 */
@@ -33,7 +34,7 @@ export function renderPalette(): string {
     return element('li', {}, element(
       'button',
       { type: 'button', class: 'cf-pick', 'data-find': escapeMarkup(find.toLowerCase()), ...marks(type) },
-      `${escapeMarkup(name)} ${element('code', {}, escapeMarkup(type))}`,
+      (partIcon(type) ?? '') + `${escapeMarkup(name)} ${element('code', {}, escapeMarkup(type))}`,
     ));
   }).join('');
 

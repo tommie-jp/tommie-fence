@@ -180,10 +180,16 @@ const STYLE = `
   .kc-chooser .cf-palette { padding: 6px 8px; overflow-y: auto; }
   .kc-chooser summary { display: none; }
   .cf-icons { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 6px; }
+  /* パレットの絵。名前の前に置くので、行の高さに収まる大きさで。 */
+  .cf-icon { flex: none; vertical-align: middle; }
+
   .cf-pick {
+    display: flex; align-items: center; gap: 6px; width: 100%;
     padding: 2px 6px; border: 1px solid transparent; border-radius: 3px;
     background: none; color: inherit; cursor: pointer; text-align: left;
   }
+  /* 絵の幅を揃える。**揃えないと名前が段ごとにずれて**、一覧として読みにくい。 */
+  .cf-pick .cf-icon { flex: none; width: 46px; height: 20px; }
   .cf-pick:hover { border-color: var(--vscode-focusBorder); }
   /* いま置こうとしているもの。道具の帯と同じ「いまの状態」の印。 */
   .cf-pick.cf-chosen {

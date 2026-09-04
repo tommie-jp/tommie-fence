@@ -11,8 +11,14 @@ describe('renderPalette', () => {
     expect(missing).toEqual([]);
   });
 
-  test('draws the twelve shapes as icons, since a list of 77 cannot be scanned', () => {
-    expect(PALETTE.match(/class="cf-icon"/g)).toHaveLength(12);
+  test('draws a shape for the featured twelve and for every row', () => {
+    // よく使う 12 個は絵だけの並び、一覧のほうは**名前の前に記号**。
+    // 名前を覚えていなくても選べるようにするため (実機で頼まれて足した)。
+    const icons = PALETTE.match(/class="cf-icon"/g) ?? [];
+    const rows = PALETTE.match(/<li>/g) ?? [];
+
+    expect(icons.length).toBe(12 + rows.length);
+    expect(rows.length).toBeGreaterThan(12);
   });
 
   test('says which parts are drawn between two crossings', () => {

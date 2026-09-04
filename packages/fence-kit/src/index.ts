@@ -28,6 +28,7 @@ export {
 export { fit, textWidth } from './textFit.ts';
 export { REAL_INK, bodySize, crystalCan, drawBody, drawsOwnLeads, hasBody } from './parts/bodies.ts';
 export { drawPackage, packageHalfWidth, packageReach } from './parts/packages.ts';
+export { partIcon } from './parts/icon.ts';
 export type { PackageShape } from './parts/packages.ts';
 export type { BodyInk, BodyPart } from './parts/bodies.ts';
 export { computeNets } from './nets.ts';

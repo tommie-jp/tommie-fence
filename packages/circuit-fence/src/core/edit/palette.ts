@@ -71,7 +71,9 @@ export function renderPalette(): string {
     return element('li', {}, element(
       'button',
       { type: 'button', class: 'cf-pick', 'data-find': escapeMarkup(find.toLowerCase()), ...marks(type) },
-      `${escapeMarkup(name)} ${element('code', {}, escapeMarkup(type))}`,
+      // **名前の前に記号を出す。** よく使うものだけ絵で並べていたが、
+      // 一覧のほうも記号が出ていれば名前を覚えていなくても選べる。
+      icon(type) + `${escapeMarkup(name)} ${element('code', {}, escapeMarkup(type))}`,
     ));
   }).join('');
 
