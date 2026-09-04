@@ -220,7 +220,23 @@ function pinsOf(type: PartType | null, turn: Turn): readonly ChipPin[] {
   if (type === null) return [];
   // **中心線に乗る足も乗らない足も置く。** 升目は掴むための道具なので、
   // 「まっすぐ引けるか」ではなく「どこから出ているか」で並べる。
-  return pinPlaces(type, turn).map(({ anchor, side }) => ({ name: mainPinName(type, anchor), side }));
+  //
+  // 名前は**図に出るものと同じ字**にする。図に足の名前を書く部品
+  // (`pinLabels`) はそちらから引く — `mainPinName` は書ける綴りのうち最初の
+  // 1 つを返すので、数字と名前の両方で呼べる足 (レギュレータ) では
+  // 図と食い違う (JS は数字めいた鍵を先に並べるため。実機で気づいた)。
+  return pinPlaces(type, turn).map(({ anchor, side }) => ({
+    name: labelOf(type, anchor) ?? mainPinName(type, anchor),
+    side,
+  }));
+}
+
+/** 図に書く足の名前 (`pinLabels`)。持たない種類は null。 */
+function labelOf(type: PartType, anchor: string): string | null {
+  const labels = type.pinLabels;
+  const at = /^pin (\d+)$/.exec(anchor);
+  if (labels === undefined || at === null) return null;
+  return labels[Number(at[1]) - 1] ?? null;
 }
 
 /** フェンス本文から升目のモデルを作る。**読めなければ空**で、嘘の位置を見せない。 */

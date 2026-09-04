@@ -321,6 +321,9 @@ const STYLE = `
 
   /* 注釈の札 (circuit のマップ)。図ではなく掴むための升目なので、印そのものは
      描かず、指した升に小さな札を出す。 */
+  /* 塗り潰す記号の中身 (同軸コネクタの中心導体)。輪郭の線とは別に持つ。 */
+  .cf-glyph-core { fill: var(--cf-ink); stroke: none; }
+
   .cf-note-tag { fill: var(--cf-paper); stroke: var(--cf-ink); stroke-width: 1; opacity: 0.85; }
   .cf-note-text { fill: var(--cf-ink); }
 

@@ -63,6 +63,20 @@ describe('glyphOf', () => {
     expect(glyphOf('ohmmeter')).toEqual({ name: 'meter', mark: 'Ω' });
   });
 
+  test('draws the parts the figure has its own symbol for, not a box', () => {
+    // 実機で「SMA コネクタ、升目の表示も回路図に寄せる」。
+    expect(glyphOf('sma').name).toBe('coax');
+    // ブザーは図がスピーカーの記号で描く。スライドスイッチは切り替えと同じ。
+    expect(glyphOf('buzzer').name).toBe('speaker');
+    expect(glyphOf('slide-switch').name).toBe('spdt');
+  });
+
+  test('keeps the box where the figure draws a box too', () => {
+    // レギュレータとピンヘッダは図でも箱。名前は足のほうが示す。
+    expect(glyphOf('regulator').name).toBe('box');
+    expect(glyphOf('sip4').name).toBe('box');
+  });
+
   test('falls back to a box, so a type with no shape still shows up', () => {
     // 名前は箱の中に出るので、どの部品かは分かる。
     // DIP は箱が**正しい姿**でもあるので、落ちたままにしてある。

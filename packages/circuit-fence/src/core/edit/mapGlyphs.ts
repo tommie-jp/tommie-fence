@@ -25,7 +25,7 @@ export type GlyphName =
   | 'diode' | 'led' | 'zener' | 'thyristor' | 'diac' | 'triac'
   | 'source' | 'battery' | 'switch' | 'switch-nc' | 'button' | 'button-nc'
   | 'reed' | 'spdt' | 'meter'
-  | 'crystal' | 'fuse' | 'lamp' | 'speaker' | 'mic' | 'transformer'
+  | 'crystal' | 'fuse' | 'lamp' | 'speaker' | 'mic' | 'transformer' | 'coax'
   | 'bjt' | 'fet' | 'opamp'
   | 'and' | 'and-inv' | 'or' | 'or-inv' | 'xor' | 'xor-inv' | 'buffer' | 'buffer-inv'
   | 'ground' | 'port' | 'supply-up' | 'supply-down' | 'short' | 'box';
@@ -53,6 +53,12 @@ const SHAPES: Record<string, GlyphName> = {
   ammeter: 'meter', voltmeter: 'meter', ohmmeter: 'meter',
   wattmeter: 'meter', galvanometer: 'meter', detector: 'meter',
   crystal: 'crystal', fuse: 'fuse', lamp: 'lamp', speaker: 'speaker', mic: 'mic',
+  // 同軸コネクタ。**図と同じ丸と中心導体**にする (実機で頼まれた)。
+  sma: 'coax',
+  // ブザーは図がスピーカーの記号で描く (circuitikz にブザーの記号が無い)。
+  buzzer: 'speaker',
+  // スライドスイッチは図が切り替えスイッチと同じ記号。
+  'slide-switch': 'spdt',
   npn: 'bjt', pnp: 'bjt',
   nmos: 'fet', pmos: 'fet', njfet: 'fet', pjfet: 'fet',
   'nmos-e': 'fet', 'pmos-e': 'fet', 'nmos-d': 'fet', 'pmos-d': 'fet',
@@ -166,6 +172,8 @@ const SHAPE: Record<GlyphName, () => string> = {
   lamp: () => `${circle(8)}${path('M-5.7,-5.7 L5.7,5.7 M5.7,-5.7 L-5.7,5.7')}`,
   // スピーカー。線の上の振動板と、その上に開くホーン。
   speaker: () => path('M-7,-4 L7,-4 L7,4 L-7,4 Z M-4,-4 L-7,-10 L7,-10 L4,-4'),
+  // 同軸コネクタ。丸の中の点が中心導体、外周が外皮 (図と同じ形)。
+  coax: () => `${circle(8)}${element('circle', { class: 'cf-glyph-core', cx: 0, cy: 0, r: 2.2 })}`,
   // マイク。線に丸が載り、線が丸の底を塞ぐ。
   mic: () => element('circle', { class: 'cf-glyph', cx: 0, cy: -4, r: 6 })
     + path('M-6,2 L6,2'),
@@ -220,7 +228,7 @@ const SPAN: Record<GlyphName, number> = {
   diode: 6, led: 6, zener: 9, thyristor: 6, diac: 8, triac: 8,
   source: 9, battery: 5.5, meter: 9,
   switch: 9, 'switch-nc': 9, button: 6, 'button-nc': 6, reed: HALF, spdt: HALF,
-  crystal: 6, fuse: 8, lamp: 8, speaker: 7, mic: 6,
+  crystal: 6, fuse: 8, lamp: 8, speaker: 7, mic: 6, coax: 8,
   bjt: 13, fet: 13, opamp: 8,
   // 反転する形は**出口の丸の外側**まで取る。丸の手前から棒を出すと、
   // 棒が丸を突き抜けて出てくる (実機で見つけた)。
@@ -259,7 +267,7 @@ const LEG_GAP: Record<GlyphName, number> = {
   diode: 12, led: 12, zener: 12, thyristor: 12, diac: 12, triac: 12,
   source: 12, battery: 12, meter: 12,
   switch: 12, 'switch-nc': 12, button: 12, 'button-nc': 12, reed: 12,
-  crystal: 12, fuse: 12, lamp: 12, speaker: 12, mic: 12,
+  crystal: 12, fuse: 12, lamp: 12, speaker: 12, mic: 12, coax: 12,
   bjt: 12, fet: 12, buffer: 12, 'buffer-inv': 12,
   ground: 12, port: 12, 'supply-up': 12, 'supply-down': 12, short: 12,
 };

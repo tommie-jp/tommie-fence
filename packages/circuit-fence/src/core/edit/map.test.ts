@@ -96,6 +96,15 @@ describe('gridMap', () => {
     expect(sideOf('parts:\n  M1: pigbt b2\n', 'E')).toBe('top');
   });
 
+  test('names the legs the way the figure does, not by the first spelling that fits', () => {
+    // レギュレータは名前でも番号でも書けるが、**図には IN / GND / OUT と出る**。
+    // `mainPinName` は書ける綴りの先頭を返すので、数字めいた鍵が先に並ぶ
+    // JS の決まりのせいで升目だけ番号になっていた (実機で気づいた)。
+    const names = gridMap('parts:\n  U1: regulator b2\n').chips[0]?.pins.map((pin) => pin.name);
+
+    expect(names).toEqual(['IN', 'GND', 'OUT']);
+  });
+
   test('gives the opamp inputs a place too, though they sit off the centre line', () => {
     // `pinSide` は「まっすぐ引けるか」の表。置き場は別の表 (`pinRow`) で持つ。
     const pins = gridMap('parts:\n  U1: opamp b2\n').chips[0]?.pins ?? [];
