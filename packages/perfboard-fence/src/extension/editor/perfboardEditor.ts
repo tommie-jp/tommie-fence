@@ -14,7 +14,7 @@ import {
   setNoteField, turnNote,
 } from '../../core/edit/note.ts';
 import { flipPart, turnPart } from '../../core/edit/turn.ts';
-import { movePart, movablePartIds, partSpans, stepCell } from '../../core/edit/move.ts';
+import { movePart, movablePartIds, partSpans, stepCell, stepsTo } from '../../core/edit/move.ts';
 import { movePoint, nodeSpans } from '../../core/edit/point.ts';
 import { deletePart, deleteWire } from '../../core/edit/remove.ts';
 import { extractPerfboardFences } from '../../core/fences.ts';
@@ -74,6 +74,7 @@ export function createPerfboardEditor(): FenceEditor {
     // 配線は穴から穴へ 1 本 (折れの綴りが文法に無い)。
     foldsWire: false,
     step: stepCell,
+    stepsTo,
 
     palette: renderPalette,
     typeNames: renderTypeOptions,

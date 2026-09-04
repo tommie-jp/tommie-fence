@@ -161,6 +161,12 @@ export type FenceEditor = {
    * 「1 つ隣」を数えられるのはフェンスだけ。
    */
   readonly step: (cell: string, rows: number, cols: number) => string | null;
+  /**
+   * 2 つの穴の間の行数と列数。**まとめて選んだものを同じだけずらす**ために要る
+   * (押した部品の動きを、ほかの部品にも掛ける)。数に落ちない綴り
+   * (レールの行) や読めない綴りは null。
+   */
+  readonly stepsTo: (from: string, to: string) => { readonly rows: number; readonly cols: number } | null;
 
   /** パレット (置ける部品の一覧) の HTML。 */
   readonly palette: () => string;

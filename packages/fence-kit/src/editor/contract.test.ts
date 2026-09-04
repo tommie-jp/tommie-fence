@@ -66,6 +66,15 @@ function fakeEditor(over: Partial<FenceEditor> = {}): FenceEditor {
     palette: () => '<button data-type="resistor" data-ends="2"></button><button data-type="led"></button>',
     typeNames: () => '',
     colorNames: () => '',
+    stepsTo: (from, to) => {
+      const at = (cell: string) => /^([a-z])(\d+)$/.exec(cell);
+      const [start, end] = [at(from), at(to)];
+      if (start === null || end === null) return null;
+      return {
+        rows: (end[1] ?? 'a').charCodeAt(0) - (start[1] ?? 'a').charCodeAt(0),
+        cols: Number(end[2]) - Number(start[2]),
+      };
+    },
     movePart: (source, handle, to) => (lineOf(source, handle) === null
       ? no(`${handle} がありません`)
       : ok([{ kind: 'delete', line: 1 }, { kind: 'insert', line: 1, text: `${handle}: resistor ${to} a3` }])),

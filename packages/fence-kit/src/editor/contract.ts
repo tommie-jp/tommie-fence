@@ -121,6 +121,14 @@ export function checkFenceEditor(editor: FenceEditor, fixture: ContractFixture):
   if (editor.step(room, 0, 0) !== room) say(`${room} から 0 だけ動かすと別の穴になります`);
   if (editor.step('読めない綴り', 0, 1) !== null) say('読めない綴りの隣を返します');
 
+  // **まとめて選んだものを同じだけずらす**ので、2 つの穴の差を数えられること。
+  const apart = right === null ? null : editor.stepsTo(room, right);
+  if (apart === null) say(`${room} と隣の穴の差を数えられません`);
+  else if (editor.step(room, apart.rows, apart.cols) !== right) say(`${room} の差を戻すと別の穴になります`);
+  if (editor.stepsTo(room, room)?.rows !== 0 || editor.stepsTo(room, room)?.cols !== 0) {
+    say(`${room} と同じ穴の差が 0 になりません`);
+  }
+
   // --- 掴んで動かす・消す ---
   const moved = editor.movePart(source, part, moveTo);
   if (!moved.ok) {

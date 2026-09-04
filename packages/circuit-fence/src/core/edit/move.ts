@@ -121,3 +121,13 @@ export function stepCell(written: string, rows: number, cols: number): string | 
   const next = { row: from.row + rows, col: from.col + cols };
   return isOnGrid(next) ? formatAddress(next) : null;
 }
+
+/**
+ * 2 つの番地の間の行数と列数。**まとめて選んだものを同じだけずらす**ために要る。
+ * 交点の間の番地 (`a_1.5`) も引けるので、端数のまま返る。
+ */
+export function stepsTo(from: string, to: string): { readonly rows: number; readonly cols: number } | null {
+  const start = parseAddress(from);
+  const end = parseAddress(to);
+  return start === null || end === null ? null : { rows: end.row - start.row, cols: end.col - start.col };
+}

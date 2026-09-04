@@ -152,6 +152,16 @@ export function stepCell(written: string, rows: number, cols: number): string | 
 }
 
 /**
+ * 2 つの穴の間の行数と列数。**まとめて選んだものを同じだけずらす**ために要る。
+ * 格子が一様なので、そのまま引くだけ。
+ */
+export function stepsTo(from: string, to: string): { readonly rows: number; readonly cols: number } | null {
+  const start = parseAddress(from);
+  const end = parseAddress(to);
+  return start === null || end === null ? null : { rows: end.row - start.row, cols: end.col - start.col };
+}
+
+/**
  * 足が置けない所に落ちていないか。**張り出す形かどうかで規則が変わる** —
  * 端面実装のコネクタは板の縁の外に足があるのが正しい姿で、ほかの部品の足は
  * 穴に入っていなければならない。置く側 (`placement/place.ts`) と同じ見方。

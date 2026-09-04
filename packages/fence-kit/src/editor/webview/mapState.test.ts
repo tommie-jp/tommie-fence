@@ -371,3 +371,49 @@ describe('打鍵を横取りしない', () => {
     expect(state.selected).toBeNull();
   });
 });
+
+describe('まとめて選ぶ (領域選択)', () => {
+  const picked = (...ids: string[]) => step(start(false), { kind: 'pickMany', parts: ids });
+
+  test('remembers everything the band caught, and says how many', () => {
+    const out = picked('R1', 'R2', 'R3');
+
+    expect(out.state.selected).toEqual({ kind: 'part', id: 'R1' });
+    expect(out.state.also).toHaveLength(3);
+    expect(out.status).toContain('3 個');
+  });
+
+  test('keeps the single case exactly as it was', () => {
+    // 1 つのときは並びを持たない — 受け取る側が数で分けなくて済む。
+    const out = picked('R1');
+
+    expect(out.state.also).toEqual([]);
+    expect(out.status).toContain('R1');
+  });
+
+  test('sends the whole group with turn, flip, duplicate and delete', () => {
+    const many = picked('R1', 'R2').state;
+    const keyed = (key: string, modifier = false) =>
+      step(many, { kind: 'key', key, shift: false, modifier }).send[0];
+
+    expect(keyed('r')).toMatchObject({ kind: 'turn', part: 'R1', parts: ['R1', 'R2'] });
+    expect(keyed('x')).toMatchObject({ kind: 'flip', parts: ['R1', 'R2'] });
+    expect(keyed('d', true)).toMatchObject({ kind: 'duplicate', parts: ['R1', 'R2'] });
+    expect(keyed('Delete')).toMatchObject({ kind: 'delete', ids: ['R1', 'R2'] });
+  });
+
+  test('does not add the list when only one is selected', () => {
+    const one = picked('R1').state;
+    const command = step(one, { kind: 'key', key: 'r', shift: false, modifier: false }).send[0];
+
+    expect(command).toEqual({ kind: 'turn', part: 'R1', quarters: 1 });
+  });
+
+  test('lets go of the group when the selection is cleared', () => {
+    const many = picked('R1', 'R2').state;
+    const out = step(many, { kind: 'key', key: 'Escape', shift: false, modifier: false });
+
+    expect(out.state.also).toEqual([]);
+    expect(out.state.selected).toBe(null);
+  });
+});

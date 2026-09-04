@@ -75,6 +75,10 @@ export type Outgoing =
 export type Incoming = {
   readonly kind: string;
   readonly part?: unknown;
+  /** まとめて選んだものの名札 (領域選択)。1 つだけのときは `part` と同じ。 */
+  readonly parts?: unknown;
+  /** まとめて消すときの名札。 */
+  readonly ids?: unknown;
   readonly from?: unknown;
   readonly to?: unknown;
   readonly what?: unknown;
@@ -174,7 +178,38 @@ type Request = {
   readonly plan: (source: string) => EditResult;
 };
 
+/**
+ * いくつかの書き換えを**続けて当てて 1 つにまとめる**。まとめて選んだものへ
+ * 同じ操作を掛けるときに要る。
+ *
+ * **1 回の書き換えにする** — 1 つずつ当てると、戻すのに選んだ数だけ押すことに
+ * なる (選んだのは 1 回なので、戻すのも 1 回であるべき)。
+ *
+ * 途中で断られたものは**飛ばして続ける**。1 つ置けないだけで残り全部が
+ * 動かないほうが困るので、断りは数えて最後に言う。
+ */
+const foldPlans = (
+  source: string,
+  plans: readonly ((now: string) => EditResult)[],
+): { readonly body: string; readonly refusals: readonly string[] } => {
+  const refusals: string[] = [];
+  let body = source;
+  for (const plan of plans) {
+    const result = plan(body);
+    if (result.ok) body = applyRewrite(body, result.value);
+    else refusals.push(result.error.message);
+  }
+  return { body, refusals };
+};
+
 const text = (value: unknown): string | null => (typeof value === 'string' ? value : null);
+
+/**
+ * まとめて選んだものの名札。**1 つだけのときも同じ道を通す** —
+ * 1 つと複数で別の道にすると、片方だけ直す取りこぼしが出る。
+ */
+const handles = (value: unknown): readonly string[] =>
+  (Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []);
 
 /** ゴーストの仮の名前。置く前の試し当てにだけ使う (本文には書かない)。 */
 const GHOST_ID = 'GHOST';
@@ -409,6 +444,40 @@ export function createSession<D extends DocLike>(
    * 動かすという本来の用途で邪魔になる。接続の変化は黙らせず、帯に出す。
    * 戻したければ元に戻す (自前の履歴か、カスタムエディタなら VS Code の undo)。
    */
+  /**
+   * まとめて選んだものへ同じ操作を掛ける。**書き換えは 1 回**にまとめるので、
+   * 戻すのも 1 回で済む。
+   */
+  async function runAll(
+    label: string,
+    plans: readonly ((source: string) => EditResult)[],
+  ): Promise<void> {
+    const fence = fenceNow();
+    if (fence === null || plans.length === 0) return;
+
+    const before = fenceBody(fence.document, fence.line, fence.source);
+    const { body, refusals } = foldPlans(fence.source, plans);
+    if (body === fence.source) {
+      say(refusals[0] ?? '変わりません');
+      return;
+    }
+
+    const applied = await host.replaceBody(fence.document, fence.line, before.length, body.split('\n'));
+    if (!applied) {
+      say('書き換えられませんでした');
+      return;
+    }
+    if (ownHistory) {
+      const now = editor.fenceAt(fence.document.getText(), fence.line);
+      if (now !== null) {
+        history.push({ label, before, after: fenceBody(fence.document, fence.line, now.source) });
+      }
+    }
+    // **できなかったものは数えて言う。** 黙って飛ばすと、選んだのに動かなかった
+    // ものがあることに気づけない。
+    say(refusals.length === 0 ? label : `${label} (${refusals.length} 件できませんでした: ${refusals[0]})`);
+  }
+
   async function run(request: Request): Promise<void> {
     const fence = fenceNow();
     if (fence === null) return;
@@ -452,12 +521,46 @@ export function createSession<D extends DocLike>(
     say(`${request.done(changes)}${changed === null ? '' : `。${changed}`}`);
   }
 
+  /**
+   * その穴を、`start` から `to` への差だけずらした穴。**フェンスに数えさせる** —
+   * 番地の綴りは板ごとに違うので、殻は引き算を知らない。
+   */
+  function shiftCell(cell: string, start: string, to: string): string | null {
+    const step = editor.stepsTo(start, to);
+    return step === null ? null : editor.step(cell, step.rows, step.cols);
+  }
+
   /** マップから来た「何を・どこへ」。部品は 1 つだけ動き、節点は交点ごと動く。 */
   async function move(message: Incoming): Promise<void> {
     // **黙って戻らない。** webview は「R1 を b1 へ…」を出したまま待っている。
     const written = text(message.to);
     if (written === null) {
       say('マップからの知らせを読めませんでした (置き先がありません)');
+      return;
+    }
+
+    // **まとめて選んでいるときは、押した部品の動き方をほかにも掛ける。**
+    // 行き先は 1 つしか来ないので、その差だけ全部をずらす。
+    const together = handles(message.parts);
+    if (message.kind === 'move' && together.length > 1) {
+      const anchor = text(message.part);
+      const fence = fenceNow();
+      const from = anchor === null || fence === null ? [] : editor.cellsOf(fence.source, anchor);
+      const start = from[0];
+      if (anchor === null || start === undefined) {
+        say('マップからの知らせを読めませんでした (どこから動かすかがありません)');
+        return;
+      }
+      await runAll(
+        `${together.length} 個を動かしました`,
+        together.map((one) => (source: string) => {
+          const at = editor.cellsOf(source, one)[0];
+          const to = at === undefined ? null : shiftCell(at, start, written);
+          return to === null
+            ? { ok: false as const, error: { message: `${editor.nameOf(one)} の動かし先を数えられません`, line: null } }
+            : editor.movePart(source, one, to);
+        }),
+      );
       return;
     }
 
@@ -737,6 +840,22 @@ export function createSession<D extends DocLike>(
    * 1 穴ずらして置く。重ねて置くと図の上で見分けが付かない。
    */
   async function duplicate(message: Incoming): Promise<void> {
+    const picked = handles(message.parts);
+    if (picked.length > 1) {
+      // **名前は 1 つずつ、その時点の本文から取る** — 先に決め打つと、
+      // 2 つ目以降が 1 つ目と同じ名前になる。
+      await runAll(
+        `${picked.length} 個を複製しました`,
+        picked.map((one) => (source: string) => {
+          const fields = editor.fieldsOf(source, one);
+          const id = fields === null ? null : editor.nextId(source, fields.type);
+          return id === null
+            ? { ok: false as const, error: { message: `${editor.nameOf(one)} は複製できません`, line: null } }
+            : editor.duplicate(source, one, id);
+        }),
+      );
+      return;
+    }
     const handle = text(message.part);
     const fence = handle === null ? null : fenceNow();
     if (handle === null || fence === null) {
@@ -781,6 +900,14 @@ export function createSession<D extends DocLike>(
   /** マップから来た「これを消す」。部品は足を指す配線も連れていく。 */
   async function remove(message: Incoming): Promise<void> {
     const what = text(message.what);
+    const picked = handles(message.ids);
+    if (picked.length > 1 && what === 'part') {
+      await runAll(
+        `${picked.length} 個を消しました`,
+        picked.map((one) => (source: string) => editor.deletePart(source, one)),
+      );
+      return;
+    }
     const id = text(message.id);
     if (id === null || (what !== 'part' && what !== 'wire')) {
       say('マップからの知らせを読めませんでした (何を消すかがありません)');
@@ -810,6 +937,7 @@ export function createSession<D extends DocLike>(
 
   /** マップから来た「これを回す / 反転する」。2 端子は番地の順が向きそのもの。 */
   async function turn(message: Incoming): Promise<void> {
+    const picked = handles(message.parts);
     const handle = text(message.part);
     const part = handle === null ? null : editor.nameOf(handle);
     if (handle === null || part === null) {
@@ -817,6 +945,18 @@ export function createSession<D extends DocLike>(
       return;
     }
     const quarters = typeof message.quarters === 'number' ? message.quarters : 0;
+
+    // **まとめて選んでいるときは 1 回の書き換えにする** (戻すのも 1 回で済む)。
+    if (picked.length > 1) {
+      const what = message.kind === 'flip' ? '反転' : '回転';
+      await runAll(
+        `${picked.length} 個を${what}しました`,
+        picked.map((one) => (source: string) => (
+          message.kind === 'flip' ? editor.flip(source, one) : editor.turn(source, one, quarters)
+        )),
+      );
+      return;
+    }
 
     await run(message.kind === 'flip'
       ? {

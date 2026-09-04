@@ -190,6 +190,20 @@ export function stepCell(written: string, rows: number, cols: number): string | 
   return shiftedOn(from, rows, cols);
 }
 
+/**
+ * 2 つの穴の間の行数と列数。**まとめて選んだものを同じだけずらす**ために要る。
+ * **レールは行が極性そのもの**で数に落ちないので、穴どうしのときだけ数える。
+ */
+export function stepsTo(from: string, to: string): { readonly rows: number; readonly cols: number } | null {
+  const start = parseAddress(from);
+  const end = parseAddress(to);
+  if (start === null || end === null) return null;
+  if (start.kind !== 'hole' || end.kind !== 'hole') {
+    return start.kind === end.kind ? { rows: 0, cols: end.col - start.col } : null;
+  }
+  return { rows: HOLE_ROWS.indexOf(end.row) - HOLE_ROWS.indexOf(start.row), cols: end.col - start.col };
+}
+
 /** 数え直した穴。行は `a`〜`j`、列は 1 から。 */
 function shiftedOn(from: Address, rows: number, cols: number): string | null {
   const col = from.col + cols;

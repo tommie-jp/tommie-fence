@@ -95,6 +95,11 @@ export type Ghost = {
 export type State = {
   readonly tool: Tool;
   readonly selected: Picked | null;
+  /**
+   * まとめて選んだもの (`selected` を含む)。**1 つのときは空**にしておくので、
+   * 今までの道はそのまま動く。領域で囲んだときだけ増える。
+   */
+  readonly also: readonly Picked[];
   readonly under: Under;
   readonly carry: Carry | null;
   /** 配線の 1 点目 (配線の道具)。2 点目のクリックで 1 本になる。 */
@@ -117,6 +122,7 @@ export const start = (ownUndo: boolean, foldsWire = false): State => ({
   carry: null,
   wireFrom: null,
   pressed: null,
+  also: [],
   ghost: null,
   lastPlaced: null,
   ownUndo,
@@ -138,6 +144,11 @@ export type Event =
     /** Ctrl か Cmd (か Alt)。 */
     readonly modifier: boolean;
   }
+  /**
+   * 領域で囲んで選んだ。**中身を数えるのは DOM の側** (どの部品がどこに
+   * 描かれているかを知っているのはあちら)。ここは覚えるだけ。
+   */
+  | { readonly kind: 'pickMany'; readonly parts: readonly string[] }
   | { readonly kind: 'tool'; readonly tool: Tool }
   /** パレットで部品を選んだ。 */
   | { readonly kind: 'place'; readonly type: string; readonly twoEnds: boolean }
@@ -172,7 +183,8 @@ const ARROWS: Readonly<Record<string, { readonly rows: number; readonly cols: nu
 };
 
 /** ドラッグと見なす距離。指で押すと数 px は動くので、0 では選べない。 */
-const DRAG = 6;
+/** これ以上動いたらドラッグ (押しただけと見分ける)。DOM の側も同じ数を見る。 */
+export const DRAG = 6;
 
 const select = (picked: Picked | null): Message =>
   (picked === null ? { kind: 'select' } : { kind: 'select', what: picked.kind, id: picked.id });
@@ -358,7 +370,13 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
     }
     const done: State = { ...clear, carry: null, ghost: null };
     if (carry.kind === 'move') {
-      return outcome(done, [{ kind: 'move', part: carry.part, to: cell }], `${shownName(carry.part)} を ${cell} へ…`);
+      // **まとめて選んでいるときは、押した部品の動きをほかにも掛ける。**
+      const many = pickedParts(state);
+      return outcome(
+        done,
+        [{ kind: 'move', part: carry.part, to: cell, ...(many.length > 1 ? { parts: many } : {}) }],
+        many.length > 1 ? `${many.length} 個を ${cell} へ…` : `${shownName(carry.part)} を ${cell} へ…`,
+      );
     }
     return outcome(
       { ...done, selected: null },
@@ -389,7 +407,7 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
     if (state.wireFrom !== null) return outcome({ ...state, wireFrom: null, pressed: null }, [], null, true);
     if (state.tool !== 'select') return { ...step(state, { kind: 'tool', tool: 'select' }), handled: true };
     if (state.selected === null) return outcome(state);
-    return outcome({ ...state, selected: null, pressed: null }, [select(null)], null, true);
+    return outcome({ ...state, selected: null, also: [], pressed: null }, [select(null)], null, true);
   }
 
   if (event.modifier) {
@@ -398,7 +416,13 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
     if (event.key.toLowerCase() === 'd') {
       const part = partTarget(state);
       if (part === null) return outcome(state);
-      return outcome(state, [{ kind: 'duplicate', part }], `${shownName(part)} をもう 1 つ…`, true);
+      const picked = pickedParts(state);
+      return outcome(
+        state,
+        [{ kind: 'duplicate', part, ...(picked.length > 1 ? { parts: picked } : {}) }],
+        picked.length > 1 ? `${picked.length} 個を複製しています…` : `${shownName(part)} をもう 1 つ…`,
+        true,
+      );
     }
     // **パネルにフォーカスがあると VS Code の Ctrl+Z は届かない。** ここで受けて、
     // 拡張側が覚えている履歴を巻き戻す。タブそのものがマップのときは横取りせず通す。
@@ -455,10 +479,15 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
       ? state.selected
       : topOf(state.under, ['part', 'wire']);
     if (picked === null) return outcome(state);
+    // **まとめて選んでいるときは全部消す。** 1 つのときは知らせも今までどおり。
+    const many = pickedParts(state);
     return outcome(
-      { ...state, selected: null, pressed: null },
-      [{ kind: 'delete', what: picked.kind, id: picked.id }],
-      `${shownName(picked.id)} を消しています…`,
+      { ...state, selected: null, also: [], pressed: null },
+      [{
+        kind: 'delete', what: picked.kind, id: picked.id,
+        ...(many.length > 1 ? { ids: many } : {}),
+      }],
+      many.length > 1 ? `${many.length} 個を消しています…` : `${shownName(picked.id)} を消しています…`,
       true,
     );
   }
@@ -478,16 +507,43 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
     );
   }
 
+  // **まとめて選んでいるときは全部に効かせる。** 1 つのときは知らせも今までどおり
+  // (並びを添えるのは複数のときだけ — 受け取る側が数で分けなくて済む)。
+  const many = pickedParts(state);
+  const group = many.length > 1 ? { parts: many } : {};
+  const said = many.length > 1 ? `${many.length} 個` : shownName(part);
+
   if (key === 'm') return carrying({ ...state, selected: picked }, { kind: 'move', part, byPointer: false }, true);
   if (key === 'r') {
     const quarters = event.shift ? -1 : 1;
-    return outcome(state, [{ kind: 'turn', part, quarters }], `${shownName(part)} を回しています…`, true);
+    return outcome(state, [{ kind: 'turn', part, ...group, quarters }], `${said}を回しています…`, true);
   }
-  if (key === 'x') return outcome(state, [{ kind: 'flip', part }], `${shownName(part)} を反転しています…`, true);
+  if (key === 'x') return outcome(state, [{ kind: 'flip', part, ...group }], `${said}を反転しています…`, true);
   if (key === 'e' || key === 'F2') {
     return outcome({ ...state, selected: picked }, [select(picked)], null, true, 'id');
   }
   return outcome(state);
+}
+
+/**
+ * いま効かせる先の名札の並び。**1 つのときは 1 件の並び**にして、
+ * 呼ぶ側が数を気にしなくて済むようにする。
+ */
+export const pickedParts = (state: State): readonly string[] =>
+  (state.also.length > 0
+    ? state.also.filter((one) => one.kind === 'part').map((one) => one.id)
+    : state.selected?.kind === 'part' ? [state.selected.id] : []);
+
+function onPickMany(state: State, parts: readonly string[]): Outcome {
+  const picked: Picked[] = parts.map((id) => ({ kind: 'part', id }));
+  const first = picked[0] ?? null;
+  if (first === null) return outcome({ ...state, selected: null, also: [] }, [select(null)], null, true);
+  return outcome(
+    { ...state, selected: first, also: picked.length > 1 ? picked : [], pressed: null },
+    [select(first)],
+    picked.length > 1 ? `${picked.length} 個を選びました` : `${shownName(first.id)} を選びました`,
+    true,
+  );
 }
 
 /** 拡張のゴースト。**いま訊いているものの答えだけ**を受け取る (古い答えは捨てる)。 */
@@ -527,6 +583,8 @@ export function step(state: State, event: Event): Outcome {
       const lifted = carrying({ ...state, tool: 'select', selected: null, wireFrom: null }, carry);
       return { ...lifted, send: [select(null), ...lifted.send] };
     }
+    case 'pickMany':
+      return onPickMany(state, event.parts);
     case 'ghost':
       return onGhost(state, event.ghost);
     case 'refresh':

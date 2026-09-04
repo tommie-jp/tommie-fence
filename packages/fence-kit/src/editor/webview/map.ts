@@ -1,4 +1,4 @@
-import { NOTHING, start, step, topOf } from './mapState.ts';
+import { DRAG, NOTHING, start, step, topOf } from './mapState.ts';
 import type { Event, Focus, Picked, State, Under } from './mapState.ts';
 
 /**
@@ -168,8 +168,11 @@ function frameSelected(shown: Element | null): void {
   shown.after(frame);
 }
 
-function markSelected(picked: Picked | null): void {
+function markSelected(picked: Picked | null, also: readonly Picked[] = []): void {
   unmark('cf-held');
+  // **まとめて選んだものは全部光らせる。** 枠を出すのは押した 1 つだけ
+  // (全部に枠を出すと、どれを軸に動かすのか読めない)。
+  for (const one of also) shownFor(one)?.classList.add('cf-held');
   const shown = shownFor(picked);
   shown?.classList.add('cf-held');
   frameSelected(shown);
@@ -292,7 +295,7 @@ function markWireFrom(now: State): void {
 }
 
 function paint(now: State): void {
-  markSelected(now.selected);
+  markSelected(now.selected, now.also);
   markHover(now);
   markGhost(now);
   markCarried(now);
@@ -435,6 +438,52 @@ const typing = (target: EventTarget | null): boolean =>
 
 // ---------------------------------------------------------------- ポインタ
 
+/**
+ * 領域で囲んで選ぶ (ラバーバンド)。**何も無い所を押して引いたときだけ** —
+ * 部品や穴の上から始めると、掴んで動かすのと見分けが付かない。
+ *
+ * 中身を数えるのはここ (DOM) の仕事。どの部品がどこに描かれているかを
+ * 知っているのはこちらで、状態機械は覚えるだけ。
+ */
+let band: { readonly x: number; readonly y: number } | null = null;
+
+const bandBox = (): HTMLElement | null => query<HTMLElement>('.kc-band-select');
+
+function showBand(from: { readonly x: number; readonly y: number }, x: number, y: number): void {
+  let box = bandBox();
+  if (box === null) {
+    box = document.createElement('div');
+    box.className = 'kc-band-select';
+    canvas()?.appendChild(box);
+  }
+  const canvasBox = canvas()?.getBoundingClientRect();
+  const left = Math.min(from.x, x) - (canvasBox?.left ?? 0);
+  const top = Math.min(from.y, y) - (canvasBox?.top ?? 0);
+  box.style.left = `${left}px`;
+  box.style.top = `${top}px`;
+  box.style.width = `${Math.abs(x - from.x)}px`;
+  box.style.height = `${Math.abs(y - from.y)}px`;
+}
+
+const hideBand = (): void => { bandBox()?.remove(); };
+
+/** 囲んだ中にある部品の名札。**中心が入っていれば選ぶ** (端がかすっただけでは選ばない)。 */
+function partsInside(from: { readonly x: number; readonly y: number }, x: number, y: number): readonly string[] {
+  const left = Math.min(from.x, x);
+  const right = Math.max(from.x, x);
+  const top = Math.min(from.y, y);
+  const bottom = Math.max(from.y, y);
+  const found: string[] = [];
+  for (const chip of document.querySelectorAll('.cf-chip[data-part]')) {
+    const box = chip.getBoundingClientRect();
+    const cx = box.left + box.width / 2;
+    const cy = box.top + box.height / 2;
+    const id = chip.getAttribute('data-part');
+    if (id !== null && cx >= left && cx <= right && cy >= top && cy <= bottom) found.push(id);
+  }
+  return found;
+}
+
 document.addEventListener('pointerdown', (event) => {
   const target = elementOf(event);
   // 一覧の外を押したら閉じる (中は `click` が拾う)。
@@ -448,7 +497,13 @@ document.addEventListener('pointerdown', (event) => {
   }
   if (event.button !== 0) return;
   if (target?.closest('.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status')) return;
-  run({ kind: 'press', under: underAt(event.clientX, event.clientY), x: event.clientX, y: event.clientY, onMap: onCanvas });
+  const under = underAt(event.clientX, event.clientY);
+  // **何も無い所から引いたら領域選択。** 掴むものがある所から始めたら今までどおり。
+  if (onCanvas && state.tool === 'select' && state.carry === null
+    && under.part === null && under.node === null && under.wire === null) {
+    band = { x: event.clientX, y: event.clientY };
+  }
+  run({ kind: 'press', under, x: event.clientX, y: event.clientY, onMap: onCanvas });
 });
 
 document.addEventListener('pointermove', (event) => {
@@ -463,6 +518,10 @@ document.addEventListener('pointermove', (event) => {
     return;
   }
   const under = underAt(event.clientX, event.clientY);
+  if (band !== null && (event.buttons & 1) !== 0) {
+    showBand(band, event.clientX, event.clientY);
+    return;
+  }
   if ((event.buttons & 1) !== 0 && state.pressed !== null) {
     run({ kind: 'drag', under, x: event.clientX, y: event.clientY });
     return;
@@ -476,6 +535,16 @@ document.addEventListener('pointerup', (event) => {
     return;
   }
   if (event.button !== 0) return;
+  if (band !== null) {
+    const from = band;
+    band = null;
+    hideBand();
+    // **少しの動きは領域ではなく「押した」。** 手が震えただけで選び直さない。
+    if (Math.abs(event.clientX - from.x) + Math.abs(event.clientY - from.y) > DRAG) {
+      run({ kind: 'pickMany', parts: partsInside(from, event.clientX, event.clientY) });
+      return;
+    }
+  }
   const target = elementOf(event);
   if (target?.closest('.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status') && state.pressed === null) return;
   run({

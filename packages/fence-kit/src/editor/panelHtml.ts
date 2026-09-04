@@ -313,6 +313,12 @@ const STYLE = `
     pointer-events: none;
   }
 
+  /* 領域選択の帯。**掴めない** (下の部品を拾わせる)。 */
+  .kc-band-select {
+    position: absolute; z-index: 1; pointer-events: none;
+    border: 1px dashed var(--cf-held); background: var(--cf-held); opacity: 0.18;
+  }
+
   /* 注釈の札 (circuit のマップ)。図ではなく掴むための升目なので、印そのものは
      描かず、指した升に小さな札を出す。 */
   .cf-note-tag { fill: var(--cf-paper); stroke: var(--cf-ink); stroke-width: 1; opacity: 0.85; }
