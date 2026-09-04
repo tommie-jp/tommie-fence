@@ -299,6 +299,30 @@ describe('generateTex の注釈の見た目', () => {
     expect(notes[0]).toMatchObject({ align: 'right' });
   });
 
+  // **回した字は伸びる向きも回る。** 横のぶんだけ取っておくと、縦に回した字が
+  // 画布の外へ出て切れる (実機で「注釈が出ない」と言われて見つけた)。
+  test('turns the room it keeps with the text, so a sideways note is not cut off', () => {
+    const box = (words: string): readonly [number, number, number, number] => {
+      const tex = generate(...R, 'notes:', `  - text b3 ${words}: ここに注釈`).tex;
+      const found = /\\path \((-?[\d.]+),(-?[\d.]+)\) rectangle \((-?[\d.]+),(-?[\d.]+)\)/.exec(tex);
+      return [Number(found?.[1] ?? 0), Number(found?.[2] ?? 0), Number(found?.[3] ?? 0), Number(found?.[4] ?? 0)];
+    };
+
+    const [flatLeft, , flatRight] = box('left');
+    const flatWidth = flatRight - flatLeft;
+
+    // 90 度は画面の下へ伸びる。TeX の y は上向きなので、下は y が小さいほう。
+    const [downLeft, downBottom, downRight, downTop] = box('r90 left');
+    expect(downRight - downLeft).toBeLessThan(flatWidth);
+    expect(downTop - downBottom).toBeCloseTo(flatWidth, 2);
+    expect(downBottom).toBeLessThan(-4);
+
+    // 270 度は逆に上へ伸びる。
+    const [, upBottom, , upTop] = box('r270 left');
+    expect(upTop - upBottom).toBeCloseTo(flatWidth, 2);
+    expect(upTop).toBeGreaterThan(-4);
+  });
+
   // 目印は 1 文字で本物の字とは幅が違うので、寄せは TeX には決めさせない。
   // 場所だけは、字がどちらへ広がるかに合わせて取っておく。
   test('keeps the room on the side the text will grow to', () => {

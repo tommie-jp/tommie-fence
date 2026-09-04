@@ -125,11 +125,23 @@ function drawTextNote(note: TextNote, pitch: number, target: TexTarget): string[
   // 取っておく。取らないと、図の縁に書いた注釈が SVG の外に出て切れる。
   // 寄せによって字の広がる向きが変わるので、取る場所もそちら側にする。
   const half = noteMargin(note.size);
-  const span = noteSpan(x, noteWidth(note.text, note.size), note.align);
-  return [
-    `\\path (${num(span.from)},${num(y - half)}) rectangle (${num(span.to)},${num(y + half)});`,
-    `\\node[${options.join(', ')}] ${at} {${NOTE_MARK_TEXT}};`,
-  ];
+  const width = noteWidth(note.text, note.size);
+  const mark = `\\node[${options.join(', ')}] ${at} {${NOTE_MARK_TEXT}};`;
+
+  // **回した字は伸びる向きも回る。** 横のぶんだけ取っておくと、縦に回した字が
+  // 画布の外へ出て切れる (実機で「注釈が出ない」と言われて見つけた)。
+  // 90 度と 270 度のときは縦に取り、横は行送りのぶんだけにする。
+  if (note.rotate === 90 || note.rotate === 270) {
+    // SVG の rotate は時計回りなので、90 度の字は画面の下へ伸びる。
+    // TeX の y は上向きだから、下は y が小さいほう — 寄せの向きを裏返して数える。
+    const along = note.rotate === 270 ? noteSpan(y, width, note.align) : noteSpan(-y, width, note.align);
+    const from = note.rotate === 270 ? along.from : -along.to;
+    const to = note.rotate === 270 ? along.to : -along.from;
+    return [`\\path (${num(x - half)},${num(from)}) rectangle (${num(x + half)},${num(to)});`, mark];
+  }
+
+  const span = noteSpan(x, width, note.align);
+  return [`\\path (${num(span.from)},${num(y - half)}) rectangle (${num(span.to)},${num(y + half)});`, mark];
 }
 
 /**

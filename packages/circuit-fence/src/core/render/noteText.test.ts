@@ -145,3 +145,21 @@ describe('applyNotes の見た目', () => {
     expect(svg).toContain('transform="translate(1 2)"');
   });
 });
+
+describe('字を回す', () => {
+  test('adds the turn into the transform the marker already has, not beside it', () => {
+    // **2 つ書くと XML として壊れ、図が丸ごと出なくなる**
+    // (実機で「notes: text を表示しない」と言われて見つけた)。
+    const svg = applyNotes(SVG, [note('ここ', { rotate: 90 })]);
+    const attributes = /<text([^>]*)>/.exec(svg)?.[1] ?? '';
+
+    expect(attributes.match(/\btransform="/g)).toHaveLength(1);
+    expect(attributes).toContain('translate(1 2) rotate(90 ');
+  });
+
+  test('leaves the marker alone when there is no turn', () => {
+    const svg = applyNotes(SVG, [note('ここ')]);
+
+    expect(svg).not.toContain('rotate(');
+  });
+});

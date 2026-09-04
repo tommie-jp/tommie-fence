@@ -60,9 +60,16 @@ const withRotation = (attributes: string, rotate: number): string => {
   if (rotate === 0) return attributes;
   const x = /\bx="([-0-9.]+)"/.exec(attributes)?.[1];
   const y = /\by="([-0-9.]+)"/.exec(attributes)?.[1];
-  return x === undefined || y === undefined
-    ? attributes
-    : `${attributes} transform="rotate(${rotate} ${x} ${y})"`;
+  if (x === undefined || y === undefined) return attributes;
+
+  const turn = `rotate(${rotate} ${x} ${y})`;
+  // **目印にはもう `transform` が付いている** (TeX が置いた位置)。足すのではなく
+  // **同じ属性の中へ継ぎ足す** — 2 つ書くと XML として壊れ、図が丸ごと出なくなる
+  // (実機で「notes: text を表示しない」と言われて見つけた)。
+  const found = /\btransform="([^"]*)"/.exec(attributes);
+  return found === null
+    ? `${attributes} transform="${turn}"`
+    : attributes.replace(found[0], `transform="${found[1]} ${turn}"`);
 };
 
 /** エンジンが目印の色を掛けた器 (`<g>`)。中の字を差し替えたら、その色は用済み。 */

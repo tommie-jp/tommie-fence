@@ -1231,9 +1231,10 @@ style:
 図に入る指定は必ず確かめたものにしてある)。
 
 寄せは、番地を字の左端・真ん中・右端のどこにするかを決める。
+**回した字は、伸びる向きも一緒に回る** — `r90` は下へ、`r270` は上へ伸びる。
 
 ```circuit
-title: 図22 寄せと太字
+title: 図22 寄せ・太字・向き
 parts:
   R1: resistor a1 a2 10k
 notes:
@@ -1244,13 +1245,15 @@ notes:
   - circle d2
   - text d2 right: right (番地が右端)
   - text e2 bold: bold で太字になる
-  - source a5 blue
+  - text a4 r90: r90 で縦
+  - text e5 r270: r270 で逆さ
+  - source a7 blue
 style:
   grid: on
   grid-to: e3
 ```
 
-![図22 寄せと太字](out/01-syntax-22.png)
+![図22 寄せ・太字・向き](out/01-syntax-22.png)
 
 同じ種類の言葉を 2 回書くと、後に書いたほうが黙って勝つのではなく
 行番号つきで返る。知らない言葉も、書ける言葉を添えて返る。
