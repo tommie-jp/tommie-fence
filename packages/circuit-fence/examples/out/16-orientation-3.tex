@@ -28,6 +28,7 @@
 \draw (a5) node[ocirc]{} node[above left]{IN}; % line 3
 \draw (a5) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (b5); % line 4
 \node[npn, rotate=-90] (part-Q1) at (c5) {}; % line 5
+\node[anchor=north] at (part-Q1.east) {$Q_{1}$}; % line 5
 \draw (c7) to[R, l_=$R_{C}$, a^=$1\,\mathrm{k}\Omega$] (c9); % line 6
 \node[vcc] at (c9) {VCC}; % line 7
 \node[ground, rotate=-90] at (c3) {}; % line 8

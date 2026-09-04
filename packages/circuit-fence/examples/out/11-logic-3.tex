@@ -18,6 +18,7 @@
 \coordinate (a4) at (6,0);
 \coordinate (c4) at (6,-4);
 \node[spdt] (part-S1) at (b2) {}; % line 3
+\node[anchor=south] at (part-S1.north) {$S_{1}$}; % line 3
 \draw (b1) |- (part-S1.in); % line 5
 \draw (part-S1.out 1) -| (a4); % line 6
 \draw (part-S1.out 2) -| (c4); % line 7

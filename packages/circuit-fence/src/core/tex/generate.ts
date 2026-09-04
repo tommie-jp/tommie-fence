@@ -3,8 +3,8 @@ import { DEFAULT_PITCH, cornerOf, formatAddress, texNameOfAddress, toPoint } fro
 import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
-import { isTurned, lookupPartType, optionsFor, pinPlaces, pinSideOf, symbolFor } from '../parts.ts';
-import type { PartType, SourceInner, Turn } from '../parts.ts';
+import { isTurned, lookupPartType, optionsFor, pinPlaces, pinSideOf, symbolFor, turnSide } from '../parts.ts';
+import type { PartType, PinSide, SourceInner, Turn } from '../parts.ts';
 import { EMPTY_STYLE } from '../parser/style.ts';
 import { cellOf as addressOf, nodeNameOf, texNameOfEndpoint } from '../types.ts';
 import type {
@@ -718,9 +718,64 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
     : type?.valueInside === true
       ? (boxTurned ? [`\\node[font=\\scriptsize] at (${name}.center) {${annotation}};`] : [])
       : [`\\node[font=\\scriptsize, anchor=${outward}] at (${name}.${place}) {${annotation}};`];
-  if (symbol === 'plain amp') return [node, ...number, ...amplifierSigns(name, part.turn)];
+  // 値がどちらの側に出ているか (名札はそこを避ける)。**箱の中の値は外を塞がない。**
+  // **寄せの反対が字の出る側** — `anchor=south` なら点の上に出る。
+  const valueSide = annotation === null || type?.valueInside === true
+    ? null
+    : (SIDE_OF[OPPOSITE[outward] ?? 'south'] ?? null);
+  const named = nameNode(part, name, type, valueSide);
+  if (symbol === 'plain amp') return [node, ...number, named, ...amplifierSigns(name, part.turn)];
 
-  return [node, ...number, ...pinNameNodes(part, name, type, target)];
+  return [node, ...number, named, ...pinNameNodes(part, name, type, target)];
+}
+
+/** 辺の名前 (画面の側)。**アンカー名から辺へ**戻すとき使う。 */
+const SIDE_OF: Readonly<Record<string, PinSide>> = {
+  north: 'top', south: 'bottom', east: 'right', west: 'left',
+};
+
+/** 名札を出す辺を探す順。**上が第一希望** — 回路図で名札は記号の上に来る。 */
+const NAME_ORDER: readonly PinSide[] = ['top', 'bottom', 'left', 'right'];
+
+/** 名札を値の外側へ 1 行ぶん逃がすときの押し出し。 */
+const STACK: Readonly<Record<PinSide, string>> = {
+  top: 'yshift=9pt', bottom: 'yshift=-9pt', left: 'xshift=-9pt', right: 'xshift=9pt',
+};
+
+/**
+ * 多端子部品の名札 (`Q1` `U2` `J1`)。**記号だけでは何番の部品か分からない**ので、
+ * 2 端子の `l_=` と同じように図に出す。circuitikz は多端子の記号に名札を
+ * 付けてくれないので、こちらでノードを 1 つ足す (実機で「SMA と U2 の名前が
+ * 出ていない」と指摘された。全種類で出ていなかった)。
+ *
+ * **置き場は空いている辺**。足のある辺に出すと線と字が重なる。
+ * 塞がっていない辺が 1 つも無いとき (レギュレータ: 左右と下が足で、上は値) は、
+ * **値のさらに外側**へ積む — 値の置き場は空くように選んであるので、
+ * その 1 行外も空いている。
+ */
+function nameNode(part: MultiTerminalPart, name: string, type: PartType | null, valueSide: PinSide | null): string {
+  const label = labelOf(part.id, part.id);
+  if (type === null) return `\\node[anchor=south] at (${name}.north) {${label}};`;
+
+  const taken = new Set<PinSide>(pinPlaces(type, part.turn).map((place) => place.side));
+  if (valueSide !== null) taken.add(valueSide);
+
+  const free = NAME_ORDER.find((side) => !taken.has(side));
+  const side = free ?? valueSide ?? 'top';
+  const options = [
+    `anchor=${OPPOSITE[ANCHOR_OF[side] ?? 'north'] ?? 'south'}`,
+    ...(free === undefined ? [STACK[side]] : []),
+  ];
+  return `\\node[${options.join(', ')}] at (${name}.${anchorAt(side, part.turn)}) {${label}};`;
+}
+
+/**
+ * 画面のその側に来る**記号の中のアンカー**。アンカーは節点ごと回るので、
+ * 回した部品で「画面の上」を指すには、回す前のどの辺が上へ来るかを引き戻す。
+ */
+function anchorAt(side: PinSide, turn: Turn): string {
+  const inShape = NAME_ORDER.find((one) => turnSide(one, turn) === side) ?? side;
+  return ANCHOR_OF[inShape] ?? 'north';
 }
 
 /**

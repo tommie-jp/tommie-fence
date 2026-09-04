@@ -46,11 +46,17 @@
 \coordinate (g8) at (8.4,-7.2);
 \coordinate (f7) at (7.2,-6);
 \node[npn] (part-Q1) at (b2) {}; % line 3
+\node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 3
 \node[pnp] (part-Q2) at (b5) {}; % line 4
+\node[anchor=west] at (part-Q2.east) {$Q_{2}$}; % line 4
 \node[nigbt] (part-Q3) at (b8) {}; % line 5
+\node[anchor=west] at (part-Q3.east) {$Q_{3}$}; % line 5
 \node[nmos] (part-M1) at (f2) {}; % line 6
+\node[anchor=west] at (part-M1.east) {$M_{1}$}; % line 6
 \node[pmos] (part-M2) at (f5) {}; % line 7
+\node[anchor=west] at (part-M2.east) {$M_{2}$}; % line 7
 \node[pigbt] (part-Q4) at (f8) {}; % line 8
+\node[anchor=west] at (part-Q4.east) {$Q_{4}$}; % line 8
 \draw (a2) -| (part-Q1.collector); % line 10
 \draw (c2) -| (part-Q1.emitter); % line 11
 \draw (b1) -| (part-Q1.base); % line 12

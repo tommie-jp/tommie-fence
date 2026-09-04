@@ -1065,6 +1065,19 @@ export function pinSideOf(type: PartType, anchor: string, turn: Turn = NO_TURN):
   return turnedSide(type.pinSide, anchor, turn);
 }
 
+/**
+ * 辺を 1 つ、向きのぶんだけ回す。**順は「反転してから回す」** (`Turn` の頭書き)。
+ *
+ * 引いた辺ではなく辺そのものを回すので、**足を持たないものの置き場**にも使える
+ * (名札を「記号の上」に出すとき、回した先で上に来る辺を知りたい)。
+ */
+export function turnSide(side: PinSide, turn: Turn): PinSide {
+  const mirrored = turn.mirror ? MIRRORED[side] : side;
+  let turned = mirrored;
+  for (let done = 0; done < turn.rotate; done += 90) turned = CLOCKWISE[turned];
+  return turned;
+}
+
 /** 表を 1 つ引いて、向きのぶんだけ辺を回す。**順は「反転してから回す」**。 */
 function turnedSide(
   sides: Readonly<Record<string, PinSide>> | undefined,
@@ -1075,10 +1088,7 @@ function turnedSide(
   const side = Object.hasOwn(sides, anchor) ? (sides[anchor] ?? null) : null;
   if (side === null) return null;
 
-  const mirrored = turn.mirror ? MIRRORED[side] : side;
-  let turned = mirrored;
-  for (let done = 0; done < turn.rotate; done += 90) turned = CLOCKWISE[turned];
-  return turned;
+  return turnSide(side, turn);
 }
 
 /**

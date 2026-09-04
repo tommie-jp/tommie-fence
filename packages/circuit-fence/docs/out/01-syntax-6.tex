@@ -31,11 +31,17 @@
 \coordinate (h9) at (16,-14);
 \coordinate (g8) at (14,-12);
 \node[njfet] (part-J1) at (c3) {}; % line 3
+\node[anchor=west] at (part-J1.east) {$J_{1}$}; % line 3
 \node[pjfet] (part-J2) at (c6) {}; % line 4
+\node[anchor=west] at (part-J2.east) {$J_{2}$}; % line 4
 \node[nigfete] (part-M1) at (c9) {}; % line 5
+\node[anchor=west] at (part-M1.east) {$M_{1}$}; % line 5
 \node[pigfete] (part-M2) at (g3) {}; % line 6
+\node[anchor=west] at (part-M2.east) {$M_{2}$}; % line 6
 \node[nigfetd] (part-M3) at (g6) {}; % line 7
+\node[anchor=west] at (part-M3.east) {$M_{3}$}; % line 7
 \node[pigfetd] (part-M4) at (g9) {}; % line 8
+\node[anchor=west] at (part-M4.east) {$M_{4}$}; % line 8
 \draw (b3) -| (part-J1.drain); % line 10
 \draw (d3) -| (part-J1.source); % line 11
 \draw (c2) -| (part-J1.gate); % line 12

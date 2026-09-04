@@ -47,11 +47,17 @@
 \coordinate (k5) at (4.8,-12);
 \coordinate (j4) at (3.6,-10.8);
 \node[njfet] (part-J1) at (b2) {}; % line 3
+\node[anchor=west] at (part-J1.east) {$J_{1}$}; % line 3
 \node[pjfet] (part-J2) at (b5) {}; % line 4
+\node[anchor=west] at (part-J2.east) {$J_{2}$}; % line 4
 \node[nigfete] (part-M1) at (f2) {}; % line 5
+\node[anchor=west] at (part-M1.east) {$M_{1}$}; % line 5
 \node[pigfete] (part-M2) at (f5) {}; % line 6
+\node[anchor=west] at (part-M2.east) {$M_{2}$}; % line 6
 \node[nigfetd] (part-M3) at (j2) {}; % line 7
+\node[anchor=west] at (part-M3.east) {$M_{3}$}; % line 7
 \node[pigfetd] (part-M4) at (j5) {}; % line 8
+\node[anchor=west] at (part-M4.east) {$M_{4}$}; % line 8
 \draw (a2) -| (part-J1.drain); % line 10
 \draw (c2) -| (part-J1.source); % line 11
 \draw (b1) -| (part-J1.gate); % line 12

@@ -1183,6 +1183,59 @@ describe('字が出る部品を全部当たる', () => {
     }
   });
 
+  test('names every multi-terminal part next to its symbol', () => {
+    // 回路図の決まりごと。**記号だけでは何番の部品か分からない**ので、
+    // 2 端子の `l_=` と同じように名札を出す。
+    const { tex } = generate('parts:', '  U2: or c3');
+
+    expect(tex).toContain('at (part-U2.north) {$U_{2}$};');
+  });
+
+  test('puts the name on a side that has no leg', () => {
+    // トランジスタは上 (C)・下 (E)・左 (B) が足で塞がっている。残るのは右。
+    const { tex } = generate('parts:', '  Q1: npn c3');
+
+    expect(tex).toContain('at (part-Q1.east) {$Q_{1}$};');
+  });
+
+  test('turns the name with the symbol', () => {
+    // 90 度回すとゲートの足も回る (左右 → 上下)。名札は空いた辺へ移る。
+    // **アンカーは節点ごと回る**ので、画面の左に来るのは記号の中の `south`。
+    const { tex } = generate('parts:', '  U2: or c3 r90');
+
+    expect(tex).toContain('\\node[anchor=east] at (part-U2.south) {$U_{2}$};');
+  });
+
+  test('stacks the name beyond the value when every side has a leg', () => {
+    // レギュレータは左右と下が足で、値は上へ逃がしてある。名札はその外側。
+    const { tex } = generate('parts:', '  VR1: regulator c3 7805');
+
+    expect(tex).toContain('anchor=south, yshift=9pt] at (part-VR1.north) {$V_{R1}$};');
+  });
+
+  test('names the boxes above the box', () => {
+    const { tex } = generate('parts:', '  U1: dip8 c3 NE555');
+
+    expect(tex).toContain('at (part-U1.north) {$U_{1}$};');
+  });
+
+  test('draws a name for every part type but the two that have none', () => {
+    // 実機で「SMA と U2 の名前が出ていない。**全部品を確認して**」と言われた回。
+    // 出ないのは 2 つだけで、どちらも回路図の決まりごと:
+    // 素の線 (`short`) は名札を掛ける記号が無く、グラウンドは番号を振らない。
+    const nameless = partTypeNames().filter((type) => {
+      const at = lookupPartType(type)?.kind === 'two-terminal' ? 'X1: ${type} b2 b4' : 'X1: ${type} b2';
+      const { doc } = parseFence(`parts:\n  ${at.replace('${type}', type)}\n`);
+      if (doc === null) throw new Error(`${type} を読めませんでした`);
+      const { tex } = generateTex(buildCircuit(doc).circuit, { style: doc.style });
+      // 電源と端子の名前は**綴りのまま** (ネットの名前として図に出るもの)。
+      // ほかは 2 端子と同じ組み方 (`R_1` の形)。どちらでも「出ている」と数える。
+      return !tex.includes('$X_{1}$') && !tex.includes('{X1}');
+    });
+
+    expect(nameless).toEqual(['short', 'ground']);
+  });
+
   test('leaves the parts whose letters circuitikz draws itself alone', () => {
     // 計器の A・V・Ω や電源の記号は circuitikz が描く。縦に置いても字は
     // 立ったままで、こちらが手を出すところが無い (図で 13 種を確かめた)。

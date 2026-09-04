@@ -13,11 +13,17 @@
 \coordinate (f15) at (16.8,-6);
 \coordinate (f18) at (20.4,-6);
 \node[dipchip, num pins=8, font=\scriptsize] (part-U1) at (f3) {}; % line 3
+\node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 3
 \node[dipchip, num pins=14, font=\scriptsize] (part-U2) at (f6) {}; % line 4
+\node[anchor=south] at (part-U2.north) {$U_{2}$}; % line 4
 \node[dipchip, num pins=16, font=\scriptsize] (part-U3) at (f9) {}; % line 5
+\node[anchor=south] at (part-U3.north) {$U_{3}$}; % line 5
 \node[dipchip, num pins=20, font=\scriptsize] (part-U4) at (f12) {}; % line 6
+\node[anchor=south] at (part-U4.north) {$U_{4}$}; % line 6
 \node[dipchip, num pins=28, font=\scriptsize] (part-U5) at (f15) {}; % line 7
+\node[anchor=south] at (part-U5.north) {$U_{5}$}; % line 7
 \node[dipchip, num pins=40, font=\scriptsize] (part-U6) at (f18) {}; % line 8
+\node[anchor=south] at (part-U6.north) {$U_{6}$}; % line 8
 \draw[circuitnoteink] (0.6,-0.12) -- (22.2,-0.12); % line 10
 \draw[circuitnoteink] (0.6,-12.12) -- (22.2,-12.12); % line 11
 \draw[circuitnoteink] (0.6,-0.12) -- (0.6,-12.12); % line 12

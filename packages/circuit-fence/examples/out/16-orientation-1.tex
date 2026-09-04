@@ -24,9 +24,13 @@
 \coordinate (b8) at (14,-2);
 \coordinate (b11) at (20,-2);
 \node[npn] (part-Q1) at (b2) {}; % line 3
+\node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 3
 \node[npn, rotate=-90] (part-Q2) at (b5) {}; % line 4
+\node[anchor=north] at (part-Q2.east) {$Q_{2}$}; % line 4
 \node[npn, rotate=-180] (part-Q3) at (b8) {}; % line 5
+\node[anchor=east] at (part-Q3.east) {$Q_{3}$}; % line 5
 \node[npn, rotate=-270] (part-Q4) at (b11) {}; % line 6
+\node[anchor=south] at (part-Q4.east) {$Q_{4}$}; % line 6
 \path (1.238,-6.593) rectangle (2.762,-5.407); % line 8
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,-6) {X}; % line 8
 \path (6.73,-6.593) rectangle (9.27,-5.407); % line 9
