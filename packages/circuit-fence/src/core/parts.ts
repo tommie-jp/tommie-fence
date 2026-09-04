@@ -545,11 +545,16 @@ export const PART_TYPES = {
   not: { kind: 'multi-terminal', symbol: 'not port', ...NO_UNIT, pins: GATE1_PINS, pinSide: GATE1_SIDE },
   buffer: { kind: 'multi-terminal', symbol: 'buffer port', ...NO_UNIT, pins: GATE1_PINS, pinSide: GATE1_SIDE },
 
-  // DIP の IC。足の本数だけが違う。
+  // DIP の IC。足の本数だけが違う。**数は板の 2 つと同じ表**にしてある
+  // (同じ回路を回路図でも実体配線図でも書けるように)。
+  dip4: dipchip(4),
+  dip6: dipchip(6),
   dip8: dipchip(8),
   dip14: dipchip(14),
   dip16: dipchip(16),
+  dip18: dipchip(18),
   dip20: dipchip(20),
+  dip24: dipchip(24),
   dip28: dipchip(28),
   dip40: dipchip(40),
 } as const satisfies Record<string, PartType>;
@@ -633,10 +638,14 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   xnor: 'XNOR ゲート',
   not: 'NOT ゲート',
   buffer: 'バッファ',
+  dip4: 'DIP の IC (4 ピン)',
+  dip6: 'DIP の IC (6 ピン)',
   dip8: 'DIP の IC (8 ピン)',
   dip14: 'DIP の IC (14 ピン)',
   dip16: 'DIP の IC (16 ピン)',
+  dip18: 'DIP の IC (18 ピン)',
   dip20: 'DIP の IC (20 ピン)',
+  dip24: 'DIP の IC (24 ピン)',
   dip28: 'DIP の IC (28 ピン)',
   dip40: 'DIP の IC (40 ピン)',
 };
@@ -721,10 +730,14 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   xnor: 'U',
   not: 'U',
   buffer: 'U',
+  dip4: 'U',
+  dip6: 'U',
   dip8: 'U',
   dip14: 'U',
   dip16: 'U',
+  dip18: 'U',
   dip20: 'U',
+  dip24: 'U',
   dip28: 'U',
   dip40: 'U',
 };

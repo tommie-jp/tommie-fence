@@ -41,7 +41,7 @@ style:             # 任意。見た目
 - **向き**は回転 `r90` / `r180` / `r270` (時計回り) と左右反転 `mirror`。
   併記できる (`Q1: npn a1 r90 mirror`)。順は問わない。2 端子は番地の順が
   向きなので書かない。回せるのは多端子と `ground`、反転できるのは多端子。
-  例外は 3 つ — `dip8`〜`dip40` と `ground` は反転できず (字が鏡文字・左右対称)、
+  例外は 3 つ — `dip4`〜`dip40` と `ground` は反転できず (字が鏡文字・左右対称)、
   `transformer` は反転だけ (回すと巻線と鉄心がばらける)
 - オペアンプだけ ± の上下 `+up` / `+down` を持つ。回転とは別の鍵なので併記できる
 - `i=字` は電流の矢 (先に書いた番地 → 後の番地の向き)、`v=字` は電圧の符号
@@ -70,7 +70,7 @@ style:             # 任意。見た目
 - 能動 `npn` `pnp` `nigbt` `pigbt` `nmos` `pmos` `njfet` `pjfet`
   `nmos-e` `pmos-e` `nmos-d` `pmos-d` `opamp` `transformer`
 - 論理 `and` `or` `nand` `nor` `xor` `xnor` `not` `buffer` `spdt`
-  `dip8` `dip14` `dip16` `dip20` `dip28` `dip40`
+  `dip4` `dip6` `dip8` `dip14` `dip16` `dip18` `dip20` `dip24` `dip28` `dip40`
 
 略記: `r` `c` `l` `d` `i` `v` `dc` `ac` `gnd` `op` `ec` `pot` `ldr` `ntc`
 `ptc` `xtal` `scr` `bat` `sw` `btn`
