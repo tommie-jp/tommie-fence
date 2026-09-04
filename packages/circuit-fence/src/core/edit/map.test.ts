@@ -179,6 +179,20 @@ describe('gridMap の配線', () => {
     expect(lines[0]?.toPin).toBeNull();
   });
 
+  test('keeps the corner of a folded wire that ends on a leg', () => {
+    // 実機で「pico のピンから出た配線が -| で曲がらない」。角が端と同じ升に
+    // 来ると `cornerOf` は「曲がっていない」と答えるが、足は升の上に無いので
+    // 図の上では曲がる。
+    const lines = linesOf('parts:\n  U1: pico f6\nwires:\n  - U1.GND8 -| f3\n');
+
+    expect(lines[0]?.points).toHaveLength(3);
+  });
+
+  test('leaves a wire between two crossings alone, where the addresses decide', () => {
+    // 番地どうしなら `cornerOf` の答えが正しい (端に乗る角は角ではない)。
+    expect(linesOf('wires:\n  - a1 -| a3\n')[0]?.points).toHaveLength(2);
+  });
+
   test('draws each leg of a chained wire', () => {
     expect(linesOf('wires:\n  - a1 -- a3 -- c3\n')).toHaveLength(2);
   });

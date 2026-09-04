@@ -2,7 +2,7 @@ import { extractCircuitFences } from '../fences.ts';
 import type { FenceBlock } from '../fences.ts';
 import { LIMITS } from '../limits.ts';
 import { cornerOf, formatAddress, parseAddress } from '../model/address.ts';
-import type { Address } from '../model/address.ts';
+import type { Address, WireOperator } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { NO_TURN, lookupPartType, lookupPin, mainPinName, pinPlaces } from '../parts.ts';
@@ -145,6 +145,27 @@ const cellAt = (address: Address): Cell => ({ row: address.row, col: address.col
  * 指す先の部品が無い配線は引かない — 書き間違いはエラーの帯の仕事で、
  * ここで当てずっぽうの線を足すと誤りが図らしく見えてしまう。
  */
+/**
+ * 足に付く配線の曲がり角。
+ *
+ * `cornerOf` は**升の番地**で見るので、角が端と同じ升に来ると「曲がっていない」
+ * と答える。足は升の上に無い (箱の縁から出る) ので、同じ升でも図の上では
+ * 曲がる — 升目だけ斜めの線になっていた (実機で指摘された)。
+ *
+ * **端のどちらかが足のときだけ**足す。番地どうしなら `cornerOf` の答えが正しい。
+ */
+function pinCornerOf(
+  from: { readonly cell: Address; readonly pin: PinRef | null },
+  to: { readonly cell: Address; readonly pin: PinRef | null },
+  operator: WireOperator,
+): Address | null {
+  if (operator === '--') return null;
+  if (from.pin === null && to.pin === null) return null;
+  return operator === '-|'
+    ? { row: from.cell.row, col: to.cell.col }
+    : { row: to.cell.row, col: from.cell.col };
+}
+
 function wireLinesOf(doc: Circuit): WireLine[] {
   const anchorAt = new Map<string, Address>();
   for (const part of doc.parts) {
@@ -181,7 +202,7 @@ function wireLinesOf(doc: Circuit): WireLine[] {
 
     const approximate = from.approximate || to.approximate;
     const line = wire.line;
-    const corner = cornerOf(from.cell, to.cell, wire.operator);
+    const corner = cornerOf(from.cell, to.cell, wire.operator) ?? pinCornerOf(from, to, wire.operator);
     const points = corner === null
       ? [cellAt(from.cell), cellAt(to.cell)]
       : [cellAt(from.cell), cellAt(corner), cellAt(to.cell)];
