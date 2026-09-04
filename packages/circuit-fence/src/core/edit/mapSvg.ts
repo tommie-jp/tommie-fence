@@ -1,6 +1,6 @@
 import { element, escapeMarkup, fit, num, svgText, textWidth } from 'fence-kit';
 import { formatAddress } from '../model/address.ts';
-import { drawBox, drawGlyph, glyphOf, glyphSpan, legGap } from './mapGlyphs.ts';
+import { drawBox, drawGlyph, glyphOf, glyphSpan, legGap, namesInside } from './mapGlyphs.ts';
 import type { GlyphName } from './mapGlyphs.ts';
 import type { Chip, ChipPin, Cell, Dot, GridMap, MapNote, WireLine } from './map.ts';
 import type { PinSide, Turn } from '../parts.ts';
@@ -273,6 +273,9 @@ const PIN_HIT = 7;
  */
 const NAME_CLEAR = 3;
 
+/** 胴の中に書く字を、縁からどれだけ内側に入れるか。 */
+const NAME_INSIDE = 3;
+
 /** 辺ごとの足の並び。**書かれた順**で、上から下・左から右に置く。 */
 type PinRows = ReadonlyMap<PinSide, readonly ChipPin[]>;
 
@@ -317,7 +320,9 @@ function reachOf(rows: PinRows, glyph: GlyphName): { readonly halfW: number; rea
  * 横向きの足の字は**棒の先**に置き、隣の升の点に少しはみ出すのを縁取りで
  * 読ませる。棒の上へ寄せると、字が箱の角に重なって読めなくなった (実測)。
  */
-function pinAt(side: PinSide, at: number, of: number, halfW: number, halfH: number, gap: number): {
+function pinAt(
+  side: PinSide, at: number, of: number, halfW: number, halfH: number, gap: number, inside = false,
+): {
   readonly x1: number; readonly y1: number; readonly x2: number; readonly y2: number;
   readonly tx: number; readonly ty: number; readonly anchor?: 'start' | 'end';
 } {
@@ -326,11 +331,15 @@ function pinAt(side: PinSide, at: number, of: number, halfW: number, halfH: numb
   const clear = PIN_DOT + NAME_CLEAR;
   if (side === 'left') {
     const x = -halfW - PIN_STUB;
-    return { x1: -halfW, y1: shift, x2: x, y2: shift, tx: x - clear, ty: shift + 3, anchor: 'end' };
+    return inside
+      ? { x1: -halfW, y1: shift, x2: x, y2: shift, tx: -halfW + NAME_INSIDE, ty: shift + 3, anchor: 'start' }
+      : { x1: -halfW, y1: shift, x2: x, y2: shift, tx: x - clear, ty: shift + 3, anchor: 'end' };
   }
   if (side === 'right') {
     const x = halfW + PIN_STUB;
-    return { x1: halfW, y1: shift, x2: x, y2: shift, tx: x + clear, ty: shift + 3, anchor: 'start' };
+    return inside
+      ? { x1: halfW, y1: shift, x2: x, y2: shift, tx: halfW - NAME_INSIDE, ty: shift + 3, anchor: 'end' }
+      : { x1: halfW, y1: shift, x2: x, y2: shift, tx: x + clear, ty: shift + 3, anchor: 'start' };
   }
   if (side === 'top') {
     const y = -halfH - PIN_STUB;
@@ -395,7 +404,9 @@ function drawStanding(chip: Chip, nudge: number): string {
       { class: 'cf-pins', transform: `translate(0,${num(nudge)})` },
       [...rows].flatMap(([side, row]) =>
         row.map((pin, at) =>
-          drawPin(pin, chip.id, pinAt(side, at, row.length, halfW, halfH, legGap(glyph.name))))).join(''),
+          drawPin(pin, chip.id, pinAt(
+            side, at, row.length, halfW, halfH, legGap(glyph.name), namesInside(glyph.name, side),
+          )))).join(''),
     );
   const mark = glyph.mark === null ? '' : svgText(0, nudge + 4, glyph.mark, { class: 'cf-mark' });
   // **上に足があるなら、その名前より更に上に出す。** 記号を持つ種類は名前が

@@ -243,6 +243,27 @@ describe('多端子部品の足', () => {
     expect([...new Set(dots)].sort((a, b) => a - b)).toEqual([-18, -6, 6, 18]);
   });
 
+  test('writes the opamp signs inside the triangle, as the figure draws them', () => {
+    // 実機で「回路図ではオペアンプの中に ＋・− があるのに editor では外にある」。
+    const svg = draw('parts:\n  U1: opamp b2\n');
+    const nameAt = (name: string): number =>
+      Number(new RegExp(`<text x="([-\\d.]+)"[^>]*class="cf-pin-name"[^>]*>\\${name}<`).exec(svg)?.[1] ?? NaN);
+    const dotAt = (cy: string): number =>
+      Number(new RegExp(`class="cf-pin-dot" cx="([-\\d.]+)" cy="${cy}"`).exec(svg)?.[1] ?? NaN);
+
+    // ± は左の丸より内側 (胴の中)、出口は右の丸より外側。
+    expect(nameAt('-')).toBeGreaterThan(dotAt('-4.5'));
+    expect(nameAt('+')).toBeGreaterThan(dotAt('4.5'));
+  });
+
+  test('keeps the names of other parts outside, where the leg ends', () => {
+    const svg = draw('parts:\n  Q1: npn b2\n');
+    const name = Number(/<text x="([-\d.]+)"[^>]*class="cf-pin-name"[^>]*>B</.exec(svg)?.[1] ?? NaN);
+    const dot = Number(/class="cf-pin-dot" cx="([-\d.]+)" cy="0"/.exec(svg)?.[1] ?? NaN);
+
+    expect(name).toBeLessThan(dot);
+  });
+
   test('makes the target bigger than the dot, since 2.6px is too small to hit', () => {
     const svg = draw('parts:\n  Q1: npn b2\n');
     const dot = /class="cf-pin-dot"[^/]*r="([\d.]+)"/.exec(svg);

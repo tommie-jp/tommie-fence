@@ -1,4 +1,5 @@
 import { element } from 'fence-kit';
+import type { PinSide } from '../parts.ts';
 
 /**
  * マップに描く部品の形。**回路図の記号になるべく寄せた似顔絵**で、
@@ -264,6 +265,21 @@ const LEG_GAP: Record<GlyphName, number> = {
 };
 
 export const legGap = (name: GlyphName): number => LEG_GAP[name];
+
+/**
+ * 足の名前を**胴の中に**書く記号と、その辺。
+ *
+ * オペアンプの ± は circuitikz が記号の一部として三角の中に描く。外に出すと
+ * 図と見た目が違ううえ、± が指す足がどれなのかも遠くなる (実機で
+ * 「回路図ではオペアンプの中に ＋・− があるのに editor では外にある」)。
+ *
+ * **辺ごとに指す。** 同じ記号でも出口 (`out`) は外に出すほうが読める —
+ * 三角の先は細く、中に字を置く場所が無い。
+ */
+const NAMES_INSIDE: Partial<Record<GlyphName, PinSide>> = { opamp: 'left' };
+
+export const namesInside = (name: GlyphName, side: PinSide): boolean =>
+  NAMES_INSIDE[name] === side;
 
 /**
  * 名前を入れる箱。**足の本数で伸びる** — DIP は片側に 20 本まで出るので、
