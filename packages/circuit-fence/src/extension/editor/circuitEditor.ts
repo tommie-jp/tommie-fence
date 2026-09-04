@@ -23,6 +23,7 @@ import {
   deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans,
   setNoteField, turnNote,
 } from '../../core/edit/note.ts';
+import { isNodeHandle, nameNode, nodeFields, nodeSpellOf } from '../../core/edit/pointName.ts';
 
 /**
  * circuit フェンスの編集エンジンを、殻が求める形 (`FenceEditor`) に束ねる。
@@ -120,10 +121,19 @@ export function createCircuitEditor(look: LookSource = PLAIN): FenceEditor {
     fieldsOf: (source, handle) => {
       if (isNoteHandle(handle)) return noteFields(source, handle);
       if (isWireHandle(handle)) return wireFields(source, handle);
+      // **節点にも欄がある** (名前)。`points:` の 1 行と、その交点を書いている
+      // 綴りの両方を書き換える道 (`pointName.ts`)。
+      if (isNodeHandle(handle)) return nodeFields(source, handle);
       return partFields(source, handle);
     },
     // 注釈には名前が無いので、名札は行番号。人に見せるときは「注釈」と呼ぶ。
-    nameOf: (handle) => (isNoteHandle(handle) ? `注釈 (${noteLineOf(handle) ?? '?'} 行目)` : nameOfHandle(handle)),
+    nameOf: (handle) => (
+      isNoteHandle(handle)
+        ? `注釈 (${noteLineOf(handle) ?? '?'} 行目)`
+        : isNodeHandle(handle)
+        ? `交点 ${nodeSpellOf(handle) ?? '?'}`
+        : nameOfHandle(handle)
+    ),
     nextId: nextPartId,
     cellsOf: (source, handle) => (isNoteHandle(handle) ? noteCells(source, handle) : partCells(source, handle)),
     // 配線は `-|` / `|-` で折れる (`Shift` を押しながら放す)。
@@ -175,7 +185,10 @@ export function createCircuitEditor(look: LookSource = PLAIN): FenceEditor {
 
     deletePart: (source, handle) => (isNoteHandle(handle) ? deleteNote(source, handle) : deletePart(source, handle)),
     deleteWire,
-    rename: renamePart,
+    // **節点の名前は `points:` の 1 行**。部品の改名とは書く場所が違う。
+    rename: (source, handle, to) => (
+      isNodeHandle(handle) ? nameNode(source, handle, to) : renamePart(source, handle, to)
+    ),
 
     setField: (source, handle, field, text) => (
       isNoteHandle(handle)

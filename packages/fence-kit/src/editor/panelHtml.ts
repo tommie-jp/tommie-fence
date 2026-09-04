@@ -427,7 +427,9 @@ export type PanelHtmlOptions = {
 export function renderFencePicker(fences: readonly FenceEntry[], line: number | null): string {
   if (fences.length < 2) return '';
   const options = fences.map((fence) => {
-    const label = fence.title === null ? `${fence.line} 行目のフェンス` : `${fence.title} (${fence.line} 行目)`;
+    // **行番号が先。** 一覧は上から順に並ぶので、頭が揃っていると目で追える
+    // (題を先に出すと、長さがまちまちで行番号の桁が縦に揃わない。実機で頼まれた)。
+    const label = fence.title === null ? `${fence.line} 行目のフェンス` : `${fence.line} 行目 ${fence.title}`;
     return `<option value="${fence.line}"${fence.line === line ? ' selected' : ''}>${escapeMarkup(label)}</option>`;
   }).join('');
   return `<label>フェンス <select class="cf-fence">${options}</select></label>`;

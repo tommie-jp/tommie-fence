@@ -147,9 +147,11 @@ function roomFor(map: GridMap, nudges: ReadonlyMap<Chip, number>): Room {
     // 名札の出る辺。**箱は中に入れる**ので外へは広がらない。上に出る分は下の
     // `NAME_TOP_ROOM` でまとめて取ってあるので、横と下だけここで見る。
     // 名札の出る辺には足が無いので、足の分と名札の分が両方効くことはない。
-    const named = glyph === 'box' ? null : nameSideOf(chip.pins);
-    const forName = (side: PinSide): number =>
-      (side === named ? standingNameReach(side, chip.id) - (side === 'bottom' ? halfH : halfW) : 0);
+    // **箱も名前を外に出す**ので、余白を数える対象に入れる。
+    const named = nameSideOf(chip.pins);
+    const forName = (side: PinSide): number => (side === named
+      ? standingNameReach(side, chip.id, { w: halfW, h: halfH + NOTCH }) - (side === 'bottom' ? halfH : halfW)
+      : 0);
     hold(
       at.x - halfW - Math.max(beside('left'), forName('left')) - EDGE,
       at.y - halfH - Math.max(beside('top'), NAME_TOP_ROOM) - EDGE,
@@ -498,25 +500,40 @@ const STAND_BELOW = -STAND_ABOVE + NAME_FONT - 2;
  */
 const NAME_TOP_ROOM = 28;
 
-/** 名札 1 つの置き場。**空いている辺の外側**に置く。 */
+/**
+ * 名札 1 つの置き場。**空いている辺の外側**に置く。
+ *
+ * `half` はその辺までの胴の半分。**箱は足の本数で伸びる**ので、決め打ちの
+ * 距離だと名前が箱の中や縁に乗る (実機で DIP の名前が切り欠きに重なった)。
+ * 記号の胴は小さいので、決め打ちのほうが遠ければそちらを採る。
+ */
 function standingNameAt(
   side: PinSide,
+  half: { readonly w: number; readonly h: number },
 ): { readonly x: number; readonly y: number; readonly anchor?: 'start' | 'end' } {
-  if (side === 'left') return { x: -STAND_ASIDE, y: 4, anchor: 'end' };
-  if (side === 'right') return { x: STAND_ASIDE, y: 4, anchor: 'start' };
-  if (side === 'bottom') return { x: 0, y: STAND_BELOW };
-  return { x: 0, y: STAND_ABOVE };
+  const aside = Math.max(STAND_ASIDE, half.w + NAME_CLEAR);
+  if (side === 'left') return { x: -aside, y: 4, anchor: 'end' };
+  if (side === 'right') return { x: aside, y: 4, anchor: 'start' };
+  if (side === 'bottom') return { x: 0, y: Math.max(STAND_BELOW, half.h + NAME_FONT) };
+  return { x: 0, y: Math.min(STAND_ABOVE, -half.h - NAME_CLEAR) };
 }
 
 /**
  * 名札が升の真ん中から届く長さ。**画布の広さ (`roomFor`) が縁で切らないため**に要る。
  * 上に出る分は昔から `NAME_TOP_ROOM` でまとめて取ってあるので、ここでは見ない。
  */
-function standingNameReach(side: PinSide, id: string): number {
+function standingNameReach(side: PinSide, id: string, half: { readonly w: number; readonly h: number }): number {
+  const place = standingNameAt(side, half);
   return side === 'left' || side === 'right'
-    ? STAND_ASIDE + textWidth(id) * NAME_FONT
-    : STAND_BELOW;
+    ? Math.abs(place.x) + textWidth(id) * NAME_FONT
+    : place.y;
 }
+
+/**
+ * 名前を出さない種類。**図が出していない**ものに合わせる — グラウンドは
+ * 回路図で番号を振らない記号なので、升目にだけ `G1` が出ると図と食い違う。
+ */
+const NAMELESS: ReadonlySet<string> = new Set(['ground']);
 
 /** 切り欠きのある種類。**足の位置がパッケージで決まる箱**だけが持つ。 */
 const DIP_TYPE = /^dip\d+$/;
@@ -571,6 +588,9 @@ function notchOf(chip: Chip, rows: PinRows, halfW: number, halfH: number, gap: n
 function drawStanding(chip: Chip, nudge: number): string {
   const glyph = glyphOf(chip.type);
   const inside = glyph.name === 'box';
+  // **名前は箱の中に入れない。** 図は箱の外 (足の無い辺) に出すので、
+  // 中に入れると同じ部品が図と升目で違う所に名前を持つ (実機で並べて見つけた)。
+  // 箱の中は型番の場所で、そちらは図が書く。
   const rows = rowsOf(chip.pins, chip.turn);
   const { halfW, halfH } = reachOf(rows, glyph.name);
   // **箱は回さない。** 矩形は回しても同じ意味しか持たず、縦横が入れ替わると
@@ -598,9 +618,12 @@ function drawStanding(chip: Chip, nudge: number): string {
     ? ''
     : svgText(0, nudge + (glyph.mark.below === true ? MARK_BELOW : 4), glyph.mark.text, { class: 'cf-mark' });
   // 名札は**足の無い辺**へ。足のある辺に出すと、棒と足の名前に重なる。
-  const place = standingNameAt(nameSideOf(chip.pins));
-  const name = inside
-    ? svgText(0, nudge + 4, chip.id, { class: 'cf-name' })
+  // **切り欠きのぶんも避ける。** 半円は箱の縁の外へ出るので、箱の高さだけで
+  // 逃がすと名前が印の上に乗って、向きの目印が読めなくなる。
+  const room = { w: halfW, h: halfH + (DIP_TYPE.test(chip.type) ? NOTCH : 0) };
+  const place = standingNameAt(nameSideOf(chip.pins), room);
+  const name = NAMELESS.has(chip.type)
+    ? ''
     : svgText(place.x, nudge + place.y, chip.id, {
       class: 'cf-name',
       halo: 'var(--cf-paper)',

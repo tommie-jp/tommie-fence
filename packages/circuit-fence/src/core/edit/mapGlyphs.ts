@@ -1,4 +1,4 @@
-import { element } from 'fence-kit';
+import { element, num } from 'fence-kit';
 import type { PinSide } from '../parts.ts';
 
 /**
@@ -27,7 +27,8 @@ export type GlyphName =
   | 'battery' | 'switch' | 'switch-nc' | 'button' | 'button-nc'
   | 'reed' | 'spdt' | 'meter'
   | 'crystal' | 'fuse' | 'lamp' | 'speaker' | 'mic' | 'transformer' | 'coax'
-  | 'bjt' | 'fet' | 'jfet' | 'igbt' | 'opamp'
+  | 'bjt' | 'bjt-p' | 'fet' | 'fet-p' | 'fet-bulk' | 'fet-bulk-p'
+  | 'jfet' | 'jfet-p' | 'igbt' | 'igbt-p' | 'opamp'
   | 'and' | 'and-inv' | 'or' | 'or-inv' | 'xor' | 'xor-inv' | 'buffer' | 'buffer-inv'
   | 'ground' | 'port' | 'supply-up' | 'supply-down' | 'short' | 'box';
 
@@ -65,10 +66,10 @@ const SHAPES: Record<string, GlyphName> = {
   buzzer: 'speaker',
   // スライドスイッチは図が切り替えスイッチと同じ記号。
   'slide-switch': 'spdt',
-  npn: 'bjt', pnp: 'bjt',
-  nmos: 'fet', pmos: 'fet', njfet: 'jfet', pjfet: 'jfet',
-  'nmos-e': 'fet', 'pmos-e': 'fet', 'nmos-d': 'fet', 'pmos-d': 'fet',
-  nigbt: 'igbt', pigbt: 'igbt',
+  npn: 'bjt', pnp: 'bjt-p',
+  nmos: 'fet', pmos: 'fet-p', njfet: 'jfet', pjfet: 'jfet-p',
+  'nmos-e': 'fet-bulk', 'pmos-e': 'fet-bulk-p', 'nmos-d': 'fet-bulk', 'pmos-d': 'fet-bulk-p',
+  nigbt: 'igbt', pigbt: 'igbt-p',
   opamp: 'opamp',
   and: 'and', nand: 'and-inv',
   or: 'or', nor: 'or-inv',
@@ -124,6 +125,25 @@ const contacts = (): string =>
 /** 反転の丸 (NAND・NOR・NOT の出口)。**これが有る無しが唯一の違い**。 */
 const bubble = (cx: number): string =>
   element('circle', { class: 'cf-glyph', cx, cy: 0, r: 2.5 });
+
+/** 矢の頭の長さ。図の矢に合わせて、開きは 30 度。 */
+const HEAD = 3.6;
+
+/**
+ * 矢 1 本の `d`。**頭は終点に付き、付け根の側へ開く。**
+ *
+ * 手で書いた座標だと、向きを変えるたびに 2 本の羽を計算し直すことになる
+ * (トランジスタは n 形と p 形で矢が逆を向くので、8 本ぶん要る)。
+ */
+function arrow(x1: number, y1: number, x2: number, y2: number): string {
+  const [dx, dy] = [x1 - x2, y1 - y2];
+  const reach = Math.hypot(dx, dy) || 1;
+  const [ux, uy] = [(dx / reach) * HEAD, (dy / reach) * HEAD];
+  const [cos, sin] = [Math.cos(Math.PI / 6), Math.sin(Math.PI / 6)];
+  const wing = (turn: number): string =>
+    `M${num(x2)},${num(y2)} L${num(x2 + ux * cos - turn * uy * sin)},${num(y2 + turn * ux * sin + uy * cos)}`;
+  return `M${num(x1)},${num(y1)} L${num(x2)},${num(y2)} ${wing(1)} ${wing(-1)}`;
+}
 
 const SHAPE: Record<GlyphName, () => string> = {
   // 折れ線。circuitikz の既定 (米国式) と同じ姿にする。
@@ -226,21 +246,34 @@ const SHAPE: Record<GlyphName, () => string> = {
   // マイク。線に丸が載り、線が丸の底を塞ぐ。
   mic: () => element('circle', { class: 'cf-glyph', cx: 0, cy: -4, r: 6 })
     + path('M-6,2 L6,2'),
-  // バイポーラ。**丸は付かない** (図が付けていない)。ベースの棒・2 本の足・
-  // エミッタの矢。npn と pnp の違いは矢の向きだけなので、この大きさでは分けない。
-  bjt: () => path('M-13,0 L-4,0 M-4,-7 L-4,7 M-4,-3 L6,-9 M-4,3 L6,9'
-    + ' M6,9 L2.2,7.9 M6,9 L4.1,5.3'),
+  // バイポーラ。**丸は付かない** (図が付けていない)。ベースの棒と 2 本の足。
+  //
+  // **矢はエミッタの足に付き、向きが n 形と p 形を分ける** — npn は外へ、
+  // pnp は内へ (ベースの側へ)。図がそこだけで描き分けているので、こちらも分ける。
+  // 足の出る辺も入れ替わる (`BJT_SIDE_P`) ので、矢は必ずエミッタの側に来る。
+  bjt: () => path(`M-13,0 L-4,0 M-4,-7 L-4,7 M-4,-3 L6,-9 ${arrow(-4, 3, 6, 9)}`),
+  'bjt-p': () => path(`M-13,0 L-4,0 M-4,-7 L-4,7 M-4,3 L6,9 ${arrow(6, -9, -4, -3)}`),
   // 電界効果。ゲートの棒とチャネルの棒が離れている (絶縁ゲート)。
+  // **p 形はゲートに丸**が付く (図と同じ)。
   fet: () => path('M-13,0 L-7,0 M-7,-7 L-7,7 M-3.5,-7 L-3.5,7'
     + ' M-3.5,-5 L6,-5 L6,-9 M-3.5,5 L6,5 L6,9'),
+  'fet-p': () => `${path('M-13,0 L-9.5,0 M-7,-7 L-7,7 M-3.5,-7 L-3.5,7'
+    + ' M-3.5,-5 L6,-5 L6,-9 M-3.5,5 L6,5 L6,9')}${bubble(-8)}`,
+  // 基板の足を出す形 (増強形・空乏形)。**真ん中の矢が向きを言う** —
+  // n 形はゲートへ向き、p 形は外を向く。
+  'fet-bulk': () => path('M-13,0 L-7,0 M-7,-7 L-7,7 M-3.5,-7 L-3.5,7'
+    + ` M-3.5,-5 L6,-5 L6,-9 M-3.5,5 L6,5 L6,9 M-3.5,0 L6,0 ${arrow(3, 0, -3.5, 0)}`),
+  'fet-bulk-p': () => path('M-13,0 L-7,0 M-7,-7 L-7,7 M-3.5,-7 L-3.5,7'
+    + ` M-3.5,-5 L6,-5 L6,-9 M-3.5,5 L6,5 L6,9 M-3.5,0 L6,0 ${arrow(-3.5, 0, 3, 0)}`),
   // 接合形。**チャネルは 1 本の棒**で、ゲートの矢がそこへ刺さる (絶縁ゲートと
-  // 違って棒が離れていない)。図がそう描き分けているので、こちらも分ける。
-  jfet: () => path('M-13,0 L-4,0 M-4,0 L-7,-1.8 M-4,0 L-7,1.8'
-    + ' M-4,-7 L-4,7 M-4,-5 L6,-5 L6,-9 M-4,5 L6,5 L6,9'),
-  // IGBT。**絶縁ゲート + エミッタ側の矢** (出口がバイポーラ)。
+  // 違って棒が離れていない)。n 形は内へ、p 形は外へ。
+  jfet: () => path(`M-4,-7 L-4,7 M-4,-5 L6,-5 L6,-9 M-4,5 L6,5 L6,9 ${arrow(-13, 0, -4, 0)}`),
+  'jfet-p': () => path(`M-4,-7 L-4,7 M-4,-5 L6,-5 L6,-9 M-4,5 L6,5 L6,9 ${arrow(-4, 0, -13, 0)}`),
+  // IGBT。**絶縁ゲート + エミッタ側の矢** (出口がバイポーラ)。向きは npn / pnp と同じ。
   igbt: () => path('M-13,0 L-7,0 M-7,-7 L-7,7 M-3.5,-7 L-3.5,7'
-    + ' M-3.5,-5 L6,-5 L6,-9 M-3.5,5 L6,5 L6,9'
-    + ' M2.5,5 L-0.5,3.6 M2.5,5 L-0.5,6.4'),
+    + ` M-3.5,-3 L6,-9 ${arrow(-3.5, 3, 6, 9)}`),
+  'igbt-p': () => path('M-13,0 L-7,0 M-7,-7 L-7,7 M-3.5,-7 L-3.5,7'
+    + ` M-3.5,3 L6,9 ${arrow(6, -9, -3.5, -3)}`),
   // 演算増幅器。出口を向いた三角。
   opamp: () => path('M-7,-9 L8,0 L-7,9 Z'),
   // 論理ゲート。**背の形で分ける** (図と同じ)。AND は平ら、OR は反り、
@@ -287,7 +320,8 @@ const SPAN: Record<GlyphName, number> = {
   'tri-source': SOURCE_R, 'i-source': SOURCE_R, solar: SOURCE_R, battery: 3, meter: 9,
   switch: 9, 'switch-nc': 9, button: 6, 'button-nc': 6, reed: HALF, spdt: HALF,
   crystal: 6, fuse: 8, lamp: 8, speaker: 7, mic: 6, coax: 8,
-  bjt: 13, fet: 13, jfet: 13, igbt: 13, opamp: 8,
+  bjt: 13, 'bjt-p': 13, fet: 13, 'fet-p': 13, 'fet-bulk': 13, 'fet-bulk-p': 13,
+  jfet: 13, 'jfet-p': 13, igbt: 13, 'igbt-p': 13, opamp: 8,
   // 反転する形は**出口の丸の外側**まで取る。丸の手前から棒を出すと、
   // 棒が丸を突き抜けて出てくる (実機で見つけた)。
   and: 9, 'and-inv': 14, or: 9, 'or-inv': 14, xor: 9, 'xor-inv': 14,
@@ -327,7 +361,8 @@ const LEG_GAP: Record<GlyphName, number> = {
   'i-source': 12, solar: 12, battery: 12, meter: 12,
   switch: 12, 'switch-nc': 12, button: 12, 'button-nc': 12, reed: 12,
   crystal: 12, fuse: 12, lamp: 12, speaker: 12, mic: 12, coax: 12,
-  bjt: 12, fet: 12, jfet: 12, igbt: 12, buffer: 12, 'buffer-inv': 12,
+  bjt: 12, 'bjt-p': 12, fet: 12, 'fet-p': 12, 'fet-bulk': 12, 'fet-bulk-p': 12,
+  jfet: 12, 'jfet-p': 12, igbt: 12, 'igbt-p': 12, buffer: 12, 'buffer-inv': 12,
   ground: 12, port: 12, 'supply-up': 12, 'supply-down': 12, short: 12,
 };
 

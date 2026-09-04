@@ -245,10 +245,11 @@ describe('renderFencePicker', () => {
     expect(renderFencePicker([{ line: 3, title: 'RC' }], 3)).toBe('');
   });
 
-  test('names each fence by its title, or its line when it has none, and selects the current one', () => {
+  test('names each fence by its line first, then its title, and selects the current one', () => {
+    // **行番号が先。** 上から順に並ぶ一覧なので、頭が揃っていると目で追える。
     const picker = renderFencePicker([{ line: 3, title: 'RC' }, { line: 9, title: null }], 9);
 
-    expect(picker).toContain('<option value="3">RC (3 行目)</option>');
+    expect(picker).toContain('<option value="3">3 行目 RC</option>');
     expect(picker).toContain('<option value="9" selected>9 行目のフェンス</option>');
   });
 

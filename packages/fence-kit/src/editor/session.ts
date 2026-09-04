@@ -225,6 +225,23 @@ const GHOST_ID = 'GHOST';
  */
 export const wireHandle = (line: string | null): string | null => (line === null ? null : `wire:${line}`);
 
+/**
+ * 節点 1 つを指す名札。**節点にも名前が無い** (交点そのもの) ので、書かれた
+ * 番地の綴りで指す。付ける名前 (`points:`) はその中身の話で、名札とは別。
+ */
+export const nodeHandle = (spelling: string | null): string | null =>
+  (spelling === null ? null : `node:${spelling}`);
+
+/**
+ * 掴んだものの名札。**名前の無いものは殻が組む** — どう指すかは殻とフェンスの
+ * 取り決めで、綴りを 1 か所に置くため (フェンスごとに散らさない)。
+ */
+const handleOf = (what: string | null, id: string | null): string | null => {
+  if (id === null) return null;
+  if (what === 'wire') return wireHandle(id);
+  return what === 'node' ? nodeHandle(id) : id;
+};
+
 export function createSession<D extends DocLike>(
   host: SessionHost<D>,
   fences: FenceEditor | readonly FenceEditor[],
@@ -465,6 +482,8 @@ export function createSession<D extends DocLike>(
     // 何も指していないときは送らない — マップで選んだ欄を閉じてしまうため。
     if (aim.kind === 'part') sendFields(editor.fieldsOf(fence.source, aim.id));
     if (aim.kind === 'wire') sendFields(editor.fieldsOf(fence.source, wireHandle(aim.id) ?? ''));
+    // **節点にも欄がある** (名前)。カーソルが番地の上に来たら、そのまま付けられる。
+    if (aim.kind === 'node') sendFields(editor.fieldsOf(fence.source, nodeHandle(aim.id) ?? ''));
   }
 
   /** webview へ最後に送った姿。**同じものを送り直さない** (下の `refreshWith`)。 */
@@ -667,7 +686,7 @@ export function createSession<D extends DocLike>(
   async function editField(message: Incoming): Promise<void> {
     // **名前の無いものは行で指す。** 配線には名前が無いので、名札を殻が組む
     // (綴りは 3 つのフェンスで同じ。注釈も同じ考え方)。
-    const handle = text(message.what) === 'wire' ? wireHandle(text(message.part)) : text(message.part);
+    const handle = handleOf(text(message.what), text(message.part));
     const part = handle === null ? null : editor.nameOf(handle);
     const field = text(message.field);
     const written = text(message.text) ?? '';
@@ -686,7 +705,8 @@ export function createSession<D extends DocLike>(
 
   /** 名前を変える。鍵・配線の足・注釈の指し先を一緒に書き換える。 */
   async function rename(message: Incoming): Promise<void> {
-    const handle = text(message.part);
+    // **節点の名前も同じ道**。書く先は `points:` の 1 行だが、押した所は同じ欄。
+    const handle = handleOf(text(message.what), text(message.part));
     const from = handle === null ? null : editor.nameOf(handle);
     const to = text(message.text);
     if (handle === null || from === null || to === null || to === '') {
@@ -951,13 +971,13 @@ export function createSession<D extends DocLike>(
    * 「いまはこれを選んでいる」と webview へ伝える。**選ぶのは webview の
    * 持ち物**なので知らせで渡す (カーソルが指したときと同じ道)。
    */
-  function pick(what: 'part' | 'wire', ids: readonly string[]): void {
+  function pick(what: 'part' | 'wire' | 'node', ids: readonly string[]): void {
     const first = ids[0];
     if (first === undefined) return;
     host.post({ kind: 'aim', what, id: first, ...(ids.length > 1 ? { also: [...ids] } : {}) });
     const fence = fenceNow();
     if (fence === null) return;
-    sendFields(editor.fieldsOf(fence.source, what === 'wire' ? (wireHandle(first) ?? '') : first));
+    sendFields(editor.fieldsOf(fence.source, handleOf(what, first) ?? ''));
   }
 
   /** マップから来た「ここからここへ 1 本」。配線は**交点から交点へ**引く。 */
@@ -1121,9 +1141,12 @@ export function createSession<D extends DocLike>(
       sendFields(null);
       return;
     }
-    if (what !== 'part' && what !== 'wire') sendFields(null);
+    // **欄を持つものは自分で送る。** ここで空にしてから送り直すと 1 度ちらつく。
+    if (what !== 'part' && what !== 'wire' && what !== 'node') sendFields(null);
     if (what === 'node') {
       light(rangesOf(fence, editor.spansOf(fence.source, 'node', id)));
+      // **節点にも欄がある** (名前)。選んだらそのまま `points:` に付けられる。
+      sendFields(editor.fieldsOf(fence.source, nodeHandle(id) ?? ''));
       return;
     }
     if (what === 'wire') {

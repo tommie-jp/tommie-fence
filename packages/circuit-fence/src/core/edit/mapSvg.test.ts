@@ -194,13 +194,24 @@ describe('部品の名前の置き場', () => {
     expect(turned.y).toBeGreaterThan(10);
   });
 
-  test('leaves the name above the parts whose top is free, as it was', () => {
-    // 足が左右にしかない種類 (オペアンプ・論理ゲート) は今までどおり上。
+  test('puts the name above the parts whose top is free', () => {
+    // 足が左右にしかない種類 (オペアンプ・論理ゲート) は上。
     for (const source of ['parts:\n  U1: opamp c3\n', 'parts:\n  U1: and c3\n']) {
       const { x, y, anchor } = nameAt(source, 'U1');
 
-      expect([x, y, anchor]).toEqual([0, -12, 'middle']);
+      expect([x, anchor]).toEqual([0, 'middle']);
+      expect(y).toBeLessThan(-11);
     }
+  });
+
+  test('clears the box, which grows with the number of legs', () => {
+    // **箱は足の本数で伸びる。** 決め打ちの距離だと、足の多い DIP で名前が
+    // 箱の中や切り欠きの上に乗る (実機で「切り欠きも表示する」と言われた回)。
+    const small = nameAt('parts:\n  U1: dip4 c3\n', 'U1');
+    const big = nameAt('parts:\n  U1: dip40 c3\n', 'U1');
+
+    expect(small.y).toBeLessThan(-12);
+    expect(big.y).toBeLessThan(small.y);
   });
 });
 

@@ -778,10 +778,11 @@ document.addEventListener('change', (event) => {
   // 名前の無いものをどう指すかは文法の話で、殻の持ち物ではない。
   if (target.classList.contains('cf-field')) {
     const picked = state.selected;
-    if (picked === null || picked.kind === 'node') return;
+    if (picked === null) return;
     const written = target.value.trim();
+    // **節点も同じ道**。名前は `points:` の 1 行になるが、押した欄は同じ。
     vscode.postMessage(target.name === 'id'
-      ? { kind: 'rename', part: picked.id, text: written }
+      ? { kind: 'rename', what: picked.kind, part: picked.id, text: written }
       : { kind: 'setField', what: picked.kind, part: picked.id, field: target.name, text: written });
     return;
   }

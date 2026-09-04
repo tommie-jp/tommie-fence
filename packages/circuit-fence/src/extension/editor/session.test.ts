@@ -131,7 +131,7 @@ describe('マップを組む', () => {
 
     const { picker } = session.view();
 
-    expect(picker).toContain('<option value="3" selected>RC (3 行目)</option>');
+    expect(picker).toContain('<option value="3" selected>3 行目 RC</option>');
     expect(picker).toContain('<option value="10">10 行目のフェンス</option>');
   });
 
@@ -993,13 +993,32 @@ describe('欄 (インスペクタ)', () => {
     expect(last(host, 'fields')?.part).toMatchObject({ id: 'R1', type: 'resistor', value: '10k' });
   });
 
-  test('closes the form when something that has no fields is picked', async () => {
+  test('opens the name field when a node is picked', async () => {
+    // 節点にも欄がある — 名前 (`points:`) だけが直せる。
     const { host, session } = opened();
     await session.handle({ kind: 'select', what: 'part', id: 'R1' });
 
     await session.handle({ kind: 'select', what: 'node', id: 'a1' });
 
+    expect(last(host, 'fields')?.part).toMatchObject({ type: 'a1', can: ['id'] });
+  });
+
+  test('closes the form when something that has no fields is picked', async () => {
+    const { host, session } = opened();
+    await session.handle({ kind: 'select', what: 'part', id: 'R1' });
+
+    await session.handle({ kind: 'select', what: 'note', id: '1' });
+
     expect(last(host, 'fields')?.part).toBeNull();
+  });
+
+  test('names a node from the field, writing the points line and the places that used it', async () => {
+    const { doc, session } = opened();
+
+    await session.handle({ kind: 'rename', what: 'node', part: 'a1', text: 'vin' });
+
+    expect(doc.getText()).toContain('vin: a1');
+    expect(doc.getText()).toContain('resistor vin a3');
   });
 
   test('writes a field the form changed', async () => {

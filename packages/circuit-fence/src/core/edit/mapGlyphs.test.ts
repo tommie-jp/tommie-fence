@@ -10,11 +10,20 @@ describe('glyphOf', () => {
   });
 
   test('folds a family onto one shape when only the detail differs', () => {
-    // 落とすのは**同じ記号の中の細部**だけ。npn と pnp の違いは矢の向き、
-    // MOSFET の増強形と空乏形はチャネルの切れ方で、どちらもこの大きさでは読めない。
-    expect(glyphOf('pnp').name).toBe(glyphOf('npn').name);
-    expect(glyphOf('nmos-e').name).toBe(glyphOf('nmos').name);
-    expect(glyphOf('pjfet').name).toBe(glyphOf('njfet').name);
+    // 落とすのは**同じ記号の中の細部**だけ。増強形と空乏形はチャネルの
+    // 切れ方の差で、この大きさでは読めない。
+    expect(glyphOf('nmos-d').name).toBe(glyphOf('nmos-e').name);
+    expect(glyphOf('pmos-d').name).toBe(glyphOf('pmos-e').name);
+  });
+
+  test('turns the arrow around for the p-type of every transistor family', () => {
+    // 実機で「トランジスタ・FET の矢印を回路図と同じに」と言われた回。
+    // **矢の向きが n 形と p 形を分ける**ので、同じ形に落とすと図と食い違う。
+    for (const [n, p] of [['npn', 'pnp'], ['njfet', 'pjfet'], ['nigbt', 'pigbt'],
+      ['nmos', 'pmos'], ['nmos-e', 'pmos-e']] as const) {
+      expect(glyphOf(n).name, n).not.toBe(glyphOf(p).name);
+      expect(drawGlyph(glyphOf(n).name), n).not.toBe(drawGlyph(glyphOf(p).name));
+    }
   });
 
   test('draws the diodes the figure draws differently as different shapes', () => {
