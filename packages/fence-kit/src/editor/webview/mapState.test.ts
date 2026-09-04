@@ -302,6 +302,34 @@ describe('続けて置く・1 穴ずつ', () => {
   });
 });
 
+describe('テキスト側のカーソルが指したもの', () => {
+  test('takes the part the cursor sits on as the selected one, so its fields open', () => {
+    // 実機で「カーソルを当てた部品の属性も表示して、変更できるように」。
+    const aimed = after(PANEL, { kind: 'aim', picked: { kind: 'part', id: 'R1' } });
+
+    expect(aimed.selected).toEqual({ kind: 'part', id: 'R1' });
+  });
+
+  test('says nothing back, since the extension is the one watching the cursor', () => {
+    // こちらから「選んだ」と言うと、同じことを 2 度することになる。
+    expect(step(PANEL, { kind: 'aim', picked: { kind: 'part', id: 'R1' } }).send).toEqual([]);
+  });
+
+  test('leaves a part being placed alone, so the cursor cannot steal it', () => {
+    const placing = after(PANEL, key('a'));
+    const carried = { ...placing, carry: { kind: 'place', type: 'resistor', twoEnds: true } } as State;
+
+    expect(step(carried, { kind: 'aim', picked: { kind: 'part', id: 'R1' } }).state.selected).toBeNull();
+  });
+
+  test('drops a group selection, since the cursor points at one thing', () => {
+    const many = after(PANEL, { kind: 'pickMany', parts: ['R1', 'C1'] });
+    expect(many.also).toHaveLength(2);
+
+    expect(after(many, { kind: 'aim', picked: { kind: 'part', id: 'D1' } }).also).toEqual([]);
+  });
+});
+
 describe('配線', () => {
   test('W starts the wire tool; the first click sets the start, the second draws', () => {
     const wiring = after(PANEL, key('w'));

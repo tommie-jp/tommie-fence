@@ -161,6 +161,12 @@ export type Event =
    * 描かれているかを知っているのはあちら)。ここは覚えるだけ。
    */
   | { readonly kind: 'pickMany'; readonly parts: readonly string[] }
+  /**
+   * テキスト側のカーソルが指したもの。**指したら選んだことにする** — 欄を出して
+   * 直せるようにするため (実機で頼まれた)。
+   * 何も指していないときは来ない (選んだままにしておく)。
+   */
+  | { readonly kind: 'aim'; readonly picked: Picked }
   | { readonly kind: 'tool'; readonly tool: Tool }
   /** パレットで部品を選んだ。 */
   | { readonly kind: 'place'; readonly type: string; readonly twoEnds: boolean }
@@ -599,6 +605,13 @@ export function step(state: State, event: Event): Outcome {
     }
     case 'pickMany':
       return onPickMany(state, event.parts);
+    case 'aim':
+      // **持ち物があるあいだは触らない** (置いている最中に選び直さない)。
+      // 知らせは返さない — カーソルを見ているのは拡張の側なので、
+      // こちらから選んだと言うと同じことを 2 度することになる。
+      return state.carry !== null
+        ? outcome(state)
+        : outcome({ ...state, selected: event.picked, also: [] });
     case 'ghost':
       return onGhost(state, event.ghost);
     case 'refresh':

@@ -300,10 +300,29 @@ function endElement(spelling: string): SVGGraphicsElement | null {
     ?? query<SVGGraphicsElement>(`.cf-pin-hit[data-pin="${escaped}"]`);
 }
 
-const centreOf = (element: SVGGraphicsElement): { readonly x: number; readonly y: number } => {
+/**
+ * その要素の真ん中を、**図の座標**で返す。
+ *
+ * `getBBox` が返すのは**その要素自身の中の座標**なので、入れ子の `<g>` に
+ * `translate` が掛かっているもの (足の丸は部品の中にいる) は原点の近くの値に
+ * なる。そのまま線を引くと、**図の左上から線が伸びる**
+ * (実機で「配線しているとときどき左上にシャドウが伸びる」)。
+ *
+ * 画面の座標を挟んで図の座標へ戻すと、途中の `translate` も `rotate` も
+ * まとめて効く。まだ描かれていない (行列が無い) ときは諦めて null。
+ */
+function centreOf(element: SVGGraphicsElement): { readonly x: number; readonly y: number } | null {
+  const svg = element.ownerSVGElement;
+  const toScreen = element.getScreenCTM();
+  const fromScreen = svg?.getScreenCTM()?.inverse();
+  if (svg === null || toScreen === null || fromScreen === undefined) return null;
+
   const box = element.getBBox();
-  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-};
+  const at = new DOMPoint(box.x + box.width / 2, box.y + box.height / 2)
+    .matrixTransform(toScreen)
+    .matrixTransform(fromScreen);
+  return Number.isFinite(at.x) && Number.isFinite(at.y) ? { x: at.x, y: at.y } : null;
+}
 
 /**
  * 配線の 1 点目。2 点目を押すまで印を出しておく。
@@ -337,6 +356,7 @@ function markWireGhost(now: State): void {
 
   const from = centreOf(start);
   const to = centreOf(finish);
+  if (from === null || to === null) return;
   // 折れる指定は先に横 (`-|`)。折れない板では真っ直ぐのまま。
   const corner = shiftHeld && now.foldsWire ? [{ x: to.x, y: from.y }] : [];
   const points = [from, ...corner, to].map((at) => `${at.x},${at.y}`).join(' ');
@@ -904,7 +924,15 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
   }
   if (message.kind === 'fields') showFields(message.part);
   if (message.kind === 'status') setText('.cf-status', message.text);
-  if (message.kind === 'aim') aim(message.what, message.id);
+  if (message.kind === 'aim') {
+    aim(message.what, message.id);
+    // **カーソルが指した部品は選んだことにする。** 欄が出て、そのまま直せる。
+    const what = message.what;
+    const id = message.id;
+    if ((what === 'part' || what === 'wire') && id !== undefined) {
+      run({ kind: 'aim', picked: { kind: what, id } });
+    }
+  }
   if (message.kind === 'history') {
     const undo = query<HTMLButtonElement>('.cf-undo');
     const redo = query<HTMLButtonElement>('.cf-redo');

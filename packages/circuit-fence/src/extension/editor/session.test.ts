@@ -159,15 +159,29 @@ describe('マップを組む', () => {
     expect(session.view().html).toContain('フェンスを見失いました');
   });
 
-  test('sends history, then the map, then what the cursor points at', () => {
+  test('sends history, then the map, then what the cursor points at and its fields', () => {
+    // **欄まで送る。** カーソルは「いまどれを見ているか」なので、光らせるだけ
+    // でなく直せるところまで出す (実機で頼まれた)。
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
     const session = sessionOf(host);
 
     session.refresh();
 
-    expect(host.sent.map((message) => message.kind)).toEqual(['history', 'map', 'aim']);
+    expect(host.sent.map((message) => message.kind)).toEqual(['history', 'map', 'aim', 'fields']);
     expect(last(host, 'aim')).toMatchObject({ what: 'part', id: 'R1' });
+    expect(last(host, 'fields')).toMatchObject({ part: { id: 'R1', type: 'resistor' } });
+  });
+
+  test('leaves the fields alone when the cursor points at nothing', () => {
+    // マップで選んだ欄を、カーソルが余白へ動いただけで閉じない。
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 0));
+    const session = sessionOf(host);
+
+    session.refresh();
+
+    expect(host.sent.map((message) => message.kind)).not.toContain('fields');
   });
 });
 

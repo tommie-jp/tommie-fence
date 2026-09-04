@@ -456,6 +456,11 @@ export function createSession<D extends DocLike>(
       return;
     }
     host.post({ kind: 'aim', what: aim.kind, id: aim.id });
+    // **指したものの欄も送る。** カーソルは「いまどれを見ているか」なので、
+    // 光らせるだけでなく直せるところまで出す (実機で頼まれた)。
+    // 何も指していないときは送らない — マップで選んだ欄を閉じてしまうため。
+    if (aim.kind === 'part') sendFields(editor.fieldsOf(fence.source, aim.id));
+    if (aim.kind === 'wire') sendFields(editor.fieldsOf(fence.source, wireHandle(aim.id) ?? ''));
   }
 
   /** webview へ最後に送った姿。**同じものを送り直さない** (下の `refreshWith`)。 */
