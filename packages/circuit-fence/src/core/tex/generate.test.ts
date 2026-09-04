@@ -1052,3 +1052,52 @@ describe('向き', () => {
     });
   });
 });
+
+describe('マイコンボード', () => {
+  const board = (...rows: string[]) => {
+    const { doc } = parseFence(`${rows.join('\n')}\n`);
+    if (doc === null) throw new Error('YAML を読めませんでした');
+    return generateTex(buildCircuit(doc).circuit, { style: doc.style });
+  };
+
+  test('draws it as a chip whose numbers are hidden, since the names take their place', () => {
+    const { tex } = board('parts:', '  U1: pico b2');
+
+    expect(tex).toContain('num pins=40');
+    expect(tex).toContain('hide numbers');
+  });
+
+  test('puts a mark on every leg, one for each name', () => {
+    // フェンスは字を TeX に渡さない (約束 7) — TeX に描かせると字送りが狂う。
+    const { tex, notes } = board('parts:', '  U1: pico b2');
+    const marks = (tex.match(/\.bpin \d+\)/g) ?? []).length;
+
+    expect(marks).toBe(40);
+    expect(notes.slice(0, 3).map((one) => one.text)).toEqual(['GP0', 'GP1', 'GND3']);
+  });
+
+  test('puts the legs before the notes, since the parts are drawn first', () => {
+    // 差し込みは**目印の出てくる順**で当たる。並びが逆だと名前と注釈が入れ替わる。
+    const { notes } = board('parts:', '  U1: pico b2', 'notes:', '  - text a1: ここ');
+
+    expect(notes[0]?.text).toBe('GP0');
+    expect(notes[notes.length - 1]?.text).toBe('ここ');
+  });
+
+  test('spells the legs the way the real board prints them', () => {
+    const { tex } = board('parts:', '  U1: pico2-w b2', 'wires:', '  - U1.GP0 -- a1');
+
+    expect(tex).toContain('part-U1.pin 1');
+  });
+
+  test('writes the real names into the exported .tex, which has fonts of its own', () => {
+    const { doc } = parseFence('parts:\n  U1: pico b2\n');
+    if (doc === null) throw new Error('YAML を読めませんでした');
+    const { tex } = generateTex(buildCircuit(doc, { target: 'latex' }).circuit, {
+      style: doc.style, target: 'latex',
+    });
+
+    expect(tex).toContain('{GP0}');
+    expect(tex).not.toContain('circuitnotemark');
+  });
+});

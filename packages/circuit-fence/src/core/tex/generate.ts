@@ -4,16 +4,16 @@ import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
 import { isTurned, lookupPartType, optionsFor, symbolFor } from '../parts.ts';
-import type { SourceInner, Turn } from '../parts.ts';
+import type { PartType, SourceInner, Turn } from '../parts.ts';
 import { EMPTY_STYLE } from '../parser/style.ts';
 import { cellOf as addressOf, nodeNameOf, texNameOfEndpoint } from '../types.ts';
 import type {
   MultiTerminalPart, NoteOverlay, PartSpec, StyleSpec, TexTarget, TwoTerminalPart, OneTerminalPart,
 } from '../types.ts';
 import {
-  drawNote, drawStamp, drawTitle, listingOf, noteColorLines, noteNeeds, noteOverlays,
+  MARK_COLOR_NAME, drawNote, drawStamp, drawTitle, listingOf, noteColorLines, noteNeeds, noteOverlays,
 } from './drawNotes.ts';
-import { noteFontTex, texColorOf } from '../notes.ts';
+import { NOTE_MARK_TEXT, noteFontTex, texColorOf } from '../notes.ts';
 import { escapeTex, hasUnicode } from './escape.ts';
 import { isMathLabel, mathInnerOf, mathLabelTex } from './mathLabel.ts';
 import { num } from './num.ts';
@@ -649,9 +649,45 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
     : type?.valueInside === true
       ? (boxTurned ? [`\\node[font=\\scriptsize] at (${name}.center) {${annotation}};`] : [])
       : [`\\node[font=\\scriptsize, anchor=north] at (${name}.${underAnchor(part.turn)}) {${annotation}};`];
-  if (symbol !== 'plain amp') return [node, ...number];
+  if (symbol === 'plain amp') return [node, ...number, ...amplifierSigns(name, part.turn)];
 
-  return [node, ...number, ...amplifierSigns(name, part.turn)];
+  return [node, ...number, ...pinNameNodes(name, type, target)];
+}
+
+/**
+ * 箱の足に書く名前 (マイコンボードだけ)。**左の列は右向き、右の列は左向き**に
+ * 出して、字が箱の中へ入るようにする。
+ *
+ * フェンスでは**字を TeX に渡さない** — 目印を 1 文字置いて、描き上がった SVG に
+ * 差し込む (約束 7)。TeX に描かせると字送りが狂う (`AGND` が「A GND」になった。
+ * 実機で確かめた)。書き出す `.tex` は本物の TeX なのでそのまま書く。
+ *
+ * **差し込みは目印の出てくる順**で当たる。部品は注釈より先に書かれるので、
+ * 名前の並びも `noteOverlays` の先頭に来る。
+ */
+function pinNameNodes(name: string, type: PartType | null, target: TexTarget): string[] {
+  const labels = type?.pinLabels;
+  if (labels === undefined) return [];
+
+  const half = labels.length / 2;
+  return labels.map((label: string, index: number) => {
+    // 1 番から半分までが左の列、残りが右の列 (DIP の番号の付き方)。
+    const left = index < half;
+    const options = [
+      // フェンスは目印の色で置く (SVG で本物の字に差し替わる)。
+      ...(target === 'latex' ? [] : [MARK_COLOR_NAME]),
+      // **40 本が箱に収まる大きさ**にする。`\scriptsize` だと左右の列が
+      // 箱の真ん中でぶつかった (実機で焼いて確かめた)。
+      'font=\\tiny',
+      `anchor=${left ? 'west' : 'east'}`,
+      // 縁のすぐ内側へ。**`bpin` は枠の上の足** (`pin` は足の先) なので、
+      // 線の太さぶんだけ逃がせば中に収まる。
+      `xshift=${left ? '' : '-'}2pt`,
+      'inner sep=0',
+    ];
+    const text = target === 'latex' ? escapeTex(label) : NOTE_MARK_TEXT;
+    return `\\node[${options.join(', ')}] at (${name}.bpin ${index + 1}) {${text}};`;
+  });
 }
 
 const drawPart = (part: PartSpec, target: TexTarget, pitch: number): string[] =>

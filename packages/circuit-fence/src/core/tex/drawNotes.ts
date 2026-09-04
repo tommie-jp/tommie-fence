@@ -19,6 +19,7 @@ import {
   noteFontTex, noteLine, noteMonoWidth, noteSourceLine, noteSpan, noteWidth, texAnchorOf, texColorOf,
 } from '../notes.ts';
 import type { NoteSize } from '../notes.ts';
+import { lookupPartType } from '../parts.ts';
 import { STAMP_TEXT } from '../version.ts';
 import type {
   ArrowNote, BoxNote, LineNote, NoteOverlay, NoteSpec, NoteTextStyle, PartSpec, SourceNote, TexTarget,
@@ -91,7 +92,7 @@ const styleOptions = (style: NoteTextStyle, target: TexTarget): string[] => [
 ];
 
 /** 目印の色に TeX で付ける名前。書き手の字は入らない。 */
-const MARK_COLOR_NAME = 'circuitnotemark';
+export const MARK_COLOR_NAME = 'circuitnotemark';
 
 /**
  * 印を置く場所。部品を指したときは記号の真ん中、番地を指したときはその交点。
@@ -398,7 +399,9 @@ export function noteColorLines(
   const marked =
     target === 'fence'
     && (circuit.title !== null
-      || circuit.notes.some((note) => note.kind === 'text' || note.kind === 'source'));
+      || circuit.notes.some((note) => note.kind === 'text' || note.kind === 'source')
+      // 足の名前も目印で置く (マイコンボード)。
+      || circuit.parts.some((part) => lookupPartType(part.type)?.pinLabels !== undefined));
   return marked
     ? [...palette, `\\definecolor{${MARK_COLOR_NAME}}{HTML}{${hexDigits(NOTE_MARK_COLOR)}}`]
     : palette;
@@ -413,6 +416,23 @@ export function noteOverlays(
 ): NoteOverlay[] {
   if (target === 'latex') return [];
 
+  // **足の名前は注釈より先。** 部品は注釈より先に書かれるので、目印もそちらが
+  // 先に出てくる (差し込みは出てくる順で当たる)。
+  const pins = circuit.parts.flatMap((part): NoteOverlay[] => {
+    const labels = lookupPartType(part.type)?.pinLabels;
+    if (labels === undefined) return [];
+    const half = labels.length / 2;
+    return labels.map((label, index) => ({
+      text: label,
+      color: NOTE_INK,
+      mono: false,
+      bold: false,
+      // 左の列は右へ、右の列は左へ伸ばす (TeX の `anchor` と揃える)。
+      align: index < half ? ('left' as const) : ('right' as const),
+      rotate: 0 as const,
+    }));
+  });
+
   const notes = circuit.notes.flatMap((note): NoteOverlay[] => {
     if (note.kind !== 'text' && note.kind !== 'source') return [];
     const color = noteColor(note.color) ?? NOTE_INK;
@@ -423,12 +443,14 @@ export function noteOverlays(
       : listing.map((text) => ({ text, mono: true, rotate: 0 as const, ...look }));
   });
 
+  const written = [...pins, ...notes];
+
   // 題は TeX のいちばん最後に置くので、差し込む並びでも末尾。
   // 色は書かせていないので、図のほかの文字と同じ色に乗る (NOTE_INK は
   // 黒のまま出て、そのあと recolorSvg がテーマの文字色に塗り替える)。
   const titled = circuit.title === null
-    ? notes
-    : [...notes, { text: circuit.title, color: NOTE_INK, mono: false, bold: true, align: 'left', rotate: 0 } as const];
+    ? written
+    : [...written, { text: circuit.title, color: NOTE_INK, mono: false, bold: true, align: 'left', rotate: 0 } as const];
 
   // 刻印は題のさらに後 (題まで含めた箱の右下に掛かる)。右下に付くものなので、
   // 差し込む字は目印から**左へ**伸ばす。

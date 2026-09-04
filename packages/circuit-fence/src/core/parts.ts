@@ -1,3 +1,5 @@
+import { lookupBoardPart } from 'fence-kit';
+import type { BoardPart } from 'fence-kit';
 /**
  * 部品の種類の表。パーサ (どう書けるか) と TeX 生成 (どう描くか) の両方がここを見る。
  * 表を 2 つに割ると片方だけ増えて食い違うので、1 か所に集める。
@@ -167,6 +169,15 @@ export type PartType = {
    * 並びは**上から下・左から右**で書く — 升目はその順に置く。
    */
   readonly pinRow?: Readonly<Record<string, PinSide>>;
+  /**
+   * 足に書く名前 (1 番から順)。**書くのはマイコンボードだけ** — 40 本を番号で
+   * 呼ぶと実物のピンアウト図と突き合わせられないため。
+   *
+   * フェンスでは**字を TeX に渡さない** (約束 7)。足の位置に目印を 1 文字置き、
+   * 描き上がった SVG に差し込む — TeX に描かせると字送りが狂う
+   * (`AGND` が「A GND」になる。実機で確かめた)。
+   */
+  readonly pinLabels?: readonly string[];
   /**
    * 向きを書ける範囲。**省くと種類で決まる** (多端子は回転も反転も可、
    * それ以外は不可)。表に書くのは既定から外れるものだけ — 実機で字が壊れる
@@ -357,6 +368,45 @@ const dipSides = (count: number): Record<string, PinSide> => {
   const right = Array.from({ length: half }, (_, index) => [`pin ${count - index}`, 'right'] as const);
   return Object.fromEntries([...left, ...right]);
 };
+
+/**
+ * マイコンボード。**箱に足の名前を書く IC** として描く。
+ *
+ * 表は fence-kit と共有 — 実体配線図の 2 つと**同じ綴り・同じピン名**で書ける
+ * ようにするため (52 の docs/21)。番号は消して名前を出す
+ * (`hide numbers`。実機の TeX で確かめた)。
+ */
+function boardchip(board: BoardPart): PartType {
+  const anchors = board.pins.map((name, index) => [name, `pin ${index + 1}`] as const);
+  return {
+    // 反転すると足の名前も型番も鏡文字になる (DIP と同じ)。回転だけ許す。
+    orient: TURN_ONLY,
+    kind: 'multi-terminal',
+    symbol: 'dipchip',
+    // **箱を広げる。** 既定の幅では左右の名前が真ん中でぶつかる
+    // (`ADC_VREF` と `GP4`。実機で焼いて確かめた)。`minimum width` は
+    // dipchip に効かないので、circuitikz の鍵をこのノードにだけ渡す。
+    options: [
+      `num pins=${board.pins.length}`,
+      'hide numbers',
+      'font=\\scriptsize',
+      '/tikz/circuitikz/multipoles/dipchip/width=2.4',
+    ],
+    valueInside: true,
+    ...NO_UNIT,
+    // **書かれた綴りは小文字で引かれる**ので両方入れる。先に書いたほうが
+    // 代表の名前になる (`mainPinName`) ので、実物の印字を先に置く。
+    pins: Object.fromEntries(anchors.flatMap(([name, anchor]) =>
+      (name === name.toLowerCase() ? [[name, anchor]] : [[name, anchor], [name.toLowerCase(), anchor]]))),
+    // 置き場は DIP と同じ回り方 (左を上から、右を下から)。
+    // **鍵はアンカー名** (`pin 1`) — 書かれた綴りではない (`pinSideOf` が引く形)。
+    pinRow: Object.fromEntries([
+      ...anchors.slice(0, anchors.length / 2).map(([, anchor]) => [anchor, 'left' as const]),
+      ...anchors.slice(anchors.length / 2).reverse().map(([, anchor]) => [anchor, 'right' as const]),
+    ]),
+    pinLabels: board.pins,
+  };
+}
 
 export const PART_TYPES = {
   // 受動部品
@@ -557,6 +607,12 @@ export const PART_TYPES = {
   dip24: dipchip(24),
   dip28: dipchip(28),
   dip40: dipchip(40),
+
+  // マイコンボード。**表は実体配線図の 2 つと共通** (fence-kit)。
+  pico: boardchip(lookupBoardPart('pico') as BoardPart),
+  'pico-w': boardchip(lookupBoardPart('pico-w') as BoardPart),
+  pico2: boardchip(lookupBoardPart('pico2') as BoardPart),
+  'pico2-w': boardchip(lookupBoardPart('pico2-w') as BoardPart),
 } as const satisfies Record<string, PartType>;
 
 export type PartTypeName = keyof typeof PART_TYPES;
@@ -648,6 +704,11 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   dip24: 'DIP の IC (24 ピン)',
   dip28: 'DIP の IC (28 ピン)',
   dip40: 'DIP の IC (40 ピン)',
+  // 製品名は実体配線図の 2 つと同じ字 (fence-kit の表)。
+  pico: 'Pico',
+  'pico-w': 'Pico W',
+  pico2: 'Pico 2',
+  'pico2-w': 'Pico 2 W',
 };
 
 /**
@@ -740,6 +801,10 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   dip24: 'U',
   dip28: 'U',
   dip40: 'U',
+  pico: 'U',
+  'pico-w': 'U',
+  pico2: 'U',
+  'pico2-w': 'U',
 };
 
 /**
