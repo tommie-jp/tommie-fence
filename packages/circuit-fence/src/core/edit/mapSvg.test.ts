@@ -208,6 +208,36 @@ describe('2 交点をつなぐ線', () => {
   });
 });
 
+describe('画布の広さ', () => {
+  const boxOf = (source: string): readonly number[] =>
+    (/class="cf-map" viewBox="([-\d. ]+)"/.exec(draw(source))?.[1] ?? '').split(' ').map(Number);
+
+  test('grows to hold a part that is bigger than the cells it sits on', () => {
+    // 実機で「pico を置いても回路図が広がらない」。40 本のボードは升 1 つに
+    // 置くが、箱は 20 行ぶんある。升目の大きさで切ると図が丸ごと外へ出る。
+    const [, top, , height] = boxOf('parts:\n  U1: pico b2\n');
+    const dots = [...draw('parts:\n  U1: pico b2\n')
+      .matchAll(/class="cf-pin-dot" cx="[-\d.]+" cy="([-\d.]+)"/g)].map((one) => Number(one[1]));
+    // 足は部品の中の座標。b 行 (y=66) に足して、画布の中に収まっていること。
+    const legs = dots.map((cy) => 66 + cy);
+
+    expect(Math.min(...legs)).toBeGreaterThan(top ?? 0);
+    expect(Math.max(...legs)).toBeLessThan((top ?? 0) + (height ?? 0));
+  });
+
+  test('opens the canvas above the origin, since a tall part reaches up', () => {
+    // 部品は升の中心を軸に上下へ伸びる。画布の原点は 0 とは限らない。
+    expect(boxOf('parts:\n  U1: pico b2\n')[1]).toBeLessThan(0);
+  });
+
+  test('stays on the cells when nothing sticks out', () => {
+    const [left, top] = boxOf('parts:\n  R1: resistor a1 a3\n');
+
+    expect(left).toBe(0);
+    expect(top).toBe(0);
+  });
+});
+
 describe('多端子部品の足', () => {
   test('puts a connection point on every leg, named as the fence spells it', () => {
     // 実機で「足に接続点を表示し、配線で押して接続して」。綴りをそのまま

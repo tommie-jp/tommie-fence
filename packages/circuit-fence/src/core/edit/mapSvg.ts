@@ -84,6 +84,58 @@ const drawWire = (wire: WireLine, bad: Bad, dots: PinPoints): string =>
     points: pathOf(wire, dots),
   });
 
+/** 画布の四隅。**升目の外へ出た部品と札まで含める。** */
+type Room = {
+  readonly left: number; readonly top: number;
+  readonly right: number; readonly bottom: number;
+};
+
+/** 足の名前 1 つが要る横幅。字の大きさは `.cf-pin-name` の 8px。 */
+const PIN_NAME_FONT = 8;
+
+/**
+ * 画布に要る広さ。**升目・部品の箱・注釈の札**のどれも入るところまで取る。
+ *
+ * 升目だけで測ると、升 1 つに置く大きな部品 (40 本のボードは 20 行ぶんの箱に
+ * なる) が縁で切れる。部品は升の中心を軸に上下へ伸びるので、**左と上へも**
+ * 広げられるようにしてある (画布の原点は 0 とは限らない)。
+ */
+function roomFor(map: GridMap, nudges: ReadonlyMap<Chip, number>): Room {
+  let room: Room = {
+    left: 0, top: 0, right: x(map.cols - 1) + EDGE, bottom: y(map.rows - 1) + EDGE,
+  };
+  const hold = (left: number, top: number, right: number, bottom: number): void => {
+    room = {
+      left: Math.min(room.left, left), top: Math.min(room.top, top),
+      right: Math.max(room.right, right), bottom: Math.max(room.bottom, bottom),
+    };
+  };
+
+  for (const note of map.notes) hold(0, 0, noteRight(note) + EDGE, 0);
+
+  for (const chip of map.chips) {
+    if (chip.to !== null) continue;
+    const rows = rowsOf(chip.pins, chip.turn);
+    const { halfW, halfH } = reachOf(rows, glyphOf(chip.type).name);
+    const at = { x: x(chip.col), y: y(chip.row) + (nudges.get(chip) ?? 0) };
+    // 足の棒と、その先の名前。**辺ごとに要る幅が違う** (名前の長さが違う)。
+    const beside = (side: PinSide): number => {
+      const row = rows.get(side);
+      if (row === undefined) return 0;
+      const widest = Math.max(0, ...row.map((pin) => textWidth(pin.name) * PIN_NAME_FONT));
+      return PIN_STUB + (side === 'left' || side === 'right' ? widest + PIN_MARGIN : PIN_NAME_FONT * 2);
+    };
+    hold(
+      at.x - halfW - beside('left') - EDGE,
+      // 名前は記号の上に出る (上に足があれば更に上)。
+      at.y - halfH - Math.max(beside('top'), -NAME_ABOVE_PIN) - EDGE,
+      at.x + halfW + beside('right') + EDGE,
+      at.y + halfH + beside('bottom') + EDGE,
+    );
+  }
+  return room;
+}
+
 /** 升目に出ている足の接続点。部品の名前と足の名前で引く。 */
 type PinPoints = ReadonlyMap<string, { readonly x: number; readonly y: number }>;
 
@@ -556,11 +608,11 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {})
     return '<p class="cf-note">フェンスを読めません。エラーを直すとマップが出ます。</p>';
   }
 
-  // **札のぶんまで画布を広げる。** 右端に近い注釈は、升目の幅だけで切ると
-  // 札が縁で切れて読めない (字に合わせて伸びるようにして初めて出た)。
-  const width = Math.max(x(map.cols - 1) + EDGE, ...map.notes.map((note) => noteRight(note) + EDGE));
-  const height = y(map.rows - 1) + EDGE;
   const nudges = nudgesOf(map.chips);
+  // **画布は升目ではなく、描いたものに合わせる。** 40 本のマイコンボードは
+  // 升 1 つに置くが箱は 20 行ぶんあり、升目の大きさで切ると図が丸ごと外へ出る
+  // (実機で「pico を置いても回路図が広がらない」)。
+  const room = roomFor(map, nudges);
   // 接続点は線より先に数える (線の先をそこへ合わせるため)。
   const dots = pinPointsOf(map.chips, nudges);
 
@@ -568,7 +620,8 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {})
     'svg',
     {
       class: 'cf-map',
-      viewBox: `0 0 ${num(width)} ${num(height)}`,
+      viewBox: `${num(room.left)} ${num(room.top)} ${num(room.right - room.left)}`
+        + ` ${num(room.bottom - room.top)}`,
       // 幅は CSS が決める。高さを比で決めるので、狭いパネルでも縦に伸びない。
       preserveAspectRatio: 'xMinYMin meet',
       xmlns: 'http://www.w3.org/2000/svg',
