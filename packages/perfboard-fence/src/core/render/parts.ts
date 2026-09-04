@@ -1,5 +1,5 @@
 import {
-  REAL_INK, drawBody, drawPackage, drawsOwnLeads, element, fit, hasBody, num,
+  REAL_INK, drawBody, drawPackage, drawsOwnLeads, element, fit, hasBody, lookupBoardPart, num,
   packageHalfWidth, packageReach, smaBody as drawSmaBody, svgText,
 } from 'fence-kit';
 import type { BodyInk, BodyPart } from 'fence-kit';
@@ -420,9 +420,19 @@ const NOTCH = 4;
  * 箱で描く部品か。**足の数ではなく形で決める** — `sip2` は足が 2 本でも
  * パッケージなので、軸物のように傾けて描いてはいけない。
  */
+/**
+ * マイコンボードの基板の色。**下の板とも IC の樹脂とも違う色**にする —
+ * 板と同じ緑にすると、上にもう 1 枚基板が載っていることが図から読めない。
+ * **透かさない** (`fill-opacity` を掛けない) — 実物の基板は不透明で、
+ * 下の穴は見えないし、そこへ配線もできない。
+ */
+const BOARD_FILL = '#123a52';
+const BOARD_EDGE = '#0b2637';
+
 const isBoxed = (part: PlacedPart): boolean => {
   const kind = footprintOf(part.type)?.kind;
-  return kind === 'dip' || kind === 'sip';
+  // マイコンボードも箱。**列の間隔が広い DIP** として同じ道を通る。
+  return kind === 'dip' || kind === 'sip' || kind === 'board';
 };
 
 /**
@@ -513,11 +523,16 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
     })
     .join('');
 
+  // **マイコンボードは基板の色で描く。** IC の樹脂と同じ色にすると、
+  // 板の上にもう 1 枚の基板が載っていることが図から読めない。
+  const board = lookupBoardPart(part.type);
   const body = element('rect', {
     x: num(rect.cx - rect.width / 2), y: num(rect.cy - rect.height / 2),
     width: num(rect.width), height: num(rect.height), rx: 3,
-    fill: theme.palette.body, stroke: theme.palette.bodyEdge, 'stroke-width': 1,
-    'fill-opacity': theme.metrics.bodyOpacity,
+    fill: board === null ? theme.palette.body : BOARD_FILL,
+    stroke: board === null ? theme.palette.bodyEdge : BOARD_EDGE,
+    'stroke-width': 1,
+    ...(board === null ? { 'fill-opacity': theme.metrics.bodyOpacity } : {}),
   });
 
   // 箱は縦横のどちらにも伸びる (回すと入れ替わる)。**短いほうの辺が

@@ -2,6 +2,7 @@ import { NO_TURN } from './orient.ts';
 import type { Turn } from './orient.ts';
 import type { Address, Board } from '../types.ts';
 import { isEdgeMount, isThreeLead, isTwoLead } from './types.ts';
+import { lookupBoardPart } from 'fence-kit';
 
 /**
  * 部品の形。**何個の穴を書くか**と、**足がどこに来るか**の 2 つを決める。
@@ -20,7 +21,7 @@ import { isEdgeMount, isThreeLead, isTwoLead } from './types.ts';
  * 中心線を挟んで反対側に決まる (`pinsOf` が補う)。
  */
 
-export type FootprintKind = 'two-lead' | 'three-lead' | 'edge' | 'dip' | 'sip';
+export type FootprintKind = 'two-lead' | 'three-lead' | 'edge' | 'dip' | 'sip' | 'board';
 
 export type Footprint = {
   readonly kind: FootprintKind;
@@ -35,6 +36,12 @@ export type Footprint = {
 /** DIP の 2 列の間隔 (穴の数)。300 mil = 7.62mm = 3 ピッチ。 */
 export const DIP_ROW_SPAN = 3;
 
+/**
+ * マイコンボードの 2 列の間隔 (穴の数)。Pico は 0.7 インチ = 17.78mm = 7 ピッチ。
+ * **DIP と同じ並べ方で、間隔だけが違う** — 1 番が左上、右へ数えて折り返す。
+ */
+export const BOARD_ROW_SPAN = 7;
+
 const DIP = /^dip([0-9]{1,2})$/;
 const SIP = /^sip([0-9]{1,2})$/;
 
@@ -47,6 +54,12 @@ const SIP_MAX_PINS = 40;
 /** 種類から形を引く。置けない種類は null。**姿で足の数が変わる**のは端面実装だけ。 */
 export function footprintOf(type: string, variant: string | null = null): Footprint | null {
   if (isEdgeMount(type, variant)) return { kind: 'edge', pins: 3, holes: 3, minHoles: 2 };
+
+  // マイコンボード。**表は fence-kit と共有** (どのボードに何番のピンがあるかは
+  // 板に依らない)。並べ方は DIP と同じで、列の間隔だけが広い。
+  const board = lookupBoardPart(type);
+  if (board !== null) return { kind: 'board', pins: board.pins.length, holes: 1 };
+
   if (isTwoLead(type)) return { kind: 'two-lead', pins: 2, holes: 2 };
   if (isThreeLead(type)) return { kind: 'three-lead', pins: 3, holes: 3 };
 
@@ -123,10 +136,11 @@ export function pinsOf(
     return Array.from({ length: footprint.pins }, (_, index) => at({ row: 0, col: index }));
   }
 
+  const span = footprint.kind === 'board' ? BOARD_ROW_SPAN : DIP_ROW_SPAN;
   const perSide = footprint.pins / 2;
   const top = Array.from({ length: perSide }, (_, index) => at({ row: 0, col: index }));
   const bottom = Array.from({ length: perSide }, (_, index) =>
-    at({ row: DIP_ROW_SPAN, col: perSide - 1 - index }));
+    at({ row: span, col: perSide - 1 - index }));
   return [...top, ...bottom];
 }
 

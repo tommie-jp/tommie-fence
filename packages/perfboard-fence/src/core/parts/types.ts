@@ -1,3 +1,4 @@
+import { boardPartNames, lookupBoardPart } from 'fence-kit';
 /**
  * 置ける部品の語彙。**Phase 2 は 2 本足だけ。** 3 本足・DIP・SIP は次の Phase で、
  * 置けないものは「知らないふり」ではなく**置けないと言う**。
@@ -103,7 +104,8 @@ const own = (table: Record<string, unknown>, key: string): boolean => Object.has
 export const isTwoLead = (type: string): boolean => TWO_LEAD.has(type);
 export const isThreeLead = (type: string): boolean => THREE_LEAD.has(type);
 export const isKnownType = (type: string): boolean =>
-  TWO_LEAD.has(type) || THREE_LEAD.has(type) || NOT_YET.has(type) || NESTED.has(type);
+  TWO_LEAD.has(type) || THREE_LEAD.has(type) || NOT_YET.has(type) || NESTED.has(type)
+  || lookupBoardPart(type) !== null;
 /**
  * パレットに出す**パッケージ物**。`dipN` / `sipN` は数を選べるが、一覧に全部
  * 並べても選べないので、**実物として売られている数**だけ出す。ここに無い数も
@@ -116,6 +118,8 @@ const SIP_SIZES: readonly number[] = [2, 3, 4, 5, 6, 8, 10, 20, 40];
 export const packageNames = (): readonly string[] => [
   ...DIP_SIZES.map((pins) => `dip${pins}`),
   ...SIP_SIZES.map((pins) => `sip${pins}`),
+  // マイコンボード。**breadboard と同じ表**から出す (fence-kit)。
+  ...boardPartNames(),
 ];
 
 export const placeableNames = (): readonly string[] => [...TWO_LEAD, ...THREE_LEAD, ...packageNames()];
@@ -127,7 +131,7 @@ export const aliasesFor = (type: string): readonly string[] =>
 /** 略記を正式名に畳む。知らない綴りはそのまま返す (呼ぶ側が断る)。 */
 export const resolveTypeName = (type: string): string => (own(ALIASES, type) ? ALIASES[type] ?? type : type);
 export const knownNames = (): readonly string[] =>
-  [...TWO_LEAD, ...THREE_LEAD, ...NOT_YET, ...NESTED, ...Object.keys(ALIASES)];
+  [...TWO_LEAD, ...THREE_LEAD, ...NOT_YET, ...NESTED, ...boardPartNames(), ...Object.keys(ALIASES)];
 
 export type PartType = {
   readonly type: string;

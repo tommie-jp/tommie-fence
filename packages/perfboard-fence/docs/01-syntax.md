@@ -217,7 +217,7 @@ wires:
 **名前**は英数字と `_` `-` で 32 字まで。配線から指せる形にする。
 **同じ名前は 1 つだけ** — 2 つあると、配線がどちらを指すのか決まらない。
 
-**種類**は 2 本足が 18、3 本足が 6、それに `dipN` と `sipN`。
+**種類**は 2 本足が 18、3 本足が 6、それに `dipN` / `sipN` とマイコンボード。
 
 ```text
 2 本足  resistor  capacitor  led  diode  inductor  crystal  buzzer
@@ -225,7 +225,11 @@ wires:
         zener  schottky  photodiode  fuse  lamp  sma
 3 本足  transistor  potentiometer  thyristor  triac  slide-switch  regulator
 パッケージ  dip4〜dip40 (偶数)  sip2〜sip40
+ボード      pico  pico-w  pico2  pico2-w
 ```
+
+マイコンボードは **breadboard と同じ綴り・同じピン名**で書ける (`U1.GP0`)。
+表を 2 つのフェンスで共有しているので、同じ回路をどちらでも書ける。
 
 **書く穴の数は形が決まる。**
 
@@ -235,6 +239,7 @@ wires:
 | 3 本足 | 3 つ | 書かれたとおり (足は曲げられる) |
 | `dipN` | 1 つ (1 番ピン) | パッケージが決める。2 列の間隔は 300 mil = 3 穴 |
 | `sipN` | 1 つ (1 番ピン) | パッケージが決める。1 列に並ぶ |
+| ボード | 1 つ (1 番ピン) | パッケージが決める。2 列の間隔は 0.7 インチ = 7 穴 |
 
 DIP の番号は実物と同じ付き方 — 1 番ピンから右へ、折り返して下の列を左へ戻る。
 図には 1 番ピン側の切り欠きを描く (**無いと 180 度回して挿せてしまう**)。
