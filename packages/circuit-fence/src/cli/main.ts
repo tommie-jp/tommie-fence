@@ -125,11 +125,13 @@ function emitTex(job: Job): number {
  *
  * 図を描かないので WASM の TeX を回さない (1 枚 1 秒近くかかる)。
  * 書きながら回すときと、CI で文法だけを見るときのための道。
- * 見るものは描くときとまったく同じ (compileCircuit を同じ的で呼ぶ) ので、
- * ここで通った図はプレビューでも同じことを言われない。
+ * 見るものは描くときと同じ (compileCircuit を同じ的で呼ぶ) ので、ここで通った図は
+ * プレビューでも同じことを言われない。**ERC だけがここに多い** — 図を描くたびに
+ * 出すものではないので (記号を 1 つ見せる図は端が開いていて当たり前)、
+ * KiCad と同じく**確かめたいときに走らせるもの**にしてある。
  */
 function checkJob(job: Job): number {
-  const { tex, netlist, errors: raw, notices } = compileCircuit(job.source);
+  const { tex, netlist, errors: raw, notices } = compileCircuit(job.source, { erc: true });
   const errors = shiftErrors(raw, job.line);
 
   if (tex === null) {

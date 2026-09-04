@@ -173,7 +173,7 @@ style:             # 任意。見た目
 ## 確かめる
 
 ```bash
-circuit-fence check <ファイルかディレクトリ...>
+circuit-fence check <ファイルかディレクトリ...>   # 描かずに確かめる (ERC つき)
 circuit-fence --version
 ```
 

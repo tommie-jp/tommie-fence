@@ -1,6 +1,7 @@
 import { attachSourceText, fenceError } from './errors.ts';
 import { buildCircuit } from './model/circuit.ts';
 import { computeNets } from './model/nets.ts';
+import { checkErc } from './model/erc.ts';
 import type { Net } from './model/nets.ts';
 import { normalizeNewlines } from './newlines.ts';
 import { parseFence } from './parser/parseFence.ts';
@@ -57,6 +58,15 @@ export type CompileOptions = {
    * オペアンプが本物の記号になる。
    */
   readonly target?: TexTarget;
+  /**
+   * ERC (**組んでも動かない**の指摘) も出すか。省略時は出さない。
+   *
+   * **図を描くたびに出すものではない。** 記号を 1 つ見せる図や書き方の例は
+   * 端が開いているのが当たり前で、そこを毎回叱ると帯を読まなくなる。
+   * KiCad の ERC と同じく、**確かめたいときに走らせるもの**として
+   * `circuit-fence check` から渡す。
+   */
+  readonly erc?: boolean;
 };
 
 export function compileCircuit(fence: string, options: CompileOptions = {}): CompileResult {
@@ -111,6 +121,10 @@ export function compileCircuit(fence: string, options: CompileOptions = {}): Com
   }
 
   const { circuit, errors: modelErrors, notices } = buildCircuit(doc, { target });
+  const netlist = computeNets(circuit);
+  // **`check: off` は ERC にも効く。** 書いた人が検査を外したのだから、
+  // 別の名前の検査だけ生き残るのは筋が通らない。
+  const erc = options.erc === true && doc.style.check !== false ? checkErc(circuit, netlist) : [];
   const { tex, lineMap, messages: texMessages, notes } = generateTex(circuit, {
     style: doc.style,
     target,
@@ -120,14 +134,14 @@ export function compileCircuit(fence: string, options: CompileOptions = {}): Com
   return {
     tex,
     lineMap,
-    netlist: computeNets(circuit),
+    netlist,
     theme,
     width: doc.style.width,
     notes,
     errors: withSource([...errors, ...modelErrors, ...themeErrors]),
     // 図は組めたが指定が効かなかったところ。行は style の項目に付けられない
     // ので (どの項目かは文面で分かる) 行なしで出す。
-    notices: withSource([...texMessages.map((message) => fenceError(message, null)), ...notices]),
+    notices: withSource([...texMessages.map((message) => fenceError(message, null)), ...notices, ...erc]),
     debug: doc.style.debug !== false,
   };
 }

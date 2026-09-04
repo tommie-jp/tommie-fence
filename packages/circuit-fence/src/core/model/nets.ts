@@ -56,11 +56,24 @@ function pinMembersOf(circuit: Circuit): Member[] {
 }
 
 /**
- * 交点の導通からネットリストを組み立てる。
- * 部品は「ネットとネットの間の枝」なので、交点をつなぐのは配線だけ。
- * ただしグラウンド記号どうしは、回路図の約束どおり離れていても同じ節点として扱う。
+ * 交点の導通そのもの。**部品は「ネットとネットの間の枝」**なので、交点をつなぐのは
+ * 配線だけ。ただしグラウンド記号どうしは、回路図の約束どおり離れていても
+ * 同じ節点として扱う。**ネットリストの一歩手前**で、どの節点が同じまとまりに
+ * 居るかだけを返す。
+ *
+ * ネットリスト (`computeNets`) は**部品の足が乗っているまとまりしか出さない**ので、
+ * 「部品に届いていない配線」を見るにはこちらが要る (`erc.ts`)。
+ * 2 つが同じ union-find を使うことが大事で、別々に組むと片方だけ直したとき
+ * 図とお知らせが黙って食い違う。
  */
-export function computeNets(circuit: Circuit): Net[] {
+export type Wiring = {
+  /** その節点が属するまとまりの代表。知らない節点はそれ自身が代表。 */
+  readonly rootOf: (cell: string) => string;
+  /** 部品の端子。`ref` は `R1.1` のような呼び名。 */
+  readonly members: readonly { readonly ref: string; readonly cell: string; readonly part: PartSpec }[];
+};
+
+export function wiringOf(circuit: Circuit): Wiring {
   const parent = new Map<CellId, CellId>();
 
   const add = (cell: CellId): void => {
@@ -126,6 +139,16 @@ export function computeNets(circuit: Circuit): Net[] {
   for (const group of byName.values()) {
     for (const rest of group.slice(1)) union(group[0]!.cell, rest.cell);
   }
+
+  return { rootOf: find, members };
+}
+
+/**
+ * 交点の導通からネットリストを組み立てる。**部品の足が乗っているまとまりだけ**が
+ * ネットになる (どこにも部品の無い線のかたまりは、突き合わせるものが無い)。
+ */
+export function computeNets(circuit: Circuit): Net[] {
+  const { rootOf: find, members } = wiringOf(circuit);
 
   const byRoot = new Map<CellId, Member[]>();
   for (const member of members) {
