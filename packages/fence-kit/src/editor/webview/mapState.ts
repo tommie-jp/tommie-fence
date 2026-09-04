@@ -47,9 +47,21 @@ export type Under = {
   readonly part: string | null;
   readonly node: string | null;
   readonly wire: string | null;
+  /**
+   * 多端子部品の足 (`Q1.C`)。**穴とは別に持つ** — 足は穴の上に無いので、
+   * 穴として渡すと「その番地へ動かす」になってしまう。使うのは配線だけ。
+   * 綴りはフェンスが決める (殻は字として運ぶ)。
+   */
+  readonly pin: string | null;
 };
 
-export const NOTHING: Under = { cell: null, part: null, node: null, wire: null };
+export const NOTHING: Under = { cell: null, part: null, node: null, wire: null, pin: null };
+
+/**
+ * 配線の端にできるもの。**足が穴より先**— 足の丸は部品の升の上に重なるので、
+ * 穴を先に採ると足を押しても穴につながる。
+ */
+export const endOf = (under: Under): string | null => under.pin ?? under.cell;
 
 /**
  * カーソルの下で鍵の対象になるもの。**部品 > 配線 > 節点**の順 — 部品の升にも
@@ -207,8 +219,8 @@ export function hint(state: State): string {
   if (state.tool === 'wire') {
     const fold = state.foldsWire ? ' (Shift で先に横へ折る)' : '';
     return state.wireFrom === null
-      ? '配線: 始まりの穴をクリック / Esc でやめる'
-      : `${state.wireFrom} から: 終わりの穴をクリック${fold} / Esc でやめる`;
+      ? '配線: 始まりの穴か足をクリック / Esc でやめる'
+      : `${state.wireFrom} から: 終わりの穴か足をクリック${fold} / Esc でやめる`;
   }
   if (under.part !== null) {
     return `${shownName(under.part)}: M 動かす / 矢印で 1 穴 / R 回す / X 反転 / Ctrl+D 複製 / E 属性 / Del 消す`;
@@ -298,8 +310,9 @@ function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcom
   if (state.carry !== null) return outcome({ ...hovered, pressed });
 
   if (state.tool === 'wire') {
-    if (event.under.cell === null) return outcome(hovered);
-    const from = state.wireFrom ?? event.under.cell;
+    const end = endOf(event.under);
+    if (end === null) return outcome(hovered);
+    const from = state.wireFrom ?? end;
     return outcome({ ...hovered, wireFrom: from, pressed });
   }
 
@@ -387,12 +400,13 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
 
   if (state.tool === 'wire') {
     const from = state.wireFrom;
-    if (from === null || cell === null || cell === from) return outcome(clear);
+    const end = endOf(event.under) ?? cell;
+    if (from === null || end === null || end === from) return outcome(clear);
     const operator = event.shift && state.foldsWire ? '-|' : '--';
     return outcome(
       { ...clear, wireFrom: null },
-      [{ kind: 'addWire', from, to: cell, operator }],
-      `${from} から ${cell} へ…`,
+      [{ kind: 'addWire', from, to: end, operator }],
+      `${from} から ${end} へ…`,
     );
   }
 

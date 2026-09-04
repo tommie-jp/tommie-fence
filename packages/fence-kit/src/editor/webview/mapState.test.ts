@@ -322,6 +322,23 @@ describe('配線', () => {
     expect(step(wiring, release(over({ cell: 'b8' }))).send).toEqual([{ kind: 'addWire', from: 'b3', to: 'b8', operator: '--' }]);
   });
 
+  test('takes a leg as an end, so a wire can start or finish on a pin', () => {
+    // 足の丸は部品の升の上に重なるので、穴を先に採ると足を押しても穴につながる。
+    const onPin = over({ cell: 'b2', part: 'Q1', pin: 'Q1.C' });
+    const wiring = after(PANEL, key('w'), press(onPin));
+
+    expect(wiring.wireFrom).toBe('Q1.C');
+    expect(step(wiring, release(over({ cell: 'b8' }))).send)
+      .toEqual([{ kind: 'addWire', from: 'Q1.C', to: 'b8', operator: '--' }]);
+  });
+
+  test('finishes on a leg too', () => {
+    const wiring = after(PANEL, key('w'), press(AT_B3));
+
+    expect(step(wiring, release(over({ cell: 'b2', part: 'Q1', pin: 'Q1.E' }))).send)
+      .toEqual([{ kind: 'addWire', from: 'b3', to: 'Q1.E', operator: '--' }]);
+  });
+
   test('folds with Shift only where the fence can write a fold', () => {
     const folding = after(start(true, true), key('w'), press(AT_B3));
     const straight = after(start(true, false), key('w'), press(AT_B3));

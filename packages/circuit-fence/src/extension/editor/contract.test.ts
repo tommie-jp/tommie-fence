@@ -27,3 +27,40 @@ describe('circuit の FenceEditor', () => {
     })).toEqual([]);
   });
 });
+
+describe('足を指す配線 (升目の接続点から)', () => {
+  const WITH_Q = ['parts:', '  Q1: npn b2', '  R1: resistor a1 a3 10k', ''].join('\n');
+
+  test('takes a pin as an end and writes it as the fence spells it', () => {
+    // 升目の足の丸を押すと `Q1.C` という綴りで返ってくる。番地ではないので、
+    // 番地としてだけ読んでいると「読めません」で終わっていた。
+    const result = createCircuitEditor().addWire(WITH_Q, 'Q1.C', 'a4', '--');
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const written = (result.value.lines ?? [])
+      .map((line) => ('text' in line ? line.text : ''))
+      .join('\n');
+    expect(written).toContain('Q1.C -- a4');
+  });
+
+  test('takes a pin at both ends', () => {
+    const result = createCircuitEditor().addWire(WITH_Q, 'Q1.C', 'Q1.E', '--');
+
+    expect(result.ok).toBe(true);
+  });
+
+  test('says which leg is missing instead of writing a wire that draws nothing', () => {
+    const result = createCircuitEditor().addWire(WITH_Q, 'Q1.Z', 'a4', '--');
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.message).toContain('Z');
+  });
+
+  test('still refuses a spelling that is neither an address nor a leg', () => {
+    const result = createCircuitEditor().addWire(WITH_Q, 'なんだこれ', 'a4', '--');
+
+    expect(result.ok).toBe(false);
+  });
+});

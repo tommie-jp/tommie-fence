@@ -342,6 +342,17 @@ const STYLE = `
   body[data-tool="wire"] .cf-cell.cf-from, .cf-cell.cf-from {
     fill: var(--vscode-focusBorder); opacity: 0.35;
   }
+
+  /* 多端子部品の足の先の接続点。**配線の道具のときだけ濃く出す** — いつも
+     目立たせると、足の丸が記号より先に目に入って図として読みにくい。
+     当たり判定は見た目より大きく取ってあり、そちらは常に透明。 */
+  .cf-pin-dot { fill: var(--cf-paper); stroke: var(--cf-ink); stroke-width: 1.2; }
+  .cf-pin-hit { fill: transparent; stroke: none; }
+  body[data-tool="wire"] .cf-pin-dot { fill: var(--vscode-focusBorder); stroke: none; }
+  body[data-tool="wire"] .cf-pin-hit:hover + .cf-pin-name,
+  body[data-tool="wire"] .cf-pin-hit:hover { cursor: crosshair; }
+  /* 押した足。1 点目の印は穴と同じ色で出す。 */
+  .cf-pin-hit.cf-from { fill: var(--vscode-focusBorder); opacity: 0.45; }
 `;
 
 /** 升目とその頭の一覧。セッションが組む (`Session.view`)。 */

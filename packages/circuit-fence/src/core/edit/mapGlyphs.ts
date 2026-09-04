@@ -117,10 +117,11 @@ const SHAPE: Record<GlyphName, () => string> = {
   // 極板 2 枚。間を空けるのが「切れている」ことの目印。
   capacitor: () => path('M-3,-9 L-3,9 M3,-9 L3,9'),
   // 電解。片方が曲がった極板 (向きのある部品)。
-  ecap: () => path('M-3,-9 L-3,9 M3.5,-9 q5,9 0,18'),
+  ecap: () => path('M-3,-9 L-3,9 M3,-9 q4,9 0,18'),
   // 可変容量。ダイオードの三角に極板 2 枚。
   varicap: () => `${path('M-7,-7 L1,0 L-7,7 Z')}${path('M1,-7 L1,7 M4.5,-7 L4.5,7')}`,
-  inductor: () => path('M-12,0 a4,4 0 0 1 8,0 a4,4 0 0 1 8,0 a4,4 0 0 1 8,0'),
+  inductor: () => path('M-10,0 a2.5,2.5 0 0 1 5,0 a2.5,2.5 0 0 1 5,0'
+    + ' a2.5,2.5 0 0 1 5,0 a2.5,2.5 0 0 1 5,0'),
   // 2 つの巻線と鉄心。空芯ではないので芯の 2 本を引く。
   transformer: () =>
     path('M-7,-9 a4.5,4.5 0 0 0 0,9 a4.5,4.5 0 0 0 0,9'
@@ -201,5 +202,30 @@ const SHAPE: Record<GlyphName, () => string> = {
  */
 export const drawGlyph = (name: GlyphName): string => SHAPE[name]();
 
-/** 2 端子の胴が線の上で占める長さ。線を胴で切らずに引くかの判断に使う。 */
-export const GLYPH_SPAN = HALF;
+/**
+ * 記号が線の上で占める長さ (原点から片側)。**2 交点をつなぐ線をどこで切るか**。
+ *
+ * 図と同じで、**線は記号の縁で止まる** — コンデンサなら極板に触れ、抵抗なら
+ * 折れ線の端に触れる。通しで引くと記号に中心線が重なり、コンデンサは
+ * 「切れている」という記号の意味まで壊れる (実機で指摘された)。
+ *
+ * **形と一緒に動かす。** ここを `Record<GlyphName, number>` にしてあるのは、
+ * 形を 1 つ足したときに値を書き忘れると型で止まるようにするため。
+ */
+const SPAN: Record<GlyphName, number> = {
+  resistor: HALF, 'resistor-var': HALF, 'resistor-iec': HALF, photoresistor: HALF,
+  capacitor: 3, ecap: 6, varicap: 7, inductor: HALF, transformer: 9,
+  diode: 6, led: 6, zener: 9, thyristor: 6, diac: 8, triac: 8,
+  source: 9, battery: 5.5, meter: 9,
+  switch: 9, 'switch-nc': 9, button: 6, 'button-nc': 6, reed: HALF, spdt: HALF,
+  crystal: 6, fuse: 8, lamp: 8, speaker: 7, mic: 6,
+  bjt: 13, fet: 13, opamp: 8,
+  and: 9, 'and-inv': 9, or: 9, 'or-inv': 9, xor: 9, 'xor-inv': 9,
+  buffer: 8, 'buffer-inv': 8,
+  ground: 8, port: 4, 'supply-up': 8, 'supply-down': 8,
+  // 線そのものなので切らない。切ると何も残らない。
+  short: 0,
+  box: 13,
+};
+
+export const glyphSpan = (name: GlyphName): number => SPAN[name];

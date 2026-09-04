@@ -1,6 +1,6 @@
 import { element, escapeMarkup, fit, num, svgText, textWidth } from 'fence-kit';
 import { formatAddress } from '../model/address.ts';
-import { drawGlyph, glyphOf } from './mapGlyphs.ts';
+import { drawGlyph, glyphOf, glyphSpan } from './mapGlyphs.ts';
 import type { Chip, ChipPin, Cell, Dot, GridMap, MapNote, WireLine } from './map.ts';
 import type { PinSide, Turn } from '../parts.ts';
 
@@ -107,7 +107,7 @@ function drawSpan(chip: Chip, far: Cell, nudge: number): string {
   const angle = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
   const glyph = glyphOf(chip.type);
 
-  const lead = element('line', { class: 'cf-lead', x1: num(x1), y1: num(y1), x2: num(x2), y2: num(y2) });
+  const lead = drawLead(chip, [x1, y1, x2, y2], length, nudge);
   const body = element(
     'g',
     { transform: `translate(${num(mx)},${num(my)}) rotate(${num(angle)})` },
@@ -120,6 +120,39 @@ function drawSpan(chip: Chip, far: Cell, nudge: number): string {
     ? svgText(mx + 14, my + 4, chip.id, { class: 'cf-name', anchor: 'start', halo: 'var(--cf-paper)' })
     : svgText(mx, my - 13, chip.id, { class: 'cf-name', halo: 'var(--cf-paper)' });
   return lead + body + mark + name;
+}
+
+/**
+ * 2 交点をつなぐ線。**記号のところで切る** — 通しで引くと、折れ線の抵抗にも
+ * 極板 2 枚のコンデンサにも中心線が重なる。コンデンサは「切れている」ことが
+ * 記号の意味なので、線を通すと嘘の図になる (実機で「中心線を非表示に」)。
+ *
+ * **逃がした部品は切らない。** 同じ 2 交点に並べた部品 (並列の RC) は胴が線から
+ * 外れているので、切ると誰も居ないところに隙間が空く。
+ */
+function drawLead(
+  chip: Chip,
+  [x1, y1, x2, y2]: readonly [number, number, number, number],
+  length: number,
+  nudge: number,
+): string {
+  const whole = element('line', { class: 'cf-lead', x1: num(x1), y1: num(y1), x2: num(x2), y2: num(y2) });
+  const span = glyphSpan(glyphOf(chip.type).name);
+  // 記号を持たない `short` は線そのものなので、切ると何も残らない。
+  if (nudge !== 0 || span === 0) return whole;
+
+  const stub = length / 2 - span;
+  // 交点が近すぎて足が残らないときは、隙間だけにする (短い線を潰さない)。
+  if (stub <= 0) return '';
+
+  const [ux, uy] = [(x2 - x1) / length, (y2 - y1) / length];
+  const near = element('line', {
+    class: 'cf-lead', x1: num(x1), y1: num(y1), x2: num(x1 + ux * stub), y2: num(y1 + uy * stub),
+  });
+  const far = element('line', {
+    class: 'cf-lead', x1: num(x2 - ux * stub), y1: num(y2 - uy * stub), x2: num(x2), y2: num(y2),
+  });
+  return near + far;
 }
 
 /**
@@ -151,13 +184,30 @@ const PIN_AT: Readonly<Record<PinSide, {
   bottom: { x1: 0, y1: 8, x2: 0, y2: 15, tx: 0, ty: 24 },
 };
 
-/** 足 1 本。**字は回さない** (辺のほうが既に回してある)。 */
-function drawPin(pin: ChipPin): string {
+/** 足の先の丸の大きさと、その当たり判定。**押せる大きさ**は見た目より大きく取る。 */
+const PIN_DOT = 2.6;
+const PIN_HIT = 7;
+
+/**
+ * 足 1 本。**字は回さない** (辺のほうが既に回してある)。
+ *
+ * 先には**接続点**を出す。ここを配線の道具で押すと `Q1.C -- a4` と書ける —
+ * 足を指す配線はこれまで手で書くしかなかった (実機で頼まれて足した)。
+ * 名札は**書かれる綴りそのもの** (`Q1.C`) にしておく。殻は綴りを知らないので、
+ * 押されたものをそのまま `addWire` へ返せる形で持たせる。
+ */
+function drawPin(pin: ChipPin, part: string): string {
   const at = PIN_AT[pin.side];
   const stub = element('line', {
     class: 'cf-pin', x1: num(at.x1), y1: num(at.y1), x2: num(at.x2), y2: num(at.y2),
   });
-  return stub + svgText(at.tx, at.ty, pin.name, {
+  const spelling = `${part}.${pin.name}`;
+  const dot = element('circle', { class: 'cf-pin-dot', cx: num(at.x2), cy: num(at.y2), r: num(PIN_DOT) })
+    + element('circle', {
+      class: 'cf-pin-hit', 'data-pin': escapeMarkup(spelling),
+      cx: num(at.x2), cy: num(at.y2), r: num(PIN_HIT),
+    });
+  return stub + dot + svgText(at.tx, at.ty, pin.name, {
     class: 'cf-pin-name',
     // 隣の升の点や升目の線に載るので、地の色で縁を取る (`cf-name` と同じ手)。
     halo: 'var(--cf-paper)',
@@ -187,7 +237,7 @@ function drawStanding(chip: Chip, nudge: number): string {
     : element(
       'g',
       { class: 'cf-pins', transform: `translate(0,${num(nudge)})` },
-      chip.pins.map(drawPin).join(''),
+      chip.pins.map((pin) => drawPin(pin, chip.id)).join(''),
     );
   const mark = glyph.mark === null ? '' : svgText(0, nudge + 4, glyph.mark, { class: 'cf-mark' });
   // **上に足があるなら、その名前より更に上に出す。** 記号を持つ種類は名前が

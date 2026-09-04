@@ -142,6 +142,66 @@ describe('読めなかった行の印', () => {
   });
 });
 
+describe('2 交点をつなぐ線', () => {
+  const leads = (svg: string): number => (svg.match(/class="cf-lead"/g) ?? []).length;
+
+  test('stops the line at the symbol, so no centre line crosses it', () => {
+    // 実機で「R, C, L の中心線を非表示に」。コンデンサは「切れている」ことが
+    // 記号の意味なので、線を通すと嘘の図になる。
+    const svg = draw('parts:\n  C1: capacitor a1 a3\n');
+
+    expect(leads(svg)).toBe(2);
+  });
+
+  test('leaves a short whole, since the line is the whole of it', () => {
+    expect(leads(draw('parts:\n  S1: short a1 a3\n'))).toBe(1);
+  });
+
+  test('leaves the line whole under a part nudged off it', () => {
+    // 同じ 2 交点に並べた部品 (並列の RC) は胴が線から外れている。
+    // 切ると誰も居ないところに隙間が空く。
+    const svg = draw('parts:\n  R1: resistor a1 a3\n  C1: capacitor a1 a3\n');
+
+    expect(leads(svg)).toBe(3);
+  });
+
+  test('keeps the gap wide enough for the symbol it holds', () => {
+    // コイルは折れ線より長い。同じ幅で切ると、線が山をまたいで出てくる。
+    const gapOf = (source: string): number => {
+      const found = [...draw(source).matchAll(/class="cf-lead" x1="([-\d.]+)"[^/]*x2="([-\d.]+)"/g)];
+      const ends = found.map((one) => [Number(one[1]), Number(one[2])] as const);
+      return ends.length < 2 ? 0 : Math.abs((ends[1]?.[0] ?? 0) - (ends[0]?.[1] ?? 0));
+    };
+
+    expect(gapOf('parts:\n  L1: inductor a1 a3\n')).toBeGreaterThan(gapOf('parts:\n  C1: capacitor a1 a3\n'));
+  });
+});
+
+describe('多端子部品の足', () => {
+  test('puts a connection point on every leg, named as the fence spells it', () => {
+    // 実機で「足に接続点を表示し、配線で押して接続して」。綴りをそのまま
+    // 名札にしておくと、殻は綴りを知らないまま `addWire` へ返せる。
+    const svg = draw('parts:\n  Q1: npn b2\n');
+
+    expect(svg).toContain('class="cf-pin-dot"');
+    expect(svg).toContain('data-pin="Q1.B"');
+    expect(svg).toContain('data-pin="Q1.C"');
+    expect(svg).toContain('data-pin="Q1.E"');
+  });
+
+  test('makes the target bigger than the dot, since 2.6px is too small to hit', () => {
+    const svg = draw('parts:\n  Q1: npn b2\n');
+    const dot = /class="cf-pin-dot"[^/]*r="([\d.]+)"/.exec(svg);
+    const hit = /class="cf-pin-hit"[^/]*r="([\d.]+)"/.exec(svg);
+
+    expect(Number(hit?.[1] ?? 0)).toBeGreaterThan(Number(dot?.[1] ?? 0));
+  });
+
+  test('leaves a two-lead part alone, since its ends are the holes themselves', () => {
+    expect(draw('parts:\n  R1: resistor a1 a3\n')).not.toContain('cf-pin-dot');
+  });
+});
+
 describe('注釈', () => {
   const NOTE = 'parts:\n  R1: resistor a1 a3\nnotes:\n  - text b1: ここ\n';
 

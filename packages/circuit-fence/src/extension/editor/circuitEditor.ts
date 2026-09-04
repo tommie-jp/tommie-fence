@@ -14,6 +14,7 @@ import { flipPart, turnPart } from '../../core/edit/turn.ts';
 import { extractCircuitFences } from '../../core/fences.ts';
 import { formatAddress, parseAddress } from '../../core/model/address.ts';
 import type { Address } from '../../core/model/address.ts';
+import type { Endpoint } from '../../core/types.ts';
 import { renamePart } from '../../core/edit/rename.ts';
 import type { MapLook } from '../../core/edit/mapSvg.ts';
 import type { EditResult, FenceEditor, NewPart } from 'fence-kit';
@@ -34,6 +35,27 @@ import {
 /** 番地として読めなかったときの断り。**綴りをそのまま見せる** (直す手がかり)。 */
 const unreadable = (written: string): EditResult =>
   ({ ok: false, error: { message: `番地として読めません: ${written}`, line: null } });
+
+/**
+ * 足を指す綴り (`Q1.C`)。**文法の読み手と同じ形**にしておく — 升目で押した足は
+ * そのまま `wires:` の端として書かれるので、ここで受ける形が食い違うと
+ * 「押せたのに書けない」になる。
+ */
+const PIN_REFERENCE = /^([\w-]+)\.([^\s.]+)$/;
+
+/**
+ * 配線の端 1 つ。**番地として読める綴りは番地**で、そうでなければ足として読む
+ * (文法の `readEndpoint` と同じ順)。どちらでもなければ null。
+ */
+function endpointOf(written: string): Endpoint | null {
+  const at = parseAddress(written);
+  if (at !== null) return { kind: 'cell', address: at };
+
+  const pin = PIN_REFERENCE.exec(written);
+  if (pin === null) return null;
+  const [, part = '', name = ''] = pin;
+  return { kind: 'pin', part, pin: name };
+}
 
 /** 書ける欄。ほかの綴りが来たら断る (webview からの知らせは信用しない)。 */
 const FIELDS: readonly string[] = ['type', 'value', 'label'];
@@ -143,12 +165,12 @@ export function createCircuitEditor(look: LookSource = PLAIN): FenceEditor {
     },
 
     addWire: (source, from, to, operator) => {
-      const at = parseAddress(from);
-      const target = parseAddress(to);
+      const at = endpointOf(from);
+      const target = endpointOf(to);
       if (at === null) return unreadable(from);
       if (target === null) return unreadable(to);
       const how = operator === '-|' || operator === '|-' ? operator : '--';
-      return insertWire(source, { kind: 'cell', address: at }, { kind: 'cell', address: target }, how);
+      return insertWire(source, at, target, how);
     },
 
     deletePart: (source, handle) => (isNoteHandle(handle) ? deleteNote(source, handle) : deletePart(source, handle)),

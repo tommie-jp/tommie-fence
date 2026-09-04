@@ -118,11 +118,12 @@ function underAt(x: number, y: number): Under {
     part: find('.cf-chip', 'part'),
     node: find('.cf-dot', 'node'),
     wire: find('.cf-wire-hit', 'line'),
+    pin: find('.cf-pin-hit', 'pin'),
   };
 }
 
 const sameUnder = (a: Under, b: Under): boolean =>
-  a.cell === b.cell && a.part === b.part && a.node === b.node && a.wire === b.wire;
+  a.cell === b.cell && a.part === b.part && a.node === b.node && a.wire === b.wire && a.pin === b.pin;
 
 // ---------------------------------------------------------------- 印
 
@@ -287,11 +288,16 @@ function markChosen(now: State): void {
   }
 }
 
-/** 配線の 1 点目。2 点目を押すまで印を出しておく。 */
+/**
+ * 配線の 1 点目。2 点目を押すまで印を出しておく。
+ * **穴でも足でもよい** — 綴りはフェンスのものなので、両方の名札を当たってみる。
+ */
 function markWireFrom(now: State): void {
   unmark('cf-from');
   if (now.wireFrom === null) return;
-  query(`.cf-cell[data-address="${CSS.escape(now.wireFrom)}"]`)?.classList.add('cf-from');
+  const escaped = CSS.escape(now.wireFrom);
+  const at = query(`.cf-cell[data-address="${escaped}"]`) ?? query(`.cf-pin-hit[data-pin="${escaped}"]`);
+  at?.classList.add('cf-from');
 }
 
 function paint(now: State): void {
