@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { aimAt, fenceAt, gridMap, partCells } from './map.ts';
+import { lookupPartType, partTypeNames, pinPlaces } from '../parts.ts';
 import { renderMapHtml } from './mapSvg.ts';
 
 const RC = [
@@ -62,9 +63,43 @@ describe('gridMap', () => {
     ]);
   });
 
-  test('leaves a DIP without pins, since none of its legs sit on a centre line', () => {
-    // **回しても升目の見た目は変わらない** (既知の限界。図のほうで確かめる)。
-    expect(gridMap('parts:\n  U1: dip8 b2 r90\n').chips[0]?.pins).toEqual([]);
+  test('gives a DIP every leg, down the left and up the right as the real part is numbered', () => {
+    // 中心線には 1 本も乗っていないが、**升目は掴むための道具**なので
+    // 出どころで並べる (実機で「すべての部品の足に接続点を」)。
+    const pins = gridMap('parts:\n  U1: dip8 b2\n').chips[0]?.pins ?? [];
+
+    expect(pins.map((pin) => pin.name)).toEqual(['1', '2', '3', '4', '8', '7', '6', '5']);
+    expect(pins.slice(0, 4).every((pin) => pin.side === 'left')).toBe(true);
+    expect(pins.slice(4).every((pin) => pin.side === 'right')).toBe(true);
+  });
+
+  test('turns a DIP legs with the part', () => {
+    const pins = gridMap('parts:\n  U1: dip8 b2 r90\n').chips[0]?.pins ?? [];
+
+    expect(pins.slice(0, 4).every((pin) => pin.side === 'top')).toBe(true);
+    expect(pins.slice(4).every((pin) => pin.side === 'bottom')).toBe(true);
+  });
+
+  test('gives the opamp inputs a place too, though they sit off the centre line', () => {
+    // `pinSide` は「まっすぐ引けるか」の表。置き場は別の表 (`pinRow`) で持つ。
+    const pins = gridMap('parts:\n  U1: opamp b2\n').chips[0]?.pins ?? [];
+
+    expect(pins.map((pin) => pin.name).sort()).toEqual(['+', '-', 'out']);
+  });
+
+  test('leaves no leg without a place — every pin of every part can be clicked', () => {
+    // **実機で数えて 15 種が欠けていた** (オペアンプの ±、ゲートの入力、
+    // DIP の全部、トランス、spdt)。足を足したときに置き場を書き忘れると、
+    // その足だけ升目から配線できなくなるので、ここで数え続ける。
+    const missing = partTypeNames().flatMap((name) => {
+      const type = lookupPartType(name);
+      if (type === undefined || type === null || type.kind !== 'multi-terminal') return [];
+      const legs = new Set(Object.values(type.pins ?? {}));
+      const placed = new Set(pinPlaces(type).map((place) => place.anchor));
+      return [...legs].filter((leg) => !placed.has(leg)).map((leg) => `${name}.${leg}`);
+    });
+
+    expect(missing).toEqual([]);
   });
 
   test('gives a two-terminal part no pins, since its body already spans two cells', () => {

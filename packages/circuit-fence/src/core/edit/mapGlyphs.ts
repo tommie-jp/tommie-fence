@@ -153,7 +153,8 @@ const SHAPE: Record<GlyphName, () => string> = {
   // リードスイッチ。ガラス管の中の接点。
   reed: () => element('ellipse', { class: 'cf-glyph', cx: 0, cy: 0, rx: 10, ry: 5 })
     + path('M-7,1 L6,-3'),
-  // 切り替え。1 つの極から 2 つの接点へ。
+  // 切り替え。1 つの極から 2 つの接点へ。接点の先は足の棒 (`SPAN` と同じ 10)
+  // まで伸ばして、升目が引く棒とつなげる。
   spdt: () => path('M-9,0 L5,-6 M7,-6 L10,-6 M7,6 L10,6'),
   meter: () => circle(9),
   // 水晶。2 枚の極板に挟まれた板。
@@ -229,3 +230,10 @@ const SPAN: Record<GlyphName, number> = {
 };
 
 export const glyphSpan = (name: GlyphName): number => SPAN[name];
+
+/**
+ * 名前を入れる箱。**足の本数で伸びる** — DIP は片側に 20 本まで出るので、
+ * 決め打ちの 26x16 では足が重なって 1 本ずつ押せない。
+ */
+export const drawBox = (halfWidth: number, halfHeight: number): string =>
+  box(halfWidth * 2, halfHeight * 2);

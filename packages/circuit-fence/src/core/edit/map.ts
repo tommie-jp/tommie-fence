@@ -5,7 +5,7 @@ import { cornerOf, formatAddress, parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import { NO_TURN, lookupPartType, mainPinName, pinSideOf } from '../parts.ts';
+import { NO_TURN, lookupPartType, mainPinName, pinPlaces } from '../parts.ts';
 import type { PartType, PinSide, Turn } from '../parts.ts';
 import { cellOf } from '../types.ts';
 import type { PartSpec } from '../types.ts';
@@ -170,11 +170,10 @@ function wireLinesOf(doc: Circuit): WireLine[] {
  * 描くと当てずっぽうの位置を約束することになる。
  */
 function pinsOf(type: PartType | null, turn: Turn): readonly ChipPin[] {
-  if (type === null || type.pinSide === undefined) return [];
-  return Object.keys(type.pinSide).flatMap((anchor) => {
-    const side = pinSideOf(type, anchor, turn);
-    return side === null ? [] : [{ name: mainPinName(type, anchor), side }];
-  });
+  if (type === null) return [];
+  // **中心線に乗る足も乗らない足も置く。** 升目は掴むための道具なので、
+  // 「まっすぐ引けるか」ではなく「どこから出ているか」で並べる。
+  return pinPlaces(type, turn).map(({ anchor, side }) => ({ name: mainPinName(type, anchor), side }));
 }
 
 /** フェンス本文から升目のモデルを作る。**読めなければ空**で、嘘の位置を見せない。 */

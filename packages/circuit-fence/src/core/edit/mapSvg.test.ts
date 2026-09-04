@@ -142,6 +142,37 @@ describe('読めなかった行の印', () => {
   });
 });
 
+describe('部品の名前の置き場', () => {
+  const nameAt = (source: string, id: string): { x: number; y: number; anchor: string } => {
+    const found = new RegExp(`<text x="([-\\d.]+)" y="([-\\d.]+)" text-anchor="(\\w+)"[^>]*class="cf-name"[^>]*>${id}<`)
+      .exec(draw(source));
+    return { x: Number(found?.[1] ?? 0), y: Number(found?.[2] ?? 0), anchor: found?.[3] ?? '' };
+  };
+
+  test('puts the name below a part laid across, the side the figure uses', () => {
+    // 実機で「部品の文字列の位置が回路図と違う」。図は横置きなら記号の下
+    // (上は値の場所)。
+    const { y } = nameAt('parts:\n  R1: resistor c1 c3\n', 'R1');
+
+    expect(y).toBeGreaterThan(0);
+    // 記号の真ん中 (c 行) より下。
+    expect(y).toBeGreaterThan(Number(/cy="([\d.]+)"/.exec(draw('parts:\n  R1: resistor c1 c3\n'))?.[1] ?? 0));
+  });
+
+  test('puts the name to the left of a part stood up, again as the figure does', () => {
+    const { anchor } = nameAt('parts:\n  R1: resistor c3 e3\n', 'R1');
+
+    expect(anchor).toBe('end');
+  });
+
+  test('turns it to the right at the left edge, where the row labels are', () => {
+    // 1 列目に立てた部品の名前は、左に置くと行の見出しに重なって読めない。
+    const { anchor } = nameAt('parts:\n  R1: resistor c1 e1\n', 'R1');
+
+    expect(anchor).toBe('start');
+  });
+});
+
 describe('2 交点をつなぐ線', () => {
   const leads = (svg: string): number => (svg.match(/class="cf-lead"/g) ?? []).length;
 

@@ -159,6 +159,15 @@ export type PartType = {
    */
   readonly pinSide?: Readonly<Record<string, PinSide>>;
   /**
+   * **辺から出てはいるが、中心線には乗っていない足** (オペアンプの ±、
+   * ゲートの入力、DIP の全部)。掴む升目が足の接続点を置く場所に使う。
+   *
+   * `pinSide` と分けてあるのは、あちらが「まっすぐ引けるか」を答える表だから。
+   * 混ぜると、斜めに入る配線を黙って通すようになる (実際に一度そうした)。
+   * 並びは**上から下・左から右**で書く — 升目はその順に置く。
+   */
+  readonly pinRow?: Readonly<Record<string, PinSide>>;
+  /**
    * 向きを書ける範囲。**省くと種類で決まる** (多端子は回転も反転も可、
    * それ以外は不可)。表に書くのは既定から外れるものだけ — 実機で字が壊れる
    * 記号を後から外せるよう、種類ごとに上書きできる形にしてある。
@@ -233,6 +242,9 @@ const AMP_PINS = { '+': '+', '-': '-', out: 'out' } as const;
 /** 出口だけが横の中心線に出る。± は三角形の縁の、中心から外れた高さ。 */
 const AMP_SIDE = { out: 'right' } as const;
 
+/** その ± の出どころ。左の辺に、図と同じで `-` が上。 */
+const AMP_ROW = { '-': 'left', '+': 'left' } as const;
+
 /** IGBT。制御端子はゲートだが、あとの 2 本はバイポーラと同じ呼び名。 */
 const IGBT_PINS = {
   g: 'gate', gate: 'gate',
@@ -253,6 +265,9 @@ const GATE1_PINS = { in: 'in', a: 'in', out: 'out', y: 'out' } as const;
 /** 2 入力ゲートは出口だけが中心線。入力 2 本は上下に振り分けられている。 */
 const GATE2_SIDE = { out: 'right' } as const;
 
+/** その入力 2 本の出どころ。左の辺に上から 1・2 の順。 */
+const GATE2_ROW = { 'in 1': 'left', 'in 2': 'left' } as const;
+
 /** 1 入力ゲートは入口も出口も中心線に乗る。 */
 const GATE1_SIDE = { in: 'left', out: 'right' } as const;
 
@@ -266,6 +281,9 @@ const SPDT_PINS = {
 /** 共通の端だけが中心線。行き先 2 つは上下に振り分けられている。 */
 const SPDT_SIDE = { in: 'left' } as const;
 
+/** その行き先 2 つの出どころ。右の辺に上から 1・2 の順。 */
+const SPDT_ROW = { 'out 1': 'right', 'out 2': 'right' } as const;
+
 /** ポテンショメータの 3 本目。2 端子の記号にアンカーが 1 つ生えている。 */
 const WIPER_PINS = { w: 'wiper', wiper: 'wiper' } as const;
 
@@ -274,6 +292,9 @@ const GATE_PINS = { g: 'gate', gate: 'gate' } as const;
 
 /** トランスは 1 次が A、2 次が B。 */
 const TRANSFORMER_PINS = { a1: 'A1', a2: 'A2', b1: 'B1', b2: 'B2' } as const;
+
+/** 巻線の端の出どころ。1 次が左の辺、2 次が右の辺。どちらも上から 1・2 の順。 */
+const TRANSFORMER_ROW = { A1: 'left', A2: 'left', B1: 'right', B2: 'right' } as const;
 
 const OHM = '\\Omega';
 const FARAD = '\\mathrm{F}';
@@ -310,7 +331,22 @@ const dipchip = (count: number): PartType => ({
   valueInside: true,
   ...NO_UNIT,
   pins: Object.fromEntries(Array.from({ length: count }, (_, index) => [`${index + 1}`, `pin ${index + 1}`])),
+  pinRow: dipSides(count),
 });
+
+/**
+ * DIP の足が出る辺。**実物と同じ番号の回り方** — 1 番から半分までが左の辺を
+ * 上から下へ、残りが右の辺を下から上へ。
+ *
+ * 並びは**上から下**で書く (升目はその順に置く) ので、右の辺は番号の大きい
+ * ほうから並べる。
+ */
+const dipSides = (count: number): Record<string, PinSide> => {
+  const half = count / 2;
+  const left = Array.from({ length: half }, (_, index) => [`pin ${index + 1}`, 'left'] as const);
+  const right = Array.from({ length: half }, (_, index) => [`pin ${count - index}`, 'right'] as const);
+  return Object.fromEntries([...left, ...right]);
+};
 
 export const PART_TYPES = {
   // 受動部品
@@ -473,7 +509,7 @@ export const PART_TYPES = {
    */
   opamp: {
     kind: 'multi-terminal', symbol: 'plain amp', latexSymbol: 'op amp', ...NO_UNIT,
-    pins: AMP_PINS, pinSide: AMP_SIDE, orient: AMP_ORIENT,
+    pins: AMP_PINS, pinSide: AMP_SIDE, pinRow: AMP_ROW, orient: AMP_ORIENT,
   },
   /**
    * トランス。circuitikz の `transformer` は**空芯** (巻線 2 つだけ) で、
@@ -482,20 +518,20 @@ export const PART_TYPES = {
    */
   transformer: {
     kind: 'multi-terminal', symbol: 'transformer core', ...NO_UNIT,
-    pins: TRANSFORMER_PINS, orient: MIRROR_ONLY,
+    pins: TRANSFORMER_PINS, pinRow: TRANSFORMER_ROW, orient: MIRROR_ONLY,
   },
   nigbt: { kind: 'multi-terminal', symbol: 'nigbt', ...NO_UNIT, pins: IGBT_PINS, pinSide: IGBT_SIDE },
   pigbt: { kind: 'multi-terminal', symbol: 'pigbt', ...NO_UNIT, pins: IGBT_PINS, pinSide: IGBT_SIDE },
   /** 切り替えスイッチ (c 接点)。 */
-  spdt: { kind: 'multi-terminal', symbol: 'spdt', ...NO_UNIT, pins: SPDT_PINS, pinSide: SPDT_SIDE },
+  spdt: { kind: 'multi-terminal', symbol: 'spdt', ...NO_UNIT, pins: SPDT_PINS, pinSide: SPDT_SIDE, pinRow: SPDT_ROW },
 
   // ロジックゲート。入力は番号でも `a` / `b` でも呼べる。
-  and: { kind: 'multi-terminal', symbol: 'and port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE },
-  or: { kind: 'multi-terminal', symbol: 'or port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE },
-  nand: { kind: 'multi-terminal', symbol: 'nand port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE },
-  nor: { kind: 'multi-terminal', symbol: 'nor port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE },
-  xor: { kind: 'multi-terminal', symbol: 'xor port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE },
-  xnor: { kind: 'multi-terminal', symbol: 'xnor port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE },
+  and: { kind: 'multi-terminal', symbol: 'and port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE, pinRow: GATE2_ROW },
+  or: { kind: 'multi-terminal', symbol: 'or port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE, pinRow: GATE2_ROW },
+  nand: { kind: 'multi-terminal', symbol: 'nand port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE, pinRow: GATE2_ROW },
+  nor: { kind: 'multi-terminal', symbol: 'nor port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE, pinRow: GATE2_ROW },
+  xor: { kind: 'multi-terminal', symbol: 'xor port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE, pinRow: GATE2_ROW },
+  xnor: { kind: 'multi-terminal', symbol: 'xnor port', ...NO_UNIT, pins: GATE2_PINS, pinSide: GATE2_SIDE, pinRow: GATE2_ROW },
   not: { kind: 'multi-terminal', symbol: 'not port', ...NO_UNIT, pins: GATE1_PINS, pinSide: GATE1_SIDE },
   buffer: { kind: 'multi-terminal', symbol: 'buffer port', ...NO_UNIT, pins: GATE1_PINS, pinSide: GATE1_SIDE },
 
@@ -802,7 +838,15 @@ export const pinNames = (type: PartType): readonly string[] => Object.keys(type.
  * 向きを渡すと**回した辺**を返す。順は「反転してから回す」(`Turn` の頭書き)。
  */
 export function pinSideOf(type: PartType, anchor: string, turn: Turn = NO_TURN): PinSide | null {
-  const sides = type.pinSide;
+  return turnedSide(type.pinSide, anchor, turn);
+}
+
+/** 表を 1 つ引いて、向きのぶんだけ辺を回す。**順は「反転してから回す」**。 */
+function turnedSide(
+  sides: Readonly<Record<string, PinSide>> | undefined,
+  anchor: string,
+  turn: Turn,
+): PinSide | null {
   if (sides === undefined) return null;
   const side = Object.hasOwn(sides, anchor) ? (sides[anchor] ?? null) : null;
   if (side === null) return null;
@@ -811,6 +855,21 @@ export function pinSideOf(type: PartType, anchor: string, turn: Turn = NO_TURN):
   let turned = mirrored;
   for (let done = 0; done < turn.rotate; done += 90) turned = CLOCKWISE[turned];
   return turned;
+}
+
+/**
+ * 足の置き場 (アンカー名 → 出ている辺)。**中心線に乗る足も乗らない足も**
+ * 出てくる — 掴む升目は「どこから出ているか」だけが要る。
+ * 並びは表に書いた順 (辺の中の上から下・左から右)。
+ */
+export function pinPlaces(type: PartType, turn: Turn = NO_TURN): readonly {
+  readonly anchor: string; readonly side: PinSide;
+}[] {
+  const anchors = [...Object.keys(type.pinSide ?? {}), ...Object.keys(type.pinRow ?? {})];
+  return anchors.flatMap((anchor) => {
+    const side = turnedSide(type.pinSide, anchor, turn) ?? turnedSide(type.pinRow, anchor, turn);
+    return side === null ? [] : [{ anchor, side }];
+  });
 }
 
 /**
