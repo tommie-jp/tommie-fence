@@ -220,6 +220,29 @@ describe('多端子部品の足', () => {
     expect(svg).toContain('data-pin="Q1.E"');
   });
 
+  test('puts the point where the symbol draws the leg, not at an even spacing', () => {
+    // 実機で「足の位置＝接続点にして」。オペアンプの ± は三角の背の
+    // 上下 1/4、AND の入力も同じ高さ。等間隔の決め打ちだと記号からずれる。
+    const dots = (source: string): number[] =>
+      [...draw(source).matchAll(/class="cf-pin-dot" cx="[-\d.]+" cy="([-\d.]+)"/g)]
+        .map((one) => Number(one[1]))
+        .sort((a, b) => a - b);
+
+    expect(dots('parts:\n  U1: opamp b2\n')).toEqual([-4.5, 0, 4.5]);
+    expect(dots('parts:\n  G1: and b2\n')).toEqual([-4.5, 0, 4.5]);
+    // トランスは巻線の両端 (±9)、切り替えは接点の高さ (±6)。
+    expect(dots('parts:\n  T1: transformer b2\n')).toEqual([-9, -9, 9, 9]);
+    expect(dots('parts:\n  S1: spdt b2\n')).toEqual([-6, 0, 6]);
+  });
+
+  test('spreads a DIP evenly, since its box grows to hold them', () => {
+    const dots = [...draw('parts:\n  U1: dip8 b2\n')
+      .matchAll(/class="cf-pin-dot" cx="[-\d.]+" cy="([-\d.]+)"/g)]
+      .map((one) => Number(one[1]));
+
+    expect([...new Set(dots)].sort((a, b) => a - b)).toEqual([-18, -6, 6, 18]);
+  });
+
   test('makes the target bigger than the dot, since 2.6px is too small to hit', () => {
     const svg = draw('parts:\n  Q1: npn b2\n');
     const dot = /class="cf-pin-dot"[^/]*r="([\d.]+)"/.exec(svg);

@@ -1,6 +1,6 @@
 import { element, escapeMarkup, fit, num, svgText, textWidth } from 'fence-kit';
 import { formatAddress } from '../model/address.ts';
-import { drawBox, drawGlyph, glyphOf, glyphSpan } from './mapGlyphs.ts';
+import { drawBox, drawGlyph, glyphOf, glyphSpan, legGap } from './mapGlyphs.ts';
 import type { GlyphName } from './mapGlyphs.ts';
 import type { Chip, ChipPin, Cell, Dot, GridMap, MapNote, WireLine } from './map.ts';
 import type { PinSide, Turn } from '../parts.ts';
@@ -196,11 +196,20 @@ function turnOf(turn: Turn): string {
  */
 const HALF_W = 13;
 const HALF_H = 8;
-/** 足の棒の長さと、同じ辺に並ぶ足の間隔。名前が 8px なので 12 で読める。 */
+/** 足の棒の長さ。間隔は記号が決める (`legGap`)。 */
 const PIN_STUB = 7;
-const PIN_GAP = 12;
 /** 端の足と胴の角の間。足が角にかからないだけの余白。 */
 const PIN_MARGIN = 6;
+
+/** 足の先の丸の大きさと、その当たり判定。**押せる大きさ**は見た目より大きく取る。 */
+const PIN_DOT = 2.6;
+const PIN_HIT = 7;
+
+/**
+ * 足の名前を丸から離す幅。**字が丸に重なると、どこが接続点なのか分からない**
+ * (実機でオペアンプの `+` `-` が丸に載っていた)。
+ */
+const NAME_CLEAR = 3;
 
 /** 辺ごとの足の並び。**書かれた順**で、上から下・左から右に置く。 */
 type PinRows = ReadonlyMap<PinSide, readonly ChipPin[]>;
@@ -228,7 +237,7 @@ const rowsOf = (pins: readonly ChipPin[], turn: Turn): PinRows => {
 function reachOf(rows: PinRows, glyph: GlyphName): { readonly halfW: number; readonly halfH: number } {
   const along = (...sides: readonly PinSide[]): number =>
     Math.max(0, ...sides.map((side) => rows.get(side)?.length ?? 0));
-  const room = (count: number): number => ((count - 1) * PIN_GAP) / 2 + PIN_MARGIN;
+  const room = (count: number): number => ((count - 1) * legGap(glyph)) / 2 + PIN_MARGIN;
   // **棒は記号の縁から出す。** 決め打ちの 13 から出すと、記号が小さい種類
   // (オペアンプの三角、トランスの巻線) で縁と棒の間が切れて見える。
   // 箱は名前を入れるので、狭くはしない。
@@ -246,26 +255,29 @@ function reachOf(rows: PinRows, glyph: GlyphName): { readonly halfW: number; rea
  * 横向きの足の字は**棒の先**に置き、隣の升の点に少しはみ出すのを縁取りで
  * 読ませる。棒の上へ寄せると、字が箱の角に重なって読めなくなった (実測)。
  */
-function pinAt(side: PinSide, at: number, of: number, halfW: number, halfH: number): {
+function pinAt(side: PinSide, at: number, of: number, halfW: number, halfH: number, gap: number): {
   readonly x1: number; readonly y1: number; readonly x2: number; readonly y2: number;
   readonly tx: number; readonly ty: number; readonly anchor?: 'start' | 'end';
 } {
-  const shift = (at - (of - 1) / 2) * PIN_GAP;
+  const shift = (at - (of - 1) / 2) * gap;
+  // 字は丸の外側へ。丸の半径と余白のぶんだけ、棒の先から更に離す。
+  const clear = PIN_DOT + NAME_CLEAR;
   if (side === 'left') {
-    return { x1: -halfW, y1: shift, x2: -halfW - PIN_STUB, y2: shift, tx: -halfW - PIN_STUB - 2, ty: shift + 3, anchor: 'end' };
+    const x = -halfW - PIN_STUB;
+    return { x1: -halfW, y1: shift, x2: x, y2: shift, tx: x - clear, ty: shift + 3, anchor: 'end' };
   }
   if (side === 'right') {
-    return { x1: halfW, y1: shift, x2: halfW + PIN_STUB, y2: shift, tx: halfW + PIN_STUB + 2, ty: shift + 3, anchor: 'start' };
+    const x = halfW + PIN_STUB;
+    return { x1: halfW, y1: shift, x2: x, y2: shift, tx: x + clear, ty: shift + 3, anchor: 'start' };
   }
   if (side === 'top') {
-    return { x1: shift, y1: -halfH, x2: shift, y2: -halfH - PIN_STUB, tx: shift, ty: -halfH - PIN_STUB - 3 };
+    const y = -halfH - PIN_STUB;
+    return { x1: shift, y1: -halfH, x2: shift, y2: y, tx: shift, ty: y - clear };
   }
-  return { x1: shift, y1: halfH, x2: shift, y2: halfH + PIN_STUB, tx: shift, ty: halfH + PIN_STUB + 9 };
+  const y = halfH + PIN_STUB;
+  // 下は字の高さぶん (8px) だけ更に下げる。基準線が下端になるため。
+  return { x1: shift, y1: halfH, x2: shift, y2: y, tx: shift, ty: y + clear + 8 };
 }
-
-/** 足の先の丸の大きさと、その当たり判定。**押せる大きさ**は見た目より大きく取る。 */
-const PIN_DOT = 2.6;
-const PIN_HIT = 7;
 
 /**
  * 足 1 本。**字は回さない** (辺のほうが既に回してある)。
@@ -320,7 +332,8 @@ function drawStanding(chip: Chip, nudge: number): string {
       'g',
       { class: 'cf-pins', transform: `translate(0,${num(nudge)})` },
       [...rows].flatMap(([side, row]) =>
-        row.map((pin, at) => drawPin(pin, chip.id, pinAt(side, at, row.length, halfW, halfH)))).join(''),
+        row.map((pin, at) =>
+          drawPin(pin, chip.id, pinAt(side, at, row.length, halfW, halfH, legGap(glyph.name))))).join(''),
     );
   const mark = glyph.mark === null ? '' : svgText(0, nudge + 4, glyph.mark, { class: 'cf-mark' });
   // **上に足があるなら、その名前より更に上に出す。** 記号を持つ種類は名前が

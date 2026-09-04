@@ -221,8 +221,10 @@ const SPAN: Record<GlyphName, number> = {
   switch: 9, 'switch-nc': 9, button: 6, 'button-nc': 6, reed: HALF, spdt: HALF,
   crystal: 6, fuse: 8, lamp: 8, speaker: 7, mic: 6,
   bjt: 13, fet: 13, opamp: 8,
-  and: 9, 'and-inv': 9, or: 9, 'or-inv': 9, xor: 9, 'xor-inv': 9,
-  buffer: 8, 'buffer-inv': 8,
+  // 反転する形は**出口の丸の外側**まで取る。丸の手前から棒を出すと、
+  // 棒が丸を突き抜けて出てくる (実機で見つけた)。
+  and: 9, 'and-inv': 14, or: 9, 'or-inv': 14, xor: 9, 'xor-inv': 14,
+  buffer: 8, 'buffer-inv': 13,
   ground: 8, port: 4, 'supply-up': 8, 'supply-down': 8,
   // 線そのものなので切らない。切ると何も残らない。
   short: 0,
@@ -230,6 +232,38 @@ const SPAN: Record<GlyphName, number> = {
 };
 
 export const glyphSpan = (name: GlyphName): number => SPAN[name];
+
+/**
+ * 同じ辺に並ぶ足の間隔。**記号が実際に足を描いている位置**で決まる —
+ * 接続点は足の先に出るので、ここが実際とずれると「どこにつながるのか
+ * 分からない丸」になる (実機でオペアンプと AND ゲートで指摘された)。
+ *
+ * 1 辺に 1 本しか出ない記号 (トランジスタなど) では使わないが、
+ * **形を足したときに書き忘れると型で止まる**よう、全部の形に値を持たせる。
+ */
+const LEG_GAP: Record<GlyphName, number> = {
+  // 背の縁の上下 1/4 のあたりに入る。図の入力もそのくらいの高さ。
+  and: 9, 'and-inv': 9, or: 9, 'or-inv': 9, xor: 9, 'xor-inv': 9,
+  // 三角の背の、中心から外れた高さ (± の付く場所)。
+  opamp: 9,
+  // 巻線の両端。コイルは ±9 まで巻いてある。
+  transformer: 18,
+  // 開いた接点 2 つ。記号がその高さに描いてある。
+  spdt: 12,
+  // 箱は自分で伸びるので、読める間隔を選べる (名前が 8px)。
+  box: 12,
+  // ここから下は 1 辺に 1 本だけ。値は使われない。
+  resistor: 12, 'resistor-var': 12, 'resistor-iec': 12, photoresistor: 12,
+  capacitor: 12, ecap: 12, varicap: 12, inductor: 12,
+  diode: 12, led: 12, zener: 12, thyristor: 12, diac: 12, triac: 12,
+  source: 12, battery: 12, meter: 12,
+  switch: 12, 'switch-nc': 12, button: 12, 'button-nc': 12, reed: 12,
+  crystal: 12, fuse: 12, lamp: 12, speaker: 12, mic: 12,
+  bjt: 12, fet: 12, buffer: 12, 'buffer-inv': 12,
+  ground: 12, port: 12, 'supply-up': 12, 'supply-down': 12, short: 12,
+};
+
+export const legGap = (name: GlyphName): number => LEG_GAP[name];
 
 /**
  * 名前を入れる箱。**足の本数で伸びる** — DIP は片側に 20 本まで出るので、
