@@ -71,6 +71,8 @@ style:             # 任意。見た目
   `nmos-e` `pmos-e` `nmos-d` `pmos-d` `opamp` `transformer`
 - 論理 `and` `or` `nand` `nor` `xor` `xnor` `not` `buffer` `spdt` `slide-switch`
   `dip4` `dip6` `dip8` `dip14` `dip16` `dip18` `dip20` `dip24` `dip28` `dip40`
+- ピンヘッダ (足は番号)
+  `sip2` `sip3` `sip4` `sip5` `sip6` `sip8` `sip10` `sip20` `sip40`
 - マイコンボード (足は実物の印字で `U1.GP0`)
   `pico` `pico-w` `pico2` `pico2-w`
 

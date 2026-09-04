@@ -409,6 +409,30 @@ function boardchip(board: BoardPart): PartType {
   };
 }
 
+/**
+ * ピンヘッダ。**記号は自分で宣言する** (`tex/sipShape.ts`) — circuitikz 1.0 に
+ * 片側だけ足が並ぶ形が無いため。足の番号は箱の中に書く (DIP と同じ)。
+ *
+ * **反転も許す。** 番号は描き上がった SVG に差し込むので鏡文字にならない
+ * (ボードと同じ理由)。
+ */
+function sipchip(count: number): PartType {
+  const legs = Array.from({ length: count }, (_, index) => index + 1);
+  return {
+    kind: 'multi-terminal',
+    symbol: `sip${count}`,
+    // **`draw` が要る。** 自分で宣言した形の輪郭は `\backgroundpath` にあり、
+    // そこは節点に `draw` が付いたときだけ描かれる (実機で気づいた)。
+    options: ['draw', 'font=\\scriptsize'],
+    valueInside: true,
+    ...NO_UNIT,
+    pins: Object.fromEntries(legs.map((at) => [`${at}`, `pin ${at}`])),
+    // 全部が左の辺に上から並ぶ。**中心線には乗らない** (だから `pinRow`)。
+    pinRow: Object.fromEntries(legs.map((at) => [`pin ${at}`, 'left' as const])),
+    pinLabels: legs.map((at) => `${at}`),
+  };
+}
+
 export const PART_TYPES = {
   // 受動部品
   resistor: { kind: 'two-terminal', symbol: 'R', unitTex: OHM, unitSi: SI_OHM },
@@ -619,6 +643,17 @@ export const PART_TYPES = {
   dip28: dipchip(28),
   dip40: dipchip(40),
 
+  // ピンヘッダ。**数は実体配線図の 2 つと同じ表**。
+  sip2: sipchip(2),
+  sip3: sipchip(3),
+  sip4: sipchip(4),
+  sip5: sipchip(5),
+  sip6: sipchip(6),
+  sip8: sipchip(8),
+  sip10: sipchip(10),
+  sip20: sipchip(20),
+  sip40: sipchip(40),
+
   // マイコンボード。**表は実体配線図の 2 つと共通** (fence-kit)。
   pico: boardchip(lookupBoardPart('pico') as BoardPart),
   'pico-w': boardchip(lookupBoardPart('pico-w') as BoardPart),
@@ -716,6 +751,15 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   dip24: 'DIP の IC (24 ピン)',
   dip28: 'DIP の IC (28 ピン)',
   dip40: 'DIP の IC (40 ピン)',
+  sip2: 'ピンヘッダ (2 ピン)',
+  sip3: 'ピンヘッダ (3 ピン)',
+  sip4: 'ピンヘッダ (4 ピン)',
+  sip5: 'ピンヘッダ (5 ピン)',
+  sip6: 'ピンヘッダ (6 ピン)',
+  sip8: 'ピンヘッダ (8 ピン)',
+  sip10: 'ピンヘッダ (10 ピン)',
+  sip20: 'ピンヘッダ (20 ピン)',
+  sip40: 'ピンヘッダ (40 ピン)',
   // 製品名は実体配線図の 2 つと同じ字 (fence-kit の表)。
   pico: 'Pico',
   'pico-w': 'Pico W',
@@ -814,6 +858,15 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   dip24: 'U',
   dip28: 'U',
   dip40: 'U',
+  sip2: 'J',
+  sip3: 'J',
+  sip4: 'J',
+  sip5: 'J',
+  sip6: 'J',
+  sip8: 'J',
+  sip10: 'J',
+  sip20: 'J',
+  sip40: 'J',
   pico: 'U',
   'pico-w': 'U',
   pico2: 'U',

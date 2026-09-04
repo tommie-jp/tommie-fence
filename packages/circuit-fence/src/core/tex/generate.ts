@@ -17,6 +17,7 @@ import { NOTE_MARK_TEXT, noteFontTex, texColorOf } from '../notes.ts';
 import { escapeTex, hasUnicode } from './escape.ts';
 import { isMathLabel, mathInnerOf, mathLabelTex } from './mathLabel.ts';
 import { num } from './num.ts';
+import { sipShapeTex } from './sipShape.ts';
 
 /**
  * 生成した TeX と、その行が元の YAML の何行目から来たかの対応。
@@ -127,6 +128,7 @@ const headerOf = (
   colors: readonly string[],
   groundWidening: number,
   hasVoltage: boolean,
+  shapes: readonly string[],
 ): string[] => [
   '\\usepackage{circuitikz}',
   // オペアンプの ± をアンカーからずらして置くのに要る。
@@ -138,6 +140,8 @@ const headerOf = (
   ...(target === 'latex' && needsUnicode ? unicodeFontLines() : []),
   ...(target === 'latex' && needsMono ? monoFontLines() : []),
   ...colors,
+  // 自分で宣言する記号 (ピンヘッダ)。**図に出てくる本数のぶんだけ**書く。
+  ...shapes,
   '\\begin{document}',
   `\\begin{circuitikz}[${style.standard ?? DEFAULT_STANDARD}, line width=${num(style.wireWidth ?? DEFAULT_WIRE_WIDTH)}pt]`,
   `\\ctikzset{bipoles/length=${num(BIPOLE_LENGTH)}cm}`,
@@ -152,6 +156,19 @@ const headerOf = (
     ? ['\\ctikzset{voltage/distance from node=.7}', '\\ctikzset{voltage/american label distance=1.4}']
     : []),
 ];
+
+/**
+ * 図に出てくるピンヘッダの記号の宣言。**同じ本数は 1 回だけ**。
+ * 使わない本数を書かないのは、図に入る書き方を増やさないため (約束 6)。
+ */
+function sipShapesFor(circuit: Circuit): string[] {
+  const sizes = new Set<number>();
+  for (const part of circuit.parts) {
+    const found = /^sip(\d+)$/.exec(part.type);
+    if (found !== null) sizes.add(Number(found[1]));
+  }
+  return [...sizes].sort((a, b) => a - b).flatMap((pins) => sipShapeTex(pins));
+}
 
 const FOOTER = ['\\end{circuitikz}', '\\end{document}'];
 
@@ -756,6 +773,7 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
       ? groundScale(style.wireWidth ?? DEFAULT_WIRE_WIDTH)
       : 1,
     circuit.parts.some((part) => part.kind === 'two-terminal' && part.voltage !== null),
+    sipShapesFor(circuit),
   );
   const cells = cellsOf(circuit);
   const byId = new Map(circuit.parts.map((part) => [part.id, part]));

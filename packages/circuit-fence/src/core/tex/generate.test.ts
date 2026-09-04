@@ -1176,8 +1176,12 @@ describe('字が出る部品を全部当たる', () => {
   test('leaves the parts whose letters circuitikz draws itself alone', () => {
     // 計器の A・V・Ω や電源の記号は circuitikz が描く。縦に置いても字は
     // 立ったままで、こちらが手を出すところが無い (図で 13 種を確かめた)。
+    // **こちらが字を置くのは、自分で足の名前を書く種類だけ。**
     const drawn = partTypeNames().filter((type) => lookupPartType(type)?.pinLabels !== undefined);
 
-    expect(drawn).toEqual(['pico', 'pico-w', 'pico2', 'pico2-w']);
+    expect(drawn).toEqual([
+      'sip2', 'sip3', 'sip4', 'sip5', 'sip6', 'sip8', 'sip10', 'sip20', 'sip40',
+      'pico', 'pico-w', 'pico2', 'pico2-w',
+    ]);
   });
 });
