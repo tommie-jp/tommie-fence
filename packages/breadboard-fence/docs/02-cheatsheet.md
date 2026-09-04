@@ -58,6 +58,7 @@ notes:                 # 任意。図に重ねる印と字
          zener schottky photodiode varicap diac reed fuse lamp sma
          speaker mic battery solar switch switch-nc
 3 本足   transistor potentiometer slide-switch thyristor triac regulator
+4 本足   transformer
 まとまり  button button-nc dipN (4〜40 の偶数) sipN (2〜40)
 ボード    pico pico-w pico2 pico2-w
 ボード外  device

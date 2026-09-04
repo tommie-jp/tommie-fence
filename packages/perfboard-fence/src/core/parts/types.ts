@@ -33,6 +33,13 @@ const THREE_LEAD = new Set([
 ]);
 
 /**
+ * 4 本足の部品。**書かれた穴がそのまま足** — 2 本足・3 本足と同じ考え方で、
+ * 巻線の端が 4 つ出ている変圧器を、どの穴に挿したかそのまま書く
+ * (実物の足の並びは品によって違い、決め打てない)。
+ */
+const FOUR_LEAD = new Set(['transformer']);
+
+/**
  * タクトスイッチ。**足の位置はパッケージが決める**ので、書くのはアンカー 1 つ
  * (DIP と同じ考え方)。a 接点 (`button`) と b 接点 (`button-nc`) は**同じ形** —
  * 実物も外から見て見分けが付かず、図で描き分けると実物に無い情報になる。
@@ -112,9 +119,10 @@ const own = (table: Record<string, unknown>, key: string): boolean => Object.has
 
 export const isTwoLead = (type: string): boolean => TWO_LEAD.has(type);
 export const isThreeLead = (type: string): boolean => THREE_LEAD.has(type);
+export const isFourLead = (type: string): boolean => FOUR_LEAD.has(type);
 export const isSwitch = (type: string): boolean => SWITCH.has(type);
 export const isKnownType = (type: string): boolean =>
-  TWO_LEAD.has(type) || THREE_LEAD.has(type) || SWITCH.has(type) || NESTED.has(type)
+  TWO_LEAD.has(type) || THREE_LEAD.has(type) || FOUR_LEAD.has(type) || SWITCH.has(type) || NESTED.has(type)
   || lookupBoardPart(type) !== null;
 /**
  * パレットに出す**パッケージ物**。`dipN` / `sipN` は数を選べるが、一覧に全部
@@ -133,7 +141,7 @@ export const packageNames = (): readonly string[] => [
 ];
 
 export const placeableNames = (): readonly string[] =>
-  [...TWO_LEAD, ...THREE_LEAD, ...SWITCH, ...packageNames()];
+  [...TWO_LEAD, ...THREE_LEAD, ...FOUR_LEAD, ...SWITCH, ...packageNames()];
 
 /** その種類を指せる略記 (`r` → resistor)。パレットの検索が引く。 */
 export const aliasesFor = (type: string): readonly string[] =>
@@ -142,7 +150,7 @@ export const aliasesFor = (type: string): readonly string[] =>
 /** 略記を正式名に畳む。知らない綴りはそのまま返す (呼ぶ側が断る)。 */
 export const resolveTypeName = (type: string): string => (own(ALIASES, type) ? ALIASES[type] ?? type : type);
 export const knownNames = (): readonly string[] =>
-  [...TWO_LEAD, ...THREE_LEAD, ...SWITCH, ...NESTED, ...boardPartNames(), ...Object.keys(ALIASES)];
+  [...TWO_LEAD, ...THREE_LEAD, ...FOUR_LEAD, ...SWITCH, ...NESTED, ...boardPartNames(), ...Object.keys(ALIASES)];
 
 export type PartType = {
   readonly type: string;

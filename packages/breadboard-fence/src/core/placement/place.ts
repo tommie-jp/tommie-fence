@@ -252,8 +252,9 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
     });
   }
 
-  if (footprint.kind === 'two-lead' || footprint.kind === 'three-lead') {
-    return placeLegs(spec, board, base, footprint.kind === 'two-lead' ? 2 : 3, footprint.kind);
+  if (footprint.kind === 'two-lead' || footprint.kind === 'three-lead' || footprint.kind === 'four-lead') {
+    const legs = footprint.kind === 'two-lead' ? 2 : footprint.kind === 'three-lead' ? 3 : 4;
+    return placeLegs(spec, board, base, legs, footprint.kind);
   }
 
   if (footprint.kind === 'switch') return placeSwitch(spec, board, base);
@@ -268,7 +269,7 @@ function placeLegs(
   board: Board,
   base: PartBase,
   legs: number,
-  kind: 'two-lead' | 'three-lead',
+  kind: 'two-lead' | 'three-lead' | 'four-lead',
 ): Result<PlacedPart> {
   if (spec.holes.length !== legs) {
     return fail(`部品 ${safeToken(spec.id)}: 穴番地を ${legs} つ書きます (今は ${spec.holes.length} つ)`, spec.line);

@@ -215,7 +215,8 @@ export type FenceDocument = {
   readonly notes: readonly NoteSpec[];
 };
 
-export type PartKind = 'two-lead' | 'three-lead' | 'switch' | 'dip' | 'sip' | 'board' | 'device';
+export type PartKind =
+  | 'two-lead' | 'three-lead' | 'four-lead' | 'switch' | 'dip' | 'sip' | 'board' | 'device';
 
 export type PlacedPin = { readonly name: string; readonly address: Address | null };
 

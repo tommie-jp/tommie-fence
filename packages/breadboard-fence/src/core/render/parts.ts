@@ -1,7 +1,9 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
 import { boardBodyRect, renderBoardPart } from './boardPart.ts';
-import { renderDip, renderPushbutton, renderSip, sipBarRect, switchBodyRect } from './packages.ts';
+import {
+  fourLeadBodyRect, renderDip, renderPushbutton, renderSip, renderTransformer, sipBarRect, switchBodyRect,
+} from './packages.ts';
 import {
   CAPTION_DROP, CAPTION_HEIGHT, LEG_NAME_GAP, ROUND_CAPTION_GAP, caption, charWidth, labelYOf,
 } from './partCommon.ts';
@@ -19,6 +21,7 @@ export function partObstacles(part: PlacedPart, layout: Layout, theme: RenderThe
   if (part.kind === 'board') return [boardBodyRect(part, layout)];
   if (part.kind === 'sip') return [sipBarRect(part, layout)];
   if (part.kind === 'switch') return [switchBodyRect(part, layout)];
+  if (part.kind === 'four-lead') return [fourLeadBodyRect(part, layout)];
 
   const points = part.pins
     .map((pin) => (pin.address ? layout.point(pin.address) : null))
@@ -109,6 +112,7 @@ export function renderPart(part: PlacedPart, layout: Layout, theme: RenderTheme)
   if (part.kind === 'dip') return renderDip(part, layout, theme);
   if (part.kind === 'sip') return renderSip(part, layout, theme);
   if (part.kind === 'switch') return renderPushbutton(part, layout, theme);
+  if (part.kind === 'four-lead') return renderTransformer(part, layout, theme);
   if (part.kind === 'board') return renderBoardPart(part, layout, theme);
   if (part.kind === 'three-lead') return renderThreeLead(part, layout, theme);
   // 機器 (device) は帯の中に別の描き方で置くので、ここには来ない。

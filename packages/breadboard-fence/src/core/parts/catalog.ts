@@ -24,7 +24,7 @@ export type PlaceableName =
   | 'reed' | 'fuse' | 'lamp' | 'sma'
   | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
   | 'transistor' | 'potentiometer' | 'slide-switch' | 'thyristor' | 'triac'
-  | 'regulator' | 'button' | 'button-nc';
+  | 'regulator' | 'button' | 'button-nc' | 'transformer';
 
 export const PLACEABLE = placeableTypes;
 
@@ -87,6 +87,7 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   regulator: '三端子レギュレータ',
   button: 'タクトスイッチ (a 接点)',
   'button-nc': 'タクトスイッチ (b 接点)',
+  transformer: '変圧器',
   battery: '電池',
   solar: '太陽電池',
   speaker: 'スピーカー',
@@ -130,6 +131,7 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   regulator: 'U',
   button: 'SW',
   'button-nc': 'SW',
+  transformer: 'T',
   battery: 'B',
   solar: 'PV',
   speaker: 'LS',
@@ -149,7 +151,8 @@ export function holesOf(type: string): number {
   const footprint = lookupFootprint(type);
   if (footprint === null) return 0;
   if (footprint.kind === 'two-lead') return 2;
-  return footprint.kind === 'three-lead' ? 3 : 1;
+  if (footprint.kind === 'three-lead') return 3;
+  return footprint.kind === 'four-lead' ? 4 : 1;
 }
 
 /** 2 端子か (交点から交点へドラッグする。ほかは 1 回の押しで置く)。 */

@@ -72,6 +72,7 @@ wires:
   - 2 本足 (コネクタ) — `sma`
   - 3 本足 — `transistor` / `potentiometer` / `slide-switch` / `thyristor` / `triac` /
     `regulator`
+  - 4 本足 — `transformer` (巻線の端。書かれた穴がそのまま足)
   - まとまった足 — `button` (a 接点) / `button-nc` (b 接点) / `dipN` / `sipN`
   - マイコンボード — `pico` / `pico-w` / `pico2` / `pico2-w`
   - ボード外の機器 — `device`

@@ -225,6 +225,7 @@ wires:
         zener  schottky  photodiode  varicap  diac  reed  fuse  lamp  sma
         speaker  mic  battery  solar  switch (a 接点)  switch-nc (b 接点)
 3 本足  transistor  potentiometer  thyristor  triac  slide-switch  regulator
+4 本足  transformer
 パッケージ  button (a 接点)  button-nc (b 接点)  dip4〜dip40 (偶数)  sip2〜sip40
 ボード      pico  pico-w  pico2  pico2-w
 ```
@@ -238,6 +239,7 @@ wires:
 | --- | --- | --- |
 | 2 本足 | 2 つ | 書かれたとおり |
 | 3 本足 | 3 つ | 書かれたとおり (足は曲げられる) |
+| 4 本足 | 4 つ | 書かれたとおり (巻線の端の並びは品ごとに違う) |
 | `button` | 1 つ (左上の足) | パッケージが決める。4 本が 2 穴角の四角に並ぶ |
 | `dipN` | 1 つ (1 番ピン) | パッケージが決める。2 列の間隔は 300 mil = 3 穴 |
 | `sipN` | 1 つ (1 番ピン) | パッケージが決める。1 列に並ぶ |

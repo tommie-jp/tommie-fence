@@ -43,6 +43,9 @@ export type BodyInk = {
 export const REAL_INK: BodyInk = { paint: (color) => color };
 
 /** CdS の受光面の折り返しの数と、豆電球のフィラメントの巻き数。 */
+/** 積層鉄心の縞の数。実物の板の重なりが見える程度に。 */
+const TRANSFORMER_PLATES = 5;
+
 const CDS_FINGERS = 5;
 const FILAMENT_TURNS = 3;
 
@@ -757,6 +760,41 @@ function switchBody(span: number, ink: BodyInk, closed: boolean): string {
     stroke: ink.paint('#8a929c'), 'stroke-width': 2.6, 'stroke-linecap': 'round',
   });
   return shell + bush + lever;
+}
+
+/**
+ * 小型の変圧器。**四角い外形の中に、積んだ鉄心の縞と巻線の胴**が見える。
+ *
+ * 中身は板に依らないので、外形 (足をどこに書いたか) だけを受け取って中を描く。
+ * 足の並べ方は板ごとに違うが、**載っている物は同じ**なので姿は 1 つで済む。
+ */
+export function transformerCore(width: number, height: number, ink: BodyInk): string {
+  const shell = element('rect', {
+    x: num(-width / 2), y: num(-height / 2), width: num(width), height: num(height), rx: 2,
+    fill: ink.paint('#3a4049'), stroke: ink.paint('#1c2026'), 'stroke-width': 1,
+  });
+  // 積層鉄心の縞。**長いほうの辺に沿って積む** (実物の板の重なり)。
+  const along = width >= height;
+  const count = TRANSFORMER_PLATES;
+  const reach = (along ? width : height) * 0.34;
+  const plates = Array.from({ length: count }, (_, index) => {
+    const at = -reach + (reach * 2 * index) / (count - 1);
+    return along
+      ? element('line', {
+        x1: num(at), y1: num(-height * 0.36), x2: num(at), y2: num(height * 0.36),
+        stroke: ink.paint('#5c646e'), 'stroke-width': 1,
+      })
+      : element('line', {
+        x1: num(-width * 0.36), y1: num(at), x2: num(width * 0.36), y2: num(at),
+        stroke: ink.paint('#5c646e'), 'stroke-width': 1,
+      });
+  }).join('');
+  // 巻線のボビン。真ん中に一回り小さい胴が見える。
+  const bobbin = element('rect', {
+    x: num(-width * 0.24), y: num(-height * 0.24), width: num(width * 0.48), height: num(height * 0.48), rx: 1.5,
+    fill: ink.paint('#23272e'), stroke: ink.paint('#12151a'), 'stroke-width': 1,
+  });
+  return shell + plates + bobbin;
 }
 
 const BODIES: Record<string, (part: BodyPart, span: number, ink: BodyInk) => string> = {

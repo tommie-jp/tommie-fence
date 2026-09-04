@@ -1,8 +1,9 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
-import { caption, fitToBoard, partLabel, pinPoints, pointOfPin } from './partCommon.ts';
+import { CAPTION_DROP, caption, fitToBoard, partLabel, pinPoints, pointOfPin } from './partCommon.ts';
 import { element, num, svgText } from './svg.ts';
 import { textWidth } from './textFit.ts';
+import { REAL_INK, transformerCore } from 'fence-kit';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
 
@@ -191,3 +192,50 @@ export function renderPushbutton(part: PlacedPart, layout: Layout, theme: Render
 
   return `${shell}${bridges}${stubs}${button}${label}`;
 }
+
+/**
+ * 変圧器。**書かれた 4 つの穴を囲む箱**として描き、中身 (積層鉄心と巻線) は
+ * fence-kit が描く — 実物の話で板に依らないので、perfboard と同じ絵になる。
+ *
+ * 足の並びを決め打たないのは、実物の足の並びが品によって違うため。
+ * どの穴に挿したかをそのまま図にする (2 本足・3 本足と同じ考え方)。
+ */
+export function renderTransformer(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
+  const rect = fourLeadBodyRect(part, layout);
+  if (rect.width === 0) return '';
+
+  const centre = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+  const core = element(
+    'g',
+    { transform: `translate(${num(centre.x)} ${num(centre.y)})` },
+    transformerCore(rect.width, rect.height, REAL_INK),
+  );
+  const stubs = (pinPoints(part, layout) ?? []).map((point) => stub(point, theme.palette.chipPin)).join('');
+  // **字は溝の側へ。** 盤の端には列番号が印字してあり、そこに重ねると両方読めない
+  // (2 本足の `labelYOf` と同じ決まり。箱の外へ出す分だけ高さを足す)。
+  const toRavine = centre.y < layout.ravineY ? 1 : -1;
+  const label = partLabel(
+    centre.x,
+    centre.y + toRavine * (rect.height / 2 + CAPTION_DROP - 4),
+    fitToBoard(caption(part), centre.x, theme.metrics.textSize, layout),
+    theme,
+  );
+  return `${core}${stubs}${label}`;
+}
+
+/** 4 本足を囲む箱。**配線をよける領域**と描画で同じ数字を使う。 */
+export function fourLeadBodyRect(part: PlacedPart, layout: Layout): Rect {
+  const points = pinPoints(part, layout);
+  if (!points || points.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
+
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+  const x0 = Math.min(...xs) - FOUR_LEAD_PAD;
+  const x1 = Math.max(...xs) + FOUR_LEAD_PAD;
+  const y0 = Math.min(...ys) - FOUR_LEAD_PAD;
+  const y1 = Math.max(...ys) + FOUR_LEAD_PAD;
+  return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
+}
+
+/** 足の穴から胴の縁までの余白。実物も足の外側に樹脂が回る。 */
+const FOUR_LEAD_PAD = 6;

@@ -1,7 +1,7 @@
 import { NO_TURN } from './orient.ts';
 import type { Turn } from './orient.ts';
 import type { Address, Board } from '../types.ts';
-import { isEdgeMount, isSwitch, isThreeLead, isTwoLead } from './types.ts';
+import { isEdgeMount, isFourLead, isSwitch, isThreeLead, isTwoLead } from './types.ts';
 import { lookupBoardPart } from 'fence-kit';
 
 /**
@@ -21,7 +21,8 @@ import { lookupBoardPart } from 'fence-kit';
  * 中心線を挟んで反対側に決まる (`pinsOf` が補う)。
  */
 
-export type FootprintKind = 'two-lead' | 'three-lead' | 'switch' | 'edge' | 'dip' | 'sip' | 'board';
+export type FootprintKind =
+  | 'two-lead' | 'three-lead' | 'four-lead' | 'switch' | 'edge' | 'dip' | 'sip' | 'board';
 
 export type Footprint = {
   readonly kind: FootprintKind;
@@ -69,6 +70,7 @@ export function footprintOf(type: string, variant: string | null = null): Footpr
 
   if (isTwoLead(type)) return { kind: 'two-lead', pins: 2, holes: 2 };
   if (isThreeLead(type)) return { kind: 'three-lead', pins: 3, holes: 3 };
+  if (isFourLead(type)) return { kind: 'four-lead', pins: 4, holes: 4 };
   // タクトスイッチ。**足の位置はパッケージが決める**ので、書くのはアンカー 1 つ。
   if (isSwitch(type)) return { kind: 'switch', pins: 4, holes: 1 };
 
@@ -122,7 +124,7 @@ export function pinsOf(
   const anchor = holes[0];
   if (!anchor) return [];
 
-  if (footprint.kind === 'two-lead' || footprint.kind === 'three-lead') {
+  if (footprint.kind === 'two-lead' || footprint.kind === 'three-lead' || footprint.kind === 'four-lead') {
     return holes.slice(0, footprint.pins);
   }
 

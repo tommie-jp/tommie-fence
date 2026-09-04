@@ -27,7 +27,7 @@ export {
 } from './colors.ts';
 export { fit, textWidth } from './textFit.ts';
 export {
-  REAL_INK, SMA_SIZE, bodySize, crystalCan, drawBody, drawsOwnLeads, hasBody, smaBody,
+  REAL_INK, SMA_SIZE, bodySize, crystalCan, drawBody, drawsOwnLeads, hasBody, smaBody, transformerCore,
 } from './parts/bodies.ts';
 export { boardPartNames, lookupBoardPart } from './parts/boards.ts';
 export type { BoardPart } from './parts/boards.ts';

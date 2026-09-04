@@ -7,6 +7,8 @@ import { safeToken } from '../errors.ts';
 export type Footprint =
   | { readonly kind: 'two-lead' }
   | { readonly kind: 'three-lead' }
+  /** 巻線の端が 4 つ出ている部品 (変圧器)。**書かれた穴がそのまま足**。 */
+  | { readonly kind: 'four-lead' }
   /** 溝をまたぐ 4 本足のスイッチ (6mm 角のタクトスイッチ)。 */
   | { readonly kind: 'switch' }
   | { readonly kind: 'dip'; readonly pins: number }
@@ -42,6 +44,13 @@ const THREE_LEAD_TYPES = new Set([
   'regulator',
 ]);
 /**
+ * 4 本足の部品。**書かれた穴がそのまま足** — 2 本足・3 本足と同じ考え方で、
+ * 巻線の端が 4 つ出ている変圧器を、どの穴に挿したかそのまま書く
+ * (実物の足の並びは品によって違い、決め打てない)。
+ */
+const FOUR_LEAD_TYPES = new Set(['transformer']);
+
+/**
  * タクトスイッチ。v0.2.0 の `pushbutton` は略記として `button` に畳んでから来る。
  *
  * **a 接点 (`button`) と b 接点 (`button-nc`) は同じ形**。実物も外から見て
@@ -61,6 +70,7 @@ const SIP_MAX_PINS = 40;
 export function lookupFootprint(type: string): Footprint | null {
   if (TWO_LEAD_TYPES.has(type)) return { kind: 'two-lead' };
   if (THREE_LEAD_TYPES.has(type)) return { kind: 'three-lead' };
+  if (FOUR_LEAD_TYPES.has(type)) return { kind: 'four-lead' };
   if (SWITCH_TYPES.has(type)) return { kind: 'switch' };
   if (type === 'device') return { kind: 'device' };
 
@@ -103,12 +113,13 @@ export const packageTypes = (): readonly string[] => [
 ];
 
 export const placeableTypes = (): readonly string[] => [
-  ...TWO_LEAD_TYPES, ...THREE_LEAD_TYPES, ...SWITCH_TYPES, ...packageTypes(),
+  ...TWO_LEAD_TYPES, ...THREE_LEAD_TYPES, ...FOUR_LEAD_TYPES, ...SWITCH_TYPES, ...packageTypes(),
 ];
 
 export const knownPartTypes = (): readonly string[] => [
   ...TWO_LEAD_TYPES,
   ...THREE_LEAD_TYPES,
+  ...FOUR_LEAD_TYPES,
   ...SWITCH_TYPES,
   'dipN',
   'sipN',

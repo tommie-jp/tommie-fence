@@ -1,6 +1,6 @@
 import {
   REAL_INK, drawBody, drawPackage, drawsOwnLeads, element, fit, hasBody, lookupBoardPart, num,
-  packageHalfWidth, packageReach, smaBody as drawSmaBody, svgText,
+  packageHalfWidth, packageReach, smaBody as drawSmaBody, svgText, transformerCore,
 } from 'fence-kit';
 import type { BodyInk, BodyPart } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
@@ -433,7 +433,7 @@ const BOARD_EDGE = '#0b2637';
 const isBoxed = (part: PlacedPart): boolean => {
   const kind = footprintOf(part.type)?.kind;
   // マイコンボードも箱。**列の間隔が広い DIP** として同じ道を通る。
-  return kind === 'dip' || kind === 'switch' || kind === 'sip' || kind === 'board';
+  return kind === 'dip' || kind === 'switch' || kind === 'sip' || kind === 'board' || kind === 'four-lead';
 };
 
 /**
@@ -530,6 +530,22 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
   // **タクトスイッチは黒い樹脂**。IC と同じ色にすると、図でどちらか分からない。
   // 基板と同じで**透かさない** — 実物の胴は不透明で、下の穴には配線できない。
   const tact = footprintOf(part.type)?.kind === 'switch';
+  // **変圧器は箱の中身を fence-kit が描く** (実物の話で板に依らない)。
+  // 外の枠は要らないので、ここでは描かずに中身だけを置く。
+  if (footprintOf(part.type)?.kind === 'four-lead') {
+    const core = element(
+      'g',
+      { transform: `translate(${num(rect.cx)} ${num(rect.cy)})` },
+      transformerCore(rect.width, rect.height, REAL_INK),
+    );
+    return `${core}${leads}${partLabel(
+      caption(part),
+      { cx: rect.cx, cy: rect.cy, height: rect.height > rect.width ? rect.width : rect.height, angle: 0 },
+      { x: rect.cx, y: rect.cy },
+      theme,
+      layout,
+    )}`;
+  }
   const body = element('rect', {
     x: num(rect.cx - rect.width / 2), y: num(rect.cy - rect.height / 2),
     width: num(rect.width), height: num(rect.height), rx: 3,
