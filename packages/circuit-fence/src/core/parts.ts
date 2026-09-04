@@ -379,8 +379,9 @@ const dipSides = (count: number): Record<string, PinSide> => {
 function boardchip(board: BoardPart): PartType {
   const anchors = board.pins.map((name, index) => [name, `pin ${index + 1}`] as const);
   return {
-    // 反転すると足の名前も型番も鏡文字になる (DIP と同じ)。回転だけ許す。
-    orient: TURN_ONLY,
+    // **反転も許す。** DIP は足番号も型番も TeX が描くので鏡文字になるが、
+    // ボードの名前は描き上がった SVG に差し込むので裏返らない。型番は
+    // 向きが付くと箱の外の別ノードへ移る (`drawMultiTerminal`)。
     kind: 'multi-terminal',
     symbol: 'dipchip',
     // **箱を広げる。** 既定の幅では左右の名前が真ん中でぶつかる

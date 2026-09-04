@@ -19,7 +19,7 @@ import {
   noteFontTex, noteLine, noteMonoWidth, noteSourceLine, noteSpan, noteWidth, texAnchorOf, texColorOf,
 } from '../notes.ts';
 import type { NoteSize } from '../notes.ts';
-import { lookupPartType } from '../parts.ts';
+import { NO_TURN, lookupPartType, pinPlaces } from '../parts.ts';
 import { STAMP_TEXT } from '../version.ts';
 import type {
   ArrowNote, BoxNote, LineNote, NoteOverlay, NoteSpec, NoteTextStyle, PartSpec, SourceNote, TexTarget,
@@ -419,18 +419,26 @@ export function noteOverlays(
   // **足の名前は注釈より先。** 部品は注釈より先に書かれるので、目印もそちらが
   // 先に出てくる (差し込みは出てくる順で当たる)。
   const pins = circuit.parts.flatMap((part): NoteOverlay[] => {
-    const labels = lookupPartType(part.type)?.pinLabels;
-    if (labels === undefined) return [];
-    const half = labels.length / 2;
-    return labels.map((label, index) => ({
-      text: label,
-      color: NOTE_INK,
-      mono: false,
-      bold: false,
-      // 左の列は右へ、右の列は左へ伸ばす (TeX の `anchor` と揃える)。
-      align: index < half ? ('left' as const) : ('right' as const),
-      rotate: 0 as const,
-    }));
+    const type = lookupPartType(part.type);
+    const labels = type?.pinLabels;
+    if (labels === undefined || type === null || type === undefined) return [];
+    const turn = part.kind === 'multi-terminal' ? part.turn : NO_TURN;
+    return labels.map((label, index) => {
+      // **差し込む字も、置いたときと同じ辺で決める** (generate.ts の
+      // `pinNamePlace` と同じ話)。片方だけ直すと字と位置が食い違う。
+      const side = pinPlaces(type, turn).find((place) => place.anchor === `pin ${index + 1}`)?.side ?? 'left';
+      return {
+        text: label,
+        color: NOTE_INK,
+        mono: false,
+        bold: false,
+        // 左の列は右へ、右の列は左へ伸ばす (TeX の `anchor` と揃える)。
+        align: side === 'right' ? ('right' as const) : ('left' as const),
+        // 上下の辺に来た足は縦に読む。SVG の `rotate` は時計回りなので、
+        // 上の辺 (下へ読む) が 90、下の辺 (上へ読む) が 270。
+        rotate: side === 'top' ? (90 as const) : side === 'bottom' ? (270 as const) : (0 as const),
+      };
+    });
   });
 
   const notes = circuit.notes.flatMap((note): NoteOverlay[] => {

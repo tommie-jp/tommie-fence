@@ -1101,3 +1101,56 @@ describe('マイコンボード', () => {
     expect(tex).not.toContain('circuitnotemark');
   });
 });
+
+describe('回したマイコンボードの足の名前', () => {
+  const board = (...rows: string[]) => {
+    const { doc } = parseFence(`${rows.join('\n')}\n`);
+    if (doc === null) throw new Error('YAML を読めませんでした');
+    return generateTex(buildCircuit(doc).circuit, { style: doc.style });
+  };
+
+  test('stands the names up when the legs move to the top and bottom', () => {
+    // 実機で「回すと名前が枠と重なって読めない」。40 本なら隣との間隔は
+    // 1 文字も無いので、上下の辺では縦に書く。
+    const { notes } = board('parts:', '  U1: pico b2 r90');
+
+    // 1 番から半分までが上の辺 (下へ読む)、残りが下の辺 (上へ読む)。
+    expect(notes[0]).toMatchObject({ text: 'GP0', rotate: 90 });
+    expect(notes[20]).toMatchObject({ rotate: 270 });
+  });
+
+  test('leaves them lying down while the legs are on the sides', () => {
+    const { notes } = board('parts:', '  U1: pico b2');
+
+    expect(notes[0]).toMatchObject({ text: 'GP0', rotate: 0, align: 'left' });
+    expect(notes[20]).toMatchObject({ rotate: 0, align: 'right' });
+  });
+
+  test('turns the names only once, in the SVG, so they do not come out upside down', () => {
+    // TeX にも回させると二重になる (実機で焼いて見つけた)。**箱そのものは
+    // 回る** ので、見るのは足の名前を置く行だけ。
+    const { tex } = board('parts:', '  U1: pico b2 r90');
+    const legs = tex.split('\n').filter((line) => line.includes('bpin'));
+
+    expect(legs).toHaveLength(40);
+    expect(legs.every((line) => !line.includes('rotate='))).toBe(true);
+  });
+
+  test('turns them in the exported .tex, which draws the text itself', () => {
+    const { doc } = parseFence('parts:\n  U1: pico b2 r90\n');
+    if (doc === null) throw new Error('YAML を読めませんでした');
+    const { tex } = generateTex(buildCircuit(doc, { target: 'latex' }).circuit, {
+      style: doc.style, target: 'latex',
+    });
+    const legs = tex.split('\n').filter((line) => line.includes('bpin'));
+
+    expect(legs.some((line) => line.includes('rotate=-90'))).toBe(true);
+  });
+
+  test('lets a board be mirrored, since its names are put in afterwards', () => {
+    // DIP が反転できないのは足番号も型番も TeX が描いて鏡文字になるため。
+    const { circuit } = buildCircuit(parseFence('parts:\n  U1: pico b2 mirror\n').doc!);
+
+    expect(circuit.parts[0]).toMatchObject({ turn: { mirror: true } });
+  });
+});

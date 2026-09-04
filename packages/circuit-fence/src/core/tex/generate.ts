@@ -3,7 +3,7 @@ import { DEFAULT_PITCH, cornerOf, formatAddress, texNameOfAddress, toPoint } fro
 import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
-import { isTurned, lookupPartType, optionsFor, symbolFor } from '../parts.ts';
+import { isTurned, lookupPartType, optionsFor, pinPlaces, symbolFor } from '../parts.ts';
 import type { PartType, SourceInner, Turn } from '../parts.ts';
 import { EMPTY_STYLE } from '../parser/style.ts';
 import { cellOf as addressOf, nodeNameOf, texNameOfEndpoint } from '../types.ts';
@@ -651,7 +651,7 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
       : [`\\node[font=\\scriptsize, anchor=north] at (${name}.${underAnchor(part.turn)}) {${annotation}};`];
   if (symbol === 'plain amp') return [node, ...number, ...amplifierSigns(name, part.turn)];
 
-  return [node, ...number, ...pinNameNodes(name, type, target)];
+  return [node, ...number, ...pinNameNodes(part, name, type, target)];
 }
 
 /**
@@ -665,29 +665,51 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
  * **差し込みは目印の出てくる順**で当たる。部品は注釈より先に書かれるので、
  * 名前の並びも `noteOverlays` の先頭に来る。
  */
-function pinNameNodes(name: string, type: PartType | null, target: TexTarget): string[] {
+function pinNameNodes(part: MultiTerminalPart, name: string, type: PartType | null, target: TexTarget): string[] {
   const labels = type?.pinLabels;
-  if (labels === undefined) return [];
+  if (labels === undefined || type === null) return [];
 
-  const half = labels.length / 2;
   return labels.map((label: string, index: number) => {
-    // 1 番から半分までが左の列、残りが右の列 (DIP の番号の付き方)。
-    const left = index < half;
+    const place = pinNamePlace(type, part.turn, index);
     const options = [
       // フェンスは目印の色で置く (SVG で本物の字に差し替わる)。
       ...(target === 'latex' ? [] : [MARK_COLOR_NAME]),
       // **40 本が箱に収まる大きさ**にする。`\scriptsize` だと左右の列が
       // 箱の真ん中でぶつかった (実機で焼いて確かめた)。
       'font=\\tiny',
-      `anchor=${left ? 'west' : 'east'}`,
+      `anchor=${place.anchor}`,
       // 縁のすぐ内側へ。**`bpin` は枠の上の足** (`pin` は足の先) なので、
       // 線の太さぶんだけ逃がせば中に収まる。
-      `xshift=${left ? '' : '-'}2pt`,
+      place.shift,
+      // **回すのは書き出す `.tex` のときだけ。** フェンスは目印を置くだけで、
+      // 回すのは差し込む側 (`noteOverlays` の `rotate`)。両方で回すと
+      // 二重になって字が逆さまになる (実機で焼いて見つけた)。
+      ...(place.rotate === 0 || target !== 'latex' ? [] : [`rotate=${place.rotate}`]),
       'inner sep=0',
     ];
     const text = target === 'latex' ? escapeTex(label) : NOTE_MARK_TEXT;
     return `\\node[${options.join(', ')}] at (${name}.bpin ${index + 1}) {${text}};`;
   });
+}
+
+/**
+ * 足の名前を、**回した先の辺**に合わせて置く向き。
+ *
+ * 箱を回すと足も回る (`pinPlaces` が辺を返す)。左右の辺なら横書きのまま
+ * 内側へ、上下の辺なら**縦に回して**内側へ書く — 横のままだと、隣り合う
+ * 足の名前どうしが重なって読めない (40 本なら間隔は 1 文字ぶんも無い)。
+ *
+ * TeX の `rotate` は反時計回り。上の辺は下へ読ませたいので -90 度。
+ */
+function pinNamePlace(type: PartType, turn: Turn, index: number): {
+  readonly anchor: string; readonly shift: string; readonly rotate: number;
+} {
+  const side = pinPlaces(type, turn).find((place) => place.anchor === `pin ${index + 1}`)?.side ?? 'left';
+  if (side === 'left') return { anchor: 'west', shift: 'xshift=2pt', rotate: 0 };
+  if (side === 'right') return { anchor: 'east', shift: 'xshift=-2pt', rotate: 0 };
+  // 上の辺: 字は下 (箱の中) へ読む。下の辺: 上へ読む。
+  if (side === 'top') return { anchor: 'west', shift: 'yshift=-2pt', rotate: -90 };
+  return { anchor: 'west', shift: 'yshift=2pt', rotate: 90 };
 }
 
 const drawPart = (part: PartSpec, target: TexTarget, pitch: number): string[] =>
