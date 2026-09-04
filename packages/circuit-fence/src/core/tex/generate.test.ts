@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { buildCircuit } from '../model/circuit.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { DEFAULT_NOTE_SIZE, noteFontTex, noteWidth } from '../notes.ts';
+import { lookupPartType, partTypeNames } from '../parts.ts';
 import { VERSION } from '../version.ts';
 import { generateTex, standaloneTex } from './generate.ts';
 
@@ -1152,5 +1153,31 @@ describe('回したマイコンボードの足の名前', () => {
     const { circuit } = buildCircuit(parseFence('parts:\n  U1: pico b2 mirror\n').doc!);
 
     expect(circuit.parts[0]).toMatchObject({ turn: { mirror: true } });
+  });
+});
+
+describe('字が出る部品を全部当たる', () => {
+  test('turns the leg names of every part that has them, not just the one we found it on', () => {
+    // 実機で「回転でピン名が見えにくくなる不具合が他の部品に無いか」。
+    // **足の名前を書くのは表に `pinLabels` を持つ種類だけ**なので、
+    // その全部が回した辺で置き方を決めていることを見る。
+    const named = partTypeNames().filter((type) => lookupPartType(type)?.pinLabels !== undefined);
+    expect(named.length).toBeGreaterThan(0);
+
+    for (const type of named) {
+      const { doc } = parseFence(`parts:\n  U1: ${type} b2 r90\n`);
+      if (doc === null) throw new Error(`${type} を読めませんでした`);
+      const { notes } = generateTex(buildCircuit(doc).circuit, { style: doc.style });
+      // 上下の辺に来た足は縦に読む。1 本でも横のままなら隣と重なる。
+      expect(notes.every((one) => one.rotate === 90 || one.rotate === 270)).toBe(true);
+    }
+  });
+
+  test('leaves the parts whose letters circuitikz draws itself alone', () => {
+    // 計器の A・V・Ω や電源の記号は circuitikz が描く。縦に置いても字は
+    // 立ったままで、こちらが手を出すところが無い (図で 13 種を確かめた)。
+    const drawn = partTypeNames().filter((type) => lookupPartType(type)?.pinLabels !== undefined);
+
+    expect(drawn).toEqual(['pico', 'pico-w', 'pico2', 'pico2-w']);
   });
 });
