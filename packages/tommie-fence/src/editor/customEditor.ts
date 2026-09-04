@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { makeNonce, panelHtml } from 'fence-kit';
-import { createPerfboardEditor } from '../../core/edit/fenceEditor.ts';
+import { fenceEditors } from './fences.ts';
 import { createSession } from 'fence-kit';
 import { attachSession, createSessionHost, mapScriptUri } from './vscodeHost.ts';
 
@@ -17,7 +17,7 @@ import { attachSession, createSessionHost, mapScriptUri } from './vscodeHost.ts'
  * フェンスに限り、複数のフェンスは頭の一覧で選ぶ (タブにはカーソルが無い)。
  */
 
-export const MAP_EDITOR = 'perfboard-fence.map';
+export const MAP_EDITOR = 'tommie-fence.map';
 
 /**
  * 開いているカスタムエディタ (文書の URI → パネル)。**1 つの文書に何枚も
@@ -40,15 +40,15 @@ export function registerMapEditor(context: vscode.ExtensionContext): void {
     resolveCustomTextEditor(document, panel) {
       panel.webview.options = { enableScripts: true };
       const uri = document.uri.toString();
-      const fence = createPerfboardEditor();
-      const session = createSession(createSessionHost(panel.webview, 'vscode'), fence, { pinned: document });
+      const fences = fenceEditors();
+      const session = createSession(createSessionHost(panel.webview, 'vscode'), fences, { pinned: document });
       panel.webview.html = panelHtml({
         cspSource: panel.webview.cspSource,
         nonce: makeNonce(),
         scriptUri: mapScriptUri(panel.webview, context),
         view: session.view(),
         undo: 'vscode',
-        foldsWire: fence.foldsWire,
+        foldsWire: fences.some((one) => one.foldsWire),
       });
 
       const panels = open.get(uri) ?? new Set<vscode.WebviewPanel>();

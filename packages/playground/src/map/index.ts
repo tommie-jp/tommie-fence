@@ -1,4 +1,4 @@
-import { COLOR_LIST_ID, TYPE_LIST_ID, makeNonce, panelHtml } from 'fence-kit';
+import { makeNonce, panelHtml } from 'fence-kit';
 import type { FenceEditor, Incoming, Outgoing, Session } from 'fence-kit';
 import { createBreadboardEditor } from 'breadboard-fence/editor';
 import { createPerfboardEditor } from 'perfboard-fence/editor';
@@ -68,11 +68,6 @@ export function openMap({ kind, frame, body, setBody }: MapOptions): MapHandle {
     nonce: makeNonce(),
     scriptUri: 'map.js',
     view: session.view(),
-    chrome: {
-      palette: editor.palette(),
-      typeNames: editor.typeNames(TYPE_LIST_ID),
-      colorNames: editor.colorNames(COLOR_LIST_ID),
-    },
     // VS Code の undo は届かないので、殻に自前の履歴を持たせる (パネルと同じ)。
     undo: 'own',
     foldsWire: editor.foldsWire,

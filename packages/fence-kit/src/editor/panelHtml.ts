@@ -76,6 +76,12 @@ const STYLE = `
   .kc-top button:disabled { opacity: 0.35; cursor: default; }
   .kc-title { margin-left: auto; opacity: 0.7; }
   .cf-fences { margin: 0; }
+  .cf-fence-step {
+    margin-left: 2px; padding: 0 5px; line-height: 18px; cursor: pointer;
+    border: 1px solid var(--kc-line); border-radius: 3px;
+    background: var(--kc-chrome); color: var(--vscode-editor-foreground, CanvasText);
+  }
+  .cf-fence-step:hover { background: var(--vscode-list-hoverBackground, var(--kc-chrome)); }
   .cf-fences select {
     font: inherit; padding: 1px 4px;
     background: var(--vscode-dropdown-background); color: var(--vscode-dropdown-foreground);
@@ -376,6 +382,11 @@ export type MapViewHtml = {
   readonly picker: string;
   /** `renderIssues` が組んだ帯 (エスケープ済み。言うことが無ければ空)。 */
   readonly issues: string;
+  /**
+   * いまのフェンスの語彙 (パレットと候補の一覧)。**言語が変わると入れ替わる**
+   * ので、升目と一緒に送り直す。1 つのフェンスしか扱わない殻では毎回同じ。
+   */
+  readonly chrome: PanelChrome;
 };
 
 /** フェンスが組む帯 (`FenceEditor.palette` / `typeNames` の答え)。 */
@@ -407,12 +418,12 @@ export type PanelHtmlOptions = {
   readonly nonce: string;
   /** webview から見た `dist/map.js` の在り処 (`asWebviewUri` が作る)。 */
   readonly scriptUri: string;
-  readonly view: MapViewHtml;
   /**
-   * フェンスが組んだ帯。**殻は中身を知らない** — 置ける部品も種類の名前も
-   * フェンスごとに違うので、`FenceEditor` から受け取ってそのまま入れる。
+   * 升目と、いまのフェンスの語彙。**語彙も `view` が持つ** — 言語が変わると
+   * 入れ替わるので、最初の HTML と送り直しで同じ出どころにする
+   * (別々に渡していたときは、最初に開いた言語のパレットが残った)。
    */
-  readonly chrome: PanelChrome;
+  readonly view: MapViewHtml;
   /**
    * 戻す・やり直すを誰が持つか。`own` はパネル (VS Code の undo が届かないので
    * 自前の履歴)、`vscode` はカスタムエディタ (タブの文書へ undo が届く)。
@@ -434,7 +445,13 @@ export function renderFencePicker(fences: readonly FenceEntry[], line: number | 
     const label = fence.title === null ? `${fence.line} 行目のフェンス` : `${fence.line} 行目 ${fence.title}`;
     return `<option value="${fence.line}"${fence.line === line ? ' selected' : ''}>${escapeMarkup(label)}</option>`;
   }).join('');
-  return `<label>フェンス <select class="cf-fence">${options}</select></label>`;
+  // **前後のボタンを添える。** 一覧を開いて選び直さずに隣のフェンスへ行ける
+  // (図を 1 枚ずつ見ていくときの動きがこれ。実機で頼まれた)。
+  const step = (name: string, glyph: string, title: string): string =>
+    `<button type="button" class="cf-fence-step" data-step="${name}" title="${title}">${glyph}</button>`;
+  return `<label>フェンス <select class="cf-fence">${options}</select></label>`
+    + step('prev', '‹', '前のフェンス')
+    + step('next', '›', '次のフェンス');
 }
 
 /** 右の道具の列。**鍵と同じ一覧** — 押すと同じ鍵を押したことになる。 */
@@ -487,8 +504,9 @@ const renderTools = (): string => TOOLS.map((one) => (
   + `<span class="kc-glyph">${one.glyph}</span><span>${one.name}</span><kbd>${one.kbd}</kbd></button>`
 )).join('');
 
-export const panelHtml = ({ cspSource, nonce, scriptUri, view, chrome, undo, foldsWire = false }: PanelHtmlOptions): string => {
+export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo, foldsWire = false }: PanelHtmlOptions): string => {
   const own = undo === 'own';
+  const { chrome } = view;
   return `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">`
     + `<meta http-equiv="Content-Security-Policy" content="default-src 'none';`
     + ` style-src ${escapeMarkup(cspSource)} 'unsafe-inline'; script-src 'nonce-${escapeMarkup(nonce)}';">`
@@ -522,7 +540,9 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, chrome, undo, fol
     + renderMenu()
     + `<div class="kc-chooser" hidden><header>部品を置く <kbd>Enter</kbd> で先頭を持つ`
     + `<button type="button" class="kc-chooser-close" title="閉じる (Esc)">✕</button></header>`
-    + chrome.palette
+    // **言語ごとに入れ替わる。** 1 つの殻が 3 つのフェンスを扱うので、
+    // いまのフェンスの語彙に差し替えられるよう箱で包む (52 の docs/19)。
+    + `<div class="cf-chrome-palette">${chrome.palette}</div>`
     + `</div></div>`
     + `<nav class="kc-tools">${renderTools()}</nav>`
     + `</div>`
@@ -530,8 +550,7 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, chrome, undo, fol
     + `<div class="cf-band">${view.issues}</div></details>`
     + `<footer class="kc-status"><span class="cf-status"></span>`
     + `<span class="kc-cell"></span><span class="kc-zoom">100 %</span></footer>`
-    + chrome.typeNames
-    + chrome.colorNames
+    + `<div class="cf-chrome-lists">${chrome.typeNames}${chrome.colorNames}</div>`
     + `<script nonce="${escapeMarkup(nonce)}" src="${escapeMarkup(scriptUri)}"></script></body></html>`;
 };
 

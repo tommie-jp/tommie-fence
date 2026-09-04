@@ -1,4 +1,4 @@
-import { COLOR_LIST_ID, TYPE_LIST_ID, panelHtml } from 'fence-kit';
+import { panelHtml } from 'fence-kit';
 import type { FenceEditor, Outgoing } from 'fence-kit';
 import { createBreadboardEditor } from 'breadboard-fence/editor';
 import { createPerfboardEditor } from 'perfboard-fence/editor';
@@ -63,11 +63,6 @@ describe.each(CASES)('$kind のマップ', ({ kind, make, body, part, to }) => {
       nonce: 'test',
       scriptUri: 'map.js',
       view: session.view(),
-      chrome: {
-      palette: editor.palette(),
-      typeNames: editor.typeNames(TYPE_LIST_ID),
-      colorNames: editor.colorNames(COLOR_LIST_ID),
-    },
       undo: 'own',
       foldsWire: editor.foldsWire,
     });

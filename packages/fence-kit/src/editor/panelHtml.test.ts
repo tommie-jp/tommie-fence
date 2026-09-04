@@ -1,13 +1,18 @@
 import { describe, expect, test } from 'vitest';
 import { makeNonce, panelHtml, renderFencePicker } from './panelHtml.ts';
 
+/** 帯はフェンスが組む (`FenceEditor`)。殻の試験では中身の分かる印を入れておく。 */
+const CHROME = {
+  palette: '<details class="cf-palette"></details>',
+  typeNames: '<datalist id="cf-type-names"></datalist>',
+  colorNames: '<datalist id="cf-color-names"></datalist>',
+};
+
 const shell = (over: Partial<Parameters<typeof panelHtml>[0]> = {}): string => panelHtml({
   cspSource: 'vscode-resource:',
   nonce: 'abc123',
   scriptUri: 'vscode-resource://dist/map.js',
-  view: { html: '<table></table>', picker: '', issues: '' },
-  // 帯はフェンスが組む (`FenceEditor`)。殻の試験では中身の分かる印を入れておく。
-  chrome: { palette: '<details class="cf-palette"></details>', typeNames: '<datalist id="cf-type-names"></datalist>', colorNames: '<datalist id="cf-color-names"></datalist>' },
+  view: { html: '<table></table>', picker: '', issues: '', chrome: CHROME },
   undo: 'own',
   ...over,
 });
@@ -221,7 +226,19 @@ describe('フェンスを選ぶ', () => {
   test('puts the picker in the head, so a document with several fences can choose', () => {
     const picker = renderFencePicker([{ line: 3, title: 'RC' }, { line: 9, title: null }], 9);
 
-    expect(shell({ view: { html: '', picker, issues: '' } })).toContain(`<p class="cf-fences">${picker}</p>`);
+    expect(shell({ view: { html: '', picker, issues: '', chrome: CHROME } })).toContain(`<p class="cf-fences">${picker}</p>`);
+  });
+
+  test('adds a step button on each side, so the next fence is one click away', () => {
+    // **一覧を開かずに隣へ行ける。** 図を 1 枚ずつ見ていくときの動きがこれ。
+    const picker = renderFencePicker([{ line: 3, title: 'RC' }, { line: 9, title: null }], 3);
+
+    expect(picker).toContain('data-step="prev"');
+    expect(picker).toContain('data-step="next"');
+  });
+
+  test('leaves the buttons out when there is nothing to step to', () => {
+    expect(renderFencePicker([{ line: 3, title: 'RC' }], 3)).toBe('');
   });
 });
 

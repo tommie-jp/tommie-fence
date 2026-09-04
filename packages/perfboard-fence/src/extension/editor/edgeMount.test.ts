@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { createPerfboardEditor } from './perfboardEditor.ts';
+import { createPerfboardEditor } from '../../core/edit/fenceEditor.ts';
 
 /**
  * 板から張り出す形 (端面実装の同軸コネクタ)。**足が板の縁の外にあるのが

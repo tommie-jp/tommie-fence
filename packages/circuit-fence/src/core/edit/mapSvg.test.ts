@@ -346,12 +346,34 @@ describe('多端子部品の足', () => {
     expect(nameAt('+')).toBeGreaterThan(dotAt('4.5'));
   });
 
-  test('keeps the names of other parts outside, where the leg ends', () => {
+  test('puts every leg name inside the body, not out at the leg end', () => {
+    // 実機で「すべての部品でピン名は内側に」。外に出すと隣の升へはみ出し、
+    // 部品を並べたときに名前どうしがぶつかる。
     const svg = draw('parts:\n  Q1: npn b2\n');
     const name = Number(/<text x="([-\d.]+)"[^>]*class="cf-pin-name"[^>]*>B</.exec(svg)?.[1] ?? NaN);
     const dot = Number(/class="cf-pin-dot" cx="([-\d.]+)" cy="0"/.exec(svg)?.[1] ?? NaN);
 
-    expect(name).toBeLessThan(dot);
+    expect(name).toBeGreaterThan(dot);
+  });
+
+  test('writes the board kind inside the box, where the real chip sits', () => {
+    // 実機で「マイコンの種類を内側に」。40 本の足の名前は縁に寄るので、
+    // 真ん中が空いている。
+    const svg = draw('parts:\n  U1: pico2 c3\n');
+
+    expect(svg).toContain('>pico2<');
+    // 名前は箱の外なので、2 つが重ならない。
+    expect(svg).toContain('>U1<');
+  });
+
+  test('widens the box so two names facing each other do not touch', () => {
+    // レギュレータの `IN` と `OUT` は狭い箱だとくっついて 1 語に読める。
+    const svg = draw('parts:\n  VR1: regulator b2\n');
+    const names = [...svg.matchAll(/<text x="([-\d.]+)"[^>]*class="cf-pin-name"/g)]
+      .map((one) => Number(one[1]));
+
+    expect(names.length).toBeGreaterThan(1);
+    expect(Math.max(...names) - Math.min(...names)).toBeGreaterThan(24);
   });
 
   test('makes the target bigger than the dot, since 2.6px is too small to hit', () => {

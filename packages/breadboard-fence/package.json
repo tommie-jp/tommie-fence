@@ -29,8 +29,9 @@
   "main": "./dist/extension.cjs",
   "exports": {
     "./core": "./src/core/index.ts",
-    "./editor": "./src/extension/editor/breadboardEditor.ts",
-    "./package.json": "./package.json"
+    "./editor": "./src/core/edit/fenceEditor.ts",
+    "./package.json": "./package.json",
+    "./plugin": "./src/extension/markdownItPlugin.ts"
   },
   "browser": "./dist/extension.web.cjs",
   "bin": {

@@ -405,3 +405,7 @@ export type { FenceError } from './types.ts';
 export type { Net } from 'fence-kit';
 export { errorText } from './render/errorText.ts';
 export { VERSION } from './version.ts';
+
+// **殻へ渡す口。** 掴んで動かす editor はこの 1 つを受け取って動く
+// (52 の docs/19 — 拡張は 1 つ、コアは 3 つのまま)。
+export { createPerfboardEditor } from './edit/fenceEditor.ts';

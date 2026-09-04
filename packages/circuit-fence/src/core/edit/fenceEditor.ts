@@ -1,29 +1,29 @@
-import { listFences } from '../../core/edit/fenceList.ts';
-import { partFields, setField } from '../../core/edit/field.ts';
-import type { PartField } from '../../core/edit/field.ts';
-import { nameOfHandle } from '../../core/edit/handles.ts';
-import { issuesOf, renderIssues, shiftIssues } from '../../core/edit/issues.ts';
-import { aimAt, fenceAt, gridMap, partCells } from '../../core/edit/map.ts';
-import { renderMapHtml } from '../../core/edit/mapSvg.ts';
-import { duplicatePart, insertPart, insertWire, nextPartId } from '../../core/edit/insert.ts';
-import { movePart, partSpans, stepCell, stepsTo } from '../../core/edit/move.ts';
-import { renderPalette, renderTypeOptions } from '../../core/edit/palette.ts';
-import { movePoint, nodeSpans } from '../../core/edit/point.ts';
-import { deletePart, deleteWire } from '../../core/edit/remove.ts';
-import { flipPart, turnPart } from '../../core/edit/turn.ts';
-import { extractCircuitFences } from '../../core/fences.ts';
-import { formatAddress, parseAddress } from '../../core/model/address.ts';
-import type { Address } from '../../core/model/address.ts';
-import type { Endpoint } from '../../core/types.ts';
-import { renamePart } from '../../core/edit/rename.ts';
-import type { MapLook } from '../../core/edit/mapSvg.ts';
+import { listFences } from './fenceList.ts';
+import { partFields, setField } from './field.ts';
+import type { PartField } from './field.ts';
+import { nameOfHandle } from './handles.ts';
+import { issuesOf, renderIssues, shiftIssues } from './issues.ts';
+import { aimAt, fenceAt, gridMap, partCells } from './map.ts';
+import { renderMapHtml } from './mapSvg.ts';
+import { duplicatePart, insertPart, insertWire, nextPartId } from './insert.ts';
+import { movePart, partSpans, stepCell, stepsTo } from './move.ts';
+import { renderPalette, renderTypeOptions } from './palette.ts';
+import { movePoint, nodeSpans } from './point.ts';
+import { deletePart, deleteWire } from './remove.ts';
+import { flipPart, turnPart } from './turn.ts';
+import { extractCircuitFences } from '../fences.ts';
+import { formatAddress, parseAddress } from '../model/address.ts';
+import type { Address } from '../model/address.ts';
+import type { Endpoint } from '../types.ts';
+import { renamePart } from './rename.ts';
+import type { MapLook } from './mapSvg.ts';
 import type { EditResult, FenceEditor, NewPart } from 'fence-kit';
-import { isWireHandle, renderColorOptions, setWireField, wireFields } from '../../core/edit/wireField.ts';
+import { isWireHandle, renderColorOptions, setWireField, wireFields } from './wireField.ts';
 import {
   deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans,
   setNoteField, turnNote,
-} from '../../core/edit/note.ts';
-import { isNodeHandle, nameNode, nodeFields, nodeSpellOf } from '../../core/edit/pointName.ts';
+} from './note.ts';
+import { isNodeHandle, nameNode, nodeFields, nodeSpellOf } from './pointName.ts';
 
 /**
  * circuit フェンスの編集エンジンを、殻が求める形 (`FenceEditor`) に束ねる。

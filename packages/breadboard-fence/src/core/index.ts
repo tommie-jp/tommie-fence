@@ -627,3 +627,7 @@ export { extractBreadboardFences } from './fences.ts';
 export type { FenceBlock } from './fences.ts';
 export { errorLine, errorText } from './render/errorText.ts';
 export type { FenceError, Net } from './types.ts';
+
+// **殻へ渡す口。** 掴んで動かす editor はこの 1 つを受け取って動く
+// (52 の docs/19 — 拡張は 1 つ、コアは 3 つのまま)。
+export { createBreadboardEditor } from './edit/fenceEditor.ts';

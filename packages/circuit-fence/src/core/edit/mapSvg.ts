@@ -1,7 +1,7 @@
-import { element, escapeMarkup, fit, num, svgText, textWidth } from 'fence-kit';
+import { element, escapeMarkup, fit, lookupBoardPart, num, svgText, textWidth } from 'fence-kit';
 import { LIMITS } from '../limits.ts';
 import { formatAddress, rowLetters } from '../model/address.ts';
-import { drawBox, drawGlyph, glyphOf, glyphSpan, legGap, namesInside } from './mapGlyphs.ts';
+import { drawBox, drawGlyph, glyphOf, glyphSpan, leadsFromCentre, legGap, namesInside } from './mapGlyphs.ts';
 import type { GlyphName } from './mapGlyphs.ts';
 import type { Chip, ChipPin, Cell, Dot, GridMap, MapNote, WireLine } from './map.ts';
 import type { PinSide, Turn } from '../parts.ts';
@@ -150,7 +150,7 @@ function roomFor(map: GridMap, nudges: ReadonlyMap<Chip, number>): Room {
     // **箱も名前を外に出す**ので、余白を数える対象に入れる。
     const named = nameSideOf(chip.pins);
     const forName = (side: PinSide): number => (side === named
-      ? standingNameReach(side, chip.id, { w: halfW, h: halfH + NOTCH }) - (side === 'bottom' ? halfH : halfW)
+      ? standingNameReach(side, chip.id, { w: halfW, h: halfH }) - (side === 'bottom' ? halfH : halfW)
       : 0);
     hold(
       at.x - halfW - Math.max(beside('left'), forName('left')) - EDGE,
@@ -394,8 +394,14 @@ function reachOf(rows: PinRows, glyph: GlyphName): { readonly halfW: number; rea
   // (オペアンプの三角、トランスの巻線) で縁と棒の間が切れて見える。
   // 箱は名前を入れるので、狭くはしない。
   const edge = glyph === 'box' ? HALF_W : Math.max(glyphSpan(glyph), 8);
+  // **中に書く名前が入るだけの幅を取る。** 左右の名前を内側へ寄せるので、
+  // 狭い箱だと `IN` と `OUT` がくっついて 1 語に読める (実機で見つけた)。
+  const inside = (side: PinSide): number => (namesInside(glyph, side)
+    ? Math.max(0, ...(rows.get(side) ?? []).map((pin) => textWidth(pin.name) * PIN_NAME_FONT))
+    : 0);
+  const forNames = (inside('left') + inside('right')) / 2 + NAME_INSIDE * 2 + 2;
   return {
-    halfW: Math.max(edge, room(along('top', 'bottom'))),
+    halfW: Math.max(edge, room(along('top', 'bottom')), forNames),
     halfH: Math.max(HALF_H, room(along('left', 'right'))),
   };
 }
@@ -535,8 +541,13 @@ function standingNameReach(side: PinSide, id: string, half: { readonly w: number
  */
 const NAMELESS: ReadonlySet<string> = new Set(['ground']);
 
-/** 切り欠きのある種類。**足の位置がパッケージで決まる箱**だけが持つ。 */
+/**
+ * 切り欠きのある種類。**実物に向きの目印がある箱**だけが持つ — DIP の
+ * パッケージと、マイコンボードの基板 (図もそこに半円を描く)。
+ * ピンヘッダ (`sipN`) には無い。
+ */
 const DIP_TYPE = /^dip\d+$/;
+const hasNotch = (type: string): boolean => DIP_TYPE.test(type) || lookupBoardPart(type) !== null;
 
 /** 切り欠きの半径。箱の縁に半円で食い込む。 */
 const NOTCH = 3.5;
@@ -564,7 +575,7 @@ function pinPointOf(
  * 決め打つと、回した DIP で反対の端へ出て印が嘘をつく。
  */
 function notchOf(chip: Chip, rows: PinRows, halfW: number, halfH: number, gap: number): string {
-  if (!DIP_TYPE.test(chip.type)) return '';
+  if (!hasNotch(chip.type)) return '';
   // **列の頭どうしの間**。`chip.pins` の並びは列の順 (左の列を上から、次に右の列を
   // 上から) なので、末尾は最終ピンではない — 数え違えると印が反対の端へ出る。
   const heads = [...rows.values()].map((row) => row[0]);
@@ -574,12 +585,12 @@ function notchOf(chip: Chip, rows: PinRows, halfW: number, halfH: number, gap: n
   const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
   const alongX = Math.abs(mid.x) >= Math.abs(mid.y);
   const side = Math.sign(alongX ? mid.x : mid.y) || -1;
-  // 半円は**縁の外へ**膨らむ (図と同じ)。パッケージの端の丸い窪みが、
-  // 外から見ると出っ張りに見えるところ。
+  // 半円は**箱の内側へ**へこむ (図と同じ)。実物の切り欠きはパッケージを
+  // 削った窪みなので、縁の外へ膨らませると別の形になる (実機で指摘された)。
   const d = alongX
-    ? `M${num(side * halfW)},${num(-NOTCH)} A${NOTCH},${NOTCH} 0 0 ${side > 0 ? 1 : 0}`
+    ? `M${num(side * halfW)},${num(-NOTCH)} A${NOTCH},${NOTCH} 0 0 ${side > 0 ? 0 : 1}`
       + ` ${num(side * halfW)},${num(NOTCH)}`
-    : `M${num(-NOTCH)},${num(side * halfH)} A${NOTCH},${NOTCH} 0 0 ${side > 0 ? 0 : 1}`
+    : `M${num(-NOTCH)},${num(side * halfH)} A${NOTCH},${NOTCH} 0 0 ${side > 0 ? 1 : 0}`
       + ` ${num(NOTCH)},${num(side * halfH)}`;
   return element('path', { class: 'cf-glyph-line', d });
 }
@@ -609,19 +620,26 @@ function drawStanding(chip: Chip, nudge: number): string {
       'g',
       { class: 'cf-pins', transform: `translate(0,${num(nudge)})` },
       [...rows].flatMap(([side, row]) =>
-        row.map((pin, at) =>
-          drawPin(pin, chip.id, pinAt(
+        row.map((pin, at) => {
+          const place = pinAt(
             side, at, row.length, halfW, halfH, legGap(glyph.name), namesInside(glyph.name, side),
-          )))).join(''),
+          );
+          // **中心から引く形は、線の根元を真ん中へ。** 丸の中の点まで届いて
+          // いるのが記号なので、縁で止めると信号線の行き先が読めない。
+          return drawPin(pin, chip.id, leadsFromCentre(glyph.name) ? { ...place, x1: 0, y1: 0 } : place);
+        })).join(''),
     );
   const mark = glyph.mark === null
     ? ''
     : svgText(0, nudge + (glyph.mark.below === true ? MARK_BELOW : 4), glyph.mark.text, { class: 'cf-mark' });
+  // **マイコンボードは種類を箱の中に書く** (`pico2`)。40 本の足の名前は左右の
+  // 縁に寄るので真ん中が空いていて、そこが実物のチップの場所でもある
+  // (実機で頼まれた)。名前 (`U1`) は箱の外なので、2 つが重ならない。
+  const kind = lookupBoardPart(chip.type) === null
+    ? ''
+    : svgText(0, nudge + 4, chip.type, { class: 'cf-mark' });
   // 名札は**足の無い辺**へ。足のある辺に出すと、棒と足の名前に重なる。
-  // **切り欠きのぶんも避ける。** 半円は箱の縁の外へ出るので、箱の高さだけで
-  // 逃がすと名前が印の上に乗って、向きの目印が読めなくなる。
-  const room = { w: halfW, h: halfH + (DIP_TYPE.test(chip.type) ? NOTCH : 0) };
-  const place = standingNameAt(nameSideOf(chip.pins), room);
+  const place = standingNameAt(nameSideOf(chip.pins), { w: halfW, h: halfH });
   const name = NAMELESS.has(chip.type)
     ? ''
     : svgText(place.x, nudge + place.y, chip.id, {
@@ -629,7 +647,7 @@ function drawStanding(chip: Chip, nudge: number): string {
       halo: 'var(--cf-paper)',
       ...(place.anchor === undefined ? {} : { anchor: place.anchor }),
     });
-  return body + pins + mark + name;
+  return body + pins + mark + kind + name;
 }
 
 /**

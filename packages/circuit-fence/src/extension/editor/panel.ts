@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { revealMapEditor } from './customEditor.ts';
-import { COLOR_LIST_ID, TYPE_LIST_ID, makeNonce, panelHtml } from 'fence-kit';
+import { makeNonce, panelHtml } from 'fence-kit';
 import { mapScriptUri } from './vscodeHost.ts';
-import { createCircuitEditor } from './circuitEditor.ts';
+import { createCircuitEditor } from '../../core/edit/fenceEditor.ts';
 import { mapLook } from './mapLook.ts';
 import { createSession } from 'fence-kit';
 import type { Session } from 'fence-kit';
@@ -51,11 +51,6 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
     nonce: makeNonce(),
     scriptUri: mapScriptUri(view.webview, context),
     view: live.view(),
-    chrome: {
-          palette: fence.palette(),
-          typeNames: fence.typeNames(TYPE_LIST_ID),
-          colorNames: fence.colorNames(COLOR_LIST_ID),
-        },
     undo: 'own',
     foldsWire: fence.foldsWire,
   });

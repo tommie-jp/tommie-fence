@@ -7,7 +7,8 @@ import { createHistory, sameBody } from './history.ts';
 import { describeDiff } from './edits.ts';
 import { applyRewrite } from './lines.ts';
 import type { EditResult, FenceEditor, FenceEntry, PartFields } from './fenceEditor.ts';
-import { renderFencePicker } from './panelHtml.ts';
+import { COLOR_LIST_ID, TYPE_LIST_ID, renderFencePicker } from './panelHtml.ts';
+import type { PanelChrome } from './panelHtml.ts';
 import type { MapViewHtml } from './panelHtml.ts';
 import type { FenceBlock } from '../fences.ts';
 
@@ -401,11 +402,20 @@ export function createSession<D extends DocLike>(
    */
   let lastView: { readonly key: string; readonly view: MapView } | null = null;
 
+  /** そのフェンスの語彙。**名札の綴りは殻が決める** (組む側と引く側で同じ 1 か所)。 */
+  const chromeOf = (fence: FenceEditor): PanelChrome => ({
+    palette: fence.palette(),
+    typeNames: fence.typeNames(TYPE_LIST_ID),
+    colorNames: fence.colorNames(COLOR_LIST_ID),
+  });
+
   function viewNow(followCursor: boolean): MapView {
     const fence = currentFence(followCursor);
     if (fence === null) {
       const note = pinned === null ? lostNote(languages()) : noneNote(languages());
-      return { html: note, picker: '', issues: '' };
+      // どのフェンスにも居ないときは、いま選ばれている言語の語彙のまま残す
+      // (パレットが空になると、置きに戻る道が消える)。
+      return { html: note, picker: '', issues: '', chrome: chromeOf(editor) };
     }
 
     // 一覧は文書全体から組むので、本文だけでなく文書も鍵に入れる。
@@ -418,6 +428,9 @@ export function createSession<D extends DocLike>(
       html: view.map,
       picker: renderFencePicker(allFences(markdown), fence.line),
       issues: view.issues,
+      // **語彙はいまのフェンスのもの。** 言語が変わるとパレットも候補も
+      // 入れ替わるので、升目と一緒に送り直す (52 の docs/19)。
+      chrome: chromeOf(editor),
     };
     lastView = { key, view: now };
     return now;

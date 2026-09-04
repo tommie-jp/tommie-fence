@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { LookSource } from '../../core/edit/fenceEditor.ts';
+import type { LookSource } from 'circuit-fence/editor';
 
 /**
  * 升目の見た目の設定。**フェンスに書く `style:` とは別**で、あちらは図の話

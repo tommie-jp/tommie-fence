@@ -3,6 +3,7 @@
 #   make                        .vsix を全部作る (変わったものだけ)
 #   make install                上に加えて VS Code に入れ直す (doBuild.sh の既定)
 #   make circuit-fence          1 つだけ作る
+#   make tommie-fence           3 つを畳んだ拡張を作る (既定では作らない。52 の docs/19)
 #   make install-circuit-fence  1 つだけ作って入れ直す
 #   make check                  型チェックとテスト (全パッケージ)
 #   make CHECK=0 install        チェックを飛ばす (描画を何度も見比べるとき)
@@ -157,7 +158,7 @@ install-$(1): $$(BUILD)/$(1)/installed.stamp
 endef
 
 $(foreach p,$(PACKAGES),$(eval $(call check_rules,$(p))))
-$(foreach p,$(EXTENSIONS),$(eval $(call extension_rules,$(p))))
+$(foreach p,$(EXTENSIONS) $(HELD),$(eval $(call extension_rules,$(p))))
 
 # --- まとめた目標 -----------------------------------------------------------
 

@@ -1,26 +1,26 @@
 import { renderIssues } from 'fence-kit';
 import type { EditResult, FenceEditor } from 'fence-kit';
 import { normalizeNewlines } from 'fence-kit';
-import { renderPalette, renderTypeOptions } from '../../core/edit/palette.ts';
-import { partFields, setField } from '../../core/edit/field.ts';
-import type { PartField } from '../../core/edit/field.ts';
-import { issuesOf, shiftIssues } from '../../core/edit/issues.ts';
-import { aimAt, fenceAt } from '../../core/edit/map.ts';
-import { insertPart, insertWire, duplicatePart, nextPartId, partCells } from '../../core/edit/insert.ts';
-import { renamePart } from '../../core/edit/rename.ts';
-import { isWireHandle, renderColorOptions, setWireField, wireFields } from '../../core/edit/wireField.ts';
+import { renderPalette, renderTypeOptions } from './palette.ts';
+import { partFields, setField } from './field.ts';
+import type { PartField } from './field.ts';
+import { issuesOf, shiftIssues } from './issues.ts';
+import { aimAt, fenceAt } from './map.ts';
+import { insertPart, insertWire, duplicatePart, nextPartId, partCells } from './insert.ts';
+import { renamePart } from './rename.ts';
+import { isWireHandle, renderColorOptions, setWireField, wireFields } from './wireField.ts';
 import {
   deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans,
   setNoteField, turnNote,
-} from '../../core/edit/note.ts';
-import { flipPart, turnPart } from '../../core/edit/turn.ts';
-import { movePart, movablePartIds, partSpans, stepCell, stepsTo } from '../../core/edit/move.ts';
-import { movePoint, nodeSpans } from '../../core/edit/point.ts';
-import { deletePart, deleteWire } from '../../core/edit/remove.ts';
-import { extractPerfboardFences } from '../../core/fences.ts';
-import { renderPerfboard } from '../../core/index.ts';
-import { parseAddress } from '../../core/model/address.ts';
-import { parseFence } from '../../core/parser/parseFence.ts';
+} from './note.ts';
+import { flipPart, turnPart } from './turn.ts';
+import { movePart, movablePartIds, partSpans, stepCell, stepsTo } from './move.ts';
+import { movePoint, nodeSpans } from './point.ts';
+import { deletePart, deleteWire } from './remove.ts';
+import { extractPerfboardFences } from '../fences.ts';
+import { renderPerfboard } from '../index.ts';
+import { parseAddress } from '../model/address.ts';
+import { parseFence } from '../parser/parseFence.ts';
 
 /**
  * perfboard フェンスの編集を、殻が求める形 (`FenceEditor`) に束ねる。

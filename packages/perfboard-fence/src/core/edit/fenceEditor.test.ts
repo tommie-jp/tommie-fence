@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { createBreadboardEditor } from './breadboardEditor.ts';
+import { createPerfboardEditor } from './fenceEditor.ts';
 
 /**
  * マップと webview の**約束**。webview (fence-kit) が探す印を、フェンスが
@@ -9,25 +9,25 @@ import { createBreadboardEditor } from './breadboardEditor.ts';
  * 光らない。どれもエラーにならないので、テストで押さえておく。
  */
 
-const editor = createBreadboardEditor();
+const editor = createPerfboardEditor();
 
-const LED = `board: half
+const LED = `board: 12x7
 points:
-  vin: a5
+  IN: a1
 parts:
-  R1: resistor a5 a10 330
+  R1: resistor b2 b6 10k
 wires:
-  - a10 -- b12
+  - a2 -- b2
 `;
 
-const NOTE = ['# ノート', '', '```breadboard', ...LED.split('\n'), '```', ''].join('\n');
+const NOTE = ['# ノート', '', '```perfboard', ...LED.split('\n'), '```', ''].join('\n');
 
 describe('マップが出す印 (webview との約束)', () => {
   const { map } = editor.view(LED, 3);
 
   test('marks the holes the webview drops onto', () => {
     // `map.ts` は `.cf-cell[data-address="…"]` で置き先を引く。
-    expect(map).toContain('class="cf-cell" data-address="a5"');
+    expect(map).toContain('class="cf-cell" data-address="b2"');
   });
 
   test('marks the parts the webview grabs', () => {
@@ -35,7 +35,7 @@ describe('マップが出す印 (webview との約束)', () => {
   });
 
   test('marks the nodes the webview grabs', () => {
-    expect(map).toContain('class="cf-dot" data-node="a5"');
+    expect(map).toContain('class="cf-dot" data-node="b2"');
   });
 
   test('marks the wires by their line, which is how they are selected', () => {
@@ -66,7 +66,7 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
 
   test('moves a part by the written address, not by a parsed one', () => {
     // **殻は文字列で話す。** 番地の綴りを知るのはこちら側だけ。
-    const result = editor.movePart(LED, 'R1', 'c5');
+    const result = editor.movePart(LED, 'R1', 'c2');
 
     expect(result.ok).toBe(true);
   });
@@ -79,17 +79,15 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
   });
 
   test('says which fields can be written, so the shell need not know the grammar', () => {
-    expect(editor.fieldsOf(LED, 'R1')?.can).toEqual(['id', 'type', 'value', 'label']);
+    // **ラベルの欄はこの文法に無い。** 字を添えたいときは注釈で書く。
+    expect(editor.fieldsOf(LED, 'R1')?.can).toEqual(['id', 'type', 'value']);
   });
 
   test('places a part from the palette', () => {
-    const result = editor.addPart(LED, { id: 'R2', type: 'resistor', at: ['c5', 'c10'] });
-
-    expect(result.ok).toBe(true);
+    expect(editor.addPart(LED, { id: 'R2', type: 'resistor', at: ['c2', 'c6'] }).ok).toBe(true);
   });
 
   test('offers a palette and the type names the fields can use', () => {
-    // **何が置けるかは部品の表そのもの。** webview 側に写しを持たない。
     expect(editor.palette()).toContain('data-type="resistor" data-ends="2"');
     expect(editor.typeNames('cf-type-names')).toContain('<option value="resistor"/>');
   });
@@ -100,35 +98,28 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
 
   test('turns a two lead part by its addresses, with no grammar change', () => {
     // 軸は足の真ん中なので、回った先が板に収まる所に置く。
-    const room = 'board: half\nparts:\n  R1: resistor c5 c10 330\n';
+    const room = 'board: 12x9\nparts:\n  R1: resistor e2 e6 10k\n';
 
     expect(editor.turn(room, 'R1', 1).ok).toBe(true);
     expect(editor.flip(LED, 'R1').ok).toBe(true);
   });
 
   test('turns a three lead part too, since its holes are all written', () => {
-    const three = 'board: half\nparts:\n  Q1: transistor h9 h10 h11 2SC1815\n';
+    const three = 'board: 12x7\nparts:\n  Q1: transistor d2 d3 d4 2SC1815\n';
 
     expect(editor.turn(three, 'Q1', 1).ok).toBe(true);
   });
 
   test('turns a part placed by one anchor by writing the word, so R is one action', () => {
     // 掴む人にとって「回す」は 1 つの操作。番地で回すか語で書くかは中で分ける。
-    const dip = 'board: half\nparts:\n  U1: dip8 @ e5 NE555\n';
+    const dip = 'board: 16x16\nparts:\n  U1: dip8 h8 NE555\n';
     const result = editor.turn(dip, 'U1', 1);
 
-    expect(result.ok && result.value.edits?.[0]?.text).toBe(' r180');
-  });
-
-  test('flips it by moving the anchor across the ravine, which is what mirror means here', () => {
-    const dip = 'board: half\nparts:\n  U1: dip8 @ e5 NE555\n';
-    const result = editor.flip(dip, 'U1');
-
-    expect(result.ok && result.value.edits?.[0]?.text).toBe('f5');
+    expect(result.ok && result.value.edits?.[0]?.text).toBe(' r90');
   });
 
   test('draws the band the map shows under the drawing', () => {
-    const broken = 'board: half\nparts:\n  R1: resistr a5 a10\n';
+    const broken = 'board: 12x7\nparts:\n  R1: resistr b2 b6\n';
 
     expect(editor.view(broken, 1).issues).toContain('cf-issue');
   });

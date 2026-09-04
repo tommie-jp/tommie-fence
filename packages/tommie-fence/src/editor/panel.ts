@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { revealMapEditor } from './customEditor.ts';
 import { makeNonce, panelHtml } from 'fence-kit';
 import { mapScriptUri } from './vscodeHost.ts';
-import { createBreadboardEditor } from '../../core/edit/fenceEditor.ts';
+import { fenceEditors } from './fences.ts';
 import { createSession } from 'fence-kit';
 import type { Session } from 'fence-kit';
 import { attachSession, createSessionHost } from './vscodeHost.ts';
@@ -20,11 +20,17 @@ let panel: vscode.WebviewPanel | null = null;
 let session: Session | null = null;
 
 export function openMapPanel(context: vscode.ExtensionContext): void {
-  const fence = createBreadboardEditor();
+  // **どのフェンスでもよい。** 3 つとも扱えるので、カーソルの下にあるものを
+  // そのまま開く (52 の docs/19 の決め 6 — 開いたときの選び方)。
+  const fences = fenceEditors();
   const editor = markdownEditor();
-  const at = editor === null ? null : fence.fenceAt(editor.document.getText(), editor.selection.active.line + 1);
+  const text = editor?.document.getText() ?? '';
+  const line = (editor?.selection.active.line ?? 0) + 1;
+  const at = editor === null ? null : fences.find((one) => one.fenceAt(text, line) !== null) ?? null;
   if (editor === null || at === null) {
-    void vscode.window.showWarningMessage(`${fence.language} フェンスの中にカーソルを置いてから開きます`);
+    void vscode.window.showWarningMessage(
+      `${fences.map((one) => one.language).join(' / ')} フェンスの中にカーソルを置いてから開きます`,
+    );
     return;
   }
 
@@ -39,19 +45,19 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
   }
 
   const view = vscode.window.createWebviewPanel(
-    'breadboardFenceMap',
-    'breadboard Editor',
+    'tommieFenceMap',
+    'Fence Editor',
     { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
     { enableScripts: true, retainContextWhenHidden: true },
   );
-  const live = createSession(createSessionHost(view.webview, 'own'), fence);
+  const live = createSession(createSessionHost(view.webview, 'own'), fences);
   view.webview.html = panelHtml({
     cspSource: view.webview.cspSource,
     nonce: makeNonce(),
     scriptUri: mapScriptUri(view.webview, context),
     view: live.view(),
     undo: 'own',
-    foldsWire: fence.foldsWire,
+    foldsWire: at.foldsWire,
   });
   attachSession(view, live);
   // 閉じたら自分自身もほどく (context.subscriptions へ積むと済んだ分が溜まる)。

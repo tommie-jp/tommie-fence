@@ -33,7 +33,12 @@ const workspaceDeps = (name) => {
     .sort()
 }
 
-const extensions = packages.filter((name) => manifests.get(name).contributes)
+// 拡張を持つもの。**`"vsix": false` は既定から外す** — 3 つを 1 つに畳んだ
+// tommie-fence がこれで、配ると決めるまでは古い 3 つと同時に入ってしまう
+// (52 の docs/19。作るだけなら `make tommie-fence` で作れる)。
+const withContributes = packages.filter((name) => manifests.get(name).contributes)
+const held = withContributes.filter((name) => manifests.get(name).vsix === false)
+const extensions = withContributes.filter((name) => !held.includes(name))
 
 // 入れ子の依存までは面倒を見ない。増えたらここで気づけるように止める
 // (作業場へ写す順番を考える必要がある)。
@@ -56,8 +61,10 @@ const lines = [
   '# scripts/packages.mjs が作る。手で直さない。',
   `PACKAGES := ${packages.join(' ')}`,
   `EXTENSIONS := ${extensions.join(' ')}`,
+  // 作れるが既定では作らないもの。規則は作るので `make <名前>` は効く。
+  `HELD := ${held.join(' ')}`,
 ]
-for (const name of extensions) {
+for (const name of [...extensions, ...held]) {
   const pkg = manifests.get(name)
   lines.push(`VSIX_${name} := ${pkg.name}-${pkg.version}.vsix`)
 }

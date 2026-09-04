@@ -38,3 +38,7 @@ test-results/
 
 # Codespaces のデモが落とす .vsix (Releases から取るのでコミットしない)
 /.devcontainer/vsix/
+# 3 つのコアから写した資材 (`packages/tommie-fence/scripts/assets.mjs` が作る)。
+# 原本はコアのまま — 追跡すると 2 か所に分かれる。
+packages/tommie-fence/media/
+packages/tommie-fence/syntaxes/

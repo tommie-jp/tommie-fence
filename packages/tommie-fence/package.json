@@ -1,0 +1,146 @@
+{
+  "name": "tommie-fence",
+  "displayName": "tommie Fence",
+  "description": "circuit / breadboard / perfboard の 3 つのフェンスを 1 つの拡張で",
+  "version": "0.1.0",
+  "private": true,
+  "vsix": false,
+  "type": "module",
+  "publisher": "tommie",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tommie-jp/tommie-fence.git",
+    "directory": "packages/tommie-fence"
+  },
+  "engines": {
+    "vscode": "^1.75.0",
+    "node": ">=20"
+  },
+  "categories": [
+    "Programming Languages",
+    "Visualization"
+  ],
+  "main": "./dist/extension.cjs",
+  "browser": "./dist/extension.web.cjs",
+  "scripts": {
+    "build": "node scripts/assets.mjs && node esbuild.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm run test",
+    "vscode:prepublish": "node scripts/assets.mjs && node esbuild.mjs --production"
+  },
+  "dependencies": {
+    "node-tikzjax": "^1.0.5",
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/vscode": "^1.75.0",
+    "@vscode/vsce": "^3.9.2",
+    "esbuild": "^0.28.2",
+    "fence-kit": "*",
+    "circuit-fence": "*",
+    "breadboard-fence": "*",
+    "perfboard-fence": "*",
+    "markdown-it": "^15.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  },
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "tommie-fence.map",
+        "displayName": "Fence Editor (図を掴んで動かす)",
+        "selector": [
+          {
+            "filenamePattern": "*.md"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
+    "markdown.markdownItPlugins": true,
+    "markdown.previewStyles": [
+      "./media/circuit.css",
+      "./media/breadboard.css",
+      "./media/perfboard.css",
+      "./node_modules/node-tikzjax/css/fonts.css"
+    ],
+    "grammars": [
+      {
+        "scopeName": "markdown.circuit.codeblock",
+        "path": "./syntaxes/circuit-injection.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml"
+        }
+      },
+      {
+        "scopeName": "markdown.breadboard.codeblock",
+        "path": "./syntaxes/breadboard-injection.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml"
+        }
+      },
+      {
+        "scopeName": "markdown.perfboard.codeblock",
+        "path": "./syntaxes/perfboard-injection.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml"
+        }
+      }
+    ],
+    "commands": [
+      {
+        "command": "tommie-fence.openMap",
+        "title": "Fence: 図を掴んで動かす",
+        "category": "tommie Fence"
+      },
+      {
+        "command": "circuit-fence.movePart",
+        "title": "Circuit Fence: 部品を動かす",
+        "category": "Circuit Fence"
+      },
+      {
+        "command": "circuit-fence.movePoint",
+        "title": "Circuit Fence: 節点を動かす",
+        "category": "Circuit Fence"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "tommie-fence.openMap",
+          "when": "editorLangId == markdown"
+        },
+        {
+          "command": "circuit-fence.movePart",
+          "when": "editorLangId == markdown"
+        },
+        {
+          "command": "circuit-fence.movePoint",
+          "when": "editorLangId == markdown"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "circuit-fence",
+      "properties": {
+        "circuitFence.map.noteFrame": {
+          "type": "boolean",
+          "default": false,
+          "description": "掴んで動かす升目で、notes: text を枠で囲む (既定は囲まない)。"
+        }
+      }
+    }
+  }
+}

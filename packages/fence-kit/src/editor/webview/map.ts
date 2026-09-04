@@ -794,6 +794,22 @@ document.addEventListener('click', (event) => {
   if (target?.closest('.kc-fit')) { fit(); return; }
   if (target?.closest('.kc-chooser-close')) { closeChooser(); return; }
 
+  // フェンスの前後。**一覧を開かずに隣へ行ける** (図を 1 枚ずつ見ていくとき)。
+  const step = target?.closest<HTMLButtonElement>('.cf-fence-step');
+  if (step) {
+    const list = query<HTMLSelectElement>('.cf-fence');
+    if (list !== null && list.options.length > 1) {
+      // **端では止まる。** 巻き戻ると、最後まで来たことが分からない。
+      const at = list.selectedIndex + (step.dataset.step === 'next' ? 1 : -1);
+      const next = list.options[Math.min(list.options.length - 1, Math.max(0, at))];
+      if (next !== undefined && next.value !== list.value) {
+        list.value = next.value;
+        vscode.postMessage({ kind: 'fence', line: Number(next.value) });
+      }
+    }
+    return;
+  }
+
   // 戻す・やり直すは拡張側に頼む (webview には文書が無い)。
   const button = target?.closest<HTMLButtonElement>('.cf-undo, .cf-redo');
   if (!button || button.disabled) return;

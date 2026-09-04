@@ -5,6 +5,7 @@ import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
 import { isTurned, lookupPartType, optionsFor, pinPlaces, pinSideOf, symbolFor, turnSide } from '../parts.ts';
 import type { PartType, PinSide, SourceInner, Turn } from '../parts.ts';
+import { lookupBoardPart } from 'fence-kit';
 import { EMPTY_STYLE } from '../parser/style.ts';
 import { cellOf as addressOf, nodeNameOf, texNameOfEndpoint } from '../types.ts';
 import type {
@@ -720,7 +721,12 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
   // 字は一緒に回る** (実機で確認。`r180` で逆さま) ので、向きが付いたら中心に
   // 立てた別ノードへ移す。向きを書いた図だけが変わる。
   const boxTurned = isTurned(part.turn);
-  const inside = type?.valueInside === true && !boxTurned ? (annotation ?? '') : '';
+  // **マイコンボードは箱の中に種類を書く** (`pico2`)。足の名前は左右の縁に
+  // 寄るので真ん中が空いていて、そこが実物のチップの場所でもある。
+  // 型番を書いてあればそれは箱の外へ回す (2 つを重ねない。実機で頼まれた)。
+  const kind = lookupBoardPart(part.type) === null ? null : escapeTex(part.type);
+  const boxed = kind !== null || type?.valueInside === true;
+  const inside = boxTurned ? '' : (kind ?? (type?.valueInside === true ? (annotation ?? '') : ''));
   const node = `\\node[${options.join(', ')}] (${name}) at (${at}) {${inside}};`;
   // それ以外の型番は記号の下に来るアンカーに掛ける。`label=below:` はノードの
   // (空の) 文字を基準にするので、記号の体の上に字が乗る (実機で確認)。
@@ -732,14 +738,26 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
   // **寄せを変えるのは、逃がし先を持つ部品だけ。** ほかは今までどおり
   // `north` に寄せる (回した先で下に来るアンカーを選ぶ形で実機で確かめてある)。
   const outward = free?.outward ?? 'north';
-  const number = annotation === null
+  // 回した箱の中の字は一緒に回る (`r180` で逆さま) ので、向きが付いたら
+  // 中心に立てた別ノードへ移す。
+  const turnedInside = boxTurned && (kind ?? (type?.valueInside === true ? annotation : null));
+  const number = annotation === null && turnedInside === null
     ? []
-    : type?.valueInside === true
-      ? (boxTurned ? [`\\node[font=\\scriptsize] at (${name}.center) {${annotation}};`] : [])
-      : [`\\node[font=\\scriptsize, anchor=${outward}] at (${name}.${place}) {${annotation}};`];
+    : kind !== null
+      // ボードは中が種類。型番は箱の外 (足の無い辺) へ。
+      ? [
+        ...(boxTurned && turnedInside !== null && turnedInside !== ''
+          ? [`\\node[font=\\scriptsize] at (${name}.center) {${turnedInside}};`] : []),
+        ...(annotation === null
+          ? [] : [`\\node[font=\\scriptsize, anchor=${outward}] at (${name}.${place}) {${annotation}};`]),
+      ]
+      : type?.valueInside === true
+        ? (boxTurned && annotation !== null ? [`\\node[font=\\scriptsize] at (${name}.center) {${annotation}};`] : [])
+        : (annotation === null
+          ? [] : [`\\node[font=\\scriptsize, anchor=${outward}] at (${name}.${place}) {${annotation}};`]);
   // 値がどちらの側に出ているか (名札はそこを避ける)。**箱の中の値は外を塞がない。**
   // **寄せの反対が字の出る側** — `anchor=south` なら点の上に出る。
-  const valueSide = annotation === null || type?.valueInside === true
+  const valueSide = annotation === null || (boxed && kind === null)
     ? null
     : (SIDE_OF[OPPOSITE[outward] ?? 'south'] ?? null);
   const named = nameNode(part, name, type, valueSide);

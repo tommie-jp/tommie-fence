@@ -35,9 +35,14 @@
       "import": "./dist/core.mjs",
       "require": "./dist/core.cjs"
     },
-    "./editor": "./src/extension/editor/circuitEditor.ts",
+    "./editor": "./src/core/edit/fenceEditor.ts",
     "./src/core": "./src/core/index.ts",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./plugin": "./src/extension/markdownItPlugin.ts",
+    "./queue": "./src/host/renderQueue.ts",
+    "./tex": "./src/host/texSvg.ts",
+    "./tex.web": "./src/host/texSvg.web.ts",
+    "./src/core/*": "./src/core/*"
   },
   "bin": {
     "circuit-fence": "./dist/cli.cjs"

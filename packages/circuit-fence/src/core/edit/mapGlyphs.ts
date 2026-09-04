@@ -380,8 +380,26 @@ export const legGap = (name: GlyphName): number => LEG_GAP[name];
  */
 const NAMES_INSIDE: Partial<Record<GlyphName, PinSide>> = { opamp: 'left' };
 
+/**
+ * 足の名前 (DIP の番号、`IN` / `OUT`、ボードの `GP0`) を胴の中に書くか。
+ *
+ * **どの部品も中に書く** (実機で「すべての部品でピン名は内側に」)。外に出すと
+ * 隣の升へはみ出し、部品を並べたときに名前どうしがぶつかる。
+ * 名札の表 (`NAMES_INSIDE`) は、**辺ごとに分けたい記号**のためだけに残す —
+ * オペアンプの出口は三角の先が細く、中に字を置く場所が無い。
+ */
 export const namesInside = (name: GlyphName, side: PinSide): boolean =>
-  NAMES_INSIDE[name] === side;
+  (name in NAMES_INSIDE ? NAMES_INSIDE[name] === side : true);
+
+/**
+ * 足の線を**記号の中心から**引く形。ふつうは記号の縁で止める (線が記号に
+ * 重なると、コンデンサのように「切れている」という意味まで壊れる) が、
+ * 同軸コネクタの中心導体は**丸の中の点まで届いているのが記号**なので、
+ * 縁で止めると信号線がどこへ行くのか読めない (実機で指摘された)。
+ */
+const LEADS_FROM_CENTRE: ReadonlySet<GlyphName> = new Set<GlyphName>(['coax']);
+
+export const leadsFromCentre = (name: GlyphName): boolean => LEADS_FROM_CENTRE.has(name);
 
 /**
  * 名前を入れる箱。**足の本数で伸びる** — DIP は片側に 20 本まで出るので、
