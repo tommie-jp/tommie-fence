@@ -8,13 +8,20 @@ import { outputStem } from 'fence-kit';
 import { STAMP_TEXT } from '../core/version.ts';
 import { USAGE, parseArgs } from './args.ts';
 
-type Job = { readonly source: string; readonly outPath: string; readonly label: string };
+type Job = {
+  readonly source: string;
+  readonly outPath: string;
+  readonly label: string;
+  /** フェンスが始まる行。**言うことの行番号を Markdown の行に直す**ために要る。 */
+  readonly offset: number;
+};
 
 const reason = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 function jobsFor(path: string, outDir: string | null): Job[] {
   const { source, stem, directory, whole } = readInput(path, outDir);
-  if (whole) return [{ source, outPath: join(directory, `${stem}.svg`), label: stem }];
+  // `.yaml` は丸ごと 1 枚なので、行番号はそのまま (ずらさない)。
+  if (whole) return [{ source, outPath: join(directory, `${stem}.svg`), label: stem, offset: 0 }];
 
   const fences = extractBreadboardFences(source);
   // 名前の付け方は fence-kit にある (3 つのフェンスで同じもの。書き写さない)。
@@ -22,6 +29,7 @@ function jobsFor(path: string, outDir: string | null): Job[] {
     source: fence.source,
     outPath: join(directory, `${outputStem(stem, index, fences.length)}.svg`),
     label: `${stem} (${fence.line} 行目)`,
+    offset: fence.line,
   }));
 }
 
@@ -56,7 +64,7 @@ function main(argv: readonly string[]): number {
 
     for (const target of targets.flatMap(collectFiles)) {
       for (const job of jobsFor(target, outDir)) {
-        const { svg, netlist, errors, notices } = renderBreadboard(job.source);
+        const { svg, netlist, errors, notices } = renderBreadboard(job.source, { offset: job.offset });
         if (!writing) {
           console.log(job.label);
         } else if (svg) {

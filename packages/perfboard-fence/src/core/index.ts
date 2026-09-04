@@ -25,7 +25,7 @@ import { drawnExtent } from './placement/geometry.ts';
 import { holeStrip } from './model/board.ts';
 import { formatAddress, parseAddress } from './model/address.ts';
 import { offBoardReason } from './model/board.ts';
-import { fenceError, notice, safeToken } from './errors.ts';
+import { fenceError, notice, safeToken, shiftErrors } from './errors.ts';
 import { renderDocument } from './render/document.ts';
 import { renderErrorBanner, renderErrorCard } from './render/errorHtml.ts';
 import { resolveStyle, themeForBoard } from './render/theme.ts';
@@ -73,6 +73,15 @@ export type RenderResult = {
 export type RenderOptions = {
   /** 掴むための層を重ねる (マップのエディタ用)。**既定では出さない**。 */
   readonly edit?: boolean;
+  /**
+   * フェンスが始まる行 (Markdown の中での 1 始まり)。**言うことの行番号を
+   * Markdown の行に直す**ために要る。
+   *
+   * ここで読む行番号はフェンスの中の数え方だが、**書き手が直しに行くのは
+   * Markdown の行**なので、そのままだと数え直しを強いる (実機で指摘された)。
+   * `.yaml` を丸ごと 1 枚として描くときは 0 (ずらさない)。
+   */
+  readonly offset?: number;
 };
 
 /**
@@ -116,7 +125,12 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
     const reported = attachSourceText(parsed.errors, source);
     const errors = reported.filter((error) => error.notice !== true);
     const notices = reported.filter((error) => error.notice === true);
-    return { svg: '', netlist: [], errors, notices, errorHtml: renderErrorCard([...errors, ...notices]) };
+    const at = (list: readonly FenceError[]): readonly FenceError[] => shiftErrors(list, options.offset ?? 0);
+    return {
+      svg: '', netlist: [],
+      errors: at(errors), notices: at(notices),
+      errorHtml: renderErrorCard([...at(errors), ...at(notices)]),
+    };
   }
 
   const { board, title } = parsed.doc;
@@ -378,8 +392,11 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   //
   // `style: debug: off` で伏せられるのは**お知らせだけ**。読めなかった行は
   // この切り替えの対象ではない (伏せると「無かったこと」に化ける)。
-  const shown = style.debug ? [...errors, ...notices] : errors;
-  return { svg, netlist, errors, notices, errorHtml: renderErrorBanner(shown) };
+  // **行番号は Markdown の行に直して出す。** 読むのはフェンスの中の数え方だが、
+  // 書き手が直しに行くのは Markdown の行 (実機で指摘された)。
+  const at = (list: readonly FenceError[]): readonly FenceError[] => shiftErrors(list, options.offset ?? 0);
+  const shown = style.debug ? [...at(errors), ...at(notices)] : at(errors);
+  return { svg, netlist, errors: at(errors), notices: at(notices), errorHtml: renderErrorBanner(shown) };
 }
 
 export { extractPerfboardFences } from './fences.ts';

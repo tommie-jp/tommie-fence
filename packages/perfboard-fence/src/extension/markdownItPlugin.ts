@@ -22,7 +22,10 @@ export function perfboardPlugin(md: MarkdownIt): MarkdownIt {
     // (消すとエディタとプレビューのスクロール同期が切れる)。
     token.attrJoin('class', 'perfboard');
     // 図は SVG、読めなかったところは図の外の HTML。字は core 側でエスケープ済み。
-    const { svg, errorHtml } = renderPerfboard(token.content);
+    // **行番号は Markdown の行で出す。** core が読むのはフェンスの中の
+    // 数え方だが、書き手が直しに行くのは Markdown の行。
+    const offset = token.map === null ? 0 : token.map[0] + 1;
+    const { svg, errorHtml } = renderPerfboard(token.content, { offset });
 
     return `<div${self.renderAttrs(token)}>${svg}${errorHtml}</div>\n`;
   };

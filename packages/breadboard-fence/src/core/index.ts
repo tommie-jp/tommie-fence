@@ -1,5 +1,5 @@
 import { keptSourceLines } from 'fence-kit';
-import { attachSourceText, fail, fenceError, notice, ok, safeToken } from './errors.ts';
+import { attachSourceText, fail, fenceError, notice, ok, safeToken, shiftErrors } from './errors.ts';
 import { normalizeNewlines } from './newlines.ts';
 import { LIMITS } from './limits.ts';
 import { formatAddress, parseAddress } from './model/address.ts';
@@ -112,6 +112,15 @@ function editLayer(
 export type RenderOptions = {
   /** 掴むための層を重ねる (マップのエディタ用)。**既定では出さない**。 */
   readonly edit?: boolean;
+  /**
+   * フェンスが始まる行 (Markdown の中での 1 始まり)。**言うことの行番号を
+   * Markdown の行に直す**ために要る。
+   *
+   * ここで読む行番号はフェンスの中の数え方だが、**書き手が直しに行くのは
+   * Markdown の行**なので、そのままだと数え直しを強いる (実機で指摘された)。
+   * `.yaml` を丸ごと 1 枚として描くときは 0 (ずらさない)。
+   */
+  readonly offset?: number;
 };
 
 export function renderBreadboard(input: string, options: RenderOptions = {}): RenderResult {
@@ -120,7 +129,8 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
   const parsed = parseFence(source);
   if (!parsed.doc) {
     const reported = attachSourceText(parsed.errors, source);
-    return { svg: '', netlist: [], errors: reported, notices: [], errorHtml: renderErrorCard(reported) };
+    const moved = shiftErrors(reported, options.offset ?? 0);
+    return { svg: '', netlist: [], errors: moved, notices: [], errorHtml: renderErrorCard(moved) };
   }
 
   const errors: FenceError[] = [...parsed.errors];
@@ -200,14 +210,14 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
     partsList: parsed.doc.partsList,
   });
 
-  return { svg, netlist, ...report(errors, source, style.debug) };
+  return { svg, netlist, ...report(errors, source, style.debug, options.offset ?? 0) };
 }
 
 /**
  * 読めなかったところと、お知らせを分けて返す。**伏せられるのはお知らせだけ**で、
  * 読めなかった行は `debug: off` でも必ず出す (黙って消えるほうが困る)。
  */
-function report(errors: readonly FenceError[], source: string, debug: boolean) {
+function report(errors: readonly FenceError[], source: string, debug: boolean, offset: number) {
   const reported = attachSourceText(errors, source);
   const hard = reported.filter((error) => error.notice !== true);
   const notices = reported.filter((error) => error.notice === true);
@@ -215,7 +225,13 @@ function report(errors: readonly FenceError[], source: string, debug: boolean) {
   // お知らせに埋もれると探すことになる (CLI の並びとも揃える)。
   const shown = debug ? [...hard, ...notices] : hard;
 
-  return { errors: hard, notices, errorHtml: renderErrorBanner(shown) };
+  // **行番号は Markdown の行に直して出す。** 読むのはフェンスの中の数え方だが、
+  // 書き手が直しに行くのは Markdown の行 (実機で指摘された)。
+  return {
+    errors: shiftErrors(hard, offset),
+    notices: shiftErrors(notices, offset),
+    errorHtml: renderErrorBanner(shiftErrors(shown, offset)),
+  };
 }
 
 /**

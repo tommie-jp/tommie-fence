@@ -103,3 +103,16 @@ export function attachSourceText(errors: readonly FenceError[], source: string):
     return at === null ? { ...error, text } : { ...error, text, at };
   });
 }
+
+/**
+ * 行番号を Markdown の行へずらす。**フェンスの中の数え方で読んだものを、
+ * 書き手が直しに行く行に直す** (実機で「.md ファイルの行番号にする」と
+ * 言われた)。0 なら何もしない (`.yaml` を丸ごと 1 枚として描くとき)。
+ */
+export const shiftErrors = (errors: readonly FenceError[], offset: number): readonly FenceError[] =>
+  (offset === 0
+    ? errors
+    : errors.map((error) => ({
+      ...error,
+      ...(error.line === null ? {} : { line: error.line + offset }),
+    })));
