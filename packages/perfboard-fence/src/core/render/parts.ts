@@ -8,6 +8,7 @@ import type { Layout } from '../model/layout.ts';
 import {
   BODY_HEIGHT, SMA_BASE, SMA_PLAIN, SMA_SIZE, bodyRect, edgeMountOf,
 } from '../placement/geometry.ts';
+import type { OrientedRect } from '../placement/geometry.ts';
 import { hatchFill } from './hatch.ts';
 import { isEdgeMount } from '../parts/types.ts';
 import { footprintOf } from '../parts/footprint.ts';
@@ -571,7 +572,128 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
     layout,
   );
 
-  return `${body}${notch}${leads}${label}`;
+  return `${body}${notch}${boardMarks(part, rect, layout)}${leads}${label}`;
+}
+
+/** マイコンボードの上に載っているもの。基板でなければ何も足さない。 */
+const BOARD_INK = '#c9cfd8';
+const BOARD_CHIP = '#0d1014';
+const BOARD_CHIP_EDGE = '#3a4049';
+/** USB は基板の端から少しだけ出る。実物の micro-B / Type-C の幅に寄せた。 */
+const USB_OUT = 7;
+const USB_LONG = 16;
+const USB_THICK = 9;
+/** 真ん中に載る本体チップの一辺。 */
+const CHIP_SIDE = 22;
+/** 足の名前の字と、穴からの逃がし。 */
+const PIN_FONT = 6.5;
+const PIN_GAP = 7;
+
+/**
+ * マイコンボードの上に載っているもの — 本体チップ・USB・アンテナ・足の名前。
+ *
+ * **breadboard と同じものを描くが、絵は別に持つ。** あちらは溝をまたぐ板の
+ * 幾何 (`Layout` が別物) に依っていて、共有できるのは**どのボードに何番の
+ * ピンがあるか**の表だけだった (52 の docs/21 の手順 3)。
+ *
+ * 足の名前は**基板の内側へ縦書き**。外へ出すと、隣の穴 (実際に配線を挿す
+ * ところ) を字が覆う。
+ */
+function boardMarks(part: PlacedPart, rect: OrientedRect, layout: Layout): string {
+  const board = lookupBoardPart(part.type);
+  if (board === null) return '';
+
+  const centre = { x: rect.cx, y: rect.cy };
+  const chip = element('rect', {
+    x: num(centre.x - CHIP_SIDE / 2), y: num(centre.y - CHIP_SIDE / 2),
+    width: CHIP_SIDE, height: CHIP_SIDE, rx: 2,
+    fill: BOARD_CHIP, stroke: BOARD_CHIP_EDGE, 'stroke-width': 1,
+  });
+  const chipName = svgText(centre.x, centre.y + 3, board.chip, {
+    'font-size': 7, fill: BOARD_INK,
+  });
+
+  // **USB は 1 番ピンの側の端。** 回すと 1 番ピンの側も回るので、名前で引く
+  // (並びは升で決まっていて、回すと名前のほうが巡る)。
+  const first = part.pins[0];
+  const at = first === undefined ? centre : layout.point(first.address);
+  const tall = rect.height > rect.width;
+  const usb = usbAt(rect, at, tall);
+  const aerial = board.wireless ? antennaAt(rect, at, tall) : '';
+
+  const names = part.pins.map((pin, index) => {
+    const name = board.pins[index];
+    if (name === undefined) return '';
+    const point = layout.point(pin.address);
+    // 内側へ向かって書く。**字の向きは列で揃える** (下から上へ読む) —
+    // 片方だけ天地が逆になると読めない。
+    const inward = tall
+      ? (point.x < centre.x ? 1 : -1)
+      : (point.y < centre.y ? 1 : -1);
+    const x = tall ? point.x + inward * PIN_GAP : point.x + PIN_FONT * 0.35;
+    const y = tall ? point.y + PIN_FONT * 0.35 : point.y + inward * PIN_GAP;
+    const turn = tall ? '' : ' rotate(-90)';
+    return element(
+      'g',
+      { transform: `translate(${num(x)} ${num(y)})${turn}` },
+      svgText(0, 0, name, {
+        'font-size': PIN_FONT, fill: BOARD_INK, anchor: inward > 0 ? 'end' : 'start',
+      }),
+    );
+  }).join('');
+
+  return `${usb}${aerial}${chip}${chipName}${names}`;
+}
+
+/** USB の口。1 番ピンのある端から外へ少し出す。 */
+function usbAt(rect: OrientedRect, first: { readonly x: number; readonly y: number }, tall: boolean): string {
+  const near = tall ? first.y < rect.cy : first.x < rect.cx;
+  const box = tall
+    ? {
+      x: rect.cx - USB_LONG / 2,
+      y: near ? rect.cy - rect.height / 2 - USB_OUT : rect.cy + rect.height / 2 - USB_THICK + USB_OUT,
+      width: USB_LONG, height: USB_THICK,
+    }
+    : {
+      x: near ? rect.cx - rect.width / 2 - USB_OUT : rect.cx + rect.width / 2 - USB_THICK + USB_OUT,
+      y: rect.cy - USB_LONG / 2,
+      width: USB_THICK, height: USB_LONG,
+    };
+  return element('rect', {
+    x: num(box.x), y: num(box.y), width: num(box.width), height: num(box.height), rx: 2.5,
+    fill: BOARD_INK, stroke: '#8a929c', 'stroke-width': 1,
+  });
+}
+
+/** 無線つきの版のアンテナ。**USB と反対の端**に載っている。 */
+function antennaAt(rect: OrientedRect, first: { readonly x: number; readonly y: number }, tall: boolean): string {
+  const near = tall ? first.y < rect.cy : first.x < rect.cx;
+  const [long, thick] = [26, 16];
+  const box = tall
+    ? {
+      x: rect.cx - long / 2,
+      y: near ? rect.cy + rect.height / 2 - thick - 4 : rect.cy - rect.height / 2 + 4,
+      width: long, height: thick,
+    }
+    : {
+      x: near ? rect.cx + rect.width / 2 - thick - 4 : rect.cx - rect.width / 2 + 4,
+      y: rect.cy - long / 2,
+      width: thick, height: long,
+    };
+  const outline = element('rect', {
+    x: num(box.x), y: num(box.y), width: num(box.width), height: num(box.height), rx: 2,
+    fill: 'none', stroke: BOARD_INK, 'stroke-width': 1.4,
+  });
+  const traces = [-7, 0, 7].map((offset) => (tall
+    ? element('line', {
+      x1: num(box.x + 3), y1: num(rect.cy + offset), x2: num(box.x + box.width - 3), y2: num(rect.cy + offset),
+      stroke: BOARD_INK, 'stroke-width': 1.4,
+    })
+    : element('line', {
+      x1: num(rect.cx + offset), y1: num(box.y + 3), x2: num(rect.cx + offset), y2: num(box.y + box.height - 3),
+      stroke: BOARD_INK, 'stroke-width': 1.4,
+    }))).join('');
+  return outline + traces;
 }
 
 /**
