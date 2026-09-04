@@ -238,6 +238,44 @@ describe('動かす', () => {
   });
 });
 
+describe('複製', () => {
+  test('points at the copy, so the next move lands on it', async () => {
+    // 実機で頼まれた。元のままだと、複製したのに元を動かしてしまう。
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'duplicate', part: 'R1' });
+
+    expect(doc.getText()).toContain('R2');
+    expect(last(host, 'aim')).toMatchObject({ what: 'part', id: 'R2' });
+  });
+
+  test('names the copy after the map was rebuilt, since rebuilding drops the pick', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'duplicate', part: 'R1' });
+    const kinds = host.sent.map((message) => message.kind);
+
+    expect(kinds.lastIndexOf('aim')).toBeGreaterThan(kinds.lastIndexOf('map'));
+  });
+
+  test('names every copy when a group was duplicated', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'duplicate', parts: ['R1', 'C1'] });
+
+    expect(last(host, 'aim')?.also).toEqual(['R2', 'C2']);
+  });
+});
+
 describe('戻す・やり直す (自前の履歴)', () => {
   test('undoes the last move from the map and reports the buttons', async () => {
     const doc = docOf(A, RC);

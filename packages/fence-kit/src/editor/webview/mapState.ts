@@ -171,7 +171,7 @@ export type Event =
    * 直せるようにするため (実機で頼まれた)。
    * 何も指していないときは来ない (選んだままにしておく)。
    */
-  | { readonly kind: 'aim'; readonly picked: Picked }
+  | { readonly kind: 'aim'; readonly picked: Picked; readonly also?: readonly Picked[] }
   | { readonly kind: 'tool'; readonly tool: Tool }
   /** パレットで部品を選んだ。 */
   | { readonly kind: 'place'; readonly type: string; readonly twoEnds: boolean }
@@ -643,7 +643,12 @@ export function step(state: State, event: Event): Outcome {
       // こちらから選んだと言うと同じことを 2 度することになる。
       return state.carry !== null
         ? outcome(state)
-        : outcome({ ...state, selected: event.picked, also: [] });
+        : outcome({
+          ...state,
+          selected: event.picked,
+          // 2 つ以上あるときだけ群れとして持つ (`pickedParts` の約束)。
+          also: (event.also?.length ?? 0) > 1 ? [...(event.also ?? [])] : [],
+        });
     case 'ghost':
       return onGhost(state, event.ghost);
     case 'refresh':

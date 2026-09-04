@@ -46,7 +46,11 @@ export type Outgoing =
   | ({ readonly kind: 'map' } & MapView)
   | { readonly kind: 'history'; readonly canUndo: boolean; readonly canRedo: boolean }
   | { readonly kind: 'status'; readonly text: string }
-  | { readonly kind: 'aim'; readonly what?: 'part' | 'node' | 'wire'; readonly id?: string }
+  | {
+    readonly kind: 'aim'; readonly what?: 'part' | 'node' | 'wire'; readonly id?: string;
+    /** まとめて選ばせるとき (複製の写し)。1 つなら書かない。 */
+    readonly also?: readonly string[];
+  }
   /** 選んだ部品の欄の中身。null は「欄を閉じる」 (部品を選んでいない)。 */
   | { readonly kind: 'fields'; readonly part: PartFields | null }
   /**
@@ -897,9 +901,14 @@ export function createSession<D extends DocLike>(
    * マップから来た「これをもう 1 つ」。**種類と向きは元のまま、名前は次の番号**で、
    * 1 穴ずらして置く。重ねて置くと図の上で見分けが付かない。
    */
-  async function duplicate(message: Incoming): Promise<void> {
+  /**
+   * 複製する。**作った名前を返す** — 呼ぶ側が組み直しのあとで選び直すため
+   * (組み直しは選択を捨てるので、先に選ぶと消える)。
+   */
+  async function duplicate(message: Incoming): Promise<readonly string[]> {
     const picked = handles(message.parts);
     if (picked.length > 1) {
+      const made: string[] = [];
       // **名前は 1 つずつ、その時点の本文から取る** — 先に決め打つと、
       // 2 つ目以降が 1 つ目と同じ名前になる。
       await runAll(
@@ -907,25 +916,27 @@ export function createSession<D extends DocLike>(
         picked.map((one) => (source: string) => {
           const fields = editor.fieldsOf(source, one);
           const id = fields === null ? null : editor.nextId(source, fields.type);
-          return id === null
-            ? { ok: false as const, error: { message: `${editor.nameOf(one)} は複製できません`, line: null } }
-            : editor.duplicate(source, one, id);
+          if (id === null) {
+            return { ok: false as const, error: { message: `${editor.nameOf(one)} は複製できません`, line: null } };
+          }
+          made.push(id);
+          return editor.duplicate(source, one, id);
         }),
       );
-      return;
+      return made;
     }
     const handle = text(message.part);
     const fence = handle === null ? null : fenceNow();
     if (handle === null || fence === null) {
       if (handle === null) say('マップからの知らせを読めませんでした (どの部品かがありません)');
-      return;
+      return [];
     }
 
     const fields = editor.fieldsOf(fence.source, handle);
     const id = fields === null ? null : editor.nextId(fence.source, fields.type);
     if (id === null) {
       say(`${editor.nameOf(handle)} は複製できません (名前を付けられません)`);
-      return;
+      return [];
     }
     await run({
       label: `${id} を`,
@@ -933,6 +944,20 @@ export function createSession<D extends DocLike>(
       already: '置くものがありません',
       plan: (source) => editor.duplicate(source, handle, id),
     });
+    return [id];
+  }
+
+  /**
+   * 「いまはこれを選んでいる」と webview へ伝える。**選ぶのは webview の
+   * 持ち物**なので知らせで渡す (カーソルが指したときと同じ道)。
+   */
+  function pick(what: 'part' | 'wire', ids: readonly string[]): void {
+    const first = ids[0];
+    if (first === undefined) return;
+    host.post({ kind: 'aim', what, id: first, ...(ids.length > 1 ? { also: [...ids] } : {}) });
+    const fence = fenceNow();
+    if (fence === null) return;
+    sendFields(editor.fieldsOf(fence.source, what === 'wire' ? (wireHandle(first) ?? '') : first));
   }
 
   /** マップから来た「ここからここへ 1 本」。配線は**交点から交点へ**引く。 */
@@ -1164,10 +1189,15 @@ export function createSession<D extends DocLike>(
           await nudge(message);
           refreshWith(true);
           return;
-        case 'duplicate':
-          await duplicate(message);
+        case 'duplicate': {
+          const made = await duplicate(message);
           refreshWith(true);
+          // **複製したほうを選んだことにする** (実機で頼まれた)。続けて動かす・
+          // 回すが写しに効く — 元のままだと、複製したのに元を動かしてしまう。
+          // **組み直しのあと**に選ぶ (組み直しは選択を捨てる)。
+          if (made.length > 0) pick('part', made);
           return;
+        }
         case 'turn':
         case 'flip':
           await turn(message);

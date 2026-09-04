@@ -371,6 +371,14 @@ describe('テキスト側のカーソルが指したもの', () => {
     expect(step(carried, { kind: 'aim', picked: { kind: 'part', id: 'R1' } }).state.selected).toBeNull();
   });
 
+  test('takes the whole group when the extension names more than one', () => {
+    // 複製したものを選ばせる道。写しが 2 つ以上なら群れとして持つ。
+    const picked = { kind: 'part' as const, id: 'R2' };
+    const also = [picked, { kind: 'part' as const, id: 'C2' }];
+
+    expect(after(PANEL, { kind: 'aim', picked, also }).also).toEqual(also);
+  });
+
   test('drops a group selection, since the cursor points at one thing', () => {
     const many = after(PANEL, { kind: 'pickMany', parts: ['R1', 'C1'] });
     expect(many.also).toHaveLength(2);

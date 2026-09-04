@@ -879,7 +879,7 @@ function showFields(part: Fields | null): void {
 type Incoming =
   | { readonly kind: 'map'; readonly html: string; readonly picker: string; readonly issues: string }
   | { readonly kind: 'status'; readonly text: string }
-  | { readonly kind: 'aim'; readonly what?: string; readonly id?: string }
+  | { readonly kind: 'aim'; readonly what?: string; readonly id?: string; readonly also?: readonly string[] }
   | { readonly kind: 'history'; readonly canUndo: boolean; readonly canRedo: boolean }
   | { readonly kind: 'fields'; readonly part: Fields | null }
   | {
@@ -930,7 +930,9 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
     const what = message.what;
     const id = message.id;
     if ((what === 'part' || what === 'wire') && id !== undefined) {
-      run({ kind: 'aim', picked: { kind: what, id } });
+      // **まとめて複製したときは全部を選ぶ** (続けて動かせるように)。
+      const also: Picked[] = message.also?.map((one) => ({ kind: what, id: one })) ?? [];
+      run({ kind: 'aim', picked: { kind: what, id }, also });
     }
   }
   if (message.kind === 'history') {
