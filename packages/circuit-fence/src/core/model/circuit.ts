@@ -445,13 +445,45 @@ function touchesOnBodies(circuit: Circuit, ends: readonly Address[]): FenceError
   return errors;
 }
 
-/** 足のある配線が通りそうな線分。足の位置は置かれた交点で代用する。 */
+/**
+ * 足のある配線のうち、**交点を拾いうる一辺**。無ければ null。
+ *
+ * 足の位置は置かれた交点で代用するしかないが、**代用が効くかどうかは
+ * 足で決まる**:
+ *
+ * - **中心線に乗る足** (`out` など。`pinAxis` が答える) は、その線が交点の
+ *   並びに乗る。だから置かれた交点を通る線分でそのまま見てよい
+ * - **中心線から外れた足** (ボードの `GP27`、オペアンプの `±`) は、記号の縁の
+ *   半端な高さに出る。そこから出る辺は**交点の並びに乗らない**ので、
+ *   どの交点も通らない — 見なくてよい。折れた線なら、**交点の側の一辺だけ**が
+ *   並びに乗るので、そちらを見る
+ * - `--` で外れた足へ引くと斜めに入る。それは別のお知らせ
+ *   (`slantedIntoPins`) が言うので、ここでは重ねて言わない
+ *
+ * **見当で「つなぐ」判断はしない**のは今までどおり。見当が外れても、
+ * 出る/出ないが変わるのはこのお知らせだけ。
+ */
 function guessSegment(wire: WireSpec, byId: ReadonlyMap<string, PartSpec>): Segment | null {
   const from = endpointCell(wire.from, byId);
   const to = endpointCell(wire.to, byId);
-  const hasPin = wire.from.kind === 'pin' || wire.to.kind === 'pin';
+  const pin = wire.from.kind === 'pin' ? wire.from : wire.to.kind === 'pin' ? wire.to : null;
+  if (pin === null || from === null || to === null || isSameAddress(from, to)) return null;
 
-  return hasPin && from !== null && to !== null && !isSameAddress(from, to) ? { from, to } : null;
+  const part = byId.get(pin.part);
+  const type = part === undefined ? null : lookupPartType(part.type);
+  const centred = part !== undefined && part.kind === 'multi-terminal' && type != null
+    && pinAxis(type, pin.pin, part.turn) !== null;
+  if (centred) return { from, to };
+
+  // ここから下は、中心線から外れた足。
+  if (wire.operator === '--') return null;
+  // 折れた線の**交点の側の一辺**。`-|` は先に横なので、角は足の行と交点の列。
+  const cell = pin === wire.from ? to : from;
+  const other = pin === wire.from ? from : to;
+  const corner = wire.operator === '-|'
+    ? { row: (pin === wire.from ? other : cell).row, col: (pin === wire.from ? cell : other).col }
+    : { row: (pin === wire.from ? cell : other).row, col: (pin === wire.from ? other : cell).col };
+  return isSameAddress(corner, cell) ? null : { from: corner, to: cell };
 }
 
 function endpointCell(endpoint: Endpoint, byId: ReadonlyMap<string, PartSpec>): Address | null {

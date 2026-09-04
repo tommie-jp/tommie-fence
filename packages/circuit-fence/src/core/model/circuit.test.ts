@@ -550,6 +550,49 @@ describe('部品の体の上に乗った端', () => {
   });
 });
 
+describe('足のある線の上に見える交点', () => {
+  const warn = (...rows: string[]) => build(...rows).notices.map((notice) => notice.message);
+  const touched = (...rows: string[]) => warn(...rows).some((message) => message.includes('この線の上に見えます'));
+
+  test('says it cannot tell when the leg sits on the symbol centre line', () => {
+    // `out` は横の中心線に出るので、その線は交点の並びに乗る。c5 を通るのか
+    // どうかは書き方でしか決まらない。
+    expect(touched(
+      'parts:', '  U1: opamp c3', '  G1: ground c5', '  R1: resistor c7 e7',
+      'wires:', '  - U1.out -- c7',
+    )).toBe(true);
+  });
+
+  test('decides for itself when the leg is off the centre line', () => {
+    // 実機で「判断できないか」と訊かれた回。**中心線から外れた足**
+    // (ボードの GP27) から出る辺は、記号の縁の半端な高さに出るので
+    // 交点の並びに乗らない — どの交点も通らないと決められる。
+    expect(touched(
+      'parts:', '  U2: pico2-w j3', '  R2: resistor j7 l7', '  R1: resistor j9 l9',
+      'wires:', '  - U2.GP26 -| j7', '  - U2.GP27 -| j9',
+    )).toBe(false);
+  });
+
+  test('still looks at the leg that does run along the crossings', () => {
+    // 折れた線の**交点の側の一辺**は並びに乗るので、そちらは見る。
+    expect(touched(
+      'parts:', '  U2: pico2-w b2', '  G1: ground f9', '  R1: resistor h9 j9',
+      'wires:', '  - U2.GP27 -| h9',
+    )).toBe(true);
+  });
+
+  test('leaves the slanted case to the notice that already speaks', () => {
+    // `--` で外れた足へ引くと斜めに入る。重ねて言わない。
+    const said = warn(
+      'parts:', '  U2: pico2-w j3', '  R2: resistor j7 l7', '  R1: resistor j9 l9',
+      'wires:', '  - U2.GP27 -- j9',
+    );
+
+    expect(said.some((message) => message.includes('斜めに入ります'))).toBe(true);
+    expect(said.some((message) => message.includes('この線の上に見えます'))).toBe(false);
+  });
+});
+
 describe('2 端子部品の足', () => {
   test('resolves the wiper of a potentiometer', () => {
     const { circuit, errors } = build(
