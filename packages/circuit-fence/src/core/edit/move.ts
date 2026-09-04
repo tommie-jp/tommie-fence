@@ -1,4 +1,4 @@
-import { formatAddress, parseAddress } from '../model/address.ts';
+import { formatAddress, parseAddress, rowLetters } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { handleAt, nameOfHandle, partOfHandle } from './handles.ts';
@@ -60,7 +60,7 @@ export function movePart(source: string, handle: string, to: Address, trial = fa
   const off = next.find((address) => !isOnGrid(address));
   if (off) {
     return fail(
-      `${partId} を ${formatAddress(to)} へ動かすと格子の外へ出ます (a〜z の 26 行、1〜${LIMITS.columns} 列)`,
+      `${partId} を ${formatAddress(to)} へ動かすと格子の外へ出ます` + ` (a〜${rowLetters(LIMITS.rows - 1)} の ${LIMITS.rows} 行、1〜${LIMITS.columns} 列)`,
       part.line,
     );
   }

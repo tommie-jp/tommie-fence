@@ -1,4 +1,4 @@
-import { formatAddress } from '../model/address.ts';
+import { formatAddress, rowLetters } from '../model/address.ts';
 import type { Address, WireOperator } from '../model/address.ts';
 import { isReferenceable, LIMITS } from '../limits.ts';
 import { normalizeNewlines } from '../newlines.ts';
@@ -120,7 +120,7 @@ function addition(source: string, lines: readonly LineEdit[], trial = false): Re
     : { ok: true, value: { ...rewrite, diff: diffOf(source, applyRewrite(source, rewrite)) } };
 }
 
-const OFF_GRID = `格子の外へは置けません (a〜z の 26 行、1〜${LIMITS.columns} 列)`;
+const OFF_GRID = `格子の外へは置けません (a〜${rowLetters(LIMITS.rows - 1)} の ${LIMITS.rows} 行、1〜${LIMITS.columns} 列)`;
 
 export function insertWire(
   source: string,

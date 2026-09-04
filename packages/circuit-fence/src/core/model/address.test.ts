@@ -1,9 +1,40 @@
 import { describe, expect, test } from 'vitest';
 import { LIMITS } from '../limits.ts';
 import {
-  DEFAULT_PITCH, addressHint, cornerOf, formatAddress, isSameAddress, parseAddress, texNameOfAddress,
-  toPoint,
+  DEFAULT_PITCH, addressHint, cornerOf, formatAddress, isSameAddress, parseAddress, rowLetters,
+  rowOfLetters, texNameOfAddress, toPoint,
 } from './address.ts';
+
+/**
+ * 行の英字。**表計算の列名と同じ bijective base-26** で、`z` の次は `aa`。
+ * 番号は 0 始まりなので、依頼の 1 始まりの n との対応は n = row + 1。
+ */
+describe('rowLetters と rowOfLetters', () => {
+  // n=1→A, 26→Z, 27→AA, 52→AZ, 53→BA, 702→ZZ, 703→AAA (0 始まりに直したもの)
+  const CASES: readonly (readonly [number, string])[] = [
+    [0, 'a'], [25, 'z'], [26, 'aa'], [51, 'az'], [52, 'ba'], [701, 'zz'], [702, 'aaa'],
+  ];
+
+  test.each(CASES)('row %i is spelled %s', (row, letters) => {
+    expect(rowLetters(row)).toBe(letters);
+  });
+
+  test.each(CASES)('%s reads back as row %i', (row, letters) => {
+    expect(rowOfLetters(letters)).toBe(row);
+  });
+
+  test('goes round trip for every row up to three letters', () => {
+    // 桁上がりのたびに 1 ずれる書き方をしていないか。境界だけでは見つからない。
+    for (let row = 0; row < 800; row += 1) expect(rowOfLetters(rowLetters(row))).toBe(row);
+  });
+
+  test('never spells a row with a letter that stands for zero', () => {
+    // 0 始まりの 26 進数で書くと `aa` が `a` と同じ場所になる。
+    const spellings = new Set(Array.from({ length: 800 }, (_, row) => rowLetters(row)));
+
+    expect(spellings.size).toBe(800);
+  });
+});
 
 describe('parseAddress', () => {
   test('reads the row from the letter and the column from the number', () => {
@@ -20,8 +51,15 @@ describe('parseAddress', () => {
     expect(parseAddress('a0')).toBeNull();
   });
 
-  test('rejects a row past the last letter', () => {
-    expect(parseAddress('aa1')).toBeNull();
+  test('reads a row past z, where the letters carry (aa, ab, ...)', () => {
+    // 実機で「z 以降も作れるように」。表計算の列名と同じ桁上がり。
+    expect(parseAddress('aa1')).toEqual({ row: 26, col: 0 });
+    expect(parseAddress('AB1')).toEqual({ row: 27, col: 0 });
+  });
+
+  test('rejects a row past the limit', () => {
+    expect(parseAddress(`${rowLetters(LIMITS.rows - 1)}1`)).not.toBeNull();
+    expect(parseAddress(`${rowLetters(LIMITS.rows)}1`)).toBeNull();
   });
 
   test('rejects a column past the limit', () => {
@@ -139,9 +177,12 @@ describe('parseAddress between the cells', () => {
     expect(parseAddress(`a_1.${'1'.repeat(LIMITS.addressDecimals + 1)}`)).toBeNull();
   });
 
-  test('rejects a step that runs past the last row, which has no next letter', () => {
-    expect(parseAddress('y.5_1')).not.toBeNull();
-    expect(parseAddress('z.5_1')).toBeNull();
+  test('rejects a step that runs past the last row, which has no next row', () => {
+    const last = rowLetters(LIMITS.rows - 1);
+    const beforeLast = rowLetters(LIMITS.rows - 2);
+
+    expect(parseAddress(`${beforeLast}.5_1`)).not.toBeNull();
+    expect(parseAddress(`${last}.5_1`)).toBeNull();
   });
 
   test('rejects a step that runs past the last column', () => {

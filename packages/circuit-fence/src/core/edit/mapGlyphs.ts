@@ -22,11 +22,12 @@ import type { PinSide } from '../parts.ts';
 export type GlyphName =
   | 'resistor' | 'resistor-var' | 'resistor-iec' | 'photoresistor'
   | 'capacitor' | 'ecap' | 'varicap' | 'inductor'
-  | 'diode' | 'led' | 'zener' | 'thyristor' | 'diac' | 'triac'
-  | 'source' | 'battery' | 'switch' | 'switch-nc' | 'button' | 'button-nc'
+  | 'diode' | 'schottky' | 'photodiode' | 'led' | 'zener' | 'thyristor' | 'diac' | 'triac'
+  | 'source' | 'dc-source' | 'ac-source' | 'square-source' | 'tri-source' | 'i-source' | 'solar'
+  | 'battery' | 'switch' | 'switch-nc' | 'button' | 'button-nc'
   | 'reed' | 'spdt' | 'meter'
   | 'crystal' | 'fuse' | 'lamp' | 'speaker' | 'mic' | 'transformer' | 'coax'
-  | 'bjt' | 'fet' | 'opamp'
+  | 'bjt' | 'fet' | 'jfet' | 'igbt' | 'opamp'
   | 'and' | 'and-inv' | 'or' | 'or-inv' | 'xor' | 'xor-inv' | 'buffer' | 'buffer-inv'
   | 'ground' | 'port' | 'supply-up' | 'supply-down' | 'short' | 'box';
 
@@ -36,18 +37,20 @@ export type Glyph = { readonly name: GlyphName; readonly mark: string | null };
 /** 記号に寄せる表。ここに無い種類は箱になる。 */
 const SHAPES: Record<string, GlyphName> = {
   resistor: 'resistor',
-  'resistor-var': 'resistor-var', potentiometer: 'resistor-var',
+  'resistor-var': 'resistor-var', potentiometer: 'potentiometer',
   // **感温・感圧は箱**。図が IEC の箱で描くので、折れ線に寄せない。
   thermistor: 'resistor-iec', 'thermistor-ntc': 'resistor-iec',
   'thermistor-ptc': 'resistor-iec', varistor: 'resistor-iec',
   photoresistor: 'photoresistor',
   capacitor: 'capacitor', ecap: 'ecap', varicap: 'varicap',
   inductor: 'inductor', transformer: 'transformer',
-  diode: 'diode', schottky: 'diode', photodiode: 'diode',
+  diode: 'diode', schottky: 'schottky', photodiode: 'photodiode',
   led: 'led', zener: 'zener', diac: 'diac',
   thyristor: 'thyristor', triac: 'triac',
-  vsource: 'source', sine: 'source', square: 'source', triangle: 'source',
-  isource: 'source', solar: 'source', battery: 'battery',
+  // 直流電源だけ丸の中に ＋ − を描く (図と同じ)。波形の電源は丸 + 字のまま
+  vsource: 'dc-source',
+  sine: 'ac-source', square: 'square-source', triangle: 'tri-source',
+  isource: 'i-source', solar: 'solar', battery: 'battery',
   switch: 'switch', 'switch-nc': 'switch-nc',
   button: 'button', 'button-nc': 'button-nc', reed: 'reed', spdt: 'spdt',
   ammeter: 'meter', voltmeter: 'meter', ohmmeter: 'meter',
@@ -60,9 +63,9 @@ const SHAPES: Record<string, GlyphName> = {
   // スライドスイッチは図が切り替えスイッチと同じ記号。
   'slide-switch': 'spdt',
   npn: 'bjt', pnp: 'bjt',
-  nmos: 'fet', pmos: 'fet', njfet: 'fet', pjfet: 'fet',
+  nmos: 'fet', pmos: 'fet', njfet: 'jfet', pjfet: 'jfet',
   'nmos-e': 'fet', 'pmos-e': 'fet', 'nmos-d': 'fet', 'pmos-d': 'fet',
-  nigbt: 'fet', pigbt: 'fet',
+  nigbt: 'igbt', pigbt: 'igbt',
   opamp: 'opamp',
   and: 'and', nand: 'and-inv',
   or: 'or', nor: 'or-inv',
@@ -80,7 +83,7 @@ const SHAPES: Record<string, GlyphName> = {
 const MARKS: Record<string, string> = {
   ammeter: 'A', voltmeter: 'V', ohmmeter: 'Ω',
   wattmeter: 'W', galvanometer: 'G', detector: 'D',
-  vsource: '+', isource: 'I',
+  isource: 'I',
   sine: '~', square: '⊓', triangle: '∿', solar: '☀',
 };
 
@@ -92,6 +95,13 @@ export const glyphOf = (type: string): Glyph => ({
 /** 2 端子の胴の長さ。マスの間隔より短くして、隣の記号とくっつかないようにする。 */
 const BODY = 20;
 const HALF = BODY / 2;
+
+/** 電源の丸の半径と、中に置く ＋ − の寸法 (図と同じ並び)。 */
+const SOURCE_R = 9;
+/** 記号の中心を丸の中心からどれだけ離すか。 */
+const SIGN_AT = 4;
+/** ＋ − の棒の半分の長さ。丸の縁 (線幅 1.5) に触れない大きさに取る。 */
+const SIGN_ARM = 2;
 
 const path = (d: string): string => element('path', { class: 'cf-glyph-line', d });
 const circle = (r: number, klass = 'cf-glyph'): string =>
@@ -147,6 +157,18 @@ const SHAPE: Record<GlyphName, () => string> = {
   // トライアック。ダイアックにゲートが 1 本。
   triac: () => `${SHAPE.diac()}${path('M6,-4 L12,-9')}`,
   source: () => circle(9),
+  // 直流電源。**丸の中に ＋ と − を横に並べる** (図 = circuitikz と同じ)。
+  //
+  // 中に置く字 (MARKS) ではなく**記号の一部**として描くこと。字は回さない
+  // 作りなので、縦置きの電源で ＋ が上に来ない (極性の印が向きを失う)。
+  //
+  // 寸法は半径から決める。棒の端でいちばん遠い点 (SIGN_AT + SIGN_ARM, SIGN_ARM)
+  // が丸の内側 (r − 線幅) に収まるようにしてある — 決め打ちにすると丸の
+  // 大きさを変えた時に静かに縁へ乗る。
+  'dc-source': () => circle(SOURCE_R)
+    + path(`M${-SIGN_AT - SIGN_ARM},0 H${-SIGN_AT + SIGN_ARM}`
+      + ` M${-SIGN_AT},${-SIGN_ARM} V${SIGN_ARM}`)
+    + path(`M${SIGN_AT - SIGN_ARM},0 H${SIGN_AT + SIGN_ARM}`),
   // 電池。長い極板と短い極板が 2 組 (丸ではない — 図が丸で描いていない)。
   battery: () => path('M-5,-8 L-5,8 M-1.5,-4 L-1.5,4 M2,-8 L2,8 M5.5,-4 L5.5,4'),
   // 開いた接点。閉じた形にすると「切れる部品」に見えない。
@@ -226,7 +248,7 @@ const SPAN: Record<GlyphName, number> = {
   resistor: HALF, 'resistor-var': HALF, 'resistor-iec': HALF, photoresistor: HALF,
   capacitor: 3, ecap: 6, varicap: 7, inductor: HALF, transformer: 9,
   diode: 6, led: 6, zener: 9, thyristor: 6, diac: 8, triac: 8,
-  source: 9, battery: 5.5, meter: 9,
+  source: 9, 'dc-source': SOURCE_R, battery: 5.5, meter: 9,
   switch: 9, 'switch-nc': 9, button: 6, 'button-nc': 6, reed: HALF, spdt: HALF,
   crystal: 6, fuse: 8, lamp: 8, speaker: 7, mic: 6, coax: 8,
   bjt: 13, fet: 13, opamp: 8,
@@ -265,7 +287,7 @@ const LEG_GAP: Record<GlyphName, number> = {
   resistor: 12, 'resistor-var': 12, 'resistor-iec': 12, photoresistor: 12,
   capacitor: 12, ecap: 12, varicap: 12, inductor: 12,
   diode: 12, led: 12, zener: 12, thyristor: 12, diac: 12, triac: 12,
-  source: 12, battery: 12, meter: 12,
+  source: 12, 'dc-source': 12, battery: 12, meter: 12,
   switch: 12, 'switch-nc': 12, button: 12, 'button-nc': 12, reed: 12,
   crystal: 12, fuse: 12, lamp: 12, speaker: 12, mic: 12, coax: 12,
   bjt: 12, fet: 12, buffer: 12, 'buffer-inv': 12,

@@ -3,7 +3,7 @@ import type { Circuit } from '../model/circuit.ts';
 import { fenceError } from '../errors.ts';
 import { partOfHandle } from './handles.ts';
 import { LIMITS } from '../limits.ts';
-import { formatAddress, parseAddress } from '../model/address.ts';
+import { LAST_ROW, formatAddress, parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import type { FenceError, PartSpec } from '../types.ts';
 
@@ -35,8 +35,8 @@ export type RewriteResult =
   | { readonly ok: true; readonly value: Rewrite }
   | { readonly ok: false; readonly error: FenceError };
 
-/** 格子の一番下の行 (`z`)。 */
-export const LAST_ROW = 25;
+/** 格子の一番下の行。**綴りを決めている所と同じ 1 か所** (`model/address.ts`) から引く。 */
+export { LAST_ROW };
 
 /** 断る 1 件。**`MoveResult` にも `RewriteResult` にもそのまま返せる形**にしておく。 */
 export const fail = (message: string, line: number | null): { readonly ok: false; readonly error: FenceError } =>

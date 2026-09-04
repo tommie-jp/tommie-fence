@@ -1,6 +1,6 @@
 import { element, escapeMarkup, fit, num, svgText, textWidth } from 'fence-kit';
 import { LIMITS } from '../limits.ts';
-import { formatAddress } from '../model/address.ts';
+import { formatAddress, rowLetters } from '../model/address.ts';
 import { drawBox, drawGlyph, glyphOf, glyphSpan, legGap, namesInside } from './mapGlyphs.ts';
 import type { GlyphName } from './mapGlyphs.ts';
 import type { Chip, ChipPin, Cell, Dot, GridMap, MapNote, WireLine } from './map.ts';
@@ -54,8 +54,8 @@ const shownOf = (map: GridMap, room: Room): Shown => ({
   cols: Math.min(LIMITS.columns, Math.max(map.cols, Math.ceil((room.right - EDGE - PAD_X) / PITCH) + 1)),
 });
 
-/** 行の名前は a〜z の 26 まで。 */
-const MAX_ROWS = 26;
+/** 升目に出す行の数。番地の上限 (`LIMITS.rows`) と同じところで止める。 */
+const MAX_ROWS = LIMITS.rows;
 
 /** 交点の目印。**升目そのもの**で、置ける場所がここだと分かる。 */
 function drawGrid(map: Shown): string {
@@ -68,12 +68,12 @@ function drawGrid(map: Shown): string {
   return layer('cf-grid', dots.join(''));
 }
 
-/** 行と列の見出し (a〜z と 1〜99)。番地を目で数えられるように。 */
+/** 行と列の見出し (a・b … z・aa・ab … と 1〜99)。番地を目で数えられるように。 */
 function drawLabels(map: Shown): string {
   const cols = Array.from({ length: map.cols }, (_, col) =>
     svgText(x(col), AXIS_Y, String(col + 1), { class: 'cf-axis' }));
   const rows = Array.from({ length: map.rows }, (_, row) =>
-    svgText(PAD_X - 12, y(row) + 4, formatAddress({ row, col: 0 }).slice(0, 1), { class: 'cf-axis' }));
+    svgText(PAD_X - 12, y(row) + 4, rowLetters(row), { class: 'cf-axis' }));
   return layer('cf-axes', [...cols, ...rows].join(''));
 }
 
@@ -133,8 +133,9 @@ function roomFor(map: GridMap, nudges: ReadonlyMap<Chip, number>): Room {
 
   for (const chip of map.chips) {
     if (chip.to !== null) continue;
+    const glyph = glyphOf(chip.type).name;
     const rows = rowsOf(chip.pins, chip.turn);
-    const { halfW, halfH } = reachOf(rows, glyphOf(chip.type).name);
+    const { halfW, halfH } = reachOf(rows, glyph);
     const at = { x: x(chip.col), y: y(chip.row) + (nudges.get(chip) ?? 0) };
     // 足の棒と、その先の名前。**辺ごとに要る幅が違う** (名前の長さが違う)。
     const beside = (side: PinSide): number => {
@@ -143,12 +144,17 @@ function roomFor(map: GridMap, nudges: ReadonlyMap<Chip, number>): Room {
       const widest = Math.max(0, ...row.map((pin) => textWidth(pin.name) * PIN_NAME_FONT));
       return PIN_STUB + (side === 'left' || side === 'right' ? widest + PIN_MARGIN : PIN_NAME_FONT * 2);
     };
+    // 名札の出る辺。**箱は中に入れる**ので外へは広がらない。上に出る分は下の
+    // `NAME_TOP_ROOM` でまとめて取ってあるので、横と下だけここで見る。
+    // 名札の出る辺には足が無いので、足の分と名札の分が両方効くことはない。
+    const named = glyph === 'box' ? null : nameSideOf(chip.pins);
+    const forName = (side: PinSide): number =>
+      (side === named ? standingNameReach(side, chip.id) - (side === 'bottom' ? halfH : halfW) : 0);
     hold(
-      at.x - halfW - beside('left') - EDGE,
-      // 名前は記号の上に出る (上に足があれば更に上)。
-      at.y - halfH - Math.max(beside('top'), -NAME_ABOVE_PIN) - EDGE,
-      at.x + halfW + beside('right') + EDGE,
-      at.y + halfH + beside('bottom') + EDGE,
+      at.x - halfW - Math.max(beside('left'), forName('left')) - EDGE,
+      at.y - halfH - Math.max(beside('top'), NAME_TOP_ROOM) - EDGE,
+      at.x + halfW + Math.max(beside('right'), forName('right')) + EDGE,
+      at.y + halfH + Math.max(beside('bottom'), forName('bottom')) + EDGE,
     );
   }
   return room;
@@ -447,13 +453,63 @@ function drawPin(pin: ChipPin, part: string, at: ReturnType<typeof pinAt>): stri
 }
 
 /**
- * 記号の上に出す名前の高さ。上に足があるときは、足の名前 (`-18`) の更に上へ。
- * 記号の中に入る箱とは別 (箱は中に名前を入れる)。
+ * 名札を出す辺を探す順。**図と同じ決め方**にする — `tex/generate.ts` の
+ * `nameNode` も同じ順で空いている辺を探す。上が第一希望で、足のある辺は避ける。
+ *
+ * これで 3 本足のトランジスタ (`npn` / `nmos` など) の名札は**右**へ出る。
+ * 上がコレクタ・下がエミッタ・左がベースで、空いているのが右しかないため。
+ * 実機で「`Q1` が記号の真上にある。回路図では記号の右」と指摘された。
+ * **辺を種類で決め打ちしない** — 回した記号は足ごと辺が回るので、
+ * 空きを数えれば回転にもそのまま追従する (図と同じ辺に出続ける)。
  */
-const NAME_ABOVE = -12;
-const NAME_ABOVE_PIN = -28;
+const NAME_ORDER: readonly PinSide[] = ['top', 'bottom', 'left', 'right'];
 
-/** 1 端子と多端子は升の上に置く。箱に落ちた種類は名前を中に入れる。 */
+const nameSideOf = (pins: readonly ChipPin[]): PinSide => {
+  const taken = new Set<PinSide>(pins.map((pin) => pin.side));
+  return NAME_ORDER.find((side) => !taken.has(side)) ?? 'top';
+};
+
+/**
+ * 名札を升の真ん中から離す量。**辺ごとに 1 つの決め打ちで、記号の大きさでは変えない。**
+ * 記号はどれも半径 14 くらいの中に描いてあり、足の届く長さ (`reachOf`) は
+ * 足の本数で伸びる別の寸法なので、そちらに合わせると記号から離れて浮く
+ * (トランスや切り替えスイッチで 10px 浮いた)。**升の半分 (17) より内側**に収まる。
+ *
+ * 横が縦より遠いのは、記号が縦より横に長いため (2 端子の `NAME_ASIDE` と同じ値)。
+ * 下だけ字の高さを足すのは、基準線が字の**下端**になるため。
+ */
+const STAND_ABOVE = -12;
+const STAND_ASIDE = NAME_ASIDE;
+const STAND_BELOW = -STAND_ABOVE + NAME_FONT - 2;
+
+/**
+ * 画布が升の上に取る余白。名札が上に出る種類ぶんを、**全部の部品に一律で**取る
+ * (足の名前より更に上へ出る場合まで含めた昔からの値。ここを部品ごとに詰めると
+ * 図の縁が種類によって動く)。
+ */
+const NAME_TOP_ROOM = 28;
+
+/** 名札 1 つの置き場。**空いている辺の外側**に置く。 */
+function standingNameAt(
+  side: PinSide,
+): { readonly x: number; readonly y: number; readonly anchor?: 'start' | 'end' } {
+  if (side === 'left') return { x: -STAND_ASIDE, y: 4, anchor: 'end' };
+  if (side === 'right') return { x: STAND_ASIDE, y: 4, anchor: 'start' };
+  if (side === 'bottom') return { x: 0, y: STAND_BELOW };
+  return { x: 0, y: STAND_ABOVE };
+}
+
+/**
+ * 名札が升の真ん中から届く長さ。**画布の広さ (`roomFor`) が縁で切らないため**に要る。
+ * 上に出る分は昔から `NAME_TOP_ROOM` でまとめて取ってあるので、ここでは見ない。
+ */
+function standingNameReach(side: PinSide, id: string): number {
+  return side === 'left' || side === 'right'
+    ? STAND_ASIDE + textWidth(id) * NAME_FONT
+    : STAND_BELOW;
+}
+
+/** 1 端子と多端子は空いている辺に名前を置く。箱に落ちた種類は名前を中に入れる。 */
 function drawStanding(chip: Chip, nudge: number): string {
   const glyph = glyphOf(chip.type);
   const inside = glyph.name === 'box';
@@ -479,13 +535,15 @@ function drawStanding(chip: Chip, nudge: number): string {
           )))).join(''),
     );
   const mark = glyph.mark === null ? '' : svgText(0, nudge + 4, glyph.mark, { class: 'cf-mark' });
-  // **上に足があるなら、その名前より更に上に出す。** 記号を持つ種類は名前が
-  // 記号の上に出るので、上の足の名前 (`B` など) と同じ高さで重なる。
-  const overhead = chip.pins.some((pin) => pin.side === 'top');
-  const above = overhead ? NAME_ABOVE_PIN : NAME_ABOVE;
+  // 名札は**足の無い辺**へ。足のある辺に出すと、棒と足の名前に重なる。
+  const place = standingNameAt(nameSideOf(chip.pins));
   const name = inside
     ? svgText(0, nudge + 4, chip.id, { class: 'cf-name' })
-    : svgText(0, nudge + above, chip.id, { class: 'cf-name', halo: 'var(--cf-paper)' });
+    : svgText(place.x, nudge + place.y, chip.id, {
+      class: 'cf-name',
+      halo: 'var(--cf-paper)',
+      ...(place.anchor === undefined ? {} : { anchor: place.anchor }),
+    });
   return body + pins + mark + name;
 }
 

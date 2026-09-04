@@ -104,3 +104,44 @@ describe('drawGlyph', () => {
     expect(drawGlyph('short')).toBe('');
   });
 });
+
+describe('直流電源の ＋ − (回路図に合わせる)', () => {
+  // 図 (circuitikz) は丸の中に ＋ と − を横に並べる。マップだけ真ん中に ＋ を
+  // 1 つ置いていたので、同じ図を見ているのに記号が違って見えた (実機で頼まれた)。
+  test('draws both signs, not a single centred plus', () => {
+    const svg = drawGlyph('dc-source');
+
+    // 中に置く字ではなく**記号の一部**として描く。字にすると回しても
+    // 上を向いたままで、縦置きの電源で ＋ が上に来ない
+    expect(glyphOf('vsource')).toEqual({ name: 'dc-source', mark: null });
+    expect(svg).toContain('<circle');
+    // ＋ は横棒と縦棒、− は横棒 1 本
+    expect(svg.match(/<path/g)).toHaveLength(2);
+  });
+
+  test('keeps the signs clear of the outline', () => {
+    // 「記号が図形と重ならないようにする」。丸の縁 (r=9、線幅 1.5) の内側に
+    // 余裕を持って収める
+    const svg = drawGlyph('dc-source');
+    // 記号の外接枠の角までを測る (実際の端より必ず遠いので安全側)。
+    // M は x,y / H は x だけ / V は y だけを取る
+    let [maxX, maxY] = [0, 0];
+    for (const [, cmd, args] of svg.matchAll(/([MHV])(-?[\d.]+(?:,-?[\d.]+)?)/g)) {
+      const nums = (args ?? '').split(',').map(Number);
+      const [a, b] = [Math.abs(nums[0] ?? 0), Math.abs(nums[1] ?? 0)];
+      if (cmd === 'M') [maxX, maxY] = [Math.max(maxX, a), Math.max(maxY, b)];
+      else if (cmd === 'H') maxX = Math.max(maxX, a);
+      else maxY = Math.max(maxY, a);
+    }
+
+    expect(maxX).toBeGreaterThan(0);
+    expect(Math.hypot(maxX, maxY)).toBeLessThan(9 - 1.5);
+  });
+
+  test('leaves the other sources alone', () => {
+    // 波形の電源は丸の中の字で描き分けている (~ ⊓ ∿)。丸のままにする
+    expect(glyphOf('sine')).toEqual({ name: 'source', mark: '~' });
+    expect(glyphOf('isource')).toEqual({ name: 'source', mark: 'I' });
+    expect(drawGlyph('source')).not.toContain('<path');
+  });
+});

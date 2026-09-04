@@ -171,6 +171,37 @@ describe('部品の名前の置き場', () => {
 
     expect(anchor).toBe('start');
   });
+
+  test('puts the name of a transistor to its right, the side the figure uses', () => {
+    // 実機で「Q1 が記号の真上にある。回路図では記号の右」。上がコレクタ・
+    // 下がエミッタ・左がベースなので、空いているのは右しかない。
+    const { x, y, anchor } = nameAt('parts:\n  Q1: npn c3\n', 'Q1');
+
+    expect(x).toBeGreaterThan(0);
+    expect(anchor).toBe('start');
+    // 高さは記号の真ん中あたり。上 (足の名前 C) や下 (E) には出ない。
+    expect(Math.abs(y)).toBeLessThan(10);
+  });
+
+  test('keeps the name off the sides that have legs, whichever way the part is turned', () => {
+    // 足は記号と一緒に回るので、名札の逃げ場も回る。図 (nameNode) と同じ順で探す。
+    expect(nameAt('parts:\n  Q1: npn c3 r180\n', 'Q1').anchor).toBe('end');
+    expect(nameAt('parts:\n  Q1: npn c3 mirror\n', 'Q1').anchor).toBe('end');
+    // r90 はベースが上・コレクタが右・エミッタが左なので、空くのは下。
+    const turned = nameAt('parts:\n  Q1: npn c3 r90\n', 'Q1');
+
+    expect(turned.x).toBe(0);
+    expect(turned.y).toBeGreaterThan(10);
+  });
+
+  test('leaves the name above the parts whose top is free, as it was', () => {
+    // 足が左右にしかない種類 (オペアンプ・論理ゲート) は今までどおり上。
+    for (const source of ['parts:\n  U1: opamp c3\n', 'parts:\n  U1: and c3\n']) {
+      const { x, y, anchor } = nameAt(source, 'U1');
+
+      expect([x, y, anchor]).toEqual([0, -12, 'middle']);
+    }
+  });
 });
 
 describe('2 交点をつなぐ線', () => {

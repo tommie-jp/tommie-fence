@@ -1,6 +1,6 @@
 import { fail, fenceError, ok, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
-import { addressHint, formatAddress, isSameAddress, parseAddress } from '../model/address.ts';
+import { addressHint, formatAddress, isSameAddress, parseAddress, rowLetters } from '../model/address.ts';
 import type { Address, WireOperator } from '../model/address.ts';
 import {
   DEFAULT_NOTE_ALIGN, DEFAULT_NOTE_SIZE, NOTE_ALIGNS, NOTE_BOX_SOLID, NOTE_COLOR_NAMES,
@@ -109,7 +109,7 @@ function addressProblem(token: string, points: Points): string {
 
   // 名前のつもりで書かれた可能性がある。名前を 1 つでも書いてある図では、
   // そちらの案内も添える。
-  const form = `行 a〜z + 列 1〜${LIMITS.columns}。交点の間は a_1.5 / a.5_1.5`;
+  const form = `行 a〜${rowLetters(LIMITS.rows - 1)} + 列 1〜${LIMITS.columns}。交点の間は a_1.5 / a.5_1.5`;
   const hint = points.size === 0 ? form : `${form}。points: に書いた名前でもありません`;
   return `${safeToken(token)} は番地の形ではありません (${hint})`;
 }

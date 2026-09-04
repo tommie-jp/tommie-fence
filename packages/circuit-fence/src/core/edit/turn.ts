@@ -1,4 +1,4 @@
-import { formatAddress } from '../model/address.ts';
+import { formatAddress, rowLetters } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
@@ -186,7 +186,7 @@ export function turnPart(source: string, handle: string, quarters: number): Rewr
   const to = { row: part.from.row + delta.row, col: part.from.col + delta.col };
   if (!isOnGrid(to)) {
     return fail(
-      `${partId} を回すと格子の外へ出ます (a〜z の 26 行、1〜${LIMITS.columns} 列)`,
+      `${partId} を回すと格子の外へ出ます (a〜${rowLetters(LIMITS.rows - 1)} の ${LIMITS.rows} 行、1〜${LIMITS.columns} 列)`,
       part.line,
     );
   }

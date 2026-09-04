@@ -13,12 +13,46 @@ export type Point = { readonly x: number; readonly y: number };
 /** 1 マスの大きさ (cm)。隣り合うマスの間に 2 端子部品 1 個が収まる。 */
 export const DEFAULT_PITCH = 2;
 
-const ROW_COUNT = 26;
-/** 最後の行 (z)。交点の間を書いても、この行より下へは出られない。 */
-const LAST_ROW = ROW_COUNT - 1;
+/** 使える英字の数 (a〜z)。 */
+const LETTER_COUNT = 26;
 const FIRST_LETTER = 'a'.charCodeAt(0);
 
-const ADDRESS = /^([a-z])([0-9]{1,3})$/;
+/** 最後の行。交点の間を書いても、この行より下へは出られない。 */
+export const LAST_ROW = LIMITS.rows - 1;
+
+/**
+ * 行番号 (0 始まり) → 行の英字。**表計算の列名と同じ bijective base-26** で、
+ * `z` の次は `aa`、`az` の次は `ba`、`zz` の次は `aaa` と桁が増える。
+ *
+ * 0 始まりの 26 進数**ではない**。`aa` は 26 進数として読むと 0 と同じ値に
+ * なってしまい、`a` と区別が付かない。1 始まりの番号を毎回 1 引いてから
+ * 割ることで、どの桁にも「0 に当たる字」が現れない綴りになる。
+ *
+ * 以前は英字 1 文字ぶんしか出せず、**z で頭打ち**だった (実機で「z 以降も
+ * 作れるように」と頼まれた)。
+ */
+export function rowLetters(row: number): string {
+  let count = Math.floor(row) + 1;
+  let letters = '';
+  while (count > 0) {
+    count -= 1;
+    letters = String.fromCharCode(FIRST_LETTER + (count % LETTER_COUNT)) + letters;
+    count = Math.floor(count / LETTER_COUNT);
+  }
+  return letters;
+}
+
+/**
+ * 行の英字 → 行番号 (0 始まり)。`rowLetters` の逆。
+ * **必ず対で直すこと** — 片方だけ変えると、書いた綴りと読んだ場所が静かにずれる。
+ */
+export function rowOfLetters(letters: string): number {
+  let count = 0;
+  for (const letter of letters) count = count * LETTER_COUNT + (letter.charCodeAt(0) - FIRST_LETTER + 1);
+  return count - 1;
+}
+
+const ADDRESS = /^([a-z]+)([0-9]{1,3})$/;
 /**
  * 交点の間の番地。**小数を書くときは `_` で行と列を切る** (`a_1.5` `a.5_1.5`)。
  *
@@ -28,7 +62,7 @@ const ADDRESS = /^([a-z])([0-9]{1,3})$/;
  * 綴りだけで分かれる。
  */
 const BETWEEN = new RegExp(
-  `^([a-z])(?:\\.([0-9]{1,${LIMITS.addressDecimals}}))?_([0-9]{1,3})(?:\\.([0-9]{1,${LIMITS.addressDecimals}}))?$`,
+  `^([a-z]+)(?:\\.([0-9]{1,${LIMITS.addressDecimals}}))?_([0-9]{1,3})(?:\\.([0-9]{1,${LIMITS.addressDecimals}}))?$`,
 );
 
 /** 小数の桁で丸める。`1.1` のような値が計算のたびに末尾でぶれると、綴りが揺れる。 */
@@ -51,7 +85,7 @@ export function parseAddress(text: string): Address | null {
   const matched = ADDRESS.exec(lowered);
   if (matched) {
     const [, letter = '', digits = ''] = matched;
-    return checked(letter.charCodeAt(0) - FIRST_LETTER, Number(digits));
+    return checked(rowOfLetters(letter), Number(digits));
   }
 
   const between = BETWEEN.exec(lowered);
@@ -63,12 +97,12 @@ export function parseAddress(text: string): Address | null {
   // 小数が無いなら `a1` と書ける場所。綴りを 2 つにしない。
   if (rowStep === 0 && columnStep === 0) return null;
 
-  return checked(letter.charCodeAt(0) - FIRST_LETTER + rowStep, Number(columnDigits) + columnStep);
+  return checked(rowOfLetters(letter) + rowStep, Number(columnDigits) + columnStep);
 }
 
 /**
  * 図に置ける範囲に収まっているか見て、中間モデルの形にする。
- * 交点の間も**格子の内側だけ**。`z.5` は z の次の行が無いところを指すので通さない。
+ * 交点の間も**格子の内側だけ**。最終行の `.5` は次の行が無いところを指すので通さない。
  */
 function checked(row: number, column: number): Address | null {
   if (row < 0 || row > LAST_ROW) return null;
@@ -88,12 +122,12 @@ const fractionText = (value: number): string => {
  * **読んだときと同じ綴りに戻る**ことが、ネットの名前とエラー文の拠りどころ。
  */
 export function formatAddress(address: Address): string {
-  // 行は必ず a〜z に収める。parseAddress は範囲を見ているが、この綴りは
+  // 行は必ず格子の内側に収める。parseAddress は範囲を見ているが、この綴りは
   // TeX の座標名にもなるので、万一はみ出しても `{` のような字を出さない
   // (**TeX には検証済みの形しか渡さない**という約束の側で守る)。
   const row = Math.min(LAST_ROW, Math.max(0, round(address.row)));
   const column = round(address.col + 1);
-  const letter = String.fromCharCode(FIRST_LETTER + Math.floor(row));
+  const letter = rowLetters(row);
 
   const rowStep = fractionText(row);
   const columnStep = fractionText(column);
@@ -112,7 +146,7 @@ export function addressHint(text: string): string | null {
   const lowered = text.toLowerCase();
   // 番地のつもりで書かれた綴りにだけ返す。`vin/2` のような書き間違いに
   // 分数の話をしても、直す手がかりにならない。
-  if (!/^[a-z][0-9./_]*$/.test(lowered)) return null;
+  if (!/^[a-z]+[0-9./_]*$/.test(lowered)) return null;
 
   // 分数の話をするのは、交点の間を書こうとした綴り (`_` がある) にだけ。
   if (lowered.includes('/') && lowered.includes('_')) {
@@ -120,7 +154,7 @@ export function addressHint(text: string): string | null {
   }
   if (lowered.includes('/')) return null;
 
-  const decimals = new RegExp(`^([a-z])([0-9]{1,3})\\.([0-9]+)$`).exec(lowered);
+  const decimals = new RegExp(`^([a-z]+)([0-9]{1,3})\\.([0-9]+)$`).exec(lowered);
   if (decimals) {
     const [, letter = '', digits = '', step = ''] = decimals;
     return step.length > LIMITS.addressDecimals
@@ -128,13 +162,13 @@ export function addressHint(text: string): string | null {
       : suggest(`${letter}_${digits}.${step}`, '交点の間は _ で行と列を切ります');
   }
 
-  const underscored = new RegExp(`^([a-z])([0-9]{1,3})_([0-9]{1,${LIMITS.addressDecimals}})$`).exec(lowered);
+  const underscored = new RegExp(`^([a-z]+)([0-9]{1,3})_([0-9]{1,${LIMITS.addressDecimals}})$`).exec(lowered);
   if (underscored) {
     const [, letter = '', digits = '', step = ''] = underscored;
     return suggest(`${letter}_${digits}.${step}`, '列の小数は . で書きます');
   }
 
-  const plain = /^([a-z])(?:\.0+)?_([0-9]{1,3})(?:\.0+)?$/.exec(lowered);
+  const plain = /^([a-z]+)(?:\.0+)?_([0-9]{1,3})(?:\.0+)?$/.exec(lowered);
   if (plain) {
     const [, letter = '', digits = ''] = plain;
     return suggest(`${letter}${digits}`, '交点の上なら _ は要りません', '_ は交点の間を書くときだけ');
@@ -181,7 +215,7 @@ export const toPoint = (address: Address, pitch: number): Point => ({
  * ちょうど線の上に乗っている点でも外積が 1e-14 ほど残り、**厳密に 0 かで見ると
  * 図では触れて見えるのにネットリストだけが割れる**。
  *
- * 絶対値で決め打てるのは、図の大きさに上限があるため。番地は 26 行 × 99 列
+ * 絶対値で決め打てるのは、図の大きさに上限があるため。番地は 99 行 × 99 列
  * までなので、外積も内積も 1e4 を超えず、丸めの残りは 1e-12 に届かない。
  * 意味のある差 (番地の刻み 0.01 と、その積) はこの値よりずっと大きい。
  */

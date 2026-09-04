@@ -581,6 +581,27 @@ describe('丸い電源の記号', () => {
     expect(tex.match(/-- \+\+\(0,[-\d.]+\);/g)).toHaveLength(1);
   });
 
+  test('keeps the signs well inside the circle, off the outline and the leads', () => {
+    // 実機で「+ と - が丸の輪郭と左右の導線に重なっている」と指摘された。
+    // 導線は輪郭で止まるので、**輪郭に触れなければ導線にも触れない**。
+    const { tex } = generate('parts:', '  V1: vsource a1 a3 5');
+    // 丸の半径は bipoles/length (1.2) × esource の直径の割合 (0.6) の半分。
+    const radius = (1.2 * 0.6) / 2;
+    // a1 は (0,0)、a3 は (4,0) なので丸の真ん中は (2,0)。
+    const ends = [...tex.matchAll(/^\\draw \((-?[\d.]+),(-?[\d.]+)\) -- \+\+\((-?[\d.]+),(-?[\d.]+)\);/gm)]
+      .flatMap(([, x, y, dx, dy]) => {
+        const [ax, ay] = [Number(x), Number(y)];
+        return [[ax, ay], [ax + Number(dx), ay + Number(dy)]];
+      });
+    const reach = Math.max(...ends.map(([x, y]) => Math.hypot((x ?? 0) - 2, y ?? 0)));
+
+    expect(ends).toHaveLength(6);
+    // 線の太さ (輪郭は倍幅) を引いても隙間が残るところまで内側へ。
+    expect(reach).toBeLessThan(radius * 0.65);
+    // 縮めすぎて読めなくなっていないことも見る。
+    expect(reach).toBeGreaterThan(radius * 0.4);
+  });
+
   test('draws the waveform of the ac sources across the circle', () => {
     // 波形は figure の座標系に描く。斜めに置いても波は水平のままで、
     // 計器の straight instruments と同じ読み方になる。

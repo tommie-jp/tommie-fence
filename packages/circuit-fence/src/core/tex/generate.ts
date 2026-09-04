@@ -1,5 +1,5 @@
 import { LIMITS } from '../limits.ts';
-import { DEFAULT_PITCH, cornerOf, formatAddress, texNameOfAddress, toPoint } from '../model/address.ts';
+import { DEFAULT_PITCH, cornerOf, formatAddress, rowLetters, texNameOfAddress, toPoint } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
@@ -407,9 +407,28 @@ const SOURCE_CIRCLE = 0.6;
  */
 const SOURCE_UNIT = SOURCE_CIRCLE * BIPOLE_LENGTH / 4;
 
-/** 直流電源の + と - の、横棒の長さと丸の真ん中からのずらし (TikZ の単位)。 */
-const SOURCE_SIGN_BAR = 0.2;
-const SOURCE_SIGN_GAP = 0.17;
+/** 丸い電源の記号の半径 (TikZ の単位)。中に描くものはここを基準に決める。 */
+const SOURCE_RADIUS = SOURCE_CIRCLE * BIPOLE_LENGTH / 2;
+
+/**
+ * 直流電源の + と - が、丸の真ん中から届いてよいところ。**半径の割合で決める** —
+ * 長さを決め打ちにすると、記号の長さ (`bipoles/length`) を変えたときに
+ * 輪郭からはみ出す。
+ *
+ * 実機で「+ と - が丸の輪郭と左右の導線に重なっている」と指摘された。
+ * 以前は外端が半径の 75% (0.27/0.36) まで届いており、線の太さ
+ * (輪郭は 1.6pt = 倍幅) を引くと隙間が 0.5mm ほどしか残らないので、
+ * 導線がそのまま丸の中へ続いているように見えていた。
+ */
+const SOURCE_SIGN_REACH = SOURCE_RADIUS * 0.6;
+
+/**
+ * 横棒の長さと、丸の真ん中から記号の中心までのずらし (TikZ の単位)。
+ * **外端が `SOURCE_SIGN_REACH` にちょうど収まる**ように 2 つで割り振る。
+ * + と - の間も、輪郭との隙間と同じくらい空く。
+ */
+const SOURCE_SIGN_BAR = SOURCE_SIGN_REACH * 0.75;
+const SOURCE_SIGN_GAP = SOURCE_SIGN_REACH - SOURCE_SIGN_BAR / 2;
 
 type Point = { readonly x: number; readonly y: number };
 
@@ -605,7 +624,7 @@ function drawGrid(
   );
   const rowLabels = ys.map(
     (y, row) =>
-      `\\node[${labelStyle}, anchor=east] at (-${margin},${num(y)}) {${formatAddress({ row, col: 0 })[0] ?? ''}};`,
+      `\\node[${labelStyle}, anchor=east] at (-${margin},${num(y)}) {${rowLetters(row)}};`,
   );
 
   return [
