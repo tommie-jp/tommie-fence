@@ -108,7 +108,9 @@ describe('向き', () => {
   });
 
   test('leaves the box unturned, since its shape says nothing (the pins do)', () => {
-    const svg = draw('parts:\n  Q1: npn b2 r90\n');
+    // **箱に落ちる種類で見る。** 記号を持つ種類 (npn) は回して見せる —
+    // 形に向きの意味があるので、回さないと書いた向きが図に出ない。
+    const svg = draw('parts:\n  U1: dip8 b2 r90\n');
 
     expect(svg).not.toContain('rotate(90)');
   });

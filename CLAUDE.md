@@ -120,5 +120,5 @@ make help             # 目標の一覧
 | `previewRefresher` | ある | ない | 回路図は描画が非同期 (TeX → SVG) なので、描き上がってからプレビューを促す仕組みが要る。フェンスに依存しないので `fence-kit` の候補 |
 | ライブラリの出口 | `circuit-fence/core` は **dist** を指す (`import`/`require`/`types`)。ソースを指す `circuit-fence/src/core` を別に持つ | `breadboard-fence/core` は **ソース** (`src/core/index.ts`) を指す | circuit だけサーバー側描画から呼ぶ要望があり、外へ出す形 (dist) が要った。3 つとも playground から呼ぶので、**ビルド前でも型が付くソースの入口**を別に用意した (dist を指すと、型チェックの前に circuit を build しないと通らない)。`src/**` は `.vscodeignore` で `.vsix` に入らないので、**ソースの入口はモノレポの中でだけ生きる** |
 | 実行時の依存 | `yaml` + `node-tikzjax` | `yaml` だけ | 同上 |
-| 図の組み立て | TeX (circuitikz) に描かせて後から色を塗り替える | SVG を直に組み立てる | だから `svg` `palette` `textFit` `title` にあたるものが circuit には無い。`theme` は名前が同じだけで別物 (circuit は塗り替えの色、breadboard は色 + 穴の寸法)。**例外は移動エディタのマップ** (`core/edit/mapSvg.ts`) — あれは公開する図ではなく掴むための UI なので SVG を組み立てる。図と競わせない (記号の正確さは TeX が正) |
+| 図の組み立て | TeX (circuitikz) に描かせて後から色を塗り替える | SVG を直に組み立てる | だから `svg` `palette` `textFit` `title` にあたるものが circuit には無い。`theme` は名前が同じだけで別物 (circuit は塗り替えの色、breadboard は色 + 穴の寸法)。**例外は移動エディタのマップ** (`core/edit/mapSvg.ts`) — あれは公開する図ではなく掴むための UI なので SVG を組み立てる。形は**回路図になるべく寄せる**が、正確さは TeX が正 (細部だけが違うものは同じ形に落とす) |
 | エラーの帯のキャレット | 全角を 2 桁と数えて位置を合わせる | 桁数だけ合わせる | 同じ `errorText.ts` という名前で別実装。**circuit の方が正しい**ので、揃えるなら breadboard を寄せる (未着手) |

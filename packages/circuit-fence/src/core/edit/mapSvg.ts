@@ -1,4 +1,4 @@
-import { element, escapeMarkup, fit, num, svgText } from 'fence-kit';
+import { element, escapeMarkup, fit, num, svgText, textWidth } from 'fence-kit';
 import { formatAddress } from '../model/address.ts';
 import { drawGlyph, glyphOf } from './mapGlyphs.ts';
 import type { Chip, ChipPin, Cell, Dot, GridMap, MapNote, WireLine } from './map.ts';
@@ -165,6 +165,13 @@ function drawPin(pin: ChipPin): string {
   });
 }
 
+/**
+ * 記号の上に出す名前の高さ。上に足があるときは、足の名前 (`-18`) の更に上へ。
+ * 記号の中に入る箱とは別 (箱は中に名前を入れる)。
+ */
+const NAME_ABOVE = -12;
+const NAME_ABOVE_PIN = -28;
+
 /** 1 端子と多端子は升の上に置く。箱に落ちた種類は名前を中に入れる。 */
 function drawStanding(chip: Chip, nudge: number): string {
   const glyph = glyphOf(chip.type);
@@ -183,9 +190,13 @@ function drawStanding(chip: Chip, nudge: number): string {
       chip.pins.map(drawPin).join(''),
     );
   const mark = glyph.mark === null ? '' : svgText(0, nudge + 4, glyph.mark, { class: 'cf-mark' });
+  // **上に足があるなら、その名前より更に上に出す。** 記号を持つ種類は名前が
+  // 記号の上に出るので、上の足の名前 (`B` など) と同じ高さで重なる。
+  const overhead = chip.pins.some((pin) => pin.side === 'top');
+  const above = overhead ? NAME_ABOVE_PIN : NAME_ABOVE;
   const name = inside
     ? svgText(0, nudge + 4, chip.id, { class: 'cf-name' })
-    : svgText(0, nudge - 12, chip.id, { class: 'cf-name', halo: 'var(--cf-paper)' });
+    : svgText(0, nudge + above, chip.id, { class: 'cf-name', halo: 'var(--cf-paper)' });
   return body + pins + mark + name;
 }
 
@@ -207,6 +218,28 @@ function drawChip(chip: Chip, nudge: number, bad: Bad): string {
   );
 }
 
+/** 注釈の札の字の大きさ。掴む的なので、記号の名前より 1 段小さい。 */
+const NOTE_FONT = 9;
+/** 札の内側の余白と高さ。字の上下が縁に当たらない最小限。 */
+const NOTE_PAD = 4;
+const NOTE_HEIGHT = NOTE_FONT + NOTE_PAD * 2;
+/**
+ * 札に出す字の長さ (全角を 1 とした幅)。**升目は掴むための道具**なので、
+ * 長い注釈を全部出すと隣の部品が札の下に隠れる。切った跡は `…` が残し、
+ * **全文は札に載せた `title`** が出す (乗せれば読める)。
+ */
+const NOTE_CHARS = 14;
+
+/** 札に出す字と、その札の幅。**幅を測る側と描く側で 1 つ**にしておく。 */
+function noteTag(note: MapNote): { readonly shown: string; readonly width: number } {
+  const shown = fit(note.kind === 'text' ? note.text : note.kind, NOTE_CHARS);
+  return { shown, width: textWidth(shown) * NOTE_FONT + NOTE_PAD * 2 };
+}
+
+/** その注釈の札が右へ伸びるところ。**画布の幅**を決めるのに要る。 */
+const noteRight = (note: MapNote): number =>
+  x(note.col) + PITCH * 0.18 + noteTag(note).width;
+
 /**
  * 注釈。**印そのものは描かない** — マップは掴むための升目で、図ではない。
  * 指した升の角に小さな札を出し、字の注釈はその字も少しだけ見せる
@@ -215,16 +248,20 @@ function drawChip(chip: Chip, nudge: number, bad: Bad): string {
 function drawNote(note: MapNote): string {
   const left = x(note.col) + PITCH * 0.18;
   const top = y(note.row) - PITCH * 0.42;
-  const shown = note.kind === 'text' ? note.text : note.kind;
+  // **札は字に合わせて伸びる。** 決め打ちの幅だと、字がその左右へはみ出して
+  // 「字の途中に四角が乗っている」ようにしか見えない (実機で指摘された)。
+  const { shown, width } = noteTag(note);
   return element(
     'g',
     { class: 'cf-chip cf-note-mark', 'data-part': note.handle, 'data-line': note.line },
-    element('rect', {
-      x: num(left), y: num(top), width: num(PITCH * 0.62), height: num(PITCH * 0.34), rx: 3,
+    // 切った跡が `…` で残るので、**全文は乗せれば読める**ようにしておく。
+    element('title', {}, escapeMarkup(note.kind === 'text' ? note.text : note.kind))
+    + element('rect', {
+      x: num(left), y: num(top), width: num(width), height: num(NOTE_HEIGHT), rx: 3,
       class: 'cf-note-tag',
     })
-    + svgText(left + PITCH * 0.31, top + PITCH * 0.26, fit(shown, 8), {
-      anchor: 'middle', class: 'cf-note-text', 'font-size': '9',
+    + svgText(left + NOTE_PAD, top + NOTE_HEIGHT * 0.72, shown, {
+      anchor: 'start', class: 'cf-note-text', 'font-size': num(NOTE_FONT),
     }),
   );
 }
@@ -283,7 +320,9 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE): string {
     return '<p class="cf-note">フェンスを読めません。エラーを直すとマップが出ます。</p>';
   }
 
-  const width = x(map.cols - 1) + EDGE;
+  // **札のぶんまで画布を広げる。** 右端に近い注釈は、升目の幅だけで切ると
+  // 札が縁で切れて読めない (字に合わせて伸びるようにして初めて出た)。
+  const width = Math.max(x(map.cols - 1) + EDGE, ...map.notes.map((note) => noteRight(note) + EDGE));
   const height = y(map.rows - 1) + EDGE;
   const nudges = nudgesOf(map.chips);
 

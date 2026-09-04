@@ -7,15 +7,15 @@ import { drawGlyph, glyphOf } from './mapGlyphs.ts';
  * 置く部品を選ぶパレット。**core が組む** — 何が置けるかは部品の表そのもので、
  * webview 側に写しを持つと種類を足したときに片方が古くなる。
  *
- * 形はマップと同じ似顔絵 (`mapGlyphs.ts`)。**図の記号とは競わせない**
- * (記号の正確さは TeX の仕事)。代表 12 種をアイコンで出し、残りは検索で引く —
- * 77 種を並べても選べないし、よく使うものは 10 ほどしかない。
+ * 形はマップと同じ記号 (`mapGlyphs.ts`)。**回路図になるべく寄せてある**が、
+ * 正確さそのものは TeX の仕事。よく使う 12 種を絵だけの並びで先に出し、
+ * 残りは名前の前に記号を添えた一覧から引く — 77 種を絵だけで並べても選べない。
  */
 
-/** アイコンに出す代表。**似顔絵の形が 12 通り**なので 1 つずつ選ぶ。 */
+/** 絵だけの並びに出す代表。**置く回数が多い順**で、形の数とは別に選ぶ。 */
 const FEATURED: readonly string[] = [
-  'resistor', 'capacitor', 'inductor', 'diode', 'vsource', 'switch',
-  'voltmeter', 'ground', 'port', 'vcc', 'short', 'npn',
+  'resistor', 'capacitor', 'inductor', 'diode', 'led', 'vsource',
+  'switch', 'npn', 'opamp', 'ground', 'port', 'vcc',
 ];
 
 /** 2 端子か (交点から交点へドラッグする。ほかは 1 回の押しで置く)。 */
@@ -48,7 +48,8 @@ function icon(type: string): string {
     : element('text', { class: 'cf-mark', x: 0, y: 3, 'text-anchor': 'middle' }, escapeMarkup(glyph.mark));
   return element(
     'svg',
-    { class: 'cf-icon', viewBox: '-14 -10 28 20' },
+    // 記号が縁で削れないだけの余白を取る (反転の丸と LED の矢が端に届く)。
+    { class: 'cf-icon', viewBox: '-15 -11 30 22' },
     (twoEnds(type) ? LEADS : '') + shape + mark,
   );
 }

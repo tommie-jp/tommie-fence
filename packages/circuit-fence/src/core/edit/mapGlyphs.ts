@@ -1,42 +1,68 @@
 import { element } from 'fence-kit';
 
 /**
- * マップに描く部品の形。**図の記号ではなく「掴むための似顔絵」**で、
- * 正確さは TeX (circuitikz) の仕事。ここが競うと、記号を 1 つ足すたびに
- * 2 か所を直す羽目になる。
+ * マップに描く部品の形。**回路図の記号になるべく寄せた似顔絵**で、
+ * 正確さそのものは TeX (circuitikz) の仕事。掴むための升目なので、
+ * 細い線や規格ごとの差までは追わない。
  *
- * だから**代表形 + 汎用形**にする。部品の種類は 100 を超えるが、描き分けるのは
- * 「どれがどこにいるか掴める」ために要る分だけ。表に無い種類は箱に落ちる
- * (名前は箱の中に出るので、どの部品かは分かる)。
+ * **以前は「代表形 + 箱」だった** (77 種のうち 40 種が箱)。実機で
+ * 「描画する部品は回路図となるべく同じ図形にする」と言われて寄せた。
+ * 掴むときに読むのは形なので、箱に名前を書くより形が似ているほうが速い。
+ *
+ * それでも**描き分けるのは形が違うところまで**にする。`schottky` と `diode`、
+ * `npn` と `pnp` のように、細部だけが違うものは同じ形に落ちる (その差は図が言う)。
+ * 表に無い種類は箱になる — DIP のような IC は箱が正しい姿でもある。
  *
  * 形は原点を中心に描く。2 端子は呼ぶ側が線の向きへ回すので、
- * **上下の非対称は意味を持たせない** (回すと下向きになる)。
+ * **上下の非対称に意味を持たせない** (回すと下向きになる)。
+ * 例外は `thyristor` のゲートで、実物が非対称なので回ると上下が入れ替わる。
  */
 
 export type GlyphName =
-  | 'resistor' | 'capacitor' | 'inductor' | 'diode' | 'source' | 'switch' | 'meter'
+  | 'resistor' | 'resistor-var' | 'capacitor' | 'ecap' | 'inductor'
+  | 'diode' | 'led' | 'zener' | 'thyristor'
+  | 'source' | 'switch' | 'switch-nc' | 'spdt' | 'meter'
+  | 'crystal' | 'fuse' | 'lamp' | 'speaker' | 'mic' | 'transformer'
+  | 'bjt' | 'fet' | 'opamp'
+  | 'and' | 'and-inv' | 'or' | 'or-inv' | 'xor' | 'xor-inv' | 'buffer' | 'buffer-inv'
   | 'ground' | 'port' | 'supply' | 'short' | 'box';
 
 /** 描く形と、中に入れる 1 文字 (計器の A・V など)。 */
 export type Glyph = { readonly name: GlyphName; readonly mark: string | null };
 
-/** 代表形に寄せる表。ここに無い種類は箱になる。 */
+/** 記号に寄せる表。ここに無い種類は箱になる。 */
 const SHAPES: Record<string, GlyphName> = {
-  resistor: 'resistor', 'resistor-var': 'resistor', potentiometer: 'resistor',
-  photoresistor: 'resistor', thermistor: 'resistor', varistor: 'resistor',
-  capacitor: 'capacitor', ecap: 'capacitor', varicap: 'capacitor',
-  inductor: 'inductor',
-  diode: 'diode', led: 'diode', zener: 'diode', schottky: 'diode',
-  photodiode: 'diode', diac: 'diode',
+  resistor: 'resistor', varistor: 'resistor',
+  'resistor-var': 'resistor-var', potentiometer: 'resistor-var',
+  photoresistor: 'resistor-var', thermistor: 'resistor-var',
+  'thermistor-ntc': 'resistor-var', 'thermistor-ptc': 'resistor-var',
+  capacitor: 'capacitor', varicap: 'capacitor', ecap: 'ecap',
+  inductor: 'inductor', transformer: 'transformer',
+  diode: 'diode', schottky: 'diode', photodiode: 'diode', diac: 'diode',
+  led: 'led', zener: 'zener', thyristor: 'thyristor', triac: 'thyristor',
   vsource: 'source', sine: 'source', square: 'source', triangle: 'source',
   isource: 'source', battery: 'source', solar: 'source',
   switch: 'switch', button: 'switch', reed: 'switch',
+  'switch-nc': 'switch-nc', 'button-nc': 'switch-nc', spdt: 'spdt',
   ammeter: 'meter', voltmeter: 'meter', ohmmeter: 'meter',
   wattmeter: 'meter', galvanometer: 'meter', detector: 'meter',
+  crystal: 'crystal', fuse: 'fuse', lamp: 'lamp', speaker: 'speaker', mic: 'mic',
+  npn: 'bjt', pnp: 'bjt',
+  nmos: 'fet', pmos: 'fet', njfet: 'fet', pjfet: 'fet',
+  'nmos-e': 'fet', 'pmos-e': 'fet', 'nmos-d': 'fet', 'pmos-d': 'fet',
+  nigbt: 'fet', pigbt: 'fet',
+  opamp: 'opamp',
+  and: 'and', nand: 'and-inv',
+  or: 'or', nor: 'or-inv',
+  xor: 'xor', xnor: 'xor-inv',
+  buffer: 'buffer', not: 'buffer-inv',
   ground: 'ground', port: 'port', vcc: 'supply', vee: 'supply', short: 'short',
 };
 
-/** 計器の丸に入れる字。**同じ丸を字で描き分ける** (形を 6 つ持たない)。 */
+/**
+ * 記号の中に置く字。**同じ丸を字で描き分ける** (計器の形を 6 つ持たない)。
+ * 論理ゲートには字を入れない — 図が背の形で描き分けているので、こちらも形で分ける。
+ */
 const MARKS: Record<string, string> = {
   ammeter: 'A', voltmeter: 'V', ohmmeter: 'Ω',
   wattmeter: 'W', galvanometer: 'G', detector: 'D',
@@ -61,17 +87,72 @@ const box = (width: number, height: number): string =>
     class: 'cf-glyph', x: -width / 2, y: -height / 2, width, height, rx: 2,
   });
 
-/** 丸に入れる字。**字は回さない**ので、呼ぶ側が回した中では使わない。 */
+/** 反転の丸 (NAND・NOR・NOT の出口)。**これが有る無しが唯一の違い**。 */
+const bubble = (cx: number): string =>
+  element('circle', { class: 'cf-glyph', cx, cy: 0, r: 2.5 });
+
 const SHAPE: Record<GlyphName, () => string> = {
-  resistor: () => box(BODY, 12),
+  // 折れ線。circuitikz の既定 (米国式) と同じ姿にする。
+  resistor: () => path('M-10,0 L-8.3,-5 L-5,5 L-1.7,-5 L1.7,5 L5,-5 L8.3,5 L10,0'),
+  // 可変・感光・感温。折れ線を斜めの矢が貫く。
+  'resistor-var': () =>
+    `${SHAPE.resistor()}${path('M-8,8 L8,-8 M8,-8 L3.5,-7 M8,-8 L7,-3.5')}`,
   // 極板 2 枚。間を空けるのが「切れている」ことの目印。
   capacitor: () => path('M-3,-9 L-3,9 M3,-9 L3,9'),
+  // 電解。片方が曲がった極板 (向きのある部品)。
+  ecap: () => path('M-3,-9 L-3,9 M3.5,-9 q5,9 0,18'),
   inductor: () => path('M-12,0 a4,4 0 0 1 8,0 a4,4 0 0 1 8,0 a4,4 0 0 1 8,0'),
+  // 2 つの巻線と鉄心。空芯ではないので芯の 2 本を引く。
+  transformer: () =>
+    path('M-7,-9 a4.5,4.5 0 0 0 0,9 a4.5,4.5 0 0 0 0,9'
+      + ' M7,-9 a4.5,4.5 0 0 1 0,9 a4.5,4.5 0 0 1 0,9'
+      + ' M-1.5,-9 L-1.5,9 M1.5,-9 L1.5,9'),
   diode: () => `${path('M-6,-7 L6,0 L-6,7 Z')}${path('M6,-7 L6,7')}`,
+  // 発光。外へ出る 2 本の矢。
+  led: () => `${SHAPE.diode()}${path('M0,-6 L4,-10 M4,-10 L1.4,-9.5 M4,-10 L3.5,-7.4'
+    + ' M4,-4 L8,-8 M8,-8 L5.4,-7.5 M8,-8 L7.5,-5.4')}`,
+  // ツェナー。棒の両端が折れる。
+  zener: () => `${path('M-6,-7 L6,0 L-6,7 Z')}${path('M9,-10 L6,-7 L6,7 L3,10')}`,
+  // サイリスタ。棒からゲートが 1 本 (実物が上下非対称)。
+  thyristor: () => `${SHAPE.diode()}${path('M6,-2 L12,-8')}`,
   source: () => circle(9),
   // 開いた接点。閉じた形にすると「切れる部品」に見えない。
   switch: () => path('M-9,0 L5,-8'),
+  // b 接点。閉じたまま、開く先を短い棒で示す。
+  'switch-nc': () => path('M-9,0 L9,0 M7,-7 L7,-1'),
+  // 切り替え。1 つの極から 2 つの接点へ。
+  spdt: () => path('M-9,0 L5,-6 M7,-6 L10,-6 M7,6 L10,6'),
   meter: () => circle(9),
+  // 水晶。2 枚の極板に挟まれた板。
+  crystal: () => `${path('M-6,-9 L-6,9 M6,-9 L6,9')}${box(6, 14)}`,
+  // ヒューズ。線の上の細い箱 (図と同じで、箱を線は貫かない)。
+  fuse: () => box(16, 8),
+  // ランプ。丸に斜め十字。
+  lamp: () => `${circle(8)}${path('M-5.7,-5.7 L5.7,5.7 M5.7,-5.7 L-5.7,5.7')}`,
+  // スピーカー。線の上の振動板と、その上に開くホーン。
+  speaker: () => path('M-7,-4 L7,-4 L7,4 L-7,4 Z M-4,-4 L-7,-10 L7,-10 L4,-4'),
+  // マイク。線に丸が載り、線が丸の底を塞ぐ。
+  mic: () => element('circle', { class: 'cf-glyph', cx: 0, cy: -4, r: 6 })
+    + path('M-6,2 L6,2'),
+  // バイポーラ。**丸は付かない** (図が付けていない)。ベースの棒・2 本の足・
+  // エミッタの矢。npn と pnp の違いは矢の向きだけなので、この大きさでは分けない。
+  bjt: () => path('M-13,0 L-4,0 M-4,-7 L-4,7 M-4,-3 L6,-9 M-4,3 L6,9'
+    + ' M6,9 L2.2,7.9 M6,9 L4.1,5.3'),
+  // 電界効果。ゲートの棒とチャネルの棒が離れている (絶縁ゲート)。
+  fet: () => path('M-13,0 L-7,0 M-7,-7 L-7,7 M-3.5,-7 L-3.5,7'
+    + ' M-3.5,-5 L6,-5 L6,-9 M-3.5,5 L6,5 L6,9'),
+  // 演算増幅器。出口を向いた三角。
+  opamp: () => path('M-7,-9 L8,0 L-7,9 Z'),
+  // 論理ゲート。**背の形で分ける** (図と同じ)。AND は平ら、OR は反り、
+  // XOR は反りがもう 1 本。反転はどれも出口の丸。
+  and: () => path('M-8,-9 L0,-9 A9,9 0 0 1 0,9 L-8,9 Z'),
+  'and-inv': () => `${SHAPE.and()}${bubble(11.5)}`,
+  or: () => path('M-8,-9 Q-3,0 -8,9 Q2,9 9,0 Q2,-9 -8,-9 Z'),
+  'or-inv': () => `${SHAPE.or()}${bubble(11.5)}`,
+  xor: () => `${SHAPE.or()}${path('M-11.5,-9 Q-6.5,0 -11.5,9')}`,
+  'xor-inv': () => `${SHAPE.xor()}${bubble(11.5)}`,
+  buffer: () => path('M-7,-9 L8,0 L-7,9 Z'),
+  'buffer-inv': () => `${SHAPE.buffer()}${bubble(10.5)}`,
   // 大地。3 本の棒が下へ短くなる。
   ground: () => path('M0,-6 L0,0 M-8,0 L8,0 M-5,4 L5,4 M-2,8 L2,8'),
   port: () => circle(4, 'cf-glyph cf-glyph-open'),
