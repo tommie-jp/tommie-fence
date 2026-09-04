@@ -35,8 +35,15 @@ const setText = (selector: string, text: string): void => {
 
 // ---------------------------------------------------------------- ズーム・パン
 
-/** 図の見え方。**組み直しても保つ** (変形は図の外側の箱に掛ける)。 */
-const view = { zoom: 1, x: 0, y: 0 };
+/**
+ * 図の見え方。**組み直しても保つ。**
+ *
+ * **動かすのはスクロールで、変形ではない。** 平行移動を `transform` で掛けると
+ * 箱の中身は動くが**大きさが変わらない**ので、ブラウザにスクロールバーを
+ * 出す手がかりが無い。図の外側の箱を拡大の分だけ広げて、はみ出したぶんを
+ * ブラウザに送らせる (実機で「スクロールバーを常に出す」と頼まれた)。
+ */
+const view = { zoom: 1 };
 const ZOOM_MIN = 0.25;
 const ZOOM_MAX = 8;
 const WHEEL_STEP = 1.1;
@@ -44,20 +51,34 @@ const KEY_STEP = 1.25;
 
 const canvas = (): HTMLElement | null => query<HTMLElement>('.kc-canvas');
 
+/**
+ * 図の幅を決め直す。**100 % は「箱の幅にちょうど」** — 図は幅に合わせて
+ * 描かれるので、そこを起点に倍率を掛ける。スクロールバーの出た分だけ箱が
+ * 狭くなるので、内側の幅 (`clientWidth`) で数える。
+ */
 function applyView(): void {
   const body = query<HTMLElement>('.cf-body');
-  if (body) body.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.zoom})`;
+  const box = canvas();
+  if (body !== null && box !== null) body.style.width = `${box.clientWidth * view.zoom}px`;
   setText('.kc-zoom', `${Math.round(view.zoom * 100)} %`);
 }
 
-/** カーソルの位置を中心にズーム (その点が動かないように平行移動を直す)。 */
+/** カーソルの位置を中心にズーム (その点が動かないようにスクロールを直す)。 */
 function zoomAt(factor: number, cx: number, cy: number): void {
+  const box = canvas();
   const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, view.zoom * factor));
+  if (box === null || next === view.zoom) {
+    view.zoom = next;
+    applyView();
+    return;
+  }
+  // カーソルの下の点を図の座標で覚えておき、広げたあとに同じ点へ戻す。
   const ratio = next / view.zoom;
-  view.x = cx - (cx - view.x) * ratio;
-  view.y = cy - (cy - view.y) * ratio;
+  const [atX, atY] = [box.scrollLeft + cx, box.scrollTop + cy];
   view.zoom = next;
   applyView();
+  box.scrollLeft = atX * ratio - cx;
+  box.scrollTop = atY * ratio - cy;
 }
 
 function zoomAtCenter(factor: number): void {
@@ -67,19 +88,21 @@ function zoomAtCenter(factor: number): void {
 
 /**
  * 全体を出す。**中身の高さに合わせる** — 図は箱の幅に合わせて描かれるので、
- * 100% でも縦がはみ出ることがある (細いパネル、縦長の板)。キャンバスは
- * スクロールしないので、ここで縮めないと下が永久に隠れる。
+ * 100 % でも縦がはみ出ることがある (細いパネル、縦長の板)。スクロールで
+ * 追えるようにはなったが、**一度に全部見たい**ときのための道は残す。
  */
 function fit(): void {
+  const box = canvas();
   view.zoom = 1;
-  view.x = 0;
-  view.y = 0;
   applyView();
+  if (box !== null) {
+    box.scrollLeft = 0;
+    box.scrollTop = 0;
+  }
 
-  const box = canvas()?.getBoundingClientRect();
-  const content = query<HTMLElement>('.cf-body')?.getBoundingClientRect();
-  if (box === undefined || content === undefined || content.height === 0) return;
-  const scale = Math.min(1, box.height / content.height);
+  const height = query<HTMLElement>('.cf-body')?.getBoundingClientRect().height ?? 0;
+  if (box === null || height === 0) return;
+  const scale = Math.min(1, box.clientHeight / height);
   if (scale >= 1) return;
   view.zoom = Math.max(ZOOM_MIN, scale);
   applyView();
@@ -91,7 +114,7 @@ function inCanvas(event: { clientX: number; clientY: number }): { x: number; y: 
   return { x: event.clientX - (box?.left ?? 0), y: event.clientY - (box?.top ?? 0) };
 }
 
-let panning: { x: number; y: number; viewX: number; viewY: number } | null = null;
+let panning: { x: number; y: number; left: number; top: number } | null = null;
 let spaceHeld = false;
 /** `Shift` を押しているか。**引いている線の影を折って見せる**ために持つ。 */
 let shiftHeld = false;
@@ -564,7 +587,10 @@ document.addEventListener('pointerdown', (event) => {
   const onCanvas = target?.closest('.kc-canvas') != null && target?.closest('.kc-chooser') == null;
   // 中ボタン (か Space + 左) でパン。KiCad と同じ。
   if (onCanvas && (event.button === 1 || (event.button === 0 && spaceHeld))) {
-    panning = { x: event.clientX, y: event.clientY, viewX: view.x, viewY: view.y };
+    const box = canvas();
+    panning = {
+      x: event.clientX, y: event.clientY, left: box?.scrollLeft ?? 0, top: box?.scrollTop ?? 0,
+    };
     event.preventDefault();
     return;
   }
@@ -585,9 +611,11 @@ document.addEventListener('pointermove', (event) => {
   // 回すボタンを押す」が効かなくなる (押した時点で対象が消えている)。
   if (elementOf(event)?.closest('.kc-tools') != null) return;
   if (panning !== null) {
-    view.x = panning.viewX + (event.clientX - panning.x);
-    view.y = panning.viewY + (event.clientY - panning.y);
-    applyView();
+    const box = canvas();
+    if (box !== null) {
+      box.scrollLeft = panning.left - (event.clientX - panning.x);
+      box.scrollTop = panning.top - (event.clientY - panning.y);
+    }
     return;
   }
   const under = underAt(event.clientX, event.clientY);
@@ -724,6 +752,9 @@ document.addEventListener('keyup', (event) => {
 // **窓の外へ出たら Space を離したことにする。** 押したまま別のタブへ移ると
 // `keyup` が届かず、戻ってきたあとの左クリックが全部「移動」になる。
 window.addEventListener('blur', () => { spaceHeld = false; shiftHeld = false; panning = null; });
+// **箱が広がったら図も広げ直す。** 幅は px で持っているので、パネルを広げても
+// 100 % のままだと図が箱の中で右に余る。
+window.addEventListener('resize', () => { applyView(); });
 document.addEventListener('visibilitychange', () => {
   spaceHeld = false;
   shiftHeld = false;

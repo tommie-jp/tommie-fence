@@ -100,8 +100,10 @@ describe('KiCad の配置', () => {
     expect(html).toContain('class="kc-fit"');
   });
 
-  test('uses a crosshair on the canvas, as KiCad does', () => {
-    expect(html).toContain('.kc-canvas { flex: 1; min-width: 0; position: relative; overflow: hidden; cursor: crosshair; }');
+  test('scrolls the canvas and keeps both bars, so the whole figure is reachable', () => {
+    // **常に出す。** 図が収まっていても場所を空けておくと、拡大したときに
+    // 幅が動かない (実機で頼まれた)。カーソルは KiCad と同じ十字。
+    expect(html).toContain('.kc-canvas { flex: 1; min-width: 0; position: relative; overflow: scroll; cursor: crosshair; }');
   });
 
   test('keeps every hit layer live, since what is under the cursor is read from the stack', () => {

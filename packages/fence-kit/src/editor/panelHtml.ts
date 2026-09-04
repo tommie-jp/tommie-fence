@@ -102,8 +102,10 @@ const STYLE = `
   /* その部品には書けない欄 (1 端子の値、多端子の l=)。消さずに触れなくする。 */
   .cf-field:disabled { opacity: 0.4; }
 
-  .kc-canvas { flex: 1; min-width: 0; position: relative; overflow: hidden; cursor: crosshair; }
-  .cf-body { transform-origin: 0 0; will-change: transform; }
+  /* **スクロールバーは常に出す。** 図が箱に収まっていても場所を空けておくと、
+     拡大したときに幅が動かない (実機で頼まれた)。 */
+  .kc-canvas { flex: 1; min-width: 0; position: relative; overflow: scroll; cursor: crosshair; }
+  .cf-body { width: 100%; }
   /* 図の根 (どのフェンスの SVG も)。ズーム 1 で箱の幅に収める。 */
   .cf-body > svg { display: block; width: 100%; height: auto; user-select: none; touch-action: none; }
   .cf-note { margin: 8px; color: var(--vscode-descriptionForeground); }
