@@ -1,5 +1,5 @@
 import { lookupBoardPart } from 'fence-kit';
-import { REGULATOR_SHAPE } from './tex/shapes.ts';
+import { REGULATOR_SHAPE, SMA_SHAPE } from './tex/shapes.ts';
 import type { BoardPart } from 'fence-kit';
 /**
  * 部品の種類の表。パーサ (どう書けるか) と TeX 生成 (どう描くか) の両方がここを見る。
@@ -179,6 +179,14 @@ export type PartType = {
    * (`AGND` が「A GND」になる。実機で確かめた)。
    */
   readonly pinLabels?: readonly string[];
+  /**
+   * 値を**この足の反対側**に出す (アンカー名で指す)。
+   *
+   * 値は既定では記号の下に出るが、**そこに足がある部品**では線と字に重なる
+   * (レギュレータの GND)。足の側は回すと変わるので、向きの表から数えるのでは
+   * なく**その足がいまどちらにあるか**で決める (実機で回して確かめた)。
+   */
+  readonly valueAwayFrom?: string;
   /**
    * 向きを書ける範囲。**省くと種類で決まる** (多端子は回転も反転も可、
    * それ以外は不可)。表に書くのは既定から外れるものだけ — 実機で字が壊れる
@@ -654,12 +662,24 @@ export const PART_TYPES = {
   buzzer: { kind: 'two-terminal', symbol: 'loudspeaker', ...NO_UNIT },
 
   /**
-   * 同軸コネクタ (SMA)。**circuitikz 1.0 に同軸コネクタの記号が無い**
-   * (`coax` `plug` `socket` `jack` は無く、`bnc` は通るが線しか描かない。
-   * 実機で確かめた)。記号の無いコネクタは**箱に名前**で描くのが回路図の
-   * 慣習なので、素の箱 (`generic`) に `J1` が付く形にする。
+   * 同軸コネクタ (SMA)。**記号はこの拡張が宣言する** (`tex/shapes.ts`) —
+   * circuitikz 1.0 に同軸コネクタの記号が無いため。丸の中に中心導体、
+   * 外周が外皮という回路図の慣習どおりの形。
+   *
+   * **足は 1 が中心導体、2 が外皮** (実体配線図の 2 つと同じ決め方)。
+   * 名前でも書ける。
    */
-  sma: { kind: 'two-terminal', symbol: 'generic', ...NO_UNIT },
+  sma: {
+    kind: 'multi-terminal',
+    symbol: SMA_SHAPE,
+    options: ['draw'],
+    ...NO_UNIT,
+    pins: { '1': 'pin 1', core: 'pin 1', centre: 'pin 1', '2': 'pin 2', gnd: 'pin 2', shield: 'pin 2' },
+    // どちらも中心線に乗る (中心導体は横、外皮は縦)。
+    pinSide: { 'pin 1': 'left', 'pin 2': 'bottom' },
+    // 値は下が外皮の足で塞がっているので上へ。
+    valueAwayFrom: 'pin 2',
+  },
 
   /**
    * 三端子レギュレータ。**記号はこの拡張が宣言する** (`tex/shapes.ts`)。
@@ -670,9 +690,12 @@ export const PART_TYPES = {
     kind: 'multi-terminal',
     symbol: REGULATOR_SHAPE,
     options: ['draw', 'font=\\scriptsize'],
-    // **型番は箱の外。** 中には足の名前 3 つが入るので、型番まで入れると
-    // `OUT` と重なる (実機で焼いて決めた)。トランジスタと同じで記号の下に出る。
+    // **型番は箱の外の上。** 中には足の名前 3 つが入るので、型番まで入れると
+    // `OUT` と重なる。下はグラウンドの足で塞がっているので上へ出す
+    // (どちらも実機で焼いて決めた)。
     valueInside: false,
+    // 下はグラウンドの足で塞がっているので、その反対側へ出す。
+    valueAwayFrom: 'pin 2',
     ...NO_UNIT,
     pins: {
       in: 'pin 1', '1': 'pin 1',

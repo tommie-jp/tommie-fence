@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { sipShapeName, sipShapeTex } from './shapes.ts';
+import { regulatorShapeTex, sipShapeName, sipShapeTex, smaShapeTex } from './shapes.ts';
 
 /**
  * ピンヘッダの記号。**circuitikz に無いので自分で宣言する** — その宣言が
@@ -42,5 +42,37 @@ describe('sipShapeTex', () => {
         .exec(sipShapeTex(pins).join('\n'))?.[1] ?? NaN);
 
     expect(Math.abs(heightOf(8))).toBeGreaterThan(Math.abs(heightOf(4)));
+  });
+});
+
+describe('regulatorShapeTex / smaShapeTex', () => {
+  test('gives the regulator three legs on three sides, as the schematic draws it', () => {
+    const tex = regulatorShapeTex().join('\n');
+
+    for (const at of [1, 2, 3]) expect(tex).toContain(`\\anchor{pin ${at}}`);
+    expect(tex).toContain('\\anchor{south}');
+  });
+
+  test('draws the coax connector as a circle with the core in the middle', () => {
+    // 実機で「SMA コネクタの回路図が正しくない」。素の箱ではなく、丸の中に
+    // 中心導体、外周が外皮という慣習どおりの形にした。
+    const tex = smaShapeTex().join('\n');
+
+    expect(tex).toContain('\\pgfpathcircle');
+    // 中心導体は塗り潰した点。
+    expect(tex).toContain('\\pgfusepath{fill}');
+    // 1 が中心導体 (左)、2 が外皮 (下)。
+    expect(tex).toContain('\\anchor{pin 1}');
+    expect(tex).toContain('\\anchor{pin 2}');
+  });
+
+  test('declares the edge anchors, so a value can hang off the symbol', () => {
+    // 宣言しないと `at (U.south)` が中心に落ちる (実機で気づいた)。
+    for (const shape of [regulatorShapeTex(), smaShapeTex(), sipShapeTex(4)]) {
+      const tex = shape.join('\n');
+      for (const edge of ['north', 'south', 'east', 'west']) {
+        expect(tex).toContain(`\\anchor{${edge}}`);
+      }
+    }
   });
 });

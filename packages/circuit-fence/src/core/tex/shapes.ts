@@ -131,3 +131,48 @@ export function regulatorShapeTex(): string[] {
     '\\makeatother',
   ];
 }
+
+/**
+ * 同軸コネクタ (`sma`)。**丸の中に中心導体、外周が外皮**という回路図の
+ * 慣習どおりの形。circuitikz 1.0 に同軸コネクタの記号が無いので宣言する
+ * (`coax` `plug` `socket` `jack` は無く、`bnc` は通るが線しか描かない。
+ * 実機で確かめた)。
+ *
+ * 足は 2 本 — **1 が中心導体 (左から入る)、2 が外皮 (下へ出る)**。
+ * 実物の SMA は外皮が 4 本足だが、図とネットリストで意味を持つのは
+ * 「どこが中心でどこが外皮か」の 2 つだけ (実体配線図の 2 つと同じ決め方)。
+ */
+const SMA_RADIUS = 0.3;
+const SMA_LEAD = 0.4;
+const SMA_CORE = 0.07;
+
+export const SMA_SHAPE = 'smacoax';
+
+export function smaShapeTex(): string[] {
+  const [r, lead] = [SMA_RADIUS, SMA_LEAD];
+  return [
+    '\\makeatletter',
+    `\\pgfdeclareshape{${SMA_SHAPE}}{`,
+    '  \\anchor{center}{\\pgfpointorigin}',
+    '  \\anchor{text}{\\pgfpointorigin}',
+    ...edgeAnchors(r, r),
+    // 1 = 中心導体 (左)、2 = 外皮 (下)。
+    `  \\anchor{pin 1}{\\pgfpoint{${num(-r - lead)}cm}{0cm}}`,
+    `  \\anchor{pin 2}{\\pgfpoint{0cm}{${num(-r - lead)}cm}}`,
+    `  \\anchor{bpin 1}{\\pgfpoint{${num(-r)}cm}{0cm}}`,
+    `  \\anchor{bpin 2}{\\pgfpoint{0cm}{${num(-r)}cm}}`,
+    '  \\backgroundpath{',
+    `    \\pgfpathcircle{\\pgfpointorigin}{${num(r)}cm}`,
+    // 中心導体は丸の真ん中まで引いて、先を塗り潰した点にする。
+    `    \\pgfpathmoveto{\\pgfpoint{${num(-r - lead)}cm}{0cm}}\\pgfpathlineto{\\pgfpointorigin}`,
+    // 外皮は丸の縁まで (中心には触れない)。
+    `    \\pgfpathmoveto{\\pgfpoint{0cm}{${num(-r - lead)}cm}}\\pgfpathlineto{\\pgfpoint{0cm}{${num(-r)}cm}}`,
+    '  }',
+    '  \\foregroundpath{',
+    `    \\pgfpathcircle{\\pgfpointorigin}{${num(SMA_CORE)}cm}`,
+    '    \\pgfusepath{fill}',
+    '  }',
+    '}',
+    '\\makeatother',
+  ];
+}

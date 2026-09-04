@@ -3,7 +3,7 @@ import { DEFAULT_PITCH, cornerOf, formatAddress, texNameOfAddress, toPoint } fro
 import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
-import { isTurned, lookupPartType, optionsFor, pinPlaces, symbolFor } from '../parts.ts';
+import { isTurned, lookupPartType, optionsFor, pinPlaces, pinSideOf, symbolFor } from '../parts.ts';
 import type { PartType, SourceInner, Turn } from '../parts.ts';
 import { EMPTY_STYLE } from '../parser/style.ts';
 import { cellOf as addressOf, nodeNameOf, texNameOfEndpoint } from '../types.ts';
@@ -17,7 +17,7 @@ import { NOTE_MARK_TEXT, noteFontTex, texColorOf } from '../notes.ts';
 import { escapeTex, hasUnicode } from './escape.ts';
 import { isMathLabel, mathInnerOf, mathLabelTex } from './mathLabel.ts';
 import { num } from './num.ts';
-import { regulatorShapeTex, sipShapeTex } from './shapes.ts';
+import { regulatorShapeTex, sipShapeTex, smaShapeTex } from './shapes.ts';
 
 /**
  * 生成した TeX と、その行が元の YAML の何行目から来たかの対応。
@@ -169,9 +169,12 @@ function sipShapesFor(circuit: Circuit): string[] {
   }
   const declared = [...sizes].sort((a, b) => a - b).flatMap((pins) => sipShapeTex(pins));
   // 三端子レギュレータも自分で宣言した形。**使うときだけ**書く。
-  return circuit.parts.some((part) => part.type === 'regulator')
+  const withReg = circuit.parts.some((part) => part.type === 'regulator')
     ? [...declared, ...regulatorShapeTex()]
     : declared;
+  return circuit.parts.some((part) => part.type === 'sma')
+    ? [...withReg, ...smaShapeTex()]
+    : withReg;
 }
 
 const FOOTER = ['\\end{circuitikz}', '\\end{document}'];
@@ -510,6 +513,43 @@ function underAnchor(turn: Turn): string {
 }
 
 /**
+ * 反対の辺。2 つに使う:
+ *
+ * - **値を記号の上に出す**とき、下に足がある部品 (レギュレータの GND) の
+ *   逃がし先を決める
+ * - 字を**外へ**向けるとき、掛けた辺の反対側に寄せる (`at (U.south)` に
+ *   `anchor=north` で字が下に出る)。**回すと辺が変わる**ので、
+ *   `north` の決め打ちだと回した部品で字が記号に重なる
+ */
+const OPPOSITE: Readonly<Record<string, string>> = {
+  south: 'north', north: 'south', east: 'west', west: 'east',
+};
+
+/** 辺の名前を、TikZ のアンカー名に直す。 */
+const ANCHOR_OF: Readonly<Record<string, string>> = {
+  left: 'west', right: 'east', top: 'north', bottom: 'south',
+};
+
+/**
+ * 値を**塞がっている足の反対側**へ出すときの、点と寄せ。
+ *
+ * **点は記号の中の向きで、寄せは画面の向きで数える。** アンカーは節点ごと
+ * 回るので、記号の中で「足の反対側」を指しておけば、回しても空いている側に
+ * 付いてくる。字のほうは回らないので、**回した先で足がどちら側にあるか**を
+ * 見て、その反対へ押し出す (実機で 3 つの向きを焼いて確かめた)。
+ */
+function awayFrom(type: PartType, anchor: string, turn: Turn): {
+  readonly place: string; readonly outward: string;
+} | null {
+  const inShape = pinSideOf(type, anchor);
+  const onScreen = pinSideOf(type, anchor, turn);
+  if (inShape === null || onScreen === null) return null;
+
+  const place = OPPOSITE[ANCHOR_OF[inShape] ?? 'south'] ?? 'north';
+  return { place, outward: ANCHOR_OF[onScreen] ?? 'north' };
+}
+
+/**
  * 部品を置ける位置を見せるグリッド。ブレッドボードと同じで、
  * 行は左に英字、列は上に数字を書く。
  *
@@ -665,11 +705,19 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
   const node = `\\node[${options.join(', ')}] (${name}) at (${at}) {${inside}};`;
   // それ以外の型番は記号の下に来るアンカーに掛ける。`label=below:` はノードの
   // (空の) 文字を基準にするので、記号の体の上に字が乗る (実機で確認)。
+  // **下が塞がっている部品は上に出す。** レギュレータは下がグラウンドの足で、
+  // 値を下に置くと足の線と `GND` の字に重なる (実機で指摘された)。
+  const blocked = type?.valueAwayFrom;
+  const free = type !== null && blocked !== undefined ? awayFrom(type, blocked, part.turn) : null;
+  const place = free?.place ?? underAnchor(part.turn);
+  // **寄せを変えるのは、逃がし先を持つ部品だけ。** ほかは今までどおり
+  // `north` に寄せる (回した先で下に来るアンカーを選ぶ形で実機で確かめてある)。
+  const outward = free?.outward ?? 'north';
   const number = annotation === null
     ? []
     : type?.valueInside === true
       ? (boxTurned ? [`\\node[font=\\scriptsize] at (${name}.center) {${annotation}};`] : [])
-      : [`\\node[font=\\scriptsize, anchor=north] at (${name}.${underAnchor(part.turn)}) {${annotation}};`];
+      : [`\\node[font=\\scriptsize, anchor=${outward}] at (${name}.${place}) {${annotation}};`];
   if (symbol === 'plain amp') return [node, ...number, ...amplifierSigns(name, part.turn)];
 
   return [node, ...number, ...pinNameNodes(part, name, type, target)];
