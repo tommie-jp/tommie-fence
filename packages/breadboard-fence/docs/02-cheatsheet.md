@@ -55,8 +55,8 @@ notes:                 # 任意。図に重ねる印と字
 ```text
 2 本足   resistor capacitor led diode buzzer crystal inductor
          photoresistor thermistor thermistor-ntc thermistor-ptc varistor
-         zener schottky photodiode varicap diac reed fuse lamp
-3 本足   transistor potentiometer slide-switch thyristor triac
+         zener schottky photodiode varicap diac reed fuse lamp sma
+3 本足   transistor potentiometer slide-switch thyristor triac regulator
 まとまり  button dipN (4〜40 の偶数) sipN (2〜40)
 ボード    pico pico-w pico2 pico2-w
 ボード外  device
@@ -67,7 +67,8 @@ notes:                 # 任意。図に重ねる印と字
 ```text
 capacitor/ceramic  capacitor/film  capacitor/electrolytic  capacitor/tantalum
 led/3mm  led/5mm
-transistor/to92  transistor/to220  transistor/sot23-dip  thyristor/…  triac/…
+transistor/to92  transistor/to220  transistor/sot23-dip  thyristor/…  triac/…  regulator/…
+sma/male  sma/female
 crystal/hc49  crystal/cylinder
 resistor/quarter  resistor/half        diode/do35  diode/do41  (zener/…  schottky/…)
 inductor/axial  inductor/radial        potentiometer/trimmer  potentiometer/knob

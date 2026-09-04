@@ -67,7 +67,9 @@ wires:
     `thermistor-ptc` / `varistor`
   - 2 本足 (ダイオードの仲間) — `zener` / `schottky` / `photodiode` / `varicap` / `diac`
   - 2 本足 (ガラス封止) — `reed` / `fuse` / `lamp`
-  - 3 本足 — `transistor` / `potentiometer` / `slide-switch` / `thyristor` / `triac`
+  - 2 本足 (コネクタ) — `sma`
+  - 3 本足 — `transistor` / `potentiometer` / `slide-switch` / `thyristor` / `triac` /
+    `regulator`
   - まとまった足 — `button` / `dipN` / `sipN`
   - マイコンボード — `pico` / `pico-w` / `pico2` / `pico2-w`
   - ボード外の機器 — `device`
@@ -574,6 +576,8 @@ parts:
 | `transistor` | `to92` / `to220` / `sot23-dip` | 丸い胴 (既定) / 放熱タブつきの角い胴 / 面実装を載せた変換基板 |
 | `thyristor` | `to92` / `to220` | 同上 |
 | `triac` | `to92` / `to220` | 同上 |
+| `regulator` | `to92` / `to220` | 1A クラスは TO-220、小電流は TO-92 |
+| `sma` | `male` / `female` | オスは中心にピン、メスは中心が穴 |
 | `crystal` | `hc49` / `cylinder` | 平たい缶 (既定) / 細い円筒 |
 | `resistor` | `quarter` / `half` | 1/4W (既定) / 1/2W。実物なりに胴が大きくなる |
 | `diode` | `do35` / `do41` | 小信号のガラス管 / 1A クラスの黒いプラスチック |

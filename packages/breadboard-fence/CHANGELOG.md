@@ -5,6 +5,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- **`regulator` (三端子レギュレータ) と `sma` (同軸コネクタ) を置けるように
+  なった。** perfboard にあって breadboard に無かった 2 つで、どちらも
+  実物としてブレッドボードに挿せる部品。姿は `to92` / `to220`、
+  `male` / `female` から選ぶ。
+
+  **板の縁に載せる横置きの SMA (`male-edge`) は perfboard だけ** —
+  ブレッドボードに縁は無い。
+
 ### Changed
 
 - **1 つの殻で複数のフェンスを扱えるようになった** (`createSession` に

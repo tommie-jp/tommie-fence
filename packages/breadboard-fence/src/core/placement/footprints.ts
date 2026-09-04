@@ -26,9 +26,16 @@ const TWO_LEAD_TYPES = new Set([
   'zener', 'schottky', 'photodiode', 'varicap', 'diac',
   // ガラス管・玉に封じた部品。
   'reed', 'fuse', 'lamp',
+  // 同軸コネクタ。**足は中心導体と GND の 2 本**で書く (実物は GND が 4 本だが、
+  // 図とネットリストで意味を持つのは「どこが中心でどこが GND か」の 2 つ)。
+  // **板の縁に載せる横置きは perfboard だけ** — ブレッドボードに縁は無い。
+  'sma',
 ]);
 const THREE_LEAD_TYPES = new Set([
   'transistor', 'potentiometer', 'slide-switch', 'thyristor', 'triac',
+  // 三端子レギュレータ。**perfboard と同じ綴り**で置けるようにしてある
+  // (同じ回路を 2 つのフェンスで書くときに語彙を 1 つで済ませるため)。
+  'regulator',
 ]);
 /** タクトスイッチ。v0.2.0 の `pushbutton` は略記として `button` に畳んでから来る。 */
 const SWITCH_TYPES = new Set(['button']);

@@ -21,9 +21,9 @@ export type PlaceableName =
   | 'resistor' | 'capacitor' | 'led' | 'diode' | 'buzzer' | 'crystal' | 'inductor'
   | 'photoresistor' | 'thermistor' | 'thermistor-ntc' | 'thermistor-ptc' | 'varistor'
   | 'zener' | 'schottky' | 'photodiode' | 'varicap' | 'diac'
-  | 'reed' | 'fuse' | 'lamp'
+  | 'reed' | 'fuse' | 'lamp' | 'sma'
   | 'transistor' | 'potentiometer' | 'slide-switch' | 'thyristor' | 'triac'
-  | 'button';
+  | 'regulator' | 'button';
 
 export const PLACEABLE = placeableTypes;
 
@@ -82,6 +82,8 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   'slide-switch': 'スライドスイッチ',
   thyristor: 'サイリスタ (SCR)',
   triac: 'トライアック',
+  sma: 'SMA コネクタ',
+  regulator: '三端子レギュレータ',
   button: 'タクトスイッチ',
 };
 
@@ -116,6 +118,8 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   'slide-switch': 'SW',
   thyristor: 'T',
   triac: 'T',
+  sma: 'J',
+  regulator: 'U',
   button: 'SW',
 };
 

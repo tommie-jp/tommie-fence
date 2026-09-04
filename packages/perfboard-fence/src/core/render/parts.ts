@@ -1,6 +1,6 @@
 import {
   REAL_INK, drawBody, drawPackage, drawsOwnLeads, element, fit, hasBody, num,
-  packageHalfWidth, packageReach, svgText,
+  packageHalfWidth, packageReach, smaBody as drawSmaBody, svgText,
 } from 'fence-kit';
 import type { BodyInk, BodyPart } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
@@ -141,30 +141,11 @@ const SMA_SOCKET = '#2b2f33';
 const SMA_LABEL = '#2b2f33';
 
 /**
- * SMA コネクタ。**胴は足の間隔で変わらない**金物なので、六角の胴 (6.35mm) の
- * 大きさで描く。オスは中心にピンが立ち、メスは中心が穴 — **姿で描き分ける**ので、
- * 図を見た人が合う相手を取り違えない。
+ * SMA コネクタ (上向き)。**姿は fence-kit と共通** — breadboard にも同じ
+ * コネクタを置けるようにするために引き上げた。板の縁に載せる横置き
+ * (`smaEdgeBody`) だけはこちらに残る — 縁の無い板には置き場が無い。
  */
-function smaBody(part: PlacedPart): string {
-  const half = SMA_SIZE / 2;
-  const shell = element('rect', {
-    x: num(-half), y: num(-half), width: num(SMA_SIZE), height: num(SMA_SIZE), rx: 6,
-    fill: SMA_METAL, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
-  });
-  // 合わせ面の丸は少し上へ。**胴の下半分は姿の名前 (2 行) の場所**にする。
-  const faceY = -half * 0.34;
-  const barrel = element('circle', {
-    cx: 0, cy: num(faceY), r: num(half * 0.46), fill: SMA_DIELECTRIC,
-    stroke: SMA_METAL_EDGE, 'stroke-width': 1,
-  });
-  const male = part.variant === 'male';
-  const centre = element('circle', {
-    cx: 0, cy: num(faceY), r: num(male ? 4 : 5),
-    fill: male ? SMA_PIN : SMA_SOCKET,
-    ...(male ? {} : { stroke: SMA_METAL_EDGE, 'stroke-width': 1 }),
-  });
-  return `${shell}${barrel}${centre}`;
-}
+const smaBody = (part: PlacedPart): string => drawSmaBody({ type: 'sma', variant: part.variant, pins: [] }, 0);
 
 /**
  * 端面実装 (横置き) の SMA。板の縁に載せて、**首から先を板の外へ出す**形。

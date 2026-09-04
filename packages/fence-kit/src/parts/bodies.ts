@@ -616,7 +616,44 @@ function buzzerBody(part: BodyPart, span: number, ink: BodyInk): string {
  * (ダイオードの仲間・円板の仲間)。実物が見分けにくい部品を図の上だけで
  * 派手に描き分けると、それは実物の情報ではなくなる。
  */
+/**
+ * SMA コネクタの金物。**胴は足の間隔で変わらない** — 六角の胴 (6.35mm) の
+ * 大きさで描く。オスは中心にピンが立ち、メスは中心が穴。**姿で描き分ける**ので、
+ * 図を見た人が合う相手を取り違えない。
+ *
+ * 板の縁に載せる横置きは perfboard だけの形なので、あちらに残してある
+ * (縁が無い breadboard には置き場が無い)。
+ */
+export const SMA_SIZE = 50;
+const SMA_METAL = '#b9bfc6';
+const SMA_METAL_EDGE = '#7f868d';
+const SMA_DIELECTRIC = '#f2f3f5';
+const SMA_PIN = '#d8b64a';
+const SMA_SOCKET = '#2b2f33';
+
+export function smaBody(part: BodyPart, _span: number, ink: BodyInk = REAL_INK): string {
+  const half = SMA_SIZE / 2;
+  const shell = element('rect', {
+    x: num(-half), y: num(-half), width: num(SMA_SIZE), height: num(SMA_SIZE), rx: 6,
+    fill: ink.paint(SMA_METAL), stroke: ink.paint(SMA_METAL_EDGE), 'stroke-width': 1,
+  });
+  // 合わせ面の丸は少し上へ。**胴の下半分は姿の名前 (2 行) の場所**にする。
+  const faceY = -half * 0.34;
+  const barrel = element('circle', {
+    cx: 0, cy: num(faceY), r: num(half * 0.46), fill: ink.paint(SMA_DIELECTRIC),
+    stroke: ink.paint(SMA_METAL_EDGE), 'stroke-width': 1,
+  });
+  const male = part.variant === 'male';
+  const centre = element('circle', {
+    cx: 0, cy: num(faceY), r: num(male ? 4 : 5),
+    fill: ink.paint(male ? SMA_PIN : SMA_SOCKET),
+    ...(male ? {} : { stroke: ink.paint(SMA_METAL_EDGE), 'stroke-width': 1 }),
+  });
+  return `${shell}${barrel}${centre}`;
+}
+
 const BODIES: Record<string, (part: BodyPart, span: number, ink: BodyInk) => string> = {
+  sma: smaBody,
   resistor: resistorBody,
   capacitor: capacitorBody,
   crystal: crystalBody,

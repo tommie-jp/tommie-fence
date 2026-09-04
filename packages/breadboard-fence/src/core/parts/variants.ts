@@ -44,6 +44,11 @@ const VARIANTS: Record<string, readonly string[]> = {
   // サイリスタとトライアックも同じ 2 つのパッケージで売られている。
   thyristor: ['to92', 'to220'],
   triac: ['to92', 'to220'],
+  // レギュレータも同じ 2 つ。1A クラスは TO-220、小電流は TO-92。
+  regulator: ['to92', 'to220'],
+  // オスは中心にピンが立ち、メスは中心が穴。**合う相手を取り違えない**ために
+  // 描き分ける。板の縁に載せる横置き (`male-edge`) は perfboard だけ。
+  sma: ['male', 'female'],
   // 平たい缶 (HC-49) と円筒 (時計用の 32.768kHz などに多い)。輪郭がまるで違う。
   crystal: ['hc49', 'cylinder'],
 };

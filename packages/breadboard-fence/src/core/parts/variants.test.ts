@@ -94,7 +94,7 @@ describe('typesWithVariants', () => {
   test('names the types whose look can be chosen', () => {
     expect(typesWithVariants()).toEqual([
       'capacitor', 'resistor', 'diode', 'zener', 'schottky', 'inductor', 'potentiometer',
-      'led', 'transistor', 'thyristor', 'triac', 'crystal',
+      'led', 'transistor', 'thyristor', 'triac', 'regulator', 'sma', 'crystal',
     ]);
   });
 });
