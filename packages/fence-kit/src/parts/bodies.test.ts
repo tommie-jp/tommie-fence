@@ -31,6 +31,8 @@ describe('drawBody', () => {
       'resistor', 'capacitor', 'led', 'diode', 'zener', 'schottky', 'photodiode', 'varicap', 'diac',
       'crystal', 'inductor', 'buzzer', 'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc',
       'varistor', 'reed', 'fuse', 'lamp',
+      // 回路図にあって板に無かった実物 (52 の docs/21 の手順 7)。
+      'battery', 'solar', 'speaker', 'mic', 'switch', 'switch-nc',
     ];
     const drawn = new Map(types.map((type) => [type, drawBody(part({ type }), 60)]));
 
@@ -44,7 +46,10 @@ describe('drawBody', () => {
 
   test('keeps every mark inside the body it reports, even on the shortest span', () => {
     // 隣り合う穴に挿した部品は胴が短い。はみ出すと板の地や隣の穴の上に乗る。
-    for (const type of ['resistor', 'capacitor', 'diode', 'fuse', 'crystal']) {
+    for (const type of [
+      'resistor', 'capacitor', 'diode', 'fuse', 'crystal',
+      'battery', 'solar', 'speaker', 'mic', 'switch', 'switch-nc',
+    ]) {
       for (const span of [12, 20, 40, 90]) {
         const one = part({ type, value: type === 'resistor' ? '10k' : null });
         const { left, right } = extentOf(drawBody(one, span));

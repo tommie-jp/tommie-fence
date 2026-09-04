@@ -652,6 +652,113 @@ export function smaBody(part: BodyPart, _span: number, ink: BodyInk = REAL_INK):
   return `${shell}${barrel}${centre}`;
 }
 
+/**
+ * 電池ホルダー。**電池そのものではなくホルダーを描く** — 板に載るのは
+ * ホルダーで、電池は差し替えるもの。コイン電池のホルダーは黒い樹脂の台に
+ * 銀色のセルが伏せてあり、片側から金物の爪が伸びる。
+ */
+function batteryBody(part: BodyPart, span: number, ink: BodyInk): string {
+  const radius = Math.min(span * 0.42, 13);
+  const base = element('rect', {
+    x: num(-radius * 1.05), y: num(-radius * 1.05), width: num(radius * 2.1), height: num(radius * 2.1), rx: 2.5,
+    fill: ink.paint('#23272e'), stroke: ink.paint('#12151a'),
+  });
+  const cell = element('circle', {
+    cx: 0, cy: 0, r: num(radius * 0.78), fill: ink.paint('#c9cfd6'), stroke: ink.paint('#8a929c'),
+  });
+  // セルの面の `+`。**極性を書いたときだけ出す** — 実物のホルダーにも
+  // どちらが + かが刻んである。
+  const plus = part.pins.findIndex((pin) => pin.name === '+');
+  const mark = plus === -1
+    ? ''
+    : svgText(0, radius * 0.32, '+', {
+      'font-size': num(radius * 0.9), 'font-weight': 700, fill: ink.paint('#5a6472'),
+    });
+  return base + cell + mark;
+}
+
+/** 太陽電池。**濃紺のセルに銀の集電線**が走るのが実物の見分けどころ。 */
+function solarBody(span: number, ink: BodyInk): string {
+  const width = Math.min(span * 0.7, 40);
+  const height = width * 0.62;
+  const panel = element('rect', {
+    x: num(-width / 2), y: num(-height / 2), width: num(width), height: num(height), rx: 1.5,
+    fill: ink.paint('#16284a'), stroke: ink.paint('#0b1730'),
+  });
+  const bus = [-0.25, 0.25].map((at) => element('line', {
+    x1: num(-width / 2 + 2), y1: num(height * at), x2: num(width / 2 - 2), y2: num(height * at),
+    stroke: ink.paint('#9fb0c8'), 'stroke-width': 1,
+  })).join('');
+  // セルの区切り。実物は細い溝で、これがあるとただの青い板に見えない。
+  const cuts = [-0.22, 0.22].map((at) => element('line', {
+    x1: num(width * at), y1: num(-height / 2 + 1.5), x2: num(width * at), y2: num(height / 2 - 1.5),
+    stroke: ink.paint('#0b1730'), 'stroke-width': 1,
+  })).join('');
+  return panel + bus + cuts;
+}
+
+/**
+ * スピーカー。**ブザーと同じ黒い丸だが、中身が違う** — ブザーは真ん中に
+ * 小さな穴が 1 つ空くだけで、スピーカーは振動板 (コーン) とその中心の
+ * ダストキャップが見える。図で選び分けられるように、そこを描く。
+ */
+function speakerBody(span: number, ink: BodyInk): string {
+  const radius = Math.min(span * 0.5, 15);
+  const frame = element('circle', {
+    cx: 0, cy: 0, r: num(radius), fill: ink.paint('#1a1d22'), stroke: ink.paint('#0d0f12'),
+  });
+  const cone = element('circle', {
+    cx: 0, cy: 0, r: num(radius * 0.74), fill: ink.paint('#2e333b'), stroke: ink.paint('#12151a'),
+  });
+  const cap = element('circle', { cx: 0, cy: 0, r: num(radius * 0.3), fill: ink.paint('#6a727c') });
+  return frame + cone + cap;
+}
+
+/**
+ * エレクトレットマイク。**銀の缶を上から見た形**。前面に音の入る穴が開き、
+ * 底の面は樹脂で塞がっている (足はそこから出る)。
+ */
+function micBody(span: number, ink: BodyInk): string {
+  const radius = Math.min(span * 0.42, 11);
+  const can = element('circle', {
+    cx: 0, cy: 0, r: num(radius), fill: ink.paint('#b9c0c9'), stroke: ink.paint('#7c848e'),
+  });
+  const face = element('circle', {
+    cx: 0, cy: 0, r: num(radius * 0.72), fill: ink.paint('#4a5058'), stroke: ink.paint('#7c848e'),
+  });
+  // 音の入る穴。**数は形の見分けどころ**なので固定 (実物も数個空いている)。
+  const holes = [[-0.32, -0.24], [0.32, -0.24], [0, 0.12], [-0.32, 0.36], [0.32, 0.36]]
+    .map(([x = 0, y = 0]) => element('circle', {
+      cx: num(radius * x), cy: num(radius * y), r: num(radius * 0.13), fill: ink.paint('#1a1d22'),
+    }))
+    .join('');
+  return can + face + holes;
+}
+
+/**
+ * トグルスイッチ。**樹脂の胴から金物のブッシュとレバーが立つ**。
+ *
+ * `closed` はふだん閉じている品 (`switch-nc`)。**レバーの倒れる向きで描き分ける**
+ * — 同じ胴に字を書くより、図を見て手が動くほうが実物に近い。
+ */
+function switchBody(span: number, ink: BodyInk, closed: boolean): string {
+  const width = Math.min(span * 0.55, 26);
+  const height = width * 0.62;
+  const shell = element('rect', {
+    x: num(-width / 2), y: num(-height / 2), width: num(width), height: num(height), rx: 2,
+    fill: ink.paint('#23272e'), stroke: ink.paint('#12151a'),
+  });
+  const bush = element('circle', {
+    cx: 0, cy: 0, r: num(height * 0.3), fill: ink.paint('#b9c0c9'), stroke: ink.paint('#7c848e'),
+  });
+  // レバーは胴の中に収める (`bodySize` の外へ出すと隣の穴に乗る)。
+  const lever = element('line', {
+    x1: 0, y1: 0, x2: num((closed ? -1 : 1) * width * 0.3), y2: num(-height * 0.28),
+    stroke: ink.paint('#8a929c'), 'stroke-width': 2.6, 'stroke-linecap': 'round',
+  });
+  return shell + bush + lever;
+}
+
 const BODIES: Record<string, (part: BodyPart, span: number, ink: BodyInk) => string> = {
   sma: smaBody,
   resistor: resistorBody,
@@ -687,6 +794,14 @@ const BODIES: Record<string, (part: BodyPart, span: number, ink: BodyInk) => str
   reed: (_part, span, ink) => reedBody(span, ink),
   fuse: (_part, span, ink) => fuseBody(span, ink),
   lamp: (_part, span, ink) => lampBody(span, ink),
+
+  // 回路図にあって板に無かった実物 (52 の docs/21 の手順 7)。
+  battery: batteryBody,
+  solar: (_part, span, ink) => solarBody(span, ink),
+  speaker: (_part, span, ink) => speakerBody(span, ink),
+  mic: (_part, span, ink) => micBody(span, ink),
+  switch: (_part, span, ink) => switchBody(span, ink, false),
+  'switch-nc': (_part, span, ink) => switchBody(span, ink, true),
 };
 
 /** その種類の胴を描けるか。無ければ呼ぶ側が自前の姿を出す。 */
@@ -758,7 +873,21 @@ export function bodySize(part: BodyPart, span: number): { readonly width: number
         ? twice(Math.min(span * 0.42, 13))
         : { width: Math.min(span * 0.6, 34), height: TURN_HALF * 2 };
     case 'buzzer':
+    case 'speaker':
       return twice(Math.min(span * 0.5, 15));
+    case 'battery':
+      return twice(Math.min(span * 0.42, 13) * 1.05);
+    case 'solar': {
+      const width = Math.min(span * 0.7, 40);
+      return { width, height: width * 0.62 };
+    }
+    case 'mic':
+      return twice(Math.min(span * 0.42, 11));
+    case 'switch':
+    case 'switch-nc': {
+      const width = Math.min(span * 0.55, 26);
+      return { width, height: width * 0.62 };
+    }
     default:
       return twice(LED_RADIUS * domeScale(part));
   }

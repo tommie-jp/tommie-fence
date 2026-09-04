@@ -22,6 +22,7 @@ export type PlaceableName =
   | 'photoresistor' | 'thermistor' | 'thermistor-ntc' | 'thermistor-ptc' | 'varistor'
   | 'zener' | 'schottky' | 'photodiode' | 'varicap' | 'diac'
   | 'reed' | 'fuse' | 'lamp' | 'sma'
+  | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
   | 'transistor' | 'potentiometer' | 'slide-switch' | 'thyristor' | 'triac'
   | 'regulator' | 'button';
 
@@ -85,6 +86,12 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   sma: 'SMA コネクタ',
   regulator: '三端子レギュレータ',
   button: 'タクトスイッチ',
+  battery: '電池',
+  solar: '太陽電池',
+  speaker: 'スピーカー',
+  mic: 'マイク',
+  switch: 'スイッチ (a 接点)',
+  'switch-nc': 'スイッチ (b 接点)',
 };
 
 /**
@@ -121,6 +128,12 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   sma: 'J',
   regulator: 'U',
   button: 'SW',
+  battery: 'B',
+  solar: 'PV',
+  speaker: 'LS',
+  mic: 'MK',
+  switch: 'SW',
+  'switch-nc': 'SW',
 };
 
 /**

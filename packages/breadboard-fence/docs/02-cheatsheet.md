@@ -56,6 +56,7 @@ notes:                 # 任意。図に重ねる印と字
 2 本足   resistor capacitor led diode buzzer crystal inductor
          photoresistor thermistor thermistor-ntc thermistor-ptc varistor
          zener schottky photodiode varicap diac reed fuse lamp sma
+         speaker mic battery solar switch switch-nc
 3 本足   transistor potentiometer slide-switch thyristor triac regulator
 まとまり  button dipN (4〜40 の偶数) sipN (2〜40)
 ボード    pico pico-w pico2 pico2-w

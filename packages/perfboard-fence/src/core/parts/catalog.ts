@@ -15,7 +15,9 @@ import { placeableNames } from './types.ts';
 export type PlaceableName =
   | 'resistor' | 'capacitor' | 'led' | 'diode' | 'inductor' | 'crystal' | 'buzzer'
   | 'photoresistor' | 'thermistor' | 'thermistor-ntc' | 'thermistor-ptc' | 'varistor'
-  | 'zener' | 'schottky' | 'photodiode' | 'fuse' | 'lamp' | 'sma'
+  | 'zener' | 'schottky' | 'photodiode' | 'varicap' | 'diac'
+  | 'reed' | 'fuse' | 'lamp' | 'sma'
+  | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
   | 'transistor' | 'potentiometer' | 'thyristor' | 'triac' | 'slide-switch' | 'regulator';
 
 /** 和名。**種類を足したら型エラーでここも要求される。** */
@@ -35,6 +37,9 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   zener: 'ツェナー',
   schottky: 'ショットキー',
   photodiode: 'フォトダイオード',
+  varicap: 'バリキャップ',
+  diac: 'ダイアック',
+  reed: 'リードスイッチ',
   fuse: 'ヒューズ',
   lamp: 'ランプ',
   sma: 'SMA コネクタ',
@@ -44,6 +49,12 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   triac: 'トライアック',
   'slide-switch': 'スライドスイッチ',
   regulator: '三端子レギュレータ',
+  battery: '電池',
+  solar: '太陽電池',
+  speaker: 'スピーカー',
+  mic: 'マイク',
+  switch: 'スイッチ (a 接点)',
+  'switch-nc': 'スイッチ (b 接点)',
 };
 
 /**
@@ -66,6 +77,9 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   zener: 'D',
   schottky: 'D',
   photodiode: 'D',
+  varicap: 'D',
+  diac: 'D',
+  reed: 'SW',
   fuse: 'F',
   lamp: 'LP',
   sma: 'J',
@@ -75,6 +89,12 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   triac: 'T',
   'slide-switch': 'SW',
   regulator: 'U',
+  battery: 'B',
+  solar: 'PV',
+  speaker: 'LS',
+  mic: 'MK',
+  switch: 'SW',
+  'switch-nc': 'SW',
 };
 
 export const PLACEABLE = placeableNames;

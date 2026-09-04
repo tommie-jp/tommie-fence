@@ -67,6 +67,8 @@ wires:
     `thermistor-ptc` / `varistor`
   - 2 本足 (ダイオードの仲間) — `zener` / `schottky` / `photodiode` / `varicap` / `diac`
   - 2 本足 (ガラス封止) — `reed` / `fuse` / `lamp`
+  - 2 本足 (音と光と電源) — `speaker` / `mic` / `battery` / `solar`
+  - 2 本足 (スイッチ) — `switch` (a 接点) / `switch-nc` (b 接点)
   - 2 本足 (コネクタ) — `sma`
   - 3 本足 — `transistor` / `potentiometer` / `slide-switch` / `thyristor` / `triac` /
     `regulator`

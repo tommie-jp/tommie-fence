@@ -15,9 +15,13 @@ const TWO_LEAD = new Set([
   // 抵抗体を固めた部品。値は抵抗なのでキャプションの読み方も抵抗と同じ。
   'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc', 'varistor',
   // ダイオードの仲間。実物はどれも同じ形の胴で、カソード帯の位置が意味を持つ。
-  'zener', 'schottky', 'photodiode',
+  'zener', 'schottky', 'photodiode', 'varicap', 'diac',
   // ガラス管・玉に封じた部品。
-  'fuse', 'lamp',
+  'reed', 'fuse', 'lamp',
+  // 回路図にあって板に無かった実物 (52 の docs/21 の手順 7)。**電池は
+  // ホルダーで数える** — 板に載るのはホルダーで、電池は差し替えるもの。
+  // トグルスイッチは a 接点 (`switch`) と b 接点 (`switch-nc`) で別の品。
+  'battery', 'solar', 'speaker', 'mic', 'switch', 'switch-nc',
   // 同軸コネクタ。**足は中心導体と GND の 2 本**で書く (実物は GND が 4 本だが、
   // 図とネットリストで意味を持つのは「どこが中心でどこが GND か」の 2 つ)。
   'sma',
