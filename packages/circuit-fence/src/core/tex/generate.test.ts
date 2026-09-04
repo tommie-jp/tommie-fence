@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { buildCircuit } from '../model/circuit.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { DEFAULT_NOTE_SIZE, noteFontTex, noteWidth } from '../notes.ts';
-import { lookupPartType, partTypeNames } from '../parts.ts';
+import { lookupPartType, partTypeNames, pinPlaces } from '../parts.ts';
 import { VERSION } from '../version.ts';
 import { generateTex, standaloneTex } from './generate.ts';
 
@@ -1167,9 +1167,19 @@ describe('字が出る部品を全部当たる', () => {
     for (const type of named) {
       const { doc } = parseFence(`parts:\n  U1: ${type} b2 r90\n`);
       if (doc === null) throw new Error(`${type} を読めませんでした`);
-      const { notes } = generateTex(buildCircuit(doc).circuit, { style: doc.style });
-      // 上下の辺に来た足は縦に読む。1 本でも横のままなら隣と重なる。
-      expect(notes.every((one) => one.rotate === 90 || one.rotate === 270)).toBe(true);
+      const { circuit } = buildCircuit(doc);
+      const { notes } = generateTex(circuit, { style: doc.style });
+      const part = circuit.parts[0];
+      if (part === undefined || part.kind !== 'multi-terminal') throw new Error(`${type} を置けませんでした`);
+      const places = pinPlaces(lookupPartType(type)!, part.turn);
+
+      // **上下の辺に来た足だけ縦に読む。** 横のままだと隣と重なる。
+      // 左右の辺の足は横のまま (回すとかえって読めない)。
+      notes.forEach((one, index) => {
+        const side = places[index]?.side;
+        const upright = one.rotate === 0;
+        expect(upright).toBe(side === 'left' || side === 'right');
+      });
     }
   });
 
@@ -1180,6 +1190,7 @@ describe('字が出る部品を全部当たる', () => {
     const drawn = partTypeNames().filter((type) => lookupPartType(type)?.pinLabels !== undefined);
 
     expect(drawn).toEqual([
+      'regulator',
       'sip2', 'sip3', 'sip4', 'sip5', 'sip6', 'sip8', 'sip10', 'sip20', 'sip40',
       'pico', 'pico-w', 'pico2', 'pico2-w',
     ]);

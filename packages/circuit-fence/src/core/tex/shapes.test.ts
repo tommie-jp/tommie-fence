@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { sipShapeName, sipShapeTex } from './sipShape.ts';
+import { sipShapeName, sipShapeTex } from './shapes.ts';
 
 /**
  * ピンヘッダの記号。**circuitikz に無いので自分で宣言する** — その宣言が

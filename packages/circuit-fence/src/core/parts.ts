@@ -1,4 +1,5 @@
 import { lookupBoardPart } from 'fence-kit';
+import { REGULATOR_SHAPE } from './tex/shapes.ts';
 import type { BoardPart } from 'fence-kit';
 /**
  * 部品の種類の表。パーサ (どう書けるか) と TeX 生成 (どう描くか) の両方がここを見る。
@@ -643,6 +644,29 @@ export const PART_TYPES = {
   dip28: dipchip(28),
   dip40: dipchip(40),
 
+  /**
+   * 三端子レギュレータ。**記号はこの拡張が宣言する** (`tex/shapes.ts`)。
+   * 番号は実物の TO-220 と同じ 1=IN / 2=GND / 3=OUT で、**名前でも番号でも**
+   * 書ける (実体配線図は番号で書くので、どちらでも通るようにしておく)。
+   */
+  regulator: {
+    kind: 'multi-terminal',
+    symbol: REGULATOR_SHAPE,
+    options: ['draw', 'font=\\scriptsize'],
+    // **型番は箱の外。** 中には足の名前 3 つが入るので、型番まで入れると
+    // `OUT` と重なる (実機で焼いて決めた)。トランジスタと同じで記号の下に出る。
+    valueInside: false,
+    ...NO_UNIT,
+    pins: {
+      in: 'pin 1', '1': 'pin 1',
+      gnd: 'pin 2', '2': 'pin 2', ground: 'pin 2',
+      out: 'pin 3', '3': 'pin 3',
+    },
+    // 3 本とも**中心線に乗る** — 左右は横の、下は縦の中心線。
+    pinSide: { 'pin 1': 'left', 'pin 2': 'bottom', 'pin 3': 'right' },
+    pinLabels: ['IN', 'GND', 'OUT'],
+  },
+
   // ピンヘッダ。**数は実体配線図の 2 つと同じ表**。
   sip2: sipchip(2),
   sip3: sipchip(3),
@@ -760,6 +784,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   sip10: 'ピンヘッダ (10 ピン)',
   sip20: 'ピンヘッダ (20 ピン)',
   sip40: 'ピンヘッダ (40 ピン)',
+  regulator: '三端子レギュレータ',
   // 製品名は実体配線図の 2 つと同じ字 (fence-kit の表)。
   pico: 'Pico',
   'pico-w': 'Pico W',
@@ -867,6 +892,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   sip10: 'J',
   sip20: 'J',
   sip40: 'J',
+  regulator: 'U',
   pico: 'U',
   'pico-w': 'U',
   pico2: 'U',

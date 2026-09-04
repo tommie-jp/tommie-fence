@@ -17,7 +17,7 @@ import { NOTE_MARK_TEXT, noteFontTex, texColorOf } from '../notes.ts';
 import { escapeTex, hasUnicode } from './escape.ts';
 import { isMathLabel, mathInnerOf, mathLabelTex } from './mathLabel.ts';
 import { num } from './num.ts';
-import { sipShapeTex } from './sipShape.ts';
+import { regulatorShapeTex, sipShapeTex } from './shapes.ts';
 
 /**
  * 生成した TeX と、その行が元の YAML の何行目から来たかの対応。
@@ -167,7 +167,11 @@ function sipShapesFor(circuit: Circuit): string[] {
     const found = /^sip(\d+)$/.exec(part.type);
     if (found !== null) sizes.add(Number(found[1]));
   }
-  return [...sizes].sort((a, b) => a - b).flatMap((pins) => sipShapeTex(pins));
+  const declared = [...sizes].sort((a, b) => a - b).flatMap((pins) => sipShapeTex(pins));
+  // 三端子レギュレータも自分で宣言した形。**使うときだけ**書く。
+  return circuit.parts.some((part) => part.type === 'regulator')
+    ? [...declared, ...regulatorShapeTex()]
+    : declared;
 }
 
 const FOOTER = ['\\end{circuitikz}', '\\end{document}'];
