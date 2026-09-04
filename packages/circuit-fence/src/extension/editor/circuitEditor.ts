@@ -15,6 +15,7 @@ import { extractCircuitFences } from '../../core/fences.ts';
 import { formatAddress, parseAddress } from '../../core/model/address.ts';
 import type { Address } from '../../core/model/address.ts';
 import { renamePart } from '../../core/edit/rename.ts';
+import type { MapLook } from '../../core/edit/mapSvg.ts';
 import type { EditResult, FenceEditor, NewPart } from 'fence-kit';
 import { isWireHandle, renderColorOptions, wireFields } from '../../core/edit/wireField.ts';
 import {
@@ -37,7 +38,15 @@ const unreadable = (written: string): EditResult =>
 /** 書ける欄。ほかの綴りが来たら断る (webview からの知らせは信用しない)。 */
 const FIELDS: readonly string[] = ['type', 'value', 'label'];
 
-export function createCircuitEditor(): FenceEditor {
+/**
+ * 升目の見た目を**描くたびに読む**。設定は動かしている最中に変えられるので、
+ * 作るときに 1 度読むと、変えても次に開き直すまで効かない。
+ */
+export type LookSource = () => MapLook;
+
+const PLAIN: LookSource = () => ({});
+
+export function createCircuitEditor(look: LookSource = PLAIN): FenceEditor {
   /** 番地の並びを読む。1 つでも読めなければ、その綴りを名指して断る。 */
   const addresses = (written: readonly string[]): readonly Address[] | string => {
     const parsed = written.map((one) => parseAddress(one));
@@ -63,7 +72,7 @@ export function createCircuitEditor(): FenceEditor {
           .filter((line): line is number => line !== null),
       );
       return {
-        map: renderMapHtml(gridMap(source), bad),
+        map: renderMapHtml(gridMap(source), bad, look()),
         // 帯は Markdown の行で出す。押すとそこへ飛べる (フェンスの中の行では飛べない)。
         issues: renderIssues(shiftIssues(issues, fenceLine)),
       };

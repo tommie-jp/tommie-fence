@@ -12,7 +12,6 @@ describe('glyphOf', () => {
   test('folds a family onto one shape when only the detail differs', () => {
     // 記号として形が違うものは描き分け、細部だけが違うものは同じ形に落とす。
     // ショットキーの棒の先や pnp の矢の向きは、この大きさでは読めない。
-    expect(glyphOf('varicap').name).toBe('capacitor');
     expect(glyphOf('schottky').name).toBe('diode');
     expect(glyphOf('photodiode').name).toBe('diode');
     expect(glyphOf('pnp').name).toBe(glyphOf('npn').name);
@@ -27,6 +26,24 @@ describe('glyphOf', () => {
     expect(glyphOf('nmos').name).toBe('fet');
     expect(glyphOf('opamp').name).toBe('opamp');
     expect(glyphOf('crystal').name).toBe('crystal');
+    expect(glyphOf('varicap').name).toBe('varicap');
+    expect(glyphOf('battery').name).toBe('battery');
+    expect(glyphOf('diac').name).toBe('diac');
+  });
+
+  test('draws the supply rails as the arrows the figure draws, up and down', () => {
+    // 上下がその記号の意味なので、回すのを断っている。形も向きで分ける。
+    expect(glyphOf('vcc').name).toBe('supply-up');
+    expect(glyphOf('vee').name).toBe('supply-down');
+    expect(drawGlyph('supply-up')).not.toBe(drawGlyph('supply-down'));
+  });
+
+  test('draws the parts the figure boxes as boxes, not as a zigzag', () => {
+    // サーミスタとバリスタは IEC の箱、感光は箱に光の矢。抵抗だけが折れ線。
+    expect(glyphOf('thermistor').name).toBe('resistor-iec');
+    expect(glyphOf('varistor').name).toBe('resistor-iec');
+    expect(glyphOf('photoresistor').name).toBe('photoresistor');
+    expect(glyphOf('resistor').name).toBe('resistor');
   });
 
   test('tells the gates apart by the back, and the inverting twin by the bubble', () => {

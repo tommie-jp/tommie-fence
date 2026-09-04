@@ -19,31 +19,36 @@ import { element } from 'fence-kit';
  */
 
 export type GlyphName =
-  | 'resistor' | 'resistor-var' | 'capacitor' | 'ecap' | 'inductor'
-  | 'diode' | 'led' | 'zener' | 'thyristor'
-  | 'source' | 'switch' | 'switch-nc' | 'spdt' | 'meter'
+  | 'resistor' | 'resistor-var' | 'resistor-iec' | 'photoresistor'
+  | 'capacitor' | 'ecap' | 'varicap' | 'inductor'
+  | 'diode' | 'led' | 'zener' | 'thyristor' | 'diac' | 'triac'
+  | 'source' | 'battery' | 'switch' | 'switch-nc' | 'button' | 'button-nc'
+  | 'reed' | 'spdt' | 'meter'
   | 'crystal' | 'fuse' | 'lamp' | 'speaker' | 'mic' | 'transformer'
   | 'bjt' | 'fet' | 'opamp'
   | 'and' | 'and-inv' | 'or' | 'or-inv' | 'xor' | 'xor-inv' | 'buffer' | 'buffer-inv'
-  | 'ground' | 'port' | 'supply' | 'short' | 'box';
+  | 'ground' | 'port' | 'supply-up' | 'supply-down' | 'short' | 'box';
 
 /** 描く形と、中に入れる 1 文字 (計器の A・V など)。 */
 export type Glyph = { readonly name: GlyphName; readonly mark: string | null };
 
 /** 記号に寄せる表。ここに無い種類は箱になる。 */
 const SHAPES: Record<string, GlyphName> = {
-  resistor: 'resistor', varistor: 'resistor',
+  resistor: 'resistor',
   'resistor-var': 'resistor-var', potentiometer: 'resistor-var',
-  photoresistor: 'resistor-var', thermistor: 'resistor-var',
-  'thermistor-ntc': 'resistor-var', 'thermistor-ptc': 'resistor-var',
-  capacitor: 'capacitor', varicap: 'capacitor', ecap: 'ecap',
+  // **感温・感圧は箱**。図が IEC の箱で描くので、折れ線に寄せない。
+  thermistor: 'resistor-iec', 'thermistor-ntc': 'resistor-iec',
+  'thermistor-ptc': 'resistor-iec', varistor: 'resistor-iec',
+  photoresistor: 'photoresistor',
+  capacitor: 'capacitor', ecap: 'ecap', varicap: 'varicap',
   inductor: 'inductor', transformer: 'transformer',
-  diode: 'diode', schottky: 'diode', photodiode: 'diode', diac: 'diode',
-  led: 'led', zener: 'zener', thyristor: 'thyristor', triac: 'thyristor',
+  diode: 'diode', schottky: 'diode', photodiode: 'diode',
+  led: 'led', zener: 'zener', diac: 'diac',
+  thyristor: 'thyristor', triac: 'triac',
   vsource: 'source', sine: 'source', square: 'source', triangle: 'source',
-  isource: 'source', battery: 'source', solar: 'source',
-  switch: 'switch', button: 'switch', reed: 'switch',
-  'switch-nc': 'switch-nc', 'button-nc': 'switch-nc', spdt: 'spdt',
+  isource: 'source', solar: 'source', battery: 'battery',
+  switch: 'switch', 'switch-nc': 'switch-nc',
+  button: 'button', 'button-nc': 'button-nc', reed: 'reed', spdt: 'spdt',
   ammeter: 'meter', voltmeter: 'meter', ohmmeter: 'meter',
   wattmeter: 'meter', galvanometer: 'meter', detector: 'meter',
   crystal: 'crystal', fuse: 'fuse', lamp: 'lamp', speaker: 'speaker', mic: 'mic',
@@ -56,7 +61,9 @@ const SHAPES: Record<string, GlyphName> = {
   or: 'or', nor: 'or-inv',
   xor: 'xor', xnor: 'xor-inv',
   buffer: 'buffer', not: 'buffer-inv',
-  ground: 'ground', port: 'port', vcc: 'supply', vee: 'supply', short: 'short',
+  ground: 'ground', port: 'port',
+  // **電源レールは矢印**で、上下がその記号の意味 (だから回すのを断っている)。
+  vcc: 'supply-up', vee: 'supply-down', short: 'short',
 };
 
 /**
@@ -66,7 +73,7 @@ const SHAPES: Record<string, GlyphName> = {
 const MARKS: Record<string, string> = {
   ammeter: 'A', voltmeter: 'V', ohmmeter: 'Ω',
   wattmeter: 'W', galvanometer: 'G', detector: 'D',
-  vsource: '+', battery: '+', isource: 'I',
+  vsource: '+', isource: 'I',
   sine: '~', square: '⊓', triangle: '∿', solar: '☀',
 };
 
@@ -87,6 +94,11 @@ const box = (width: number, height: number): string =>
     class: 'cf-glyph', x: -width / 2, y: -height / 2, width, height, rx: 2,
   });
 
+/** 押しボタンの 2 つの接点。**離れているのが「切れている」の目印**。 */
+const contacts = (): string =>
+  element('circle', { class: 'cf-glyph', cx: -5, cy: 0, r: 1.6 })
+  + element('circle', { class: 'cf-glyph', cx: 5, cy: 0, r: 1.6 });
+
 /** 反転の丸 (NAND・NOR・NOT の出口)。**これが有る無しが唯一の違い**。 */
 const bubble = (cx: number): string =>
   element('circle', { class: 'cf-glyph', cx, cy: 0, r: 2.5 });
@@ -94,13 +106,20 @@ const bubble = (cx: number): string =>
 const SHAPE: Record<GlyphName, () => string> = {
   // 折れ線。circuitikz の既定 (米国式) と同じ姿にする。
   resistor: () => path('M-10,0 L-8.3,-5 L-5,5 L-1.7,-5 L1.7,5 L5,-5 L8.3,5 L10,0'),
-  // 可変・感光・感温。折れ線を斜めの矢が貫く。
+  // 可変。折れ線を斜めの矢が貫く。
   'resistor-var': () =>
     `${SHAPE.resistor()}${path('M-8,8 L8,-8 M8,-8 L3.5,-7 M8,-8 L7,-3.5')}`,
+  // 感温・感圧。IEC の箱を斜めの線が貫く (図と同じ)。
+  'resistor-iec': () => `${box(20, 10)}${path('M-7,6 L7,-6')}`,
+  // 感光。箱へ光が差す 2 本の矢。
+  photoresistor: () => `${box(20, 10)}${path('M-1.5,-10.5 L-5,-6 M-5,-6 L-2.4,-6.7 M-5,-6 L-4.2,-8.6'
+    + ' M4.5,-10.5 L1,-6 M1,-6 L3.6,-6.7 M1,-6 L4.4,-8.6')}`,
   // 極板 2 枚。間を空けるのが「切れている」ことの目印。
   capacitor: () => path('M-3,-9 L-3,9 M3,-9 L3,9'),
   // 電解。片方が曲がった極板 (向きのある部品)。
   ecap: () => path('M-3,-9 L-3,9 M3.5,-9 q5,9 0,18'),
+  // 可変容量。ダイオードの三角に極板 2 枚。
+  varicap: () => `${path('M-7,-7 L1,0 L-7,7 Z')}${path('M1,-7 L1,7 M4.5,-7 L4.5,7')}`,
   inductor: () => path('M-12,0 a4,4 0 0 1 8,0 a4,4 0 0 1 8,0 a4,4 0 0 1 8,0'),
   // 2 つの巻線と鉄心。空芯ではないので芯の 2 本を引く。
   transformer: () =>
@@ -115,11 +134,24 @@ const SHAPE: Record<GlyphName, () => string> = {
   zener: () => `${path('M-6,-7 L6,0 L-6,7 Z')}${path('M9,-10 L6,-7 L6,7 L3,10')}`,
   // サイリスタ。棒からゲートが 1 本 (実物が上下非対称)。
   thyristor: () => `${SHAPE.diode()}${path('M6,-2 L12,-8')}`,
+  // ダイアック。向かい合う三角 (どちら向きにも流れる)。
+  diac: () => path('M-8,-7 L-8,7 L2,0 Z M8,7 L8,-7 L-2,0 Z'),
+  // トライアック。ダイアックにゲートが 1 本。
+  triac: () => `${SHAPE.diac()}${path('M6,-4 L12,-9')}`,
   source: () => circle(9),
+  // 電池。長い極板と短い極板が 2 組 (丸ではない — 図が丸で描いていない)。
+  battery: () => path('M-5,-8 L-5,8 M-1.5,-4 L-1.5,4 M2,-8 L2,8 M5.5,-4 L5.5,4'),
   // 開いた接点。閉じた形にすると「切れる部品」に見えない。
   switch: () => path('M-9,0 L5,-8'),
   // b 接点。閉じたまま、開く先を短い棒で示す。
   'switch-nc': () => path('M-9,0 L9,0 M7,-7 L7,-1'),
+  // 押しボタン (a 接点)。2 つの接点の上に、離れた押し板。
+  button: () => `${contacts()}${path('M-6,-7 L6,-7 M0,-7 L0,-3')}`,
+  // 押しボタン (b 接点)。押し板が接点に載っている。
+  'button-nc': () => `${contacts()}${path('M-6,-4 L6,-4 M0,-4 L0,0')}`,
+  // リードスイッチ。ガラス管の中の接点。
+  reed: () => element('ellipse', { class: 'cf-glyph', cx: 0, cy: 0, rx: 10, ry: 5 })
+    + path('M-7,1 L6,-3'),
   // 切り替え。1 つの極から 2 つの接点へ。
   spdt: () => path('M-9,0 L5,-6 M7,-6 L10,-6 M7,6 L10,6'),
   meter: () => circle(9),
@@ -156,7 +188,8 @@ const SHAPE: Record<GlyphName, () => string> = {
   // 大地。3 本の棒が下へ短くなる。
   ground: () => path('M0,-6 L0,0 M-8,0 L8,0 M-5,4 L5,4 M-2,8 L2,8'),
   port: () => circle(4, 'cf-glyph cf-glyph-open'),
-  supply: () => path('M0,6 L0,-4 M-7,-4 L7,-4'),
+  'supply-up': () => path('M0,8 L0,-8 M0,-8 L-4,-3 M0,-8 L4,-3'),
+  'supply-down': () => path('M0,-8 L0,8 M0,8 L-4,3 M0,8 L4,3'),
   // 線だけ (`short` は記号を持たない)。
   short: () => '',
   box: () => box(26, 16),

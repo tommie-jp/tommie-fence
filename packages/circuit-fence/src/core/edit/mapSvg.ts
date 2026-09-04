@@ -245,17 +245,18 @@ const noteRight = (note: MapNote): number =>
  * 指した升の角に小さな札を出し、字の注釈はその字も少しだけ見せる
  * (どの注釈かを選ぶのに要る)。
  */
-function drawNote(note: MapNote): string {
+function drawNote(note: MapNote, framed: boolean): string {
   const left = x(note.col) + PITCH * 0.18;
   const top = y(note.row) - PITCH * 0.42;
   const { shown, width } = noteTag(note);
   // **字の注釈に枠は付けない** (実機で「text に枠は要らない」)。書いた字が
   // そのまま読めるものに枠を足すと、枠のほうが目立つ。字だけでは升目の点や
   // 配線に載って読みにくいので、地の色で縁を取る (`cf-name` と同じ手)。
+  // 枠が要る人のために設定で戻せる (`framed`。**既定は付けない**)。
   //
   // **自分の字を持たない注釈 (`circle` など) には枠を残す。** あちらに出るのは
   // 種類の名前なので、枠が「これは札で、図に出る字ではない」と言っている。
-  const bare = note.kind === 'text';
+  const bare = note.kind === 'text' && !framed;
   const frame = bare ? '' : element('rect', {
     x: num(left), y: num(top), width: num(width), height: num(NOTE_HEIGHT), rx: 3,
     class: 'cf-note-tag',
@@ -322,7 +323,16 @@ const NONE: Bad = new Set();
 
 const classOf = (base: string, line: number, bad: Bad): string => (bad.has(line) ? `${base} cf-bad` : base);
 
-export function renderMapHtml(map: GridMap, bad: Bad = NONE): string {
+/**
+ * 升目の見た目のうち、**書き手ではなく読み手が選ぶもの**。フェンスに書く
+ * `style:` は図の話なので、こちらは VS Code の設定から来る。
+ */
+export type MapLook = {
+  /** 字の注釈に枠を付けるか。**既定は付けない** (実機で「枠は要らない」)。 */
+  readonly noteFrame?: boolean;
+};
+
+export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {}): string {
   if (!map.readable) {
     return '<p class="cf-note">フェンスを読めません。エラーを直すとマップが出ます。</p>';
   }
@@ -351,7 +361,7 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE): string {
       + layer('cf-marks', map.dots.map(drawDot).join(''))
       + layer('cf-parts', map.chips.map((chip) => drawChip(chip, nudges.get(chip) ?? 0, bad)).join(''))
       // 注釈は部品の上。指したものが下に隠れると印の意味が無い (図と同じ順)。
-      + layer('cf-notes', map.notes.map(drawNote).join(''))
+      + layer('cf-notes', map.notes.map((note) => drawNote(note, look.noteFrame === true)).join(''))
       + drawHits(map),
   );
 

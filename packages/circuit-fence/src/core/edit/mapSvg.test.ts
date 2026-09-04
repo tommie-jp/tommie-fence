@@ -154,6 +154,13 @@ describe('注釈', () => {
     expect(svg).not.toContain('cf-note-tag');
   });
 
+  test('puts the frame back when the reader asks for it', () => {
+    // 好みが分かれるところなので設定で戻せる。**既定は付けない**。
+    const svg = renderMapHtml(gridMap(NOTE), undefined, { noteFrame: true });
+
+    expect(svg).toContain('cf-note-tag');
+  });
+
   test('keeps the frame on notes that have no words of their own', () => {
     // `circle` などは種類の名を出すだけなので、枠が「これは札だ」と言う。
     const svg = draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - circle R1\n');

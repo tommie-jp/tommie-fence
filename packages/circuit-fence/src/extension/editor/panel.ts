@@ -3,6 +3,7 @@ import { revealMapEditor } from './customEditor.ts';
 import { COLOR_LIST_ID, TYPE_LIST_ID, makeNonce, panelHtml } from 'fence-kit';
 import { mapScriptUri } from './vscodeHost.ts';
 import { createCircuitEditor } from './circuitEditor.ts';
+import { mapLook } from './mapLook.ts';
 import { createSession } from 'fence-kit';
 import type { Session } from 'fence-kit';
 import { attachSession, createSessionHost } from './vscodeHost.ts';
@@ -20,7 +21,7 @@ let panel: vscode.WebviewPanel | null = null;
 let session: Session | null = null;
 
 export function openMapPanel(context: vscode.ExtensionContext): void {
-  const fence = createCircuitEditor();
+  const fence = createCircuitEditor(mapLook);
   const editor = markdownEditor();
   const at = editor === null ? null : fence.fenceAt(editor.document.getText(), editor.selection.active.line + 1);
   if (editor === null || at === null) {

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { COLOR_LIST_ID, TYPE_LIST_ID, makeNonce, panelHtml } from 'fence-kit';
 import { createCircuitEditor } from './circuitEditor.ts';
+import { mapLook } from './mapLook.ts';
 import { createSession } from 'fence-kit';
 import { attachSession, createSessionHost, mapScriptUri } from './vscodeHost.ts';
 
@@ -40,7 +41,7 @@ export function registerMapEditor(context: vscode.ExtensionContext): void {
     resolveCustomTextEditor(document, panel) {
       panel.webview.options = { enableScripts: true };
       const uri = document.uri.toString();
-      const fence = createCircuitEditor();
+      const fence = createCircuitEditor(mapLook);
       const session = createSession(createSessionHost(panel.webview, 'vscode'), fence, { pinned: document });
       panel.webview.html = panelHtml({
         cspSource: panel.webview.cspSource,

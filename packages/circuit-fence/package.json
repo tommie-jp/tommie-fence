@@ -105,6 +105,16 @@
           "when": "editorLangId == markdown"
         }
       ]
+    },
+    "configuration": {
+      "title": "circuit-fence",
+      "properties": {
+        "circuitFence.map.noteFrame": {
+          "type": "boolean",
+          "default": false,
+          "description": "掴んで動かす升目で、notes: text を枠で囲む (既定は囲まない)。"
+        }
+      }
     }
   },
   "scripts": {
