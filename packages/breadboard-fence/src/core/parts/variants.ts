@@ -93,7 +93,7 @@ function splitOnSlash(token: string): { type: string; variant: string | null } {
 
 /**
  * その種類に選べる姿。種類名は入力から来るので、必ず自分の持ち物だけを引く
- * (`parts/boards.ts` と同じ理由。素の添字だと `constructor` が Object.prototype から拾える)。
+ * (fence-kit の `parts/boards.ts` と同じ理由。素の添字だと `constructor` が Object.prototype から拾える)。
  */
 export const variantsOf = (type: string): readonly string[] =>
   Object.hasOwn(VARIANTS, type) ? VARIANTS[type] ?? [] : [];

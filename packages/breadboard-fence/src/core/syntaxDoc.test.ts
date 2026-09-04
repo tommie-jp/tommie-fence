@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
 import { NOTE_ALIGNS, NOTE_COLORS, NOTE_KINDS, NOTE_LEADINGS, NOTE_SIZES } from './notes.ts';
 import { aliasNames } from './parts/aliases.ts';
-import { boardPartNames } from './parts/boards.ts';
+import { boardPartNames } from 'fence-kit';
 import { typesWithVariants, variantsOf } from './parts/variants.ts';
 import { knownPartTypes } from './placement/footprints.ts';
 import { TOP_LEVEL_KEYS } from './parser/parseFence.ts';

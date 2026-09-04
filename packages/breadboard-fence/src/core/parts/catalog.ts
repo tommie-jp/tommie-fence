@@ -10,7 +10,7 @@
  */
 
 import { lookupFootprint, placeableTypes } from '../placement/footprints.ts';
-import { lookupBoardPart } from './boards.ts';
+import { lookupBoardPart } from 'fence-kit';
 
 /**
  * 置ける種類の名前。**一覧そのものは `footprints.ts` が正** — 足の数を決めて

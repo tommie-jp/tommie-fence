@@ -1,5 +1,5 @@
-import type { BoardPart } from '../parts/boards.ts';
-import { boardPartNames, lookupBoardPart } from '../parts/boards.ts';
+import type { BoardPart } from 'fence-kit';
+import { boardPartNames, lookupBoardPart } from 'fence-kit';
 import { aliasNames } from '../parts/aliases.ts';
 import { safeToken } from '../errors.ts';
 

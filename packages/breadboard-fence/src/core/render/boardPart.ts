@@ -1,5 +1,5 @@
 import type { Layout } from '../model/layout.ts';
-import { lookupBoardPart } from '../parts/boards.ts';
+import { lookupBoardPart } from 'fence-kit';
 import type { PlacedPart, Rect } from '../types.ts';
 import { caption, fitToBoard, pinPoints } from './partCommon.ts';
 import { element, num, svgText } from './svg.ts';

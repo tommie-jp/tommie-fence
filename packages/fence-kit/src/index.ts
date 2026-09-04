@@ -29,6 +29,8 @@ export { fit, textWidth } from './textFit.ts';
 export {
   REAL_INK, SMA_SIZE, bodySize, crystalCan, drawBody, drawsOwnLeads, hasBody, smaBody,
 } from './parts/bodies.ts';
+export { boardPartNames, lookupBoardPart } from './parts/boards.ts';
+export type { BoardPart } from './parts/boards.ts';
 export { drawPackage, packageHalfWidth, packageReach } from './parts/packages.ts';
 export { partIcon } from './parts/icon.ts';
 export type { PackageShape } from './parts/packages.ts';

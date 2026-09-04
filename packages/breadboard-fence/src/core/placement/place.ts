@@ -6,7 +6,7 @@ import type {
   Address, Board, FenceError, HoleAddress, HoleRow, PartKind, PartSpec, PlacedPart, PlacedPin,
   RailAddress, Result,
 } from '../types.ts';
-import type { BoardPart } from '../parts/boards.ts';
+import type { BoardPart } from 'fence-kit';
 import type { Turn } from '../parts/orient.ts';
 import { isPolarVariant, typesWithVariants, variantsOf } from '../parts/variants.ts';
 import { describeUnknownType, lookupFootprint } from './footprints.ts';
