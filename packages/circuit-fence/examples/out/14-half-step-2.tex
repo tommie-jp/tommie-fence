@@ -18,14 +18,14 @@
 \coordinate (a5) at (12,0);
 \coordinate (b1) at (0,-3);
 \coordinate (b5) at (12,-3);
-\coordinate (bp5-1) at (0,-4.5);
-\coordinate (bp5-5) at (12,-4.5);
+\coordinate (b1f0) at (0,-4.5);
+\coordinate (b5f0) at (12,-4.5);
 \coordinate (c1) at (0,-6);
 \coordinate (c5) at (12,-6);
 \draw (a1) node[ocirc]{} node[above left]{IN}; % line 3
 \draw (a1) to[R, l_=$R_{1}$, a^=$1\,\mathrm{k}\Omega$] (a5); % line 4
 \draw (b1) to[R, l_=$R_{2}$, a^=$2\,\mathrm{k}\Omega$] (b5); % line 5
-\draw (bp5-1) to[R, l_=$R_{3}$, a^=$3\,\mathrm{k}\Omega$] (bp5-5); % line 6
+\draw (b1f0) to[R, l_=$R_{3}$, a^=$3\,\mathrm{k}\Omega$] (b5f0); % line 6
 \draw (c1) to[R, l_=$R_{4}$, a^=$4\,\mathrm{k}\Omega$] (c5); % line 7
 \draw (a5) node[ocirc]{} node[above left]{OUT}; % line 8
 \draw (a1) -- (b1); % line 10
@@ -36,8 +36,8 @@
 \node[circ] at (a5) {};
 \node[circ] at (b1) {};
 \node[circ] at (b5) {};
-\node[circ] at (bp5-1) {};
-\node[circ] at (bp5-5) {};
+\node[circ] at (b1f0) {};
+\node[circ] at (b5f0) {};
 \path (15,-8.869) rectangle (23.302,0.593); % line 13
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (15,0) {X}; % line 13
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (15,-0.487) {X}; % line 13

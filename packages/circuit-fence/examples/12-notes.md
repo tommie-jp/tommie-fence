@@ -54,12 +54,12 @@ notes:
   - circle R2 blue
   - circle R3 green
   - circle R4 orange
-  - text a.7_2 red center: red
-  - text a.7_5 blue center: blue
+  - text a2h0 red center: red
+  - text a5h0 blue center: blue
   - text b1 blue: "R1: resistor a1 a3"
   - text b4 blue: "R2: resistor a4 a6"
-  - text c.7_2 green center: green
-  - text c.7_5 orange center: orange
+  - text c2h0 green center: green
+  - text c5h0 orange center: orange
   - text d1 blue: "R3: resistor c1 c3"
   - text d4 blue: "R4: resistor c4 c6"
 style:
@@ -194,7 +194,7 @@ notes:
   - line a1 a5 ink
   - line c1 c5 ink
   - line e1 e5 ink
-  - text b.5_1 blue left: line で仕切る
+  - text b1f0 blue left: line で仕切る
   - text f1 blue: box a1 e5 ink solid
   - source a8 blue
 style:

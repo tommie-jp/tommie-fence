@@ -101,7 +101,7 @@ const readAddress = (token: string, line: number, points: Points = NO_POINTS): R
 
 /**
  * 番地として読めなかった綴りへの返事。**近い書き間違いには直せる形を先に返す**
- * (`a1.5` → `a_1.5`)。番地の形ですらないなら、書ける範囲を添える。
+ * (`a1.5` → `a1a5`)。番地の形ですらないなら、書ける範囲を添える。
  */
 function addressProblem(token: string, points: Points): string {
   const near = addressHint(token);
@@ -109,7 +109,7 @@ function addressProblem(token: string, points: Points): string {
 
   // 名前のつもりで書かれた可能性がある。名前を 1 つでも書いてある図では、
   // そちらの案内も添える。
-  const form = `行 a〜${rowLetters(LIMITS.rows - 1)} + 列 1〜${LIMITS.columns}。交点の間は a_1.5 / a.5_1.5`;
+  const form = `行 a〜${rowLetters(LIMITS.rows - 1)} + 列 1〜${LIMITS.columns}。交点の間は組を足す (a1a5 / a1f5)`;
   const hint = points.size === 0 ? form : `${form}。points: に書いた名前でもありません`;
   return `${safeToken(token)} は番地の形ではありません (${hint})`;
 }
@@ -379,9 +379,8 @@ export function parseWireLine(
 /**
  * 配線の端。`a3` のような番地か、`U1.out` のような足。
  *
- * **番地として読める綴りは番地**。交点の間の番地 (`a_1.5`) は足と同じく `.` を
- * 含むが、足の綴りに `_` の区切りは無いので、取り違えは起きない
- * (`U1.5` は番地の形ではないので、これまでどおり DIP の 5 番ピンのまま)。
+ * **番地に `.` は出てこない** (交点の間も `a1a5` と組で書く)。だから
+ * `.` を含む綴りは足、と 1 行で分かれる (`U1.5` は DIP の 5 番ピン)。
  */
 function readEndpoint(token: string, line: number, points: Points): Result<Endpoint> {
   const named = points.get(token);
@@ -645,13 +644,13 @@ function readLineNote(rest: readonly string[], line: number): Result<NoteSpec> {
 
 /**
  * 印と指し棒の指し先になれる綴りか。**部品 ID か番地**のどちらか。
- * 交点の間の番地 (`a_1.5`) は `.` を含むので、部品 ID の字種だけでは足りない。
+ * 交点の間の番地 (`a1a5`) は部品 ID と同じ字種なので、番地としても読んでみる。
  */
 const isNoteTarget = (token: string): boolean => isReferenceable(token) || parseAddress(token) !== null;
 
 const notReferenceable = (token: string): string =>
   `${safeToken(token)} は部品 ID にも番地にもなりません`
-  + ` (部品 ID は英数字と _ - だけの ${LIMITS.idLength} 文字まで、番地は a1 / a_1.5)`;
+  + ` (部品 ID は英数字と _ - だけの ${LIMITS.idLength} 文字まで、番地は a1 / a1a5)`;
 
 /**
  * `source a6 blue tiny` を読む。中身はフェンス自身から作るので、

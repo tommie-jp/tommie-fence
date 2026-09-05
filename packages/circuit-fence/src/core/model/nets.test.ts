@@ -223,15 +223,15 @@ describe('computeNets の番地の名前', () => {
 
 describe('computeNets の T 字 (交点の間)', () => {
   test('joins an end that sits on a wire between the cells', () => {
-    // v.94_80.41 -- y.22_86.19 のちょうど真ん中が x.08_83.3。数としては線の上に
+    // v80j4e1 -- y86c1c9 のちょうど真ん中が x83a3i0。数としては線の上に
     // 乗っているのに、掛け算の丸め (誤差 1e-14) で「乗っていない」と読むと、
     // 図では触れて見えるのにネットリストだけが割れる。
     const nets = netsOf(
       'parts:',
-      '  IN: port v.94_80.41',
-      '  R1: resistor x.08_83.3 a1',
+      '  IN: port v80j4e1',
+      '  R1: resistor x83a3i0 a1',
       'wires:',
-      '  - v.94_80.41 -- y.22_86.19',
+      '  - v80j4e1 -- y86c1c9',
     );
 
     expect(nets[0]).toMatchObject({ name: 'IN', refs: ['IN', 'R1.1'] });

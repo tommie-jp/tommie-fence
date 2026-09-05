@@ -766,14 +766,14 @@ describe('行送りの語が書ける場所', () => {
 
 describe('addresses between the cells', () => {
   test('places a part on an address written between two cells', () => {
-    expect(partOf('resistor a_1.5 a_3.5 10k')).toMatchObject({
+    expect(partOf('resistor a1a5 a3a5 10k')).toMatchObject({
       from: { row: 0, col: 0.5 },
       to: { row: 0, col: 2.5 },
     });
   });
 
   test('reads a wire that ends between two cells', () => {
-    expect(wireOf('a.5_1 -- a.5_3')).toEqual({
+    expect(wireOf('a1f0 -- a3f0')).toEqual({
       from: { kind: 'cell', address: { row: 0.5, col: 0 } },
       to: { kind: 'cell', address: { row: 0.5, col: 2 } },
       operator: '--',
@@ -787,11 +787,11 @@ describe('addresses between the cells', () => {
   });
 
   test('points to the separator when a decimal is written without one', () => {
-    expect(messageOf('resistor a1.5 a3').message).toContain('a_1.5');
+    expect(messageOf('resistor a1.5 a3').message).toContain('a1a5');
   });
 
   test('points to the decimal when a fraction is written', () => {
-    expect(messageOf('resistor a.1/4_2 a3').message).toContain('.25');
+    expect(messageOf('resistor a.1/4_2 a3').message).toContain('組');
   });
 
   test('points to the plain spelling when the separator carries no decimal', () => {
@@ -807,11 +807,11 @@ describe('交点の間の番地を書ける場所', () => {
   };
 
   test('circles a cell between the crossings, which is an address like any other', () => {
-    expect(noteOf('circle a_1.5')).toMatchObject({ kind: 'circle', target: 'a_1.5' });
+    expect(noteOf('circle a1a5')).toMatchObject({ kind: 'circle', target: 'a1a5' });
   });
 
   test('points an arrow from and to a cell between the crossings', () => {
-    expect(noteOf('arrow a.5_1 R1')).toMatchObject({ kind: 'arrow', from: 'a.5_1', to: 'R1' });
+    expect(noteOf('arrow a1f0 R1')).toMatchObject({ kind: 'arrow', from: 'a1f0', to: 'R1' });
   });
 
   test('still refuses a target that is neither a part nor an address', () => {

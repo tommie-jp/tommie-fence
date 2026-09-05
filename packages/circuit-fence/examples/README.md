@@ -40,7 +40,7 @@ GitHub のようにフェンスが描画されない場所で、ソースと図�
 | [11-logic.md](11-logic.md) | ロジックゲート / DIP の IC / 切り替えスイッチ |
 | [12-notes.md](12-notes.md) | `notes:` の印・枠・指し棒・直線・字、実線の枠、色、大きさ、寄せ、日本語 |
 | [13-points.md](13-points.md) | `points:` (番地に名前を付ける) |
-| [14-half-step.md](14-half-step.md) | 交点の間の番地 (`a_1.5` `a.5_1`) |
+| [14-half-step.md](14-half-step.md) | 交点の間の番地 (`a1a5` `a1f0`) |
 | [15-arrows.md](15-arrows.md) | 電流の矢と電圧の符号 (`i=` `v=`) |
 | [16-orientation.md](16-orientation.md) | 記号の向き (`r90` / `r180` / `r270` / `mirror`) |
 

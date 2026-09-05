@@ -116,7 +116,7 @@ export type GridMap = {
   readonly chips: readonly Chip[];
   /** 掴める注釈。升目に載らない所を指しているものは出さない (チップと同じ理由)。 */
   readonly notes: readonly MapNote[];
-  /** 掴める節点。**交点の間 (`a_1.5`) も書かれたところに出る**。 */
+  /** 掴める節点。**交点の間 (`a1a5`) も書かれたところに出る**。 */
   readonly dots: readonly Dot[];
   /** 引く線。部品の形と違い、**書かれたとおりの位置**に引ける。 */
   readonly wires: readonly WireLine[];
@@ -247,7 +247,7 @@ export function gridMap(source: string): GridMap {
   const chips: Chip[] = [];
 
   for (const [index, part] of doc.parts.entries()) {
-    // **交点の間 (`a_1.5`) も書かれたところに出す。** 升目の線は交点にしか
+    // **交点の間 (`a1a5`) も書かれたところに出す。** 升目の線は交点にしか
     // 無いが、部品は線の間にも置ける — 近くの升へ寄せて見せると、掴んで
     // 動かしたとき書いた場所と違うところへ行く。端数のまま置けば嘘がない。
     const [anchor, far] = addressesOf(part);
@@ -294,7 +294,7 @@ export function gridMap(source: string): GridMap {
 
   // **升目は点と線も覆う。** 配線だけが届く交点はチップに現れないので、
   // 部品だけを見て決めると端が升の外へ落ちて掴めなくなる。
-  // 端数の番地は切り上げて数える (`a_1.5` は 2 列目まで要る)。
+  // 端数の番地は切り上げて数える (`a1a5` は 2 列目まで要る)。
   const used: readonly Cell[] = [
     ...chips.flatMap((chip) => [chip, chip.to].filter((cell) => cell !== null)),
     ...dots,
@@ -380,7 +380,7 @@ export function fenceAt(markdown: string, line: number): FenceBlock | null {
  * その部品が載っている交点 (書かれた綴り)。ゴーストの光らせ先。無ければ空。
  *
  * **升目を組まずに、書かれた番地をそのまま読む。** `gridMap` を通すと
- * 升目に載らない番地 (`a_1.5`) の部品が黙って空になり、置いたのに何も光らない。
+ * 升目に載らない番地 (`a1a5`) の部品が黙って空になり、置いたのに何も光らない。
  * ホバーのたびに呼ばれるので、点や配線まで組み直す必要も無い。
  */
 export function partCells(source: string, handle: string): readonly string[] {

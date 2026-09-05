@@ -550,7 +550,7 @@ describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
     }]);
     // **端数の付いた問い合わせの答えだけ**を受け取る (Ctrl 無しの古い答えを採らない)。
     const asked = step(carrying, hover(AT_Q)).state;
-    const answer = { key: 'place:transistor::b3:0:0::0.25,-0.25', cells: ['b.25_2.75'], ok: true, why: '' };
+    const answer = { key: 'place:transistor::b3:0:0::0.25,-0.25', cells: ['b2c7f5'], ok: true, why: '' };
     expect(step(asked, { kind: 'ghost', ghost: answer }).state.ghost).toEqual(answer);
     expect(step(asked, { kind: 'ghost', ghost: { ...answer, key: 'place:transistor::b3:0:0' } }).state.ghost).toBeNull();
   });

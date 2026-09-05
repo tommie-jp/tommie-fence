@@ -65,8 +65,8 @@ parts:
   Z1:  resistor c7 c8 l=$\dot{Z}_L$
   R1:  resistor c10 c11 l=RL
 notes:
-  - text a.7_1 blue left: ラベル無し (ID がそのまま出る)
-  - text c.7_1 blue left: ラベル有り (図に出る字だけが変わる)
+  - text a1h0 blue left: ラベル無し (ID がそのまま出る)
+  - text c1h0 blue left: ラベル有り (図に出る字だけが変わる)
   - source a13 blue
 style:
   grid: on

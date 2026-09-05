@@ -114,7 +114,7 @@ export function partSpans(source: string, handle: string): readonly Span[] {
 
 /**
  * その番地から `rows` 行・`cols` 列だけ離れた番地。格子の外は null。
- * **交点の間 (`a_1.5`) からも数えられる** — 足すだけなので端数がそのまま乗る。
+ * **交点の間 (`a1a5`) からも数えられる** — 足すだけなので端数がそのまま乗る。
  */
 export function stepCell(written: string, rows: number, cols: number): string | null {
   const from = parseAddress(written);
@@ -125,7 +125,7 @@ export function stepCell(written: string, rows: number, cols: number): string | 
 
 /**
  * 2 つの番地の間の行数と列数。**まとめて選んだものを同じだけずらす**ために要る。
- * 交点の間の番地 (`a_1.5`) も引けるので、端数のまま返る。
+ * 交点の間の番地 (`a1a5`) も引けるので、端数のまま返る。
  */
 export function stepsTo(from: string, to: string): GridStep | null {
   const start = parseAddress(from);

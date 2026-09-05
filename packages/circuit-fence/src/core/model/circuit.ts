@@ -142,7 +142,7 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
   return {
     circuit,
     errors,
-    notices: checking ? [...ambiguousTouches(circuit, byId), ...pinLikeAddresses(circuit, byId)] : [],
+    notices: checking ? ambiguousTouches(circuit, byId) : [],
   };
 }
 
@@ -516,49 +516,6 @@ function resolvePins(
   }
 
   return { ...wire, from, to };
-}
-
-/**
- * 足とも番地とも読める綴り。
- *
- * 部品 ID には `_` を使えるので (`U_1`)、足を書いた `U_1.5` は
- * 交点の間の番地 `u_1.5` としても読める。読む順で決めると、線は行 u まで
- * 飛び、ネットリストからは足が消える — **図もネットリストも黙って壊れる**。
- * どちらのつもりだったかは書いた人にしか分からないので、書き分けを頼む。
- *
- * 言うのは**その ID の部品が実在して、その足を持っているとき**だけ。
- * 持っていなければ足としては読めないので、番地で確定する。
- */
-function pinLikeAddresses(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>): FenceError[] {
-  const errors: FenceError[] = [];
-
-  for (const wire of circuit.wires) {
-    for (const endpoint of [wire.from, wire.to]) {
-      if (endpoint.kind !== 'cell') continue;
-
-      const written = formatAddress(endpoint.address);
-      const split = written.lastIndexOf('.');
-      if (!written.includes('_') || split < 0) continue;
-
-      const head = written.slice(0, split);
-      const pin = written.slice(split + 1);
-      const part = [...byId.values()].find((candidate) => candidate.id.toLowerCase() === head);
-      if (part === undefined) continue;
-
-      const type = lookupPartType(part.type);
-      if (type === undefined || type === null || lookupPin(type, pin) === null) continue;
-
-      errors.push(
-        fenceError(
-          `${safeToken(`${part.id}.${pin}`)} は番地 ${written} とも足とも読めます`
-            + ` (足のつもりなら部品 ID から _ を外し、番地のつもりなら points: で名前を付けてください)`,
-          wire.line,
-        ),
-      );
-    }
-  }
-
-  return errors;
 }
 
 /** 端 1 つを解決する。番地はそのまま、足はアンカー名に揃える。 */

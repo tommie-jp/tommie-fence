@@ -49,109 +49,109 @@ parts:
   G1:  galvanometer v5 v7
   D8:  detector v8 v10
 notes:
-  - line a.1_1.5 a.1_13.5 ink
-  - line c.1_1.5 c.1_13.5 ink
-  - line e.1_1.5 e.1_13.5 ink
-  - line g.1_1.5 g.1_13.5 ink
-  - line i.1_1.5 i.1_13.5 ink
-  - line k.1_1.5 k.1_13.5 ink
-  - line m.1_1.5 m.1_13.5 ink
-  - line o.1_1.5 o.1_13.5 ink
-  - line q.1_1.5 q.1_13.5 ink
-  - line s.1_1.5 s.1_13.5 ink
-  - line u.1_1.5 u.1_13.5 ink
-  - line w.1_1.5 w.1_13.5 ink
-  - line a.1_1.5 w.1_1.5 ink
-  - line a.1_4.5 w.1_4.5 ink
-  - line a.1_7.5 w.1_7.5 ink
-  - line a.1_10.5 w.1_10.5 ink
-  - line a.1_13.5 w.1_13.5 ink
-  - text a.4_3 blue center: 05 抵抗
-  - text b.7_3 blue center: "R1: resistor b2 b4 10k"
-  - text a.4_6 blue center: 06 可変抵抗
-  - text b.7_6 blue center: "R2: resistor-var b5 b7 10k"
-  - text a.4_9 blue center: 07 ポテンショメータ
-  - text b.7_9 blue center: "P2: potentiometer b8 b10 10k"
-  - text a.4_12 blue center: 08 コンデンサ
-  - text b.7_12 blue center: "C1: capacitor b11 b13 100n"
-  - text c.4_3 blue center: 09 電解コンデンサ
-  - text d.7_3 blue center: "C2: ecap d2 d4 100u"
-  - text c.4_6 blue center: 10 バリキャップ
-  - text d.7_6 blue center: "D4: varicap d5 d7 33p"
-  - text c.4_9 blue center: 11 コイル
-  - text d.7_9 blue center: "L1: inductor d8 d10 10m"
-  - text c.4_12 blue center: 12 CdS セル
-  - text d.7_12 blue center: "R3: photoresistor d11 d13"
-  - text e.4_3 blue center: 13 サーミスタ
-  - text f.7_3 blue center: "R4: thermistor f2 f4 10k"
-  - text e.4_6 blue center: 14 NTC サーミスタ
-  - text f.7_6 blue center: "R5: thermistor-ntc f5 f7 10k"
-  - text e.4_9 blue center: 15 PTC サーミスタ
-  - text f.7_9 blue center: "R6: thermistor-ptc f8 f10"
-  - text e.4_12 blue center: 16 バリスタ
-  - text f.7_12 blue center: "R7: varistor f11 f13 470V"
-  - text g.4_3 blue center: 17 水晶振動子
-  - text h.7_3 blue center: "X1: crystal h2 h4 16M"
-  - text g.4_6 blue center: 18 ダイオード
-  - text h.7_6 blue center: "D1: diode h5 h7 1N4148"
-  - text g.4_9 blue center: 19 LED
-  - text h.7_9 blue center: "D2: led h8 h10"
-  - text g.4_12 blue center: 20 ツェナー
-  - text h.7_12 blue center: "D3: zener h11 h13 5V1"
-  - text i.4_3 blue center: 21 ショットキー
-  - text j.7_3 blue center: "D5: schottky j2 j4 1N5819"
-  - text i.4_6 blue center: 22 フォトダイオード
-  - text j.7_6 blue center: "D6: photodiode j5 j7"
-  - text i.4_9 blue center: 23 ダイアック
-  - text j.7_9 blue center: "D7: diac j8 j10"
-  - text i.4_12 blue center: 24 サイリスタ
-  - text j.7_12 blue center: "T1: thyristor j11 j13"
-  - text k.4_3 blue center: 25 トライアック
-  - text l.7_3 blue center: "T2: triac l2 l4"
-  - text k.4_6 blue center: 26 直流電源
-  - text l.7_6 blue center: "V1: vsource l5 l7 5"
-  - text k.4_9 blue center: 27 交流電源
-  - text l.7_9 blue center: "V2: sine l8 l10 1"
-  - text k.4_12 blue center: 28 方形波電源
-  - text l.7_12 blue center: "V3: square l11 l13 5"
-  - text m.4_3 blue center: 29 三角波電源
-  - text n.7_3 blue center: "V4: triangle n2 n4 1"
-  - text m.4_6 blue center: 30 定電流源
-  - text n.7_6 blue center: "I1: isource n5 n7 20m"
-  - text m.4_9 blue center: 31 電池
-  - text n.7_9 blue center: "B1: battery n8 n10 9"
-  - text m.4_12 blue center: 32 太陽電池
-  - text n.7_12 blue center: "PV1: solar n11 n13 0.6"
-  - text o.4_3 blue center: 33 スイッチ
-  - text p.7_3 blue center: "S1: switch p2 p4"
-  - text o.4_6 blue center: 34 b 接点スイッチ
-  - text p.7_6 blue center: "S2: switch-nc p5 p7"
-  - text o.4_9 blue center: 35 押しボタン
-  - text p.7_9 blue center: "S3: button p8 p10"
-  - text o.4_12 blue center: 36 b 接点ボタン
-  - text p.7_12 blue center: "S4: button-nc p11 p13"
-  - text q.4_3 blue center: 37 リードスイッチ
-  - text r.7_3 blue center: "S5: reed r2 r4"
-  - text q.4_6 blue center: 38 ヒューズ
-  - text r.7_6 blue center: "F1: fuse r5 r7 3A"
-  - text q.4_9 blue center: 39 ランプ
-  - text r.7_9 blue center: "P1: lamp r8 r10"
-  - text q.4_12 blue center: 40 スピーカー
-  - text r.7_12 blue center: "LS1: speaker r11 r13"
-  - text s.4_3 blue center: 41 マイク
-  - text t.7_3 blue center: "MK1: mic t2 t4"
-  - text s.4_6 blue center: 42 電流計
-  - text t.7_6 blue center: "A1: ammeter t5 t7"
-  - text s.4_9 blue center: 43 電圧計
-  - text t.7_9 blue center: "V5: voltmeter t8 t10"
-  - text s.4_12 blue center: 44 抵抗計
-  - text t.7_12 blue center: "M1: ohmmeter t11 t13"
-  - text u.4_3 blue center: 45 電力計
-  - text v.7_3 blue center: "W1: wattmeter v2 v4"
-  - text u.4_6 blue center: 46 検流計
-  - text v.7_6 blue center: "G1: galvanometer v5 v7"
-  - text u.4_9 blue center: 47 検出器
-  - text v.7_9 blue center: "D8: detector v8 v10"
+  - line a1b5 a13b5 ink
+  - line c1b5 c13b5 ink
+  - line e1b5 e13b5 ink
+  - line g1b5 g13b5 ink
+  - line i1b5 i13b5 ink
+  - line k1b5 k13b5 ink
+  - line m1b5 m13b5 ink
+  - line o1b5 o13b5 ink
+  - line q1b5 q13b5 ink
+  - line s1b5 s13b5 ink
+  - line u1b5 u13b5 ink
+  - line w1b5 w13b5 ink
+  - line a1b5 w1b5 ink
+  - line a4b5 w4b5 ink
+  - line a7b5 w7b5 ink
+  - line a10b5 w10b5 ink
+  - line a13b5 w13b5 ink
+  - text a3e0 blue center: 05 抵抗
+  - text b3h0 blue center: "R1: resistor b2 b4 10k"
+  - text a6e0 blue center: 06 可変抵抗
+  - text b6h0 blue center: "R2: resistor-var b5 b7 10k"
+  - text a9e0 blue center: 07 ポテンショメータ
+  - text b9h0 blue center: "P2: potentiometer b8 b10 10k"
+  - text a12e0 blue center: 08 コンデンサ
+  - text b12h0 blue center: "C1: capacitor b11 b13 100n"
+  - text c3e0 blue center: 09 電解コンデンサ
+  - text d3h0 blue center: "C2: ecap d2 d4 100u"
+  - text c6e0 blue center: 10 バリキャップ
+  - text d6h0 blue center: "D4: varicap d5 d7 33p"
+  - text c9e0 blue center: 11 コイル
+  - text d9h0 blue center: "L1: inductor d8 d10 10m"
+  - text c12e0 blue center: 12 CdS セル
+  - text d12h0 blue center: "R3: photoresistor d11 d13"
+  - text e3e0 blue center: 13 サーミスタ
+  - text f3h0 blue center: "R4: thermistor f2 f4 10k"
+  - text e6e0 blue center: 14 NTC サーミスタ
+  - text f6h0 blue center: "R5: thermistor-ntc f5 f7 10k"
+  - text e9e0 blue center: 15 PTC サーミスタ
+  - text f9h0 blue center: "R6: thermistor-ptc f8 f10"
+  - text e12e0 blue center: 16 バリスタ
+  - text f12h0 blue center: "R7: varistor f11 f13 470V"
+  - text g3e0 blue center: 17 水晶振動子
+  - text h3h0 blue center: "X1: crystal h2 h4 16M"
+  - text g6e0 blue center: 18 ダイオード
+  - text h6h0 blue center: "D1: diode h5 h7 1N4148"
+  - text g9e0 blue center: 19 LED
+  - text h9h0 blue center: "D2: led h8 h10"
+  - text g12e0 blue center: 20 ツェナー
+  - text h12h0 blue center: "D3: zener h11 h13 5V1"
+  - text i3e0 blue center: 21 ショットキー
+  - text j3h0 blue center: "D5: schottky j2 j4 1N5819"
+  - text i6e0 blue center: 22 フォトダイオード
+  - text j6h0 blue center: "D6: photodiode j5 j7"
+  - text i9e0 blue center: 23 ダイアック
+  - text j9h0 blue center: "D7: diac j8 j10"
+  - text i12e0 blue center: 24 サイリスタ
+  - text j12h0 blue center: "T1: thyristor j11 j13"
+  - text k3e0 blue center: 25 トライアック
+  - text l3h0 blue center: "T2: triac l2 l4"
+  - text k6e0 blue center: 26 直流電源
+  - text l6h0 blue center: "V1: vsource l5 l7 5"
+  - text k9e0 blue center: 27 交流電源
+  - text l9h0 blue center: "V2: sine l8 l10 1"
+  - text k12e0 blue center: 28 方形波電源
+  - text l12h0 blue center: "V3: square l11 l13 5"
+  - text m3e0 blue center: 29 三角波電源
+  - text n3h0 blue center: "V4: triangle n2 n4 1"
+  - text m6e0 blue center: 30 定電流源
+  - text n6h0 blue center: "I1: isource n5 n7 20m"
+  - text m9e0 blue center: 31 電池
+  - text n9h0 blue center: "B1: battery n8 n10 9"
+  - text m12e0 blue center: 32 太陽電池
+  - text n12h0 blue center: "PV1: solar n11 n13 0.6"
+  - text o3e0 blue center: 33 スイッチ
+  - text p3h0 blue center: "S1: switch p2 p4"
+  - text o6e0 blue center: 34 b 接点スイッチ
+  - text p6h0 blue center: "S2: switch-nc p5 p7"
+  - text o9e0 blue center: 35 押しボタン
+  - text p9h0 blue center: "S3: button p8 p10"
+  - text o12e0 blue center: 36 b 接点ボタン
+  - text p12h0 blue center: "S4: button-nc p11 p13"
+  - text q3e0 blue center: 37 リードスイッチ
+  - text r3h0 blue center: "S5: reed r2 r4"
+  - text q6e0 blue center: 38 ヒューズ
+  - text r6h0 blue center: "F1: fuse r5 r7 3A"
+  - text q9e0 blue center: 39 ランプ
+  - text r9h0 blue center: "P1: lamp r8 r10"
+  - text q12e0 blue center: 40 スピーカー
+  - text r12h0 blue center: "LS1: speaker r11 r13"
+  - text s3e0 blue center: 41 マイク
+  - text t3h0 blue center: "MK1: mic t2 t4"
+  - text s6e0 blue center: 42 電流計
+  - text t6h0 blue center: "A1: ammeter t5 t7"
+  - text s9e0 blue center: 43 電圧計
+  - text t9h0 blue center: "V5: voltmeter t8 t10"
+  - text s12e0 blue center: 44 抵抗計
+  - text t12h0 blue center: "M1: ohmmeter t11 t13"
+  - text u3e0 blue center: 45 電力計
+  - text v3h0 blue center: "W1: wattmeter v2 v4"
+  - text u6e0 blue center: 46 検流計
+  - text v6h0 blue center: "G1: galvanometer v5 v7"
+  - text u9e0 blue center: 47 検出器
+  - text v9h0 blue center: "D8: detector v8 v10"
 style:
   grid: off
 ```
@@ -184,21 +184,21 @@ parts:
   VCC: vcc b9
   VEE: vee b12
 notes:
-  - line a.1_1.5 a.1_13.5 ink
-  - line c.1_1.5 c.1_13.5 ink
-  - line a.1_1.5 c.1_1.5 ink
-  - line a.1_4.5 c.1_4.5 ink
-  - line a.1_7.5 c.1_7.5 ink
-  - line a.1_10.5 c.1_10.5 ink
-  - line a.1_13.5 c.1_13.5 ink
-  - text a.4_3 blue center: 01 端子
-  - text b.7_3 blue center: "IN: port b3"
-  - text a.4_6 blue center: 02 グラウンド
-  - text b.7_6 blue center: "G1: ground b6"
-  - text a.4_9 blue center: 03 電源レール (+)
-  - text b.7_9 blue center: "VCC: vcc b9"
-  - text a.4_12 blue center: 04 電源レール (-)
-  - text b.7_12 blue center: "VEE: vee b12"
+  - line a1b5 a13b5 ink
+  - line c1b5 c13b5 ink
+  - line a1b5 c1b5 ink
+  - line a4b5 c4b5 ink
+  - line a7b5 c7b5 ink
+  - line a10b5 c10b5 ink
+  - line a13b5 c13b5 ink
+  - text a3e0 blue center: 01 端子
+  - text b3h0 blue center: "IN: port b3"
+  - text a6e0 blue center: 02 グラウンド
+  - text b6h0 blue center: "G1: ground b6"
+  - text a9e0 blue center: 03 電源レール (+)
+  - text b9h0 blue center: "VCC: vcc b9"
+  - text a12e0 blue center: 04 電源レール (-)
+  - text b12h0 blue center: "VEE: vee b12"
 style:
   grid: off
 ```

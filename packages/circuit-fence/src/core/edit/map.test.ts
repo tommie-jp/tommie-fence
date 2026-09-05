@@ -148,9 +148,9 @@ describe('gridMap', () => {
   });
 
   test('shows a part on a half-step address where it is written, not on a neighbouring cell', () => {
-    // 交点の間 (`a_1.5`) も**書かれたところ**に出す。升へ寄せると、掴んで
+    // 交点の間 (`a1a5`) も**書かれたところ**に出す。升へ寄せると、掴んで
     // 動かしたとき書いた場所と違うところへ行く — 端数のまま置けば嘘がない。
-    const map = gridMap('parts:\n  R1: resistor a_1.5 a_3.5 1k\n');
+    const map = gridMap('parts:\n  R1: resistor a1a5 a3a5 1k\n');
 
     expect(map.chips).toHaveLength(1);
     expect(map.chips[0]?.col).toBe(0.5);
@@ -159,21 +159,21 @@ describe('gridMap', () => {
 
   test('lets an arrow key move a half-step part without losing the half', () => {
     // 端数のまま 1 升ずらす。整数へ丸めると、押した覚えのない場所へ動く。
-    expect(stepCell('a_1.5', 0, 1)).toBe('a_2.5');
-    expect(stepsTo('a_1.5', 'a3')).toEqual({ rows: 0, cols: 1.5 });
+    expect(stepCell('a1a5', 0, 1)).toBe('a2a5');
+    expect(stepsTo('a1a5', 'a3')).toEqual({ rows: 0, cols: 1.5 });
   });
 
   test('spells a quarter step from a whole crossing, and comes back to the same crossing', () => {
     // Ctrl+クリックの 1/4 升 (52 の docs/23)。殻は端数だけ渡し、綴りはここが組む。
     // 交点ちょうどに戻れば素の番地 (`b3`) — 1 つの場所に綴りは 1 つ。
-    expect(stepCell('b3', 0.25, -0.25)).toBe('b.25_2.75');
-    expect(stepCell('b.25_2.75', -0.25, 0.25)).toBe('b3');
+    expect(stepCell('b3', 0.25, -0.25)).toBe('b2c7f5');
+    expect(stepCell('b2c7f5', -0.25, 0.25)).toBe('b3');
     expect(stepCell('b3', 0, 0)).toBe('b3');
   });
 
   test('makes room for the cell a half-step part reaches into', () => {
-    // 端数は切り上げて数える (`a_9.5` は 10 列目まで要る)。
-    const map = gridMap('parts:\n  R1: resistor a_9.5 a_11.5 1k\n');
+    // 端数は切り上げて数える (`a9a5` は 10 列目まで要る)。
+    const map = gridMap('parts:\n  R1: resistor a9a5 a11a5 1k\n');
 
     expect(map.cols).toBeGreaterThanOrEqual(12);
   });
@@ -230,7 +230,7 @@ describe('gridMap の配線', () => {
   });
 
   test('keeps a half-step endpoint where it was written', () => {
-    expect(linesOf('wires:\n  - a_1.5 -- a3\n')[0]?.points[0]).toEqual({ row: 0, col: 0.5 });
+    expect(linesOf('wires:\n  - a1a5 -- a3\n')[0]?.points[0]).toEqual({ row: 0, col: 0.5 });
   });
 
   test('approximates a pin end at the part, since only TeX knows where the leg is', () => {
@@ -398,7 +398,7 @@ describe('partCells', () => {
 
   test('reads a part the grid map leaves out, since a ghost must light where it lands', () => {
     // 交点の間の番地は升目に載らない (掴めない) が、**置いた先としては正しい**。
-    expect(partCells('parts:\n  R1: resistor a_1.5 a3\n', 'R1')).toEqual(['a_1.5', 'a3']);
+    expect(partCells('parts:\n  R1: resistor a1a5 a3\n', 'R1')).toEqual(['a1a5', 'a3']);
   });
 
   test('tells the repeated names apart by their handle', () => {

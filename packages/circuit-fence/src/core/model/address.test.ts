@@ -133,88 +133,91 @@ describe('cornerOf', () => {
 });
 
 describe('parseAddress between the cells', () => {
-  test('reads a column written between two cells', () => {
-    expect(parseAddress('a_1.5')).toEqual({ row: 0, col: 0.5 });
-    expect(parseAddress('b_3.5')).toEqual({ row: 1, col: 2.5 });
+  test('reads a column step from the digit of another pair', () => {
+    expect(parseAddress('a1a5')).toEqual({ row: 0, col: 0.5 });
+    expect(parseAddress('b3a5')).toEqual({ row: 1, col: 2.5 });
   });
 
-  test('reads a row written between two letters', () => {
-    expect(parseAddress('a.5_1')).toEqual({ row: 0.5, col: 0 });
-    expect(parseAddress('a.5_1.5')).toEqual({ row: 0.5, col: 0.5 });
+  test('reads a row step from the letter of the pair, counted like the row itself (a = 0)', () => {
+    expect(parseAddress('a1f0')).toEqual({ row: 0.5, col: 0 });
+    expect(parseAddress('a1f5')).toEqual({ row: 0.5, col: 0.5 });
   });
 
-  test('reads a quarter step, which halves the gap again', () => {
-    expect(parseAddress('a_1.25')).toEqual({ row: 0, col: 0.25 });
-    expect(parseAddress('a.25_2')).toEqual({ row: 0.25, col: 1 });
+  test('reads a second pair as the next decimal, which halves the gap again', () => {
+    expect(parseAddress('a1a2a5')).toEqual({ row: 0, col: 0.25 });
+    expect(parseAddress('a1c2f5')).toEqual({ row: 0.25, col: 0.25 });
+    expect(parseAddress('b2c7f5')).toEqual({ row: 1.25, col: 1.75 });
   });
 
   test('reads it the same way in upper case', () => {
-    expect(parseAddress('A.5_1.5')).toEqual(parseAddress('a.5_1.5'));
+    expect(parseAddress('A1F5')).toEqual(parseAddress('a1f5'));
   });
 
-  test('reads a trailing zero as the same place, so one spelling stays canonical', () => {
-    expect(parseAddress('a_1.50')).toEqual(parseAddress('a_1.5'));
+  test('rejects a last pair that carries no step, because the plain address says the same place', () => {
+    expect(parseAddress('a1a0')).toBeNull();
+    expect(parseAddress('a1b5a0')).toBeNull();
   });
 
-  test('rejects a decimal written without the separator, which is a pin (U1.5)', () => {
+  test('keeps a zero pair that a later pair needs', () => {
+    expect(parseAddress('a1a0b5')).toEqual({ row: 0.01, col: 0.05 });
+  });
+
+  test('rejects a letter past j, which stands for no decimal digit', () => {
+    expect(parseAddress('a1k5')).toBeNull();
+    expect(parseAddress('a1z0')).toBeNull();
+  });
+
+  test('rejects a decimal, which is a pin (U1.5)', () => {
     expect(parseAddress('a1.5')).toBeNull();
     expect(parseAddress('u1.5')).toBeNull();
   });
 
-  test('rejects a separator without a decimal, which is just a1', () => {
-    expect(parseAddress('a_1')).toBeNull();
-    expect(parseAddress('a_1.0')).toBeNull();
-    expect(parseAddress('a.0_1')).toBeNull();
+  test('rejects the separator the spelling used to need', () => {
+    expect(parseAddress('a_1.5')).toBeNull();
+    expect(parseAddress('a.5_1')).toBeNull();
   });
 
-  test('rejects a fraction, so the same place has one spelling', () => {
-    expect(parseAddress('a.1/4_2')).toBeNull();
-    expect(parseAddress('a_1/4')).toBeNull();
-  });
-
-  test('rejects a decimal finer than the limit', () => {
-    expect(parseAddress(`a_1.${'1'.repeat(LIMITS.addressDecimals)}`)).not.toBeNull();
-    expect(parseAddress(`a_1.${'1'.repeat(LIMITS.addressDecimals + 1)}`)).toBeNull();
+  test('rejects more pairs than the decimals allow', () => {
+    expect(parseAddress('a1b5b5')).not.toBeNull();
+    expect(parseAddress('a1b5b5b5')).toBeNull();
   });
 
   test('rejects a step that runs past the last row, which has no next row', () => {
     const last = rowLetters(LIMITS.rows - 1);
     const beforeLast = rowLetters(LIMITS.rows - 2);
 
-    expect(parseAddress(`${beforeLast}.5_1`)).not.toBeNull();
-    expect(parseAddress(`${last}.5_1`)).toBeNull();
+    expect(parseAddress(`${beforeLast}1f0`)).not.toBeNull();
+    expect(parseAddress(`${last}1f0`)).toBeNull();
   });
 
   test('rejects a step that runs past the last column', () => {
-    expect(parseAddress(`a_${LIMITS.columns - 1}.5`)).not.toBeNull();
-    expect(parseAddress(`a_${LIMITS.columns}.5`)).toBeNull();
+    expect(parseAddress(`a${LIMITS.columns - 1}a5`)).not.toBeNull();
+    expect(parseAddress(`a${LIMITS.columns}a5`)).toBeNull();
   });
 
-  test('rejects a half written address', () => {
-    expect(parseAddress('a_')).toBeNull();
-    expect(parseAddress('_1')).toBeNull();
-    expect(parseAddress('a.5')).toBeNull();
-    expect(parseAddress('a.5_')).toBeNull();
-    expect(parseAddress('a_1.5_2')).toBeNull();
+  test('rejects a half written pair', () => {
+    expect(parseAddress('a1a')).toBeNull();
+    expect(parseAddress('a15a')).toBeNull();
+    expect(parseAddress('1a5')).toBeNull();
   });
 });
 
 describe('formatAddress between the cells', () => {
-  test('writes the separator only when there is a decimal', () => {
-    expect(formatAddress({ row: 0, col: 0.5 })).toBe('a_1.5');
-    expect(formatAddress({ row: 0.5, col: 0.5 })).toBe('a.5_1.5');
-    expect(formatAddress({ row: 0.5, col: 0 })).toBe('a.5_1');
+  test('writes a pair only when there is a step', () => {
+    expect(formatAddress({ row: 0, col: 0.5 })).toBe('a1a5');
+    expect(formatAddress({ row: 0.5, col: 0.5 })).toBe('a1f5');
+    expect(formatAddress({ row: 0.5, col: 0 })).toBe('a1f0');
   });
 
   test('writes every spelling back the way it was read', () => {
-    for (const written of ['a1', 'b3', 'a_1.5', 'a.5_1.5', 'a.5_1', 'a_1.25', 'a.25_2', 'z99', 'y.5_98.5']) {
+    for (const written of ['a1', 'b3', 'a1a5', 'a1f5', 'a1f0', 'a1a2f5', 'b2c7f5', 'z99', 'y98f5', 'a1a0b5']) {
       expect(formatAddress(parseAddress(written)!)).toBe(written);
     }
   });
 
-  test('writes one spelling for a place written two ways', () => {
-    expect(formatAddress(parseAddress('a_1.50')!)).toBe('a_1.5');
-    expect(formatAddress(parseAddress('a_1.10')!)).toBe('a_1.1');
+  test('writes one spelling for a place the numbers reach two ways', () => {
+    expect(formatAddress({ row: 0, col: 0.5 })).toBe(formatAddress({ row: 0, col: 0.50 }));
+    expect(formatAddress({ row: 0, col: 1 })).toBe('a2');
   });
 });
 
@@ -224,9 +227,9 @@ describe('texNameOfAddress', () => {
     expect(texNameOfAddress({ row: 1, col: 2 })).toBe('b3');
   });
 
-  test('keeps the dot out, which TikZ reads as the anchor of a node', () => {
-    expect(texNameOfAddress({ row: 0, col: 0.5 })).not.toContain('.');
-    expect(texNameOfAddress({ row: 0.5, col: 0.5 })).not.toContain('.');
+  test('hands the spelling straight through, because no dot is left for TikZ to read as an anchor', () => {
+    expect(texNameOfAddress({ row: 0, col: 0.5 })).toBe('a1a5');
+    expect(texNameOfAddress({ row: 0.5, col: 0.5 })).not.toMatch(/[._]/);
   });
 
   test('gives two places two names', () => {
@@ -257,44 +260,60 @@ describe('addresses between the cells in the geometry', () => {
 });
 
 describe('addressHint', () => {
-  test('turns a decimal written without the separator into the spelling that works', () => {
-    expect(addressHint('a1.5')).toContain('a_1.5');
-    expect(addressHint('c12.25')).toContain('c_12.25');
+  test('turns the separator the spelling used to need into the pairs that work', () => {
+    expect(addressHint('a_1.5')).toContain('a1a5');
+    expect(addressHint('a.5_1')).toContain('a1f0');
+    expect(addressHint('b.25_2.75')).toContain('b2c7f5');
+  });
+
+  test('points back to the plain spelling when the old separator carried no decimal', () => {
+    expect(addressHint('a_1')).toContain('a1');
+    expect(addressHint('a.0_1')).toContain('a1');
+  });
+
+  test('turns a decimal into the pairs that work', () => {
+    expect(addressHint('a1.5')).toContain('a1a5');
+    expect(addressHint('c12.25')).toContain('c12a2a5');
+  });
+
+  test('says which letters a pair may use', () => {
+    expect(addressHint('a1k5')).toContain('a〜j');
+  });
+
+  test('says how many pairs there may be when there are more', () => {
+    expect(addressHint('a1b5b5b5')).toContain(String(LIMITS.addressDecimals));
   });
 
   test('says how fine a decimal may be when it is finer than that', () => {
     expect(addressHint('a1.125')).toContain(String(LIMITS.addressDecimals));
   });
 
-  test('turns a decimal written with the separator alone into the spelling that works', () => {
-    expect(addressHint('a1_5')).toContain('a_1.5');
-  });
-
-  test('points back to the plain spelling when the separator carries no decimal', () => {
-    expect(addressHint('a_1')).toContain('a1');
-    expect(addressHint('a.0_1')).toContain('a1');
+  test('points back to the plain spelling when the last pair carries no step', () => {
+    expect(addressHint('a1a0')).toContain('a1');
   });
 
   test('says a fraction is not a way to write it', () => {
-    expect(addressHint('a.1/4_2')).toContain('.25');
+    expect(addressHint('a.1/4_2')).toContain('組');
   });
 
   test('says nothing about text that is not a near miss', () => {
     expect(addressHint('resistor')).toBeNull();
     expect(addressHint('U1.out')).toBeNull();
     expect(addressHint('a1')).toBeNull();
+    expect(addressHint('a1a5')).toBeNull();
   });
 });
 
 describe('addressHint が返す綴り', () => {
   test('never hands back a spelling that fails to parse', () => {
     // 言われたとおりに直しても通らない案内は、自己修正のループを空回りさせる。
-    for (const written of ['a0.5', 'a100.5', 'a1_0', 'a_0', 'z1.5', 'a1.999']) {
+    const near = ['a0.5', 'a100.5', 'a1_0', 'a_0', 'a1.999', 'a1k5', 'a1a0', 'a1b5b5b5'];
+    for (const written of [...near, `${rowLetters(LIMITS.rows - 1)}.5_1`, `a${LIMITS.columns}.5`]) {
       const hint = addressHint(written);
       if (hint === null) continue;
-      const suggested = /[a-z](?:\.\d+)?_?\d+(?:\.\d+)?/.exec(hint.replace(/^[^(]*\(/, ''));
+      const suggested = /[a-z]+\d+(?:[a-j]\d){0,2}/.exec(hint.replace(/^[^(]*\(/, ''));
       if (suggested === null) continue;
-      expect(parseAddress(suggested[0])).not.toBeNull();
+      expect(parseAddress(suggested[0]), `${written} → ${hint}`).not.toBeNull();
     }
   });
 
@@ -302,9 +321,5 @@ describe('addressHint が返す綴り', () => {
     // `points:` の名前を書き間違えた人に分数の話をしても、直す手がかりにならない。
     expect(addressHint('vin/2')).toBeNull();
     expect(addressHint('R1/2')).toBeNull();
-  });
-
-  test('keeps the decimals it allows in step with the limit', () => {
-    expect(addressHint(`a1_${'1'.repeat(LIMITS.addressDecimals)}`)).not.toBeNull();
   });
 });

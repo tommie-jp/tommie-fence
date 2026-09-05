@@ -57,9 +57,9 @@ describe('movePart', () => {
   });
 
   test('moves a part written with a half-step address', () => {
-    const source = ['parts:', '  R1:  resistor a_1.5 a_3.5 1k', ''].join('\n');
+    const source = ['parts:', '  R1:  resistor a1a5 a3a5 1k', ''].join('\n');
 
-    expect(moved(source, 'R1', 'b_1.5').source).toContain('resistor b_1.5 b_3.5 1k');
+    expect(moved(source, 'R1', 'b1a5').source).toContain('resistor b1a5 b3a5 1k');
   });
 
   test('turns a point name into the new address, and leaves points: alone', () => {

@@ -138,7 +138,7 @@ export function createCircuitEditor(look: LookSource = PLAIN): FenceEditor {
     cellsOf: (source, handle) => (isNoteHandle(handle) ? noteCells(source, handle) : partCells(source, handle)),
     // 配線は `-|` / `|-` で折れる (`Shift` を押しながら放す)。
     foldsWire: true,
-    // 交点の間 (`b.25_2.75`) は小数 2 桁まで書けるので、1/4 升まで刻める。
+    // 交点の間 (`b2c7f5`) は小数 2 桁まで書けるので、1/4 升まで刻める。
     fine: 4,
     step: stepCell,
     stepsTo,

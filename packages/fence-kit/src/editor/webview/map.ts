@@ -243,7 +243,7 @@ function markHover(now: State): void {
   shownFor(topOf(now.under))?.classList.add('cf-hover');
 }
 
-/** その番地の当たり判定の四角。端数の番地 (`b.25_2.75`) には無い。 */
+/** その番地の当たり判定の四角。端数の番地 (`b2c7f5`) には無い。 */
 const cellElement = (address: string): SVGGraphicsElement | null =>
   query<SVGGraphicsElement>(`.cf-cell[data-address="${CSS.escape(address)}"]`);
 
@@ -497,7 +497,7 @@ function paint(now: State): void {
   // **「置く」は道具ではなく持ち物** (`carry`)。CSS から見た顔だけをここで作る。
   document.body.dataset.tool = now.carry?.kind === 'place' ? 'place' : now.tool;
   document.body.classList.toggle('cf-carrying', now.carry !== null);
-  // 端数の上では拡張が綴った番地 (`b.25_2.75`) を出す。殻は綴りを組めないので、ゴーストの答えから取る。
+  // 端数の上では拡張が綴った番地 (`b2c7f5`) を出す。殻は綴りを組めないので、ゴーストの答えから取る。
   const spelled = now.under.fine !== null && now.ghost !== null && now.ghost.ok ? now.ghost.cells[0] : undefined;
   setText('.kc-cell', spelled ?? now.under.cell ?? '');
 }

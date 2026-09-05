@@ -935,22 +935,22 @@ describe('generateTex for addresses between the cells', () => {
   test('names the coordinate without a dot, which TikZ reads as an anchor', () => {
     const { tex } = generate(
       'parts:',
-      '  R1: resistor a_1.5 a_3.5 10k',
+      '  R1: resistor a1a5 a3a5 10k',
       'wires:',
-      '  - a.5_1 -- a.5_3',
+      '  - a1f0 -- a3f0',
     );
 
-    expect(tex).toContain('\\coordinate (a-1p5) at (1,0);');
-    expect(tex).toContain('\\coordinate (a-3p5) at (5,0);');
-    expect(tex).toContain('\\coordinate (ap5-1) at (0,-1);');
-    expect(tex).toContain('\\draw (a-1p5) to[R');
-    expect(tex).toContain('\\draw (ap5-1) -- (ap5-3);');
+    expect(tex).toContain('\\coordinate (a1a5) at (1,0);');
+    expect(tex).toContain('\\coordinate (a3a5) at (5,0);');
+    expect(tex).toContain('\\coordinate (a1f0) at (0,-1);');
+    expect(tex).toContain('\\draw (a1a5) to[R');
+    expect(tex).toContain('\\draw (a1f0) -- (a3f0);');
   });
 
   test('draws the grid on the whole cells, and wide enough to cover a half step', () => {
     const { tex } = generate(
       'parts:',
-      '  R1: resistor a_1.5 b_2.5 10k',
+      '  R1: resistor a1a5 b2a5 10k',
       'style:',
       '  grid: on',
     );
@@ -962,7 +962,7 @@ describe('generateTex for addresses between the cells', () => {
   test('widens the grid to the next whole cell when a part hangs past the last one', () => {
     const { tex } = generate(
       'parts:',
-      '  R1: resistor a1 a.5_1 10k',
+      '  R1: resistor a1 a1f0 10k',
       'style:',
       '  grid: on',
     );

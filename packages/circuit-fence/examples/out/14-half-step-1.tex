@@ -15,17 +15,17 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
 \coordinate (a1) at (0,0);
-\coordinate (a-2p5) at (3,0);
-\coordinate (c-2p5) at (3,-4);
+\coordinate (a2a5) at (3,0);
+\coordinate (c2a5) at (3,-4);
 \coordinate (a4) at (6,0);
 \draw (a1) node[ocirc]{} node[above left]{IN}; % line 3
-\draw (a1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (a-2p5); % line 4
-\draw (a-2p5) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (c-2p5); % line 5
-\node[ground] at (c-2p5) {}; % line 6
+\draw (a1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (a2a5); % line 4
+\draw (a2a5) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (c2a5); % line 5
+\node[ground] at (c2a5) {}; % line 6
 \draw (a4) node[ocirc]{} node[above left]{OUT}; % line 7
-\draw (a-2p5) -- (a4); % line 9
-\node[circ] at (a-2p5) {};
-\path (8,-7.408) rectangle (16.661,0.593); % line 11
+\draw (a2a5) -- (a4); % line 9
+\node[circ] at (a2a5) {};
+\path (8,-7.408) rectangle (16.136,0.593); % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,0) {X}; % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,-0.487) {X}; % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,-0.974) {X}; % line 11

@@ -1,7 +1,7 @@
 # 交点の間に置く
 
 交点と交点の間に置きたいときは、**`_` で行と列を切って**小数を書く
-(`a_1.5` は列が 1 と 2 の間、`a.5_1` は行が a と b の間)。小数は 2 桁まで。
+(`a1a5` は列が 1 と 2 の間、`a1f0` は行が a と b の間)。小数は 2 桁まで。
 
 `a1.5` のように `_` で切らない書き方は通さない。`.` は足の区切りでもあるので
 (`U1.5` は DIP の 5 番ピン)、切らずに書けるようにすると、どちらのつもりで
@@ -11,12 +11,12 @@
 title: 図01 交点の間に節点を置く
 parts:
   IN:  port a1
-  R1:  resistor a1 a_2.5 10k
-  C1:  capacitor a_2.5 c_2.5 100n
-  G1:  ground c_2.5
+  R1:  resistor a1 a2a5 10k
+  C1:  capacitor a2a5 c2a5 100n
+  G1:  ground c2a5
   OUT: port a4
 wires:
-  - a_2.5 -- a4
+  - a2a5 -- a4
 notes:
   - source a5 blue
 style:
@@ -35,7 +35,7 @@ parts:
   IN:  port a1
   R1:  resistor a1 a5 1k
   R2:  resistor b1 b5 2k
-  R3:  resistor b.5_1 b.5_5 3k
+  R3:  resistor b1f0 b5f0 3k
   R4:  resistor c1 c5 4k
   OUT: port a5
 wires:

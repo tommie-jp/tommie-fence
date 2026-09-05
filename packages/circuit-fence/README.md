@@ -97,7 +97,7 @@ addresses is the direction**.
 When several places point at the same node, naming the address under `points:`
 makes moving it a one-line edit (write `vin: a1` and `vin` works anywhere an
 address does). To sit between two grid points, split the row from the column
-with `_` and write a fraction: `a_1.5`.
+with `_` and write a fraction: `a1a5`.
 
 Diagrams are drawn by TeX (WASM), so there is no LaTeX to install. Each takes
 about a second, and a "drawing the diagram…" placeholder stands in until it
@@ -254,7 +254,7 @@ Design commitments and working rules are in [CLAUDE.md](CLAUDE.md) (Japanese).
 Phase 3. 77 parts in all (4 one-terminal symbols, 44 two-terminal parts,
 29 multi-terminal parts). Done so far: `--` / `-|` / `|-` wires, pin
 references (`U1.out`), junction dots, T connections, overlap detection,
-`points:` (names for addresses), addresses between grid points (`a_1.5`),
+`points:` (names for addresses), addresses between grid points (`a1a5`),
 orientation for multi-terminal parts and `ground` (`r90` / `r180` / `r270` /
 `mirror`), `l=` (the drawn label) and `i=` / `v=` (current arrows and voltage signs) on
 two-terminal parts, `title:` (a title above the diagram), `style:` (grid

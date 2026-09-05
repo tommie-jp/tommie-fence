@@ -1079,7 +1079,7 @@ describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
 
     await session.handle({ kind: 'addPart', type: 'ground', at: ['b3'], fine: [{ rows: 0.25, cols: -0.25 }] });
 
-    expect(doc.getText()).toContain('G1: ground b.25_2.75');
+    expect(doc.getText()).toContain('G1: ground b2c7f5');
   });
 
   test('answers a quarter preview with the spelled crossing', async () => {
@@ -1093,11 +1093,11 @@ describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
     });
 
     const ghost = host.sent.find((message) => message.kind === 'ghost');
-    expect(ghost).toMatchObject({ cells: ['b.25_2.75'], ok: true });
+    expect(ghost).toMatchObject({ cells: ['b2c7f5'], ok: true });
   });
 
   test('writes a whole address when the quarter lands on the crossing', async () => {
-    // 1 つの場所に綴りは 1 つ (`b_3.0` は無い)。
+    // 1 つの場所に綴りは 1 つ (`b3` は無い)。
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
     const session = sessionOf(host);
@@ -1116,6 +1116,6 @@ describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
 
     await session.handle({ kind: 'move', part: 'R1', to: 'b1', fine: { rows: 0, cols: 0.5 } });
 
-    expect(doc.getText()).toContain('resistor b_1.5 b_3.5 10k');
+    expect(doc.getText()).toContain('resistor b1a5 b3a5 10k');
   });
 });

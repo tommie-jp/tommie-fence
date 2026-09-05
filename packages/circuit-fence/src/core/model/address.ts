@@ -2,7 +2,7 @@ import { LIMITS } from '../limits.ts';
 
 /**
  * グリッドの交点 1 つ。row は上から (a = 0)、col は左から (1 = 0) 数える。
- * 書き方は `a1` `b3`、交点の間なら `a_1.5` `a.5_1.5`。**この 0 始まりの形が
+ * 書き方は `a1` `b3`、交点の間なら `a1a5` `a1f5`。**この 0 始まりの形が
  * 中間モデルでの正**で、綴りは入口 (parseAddress) と出口 (formatAddress) にしか
  * 出てこない。交点の間は整数でない値になるので、row も col も整数とは限らない。
  */
@@ -52,57 +52,59 @@ export function rowOfLetters(letters: string): number {
   return count - 1;
 }
 
-const ADDRESS = /^([a-z]+)([0-9]{1,3})$/;
+/** 端数の 1 桁を表す英字。**`a` = 0** で、行の英字 (`a` = 0 行) と同じ数え方。 */
+const FRACTION_LETTERS = 'abcdefghij';
+
 /**
- * 交点の間の番地。**小数を書くときは `_` で行と列を切る** (`a_1.5` `a.5_1.5`)。
+ * 番地の綴り。`a1` の後ろに**「行の英字 + 列の数字」の組**を足すと交点の間を指す
+ * (`a1a5` は列が半分、`a1f0` は行が半分、`a1f5` は両方)。組 1 つで小数第 1 位、
+ * 2 つで第 2 位まで — `LIMITS.addressDecimals` と同じ深さ。
  *
- * 切らずに `a1.5` と書けるようにはしない。`.` は足の区切りでもあるので
- * (`U1.5` は DIP の 5 番ピン)、切らないと**どちらのつもりで書いたのかを
- * 読む順で決めることになる**。`_` があるほうが番地、無いほうが足、と
- * 綴りだけで分かれる。
+ * **英字と数字が交互に並ぶので区切りが要らない。** 以前は `_` で行と列を切って
+ * 小数を書いていたが (旧 `a.5_1.5`)、番地から `.` が消えたことで
+ * **`.` を含む綴りは足 (`U1.5`)** と 1 行で分かれるようになった。
  */
-const BETWEEN = new RegExp(
-  `^([a-z]+)(?:\\.([0-9]{1,${LIMITS.addressDecimals}}))?_([0-9]{1,3})(?:\\.([0-9]{1,${LIMITS.addressDecimals}}))?$`,
-);
+const ADDRESS = new RegExp(`^([a-z]+)([0-9]{1,3})((?:[a-j][0-9]){0,${LIMITS.addressDecimals}})$`);
+
+/** 組が 1 つも無いのと同じ意味になる末尾。`a1a0` は `a1` と同じ場所。 */
+const EMPTY_PAIR = 'a0';
 
 /** 小数の桁で丸める。`1.1` のような値が計算のたびに末尾でぶれると、綴りが揺れる。 */
 const round = (value: number): number => Number(value.toFixed(LIMITS.addressDecimals));
 
-/** `.5` の形で書かれた端数。書かれていなければ 0。 */
-const fractionOf = (digits: string | undefined): number => (digits === undefined ? 0 : Number(`0.${digits}`));
+/** 組の並び → 行と列の端数。組 i は 10 の (i+1) 乗ぶんの 1 を刻む。 */
+function stepsOfPairs(pairs: string): { readonly row: number; readonly col: number } {
+  let row = 0;
+  let col = 0;
+  for (let at = 0; at < pairs.length; at += 2) {
+    const scale = 10 ** (at / 2 + 1);
+    row += FRACTION_LETTERS.indexOf(pairs[at] ?? 'a') / scale;
+    col += Number(pairs[at + 1]) / scale;
+  }
+  return { row, col };
+}
 
 /**
- * `a1` `a_1.5` `a.5_1.5` の形の番地を読む。読めなければ null
+ * `a1` `a1a5` `b2c7f5` の形の番地を読む。読めなければ null
  * (エラー文はどう使うかを知っている側で作る)。大小どちらで書いてもよい。
  *
- * 同じ場所の綴りは 1 つに保つ。`a_1` (小数の無い `_` 付き) と `a_1.0` は
- * `a1` と同じ場所なので通さない — 2 通りで書けると、ネットの名前も
- * 図どうしの突き合わせもその分だけ揺れる。
+ * 同じ場所の綴りは 1 つに保つ。末尾の組が `a0` (行も列もずれ無し) の綴りは
+ * 通さない — 2 通りで書けると、ネットの名前も図どうしの突き合わせもその分だけ揺れる。
  */
 export function parseAddress(text: string): Address | null {
-  const lowered = text.toLowerCase();
+  const matched = ADDRESS.exec(text.toLowerCase());
+  if (!matched) return null;
 
-  const matched = ADDRESS.exec(lowered);
-  if (matched) {
-    const [, letter = '', digits = ''] = matched;
-    return checked(rowOfLetters(letter), Number(digits));
-  }
+  const [, letters = '', digits = '', pairs = ''] = matched;
+  if (pairs.endsWith(EMPTY_PAIR)) return null;
 
-  const between = BETWEEN.exec(lowered);
-  if (!between) return null;
-
-  const [, letter = '', rowDigits, columnDigits, columnFraction] = between;
-  const rowStep = fractionOf(rowDigits);
-  const columnStep = fractionOf(columnFraction);
-  // 小数が無いなら `a1` と書ける場所。綴りを 2 つにしない。
-  if (rowStep === 0 && columnStep === 0) return null;
-
-  return checked(rowOfLetters(letter) + rowStep, Number(columnDigits) + columnStep);
+  const steps = stepsOfPairs(pairs);
+  return checked(rowOfLetters(letters) + steps.row, Number(digits) + steps.col);
 }
 
 /**
  * 図に置ける範囲に収まっているか見て、中間モデルの形にする。
- * 交点の間も**格子の内側だけ**。最終行の `.5` は次の行が無いところを指すので通さない。
+ * 交点の間も**格子の内側だけ**。最終行の組は次の行が無いところを指すので通さない。
  */
 function checked(row: number, column: number): Address | null {
   if (row < 0 || row > LAST_ROW) return null;
@@ -111,30 +113,51 @@ function checked(row: number, column: number): Address | null {
   return { row: round(row), col: round(column - 1) };
 }
 
-/** `.5` の形で書き足す端数。端数が無ければ空 (`a1` のまま)。 */
-const fractionText = (value: number): string => {
-  const step = round(value - Math.floor(value));
-  return step === 0 ? '' : String(step).slice(1);
-};
+/** 端数を桁の並びにする (`0.25` → `25`)。丸めてから取るので、末尾がぶれない。 */
+const digitsOfFraction = (value: number): string =>
+  String(Math.round((value - Math.floor(value)) * 10 ** LIMITS.addressDecimals))
+    .padStart(LIMITS.addressDecimals, '0');
+
+/** 行と列の端数 → 組の並び。ずれが無ければ空 (`a1` のまま)。 */
+function pairsText(row: number, column: number): string {
+  const rowDigits = digitsOfFraction(row);
+  const columnDigits = digitsOfFraction(column);
+
+  let pairs = '';
+  for (let at = 0; at < LIMITS.addressDecimals; at += 1) {
+    pairs += (FRACTION_LETTERS[Number(rowDigits[at])] ?? 'a') + columnDigits[at];
+  }
+  // 末尾の空の組は書かない (1 つの場所に綴りは 1 つ)。
+  return pairs.replace(new RegExp(`(?:${EMPTY_PAIR})+$`), '');
+}
 
 /**
- * 番地を綴りに戻す。交点の上なら `a1`、間なら `a_1.5` `a.5_1.5`。
+ * 番地を綴りに戻す。交点の上なら `a1`、間なら `a1a5` `b2c7f5`。
  * **読んだときと同じ綴りに戻る**ことが、ネットの名前とエラー文の拠りどころ。
  */
 export function formatAddress(address: Address): string {
   // 行は必ず格子の内側に収める。parseAddress は範囲を見ているが、この綴りは
-  // TeX の座標名にもなるので、万一はみ出しても `{` のような字を出さない
-  // (**TeX には検証済みの形しか渡さない**という約束の側で守る)。
+  // TeX の座標名にもなるので、万一はみ出しても格子の外を指す名前を出さない。
   const row = Math.min(LAST_ROW, Math.max(0, round(address.row)));
   const column = round(address.col + 1);
-  const letter = rowLetters(row);
 
-  const rowStep = fractionText(row);
-  const columnStep = fractionText(column);
-  if (rowStep === '' && columnStep === '') return `${letter}${column}`;
-
-  return `${letter}${rowStep}_${Math.floor(column)}${columnStep}`;
+  return `${rowLetters(row)}${Math.floor(column)}${pairsText(row, column)}`;
 }
+
+/** その行と列に綴りがあるなら、それ。格子の外なら null (案内に出さない)。 */
+function spellingAt(row: number, column: number): string | null {
+  const address = checked(row, column);
+  return address === null ? null : formatAddress(address);
+}
+
+/** `_` で行と列を切って小数を書いていた頃の綴り (旧 `a.5_1.5` `a_1.25`)。 */
+const OLD_BETWEEN = /^([a-z]+)(?:\.([0-9]+))?_([0-9]{1,3})(?:\.([0-9]+))?$/;
+/** その頃の書き間違い (`a1_5` = 列の小数を `_` で切った形)。 */
+const OLD_SLIP = /^([a-z]+)([0-9]{1,3})_([0-9]+)$/;
+/** 番地に小数を書いた綴り (`a1.5`)。いまの文法では足の綴り。 */
+const DECIMAL = /^([a-z]+)([0-9]{1,3})\.([0-9]+)$/;
+
+const fractionOf = (digits: string | undefined): number => (digits === undefined ? 0 : Number(`0.${digits}`));
 
 /**
  * 番地として読めなかった綴りへの案内。**近い書き間違いにだけ**返す (無ければ null)。
@@ -144,57 +167,85 @@ export function formatAddress(address: Address): string {
  */
 export function addressHint(text: string): string | null {
   const lowered = text.toLowerCase();
+  // 読める綴りに案内は要らない (呼び手は読めなかったときだけ聞くが、念のため)。
+  if (parseAddress(lowered) !== null) return null;
   // 番地のつもりで書かれた綴りにだけ返す。`vin/2` のような書き間違いに
-  // 分数の話をしても、直す手がかりにならない。
-  if (!/^[a-z]+[0-9./_]*$/.test(lowered)) return null;
+  // 組の話をしても、直す手がかりにならない。
+  if (!/^[a-z][a-z0-9./_]*$/.test(lowered)) return null;
 
   // 分数の話をするのは、交点の間を書こうとした綴り (`_` がある) にだけ。
-  if (lowered.includes('/') && lowered.includes('_')) {
-    return `分数では書けません (${LIMITS.addressDecimals} 桁までの小数で書きます。1/4 なら .25)`;
-  }
-  if (lowered.includes('/')) return null;
-
-  const decimals = new RegExp(`^([a-z]+)([0-9]{1,3})\\.([0-9]+)$`).exec(lowered);
-  if (decimals) {
-    const [, letter = '', digits = '', step = ''] = decimals;
-    return step.length > LIMITS.addressDecimals
-      ? `番地の小数は ${LIMITS.addressDecimals} 桁までです`
-      : suggest(`${letter}_${digits}.${step}`, '交点の間は _ で行と列を切ります');
+  if (lowered.includes('/')) {
+    return lowered.includes('_')
+      ? '分数では書けません (交点の間は 英字+数字 の組で書きます。行の英字は a〜j で a = 0)'
+      : null;
   }
 
-  const underscored = new RegExp(`^([a-z]+)([0-9]{1,3})_([0-9]{1,${LIMITS.addressDecimals}})$`).exec(lowered);
-  if (underscored) {
-    const [, letter = '', digits = '', step = ''] = underscored;
-    return suggest(`${letter}_${digits}.${step}`, '列の小数は . で書きます');
+  const old = OLD_BETWEEN.exec(lowered) ?? OLD_SLIP.exec(lowered);
+  if (old) {
+    const [, letters = '', first, digits = '', second] = old;
+    // `a1f5` は行の端数が先、`a1_5` は列の端数だけ (行の端数を書く場所が無い)。
+    const isSlip = second === undefined && first !== undefined && OLD_SLIP.test(lowered);
+    const rowStep = isSlip ? 0 : fractionOf(first);
+    const columnStep = isSlip ? fractionOf(first) : fractionOf(second);
+    if (tooFine(first) || tooFine(second)) return decimalsLimit();
+    return suggest(
+      spellingAt(rowOfLetters(letters) + rowStep, Number(digits) + columnStep),
+      '交点の間は 英字+数字 の組で書きます',
+      '行の英字は a〜j (a = 0)、列は 0〜9',
+    );
   }
 
-  const plain = /^([a-z]+)(?:\.0+)?_([0-9]{1,3})(?:\.0+)?$/.exec(lowered);
-  if (plain) {
-    const [, letter = '', digits = ''] = plain;
-    return suggest(`${letter}${digits}`, '交点の上なら _ は要りません', '_ は交点の間を書くときだけ');
+  const decimal = DECIMAL.exec(lowered);
+  if (decimal) {
+    const [, letters = '', digits = '', step = ''] = decimal;
+    if (tooFine(step)) return decimalsLimit();
+    return suggest(
+      spellingAt(rowOfLetters(letters), Number(digits) + fractionOf(step)),
+      '番地に小数は書きません (`.` は足の区切り)',
+      '交点の間は 英字+数字 の組',
+    );
+  }
+
+  const pairs = /^([a-z]+)([0-9]{1,3})((?:[a-z][0-9])+)$/.exec(lowered);
+  if (pairs) {
+    const [, letters = '', digits = '', written = ''] = pairs;
+    if (/[k-z]/.test(written)) return '端数の英字は a〜j です (a = 0、j = 9)';
+    if (written.length > LIMITS.addressDecimals * 2) {
+      return `端数の組は ${LIMITS.addressDecimals} 個までです (組 1 つで 1/10、2 つで 1/100)`;
+    }
+    const steps = stepsOfPairs(written);
+    return suggest(
+      spellingAt(rowOfLetters(letters) + steps.row, Number(digits) + steps.col),
+      '端数の無い組は書きません',
+      '交点の上なら組は要らない',
+    );
   }
 
   return null;
 }
 
+/** 小数の桁が文法より細かいか。`undefined` は書かれていないということ。 */
+const tooFine = (digits: string | undefined): boolean => digits !== undefined && digits.length > LIMITS.addressDecimals;
+
+const decimalsLimit = (): string =>
+  `番地の端数は ${LIMITS.addressDecimals} 桁までです (組 1 つで 1/10、${LIMITS.addressDecimals} つで 1/100)`;
+
 /**
  * 直し方の案内。**綴りを返すのは、その綴りが通るときだけ**。
  * 言われたとおりに直しても通らない案内は、自己修正のループを空回りさせる
- * (`a0.5` を `a_0.5` にしても、1 より小さい列は無いので通らない)。
+ * (`a0.5` を組で書き直しても、1 より小さい列は無いので通らない)。
  */
-function suggest(spelling: string, lead: string, fallback = lead): string | null {
-  return parseAddress(spelling) === null ? null : `${lead} (${spelling}。${fallback})`;
+function suggest(spelling: string | null, lead: string, fallback = lead): string | null {
+  return spelling === null || parseAddress(spelling) === null ? null : `${lead} (${spelling}。${fallback})`;
 }
 
-
 /**
- * TikZ の座標に付ける名前。**`.` と `_` を綴りから外す**。
- * `.` は TikZ ではノードの足 (`(U1.north)`) の区切りなので、名前に入れると
- * 座標として読まれない。`a1` の形はそのまま通すので、交点だけで描いた図の
- * TeX はこれまでと 1 バイトも変わらない。
+ * TikZ の座標に付ける名前。**綴りをそのまま使う**。
+ * 番地は英字と数字だけなので、TikZ がノードの足 (`(U1.north)`) と読む `.` も、
+ * 座標名に使えない `_` も出てこない。`a1` の形はそのまま通すので、
+ * 交点だけで描いた図の TeX はこれまでと 1 バイトも変わらない。
  */
-export const texNameOfAddress = (address: Address): string =>
-  formatAddress(address).replace(/\./g, 'p').replace(/_/g, '-');
+export const texNameOfAddress = (address: Address): string => formatAddress(address);
 
 /** -0 を 0 に正す。TeX に `-0` と書かれると読みにくく、出力も揺れるため。 */
 const normalize = (value: number): number => (value === 0 ? 0 : value);
