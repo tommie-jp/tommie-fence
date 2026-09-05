@@ -118,6 +118,12 @@ describe('KiCad の配置', () => {
     expect(html).toContain('.cf-wire-hit { stroke: transparent; stroke-width: 8; fill: none; }');
   });
 
+  test('keeps the quarter box out of the hit stack, and colours it like the ghost', () => {
+    // 端数の升は DOM に無いので、殻が小さい四角を足す (52 の docs/23)。掴めてはいけない。
+    expect(html).toContain('.cf-fine-box { fill: var(--cf-ghost); opacity: 0.6; pointer-events: none; }');
+    expect(html).toContain('.cf-fine-box-bad { fill: var(--cf-bad); }');
+  });
+
   test('tells the script the abilities of the fence on the box that is swapped per language', () => {
     // **最初の HTML に焼かない。** 言語をまたぐと能力も変わる (52 の docs/19, 23)。
     const able = shell({ view: { html: '', picker: '', issues: '', chrome: { ...CHROME, foldsWire: true, fine: 4 } } });

@@ -618,6 +618,15 @@ describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
     expect(step(swapped, press(AT_Q)).state.pressed?.fine ?? null).toBeNull();
   });
 
+  test('says Ctrl only where the fence can take a quarter, and says where the quarter went', () => {
+    expect(hint(after(FINE, place('transistor'), hover(AT_B3)))).toContain('Ctrl+クリックで 1/4 升');
+    expect(hint(after(FINE, hover(ON_R1), key('m')))).toContain('Ctrl+クリックで 1/4 升');
+    expect(hint(after(FINE, key('w')))).toContain('Ctrl+クリックで 1/4 升');
+    expect(hint(after(PANEL, place('transistor'), hover(AT_B3)))).not.toContain('Ctrl');
+    expect(hint(after(PANEL, key('w')))).not.toContain('Ctrl');
+    expect(step(after(FINE, place('transistor'), hover(AT_Q), press(AT_Q)), release(AT_Q, false)).status).toContain('1/4 升');
+  });
+
   test('takes the abilities from the chrome, so a swapped language brings its own', () => {
     const swapped = step(PANEL, { kind: 'chrome', foldsWire: true, fine: 4 }).state;
 

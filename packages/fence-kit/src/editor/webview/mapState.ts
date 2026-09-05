@@ -131,6 +131,8 @@ export type Ghost = {
   readonly from?: readonly string[];
   /** 置く部品の絵 (置くときだけ)。図にまだ無い部品なので、拡張が切り出して寄こす。 */
   readonly chip?: string;
+  /** 絵をずらす量 (`from[0]` → `cells[0]`、升の数)。端数の升は DOM に無いので、数でも受け取る。 */
+  readonly shift?: Fine;
 };
 
 export type State = {
@@ -257,18 +259,20 @@ export function hint(state: State): string {
   const { carry, under, selected } = state;
   if (carry !== null) {
     const bad = state.ghost !== null && !state.ghost.ok && state.ghost.why !== '' ? ` — ${state.ghost.why}` : '';
+    const fine = fineHintOf(state);
     if (carry.kind === 'place') {
       const how = carry.twoEnds ? 'クリックで置く (ドラッグで間隔を選ぶ)' : 'クリックで置く';
-      return `${carry.type} を置きます: ${how} / R 回す / X 反転 / Esc でやめる${bad}`;
+      return `${carry.type} を置きます: ${how}${fine} / R 回す / X 反転 / Esc でやめる${bad}`;
     }
-    if (carry.kind === 'move') return `${shownName(carry.part)} を動かしています: 置きたい穴でクリック / Esc で戻す${bad}`;
-    return `${carry.node} の節点を引きずっています: 置きたい穴でクリック (接続は保たれます) / Esc で戻す${bad}`;
+    if (carry.kind === 'move') return `${shownName(carry.part)} を動かしています: 置きたい穴でクリック${fine} / Esc で戻す${bad}`;
+    return `${carry.node} の節点を引きずっています: 置きたい穴でクリック (接続は保たれます)${fine} / Esc で戻す${bad}`;
   }
   if (state.tool === 'wire') {
     const fold = state.foldsWire ? ' (Shift で先に横へ折る)' : '';
+    const fine = fineHintOf(state);
     return state.wireFrom === null
-      ? '配線: 始まりの穴か足をクリック / Esc でやめる'
-      : `${state.wireFrom} から: 終わりの穴か足をクリック${fold} / Esc でやめる`;
+      ? `配線: 始まりの穴か足をクリック${fine} / Esc でやめる`
+      : `${state.wireFrom} から: 終わりの穴か足をクリック${fold}${fine} / Esc でやめる`;
   }
   if (under.part !== null) {
     return `${shownName(under.part)}: M 動かす / 矢印で 1 穴 / R 回す / X 反転 / Ctrl+D 複製 / E 属性 / Del 消す`;
@@ -280,6 +284,12 @@ export function hint(state: State): string {
   }
   return 'A 部品を置く / W 配線 / M 動かす / G 引きずる (鍵はカーソルの下に効きます)';
 }
+
+/**
+ * 案内文に添える Ctrl の説明。**能力表から組む** — 端数を受けない板で言うと、
+ * 押しても何も起きない鍵を案内することになる (`foldsWire` と同じ)。
+ */
+const fineHintOf = (state: State): string => (state.fine === null ? '' : ` / Ctrl+クリックで 1/${state.fine} 升`);
 
 /** 帯の一言に添える「升の間」。端数が無ければ何も足さない。 */
 const betweenNote = (state: State, fine: Fine | null): string =>

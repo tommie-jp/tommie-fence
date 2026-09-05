@@ -1,5 +1,5 @@
 import { DRAG, NOTHING, endOf, fineOf, sameFine, start, step, topOf } from './mapState.ts';
-import type { Event, Fine, Focus, Picked, State, Under } from './mapState.ts';
+import type { Event, Fine, Focus, Ghost, Picked, State, Under } from './mapState.ts';
 
 /**
  * マップの webview の**DOM を触る側**。何が起きたかを読んで状態遷移
@@ -244,11 +244,45 @@ function markHover(now: State): void {
 function markGhost(now: State): void {
   unmark('cf-ghost');
   unmark('cf-ghost-bad');
+  document.querySelector('.cf-fine-box')?.remove();
   if (now.carry === null || now.ghost === null) return;
   const className = now.ghost.ok ? 'cf-ghost' : 'cf-ghost-bad';
   for (const cell of now.ghost.cells) {
     query(`.cf-cell[data-address="${CSS.escape(cell)}"]`)?.classList.add(className);
   }
+  markFineBox(now, now.ghost.ok);
+}
+
+/** 端数の落ち先 (図の座標) と四角の大きさ。端数が無ければ null。 */
+function fineSpot(now: State): { readonly cell: Element; readonly x: number; readonly y: number; readonly size: number } | null {
+  const { cell, fine } = now.under;
+  if (cell === null || fine === null || now.fine === null) return null;
+  const element = query<SVGGraphicsElement>(`.cf-cell[data-address="${CSS.escape(cell)}"]`);
+  if (element === null) return null;
+  const box = element.getBBox();
+  return {
+    cell: element,
+    x: box.x + box.width / 2 + fine.cols * box.width,
+    y: box.y + box.height / 2 + fine.rows * box.height,
+    size: box.width / now.fine,
+  };
+}
+
+/**
+ * 端数の落ち先。**端数の升は DOM に無い**ので、押した升の中心から端数ぶんずらした所に
+ * 1/`fine` の小さい四角を出す (52 の docs/23)。どこに落ちるかが押す前に見える。
+ */
+function markFineBox(now: State, ok: boolean): void {
+  const spot = fineSpot(now);
+  if (spot === null) return;
+  const box = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  box.setAttribute('class', `cf-fine-box${ok ? '' : ' cf-fine-box-bad'}`);
+  box.setAttribute('x', String(spot.x - spot.size / 2));
+  box.setAttribute('y', String(spot.y - spot.size / 2));
+  box.setAttribute('width', String(spot.size));
+  box.setAttribute('height', String(spot.size));
+  // 升の四角と同じ層に置く (同じ座標系で描ける)。
+  spot.cell.after(box);
 }
 
 /** 穴 1 つの真ん中 (図の座標)。当たり判定の四角から読む。 */
@@ -281,6 +315,31 @@ function anchorOf(cells: readonly string[]): { readonly x: number; readonly y: n
  * なので姿は変わらず、拡張に問い合わせ直さずに済む (ゴーストは穴をまたぐたびに
  * 出るので、1 回でも図を組み直すと重くなる)。
  */
+/**
+ * 運ぶ絵をずらす量 (図の座標)。**穴の要素から測るのが先** — 板の当たり判定は
+ * ピッチの 0.9 倍なので、幅から数えると狂う。端数の升は DOM に無い (circuit だけ) ので、
+ * そのときは拡張が添えた `shift` (升の数) を升の幅に掛ける (circuit の升はピッチちょうど)。
+ */
+function shiftOf(ghost: Ghost): { readonly x: number; readonly y: number } | null {
+  const from = anchorOf(ghost.from ?? []);
+  const to = anchorOf(ghost.cells);
+  if (from !== null && to !== null) return { x: to.x - from.x, y: to.y - from.y };
+  const unit = query<SVGGraphicsElement>('.cf-cell')?.getBBox();
+  if (ghost.shift === undefined || unit === undefined) return null;
+  return { x: ghost.shift.cols * unit.width, y: ghost.shift.rows * unit.height };
+}
+
+/** 升の中心から端数ぶんずらす (升の幅で数える)。足には端数が無い。 */
+function offsetBy(
+  centre: { readonly x: number; readonly y: number } | null,
+  element: SVGGraphicsElement,
+  fine: Fine | null,
+): { readonly x: number; readonly y: number } | null {
+  if (centre === null || fine === null) return centre;
+  const box = element.getBBox();
+  return { x: centre.x + fine.cols * box.width, y: centre.y + fine.rows * box.height };
+}
+
 /** 置く部品の絵。拡張が寄こした markup を図の中へ入れて、掴めなくする。 */
 let placedChip: { readonly markup: string; readonly node: SVGGraphicsElement } | null = null;
 
@@ -310,9 +369,8 @@ function markCarried(now: State): void {
   // 持ち上げたものは薄くする。**行き先の絵と二重に見えない**ように。
   if (now.carry.kind === 'move') held.classList.add('cf-lifted');
 
-  const from = anchorOf(now.ghost.from ?? []);
-  const to = anchorOf(now.ghost.cells);
-  if (from === null || to === null) return;
+  const moved = shiftOf(now.ghost);
+  if (moved === null) return;
 
   const ghost = held.cloneNode(true) as SVGGraphicsElement;
   // 掴む印は写さない (ゴーストは掴めない。名札が 2 つあると選ぶ先が狂う)。
@@ -321,7 +379,7 @@ function markCarried(now: State): void {
   ghost.setAttribute('class', `cf-ghost-part${now.ghost.ok ? '' : ' cf-ghost-part-bad'}`);
   // **元の姿勢の前にずらしを足す** (部品が自分の transform を持っていても壊さない)。
   const posture = held.getAttribute('transform');
-  const shift = `translate(${to.x - from.x} ${to.y - from.y})`;
+  const shift = `translate(${moved.x} ${moved.y})`;
   ghost.setAttribute('transform', posture === null ? shift : `${shift} ${posture}`);
   // **図の中へ入れる。** 置くときの絵は図の外で組んであるので、入れ先は
   // 図にある部品の親 (無ければ図そのもの) にする。
@@ -402,8 +460,9 @@ function markWireGhost(now: State): void {
   const finish = endElement(end);
   if (start === null || finish === null) return;
 
-  const from = centreOf(start);
-  const to = centreOf(finish);
+  // 端数の端 (Ctrl) は升の中心からずらす。足を採ったときは端数を持たない。
+  const from = offsetBy(centreOf(start), start, now.wireFromFine);
+  const to = offsetBy(centreOf(finish), finish, now.under.pin !== null ? null : now.under.fine);
   if (from === null || to === null) return;
   // 折れる指定は先に横 (`-|`)。折れない板では真っ直ぐのまま。
   const corner = shiftHeld && now.foldsWire ? [{ x: to.x, y: from.y }] : [];
@@ -426,7 +485,9 @@ function paint(now: State): void {
   // **「置く」は道具ではなく持ち物** (`carry`)。CSS から見た顔だけをここで作る。
   document.body.dataset.tool = now.carry?.kind === 'place' ? 'place' : now.tool;
   document.body.classList.toggle('cf-carrying', now.carry !== null);
-  setText('.kc-cell', now.under.cell ?? '');
+  // 端数の上では拡張が綴った番地 (`b.25_2.75`) を出す。殻は綴りを組めないので、ゴーストの答えから取る。
+  const spelled = now.under.fine !== null && now.ghost !== null && now.ghost.ok ? now.ghost.cells[0] : undefined;
+  setText('.kc-cell', spelled ?? now.under.cell ?? '');
 }
 
 // ---------------------------------------------------------------- 選択窓・欄
@@ -978,6 +1039,7 @@ type Incoming =
     readonly kind: 'ghost'; readonly key: string; readonly cells: readonly string[];
     readonly ok: boolean; readonly why: string; readonly from?: readonly string[];
     readonly chip?: string;
+    readonly shift?: Fine;
   };
 
 /** 拡張が送る語彙と能力表 (`PanelChrome` と同じ形)。 */
@@ -1038,7 +1100,7 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
       kind: 'ghost',
       ghost: {
         key: message.key, cells: message.cells, ok: message.ok, why: message.why,
-        from: message.from, chip: message.chip,
+        from: message.from, chip: message.chip, shift: message.shift,
       },
     });
   }

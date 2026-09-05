@@ -349,6 +349,9 @@ const STYLE = `
      負けると、1 穴で置く部品はゴーストがまったく見えない。 */
   body.cf-carrying .cf-cell.cf-ghost, .cf-cell.cf-ghost { fill: var(--cf-ghost); opacity: 0.45; }
   body.cf-carrying .cf-cell.cf-ghost-bad, .cf-cell.cf-ghost-bad { fill: var(--cf-bad); opacity: 0.45; }
+  /* 端数の升は DOM に無い。押した升からずらした所に小さい四角を出す (52 の docs/23)。掴めてはいけない。 */
+  .cf-fine-box { fill: var(--cf-ghost); opacity: 0.6; pointer-events: none; }
+  .cf-fine-box-bad { fill: var(--cf-bad); }
   /* 配線の 1 点目。 */
   body[data-tool="wire"] .cf-cell.cf-from, .cf-cell.cf-from {
     fill: var(--vscode-focusBorder); opacity: 0.35;
