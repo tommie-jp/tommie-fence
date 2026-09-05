@@ -53,6 +53,23 @@ describe('renderMapHtml が描くもの', () => {
     expect(svg).toContain('data-address="b2"');
   });
 
+  test('lays the drop targets edge to edge, one pitch square, since the shell divides the pointer offset by this width', () => {
+    // Ctrl で 1/4 升 (52 の docs/23): 殻は升の四角の中の位置を幅で割って端数を出す。
+    // 隙間を空けたり縦横を変えたりすると、1/4 の刻みがずれる。
+    const svg = draw('parts:\n  R1: resistor a1 a3\n');
+    const cellOf = (address: string) => {
+      const found = new RegExp(`<rect class="cf-cell" data-address="${address}"([^>]*)>`).exec(svg);
+      const attr = (name: string): number => Number(new RegExp(` ${name}="([-\\d.]+)"`).exec(found?.[1] ?? '')?.[1]);
+      return { x: attr('x'), y: attr('y'), width: attr('width'), height: attr('height') };
+    };
+    const [a1, a2, b1] = [cellOf('a1'), cellOf('a2'), cellOf('b1')];
+
+    expect(a1.width).toBeGreaterThan(0);
+    expect(a1.width).toBe(a1.height);
+    expect(a2.x - a1.x).toBe(a1.width);
+    expect(b1.y - a1.y).toBe(a1.height);
+  });
+
   test('offsets two parts spanning the same pair, so neither hides the other', () => {
     // 並列の RC は普通に書く。ぴったり重ねると後ろの 1 つを掴めない。
     const svg = draw('parts:\n  R1: resistor a1 c1\n  C1: capacitor a1 c1\n');
