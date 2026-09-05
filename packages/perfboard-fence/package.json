@@ -27,71 +27,22 @@
     "electronics",
     "diagram"
   ],
-  "main": "./dist/extension.cjs",
   "exports": {
     "./core": "./src/core/index.ts",
     "./editor": "./src/core/edit/fenceEditor.ts",
     "./package.json": "./package.json",
-    "./plugin": "./src/extension/markdownItPlugin.ts"
+    "./plugin": "./src/markdownItPlugin.ts"
   },
-  "browser": "./dist/extension.web.cjs",
   "bin": {
     "perfboard-fence": "./dist/cli.cjs"
-  },
-  "activationEvents": [],
-  "contributes": {
-    "customEditors": [
-      {
-        "viewType": "perfboard-fence.map",
-        "displayName": "perfboard Editor",
-        "selector": [
-          {
-            "filenamePattern": "*.md"
-          }
-        ],
-        "priority": "option"
-      }
-    ],
-    "commands": [
-      {
-        "command": "perfboard-fence.openMap",
-        "title": "Perfboard Fence: 図を掴んで動かす (マップ)",
-        "category": "Perfboard Fence"
-      }
-    ],
-    "menus": {
-      "commandPalette": [
-        {
-          "command": "perfboard-fence.openMap",
-          "when": "editorLangId == markdown"
-        }
-      ]
-    },
-    "markdown.markdownItPlugins": true,
-    "markdown.previewStyles": [
-      "./media/perfboard.css"
-    ],
-    "grammars": [
-      {
-        "scopeName": "markdown.perfboard.codeblock",
-        "path": "./syntaxes/perfboard-injection.json",
-        "injectTo": [
-          "text.html.markdown"
-        ],
-        "embeddedLanguages": {
-          "meta.embedded.block.yaml": "yaml"
-        }
-      }
-    ]
   },
   "scripts": {
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.webview.json --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
-    "vscode:prepublish": "node esbuild.mjs --production",
     "check": "npm run typecheck && npm run test",
     "schematics": "node ../circuit-fence/dist/cli.cjs render examples/06-ic.md --out examples/out/schematic",
     "examples": "npm run build && node dist/cli.cjs render examples --out examples/out && node scripts/png.mjs",
@@ -102,9 +53,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
-    "@types/vscode": "^1.75.0",
     "@vitest/coverage-v8": "^4.1.11",
-    "@vscode/vsce": "^3.9.2",
     "esbuild": "^0.28.2",
     "fence-kit": "*",
     "markdown-it": "^15.0.0",

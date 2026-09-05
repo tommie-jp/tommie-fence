@@ -27,11 +27,12 @@ circuit を初めて描くときだけ)。**図を掴んで動かすマップも
 [![Codespaces で開く](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
 
 **3 つとも本物で動かすなら Codespaces。** ブラウザの中に VS Code が立ち上がり、
-3 つの拡張が入った状態で [examples/try-me.md](examples/try-me.ja.md) が開く。
+拡張が入った状態で [examples/try-me.md](examples/try-me.ja.md) が開く。
 プレビュー (`Ctrl+Shift+V`) でフェンスが図になり、`.md` のタブそのものを
 図のエディタにもできる。GitHub のアカウントが要る (無料枠は月 120 コア時間)。
 
-拡張は Releases の `.vsix` から入る。**この場でソースからは組まない** —
+拡張 (`tommie-fence` の 1 つ) は Releases の `.vsix` から入る。
+**この場でソースからは組まない** —
 デモで見せるのは公開した版で、main の途中ではない。
 
 ## 状況
@@ -53,9 +54,10 @@ circuit を初めて描くときだけ)。**図を掴んで動かすマップも
 ```text
 tommie-fence
 ├── packages/fence-kit          共有: 改行の正規化、フェンス抽出、markup のエスケープ
-├── packages/circuit-fence
-├── packages/breadboard-fence
-├── packages/perfboard-fence
+├── packages/circuit-fence     ライブラリ + CLI
+├── packages/breadboard-fence  ライブラリ + CLI
+├── packages/perfboard-fence   ライブラリ + CLI
+├── packages/tommie-fence      VS Code 拡張。3 つを 1 つに畳んだもの
 └── packages/playground        3 つをブラウザで試す 1 枚の頁 (拡張ではない)
 ```
 
@@ -91,7 +93,7 @@ npm run check                                # 全パッケージの型チェッ
 npm run check --workspace=circuit-fence      # 1 つだけ
 npm run examples --workspace=circuit-fence   # 図を作り直す
 npm run build --workspace=playground         # 試す頁を組む (dist/ に出る)
-./doBuild.sh circuit-fence                   # .vsix を作って VS Code に入れ直す
+./doBuild.sh                                 # .vsix を作って VS Code に入れ直す
 ./doVersion.sh circuit-fence minor           # 版を上げる
 ```
 
@@ -104,9 +106,9 @@ npm run build --workspace=playground         # 試す頁を組む (dist/ に出�
 **触っていないパッケージは作り直さない。** make を直に呼んでもよい:
 
 ```bash
-make                  # .vsix を全部作る (変わったものだけ)
+make                  # .vsix を作る (変わっていれば)
 make install          # 上に加えて VS Code に入れ直す
-make circuit-fence    # 1 つだけ
+make tommie-fence     # 拡張だけ
 make CHECK=0 install  # 型チェックとテストを飛ばす
 make clean            # 作り直しの記録・作業場・.vsix を捨てる
 make help             # 目標の一覧

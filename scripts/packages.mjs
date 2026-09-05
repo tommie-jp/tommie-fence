@@ -40,21 +40,17 @@ const withContributes = packages.filter((name) => manifests.get(name).contribute
 const held = withContributes.filter((name) => manifests.get(name).vsix === false)
 const extensions = withContributes.filter((name) => !held.includes(name))
 
-// 入れ子の依存までは面倒を見ない。増えたらここで気づけるように止める
-// (作業場へ写す順番を考える必要がある)。
-//
-// **見るのは拡張だけ。** 写して単独で install するのは .vsix にするものだけで、
-// それ以外 (playground) は束ねて終わりなので、写す順番の問題が起きない。
-// 全パッケージを見ると、3 つのコアに依存する playground でここが鳴る。
-for (const name of extensions) {
+// **入れ子の依存も辿る。** 畳んだ拡張は 3 つのコアに依存し、そのコアは
+// fence-kit に依存する (52 の docs/19)。作業場には全部を並べて置き、
+// **どれの package.json も `file:../<名前>` を指す**ように書き換える
+// (`scripts/vsix.sh`)。並びは**依存が先** — 写す順にそのまま使える。
+const allDeps = (name, seen = new Set()) => {
   for (const dep of workspaceDeps(name)) {
-    const nested = workspaceDeps(dep)
-    if (nested.length > 0) {
-      throw new Error(
-        `${dep} がモノレポ内の依存を持っている (${nested.join(' ')})。写す順番を考える必要がある`,
-      )
-    }
+    if (seen.has(dep)) continue
+    allDeps(dep, seen)
+    seen.add(dep)
   }
+  return [...seen]
 }
 
 const lines = [
@@ -69,6 +65,6 @@ for (const name of [...extensions, ...held]) {
   lines.push(`VSIX_${name} := ${pkg.name}-${pkg.version}.vsix`)
 }
 for (const name of packages) {
-  lines.push(`WSDEPS_${name} := ${workspaceDeps(name).join(' ')}`)
+  lines.push(`WSDEPS_${name} := ${allDeps(name).join(' ')}`)
 }
 process.stdout.write(lines.join('\n') + '\n')

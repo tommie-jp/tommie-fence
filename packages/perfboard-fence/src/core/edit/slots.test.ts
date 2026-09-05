@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { createPerfboardEditor } from '../../core/edit/fenceEditor.ts';
+import { createPerfboardEditor } from './fenceEditor.ts';
 
 const SLOTS = 'board:\n  size: 12x7\n  slots: on\nparts:\n  R1: resistor c2 c6\n';
 const PLAIN = 'board: 12x7\nparts:\n  R1: resistor c2 c6\n';

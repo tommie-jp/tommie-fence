@@ -29,7 +29,7 @@ What you write goes into the URL, so a link is enough to hand it to someone.
 [![Open in Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
 
 **For all three for real, use Codespaces.** VS Code opens in the browser with
-the three extensions installed and [examples/try-me.md](examples/try-me.md) in
+the extension installed and [examples/try-me.md](examples/try-me.md) in
 front of you. Open the Markdown preview (`Ctrl+Shift+V`) and the fences turn
 into drawings; you can also turn the `.md` tab itself into a drawing editor. A
 GitHub account is needed (the free tier is 120 core-hours a month).
@@ -57,9 +57,10 @@ workspaces.
 ```text
 tommie-fence
 ├── packages/fence-kit          shared: newline normalisation, fence extraction, markup escaping
-├── packages/circuit-fence
-├── packages/breadboard-fence
-├── packages/perfboard-fence
+├── packages/circuit-fence     library + CLI
+├── packages/breadboard-fence  library + CLI
+├── packages/perfboard-fence   library + CLI
+├── packages/tommie-fence      the VS Code extension: all three folded into one
 └── packages/playground        one page that runs all three in a browser
 ```
 
@@ -97,7 +98,7 @@ npm run check                                # typecheck + tests, all packages
 npm run check --workspace=circuit-fence      # just one
 npm run examples --workspace=circuit-fence   # rebuild the drawings
 npm run build --workspace=playground         # build the try-it page into dist/
-./doBuild.sh circuit-fence                   # build the .vsix, reinstall into VS Code
+./doBuild.sh                                 # build the .vsix, reinstall into VS Code
 ./doVersion.sh circuit-fence minor           # bump the version
 ```
 
@@ -112,9 +113,9 @@ make goals. **Packages you have not touched are not rebuilt.** You can call make
 directly:
 
 ```bash
-make                  # build every .vsix (only what changed)
+make                  # build the .vsix (if it changed)
 make install          # the above, plus reinstalling into VS Code
-make circuit-fence    # just one
+make tommie-fence     # the extension only
 make CHECK=0 install  # skip the typecheck and the tests
 make clean            # drop the rebuild marks, the staging area, the .vsix files
 make help             # list the goals

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { checkFenceEditor } from 'fence-kit';
-import { createPerfboardEditor } from '../../core/edit/fenceEditor.ts';
+import { createPerfboardEditor } from './fenceEditor.ts';
 
 /**
  * 殻がフェンスに求めることを、**3 つのフェンスで同じ手**で確かめる

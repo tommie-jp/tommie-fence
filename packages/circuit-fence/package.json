@@ -27,8 +27,6 @@
     "schematic",
     "diagram"
   ],
-  "main": "./dist/extension.cjs",
-  "browser": "./dist/extension.web.cjs",
   "exports": {
     "./core": {
       "types": "./dist/types/index.d.ts",
@@ -38,7 +36,7 @@
     "./editor": "./src/core/edit/fenceEditor.ts",
     "./src/core": "./src/core/index.ts",
     "./package.json": "./package.json",
-    "./plugin": "./src/extension/markdownItPlugin.ts",
+    "./plugin": "./src/markdownItPlugin.ts",
     "./queue": "./src/host/renderQueue.ts",
     "./tex": "./src/host/texSvg.ts",
     "./tex.web": "./src/host/texSvg.web.ts",
@@ -47,93 +45,17 @@
   "bin": {
     "circuit-fence": "./dist/cli.cjs"
   },
-  "activationEvents": [],
-  "contributes": {
-    "customEditors": [
-      {
-        "viewType": "circuit-fence.map",
-        "displayName": "circuit Editor",
-        "selector": [
-          {
-            "filenamePattern": "*.md"
-          }
-        ],
-        "priority": "option"
-      }
-    ],
-    "markdown.markdownItPlugins": true,
-    "markdown.previewStyles": [
-      "./media/circuit.css",
-      "./node_modules/node-tikzjax/css/fonts.css"
-    ],
-    "grammars": [
-      {
-        "scopeName": "markdown.circuit.codeblock",
-        "path": "./syntaxes/circuit-injection.json",
-        "injectTo": [
-          "text.html.markdown"
-        ],
-        "embeddedLanguages": {
-          "meta.embedded.block.yaml": "yaml"
-        }
-      }
-    ],
-    "commands": [
-      {
-        "command": "circuit-fence.movePart",
-        "title": "Circuit Fence: 部品を動かす",
-        "category": "Circuit Fence"
-      },
-      {
-        "command": "circuit-fence.movePoint",
-        "title": "Circuit Fence: 節点を動かす",
-        "category": "Circuit Fence"
-      },
-      {
-        "command": "circuit-fence.openMap",
-        "title": "Circuit Fence: 図を掴んで動かす (マップ)",
-        "category": "Circuit Fence"
-      }
-    ],
-    "menus": {
-      "commandPalette": [
-        {
-          "command": "circuit-fence.movePart",
-          "when": "editorLangId == markdown"
-        },
-        {
-          "command": "circuit-fence.movePoint",
-          "when": "editorLangId == markdown"
-        },
-        {
-          "command": "circuit-fence.openMap",
-          "when": "editorLangId == markdown"
-        }
-      ]
-    },
-    "configuration": {
-      "title": "circuit-fence",
-      "properties": {
-        "circuitFence.map.noteFrame": {
-          "type": "boolean",
-          "default": false,
-          "description": "掴んで動かす升目で、notes: text を枠で囲む (既定は囲まない)。"
-        }
-      }
-    }
-  },
   "scripts": {
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
     "types": "tsc -p tsconfig.types.json",
     "prepack": "rm -rf dist && node esbuild.mjs --production && npm run types",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.webview.json --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "examples": "npm run build && node dist/cli.cjs render examples --out examples/out && node scripts/figures.mjs examples examples/out",
     "docs": "npm run build && node dist/cli.cjs render docs/01-syntax.md --out docs/out && node scripts/figures.mjs docs/01-syntax.md docs/out",
-    "vscode:prepublish": "node esbuild.mjs --production",
     "check": "npm run typecheck && npm run test"
   },
   "dependencies": {
@@ -142,9 +64,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
-    "@types/vscode": "^1.75.0",
     "@vitest/coverage-v8": "^4.1.11",
-    "@vscode/vsce": "^3.9.2",
     "esbuild": "^0.28.2",
     "fence-kit": "*",
     "markdown-it": "^15.0.0",

@@ -2,9 +2,9 @@ import type { MarkdownIt, RendererRule } from 'markdown-it';
 import {
   attachSourceText, compileCircuit, finishSvg, renderErrorBanner, renderErrorCard, renderNetlist,
   shiftErrors,
-} from '../core/index.ts';
-import type { FenceError, Theme } from '../core/index.ts';
-import { hashOf } from '../host/hash.ts';
+} from './core/index.ts';
+import type { FenceError, Theme } from './core/index.ts';
+import { hashOf } from './host/hash.ts';
 
 const LANGUAGE = 'circuit';
 

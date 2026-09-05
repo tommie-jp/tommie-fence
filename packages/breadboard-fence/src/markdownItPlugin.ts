@@ -1,14 +1,14 @@
 import type { MarkdownIt, RendererRule } from 'markdown-it';
-import { renderPerfboard } from '../core/index.ts';
+import { renderBreadboard } from './core/index.ts';
 
-const LANGUAGE = 'perfboard';
+const LANGUAGE = 'breadboard';
 
 /**
- * ```perfboard フェンスを図に差し替える markdown-it プラグイン。
+ * ```breadboard フェンスを図に差し替える markdown-it プラグイン。
  * VS Code のプレビューはここが返した HTML をサニタイズしないので、
  * 文字列の組み立てはすべて core 側のエスケープを通ったものだけを使う。
  */
-export function perfboardPlugin(md: MarkdownIt): MarkdownIt {
+export function breadboardPlugin(md: MarkdownIt): MarkdownIt {
   const fallback: RendererRule = md.renderer.rules.fence
     ?? ((tokens, index, options, _env, self) => self.renderToken(tokens, index, options));
 
@@ -20,12 +20,12 @@ export function perfboardPlugin(md: MarkdownIt): MarkdownIt {
 
     // VS Code が付けた data-line / code-line を残したままクラスを足す
     // (消すとエディタとプレビューのスクロール同期が切れる)。
-    token.attrJoin('class', 'perfboard');
+    token.attrJoin('class', 'breadboard');
     // 図は SVG、読めなかったところは図の外の HTML。字は core 側でエスケープ済み。
     // **行番号は Markdown の行で出す。** core が読むのはフェンスの中の
     // 数え方だが、書き手が直しに行くのは Markdown の行。
     const offset = token.map === null ? 0 : token.map[0] + 1;
-    const { svg, errorHtml } = renderPerfboard(token.content, { offset });
+    const { svg, errorHtml } = renderBreadboard(token.content, { offset });
 
     return `<div${self.renderAttrs(token)}>${svg}${errorHtml}</div>\n`;
   };

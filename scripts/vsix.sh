@@ -38,13 +38,24 @@ fi
 stage="$root/$build/stage/$pkg"
 
 # 依存のうち、このモノレポの中にあるもの (fence-kit など)。
+# モノレポ内の依存を**辿れるだけ辿る**。畳んだ拡張は 3 つのコアに依存し、
+# コアは fence-kit に依存する (52 の docs/19)。並びは依存が先 —
+# 写す順にそのまま使える。
 workspace_deps() {
   node -p "
-    const pkg = require('$root/packages/$1/package.json');
     const fs = require('fs');
-    Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })
-      .filter((name) => fs.existsSync('$root/packages/' + name))
-      .join('\n')
+    const read = (name) => require('$root/packages/' + name + '/package.json');
+    const seen = new Set();
+    const walk = (name) => {
+      const pkg = read(name);
+      for (const dep of Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })) {
+        if (!fs.existsSync('$root/packages/' + dep) || seen.has(dep)) continue;
+        walk(dep);
+        seen.add(dep);
+      }
+    };
+    walk('$1');
+    [...seen].join('\n')
   "
 }
 
@@ -71,18 +82,25 @@ sync_stage() {
   copy_tree "$pkg" "$stage/$pkg"
   for dep in $deps; do
     copy_tree "$dep" "$stage/$dep"
-    # 作業場には workspaces の親が無いので `*` は npm を探しに行って失敗する。
-    # 隣に置いた実体を file: で指す形に書き換える。
-    node -e "
-      const fs = require('fs');
-      const f = '$stage/$pkg/package.json';
+  done
+  # 作業場には workspaces の親が無いので `*` は npm を探しに行って失敗する。
+  # 隣に置いた実体を file: で指す形に書き換える。**依存の側も書き換える** —
+  # コアが fence-kit を `*` で指したままだと、そこで探しに行って落ちる。
+  # **依存の一覧は環境変数で渡す。** 改行を含むので、字の中に埋めると壊れる。
+  WSDEPS="$deps" node -e "
+    const fs = require('fs');
+    const names = (process.env.WSDEPS ?? '').split(/\s+/).filter(Boolean);
+    for (const who of ['$pkg', ...names]) {
+      const f = '$stage/' + who + '/package.json';
       const j = JSON.parse(fs.readFileSync(f, 'utf8'));
       for (const field of ['dependencies', 'devDependencies']) {
-        if (j[field]?.['$dep']) j[field]['$dep'] = 'file:../$dep';
+        for (const dep of names) {
+          if (j[field]?.[dep]) j[field][dep] = 'file:../' + dep;
+        }
       }
       fs.writeFileSync(f, JSON.stringify(j, null, 2) + '\n');
-    "
-  done
+    }
+  "
 }
 
 case "$mode" in

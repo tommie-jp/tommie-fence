@@ -1,13 +1,16 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
 import manifest from '../package.json' with { type: 'json' };
-import circuit from 'circuit-fence/package.json' with { type: 'json' };
-import breadboard from 'breadboard-fence/package.json' with { type: 'json' };
-import perfboard from 'perfboard-fence/package.json' with { type: 'json' };
+import { ASSETS } from './assets.ts';
 
 /**
- * VS Code に出すものの突き合わせ (52 の docs/19)。**3 つぶんを 1 つに畳む**ので、
- * 片方に足したときにこちらが落ちるようにしておく。
+ * VS Code に出すもの (52 の docs/19)。**3 つぶんを 1 つに畳んだ**ので、
+ * 3 つとも載っていることをここで見張る — 落ちても図が出ないだけで、
+ * エラーにはならない。
  */
+const grammarOf = (path: string): { readonly scopeName: string } =>
+  JSON.parse(readFileSync(new URL(`../${path}`, import.meta.url), 'utf8'));
+
 describe('3 つを 1 つに畳んだ contributes', () => {
   test('registers one custom editor, which is the whole point of folding', () => {
     // `customEditors` は中身で絞れない (`when` が無い) ので、一覧を 1 つに
@@ -16,12 +19,15 @@ describe('3 つを 1 つに畳んだ contributes', () => {
     expect(manifest.contributes.customEditors[0]?.viewType).toBe('tommie-fence.map');
   });
 
-  test('carries every grammar the three had', () => {
-    const scopes = manifest.contributes.grammars.map((one) => one.scopeName);
+  test('points every grammar at a file it actually ships', () => {
+    // **原本は 3 つのコア**。写しが古くないことは `assets.test.ts` が見る。
+    const copied = ASSETS.map(([, to]) => `./${to}`);
 
-    for (const one of [circuit, breadboard, perfboard]) {
-      for (const grammar of one.contributes.grammars) expect(scopes).toContain(grammar.scopeName);
+    for (const grammar of manifest.contributes.grammars) {
+      expect(copied, grammar.path).toContain(grammar.path);
+      expect(grammarOf(grammar.path).scopeName).toBe(grammar.scopeName);
     }
+    expect(manifest.contributes.grammars).toHaveLength(3);
   });
 
   test('keeps the old command ids, so a key binding written before the fold still works', () => {

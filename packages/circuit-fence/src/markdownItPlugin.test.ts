@@ -1,8 +1,8 @@
 import MarkdownIt from 'markdown-it';
 import { describe, expect, test, vi } from 'vitest';
-import { VERSION, compileCircuit } from '../core/index.ts';
-import { DEFAULT_NOTE_SIZE, notePt } from '../core/notes.ts';
-import { hashOf } from '../host/hash.ts';
+import { VERSION, compileCircuit } from './core/index.ts';
+import { DEFAULT_NOTE_SIZE, notePt } from './core/notes.ts';
+import { hashOf } from './host/hash.ts';
 import { circuitPlugin } from './markdownItPlugin.ts';
 import type { FigureSource } from './markdownItPlugin.ts';
 

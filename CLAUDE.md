@@ -19,6 +19,9 @@
   全穴が独立しているので、breadboard の `board` / `layout` / `place` /
   `router` はそのままでは使えない。**実測すると土台に
   なるのは盤面モデルではなく描画層のほう** (52 の docs/05)
+- `packages/tommie-fence` — **VS Code に出るのはこれだけ。** 3 つのフェンスを
+  1 つの拡張に畳んだもの (52 の docs/19)。中身は入口だけで、図を描くのは
+  上の 3 つのコア。**3 つは拡張ではなくライブラリ + CLI**になった
 - `packages/playground` — 3 つのフェンスをブラウザだけで試す静的なページ
   (GitHub Pages)。**拡張ではない** ので `.vsix` の対象から外れ、`check` には乗る。
   約束は [packages/playground/CLAUDE.md](packages/playground/CLAUDE.md)
@@ -46,8 +49,7 @@ npm run check                                # 全パッケージの型チェッ
 npm run check --workspace=circuit-fence      # 1 つだけ
 npm run examples --workspace=circuit-fence   # 図を作り直す
 npm run build --workspace=playground         # 試す頁 (playground) を組む
-./doBuild.sh                                 # 全部の .vsix を作って入れ直す
-./doBuild.sh circuit-fence                   # 1 つだけ
+./doBuild.sh                                 # .vsix を作って入れ直す (拡張は 1 つ)
 ./doVersion.sh circuit-fence minor           # 版を上げる
 ```
 
@@ -55,9 +57,9 @@ npm run build --workspace=playground         # 試す頁 (playground) を組む
 `doBuild.sh` は引数を make の目標に訳すだけ。make を直に呼んでもよい:
 
 ```bash
-make                  # .vsix を全部作る (変わったものだけ)
+make                  # .vsix を作る (変わっていれば)
 make install          # 上に加えて VS Code に入れ直す (doBuild.sh の既定)
-make circuit-fence    # 1 つだけ
+make tommie-fence     # 拡張だけ (チェックは飛ばさない)
 make CHECK=0 install  # 型チェックとテストを飛ばす (doBuild.sh --fast と同じ)
 make clean            # 作り直しの記録・作業場・.vsix を捨てる
 make help             # 目標の一覧
@@ -71,7 +73,10 @@ make help             # 目標の一覧
 ## 約束
 
 1. **`vsce` を直に呼ばない**。`.vsix` を作るのは `./doBuild.sh` (と、その中身の
-   `make`) だけ (パッケージ名を書かなければ**拡張を持つパッケージを全部**作る)。
+   `make`) だけ。**拡張は `tommie-fence` の 1 つ**で、3 つのコアはその依存として
+   作業場へ写される (`WSDEPS` は入れ子まで辿る)。
+   **入れ直す前に畳む前の 3 つを消す** (`RETIRED`) — 残っていると文法も
+   プレビューも二重に登録され、図が 2 つ出る。
    workspaces は依存を直下の `node_modules` へ巻き上げるので、パッケージの中で
    `vsce package` を走らせると依存を外に探しに行き、同じファイルを 2 通りの経路で
    拾って「同じパスが 2 つある」と言って止まる。`scripts/vsix.sh` はパッケージ単体を

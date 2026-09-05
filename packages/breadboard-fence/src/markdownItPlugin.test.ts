@@ -1,6 +1,6 @@
 import MarkdownIt from 'markdown-it';
 import { describe, expect, test } from 'vitest';
-import { THEMES } from '../core/render/theme.ts';
+import { THEMES } from './core/render/theme.ts';
 import { breadboardPlugin } from './markdownItPlugin.ts';
 
 const md = () => new MarkdownIt().use(breadboardPlugin);

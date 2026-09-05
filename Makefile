@@ -72,6 +72,12 @@ $(BUILD)/packages.mk: $(wildcard packages/*/package.json) scripts/packages.mjs
 	@mkdir -p $(@D)
 	@node scripts/packages.mjs > $@
 
+# **畳む前の 3 つ。** 入れ直す前に消す — 残っていると文法もプレビューも二重に
+# 登録され、図が 2 つ出る (52 の docs/19)。手で消してもらう手順を README に
+# 書くだけだと、忘れたときの壊れ方が分かりにくい。
+# 入っていなければ何も起きない (`|| true`)。
+RETIRED := tommie.circuit-fence tommie.breadboard-fence tommie.perfboard-fence
+
 KIT_SOURCES := $(call sources,fence-kit)
 VSIX_FILES  := $(foreach p,$(EXTENSIONS),packages/$(p)/$(VSIX_$(p)))
 
@@ -147,6 +153,7 @@ $$(BUILD)/$(1)/installed.stamp: packages/$(1)/$$(VSIX_$(1))
 	  echo "    拡張ビュー (Ctrl+Shift+X) の右上 ... → 「VSIX からのインストール」" >&2; \
 	  exit 1; \
 	}
+	@$$(foreach old,$$(RETIRED),$$(CODE_LOCK) code --uninstall-extension $$(old) >/dev/null 2>&1 || true;)
 	$$(CODE_LOCK) code --install-extension $$< --force
 	@touch $$@
 
