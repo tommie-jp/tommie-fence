@@ -397,6 +397,10 @@ export type PanelChrome = {
   readonly typeNames: string;
   /** 色の候補 (`datalist`)。配線を選んだときの色の欄が引く。 */
   readonly colorNames: string;
+  /** 配線を `Shift` で折れるか (`FenceEditor.foldsWire`)。案内文に出す。 */
+  readonly foldsWire: boolean;
+  /** 何分の 1 升まで刻めるか (`FenceEditor.fine`)。null なら Ctrl は素のクリック (52 の docs/23)。 */
+  readonly fine: number | null;
 };
 
 /** 欄の種類が引く候補の名札。**組む側と引く側で同じ綴りを使う**ための 1 か所。 */
@@ -429,8 +433,6 @@ export type PanelHtmlOptions = {
    * 自前の履歴)、`vscode` はカスタムエディタ (タブの文書へ undo が届く)。
    */
   readonly undo: 'own' | 'vscode';
-  /** 配線を `Shift` で折れるか (`FenceEditor.foldsWire`)。案内文に出す。 */
-  readonly foldsWire?: boolean;
 };
 
 /**
@@ -504,14 +506,14 @@ const renderTools = (): string => TOOLS.map((one) => (
   + `<span class="kc-glyph">${one.glyph}</span><span>${one.name}</span><kbd>${one.kbd}</kbd></button>`
 )).join('');
 
-export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo, foldsWire = false }: PanelHtmlOptions): string => {
+export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtmlOptions): string => {
   const own = undo === 'own';
   const { chrome } = view;
   return `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">`
     + `<meta http-equiv="Content-Security-Policy" content="default-src 'none';`
     + ` style-src ${escapeMarkup(cspSource)} 'unsafe-inline'; script-src 'nonce-${escapeMarkup(nonce)}';">`
     + `<style>${STYLE}</style><title>図を掴んで動かす</title></head>`
-    + `<body data-tool="select" data-folds="${foldsWire ? '1' : '0'}"${own ? ' class="cf-own-undo"' : ''}>`
+    + `<body data-tool="select"${own ? ' class="cf-own-undo"' : ''}>`
     + `<header class="kc-top">`
     + `<span class="kc-group">`
     + `<button class="cf-undo"${own ? ' disabled' : ''} title="元に戻す (Ctrl+Z)">↶</button>`
@@ -542,7 +544,8 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo, foldsWire =
     + `<button type="button" class="kc-chooser-close" title="閉じる (Esc)">✕</button></header>`
     // **言語ごとに入れ替わる。** 1 つの殻が 3 つのフェンスを扱うので、
     // いまのフェンスの語彙に差し替えられるよう箱で包む (52 の docs/19)。
-    + `<div class="cf-chrome-palette">${chrome.palette}</div>`
+    // **能力表も同じ箱に書く** (body に焼くと、言語をまたいだとき最初の言語のまま残る)。
+    + `<div class="cf-chrome-palette" data-folds="${chrome.foldsWire ? '1' : '0'}" data-fine="${chrome.fine ?? ''}">${chrome.palette}</div>`
     + `</div></div>`
     + `<nav class="kc-tools">${renderTools()}</nav>`
     + `</div>`

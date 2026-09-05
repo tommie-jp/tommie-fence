@@ -48,7 +48,6 @@ export function registerMapEditor(context: vscode.ExtensionContext): void {
         scriptUri: mapScriptUri(panel.webview, context),
         view: session.view(),
         undo: 'vscode',
-        foldsWire: fences.some((one) => one.foldsWire),
       });
 
       const panels = open.get(uri) ?? new Set<vscode.WebviewPanel>();

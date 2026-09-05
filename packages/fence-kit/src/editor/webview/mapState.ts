@@ -38,6 +38,33 @@ export const shownName = (handle: string): string => handle.split('#')[0] ?? han
 export type Tool = 'select' | 'wire';
 
 /**
+ * 升の中の端数 (Ctrl を押している間だけ。52 の docs/23)。`{ rows: 0.25, cols: -0.25 }` の
+ * ように **-0.5〜0.5 を 1/`fine` で刻んだ値**。綴りに直すのはフェンスの `step` で、
+ * 殻は数のまま運ぶ (`_` も `.25` も知らない)。
+ */
+export type Fine = { readonly rows: number; readonly cols: number };
+
+/** 升と、その中の端数。**同じ場所か**はこの組で比べる。 */
+export type Spot = { readonly cell: string | null; readonly fine: Fine | null };
+
+export const sameFine = (a: Fine | null, b: Fine | null): boolean =>
+  a === b || (a !== null && b !== null && a.rows === b.rows && a.cols === b.cols);
+
+export const sameSpot = (a: Spot, b: Spot): boolean => a.cell === b.cell && sameFine(a.fine, b.fine);
+
+/**
+ * 升の四角の中の位置 → 端数。左上が (0, 0)、四角の幅と高さで割り、真ん中を 0 にして
+ * 1/`steps` に丸める。**DOM を知らない**ので node で試せる。
+ * 丸めた先は -0.5〜0.5 (四角の縁は隣の升の縁と同じ場所 — `b3` の +0.5 も `b4` の -0.5 も同じ交点)。
+ */
+export function fineOf(offsetX: number, offsetY: number, width: number, height: number, steps: number): Fine {
+  // `|| 0` は -0 を 0 にする (答えを比べるときに別物にしない)。
+  const snap = (offset: number, size: number): number =>
+    Math.max(-0.5, Math.min(0.5, Math.round((offset / size - 0.5) * steps) / steps)) || 0;
+  return { rows: snap(offsetY, height), cols: snap(offsetX, width) };
+}
+
+/**
  * カーソルの下にあるもの (DOM を読むのは `map.ts`)。**全部いっぺんに持つ** —
  * 部品の升にも節点は立つので、どれを対象にするかは鍵が決める
  * (`M` は部品、`G` は節点、`W` は穴)。
@@ -53,9 +80,11 @@ export type Under = {
    * 綴りはフェンスが決める (殻は字として運ぶ)。
    */
   readonly pin: string | null;
+  /** 升の中の端数。交点ちょうど・Ctrl 無し・板の上は null。 */
+  readonly fine: Fine | null;
 };
 
-export const NOTHING: Under = { cell: null, part: null, node: null, wire: null, pin: null };
+export const NOTHING: Under = { cell: null, part: null, node: null, wire: null, pin: null, fine: null };
 
 /**
  * 配線の端にできるもの。**足が穴より先**— 足の丸は部品の升の上に重なるので、
@@ -117,7 +146,7 @@ export type State = {
   /** 配線の 1 点目 (配線の道具)。2 点目のクリックで 1 本になる。 */
   readonly wireFrom: string | null;
   /** 押した場所。放した場所が離れていればドラッグ、その場ならクリック。 */
-  readonly pressed: { readonly x: number; readonly y: number; readonly cell: string | null } | null;
+  readonly pressed: { readonly x: number; readonly y: number; readonly cell: string | null; readonly fine: Fine | null } | null;
   readonly ghost: Ghost | null;
   /** 直前に置いたもの (`Insert` でもう 1 つ)。足の数まで覚える。 */
   readonly lastPlaced: { readonly type: string; readonly twoEnds: boolean } | null;
@@ -125,9 +154,13 @@ export type State = {
   readonly ownUndo: boolean;
   /** 配線を `Shift` で折れるか (フェンスの能力表)。案内文に出す。 */
   readonly foldsWire: boolean;
+  /** 何分の 1 升まで刻めるか (`FenceEditor.fine`)。null なら Ctrl を押しても素のクリック。 */
+  readonly fine: number | null;
+  /** 配線の 1 点目の端数 (`wireFrom` の隣。綴りは拡張が組むので数のまま)。 */
+  readonly wireFromFine: Fine | null;
 };
 
-export const start = (ownUndo: boolean, foldsWire = false): State => ({
+export const start = (ownUndo: boolean, foldsWire = false, fine: number | null = null): State => ({
   tool: 'select',
   selected: null,
   under: NOTHING,
@@ -139,6 +172,8 @@ export const start = (ownUndo: boolean, foldsWire = false): State => ({
   lastPlaced: null,
   ownUndo,
   foldsWire,
+  fine,
+  wireFromFine: null,
 });
 
 /** webview で起きたこと。**DOM を読むのは呼ぶ側** (`map.ts`)。 */
@@ -179,7 +214,9 @@ export type Event =
   | { readonly kind: 'ghost'; readonly ghost: Ghost }
   /** マップを組み直した (要素が入れ替わるので押しかけを捨てる)。 */
   | { readonly kind: 'refresh' }
-  | { readonly kind: 'dblclick'; readonly under: Under };
+  | { readonly kind: 'dblclick'; readonly under: Under }
+  /** 語彙と一緒に来る能力表 (言語をまたぐと変わる)。 */
+  | { readonly kind: 'chrome'; readonly foldsWire: boolean; readonly fine: number | null };
 
 /** 拡張へ送る知らせ (`session.ts` の `Incoming` と同じ形)。 */
 export type Message = { readonly kind: string } & Readonly<Record<string, unknown>>;
@@ -244,6 +281,10 @@ export function hint(state: State): string {
   return 'A 部品を置く / W 配線 / M 動かす / G 引きずる (鍵はカーソルの下に効きます)';
 }
 
+/** 帯の一言に添える「升の間」。端数が無ければ何も足さない。 */
+const betweenNote = (state: State, fine: Fine | null): string =>
+  (fine === null || state.fine === null ? '' : ` の間 (1/${state.fine} 升)`);
+
 const outcome = (
   state: State,
   send: readonly Message[] = [],
@@ -252,23 +293,48 @@ const outcome = (
   focus: Focus | null = null,
 ): Outcome => ({ state, send, status: status ?? hint(state), handled, focus });
 
+/** 穴のある場所 (押した穴・置く穴)。 */
+type Held = { readonly cell: string; readonly fine: Fine | null };
+
+/** 端数を、このフェンスが受けるときだけ通す (板の 2 つは null のまま素のクリック)。 */
+const fineFor = (state: State, under: Under): Fine | null => (state.fine === null ? null : under.fine);
+
+/** カーソルの下の場所 (端数はフェンスが受けるときだけ)。 */
+const spotOf = (state: State, under: Under): Spot => ({ cell: under.cell, fine: fineFor(state, under) });
+
+/** 配線の端の端数。**足は升ではない**ので、足を採ったときは端数を持たない。 */
+const endFine = (state: State, under: Under): Fine | null => (under.pin !== null ? null : fineFor(state, under));
+
+/** 問い合わせの札に入れる端数の綴り。無ければ空。 */
+const fineKey = (fine: Fine | null): string => (fine === null ? '' : `${fine.rows},${fine.cols}`);
+
+/** 知らせに添える端数。無ければ何も足さない (端数が無ければ知らせは今までと同じ)。 */
+const withFine = (fine: Fine | null): { readonly fine?: Fine } => (fine === null ? {} : { fine });
+
 /**
  * 間隔を選んでいる最中の 1 本目の足。2 端子を押したまま別の穴へ動かしている
  * ときだけ立つ。**ゴーストと確定に同じ値を渡す**ための 1 か所。
+ * 同じ升でも端数が違えば別の場所 (升の中で間隔を選べる)。
  */
-function spanFrom(state: State, carry: Carry, cell: string | null): string | null {
-  if (carry.kind !== 'place' || !carry.twoEnds) return null;
-  const from = state.pressed?.cell ?? null;
-  return from === null || from === cell ? null : from;
+function spanFrom(state: State, carry: Carry, under: Under): Held | null {
+  if (carry.kind !== 'place' || !carry.twoEnds || state.pressed === null || state.pressed.cell === null) return null;
+  const from: Held = { cell: state.pressed.cell, fine: state.pressed.fine };
+  return sameSpot(from, spotOf(state, under)) ? null : from;
 }
 
-/** ゴーストの問い合わせの札。同じ札の答えだけを受け取る。 */
-function previewKey(carry: Carry, cell: string, from: string | null): string {
+/**
+ * ゴーストの問い合わせの札。同じ札の答えだけを受け取る。**端数も札に入れる** —
+ * 入れないと、Ctrl 無しの古い答えを Ctrl 中の問い合わせが採る。端数が無ければ今までの札のまま。
+ */
+function previewKey(carry: Carry, to: Held, from: Held | null): string {
   if (carry.kind === 'place') {
-    return `place:${carry.type}:${from ?? ''}:${cell}:${carry.turn}:${carry.flip ? 1 : 0}`;
+    const base = `place:${carry.type}:${from?.cell ?? ''}:${to.cell}:${carry.turn}:${carry.flip ? 1 : 0}`;
+    const fromFine = from?.fine ?? null;
+    return fromFine === null && to.fine === null ? base : `${base}:${fineKey(fromFine)}:${fineKey(to.fine)}`;
   }
-  if (carry.kind === 'move') return `move:${carry.part}:${cell}`;
-  return `node:${carry.node}:${cell}`;
+  const tail = to.fine === null ? '' : `:${fineKey(to.fine)}`;
+  if (carry.kind === 'move') return `move:${carry.part}:${to.cell}${tail}`;
+  return `node:${carry.node}:${to.cell}${tail}`;
 }
 
 /**
@@ -276,36 +342,40 @@ function previewKey(carry: Carry, cell: string, from: string | null): string {
  * **押したときと同じ穴を渡す** — ドラッグで間隔を選んでいる最中に押した穴を
  * 落とすと、緑に光った穴と書かれる穴が食い違う。
  */
-function previewAt(state: State, carry: Carry, cell: string | null): readonly Message[] {
-  if (cell === null) return [];
-  const from = spanFrom(state, carry, cell);
-  const key = previewKey(carry, cell, from);
+function previewAt(state: State, carry: Carry, under: Under): readonly Message[] {
+  if (under.cell === null) return [];
+  const to: Held = { cell: under.cell, fine: fineFor(state, under) };
+  const from = spanFrom(state, carry, under);
+  const key = previewKey(carry, to, from);
   if (carry.kind === 'place') {
     return [{
       kind: 'preview',
       key,
       what: 'place',
       type: carry.type,
-      to: cell,
+      to: to.cell,
       turn: carry.turn,
       flip: carry.flip,
-      ...(from === null ? {} : { from }),
+      ...(from === null ? {} : { from: from.cell }),
+      ...(from?.fine == null ? {} : { fromFine: from.fine }),
+      ...withFine(to.fine),
     }];
   }
-  if (carry.kind === 'move') return [{ kind: 'preview', key, what: 'move', part: carry.part, to: cell }];
-  return [{ kind: 'preview', key, what: 'node', from: carry.node, to: cell }];
+  if (carry.kind === 'move') return [{ kind: 'preview', key, what: 'move', part: carry.part, to: to.cell, ...withFine(to.fine) }];
+  return [{ kind: 'preview', key, what: 'node', from: carry.node, to: to.cell, ...withFine(to.fine) }];
 }
 
 /** 持ち物を持ち替える (ゴーストは訊き直す)。 */
 const carrying = (state: State, carry: Carry | null, handled = false): Outcome => {
   const next: State = { ...state, carry, ghost: null, pressed: null };
-  return outcome(next, carry === null ? [] : previewAt(next, carry, state.under.cell), null, handled);
+  return outcome(next, carry === null ? [] : previewAt(next, carry, state.under), null, handled);
 };
 
 function onHover(state: State, under: Under): Outcome {
-  const moved = under.cell !== state.under.cell;
+  // 升が同じでも端数が変われば動いた (Ctrl 中は 1/4 ごとにゴーストを訊き直す)。
+  const moved = !sameSpot(spotOf(state, under), spotOf(state, state.under));
   const next: State = { ...state, under, ghost: moved && under.cell === null ? null : state.ghost };
-  const ask = state.carry !== null && moved ? previewAt(next, state.carry, under.cell) : [];
+  const ask = state.carry !== null && moved ? previewAt(next, state.carry, under) : [];
   return outcome(next, ask);
 }
 
@@ -314,7 +384,7 @@ const partTarget = (state: State): string | null =>
   (state.selected?.kind === 'part' ? state.selected.id : state.under.part);
 
 function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcome {
-  const pressed = { x: event.x, y: event.y, cell: event.under.cell };
+  const pressed = { x: event.x, y: event.y, cell: event.under.cell, fine: fineFor(state, event.under) };
   const hovered: State = { ...state, under: event.under };
 
   // 持ち物があるあいだ、押すのは「ここに置く」の始まり (確定は放したとき)。
@@ -324,7 +394,9 @@ function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcom
     const end = endOf(event.under);
     if (end === null) return outcome(hovered);
     const from = state.wireFrom ?? end;
-    return outcome({ ...hovered, wireFrom: from, pressed });
+    // 1 点目の端数も覚える (綴りは拡張が組むので、ここでは数のまま)。
+    const fromFine = state.wireFrom === null ? endFine(state, event.under) : state.wireFromFine;
+    return outcome({ ...hovered, wireFrom: from, wireFromFine: fromFine, pressed });
   }
 
   const on = topOf(event.under);
@@ -345,9 +417,9 @@ function onDrag(state: State, event: Extract<Event, { kind: 'drag' }>): Outcome 
   // 持ち物があるままの引きずりは「間隔を選ぶ」。穴が変わるたびにゴーストを訊き直す
   // (押した穴も一緒に渡すので、光る穴と書かれる穴が揃う)。
   if (state.carry !== null) {
-    const moved = event.under.cell !== state.under.cell;
+    const moved = !sameSpot(spotOf(state, event.under), spotOf(state, state.under));
     const next: State = { ...state, under: event.under };
-    return outcome(next, moved ? previewAt(next, state.carry, event.under.cell) : []);
+    return outcome(next, moved ? previewAt(next, state.carry, event.under) : []);
   }
 
   const hovered = onHover(state, event.under);
@@ -375,15 +447,20 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
 
   if (carry?.kind === 'place') {
     if (cell === null) return outcome(clear);
-    const from = spanFrom(state, carry, cell);
+    const to: Held = { cell, fine: fineFor(state, event.under) };
+    const from = spanFrom(state, carry, event.under);
     const traveled = from !== null && Math.abs(event.x - (pressed?.x ?? 0)) + Math.abs(event.y - (pressed?.y ?? 0)) > DRAG;
     // 2 端子はドラッグで間隔を選べる。ほかは押した穴 1 つ (並べ方は板が決める)。
-    const at = traveled && from !== null ? [from, cell] : [cell];
+    const spots = traveled && from !== null ? [from, to] : [to];
+    const at = spots.map((spot) => spot.cell);
+    // 端数は穴に並べて添える (無ければ添えない — 知らせは今までと同じ)。
+    const fines = spots.map((spot) => spot.fine);
+    const fine = fines.some((one) => one !== null) ? { fine: fines } : {};
     // **道具は置いたあとも続く** (何本も置くのが普通)。抜けるのは Esc。
     return outcome(
       { ...clear, lastPlaced: { type: carry.type, twoEnds: carry.twoEnds } },
-      [{ kind: 'addPart', type: carry.type, at, turn: carry.turn, flip: carry.flip }],
-      `${carry.type} を ${at.join(' ')} へ…`,
+      [{ kind: 'addPart', type: carry.type, at, turn: carry.turn, flip: carry.flip, ...fine }],
+      `${carry.type} を ${at.join(' ')}${betweenNote(state, to.fine)} へ…`,
     );
   }
 
@@ -392,36 +469,41 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
       // ドラッグで持ち上げた物を穴の外で放したら戻す。鍵で持ち上げた物は持ったまま。
       return carry.byPointer ? carrying(clear, null) : outcome(clear);
     }
-    if (carry.byPointer && pressed !== null && pressed.cell === cell) {
-      // 持ち上げた穴に戻したのは「選んだ」だけ。
+    const to: Held = { cell, fine: fineFor(state, event.under) };
+    if (carry.byPointer && pressed !== null && sameSpot(pressed, to)) {
+      // 持ち上げた穴に戻したのは「選んだ」だけ (同じ升でも端数が違えば動かす)。
       return carrying(clear, null);
     }
     const done: State = { ...clear, carry: null, ghost: null };
+    const where = `${cell}${betweenNote(state, to.fine)}`;
     if (carry.kind === 'move') {
       // **まとめて選んでいるときは、押した部品の動きをほかにも掛ける。**
       const many = pickedParts(state);
       return outcome(
         done,
-        [{ kind: 'move', part: carry.part, to: cell, ...(many.length > 1 ? { parts: many } : {}) }],
-        many.length > 1 ? `${many.length} 個を ${cell} へ…` : `${shownName(carry.part)} を ${cell} へ…`,
+        [{ kind: 'move', part: carry.part, to: cell, ...withFine(to.fine), ...(many.length > 1 ? { parts: many } : {}) }],
+        many.length > 1 ? `${many.length} 個を ${where} へ…` : `${shownName(carry.part)} を ${where} へ…`,
       );
     }
     return outcome(
       { ...done, selected: null },
-      [{ kind: 'moveNode', from: carry.node, to: cell }],
-      `${carry.node} の節点を ${cell} へ…`,
+      [{ kind: 'moveNode', from: carry.node, to: cell, ...withFine(to.fine) }],
+      `${carry.node} の節点を ${where} へ…`,
     );
   }
 
   if (state.tool === 'wire') {
     const from = state.wireFrom;
     const end = endOf(event.under) ?? cell;
-    if (from === null || end === null || end === from) return outcome(clear);
+    const toFine = endFine(state, event.under);
+    // 同じ升でも端数が違えば別の交点 (短い配線が引ける)。
+    if (from === null || end === null || (end === from && sameFine(state.wireFromFine, toFine))) return outcome(clear);
     const operator = event.shift && state.foldsWire ? '-|' : '--';
+    const fine = state.wireFromFine === null && toFine === null ? {} : { fine: [state.wireFromFine, toFine] };
     return outcome(
-      { ...clear, wireFrom: null },
-      [{ kind: 'addWire', from, to: end, operator }],
-      `${from} から ${end} へ…`,
+      { ...clear, wireFrom: null, wireFromFine: null },
+      [{ kind: 'addWire', from, to: end, operator, ...fine }],
+      `${from} から ${end}${betweenNote(state, toFine)} へ…`,
     );
   }
 
@@ -433,7 +515,7 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
   if (event.key === 'Escape') {
     if (state.carry !== null) return carrying(state, null, true);
     // 配線の引きかけは、道具を抜ける前に 1 点目だけを捨てる。
-    if (state.wireFrom !== null) return outcome({ ...state, wireFrom: null, pressed: null }, [], null, true);
+    if (state.wireFrom !== null) return outcome({ ...state, wireFrom: null, wireFromFine: null, pressed: null }, [], null, true);
     if (state.tool !== 'select') return { ...step(state, { kind: 'tool', tool: 'select' }), handled: true };
     if (state.selected === null) return outcome(state);
     return outcome({ ...state, selected: null, also: [], pressed: null }, [select(null)], null, true);
@@ -603,7 +685,7 @@ function onGhost(state: State, ghost: Ghost): Outcome {
   const { carry, under } = state;
   const wanted = carry === null || under.cell === null
     ? null
-    : previewKey(carry, under.cell, spanFrom(state, carry, under.cell));
+    : previewKey(carry, { cell: under.cell, fine: fineFor(state, under) }, spanFrom(state, carry, under));
   if (wanted !== ghost.key) return outcome(state);
   return outcome({ ...state, ghost });
 }
@@ -627,12 +709,12 @@ export function step(state: State, event: Event): Outcome {
       return onKey(state, event);
     case 'tool':
       return outcome(
-        { ...state, tool: event.tool, carry: null, ghost: null, wireFrom: null, pressed: null, selected: null },
+        { ...state, tool: event.tool, carry: null, ghost: null, wireFrom: null, wireFromFine: null, pressed: null, selected: null },
         [select(null)],
       );
     case 'place': {
       const carry: Carry = { kind: 'place', type: event.type, turn: 0, flip: false, twoEnds: event.twoEnds };
-      const lifted = carrying({ ...state, tool: 'select', selected: null, wireFrom: null }, carry);
+      const lifted = carrying({ ...state, tool: 'select', selected: null, wireFrom: null, wireFromFine: null }, carry);
       return { ...lifted, send: [select(null), ...lifted.send] };
     }
     case 'pickMany':
@@ -654,6 +736,14 @@ export function step(state: State, event: Event): Outcome {
     case 'refresh':
       // **持ち物は続ける** (組み直しは書き換えのたびに起きる)。押しかけは捨てる。
       return outcome({ ...state, selected: null, pressed: null });
+    case 'chrome':
+      // 言語が変わると能力も変わる。端数を受けない板に移ったら、持っていた端数は捨てる。
+      return outcome({
+        ...state,
+        foldsWire: event.foldsWire,
+        fine: event.fine,
+        under: event.fine === null ? { ...state.under, fine: null } : state.under,
+      });
     case 'dblclick': {
       if (event.under.part === null) return outcome(state);
       const picked: Picked = { kind: 'part', id: event.under.part };

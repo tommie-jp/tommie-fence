@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { NOTHING, hint, start, step } from './mapState.ts';
+import { NOTHING, fineOf, hint, start, step } from './mapState.ts';
 import type { Event, State, Under } from './mapState.ts';
 
 const PANEL = start(true);
@@ -517,5 +517,111 @@ describe('まとめて選ぶ (領域選択)', () => {
 
     expect(out.state.also).toEqual([]);
     expect(out.state.selected).toBe(null);
+  });
+});
+
+describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
+  /** 1/4 升まで刻めるフェンス (circuit)。 */
+  const FINE = start(true, false, 4);
+  const quarter = (cell: string, rows: number, cols: number, more: Partial<Under> = {}): Under =>
+    over({ cell, fine: { rows, cols }, ...more });
+  const Q = { rows: 0.25, cols: -0.25 };
+  const AT_Q = quarter('b3', 0.25, -0.25);
+
+  test('rounds the pointer offset to the nearest quarter of the cell, centre being 0', () => {
+    expect(fineOf(0, 0, 40, 40, 4)).toEqual({ rows: -0.5, cols: -0.5 });
+    expect(fineOf(20, 20, 40, 40, 4)).toEqual({ rows: 0, cols: 0 });
+    expect(fineOf(30, 20, 40, 40, 4)).toEqual({ rows: 0, cols: 0.25 });
+    expect(fineOf(40, 40, 40, 40, 4)).toEqual({ rows: 0.5, cols: 0.5 });
+    expect(fineOf(21, 19, 40, 40, 4)).toEqual({ rows: 0, cols: 0 });
+  });
+
+  test('clamps within half a cell, and keeps to the steps the fence named', () => {
+    expect(fineOf(-5, 45, 40, 40, 4)).toEqual({ rows: 0.5, cols: -0.5 });
+    expect(fineOf(30, 20, 40, 40, 2)).toEqual({ rows: 0, cols: 0.5 });
+  });
+
+  test('asks for a ghost again when only the quarter changes, and keys the answer by it', () => {
+    const carrying = after(FINE, place('transistor'), hover(AT_B3));
+
+    expect(step(carrying, hover(AT_Q)).send).toEqual([{
+      kind: 'preview', key: 'place:transistor::b3:0:0::0.25,-0.25', what: 'place', type: 'transistor',
+      to: 'b3', turn: 0, flip: false, fine: Q,
+    }]);
+    // **端数の付いた問い合わせの答えだけ**を受け取る (Ctrl 無しの古い答えを採らない)。
+    const asked = step(carrying, hover(AT_Q)).state;
+    const answer = { key: 'place:transistor::b3:0:0::0.25,-0.25', cells: ['b.25_2.75'], ok: true, why: '' };
+    expect(step(asked, { kind: 'ghost', ghost: answer }).state.ghost).toEqual(answer);
+    expect(step(asked, { kind: 'ghost', ghost: { ...answer, key: 'place:transistor::b3:0:0' } }).state.ghost).toBeNull();
+  });
+
+  test('sends the quarter with addPart, move, moveNode and addWire', () => {
+    expect(step(after(FINE, place('transistor'), hover(AT_Q), press(AT_Q)), release(AT_Q, false)).send)
+      .toEqual([{ kind: 'addPart', type: 'transistor', at: ['b3'], turn: 0, flip: false, fine: [Q] }]);
+    expect(step(after(FINE, hover(ON_R1), key('m')), release(AT_Q, false)).send)
+      .toEqual([{ kind: 'move', part: 'R1', to: 'b3', fine: Q }]);
+    expect(step(after(FINE, hover(ON_NODE), key('g')), release(AT_Q, false)).send)
+      .toEqual([{ kind: 'moveNode', from: 'a3', to: 'b3', fine: Q }]);
+    expect(step(after(FINE, key('w'), press(AT_B3)), release(quarter('b8', 0.25, -0.25))).send)
+      .toEqual([{ kind: 'addWire', from: 'b3', to: 'b8', operator: '--', fine: [null, Q] }]);
+    // 同じ升の中でも、端数が違えば別の交点 (短い配線が引ける)。
+    expect(step(after(FINE, key('w'), press(AT_B3)), release(AT_Q)).send)
+      .toEqual([{ kind: 'addWire', from: 'b3', to: 'b3', operator: '--', fine: [null, Q] }]);
+  });
+
+  test('sends nothing extra without Ctrl, so the fence sees the same messages as before', () => {
+    // 端数が無ければ 1 バイトも変わらない。
+    expect(step(after(FINE, place('transistor'), hover(AT_B3), press(AT_B3)), release(AT_B3, false)).send)
+      .toEqual([{ kind: 'addPart', type: 'transistor', at: ['b3'], turn: 0, flip: false }]);
+    expect(step(after(FINE, hover(ON_R1), key('m')), release(AT_B3, false)).send)
+      .toEqual([{ kind: 'move', part: 'R1', to: 'b3' }]);
+    expect(step(after(FINE, key('w'), press(AT_B3)), release(over({ cell: 'b8' }))).send)
+      .toEqual([{ kind: 'addWire', from: 'b3', to: 'b8', operator: '--' }]);
+  });
+
+  test('ignores the quarter on a fence that has no place between the holes', () => {
+    // 板の 2 つ。Ctrl を押していても素のクリック (案内にも出ない)。
+    expect(step(after(PANEL, place('transistor'), hover(AT_Q), press(AT_Q)), release(AT_Q, false)).send)
+      .toEqual([{ kind: 'addPart', type: 'transistor', at: ['b3'], turn: 0, flip: false }]);
+    expect(step(after(PANEL, place('transistor'), hover(AT_B3)), hover(AT_Q)).send).toEqual([]);
+  });
+
+  test('a drag put back in the same cell but another quarter is a move, not a re-select', () => {
+    const lifted = after(FINE, press(ON_R1), drag(quarter('a1', 0, 0.25)));
+    expect(lifted.carry?.kind).toBe('move');
+
+    expect(step(lifted, release(quarter('a1', 0, 0.25))).send)
+      .toEqual([{ kind: 'move', part: 'R1', to: 'a1', fine: { rows: 0, cols: 0.25 } }]);
+    expect(step(lifted, release(ON_R1)).send).toEqual([]);
+  });
+
+  test('carries the pressed quarter as the first leg of a span', () => {
+    const from = quarter('b3', 0, 0.25);
+    const dragging = after(FINE, place('resistor', true), hover(from), press(from));
+
+    expect(step(dragging, drag(over({ cell: 'b8' }))).send).toEqual([{
+      kind: 'preview', key: 'place:resistor:b3:b8:0:0:0,0.25:', what: 'place', type: 'resistor',
+      to: 'b8', turn: 0, flip: false, from: 'b3', fromFine: { rows: 0, cols: 0.25 },
+    }]);
+    expect(step(dragging, release(over({ cell: 'b8' }))).send).toEqual([{
+      kind: 'addPart', type: 'resistor', at: ['b3', 'b8'], turn: 0, flip: false, fine: [{ rows: 0, cols: 0.25 }, null],
+    }]);
+  });
+
+  test('forgets the quarter when the chrome says the fence has none', () => {
+    const carrying = after(FINE, place('transistor'), hover(AT_Q));
+
+    const swapped = step(carrying, { kind: 'chrome', foldsWire: false, fine: null }).state;
+
+    expect(swapped.fine).toBeNull();
+    expect(swapped.under.fine).toBeNull();
+    expect(step(swapped, press(AT_Q)).state.pressed?.fine ?? null).toBeNull();
+  });
+
+  test('takes the abilities from the chrome, so a swapped language brings its own', () => {
+    const swapped = step(PANEL, { kind: 'chrome', foldsWire: true, fine: 4 }).state;
+
+    expect(swapped.foldsWire).toBe(true);
+    expect(swapped.fine).toBe(4);
   });
 });

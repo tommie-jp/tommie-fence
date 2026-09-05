@@ -6,6 +6,8 @@ const CHROME = {
   palette: '<details class="cf-palette"></details>',
   typeNames: '<datalist id="cf-type-names"></datalist>',
   colorNames: '<datalist id="cf-color-names"></datalist>',
+  foldsWire: false,
+  fine: null,
 };
 
 const shell = (over: Partial<Parameters<typeof panelHtml>[0]> = {}): string => panelHtml({
@@ -116,10 +118,13 @@ describe('KiCad の配置', () => {
     expect(html).toContain('.cf-wire-hit { stroke: transparent; stroke-width: 8; fill: none; }');
   });
 
-  test('tells the script whether the fence can fold a wire', () => {
-    expect(shell({ foldsWire: true })).toContain('data-folds="1"');
-    expect(shell({ foldsWire: false })).toContain('data-folds="0"');
-    expect(html).toContain('data-folds="0"');
+  test('tells the script the abilities of the fence on the box that is swapped per language', () => {
+    // **最初の HTML に焼かない。** 言語をまたぐと能力も変わる (52 の docs/19, 23)。
+    const able = shell({ view: { html: '', picker: '', issues: '', chrome: { ...CHROME, foldsWire: true, fine: 4 } } });
+
+    expect(able).toContain('class="cf-chrome-palette" data-folds="1" data-fine="4"');
+    expect(html).toContain('class="cf-chrome-palette" data-folds="0" data-fine=""');
+    expect(html).not.toContain('<body data-tool="select" data-folds');
   });
 
   test('keeps the long how-to out: the status row says what can be done now', () => {

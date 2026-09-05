@@ -55,7 +55,7 @@ describe.each(CASES)('$kind のマップ', ({ kind, make, body, part, to }) => {
 
   test('マップの HTML を組める', () => {
     // Arrange
-    const { session, editor } = open();
+    const { session } = open();
 
     // Act
     const html = panelHtml({
@@ -64,7 +64,6 @@ describe.each(CASES)('$kind のマップ', ({ kind, make, body, part, to }) => {
       scriptUri: 'map.js',
       view: session.view(),
       undo: 'own',
-      foldsWire: editor.foldsWire,
     });
 
     // Assert

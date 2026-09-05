@@ -57,7 +57,6 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
     scriptUri: mapScriptUri(view.webview, context),
     view: live.view(),
     undo: 'own',
-    foldsWire: at.foldsWire,
   });
   attachSession(view, live);
   // 閉じたら自分自身もほどく (context.subscriptions へ積むと済んだ分が溜まる)。

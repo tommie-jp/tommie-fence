@@ -84,6 +84,13 @@ describe('1 つの殻で 2 つのフェンス', () => {
     expect(sessionOf().view().chrome.palette).toBe('<p>one</p>');
   });
 
+  test('sends the abilities of the fence with its vocabulary, since the webview reads them from the same box', () => {
+    const { chrome } = sessionOf().view();
+
+    expect(chrome.foldsWire).toBe(false);
+    expect(chrome.fine).toBeNull();
+  });
+
   test('sends the vocabulary again with every map, not just the first one', () => {
     // 送り直しに乗っていないと、受け手 (webview) が入れ替えようがない。
     const posted: { kind: string; chrome?: { palette: string } }[] = [];

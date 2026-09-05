@@ -1,5 +1,5 @@
-import { DRAG, NOTHING, endOf, start, step, topOf } from './mapState.ts';
-import type { Event, Focus, Picked, State, Under } from './mapState.ts';
+import { DRAG, NOTHING, endOf, fineOf, sameFine, start, step, topOf } from './mapState.ts';
+import type { Event, Fine, Focus, Picked, State, Under } from './mapState.ts';
 
 /**
  * マップの webview の**DOM を触る側**。何が起きたかを読んで状態遷移
@@ -18,10 +18,17 @@ declare function acquireVsCodeApi(): { postMessage: (message: unknown) => void }
 
 const vscode = acquireVsCodeApi();
 
-let state: State = start(
-  document.body.classList.contains('cf-own-undo'),
-  document.body.dataset.folds === '1',
-);
+/** フェンスの語彙と能力表の箱。**言語をまたぐと入れ替わる**ので、body ではなくここを読む。 */
+const chromeBox = (): HTMLElement | null => document.querySelector<HTMLElement>('.cf-chrome-palette');
+
+/** 箱に書かれた能力表 (`PanelChrome.foldsWire` / `fine`)。 */
+function abilitiesOf(box: HTMLElement | null): { readonly foldsWire: boolean; readonly fine: number | null } {
+  const fine = Number(box?.dataset.fine ?? '');
+  return { foldsWire: box?.dataset.folds === '1', fine: Number.isInteger(fine) && fine > 1 ? fine : null };
+}
+
+const firstAbilities = abilitiesOf(chromeBox());
+let state: State = start(document.body.classList.contains('cf-own-undo'), firstAbilities.foldsWire, firstAbilities.fine);
 
 /** 最後に見たカーソルの位置。組み直しのあとにカーソルの下を取り直す。 */
 let pointer: { x: number; y: number } | null = null;
@@ -118,6 +125,8 @@ let panning: { x: number; y: number; left: number; top: number } | null = null;
 let spaceHeld = false;
 /** `Shift` を押しているか。**引いている線の影を折って見せる**ために持つ。 */
 let shiftHeld = false;
+/** `Ctrl` (mac は `Cmd`) を押しているか。**押している間だけ 1/4 升** (52 の docs/23)。 */
+let ctrlHeld = false;
 
 // ---------------------------------------------------------------- カーソルの下
 
@@ -130,25 +139,41 @@ function underAt(x: number, y: number): Under {
   const stack = document.elementsFromPoint(x, y);
   // 図の根は `.cf-body` の中の SVG (class はフェンスごとに違うので、箱で見る)。
   if (!stack.some((element) => element.closest('.cf-body'))) return NOTHING;
-  const find = (selector: string, name: string): string | null => {
+  const find = (selector: string, name: string): { readonly hit: HTMLElement; readonly value: string } | null => {
     for (const element of stack) {
       const hit = element.closest<HTMLElement>(selector);
       const value = hit?.dataset[name];
-      if (value !== undefined) return value;
+      if (hit !== null && hit !== undefined && value !== undefined) return { hit, value };
     }
     return null;
   };
+  const cell = find('.cf-cell', 'address');
   return {
-    cell: find('.cf-cell', 'address'),
-    part: find('.cf-chip', 'part'),
-    node: find('.cf-dot', 'node'),
-    wire: find('.cf-wire-hit', 'line'),
-    pin: find('.cf-pin-hit', 'pin'),
+    cell: cell?.value ?? null,
+    part: find('.cf-chip', 'part')?.value ?? null,
+    node: find('.cf-dot', 'node')?.value ?? null,
+    wire: find('.cf-wire-hit', 'line')?.value ?? null,
+    pin: find('.cf-pin-hit', 'pin')?.value ?? null,
+    fine: cell === null ? null : fineIn(cell.hit, x, y),
   };
 }
 
+/**
+ * 升の四角の中の端数。**Ctrl を押している間、端数を受けるフェンスでだけ**数える —
+ * 板の上でも数えると、Ctrl を押しながらの hover が 16 倍の往復になる。
+ * 四角はピッチちょうどで隙間なく敷かれている (circuit の `mapSvg` のテストが見張る)。
+ * 交点ちょうどは null (端数が無ければ知らせは今までと同じ)。
+ */
+function fineIn(cell: Element, x: number, y: number): Fine | null {
+  if (!ctrlHeld || state.fine === null) return null;
+  const box = cell.getBoundingClientRect();
+  const fine = fineOf(x - box.left, y - box.top, box.width, box.height, state.fine);
+  return fine.rows === 0 && fine.cols === 0 ? null : fine;
+}
+
 const sameUnder = (a: Under, b: Under): boolean =>
-  a.cell === b.cell && a.part === b.part && a.node === b.node && a.wire === b.wire && a.pin === b.pin;
+  a.cell === b.cell && a.part === b.part && a.node === b.node && a.wire === b.wire && a.pin === b.pin
+  && sameFine(a.fine, b.fine);
 
 // ---------------------------------------------------------------- 印
 
@@ -596,6 +621,7 @@ document.addEventListener('pointerdown', (event) => {
   }
   if (event.button !== 0) return;
   if (target?.closest('.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status')) return;
+  ctrlHeld = event.ctrlKey || event.metaKey;
   const under = underAt(event.clientX, event.clientY);
   // **何も無い所から引いたら領域選択。** 掴むものがある所から始めたら今までどおり。
   if (onCanvas && state.tool === 'select' && state.carry === null
@@ -607,6 +633,8 @@ document.addEventListener('pointerdown', (event) => {
 
 document.addEventListener('pointermove', (event) => {
   pointer = { x: event.clientX, y: event.clientY };
+  // 鍵の知らせが届かなかったとき (窓の外で押した) も、出来事の印で揃える。
+  ctrlHeld = event.ctrlKey || event.metaKey;
   // **道具の列の上ではカーソルの下を捨てない。** 捨てると「部品にカーソルを置いて
   // 回すボタンを押す」が効かなくなる (押した時点で対象が消えている)。
   if (elementOf(event)?.closest('.kc-tools') != null) return;
@@ -648,6 +676,7 @@ document.addEventListener('pointerup', (event) => {
   }
   const target = elementOf(event);
   if (target?.closest('.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status') && state.pressed === null) return;
+  ctrlHeld = event.ctrlKey || event.metaKey;
   run({
     kind: 'release',
     under: underAt(event.clientX, event.clientY),
@@ -683,6 +712,12 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Shift' && !shiftHeld) {
     shiftHeld = true;
     paint(state);
+  }
+  // **Ctrl を押した瞬間に升の下を読み直す。** カーソルは動かないので、読み直さないと
+  // ゴーストが 1/4 の位置へ動かない (mac は Cmd — Ctrl+クリックは右クリックになる)。
+  if ((event.key === 'Control' || event.key === 'Meta') && !ctrlHeld) {
+    ctrlHeld = true;
+    syncHover();
   }
 
   // 選択窓の検索欄。Enter で先頭の候補、Esc で閉じる。ほかは欄に任せる。
@@ -747,17 +782,22 @@ document.addEventListener('keyup', (event) => {
     shiftHeld = false;
     paint(state);
   }
+  if ((event.key === 'Control' || event.key === 'Meta') && ctrlHeld) {
+    ctrlHeld = false;
+    syncHover();
+  }
 });
 
 // **窓の外へ出たら Space を離したことにする。** 押したまま別のタブへ移ると
 // `keyup` が届かず、戻ってきたあとの左クリックが全部「移動」になる。
-window.addEventListener('blur', () => { spaceHeld = false; shiftHeld = false; panning = null; });
+window.addEventListener('blur', () => { spaceHeld = false; shiftHeld = false; ctrlHeld = false; panning = null; });
 // **箱が広がったら図も広げ直す。** 幅は px で持っているので、パネルを広げても
 // 100 % のままだと図が箱の中で右に余る。
 window.addEventListener('resize', () => { applyView(); });
 document.addEventListener('visibilitychange', () => {
   spaceHeld = false;
   shiftHeld = false;
+  ctrlHeld = false;
   panning = null;
 });
 
@@ -927,8 +967,8 @@ function showFields(part: Fields | null): void {
 type Incoming =
   | {
     readonly kind: 'map'; readonly html: string; readonly picker: string; readonly issues: string;
-    /** いまのフェンスの語彙。**言語が変わると入れ替わる** (52 の docs/19)。 */
-    readonly chrome?: { readonly palette: string; readonly typeNames: string; readonly colorNames: string };
+    /** いまのフェンスの語彙と能力表。**言語が変わると入れ替わる** (52 の docs/19, 23)。 */
+    readonly chrome?: Chrome;
   }
   | { readonly kind: 'status'; readonly text: string }
   | { readonly kind: 'aim'; readonly what?: string; readonly id?: string; readonly also?: readonly string[] }
@@ -940,10 +980,37 @@ type Incoming =
     readonly chip?: string;
   };
 
+/** 拡張が送る語彙と能力表 (`PanelChrome` と同じ形)。 */
+type Chrome = {
+  readonly palette: string;
+  readonly typeNames: string;
+  readonly colorNames: string;
+  readonly foldsWire: boolean;
+  readonly fine: number | null;
+};
+
 const fill = (selector: string, html: string): void => {
   const target = query(selector);
   if (target) target.innerHTML = html;
 };
+
+/**
+ * **語彙も能力表も入れ替える。** 1 つの殻が 3 つのフェンスを扱うので、言語をまたぐと
+ * 置ける部品も種類の候補も、Ctrl が効くかどうかも変わる。ここで受けないと、最初に
+ * 開いた言語のパレットが残る (52 の docs/19。畳んだあと実測で見つけた)。
+ */
+function applyChrome(chrome: Chrome): void {
+  const box = chromeBox();
+  if (box !== null) {
+    box.innerHTML = chrome.palette;
+    box.dataset.folds = chrome.foldsWire ? '1' : '0';
+    box.dataset.fine = chrome.fine === null ? '' : String(chrome.fine);
+  }
+  fill('.cf-chrome-lists', chrome.typeNames + chrome.colorNames);
+  // パレットの `details` は選択窓の中では常に開いておく (入れ替えたぶんも)。
+  for (const details of document.querySelectorAll<HTMLDetailsElement>('.kc-chooser details')) details.open = true;
+  run({ kind: 'chrome', foldsWire: chrome.foldsWire, fine: chrome.fine });
+}
 
 window.addEventListener('message', (event: MessageEvent<Incoming>) => {
   const message = event.data;
@@ -951,13 +1018,7 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
     fill('.cf-body', message.html);
     fill('.cf-fences', message.picker);
     fill('.cf-band', message.issues);
-    // **語彙も入れ替える。** 1 つの殻が 3 つのフェンスを扱うので、言語をまたぐと
-    // 置ける部品も種類の候補も変わる。ここで受けないと、最初に開いた言語の
-    // パレットが残る (52 の docs/19。畳んだあと実測で見つけた)。
-    if (message.chrome !== undefined) {
-      fill('.cf-chrome-palette', message.chrome.palette);
-      fill('.cf-chrome-lists', message.chrome.typeNames + message.chrome.colorNames);
-    }
+    if (message.chrome !== undefined) applyChrome(message.chrome);
     applyView();
     // **選んでいたものが残っていれば選んだまま。** 書き換えのたびに組み直る
     // ので、そのたびに離すと欄で値を直せない。消えていれば捨てる。

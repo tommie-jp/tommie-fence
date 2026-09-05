@@ -70,7 +70,6 @@ export function openMap({ kind, frame, body, setBody }: MapOptions): MapHandle {
     view: session.view(),
     // VS Code の undo は届かないので、殻に自前の履歴を持たせる (パネルと同じ)。
     undo: 'own',
-    foldsWire: editor.foldsWire,
   });
 
   return {

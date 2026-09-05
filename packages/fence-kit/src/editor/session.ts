@@ -407,6 +407,9 @@ export function createSession<D extends DocLike>(
     palette: fence.palette(),
     typeNames: fence.typeNames(TYPE_LIST_ID),
     colorNames: fence.colorNames(COLOR_LIST_ID),
+    // 能力表も語彙と一緒に (webview は同じ箱から読む)。
+    foldsWire: fence.foldsWire,
+    fine: fence.fine,
   });
 
   function viewNow(followCursor: boolean): MapView {
