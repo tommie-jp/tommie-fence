@@ -925,7 +925,11 @@ function showFields(part: Fields | null): void {
 }
 
 type Incoming =
-  | { readonly kind: 'map'; readonly html: string; readonly picker: string; readonly issues: string }
+  | {
+    readonly kind: 'map'; readonly html: string; readonly picker: string; readonly issues: string;
+    /** いまのフェンスの語彙。**言語が変わると入れ替わる** (52 の docs/19)。 */
+    readonly chrome?: { readonly palette: string; readonly typeNames: string; readonly colorNames: string };
+  }
   | { readonly kind: 'status'; readonly text: string }
   | { readonly kind: 'aim'; readonly what?: string; readonly id?: string; readonly also?: readonly string[] }
   | { readonly kind: 'history'; readonly canUndo: boolean; readonly canRedo: boolean }
@@ -947,6 +951,13 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
     fill('.cf-body', message.html);
     fill('.cf-fences', message.picker);
     fill('.cf-band', message.issues);
+    // **語彙も入れ替える。** 1 つの殻が 3 つのフェンスを扱うので、言語をまたぐと
+    // 置ける部品も種類の候補も変わる。ここで受けないと、最初に開いた言語の
+    // パレットが残る (52 の docs/19。畳んだあと実測で見つけた)。
+    if (message.chrome !== undefined) {
+      fill('.cf-chrome-palette', message.chrome.palette);
+      fill('.cf-chrome-lists', message.chrome.typeNames + message.chrome.colorNames);
+    }
     applyView();
     // **選んでいたものが残っていれば選んだまま。** 書き換えのたびに組み直る
     // ので、そのたびに離すと欄で値を直せない。消えていれば捨てる。

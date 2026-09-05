@@ -76,4 +76,29 @@ describe('1 つの殻で 2 つのフェンス', () => {
     // どちらの実装に訊くかは**いまのフェンス**で決まる。
     expect(sessionOf().view().html).toContain('data-of="one"');
   });
+
+  test('sends the vocabulary of the fence it is showing, so the palette follows the language', () => {
+    // **語彙も言語ごと。** 最初の HTML に焼き込むと、言語をまたいだときに
+    // 最初に開いた言語のパレットが残る (畳んだあと実測で見つけた)。
+    expect(sessionOf().view().chrome.palette).toBe('<p>one</p>');
+  });
+
+  test('sends the vocabulary again with every map, not just the first one', () => {
+    // 送り直しに乗っていないと、受け手 (webview) が入れ替えようがない。
+    const posted: { kind: string; chrome?: { palette: string } }[] = [];
+    const doc = docOf();
+    const host = {
+      post: (message: { kind: string }) => posted.push(message),
+      documents: () => [doc],
+      activeEditor: () => null,
+      applyEdits: async () => true,
+      replaceBody: async () => true,
+      highlight: () => {},
+    };
+    const live = createSession(host as never, [fenceOf('one', '```one'), fenceOf('two', '```two')], { pinned: doc as never });
+
+    live.refresh();
+
+    expect(posted.find((one) => one.kind === 'map')?.chrome?.palette).toBe('<p>one</p>');
+  });
 });
