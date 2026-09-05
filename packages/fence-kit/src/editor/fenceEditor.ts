@@ -118,7 +118,7 @@ export type EditResult =
  * (`{ rows: 0.25, cols: -0.25 }`) でもある。**1 か所で名付ける** — 殻・session・webview が
  * 同じ組を別々に綴らないように。
  */
-export type Step = { readonly rows: number; readonly cols: number };
+export type GridStep = { readonly rows: number; readonly cols: number };
 
 export type FenceEditor = {
   /** フェンスの言葉 (` ```circuit ` の `circuit`)。お知らせの文面に出す。 */
@@ -190,7 +190,7 @@ export type FenceEditor = {
    * (押した部品の動きを、ほかの部品にも掛ける)。数に落ちない綴り
    * (レールの行) や読めない綴りは null。
    */
-  readonly stepsTo: (from: string, to: string) => Step | null;
+  readonly stepsTo: (from: string, to: string) => GridStep | null;
 
   /** パレット (置ける部品の一覧) の HTML。 */
   readonly palette: () => string;

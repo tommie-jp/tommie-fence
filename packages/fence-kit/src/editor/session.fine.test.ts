@@ -84,7 +84,7 @@ describe('端数を綴りにする (Ctrl で 1/4 升)', () => {
     await session.handle({ kind: 'addPart', type: 'resistor', at: ['b3', 'b8'], fine: [null, Q] });
     await session.handle({ kind: 'move', part: 'R1', to: 'b3', fine: Q });
     await session.handle({ kind: 'moveNode', from: 'a1', to: 'b3', fine: Q });
-    await session.handle({ kind: 'addWire', from: 'a1', to: 'b3', operator: '--', fine: [null, Q] });
+    await session.handle({ kind: 'addWire', from: 'a1', to: 'b3', operator: '--', fine: Q });
 
     expect(calls).toEqual([
       ['addPart', ['b3@0.25,-0.25']],

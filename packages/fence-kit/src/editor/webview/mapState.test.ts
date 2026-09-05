@@ -563,10 +563,10 @@ describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
     expect(step(after(FINE, hover(ON_NODE), key('g')), release(AT_Q, false)).send)
       .toEqual([{ kind: 'moveNode', from: 'a3', to: 'b3', fine: Q }]);
     expect(step(after(FINE, key('w'), press(AT_B3)), release(quarter('b8', 0.25, -0.25))).send)
-      .toEqual([{ kind: 'addWire', from: 'b3', to: 'b8', operator: '--', fine: [null, Q] }]);
+      .toEqual([{ kind: 'addWire', from: 'b3', to: 'b8', operator: '--', fine: Q }]);
     // 同じ升の中でも、端数が違えば別の交点 (短い配線が引ける)。
     expect(step(after(FINE, key('w'), press(AT_B3)), release(AT_Q)).send)
-      .toEqual([{ kind: 'addWire', from: 'b3', to: 'b3', operator: '--', fine: [null, Q] }]);
+      .toEqual([{ kind: 'addWire', from: 'b3', to: 'b3', operator: '--', fine: Q }]);
   });
 
   test('sends nothing extra without Ctrl, so the fence sees the same messages as before', () => {

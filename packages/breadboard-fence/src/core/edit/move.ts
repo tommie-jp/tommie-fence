@@ -1,3 +1,4 @@
+import type { GridStep } from 'fence-kit';
 import type { Edit, NetDiff, Span } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
@@ -30,7 +31,7 @@ const fail = (message: string, line: number | null): MoveResult =>
 /** 番地の行を数で。 */
 const rowIndex = (row: HoleRow): number => HOLE_ROWS.indexOf(row);
 
-type Step = { readonly rows: number; readonly cols: number };
+type Step = GridStep;
 
 /**
  * 動かす量。**穴どうしのときだけ行が動く。**
@@ -196,7 +197,7 @@ export function stepCell(written: string, rows: number, cols: number): string | 
  * 2 つの穴の間の行数と列数。**まとめて選んだものを同じだけずらす**ために要る。
  * **レールは行が極性そのもの**で数に落ちないので、穴どうしのときだけ数える。
  */
-export function stepsTo(from: string, to: string): { readonly rows: number; readonly cols: number } | null {
+export function stepsTo(from: string, to: string): GridStep | null {
   const start = parseAddress(from);
   const end = parseAddress(to);
   if (start === null || end === null) return null;

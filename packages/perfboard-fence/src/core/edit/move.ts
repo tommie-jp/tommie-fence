@@ -1,3 +1,4 @@
+import type { GridStep } from 'fence-kit';
 import type { Edit, NetDiff, Span } from 'fence-kit';
 import { normalizeNewlines } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
@@ -157,7 +158,7 @@ export function stepCell(written: string, rows: number, cols: number): string | 
  * 2 つの穴の間の行数と列数。**まとめて選んだものを同じだけずらす**ために要る。
  * 格子が一様なので、そのまま引くだけ。
  */
-export function stepsTo(from: string, to: string): { readonly rows: number; readonly cols: number } | null {
+export function stepsTo(from: string, to: string): GridStep | null {
   const start = parseAddress(from);
   const end = parseAddress(to);
   return start === null || end === null ? null : { rows: end.row - start.row, cols: end.col - start.col };

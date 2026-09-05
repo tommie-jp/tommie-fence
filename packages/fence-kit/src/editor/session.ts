@@ -6,7 +6,7 @@ import type { DocLike, EditorLike } from './documentLike.ts';
 import { createHistory, sameBody } from './history.ts';
 import { describeDiff } from './edits.ts';
 import { applyRewrite } from './lines.ts';
-import type { EditResult, FenceEditor, FenceEntry, PartFields, Step } from './fenceEditor.ts';
+import type { EditResult, FenceEditor, FenceEntry, GridStep, PartFields } from './fenceEditor.ts';
 import { COLOR_LIST_ID, TYPE_LIST_ID, renderFencePicker } from './panelHtml.ts';
 import type { PanelChrome } from './panelHtml.ts';
 import type { MapViewHtml } from './panelHtml.ts';
@@ -79,7 +79,7 @@ export type Outgoing =
      * 絵をずらす量 (`from[0]` → `cells[0]`)。**端数の升は DOM に無い**ので、殻は要素を
      * 引けず、差を数で受け取る (52 の docs/23)。`from` があるときだけ。
      */
-    readonly shift?: Step;
+    readonly shift?: GridStep;
   };
 
 /** webview から来るもの。中身は信用せず、使う前に形を確かめる。 */
@@ -643,7 +643,7 @@ export function createSession<D extends DocLike>(
    * 絵をずらす量 (`from[0]` → `cells[0]`)。**端数の升は DOM に無い**ので殻は要素を引けず、
    * 差を数で受け取る (52 の docs/23)。数えられない綴り (レール) なら添えない。
    */
-  const shiftOf = (from: readonly string[] | undefined, cells: readonly string[]): { readonly shift?: Step } => {
+  const shiftOf = (from: readonly string[] | undefined, cells: readonly string[]): { readonly shift?: GridStep } => {
     const start = from?.[0];
     const end = cells[0];
     if (start === undefined || end === undefined) return {};
@@ -651,19 +651,41 @@ export function createSession<D extends DocLike>(
     return shift === null ? {} : { shift };
   };
 
+  /**
+   * ゴーストの答え。**組み立てるのは 1 か所** — 試し当ての答えも、端数を綴れなかった
+   * 断りも同じ封筒で返る (欄が増えたときに片方だけ古くならない)。
+   */
+  const sendGhost = (
+    key: string,
+    cells: readonly string[],
+    ok: boolean,
+    why = '',
+    from?: readonly string[],
+    chip?: string,
+  ): void => host.post({
+    kind: 'ghost', key, cells, ok, why,
+    ...(from === undefined ? {} : { from }),
+    ...(chip === undefined ? {} : { chip }),
+    ...shiftOf(from, cells),
+  });
+
   /** 端数を綴りにできなかった理由。`resolveFine` の答えそのものになる。 */
   type Refused = { readonly ok: false; readonly why: string };
   const refuse = (why: string): Refused => ({ ok: false, why });
 
   /**
-   * webview から来た端数 (`{ rows, cols }`)。無ければ null、形が違えば 'bad'。
+   * webview から来た端数 (`{ rows, cols }`)。無ければ null、形が違えば断り。
    * 大きさは升の半分まで (それより外は隣の升)。交点ちょうど (0, 0) は「端数無し」。
    */
-  function fractionOf(value: unknown): Step | null | 'bad' {
+  const UNREADABLE = 'マップからの知らせを読めませんでした (端数が読めません)';
+
+  function fractionOf(value: unknown): GridStep | null | Refused {
     if (value === null || value === undefined) return null;
-    if (typeof value !== 'object') return 'bad';
+    if (typeof value !== 'object') return refuse(UNREADABLE);
     const { rows, cols } = value as { readonly rows?: unknown; readonly cols?: unknown };
-    if (typeof rows !== 'number' || typeof cols !== 'number' || Math.abs(rows) > 0.5 || Math.abs(cols) > 0.5) return 'bad';
+    if (typeof rows !== 'number' || typeof cols !== 'number' || Math.abs(rows) > 0.5 || Math.abs(cols) > 0.5) {
+      return refuse(UNREADABLE);
+    }
     return rows === 0 && cols === 0 ? null : { rows, cols };
   }
 
@@ -672,7 +694,7 @@ export function createSession<D extends DocLike>(
    * 殻は `_` も `.25` も知らない。刻みに合わない端数は断る (circuit の `round()` は
    * `.125` を `.13` に黙って丸める)。穴の間が無い板では断る (webview は送らないが、境界で見る)。
    */
-  function spellOf(cell: string, fine: Step | null): string | Refused {
+  function spellOf(cell: string, fine: GridStep | null): string | Refused {
     if (fine === null) return cell;
     if (editor.fine === null) return refuse('この盤では穴の間に置けません');
     if (!Number.isInteger(fine.rows * editor.fine) || !Number.isInteger(fine.cols * editor.fine)) {
@@ -688,29 +710,23 @@ export function createSession<D extends DocLike>(
    */
   function resolveFine(message: Incoming): { readonly ok: true; readonly message: Incoming } | Refused {
     if (message.fine === undefined && message.fromFine === undefined) return { ok: true, message };
+    // **端数そのものと見分ける。** どちらもオブジェクトなので、断りの印 (`ok`) で判じる。
+    const isRefused = (value: unknown): value is Refused =>
+      typeof value === 'object' && value !== null && 'ok' in value;
     const spell = (cell: unknown, fine: unknown): string | Refused => {
       const written = text(cell);
       const fraction = fractionOf(fine);
       if (written === null) return refuse('マップからの知らせを読めませんでした (置き先がありません)');
-      if (fraction === 'bad') return refuse('マップからの知らせを読めませんでした (端数が読めません)');
-      return spellOf(written, fraction);
+      return isRefused(fraction) ? fraction : spellOf(written, fraction);
     };
-    const isRefused = (spelled: string | Refused): spelled is Refused => typeof spelled !== 'string';
-    const fines: readonly unknown[] = Array.isArray(message.fine) ? message.fine : [];
-
+    // 置くときだけ穴が何個も並ぶ (`at`)。ほかは `to` 1 つなので、下の道を通る。
     if (message.kind === 'addPart') {
+      const fines: readonly unknown[] = Array.isArray(message.fine) ? message.fine : [];
       const at: readonly unknown[] = Array.isArray(message.at) ? message.at : [];
       const spelled = at.map((cell, index) => spell(cell, fines[index] ?? null));
       return spelled.find(isRefused) ?? { ok: true, message: { ...message, at: spelled } };
     }
-    if (message.kind === 'addWire') {
-      const from = spell(message.from, fines[0] ?? null);
-      const to = spell(message.to, fines[1] ?? null);
-      if (isRefused(from)) return from;
-      if (isRefused(to)) return to;
-      return { ok: true, message: { ...message, from, to } };
-    }
-    // preview / move / moveNode: `to` に `fine`。置く試し当ての間隔選びは `from` に `fromFine`。
+    // preview / move / moveNode / addWire: `to` に `fine`、1 本目の端は `from` に `fromFine`。
     const to = spell(message.to, message.fine);
     if (isRefused(to)) return to;
     if (message.fromFine === undefined) return { ok: true, message: { ...message, to } };
@@ -879,12 +895,7 @@ export function createSession<D extends DocLike>(
       why = '',
       from?: readonly string[],
       chip?: string,
-    ): void => host.post({
-      kind: 'ghost', key, cells, ok, why,
-      ...(from === undefined ? {} : { from }),
-      ...(chip === undefined ? {} : { chip }),
-      ...shiftOf(from, cells),
-    });
+    ): void => sendGhost(key, cells, ok, why, from, chip);
 
     const fence = currentFence(true);
     const plan = fence === null ? null : plannedFor(message, fence.source);
@@ -1294,11 +1305,8 @@ export function createSession<D extends DocLike>(
       const resolved = resolveFine(received);
       if (!resolved.ok) {
         // 試し当てはゴーストで断る (押す前に見える)。ほかは帯で言う。
-        if (received.kind === 'preview') {
-          host.post({ kind: 'ghost', key: text(received.key) ?? '', cells: [], ok: false, why: resolved.why });
-        } else {
-          say(resolved.why);
-        }
+        if (received.kind === 'preview') sendGhost(text(received.key) ?? '', [], false, resolved.why);
+        else say(resolved.why);
         return;
       }
       const message = resolved.message;

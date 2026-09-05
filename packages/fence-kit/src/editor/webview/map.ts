@@ -1,5 +1,6 @@
-import { DRAG, NOTHING, endFine, endOf, fineOf, sameFine, sameSpot, start, step, topOf } from './mapState.ts';
+import { DRAG, NOTHING, endSpotOf, fineOf, sameFine, sameSpot, start, step, topOf } from './mapState.ts';
 import type { Event, Fine, Focus, Ghost, Picked, State, Under } from './mapState.ts';
+import type { PanelChrome } from '../panelHtml.ts';
 
 /**
  * マップの webview の**DOM を触る側**。何が起きたかを読んで状態遷移
@@ -18,17 +19,16 @@ declare function acquireVsCodeApi(): { postMessage: (message: unknown) => void }
 
 const vscode = acquireVsCodeApi();
 
-/** フェンスの語彙と能力表の箱。**言語をまたぐと入れ替わる**ので、body ではなくここを読む。 */
-const chromeBox = (): HTMLElement | null => document.querySelector<HTMLElement>('.cf-chrome-palette');
-
-/** 箱に書かれた能力表 (`PanelChrome.foldsWire` / `fine`)。 */
-function abilitiesOf(box: HTMLElement | null): { readonly foldsWire: boolean; readonly fine: number | null } {
-  const fine = Number(box?.dataset.fine ?? '');
-  return { foldsWire: box?.dataset.folds === '1', fine: Number.isInteger(fine) && fine > 1 ? fine : null };
-}
-
-const firstAbilities = abilitiesOf(chromeBox());
-let state: State = start(document.body.classList.contains('cf-own-undo'), firstAbilities.foldsWire, firstAbilities.fine);
+/**
+ * 起動のときの能力表。**言語をまたぐと入れ替わる**ので body ではなく語彙の箱に書いてある
+ * (2 度目からは `map` の知らせが `chrome` として運ぶ)。空も NaN も「刻めない」に落ちる。
+ */
+const firstChrome = document.querySelector<HTMLElement>('.cf-chrome-palette');
+let state: State = start(
+  document.body.classList.contains('cf-own-undo'),
+  firstChrome?.dataset.folds === '1',
+  Number(firstChrome?.dataset.fine) || null,
+);
 
 /** 最後に見たカーソルの位置。組み直しのあとにカーソルの下を取り直す。 */
 let pointer: { x: number; y: number } | null = null;
@@ -143,7 +143,7 @@ function underAt(x: number, y: number): Under {
     for (const element of stack) {
       const hit = element.closest<HTMLElement>(selector);
       const value = hit?.dataset[name];
-      if (hit !== null && hit !== undefined && value !== undefined) return { hit, value };
+      if (hit != null && value !== undefined) return { hit, value };
     }
     return null;
   };
@@ -165,8 +165,9 @@ function underAt(x: number, y: number): Under {
  * 交点ちょうどは null (端数が無ければ知らせは今までと同じ)。
  */
 function fineIn(cell: Element, x: number, y: number): Fine | null {
-  // 持ち物も配線の道具も無ければ端数は絵に出ない — 数えると hover の塗り直しだけが 16 倍になる。
-  const wanted = state.carry !== null || state.tool === 'wire';
+  // 端数が絵に出るのは、持ち物があるときと配線を引きかけているときだけ。
+  // それ以外で数えると、何も変わらない塗り直しが 1 升あたり 16 回になる。
+  const wanted = state.carry !== null || state.wireFrom !== null;
   if (!ctrlHeld || state.fine === null || !wanted) return null;
   const box = cell.getBoundingClientRect();
   const fine = fineOf(x - box.left, y - box.top, box.width, box.height, state.fine);
@@ -336,8 +337,7 @@ function shiftOf(ghost: Ghost): { readonly x: number; readonly y: number } | nul
   if (from !== null && to !== null) return { x: to.x - from.x, y: to.y - from.y };
   if (ghost.shift === undefined) return null;
   const unit = query<SVGGraphicsElement>('.cf-cell')?.getBBox();
-  if (unit === undefined) return null;
-  return { x: ghost.shift.cols * unit.width, y: ghost.shift.rows * unit.height };
+  return unit === undefined ? null : offsetBy({ x: 0, y: 0 }, unit, ghost.shift);
 }
 
 /** 升の中心から端数ぶんずらす (升の四角の幅で数える)。足には端数が無い。 */
@@ -411,9 +411,7 @@ function markChosen(now: State): void {
  * なので、両方の名札を当たってみる。どちらでもなければ null。
  */
 function endElement(spelling: string): SVGGraphicsElement | null {
-  const escaped = CSS.escape(spelling);
-  return query<SVGGraphicsElement>(`.cf-cell[data-address="${escaped}"]`)
-    ?? query<SVGGraphicsElement>(`.cf-pin-hit[data-pin="${escaped}"]`);
+  return cellElement(spelling) ?? query<SVGGraphicsElement>(`.cf-pin-hit[data-pin="${CSS.escape(spelling)}"]`);
 }
 
 /**
@@ -434,7 +432,8 @@ function centreOf(element: SVGGraphicsElement): { readonly x: number; readonly y
   if (svg === null || toScreen === null || fromScreen === undefined) return null;
 
   const box = element.getBBox();
-  const at = new DOMPoint(box.x + box.width / 2, box.y + box.height / 2)
+  const middle = middleOf(box);
+  const at = new DOMPoint(middle.x, middle.y)
     .matrixTransform(toScreen)
     .matrixTransform(fromScreen);
   return Number.isFinite(at.x) && Number.isFinite(at.y) ? { x: at.x, y: at.y, box } : null;
@@ -463,13 +462,12 @@ const GHOST_WIRE = 'cf-ghost-wire';
 function markWireGhost(now: State): void {
   document.querySelector(`.${GHOST_WIRE}`)?.remove();
   const layer = query('.cf-wires');
-  const end = now.tool === 'wire' ? endOf(now.under) : null;
-  if (now.wireFrom === null || end === null || layer === null) return;
+  const end = now.tool === 'wire' ? endSpotOf(now, now.under) : null;
   // 同じ升でも端数が違えば別の交点 (書かれる配線と同じ判定)。
-  if (sameSpot(now.wireFrom, { cell: end, fine: endFine(now, now.under) })) return;
+  if (now.wireFrom === null || end === null || layer === null || sameSpot(now.wireFrom, end)) return;
 
   const start = endElement(now.wireFrom.cell);
-  const finish = endElement(end);
+  const finish = endElement(end.cell);
   if (start === null || finish === null) return;
 
   // 端数の端 (Ctrl) は升の中心からずらす。足を採ったときは端数を持たない。
@@ -477,7 +475,7 @@ function markWireGhost(now: State): void {
   const toCentre = centreOf(finish);
   if (fromCentre === null || toCentre === null) return;
   const from = offsetBy(fromCentre, fromCentre.box, now.wireFrom.fine);
-  const to = offsetBy(toCentre, toCentre.box, endFine(now, now.under));
+  const to = offsetBy(toCentre, toCentre.box, end.fine);
   // 折れる指定は先に横 (`-|`)。折れない板では真っ直ぐのまま。
   const corner = shiftHeld && now.foldsWire ? [{ x: to.x, y: from.y }] : [];
   const points = [from, ...corner, to].map((at) => `${at.x},${at.y}`).join(' ');
@@ -1047,7 +1045,7 @@ type Incoming =
   | {
     readonly kind: 'map'; readonly html: string; readonly picker: string; readonly issues: string;
     /** いまのフェンスの語彙と能力表。**言語が変わると入れ替わる** (52 の docs/19, 23)。 */
-    readonly chrome?: Chrome;
+    readonly chrome?: PanelChrome;
   }
   | { readonly kind: 'status'; readonly text: string }
   | { readonly kind: 'aim'; readonly what?: string; readonly id?: string; readonly also?: readonly string[] }
@@ -1060,14 +1058,10 @@ type Incoming =
     readonly shift?: Fine;
   };
 
-/** 拡張が送る語彙と能力表 (`PanelChrome` と同じ形)。 */
-type Chrome = {
-  readonly palette: string;
-  readonly typeNames: string;
-  readonly colorNames: string;
-  readonly foldsWire: boolean;
-  readonly fine: number | null;
-};
+/** パレットの `details` は選択窓の中では常に開いておく (窓そのものが開け閉めの単位)。 */
+function openPaletteDetails(): void {
+  for (const details of document.querySelectorAll<HTMLDetailsElement>('.kc-chooser details')) details.open = true;
+}
 
 const fill = (selector: string, html: string): void => {
   const target = query(selector);
@@ -1079,11 +1073,10 @@ const fill = (selector: string, html: string): void => {
  * 置ける部品も種類の候補も、Ctrl が効くかどうかも変わる。ここで受けないと、最初に
  * 開いた言語のパレットが残る (52 の docs/19。畳んだあと実測で見つけた)。
  */
-function applyChrome(chrome: Chrome): void {
+function applyChrome(chrome: PanelChrome): void {
   fill('.cf-chrome-palette', chrome.palette);
   fill('.cf-chrome-lists', chrome.typeNames + chrome.colorNames);
-  // パレットの `details` は選択窓の中では常に開いておく (入れ替えたぶんも)。
-  for (const details of document.querySelectorAll<HTMLDetailsElement>('.kc-chooser details')) details.open = true;
+  openPaletteDetails();
   // 能力表は状態にだけ流す (塗り直しは、このあとの hover の取り直しがやる)。
   // 箱の `data-` は起動の 1 回しか読まないので、書き直さない。
   state = step(state, { kind: 'chrome', foldsWire: chrome.foldsWire, fine: chrome.fine }).state;
@@ -1158,8 +1151,7 @@ document.addEventListener('input', (event) => {
 // 欄で Enter を押したときに送り直さない (`change` が既に当てている)。
 document.addEventListener('submit', (event) => { event.preventDefault(); });
 
-// パレットの `details` は選択窓の中では常に開いておく (窓そのものが開け閉めの単位)。
-for (const details of document.querySelectorAll<HTMLDetailsElement>('.kc-chooser details')) details.open = true;
+openPaletteDetails();
 
 setText('.cf-status', step(state, { kind: 'hover', under: NOTHING }).status);
 applyView();

@@ -1,4 +1,4 @@
-import type { Step } from '../fenceEditor.ts';
+import type { GridStep } from '../fenceEditor.ts';
 
 /**
  * マップの webview の**状態遷移**。DOM も vscode も知らない純関数なので、
@@ -44,7 +44,7 @@ export type Tool = 'select' | 'wire';
  * ように **-0.5〜0.5 を 1/`fine` で刻んだ値**。綴りに直すのはフェンスの `step` で、
  * 殻は数のまま運ぶ (`_` も `.25` も知らない)。
  */
-export type Fine = Step;
+export type Fine = GridStep;
 
 /** 升と、その中の端数。**同じ場所か**はこの組で比べる。 */
 export type Spot = { readonly cell: string | null; readonly fine: Fine | null };
@@ -236,7 +236,7 @@ export type Outcome = {
 };
 
 /** 矢印 1 回ぶんの動き。**画面の向きそのまま** (下が行の増える向き)。 */
-const ARROWS: Readonly<Record<string, { readonly rows: number; readonly cols: number }>> = {
+const ARROWS: Readonly<Record<string, GridStep>> = {
   ArrowUp: { rows: -1, cols: 0 },
   ArrowDown: { rows: 1, cols: 0 },
   ArrowLeft: { rows: 0, cols: -1 },
@@ -317,14 +317,23 @@ const heldOf = (state: State, under: Under): Held | null => {
   return spot.cell === null ? null : { ...spot, cell: spot.cell };
 };
 
-/** 配線の端の端数。**足は升ではない**ので、足を採ったときは端数を持たない。 */
-export const endFine = (state: State, under: Under): Fine | null => (under.pin !== null ? null : fineFor(state, under));
+/**
+ * 配線の端になる場所。**足が穴より先**で、**足は升ではない**ので端数を持たない
+ * (穴として渡すと「その番地へ動かす」になり、端数を付けると足の上の 1/4 になる)。
+ */
+export const endSpotOf = (state: State, under: Under): Held | null => {
+  if (under.pin !== null) return { cell: under.pin, fine: null };
+  return under.cell === null ? null : { cell: under.cell, fine: fineFor(state, under) };
+};
 
 /** 問い合わせの札に入れる端数の綴り。無ければ空。 */
 const fineKey = (fine: Fine | null): string => (fine === null ? '' : `${fine.rows},${fine.cols}`);
 
 /** 知らせに添える端数。無ければ何も足さない (端数が無ければ知らせは今までと同じ)。 */
 const withFine = (fine: Fine | null): { readonly fine?: Fine } => (fine === null ? {} : { fine });
+
+/** 1 本目の端の端数 (置く試し当ての間隔選び、配線の 1 点目)。 */
+const withFromFine = (fine: Fine | null): { readonly fromFine?: Fine } => (fine === null ? {} : { fromFine: fine });
 
 /** 穴の並びに添える端数 (`addPart` の `at`、`addWire` の `[from, to]`)。全部無ければ足さない。 */
 const withFines = (fines: readonly (Fine | null)[]): { readonly fine?: readonly (Fine | null)[] } =>
@@ -376,7 +385,7 @@ function previewAt(state: State, carry: Carry, under: Under): readonly Message[]
       turn: carry.turn,
       flip: carry.flip,
       ...(from === null ? {} : { from: from.cell }),
-      ...(from?.fine == null ? {} : { fromFine: from.fine }),
+      ...withFromFine(from?.fine ?? null),
       ...withFine(to.fine),
     }];
   }
@@ -410,10 +419,10 @@ function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcom
   if (state.carry !== null) return outcome({ ...hovered, pressed });
 
   if (state.tool === 'wire') {
-    const end = endOf(event.under);
+    const end = endSpotOf(state, event.under);
     if (end === null) return outcome(hovered);
     // 1 点目は端数ごと覚える (綴りは拡張が組むので、ここでは数のまま)。
-    const from = state.wireFrom ?? { cell: end, fine: endFine(state, event.under) };
+    const from = state.wireFrom ?? end;
     return outcome({ ...hovered, wireFrom: from, pressed });
   }
 
@@ -459,7 +468,6 @@ function onDrag(state: State, event: Extract<Event, { kind: 'drag' }>): Outcome 
 
 function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Outcome {
   const hovered: State = { ...state, under: event.under };
-  const cell = event.under.cell;
   const { carry, pressed } = state;
   const clear: State = { ...hovered, pressed: null };
 
@@ -509,15 +517,14 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
 
   if (state.tool === 'wire') {
     const from = state.wireFrom;
-    const end = endOf(event.under) ?? cell;
-    const to: Spot = { cell: end, fine: endFine(state, event.under) };
+    const to = endSpotOf(state, event.under);
     // 同じ升でも端数が違えば別の交点 (短い配線が引ける)。
-    if (from === null || end === null || sameSpot(from, to)) return outcome(clear);
+    if (from === null || to === null || sameSpot(from, to)) return outcome(clear);
     const operator = event.shift && state.foldsWire ? '-|' : '--';
     return outcome(
       { ...clear, wireFrom: null },
-      [{ kind: 'addWire', from: from.cell, to: end, operator, ...withFines([from.fine, to.fine]) }],
-      `${from.cell} から ${end}${betweenNote(state, to.fine)} へ…`,
+      [{ kind: 'addWire', from: from.cell, to: to.cell, operator, ...withFine(to.fine), ...withFromFine(from.fine) }],
+      `${from.cell} から ${to.cell}${betweenNote(state, to.fine)} へ…`,
     );
   }
 

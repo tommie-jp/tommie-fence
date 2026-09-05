@@ -1,3 +1,4 @@
+import type { GridStep } from 'fence-kit';
 import { formatAddress, parseAddress, rowLetters } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
@@ -126,7 +127,7 @@ export function stepCell(written: string, rows: number, cols: number): string | 
  * 2 つの番地の間の行数と列数。**まとめて選んだものを同じだけずらす**ために要る。
  * 交点の間の番地 (`a_1.5`) も引けるので、端数のまま返る。
  */
-export function stepsTo(from: string, to: string): { readonly rows: number; readonly cols: number } | null {
+export function stepsTo(from: string, to: string): GridStep | null {
   const start = parseAddress(from);
   const end = parseAddress(to);
   return start === null || end === null ? null : { rows: end.row - start.row, cols: end.col - start.col };

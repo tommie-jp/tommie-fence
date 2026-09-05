@@ -135,11 +135,14 @@ export function checkFenceEditor(editor: FenceEditor, fixture: ContractFixture):
   if (typeof editor.fine !== 'number' && editor.fine !== null) {
     say('fine が数でも null でもありません');
   } else if (editor.fine !== null) {
-    const aside = editor.step(room, 0, 1 / editor.fine);
-    if (aside === null || editor.step(aside, 0, -1 / editor.fine) !== room) {
-      say(`${room} を 1/${editor.fine} 升ずらして戻せません`);
-    }
-    if (editor.step(room, 1 / editor.fine, 0) === null) say(`${room} を行の向きに 1/${editor.fine} 升ずらせません`);
+    // **行と列を同じ形で見る。** 片方だけ往復を見ていると、もう片方の綴りが
+    // 戻れなくても契約が通る。
+    const quarter = 1 / editor.fine;
+    const stuck = ([[0, quarter], [quarter, 0]] as const).some(([rows, cols]) => {
+      const aside = editor.step(room, rows, cols);
+      return aside === null || editor.step(aside, -rows, -cols) !== room;
+    });
+    if (stuck) say(`${room} を 1/${editor.fine} 升ずらして戻せません`);
   } else if (editor.step(room, 0, 0.25) !== null || editor.step(room, 0.25, 0) !== null) {
     say('穴の間が無いのに端数の穴を返します');
   }
