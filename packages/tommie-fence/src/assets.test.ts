@@ -8,6 +8,11 @@ import manifest from '../package.json' with { type: 'json' };
  * (`.vsix` は拡張の中しか見ない)。**原本はコアのまま**なので、写しが古く
  * なっていないことをここで見張る — 古いと図の色や色分けだけが静かにずれる。
  */
+/**
+ * 写しは**追跡していない** (原本はコアのまま) ので、まっさらな checkout では
+ * 存在しない。`pretest` が写してから走る — ここで作らないのは、テストが
+ * 中身を書き換える形にしないため。
+ */
 const read = (path: string): string => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
 describe('コアから写した資材', () => {

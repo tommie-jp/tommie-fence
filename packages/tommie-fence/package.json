@@ -25,6 +25,7 @@
   "scripts": {
     "build": "node scripts/assets.mjs && node esbuild.mjs",
     "typecheck": "tsc --noEmit",
+    "pretest": "node scripts/assets.mjs",
     "test": "vitest run",
     "check": "npm run typecheck && npm run test",
     "vscode:prepublish": "node scripts/assets.mjs && node esbuild.mjs --production"
