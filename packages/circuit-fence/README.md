@@ -96,8 +96,9 @@ addresses is the direction**.
 
 When several places point at the same node, naming the address under `points:`
 makes moving it a one-line edit (write `vin: a1` and `vin` works anywhere an
-address does). To sit between two grid points, split the row from the column
-with `_` and write a fraction: `a1a5`.
+address does). To sit between two grid points, add a pair after the address:
+the letter steps the row, the digit steps the column (`a1a5` sits half a cell
+to the right of `a1`, `a1f0` half a cell below it).
 
 Diagrams are drawn by TeX (WASM), so there is no LaTeX to install. Each takes
 about a second, and a "drawing the diagram…" placeholder stands in until it
