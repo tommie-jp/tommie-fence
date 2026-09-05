@@ -1,3 +1,4 @@
+import type { Fine } from './webview/mapState.ts';
 import { chipOf } from './chip.ts';
 import type { Edit, LineEdit, NetDiff, Span } from './edits.ts';
 import { bodyAfter, fenceBody } from './docEdits.ts';
@@ -75,6 +76,11 @@ export type Outgoing =
      * 試し当てで作った写しの図から切り出して渡す。
      */
     readonly chip?: string;
+    /**
+     * 絵をずらす量 (`from[0]` → `cells[0]`)。**端数の升は DOM に無い**ので、殻は要素を
+     * 引けず、差を数で受け取る (52 の docs/23)。`from` があるときだけ。
+     */
+    readonly shift?: { readonly rows: number; readonly cols: number };
   };
 
 /** webview から来るもの。中身は信用せず、使う前に形を確かめる。 */
@@ -101,6 +107,13 @@ export type Incoming = {
   readonly key?: unknown;
   readonly rows?: unknown;
   readonly cols?: unknown;
+  /**
+   * 升の中の端数 (Ctrl で 1/4 升。52 の docs/23)。`to` に対して `{ rows, cols }`、
+   * `addPart` の `at` と `addWire` の `[from, to]` には並行した並び。**入口で綴りにする** (`resolveFine`)。
+   */
+  readonly fine?: unknown;
+  /** 置く試し当てで間隔を選んでいる最中の、1 本目 (`from`) の端数。 */
+  readonly fromFine?: unknown;
 };
 
 export type SessionHost<D extends DocLike> = {
@@ -627,6 +640,92 @@ export function createSession<D extends DocLike>(
     return step === null ? null : editor.step(cell, step.rows, step.cols);
   }
 
+  /**
+   * 絵をずらす量 (`from[0]` → `cells[0]`)。**端数の升は DOM に無い**ので殻は要素を引けず、
+   * 差を数で受け取る (52 の docs/23)。数えられない綴り (レール) なら添えない。
+   */
+  const shiftOf = (from: readonly string[] | undefined, cells: readonly string[]): { readonly shift?: Fine } => {
+    const start = from?.[0];
+    const end = cells[0];
+    if (start === undefined || end === undefined) return {};
+    const shift = editor.stepsTo(start, end);
+    return shift === null ? {} : { shift };
+  };
+
+  /** 端数を綴りにする知らせ。ほかは端数を持たない。 */
+  const FINE_KINDS: ReadonlySet<string> = new Set(['preview', 'addPart', 'move', 'moveNode', 'addWire']);
+
+  type Refusal = { readonly why: string };
+  const isRefusal = (value: unknown): value is Refusal => typeof value === 'object' && value !== null && 'why' in value;
+
+  /**
+   * webview から来た端数 (`{ rows, cols }`)。無ければ null、形が違えば 'bad'。
+   * 大きさは升の半分まで (それより外は隣の升)。交点ちょうど (0, 0) は「端数無し」。
+   */
+  function fractionOf(value: unknown): Fine | null | 'bad' {
+    if (value === null || value === undefined) return null;
+    if (typeof value !== 'object') return 'bad';
+    const { rows, cols } = value as { readonly rows?: unknown; readonly cols?: unknown };
+    if (typeof rows !== 'number' || typeof cols !== 'number' || Math.abs(rows) > 0.5 || Math.abs(cols) > 0.5) return 'bad';
+    return rows === 0 && cols === 0 ? null : { rows, cols };
+  }
+
+  /**
+   * (升, 端数) → 綴り。端数が無ければそのまま。**綴りを組むのはフェンス** (`step`) —
+   * 殻は `_` も `.25` も知らない。刻みに合わない端数は断る (circuit の `round()` は
+   * `.125` を `.13` に黙って丸める)。穴の間が無い板では断る (webview は送らないが、境界で見る)。
+   */
+  function spellOf(cell: string, fine: Fine | null): string | Refusal {
+    if (fine === null) return cell;
+    if (editor.fine === null) return { why: 'この盤では穴の間に置けません' };
+    if (!Number.isInteger(fine.rows * editor.fine) || !Number.isInteger(fine.cols * editor.fine)) {
+      return { why: `端数を読めませんでした (1/${editor.fine} 升の倍数ではありません)` };
+    }
+    return editor.step(cell, fine.rows, fine.cols) ?? { why: `${cell} の間には置けません` };
+  }
+
+  /**
+   * **入口で 1 回**、端数の付いた「どこへ」を綴りにする。そこから先は文字列のまま —
+   * 置く・動かす・引きずる・配線の全部が同じ場所を通るので、片方だけ端数を忘れない。
+   * 端数が無ければ知らせはそのまま返る (1 バイトも変わらない)。
+   */
+  function resolveFine(
+    message: Incoming,
+  ): { readonly ok: true; readonly message: Incoming } | { readonly ok: false; readonly why: string } {
+    if (!FINE_KINDS.has(message.kind) || (message.fine === undefined && message.fromFine === undefined)) {
+      return { ok: true, message };
+    }
+    const spell = (cell: unknown, fine: unknown): string | Refusal => {
+      const written = text(cell);
+      const fraction = fractionOf(fine);
+      if (written === null) return { why: 'マップからの知らせを読めませんでした (置き先がありません)' };
+      if (fraction === 'bad') return { why: 'マップからの知らせを読めませんでした (端数が読めません)' };
+      return spellOf(written, fraction);
+    };
+    const fines: readonly unknown[] = Array.isArray(message.fine) ? message.fine : [];
+
+    if (message.kind === 'addPart') {
+      const at: readonly unknown[] = Array.isArray(message.at) ? message.at : [];
+      const spelled = at.map((cell, index) => spell(cell, fines[index] ?? null));
+      const refused = spelled.find(isRefusal);
+      if (refused !== undefined) return { ok: false, why: refused.why };
+      return { ok: true, message: { ...message, at: spelled, fine: undefined } };
+    }
+    if (message.kind === 'addWire') {
+      const from = spell(message.from, fines[0] ?? null);
+      const to = spell(message.to, fines[1] ?? null);
+      if (isRefusal(from)) return { ok: false, why: from.why };
+      if (isRefusal(to)) return { ok: false, why: to.why };
+      return { ok: true, message: { ...message, from, to, fine: undefined } };
+    }
+    // preview / move / moveNode: `to` に `fine`。置く試し当ての間隔選びは `from` に `fromFine`。
+    const to = spell(message.to, message.fine);
+    if (isRefusal(to)) return { ok: false, why: to.why };
+    const from = message.fromFine === undefined ? message.from : spell(message.from, message.fromFine);
+    if (isRefusal(from)) return { ok: false, why: from.why };
+    return { ok: true, message: { ...message, to, from, fine: undefined, fromFine: undefined } };
+  }
+
   /** マップから来た「何を・どこへ」。部品は 1 つだけ動き、節点は交点ごと動く。 */
   async function move(message: Incoming): Promise<void> {
     // **黙って戻らない。** webview は「R1 を b1 へ…」を出したまま待っている。
@@ -792,6 +891,7 @@ export function createSession<D extends DocLike>(
       kind: 'ghost', key, cells, ok, why,
       ...(from === undefined ? {} : { from }),
       ...(chip === undefined ? {} : { chip }),
+      ...shiftOf(from, cells),
     });
 
     const fence = currentFence(true);
@@ -1197,7 +1297,19 @@ export function createSession<D extends DocLike>(
     view: () => viewNow(true),
     refresh: () => refreshWith(true),
 
-    handle: async (message) => {
+    handle: async (received) => {
+      // **端数は入口で綴りにする** (Ctrl で 1/4 升。52 の docs/23)。
+      const resolved = resolveFine(received);
+      if (!resolved.ok) {
+        // 試し当てはゴーストで断る (押す前に見える)。ほかは帯で言う。
+        if (received.kind === 'preview') {
+          host.post({ kind: 'ghost', key: text(received.key) ?? '', cells: [], ok: false, why: resolved.why });
+        } else {
+          say(resolved.why);
+        }
+        return;
+      }
+      const message = resolved.message;
       switch (message.kind) {
         case 'move':
         case 'moveNode':

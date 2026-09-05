@@ -947,8 +947,9 @@ describe('部品を置く', () => {
 
     const ghost = host.sent.find((message) => message.kind === 'ghost');
     // `from` は動かす前の穴。**殻はこれで運んでいる部品の絵を行き先へずらす**。
+    // `shift` はその差 (端数の升は DOM に無いので、数でも渡す。52 の docs/23)。
     expect(ghost).toEqual({
-      kind: 'ghost', key: 'k3', cells: ['b1', 'b3'], ok: true, why: '', from: ['a1', 'a3'],
+      kind: 'ghost', key: 'k3', cells: ['b1', 'b3'], ok: true, why: '', from: ['a1', 'a3'], shift: { rows: 1, cols: 0 },
     });
   });
 
@@ -1066,5 +1067,55 @@ describe('欄 (インスペクタ)', () => {
     await session.handle({ kind: 'setField', part: 'R1', field: 'colour', text: 'red' });
 
     expect(last(host, 'status')?.text).toContain('読めませんでした');
+  });
+});
+
+describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
+  test('places a part a quarter off the crossing when the map says so', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'addPart', type: 'ground', at: ['b3'], fine: [{ rows: 0.25, cols: -0.25 }] });
+
+    expect(doc.getText()).toContain('G1: ground b.25_2.75');
+  });
+
+  test('answers a quarter preview with the spelled crossing', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({
+      kind: 'preview', key: 'k1', what: 'place', type: 'ground', to: 'b3', turn: 0, flip: false, fine: { rows: 0.25, cols: -0.25 },
+    });
+
+    const ghost = host.sent.find((message) => message.kind === 'ghost');
+    expect(ghost).toMatchObject({ cells: ['b.25_2.75'], ok: true });
+  });
+
+  test('writes a whole address when the quarter lands on the crossing', async () => {
+    // 1 つの場所に綴りは 1 つ (`b_3.0` は無い)。
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'addPart', type: 'ground', at: ['b3'], fine: [{ rows: 0, cols: 0 }] });
+
+    expect(doc.getText()).toContain('G1: ground b3');
+  });
+
+  test('moves a part between crossings, carrying its other end by the same step', async () => {
+    const doc = docOf(A, RC);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'move', part: 'R1', to: 'b1', fine: { rows: 0, cols: 0.5 } });
+
+    expect(doc.getText()).toContain('resistor b_1.5 b_3.5 10k');
   });
 });
