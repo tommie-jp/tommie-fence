@@ -282,6 +282,23 @@ describe('続けて置く・1 穴ずつ', () => {
     expect(step(hovering, key('ArrowRight')).state.selected).toEqual({ kind: 'part', id: 'R1' });
   });
 
+  test('nudges by one fine step when the modifier is held, so the mouse need not aim at it', () => {
+    const hovering = after(start(true, false, 10), hover(ON_R1));
+
+    expect(step(hovering, key('ArrowRight', { modifier: true })).send)
+      .toEqual([{ kind: 'nudge', part: 'R1', rows: 0, cols: 0.1 }]);
+    expect(step(hovering, key('ArrowUp', { modifier: true })).send)
+      .toEqual([{ kind: 'nudge', part: 'R1', rows: -0.1, cols: 0 }]);
+    expect(step(hovering, key('ArrowRight', { modifier: true })).handled).toBe(true);
+  });
+
+  test('leaves the modifier and the arrows alone on a board, which has no step between holes', () => {
+    const hovering = after(PANEL, hover(ON_R1));
+
+    expect(step(hovering, key('ArrowRight', { modifier: true })).send).toEqual([]);
+    expect(step(hovering, key('ArrowRight', { modifier: true })).handled).toBe(false);
+  });
+
   test('keeps the arrows for the page when there is nothing to nudge', () => {
     expect(step(PANEL, key('ArrowRight')).send).toEqual([]);
     expect(step(PANEL, key('ArrowRight')).handled).toBe(false);

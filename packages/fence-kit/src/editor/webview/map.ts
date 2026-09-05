@@ -35,6 +35,10 @@ let pointer: { x: number; y: number } | null = null;
 
 const query = <T extends Element>(selector: string): T | null => document.querySelector<T>(selector);
 
+/** 端数を符号つきの短い数に (`0.3` → `+.3`、`0` → `0`)。 */
+const signed = (value: number): string =>
+  (value === 0 ? '0' : `${value < 0 ? '-' : '+'}${String(Math.abs(value)).replace(/^0/, '')}`);
+
 const setText = (selector: string, text: string): void => {
   const target = query(selector);
   if (target) target.textContent = text;
@@ -54,6 +58,8 @@ const view = { zoom: 1 };
 const ZOOM_MIN = 0.25;
 const ZOOM_MAX = 8;
 const WHEEL_STEP = 1.1;
+/** 落ち先の四角の最小の辺 (升の座標系)。これより小さいと見えない。 */
+const SMALLEST_FINE_BOX = 6;
 const KEY_STEP = 1.25;
 
 const canvas = (): HTMLElement | null => query<HTMLElement>('.kc-canvas');
@@ -274,7 +280,10 @@ function fineSpot(now: State): { readonly cell: Element; readonly x: number; rea
   const element = cellElement(cell);
   if (element === null) return null;
   const box = element.getBBox();
-  return { cell: element, ...offsetBy(middleOf(box), box, fine), size: box.width / now.fine };
+  // 刻みが細かいと 1/`fine` の四角は見えなくなる (升 34 に対して 1/10 は 3.4)。
+  // **落ち先が見えることのほうが大事**なので、下限を置く。
+  const size = Math.max(box.width / now.fine, SMALLEST_FINE_BOX);
+  return { cell: element, ...offsetBy(middleOf(box), box, fine), size };
 }
 
 /**
@@ -499,7 +508,9 @@ function paint(now: State): void {
   document.body.classList.toggle('cf-carrying', now.carry !== null);
   // 端数の上では拡張が綴った番地 (`b2c7f5`) を出す。殻は綴りを組めないので、ゴーストの答えから取る。
   const spelled = now.under.fine !== null && now.ghost !== null && now.ghost.ok ? now.ghost.cells[0] : undefined;
-  setText('.kc-cell', spelled ?? now.under.cell ?? '');
+  // 綴りだけでは何段ずれているかが読みにくいので、数でも添える (`b2d7 (+.3, +.7)`)。
+  const offset = now.under.fine === null ? '' : ` (${signed(now.under.fine.rows)}, ${signed(now.under.fine.cols)})`;
+  setText('.kc-cell', `${spelled ?? now.under.cell ?? ''}${now.under.cell === null ? '' : offset}`);
 }
 
 // ---------------------------------------------------------------- 選択窓・欄

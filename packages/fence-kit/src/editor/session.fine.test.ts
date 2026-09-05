@@ -126,6 +126,28 @@ describe('端数を綴りにする (Ctrl で 1/4 升)', () => {
     expect(stepCalls()).toBe(0);
   });
 
+  test('nudges by a fine step, so the arrows reach what the mouse cannot aim at', async () => {
+    const { session, calls } = open({ fine: 10 });
+
+    await session.handle({ kind: 'nudge', part: 'R1', rows: 0, cols: 0.1 });
+    await session.handle({ kind: 'nudge', part: 'R1', rows: -0.1, cols: 0 });
+    await session.handle({ kind: 'nudge', part: 'R1', rows: 0, cols: 1 });
+
+    expect(calls).toEqual([
+      ['movePart', 'R1', 'x@0,0.1'],
+      ['movePart', 'R1', 'x@-0.1,0'],
+      ['movePart', 'R1', 'x@0,1'],
+    ]);
+  });
+
+  test('drops a nudge that is not a whole number of fine steps, so no unwritable address is made', async () => {
+    const { session, calls } = open({ fine: 10 });
+
+    await session.handle({ kind: 'nudge', part: 'R1', rows: 0, cols: 0.125 });
+
+    expect(calls).toEqual([['movePart', 'R1', 'x@0,0']]);
+  });
+
   test('refuses a quarter on a fence whose fine is null, in words', async () => {
     const { session, calls, status } = open({ fine: null });
 

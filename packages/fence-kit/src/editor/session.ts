@@ -1005,9 +1005,18 @@ export function createSession<D extends DocLike>(
     return lastGhost;
   }
 
-  /** webview から来た数 (整数でなければ 0)。 */
-  const count = (value: unknown): number =>
-    (typeof value === 'number' && Number.isInteger(value) ? value : 0);
+  /**
+   * webview から来た「いくつ動かすか」。升 1 つぶんの整数と、**1/`fine` 升の倍数**
+   * (Ctrl+矢印) を通す。刻みに乗らない数は 0 — 綴りに直せない場所を作らせない。
+   */
+  const count = (value: unknown): number => {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+    if (Number.isInteger(value)) return value;
+    if (editor.fine === null) return 0;
+    // 掛けた答えは 2 進小数に収まらない (`0.7 * 10`) ので、丸めの残りを許す。
+    const steps = value * editor.fine;
+    return Math.abs(steps - Math.round(steps)) < 1e-9 ? value : 0;
+  };
 
   /**
    * マップから来た「矢印で 1 穴」。**動かすのと同じ道**を通る (接続の変化も

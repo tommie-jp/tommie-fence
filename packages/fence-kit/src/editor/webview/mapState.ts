@@ -288,7 +288,8 @@ export function hint(state: State): string {
  * 案内文に添える Ctrl の説明。**能力表から組む** — 端数を受けない板で言うと、
  * 押しても何も起きない鍵を案内することになる (`foldsWire` と同じ)。
  */
-const fineHintOf = (state: State): string => (state.fine === null ? '' : ` / Ctrl+クリックで 1/${state.fine} 升`);
+const fineHintOf = (state: State): string =>
+  (state.fine === null ? '' : ` / Ctrl+クリックで 1/${state.fine} 升 (Ctrl+矢印で 1 段)`);
 
 /** 帯の一言に添える「升の間」。端数が無ければ何も足さない。 */
 const betweenNote = (state: State, fine: Fine | null): string =>
@@ -556,6 +557,21 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
         true,
       );
     }
+    // Ctrl+矢印は 1/`fine` 升ずつ。**細かい刻みをマウスで狙わせない** —
+    // クリックで近くへ置き、あとは 1 段ずつ直す (52 の docs/23)。
+    // 端数を受けないフェンス (板) では何もしない (押しても効かない鍵は案内もしない)。
+    const nudgeStep = ARROWS[event.key];
+    if (nudgeStep !== undefined && state.fine !== null) {
+      const part = partTarget(state);
+      if (part === null) return outcome(state);
+      return outcome(
+        { ...state, selected: { kind: 'part', id: part } },
+        [{ kind: 'nudge', part, rows: nudgeStep.rows / state.fine, cols: nudgeStep.cols / state.fine }],
+        `${shownName(part)} を動かしています…`,
+        true,
+      );
+    }
+
     // **パネルにフォーカスがあると VS Code の Ctrl+Z は届かない。** ここで受けて、
     // 拡張側が覚えている履歴を巻き戻す。タブそのものがマップのときは横取りせず通す。
     if (!state.ownUndo) return outcome(state);

@@ -1070,33 +1070,33 @@ describe('欄 (インスペクタ)', () => {
   });
 });
 
-describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
-  test('places a part a quarter off the crossing when the map says so', async () => {
+describe('Ctrl で 1/10 升 (52 の docs/23)', () => {
+  test('places a part a fine step off the crossing when the map says so', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'addPart', type: 'ground', at: ['b3'], fine: [{ rows: 0.25, cols: -0.25 }] });
+    await session.handle({ kind: 'addPart', type: 'ground', at: ['b3'], fine: [{ rows: 0.3, cols: -0.3 }] });
 
-    expect(doc.getText()).toContain('G1: ground b2c7f5');
+    expect(doc.getText()).toContain('G1: ground b2d7');
   });
 
-  test('answers a quarter preview with the spelled crossing', async () => {
+  test('answers a fine preview with the spelled crossing', async () => {
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
     const session = sessionOf(host);
     session.view();
 
     await session.handle({
-      kind: 'preview', key: 'k1', what: 'place', type: 'ground', to: 'b3', turn: 0, flip: false, fine: { rows: 0.25, cols: -0.25 },
+      kind: 'preview', key: 'k1', what: 'place', type: 'ground', to: 'b3', turn: 0, flip: false, fine: { rows: 0.3, cols: -0.3 },
     });
 
     const ghost = host.sent.find((message) => message.kind === 'ghost');
-    expect(ghost).toMatchObject({ cells: ['b2c7f5'], ok: true });
+    expect(ghost).toMatchObject({ cells: ['b2d7'], ok: true });
   });
 
-  test('writes a whole address when the quarter lands on the crossing', async () => {
+  test('writes a whole address when the fine step lands on the crossing', async () => {
     // 1 つの場所に綴りは 1 つ (`b3` は無い)。
     const doc = docOf(A, RC);
     const host = hostOf([doc], at(doc, 5));
