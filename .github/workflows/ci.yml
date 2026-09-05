@@ -15,21 +15,36 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # fence-kit は図を作らないので、型チェックとテストだけ。
+          # fence-kit は束ねる工程を持たないので、型チェックとテストだけ。
           - pkg: fence-kit
+            build: false
+            docs: false
+            generated: ""
+          # 配る 1 つ。図は作らないが、**束ねられることは見る** —
+          # ここが壊れると `.vsix` が作れない (52 の docs/19)。
+          - pkg: tommie-fence
+            build: true
+            docs: false
+            generated: ""
+          # 3 つのフェンスを 1 つの頁で動かす。全部を import する唯一の場所。
+          - pkg: playground
+            build: true
             docs: false
             generated: ""
           # 生成物のうち、どの環境でも同じバイト列になるものだけ差分を見る。
           # circuit-fence: SVG は node-tikzjax の版で、PNG はフォント環境で変わる。
           # breadboard-fence: SVG は決まるが、PNG はフォントの描画で変わる。
           - pkg: circuit-fence
+            build: true
             docs: true
             generated: "'packages/circuit-fence/examples/out/*.tex' 'packages/circuit-fence/docs/out/*.tex'"
           - pkg: breadboard-fence
+            build: true
             docs: false
             generated: "'packages/breadboard-fence/examples/out/*.svg'"
           # perfboard-fence: SVG は決まる。docs にも図があるので両方作り直す。
           - pkg: perfboard-fence
+            build: true
             docs: true
             generated: "'packages/perfboard-fence/examples/out/*.svg' 'packages/perfboard-fence/docs/out/*.svg'"
     name: check (${{ matrix.pkg }})
@@ -44,6 +59,10 @@ jobs:
       - run: npm ci
       - run: npm run typecheck --workspace=${{ matrix.pkg }}
       - run: npm test --workspace=${{ matrix.pkg }}
+      # **束ねられることも見る。** 型チェックもテストも `esbuild.mjs` を通らない
+      # ので、ここが無いと壊れたビルドが素通りする (実際に踏んだ)。
+      - if: matrix.build
+        run: npm run build --workspace=${{ matrix.pkg }}
       - if: matrix.generated != ''
         run: npm run examples --workspace=${{ matrix.pkg }}
       - if: matrix.docs

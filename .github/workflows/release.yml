@@ -4,7 +4,8 @@ name: Release
 # 分けないよう、両者の一致を確かめてからパッケージする。
 #
 # モノレポなので、タグはどのパッケージの版かを名前で表す:
-#   circuit-fence-v0.4.0 / breadboard-fence-v0.4.0
+#   tommie-fence-v0.1.0 (拡張。`.vsix` が付く)
+#   circuit-fence-v0.5.0 (ライブラリ + CLI。版と CHANGELOG だけ)
 # (旧リポジトリの `v0.3.0` 形式のタグは、archive したあちらに残る)
 on:
   push:
@@ -41,17 +42,37 @@ jobs:
           fi
           echo "PKG=$pkg" >> "$GITHUB_ENV"
           echo "VER=$ver" >> "$GITHUB_ENV"
+          # **拡張は 1 つだけ** (52 の docs/19 で 3 つを畳んだ)。ほかは
+          # ライブラリ + CLI なので `.vsix` が無く、版だけを切る。
+          if node -p "!!require('./packages/$pkg/package.json').contributes" | grep -q true; then
+            echo "VSIX=1" >> "$GITHUB_ENV"
+          else
+            echo "VSIX=" >> "$GITHUB_ENV"
+          fi
+          # 図を作り直す口があるか (`examples` を持たないパッケージもある)。
+          if node -p "!!require('./packages/$pkg/package.json').scripts.examples" | grep -q true; then
+            echo "FIGURES=1" >> "$GITHUB_ENV"
+          else
+            echo "FIGURES=" >> "$GITHUB_ENV"
+          fi
 
       # doBuild.sh が型チェックとテストを通してから、作業場へ写して .vsix を作る。
       # (workspaces の巻き上げのまま vsce を呼ぶと同じパスを 2 度拾って止まるため)
-      - name: .vsix を作る
+      - name: .vsix を作る (拡張のときだけ)
+        if: env.VSIX
         run: |
           ./doBuild.sh "$PKG" --no-install
           cd "packages/$PKG"
           test -f "$PKG-$VER.vsix"
           sha256sum "$PKG-$VER.vsix" > SHA256SUMS
 
+      # ライブラリは束ねられることだけ見る (`.vsix` は無い)。
+      - name: 束ねられることを確かめる (ライブラリのとき)
+        if: ${{ !env.VSIX }}
+        run: npm run build --workspace="$PKG"
+
       - name: 生成物が作り直し済みか確かめる
+        if: env.FIGURES
         run: |
           npm run examples --workspace="$PKG"
           case "$PKG" in
@@ -92,6 +113,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cd "packages/$PKG"
-          gh release create "$GITHUB_REF_NAME" \
-            "$PKG-$VER.vsix" SHA256SUMS \
-            --verify-tag --title "$GITHUB_REF_NAME" --notes-file notes.md
+          # 拡張なら `.vsix` を添える。ライブラリは版と CHANGELOG だけ。
+          if [ -n "$VSIX" ]; then
+            gh release create "$GITHUB_REF_NAME" \
+              "$PKG-$VER.vsix" SHA256SUMS \
+              --verify-tag --title "$GITHUB_REF_NAME" --notes-file notes.md
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --verify-tag --title "$GITHUB_REF_NAME" --notes-file notes.md
+          fi
