@@ -113,6 +113,13 @@ export type EditResult =
   | { readonly ok: true; readonly value: EditChanges }
   | { readonly ok: false; readonly error: { readonly message: string; readonly line: number | null } };
 
+/**
+ * 行と列の差 (升の数)。`stepsTo` の答えであり、殻が Ctrl で運ぶ端数
+ * (`{ rows: 0.25, cols: -0.25 }`) でもある。**1 か所で名付ける** — 殻・session・webview が
+ * 同じ組を別々に綴らないように。
+ */
+export type Step = { readonly rows: number; readonly cols: number };
+
 export type FenceEditor = {
   /** フェンスの言葉 (` ```circuit ` の `circuit`)。お知らせの文面に出す。 */
   readonly language: string;
@@ -183,7 +190,7 @@ export type FenceEditor = {
    * (押した部品の動きを、ほかの部品にも掛ける)。数に落ちない綴り
    * (レールの行) や読めない綴りは null。
    */
-  readonly stepsTo: (from: string, to: string) => { readonly rows: number; readonly cols: number } | null;
+  readonly stepsTo: (from: string, to: string) => Step | null;
 
   /** パレット (置ける部品の一覧) の HTML。 */
   readonly palette: () => string;

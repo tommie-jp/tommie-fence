@@ -1,4 +1,3 @@
-import type { Fine } from './webview/mapState.ts';
 import { chipOf } from './chip.ts';
 import type { Edit, LineEdit, NetDiff, Span } from './edits.ts';
 import { bodyAfter, fenceBody } from './docEdits.ts';
@@ -7,7 +6,7 @@ import type { DocLike, EditorLike } from './documentLike.ts';
 import { createHistory, sameBody } from './history.ts';
 import { describeDiff } from './edits.ts';
 import { applyRewrite } from './lines.ts';
-import type { EditResult, FenceEditor, FenceEntry, PartFields } from './fenceEditor.ts';
+import type { EditResult, FenceEditor, FenceEntry, PartFields, Step } from './fenceEditor.ts';
 import { COLOR_LIST_ID, TYPE_LIST_ID, renderFencePicker } from './panelHtml.ts';
 import type { PanelChrome } from './panelHtml.ts';
 import type { MapViewHtml } from './panelHtml.ts';
@@ -80,7 +79,7 @@ export type Outgoing =
      * 絵をずらす量 (`from[0]` → `cells[0]`)。**端数の升は DOM に無い**ので、殻は要素を
      * 引けず、差を数で受け取る (52 の docs/23)。`from` があるときだけ。
      */
-    readonly shift?: { readonly rows: number; readonly cols: number };
+    readonly shift?: Step;
   };
 
 /** webview から来るもの。中身は信用せず、使う前に形を確かめる。 */
@@ -644,7 +643,7 @@ export function createSession<D extends DocLike>(
    * 絵をずらす量 (`from[0]` → `cells[0]`)。**端数の升は DOM に無い**ので殻は要素を引けず、
    * 差を数で受け取る (52 の docs/23)。数えられない綴り (レール) なら添えない。
    */
-  const shiftOf = (from: readonly string[] | undefined, cells: readonly string[]): { readonly shift?: Fine } => {
+  const shiftOf = (from: readonly string[] | undefined, cells: readonly string[]): { readonly shift?: Step } => {
     const start = from?.[0];
     const end = cells[0];
     if (start === undefined || end === undefined) return {};
@@ -652,17 +651,15 @@ export function createSession<D extends DocLike>(
     return shift === null ? {} : { shift };
   };
 
-  /** 端数を綴りにする知らせ。ほかは端数を持たない。 */
-  const FINE_KINDS: ReadonlySet<string> = new Set(['preview', 'addPart', 'move', 'moveNode', 'addWire']);
-
-  type Refusal = { readonly why: string };
-  const isRefusal = (value: unknown): value is Refusal => typeof value === 'object' && value !== null && 'why' in value;
+  /** 端数を綴りにできなかった理由。`resolveFine` の答えそのものになる。 */
+  type Refused = { readonly ok: false; readonly why: string };
+  const refuse = (why: string): Refused => ({ ok: false, why });
 
   /**
    * webview から来た端数 (`{ rows, cols }`)。無ければ null、形が違えば 'bad'。
    * 大きさは升の半分まで (それより外は隣の升)。交点ちょうど (0, 0) は「端数無し」。
    */
-  function fractionOf(value: unknown): Fine | null | 'bad' {
+  function fractionOf(value: unknown): Step | null | 'bad' {
     if (value === null || value === undefined) return null;
     if (typeof value !== 'object') return 'bad';
     const { rows, cols } = value as { readonly rows?: unknown; readonly cols?: unknown };
@@ -675,13 +672,13 @@ export function createSession<D extends DocLike>(
    * 殻は `_` も `.25` も知らない。刻みに合わない端数は断る (circuit の `round()` は
    * `.125` を `.13` に黙って丸める)。穴の間が無い板では断る (webview は送らないが、境界で見る)。
    */
-  function spellOf(cell: string, fine: Fine | null): string | Refusal {
+  function spellOf(cell: string, fine: Step | null): string | Refused {
     if (fine === null) return cell;
-    if (editor.fine === null) return { why: 'この盤では穴の間に置けません' };
+    if (editor.fine === null) return refuse('この盤では穴の間に置けません');
     if (!Number.isInteger(fine.rows * editor.fine) || !Number.isInteger(fine.cols * editor.fine)) {
-      return { why: `端数を読めませんでした (1/${editor.fine} 升の倍数ではありません)` };
+      return refuse(`端数を読めませんでした (1/${editor.fine} 升の倍数ではありません)`);
     }
-    return editor.step(cell, fine.rows, fine.cols) ?? { why: `${cell} の間には置けません` };
+    return editor.step(cell, fine.rows, fine.cols) ?? refuse(`${cell} の間には置けません`);
   }
 
   /**
@@ -689,41 +686,36 @@ export function createSession<D extends DocLike>(
    * 置く・動かす・引きずる・配線の全部が同じ場所を通るので、片方だけ端数を忘れない。
    * 端数が無ければ知らせはそのまま返る (1 バイトも変わらない)。
    */
-  function resolveFine(
-    message: Incoming,
-  ): { readonly ok: true; readonly message: Incoming } | { readonly ok: false; readonly why: string } {
-    if (!FINE_KINDS.has(message.kind) || (message.fine === undefined && message.fromFine === undefined)) {
-      return { ok: true, message };
-    }
-    const spell = (cell: unknown, fine: unknown): string | Refusal => {
+  function resolveFine(message: Incoming): { readonly ok: true; readonly message: Incoming } | Refused {
+    if (message.fine === undefined && message.fromFine === undefined) return { ok: true, message };
+    const spell = (cell: unknown, fine: unknown): string | Refused => {
       const written = text(cell);
       const fraction = fractionOf(fine);
-      if (written === null) return { why: 'マップからの知らせを読めませんでした (置き先がありません)' };
-      if (fraction === 'bad') return { why: 'マップからの知らせを読めませんでした (端数が読めません)' };
+      if (written === null) return refuse('マップからの知らせを読めませんでした (置き先がありません)');
+      if (fraction === 'bad') return refuse('マップからの知らせを読めませんでした (端数が読めません)');
       return spellOf(written, fraction);
     };
+    const isRefused = (spelled: string | Refused): spelled is Refused => typeof spelled !== 'string';
     const fines: readonly unknown[] = Array.isArray(message.fine) ? message.fine : [];
 
     if (message.kind === 'addPart') {
       const at: readonly unknown[] = Array.isArray(message.at) ? message.at : [];
       const spelled = at.map((cell, index) => spell(cell, fines[index] ?? null));
-      const refused = spelled.find(isRefusal);
-      if (refused !== undefined) return { ok: false, why: refused.why };
-      return { ok: true, message: { ...message, at: spelled, fine: undefined } };
+      return spelled.find(isRefused) ?? { ok: true, message: { ...message, at: spelled } };
     }
     if (message.kind === 'addWire') {
       const from = spell(message.from, fines[0] ?? null);
       const to = spell(message.to, fines[1] ?? null);
-      if (isRefusal(from)) return { ok: false, why: from.why };
-      if (isRefusal(to)) return { ok: false, why: to.why };
-      return { ok: true, message: { ...message, from, to, fine: undefined } };
+      if (isRefused(from)) return from;
+      if (isRefused(to)) return to;
+      return { ok: true, message: { ...message, from, to } };
     }
     // preview / move / moveNode: `to` に `fine`。置く試し当ての間隔選びは `from` に `fromFine`。
     const to = spell(message.to, message.fine);
-    if (isRefusal(to)) return { ok: false, why: to.why };
-    const from = message.fromFine === undefined ? message.from : spell(message.from, message.fromFine);
-    if (isRefusal(from)) return { ok: false, why: from.why };
-    return { ok: true, message: { ...message, to, from, fine: undefined, fromFine: undefined } };
+    if (isRefused(to)) return to;
+    if (message.fromFine === undefined) return { ok: true, message: { ...message, to } };
+    const from = spell(message.from, message.fromFine);
+    return isRefused(from) ? from : { ok: true, message: { ...message, to, from } };
   }
 
   /** マップから来た「何を・どこへ」。部品は 1 つだけ動き、節点は交点ごと動く。 */

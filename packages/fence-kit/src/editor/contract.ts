@@ -140,7 +140,7 @@ export function checkFenceEditor(editor: FenceEditor, fixture: ContractFixture):
       say(`${room} を 1/${editor.fine} 升ずらして戻せません`);
     }
     if (editor.step(room, 1 / editor.fine, 0) === null) say(`${room} を行の向きに 1/${editor.fine} 升ずらせません`);
-  } else if (editor.step(room, 0, 0.25) !== null) {
+  } else if (editor.step(room, 0, 0.25) !== null || editor.step(room, 0.25, 0) !== null) {
     say('穴の間が無いのに端数の穴を返します');
   }
 

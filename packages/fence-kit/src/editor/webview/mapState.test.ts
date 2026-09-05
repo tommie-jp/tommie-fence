@@ -347,7 +347,7 @@ describe('Shift を押しながら選ぶ', () => {
   test('leaves the wire tool alone, where Shift already folds', () => {
     const wiring = after(PANEL, key('w'));
 
-    expect(after(wiring, shiftPress(AT_B3)).wireFrom).toBe('b3');
+    expect(after(wiring, shiftPress(AT_B3)).wireFrom).toEqual({ cell: 'b3', fine: null });
   });
 });
 
@@ -393,7 +393,7 @@ describe('配線', () => {
     expect(wiring.tool).toBe('wire');
 
     const started = after(wiring, press(AT_B3), release(AT_B3, false));
-    expect(started.wireFrom).toBe('b3');
+    expect(started.wireFrom).toEqual({ cell: 'b3', fine: null });
     expect(hint(started)).toContain('b3 から');
 
     const { state, send } = step(after(started, press(over({ cell: 'b8' }))), release(over({ cell: 'b8' }), false));
@@ -412,7 +412,7 @@ describe('配線', () => {
     const onPin = over({ cell: 'b2', part: 'Q1', pin: 'Q1.C' });
     const wiring = after(PANEL, key('w'), press(onPin));
 
-    expect(wiring.wireFrom).toBe('Q1.C');
+    expect(wiring.wireFrom).toEqual({ cell: 'Q1.C', fine: null });
     expect(step(wiring, release(over({ cell: 'b8' }))).send)
       .toEqual([{ kind: 'addWire', from: 'Q1.C', to: 'b8', operator: '--' }]);
   });

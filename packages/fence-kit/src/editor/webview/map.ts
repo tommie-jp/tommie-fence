@@ -1,4 +1,4 @@
-import { DRAG, NOTHING, endOf, fineOf, sameFine, start, step, topOf } from './mapState.ts';
+import { DRAG, NOTHING, endFine, endOf, fineOf, sameFine, sameSpot, start, step, topOf } from './mapState.ts';
 import type { Event, Fine, Focus, Ghost, Picked, State, Under } from './mapState.ts';
 
 /**
@@ -165,7 +165,9 @@ function underAt(x: number, y: number): Under {
  * 交点ちょうどは null (端数が無ければ知らせは今までと同じ)。
  */
 function fineIn(cell: Element, x: number, y: number): Fine | null {
-  if (!ctrlHeld || state.fine === null) return null;
+  // 持ち物も配線の道具も無ければ端数は絵に出ない — 数えると hover の塗り直しだけが 16 倍になる。
+  const wanted = state.carry !== null || state.tool === 'wire';
+  if (!ctrlHeld || state.fine === null || !wanted) return null;
   const box = cell.getBoundingClientRect();
   const fine = fineOf(x - box.left, y - box.top, box.width, box.height, state.fine);
   return fine.rows === 0 && fine.cols === 0 ? null : fine;
@@ -240,16 +242,27 @@ function markHover(now: State): void {
   shownFor(topOf(now.under))?.classList.add('cf-hover');
 }
 
+/** その番地の当たり判定の四角。端数の番地 (`b.25_2.75`) には無い。 */
+const cellElement = (address: string): SVGGraphicsElement | null =>
+  query<SVGGraphicsElement>(`.cf-cell[data-address="${CSS.escape(address)}"]`);
+
+/** 四角の真ん中 (その要素自身の座標)。 */
+const middleOf = (box: DOMRect): { readonly x: number; readonly y: number } =>
+  ({ x: box.x + box.width / 2, y: box.y + box.height / 2 });
+
+/** 端数の落ち先の四角。**1 つを使い回す** (塗り直しのたびに作らない。板では作られない)。 */
+let fineBox: SVGRectElement | null = null;
+
 /** ゴースト — 置く・動かす先の穴を光らせる。置けないときは赤。 */
 function markGhost(now: State): void {
   unmark('cf-ghost');
   unmark('cf-ghost-bad');
-  document.querySelector('.cf-fine-box')?.remove();
-  if (now.carry === null || now.ghost === null) return;
-  const className = now.ghost.ok ? 'cf-ghost' : 'cf-ghost-bad';
-  for (const cell of now.ghost.cells) {
-    query(`.cf-cell[data-address="${CSS.escape(cell)}"]`)?.classList.add(className);
+  if (now.carry === null || now.ghost === null) {
+    fineBox?.remove();
+    return;
   }
+  const className = now.ghost.ok ? 'cf-ghost' : 'cf-ghost-bad';
+  for (const cell of now.ghost.cells) cellElement(cell)?.classList.add(className);
   markFineBox(now, now.ghost.ok);
 }
 
@@ -257,15 +270,10 @@ function markGhost(now: State): void {
 function fineSpot(now: State): { readonly cell: Element; readonly x: number; readonly y: number; readonly size: number } | null {
   const { cell, fine } = now.under;
   if (cell === null || fine === null || now.fine === null) return null;
-  const element = query<SVGGraphicsElement>(`.cf-cell[data-address="${CSS.escape(cell)}"]`);
+  const element = cellElement(cell);
   if (element === null) return null;
   const box = element.getBBox();
-  return {
-    cell: element,
-    x: box.x + box.width / 2 + fine.cols * box.width,
-    y: box.y + box.height / 2 + fine.rows * box.height,
-    size: box.width / now.fine,
-  };
+  return { cell: element, ...offsetBy(middleOf(box), box, fine), size: box.width / now.fine };
 }
 
 /**
@@ -274,8 +282,12 @@ function fineSpot(now: State): { readonly cell: Element; readonly x: number; rea
  */
 function markFineBox(now: State, ok: boolean): void {
   const spot = fineSpot(now);
-  if (spot === null) return;
-  const box = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  if (spot === null) {
+    fineBox?.remove();
+    return;
+  }
+  const box = fineBox ?? document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  fineBox = box;
   box.setAttribute('class', `cf-fine-box${ok ? '' : ' cf-fine-box-bad'}`);
   box.setAttribute('x', String(spot.x - spot.size / 2));
   box.setAttribute('y', String(spot.y - spot.size / 2));
@@ -287,10 +299,8 @@ function markFineBox(now: State, ok: boolean): void {
 
 /** 穴 1 つの真ん中 (図の座標)。当たり判定の四角から読む。 */
 function cellCentre(address: string): { readonly x: number; readonly y: number } | null {
-  const cell = query<SVGGraphicsElement>(`.cf-cell[data-address="${CSS.escape(address)}"]`);
-  if (cell === null) return null;
-  const box = cell.getBBox();
-  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  const cell = cellElement(address);
+  return cell === null ? null : middleOf(cell.getBBox());
 }
 
 /**
@@ -324,19 +334,19 @@ function shiftOf(ghost: Ghost): { readonly x: number; readonly y: number } | nul
   const from = anchorOf(ghost.from ?? []);
   const to = anchorOf(ghost.cells);
   if (from !== null && to !== null) return { x: to.x - from.x, y: to.y - from.y };
+  if (ghost.shift === undefined) return null;
   const unit = query<SVGGraphicsElement>('.cf-cell')?.getBBox();
-  if (ghost.shift === undefined || unit === undefined) return null;
+  if (unit === undefined) return null;
   return { x: ghost.shift.cols * unit.width, y: ghost.shift.rows * unit.height };
 }
 
-/** 升の中心から端数ぶんずらす (升の幅で数える)。足には端数が無い。 */
+/** 升の中心から端数ぶんずらす (升の四角の幅で数える)。足には端数が無い。 */
 function offsetBy(
-  centre: { readonly x: number; readonly y: number } | null,
-  element: SVGGraphicsElement,
+  centre: { readonly x: number; readonly y: number },
+  box: DOMRect,
   fine: Fine | null,
-): { readonly x: number; readonly y: number } | null {
-  if (centre === null || fine === null) return centre;
-  const box = element.getBBox();
+): { readonly x: number; readonly y: number } {
+  if (fine === null) return centre;
   return { x: centre.x + fine.cols * box.width, y: centre.y + fine.rows * box.height };
 }
 
@@ -417,7 +427,7 @@ function endElement(spelling: string): SVGGraphicsElement | null {
  * 画面の座標を挟んで図の座標へ戻すと、途中の `translate` も `rotate` も
  * まとめて効く。まだ描かれていない (行列が無い) ときは諦めて null。
  */
-function centreOf(element: SVGGraphicsElement): { readonly x: number; readonly y: number } | null {
+function centreOf(element: SVGGraphicsElement): { readonly x: number; readonly y: number; readonly box: DOMRect } | null {
   const svg = element.ownerSVGElement;
   const toScreen = element.getScreenCTM();
   const fromScreen = svg?.getScreenCTM()?.inverse();
@@ -427,7 +437,7 @@ function centreOf(element: SVGGraphicsElement): { readonly x: number; readonly y
   const at = new DOMPoint(box.x + box.width / 2, box.y + box.height / 2)
     .matrixTransform(toScreen)
     .matrixTransform(fromScreen);
-  return Number.isFinite(at.x) && Number.isFinite(at.y) ? { x: at.x, y: at.y } : null;
+  return Number.isFinite(at.x) && Number.isFinite(at.y) ? { x: at.x, y: at.y, box } : null;
 }
 
 /**
@@ -436,7 +446,7 @@ function centreOf(element: SVGGraphicsElement): { readonly x: number; readonly y
 function markWireFrom(now: State): void {
   unmark('cf-from');
   if (now.wireFrom === null) return;
-  endElement(now.wireFrom)?.classList.add('cf-from');
+  endElement(now.wireFrom.cell)?.classList.add('cf-from');
 }
 
 /** 引いている最中の配線の影。**引き終わると消える** ので、図には残らない。 */
@@ -454,16 +464,20 @@ function markWireGhost(now: State): void {
   document.querySelector(`.${GHOST_WIRE}`)?.remove();
   const layer = query('.cf-wires');
   const end = now.tool === 'wire' ? endOf(now.under) : null;
-  if (now.wireFrom === null || end === null || end === now.wireFrom || layer === null) return;
+  if (now.wireFrom === null || end === null || layer === null) return;
+  // 同じ升でも端数が違えば別の交点 (書かれる配線と同じ判定)。
+  if (sameSpot(now.wireFrom, { cell: end, fine: endFine(now, now.under) })) return;
 
-  const start = endElement(now.wireFrom);
+  const start = endElement(now.wireFrom.cell);
   const finish = endElement(end);
   if (start === null || finish === null) return;
 
   // 端数の端 (Ctrl) は升の中心からずらす。足を採ったときは端数を持たない。
-  const from = offsetBy(centreOf(start), start, now.wireFromFine);
-  const to = offsetBy(centreOf(finish), finish, now.under.pin !== null ? null : now.under.fine);
-  if (from === null || to === null) return;
+  const fromCentre = centreOf(start);
+  const toCentre = centreOf(finish);
+  if (fromCentre === null || toCentre === null) return;
+  const from = offsetBy(fromCentre, fromCentre.box, now.wireFrom.fine);
+  const to = offsetBy(toCentre, toCentre.box, endFine(now, now.under));
   // 折れる指定は先に横 (`-|`)。折れない板では真っ直ぐのまま。
   const corner = shiftHeld && now.foldsWire ? [{ x: to.x, y: from.y }] : [];
   const points = [from, ...corner, to].map((at) => `${at.x},${at.y}`).join(' ');
@@ -608,6 +622,18 @@ function syncHover(): void {
 }
 
 /**
+ * `Ctrl` (mac は `Cmd`) の印を出来事から取り直す。**変わったときだけ升の下を読み直す** —
+ * 鍵を押した瞬間はカーソルが動かないので、読み直さないとゴーストが 1/4 の位置へ動かない。
+ * 窓の外で押して戻ったときは `keydown` が来ないので、pointer の出来事からも揃える。
+ */
+function syncCtrl(event: { readonly ctrlKey: boolean; readonly metaKey: boolean }): void {
+  const held = event.ctrlKey || event.metaKey;
+  if (held === ctrlHeld) return;
+  ctrlHeld = held;
+  syncHover();
+}
+
+/**
  * その出来事が起きた要素。**`document` に届いた出来事もある**ので、要素かどうかを
  * 見てから返す (素で `closest` を呼ぶと落ちる)。
  */
@@ -682,7 +708,7 @@ document.addEventListener('pointerdown', (event) => {
   }
   if (event.button !== 0) return;
   if (target?.closest('.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status')) return;
-  ctrlHeld = event.ctrlKey || event.metaKey;
+  syncCtrl(event);
   const under = underAt(event.clientX, event.clientY);
   // **何も無い所から引いたら領域選択。** 掴むものがある所から始めたら今までどおり。
   if (onCanvas && state.tool === 'select' && state.carry === null
@@ -694,8 +720,7 @@ document.addEventListener('pointerdown', (event) => {
 
 document.addEventListener('pointermove', (event) => {
   pointer = { x: event.clientX, y: event.clientY };
-  // 鍵の知らせが届かなかったとき (窓の外で押した) も、出来事の印で揃える。
-  ctrlHeld = event.ctrlKey || event.metaKey;
+  syncCtrl(event);
   // **道具の列の上ではカーソルの下を捨てない。** 捨てると「部品にカーソルを置いて
   // 回すボタンを押す」が効かなくなる (押した時点で対象が消えている)。
   if (elementOf(event)?.closest('.kc-tools') != null) return;
@@ -737,7 +762,7 @@ document.addEventListener('pointerup', (event) => {
   }
   const target = elementOf(event);
   if (target?.closest('.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status') && state.pressed === null) return;
-  ctrlHeld = event.ctrlKey || event.metaKey;
+  syncCtrl(event);
   run({
     kind: 'release',
     under: underAt(event.clientX, event.clientY),
@@ -774,12 +799,8 @@ document.addEventListener('keydown', (event) => {
     shiftHeld = true;
     paint(state);
   }
-  // **Ctrl を押した瞬間に升の下を読み直す。** カーソルは動かないので、読み直さないと
-  // ゴーストが 1/4 の位置へ動かない (mac は Cmd — Ctrl+クリックは右クリックになる)。
-  if ((event.key === 'Control' || event.key === 'Meta') && !ctrlHeld) {
-    ctrlHeld = true;
-    syncHover();
-  }
+  // Ctrl (mac は Cmd。Ctrl+クリックは右クリックになる) の印。
+  syncCtrl(event);
 
   // 選択窓の検索欄。Enter で先頭の候補、Esc で閉じる。ほかは欄に任せる。
   if (target?.classList.contains('cf-search')) {
@@ -843,10 +864,7 @@ document.addEventListener('keyup', (event) => {
     shiftHeld = false;
     paint(state);
   }
-  if ((event.key === 'Control' || event.key === 'Meta') && ctrlHeld) {
-    ctrlHeld = false;
-    syncHover();
-  }
+  syncCtrl(event);
 });
 
 // **窓の外へ出たら Space を離したことにする。** 押したまま別のタブへ移ると
@@ -1062,16 +1080,13 @@ const fill = (selector: string, html: string): void => {
  * 開いた言語のパレットが残る (52 の docs/19。畳んだあと実測で見つけた)。
  */
 function applyChrome(chrome: Chrome): void {
-  const box = chromeBox();
-  if (box !== null) {
-    box.innerHTML = chrome.palette;
-    box.dataset.folds = chrome.foldsWire ? '1' : '0';
-    box.dataset.fine = chrome.fine === null ? '' : String(chrome.fine);
-  }
+  fill('.cf-chrome-palette', chrome.palette);
   fill('.cf-chrome-lists', chrome.typeNames + chrome.colorNames);
   // パレットの `details` は選択窓の中では常に開いておく (入れ替えたぶんも)。
   for (const details of document.querySelectorAll<HTMLDetailsElement>('.kc-chooser details')) details.open = true;
-  run({ kind: 'chrome', foldsWire: chrome.foldsWire, fine: chrome.fine });
+  // 能力表は状態にだけ流す (塗り直しは、このあとの hover の取り直しがやる)。
+  // 箱の `data-` は起動の 1 回しか読まないので、書き直さない。
+  state = step(state, { kind: 'chrome', foldsWire: chrome.foldsWire, fine: chrome.fine }).state;
 }
 
 window.addEventListener('message', (event: MessageEvent<Incoming>) => {
