@@ -163,6 +163,14 @@ describe('gridMap', () => {
     expect(stepsTo('a_1.5', 'a3')).toEqual({ rows: 0, cols: 1.5 });
   });
 
+  test('spells a quarter step from a whole crossing, and comes back to the same crossing', () => {
+    // Ctrl+クリックの 1/4 升 (52 の docs/23)。殻は端数だけ渡し、綴りはここが組む。
+    // 交点ちょうどに戻れば素の番地 (`b3`) — 1 つの場所に綴りは 1 つ。
+    expect(stepCell('b3', 0.25, -0.25)).toBe('b.25_2.75');
+    expect(stepCell('b.25_2.75', -0.25, 0.25)).toBe('b3');
+    expect(stepCell('b3', 0, 0)).toBe('b3');
+  });
+
   test('makes room for the cell a half-step part reaches into', () => {
     // 端数は切り上げて数える (`a_9.5` は 10 列目まで要る)。
     const map = gridMap('parts:\n  R1: resistor a_9.5 a_11.5 1k\n');

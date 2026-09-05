@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { parseAddress } from '../model/address.ts';
 import type { Address } from '../types.ts';
-import { movePart, movablePartIds, partSpans } from './move.ts';
+import { movePart, movablePartIds, partSpans, stepCell } from './move.ts';
 import { applyEdits } from './shared.ts';
 
 const at = (text: string): Address => {
@@ -131,5 +131,14 @@ describe('partSpans', () => {
 
   test('is empty for a part that is not there', () => {
     expect(partSpans(LED, 'X9')).toEqual([]);
+  });
+});
+
+describe('stepCell', () => {
+  test('returns null for a fractional row or column, instead of spelling a hole the board does not have', () => {
+    // 穴の間は文法に無い。`a5.25` を書くと、次に読むときに黙って落ちる (52 の docs/23)。
+    expect(stepCell('a5', 0, 0.25)).toBeNull();
+    expect(stepCell('a5', 0.5, 0)).toBeNull();
+    expect(stepCell('a5', 0, 1)).toBe('a6');
   });
 });

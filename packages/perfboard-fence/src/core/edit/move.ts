@@ -147,6 +147,8 @@ export function movePart(source: string, id: string, to: Address, trial = false)
 export function stepCell(written: string, rows: number, cols: number): string | null {
   const from = parseAddress(written);
   if (from === null) return null;
+  // **穴の間は文法に無い。** 端数を足すと `a1.25` という読めない綴りになる (52 の docs/23)。
+  if (!Number.isInteger(rows) || !Number.isInteger(cols)) return null;
   const next = { row: from.row + rows, col: from.col + cols };
   return next.row < 0 || next.col < 0 ? null : formatAddress(next);
 }

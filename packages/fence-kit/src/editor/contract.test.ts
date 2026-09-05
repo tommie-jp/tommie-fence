@@ -55,10 +55,11 @@ function fakeEditor(over: Partial<FenceEditor> = {}): FenceEditor {
       return line === null ? [] : cellsOn(line);
     },
     foldsWire: false,
-    // `a1` の形。行は 1 字、列は数。
+    fine: null,
+    // `a1` の形。行は 1 字、列は数。穴の間は無い (端数は null)。
     step: (cell, rows, cols) => {
       const found = /^([a-z])(\d+)$/.exec(cell);
-      if (found === null) return null;
+      if (found === null || !Number.isInteger(rows) || !Number.isInteger(cols)) return null;
       const row = String.fromCharCode((found[1] ?? 'a').charCodeAt(0) + rows);
       const col = Number(found[2]) + cols;
       return row < 'a' || row > 'z' || col < 1 ? null : `${row}${col}`;
@@ -204,5 +205,27 @@ describe('checkFenceEditor', () => {
       .toContain('パレットに置ける種類がありません');
     expect(checkFenceEditor(fakeEditor({ foldsWire: undefined as unknown as boolean }), FIXTURE))
       .toContain('foldsWire が真偽値ではありません');
+  });
+
+  test('catches a fine that is neither a number nor null', () => {
+    expect(checkFenceEditor(fakeEditor({ fine: undefined as unknown as number }), FIXTURE))
+      .toContain('fine が数でも null でもありません');
+  });
+
+  test('catches a fence that claims a fine step but cannot spell it and come back', () => {
+    // 偽物の `step` は端数を綴れない。「1/4 升まで刻める」と名乗るなら、
+    // ずらして戻せなければ Ctrl+クリックが黙って何も置かない (52 の docs/23)。
+    expect(checkFenceEditor(fakeEditor({ fine: 4 }), FIXTURE)).toContain('b1 を 1/4 升ずらして戻せません');
+  });
+
+  test('catches a board that spells a fraction it has no grammar for', () => {
+    // 穴の間が無い板が端数の穴を返すと、読めない綴りが本文に書かれる。
+    const whole = fakeEditor().step;
+    const loose = fakeEditor({
+      fine: null,
+      step: (cell, rows, cols) => (Number.isInteger(rows) && Number.isInteger(cols) ? whole(cell, rows, cols) : 'a5.25'),
+    });
+
+    expect(checkFenceEditor(loose, FIXTURE)).toContain('穴の間が無いのに端数の穴を返します');
   });
 });

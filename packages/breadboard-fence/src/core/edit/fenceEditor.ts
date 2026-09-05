@@ -76,6 +76,8 @@ export function createBreadboardEditor(): FenceEditor {
     cellsOf: (source, handle) => (isNoteHandle(handle) ? noteCells(source, handle) : partCells(source, handle)),
     // 配線は穴から穴へ 1 本 (折れの綴りが文法に無い)。
     foldsWire: false,
+    // 穴の間は無い (足は穴に挿す)。Ctrl を押しても素のクリック。
+    fine: null,
     step: stepCell,
     stepsTo,
 

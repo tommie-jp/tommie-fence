@@ -164,6 +164,13 @@ export type FenceEditor = {
    */
   readonly foldsWire: boolean;
   /**
+   * 何分の 1 升まで刻めるか (`4` なら 1/4)。**穴の間が文法に無いフェンスは null。**
+   * Ctrl を押しながらのクリックはこれで効き方が決まり、殻の案内文もここから組む
+   * (null の板で「Ctrl で 1/4 升」と案内すると、押しても何も起きない鍵になる)。
+   * 殻は端数 (`{ rows: 0.25, cols: -0.25 }`) を `step` に渡すだけで、綴りは知らない。
+   */
+  readonly fine: number | null;
+  /**
    * その穴から `rows` 行・`cols` 列だけ離れた穴 (書かれた綴り)。板の外や、
    * 数に落ちない綴り (レールの行) は null。
    *

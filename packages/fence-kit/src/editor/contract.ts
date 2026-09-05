@@ -129,6 +129,21 @@ export function checkFenceEditor(editor: FenceEditor, fixture: ContractFixture):
     say(`${room} と同じ穴の差が 0 になりません`);
   }
 
+  // --- 穴の間 (Ctrl で 1/4 升。52 の docs/23) ---
+  // **名乗った刻みで綴れて、戻れること。** 名乗らないなら端数の穴を返さないこと
+  // (板の `step` が `a5.25` という読めない綴りを黙って返していた)。
+  if (typeof editor.fine !== 'number' && editor.fine !== null) {
+    say('fine が数でも null でもありません');
+  } else if (editor.fine !== null) {
+    const aside = editor.step(room, 0, 1 / editor.fine);
+    if (aside === null || editor.step(aside, 0, -1 / editor.fine) !== room) {
+      say(`${room} を 1/${editor.fine} 升ずらして戻せません`);
+    }
+    if (editor.step(room, 1 / editor.fine, 0) === null) say(`${room} を行の向きに 1/${editor.fine} 升ずらせません`);
+  } else if (editor.step(room, 0, 0.25) !== null) {
+    say('穴の間が無いのに端数の穴を返します');
+  }
+
   // --- 掴んで動かす・消す ---
   const moved = editor.movePart(source, part, moveTo);
   if (!moved.ok) {

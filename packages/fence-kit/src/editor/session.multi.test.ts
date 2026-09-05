@@ -24,6 +24,7 @@ const fenceOf = (language: string, mark: string): FenceEditor => ({
   nextId: () => 'X1',
   cellsOf: () => [],
   foldsWire: false,
+  fine: null,
   step: () => null,
   stepsTo: () => null,
   palette: () => `<p>${language}</p>`,
