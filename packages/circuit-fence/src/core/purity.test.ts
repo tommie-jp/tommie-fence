@@ -26,7 +26,9 @@ const CORE_DIR = fileURLToPath(new URL('.', import.meta.url));
 const ALLOWED = new Set(['yaml', 'fence-kit']);
 
 // import と export の両方、静的も動的も、引用符はどちらも拾う。
-const SPECIFIER = /(?:\bfrom|\bimport|\brequire)\s*\(?\s*['"]([^'"]+)['"]/g;
+// **引用符の中の語は import ではない。** 型の並び (`'from' | 'to'`) を
+// import と読み違えないよう、直前が引用符のものは飛ばす。
+const SPECIFIER = /(?<!['"])(?:\bfrom|\bimport|\brequire)\s*\(?\s*['"]([^'"]+)['"]/g;
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

@@ -701,6 +701,13 @@ wires:
     expect(renderPerfboard(LED, { edit: true }).svg).toContain('class="cf-wire-hit"');
   });
 
+  test('puts a hit spot on each end of a wire, so one end alone can be pulled', () => {
+    const { svg } = renderPerfboard(LED, { edit: true });
+
+    expect(svg).toContain('class="cf-wire-end" data-line="7" data-end="from"');
+    expect(svg).toContain('class="cf-wire-end" data-line="7" data-end="to"');
+  });
+
   test('puts a node only where something is written, and carries its name', () => {
     const { svg } = renderPerfboard(LED, { edit: true });
 

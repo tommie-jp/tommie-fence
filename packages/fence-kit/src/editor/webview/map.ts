@@ -168,6 +168,12 @@ function underAt(x: number, y: number): Under {
     note: chip?.hit.dataset.note === '1',
     node: find('.cf-dot', 'node')?.value ?? null,
     wire: find('.cf-wire-hit', 'line')?.value ?? null,
+    // 配線の**端**。線そのものより上にあるので、端の上では端が勝つ。
+    wireEnd: (() => {
+      const found = find('.cf-wire-end', 'line');
+      const end = found?.hit.dataset.end;
+      return found === null || end === undefined ? null : { line: found.value, end: end as 'from' | 'to' };
+    })(),
     pin: find('.cf-pin-hit', 'pin')?.value ?? null,
     fine: cell === null ? null : fineIn(cell.hit, x, y),
   };

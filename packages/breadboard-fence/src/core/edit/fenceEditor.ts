@@ -12,7 +12,7 @@ import { movePart, movablePartIds, partSpans, stepCell, stepsTo } from './move.t
 import { deviceCells, deviceSpans, isDevice, moveDevice } from './device.ts';
 import { movePoint, nodeSpans } from './point.ts';
 import { deletePart, deleteWire } from './remove.ts';
-import { isWireHandle, renderColorOptions, setWireField, wireFields } from './wireField.ts';
+import { isWireHandle, renderColorOptions, setWireField, wireFields, moveWireEnd } from './wireField.ts';
 import {
   deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans, noteText,
   setNoteField, turnNote,
@@ -131,6 +131,8 @@ export function createBreadboardEditor(): FenceEditor {
     },
 
     deletePart: (source, handle) => (isNoteHandle(handle) ? deleteNote(source, handle) : deletePart(source, handle)),
+    // 掴んだ端だけを付け替える (もう片方も色も動かない)。
+    moveWireEnd: (source, handle, end, to) => moveWireEnd(source, handle, end, to),
     deleteWire,
 
     addWire: (source, from, to) => {

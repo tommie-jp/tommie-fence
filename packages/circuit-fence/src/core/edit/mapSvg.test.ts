@@ -635,6 +635,9 @@ describe('配線を掴む', () => {
 
     expect(svg).toContain('cf-wire-hits');
     expect(svg).toContain('class="cf-wire-hit" data-line="2"');
+
+    expect(svg).toContain('class="cf-wire-end" data-line="2" data-end="from"');
+    expect(svg).toContain('class="cf-wire-end" data-line="2" data-end="to"');
   });
 
   test('puts the grab layer under the parts, so a part still takes the click', () => {

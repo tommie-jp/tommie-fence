@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { applyEdits, applyLineEdits, applyRewrite } from './lines.ts';
+import { applyEdits, applyLineEdits, applyRewrite, wireEndToken } from './lines.ts';
 
 const SOURCE = 'parts:\n  R1: resistor a9 b9 330\nwires:\n  - a9 -- b9\n';
 
@@ -33,5 +33,26 @@ describe('applyRewrite', () => {
     expect(applyRewrite(SOURCE, {})).toBe(SOURCE);
     expect(applyRewrite(SOURCE, { lines: [{ kind: 'delete', line: 4 }] }))
       .toBe(applyLineEdits(SOURCE, [{ kind: 'delete', line: 4 }]));
+  });
+});
+
+describe('wireEndToken', () => {
+  test('finds each end around the operator, so one end can be re-routed', () => {
+    // 実機で「配線の先端を選択して、その先端だけ移動できるようにする」。
+    const line = '  - a1 -- b2 red';
+
+    expect(wireEndToken(line, ['--'], 'from')).toEqual({ column: 4, length: 2, text: 'a1' });
+    expect(wireEndToken(line, ['--'], 'to')).toEqual({ column: 10, length: 2, text: 'b2' });
+  });
+
+  test('reads the longer operator first, so a fold is not mistaken for a dash', () => {
+    const line = '  - Q1.C -| a5';
+
+    expect(wireEndToken(line, ['--', '-|', '|-'], 'from')).toEqual({ column: 4, length: 4, text: 'Q1.C' });
+    expect(wireEndToken(line, ['--', '-|', '|-'], 'to')).toEqual({ column: 12, length: 2, text: 'a5' });
+  });
+
+  test('says nothing when the line holds no operator', () => {
+    expect(wireEndToken('  - a1', ['--'], 'from')).toBeNull();
   });
 });

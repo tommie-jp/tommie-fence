@@ -143,7 +143,8 @@ export function renderDocument(input: DocumentInput): string {
  */
 function hitLineOf(points: readonly Point[], line: number, theme: RenderStyle['theme']): string {
   const path = roundedPath(points, 0);
-  return path === '' ? '' : element('path', {
+  if (path === '') return '';
+  const whole = element('path', {
     class: 'cf-wire-hit',
     'data-line': String(line),
     d: path,
@@ -153,6 +154,30 @@ function hitLineOf(points: readonly Point[], line: number, theme: RenderStyle['t
     'stroke-linecap': 'round',
     'stroke-linejoin': 'round',
   });
+  return whole + wireEndHits(points, line, theme);
+}
+
+/**
+ * 配線の**端だけ**を掴む的。線そのものより上に置く (端の上では端が勝つ)。
+ * 掴んだ端だけを付け替えられるようにするためのもの
+ * (実機で「配線の先端を選択して、その先端だけ移動できるようにする」)。
+ */
+function wireEndHits(points: readonly Point[], line: number, theme: RenderStyle['theme']): string {
+  const ends = [
+    { at: points[0], end: 'from' },
+    { at: points[points.length - 1], end: 'to' },
+  ];
+  return ends
+    .map(({ at, end }) => (at === undefined ? '' : element('circle', {
+      class: 'cf-wire-end',
+      'data-line': String(line),
+      'data-end': end,
+      cx: num(at.x),
+      cy: num(at.y),
+      r: num(theme.metrics.wireWidth * 1.6),
+      fill: 'transparent',
+    })))
+    .join('');
 }
 
 /** 右下に小さく刻む版。字は書けない (処理系が埋めるものなので)。 */

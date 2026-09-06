@@ -1,9 +1,10 @@
-import { normalizeNewlines, wireColorNames } from 'fence-kit';
+import { normalizeNewlines, wireColorNames, wireEndToken } from 'fence-kit';
 import type { Edit, NetDiff } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { isColor, colorHint } from '../color.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import type { FenceError } from '../types.ts';
+import { diffAfter } from './diff.ts';
 
 /**
  * 配線の欄 (色)。**掴み手は書かれた行** — 配線に名前は無い (注釈と同じ考え方)。
@@ -80,3 +81,26 @@ export function setWireField(source: string, handle: string, field: string, text
 /** 色の候補 (`datalist`)。**書ける色はフェンスが決める。** */
 export const renderColorOptions = (id: string): string =>
   `<datalist id="${id}">${wireColorNames().map((name) => `<option value="${name}">`).join('')}</datalist>`;
+
+/** 板の配線は 1 種類 (折れの綴りが無い)。 */
+const WIRE_OPERATORS = ['--'];
+
+/**
+ * 掴んだ端だけを付け替える。**行の中のその 1 語を差し替える**ので、
+ * もう片方の端も色も動かない (実機で「配線の先端を選択して、その先端だけ
+ * 移動できるようにする。配線全体を移動しない」)。
+ */
+export function moveWireEnd(source: string, handle: string, end: 'from' | 'to', to: string): WireResult {
+  const found = locate(source, handle);
+  const line = wireLineOf(handle);
+  if (found === null) return fail(`${line ?? '?'} 行目に配線がありません`, line);
+
+  const token = wireEndToken(found.text, WIRE_OPERATORS, end);
+  if (token === null) {
+    return fail(`${found.line} 行目の配線の端を行の中に見つけられませんでした`, found.line);
+  }
+  if (token.text === to) return { ok: true, value: { edits: [], diff: { lost: [], gained: [] } } };
+
+  const edits: Edit[] = [{ line: found.line, column: token.column, length: token.length, text: to }];
+  return { ok: true, value: { edits, diff: diffAfter(normalizeNewlines(source), edits) } };
+}

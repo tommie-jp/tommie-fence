@@ -92,7 +92,37 @@ const grabWire = (wire: WireLine, dots: PinPoints): string =>
     class: 'cf-wire-hit',
     'data-line': wire.line,
     points: pathOf(wire, dots),
-  });
+  }) + grabWireEnds(wire, dots);
+
+/**
+ * 配線の**端だけ**を掴む的。線そのものより後に置く (端の上では端が勝つ)。
+ * 掴んだ端だけを引き直せるようにするためのもの
+ * (実機で「配線の先端を選択して、その先端だけ移動できるようにする」)。
+ */
+function grabWireEnds(wire: WireLine, dots: PinPoints): string {
+  const points = pathOf(wire, dots).split(' ').filter((one) => one !== '');
+  const at = (text: string | undefined): { x: number; y: number } | null => {
+    const [x, y] = (text ?? '').split(',').map(Number);
+    return x === undefined || y === undefined || Number.isNaN(x) || Number.isNaN(y) ? null : { x, y };
+  };
+  return [
+    { spot: at(points[0]), end: 'from' },
+    { spot: at(points[points.length - 1]), end: 'to' },
+  ]
+    .map(({ spot, end }) => (spot === null ? '' : element('circle', {
+      class: 'cf-wire-end',
+      'data-line': wire.line,
+      'data-end': end,
+      cx: num(spot.x),
+      cy: num(spot.y),
+      r: WIRE_END_HIT,
+      fill: 'transparent',
+    })))
+    .join('');
+}
+
+/** 端を掴む的の大きさ。**指でも掴める**が、隣の穴には届かない大きさ。 */
+const WIRE_END_HIT = 7;
 
 /**
  * 引いた線。ピンで書いた端は近似なので破線にして、正確な位置を約束しない

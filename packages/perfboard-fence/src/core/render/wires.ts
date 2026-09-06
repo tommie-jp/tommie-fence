@@ -59,8 +59,32 @@ export const renderWires = (
         'stroke-width': num(WIRE_WIDTH * 3),
         'stroke-linecap': 'round',
       });
-      return element('g', { class: 'cf-wire', 'data-line': String(wire.line ?? 0) }, drawn + hit);
+      const ends = wireEndHits(from, to, String(wire.line ?? 0));
+      return element(
+        'g',
+        { class: 'cf-wire', 'data-line': String(wire.line ?? 0) },
+        drawn + hit + ends,
+      );
     })
+    .join('');
+
+/**
+ * 配線の**端だけ**を掴む的。線そのものより後に置く (端の上では端が勝つ)。
+ * 掴んだ端だけを付け替えられるようにするためのもの
+ * (実機で「配線の先端を選択して、その先端だけ移動できるようにする」)。
+ * breadboard-fence と同じ約束 (`.cf-wire-end` に `data-line` と `data-end`)。
+ */
+const wireEndHits = (from: Point, to: Point, line: string): string =>
+  [{ at: from, end: 'from' }, { at: to, end: 'to' }]
+    .map(({ at, end }) => element('circle', {
+      class: 'cf-wire-end',
+      'data-line': line,
+      'data-end': end,
+      cx: num(at.x),
+      cy: num(at.y),
+      r: num(WIRE_WIDTH * 1.6),
+      fill: 'transparent',
+    }))
     .join('');
 
 /**

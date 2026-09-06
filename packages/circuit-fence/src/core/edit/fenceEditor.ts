@@ -18,7 +18,7 @@ import type { Endpoint } from '../types.ts';
 import { renamePart } from './rename.ts';
 import type { MapLook } from './mapSvg.ts';
 import type { EditResult, FenceEditor, NewPart } from 'fence-kit';
-import { isWireHandle, renderColorOptions, setWireField, wireFields } from './wireField.ts';
+import { isWireHandle, renderColorOptions, setWireField, wireFields, moveWireEnd } from './wireField.ts';
 import {
   deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans, noteText,
   setNoteField, turnNote,
@@ -189,6 +189,8 @@ export function createCircuitEditor(look: LookSource = PLAIN): FenceEditor {
     },
 
     deletePart: (source, handle) => (isNoteHandle(handle) ? deleteNote(source, handle) : deletePart(source, handle)),
+    // 掴んだ端だけを付け替える (もう片方も色も動かない)。
+    moveWireEnd: (source, handle, end, to) => moveWireEnd(source, handle, end, to),
     deleteWire,
     // **節点の名前は `points:` の 1 行**。部品の改名とは書く場所が違う。
     rename: (source, handle, to) => (

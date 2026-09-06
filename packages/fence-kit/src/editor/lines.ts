@@ -162,3 +162,42 @@ export const applyRewrite = (
   applyEdits(normalizeNewlines(source), rewrite.edits ?? []),
   rewrite.lines ?? [],
 );
+
+/**
+ * 配線の行の中で、片方の端が書かれている所。
+ *
+ * **3 つのフェンスで同じ形の行**を書く (`- a1 -- b2 red`)。端は演算子の
+ * 前後の 1 語で、色や種類はそのあとに続く。**行の中の位置はモデルが持って
+ * いない**ので、字として見つけるしかない (`setWireField` と同じ手)。
+ *
+ * 掴んだ端だけを付け替えるのに要る (実機で「配線の先端を選択して、その先端
+ * だけ移動できるようにする」)。読めなければ null。
+ */
+export function wireEndToken(
+  lineText: string,
+  operators: readonly string[],
+  end: 'from' | 'to',
+): { readonly column: number; readonly length: number; readonly text: string } | null {
+  // **長い綴りから探す** (`-|` を `-` と読み違えない)。
+  const found = [...operators]
+    .sort((a, b) => b.length - a.length)
+    .map((operator) => ({ operator, at: lineText.indexOf(operator) }))
+    .find((one) => one.at >= 0);
+  if (found === undefined) return null;
+
+  if (end === 'from') {
+    const before = lineText.slice(0, found.at);
+    const token = /(\S+)(\s*)$/.exec(before);
+    if (token === null) return null;
+    return { column: before.length - (token[1] ?? '').length - (token[2] ?? '').length, length: (token[1] ?? '').length, text: token[1] ?? '' };
+  }
+
+  const after = lineText.slice(found.at + found.operator.length);
+  const token = /^(\s*)(\S+)/.exec(after);
+  if (token === null) return null;
+  return {
+    column: found.at + found.operator.length + (token[1] ?? '').length,
+    length: (token[2] ?? '').length,
+    text: token[2] ?? '',
+  };
+}

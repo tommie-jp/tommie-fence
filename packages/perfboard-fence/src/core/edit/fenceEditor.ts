@@ -8,7 +8,7 @@ import { issuesOf, shiftIssues } from './issues.ts';
 import { aimAt, fenceAt } from './map.ts';
 import { insertPart, insertWire, duplicatePart, nextPartId, partCells } from './insert.ts';
 import { renamePart } from './rename.ts';
-import { isWireHandle, renderColorOptions, setWireField, wireFields } from './wireField.ts';
+import { isWireHandle, renderColorOptions, setWireField, wireFields, moveWireEnd } from './wireField.ts';
 import {
   deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans, noteText,
   setNoteField, turnNote,
@@ -116,6 +116,8 @@ export function createPerfboardEditor(): FenceEditor {
     },
 
     deletePart: (source, handle) => (isNoteHandle(handle) ? deleteNote(source, handle) : deletePart(source, handle)),
+    // 掴んだ端だけを付け替える (もう片方も色も動かない)。
+    moveWireEnd: (source, handle, end, to) => moveWireEnd(source, handle, end, to),
     deleteWire,
 
     addWire: (source, from, to) => {

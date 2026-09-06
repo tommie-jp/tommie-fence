@@ -76,6 +76,8 @@ export type Under = {
   readonly part: string | null;
   readonly node: string | null;
   readonly wire: string | null;
+  /** 配線の端 (行と、どちらの端か)。**端だけを付け替える**ために線とは別に持つ。 */
+  readonly wireEnd: { readonly line: string; readonly end: 'from' | 'to' } | null;
   /**
    * 多端子部品の足 (`Q1.C`)。**穴とは別に持つ** — 足は穴の上に無いので、
    * 穴として渡すと「その番地へ動かす」になってしまう。使うのは配線だけ。
@@ -88,7 +90,9 @@ export type Under = {
   readonly fine: Fine | null;
 };
 
-export const NOTHING: Under = { cell: null, part: null, node: null, wire: null, pin: null, fine: null };
+export const NOTHING: Under = {
+  cell: null, part: null, node: null, wire: null, wireEnd: null, pin: null, fine: null,
+};
 
 /**
  * 配線の端にできるもの。**足が穴より先**— 足の丸は部品の升の上に重なるので、
@@ -127,7 +131,14 @@ export type Carry =
     /** 掴んだのが注釈か。**端数が注釈にだけ効く板**で見る (`fineFor`)。 */
     readonly note?: boolean;
   }
-  | { readonly kind: 'drag'; readonly node: string; readonly byPointer: boolean };
+  | { readonly kind: 'drag'; readonly node: string; readonly byPointer: boolean }
+  | {
+    /** 配線の端だけを引き直す。**線そのものは動かない** (もう片方の端は残る)。 */
+    readonly kind: 'wireEnd';
+    readonly line: string;
+    readonly end: 'from' | 'to';
+    readonly byPointer: boolean;
+  };
 
 /** 拡張が答えたゴースト。`key` は問い合わせの札 (古い答えを捨てる)。 */
 export type Ghost = {
@@ -284,6 +295,9 @@ export function hint(state: State): string {
       return `${carry.type} を置きます: ${how}${fine} / R 回す / X 反転 / Esc でやめる${bad}`;
     }
     if (carry.kind === 'move') return `${shownName(carry.part)} を動かしています: 置きたい穴でクリック${fine} / Esc で戻す${bad}`;
+    if (carry.kind === 'wireEnd') {
+      return `${carry.line} 行目の配線の端を引き直しています: 引きたい穴でクリック${fine} / Esc で戻す${bad}`;
+    }
     return `${carry.node} の節点を引きずっています: 置きたい穴でクリック (接続は保たれます)${fine} / Esc で戻す${bad}`;
   }
   if (state.tool === 'wire') {
@@ -389,6 +403,7 @@ function previewKey(carry: Carry, to: Held, from: Held | null): string {
   }
   const tail = to.fine === null ? '' : `:${fineKey(to.fine)}`;
   if (carry.kind === 'move') return `move:${carry.part}:${to.cell}${tail}`;
+  if (carry.kind === 'wireEnd') return `wire:${carry.line}:${carry.end}:${to.cell}${tail}`;
   return `node:${carry.node}:${to.cell}${tail}`;
 }
 
@@ -426,6 +441,9 @@ function previewAt(state: State, carry: Carry, under: Under): readonly Message[]
       ...withFine(to.fine),
     }];
   }
+  // 端の引き直しは影を出さない (線は 2 つの穴が決めるので、置き先の穴が
+  // 分かれば足りる)。
+  if (carry.kind === 'wireEnd') return [];
   return [{ kind: 'preview', key, what: 'node', from: carry.node, to: to.cell, ...withFine(to.fine) }];
 }
 
@@ -501,6 +519,13 @@ function onDrag(state: State, event: Extract<Event, { kind: 'drag' }>): Outcome 
     const lifted = carrying(hovered.state, { kind: 'drag', node: selected.id, byPointer: true });
     return { ...lifted, state: { ...lifted.state, pressed } };
   }
+  // **配線は端だけ引き直せる。** 押したのが端なら、その端を持ち上げる
+  // (線の途中を掴んでも何も起きないのは今までどおり — 線は 2 つの穴が決める)。
+  const end = state.under.wireEnd;
+  if (selected.kind === 'wire' && end !== null) {
+    const lifted = carrying(hovered.state, { kind: 'wireEnd', ...end, byPointer: true });
+    return { ...lifted, state: { ...lifted.state, pressed } };
+  }
   return hovered;
 }
 
@@ -525,7 +550,7 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
     );
   }
 
-  if (carry?.kind === 'move' || carry?.kind === 'drag') {
+  if (carry?.kind === 'move' || carry?.kind === 'drag' || carry?.kind === 'wireEnd') {
     const to = heldOf(state, event.under);
     if (to === null) {
       // ドラッグで持ち上げた物を穴の外で放したら戻す。鍵で持ち上げた物は持ったまま。
@@ -552,10 +577,17 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
         many.length > 1 ? `${many.length} 個を ${where} へ…` : `${shownName(carry.part)} を ${where} へ…`,
       );
     }
+    if (carry.kind === 'drag') {
+      return outcome(
+        { ...done, selected: null },
+        [{ kind: 'moveNode', from: carry.node, to: to.cell, ...withFine(to.fine) }],
+        `${carry.node} の節点を ${where} へ…`,
+      );
+    }
     return outcome(
       { ...done, selected: null },
-      [{ kind: 'moveNode', from: carry.node, to: to.cell, ...withFine(to.fine) }],
-      `${carry.node} の節点を ${where} へ…`,
+      [{ kind: 'moveWireEnd', line: carry.line, end: carry.end, to: to.cell, ...withFine(to.fine) }],
+      `${carry.line} 行目の配線の端を ${where} へ…`,
     );
   }
 

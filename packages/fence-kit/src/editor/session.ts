@@ -95,6 +95,8 @@ export type Incoming = {
   readonly what?: unknown;
   readonly id?: unknown;
   readonly line?: unknown;
+  /** 配線のどちらの端か (`from` / `to`)。 */
+  readonly end?: unknown;
   readonly quarters?: unknown;
   readonly operator?: unknown;
   readonly type?: unknown;
@@ -1076,6 +1078,33 @@ export function createSession<D extends DocLike>(
    * (組み直しは選択を捨てるので、先に選ぶと消える)。
    */
   /**
+   * 配線の端だけを引き直す。**線そのものは動かない** — 掴んだ端の綴りだけを
+   * 差し替えるので、もう片方の端も色も残る (実機で「配線全体を移動しない」)。
+   */
+  async function moveWireEnd(message: Incoming): Promise<void> {
+    const line = text(message.line);
+    const end = text(message.end);
+    const to = text(message.to);
+    if (line === null || to === null || (end !== 'from' && end !== 'to')) {
+      say('マップからの知らせを読めませんでした (配線の端がありません)');
+      return;
+    }
+    if (editor.moveWireEnd === undefined) {
+      say('このフェンスでは配線の端を引き直せません');
+      return;
+    }
+    const move = editor.moveWireEnd;
+    // 端数は入口で綴りになっている (`resolveFine`)。
+    const written = to;
+    await run({
+      label: `${line} 行目の配線の端を ${written} へ`,
+      done: () => `${line} 行目の配線の端を ${written} へ引き直しました`,
+      already: `配線の端はすでに ${written} にあります`,
+      plan: (source) => move(source, `wire:${line}`, end, written),
+    });
+  }
+
+  /**
    * 注釈の言葉をクリップボードへ (実機で「テキストコピー」を頼まれた)。
    *
    * **写せるものかどうかはフェンスが決める** (`textOf`) — 言葉を持つのは
@@ -1407,6 +1436,10 @@ export function createSession<D extends DocLike>(
           if (made.length > 0) pick('part', made);
           return;
         }
+        case 'moveWireEnd':
+          await moveWireEnd(message);
+          refreshWith(true);
+          return;
         case 'copyText':
           await copyText(message);
           return;

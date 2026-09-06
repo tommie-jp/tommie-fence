@@ -167,6 +167,11 @@ export type FenceEditor = {
    */
   readonly fineFor?: 'all' | 'note';
   /**
+   * 配線の**片方の端だけ**を付け替える。掴んだ端の綴りを差し替えるので、
+   * もう片方も色も動かない (実機で「配線全体を移動しない」)。
+   */
+  readonly moveWireEnd?: (source: string, handle: string, end: 'from' | 'to', to: string) => EditResult;
+  /**
    * 置く部品に付ける ID。**知らない種類だけ null。** ID がそのまま図に出る種類
    * (circuit の `port` / `vcc`) も既定の名前で返す — 置く流れを窓で止めない
    * (KiCad が `#PWR?` で置いてから直させるのと同じ)。名前は欄で直す。
