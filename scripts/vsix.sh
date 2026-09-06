@@ -149,13 +149,26 @@ case "$mode" in
     # 直下なので、モノレポでは `packages/<パッケージ>` の分だけ足りず、Marketplace と
     # 拡張ページの図が 404 になる (単一リポジトリだった頃は既定で合っていた)。
     # package.json の repository.directory から基準を作って渡す。
-    read -r base_content base_images <<<"$(node -p "
+    #
+    # **答えは代入で受ける。** `read ... <<<"$(node -p …)"` と 1 行で書くと、
+    # node が落ちても read は空行を読んで 0 を返す (here-string は必ず 1 行ある)。
+    # `set -e` も ERR の罠も素通りし、基準が空のまま
+    # `vsce package --baseContentUrl "" --baseImagesUrl ""` が「成功」して、
+    # **README の図とリンクが黙って 404 の .vsix** が出てくる。
+    # 代入なら command substitution の終了コードがそのまま効く。
+    bases="$(node -p "
       const p = require('$root/packages/$pkg/package.json');
       const url = String(p.repository?.url ?? '').replace(/^git\+/, '').replace(/\.git\$/, '');
       if (!url) throw new Error('packages/$pkg/package.json に repository.url がありません');
       const dir = p.repository?.directory ? '/' + p.repository.directory : '';
       [url + '/blob/HEAD' + dir, url + '/raw/HEAD' + dir].join(' ');
     ")"
+    read -r base_content base_images <<<"$bases"
+    # node が落ちずに思わぬものを刷ったときも、ここで止める (空の基準は渡さない)。
+    if [ -z "$base_content" ] || [ -z "$base_images" ]; then
+      echo "packages/$pkg の repository から README の基準 URL を作れませんでした: '$bases'" >&2
+      exit 1
+    fi
 
     echo "==> $pkg: $(basename "$out") を作る (README の相対リンクの基準: $base_content)"
     # vsce package が vscode:prepublish (esbuild --production) を呼ぶ。
