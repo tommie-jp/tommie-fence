@@ -1,114 +1,64 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
 import {
-  CAPTION_CLEAR, NAME_CAP, caption, fitToBoard, partLabel, pinPoints, pointOfPin,
+  CAPTION_CLEAR, NAME_CAP, caption, fitToBoard, haloWidth, partLabel, pinPoints, pointOfPin,
 } from './partCommon.ts';
-import { element, num, svgText } from './svg.ts';
-import { textWidth } from './textFit.ts';
-import { REAL_INK, transformerCore } from 'fence-kit';
+import { element, num } from './svg.ts';
+import { REAL_INK, dipChip, sipBox, sipHeader, transformerCore } from 'fence-kit';
+import type { ChipInk } from 'fence-kit';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
+
+/** fence-kit のパッケージに渡す色。**板ではなく部品の色**を集めたもの。 */
+export function chipInk(theme: RenderTheme): ChipInk {
+  return {
+    body: theme.palette.chipBody,
+    pin: theme.palette.chipPin,
+    chipText: theme.palette.chipText,
+    plate: theme.palette.plate,
+    outside: theme.palette.partText,
+    halo: theme.palette.textHalo,
+    haloWidth: haloWidth(theme),
+  };
+}
 
 /** ピンの上に置く足の跡。 */
 const stub = (point: Point, fill: string, dy = -3): string =>
   element('rect', { x: num(point.x - 3), y: num(point.y + dy), width: 6, height: 6, fill });
 
-/** 本体の枠と字の間に残す余白。 */
-const CHIP_LABEL_PAD = 14;
-
 /**
- * パッケージの幅からはみ出さないところまで字を詰める。
- * **幅は文字数ではなく `textWidth` で数える**。全角を半角の幅で数えていたときは、
- * 日本語のラベルが枠から飛び出していた (dip8 の本体 78px に対して字が 95px)。
- * 板の上の字はどこも同じ物差しで数える (部品リスト・キャプションと共通)。
+ * DIP パッケージ。**姿は fence-kit にある** (`parts/chips.ts`) — 実物の
+ * パッケージの話で板に依らないので、perfboard と同じ絵になる
+ * (実機で「全ての部品の見た目を breadboard と perfboard で共通にする」)。
+ * ここに残るのは板の話 — 足の点と、切り欠きを向ける先。
  */
-const fittedFontSize = (text: string, width: number, scale: number): number =>
-  Math.min(scale * 9.5, (width - CHIP_LABEL_PAD) / textWidth(text));
-
 export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
-  const anchor = part.pins[0]?.address;
-  const half = part.pins.length / 2;
-  if (!anchor || anchor.kind !== 'hole') return '';
+  const points = pinPoints(part, layout);
+  if (!points || points.length === 0) return '';
 
-  const { palette } = theme;
-  const scale = textScale(theme);
-  const points = part.pins.map((pin) => (pin.address ? layout.point(pin.address) : { x: 0, y: 0 }));
-  const anchorPoint = points[0]!;
-  const oppositePoint = points[part.pins.length - 1]!;
-  const farPoint = points[half - 1]!;
-
-  const x0 = Math.min(anchorPoint.x, farPoint.x) - 0.45 * layout.pitch;
-  const x1 = Math.max(anchorPoint.x, farPoint.x) + 0.45 * layout.pitch;
-  const y0 = Math.min(anchorPoint.y, oppositePoint.y) - 5;
-  const y1 = Math.max(anchorPoint.y, oppositePoint.y) + 5;
-
-  const stubs = points.map((point) => stub(point, palette.chipPin, point.y < (y0 + y1) / 2 ? -1 : -5)).join('');
-
-  const numbers = part.pins
-    .map((pin, index) => {
-      const point = points[index]!;
-      const inward = point.y < (y0 + y1) / 2 ? 12 : -7;
-      return svgText(point.x, point.y + inward, pin.name, { 'font-size': num(scale * 6.5), fill: palette.chipPin });
-    })
-    .join('');
-
-  const shell = element('rect', {
-    x: num(x0), y: num(y0), width: num(x1 - x0), height: num(y1 - y0), rx: 3,
-    fill: palette.chipBody, stroke: '#14171c',
-  });
-  // **切り欠きはピン 1 の側の端。** `r180` で 1 番が反対の端へ行くと、実物では
-  // 切り欠きもそちらを向く。ここが付いてこないと、図のとおりに挿した IC が 180 度回る。
-  //
   // **`pins[0]` は 1 番ピンとは限らない** — 升の並びは固定で、回すと名前のほうが
   // 巡る (`placement/place.ts` の spun)。だから名前で引く。
-  const pinOne = points[part.pins.findIndex((pin) => pin.name === '1')] ?? anchorPoint;
-  const notch = element('circle', {
-    cx: num(pinOne.x < (x0 + x1) / 2 ? x0 : x1), cy: num((y0 + y1) / 2), r: 4.5, fill: palette.plate,
+  const pinOne = part.pins.findIndex((pin) => pin.name === '1');
+  return dipChip({
+    points,
+    names: part.pins.map((pin) => pin.name),
+    pinOne: pinOne < 0 ? 0 : pinOne,
+    pitch: layout.pitch,
+    caption: caption(part),
+    scale: textScale(theme),
+    ink: chipInk(theme),
   });
-  const text = caption(part);
-  const label = svgText((x0 + x1) / 2, (y0 + y1) / 2 + 3.5, text, {
-    'font-size': num(fittedFontSize(text, x1 - x0, scale)),
-    fill: palette.chipText,
-  });
-
-  return `${stubs}${shell}${notch}${numbers}${label}`;
 }
-
-/** 1 列ヘッダの本体が覆う帯 (ピッチに対する比)。 */
-const SIP_HALF_HEIGHT = 0.5;
-const SIP_NAME_FONT = 6.5;
-/**
- * ピン名の縁取り。**普通の縁取り (`haloWidth`) より細くする** — 本体の縁と
- * 次の穴の列のあいだは半ピッチ足らずしか無く、太い縁取りは本体の縁を削る
- * (実機で「sip*、部品に文字が被らないようにする」)。細くても、下にあるのは
- * 穴 1 つなので読める。
- */
-const SIP_NAME_HALO = 2;
-/**
- * ピン名は**本体の縁と次の穴の列のあいだ**に置く。縁から穴の列までは
- * 半ピッチ足らずしか無いので、決め打ちの距離だと名前が本体か穴に乗る
- * (実機で「sip*、部品に文字が被らないようにする」)。字は基準線から上へ
- * 伸びるので、**字の高さも足して**縁から離す。
- */
-const SIP_NAME_CLEAR = 0.5;
-const SIP_NAME_CAP = 0.72;
 
 export function sipBarRect(part: PlacedPart, layout: Layout): Rect {
   const points = pinPoints(part, layout);
-  const first = points?.[0];
-  if (!points || !first) return { x: 0, y: 0, width: 0, height: 0 };
-
-  const xs = points.map((point) => point.x);
-  const x0 = Math.min(...xs) - 0.5 * layout.pitch;
-  const x1 = Math.max(...xs) + 0.5 * layout.pitch;
-  const half = SIP_HALF_HEIGHT * layout.pitch;
-  return { x: x0, y: first.y - half, width: x1 - x0, height: half * 2 };
+  if (!points || points.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
+  return sipBox(points, layout.pitch);
 }
 
 /**
- * 1 列に並んだヘッダ。ヘッダ 1 列のモジュール (OLED や測距センサ) をこれで賄うので、
- * **ピン名は本体の外**に出す。どの穴が何なのかが、図の中だけで分かる必要がある。
- * 出す先は溝の側 (`partCommon.labelYOf` と同じ約束):
+ * 1 列に並んだヘッダ。**姿は fence-kit にある** (`parts/chips.ts`)。
+ * 板の話として残るのは**ピン名をどちら側に出すか**だけ — 出す先は溝の側:
  * 盤の端には列番号が印字されていて、そこに重ねると両方読めなくなる。
  */
 export function renderSip(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
@@ -116,47 +66,15 @@ export function renderSip(part: PlacedPart, layout: Layout, theme: RenderTheme):
   const first = points?.[0];
   if (!points || !first) return '';
 
-  const { palette } = theme;
-  const scale = textScale(theme);
-  const bar = sipBarRect(part, layout);
-  const towardRavine = first.y < layout.ravineY ? 1 : -1;
-
-  const shell = element('rect', {
-    x: num(bar.x), y: num(bar.y), width: num(bar.width), height: num(bar.height), rx: 3,
-    fill: palette.chipBody, stroke: '#14171c',
+  return sipHeader({
+    points,
+    names: part.pins.map((pin) => pin.name),
+    pitch: layout.pitch,
+    caption: caption(part),
+    scale: textScale(theme),
+    nameSide: first.y < layout.ravineY ? 1 : -1,
+    ink: chipInk(theme),
   });
-  // 足は本体の縁からピン名の側へ覗かせる。本体の真ん中に重ねるとキャプションと食い合い、
-  // 本体の下に隠すとどの穴に挿さっているのかが読めなくなる。
-  const edgeY = first.y + (towardRavine * bar.height) / 2;
-  const stubs = points
-    .map((point) =>
-      element('rect', { x: num(point.x - 3), y: num(edgeY - 2.5), width: 6, height: 5, fill: palette.chipPin }),
-    )
-    .join('');
-  const names = part.pins
-    .map((pin, index) => {
-      const point = points[index];
-      return point
-        ? partLabel(
-          point.x,
-          point.y + towardRavine * (
-            bar.height / 2 + SIP_NAME_HALO / 2 + SIP_NAME_CLEAR + scale * SIP_NAME_FONT * SIP_NAME_CAP
-          ),
-          pin.name,
-          theme,
-          { 'font-size': num(scale * SIP_NAME_FONT), haloWidth: SIP_NAME_HALO },
-        )
-        : '';
-    })
-    .join('');
-
-  const text = caption(part);
-  const label = svgText(bar.x + bar.width / 2, first.y + 3.5, text, {
-    'font-size': num(fittedFontSize(text, bar.width, scale)),
-    fill: palette.chipText,
-  });
-
-  return `${shell}${stubs}${names}${label}`;
 }
 
 /** タクトスイッチの本体が覆う範囲 (ピッチに対する比)。6mm 角なので 2 列 + 溝ぶん。 */

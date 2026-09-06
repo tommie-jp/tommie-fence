@@ -39,6 +39,10 @@ export type Palette = {
   readonly bodyEdge: string;
   /** 樹脂のパッケージ (TO-92 / TO-220) の胴。**テーマごとの黒**。 */
   readonly chipBody: string;
+  /** パッケージから覗く足の跡と、樹脂に刷った足の番号。 */
+  readonly chipPin: string;
+  /** 樹脂の上に載る字 (部品名・チップ名)。**breadboard と同じ色**。 */
+  readonly chipText: string;
   /** 部品の名前と値。**板の外に出す字** (題・書き出し) もこれ。 */
   readonly caption: string;
   /**
@@ -93,6 +97,8 @@ const LIGHT: Palette = {
   lead: '#9aa0a6',
   body: '#efe4cd',
   chipBody: '#2b2f36',
+  chipPin: '#b9bec7',
+  chipText: '#e8ebf0',
   bodyEdge: '#b6a887',
   caption: '#3c3730',
   plateText: textOn(PLATE_COLORS.green as string),
@@ -111,6 +117,8 @@ const DARK: Palette = {
   lead: '#8d949a',
   body: '#3c4740',
   chipBody: '#12161b',
+  chipPin: '#c9cfd8',
+  chipText: '#eef1f6',
   bodyEdge: '#5c6b62',
   caption: '#dfe6e1',
   plateText: '#e8efe9',
@@ -129,6 +137,8 @@ const MONO: Palette = {
   lead: '#7a7a7a',
   body: '#f2f2f2',
   chipBody: '#000000',
+  chipPin: '#ffffff',
+  chipText: '#ffffff',
   bodyEdge: '#5a5a5a',
   caption: '#1a1a1a',
   plateText: '#1a1a1a',

@@ -30,6 +30,12 @@ export {
   REAL_INK, SMA_SIZE, bodySize, crystalCan, drawBody, drawsOwnLeads, hasBody, smaBody, transformerCore,
 } from './parts/bodies.ts';
 export { boardPartNames, lookupBoardPart } from './parts/boards.ts';
+export {
+  boardBox, boardChip, chipAlongX, dipBox, dipChip, sipBox, sipHeader,
+} from './parts/chips.ts';
+export type {
+  BoardChipOptions, ChipBox, ChipInk, ChipPoint, DipOptions, SipOptions,
+} from './parts/chips.ts';
 export type { BoardPart } from './parts/boards.ts';
 export { drawPackage, packageHalfWidth, packageReach } from './parts/packages.ts';
 export { partIcon } from './parts/icon.ts';

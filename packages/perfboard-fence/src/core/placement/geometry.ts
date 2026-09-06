@@ -1,4 +1,4 @@
-import { crystalCan } from 'fence-kit';
+import { boardBox, crystalCan, dipBox, sipBox } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import { footprintOf } from '../parts/footprint.ts';
 import { isEdgeMount } from '../parts/types.ts';
@@ -158,6 +158,22 @@ export function spanOf(part: PlacedPart): number | null {
 function boxRect(part: PlacedPart, layout: Layout): OrientedRect | null {
   const points = part.pins.map((pin) => layout.point(pin.address));
   if (points.length === 0) return null;
+
+  // **パッケージの外形は fence-kit が持つ。** 描くのも同じ関数なので、
+  // 「図では重なって見えるのに何も言わない」が起きない (この約束のためにここにいる)。
+  const kind = footprintOf(part.type)?.kind;
+  const box = kind === 'dip' ? dipBox(points, layout.pitch)
+    : kind === 'sip' ? sipBox(points, layout.pitch)
+      : kind === 'board' ? boardBox(points, layout.pitch) : null;
+  if (box !== null) {
+    return {
+      cx: box.x + box.width / 2,
+      cy: box.y + box.height / 2,
+      width: box.width,
+      height: box.height,
+      angle: 0,
+    };
+  }
 
   const xs = points.map((point) => point.x);
   const ys = points.map((point) => point.y);

@@ -1,8 +1,9 @@
 import {
-  REAL_INK, drawBody, drawPackage, drawsOwnLeads, element, fit, hasBody, lookupBoardPart, num,
-  bodySize, packageHalfWidth, packageReach, smaBody as drawSmaBody, svgText, transformerCore,
+  REAL_INK, boardChip, dipChip, drawBody, drawPackage, drawsOwnLeads, element, fit, hasBody,
+  lookupBoardPart, num, bodySize, packageHalfWidth, packageReach, sipHeader,
+  smaBody as drawSmaBody, svgText, transformerCore, TEXT_HALO_WIDTH,
 } from 'fence-kit';
-import type { BodyInk, BodyPart } from 'fence-kit';
+import type { BodyInk, BodyPart, ChipInk } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Layout } from '../model/layout.ts';
 import {
@@ -428,22 +429,10 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
   return `${lead}${body}${smaBadge(part, badgeAt, theme)}${label}`;
 }
 
-/** ノッチの半径 (DIP の 1 番ピン側の切り欠き)。 */
-const NOTCH = 4;
-
 /**
  * 箱で描く部品か。**足の数ではなく形で決める** — `sip2` は足が 2 本でも
  * パッケージなので、軸物のように傾けて描いてはいけない。
  */
-/**
- * マイコンボードの基板の色。**下の板とも IC の樹脂とも違う色**にする —
- * 板と同じ緑にすると、上にもう 1 枚基板が載っていることが図から読めない。
- * **透かさない** (`fill-opacity` を掛けない) — 実物の基板は不透明で、
- * 下の穴は見えないし、そこへ配線もできない。
- */
-const BOARD_FILL = '#123a52';
-const BOARD_EDGE = '#0b2637';
-
 const isBoxed = (part: PlacedPart): boolean => {
   const kind = footprintOf(part.type)?.kind;
   // マイコンボードも箱。**列の間隔が広い DIP** として同じ道を通る。
@@ -518,6 +507,68 @@ function renderPackage(part: PlacedPart, layout: Layout, theme: Theme): string {
 }
 
 /**
+ * パッケージに渡す色。**板ではなく部品の色**。breadboard と同じものを渡すので、
+ * 同じ絵になる (実機で「全ての部品の見た目を breadboard と perfboard で
+ * 共通にする。breadboard を基準にする」)。
+ */
+const CHIP_SCALE = 1;
+
+const chipInk = (theme: Theme): ChipInk => ({
+  body: theme.palette.chipBody,
+  pin: theme.palette.chipPin,
+  chipText: theme.palette.chipText,
+  plate: theme.palette.plate,
+  outside: theme.palette.plateText,
+  halo: theme.palette.plate,
+  haloWidth: TEXT_HALO_WIDTH,
+});
+
+/**
+ * DIP・SIP・マイコンボード。**姿は fence-kit にある** (`parts/chips.ts`)。
+ * 板の話として残るのは足の穴の座標だけで、絵は breadboard と 1 つの実装を
+ * 分け合う — どちらも実体配線図なので、同じ部品が板によって違って見える
+ * 理由が無い (実機で「sip*、dip* は breadboard と見た目を同じにする」)。
+ *
+ * **足の番号は書かれた順**。この板の足には名前が無く (穴がそのまま足)、
+ * 1 番から数えた番号がそのまま実物のピン番号になる。
+ *
+ * **字の大きさは breadboard に合わせる** (`CHIP_SCALE`)。樹脂に刷る字は
+ * 部品の姿の一部で、板に書く字 (`metrics.textSize`) とは別のもの。
+ */
+function renderChip(part: PlacedPart, kind: 'dip' | 'sip' | 'board', layout: Layout, theme: Theme): string {
+  const points = part.pins.map((pin) => layout.point(pin.address));
+  if (points.length === 0) return '';
+
+  const shared = {
+    points,
+    pitch: layout.pitch,
+    caption: caption(part),
+    scale: CHIP_SCALE,
+    ink: chipInk(theme),
+  };
+  const numbers = points.map((_, index) => String(index + 1));
+
+  if (kind === 'dip') {
+    // **1 番ピンは書かれたアンカー。** 回しても足の並びのほうが回るので
+    // (`parts/footprint.ts` の pinsOf)、切り欠きは常に 0 番の側。
+    return dipChip({ ...shared, names: numbers, pinOne: 0 });
+  }
+  if (kind === 'sip') {
+    // **名前は行の増える側へ。** この板に溝は無いので、どちらでも読めるほうを
+    // 1 つに決める (breadboard は溝の側)。
+    return sipHeader({ ...shared, names: numbers, nameSide: 1 });
+  }
+
+  const definition = lookupBoardPart(part.type);
+  return boardChip({
+    ...shared,
+    names: definition?.pins ?? [],
+    definition,
+    fit: (text, at, fontSize) => fitToBoard(text, at.x, fontSize, layout),
+  });
+}
+
+/**
  * 足が 3 本以上ある部品。**足を囲む箱**として描き、足は穴まで短い線で出す。
  *
  * DIP は 1 番ピン側にノッチを描く。実物と同じ向きの目印が無いと、
@@ -527,6 +578,11 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
   const rect = bodyRect(part, layout);
   const first = part.pins[0];
   if (!rect || !first) return '';
+
+  // **パッケージの姿は fence-kit が描く** (`parts/chips.ts`)。ここに残るのは
+  // タクトスイッチと変圧器の 2 つだけ。
+  const kind = footprintOf(part.type)?.kind;
+  if (kind === 'dip' || kind === 'sip' || kind === 'board') return renderChip(part, kind, layout, theme);
 
   const leads = part.pins
     .map((pin) => {
@@ -538,15 +594,9 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
     })
     .join('');
 
-  // **マイコンボードは基板の色で描く。** IC の樹脂と同じ色にすると、
-  // 板の上にもう 1 枚の基板が載っていることが図から読めない。
-  const board = lookupBoardPart(part.type);
-  // **タクトスイッチは黒い樹脂**。IC と同じ色にすると、図でどちらか分からない。
-  // 基板と同じで**透かさない** — 実物の胴は不透明で、下の穴には配線できない。
-  const tact = footprintOf(part.type)?.kind === 'switch';
   // **変圧器は箱の中身を fence-kit が描く** (実物の話で板に依らない)。
   // 外の枠は要らないので、ここでは描かずに中身だけを置く。
-  if (footprintOf(part.type)?.kind === 'four-lead') {
+  if (kind === 'four-lead') {
     const core = element(
       'g',
       { transform: `translate(${num(rect.cx)} ${num(rect.cy)})` },
@@ -560,43 +610,15 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
       layout,
     )}`;
   }
+
+  // **タクトスイッチは黒い樹脂**。IC と同じ色にすると、図でどちらか分からない。
+  // **透かさない** — 実物の胴は不透明で、下の穴には配線できない。
   const body = element('rect', {
     x: num(rect.cx - rect.width / 2), y: num(rect.cy - rect.height / 2),
     width: num(rect.width), height: num(rect.height), rx: 3,
-    fill: tact ? SWITCH_FILL : board === null ? theme.palette.body : BOARD_FILL,
-    stroke: tact ? SWITCH_EDGE : board === null ? theme.palette.bodyEdge : BOARD_EDGE,
-    'stroke-width': 1,
-    ...(board === null && !tact ? { 'fill-opacity': theme.metrics.bodyOpacity } : {}),
+    fill: SWITCH_FILL, stroke: SWITCH_EDGE, 'stroke-width': 1,
   });
-
-  // 箱は縦横のどちらにも伸びる (回すと入れ替わる)。**短いほうの辺が
-  // パッケージの端**で、ノッチもキャプションの向きもそこから決まる。
   const tall = rect.height > rect.width;
-
-  // ノッチは**パッケージの端の辺**の真ん中。DIP でだけ描く
-  // (SIP と 3 本足には無い)。
-  //
-  // **端は 1 番ピンと最終ピンの間。** 実物の切り欠きは 2 列の始まりと終わりが
-  // 並ぶ短い辺にあり、その中点を箱の縁へ寄せたところが印の位置になる。
-  // 箱の左端に決め打つと、板を裏返した図 (`style: back`) や回した DIP で
-  // 反対の端へ出て、**図のとおりに挿した IC が 180 度回る** —
-  // この印はそれを防ぐためにある。
-  //
-  // **どちらの軸かも中点が決める。** dip8 の箱は正方形 (4 穴 × 4 行) なので、
-  // 縦長か横長かでは決められない。
-  const footprint = footprintOf(part.type);
-  const lastPin = part.pins[part.pins.length - 1];
-  const ends = [first, lastPin ?? first].map((pin) => layout.point(pin.address));
-  const mid = { x: (ends[0]!.x + ends[1]!.x) / 2, y: (ends[0]!.y + ends[1]!.y) / 2 };
-  const alongX = Math.abs(mid.x - rect.cx) >= Math.abs(mid.y - rect.cy);
-  const nearOn = (center: number, size: number, at: number): number =>
-    (at < center ? center - size / 2 + NOTCH : center + size / 2 - NOTCH);
-  const notch = footprint?.kind !== 'dip' ? '' : element('circle', {
-    cx: num(alongX ? nearOn(rect.cx, rect.width, mid.x) : rect.cx),
-    cy: num(alongX ? rect.cy : nearOn(rect.cy, rect.height, mid.y)),
-    r: NOTCH, fill: theme.palette.plate, stroke: theme.palette.bodyEdge, 'stroke-width': 1,
-  });
-
   const label = partLabel(
     caption(part),
     { cx: rect.cx, cy: rect.cy, height: tall ? rect.width : rect.height, angle: tall ? Math.PI / 2 : 0 },
@@ -605,7 +627,7 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
     layout,
   );
 
-  return `${body}${notch}${boardMarks(part, rect, layout)}${switchMarks(part, rect)}${leads}${label}`;
+  return `${body}${switchMarks(part, rect)}${leads}${label}`;
 }
 
 /** タクトスイッチの樹脂。**IC より黒い** (実物も真っ黒な成型品)。 */
@@ -623,127 +645,6 @@ function switchMarks(part: PlacedPart, rect: OrientedRect): string {
     cx: num(rect.cx), cy: num(rect.cy), r: num(Math.min(rect.width, rect.height) * 0.28),
     fill: '#c9cfd8', stroke: '#6b7280', 'stroke-width': 1,
   });
-}
-
-/** マイコンボードの上に載っているもの。基板でなければ何も足さない。 */
-const BOARD_INK = '#c9cfd8';
-const BOARD_CHIP = '#0d1014';
-const BOARD_CHIP_EDGE = '#3a4049';
-/** USB は基板の端から少しだけ出る。実物の micro-B / Type-C の幅に寄せた。 */
-const USB_OUT = 7;
-const USB_LONG = 16;
-const USB_THICK = 9;
-/** 真ん中に載る本体チップの一辺。 */
-const CHIP_SIDE = 22;
-/** 足の名前の字と、穴からの逃がし。 */
-const PIN_FONT = 6.5;
-const PIN_GAP = 7;
-
-/**
- * マイコンボードの上に載っているもの — 本体チップ・USB・アンテナ・足の名前。
- *
- * **breadboard と同じものを描くが、絵は別に持つ。** あちらは溝をまたぐ板の
- * 幾何 (`Layout` が別物) に依っていて、共有できるのは**どのボードに何番の
- * ピンがあるか**の表だけだった (52 の docs/21 の手順 3)。
- *
- * 足の名前は**基板の内側へ縦書き**。外へ出すと、隣の穴 (実際に配線を挿す
- * ところ) を字が覆う。
- */
-function boardMarks(part: PlacedPart, rect: OrientedRect, layout: Layout): string {
-  const board = lookupBoardPart(part.type);
-  if (board === null) return '';
-
-  const centre = { x: rect.cx, y: rect.cy };
-  const chip = element('rect', {
-    x: num(centre.x - CHIP_SIDE / 2), y: num(centre.y - CHIP_SIDE / 2),
-    width: CHIP_SIDE, height: CHIP_SIDE, rx: 2,
-    fill: BOARD_CHIP, stroke: BOARD_CHIP_EDGE, 'stroke-width': 1,
-  });
-  const chipName = svgText(centre.x, centre.y + 3, board.chip, {
-    'font-size': 7, fill: BOARD_INK,
-  });
-
-  // **USB は 1 番ピンの側の端。** 回すと 1 番ピンの側も回るので、名前で引く
-  // (並びは升で決まっていて、回すと名前のほうが巡る)。
-  const first = part.pins[0];
-  const at = first === undefined ? centre : layout.point(first.address);
-  const tall = rect.height > rect.width;
-  const usb = usbAt(rect, at, tall);
-  const aerial = board.wireless ? antennaAt(rect, at, tall) : '';
-
-  const names = part.pins.map((pin, index) => {
-    const name = board.pins[index];
-    if (name === undefined) return '';
-    const point = layout.point(pin.address);
-    // 内側へ向かって書く。**字の向きは列で揃える** (下から上へ読む) —
-    // 片方だけ天地が逆になると読めない。
-    const inward = tall
-      ? (point.x < centre.x ? 1 : -1)
-      : (point.y < centre.y ? 1 : -1);
-    const x = tall ? point.x + inward * PIN_GAP : point.x + PIN_FONT * 0.35;
-    const y = tall ? point.y + PIN_FONT * 0.35 : point.y + inward * PIN_GAP;
-    const turn = tall ? '' : ' rotate(-90)';
-    return element(
-      'g',
-      { transform: `translate(${num(x)} ${num(y)})${turn}` },
-      svgText(0, 0, name, {
-        'font-size': PIN_FONT, fill: BOARD_INK, anchor: inward > 0 ? 'end' : 'start',
-      }),
-    );
-  }).join('');
-
-  return `${usb}${aerial}${chip}${chipName}${names}`;
-}
-
-/** USB の口。1 番ピンのある端から外へ少し出す。 */
-function usbAt(rect: OrientedRect, first: { readonly x: number; readonly y: number }, tall: boolean): string {
-  const near = tall ? first.y < rect.cy : first.x < rect.cx;
-  const box = tall
-    ? {
-      x: rect.cx - USB_LONG / 2,
-      y: near ? rect.cy - rect.height / 2 - USB_OUT : rect.cy + rect.height / 2 - USB_THICK + USB_OUT,
-      width: USB_LONG, height: USB_THICK,
-    }
-    : {
-      x: near ? rect.cx - rect.width / 2 - USB_OUT : rect.cx + rect.width / 2 - USB_THICK + USB_OUT,
-      y: rect.cy - USB_LONG / 2,
-      width: USB_THICK, height: USB_LONG,
-    };
-  return element('rect', {
-    x: num(box.x), y: num(box.y), width: num(box.width), height: num(box.height), rx: 2.5,
-    fill: BOARD_INK, stroke: '#8a929c', 'stroke-width': 1,
-  });
-}
-
-/** 無線つきの版のアンテナ。**USB と反対の端**に載っている。 */
-function antennaAt(rect: OrientedRect, first: { readonly x: number; readonly y: number }, tall: boolean): string {
-  const near = tall ? first.y < rect.cy : first.x < rect.cx;
-  const [long, thick] = [26, 16];
-  const box = tall
-    ? {
-      x: rect.cx - long / 2,
-      y: near ? rect.cy + rect.height / 2 - thick - 4 : rect.cy - rect.height / 2 + 4,
-      width: long, height: thick,
-    }
-    : {
-      x: near ? rect.cx + rect.width / 2 - thick - 4 : rect.cx - rect.width / 2 + 4,
-      y: rect.cy - long / 2,
-      width: thick, height: long,
-    };
-  const outline = element('rect', {
-    x: num(box.x), y: num(box.y), width: num(box.width), height: num(box.height), rx: 2,
-    fill: 'none', stroke: BOARD_INK, 'stroke-width': 1.4,
-  });
-  const traces = [-7, 0, 7].map((offset) => (tall
-    ? element('line', {
-      x1: num(box.x + 3), y1: num(rect.cy + offset), x2: num(box.x + box.width - 3), y2: num(rect.cy + offset),
-      stroke: BOARD_INK, 'stroke-width': 1.4,
-    })
-    : element('line', {
-      x1: num(rect.cx + offset), y1: num(box.y + 3), x2: num(rect.cx + offset), y2: num(box.y + box.height - 3),
-      stroke: BOARD_INK, 'stroke-width': 1.4,
-    }))).join('');
-  return outline + traces;
 }
 
 /**

@@ -44,7 +44,10 @@ Markdown の ` ```perfboard ` フェンスをユニバーサル基板の実体�
    その行が要って、breadboard と重複していると測れたときだけ。
    引き上げたら breadboard のスナップショットが無差分であることを必ず見る。
    いま上がっているのは `num` / `svgText` / `parseOhms` / `resistorBandColors` /
-   部品の色 / `fit` / `textWidth`。**どれも実物の部品か SVG の話で、盤面に依らない。**
+   部品の色 / `fit` / `textWidth` / **パッケージの姿** (`parts/chips.ts` —
+   DIP・SIP・マイコンボード)。**どれも実物の部品か SVG の話で、盤面に依らない。**
+   パッケージの姿は**外形も fence-kit が持つ** (`dipBox` / `sipBox` / `boardBox`) —
+   描画と当たり判定で同じ形を使う約束 (下の 9) をまたいで保つため。
 6. **番地の長さに上限を置く**。行の名前を無制限に受けると `rowIndex` が
    桁あふれして `Infinity` になり、`rowLabel` の桁下げが終わらず**図が止まる**
    (実際に踏んだ)。`model/address.ts` の `MAX_ROW_LETTERS` / `MAX_COL_DIGITS`。

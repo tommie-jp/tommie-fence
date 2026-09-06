@@ -31,9 +31,9 @@ describe('renderBackSide', () => {
   test('puts the pin-1 notch on the pin-1 side, even though the board is mirrored', () => {
     // ここを取り違えると、図のとおりに挿した IC が 180 度回る。
     const svg = draw();
-    const notch = /<circle cx="([0-9.]+)"[^>]*r="4"/.exec(svg);
+    const notch = /<circle cx="([0-9.]+)"[^>]*r="4.5"/.exec(svg);
     const front = renderBackSide(board, createLayout(board, { title: true }), { wires: [], parts: dip, soldered: [] }, THEME, labels, 0);
-    const frontNotch = /<circle cx="([0-9.]+)"[^>]*r="4"/.exec(front);
+    const frontNotch = /<circle cx="([0-9.]+)"[^>]*r="4.5"/.exec(front);
 
     expect(Math.abs(Number(notch?.[1]) - pinOneX())).toBeLessThan(20);
     expect(Math.abs(Number(frontNotch?.[1]) - pinOneX(createLayout(board, { title: true })))).toBeLessThan(20);

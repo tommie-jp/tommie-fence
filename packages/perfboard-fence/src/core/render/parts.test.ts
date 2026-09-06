@@ -330,7 +330,7 @@ describe('DIP のノッチはパッケージの端に出る', () => {
       : (words.includes('r180') ? { rotate: 180 as const, mirror: false } : NO_TURN);
     const placed = placeParts([{ ...spec, holes: [hole!], turn }], wide).parts[0]!;
     const svg = renderParts([placed], wideLayout, THEME);
-    const found = /<circle cx="([-0-9.]+)" cy="([-0-9.]+)" r="4"/.exec(svg);
+    const found = /<circle cx="([-0-9.]+)" cy="([-0-9.]+)" r="4.5"/.exec(svg);
     return { x: Number(found?.[1]), y: Number(found?.[2]), pins: placed.pins };
   };
 
