@@ -174,6 +174,19 @@ describe('generateTex', () => {
     expect(generate('parts:', '  C1: capacitor a1 c1 v=vC').tex).toContain('voltage/american label distance=1.4');
   });
 
+  test('turns the MOSFET arrows on, so the figure tells n from p', () => {
+    // 実機で「FET に必ず矢印を入れて n・p の区別が付くように」。circuitikz の
+    // 既定では nmos と pmos の違いがゲートの丸だけで、印刷すると読み取れない。
+    // **MOSFET を置いた図にだけ書く** (図に入る書き方を増やさない。約束 6)。
+    expect(generate('parts:', '  M1: nmos a1').tex).toContain('\\ctikzset{tripoles/mos style/arrows}');
+    expect(generate('parts:', '  M1: pmos a1').tex).toContain('\\ctikzset{tripoles/mos style/arrows}');
+    expect(generate('parts:', '  R1: resistor a1 a3').tex).not.toContain('mos style');
+    // 接合形と、基板の足を出す形 (`-e` / `-d`) は既定で矢が付いている。
+    // この指定も効かない (実測) ので、書き足す理由が無い。
+    expect(generate('parts:', '  J1: njfet a1').tex).not.toContain('mos style');
+    expect(generate('parts:', '  M1: nmos-e a1').tex).not.toContain('mos style');
+  });
+
   test('draws the same arrows in the tex it writes out', () => {
     const tex = generateLatex('parts:', '  R1: resistor a1 a3 i=i1').tex;
 

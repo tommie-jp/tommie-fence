@@ -2,6 +2,21 @@ import { describe, expect, test } from 'vitest';
 import { drawGlyph, glyphOf } from './mapGlyphs.ts';
 import { partTypeNames } from '../parts.ts';
 
+/**
+ * その markup に矢の頭が入っているか。`arrow()` は頭の羽 2 本を先端から
+ * 引くので、**同じ点から始まる `M` が 2 つ**あれば矢が付いている。
+ */
+/**
+ * 矢の頭の座標。`arrow()` は `M軸元 L頭 M頭 L羽 M頭 L羽` の形で書き出すので、
+ * **同じ点への `L` の直後に、その点からの `M` が続く**ところが頭。
+ * 素の足の線は 1 本の `L` の連なりで書くので、この形にはならない。
+ */
+const headsOf = (markup: string): { readonly x: number; readonly y: number }[] =>
+  [...markup.matchAll(/L(-?[\d.]+),(-?[\d.]+) M\1,\2 L/g)]
+    .map((found) => ({ x: Number(found[1]), y: Number(found[2]) }));
+
+const hasArrow = (markup: string): boolean => headsOf(markup).length > 0;
+
 describe('glyphOf', () => {
   test('gives the common passives their own shape', () => {
     expect(glyphOf('resistor').name).toBe('resistor');
@@ -10,10 +25,32 @@ describe('glyphOf', () => {
   });
 
   test('folds a family onto one shape when only the detail differs', () => {
-    // 落とすのは**同じ記号の中の細部**だけ。増強形と空乏形はチャネルの
-    // 切れ方の差で、この大きさでは読めない。
-    expect(glyphOf('nmos-d').name).toBe(glyphOf('nmos-e').name);
-    expect(glyphOf('pmos-d').name).toBe(glyphOf('pmos-e').name);
+    // 落とすのは**同じ記号の中の細部**だけ。ショットキーと普通のダイオードは
+    // 棒の折れ方の差で、この大きさでは読めない…わけではないので描き分ける。
+    // ここに残っているのは、図が同じ形で描いている組。
+    expect(glyphOf('thermistor').name).toBe(glyphOf('varistor').name);
+    expect(glyphOf('buzzer').name).toBe(glyphOf('speaker').name);
+  });
+
+  test('tells the enhancement FET from the depletion one by the channel', () => {
+    // 実機で「pmos-e と pmos-d の区別が付くように実線と破線で分ける」。
+    // 図 (circuitikz の nigfete / nigfetd) と同じで、**切れているのは
+    // チャネルの棒**で、増強形が切れて空乏形はつながる。ゲートの棒は両方とも
+    // 1 本のまま (そちらを切ると別の記号になる)。
+    for (const [enhancement, depletion] of [['nmos-e', 'nmos-d'], ['pmos-e', 'pmos-d']] as const) {
+      expect(glyphOf(enhancement).name, enhancement).not.toBe(glyphOf(depletion).name);
+      const broken = drawGlyph(glyphOf(enhancement).name);
+      const solid = drawGlyph(glyphOf(depletion).name);
+      // 空乏形のチャネルは端から端までの 1 本。増強形にはその 1 本が無い。
+      expect(solid, depletion).toContain('M-3.5,-7 L-3.5,7');
+      expect(broken, enhancement).not.toContain('M-3.5,-7 L-3.5,7');
+      // 増強形は 3 つに切れている (図が描いているのと同じ数)。
+      expect([...broken.matchAll(/M-3\.5,-?[\d.]+ L-3\.5,-?[\d.]+/g)], enhancement).toHaveLength(3);
+      // ゲートの棒はどちらも 1 本。
+      for (const [shape, type] of [[broken, enhancement], [solid, depletion]] as const) {
+        expect(shape, type).toContain('M-7,-7 L-7,7');
+      }
+    }
   });
 
   test('turns the arrow around for the p-type of every transistor family', () => {
@@ -24,6 +61,43 @@ describe('glyphOf', () => {
       expect(glyphOf(n).name, n).not.toBe(glyphOf(p).name);
       expect(drawGlyph(glyphOf(n).name), n).not.toBe(drawGlyph(glyphOf(p).name));
     }
+  });
+
+  test('reads the pn-junction arrows and the current arrow by their own rules', () => {
+    // **FET の矢は意味が 2 通りある**ので、n 形でも向きが揃わない。
+    // 実機で「nmos の矢印が逆」と見えたのはこれが理由で、調べ直して
+    // 一般の回路図どおりに戻した (2026-09-06)。
+    //
+    // - 接合形のゲートの矢と `-e` / `-d` の基板の矢 → **pn 接合の向き**
+    //   (P から N へ)。n 形はチャネルの棒を指す。
+    // - 簡易記号 `nmos` / `pmos` のソースの矢 → **電流の向き**
+    //   (バイポーラのエミッタと同じ読み方)。n 形は棒から離れる。
+    //
+    // チャネルの棒は x=-3.5 (接合形だけ 1 本の棒で x=-4)。
+    const heads = (type: string): number[] =>
+      headsOf(drawGlyph(glyphOf(type).name)).map((head) => head.x);
+
+    for (const [type, bar] of [['njfet', -4], ['nmos-e', -3.5], ['nmos-d', -3.5]] as const) {
+      expect(heads(type), type).toContain(bar);
+    }
+    for (const [type, bar] of [['pjfet', -4], ['pmos-e', -3.5], ['pmos-d', -3.5]] as const) {
+      expect(heads(type), type).not.toContain(bar);
+    }
+    // 簡易記号だけ逆。n はソースの足の外側 (x=3) に、p は棒の上に頭が来る。
+    expect(heads('nmos')).toEqual([3]);
+    expect(heads('pmos')).toEqual([-3.5]);
+  });
+
+  test('gives every FET an arrow, so n and p read apart at a glance', () => {
+    // 実機で「FET の図形に必ず矢印を入れる」。簡易記号の nmos / pmos は
+    // ゲートの丸 1 つしか違いが無く、升目の大きさでは n と p を読めなかった。
+    // 図 (circuitikz の arrowmos) と同じで、**矢はソースの足に付く**。
+    for (const type of ['nmos', 'pmos', 'njfet', 'pjfet',
+      'nmos-e', 'pmos-e', 'nmos-d', 'pmos-d'] as const) {
+      expect(hasArrow(drawGlyph(glyphOf(type).name)), type).toBe(true);
+    }
+    // 矢を数える目のほうも確かめる。矢の無い記号では立たない。
+    expect(hasArrow(drawGlyph('capacitor'))).toBe(false);
   });
 
   test('draws the diodes the figure draws differently as different shapes', () => {

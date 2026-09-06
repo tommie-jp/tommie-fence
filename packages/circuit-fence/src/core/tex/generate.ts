@@ -116,6 +116,12 @@ const unicodeFontLines = (): string[] => [
 ];
 
 /**
+ * ソースの矢を足す MOSFET。**簡易記号の 2 つだけ** — `-e` / `-d` は
+ * circuitikz が既定で基板の矢を描いていて、`mos style/arrows` も効かない (実測)。
+ */
+const MOS_ARROW_TYPES: ReadonlySet<string> = new Set(['nmos', 'pmos']);
+
+/**
  * 実機コンパイルを確認した定型。
  * circuitikz 1.0 (フェンス側 WASM) で通る書き方だけを使う。
  * 書き出す `.tex` はそこにパッケージを足すだけで、図の中身は同じ。
@@ -129,6 +135,7 @@ const headerOf = (
   colors: readonly string[],
   groundWidening: number,
   hasVoltage: boolean,
+  hasMos: boolean,
   shapes: readonly string[],
 ): string[] => [
   '\\usepackage{circuitikz}',
@@ -156,6 +163,13 @@ const headerOf = (
   ...(hasVoltage
     ? ['\\ctikzset{voltage/distance from node=.7}', '\\ctikzset{voltage/american label distance=1.4}']
     : []),
+  // MOSFET の簡易記号にソースの矢を付ける。既定では `nmos` と `pmos` の違いが
+  // ゲートの丸 1 つしか無く、印刷すると n 形か p 形か読み取れない
+  // (実機で「FET に必ず矢印を入れて n・p の区別が付くように」)。
+  // 矢は**電流の向き**なので n 形が外を向く (升目の記号もこれに合わせてある)。
+  // **簡易記号を置いた図にだけ書く** (約束 6)。接合形と `-e` / `-d` は
+  // 既定で矢が付いていて、この指定も効かない (実測)。
+  ...(hasMos ? ['\\ctikzset{tripoles/mos style/arrows}'] : []),
 ];
 
 /**
@@ -917,6 +931,7 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
       ? groundScale(style.wireWidth ?? DEFAULT_WIRE_WIDTH)
       : 1,
     circuit.parts.some((part) => part.kind === 'two-terminal' && part.voltage !== null),
+    circuit.parts.some((part) => MOS_ARROW_TYPES.has(part.type)),
     sipShapesFor(circuit),
   );
   const cells = cellsOf(circuit);

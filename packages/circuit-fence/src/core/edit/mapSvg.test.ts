@@ -1,6 +1,9 @@
+import { textWidth } from 'fence-kit';
 import { describe, expect, test } from 'vitest';
 import { gridMap } from './map.ts';
+import { glyphOf, glyphSpan, glyphTall } from './mapGlyphs.ts';
 import { renderMapHtml } from './mapSvg.ts';
+import { lookupPartType, partTypeNames } from '../parts.ts';
 
 const draw = (source: string): string => renderMapHtml(gridMap(source));
 
@@ -363,14 +366,150 @@ describe('多端子部品の足', () => {
     expect(nameAt('+')).toBeGreaterThan(dotAt('4.5'));
   });
 
-  test('puts every leg name inside the body, not out at the leg end', () => {
+  test('puts a leg name inside the body, not out at the leg end', () => {
     // 実機で「すべての部品でピン名は内側に」。外に出すと隣の升へはみ出し、
-    // 部品を並べたときに名前どうしがぶつかる。
-    const svg = draw('parts:\n  Q1: npn b2\n');
-    const name = Number(/<text x="([-\d.]+)"[^>]*class="cf-pin-name"[^>]*>B</.exec(svg)?.[1] ?? NaN);
+    // 部品を並べたときに名前どうしがぶつかる。**これが既定** — 胴が棒だけで
+    // 中の空いていないトランジスタ族だけが例外 (下の 2 つ)。
+    const svg = draw('parts:\n  VR1: regulator b2\n');
+    const name = Number(/<text x="([-\d.]+)"[^>]*class="cf-pin-name"[^>]*>IN</.exec(svg)?.[1] ?? NaN);
     const dot = Number(/class="cf-pin-dot" cx="([-\d.]+)" cy="0"/.exec(svg)?.[1] ?? NaN);
 
     expect(name).toBeGreaterThan(dot);
+  });
+
+  /**
+   * 3 本足のトランジスタと、その足の名前の出る辺。**p 形は上下が入れ替わる**
+   * (`BJT_SIDE_P` / `FET_SIDE_P`)。
+   */
+  const THREE_LEGGED = [
+    { type: 'nmos', left: 'G', top: 'D', bottom: 'S' },
+    { type: 'pmos', left: 'G', top: 'S', bottom: 'D' },
+    { type: 'njfet', left: 'G', top: 'D', bottom: 'S' },
+    { type: 'nmos-e', left: 'G', top: 'D', bottom: 'S' },
+    { type: 'npn', left: 'B', top: 'C', bottom: 'E' },
+    { type: 'pnp', left: 'B', top: 'E', bottom: 'C' },
+    { type: 'nigbt', left: 'G', top: 'C', bottom: 'E' },
+    { type: 'pigbt', left: 'G', top: 'E', bottom: 'C' },
+  ] as const;
+
+  /** その字の `<text>` の左上。 */
+  const nameAt = (svg: string, text: string): { readonly x: number; readonly y: number } => {
+    const found = new RegExp(`<text x="([-\\d.]+)" y="([-\\d.]+)"[^>]*class="cf-pin-name"[^>]*>${text}<`)
+      .exec(svg);
+    return { x: Number(found?.[1] ?? NaN), y: Number(found?.[2] ?? NaN) };
+  };
+
+  const dotsOf = (svg: string): { readonly x: number; readonly y: number }[] =>
+    [...svg.matchAll(/class="cf-pin-dot" cx="([-\d.]+)" cy="([-\d.]+)"/g)]
+      .map((found) => ({ x: Number(found[1]), y: Number(found[2]) }));
+
+  test('keeps the transistor leg names off the symbol, beside each pin', () => {
+    // 実機で「FET の G・D・S を図形と重ならないように」、続けて「NPN・PNP も
+    // 同様に」「nigbt・pigbt も同様」。中に書くと制御端子の字が棒に乗り、
+    // 接合形では**矢の上に**乗って、n 形と p 形を分ける印が読めなかった。
+    // 置き場所は言われたとおり — 左ピンの下、上ピンの右、下ピンの右。
+    for (const part of THREE_LEGGED) {
+      const svg = draw(`parts:\n  X1: ${part.type} b2\n`);
+      const dots = dotsOf(svg);
+      const left = dots.find((dot) => dot.x < 0) ?? { x: NaN, y: NaN };
+      const top = dots.find((dot) => dot.y < 0) ?? { x: NaN, y: NaN };
+      const bottom = dots.find((dot) => dot.y > 0) ?? { x: NaN, y: NaN };
+
+      // 制御端子 (B / G) は左ピンの真下。
+      expect(nameAt(svg, part.left).x, part.type).toBe(left.x);
+      expect(nameAt(svg, part.left).y, part.type).toBeGreaterThan(left.y);
+      // あとの 2 本は上下のピンの右、ピンと同じ高さ。
+      expect(nameAt(svg, part.top).x, part.type).toBeGreaterThan(top.x);
+      expect(Math.abs(nameAt(svg, part.top).y - top.y), part.type).toBeLessThan(6);
+      expect(nameAt(svg, part.bottom).x, part.type).toBeGreaterThan(bottom.x);
+      expect(Math.abs(nameAt(svg, part.bottom).y - bottom.y), part.type).toBeLessThan(6);
+    }
+  });
+
+  test('leaves the transistor names outside the symbol, not on its bars', () => {
+    // 重ならないことが頼まれたことなので、図形の張り出しと比べて確かめる。
+    // どの胴も原点から 13 まで (glyphSpan)、高さは 9 まで (glyphTall)。
+    for (const part of THREE_LEGGED) {
+      const svg = draw(`parts:\n  X1: ${part.type} b2\n`);
+      const names = [...svg.matchAll(/<text x="([-\d.]+)" y="([-\d.]+)"[^>]*class="cf-pin-name"/g)]
+        .map((found) => ({ x: Number(found[1]), y: Number(found[2]) }));
+
+      expect(names, part.type).toHaveLength(3);
+      for (const at of names) {
+        expect(Math.abs(at.x) > 13 || Math.abs(at.y) > 9, `${part.type} (${at.x},${at.y})`).toBe(true);
+      }
+    }
+  });
+
+  /**
+   * 胴の中に足の名前を書いてよい記号。**中が空いているものだけ。**
+   * 箱は名前を入れるための姿そのもので、オペアンプの ± は circuitikz が
+   * 記号の一部として三角の中に描く (図と揃えるため中に置いている)。
+   */
+  const INSIDE_ON_PURPOSE: ReadonlySet<string> = new Set(['box', 'opamp']);
+
+  /** 描いた足の名前を、字の箱として読み直す (基準線は下端)。 */
+  const nameBoxes = (svg: string): {
+    readonly left: number; readonly right: number;
+    readonly top: number; readonly bottom: number; readonly text: string;
+  }[] =>
+    [...svg.matchAll(/<text x="([-\d.]+)" y="([-\d.]+)"[^>]*text-anchor="(\w+)"[^>]*class="cf-pin-name"[^>]*>([^<]*)</g)]
+      .map((found) => {
+        const [x, y, anchor, text] = [Number(found[1]), Number(found[2]), found[3], found[4] ?? ''];
+        const width = textWidth(text) * 8;
+        const left = anchor === 'end' ? x - width : anchor === 'start' ? x : x - width / 2;
+        return { left, right: left + width, top: y - 8, bottom: y, text };
+      });
+
+  test('never writes a leg name on top of the symbol', () => {
+    // 実機で「他の部品でもピン名が図形と重なっているものは FET 同様にする」。
+    // **部品を 1 つずつ見て回るのではなく、重なりを測って全部に効かせる** —
+    // 部品を足したときにも、名前が記号に乗ったままならここで止まる。
+    // 記号の張り出しは `glyphSpan` (横) と `glyphTall` (縦) が持っている。
+    const seen: string[] = [];
+    for (const type of partTypeNames()) {
+      if (lookupPartType(type)?.kind !== 'multi-terminal') continue;
+      const glyph = glyphOf(type).name;
+      if (INSIDE_ON_PURPOSE.has(glyph)) continue;
+      seen.push(type);
+
+      const svg = draw(`parts:\n  X1: ${type} b3\n`);
+      const [span, tall] = [glyphSpan(glyph), glyphTall(glyph)];
+      for (const box of nameBoxes(svg)) {
+        const over = box.right > -span && box.left < span && box.bottom > -tall && box.top < tall;
+        expect(over, `${type}: ${box.text} (${box.left}..${box.right}, ${box.top}..${box.bottom})`).toBe(false);
+      }
+    }
+    // 見落としで 0 件になっていないことを確かめる (通ったのは空回りでは無い)。
+    expect(seen.length).toBeGreaterThan(20);
+  });
+
+  test('leaves the logic gate output unnamed, since the shape already says it', () => {
+    // 実機で「ロジックゲートの 2 本足の部品はピン名を表示しない。3 本足の
+    // out は非表示に」。三角の向きが入口と出口を言っているので、字で繰り返さない。
+    // **接続点は残る** — `G1.out -- a5` と書けなくなっては困る。
+    for (const type of ['and', 'or', 'xor', 'nand', 'nor', 'xnor'] as const) {
+      const svg = draw(`parts:\n  G1: ${type} b3\n`);
+      const names = [...svg.matchAll(/class="cf-pin-name"[^>]*>([^<]*)</g)].map((found) => found[1]);
+
+      expect(names.sort(), type).toEqual(['1', '2']);
+      // 入口 2 本と出口で、丸は 3 つとも出ている。
+      expect([...svg.matchAll(/class="cf-pin-dot"/g)], type).toHaveLength(3);
+      expect(svg, type).toContain('data-pin="G1.out"');
+    }
+  });
+
+  test('leaves both legs of a one-input gate unnamed', () => {
+    // 2 本足 (`not` / `buffer`) は入口と出口しか無い。どちらがどちらかは
+    // 三角の向きで読めるので、字は 1 つも出さない。
+    for (const type of ['not', 'buffer'] as const) {
+      const svg = draw(`parts:\n  G1: ${type} b3\n`);
+
+      expect(svg, type).not.toContain('cf-pin-name');
+      expect([...svg.matchAll(/class="cf-pin-dot"/g)], type).toHaveLength(2);
+      expect(svg, type).toContain('data-pin="G1.in"');
+      expect(svg, type).toContain('data-pin="G1.out"');
+    }
   });
 
   test('writes the board kind inside the box, where the real chip sits', () => {

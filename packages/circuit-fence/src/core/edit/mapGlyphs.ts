@@ -27,7 +27,7 @@ export type GlyphName =
   | 'battery' | 'switch' | 'switch-nc' | 'button' | 'button-nc'
   | 'reed' | 'spdt' | 'meter'
   | 'crystal' | 'fuse' | 'lamp' | 'speaker' | 'mic' | 'transformer' | 'coax'
-  | 'bjt' | 'bjt-p' | 'fet' | 'fet-p' | 'fet-bulk' | 'fet-bulk-p'
+  | 'bjt' | 'bjt-p' | 'fet' | 'fet-p' | 'fet-e' | 'fet-e-p' | 'fet-d' | 'fet-d-p'
   | 'jfet' | 'jfet-p' | 'igbt' | 'igbt-p' | 'opamp'
   | 'and' | 'and-inv' | 'or' | 'or-inv' | 'xor' | 'xor-inv' | 'buffer' | 'buffer-inv'
   | 'ground' | 'port' | 'supply-up' | 'supply-down' | 'short' | 'box';
@@ -68,7 +68,8 @@ const SHAPES: Record<string, GlyphName> = {
   'slide-switch': 'spdt',
   npn: 'bjt', pnp: 'bjt-p',
   nmos: 'fet', pmos: 'fet-p', njfet: 'jfet', pjfet: 'jfet-p',
-  'nmos-e': 'fet-bulk', 'pmos-e': 'fet-bulk-p', 'nmos-d': 'fet-bulk', 'pmos-d': 'fet-bulk-p',
+  // **増強形と空乏形はチャネルで分かれる** (図と同じ。実機で頼まれた)。
+  'nmos-e': 'fet-e', 'pmos-e': 'fet-e-p', 'nmos-d': 'fet-d', 'pmos-d': 'fet-d-p',
   nigbt: 'igbt', pigbt: 'igbt-p',
   opamp: 'opamp',
   and: 'and', nand: 'and-inv',
@@ -144,6 +145,26 @@ function arrow(x1: number, y1: number, x2: number, y2: number): string {
     `M${num(x2)},${num(y2)} L${num(x2 + ux * cos - turn * uy * sin)},${num(y2 + turn * ux * sin + uy * cos)}`;
   return `M${num(x1)},${num(y1)} L${num(x2)},${num(y2)} ${wing(1)} ${wing(-1)}`;
 }
+
+/**
+ * 基板の足を出す FET (増強形・空乏形) の胴。**チャネルの棒だけが違う。**
+ *
+ * 図 (circuitikz の `nigfete` / `nigfetd`) と同じで、増強形はチャネルが
+ * 3 つに切れ (電圧を掛けるまでチャネルが無い)、空乏形は 1 本でつながる。
+ * **切れるのはチャネルの棒だけ** — ゲートの棒を切ると別の記号になる。
+ */
+const fetBulk = (channel: string, bulk: string): string =>
+  path(`M-13,0 L-7,0 M-7,-7 L-7,7 ${channel}`
+    + ` M-3.5,-5 L6,-5 L6,-9 M-3.5,5 L6,5 L6,9 M-3.5,0 L6,0 ${bulk}`);
+
+/** 空乏形のチャネル。端から端までの 1 本。 */
+const CHANNEL_SOLID = 'M-3.5,-7 L-3.5,7';
+/** 増強形のチャネル。3 つに切れている (図が描いているのと同じ数)。 */
+const CHANNEL_BROKEN = 'M-3.5,-7 L-3.5,-3.8 M-3.5,-1.6 L-3.5,1.6 M-3.5,3.8 L-3.5,7';
+
+/** 基板の足の矢。n 形はゲートへ向き、p 形は外を向く (図と同じ)。 */
+const BULK_IN = arrow(3, 0, -3.5, 0);
+const BULK_OUT = arrow(-3.5, 0, 3, 0);
 
 const SHAPE: Record<GlyphName, () => string> = {
   // 折れ線。circuitikz の既定 (米国式) と同じ姿にする。
@@ -259,16 +280,27 @@ const SHAPE: Record<GlyphName, () => string> = {
   'bjt-p': () => path(`M-13,0 L-4,0 M-4,-7 L-4,7 M-4,3 L6,9 ${arrow(6, -9, -4, -3)}`),
   // 電界効果。ゲートの棒とチャネルの棒が離れている (絶縁ゲート)。
   // **p 形はゲートに丸**が付く (図と同じ)。
+  //
+  // **矢はソースの足に付く。** 丸だけで n 形と p 形を分けると、升目の大きさでは
+  // 読み取れない (実機で「FET の図形に必ず矢印を入れる」)。**足の出る辺が
+  // 入れ替わる**ので (`FET_SIDE_P`)、ソースは n では下、p では上に来る。
+  //
+  // **この矢だけは向きの意味が違う。** 接合形のゲートの矢と `-e` / `-d` の
+  // 基板の矢は **pn 接合の向き** (P から N へ) なので n 形が内を向くが、
+  // 簡易記号のソースの矢は**電流の向き**で、バイポーラのエミッタと同じ
+  // 読み方をする — だから n 形は**外**を向く。同じ n チャネルで矢が
+  // 揃わないのは記号のほうの事情で、図 (circuitikz の `arrowmos`) も同じ。
+  // 一度「逆では」と見て内向きに揃えたが、調べ直して戻した (2026-09-06)。
   fet: () => path('M-13,0 L-7,0 M-7,-7 L-7,7 M-3.5,-7 L-3.5,7'
-    + ' M-3.5,-5 L6,-5 L6,-9 M-3.5,5 L6,5 L6,9'),
+    + ` M-3.5,-5 L6,-5 L6,-9 M-3.5,5 L6,5 L6,9 ${arrow(-3.5, 5, 3, 5)}`),
   'fet-p': () => `${path('M-13,0 L-9.5,0 M-7,-7 L-7,7 M-3.5,-7 L-3.5,7'
-    + ' M-3.5,-5 L6,-5 L6,-9 M-3.5,5 L6,5 L6,9')}${bubble(-8)}`,
-  // 基板の足を出す形 (増強形・空乏形)。**真ん中の矢が向きを言う** —
-  // n 形はゲートへ向き、p 形は外を向く。
-  'fet-bulk': () => path('M-13,0 L-7,0 M-7,-7 L-7,7 M-3.5,-7 L-3.5,7'
-    + ` M-3.5,-5 L6,-5 L6,-9 M-3.5,5 L6,5 L6,9 M-3.5,0 L6,0 ${arrow(3, 0, -3.5, 0)}`),
-  'fet-bulk-p': () => path('M-13,0 L-7,0 M-7,-7 L-7,7 M-3.5,-7 L-3.5,7'
-    + ` M-3.5,-5 L6,-5 L6,-9 M-3.5,5 L6,5 L6,9 M-3.5,0 L6,0 ${arrow(-3.5, 0, 3, 0)}`),
+    + ` M-3.5,-5 L6,-5 L6,-9 M-3.5,5 L6,5 L6,9 ${arrow(3, -5, -3.5, -5)}`)}${bubble(-8)}`,
+  // 基板の足を出す形。**真ん中の矢が n・p を、チャネルの棒が増強形・空乏形を言う**
+  // (実機で「pmos-e と pmos-d の区別が付くように実線と破線で分ける」)。
+  'fet-e': () => fetBulk(CHANNEL_BROKEN, BULK_IN),
+  'fet-e-p': () => fetBulk(CHANNEL_BROKEN, BULK_OUT),
+  'fet-d': () => fetBulk(CHANNEL_SOLID, BULK_IN),
+  'fet-d-p': () => fetBulk(CHANNEL_SOLID, BULK_OUT),
   // 接合形。**チャネルは 1 本の棒**で、ゲートの矢がそこへ刺さる (絶縁ゲートと
   // 違って棒が離れていない)。n 形は内へ、p 形は外へ。
   jfet: () => path(`M-4,-7 L-4,7 M-4,-5 L6,-5 L6,-9 M-4,5 L6,5 L6,9 ${arrow(-13, 0, -4, 0)}`),
@@ -326,7 +358,8 @@ const SPAN: Record<GlyphName, number> = {
   crystal: 6, lamp: 8, speaker: 7, coax: 8,
   // **線が記号を貫く**ので切らない (ヒューズは溶断線、マイクは丸の底)。
   fuse: 0, mic: 0,
-  bjt: 13, 'bjt-p': 13, fet: 13, 'fet-p': 13, 'fet-bulk': 13, 'fet-bulk-p': 13,
+  bjt: 13, 'bjt-p': 13, fet: 13, 'fet-p': 13,
+  'fet-e': 13, 'fet-e-p': 13, 'fet-d': 13, 'fet-d-p': 13,
   jfet: 13, 'jfet-p': 13, igbt: 13, 'igbt-p': 13, opamp: 8,
   // 反転する形は**出口の丸の外側**まで取る。丸の手前から棒を出すと、
   // 棒が丸を突き抜けて出てくる (実機で見つけた)。
@@ -356,7 +389,7 @@ const TALL: Record<GlyphName, number> = {
   'i-source': 9, solar: 15, battery: 8, meter: 9,
   switch: 8, 'switch-nc': 8, button: 9, 'button-nc': 7, reed: 5, spdt: 6,
   crystal: 9, fuse: 4, lamp: 8, speaker: 10, mic: 11, coax: 8,
-  bjt: 9, 'bjt-p': 9, fet: 9, 'fet-p': 9, 'fet-bulk': 9, 'fet-bulk-p': 9,
+  bjt: 9, 'bjt-p': 9, fet: 9, 'fet-p': 9, 'fet-e': 9, 'fet-e-p': 9, 'fet-d': 9, 'fet-d-p': 9,
   jfet: 9, 'jfet-p': 9, igbt: 9, 'igbt-p': 9, opamp: 9,
   and: 9, 'and-inv': 9, or: 9, 'or-inv': 9, xor: 9, 'xor-inv': 9, buffer: 9, 'buffer-inv': 9,
   ground: 8, port: 4, 'supply-up': 8, 'supply-down': 8,
@@ -395,12 +428,23 @@ const LEG_GAP: Record<GlyphName, number> = {
   'i-source': 12, solar: 12, battery: 12, meter: 12,
   switch: 12, 'switch-nc': 12, button: 12, 'button-nc': 12, reed: 12,
   crystal: 12, fuse: 12, lamp: 12, speaker: 12, mic: 12, coax: 12,
-  bjt: 12, 'bjt-p': 12, fet: 12, 'fet-p': 12, 'fet-bulk': 12, 'fet-bulk-p': 12,
+  bjt: 12, 'bjt-p': 12, fet: 12, 'fet-p': 12,
+  'fet-e': 12, 'fet-e-p': 12, 'fet-d': 12, 'fet-d-p': 12,
   jfet: 12, 'jfet-p': 12, igbt: 12, 'igbt-p': 12, buffer: 12, 'buffer-inv': 12,
   ground: 12, port: 12, 'supply-up': 12, 'supply-down': 12, short: 12,
 };
 
 export const legGap = (name: GlyphName): number => LEG_GAP[name];
+
+/**
+ * 足の名前 (DIP の番号、`IN` / `OUT`、ボードの `GP0`) をどこに置くか。
+ *
+ * - `inside` — 胴の中。**これが既定** (実機で「すべての部品でピン名は内側に」)。
+ *   外に出すと隣の升へはみ出し、部品を並べたときに名前どうしがぶつかる。
+ * - `outside` — 足の先の丸の、更に外。
+ * - `beside` — 足の先の丸の**脇**。記号にも足の線にも重ならない置き方。
+ */
+export type NamePlace = 'inside' | 'outside' | 'beside';
 
 /**
  * 足の名前を**胴の中に**書く記号と、その辺。
@@ -415,15 +459,54 @@ export const legGap = (name: GlyphName): number => LEG_GAP[name];
 const NAMES_INSIDE: Partial<Record<GlyphName, PinSide>> = { opamp: 'left' };
 
 /**
- * 足の名前 (DIP の番号、`IN` / `OUT`、ボードの `GP0`) を胴の中に書くか。
+ * 足の名前を**丸の脇**へ出す記号。**3 本足のトランジスタが全部入る。**
  *
- * **どの部品も中に書く** (実機で「すべての部品でピン名は内側に」)。外に出すと
- * 隣の升へはみ出し、部品を並べたときに名前どうしがぶつかる。
- * 名札の表 (`NAMES_INSIDE`) は、**辺ごとに分けたい記号**のためだけに残す —
- * オペアンプの出口は三角の先が細く、中に字を置く場所が無い。
+ * この族は胴が棒だけで、中が空いていない。中に書くと制御端子の字
+ * (`G` / `B`) が棒や足の線に乗り、接合形では**ゲートの矢の上に**乗って、
+ * n 形と p 形を分けているただ 1 つの印が読めなくなる (実機で
+ * 「FET の G・D・S を図形と重ならないように」、続けて「NPN・PNP も同様に」
+ * 「nigbt・pigbt も同様」)。
+ *
+ * **辺で置くので回転にそのまま乗る** — 左の足は丸の下、上下の足は丸の右。
  */
-export const namesInside = (name: GlyphName, side: PinSide): boolean =>
-  (name in NAMES_INSIDE ? NAMES_INSIDE[name] === side : true);
+const NAMES_BESIDE: ReadonlySet<GlyphName> = new Set<GlyphName>([
+  'fet', 'fet-p', 'fet-e', 'fet-e-p', 'fet-d', 'fet-d-p', 'jfet', 'jfet-p',
+  'bjt', 'bjt-p', 'igbt', 'igbt-p',
+  // 巻線・接点・丸の中も空いていない。トランスは名前が巻線に、切り替え
+  // スイッチは接点に、同軸は中心導体に乗っていた (実機で「他の部品でも
+  // ピン名が図形と重なっているものは FET 同様に」)。
+  'transformer', 'spdt', 'coax',
+  // ロジックゲートは入口の字が背の線に、出口が胴の中に乗る。
+  // 出口の字は出さないが (`HIDDEN_PIN_NAMES`)、入口 2 本は残るので外へ。
+  'and', 'and-inv', 'or', 'or-inv', 'xor', 'xor-inv', 'buffer', 'buffer-inv',
+]);
+
+export const namePlace = (name: GlyphName, side: PinSide): NamePlace => {
+  if (NAMES_BESIDE.has(name)) return 'beside';
+  if (!(name in NAMES_INSIDE)) return 'inside';
+  return NAMES_INSIDE[name] === side ? 'inside' : 'outside';
+};
+
+/**
+ * 名前を出さない足。**形が既に言っていることを字で繰り返さない**
+ * (実機で「ロジックゲートの 2 本足の部品はピン名を表示しない。3 本足の
+ * `out` は非表示に」)。ゲートは三角の向きが入口と出口を言っていて、
+ * 出口はどれも 1 本しか無い。2 入力の `1` と `2` は形では読めないので残す。
+ *
+ * **辺ではなく足の名前で指す。** 辺で指すと、回した記号 (`r90`) で
+ * 消える足が入れ替わる。
+ *
+ * 消えるのは**字だけ**で、接続点は残る (`G1.out -- a5` と書けなくなっては困る)。
+ */
+const HIDDEN_PIN_NAMES: Partial<Record<GlyphName, ReadonlySet<string>>> = {
+  buffer: new Set(['in', 'out']), 'buffer-inv': new Set(['in', 'out']),
+  and: new Set(['out']), 'and-inv': new Set(['out']),
+  or: new Set(['out']), 'or-inv': new Set(['out']),
+  xor: new Set(['out']), 'xor-inv': new Set(['out']),
+};
+
+export const showsPinName = (name: GlyphName, pin: string): boolean =>
+  !(HIDDEN_PIN_NAMES[name]?.has(pin) ?? false);
 
 /**
  * 足の線を**記号の中心から**引く形。ふつうは記号の縁で止める (線が記号に

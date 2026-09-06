@@ -2,9 +2,10 @@ import { element, escapeMarkup, fit, lookupBoardPart, num, svgText, textWidth } 
 import { LIMITS } from '../limits.ts';
 import { formatAddress, rowLetters } from '../model/address.ts';
 import {
-  drawBox, drawGlyph, glyphOf, glyphSpan, glyphTall, leadsFromCentre, legGap, namesInside,
+  drawBox, drawGlyph, glyphOf, glyphSpan, glyphTall, leadsFromCentre, legGap, namePlace,
+  showsPinName,
 } from './mapGlyphs.ts';
-import type { GlyphName } from './mapGlyphs.ts';
+import type { GlyphName, NamePlace } from './mapGlyphs.ts';
 import type { Chip, ChipPin, Cell, Dot, GridMap, MapNote, WireLine } from './map.ts';
 import type { PinSide, Turn } from '../parts.ts';
 
@@ -405,7 +406,7 @@ function reachOf(rows: PinRows, glyph: GlyphName): { readonly halfW: number; rea
   const edge = glyph === 'box' ? HALF_W : Math.max(glyphSpan(glyph), 8);
   // **中に書く名前が入るだけの幅を取る。** 左右の名前を内側へ寄せるので、
   // 狭い箱だと `IN` と `OUT` がくっついて 1 語に読める (実機で見つけた)。
-  const inside = (side: PinSide): number => (namesInside(glyph, side)
+  const inside = (side: PinSide): number => (namePlace(glyph, side) === 'inside'
     ? Math.max(0, ...(rows.get(side) ?? []).map((pin) => textWidth(pin.name) * PIN_NAME_FONT))
     : 0);
   const forNames = (inside('left') + inside('right')) / 2 + NAME_INSIDE * 2 + 2;
@@ -423,7 +424,8 @@ function reachOf(rows: PinRows, glyph: GlyphName): { readonly halfW: number; rea
  * 読ませる。棒の上へ寄せると、字が箱の角に重なって読めなくなった (実測)。
  */
 function pinAt(
-  side: PinSide, at: number, of: number, halfW: number, halfH: number, gap: number, inside = false,
+  side: PinSide, at: number, of: number, halfW: number, halfH: number, gap: number,
+  want: NamePlace = 'inside',
 ): {
   readonly x1: number; readonly y1: number; readonly x2: number; readonly y2: number;
   readonly tx: number; readonly ty: number; readonly anchor?: 'start' | 'end';
@@ -431,25 +433,40 @@ function pinAt(
   const shift = (at - (of - 1) / 2) * gap;
   // 字は丸の外側へ。丸の半径と余白のぶんだけ、棒の先から更に離す。
   const clear = PIN_DOT + NAME_CLEAR;
+  // 字の基準線は下端なので、丸の下に置くときは字の高さぶん (8px) 余計に下げる。
+  const below = clear + PIN_NAME_FONT;
+  // **同じ辺に 2 本以上並ぶときは丸の外へ。** 脇 (丸の下・右) に置くと、
+  // 字が隣の足の丸に乗る (ロジックゲートの入力 2 本で見つけた)。
+  // 外なら足の並ぶ向きと直交するので、何本並んでもぶつからない。
+  const place = of > 1 && want === 'beside' ? 'outside' : want;
   if (side === 'left') {
     const x = -halfW - PIN_STUB;
-    return inside
-      ? { x1: -halfW, y1: shift, x2: x, y2: shift, tx: -halfW + NAME_INSIDE, ty: shift + 3, anchor: 'start' }
-      : { x1: -halfW, y1: shift, x2: x, y2: shift, tx: x - clear, ty: shift + 3, anchor: 'end' };
+    const lead = { x1: -halfW, y1: shift, x2: x, y2: shift };
+    if (place === 'beside') return { ...lead, tx: x, ty: shift + below };
+    return place === 'inside'
+      ? { ...lead, tx: -halfW + NAME_INSIDE, ty: shift + 3, anchor: 'start' }
+      : { ...lead, tx: x - clear, ty: shift + 3, anchor: 'end' };
   }
   if (side === 'right') {
     const x = halfW + PIN_STUB;
-    return inside
-      ? { x1: halfW, y1: shift, x2: x, y2: shift, tx: halfW - NAME_INSIDE, ty: shift + 3, anchor: 'end' }
-      : { x1: halfW, y1: shift, x2: x, y2: shift, tx: x + clear, ty: shift + 3, anchor: 'start' };
+    const lead = { x1: halfW, y1: shift, x2: x, y2: shift };
+    if (place === 'beside') return { ...lead, tx: x, ty: shift + below };
+    return place === 'inside'
+      ? { ...lead, tx: halfW - NAME_INSIDE, ty: shift + 3, anchor: 'end' }
+      : { ...lead, tx: x + clear, ty: shift + 3, anchor: 'start' };
   }
   if (side === 'top') {
     const y = -halfH - PIN_STUB;
-    return { x1: shift, y1: -halfH, x2: shift, y2: y, tx: shift, ty: y - clear };
+    const lead = { x1: shift, y1: -halfH, x2: shift, y2: y };
+    return place === 'beside'
+      ? { ...lead, tx: shift + clear, ty: y + 3, anchor: 'start' }
+      : { ...lead, tx: shift, ty: y - clear };
   }
   const y = halfH + PIN_STUB;
-  // 下は字の高さぶん (8px) だけ更に下げる。基準線が下端になるため。
-  return { x1: shift, y1: halfH, x2: shift, y2: y, tx: shift, ty: y + clear + 8 };
+  const lead = { x1: shift, y1: halfH, x2: shift, y2: y };
+  return place === 'beside'
+    ? { ...lead, tx: shift + clear, ty: y + 3, anchor: 'start' }
+    : { ...lead, tx: shift, ty: y + below };
 }
 
 /**
@@ -460,7 +477,7 @@ function pinAt(
  * 名札は**書かれる綴りそのもの** (`Q1.C`) にしておく。殻は綴りを知らないので、
  * 押されたものをそのまま `addWire` へ返せる形で持たせる。
  */
-function drawPin(pin: ChipPin, part: string, at: ReturnType<typeof pinAt>): string {
+function drawPin(pin: ChipPin, part: string, at: ReturnType<typeof pinAt>, named = true): string {
   const stub = element('line', {
     class: 'cf-pin', x1: num(at.x1), y1: num(at.y1), x2: num(at.x2), y2: num(at.y2),
   });
@@ -470,6 +487,7 @@ function drawPin(pin: ChipPin, part: string, at: ReturnType<typeof pinAt>): stri
       class: 'cf-pin-hit', 'data-pin': escapeMarkup(spelling),
       cx: num(at.x2), cy: num(at.y2), r: num(PIN_HIT),
     });
+  if (!named) return stub + dot;
   return stub + dot + svgText(at.tx, at.ty, pin.name, {
     class: 'cf-pin-name',
     // 隣の升の点や升目の線に載るので、地の色で縁を取る (`cf-name` と同じ手)。
@@ -630,12 +648,16 @@ function drawStanding(chip: Chip, nudge: number): string {
       { class: 'cf-pins', transform: `translate(0,${num(nudge)})` },
       [...rows].flatMap(([side, row]) =>
         row.map((pin, at) => {
-          const place = pinAt(
-            side, at, row.length, halfW, halfH, legGap(glyph.name), namesInside(glyph.name, side),
+          const spot = pinAt(
+            side, at, row.length, halfW, halfH, legGap(glyph.name), namePlace(glyph.name, side),
           );
           // **中心から引く形は、線の根元を真ん中へ。** 丸の中の点まで届いて
           // いるのが記号なので、縁で止めると信号線の行き先が読めない。
-          return drawPin(pin, chip.id, leadsFromCentre(glyph.name) ? { ...place, x1: 0, y1: 0 } : place);
+          return drawPin(
+            pin, chip.id,
+            leadsFromCentre(glyph.name) ? { ...spot, x1: 0, y1: 0 } : spot,
+            showsPinName(glyph.name, pin.name),
+          );
         })).join(''),
     );
   const mark = glyph.mark === null
