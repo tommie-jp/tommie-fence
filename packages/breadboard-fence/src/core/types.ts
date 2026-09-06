@@ -9,9 +9,18 @@ export type HoleRow = (typeof HOLE_ROWS)[number];
 export const RAIL_ROWS = ['+t', '-t', '-b', '+b'] as const;
 export type RailRow = (typeof RAIL_ROWS)[number];
 
-export type HoleAddress = { readonly kind: 'hole'; readonly row: HoleRow; readonly col: number };
+/**
+ * 交点からの端数 (行・列とも 0〜0.9)。**注釈だけが持つ** — 部品と配線は穴に
+ * 挿すものなので交点そのものを指す (`isCrossing` が見張る)。
+ * 綴りは circuit と同じ「行の英字 + 列の数字」の組 (`b5c3`)。
+ */
+export type Fraction = { readonly rows?: number; readonly cols?: number };
 
-export type RailAddress = {
+export type HoleAddress = Fraction & {
+  readonly kind: 'hole'; readonly row: HoleRow; readonly col: number;
+};
+
+export type RailAddress = Fraction & {
   readonly kind: 'rail';
   readonly polarity: '+' | '-';
   readonly side: 't' | 'b';

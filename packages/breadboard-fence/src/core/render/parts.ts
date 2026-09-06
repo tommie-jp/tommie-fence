@@ -5,7 +5,8 @@ import {
   fourLeadBodyRect, renderDip, renderPushbutton, renderSip, renderTransformer, sipBarRect, switchBodyRect,
 } from './packages.ts';
 import {
-  CAPTION_DROP, CAPTION_HEIGHT, LEG_NAME_GAP, ROUND_CAPTION_GAP, caption, charWidth, labelYOf,
+  CAPTION_DROP, CAPTION_HEIGHT, LEG_NAME_CLEAR, NAME_CAP, NAME_LINE,
+  caption, charWidth, labelYOf,
 } from './partCommon.ts';
 import { bodyHalfHeight, bodyHalfWidth, renderThreeLead } from './threeLead.ts';
 import { renderTwoLead } from './twoLead.ts';
@@ -50,8 +51,6 @@ export function partObstacles(part: PlacedPart, layout: Layout, theme: RenderThe
     // 胴・キャプション・足の名前を**別々の矩形で渡す**。いちばん広いものに合わせて
     // 1 つの箱にすると、何も描いていないところまで塞いで、
     // 空いているレーンを配線に諦めさせてしまう。
-    const toRavine = center.y < layout.ravineY ? 1 : -1;
-
     return [
       {
         x: center.x - halfWidth,
@@ -59,17 +58,22 @@ export function partObstacles(part: PlacedPart, layout: Layout, theme: RenderThe
         width: halfWidth * 2,
         height: halfHeight * 2 + reach * 2,
       },
-      // キャプションは胴の外、溝の側 (threeLead.ts と同じ勘定)。
-      captionBand(center.x, center.y + toRavine * (halfHeight + ROUND_CAPTION_GAP), captionWidth(part, theme), theme),
+      // キャプションは足の名前の 1 行下 (threeLead.ts と同じ勘定)。
+      captionBand(
+        center.x,
+        center.y + halfHeight + LEG_NAME_CLEAR + theme.metrics.textSize * (NAME_CAP + NAME_LINE),
+        captionWidth(part, theme),
+        theme,
+      ),
       // 足の名前は反対側に並ぶ。名前が長ければ胴からはみ出す。
-      ...legNameBands(part, points, center, halfHeight, toRavine, theme),
+      ...legNameBands(part, points, center, halfHeight, theme),
     ];
   }
 
   const center = { x: (left + right) / 2, y: (top + bottom) / 2 };
   const width = Math.max(captionWidth(part, theme), right - left);
 
-  return [captionBand(center.x, labelYOf(part, center, layout), width, theme)];
+  return [captionBand(center.x, labelYOf(part, center, layout, theme), width, theme)];
 }
 
 /** 字 1 行が占める帯。`baseline` は字の基準線で、字はそこから上へ伸びる。 */
@@ -88,10 +92,10 @@ function legNameBands(
   points: readonly Point[],
   center: Point,
   halfHeight: number,
-  toRavine: number,
   theme: RenderTheme,
 ): Rect[] {
-  const baseline = center.y - toRavine * (halfHeight + LEG_NAME_GAP);
+  // **名前は胴の下** (`threeLead.ts` と同じ勘定)。字の高さも足す。
+  const baseline = center.y + halfHeight + LEG_NAME_CLEAR + theme.metrics.textSize * NAME_CAP;
   return part.pins.flatMap((pin, index) => {
     const point = points[index];
     if (!point) return [];

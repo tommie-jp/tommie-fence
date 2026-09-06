@@ -35,6 +35,17 @@ export type Layout = {
   point(address: Address): Point;
 };
 
+/**
+ * その行から**次の行まで**の隔たり。端数の番地 (`b5c3`) を落とすのに使う。
+ * いちばん下の行には次が無いので、1 つ上との隔たりで代える。
+ */
+function stepBelow(rowY: ReadonlyMap<HoleRow | RailRow, number>, at: number): number {
+  const below = [...rowY.values()].filter((y) => y > at).sort((a, b) => a - b)[0];
+  if (below !== undefined) return below - at;
+  const above = [...rowY.values()].filter((y) => y < at).sort((a, b) => b - a)[0];
+  return above === undefined ? PITCH : at - above;
+}
+
 /** 穴番地を画布の座標に落とす。ボード外の機器を置く帯があれば、その分だけ上下に伸びる。 */
 export function createLayout(board: Board, options: LayoutOptions = {}): Layout {
   const rowY = new Map<HoleRow | RailRow, number>();
@@ -120,11 +131,18 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
     },
     colX,
     rowY: (row) => rowY.get(row) ?? 0,
-    point: (address) => ({
-      x: colX(address.col),
-      y: address.kind === 'hole'
-        ? rowY.get(address.row) ?? 0
-        : rowY.get(`${address.polarity}${address.side}` as RailRow) ?? 0,
-    }),
+    // **端数は次の行までの隔たりで測る。** 行の間隔は一定ではない (溝をまたぐ
+     // ところとレールの外側が広い) ので、ピッチを掛けると溝の真ん中が真ん中に
+     // ならない。0.5 と書けば、その行と次の行のちょうど間に来る。
+    point: (address) => {
+      const at = address.kind === 'hole'
+        ? (rowY.get(address.row) ?? 0)
+        : (rowY.get(`${address.polarity}${address.side}` as RailRow) ?? 0);
+      const rows = address.rows ?? 0;
+      return {
+        x: colX(address.col) + (address.cols ?? 0) * PITCH,
+        y: at + (rows === 0 ? 0 : rows * stepBelow(rowY, at)),
+      };
+    },
   };
 }

@@ -13,7 +13,7 @@ import { movePoint, nodeSpans } from './point.ts';
 import { deletePart, deleteWire } from './remove.ts';
 import { isWireHandle, renderColorOptions, setWireField, wireFields } from './wireField.ts';
 import {
-  deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans,
+  deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans, noteText,
   setNoteField, turnNote,
 } from './note.ts';
 import { extractBreadboardFences } from '../fences.ts';
@@ -73,6 +73,8 @@ export function createBreadboardEditor(): FenceEditor {
     // 配線から指すための名前なので重ならない — 名札はそのまま名前。
     // 注釈には名前が無いので、名札は行番号。人に見せるときは「注釈」と呼ぶ。
     nameOf: (handle) => (isNoteHandle(handle) ? `注釈 (${noteLineOf(handle) ?? '?'} 行目)` : handle),
+    // 写せる字を持つのは `text` の注釈だけ (右クリックの「テキストコピー」)。
+    textOf: (source, handle) => (isNoteHandle(handle) ? noteText(source, handle) : null),
     cellsOf: (source, handle) => (isNoteHandle(handle) ? noteCells(source, handle) : partCells(source, handle)),
     // 配線は穴から穴へ 1 本 (折れの綴りが文法に無い)。
     foldsWire: false,

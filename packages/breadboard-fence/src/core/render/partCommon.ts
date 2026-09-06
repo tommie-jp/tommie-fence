@@ -15,11 +15,12 @@ export const CAPTION_HEIGHT = 14;
 // ラベルは穴 1 つぶんの隙間 (20) に置く。字を大きくしても**ベースラインは動かさない**:
 // 字は基準線から上へ伸びるので隙間を上に使い、下げると隣の穴の列に食い込む。
 export const CAPTION_DROP = 18;
-const CAPTION_RISE = 14;
-// LED は本体の丸が大きいぶん、上に置くラベルを少し離す。
-const LED_CAPTION_RISE = 21;
-export const LEG_NAME_GAP = 9;
-export const ROUND_CAPTION_GAP = 14;
+/** 胴と足の名前のあいだの隙間。字の高さは呼ぶ側が足す。 */
+export const LEG_NAME_CLEAR = 3;
+/** 字が基準線から上へ出る高さの、字の大きさに対する比。 */
+export const NAME_CAP = 0.72;
+/** 字を 1 行送るときの比。 */
+export const NAME_LINE = 1.15;
 
 // ラベルと値の長さはパーサ側 (limits.ts) で切ってあるので、ここでは組み立てるだけ。
 export const caption = (part: PlacedPart): string => [part.id, part.value ?? part.label ?? ''].join(' ').trim();
@@ -61,9 +62,6 @@ export const charWidth = (theme: RenderTheme): number => textScale(theme) * CHAR
 export const haloWidth = (theme: RenderTheme): number =>
   TEXT_HALO_WIDTH * textScale(theme) + (theme.metrics.holeSize - BASE_HOLE_SIZE) * 1.25;
 
-/** 砲弾型で描く部品。丸が大きいぶん、上に置くラベルを少し離す。 */
-const DOME_TYPES: ReadonlySet<string> = new Set(['led', 'photodiode']);
-
 /**
  * **胴が足の線に細く乗らない部品**。ほかの 2 本足は足の線の上に薄く乗るだけなので
  * 定数の距離で足りるが、水晶の缶は**足の穴を覆う** (平たい缶) か**片側に高く立つ**
@@ -80,12 +78,30 @@ function bodyHeightOf(part: PlacedPart, layout: Layout): number {
   return bodySize(part, Math.hypot(to.x - from.x, to.y - from.y)).height;
 }
 
-/** ラベルは溝の側に置く。盤の端は列番号の印字があり、そこに重ねると両方読めなくなる。 */
-export function labelYOf(part: PlacedPart, center: Point, layout: Layout): number {
-  const toRavine = center.y < layout.ravineY ? 1 : -1;
-  if (OVER_AXIS_TYPES.has(part.type)) return center.y + toRavine * bodyHeightOf(part, layout);
-  if (toRavine > 0) return center.y + CAPTION_DROP;
-  return center.y - (DOME_TYPES.has(part.type) ? LED_CAPTION_RISE : CAPTION_RISE);
+/** 胴と名札のあいだに空ける隙間。 */
+export const CAPTION_CLEAR = 4;
+
+/** 字が基準線から上へ出る高さ (大文字の高さ)。下に置くときはこれも足す。 */
+const capHeight = (theme: RenderTheme): number => theme.metrics.textSize * 0.72;
+
+/**
+ * ラベルは**いつも胴の下**。溝の側へ振り分けていたが、上のブロックと下の
+ * ブロックで名前の出る側が変わり、同じ図の中で揃わなかった
+ * (実機で「すべての部品名は部品の下側に表示する」)。
+ *
+ * **胴の高さから測る。** 決め打ちの距離だと、背の高い胴 (円板のバリスタや
+ * CdS、箱のヒューズ・電池・太陽電池・スイッチ、砲弾のダイオード) に字が乗る
+ * (実機で「文字と図形が被らないように文字をずらす」と 18 種類を並べて言われた)。
+ * **姿もそのまま効く** — 胴の寸法は `bodySize` が姿ごとに持っているので、
+ * `capacitor/electrolytic` のように姿で背の伸びる部品も一緒に逃げる。
+ *
+ * 下に置くときは**字の高さも足す** — 基準線は字の下端なので、隙間だけ足すと
+ * 字の頭が胴に食い込む。
+ */
+export function labelYOf(part: PlacedPart, center: Point, layout: Layout, theme: RenderTheme): number {
+  if (OVER_AXIS_TYPES.has(part.type)) return center.y + bodyHeightOf(part, layout);
+  const half = bodyHeightOf(part, layout) / 2;
+  return center.y + Math.max(CAPTION_DROP, half + CAPTION_CLEAR + capHeight(theme));
 }
 
 /** 板と穴の上に載る部品の字。縁取りを敷いて、下の穴に食われないようにする。 */

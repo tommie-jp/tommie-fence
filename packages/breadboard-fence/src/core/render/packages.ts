@@ -1,6 +1,8 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
-import { CAPTION_DROP, caption, fitToBoard, partLabel, pinPoints, pointOfPin } from './partCommon.ts';
+import {
+  CAPTION_CLEAR, NAME_CAP, caption, fitToBoard, partLabel, pinPoints, pointOfPin,
+} from './partCommon.ts';
 import { element, num, svgText } from './svg.ts';
 import { textWidth } from './textFit.ts';
 import { REAL_INK, transformerCore } from 'fence-kit';
@@ -73,9 +75,23 @@ export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme):
 }
 
 /** 1 列ヘッダの本体が覆う帯 (ピッチに対する比)。 */
-const SIP_HALF_HEIGHT = 0.55;
-const SIP_NAME_GAP = 9;
-const SIP_NAME_FONT = 7;
+const SIP_HALF_HEIGHT = 0.5;
+const SIP_NAME_FONT = 6.5;
+/**
+ * ピン名の縁取り。**普通の縁取り (`haloWidth`) より細くする** — 本体の縁と
+ * 次の穴の列のあいだは半ピッチ足らずしか無く、太い縁取りは本体の縁を削る
+ * (実機で「sip*、部品に文字が被らないようにする」)。細くても、下にあるのは
+ * 穴 1 つなので読める。
+ */
+const SIP_NAME_HALO = 2;
+/**
+ * ピン名は**本体の縁と次の穴の列のあいだ**に置く。縁から穴の列までは
+ * 半ピッチ足らずしか無いので、決め打ちの距離だと名前が本体か穴に乗る
+ * (実機で「sip*、部品に文字が被らないようにする」)。字は基準線から上へ
+ * 伸びるので、**字の高さも足して**縁から離す。
+ */
+const SIP_NAME_CLEAR = 0.5;
+const SIP_NAME_CAP = 0.72;
 
 export function sipBarRect(part: PlacedPart, layout: Layout): Rect {
   const points = pinPoints(part, layout);
@@ -121,9 +137,15 @@ export function renderSip(part: PlacedPart, layout: Layout, theme: RenderTheme):
     .map((pin, index) => {
       const point = points[index];
       return point
-        ? partLabel(point.x, point.y + towardRavine * (bar.height / 2 + SIP_NAME_GAP), pin.name, theme, {
-            'font-size': num(scale * SIP_NAME_FONT),
-          })
+        ? partLabel(
+          point.x,
+          point.y + towardRavine * (
+            bar.height / 2 + SIP_NAME_HALO / 2 + SIP_NAME_CLEAR + scale * SIP_NAME_FONT * SIP_NAME_CAP
+          ),
+          pin.name,
+          theme,
+          { 'font-size': num(scale * SIP_NAME_FONT), haloWidth: SIP_NAME_HALO },
+        )
         : '';
     })
     .join('');
@@ -188,7 +210,14 @@ export function renderPushbutton(part: PlacedPart, layout: Layout, theme: Render
     cx: num(center.x), cy: num(center.y), r: num(0.45 * layout.pitch),
     fill: '#c9cfd8', stroke: '#6b7280',
   });
-  const label = partLabel(center.x, body.y - 5, fitToBoard(caption(part), center.x, theme.metrics.textSize, layout), theme);
+  // **名前は胴の下。** 上に出していたが、ほかの部品と側が揃わなかった
+  // (実機で「transformer, button* は名前を部品の下にする」)。
+  const label = partLabel(
+    center.x,
+    body.y + body.height + CAPTION_CLEAR + theme.metrics.textSize * NAME_CAP,
+    fitToBoard(caption(part), center.x, theme.metrics.textSize, layout),
+    theme,
+  );
 
   return `${shell}${bridges}${stubs}${button}${label}`;
 }
@@ -211,12 +240,10 @@ export function renderTransformer(part: PlacedPart, layout: Layout, theme: Rende
     transformerCore(rect.width, rect.height, REAL_INK),
   );
   const stubs = (pinPoints(part, layout) ?? []).map((point) => stub(point, theme.palette.chipPin)).join('');
-  // **字は溝の側へ。** 盤の端には列番号が印字してあり、そこに重ねると両方読めない
-  // (2 本足の `labelYOf` と同じ決まり。箱の外へ出す分だけ高さを足す)。
-  const toRavine = centre.y < layout.ravineY ? 1 : -1;
+  // **字は胴の下。** ほかの部品と側を揃える (実機で「名前を部品の下にする」)。
   const label = partLabel(
     centre.x,
-    centre.y + toRavine * (rect.height / 2 + CAPTION_DROP - 4),
+    centre.y + rect.height / 2 + CAPTION_CLEAR + theme.metrics.textSize * NAME_CAP,
     fitToBoard(caption(part), centre.x, theme.metrics.textSize, layout),
     theme,
   );

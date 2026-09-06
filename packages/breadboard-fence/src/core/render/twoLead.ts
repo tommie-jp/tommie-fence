@@ -30,7 +30,7 @@ export function renderTwoLead(part: PlacedPart, layout: Layout, theme: RenderThe
     stroke: palette.lead, 'stroke-width': LEAD_WIDTH,
   });
   const text = fitToBoard(caption(part), center.x, theme.metrics.textSize, layout);
-  const label = partLabel(center.x, labelYOf(part, center, layout), text, theme);
+  const label = partLabel(center.x, labelYOf(part, center, layout, theme), text, theme);
   // 3 引数 rotate() を読まないレンダラがあるので translate と rotate に分ける。
   const body = element(
     'g',

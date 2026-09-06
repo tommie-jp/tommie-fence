@@ -2,6 +2,9 @@ import type { Layout } from '../model/layout.ts';
 import { lookupBoardPart } from 'fence-kit';
 import type { PlacedPart, Rect } from '../types.ts';
 import { caption, fitToBoard, pinPoints } from './partCommon.ts';
+
+/** 足の番号の桁 (`01` `40`)。揃えると名前の頭が縦に並ぶ。 */
+const PIN_NUMBER_DIGITS = 2;
 import { element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
@@ -88,13 +91,19 @@ export function renderBoardPart(part: PlacedPart, layout: Layout, theme: RenderT
       // 基板の内側へ向かって縦書きにする。**字の向きは上下の列で揃える** (下から上へ読む):
       // 伸ばす向きは anchor で切り替え、回す角度は変えない。片方だけ天地が逆になると読めない。
       const inward = point.y < center.y ? 1 : -1;
+      // **ヘッダの番号を名前に添える** (`01 GP0`)。実物のピンアウト図と突き合わせる
+      // ときに、名前だけだと何番目の足かを数え直すことになる (回路図フェンスと
+      // 同じ。実機で「pico のピン名にピン番号を表示する」)。
+      // **番号は足の側の端**へ — 字は足から内側へ伸びるので、伸びる向きで前後が入れ替わる。
+      const number = String(index + 1).padStart(PIN_NUMBER_DIGITS, '0');
+      const text = inward > 0 ? `${pin.name} ${number}` : `${number} ${pin.name}`;
       const x = point.x + fontSize * 0.35;
       const y = point.y + inward * PIN_NAME_GAP;
       // 3 引数 rotate() を読まないレンダラがあるので translate と rotate に分ける。
       return element(
         'g',
         { transform: `translate(${num(x)} ${num(y)}) rotate(-90)` },
-        svgText(0, 0, pin.name, {
+        svgText(0, 0, text, {
           'font-size': num(fontSize),
           fill: palette.chipText,
           anchor: inward > 0 ? 'end' : 'start',

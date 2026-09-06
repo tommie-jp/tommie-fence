@@ -1,5 +1,5 @@
 import { fail, ok, safeToken } from '../errors.ts';
-import { formatAddress, parseAddress } from '../model/address.ts';
+import { formatAddress, isCrossing, parseAddress } from '../model/address.ts';
 import { offBoardReason } from '../model/board.ts';
 import { HOLE_ROWS } from '../types.ts';
 import type {
@@ -448,6 +448,11 @@ function placeSwitch(spec: PartSpec, board: Board, base: PartBase): Result<Place
 function resolveHole(text: string, board: Board, line: number): Result<Address> {
   const address = parseAddress(text);
   if (!address) return fail(`穴番地として読めません: ${safeToken(text)} (a5 や +t5 のように書きます)`, line, text);
+  // **足は穴に挿す。** 交点の間 (`b5c3`) を書けるのは注釈だけで、部品と配線は
+  // 交点そのものを指す — 間に挿せる穴は実物に無い。
+  if (!isCrossing(address)) {
+    return fail(`穴の間には挿せません: ${safeToken(text)} (交点の間を書けるのは注釈だけです)`, line, text);
+  }
   const reason = offBoardReason(board, address);
   if (reason) return fail(reason, line);
   return ok(address);

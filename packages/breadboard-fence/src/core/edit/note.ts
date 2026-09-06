@@ -279,3 +279,13 @@ export function flipNote(source: string, handle: string): NoteResult {
 /** `board:` に書かれた指定から板を組む。書かれていなければ既定の板。 */
 const boardOf = (spec: Parameters<typeof createBoard>[0] | null): ReturnType<typeof createBoard> | null =>
   (spec === null ? null : createBoard(spec));
+
+/**
+ * その注釈が持っている**写せる字**。言葉を持つのは `text` だけで、
+ * 印や枠には写す字が無い (右クリックの「テキストコピー」が読む)。
+ */
+export function noteText(source: string, handle: string): string | null {
+  const found = locate(source, handle);
+  if (!isFound(found) || found.note.kind !== 'text') return null;
+  return found.note.text ?? null;
+}

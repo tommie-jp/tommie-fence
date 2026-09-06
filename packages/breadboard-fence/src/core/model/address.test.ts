@@ -66,3 +66,38 @@ describe('isTopBlock', () => {
     expect(isTopBlock('j')).toBe(false);
   });
 });
+
+/**
+ * 交点の間と板の外 (52 の docs、実機で「text はどこでも移動できるようにする。
+ * breadboard の穴のない領域含む。ボード外含む」)。
+ *
+ * **綴りは circuit と同じ**「行の英字 + 列の数字」の組で、1 組で小数第 1 位。
+ * 穴と穴の間・溝の中・板の左右へは、この端数で届く。
+ */
+describe('交点の間 (端数の番地)', () => {
+  test('reads a pair as tenths of a row and a column, as the schematic fence does', () => {
+    expect(parseAddress('b5c3')).toEqual({ kind: 'hole', row: 'b', col: 5, rows: 0.2, cols: 0.3 });
+    // `a0` の組は「ずれ無し」なので、綴りが 2 通りにならないよう断る。
+    expect(parseAddress('b5a0')).toBeNull();
+  });
+
+  test('writes the fraction back in the same spelling', () => {
+    const at = parseAddress('b5c3');
+
+    expect(at === null ? '' : formatAddress(at)).toBe('b5c3');
+    // 端数の無い番地は今までどおり。
+    expect(formatAddress({ kind: 'hole', row: 'b', col: 5 })).toBe('b5');
+  });
+
+  test('takes a fraction on a rail too, which is how a note leaves the board', () => {
+    expect(parseAddress('+t5c3')).toEqual({
+      kind: 'rail', polarity: '+', side: 't', col: 5, rows: 0.2, cols: 0.3,
+    });
+  });
+
+  test('keeps the plain spellings working', () => {
+    expect(parseAddress('a1')).toEqual({ kind: 'hole', row: 'a', col: 1 });
+    expect(parseAddress('+t5')).toEqual({ kind: 'rail', polarity: '+', side: 't', col: 5 });
+    expect(parseAddress('k1')).toBeNull();
+  });
+});

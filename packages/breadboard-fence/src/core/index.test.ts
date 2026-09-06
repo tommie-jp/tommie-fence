@@ -861,7 +861,9 @@ describe('renderBreadboard', () => {
     expect(svg).not.toContain('onload');
   });
 
-  test('keeps a part caption off the column numbers printed along the edges', () => {
+  test('writes every part caption below its body, whichever block it sits in', () => {
+    // 実機で「すべての部品名は部品の下側に表示する」。溝の側へ振り分けていたので、
+    // 上のブロックと下のブロックで名前の出る側が変わって揃わなかった。
     const { svg } = renderBreadboard('parts:\n  R1: resistor a5 a10 330\n  R2: resistor j5 j10 330\n');
 
     const captions = [...svg.matchAll(/<text[^>]*y="([\d.]+)"[^>]*>(R\d 330)<\/text>/g)];
@@ -869,9 +871,9 @@ describe('renderBreadboard', () => {
     const rowJ = Number([...svg.matchAll(/<text[^>]*y="([\d.]+)"[^>]*>j<\/text>/g)][0]?.[1]);
 
     expect(captions).toHaveLength(2);
-    // 上ブロックの部品は下へ、下ブロックの部品は上へ、どちらも溝側に逃がす。
+    // どちらも胴より下 (行の綴りの基準線より下に来る)。
     expect(Number(captions[0]?.[1])).toBeGreaterThan(rowA);
-    expect(Number(captions[1]?.[1])).toBeLessThan(rowJ);
+    expect(Number(captions[1]?.[1])).toBeGreaterThan(rowJ);
   });
 
   test('treats a colour name inherited from Object.prototype as unknown', () => {

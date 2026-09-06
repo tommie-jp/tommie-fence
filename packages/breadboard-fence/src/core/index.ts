@@ -2,7 +2,7 @@ import { keptSourceLines } from 'fence-kit';
 import { attachSourceText, fail, fenceError, notice, ok, safeToken, shiftErrors } from './errors.ts';
 import { normalizeNewlines } from './newlines.ts';
 import { LIMITS } from './limits.ts';
-import { formatAddress, parseAddress } from './model/address.ts';
+import { formatAddress, isCrossing, parseAddress } from './model/address.ts';
 import { createBoard, devicePinStrip, isOnBoard, offBoardReason, stripOf } from './model/board.ts';
 import { createLayout } from './model/layout.ts';
 import type { Layout } from './model/layout.ts';
@@ -572,6 +572,10 @@ function resolveEndpoint(
 
   const address = parseAddress(text);
   if (!address) return fail(`配線の端点として読めません: ${safeToken(text)}`, line, text);
+  // **配線の端も穴に挿す。** 交点の間を書けるのは注釈だけ (`isCrossing`)。
+  if (!isCrossing(address)) {
+    return fail(`穴の間へは引けません: ${safeToken(text)} (交点の間を書けるのは注釈だけです)`, line, text);
+  }
   const reason = offBoardReason(board, address);
   if (reason) return fail(reason, line);
   return ok({ kind: 'hole', address, viaPin: false });

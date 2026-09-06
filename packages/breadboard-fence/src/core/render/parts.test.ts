@@ -8,6 +8,7 @@ import { partObstacles, renderPart } from './parts.ts';
 import { bodyHalfHeight, bodyHalfWidth } from './threeLead.ts';
 import { num } from './svg.ts';
 import { resolveStyle } from './theme.ts';
+import { bodySize } from 'fence-kit';
 
 const board = createBoard('half');
 const layout = createLayout(board);
@@ -137,5 +138,66 @@ describe('1 番ピンの印は向きに付いてくる', () => {
 
     expect(usbX('M1: pico @ h5')).toBeLessThan(edges('M1: pico @ h5').left);
     expect(usbX('M1: pico @ h5 r180')).toBeGreaterThan(edges('M1: pico @ h5').left);
+  });
+});
+
+
+/**
+ * 名札が胴に乗らないこと。**実機で「文字と図形が被らないように文字をずらす」**
+ * と、円板・箱・砲弾の 18 種類を並べて言われた回 (2026-09-06)。
+ *
+ * **1 つずつ見て回るのではなく、重なりを測って全部に効かせる** — 姿を足したり
+ * 胴の寸法を変えたときにも、名札が乗ったままならここで止まる。
+ */
+describe('名札は胴の外', () => {
+  /**
+   * その部品の名札の基準線 (画布の座標)。**胴に刷る字と混ぜない** —
+   * 極性の印や品種の 1 文字 (`N` `P` `−`) も `<text>` で描いてある。
+   */
+  const labelBaselineOf = (svg: string, id: string): number =>
+    Number(new RegExp(`<text x="[\\d.]+" y="([\\d.]+)"[^>]*>${id}`).exec(svg)?.[1] ?? NaN);
+
+  /** 10px 前後の字が基準線から上へ出る高さ。 */
+  const capOf = (): number => theme.metrics.textSize * 0.72;
+
+  const cases: readonly string[] = [
+    'VZ1: varistor a3 a7', 'CDS1: photoresistor a3 a7',
+    'TH1: thermistor a3 a7', 'TH2: thermistor-ntc a3 a7', 'TH3: thermistor-ptc a3 a7',
+    'D1: diode a3 a7', 'D2: zener a3 a7', 'D3: schottky a3 a7', 'D4: led a3 a7',
+    'SP1: speaker a3 a7', 'F1: fuse a3 a7', 'LA1: lamp a3 a7', 'BZ1: buzzer a3 a7',
+    'BAT1: battery a3 a7', 'SO1: solar a3 a7', 'SW1: switch a3 a7', 'SW2: switch-nc a3 a7',
+    // 姿の違いも見る (胴の寸法が姿で変わる種類)。
+    'C1: capacitor/electrolytic a3 a7', 'C2: capacitor/tantalum a3 a7',
+    'D5: diode/do41 a3 a7', 'L1: inductor/radial a3 a7', 'X1: crystal/cylinder a3 a7',
+    'R1: resistor/half a3 a7',
+  ];
+
+  for (const line of cases) {
+    test(`keeps the label clear of the body: ${line.split(':')[1]?.trim()}`, () => {
+      const part = place(line);
+      const centre = layout.point(part.pins[0]!.address!);
+      const svg = renderPart(part, layout, theme);
+      const baseline = labelBaselineOf(svg, part.id);
+      // a 行は上のブロックなので、名札は胴の下。字の頭が胴の下の縁より下に来る。
+      const half = bodySize(part, 4 * layout.pitch).height / 2;
+
+      expect(baseline - capOf()).toBeGreaterThan(centre.y + half);
+    });
+  }
+});
+
+
+describe('マイコンボードの足の番号', () => {
+  test('writes the header number beside each pin name, as the schematic does', () => {
+    // 実機で「pico のピン名にピン番号を表示する。circuit-editor の pico を参考に」。
+    const part = place('U1: pico @ h5');
+    const svg = renderPart(part, layout, theme);
+
+    // 下の列 (足が下、字は上へ伸びる) は番号が先。
+    expect(svg).toContain('>01 GP0<');
+    // 上の列 (字は下へ伸びる) は名前が先 — **番号はどちらも足の側の端**。
+    expect(svg).toContain('>VBUS 40<');
+    // 配線に書く綴りは名前のまま。
+    expect(svg).not.toContain('01 GP0"');
   });
 });

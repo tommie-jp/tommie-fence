@@ -1,6 +1,6 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart } from '../types.ts';
-import { LEG_NAME_GAP, ROUND_CAPTION_GAP, caption, fitToBoard, haloWidth, partLabel, pinPoints } from './partCommon.ts';
+import { LEG_NAME_CLEAR, NAME_CAP, NAME_LINE, caption, fitToBoard, haloWidth, partLabel, pinPoints } from './partCommon.ts';
 import { drawPackage, packageHalfWidth, packageReach } from 'fence-kit';
 import { element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
@@ -41,11 +41,16 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
       element('rect', { x: num(point.x - 3), y: num(point.y - 3), width: 6, height: 6, fill: palette.chipPin }),
     )
     .join('');
+  // **足の名前もキャプションも胴の下へ。** 図の中で名前の出る側が揃う
+  // (実機で「すべての部品名は部品の下側に表示する」)。溝の側へ振り分けて
+  // いたが、上下のブロックで側が変わって揃わなかった。
+  const cap = metrics.textSize * NAME_CAP;
+  const nameY = (y: number): number => y + reach + LEG_NAME_CLEAR + cap;
   const names = part.pins
     .map((pin, index) => {
       const point = points[index];
       return point
-        ? svgText(point.x, point.y - towardRavine * (reach + LEG_NAME_GAP), pin.name, {
+        ? svgText(point.x, nameY(point.y), pin.name, {
             'font-size': num(metrics.textSize),
             'font-weight': 700,
             fill: palette.partText,
@@ -56,7 +61,8 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
     })
     .join('');
   const text = fitToBoard(caption(part), center.x, theme.metrics.textSize, layout);
-  const label = partLabel(center.x, center.y + towardRavine * (reach + ROUND_CAPTION_GAP), text, theme);
+  // キャプションは名前の 1 行下 (名前と同じ側に積む)。
+  const label = partLabel(center.x, nameY(center.y) + metrics.textSize * NAME_LINE, text, theme);
 
   const shell = drawPackage(part, {
     cx: center.x,
