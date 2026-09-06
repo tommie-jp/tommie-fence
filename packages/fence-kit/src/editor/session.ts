@@ -424,6 +424,7 @@ export function createSession<D extends DocLike>(
     // 能力表も語彙と一緒に (webview は同じ箱から読む)。
     foldsWire: fence.foldsWire,
     fine: fence.fine,
+    fineFor: fence.fineFor ?? 'all',
   });
 
   function viewNow(followCursor: boolean): MapView {

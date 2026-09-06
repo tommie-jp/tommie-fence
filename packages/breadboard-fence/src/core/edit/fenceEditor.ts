@@ -18,7 +18,7 @@ import {
 } from './note.ts';
 import { extractBreadboardFences } from '../fences.ts';
 import { renderBreadboard } from '../index.ts';
-import { parseAddress } from '../model/address.ts';
+import { parseAddress, isCrossing } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import type { Address } from '../types.ts';
@@ -31,6 +31,15 @@ import type { Address } from '../types.ts';
  * 自分で SVG を組んでいて穴の座標が線形に出るので、図の上に透明な層を
  * 重ねるだけでよい (`renderBreadboard(source, { edit: true })`)。
  */
+
+/**
+ * 穴の間へ置こうとしたときの断り。**足は穴に挿す**ので、交点の間に置けるのは
+ * 注釈だけ (52 の docs、実機で「text はどこでも移動できるように」)。
+ */
+const betweenHoles = (written: string) => ({
+  ok: false as const,
+  error: { message: `穴の間には置けません: ${written} (間に置けるのは注釈だけです)`, line: null },
+});
 
 const unreadable = (written: string): EditResult =>
   ({ ok: false, error: { message: `穴として読めません: ${written}`, line: null } });
@@ -79,7 +88,10 @@ export function createBreadboardEditor(): FenceEditor {
     // 配線は穴から穴へ 1 本 (折れの綴りが文法に無い)。
     foldsWire: false,
     // 穴の間は無い (足は穴に挿す)。Ctrl を押しても素のクリック。
-    fine: null,
+    // **注釈だけが交点の間に置ける** (`b5c3`)。足は穴に挿すので、部品と配線は
+    // 交点そのものを指す (52 の docs、実機で「text はどこでも移動できるように」)。
+    fine: 10,
+    fineFor: 'note' as const,
     step: stepCell,
     stepsTo,
 
@@ -103,6 +115,7 @@ export function createBreadboardEditor(): FenceEditor {
       const target = readAddress(to);
       if (at === null) return unreadable(from);
       if (target === null) return unreadable(to);
+      if (!isCrossing(target)) return betweenHoles(to);
       return movePoint(source, at, target, trial?.preview === true);
     },
 
@@ -114,6 +127,8 @@ export function createBreadboardEditor(): FenceEditor {
       const target = readAddress(to);
       if (at === null) return unreadable(from);
       if (target === null) return unreadable(to);
+      if (!isCrossing(at)) return betweenHoles(from);
+      if (!isCrossing(target)) return betweenHoles(to);
       return insertWire(source, at, target);
     },
 
@@ -133,6 +148,8 @@ export function createBreadboardEditor(): FenceEditor {
       const at = part.at.map((one) => readAddress(one));
       const bad = at.indexOf(null);
       if (bad >= 0) return unreadable(part.at[bad] ?? '');
+      const between = at.findIndex((one) => one !== null && !isCrossing(one));
+      if (between >= 0) return betweenHoles(part.at[between] ?? '');
       return insertPart(source, {
         id: part.id,
         type: part.type,

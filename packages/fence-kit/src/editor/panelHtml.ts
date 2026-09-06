@@ -406,6 +406,8 @@ export type PanelChrome = {
   readonly foldsWire: boolean;
   /** 何分の 1 升まで刻めるか (`FenceEditor.fine`)。null なら Ctrl は素のクリック (52 の docs/23)。 */
   readonly fine: number | null;
+  /** 端数が効く相手 (`FenceEditor.fineFor`)。`note` なら注釈だけ。 */
+  readonly fineFor: 'all' | 'note';
 };
 
 /** 欄の種類が引く候補の名札。**組む側と引く側で同じ綴りを使う**ための 1 か所。 */
@@ -575,7 +577,8 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     // **言語ごとに入れ替わる。** 1 つの殻が 3 つのフェンスを扱うので、
     // いまのフェンスの語彙に差し替えられるよう箱で包む (52 の docs/19)。
     // **能力表も同じ箱に書く** (body に焼くと、言語をまたいだとき最初の言語のまま残る)。
-    + `<div class="cf-chrome-palette" data-folds="${chrome.foldsWire ? '1' : '0'}" data-fine="${chrome.fine ?? ''}">${chrome.palette}</div>`
+    + `<div class="cf-chrome-palette" data-folds="${chrome.foldsWire ? '1' : '0'}"`
+    + ` data-fine="${chrome.fine ?? ''}" data-fine-for="${chrome.fineFor}">${chrome.palette}</div>`
     + `</div></div>`
     + `<nav class="kc-tools">${renderTools()}</nav>`
     + `</div>`

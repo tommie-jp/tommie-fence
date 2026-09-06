@@ -93,7 +93,7 @@ describe('持ち上げて、置く所で 1 クリック (KiCad の型 2)', () =>
   test('M lifts the part under the cursor and asks for a ghost where the cursor is', () => {
     const { state, send } = step(after(PANEL, hover(ON_R1)), key('m'));
 
-    expect(state.carry).toEqual({ kind: 'move', part: 'R1', byPointer: false });
+    expect(state.carry).toEqual({ kind: 'move', part: 'R1', byPointer: false, note: false });
     expect(send).toEqual([{ kind: 'preview', key: 'move:R1:a1', what: 'move', part: 'R1', to: 'a1' }]);
   });
 
@@ -109,7 +109,7 @@ describe('持ち上げて、置く所で 1 クリック (KiCad の型 2)', () =>
   test('dragging a selected part lifts it too, and drops it where the pointer is let go', () => {
     const dragged = after(PANEL, press(ON_R1), drag(AT_B3));
 
-    expect(dragged.carry).toEqual({ kind: 'move', part: 'R1', byPointer: true });
+    expect(dragged.carry).toEqual({ kind: 'move', part: 'R1', byPointer: true, note: false });
     // **掴んだ升も添える** — アンカーとの差を殻が引く (胴の途中を掴んでも影がずれない)。
     expect(step(dragged, release(AT_B3)).send).toEqual([{ kind: 'move', part: 'R1', from: 'a1', to: 'b3' }]);
   });
@@ -140,7 +140,7 @@ describe('持ち上げて、置く所で 1 クリック (KiCad の型 2)', () =>
     expect(step(lifted, key('R', { shift: true })).send).toEqual([{ kind: 'turn', part: 'R1', quarters: -1 }]);
     expect(step(lifted, key('x')).send).toEqual([{ kind: 'flip', part: 'R1' }]);
     // 持ったままなので、置く先はまだ決まっていない。
-    expect(step(lifted, key('r')).state.carry).toEqual({ kind: 'move', part: 'R1', byPointer: false });
+    expect(step(lifted, key('r')).state.carry).toEqual({ kind: 'move', part: 'R1', byPointer: false, note: false });
   });
 
   test('G takes the selected node over the hovered one, like every other key', () => {

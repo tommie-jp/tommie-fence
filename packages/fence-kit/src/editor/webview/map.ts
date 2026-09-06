@@ -28,6 +28,7 @@ let state: State = start(
   document.body.classList.contains('cf-own-undo'),
   firstChrome?.dataset.folds === '1',
   Number(firstChrome?.dataset.fine) || null,
+  firstChrome?.dataset.fineFor === 'note' ? 'note' : 'all',
 );
 
 /** 最後に見たカーソルの位置。組み直しのあとにカーソルの下を取り直す。 */
@@ -159,9 +160,12 @@ function underAt(x: number, y: number): Under {
     return null;
   };
   const cell = find('.cf-cell', 'address');
+  const chip = find('.cf-chip', 'part');
   return {
     cell: cell?.value ?? null,
-    part: find('.cf-chip', 'part')?.value ?? null,
+    part: chip?.value ?? null,
+    // **注釈かどうかは絵が言う** (`data-note`)。端数が注釈にだけ効く板で要る。
+    note: chip?.hit.dataset.note === '1',
     node: find('.cf-dot', 'node')?.value ?? null,
     wire: find('.cf-wire-hit', 'line')?.value ?? null,
     pin: find('.cf-pin-hit', 'pin')?.value ?? null,
@@ -180,7 +184,12 @@ function fineIn(cell: Element, x: number, y: number): Fine | null {
   // 端数が絵に出るのは、持ち物があるときと配線を引きかけているときだけ。
   // それ以外で数えると、何も変わらない塗り直しが 1 升あたり 100 回になる。
   const wanted = state.carry !== null || state.wireFrom !== null;
-  if (shiftHeld || state.fine === null || !wanted) return null;
+  // **端数が効く相手のときだけ数える。** 板の 2 つは足を穴に挿すので、
+  // 刻めるのは注釈だけ (`fineFor`)。刻めない物に小さい四角を出すと、
+  // そこへ置けるように見えて置けない。
+  const takesFine = state.fineFor === 'all'
+    || (state.carry?.kind === 'move' && state.carry.note === true);
+  if (shiftHeld || state.fine === null || !wanted || !takesFine) return null;
   const box = cell.getBoundingClientRect();
   const fine = fineOf(x - box.left, y - box.top, box.width, box.height, state.fine);
   return fine.rows === 0 && fine.cols === 0 ? null : fine;

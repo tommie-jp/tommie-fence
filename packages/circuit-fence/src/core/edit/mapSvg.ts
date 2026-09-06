@@ -840,7 +840,7 @@ function drawNote(note: MapNote, framed: boolean): string {
   });
   return element(
     'g',
-    { class: 'cf-chip cf-note-mark', 'data-part': note.handle, 'data-line': note.line },
+    { class: 'cf-chip cf-note-mark', 'data-part': note.handle, 'data-note': '1', 'data-line': note.line },
     // 切った跡が `…` で残るので、**全文は乗せれば読める**ようにしておく。
     element('title', {}, escapeMarkup(bare ? note.text : note.kind))
     + frame

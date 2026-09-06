@@ -161,6 +161,12 @@ export type FenceEditor = {
    */
   readonly textOf?: (source: string, handle: string) => string | null;
   /**
+   * 端数 (`fine`) が効く相手。**`note` なら注釈だけ** — 板の 2 つは足を穴に
+   * 挿すので、部品と配線は交点そのものを指す (書けるのは注釈だけ)。
+   * 書かなければ全部に効く (circuit)。
+   */
+  readonly fineFor?: 'all' | 'note';
+  /**
    * 置く部品に付ける ID。**知らない種類だけ null。** ID がそのまま図に出る種類
    * (circuit の `port` / `vcc`) も既定の名前で返す — 置く流れを窓で止めない
    * (KiCad が `#PWR?` で置いてから直させるのと同じ)。名前は欄で直す。

@@ -72,7 +72,7 @@ export function renderNotes(
   return onBoard(notes).map((note) => {
     const drawn = renderNote(note, layout, theme, sourceLines);
     return edit
-      ? element('g', { class: 'cf-chip', 'data-part': noteHandle(note.spec.line) }, drawn)
+      ? element('g', { class: 'cf-chip', 'data-part': noteHandle(note.spec.line), 'data-note': '1' }, drawn)
       : drawn;
   }).join('');
 }

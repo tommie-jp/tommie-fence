@@ -82,7 +82,9 @@ export type Under = {
    * 綴りはフェンスが決める (殻は字として運ぶ)。
    */
   readonly pin: string | null;
-  /** 升の中の端数。交点ちょうど・Ctrl 無し・板の上は null。 */
+  /** その部品が注釈か。**端数が注釈にだけ効く板**で見る (`fineFor`)。 */
+  readonly note?: boolean;
+  /** 升の中の端数。交点ちょうど・Shift 中・刻めない相手は null。 */
   readonly fine: Fine | null;
 };
 
@@ -120,7 +122,11 @@ export type Carry =
     /** 2 端子か。ドラッグで間隔を選べるのはこれだけ (ほかは押した穴 1 つ)。 */
     readonly twoEnds: boolean;
   }
-  | { readonly kind: 'move'; readonly part: string; readonly byPointer: boolean }
+  | {
+    readonly kind: 'move'; readonly part: string; readonly byPointer: boolean;
+    /** 掴んだのが注釈か。**端数が注釈にだけ効く板**で見る (`fineFor`)。 */
+    readonly note?: boolean;
+  }
   | { readonly kind: 'drag'; readonly node: string; readonly byPointer: boolean };
 
 /** 拡張が答えたゴースト。`key` は問い合わせの札 (古い答えを捨てる)。 */
@@ -160,9 +166,19 @@ export type State = {
   readonly foldsWire: boolean;
   /** 何分の 1 升まで刻めるか (`FenceEditor.fine`)。null なら Ctrl を押しても素のクリック。 */
   readonly fine: number | null;
+  /**
+   * 端数が効く相手。**`note` なら注釈だけ** — 板の 2 つは足を穴に挿すので、
+   * 部品と配線は交点そのものを指す (実機で「text はどこでも移動できるように」)。
+   */
+  readonly fineFor: FineFor;
 };
 
-export const start = (ownUndo: boolean, foldsWire = false, fine: number | null = null): State => ({
+export const start = (
+  ownUndo: boolean,
+  foldsWire = false,
+  fine: number | null = null,
+  fineFor: FineFor = 'all',
+): State => ({
   tool: 'select',
   selected: null,
   under: NOTHING,
@@ -175,6 +191,7 @@ export const start = (ownUndo: boolean, foldsWire = false, fine: number | null =
   ownUndo,
   foldsWire,
   fine,
+  fineFor,
 });
 
 /** webview で起きたこと。**DOM を読むのは呼ぶ側** (`map.ts`)。 */
@@ -221,6 +238,9 @@ export type Event =
 
 /** 拡張へ送る知らせ (`session.ts` の `Incoming` と同じ形)。 */
 export type Message = { readonly kind: string } & Readonly<Record<string, unknown>>;
+
+/** 端数が効く相手。 */
+export type FineFor = 'all' | 'note';
 
 /** DOM 側に頼むフォーカスの移動。 */
 export type Focus = 'search' | 'id';
@@ -472,7 +492,9 @@ function onDrag(state: State, event: Extract<Event, { kind: 'drag' }>): Outcome 
 
   // 押したまま離れたら持ち上げる (KiCad の M / G をドラッグでも)。配線は動かせない。
   if (selected.kind === 'part') {
-    const lifted = carrying(hovered.state, { kind: 'move', part: selected.id, byPointer: true });
+    const lifted = carrying(hovered.state, {
+      kind: 'move', part: selected.id, byPointer: true, note: hovered.state.under.note === true,
+    });
     return { ...lifted, state: { ...lifted.state, pressed } };
   }
   if (selected.kind === 'node') {
@@ -673,7 +695,13 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
   const group = many.length > 1 ? { parts: many } : {};
   const said = many.length > 1 ? `${many.length} 個` : shownName(part);
 
-  if (key === 'm') return carrying({ ...state, selected: picked }, { kind: 'move', part, byPointer: false }, true);
+  if (key === 'm') {
+    return carrying(
+      { ...state, selected: picked },
+      { kind: 'move', part, byPointer: false, note: state.under.note === true },
+      true,
+    );
+  }
   if (key === 'r') {
     const quarters = event.shift ? -1 : 1;
     return outcome(state, [{ kind: 'turn', part, ...group, quarters }], `${said}を回しています…`, true);

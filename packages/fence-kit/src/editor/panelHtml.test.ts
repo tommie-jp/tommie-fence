@@ -8,6 +8,7 @@ const CHROME = {
   colorNames: '<datalist id="cf-color-names"></datalist>',
   foldsWire: false,
   fine: null,
+  fineFor: 'all' as const,
 };
 
 const shell = (over: Partial<Parameters<typeof panelHtml>[0]> = {}): string => panelHtml({
@@ -138,7 +139,7 @@ describe('KiCad の配置', () => {
 
   test('tells the script the abilities of the fence on the box that is swapped per language', () => {
     // **最初の HTML に焼かない。** 言語をまたぐと能力も変わる (52 の docs/19, 23)。
-    const able = shell({ view: { html: '', picker: '', issues: '', chrome: { ...CHROME, foldsWire: true, fine: 4 } } });
+    const able = shell({ view: { html: '', picker: '', issues: '', chrome: { ...CHROME, foldsWire: true, fine: 4, fineFor: 'all' as const } } });
 
     expect(able).toContain('class="cf-chrome-palette" data-folds="1" data-fine="4"');
     expect(html).toContain('class="cf-chrome-palette" data-folds="0" data-fine=""');

@@ -1,7 +1,7 @@
 import type { GridStep } from 'fence-kit';
 import type { Edit, NetDiff, Span } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
-import { formatAddress, parseAddress } from '../model/address.ts';
+import { formatAddress, isCrossing, parseAddress } from '../model/address.ts';
 import { createBoard } from '../model/board.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
@@ -138,6 +138,11 @@ export function partSpans(source: string, id: string): readonly Span[] {
 export function movePart(source: string, id: string, to: Address, trial = false): MoveResult {
   const found = locatePart(source, id);
   if (!isLocated(found)) return { ok: false, error: found.error };
+  // **足は穴に挿す。** 交点の間へ落とされたら、書き込む前に断る (置く側と同じ
+  // 規則。書いてしまうと、読み直したときにエラーになる図が残る)。
+  if (!isCrossing(to)) {
+    return fail(`${safeToken(id)} は穴の間には置けません (間に置けるのは注釈だけです)`, found.part.line);
+  }
 
   const anchor = found.addresses[0];
   if (anchor === undefined) return fail(`${safeToken(id)} に穴がありません`, found.part.line);
@@ -185,13 +190,15 @@ export function movePart(source: string, id: string, to: Address, trial = false)
 export function stepCell(written: string, rows: number, cols: number): string | null {
   const from = parseAddress(written);
   if (from === null) return null;
-  // **穴の間は文法に無い。** 端数を足すと `a5.25` という読めない綴りになる (52 の docs/23)。
-  if (!Number.isInteger(rows) || !Number.isInteger(cols)) return null;
-  if (from.kind !== 'hole') {
-    return rows !== 0 ? null : shiftedOn(from, 0, cols);
-  }
-  return shiftedOn(from, rows, cols);
+  // **端数も綴れる** (`b5c3`)。刻みは小数第 1 位までで、それより細かい数は
+  // 綴りに直せない (`isCrossing` で見張っている番地の形に載らない)。
+  const step = { rows: round(rows), cols: round(cols) };
+  if (step.rows !== rows || step.cols !== cols) return null;
+  return shiftedOn(from, step.rows, step.cols);
 }
+
+/** 小数第 1 位で丸める。綴りに載る刻みはここまで。 */
+const round = (value: number): number => Number(value.toFixed(1));
 
 /**
  * 2 つの穴の間の行数と列数。**まとめて選んだものを同じだけずらす**ために要る。
@@ -208,10 +215,24 @@ export function stepsTo(from: string, to: string): GridStep | null {
 }
 
 /** 数え直した穴。行は `a`〜`j`、列は 1 から。 */
+/**
+ * その番地から行・列にずらした綴り。**端数は交点からの残り**として持つので、
+ * 行をまたぐぶんは行の綴りへ、残りが組 (`c3`) になる。
+ */
 function shiftedOn(from: Address, rows: number, cols: number): string | null {
-  const col = from.col + cols;
+  const wholeCols = Math.floor((from.cols ?? 0) + cols);
+  const col = from.col + wholeCols;
+  const restCols = Number((((from.cols ?? 0) + cols) - wholeCols).toFixed(1));
   if (col < 1) return null;
-  if (from.kind !== 'hole') return formatAddress({ ...from, col });
-  const row = HOLE_ROWS[HOLE_ROWS.indexOf(from.row) + rows];
-  return row === undefined ? null : formatAddress({ kind: 'hole', row, col });
+
+  const wholeRows = Math.floor((from.rows ?? 0) + rows);
+  const restRows = Number((((from.rows ?? 0) + rows) - wholeRows).toFixed(1));
+  const rest = { ...(restRows === 0 ? {} : { rows: restRows }), ...(restCols === 0 ? {} : { cols: restCols }) };
+
+  // レールは行が極性そのものなので、行はずらせない (端数だけは持てる)。
+  if (from.kind !== 'hole') {
+    return wholeRows !== 0 ? null : formatAddress({ ...from, col, ...rest });
+  }
+  const row = HOLE_ROWS[HOLE_ROWS.indexOf(from.row) + wholeRows];
+  return row === undefined ? null : formatAddress({ kind: 'hole', row, col, ...rest });
 }

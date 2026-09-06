@@ -114,6 +114,6 @@ export const renderNotes = (
   notes.map((note) => {
     const drawn = renderNote(note, layout, theme);
     return edit && note.line !== null
-      ? element('g', { class: 'cf-chip', 'data-part': noteHandle(note.line) }, drawn)
+      ? element('g', { class: 'cf-chip', 'data-part': noteHandle(note.line), 'data-note': '1' }, drawn)
       : drawn;
   }).join('');
