@@ -176,6 +176,11 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
     backTop: back === null ? null : backTop,
     colX,
     rowY,
-    point: (address) => ({ x: colX(address.col), y: rowY(address.row) }),
+    // **交点の間も指せる** (`rows` / `cols` は 1 升に対する端数)。格子は一様なので
+    // ピッチを掛けるだけ。書けるのは注釈だけで、足は交点そのものを指す。
+    point: (address) => ({
+      x: colX(address.col) + (address.cols ?? 0) * PITCH,
+      y: rowY(address.row) + (address.rows ?? 0) * PITCH,
+    }),
   };
 }

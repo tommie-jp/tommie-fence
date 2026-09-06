@@ -2,7 +2,7 @@ import type { GridStep } from 'fence-kit';
 import type { Edit, NetDiff, Span } from 'fence-kit';
 import { normalizeNewlines } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
-import { formatAddress, parseAddress } from '../model/address.ts';
+import { formatAddress, isCrossing, parseAddress } from '../model/address.ts';
 import { isOnBoard, offBoardReason } from '../model/board.ts';
 import { isEdgeMount } from '../parts/types.ts';
 import { parseFence } from '../parser/parseFence.ts';
@@ -105,6 +105,11 @@ export function partSpans(source: string, id: string): readonly Span[] {
 export function movePart(source: string, id: string, to: Address, trial = false): MoveResult {
   const found = locatePart(source, id);
   if (!isLocated(found)) return { ok: false, error: found.error };
+  // **足は穴に挿す。** 交点の間へ落とされたら、書き込む前に断る (置く側と同じ
+  // 規則。書いてしまうと、読み直したときにエラーになる図が残る)。
+  if (!isCrossing(to)) {
+    return fail(`${safeToken(id)} は穴の間には置けません (間に置けるのは注釈だけです)`, found.lineNumber);
+  }
 
   const anchor = found.addresses[0];
   if (anchor === undefined) return fail(`${safeToken(id)} に穴がありません`, found.lineNumber);
@@ -148,10 +153,35 @@ export function movePart(source: string, id: string, to: Address, trial = false)
 export function stepCell(written: string, rows: number, cols: number): string | null {
   const from = parseAddress(written);
   if (from === null) return null;
-  // **穴の間は文法に無い。** 端数を足すと `a1.25` という読めない綴りになる (52 の docs/23)。
-  if (!Number.isInteger(rows) || !Number.isInteger(cols)) return null;
-  const next = { row: from.row + rows, col: from.col + cols };
-  return next.row < 0 || next.col < 0 ? null : formatAddress(next);
+  // **端数も綴れる** (`b5c3`)。刻みは小数第 1 位までで、それより細かい数は
+  // 綴りに直せない (`isCrossing` で見張っている番地の形に載らない)。
+  const step = { rows: round(rows), cols: round(cols) };
+  if (step.rows !== rows || step.cols !== cols) return null;
+  return shiftedOn(from, step.rows, step.cols);
+}
+
+/** 小数第 1 位で丸める。綴りに載る刻みはここまで。 */
+const round = (value: number): number => Number(value.toFixed(1));
+
+/**
+ * その番地から行・列にずらした綴り。**端数は交点からの残り**として持つので、
+ * 升をまたぐぶんは行と列の綴りへ、残りが組 (`c3`) になる。
+ */
+function shiftedOn(from: Address, rows: number, cols: number): string | null {
+  const along = (base: number, rest: number, step: number): { whole: number; rest: number } => {
+    const moved = rest + step;
+    const whole = Math.floor(moved);
+    return { whole: base + whole, rest: Number((moved - whole).toFixed(1)) };
+  };
+  const col = along(from.col, from.cols ?? 0, cols);
+  const row = along(from.row, from.rows ?? 0, rows);
+  if (row.whole < 0 || col.whole < 0) return null;
+  return formatAddress({
+    row: row.whole,
+    col: col.whole,
+    ...(row.rest === 0 ? {} : { rows: row.rest }),
+    ...(col.rest === 0 ? {} : { cols: col.rest }),
+  });
 }
 
 /**

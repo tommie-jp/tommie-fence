@@ -29,7 +29,18 @@ export const TOP_LEVEL_KEYS = ['title', 'points', 'board', 'style', 'parts', 'wi
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
 
 /** 穴の番地。行も列も 1 始まり。行の名前は `a` `b` … `aa` (address.ts)。 */
-export type Address = { readonly row: number; readonly col: number };
+/**
+ * 穴の番地。**交点の間も指せる** (`rows` / `cols` は 1 升に対する端数)。
+ * 端数を書けるのは注釈だけで、足は穴に挿すので交点そのものを指す
+ * (`isCrossing` が見張る)。**端数が無ければ鍵ごと持たない** — 交点の番地は
+ * 今までと同じ形のままにする (`{ row, col }` を比べているところが多い)。
+ */
+export type Address = {
+  readonly row: number;
+  readonly col: number;
+  readonly rows?: number;
+  readonly cols?: number;
+};
 
 /** 板の大きさ。列 × 行 (板の呼び方と同じ順)。 */
 export type BoardSize = { readonly cols: number; readonly rows: number };

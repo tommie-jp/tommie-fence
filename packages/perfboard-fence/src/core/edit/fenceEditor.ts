@@ -20,7 +20,7 @@ import { movePoint, nodeSpans } from './point.ts';
 import { deletePart, deleteWire } from './remove.ts';
 import { extractPerfboardFences } from '../fences.ts';
 import { renderPerfboard } from '../index.ts';
-import { parseAddress } from '../model/address.ts';
+import { isCrossing, parseAddress } from '../model/address.ts';
 import { parseFence } from '../parser/parseFence.ts';
 
 /**
@@ -30,6 +30,15 @@ import { parseFence } from '../parser/parseFence.ts';
  * **マップは図そのもの。** 格子が一様なので、図の上に透明な層を重ねるだけで
  * 掴める (`renderPerfboard(source, { edit: true })`)。
  */
+
+/**
+ * 穴の間へ置こうとしたときの断り。**足は穴に挿す**ので、交点の間に置けるのは
+ * 注釈だけ (breadboard と同じ約束)。
+ */
+const betweenHoles = (written: string) => ({
+  ok: false as const,
+  error: { message: `穴の間には置けません: ${written} (間に置けるのは注釈だけです)`, line: null },
+});
 
 const unreadable = (written: string): EditResult =>
   ({ ok: false, error: { message: `穴として読めません: ${written}`, line: null } });
@@ -83,8 +92,11 @@ export function createPerfboardEditor(): FenceEditor {
     },
     // 配線は穴から穴へ 1 本 (折れの綴りが文法に無い)。
     foldsWire: false,
-    // 穴の間は無い (足は穴に挿す)。Ctrl を押しても素のクリック。
-    fine: null,
+    // **注釈だけが交点の間に置ける** (`b5c3`)。足は穴に挿すので、部品・配線・
+    // 節点は交点そのものを指す (breadboard と同じ約束)。
+    // 既定が 1/10 升で、`Shift` を押している間だけ升ちょうど。
+    fine: 10,
+    fineFor: 'note' as const,
     step: stepCell,
     stepsTo,
 
@@ -98,7 +110,9 @@ export function createPerfboardEditor(): FenceEditor {
       if (at === null) return unreadable(to);
       if (isNoteHandle(handle)) return moveNote(source, handle, at, trial?.preview === true);
       // 機器は `at:` を書き換えて動かす (箱の左上が落ちた穴に来る)。
+      // **機器も穴を指す** — `at:` に書けるのは番地なので、端数は断る。
       if (isDevice(source, handle)) {
+        if (!isCrossing(at)) return betweenHoles(to);
         return moveDevice(source, handle, deviceTarget(at), trial?.preview === true);
       }
       if (!movablePartIds(source).includes(handle)) {
@@ -112,6 +126,7 @@ export function createPerfboardEditor(): FenceEditor {
       const target = readAddress(to);
       if (at === null) return unreadable(from);
       if (target === null) return unreadable(to);
+      if (!isCrossing(target)) return betweenHoles(to);
       return movePoint(source, at, target, trial?.preview === true);
     },
 
@@ -125,6 +140,8 @@ export function createPerfboardEditor(): FenceEditor {
       const target = readAddress(to);
       if (at === null) return unreadable(from);
       if (target === null) return unreadable(to);
+      if (!isCrossing(at)) return betweenHoles(from);
+      if (!isCrossing(target)) return betweenHoles(to);
       return insertWire(source, at, target);
     },
 

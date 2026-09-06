@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { formatAddress, parseAddress, rowIndex, rowLabel } from './address.ts';
+import { formatAddress, isCrossing, parseAddress, rowIndex, rowLabel } from './address.ts';
 
 describe('rowLabel', () => {
   test('numbers the rows with letters, 1 based', () => {
@@ -135,5 +135,40 @@ describe('板の外の番地', () => {
     expect(rowLabel(0)).toBe('0');
     expect(rowLabel(-1)).toBe('-a');
     expect(rowLabel(-27)).toBe('-aa');
+  });
+});
+
+/**
+ * 交点の間 (端数の番地)。**書けるのは注釈だけ** — 足は穴に挿すので、部品も
+ * 配線も節点も交点そのものを指す (実機で「フェンス editor すべてで 1/10 単位を
+ * デフォルトにする」。breadboard と同じ綴り)。
+ */
+describe('交点の間 (端数の番地)', () => {
+  test('reads a pair of tenths after the address', () => {
+    expect(parseAddress('b5c3')).toEqual({ row: 2, col: 5, rows: 0.2, cols: 0.3 });
+  });
+
+  test('writes the pair back, and leaves a whole crossing as it was', () => {
+    const at = parseAddress('b5c3');
+
+    expect(at === null ? '' : formatAddress(at)).toBe('b5c3');
+    expect(formatAddress({ row: 2, col: 5 })).toBe('b5');
+  });
+
+  test('takes the pair on a multi-letter row and a column outside the board', () => {
+    expect(parseAddress('ab12c3')).toEqual({ row: 28, col: 12, rows: 0.2, cols: 0.3 });
+    expect(parseAddress('a-1c3')).toEqual({ row: 1, col: -1, rows: 0.2, cols: 0.3 });
+  });
+
+  test('refuses a pair that means no offset, so one place has one spelling', () => {
+    expect(parseAddress('b5a0')).toBeNull();
+  });
+
+  test('tells a crossing from a place between crossings', () => {
+    const between = parseAddress('b5c3');
+    const crossing = parseAddress('b5');
+
+    expect(between === null ? false : isCrossing(between)).toBe(false);
+    expect(crossing === null ? false : isCrossing(crossing)).toBe(true);
   });
 });

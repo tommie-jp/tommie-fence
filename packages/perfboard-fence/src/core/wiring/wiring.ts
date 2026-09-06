@@ -3,7 +3,7 @@ import { footprintOf } from '../parts/footprint.ts';
 import type { Net, NetMember } from 'fence-kit';
 import { fenceError, notice, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
-import { formatAddress, parseAddress } from '../model/address.ts';
+import { formatAddress, isCrossing, parseAddress } from '../model/address.ts';
 import { holeStrip, offBoardReason } from '../model/board.ts';
 import { isEdgeMount } from '../parts/types.ts';
 import type {
@@ -110,7 +110,10 @@ export function resolveWires(
       ));
       return null;
     }
-    const reason = offBoardReason(board, address);
+    // **配線の端も穴に挿す。** 交点の間を書けるのは注釈だけ (`isCrossing`)。
+    const reason = isCrossing(address)
+      ? offBoardReason(board, address)
+      : `穴の間へは引けません: ${safeToken(written)} (交点の間を書けるのは注釈だけです)`;
     if (reason !== null) {
       errors.push(fenceError(reason, line, written));
       return null;

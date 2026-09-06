@@ -114,10 +114,23 @@ export function moveNote(source: string, handle: string, to: Address, trial = fa
   if (anchor === null) return fail(`${found.line} 行目の注釈の番地を読めません`, found.line);
 
   const board = boardOf(source);
-  const delta = { row: to.row - anchor.row, col: to.col - anchor.col };
+  // **端数ごとずらす。** 交点の間へ落とされたぶんを捨てると、掴んだ場所と
+  // 書き込む場所が食い違う (升目は既定で 1/10 升を送ってくる)。
+  const delta = {
+    row: (to.row + (to.rows ?? 0)) - (anchor.row + (anchor.rows ?? 0)),
+    col: (to.col + (to.cols ?? 0)) - (anchor.col + (anchor.cols ?? 0)),
+  };
   const landings = written.map((one) => {
     const at = parseAddress(one);
-    return at === null ? null : { row: at.row + delta.row, col: at.col + delta.col };
+    if (at === null) return null;
+    const row = along(at.row, at.rows ?? 0, delta.row);
+    const col = along(at.col, at.cols ?? 0, delta.col);
+    return {
+      row: row.whole,
+      col: col.whole,
+      ...(row.rest === 0 ? {} : { rows: row.rest }),
+      ...(col.rest === 0 ? {} : { cols: col.rest }),
+    };
   });
   if (landings.some((one) => one === null)) return fail(`${found.line} 行目の注釈の番地を読めません`, found.line);
   // **注釈は板の外へも出せる。** 半田付けする場所ではなく、図に添える字なので、
@@ -292,3 +305,13 @@ export function noteText(source: string, handle: string): string | null {
   if (!isFound(found) || found.note.kind !== 'text') return null;
   return found.note.text ?? null;
 }
+
+/**
+ * 交点から数えた位置を、**升をまたいだぶんと残り**に割る。残りが組 (`c3`) になる。
+ * 刻みは小数第 1 位まで (番地の綴りに載る細かさ)。
+ */
+const along = (base: number, rest: number, step: number): { whole: number; rest: number } => {
+  const moved = rest + step;
+  const whole = Math.floor(moved);
+  return { whole: base + whole, rest: Number((moved - whole).toFixed(1)) };
+};

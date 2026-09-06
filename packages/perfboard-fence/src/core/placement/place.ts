@@ -1,6 +1,6 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
-import { formatAddress, parseAddress } from '../model/address.ts';
+import { formatAddress, isCrossing, parseAddress } from '../model/address.ts';
 import { holeStrip, isOnBoard, offBoardReason } from '../model/board.ts';
 import { footprintOf, pinsOf } from '../parts/footprint.ts';
 import { isTurned } from '../parts/orient.ts';
@@ -39,10 +39,14 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     let rejected = false;
     for (const hole of spec.holes) {
       const address = parseAddress(hole);
-      // 番地として読めることは parser が見ているので、ここで見るのは板に載るかだけ。
+      // 番地として読めることは parser が見ているので、ここで見るのは板に載るかと、
+      // **交点そのものを指しているか**。足は穴に挿すので、交点の間 (`b5c3`) を
+      // 書けるのは注釈だけ — 間に挿せる穴は実物に無い。
       const reason = address === null
         ? `穴の番地として読めません: ${safeToken(hole)}`
-        : offBoardReason(board, address);
+        : !isCrossing(address)
+          ? `穴の間には挿せません: ${safeToken(hole)} (交点の間を書けるのは注釈だけです)`
+          : offBoardReason(board, address);
       if (address === null || reason !== null) {
         errors.push(fenceError(reason ?? '', spec.line, hole));
         rejected = true;

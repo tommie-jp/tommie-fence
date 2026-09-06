@@ -117,3 +117,27 @@ describe('duplicateNote / deleteNote / noteFields', () => {
       .toContain('- text d4 red: ここは GND');
   });
 });
+
+/**
+ * 交点の間へ動かせること。**升目は既定で 1/10 升を送ってくる**ので、端数を
+ * 捨てると掴んだ場所と書き込む場所が食い違う (実機で「フェンス editor すべてで
+ * 1/10 単位をデフォルトにする」)。
+ */
+describe('注釈は交点の間へ動かせる', () => {
+  const SOURCE = 'parts:\n  R1: resistor b3 b7 10k\nnotes:\n  - text d3 blue: ここ\n';
+
+  test('writes the tenths it was dropped at', () => {
+    const at = parseAddress('e5c3')!;
+    const moved = moveNote(SOURCE, 'note:4', at);
+
+    expect(moved.ok).toBe(true);
+    expect(moved.ok && (moved.value.edits ?? []).map((edit) => edit.text)).toEqual(['e5c3']);
+  });
+
+  test('keeps the crossing spelling when it lands on one', () => {
+    const at = parseAddress('e5')!;
+    const moved = moveNote(SOURCE, 'note:4', at);
+
+    expect(moved.ok && (moved.value.edits ?? []).map((edit) => edit.text)).toEqual(['e5']);
+  });
+});

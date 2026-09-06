@@ -23,7 +23,7 @@ import { checkErc } from './erc/erc.ts';
 import { checkFit } from './placement/collide.ts';
 import { drawnExtent } from './placement/geometry.ts';
 import { holeStrip } from './model/board.ts';
-import { formatAddress, parseAddress } from './model/address.ts';
+import { formatAddress, isCrossing, parseAddress } from './model/address.ts';
 import { offBoardReason } from './model/board.ts';
 import { fenceError, notice, safeToken, shiftErrors } from './errors.ts';
 import { renderDocument } from './render/document.ts';
@@ -182,9 +182,12 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   const named: [Address, string][] = [];
   for (const { name, written, line } of parsed.doc.points) {
     const address = parseAddress(written);
+    // **節点も穴に立てる。** 交点の間 (`b5c3`) を書けるのは注釈だけ。
     const reason = address === null
       ? `穴の番地として読めません: ${safeToken(written)}`
-      : offBoardReason(board, address);
+      : !isCrossing(address)
+        ? `穴の間には立てられません: ${safeToken(written)} (交点の間を書けるのは注釈だけです)`
+        : offBoardReason(board, address);
     if (address === null || reason !== null) {
       pointErrors.push(fenceError(reason ?? '', line, written));
       continue;

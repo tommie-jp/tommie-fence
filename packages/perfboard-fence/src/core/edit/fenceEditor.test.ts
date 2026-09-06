@@ -124,3 +124,43 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
     expect(editor.view(broken, 1).issues).toContain('cf-issue');
   });
 });
+
+/**
+ * 交点の間へ置けるのは注釈だけ。**升目は既定で 1/10 升**を送ってくるので、
+ * 刻めない相手に落ちたら**書き込む前に断る** (実機で「フェンス editor すべてで
+ * 1/10 単位をデフォルトにする」)。
+ */
+describe('交点の間 (1/10 升)', () => {
+  const SOURCE = [
+    'board: 12x8',
+    'points:',
+    '  VCC: a1',
+    'parts:',
+    '  R1: resistor b3 b7 10k',
+    'wires:',
+    '  - a1 -- b3',
+    'notes:',
+    '  - text d3: ここ',
+    '',
+  ].join('\n');
+
+  test('says the map may cut a cell into tenths', () => {
+    expect(createPerfboardEditor().fine).toBe(10);
+    expect(createPerfboardEditor().fineFor).toBe('note');
+  });
+
+  test('moves a note between crossings', () => {
+    const moved = createPerfboardEditor().movePart(SOURCE, 'note:9', 'e5c3');
+
+    expect(moved.ok).toBe(true);
+    expect(moved.ok && (moved.value.edits ?? []).some((edit) => edit.text.includes('e5c3'))).toBe(true);
+  });
+
+  test('refuses a part, a wire end and a point between crossings', () => {
+    const editor = createPerfboardEditor();
+
+    expect(editor.movePart(SOURCE, 'R1', 'c5c3').ok).toBe(false);
+    expect(editor.movePoint(SOURCE, 'a1', 'c5c3').ok).toBe(false);
+    expect(editor.addWire(SOURCE, 'b3', 'c5c3', '--').ok).toBe(false);
+  });
+});

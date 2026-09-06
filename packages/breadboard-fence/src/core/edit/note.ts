@@ -117,9 +117,11 @@ export function moveNote(source: string, handle: string, to: Address, trial = fa
   }
 
   const board = boardOf(parseFence(normalizeNewlines(source)).doc?.board ?? null);
+  // **端数ごとずらす。** 交点の間へ落とされたぶんを捨てると、掴んだ場所と
+  // 書き込む場所が食い違う (升目は既定で 1/10 升を送ってくる)。
   const delta = {
-    row: HOLE_ROWS.indexOf(to.row) - HOLE_ROWS.indexOf(anchor.row),
-    col: to.col - anchor.col,
+    row: (HOLE_ROWS.indexOf(to.row) + (to.rows ?? 0)) - (HOLE_ROWS.indexOf(anchor.row) + (anchor.rows ?? 0)),
+    col: (to.col + (to.cols ?? 0)) - (anchor.col + (anchor.cols ?? 0)),
   };
   const landings = found.note.targets.map((one) => {
     const at = parseAddress(one);
@@ -148,8 +150,26 @@ export function moveNote(source: string, handle: string, to: Address, trial = fa
 /** 番地をずらす。**レールは行が極性そのもの**で数に落ちないので、動かさない。 */
 const moved = (at: Address, delta: { readonly row: number; readonly col: number }): Address | null => {
   if (at.kind !== 'hole') return null;
-  const row = HOLE_ROWS[HOLE_ROWS.indexOf(at.row) + delta.row];
-  return row === undefined ? null : { kind: 'hole', row, col: at.col + delta.col };
+  const rowAt = along(HOLE_ROWS.indexOf(at.row), at.rows ?? 0, delta.row);
+  const colAt = along(at.col, at.cols ?? 0, delta.col);
+  const row = HOLE_ROWS[rowAt.whole];
+  return row === undefined ? null : {
+    kind: 'hole',
+    row,
+    col: colAt.whole,
+    ...(rowAt.rest === 0 ? {} : { rows: rowAt.rest }),
+    ...(colAt.rest === 0 ? {} : { cols: colAt.rest }),
+  };
+};
+
+/**
+ * 交点から数えた位置を、**升をまたいだぶんと残り**に割る。残りが組 (`c3`) になる。
+ * 刻みは小数第 1 位まで (番地の綴りに載る細かさ)。
+ */
+const along = (base: number, rest: number, step: number): { whole: number; rest: number } => {
+  const moved = rest + step;
+  const whole = Math.floor(moved);
+  return { whole: base + whole, rest: Number((moved - whole).toFixed(1)) };
 };
 
 /** 注釈をもう 1 つ。**1 穴ずらす** — 重ねると増えたことが図で分からない。 */
