@@ -1,10 +1,9 @@
 # tommie-fence のビルド。**何をいつ作り直すかはここが決める。**
 #
-#   make                        .vsix を全部作る (変わったものだけ)
+#   make                        .vsix を作る (変わっていれば)。拡張は tommie-fence の 1 つ (52 の docs/19)
 #   make install                上に加えて VS Code に入れ直す (doBuild.sh の既定)
-#   make circuit-fence          1 つだけ作る
-#   make tommie-fence           3 つを畳んだ拡張を作る (既定では作らない。52 の docs/19)
-#   make install-circuit-fence  1 つだけ作って入れ直す
+#   make tommie-fence           拡張だけ作る (チェックは飛ばさない)
+#   make install-tommie-fence   拡張だけ作って入れ直す
 #   make check                  型チェックとテスト (全パッケージ)
 #   make CHECK=0 install        チェックを飛ばす (描画を何度も見比べるとき)
 #   make clean                  作り直しの記録・作業場・.vsix を捨てる

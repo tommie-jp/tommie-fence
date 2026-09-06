@@ -164,7 +164,7 @@ describe('gridMap', () => {
   });
 
   test('spells a quarter step from a whole crossing, and comes back to the same crossing', () => {
-    // Ctrl+クリックの 1/4 升 (52 の docs/23)。殻は端数だけ渡し、綴りはここが組む。
+    // Ctrl+クリックの端数 (52 の docs/23)。殻は端数だけ渡し、綴りはここが組む。
     // 交点ちょうどに戻れば素の番地 (`b3`) — 1 つの場所に綴りは 1 つ。
     expect(stepCell('b3', 0.25, -0.25)).toBe('b2c7f5');
     expect(stepCell('b2c7f5', -0.25, 0.25)).toBe('b3');

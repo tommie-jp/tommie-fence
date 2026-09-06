@@ -41,19 +41,21 @@ N1 : R1.2, D1.A
 
 ## 使い方
 
-必要なのは **VS Code 1.75 以上**だけ。Marketplace には出していないので、
-[Releases](https://github.com/tommie-jp/breadboard-fence/releases) から
-`.vsix` を落として入れる (自分で作ることもできる → [開発](#開発))。
+必要なのは **VS Code 1.75 以上**だけ。拡張は **`tommie-fence`** の 1 つ —
+3 つのフェンス (`circuit` / `breadboard` / `perfboard`) を 1 つの `.vsix` に
+畳んだもので、このパッケージはその中の breadboard のコア。Marketplace には
+出していないので、[Releases](https://github.com/tommie-jp/tommie-fence/releases)
+から `.vsix` を落として入れる (自分で作ることもできる → [開発](#開発))。
 
-`.vsix` の中身は素の JavaScript で、プラットフォーム別のバイナリを含まない
-(実行時の依存は YAML パーサだけ)。**同じファイルがどの環境でも使える**ので、
-Releases の asset も 1 つしかない。違うのは「どこに入れるか」だけ。
+`.vsix` の中身は素の JavaScript と WASM で、プラットフォーム別のバイナリを
+含まない。**同じファイルがどの環境でも使える**ので、Releases の asset も
+1 つしかない。違うのは「どこに入れるか」だけ。
 
 | 環境 | 拡張が動く場所 | インストール |
 | --- | --- | --- |
-| Windows | Windows 側 | PowerShell で `code --install-extension (Get-Item breadboard-fence-*.vsix).FullName` |
-| WSL2 | **WSL 側** (`~/.vscode-server/extensions`) | WSL のシェルで `code --install-extension breadboard-fence-*.vsix` |
-| Linux / macOS | そのマシン | `code --install-extension breadboard-fence-*.vsix` |
+| Windows | Windows 側 | PowerShell で `code --install-extension (Get-Item tommie-fence-*.vsix).FullName` |
+| WSL2 | **WSL 側** (`~/.vscode-server/extensions`) | WSL のシェルで `code --install-extension tommie-fence-*.vsix` |
+| Linux / macOS | そのマシン | `code --install-extension tommie-fence-*.vsix` |
 | Remote-SSH / Dev Container / Codespaces | **接続先** | 接続先のシェルで上と同じコマンド |
 | VSCodium / Cursor | そのマシン | `code` の代わりに `codium` / `cursor` を使う |
 
@@ -83,14 +85,14 @@ sha256sum -c SHA256SUMS
 
 ```bash
 # リポジトリ直下で
-./doBuild.sh breadboard-fence            # 検査 → .vsix を作る → 入れ直す
+./doBuild.sh                             # 検査 → .vsix (tommie-fence) を作る → 入れ直す
 ```
 
 入れ直しだけ手でやるなら次の 2 つ。
 
 ```bash
-./doBuild.sh breadboard-fence --no-install
-code --install-extension packages/breadboard-fence/breadboard-fence-0.6.0.vsix --force
+./doBuild.sh --no-install
+code --install-extension packages/tommie-fence/tommie-fence-*.vsix --force
 ```
 
 `.vsix` を作るのに `doBuild.sh` を通すのは、**workspaces が依存を
@@ -106,7 +108,7 @@ code --install-extension packages/breadboard-fence/breadboard-fence-0.6.0.vsix -
 ### Windows で気をつけること
 
 - Node.js は `winget install OpenJS.NodeJS.LTS` で入る。
-- PowerShell と cmd はワイルドカードを展開せず `breadboard-fence-*.vsix` を
+- PowerShell と cmd はワイルドカードを展開せず `tommie-fence-*.vsix` を
   そのまま渡してしまう。上の表のように `Get-Item` で実体のパスにするか、
   ファイル名を直接書く。
 
@@ -254,12 +256,11 @@ GitHub や別のノートに貼っても報告が付いてこない。言うこ�
 | ディレクトリ | 中身 |
 | --- | --- |
 | `src/core/` | 描画コア (parser / model / placement / router / render) |
-| `src/extension/` | VS Code 拡張 (markdown-it の fence ルールを差し替えるだけ) |
+| `src/markdownItPlugin.ts` | プレビューの差し込み口 (markdown-it の fence ルールを差し替えるだけ)。VS Code 拡張そのものは `packages/tommie-fence` |
 | `src/cli/` | SVG 書き出しコマンド |
 | `syntaxes/` | フェンス内 YAML のシンタックスハイライト (injection grammar) |
 
-実行時の依存は YAML パーサ 1 つだけ。バンドルは拡張・CLI ともに約 180 KB
-(圧縮した `.vsix` は 133 KB)。
+このコアの実行時の依存は YAML パーサ 1 つだけ。CLI のバンドルは約 180 KB。
 
 ## 開発
 
@@ -272,12 +273,12 @@ npm test --workspace=breadboard-fence          # ユニットテスト
 npm run check --workspace=breadboard-fence     # 型チェック + テスト
 npm run examples --workspace=breadboard-fence  # examples/*.md → examples/out/*.svg (+ PNG)
 npm run docs --workspace=breadboard-fence      # docs/01-syntax.md → docs/out/*.svg
-./doBuild.sh breadboard-fence                  # 上をまとめて、VS Code に入れ直すところまで
+./doBuild.sh                                   # 上をまとめて、拡張 (tommie-fence) を VS Code に入れ直すところまで
 ./doVersion.sh breadboard-fence minor          # 版を上げる (package.json と写しを揃える)
 ```
 
-VS Code で F5 を押すと拡張機能をデバッグ実行し、`examples/` を開いた
-ウィンドウが立ち上がる。
+VS Code で F5 を押すと拡張 (このコアを束ねた `packages/tommie-fence`) を
+別ウィンドウでデバッグ実行できる。
 
 図の描画を変えると `examples/out` のスナップショットテストが落ちる。
 `npm run examples` と `npm run docs` で作り直し、git diff で図の変化を
@@ -288,17 +289,21 @@ VS Code で F5 を押すと拡張機能をデバッグ実行し、`examples/` �
 
 ### リリース
 
-`package.json` の version と [CHANGELOG.md](CHANGELOG.md) を更新してから、
-一致するタグを push する。`.github/workflows/release.yml` が検査 → `.vsix` の作成 →
-Release の作成までをやる。リリースノートは CHANGELOG の該当バージョンの節から取る。
+版は `./doVersion.sh` で上げ (`package.json` と `src/core/version.ts` の写しを
+一緒に直す)、[CHANGELOG.md](CHANGELOG.md) に節を書いてから、一致するタグを
+push する。**タグはパッケージ名を接頭辞にする** (`breadboard-fence-v0.7.0`) —
+`.github/workflows/release.yml` はその形だけを拾う。検査を通してから
+Release を作り、リリースノートは CHANGELOG の該当バージョンの節から取る。
+このパッケージはライブラリ + CLI なので `.vsix` は付かない。拡張は
+`tommie-fence-v<版>` として別に出す。
 
 ```bash
-npm version 0.2.0 --no-git-tag-version   # package.json / package-lock.json
-$EDITOR CHANGELOG.md                     # ## [0.2.0] の節を書く
-npm run check
-git commit -am "chore: v0.2.0"
-git tag -a v0.2.0 -m "v0.2.0"
-git push origin main v0.2.0
+./doVersion.sh breadboard-fence minor    # package.json / package-lock.json / src/core/version.ts
+$EDITOR packages/breadboard-fence/CHANGELOG.md   # ## [0.7.0] の節を書く
+npm run check --workspace=breadboard-fence
+git commit -am "chore: breadboard-fence v0.7.0"
+git tag -a breadboard-fence-v0.7.0 -m "breadboard-fence v0.7.0"
+git push origin main breadboard-fence-v0.7.0
 ```
 
 ## ライセンス

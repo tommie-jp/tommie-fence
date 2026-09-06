@@ -244,7 +244,7 @@ root** (one `npm install` covers every package).
 npm install
 npm run check --workspace=circuit-fence      # typecheck + tests
 npm run examples --workspace=circuit-fence   # rebuild the diagrams under examples (commit the output too)
-./doBuild.sh circuit-fence                   # build the .vsix and reinstall it into VS Code
+./doBuild.sh                                 # build the extension (tommie-fence, which bundles this core) and reinstall it into VS Code
 ./doVersion.sh circuit-fence minor           # bump the version (package.json and its copy together)
 ```
 

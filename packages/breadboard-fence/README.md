@@ -41,20 +41,22 @@ rules: **no absolute coordinates, connections by name, placement by hole address
 
 ## Getting started
 
-All you need is **VS Code 1.75 or newer**. It is not on the Marketplace, so grab
-the `.vsix` from
-[Releases](https://github.com/tommie-jp/breadboard-fence/releases)
+All you need is **VS Code 1.75 or newer**. The extension is **`tommie-fence`** —
+one `.vsix` that carries all three fences (`circuit` / `breadboard` /
+`perfboard`); this package is the breadboard core inside it. It is not on the
+Marketplace, so grab the `.vsix` from
+[Releases](https://github.com/tommie-jp/tommie-fence/releases)
 (or build your own — see [Development](#development)).
 
-The `.vsix` is plain JavaScript with no platform-specific binaries (the only
-runtime dependency is a YAML parser). **The same file works everywhere**, which
-is why a Release carries exactly one asset. Only the *where* differs.
+The `.vsix` is plain JavaScript and WASM with no platform-specific binaries.
+**The same file works everywhere**, which is why a Release carries exactly one
+asset. Only the *where* differs.
 
 | Environment | Where the extension runs | Install |
 | --- | --- | --- |
-| Windows | Windows side | PowerShell: `code --install-extension (Get-Item breadboard-fence-*.vsix).FullName` |
-| WSL2 | **WSL side** (`~/.vscode-server/extensions`) | From a WSL shell: `code --install-extension breadboard-fence-*.vsix` |
-| Linux / macOS | That machine | `code --install-extension breadboard-fence-*.vsix` |
+| Windows | Windows side | PowerShell: `code --install-extension (Get-Item tommie-fence-*.vsix).FullName` |
+| WSL2 | **WSL side** (`~/.vscode-server/extensions`) | From a WSL shell: `code --install-extension tommie-fence-*.vsix` |
+| Linux / macOS | That machine | `code --install-extension tommie-fence-*.vsix` |
 | Remote-SSH / Dev Container / Codespaces | **The remote** | Same command from the remote's shell |
 | VSCodium / Cursor | That machine | Use `codium` / `cursor` instead of `code` |
 
@@ -84,14 +86,14 @@ install it again.
 
 ```bash
 # from the repository root
-./doBuild.sh breadboard-fence            # check → build the .vsix → reinstall
+./doBuild.sh                             # check → build the .vsix (tommie-fence) → reinstall
 ```
 
 To do the reinstall by hand, that is these two:
 
 ```bash
-./doBuild.sh breadboard-fence --no-install
-code --install-extension packages/breadboard-fence/breadboard-fence-0.6.0.vsix --force
+./doBuild.sh --no-install
+code --install-extension packages/tommie-fence/tommie-fence-*.vsix --force
 ```
 
 Building the `.vsix` goes through `doBuild.sh` because **workspaces hoist the
@@ -108,7 +110,7 @@ package has to be copied out and packed on its own.
 
 - Node.js installs with `winget install OpenJS.NodeJS.LTS`.
 - PowerShell and cmd do not expand wildcards and will pass
-  `breadboard-fence-*.vsix` through literally. Use `Get-Item` as in the table
+  `tommie-fence-*.vsix` through literally. Use `Get-Item` as in the table
   above, or write the file name out.
 
 ### Notes for WSL2
@@ -267,12 +269,12 @@ along. What it has to say lands in `errorHtml` (for the preview) and in `errors`
 | Directory | What is in it |
 | --- | --- |
 | `src/core/` | The rendering core (parser / model / placement / router / render) |
-| `src/extension/` | The VS Code extension (it only swaps markdown-it's fence rule) |
+| `src/markdownItPlugin.ts` | The preview hook (it only swaps markdown-it's fence rule); the VS Code extension itself is `packages/tommie-fence` |
 | `src/cli/` | The SVG writer |
 | `syntaxes/` | Syntax highlighting for the YAML inside a fence (injection grammar) |
 
-The only runtime dependency is a YAML parser. Both bundles come to about 180 KB
-(the compressed `.vsix` is 133 KB).
+The only runtime dependency of this core is a YAML parser; the CLI bundle comes
+to about 180 KB.
 
 ## Development
 
@@ -285,11 +287,12 @@ npm test --workspace=breadboard-fence          # unit tests
 npm run check --workspace=breadboard-fence     # type check + tests
 npm run examples --workspace=breadboard-fence  # examples/*.md → examples/out/*.svg (+ PNG)
 npm run docs --workspace=breadboard-fence      # docs/01-syntax.md → docs/out/*.svg
-./doBuild.sh breadboard-fence                  # the above, through to reinstalling in VS Code
+./doBuild.sh                                   # the above, through to reinstalling the extension (tommie-fence) in VS Code
 ./doVersion.sh breadboard-fence minor          # bump the version (package.json and its copy together)
 ```
 
-Pressing F5 in VS Code debugs the extension and opens a window on `examples/`.
+Pressing F5 in VS Code debugs the extension (`packages/tommie-fence`, which
+bundles this core) in a second window.
 
 Changing how things are drawn fails the `examples/out` snapshot tests. Rebuild
 with `npm run examples` and `npm run docs`, then review the change with git diff
@@ -301,18 +304,22 @@ Keep the two in the same sections.
 
 ### Releasing
 
-Update the version in `package.json` and [CHANGELOG.md](CHANGELOG.md), then push
-a matching tag. `.github/workflows/release.yml` runs the checks, builds the
-`.vsix` and creates the Release; the release notes come from that version's
-section of the CHANGELOG.
+Bump the version with `./doVersion.sh` (it keeps `package.json` and its copy in
+`src/core/version.ts` together), write the section in
+[CHANGELOG.md](CHANGELOG.md), then push a matching tag. **Tags are prefixed
+with the package name** (`breadboard-fence-v0.7.0`) — that is what
+`.github/workflows/release.yml` listens for. It runs the checks and creates
+the Release with the notes taken from that version's section of the
+CHANGELOG. This package is a library + CLI, so no `.vsix` is attached; the
+extension is released separately as `tommie-fence-v<version>`.
 
 ```bash
-npm version 0.2.0 --no-git-tag-version   # package.json / package-lock.json
-$EDITOR CHANGELOG.md                     # write the ## [0.2.0] section
-npm run check
-git commit -am "chore: v0.2.0"
-git tag -a v0.2.0 -m "v0.2.0"
-git push origin main v0.2.0
+./doVersion.sh breadboard-fence minor    # package.json / package-lock.json / src/core/version.ts
+$EDITOR packages/breadboard-fence/CHANGELOG.md   # write the ## [0.7.0] section
+npm run check --workspace=breadboard-fence
+git commit -am "chore: breadboard-fence v0.7.0"
+git tag -a breadboard-fence-v0.7.0 -m "breadboard-fence v0.7.0"
+git push origin main breadboard-fence-v0.7.0
 ```
 
 ## License

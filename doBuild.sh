@@ -7,9 +7,9 @@
 # ところが出てこない。作り直して入れ直すまでが 1 セットになる。
 #
 #   ./doBuild.sh                             **全部**作り直して入れ直す (既定)
-#   ./doBuild.sh circuit-fence               1 つだけ
-#   ./doBuild.sh breadboard-fence --fast     チェックを飛ばす (描画を何度も見比べるとき)
-#   ./doBuild.sh circuit-fence --no-install  .vsix を作るだけ (配布物を用意するとき)
+#   ./doBuild.sh tommie-fence                名前で 1 つだけ (拡張は tommie-fence の 1 つ)
+#   ./doBuild.sh --fast                      チェックを飛ばす (描画を何度も見比べるとき)
+#   ./doBuild.sh --no-install                .vsix を作るだけ (配布物を用意するとき)
 #   ./doBuild.sh -h                          この説明を出す
 #
 # **触っていないものは作り直さない。** 段取りは Makefile が持っていて、ここは

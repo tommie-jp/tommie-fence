@@ -1,12 +1,14 @@
 # プロジェクト指示 (breadboard-fence)
 
 Markdown の ` ```breadboard ` フェンスをブレッドボード実体配線図としてレンダリングする
-VS Code 拡張機能。全体像は [README.ja.md](README.ja.md) (英語は
+**ライブラリ + CLI**。全体像は [README.ja.md](README.ja.md) (英語は
 [README.md](README.md))、文法は [docs/01-syntax.md](docs/01-syntax.md)。
+VS Code に出る拡張は `packages/tommie-fence` の 1 つで、このコアはそこに
+束ねられる (52 の docs/19)。
 
 **tommie-fence モノレポの 1 パッケージ**。`npm` のコマンドはリポジトリ直下で
 `--workspace=breadboard-fence` を付けて実行する。`.vsix` を作るのは直下の
-`./doBuild.sh breadboard-fence`、版を上げるのは `./doVersion.sh breadboard-fence`。
+`./doBuild.sh` (拡張は tommie-fence の 1 つ)、版を上げるのは `./doVersion.sh breadboard-fence`。
 **`vsce` を直に呼ばない** — workspaces が依存を直下へ巻き上げるため失敗する。
 
 ## 設計上の約束

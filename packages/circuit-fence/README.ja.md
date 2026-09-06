@@ -219,7 +219,7 @@ npm pack   # ビルドと型定義の書き出しを済ませて circuit-fence-<
 npm install
 npm run check --workspace=circuit-fence      # 型チェック + テスト
 npm run examples --workspace=circuit-fence   # examples の図を作り直す (変えたら出力もコミットする)
-./doBuild.sh circuit-fence                   # .vsix を作って VS Code に入れ直す
+./doBuild.sh                                 # 拡張 (このコアを束ねた tommie-fence) を作って VS Code に入れ直す
 ./doVersion.sh circuit-fence minor           # 版を上げる (package.json と写しを揃える)
 ```
 

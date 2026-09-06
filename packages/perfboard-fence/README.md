@@ -157,7 +157,7 @@ Run everything from the repository root (npm workspaces).
 ```bash
 npm run check --workspace=perfboard-fence      # typecheck + tests
 npm run examples --workspace=perfboard-fence   # rebuild the drawings
-./doBuild.sh perfboard-fence                   # build the .vsix, reinstall into VS Code
+./doBuild.sh                                   # build the extension (tommie-fence, which bundles this core), reinstall into VS Code
 ```
 
 ## License

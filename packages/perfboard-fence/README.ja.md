@@ -142,7 +142,7 @@ node dist/cli.cjs check examples                       # 書かずに検証だ�
 ```bash
 npm run check --workspace=perfboard-fence      # 型チェック + テスト
 npm run examples --workspace=perfboard-fence   # 図を作り直す
-./doBuild.sh perfboard-fence                   # .vsix を作って VS Code に入れ直す
+./doBuild.sh                                   # 拡張 (このコアを束ねた tommie-fence) を作って VS Code に入れ直す
 ```
 
 ## ライセンス

@@ -107,7 +107,7 @@ export type Incoming = {
   readonly rows?: unknown;
   readonly cols?: unknown;
   /**
-   * 升の中の端数 (Ctrl で 1/4 升。52 の docs/23)。`to` に対して `{ rows, cols }`、
+   * 升の中の端数 (Ctrl で 1/`fine` 升。circuit は 1/10。52 の docs/23)。`to` に対して `{ rows, cols }`、
    * `addPart` の `at` と `addWire` の `[from, to]` には並行した並び。**入口で綴りにする** (`resolveFine`)。
    */
   readonly fine?: unknown;
