@@ -77,7 +77,13 @@ $(BUILD)/packages.mk: $(wildcard packages/*/package.json) scripts/packages.mjs
 # 入っていなければ何も起きない (`|| true`)。
 RETIRED := tommie.circuit-fence tommie.breadboard-fence tommie.perfboard-fence
 
-KIT_SOURCES := $(call sources,fence-kit)
+# **束ねる相手のソースも入力に数える。** .vsix には esbuild が
+# モノレポ内の依存 (fence-kit と 3 つのコア) を束ねて入れるので、あちらを
+# 直したらこちらも作り直さないと、**直したはずの図が出ない .vsix が入ったまま
+# 残る** (perfboard の描画を直しても作り直しが走らなかった)。
+# `WSDEPS_*` は入れ子まで辿ってあるので、これで全部そろう。
+deps_sources = $(foreach d,$(WSDEPS_$(1)),$(call sources,$(d)))
+deps_lists = $(foreach d,$(WSDEPS_$(1)),$(BUILD)/$(d)/sources.list)
 VSIX_FILES  := $(foreach p,$(EXTENSIONS),packages/$(p)/$(VSIX_$(p)))
 
 # --- パッケージごとの規則 ---------------------------------------------------
@@ -99,8 +105,6 @@ $(BUILD)/%/sources.list: FORCE
 # 消されると次に必ず作り直しになるので残す。
 .PRECIOUS: $(BUILD)/%/sources.list
 
-KIT_LIST := $(BUILD)/fence-kit/sources.list
-
 # **段取りそのものも入力に数える。** 詰め方を直したのに作り直しが走らないと、
 # 古い経路で作った .vsix が入ったまま残る。
 BUILD_RULES := Makefile scripts/vsix.sh
@@ -117,8 +121,8 @@ CODE_LOCK := $(if $(shell command -v flock 2>/dev/null),flock $(BUILD)/code-inst
 # 直したらこちらのテストも通し直す必要がある。
 define check_rules
 
-$$(BUILD)/$(1)/check.stamp: $$(call sources,$(1)) $$(KIT_SOURCES) \
-                           $$(BUILD)/$(1)/sources.list $$(KIT_LIST) $$(BUILD_RULES)
+$$(BUILD)/$(1)/check.stamp: $$(call sources,$(1)) $$(call deps_sources,$(1)) \
+                           $$(BUILD)/$(1)/sources.list $$(call deps_lists,$(1)) $$(BUILD_RULES)
 	@mkdir -p $$(@D)
 	npm run check --workspace=$(1)
 	@touch $$@
@@ -138,8 +142,8 @@ $$(BUILD)/$(1)/install.stamp: packages/$(1)/package.json \
 	scripts/vsix.sh install $(1)
 	@touch $$@
 
-packages/$(1)/$$(VSIX_$(1)): $$(call sources,$(1)) $$(KIT_SOURCES) \
-                             $$(BUILD)/$(1)/sources.list $$(KIT_LIST) \
+packages/$(1)/$$(VSIX_$(1)): $$(call sources,$(1)) $$(call deps_sources,$(1)) \
+                             $$(BUILD)/$(1)/sources.list $$(call deps_lists,$(1)) \
                              $$(BUILD)/$(1)/install.stamp $$(BUILD_RULES) \
                              $$(if $$(filter 0,$$(CHECK)),,$$(BUILD)/$(1)/check.stamp)
 	scripts/vsix.sh package $(1) $$@
