@@ -2,7 +2,7 @@
   "name": "tommie-fence",
   "displayName": "tommie-fence",
   "description": "circuit / breadboard / perfboard の 3 つのフェンスを 1 つの拡張で",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "publisher": "tommie",

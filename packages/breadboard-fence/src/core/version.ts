@@ -7,7 +7,7 @@ import { stampText } from 'fence-kit';
  * `package.json` と食い違わないことはテストで見張る。ビルド時に差し込む形にすると、
  * コアを直に import する側 (テストや他アプリのサーバー側描画) で値が入らない。
  */
-export const VERSION = '0.7.0';
+export const VERSION = '0.8.0';
 
 /** 図の右下と `--version` に出す字。綴りの作り方は fence-kit にある。 */
 export const STAMP_TEXT = stampText('breadboard-fence', VERSION);
