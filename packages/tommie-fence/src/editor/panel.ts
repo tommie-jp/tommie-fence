@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { revealMapEditor } from './customEditor.ts';
 import { makeNonce, panelHtml } from 'fence-kit';
-import { mapScriptUri } from './vscodeHost.ts';
+import { mapScriptUri, webviewRoot } from './vscodeHost.ts';
 import { fenceEditors } from './fences.ts';
 import { createSession } from 'fence-kit';
 import type { Session } from 'fence-kit';
@@ -48,7 +48,7 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
     'tommieFenceMap',
     'Fence Editor',
     { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
-    { enableScripts: true, retainContextWhenHidden: true },
+    { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [webviewRoot(context)] },
   );
   const live = createSession(createSessionHost(view.webview, 'own'), fences);
   view.webview.html = panelHtml({

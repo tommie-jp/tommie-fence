@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { makeNonce, panelHtml } from 'fence-kit';
 import { fenceEditors } from './fences.ts';
 import { createSession } from 'fence-kit';
-import { attachSession, createSessionHost, mapScriptUri } from './vscodeHost.ts';
+import { attachSession, createSessionHost, mapScriptUri, webviewRoot } from './vscodeHost.ts';
 
 /**
  * `.md` のタブそのものをマップにするカスタムエディタ。タブの頭の開き方の一覧
@@ -38,7 +38,7 @@ export function revealMapEditor(uri: string): boolean {
 export function registerMapEditor(context: vscode.ExtensionContext): void {
   const provider: vscode.CustomTextEditorProvider = {
     resolveCustomTextEditor(document, panel) {
-      panel.webview.options = { enableScripts: true };
+      panel.webview.options = { enableScripts: true, localResourceRoots: [webviewRoot(context)] };
       const uri = document.uri.toString();
       const fences = fenceEditors();
       const session = createSession(createSessionHost(panel.webview, 'vscode'), fences, { pinned: document });

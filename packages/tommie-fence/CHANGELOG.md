@@ -11,6 +11,11 @@
   TeX エンジン (node-tikzjax) を束ねてしまっていた。WASM もフォントも
   `__dirname` からの相対で読むので、束ねると `dist/` の隣を探しに行く。
   束ねずに同梱する形へ戻した。
+- **`.vsix` に `src/` とテストまで入っていた。** 3 つのコアにあった `.vscodeignore` を
+  畳んだときに写し忘れていた (5,697 ファイル・47 MB)。書き足して、入るのは
+  `dist/` `media/` `syntaxes/` と実行時の依存だけにした。`LICENSE` も添えた。
+- **webview が読める場所を `dist/` に絞った** (`localResourceRoots`)。書かないと
+  既定でワークスペース全体まで読める。読むのは束ねた `map.js` の 1 本だけ。
 
 ### Added
 

@@ -38,7 +38,16 @@ function highlight(uri: string, ranges: readonly LitRange[]): void {
  * (文字列に書いたスクリプトは「その字が入っているか」しか試せない)。
  */
 export const mapScriptUri = (webview: vscode.Webview, context: vscode.ExtensionContext): string =>
-  webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'dist', 'map.js')).toString();
+  webview.asWebviewUri(vscode.Uri.joinPath(webviewRoot(context), 'map.js')).toString();
+
+/**
+ * webview に読ませてよい場所。**`dist/` の下だけ** (束ねた `map.js` がそこにある)。
+ * `localResourceRoots` を書かないと既定でワークスペース全体まで読めるので、
+ * パネルもカスタムエディタもここに絞る (CSP も `default-src 'none'` で、
+ * 読むのはこの 1 本だけ)。
+ */
+export const webviewRoot = (context: vscode.ExtensionContext): vscode.Uri =>
+  vscode.Uri.joinPath(context.extensionUri, 'dist');
 
 /**
  * その文書をテキストエディタで見せる。**もう見えていれば何もしない** —
