@@ -266,6 +266,24 @@ describe('addressHint', () => {
     expect(addressHint('b.25_2.75')).toContain('b2c7f5');
   });
 
+  test('reads the misplaced separator as the column decimal it stood for', () => {
+    // `a1_5` は `_` の後ろが**列の端数**という書き間違い (行の端数を書く場所が
+    // 無い綴り)。組の位置が `a.5_1.5` と違うので、1 つの分解で兼ねると行と列が
+    // 入れ替わり、**言われたとおり直すと別の交点へ移る**案内になる
+    // (`a1_5` に `a5a1` を返していた)。
+    expect(addressHint('a1_5')).toContain('a1a5');
+    expect(addressHint('c12_5')).toContain('c12a5');
+    expect(addressHint('b2_75')).toContain('b2a7a5');
+  });
+
+  test('counts the decimals of the misplaced separator, not the column number', () => {
+    // 端数の桁を数える先も入れ替わっていた。`c1_555` は端数が 3 桁なので断る。
+    expect(addressHint('c1_555')).toContain('端数');
+    // `c123_5` の 3 桁は**列のほう**で、端数は 1 桁。桁の話で断ってはいけない
+    // (列 123 は格子の外なので、案内そのものが出ない)。
+    expect(addressHint('c123_5')).toBeNull();
+  });
+
   test('points back to the plain spelling when the old separator carried no decimal', () => {
     expect(addressHint('a_1')).toContain('a1');
     expect(addressHint('a.0_1')).toContain('a1');

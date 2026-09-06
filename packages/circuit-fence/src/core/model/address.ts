@@ -159,6 +159,33 @@ const DECIMAL = /^([a-z]+)([0-9]{1,3})\.([0-9]+)$/;
 
 const fractionOf = (digits: string | undefined): number => (digits === undefined ? 0 : Number(`0.${digits}`));
 
+/** 旧綴りを読み直したもの。行の英字・行の端数・列の数字・列の端数。 */
+type OldSpelling = {
+  readonly letters: string; readonly rowStep: string | undefined;
+  readonly columns: string; readonly columnStep: string | undefined;
+};
+
+/**
+ * 旧綴り 2 通りを、同じ 4 つの部品に読み直す。
+ *
+ * **2 つは組の位置が違う。** `a.5_1.5` は行の端数が英字の後ろ・列の端数が
+ * 数字の後ろ、`a1_5` は `_` の後ろが**列の端数**で、行の端数を書く場所が無い。
+ * 1 つの分解で兼ねると行と列が入れ替わり、**言われたとおり直すと別の交点へ
+ * 移る**案内になる (`a1_5` に `a5a1` を返していた)。
+ */
+function oldSpelling(text: string): OldSpelling | null {
+  const between = OLD_BETWEEN.exec(text);
+  if (between !== null) {
+    return {
+      letters: between[1] ?? '', rowStep: between[2],
+      columns: between[3] ?? '', columnStep: between[4],
+    };
+  }
+  const slip = OLD_SLIP.exec(text);
+  if (slip === null) return null;
+  return { letters: slip[1] ?? '', rowStep: undefined, columns: slip[2] ?? '', columnStep: slip[3] };
+}
+
 /**
  * 番地として読めなかった綴りへの案内。**近い書き間違いにだけ**返す (無ければ null)。
  *
@@ -180,16 +207,16 @@ export function addressHint(text: string): string | null {
       : null;
   }
 
-  const old = OLD_BETWEEN.exec(lowered) ?? OLD_SLIP.exec(lowered);
-  if (old) {
-    const [, letters = '', first, digits = '', second] = old;
-    // `a1f5` は行の端数が先、`a1_5` は列の端数だけ (行の端数を書く場所が無い)。
-    const isSlip = second === undefined && first !== undefined && OLD_SLIP.test(lowered);
-    const rowStep = isSlip ? 0 : fractionOf(first);
-    const columnStep = isSlip ? fractionOf(first) : fractionOf(second);
-    if (tooFine(first) || tooFine(second)) return decimalsLimit();
+  const old = oldSpelling(lowered);
+  if (old !== null) {
+    // 桁を数えるのは**端数のほう**。列の数字を数えると `c123_5` を
+    // 「端数は 2 桁まで」と断ってしまう (列が 3 桁なだけ)。
+    if (tooFine(old.rowStep) || tooFine(old.columnStep)) return decimalsLimit();
     return suggest(
-      spellingAt(rowOfLetters(letters) + rowStep, Number(digits) + columnStep),
+      spellingAt(
+        rowOfLetters(old.letters) + fractionOf(old.rowStep),
+        Number(old.columns) + fractionOf(old.columnStep),
+      ),
       '交点の間は 英字+数字 の組で書きます',
       '行の英字は a〜j (a = 0)、列は 0〜9',
     );
