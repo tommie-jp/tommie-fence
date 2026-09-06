@@ -1,3 +1,4 @@
+import { slideBy, slideInto } from 'fence-kit';
 import { formatAddress, rowLetters } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { nameOfHandle, partOfHandle } from './handles.ts';
@@ -6,7 +7,7 @@ import { MIRROR_WORD, isRotationWord, rotationWord } from '../parser/compact.ts'
 import { LIMITS } from '../limits.ts';
 import { lookupPartType, orientOf } from '../parts.ts';
 import type { Turn } from '../parts.ts';
-import { applyRewrite, diffOf, fail, isOnGrid, locatePart, tokensFrom, wordEdit } from './shared.ts';
+import { LAST_ROW, applyRewrite, diffOf, fail, isOnGrid, locatePart, tokensFrom, wordEdit } from './shared.ts';
 import type { Edit, RewriteResult } from './shared.ts';
 import type { Circuit } from '../model/circuit.ts';
 import type { PartSpec } from '../types.ts';
@@ -181,10 +182,30 @@ export function turnPart(source: string, handle: string, quarters: number): Rewr
   if (!ends.ok) return ends;
   const { tokens } = ends;
 
-  // **アンカー (先に書いた端) は動かさない。** 動かすと「回す」が「移動」になる。
+  // **アンカー (先に書いた端) を軸に回す。** 軸を真ん中に取ると、回すたびに
+  // 記号がその場から振られて「移動」に見える。
   const delta = spin({ row: part.to.row - part.from.row, col: part.to.col - part.from.col }, quarters);
-  const to = { row: part.from.row + delta.row, col: part.from.col + delta.col };
-  if (!isOnGrid(to)) {
+  const turned = { row: part.from.row + delta.row, col: part.from.col + delta.col };
+
+  // **格子から出たら寄せ直す。回転そのものは断らない。** 縁に置いた記号を回すと
+  // 端が外へ出るが、断ると「この部品は回らない」に見える (板の 2 つと同じ手当て。
+  // 52 の docs/28)。**寄せるときだけ**アンカーも動く — 足りない分ちょうどなので、
+  // 格子に載っている回し方は 1 升も動かない。
+  //
+  // **名前で書かれた端があるときは寄せない。** `points:` の名前は場所を指す
+  // 約束なので、番地に直すと名前が外れ、あとで点を動かしても記号が付いてこない。
+  const named = tokens.some((token, index) => {
+    const written = normalized.split('\n')[part.line - 1]?.slice(token.column, token.column + token.length) ?? '';
+    return index < 2 && doc.points.has(written);
+  });
+  const slide = named
+    ? { row: 0, col: 0 }
+    : slideInto([part.from, turned], { least: 0, most: LAST_ROW }, { least: 0, most: LIMITS.columns - 1 });
+  if (slide === null) {
+    return fail(`${partId} は回しても格子に収まりません`, part.line);
+  }
+  const [from, to] = slideBy([part.from, turned], slide);
+  if (from === undefined || to === undefined || !isOnGrid(from) || !isOnGrid(to)) {
     return fail(
       `${partId} を回すと格子の外へ出ます (a〜${rowLetters(LIMITS.rows - 1)} の ${LIMITS.rows} 行、1〜${LIMITS.columns} 列)`,
       part.line,
@@ -192,10 +213,17 @@ export function turnPart(source: string, handle: string, quarters: number): Rewr
   }
   // **一周は何もしない。** 同じ字を書き戻すと、呼ぶ側の「変わっていない」判定を
   // 素通りして、書類が汚れ・元に戻す段が積まれ・「動かしました」と言われる。
-  if (to.row === part.to.row && to.col === part.to.col) return rewriteOf(normalized, []);
+  if (to.row === part.to.row && to.col === part.to.col
+    && from.row === part.from.row && from.col === part.from.col) {
+    return rewriteOf(normalized, []);
+  }
 
-  // アンカーは書かれたまま (名前で書かれていれば名前のまま)。動くのは反対の端だけ。
-  return rewriteOf(normalized, editsFor(part.line, tokens, [null, formatAddress(to)]));
+  // **寄せなかったときはアンカーを書き換えない** (名前で書かれていれば名前のまま)。
+  const moved = from.row !== part.from.row || from.col !== part.from.col;
+  return rewriteOf(normalized, editsFor(part.line, tokens, [
+    moved ? formatAddress(from) : null,
+    formatAddress(to),
+  ]));
 }
 
 export function flipPart(source: string, handle: string): RewriteResult {

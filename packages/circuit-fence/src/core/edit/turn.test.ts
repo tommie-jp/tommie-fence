@@ -60,8 +60,24 @@ describe('turnPart', () => {
     expect(turned(RC, 'R1', 1).diff.lost.length).toBeGreaterThan(0);
   });
 
-  test('refuses to turn a part off the grid, rather than clamping it', () => {
-    const result = turnPart(RC, 'R1', -1);
+  test('slides a turn that would leave the grid back onto it', () => {
+    // **縁に置いた記号も回せる。** 断ると「この部品は回らない」に見える
+    // (板の 2 つと同じ手当て)。足りない分だけ寄せるので、載っている回し方は
+    // 1 升も動かない。a1 → a3 を反時計回りに回すと上へ 2 出るので、2 下げる。
+    expect(turned(RC, 'R1', -1).source).toContain('  R1: resistor c1 a1 10k');
+  });
+
+  test('leaves the anchor alone when nothing had to be slid', () => {
+    // 寄せないときはアンカーの綴りを書き換えない (名前で書かれていれば名前のまま)。
+    const middle = 'parts:\n  R1: resistor c3 c5 10k\n';
+
+    expect(turned(middle, 'R1', 1).source).toContain('  R1: resistor c3 e3 10k');
+  });
+
+  test('keeps a name written by points:, rather than sliding it into an address', () => {
+    // 名前は場所を指す約束。番地に直すと名前が外れ、点を動かしても付いてこない。
+    const named = 'points:\n  IN: a1\nparts:\n  R1: resistor IN a3 10k\n';
+    const result = turnPart(named, 'R1', -1);
 
     expect(result.ok).toBe(false);
     expect(result.ok === false && result.error.message).toContain('格子の外');
