@@ -174,3 +174,88 @@ describe('端数を綴りにする (Ctrl で 1/4 升)', () => {
     expect(ghost()).toMatchObject({ key: 'k', cells: [], ok: false, why: 'この盤では穴の間に置けません' });
   });
 });
+
+describe('端数を綴りにできないとき', () => {
+  const Q4 = { rows: 0.25, cols: -0.25 };
+
+  test('refuses a fraction that is not an object at all', async () => {
+    const { session, status } = open();
+
+    await session.handle({ kind: 'move', part: 'R1', to: 'b3', fine: 'なんとか' });
+
+    expect(status()).toContain('端数が読めません');
+  });
+
+  test('refuses a fraction with something other than numbers on it', async () => {
+    const { session, status } = open();
+
+    await session.handle({ kind: 'move', part: 'R1', to: 'b3', fine: { rows: 'x', cols: 0 } });
+
+    expect(status()).toContain('端数が読めません');
+  });
+
+  test('refuses a fraction bigger than half a cell, which is the next cell over', async () => {
+    const { session, status } = open();
+
+    await session.handle({ kind: 'move', part: 'R1', to: 'b3', fine: { rows: 0.9, cols: 0 } });
+
+    expect(status()).toContain('端数が読めません');
+  });
+
+  test('takes the middle of the cell as no fraction at all', async () => {
+    const { session, calls } = open();
+
+    await session.handle({ kind: 'move', part: 'R1', to: 'b3', fine: { rows: 0, cols: 0 } });
+
+    expect(calls).toContainEqual(['movePart', 'R1', 'b3']);
+  });
+
+  test('refuses a fraction that does not land on the fence steps', async () => {
+    // circuit の `round()` は `.125` を黙って `.13` に丸める。**黙らせない。**
+    const { session, status } = open();
+
+    await session.handle({ kind: 'move', part: 'R1', to: 'b3', fine: { rows: 0.125, cols: 0 } });
+
+    expect(status()).toContain('倍数ではありません');
+  });
+
+  test('refuses any fraction on a board that has no room between the holes', async () => {
+    const { session, status } = open({ fine: null });
+
+    await session.handle({ kind: 'move', part: 'R1', to: 'b3', fine: Q4 });
+
+    expect(status()).toContain('穴の間に置けません');
+  });
+
+  test('refuses when the fence cannot spell that spot', async () => {
+    const { session, status } = open({ step: () => null });
+
+    await session.handle({ kind: 'move', part: 'R1', to: 'b3', fine: Q4 });
+
+    expect(status()).toContain('間には置けません');
+  });
+
+  test('refuses when there is no cell to put the fraction on', async () => {
+    const { session, status } = open();
+
+    await session.handle({ kind: 'move', part: 'R1', fine: Q4 });
+
+    expect(status()).toContain('置き先がありません');
+  });
+
+  test('refuses a bad fraction on the first end of a wire too', async () => {
+    const { session, status } = open();
+
+    await session.handle({ kind: 'addWire', from: 'a1', to: 'b3', operator: '--', fine: Q4, fromFine: 'なんとか' });
+
+    expect(status()).toContain('端数が読めません');
+  });
+
+  test('refuses a bad fraction while placing, before anything is written', async () => {
+    const { session, status } = open();
+
+    await session.handle({ kind: 'addPart', type: 'resistor', at: ['b3'], fine: ['なんとか'] });
+
+    expect(status()).toContain('端数が読めません');
+  });
+});
