@@ -2,11 +2,13 @@ import { element, escapeMarkup, fit, lookupBoardPart, num, svgText, textWidth } 
 import { LIMITS } from '../limits.ts';
 import { formatAddress, rowLetters } from '../model/address.ts';
 import {
-  drawBox, drawGlyph, glyphOf, glyphSpan, glyphTall, leadsFromCentre, legGap, namePlace,
+  drawBox, drawGlyph, glyphOf, glyphSpan, glyphSpanBack, glyphTall, leadsFromCentre, legGap,
+  namePlace,
   showsPinName,
 } from './mapGlyphs.ts';
 import type { GlyphName, NamePlace } from './mapGlyphs.ts';
 import type { Chip, ChipPin, Cell, Dot, GridMap, MapNote, WireLine } from './map.ts';
+import { turnSide } from '../parts.ts';
 import type { PinSide, Turn } from '../parts.ts';
 
 /**
@@ -144,7 +146,7 @@ function roomFor(map: GridMap, nudges: ReadonlyMap<Chip, number>): Room {
     const beside = (side: PinSide): number => {
       const row = rows.get(side);
       if (row === undefined) return 0;
-      const widest = Math.max(0, ...row.map((pin) => textWidth(pin.name) * PIN_NAME_FONT));
+      const widest = Math.max(0, ...row.map((pin) => textWidth(pin.label) * PIN_NAME_FONT));
       return PIN_STUB + (side === 'left' || side === 'right' ? widest + PIN_MARGIN : PIN_NAME_FONT * 2);
     };
     // 名札の出る辺。**箱は中に入れる**ので外へは広がらない。上に出る分は下の
@@ -257,16 +259,17 @@ function drawSpan(chip: Chip, far: Cell, nudge: number): string {
     { transform: `translate(${num(mx)},${num(my)}) rotate(${num(angle)})` },
     drawGlyph(glyph.name),
   );
-  const mark = glyph.mark === null
-    ? ''
-    : svgText(mx, my + (glyph.mark.below === true ? MARK_BELOW : 4), glyph.mark.text, { class: 'cf-mark' });
-  // **名前を置く側は図と揃える** — 横置きは記号の下、縦置きは記号の左
-  // (図では反対側が値の場所。実機で「文字列の位置が回路図と違う」)。
-  const upright = Math.abs(y2 - y1) > Math.abs(x2 - x1);
   // **記号の張り出しの外へ。** 決め打ちの距離だと、背の高い記号 (ダイアック・
   // 水晶・電源の丸) に名前が乗る (実機で指摘された)。線と直交する向きの
   // 張り出しは、縦置きでは横向きになるので、どちらの置き方でも同じ数を使う。
-  const clear = Math.max(NAME_BELOW, glyphTall(glyph.name) + NAME_CLEAR_TALL);
+  const clear = nameClearOf(glyph.name);
+  const mark = glyph.mark === null
+    ? ''
+    : svgText(mx, my + (glyph.mark.below === true ? clear + MARK_STEP : MARK_MIDDLE), glyph.mark.text,
+      { class: 'cf-mark' });
+  // **名前を置く側は図と揃える** — 横置きは記号の下、縦置きは記号の左
+  // (図では反対側が値の場所。実機で「文字列の位置が回路図と違う」)。
+  const upright = Math.abs(y2 - y1) > Math.abs(x2 - x1);
   const aside = asideOf(mx, chip.id, clear);
   const name = upright
     ? svgText(aside.x, my + 4, chip.id, { class: 'cf-name', anchor: aside.anchor, halo: 'var(--cf-paper)' })
@@ -280,15 +283,38 @@ function drawSpan(chip: Chip, far: Cell, nudge: number): string {
  */
 const NAME_BELOW = 15;
 
-/** 記号の張り出しから名前までの隙間。字の高さ (10px) の半分より少し広く取る。 */
-const NAME_CLEAR_TALL = 8;
+/**
+ * 記号の張り出しと**名前の頭**の間に空ける隙間。
+ *
+ * 基準線 (`y`) は字の**下端**なので、張り出しに隙間だけを足すと、字の高さぶん
+ * 上に食い込んで記号に触れる (実機で「diac, 部品名が図形に被らないようにする」
+ * と、同じ形の 18 種類を並べて指摘された)。**字の高さも足す。**
+ */
+const NAME_CLEAR_TALL = 4;
+
+/** 10px の字がベースラインから上へ出る高さ (大文字の高さ)。 */
+const NAME_CAP = 7.5;
+
+/** その記号の、中心から名前の基準線までの隔たり。 */
+const nameClearOf = (name: GlyphName): number =>
+  Math.max(NAME_BELOW, glyphTall(name) + NAME_CLEAR_TALL + NAME_CAP);
 
 /**
- * 品種の字 (`NTC`) を記号の下へ置く高さ。**名前のさらに下**に置く —
- * 図も 2 行目として名前の下に書く (`l2_=`) ので、並びを揃える。
- * 記号と名前の間に入れると、10px の字が 2 つ重なって両方読めない (実測)。
+ * 品種の字 (`NTC`) を**名前の 1 行下**へ置く送り。図も 2 行目として名前の下に
+ * 書く (`l2_=`) ので、並びを揃える。名前が記号の高さで下がると一緒に下がる —
+ * 決め打ちにすると、背の高い記号で名前と重なる。
  */
-const MARK_BELOW = NAME_BELOW + 9;
+const MARK_STEP = 9;
+
+/** 名前を出さない立ち姿の記号が、下へ字を置く高さ。 */
+const MARK_BELOW = NAME_BELOW + MARK_STEP;
+
+/**
+ * 丸の中に置く 1 文字 (計器の `A` `V` `Ω`) の基準線。**字の真ん中を丸の中心に**
+ * 合わせる — 基準線は字の下端なので、9px の大文字の高さ (6.5) の半分だけ下げる。
+ * 4 だと僅かに下がって見えた (実機で「A を円の中心に。meter 類は全て同様に」)。
+ */
+const MARK_MIDDLE = 3.2;
 const NAME_ASIDE = 14;
 
 /** 名前の字の大きさ (`.cf-name` の `font-size`)。はみ出すかを測るのに要る。 */
@@ -319,20 +345,25 @@ function drawLead(
   nudge: number,
 ): string {
   const whole = element('line', { class: 'cf-lead', x1: num(x1), y1: num(y1), x2: num(x2), y2: num(y2) });
-  const span = glyphSpan(glyphOf(chip.type).name);
+  const glyph = glyphOf(chip.type).name;
+  const span = glyphSpan(glyph);
   // 記号を持たない `short` は線そのものなので、切ると何も残らない。
   if (nudge !== 0 || span === 0) return whole;
 
-  const stub = length / 2 - span;
+  // **前後で切る長さが違う。** 記号は線の向きに回してあるので、始点の側が
+  // 記号の後ろ (-x)。1 つの数で切ると、短いほうの側に隙間が空く。
+  const stubs = [length / 2 - glyphSpanBack(glyph), length / 2 - span];
   // 交点が近すぎて足が残らないときは、隙間だけにする (短い線を潰さない)。
-  if (stub <= 0) return '';
+  if (Math.min(...stubs) <= 0) return '';
 
   const [ux, uy] = [(x2 - x1) / length, (y2 - y1) / length];
   const near = element('line', {
-    class: 'cf-lead', x1: num(x1), y1: num(y1), x2: num(x1 + ux * stub), y2: num(y1 + uy * stub),
+    class: 'cf-lead',
+    x1: num(x1), y1: num(y1), x2: num(x1 + ux * stubs[0]!), y2: num(y1 + uy * stubs[0]!),
   });
   const far = element('line', {
-    class: 'cf-lead', x1: num(x2 - ux * stub), y1: num(y2 - uy * stub), x2: num(x2), y2: num(y2),
+    class: 'cf-lead',
+    x1: num(x2 - ux * stubs[1]!), y1: num(y2 - uy * stubs[1]!), x2: num(x2), y2: num(y2),
   });
   return near + far;
 }
@@ -396,7 +427,9 @@ const rowsOf = (pins: readonly ChipPin[], turn: Turn): PinRows => {
  * 何本も出る部品は、既定の箱では足が重なって 1 本ずつ押せない
  * (実機で「すべての部品の足に接続点があるか」と言われて広げた)。
  */
-function reachOf(rows: PinRows, glyph: GlyphName): { readonly halfW: number; readonly halfH: number } {
+function reachOf(rows: PinRows, glyph: GlyphName): {
+  readonly halfW: number; readonly halfFront: number; readonly halfBack: number; readonly halfH: number;
+} {
   const along = (...sides: readonly PinSide[]): number =>
     Math.max(0, ...sides.map((side) => rows.get(side)?.length ?? 0));
   const room = (count: number): number => ((count - 1) * legGap(glyph)) / 2 + PIN_MARGIN;
@@ -407,12 +440,36 @@ function reachOf(rows: PinRows, glyph: GlyphName): { readonly halfW: number; rea
   // **中に書く名前が入るだけの幅を取る。** 左右の名前を内側へ寄せるので、
   // 狭い箱だと `IN` と `OUT` がくっついて 1 語に読める (実機で見つけた)。
   const inside = (side: PinSide): number => (namePlace(glyph, side) === 'inside'
-    ? Math.max(0, ...(rows.get(side) ?? []).map((pin) => textWidth(pin.name) * PIN_NAME_FONT))
+    ? Math.max(0, ...(rows.get(side) ?? []).map((pin) => textWidth(pin.label) * PIN_NAME_FONT))
     : 0);
-  const forNames = (inside('left') + inside('right')) / 2 + NAME_INSIDE * 2 + 2;
+  // **縦に立てた名前 (`GND`) には、真ん中に自分の縦の列を空ける。**
+  // 上下の辺の名前は縁から内へ伸びて左右の名前 (`IN` `OUT`) の高さを通るので、
+  // 列を空けないと重なる (実機で「GND を箱の中に表示する」)。
+  // 列の幅は字の高さ 1 つぶん。
+  // 列の幅は字の高さ 1 つぶんと余白。**字幅は見積もり**なので厚めに取る
+  // (`textWidth` は図の字を基準にした概算で、升目の font は少し広い)。
+  const longest = Math.max(inside('top'), inside('bottom'));
+  const standing = longest === 0 ? 0 : PIN_NAME_FONT + NAME_INSIDE;
+  const forNames = (inside('left') + inside('right') + standing) / 2 + NAME_INSIDE * 2 + 2;
+  // 立てた名前の**長さ**は箱の高さで飲む (縁からの余白の内側に収める)。
+  const forStanding = longest / 2 + NAME_INSIDE + PIN_NAME_FONT / 2;
+  const wide = Math.max(edge, room(along('top', 'bottom')), forNames);
+  // **足を出すのは記号の縁から。箱だけが「箱の縁」。** 中に字を置くための幅で
+  // 足まで押し出すと、三角の先と出口の丸が離れる (実機で「opamp, 出力を
+  // ピンと接続する」)。箱は矩形そのものが縁なので、広げた幅がそのまま縁。
+  const halfFront = glyph === 'box' ? wide : edge;
+  // **後ろ側は記号の縁そのもの。** 前と同じ下限 (8) を掛けると、反転の丸の
+  // ぶんだけ後ろに隙間が残る (実機で「配線と部品の間を接続する」)。
+  // 上下の足が収まる幅だけは外せない。
+  // **前後が同じ形は今までどおり** — 下限を外すと 1 端子の記号の棒が伸びる。
+  const halfBack = glyphSpanBack(glyph) === glyphSpan(glyph)
+    ? halfFront
+    : Math.min(halfFront, Math.max(glyphSpanBack(glyph), room(along('top', 'bottom'))));
   return {
-    halfW: Math.max(edge, room(along('top', 'bottom')), forNames),
-    halfH: Math.max(HALF_H, room(along('left', 'right'))),
+    halfW: wide,
+    halfFront,
+    halfBack,
+    halfH: Math.max(HALF_H, room(along('left', 'right')), forStanding),
   };
 }
 
@@ -429,6 +486,8 @@ function pinAt(
 ): {
   readonly x1: number; readonly y1: number; readonly x2: number; readonly y2: number;
   readonly tx: number; readonly ty: number; readonly anchor?: 'start' | 'end';
+  /** 字を回す角 (度)。**縦の辺で胴の中に書くときだけ** — 横のままでは入らない。 */
+  readonly rotate?: number;
 } {
   const shift = (at - (of - 1) / 2) * gap;
   // 字は丸の外側へ。丸の半径と余白のぶんだけ、棒の先から更に離す。
@@ -442,6 +501,9 @@ function pinAt(
   if (side === 'left') {
     const x = -halfW - PIN_STUB;
     const lead = { x1: -halfW, y1: shift, x2: x, y2: shift };
+    // **棒の上。** 字は基準線が下端なので、棒から離すだけで上に乗る。
+    // **外へ伸ばす** — 胴の側から書き始めると、巻線の膨らみに乗る。
+    if (place === 'over') return { ...lead, tx: x + PIN_DOT, ty: shift - clear, anchor: 'end' };
     if (place === 'beside') return { ...lead, tx: x, ty: shift + below };
     return place === 'inside'
       ? { ...lead, tx: -halfW + NAME_INSIDE, ty: shift + 3, anchor: 'start' }
@@ -450,20 +512,33 @@ function pinAt(
   if (side === 'right') {
     const x = halfW + PIN_STUB;
     const lead = { x1: halfW, y1: shift, x2: x, y2: shift };
+    if (place === 'over') return { ...lead, tx: x - PIN_DOT, ty: shift - clear, anchor: 'start' };
     if (place === 'beside') return { ...lead, tx: x, ty: shift + below };
     return place === 'inside'
       ? { ...lead, tx: halfW - NAME_INSIDE, ty: shift + 3, anchor: 'end' }
       : { ...lead, tx: x + clear, ty: shift + 3, anchor: 'start' };
   }
+  // 縦の棒には「上」が無い (棒の向きが字と同じ)。回した記号は脇へ置く。
+  //
+  // **胴の中に書くときは字を縦に回す** (実機で「regulator, GND を箱の中に表示する」)。
+  // 横のままだと左右の名前 (`IN` `OUT`) とぶつかる。図 (circuitikz) も KiCad も
+  // 縦に立てて書く。回すと字は基準点から**上 (下の辺) か下 (上の辺) へ**伸びるので、
+  // 縁の内側を基準点にすれば箱の中に収まる。
   if (side === 'top') {
     const y = -halfH - PIN_STUB;
     const lead = { x1: shift, y1: -halfH, x2: shift, y2: y };
-    return place === 'beside'
+    if (place === 'inside') {
+      return { ...lead, tx: shift - 3, ty: -halfH + NAME_INSIDE, anchor: 'start', rotate: 90 };
+    }
+    return place === 'beside' || place === 'over'
       ? { ...lead, tx: shift + clear, ty: y + 3, anchor: 'start' }
       : { ...lead, tx: shift, ty: y - clear };
   }
   const y = halfH + PIN_STUB;
   const lead = { x1: shift, y1: halfH, x2: shift, y2: y };
+  if (place === 'inside') {
+    return { ...lead, tx: shift + 3, ty: halfH - NAME_INSIDE, anchor: 'start', rotate: -90 };
+  }
   return place === 'beside'
     ? { ...lead, tx: shift + clear, ty: y + 3, anchor: 'start' }
     : { ...lead, tx: shift, ty: y + below };
@@ -477,7 +552,9 @@ function pinAt(
  * 名札は**書かれる綴りそのもの** (`Q1.C`) にしておく。殻は綴りを知らないので、
  * 押されたものをそのまま `addWire` へ返せる形で持たせる。
  */
-function drawPin(pin: ChipPin, part: string, at: ReturnType<typeof pinAt>, named = true): string {
+function drawPin(
+  pin: ChipPin, part: string, at: ReturnType<typeof pinAt>, named = true, place: NamePlace = 'outside',
+): string {
   const stub = element('line', {
     class: 'cf-pin', x1: num(at.x1), y1: num(at.y1), x2: num(at.x2), y2: num(at.y2),
   });
@@ -488,11 +565,16 @@ function drawPin(pin: ChipPin, part: string, at: ReturnType<typeof pinAt>, named
       cx: num(at.x2), cy: num(at.y2), r: num(PIN_HIT),
     });
   if (!named) return stub + dot;
-  return stub + dot + svgText(at.tx, at.ty, pin.name, {
+  // **出すのは `label`、指すのは `name`。** 番号を混ぜた字では配線が書けない。
+  return stub + dot + svgText(at.tx, at.ty, pin.label, {
     class: 'cf-pin-name',
     // 隣の升の点や升目の線に載るので、地の色で縁を取る (`cf-name` と同じ手)。
-    halo: 'var(--cf-paper)',
+    // **胴の中に書く字は縁を取らない** — 中は既に地の色で塗ってあるので要らず、
+    // 縁ぎりぎりに来る 1 番の番号が箱の輪郭を消していた (実機で「DIP の上部が
+    // 欠けている (直線が途切れている)」「SIP40 も同様」)。
+    ...(place === 'inside' ? {} : { halo: 'var(--cf-paper)' }),
     ...(at.anchor === undefined ? {} : { anchor: at.anchor }),
+    ...(at.rotate === undefined ? {} : { transform: `rotate(${num(at.rotate)},${num(at.tx)},${num(at.ty)})` }),
   });
 }
 
@@ -524,6 +606,13 @@ const nameSideOf = (pins: readonly ChipPin[]): PinSide => {
  */
 const STAND_ABOVE = -12;
 const STAND_ASIDE = NAME_ASIDE;
+
+/**
+ * 名札を胴から離す隙間。**名前は地の色で縁を取ってある** (`halo`) ので、
+ * 縁ぎりぎりに置くとその縁取りが箱の輪郭を消す (実機で「DIP の上部が欠けている
+ * (直線が途切れている)」)。縁取りの幅 (1.5) と輪郭の太さの半分 (0.75) の外側へ。
+ */
+const STAND_CLEAR = 6;
 const STAND_BELOW = -STAND_ABOVE + NAME_FONT - 2;
 
 /**
@@ -544,11 +633,11 @@ function standingNameAt(
   side: PinSide,
   half: { readonly w: number; readonly h: number },
 ): { readonly x: number; readonly y: number; readonly anchor?: 'start' | 'end' } {
-  const aside = Math.max(STAND_ASIDE, half.w + NAME_CLEAR);
+  const aside = Math.max(STAND_ASIDE, half.w + STAND_CLEAR);
   if (side === 'left') return { x: -aside, y: 4, anchor: 'end' };
   if (side === 'right') return { x: aside, y: 4, anchor: 'start' };
-  if (side === 'bottom') return { x: 0, y: Math.max(STAND_BELOW, half.h + NAME_FONT) };
-  return { x: 0, y: Math.min(STAND_ABOVE, -half.h - NAME_CLEAR) };
+  if (side === 'bottom') return { x: 0, y: Math.max(STAND_BELOW, half.h + STAND_CLEAR + NAME_CAP) };
+  return { x: 0, y: Math.min(STAND_ABOVE, -half.h - STAND_CLEAR) };
 }
 
 /**
@@ -630,7 +719,10 @@ function drawStanding(chip: Chip, nudge: number): string {
   // 中に入れると同じ部品が図と升目で違う所に名前を持つ (実機で並べて見つけた)。
   // 箱の中は型番の場所で、そちらは図が書く。
   const rows = rowsOf(chip.pins, chip.turn);
-  const { halfW, halfH } = reachOf(rows, glyph.name);
+  const { halfW, halfFront, halfBack, halfH } = reachOf(rows, glyph.name);
+  // **記号の後ろ (-x) が画面のどちら側へ来るか。** 回すと入れ替わるので、
+  // 辺そのものではなく、回す前のどの辺かで選ぶ。
+  const backSide = turnSide('left', chip.turn);
   // **箱は回さない。** 矩形は回しても同じ意味しか持たず、縦横が入れ替わると
   // 中に入れた名前がはみ出す。向きは足のほうが示す。
   // 箱でない記号 (ground) は回して見せる — 足が無いので、回さないと
@@ -648,15 +740,19 @@ function drawStanding(chip: Chip, nudge: number): string {
       { class: 'cf-pins', transform: `translate(0,${num(nudge)})` },
       [...rows].flatMap(([side, row]) =>
         row.map((pin, at) => {
+          const place = namePlace(glyph.name, side);
           const spot = pinAt(
-            side, at, row.length, halfW, halfH, legGap(glyph.name), namePlace(glyph.name, side),
+            side, at, row.length, side === backSide ? halfBack : halfFront, halfH, legGap(glyph.name), place,
           );
           // **中心から引く形は、線の根元を真ん中へ。** 丸の中の点まで届いて
           // いるのが記号なので、縁で止めると信号線の行き先が読めない。
+          // **届くのはその 1 本だけ** — 同軸の外皮を中心から引くと、アースが
+          // 中心導体につながって見える (実機で「アースは中心に接続しない」)。
           return drawPin(
             pin, chip.id,
-            leadsFromCentre(glyph.name) ? { ...spot, x1: 0, y1: 0 } : spot,
+            leadsFromCentre(glyph.name, pin.name) ? { ...spot, x1: 0, y1: 0 } : spot,
             showsPinName(glyph.name, pin.name),
+            place,
           );
         })).join(''),
     );

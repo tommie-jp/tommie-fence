@@ -1108,14 +1108,38 @@ describe('マイコンボード', () => {
     const marks = (tex.match(/\.bpin \d+\)/g) ?? []).length;
 
     expect(marks).toBe(40);
-    expect(notes.slice(0, 3).map((one) => one.text)).toEqual(['GP0', 'GP1', 'GND3']);
+    expect(notes.slice(0, 3).map((one) => one.text)).toEqual(['01 GP0', '02 GP1', '03 GND3']);
+  });
+
+  test('writes the pin number on the outer end of every leg name', () => {
+    // 実機で頼まれた形 —「01 GP0」「02 GP1」、右の列は「VBUS 40」。
+    // **番号は常に箱の外側の端**。字は縁から中へ伸びるので、左の列は番号が先、
+    // 右の列は名前が先になる。
+    const { notes } = board('parts:', '  U1: pico b2');
+
+    // 左の列 (1〜20 番) は番号が先。1 桁は 0 を足して 2 桁に揃える。
+    expect(notes[0]?.text).toBe('01 GP0');
+    expect(notes[19]?.text).toBe('20 GP15');
+    // 右の列 (21〜40 番) は名前が先で、番号が外 (右) の端。
+    expect(notes[20]?.text).toBe('GP16 21');
+    expect(notes[38]?.text).toBe('VSYS 39');
+    expect(notes[39]?.text).toBe('VBUS 40');
+  });
+
+  test('keeps the number on the outer end after the board is turned', () => {
+    // 回すと左の列が上の辺、右の列が下の辺へ移る。どちらも縁から中へ読むので、
+    // **番号はどちらも先** (外側の端) になる。
+    const { notes } = board('parts:', '  U1: pico b2 r90');
+
+    expect(notes[0]?.text).toBe('01 GP0');
+    expect(notes[39]?.text).toBe('40 VBUS');
   });
 
   test('puts the legs before the notes, since the parts are drawn first', () => {
     // 差し込みは**目印の出てくる順**で当たる。並びが逆だと名前と注釈が入れ替わる。
     const { notes } = board('parts:', '  U1: pico b2', 'notes:', '  - text a1: ここ');
 
-    expect(notes[0]?.text).toBe('GP0');
+    expect(notes[0]?.text).toBe('01 GP0');
     expect(notes[notes.length - 1]?.text).toBe('ここ');
   });
 
@@ -1132,7 +1156,7 @@ describe('マイコンボード', () => {
       style: doc.style, target: 'latex',
     });
 
-    expect(tex).toContain('{GP0}');
+    expect(tex).toContain('{01 GP0}');
     expect(tex).not.toContain('circuitnotemark');
   });
 });
@@ -1150,14 +1174,14 @@ describe('回したマイコンボードの足の名前', () => {
     const { notes } = board('parts:', '  U1: pico b2 r90');
 
     // 1 番から半分までが上の辺 (下へ読む)、残りが下の辺 (上へ読む)。
-    expect(notes[0]).toMatchObject({ text: 'GP0', rotate: 90 });
+    expect(notes[0]).toMatchObject({ text: '01 GP0', rotate: 90 });
     expect(notes[20]).toMatchObject({ rotate: 270 });
   });
 
   test('leaves them lying down while the legs are on the sides', () => {
     const { notes } = board('parts:', '  U1: pico b2');
 
-    expect(notes[0]).toMatchObject({ text: 'GP0', rotate: 0, align: 'left' });
+    expect(notes[0]).toMatchObject({ text: '01 GP0', rotate: 0, align: 'left' });
     expect(notes[20]).toMatchObject({ rotate: 0, align: 'right' });
   });
 

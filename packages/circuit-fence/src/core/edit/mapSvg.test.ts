@@ -7,6 +7,12 @@ import { lookupPartType, partTypeNames } from '../parts.ts';
 
 const draw = (source: string): string => renderMapHtml(gridMap(source));
 
+/** 10px の字がベースラインから上へ出る高さ。名前の頭がどこに来るかを測るのに使う。 */
+const NAME_CAP = 7.5;
+
+/** 記号と名前の間に見えていてほしい隙間。 */
+const NAME_GAP = 3;
+
 describe('renderMapHtml が描くもの', () => {
   test('draws one svg that scales to the panel', () => {
     const svg = draw('parts:\n  R1: resistor a1 a3\n');
@@ -221,6 +227,23 @@ describe('部品の名前の置き場', () => {
 
       expect([x, anchor]).toEqual([0, 'middle']);
       expect(y).toBeLessThan(-11);
+    }
+  });
+
+  test('keeps the name clear of the shape, not just below its centre', () => {
+    // 実機で「diac, 部品名が図形に被らないようにする」と、同じ形の 18 種類を
+    // 並べて言われた回。**字の頭**が張り出しより下に来なければ被る —
+    // 基準線は字の下端なので、張り出しに字の高さを足すまでが要る。
+    for (const type of ['diac', 'diode', 'zener', 'varicap', 'triac', 'vsource', 'sine',
+      'square', 'isource', 'battery', 'solar', 'triangle', 'lamp', 'ammeter', 'voltmeter',
+      'ohmmeter', 'wattmeter', 'galvanometer', 'detector']) {
+      const source = `parts:\n  X1: ${type} c1 c3\n`;
+      // 記号を置いた点 (`translate`) が記号の中心。名前の y はそこからの隔たり。
+      const centre = Number(/translate\(\d+,(\d+)\) rotate/.exec(draw(source))?.[1] ?? 0);
+      const top = nameAt(source, 'X1').y - centre - NAME_CAP;
+
+      // 0.5px 空いていても目には触れて見える。**読める隙間**まで離す。
+      expect([type, top >= glyphTall(glyphOf(type).name) + NAME_GAP]).toEqual([type, true]);
     }
   });
 
@@ -618,5 +641,138 @@ describe('配線を掴む', () => {
     const svg = draw('parts:\n  R1: resistor a1 a3\nwires:\n  - a1 -- c1\n');
 
     expect(svg.indexOf('cf-wire-hits')).toBeLessThan(svg.indexOf('cf-parts'));
+  });
+});
+
+
+describe('図と同じ見え方にする細工', () => {
+  test('centres the letter in the meter circle, which the figure does', () => {
+    // 実機で「ammeter, \"A\" を円の中心に表示する (現在は微妙に下にずれている)。
+    // meter 類は全て同様に直す」。9px の字は、基準線を大文字の高さの半分だけ
+    // 下げたところで丸の中心に来る。
+    const svg = draw('parts:\n  A1: ammeter c1 c3\n');
+    const centre = Number(/translate\(\d+,(\d+)\) rotate/.exec(svg)?.[1] ?? 0);
+    const mark = /<text x="[-\d.]+" y="([-\d.]+)"[^>]*class="cf-mark"[^>]*>A</.exec(svg);
+
+    // 9px の大文字は高さ 6.5 ほど。中心に置くならその半分だけ下げる。
+    expect(Number(mark?.[1]) - centre).toBeCloseTo(3.2, 1);
+  });
+
+  test('keeps the haloed leg numbers off the box outline, so the edge stays whole', () => {
+    // 実機で「DIP の上部が欠けている (直線が途切れている)」「SIP40 も同様」。
+    // 足の番号は地の色で縁を取ってあり (`halo`)、箱の縁に近すぎると線を消す。
+    // 箱の中は既に地の色で塗ってあるので、中に書く字に縁取りは要らない。
+    for (const type of ['dip40', 'sip40']) {
+      const svg = draw(`parts:\n  U1: ${type} c3\n`);
+      const legs = [...svg.matchAll(/<text[^>]*class="cf-pin-name"[^>]*>/g)].map((one) => one[0]);
+
+      expect(legs.length).toBeGreaterThan(0);
+      expect(legs.every((one) => !one.includes('stroke='))).toBe(true);
+    }
+  });
+
+  test('writes the transformer leg names over their leads, as the figure does', () => {
+    // 実機で「transformer, ピン名の位置を変更する。図 1 に近づける」。
+    // 図 (KiCad の `Transformer_1P_1S`) は番号を**足の棒の上**に置く。
+    // 棒の外 (丸の更に外側) に出すと、巻線から遠くてどちらの端か読みにくい。
+    const svg = draw('parts:\n  T1: transformer c3\n');
+    const named = [...svg.matchAll(
+      /<text x="(-?[\d.]+)" y="(-?[\d.]+)"([^>]*)class="cf-pin-name"[^>]*>(\w+)</g,
+    )].map(([, x, y, rest, name]) => ({ x: Number(x), y: Number(y), rest: rest ?? '', name }));
+
+    expect(named.map((one) => one.name)).toEqual(['a1', 'a2', 'b1', 'b2']);
+    // 足は y=∓9。字はその上 (棒に乗らない)。
+    expect(named.map((one) => one.y)).toEqual([-14.6, 3.4, -14.6, 3.4]);
+    // **外へ伸ばす。** 巻線の膨らみ (-11.5) の外から書き始めないと、下の足の
+    // 名前が巻線に乗る。
+    expect(named.map((one) => one.x)).toEqual([-13.4, -13.4, 13.4, 13.4]);
+    expect(named.map((one) => /text-anchor="(\w+)"/.exec(one.rest)?.[1]))
+      .toEqual(['end', 'end', 'start', 'start']);
+  });
+
+  test('writes the regulator GND inside the box, standing up, as the figure does', () => {
+    // 実機で「regulator, GND を箱の中に表示する。図 1 に近づける」。
+    // 図 (circuitikz) も KiCad も箱の中に立てて書く。横に寝かせると IN・OUT と
+    // ぶつかるので、**縦に回して**下の縁の内側へ入れる。
+    const svg = draw('parts:\n  U1: regulator c3\n');
+    const gnd = /<text x="(-?[\d.]+)" y="(-?[\d.]+)"[^>]*transform="rotate\((-?\d+)[^)]*\)"[^>]*>GND</
+      .exec(svg);
+    const halfH = Number(/<rect class="cf-glyph" x="-?[\d.]+" y="(-[\d.]+)"/.exec(svg)?.[1] ?? 0);
+
+    expect(gnd).not.toBeNull();
+    // 下から上へ読む (反時計回り)。
+    expect(Number(gnd?.[3])).toBe(-90);
+    // 縁の内側。字は上へ伸びるので、箱はその長さを飲み込むだけ高い。
+    expect(Number(gnd?.[2])).toBeCloseTo(-halfH - 3, 1);
+    expect(-halfH * 2).toBeGreaterThan(textWidth('GND') * 8 + 6);
+  });
+
+  test('runs the lead up to the body on both sides of a lopsided part', () => {
+    // 実機で「配線と部品の間を接続する」。c1 と c3 は 68px 離れていて中心は 54。
+    // 電解コンデンサは左が真っ直ぐな極板 (3)、右が曲がった極板 (5)。
+    const svg = draw('parts:\n  EC1: ecap c1 c3\n');
+    const leads = [...svg.matchAll(/<line class="cf-lead" x1="([\d.]+)" y1="[\d.]+" x2="([\d.]+)"/g)]
+      .map(([, from, to]) => [Number(from), Number(to)]);
+
+    expect(leads).toEqual([[20, 51], [59, 88]]);
+  });
+
+  test('starts the opamp output at the tip, not out where the box would be', () => {
+    // 実機で「opamp, 出力をピンと接続する」。三角の中に ± を書くぶん幅を
+    // 取っていたので、**出口の側**に隙間が空いていた。箱でない記号の縁は
+    // 記号そのものが持っている (三角の先は 8)。
+    const svg = draw('parts:\n  U1: opamp c3\n');
+    const right = [...svg.matchAll(/<line class="cf-pin" x1="([\d.]+)"/g)].map(([, x]) => Number(x));
+
+    expect(Math.min(...right)).toBe(8);
+  });
+
+  test('starts a gate leg at the back of its body, not out past the bubble', () => {
+    // 実機で「配線と部品の間を接続する」。`nor` は前に反転の丸が付くぶん幅を
+    // 取るので、1 つの数で両側を出すと**入口の側に大きな隙間**が空いていた。
+    const stubIn = (type: string): number => {
+      const svg = draw(`parts:\n  G1: ${type} c3\n`);
+      const left = [...svg.matchAll(/<line class="cf-pin" x1="(-[\d.]+)"/g)].map(([, x]) => Number(x));
+      return Math.max(...left);
+    };
+
+    // 反った背は入口の高さで -6.1。丸の有る無しで入口の側は変わらない。
+    expect(stubIn('nor')).toBe(-6);
+    expect(stubIn('or')).toBe(stubIn('nor'));
+    expect(stubIn('nand')).toBe(-8);
+    expect(stubIn('not')).toBe(-7);
+  });
+
+  test('writes the header number beside each board leg, as the figure does', () => {
+    // 実機で「pico のピン番号が付いていない」(升目)。図と同じ字を出す —
+    // 左の列は番号が先、右の列は名前が先 (番号は常に箱の外側の端)。
+    const svg = draw('parts:\n  PI1: pico c3\n');
+
+    expect(svg).toContain('>01 GP0<');
+    expect(svg).toContain('>VBUS 40<');
+    // **配線に書く綴りは名前のまま。** 番号を混ぜると `PI1.GP0` が書けなくなる。
+    expect(svg).toContain('data-pin="PI1.GP0"');
+    expect(svg).not.toContain('data-pin="PI1.01 GP0"');
+  });
+
+  test('widens the board box for the numbered legs, so the two columns stay apart', () => {
+    // 番号のぶん字が伸びるので、箱もそのぶん広げないと左右の列がぶつかる。
+    // いちばん長い組は 6 行目の `06 GP4` と `ADC_VREF 35`。
+    const halfW = -Number(/<rect class="cf-glyph" x="(-[\d.]+)"/.exec(draw('parts:\n  PI1: pico c3\n'))?.[1] ?? 0);
+    const both = (textWidth('06 GP4') + textWidth('ADC_VREF 35')) * 8;
+
+    expect(halfW * 2).toBeGreaterThan(both);
+  });
+
+  test('runs only the core lead to the centre of the coax, not the shield', () => {
+    // 実機で「SMA の図が間違っている。アースは中心に接続しない」。図と同じで、
+    // 中心導体だけが中心の点まで届き、外皮の足は丸の縁で止まる。
+    const svg = draw('parts:\n  J1: sma c3\n');
+    const legs = [...svg.matchAll(/<line class="cf-pin" x1="([-\d.]+)" y1="([-\d.]+)"/g)]
+      .map(([, px, py]) => ({ x: Number(px), y: Number(py) }));
+
+    expect(legs).toHaveLength(2);
+    // 中心導体 (1 番) は原点から、外皮 (2 番) は縁から。
+    expect(legs.filter((one) => one.x === 0 && one.y === 0)).toHaveLength(1);
   });
 });

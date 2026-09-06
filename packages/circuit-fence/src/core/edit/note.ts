@@ -277,3 +277,13 @@ export function flipNote(source: string, handle: string): NoteResult {
 
 /** 語の綴りを読むのに使う (向きの語だけを拾うため)。 */
 export const noteRotation = noteRotationOf;
+
+/**
+ * その注釈が持っている**写せる字**。言葉を持つのは `text` だけで、
+ * 印や枠には写す字が無い (右クリックの「テキストコピー」が読む)。
+ */
+export function noteText(source: string, handle: string): string | null {
+  const found = locate(source, handle);
+  if (!isFound(found) || found.note.kind !== 'text') return null;
+  return found.note.text ?? null;
+}

@@ -118,6 +118,22 @@ const box = (width: number, height: number): string =>
     class: 'cf-glyph', x: -width / 2, y: -height / 2, width, height, rx: 2,
   });
 
+/**
+ * 左を開けた丸 (同軸コネクタの外皮)。真横 (180 度) を中心に `gap` 度だけ
+ * 開け、残りを弧で描く。**開き口から中心導体の線が入る**。
+ */
+const openCircle = (r: number, gap: number): string => {
+  const at = (deg: number): string => {
+    const rad = (deg * Math.PI) / 180;
+    return `${num(r * Math.cos(rad))},${num(r * Math.sin(rad))}`;
+  };
+  // 弧は大きいほう (180 度超え) を、時計回りに描く。
+  return path(`M${at(180 + gap)} A${r},${r} 0 1 1 ${at(180 - gap)}`);
+};
+
+/** 外皮の丸を開ける角度 (中心導体の入る向きから上下へ、度)。図と同じ。 */
+const COAX_GAP = 24;
+
 /** 押しボタンの 2 つの接点。**離れているのが「切れている」の目印**。 */
 const contacts = (): string =>
   element('circle', { class: 'cf-glyph', cx: -5, cy: 0, r: 1.6 })
@@ -169,25 +185,31 @@ const BULK_OUT = arrow(-3.5, 0, 3, 0);
 const SHAPE: Record<GlyphName, () => string> = {
   // 折れ線。circuitikz の既定 (米国式) と同じ姿にする。
   resistor: () => path('M-10,0 L-8.3,-5 L-5,5 L-1.7,-5 L1.7,5 L5,-5 L8.3,5 L10,0'),
-  // 可変。折れ線を斜めの矢が貫く。
-  'resistor-var': () =>
-    `${SHAPE.resistor()}${path('M-8,8 L8,-8 M8,-8 L3.5,-7 M8,-8 L7,-3.5')}`,
+  // 可変。**折れ線の真ん中を、立った矢が貫く** (図と同じ)。45 度で端から端まで
+  // 引くと、矢が折れ線の外まで伸びて別の記号に見えた (実機で「回路図の図形に
+  // 近づける」)。図の矢は横 1 に対して縦 2.4 ほどの傾きで、上下へ突き抜ける。
+  'resistor-var': () => `${SHAPE.resistor()}${path(arrow(3.5, 8.5, -3.5, -8.5))}`,
   // ポテンショメータ。**上から下りる矢がワイパー** (可変抵抗の斜めの矢とは別の記号)。
-  potentiometer: () =>
-    `${SHAPE.resistor()}${path('M0,-12 L0,-4 M0,-4 L-1.8,-7.2 M0,-4 L1.8,-7.2')}`,
+  // **矢先は折れ線の山の手前で止める** (図と同じ)。中まで下ろすと歯の間に
+  // 刺さって見えた (実機で「矢印を図形とかぶらないようにする」)。
+  potentiometer: () => `${SHAPE.resistor()}${path(arrow(0, -13, 0, -7))}`,
   // 感温・感圧。IEC の箱を斜めの線が貫く (図と同じ)。
   'resistor-iec': () => `${box(20, 10)}${path('M-7,6 L7,-6')}`,
-  // 感光。箱へ光が差す 2 本の矢。
-  photoresistor: () => `${box(20, 10)}${path('M-1.5,-10.5 L-5,-6 M-5,-6 L-2.4,-6.7 M-5,-6 L-4.2,-8.6'
-    + ' M4.5,-10.5 L1,-6 M1,-6 L3.6,-6.7 M1,-6 L4.4,-8.6')}`,
+  // 感光。箱へ光が差す 2 本の矢。**矢先と箱の間は空ける** — 触れると光の矢が
+  // 箱から生えているように見える (実機で「矢印と本体に隙間を開ける」)。
+  // 箱の上の縁は -5、線幅 1.5 の外側で -5.75。そこから更に離して止める。
+  photoresistor: () => `${box(20, 10)}${path(`${arrow(-1.5, -12.5, -5, -8)} ${arrow(4.5, -12.5, 1, -8)}`)}`,
   // 極板 2 枚。間を空けるのが「切れている」ことの目印。
   capacitor: () => path('M-3,-9 L-3,9 M3,-9 L3,9'),
   // 電解。片方が曲がった極板 (向きのある部品)。
   ecap: () => path('M-3,-9 L-3,9 M3,-9 q4,9 0,18'),
   // 可変容量。ダイオードの三角に極板 2 枚。
   varicap: () => `${path('M-7,-7 L1,0 L-7,7 Z')}${path('M1,-7 L1,7 M4.5,-7 L4.5,7')}`,
-  inductor: () => path('M-10,0 a2.5,2.5 0 0 1 5,0 a2.5,2.5 0 0 1 5,0'
-    + ' a2.5,2.5 0 0 1 5,0 a2.5,2.5 0 0 1 5,0'),
+  // コイル。**山は抵抗の折れ線と同じ高さ**まで巻く (実機で「コイルの高さを
+  // 増やす。抵抗の高さと同じぐらいに」)。幅は 4 山で胴 (20) のままなので、
+  // 弧は円ではなく縦に伸びた楕円になる。
+  inductor: () => path('M-10,0 a2.5,5 0 0 1 5,0 a2.5,5 0 0 1 5,0'
+    + ' a2.5,5 0 0 1 5,0 a2.5,5 0 0 1 5,0'),
   // 2 つの巻線と鉄心。空芯ではないので芯の 2 本を引く。
   transformer: () =>
     path('M-7,-9 a4.5,4.5 0 0 0 0,9 a4.5,4.5 0 0 0 0,9'
@@ -197,11 +219,12 @@ const SHAPE: Record<GlyphName, () => string> = {
   // ショットキー。棒の両端が **S 字**に折れる (ツェナーは同じ向きに折れる)。
   schottky: () => `${path('M-6,-7 L6,0 L-6,7 Z')}${path('M9,-4 L9,-7 L6,-7 L6,7 L3,7 L3,4')}`,
   // 受光。**内へ入る 2 本の矢** (発光は外へ出る)。
-  photodiode: () => `${SHAPE.diode()}${path('M4,-10 L0,-6 M0,-6 L2.7,-6.7 M0,-6 L0.7,-8.7'
-    + ' M8,-8 L4,-4 M4,-4 L6.7,-4.7 M4,-4 L4.7,-6.7')}`,
+  // **矢は胴の上へ寄せる** — 元の場所では陰極の棒を横切り、三角の上の辺にも
+  // 乗っていた (実機で「led の矢印が図形とかぶらないように矢印をずらす」。
+  // 受光も同じ形なので一緒に離した)。
+  photodiode: () => `${SHAPE.diode()}${path(`${arrow(0.5, -12, -3.5, -8)} ${arrow(4.5, -10.5, 0.5, -6.5)}`)}`,
   // 発光。外へ出る 2 本の矢。
-  led: () => `${SHAPE.diode()}${path('M0,-6 L4,-10 M4,-10 L1.4,-9.5 M4,-10 L3.5,-7.4'
-    + ' M4,-4 L8,-8 M8,-8 L5.4,-7.5 M8,-8 L7.5,-5.4')}`,
+  led: () => `${SHAPE.diode()}${path(`${arrow(-3.5, -8, 0.5, -12)} ${arrow(0.5, -6.5, 4.5, -10.5)}`)}`,
   // ツェナー。棒の両端が折れる。
   zener: () => `${path('M-6,-7 L6,0 L-6,7 Z')}${path('M9,-10 L6,-7 L6,7 L3,10')}`,
   // サイリスタ。棒からゲートが 1 本 (実物が上下非対称)。
@@ -242,14 +265,18 @@ const SHAPE: Record<GlyphName, () => string> = {
   battery: () => path('M-3,-8 L-3,8 M3,-4 L3,4'),
   // 開いた接点。閉じた形にすると「切れる部品」に見えない。
   switch: () => path('M-9,0 L5,-8'),
-  // b 接点。**閉じた線の上にレバーが倒れ、そこを短い棒が横切る** (図と同じ)。
-  // 横切る棒が「押すと開く」の印 — 斜めの線だけだと a 接点の開いたレバーに見える。
-  'switch-nc': () => path('M-9,0 L9,0 M-1,2 L5,-7 M-0.5,-4.2 L4.5,-0.8'),
+  // b 接点。**閉じた線を、短い棒が 1 本斜めに横切る** (図と同じ)。
+  // 倒れたレバーと横切る棒の 2 本を描いていたが、図はレバーを描かない —
+  // 線が閉じていることと、横切る棒が「押すと開く」の印 (実機で「回路図の形に
+  // 近づける」)。
+  'switch-nc': () => path('M-9,0 L9,0 M-1,4 L5,-6'),
   // 押しボタン (a 接点)。2 つの接点の**上に離れた**押し板と、そこから伸びる軸。
   // **軸は上へ**出る (図と同じ) — 下へ出すと接点に届いて閉じた形に見える。
   button: () => `${contacts()}${path('M-6,-5 L6,-5 M0,-5 L0,-9')}`,
-  // 押しボタン (b 接点)。押し板が接点に**載っている** (閉じている)。軸は上へ。
-  'button-nc': () => `${contacts()}${path('M-6,-2 L6,-2 M0,-2 L0,-7')}`,
+  // 押しボタン (b 接点)。**閉じる棒は接点の下の縁**を通り、軸はその反対 (上) へ
+  // 伸びる (図と同じ。実機で「スイッチの下線が◯の下に接続するようにする」)。
+  // 棒を接点の上に置くと、a 接点の浮いた押し板と見分けが付かない。
+  'button-nc': () => `${contacts()}${path('M-6,1.6 L6,1.6 M0,1.6 L0,-7')}`,
   // リードスイッチ。ガラス管の中の接点。
   reed: () => element('ellipse', { class: 'cf-glyph', cx: 0, cy: 0, rx: 10, ry: 5 })
     + path('M-7,1 L6,-3'),
@@ -260,13 +287,18 @@ const SHAPE: Record<GlyphName, () => string> = {
   // 水晶。2 枚の極板に挟まれた板。
   crystal: () => `${path('M-6,-9 L-6,9 M6,-9 L6,9')}${box(6, 14)}`,
   // ヒューズ。**線が箱を貫く** (図と同じ) — 溶断線が中を通っているのが記号。
-  fuse: () => box(16, 8),
+  // 線は記号の側で引く。箱は地の色で塗るので、下を通る引き込み線は隠れる
+  // (実機で「fuse は中心線を表示する」)。
+  fuse: () => `${box(16, 8)}${path('M-8,0 L8,0')}`,
   // ランプ。丸に斜め十字。
   lamp: () => `${circle(8)}${path('M-5.7,-5.7 L5.7,5.7 M5.7,-5.7 L-5.7,5.7')}`,
   // スピーカー。線の上の振動板と、その上に開くホーン。
   speaker: () => path('M-7,-4 L7,-4 L7,4 L-7,4 Z M-4,-4 L-7,-10 L7,-10 L4,-4'),
   // 同軸コネクタ。丸の中の点が中心導体、外周が外皮 (図と同じ形)。
-  coax: () => `${circle(8)}${element('circle', { class: 'cf-glyph-core', cx: 0, cy: 0, r: 2.2 })}`,
+  // **外皮の丸は中心導体が入る側 (左) を開ける** — 閉じた丸だと、中心へ入る
+  // 線が縁を横切って外皮 (アース) と中心がつながって見える
+  // (実機で「SMA の図が間違っている。アースは中心に接続しない」)。
+  coax: () => `${openCircle(8, COAX_GAP)}${element('circle', { class: 'cf-glyph-core', cx: 0, cy: 0, r: 2.2 })}`,
   // マイク。**線の上に丸が載り、天に振動板の棒**が渡る (図と同じ)。
   // 棒を底へ置くと、線と重なって丸を塞いだ別の記号になる。
   mic: () => element('circle', { class: 'cf-glyph', cx: 0, cy: -5, r: 5.5 })
@@ -350,8 +382,8 @@ export const drawGlyph = (name: GlyphName): string => SHAPE[name]();
  */
 const SPAN: Record<GlyphName, number> = {
   resistor: HALF, 'resistor-var': HALF, potentiometer: HALF, 'resistor-iec': HALF, photoresistor: HALF,
-  capacitor: 3, ecap: 6, varicap: 7, inductor: HALF, transformer: 9,
-  diode: 6, schottky: 9, photodiode: 6, led: 6, zener: 9, thyristor: 6, diac: 5, triac: 5,
+  capacitor: 3, ecap: 5, varicap: 4.5, inductor: HALF, transformer: 9,
+  diode: 6, schottky: 6, photodiode: 6, led: 6, zener: 6, thyristor: 6, diac: 5, triac: 5,
   source: 9, 'dc-source': SOURCE_R, 'ac-source': SOURCE_R, 'square-source': SOURCE_R,
   'tri-source': SOURCE_R, 'i-source': SOURCE_R, solar: SOURCE_R, battery: 3, meter: 9,
   switch: 9, 'switch-nc': 9, button: 6, 'button-nc': 6, reed: HALF, spdt: HALF,
@@ -374,6 +406,41 @@ const SPAN: Record<GlyphName, number> = {
 export const glyphSpan = (name: GlyphName): number => SPAN[name];
 
 /**
+ * 記号の**後ろ側** (足の出る -x の側) の張り出し。前後で形が違う記号だけが
+ * 持ち、持たない形は `SPAN` と同じ。
+ *
+ * 1 つの数で両端を切ると、**短いほうの側に隙間**が空く (実機で「配線と部品の
+ * 間を接続する」)。反転の丸は前にしか付かず (`nand` `nor` `not` `xnor`)、
+ * ツェナーとショットキーの折れ、電解の曲がった極板、可変容量の 2 枚目の極板も
+ * 片側にしか出ない。
+ *
+ * **測るのは足の高さでの張り出し。** ゲートの入口は上下に振ってあるので、
+ * 反った背 (`or`) や重ねた弧 (`xor`) は真ん中より外側で線に当たる。
+ */
+const SPAN_BACK: Partial<Record<GlyphName, number>> = {
+  // 極板 2 枚。前は曲がった極板の腹 (中心線の高さで 5)、後ろは真っ直ぐな 3。
+  ecap: 3,
+  // 三角の底。棒の折れは上下へ逃げるので、中心線には掛からない。
+  zener: 6, schottky: 6,
+  // 三角の底。前は 2 枚目の極板 (4.5) で止まる。
+  varicap: 7,
+  // 三角の背。前は先端 (8)。
+  opamp: 7,
+  // 極。前は接点の先 (10)。
+  spdt: 9,
+  // ゲートの背。**反転の丸は前にしか付かない**ので、後ろは丸の無い姿と同じ。
+  and: 8, 'and-inv': 8,
+  // 反った背は入口の高さ (±4.5) で -6.1 まで戻る。
+  or: 6, 'or-inv': 6,
+  // もう 1 本の弧が更に外側 (入口の高さで -9.6)。
+  xor: 9.6, 'xor-inv': 9.6,
+  // 三角の背。
+  buffer: 7, 'buffer-inv': 7,
+};
+
+export const glyphSpanBack = (name: GlyphName): number => SPAN_BACK[name] ?? SPAN[name];
+
+/**
  * 記号が**線と直交する向き**に張り出す長さ (原点から片側)。名前をその外へ
  * 置くために要る — 決め打ちの距離だと、背の高い記号 (ダイアック・水晶・
  * 電源の丸) に名前が乗る (実機で「diac の名前と図形が重なっている」)。
@@ -382,12 +449,12 @@ export const glyphSpan = (name: GlyphName): number => SPAN[name];
  * `SPAN` と同じで、形を足したときに書き忘れると型で止まる。
  */
 const TALL: Record<GlyphName, number> = {
-  resistor: 5, 'resistor-var': 8, potentiometer: 12, 'resistor-iec': 6, photoresistor: 11,
-  capacitor: 9, ecap: 9, varicap: 7, inductor: 3, transformer: 9,
-  diode: 7, schottky: 7, photodiode: 10, led: 10, zener: 10, thyristor: 8, diac: 8, triac: 9,
+  resistor: 5, 'resistor-var': 9, potentiometer: 13, 'resistor-iec': 6, photoresistor: 13,
+  capacitor: 9, ecap: 9, varicap: 7, inductor: 5, transformer: 9,
+  diode: 7, schottky: 7, photodiode: 12, led: 12, zener: 10, thyristor: 8, diac: 8, triac: 9,
   source: 9, 'dc-source': 9, 'ac-source': 9, 'square-source': 9, 'tri-source': 9,
   'i-source': 9, solar: 15, battery: 8, meter: 9,
-  switch: 8, 'switch-nc': 8, button: 9, 'button-nc': 7, reed: 5, spdt: 6,
+  switch: 8, 'switch-nc': 6, button: 9, 'button-nc': 8, reed: 5, spdt: 6,
   crystal: 9, fuse: 4, lamp: 8, speaker: 10, mic: 11, coax: 8,
   bjt: 9, 'bjt-p': 9, fet: 9, 'fet-p': 9, 'fet-e': 9, 'fet-e-p': 9, 'fet-d': 9, 'fet-d-p': 9,
   jfet: 9, 'jfet-p': 9, igbt: 9, 'igbt-p': 9, opamp: 9,
@@ -443,8 +510,9 @@ export const legGap = (name: GlyphName): number => LEG_GAP[name];
  *   外に出すと隣の升へはみ出し、部品を並べたときに名前どうしがぶつかる。
  * - `outside` — 足の先の丸の、更に外。
  * - `beside` — 足の先の丸の**脇**。記号にも足の線にも重ならない置き方。
+ * - `over` — 足の**棒の上**。棒の真ん中に揃えて、胴と丸の間に収める。
  */
-export type NamePlace = 'inside' | 'outside' | 'beside';
+export type NamePlace = 'inside' | 'outside' | 'beside' | 'over';
 
 /**
  * 足の名前を**胴の中に**書く記号と、その辺。
@@ -472,16 +540,26 @@ const NAMES_INSIDE: Partial<Record<GlyphName, PinSide>> = { opamp: 'left' };
 const NAMES_BESIDE: ReadonlySet<GlyphName> = new Set<GlyphName>([
   'fet', 'fet-p', 'fet-e', 'fet-e-p', 'fet-d', 'fet-d-p', 'jfet', 'jfet-p',
   'bjt', 'bjt-p', 'igbt', 'igbt-p',
-  // 巻線・接点・丸の中も空いていない。トランスは名前が巻線に、切り替え
-  // スイッチは接点に、同軸は中心導体に乗っていた (実機で「他の部品でも
-  // ピン名が図形と重なっているものは FET 同様に」)。
-  'transformer', 'spdt', 'coax',
+  // 接点と丸の中も空いていない。切り替えスイッチは名前が接点に、同軸は
+  // 中心導体に乗っていた (実機で「他の部品でもピン名が図形と重なっている
+  // ものは FET 同様に」)。
+  'spdt', 'coax',
   // ロジックゲートは入口の字が背の線に、出口が胴の中に乗る。
   // 出口の字は出さないが (`HIDDEN_PIN_NAMES`)、入口 2 本は残るので外へ。
   'and', 'and-inv', 'or', 'or-inv', 'xor', 'xor-inv', 'buffer', 'buffer-inv',
 ]);
 
+/**
+ * 足の名前を**棒の上**に書く記号。
+ *
+ * トランスは巻線が上下に 2 本ずつ出ていて、丸の外へ出すと巻線から遠くなり、
+ * どちらの端の名前なのか読みにくい。図 (KiCad の `Transformer_1P_1S`) は
+ * 番号を棒の上に置いている (実機で「ピン名の位置を変更する。図 1 に近づける」)。
+ */
+const NAMES_OVER: ReadonlySet<GlyphName> = new Set<GlyphName>(['transformer']);
+
 export const namePlace = (name: GlyphName, side: PinSide): NamePlace => {
+  if (NAMES_OVER.has(name)) return 'over';
   if (NAMES_BESIDE.has(name)) return 'beside';
   if (!(name in NAMES_INSIDE)) return 'inside';
   return NAMES_INSIDE[name] === side ? 'inside' : 'outside';
@@ -514,9 +592,10 @@ export const showsPinName = (name: GlyphName, pin: string): boolean =>
  * 同軸コネクタの中心導体は**丸の中の点まで届いているのが記号**なので、
  * 縁で止めると信号線がどこへ行くのか読めない (実機で指摘された)。
  */
-const LEADS_FROM_CENTRE: ReadonlySet<GlyphName> = new Set<GlyphName>(['coax']);
+const LEADS_FROM_CENTRE: Partial<Record<GlyphName, string>> = { coax: '1' };
 
-export const leadsFromCentre = (name: GlyphName): boolean => LEADS_FROM_CENTRE.has(name);
+export const leadsFromCentre = (name: GlyphName, pin: string): boolean =>
+  LEADS_FROM_CENTRE[name] === pin;
 
 /**
  * 名前を入れる箱。**足の本数で伸びる** — DIP は片側に 20 本まで出るので、

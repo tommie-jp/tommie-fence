@@ -3,7 +3,9 @@ import { DEFAULT_PITCH, cornerOf, formatAddress, rowLetters, texNameOfAddress, t
 import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
-import { isTurned, lookupPartType, optionsFor, pinPlaces, pinSideOf, symbolFor, turnSide } from '../parts.ts';
+import {
+  isTurned, lookupPartType, optionsFor, pinLabelText, pinPlaces, pinSideOf, symbolFor, turnSide,
+} from '../parts.ts';
 import type { PartType, PinSide, SourceInner, Turn } from '../parts.ts';
 import { lookupBoardPart } from 'fence-kit';
 import { EMPTY_STYLE } from '../parser/style.ts';
@@ -844,7 +846,7 @@ function pinNameNodes(part: MultiTerminalPart, name: string, type: PartType | nu
   const labels = type?.pinLabels;
   if (labels === undefined || type === null) return [];
 
-  return labels.map((label: string, index: number) => {
+  return labels.map((_label: string, index: number) => {
     const place = pinNamePlace(type, part.turn, index);
     const options = [
       // フェンスは目印の色で置く (SVG で本物の字に差し替わる)。
@@ -862,7 +864,8 @@ function pinNameNodes(part: MultiTerminalPart, name: string, type: PartType | nu
       ...(place.rotate === 0 || target !== 'latex' ? [] : [`rotate=${place.rotate}`]),
       'inner sep=0',
     ];
-    const text = target === 'latex' ? escapeTex(label) : NOTE_MARK_TEXT;
+    // 名前と番号は 1 つの字。番号の付く端は辺で決まる (`pinLabelText`)。
+    const text = target === 'latex' ? escapeTex(pinLabelText(type, index, place.side)) : NOTE_MARK_TEXT;
     return `\\node[${options.join(', ')}] at (${name}.bpin ${index + 1}) {${text}};`;
   });
 }
@@ -877,14 +880,14 @@ function pinNameNodes(part: MultiTerminalPart, name: string, type: PartType | nu
  * TeX の `rotate` は反時計回り。上の辺は下へ読ませたいので -90 度。
  */
 function pinNamePlace(type: PartType, turn: Turn, index: number): {
-  readonly anchor: string; readonly shift: string; readonly rotate: number;
+  readonly anchor: string; readonly shift: string; readonly rotate: number; readonly side: PinSide;
 } {
   const side = pinPlaces(type, turn).find((place) => place.anchor === `pin ${index + 1}`)?.side ?? 'left';
-  if (side === 'left') return { anchor: 'west', shift: 'xshift=2pt', rotate: 0 };
-  if (side === 'right') return { anchor: 'east', shift: 'xshift=-2pt', rotate: 0 };
+  if (side === 'left') return { anchor: 'west', shift: 'xshift=2pt', rotate: 0, side };
+  if (side === 'right') return { anchor: 'east', shift: 'xshift=-2pt', rotate: 0, side };
   // 上の辺: 字は下 (箱の中) へ読む。下の辺: 上へ読む。
-  if (side === 'top') return { anchor: 'west', shift: 'yshift=-2pt', rotate: -90 };
-  return { anchor: 'west', shift: 'yshift=2pt', rotate: 90 };
+  if (side === 'top') return { anchor: 'west', shift: 'yshift=-2pt', rotate: -90, side };
+  return { anchor: 'west', shift: 'yshift=2pt', rotate: 90, side };
 }
 
 const drawPart = (part: PartSpec, target: TexTarget, pitch: number): string[] =>

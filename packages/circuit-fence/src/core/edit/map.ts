@@ -5,7 +5,7 @@ import { cornerOf, formatAddress, parseAddress } from '../model/address.ts';
 import type { Address, WireOperator } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import { NO_TURN, lookupPartType, lookupPin, mainPinName, pinPlaces } from '../parts.ts';
+import { NO_TURN, lookupPartType, lookupPin, mainPinName, pinLabelText, pinPlaces } from '../parts.ts';
 import type { PartType, PinSide, Turn } from '../parts.ts';
 import { cellOf } from '../types.ts';
 import type { PartSpec } from '../types.ts';
@@ -32,7 +32,16 @@ export type Cell = { readonly row: number; readonly col: number };
  * 箱から出る足 1 本。**辺は向きに合わせて回したあとのもの** —
  * 箱そのものは回しても同じ形なので、**回ったことが目で分かるのはここだけ**。
  */
-export type ChipPin = { readonly name: string; readonly side: PinSide };
+export type ChipPin = {
+  /** 配線に書く綴り (`U1.GP0`)。**掴んだ足を指すのもこれ。** */
+  readonly name: string;
+  /**
+   * 升目に**出す字**。番号を持つ種類 (マイコンボード) では名前と番号が並ぶ
+   * (`01 GP0`)。名前と分けてあるのは、番号を混ぜた字では配線が書けないため。
+   */
+  readonly label: string;
+  readonly side: PinSide;
+};
 
 /** マップに置く部品 1 つ。 */
 export type Chip = {
@@ -220,10 +229,25 @@ function pinsOf(type: PartType | null, turn: Turn): readonly ChipPin[] {
   // (`pinLabels`) はそちらから引く — `mainPinName` は書ける綴りのうち最初の
   // 1 つを返すので、数字と名前の両方で呼べる足 (レギュレータ) では
   // 図と食い違う (JS は数字めいた鍵を先に並べるため。実機で気づいた)。
-  return pinPlaces(type, turn).map(({ anchor, side }) => ({
-    name: labelOf(type, anchor) ?? mainPinName(type, anchor),
-    side,
-  }));
+  //
+  // **足の番号 (`pinNumbers`) はここでは付けない。** 升目の名前は配線に
+  // 書く綴りでもあるので (`U1.GP0`)、番号を混ぜると書けない字になる。
+  // 番号を添えるのは図のほうだけ (`pinLabelText`)。
+  return pinPlaces(type, turn).map(({ anchor, side }) => {
+    const name = labelOf(type, anchor) ?? mainPinName(type, anchor);
+    return { name, label: drawnLabelOf(type, anchor, side) ?? name, side };
+  });
+}
+
+/**
+ * 升目に出す字。**図と同じもの**にする (`pinLabelText`) — 足の番号を持つ種類
+ * では名前と番号が並ぶ (実機で「pico のピン番号が付いていない」)。
+ * 番号は辺で決まる端に付くので、回した部品でも外側に来る。
+ */
+function drawnLabelOf(type: PartType, anchor: string, side: PinSide): string | null {
+  const at = /^pin (\d+)$/.exec(anchor);
+  if (at === null || type.pinLabels === undefined) return null;
+  return pinLabelText(type, Number(at[1]) - 1, side);
 }
 
 /** 図に書く足の名前 (`pinLabels`)。持たない種類は null。 */

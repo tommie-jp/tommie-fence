@@ -19,7 +19,7 @@ import {
   noteFontTex, noteLine, noteMonoWidth, noteSourceLine, noteSpan, noteWidth, texAnchorOf, texColorOf,
 } from '../notes.ts';
 import type { NoteSize } from '../notes.ts';
-import { NO_TURN, lookupPartType, pinPlaces } from '../parts.ts';
+import { NO_TURN, lookupPartType, pinLabelText, pinPlaces } from '../parts.ts';
 import { STAMP_TEXT } from '../version.ts';
 import type {
   ArrowNote, BoxNote, LineNote, NoteOverlay, NoteSpec, NoteTextStyle, PartSpec, SourceNote, TexTarget,
@@ -423,12 +423,13 @@ export function noteOverlays(
     const labels = type?.pinLabels;
     if (labels === undefined || type === null || type === undefined) return [];
     const turn = part.kind === 'multi-terminal' ? part.turn : NO_TURN;
-    return labels.map((label, index) => {
+    return labels.map((_label, index) => {
       // **差し込む字も、置いたときと同じ辺で決める** (generate.ts の
       // `pinNamePlace` と同じ話)。片方だけ直すと字と位置が食い違う。
       const side = pinPlaces(type, turn).find((place) => place.anchor === `pin ${index + 1}`)?.side ?? 'left';
       return {
-        text: label,
+        // 名前と番号は 1 つの字。番号の付く端は辺で決まる (`pinLabelText`)。
+        text: pinLabelText(type, index, side),
         color: NOTE_INK,
         mono: false,
         bold: false,

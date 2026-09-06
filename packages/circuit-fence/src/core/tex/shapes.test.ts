@@ -58,12 +58,34 @@ describe('regulatorShapeTex / smaShapeTex', () => {
     // 中心導体、外周が外皮という慣習どおりの形にした。
     const tex = smaShapeTex().join('\n');
 
-    expect(tex).toContain('\\pgfpathcircle');
+    expect(tex).toContain('\\pgfpatharc');
     // 中心導体は塗り潰した点。
     expect(tex).toContain('\\pgfusepath{fill}');
     // 1 が中心導体 (左)、2 が外皮 (下)。
     expect(tex).toContain('\\anchor{pin 1}');
     expect(tex).toContain('\\anchor{pin 2}');
+  });
+
+  test('opens the shield where the core lead enters, so the two do not touch', () => {
+    // 実機で「SMA の図が間違っている。アースは中心に接続しない」。
+    // 閉じた丸を中心導体の線が横切ると、外皮と中心が繋がって見える。
+    const tex = smaShapeTex().join('\n');
+
+    // 外皮は閉じた丸ではない (丸のままだと中心導体の線が縁を貫く)。
+    expect(tex).not.toContain('\\pgfpathcircle{\\pgfpointorigin}{0.3cm}');
+    // 開けるのは中心導体が入る側 (画面の左、180 度)。
+    expect(tex).toContain('\\pgfpatharc{204}{516}{0.3cm}');
+    // 開き口は中心導体の線より広い (線幅 0.8pt ≒ 0.028cm)。
+    expect(2 * 0.3 * Math.sin((24 * Math.PI) / 180)).toBeGreaterThan(0.1);
+  });
+
+  test('leaves the shield lead on the rim, so it never reaches the core', () => {
+    // 外皮の足は下の縁 (0, -0.3) 止まり。中心 (原点) まで引いてはいけない。
+    const tex = smaShapeTex().join('\n');
+
+    expect(tex).toContain(
+      '\\pgfpathmoveto{\\pgfpoint{0cm}{-0.7cm}}\\pgfpathlineto{\\pgfpoint{0cm}{-0.3cm}}',
+    );
   });
 
   test('declares the edge anchors, so a value can hang off the symbol', () => {

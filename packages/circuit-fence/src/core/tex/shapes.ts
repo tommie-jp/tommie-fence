@@ -141,15 +141,30 @@ export function regulatorShapeTex(): string[] {
  * 足は 2 本 — **1 が中心導体 (左から入る)、2 が外皮 (下へ出る)**。
  * 実物の SMA は外皮が 4 本足だが、図とネットリストで意味を持つのは
  * 「どこが中心でどこが外皮か」の 2 つだけ (実体配線図の 2 つと同じ決め方)。
+ *
+ * **外皮の丸は中心導体が入る側を開ける。** 閉じた丸にすると、中心導体の線が
+ * 縁を横切って外皮と中心が繋がって見える (実機で「アースは中心に接続しない」と
+ * 指摘された)。circuitikz 自身の `bnc` も同じで、足の出る側の丸を切り欠いて
+ * 描いている (吐かせた SVG が丸をその帯で clip していた)。
  */
 const SMA_RADIUS = 0.3;
 const SMA_LEAD = 0.4;
 const SMA_CORE = 0.07;
+/** 外皮の丸を開ける角度 (中心導体の入る向きから上下へ、度)。 */
+const SMA_GAP = 24;
 
 export const SMA_SHAPE = 'smacoax';
 
+/** 丸の上の点 (角度は度、真右が 0 度で反時計回り)。 */
+const onCircle = (degrees: number, radius: number): string => {
+  const radians = (degrees * Math.PI) / 180;
+  return `\\pgfpoint{${num(radius * Math.cos(radians))}cm}{${num(radius * Math.sin(radians))}cm}`;
+};
+
 export function smaShapeTex(): string[] {
   const [r, lead] = [SMA_RADIUS, SMA_LEAD];
+  // 中心導体は真横 (180 度) から入る。その前後を開けて、残りを弧で描く。
+  const [from, to] = [180 + SMA_GAP, 180 - SMA_GAP + 360];
   return [
     '\\makeatletter',
     `\\pgfdeclareshape{${SMA_SHAPE}}{`,
@@ -162,7 +177,9 @@ export function smaShapeTex(): string[] {
     `  \\anchor{bpin 1}{\\pgfpoint{${num(-r)}cm}{0cm}}`,
     `  \\anchor{bpin 2}{\\pgfpoint{0cm}{${num(-r)}cm}}`,
     '  \\backgroundpath{',
-    `    \\pgfpathcircle{\\pgfpointorigin}{${num(r)}cm}`,
+    // 外皮は中心導体の入る側を開けた弧。閉じた丸だと中心導体の線が縁を貫く。
+    `    \\pgfpathmoveto{${onCircle(from, r)}}`,
+    `    \\pgfpatharc{${from}}{${to}}{${num(r)}cm}`,
     // 中心導体は丸の真ん中まで引いて、先を塗り潰した点にする。
     `    \\pgfpathmoveto{\\pgfpoint{${num(-r - lead)}cm}{0cm}}\\pgfpathlineto{\\pgfpointorigin}`,
     // 外皮は丸の縁まで (中心には触れない)。

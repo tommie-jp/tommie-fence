@@ -40,9 +40,9 @@ describe('gridMap', () => {
     const map = gridMap('parts:\n  Q1: npn b2\n');
 
     expect(map.chips[0]?.pins).toEqual([
-      { name: 'B', side: 'left' },
-      { name: 'C', side: 'top' },
-      { name: 'E', side: 'bottom' },
+      { name: 'B', label: 'B', side: 'left' },
+      { name: 'C', label: 'C', side: 'top' },
+      { name: 'E', label: 'E', side: 'bottom' },
     ]);
   });
 
@@ -50,17 +50,17 @@ describe('gridMap', () => {
     const map = gridMap('parts:\n  Q1: npn b2 r90\n');
 
     expect(map.chips[0]?.pins).toEqual([
-      { name: 'B', side: 'top' },
-      { name: 'C', side: 'right' },
-      { name: 'E', side: 'left' },
+      { name: 'B', label: 'B', side: 'top' },
+      { name: 'C', label: 'C', side: 'right' },
+      { name: 'E', label: 'E', side: 'left' },
     ]);
   });
 
   test('names a pin the way the reference does, not by the shortest alias', () => {
     // `not` の足は `a` / `y` とも書けるが、代表の名前は `in` / `out`。
     expect(gridMap('parts:\n  N1: not b2\n').chips[0]?.pins).toEqual([
-      { name: 'in', side: 'left' },
-      { name: 'out', side: 'right' },
+      { name: 'in', label: 'in', side: 'left' },
+      { name: 'out', label: 'out', side: 'right' },
     ]);
   });
 

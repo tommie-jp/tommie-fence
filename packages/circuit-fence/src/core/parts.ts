@@ -180,6 +180,11 @@ export type PartType = {
    */
   readonly pinLabels?: readonly string[];
   /**
+   * 足に書く番号 (`pinLabels` と同じ並び)。**名前と一緒に 1 つの字**として出し、
+   * 番号は箱の外側の端に置く (`pinLabelText`)。持たない種類は名前だけ。
+   */
+  readonly pinNumbers?: readonly string[];
+  /**
    * 値を**この足の反対側**に出す (アンカー名で指す)。
    *
    * 値は既定では記号の下に出るが、**そこに足がある部品**では線と字に重なる
@@ -385,6 +390,9 @@ const dipSides = (count: number): Record<string, PinSide> => {
  * ようにするため (52 の docs/21)。番号は消して名前を出す
  * (`hide numbers`。実機の TeX で確かめた)。
  */
+/** 足の番号の桁 (`01` `40`)。揃えると名前の頭が縦に並ぶ。 */
+const PIN_NUMBER_DIGITS = 2;
+
 function boardchip(board: BoardPart): PartType {
   const anchors = board.pins.map((name, index) => [name, `pin ${index + 1}`] as const);
   return {
@@ -415,6 +423,10 @@ function boardchip(board: BoardPart): PartType {
       ...anchors.slice(anchors.length / 2).reverse().map(([, anchor]) => [anchor, 'right' as const]),
     ]),
     pinLabels: board.pins,
+    // **実物の印字と突き合わせるための番号。** 名前だけだと、40 本のうちどれが
+    // ヘッダの何番目かをボードの絵に戻らないと確かめられない (実機で頼まれた)。
+    // 桁を 2 桁に揃えるのは、1 桁の番号でも名前の頭が縦に並ぶようにするため。
+    pinNumbers: board.pins.map((_, index) => String(index + 1).padStart(PIN_NUMBER_DIGITS, '0')),
   };
 }
 
@@ -1104,6 +1116,22 @@ export function pinPlaces(type: PartType, turn: Turn = NO_TURN): readonly {
     const side = turnedSide(type.pinSide, anchor, turn) ?? turnedSide(type.pinRow, anchor, turn);
     return side === null ? [] : [{ anchor, side }];
   });
+}
+
+/**
+ * 足に書く字 (名前と、あれば番号)。**番号は必ず箱の外側の端**に置く —
+ * 実機で「ピン番号は常に外側に付ける」と決めた。
+ *
+ * 字は縁から箱の中へ伸びるので、外側の端は**右の辺だけが字の末尾**で、
+ * ほかの辺 (左・上・下) は字の先頭になる。だから右の列だけ名前が先。
+ * 図に置く側 (`generate.ts`) と字を差し込む側 (`drawNotes.ts`) の両方が
+ * ここを呼ぶ — 2 か所で組み立てると、片方だけ並びが変わる。
+ */
+export function pinLabelText(type: PartType, index: number, side: PinSide): string {
+  const label = type.pinLabels?.[index] ?? '';
+  const number = type.pinNumbers?.[index];
+  if (number === undefined) return label;
+  return side === 'right' ? `${label} ${number}` : `${number} ${label}`;
 }
 
 /**
