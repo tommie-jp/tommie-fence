@@ -4,7 +4,7 @@ import { fenceError, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import { isOnBoard } from '../model/board.ts';
 import { HOLE_ROWS } from '../types.ts';
-import type { Address, HoleRow } from '../types.ts';
+import type { Address, Board, HoleRow, RailRow } from '../types.ts';
 import { diffAfter } from './diff.ts';
 import { TURN_WORD, isTurned, orientOf } from '../parts/orient.ts';
 import { lookupFootprint } from '../placement/footprints.ts';
@@ -46,11 +46,38 @@ function spin(delta: { readonly row: number; readonly col: number }, quarters: n
   );
 }
 
-/** 穴の行を数で。**レールは行が極性そのもの**なので数に落ちない。 */
-const rowIndex = (address: Address): number | null =>
-  (address.kind === 'hole' ? HOLE_ROWS.indexOf(address.row) : null);
+/**
+ * 上から下への行の並び。**レールも数に落とす。**
+ *
+ * レールは行が極性そのものなので数えていなかったが、そのせいで
+ * **レールに挿した部品は回せなかった** (`Re: resistor -t20 e20` など)。
+ * 実物の並びは上から `rails[0]` `rails[1]` a〜j `rails[2]` `rails[3]` なので、
+ * そのまま並べれば穴と同じ勘定で回せる。レールの無い板 (mini) は穴だけ。
+ */
+type RowName = HoleRow | RailRow;
 
-const rowAt = (index: number): HoleRow | null => HOLE_ROWS[index] ?? null;
+const rowOrder = (board: Board): readonly RowName[] =>
+  (board.rails === null
+    ? HOLE_ROWS
+    : [board.rails[0], board.rails[1], ...HOLE_ROWS, board.rails[2], board.rails[3]]);
+
+const nameOfRow = (address: Address): RowName =>
+  (address.kind === 'hole' ? address.row : `${address.polarity}${address.side}`);
+
+/** その番地の行の番号。並びに無ければ null。 */
+const rowIndex = (order: readonly RowName[], address: Address): number | null => {
+  const at = order.indexOf(nameOfRow(address));
+  return at < 0 ? null : at;
+};
+
+/** 番号から番地へ。レールの行はレールの番地になる。 */
+function addressAt(order: readonly RowName[], index: number, col: number): Address | null {
+  const name = order[index];
+  if (name === undefined) return null;
+  if ((HOLE_ROWS as readonly string[]).includes(name)) return { kind: 'hole', row: name as HoleRow, col };
+  const [polarity, side] = [...name] as ['+' | '-', 't' | 'b'];
+  return { kind: 'rail', polarity, side, col };
+}
 
 /**
  * 掴んだ部品と、その足。回すのも裏返すのもここを通る。
@@ -167,7 +194,7 @@ function flippedRow(type: string, row: HoleRow): HoleRow | null {
   const kind = lookupFootprint(type)?.kind;
   if (kind === 'dip') return row === 'e' ? 'f' : 'e';
   if (kind !== 'board') return null;
-  return rowAt((HOLE_ROWS.indexOf(row) + HOLE_ROWS.length / 2) % HOLE_ROWS.length);
+  return HOLE_ROWS[(HOLE_ROWS.indexOf(row) + HOLE_ROWS.length / 2) % HOLE_ROWS.length] ?? null;
 }
 
 /** アンカーを溝の向こう側の行へ書き直す (`@ e5` → `@ f5`)。 */
@@ -248,12 +275,22 @@ export function turnPart(
   const last = found.addresses[found.addresses.length - 1];
   if (first === undefined || last === undefined) return fail(`${safeToken(id)} の足がありません`, found.part.line);
 
-  // **レールは行が極性そのもの。** 数に落ちないので回しようがない。
-  const firstRow = rowIndex(first);
-  const lastRow = rowIndex(last);
-  if (firstRow === null || lastRow === null || found.addresses.some((one) => rowIndex(one) === null)) {
-    return fail(`${safeToken(id)} はレールに挿さっているので回せません (穴どうしなら回せます)`, found.part.line);
+  // **レールも行の並びに入れて数える** (`rowOrder`)。挿さっていても回せる。
+  const order = rowOrder(found.board);
+  const firstRow = rowIndex(order, first);
+  const lastRow = rowIndex(order, last);
+  if (firstRow === null || lastRow === null || found.addresses.some((one) => rowIndex(order, one) === null)) {
+    return fail(`${safeToken(id)} の行がこの板にありません (レールを剥がした板かもしれません)`, found.part.line);
   }
+
+  // **もともとレールに居ない部品は、回してもレールへ移さない。** 電源に
+  // つなぐのは回す操作の仕事ではない — 黙ってつながると回路の意味が変わる。
+  // レールに挿さっている部品だけが、レールを含む並びの中で回る。
+  const onRail = found.addresses.some((one) => one.kind === 'rail');
+  const holesFrom = order.indexOf(HOLE_ROWS[0] as RowName);
+  const range = onRail
+    ? { least: 0, most: order.length - 1 }
+    : { least: holesFrom, most: holesFrom + HOLE_ROWS.length - 1 };
 
   // **軸は足の真ん中** (KiCad の `R` も選んだものの中心を軸にする)。先に書いた足を
   // 軸にしていたころは、回すと胴が大きく振られて「移動」に見えた。
@@ -261,7 +298,7 @@ export function turnPart(
   // 留まる (2 回押せば元に戻る)。
   const named = pivotIndex(found.line, tokens);
   const held = around === 'anchor' || named !== null ? found.addresses[named ?? 0] : undefined;
-  const heldRow = held === undefined ? null : rowIndex(held);
+  const heldRow = held === undefined ? null : rowIndex(order, held);
   const pivotRow = held !== undefined && heldRow !== null
     ? heldRow
     : firstRow + Math.trunc((lastRow - firstRow) / 2);
@@ -270,7 +307,7 @@ export function turnPart(
     : held.col;
 
   const turned = found.addresses.map((one) => {
-    const row = rowIndex(one) ?? 0;
+    const row = rowIndex(order, one) ?? 0;
     const delta = spin({ row: row - pivotRow, col: one.col - pivotCol }, quarters);
     return { row: pivotRow + delta.row, col: pivotCol + delta.col };
   });
@@ -286,20 +323,29 @@ export function turnPart(
   // ゴーストを赤で見せる側 (`session.ts`) に任せる。
   const slide = around === 'anchor'
     ? { row: 0, col: 0 }
-    : slideInto(turned, { least: 0, most: HOLE_ROWS.length - 1 }, { least: 1, most: found.board.columns });
+    : slideInto(turned, range, { least: 1, most: found.board.columns });
   if (slide === null) {
     return fail(`${safeToken(id)} は回しても板に収まりません`, found.part.line);
   }
 
-  const landings: (Address | null)[] = slideBy(turned, slide).map((one) => {
-    const landed = rowAt(one.row);
-    return landed === null ? null : { kind: 'hole', row: landed, col: one.col };
-  });
+  const landings: (Address | null)[] = slideBy(turned, slide)
+    .map((one) => addressAt(order, one.row, one.col));
 
   for (const landing of landings) {
     if (landing === null || !isOnBoard(found.board, landing)) {
       return fail(`${safeToken(id)} を回すと板の外へ出ます`, found.part.line);
     }
+    // **もともとレールに居ない部品をレールへ移さない。** 黙って電源に
+    // つながると回路の意味が変わる (つなぐのは配線の仕事)。
+    if (!onRail && landing.kind === 'rail') {
+      return fail(`${safeToken(id)} を回すと足がレールに入ります (穴の中で回せる向きにします)`, found.part.line);
+    }
+  }
+  // **同じレール行に 2 本は挿さない。** その行は丸ごと 1 本の電位なので、
+  // 回した先が短絡した図になる (置くときと同じ見方。`insert.ts` の `onOneRail`)。
+  const rails = landings.filter((one) => one?.kind === 'rail').map((one) => formatAddress(one as Address).slice(0, 2));
+  if (new Set(rails).size !== rails.length) {
+    return fail(`${safeToken(id)} を回すと足が 2 本とも同じレールに入ります (短絡になります)`, found.part.line);
   }
 
   // **一周は何もしない。** 同じ字を書き戻すと「動かしました」と嘘を言うことになる。

@@ -241,10 +241,19 @@ describe('insertPart: 1 穴で置く (マップの 1 クリック)', () => {
   });
 
   test('reports a turn that does not fit instead of writing a broken line', () => {
+    // i5 から時計回りに回すと、3 本目の足が穴の並びの下 (レール) へ出る。
+    // **回すだけで電源につながない**ので、そこは断る。
     const result = insertPart(WITH_WIRES, { id: 'Q1', type: 'transistor', at: [at('i5')], turn: 1 });
 
     expect(result.ok).toBe(false);
-    expect(!result.ok && result.error.message).toContain('板の外');
+    expect(!result.ok && result.error.message).toContain('レールに入ります');
+  });
+
+  test('reports a turn that walks past the last column as off the board', () => {
+    const result = insertPart(WITH_WIRES, { id: 'R9', type: 'resistor', at: [at('a29')], turn: 0 });
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).toContain('要ります');
   });
 });
 

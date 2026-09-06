@@ -93,10 +93,32 @@ describe('turnPart', () => {
     expect(!result.ok && result.error.message).toContain('板の外');
   });
 
-  test('refuses to turn a part on a rail, whose row is its polarity', () => {
-    const rail = 'board: half\nparts:\n  R1: resistor +t5 a5 330\n';
+  test('turns a part that sits on a rail, counting the rails as rows of their own', () => {
+    // レールは行が極性そのものなので数えていなかったが、そのせいで
+    // **レールに挿した部品だけ回せなかった** (実機の例に 1 件あった)。
+    // 上から `+t` `-t` a〜j `-b` `+b` と並べれば、穴と同じ勘定で回る。
+    // レールから穴へ渡した部品 (例 08 の `Re`)。回すと穴の中で横になる。
+    const rail = 'board: half\nparts:\n  R1: resistor -t20 e20 330\n';
 
-    expect(!turnPart(rail, 'R1', 1).ok).toBe(true);
+    expect(after(rail, turnPart(rail, 'R1', 1))).toContain('R1: resistor b22 b17 330');
+  });
+
+  test('refuses a turn that would put both legs on one rail, which is a short', () => {
+    // その行は丸ごと 1 本の電位。置くときと同じ見方で断る。
+    const rail = 'board: half\nparts:\n  R1: resistor +t5 -t5 330\n';
+    const result = turnPart(rail, 'R1', 1);
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).toContain('短絡');
+  });
+
+  test('does not move a part into a rail it was not already in', () => {
+    // 黙って電源につながると回路の意味が変わる (つなぐのは配線の仕事)。
+    const low = 'board: half\nparts:\n  Q1: transistor i5 i6 i7\n';
+    const result = turnPart(low, 'Q1', 1, 'anchor');
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).toContain('レールに入ります');
   });
 
   test('turns a three lead part too, since its holes are all written', () => {
