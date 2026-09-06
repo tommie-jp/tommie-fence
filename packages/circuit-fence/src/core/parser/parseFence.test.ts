@@ -404,3 +404,20 @@ describe('parseFence の title', () => {
     expect(result.errors.map((error) => error.message).join('')).not.toContain('知らないキー');
   });
 });
+
+describe('parseFence が覚えておくもの', () => {
+  test('同じ本文を 2 度読むと、同じ答えがそのまま返る', () => {
+    // Arrange — マップの試し当ては 1 回のうちに同じ本文を何度も読む (52 の docs/27)。
+    const source = `title: RC
+parts:
+  R1: resistor a1 a3 10k
+`;
+
+    // Act
+    const first = parseFence(source);
+    const again = parseFence(source);
+
+    // Assert — **答えは共有される。** 受け取った側は書き換えない (読み取り専用の型)。
+    expect(again).toBe(first);
+  });
+});

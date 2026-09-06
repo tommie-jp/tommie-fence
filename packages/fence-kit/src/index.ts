@@ -11,6 +11,7 @@
  * (理由は直下の CLAUDE.md の約束 3)。
  */
 export { normalizeNewlines } from './newlines.ts';
+export { rememberRecent } from './rememberRecent.ts';
 export { extractFences, outputStem } from './fences.ts';
 export { stampText } from './stamp.ts';
 export { keptSourceLines } from './sourceListing.ts';

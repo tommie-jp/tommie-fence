@@ -10,6 +10,7 @@ import type {
   BoardSpec, FenceDocument, FenceError, NoteSpec, PartSpec, PartsListMode, Result, StyleSpec, WireSpec,
 } from '../types.ts';
 import { splitPartType } from '../parts/variants.ts';
+import { rememberRecent } from 'fence-kit';
 import { parseCompactPart, parseHoleToken, parseWireSpec } from './compact.ts';
 import { parseNoteLine } from './notes.ts';
 import {
@@ -36,7 +37,7 @@ const scalarText = (node: unknown): string | null =>
  * フェンスの中身 (YAML) を検証済みのモデルに変換する。
  * エラーはすべて行番号つきで返し、読めた部分は捨てない。
  */
-export function parseFence(source: string): ParseResult {
+function readFence(source: string): ParseResult {
   const lineCounter = new LineCounter();
   // 重複キーは YAML のエラーにせず、こちらで部品 ID として報告する。
   const parsed = parseDocument(source, { lineCounter, uniqueKeys: false });
@@ -502,3 +503,10 @@ function collectWires(
     }
   }
 }
+
+/**
+ * 読んだ結果は**直前の 2 本文ぶん覚える** (`rememberRecent`)。マップの試し当ては
+ * 1 回のうちに同じ本文を何度も読むので、そのたびに YAML を通すと拡張ホストが
+ * 埋まる (52 の docs/27 の実測)。**答えは読み取り専用**で、呼ぶ側に書き換える所は無い。
+ */
+export const parseFence = rememberRecent(readFence);

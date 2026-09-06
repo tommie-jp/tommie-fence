@@ -7,6 +7,9 @@
  */
 export const registered: { commands: string[]; editors: string[] } = { commands: [], editors: [] };
 
+/** 受け止めた聞き手。テストが「その出来事が起きた」ことにするために使う。 */
+export const listeners: { selection: ((event: unknown) => void)[] } = { selection: [] };
+
 export const commands = {
   registerCommand(id: string, _run: unknown) {
     registered.commands.push(id);
@@ -40,8 +43,14 @@ export const window = {
   onDidChangeActiveTextEditor() {
     return { dispose() {} };
   },
-  onDidChangeTextEditorSelection() {
-    return { dispose() {} };
+  onDidChangeTextEditorSelection(listen: (event: unknown) => void) {
+    // **聞き手を覚える。** カーソルを追う段取り (まとめ方) をテストが動かすため。
+    listeners.selection.push(listen);
+    return {
+      dispose() {
+        listeners.selection = listeners.selection.filter((one) => one !== listen);
+      },
+    };
   },
 };
 

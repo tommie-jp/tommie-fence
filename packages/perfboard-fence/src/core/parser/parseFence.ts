@@ -6,6 +6,7 @@ import { isLandColor, isPlateColor, landNames, plateNames } from '../render/fini
 import { boardNames } from '../model/catalog.ts';
 import { LIMITS } from '../limits.ts';
 import { parsePartLine } from './parts.ts';
+import { rememberRecent } from 'fence-kit';
 import { parseWireLine } from './wires.ts';
 import { EMPTY_STYLE, parseStyle } from './style.ts';
 import { parseNoteLine } from './notes.ts';
@@ -60,7 +61,7 @@ const writtenText = (node: unknown, source: string): string | null => {
  * 中身を見ない (見られるようになった Phase で足す)。知らないキーを名指すのは
  * ここから始める — 綴り間違いが黙って無視されるのが一番たちが悪い。
  */
-export function parseFence(source: string): ParseResult {
+function readFence(source: string): ParseResult {
   if (source.trim() === '') {
     return { doc: null, errors: [fenceError('perfboard フェンスが空です (board: から書き始めます)', null)] };
   }
@@ -481,3 +482,10 @@ export function parseFence(source: string): ParseResult {
 
   return { doc: { board, title, style, parts, devices, wires, points, notes }, errors };
 }
+
+/**
+ * 読んだ結果は**直前の 2 本文ぶん覚える** (`rememberRecent`)。マップの試し当ては
+ * 1 回のうちに同じ本文を何度も読むので、そのたびに YAML を通すと拡張ホストが
+ * 埋まる (52 の docs/27 の実測)。**答えは読み取り専用**で、呼ぶ側に書き換える所は無い。
+ */
+export const parseFence = rememberRecent(readFence);

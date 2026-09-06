@@ -6,6 +6,7 @@ import { parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import type { FenceError, NoteSpec, PartSpec, Result, StyleSpec, WireSpec } from '../types.ts';
 import { isNoteDrawable } from '../tex/escape.ts';
+import { rememberRecent } from 'fence-kit';
 import { NO_POINTS, parseCompactPart, parseNoteLine, parseNoteText, parseWireLine } from './compact.ts';
 import type { Points } from './compact.ts';
 import { namesNet } from '../parts.ts';
@@ -71,7 +72,7 @@ const scalarText = (node: unknown): string | null =>
  * 1 行の中身の解釈は compact.ts に任せる。
  * エラーはすべて行番号つきで返し、読めた部分は捨てない。
  */
-export function parseFence(source: string): ParseResult {
+function readFence(source: string): ParseResult {
   const lineCounter = new LineCounter();
   // 重複キーは YAML のエラーにせず、こちらで部品 ID として報告する。
   const parsed = parseDocument(source, { lineCounter, uniqueKeys: false });
@@ -502,3 +503,10 @@ function readNote(item: ParsedNode | null, line: number, lineOf: LineOf, points:
 
   return fail('注釈は「- circle 部品ID」か「- text 番地: 文字」で書きます', line);
 }
+
+/**
+ * 読んだ結果は**直前の 2 本文ぶん覚える** (`rememberRecent`)。マップの試し当ては
+ * 1 回のうちに同じ本文を何度も読むので、そのたびに YAML を通すと拡張ホストが
+ * 埋まる (52 の docs/27 の実測)。**答えは読み取り専用**で、呼ぶ側に書き換える所は無い。
+ */
+export const parseFence = rememberRecent(readFence);
