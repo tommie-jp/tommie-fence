@@ -2,6 +2,10 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+> **This project is currently an alpha release.** It mostly works, but the
+> finer behaviour is still unstable. You can try it right away in the
+> [playground](https://tommie-jp.github.io/tommie-fence/).
+
 A family of Markdown fence languages that draw electronics, kept in one
 monorepo: schematic, breadboard, and perfboard.
 
