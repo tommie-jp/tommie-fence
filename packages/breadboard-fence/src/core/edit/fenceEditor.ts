@@ -9,6 +9,7 @@ import { insertPart, insertWire, duplicatePart, nextPartId, partCells } from './
 import { renamePart } from './rename.ts';
 import { flipPart, turnPart } from './turn.ts';
 import { movePart, movablePartIds, partSpans, stepCell, stepsTo } from './move.ts';
+import { deviceCells, deviceSpans, isDevice, moveDevice } from './device.ts';
 import { movePoint, nodeSpans } from './point.ts';
 import { deletePart, deleteWire } from './remove.ts';
 import { isWireHandle, renderColorOptions, setWireField, wireFields } from './wireField.ts';
@@ -67,6 +68,8 @@ export function createBreadboardEditor(): FenceEditor {
 
     spansOf: (source, what, id) => {
       if (isNoteHandle(id)) return noteSpans(source, id);
+      // **板の外の機器は入れ子で書く**ので、光らせるのは `at:` の値 (`device.ts`)。
+      if (what !== 'node' && isDevice(source, id)) return deviceSpans(source, id);
       if (what !== 'node') return partSpans(source, id);
       const at = readAddress(id);
       return at === null ? [] : nodeSpans(source, at);
@@ -84,7 +87,13 @@ export function createBreadboardEditor(): FenceEditor {
     nameOf: (handle) => (isNoteHandle(handle) ? `注釈 (${noteLineOf(handle) ?? '?'} 行目)` : handle),
     // 写せる字を持つのは `text` の注釈だけ (右クリックの「テキストコピー」)。
     textOf: (source, handle) => (isNoteHandle(handle) ? noteText(source, handle) : null),
-    cellsOf: (source, handle) => (isNoteHandle(handle) ? noteCells(source, handle) : partCells(source, handle)),
+    cellsOf: (source, handle) => {
+      if (isNoteHandle(handle)) return noteCells(source, handle);
+      // 帯に並べた機器には指せる穴が無い (左右の位置はつながる穴が決める)。
+      if (isDevice(source, handle)) return deviceCells();
+      return partCells(source, handle);
+    },
+
     // 配線は穴から穴へ 1 本 (折れの綴りが文法に無い)。
     foldsWire: false,
     // 穴の間は無い (足は穴に挿す)。Ctrl を押しても素のクリック。
@@ -104,6 +113,8 @@ export function createBreadboardEditor(): FenceEditor {
       const at = readAddress(to);
       if (at === null) return unreadable(to);
       if (isNoteHandle(handle)) return moveNote(source, handle, at, trial?.preview === true);
+      // 機器は `at:` を書き換えて動かす (この板で選べるのは上下の帯だけ)。
+      if (isDevice(source, handle)) return moveDevice(source, handle, at, trial?.preview === true);
       if (!movablePartIds(source).includes(handle)) {
         return { ok: false, error: { message: `動かせる部品ではありません: ${handle}`, line: null } };
       }

@@ -97,11 +97,14 @@ export function renderDocument(input: DocumentInput): string {
     )),
     ...input.parts.filter((part) => part.kind !== 'device').map((part) =>
       marked(renderPart(part, layout, theme), { class: 'cf-chip', 'data-part': part.id })),
+    // 板の外の機器も**掴めるように包む** (実機で「基板外の部品も対象にする」)。
     ...input.parts
       .filter((part) => part.kind === 'device')
       .map((part) => {
         const placement = input.devices.get(part.id);
-        return placement ? renderDevice(part, placement, theme) : '';
+        return placement
+          ? marked(renderDevice(part, placement, theme), { class: 'cf-chip', 'data-part': part.id })
+          : '';
       }),
     // 注釈は板・部品・配線の上に重ねる。回路の一員ではないので最後に置く。
     renderNotes(input.notes, layout, theme, input.sourceLines, edit !== null),
