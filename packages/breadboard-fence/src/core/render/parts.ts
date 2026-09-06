@@ -5,7 +5,7 @@ import {
   fourLeadBodyRect, renderDip, renderPushbutton, renderSip, renderTransformer, sipBarRect, switchBodyRect,
 } from './packages.ts';
 import {
-  CAPTION_DROP, CAPTION_HEIGHT, LEG_NAME_CLEAR, NAME_CAP, NAME_LINE,
+  CAPTION_CLEAR, CAPTION_DROP, CAPTION_HEIGHT, LEG_NAME_CLEAR, NAME_CAP, NAME_LINE,
   caption, charWidth, labelYOf,
 } from './partCommon.ts';
 import { bodyHalfHeight, bodyHalfWidth, renderThreeLead } from './threeLead.ts';
@@ -19,7 +19,20 @@ import { textScale } from './theme.ts';
  * 大きな部品 (パッケージ・ボード) は本体の外形をそのまま渡す。
  */
 export function partObstacles(part: PlacedPart, layout: Layout, theme: RenderTheme): Rect[] {
-  if (part.kind === 'board') return [boardBodyRect(part, layout)];
+  if (part.kind === 'board') {
+    // **名前も配線をよける。** 胴の下に出すようになったので、板の外形だけでは
+    // 名前の上を配線が走る (ほかの部品と同じ勘定)。
+    const body = boardBodyRect(part, layout);
+    return [
+      body,
+      captionBand(
+        body.x + body.width / 2,
+        body.y + body.height + CAPTION_CLEAR + theme.metrics.textSize * NAME_CAP,
+        captionWidth(part, theme),
+        theme,
+      ),
+    ];
+  }
   if (part.kind === 'sip') return [sipBarRect(part, layout)];
   if (part.kind === 'switch') return [switchBodyRect(part, layout)];
   if (part.kind === 'four-lead') return [fourLeadBodyRect(part, layout)];

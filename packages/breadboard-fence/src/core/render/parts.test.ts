@@ -5,6 +5,7 @@ import { parseFence } from '../parser/parseFence.ts';
 import { placeParts } from '../placement/place.ts';
 import type { PlacedPart } from '../types.ts';
 import { partObstacles, renderPart } from './parts.ts';
+import { boardBodyRect } from './boardPart.ts';
 import { bodyHalfHeight, bodyHalfWidth } from './threeLead.ts';
 import { num } from './svg.ts';
 import { resolveStyle } from './theme.ts';
@@ -186,6 +187,21 @@ describe('名札は胴の外', () => {
   }
 });
 
+
+describe('マイコンボードの名前', () => {
+  test('keeps the name below the board, clear of the pin names written inside it', () => {
+    // 基板の中に置いていたころは、長い足の名前 (`ADC_VREF 35`) と食い合っていた
+    // (実機で「文字が図形に被らないようにする」)。**ほかの部品と同じ側** —
+    // 名前は胴の下 (実機で「すべての部品名は部品の下側に表示する」)。
+    const part = place('U1: pico @ h5');
+    const svg = renderPart(part, layout, theme);
+    // 名前は `U1 Pico` (id と品名)。
+    const baseline = Number(/<text x="[\d.]+" y="([\d.]+)"[^>]*>U1 /.exec(svg)?.[1] ?? NaN);
+    const body = boardBodyRect(part, layout);
+
+    expect(baseline - theme.metrics.textSize * 0.72).toBeGreaterThan(body.y + body.height);
+  });
+});
 
 describe('マイコンボードの足の番号', () => {
   test('writes the header number beside each pin name, as the schematic does', () => {

@@ -1,5 +1,5 @@
 import {
-  REAL_INK, boardChip, dipChip, drawBody, drawPackage, drawsOwnLeads, element, fit, hasBody,
+  REAL_INK, boardBox, boardChip, dipChip, drawBody, drawPackage, drawsOwnLeads, element, fit, hasBody,
   lookupBoardPart, num, bodySize, packageHalfWidth, packageReach, sipHeader,
   smaBody as drawSmaBody, svgText, transformerCore, TEXT_HALO_WIDTH,
 } from 'fence-kit';
@@ -574,13 +574,26 @@ function renderChip(part: PlacedPart, kind: 'dip' | 'sip' | 'board', layout: Lay
     return sipHeader({ ...shared, names: numbers, nameSide: 1 });
   }
 
+  // **マイコンボードの名前は胴の下。** 基板の中に置くと長い足の名前
+  // (`ADC_VREF 35`) と食い合う。ほかの部品と側も揃う。
   const definition = lookupBoardPart(part.type);
-  return boardChip({
-    ...shared,
+  const box = boardBox(points, layout.pitch);
+  const drawn = boardChip({
+    points,
+    pitch: layout.pitch,
+    scale: CHIP_SCALE,
+    ink: chipInk(theme),
     names: definition?.pins ?? [],
     definition,
-    fit: (text, at, fontSize) => fitToBoard(text, at.x, fontSize, layout),
   });
+  const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  return drawn + partLabel(
+    caption(part),
+    { cx: centre.x, cy: centre.y, height: box.height, angle: 0 },
+    centre,
+    theme,
+    layout,
+  );
 }
 
 /**

@@ -730,13 +730,14 @@ describe('renderBreadboard', () => {
     expect([...text].length).toBeLessThan([...value].length);
   });
 
-  test('cuts a board caption that hangs off the left edge the same way', () => {
+  test('cuts a board caption that hangs off the board the same way', () => {
     const { svg } = renderBreadboard(`parts:\n  MCU: pico2 @ h5 ${'あ'.repeat(60)}\n`);
+    const width = Number(/viewBox="0 0 ([\d.]+)/.exec(svg)?.[1]);
     const [, x = '', size = '', text = ''] = caption(svg, 'MCU ') ?? [];
 
-    // Pico のラベルは基板の左に右揃えで置くので、伸びるのは左だけ。
+    // **名前は基板の下に中央揃え** (ほかの部品と同じ)。使えるのは近いほうの端までの倍。
     expect(text.endsWith('…')).toBe(true);
-    expect(textWidth(text) * Number(size)).toBeLessThanOrEqual(Number(x));
+    expect(textWidth(text) * Number(size)).toBeLessThanOrEqual(Math.min(Number(x), width - Number(x)) * 2);
   });
 
   test('shrinks a chip label until it fits the package body, full width or not', () => {

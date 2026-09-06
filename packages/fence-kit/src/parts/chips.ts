@@ -307,20 +307,22 @@ export type BoardChipOptions = {
   /** 1 番ピンの添字。**USB の側**を決める (既定は書かれた 1 つ目の穴)。 */
   readonly pinOne?: number;
   readonly pitch: number;
-  readonly caption: string;
   readonly scale: number;
   readonly ink: ChipInk;
-  /** 板からはみ出す字を切る (盤面の話なので呼ぶ側が持つ)。 */
-  readonly fit?: (text: string, at: ChipPoint, fontSize: number) => string;
 };
 
 /**
  * マイコンボード。**ピン名は基板の中に縦書きで置く**: 外に出すと、隣の列の穴
  * (実際に配線を挿すところ) を字が覆ってしまう。USB は必ずピン 1 の側の端に描く。
  * 実物のピンアウト図と同じ向きで読めるようにするため。
+ *
+ * **部品の名前 (`U1`) はここでは描かない。** 基板の中に置くと長い足の名前
+ * (`ADC_VREF 35`) と食い合う。ほかの部品と同じで**胴の下**に出す — どこに
+ * 出せるかは板の話なので、呼ぶ側が板の物差しで置く
+ * (実機で「すべての部品名は部品の下側に表示する」)。
  */
 export function boardChip(options: BoardChipOptions): string {
-  const { points, names, definition, pinOne = 0, pitch, caption, scale, ink, fit } = options;
+  const { points, names, definition, pinOne = 0, pitch, scale, ink } = options;
   const first = points[pinOne] ?? points[0];
   if (!first) return '';
 
@@ -396,34 +398,8 @@ export function boardChip(options: BoardChipOptions): string {
     })
     .join('');
 
-  const labelSize = scale * 10;
-  const label = boardLabel(caption, centre, chipSide, labelSize, alongX, ink, fit);
-
   return `${usb}${shell}${antenna(definition, box, centre, alongX, nearStart, ink.pin)}`
-    + `${chip}${chipName}${stubs}${legends}${label}`;
-}
-
-/** 基板の名前。**チップの手前**に右揃えで置くので、伸びるのは 1 方向だけ。 */
-function boardLabel(
-  caption: string,
-  centre: ChipPoint,
-  chipSide: number,
-  size: number,
-  alongX: boolean,
-  ink: ChipInk,
-  fit?: BoardChipOptions['fit'],
-): string {
-  const gap = chipSide / 2 + 10;
-  const at = alongX ? { x: centre.x - gap, y: centre.y } : { x: centre.x, y: centre.y - gap };
-  const text = fit ? fit(caption, at, size) : caption;
-  const style = { 'font-size': num(size), fill: ink.chipText, anchor: 'end' as const };
-  return alongX
-    ? svgText(at.x, at.y + 4, text, style)
-    : element(
-      'g',
-      { transform: `translate(${num(at.x)} ${num(at.y)}) rotate(-90)` },
-      svgText(0, 4, text, style),
-    );
+    + `${chip}${chipName}${stubs}${legends}`;
 }
 
 /** 無線つきの版は USB と反対の端にアンテナが載っている。 */

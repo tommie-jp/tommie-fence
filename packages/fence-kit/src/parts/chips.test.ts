@@ -115,7 +115,6 @@ describe('boardChip', () => {
     definition,
     pinOne,
     pitch: PITCH,
-    caption: 'M1 Pico',
     scale: 1,
     ink: INK,
   });
@@ -143,7 +142,6 @@ describe('boardChip', () => {
       names: lookupBoardPart('pico-w')?.pins ?? [],
       definition: lookupBoardPart('pico-w'),
       pitch: PITCH,
-      caption: 'M1',
       scale: 1,
       ink: INK,
     });

@@ -1,7 +1,9 @@
 import { boardBox, boardChip, lookupBoardPart } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Rect } from '../types.ts';
-import { caption, fitToBoard, pinPoints } from './partCommon.ts';
+import {
+  CAPTION_CLEAR, NAME_CAP, caption, fitToBoard, partLabel, pinPoints,
+} from './partCommon.ts';
 import { chipInk } from './packages.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
@@ -27,16 +29,26 @@ export function renderBoardPart(part: PlacedPart, layout: Layout, theme: RenderT
   // 巡る (`placement/place.ts` の spun)。だから名前で引く。
   const definition = lookupBoardPart(part.type);
   const pinOne = part.pins.findIndex((pin) => pin.name === definition?.pins[0]);
-  return boardChip({
+  const drawn = boardChip({
     points,
     names: part.pins.map((pin) => pin.name),
     definition,
     pinOne: pinOne < 0 ? 0 : pinOne,
     pitch: layout.pitch,
-    caption: caption(part),
     scale: textScale(theme),
     ink: chipInk(theme),
-    // 基板の左に右揃えで置くので、伸びるのは左だけ。画布の左端で切る。
-    fit: (text, at, fontSize) => fitToBoard(text, at.x, fontSize, layout, 'end'),
   });
+
+  // **名前は胴の下。** 基板の中に置いていたころは、長い足の名前
+  // (`ADC_VREF 35`) と食い合っていた (実機で「文字が図形に被らないようにする」)。
+  // ほかの部品と側も揃う (実機で「すべての部品名は部品の下側に表示する」)。
+  const body = boardBodyRect(part, layout);
+  const centreX = body.x + body.width / 2;
+  const label = partLabel(
+    centreX,
+    body.y + body.height + CAPTION_CLEAR + theme.metrics.textSize * NAME_CAP,
+    fitToBoard(caption(part), centreX, theme.metrics.textSize, layout),
+    theme,
+  );
+  return `${drawn}${label}`;
 }
