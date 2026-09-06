@@ -45,6 +45,16 @@ export const targets = [
     platform: 'browser',
     target: 'es2022',
   },
+  {
+    // TeX を描くスレッド。**別のファイルとして出す** — `worker_threads` は
+    // 入口をパスで受け取るので、拡張の束ねた 1 本の中には置けない。
+    // TeX エンジンは同じ理由で external のまま (node_modules から読む)。
+    entryPoints: ['../circuit-fence/src/host/texWorker.ts'],
+    outfile: 'dist/tex-worker.cjs',
+    format: 'cjs',
+    platform: 'node',
+    external: [TEX_ENGINE],
+  },
 ];
 
 /**

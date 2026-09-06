@@ -39,6 +39,7 @@
     "./plugin": "./src/markdownItPlugin.ts",
     "./queue": "./src/host/renderQueue.ts",
     "./tex": "./src/host/texSvg.ts",
+    "./tex-worker": "./src/host/texSvgWorker.ts",
     "./tex.web": "./src/host/texSvg.web.ts",
     "./src/core/*": "./src/core/*"
   },
