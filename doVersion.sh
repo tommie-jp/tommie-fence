@@ -39,8 +39,11 @@ if [ ! -d "packages/$pkg" ]; then
   exit 2
 fi
 
+# **写しを持たないパッケージもある。** 図に版を刻むのは描画コアだけで、
+# 3 つを畳んだ拡張 (tommie-fence) は自分では描かない (52 の docs/19)。
+# 写しが「あるのに古い」のは事故だが、「無い」のは正しい姿。
 COPY="packages/$pkg/src/core/version.ts"
-if [ ! -f "$COPY" ]; then
+if [ ! -f "$COPY" ] && [ -d "packages/$pkg/src/core" ]; then
   echo "$COPY がありません。写しの置き場が変わっていませんか" >&2
   exit 1
 fi
@@ -69,16 +72,20 @@ npm version "$spec" --workspace="$pkg" --no-git-tag-version --allow-same-version
 
 new="$(node -p "require('./packages/$pkg/package.json').version")"
 
-echo "==> $COPY の写しを合わせる"
-sed -i "s/^export const VERSION = '.*';$/export const VERSION = '$new';/" "$COPY"
+if [ -f "$COPY" ]; then
+  echo "==> $COPY の写しを合わせる"
+  sed -i "s/^export const VERSION = '.*';$/export const VERSION = '$new';/" "$COPY"
 
-if ! grep -q "^export const VERSION = '$new';\$" "$COPY"; then
-  echo "$COPY を書き換えられませんでした。VERSION の行の形が変わっていませんか" >&2
-  exit 1
+  if ! grep -q "^export const VERSION = '$new';\$" "$COPY"; then
+    echo "$COPY を書き換えられませんでした。VERSION の行の形が変わっていませんか" >&2
+    exit 1
+  fi
+
+  echo "==> 写しがずれていないか確かめる"
+  npm exec --workspace="$pkg" -- vitest run src/core/version.test.ts
+else
+  echo "==> 版の写しは持たないパッケージ (図に刻むのは描画コアだけ)"
 fi
-
-echo "==> 写しがずれていないか確かめる"
-npm exec --workspace="$pkg" -- vitest run src/core/version.test.ts
 
 echo
 echo "==> $pkg $old → $new"

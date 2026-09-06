@@ -18,7 +18,7 @@ circuit / breadboard / perfboard の 3 つのフェンスを **1 つの拡張**�
 code --uninstall-extension tommie.circuit-fence
 code --uninstall-extension tommie.breadboard-fence
 code --uninstall-extension tommie.perfboard-fence
-code --install-extension packages/tommie-fence/tommie-fence-0.1.0.vsix
+code --install-extension packages/tommie-fence/tommie-fence-0.2.0.vsix
 ```
 
 ## 畳んで変わること
