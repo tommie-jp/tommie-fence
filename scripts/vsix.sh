@@ -18,6 +18,10 @@
 # 直すまで固定される。** 入れ直したいときも `make clean`。
 set -euo pipefail
 
+# **落ちたら何が落ちたかを言う。** `set -e` は黙って抜けるので、CI のログに
+# make の `Error 1` しか残らず、直す手がかりが無かった (図の報告と同じ考え方)。
+trap 'echo "==> 失敗: ${BASH_COMMAND} (exit $?)" >&2' ERR
+
 cd "$(dirname "$0")/.."
 root="$PWD"
 build="${BUILD:-.build}"
@@ -110,7 +114,11 @@ case "$mode" in
     # devDependencies も要る。vsce が prepublish で esbuild を呼ぶため。
     # パッケージが単体で install できる状態を保つのは、この段取りの前提。
     # --install-links: file: の依存を実体で置く (symlink だと vsce が辿れない)。
-    (cd "$stage/$pkg" && npm install --install-links --no-audit --no-fund --silent)
+    #
+    # **--silent にしない。** 落ちたときに何も言わずに終わり、CI のログに
+    # 「Error 1」しか残らなかった (直す手がかりが図に出ないのと同じ問題)。
+    # `--loglevel=error` なら、うまくいけば静かなまま、落ちたときだけ理由が出る。
+    (cd "$stage/$pkg" && npm install --install-links --no-audit --no-fund --loglevel=error)
     ;;
 
   package)
