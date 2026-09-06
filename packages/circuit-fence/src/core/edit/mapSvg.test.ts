@@ -620,6 +620,50 @@ describe('注釈', () => {
     expect(svg).toContain('cf-note-tag');
   });
 
+  test('draws a line note as a line, not as a tag that says "line"', () => {
+    // 罫線を 24 本引いた図では「line」という箱が 24 個並び、**図と似ても
+    // 似つかないマップ**になっていた (実機で「line が正しく表示されてない」)。
+    const svg = draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - line b1 b5\n');
+
+    expect(svg).toContain('cf-note-line');
+    expect(svg).not.toContain('cf-note-tag');
+  });
+
+  test('gives the drawn note a fat clear line to grab, since the thin one cannot be pressed', () => {
+    const svg = draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - line b1 b5\n');
+
+    expect(svg).toContain('cf-note-hit');
+    expect(svg).toContain('data-part="note:4"');
+  });
+
+  test('points the arrow, which is the one thing that tells it from a line', () => {
+    const arrow = draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - arrow b1 b5\n');
+    const line = draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - line b1 b5\n');
+
+    expect(arrow).toContain('<polyline');
+    expect(arrow).not.toBe(line);
+  });
+
+  test('draws a box note as a box around its two corners', () => {
+    const svg = draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - box b1 d5\n');
+
+    expect(svg).toContain('cf-note-line');
+    expect(svg).toContain('<rect');
+  });
+
+  test('keeps the grid wide enough for the far end of a drawn note', () => {
+    // 覆わないと線の先が升の外へ落ちて、図と食い違う。
+    const near = gridMap('parts:\n  R1: resistor a1 a3\nnotes:\n  - line b1 b2\n');
+    const far = gridMap('parts:\n  R1: resistor a1 a3\nnotes:\n  - line b1 b20\n');
+
+    expect(far.cols).toBeGreaterThan(near.cols);
+  });
+
+  test('still tags the notes that have no far end', () => {
+    // `circle` は部品を指すだけで、線の引きようが無い。
+    expect(draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - circle R1\n')).toContain('cf-note-tag');
+  });
+
   test('keeps the whole note on the tag, since the drawn words are cut', () => {
     const long = `parts:\n  R1: resistor a1 a3\nnotes:\n  - text b1: ${'あ'.repeat(30)}\n`;
     const svg = draw(long);

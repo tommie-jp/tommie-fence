@@ -365,6 +365,14 @@ const STYLE = `
 
   .cf-note-tag { fill: var(--cf-paper); stroke: var(--cf-ink); stroke-width: 1; opacity: 0.85; }
   .cf-note-text { fill: var(--cf-ink); }
+  /* 形を持つ注釈 (line / arrow / box)。**図に重ねる印**なので、部品や配線とは
+     別の見え方にする — 細い破線で、回路の一員ではないことを言う。
+     当たり判定は太い透明を重ねる (配線と同じ手。掴めないと動かせない)。 */
+  .cf-note-line {
+    fill: none; stroke: var(--cf-ink); stroke-width: 1.4; opacity: 0.7;
+    stroke-dasharray: 5 3; stroke-linecap: round;
+  }
+  .cf-note-hit { fill: none; }
 
   /* 読めなかった行に書かれたもの。**触れている印・持っている印より後に置く**。 */
   .cf-bad .cf-glyph, .cf-bad .cf-glyph-line, .cf-bad .cf-lead,

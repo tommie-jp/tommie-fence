@@ -868,14 +868,81 @@ function noteTag(note: MapNote): { readonly shown: string; readonly width: numbe
 
 /** その注釈の札が右へ伸びるところ。**画布の幅**を決めるのに要る。 */
 const noteRight = (note: MapNote): number =>
-  x(note.col) + PITCH * 0.18 + noteTag(note).width;
+  (note.span === null ? x(note.col) + PITCH * 0.18 + noteTag(note).width : x(Math.max(note.col, note.span.col)));
+
+/** 掴む的の太さ。**見える線は細すぎて押せない** (配線と同じ手)。 */
+const NOTE_HIT = 10;
+
+/**
+ * 形を持つ注釈 (`line` / `arrow` / `box`) を、**その形のまま**描く。
+ *
+ * ここが無かったころは種類名の札だけを出していた。罫線を 24 本引いた図では
+ * 「line」という箱が 24 個並び、**図と似ても似つかないマップ**になる
+ * (実機で「line が正しく表示されてない」)。掴むための升目とはいえ、
+ * 図の上に何が重なっているかは形で分かるべき。
+ *
+ * **掴む的は別に重ねる** — 見える線を太くすると図が変わってしまう (配線と同じ)。
+ */
+function drawNoteShape(note: MapNote, span: Cell, bad: Bad): string {
+  const from = { x: x(note.col), y: y(note.row) };
+  const to = { x: x(span.col), y: y(span.row) };
+  const marks = { class: classOf('cf-note-line', note.line, bad), 'data-line': note.line };
+
+  if (note.kind === 'box') {
+    const left = Math.min(from.x, to.x);
+    const top = Math.min(from.y, to.y);
+    return element('rect', {
+      ...marks, x: num(left), y: num(top),
+      width: num(Math.abs(to.x - from.x)), height: num(Math.abs(to.y - from.y)),
+      fill: 'none', rx: 3,
+    }) + element('rect', {
+      class: 'cf-note-hit', x: num(left), y: num(top),
+      width: num(Math.abs(to.x - from.x)), height: num(Math.abs(to.y - from.y)),
+      fill: 'none', 'stroke-width': NOTE_HIT, stroke: 'transparent',
+    });
+  }
+
+  // 指し棒は先に矢を付ける。向きが読めることが `line` との違いそのもの。
+  const head = note.kind === 'arrow' ? arrowHead(from, to) : '';
+  return element('line', { ...marks, x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y) })
+    + head
+    + element('line', {
+      class: 'cf-note-hit', x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y),
+      'stroke-width': NOTE_HIT, stroke: 'transparent', 'stroke-linecap': 'round',
+    });
+}
+
+/** 指し棒の先の矢。**升目のものなので小さく** (図の矢とは別物)。 */
+function arrowHead(
+  from: { readonly x: number; readonly y: number },
+  to: { readonly x: number; readonly y: number },
+): string {
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+  const size = PITCH * 0.28;
+  const wing = (turn: number): string =>
+    `${num(to.x - size * Math.cos(angle + turn))},${num(to.y - size * Math.sin(angle + turn))}`;
+  return element('polyline', {
+    class: 'cf-note-line',
+    points: `${wing(0.4)} ${num(to.x)},${num(to.y)} ${wing(-0.4)}`,
+    fill: 'none',
+  });
+}
 
 /**
  * 注釈。**印そのものは描かない** — マップは掴むための升目で、図ではない。
  * 指した升の角に小さな札を出し、字の注釈はその字も少しだけ見せる
  * (どの注釈かを選ぶのに要る)。
  */
-function drawNote(note: MapNote, framed: boolean): string {
+function drawNote(note: MapNote, framed: boolean, bad: Bad): string {
+  // **形を持つものは形で出す。** 札は出さない (線の上に種類名が乗ると読めない)。
+  if (note.span !== null) {
+    return element(
+      'g',
+      { class: 'cf-chip cf-note-mark', 'data-part': note.handle, 'data-note': '1', 'data-line': note.line },
+      element('title', {}, escapeMarkup(note.kind)) + drawNoteShape(note, note.span, bad),
+    );
+  }
+
   const left = x(note.col) + PITCH * 0.18;
   const top = y(note.row) - PITCH * 0.42;
   const { shown, width } = noteTag(note);
@@ -996,7 +1063,7 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {})
       + layer('cf-marks', map.dots.map(drawDot).join(''))
       + layer('cf-parts', map.chips.map((chip) => drawChip(chip, nudges.get(chip) ?? 0, bad)).join(''))
       // 注釈は部品の上。指したものが下に隠れると印の意味が無い (図と同じ順)。
-      + layer('cf-notes', map.notes.map((note) => drawNote(note, look.noteFrame === true)).join(''))
+      + layer('cf-notes', map.notes.map((note) => drawNote(note, look.noteFrame === true, bad)).join(''))
       + drawHits(shown),
   );
 }

@@ -115,6 +115,14 @@ export type MapNote = {
   readonly text: string;
   readonly row: number;
   readonly col: number;
+  /**
+   * 反対の端 (`line` / `arrow` / `box`)。**形を持つ注釈だけ**が持つ。
+   *
+   * ここが無かったので、マップは注釈をぜんぶ種類名の札で出していた —
+   * 罫線を 24 本引いた図では「line」という箱が 24 個並び、図と似ても似つかない
+   * マップになる (実機で「line が正しく表示されてない」)。
+   */
+  readonly span: Cell | null;
   /** 部品を指しているか。**指しているものは動かさない** (名前が外れるため)。 */
   readonly onPart: boolean;
 };
@@ -312,6 +320,7 @@ export function gridMap(source: string): GridMap {
       text: note.kind === 'text' ? note.text : '',
       row: cell.row,
       col: cell.col,
+      span: noteSpanOf(note),
       onPart: named,
     });
   }
@@ -323,6 +332,9 @@ export function gridMap(source: string): GridMap {
     ...chips.flatMap((chip) => [chip, chip.to].filter((cell) => cell !== null)),
     ...dots,
     ...wires.flatMap((wire) => wire.points),
+    // **形を持つ注釈の反対の端も覆う。** 覆わないと、線の先が升の外へ落ちて
+    // 図と食い違う (罫線は図の端から端まで引くので、いちばん外に出やすい)。
+    ...notes.flatMap((note) => (note.span === null ? [] : [note.span])),
   ];
   const span = (of: (cell: Cell) => number): number[] => used.map((cell) => Math.ceil(of(cell)) + 1 + MARGIN);
   const rows = Math.min(26, Math.max(MIN_ROWS, ...span((cell) => cell.row)));
@@ -421,6 +433,24 @@ function noteTargetOf(note: { readonly kind: string } & Record<string, unknown>)
     return typeof note.from === 'object' && note.from !== null ? formatAddress(note.from as Address) : null;
   }
   if (note.kind === 'arrow' || note.kind === 'line') return typeof note.from === 'string' ? note.from : null;
+  return null;
+}
+
+/**
+ * 形を持つ注釈の**反対の端**。持たない注釈 (字・囲み・書き出し) は null。
+ *
+ * `line` と `arrow` は番地を綴りで持ち (`a1b5` のような交点の間も書ける)、
+ * `box` は番地そのもので持つ。読めない綴りは null — 形が引けないだけで、
+ * 札は今までどおり出る。
+ */
+function noteSpanOf(note: { readonly kind: string } & Record<string, unknown>): Cell | null {
+  if (note.kind === 'arrow' || note.kind === 'line') {
+    const address = typeof note.to === 'string' ? parseAddress(note.to) : null;
+    return address === null ? null : cellAt(address);
+  }
+  if (note.kind === 'box') {
+    return typeof note.to === 'object' && note.to !== null ? cellAt(note.to as Address) : null;
+  }
   return null;
 }
 
