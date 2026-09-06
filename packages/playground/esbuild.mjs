@@ -34,6 +34,13 @@ for (const name of ['index.html', 'style.css']) {
 // リポジトリには置かない — 8.5 MB のバイナリで、node-tikzjax が版ごとに持っている
 // ものをこちらで持ち直す理由が無い。落とすのは circuit の図を初めて描くときだけ。
 const require = createRequire(import.meta.url);
+
+/**
+ * 拡張の版。**頁の頭に出す** (実機で「tommie-fence の後にバージョンを表示する」)。
+ * ここで焼き込むのは、頁が版を知る手立てがこれしか無いため — 実行時に
+ * `package.json` を読ませると、Pages に置くファイルが 1 つ増える。
+ */
+const version = require('../tommie-fence/package.json').version;
 const tikzjax = require.resolve('node-tikzjax/package.json').replace(/package\.json$/, '');
 await cp(`${tikzjax}tex`, 'dist/tex', { recursive: true });
 await cp(`${tikzjax}css`, 'dist/tex/css', { recursive: true });
@@ -56,6 +63,7 @@ const options = {
   target: 'es2022',
   sourcemap: !production,
   minify: production,
+  define: { __VERSION__: JSON.stringify(version) },
   logLevel: 'info',
 };
 

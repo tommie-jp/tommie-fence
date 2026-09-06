@@ -26,6 +26,7 @@
     "esbuild": "^0.28.2",
     "node-tikzjax": "^1.0.5",
     "perfboard-fence": "*",
+    "qrcode-generator": "^2.0.4",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"
   }

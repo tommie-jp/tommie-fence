@@ -32,8 +32,40 @@ body {
   line-height: 1.6;
 }
 
+.head { position: relative; }
+
 h1 { font-size: 1.5rem; margin: 0 0 4px; }
 h1 span { color: var(--dim); font-weight: 400; }
+/* 版は名前のすぐ後ろ。**名前より控えめに** (見出しは名前が主)。 */
+h1 .ver { font-family: var(--mono); font-size: 0.75em; }
+
+/* この頁の QR を出す釦。**右上の隅**に置く — 本文の並びを押しのけない。 */
+.qr {
+  position: absolute; top: 0; right: 0;
+  font: inherit; font-family: var(--mono); font-size: 0.85rem;
+  padding: 4px 12px; cursor: pointer;
+  color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line); border-radius: 6px;
+}
+
+.qr-box {
+  border: 1px solid var(--line); border-radius: 10px;
+  padding: 16px; color: var(--ink); background: var(--paper);
+  max-width: min(92vw, 420px);
+}
+.qr-box::backdrop { background: rgb(0 0 0 / 40%); }
+.qr-url {
+  margin: 0 0 12px; font-family: var(--mono); font-size: 11px; color: var(--dim);
+  /* 共有リンクは長い。**折り返して全部見せる** (縮めると読み合わせできない)。 */
+  overflow-wrap: anywhere;
+}
+.qr-code svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+.qr-box form { margin-top: 12px; text-align: right; }
+.qr-box button {
+  font: inherit; font-size: 0.9rem; padding: 4px 12px; cursor: pointer;
+  color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line); border-radius: 6px;
+}
 h2 { font-size: 0.8rem; margin: 0 0 6px; color: var(--dim); font-weight: 600; }
 
 .lead { margin: 0 0 8px; }
@@ -68,8 +100,9 @@ select, .bar button {
 .panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
 @media (max-width: 860px) { .panes { grid-template-columns: minmax(0, 1fr); } }
 
+
 textarea {
-  width: 100%; height: min(60vh, 560px); resize: vertical;
+  width: 100%; height: min(60svh, 560px); resize: vertical;
   padding: 12px; tab-size: 2;
   font-family: var(--mono); font-size: 13px; line-height: 1.55;
   color: var(--ink); background: var(--paper);
@@ -86,7 +119,7 @@ textarea {
    描かれるので、半分の幅に押し込めると図もその半分にしかならない
    (属性の欄と道具の列が両端を取るぶん、さらに細くなる)。 */
 .map {
-  width: 100%; height: min(72vh, 680px); margin-bottom: 16px;
+  width: 100%; height: min(72svh, 680px); margin-bottom: 16px;
   border: 1px solid var(--line); border-radius: 8px; background: var(--paper);
 }
 
@@ -118,3 +151,36 @@ td { font-family: var(--mono); font-size: 12px; }
 .foot { margin-top: 24px; font-size: 0.85rem; color: var(--dim); }
 .foot p { margin: 4px 0; }
 .foot a { color: inherit; }
+
+/*
+ * スマホ (とくに iPhone) で触れるようにする。**直すのは 4 つ**:
+ *
+ * 1. **釦と欄を 44px 角より小さくしない** — Apple の指針の下限で、これより
+ *    小さいと指で押せない (マウスの 4px の余白のままでは足りない)
+ * 2. **欄の字を 16px 以上にする** — iOS Safari は 16px 未満の入力欄に
+ *    焦点が移ると**頁ごと拡大する**。戻す手立てが無く、以後ずっと横に溢れる
+ * 3. **高さを `vh` で決めない** — iOS の `100vh` はアドレス欄を含む高さで、
+ *    実際に見えている分より大きい。図と欄が画面からはみ出す
+ * 4. **右上の QR は見出しの下へ回す** — 狭い画面では見出しに重なる
+ */
+@media (max-width: 560px) {
+  body { padding: 12px 12px 24px; }
+  h1 { font-size: 1.25rem; }
+  .head { padding-right: 0; }
+  .qr { position: static; margin-top: 8px; min-height: 44px; padding: 8px 16px; }
+
+  .bar { gap: 8px; }
+  .bar button, .kinds button, select { min-height: 44px; padding: 8px 12px; }
+  /* 種類の釦は 3 つで 1 行に収める (綴りだけ出して、呼び名は畳む)。 */
+  .kinds { width: 100%; }
+  .kinds button { flex: 1; font-size: 0.8rem; padding: 8px 4px; }
+  /* 呼び名は畳む (綴りだけで 3 つが 1 行に収まる)。 */
+  .kinds .reading { display: none; }
+  .pick { width: 100%; }
+  .pick select { flex: 1; min-width: 0; }
+
+  /* iOS Safari が頁を拡大しない大きさ。 */
+  textarea { font-size: 16px; height: 40svh; }
+  .map { height: 70svh; }
+  select { font-size: 16px; }
+}

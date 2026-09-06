@@ -1,10 +1,11 @@
-import { KINDS, KIND_LABEL } from './kinds.ts';
+import { KINDS, KIND_LABEL, KIND_READING } from './kinds.ts';
 import type { Kind } from './kinds.ts';
 import { render } from './fences.ts';
 import { decodeShare, encodeShare } from './share.ts';
 import { forKind, parseExamples } from './examples.ts';
 import type { Example } from './examples.ts';
 import type { Output } from './fences.ts';
+import { qrSvg } from './qr.ts';
 
 /**
  * 画面を組み立てる層。**決め事はここに置かない** — 描画は `fences.ts`、
@@ -38,7 +39,15 @@ const els = {
   from: need('from'),
   map: need<HTMLIFrameElement>('map'),
   mapToggle: need<HTMLButtonElement>('map-toggle'),
+  ver: need('ver'),
+  qr: need<HTMLButtonElement>('qr'),
+  qrBox: need<HTMLDialogElement>('qr-box'),
+  qrUrl: need('qr-url'),
+  qrCode: need('qr-code'),
 };
+
+/** 拡張の版。ビルドのときに焼き込む (`esbuild.mjs`)。 */
+declare const __VERSION__: string;
 
 let kind: Kind = 'breadboard';
 let examples: readonly Example[] = [];
@@ -215,6 +224,18 @@ function say(text: string): void {
 }
 
 /** 例を選ぶ欄。まともな例とわざと壊した例を分けて並べる。 */
+/** 例の出どころのファイル名 (`.../examples/01-led.md` → `01-led`)。 */
+const fileOf = (from: string): string =>
+  (from.split('/').pop() ?? from).replace(/\.[^.]+$/, '');
+
+/**
+ * 例の選び手を組む。**出どころのファイルごとに小見出しを付ける。**
+ *
+ * 図の番号は `.md` ごとに 01 から数え直す約束なので、平らに並べると
+ * 「図01」が何度も出て、どれがどれだか分からない (実機で「図の番号が
+ * 重複している」)。番号の付け方は文書の側の決めなので変えず、
+ * **出どころで括って**見分けられるようにする。
+ */
 function fillExamples(): void {
   const mine = forKind(examples, kind);
   els.example.replaceChildren();
@@ -223,16 +244,24 @@ function fillExamples(): void {
     [false, '例'],
     [true, 'わざと壊した例'],
   ] as const) {
-    const group = document.createElement('optgroup');
-    group.label = label;
+    // ファイルの並びは JSON のまま (作る側が並べてある)。
+    const files: string[] = [];
+    const rows = new Map<string, HTMLOptionElement[]>();
     for (const [index, example] of mine.entries()) {
       if (example.broken !== broken) continue;
+      const file = fileOf(example.from);
+      if (!rows.has(file)) { rows.set(file, []); files.push(file); }
       const option = document.createElement('option');
       option.value = String(index);
       option.textContent = example.label;
-      group.append(option);
+      rows.get(file)?.push(option);
     }
-    if (group.childElementCount > 0) els.example.append(group);
+    for (const file of files) {
+      const group = document.createElement('optgroup');
+      group.label = broken ? `${label} — ${file}` : file;
+      group.append(...(rows.get(file) ?? []));
+      els.example.append(group);
+    }
   }
   els.example.disabled = mine.length === 0;
 }
@@ -288,7 +317,13 @@ function buildKinds(): void {
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.kind = name;
-    button.textContent = KIND_LABEL[name];
+    // **綴りと呼び名を別の字にする。** 狭い画面では呼び名だけ畳んで、
+    // 3 つを 1 行に収める (綴りはフェンスに書く字なので畳めない)。
+    button.append(KIND_LABEL[name]);
+    const reading = document.createElement('span');
+    reading.className = 'reading';
+    reading.textContent = `（${KIND_READING[name]}）`;
+    button.append(reading);
     button.setAttribute('aria-pressed', String(name === kind));
     button.addEventListener('click', () => setKind(name));
     els.kinds.append(button);
@@ -345,6 +380,8 @@ function listen(): void {
     reopenMap();
   });
 
+  els.qr.addEventListener('click', showQr);
+  els.qrBox.addEventListener('close', () => { els.qr.setAttribute('aria-expanded', 'false'); });
   els.share.addEventListener('click', () => {
     syncHash();
     navigator.clipboard.writeText(location.href).then(
@@ -354,7 +391,24 @@ function listen(): void {
   });
 }
 
+/**
+ * この頁の URL を QR で出す。**開くたびに組み直す** — 例を選ぶたびに
+ * `#` が変わるので、覚えておくと前の頁の QR を出すことになる。
+ */
+function showQr(): void {
+  syncHash();
+  const url = location.href;
+  els.qrUrl.textContent = url;
+  const drawn = qrSvg(url);
+  els.qrCode.innerHTML = drawn ?? '';
+  els.qrCode.hidden = drawn === null;
+  if (drawn === null) say('この長さは QR に入りません (リンクをコピーしてください)');
+  els.qrBox.showModal();
+  els.qr.setAttribute('aria-expanded', 'true');
+}
+
 async function start(): Promise<void> {
+  els.ver.textContent = __VERSION__;
   buildKinds();
   listen();
 

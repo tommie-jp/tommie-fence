@@ -20,7 +20,8 @@
   </head>
   <body>
     <header class="head">
-      <h1>tommie-fence <span>playground</span></h1>
+      <h1>tommie-fence <span class="ver" id="ver"></span> <span>playground</span></h1>
+      <button type="button" class="qr" id="qr" aria-expanded="false">QR</button>
       <p class="lead">
         Markdown のフェンスで電子工作の図を描く。左に書くと、右に出る。
         <span lang="en">Markdown fences that draw electronics. Type on the left, see it on the right.</span>
@@ -39,12 +40,19 @@
           例
           <select id="example"></select>
         </label>
-        <button type="button" id="map-toggle" aria-pressed="false">図を掴んで動かす</button>
+        <button type="button" id="map-toggle" aria-pressed="false">編集する</button>
         <button type="button" id="share">リンクをコピー</button>
         <span class="said" id="said" role="status"></span>
       </div>
 
       <iframe class="map" id="map" title="図を掴んで動かすマップ" hidden></iframe>
+
+      <!-- この頁の URL を入れた QR。スマホで開き直すための道 (実機で頼まれた)。 -->
+      <dialog class="qr-box" id="qr-box">
+        <p class="qr-url" id="qr-url"></p>
+        <div class="qr-code" id="qr-code"></div>
+        <form method="dialog"><button type="submit">閉じる</button></form>
+      </dialog>
 
       <div class="panes">
         <section class="pane">

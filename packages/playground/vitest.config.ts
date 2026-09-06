@@ -17,6 +17,11 @@ export default defineConfig({
       exclude: [
         'src/**/*.test.ts',
         'src/main.ts',
+        // `src/map/webview.ts` は iframe の中の入口。**ブラウザでしか動かない** —
+        // 中身は `acquireVsCodeApi` と色の変数を用意して `fence-kit/webview` を
+        // 動的に読むだけで、node で真似ても確かめたことになるのは真似のほう。
+        // 橋の側 (`src/map/index.ts`) は node で覆ってある。
+        'src/map/webview.ts',
         'src/tex/assets.ts',
         'src/tex/engine.ts',
         'src/tex/svg.ts',
