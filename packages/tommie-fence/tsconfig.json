@@ -5,6 +5,9 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    // `esbuild.mjs` と `scripts/` も見る。束ね方そのものを
+    // `src/bundle.test.ts` が読むため (include に載っているだけでは素通しになる)。
+    "allowJs": true,
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
     "isolatedModules": true,

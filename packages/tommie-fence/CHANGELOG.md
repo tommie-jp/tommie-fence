@@ -5,6 +5,13 @@
 
 ## [0.1.0] - 2026-09-05
 
+### Fixed
+
+- **circuit の図が描けなかった** (`Cannot find module './xhr-sync-worker.js'`)。
+  TeX エンジン (node-tikzjax) を束ねてしまっていた。WASM もフォントも
+  `__dirname` からの相対で読むので、束ねると `dist/` の隣を探しに行く。
+  束ねずに同梱する形へ戻した。
+
 ### Added
 
 - **3 つのフェンスを 1 つの拡張にした** (`circuit` / `breadboard` /
