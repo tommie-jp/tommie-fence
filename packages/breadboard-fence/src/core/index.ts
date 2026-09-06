@@ -18,6 +18,7 @@ import type { RenderedWire } from './render/document.ts';
 import { layoutDevices } from './render/devices.ts';
 import type { DevicePlacement } from './render/devices.ts';
 import type { NoteAnchor, ResolvedNote } from './render/notes.ts';
+import { captionDrops } from './render/captions.ts';
 import { partObstacles } from './render/parts.ts';
 import { renderErrorBanner, renderErrorCard } from './render/errorHtml.ts';
 import { DEFAULT_WIRE_COLOR, wireColor as lookupWireColor, wireColorNames } from './render/palette.ts';
@@ -151,7 +152,10 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
 
   // 配線と足が同じ穴を取り合う部品を、同じ列の空いた行へ寄せる。
   // resolveWire より前に済ませるので、ピン参照 (`Re.2`) の配線は寄せた後の穴に付く。
-  const preObstacles = placed.flatMap((part) => partObstacles(part, layout, style.theme));
+  // **名札の逃がしも配線よけに効かせる** — 逃がした先の帯を渡さないと、
+  // 下げた名札の上を配線が走る (`render/captions.ts`)。
+  const preDrops = captionDrops(placed, layout, style.theme);
+  const preObstacles = placed.flatMap((part) => partObstacles(part, layout, style.theme, preDrops));
   const plan = planWires(parsed.doc.wires, placed, board, layout, preObstacles);
   const relocation = relocateParts(placed, plan.ends, plan.corridor, style.check !== false);
   errors.push(...relocation.errors);
@@ -170,8 +174,9 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
     const to = pointOf(wire.to, layout.point, placements);
     return from && to ? [{ from, to, hints: wire.hints, color: wire.color, line: wire.line }] : [];
   });
+  const drops = captionDrops(parts, layout, style.theme);
   const obstacles = [
-    ...parts.flatMap((part) => partObstacles(part, layout, style.theme)),
+    ...parts.flatMap((part) => partObstacles(part, layout, style.theme, drops)),
     ...[...placements.values()].map((device) => device.rect),
   ];
   // 部品の絵が載っている穴。行に沿ってまっすぐ引く配線がこの上を通らないようにする

@@ -27,7 +27,7 @@ export const bodyHalfHeight = (part: PlacedPart, layout: Layout): number =>
 export const bodyHalfWidth = (part: PlacedPart, layout: Layout): number =>
   packageHalfWidth(part, layout.pitch);
 
-export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
+export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderTheme, drop = 0): string {
   const points = pinPoints(part, layout);
   const center = points?.[1];
   if (!points || !center) return '';
@@ -62,7 +62,7 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
     .join('');
   const text = fitToBoard(caption(part), center.x, theme.metrics.textSize, layout);
   // キャプションは名前の 1 行下 (名前と同じ側に積む)。
-  const label = partLabel(center.x, nameY(center.y) + metrics.textSize * NAME_LINE, text, theme);
+  const label = partLabel(center.x, nameY(center.y) + metrics.textSize * NAME_LINE + drop, text, theme);
 
   const shell = drawPackage(part, {
     cx: center.x,

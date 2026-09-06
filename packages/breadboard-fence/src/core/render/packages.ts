@@ -99,7 +99,7 @@ export function switchBodyRect(part: PlacedPart, layout: Layout): Rect {
  * 実物では見えない結線だが、ここを知らずに同じ側の 2 本を使うと回路が最初から短絡する
  * (この図がいちばん防ぎたい間違い)。
  */
-export function renderPushbutton(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
+export function renderPushbutton(part: PlacedPart, layout: Layout, theme: RenderTheme, drop = 0): string {
   const points = pinPoints(part, layout);
   if (!points || points.length === 0) return '';
 
@@ -132,7 +132,7 @@ export function renderPushbutton(part: PlacedPart, layout: Layout, theme: Render
   // (実機で「transformer, button* は名前を部品の下にする」)。
   const label = partLabel(
     center.x,
-    body.y + body.height + CAPTION_CLEAR + theme.metrics.textSize * NAME_CAP,
+    body.y + body.height + CAPTION_CLEAR + theme.metrics.textSize * NAME_CAP + drop,
     fitToBoard(caption(part), center.x, theme.metrics.textSize, layout),
     theme,
   );
@@ -147,7 +147,7 @@ export function renderPushbutton(part: PlacedPart, layout: Layout, theme: Render
  * 足の並びを決め打たないのは、実物の足の並びが品によって違うため。
  * どの穴に挿したかをそのまま図にする (2 本足・3 本足と同じ考え方)。
  */
-export function renderTransformer(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
+export function renderTransformer(part: PlacedPart, layout: Layout, theme: RenderTheme, drop = 0): string {
   const rect = fourLeadBodyRect(part, layout);
   if (rect.width === 0) return '';
 
@@ -161,7 +161,7 @@ export function renderTransformer(part: PlacedPart, layout: Layout, theme: Rende
   // **字は胴の下。** ほかの部品と側を揃える (実機で「名前を部品の下にする」)。
   const label = partLabel(
     centre.x,
-    centre.y + rect.height / 2 + CAPTION_CLEAR + theme.metrics.textSize * NAME_CAP,
+    centre.y + rect.height / 2 + CAPTION_CLEAR + theme.metrics.textSize * NAME_CAP + drop,
     fitToBoard(caption(part), centre.x, theme.metrics.textSize, layout),
     theme,
   );

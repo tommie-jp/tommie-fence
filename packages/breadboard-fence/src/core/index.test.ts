@@ -1169,3 +1169,27 @@ parts:
     expect(renderBreadboard(named, { edit: true }).svg).toContain('data-name="vin"');
   });
 });
+
+describe('板の印字と名札', () => {
+  test('leaves out a printed column number where a caption covers it', () => {
+    // 縁取りでは消しきれず、字の隙間から欠けた数字が覗いて汚れて見える
+    // (実機で `TH1 10k` の間に `5` の欠片が出ていた)。番号は 5 列おきに
+    // 何度も出るので、1 つ伏せても数えられなくならない。
+    const bare = renderBreadboard('board: half\nparts:\n  R9: resistor a20 a24 100k\n').svg;
+    const over = renderBreadboard('board: half\nparts:\n  TH1: thermistor-ntc j3 j7 10k\n').svg;
+
+    // 板の下の段の `5` が消える。上の段には残る (名札は下にしか出ない)。
+    expect((bare.match(/>5</g) ?? []).length).toBe(2);
+    expect((over.match(/>5</g) ?? []).length).toBe(1);
+  });
+
+  test('moves a caption out of the way of a note the writer placed by address', () => {
+    const source = 'board: half\nparts:\n  R2: resistor c5 c9 4k7\nnotes:\n  - text d5 blue: fb\n';
+    const alone = renderBreadboard('board: half\nparts:\n  R2: resistor c5 c9 4k7\n').svg;
+    const withNote = renderBreadboard(source).svg;
+    const baselineOf = (svg: string): number =>
+      Number(/<text x="[\d.]+" y="([\d.]+)"[^>]*>R2 /.exec(svg)?.[1] ?? NaN);
+
+    expect(baselineOf(withNote)).toBeGreaterThan(baselineOf(alone));
+  });
+});

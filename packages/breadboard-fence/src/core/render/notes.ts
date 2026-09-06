@@ -1,10 +1,10 @@
 import type { Layout } from '../model/layout.ts';
 import { DEFAULT_MARK_COLOR, noteColorValue, noteLeading, noteSizeScale } from '../notes.ts';
 import type { NoteAlign } from '../notes.ts';
-import type { NoteSpec, Point } from '../types.ts';
+import type { NoteSpec, Point, Rect } from '../types.ts';
 import { haloWidth } from './partCommon.ts';
 import { element, num, svgText } from './svg.ts';
-import { fit } from './textFit.ts';
+import { fit, textWidth } from './textFit.ts';
 import type { RenderTheme } from './theme.ts';
 
 /**
@@ -344,4 +344,35 @@ function roomFor(x: number, align: NoteAlign, layout: Layout): number {
   if (align === 'left') return Math.max(0, right);
   if (align === 'right') return Math.max(0, left);
   return Math.max(0, Math.min(left, right)) * 2;
+}
+
+/**
+ * 板の上に置いた字が占める帯。**書いた人が番地で決めた場所**なので、
+ * 自動で置く名札のほうが避ける (`captions.ts`)。1 行 1 つ。
+ */
+export function noteBands(
+  notes: readonly ResolvedNote[],
+  theme: RenderTheme,
+  sourceLines: readonly string[],
+): Rect[] {
+  const bands: Rect[] = [];
+  for (const note of onBoard(notes)) {
+    const { spec } = note;
+    const anchor = note.anchors[0];
+    if ((spec.kind !== 'text' && spec.kind !== 'source') || !anchor) continue;
+    // 回した字は帯で囲めない (斜めになる)。数えるのは横に読む字だけ。
+    if (spec.turn.rotate !== 0) continue;
+
+    const size = fontSizeOf(spec, theme);
+    const step = size * noteLeading(spec.leading, spec.kind);
+    const align: NoteAlign = spec.align ?? 'left';
+    const top = anchor.center.y + (spec.turn.mirror ? step + size * 0.4 : 0);
+    linesOf(spec, sourceLines).forEach((text, index) => {
+      const width = textWidth(text) * size;
+      const x = align === 'left' ? anchor.center.x
+        : align === 'right' ? anchor.center.x - width : anchor.center.x - width / 2;
+      bands.push({ x, y: top + step * index - size * 0.72, width, height: size * 0.92 });
+    });
+  }
+  return bands;
 }

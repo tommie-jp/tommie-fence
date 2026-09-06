@@ -13,7 +13,7 @@ import type { RenderTheme } from './theme.ts';
  * 板に依らないので、perfboard と同じものを使う (52 の docs/18)。ここに残るのは
  * 板の話 — 足の線、キャプションの置き場、傾きと位置。
  */
-export function renderTwoLead(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
+export function renderTwoLead(part: PlacedPart, layout: Layout, theme: RenderTheme, drop = 0): string {
   const [first, second] = part.pins;
   if (!first?.address || !second?.address) return '';
 
@@ -30,7 +30,7 @@ export function renderTwoLead(part: PlacedPart, layout: Layout, theme: RenderThe
     stroke: palette.lead, 'stroke-width': LEAD_WIDTH,
   });
   const text = fitToBoard(caption(part), center.x, theme.metrics.textSize, layout);
-  const label = partLabel(center.x, labelYOf(part, center, layout, theme), text, theme);
+  const label = partLabel(center.x, labelYOf(part, center, layout, theme) + drop, text, theme);
   // 3 引数 rotate() を読まないレンダラがあるので translate と rotate に分ける。
   const body = element(
     'g',

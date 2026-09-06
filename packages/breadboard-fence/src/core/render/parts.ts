@@ -4,10 +4,8 @@ import { boardBodyRect, renderBoardPart } from './boardPart.ts';
 import {
   fourLeadBodyRect, renderDip, renderPushbutton, renderSip, renderTransformer, sipBarRect, switchBodyRect,
 } from './packages.ts';
-import {
-  CAPTION_CLEAR, CAPTION_DROP, CAPTION_HEIGHT, LEG_NAME_CLEAR, NAME_CAP, NAME_LINE,
-  caption, charWidth, labelYOf,
-} from './partCommon.ts';
+import { CAPTION_DROP, LEG_NAME_CLEAR, NAME_CAP, charWidth } from './partCommon.ts';
+import { band, captionBandOf, captionDropOf } from './captions.ts';
 import { bodyHalfHeight, bodyHalfWidth, renderThreeLead } from './threeLead.ts';
 import { renderTwoLead } from './twoLead.ts';
 import type { RenderTheme } from './theme.ts';
@@ -18,24 +16,22 @@ import { textScale } from './theme.ts';
  * 溝側に置いたラベルがレーンと同じ高さに来るのが問題になる。
  * 大きな部品 (パッケージ・ボード) は本体の外形をそのまま渡す。
  */
-export function partObstacles(part: PlacedPart, layout: Layout, theme: RenderTheme): Rect[] {
-  if (part.kind === 'board') {
-    // **名前も配線をよける。** 胴の下に出すようになったので、板の外形だけでは
-    // 名前の上を配線が走る (ほかの部品と同じ勘定)。
-    const body = boardBodyRect(part, layout);
-    return [
-      body,
-      captionBand(
-        body.x + body.width / 2,
-        body.y + body.height + CAPTION_CLEAR + theme.metrics.textSize * NAME_CAP,
-        captionWidth(part, theme),
-        theme,
-      ),
-    ];
-  }
+export function partObstacles(
+  part: PlacedPart,
+  layout: Layout,
+  theme: RenderTheme,
+  drops?: ReadonlyMap<string, number>,
+): Rect[] {
+  // **名札の帯は `captions.ts` が持つ** — 描く位置と同じ勘定を使う
+  // (別々に持つと、逃がした名札の上を配線が走る)。
+  const drop = drops?.get(part.id) ?? 0;
+  const label = captionBandOf(part, layout, theme, drop);
+  const bands = label === null ? [] : [label];
+
+  if (part.kind === 'board') return [boardBodyRect(part, layout), ...bands];
   if (part.kind === 'sip') return [sipBarRect(part, layout)];
-  if (part.kind === 'switch') return [switchBodyRect(part, layout)];
-  if (part.kind === 'four-lead') return [fourLeadBodyRect(part, layout)];
+  if (part.kind === 'switch') return [switchBodyRect(part, layout), ...bands];
+  if (part.kind === 'four-lead') return [fourLeadBodyRect(part, layout), ...bands];
 
   const points = part.pins
     .map((pin) => (pin.address ? layout.point(pin.address) : null))
@@ -71,28 +67,13 @@ export function partObstacles(part: PlacedPart, layout: Layout, theme: RenderThe
         width: halfWidth * 2,
         height: halfHeight * 2 + reach * 2,
       },
-      // キャプションは足の名前の 1 行下 (threeLead.ts と同じ勘定)。
-      captionBand(
-        center.x,
-        center.y + halfHeight + LEG_NAME_CLEAR + theme.metrics.textSize * (NAME_CAP + NAME_LINE),
-        captionWidth(part, theme),
-        theme,
-      ),
+      ...bands,
       // 足の名前は反対側に並ぶ。名前が長ければ胴からはみ出す。
       ...legNameBands(part, points, center, halfHeight, theme),
     ];
   }
 
-  const center = { x: (left + right) / 2, y: (top + bottom) / 2 };
-  const width = Math.max(captionWidth(part, theme), right - left);
-
-  return [captionBand(center.x, labelYOf(part, center, layout, theme), width, theme)];
-}
-
-/** 字 1 行が占める帯。`baseline` は字の基準線で、字はそこから上へ伸びる。 */
-function captionBand(centerX: number, baseline: number, width: number, theme: RenderTheme): Rect {
-  const height = textScale(theme) * CAPTION_HEIGHT;
-  return { x: centerX - width / 2, y: baseline - height + 3, width, height };
+  return bands;
 }
 
 /**
@@ -112,26 +93,24 @@ function legNameBands(
   return part.pins.flatMap((pin, index) => {
     const point = points[index];
     if (!point) return [];
-    return [captionBand(point.x, baseline, [...pin.name].length * charWidth(theme), theme)];
+    return [band(point.x, baseline, [...pin.name].length * charWidth(theme), theme)];
   });
 }
 
-/**
- * 字が図の上で占める横幅。**コードポイントで数え、ラテン文字より広いものは 2 文字ぶん**。
- * サロゲートペアを 2 と数えると絵文字だけ広がり、1 と数えると漢字も絵文字も狭くなる。
- * 狭く見るほうが危ない側で、塞ぎ損ねた字の上を配線が走る。
- */
-const captionWidth = (part: PlacedPart, theme: RenderTheme): number =>
-  [...caption(part)].reduce((sum, char) => sum + ((char.codePointAt(0) ?? 0) > 0xff ? 2 : 1), 0)
-  * charWidth(theme);
-
-export function renderPart(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
+export function renderPart(
+  part: PlacedPart,
+  layout: Layout,
+  theme: RenderTheme,
+  drops?: ReadonlyMap<string, number>,
+): string {
+  // **名札がぶつかったら 1 行下げる** (`captions.ts`)。逃がす量は配線よけと同じ。
+  const drop = captionDropOf(drops, part, theme);
   if (part.kind === 'dip') return renderDip(part, layout, theme);
   if (part.kind === 'sip') return renderSip(part, layout, theme);
-  if (part.kind === 'switch') return renderPushbutton(part, layout, theme);
-  if (part.kind === 'four-lead') return renderTransformer(part, layout, theme);
-  if (part.kind === 'board') return renderBoardPart(part, layout, theme);
-  if (part.kind === 'three-lead') return renderThreeLead(part, layout, theme);
+  if (part.kind === 'switch') return renderPushbutton(part, layout, theme, drop);
+  if (part.kind === 'four-lead') return renderTransformer(part, layout, theme, drop);
+  if (part.kind === 'board') return renderBoardPart(part, layout, theme, drop);
+  if (part.kind === 'three-lead') return renderThreeLead(part, layout, theme, drop);
   // 機器 (device) は帯の中に別の描き方で置くので、ここには来ない。
-  return renderTwoLead(part, layout, theme);
+  return renderTwoLead(part, layout, theme, drop);
 }

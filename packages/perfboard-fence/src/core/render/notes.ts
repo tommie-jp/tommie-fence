@@ -1,7 +1,7 @@
-import { element, fit, num, svgText } from 'fence-kit';
+import { element, fit, num, svgText, textWidth } from 'fence-kit';
 import { colorValue } from '../color.ts';
 import type { Layout } from '../model/layout.ts';
-import type { ResolvedNote } from '../types.ts';
+import type { Rect, ResolvedNote } from '../types.ts';
 import type { Theme } from './theme.ts';
 
 /**
@@ -117,3 +117,26 @@ export const renderNotes = (
       ? element('g', { class: 'cf-chip', 'data-part': noteHandle(note.line), 'data-note': '1' }, drawn)
       : drawn;
   }).join('');
+
+/**
+ * 板に書いた字が占める帯。**書いた人が番地で決めた場所**なので、自動で置く
+ * 名札のほうが避ける (`captions.ts`)。回した字は帯で囲めないので数えない。
+ */
+export function noteBands(
+  notes: readonly ResolvedNote[],
+  layout: Layout,
+  theme: Theme,
+): Rect[] {
+  const size = theme.metrics.textSize;
+  return notes.flatMap((note) => {
+    if (note.kind !== 'text' || note.turn.rotate !== 0) return [];
+    const from = layout.point(note.from);
+    const { anchor, room } = textRoom(from.x, layout.width);
+    const text = fit(note.text ?? '', Math.max(0, room) / size);
+    const width = textWidth(text) * size;
+    const rise = note.turn.mirror ? -(TEXT_RISE + size * 0.8) : TEXT_RISE;
+    const baseline = from.y - rise;
+    const x = anchor === 'start' ? from.x : anchor === 'end' ? from.x - width : from.x - width / 2;
+    return [{ x, y: baseline - size * 0.72, width, height: size * 0.92 }];
+  });
+}

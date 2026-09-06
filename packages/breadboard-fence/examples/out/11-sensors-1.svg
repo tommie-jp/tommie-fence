@@ -458,9 +458,7 @@
 <text x="42" y="72" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" stroke="#f2efe6" stroke-width="3.45" paint-order="stroke" font-size="13.23" font-weight="700" fill="#5f5748">1</text>
 <text x="42" y="297" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" stroke="#f2efe6" stroke-width="3.45" paint-order="stroke" font-size="13.23" font-weight="700" fill="#5f5748">1</text>
 <text x="122" y="72" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" stroke="#f2efe6" stroke-width="3.45" paint-order="stroke" font-size="13.23" font-weight="700" fill="#5f5748">5</text>
-<text x="122" y="297" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" stroke="#f2efe6" stroke-width="3.45" paint-order="stroke" font-size="13.23" font-weight="700" fill="#5f5748">5</text>
 <text x="222" y="72" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" stroke="#f2efe6" stroke-width="3.45" paint-order="stroke" font-size="13.23" font-weight="700" fill="#5f5748">10</text>
-<text x="222" y="297" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" stroke="#f2efe6" stroke-width="3.45" paint-order="stroke" font-size="13.23" font-weight="700" fill="#5f5748">10</text>
 <text x="322" y="72" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" stroke="#f2efe6" stroke-width="3.45" paint-order="stroke" font-size="13.23" font-weight="700" fill="#5f5748">15</text>
 <text x="322" y="297" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" stroke="#f2efe6" stroke-width="3.45" paint-order="stroke" font-size="13.23" font-weight="700" fill="#5f5748">15</text>
 <text x="422" y="72" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" stroke="#f2efe6" stroke-width="3.45" paint-order="stroke" font-size="13.23" font-weight="700" fill="#5f5748">20</text>

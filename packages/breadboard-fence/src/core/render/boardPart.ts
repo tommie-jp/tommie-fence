@@ -21,7 +21,7 @@ export function boardBodyRect(part: PlacedPart, layout: Layout): Rect {
  * perfboard で共通にする」)。ここに残るのは板の話 — 足の点と、
  * 板からはみ出す字の切り方。
  */
-export function renderBoardPart(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
+export function renderBoardPart(part: PlacedPart, layout: Layout, theme: RenderTheme, drop = 0): string {
   const points = pinPoints(part, layout);
   if (!points || points.length === 0) return '';
 
@@ -46,7 +46,7 @@ export function renderBoardPart(part: PlacedPart, layout: Layout, theme: RenderT
   const centreX = body.x + body.width / 2;
   const label = partLabel(
     centreX,
-    body.y + body.height + CAPTION_CLEAR + theme.metrics.textSize * NAME_CAP,
+    body.y + body.height + CAPTION_CLEAR + theme.metrics.textSize * NAME_CAP + drop,
     fitToBoard(caption(part), centreX, theme.metrics.textSize, layout),
     theme,
   );

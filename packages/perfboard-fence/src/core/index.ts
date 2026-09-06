@@ -11,7 +11,7 @@ import { renderParts } from './render/parts.ts';
 import { renderDeviceWires, renderWires } from './render/wires.ts';
 import { crossingPoints } from './render/crossings.ts';
 import { renderTitle } from './render/title.ts';
-import { renderNotes } from './render/notes.ts';
+import { noteBands, renderNotes } from './render/notes.ts';
 import { hatchDefs } from './render/hatch.ts';
 import { legendColors, legendSize, paintedColors, renderLegend } from './render/legend.ts';
 import { partsListSize, partsListing, renderPartsList } from './render/partsList.ts';
@@ -329,7 +329,8 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
         wiring.deviceWires, placedDevices.placed, layout, THEME, hops.slice(wiring.wires.length),
       )
       + renderDevices(placedDevices.placed, THEME, options.edit === true)
-      + renderParts(placement.parts, layout, PLATE, options.edit === true)
+      // **名札は板に書いた字を避ける** (番地で置いたほうが強い)。
+      + renderParts(placement.parts, layout, PLATE, options.edit === true, noteBands(notes, layout, PLATE))
       // 注釈は一番上。**指したものが下に隠れると印の意味が無くなる。**
       + renderNotes(notes, layout, PLATE, options.edit === true)
       // 凡例・部品表・書き出しは板の外の帯。図とは重ならないので、順番はどこでもよい。

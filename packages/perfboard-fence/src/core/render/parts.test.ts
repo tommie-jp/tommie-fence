@@ -400,3 +400,41 @@ describe('姿ごとの描き分け', () => {
     });
   }
 });
+
+/**
+ * 名札どうしがぶつかったら 1 行下げること。**隣り合う行に部品を置くと、
+ * 上の部品の名札と下の部品の名札が同じ高さに並ぶ** (breadboard と同じ約束)。
+ */
+describe('名札はぶつかったら逃げる', () => {
+  const baselineOf = (svg: string, id: string): number =>
+    Number(new RegExp(`<text x="[\\d.]+" y="([\\d.]+)"[^>]*>${id} `).exec(svg)?.[1] ?? NaN);
+
+  const drawn = (...written: readonly string[]): string => renderParts(
+    placeParts(written.map((one, index) => {
+      const [id = '', rest = ''] = one.split(': ');
+      const [type = '', ...holes] = rest.split(' ');
+      const value = holes.length > 2 ? holes.pop() ?? null : null;
+      return {
+        id, type, variant: null, value, line: index + 1, written: rest, holes, turn: NO_TURN,
+      };
+    }), board).parts,
+    layout,
+    THEME,
+  );
+
+  test('drops the later caption a line when two would sit on the same one', () => {
+    // 同じ行に並べた 2 つ。値が長いと名札の帯が横に伸びてぶつかる。
+    const both = drawn('R1: resistor b2 b3 1.5kΩ±5%', 'R2: resistor b4 b5 1.5kΩ±5%');
+    const alone = drawn('R2: resistor b4 b5 1.5kΩ±5%');
+
+    expect(baselineOf(both, 'R2')).toBeGreaterThan(baselineOf(alone, 'R2'));
+    expect(baselineOf(both, 'R2')).toBeGreaterThan(baselineOf(both, 'R1'));
+  });
+
+  test('leaves the first caption where it is, so writing a part does not move the others', () => {
+    const both = drawn('R1: resistor b2 b3 1.5kΩ±5%', 'R2: resistor b4 b5 1.5kΩ±5%');
+    const alone = drawn('R1: resistor b2 b3 1.5kΩ±5%');
+
+    expect(baselineOf(both, 'R1')).toBe(baselineOf(alone, 'R1'));
+  });
+});

@@ -1,6 +1,6 @@
 import type { Layout } from '../model/layout.ts';
 import { HOLE_ROWS } from '../types.ts';
-import type { Board, HoleRow, RailRow } from '../types.ts';
+import type { Board, HoleRow, RailRow, Rect } from '../types.ts';
 import type { Palette, RenderTheme } from './theme.ts';
 import { TEXT_HALO_WIDTH, element, num, svgText } from './svg.ts';
 
@@ -17,7 +17,16 @@ const railColor = (rail: RailRow, palette: Palette): string =>
   rail.startsWith('+') ? palette.positive : palette.negative;
 
 /** ブレッドボード本体 (板・溝・電源レール・全部の穴・行番号) を描く。 */
-export function renderBoard(board: Board, layout: Layout, theme: RenderTheme): string {
+export function renderBoard(
+  board: Board,
+  layout: Layout,
+  theme: RenderTheme,
+  // **名札が乗る所には印字しない** (`captions.ts` が数えた帯)。板の印字は
+  // 縁取りで消しきれず、字の隙間から欠けた数字が覗いて汚れて見える
+  // (実機で `TH1 10k` の間に `5` の欠片が出ていた)。番号は 5 列おきに
+  // 何度も出るので、1 つ伏せても数えられなくならない。
+  covered: readonly Rect[] = [],
+): string {
   const { palette, metrics } = theme;
   const { x, y, width, height } = layout.board;
   const left = layout.colX(1);
@@ -90,9 +99,18 @@ export function renderBoard(board: Board, layout: Layout, theme: RenderTheme): s
       halo: palette.plate,
       haloWidth: TEXT_HALO_WIDTH * metrics.boardTextScale,
     };
-    parts.push(svgText(layout.colX(col), layout.rowY('a') - 12, String(col), options));
-    parts.push(svgText(layout.colX(col), layout.rowY('j') + 17, String(col), options));
+    const width = String(col).length * COLUMN_FONT * metrics.boardTextScale * 0.6;
+    for (const y of [layout.rowY('a') - 12, layout.rowY('j') + 17]) {
+      const spot = { x: layout.colX(col) - width / 2, y: y - COLUMN_FONT * metrics.boardTextScale, width, height: COLUMN_FONT * metrics.boardTextScale * 1.2 };
+      if (covered.some((band) => hides(band, spot))) continue;
+      parts.push(svgText(layout.colX(col), y, String(col), options));
+    }
   }
 
   return parts.join('\n');
 }
+
+/** 2 つの矩形が重なっているか (板の印字を伏せるかどうかの判定)。 */
+const hides = (a: Rect, b: Rect): boolean =>
+  Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 0
+  && Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) > 0;

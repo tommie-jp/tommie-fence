@@ -13,7 +13,9 @@ import type { OrientedRect } from '../placement/geometry.ts';
 import { hatchFill } from './hatch.ts';
 import { isEdgeMount } from '../parts/types.ts';
 import { footprintOf } from '../parts/footprint.ts';
-import type { PlacedPart, Point } from '../types.ts';
+import type { PlacedPart, Point, Rect } from '../types.ts';
+import { captionRoom, captionWidth } from './captions.ts';
+import type { CaptionRoom } from './captions.ts';
 import { jointMark } from './joints.ts';
 import type { Theme } from './theme.ts';
 
@@ -72,6 +74,7 @@ function partLabel(
   pins: { readonly x: number; readonly y: number },
   theme: Theme,
   layout: Layout,
+  room?: CaptionRoom,
 ): string {
   const size = theme.metrics.textSize;
   const style = {
@@ -84,7 +87,11 @@ function partLabel(
   const tilt = turned(rect.angle);
   if (Math.abs(tilt) < UPRIGHT) {
     const baseline = rect.cy + rect.height / 2 + CAPTION_GAP + size * CAPTION_CAP;
-    return svgText(pins.x, baseline, fitToBoard(text, pins.x, size, layout), style);
+    // **ぶつかったら 1 行下げる** (`captions.ts`)。隣の行の部品と名札が
+    // 同じ高さに並ぶことがある (実機で `Q1 2SC1815` と `D1 1N60` が重なった)。
+    const shown = fitToBoard(text, pins.x, size, layout);
+    const drop = room?.drop(pins.x, baseline, captionWidth(shown, theme)) ?? 0;
+    return svgText(pins.x, baseline + drop, shown, style);
   }
 
   // **傾いた胴には字も同じだけ傾ける。** 斜めに置いた部品の名前だけ水平だと、
@@ -95,14 +102,14 @@ function partLabel(
   // (横向きの字は下端で置くため、その半分が要らない)。
   const gap = rect.height / 2 + CAPTION_GAP + size / 2;
   const at = { x: pins.x + away.x * gap, y: pins.y + away.y * gap };
-  const room = Math.abs(Math.sin(tilt)) > Math.abs(Math.cos(tilt))
+  const fitted = Math.abs(Math.sin(tilt)) > Math.abs(Math.cos(tilt))
     ? fitDown(text, at.y, size, layout)
     : fitToBoard(text, at.x, size, layout);
 
   return element(
     'g',
     { transform: `translate(${num(at.x)} ${num(at.y)}) rotate(${num(degrees(tilt))})` },
-    svgText(0, 0, room, { ...style, 'dominant-baseline': 'middle' }),
+    svgText(0, 0, fitted, { ...style, 'dominant-baseline': 'middle' }),
   );
 }
 
@@ -375,7 +382,7 @@ const SPAN_RATIO: Record<string, number> = {
  * 2 本足の部品。**胴は 2 つの穴を結ぶ線の上に、その傾きのまま描く**ので、
  * 各部品の形は「原点が中央・x 軸が足の向き」の座標で書けばよい。
  */
-function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
+function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme, room?: CaptionRoom): string {
   const [first, second] = part.pins;
   const rect = bodyRect(part, layout);
   if (!first || !second || !rect) return '';
@@ -431,6 +438,7 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
     pinMiddle,
     theme,
     layout,
+    room,
   );
 
   // 姿の名前は**板の外に出ている胴の真ん中**に置く。台座は 1mm しかないので
@@ -479,7 +487,7 @@ function packageAngle(part: PlacedPart): number {
   return ((step % 4) + 4) % 4 * 90;
 }
 
-function renderPackage(part: PlacedPart, layout: Layout, theme: Theme): string {
+function renderPackage(part: PlacedPart, layout: Layout, theme: Theme, room?: CaptionRoom): string {
   const rect = bodyRect(part, layout);
   if (!rect) return '';
 
@@ -517,6 +525,7 @@ function renderPackage(part: PlacedPart, layout: Layout, theme: Theme): string {
     { x: rect.cx, y: rect.cy },
     theme,
     layout,
+    room,
   );
   return `${shell}${leads}${label}`;
 }
@@ -550,7 +559,13 @@ const chipInk = (theme: Theme): ChipInk => ({
  * **字の大きさは breadboard に合わせる** (`CHIP_SCALE`)。樹脂に刷る字は
  * 部品の姿の一部で、板に書く字 (`metrics.textSize`) とは別のもの。
  */
-function renderChip(part: PlacedPart, kind: 'dip' | 'sip' | 'board', layout: Layout, theme: Theme): string {
+function renderChip(
+  part: PlacedPart,
+  kind: 'dip' | 'sip' | 'board',
+  layout: Layout,
+  theme: Theme,
+  room?: CaptionRoom,
+): string {
   const points = part.pins.map((pin) => layout.point(pin.address));
   if (points.length === 0) return '';
 
@@ -593,6 +608,7 @@ function renderChip(part: PlacedPart, kind: 'dip' | 'sip' | 'board', layout: Lay
     centre,
     theme,
     layout,
+    room,
   );
 }
 
@@ -602,7 +618,7 @@ function renderChip(part: PlacedPart, kind: 'dip' | 'sip' | 'board', layout: Lay
  * DIP は 1 番ピン側にノッチを描く。実物と同じ向きの目印が無いと、
  * **図を見ながら挿すときに 180 度回して挿せてしまう**。
  */
-function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
+function renderBox(part: PlacedPart, layout: Layout, theme: Theme, room?: CaptionRoom): string {
   const rect = bodyRect(part, layout);
   const first = part.pins[0];
   if (!rect || !first) return '';
@@ -610,7 +626,7 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
   // **パッケージの姿は fence-kit が描く** (`parts/chips.ts`)。ここに残るのは
   // タクトスイッチと変圧器の 2 つだけ。
   const kind = footprintOf(part.type)?.kind;
-  if (kind === 'dip' || kind === 'sip' || kind === 'board') return renderChip(part, kind, layout, theme);
+  if (kind === 'dip' || kind === 'sip' || kind === 'board') return renderChip(part, kind, layout, theme, room);
 
   const leads = part.pins
     .map((pin) => {
@@ -636,6 +652,7 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
       { x: rect.cx, y: rect.cy },
       theme,
       layout,
+      room,
     )}`;
   }
 
@@ -653,6 +670,7 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme): string {
     { x: rect.cx, y: rect.cy },
     theme,
     layout,
+    room,
   );
 
   return `${body}${switchMarks(part, rect)}${leads}${label}`;
@@ -685,13 +703,20 @@ export const renderParts = (
   layout: Layout,
   theme: Theme,
   edit = false,
-): string =>
-  parts
+  // **先に場所を取っているもの** (板に書いた注釈)。名札はそこを避ける。
+  taken: readonly Rect[] = [],
+): string => {
+  // **名札の逃がしは書かれた順に決まる** (`captions.ts`)。
+  const room = captionRoom(theme, taken);
+  return parts
     .map((part) => {
       const kind = footprintOf(part.type, part.variant)?.kind;
       const drawn = isBoxed(part)
-        ? renderBox(part, layout, theme)
-        : kind === 'three-lead' ? renderPackage(part, layout, theme) : renderTwoLead(part, layout, theme);
+        ? renderBox(part, layout, theme, room)
+        : kind === 'three-lead'
+          ? renderPackage(part, layout, theme, room)
+          : renderTwoLead(part, layout, theme, room);
       return edit ? element('g', { class: 'cf-chip', 'data-part': part.id }, drawn) : drawn;
     })
     .join('');
+};

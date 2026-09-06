@@ -1,9 +1,10 @@
 import type { Layout } from '../model/layout.ts';
-import type { Board, PartsListMode, PlacedPart, Point } from '../types.ts';
+import type { Board, PartsListMode, PlacedPart, Point, Rect } from '../types.ts';
+import { captionBandOf, captionDrops } from './captions.ts';
 import { renderBoard } from './board.ts';
 import type { DevicePlacement } from './devices.ts';
 import { renderDevice } from './devices.ts';
-import { notesBottom, outsideNotesHeight, renderNotes, renderOutsideNotes } from './notes.ts';
+import { noteBands, notesBottom, outsideNotesHeight, renderNotes, renderOutsideNotes } from './notes.ts';
 import type { ResolvedNote } from './notes.ts';
 import { renderHits } from './hits.ts';
 import { renderPart } from './parts.ts';
@@ -87,8 +88,18 @@ export function renderDocument(input: DocumentInput): string {
 
   // 題の下に図と部品リストが続く。中は座標をずらさず、題のぶんだけ全体を
   // 1 つの g で下げる (図の中の座標計算に題が混ざらない)。
+  // **名札がぶつかったら 1 行下げる。** 図の中で 1 回だけ決めて、
+  // 描く側と配線よけで同じ答えを使う (`captions.ts`)。
+  const drops = captionDrops(
+    input.parts, layout, theme,
+    noteBands(input.notes, theme, input.sourceLines ?? []),
+  );
+  // 板の印字 (列番号) を伏せる帯。名札が乗る所だけ。
+  const covered = input.parts
+    .map((part) => captionBandOf(part, layout, theme, drops.get(part.id) ?? 0))
+    .filter((band): band is Rect => band !== null);
   const body = [
-    renderBoard(input.board, layout, theme),
+    renderBoard(input.board, layout, theme, covered),
     ...wires.map((wire) => wire.halo),
     // 配線は細くて掴めないので、見える線に**太い透明な線**を重ねる (circuit と同じ手)。
     ...wires.map((wire, index) => marked(
@@ -96,7 +107,7 @@ export function renderDocument(input: DocumentInput): string {
       { class: 'cf-wire', 'data-line': String(input.wires[index]?.line ?? 0) },
     )),
     ...input.parts.filter((part) => part.kind !== 'device').map((part) =>
-      marked(renderPart(part, layout, theme), { class: 'cf-chip', 'data-part': part.id })),
+      marked(renderPart(part, layout, theme, drops), { class: 'cf-chip', 'data-part': part.id })),
     // 板の外の機器も**掴めるように包む** (実機で「基板外の部品も対象にする」)。
     ...input.parts
       .filter((part) => part.kind === 'device')

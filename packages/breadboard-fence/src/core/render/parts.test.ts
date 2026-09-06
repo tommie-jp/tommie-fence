@@ -6,6 +6,7 @@ import { placeParts } from '../placement/place.ts';
 import type { PlacedPart } from '../types.ts';
 import { partObstacles, renderPart } from './parts.ts';
 import { boardBodyRect } from './boardPart.ts';
+import { captionDrops } from './captions.ts';
 import { bodyHalfHeight, bodyHalfWidth } from './threeLead.ts';
 import { num } from './svg.ts';
 import { resolveStyle } from './theme.ts';
@@ -215,5 +216,42 @@ describe('マイコンボードの足の番号', () => {
     expect(svg).toContain('>VBUS 40<');
     // 配線に書く綴りは名前のまま。
     expect(svg).not.toContain('01 GP0"');
+  });
+});
+
+/**
+ * 名札どうしがぶつかったら 1 行下げること。**隣り合う行に部品を置くと、
+ * 上の部品の名札と下の部品の名札が同じ高さに並ぶ** (3 本足は足の名前の
+ * 1 行下に名札が来るので、1 行違いでもぶつかる)。
+ * 実機の 09-am-radio で `Q1 2SC1815` と `D1 1N60` が重なっていた回。
+ */
+describe('名札はぶつかったら逃げる', () => {
+  const baselineOf = (svg: string, id: string): number =>
+    Number(new RegExp(`<text x="[\\d.]+" y="([\\d.]+)"[^>]*>${id} `).exec(svg)?.[1] ?? NaN);
+
+  const drawAll = (source: string): string => {
+    const doc = parseFence(source).doc!;
+    const placement = placeParts(doc.parts, createBoard(doc.board));
+    const drops = captionDrops(placement.parts, layout, theme);
+    return placement.parts.map((part) => renderPart(part, layout, theme, drops)).join('');
+  };
+
+  test('drops the later caption a line when two would sit on the same one', () => {
+    const both = drawAll('parts:\n'
+      + '  Q1: transistor h11(B) h12(C) h13(E) 2SC1815\n'
+      + '  D1: diode i12(A) i17(K) 1N60\n');
+    const alone = drawAll('parts:\n  D1: diode i12(A) i17(K) 1N60\n');
+
+    expect(baselineOf(both, 'D1')).toBeGreaterThan(baselineOf(alone, 'D1'));
+    expect(baselineOf(both, 'D1') - baselineOf(both, 'Q1')).toBeGreaterThan(theme.metrics.textSize);
+  });
+
+  test('leaves the first caption where it is, so writing a part does not move the others', () => {
+    const both = drawAll('parts:\n'
+      + '  Q1: transistor h11(B) h12(C) h13(E) 2SC1815\n'
+      + '  D1: diode i12(A) i17(K) 1N60\n');
+    const alone = drawAll('parts:\n  Q1: transistor h11(B) h12(C) h13(E) 2SC1815\n');
+
+    expect(baselineOf(both, 'Q1')).toBe(baselineOf(alone, 'Q1'));
   });
 });
