@@ -7,6 +7,10 @@ on:
     branches: [main]
   pull_request:
 
+# 読むだけ。release.yml / pages.yml と同じく、既定の token の権限に頼らない。
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
