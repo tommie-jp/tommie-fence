@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vitest';
 import { openMap } from './index.ts';
 import { THEME_CSS } from './theme.ts';
 
@@ -10,6 +10,14 @@ import { THEME_CSS } from './theme.ts';
  */
 
 const SOURCE = 'title: t\nboard: half\nparts:\n  R1: resistor a5 a10\n';
+
+/**
+ * **iframe は頁から外して片付ける。** jsdom は閉じるときに子の browsing context を
+ * 順に閉じるので、置きっぱなしにすると後始末で落ちる (CI で踏んだ)。
+ */
+afterEach(() => {
+  for (const frame of document.querySelectorAll('iframe')) frame.remove();
+});
 
 const openOne = (over: { readonly body?: () => string } = {}) => {
   const frame = document.createElement('iframe');
@@ -62,7 +70,7 @@ describe('マップを頁に開く', () => {
     const sent: unknown[] = [];
     Object.defineProperty(frame, 'contentWindow', {
       configurable: true,
-      value: { postMessage: (message: unknown) => sent.push(message) },
+      value: { postMessage: (message: unknown) => sent.push(message), close: () => {} },
     });
 
     handle.refresh();
@@ -75,7 +83,7 @@ describe('マップを頁に開く', () => {
 
   test('acts on what the frame sends back', () => {
     const { frame, handle, written } = openOne();
-    Object.defineProperty(frame, 'contentWindow', { configurable: true, value: { postMessage: () => {} } });
+    Object.defineProperty(frame, 'contentWindow', { configurable: true, value: { postMessage: () => {}, close: () => {} } });
     loaded(frame);
 
     fromFrame(frame, { kind: 'move', part: 'R1', to: 'c5' });
@@ -89,7 +97,7 @@ describe('マップを頁に開く', () => {
 
   test('ignores messages from anything but its own frame', async () => {
     const { frame, handle, written } = openOne();
-    Object.defineProperty(frame, 'contentWindow', { configurable: true, value: { postMessage: () => {} } });
+    Object.defineProperty(frame, 'contentWindow', { configurable: true, value: { postMessage: () => {}, close: () => {} } });
     loaded(frame);
 
     window.dispatchEvent(new MessageEvent('message', { data: { kind: 'move', part: 'R1', to: 'c5' } }));
@@ -101,7 +109,7 @@ describe('マップを頁に開く', () => {
 
   test('lets go of the frame and the listeners when it is closed', async () => {
     const { frame, handle, written } = openOne();
-    Object.defineProperty(frame, 'contentWindow', { configurable: true, value: { postMessage: () => {} } });
+    Object.defineProperty(frame, 'contentWindow', { configurable: true, value: { postMessage: () => {}, close: () => {} } });
     loaded(frame);
 
     handle.close();
