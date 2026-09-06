@@ -181,6 +181,25 @@ describe('SMA の横置き (端面実装)', () => {
     expect((flat.match(/<line /g) ?? []).length).toBeGreaterThan((upright.match(/<line /g) ?? []).length);
   });
 
+  test('keeps the name on the board when the clip straddles the very edge', () => {
+    // 凹は板の縁を挟むので、**先端は板の外の列**にも書ける (`g0` / `i0`)。
+    // 足の中点で字を置くと板から出て、幅ゼロで `…` に切られ、**部品の名前が
+    // 図から消える** (実機で 12-all-perfboard.md の図16 で踏んだ)。
+    const straddling = placeParts(
+      [{
+        id: 'J1', type: 'sma', variant: 'female-edge', holes: ['c1', 'b0', 'd0'],
+        value: null, written: 'sma/female-edge c1 b0 d0', turn: NO_TURN, line: 1,
+      }],
+      board,
+    ).parts;
+
+    const svg = renderParts(straddling, layout, THEME);
+    const label = /<text x="([0-9.]+)"[^>]*>J1<\/text>/.exec(svg);
+
+    expect(svg).toContain('>J1</text>');
+    expect(Number(label?.[1])).toBe(layout.point(parseAddress('c1')!).x);
+  });
+
   test('keeps the caption over the legs, not over the body that hangs off the board', () => {
     const svg = renderParts(edge('male-edge'), layout, THEME);
     const label = /<text x="([0-9.]+)"[^>]*>J1<\/text>/.exec(svg);

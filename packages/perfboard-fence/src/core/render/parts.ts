@@ -45,6 +45,13 @@ function fitToBoard(text: string, x: number, fontSize: number, layout: Layout): 
   return fit(text, Math.max(0, room) / fontSize);
 }
 
+/**
+ * その置き場所に字が丸ごと収まるか。**切るのと同じ物差しで見る** (`fitToBoard`) —
+ * 別に測ると、収まると言った場所で `…` に切られる。
+ */
+const roomFor = (text: string, x: number, fontSize: number, layout: Layout): boolean =>
+  fitToBoard(text, x, fontSize, layout) === text;
+
 /** 縦に置いた部品のキャプションが、板の上下に収まる幅。 */
 function fitDown(text: string, y: number, fontSize: number, layout: Layout): string {
   const { board } = layout;
@@ -402,9 +409,17 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
   // (端面実装の SMA) で字が板から出て、地に紛れるか幅ゼロで `…` に切られる。
   // 縦は胴の下端から測る — 中心から一定の距離だと、胴の大きい部品で字が胴に載る。
   // 端面実装は 2 本目の足が中心線の上下にあるので、**中心導体の行**で測る。
+  // **端面実装は字の入る場所まで引き戻す。** 凹は板の縁を挟むので、先端を板の外の
+  // 列にも書ける (`g0`)。そのとき足の中点は板の縁に寄りすぎて幅が取れず、
+  // **部品の名前が `…` になって図から消える** (実機で図16 で踏んだ)。
+  // 入らないときは中心導体の穴へ — そこは必ず板の内側にある。
+  const middleX = (from.x + to.x) / 2;
   const pinMiddle = mount === null
-    ? { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 }
-    : { x: (from.x + to.x) / 2, y: from.y };
+    ? { x: middleX, y: (from.y + to.y) / 2 }
+    : {
+      x: roomFor(caption(part), middleX, theme.metrics.textSize, layout) ? middleX : from.x,
+      y: from.y,
+    };
   // **測るのは描かれている胴**。当たり判定の矩形 (`bodyRect`) は 2 本足をどれも
   // 同じ高さで見るので、円板 (バリスタ・CdS) や玉のように背の高い胴では
   // 字が胴に食い込む (実機で「varistor、文字が被らないようにして」)。
