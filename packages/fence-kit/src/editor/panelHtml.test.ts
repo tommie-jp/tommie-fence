@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import { makeNonce, panelHtml, renderFencePicker } from './panelHtml.ts';
+import { makeNonce, panelHtml, renderFencePicker, renderSwatches } from './panelHtml.ts';
 
 /** 帯はフェンスが組む (`FenceEditor`)。殻の試験では中身の分かる印を入れておく。 */
 const CHROME = {
   palette: '<details class="cf-palette"></details>',
   typeNames: '<datalist id="cf-type-names"></datalist>',
   colorNames: '<datalist id="cf-color-names"></datalist>',
+  swatches: '',
   foldsWire: false,
   fine: null,
   fineFor: 'all' as const,
@@ -338,5 +339,32 @@ describe('renderFencePicker', () => {
 
   test('escapes the title, which comes from the fence', () => {
     expect(renderFencePicker([{ line: 3, title: '<b>' }, { line: 9, title: null }], 3)).toContain('&lt;b&gt;');
+  });
+});
+
+describe('配線の色見本', () => {
+  test('draws a square in the real colour beside each name, so it reads without opening', () => {
+    const html = renderSwatches(['red', 'black']);
+
+    expect(html).toContain('data-color="red"');
+    expect(html).toContain('background:#d33a2f');
+    expect(html).toContain('>black</button>');
+  });
+
+  test('leaves out names it cannot colour, since an unpainted square says nothing', () => {
+    expect(renderSwatches(['red', 'chartreuse'])).not.toContain('chartreuse');
+  });
+
+  test('draws nothing for a fence that writes no wire colours', () => {
+    expect(renderSwatches([])).toBe('');
+  });
+
+  test('shows one square per colour, not one per spelling', () => {
+    // `gray` と `grey` は同じ色。見本に両方出すと「どこが違うのか」になる。
+    const html = renderSwatches(['gray', 'grey', 'red']);
+
+    expect(html).toContain('data-color="gray"');
+    expect(html).not.toContain('data-color="grey"');
+    expect(html).toContain('data-color="red"');
   });
 });

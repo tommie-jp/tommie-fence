@@ -7,7 +7,7 @@ import { createHistory, sameBody } from './history.ts';
 import { describeDiff } from './edits.ts';
 import { applyRewrite } from './lines.ts';
 import type { EditResult, FenceEditor, FenceEntry, GridStep, PartFields } from './fenceEditor.ts';
-import { COLOR_LIST_ID, TYPE_LIST_ID, renderFencePicker } from './panelHtml.ts';
+import { COLOR_LIST_ID, TYPE_LIST_ID, renderFencePicker, renderSwatches } from './panelHtml.ts';
 import type { PanelChrome } from './panelHtml.ts';
 import type { MapViewHtml } from './panelHtml.ts';
 import type { FenceBlock } from '../fences.ts';
@@ -94,6 +94,10 @@ export type Incoming = {
   readonly to?: unknown;
   readonly what?: unknown;
   readonly id?: unknown;
+  /** まとめて消す配線 (行番号の並び)。部品は `ids` のほう。 */
+  readonly wires?: unknown;
+  /** 引く配線の色 (色見本で選んだもの)。 */
+  readonly color?: unknown;
   readonly line?: unknown;
   /** 配線のどちらの端か (`from` / `to`)。 */
   readonly end?: unknown;
@@ -423,6 +427,7 @@ export function createSession<D extends DocLike>(
     palette: fence.palette(),
     typeNames: fence.typeNames(TYPE_LIST_ID),
     colorNames: fence.colorNames(COLOR_LIST_ID),
+    swatches: renderSwatches(fence.wireColors?.() ?? []),
     // 能力表も語彙と一緒に (webview は同じ箱から読む)。
     foldsWire: fence.foldsWire,
     fine: fence.fine,
@@ -928,7 +933,12 @@ export function createSession<D extends DocLike>(
     // **押したときと同じ書き換えを本文の写しに当てて**、そのあとの穴を読む。
     // 見せた物と書かれる物が食い違わない (文書は触らないので何度でも呼べる)。
     if (!plan.result.ok) {
-      answer([plan.at], false, plan.result.error.message, plan.from);
+      // **置けなくても姿は見せる (赤い影)。** 動かすときは図にある絵をそのまま
+      // 写せるので前から赤く出ていたが、置くときは図にまだ無いぶん影ごと消えて
+      // いた — 回して置けない向きにすると、何を持っているのかが画面から消える
+      // (実機で「回転して置けない場合でもシャドウを赤で表示して」)。
+      const shown = refusedChip(fence.source, fence.line, plan);
+      answer(shown?.cells ?? [plan.at], false, plan.result.error.message, shown?.from ?? plan.from, shown?.chip);
       return;
     }
     const after = applyRewrite(fence.source, plan.result.value);
@@ -956,6 +966,11 @@ export function createSession<D extends DocLike>(
     readonly shape?: string;
     /** 写しの図の中でのゴーストの名前 (置くときだけ)。 */
     readonly ghostId?: string;
+    /**
+     * 同じものを**別の穴に**当ててみる (置くときだけ)。置けない所を指している
+     * ときに、姿を描くための足場を探すのに使う。
+     */
+    readonly trial?: (at: string) => EditResult;
   } | null {
     const to = text(message.to);
     if (to === null) return null;
@@ -976,6 +991,9 @@ export function createSession<D extends DocLike>(
       return {
         result: editor.addPart(source, part),
         at: to,
+        // **足場を探せるのは 1 穴で置くときだけ。** 間隔をドラッグで選んでいる
+        // 最中は穴が 2 つ来て、ずらすと間隔そのものが変わる (姿が別物になる)。
+        ...(at.length === 1 ? { trial: (spot: string) => editor.addPart(source, { ...part, at: [spot] }) } : {}),
         cells: (after) => editor.cellsOf(after, id),
         // 足の数まで鍵に入れる (2 端子はドラッグで間隔が変わり、姿も変わる)。
         // 名前も入れる — 本文が変われば次の名前が変わり、名札も変わる。
@@ -1013,6 +1031,73 @@ export function createSession<D extends DocLike>(
    * 場所を変えただけなら、前に描いた絵とそのときの穴を返して殻にずらさせる。
    */
   let lastGhost: { readonly shape: string; readonly chip: string; readonly from: readonly string[] } | null = null;
+
+  /**
+   * 置けない所を指しているときの姿。**赤い影を出すための足場**を探して描く。
+   *
+   * 姿は種類と向きと足の数で決まり、場所では変わらない。だから**どこか置ける穴**に
+   * 試し当てて絵を切り出し、そこから指した穴までの差を添えれば、置けない場所にも
+   * 同じ姿を出せる。置ける穴が見つからなければ諦める (影は出ない)。
+   */
+  const ROOM_REACH = 3;
+
+  /** 近い順に見る差 (0 から `reach` 升まで)。**同じ距離なら行が先**。 */
+  function* nearby(reach: number): Generator<{ readonly rows: number; readonly cols: number }> {
+    yield { rows: 0, cols: 0 };
+    for (let far = 1; far <= reach; far += 1) {
+      for (let rows = -far; rows <= far; rows += 1) {
+        for (const cols of new Set([far - Math.abs(rows), -(far - Math.abs(rows))])) {
+          yield { rows, cols };
+        }
+      }
+    }
+  }
+
+  function refusedChip(
+    source: string,
+    line: number,
+    plan: { readonly at: string; readonly shape?: string; readonly ghostId?: string; readonly trial?: (at: string) => EditResult },
+  ): { readonly chip: string; readonly cells: readonly string[]; readonly from: readonly string[] } | null {
+    const { shape, ghostId, trial } = plan;
+    if (shape === undefined || ghostId === undefined || trial === undefined) return null;
+
+    // **同じ姿を描いてあれば探さない。** 置ける穴を掃いたあとで縁へ寄せる、が
+    // ふつうの触り方なので、たいていはここで当たる。
+    const drawn = lastGhost !== null && lastGhost.shape === shape
+      ? lastGhost
+      : searchRoom(source, line, shape, ghostId, plan.at, trial);
+    if (drawn === null) return null;
+
+    const anchor = drawn.from[0];
+    const shift = anchor === undefined ? null : editor.stepsTo(anchor, plan.at);
+    if (shift === null) return null;
+    const cells = drawn.from
+      .map((cell) => editor.step(cell, shift.rows, shift.cols))
+      .filter((cell): cell is string => cell !== null);
+    return cells.length === 0 ? null : { chip: drawn.chip, cells, from: drawn.from };
+  }
+
+  function searchRoom(
+    source: string,
+    line: number,
+    shape: string,
+    ghostId: string,
+    at: string,
+    trial: (at: string) => EditResult,
+  ): { readonly chip: string; readonly from: readonly string[] } | null {
+    for (const step of nearby(ROOM_REACH)) {
+      const cell = editor.step(at, step.rows, step.cols);
+      if (cell === null) continue;
+      const fits = trial(cell);
+      if (!fits.ok) continue;
+      const after = applyRewrite(source, fits.value);
+      const cells = editor.cellsOf(after, ghostId);
+      if (cells.length === 0) continue;
+      const drawn = ghostChip(shape, ghostId, after, line, cells);
+      if (drawn !== null) return drawn;
+    }
+    return null;
+  }
 
   function ghostChip(
     shape: string,
@@ -1196,13 +1281,16 @@ export function createSession<D extends DocLike>(
     }
     // 折れ方は放したときの Shift で決まる (`|-` は欄から。まだ無い)。
     const operator = message.operator === '-|' || message.operator === '|-' ? message.operator : '--';
-    const written = `${from} ${operator} ${to}`;
+    // **見本で選んだ色で引く** (実機で「色パレットから色を選択した後、配線すると
+    // その色で配線できるようにする」)。無ければ書かない (フェンスの既定色)。
+    const color = text(message.color) ?? undefined;
+    const written = `${from} ${operator} ${to}${color === undefined ? '' : ` ${color}`}`;
 
     await run({
       label: `${written} を`,
       done: () => `${written} を引きました`,
       already: '引くものがありません',
-      plan: (source) => editor.addWire(source, from, to, operator),
+      plan: (source) => editor.addWire(source, from, to, operator, color),
     });
   }
 
@@ -1210,10 +1298,18 @@ export function createSession<D extends DocLike>(
   async function remove(message: Incoming): Promise<void> {
     const what = text(message.what);
     const picked = handles(message.ids);
-    if (picked.length > 1 && what === 'part') {
+    const wires = handles(message.wires);
+    if (picked.length + wires.length > 1) {
+      // **配線が先、しかも行番号の大きいほうから。** 配線は行で指すので、
+      // 先に上の行を消すと下の行の番号がずれる。部品は名前で引き直すので、
+      // 行がずれても正しく当たる (だから後にできる)。
+      const byLine = [...wires].sort((a, b) => Number(b) - Number(a));
       await runAll(
-        `${picked.length} 個を消しました`,
-        picked.map((one) => (source: string) => editor.deletePart(source, one)),
+        `${picked.length + wires.length} 個を消しました`,
+        [
+          ...byLine.map((one) => (source: string) => editor.deleteWire(source, Number(one))),
+          ...picked.map((one) => (source: string) => editor.deletePart(source, one)),
+        ],
       );
       return;
     }

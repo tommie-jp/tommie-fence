@@ -147,6 +147,12 @@ export type FenceEditor = {
    * 板ごとに違う (circuit は線の色、板の 2 つは被覆の色)。
    */
   readonly colorNames: (listId: string) => string;
+  /**
+   * 配線に書ける色の名前。**属性に固定の色見本を出す**ために要る
+   * (実機で「ドロップダウンメニューではなく、固定の色パレット」)。
+   * 色を書かないフェンスは持たなくてよい (見本を出さない)。
+   */
+  readonly wireColors?: () => readonly string[];
 
   /**
    * 掴んだ名札 (`VCC#2`) から、人に見せる名前 (`VCC`)。
@@ -223,7 +229,7 @@ export type FenceEditor = {
    * 決まる部品 (DIP・端面実装のコネクタ) は、置き直すとその並びを作り直せない。
    */
   readonly duplicate: (source: string, handle: string, id: string) => EditResult;
-  readonly addWire: (source: string, from: string, to: string, operator: string) => EditResult;
+  readonly addWire: (source: string, from: string, to: string, operator: string, color?: string) => EditResult;
   readonly deletePart: (source: string, handle: string) => EditResult;
   readonly deleteWire: (source: string, line: number) => EditResult;
   readonly rename: (source: string, handle: string, to: string) => EditResult;

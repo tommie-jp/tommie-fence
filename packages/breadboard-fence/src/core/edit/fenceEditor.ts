@@ -1,4 +1,4 @@
-import { renderIssues } from 'fence-kit';
+import { renderIssues, wireColorNames } from 'fence-kit';
 import type { EditResult, FenceEditor } from 'fence-kit';
 import { renderPalette, renderTypeOptions } from './palette.ts';
 import { partFields, setField } from './field.ts';
@@ -9,7 +9,9 @@ import { insertPart, insertWire, duplicatePart, nextPartId, partCells } from './
 import { renamePart } from './rename.ts';
 import { flipPart, turnPart } from './turn.ts';
 import { movePart, movablePartIds, partSpans, stepCell, stepsTo } from './move.ts';
-import { deviceCells, deviceSpans, isDevice, moveDevice } from './device.ts';
+import {
+  deviceCells, deviceFields, devicePinSpans, deviceSpans, duplicateDevice, isDevice, moveDevice, setDeviceField,
+} from './device.ts';
 import { movePoint, nodeSpans } from './point.ts';
 import { deletePart, deleteWire } from './remove.ts';
 import { isWireHandle, renderColorOptions, setWireField, wireFields, moveWireEnd } from './wireField.ts';
@@ -68,8 +70,9 @@ export function createBreadboardEditor(): FenceEditor {
 
     spansOf: (source, what, id) => {
       if (isNoteHandle(id)) return noteSpans(source, id);
-      // **板の外の機器は入れ子で書く**ので、光らせるのは `at:` の値 (`device.ts`)。
-      if (what !== 'node' && isDevice(source, id)) return deviceSpans(source, id);
+      // **板の外の機器は入れ子で書く**ので、光らせるのは `at:` の値と、
+      // その機器のピンを指している配線の名前 (`device.ts`)。
+      if (what !== 'node' && isDevice(source, id)) return [...deviceSpans(source, id), ...devicePinSpans(source, id)];
       if (what !== 'node') return partSpans(source, id);
       const at = readAddress(id);
       return at === null ? [] : nodeSpans(source, at);
@@ -78,6 +81,8 @@ export function createBreadboardEditor(): FenceEditor {
     fieldsOf: (source, handle) => {
       if (isNoteHandle(handle)) return noteFields(source, handle);
       if (isWireHandle(handle)) return wireFields(source, handle);
+      // 機器に書けるのは名前とラベルだけ (値は文法が使わず、種類は device そのもの)。
+      if (isDevice(source, handle)) return deviceFields(source, handle);
       return partFields(source, handle);
     },
 
@@ -107,6 +112,9 @@ export function createBreadboardEditor(): FenceEditor {
     palette: renderPalette,
     typeNames: renderTypeOptions,
     colorNames: renderColorOptions,
+    // **固定の色見本を属性に出す** (実機で「ドロップダウンメニューではなく、
+    // 固定の色パレット」)。被覆の色は板の 2 つで同じ表 (`fence-kit` の colors.ts)。
+    wireColors: wireColorNames,
     nextId: nextPartId,
 
     movePart: (source, handle, to, trial) => {
@@ -135,14 +143,14 @@ export function createBreadboardEditor(): FenceEditor {
     moveWireEnd: (source, handle, end, to) => moveWireEnd(source, handle, end, to),
     deleteWire,
 
-    addWire: (source, from, to) => {
+    addWire: (source, from, to, _operator, color) => {
       const at = readAddress(from);
       const target = readAddress(to);
       if (at === null) return unreadable(from);
       if (target === null) return unreadable(to);
       if (!isCrossing(at)) return betweenHoles(from);
       if (!isCrossing(target)) return betweenHoles(to);
-      return insertWire(source, at, target);
+      return insertWire(source, at, target, color);
     },
 
     rename: renamePart,
@@ -152,9 +160,12 @@ export function createBreadboardEditor(): FenceEditor {
         ? setNoteField(source, handle, field, text)
         : isWireHandle(handle)
         ? setWireField(source, handle, field, text)
-        : field === 'type' || field === 'value' || field === 'label'
-        ? setField(source, handle, field as PartField, text)
-        : { ok: false, error: { message: `書き換えられない欄です: ${field}`, line: null } }
+        : field !== 'type' && field !== 'value' && field !== 'label'
+        ? { ok: false, error: { message: `書き換えられない欄です: ${field}`, line: null } }
+        // **機器は入れ子で書く**ので、直すのはブロックの中の 1 行 (`device.ts`)。
+        : isDevice(source, handle)
+        ? setDeviceField(source, handle, field as PartField, text)
+        : setField(source, handle, field as PartField, text)
     ),
 
     addPart: (source, part) => {
@@ -172,7 +183,13 @@ export function createBreadboardEditor(): FenceEditor {
         preview: part.preview ?? false,
       });
     },
-    duplicate: (source, handle, id) => (isNoteHandle(handle) ? duplicateNote(source, handle) : duplicatePart(source, handle, id)),
+    duplicate: (source, handle, id) => (
+      isNoteHandle(handle)
+        ? duplicateNote(source, handle)
+        : isDevice(source, handle)
+        ? duplicateDevice(handle)
+        : duplicatePart(source, handle, id)
+    ),
     turn: (source, handle, quarters) => (
       isNoteHandle(handle) ? turnNote(source, handle, quarters) : turnPart(source, handle, quarters)
     ),

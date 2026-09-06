@@ -169,6 +169,11 @@ export type State = {
   /** 押した場所。放した場所が離れていればドラッグ、その場ならクリック。 */
   readonly pressed: (Spot & { readonly x: number; readonly y: number }) | null;
   readonly ghost: Ghost | null;
+  /**
+   * いま出ているゴーストが**訊いていた場所**。カーソルはもう先へ進んでいることが
+   * あるので、その差だけ `map.ts` が絵をずらす (往復を待たずに追従させる)。
+   */
+  readonly ghostAt: Spot | null;
   /** 直前に置いたもの (`Insert` でもう 1 つ)。足の数まで覚える。 */
   readonly lastPlaced: { readonly type: string; readonly twoEnds: boolean } | null;
   /** 戻す・やり直すを自分で持つか (パネル)。タブそのものがマップなら VS Code に任せる。 */
@@ -182,6 +187,12 @@ export type State = {
    * 部品と配線は交点そのものを指す (実機で「text はどこでも移動できるように」)。
    */
   readonly fineFor: FineFor;
+  /**
+   * これから引く配線の色。**見本で選んだ色が次の 1 本に効く**
+   * (実機で「色パレットから色を選択した後、配線するとその色で配線できる」)。
+   * null は色を書かない (フェンスの既定色)。
+   */
+  readonly ink: string | null;
 };
 
 export const start = (
@@ -198,11 +209,13 @@ export const start = (
   pressed: null,
   also: [],
   ghost: null,
+  ghostAt: null,
   lastPlaced: null,
   ownUndo,
   foldsWire,
   fine,
   fineFor,
+  ink: null,
 });
 
 /** webview で起きたこと。**DOM を読むのは呼ぶ側** (`map.ts`)。 */
@@ -229,7 +242,12 @@ export type Event =
    * 領域で囲んで選んだ。**中身を数えるのは DOM の側** (どの部品がどこに
    * 描かれているかを知っているのはあちら)。ここは覚えるだけ。
    */
-  | { readonly kind: 'pickMany'; readonly parts: readonly string[] }
+  | {
+    readonly kind: 'pickMany';
+    readonly parts: readonly string[];
+    /** 囲みの中の配線 (行番号)。**配線もまとめて選べる** (実機で頼まれた)。 */
+    readonly wires?: readonly string[];
+  }
   /**
    * テキスト側のカーソルが指したもの。**指したら選んだことにする** — 欄を出して
    * 直せるようにするため (実機で頼まれた)。
@@ -239,13 +257,23 @@ export type Event =
   | { readonly kind: 'tool'; readonly tool: Tool }
   /** パレットで部品を選んだ。 */
   | { readonly kind: 'place'; readonly type: string; readonly twoEnds: boolean }
-  /** 拡張がゴーストを返した。 */
-  | { readonly kind: 'ghost'; readonly ghost: Ghost }
+  /**
+   * 拡張がゴーストを返した。`asked` は**その答えが訊いていた場所** — 門が
+   * 実際に送ったものを `map.ts` が控えている。カーソルが先へ進んでいても
+   * 答えを採るために要る (進んだ分は図の上でずらす)。
+   */
+  | { readonly kind: 'ghost'; readonly ghost: Ghost; readonly asked?: { readonly key: string; readonly at: Spot } }
   /** マップを組み直した (要素が入れ替わるので押しかけを捨てる)。 */
   | { readonly kind: 'refresh' }
   | { readonly kind: 'dblclick'; readonly under: Under }
   /** 語彙と一緒に来る能力表 (言語をまたぐと変わる)。 */
-  | { readonly kind: 'chrome'; readonly foldsWire: boolean; readonly fine: number | null };
+  | { readonly kind: 'chrome'; readonly foldsWire: boolean; readonly fine: number | null }
+  /**
+   * 色見本を押した。**引く色が変わる** — 配線を選んでいれば、その 1 本にも
+   * 効かせる (見えている物に効かないと、見本が「次の色」なのか
+   * 「この配線の色」なのか読めない)。同じ色をもう一度押すと色を書かないに戻す。
+   */
+  | { readonly kind: 'ink'; readonly color: string };
 
 /** 拡張へ送る知らせ (`session.ts` の `Incoming` と同じ形)。 */
 export type Message = { readonly kind: string } & Readonly<Record<string, unknown>>;
@@ -350,7 +378,7 @@ type Held = Spot & { readonly cell: string };
 const fineFor = (state: State, under: Under): Fine | null => (state.fine === null ? null : under.fine);
 
 /** カーソルの下の場所 (端数はフェンスが受けるときだけ)。 */
-const spotOf = (state: State, under: Under): Spot => ({ cell: under.cell, fine: fineFor(state, under) });
+export const spotOf = (state: State, under: Under): Spot => ({ cell: under.cell, fine: fineFor(state, under) });
 
 /** カーソルの下の穴 (端数つき)。穴が無ければ null。**「どこへ」はここから 1 つの道で作る。** */
 const heldOf = (state: State, under: Under): Held | null => {
@@ -484,7 +512,9 @@ function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcom
 
   // **`Shift` を押しながら押すと、群れへの出し入れ。** 選び直さずに 1 つずつ
   // 足したり外したりできる (領域で囲むだけでは、飛び飛びの組を作れない)。
-  if (event.shift === true && on !== null && on.kind === 'part') return onToggle(state, on, pressed);
+  // **配線も入れられる** — 囲みで選べるものと、1 つずつ選べるものを揃える。
+  // 節点は交点そのもので消すものが無いので、群れに入れない。
+  if (event.shift === true && on !== null && on.kind !== 'node') return onToggle(state, on, pressed);
 
   if (on === null) {
     // マップの何もない所を押したら選び直し (選んだままだと光が残る)。
@@ -599,7 +629,12 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
     const operator = event.shift && state.foldsWire ? '-|' : '--';
     return outcome(
       { ...clear, wireFrom: null },
-      [{ kind: 'addWire', from: from.cell, to: to.cell, operator, ...withFine(to.fine), ...withFromFine(from.fine) }],
+      [{
+        kind: 'addWire', from: from.cell, to: to.cell, operator,
+        // **見本で選んだ色で引く。** 選んでいなければ書かない (フェンスの既定色)。
+        ...(state.ink === null ? {} : { color: state.ink }),
+        ...withFine(to.fine), ...withFromFine(from.fine),
+      }],
       `${from.cell} から ${to.cell}${betweenNote(state, to.fine)} へ…`,
     );
   }
@@ -687,15 +722,18 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
       ? state.selected
       : topOf(state.under, ['part', 'wire']);
     if (picked === null) return outcome(state);
-    // **まとめて選んでいるときは全部消す。** 1 つのときは知らせも今までどおり。
-    const many = pickedParts(state);
+    // **まとめて選んでいるときは全部消す。** 部品も配線も (実機で「配線も
+    // 複数選択に対応する」)。1 つのときは知らせも今までどおり。
+    const parts = pickedParts(state);
+    const wires = pickedWires(state);
+    const many = parts.length + wires.length;
     return outcome(
       { ...state, selected: null, also: [], pressed: null },
       [{
         kind: 'delete', what: picked.kind, id: picked.id,
-        ...(many.length > 1 ? { ids: many } : {}),
+        ...(many > 1 ? { ids: parts, wires } : {}),
       }],
-      many.length > 1 ? `${many.length} 個を消しています…` : `${shownName(picked.id)} を消しています…`,
+      many > 1 ? `${many} 個を消しています…` : `${shownName(picked.id)} を消しています…`,
       true,
     );
   }
@@ -753,10 +791,15 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
  * いま効かせる先の名札の並び。**1 つのときは 1 件の並び**にして、
  * 呼ぶ側が数を気にしなくて済むようにする。
  */
-export const pickedParts = (state: State): readonly string[] =>
+export const pickedParts = (state: State): readonly string[] => pickedOf(state, 'part');
+
+/** いま効かせる先の配線 (行番号)。**消すのだけが配線に効く** (回す・反転するは無い)。 */
+export const pickedWires = (state: State): readonly string[] => pickedOf(state, 'wire');
+
+const pickedOf = (state: State, kind: Picked['kind']): readonly string[] =>
   (state.also.length > 0
-    ? state.also.filter((one) => one.kind === 'part').map((one) => one.id)
-    : state.selected?.kind === 'part' ? [state.selected.id] : []);
+    ? state.also.filter((one) => one.kind === kind).map((one) => one.id)
+    : state.selected?.kind === kind ? [state.selected.id] : []);
 
 /**
  * 群れへの出し入れ。**押したものが入っていれば外し、居なければ足す。**
@@ -781,8 +824,13 @@ function onToggle(state: State, on: Picked, pressed: State['pressed']): Outcome 
   );
 }
 
-function onPickMany(state: State, parts: readonly string[]): Outcome {
-  const picked: Picked[] = parts.map((id) => ({ kind: 'part', id }));
+function onPickMany(state: State, parts: readonly string[], wires: readonly string[]): Outcome {
+  // **部品が先、配線が後。** 先頭が「押した 1 つ」の代わりになるので、鍵の効く
+  // 先 (回す・反転する) を持つほうを頭に置く。
+  const picked: Picked[] = [
+    ...parts.map((id): Picked => ({ kind: 'part', id })),
+    ...wires.map((id): Picked => ({ kind: 'wire', id })),
+  ];
   const first = picked[0] ?? null;
   if (first === null) return outcome({ ...state, selected: null, also: [] }, [select(null)], null, true);
   return outcome(
@@ -793,13 +841,46 @@ function onPickMany(state: State, parts: readonly string[]): Outcome {
   );
 }
 
-/** 拡張のゴースト。**いま訊いているものの答えだけ**を受け取る (古い答えは捨てる)。 */
-function onGhost(state: State, ghost: Ghost): Outcome {
+/** 配線 1 本の名札。**綴りは殻と揃える** (`session.ts` の `wireHandle`)。 */
+const wireHandleOf = (line: string): string => `wire:${line}`;
+
+/**
+ * 色見本を押した。引く色を覚え、**配線を選んでいればその 1 本にも当てる**。
+ * 同じ色をもう一度押すと外れる (色を書かない = フェンスの既定色に戻る)。
+ */
+function onInk(state: State, color: string): Outcome {
+  const ink = state.ink === color ? null : color;
+  const wires = pickedWires(state);
+  const next: State = { ...state, ink };
+  if (wires.length === 0) {
+    return outcome(next, [], ink === null ? '配線の色を既定に戻しました' : `これから引く配線の色: ${ink}`);
+  }
+  return outcome(
+    next,
+    wires.map((line) => ({ kind: 'setField', part: wireHandleOf(line), field: 'color', text: ink ?? '' })),
+    wires.length > 1 ? `${wires.length} 本の色を変えています…` : `${wires[0]} 行目の配線の色を変えています…`,
+  );
+}
+
+/**
+ * 拡張のゴースト。**いま訊いているものの答えだけ**を受け取る (別の持ち物の
+ * 答えは捨てる)。
+ *
+ * **カーソルが先へ進んでいても捨てない。** 往復のあいだにマウスは何升も動く
+ * ので、「カーソルの真下の答え」しか採らないと、影は答えが返るたびに 1 回しか
+ * 動かない — Remote 越しのように往復が遅い所では、それが「反応が悪い」に見える
+ * (実機で「部品を移動中の反応が悪い。マウス追従をスムーズにして」)。
+ * 訊いた場所を `ghostAt` に控えておき、そこから先へ進んだ分は `map.ts` が
+ * 図の上でずらす (往復を待たない)。
+ */
+function onGhost(state: State, event: Extract<Event, { kind: 'ghost' }>): Outcome {
+  const { ghost, asked } = event;
   const { carry, under } = state;
   const to = carry === null ? null : heldOf(state, under);
   const wanted = carry === null || to === null ? null : previewKey(carry, to, spanFrom(state, carry, to));
-  if (wanted !== ghost.key) return outcome(state);
-  return outcome({ ...state, ghost });
+  if (wanted === ghost.key) return outcome({ ...state, ghost, ghostAt: to });
+  if (asked !== undefined && ghost.key === asked.key) return outcome({ ...state, ghost, ghostAt: asked.at });
+  return outcome(state);
 }
 
 export function step(state: State, event: Event): Outcome {
@@ -830,7 +911,7 @@ export function step(state: State, event: Event): Outcome {
       return { ...lifted, send: [select(null), ...lifted.send] };
     }
     case 'pickMany':
-      return onPickMany(state, event.parts);
+      return onPickMany(state, event.parts, event.wires ?? []);
     case 'aim':
       // **持ち物があるあいだは触らない** (置いている最中に選び直さない)。
       // 知らせは返さない — カーソルを見ているのは拡張の側なので、
@@ -844,7 +925,9 @@ export function step(state: State, event: Event): Outcome {
           also: (event.also?.length ?? 0) > 1 ? [...(event.also ?? [])] : [],
         });
     case 'ghost':
-      return onGhost(state, event.ghost);
+      return onGhost(state, event);
+    case 'ink':
+      return onInk(state, event.color);
     case 'refresh':
       // **持ち物は続ける** (組み直しは書き換えのたびに起きる)。押しかけは捨てる。
       return outcome({ ...state, selected: null, pressed: null });

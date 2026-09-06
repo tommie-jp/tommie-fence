@@ -23,5 +23,12 @@
   },
   "include": ["src", "vitest.config.ts"],
   // DOM を知るのは webview だけ (下の tsconfig.webview.json が見る)。
-  "exclude": ["src/editor/webview/map.ts"]
+  // **DOM を触るファイルだけ**を外す — 同じ webview の下でも `mapState.ts` と
+  // `previewGate.ts` は DOM を知らないので、こちらでも見張る。
+  "exclude": [
+    "src/editor/webview/map.ts",
+    "src/editor/webview/domFixture.ts",
+    "src/editor/webview/map.dom.test.ts",
+    "src/editor/webview/map.chrome.test.ts"
+  ]
 }

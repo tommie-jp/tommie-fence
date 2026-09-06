@@ -1,4 +1,4 @@
-import { renderIssues } from 'fence-kit';
+import { renderIssues, wireColorNames } from 'fence-kit';
 import type { EditResult, FenceEditor } from 'fence-kit';
 import { normalizeNewlines } from 'fence-kit';
 import { renderPalette, renderTypeOptions } from './palette.ts';
@@ -103,6 +103,9 @@ export function createPerfboardEditor(): FenceEditor {
     palette: renderPalette,
     typeNames: renderTypeOptions,
     colorNames: renderColorOptions,
+    // **固定の色見本を属性に出す** (実機で「ドロップダウンメニューではなく、
+    // 固定の色パレット」)。被覆の色は板の 2 つで同じ表 (`fence-kit` の colors.ts)。
+    wireColors: wireColorNames,
     nextId: nextPartId,
 
     movePart: (source, handle, to, trial) => {
@@ -135,14 +138,14 @@ export function createPerfboardEditor(): FenceEditor {
     moveWireEnd: (source, handle, end, to) => moveWireEnd(source, handle, end, to),
     deleteWire,
 
-    addWire: (source, from, to) => {
+    addWire: (source, from, to, _operator, color) => {
       const at = readAddress(from);
       const target = readAddress(to);
       if (at === null) return unreadable(from);
       if (target === null) return unreadable(to);
       if (!isCrossing(at)) return betweenHoles(from);
       if (!isCrossing(target)) return betweenHoles(to);
-      return insertWire(source, at, target);
+      return insertWire(source, at, target, color);
     },
 
     rename: renamePart,

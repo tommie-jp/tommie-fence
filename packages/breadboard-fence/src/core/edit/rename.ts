@@ -3,13 +3,17 @@ import { fenceError, safeToken } from '../errors.ts';
 import { isReferenceable } from '../limits.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
+import { devicePinSpans } from './device.ts';
 import type { FieldResult } from './field.ts';
 
 /**
- * 部品の名前を変える。**鍵と、その部品を指す注釈の両方**を書き換える。
+ * 部品の名前を変える。**鍵と、その部品を指す注釈**を書き換える。
  *
- * 配線は書き換えない — こちらの配線は**穴を指す**ので、名前が変わっても
- * 行はそのまま正しい (circuit は `Q1.b` の形で足を指すので一緒に直す)。
+ * 板に挿す部品の配線は書き換えない — こちらの配線は**穴を指す**ので、名前が
+ * 変わっても行はそのまま正しい (circuit は `Q1.b` の形で足を指すので一緒に直す)。
+ *
+ * **板の外の機器だけは配線も直す。** 機器には穴が無く、配線は `AD2.V+` の形で
+ * ピンを指すので、名前だけ変えると指し先を見失う (図から機器が消える)。
  */
 
 const fail = (message: string, line: number | null): FieldResult =>
@@ -60,6 +64,11 @@ export function renamePart(source: string, from: string, to: string): FieldResul
       if (target === from) edits.push({ line: note.line, ...span, text: to });
       cursor = span.column + span.length;
     }
+  }
+
+  // **機器のピンを指している配線も一緒に。** `AD2.V+` の `AD2` の所だけを直す。
+  if (part.type === 'device') {
+    for (const span of devicePinSpans(normalized, from)) edits.push({ ...span, text: to });
   }
 
   // **接続は変わらない** (名前が変わるだけで、どの穴に何が挿さるかは同じ)。

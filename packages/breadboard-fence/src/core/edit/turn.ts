@@ -1,4 +1,5 @@
 import type { Edit } from 'fence-kit';
+import { slideBy, slideInto } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import { isOnBoard } from '../model/board.ts';
@@ -62,11 +63,16 @@ function writtenLeadsAt(source: string, id: string, what: string) {
   if (!isLocated(found)) return { ok: false as const, error: found.error };
 
   if (found.addresses.length < 2) {
+    // **対称な形はそう言う。** タクトスイッチは回しても同じ穴どうしがつながる
+    // ので、「向きが出ません」だと直しようのない断りに読める。
+    const symmetric = lookupFootprint(found.part.type)?.kind === 'switch';
     return {
       ok: false as const,
       error: fenceError(
-        `${safeToken(id)} は${what}せません`
-        + ` (足の位置を形が決める部品なので、穴の順に向きが出ません)`,
+        symmetric
+          ? `${safeToken(id)} は${what}しても同じ穴どうしがつながります (対称な形です)`
+          : `${safeToken(id)} は${what}せません`
+            + ` (足の位置を形が決める部品なので、穴の順に向きが出ません)`,
         found.part.line,
       ),
     };
@@ -263,12 +269,31 @@ export function turnPart(
     ? first.col + Math.trunc((last.col - first.col) / 2)
     : held.col;
 
-  const landings: (Address | null)[] = found.addresses.map((one) => {
-    const row = rowIndex(one);
-    if (row === null) return null;
+  const turned = found.addresses.map((one) => {
+    const row = rowIndex(one) ?? 0;
     const delta = spin({ row: row - pivotRow, col: one.col - pivotCol }, quarters);
-    const landed = rowAt(pivotRow + delta.row);
-    return landed === null ? null : { kind: 'hole', row: landed, col: pivotCol + delta.col };
+    return { row: pivotRow + delta.row, col: pivotCol + delta.col };
+  });
+
+  // **板から出たら寄せ直す。回転そのものは断らない。** 縁に置いた部品を回すと
+  // 足が外へ出るが、断ると「この部品は回らない」に見える (実機で
+  // 「capacitor, inductor などほとんど回転できない」と言われたのがこれで、
+  // 実は部品の種類ではなく**置いた行**で決まっていた)。足りない分だけ寄せる
+  // ので、板に載っている回し方は 1 穴も動かない。
+  //
+  // **置く前 (`anchor`) は寄せない。** 押した穴に足が来るのが置くときの約束で、
+  // 寄せると「押した穴に置けない」ことになる。入らないときは断り、
+  // ゴーストを赤で見せる側 (`session.ts`) に任せる。
+  const slide = around === 'anchor'
+    ? { row: 0, col: 0 }
+    : slideInto(turned, { least: 0, most: HOLE_ROWS.length - 1 }, { least: 1, most: found.board.columns });
+  if (slide === null) {
+    return fail(`${safeToken(id)} は回しても板に収まりません`, found.part.line);
+  }
+
+  const landings: (Address | null)[] = slideBy(turned, slide).map((one) => {
+    const landed = rowAt(one.row);
+    return landed === null ? null : { kind: 'hole', row: landed, col: one.col };
   });
 
   for (const landing of landings) {
@@ -291,21 +316,6 @@ export function turnPart(
   return { ok: true, value: { edits, diff: diffAfter(source, edits) } };
 }
 
-/**
- * 書かれた足の綴り全体。**極性の印まで含める** (`b12(A)`)。
- *
- * 番地だけを入れ替えると印がその場に残り、`b13(A) b12(K)` という**別の意味**の
- * 行になる (アノードが反対の穴へ移る)。裏返すのは部品なので、印も一緒に回る。
- */
-function writtenSpan(
-  lineText: string,
-  token: { readonly column: number; readonly length: number },
-): { readonly column: number; readonly length: number } {
-  const after = lineText.slice(token.column + token.length);
-  const tag = /^\([^)\s]*\)/.exec(after);
-  return tag === null ? token : { column: token.column, length: token.length + tag[0].length };
-}
-
 export function flipPart(source: string, id: string): MoveResult {
   const anchored = anchoredTurn(source, id);
   if (anchored !== null) return flipByAnchor(source, anchored, id);
@@ -318,9 +328,17 @@ export function flipPart(source: string, id: string): MoveResult {
   // 変わらない (変わるのは、どちらの足がどちらの穴に挿さるか)。
   // 3 本足なら両端が入れ替わり、真ん中はその場に残る — 実物を裏返したときと同じ。
   //
-  // **綴りごと入れ替える** — 番地に直すと `points:` の名前が外れ、
-  // 印 (`(A)`) を置いていくと別の意味の行になる。
-  const spans = grabbed.tokens.map((token) => writtenSpan(found.line, token));
+  // **入れ替えるのは番地だけ。印 (`b12(A)`) はその場に残す。**
+  // 印まで一緒に動かすと `b13(K) b12(A)` になり、**書き方が変わるだけで
+  // 意味は元のまま** — カソードは同じ穴に挿さったままなので、押しても図が
+  // 変わらない (実機で「varicap が反転できない」と言われたのがこれ。
+  // 印を書いた部品ぜんぶ — ダイオードの仲間・LED・電解・3 本足 — が効かなかった)。
+  // 印を置いていけば `b12(K) b13(A)`、つまりカソードが反対の穴へ移る。
+  // これが実物を裏返したときに起きること。
+  //
+  // 番地の綴りはそのまま持っていく — `points:` の名前で書かれた足を番地に
+  // 直すと名前が外れ、あとで点を動かしても部品が付いてこなくなる。
+  const spans = grabbed.tokens;
   const spelling = (index: number): string => {
     const span = spans[index];
     return span === undefined ? '' : found.line.slice(span.column, span.column + span.length);

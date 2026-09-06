@@ -63,10 +63,27 @@ describe('turnPart', () => {
     expect(result.ok && result.value.edits).toEqual([]);
   });
 
-  test('refuses a turn that would walk off the board, naming the hole', () => {
-    // 上端の行から上へ回すと外れる。**どの穴が出るのかを名指す。**
+  test('slides a turn that would walk off the board back onto it', () => {
+    // **縁に置いた部品も回せる。** 上端の行から上へ回すと足が外へ出るが、
+    // 断ると「この部品は回らない」に見える。足りない分だけ下へ寄せる。
     const top = 'board: 12x7\nparts:\n  R1: resistor a2 a6 10k\n';
-    const result = turnPart(top, 'R1', -1);
+
+    expect(after(top, turnPart(top, 'R1', -1))).toContain('R1: resistor e4 a4 10k');
+  });
+
+  test('refuses only when the part cannot fit on the board at all', () => {
+    // 9 行にまたがる部品を縦にすると 9 行要る。板は 7 行しかないので、
+    // どこへ寄せても載らない。**そのときだけ**断る。
+    const wide = 'board: 12x7\nparts:\n  R1: resistor a2 a10 10k\n';
+    const result = turnPart(wide, 'R1', 1);
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).toContain('板の外');
+  });
+
+  test('does not slide while placing, so the leg lands in the hole that was pressed', () => {
+    const top = 'board: 12x7\nparts:\n  R1: resistor a2 a6 10k\n';
+    const result = turnPart(top, 'R1', -1, 'anchor');
 
     expect(result.ok).toBe(false);
     expect(!result.ok && result.error.message).toContain('板の外');
@@ -119,10 +136,18 @@ describe('アンカー 1 つで置く形 (DIP / SIP)', () => {
     expect(after(turned, flipPart(turned, 'U1'))).toContain('U1: dip8 h8 mirror r90 NE555');
   });
 
-  test('refuses a turn that walks the legs off the board, naming the hole', () => {
-    // 回すと縁を踏みやすい。**帯だけ残して図が消える**より、ここで断るほうがよい。
+  test('slides a turn that walks the legs off the board back onto it', () => {
+    // **縁に置いた DIP も回せる。** 断ると「この部品は回らない」に見える
+    // (足を書いて置く部品と同じ手当て)。寄せるのはアンカーの穴 1 つ。
     const edge = 'board: 16x16\nparts:\n  U1: dip8 a1\n';
-    const result = turnPart(edge, 'U1', 1);
+
+    expect(after(edge, turnPart(edge, 'U1', 1))).toContain('U1: dip8 a4 r90');
+  });
+
+  test('refuses only when the package cannot fit on the board at all', () => {
+    // 40 ピンの DIP を縦にすると 20 行要る。板は 6 行しかないので載らない。
+    const narrow = 'board: 16x6\nparts:\n  U1: dip40 a1\n';
+    const result = turnPart(narrow, 'U1', 1);
 
     expect(result.ok).toBe(false);
     expect(!result.ok && result.error.message).toContain('板の外');

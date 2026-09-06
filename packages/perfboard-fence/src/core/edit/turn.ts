@@ -1,4 +1,5 @@
 import type { Edit } from 'fence-kit';
+import { slideBy, slideInto } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 
@@ -160,12 +161,27 @@ function turnByWord(source: string, id: string, next: Turn): MoveResult {
   }
 
   // **回した先が板の穴に落ちることを見る。** 落ちなければ図は描けず、
-  // 掴んで回した人には帯だけが残る。番地で回すときと同じように、ここで断る。
+  // 掴んで回した人には帯だけが残る。
+  //
+  // 出てしまうときは**足りない分だけ板の中へ寄せる** — 足を書いて置く部品と
+  // 同じ手当て (52 の docs/28)。縁に置いた DIP が回せないと、使う人には
+  // 「この部品は回らない」に見える。寄せるのはアンカーの穴 1 つなので、
+  // 綴りもそこだけ直す。どこへ寄せても載らないときだけ断る。
   const footprint = footprintOf(found.part.type, found.part.variant);
-  // **板から張り出す形だけが外に出られる** (`offBoardCheck`)。
-  const outside = footprint === null
+  const anchor = found.addresses[0];
+  const pinsAt = (at: Address): readonly Address[] =>
+    (footprint === null ? [] : pinsOf(footprint, [at, ...found.addresses.slice(1)], found.board, next));
+  const slid = footprint === null || anchor === undefined || offBoardCheck(found, pinsAt(anchor)) === null
     ? null
-    : offBoardCheck(found, pinsOf(footprint, found.addresses, found.board, next));
+    : slideInto(pinsAt(anchor), { least: 1, most: found.board.rows }, { least: 1, most: found.board.cols });
+  const moved = anchor === undefined || slid === null || (slid.row === 0 && slid.col === 0)
+    ? null
+    : { row: anchor.row + slid.row, col: anchor.col + slid.col };
+
+  // **板から張り出す形だけが外に出られる** (`offBoardCheck`)。
+  const outside = footprint === null || anchor === undefined
+    ? null
+    : offBoardCheck(found, pinsAt(moved ?? anchor));
   if (outside !== null) {
     return fail(`${safeToken(id)} を回すと足が置けません (${outside})`, found.lineNumber);
   }
@@ -176,6 +192,14 @@ function turnByWord(source: string, id: string, next: Turn): MoveResult {
     .map((match) => ({ column: after + (match.index ?? 0), length: match[0].length, text: match[0] }));
 
   const edits: Edit[] = [];
+  // 寄せたときはアンカーの綴りも直す。**語より左**にあるので、当てる順は
+  // 桁の大きいほうからで足りる (`applyEdits` がそう並べる)。
+  const held = located?.tokens[0];
+  if (moved !== null && held !== undefined) {
+    edits.push({
+      line: found.lineNumber, column: held.column, length: held.length, text: formatAddress(moved),
+    });
+  }
   if (next.rotate !== was.rotate) {
     edits.push(...wordEdit(found.lineNumber, tail.find((one) => isRotationWord(one.text)) ?? null,
       rotationWord(next.rotate), after));
@@ -245,10 +269,25 @@ export function turnPart(
   if (pivot === null) return fail(`${safeToken(id)} の足がありません`, found.lineNumber);
 
   // 格子が一様なので、回すのは軸からの行と列の差をそのまま回すだけ。
-  const landings: Address[] = found.addresses.map((one) => {
+  const turned: Address[] = found.addresses.map((one) => {
     const delta = spin({ row: one.row - pivot.row, col: one.col - pivot.col }, quarters);
     return { row: pivot.row + delta.row, col: pivot.col + delta.col };
   });
+
+  // **板から出たら寄せ直す。回転そのものは断らない。** 縁に置いた部品を回すと
+  // 足が外へ出るが、断ると「この部品は回らない」に見える (breadboard 側で
+  // 実機から言われた。板が違うだけで同じ作りなので、同じように直す)。
+  // 足りない分だけ寄せるので、板に載っている回し方は 1 穴も動かない。
+  //
+  // **置く前 (`anchor`) は寄せない。** 押した穴に足が来るのが置くときの約束で、
+  // 寄せると「押した穴に置けない」ことになる。
+  const landings = around === 'anchor' || offBoardCheck(found, turned) === null
+    ? turned
+    : slideBy(turned, slideInto(
+      turned,
+      { least: 1, most: found.board.rows },
+      { least: 1, most: found.board.cols },
+    ));
 
   const why = offBoardCheck(found, landings);
   if (why !== null) return fail(`${safeToken(id)} を回すと足が置けません (${why})`, found.lineNumber);

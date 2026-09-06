@@ -1,4 +1,7 @@
-import { FLOW_REFUSAL, appendUnderKey, applyEdits, applyLineEdits, isFlowKey, leadOffsets, needsRoom, orientInserted } from 'fence-kit';
+import {
+  appendUnderKey, applyEdits, applyLineEdits, FLOW_REFUSAL, isFlowKey, leadOffsets, needsRoom,
+  orientInserted, wireColor,
+} from 'fence-kit';
 import type { LineEdit, NetDiff } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
@@ -39,10 +42,11 @@ const fail = (message: string, line: number | null): AdditionResult =>
   ({ ok: false, error: fenceError(message, line) });
 
 /**
- * 端点から端点へ 1 本。色は書かない (既定の色。**色は後から欄で変える**もので、
- * 引くときに決めさせると、引くたびに選ばせることになる)。
+ * 端点から端点へ 1 本。**色は色見本で選んでいるときだけ書く** (実機で
+ * 「色パレットから色を選択した後、配線するとその色で配線できるようにする」)。
+ * 選んでいなければ書かない — 既定の色で引いて、あとから欄で直せる。
  */
-export function insertWire(source: string, from: Address, to: Address): AdditionResult {
+export function insertWire(source: string, from: Address, to: Address, color?: string): AdditionResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   if (doc === null) return fail('フェンスを読めないので足せません (先にエラーを直します)', null);
@@ -60,7 +64,11 @@ export function insertWire(source: string, from: Address, to: Address): Addition
   if (isFlowKey(lines, 'wires')) return fail(`配線: ${FLOW_REFUSAL.replace('消せません', '足せません')}`, null);
 
   const last = doc.wires.reduce((deepest, wire) => Math.max(deepest, wire.line), 0);
-  const written = `- ${formatAddress(from)} -- ${formatAddress(to)}`;
+  // **色は色見本で選んだものだけ書く。** 知らない名前は書かない — 書式エラーの
+  // 行を作るより、既定の色で引いておくほうが figure が読める
+  // (色は属性の欄からいつでも直せる)。
+  const inked = color !== undefined && wireColor(color) !== null ? ` ${color}` : '';
+  const written = `- ${formatAddress(from)} -- ${formatAddress(to)}${inked}`;
   const added = appendUnderKey(lines, 'wires', last, written);
 
   return { ok: true, value: { edits: [], lines: added, diff: diffAfterLines(normalized, added) } };

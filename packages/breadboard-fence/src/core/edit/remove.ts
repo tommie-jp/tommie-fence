@@ -4,6 +4,7 @@ import { fenceError, safeToken } from '../errors.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import type { FenceError, NoteSpec } from '../types.ts';
+import { deviceBlock, devicePinSpans, isDevice } from './device.ts';
 import { diffAfterLines } from './diff.ts';
 
 /**
@@ -69,14 +70,29 @@ export function deletePart(source: string, id: string): RemovalResult {
     if (isKeyLine(lines[line - 1], 'notes')) return fail(`${safeToken(id)} を指す注釈: ${FLOW_REFUSAL}`, line);
   }
 
-  const drop = new Set<number>([part.line, ...noteLines]);
+  // **機器は入れ子で書くので、ブロックごと消す。** 鍵の行だけ消すと中身が
+  // 宙に浮いて、フェンスそのものが読めなくなる (実機で踏んだ)。
+  // ピンを指している配線も一緒に — 消えた機器を指す線は描きようがない
+  // (板に挿す部品の配線は穴を指すので、そちらは今までどおり残す)。
+  const body = isDevice(normalized, id) ? deviceBlock(normalized, id) : [];
+  const pinWires = body.length === 0
+    ? new Set<number>()
+    : new Set(devicePinSpans(normalized, id).map((span) => span.line));
+  for (const line of pinWires) {
+    if (isKeyLine(lines[line - 1], 'wires')) return fail(`${safeToken(id)} を指す配線: ${FLOW_REFUSAL}`, line);
+  }
+  if (doc.wires.length > 0 && doc.wires.every((wire) => pinWires.has(wire.line))) {
+    pinWires.add(keyLineOf(lines, 'wires'));
+  }
+
+  const drop = new Set<number>([part.line, ...body, ...noteLines, ...pinWires]);
   // **最後の 1 つを消したら鍵ごと。** 空の `parts:` / `notes:` は読めない。
   if (doc.parts.length === 1) drop.add(keyLineOf(lines, 'parts'));
   if (doc.notes.length > 0 && doc.notes.every((note) => noteLines.has(note.line))) {
     drop.add(keyLineOf(lines, 'notes'));
   }
 
-  return removal(normalized, drop, noteLines.size);
+  return removal(normalized, drop, noteLines.size + pinWires.size);
 }
 
 export function deleteWire(source: string, line: number): RemovalResult {

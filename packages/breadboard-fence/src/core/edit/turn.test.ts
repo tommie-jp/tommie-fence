@@ -48,11 +48,46 @@ describe('turnPart', () => {
     expect(result.ok && result.value.edits).toEqual([]);
   });
 
-  test('refuses a turn that would walk off the board', () => {
-    // b12 → b13 は右へ 1。反時計回りに 90 度で上へ 1 → a12 は板の上にある。
-    // 上端の行から上へ回すと外れる。
+  test('slides a turn that would walk off the board back onto it', () => {
+    // **縁に置いた部品も回せる。** a5 → a10 を回すと足が板の上へ出るが、
+    // 断ると「この部品は回らない」に見える (実機で「capacitor, inductor など
+    // ほとんど回転できない」と言われたのがこれ)。足りない分だけ下へ寄せる。
     const top = 'board: half\nparts:\n  R1: resistor a5 a10 330\n';
-    const result = turnPart(top, 'R1', -1);
+
+    expect(after(top, turnPart(top, 'R1', 1))).toContain('R1: resistor a7 f7 330');
+    expect(after(top, turnPart(top, 'R1', -1))).toContain('R1: resistor f7 a7 330');
+  });
+
+  test('slides the narrower parts too, which is why they looked unturnable', () => {
+    // 足の間隔が狭いほど寄せる量は小さい。回れるかどうかは**部品の種類ではなく
+    // 置いた行**で決まっていた。
+    const top = 'board: half\nparts:\n  C1: capacitor a5 a8 0.1u\n';
+
+    expect(after(top, turnPart(top, 'C1', 1))).toContain('C1: capacitor a6 d6 0.1u');
+  });
+
+  test('slides sideways as well, when the turn runs past the last column', () => {
+    // 縦向きの部品を横にすると、右の縁からはみ出すことがある。
+    const edge = 'board: half\nparts:\n  R1: resistor a29 f29 330\n';
+
+    expect(after(edge, turnPart(edge, 'R1', 1))).toContain('R1: resistor c30 c25 330');
+  });
+
+  test('refuses only when the part cannot fit on the board at all', () => {
+    // 12 列にまたがる部品を縦にすると 12 行要る。板は 10 行しかないので、
+    // どこへ寄せても載らない。**そのときだけ**断る。
+    const wide = 'board: half\nparts:\n  R1: resistor a1 a13 330\n';
+    const result = turnPart(wide, 'R1', 1);
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).toContain('収まりません');
+  });
+
+  test('does not slide while placing, so the leg lands in the hole that was pressed', () => {
+    // 置く前の回しは押した穴が軸。寄せると「押した穴に置けない」ことになるので、
+    // 入らないときは断って、ゴーストを赤で見せる側に任せる。
+    const low = 'board: half\nparts:\n  R1: resistor h5 h10 330\n';
+    const result = turnPart(low, 'R1', 1, 'anchor');
 
     expect(result.ok).toBe(false);
     expect(!result.ok && result.error.message).toContain('板の外');
@@ -69,12 +104,12 @@ describe('turnPart', () => {
     expect(after(LED, turnPart(LED, 'Q1', 1))).toContain('Q1: transistor g10(B) h10(C) i10(E) 2SC1815');
   });
 
-  test('says why a part placed by one anchor cannot be turned', () => {
-    // 足の位置を形が決めるので、穴の順に向きが出ない。
+  test('says a tact switch is symmetric, rather than that it has no direction', () => {
+    // 回しても同じ穴どうしがつながる。**直しようのない断りに読ませない。**
     const result = turnPart(LED, 'SW1', 1);
 
     expect(result.ok).toBe(false);
-    expect(!result.ok && result.error.message).toContain('形が決める');
+    expect(!result.ok && result.error.message).toContain('対称');
   });
 });
 
@@ -83,9 +118,11 @@ describe('flipPart', () => {
     expect(after(LED, flipPart(LED, 'R1'))).toContain('R1: resistor a10 a5 330');
   });
 
-  test('carries the polarity tags along, spelling and all', () => {
-    // `(A)` と `(K)` は綴りごと入れ替わる (向きが変わるのだから当然)。
-    expect(after(LED, flipPart(LED, 'D1'))).toContain('D1: led b13(K) b12(A) red');
+  test('leaves the polarity tags where they are, so the cathode moves to the other hole', () => {
+    // **印を一緒に動かすと何も変わらない。** `b13(K) b12(A)` は書き方が違うだけで
+    // 「K は b13」のまま — 押しても図が変わらない (実機で「varicap が反転できない」)。
+    // 番地だけを入れ替えれば、カソードが反対の穴へ移る = 実物を裏返したのと同じ。
+    expect(after(LED, flipPart(LED, 'D1'))).toContain('D1: led b13(A) b12(K) red');
   });
 
   test('keeps a name written by points:, instead of spelling out the address', () => {
@@ -104,7 +141,8 @@ describe('flipPart', () => {
 
   test('reverses the leads of a three lead part, leaving the middle in place', () => {
     // 実物を裏返したときと同じ — 両端が入れ替わり、真ん中はその場に残る。
-    expect(after(LED, flipPart(LED, 'Q1'))).toContain('Q1: transistor h11(E) h10(C) h9(B) 2SC1815');
+    // 印は動かないので、**B が h11 へ、E が h9 へ**移る (足の並びが本当に変わる)。
+    expect(after(LED, flipPart(LED, 'Q1'))).toContain('Q1: transistor h11(B) h10(C) h9(E) 2SC1815');
   });
 
   test('says why a part placed by one anchor cannot be flipped', () => {

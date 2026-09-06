@@ -173,13 +173,42 @@ describe('置く', () => {
     expect(step(carrying, hover(over({ cell: 'b4' }))).send).toHaveLength(1);
   });
 
-  test('keeps only the ghost it asked for, and drops a stale answer', () => {
+  test('keeps only the ghost it asked for, and drops an answer it never asked for', () => {
     const carrying = after(PANEL, place('transistor'), hover(AT_B3));
     const fresh = { key: 'place:transistor::b3:0:0', cells: ['b3', 'b4', 'b5'], ok: true, why: '' };
     const stale = { ...fresh, key: 'place:transistor::b2:0:0' };
 
     expect(step(carrying, { kind: 'ghost', ghost: fresh }).state.ghost).toEqual(fresh);
     expect(step(carrying, { kind: 'ghost', ghost: stale }).state.ghost).toBeNull();
+  });
+
+  test('takes the answer it is waiting for even after the cursor has moved on', () => {
+    // **往復のあいだにマウスは何升も進む。** カーソルの真下の答えしか採らないと、
+    // 影は答えが返るたびに 1 回しか動かない (実機で「移動中の反応が悪い」)。
+    // 訊いていた場所を控えておき、そこから進んだ分は絵をずらす側が足す。
+    const moved = after(PANEL, place('transistor'), hover(AT_B3), hover(over({ cell: 'b7' })));
+    const late = { key: 'place:transistor::b3:0:0', cells: ['b3', 'b4', 'b5'], ok: true, why: '' };
+    const asked = { key: 'place:transistor::b3:0:0', at: { cell: 'b3', fine: null } };
+
+    const caught = step(moved, { kind: 'ghost', ghost: late, asked }).state;
+
+    expect(caught.ghost).toEqual(late);
+    expect(caught.ghostAt).toEqual({ cell: 'b3', fine: null });
+  });
+
+  test('still drops an answer for a carry it is no longer holding', () => {
+    const moved = after(PANEL, place('transistor'), hover(AT_B3), hover(over({ cell: 'b7' })));
+    const other = { key: 'place:resistor::b3:0:0', cells: ['b3'], ok: true, why: '' };
+    const asked = { key: 'place:transistor::b3:0:0', at: { cell: 'b3', fine: null } };
+
+    expect(step(moved, { kind: 'ghost', ghost: other, asked }).state.ghost).toBeNull();
+  });
+
+  test('remembers where the answer it took was pointing, so the picture can run ahead', () => {
+    const carrying = after(PANEL, place('transistor'), hover(AT_B3));
+    const fresh = { key: 'place:transistor::b3:0:0', cells: ['b3', 'b4', 'b5'], ok: true, why: '' };
+
+    expect(step(carrying, { kind: 'ghost', ghost: fresh }).state.ghostAt).toEqual({ cell: 'b3', fine: null });
   });
 
   test('places with one click, sending the pressed hole and the orientation', () => {
@@ -513,6 +542,45 @@ describe('打鍵を横取りしない', () => {
   });
 });
 
+describe('配線の色見本', () => {
+  // 実機で「ドロップダウンメニューではなく、固定の色パレット」「色パレットから
+  // 色を選択した後、配線するとその色で配線できるようにする」。
+  const wiring = after(PANEL, key('w'));
+
+  test('remembers the colour that was picked, so the next wire is drawn in it', () => {
+    const inked = after(wiring, { kind: 'ink', color: 'red' });
+
+    expect(inked.ink).toBe('red');
+    const drawn = after(inked, press(AT_B3), release(AT_B3, false));
+    expect(step(drawn, release(over({ cell: 'b7' }), false)).send).toEqual([
+      { kind: 'addWire', from: 'b3', to: 'b7', operator: '--', color: 'red' },
+    ]);
+  });
+
+  test('writes no colour until one is picked, keeping the fence default', () => {
+    const drawn = after(wiring, press(AT_B3), release(AT_B3, false));
+
+    expect(step(drawn, release(over({ cell: 'b7' }), false)).send).toEqual([
+      { kind: 'addWire', from: 'b3', to: 'b7', operator: '--' },
+    ]);
+  });
+
+  test('puts the pen down when the same colour is pressed again', () => {
+    const twice = after(wiring, { kind: 'ink', color: 'red' }, { kind: 'ink', color: 'red' });
+
+    expect(twice.ink).toBeNull();
+  });
+
+  test('paints the wires that are selected, so the palette acts on what is visible', () => {
+    const picked = step(start(false), { kind: 'pickMany', parts: [], wires: ['7', '9'] }).state;
+
+    expect(step(picked, { kind: 'ink', color: 'blue' }).send).toEqual([
+      { kind: 'setField', part: 'wire:7', field: 'color', text: 'blue' },
+      { kind: 'setField', part: 'wire:9', field: 'color', text: 'blue' },
+    ]);
+  });
+});
+
 describe('まとめて選ぶ (領域選択)', () => {
   const picked = (...ids: string[]) => step(start(false), { kind: 'pickMany', parts: ids });
 
@@ -541,6 +609,34 @@ describe('まとめて選ぶ (領域選択)', () => {
     expect(keyed('x')).toMatchObject({ kind: 'flip', parts: ['R1', 'R2'] });
     expect(keyed('d', true)).toMatchObject({ kind: 'duplicate', parts: ['R1', 'R2'] });
     expect(keyed('Delete')).toMatchObject({ kind: 'delete', ids: ['R1', 'R2'] });
+  });
+
+  test('catches wires as well as parts, since both are things you delete', () => {
+    // 消せるのは部品と配線の 2 つなのに、囲みで選べるのは部品だけだった
+    // (実機で「配線も複数選択に対応する」)。
+    const out = step(start(false), { kind: 'pickMany', parts: ['R1'], wires: ['7', '9'] });
+
+    expect(out.state.also).toEqual([
+      { kind: 'part', id: 'R1' },
+      { kind: 'wire', id: '7' },
+      { kind: 'wire', id: '9' },
+    ]);
+    expect(out.status).toContain('3 個');
+  });
+
+  test('deletes the wires along with the parts, keeping the two lists apart', () => {
+    // 配線は行で指すので、部品の名札と混ぜると殻が引き分けられない。
+    const mixed = step(start(false), { kind: 'pickMany', parts: ['R1'], wires: ['7'] }).state;
+
+    expect(step(mixed, { kind: 'key', key: 'Delete', shift: false, modifier: false }).send[0])
+      .toMatchObject({ kind: 'delete', ids: ['R1'], wires: ['7'] });
+  });
+
+  test('leaves turning to the parts, because a wire has no posture', () => {
+    const mixed = step(start(false), { kind: 'pickMany', parts: ['R1', 'R2'], wires: ['7'] }).state;
+
+    expect(step(mixed, { kind: 'key', key: 'r', shift: false, modifier: false }).send[0])
+      .toMatchObject({ kind: 'turn', parts: ['R1', 'R2'] });
   });
 
   test('does not add the list when only one is selected', () => {
@@ -680,5 +776,84 @@ describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
 
     expect(swapped.foldsWire).toBe(true);
     expect(swapped.fine).toBe(4);
+  });
+});
+
+describe('残りの道', () => {
+  // 実機で踏んだ道ではないが、**通っていない分かれ道**を 1 つずつ押さえる。
+  const onNode = over({ cell: 'a3', node: 'a3' });
+
+  test('lifts a part by dragging it, without pressing M first', () => {
+    const held = after(PANEL, press(ON_R1));
+
+    expect(step(held, drag(AT_B3)).state.carry).toMatchObject({ kind: 'move', part: 'R1', byPointer: true });
+  });
+
+  test('drags a node the same way', () => {
+    const held = after(PANEL, press(ON_NODE));
+
+    expect(step(held, drag(AT_B3)).state.carry).toMatchObject({ kind: 'drag', node: 'a3' });
+  });
+
+  test('does not lift on a small wobble of the hand', () => {
+    const held = after(PANEL, press(ON_R1));
+
+    expect(step(held, drag(ON_R1, false)).state.carry).toBeNull();
+  });
+
+  test('drags a node with G, from the selection or from under the cursor', () => {
+    expect(after(PANEL, hover(onNode), key('g')).carry).toMatchObject({ kind: 'drag', node: 'a3' });
+    expect(after(PANEL, hover(AT_B3), key('g')).carry).toBeNull();
+  });
+
+  test('drops a dragged node where it was clicked', () => {
+    const dragging = after(PANEL, hover(onNode), key('g'), hover(AT_B3));
+
+    expect(step(dragging, release(AT_B3, false)).send).toEqual([{ kind: 'moveNode', from: 'a3', to: 'b3' }]);
+  });
+
+  test('places the last thing again on Insert, remembering how many legs it had', () => {
+    const placed = after(PANEL, place('resistor', true), hover(AT_B3), press(AT_B3), release(AT_B3, false));
+
+    expect(after(placed, key('Escape'), key('Insert')).carry)
+      .toMatchObject({ kind: 'place', type: 'resistor', twoEnds: true });
+  });
+
+  test('does nothing on Insert when nothing has been placed yet', () => {
+    expect(step(PANEL, key('Insert')).state.carry).toBeNull();
+  });
+
+  test('drops the first wire point on Escape, before leaving the tool', () => {
+    const started = after(PANEL, key('w'), hover(AT_B3), press(AT_B3), release(AT_B3, false));
+    expect(started.wireFrom).not.toBeNull();
+
+    const dropped = after(started, key('Escape'));
+    expect(dropped.wireFrom).toBeNull();
+    expect(dropped.tool).toBe('wire');
+  });
+
+  test('leaves the tool on the next Escape', () => {
+    const wiring = after(PANEL, key('w'));
+
+    expect(after(wiring, key('Escape')).tool).toBe('select');
+  });
+
+  test('turns and flips a part it is carrying, since the rewrite lands on the text', () => {
+    const lifted = after(PANEL, hover(ON_R1), key('m'));
+
+    expect(step(lifted, key('r')).send).toEqual([{ kind: 'turn', part: 'R1', quarters: 1 }]);
+    expect(step(lifted, key('x')).send).toEqual([{ kind: 'flip', part: 'R1' }]);
+  });
+
+  test('ignores the other keys while something is being carried', () => {
+    const lifted = after(PANEL, hover(ON_R1), key('m'));
+
+    expect(step(lifted, key('Delete')).send).toEqual([]);
+  });
+
+  test('sends the grabbed cell when a part was picked up by the pointer', () => {
+    const dragged = after(PANEL, press(ON_R1), drag(AT_B3));
+
+    expect(step(dragged, release(AT_B3)).send[0]).toMatchObject({ kind: 'move', part: 'R1', from: 'a1' });
   });
 });

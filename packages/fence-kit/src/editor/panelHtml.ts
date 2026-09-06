@@ -1,3 +1,4 @@
+import { wireColor } from '../colors.ts';
 import { escapeMarkup } from '../markup.ts';
 import type { FenceEntry } from './fenceEditor.ts';
 
@@ -117,6 +118,28 @@ const STYLE = `
   /* 図の根 (どのフェンスの SVG も)。ズーム 1 で箱の幅に収める。 */
   .cf-body > svg { display: block; width: 100%; height: auto; user-select: none; touch-action: none; }
   .cf-note { margin: 8px; color: var(--vscode-descriptionForeground); }
+
+  /* 配線の色見本。**開かずに色が見える**ように、四角と名前を並べて出す。 */
+  .cf-colors { margin-top: 10px; }
+  .cf-colors[hidden] { display: none; }
+  .cf-colors h3 { margin: 0 0 4px; font-size: 11px; font-weight: normal; color: var(--vscode-descriptionForeground); }
+  .cf-swatches { display: flex; flex-wrap: wrap; gap: 2px; }
+  .cf-swatch {
+    display: flex; align-items: center; gap: 4px;
+    padding: 2px 5px 2px 3px; border: 1px solid transparent; border-radius: 3px;
+    background: none; cursor: pointer; font-size: 11px;
+  }
+  .cf-swatch:hover { border-color: var(--vscode-focusBorder); }
+  /* いま引く色。**枠で示す** (色そのものは四角が言っている)。 */
+  .cf-swatch.cf-inked {
+    border-color: var(--cf-held);
+    background: var(--vscode-list-activeSelectionBackground);
+    color: var(--vscode-list-activeSelectionForeground);
+  }
+  .cf-swatch-chip {
+    width: 11px; height: 11px; border-radius: 2px;
+    border: 1px solid var(--vscode-descriptionForeground);
+  }
 
   /* 右の道具の列 (KiCad の右ツールバー)。鍵を知らなくても押せる。 */
   .kc-tools {
@@ -284,6 +307,12 @@ const STYLE = `
   .cf-hover .cf-glyph, .cf-hover .cf-glyph-line, .cf-hover .cf-lead, .cf-hover .cf-pin,
   .cf-wire.cf-hover { stroke: var(--vscode-focusBorder); stroke-width: 2.5; opacity: 0.9; }
   .cf-hover .cf-dot-mark { stroke: var(--vscode-focusBorder); stroke-width: 3; }
+  /* **姿のまわりにも影を出す。** 縁取りを塗り替えられるのは記号のマップ
+     (circuit) だけで、breadboard と perfboard の .cf-chip は実物の姿そのもの。
+     中に塗り替える線が無いので、上の規則では**何も起きていなかった**
+     (実機で「全フェンス、ホバーで部品をシャドウにする」)。姿に依らない印は
+     影だけなので、選んだ印 (.cf-held) と同じ手を弱くして使う。 */
+  .cf-hover { filter: drop-shadow(0 0 3px var(--vscode-focusBorder)); }
 
   /* エディタのカーソルが指しているもの。掴んでいる印とは別の色。 */
   .cf-aim .cf-glyph, .cf-aim .cf-glyph-line, .cf-aim .cf-lead, .cf-aim .cf-pin,
@@ -402,6 +431,8 @@ export type PanelChrome = {
   readonly typeNames: string;
   /** 色の候補 (`datalist`)。配線を選んだときの色の欄が引く。 */
   readonly colorNames: string;
+  /** 配線の色見本 (固定のパレット)。色を書かないフェンスでは空。 */
+  readonly swatches: string;
   /** 配線を `Shift` で折れるか (`FenceEditor.foldsWire`)。案内文に出す。 */
   readonly foldsWire: boolean;
   /** 何分の 1 升まで刻めるか (`FenceEditor.fine`)。null なら Ctrl は素のクリック (52 の docs/23)。 */
@@ -415,6 +446,37 @@ export const TYPE_LIST_ID = 'cf-type-names';
 
 /** 色の候補の名札。**組む側と引く側で同じ綴りを使う**ための 1 か所。 */
 export const COLOR_LIST_ID = 'cf-color-names';
+
+/**
+ * 配線の色見本。**四角と名前を並べた固定のパレット**
+ * (実機で「ドロップダウンメニューではなく、固定の色パレット」)。
+ *
+ * ドロップダウンだと**開くまで色が見えない** — 色名だけの並びから被覆の色を
+ * 思い出させることになる。実物の色そのもので四角を塗るので、`colors.ts` の
+ * 表をそのまま引く (テーマで塗り替えない色。図と見本が食い違わない)。
+ *
+ * 引ける名前だけを出す (知らない名前は四角の色が決まらない)。
+ */
+export const renderSwatches = (names: readonly string[]): string => {
+  const seen = new Set<string>();
+  const shown = names
+    .map((name) => ({ name, css: wireColor(name) }))
+    .filter((one) => {
+      // **同じ四角を 2 つ並べない。** `gray` と `grey` は同じ色の綴り違いで、
+      // 見本に両方出すと「どこが違うのか」と読ませてしまう (実機で訊かれた)。
+      // 書くほうは今までどおり両方通る — 減らすのは見本だけ。
+      if (one.css === null || seen.has(one.css)) return false;
+      seen.add(one.css);
+      return true;
+    });
+  if (shown.length === 0) return '';
+  return shown.map((one) => (
+    `<button type="button" class="cf-swatch" data-color="${escapeMarkup(one.name)}"`
+    + ` title="${escapeMarkup(one.name)}">`
+    + `<span class="cf-swatch-chip" style="background:${escapeMarkup(one.css ?? '')}"></span>`
+    + `${escapeMarkup(one.name)}</button>`
+  )).join('');
+};
 
 /**
  * 種類の欄が、選んだものによって引き替える候補の名札。**中身は空で出す** —
@@ -567,6 +629,10 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     + `<label>色 <input class="cf-field" name="color" size="8" list="${COLOR_LIST_ID}"></label>`
     + `<datalist id="${KIND_LIST_ID}"></datalist>`
     + `</form>`
+    // **色見本は欄の外。** 配線の道具を選んだだけ (何も選んでいない) のときも
+    // 出したいので、欄の出し入れとは別に持つ。
+    + `<section class="cf-colors" hidden><h3>配線の色</h3>`
+    + `<div class="cf-swatches">${chrome.swatches}</div></section>`
     + `<p class="kc-props-hint">部品や配線をクリック (か <kbd>E</kbd>) すると欄が出ます。`
     + `<kbd>Enter</kbd> か欄を離れたときに行へ当たります。</p>`
     + `</aside>`

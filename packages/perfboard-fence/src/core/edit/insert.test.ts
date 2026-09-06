@@ -199,3 +199,18 @@ describe('partCells', () => {
     expect(partCells('board: 12x7\nparts:\n  R1: resistor a1 a6 330\n', 'R9')).toEqual([]);
   });
 });
+
+describe('配線の色 (色見本で選んだもの)', () => {
+  // breadboard と同じ約束 — 板の 2 つで被覆の色の表は 1 つ (`fence-kit` の colors.ts)。
+  test('writes the colour on the new line when one was picked', () => {
+    const result = insertWire(WITH_WIRES, at('b6'), at('b8'), 'red');
+
+    expect(result.ok && result.value.lines[0]).toMatchObject({ text: '  - b6 -- b8 red' });
+  });
+
+  test('drops a colour it cannot draw, rather than writing a line that fails to read', () => {
+    const result = insertWire(WITH_WIRES, at('b6'), at('b8'), 'chartreuse');
+
+    expect(result.ok && result.value.lines[0]).toMatchObject({ text: '  - b6 -- b8' });
+  });
+});

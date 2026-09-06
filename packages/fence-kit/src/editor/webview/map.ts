@@ -1,5 +1,6 @@
-import { DRAG, NOTHING, endSpotOf, fineOf, sameFine, sameSpot, start, step, topOf } from './mapState.ts';
-import type { Event, Fine, Focus, Ghost, Picked, State, Under } from './mapState.ts';
+import { DRAG, NOTHING, endSpotOf, fineOf, sameFine, sameSpot, spotOf, start, step, topOf } from './mapState.ts';
+import { createPreviewGate } from './previewGate.ts';
+import type { Event, Fine, Focus, Ghost, Picked, Spot, State, Under } from './mapState.ts';
 import type { PanelChrome } from '../panelHtml.ts';
 
 /**
@@ -18,6 +19,24 @@ import type { PanelChrome } from '../panelHtml.ts';
 declare function acquireVsCodeApi(): { postMessage: (message: unknown) => void };
 
 const vscode = acquireVsCodeApi();
+
+/**
+ * 拡張への送り口の門。**試し当ては 1 つずつ送る** (決め事は `previewGate.ts`)。
+ * カーソルの動く速さではなく、答えの返る速さで往復が決まるようにする。
+ */
+/**
+ * **門が実際に送った試し当て。** 待たせているものは入らない (答えは 1 つずつしか
+ * 来ないので、返ってきた答えが訊いていた場所はこれで引ける)。カーソルが先へ
+ * 進んでいても答えを採り、進んだ分を図の上でずらすために要る。
+ */
+let asked: { readonly key: string; readonly at: Spot } | null = null;
+
+const gate = createPreviewGate((message) => {
+  if (message.kind === 'preview' && typeof message['to'] === 'string') {
+    asked = { key: String(message['key']), at: { cell: message['to'], fine: (message['fine'] as Fine) ?? null } };
+  }
+  vscode.postMessage(message);
+});
 
 /**
  * 起動のときの能力表。**言語をまたぐと入れ替わる**ので body ではなく語彙の箱に書いてある
@@ -62,6 +81,15 @@ const WHEEL_STEP = 1.1;
 /** 落ち先の四角の最小の辺 (升の座標系)。これより小さいと見えない。 */
 const SMALLEST_FINE_BOX = 6;
 const KEY_STEP = 1.25;
+
+/**
+ * 図ではない殻の部分。**ここを押しても図を押したことにしない** (選択が外れる)。
+ *
+ * **右クリックの一覧 (`.kc-menu`) も殻。** 図の上に重ねて出しているので、
+ * 入れておかないと項目を押した瞬間に「図の空きを押した」になり、選んだものが
+ * 外れてから鍵が走る — 実機で「右メニューが効かない」と言われたのがこれ。
+ */
+const CHROME = '.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status, .kc-menu';
 
 const canvas = (): HTMLElement | null => query<HTMLElement>('.kc-canvas');
 
@@ -219,8 +247,29 @@ function shownFor(picked: Picked | null): Element | null {
   return query(`.cf-wire[data-line="${id}"]`);
 }
 
+/**
+ * 付けた印の控え。**外すときに図ぜんぶを探し直さない。**
+ *
+ * 印は 7 種類あり、カーソルが動くたびに全部いったん外して付け直すので、
+ * そのたびに `querySelectorAll` を図ぜんぶに 7 回まわしていた
+ * (52 の docs/27 の実測)。印を付けるのはこの殻だけで、図の側 (フェンスが
+ * 組んだ markup) は付けてこないので、控えだけ見れば足りる。
+ */
+const marked = new Map<string, Element[]>();
+
+const mark = (element: Element | null | undefined, className: string): void => {
+  if (element === null || element === undefined) return;
+  element.classList.add(className);
+  const kept = marked.get(className);
+  if (kept === undefined) marked.set(className, [element]);
+  else kept.push(element);
+};
+
 const unmark = (className: string): void => {
-  for (const element of document.querySelectorAll(`.${className}`)) element.classList.remove(className);
+  const kept = marked.get(className);
+  if (kept === undefined) return;
+  for (const element of kept) element.classList.remove(className);
+  kept.length = 0;
 };
 
 /**
@@ -230,11 +279,28 @@ const unmark = (className: string): void => {
  * あっても部品の色に紛れる (実機で「選択が分かりにくい」と指摘された)。
  * 姿に依らない外枠なら、どのフェンスでも同じように分かる。
  */
-function frameSelected(shown: Element | null): void {
-  document.querySelector('.cf-held-box')?.remove();
-  if (!(shown instanceof SVGGraphicsElement) || !shown.classList.contains('cf-chip')) return;
+/**
+ * いま出ている枠と、その相手。**同じものを選んだままなら作り直さない** —
+ * 作り直すと `getBBox` (レイアウト) と合成層の組み直しが 1 動きごとに走る。
+ */
+let heldBox: { readonly around: SVGGraphicsElement; readonly node: SVGRectElement } | null = null;
 
-  const box = shown.getBBox();
+const dropHeldBox = (): void => {
+  heldBox?.node.remove();
+  heldBox = null;
+};
+
+function frameSelected(shown: Element | null): void {
+  const around = shown instanceof SVGGraphicsElement && shown.classList.contains('cf-chip') ? shown : null;
+  if (around === null) {
+    dropHeldBox();
+    return;
+  }
+  // 図を組み直すと要素そのものが入れ替わるので、**同じ物か**は要素で見る。
+  if (heldBox !== null && heldBox.around === around && heldBox.node.isConnected) return;
+  dropHeldBox();
+
+  const box = around.getBBox();
   if (box.width === 0 && box.height === 0) return;
   const frame = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
   frame.setAttribute('class', 'cf-held-box');
@@ -243,19 +309,20 @@ function frameSelected(shown: Element | null): void {
   frame.setAttribute('width', String(box.width + HELD_PAD * 2));
   frame.setAttribute('height', String(box.height + HELD_PAD * 2));
   // **同じ姿勢で描く**: getBBox は要素自身の transform を含まないので、写して合わせる。
-  const posture = shown.getAttribute('transform');
+  const posture = around.getAttribute('transform');
   if (posture !== null) frame.setAttribute('transform', posture);
   // 手前に置く。部品が重なっていても枠が隠れない (当たり判定は CSS で外す)。
-  shown.after(frame);
+  around.after(frame);
+  heldBox = { around, node: frame };
 }
 
 function markSelected(picked: Picked | null, also: readonly Picked[] = []): void {
   unmark('cf-held');
   // **まとめて選んだものは全部光らせる。** 枠を出すのは押した 1 つだけ
   // (全部に枠を出すと、どれを軸に動かすのか読めない)。
-  for (const one of also) shownFor(one)?.classList.add('cf-held');
+  for (const one of also) mark(shownFor(one), 'cf-held');
   const shown = shownFor(picked);
-  shown?.classList.add('cf-held');
+  mark(shown, 'cf-held');
   frameSelected(shown);
 }
 
@@ -267,12 +334,40 @@ function markSelected(picked: Picked | null, also: readonly Picked[] = []): void
 function markHover(now: State): void {
   unmark('cf-hover');
   if (now.carry !== null || now.tool !== 'select') return;
-  shownFor(topOf(now.under))?.classList.add('cf-hover');
+  mark(shownFor(topOf(now.under)), 'cf-hover');
 }
 
+/**
+ * 引いた穴の控え。**穴は図を組み直すまで動かない**ので、番地から引いた要素も
+ * その四角も覚えておく。`getBBox` はレイアウトを起こすので、1 動きに 3 回払うと
+ * 効いてくる (52 の docs/27)。控えは組み直しで捨てる (`forgetPainted`)。
+ */
+const cellsSeen = new Map<string, SVGGraphicsElement | null>();
+const boxesSeen = new Map<string, DOMRect>();
+
 /** その番地の当たり判定の四角。端数の番地 (`b2c7f5`) には無い。 */
-const cellElement = (address: string): SVGGraphicsElement | null =>
-  query<SVGGraphicsElement>(`.cf-cell[data-address="${CSS.escape(address)}"]`);
+const cellElement = (address: string): SVGGraphicsElement | null => {
+  const known = cellsSeen.get(address);
+  if (known !== undefined) return known;
+  const found = query<SVGGraphicsElement>(`.cf-cell[data-address="${CSS.escape(address)}"]`);
+  cellsSeen.set(address, found);
+  return found;
+};
+
+/**
+ * その穴の四角 (図の座標)。**まだ描かれていないときは覚えない** — 隠れている
+ * webview の `getBBox` は 0 を返すので、覚えると出てきたときに 0 のままになる。
+ */
+const cellBox = (address: string): DOMRect | null => {
+  const known = boxesSeen.get(address);
+  if (known !== undefined) return known;
+  const element = cellElement(address);
+  if (element === null) return null;
+  const box = element.getBBox();
+  if (box.width === 0 && box.height === 0) return box;
+  boxesSeen.set(address, box);
+  return box;
+};
 
 /** 四角の真ん中 (その要素自身の座標)。 */
 const middleOf = (box: DOMRect): { readonly x: number; readonly y: number } =>
@@ -290,7 +385,7 @@ function markGhost(now: State): void {
     return;
   }
   const className = now.ghost.ok ? 'cf-ghost' : 'cf-ghost-bad';
-  for (const cell of now.ghost.cells) cellElement(cell)?.classList.add(className);
+  for (const cell of now.ghost.cells) mark(cellElement(cell), className);
   markFineBox(now, now.ghost.ok);
 }
 
@@ -299,8 +394,8 @@ function fineSpot(now: State): { readonly cell: Element; readonly x: number; rea
   const { cell, fine } = now.under;
   if (cell === null || fine === null || now.fine === null) return null;
   const element = cellElement(cell);
-  if (element === null) return null;
-  const box = element.getBBox();
+  const box = cellBox(cell);
+  if (element === null || box === null) return null;
   // 刻みが細かいと 1/`fine` の四角は見えなくなる (升 34 に対して 1/10 は 3.4)。
   // **落ち先が見えることのほうが大事**なので、下限を置く。
   const size = Math.max(box.width / now.fine, SMALLEST_FINE_BOX);
@@ -330,8 +425,8 @@ function markFineBox(now: State, ok: boolean): void {
 
 /** 穴 1 つの真ん中 (図の座標)。当たり判定の四角から読む。 */
 function cellCentre(address: string): { readonly x: number; readonly y: number } | null {
-  const cell = cellElement(address);
-  return cell === null ? null : middleOf(cell.getBBox());
+  const box = cellBox(address);
+  return box === null ? null : middleOf(box);
 }
 
 /**
@@ -366,8 +461,19 @@ function shiftOf(ghost: Ghost): { readonly x: number; readonly y: number } | nul
   const to = anchorOf(ghost.cells);
   if (from !== null && to !== null) return { x: to.x - from.x, y: to.y - from.y };
   if (ghost.shift === undefined) return null;
-  const unit = query<SVGGraphicsElement>('.cf-cell')?.getBBox();
-  return unit === undefined ? null : offsetBy({ x: 0, y: 0 }, unit, ghost.shift);
+  const unit = unitBox();
+  return unit === null ? null : offsetBy({ x: 0, y: 0 }, unit, ghost.shift);
+}
+
+/** 升 1 つの大きさ (どの穴でも同じ)。**番地を知らないとき**の物差しに使う。 */
+let unitSize: DOMRect | null = null;
+
+function unitBox(): DOMRect | null {
+  if (unitSize !== null) return unitSize;
+  const box = query<SVGGraphicsElement>('.cf-cell')?.getBBox();
+  if (box === undefined || (box.width === 0 && box.height === 0)) return box ?? null;
+  unitSize = box;
+  return box;
 }
 
 /** 升の中心から端数ぶんずらす (升の四角の幅で数える)。足には端数が無い。 */
@@ -393,10 +499,113 @@ function chipFrom(markup: string): SVGGraphicsElement | null {
   return node;
 }
 
+/**
+ * いま出ている運ぶ絵と、その元。**運んでいるあいだは作り直さない** —
+ * 姿は変わらず場所だけが変わるので、消して作り直すと穴をまたぐたびに
+ * 合成層が組み直る (52 の docs/27 の実測で 1 回 2.2 ms)。
+ */
+let carried: { readonly of: SVGGraphicsElement; readonly node: SVGGraphicsElement } | null = null;
+
+const dropCarried = (): void => {
+  carried?.node.remove();
+  carried = null;
+};
+
+/**
+ * 運ぶ絵を用意する。**元が同じなら写しを使い回す。**
+ * 姿が変わるとき (回した・間隔を変えた・図を組み直した) は元の要素そのものが
+ * 入れ替わるので、要素で見分ければ足りる。
+ */
+function ghostChipOf(held: SVGGraphicsElement): SVGGraphicsElement {
+  if (carried !== null && carried.of === held && carried.node.isConnected) return carried.node;
+  dropCarried();
+
+  const ghost = held.cloneNode(true) as SVGGraphicsElement;
+  // 掴む印は写さない (ゴーストは掴めない。名札が 2 つあると選ぶ先が狂う)。
+  ghost.removeAttribute('data-part');
+  for (const one of ghost.querySelectorAll('[data-part]')) one.removeAttribute('data-part');
+  // **図の中へ入れる。** 置くときの絵は図の外で組んであるので、入れ先は
+  // 図にある部品の親 (無ければ図そのもの) にする。
+  const into = query('.cf-chip')?.parentNode ?? query('svg');
+  (into as Element | null)?.appendChild(ghost);
+  carried = { of: held, node: ghost };
+  return ghost;
+}
+
+/** 穴を持たないもの (帯に並べた板の外の機器) か。ずらす基準になる穴が無い。 */
+const holeless = (ghost: Ghost): boolean =>
+  ghost.cells.length === 0 && (ghost.from ?? []).length === 0;
+
+/**
+ * 持ち物を掴んだときのカーソルの位置 (画面の座標)。
+ * **穴を持たないものの影はここからの差で動かす。**
+ *
+ * 板の外の機器は帯に並ぶので指せる穴が無く (`cellsOf` が空)、拡張の答えには
+ * ずらす基準が入ってこない — 影が出ないまま「動かせない」に見えていた
+ * (実機で「基板外のデバイスをマウスで動かせるようにする」)。
+ * **升では数えられない** (掴んだとき、カーソルは板の外に居る) ので、
+ * 画面の座標で数えて図の座標へ落とす。
+ */
+let carriedFrom: { readonly x: number; readonly y: number } | null = null;
+
+/** 掴んだ・放したを控える。**掴み直したときだけ**基準を取り直す。 */
+function noteCarry(before: State['carry'], now: State): void {
+  if (now.carry === null) carriedFrom = null;
+  else if (before === null) carriedFrom = pointer;
+}
+
+/** 画面の座標を図の座標へ。図が無い・行列が取れないときは null。 */
+function userPoint(at: { readonly x: number; readonly y: number } | null): { readonly x: number; readonly y: number } | null {
+  if (at === null) return null;
+  const svg = query<SVGSVGElement>('.cf-body svg');
+  const screen = svg?.getScreenCTM();
+  if (svg === null || screen === null || screen === undefined) return null;
+  const point = new DOMPoint(at.x, at.y).matrixTransform(screen.inverse());
+  return { x: point.x, y: point.y };
+}
+
+/** 穴を持たないものの動いた量 (掴んだ所からカーソルまで)。数えられなければ null。 */
+function floatingShift(): { readonly x: number; readonly y: number } | null {
+  const at = userPoint(carriedFrom);
+  const to = userPoint(pointer);
+  return at === null || to === null ? null : { x: to.x - at.x, y: to.y - at.y };
+}
+
+/**
+ * その場所 (端数つき) の図の座標。穴が図に無ければ null。
+ */
+function spotPoint(spot: Spot | null): { readonly x: number; readonly y: number } | null {
+  if (spot === null || spot.cell === null) return null;
+  const box = cellBox(spot.cell);
+  return box === null ? null : offsetBy(middleOf(box), box, spot.fine);
+}
+
+/**
+ * **答えが追いつくまでの差。** ゴーストは「訊いた穴」の答えで、そのあいだに
+ * カーソルは何升も先へ進んでいる。往復を待って絵を動かすと、影は答えの数だけ
+ * しか動かない (実機で「部品を移動中の反応が悪い。マウス追従をスムーズに」)。
+ *
+ * 升は一様なので、**進んだ分は図の上で足せる** — 拡張に訊き直さずに済む。
+ * 答えが来たら差は 0 に戻り、絵はそのまま正しい場所に居る。
+ */
+function leadOf(now: State): { readonly x: number; readonly y: number } {
+  const at = spotPoint(now.ghostAt);
+  const to = spotPoint(spotOf(now, now.under));
+  if (at === null || to === null) return { x: 0, y: 0 };
+  return { x: to.x - at.x, y: to.y - at.y };
+}
+
 function markCarried(now: State): void {
-  document.querySelector('.cf-ghost-part')?.remove();
   unmark('cf-lifted');
-  if (now.carry === null || now.ghost === null) return;
+  // **引き直している線は薄くする。** 行き先の影 (`markWireGhost`) と二重に
+  // 見えないように — 部品を持ち上げたときと同じ見せ方に揃える。
+  if (now.carry?.kind === 'wireEnd') {
+    mark(query(`.cf-wire[data-line="${CSS.escape(now.carry.line)}"]`), 'cf-lifted');
+  }
+  if (now.carry === null || now.ghost === null) {
+    dropCarried();
+    return;
+  }
 
   // 動かすときは**図にある絵を写す**。置くときは拡張が寄こした絵を使う
   // (図にまだ無い部品なので、写す先が無い)。
@@ -405,26 +614,28 @@ function markCarried(now: State): void {
     : now.carry.kind === 'place' && now.ghost.chip !== undefined
       ? chipFrom(now.ghost.chip)
       : null;
-  if (held === null) return;
+  // 穴どうしの差が数えられればそれ (答えが遅れている分は `leadOf` が足す)。
+  // **穴を持たないものはカーソルに付いてくる** — 掴んだ所からの差で動かす。
+  const answered = held === null ? null : shiftOf(now.ghost);
+  const lead = leadOf(now);
+  const moved = held === null
+    ? null
+    : answered !== null
+      ? { x: answered.x + lead.x, y: answered.y + lead.y }
+      : holeless(now.ghost) ? floatingShift() : null;
+  if (held === null || moved === null) {
+    dropCarried();
+    return;
+  }
   // 持ち上げたものは薄くする。**行き先の絵と二重に見えない**ように。
-  if (now.carry.kind === 'move') held.classList.add('cf-lifted');
+  if (now.carry.kind === 'move') mark(held, 'cf-lifted');
 
-  const moved = shiftOf(now.ghost);
-  if (moved === null) return;
-
-  const ghost = held.cloneNode(true) as SVGGraphicsElement;
-  // 掴む印は写さない (ゴーストは掴めない。名札が 2 つあると選ぶ先が狂う)。
-  ghost.removeAttribute('data-part');
-  for (const marked of ghost.querySelectorAll('[data-part]')) marked.removeAttribute('data-part');
+  const ghost = ghostChipOf(held);
   ghost.setAttribute('class', `cf-ghost-part${now.ghost.ok ? '' : ' cf-ghost-part-bad'}`);
   // **元の姿勢の前にずらしを足す** (部品が自分の transform を持っていても壊さない)。
   const posture = held.getAttribute('transform');
   const shift = `translate(${moved.x} ${moved.y})`;
   ghost.setAttribute('transform', posture === null ? shift : `${shift} ${posture}`);
-  // **図の中へ入れる。** 置くときの絵は図の外で組んであるので、入れ先は
-  // 図にある部品の親 (無ければ図そのもの) にする。
-  const into = query('.cf-chip')?.parentNode ?? query('svg');
-  (into as Element | null)?.appendChild(ghost);
 }
 
 /** いま置こうとしている部品。パレットのどれを押したかを見せる。 */
@@ -432,7 +643,29 @@ function markChosen(now: State): void {
   unmark('cf-chosen');
   if (now.carry?.kind !== 'place') return;
   for (const element of document.querySelectorAll(`.cf-pick[data-type="${CSS.escape(now.carry.type)}"]`)) {
-    element.classList.add('cf-chosen');
+    mark(element, 'cf-chosen');
+  }
+}
+
+/**
+ * 配線の色見本。**配線に触っているときだけ出す** — 道具が配線か、選んだものが
+ * 配線か、引きかけているとき。いつも出しておくと、部品を直しているときに
+ * 関わりのない色の並びが欄の下に居座る。
+ *
+ * 押した色は枠で示す (実機で「固定の色パレット」。開かずに色が見えることと、
+ * いま何色で引くのかが見えることの 2 つが要る)。
+ */
+function markInk(now: State): void {
+  const box = query<HTMLElement>('.cf-colors');
+  if (box === null) return;
+  const swatches = document.querySelectorAll<HTMLElement>('.cf-swatch');
+  const wanted = swatches.length > 0
+    && (now.tool === 'wire' || now.wireFrom !== null
+      || now.selected?.kind === 'wire' || now.also.some((one) => one.kind === 'wire'));
+  box.hidden = !wanted;
+  if (!wanted) return;
+  for (const swatch of swatches) {
+    swatch.classList.toggle('cf-inked', swatch.dataset.color === now.ink);
   }
 }
 
@@ -475,7 +708,7 @@ function centreOf(element: SVGGraphicsElement): { readonly x: number; readonly y
 function markWireFrom(now: State): void {
   unmark('cf-from');
   if (now.wireFrom === null) return;
-  endElement(now.wireFrom.cell)?.classList.add('cf-from');
+  mark(endElement(now.wireFrom.cell), 'cf-from');
 }
 
 /** 引いている最中の配線の影。**引き終わると消える** ので、図には残らない。 */
@@ -489,30 +722,77 @@ const GHOST_WIRE = 'cf-ghost-wire';
  * 線は**カーソルの下の穴・足まで**引く。生のカーソル位置まで引くと、
  * 見えている線と実際に書かれる線が食い違う (書かれるのは穴と穴の間)。
  */
-function markWireGhost(now: State): void {
-  document.querySelector(`.${GHOST_WIRE}`)?.remove();
-  const layer = query('.cf-wires');
-  const end = now.tool === 'wire' ? endSpotOf(now, now.under) : null;
-  // 同じ升でも端数が違えば別の交点 (書かれる配線と同じ判定)。
-  if (now.wireFrom === null || end === null || layer === null || sameSpot(now.wireFrom, end)) return;
+/** 引いている最中の線。**1 本を使い回す** (端数の四角と同じ理由で、作り直さない)。 */
+let wireGhost: SVGPolylineElement | null = null;
 
-  const start = endElement(now.wireFrom.cell);
+/**
+ * 影を入れる層。**`.cf-wires` を持つのは circuit だけ** — 板の 2 つのマップは
+ * 実物の図を掴ませているので、その名前の層が無い。無ければ図の根へ入れる。
+ *
+ * 座標はどちらでも同じ: `centreOf` が返すのは図の根の座標で、circuit の層は
+ * 変形を持たない (`mapSvg.ts` の `layer`)。影は当たり判定を持たない
+ * (`pointer-events: none`) ので、根に置いても掴む先は変わらない。
+ *
+ * これが無かったので、**板では引いている最中の線が出ていなかった** (52 の docs/27)。
+ */
+const wireLayer = (): Element | null => query('.cf-wires') ?? query('.cf-body > svg');
+
+/** その配線の**動かさないほうの端**の場所 (図の座標)。読めなければ null。 */
+function heldEnd(line: string, moving: 'from' | 'to'): { readonly x: number; readonly y: number } | null {
+  const other = moving === 'from' ? 'to' : 'from';
+  const shown = query<SVGGraphicsElement>(
+    `.cf-wire-end[data-line="${CSS.escape(line)}"][data-end="${other}"]`,
+  );
+  return shown === null ? null : centreOf(shown);
+}
+
+/**
+ * 影の両端 (図の座標)。**2 通りある** — 新しく引いている最中 (1 点目 → カーソル) と、
+ * 端を引き直している最中 (動かさないほうの端 → カーソル)。
+ *
+ * 端の引き直しには**影が出ていなかった** — 光る穴だけでは、どちらの端が
+ * どこへ付くのかが読めない (実機で「配線の端をドラッグ中にシャドウを表示する」)。
+ */
+function wireGhostLine(now: State): {
+  readonly from: { readonly x: number; readonly y: number };
+  readonly to: { readonly x: number; readonly y: number };
+} | null {
+  const end = now.tool === 'wire' || now.carry?.kind === 'wireEnd' ? endSpotOf(now, now.under) : null;
+  if (end === null) return null;
   const finish = endElement(end.cell);
-  if (start === null || finish === null) return;
-
-  // 端数の端は升の中心からずらす。足を採ったときは端数を持たない。
-  const fromCentre = centreOf(start);
-  const toCentre = centreOf(finish);
-  if (fromCentre === null || toCentre === null) return;
-  const from = offsetBy(fromCentre, fromCentre.box, now.wireFrom.fine);
+  const toCentre = finish === null ? null : centreOf(finish);
+  if (toCentre === null) return null;
   const to = offsetBy(toCentre, toCentre.box, end.fine);
+
+  if (now.carry?.kind === 'wireEnd') {
+    const from = heldEnd(now.carry.line, now.carry.end);
+    return from === null ? null : { from, to };
+  }
+  // 同じ升でも端数が違えば別の交点 (書かれる配線と同じ判定)。
+  if (now.wireFrom === null || sameSpot(now.wireFrom, end)) return null;
+  const start = endElement(now.wireFrom.cell);
+  const fromCentre = start === null ? null : centreOf(start);
+  if (fromCentre === null) return null;
+  return { from: offsetBy(fromCentre, fromCentre.box, now.wireFrom.fine), to };
+}
+
+function markWireGhost(now: State): void {
+  const layer = wireLayer();
+  const line = wireGhostLine(now);
+  if (line === null || layer === null) {
+    wireGhost?.remove();
+    return;
+  }
+  const { from, to } = line;
   // 折れる指定は先に横 (`-|`)。折れない板では真っ直ぐのまま。
   const corner = shiftHeld && now.foldsWire ? [{ x: to.x, y: from.y }] : [];
   const points = [from, ...corner, to].map((at) => `${at.x},${at.y}`).join(' ');
-  const ghost = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+  const ghost = wireGhost ?? document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+  wireGhost = ghost;
   ghost.setAttribute('class', GHOST_WIRE);
   ghost.setAttribute('points', points);
-  layer.append(ghost);
+  // 図を組み直すと層そのものが入れ替わるので、そのときだけ入れ直す。
+  if (ghost.parentNode !== layer) layer.append(ghost);
 }
 
 function paint(now: State): void {
@@ -521,6 +801,7 @@ function paint(now: State): void {
   markGhost(now);
   markCarried(now);
   markChosen(now);
+  markInk(now);
   markWireFrom(now);
   markWireGhost(now);
   // 道具は CSS が見る目印にする (右の道具の列の光り方、カーソルの形)。
@@ -532,6 +813,45 @@ function paint(now: State): void {
   // 綴りだけでは何段ずれているかが読みにくいので、数でも添える (`b2d7 (+.3, +.7)`)。
   const offset = now.under.fine === null ? '' : ` (${signed(now.under.fine.rows)}, ${signed(now.under.fine.cols)})`;
   setText('.kc-cell', `${spelled ?? now.under.cell ?? ''}${now.under.cell === null ? '' : offset}`);
+}
+
+/**
+ * 塗り直しの予約。**1 フレームに 1 回**にまとめる — カーソルが 1 回動くと、
+ * ホバーで 1 度、拡張から返ったゴーストでもう 1 度、続けて塗っていた。
+ * どちらも「いまの状態」を映すので、フレームの終わりに 1 回で足りる。
+ *
+ * **遅らせても掴む先は変わらない。** 印も枠も影も当たり判定を持たない
+ * (CSS の `pointer-events: none`) ので、カーソルの下 (`elementsFromPoint`) は
+ * 塗る前と後で同じものを返す。
+ */
+let painting: number | null = null;
+
+function paintSoon(): void {
+  if (painting !== null) return;
+  painting = requestAnimationFrame(() => {
+    painting = null;
+    paint(state);
+  });
+}
+
+/**
+ * 図を組み直したときに、控えている印と絵を捨てる。**前の図の要素を抱えたまま
+ * にしない** — 中身を入れ替えると、控えの指す先は図から外れた古い要素になる。
+ */
+function forgetPainted(): void {
+  // **捨てる前に外す。** いまは図ごと入れ替わるので外さなくても消えるが、
+  // それは呼ぶ側の事情。控えの側で辻褄を合わせておく。
+  for (const className of marked.keys()) unmark(className);
+  marked.clear();
+  cellsSeen.clear();
+  boxesSeen.clear();
+  unitSize = null;
+  dropCarried();
+  dropHeldBox();
+  wireGhost?.remove();
+  wireGhost = null;
+  fineBox?.remove();
+  fineBox = null;
 }
 
 // ---------------------------------------------------------------- 選択窓・欄
@@ -635,11 +955,13 @@ document.addEventListener('contextmenu', (event) => {
  * (握ったものだけ既定の動きを止める)。
  */
 function run(event: Event): boolean {
+  const held = state.carry;
   const outcome = step(state, event);
   state = outcome.state;
-  for (const message of outcome.send) vscode.postMessage(message);
+  noteCarry(held, state);
+  for (const message of outcome.send) gate.post(message);
   setText('.cf-status', outcome.status);
-  paint(state);
+  paintSoon();
   focusOn(outcome.focus);
   return outcome.handled;
 }
@@ -661,7 +983,7 @@ function syncShift(event: { readonly shiftKey: boolean }): void {
   if (event.shiftKey === shiftHeld) return;
   shiftHeld = event.shiftKey;
   syncHover();
-  paint(state);
+  paintSoon();
 }
 
 /**
@@ -706,21 +1028,39 @@ function showBand(from: { readonly x: number; readonly y: number }, x: number, y
 
 const hideBand = (): void => { bandBox()?.remove(); };
 
-/** 囲んだ中にある部品の名札。**中心が入っていれば選ぶ** (端がかすっただけでは選ばない)。 */
-function partsInside(from: { readonly x: number; readonly y: number }, x: number, y: number): readonly string[] {
+/**
+ * 囲んだ中にあるものの名札。**中心が入っていれば選ぶ** (端がかすっただけでは
+ * 選ばない)。**配線も拾う** — 消すのは部品と配線の 2 つなのに、囲みで選べるのは
+ * 部品だけだった (実機で「配線も複数選択に対応する」)。
+ *
+ * 配線は**見える線**で数える (掴む線は当たり判定を太らせてあり、中心も同じ所に
+ * 出るが、図に出ていない線を拾わないほうが読みが揃う)。
+ */
+function inside(
+  from: { readonly x: number; readonly y: number },
+  x: number,
+  y: number,
+): { readonly parts: readonly string[]; readonly wires: readonly string[] } {
   const left = Math.min(from.x, x);
   const right = Math.max(from.x, x);
   const top = Math.min(from.y, y);
   const bottom = Math.max(from.y, y);
-  const found: string[] = [];
-  for (const chip of document.querySelectorAll('.cf-chip[data-part]')) {
-    const box = chip.getBoundingClientRect();
-    const cx = box.left + box.width / 2;
-    const cy = box.top + box.height / 2;
-    const id = chip.getAttribute('data-part');
-    if (id !== null && cx >= left && cx <= right && cy >= top && cy <= bottom) found.push(id);
-  }
-  return found;
+
+  const gather = (selector: string, name: string): readonly string[] => {
+    const found: string[] = [];
+    for (const shown of document.querySelectorAll(selector)) {
+      const box = shown.getBoundingClientRect();
+      const cx = box.left + box.width / 2;
+      const cy = box.top + box.height / 2;
+      const id = shown.getAttribute(name);
+      if (id !== null && !found.includes(id) && cx >= left && cx <= right && cy >= top && cy <= bottom) {
+        found.push(id);
+      }
+    }
+    return found;
+  };
+
+  return { parts: gather('.cf-chip[data-part]', 'data-part'), wires: gather('.cf-wire[data-line]', 'data-line') };
 }
 
 document.addEventListener('pointerdown', (event) => {
@@ -738,7 +1078,7 @@ document.addEventListener('pointerdown', (event) => {
     return;
   }
   if (event.button !== 0) return;
-  if (target?.closest('.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status')) return;
+  if (target?.closest(CHROME)) return;
   syncShift(event);
   const under = underAt(event.clientX, event.clientY);
   // **何も無い所から引いたら領域選択。** 掴むものがある所から始めたら今までどおり。
@@ -752,9 +1092,11 @@ document.addEventListener('pointerdown', (event) => {
 document.addEventListener('pointermove', (event) => {
   pointer = { x: event.clientX, y: event.clientY };
   syncShift(event);
-  // **道具の列の上ではカーソルの下を捨てない。** 捨てると「部品にカーソルを置いて
-  // 回すボタンを押す」が効かなくなる (押した時点で対象が消えている)。
-  if (elementOf(event)?.closest('.kc-tools') != null) return;
+  // **道具の列と右クリックの一覧の上ではカーソルの下を捨てない。** 捨てると
+  // 「部品にカーソルを置いて回すボタンを押す」が効かなくなる (押した時点で
+  // 対象が消えている)。一覧は押した所の右下に出るので、項目まで下りる途中で
+  // 必ず部品から外れる — 実機で「右メニューが効かない」と言われたのはこれ。
+  if (elementOf(event)?.closest('.kc-tools, .kc-menu') != null) return;
   if (panning !== null) {
     const box = canvas();
     if (box !== null) {
@@ -787,12 +1129,12 @@ document.addEventListener('pointerup', (event) => {
     hideBand();
     // **少しの動きは領域ではなく「押した」。** 手が震えただけで選び直さない。
     if (Math.abs(event.clientX - from.x) + Math.abs(event.clientY - from.y) > DRAG) {
-      run({ kind: 'pickMany', parts: partsInside(from, event.clientX, event.clientY) });
+      run({ kind: 'pickMany', ...inside(from, event.clientX, event.clientY) });
       return;
     }
   }
   const target = elementOf(event);
-  if (target?.closest('.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status') && state.pressed === null) return;
+  if (target?.closest(CHROME) && state.pressed === null) return;
   syncShift(event);
   run({
     kind: 'release',
@@ -912,6 +1254,13 @@ document.addEventListener('click', (event) => {
     return;
   }
 
+  // 配線の色見本。**引く色を決める** (配線を選んでいれば、その 1 本にも効く)。
+  const swatch = target?.closest<HTMLElement>('.cf-swatch');
+  if (swatch?.dataset.color !== undefined) {
+    run({ kind: 'ink', color: swatch.dataset.color });
+    return;
+  }
+
   // 右の道具の列と右クリックの一覧。鍵と同じことをする (鍵を知らなくても押せる)。
   const tool = target?.closest<HTMLElement>('.kc-tool');
   if (tool?.dataset.key !== undefined) {
@@ -996,7 +1345,7 @@ function aim(what: string | undefined, id: string | undefined): void {
   const selector = what === 'part'
     ? `.cf-chip[data-part="${escaped}"]`
     : what === 'node' ? `.cf-dot[data-node="${escaped}"]` : `.cf-wire[data-line="${escaped}"]`;
-  for (const element of document.querySelectorAll(selector)) element.classList.add('cf-aim');
+  for (const element of document.querySelectorAll(selector)) mark(element, 'cf-aim');
 }
 
 /** 欄に出す中身 (`core/edit/field.ts` の `PartFields`)。 */
@@ -1102,6 +1451,8 @@ const fill = (selector: string, html: string): void => {
 function applyChrome(chrome: PanelChrome): void {
   fill('.cf-chrome-palette', chrome.palette);
   fill('.cf-chrome-lists', chrome.typeNames + chrome.colorNames);
+  // **色見本も語彙のうち。** 色を書かないフェンス (circuit) では空になる。
+  fill('.cf-swatches', chrome.swatches);
   openPaletteDetails();
   // 能力表は状態にだけ流す (塗り直しは、このあとの hover の取り直しがやる)。
   // 箱の `data-` は起動の 1 回しか読まないので、書き直さない。
@@ -1115,12 +1466,14 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
     fill('.cf-fences', message.picker);
     fill('.cf-band', message.issues);
     if (message.chrome !== undefined) applyChrome(message.chrome);
+    // 中身を入れ替えたので、控えている印と絵は捨てる (指す先が図から外れた)。
+    forgetPainted();
     applyView();
     // **選んでいたものが残っていれば選んだまま。** 書き換えのたびに組み直る
     // ので、そのたびに離すと欄で値を直せない。消えていれば捨てる。
     if (state.selected !== null && shownFor(state.selected) !== null) {
       // 光と欄も送り直してもらう (拡張側は何を選んでいるかを覚えていない)。
-      vscode.postMessage({ kind: 'select', what: state.selected.kind, id: state.selected.id });
+      gate.post({ kind: 'select', what: state.selected.kind, id: state.selected.id });
     } else {
       run({ kind: 'refresh' });
     }
@@ -1130,12 +1483,19 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
     syncHover();
   }
   if (message.kind === 'ghost') {
+    // **解錠する前に控えを取る。** 解錠すると待たせていた試し当てが飛び、
+    // `asked` が次のものへ入れ替わる。
+    const answering = asked;
+    // **先に解錠する。** 待たせていた試し当てを送ってから塗り直すと、
+    // 拡張が次の答えを作るあいだにこちらが塗れる。
+    gate.answered(message.key);
     run({
       kind: 'ghost',
       ghost: {
         key: message.key, cells: message.cells, ok: message.ok, why: message.why,
         from: message.from, chip: message.chip, shift: message.shift,
       },
+      ...(answering === null ? {} : { asked: answering }),
     });
   }
   if (message.kind === 'fields') showFields(message.part);

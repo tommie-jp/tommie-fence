@@ -1,9 +1,12 @@
 import { normalizeNewlines } from 'fence-kit';
-import type { Span } from 'fence-kit';
+import type { Edit, EditResult, LineEdit, Span } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
+import { LIMITS } from '../limits.ts';
 import { isTopBlock } from '../model/address.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import { diffAfter } from './diff.ts';
+import { diffAfter, diffAfterLines } from './diff.ts';
+import { partFields } from './field.ts';
+import type { PartField } from './field.ts';
 import type { MoveResult } from './move.ts';
 import type { Address, PartSpec } from '../types.ts';
 
@@ -60,6 +63,21 @@ function atToken(
   return null;
 }
 
+/**
+ * その機器のブロックの中身の行 (鍵の行は含まない)。**消すのはブロックごと** —
+ * 鍵の行だけ消すと中身が宙に浮いて、フェンスそのものが読めなくなる。
+ */
+export function deviceBlock(source: string, id: string): readonly number[] {
+  const normalized = normalizeNewlines(source);
+  const device = deviceOf(normalized, id);
+  if (device?.line == null) return [];
+  const lines = normalized.split('\n');
+  const block = blockOf(lines, device.line);
+  const inside: number[] = [];
+  for (let at = block.from + 1; at <= block.to; at += 1) inside.push(at);
+  return inside;
+}
+
 /** その機器の場所が書かれている所。エディタで光らせるのに使う。 */
 export function deviceSpans(source: string, id: string): readonly Span[] {
   const normalized = normalizeNewlines(source);
@@ -112,3 +130,118 @@ const sideOf = (to: Address): 'top' | 'bottom' =>
  * つながる穴から決まる) ので空を返す。まとめて動かす起点には使えない。
  */
 export const deviceCells = (): readonly string[] => [];
+
+/**
+ * 機器の欄。**書けるのは名前とラベルだけ。**
+ *
+ * 値は文法が使わない (箱に出るのは `label ?? id`。`parser/schema.ts` が
+ * 「機器に value は使いません」と言う) し、種類は `device` そのものなので
+ * 打ち替える先が無い。欄に出して受け付けないと、**直せるように見えて直せない**
+ * (実機で属性パネルから触れなかった)。
+ */
+export const deviceFields = (source: string, id: string): ReturnType<typeof partFields> => {
+  const fields = partFields(source, id);
+  return fields === null ? null : { ...fields, value: '', can: ['id', 'label'] };
+};
+
+const fieldFail = (message: string, line: number | null): EditResult =>
+  ({ ok: false, error: fenceError(message, line) });
+
+/** ブロックの中の `key:` の値が書かれている所。無ければ null。 */
+function valueToken(
+  lines: readonly string[],
+  block: { from: number; to: number },
+  key: string,
+): { line: number; column: number; length: number } | null {
+  for (let at = block.from; at <= block.to; at += 1) {
+    const found = new RegExp(`^(\\s*${key}:[ \\t]*)(.*)$`).exec(lines[at - 1] ?? '');
+    if (found) return { line: at, column: (found[1] ?? '').length, length: (found[2] ?? '').trimEnd().length };
+  }
+  return null;
+}
+
+/** ラベルに書ける字か。**ブロックの形を壊す字は通さない** (1 行記法と同じ見方)。 */
+function badLabel(text: string): string | null {
+  if (text.includes('#')) return 'YAML のコメントになるので `#` は書けません';
+  if (/[:{}[\],]/.test(text)) return 'YAML の記号 (`:` `{` `}` `[` `]` `,`) は書けません';
+  if ([...text].length > LIMITS.labelLength) return `${LIMITS.labelLength} 文字までです`;
+  return null;
+}
+
+/**
+ * 機器のラベルを書き換える。**ブロックの中の 1 行だけ**を直す
+ * (`type:` や `pins:` は動かさない)。無ければ `type:` の次に足し、
+ * 空にするなら行ごと消す (空の `label:` を残さない)。
+ */
+export function setDeviceField(source: string, id: string, field: PartField, text: string): EditResult {
+  const normalized = normalizeNewlines(source);
+  const device = deviceOf(normalized, id);
+  if (device?.line == null) return fieldFail(`機器が見つかりません: ${safeToken(id)}`, null);
+  if (field !== 'label') {
+    return fieldFail(
+      `機器に${field === 'type' ? '種類' : '値'}は書けません`
+      + ` (箱に出る名前は${field === 'type' ? 'ラベル' : 'ラベル'}に書きます)`,
+      device.line,
+    );
+  }
+
+  const written = text.trim();
+  const problem = badLabel(written);
+  if (problem !== null) return fieldFail(`${safeToken(id)} のラベル: ${problem}`, device.line);
+
+  const lines = normalized.split('\n');
+  const block = blockOf(lines, device.line);
+  const token = valueToken(lines, block, 'label');
+
+  // **空にするなら行ごと消す** (中身の無い `label:` を残さない)。書き換えは
+  // 行の中に閉じるものなので、行の出し入れは `lines` のほうで頼む。
+  if (token !== null && written === '') {
+    const removed: readonly LineEdit[] = [{ kind: 'delete', line: token.line }];
+    return { ok: true, value: { edits: [], lines: removed, diff: diffAfterLines(normalized, removed) } };
+  }
+  const edits: readonly Edit[] = token !== null
+    ? [{ line: token.line, column: token.column, length: token.length, text: written }]
+    : written === ''
+      ? []
+      : [{
+        line: block.from,
+        column: (lines[block.from - 1] ?? '').length,
+        length: 0,
+        text: `\n${' '.repeat(indentOf(lines[block.from] ?? ''))}label: ${written}`,
+      }];
+  return { ok: true, value: { edits, diff: diffAfter(normalized, edits) } };
+}
+
+/**
+ * 機器は複製しない。**つなぐ配線が決まらない**ので、写した箱は帯のどこにも
+ * 置けず (左右の位置はつながる穴が決める) 図に出ない。
+ * 「複製した」と言って何も出ないより、そう言って断る。
+ */
+export const duplicateDevice = (id: string): MoveResult =>
+  ({
+    ok: false,
+    error: fenceError(
+      `${safeToken(id)} は複製できません (帯の位置はつながる配線が決めるので、写しの置き場が決まりません)`,
+      null,
+    ),
+  });
+
+/** その機器のピンを指している配線の綴り (`AD2.V+` の `AD2` の所)。 */
+export function devicePinSpans(source: string, id: string): readonly Span[] {
+  const normalized = normalizeNewlines(source);
+  const { doc } = parseFence(normalized);
+  if (doc === null) return [];
+  const lines = normalized.split('\n');
+  const spans: Span[] = [];
+  for (const wire of doc.wires) {
+    const text = lines[wire.line - 1] ?? '';
+    for (const found of text.matchAll(new RegExp(`(^|[^\\w-])(${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\.`, 'g'))) {
+      spans.push({
+        line: wire.line,
+        column: (found.index ?? 0) + (found[1] ?? '').length,
+        length: id.length,
+      });
+    }
+  }
+  return spans;
+}

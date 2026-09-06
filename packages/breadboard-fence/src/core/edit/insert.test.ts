@@ -260,3 +260,25 @@ describe('partCells', () => {
     expect(partCells(WITH_WIRES, 'R9')).toEqual([]);
   });
 });
+
+describe('配線の色 (色見本で選んだもの)', () => {
+  // 実機で「色パレットから色を選択した後、配線するとその色で配線できるように」。
+  const BOARD = 'board: half\nparts:\n  R1: resistor a5 a10\nwires:\n  - a5 -- a10\n';
+  test('writes the colour on the new line when one was picked', () => {
+    const result = insertWire(BOARD, at('b5'), at('b10'), 'red');
+
+    expect(result.ok && result.value.lines[0]).toMatchObject({ text: '  - b5 -- b10 red' });
+  });
+
+  test('writes no colour when none was picked, leaving the fence default', () => {
+    const result = insertWire(BOARD, at('b5'), at('b10'));
+
+    expect(result.ok && result.value.lines[0]).toMatchObject({ text: '  - b5 -- b10' });
+  });
+
+  test('drops a colour it cannot draw, rather than writing a line that fails to read', () => {
+    const result = insertWire(BOARD, at('b5'), at('b10'), 'chartreuse');
+
+    expect(result.ok && result.value.lines[0]).toMatchObject({ text: '  - b5 -- b10' });
+  });
+});
