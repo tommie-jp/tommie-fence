@@ -73,14 +73,25 @@ function drawGrid(map: Shown): string {
   return layer('cf-grid', dots.join(''));
 }
 
-/** 行と列の見出し (a・b … z・aa・ab … と 1〜99)。番地を目で数えられるように。 */
-function drawLabels(map: Shown): string {
+/**
+ * 行と列の見出し (a・b … z・aa・ab … と 1〜99)。番地を目で数えられるように。
+ *
+ * **行の字は、左へ張り出した部品より外に出す。** 1 列目に置いたマイコンボードは
+ * 足の名前が升目の左へ出るので、決め打ちの位置だと**行の字が箱の下に隠れる**
+ * (図の行が数えられなくなる)。画布は描いたものに合わせて広がっているので、
+ * その左端を基準にする。
+ */
+function drawLabels(map: Shown, left: number): string {
   const cols = Array.from({ length: map.cols }, (_, col) =>
     svgText(x(col), AXIS_Y, String(col + 1), { class: 'cf-axis' }));
+  const axisX = Math.min(PAD_X - 12, left + AXIS_PAD);
   const rows = Array.from({ length: map.rows }, (_, row) =>
-    svgText(PAD_X - 12, y(row) + 4, rowLetters(row), { class: 'cf-axis' }));
+    svgText(axisX, y(row) + 4, rowLetters(row), { class: 'cf-axis' }));
   return layer('cf-axes', [...cols, ...rows].join(''));
 }
+
+/** 画布の左端から行の字までの余白。2 文字の行 (`aa`) が画布に収まる幅。 */
+const AXIS_PAD = 10;
 
 /**
  * 配線を掴むための当たり判定。**見える線は細すぎて押せない** (1.5) ので、
@@ -145,6 +156,8 @@ type Room = {
 
 /** 足の名前 1 つが要る横幅。字の大きさは `.cf-pin-name` の 8px。 */
 const PIN_NAME_FONT = 8;
+/** 箱の中に書く字の大きさ (`.cf-mark` の font-size と同じ)。 */
+const MARK_FONT = 9;
 
 /**
  * 画布に要る広さ。**升目・部品の箱・注釈の札**のどれも入るところまで取る。
@@ -170,7 +183,7 @@ function roomFor(map: GridMap, nudges: ReadonlyMap<Chip, number>): Room {
     if (chip.to !== null) continue;
     const glyph = glyphOf(chip.type).name;
     const rows = rowsOf(chip.pins, chip.turn);
-    const { halfW, halfH } = reachOf(rows, glyph);
+    const { halfW, halfH } = reachOf(rows, glyph, middleWidth(chip.type));
     const at = { x: x(chip.col), y: y(chip.row) + (nudges.get(chip) ?? 0) };
     // 足の棒と、その先の名前。**辺ごとに要る幅が違う** (名前の長さが違う)。
     const beside = (side: PinSide): number => {
@@ -196,6 +209,13 @@ function roomFor(map: GridMap, nudges: ReadonlyMap<Chip, number>): Room {
   }
   return room;
 }
+
+/**
+ * 箱の真ん中に書く種類の字 (`pico2`) の幅。書かない部品は 0。
+ * **書く側と同じ字**で測る (`cf-mark` の 9px)。
+ */
+const middleWidth = (type: string): number =>
+  (lookupBoardPart(type) === null ? 0 : textWidth(type) * MARK_FONT + NAME_INSIDE * 2);
 
 /** 升目に出ている足の接続点。部品の名前と足の名前で引く。 */
 type PinPoints = ReadonlyMap<string, { readonly x: number; readonly y: number }>;
@@ -245,7 +265,7 @@ function pinPointsOf(chips: readonly Chip[], nudges: ReadonlyMap<Chip, number>):
     if (chip.to !== null || chip.pins.length === 0) continue;
     const rows = rowsOf(chip.pins, chip.turn);
     const glyph = glyphOf(chip.type).name;
-    const { halfW, halfH } = reachOf(rows, glyph);
+    const { halfW, halfH } = reachOf(rows, glyph, middleWidth(chip.type));
     const nudge = nudges.get(chip) ?? 0;
     for (const [side, row] of rows) {
       row.forEach((pin, at) => {
@@ -457,7 +477,7 @@ const rowsOf = (pins: readonly ChipPin[], turn: Turn): PinRows => {
  * 何本も出る部品は、既定の箱では足が重なって 1 本ずつ押せない
  * (実機で「すべての部品の足に接続点があるか」と言われて広げた)。
  */
-function reachOf(rows: PinRows, glyph: GlyphName): {
+function reachOf(rows: PinRows, glyph: GlyphName, middle = 0): {
   readonly halfW: number; readonly halfFront: number; readonly halfBack: number; readonly halfH: number;
 } {
   const along = (...sides: readonly PinSide[]): number =>
@@ -480,7 +500,10 @@ function reachOf(rows: PinRows, glyph: GlyphName): {
   // (`textWidth` は図の字を基準にした概算で、升目の font は少し広い)。
   const longest = Math.max(inside('top'), inside('bottom'));
   const standing = longest === 0 ? 0 : PIN_NAME_FONT + NAME_INSIDE;
-  const forNames = (inside('left') + inside('right') + standing) / 2 + NAME_INSIDE * 2 + 2;
+  // **箱の真ん中に書く字 (`pico2`) のぶんも空ける。** 左右の名前は縁から
+  // 内へ寄るので、真ん中の空きがその字より狭いと重なる (足に番号を添えて
+  // 名前が伸びた回に踏んだ)。
+  const forNames = (inside('left') + inside('right') + standing + middle) / 2 + NAME_INSIDE * 2 + 2;
   // 立てた名前の**長さ**は箱の高さで飲む (縁からの余白の内側に収める)。
   const forStanding = longest / 2 + NAME_INSIDE + PIN_NAME_FONT / 2;
   const wide = Math.max(edge, room(along('top', 'bottom')), forNames);
@@ -749,7 +772,7 @@ function drawStanding(chip: Chip, nudge: number): string {
   // 中に入れると同じ部品が図と升目で違う所に名前を持つ (実機で並べて見つけた)。
   // 箱の中は型番の場所で、そちらは図が書く。
   const rows = rowsOf(chip.pins, chip.turn);
-  const { halfW, halfFront, halfBack, halfH } = reachOf(rows, glyph.name);
+  const { halfW, halfFront, halfBack, halfH } = reachOf(rows, glyph.name, middleWidth(chip.type));
   // **記号の後ろ (-x) が画面のどちら側へ来るか。** 回すと入れ替わるので、
   // 辺そのものではなく、回す前のどの辺かで選ぶ。
   const backSide = turnSide('left', chip.turn);
@@ -965,7 +988,7 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {})
       xmlns: 'http://www.w3.org/2000/svg',
     },
     drawGrid(shown)
-      + drawLabels(shown)
+      + drawLabels(shown, room.left)
       + layer('cf-wires', map.wires.map((wire) => drawWire(wire, bad, dots)).join(''))
       // 掴む層は見える線より後、部品より前。上に描いたものからクリックを取るので、
       // 部品と節点が先に取り、配線はその隙間で取る。

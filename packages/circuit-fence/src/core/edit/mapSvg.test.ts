@@ -779,3 +779,49 @@ describe('図と同じ見え方にする細工', () => {
     expect(legs.filter((one) => one.x === 0 && one.y === 0)).toHaveLength(1);
   });
 });
+
+/**
+ * 箱の中に書く字どうしが重ならないこと。**足に番号を添えて名前が伸びた回**に
+ * 踏んだ (`pico` の種類名が `10 GP7` と `GP26 31` の上に乗っていた)。
+ * 1 つずつ見て回るのではなく、字の占める幅を測って当てる。
+ */
+describe('箱の中の字は重ならない', () => {
+  /** その `<text>` が局所座標で占める左右 (`x` と anchor と字幅から)。 */
+  const spanOf = (tag: string, font: number): { left: number; right: number } => {
+    const x = Number(/ x="([-\d.]+)"/.exec(tag)?.[1] ?? NaN);
+    const text = />([^<]*)</.exec(tag)?.[1] ?? '';
+    const width = textWidth(text) * font;
+    const anchor = /text-anchor="(\w+)"/.exec(tag)?.[1] ?? 'start';
+    const left = anchor === 'middle' ? x - width / 2 : anchor === 'end' ? x - width : x;
+    return { left, right: left + width };
+  };
+
+  test('keeps the type name clear of the pin names written inside the box', () => {
+    const svg = draw('parts:\n  PI1: pico a1\n');
+    // 立てて書く名前 (`GND`) は横幅を持たないので、横に伸びるものだけ見る。
+    const names = [...svg.matchAll(/<text [^>]*class="cf-pin-name"[^>]*>[^<]*<\/text>/g)]
+      .map((found) => found[0])
+      .filter((tag) => !tag.includes('rotate'))
+      .map((tag) => spanOf(tag, 8));
+    const kind = spanOf(/<text [^>]*class="cf-mark"[^>]*>pico<\/text>/.exec(svg)?.[0] ?? '', 9);
+
+    expect(names.length).toBeGreaterThan(0);
+    for (const name of names) {
+      expect(Math.min(name.right, kind.right) - Math.max(name.left, kind.left)).toBeLessThanOrEqual(0);
+    }
+  });
+
+  test('moves the row letters out from under a part that reaches left of the grid', () => {
+    // 1 列目に置いたマイコンボードは足の名前が升目の左へ出る。決め打ちの位置だと
+    // **行の字が箱の下に隠れて**、図の行を数えられなくなる。
+    const svg = draw('parts:\n  PI1: pico a1\n');
+    const at = Number(/<g transform="translate\((-?[\d.]+),/.exec(svg)?.[1] ?? NaN);
+    const letters = [...svg.matchAll(/<text x="([-\d.]+)"[^>]*class="cf-axis">[a-z]+<\/text>/g)]
+      .map((found) => Number(found[1]));
+    const leftmost = Math.min(...[...svg.matchAll(/<text [^>]*class="cf-pin-name"[^>]*>[^<]*<\/text>/g)]
+      .map((found) => at + spanOf(found[0], 8).left));
+
+    expect(letters.length).toBeGreaterThan(0);
+    for (const letter of letters) expect(letter).toBeLessThan(leftmost);
+  });
+});
