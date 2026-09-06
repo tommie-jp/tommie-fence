@@ -7,9 +7,10 @@ const hits = (
   size: { cols: number; rows: number } = { cols: 6, rows: 4 },
   used: readonly string[] = [],
   names: ReadonlyMap<string, string> = new Map(),
+  outer = false,
 ) => {
   const board = createBoard(size);
-  return renderHits(board, createLayout(board), new Set(used), names);
+  return renderHits(board, createLayout(board), new Set(used), names, outer);
 };
 
 describe('renderHits', () => {
@@ -19,6 +20,18 @@ describe('renderHits', () => {
     expect(svg.match(/class="cf-cell"/g)).toHaveLength(6 * 4);
     expect(svg).toContain('data-address="a1"');
     expect(svg).toContain('data-address="d6"');
+  });
+
+  test('lays cells one ring outside the board, so off-board things have a drop', () => {
+    // 実機で「外部デバイスを選択できるが、移動などができない」。板の外に置く
+    // もの (機器の箱、端面実装のコネクタ) は、そこへ落とせないと動かせない。
+    const svg = hits({ cols: 6, rows: 4 }, [], new Map(), true);
+
+    expect(svg).toContain('data-address="01"');
+    expect(svg).toContain('data-address="a0"');
+    expect(svg).toContain('data-address="e1"');
+    // 広げるのは 1 周だけ。
+    expect(svg).not.toContain('data-address="-a1"');
   });
 
   test('keeps the cells invisible, since the drawing is the map', () => {

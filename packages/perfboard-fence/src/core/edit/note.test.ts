@@ -57,11 +57,18 @@ describe('moveNote', () => {
     expect(after(BOARD, moveNote(BOARD, 'note:6', at('a1')))).toContain('- box a1 c3 blue');
   });
 
-  test('refuses a move that takes the note off the board', () => {
-    const result = moveNote(BOARD, 'note:6', at('l8'));
+  test('lets a note leave the board, since it is a word on the drawing', () => {
+    // 実機で「text はどこでも移動できるようにする。ボード外含む」。
+    // 半田付けする場所ではないので、板の脇や上下の余白にも置ける。
+    expect(moveNote(BOARD, 'note:6', at('a0')).ok).toBe(true);
+  });
+
+  test('still refuses a move that takes the note out of reach', () => {
+    // 番地の届く範囲 (板の外は 4 つ先まで) が図の広がる限界。
+    const result = moveNote(BOARD, 'note:6', at('a99'));
 
     expect(result.ok).toBe(false);
-    expect(result.ok || result.error.message).toContain('板の外');
+    expect(result.ok || result.error.message).toContain('離れすぎ');
   });
 
   test('says so when the handle points at no note', () => {

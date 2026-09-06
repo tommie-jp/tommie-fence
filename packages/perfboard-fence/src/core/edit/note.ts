@@ -2,7 +2,7 @@ import { FLOW_REFUSAL, dropLines, isKeyLine, keyLineOf, normalizeNewlines } from
 import type { Edit, LineEdit, NetDiff, Span } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
-import { isSolderable } from '../model/board.ts';
+import { offBoardReason } from '../model/board.ts';
 import { createBoard } from '../model/board.ts';
 import { MIRROR_WORD, NO_TURN, rotationWord } from '../parts/orient.ts';
 import type { Turn } from '../parts/orient.ts';
@@ -120,10 +120,13 @@ export function moveNote(source: string, handle: string, to: Address, trial = fa
     return at === null ? null : { row: at.row + delta.row, col: at.col + delta.col };
   });
   if (landings.some((one) => one === null)) return fail(`${found.line} 行目の注釈の番地を読めません`, found.line);
+  // **注釈は板の外へも出せる。** 半田付けする場所ではなく、図に添える字なので、
+  // 板の脇や上下の余白に置きたいことがある (実機で「text はどこでも移動できる
+  // ようにする。ボード外含む」)。**離れすぎだけ断る** — 番地の届く範囲
+  // (`offBoardReason`、板の外は 4 つ先まで) が図の広がる限界でもある。
   for (const landing of landings) {
-    if (landing !== null && board !== null && !isSolderable(board, landing)) {
-      return fail(`注釈を動かすと ${formatAddress(landing)} が板の外です`, found.line);
-    }
+    const why = landing === null || board === null ? null : offBoardReason(board, landing);
+    if (why !== null) return fail(`注釈を動かすと ${why}`, found.line);
   }
 
   const spans = tokensOf(found.text, written);
@@ -279,3 +282,13 @@ export function flipNote(source: string, handle: string): NoteResult {
 
 /** 向きの無い注釈。**書いていないのと同じ**。 */
 export const NOTE_NO_TURN = NO_TURN;
+
+/**
+ * その注釈が持っている**写せる字**。言葉を持つのは `text` だけで、
+ * 印や枠には写す字が無い (右クリックの「テキストコピー」が読む)。
+ */
+export function noteText(source: string, handle: string): string | null {
+  const found = locate(source, handle);
+  if (!isFound(found) || found.note.kind !== 'text') return null;
+  return found.note.text ?? null;
+}

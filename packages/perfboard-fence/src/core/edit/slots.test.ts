@@ -7,11 +7,14 @@ const cells = (src: string): string[] =>
   [...createPerfboardEditor().view(src, 1).map.matchAll(/class="cf-cell" data-address="([^"]+)"/g)].map((m) => m[1] ?? '');
 
 describe('スロットの銅箔', () => {
-  test('掴める升がスロットにも立つ (書いた板だけ)', () => {
+  test('掴める升がスロットにも立つ', () => {
     expect(cells(SLOTS)).toContain('a0');
     expect(cells(SLOTS)).toContain('a13');
     expect(cells(SLOTS)).toContain('g0');
-    expect(cells(PLAIN)).not.toContain('a0');
+    // **銅箔の無い板にも升は立つ** — 板の外に置くもの (機器・注釈) の
+    // 動かし先になるため。銅箔の無い所へ配線を引くのは今までどおり断る
+    // (次のテスト)。
+    expect(cells(PLAIN)).toContain('a0');
   });
 
   test('配線はスロットへ引ける', () => {

@@ -198,8 +198,18 @@ function renderDevice(placed: PlacedDevice, theme: Theme): string {
   return `${body}${legs}${caption}`;
 }
 
-export const renderDevices = (placed: readonly PlacedDevice[], theme: Theme): string =>
-  placed.map((one) => renderDevice(one, theme)).join('');
+/**
+ * 板の外の機器を全部。`edit` のときは**掴むための印**で 1 つずつ包む
+ * (部品と同じ `data-part`。実機で「基板外の部品もマウスコマンドの対象にする」)。
+ * 既定では包まない — 貼る図は 1 バイトも変わらない。
+ */
+export const renderDevices = (placed: readonly PlacedDevice[], theme: Theme, edit = false): string =>
+  placed
+    .map((one) => {
+      const drawn = renderDevice(one, theme);
+      return edit ? element('g', { class: 'cf-chip', 'data-part': one.device.id }, drawn) : drawn;
+    })
+    .join('');
 
 /**
  * 番地で置いた機器が、板の上と下へどれだけはみ出すか。

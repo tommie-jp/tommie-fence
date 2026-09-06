@@ -1,6 +1,6 @@
 import {
   REAL_INK, drawBody, drawPackage, drawsOwnLeads, element, fit, hasBody, lookupBoardPart, num,
-  packageHalfWidth, packageReach, smaBody as drawSmaBody, svgText, transformerCore,
+  bodySize, packageHalfWidth, packageReach, smaBody as drawSmaBody, svgText, transformerCore,
 } from 'fence-kit';
 import type { BodyInk, BodyPart } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
@@ -17,8 +17,14 @@ import { jointMark } from './joints.ts';
 import type { Theme } from './theme.ts';
 
 const LEAD_WIDTH = 2;
-/** 胴の下端からキャプションまで。**胴の大きさで変わる部品**があるので、下端から測る。 */
-const CAPTION_GAP = 8;
+/**
+ * 胴の下端からキャプションの**頭**まで。**胴の大きさで変わる部品**があるので、
+ * 下端から測る。字は基準線から上へ伸びるので、置くときは字の高さも足す
+ * (足さないと字の頭が胴に食い込む。実機で「文字と重なっていないか確認して」)。
+ */
+const CAPTION_GAP = 4;
+/** 字が基準線から上へ出る高さの、字の大きさに対する比 (大文字の高さ)。 */
+const CAPTION_CAP = 0.72;
 /** 図に出す名前と値。値が無ければ名前だけ。 */
 const caption = (part: PlacedPart): string =>
   part.value === null ? part.id : `${part.id} ${clampText(part.value, LIMITS.labelLength)}`;
@@ -69,7 +75,8 @@ function partLabel(
   // 巻き込まないでおく (`sin` の丸めで字が 0.01 度ずれるようなことも起きない)。
   const tilt = turned(rect.angle);
   if (Math.abs(tilt) < UPRIGHT) {
-    return svgText(pins.x, rect.cy + rect.height / 2 + CAPTION_GAP, fitToBoard(text, pins.x, size, layout), style);
+    const baseline = rect.cy + rect.height / 2 + CAPTION_GAP + size * CAPTION_CAP;
+    return svgText(pins.x, baseline, fitToBoard(text, pins.x, size, layout), style);
   }
 
   // **傾いた胴には字も同じだけ傾ける。** 斜めに置いた部品の名前だけ水平だと、
@@ -139,14 +146,16 @@ const SMA_PIN_REACH = 20;
 const SMA_PIN_LEAD = 8;
 const SMA_SOCKET = '#2b2f33';
 /** 胴に書く姿の名前。金物の上に載るので、明るい地に読める濃さにする。 */
-const SMA_LABEL = '#2b2f33';
 
 /**
  * SMA コネクタ (上向き)。**姿は fence-kit と共通** — breadboard にも同じ
  * コネクタを置けるようにするために引き上げた。板の縁に載せる横置き
  * (`smaEdgeBody`) だけはこちらに残る — 縁の無い板には置き場が無い。
  */
-const smaBody = (part: PlacedPart): string => drawSmaBody({ type: 'sma', variant: part.variant, pins: [] }, 0);
+// **姿は breadboard と同じ**にする (実機で「sma の実態図を breadboard と同じに」)。
+// 合わせ面の丸は四角の真ん中 — 姿の名前は胴に刷らず、胴の下へ出す (`smaBadge`)。
+const smaBody = (part: PlacedPart): string =>
+  drawSmaBody({ type: 'sma', variant: part.variant, pins: [] }, 0);
 
 /**
  * 端面実装 (横置き) の SMA。板の縁に載せて、**首から先を板の外へ出す**形。
@@ -245,24 +254,21 @@ function smaEdgeBody(
  * **胴と一緒に回さない。** 板の右の縁に載せたコネクタは胴が 180 度回るので、
  * 一緒に回すと鏡文字になる。字はいつも水平に置く。
  */
-function smaBadge(part: PlacedPart, at: { x: number; y: number }, edge: boolean, theme: Theme): string {
+function smaBadge(part: PlacedPart, at: { x: number; y: number }, theme: Theme): string {
   if (part.type !== 'sma' || part.variant === null) return '';
 
   const male = part.variant.startsWith('male');
   const size = theme.metrics.textSize;
-  // **2 行に分ける。** 1 行だと横置きでは足や配線に被り、縦置きでは胴に入らず
-  // `SMA fem…` と切れる。胴に収まる幅は「SMA」も「female」も 6 字ぶんで足りる。
-  const room = (edge ? SMA_SIZE - 4 : SMA_SIZE - 6) / size;
-  const first = at.y + (edge ? -size * 0.2 : SMA_SIZE * 0.16);
-  const step = size * 1.15;
+  // **胴の下、名前の 1 行下に置く。** 胴に刷ると合わせ面の丸を下へ押しやることに
+  // なり、breadboard と姿が変わる (実機で「同じにする」)。字は 1 行で足りる。
+  const room = (SMA_SIZE * 1.4) / size;
+  const at2 = { x: at.x, y: at.y + SMA_SIZE / 2 + CAPTION_GAP + size * (CAPTION_CAP + 1.15) };
 
-  return ['SMA', male ? 'male' : 'female']
-    .map((line, index) => svgText(at.x, first + step * index, fit(line, room), {
-      fill: SMA_LABEL,
-      'font-size': num(size),
-      halo: SMA_METAL,
-    }))
-    .join('');
+  return svgText(at2.x, at2.y, fit(`SMA ${male ? 'male' : 'female'}`, room), {
+    fill: theme.palette.plateText,
+    'font-size': num(size),
+    halo: theme.palette.plate,
+  });
 }
 
 const genericBody = (width: number, theme: Theme): string =>
@@ -398,11 +404,19 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
   const pinMiddle = mount === null
     ? { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 }
     : { x: (from.x + to.x) / 2, y: from.y };
-  const label = partLabel(caption(part), rect, pinMiddle, theme, layout);
+  // **測るのは描かれている胴**。当たり判定の矩形 (`bodyRect`) は 2 本足をどれも
+  // 同じ高さで見るので、円板 (バリスタ・CdS) や玉のように背の高い胴では
+  // 字が胴に食い込む (実機で「varistor、文字が被らないようにして」)。
+  // 姿ごとの寸法は `bodySize` が持っていて、描く側もそこから引いている。
+  const drawn = bodySize(asBody(part), spanOf(part, from, to, width));
+  const label = partLabel(
+    caption(part),
+    { ...rect, height: Math.max(rect.height, drawn.height) },
+    pinMiddle,
+    theme,
+    layout,
+  );
 
-  // 姿の名前は**胴のブロックの真ん中**に置く。全体の中心だとねじ部まで含むので
-  // 板の外へ寄りすぎ、足の側だと配線に被る。
-  const edge = mount !== null;
   // 姿の名前は**板の外に出ている胴の真ん中**に置く。台座は 1mm しかないので
   // そこに寄せると板に掛かり、足の側に寄せると配線に被る。
   const blockX = mount === null ? 0 : (-width / 2 + mount.edgeX) / 2;
@@ -411,7 +425,7 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme): string {
     y: rect.cy + blockX * Math.sin(rect.angle),
   };
 
-  return `${lead}${body}${smaBadge(part, badgeAt, edge, theme)}${label}`;
+  return `${lead}${body}${smaBadge(part, badgeAt, theme)}${label}`;
 }
 
 /** ノッチの半径 (DIP の 1 番ピン側の切り欠き)。 */

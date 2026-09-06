@@ -10,11 +10,12 @@ import { insertPart, insertWire, duplicatePart, nextPartId, partCells } from './
 import { renamePart } from './rename.ts';
 import { isWireHandle, renderColorOptions, setWireField, wireFields } from './wireField.ts';
 import {
-  deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans,
+  deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans, noteText,
   setNoteField, turnNote,
 } from './note.ts';
 import { flipPart, turnPart } from './turn.ts';
 import { movePart, movablePartIds, partSpans, stepCell, stepsTo } from './move.ts';
+import { deviceCells, deviceSpans, deviceTarget, isDevice, moveDevice } from './device.ts';
 import { movePoint, nodeSpans } from './point.ts';
 import { deletePart, deleteWire } from './remove.ts';
 import { extractPerfboardFences } from '../fences.ts';
@@ -56,6 +57,8 @@ export function createPerfboardEditor(): FenceEditor {
 
     spansOf: (source, what, id) => {
       if (isNoteHandle(id)) return noteSpans(source, id);
+      // **板の外の機器は入れ子で書く**ので、光らせるのは `at:` の値 (`device.ts`)。
+      if (what !== 'node' && isDevice(source, id)) return deviceSpans(source, id);
       if (what !== 'node') return partSpans(source, id);
       const at = readAddress(id);
       return at === null ? [] : nodeSpans(source, at);
@@ -70,7 +73,14 @@ export function createPerfboardEditor(): FenceEditor {
     // 部品の ID は配線から指すための名前なので重ならない — 名札はそのまま名前。
     // 注釈には名前が無いので、名札は行番号。人に見せるときは「注釈」と呼ぶ。
     nameOf: (handle) => (isNoteHandle(handle) ? `注釈 (${noteLineOf(handle) ?? '?'} 行目)` : handle),
-    cellsOf: (source, handle) => (isNoteHandle(handle) ? noteCells(source, handle) : partCells(source, handle)),
+    // 写せる字を持つのは `text` の注釈だけ (右クリックの「テキストコピー」)。
+    textOf: (source, handle) => (isNoteHandle(handle) ? noteText(source, handle) : null),
+    cellsOf: (source, handle) => {
+      if (isNoteHandle(handle)) return noteCells(source, handle);
+      // 機器は番地で置いたときだけ穴に載る (帯に並べた機器には指せる穴が無い)。
+      if (isDevice(source, handle)) return deviceCells(source, handle);
+      return partCells(source, handle);
+    },
     // 配線は穴から穴へ 1 本 (折れの綴りが文法に無い)。
     foldsWire: false,
     // 穴の間は無い (足は穴に挿す)。Ctrl を押しても素のクリック。
@@ -87,6 +97,10 @@ export function createPerfboardEditor(): FenceEditor {
       const at = readAddress(to);
       if (at === null) return unreadable(to);
       if (isNoteHandle(handle)) return moveNote(source, handle, at, trial?.preview === true);
+      // 機器は `at:` を書き換えて動かす (箱の左上が落ちた穴に来る)。
+      if (isDevice(source, handle)) {
+        return moveDevice(source, handle, deviceTarget(at), trial?.preview === true);
+      }
       if (!movablePartIds(source).includes(handle)) {
         return { ok: false, error: { message: `動かせる部品ではありません: ${handle}`, line: null } };
       }

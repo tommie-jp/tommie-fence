@@ -39,6 +39,8 @@ export function renderHits(
   layout: Layout,
   used: ReadonlySet<string>,
   names: ReadonlyMap<string, string>,
+  /** 板のすぐ外にも升を立てるか。**板の外に置くものがあるときだけ** true。 */
+  outer = false,
 ): string {
   const addresses: Address[] = [];
   for (let row = 1; row <= board.rows; row += 1) {
@@ -56,9 +58,34 @@ export function renderHits(
     }
   }
 
+  // **板の外に置くものがあるときだけ、すぐ外にも升を立てる。**
+  // 機器の箱は板の外が居場所なので、そこへ落とせないと掴んでも動かし先が無い
+  // (実機で「外部デバイスを選択できるが、移動などができない」)。
+  // **何も無い板では立てない** — 銅箔の無い所に配線の端を落とせてしまう。
+  // 立てるのは 1 周ぶんだけ (番地は 4 つ先まで書けるが、押す先は絞る)。
+  if (outer) {
+    for (let col = 1; col <= board.cols; col += 1) {
+      addresses.push({ row: 0, col }, { row: board.rows + 1, col });
+    }
+    for (let row = 1; row <= board.rows; row += 1) {
+      addresses.push({ row, col: 0 }, { row, col: board.cols + 1 });
+    }
+  }
+
   // **板の外でも、何かが書かれている所には升を立てる。** 端面実装のコネクタは
   // 足が板の縁の外にあるのが正しい姿なので、そこを掴めないと節点を引きずれない。
   // 書かれていない板の外には立てない (押す先が無い)。
+  // 同じ番地を 2 度立てない (縁の銅箔と外周が重なる)。
+  const seen = new Set<string>();
+  const unique = addresses.filter((address) => {
+    const written = formatAddress(address);
+    if (seen.has(written)) return false;
+    seen.add(written);
+    return true;
+  });
+  addresses.length = 0;
+  addresses.push(...unique);
+
   const already = new Set(addresses.map((address) => formatAddress(address)));
   for (const written of used) {
     if (already.has(written)) continue;

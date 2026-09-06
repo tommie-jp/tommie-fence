@@ -328,7 +328,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       + renderDeviceWires(
         wiring.deviceWires, placedDevices.placed, layout, THEME, hops.slice(wiring.wires.length),
       )
-      + renderDevices(placedDevices.placed, THEME)
+      + renderDevices(placedDevices.placed, THEME, options.edit === true)
       + renderParts(placement.parts, layout, PLATE, options.edit === true)
       // 注釈は一番上。**指したものが下に隠れると印の意味が無くなる。**
       + renderNotes(notes, layout, PLATE, options.edit === true)
@@ -357,7 +357,10 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       + (options.edit === true
         ? renderHits(board, layout, ...(() => {
           const layer = editLayer(parsed.doc.parts, wiring.wires, parsed.doc.points);
-          return [layer.used, layer.names] as const;
+          // **編集のときは板のすぐ外にも升を立てる。** 板の外に置くもの
+          // (機器の箱、注釈) の動かし先になる。落とせない相手 (銅箔の無い所へ
+          // 引く配線) は今までどおり断るので、升があっても嘘にはならない。
+          return [layer.used, layer.names, true] as const;
         })())
         : '');
 
