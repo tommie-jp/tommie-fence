@@ -110,7 +110,8 @@ describe('持ち上げて、置く所で 1 クリック (KiCad の型 2)', () =>
     const dragged = after(PANEL, press(ON_R1), drag(AT_B3));
 
     expect(dragged.carry).toEqual({ kind: 'move', part: 'R1', byPointer: true });
-    expect(step(dragged, release(AT_B3)).send).toEqual([{ kind: 'move', part: 'R1', to: 'b3' }]);
+    // **掴んだ升も添える** — アンカーとの差を殻が引く (胴の途中を掴んでも影がずれない)。
+    expect(step(dragged, release(AT_B3)).send).toEqual([{ kind: 'move', part: 'R1', from: 'a1', to: 'b3' }]);
   });
 
   test('a drag let go where it started, or off the holes, only selects', () => {
@@ -282,18 +283,39 @@ describe('続けて置く・1 穴ずつ', () => {
     expect(step(hovering, key('ArrowRight')).state.selected).toEqual({ kind: 'part', id: 'R1' });
   });
 
-  test('nudges by one fine step when the modifier is held, so the mouse need not aim at it', () => {
+  test('nudges by one fine step with a plain arrow, since that is the finer work', () => {
+    // 実機で「Ctrl なしでも 1/10 単位で移動するように変更。Ctrl+クリックは廃止」。
+    // **細かいほうが既定**で、升ちょうどが Shift 付き。
     const hovering = after(start(true, false, 10), hover(ON_R1));
 
-    expect(step(hovering, key('ArrowRight', { modifier: true })).send)
+    expect(step(hovering, key('ArrowRight')).send)
       .toEqual([{ kind: 'nudge', part: 'R1', rows: 0, cols: 0.1 }]);
-    expect(step(hovering, key('ArrowUp', { modifier: true })).send)
+    expect(step(hovering, key('ArrowUp')).send)
       .toEqual([{ kind: 'nudge', part: 'R1', rows: -0.1, cols: 0 }]);
-    expect(step(hovering, key('ArrowRight', { modifier: true })).handled).toBe(true);
+    expect(step(hovering, key('ArrowRight')).handled).toBe(true);
   });
 
-  test('leaves the modifier and the arrows alone on a board, which has no step between holes', () => {
+  test('nudges by a whole hole while Shift is held, as the modifier now means the grid', () => {
+    // 実機で「SHIFT を押しているときには枡単位で動くようにする」。
+    const hovering = after(start(true, false, 10), hover(ON_R1));
+
+    expect(step(hovering, key('ArrowRight', { shift: true })).send)
+      .toEqual([{ kind: 'nudge', part: 'R1', rows: 0, cols: 1 }]);
+    expect(step(hovering, key('ArrowDown', { shift: true })).send)
+      .toEqual([{ kind: 'nudge', part: 'R1', rows: 1, cols: 0 }]);
+  });
+
+  test('leaves the arrows on a whole hole on a board, which has no step between holes', () => {
+    // 端数を受けないフェンス (板) は Shift の有無にかかわらず 1 穴。
     const hovering = after(PANEL, hover(ON_R1));
+
+    expect(step(hovering, key('ArrowRight')).send).toEqual([{ kind: 'nudge', part: 'R1', rows: 0, cols: 1 }]);
+    expect(step(hovering, key('ArrowRight', { shift: true })).send)
+      .toEqual([{ kind: 'nudge', part: 'R1', rows: 0, cols: 1 }]);
+  });
+
+  test('no longer steals the arrows for the modifier, since Ctrl lost its meaning', () => {
+    const hovering = after(start(true, false, 10), hover(ON_R1));
 
     expect(step(hovering, key('ArrowRight', { modifier: true })).send).toEqual([]);
     expect(step(hovering, key('ArrowRight', { modifier: true })).handled).toBe(false);
@@ -608,7 +630,7 @@ describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
     expect(lifted.carry?.kind).toBe('move');
 
     expect(step(lifted, release(quarter('a1', 0, 0.25))).send)
-      .toEqual([{ kind: 'move', part: 'R1', to: 'a1', fine: { rows: 0, cols: 0.25 } }]);
+      .toEqual([{ kind: 'move', part: 'R1', from: 'a1', to: 'a1', fine: { rows: 0, cols: 0.25 } }]);
     expect(step(lifted, release(ON_R1)).send).toEqual([]);
   });
 
@@ -635,13 +657,22 @@ describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
     expect(step(swapped, press(AT_Q)).state.pressed?.fine ?? null).toBeNull();
   });
 
-  test('says Ctrl only where the fence can take a quarter, and says where the quarter went', () => {
-    expect(hint(after(FINE, place('transistor'), hover(AT_B3)))).toContain('Ctrl+クリックで 1/4 升');
-    expect(hint(after(FINE, hover(ON_R1), key('m')))).toContain('Ctrl+クリックで 1/4 升');
-    expect(hint(after(FINE, key('w')))).toContain('Ctrl+クリックで 1/4 升');
-    expect(hint(after(PANEL, place('transistor'), hover(AT_B3)))).not.toContain('Ctrl');
-    expect(hint(after(PANEL, key('w')))).not.toContain('Ctrl');
+  test('says the step only where the fence can take a quarter, and says where the quarter went', () => {
+    // 刻みの案内は**能力表から組む**。板 (端数を受けない) では言わない。
+    // 既定が 1/4 升で、Shift が升ちょうど (実機で入れ替えを頼まれた)。
+    expect(hint(after(FINE, place('transistor'), hover(AT_B3)))).toContain('1/4 升 (Shift で升ちょうど)');
+    expect(hint(after(FINE, hover(ON_R1), key('m')))).toContain('1/4 升 (Shift で升ちょうど)');
+    expect(hint(after(FINE, key('w')))).toContain('1/4 升 (Shift で升ちょうど)');
+    expect(hint(after(PANEL, place('transistor'), hover(AT_B3)))).not.toContain('升 (Shift');
+    expect(hint(after(PANEL, key('w')))).not.toContain('升 (Shift');
+    // **Ctrl はもう刻みの鍵ではない** (複製の Ctrl+D だけが残る)。
+    expect(hint(after(FINE, place('transistor'), hover(AT_B3)))).not.toContain('Ctrl');
     expect(step(after(FINE, place('transistor'), hover(AT_Q), press(AT_Q)), release(AT_Q, false)).status).toContain('1/4 升');
+  });
+
+  test('tells the arrows apart by Shift where the fence has a step between holes', () => {
+    expect(hint(after(FINE, hover(ON_R1)))).toContain('矢印で 1/4 升 (Shift で 1 穴)');
+    expect(hint(after(PANEL, hover(ON_R1)))).toContain('矢印で 1 穴');
   });
 
   test('takes the abilities from the chrome, so a swapped language brings its own', () => {

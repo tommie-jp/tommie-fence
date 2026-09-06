@@ -129,10 +129,15 @@ function inCanvas(event: { clientX: number; clientY: number }): { x: number; y: 
 
 let panning: { x: number; y: number; left: number; top: number } | null = null;
 let spaceHeld = false;
-/** `Shift` を押しているか。**引いている線の影を折って見せる**ために持つ。 */
+/**
+ * `Shift` を押しているか。**升ちょうどに吸い付ける**ためと、**引いている線の影を
+ * 折って見せる**ために持つ。
+ *
+ * 刻みは**既定が 1/`fine` 升**で、`Shift` を押している間だけ升ちょうど
+ * (実機で「Ctrl なしでも 1/10 単位で移動する」「SHIFT を押しているときには
+ * 枡単位で動く」。前は逆で、`Ctrl` を押している間だけ細かかった)。
+ */
 let shiftHeld = false;
-/** `Ctrl` (mac は `Cmd`) を押しているか。**押している間だけ 1/4 升** (52 の docs/23)。 */
-let ctrlHeld = false;
 
 // ---------------------------------------------------------------- カーソルの下
 
@@ -165,16 +170,17 @@ function underAt(x: number, y: number): Under {
 }
 
 /**
- * 升の四角の中の端数。**Ctrl を押している間、端数を受けるフェンスでだけ**数える —
- * 板の上でも数えると、Ctrl を押しながらの hover が 16 倍の往復になる。
+ * 升の四角の中の端数。**端数を受けるフェンスでだけ**数える。
  * 四角はピッチちょうどで隙間なく敷かれている (circuit の `mapSvg` のテストが見張る)。
  * 交点ちょうどは null (端数が無ければ知らせは今までと同じ)。
+ *
+ * **`Shift` を押している間は数えない** — そのあいだは升ちょうどに吸い付く。
  */
 function fineIn(cell: Element, x: number, y: number): Fine | null {
   // 端数が絵に出るのは、持ち物があるときと配線を引きかけているときだけ。
-  // それ以外で数えると、何も変わらない塗り直しが 1 升あたり 16 回になる。
+  // それ以外で数えると、何も変わらない塗り直しが 1 升あたり 100 回になる。
   const wanted = state.carry !== null || state.wireFrom !== null;
-  if (!ctrlHeld || state.fine === null || !wanted) return null;
+  if (shiftHeld || state.fine === null || !wanted) return null;
   const box = cell.getBoundingClientRect();
   const fine = fineOf(x - box.left, y - box.top, box.width, box.height, state.fine);
   return fine.rows === 0 && fine.cols === 0 ? null : fine;
@@ -479,7 +485,7 @@ function markWireGhost(now: State): void {
   const finish = endElement(end.cell);
   if (start === null || finish === null) return;
 
-  // 端数の端 (Ctrl) は升の中心からずらす。足を採ったときは端数を持たない。
+  // 端数の端は升の中心からずらす。足を採ったときは端数を持たない。
   const fromCentre = centreOf(start);
   const toCentre = centreOf(finish);
   if (fromCentre === null || toCentre === null) return;
@@ -631,15 +637,16 @@ function syncHover(): void {
 }
 
 /**
- * `Ctrl` (mac は `Cmd`) の印を出来事から取り直す。**変わったときだけ升の下を読み直す** —
- * 鍵を押した瞬間はカーソルが動かないので、読み直さないとゴーストが 1/4 の位置へ動かない。
- * 窓の外で押して戻ったときは `keydown` が来ないので、pointer の出来事からも揃える。
+ * `Shift` の印を出来事から取り直す。**変わったときだけ升の下を読み直す** —
+ * 鍵を押した瞬間はカーソルが動かないので、読み直さないとゴーストが升ちょうどへ
+ * 戻らない。窓の外で押して戻ったときは `keydown` が来ないので、pointer の
+ * 出来事からも揃える。**影の折れ方も Shift で変わる**ので、一緒に塗り直す。
  */
-function syncCtrl(event: { readonly ctrlKey: boolean; readonly metaKey: boolean }): void {
-  const held = event.ctrlKey || event.metaKey;
-  if (held === ctrlHeld) return;
-  ctrlHeld = held;
+function syncShift(event: { readonly shiftKey: boolean }): void {
+  if (event.shiftKey === shiftHeld) return;
+  shiftHeld = event.shiftKey;
   syncHover();
+  paint(state);
 }
 
 /**
@@ -717,7 +724,7 @@ document.addEventListener('pointerdown', (event) => {
   }
   if (event.button !== 0) return;
   if (target?.closest('.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status')) return;
-  syncCtrl(event);
+  syncShift(event);
   const under = underAt(event.clientX, event.clientY);
   // **何も無い所から引いたら領域選択。** 掴むものがある所から始めたら今までどおり。
   if (onCanvas && state.tool === 'select' && state.carry === null
@@ -729,7 +736,7 @@ document.addEventListener('pointerdown', (event) => {
 
 document.addEventListener('pointermove', (event) => {
   pointer = { x: event.clientX, y: event.clientY };
-  syncCtrl(event);
+  syncShift(event);
   // **道具の列の上ではカーソルの下を捨てない。** 捨てると「部品にカーソルを置いて
   // 回すボタンを押す」が効かなくなる (押した時点で対象が消えている)。
   if (elementOf(event)?.closest('.kc-tools') != null) return;
@@ -771,7 +778,7 @@ document.addEventListener('pointerup', (event) => {
   }
   const target = elementOf(event);
   if (target?.closest('.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status') && state.pressed === null) return;
-  syncCtrl(event);
+  syncShift(event);
   run({
     kind: 'release',
     under: underAt(event.clientX, event.clientY),
@@ -802,14 +809,8 @@ document.addEventListener('wheel', (event) => {
 
 document.addEventListener('keydown', (event) => {
   const target = elementOf(event);
-  // **折れ方は押している最中に切り替わる。** 影を折り直すだけなので、
-  // ここでは状態遷移を通さず塗り直す。
-  if (event.key === 'Shift' && !shiftHeld) {
-    shiftHeld = true;
-    paint(state);
-  }
-  // Ctrl (mac は Cmd。Ctrl+クリックは右クリックになる) の印。
-  syncCtrl(event);
+  // **刻みも折れ方も押している最中に切り替わる。** 升の下を読み直して塗り直す。
+  syncShift(event);
 
   // 選択窓の検索欄。Enter で先頭の候補、Esc で閉じる。ほかは欄に任せる。
   if (target?.classList.contains('cf-search')) {
@@ -869,23 +870,18 @@ document.addEventListener('keydown', (event) => {
 
 document.addEventListener('keyup', (event) => {
   if (event.key === ' ') spaceHeld = false;
-  if (event.key === 'Shift' && shiftHeld) {
-    shiftHeld = false;
-    paint(state);
-  }
-  syncCtrl(event);
+  syncShift(event);
 });
 
 // **窓の外へ出たら Space を離したことにする。** 押したまま別のタブへ移ると
 // `keyup` が届かず、戻ってきたあとの左クリックが全部「移動」になる。
-window.addEventListener('blur', () => { spaceHeld = false; shiftHeld = false; ctrlHeld = false; panning = null; });
+window.addEventListener('blur', () => { spaceHeld = false; shiftHeld = false; panning = null; });
 // **箱が広がったら図も広げ直す。** 幅は px で持っているので、パネルを広げても
 // 100 % のままだと図が箱の中で右に余る。
 window.addEventListener('resize', () => { applyView(); });
 document.addEventListener('visibilitychange', () => {
   spaceHeld = false;
   shiftHeld = false;
-  ctrlHeld = false;
   panning = null;
 });
 
@@ -922,14 +918,18 @@ document.addEventListener('click', (event) => {
   if (target?.closest('.kc-fit')) { fit(); return; }
   if (target?.closest('.kc-chooser-close')) { closeChooser(); return; }
 
-  // フェンスの前後。**一覧を開かずに隣へ行ける** (図を 1 枚ずつ見ていくとき)。
+  // フェンスの前後と両端。**一覧を開かずに隣へ行ける** (図を 1 枚ずつ見ていくとき)。
   const step = target?.closest<HTMLButtonElement>('.cf-fence-step');
   if (step) {
     const list = query<HTMLSelectElement>('.cf-fence');
     if (list !== null && list.options.length > 1) {
+      const last = list.options.length - 1;
+      const which = step.dataset.step;
       // **端では止まる。** 巻き戻ると、最後まで来たことが分からない。
-      const at = list.selectedIndex + (step.dataset.step === 'next' ? 1 : -1);
-      const next = list.options[Math.min(list.options.length - 1, Math.max(0, at))];
+      const at = which === 'first' ? 0
+        : which === 'last' ? last
+          : list.selectedIndex + (which === 'next' ? 1 : -1);
+      const next = list.options[Math.min(last, Math.max(0, at))];
       if (next !== undefined && next.value !== list.value) {
         list.value = next.value;
         vscode.postMessage({ kind: 'fence', line: Number(next.value) });
@@ -1081,7 +1081,7 @@ const fill = (selector: string, html: string): void => {
 
 /**
  * **語彙も能力表も入れ替える。** 1 つの殻が 3 つのフェンスを扱うので、言語をまたぐと
- * 置ける部品も種類の候補も、Ctrl が効くかどうかも変わる。ここで受けないと、最初に
+ * 置ける部品も種類の候補も、升の間を刻めるかどうかも変わる。ここで受けないと、最初に
  * 開いた言語のパレットが残る (52 の docs/19。畳んだあと実測で見つけた)。
  */
 function applyChrome(chrome: PanelChrome): void {

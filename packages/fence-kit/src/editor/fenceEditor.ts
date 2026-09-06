@@ -114,7 +114,7 @@ export type EditResult =
   | { readonly ok: false; readonly error: { readonly message: string; readonly line: number | null } };
 
 /**
- * 行と列の差 (升の数)。`stepsTo` の答えであり、殻が Ctrl で運ぶ端数
+ * 行と列の差 (升の数)。`stepsTo` の答えであり、殻が運ぶ端数
  * (`{ rows: 0.25, cols: -0.25 }`) でもある。**1 か所で名付ける** — 殻・session・webview が
  * 同じ組を別々に綴らないように。
  */
@@ -153,6 +153,13 @@ export type FenceEditor = {
    * **名札の綴りは、絵を描く側と編集する側の取り決め**なのでフェンスが持つ。
    */
   readonly nameOf: (handle: string) => string;
+  /**
+   * その名札が持っている**写せる字**。無ければ null。
+   *
+   * いまのところ言葉を持つのは `text` の注釈だけ — 部品や配線には写す字が無い。
+   * 右クリックの「テキストコピー」がこれを読む (実機で頼まれた)。
+   */
+  readonly textOf?: (source: string, handle: string) => string | null;
   /**
    * 置く部品に付ける ID。**知らない種類だけ null。** ID がそのまま図に出る種類
    * (circuit の `port` / `vcc`) も既定の名前で返す — 置く流れを窓で止めない

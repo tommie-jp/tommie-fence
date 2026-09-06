@@ -634,14 +634,22 @@ const SMA_DIELECTRIC = '#f2f3f5';
 const SMA_PIN = '#d8b64a';
 const SMA_SOCKET = '#2b2f33';
 
-export function smaBody(part: BodyPart, _span: number, ink: BodyInk = REAL_INK): string {
+/**
+ * 同軸コネクタを上から見た姿。**合わせ面の丸 (中心導体とそれを囲むアース) は
+ * 四角の真ん中**に来る — 実物のフランジは丸を中心に置いた正方形で、
+ * ずらすと別の部品に見える (実機で「信号＋アースを四角の中心に置く」)。
+ *
+ * `badge` を立てたときだけ丸を上へ寄せる。**姿の名前を胴に刷る板**
+ * (perfboard) が、その下半分を字の場所に使うため — 板の側の都合なので、
+ * 何も刷らない板 (breadboard) では真ん中のままにする。
+ */
+export function smaBody(part: BodyPart, _span: number, ink: BodyInk = REAL_INK, badge = false): string {
   const half = SMA_SIZE / 2;
   const shell = element('rect', {
     x: num(-half), y: num(-half), width: num(SMA_SIZE), height: num(SMA_SIZE), rx: 6,
     fill: ink.paint(SMA_METAL), stroke: ink.paint(SMA_METAL_EDGE), 'stroke-width': 1,
   });
-  // 合わせ面の丸は少し上へ。**胴の下半分は姿の名前 (2 行) の場所**にする。
-  const faceY = -half * 0.34;
+  const faceY = badge ? -half * 0.34 : 0;
   const barrel = element('circle', {
     cx: 0, cy: num(faceY), r: num(half * 0.46), fill: ink.paint(SMA_DIELECTRIC),
     stroke: ink.paint(SMA_METAL_EDGE), 'stroke-width': 1,
@@ -655,29 +663,57 @@ export function smaBody(part: BodyPart, _span: number, ink: BodyInk = REAL_INK):
   return `${shell}${barrel}${centre}`;
 }
 
+/** 乾電池の寸法 (足の間隔に対する比と上限)。缶の長さと太さ。 */
+const BATTERY_LENGTH = 0.72;
+const BATTERY_MAX_LENGTH = 40;
+const BATTERY_THICK = 0.46;
+
 /**
- * 電池ホルダー。**電池そのものではなくホルダーを描く** — 板に載るのは
- * ホルダーで、電池は差し替えるもの。コイン電池のホルダーは黒い樹脂の台に
- * 銀色のセルが伏せてあり、片側から金物の爪が伸びる。
+ * 乾電池。**いちばん見慣れた電池の姿**にする — 横に寝た円筒の缶で、片端に
+ * ＋の突起、胴にラベルの帯 (実機で「一般的な電池の実態図にして」)。
+ *
+ * コイン電池のホルダーを描いていたが、`battery` はどの電池でも書ける種類なので、
+ * 品種を決め打った姿は嘘になる。**電池と言われて誰もが思い出す形**にしておき、
+ * 品種は値やラベルに書いてもらう (`BAT1: battery a3 a7 単3` のように)。
+ *
+ * **＋の側は足の名前で決まる。** `(+)` を書いてあればその端に突起を描き、
+ * 書いていなければ**先に書いた穴が ＋** (極性のある 2 端子の約束と同じ)。
  */
 function batteryBody(part: BodyPart, span: number, ink: BodyInk): string {
-  const radius = Math.min(span * 0.42, 13);
-  const base = element('rect', {
-    x: num(-radius * 1.05), y: num(-radius * 1.05), width: num(radius * 2.1), height: num(radius * 2.1), rx: 2.5,
-    fill: ink.paint('#23272e'), stroke: ink.paint('#12151a'),
+  const length = Math.min(span * BATTERY_LENGTH, BATTERY_MAX_LENGTH);
+  const height = length * BATTERY_THICK;
+  const [half, halfH] = [length / 2, height / 2];
+  // **＋が右か左か。** 名前で書いてあればそちら、無ければ先に書いた穴。
+  const minus = part.pins.findIndex((pin) => pin.name === '-');
+  const toPlus = minus === 1 ? -1 : 1;
+
+  // **突起も缶も、名乗った寸法 (`bodySize`) の内側に収める** — はみ出すと
+  // 名札の逃げ場や配線のよけ場を測り違える (`bodies.test.ts` が見張る)。
+  const nubW = halfH * 0.5;
+  const canLength = length - nubW;
+  const canX = toPlus > 0 ? -half : -half + nubW;
+  // 缶。金属の地に、真ん中はラベルの帯。
+  const can = element('rect', {
+    x: num(canX), y: num(-halfH), width: num(canLength), height: num(height), rx: 2,
+    fill: ink.paint('#d7dbe0'), stroke: ink.paint('#8a929c'),
   });
-  const cell = element('circle', {
-    cx: 0, cy: 0, r: num(radius * 0.78), fill: ink.paint('#c9cfd6'), stroke: ink.paint('#8a929c'),
+  const band = element('rect', {
+    x: num(canX + canLength * 0.19), y: num(-halfH), width: num(canLength * 0.62), height: num(height), rx: 1,
+    fill: ink.paint('#1f4f8f'), stroke: ink.paint('#14355f'),
   });
-  // セルの面の `+`。**極性を書いたときだけ出す** — 実物のホルダーにも
-  // どちらが + かが刻んである。
-  const plus = part.pins.findIndex((pin) => pin.name === '+');
-  const mark = plus === -1
-    ? ''
-    : svgText(0, radius * 0.32, '+', {
-      'font-size': num(radius * 0.9), 'font-weight': 700, fill: ink.paint('#5a6472'),
-    });
-  return base + cell + mark;
+  // ＋の側の突起。実物の頭のぽっち。
+  const nub = element('rect', {
+    x: num(toPlus > 0 ? half - nubW : -half), y: num(-halfH * 0.4),
+    width: num(nubW), height: num(halfH * 0.8), rx: 1,
+    fill: ink.paint('#c9cfd6'), stroke: ink.paint('#8a929c'),
+  });
+  // ＋と − の印。**帯の外の金属の上**に置く (帯に重ねると読めない)。
+  const sign = (text: string, at: number): string => svgText(at, halfH * 0.42, text, {
+    'font-size': num(height * 0.62), 'font-weight': 700, fill: ink.paint('#5a6472'),
+  });
+  const marks = sign('+', toPlus * (half - nubW - height * 0.22))
+    + sign('−', toPlus * -(half - height * 0.22));
+  return can + band + nub + marks;
 }
 
 /** 太陽電池。**濃紺のセルに銀の集電線**が走るのが実物の見分けどころ。 */
@@ -913,14 +949,19 @@ export function bodySize(part: BodyPart, span: number): { readonly width: number
     case 'buzzer':
     case 'speaker':
       return twice(Math.min(span * 0.5, 15));
-    case 'battery':
-      return twice(Math.min(span * 0.42, 13) * 1.05);
+    case 'battery': {
+      const width = Math.min(span * BATTERY_LENGTH, BATTERY_MAX_LENGTH);
+      return { width, height: width * BATTERY_THICK };
+    }
     case 'solar': {
       const width = Math.min(span * 0.7, 40);
       return { width, height: width * 0.62 };
     }
     case 'mic':
       return twice(Math.min(span * 0.42, 11));
+    // 上から見た四角いフランジ。**足の間隔では伸び縮みしない** (実物の寸法)。
+    case 'sma':
+      return { width: SMA_SIZE, height: SMA_SIZE };
     case 'switch':
     case 'switch-nc': {
       const width = Math.min(span * 0.55, 26);

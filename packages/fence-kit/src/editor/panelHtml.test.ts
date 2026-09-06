@@ -91,8 +91,20 @@ describe('KiCad の配置', () => {
     // 道具の列と同じ表から組む (押せることが 2 通りの並びで違って見えない)。
     const inColumn = [...html.matchAll(/class="kc-tool"[^>]*data-key="([^"]+)"/g)].map((one) => one[1]);
     const inMenu = [...html.matchAll(/class="kc-tool kc-menu-item" data-key="([^"]+)"/g)].map((one) => one[1]);
-    expect(inMenu).toEqual(inColumn);
+    // 一覧は道具の列と同じ並びで始まり、**一覧にだけ出る道具**が後ろに付く。
+    expect(inMenu.slice(0, inColumn.length)).toEqual(inColumn);
     expect(inMenu).toContain('Delete');
+  });
+
+  test('adds the copy to the menu only, since it needs a note under the cursor', () => {
+    // 実機で「text を右メニューに『テキストコピー』を追加」。押せない相手の
+    // ときに居座らないよう、道具の列には出さない。
+    const inColumn = [...html.matchAll(/class="kc-tool"[^>]*data-key="([^"]+)"/g)].map((one) => one[1]);
+    const inMenu = [...html.matchAll(/class="kc-tool kc-menu-item" data-key="([^"]+)"/g)].map((one) => one[1]);
+
+    expect(inMenu).toContain('c');
+    expect(inColumn).not.toContain('c');
+    expect(html).toContain('テキストコピー');
   });
 
   test('ends with a status row that shows the hint, the hole under the cursor and the zoom', () => {
@@ -248,6 +260,28 @@ describe('フェンスを選ぶ', () => {
     expect(picker).toContain('data-step="next"');
   });
 
+  test('adds ends to the steps, so the first and last fence are one click away', () => {
+    // 実機で「フェンス項目の最初、最後に移動できるようにする。メディアプレーヤーの
+    // アイコンを真似する」。並びも再生機と同じ ⏮ ◀ ▶ ⏭。
+    const picker = renderFencePicker([{ line: 3, title: 'RC' }, { line: 9, title: null }], 3);
+    const order = [...picker.matchAll(/data-step="(\w+)"/g)].map(([, name]) => name);
+
+    expect(order).toEqual(['first', 'prev', 'next', 'last']);
+  });
+
+  test('draws the steps as solid triangles, which are easier to hit than chevrons', () => {
+    // 実機で「`<`, `>` を押しやすいように ◀, ▶ にする」。端へ飛ぶ 2 つは
+    // 再生機と同じ「棒 + 三角」。**絵文字ではなく字**で描く — 絵文字だと
+    // 環境によって色付きの別の絵になる。
+    const picker = renderFencePicker([{ line: 3, title: 'RC' }, { line: 9, title: null }], 3);
+
+    expect(picker).toContain('>◀</button>');
+    expect(picker).toContain('>▶</button>');
+    expect(picker).toContain('>|◀</button>');
+    expect(picker).toContain('>▶|</button>');
+    expect(picker).not.toContain('‹');
+  });
+
   test('leaves the buttons out when there is nothing to step to', () => {
     expect(renderFencePicker([{ line: 3, title: 'RC' }], 3)).toBe('');
   });
@@ -279,8 +313,26 @@ describe('renderFencePicker', () => {
     // **行番号が先。** 上から順に並ぶ一覧なので、頭が揃っていると目で追える。
     const picker = renderFencePicker([{ line: 3, title: 'RC' }, { line: 9, title: null }], 9);
 
-    expect(picker).toContain('<option value="3">3 行目 RC</option>');
-    expect(picker).toContain('<option value="9" selected>9 行目のフェンス</option>');
+    expect(picker).toContain('<option value="3">003: RC</option>');
+    expect(picker).toContain('<option value="9" selected>009: フェンス</option>');
+  });
+
+  test('pads the line to three digits, so the titles line up in the list', () => {
+    // 実機で頼まれた形 —「行番号: 題」で、1000 行目までは 0 を先に付けて 3 桁。
+    const picker = renderFencePicker(
+      [{ line: 1, title: '図01' }, { line: 12, title: '図02' }, { line: 382, title: '図17' }],
+      1,
+    );
+
+    expect(picker).toContain('>001: 図01<');
+    expect(picker).toContain('>012: 図02<');
+    expect(picker).toContain('>382: 図17<');
+  });
+
+  test('leaves a line past three digits as it is, since padding is only for lining up', () => {
+    const picker = renderFencePicker([{ line: 1234, title: '図01' }, { line: 9, title: '図02' }], 9);
+
+    expect(picker).toContain('>1234: 図01<');
   });
 
   test('escapes the title, which comes from the fence', () => {

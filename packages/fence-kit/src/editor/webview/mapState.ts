@@ -267,14 +267,17 @@ export function hint(state: State): string {
     return `${carry.node} の節点を引きずっています: 置きたい穴でクリック (接続は保たれます)${fine} / Esc で戻す${bad}`;
   }
   if (state.tool === 'wire') {
-    const fold = state.foldsWire ? ' (Shift で先に横へ折る)' : '';
-    const fine = fineHintOf(state);
+    // **Shift は 2 つを兼ねる** — 升ちょうどに吸い付き、影を先に横へ折る。
+    // 1 つの鍵なので案内も 1 か所にまとめる (2 度言うと別の鍵に見える)。
+    const fine = fineHintOf(state, state.foldsWire);
+    const fold = state.fine === null && state.foldsWire ? ' (Shift で先に横へ折る)' : '';
     return state.wireFrom === null
       ? `配線: 始まりの穴か足をクリック${fine} / Esc でやめる`
       : `${state.wireFrom.cell} から: 終わりの穴か足をクリック${fold}${fine} / Esc でやめる`;
   }
   if (under.part !== null) {
-    return `${shownName(under.part)}: M 動かす / 矢印で 1 穴 / R 回す / X 反転 / Ctrl+D 複製 / E 属性 / Del 消す`;
+    const step = state.fine === null ? '矢印で 1 穴' : `矢印で 1/${state.fine} 升 (Shift で 1 穴)`;
+    return `${shownName(under.part)}: M 動かす / ${step} / R 回す / X 反転 / Ctrl+D 複製 / E 属性 / Del 消す`;
   }
   if (under.wire !== null) return `${under.wire} 行目の配線: Del 消す`;
   if (under.node !== null) return `${under.node} の節点: G 引きずる (来ているものが丸ごと動く)`;
@@ -285,11 +288,14 @@ export function hint(state: State): string {
 }
 
 /**
- * 案内文に添える Ctrl の説明。**能力表から組む** — 端数を受けない板で言うと、
+ * 案内文に添える刻みの説明。**能力表から組む** — 端数を受けない板で言うと、
  * 押しても何も起きない鍵を案内することになる (`foldsWire` と同じ)。
+ *
+ * **既定が 1/`fine` 升で、`Shift` が升ちょうど。** 逆 (Ctrl で細かく) だった
+ * のを入れ替えた (実機で頼まれた)。
  */
-const fineHintOf = (state: State): string =>
-  (state.fine === null ? '' : ` / Ctrl+クリックで 1/${state.fine} 升 (Ctrl+矢印で 1 段)`);
+const fineHintOf = (state: State, folds = false): string =>
+  (state.fine === null ? '' : ` / 1/${state.fine} 升 (Shift で升ちょうど${folds ? '・先に横へ折る' : ''})`);
 
 /** 帯の一言に添える「升の間」。端数が無ければ何も足さない。 */
 const betweenNote = (state: State, fine: Fine | null): string =>
@@ -390,7 +396,16 @@ function previewAt(state: State, carry: Carry, under: Under): readonly Message[]
       ...withFine(to.fine),
     }];
   }
-  if (carry.kind === 'move') return [{ kind: 'preview', key, what: 'move', part: carry.part, to: to.cell, ...withFine(to.fine) }];
+  // **掴んだ場所も送る。** 部品は書かれた 1 つ目の穴 (アンカー) を基準に動くので、
+  // 胴の途中を掴むと、その差だけ影がずれる (実機で「部品シャドウがズレる」)。
+  // 差を殻の側で引けるように、押した升を添える。
+  if (carry.kind === 'move') {
+    return [{
+      kind: 'preview', key, what: 'move', part: carry.part, to: to.cell,
+      ...(carry.byPointer && state.pressed !== null ? { from: state.pressed.cell } : {}),
+      ...withFine(to.fine),
+    }];
+  }
   return [{ kind: 'preview', key, what: 'node', from: carry.node, to: to.cell, ...withFine(to.fine) }];
 }
 
@@ -505,7 +520,13 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
       const many = pickedParts(state);
       return outcome(
         done,
-        [{ kind: 'move', part: carry.part, to: to.cell, ...withFine(to.fine), ...(many.length > 1 ? { parts: many } : {}) }],
+        [{
+          kind: 'move', part: carry.part, to: to.cell,
+          // 掴んだ升 (アンカーとの差を引くため。`previewAt` と同じ理由)。
+          ...(carry.byPointer && pressed !== null ? { from: pressed.cell } : {}),
+          ...withFine(to.fine),
+          ...(many.length > 1 ? { parts: many } : {}),
+        }],
         many.length > 1 ? `${many.length} 個を ${where} へ…` : `${shownName(carry.part)} を ${where} へ…`,
       );
     }
@@ -557,21 +578,6 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
         true,
       );
     }
-    // Ctrl+矢印は 1/`fine` 升ずつ。**細かい刻みをマウスで狙わせない** —
-    // クリックで近くへ置き、あとは 1 段ずつ直す (52 の docs/23)。
-    // 端数を受けないフェンス (板) では何もしない (押しても効かない鍵は案内もしない)。
-    const nudgeStep = ARROWS[event.key];
-    if (nudgeStep !== undefined && state.fine !== null) {
-      const part = partTarget(state);
-      if (part === null) return outcome(state);
-      return outcome(
-        { ...state, selected: { kind: 'part', id: part } },
-        [{ kind: 'nudge', part, rows: nudgeStep.rows / state.fine, cols: nudgeStep.cols / state.fine }],
-        `${shownName(part)} を動かしています…`,
-        true,
-      );
-    }
-
     // **パネルにフォーカスがあると VS Code の Ctrl+Z は届かない。** ここで受けて、
     // 拡張側が覚えている履歴を巻き戻す。タブそのものがマップのときは横取りせず通す。
     if (!state.ownUndo) return outcome(state);
@@ -644,12 +650,18 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
   if (part === null) return outcome(state);
   const picked: Picked = { kind: 'part', id: part };
 
-  // 矢印で 1 穴。**行き先を数えるのは拡張** (綴りを知らない)。
+  // 矢印で動かす。**行き先を数えるのは拡張** (綴りを知らない)。
+  //
+  // **既定は 1/`fine` 段、`Shift` で 1 穴。** 図を詰める作業は端数のほうなので、
+  // 細かいほうを素の矢印にした (実機で「Ctrl なしでも 1/10 単位で移動する」
+  // 「SHIFT を押しているときには枡単位で動く」)。端数を受けないフェンス (板)
+  // は穴の間が無いので、Shift の有無にかかわらず 1 穴。
   const arrow = ARROWS[key];
   if (arrow !== undefined) {
+    const per = state.fine !== null && !event.shift ? state.fine : 1;
     return outcome(
       { ...state, selected: picked },
-      [{ kind: 'nudge', part, rows: arrow.rows, cols: arrow.cols }],
+      [{ kind: 'nudge', part, rows: arrow.rows / per, cols: arrow.cols / per }],
       `${shownName(part)} を動かしています…`,
       true,
     );
@@ -667,6 +679,10 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
     return outcome(state, [{ kind: 'turn', part, ...group, quarters }], `${said}を回しています…`, true);
   }
   if (key === 'x') return outcome(state, [{ kind: 'flip', part, ...group }], `${said}を反転しています…`, true);
+  // **字を写す。** 図に書いた注釈の言葉を、もう一度打ち直さずに使えるようにする
+  // (実機で「text を右メニューに『テキストコピー』を追加」)。
+  // 写せるものかどうかは殻が決める — ここでは頼むだけ。
+  if (key === 'c') return outcome(state, [{ kind: 'copyText', part }], `${shownName(part)} の字を写しています…`, true);
   if (key === 'e' || key === 'F2') {
     return outcome({ ...state, selected: picked }, [select(picked)], null, true, 'id');
   }

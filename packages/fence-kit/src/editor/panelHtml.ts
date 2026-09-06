@@ -76,8 +76,10 @@ const STYLE = `
   .kc-top button:disabled { opacity: 0.35; cursor: default; }
   .kc-title { margin-left: auto; opacity: 0.7; }
   .cf-fences { margin: 0; }
+  /* **押しやすい大きさに取る。** 三角 1 つと「棒 + 三角」で幅が変わるので、
+     どれも同じ幅に揃えて並べる (実機で「押しやすいように」と頼まれた)。 */
   .cf-fence-step {
-    margin-left: 2px; padding: 0 5px; line-height: 18px; cursor: pointer;
+    margin-left: 3px; padding: 0 6px; min-width: 26px; line-height: 22px; cursor: pointer;
     border: 1px solid var(--kc-line); border-radius: 3px;
     background: var(--kc-chrome); color: var(--vscode-editor-foreground, CanvasText);
   }
@@ -439,24 +441,39 @@ export type PanelHtmlOptions = {
 };
 
 /**
+ * 一覧に出す行番号。**3 桁に足りなければ 0 を先に付ける** (`001` `012`) —
+ * 桁数が違うと題の頭が縦にずれる (実機で頼まれた)。4 桁からはそのまま。
+ */
+const LINE_DIGITS = 3;
+const lineLabel = (line: number): string => String(line).padStart(LINE_DIGITS, '0');
+
+/**
  * フェンスの一覧。**2 つ以上のときだけ**出す (1 つなら選ぶものが無い)。
- * 題があれば題、無ければ行番号で呼ぶ。題はフェンスから来た字なのでエスケープする。
+ * 題があれば題、無ければ「フェンス」と呼ぶ。題はフェンスから来た字なので
+ * エスケープする。
  */
 export function renderFencePicker(fences: readonly FenceEntry[], line: number | null): string {
   if (fences.length < 2) return '';
   const options = fences.map((fence) => {
-    // **行番号が先。** 一覧は上から順に並ぶので、頭が揃っていると目で追える
+    // **「行番号: 題」。** 一覧は上から順に並ぶので、頭が揃っていると目で追える
     // (題を先に出すと、長さがまちまちで行番号の桁が縦に揃わない。実機で頼まれた)。
-    const label = fence.title === null ? `${fence.line} 行目のフェンス` : `${fence.line} 行目 ${fence.title}`;
+    const label = `${lineLabel(fence.line)}: ${fence.title ?? 'フェンス'}`;
     return `<option value="${fence.line}"${fence.line === line ? ' selected' : ''}>${escapeMarkup(label)}</option>`;
   }).join('');
-  // **前後のボタンを添える。** 一覧を開いて選び直さずに隣のフェンスへ行ける
-  // (図を 1 枚ずつ見ていくときの動きがこれ。実機で頼まれた)。
+  // **前後と両端のボタンを添える。** 一覧を開いて選び直さずに隣のフェンスへ
+  // 行ける (図を 1 枚ずつ見ていくときの動きがこれ。実機で頼まれた)。
+  //
+  // 並びも印も**メディアプレーヤーと同じ** — ⏮ ◀ ▶ ⏭ (実機で「最初、最後に
+  // 移動できるようにする。メディアプレーヤーのアイコンを真似する」)。
+  // 端へ飛ぶ 2 つは**棒と三角を並べて**描く。⏮ ⏭ の 1 文字は環境によって
+  // 色付きの絵文字になり、ほかのボタンと揃わない。
   const step = (name: string, glyph: string, title: string): string =>
     `<button type="button" class="cf-fence-step" data-step="${name}" title="${title}">${glyph}</button>`;
   return `<label>フェンス <select class="cf-fence">${options}</select></label>`
-    + step('prev', '‹', '前のフェンス')
-    + step('next', '›', '次のフェンス');
+    + step('first', '|◀', '最初のフェンス')
+    + step('prev', '◀', '前のフェンス')
+    + step('next', '▶', '次のフェンス')
+    + step('last', '▶|', '最後のフェンス');
 }
 
 /** 右の道具の列。**鍵と同じ一覧** — 押すと同じ鍵を押したことになる。 */
@@ -475,6 +492,11 @@ type ToolButton = {
    * 見分けが付かない (実機で「何が違うのか」と訊かれた)。
    */
   readonly hint?: string;
+  /**
+   * 右クリックの一覧にだけ出す道具。**道具の列には出さない** — 相手が
+   * 注釈のときにしか効かないものを常に並べると、押せない釦が居座る。
+   */
+  readonly menuOnly?: boolean;
 };
 
 const TOOLS: readonly ToolButton[] = [
@@ -487,6 +509,11 @@ const TOOLS: readonly ToolButton[] = [
   { key: 'x', glyph: '⇔', name: '反転', kbd: 'X' },
   { key: 'd', modifier: true, glyph: '⧉', name: '複製', kbd: 'Ctrl+D' },
   { key: 'Delete', glyph: '✕', name: '消す', kbd: 'Del' },
+  // 注釈の言葉を写す。**相手が注釈のときだけ効く**ので一覧にだけ出す。
+  {
+    key: 'c', glyph: '⧉', name: 'テキストコピー', kbd: 'C',
+    hint: '注釈 (text) の言葉をクリップボードへ', menuOnly: true,
+  },
 ];
 
 /**
@@ -502,7 +529,7 @@ const renderMenu = (): string => `<menu class="kc-menu" hidden>${TOOLS.map((one)
   + `<span class="kc-glyph">${one.glyph}</span><span>${one.name}</span><kbd>${one.kbd}</kbd></button></li>`
 )).join('')}</menu>`;
 
-const renderTools = (): string => TOOLS.map((one) => (
+const renderTools = (): string => TOOLS.filter((one) => one.menuOnly !== true).map((one) => (
   `<button type="button" class="kc-tool"${one.tool === undefined ? '' : ` data-tool="${one.tool}"`}`
   + ` data-key="${one.key}"${one.modifier === true ? ' data-modifier="1"' : ''}`
   + ` title="${toolTitle(one)}">`

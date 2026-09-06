@@ -107,7 +107,7 @@ export type Incoming = {
   readonly rows?: unknown;
   readonly cols?: unknown;
   /**
-   * 升の中の端数 (Ctrl で 1/`fine` 升。circuit は 1/10。52 の docs/23)。`to` に対して `{ rows, cols }`、
+   * 升の中の端数 (1/`fine` 升。circuit は 1/10。52 の docs/23)。`to` に対して `{ rows, cols }`、
    * `addPart` の `at` と `addWire` の `[from, to]` には並行した並び。**入口で綴りにする** (`resolveFine`)。
    */
   readonly fine?: unknown;
@@ -139,6 +139,8 @@ export type SessionHost<D extends DocLike> = {
   readonly showDocument?: (uri: string, line: number) => Promise<void>;
   /** VS Code の undo に頼めるとき (カスタムエディタ)。無ければ自前の履歴を持つ。 */
   readonly nativeUndo?: (kind: 'undo' | 'redo') => Promise<void>;
+  /** クリップボードへ写す。持たない宿主 (playground) では無い。 */
+  readonly copyText?: (text: string) => Promise<void>;
 };
 
 /**
@@ -640,6 +642,17 @@ export function createSession<D extends DocLike>(
   }
 
   /**
+   * 掴んだ升とアンカーの差を引いた行き先。**掴んだ升が無い (鍵で持ち上げた)
+   * ときや、差を数えられない綴りのときは、落とした升そのまま。**
+   */
+  function shiftedTarget(source: string, handle: string, grabbed: string | null, dropped: string): string {
+    if (grabbed === null || grabbed === dropped) return dropped;
+    const anchor = editor.cellsOf(source, handle)[0];
+    if (anchor === undefined) return dropped;
+    return shiftCell(anchor, grabbed, dropped) ?? dropped;
+  }
+
+  /**
    * 絵をずらす量 (`from[0]` → `cells[0]`)。**端数の升は DOM に無い**ので殻は要素を引けず、
    * 差を数で受け取る (52 の docs/23)。数えられない綴り (レール) なら添えない。
    */
@@ -777,11 +790,16 @@ export function createSession<D extends DocLike>(
         say('マップからの知らせを読めませんでした (部品がありません)');
         return;
       }
+      // **掴んだ場所とアンカーの差を保つ。** 部品は書かれた 1 つ目の穴を基準に
+      // 動くので、胴の途中を掴んだときに差を引かないと、その分だけ跳ぶ
+      // (実機で「部品をドラッグして移動すると、部品シャドウがズレる」)。
+      const grabbed = text(message.from);
+      const target = (source: string): string => shiftedTarget(source, handle, grabbed, written);
       await run({
         label: `${part} を ${written} へ`,
         done: () => `${part} を ${written} へ動かしました`,
         already: `${part} はすでに ${written} にあります`,
-        plan: (source) => editor.movePart(source, handle, written),
+        plan: (source) => editor.movePart(source, handle, target(source)),
       });
       return;
     }
@@ -966,9 +984,12 @@ export function createSession<D extends DocLike>(
     if (message.what === 'move') {
       const handle = text(message.part);
       if (handle === null) return null;
+      // **影も掴んだ差を保つ** (落とすときと同じ勘定。実機で「部品シャドウが
+      // ズレる」と言われたのは、ここで差を引いていなかったため)。
+      const target = shiftedTarget(source, handle, text(message.from), to);
       return {
-        result: editor.movePart(source, handle, to, { preview: true }),
-        at: to,
+        result: editor.movePart(source, handle, target, { preview: true }),
+        at: target,
         cells: (after) => editor.cellsOf(after, handle),
         from: editor.cellsOf(source, handle),
       };
@@ -1007,7 +1028,7 @@ export function createSession<D extends DocLike>(
 
   /**
    * webview から来た「いくつ動かすか」。升 1 つぶんの整数と、**1/`fine` 升の倍数**
-   * (Ctrl+矢印) を通す。刻みに乗らない数は 0 — 綴りに直せない場所を作らせない。
+   * (矢印) を通す。刻みに乗らない数は 0 — 綴りに直せない場所を作らせない。
    */
   const count = (value: unknown): number => {
     if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
@@ -1053,6 +1074,33 @@ export function createSession<D extends DocLike>(
    * 複製する。**作った名前を返す** — 呼ぶ側が組み直しのあとで選び直すため
    * (組み直しは選択を捨てるので、先に選ぶと消える)。
    */
+  /**
+   * 注釈の言葉をクリップボードへ (実機で「テキストコピー」を頼まれた)。
+   *
+   * **写せるものかどうかはフェンスが決める** (`textOf`) — 言葉を持つのは
+   * `text` の注釈だけで、部品や配線には写す字が無い。殻が写せないとき
+   * (クリップボードを持たない宿主) も、そう言って終わる。
+   */
+  async function copyText(message: Incoming): Promise<void> {
+    const handle = text(message.part);
+    const fence = fenceNow();
+    if (handle === null || fence === null) {
+      say('マップからの知らせを読めませんでした (写すものがありません)');
+      return;
+    }
+    const written = editor.textOf?.(fence.source, handle) ?? null;
+    if (written === null) {
+      say(`${editor.nameOf(handle)} に写せる字がありません (text の注釈だけ写せます)`);
+      return;
+    }
+    if (host.copyText === undefined) {
+      say('この画面ではクリップボードへ写せません');
+      return;
+    }
+    await host.copyText(written);
+    say(`「${written}」を写しました`);
+  }
+
   async function duplicate(message: Incoming): Promise<readonly string[]> {
     const picked = handles(message.parts);
     if (picked.length > 1) {
@@ -1310,7 +1358,7 @@ export function createSession<D extends DocLike>(
     refresh: () => refreshWith(true),
 
     handle: async (received) => {
-      // **端数は入口で綴りにする** (Ctrl で 1/4 升。52 の docs/23)。
+      // **端数は入口で綴りにする** (1/4 升。52 の docs/23)。
       const resolved = resolveFine(received);
       if (!resolved.ok) {
         // 試し当てはゴーストで断る (押す前に見える)。ほかは帯で言う。
@@ -1358,6 +1406,9 @@ export function createSession<D extends DocLike>(
           if (made.length > 0) pick('part', made);
           return;
         }
+        case 'copyText':
+          await copyText(message);
+          return;
         case 'turn':
         case 'flip':
           await turn(message);

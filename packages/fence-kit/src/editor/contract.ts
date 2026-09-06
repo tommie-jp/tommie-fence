@@ -129,7 +129,7 @@ export function checkFenceEditor(editor: FenceEditor, fixture: ContractFixture):
     say(`${room} と同じ穴の差が 0 になりません`);
   }
 
-  // --- 穴の間 (Ctrl で 1/4 升。52 の docs/23) ---
+  // --- 穴の間 (既定で 1/4 升、Shift で升ちょうど。52 の docs/23) ---
   // **名乗った刻みで綴れて、戻れること。** 名乗らないなら端数の穴を返さないこと
   // (板の `step` が `a5.25` という読めない綴りを黙って返していた)。
   if (typeof editor.fine !== 'number' && editor.fine !== null) {

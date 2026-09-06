@@ -79,6 +79,8 @@ export function createSessionHost(webview: vscode.Webview, undo: 'own' | 'vscode
     replaceBody,
     highlight,
     showDocument,
+    // 右クリックの「テキストコピー」。VS Code のクリップボードへ写す。
+    copyText: async (text: string) => { await vscode.env.clipboard.writeText(text); },
   };
   if (undo === 'own') return base;
   return {

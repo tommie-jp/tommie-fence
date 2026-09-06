@@ -1,6 +1,6 @@
 {
   "name": "tommie-fence",
-  "displayName": "tommie Fence",
+  "displayName": "tommie-fence",
   "description": "circuit / breadboard / perfboard の 3 つのフェンスを 1 つの拡張で",
   "version": "0.1.0",
   "private": true,
@@ -51,7 +51,7 @@
     "customEditors": [
       {
         "viewType": "tommie-fence.map",
-        "displayName": "Fence Editor (図を掴んで動かす)",
+        "displayName": "Fence Editor",
         "selector": [
           {
             "filenamePattern": "*.md"
@@ -103,7 +103,7 @@
       {
         "command": "tommie-fence.openMap",
         "title": "Fence: 図を掴んで動かす",
-        "category": "tommie Fence"
+        "category": "tommie-fence"
       },
       {
         "command": "circuit-fence.movePart",

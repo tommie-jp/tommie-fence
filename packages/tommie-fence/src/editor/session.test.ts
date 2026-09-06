@@ -131,8 +131,8 @@ describe('マップを組む', () => {
 
     const { picker } = session.view();
 
-    expect(picker).toContain('<option value="3" selected>3 行目 RC</option>');
-    expect(picker).toContain('<option value="10">10 行目のフェンス</option>');
+    expect(picker).toContain('<option value="3" selected>003: RC</option>');
+    expect(picker).toContain('<option value="10">010: フェンス</option>');
   });
 
   test('follows the cursor into another fence', () => {
