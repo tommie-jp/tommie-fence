@@ -84,11 +84,27 @@ describe('板の外の機器を升目から触る', () => {
     expect(spans.length).toBeGreaterThan(1);
   });
 
-  test('says why a device cannot be duplicated, instead of talking about holes', () => {
-    const result = editor.duplicate(SOURCE, 'AD2', 'AD3');
+  test('copies the whole block, keeping the pins and the label, under a new name', () => {
+    // 写しには配線が付かないが、**それでも図には出る** (つながっていなければ
+    // 既定の場所に並ぶ)。出ないと思って断っていたが、描いてみたら出た。
+    const copied = after(editor.duplicate(SOURCE, 'AD2', 'AD3'));
+
+    expect(copied).toContain('  AD3:');
+    expect(copied).toContain('    pins: [V+, GND]');
+    expect(copied.match(/type: device/g)).toHaveLength(2);
+  });
+
+  test('puts the copy right after the one it came from, so it reads as an addition', () => {
+    const copied = after(editor.duplicate(SOURCE, 'AD2', 'AD3')).split('\n');
+
+    expect(copied.indexOf('  AD3:')).toBe(copied.indexOf('    pins: [V+, GND]') + 1);
+  });
+
+  test('refuses a name that is already taken', () => {
+    const result = editor.duplicate(SOURCE, 'AD2', 'R1');
 
     expect(result.ok).toBe(false);
-    expect(!result.ok && result.error.message).toContain('置き場が決まりません');
+    expect(!result.ok && result.error.message).toContain('もう使われています');
   });
 
   test('deletes the whole block, as one thing', () => {

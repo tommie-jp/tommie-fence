@@ -187,7 +187,7 @@ export function createBreadboardEditor(): FenceEditor {
       isNoteHandle(handle)
         ? duplicateNote(source, handle)
         : isDevice(source, handle)
-        ? duplicateDevice(handle)
+        ? duplicateDevice(source, handle, id)
         : duplicatePart(source, handle, id)
     ),
     turn: (source, handle, quarters) => (

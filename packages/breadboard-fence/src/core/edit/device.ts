@@ -1,5 +1,5 @@
 import { normalizeNewlines } from 'fence-kit';
-import type { Edit, EditResult, LineEdit, Span } from 'fence-kit';
+import type { Edit, EditResult, LineEdit, NetDiff, Span } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { isTopBlock } from '../model/address.ts';
@@ -147,6 +147,14 @@ export const deviceFields = (source: string, id: string): ReturnType<typeof part
 const fieldFail = (message: string, line: number | null): EditResult =>
   ({ ok: false, error: fenceError(message, line) });
 
+/** 行を足す書き換えの答え。**中身は `insert.ts` の `AdditionResult` と同じ形**。 */
+type AdditionResult =
+  | {
+    readonly ok: true;
+    readonly value: { readonly edits: readonly Edit[]; readonly lines: readonly LineEdit[]; readonly diff: NetDiff };
+  }
+  | { readonly ok: false; readonly error: ReturnType<typeof fenceError> };
+
 /** ブロックの中の `key:` の値が書かれている所。無ければ null。 */
 function valueToken(
   lines: readonly string[],
@@ -213,18 +221,42 @@ export function setDeviceField(source: string, id: string, field: PartField, tex
 }
 
 /**
- * 機器は複製しない。**つなぐ配線が決まらない**ので、写した箱は帯のどこにも
- * 置けず (左右の位置はつながる穴が決める) 図に出ない。
- * 「複製した」と言って何も出ないより、そう言って断る。
+ * 機器をもう 1 つ。**ブロックをそのまま写して、鍵だけ差し替える。**
+ *
+ * 写しには配線が付かないが、**それでも図には出る** (帯に並ぶ機器の左右は
+ * つながる穴が決めるので、つながっていなければ既定の場所に出る)。
+ * 出ないと思って断っていたが、実際に描いてみたら出た。
+ *
+ * 写す先は**元のブロックのすぐ後ろ**。部品の複製が斜めに 1 穴ずらすのと同じで、
+ * 元のそばに出したほうが「増えた」ことが分かる。
  */
-export const duplicateDevice = (id: string): MoveResult =>
-  ({
-    ok: false,
-    error: fenceError(
-      `${safeToken(id)} は複製できません (帯の位置はつながる配線が決めるので、写しの置き場が決まりません)`,
-      null,
-    ),
-  });
+export function duplicateDevice(source: string, id: string, newId: string): AdditionResult {
+  const normalized = normalizeNewlines(source);
+  const { doc } = parseFence(normalized);
+  if (doc === null) {
+    return { ok: false, error: fenceError('フェンスを読めないので複製できません (先にエラーを直します)', null) };
+  }
+  const device = deviceOf(normalized, id);
+  if (device?.line == null) {
+    return { ok: false, error: fenceError(`機器が見つかりません: ${safeToken(id)}`, null) };
+  }
+  if (doc.parts.some((one) => one.id === newId)) {
+    return { ok: false, error: fenceError(`その名前はもう使われています: ${safeToken(newId)}`, device.line) };
+  }
+
+  const lines = normalized.split('\n');
+  const block = blockOf(lines, device.line);
+  // **鍵の行だけ名前を差し替え、中身はそのまま写す** (`pins:` の並びも
+  // `label:` も、手で整えた並びごと残る)。
+  const copied = [
+    (lines[block.from - 1] ?? '').replace(/^(\s*)[^\s:]+\s*:/, `$1${newId}:`),
+    ...lines.slice(block.from, block.to),
+  ];
+  const added: readonly LineEdit[] = copied.map((text, index) => ({
+    kind: 'insert' as const, line: block.to + 1 + index, text,
+  }));
+  return { ok: true, value: { edits: [], lines: added, diff: diffAfterLines(normalized, added) } };
+}
 
 /** その機器のピンを指している配線の綴り (`AD2.V+` の `AD2` の所)。 */
 export function devicePinSpans(source: string, id: string): readonly Span[] {
