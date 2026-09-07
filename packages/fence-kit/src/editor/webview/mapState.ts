@@ -109,11 +109,27 @@ export const endOf = (under: Under): string | null => under.pin ?? under.cell;
  * 光っているものと押して選ばれるものが食い違う。
  */
 export function topOf(under: Under, kinds: readonly Kind[] = ['part', 'wire', 'node']): Picked | null {
+  const wire = wireUnder(under);
   if (kinds.includes('part') && under.part !== null) return { kind: 'part', id: under.part };
-  if (kinds.includes('wire') && under.wire !== null) return { kind: 'wire', id: under.wire };
+  if (kinds.includes('wire') && wire !== null) return { kind: 'wire', id: wire };
   if (kinds.includes('node') && under.node !== null) return { kind: 'node', id: under.node };
   return null;
 }
+
+/**
+ * カーソルの下の配線。**端の的も配線と数える。**
+ *
+ * 端の丸 (半径 7) は線の先をはみ出して置いてあり、太い当たり判定の線は
+ * 既定の `butt` 端なので**先端ちょうどには載っていない**ことがある。
+ * 端の丸だけを配線と読まないと、同じ配線でも押した端によって
+ * 「端を引き直す」になったり「節点を引きずる」になったりして、
+ * 引き直しの影が出たり出なかったりする
+ * (実機で「片方は出るが、別の片方が出ない」)。
+ *
+ * **節点より先に採るのは今までどおり** (`topOf` の 部品 > 配線 > 節点)。
+ * 節点そのものを動かすのは `G` 引きずる。
+ */
+const wireUnder = (under: Under): string | null => under.wire ?? under.wireEnd?.line ?? null;
 
 /** カーソルに付いているもの。 */
 export type Carry =
@@ -166,8 +182,18 @@ export type State = {
   readonly carry: Carry | null;
   /** 配線の 1 点目 (配線の道具)。2 点目のクリックで 1 本になる。 */
   readonly wireFrom: Held | null;
-  /** 押した場所。放した場所が離れていればドラッグ、その場ならクリック。 */
-  readonly pressed: (Spot & { readonly x: number; readonly y: number }) | null;
+  /**
+   * 押した場所。放した場所が離れていればドラッグ、その場ならクリック。
+   * **押したときに端の丸に載っていたか**も覚える — 引き始めるのは指が
+   * `DRAG` 分だけ動いたあとで、そのころカーソルはもう端の丸から出ている。
+   */
+  readonly pressed:
+    | (Spot & {
+      readonly x: number;
+      readonly y: number;
+      readonly wireEnd: { readonly line: string; readonly end: 'from' | 'to' } | null;
+    })
+    | null;
   readonly ghost: Ghost | null;
   /**
    * いま出ているゴーストが**訊いていた場所**。カーソルはもう先へ進んでいることが
@@ -494,7 +520,7 @@ const partTarget = (state: State): string | null =>
   (state.selected?.kind === 'part' ? state.selected.id : state.under.part);
 
 function onPress(state: State, event: Extract<Event, { kind: 'press' }>): Outcome {
-  const pressed = { x: event.x, y: event.y, ...spotOf(state, event.under) };
+  const pressed = { x: event.x, y: event.y, wireEnd: event.under.wireEnd, ...spotOf(state, event.under) };
   const hovered: State = { ...state, under: event.under };
 
   // 持ち物があるあいだ、押すのは「ここに置く」の始まり (確定は放したとき)。
@@ -551,7 +577,9 @@ function onDrag(state: State, event: Extract<Event, { kind: 'drag' }>): Outcome 
   }
   // **配線は端だけ引き直せる。** 押したのが端なら、その端を持ち上げる
   // (線の途中を掴んでも何も起きないのは今までどおり — 線は 2 つの穴が決める)。
-  const end = state.under.wireEnd;
+  // **押したときの端を見る** — ゆっくり引くと、`DRAG` を越えるころには
+  // カーソルが端の丸から出ていて、いまの `under` には端が写っていない。
+  const end = pressed.wireEnd ?? state.under.wireEnd;
   if (selected.kind === 'wire' && end !== null) {
     const lifted = carrying(hovered.state, { kind: 'wireEnd', ...end, byPointer: true });
     return { ...lifted, state: { ...lifted.state, pressed } };

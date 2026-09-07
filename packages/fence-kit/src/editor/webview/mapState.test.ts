@@ -133,6 +133,31 @@ describe('持ち上げて、置く所で 1 クリック (KiCad の型 2)', () =>
     expect(after(PANEL, press(ON_WIRE), drag(AT_B3)).carry).toBeNull();
   });
 
+  /**
+   * 端の丸 (半径 7) は線の先をはみ出しているので、太い当たり判定の線が
+   * 先端に届かないことがある。そこで節点に落ちると、同じ配線でも押した端に
+   * よって引き直せたり引きずりになったりする (実機で「片方は出るが、
+   * 別の片方が出ない」)。**端の丸に載っていれば、いつでもその配線。**
+   */
+  const LIFTED = { kind: 'wireEnd', line: '5', end: 'to', byPointer: true };
+  const ON_END = over({ cell: 'a2', node: 'a2', wire: '5', wireEnd: { line: '5', end: 'to' } });
+  const ONLY_END = over({ cell: 'a2', node: 'a2', wireEnd: { line: '5', end: 'to' } });
+
+  test('takes the end target for its own wire, even when the fat hit line misses the tip', () => {
+    expect(step(PANEL, press(ON_END)).state.selected).toEqual({ kind: 'wire', id: '5' });
+    expect(step(PANEL, press(ONLY_END)).state.selected).toEqual({ kind: 'wire', id: '5' });
+  });
+
+  test('lifts that end on a drag, whichever of the two was pressed', () => {
+    expect(after(PANEL, press(ON_END), drag(AT_B3)).carry).toEqual(LIFTED);
+    expect(after(PANEL, press(ONLY_END), drag(AT_B3)).carry).toEqual(LIFTED);
+  });
+
+  test('lifts the end the press was on, not the one under a cursor that has moved on', () => {
+    // ゆっくり引くと、`DRAG` を越えるころにはカーソルが端の丸から出ている。
+    expect(after(PANEL, press(ON_END), drag(AT_B3, false), drag(AT_B3)).carry).toEqual(LIFTED);
+  });
+
   test('turns and flips a lifted part, which the docs promise for anything on the cursor', () => {
     const lifted = after(PANEL, hover(ON_R1), key('m'));
 
