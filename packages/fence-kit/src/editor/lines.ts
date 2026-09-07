@@ -26,6 +26,30 @@ export const isKeyLine = (lineText: string | undefined, key: string): boolean =>
 export const FLOW_REFUSAL = 'フロー形式 (1 行に書いた形) は行ごと消せません。手で消します';
 
 /**
+ * 元の本文の `line` 行目が、いまの本文では何行目に居るか。消えていれば null。
+ *
+ * **まとめて消すときに要る。** 行番号で指すもの (配線、注釈) の名札は元の
+ * 本文で数えたものだが、1 つ消すたびに後ろの行が繰り上がる。しかも部品を
+ * 消すと、その足を指す配線や指している注釈まで一緒に落ちるので、**選んだ
+ * 覚えのない行が消えている**ことがある。数え直さないと、ずれた番号に来た
+ * 別のものを消してしまう (52 の docs/31)。
+ *
+ * **消すのは行ごと**なので、いまの本文は元の行の並びから何本か抜いたもの
+ * (部分列) になっている。頭から突き合わせれば、どこへ動いたかが分かる。
+ * 同じ字の行が複数あるときはどれと対応させても結果は同じ (字が同じなら、
+ * どちらを消しても本文は同じになる)。
+ */
+export function lineNow(before: readonly string[], after: readonly string[], line: number): number | null {
+  let at = 0;
+  for (let index = 0; index < before.length; index += 1) {
+    const kept = at < after.length && before[index] === after[at];
+    if (index === line - 1) return kept ? at + 1 : null;
+    if (kept) at += 1;
+  }
+  return null;
+}
+
+/**
  * 消す行を書き換えに直す。**行番号の順に並べて渡す** (当てる側が後ろから
  * 当てられるように)。0 は「鍵が無い」の印なので落とす。
  */

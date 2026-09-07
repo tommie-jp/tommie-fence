@@ -5,12 +5,13 @@ import { indentOn } from './documentLike.ts';
 import type { DocLike, EditorLike } from './documentLike.ts';
 import { createHistory, sameBody } from './history.ts';
 import { describeDiff } from './edits.ts';
-import { applyRewrite } from './lines.ts';
+import { applyRewrite, lineNow } from './lines.ts';
 import type { EditResult, FenceEditor, FenceEntry, GridStep, PartFields } from './fenceEditor.ts';
 import { COLOR_LIST_ID, TYPE_LIST_ID, renderFencePicker, renderSwatches } from './panelHtml.ts';
 import type { PanelChrome } from './panelHtml.ts';
 import type { MapViewHtml } from './panelHtml.ts';
 import type { FenceBlock } from '../fences.ts';
+import { normalizeNewlines } from '../newlines.ts';
 
 /**
  * マップの**セッション** — webview 1 つと文書 1 つの間の段取り。
@@ -252,6 +253,16 @@ export const wireHandle = (line: string | null): string | null => (line === null
  */
 export const nodeHandle = (spelling: string | null): string | null =>
   (spelling === null ? null : `node:${spelling}`);
+
+/**
+ * 注釈 1 つを指す名札の行番号。注釈にも名前が無いので**書かれた行で指す**
+ * (綴りは 3 つのフェンスの `note.ts` と同じ取り決め)。名札でなければ null。
+ */
+const noteLineOf = (handle: string): number | null => {
+  if (!handle.startsWith('note:')) return null;
+  const line = Number(handle.slice('note:'.length));
+  return Number.isInteger(line) && line > 0 ? line : null;
+};
 
 /**
  * 掴んだものの名札。**名前の無いものは殻が組む** — どう指すかは殻とフェンスの
@@ -1294,23 +1305,62 @@ export function createSession<D extends DocLike>(
     });
   }
 
+  /**
+   * まとめて消す手順。**名札は書かれた場所で決まる**ので、1 つ消すたびに
+   * 残りの名札がずれる (実機で「範囲削除した部品がフェンスに残っている」)。
+   *
+   * | 消すもの | 名札 | 何でずれるか |
+   * | --- | --- | --- |
+   * | 注釈 | `note:11` (行番号) | 上の行が消えると別の行を指す |
+   * | 配線 | 行番号 | 同上 |
+   * | 同じ名前の記号 | `VCC#2` (書いた順) | 前の `VCC` が消えると番号が繰り上がる |
+   *
+   * 手当ては 2 つ。
+   *
+   * 1. **下の行から消す。** 「書いた順」の数え方は前を数えるので、下から
+   *    消せば動かない (`VCC#2` は最後まで 2 つ目のまま)。
+   * 2. **行で指すものは、当てる直前に数え直す。** 部品を消すと足を指す配線や
+   *    指している注釈まで一緒に落ちるので、順だけでは足りない
+   *    (`wires:` を `parts:` より前に書いた図で、選んでいない配線が消えた)。
+   *
+   * 空になった `parts:` / `wires:` の鍵を落とすのは各フェンスの `delete…` が
+   * やるので、**続けて当てる**ところ (`runAll`) は今までどおり。
+   */
+  function deletions(
+    parts: readonly string[],
+    wires: readonly string[],
+  ): readonly ((source: string) => EditResult)[] {
+    const source = normalizeNewlines(fenceNow()?.source ?? '');
+    const was = source.split('\n');
+    const targets = [
+      ...wires.map((id) => ({ id, line: Number(id), wire: true })),
+      // 書かれている場所はフェンスに訊く (エディタで光らせる先と同じ道)。
+      // **注釈は名札そのものが行**なので、そちらを先に読む — 指し先を持たない
+      // 注釈 (`source`) は光らせる先が無く、`spansOf` が空で返る。
+      ...parts.map((id) => ({
+        id,
+        line: noteLineOf(id) ?? editor.spansOf(source, 'part', id)[0]?.line ?? 0,
+        wire: false,
+      })),
+    ].sort((a, b) => b.line - a.line);
+
+    return targets.map((one) => (body: string) => {
+      // 名前で引くものは、行がずれても正しく当たる。
+      if (!one.wire && noteLineOf(one.id) === null) return editor.deletePart(body, one.id);
+      const at = lineNow(was, normalizeNewlines(body).split('\n'), one.line);
+      // **もう消えているものは断りにしない。** 一緒に連れていかれただけで、用は済んでいる。
+      if (at === null) return { ok: true, value: { edits: [], diff: { lost: [], gained: [] } } };
+      return one.wire ? editor.deleteWire(body, at) : editor.deletePart(body, `note:${at}`);
+    });
+  }
+
   /** マップから来た「これを消す」。部品は足を指す配線も連れていく。 */
   async function remove(message: Incoming): Promise<void> {
     const what = text(message.what);
     const picked = handles(message.ids);
     const wires = handles(message.wires);
     if (picked.length + wires.length > 1) {
-      // **配線が先、しかも行番号の大きいほうから。** 配線は行で指すので、
-      // 先に上の行を消すと下の行の番号がずれる。部品は名前で引き直すので、
-      // 行がずれても正しく当たる (だから後にできる)。
-      const byLine = [...wires].sort((a, b) => Number(b) - Number(a));
-      await runAll(
-        `${picked.length + wires.length} 個を消しました`,
-        [
-          ...byLine.map((one) => (source: string) => editor.deleteWire(source, Number(one))),
-          ...picked.map((one) => (source: string) => editor.deletePart(source, one)),
-        ],
-      );
+      await runAll(`${picked.length + wires.length} 個を消しました`, deletions(picked, wires));
       return;
     }
     const id = text(message.id);

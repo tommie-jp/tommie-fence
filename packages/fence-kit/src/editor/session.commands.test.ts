@@ -165,16 +165,95 @@ describe('動かす・置く・消す', () => {
     expect(calls).toContainEqual(['deleteWire', 7]);
   });
 
-  test('deletes a whole group in one rewrite, wires first and from the bottom up', async () => {
-    // 配線は行で指すので、上の行から消すと下の番号がずれる。
-    const { session, calls, status } = open();
+  /**
+   * **まとめて消すときの名札のずれ。**
+   *
+   * 名札は書かれた場所で決まる — 注釈は行番号そのもの、同じ名前の記号は
+   * 書いた順の番号、配線は行番号。1 つ消すたびに残りがずれるので、
+   * 下から消し、行で指すものは当てる直前に数え直す (52 の docs/31)。
+   *
+   * 張りぼての `delete…` は**行を消して返す** — 実物 3 つともそうで
+   * (`remove.ts` の「消すのは行ごと」)、数え直しはそれを頼りにしている。
+   */
+  const FENCE_LINES = [
+    'wires:',
+    '  - a4 -- Q1.b',
+    '  - a3 -- a4',
+    '  - a1 -- a2',
+    'parts:',
+    '  IN: port a1',
+    '  Q1: npn b5',
+  ];
+  const drops = (...lines: readonly number[]) => ({
+    ok: true as const,
+    value: {
+      edits: [],
+      lines: [...lines].sort((a, b) => a - b).map((line) => ({ kind: 'delete' as const, line })),
+      diff: { lost: [], gained: [] },
+    },
+  });
 
-    await session.handle({ kind: 'delete', what: 'part', id: 'R1', ids: ['R1', 'D1'], wires: ['7', '9'] });
+  /** 行を消す張りぼて。部品は自分の行と、連れていく行 (`with`) を落とす。 */
+  const dropping = (
+    at: Record<string, number>,
+    also: Record<string, readonly number[]> = {},
+    note: (...call: Call) => void = () => {},
+  ): Partial<FenceEditor> => ({
+    fenceAt: () => ({ line: 1, source: FENCE_LINES.join('\n'), indents: [] }),
+    firstFence: () => ({ line: 1, source: FENCE_LINES.join('\n'), indents: [] }),
+    spansOf: (_source, _what, id) => (at[id] === undefined ? [] : [{ line: at[id], column: 0, length: id.length }]),
+    deletePart: (_s, id) => { note('deletePart', id); return drops(at[id] ?? 1, ...(also[id] ?? [])); },
+    deleteWire: (_s, line) => { note('deleteWire', line); return drops(line); },
+  });
 
+  test('deletes a whole group in one rewrite, from the bottom of the fence up', async () => {
+    const calls: Call[] = [];
+    const { session, status } = open(dropping({ IN: 6, Q1: 7 }, {}, (...one) => { calls.push(one); }));
+
+    await session.handle({ kind: 'delete', what: 'part', id: 'Q1', ids: ['Q1', 'IN'], wires: ['3', '4'] });
+
+    // 7 → 6 → 4 → 3 の順。行の大きいものから当てる。
+    expect(calls.map((one) => one[0])).toEqual(['deletePart', 'deletePart', 'deleteWire', 'deleteWire']);
     expect(calls).toEqual([
-      ['deleteWire', 9], ['deleteWire', 7], ['deletePart', 'R1'], ['deletePart', 'D1'],
+      ['deletePart', 'Q1'], ['deletePart', 'IN'], ['deleteWire', 4], ['deleteWire', 3],
     ]);
     expect(status()).toContain('4 個');
+  });
+
+  /**
+   * 部品は足を指す配線も連れていく。**その配線が上の行にある**と、あとに残った
+   * 配線の行番号が繰り上がる — 数え直さないと、選んでいない配線を消してしまう。
+   */
+  test('counts the line of a wire again after a part has taken one with it', async () => {
+    const calls: Call[] = [];
+    // Q1 (7 行目) は足を指す配線 (2 行目) も連れていく。
+    const { session } = open(dropping({ Q1: 7 }, { Q1: [2] }, (...one) => { calls.push(one); }));
+
+    await session.handle({ kind: 'delete', what: 'part', id: 'Q1', ids: ['Q1'], wires: ['3'] });
+
+    // 3 行目の配線は、2 行目が消えたので 2 行目に来ている。
+    expect(calls).toEqual([['deletePart', 'Q1'], ['deleteWire', 2]]);
+  });
+
+  test('drops a target that another one has already taken with it', async () => {
+    const calls: Call[] = [];
+    const { session } = open(dropping({ Q1: 7 }, { Q1: [2] }, (...one) => { calls.push(one); }));
+
+    await session.handle({ kind: 'delete', what: 'part', id: 'Q1', ids: ['Q1'], wires: ['2'] });
+
+    // **断りにしない。** 一緒に連れていかれただけで、用は済んでいる。
+    expect(calls).toEqual([['deletePart', 'Q1']]);
+  });
+
+  test('takes a note by the line in its own handle, which spansOf cannot always give', async () => {
+    // 図の外に出る注釈 (`source`) は光らせる先が無く、`spansOf` が空で返る。
+    // そこで 0 行目と数えると、いちばん上の物として最後に消され、名札がずれる。
+    const calls: Call[] = [];
+    const { session } = open(dropping({ IN: 6 }, {}, (...one) => { calls.push(one); }));
+
+    await session.handle({ kind: 'delete', what: 'part', id: 'IN', ids: ['IN', 'note:7'], wires: [] });
+
+    expect(calls).toEqual([['deletePart', 'note:7'], ['deletePart', 'IN']]);
   });
 
   test('says what it could not do when part of a group refuses', async () => {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { applyEdits, applyLineEdits, applyRewrite, wireEndToken } from './lines.ts';
+import { applyEdits, applyLineEdits, applyRewrite, lineNow, wireEndToken } from './lines.ts';
 
 const SOURCE = 'parts:\n  R1: resistor a9 b9 330\nwires:\n  - a9 -- b9\n';
 
@@ -54,5 +54,36 @@ describe('wireEndToken', () => {
 
   test('says nothing when the line holds no operator', () => {
     expect(wireEndToken('  - a1', ['--'], 'from')).toBeNull();
+  });
+});
+
+/**
+ * まとめて消すときに、行で指すもの (配線・注釈) の行番号を数え直す道具。
+ * **消すのは行ごと**なので、いまの本文は元の行の部分列になっている。
+ */
+describe('lineNow', () => {
+  const WAS = ['a', 'b', 'c', 'd'];
+
+  test('gives the same line back when nothing has been removed', () => {
+    expect(lineNow(WAS, WAS, 3)).toBe(3);
+  });
+
+  test('counts the line up by however many above it are gone', () => {
+    expect(lineNow(WAS, ['b', 'd'], 4)).toBe(2);
+    expect(lineNow(WAS, ['b', 'd'], 2)).toBe(1);
+  });
+
+  test('says null for a line that is gone, so the caller can skip it', () => {
+    expect(lineNow(WAS, ['b', 'd'], 1)).toBeNull();
+    expect(lineNow(WAS, ['b', 'd'], 3)).toBeNull();
+  });
+
+  test('holds up when the same text is written on two lines', () => {
+    // どちらを消したことにしても、消えたあとの本文は同じ。
+    expect(lineNow(['a', 'x', 'a', 'b'], ['a', 'a', 'b'], 4)).toBe(3);
+  });
+
+  test('says null past the end, since there is no such line', () => {
+    expect(lineNow(WAS, WAS, 9)).toBeNull();
   });
 });
