@@ -124,7 +124,7 @@ describe('KiCad の配置', () => {
   test('scrolls the canvas and keeps both bars, so the whole figure is reachable', () => {
     // **常に出す。** 図が収まっていても場所を空けておくと、拡大したときに
     // 幅が動かない (実機で頼まれた)。カーソルは KiCad と同じ十字。
-    expect(html).toContain('.kc-canvas { flex: 1; min-width: 0; overflow: scroll; cursor: crosshair; }');
+    expect(html).toContain('.kc-canvas { flex: 1; min-width: 0; overflow: scroll; touch-action: none; cursor: crosshair; }');
   });
 
   test('keeps every hit layer live, since what is under the cursor is read from the stack', () => {
@@ -362,6 +362,42 @@ describe('浮かぶものの置き場', () => {
   test('leaves the positioning to the stage, so the canvas can scroll under it', () => {
     expect(html).toContain('.kc-stage { flex: 1; min-width: 0; position: relative;');
     expect(html).not.toContain('.kc-canvas { flex: 1; min-width: 0; position: relative;');
+  });
+});
+
+/**
+ * 狭い画面 (スマホ) の畳み方。**図を主にする** — 属性 260px と道具 64px を
+ * 据えたままだと、390px の画面では図に残る幅が 0 になる (52 の docs/32)。
+ */
+describe('狭いときの畳み方', () => {
+  test('folds at 720px, so an iPad mini in portrait keeps the wide shape', () => {
+    expect(html).toContain('@media (max-width: 720px)');
+  });
+
+  test('offers a button for the drawer, since the panel is no longer always out', () => {
+    expect(html).toContain('class="kc-props-toggle"');
+  });
+
+  test('lays the drawer over the figure instead of pushing it aside', () => {
+    // 押しのけると図の幅が変わって組み直され、見ていた所を見失う。
+    const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
+    expect(narrow).toContain('.kc-props {');
+    expect(narrow).toContain('position: absolute;');
+  });
+
+  test('turns the tool column into a strip along the bottom', () => {
+    const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
+    expect(narrow).toContain('.kc-tools {');
+    expect(narrow).toContain('flex-direction: row;');
+  });
+
+  test('stops one finger from scrolling the figure, since one finger means select', () => {
+    expect(html).toContain('.kc-canvas { flex: 1; min-width: 0; overflow: scroll; touch-action: none;');
+  });
+
+  test('says what the fingers do, next to what the mouse does', () => {
+    expect(html).toContain('2 本指で移動');
+    expect(html).toContain('長押しでメニュー');
   });
 });
 

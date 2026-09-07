@@ -1127,10 +1127,20 @@ function inside(
   return { parts: gather('.cf-chip[data-part]', 'data-part'), wires: gather('.cf-wire[data-line]', 'data-line') };
 }
 
+/**
+ * 狭い画面では属性と部品の一覧をしまってある (52 の docs/32)。
+ * **図に重ねて出す**ので、図を触ったら引っ込める — 重なったまま触ると、
+ * 引き出しの向こう側を押しているつもりで手前を押すことになる。
+ */
+const toggleDrawer = (): void => { document.body.classList.toggle('kc-drawer'); };
+const closeDrawer = (): void => { document.body.classList.remove('kc-drawer'); };
+
 document.addEventListener('pointerdown', (event) => {
   const target = elementOf(event);
   // 一覧の外を押したら閉じる (中は `click` が拾う)。
   if (target?.closest('.kc-menu') == null) closeMenu();
+  // 引き出しの外を押したら引っ込める (ボタンそのものは `click` が受け持つ)。
+  if (target?.closest('.kc-props, .kc-props-toggle') == null) closeDrawer();
   const onCanvas = target?.closest('.kc-canvas') != null && target?.closest('.kc-chooser') == null;
   // 中ボタン (か Space + 左) でパン。KiCad と同じ。
   if (onCanvas && (event.button === 1 || (event.button === 0 && spaceHeld))) {
@@ -1346,6 +1356,7 @@ document.addEventListener('click', (event) => {
   if (target?.closest('.kc-fit')) { fit(); return; }
   if (target?.closest('.kc-chooser-close')) { closeChooser(); return; }
   if (target?.closest('.kc-dock-pop')) { openChooser(); return; }
+  if (target?.closest('.kc-props-toggle')) { toggleDrawer(); return; }
 
   // フェンスの前後と両端。**一覧を開かずに隣へ行ける** (図を 1 枚ずつ見ていくとき)。
   const step = target?.closest<HTMLButtonElement>('.cf-fence-step');

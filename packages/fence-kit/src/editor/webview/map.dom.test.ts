@@ -97,6 +97,11 @@ const answerGhost = async (over: Record<string, unknown> = {}): Promise<void> =>
   await nextFrame();
 };
 
+/** その札を押す。**`click` で受けているもの**を見るとき (道具・ボタン)。 */
+const click = (selector: string): void => {
+  document.querySelector(selector)?.dispatchEvent(new Event('click', { bubbles: true }));
+};
+
 const key = (name: string, detail: Record<string, unknown> = {}): void => {
   const event = new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true, ...detail });
   document.body.dispatchEvent(event);
@@ -325,6 +330,34 @@ describe('置く', () => {
     fire('pointerup', at(1, 1));
 
     expect(lastOf('addPart')).toMatchObject({ type: 'resistor', at: ['a1'], flip: true });
+  });
+});
+
+/**
+ * 狭い画面の引き出し。**属性と部品の一覧は普段しまってある**ので、
+ * 開け閉ての段取りだけがここの受け持ち (畳み方そのものは CSS)。
+ */
+describe('属性の引き出し', () => {
+  test('opens and closes from the button in the top bar', () => {
+    click('.kc-props-toggle');
+    expect(document.body.classList.contains('kc-drawer')).toBe(true);
+
+    click('.kc-props-toggle');
+    expect(document.body.classList.contains('kc-drawer')).toBe(false);
+  });
+
+  test('closes when the figure is touched, since the drawer sits over it', () => {
+    click('.kc-props-toggle');
+    fire('pointerdown', at(1, 1));
+
+    expect(document.body.classList.contains('kc-drawer')).toBe(false);
+  });
+
+  test('stays open while the panel itself is being used', () => {
+    click('.kc-props-toggle');
+    fire('pointerdown', { target: document.querySelector('.kc-props') });
+
+    expect(document.body.classList.contains('kc-drawer')).toBe(true);
   });
 });
 

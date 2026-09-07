@@ -74,8 +74,12 @@ const STYLE = `
     background: none; cursor: pointer;
   }
   .kc-top button:hover { border-color: var(--vscode-focusBorder); }
+  /* 引き出しのボタン。**広いときは属性が出ている**ので要らない。 */
+  .kc-props-toggle { display: none; }
   .kc-top button:disabled { opacity: 0.35; cursor: default; }
   .kc-title { margin-left: auto; opacity: 0.7; }
+  /* 指の案内。狭いときだけ、マウスの案内と入れ替える。 */
+  .kc-title-touch { display: none; }
   .cf-fences { margin: 0; }
   /* **押しやすい大きさに取る。** 三角 1 つと「棒 + 三角」で幅が変わるので、
      どれも同じ幅に揃えて並べる (実機で「押しやすいように」と頼まれた)。 */
@@ -91,8 +95,9 @@ const STYLE = `
     border: 1px solid var(--vscode-dropdown-border);
   }
 
-  /* 真ん中: 左に属性、図、右に道具の列。 */
-  .kc-main { flex: 1; min-height: 0; display: flex; }
+  /* 真ん中: 左に属性、図、右に道具の列。**引き出しの基準**でもある
+     (狭いときは属性がここへ重なる)。 */
+  .kc-main { flex: 1; min-height: 0; display: flex; position: relative; }
   /* 部品の一覧も抱えるので、欄だけのころ (170px) より広い。**浮かぶ窓と同じ幅**
      (260px) にする — 狭めると種類の名前が 1 字ずつ折り返して読めなくなる。 */
   .kc-props {
@@ -120,7 +125,9 @@ const STYLE = `
   .kc-stage { flex: 1; min-width: 0; position: relative; display: flex; }
   /* **スクロールバーは常に出す。** 図が箱に収まっていても場所を空けておくと、
      拡大したときに幅が動かない (実機で頼まれた)。 */
-  .kc-canvas { flex: 1; min-width: 0; overflow: scroll; cursor: crosshair; }
+  /* **1 本指では流さない。** 絵の上は既に止めてあるが、絵の外側が流れると
+     同じ 1 本指が場所によって別の意味になる。移動は 2 本指が受け持つ。 */
+  .kc-canvas { flex: 1; min-width: 0; overflow: scroll; touch-action: none; cursor: crosshair; }
   .cf-body { width: 100%; }
   /* 図の根 (どのフェンスの SVG も)。ズーム 1 で箱の幅に収める。 */
   .cf-body > svg { display: block; width: 100%; height: auto; user-select: none; touch-action: none; }
@@ -277,6 +284,38 @@ const STYLE = `
   .cf-types li .cf-pick { width: 100%; }
   .cf-types code { opacity: 0.7; font-size: 11px; }
   .cf-types li.cf-hidden { display: none; }
+
+  /* **狭いときは図を主にする** (52 の docs/32)。属性 260px と道具 64px を
+     据えたままだと、390px の画面では図に残る幅が 0 になる。
+     閾値の 720px は、iPad mini の縦 (744px) が今までどおりの形で収まり、
+     iPhone Pro Max の横 (430px) が畳まれる所。 */
+  @media (max-width: 720px) {
+    /* 属性は引き出し。**図に重ねる** — 押しのけると図の幅が変わって組み直され、
+       見ていた所を見失う。 */
+    .kc-props {
+      position: absolute; z-index: 3; top: 0; bottom: 0; left: 0;
+      width: min(86vw, 300px); transform: translateX(-101%);
+      transition: transform 0.15s ease-out;
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.35);
+    }
+    body.kc-drawer .kc-props { transform: none; }
+    .kc-props-toggle { display: inline-flex; }
+
+    /* 道具は下端に横並び。縦に 9 つ並べると図を押し潰す。 */
+    .kc-main { flex-direction: column; }
+    .kc-tools {
+      width: auto; flex-direction: row; overflow-x: auto; overflow-y: hidden;
+      border-left: 0; border-top: 1px solid var(--kc-line);
+    }
+    .kc-tool { flex: none; min-width: 54px; }
+
+    /* 案内はマウスから指へ。狭い帯に 2 つ並べない。 */
+    .kc-title { display: none; }
+    .kc-title-touch { display: inline; margin-left: auto; opacity: 0.7; }
+
+    /* 浮かぶ窓は画面いっぱいに近づける (260px の窓は狭い画面で収まらない)。 */
+    .kc-chooser { width: auto; right: 8px; }
+  }
 
   /* 帯: 読めなかったところとお知らせ。折り畳める。 */
   .kc-band { flex: none; max-height: 30%; overflow-y: auto; border-top: 1px solid var(--kc-line); background: var(--kc-chrome); }
@@ -657,6 +696,7 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     + `<style>${STYLE}</style><title>図を掴んで動かす</title></head>`
     + `<body data-tool="select"${own ? ' class="cf-own-undo"' : ''}>`
     + `<header class="kc-top">`
+    + `<button type="button" class="kc-props-toggle" title="属性と部品 (狭いとき)">▤</button>`
     + `<span class="kc-group">`
     + `<button class="cf-undo"${own ? ' disabled' : ''} title="元に戻す (Ctrl+Z)">↶</button>`
     + `<button class="cf-redo"${own ? ' disabled' : ''} title="やり直す (Ctrl+Shift+Z)">↷</button></span>`
@@ -666,6 +706,7 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     + `<button class="kc-fit" title="全体 (Home)">⤢</button></span>`
     + `<p class="cf-fences">${view.picker}</p>`
     + `<span class="kc-title">ホイールで拡大・縮小、中ボタン (か Space + ドラッグ) で移動</span>`
+    + `<span class="kc-title-touch">2 本指で移動・ピンチで拡大、長押しでメニュー</span>`
     + `</header>`
     + `<div class="kc-main">`
     + `<aside class="kc-props"><h2>属性</h2>`
