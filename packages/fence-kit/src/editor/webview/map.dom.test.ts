@@ -110,6 +110,10 @@ const key = (name: string, detail: Record<string, unknown> = {}): void => {
 const sentKinds = (): readonly string[] => posted.map((one) => one.kind);
 const lastOf = (kind: string): Posted | undefined => [...posted].reverse().find((one) => one.kind === kind);
 const status = (): string => document.querySelector('.cf-status')?.textContent ?? '';
+/** いまのズーム率 (%)。帯に出ている字から読む。 */
+const zoom = (): number => Number((document.querySelector('.kc-zoom')?.textContent ?? '0').replace(/[^0-9]/g, ''));
+/** 長押しと見なすまでの待ち (`map.ts` と揃える)。 */
+const LONG_PRESS = 500;
 const marked = (className: string): readonly string[] =>
   [...document.querySelectorAll(`.${className}`)].map((one) => one.getAttribute('data-part')
     ?? one.getAttribute('data-line') ?? one.getAttribute('data-address') ?? one.className.toString());
@@ -358,6 +362,92 @@ describe('属性の引き出し', () => {
     fire('pointerdown', { target: document.querySelector('.kc-props') });
 
     expect(document.body.classList.contains('kc-drawer')).toBe(true);
+  });
+});
+
+/**
+ * 指の操作 (52 の docs/32)。**1 本の意味はマウスと同じ**に保ち、
+ * 移動と拡大は 2 本へ寄せる。1 本と 2 本は混じらないので取り合いにならない。
+ */
+describe('指で触る', () => {
+  const touch = (kind: string, id: number, x: number, y: number, more: Record<string, unknown> = {}): void => {
+    fire(kind, { pointerId: id, pointerType: 'touch', clientX: x, clientY: y, buttons: 1, ...more });
+  };
+
+  test('pans with two fingers, which one finger never does', () => {
+    const box = document.querySelector('.kc-canvas') as HTMLElement;
+    box.scrollLeft = 100;
+    box.scrollTop = 100;
+
+    touch('pointerdown', 1, 200, 200);
+    touch('pointerdown', 2, 240, 200);
+    touch('pointermove', 1, 170, 180);
+    touch('pointermove', 2, 210, 180);
+
+    // 2 本の真ん中が (-30, -20) 動いたので、図はその逆へスクロールする。
+    expect(box.scrollLeft).toBe(130);
+    expect(box.scrollTop).toBe(120);
+  });
+
+  test('zooms on a pinch, by how much the two fingers spread', () => {
+    const before = zoom();
+
+    touch('pointerdown', 1, 200, 200);
+    touch('pointerdown', 2, 300, 200);
+    touch('pointermove', 2, 400, 200);
+
+    expect(zoom()).toBeGreaterThan(before);
+  });
+
+  /**
+   * **指は同時には動かず、出来事は 1 本ずつ来る。** 前の出来事との比で拡大すると、
+   * 片方が動いた瞬間だけ間合いが伸びて倍率が揺れる。始めからの比で決める。
+   */
+  test('holds the zoom while both fingers travel together, one event at a time', () => {
+    const before = zoom();
+
+    touch('pointerdown', 1, 200, 200);
+    touch('pointerdown', 2, 260, 200);
+    for (let step = 1; step <= 4; step += 1) {
+      touch('pointermove', 1, 200 - step * 10, 200);
+      touch('pointermove', 2, 260 - step * 10, 200);
+    }
+
+    expect(zoom()).toBe(before);
+  });
+
+  test('takes back what one finger had started when a second one lands', () => {
+    // なぞり始めてから 2 本目を足すことがある。囲みかけのまま移動に移ると帯が残る。
+    touch('pointerdown', 1, 200, 200);
+    touch('pointermove', 1, 260, 240);
+    expect(document.querySelector('.kc-band-select')).not.toBeNull();
+
+    touch('pointerdown', 2, 300, 200);
+
+    expect(document.querySelector('.kc-band-select')).toBeNull();
+  });
+
+  test('opens the menu on a long press, since iOS never sends contextmenu', async () => {
+    touch('pointerdown', 1, ...[at(1, 1).clientX, at(1, 1).clientY] as [number, number]);
+    await new Promise((done) => { setTimeout(done, LONG_PRESS + 40); });
+
+    expect((document.querySelector('.kc-menu') as HTMLElement).hidden).toBe(false);
+  });
+
+  test('takes a long press back when the finger moves, which means a drag', async () => {
+    touch('pointerdown', 1, 200, 200);
+    touch('pointermove', 1, 240, 230);
+    await new Promise((done) => { setTimeout(done, LONG_PRESS + 40); });
+
+    expect((document.querySelector('.kc-menu') as HTMLElement).hidden).toBe(true);
+  });
+
+  test('leaves the mouse alone: one pointer still selects and drags', () => {
+    fire('pointerdown', { ...at(1, 1), pointerId: 1, pointerType: 'mouse', buttons: 1 });
+    fire('pointermove', { clientX: 200, clientY: 200, pointerId: 1, pointerType: 'mouse', buttons: 1 });
+
+    expect(document.querySelector('.kc-band-select')).toBeNull();
+    expect(lastOf('select')).toBeDefined();
   });
 });
 

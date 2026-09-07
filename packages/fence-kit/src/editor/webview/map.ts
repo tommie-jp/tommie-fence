@@ -167,6 +167,116 @@ function inCanvas(event: { clientX: number; clientY: number }): { x: number; y: 
 
 let panning: { x: number; y: number; left: number; top: number } | null = null;
 let spaceHeld = false;
+
+// ---------------------------------------------------------------- 指
+
+/**
+ * 指で触るときの決め (52 の docs/32)。**1 本の意味はマウスと同じ**に保ち、
+ * 移動と拡大は 2 本へ寄せる。1 本と 2 本は混じらないので取り合いにならない。
+ *
+ * | 指 | すること |
+ * | --- | --- |
+ * | 1 本でなぞる | 今までどおり (何もない所からなら囲み、物の上からなら動かす) |
+ * | 2 本でなぞる | 図を移動する |
+ * | 2 本を開く・閉じる | 拡大・縮小 |
+ * | 長押し | 右メニュー |
+ */
+const LONG_PRESS = 500;
+/** 長押しと見なす動きの幅。指は静かに置いても少し揺れる。 */
+const LONG_PRESS_SLACK = 10;
+
+/** いま触れている指。 */
+const fingers = new Map<number, { readonly x: number; readonly y: number }>();
+/**
+ * 2 本指のなぞり。**間合いは始めたときのものを覚える** — 指は同時には動かず、
+ * 出来事は 1 本ずつ来る。前の出来事との比で拡大すると、片方が動いた瞬間だけ
+ * 間合いが伸びて拡大が揺れる。始めからの比なら、もう片方が追いついた時点で
+ * 正しい倍率に戻る。真ん中のほうは移動なので、前の出来事との差でよい。
+ */
+let pinch: {
+  readonly gap: number;
+  readonly zoom: number;
+  x: number;
+  y: number;
+} | null = null;
+/** 長押しの見張り。動いたか離したら取り消す。 */
+/** `setTimeout` の返しは殻 (DOM) と node で型が違うので、そのまま借りる。 */
+type Timer = ReturnType<typeof setTimeout>;
+let pressing: { readonly id: number; readonly x: number; readonly y: number; readonly timer: Timer } | null = null;
+
+/** 2 本指の間合いと真ん中。指が 2 本無ければ null。 */
+function spanOf(): { readonly gap: number; readonly x: number; readonly y: number } | null {
+  const [one, two] = [...fingers.values()];
+  if (one === undefined || two === undefined) return null;
+  return {
+    gap: Math.hypot(two.x - one.x, two.y - one.y),
+    x: (one.x + two.x) / 2,
+    y: (one.y + two.y) / 2,
+  };
+}
+
+/** なぞりの始め。いまの倍率も覚える (始めからの比で拡大するため)。 */
+function startPinch(): void {
+  const span = spanOf();
+  pinch = span === null ? null : { gap: span.gap, zoom: view.zoom, x: span.x, y: span.y };
+}
+
+const dropLongPress = (): void => {
+  if (pressing !== null) clearTimeout(pressing.timer);
+  pressing = null;
+};
+
+/** 指を置いたら長押しを数え始める。**図の上だけ** (道具や欄では数えない)。 */
+function watchLongPress(event: PointerEvent): void {
+  dropLongPress();
+  if (elementOf(event)?.closest('.kc-canvas') == null) return;
+  const [x, y] = [event.clientX, event.clientY];
+  pressing = {
+    id: event.pointerId,
+    x,
+    y,
+    timer: setTimeout(() => {
+      pressing = null;
+      // **指の下のものに効かせる。** 押しかけは畳んでから開く (帯が残らない)。
+      band = null;
+      hideBand();
+      run({ kind: 'cancel' });
+      openMenu(x, y);
+    }, LONG_PRESS),
+  };
+}
+
+/** 動いたら長押しではない (なぞりの始まり)。 */
+function stirLongPress(event: PointerEvent): void {
+  if (pressing === null || pressing.id !== event.pointerId) return;
+  if (Math.abs(event.clientX - pressing.x) + Math.abs(event.clientY - pressing.y) > LONG_PRESS_SLACK) {
+    dropLongPress();
+  }
+}
+
+/**
+ * 2 本指で動かす。**真ん中の動きで移動、間合いの伸び縮みで拡大。**
+ * 先に移動を当ててから拡大する — 拡大は真ん中の点を止めたまま広げるので、
+ * 順を逆にすると止める点が古いままになる。
+ */
+function pinchTo(): void {
+  const now = spanOf();
+  const box = canvas();
+  if (now === null || pinch === null || box === null) return;
+  box.scrollLeft -= now.x - pinch.x;
+  box.scrollTop -= now.y - pinch.y;
+  pinch.x = now.x;
+  pinch.y = now.y;
+  if (pinch.gap <= 0 || now.gap <= 0) return;
+  // **始めからの比で倍率を決める。** `zoomAt` は掛け算で受けるので、
+  // いまの倍率から目当ての倍率までの比に直して渡す。
+  const wanted = pinch.zoom * (now.gap / pinch.gap);
+  const frame = box.getBoundingClientRect();
+  zoomAt(wanted / view.zoom, now.x - frame.left, now.y - frame.top);
+}
+
+/** その出来事が指か。マウスとペンは今までどおり 1 つの道を通る。 */
+const byFinger = (event: PointerEvent): boolean => event.pointerType === 'touch';
 /**
  * `Shift` を押しているか。**升ちょうどに吸い付ける**ためと、**引いている線の影を
  * 折って見せる**ために持つ。
@@ -1137,6 +1247,20 @@ const closeDrawer = (): void => { document.body.classList.remove('kc-drawer'); }
 
 document.addEventListener('pointerdown', (event) => {
   const target = elementOf(event);
+  if (byFinger(event)) {
+    fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    // **2 本目が来たら、1 本目の続きは取り消す。** なぞり始めてから足すことが
+    // あるので、囲みかけ・持ち上げかけをその場で戻してから移動に移る。
+    if (fingers.size >= 2) {
+      dropLongPress();
+      band = null;
+      hideBand();
+      run({ kind: 'cancel' });
+      startPinch();
+      return;
+    }
+    watchLongPress(event);
+  }
   // 一覧の外を押したら閉じる (中は `click` が拾う)。
   if (target?.closest('.kc-menu') == null) closeMenu();
   // 引き出しの外を押したら引っ込める (ボタンそのものは `click` が受け持つ)。
@@ -1166,6 +1290,15 @@ document.addEventListener('pointerdown', (event) => {
 document.addEventListener('pointermove', (event) => {
   pointer = { x: event.clientX, y: event.clientY };
   syncShift(event);
+  if (byFinger(event)) {
+    if (fingers.has(event.pointerId)) fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    stirLongPress(event);
+    // 2 本のあいだは状態遷移へ流さない (図を動かしているだけ)。
+    if (fingers.size >= 2) {
+      pinchTo();
+      return;
+    }
+  }
   // **道具の列と右クリックの一覧の上ではカーソルの下を捨てない。** 捨てると
   // 「部品にカーソルを置いて回すボタンを押す」が効かなくなる (押した時点で
   // 対象が消えている)。一覧は押した所の右下に出るので、項目まで下りる途中で
@@ -1192,6 +1325,15 @@ document.addEventListener('pointermove', (event) => {
 });
 
 document.addEventListener('pointerup', (event) => {
+  if (byFinger(event)) {
+    dropLongPress();
+    const gestured = fingers.size >= 2;
+    fingers.delete(event.pointerId);
+    if (fingers.size < 2) pinch = null;
+    // **なぞりの終わりは「押した」ではない。** 残った指も、押しの控えを
+    // 持っていないので状態遷移は何もしない。
+    if (gestured) return;
+  }
   if (panning !== null) {
     panning = null;
     return;
@@ -1220,7 +1362,15 @@ document.addEventListener('pointerup', (event) => {
 });
 
 // 窓の外で放したときなど、放した知らせが来ないことがある。
-document.addEventListener('pointercancel', () => { panning = null; run({ kind: 'cancel' }); });
+document.addEventListener('pointercancel', (event) => {
+  if (byFinger(event)) {
+    dropLongPress();
+    fingers.delete(event.pointerId);
+    if (fingers.size < 2) pinch = null;
+  }
+  panning = null;
+  run({ kind: 'cancel' });
+});
 
 document.addEventListener('dblclick', (event) => {
   const target = elementOf(event);
