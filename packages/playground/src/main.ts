@@ -189,6 +189,35 @@ async function showMap(): Promise<void> {
   });
 }
 
+/**
+ * 落としたものを控えて、電波が無くても開けるようにする。
+ * **失敗しても頁は動く** — 控えは無くてもよいものなので、断られたら黙って進む
+ * (対応していないブラウザ、`file://` で開いた人、私用ウィンドウ)。
+ */
+function keepOffline(): void {
+  if (!('serviceWorker' in navigator)) return;
+  void navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+/**
+ * ホーム画面から開いたか (PWA)。**iOS は `display-mode` を見ない**ので、
+ * あちらの `navigator.standalone` も見る。
+ */
+const asApp = (): boolean => window.matchMedia('(display-mode: standalone)').matches
+  || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+/**
+ * アプリとして開いたときの支度。**編集する所だけを出す** — 見出しも
+ * フェンスの字も畳み、図は最初から開いておく (52 の docs/35)。
+ * 畳み方は CSS の `body.app` が持つ。
+ */
+function startAsApp(): void {
+  if (!asApp()) return;
+  document.body.classList.add('app');
+  els.mapToggle.setAttribute('aria-pressed', 'true');
+  void showMap();
+}
+
 function toggleMap(): void {
   if (map !== null || els.mapToggle.getAttribute('aria-pressed') === 'true') {
     closeMap();
@@ -427,6 +456,11 @@ async function start(): Promise<void> {
   // 先に外しても最初の例が選ばれた形に戻る (共有リンクの中身と食い違う)。
   if (shared === null) showExample(0);
   else els.example.selectedIndex = -1;
+
+  // **最後に支度する。** 図を開くのは中身が決まってから (先に開くと空の図に
+  // なり、例が届いたところで組み直す)。
+  startAsApp();
+  keepOffline();
 }
 
 void start();

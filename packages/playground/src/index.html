@@ -13,6 +13,16 @@
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23f2efe6'/%3E%3Cg fill='%233f4650'%3E%3Ccircle cx='4.5' cy='4.5' r='1.4'/%3E%3Ccircle cx='11.5' cy='4.5' r='1.4'/%3E%3Ccircle cx='4.5' cy='11.5' r='1.4'/%3E%3Ccircle cx='11.5' cy='11.5' r='1.4'/%3E%3C/g%3E%3Cpath d='M4.5 4.5h7' stroke='%23c1440e' stroke-width='1.2'/%3E%3C/svg%3E"
     />
+    <!-- スマホの入口 (PWA)。道は相対 — 置き場が GitHub Pages の
+         /tommie-fence/ と手元の / の 2 つあるため (52 の docs/35)。 -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#f6f8fa" />
+    <!-- iOS は manifest の display も icons も見ない。ホーム画面から開いた
+         ときに殻を外すのと、絵札を出すのは、この 3 つが受け持つ。 -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="tommie-fence" />
+    <link rel="apple-touch-icon" href="icon-180.png" />
     <link rel="stylesheet" href="style.css" />
     <!-- circuit の図の字を組むフォント (TeX の Computer Modern)。
          face は 140 個あるが、ブラウザは使う分しか落とさない。 -->

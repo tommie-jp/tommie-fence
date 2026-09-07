@@ -184,3 +184,28 @@ td { font-family: var(--mono); font-size: 12px; }
   .map { height: 70svh; }
   select { font-size: 16px; }
 }
+
+/* ホーム画面から開いたとき (PWA)。**編集する所だけを出す** —
+   見出しもフェンスの字も出るものも畳んで、図と道具に画面をまるごと渡す
+   (実機で「GUI で編集する部分をアプリ化する」。52 の docs/35)。
+
+   **頁としては今までどおり。** 畳むのは `body.app` が付いたときだけで、
+   ブラウザで開いた人には何も変わらない。 */
+body.app {
+  padding: 0; height: 100svh; display: flex; flex-direction: column; overflow: hidden;
+}
+body.app .head,
+body.app .panes,
+body.app .foot,
+/* 図は出しっぱなしなので、開閉の釦は要らない。 */
+body.app #map-toggle { display: none; }
+body.app main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+body.app .bar { margin: 0; padding: 8px clamp(8px, 3vw, 16px); gap: 8px; }
+/* **帯は薄く。** 狭い画面では例の欄が 1 行を丸ごと取るが、アプリでは
+   図に高さを譲りたいので、隣の釦と同じ行に並べる。 */
+body.app .pick { flex: 1; width: auto; min-width: 0; }
+/* 高さは残り全部。**枠は取る** — 画面の端まで図に使う。 */
+body.app .map {
+  flex: 1; height: auto; min-height: 0; margin: 0;
+  border: 0; border-top: 1px solid var(--line); border-radius: 0;
+}
