@@ -309,12 +309,40 @@ const STYLE = `
     }
     .kc-tool { flex: none; min-width: 54px; }
 
-    /* 案内はマウスから指へ。狭い帯に 2 つ並べない。 */
+    /* 案内はマウスから指へ。狭い帯に 2 つ並べない。
+       **段を分けて丸ごと出す** — 横に押し込むと 1 字ずつ折り返して、
+       帯が縦に伸びる (実測で 200px 近くなった)。 */
+    .kc-top { flex-wrap: wrap; }
     .kc-title { display: none; }
-    .kc-title-touch { display: inline; margin-left: auto; opacity: 0.7; }
+    .kc-title-touch {
+      display: block; width: 100%; margin: 0; opacity: 0.7;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
 
     /* 浮かぶ窓は画面いっぱいに近づける (260px の窓は狭い画面で収まらない)。 */
     .kc-chooser { width: auto; right: 8px; }
+
+    /* **字と的をスマホの寸法に。** 12px の字と 24px のボタンは、指と目には
+       小さい。押す所は 44px 角を下限にする (Apple の HIG が 44pt、
+       Material が 48dp)。 */
+    body { font-size: 15px; }
+    .kc-props h2, .cf-colors h3, .kc-dock h3 { font-size: 13px; }
+    .cf-swatch, .cf-types code, .kc-status, .kc-title-touch { font-size: 13px; }
+
+    /* **欄は 16px を切らない。** iOS Safari は 16px 未満の欄に触れると、
+       打ち始めた瞬間に頁ごと拡大する (図が飛ぶ)。 */
+    .cf-field, .cf-search { font-size: 16px; padding: 8px 10px; }
+
+    .kc-top button, .kc-props-toggle { min-width: 44px; height: 44px; }
+    .kc-tool { min-width: 64px; min-height: 44px; padding: 6px 4px; }
+    .kc-tool .kc-glyph { font-size: 20px; }
+    .cf-pick, .cf-swatch, .kc-menu-item { min-height: 44px; }
+    .cf-icons { grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); }
+    .cf-icons .cf-pick { min-height: 48px; }
+
+    /* 鍵の字はスマホに要らない。**道具の名前に幅を譲る**
+       (案内文の中の鍵は残す — 消すと文が途切れる)。 */
+    .kc-tool kbd { display: none; }
   }
 
   /* 帯: 読めなかったところとお知らせ。折り畳める。 */

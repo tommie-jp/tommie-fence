@@ -395,6 +395,33 @@ describe('狭いときの畳み方', () => {
     expect(html).toContain('.kc-canvas { flex: 1; min-width: 0; overflow: scroll; touch-action: none;');
   });
 
+  /**
+   * **字と的をスマホの寸法に。** 12px の字と 24px のボタンは指と目に小さい。
+   * 押す所は 44px 角を下限にする (Apple の HIG が 44pt、Material が 48dp)。
+   */
+  test('grows the text to what a phone reads at', () => {
+    const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
+    expect(narrow).toContain('body { font-size: 15px; }');
+  });
+
+  test('keeps every field at 16px, or iOS zooms the page when one is tapped', () => {
+    const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
+    expect(narrow).toMatch(/\.cf-field, \.cf-search \{[^}]*font-size: 16px/);
+  });
+
+  test('gives the tools and buttons a 44px target, which a finger can hit', () => {
+    const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
+    expect(narrow).toMatch(/\.kc-tool \{[^}]*min-height: 44px/);
+    expect(narrow).toMatch(/\.kc-top button, \.kc-props-toggle \{[^}]*min-width: 44px/);
+  });
+
+  test('drops the key hints on the tools, since a phone has no keys', () => {
+    const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
+    expect(narrow).toContain('.kc-tool kbd { display: none; }');
+    // 案内文の中の鍵は残す (消すと文が途切れる)。
+    expect(narrow).not.toContain('kbd { display: none; }\n    .kc-props-hint');
+  });
+
   test('says what the fingers do, next to what the mouse does', () => {
     expect(html).toContain('2 本指で移動');
     expect(html).toContain('長押しでメニュー');
