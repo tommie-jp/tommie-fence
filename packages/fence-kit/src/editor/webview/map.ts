@@ -80,6 +80,8 @@ const ZOOM_MAX = 8;
 const WHEEL_STEP = 1.1;
 /** 落ち先の四角の最小の辺 (升の座標系)。これより小さいと見えない。 */
 const SMALLEST_FINE_BOX = 6;
+/** 触れている穴の輪の半径 (升の何倍か)。**穴の丸 (半径 4.5) より外**に置く。 */
+const HOLE_MARK = 0.3;
 const KEY_STEP = 1.25;
 
 /**
@@ -375,6 +377,37 @@ const middleOf = (box: DOMRect): { readonly x: number; readonly y: number } =>
 
 /** 端数の落ち先の四角。**1 つを使い回す** (塗り直しのたびに作らない。板では作られない)。 */
 let fineBox: SVGRectElement | null = null;
+
+/** 触れている穴の輪。**1 つを使い回す** (塗り直しのたびに作らない)。 */
+let holeMark: SVGCircleElement | null = null;
+
+/**
+ * カーソルが触れている穴の印。配線を引くとき・物を持っているときに出す
+ * (どの穴に落ちるかが、押す前に見えるようにするためのもの)。
+ *
+ * **穴を塗り潰さない。** 当たり判定の四角は升ちょうどなので、そこを塗ると
+ * 穴そのものがカーソルの下に隠れる (実機で「■で穴が隠れる」)。
+ * 升より小さい輪を穴の真ん中に置き、中は空けておく。
+ */
+function markHole(now: State): void {
+  const wanted = now.tool === 'wire' || now.carry !== null;
+  const at = wanted ? spotPoint(spotOf(now, now.under)) : null;
+  const cell = now.under.cell;
+  const element = cell === null ? null : cellElement(cell);
+  const box = cell === null ? null : cellBox(cell);
+  if (at === null || element === null || box === null) {
+    holeMark?.remove();
+    return;
+  }
+  const ring = holeMark ?? document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  holeMark = ring;
+  ring.setAttribute('class', 'cf-hole-mark');
+  ring.setAttribute('cx', String(at.x));
+  ring.setAttribute('cy', String(at.y));
+  ring.setAttribute('r', String(box.width * HOLE_MARK));
+  // 升の四角と同じ層に置く (同じ座標系で描ける)。
+  element.after(ring);
+}
 
 /** ゴースト — 置く・動かす先の穴を光らせる。置けないときは赤。 */
 function markGhost(now: State): void {
@@ -804,6 +837,7 @@ function paint(now: State): void {
   markInk(now);
   markWireFrom(now);
   markWireGhost(now);
+  markHole(now);
   // 道具は CSS が見る目印にする (右の道具の列の光り方、カーソルの形)。
   // **「置く」は道具ではなく持ち物** (`carry`)。CSS から見た顔だけをここで作る。
   document.body.dataset.tool = now.carry?.kind === 'place' ? 'place' : now.tool;
@@ -852,6 +886,8 @@ function forgetPainted(): void {
   wireGhost = null;
   fineBox?.remove();
   fineBox = null;
+  holeMark?.remove();
+  holeMark = null;
 }
 
 // ---------------------------------------------------------------- 選択窓・欄
@@ -860,19 +896,39 @@ const chooser = (): HTMLElement | null => query<HTMLElement>('.kc-chooser');
 const searchBox = (): HTMLInputElement | null => query<HTMLInputElement>('.cf-search');
 const fieldInput = (name: string): HTMLInputElement | null => query<HTMLInputElement>(`.cf-field[name="${name}"]`);
 
-function openChooser(): void {
-  const box = chooser();
-  if (box === null) return;
-  box.hidden = false;
+/**
+ * 部品の一覧は**属性パネルに据え置き**で、窓の絵を押したときだけ図の上の窓へ移る
+ * (実機で「属性パネルに固定で。窓の絵で今までの窓を出す」)。
+ * **箱は 1 つだけを動かす** — 2 つ持つと、言語をまたいだときの差し替え
+ * (`applyChrome`) や検索の絞り込みが片方にしか効かない。
+ */
+const palette = (): HTMLElement | null => query<HTMLElement>('.cf-chrome-palette');
+
+function movePalette(into: string): void {
+  const box = palette();
+  const seat = query(into);
+  if (box === null || seat === null || box.parentNode === seat) return;
+  seat.append(box);
+}
+
+function focusSearch(): void {
   const search = searchBox();
   search?.focus();
   search?.select();
 }
 
-function closeChooser(): void {
+function openChooser(): void {
   const box = chooser();
   if (box === null) return;
-  box.hidden = true;
+  movePalette('.kc-chooser-body');
+  box.hidden = false;
+  focusSearch();
+}
+
+function closeChooser(): void {
+  const box = chooser();
+  movePalette('.kc-dock-body');
+  if (box !== null) box.hidden = true;
   searchBox()?.blur();
 }
 
@@ -901,7 +957,8 @@ function focusIntoId(): void {
 }
 
 function focusOn(focus: Focus | null): void {
-  if (focus === 'search') openChooser();
+  // **窓は開かない。** 一覧は属性パネルに出ているので、そこの検索欄へ移るだけ。
+  if (focus === 'search') focusSearch();
   if (focus !== 'id') return;
   if (query<HTMLFormElement>('.cf-inspector')?.hidden !== false) {
     wantsField = true;
@@ -1281,6 +1338,7 @@ document.addEventListener('click', (event) => {
   if (target?.closest('.kc-zoom-out')) { zoomAtCenter(1 / KEY_STEP); return; }
   if (target?.closest('.kc-fit')) { fit(); return; }
   if (target?.closest('.kc-chooser-close')) { closeChooser(); return; }
+  if (target?.closest('.kc-dock-pop')) { openChooser(); return; }
 
   // フェンスの前後と両端。**一覧を開かずに隣へ行ける** (図を 1 枚ずつ見ていくとき)。
   const step = target?.closest<HTMLButtonElement>('.cf-fence-step');
@@ -1433,9 +1491,14 @@ type Incoming =
     readonly shift?: Fine;
   };
 
-/** パレットの `details` は選択窓の中では常に開いておく (窓そのものが開け閉めの単位)。 */
+/**
+ * パレットの `details` は常に開いておく。**開け閉めの単位は箱のほう** —
+ * 属性パネルに据え置きなら出しっぱなし、窓に移したなら窓の開け閉めが受け持つ。
+ */
 function openPaletteDetails(): void {
-  for (const details of document.querySelectorAll<HTMLDetailsElement>('.kc-chooser details')) details.open = true;
+  for (const details of document.querySelectorAll<HTMLDetailsElement>('.cf-chrome-palette details')) {
+    details.open = true;
+  }
 }
 
 const fill = (selector: string, html: string): void => {

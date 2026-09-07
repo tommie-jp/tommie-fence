@@ -348,7 +348,7 @@ describe('配線の色見本', () => {
 
     expect(html).toContain('data-color="red"');
     expect(html).toContain('background:#d33a2f');
-    expect(html).toContain('>black</button>');
+    expect(html).toContain('<span class="cf-swatch-name">black</span>');
   });
 
   test('leaves out names it cannot colour, since an unpainted square says nothing', () => {

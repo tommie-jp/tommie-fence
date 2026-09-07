@@ -93,8 +93,10 @@ const STYLE = `
 
   /* 真ん中: 左に属性、図、右に道具の列。 */
   .kc-main { flex: 1; min-height: 0; display: flex; }
+  /* 部品の一覧も抱えるので、欄だけのころ (170px) より広い。**浮かぶ窓と同じ幅**
+     (260px) にする — 狭めると種類の名前が 1 字ずつ折り返して読めなくなる。 */
   .kc-props {
-    width: 170px; flex: none; padding: 8px; overflow-y: auto;
+    width: 260px; flex: none; padding: 8px; overflow-y: auto;
     border-right: 1px solid var(--kc-line); background: var(--kc-chrome);
   }
   .kc-props h2 { margin: 0 0 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; opacity: 0.7; }
@@ -123,12 +125,17 @@ const STYLE = `
   .cf-colors { margin-top: 10px; }
   .cf-colors[hidden] { display: none; }
   .cf-colors h3 { margin: 0 0 4px; font-size: 11px; font-weight: normal; color: var(--vscode-descriptionForeground); }
-  .cf-swatches { display: flex; flex-wrap: wrap; gap: 2px; }
+  /* **升目に並べる。** 折り返しに任せると段ごとに色の四角の位置がずれて、
+     どこに何色があるか覚えられない (実機で「グリッド表示に」)。
+     幅は欄に合わせて 2 列・3 列と変わるが、列は必ず揃う。 */
+  .cf-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 2px; }
   .cf-swatch {
-    display: flex; align-items: center; gap: 4px;
+    display: flex; align-items: center; gap: 4px; min-width: 0;
     padding: 2px 5px 2px 3px; border: 1px solid transparent; border-radius: 3px;
     background: none; cursor: pointer; font-size: 11px;
   }
+  /* 名前が長い色 (orange) でも列の幅を押し広げない。 */
+  .cf-swatch-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cf-swatch:hover { border-color: var(--vscode-focusBorder); }
   /* いま引く色。**枠で示す** (色そのものは四角が言っている)。 */
   .cf-swatch.cf-inked {
@@ -210,9 +217,32 @@ const STYLE = `
     border-bottom: 1px solid var(--kc-line); font-weight: 600;
   }
   .kc-chooser-close { margin-left: auto; border: 0; background: none; cursor: pointer; }
-  .kc-chooser .cf-palette { padding: 6px 8px; overflow-y: auto; }
-  .kc-chooser summary { display: none; }
-  .cf-icons { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 6px; }
+  .kc-chooser-body { display: flex; flex-direction: column; min-height: 0; }
+
+  /* 属性パネルに据えた部品の一覧。**窓に移しても同じ箱**なので、
+     見た目の決めは箱 (cf-chrome-palette) の側に置く。 */
+  .kc-dock { margin-top: 10px; }
+  .kc-dock h3 {
+    display: flex; align-items: center; margin: 0 0 4px;
+    font-size: 11px; font-weight: normal; color: var(--vscode-descriptionForeground);
+  }
+  .kc-dock-pop {
+    margin-left: auto; padding: 0 4px; border: 1px solid transparent; border-radius: 3px;
+    background: none; color: inherit; cursor: pointer; font-size: 13px; line-height: 1;
+  }
+  .kc-dock-pop:hover { border-color: var(--vscode-focusBorder); }
+  /* 窓へ移したあとの空の座。「窓に出ています」と分かるようにしておく。 */
+  .kc-dock-body:empty::after {
+    content: "別の窓に出ています"; display: block; padding: 6px 2px;
+    color: var(--vscode-descriptionForeground);
+  }
+  .cf-chrome-palette .cf-palette { padding: 6px 0; overflow-y: auto; }
+  .kc-chooser .cf-chrome-palette .cf-palette { padding: 6px 8px; }
+  /* 見出しは箱の側 (据え置きなら h3、窓なら header) が出す。 */
+  .cf-chrome-palette summary { display: none; }
+  /* よく使うものの絵。**升目に並べる** — 幅で段の切れ目が変わると、どこに何が
+     あるか覚えられない (色見本と同じ理由)。 */
+  .cf-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 4px; margin: 0 0 6px; }
   /* パレットの絵。名前の前に置くので、行の高さに収まる大きさで。 */
   .cf-icon { flex: none; vertical-align: middle; }
 
@@ -229,7 +259,8 @@ const STYLE = `
     border-color: var(--vscode-focusBorder);
     background: var(--vscode-list-hoverBackground);
   }
-  .cf-icons .cf-pick { padding: 2px; }
+  /* 絵だけの升。**cf-pick の 100% を外す** — 外さないと 1 段に 1 つしか並ばない。 */
+  .cf-icons .cf-pick { width: auto; padding: 2px; justify-content: center; }
   .cf-icon { width: 34px; height: 24px; }
   .cf-icon .cf-mark { font-size: 9px; }
   .cf-search {
@@ -379,9 +410,13 @@ const STYLE = `
   .cf-wire.cf-bad { stroke: var(--cf-bad); }
   .cf-bad .cf-name { fill: var(--cf-bad); }
 
-  /* 穴に触れているとき (配線・持ち物のあいだ) は穴を薄く見せる。 */
-  body[data-tool="wire"] .cf-cell:hover, body.cf-carrying .cf-cell:hover {
-    fill: var(--vscode-editor-inactiveSelectionBackground);
+  /* 触れている穴の印。**穴を塗り潰さない** — 当たり判定の四角は升ちょうどの
+     大きさなので、塗ると穴そのものがカーソルの下に隠れる (実機で
+     「マウスカーソルの■で穴が隠れる。小さくするか非表示に」)。
+     升より小さい輪を穴の真ん中に置いて、中は空けておく (map.ts の markHole)。 */
+  .cf-hole-mark {
+    fill: none; stroke: var(--vscode-focusBorder); stroke-width: 1.5;
+    opacity: 0.8; pointer-events: none;
   }
   /* ゴースト: 置く・動かす先の穴。置けないときは赤。**触れている印より後に、
      同じ強さで置く** — カーソルの真下の穴 (まさに押そうとしている穴) が薄い色に
@@ -482,7 +517,7 @@ export const renderSwatches = (names: readonly string[]): string => {
     `<button type="button" class="cf-swatch" data-color="${escapeMarkup(one.name)}"`
     + ` title="${escapeMarkup(one.name)}">`
     + `<span class="cf-swatch-chip" style="background:${escapeMarkup(one.css ?? '')}"></span>`
-    + `${escapeMarkup(one.name)}</button>`
+    + `<span class="cf-swatch-name">${escapeMarkup(one.name)}</span></button>`
   )).join('');
 };
 
@@ -641,18 +676,26 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     // 出したいので、欄の出し入れとは別に持つ。
     + `<section class="cf-colors" hidden><h3>配線の色</h3>`
     + `<div class="cf-swatches">${chrome.swatches}</div></section>`
+    // **部品の一覧はここに出しっぱなし** (実機で「属性パネルに固定で」)。
+    // 窓の絵を押すと、今までどおり図の上に浮かぶ窓へ移す (`kc-chooser`)。
+    // **語彙ごと移す**ので、箱は 1 つだけ (中身は言語をまたぐと入れ替わる)。
+    + `<section class="kc-dock"><h3>部品を置く`
+    + `<button type="button" class="kc-dock-pop" title="別の窓で開く">⧉</button></h3>`
+    + `<div class="kc-dock-body">`
+    // **言語ごとに入れ替わる。** 1 つの殻が 3 つのフェンスを扱うので、
+    // いまのフェンスの語彙に差し替えられるよう箱で包む (52 の docs/19)。
+    // **能力表も同じ箱に書く** (body に焼くと、言語をまたいだとき最初の言語のまま残る)。
+    + `<div class="cf-chrome-palette" data-folds="${chrome.foldsWire ? '1' : '0'}"`
+    + ` data-fine="${chrome.fine ?? ''}" data-fine-for="${chrome.fineFor}">${chrome.palette}</div>`
+    + `</div></section>`
     + `<p class="kc-props-hint">部品や配線をクリック (か <kbd>E</kbd>) すると欄が出ます。`
     + `<kbd>Enter</kbd> か欄を離れたときに行へ当たります。</p>`
     + `</aside>`
     + `<div class="kc-canvas"><div class="cf-body">${view.html}</div>`
     + renderMenu()
     + `<div class="kc-chooser" hidden><header>部品を置く <kbd>Enter</kbd> で先頭を持つ`
-    + `<button type="button" class="kc-chooser-close" title="閉じる (Esc)">✕</button></header>`
-    // **言語ごとに入れ替わる。** 1 つの殻が 3 つのフェンスを扱うので、
-    // いまのフェンスの語彙に差し替えられるよう箱で包む (52 の docs/19)。
-    // **能力表も同じ箱に書く** (body に焼くと、言語をまたいだとき最初の言語のまま残る)。
-    + `<div class="cf-chrome-palette" data-folds="${chrome.foldsWire ? '1' : '0'}"`
-    + ` data-fine="${chrome.fine ?? ''}" data-fine-for="${chrome.fineFor}">${chrome.palette}</div>`
+    + `<button type="button" class="kc-chooser-close" title="属性パネルへ戻す (Esc)">✕</button></header>`
+    + `<div class="kc-chooser-body"></div>`
     + `</div></div>`
     + `<nav class="kc-tools">${renderTools()}</nav>`
     + `</div>`

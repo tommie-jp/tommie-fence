@@ -341,6 +341,28 @@ describe('配線', () => {
     expect(lastOf('addWire')).toMatchObject({ from: 'a1', to: 'a3', operator: '--' });
   });
 
+  /**
+   * 触れている穴の印。**穴を塗り潰していた**ので、カーソルの下の穴が
+   * 升と同じ大きさの四角に隠れていた (実機で「■で穴が隠れる」)。
+   * 升より小さい輪に替えたことを、大きさで見張る。
+   */
+  test('rings the hole it is touching, smaller than the hole square', async () => {
+    key('w');
+    fire('pointermove', at(1, 1));
+    await nextFrame();
+
+    const ring = document.querySelector('.cf-hole-mark');
+    expect(ring).not.toBeNull();
+    expect(Number(ring?.getAttribute('r')) * 2).toBeLessThan(CELL);
+  });
+
+  test('leaves the holes alone while nothing is being drawn or carried', async () => {
+    fire('pointermove', at(1, 1));
+    await nextFrame();
+
+    expect(document.querySelector('.cf-hole-mark')).toBeNull();
+  });
+
   test('shows the line before it is drawn, so the second click is aimed', async () => {
     key('w');
     fire('pointermove', at(1, 1));

@@ -172,25 +172,43 @@ describe('パン', () => {
 });
 
 describe('部品を探す窓', () => {
-  test('opens on A, and closes on Escape', async () => {
+  const seatOf = (): string | null =>
+    document.querySelector('.cf-chrome-palette')?.parentElement?.className ?? null;
+
+  test('sits in the properties panel, and A only moves into its search box', async () => {
+    expect(seatOf()).toBe('kc-dock-body');
+    expect((document.querySelector('.kc-chooser') as HTMLElement).hidden).toBe(true);
+
     key('a');
     await nextFrame();
+
+    // 据え置きなので窓は出ない。検索欄へ移るだけ。
+    expect((document.querySelector('.kc-chooser') as HTMLElement).hidden).toBe(true);
+    expect(document.activeElement).toBe(document.querySelector('.cf-search'));
+  });
+
+  test('moves the whole palette into the floating window, and back on Escape', async () => {
+    click('.kc-dock-pop');
+    await nextFrame();
     expect((document.querySelector('.kc-chooser') as HTMLElement).hidden).toBe(false);
+    expect(seatOf()).toBe('kc-chooser-body');
 
     // **欄の Esc は欄が受ける** (打っている最中の鍵を横取りしないため)。
     (document.querySelector('.cf-search') as HTMLInputElement)
       .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
     await nextFrame();
     expect((document.querySelector('.kc-chooser') as HTMLElement).hidden).toBe(true);
+    expect(seatOf()).toBe('kc-dock-body');
   });
 
   test('closes from its own button too', async () => {
-    key('a');
+    click('.kc-dock-pop');
     await nextFrame();
     click('.kc-chooser-close');
     await nextFrame();
 
     expect((document.querySelector('.kc-chooser') as HTMLElement).hidden).toBe(true);
+    expect(seatOf()).toBe('kc-dock-body');
   });
 
   test('narrows the list as the words are typed', async () => {
