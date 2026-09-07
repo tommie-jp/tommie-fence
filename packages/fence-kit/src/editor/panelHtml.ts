@@ -113,9 +113,14 @@ const STYLE = `
   /* その部品には書けない欄 (1 端子の値、多端子の l=)。消さずに触れなくする。 */
   .cf-field:disabled { opacity: 0.4; }
 
+  /* 図の場。**浮かぶもの (右クリックの一覧・部品の窓・囲みの帯) はここに置く。**
+     図の箱のほうは中身ごとスクロールするので、その中に絶対配置すると図と
+     一緒に流れ、スクロールしたぶんだけ押した所からずれる
+     (実機で「右メニューが出ない」「範囲選択のシャドウが出ない」)。 */
+  .kc-stage { flex: 1; min-width: 0; position: relative; display: flex; }
   /* **スクロールバーは常に出す。** 図が箱に収まっていても場所を空けておくと、
      拡大したときに幅が動かない (実機で頼まれた)。 */
-  .kc-canvas { flex: 1; min-width: 0; position: relative; overflow: scroll; cursor: crosshair; }
+  .kc-canvas { flex: 1; min-width: 0; overflow: scroll; cursor: crosshair; }
   .cf-body { width: 100%; }
   /* 図の根 (どのフェンスの SVG も)。ズーム 1 で箱の幅に収める。 */
   .cf-body > svg { display: block; width: 100%; height: auto; user-select: none; touch-action: none; }
@@ -691,7 +696,7 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     + `<p class="kc-props-hint">部品や配線をクリック (か <kbd>E</kbd>) すると欄が出ます。`
     + `<kbd>Enter</kbd> か欄を離れたときに行へ当たります。</p>`
     + `</aside>`
-    + `<div class="kc-canvas"><div class="cf-body">${view.html}</div>`
+    + `<div class="kc-stage"><div class="kc-canvas"><div class="cf-body">${view.html}</div></div>`
     + renderMenu()
     + `<div class="kc-chooser" hidden><header>部品を置く <kbd>Enter</kbd> で先頭を持つ`
     + `<button type="button" class="kc-chooser-close" title="属性パネルへ戻す (Esc)">✕</button></header>`

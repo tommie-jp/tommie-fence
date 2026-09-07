@@ -124,7 +124,7 @@ describe('KiCad の配置', () => {
   test('scrolls the canvas and keeps both bars, so the whole figure is reachable', () => {
     // **常に出す。** 図が収まっていても場所を空けておくと、拡大したときに
     // 幅が動かない (実機で頼まれた)。カーソルは KiCad と同じ十字。
-    expect(html).toContain('.kc-canvas { flex: 1; min-width: 0; position: relative; overflow: scroll; cursor: crosshair; }');
+    expect(html).toContain('.kc-canvas { flex: 1; min-width: 0; overflow: scroll; cursor: crosshair; }');
   });
 
   test('keeps every hit layer live, since what is under the cursor is read from the stack', () => {
@@ -339,6 +339,29 @@ describe('renderFencePicker', () => {
 
   test('escapes the title, which comes from the fence', () => {
     expect(renderFencePicker([{ line: 3, title: '<b>' }, { line: 9, title: null }], 3)).toContain('&lt;b&gt;');
+  });
+});
+
+/**
+ * 図の上に浮かぶもの (右クリックの一覧・部品の窓・囲みの帯) の置き場。
+ *
+ * **図の箱 (`kc-canvas`) の中には置かない。** あの箱は中身ごとスクロールする
+ * ので、中に絶対配置すると図と一緒に流れ、スクロールしたぶんだけ押した所から
+ * ずれる (実機で「右メニューが出ない」「範囲選択のシャドウが出ない」)。
+ */
+describe('浮かぶものの置き場', () => {
+  /** 図の箱が閉じたところ。ここから後ろに出ていれば、一緒には流れない。 */
+  const afterCanvas = (): string => html.slice(html.indexOf('</div>', html.indexOf('class="kc-canvas"')));
+
+  test('puts the menu and the chooser after the scrolling canvas, inside the stage', () => {
+    expect(html).toContain('<div class="kc-stage">');
+    expect(afterCanvas()).toContain('class="kc-menu"');
+    expect(afterCanvas()).toContain('class="kc-chooser"');
+  });
+
+  test('leaves the positioning to the stage, so the canvas can scroll under it', () => {
+    expect(html).toContain('.kc-stage { flex: 1; min-width: 0; position: relative;');
+    expect(html).not.toContain('.kc-canvas { flex: 1; min-width: 0; position: relative;');
   });
 });
 

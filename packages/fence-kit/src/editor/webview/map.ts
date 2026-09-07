@@ -94,6 +94,13 @@ const KEY_STEP = 1.25;
 const CHROME = '.kc-chooser, .kc-props, .kc-top, .kc-tools, .kc-band, .kc-status, .kc-menu';
 
 const canvas = (): HTMLElement | null => query<HTMLElement>('.kc-canvas');
+/**
+ * 図の場。**浮かぶもの (右クリックの一覧・部品の窓・囲みの帯) の座標はここが基準。**
+ * 図の箱 (`kc-canvas`) は中身ごとスクロールするので、そちらを基準にすると
+ * 図と一緒に流れ、スクロールしたぶんだけ押した所からずれる
+ * (実機で「右メニューが出ない」「範囲選択のシャドウが出ない」)。
+ */
+const stage = (): HTMLElement | null => query<HTMLElement>('.kc-stage');
 
 /**
  * 図の幅を決め直す。**100 % は「箱の幅にちょうど」** — 図は幅に合わせて
@@ -980,7 +987,7 @@ const menu = (): HTMLElement | null => query<HTMLElement>('.kc-menu');
  */
 function openMenu(x: number, y: number): void {
   const box = menu();
-  const frame = canvas()?.getBoundingClientRect();
+  const frame = stage()?.getBoundingClientRect();
   if (box === null || frame === undefined) return;
   run({ kind: 'hover', under: underAt(x, y) });
 
@@ -1072,11 +1079,11 @@ function showBand(from: { readonly x: number; readonly y: number }, x: number, y
   if (box === null) {
     box = document.createElement('div');
     box.className = 'kc-band-select';
-    canvas()?.appendChild(box);
+    stage()?.appendChild(box);
   }
-  const canvasBox = canvas()?.getBoundingClientRect();
-  const left = Math.min(from.x, x) - (canvasBox?.left ?? 0);
-  const top = Math.min(from.y, y) - (canvasBox?.top ?? 0);
+  const frame = stage()?.getBoundingClientRect();
+  const left = Math.min(from.x, x) - (frame?.left ?? 0);
+  const top = Math.min(from.y, y) - (frame?.top ?? 0);
   box.style.left = `${left}px`;
   box.style.top = `${top}px`;
   box.style.width = `${Math.abs(x - from.x)}px`;
