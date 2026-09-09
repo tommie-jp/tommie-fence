@@ -245,8 +245,13 @@ function syncHash(): void {
   history.replaceState(null, '', `${location.pathname}${location.search}${hash}`);
 }
 
-function say(text: string): void {
+/**
+ * 帯に一言。**`holds` を立てると消えない** — 読めなかったリンクの断りは、
+ * 2 秒で消すと「別の図が出ている」ことに気づけないまま終わる。
+ */
+function say(text: string, holds = false): void {
   els.said.textContent = text;
+  if (holds) return;
   window.setTimeout(() => {
     if (els.said.textContent === text) els.said.textContent = '';
   }, 2_000);
@@ -396,7 +401,14 @@ function listen(): void {
   // `syncHash` は replaceState なのでこれを鳴らさない (打鍵では回らない)。
   window.addEventListener('hashchange', () => {
     const shared = decodeShare(location.hash);
+    // 共有リンクでないハッシュ (ただの `#見出し`) には何も言わない。
     if (shared === null) return;
+    // **読めないリンクは黙って捨てない。** そのままだと、渡した相手には
+    // 「前の図のまま何も起きない」としか見えない。
+    if (!shared.ok) {
+      say(shared.why, true);
+      return;
+    }
 
     if (shared.kind !== kind) {
       kind = shared.kind;
@@ -443,7 +455,8 @@ async function start(): Promise<void> {
 
   // 共有リンクで来た人には、例が届く前に、そのフェンスを出す。
   const shared = decodeShare(location.hash);
-  if (shared !== null) {
+  const opened = shared !== null && shared.ok;
+  if (shared !== null && shared.ok) {
     kind = shared.kind;
     els.source.value = shared.source;
     markKind();
@@ -454,8 +467,12 @@ async function start(): Promise<void> {
   await loadExamples();
   // **例を埋めたあとにもう一度**選びを外す。`fillExamples` は欄を作り直すので、
   // 先に外しても最初の例が選ばれた形に戻る (共有リンクの中身と食い違う)。
-  if (shared === null) showExample(0);
+  if (!opened) showExample(0);
   else els.example.selectedIndex = -1;
+
+  // **読めなかったリンクは、既定の例を出したあとに言う。** 先に言うと
+  // `showExample` の一言に上書きされる。
+  if (shared !== null && !shared.ok) say(`${shared.why} (既定の例を出しています)`, true);
 
   // **最後に支度する。** 図を開くのは中身が決まってから (先に開くと空の図に
   // なり、例が届いたところで組み直す)。

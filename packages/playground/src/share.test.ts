@@ -1,6 +1,13 @@
 import { describe, expect, test } from 'vitest';
 import { decodeShare, encodeShare } from './share.ts';
 
+/** 読めた前提で中身だけ取る (読めなければ落ちる)。 */
+const read = (hash: string): string => {
+  const said = decodeShare(hash);
+  if (said === null || !said.ok) throw new Error(`読めませんでした: ${hash.slice(0, 40)}`);
+  return said.source;
+};
+
 describe('encodeShare / decodeShare', () => {
   test('書いたフェンスを往復させても字が変わらない', () => {
     // Arrange
@@ -10,7 +17,7 @@ describe('encodeShare / decodeShare', () => {
     const back = decodeShare(encodeShare('breadboard', source));
 
     // Assert
-    expect(back).toEqual({ kind: 'breadboard', source });
+    expect(back).toEqual({ ok: true, kind: 'breadboard', source });
   });
 
   test('種類はリンクの頭に平文で載る', () => {
@@ -26,39 +33,69 @@ describe('encodeShare / decodeShare', () => {
 
     // Assert
     expect(payload).toMatch(/^[A-Za-z0-9_-]+$/);
-    expect(decodeShare(encodeShare('perfboard', source))?.source).toBe(source);
+    expect(read(encodeShare('perfboard', source))).toBe(source);
   });
 
   test('先頭の # が付いていても読める', () => {
     const hash = encodeShare('breadboard', 'board: half\n');
 
-    expect(decodeShare(`#${hash}`)?.source).toBe('board: half\n');
+    expect(read(`#${hash}`)).toBe('board: half\n');
   });
 
   test('長いフェンスでも落ちない (btoa の引数の上限)', () => {
     const source = 'board: half\n'.repeat(5_000);
 
-    expect(decodeShare(encodeShare('breadboard', source))?.source).toBe(source);
+    expect(read(encodeShare('breadboard', source))).toBe(source);
   });
 
-  test('知らない種類は受け取らない', () => {
-    expect(decodeShare('vector/eA')).toBeNull();
+  test('短い綴りのリンクも読める', () => {
+    // 52 の docs/08 で綴りを短くすると決めてある。正を入れ替える日に
+    // 配ってあるリンクが切れないよう、両方を読めるようにしてある。
+    const hash = `bread/${encodeShare('breadboard', 'board: half\n').split('/')[1] ?? ''}`;
+
+    expect(decodeShare(hash)).toEqual({ ok: true, kind: 'breadboard', source: 'board: half\n' });
   });
 
-  test('種類だけで中身が無ければ受け取らない', () => {
-    expect(decodeShare('breadboard/')).toBeNull();
+  /**
+   * **読めないリンクは黙って捨てない** (約束 6)。既定の例に落ちるだけだと、
+   * 渡した相手には「別の図が出た」としか見えない。
+   */
+  describe('読めなかったとき', () => {
+    test('知らない種類は、その綴りを添えて断る', () => {
+      const said = decodeShare('vector/eA');
+
+      expect(said).toMatchObject({ ok: false });
+      expect(said && !said.ok && said.why).toContain('vector');
+    });
+
+    test('種類だけで中身が無ければ断る', () => {
+      expect(decodeShare('breadboard/')).toMatchObject({ ok: false });
+    });
+
+    test('base64 として読めなければ断る', () => {
+      expect(decodeShare('breadboard/****')).toMatchObject({ ok: false });
+    });
+
+    test('長すぎる綴りは切って返す (画面を押し流さない)', () => {
+      const said = decodeShare(`${'z'.repeat(500)}/eA`);
+
+      expect(said && !said.ok && said.why.length).toBeLessThan(80);
+    });
   });
 
-  test('区切りが無ければ受け取らない', () => {
-    expect(decodeShare('breadboard')).toBeNull();
-  });
+  /**
+   * **共有リンクでないものには何も言わない。** ただの `#見出し` へ飛んだだけの
+   * ハッシュに「読めません」と出すと、そちらのほうが嘘になる。
+   */
+  describe('そもそも共有リンクでないもの', () => {
+    test('区切りが無ければ null', () => {
+      expect(decodeShare('breadboard')).toBeNull();
+      expect(decodeShare('midashi')).toBeNull();
+    });
 
-  test('base64 として読めなければ受け取らない', () => {
-    expect(decodeShare('breadboard/****')).toBeNull();
-  });
-
-  test('空のハッシュは受け取らない', () => {
-    expect(decodeShare('')).toBeNull();
-    expect(decodeShare('#')).toBeNull();
+    test('空のハッシュは null', () => {
+      expect(decodeShare('')).toBeNull();
+      expect(decodeShare('#')).toBeNull();
+    });
   });
 });

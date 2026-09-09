@@ -1,4 +1,4 @@
-import { isKind } from './kinds.ts';
+import { toKind } from './kinds.ts';
 import type { Kind } from './kinds.ts';
 
 /**
@@ -43,18 +43,46 @@ export const encodeShare = (kind: Kind, source: string): string =>
   `${kind}/${toBase64Url(source)}`;
 
 /**
- * 共有リンクを読む。`#` が付いていても外して読む。
- * **読めないものは黙って捨てない** — null を返し、呼ぶ側が既定の例に落とす。
+ * 共有リンクを読んだ結果。**3 通りある。**
+ *
+ * | 返り | 何が起きたか | 呼ぶ側 |
+ * | --- | --- | --- |
+ * | `null` | そもそも共有リンクではない (空、ただの `#見出し`) | 何も言わない |
+ * | `ok: false` | リンクの形はしているが読めない | **画面に出す** |
+ * | `ok: true` | 読めた | その図を出す |
+ *
+ * **読めないものを黙って捨てない** (約束 6)。既定の例に落ちるだけだと、
+ * リンクを渡された人には「別の図が出た」としか見えない。
  */
-export function decodeShare(hash: string): { readonly kind: Kind; readonly source: string } | null {
+export type Shared =
+  | { readonly ok: true; readonly kind: Kind; readonly source: string }
+  | { readonly ok: false; readonly why: string };
+
+/** 画面に出す綴りの上限。外から来た字なので、長いものは切る。 */
+const SHOWN = 20;
+
+/** 外から来た字を、そのまま画面に出せる短さにする。 */
+const shown = (text: string): string =>
+  (text.length <= SHOWN ? text : `${text.slice(0, SHOWN)}…`);
+
+/**
+ * 共有リンクを読む。`#` が付いていても外して読む。
+ *
+ * **種類は別名でも受ける** (`kinds.ts` の `toKind`) — リンクは昔の綴りで
+ * 書かれていることがあり、綴りを変えた日に配ってあるものを切らないため。
+ */
+export function decodeShare(hash: string): Shared | null {
   const body = hash.startsWith('#') ? hash.slice(1) : hash;
   const slash = body.indexOf('/');
+  // 区切りが無いものは共有リンクではない (ただの `#見出し` かもしれない)。
   if (slash <= 0) return null;
 
-  const kind = body.slice(0, slash);
-  if (!isKind(kind)) return null;
+  const spelling = body.slice(0, slash);
+  const kind = toKind(spelling);
+  if (kind === null) return { ok: false, why: `知らない種類です: ${shown(spelling)}` };
 
   const source = fromBase64Url(body.slice(slash + 1));
-  if (source === null || source === '') return null;
-  return { kind, source };
+  if (source === null) return { ok: false, why: 'リンクの中身を読めませんでした' };
+  if (source === '') return { ok: false, why: 'リンクに中身がありません' };
+  return { ok: true, kind, source };
 }

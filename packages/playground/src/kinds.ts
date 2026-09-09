@@ -9,9 +9,37 @@ export const KINDS = ['circuit', 'breadboard', 'perfboard'] as const;
 
 export type Kind = (typeof KINDS)[number];
 
-/** 外から来た字 (URL・JSON) を種類として受け取ってよいか。 */
+/** 外から来た字 (JSON・画面の状態) を種類として受け取ってよいか。**正の綴りだけ。** */
 export const isKind = (value: unknown): value is Kind =>
   typeof value === 'string' && (KINDS as readonly string[]).includes(value);
+
+/**
+ * 正でない綴りと、その指し先。**足すだけで、減らさない。**
+ *
+ * 共有リンクは種類を**平文で**載せている (`#breadboard/…`) ので、綴りを
+ * 変えると配ってあるリンクが読めなくなる。52 の docs/08 で
+ * 「短い綴りを正にして長い綴りを別名で残す。別名に期限を切らない」と
+ * 決めてあるので、**入れ替える前から両方を読めるようにしておく** —
+ * そうすれば正を入れ替える日は、この表の向きを変えるだけで済む。
+ *
+ * `circuit` に短い綴りは無い (docs/08: 総称の `-board` を落とすので、
+ * もともと識別子だけの `circuit` は変わらない)。
+ */
+const ALSO: Readonly<Record<string, Kind>> = {
+  bread: 'breadboard',
+  perf: 'perfboard',
+};
+
+/**
+ * 外から来た字 (URL) を種類に直す。**別名も受ける。** 読めなければ null。
+ *
+ * 受け口をここだけ緩めるのは、リンクが「昔の綴りで書かれていることがある」
+ * ものだから。画面の状態や例の JSON は自分で作るので `isKind` のまま。
+ */
+export const toKind = (value: unknown): Kind | null => {
+  if (isKind(value)) return value;
+  return typeof value === 'string' ? ALSO[value] ?? null : null;
+};
 
 /**
  * 画面に出す名前。**フェンスの綴りに、その図の呼び名を添える。**
