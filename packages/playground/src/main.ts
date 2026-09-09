@@ -169,6 +169,7 @@ function closeMap(): void {
   map = null;
   els.map.hidden = true;
   els.mapToggle.setAttribute('aria-pressed', 'false');
+  syncFull();
 }
 
 async function showMap(): Promise<void> {
@@ -207,14 +208,36 @@ const asApp = (): boolean => window.matchMedia('(display-mode: standalone)').mat
   || (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
 /**
+ * 狭いと見なす幅。**マップの側の閾値と揃える** (`panelHtml` の 720px) —
+ * ずれると、頁は畳んだのにマップは広いときの形、という食い違いが出る。
+ */
+const NARROW = '(max-width: 720px)';
+
+/**
+ * 図だけを出す形にするか。**アプリはいつも、頁は「狭いときの編集中」だけ。**
+ *
+ * 広い画面で畳むと、フェンスの字と出るものが同時に見られる今までの形が
+ * 失われる。狭い画面ではそもそも図に幅が残らないので、畳んで図に渡す
+ * (実機で「編集するを押したら、その部分だけを表示する」)。
+ */
+function syncFull(): void {
+  const editing = els.mapToggle.getAttribute('aria-pressed') === 'true';
+  document.body.classList.toggle('full', asApp() || (editing && window.matchMedia(NARROW).matches));
+  // **開いているあいだは「閉じる」と言う。** 同じ釦が行きと帰りを兼ねるので、
+  // 「編集する」のままだと、いま何を押せるのかが読めない。
+  els.mapToggle.textContent = editing ? '閉じる' : '編集する';
+}
+
+/**
  * アプリとして開いたときの支度。**編集する所だけを出す** — 見出しも
  * フェンスの字も畳み、図は最初から開いておく (52 の docs/35)。
- * 畳み方は CSS の `body.app` が持つ。
+ * 畳み方は CSS の `body.full` が持つ。
  */
 function startAsApp(): void {
   if (!asApp()) return;
   document.body.classList.add('app');
   els.mapToggle.setAttribute('aria-pressed', 'true');
+  syncFull();
   void showMap();
 }
 
@@ -224,6 +247,7 @@ function toggleMap(): void {
     return;
   }
   els.mapToggle.setAttribute('aria-pressed', 'true');
+  syncFull();
   void showMap();
 }
 
@@ -497,6 +521,19 @@ async function start(): Promise<void> {
   // **読めなかったリンクは、既定の例を出したあとに言う。** 先に言うと
   // `showExample` の一言に上書きされる。
   if (shared !== null && !shared.ok) say(`${shared.why} (既定の例を出しています)`, true);
+
+  // **幅が変わったら畳み方も変える。** 横向きにした・窓を広げたときに、
+  // 畳んだままだとフェンスの字へ戻れない。
+  window.matchMedia(NARROW).addEventListener('change', syncFull);
+
+  // **iOS はピンチを gesture* で送ってくる。** マップ (iframe) の側では
+  // 止められない — 頁ごと拡大するのは最上位のこちらなので、ここで断る。
+  // 図の拡大は 2 本指でマップがやる (52 の docs/32)。
+  for (const kind of ['gesturestart', 'gesturechange', 'gestureend']) {
+    document.addEventListener(kind, (event) => {
+      if (document.body.classList.contains('full')) event.preventDefault();
+    }, { passive: false });
+  }
 
   // **最後に支度する。** 図を開くのは中身が決まってから (先に開くと空の図に
   // なり、例が届いたところで組み直す)。

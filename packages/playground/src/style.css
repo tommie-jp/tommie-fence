@@ -189,23 +189,29 @@ td { font-family: var(--mono); font-size: 12px; }
    見出しもフェンスの字も出るものも畳んで、図と道具に画面をまるごと渡す
    (実機で「GUI で編集する部分をアプリ化する」。52 の docs/35)。
 
-   **頁としては今までどおり。** 畳むのは `body.app` が付いたときだけで、
+   **頁としては今までどおり。** 畳むのは `body.full` が付いたときだけで、
    ブラウザで開いた人には何も変わらない。 */
-body.app {
+body.full {
   padding: 0; height: 100svh; display: flex; flex-direction: column; overflow: hidden;
+  /* **ブラウザの拡大を止める。** 図の拡大は 2 本指でマップがやるので、頁ごと
+     拡大されると道具の列まで一緒に大きくなる (実機で「メニューアイコンは
+     拡大対象にしないで」)。**iframe の中では止められない** — ピンチを受け持つ
+     のは最上位の頁のほうなので、こちら側で断る。スクロールは残す。 */
+  touch-action: pan-x pan-y;
 }
-body.app .head,
-body.app .panes,
-body.app .foot,
-/* 図は出しっぱなしなので、開閉の釦は要らない。 */
+body.full .head,
+body.full .panes,
+body.full .foot { display: none; }
+/* アプリでは図が出しっぱなしなので、開閉の釦は要らない。**頁のほうは残す** —
+   狭いときの「編集する」は、そのまま「閉じる」になる。 */
 body.app #map-toggle { display: none; }
-body.app main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-body.app .bar { margin: 0; padding: 8px clamp(8px, 3vw, 16px); gap: 8px; }
+body.full main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+body.full .bar { margin: 0; padding: 8px clamp(8px, 3vw, 16px); gap: 8px; }
 /* **帯は薄く。** 狭い画面では例の欄が 1 行を丸ごと取るが、アプリでは
    図に高さを譲りたいので、隣の釦と同じ行に並べる。 */
-body.app .pick { flex: 1; width: auto; min-width: 0; }
+body.full .pick { flex: 1; width: auto; min-width: 0; }
 /* 高さは残り全部。**枠は取る** — 画面の端まで図に使う。 */
-body.app .map {
+body.full .map {
   flex: 1; height: auto; min-height: 0; margin: 0;
   border: 0; border-top: 1px solid var(--line); border-radius: 0;
 }
