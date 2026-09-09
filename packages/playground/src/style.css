@@ -32,21 +32,10 @@ body {
   line-height: 1.6;
 }
 
-.head { position: relative; }
-
 h1 { font-size: 1.5rem; margin: 0 0 4px; }
-h1 span { color: var(--dim); font-weight: 400; }
-/* 版は名前のすぐ後ろ。**名前より控えめに** (見出しは名前が主)。 */
-h1 .ver { font-family: var(--mono); font-size: 0.75em; }
-
-/* この頁の QR を出す釦。**右上の隅**に置く — 本文の並びを押しのけない。 */
-.qr {
-  position: absolute; top: 0; right: 0;
-  font: inherit; font-family: var(--mono); font-size: 0.85rem;
-  padding: 4px 12px; cursor: pointer;
-  color: var(--ink); background: var(--paper);
-  border: 1px solid var(--line); border-radius: 6px;
-}
+/* 版は下の署名の中。**見出しには出さない** — 初めて来た人には要らない字で、
+   その分を一文と図に渡す (52 の docs/41)。 */
+.foot .ver { font-family: var(--mono); }
 
 .qr-box {
   border: 1px solid var(--line); border-radius: 10px;
@@ -68,16 +57,26 @@ h1 .ver { font-family: var(--mono); font-size: 0.75em; }
 }
 h2 { font-size: 0.8rem; margin: 0 0 6px; color: var(--dim); font-weight: 600; }
 
-.lead { margin: 0 0 8px; }
-.lead span { display: block; color: var(--dim); font-size: 0.85rem; }
+/* **一文は 1 つだけ出す** (`main.ts` が言語を選ぶ)。2 つ並べると、
+   読めないほうの行が図を 1 行ぶん押し下げる。 */
+.lead { margin: 0; font-size: 1.05rem; }
 
-.links { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.9rem; }
-.links a { color: inherit; }
+/* 気に入った人の行き先。**figure より下**に置く (docs/41)。 */
+.next { margin-top: 24px; }
+.next h2 { margin-bottom: 4px; }
+.next ul { margin: 0; padding-left: 1.2em; font-size: 0.9rem; color: var(--dim); }
+.next li { margin: 2px 0; }
+.next a { color: var(--ink); }
+
+/* 頁の骨。**縦に積んで order で並べ替える** — 狭い画面では図を字より
+   先に出すため (docs/41)。 */
+main { display: flex; flex-direction: column; }
 
 .bar {
   display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
   margin: 16px 0 12px;
 }
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
 .kinds { display: flex; gap: 4px; }
 .kinds button {
@@ -98,7 +97,23 @@ select, .bar button {
 .said { font-size: 0.85rem; color: var(--dim); }
 
 .panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
-@media (max-width: 860px) { .panes { grid-template-columns: minmax(0, 1fr); } }
+/* **広い画面は左に字、右に図。** HTML は図が先なので、ここで入れ替える
+   (狭い画面での並びのほうが本になる)。 */
+@media (min-width: 861px) {
+  .pane-src { order: 1; }
+  .pane-out { order: 2; }
+}
+
+/* **狭い画面は figure が先。** 帯をほどいて、札は図の上・道具は字の下に置く
+   (docs/41: 見せる → 触る → 次へ)。 */
+@media (max-width: 860px) {
+  .panes { grid-template-columns: minmax(0, 1fr); }
+  .bar { display: contents; }
+  .kinds { order: 1; margin: 12px 0; }
+  .panes { order: 2; }
+  .tools { order: 3; margin-top: 12px; }
+  .next { order: 4; }
+}
 
 
 textarea {
@@ -166,8 +181,7 @@ td { font-family: var(--mono); font-size: 12px; }
 @media (max-width: 560px) {
   body { padding: 12px 12px 24px; }
   h1 { font-size: 1.25rem; }
-  .head { padding-right: 0; }
-  .qr { position: static; margin-top: 8px; min-height: 36px; padding: 6px 16px; }
+  .lead { font-size: 1rem; }
 
   /* **釦は iOS の寸法に。** 44px 角は指の下限で、**枠の高さの決めではない**。
      3 段とも 44px にすると帯だけで 164px 取り、図より背が高くなる
@@ -206,7 +220,12 @@ body.full {
 }
 body.full .head,
 body.full .panes,
+body.full .next,
 body.full .foot { display: none; }
+/* **帯は 1 行に戻す。** 狭いときの `display: contents` はほどいた形なので、
+   畳んだ姿では札と道具が別々の段に散る (実機で頼まれた「種類の札と釦の行」)。 */
+body.full .bar { display: flex; }
+body.full .kinds, body.full .tools { order: 0; margin: 0; }
 /* アプリでは図が出しっぱなしなので、開閉の釦は要らない。**頁のほうは残す** —
    狭いときの「編集する」は、そのまま「閉じる」になる。 */
 body.app #map-toggle { display: none; }

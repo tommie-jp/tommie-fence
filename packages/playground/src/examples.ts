@@ -53,6 +53,16 @@ export function parseExamples(data: unknown): ExampleList {
   return { examples, dropped };
 }
 
-/** その種類の例だけ。並びは JSON のまま (作る側が並べてある)。 */
-export const forKind = (examples: readonly Example[], kind: Kind): readonly Example[] =>
-  examples.filter((example) => example.kind === kind);
+/**
+ * その種類の例だけ。並びは JSON のまま (作る側が並べてある)。
+ *
+ * **わざと壊した例は既定で外す。** あれはエラーの帯を確かめるためのもので、
+ * 初めて来た人の欄に並ぶと雑音にしかならない (52 の docs/41)。
+ * `?dev` で開いた人にだけ `broken` を立てて呼ぶ。
+ */
+export const forKind = (
+  examples: readonly Example[],
+  kind: Kind,
+  broken = false,
+): readonly Example[] =>
+  examples.filter((example) => example.kind === kind && (broken || !example.broken));

@@ -40,6 +40,8 @@ const els = {
   map: need<HTMLIFrameElement>('map'),
   mapToggle: need<HTMLButtonElement>('map-toggle'),
   ver: need('ver'),
+  leadJa: need('lead-ja'),
+  leadEn: need('lead-en'),
   qr: need<HTMLButtonElement>('qr'),
   qrBox: need<HTMLDialogElement>('qr-box'),
   qrUrl: need('qr-url'),
@@ -51,6 +53,28 @@ declare const __VERSION__: string;
 
 let kind: Kind = 'breadboard';
 let examples: readonly Example[] = [];
+
+/**
+ * わざと壊した例を欄に出すか。**`?dev` で開いた人だけ。**
+ * あれはエラーの帯を確かめるためのもので、初めて来た人には雑音になる
+ * (52 の docs/41)。`syncHash` は search を残すので、選んでも消えない。
+ */
+const showsBroken = new URLSearchParams(location.search).has('dev');
+
+/** いま並べている例。**欄と `showExample` の番号を揃えるため 1 か所に置く。** */
+const mine = (): readonly Example[] => forKind(examples, kind, showsBroken);
+
+/**
+ * 一文をどちらの言語で出すか。**片方だけ出す** — 2 つ並べると、読めない
+ * ほうの行が図を 1 行ぶん押し下げる (52 の docs/41)。
+ * 字は両方 HTML にあるので、ここでするのは hidden の切り替えだけ。
+ */
+function pickLanguage(): void {
+  const ja = navigator.language.startsWith('ja');
+  els.leadJa.hidden = !ja;
+  els.leadEn.hidden = ja;
+  document.documentElement.lang = ja ? 'ja' : 'en';
+}
 
 const reason = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
@@ -225,7 +249,7 @@ function syncFull(): void {
   document.body.classList.toggle('full', asApp() || (editing && window.matchMedia(NARROW).matches));
   // **開いているあいだは「閉じる」と言う。** 同じ釦が行きと帰りを兼ねるので、
   // 「編集する」のままだと、いま何を押せるのかが読めない。
-  els.mapToggle.textContent = editing ? '閉じる' : '編集する';
+  els.mapToggle.textContent = editing ? '閉じる' : 'GUI で編集';
 }
 
 /**
@@ -307,7 +331,7 @@ const fileOf = (from: string): string =>
  * **出どころで括って**見分けられるようにする。
  */
 function fillExamples(): void {
-  const mine = forKind(examples, kind);
+  const list = mine();
   els.example.replaceChildren();
 
   // **リンクで来た図は一番上。** 題は貼るときと同じ読み方をする
@@ -329,7 +353,7 @@ function fillExamples(): void {
     // ファイルの並びは JSON のまま (作る側が並べてある)。
     const files: string[] = [];
     const rows = new Map<string, HTMLOptionElement[]>();
-    for (const [index, example] of mine.entries()) {
+    for (const [index, example] of list.entries()) {
       if (example.broken !== broken) continue;
       const file = fileOf(example.from);
       if (!rows.has(file)) { rows.set(file, []); files.push(file); }
@@ -346,7 +370,7 @@ function fillExamples(): void {
     }
   }
   // 例が 1 本も無くても、リンクの札があるなら欄は生かす (題を出す場所)。
-  els.example.disabled = mine.length === 0 && els.example.options.length === 0;
+  els.example.disabled = list.length === 0 && els.example.options.length === 0;
 }
 
 /**
@@ -377,7 +401,7 @@ function showLinked(): void {
 }
 
 function showExample(index: number): void {
-  const example = forKind(examples, kind)[index];
+  const example = mine()[index];
   if (example === undefined) return;
 
   els.source.value = example.source;
@@ -538,6 +562,7 @@ function showQr(): void {
 
 async function start(): Promise<void> {
   els.ver.textContent = __VERSION__;
+  pickLanguage();
   buildKinds();
   listen();
 

@@ -50,30 +50,33 @@
     <link rel="stylesheet" href="tex/css/fonts.css" />
   </head>
   <body>
+    <!-- **見せる → 触る → 次へ** の順に組む (52 の docs/41)。最初の画面に
+         図が出ることを最優先にし、道具とリンクはその下へ降ろした。
+         広い画面では今までどおり左に字・右に図 (並べ替えは CSS の order)。 -->
     <header class="head">
-      <h1>tommie-fence <span class="ver" id="ver"></span> <span>playground</span></h1>
-      <button type="button" class="qr" id="qr" aria-expanded="false">QR</button>
-      <p class="lead">
-        Markdown のフェンスで電子工作の図を描く。左に書くと、右に出る。
-        <span lang="en">Markdown fences that draw electronics. Type on the left, see it on the right.</span>
-      </p>
-      <nav class="links">
-        <a href="https://github.com/tommie-jp/tommie-fence">GitHub</a>
-        <a href="https://codespaces.new/tommie-jp/tommie-fence?quickstart=1">VS Code で試す (Codespaces)</a>
-        <a href="https://github.com/tommie-jp/tommie-fence/releases">拡張を入れる (.vsix)</a>
-      </nav>
+      <h1>tommie-fence</h1>
+      <!-- 一文は**片方だけ出す**。両方置いて `main.ts` が hidden を切り替える
+           (組み立ては変えない)。「左に書くと右に出る」はスマホで嘘になるので
+           言わない。 -->
+      <p class="lead" id="lead-ja">Markdown に書くと、電子工作の図になる。</p>
+      <p class="lead" id="lead-en" lang="en" hidden>Write Markdown, get an electronics diagram.</p>
     </header>
 
     <main>
+      <!-- 狭い画面では帯をほどいて (`display: contents`)、札を図の上・
+           道具を字の下に置く。広い画面と `body.full` では 1 行の帯のまま。 -->
       <div class="bar">
         <div class="kinds" id="kinds" role="group" aria-label="フェンスの種類"></div>
-        <label class="pick">
-          例
-          <select id="example"></select>
-        </label>
-        <button type="button" id="map-toggle" aria-pressed="false">編集する</button>
-        <button type="button" id="share">リンクをコピー</button>
-        <span class="said" id="said" role="status"></span>
+        <div class="tools">
+          <label class="pick">
+            例
+            <select id="example"></select>
+          </label>
+          <button type="button" id="map-toggle" aria-pressed="false">GUI で編集</button>
+          <button type="button" id="share">リンクをコピー</button>
+          <button type="button" id="qr" aria-expanded="false">QR</button>
+          <span class="said" id="said" role="status"></span>
+        </div>
       </div>
 
       <iframe class="map" id="map" title="図を掴んで動かすマップ" hidden></iframe>
@@ -86,14 +89,9 @@
       </dialog>
 
       <div class="panes">
-        <section class="pane">
-          <h2><label for="source">フェンス</label></h2>
-          <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off"
-            placeholder="ここにフェンスの中身を書く"></textarea>
-        </section>
-
-        <section class="pane">
-          <h2>出るもの</h2>
+        <!-- **図が先。** 狭い画面ではこの順のまま、広い画面では order で
+             左右を入れ替える (字が左、図が右)。 -->
+        <section class="pane pane-out">
           <div class="out">
             <div class="figure" id="figure"></div>
             <p class="note" id="note" hidden></p>
@@ -105,7 +103,33 @@
             <pre class="messages" id="messages" hidden></pre>
           </div>
         </section>
+
+        <section class="pane pane-src">
+          <h2><label for="source">フェンス</label></h2>
+          <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off"
+            placeholder="ここにフェンスの中身を書く"></textarea>
+        </section>
       </div>
+
+      <!-- 気に入った人の行き先。**順は docs/15 の決めのまま** —
+           最初の 30 秒がこの頁、次が Codespaces、それでも気に入ったら .vsix。 -->
+      <section class="next">
+        <h2>気に入ったら</h2>
+        <ul>
+          <li>
+            <a href="https://codespaces.new/tommie-jp/tommie-fence?quickstart=1">VS Code で試す (Codespaces)</a>
+            — ブラウザの中に本物の VS Code が立つ
+          </li>
+          <li>
+            <a href="https://github.com/tommie-jp/tommie-fence/releases">拡張を入れる (.vsix)</a>
+            — 手元の VS Code で書く
+          </li>
+          <li>
+            <a href="https://github.com/tommie-jp/tommie-fence">GitHub</a>
+            — 文法と中身
+          </li>
+        </ul>
+      </section>
     </main>
 
     <footer class="foot">
@@ -114,6 +138,7 @@
         「リンクをコピー」はフェンスを URL に載せるだけで、預け先を持たない。
       </p>
       <p id="from"></p>
+      <p>tommie-fence <span class="ver" id="ver"></span> playground</p>
     </footer>
 
     <script type="module" src="app.js"></script>

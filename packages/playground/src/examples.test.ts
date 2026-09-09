@@ -51,4 +51,22 @@ describe('forKind', () => {
 
     expect(forKind(parseExamples([one, perf]).examples, 'perfboard')).toEqual([perf]);
   });
+
+  /**
+   * わざと壊した例はエラーの帯を確かめるためのもの。**初めて来た人の欄には
+   * 出さない** (52 の docs/41)。`?dev` で開いた人にだけ足す。
+   */
+  test('わざと壊した例は既定で外す', () => {
+    const broken = { ...one, broken: true, label: 'わざと壊した例' };
+    const all = parseExamples([one, broken]).examples;
+
+    expect(forKind(all, 'breadboard')).toEqual([one]);
+  });
+
+  test('broken を立てると壊した例も並ぶ (?dev で開いたとき)', () => {
+    const broken = { ...one, broken: true, label: 'わざと壊した例' };
+    const all = parseExamples([one, broken]).examples;
+
+    expect(forKind(all, 'breadboard', true)).toEqual([one, broken]);
+  });
 });
