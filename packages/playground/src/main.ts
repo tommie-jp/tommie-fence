@@ -3,6 +3,7 @@ import type { Kind } from './kinds.ts';
 import { render } from './fences.ts';
 import { decodeShare, encodeShare, shareHtml, shareLabel } from './share.ts';
 import { forKind, parseExamples } from './examples.ts';
+import { nudge, nudgesFor } from './demo.ts';
 import type { Example } from './examples.ts';
 import type { Output } from './fences.ts';
 import { qrSvg } from './qr.ts';
@@ -31,6 +32,7 @@ const els = {
   said: need('said'),
   source: need<HTMLTextAreaElement>('source'),
   figure: need('figure'),
+  try: need('try'),
   note: need('note'),
   tex: need<HTMLDetailsElement>('tex'),
   texBody: need('tex-body'),
@@ -60,6 +62,12 @@ let examples: readonly Example[] = [];
  * (52 の docs/41)。`syncHash` は search を残すので、選んでも消えない。
  */
 const showsBroken = new URLSearchParams(location.search).has('dev');
+
+/**
+ * いま出している例の**元の字**。「試す」で書き換えた後、元に戻すために持つ。
+ * 手で打った字は元が無いので空 (そのときは戻す釦を出さない)。
+ */
+let pristine = '';
 
 /** いま並べている例。**欄と `showExample` の番号を揃えるため 1 か所に置く。** */
 const mine = (): readonly Example[] => forKind(examples, kind, showsBroken);
@@ -157,6 +165,57 @@ function paintNetlist(netlist: readonly { name: string; refs: readonly string[] 
   els.netlist.append(table);
 }
 
+/**
+ * 「試す」の帯。**当たる釦だけを出す** — 押しても何も起きない釦を並べると、
+ * 触った人は「壊れている」と読む (`demo.ts` の `nudge` が null で教える)。
+ */
+function renderTry(): void {
+  const source = els.source.value;
+  const rows = nudgesFor(kind, shareLabel(kind, source))
+    .filter((one) => nudge(source, one) !== null);
+  const back = pristine !== '' && source !== pristine;
+
+  els.try.replaceChildren();
+  els.try.hidden = rows.length === 0 && !back;
+  if (els.try.hidden) return;
+
+  const lead = document.createElement('span');
+  lead.textContent = '試す:';
+  els.try.append(lead);
+
+  for (const one of rows) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = one.label;
+    button.addEventListener('click', () => {
+      const next = nudge(els.source.value, one);
+      // 押した瞬間に当たらなくなっていたら何もしない (欄を手で直した後)。
+      if (next === null) return;
+      els.source.value = next;
+      paint();
+      syncHash();
+      map?.refresh();
+      // **欄に焦点は移さない** — スマホでキーボードが出て図が隠れる。
+      say(one.said);
+    });
+    els.try.append(button);
+  }
+
+  if (!back) return;
+  const undo = document.createElement('button');
+  undo.type = 'button';
+  undo.className = 'back';
+  undo.textContent = '元に戻す';
+  undo.addEventListener('click', () => {
+    els.source.value = pristine;
+    paint();
+    syncHash();
+    map?.refresh();
+    say('例の字に戻した');
+  });
+  els.try.append(undo);
+}
+
 function paint(): void {
   const output = render(kind, els.source.value);
 
@@ -180,6 +239,8 @@ function paint(): void {
 
   els.messages.hidden = output.messages.length === 0;
   els.messages.textContent = output.messages.join('\n\n');
+
+  renderTry();
 }
 
 /**
@@ -393,6 +454,7 @@ function showFrom(example: Example | null): void {
 function showLinked(): void {
   if (linked === null) return;
   els.source.value = linked.source;
+  pristine = linked.source;
   map?.refresh();
   els.example.value = LINK_OPTION;
   showFrom(null);
@@ -405,6 +467,7 @@ function showExample(index: number): void {
   if (example === undefined) return;
 
   els.source.value = example.source;
+  pristine = example.source;
   map?.refresh();
   els.example.value = String(index);
   showFrom(example);
@@ -503,6 +566,7 @@ function listen(): void {
     // 種類が同じでも組み直す — **札の題が変わっている**ため。
     fillExamples();
     els.source.value = shared.source;
+    pristine = shared.source;
     showFrom(null);
     els.example.value = LINK_OPTION;
     paint();
@@ -573,6 +637,7 @@ async function start(): Promise<void> {
     kind = shared.kind;
     linked = { kind: shared.kind, source: shared.source };
     els.source.value = shared.source;
+    pristine = shared.source;
     markKind();
     showFrom(null);
     paint();

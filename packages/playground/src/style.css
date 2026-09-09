@@ -138,6 +138,18 @@ textarea {
   border: 1px solid var(--line); border-radius: 8px; background: var(--paper);
 }
 
+/* 「試す」の帯。**図のすぐ下**に置く — 図が変わるのを見ながら押すため。 */
+.try { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.9rem; }
+.try[hidden] { display: none; }
+.try span { color: var(--dim); }
+.try button {
+  font: inherit; font-size: 0.9rem; padding: 4px 12px; cursor: pointer;
+  color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line); border-radius: 6px;
+}
+/* 元に戻す釦は控えめに (押す順は「試す」が先)。 */
+.try button.back { color: var(--dim); }
+
 .note {
   margin: 0; padding: 10px 12px; font-size: 0.9rem;
   color: var(--dim); background: var(--paper);
@@ -189,7 +201,7 @@ td { font-family: var(--mono); font-size: 12px; }
      同じ 36px にして、字は 13px (註) に落とす。指で押す面は 36 x 115px
      あるので、44px 角の指針は面積として満たしている。 */
   .bar { gap: 8px; }
-  .bar button, .kinds button, select { min-height: 36px; padding: 6px 12px; }
+  .bar button, .kinds button, select, .try button { min-height: 36px; padding: 6px 12px; }
   /* 種類の釦は 3 つで 1 行に収める (綴りだけ出して、呼び名は畳む)。 */
   .kinds { width: 100%; }
   .kinds button { flex: 1; font-size: 13px; padding: 6px 4px; }
