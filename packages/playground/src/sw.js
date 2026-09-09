@@ -49,7 +49,12 @@ async function keep(request, response) {
 /** 網が先 (頁そのもの)。駄目なら控え。 */
 async function netFirst(request) {
   try {
-    const fresh = await fetch(request);
+    // **ブラウザの控えも飛ばす。** GitHub Pages は 10 分の `max-age` を付けて
+    // 返すので、素の `fetch` だとそのあいだ古いものが来る。上げ直したものが
+    // 次に開いたときに出ないと、直したかどうかが確かめられない
+    // (実機の試験で 2 度踏んだ)。`no-cache` は取り直しではなく問い合わせ直しで、
+    // 変わっていなければ 304 で済む。
+    const fresh = await fetch(request, { cache: 'no-cache' });
     await keep(request, fresh);
     return fresh;
   } catch (whyNot) {
