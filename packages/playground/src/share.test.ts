@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { decodeShare, encodeShare } from './share.ts';
+import { decodeShare, encodeShare, shareHtml, shareLabel } from './share.ts';
 
 /** 読めた前提で中身だけ取る (読めなければ落ちる)。 */
 const read = (hash: string): string => {
@@ -97,5 +97,56 @@ describe('encodeShare / decodeShare', () => {
       expect(decodeShare('')).toBeNull();
       expect(decodeShare('#')).toBeNull();
     });
+  });
+});
+
+/**
+ * 貼ったときに見える題。**リンクの長さではなく、貼った先の見た目**を直す
+ * ためのもの (52 の docs/38)。`text/html` に題名付きのリンクを置くと、
+ * リッチテキストを受ける相手には題だけが見える。
+ */
+describe('貼ったときの題', () => {
+  test('フェンスの title をそのまま題にする', () => {
+    expect(shareLabel('breadboard', 'title: 図01 LED と抵抗\nboard: half\n')).toBe('図01 LED と抵抗');
+  });
+
+  test('引用符は外す (YAML の書き方の違いを持ち込まない)', () => {
+    expect(shareLabel('circuit', 'title: "図02 RC"\n')).toBe('図02 RC');
+    expect(shareLabel('circuit', "title: '図02 RC'\n")).toBe('図02 RC');
+  });
+
+  test('題が無ければ種類で言う (無題のリンクにしない)', () => {
+    expect(shareLabel('perfboard', 'board: 12x7\n')).toBe('tommie-fence の perfboard 図');
+    expect(shareLabel('circuit', 'title:   \n')).toBe('tommie-fence の circuit 図');
+  });
+
+  test('字下げした title は拾わない (部品の中の題は図の題ではない)', () => {
+    expect(shareLabel('breadboard', 'parts:\n  title: これは部品\n')).toBe('tommie-fence の breadboard 図');
+  });
+
+  test('長い題は切る (貼った先で 1 行に収まる長さに)', () => {
+    const said = shareLabel('circuit', `title: ${'あ'.repeat(200)}\n`);
+
+    expect(said.length).toBeLessThan(70);
+    expect(said.endsWith('…')).toBe(true);
+  });
+
+  test('貼る HTML は題つきの 1 本のリンク', () => {
+    const html = shareHtml('https://example.test/#circuit/eA', '図01');
+
+    expect(html).toBe('<a href="https://example.test/#circuit/eA">図01</a>');
+  });
+
+  /** 題もアドレスも外から来た字。**そのまま HTML に入れない。** */
+  test('題に混ぜられた印は逃がす', () => {
+    const html = shareHtml('https://example.test/', '<img src=x onerror=alert(1)>&"');
+
+    expect(html).not.toContain('<img');
+    expect(html).toContain('&lt;img');
+    expect(html).toContain('&amp;');
+  });
+
+  test('アドレスの引用符も逃がす', () => {
+    expect(shareHtml('https://example.test/"onmouseover="x', '題')).not.toContain('"onmouseover="x');
   });
 });

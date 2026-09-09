@@ -13,6 +13,22 @@
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23f2efe6'/%3E%3Cg fill='%233f4650'%3E%3Ccircle cx='4.5' cy='4.5' r='1.4'/%3E%3Ccircle cx='11.5' cy='4.5' r='1.4'/%3E%3Ccircle cx='4.5' cy='11.5' r='1.4'/%3E%3Ccircle cx='11.5' cy='11.5' r='1.4'/%3E%3C/g%3E%3Cpath d='M4.5 4.5h7' stroke='%23c1440e' stroke-width='1.2'/%3E%3C/svg%3E"
     />
+    <!-- チャットや SNS に貼られたときのカード (52 の docs/38)。
+         生の URL だけが出るのを避けるためのもので、フェンスの中身は
+         `#` の向こうにあってサーバへ届かないので、**どの図でも同じカード**。
+
+         **og:image だけは絶対 URL**。取りに来るのは相手のサーバで、
+         相対では引けない。ここがこの頁で唯一の絶対 URL なので、
+         出所を移すときはここを直す (組み立ての SITE と揃える)。 -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="tommie-fence playground" />
+    <meta
+      property="og:description"
+      content="Markdown のフェンスで電子工作の図を描く。何も入れずにブラウザで試す"
+    />
+    <meta property="og:image" content="https://tommie-jp.github.io/tommie-fence/icon-512.png" />
+    <meta name="twitter:card" content="summary" />
+
     <!-- スマホの入口 (PWA)。道は相対 — 置き場が GitHub Pages の
          /tommie-fence/ と手元の / の 2 つあるため (52 の docs/35)。 -->
     <link rel="manifest" href="manifest.webmanifest" />

@@ -1,7 +1,7 @@
 import { KINDS, KIND_LABEL, KIND_READING } from './kinds.ts';
 import type { Kind } from './kinds.ts';
 import { render } from './fences.ts';
-import { decodeShare, encodeShare } from './share.ts';
+import { decodeShare, encodeShare, shareHtml, shareLabel } from './share.ts';
 import { forKind, parseExamples } from './examples.ts';
 import type { Example } from './examples.ts';
 import type { Output } from './fences.ts';
@@ -423,13 +423,37 @@ function listen(): void {
 
   els.qr.addEventListener('click', showQr);
   els.qrBox.addEventListener('close', () => { els.qr.setAttribute('aria-expanded', 'false'); });
-  els.share.addEventListener('click', () => {
-    syncHash();
-    navigator.clipboard.writeText(location.href).then(
-      () => say('コピーしました'),
-      () => say('コピーできませんでした (アドレス欄から取ってください)'),
-    );
-  });
+  els.share.addEventListener('click', () => { void copyLink(); });
+}
+
+/**
+ * リンクを写す。**題名付きで写す** — 貼った先が生の URL を出さないように
+ * するのが狙いで、リンクを短くする話とは別 (52 の docs/38)。
+ *
+ * `text/html` と `text/plain` を**両方**置く。リッチテキストを受ける相手
+ * (Gmail・Slack・Notion など) には題だけが見え、プレーンテキストしか
+ * 受けない相手には今までどおり URL が渡る。
+ *
+ * **`ClipboardItem` が無ければ URL だけ写す。** 題が付かないだけで、
+ * 渡せるものは変わらない。
+ */
+async function copyLink(): Promise<void> {
+  syncHash();
+  const url = location.href;
+  const label = shareLabel(kind, els.source.value);
+  try {
+    if (typeof ClipboardItem === 'function') {
+      await navigator.clipboard.write([new ClipboardItem({
+        'text/html': new Blob([shareHtml(url, label)], { type: 'text/html' }),
+        'text/plain': new Blob([url], { type: 'text/plain' }),
+      })]);
+    } else {
+      await navigator.clipboard.writeText(url);
+    }
+    say(`コピーしました: ${label}`);
+  } catch {
+    say('コピーできませんでした (アドレス欄から取ってください)');
+  }
 }
 
 /**

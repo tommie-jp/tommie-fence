@@ -86,3 +86,44 @@ export function decodeShare(hash: string): Shared | null {
   if (source === '') return { ok: false, why: 'リンクに中身がありません' };
   return { ok: true, kind, source };
 }
+
+/**
+ * 貼ったときに見える題。**リンクの長さではなく、貼った先の見た目を直す**
+ * ためのもの (52 の docs/38)。
+ *
+ * フェンスの `title:` をそのまま使う — 図に出ている題と、貼ったリンクの題が
+ * 同じでないと、受け取った人が別のものだと思う。**字下げした `title:` は
+ * 拾わない** (部品の中に書いた題は、図の題ではない)。
+ */
+const TITLE = /^title:[ \t]*(.*)$/m;
+
+/** 貼った先で 1 行に収まる長さ。これを超えたら切る。 */
+const LABEL_MAX = 60;
+
+/** YAML の引用符を外す。書き方の違いを貼り先へ持ち込まない。 */
+const unquoted = (text: string): string =>
+  (/^(["']).*\1$/.test(text) ? text.slice(1, -1) : text);
+
+export function shareLabel(kind: Kind, source: string): string {
+  const found = TITLE.exec(source);
+  const title = unquoted((found?.[1] ?? '').trim()).trim();
+  if (title === '') return `tommie-fence の ${kind} 図`;
+  return title.length <= LABEL_MAX ? title : `${title.slice(0, LABEL_MAX)}…`;
+}
+
+/** HTML に入れてよい形に逃がす。**題もアドレスも外から来た字。** */
+const escaped = (text: string): string => text
+  .replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+  .replaceAll('"', '&quot;');
+
+/**
+ * クリップボードの `text/html` に置く 1 本のリンク。
+ *
+ * これがあると、リッチテキストを受ける相手 (Gmail・Slack・Notion など) では
+ * **題だけが見える**。プレーンテキストしか受けない相手には
+ * `text/plain` のほうが渡るので、そちらは今までどおり URL。
+ */
+export const shareHtml = (url: string, label: string): string =>
+  `<a href="${escaped(url)}">${escaped(label)}</a>`;
