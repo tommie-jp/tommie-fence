@@ -281,6 +281,18 @@ function say(text: string, holds = false): void {
   }, 2_000);
 }
 
+/**
+ * リンクで来た図。**例の欄に題を出すために覚えておく。**
+ *
+ * これが無いと、共有リンクで開いた人の欄は空のままになる。1 行を丸ごと
+ * 使う欄が空だと壊れて見えるうえ、**選び直して戻る道も無い** (例を 1 つ
+ * 選んだら、リンクの図には二度と戻れなかった)。
+ */
+let linked: { readonly kind: Kind; readonly source: string } | null = null;
+
+/** リンクの図を指す値。例は番号なので、字にしておけば混ざらない。 */
+const LINK_OPTION = 'link';
+
 /** 例を選ぶ欄。まともな例とわざと壊した例を分けて並べる。 */
 /** 例の出どころのファイル名 (`.../examples/01-led.md` → `01-led`)。 */
 const fileOf = (from: string): string =>
@@ -297,6 +309,18 @@ const fileOf = (from: string): string =>
 function fillExamples(): void {
   const mine = forKind(examples, kind);
   els.example.replaceChildren();
+
+  // **リンクで来た図は一番上。** 題は貼るときと同じ読み方をする
+  // (`shareLabel`) ので、送った人が見た札とここの札が揃う。
+  if (linked !== null && linked.kind === kind) {
+    const option = document.createElement('option');
+    option.value = LINK_OPTION;
+    option.textContent = shareLabel(linked.kind, linked.source);
+    const group = document.createElement('optgroup');
+    group.label = 'リンクで開いた図';
+    group.append(option);
+    els.example.append(group);
+  }
 
   for (const [broken, label] of [
     [false, '例'],
@@ -321,7 +345,8 @@ function fillExamples(): void {
       els.example.append(group);
     }
   }
-  els.example.disabled = mine.length === 0;
+  // 例が 1 本も無くても、リンクの札があるなら欄は生かす (題を出す場所)。
+  els.example.disabled = mine.length === 0 && els.example.options.length === 0;
 }
 
 /**
@@ -330,16 +355,25 @@ function fillExamples(): void {
  */
 function showFrom(example: Example | null): void {
   els.from.replaceChildren();
-  if (example === null) {
-    // 例を選んでいない状態にする。選んだままだと、欄の名前と中身が食い違う。
-    els.example.selectedIndex = -1;
-    return;
-  }
+  // リンクの図には出どころのファイルが無いので、行ごと消す。
+  // **選びは動かさない** — 欄はリンクの札を選んだままにする。
+  if (example === null) return;
 
   const link = document.createElement('a');
   link.href = `${REPO}/${example.from}`;
   link.textContent = example.from;
   els.from.append('この例の出どころ: ', link);
+}
+
+/** リンクで来た図を出し直す。欄でその札を選んだときの行き先。 */
+function showLinked(): void {
+  if (linked === null) return;
+  els.source.value = linked.source;
+  map?.refresh();
+  els.example.value = LINK_OPTION;
+  showFrom(null);
+  paint();
+  syncHash();
 }
 
 function showExample(index: number): void {
@@ -417,7 +451,10 @@ function listen(): void {
     }, QUIET_MS);
   });
 
-  els.example.addEventListener('change', () => showExample(Number(els.example.value)));
+  els.example.addEventListener('change', () => {
+    if (els.example.value === LINK_OPTION) showLinked();
+    else showExample(Number(els.example.value));
+  });
   els.mapToggle.addEventListener('click', toggleMap);
 
   // **共有リンクを、開いたままの頁に貼られたとき。** ハッシュだけの移動は
@@ -434,13 +471,16 @@ function listen(): void {
       return;
     }
 
+    linked = { kind: shared.kind, source: shared.source };
     if (shared.kind !== kind) {
       kind = shared.kind;
       markKind();
-      fillExamples();
     }
+    // 種類が同じでも組み直す — **札の題が変わっている**ため。
+    fillExamples();
     els.source.value = shared.source;
     showFrom(null);
+    els.example.value = LINK_OPTION;
     paint();
     reopenMap();
   });
@@ -506,6 +546,7 @@ async function start(): Promise<void> {
   const opened = shared !== null && shared.ok;
   if (shared !== null && shared.ok) {
     kind = shared.kind;
+    linked = { kind: shared.kind, source: shared.source };
     els.source.value = shared.source;
     markKind();
     showFrom(null);
@@ -513,10 +554,10 @@ async function start(): Promise<void> {
   }
 
   await loadExamples();
-  // **例を埋めたあとにもう一度**選びを外す。`fillExamples` は欄を作り直すので、
-  // 先に外しても最初の例が選ばれた形に戻る (共有リンクの中身と食い違う)。
+  // **例を埋めたあとに選ぶ。** `fillExamples` は欄を作り直すので、先に
+  // 選んでも最初の例に戻ってしまう (リンクの中身と札が食い違う)。
   if (!opened) showExample(0);
-  else els.example.selectedIndex = -1;
+  else els.example.value = LINK_OPTION;
 
   // **読めなかったリンクは、既定の例を出したあとに言う。** 先に言うと
   // `showExample` の一言に上書きされる。
