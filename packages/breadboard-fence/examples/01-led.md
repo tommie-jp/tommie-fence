@@ -12,8 +12,6 @@ wires:
   - +t5 -- a5 red
   - a10 -- b12
   - c13 -- -t13 black
-notes:
-  - source blue
 ```
 
 ![図01 LED と抵抗](out/01-led.svg)

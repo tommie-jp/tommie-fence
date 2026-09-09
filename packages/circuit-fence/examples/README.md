@@ -27,6 +27,7 @@ GitHub のようにフェンスが描画されない場所で、ソースと図�
 
 | 例 | 01-syntax.md の項目 |
 | --- | --- |
+| [00-led.md](00-led.md) | いちばん小さな回路 (3 つのフェンスで同じもの) |
 | [01-rc-lowpass.md](01-rc-lowpass.md) | 番地 / 部品 / 配線 / ネットリスト |
 | [02-parts.md](02-parts.md) | 2 端子部品 44 種、1 端子の記号 4 種 |
 | [03-multi-terminal.md](03-multi-terminal.md) | 多端子部品と足の名前、型番、FET の種類、2 端子の足 |
