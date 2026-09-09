@@ -23,6 +23,11 @@
 
 * { box-sizing: border-box; }
 
+/* **`hidden` は display に負ける。** ブラウザの `[hidden] { display: none }` は
+   ただの型なので、後から `display: block` などを当てると畳んだつもりのものが
+   出てくる (実測で、英語の一文が日本語と並んで出た)。ここで断ち切る。 */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   padding: 16px clamp(12px, 3vw, 32px) 32px;
@@ -60,6 +65,8 @@ h2 { font-size: 0.8rem; margin: 0 0 6px; color: var(--dim); font-weight: 600; }
 /* **一文は 1 つだけ出す** (`main.ts` が言語を選ぶ)。2 つ並べると、
    読めないほうの行が図を 1 行ぶん押し下げる。 */
 .lead { margin: 0; font-size: 1.05rem; }
+/* リンクで来たときの一文。題を主に、案内は下に小さく。 */
+.lead-link span { display: block; color: var(--dim); font-size: 0.85rem; }
 
 /* 気に入った人の行き先。**figure より下**に置く (docs/41)。 */
 .next { margin-top: 24px; }
@@ -140,7 +147,6 @@ textarea {
 
 /* 「試す」の帯。**図のすぐ下**に置く — 図が変わるのを見ながら押すため。 */
 .try { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.9rem; }
-.try[hidden] { display: none; }
 .try span { color: var(--dim); }
 .try button {
   font: inherit; font-size: 0.9rem; padding: 4px 12px; cursor: pointer;

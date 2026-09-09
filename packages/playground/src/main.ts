@@ -44,6 +44,10 @@ const els = {
   ver: need('ver'),
   leadJa: need('lead-ja'),
   leadEn: need('lead-en'),
+  leadLink: need('lead-link'),
+  leadTitle: need('lead-title'),
+  leadNoteJa: need('lead-note-ja'),
+  leadNoteEn: need('lead-note-en'),
   qr: need<HTMLButtonElement>('qr'),
   qrBox: need<HTMLDialogElement>('qr-box'),
   qrUrl: need('qr-url'),
@@ -75,13 +79,23 @@ const mine = (): readonly Example[] => forKind(examples, kind, showsBroken);
 /**
  * 一文をどちらの言語で出すか。**片方だけ出す** — 2 つ並べると、読めない
  * ほうの行が図を 1 行ぶん押し下げる (52 の docs/41)。
- * 字は両方 HTML にあるので、ここでするのは hidden の切り替えだけ。
+ * 字は両方 HTML にあるので、するのは hidden の切り替えだけ。
  */
-function pickLanguage(): void {
-  const ja = navigator.language.startsWith('ja');
-  els.leadJa.hidden = !ja;
-  els.leadEn.hidden = ja;
-  document.documentElement.lang = ja ? 'ja' : 'en';
+const JA = navigator.language.startsWith('ja');
+
+/**
+ * 見出しの下の一文。**リンクの図を出しているあいだは、その図の題**にする。
+ *
+ * 「Markdown に書くと〜」は初めて来た人への案内。リンクを受けた人はもう
+ * 図を見に来ているので、開いたものが何かを先に言うほうがよい
+ * (52 の docs/41)。例を選び直したら案内に戻る。
+ */
+function syncLead(): void {
+  const onLink = linked !== null && els.example.value === LINK_OPTION;
+  els.leadLink.hidden = !onLink;
+  els.leadJa.hidden = onLink || !JA;
+  els.leadEn.hidden = onLink || JA;
+  if (linked !== null) els.leadTitle.textContent = shareLabel(linked.kind, linked.source);
 }
 
 const reason = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -458,6 +472,7 @@ function showLinked(): void {
   map?.refresh();
   els.example.value = LINK_OPTION;
   showFrom(null);
+  syncLead();
   paint();
   syncHash();
 }
@@ -471,6 +486,7 @@ function showExample(index: number): void {
   map?.refresh();
   els.example.value = String(index);
   showFrom(example);
+  syncLead();
   paint();
   syncHash();
 }
@@ -569,6 +585,7 @@ function listen(): void {
     pristine = shared.source;
     showFrom(null);
     els.example.value = LINK_OPTION;
+    syncLead();
     paint();
     reopenMap();
   });
@@ -626,7 +643,10 @@ function showQr(): void {
 
 async function start(): Promise<void> {
   els.ver.textContent = __VERSION__;
-  pickLanguage();
+  document.documentElement.lang = JA ? 'ja' : 'en';
+  els.leadNoteJa.hidden = !JA;
+  els.leadNoteEn.hidden = JA;
+  syncLead();
   buildKinds();
   listen();
 
@@ -647,7 +667,10 @@ async function start(): Promise<void> {
   // **例を埋めたあとに選ぶ。** `fillExamples` は欄を作り直すので、先に
   // 選んでも最初の例に戻ってしまう (リンクの中身と札が食い違う)。
   if (!opened) showExample(0);
-  else els.example.value = LINK_OPTION;
+  else {
+    els.example.value = LINK_OPTION;
+    syncLead();
+  }
 
   // **読めなかったリンクは、既定の例を出したあとに言う。** 先に言うと
   // `showExample` の一言に上書きされる。
