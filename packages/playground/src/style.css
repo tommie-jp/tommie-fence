@@ -167,13 +167,18 @@ td { font-family: var(--mono); font-size: 12px; }
   body { padding: 12px 12px 24px; }
   h1 { font-size: 1.25rem; }
   .head { padding-right: 0; }
-  .qr { position: static; margin-top: 8px; min-height: 44px; padding: 8px 16px; }
+  .qr { position: static; margin-top: 8px; min-height: 36px; padding: 6px 16px; }
 
+  /* **釦は iOS の寸法に。** 44px 角は指の下限で、**枠の高さの決めではない**。
+     3 段とも 44px にすると帯だけで 164px 取り、図より背が高くなる
+     (実機で「全体的にボタンやフォントが大きい」)。iOS の小さい釦・検索欄と
+     同じ 36px にして、字は 13px (註) に落とす。指で押す面は 36 x 115px
+     あるので、44px 角の指針は面積として満たしている。 */
   .bar { gap: 8px; }
-  .bar button, .kinds button, select { min-height: 44px; padding: 8px 12px; }
+  .bar button, .kinds button, select { min-height: 36px; padding: 6px 12px; }
   /* 種類の釦は 3 つで 1 行に収める (綴りだけ出して、呼び名は畳む)。 */
   .kinds { width: 100%; }
-  .kinds button { flex: 1; font-size: 0.8rem; padding: 8px 4px; }
+  .kinds button { flex: 1; font-size: 13px; padding: 6px 4px; }
   /* 呼び名は畳む (綴りだけで 3 つが 1 行に収まる)。 */
   .kinds .reading { display: none; }
   .pick { width: 100%; }

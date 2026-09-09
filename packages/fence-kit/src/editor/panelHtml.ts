@@ -328,7 +328,7 @@ const STYLE = `
     .kc-stage { min-height: 0; }
     .kc-tools {
       width: auto; flex-direction: row; overflow-x: auto; overflow-y: hidden;
-      border-left: 0; border-top: 1px solid var(--kc-line);
+      padding: 4px; border-left: 0; border-top: 1px solid var(--kc-line);
     }
     .kc-tool { flex: none; min-width: 54px; }
 
@@ -345,23 +345,31 @@ const STYLE = `
     /* 浮かぶ窓は画面いっぱいに近づける (260px の窓は狭い画面で収まらない)。 */
     .kc-chooser { width: auto; right: 8px; }
 
-    /* **字と的をスマホの寸法に。** 12px の字と 24px のボタンは、指と目には
-       小さい。押す所は 44px 角を下限にする (Apple の HIG が 44pt、
-       Material が 48dp)。 */
-    body { font-size: 15px; }
-    .kc-props h2, .cf-colors h3, .kc-dock h3 { font-size: 13px; }
-    .cf-swatch, .cf-types code, .kc-status, .kc-title-touch { font-size: 13px; }
+    /* **的は 44px、見た目は iOS の寸法。** 最初は字も枠も一緒に大きくしたが、
+       実機で「全体的にボタンやフォントが大きい」と言われた。iOS のタブ棒を
+       見ると**この 2 つは別物**で、札は 10pt・絵は 25pt と小さいまま、
+       押せる面のほうが 49pt ある。こちらも同じに分ける — 縮めるのは
+       字と絵で、押す面の下限は動かさない。
+       字は iOS の刻み (17 本文 / 15 小見出し / 13 註 / 12 説明) に載せる。
+       ここは密な道具の面なので、地の字は註の 13px。 */
+    body { font-size: 13px; }
+    .kc-props h2, .cf-colors h3, .kc-dock h3 { font-size: 12px; }
+    .cf-swatch, .cf-types code, .kc-status, .kc-title-touch { font-size: 12px; }
 
     /* **欄は 16px を切らない。** iOS Safari は 16px 未満の欄に触れると、
-       打ち始めた瞬間に頁ごと拡大する (図が飛ぶ)。 */
-    .cf-field, .cf-search { font-size: 16px; padding: 8px 10px; }
+       打ち始めた瞬間に頁ごと拡大する (図が飛ぶ)。**ここだけは縮めない。** */
+    .cf-field, .cf-search { font-size: 16px; padding: 6px 8px; }
 
-    .kc-top button, .kc-props-toggle { min-width: 44px; height: 44px; }
-    .kc-tool { min-width: 64px; min-height: 44px; padding: 6px 4px; }
-    .kc-tool .kc-glyph { font-size: 20px; }
+    /* 上の帯の釦は絵だけ。iOS の小さい釦 (検索欄と同じ 36pt) に合わせる。 */
+    .kc-top button, .kc-props-toggle { min-width: 36px; height: 36px; }
+    /* 道具は**タブ棒と同じ作り**。面は 44px のまま、絵と札を落とす。 */
+    .kc-tool { min-width: 56px; min-height: 44px; padding: 4px; }
+    .kc-tool .kc-glyph { font-size: 17px; }
+    /* 一覧の行は iOS も 44pt。**ここは縮めない** — 並んだ中の 1 つを
+       選ぶので、隣を押すと別の部品が置かれる。 */
     .cf-pick, .cf-swatch, .kc-menu-item { min-height: 44px; }
-    .cf-icons { grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); }
-    .cf-icons .cf-pick { min-height: 48px; }
+    .cf-icons { grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); }
+    .cf-icons .cf-pick { min-height: 44px; }
 
     /* 鍵の字はスマホに要らない。**道具の名前に幅を譲る**
        (案内文の中の鍵は残す — 消すと文が途切れる)。 */

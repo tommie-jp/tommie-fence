@@ -407,12 +407,14 @@ describe('狭いときの畳み方', () => {
   });
 
   /**
-   * **字と的をスマホの寸法に。** 12px の字と 24px のボタンは指と目に小さい。
-   * 押す所は 44px 角を下限にする (Apple の HIG が 44pt、Material が 48dp)。
+   * **的の大きさと見た目の大きさは別物。** iOS のタブ棒は札が 10pt・絵が
+   * 25pt と小さいまま、押せる面が 49pt ある。こちらも同じに分ける
+   * (実機で「全体的にボタンやフォントが大きい」と言われた回)。
+   * 字は iOS の刻みに載せ、密な道具の面なので地は註の 13px。
    */
-  test('grows the text to what a phone reads at', () => {
+  test('sets the text to what iOS calls a footnote, not to 15px', () => {
     const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
-    expect(narrow).toContain('body { font-size: 15px; }');
+    expect(narrow).toContain('body { font-size: 13px; }');
   });
 
   test('keeps every field at 16px, or iOS zooms the page when one is tapped', () => {
@@ -420,10 +422,25 @@ describe('狭いときの畳み方', () => {
     expect(narrow).toMatch(/\.cf-field, \.cf-search \{[^}]*font-size: 16px/);
   });
 
-  test('gives the tools and buttons a 44px target, which a finger can hit', () => {
+  /**
+   * 道具は一番よく押すものなので、**絵と札を落としても面は 44px のまま**。
+   * 一覧の行 (部品・色・右の一覧) も、隣を押すと別のものが置かれるので
+   * 縮めない。落とすのは絵だけの釦 (上の帯) と、字。
+   */
+  test('keeps the 44px target on the tools while the glyph shrinks', () => {
     const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
     expect(narrow).toMatch(/\.kc-tool \{[^}]*min-height: 44px/);
-    expect(narrow).toMatch(/\.kc-top button, \.kc-props-toggle \{[^}]*min-width: 44px/);
+    expect(narrow).toMatch(/\.kc-tool \.kc-glyph \{ font-size: 17px/);
+  });
+
+  test('keeps the 44px row on the lists, where a miss places the wrong part', () => {
+    const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
+    expect(narrow).toMatch(/\.cf-pick, \.cf-swatch, \.kc-menu-item \{[^}]*min-height: 44px/);
+  });
+
+  test('drops the icon-only buttons to the 36px iOS uses for small controls', () => {
+    const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
+    expect(narrow).toMatch(/\.kc-top button, \.kc-props-toggle \{[^}]*height: 36px/);
   });
 
   test('drops the key hints on the tools, since a phone has no keys', () => {
