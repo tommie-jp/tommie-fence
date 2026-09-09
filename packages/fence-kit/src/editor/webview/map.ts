@@ -1362,6 +1362,18 @@ document.addEventListener('pointerup', (event) => {
 });
 
 // 窓の外で放したときなど、放した知らせが来ないことがある。
+/**
+ * iOS のピンチ。**`touch-action` だけでは足りない** — Safari は独自の
+ * `gesture*` でも送ってきて、断らないと頁ごと拡大される。そうなると図だけで
+ * なく道具の列も帯も一緒に大きくなる (実機で「メニューアイコンは拡大対象に
+ * しないで、固定表示して」)。
+ *
+ * 拡大そのものは 2 本指のなぞりでこちらがやる (52 の docs/32)。
+ */
+for (const kind of ['gesturestart', 'gesturechange', 'gestureend']) {
+  document.addEventListener(kind, (event) => { event.preventDefault(); }, { passive: false });
+}
+
 document.addEventListener('pointercancel', (event) => {
   if (byFinger(event)) {
     dropLongPress();

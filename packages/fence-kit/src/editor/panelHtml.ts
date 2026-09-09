@@ -21,9 +21,21 @@ const STYLE = `
   /* KiCad の配置を借りる (52 の docs/17): 上に道具の帯、右に道具の列、左に属性、
      下に状態行。色は VS Code のテーマに従う (KiCad 自身もテーマで色を変える)。 */
   html, body { height: 100%; margin: 0; }
+  /* **ブラウザのピンチ拡大を止める。** 図の拡大は 2 本指でこちらがやるので
+     (52 の docs/32)、ブラウザにも拡大されると道具の列も帯も一緒に大きくなる
+     (実機で「メニューアイコンは拡大対象にしないで、固定表示して」)。
+     スクロールは残す (pan-x pan-y)。iOS は gesture* でも送ってくるので、
+     map.ts の側でも断っている。 */
+  html, body { touch-action: pan-x pan-y; }
   body {
     font-family: var(--vscode-font-family); font-size: 12px;
     display: flex; flex-direction: column; overflow: hidden;
+    /* **iOS の割り込みを止める。** 長押しで「コピー / 調べる」の吹き出しを
+       出し、図を字として選ぼうとする。掴む・引く操作と取り合いになる
+       (実機で報告)。欄だけは下で選べるように戻す。 */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
     color: var(--vscode-foreground, CanvasText); background: var(--vscode-editor-background, Canvas);
     /* 記号の地。線の上に載る字の縁取りにも使う (図側から色名で引ける)。 */
     --cf-paper: var(--vscode-editor-background, Canvas);
@@ -110,6 +122,11 @@ const STYLE = `
   /* display: flex は hidden 属性の既定に勝つので、明示して隠す。 */
   .cf-inspector[hidden] { display: none; }
   .cf-inspector label { display: flex; flex-direction: column; gap: 2px; color: var(--vscode-descriptionForeground); }
+  /* **欄は選べる。** 打つ・直すために要るので、body で切った選択を戻す。 */
+  .cf-field, .cf-search {
+    -webkit-user-select: text;
+    user-select: text;
+  }
   .cf-field {
     padding: 2px 4px; font: inherit;
     background: var(--vscode-input-background); color: var(--vscode-input-foreground);

@@ -422,6 +422,26 @@ describe('狭いときの畳み方', () => {
     expect(narrow).not.toContain('kbd { display: none; }\n    .kc-props-hint');
   });
 
+  /**
+   * 実機の iPhone で出た 2 つ (52 の docs/40)。**どちらも iOS が
+   * 自分の操作を割り込ませてくる**話で、こちらが断らないと止まらない。
+   */
+  test('stops the browser from zooming the map, so the tools stay put', () => {
+    // 図の拡大は 2 本指で自分がやる。ブラウザにも拡大されると、道具や帯まで
+    // 一緒に大きくなる (実機で「メニューアイコンは拡大対象にしないで」)。
+    expect(html).toContain('html, body { touch-action: pan-x pan-y; }');
+  });
+
+  test('turns off the long-press callout and text selection', () => {
+    // iOS は図の上でも「コピー / 調べる」を出し、字として選ぼうとする。
+    expect(html).toContain('-webkit-touch-callout: none;');
+    expect(html).toMatch(/body \{[^}]*user-select: none/s);
+  });
+
+  test('leaves the fields selectable, since they are there to be typed in', () => {
+    expect(html).toMatch(/\.cf-field, \.cf-search \{[^}]*user-select: text/s);
+  });
+
   test('says what the fingers do, next to what the mouse does', () => {
     expect(html).toContain('2 本指で移動');
     expect(html).toContain('長押しでメニュー');
