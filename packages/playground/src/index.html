@@ -33,8 +33,13 @@
          /tommie-fence/ と手元の / の 2 つあるため (52 の docs/35)。 -->
     <link rel="manifest" href="manifest.webmanifest" />
     <meta name="theme-color" content="#f6f8fa" />
+    <!-- 殻を外して開く、の標準の綴り。**Chrome が apple- の綴りを
+         「非推奨」と言う**ので両方置く (実機の DevTools で出た)。
+         消せるのはこちらではなく apple- のほうが要らなくなったとき。 -->
+    <meta name="mobile-web-app-capable" content="yes" />
     <!-- iOS は manifest の display も icons も見ない。ホーム画面から開いた
-         ときに殻を外すのと、絵札を出すのは、この 3 つが受け持つ。 -->
+         ときに殻を外すのと、絵札を出すのは、この 3 つが受け持つ。
+         **標準の綴りも iOS は見ない**ので、上と重なっていても消さない。 -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="tommie-fence" />
