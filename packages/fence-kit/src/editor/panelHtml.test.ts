@@ -391,6 +391,17 @@ describe('狭いときの畳み方', () => {
     expect(narrow).toContain('flex-direction: row;');
   });
 
+  /**
+   * 縦並びでは図の高さが主軸になる。min-height の既定 (auto) は「中身より
+   * 小さくしない」なので、図が SVG の高さのまま居座り、下の道具・帯・状態欄を
+   * 画面の外へ押し出す。body は overflow: hidden なので、押し出された分は
+   * **スクロールもできずに消える** (375x667 で道具が 36px 見切れた)。
+   */
+  test('lets the figure shrink, so the bottom strip stays on the screen', () => {
+    const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
+    expect(narrow).toContain('.kc-stage { min-height: 0; }');
+  });
+
   test('stops one finger from scrolling the figure, since one finger means select', () => {
     expect(html).toContain('.kc-canvas { flex: 1; min-width: 0; overflow: scroll; touch-action: none;');
   });

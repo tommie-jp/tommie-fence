@@ -320,6 +320,12 @@ const STYLE = `
 
     /* 道具は下端に横並び。縦に 9 つ並べると図を押し潰す。 */
     .kc-main { flex-direction: column; }
+    /* **図は縮む。** 縦並びにすると図の高さが主軸になり、min-height の既定
+       (auto) が「中身より小さくしない」と言うので、図が SVG の高さのまま
+       居座って道具・帯・状態欄を画面の外へ押し出す。body は overflow: hidden
+       なので、押し出された分は**スクロールもできずに消える**
+       (実機で「下の道具が見切れている」)。0 にして図のほうを譲らせる。 */
+    .kc-stage { min-height: 0; }
     .kc-tools {
       width: auto; flex-direction: row; overflow-x: auto; overflow-y: hidden;
       border-left: 0; border-top: 1px solid var(--kc-line);
