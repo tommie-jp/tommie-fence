@@ -11,20 +11,7 @@ import type { Kind } from './kinds.ts';
  * リンクを見ただけでどのフェンスか分かるようにするため。
  */
 
-const encoder = new TextEncoder();
 const decoder = new TextDecoder();
-
-/** バイト列 → base64url。`btoa` は 1 文字 1 バイトとして読むので先に詰め直す。 */
-function toBase64Url(text: string): string {
-  const bytes = encoder.encode(text);
-  let binary = '';
-  // 一度に渡すと引数の数の上限に当たる (長いフェンスで落ちる) ので刻む。
-  const CHUNK = 0x8000;
-  for (let at = 0; at < bytes.length; at += CHUNK) {
-    binary += String.fromCharCode(...bytes.subarray(at, at + CHUNK));
-  }
-  return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
-}
 
 /** base64url → 元の字。読めなければ null (外から来た字なので投げない)。 */
 function fromBase64Url(data: string): string | null {
@@ -37,10 +24,6 @@ function fromBase64Url(data: string): string | null {
     return null;
   }
 }
-
-/** 共有リンクのハッシュ部 (`#` は含まない)。 */
-export const encodeShare = (kind: Kind, source: string): string =>
-  `${kind}/${toBase64Url(source)}`;
 
 /**
  * 共有リンクを読んだ結果。**3 通りある。**
@@ -110,20 +93,3 @@ export function shareLabel(kind: Kind, source: string): string {
   if (title === '') return `tommie-fence の ${kind} 図`;
   return title.length <= LABEL_MAX ? title : `${title.slice(0, LABEL_MAX)}…`;
 }
-
-/** HTML に入れてよい形に逃がす。**題もアドレスも外から来た字。** */
-const escaped = (text: string): string => text
-  .replaceAll('&', '&amp;')
-  .replaceAll('<', '&lt;')
-  .replaceAll('>', '&gt;')
-  .replaceAll('"', '&quot;');
-
-/**
- * クリップボードの `text/html` に置く 1 本のリンク。
- *
- * これがあると、リッチテキストを受ける相手 (Gmail・Slack・Notion など) では
- * **題だけが見える**。プレーンテキストしか受けない相手には
- * `text/plain` のほうが渡るので、そちらは今までどおり URL。
- */
-export const shareHtml = (url: string, label: string): string =>
-  `<a href="${escaped(url)}">${escaped(label)}</a>`;

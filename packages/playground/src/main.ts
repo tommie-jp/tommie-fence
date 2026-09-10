@@ -1,14 +1,11 @@
 import { KINDS, KIND_LABEL, KIND_READING } from './kinds.ts';
 import type { Kind } from './kinds.ts';
 import { render } from './fences.ts';
-import { decodeShare, encodeShare, shareHtml, shareLabel } from './share.ts';
+import { decodeShare, shareLabel } from './share.ts';
 import { forKind, parseExamples } from './examples.ts';
 import { nudge, nudgesFor } from './demo.ts';
 import type { Example } from './examples.ts';
 import type { Output } from './fences.ts';
-import { qrSvg } from './qr.ts';
-import { SHORTS_URL, parseShorts, shortFor } from './shorts.ts';
-import type { Shorts } from './shorts.ts';
 
 /**
  * 画面を組み立てる層。**決め事はここに置かない** — 描画は `fences.ts`、
@@ -30,7 +27,6 @@ function need<E extends HTMLElement>(id: string): E {
 const els = {
   kinds: need('kinds'),
   example: need<HTMLSelectElement>('example'),
-  share: need<HTMLButtonElement>('share'),
   said: need('said'),
   source: need<HTMLTextAreaElement>('source'),
   figure: need('figure'),
@@ -50,11 +46,6 @@ const els = {
   leadTitle: need('lead-title'),
   leadNoteJa: need('lead-note-ja'),
   leadNoteEn: need('lead-note-en'),
-  qr: need<HTMLButtonElement>('qr'),
-  qrBox: need<HTMLDialogElement>('qr-box'),
-  qrUrl: need('qr-url'),
-  qrKind: need('qr-kind'),
-  qrCode: need('qr-code'),
 };
 
 /** 拡張の版。ビルドのときに焼き込む (`esbuild.mjs`)。 */
@@ -66,7 +57,7 @@ let examples: readonly Example[] = [];
 /**
  * わざと壊した例を欄に出すか。**`?dev` で開いた人だけ。**
  * あれはエラーの帯を確かめるためのもので、初めて来た人には雑音になる
- * (52 の docs/41)。`syncHash` は search を残すので、選んでも消えない。
+ * (52 の docs/41)。`?dev` は URL の問い合わせに残るので、選んでも消えない。
  */
 const showsBroken = new URLSearchParams(location.search).has('dev');
 
@@ -210,7 +201,6 @@ function renderTry(): void {
       if (next === null) return;
       els.source.value = next;
       paint();
-      syncHash();
       map?.refresh();
       // **欄に焦点は移さない** — スマホでキーボードが出て図が隠れる。
       say(one.said);
@@ -226,7 +216,6 @@ function renderTry(): void {
   undo.addEventListener('click', () => {
     els.source.value = pristine;
     paint();
-    syncHash();
     map?.refresh();
     say('例の字に戻した');
   });
@@ -287,7 +276,6 @@ async function showMap(): Promise<void> {
     setBody: (next) => {
       els.source.value = next;
       paint();
-      syncHash();
     },
   });
 }
@@ -364,11 +352,16 @@ function reopenMap(): void {
   toggleMap();
 }
 
-function syncHash(): void {
-  const source = els.source.value;
-  const hash = source.trim() === '' ? '' : `#${encodeShare(kind, source)}`;
-  // 打鍵のたびに履歴を積むと「戻る」が使えなくなるので、置き換える。
-  history.replaceState(null, '', `${location.pathname}${location.search}${hash}`);
+/**
+ * URL からリンクの印を落とす。**URL は文書ではない** (52 の docs/43)。
+ *
+ * 打鍵のたびに図を URL へ書く作りをやめたので、リンクで来た人が別のものを
+ * 開いたら、来たときの `#` は嘘になる (読み込み直すと前の図に戻ってしまう)。
+ * 落として、この頁の場所だけにする。履歴は積まない。
+ */
+function forgetHash(): void {
+  if (location.hash === '') return;
+  history.replaceState(null, '', `${location.pathname}${location.search}`);
 }
 
 /**
@@ -477,7 +470,6 @@ function showLinked(): void {
   showFrom(null);
   syncLead();
   paint();
-  syncHash();
 }
 
 function showExample(index: number): void {
@@ -491,7 +483,7 @@ function showExample(index: number): void {
   showFrom(example);
   syncLead();
   paint();
-  syncHash();
+  forgetHash();
 }
 
 /** どのタブが選ばれているかを画面に映す。 */
@@ -551,7 +543,6 @@ function listen(): void {
     window.clearTimeout(timer);
     timer = window.setTimeout(() => {
       paint();
-      syncHash();
       // 手で書き換えたときもマップを組み直す (拡張と同じ)。
       map?.refresh();
     }, QUIET_MS);
@@ -565,7 +556,7 @@ function listen(): void {
 
   // **共有リンクを、開いたままの頁に貼られたとき。** ハッシュだけの移動は
   // 頁を読み込み直さないので、ここで拾わないと何も起きない (実際に踏んだ)。
-  // `syncHash` は replaceState なのでこれを鳴らさない (打鍵では回らない)。
+  // 頁の側から `#` を書くことはもう無いので、鳴るのは人が貼ったときだけ。
   window.addEventListener('hashchange', () => {
     const shared = decodeShare(location.hash);
     // 共有リンクでないハッシュ (ただの `#見出し`) には何も言わない。
@@ -593,92 +584,6 @@ function listen(): void {
     reopenMap();
   });
 
-  els.qr.addEventListener('click', showQr);
-  els.qrBox.addEventListener('close', () => { els.qr.setAttribute('aria-expanded', 'false'); });
-  els.share.addEventListener('click', () => { void copyLink(); });
-}
-
-/**
- * リンクを写す。**題名付きで写す** — 貼った先が生の URL を出さないように
- * するのが狙いで、リンクを短くする話とは別 (52 の docs/38)。
- *
- * `text/html` と `text/plain` を**両方**置く。リッチテキストを受ける相手
- * (Gmail・Slack・Notion など) には題だけが見え、プレーンテキストしか
- * 受けない相手には今までどおり URL が渡る。
- *
- * **`ClipboardItem` が無ければ URL だけ写す。** 題が付かないだけで、
- * 渡せるものは変わらない。
- */
-async function copyLink(): Promise<void> {
-  syncHash();
-  const url = location.href;
-  const label = shareLabel(kind, els.source.value);
-  try {
-    if (typeof ClipboardItem === 'function') {
-      await navigator.clipboard.write([new ClipboardItem({
-        'text/html': new Blob([shareHtml(url, label)], { type: 'text/html' }),
-        'text/plain': new Blob([url], { type: 'text/plain' }),
-      })]);
-    } else {
-      await navigator.clipboard.writeText(url);
-    }
-    say(`コピーしました: ${label}`);
-  } catch {
-    say('コピーできませんでした (アドレス欄から取ってください)');
-  }
-}
-
-/**
- * この頁の URL を QR で出す。**開くたびに組み直す** — 例を選ぶたびに
- * `#` が変わるので、覚えておくと前の頁の QR を出すことになる。
- */
-/**
- * 短縮リンクの表。**QR を開いたときに 1 度だけ取りに行く。**
- * 押さない人には落とさせない (資材を要るときだけ落とす、と同じ考え)。
- * 取れなければ空の表 — 長い URL のまま出すだけで、頁は動く。
- */
-let shorts: Promise<Shorts> | null = null;
-
-const loadShorts = (): Promise<Shorts> => {
-  shorts ??= fetch(SHORTS_URL)
-    .then((response) => (response.ok ? response.json() : null))
-    .then((data: unknown) => parseShorts(data))
-    .catch(() => parseShorts(null));
-  return shorts;
-};
-
-/** QR を 1 枚描く。**入らない長さのときは、そう言う。** */
-function drawQr(url: string, was: string | null): void {
-  els.qrUrl.textContent = url;
-  const drawn = qrSvg(url);
-  els.qrCode.innerHTML = drawn ?? '';
-  els.qrCode.hidden = drawn === null;
-
-  els.qrKind.hidden = was === null;
-  if (was !== null) els.qrKind.textContent = `短縮リンク (元の URL は ${was.length} 字)`;
-
-  if (drawn === null) say('この長さは QR に入りません (リンクをコピーしてください)');
-}
-
-/**
- * この頁の QR。**短縮リンクがあれば、そちらを入れる** (52 の docs/42)。
- *
- * 表を待たずに長い URL で先に描く — 表は別の出所から取るので、待つと
- * 窓が空のまま止まって見える。取れたら描き直す。
- */
-function showQr(): void {
-  syncHash();
-  const url = location.href;
-  drawQr(url, null);
-  els.qrBox.showModal();
-  els.qr.setAttribute('aria-expanded', 'true');
-
-  void loadShorts().then((table) => {
-    // 閉じられた・別の図に移った後の結果は捨てる (窓の中身が食い違う)。
-    if (!els.qrBox.open || location.href !== url) return;
-    const short = shortFor(url, table);
-    if (short !== null) drawQr(short, url);
-  });
 }
 
 async function start(): Promise<void> {

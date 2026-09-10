@@ -1,5 +1,21 @@
 import { describe, expect, test } from 'vitest';
-import { decodeShare, encodeShare, shareHtml, shareLabel } from './share.ts';
+import { decodeShare, shareLabel } from './share.ts';
+
+/**
+ * リンクを組む。**頁はもう組まない** (URL は文書ではない。52 の docs/43) ので、
+ * 試験の中で持つ。長い字や 256 種のバイトを literal で書けないため。
+ * **綴りそのものは下の literal の試験が押さえている。**
+ */
+const encode = (kind: string, source: string): string => {
+  const bytes = new TextEncoder().encode(source);
+  let binary = '';
+  const CHUNK = 0x8000;
+  for (let at = 0; at < bytes.length; at += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(at, at + CHUNK));
+  }
+  const payload = btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+  return `${kind}/${payload}`;
+};
 
 /** 読めた前提で中身だけ取る (読めなければ落ちる)。 */
 const read = (hash: string): string => {
@@ -8,20 +24,27 @@ const read = (hash: string): string => {
   return said.source;
 };
 
-describe('encodeShare / decodeShare', () => {
-  test('書いたフェンスを往復させても字が変わらない', () => {
-    // Arrange
-    const source = 'title: 図01 LED と抵抗\nboard: half\n';
+describe('decodeShare', () => {
+  /**
+   * **配ってある綴りを literal で押さえる。** 自分で組んだものを自分で読む
+   * 試験では、綴りが変わったことを捕まえられない (両方が一緒に動くため)。
+   * この字は s.tommie.jp の転送ページ 109 本が指しているものと同じ形。
+   */
+  test('配ってあるリンクを読む (綴りを literal で押さえる)', () => {
+    // Arrange: 「title: 図01 LED と抵抗 / board: half」の base64url。
+    const hash = 'breadboard/dGl0bGU6IOWbszAxIExFRCDjgajmirXmipcKYm9hcmQ6IGhhbGYK';
 
     // Act
-    const back = decodeShare(encodeShare('breadboard', source));
+    const back = decodeShare(hash);
 
     // Assert
-    expect(back).toEqual({ ok: true, kind: 'breadboard', source });
+    expect(back).toEqual({ ok: true, kind: 'breadboard', source: 'title: 図01 LED と抵抗\nboard: half\n' });
   });
 
-  test('種類はリンクの頭に平文で載る', () => {
-    expect(encodeShare('circuit', 'x')).toMatch(/^circuit\//);
+  test('往復しても字が変わらない', () => {
+    const source = 'title: 図01 LED と抵抗\nboard: half\n';
+
+    expect(decodeShare(encode('breadboard', source))).toEqual({ ok: true, kind: 'breadboard', source });
   });
 
   test('URL に置けない字を含まない (base64 の + / = を置き換える)', () => {
@@ -29,15 +52,15 @@ describe('encodeShare / decodeShare', () => {
     const source = Array.from({ length: 256 }, (_, code) => String.fromCharCode(code)).join('');
 
     // Act
-    const payload = encodeShare('perfboard', source).split('/')[1] ?? '';
+    const payload = encode('perfboard', source).split('/')[1] ?? '';
 
     // Assert
     expect(payload).toMatch(/^[A-Za-z0-9_-]+$/);
-    expect(read(encodeShare('perfboard', source))).toBe(source);
+    expect(read(encode('perfboard', source))).toBe(source);
   });
 
   test('先頭の # が付いていても読める', () => {
-    const hash = encodeShare('breadboard', 'board: half\n');
+    const hash = encode('breadboard', 'board: half\n');
 
     expect(read(`#${hash}`)).toBe('board: half\n');
   });
@@ -45,13 +68,13 @@ describe('encodeShare / decodeShare', () => {
   test('長いフェンスでも落ちない (btoa の引数の上限)', () => {
     const source = 'board: half\n'.repeat(5_000);
 
-    expect(read(encodeShare('breadboard', source))).toBe(source);
+    expect(read(encode('breadboard', source))).toBe(source);
   });
 
   test('短い綴りのリンクも読める', () => {
     // 52 の docs/08 で綴りを短くすると決めてある。正を入れ替える日に
     // 配ってあるリンクが切れないよう、両方を読めるようにしてある。
-    const hash = `bread/${encodeShare('breadboard', 'board: half\n').split('/')[1] ?? ''}`;
+    const hash = `bread/${encode('breadboard', 'board: half\n').split('/')[1] ?? ''}`;
 
     expect(decodeShare(hash)).toEqual({ ok: true, kind: 'breadboard', source: 'board: half\n' });
   });
@@ -101,11 +124,11 @@ describe('encodeShare / decodeShare', () => {
 });
 
 /**
- * 貼ったときに見える題。**リンクの長さではなく、貼った先の見た目**を直す
- * ためのもの (52 の docs/38)。`text/html` に題名付きのリンクを置くと、
- * リッチテキストを受ける相手には題だけが見える。
+ * フェンスの題。**画面のあちこちで図の名前として出す** (例の欄、リンクで
+ * 開いたときの一文、「試す」釦の引き当て)。もとは貼ったときの見た目を直す
+ * ために足したもの (52 の docs/38)。
  */
-describe('貼ったときの題', () => {
+describe('フェンスの題', () => {
   test('フェンスの title をそのまま題にする', () => {
     expect(shareLabel('breadboard', 'title: 図01 LED と抵抗\nboard: half\n')).toBe('図01 LED と抵抗');
   });
@@ -129,24 +152,5 @@ describe('貼ったときの題', () => {
 
     expect(said.length).toBeLessThan(70);
     expect(said.endsWith('…')).toBe(true);
-  });
-
-  test('貼る HTML は題つきの 1 本のリンク', () => {
-    const html = shareHtml('https://example.test/#circuit/eA', '図01');
-
-    expect(html).toBe('<a href="https://example.test/#circuit/eA">図01</a>');
-  });
-
-  /** 題もアドレスも外から来た字。**そのまま HTML に入れない。** */
-  test('題に混ぜられた印は逃がす', () => {
-    const html = shareHtml('https://example.test/', '<img src=x onerror=alert(1)>&"');
-
-    expect(html).not.toContain('<img');
-    expect(html).toContain('&lt;img');
-    expect(html).toContain('&amp;');
-  });
-
-  test('アドレスの引用符も逃がす', () => {
-    expect(shareHtml('https://example.test/"onmouseover="x', '題')).not.toContain('"onmouseover="x');
   });
 });
