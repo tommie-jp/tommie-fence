@@ -218,6 +218,15 @@ export type FenceEditor = {
 
   /** パレット (置ける部品の一覧) の HTML。 */
   readonly palette: () => string;
+  /**
+   * その種類 1 つの絵 (SVG)。**帯の印に使う** — 引き出しの中身が部品の
+   * 一覧なので、その言語の抵抗をそのまま印にする (52 の docs/46)。
+   *
+   * **言語で姿が違う。** 回路図は記号 (アメリカ型の折れ線)、ブレッドボードと
+   * 基板は実物の姿。パレットが既に描き分けているので、同じものを引く。
+   * 描き方を知らない種類は null。
+   */
+  readonly partIcon?: (type: string) => string | null;
   /** 種類の名前の候補 (`datalist`)。欄で種類を打ち替えるときに出す。 */
   readonly typeNames: (listId: string) => string;
 

@@ -60,7 +60,7 @@ const bodyHtml = (): string => {
         palette: '<button class="cf-pick" data-type="resistor" data-ends="2" data-find="resistor"></button>',
         typeNames: '',
         colorNames: '',
-        swatches: '<button type="button" class="cf-swatch" data-color="red"><span></span>red</button>',
+        swatches: '<button type="button" class="cf-swatch" data-color="red"><span></span>red</button>', drawerIcon: '',
         foldsWire: false,
         fine: null,
         fineFor: 'all',

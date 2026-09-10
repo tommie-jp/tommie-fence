@@ -1,4 +1,4 @@
-import { renderIssues, wireColorNames } from 'fence-kit';
+import { partIcon, renderIssues, wireColorNames } from 'fence-kit';
 import type { EditResult, FenceEditor } from 'fence-kit';
 import { normalizeNewlines } from 'fence-kit';
 import { renderPalette, renderTypeOptions } from './palette.ts';
@@ -101,6 +101,8 @@ export function createPerfboardEditor(): FenceEditor {
     stepsTo,
 
     palette: renderPalette,
+    // 帯の印は**その言語の抵抗**。基板図なので実物の姿 (色帯の付いた胴)。
+    partIcon: (type) => partIcon(type),
     typeNames: renderTypeOptions,
     colorNames: renderColorOptions,
     // **固定の色見本を属性に出す** (実機で「ドロップダウンメニューではなく、

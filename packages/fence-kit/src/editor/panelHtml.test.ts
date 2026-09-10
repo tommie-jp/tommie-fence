@@ -6,7 +6,7 @@ const CHROME = {
   palette: '<details class="cf-palette"></details>',
   typeNames: '<datalist id="cf-type-names"></datalist>',
   colorNames: '<datalist id="cf-color-names"></datalist>',
-  swatches: '',
+  swatches: '', drawerIcon: '',
   foldsWire: false,
   fine: null,
   fineFor: 'all' as const,
@@ -465,7 +465,7 @@ describe('狭いときの畳み方', () => {
    */
   test('tightens the parts list rows, which are wide enough to keep their target', () => {
     const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
-    expect(narrow).toMatch(/\.cf-types \.cf-pick \{[^}]*min-height: 36px/);
+    expect(narrow).toMatch(/\.cf-types \.cf-pick \{[^}]*min-height: 32px/);
   });
 
   test('drops the icon-only buttons to the 36px iOS uses for small controls', () => {

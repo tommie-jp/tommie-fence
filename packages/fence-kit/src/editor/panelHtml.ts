@@ -362,8 +362,11 @@ const STYLE = `
       font-weight: 700; font-size: 16px; line-height: 1;
       color: var(--vscode-editor-foreground, CanvasText);
     }
-    /* 引き出しの印は絵なので、字の太さではなく線の太さで出す。 */
-    .kc-props-toggle svg { width: 24px; height: 12px; }
+    /* 引き出しの印は絵なので、字の太さではなく線の太さで出す。
+       **枠の真ん中に置く** (実機で「上下方向の中央に表示する」) — 釦の中で
+       字のベースラインに載ると、絵が下に沈む。 */
+    .kc-props-toggle { display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+    .kc-props-toggle svg { display: block; width: 26px; height: auto; max-height: 22px; }
 
     /* **フェンスの選び手と送りの釦は 1 行に** (実機で頼まれた)。
        折り返させず、余った幅を選び手に吸わせる。 */
@@ -407,11 +410,12 @@ const STYLE = `
     /* 一覧の行は iOS も 44pt。**ここは縮めない** — 並んだ中の 1 つを
        選ぶので、隣を押すと別の部品が置かれる。 */
     .cf-pick, .cf-swatch, .kc-menu-item { min-height: 44px; }
-    /* **部品の一覧の行だけは詰める** (実機で「行間を狭くする」)。行は
-       引き出しの幅いっぱい (300px) なので、高さを 36px にしても押す面は
-       36 x 300 あり、44px 角の指針は面積として満たす。絵 20px + 上下 8px。
+    /* **部品の一覧の行だけは詰める** (実機で 2 度「行間を狭くする」)。行は
+       引き出しの幅いっぱい (300px) なので、高さを 32px にしても押す面は
+       32 x 300 あり、44px 角の指針は面積として満たす (絵が 20px なので、
+       これ以上詰めると絵が枠に触る)。
        長押しの一覧 (行が狭い) と色見本 (升が小さい) は 44px のまま。 */
-    .cf-types .cf-pick { min-height: 36px; padding-top: 0; padding-bottom: 0; }
+    .cf-types .cf-pick { min-height: 32px; padding-top: 0; padding-bottom: 0; }
     .cf-icons { grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); }
     .cf-icons .cf-pick { min-height: 44px; }
 
@@ -658,6 +662,11 @@ export type PanelChrome = {
   readonly colorNames: string;
   /** 配線の色見本 (固定のパレット)。色を書かないフェンスでは空。 */
   readonly swatches: string;
+  /**
+   * 引き出しの印 (抵抗の絵)。**言語で姿が違う** — 回路図は記号、
+   * ブレッドボードと基板は実物の姿 (52 の docs/46)。描けないときは空。
+   */
+  readonly drawerIcon: string;
   /** 配線を `Shift` で折れるか (`FenceEditor.foldsWire`)。案内文に出す。 */
   readonly foldsWire: boolean;
   /** 何分の 1 升まで刻めるか (`FenceEditor.fine`)。null なら Ctrl は素のクリック (52 の docs/23)。 */
@@ -774,9 +783,9 @@ export function renderFencePicker(fences: readonly FenceEntry[], line: number | 
 }
 
 /**
- * 引き出しの印。**部品 (抵抗) の絵**にする — 中身が部品の一覧と属性なので、
- * 絵がそのまま中身を言う (実機で「部品アイコン (抵抗の図形) にする」)。
- * IEC の四角い抵抗。**線は太めに** — 20px 角では細い線が飛ぶ。
+ * 引き出しの印の**受け皿**。ふだんはその言語の抵抗 (`chrome.drawerIcon`) が
+ * 入る — 回路図は記号、ブレッドボードと基板は実物の姿。
+ * ここに落ちるのは、絵を持たない言語が来たときだけ。
  */
 const RESISTOR_ICON = '<svg viewBox="0 0 26 12" width="22" height="11" aria-hidden="true" focusable="false">'
   + '<path d="M1 6h4M21 6h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
@@ -853,7 +862,7 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     + `<body data-tool="select"${own ? ' class="cf-own-undo"' : ''}>`
     + `<header class="kc-top">`
     + `<button type="button" class="kc-props-toggle" title="属性と部品 (狭いとき)"`
-    + ` aria-label="属性と部品">${RESISTOR_ICON}</button>`
+    + ` aria-label="属性と部品">${chrome.drawerIcon || RESISTOR_ICON}</button>`
     + `<span class="kc-group">`
     + `<button class="cf-undo"${own ? ' disabled' : ''} title="元に戻す (Ctrl+Z)">↶</button>`
     + `<button class="cf-redo"${own ? ' disabled' : ''} title="やり直す (Ctrl+Shift+Z)">↷</button></span>`
