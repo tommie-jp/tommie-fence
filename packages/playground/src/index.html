@@ -94,12 +94,23 @@
           <input type="file" id="file" accept=".md,.markdown,text/markdown" hidden />
           <button type="button" id="open">開く</button>
           <button type="button" id="save">保存</button>
+          <button type="button" id="qr" aria-expanded="false">QR</button>
           <button type="button" id="map-toggle" aria-pressed="false">GUI で編集</button>
           <span class="said" id="said" role="status"></span>
         </div>
       </div>
 
       <iframe class="map" id="map" title="図を掴んで動かすマップ" hidden></iframe>
+
+      <!-- **いま開いている文書を指すリンク**の QR。スマホで開き直す・人に渡す
+           ための道 (52 の docs/44)。手元のファイルには置き場が無いので、
+           そのときは頁の URL だけを入れて、そう言う。 -->
+      <dialog class="qr-box" id="qr-box">
+        <p class="qr-url" id="qr-url"></p>
+        <p class="qr-kind" id="qr-kind"></p>
+        <div class="qr-code" id="qr-code"></div>
+        <form method="dialog"><button type="submit">閉じる</button></form>
+      </dialog>
 
       <div class="panes">
         <!-- **図が先。** 狭い画面ではこの順のまま、広い画面では order で

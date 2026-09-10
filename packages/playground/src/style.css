@@ -42,6 +42,28 @@ h1 { font-size: 1.5rem; margin: 0 0 4px; }
    その分を一文と図に渡す (52 の docs/41)。 */
 .foot .ver { font-family: var(--mono); }
 
+/* いま開いている文書を指すリンクの QR (52 の docs/44)。 */
+.qr-box {
+  border: 1px solid var(--line); border-radius: 10px;
+  padding: 16px; color: var(--ink); background: var(--paper);
+  max-width: min(92vw, 420px);
+}
+.qr-box::backdrop { background: rgb(0 0 0 / 40%); }
+.qr-url {
+  margin: 0 0 4px; font-family: var(--mono); font-size: 11px; color: var(--ink);
+  /* **折り返して全部見せる** (縮めると読み合わせできない)。 */
+  overflow-wrap: anywhere;
+}
+/* 何を指しているか。**手元のファイルは渡せない**ので、そこを言う場所。 */
+.qr-kind { margin: 0 0 12px; font-size: 0.8rem; color: var(--dim); }
+.qr-code svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+.qr-box form { margin-top: 12px; text-align: right; }
+.qr-box button {
+  font: inherit; font-size: 0.9rem; padding: 4px 12px; cursor: pointer;
+  color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line); border-radius: 6px;
+}
+
 h2 { font-size: 0.8rem; margin: 0 0 6px; color: var(--dim); font-weight: 600; }
 
 /* **一文は 1 つだけ出す** (`main.ts` が言語を選ぶ)。2 つ並べると、

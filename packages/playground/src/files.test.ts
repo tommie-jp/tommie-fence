@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { UNTITLED, asTyped, canHold, docFrom, isCrlf, nameOf, withNewlines } from './files.ts';
+import { UNTITLED, asTyped, canHold, docFrom, isCrlf, linkTo, nameOf, withNewlines } from './files.ts';
 
 /**
  * **改行の形を保つ。** テキスト欄は値を LF に均すので、開いた時点で
@@ -88,5 +88,52 @@ describe('canHold', () => {
     expect(canHold({})).toBe(false);
     expect(canHold(null)).toBe(false);
     expect(canHold(undefined)).toBe(false);
+  });
+});
+
+/**
+ * **アドレス欄と QR は同じ答えを使う。** 2 通りに数えると、配った QR と
+ * 手元の URL が食い違う (52 の docs/44)。
+ */
+describe('linkTo', () => {
+  const BASE = 'https://tommie-jp.github.io/tommie-fence/';
+
+  test('同じ置き場の文書は相対の道で指す', () => {
+    expect(linkTo(BASE, `${BASE}examples/breadboard/01-led.md`))
+      .toBe(`${BASE}?doc=examples/breadboard/01-led.md`);
+  });
+
+  test('別の置き場の文書は URL のまま指す', () => {
+    expect(linkTo(BASE, 'https://example.test/x.md'))
+      .toBe(`${BASE}?doc=https://example.test/x.md`);
+  });
+
+  /**
+   * **手元のファイルには URL が無い。** ディスクの上にしか無く、相手の端末
+   * には存在しない。頁の URL だけを渡す (実機で「文書がない場合は ?doc=
+   * なしで、そのページの URL だけを埋め込む」)。
+   */
+  test('置き場が無ければ頁の URL だけ', () => {
+    expect(linkTo(BASE, null)).toBe(BASE);
+    expect(linkTo(BASE, '')).toBe(BASE);
+  });
+
+  test('`/` と `:` は化けさせない (読み合わせる字なので)', () => {
+    expect(linkTo(BASE, 'https://example.test/a/b.md')).toContain('https://example.test/a/b.md');
+  });
+
+  test('問い合わせの区切りは逃がす (行き先を切らない)', () => {
+    const link = linkTo(BASE, 'https://example.test/x.md?v=2&y=3');
+
+    expect(link).toContain('%3F');
+    expect(link).toContain('%26');
+  });
+
+  /** 出した道はそのまま読み直せる (アドレス欄に置いたものを開き直せる)。 */
+  test('出したリンクは docFrom で読み直せる', () => {
+    const link = linkTo(BASE, `${BASE}examples/circuit/00-led.md`);
+    const search = link.slice(link.indexOf('?'));
+
+    expect(docFrom(search, BASE)).toBe(`${BASE}examples/circuit/00-led.md`);
   });
 });

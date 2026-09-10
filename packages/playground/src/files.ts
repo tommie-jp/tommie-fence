@@ -4,6 +4,9 @@
  * fence-editor は「外にある `.md` を開く → 中のフェンスを直す → `.md` に
  * 書き戻す」道具で、頁はその手順のデモをする。**開く口と書き戻す口は
  * 動く所によって違う**が、決め方はここに集める (DOM は知らない)。
+ *
+ * **その文書がどこにあるか**もここが持つ (`linkTo`)。アドレス欄と QR は
+ * 同じ答えを使う — 2 通りに数えると、配った QR と手元の URL が食い違う。
  */
 
 /** 名前が分からないときの呼び名。 */
@@ -79,3 +82,28 @@ export type FileHandle = {
 /** 掴み手を持てる窓か。 */
 export const canHold = (view: unknown): boolean =>
   typeof view === 'object' && view !== null && 'showOpenFilePicker' in view;
+
+/**
+ * 問い合わせに置ける形にする。**`/` と `:` は戻す** — どちらも問い合わせに
+ * 置いてよい字で、`%2F` に化けると URL が長く、読み合わせにくくなる
+ * (QR の窓に出す字でもある)。
+ */
+export const asQuery = (text: string): string =>
+  encodeURIComponent(text).replaceAll('%2F', '/').replaceAll('%3A', ':');
+
+/**
+ * **いま開いている文書を指すリンク。** アドレス欄にも QR にもこれを使う。
+ *
+ * `base` は頁そのもの (問い合わせも `#` も無い形)。`docUrl` はその文書の
+ * 置き場で、**手元のファイルには無い** (ディスクの上にしか無く、相手の端末に
+ * は存在しない) ので、そのときは**頁の URL だけ**を返す。
+ *
+ * 同じ置き場の下にあるものは**相対の道**にする — `?doc=examples/…` の形。
+ * 短くなるうえ、手元 (`/`) と Pages (`/tommie-fence/`) の 2 つある置き場の
+ * どちらでも同じ字になる。
+ */
+export function linkTo(base: string, docUrl: string | null): string {
+  if (docUrl === null || docUrl === '') return base;
+  const path = docUrl.startsWith(base) ? docUrl.slice(base.length) : docUrl;
+  return `${base}?doc=${asQuery(path)}`;
+}

@@ -5,7 +5,8 @@ import { decodeShare } from './share.ts';
 import { parseExamples, shown } from './examples.ts';
 import { nudge, nudgesFor } from './demo.ts';
 import { asDocument, fenceAt, fencesIn, labelOf, lineOfOffset, replaceFence } from './document.ts';
-import { UNTITLED, asTyped, canHold, docFrom, isCrlf, nameOf, withNewlines } from './files.ts';
+import { UNTITLED, asTyped, canHold, docFrom, isCrlf, linkTo, nameOf, withNewlines } from './files.ts';
+import { qrSvg } from './qr.ts';
 import type { FileHandle } from './files.ts';
 import type { DocFence } from './document.ts';
 import type { Example } from './examples.ts';
@@ -38,6 +39,11 @@ const els = {
   file: need<HTMLInputElement>('file'),
   open: need<HTMLButtonElement>('open'),
   save: need<HTMLButtonElement>('save'),
+  qr: need<HTMLButtonElement>('qr'),
+  qrBox: need<HTMLDialogElement>('qr-box'),
+  qrUrl: need('qr-url'),
+  qrKind: need('qr-kind'),
+  qrCode: need('qr-code'),
   said: need('said'),
   source: need<HTMLTextAreaElement>('source'),
   figure: need('figure'),
@@ -70,13 +76,19 @@ type Doc = {
   readonly title: string;
   /** リポジトリの中の置き場。例のときだけ (出どころのリンクに使う)。 */
   readonly from: string | null;
+  /**
+   * **その文書がどこにあるか。** 例と `?doc=` にはあり、手元のファイルには
+   * 無い (ディスクの上にしか無く、相手の端末には存在しない)。
+   * アドレス欄と QR がこれを指す。
+   */
+  readonly url: string | null;
   /** 配ってあるリンクから開いたか。 */
   readonly fromLink: boolean;
   /** 開いたときが CRLF だったか。**書き戻すときに揃える。** */
   readonly crlf: boolean;
 };
 
-let doc: Doc = { name: '', title: '', from: null, fromLink: false, crlf: false };
+let doc: Doc = { name: '', title: '', from: null, url: null, fromLink: false, crlf: false };
 /** 開いたときの全文。「元に戻す」の行き先。 */
 let pristine = '';
 /** いまの文書のフェンス。**欄の字が正**なので、変わるたびに数え直す。 */
@@ -407,16 +419,24 @@ function toggleMap(): void {
 // **マップは開き直さない。** 3 つの言語を一度に渡してあるので、別の言語の
 // フェンスへ移っても殻の側で乗り換わる (52 の docs/43)。
 
+/** この頁そのもの (問い合わせも `#` も無い形)。リンクを組む基準。 */
+const pageUrl = (): string => `${location.origin}${location.pathname}`;
+
 /**
- * URL からリンクの印を落とす。**URL は文書ではない** (52 の docs/43)。
+ * アドレス欄を、いま開いている文書に合わせる。**URL は文書の中身ではなく、
+ * 文書の置き場を指す** (52 の docs/43 / 44)。
  *
- * 打鍵のたびに図を URL へ書く作りをやめたので、リンクで来た人が別のものを
- * 開いたら、来たときの `#` は嘘になる (読み込み直すと前の図に戻ってしまう)。
- * 落として、この頁の場所だけにする。履歴は積まない。
+ * - 置き場のある文書 (例・`?doc=`) → `?doc=…`。読み込み直しても同じものが出る
+ * - 手元のファイル → 頁の URL だけ。**指せるものが無い**
+ * - 配ってあるリンクで来たとき → 来たときの `#` を残す (旧い形の読み)
+ *
+ * 履歴は積まない (打鍵のたびに戻れなくなるのを避けたのと同じ)。
  */
-function forgetHash(): void {
-  if (location.hash === '') return;
-  history.replaceState(null, '', `${location.pathname}${location.search}`);
+function showWhere(): void {
+  const link = linkTo(pageUrl(), doc.url);
+  const dev = showsBroken ? (link.includes('?') ? '&dev' : '?dev') : '';
+  const hash = doc.fromLink ? location.hash : '';
+  history.replaceState(null, '', `${link}${dev}${hash}`);
 }
 
 /**
@@ -543,6 +563,7 @@ function openDoc(next: Doc, text: string): void {
   showFrom();
   syncLead();
   paint();
+  showWhere();
   map?.refresh();
 }
 
@@ -556,8 +577,12 @@ async function openExample(index: number): Promise<void> {
     if (!response.ok) throw new Error(`${response.status} で返りました`);
     const text = await response.text();
     els.example.value = String(index);
-    openText(example.name, text, { title: example.title, from: example.from });
-    forgetHash();
+    openText(example.name, text, {
+      title: example.title,
+      from: example.from,
+      // **例も置き場のある文書。** 同じ URL を渡せば相手も同じものを開ける。
+      url: new URL(example.path, pageUrl()).href,
+    });
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     say(`${example.name} を開けませんでした: ${reason}`, true);
@@ -581,6 +606,8 @@ function openText(name: string, text: string, over: Partial<Doc> = {}): void {
     name: name === '' ? UNTITLED : name,
     title: name,
     from: null,
+    // **手元のファイルには置き場が無い。** 呼ぶ側が知っていれば渡す。
+    url: null,
     fromLink: false,
     crlf,
     ...over,
@@ -593,7 +620,6 @@ async function openFile(file: File, handle: FileHandle | null = null): Promise<v
     openText(file.name, await file.text());
     // **開いた後に持たせる** (`openDoc` が掴み手を落とすので、順は逆にできない)。
     held = handle;
-    forgetHash();
     say(handle === null ? `${file.name} を開きました` : `${file.name} を開きました (保存で上書きします)`);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
@@ -634,7 +660,7 @@ async function openUrl(url: string): Promise<boolean> {
   try {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`${response.status} で返りました`);
-    openText(nameOf(url), await response.text());
+    openText(nameOf(url), await response.text(), { url });
     return true;
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
@@ -687,6 +713,33 @@ function kept(typed: string, message: string): void {
   showDocName();
   renderTry();
   say(message);
+}
+
+/**
+ * いま開いている文書を指すリンクの QR。**スマホで開き直す・人に渡す**道
+ * (52 の docs/44)。
+ *
+ * 入れるのは**中身ではなく置き場**。手元のファイルにはそれが無い —
+ * ディスクの上にしか無く、相手の端末には存在しない — ので、そのときは
+ * **頁の URL だけ**を入れて、渡せないことを言う (実機で決めた形)。
+ *
+ * 開くたびに組み直す。文書を替えれば指す先も変わるので、覚えておくと
+ * 前の文書の QR を出すことになる。
+ */
+function showQr(): void {
+  const link = linkTo(pageUrl(), doc.url);
+  els.qrUrl.textContent = link;
+  els.qrKind.textContent = doc.url === null
+    ? `この頁を開くリンク (${doc.name === '' ? 'いまの文書' : doc.name} は手元にあるので渡せません)`
+    : 'この文書を開くリンク';
+
+  const drawn = qrSvg(link);
+  els.qrCode.innerHTML = drawn ?? '';
+  els.qrCode.hidden = drawn === null;
+  if (drawn === null) say('この長さは QR に入りません', true);
+
+  els.qrBox.showModal();
+  els.qr.setAttribute('aria-expanded', 'true');
 }
 
 /** いまのフェンスを選び直す。 */
@@ -763,6 +816,8 @@ function listen(): void {
     els.file.value = '';
   });
   els.save.addEventListener('click', () => { void saveDoc(); });
+  els.qr.addEventListener('click', showQr);
+  els.qrBox.addEventListener('close', () => { els.qr.setAttribute('aria-expanded', 'false'); });
 
   // **落として開く。** 受け皿は頁ぜんぶ (どこへ落としても同じ)。
   for (const kind of ['dragenter', 'dragover'] as const) {
@@ -842,6 +897,7 @@ function openLink(kind: Kind, source: string): void {
     name: 'リンクの図.md',
     title: fence === undefined ? 'リンクの図' : labelOf(fence),
     from: null,
+    url: null,
     fromLink: true,
     crlf: false,
   }, text);
