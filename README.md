@@ -22,13 +22,14 @@ numbers and the content of the offending line.
 ## Try it without installing anything
 
 **[Open the playground](https://tommie-jp.github.io/tommie-fence/)** — no
-account, no sign-up. Type on the left, the drawing appears on the right, and
-**all three fences draw** — schematics included, with TeX running in
+account, no sign-up. **Open a `.md`, edit the fences inside it, write the `.md`
+back** — the same steps the extension takes, in a browser alone.
+**All three fences draw** — schematics included, with TeX running in
 WebAssembly (the engine is fetched only the first time you draw a circuit).
 **The map opens there too**: drag a part and the address in the fence is
-rewritten, the same editor the extensions carry. It carries 125 examples,
-including the deliberately broken ones that show how mistakes are reported.
-What you write goes into the URL, so a link is enough to hand it to someone.
+rewritten, the same editor the extension carries. It carries the 47 `.md`
+files from each package's `examples/`, unchanged. Open your own file (button,
+drop, or `?doc=`), edit it, and write it back.
 
 [![Open in Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
 
