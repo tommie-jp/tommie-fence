@@ -211,7 +211,12 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
     devices: placements,
     wires: rendered,
     notes,
-    sourceLines: notes.some((note) => note.spec.kind === 'source') ? sourceListing(source) : [],
+    // **掴んで動かすときは書き出しを出さない** (52 の docs/45)。あれは公開する
+    // 図に「元の字」を添えるためのもので、editor では字は隣の欄に出ている。
+    // 二重になるうえ、板より高い帯が付いて図そのものが小さくなる。
+    sourceLines: options.edit !== true && notes.some((note) => note.spec.kind === 'source')
+      ? sourceListing(source)
+      : [],
     partsList: parsed.doc.partsList,
   });
 

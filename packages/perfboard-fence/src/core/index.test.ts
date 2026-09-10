@@ -682,6 +682,31 @@ wires:
     expect(renderPerfboard(LED, { edit: false }).svg).toBe(renderPerfboard(LED).svg);
   });
 
+  /**
+   * **掴んで動かすときは書き出しを出さない** (52 の docs/45)。あれは公開する
+   * 図に「元の字」を添えるためのもので、editor では字は隣の欄に出ている。
+   * 二重になるうえ、板より高い帯が付いて図そのものが小さくなる。
+   */
+  test('leaves out the source listing on the map, where the text is already beside it', () => {
+    // Arrange
+    const withSource = `${LED}notes:\n  - source blue\n`;
+
+    // Act
+    const drawn = renderPerfboard(withSource, { edit: true }).svg;
+
+    // Assert
+    expect(drawn).not.toContain('R1: resistor b2 b6 10k');
+    expect(renderPerfboard(withSource).svg).toContain('R1: resistor b2 b6 10k');
+  });
+
+  test('keeps the map no taller than the plain drawing when source is asked for', () => {
+    const withSource = `${LED}notes:\n  - source blue\n`;
+    const heightOf = (svg: string): number => Number(/height="([\d.]+)"/.exec(svg)?.[1] ?? 0);
+
+    expect(heightOf(renderPerfboard(withSource, { edit: true }).svg))
+      .toBeLessThan(heightOf(renderPerfboard(withSource).svg));
+  });
+
   test('lays a cell over every hole when the map is asked for', () => {
     const { svg } = renderPerfboard(LED, { edit: true });
 

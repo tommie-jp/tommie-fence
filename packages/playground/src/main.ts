@@ -392,10 +392,6 @@ const NARROW = '(max-width: 720px)';
  */
 function syncFull(): void {
   const editing = els.mapToggle.getAttribute('aria-pressed') === 'true';
-  // **GUI で編集しているあいだは、フェンスの字を出さない** (2026-09-10 の決め)。
-  // 畳み方は CSS の `body.editing` が持つ。狭い画面では `body.full` が
-  // 両方とも畳むので、効くのは広い画面。
-  document.body.classList.toggle('editing', editing);
   document.body.classList.toggle('full', asApp() || (editing && window.matchMedia(NARROW).matches));
   // **開いているあいだは「閉じる」と言う。** 同じ釦が行きと帰りを兼ねるので、
   // 「編集する」のままだと、いま何を押せるのかが読めない。

@@ -143,7 +143,12 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
 
   // 書き出し (`- source`) は板の上に置かないので、帯の分だけ画布を伸ばす。
   // **図を組む前に測る** — 帯の大きさが決まらないと板の置き場所も決まらない。
-  const sourceNotes = parsed.doc.notes.filter((note) => note.kind === 'source');
+  // **掴んで動かすときは書き出しを出さない** (52 の docs/45)。あれは公開する
+  // 図に「元の字」を添えるためのもので、editor では字は隣の欄に出ている。
+  // 二重になるうえ、板より高い帯が付いて図そのものが小さくなる。
+  const sourceNotes = options.edit === true
+    ? []
+    : parsed.doc.notes.filter((note) => note.kind === 'source');
   const listing = sourceNotes.length > 0 ? sourceListing(source) : [];
   // 部品表も板の外に出すので、**図を組む前に測る** (書き出しと同じ理由)。
   // 板に載せる前の部品から作る — 載せられなかった部品も、揃えるものには変わりない。

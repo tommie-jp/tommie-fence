@@ -1123,6 +1123,23 @@ describe('renderBreadboard の編集用の描き方', () => {
     expect(renderBreadboard(led, { edit: false }).svg).toBe(renderBreadboard(led).svg);
   });
 
+  /**
+   * **掴んで動かすときは書き出しを出さない** (52 の docs/45)。あれは公開する
+   * 図に「元の字」を添えるためのもので、editor では字は隣の欄に出ている。
+   * 二重になるうえ、板より高い帯が付いて図そのものが小さくなる。
+   */
+  test('leaves out the source listing on the map, where the text is already beside it', () => {
+    // Arrange
+    const withSource = `${led}notes:\n  - source blue\n`;
+
+    // Act
+    const drawn = renderBreadboard(withSource, { edit: true }).svg;
+
+    // Assert
+    expect(drawn).not.toContain('board: half');
+    expect(renderBreadboard(withSource).svg).toContain('board: half');
+  });
+
   test('lays a cell over every hole when the map is asked for', () => {
     const { svg } = renderBreadboard(led, { edit: true });
 
