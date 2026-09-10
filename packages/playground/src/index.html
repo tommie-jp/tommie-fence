@@ -104,18 +104,19 @@
             <input type="file" id="file" accept=".md,.markdown,text/markdown" hidden />
             <button type="button" id="open">開く</button>
             <button type="button" id="qr" aria-expanded="false">QR</button>
-            <!-- 何が起きたかの記録。**一言は 2 秒で消えて、スマホでは
-                 見逃しやすい** (52 の docs/45)。開いても図を押し下げないよう
-                 垂れ下げる。 -->
-            <details class="log" id="log">
-              <summary>ログ</summary>
-              <ol id="log-rows"></ol>
-            </details>
           </div>
           <!-- **よく押すものは隠さない** (52 の docs/46)。保存が 2 タップに
                なるのは、直す道具として一番困る所 — 頁を閉じると字は消える。 -->
           <button type="button" id="save">保存</button>
           <button type="button" id="map-toggle" aria-pressed="false">GUI で編集</button>
+          <!-- 何が起きたかの記録。**一言は 2 秒で消えて、スマホでは見逃し
+               やすい** (52 の docs/45)。開いても図を押し下げないよう垂れ下げる。
+               **畳んだ姿でも `···` の中に入れない** — しくじりを読む場所なので、
+               いつでも 1 押しで開けるようにする (実機で「常に表示する」)。 -->
+          <details class="log" id="log">
+            <summary>ログ</summary>
+            <ol id="log-rows"></ol>
+          </details>
           <span class="said" id="said" role="status"></span>
         </div>
       </div>

@@ -22,6 +22,11 @@ const EDITORS: Readonly<Record<Kind, () => FenceEditor>> = {
 export type MapHandle = {
   /** 本文が外で変わったときに、マップを組み直す。 */
   readonly refresh: () => void;
+  /**
+   * 帯 (読めなかった行とお知らせ) にお知らせを足す。**頁で起きたこと**を
+   * 言う先 — 畳んだ姿では、頁の側の断りが出る場所が無い (52 の docs/46)。
+   */
+  readonly notice: (text: string, bad?: boolean) => void;
   /** 片付ける (聞き耳を外す)。 */
   readonly close: () => void;
 };
@@ -89,6 +94,7 @@ export function openMap({ frame, text, setText, fenceLine, onBind, onStatus }: M
 
   return {
     refresh: () => session.refresh(),
+    notice: (text, bad = true) => post({ kind: 'notice', text, bad }),
     close: () => {
       frame.removeEventListener('load', onLoad);
       window.removeEventListener('message', onMessage);

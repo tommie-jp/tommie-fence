@@ -138,6 +138,9 @@ select, .bar button {
   box-shadow: 0 4px 12px rgb(0 0 0 / 18%);
 }
 .log li { margin: 2px 0; }
+/* **しくじりは赤で。** 並んだ記録の中から目で拾えるようにする
+   (実機で「失敗はログと帯に赤色で表示する」)。 */
+.log li.bad { color: var(--bad); font-weight: 600; }
 .log time { font-family: var(--mono); color: var(--dim); margin-right: 6px; }
 .log .none { color: var(--dim); }
 
@@ -292,7 +295,10 @@ body.full .picks { display: none; }
    2 段で 90px 取っていたのを 44px にして、その分を図に渡す。
    板の置き場所を測る基準は帯そのもの (道具の行だと右半分にしか出ない)。 */
 body.full .bar { position: relative; flex-wrap: nowrap; }
-body.full .tools { position: static; flex-wrap: nowrap; }
+/* **道具は要るだけ取る** (`flex: none`)。広い画面では余りを吸わせているが、
+   畳んだ姿でそれをやると名前と幅を分け合って、釦のほうが折り返す
+   (実測で帯が 99px になった)。余りは名前に吸わせて、長ければ端を詰める。 */
+body.full .tools { position: static; flex-wrap: nowrap; flex: none; min-width: 0; }
 body.full .more { display: inline-flex; align-items: center; }
 /* 名前は真ん中で、長ければ端を詰める (釦の場所を押しのけない)。 */
 body.full .doc {
@@ -301,7 +307,9 @@ body.full .doc {
 }
 /* **たまに押すものは板の中へ。** 一言は出ているときだけ場所を取る。 */
 body.full .more-items { display: none; }
-body.full .said:empty { display: none; }
+/* **畳んだ姿では一言を出さない** (実機で踏んだ)。長い断りが入ると 1 行の帯が
+   崩れて釦が押しのけられる。しくじりはログ (赤) とマップの帯へ回す。 */
+body.full .said { display: none; }
 
 /* `···` を押したとき。**帯の下から板が降りる** — 図は押し下げない
    (重ねるだけなので、閉じれば元の見え方に戻る)。 */
@@ -312,10 +320,8 @@ body.full.sheet .more-items {
   border-bottom: 1px solid var(--line); box-shadow: 0 6px 16px rgb(0 0 0 / 18%);
 }
 body.full.sheet .more-items .pick { width: auto; }
-/* 板の中では、ログは垂れ下げずにその場で開く (板の中に板を重ねない)。 */
-body.full.sheet .log ol {
-  position: static; margin: 4px 0 0; max-height: 30svh; box-shadow: none;
-}
+/* 畳んだ姿では、名前を詰めてログの場所を空ける (ログは `···` の外に置く)。 */
+body.full .log summary { padding: 4px 6px; }
 /* アプリでは図が出しっぱなしなので、開閉の釦は要らない。**頁のほうは残す** —
    狭いときの「編集する」は、そのまま「閉じる」になる。 */
 body.app #map-toggle { display: none; }

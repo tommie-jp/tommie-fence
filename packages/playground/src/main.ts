@@ -322,7 +322,7 @@ function paint(): void {
  * 図を掴んで動かすマップ。**拡張と同じ殻**を iframe の中で動かすので、
  * 一式が要るのは開いたときだけ (`import()` で別のかたまりにする)。
  */
-let map: { refresh: () => void; close: () => void } | null = null;
+let map: { refresh: () => void; close: () => void; notice: (text: string, bad?: boolean) => void } | null = null;
 
 function closeMap(): void {
   map?.close();
@@ -457,7 +457,7 @@ function showWhere(): void {
  * (文書は外のファイルなので、そちらを見れば分かる)。
  */
 const LOG_ROWS = 20;
-const log: { readonly at: string; readonly text: string }[] = [];
+const log: { readonly at: string; readonly text: string; readonly bad: boolean }[] = [];
 
 const clock = (): string => new Date().toTimeString().slice(0, 5);
 
@@ -473,6 +473,8 @@ function renderLog(): void {
   }
   for (const row of [...log].reverse()) {
     const line = document.createElement('li');
+    // **しくじりは赤で。** 並んだ記録の中から、目で拾えるようにする。
+    if (row.bad) line.className = 'bad';
     const at = document.createElement('time');
     at.textContent = row.at;
     line.append(at, row.text);
@@ -481,10 +483,23 @@ function renderLog(): void {
 }
 
 /** 記録だけ足す (帯には出さない)。マップの帯へ出た一言もここへ落とす。 */
-function note(text: string): void {
-  log.push({ at: clock(), text });
+function note(text: string, bad = false): void {
+  log.push({ at: clock(), text, bad });
   if (log.length > LOG_ROWS) log.shift();
   renderLog();
+}
+
+/**
+ * しくじりを言う。**ログに赤で残し、マップの帯にも出す** (実機で頼まれた)。
+ *
+ * 帯の一言 (`say`) には出さない — 長い断りを入れると、畳んだ姿の 1 行の帯が
+ * 崩れて釦が押しのけられる (実機で踏んだ)。読む場所は**残る所**にまとめる。
+ */
+function warn(text: string): void {
+  note(text, true);
+  map?.notice(text);
+  // マップを開いていないときは、頁の側の帯に出す (そちらは畳まれていない)。
+  if (map === null) say(text, true);
 }
 
 /**
@@ -639,7 +654,7 @@ async function openExample(index: number): Promise<void> {
     });
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    say(`${example.name} を開けませんでした: ${reason}`, true);
+    warn(`${example.name} を開けませんでした: ${reason}`);
   }
 }
 
@@ -677,7 +692,7 @@ async function openFile(file: File, handle: FileHandle | null = null): Promise<v
     if (handle !== null) say(`${file.name} は保存で上書きします`);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    say(`${file.name} を読めませんでした: ${reason}`, true);
+    warn(`${file.name} を読めませんでした: ${reason}`);
   }
 }
 
@@ -701,7 +716,7 @@ async function pickFile(): Promise<void> {
     // **取り消しは何も言わない。** 人が閉じただけで、失敗ではない。
     if (error instanceof DOMException && error.name === 'AbortError') return;
     const reason = error instanceof Error ? error.message : String(error);
-    say(`開けませんでした: ${reason}`, true);
+    warn(`開けませんでした: ${reason}`);
   }
 }
 
@@ -718,7 +733,7 @@ async function openUrl(url: string): Promise<boolean> {
     return true;
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    say(`${url} を開けませんでした: ${reason}`, true);
+    warn(`${url} を開けませんでした: ${reason}`);
     return false;
   }
 }
@@ -744,7 +759,7 @@ async function saveDoc(): Promise<void> {
       // **書けなかったら落とす道へ。** 許しを取り消された・別の窓が掴んで
       // いる、などがある。黙って何も起きないのが一番困る。
       const reason = error instanceof Error ? error.message : String(error);
-      say(`その場に書けませんでした (${reason})。落とします`, true);
+      warn(`その場に書けませんでした (${reason})。落とします`);
       held = null;
     }
   }
@@ -764,7 +779,7 @@ async function saveDoc(): Promise<void> {
       // **取り消しは何も言わない。** 人が閉じただけで、失敗ではない。
       if (error instanceof DOMException && error.name === 'AbortError') return;
       const reason = error instanceof Error ? error.message : String(error);
-      say(`共有シートに出せませんでした (${reason})。落とします`, true);
+      warn(`共有シートに出せませんでした (${reason})。落とします`);
     }
   }
 
@@ -845,7 +860,7 @@ async function loadExamples(): Promise<void> {
     const { examples: found, dropped } = parseExamples(await response.json());
     examples = found;
     // **落とした数を黙らせない。** 頁と JSON の形が食い違っている印。
-    if (dropped > 0) say(`例を ${dropped} 本読めませんでした`);
+    if (dropped > 0) warn(`例を ${dropped} 本読めませんでした`);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     els.messages.hidden = false;
@@ -977,7 +992,7 @@ function listen(): void {
     // **読めないリンクは黙って捨てない。** そのままだと、渡した相手には
     // 「前の図のまま何も起きない」としか見えない。
     if (!shared.ok) {
-      say(shared.why, true);
+      warn(shared.why);
       return;
     }
 
@@ -1032,7 +1047,7 @@ async function start(): Promise<void> {
 
   // **読めなかったリンクは、既定の例を出したあとに言う。** 先に言うと
   // `showExample` の一言に上書きされる。
-  if (shared !== null && !shared.ok) say(`${shared.why} (既定の例を出しています)`, true);
+  if (shared !== null && !shared.ok) warn(`${shared.why} (既定の例を出しています)`);
 
   // **幅が変わったら畳み方も変える。** 横向きにした・窓を広げたときに、
   // 畳んだままだとフェンスの字へ戻れない。

@@ -48,6 +48,12 @@ export type Outgoing =
   | ({ readonly kind: 'map' } & MapView)
   | { readonly kind: 'history'; readonly canUndo: boolean; readonly canRedo: boolean }
   | { readonly kind: 'status'; readonly text: string }
+  /**
+   * 宿主からのお知らせ。**帯に足す** (読めなかった行と同じ場所)。
+   * 殻は使わない — 頁のように、殻の外で起きたこと (ファイルを開けなかった等)
+   * を言う先が要る宿主のためのもの (52 の docs/46)。
+   */
+  | { readonly kind: 'notice'; readonly text: string; readonly bad?: boolean }
   | {
     readonly kind: 'aim'; readonly what?: 'part' | 'node' | 'wire'; readonly id?: string;
     /** まとめて選ばせるとき (複製の写し)。1 つなら書かない。 */

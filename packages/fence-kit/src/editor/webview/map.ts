@@ -1661,6 +1661,11 @@ type Incoming =
     readonly chrome?: PanelChrome;
   }
   | { readonly kind: 'status'; readonly text: string }
+  /**
+   * 宿主からのお知らせ。**帯に赤で足す** — 頁が「ファイルを開けなかった」
+   * ようなことを言う先 (52 の docs/46)。帯は次に図を組み直すまで残る。
+   */
+  | { readonly kind: 'notice'; readonly text: string; readonly bad?: boolean }
   | { readonly kind: 'aim'; readonly what?: string; readonly id?: string; readonly also?: readonly string[] }
   | { readonly kind: 'history'; readonly canUndo: boolean; readonly canRedo: boolean }
   | { readonly kind: 'fields'; readonly part: Fields | null }
@@ -1679,6 +1684,24 @@ function openPaletteDetails(): void {
   for (const details of document.querySelectorAll<HTMLDetailsElement>('.cf-chrome-palette details')) {
     details.open = true;
   }
+}
+
+/**
+ * 宿主のお知らせを帯へ足す。**読めなかった行と同じ見た目**にして、
+ * 同じ所を見れば済むようにする (52 の docs/46)。
+ *
+ * **字は組まずに置く** (`textContent`) — 外から来た字なので、印を混ぜられても
+ * 中身として出す。畳んであれば開く (出しても見えないと意味がない)。
+ */
+function showNotice(text: string, bad: boolean): void {
+  const band = query('.cf-band');
+  if (!band) return;
+  const row = document.createElement('p');
+  row.className = bad ? 'cf-issue cf-error' : 'cf-issue cf-notice';
+  row.textContent = text;
+  band.prepend(row);
+  const box = band.closest('details');
+  if (box instanceof HTMLDetailsElement) box.open = true;
 }
 
 const fill = (selector: string, html: string): void => {
@@ -1743,6 +1766,7 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
   }
   if (message.kind === 'fields') showFields(message.part);
   if (message.kind === 'status') setText('.cf-status', message.text);
+  if (message.kind === 'notice') showNotice(message.text, message.bad === true);
   if (message.kind === 'aim') {
     aim(message.what, message.id);
     // **カーソルが指した部品は選んだことにする。** 欄が出て、そのまま直せる。
