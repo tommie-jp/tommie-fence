@@ -104,8 +104,14 @@ main { display: flex; flex-direction: column; }
 /* `···` の釦。**畳んだ姿でだけ出す。** */
 .more { display: none; }
 
-/* いま開いている文書の名前。**直したままなら印を添える。** */
-.doc { margin: 0; font-size: 0.9rem; color: var(--dim); }
+/* いま開いている文書の名前。**直したままなら印を添える。**
+   **押すと文書の一覧が開く**ので、釦の見た目は消して字だけにする
+   (帯の中で釦が並んで見えると、どれが何だか分からなくなる)。 */
+.doc {
+  margin: 0; padding: 0; font: inherit; font-size: 0.9rem; color: var(--dim);
+  background: none; border: 0; cursor: pointer; text-align: left;
+}
+.doc:hover { color: var(--ink); text-decoration: underline; }
 .doc .dirty { color: var(--bad); font-weight: 600; }
 
 /* 図の落とし先 (ドラッグ & ドロップ)。**頁ぜんぶが受け皿。** */

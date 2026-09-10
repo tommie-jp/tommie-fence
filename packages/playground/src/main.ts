@@ -35,7 +35,7 @@ function need<E extends HTMLElement>(id: string): E {
 const els = {
   example: need<HTMLSelectElement>('example'),
   fence: need<HTMLSelectElement>('fence'),
-  docName: need('doc-name'),
+  docName: need<HTMLButtonElement>('doc-name'),
   file: need<HTMLInputElement>('file'),
   open: need<HTMLButtonElement>('open'),
   save: need<HTMLButtonElement>('save'),
@@ -908,6 +908,29 @@ function listen(): void {
   };
   els.more.addEventListener('click', () => {
     showSheet(!document.body.classList.contains('sheet'));
+  });
+
+  /**
+   * 文書の名前を押したら、文書の一覧を開く。**名前が「いま何を開いているか」**
+   * なので、そこが入口として自然 (実機で頼まれた)。
+   *
+   * 畳んだ姿では欄が板の中に隠れているので、**先に板を開いてから**呼ぶ
+   * (隠れた欄には一覧を出せない)。`showPicker` を持たない窓では、板が開いた
+   * ままになる — そこに欄があるので、もう 1 押しで開ける。
+   */
+  els.docName.addEventListener('click', () => {
+    if (document.body.classList.contains('full')) showSheet(true);
+    const picker = els.example as HTMLSelectElement & { showPicker?: () => void };
+    if (typeof picker.showPicker !== 'function') return;
+    // **姿を確定させてから呼ぶ。** `showPicker` は「描かれている」ことを
+    // 求める (隠れたままだと NotSupportedError)。板を開いた印を付けた直後は
+    // まだ組み直していないので、ここで一度読んで確定させる。
+    void picker.offsetHeight;
+    try {
+      picker.showPicker();
+    } catch {
+      // それでも出せない窓がある。板は開いたままにする — そこに欄がある。
+    }
   });
   // **外を押したら閉じる。** 板の外の図を触ろうとしたときに、板が邪魔をしない。
   document.addEventListener('pointerdown', (event) => {

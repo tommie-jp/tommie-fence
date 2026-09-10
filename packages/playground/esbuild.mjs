@@ -44,6 +44,17 @@ for (const size of [180, 192, 512]) {
   await writeFile(`dist/icon-${size}.png`, iconPng(size));
 }
 
+/**
+ * 組んだ時刻を **JST で**。読むのは手元の人なので、手元の時計と揃っていないと
+ * 「新しいほうか」を目で比べられない (実機で頼まれた)。
+ *
+ * **CI は UTC で回る**ので、機械の時計に任せず時間帯を指定する。
+ * `sv-SE` を選ぶのは、その綴りが `YYYY-MM-DD HH:MM:SS` になるため
+ * (ISO と同じ並びを、時間帯を変えたまま得られる唯一の手軽な道)。
+ */
+const builtAt = () =>
+  `${new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Tokyo' }).slice(0, 16)} JST`;
+
 const icon = (size, purpose) => ({
   src: `icon-${size}.png`, sizes: `${size}x${size}`, type: 'image/png', purpose,
 });
@@ -108,11 +119,11 @@ const options = {
   /**
    * **いつ組んだか**も焼き込む。配りかたが終わる前に見て「直っていない」と
    * 読む取り違えを 3 度踏んだので、頁の側で見分けが付くようにする
-   * (ログの 1 行目に出る。52 の docs/46)。分・秒までは要らない。
+   * (ログの 1 行目に出る。52 の docs/46)。秒までは要らない。
    */
   define: {
     __VERSION__: JSON.stringify(version),
-    __BUILT__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')),
+    __BUILT__: JSON.stringify(builtAt()),
   },
   logLevel: 'info',
 };
