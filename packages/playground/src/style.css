@@ -326,7 +326,18 @@ body.full .log summary { padding: 4px 6px; }
    狭いときの「編集する」は、そのまま「閉じる」になる。 */
 body.app #map-toggle { display: none; }
 body.full main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-body.full .bar { margin: 0; padding: 8px clamp(8px, 3vw, 16px); gap: 8px; }
+/* **帯は字 1 行ぶんの高さに** (実機で頼まれた)。畳んだ姿は図が主なので、
+   帯は「そこに在る」ことが分かれば足りる。36px の釦と 8px の余白で 53px
+   取っていたのを、28px と 3px で 34px にする。
+   **押す面は横で稼ぐ** — 保存も閉じるも 28 x 60px あり、面積では 44px 角の
+   指針を満たす (52 の docs/40 の「的と見た目は別物」と同じ分け方)。
+   **頁の姿は 36px のまま** — あちらは図と字を並べて読む所で、帯を詰めても
+   得るものが無い。 */
+body.full .bar { margin: 0; padding: 3px clamp(8px, 3vw, 16px); gap: 6px; }
+body.full .bar button,
+body.full .log summary { min-height: 28px; padding: 2px 10px; }
+body.full .more { padding: 2px 8px; }
+body.full .doc { font-size: 0.85rem; }
 /* **例の欄は 1 行を丸ごと使う。** 種類の札・例・釦を 1 行に詰めると、
    375px では例の名前が「図01 LED…」まで切れて、何を選んでいるか読めない
    (実機で「1 行にして」)。図の高さを 50px ほど譲る。
