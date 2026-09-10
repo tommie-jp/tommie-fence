@@ -7,6 +7,8 @@ import { nudge, nudgesFor } from './demo.ts';
 import type { Example } from './examples.ts';
 import type { Output } from './fences.ts';
 import { qrSvg } from './qr.ts';
+import { SHORTS_URL, parseShorts, shortFor } from './shorts.ts';
+import type { Shorts } from './shorts.ts';
 
 /**
  * 画面を組み立てる層。**決め事はここに置かない** — 描画は `fences.ts`、
@@ -51,6 +53,7 @@ const els = {
   qr: need<HTMLButtonElement>('qr'),
   qrBox: need<HTMLDialogElement>('qr-box'),
   qrUrl: need('qr-url'),
+  qrKind: need('qr-kind'),
   qrCode: need('qr-code'),
 };
 
@@ -629,16 +632,53 @@ async function copyLink(): Promise<void> {
  * この頁の URL を QR で出す。**開くたびに組み直す** — 例を選ぶたびに
  * `#` が変わるので、覚えておくと前の頁の QR を出すことになる。
  */
-function showQr(): void {
-  syncHash();
-  const url = location.href;
+/**
+ * 短縮リンクの表。**QR を開いたときに 1 度だけ取りに行く。**
+ * 押さない人には落とさせない (資材を要るときだけ落とす、と同じ考え)。
+ * 取れなければ空の表 — 長い URL のまま出すだけで、頁は動く。
+ */
+let shorts: Promise<Shorts> | null = null;
+
+const loadShorts = (): Promise<Shorts> => {
+  shorts ??= fetch(SHORTS_URL)
+    .then((response) => (response.ok ? response.json() : null))
+    .then((data: unknown) => parseShorts(data))
+    .catch(() => parseShorts(null));
+  return shorts;
+};
+
+/** QR を 1 枚描く。**入らない長さのときは、そう言う。** */
+function drawQr(url: string, was: string | null): void {
   els.qrUrl.textContent = url;
   const drawn = qrSvg(url);
   els.qrCode.innerHTML = drawn ?? '';
   els.qrCode.hidden = drawn === null;
+
+  els.qrKind.hidden = was === null;
+  if (was !== null) els.qrKind.textContent = `短縮リンク (元の URL は ${was.length} 字)`;
+
   if (drawn === null) say('この長さは QR に入りません (リンクをコピーしてください)');
+}
+
+/**
+ * この頁の QR。**短縮リンクがあれば、そちらを入れる** (52 の docs/42)。
+ *
+ * 表を待たずに長い URL で先に描く — 表は別の出所から取るので、待つと
+ * 窓が空のまま止まって見える。取れたら描き直す。
+ */
+function showQr(): void {
+  syncHash();
+  const url = location.href;
+  drawQr(url, null);
   els.qrBox.showModal();
   els.qr.setAttribute('aria-expanded', 'true');
+
+  void loadShorts().then((table) => {
+    // 閉じられた・別の図に移った後の結果は捨てる (窓の中身が食い違う)。
+    if (!els.qrBox.open || location.href !== url) return;
+    const short = shortFor(url, table);
+    if (short !== null) drawQr(short, url);
+  });
 }
 
 async function start(): Promise<void> {

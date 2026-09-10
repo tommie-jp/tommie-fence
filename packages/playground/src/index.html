@@ -91,6 +91,9 @@
       <!-- この頁の URL を入れた QR。スマホで開き直すための道 (実機で頼まれた)。 -->
       <dialog class="qr-box" id="qr-box">
         <p class="qr-url" id="qr-url"></p>
+        <!-- どちらの URL を入れたか。**黙って差し替えない** — 読み取った先が
+             s.tommie.jp になるので、そう言っておく (52 の docs/42)。 -->
+        <p class="qr-kind" id="qr-kind" hidden></p>
         <div class="qr-code" id="qr-code"></div>
         <form method="dialog"><button type="submit">閉じる</button></form>
       </dialog>

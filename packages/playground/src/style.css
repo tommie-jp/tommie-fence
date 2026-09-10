@@ -53,6 +53,7 @@ h1 { font-size: 1.5rem; margin: 0 0 4px; }
   /* 共有リンクは長い。**折り返して全部見せる** (縮めると読み合わせできない)。 */
   overflow-wrap: anywhere;
 }
+.qr-kind { margin: -6px 0 12px; font-size: 0.8rem; color: var(--dim); }
 .qr-code svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
 .qr-box form { margin-top: 12px; text-align: right; }
 .qr-box button {
