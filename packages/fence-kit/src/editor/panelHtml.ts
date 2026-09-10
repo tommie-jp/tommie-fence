@@ -351,8 +351,30 @@ const STYLE = `
 
     /* 案内はマウスから指へ。狭い帯に 2 つ並べない。
        **段を分けて丸ごと出す** — 横に押し込むと 1 字ずつ折り返して、
-       帯が縦に伸びる (実測で 200px 近くなった)。 */
-    .kc-top { flex-wrap: wrap; }
+       帯が縦に伸びる (実測で 200px 近くなった)。
+
+       **段の間は詰める** (実機で「行間を小さくする」)。折り返す帯なので、
+       効くのは段と段のあいだ (row-gap) のほう。 */
+    .kc-top { flex-wrap: wrap; gap: 2px 6px; padding: 2px 6px; }
+    /* **印は太く濃く** (実機で頼まれた)。帯の印は字で描いてあるので、
+       細いままだと小さい画面で飛ぶ。地の色に負けない濃さまで上げる。 */
+    .kc-top button {
+      font-weight: 700; font-size: 16px; line-height: 1;
+      color: var(--vscode-editor-foreground, CanvasText);
+    }
+    /* 引き出しの印は絵なので、字の太さではなく線の太さで出す。 */
+    .kc-props-toggle svg { width: 24px; height: 12px; }
+
+    /* **フェンスの選び手と送りの釦は 1 行に** (実機で頼まれた)。
+       折り返させず、余った幅を選び手に吸わせる。 */
+    .cf-fences {
+      display: flex; flex-wrap: nowrap; align-items: center; gap: 2px;
+      width: 100%; min-width: 0;
+    }
+    .cf-fences label { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; }
+    .cf-fences select { flex: 1; min-width: 0; }
+    /* 送りの釦は**間を詰めて**並べる (実機で「アイコン間隔を小さく」)。 */
+    .cf-fence-step { flex: none; margin-left: 0; padding: 0 4px; font-weight: 700; }
     .kc-title { display: none; }
     .kc-title-touch {
       display: block; width: 100%; margin: 0; opacity: 0.7;
@@ -719,12 +741,20 @@ const lineLabel = (line: number): string => String(line).padStart(LINE_DIGITS, '
  * 題があれば題、無ければ「フェンス」と呼ぶ。題はフェンスから来た字なので
  * エスケープする。
  */
+/** 一覧に出す札の長さ。**題はフェンスから来た字**なので、長さは決め打つ。 */
+const LABEL_MAX = 24;
+
+const shortLabel = (text: string): string =>
+  (text.length <= LABEL_MAX ? text : `${text.slice(0, LABEL_MAX)}…`);
+
 export function renderFencePicker(fences: readonly FenceEntry[], line: number | null): string {
   if (fences.length < 2) return '';
   const options = fences.map((fence) => {
     // **「行番号: 題」。** 一覧は上から順に並ぶので、頭が揃っていると目で追える
     // (題を先に出すと、長さがまちまちで行番号の桁が縦に揃わない。実機で頼まれた)。
-    const label = `${lineLabel(fence.line)}: ${fence.title ?? 'フェンス'}`;
+    // **長い題は後ろを詰める** (実機で「後半を … で省略する」)。狭い帯では
+    // 一覧の幅が 200px ほどしかなく、切らないと選び手が行を丸ごと取る。
+    const label = shortLabel(`${lineLabel(fence.line)}: ${fence.title ?? 'フェンス'}`);
     return `<option value="${fence.line}"${fence.line === line ? ' selected' : ''}>${escapeMarkup(label)}</option>`;
   }).join('');
   // **前後と両端のボタンを添える。** 一覧を開いて選び直さずに隣のフェンスへ
@@ -742,6 +772,16 @@ export function renderFencePicker(fences: readonly FenceEntry[], line: number | 
     + step('next', '▶', '次のフェンス')
     + step('last', '▶|', '最後のフェンス');
 }
+
+/**
+ * 引き出しの印。**部品 (抵抗) の絵**にする — 中身が部品の一覧と属性なので、
+ * 絵がそのまま中身を言う (実機で「部品アイコン (抵抗の図形) にする」)。
+ * IEC の四角い抵抗。**線は太めに** — 20px 角では細い線が飛ぶ。
+ */
+const RESISTOR_ICON = '<svg viewBox="0 0 26 12" width="22" height="11" aria-hidden="true" focusable="false">'
+  + '<path d="M1 6h4M21 6h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+  + '<rect x="5.5" y="1.5" width="15" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/>'
+  + '</svg>';
 
 /** 右の道具の列。**鍵と同じ一覧** — 押すと同じ鍵を押したことになる。 */
 type ToolButton = {
@@ -812,7 +852,8 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     + `<style>${STYLE}</style><title>図を掴んで動かす</title></head>`
     + `<body data-tool="select"${own ? ' class="cf-own-undo"' : ''}>`
     + `<header class="kc-top">`
-    + `<button type="button" class="kc-props-toggle" title="属性と部品 (狭いとき)">▤</button>`
+    + `<button type="button" class="kc-props-toggle" title="属性と部品 (狭いとき)"`
+    + ` aria-label="属性と部品">${RESISTOR_ICON}</button>`
     + `<span class="kc-group">`
     + `<button class="cf-undo"${own ? ' disabled' : ''} title="元に戻す (Ctrl+Z)">↶</button>`
     + `<button class="cf-redo"${own ? ' disabled' : ''} title="やり直す (Ctrl+Shift+Z)">↷</button></span>`

@@ -326,10 +326,16 @@ export function createSession<D extends DocLike>(
    * 同じ `.md` に 2 つの言語があると、題だけでは見分けが付かない。
    */
   function allFences(markdown: string): readonly FenceEntry[] {
+    const found = editors.map((one) => ({ one, rows: one.fences(markdown) }))
+      .filter((each) => each.rows.length > 0);
+    // **言語を添えるのは、その文書に 2 つ以上あるときだけ。** 殻に 3 つの
+    // 言語を渡してあっても (頁がそうする)、文書が 1 つの言語で書かれていれば
+    // 添え字は毎行に付く無駄な字になる — 狭い帯では札の幅がそのぶん減る。
+    const mixed = found.length > 1;
     // 題があればそのまま、無ければ言語だけを出す (行番号は一覧が添える)。
-    const rows = editors.flatMap((one) => one.fences(markdown).map((entry) => ({
+    const rows = found.flatMap(({ one, rows: entries }) => entries.map((entry) => ({
       ...entry,
-      title: editors.length === 1
+      title: !mixed
         ? entry.title
         : entry.title === null ? one.language : `${entry.title} (${one.language})`,
     })));
