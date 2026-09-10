@@ -397,6 +397,26 @@ describe('狭いときの畳み方', () => {
    * 画面の外へ押し出す。body は overflow: hidden なので、押し出された分は
    * **スクロールもできずに消える** (375x667 で道具が 36px 見切れた)。
    */
+  /**
+   * **道具は画面の下端に貼り付ける** (実機で「固定にする。スクロールで
+   * 動かないようにする」)。iOS のタブ棒と同じ置き方で、帯を開いても図を
+   * 流しても道具の場所が変わらない。流れから外した分は body の余白で空ける
+   * (空けないと帯と状態欄が下に隠れる)。
+   */
+  test('pins the tool strip to the bottom edge, where a thumb can always find it', () => {
+    const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
+
+    expect(narrow).toMatch(/\.kc-tools \{[^}]*position: fixed/);
+    expect(narrow).toMatch(/\.kc-tools \{[^}]*bottom: 0/);
+  });
+
+  test('keeps room for the pinned strip, or the band and status hide under it', () => {
+    const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
+
+    expect(narrow).toMatch(/body \{[^}]*padding-bottom: 54px/);
+    expect(narrow).toMatch(/\.kc-tools \{[^}]*height: 54px/);
+  });
+
   test('lets the figure shrink, so the bottom strip stays on the screen', () => {
     const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
     expect(narrow).toContain('.kc-stage { min-height: 0; }');

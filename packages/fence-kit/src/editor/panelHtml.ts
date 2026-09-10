@@ -320,6 +320,23 @@ const STYLE = `
 
     /* 道具は下端に横並び。縦に 9 つ並べると図を押し潰す。 */
     .kc-main { flex-direction: column; }
+
+    /* **道具は画面の下端に貼り付ける** (実機で「固定にする。スクロールで
+       動かないようにする」)。iOS のタブ棒と同じ置き方で、**中身がどう動いても
+       道具の場所が変わらない** — 帯を開いても、図を流しても、指の行き先は同じ。
+       流れから外すので、その分の場所を body の余白で空けておく
+       (空けないと帯と状態欄が下に隠れる)。
+       高さを決め打つのは、**流れから外したものの分を CSS で測れない**ため。
+       44 (道具) + 8 (余白) + 1 (境) = 53 に、少し足した数。 */
+    body { box-sizing: border-box; padding-bottom: 54px; }
+    .kc-tools {
+      box-sizing: border-box; position: fixed; z-index: 3;
+      left: 0; right: 0; bottom: 0; height: 54px;
+    }
+    /* **横の巻き取り棒は出さない。** 触る画面では指で流せるし、出すと
+       決め打った高さの中で道具の絵に重なる。 */
+    .kc-tools { scrollbar-width: none; }
+    .kc-tools::-webkit-scrollbar { display: none; }
     /* **図は縮む。** 縦並びにすると図の高さが主軸になり、min-height の既定
        (auto) が「中身より小さくしない」と言うので、図が SVG の高さのまま
        居座って道具・帯・状態欄を画面の外へ押し出す。body は overflow: hidden

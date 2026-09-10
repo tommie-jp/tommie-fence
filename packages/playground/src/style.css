@@ -87,8 +87,14 @@ main { display: flex; flex-direction: column; }
   display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
   margin: 16px 0 12px;
 }
-/* 道具の行。**ログの垂れ下げの基準**でもある (下の註)。 */
-.tools { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* 道具の行。**ログの垂れ下げの基準**でもある (下の註)。
+   **縮めるようにしておく** (`min-width: 0`) — 既定の `auto` のままだと、
+   釦が増えたぶんだけ帯からはみ出して頁が横に流れる (実測で 375px の画面に
+   626px の行が居た)。縮められれば、中で折り返す。 */
+.tools {
+  position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  flex: 1; min-width: 0;
+}
 
 .picks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 /* いま開いている文書の名前。**直したままなら印を添える。** */
@@ -118,7 +124,9 @@ select, .bar button {
   position: absolute; z-index: 5; left: 0; right: 0; top: 100%;
   max-height: 40svh; overflow-y: auto; overflow-wrap: anywhere;
   margin: 4px 0 0; padding: 8px 12px; list-style: none;
-  color: var(--ink); background: var(--paper);
+  /* **地は灰色** (実機で頼まれた)。下の図や字に重なるので、紙と同じ白だと
+     どこまでが帯か分からない。 */
+  color: var(--ink); background: var(--ground);
   border: 1px solid var(--line); border-radius: 8px;
   box-shadow: 0 4px 12px rgb(0 0 0 / 18%);
 }
