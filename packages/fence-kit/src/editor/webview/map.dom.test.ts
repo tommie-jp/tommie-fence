@@ -535,6 +535,34 @@ describe('右クリックの一覧', () => {
     expect((document.querySelector('.kc-menu') as HTMLElement).hidden).toBe(false);
   });
 
+  /**
+   * **面のどこでもブラウザの一覧は出さない** (実機で頼まれた)。図の上だけを
+   * 止めていたのでは足りない — こちらの一覧を開いた後、その一覧の上で右クリック
+   * すると素通りして、**2 つの一覧が並んで出ていた**。
+   */
+  test('stops the browser menu even off the figure, where our list is drawn', () => {
+    const menu = document.querySelector('.kc-menu') as HTMLElement;
+    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+
+    menu.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  /** 欄では既定の一覧を残す — 貼り付けや辞書はブラウザのものが要る。 */
+  test('leaves the browser menu alone in a field, where paste lives', () => {
+    // **文書の中に置く。** 外した要素では出来事が document まで上がらず、
+    // 何も確かめないまま通ってしまう。
+    const field = document.createElement('input');
+    document.body.append(field);
+    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+
+    field.dispatchEvent(event);
+    field.remove();
+
+    expect(event.defaultPrevented).toBe(false);
+  });
+
   test('keeps hold of what the cursor was over while the pointer walks the list', async () => {
     // **一覧は図の上に重ねて出す。** 項目まで下りる途中でカーソルの下を捨てると、
     // 押した瞬間に対象が消える (実機で「右メニューが効かない」)。

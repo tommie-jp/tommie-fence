@@ -1116,9 +1116,19 @@ const closeMenu = (): void => {
 };
 
 document.addEventListener('contextmenu', (event) => {
-  if (elementOf(event)?.closest('.kc-canvas') == null) return;
-  // webview には既定のメニューが無いので、出すのはこちらの仕事。
+  const on = elementOf(event);
+  // **欄では既定のメニューを残す。** 貼り付けや辞書はブラウザのものが要る。
+  if (on?.closest('input, textarea, select') != null) return;
+
+  // **面のどこでも既定のメニューは出さない** (実機で「右クリックしたとき
+  // ブラウザのメニューが出ないようにする」)。VS Code の webview には元から
+  // 無いので、あちらでは何も変わらない。**図の上だけを止めていたのでは
+  // 足りなかった** — こちらのメニューを開いた後、そのメニューの上で右クリック
+  // すると素通りして、2 つのメニューが並んで出ていた。
   event.preventDefault();
+
+  // 出すのは図の上だけ (道具や帯の上で出しても、指す相手が無い)。
+  if (on?.closest('.kc-canvas') == null) return;
   openMenu(event.clientX, event.clientY);
 });
 
