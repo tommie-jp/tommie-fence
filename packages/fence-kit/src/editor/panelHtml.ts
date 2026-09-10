@@ -1,4 +1,5 @@
 import { wireColor } from '../colors.ts';
+import { partIcon } from '../parts/icon.ts';
 import { escapeMarkup } from '../markup.ts';
 import type { FenceEntry } from './fenceEditor.ts';
 
@@ -662,11 +663,6 @@ export type PanelChrome = {
   readonly colorNames: string;
   /** 配線の色見本 (固定のパレット)。色を書かないフェンスでは空。 */
   readonly swatches: string;
-  /**
-   * 引き出しの印 (抵抗の絵)。**言語で姿が違う** — 回路図は記号、
-   * ブレッドボードと基板は実物の姿 (52 の docs/46)。描けないときは空。
-   */
-  readonly drawerIcon: string;
   /** 配線を `Shift` で折れるか (`FenceEditor.foldsWire`)。案内文に出す。 */
   readonly foldsWire: boolean;
   /** 何分の 1 升まで刻めるか (`FenceEditor.fine`)。null なら Ctrl は素のクリック (52 の docs/23)。 */
@@ -783,14 +779,15 @@ export function renderFencePicker(fences: readonly FenceEntry[], line: number | 
 }
 
 /**
- * 引き出しの印の**受け皿**。ふだんはその言語の抵抗 (`chrome.drawerIcon`) が
- * 入る — 回路図は記号、ブレッドボードと基板は実物の姿。
- * ここに落ちるのは、絵を持たない言語が来たときだけ。
+ * 引き出しの印。**いつでも抵抗の実物の姿**にする (実機で「回路図でも変更
+ * しない」)。中身は部品の一覧と属性なので、絵がそのまま中身を言う。
+ *
+ * **言語で描き分けない。** 回路図の記号にすると、同じ引き出しが言語ごとに
+ * 別の絵になり、**印としての覚えやすさが消える** — 印は「そこに何があるか」を
+ * 言うもので、「いま何の言語か」を言うものではない (それは図が言っている)。
  */
-const RESISTOR_ICON = '<svg viewBox="0 0 26 12" width="22" height="11" aria-hidden="true" focusable="false">'
-  + '<path d="M1 6h4M21 6h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
-  + '<rect x="5.5" y="1.5" width="15" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/>'
-  + '</svg>';
+const RESISTOR_ICON = partIcon('resistor')
+  ?? '<svg viewBox="0 0 26 12" width="22" height="11" aria-hidden="true"></svg>';
 
 /** 右の道具の列。**鍵と同じ一覧** — 押すと同じ鍵を押したことになる。 */
 type ToolButton = {
@@ -862,7 +859,7 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     + `<body data-tool="select"${own ? ' class="cf-own-undo"' : ''}>`
     + `<header class="kc-top">`
     + `<button type="button" class="kc-props-toggle" title="属性と部品 (狭いとき)"`
-    + ` aria-label="属性と部品">${chrome.drawerIcon || RESISTOR_ICON}</button>`
+    + ` aria-label="属性と部品">${RESISTOR_ICON}</button>`
     + `<span class="kc-group">`
     + `<button class="cf-undo"${own ? ' disabled' : ''} title="元に戻す (Ctrl+Z)">↶</button>`
     + `<button class="cf-redo"${own ? ' disabled' : ''} title="やり直す (Ctrl+Shift+Z)">↷</button></span>`

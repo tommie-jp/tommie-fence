@@ -6,7 +6,7 @@ const CHROME = {
   palette: '<details class="cf-palette"></details>',
   typeNames: '<datalist id="cf-type-names"></datalist>',
   colorNames: '<datalist id="cf-color-names"></datalist>',
-  swatches: '', drawerIcon: '',
+  swatches: '',
   foldsWire: false,
   fine: null,
   fineFor: 'all' as const,

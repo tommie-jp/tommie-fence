@@ -40,7 +40,7 @@ const bodyHtml = (undo: 'own' | 'vscode'): string => {
           + '<li><button class="cf-pick" data-type="resistor" data-ends="2" data-find="resistor 抵抗"></button></li>'
           + '<li><button class="cf-pick" data-type="capacitor" data-ends="2" data-find="capacitor"></button></li>'
           + '</ul>',
-        typeNames: '', colorNames: '', swatches: '', drawerIcon: '', foldsWire: false, fine: null, fineFor: 'all',
+        typeNames: '', colorNames: '', swatches: '', foldsWire: false, fine: null, fineFor: 'all',
       },
     },
   });
@@ -424,7 +424,7 @@ describe('拡張からのそのほかの知らせ', () => {
       issues: '',
       chrome: {
         palette: '<button class="cf-pick" data-type="opamp" data-ends="0"></button>',
-        typeNames: '', colorNames: '', swatches: '', drawerIcon: '', foldsWire: true, fine: 10, fineFor: 'all',
+        typeNames: '', colorNames: '', swatches: '', foldsWire: true, fine: 10, fineFor: 'all',
       },
     });
 

@@ -40,13 +40,6 @@ const LEADS = element('path', { class: 'cf-glyph-line', d: 'M-13,0 L-9,0 M9,0 L1
 /** 短絡は線だけの「記号を持たない」種類。空の枠にせず、線を引く。 */
 const WIRE = element('path', { class: 'cf-glyph-line', d: 'M-10,0 L10,0' });
 
-/**
- * その種類 1 つの記号。**帯の印にも使う** (`FenceEditor.partIcon`)。
- * 回路図なので**アメリカ型の折れ線**で、枠の真ん中に来る
- * (viewBox が上下対称なので、そのまま中央に載る)。
- */
-export const partIcon = (type: string): string => icon(type);
-
 function icon(type: string): string {
   const glyph = glyphOf(type);
   const shape = drawGlyph(glyph.name) || WIRE;

@@ -7,7 +7,7 @@ import { aimAt, fenceAt, gridMap, partCells } from './map.ts';
 import { renderMapHtml } from './mapSvg.ts';
 import { duplicatePart, insertPart, insertWire, nextPartId } from './insert.ts';
 import { movePart, partSpans, stepCell, stepsTo } from './move.ts';
-import { partIcon, renderPalette, renderTypeOptions } from './palette.ts';
+import { renderPalette, renderTypeOptions } from './palette.ts';
 import { movePoint, nodeSpans } from './point.ts';
 import { deletePart, deleteWire } from './remove.ts';
 import { flipPart, turnPart } from './turn.ts';
@@ -147,8 +147,6 @@ export function createCircuitEditor(look: LookSource = PLAIN): FenceEditor {
     stepsTo,
 
     palette: renderPalette,
-    // 帯の印は**その言語の抵抗**。回路図なので記号 (アメリカ型の折れ線)。
-    partIcon,
     typeNames: renderTypeOptions,
     colorNames: renderColorOptions,
 

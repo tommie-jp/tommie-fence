@@ -76,9 +76,15 @@
         <!-- **たまにしか押さないものを畳む釦** (52 の docs/46)。畳んだ姿
              (`body.full`) でだけ出る。印を `≡` にしないのは、マップの左上に
              部品の絵 (抵抗) を出すので、こちらは**ハンバーガー**で役が分かれる
-             (実機で決め直し。52 の docs/46)。 -->
+             (実機で決め直し。52 の docs/46)。
+             **字の `≡` ではなく絵で描く** — 字の記号は細く、環境によって
+             太さも高さも変わる。太い棒 3 本なら小さくても読める。 -->
         <button type="button" class="more" id="more" aria-expanded="false"
-          aria-label="ほかの操作">≡</button>
+          aria-label="ほかの操作"
+        ><svg viewBox="0 0 20 14" width="20" height="14" aria-hidden="true" focusable="false"
+          ><path d="M1 2h18M1 7h18M1 12h18" fill="none" stroke="currentColor"
+            stroke-width="2.4" stroke-linecap="round"/></svg
+        ></button>
         <!-- いま開いている文書。**手元のファイルを開くと「例」の欄は何も
              指さなくなる**ので、名前を出す場所が要る。**畳んだ姿でも出す** —
              直しているものと、保存したかを画面から読み取れるように。

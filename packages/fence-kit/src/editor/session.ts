@@ -461,8 +461,6 @@ export function createSession<D extends DocLike>(
     typeNames: fence.typeNames(TYPE_LIST_ID),
     colorNames: fence.colorNames(COLOR_LIST_ID),
     swatches: renderSwatches(fence.wireColors?.() ?? []),
-    // 帯の印は**その言語の抵抗**。パレットが既に描き分けているものを引く。
-    drawerIcon: fence.partIcon?.('resistor') ?? '',
     // 能力表も語彙と一緒に (webview は同じ箱から読む)。
     foldsWire: fence.foldsWire,
     fine: fence.fine,
