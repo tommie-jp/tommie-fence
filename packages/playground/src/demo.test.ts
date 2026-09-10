@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DEMO_TITLE, nudge, nudgesFor } from './demo.ts';
+import { fencesIn } from './document.ts';
 import { KINDS } from './kinds.ts';
 import type { Kind } from './kinds.ts';
 
@@ -61,11 +62,12 @@ describe('釦とデモの例', () => {
     perfboard: 'perfboard-fence/examples/00-led.md',
   };
 
+  /** **頁と同じ数え方で取り出す** (`fencesIn`)。別々に数えると食い違う。 */
   const fenceOf = (kind: Kind): string => {
     const body = readFileSync(join(import.meta.dirname, '../..', EXAMPLES[kind]), 'utf8');
-    const found = new RegExp(`\`\`\`${kind}\\n([\\s\\S]*?)\`\`\``).exec(body);
-    if (found?.[1] === undefined) throw new Error(`${EXAMPLES[kind]} に ${kind} のフェンスがありません`);
-    return found[1];
+    const found = fencesIn(body)[0];
+    if (found === undefined) throw new Error(`${EXAMPLES[kind]} にフェンスがありません`);
+    return found.source;
   };
 
   for (const kind of KINDS) {

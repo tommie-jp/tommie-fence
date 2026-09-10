@@ -58,6 +58,12 @@ await writeFile('dist/manifest.webmanifest', `${JSON.stringify({
   background_color: '#f6f8fa',
   theme_color: '#f6f8fa',
   icons: [icon(192, 'any'), icon(512, 'any'), icon(512, 'maskable')],
+  // **`.md` を開けるアプリとして名乗る** (52 の docs/43)。Chromium の PC では
+  // 「このアプリで開く」に出る。iOS は見ないので、あちらは「開く」釦のまま。
+  file_handlers: [{
+    action: '.',
+    accept: { 'text/markdown': ['.md', '.markdown'] },
+  }],
 }, null, 2)}\n`);
 
 // TeX の資材 (WASM・コアダンプ・スタイル・フォント) は **node_modules から写す**。

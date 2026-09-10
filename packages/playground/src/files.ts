@@ -56,3 +56,26 @@ export function docFrom(search: string, base: string): string | null {
     return null;
   }
 }
+
+/**
+ * その場のファイルへ書き戻せる掴み手 (File System Access)。
+ *
+ * **持てるのは Chromium の PC だけ。** iOS には picker そのものが無く、
+ * OPFS はあるがそれは頁の中の倉庫で「web の外」ではない。持てないときは
+ * 同じ名前でダウンロードする — それが今のブラウザでできる「外へ書く」。
+ *
+ * 型を自前で書いているのは、`lib.dom` の版によって有ったり無かったりする
+ * ため (**組み立てる TypeScript の版に頁の動きを預けない**)。
+ */
+export type FileHandle = {
+  readonly name: string;
+  readonly getFile: () => Promise<File>;
+  readonly createWritable: () => Promise<{
+    readonly write: (data: string) => Promise<void>;
+    readonly close: () => Promise<void>;
+  }>;
+};
+
+/** 掴み手を持てる窓か。 */
+export const canHold = (view: unknown): boolean =>
+  typeof view === 'object' && view !== null && 'showOpenFilePicker' in view;

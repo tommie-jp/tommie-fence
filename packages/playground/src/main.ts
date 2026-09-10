@@ -5,7 +5,8 @@ import { decodeShare } from './share.ts';
 import { parseExamples, shown } from './examples.ts';
 import { nudge, nudgesFor } from './demo.ts';
 import { asDocument, fenceAt, fencesIn, labelOf, lineOfOffset, replaceFence } from './document.ts';
-import { UNTITLED, asTyped, docFrom, isCrlf, nameOf, withNewlines } from './files.ts';
+import { UNTITLED, asTyped, canHold, docFrom, isCrlf, nameOf, withNewlines } from './files.ts';
+import type { FileHandle } from './files.ts';
 import type { DocFence } from './document.ts';
 import type { Example } from './examples.ts';
 import type { Output } from './fences.ts';
@@ -532,6 +533,8 @@ function setText(next: string): void {
 
 /** 文書を開く。**ここが唯一の入口** — 例もリンクも手元のファイルも通る。 */
 function openDoc(next: Doc, text: string): void {
+  // **前の文書の掴み手は捨てる。** 残すと、別のファイルを上書きしてしまう。
+  held = null;
   doc = next;
   pristine = text;
   at = 0;
@@ -562,6 +565,13 @@ async function openExample(index: number): Promise<void> {
 }
 
 /**
+ * その場に書き戻せる掴み手。**持てたときだけ**入る (Chromium の PC)。
+ * 文書を開き直すたびに落とす — 前の文書の掴み手に書くと、別のファイルを
+ * 上書きすることになる。
+ */
+let held: FileHandle | null = null;
+
+/**
  * 外の `.md` を開く。**開く口はどれもここへ来る** (釦・落とす・`?doc=`・例)。
  * 改行の形は開いたときのものを覚えておき、書き戻すときに揃える。
  */
@@ -578,14 +588,40 @@ function openText(name: string, text: string, over: Partial<Doc> = {}): void {
 }
 
 /** 手元のファイルを開く (釦でも、落としても、ここへ来る)。 */
-async function openFile(file: File): Promise<void> {
+async function openFile(file: File, handle: FileHandle | null = null): Promise<void> {
   try {
     openText(file.name, await file.text());
+    // **開いた後に持たせる** (`openDoc` が掴み手を落とすので、順は逆にできない)。
+    held = handle;
     forgetHash();
-    say(`${file.name} を開きました`);
+    say(handle === null ? `${file.name} を開きました` : `${file.name} を開きました (保存で上書きします)`);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     say(`${file.name} を読めませんでした: ${reason}`, true);
+  }
+}
+
+/** 窓の側の口。**lib.dom の版に頁の動きを預けない**ので、こちらで名を付ける。 */
+type Picker = {
+  showOpenFilePicker: (options?: unknown) => Promise<readonly FileHandle[]>;
+};
+
+/**
+ * 掴み手ごと開く (File System Access)。**2 回目からは窓を出さずに上書き**
+ * できる — 直す道具として当たり前の形。持てない窓では釦が `<input>` を押す。
+ */
+async function pickFile(): Promise<void> {
+  try {
+    const [handle] = await (window as unknown as Picker).showOpenFilePicker({
+      types: [{ description: 'Markdown', accept: { 'text/markdown': ['.md', '.markdown'] } }],
+    });
+    if (handle === undefined) return;
+    await openFile(await handle.getFile(), handle);
+  } catch (error) {
+    // **取り消しは何も言わない。** 人が閉じただけで、失敗ではない。
+    if (error instanceof DOMException && error.name === 'AbortError') return;
+    const reason = error instanceof Error ? error.message : String(error);
+    say(`開けませんでした: ${reason}`, true);
   }
 }
 
@@ -612,9 +648,27 @@ async function openUrl(url: string): Promise<boolean> {
  * ブラウザによっては無い (段 4 で `showOpenFilePicker` を足す)。
  * iOS はダウンロードが Files に落ちるので、そこから戻せる。
  */
-function saveDoc(): void {
+async function saveDoc(): Promise<void> {
   if (doc.name === '') return;
-  const text = withNewlines(els.source.value, doc.crlf);
+  const typed = els.source.value;
+  const text = withNewlines(typed, doc.crlf);
+
+  if (held !== null) {
+    try {
+      const writable = await held.createWritable();
+      await writable.write(text);
+      await writable.close();
+      kept(typed, `${doc.name} に書きました`);
+      return;
+    } catch (error) {
+      // **書けなかったら落とす道へ。** 許しを取り消された・別の窓が掴んで
+      // いる、などがある。黙って何も起きないのが一番困る。
+      const reason = error instanceof Error ? error.message : String(error);
+      say(`その場に書けませんでした (${reason})。落とします`, true);
+      held = null;
+    }
+  }
+
   const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown;charset=utf-8' }));
   const link = document.createElement('a');
   link.href = url;
@@ -623,11 +677,16 @@ function saveDoc(): void {
   URL.revokeObjectURL(url);
 
   // **落とせたものとして扱う。** ブラウザは落とし終わりを教えないので、
-  // ここで印を解く。以後の「元に戻す」はこの字へ戻る。
-  pristine = els.source.value;
+  // ここで印を解く。
+  kept(typed, `${doc.name} を落としました`);
+}
+
+/** 書き戻せたときの後始末。**「元に戻す」の行き先もここへ進む。** */
+function kept(typed: string, message: string): void {
+  pristine = typed;
   showDocName();
   renderTry();
-  say(`${doc.name} を落としました`);
+  say(message);
 }
 
 /** いまのフェンスを選び直す。 */
@@ -690,7 +749,12 @@ function listen(): void {
   els.fence.addEventListener('change', () => { showFence(Number(els.fence.value)); });
   els.mapToggle.addEventListener('click', toggleMap);
 
-  els.open.addEventListener('click', () => els.file.click());
+  // **掴めるなら picker で開く** (2 回目からその場に上書きできる)。
+  // 持てない窓 (iOS など) では今までどおり `<input>` を押す。
+  els.open.addEventListener('click', () => {
+    if (canHold(window)) void pickFile();
+    else els.file.click();
+  });
   els.file.addEventListener('change', () => {
     const file = els.file.files?.[0];
     if (file !== undefined) void openFile(file);
@@ -698,7 +762,7 @@ function listen(): void {
     // 鳴らないので、読み終わったら空に戻す。
     els.file.value = '';
   });
-  els.save.addEventListener('click', saveDoc);
+  els.save.addEventListener('click', () => { void saveDoc(); });
 
   // **落として開く。** 受け皿は頁ぜんぶ (どこへ落としても同じ)。
   for (const kind of ['dragenter', 'dragover'] as const) {
@@ -716,8 +780,22 @@ function listen(): void {
   document.addEventListener('drop', (event) => {
     event.preventDefault();
     document.body.classList.remove('dropping');
+    const item = event.dataTransfer?.items[0];
     const file = event.dataTransfer?.files[0];
-    if (file !== undefined) void openFile(file);
+    if (file === undefined) return;
+
+    // **落としたものからも掴み手を取れる** (Chromium)。取れれば、そのまま
+    // その場に書き戻せる。取れなければダウンロードに落ちるだけ。
+    const asHandle = (item as { getAsFileSystemHandle?: () => Promise<FileHandle | null> } | undefined)
+      ?.getAsFileSystemHandle;
+    if (asHandle === undefined) {
+      void openFile(file);
+      return;
+    }
+    void asHandle.call(item).then(
+      (handle) => openFile(file, handle),
+      () => openFile(file),
+    );
   });
 
   // **⌘S / Ctrl+S でも落とす。** 直す道具として当たり前の鍵で、押すと
@@ -725,7 +803,7 @@ function listen(): void {
   document.addEventListener('keydown', (event) => {
     if (!(event.metaKey || event.ctrlKey) || event.key !== 's') return;
     event.preventDefault();
-    saveDoc();
+    void saveDoc();
   });
 
   // **直したまま閉じさせない。** 頁を閉じると字は消える (預け先が無い)。

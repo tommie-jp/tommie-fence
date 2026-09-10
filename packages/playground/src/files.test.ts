@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { UNTITLED, asTyped, docFrom, isCrlf, nameOf, withNewlines } from './files.ts';
+import { UNTITLED, asTyped, canHold, docFrom, isCrlf, nameOf, withNewlines } from './files.ts';
 
 /**
  * **改行の形を保つ。** テキスト欄は値を LF に均すので、開いた時点で
@@ -72,5 +72,21 @@ describe('docFrom', () => {
     expect(docFrom('', HERE)).toBeNull();
     expect(docFrom('?dev', HERE)).toBeNull();
     expect(docFrom('?doc=', HERE)).toBeNull();
+  });
+});
+
+/**
+ * **掴み手を持てるのは Chromium の PC だけ。** 無いときはダウンロードに
+ * 落ちるので、有無を見分けられればよい。
+ */
+describe('canHold', () => {
+  test('showOpenFilePicker のある窓なら持てる', () => {
+    expect(canHold({ showOpenFilePicker: () => {} })).toBe(true);
+  });
+
+  test('無ければ持てない', () => {
+    expect(canHold({})).toBe(false);
+    expect(canHold(null)).toBe(false);
+    expect(canHold(undefined)).toBe(false);
   });
 });
