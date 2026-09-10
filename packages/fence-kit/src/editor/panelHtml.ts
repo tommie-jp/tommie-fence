@@ -398,6 +398,41 @@ const STYLE = `
     .kc-tool kbd { display: none; }
   }
 
+  /* **横向きは高さで畳む** (52 の docs/46)。横向きの iPhone は幅が 667〜932px
+     で、上の 720px の塊の両側にまたがる — 幅で決めると機種で姿が変わる。
+     **足りないのは高さ**で、そちらは全機種 375〜430px と揃っている。
+
+     **幅は余っているので道具は右へ縦に並べ直す。** 下端に貼ると、一番足りない
+     高さを 54px 食う。両方の塊に当たるとき (SE の横向き: 幅 667 かつ 高さ 375)
+     は、**こちらが後に書いてあるので勝つ** — それが狙い。 */
+  @media (max-height: 500px) {
+    /* 道具は右へ。**2 列にする** — 1 列だと 225px の高さに 4 つしか入らず、
+       残り 5 つが巻き取りの向こうへ隠れる。幅は 667px あって余っているので、
+       120px を道具に回しても図に 547px 残る。9 つが一度に見えるほうが速い。 */
+    body { padding-bottom: 0; }
+    .kc-main { flex-direction: row; }
+    .kc-tools {
+      position: static; width: 120px; height: auto;
+      display: grid; grid-template-columns: repeat(2, 1fr); align-content: start;
+      overflow-x: hidden; overflow-y: auto;
+      border-top: 0; border-left: 1px solid var(--kc-line);
+    }
+    /* 5 段 x 42px = 210px。**的は 40 x 56px** で、面積としては 44px 角と同じ
+       ((52 の docs/40) の「的の大きさと見た目は別物」と同じ考え)。 */
+    .kc-tool { min-width: 0; min-height: 40px; padding: 2px; font-size: 10px; }
+    .kc-tool .kc-glyph { font-size: 15px; }
+    /* 札は 1 行に収める。**折り返すと段の高さが揃わず**、9 つの並びが崩れる
+       (「引きずる」の 5 字が 2 行になっていた)。iOS のタブ棒の札も 10pt。 */
+    .kc-tool span { white-space: nowrap; }
+
+    /* **指の案内は出さない。** 20px でも横向きでは図の 8% にあたる。
+       縦向きで一度読めば足りる話で、毎回場所を取るほどではない。 */
+    .kc-title-touch { display: none; }
+
+    /* 状態欄はそのまま (25px)。**畳んでも取り返せる高さが小さい**うえ、
+       掴んだ結果の一言が出る場所でもある。 */
+  }
+
   /* 帯: 読めなかったところとお知らせ。折り畳める。 */
   .kc-band { flex: none; max-height: 30%; overflow-y: auto; border-top: 1px solid var(--kc-line); background: var(--kc-chrome); }
   .kc-band summary { padding: 3px 8px; cursor: pointer; user-select: none; opacity: 0.8; }

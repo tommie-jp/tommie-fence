@@ -73,37 +73,49 @@
       <!-- 狭い画面では帯をほどいて (`display: contents`)、札を図の上・
            道具を字の下に置く。広い画面と `body.full` では 1 行の帯のまま。 -->
       <div class="bar">
+        <!-- **たまにしか押さないものを畳む釦** (52 の docs/46)。畳んだ姿
+             (`body.full`) でだけ出る。印を `≡` にしないのは、マップの左上に
+             既に `▤` (属性の引き出し) があり、2 つ並ぶと引き出しが 2 つに
+             見えるため。iOS の作法どおり `···` にして役を分ける。 -->
+        <button type="button" class="more" id="more" aria-expanded="false">···</button>
+        <!-- いま開いている文書。**手元のファイルを開くと「例」の欄は何も
+             指さなくなる**ので、名前を出す場所が要る。**畳んだ姿でも出す** —
+             直しているものと、保存したかを画面から読み取れるように。 -->
+        <p class="doc" id="doc-name"></p>
         <!-- **文書の中のどのフェンスを見ているか。** 狭い画面では図の上に置く
              (図の名札を兼ねる)。 -->
         <div class="picks">
-          <!-- いま開いている文書。**手元のファイルを開くと「例」の欄は何も
-               指さなくなる**ので、名前を出す場所が要る。 -->
-          <p class="doc" id="doc-name"></p>
           <label class="pick">
             フェンス
             <select id="fence"></select>
           </label>
         </div>
         <div class="tools">
-          <label class="pick">
-            例
-            <select id="example"></select>
-          </label>
-          <!-- 外の `.md` を開く。**欄は隠して釦で押させる** (見た目が
-               ブラウザごとに違ううえ、日本語の呼び名を付けられない)。 -->
-          <input type="file" id="file" accept=".md,.markdown,text/markdown" hidden />
-          <button type="button" id="open">開く</button>
+          <!-- **たまに押すもの。** 畳んだ姿では `···` の板の中へ回る。
+               普段は `display: contents` で、行に直に並んでいるのと同じ。 -->
+          <div class="more-items" id="more-items">
+            <label class="pick">
+              例
+              <select id="example"></select>
+            </label>
+            <!-- 外の `.md` を開く。**欄は隠して釦で押させる** (見た目が
+                 ブラウザごとに違ううえ、日本語の呼び名を付けられない)。 -->
+            <input type="file" id="file" accept=".md,.markdown,text/markdown" hidden />
+            <button type="button" id="open">開く</button>
+            <button type="button" id="qr" aria-expanded="false">QR</button>
+            <!-- 何が起きたかの記録。**一言は 2 秒で消えて、スマホでは
+                 見逃しやすい** (52 の docs/45)。開いても図を押し下げないよう
+                 垂れ下げる。 -->
+            <details class="log" id="log">
+              <summary>ログ</summary>
+              <ol id="log-rows"></ol>
+            </details>
+          </div>
+          <!-- **よく押すものは隠さない** (52 の docs/46)。保存が 2 タップに
+               なるのは、直す道具として一番困る所 — 頁を閉じると字は消える。 -->
           <button type="button" id="save">保存</button>
-          <button type="button" id="qr" aria-expanded="false">QR</button>
           <button type="button" id="map-toggle" aria-pressed="false">GUI で編集</button>
           <span class="said" id="said" role="status"></span>
-          <!-- 何が起きたかの記録。**一言は 2 秒で消えて、スマホでは
-               見逃しやすい** (52 の docs/45)。開いても図を押し下げないよう
-               垂れ下げる。 -->
-          <details class="log" id="log">
-            <summary>ログ</summary>
-            <ol id="log-rows"></ol>
-          </details>
         </div>
       </div>
 

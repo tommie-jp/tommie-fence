@@ -97,6 +97,13 @@ main { display: flex; flex-direction: column; }
 }
 
 .picks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* **たまに押すものの束。** 普段は `contents` なので、行に直に並んでいるのと
+   同じ (見た目は 1 行も変わらない)。畳んだ姿でだけ板に化ける。 */
+.more-items { display: contents; }
+
+/* `···` の釦。**畳んだ姿でだけ出す。** */
+.more { display: none; }
+
 /* いま開いている文書の名前。**直したままなら印を添える。** */
 .doc { margin: 0; font-size: 0.9rem; color: var(--dim); }
 .doc .dirty { color: var(--bad); font-weight: 600; }
@@ -147,7 +154,8 @@ select, .bar button {
 @media (max-width: 860px) {
   .panes { grid-template-columns: minmax(0, 1fr); }
   .bar { display: contents; }
-  .picks { order: 1; margin: 12px 0; }
+  .doc { order: 1; margin: 12px 0 0; }
+  .picks { order: 1; margin: 4px 0 12px; }
   .panes { order: 2; }
   .tools { order: 3; margin-top: 12px; }
   .next { order: 4; }
@@ -226,8 +234,13 @@ td { font-family: var(--mono); font-size: 12px; }
  * 3. **高さを `vh` で決めない** — iOS の `100vh` はアドレス欄を含む高さで、
  *    実際に見えている分より大きい。図と欄が画面からはみ出す
  * 4. **右上の QR は見出しの下へ回す** — 狭い画面では見出しに重なる
+ *
+ * **閾値はマップと揃えて 720px** (52 の docs/46)。かつては 560px だったが、
+ * 560 と 720 のあいだ — **横向きの iPhone SE (667px) がちょうどここ** — では
+ * 欄が縮む規則が効かず、釦が帯から溢れて 2 段目に落ちていた (実機の画像)。
+ * 頁とマップが別の姿で組み合わさる所を作らない。
  */
-@media (max-width: 560px) {
+@media (max-width: 720px) {
   body { padding: 12px 12px 24px; }
   h1 { font-size: 1.25rem; }
   .lead { font-size: 1rem; }
@@ -274,6 +287,35 @@ body.full .picks, body.full .tools { order: 0; margin: 0; }
 /* **畳んだ姿ではフェンスの選び手を出さない。** マップが同じ一覧を持っている
    (殻の `renderFencePicker`)。2 つ並べても迷うだけ。 */
 body.full .picks { display: none; }
+
+/* **畳んだ姿の帯は 1 段** (52 の docs/46)。`[···] 文書名 ● [保存][閉じる]`。
+   2 段で 90px 取っていたのを 44px にして、その分を図に渡す。
+   板の置き場所を測る基準は帯そのもの (道具の行だと右半分にしか出ない)。 */
+body.full .bar { position: relative; flex-wrap: nowrap; }
+body.full .tools { position: static; flex-wrap: nowrap; }
+body.full .more { display: inline-flex; align-items: center; }
+/* 名前は真ん中で、長ければ端を詰める (釦の場所を押しのけない)。 */
+body.full .doc {
+  order: 0; margin: 0; flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* **たまに押すものは板の中へ。** 一言は出ているときだけ場所を取る。 */
+body.full .more-items { display: none; }
+body.full .said:empty { display: none; }
+
+/* `···` を押したとき。**帯の下から板が降りる** — 図は押し下げない
+   (重ねるだけなので、閉じれば元の見え方に戻る)。 */
+body.full.sheet .more-items {
+  display: flex; flex-direction: column; align-items: stretch; gap: 8px;
+  position: absolute; z-index: 6; left: 0; right: 0; top: 100%;
+  padding: 12px; background: var(--ground);
+  border-bottom: 1px solid var(--line); box-shadow: 0 6px 16px rgb(0 0 0 / 18%);
+}
+body.full.sheet .more-items .pick { width: auto; }
+/* 板の中では、ログは垂れ下げずにその場で開く (板の中に板を重ねない)。 */
+body.full.sheet .log ol {
+  position: static; margin: 4px 0 0; max-height: 30svh; box-shadow: none;
+}
 /* アプリでは図が出しっぱなしなので、開閉の釦は要らない。**頁のほうは残す** —
    狭いときの「編集する」は、そのまま「閉じる」になる。 */
 body.app #map-toggle { display: none; }

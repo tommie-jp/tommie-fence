@@ -44,6 +44,7 @@ const els = {
   qrUrl: need('qr-url'),
   qrKind: need('qr-kind'),
   qrCode: need('qr-code'),
+  more: need<HTMLButtonElement>('more'),
   log: need<HTMLDetailsElement>('log'),
   logRows: need('log-rows'),
   said: need('said'),
@@ -869,12 +870,38 @@ function listen(): void {
   els.source.addEventListener('click', follow);
   els.source.addEventListener('keyup', follow);
 
-  els.example.addEventListener('change', () => { void openExample(Number(els.example.value)); });
+  els.example.addEventListener('change', () => {
+    showSheet(false);
+    void openExample(Number(els.example.value));
+  });
   els.fence.addEventListener('change', () => { showFence(Number(els.fence.value)); });
   els.mapToggle.addEventListener('click', toggleMap);
 
   // **掴めるなら picker で開く** (2 回目からその場に上書きできる)。
   // 持てない窓 (iOS など) では今までどおり `<input>` を押す。
+  /**
+   * `···` の板。**たまにしか押さないものを畳む** (52 の docs/46)。
+   * 保存と閉じるは畳まない — 保存が 2 タップになるのが一番困る。
+   */
+  const showSheet = (open: boolean): void => {
+    document.body.classList.toggle('sheet', open);
+    els.more.setAttribute('aria-expanded', String(open));
+    // 閉じたらログも畳む (次に開いたときに開きっぱなしだと板が長い)。
+    if (!open) els.log.open = false;
+  };
+  els.more.addEventListener('click', () => {
+    showSheet(!document.body.classList.contains('sheet'));
+  });
+  // **外を押したら閉じる。** 板の外の図を触ろうとしたときに、板が邪魔をしない。
+  document.addEventListener('pointerdown', (event) => {
+    if (!document.body.classList.contains('sheet')) return;
+    if (event.target instanceof Node && els.more.closest('.bar')?.contains(event.target)) return;
+    showSheet(false);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') showSheet(false);
+  });
+
   els.open.addEventListener('click', () => {
     if (canHold(window)) void pickFile();
     else els.file.click();

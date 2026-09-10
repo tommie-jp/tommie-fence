@@ -473,6 +473,39 @@ describe('狭いときの畳み方', () => {
     expect(narrow).toMatch(/\.kc-top button, \.kc-props-toggle \{[^}]*height: 36px/);
   });
 
+  /**
+   * **横向きは高さで畳む** (52 の docs/46)。横向きの iPhone は幅 667〜932px で
+   * 720px の塊の両側にまたがるので、幅で決めると機種で姿が変わる。足りない
+   * のは高さで、そちらは全機種 375〜430px と揃っている。
+   */
+  test('folds by height as well, so a phone on its side is not decided by width', () => {
+    expect(html).toContain('@media (max-height: 500px)');
+  });
+
+  test('puts the tools back on the side when height is short, since width is spare', () => {
+    const low = html.slice(html.indexOf('@media (max-height: 500px)'));
+
+    expect(low).toMatch(/\.kc-main \{[^}]*flex-direction: row/);
+    expect(low).toMatch(/\.kc-tools \{[^}]*grid-template-columns: repeat\(2, 1fr\)/);
+  });
+
+  /** 下端に貼ると、一番足りない高さを 54px 食う。 */
+  test('unpins the bottom strip when lying down, where height is what is missing', () => {
+    const low = html.slice(html.indexOf('@media (max-height: 500px)'));
+
+    expect(low).toMatch(/body \{ padding-bottom: 0/);
+    expect(low).toMatch(/\.kc-tools \{[^}]*position: static/);
+  });
+
+  /**
+   * **後に書いてあるほうが勝つ。** SE の横向き (幅 667 かつ 高さ 375) は
+   * 両方の塊に当たるので、順が意味を持つ。
+   */
+  test('lets the short-height rules win over the narrow-width ones', () => {
+    expect(html.indexOf('@media (max-height: 500px)'))
+      .toBeGreaterThan(html.indexOf('@media (max-width: 720px)'));
+  });
+
   test('drops the key hints on the tools, since a phone has no keys', () => {
     const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
     expect(narrow).toContain('.kc-tool kbd { display: none; }');
