@@ -1010,7 +1010,7 @@ async function start(): Promise<void> {
   els.leadNoteEn.hidden = JA;
   // **どの版を見ているかをログの頭に置く。** 配りかたが終わる前に見て
   // 「直っていない」と読む取り違えを 3 度踏んだ (52 の docs/46)。
-  note(`版 ${__VERSION__}・${__BUILT__} に組んだもの`);
+  note(`ver ${__VERSION__} build ${__BUILT__}`);
   renderLog();
   syncLead();
   listen();
