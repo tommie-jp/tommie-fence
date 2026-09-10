@@ -4,6 +4,7 @@ import { createBreadboardEditor } from 'breadboard-fence/editor';
 import { createPerfboardEditor } from 'perfboard-fence/editor';
 import { createCircuitEditor } from 'circuit-fence/editor';
 import { createMapSession } from './host.ts';
+import { KINDS } from '../kinds.ts';
 import type { Kind } from '../kinds.ts';
 
 /**
@@ -26,14 +27,21 @@ export type MapHandle = {
 };
 
 export type MapOptions = {
-  readonly kind: Kind;
   readonly frame: HTMLIFrameElement;
-  readonly body: () => string;
-  readonly setBody: (next: string) => void;
+  /** いまの文書の全文 (Markdown)。 */
+  readonly text: () => string;
+  /** 書き換わった全文を頁へ返す。 */
+  readonly setText: (next: string) => void;
+  /** いま見せているフェンスの本文の 1 行目 (0 始まり)。 */
+  readonly fenceLine: () => number;
+  /** 殻が掴むフェンスを変えたとき (中の一覧で選び直した)。 */
+  readonly onBind: (line: number) => void;
 };
 
-export function openMap({ kind, frame, body, setBody }: MapOptions): MapHandle {
-  const editor = EDITORS[kind]();
+export function openMap({ frame, text, setText, fenceLine, onBind }: MapOptions): MapHandle {
+  // **3 つの言語ぜんぶを渡す。** 文書に何が書いてあるかは開くまで分からず、
+  // 1 つの `.md` に 2 つの言語が混ざっていることもある (52 の docs/43)。
+  const editors = KINDS.map((kind) => EDITORS[kind]());
 
   // 中の頁ができるまでは送れないので、溜めておいて `load` で流す。
   let ready = false;
@@ -46,7 +54,7 @@ export function openMap({ kind, frame, body, setBody }: MapOptions): MapHandle {
     frame.contentWindow?.postMessage(message, '*');
   };
 
-  const session: Session = createMapSession({ kind, editor, body, setBody, post });
+  const session: Session = createMapSession({ editors, text, setText, fenceLine, onBind, post });
 
   const onLoad = (): void => {
     ready = true;

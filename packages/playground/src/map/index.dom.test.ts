@@ -9,7 +9,21 @@ import { THEME_CSS } from './theme.ts';
  * 1 行も変えずに動く — 写しが崩れると、頁だけで壊れて拡張では気づけない。
  */
 
-const SOURCE = 'title: t\nboard: half\nparts:\n  R1: resistor a5 a10\n';
+/** 散文とフェンスが混ざった、普通の Markdown (52 の docs/43)。 */
+const DOC = [
+  '# 例',
+  '',
+  '```breadboard',
+  'title: t',
+  'board: half',
+  'parts:',
+  '  R1: resistor a5 a10',
+  '```',
+  '',
+].join('\n');
+
+/** フェンスの本文の 1 行目 (0 始まり)。 */
+const FENCE_LINE = 3;
 
 /**
  * **iframe は頁から外して片付ける。** jsdom は閉じるときに子の browsing context を
@@ -19,18 +33,20 @@ afterEach(() => {
   for (const frame of document.querySelectorAll('iframe')) frame.remove();
 });
 
-const openOne = (over: { readonly body?: () => string } = {}) => {
+const openOne = (over: { readonly text?: () => string } = {}) => {
   const frame = document.createElement('iframe');
   document.body.append(frame);
-  let body = over.body?.() ?? SOURCE;
+  let text = over.text?.() ?? DOC;
   const written: string[] = [];
+  const bound: number[] = [];
   const handle = openMap({
-    kind: 'breadboard',
     frame,
-    body: () => body,
-    setBody: (next) => { written.push(next); body = next; },
+    text: () => text,
+    setText: (next) => { written.push(next); text = next; },
+    fenceLine: () => FENCE_LINE,
+    onBind: (line) => bound.push(line),
   });
-  return { frame, handle, written, body: () => body };
+  return { frame, handle, written, bound, body: () => text };
 };
 
 /** 中の頁が読み込まれた合図。jsdom は srcdoc を実際には読まないので、手で出す。 */
@@ -120,13 +136,26 @@ describe('マップを頁に開く', () => {
     expect(written).toEqual([]);
   });
 
-  test('opens the other fences the same way', () => {
+  /**
+   * **3 つの言語を一度に渡してある** (52 の docs/43)。1 つの `.md` に
+   * どの言語が書いてあるかは開くまで分からず、混ざっていることもある。
+   */
+  test('opens whichever language the document happens to use', () => {
     for (const kind of ['perfboard', 'circuit'] as const) {
       const frame = document.createElement('iframe');
       document.body.append(frame);
-      const handle = openMap({ kind, frame, body: () => '', setBody: () => {} });
+      const text = ['# 例', '', `\`\`\`${kind}`, 'parts:', '```', ''].join('\n');
+      const handle = openMap({
+        frame,
+        text: () => text,
+        setText: () => {},
+        fenceLine: () => 3,
+        onBind: () => {},
+      });
 
       expect(frame.srcdoc, kind).toContain('<!DOCTYPE html>');
+      // **その言語の道具**が出ている (別の言語の殻に落ちていない)。
+      expect(frame.srcdoc, kind).toContain(kind);
       handle.close();
     }
   });

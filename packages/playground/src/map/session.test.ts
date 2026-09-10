@@ -37,17 +37,23 @@ const CASES: readonly { kind: Kind; make: () => FenceEditor; body: string; part:
 ];
 
 describe.each(CASES)('$kind のマップ', ({ kind, make, body, part, to }) => {
+  /**
+   * **文書は Markdown の全文** (52 の docs/43)。散文を前後に置いて、
+   * 書き換えがフェンスの行だけに当たることも一緒に見る。
+   */
   const open = () => {
-    let now = body;
+    let now = ['# 見出し', '', `\`\`\`${kind}`, body.replace(/\n$/, ''), '```', '', 'あとがき。', ''].join('\n');
     const sent: Outgoing[] = [];
     const editor = make();
     const session = createMapSession({
-      kind,
-      editor,
-      body: () => now,
-      setBody: (next) => {
+      editors: [editor],
+      text: () => now,
+      setText: (next) => {
         now = next;
       },
+      // 本文の 1 行目 (見出し 0 / 空 1 / 開き記号 2 → 本文 3)。
+      fenceLine: () => 3,
+      onBind: () => {},
       post: (message) => sent.push(message),
     });
     return { session, editor, sent, now: () => now };
@@ -71,24 +77,38 @@ describe.each(CASES)('$kind のマップ', ({ kind, make, body, part, to }) => {
     expect(html).toContain('cf-status');
   });
 
-  test('掴んで動かすと本文が書き換わる', async () => {
+  test('掴んで動かすと文書が書き換わる', async () => {
     // Arrange
     const { session, now } = open();
+    const was = now();
 
     // Act
     await session.handle({ kind: 'move', part, to });
 
     // Assert
     expect(now()).toContain(to);
-    expect(now()).not.toBe(body);
+    expect(now()).not.toBe(was);
   });
 
-  test('戻すと元の本文に返る', async () => {
+  /** **開いていない行は 1 字も変えない。** 書き戻す先は文書そのもの。 */
+  test('散文の行は動かさない', async () => {
     const { session, now } = open();
+
+    await session.handle({ kind: 'move', part, to });
+
+    const lines = now().split('\n');
+    expect(lines[0]).toBe('# 見出し');
+    expect(lines.at(-2)).toBe('あとがき。');
+    expect(now()).toContain(`\`\`\`${kind}`);
+  });
+
+  test('戻すと元の文書に返る', async () => {
+    const { session, now } = open();
+    const was = now();
     await session.handle({ kind: 'move', part, to });
 
     await session.handle({ kind: 'undo' });
 
-    expect(now()).toBe(body);
+    expect(now()).toBe(was);
   });
 });

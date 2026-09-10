@@ -2,28 +2,38 @@ import { isKind } from './kinds.ts';
 import type { Kind } from './kinds.ts';
 
 /**
- * 例の一覧。**中身はビルド時に集める** (`scripts/examples.mjs` が
- * 各パッケージの `examples/` からフェンスを抜き出して `examples.json` を書く)。
- * ページは起動時にそれを 1 回読むだけ。
+ * 開ける `.md` の一覧。**中身はここに無い** — `scripts/examples.mjs` が
+ * 各パッケージの `examples/` から `.md` を `dist/examples/` へ写し、
+ * この一覧 (`examples.json`) を書く。頁は選ばれたものだけを取りに行く。
+ *
+ * **例も「外にある `.md`」の 1 つ**として扱う (52 の docs/43)。散文と
+ * フェンスが混ざった本物の文書なので、開いて直して書き戻すデモの題材に
+ * そのまま使える。
  *
  * ここにあるのは**外から来た JSON を受け取ってよいか**を確かめる部分。
  * 形が違うものは黙って捨てず、落とした数を数えて呼ぶ側に返す。
  */
 
 export type Example = {
+  /** その `.md` が使っているフェンスの言語。 */
   readonly kind: Kind;
-  /** わざと壊した例か。選ぶ欄で分けて並べる。 */
+  /** わざと壊した例か。`?dev` のときだけ並べる。 */
   readonly broken: boolean;
-  /** 選ぶ欄に出す名前。フェンスの `title:` か、無ければファイル名。 */
-  readonly label: string;
-  readonly source: string;
-  /** リポジトリの中での置き場。元のファイルへのリンクに使う。 */
+  /** ファイル名 (`01-led.md`)。 */
+  readonly name: string;
+  /** 文書の名前 (最初の見出し)。 */
+  readonly title: string;
+  /** 中のフェンスの本数。 */
+  readonly fences: number;
+  /** `dist/` からの道。ここを取りに行く。 */
+  readonly path: string;
+  /** リポジトリの中の置き場。出どころのリンクに使う。 */
   readonly from: string;
 };
 
 export type ExampleList = {
   readonly examples: readonly Example[];
-  /** 形が合わずに落としたもの。0 でなければページが古い JSON を読んでいる。 */
+  /** 形が合わずに落としたもの。0 でなければ頁が古い JSON を読んでいる。 */
   readonly dropped: number;
 };
 
@@ -31,15 +41,17 @@ const isString = (value: unknown): value is string => typeof value === 'string';
 
 function toExample(value: unknown): Example | null {
   if (typeof value !== 'object' || value === null) return null;
-  const { kind, broken, label, source, from } = value as Record<string, unknown>;
+  const { kind, broken, name, title, fences, path, from } = value as Record<string, unknown>;
   if (!isKind(kind)) return null;
-  if (!isString(label) || !isString(source) || !isString(from)) return null;
-  if (typeof broken !== 'boolean') return null;
-  if (source.trim() === '') return null;
-  return { kind, broken, label, source, from };
+  if (!isString(name) || !isString(title) || !isString(path) || !isString(from)) return null;
+  if (typeof broken !== 'boolean' || typeof fences !== 'number') return null;
+  if (name === '' || path === '') return null;
+  // **道は `dist/` の中に限る。** 外から来た字なので、別の出所を指させない。
+  if (!path.startsWith('examples/') || path.includes('..')) return null;
+  return { kind, broken, name, title, fences, path, from };
 }
 
-/** JSON (配列のはず) を例の一覧にする。 */
+/** JSON (配列のはず) を一覧にする。 */
 export function parseExamples(data: unknown): ExampleList {
   if (!Array.isArray(data)) return { examples: [], dropped: 0 };
 
@@ -54,15 +66,9 @@ export function parseExamples(data: unknown): ExampleList {
 }
 
 /**
- * その種類の例だけ。並びは JSON のまま (作る側が並べてある)。
- *
- * **わざと壊した例は既定で外す。** あれはエラーの帯を確かめるためのもので、
- * 初めて来た人の欄に並ぶと雑音にしかならない (52 の docs/41)。
+ * 並べるもの。**わざと壊した例は既定で外す** — あれはエラーの帯を確かめる
+ * ためのもので、初めて来た人の欄に並ぶと雑音にしかならない (52 の docs/41)。
  * `?dev` で開いた人にだけ `broken` を立てて呼ぶ。
  */
-export const forKind = (
-  examples: readonly Example[],
-  kind: Kind,
-  broken = false,
-): readonly Example[] =>
-  examples.filter((example) => example.kind === kind && (broken || !example.broken));
+export const shown = (examples: readonly Example[], broken = false): readonly Example[] =>
+  examples.filter((example) => broken || !example.broken);

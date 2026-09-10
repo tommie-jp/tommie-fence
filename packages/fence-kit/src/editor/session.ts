@@ -148,6 +148,14 @@ export type SessionHost<D extends DocLike> = {
   readonly nativeUndo?: (kind: 'undo' | 'redo') => Promise<void>;
   /** クリップボードへ写す。持たない宿主 (playground) では無い。 */
   readonly copyText?: (text: string) => Promise<void>;
+  /**
+   * 掴むフェンスが変わったとき。**一覧で選び直したときにも鳴る。**
+   *
+   * VS Code は要らない (カーソルが正で、こちらが追う側)。頁のように
+   * **同じ文書を殻の外にも映している宿主**が、どのフェンスを見せるかを
+   * 揃えるために使う。`line` は本文の 1 行目 (0 始まり)。
+   */
+  readonly onBind?: (uri: string, line: number) => void;
 };
 
 /**
@@ -372,7 +380,9 @@ export function createSession<D extends DocLike>(
       history.clear();
       light([]);
     }
+    const moved = bound === null || bound.uri !== uri || bound.line !== line;
     bound = { uri, line };
+    if (moved) host.onBind?.(uri, line);
   }
 
   /** カーソルのあるフェンス。文書を固定していれば、その文書の中に限る。 */
@@ -1520,9 +1530,12 @@ export function createSession<D extends DocLike>(
     const document = bound === null ? pinned : documentOf(bound.uri);
     if (line === null || document === null) return;
 
-    const fence = editor.fenceAt(document.getText(), line);
+    // **言語をまたいで探す。** 一覧 (`allFences`) は 3 つの言語を混ぜて
+    // 並べるので、いまの言語だけで引くと、別の言語の行を選んだ人に
+    // 「フェンスがありません」と言うことになる。
+    const fence = lookUp(document.getText(), line);
     if (fence === null) {
-      say(`${line} 行目に ${editor.language} フェンスがありません`);
+      say(`${line} 行目に ${languages()} フェンスがありません`);
       return;
     }
     rebind(document, fence.line);

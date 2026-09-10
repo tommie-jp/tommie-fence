@@ -1,12 +1,14 @@
 //
-// 例をビルド時に集めて 1 つの JSON にする。ページは起動時にこれを 1 回読む。
+// 例をビルド時に集める。**`.md` をそのまま配る** (52 の docs/43)。
 //
-// **出所は各パッケージの examples/ そのもの。** 例をこちらへ写すと、直した日に
-// 2 つが食い違う (写しは必ず古くなる)。フェンスだけを抜き出して持ってくる。
+// fence-editor は「外にある `.md` を開いて、中のフェンスを直して、書き戻す」
+// 道具で、頁はその手順のデモをする。**例もその「外にある `.md`」の 1 つ**に
+// する — フェンスだけを抜き出すと、散文とフェンスが混ざった本物の文書を
+// 開くところが見せられない。
 //
-// 抜き出しは行頭のフェンスに限った正規表現で足りる — 相手は自分たちの例
-// (箇条書きの中に埋めたフェンスは無い)。取りこぼしたら数が減るので、
-// 下限を決めて止める。
+// **出所は各パッケージの examples/ そのもの。** 中身は書き換えず、写して
+// 一覧を作るだけ (直した日に 2 つが食い違わない)。
+import { cp, mkdir, writeFile } from 'node:fs/promises';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -16,51 +18,25 @@ const PACKAGE_OF = {
   circuit: 'circuit-fence',
 };
 
-/** この数を下回ったら、抜き出しが壊れたと見なして止める。 */
+/** この数を下回ったら、集めるところが壊れたと見なして止める。 */
 const LEAST = 5;
 
-/**
- * 1 つの Markdown から、その種類のフェンスを順に取り出す。**直前の見出しも
- * 一緒に返す** — 題 (`title:`) を書かないフェンス (わざと壊した例など) は、
- * 見出しがいちばん読み手に伝わる名前になるため。
- *
- * フェンスの中は見出しとして数えない (` ```text ` に書いた報告の見本を
- * 見出しと取り違えるため)。
- */
-function fencesIn(markdown, kind) {
-  const found = [];
-  let heading = null;
-  let body = null;
-  let mine = false;
-
+/** 文書の名前。**最初の見出し**を採る (無ければファイル名)。 */
+const headingOf = (markdown, stem) => {
   for (const line of markdown.split('\n')) {
-    const fence = line.match(/^```(\S*)/);
-
-    if (body !== null) {
-      if (fence && fence[1] === '') {
-        if (mine) found.push({ source: `${body.join('\n')}\n`, heading });
-        body = null;
-      } else {
-        body.push(line);
-      }
-      continue;
-    }
-
-    if (fence) {
-      body = [];
-      mine = fence[1] === kind;
-      continue;
-    }
-
-    const title = line.match(/^#{1,6}\s+(\S.*?)\s*$/);
-    if (title?.[1] !== undefined) heading = title[1];
+    // フェンスの中は見出しとして数えない。
+    if (line.startsWith('```')) break;
+    const found = line.match(/^#\s+(\S.*?)\s*$/);
+    if (found?.[1] !== undefined) return found[1];
   }
-  return found;
-}
+  return stem;
+};
 
-const titleOf = (body) => body.match(/^title:\s*(\S.*?)\s*$/m)?.[1] ?? null;
+/** その言語のフェンスが何本あるか (行頭のフェンスだけ数える)。 */
+const countFences = (markdown, kind) =>
+  markdown.split('\n').filter((line) => line.startsWith(`\`\`\`${kind}`)).length;
 
-function fromDirectory(directory, kind, broken, repoPath) {
+function fromDirectory(directory, kind, broken, repoPath, prefix) {
   if (!existsSync(directory)) return [];
 
   const found = [];
@@ -68,43 +44,53 @@ function fromDirectory(directory, kind, broken, repoPath) {
     if (!name.endsWith('.md') || name.startsWith('README')) continue;
 
     const markdown = readFileSync(join(directory, name), 'utf8');
-    const fences = fencesIn(markdown, kind);
-    const stem = name.replace(/\.md$/, '');
+    const fences = countFences(markdown, kind);
+    // フェンスが 1 つも無い `.md` は開いても何も描けないので配らない。
+    if (fences === 0) continue;
 
-    // 同じ名前が並ぶとき (1 つの見出しの下に何本もあるとき) だけ番号を添える。
-    const labels = fences.map((fence) => titleOf(fence.source) ?? fence.heading ?? stem);
-    const seen = new Map();
-    for (const label of labels) seen.set(label, (seen.get(label) ?? 0) + 1);
-    const numbered = new Map();
-
-    for (const [index, fence] of fences.entries()) {
-      const label = labels[index] ?? stem;
-      let shown = label;
-      if ((seen.get(label) ?? 0) > 1) {
-        const nth = (numbered.get(label) ?? 0) + 1;
-        numbered.set(label, nth);
-        shown = `${label} (${nth})`;
-      }
-      found.push({ kind, broken, label: shown, source: fence.source, from: `${repoPath}/${name}` });
-    }
+    found.push({
+      kind,
+      broken,
+      name,
+      title: headingOf(markdown, name.replace(/\.md$/, '')),
+      fences,
+      /** `dist/` からの道。頁はここを取りに行く。 */
+      path: `${prefix}/${name}`,
+      /** リポジトリの中の置き場。出どころのリンクに使う。 */
+      from: `${repoPath}/${name}`,
+    });
   }
   return found;
 }
 
-/** 3 つのパッケージの examples/ から、フェンスを集める。 */
-export function collectExamples(packagesDir = '..') {
+/** 3 つのパッケージの examples/ から `.md` を集めて写す。 */
+export async function collectExamples(packagesDir = '..', outDir = 'dist/examples') {
   const all = [];
   for (const [kind, pkg] of Object.entries(PACKAGE_OF)) {
     const base = join(packagesDir, pkg, 'examples');
     const repoPath = `packages/${pkg}/examples`;
     // まともな例が先、わざと壊した例が後。選ぶ欄はこの並びのまま出す。
-    const ok = fromDirectory(base, kind, false, repoPath);
-    const broken = fromDirectory(join(base, 'errors'), kind, true, `${repoPath}/errors`);
+    const ok = fromDirectory(base, kind, false, repoPath, `examples/${kind}`);
+    const broken = fromDirectory(join(base, 'errors'), kind, true, `${repoPath}/errors`, `examples/${kind}/errors`);
 
     if (ok.length < LEAST) {
-      throw new Error(`${kind} の例が ${ok.length} 本しか取れていません (${base})。抜き出しが壊れています`);
+      throw new Error(`${kind} の例が ${ok.length} 本しか取れていません (${base})。集めるところが壊れています`);
+    }
+
+    await mkdir(join(outDir, kind), { recursive: true });
+    for (const one of [...ok, ...broken]) {
+      const to = join(outDir, one.path.replace(/^examples\//, ''));
+      await mkdir(join(to, '..'), { recursive: true });
+      await cp(join(packagesDir, pkg, 'examples', one.broken ? 'errors' : '', one.name), to);
     }
     all.push(...ok, ...broken);
   }
+  return all;
+}
+
+/** 一覧を書き出す。写しは `collectExamples` が済ませてある。 */
+export async function writeExamples(packagesDir = '..', outDir = 'dist') {
+  const all = await collectExamples(packagesDir, join(outDir, 'examples'));
+  await writeFile(join(outDir, 'examples.json'), `${JSON.stringify(all)}\n`);
   return all;
 }

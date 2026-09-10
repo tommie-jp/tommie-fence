@@ -73,7 +73,14 @@
       <!-- 狭い画面では帯をほどいて (`display: contents`)、札を図の上・
            道具を字の下に置く。広い画面と `body.full` では 1 行の帯のまま。 -->
       <div class="bar">
-        <div class="kinds" id="kinds" role="group" aria-label="フェンスの種類"></div>
+        <!-- **文書の中のどのフェンスを見ているか。** 狭い画面では図の上に置く
+             (図の名札を兼ねる)。 -->
+        <div class="picks">
+          <label class="pick">
+            フェンス
+            <select id="fence"></select>
+          </label>
+        </div>
         <div class="tools">
           <label class="pick">
             例
@@ -106,9 +113,9 @@
         </section>
 
         <section class="pane pane-src">
-          <h2><label for="source">フェンス</label></h2>
+          <h2><label for="source">Markdown</label></h2>
           <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off"
-            placeholder="ここにフェンスの中身を書く"></textarea>
+            placeholder="ここに Markdown を書く (中の ```circuit / ```breadboard / ```perfboard が図になる)"></textarea>
         </section>
       </div>
 

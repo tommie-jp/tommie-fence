@@ -67,14 +67,7 @@ main { display: flex; flex-direction: column; }
 }
 .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
-.kinds { display: flex; gap: 4px; }
-.kinds button {
-  font: inherit; font-family: var(--mono); font-size: 0.85rem;
-  padding: 4px 12px; cursor: pointer;
-  color: var(--ink); background: var(--paper);
-  border: 1px solid var(--line); border-radius: 6px;
-}
-.kinds button[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+.picks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
 .pick { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; color: var(--dim); }
 select, .bar button {
@@ -98,7 +91,7 @@ select, .bar button {
 @media (max-width: 860px) {
   .panes { grid-template-columns: minmax(0, 1fr); }
   .bar { display: contents; }
-  .kinds { order: 1; margin: 12px 0; }
+  .picks { order: 1; margin: 12px 0; }
   .panes { order: 2; }
   .tools { order: 3; margin-top: 12px; }
   .next { order: 4; }
@@ -189,12 +182,8 @@ td { font-family: var(--mono); font-size: 12px; }
      同じ 36px にして、字は 13px (註) に落とす。指で押す面は 36 x 115px
      あるので、44px 角の指針は面積として満たしている。 */
   .bar { gap: 8px; }
-  .bar button, .kinds button, select, .try button { min-height: 36px; padding: 6px 12px; }
-  /* 種類の釦は 3 つで 1 行に収める (綴りだけ出して、呼び名は畳む)。 */
-  .kinds { width: 100%; }
-  .kinds button { flex: 1; font-size: 13px; padding: 6px 4px; }
-  /* 呼び名は畳む (綴りだけで 3 つが 1 行に収まる)。 */
-  .kinds .reading { display: none; }
+  .bar button, select, .try button { min-height: 36px; padding: 6px 12px; }
+  .picks { width: 100%; }
   .pick { width: 100%; }
   .pick select { flex: 1; min-width: 0; }
 
@@ -225,7 +214,10 @@ body.full .foot { display: none; }
 /* **帯は 1 行に戻す。** 狭いときの `display: contents` はほどいた形なので、
    畳んだ姿では札と道具が別々の段に散る (実機で頼まれた「種類の札と釦の行」)。 */
 body.full .bar { display: flex; }
-body.full .kinds, body.full .tools { order: 0; margin: 0; }
+body.full .picks, body.full .tools { order: 0; margin: 0; }
+/* **畳んだ姿ではフェンスの選び手を出さない。** マップが同じ一覧を持っている
+   (殻の `renderFencePicker`)。2 つ並べても迷うだけ。 */
+body.full .picks { display: none; }
 /* アプリでは図が出しっぱなしなので、開閉の釦は要らない。**頁のほうは残す** —
    狭いときの「編集する」は、そのまま「閉じる」になる。 */
 body.app #map-toggle { display: none; }

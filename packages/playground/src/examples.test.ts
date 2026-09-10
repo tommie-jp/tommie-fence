@@ -1,17 +1,19 @@
 import { describe, expect, test } from 'vitest';
-import { forKind, parseExamples } from './examples.ts';
+import { parseExamples, shown } from './examples.ts';
 
 const one = {
   kind: 'breadboard',
   broken: false,
-  label: '図01 LED と抵抗',
-  source: 'board: half\n',
+  name: '01-led.md',
+  title: 'LED と抵抗',
+  fences: 1,
+  path: 'examples/breadboard/01-led.md',
   from: 'packages/breadboard-fence/examples/01-led.md',
 };
 
 describe('parseExamples', () => {
   test('形の合ったものを読む', () => {
-    // Arrange / Act
+    // Act
     const { examples, dropped } = parseExamples([one]);
 
     // Assert
@@ -19,24 +21,24 @@ describe('parseExamples', () => {
     expect(dropped).toBe(0);
   });
 
-  test('知らない種類は落として数える', () => {
-    const { examples, dropped } = parseExamples([one, { ...one, kind: 'vector' }]);
+  test('欠けているものは落として、数を返す', () => {
+    const { examples, dropped } = parseExamples([one, { kind: 'breadboard' }, null, 7]);
 
-    expect(examples).toHaveLength(1);
-    expect(dropped).toBe(1);
+    expect(examples).toEqual([one]);
+    expect(dropped).toBe(3);
   });
 
-  test('欄が欠けているもの・型が違うものは落とす', () => {
-    const { examples, dropped } = parseExamples([
-      { ...one, label: 42 },
-      { ...one, broken: 'yes' },
-      { ...one, source: '   ' },
-      null,
-      'breadboard',
-    ]);
+  test('知らない種類は落とす', () => {
+    expect(parseExamples([{ ...one, kind: 'vector' }]).dropped).toBe(1);
+  });
 
-    expect(examples).toHaveLength(0);
-    expect(dropped).toBe(5);
+  /**
+   * **道は外から来た字。** `dist/` の中に限る — そうしないと、古い JSON や
+   * 差し替えられた JSON で別の出所を取りに行かせられる。
+   */
+  test('examples/ の外を指す道は落とす', () => {
+    expect(parseExamples([{ ...one, path: 'https://example.test/x.md' }]).dropped).toBe(1);
+    expect(parseExamples([{ ...one, path: 'examples/../../secret.md' }]).dropped).toBe(1);
   });
 
   test('配列でなければ空で返す (読み込みに失敗したとき)', () => {
@@ -45,28 +47,14 @@ describe('parseExamples', () => {
   });
 });
 
-describe('forKind', () => {
-  test('その種類だけを返す', () => {
-    const perf = { ...one, kind: 'perfboard' as const };
+describe('shown', () => {
+  const broken = { ...one, broken: true, name: 'bad.md' };
 
-    expect(forKind(parseExamples([one, perf]).examples, 'perfboard')).toEqual([perf]);
-  });
-
-  /**
-   * わざと壊した例はエラーの帯を確かめるためのもの。**初めて来た人の欄には
-   * 出さない** (52 の docs/41)。`?dev` で開いた人にだけ足す。
-   */
   test('わざと壊した例は既定で外す', () => {
-    const broken = { ...one, broken: true, label: 'わざと壊した例' };
-    const all = parseExamples([one, broken]).examples;
-
-    expect(forKind(all, 'breadboard')).toEqual([one]);
+    expect(shown(parseExamples([one, broken]).examples)).toEqual([one]);
   });
 
-  test('broken を立てると壊した例も並ぶ (?dev で開いたとき)', () => {
-    const broken = { ...one, broken: true, label: 'わざと壊した例' };
-    const all = parseExamples([one, broken]).examples;
-
-    expect(forKind(all, 'breadboard', true)).toEqual([one, broken]);
+  test('broken を立てると並ぶ (?dev で開いたとき)', () => {
+    expect(shown(parseExamples([one, broken]).examples, true)).toEqual([one, broken]);
   });
 });

@@ -1,17 +1,22 @@
-import { KINDS, KIND_LABEL, KIND_READING } from './kinds.ts';
+import { KIND_LABEL, KIND_READING } from './kinds.ts';
 import type { Kind } from './kinds.ts';
 import { render } from './fences.ts';
-import { decodeShare, shareLabel } from './share.ts';
-import { forKind, parseExamples } from './examples.ts';
+import { decodeShare } from './share.ts';
+import { parseExamples, shown } from './examples.ts';
 import { nudge, nudgesFor } from './demo.ts';
+import { asDocument, fenceAt, fencesIn, labelOf, lineOfOffset, replaceFence } from './document.ts';
+import type { DocFence } from './document.ts';
 import type { Example } from './examples.ts';
 import type { Output } from './fences.ts';
 
 /**
  * 画面を組み立てる層。**決め事はここに置かない** — 描画は `fences.ts`、
- * リンクの綴りは `share.ts`、例の受け取りは `examples.ts` にあり、
- * どれも DOM を知らない純関数としてテストに掛かっている。
+ * 文書の数え方は `document.ts`、リンクの読みは `share.ts`、一覧は
+ * `examples.ts` にあり、どれも DOM を知らない純関数としてテストに掛かっている。
  * ここがするのは、打鍵を読んで結果を DOM に映すことだけ。
+ *
+ * **持っているのは Markdown の文書 1 つ** (52 の docs/43)。フェンスは
+ * その中の範囲で、図に出すのは「いまのフェンス」1 本。
  */
 
 const REPO = 'https://github.com/tommie-jp/tommie-fence/blob/main';
@@ -25,8 +30,8 @@ function need<E extends HTMLElement>(id: string): E {
 }
 
 const els = {
-  kinds: need('kinds'),
   example: need<HTMLSelectElement>('example'),
+  fence: need<HTMLSelectElement>('fence'),
   said: need('said'),
   source: need<HTMLTextAreaElement>('source'),
   figure: need('figure'),
@@ -51,7 +56,26 @@ const els = {
 /** 拡張の版。ビルドのときに焼き込む (`esbuild.mjs`)。 */
 declare const __VERSION__: string;
 
-let kind: Kind = 'breadboard';
+/** いま開いている文書。**フェンスではなく Markdown の全文**を持つ。 */
+type Doc = {
+  /** ファイル名 (`01-led.md`)。 */
+  readonly name: string;
+  /** 見出し。画面に出す名前。 */
+  readonly title: string;
+  /** リポジトリの中の置き場。例のときだけ (出どころのリンクに使う)。 */
+  readonly from: string | null;
+  /** 配ってあるリンクから開いたか。 */
+  readonly fromLink: boolean;
+};
+
+let doc: Doc = { name: '', title: '', from: null, fromLink: false };
+/** 開いたときの全文。「元に戻す」の行き先。 */
+let pristine = '';
+/** いまの文書のフェンス。**欄の字が正**なので、変わるたびに数え直す。 */
+let here: readonly DocFence[] = [];
+/** いま図に出しているフェンスの番号。 */
+let at = 0;
+
 let examples: readonly Example[] = [];
 
 /**
@@ -61,14 +85,11 @@ let examples: readonly Example[] = [];
  */
 const showsBroken = new URLSearchParams(location.search).has('dev');
 
-/**
- * いま出している例の**元の字**。「試す」で書き換えた後、元に戻すために持つ。
- * 手で打った字は元が無いので空 (そのときは戻す釦を出さない)。
- */
-let pristine = '';
+/** いま並べている例。**欄と `openExample` の番号を揃えるため 1 か所に置く。** */
+const mine = (): readonly Example[] => shown(examples, showsBroken);
 
-/** いま並べている例。**欄と `showExample` の番号を揃えるため 1 か所に置く。** */
-const mine = (): readonly Example[] => forKind(examples, kind, showsBroken);
+/** いま図に出しているフェンス。無ければ null (フェンスの無い文書)。 */
+const now = (): DocFence | null => here[at] ?? null;
 
 /**
  * 一文をどちらの言語で出すか。**片方だけ出す** — 2 つ並べると、読めない
@@ -85,11 +106,10 @@ const JA = navigator.language.startsWith('ja');
  * (52 の docs/41)。例を選び直したら案内に戻る。
  */
 function syncLead(): void {
-  const onLink = linked !== null && els.example.value === LINK_OPTION;
-  els.leadLink.hidden = !onLink;
-  els.leadJa.hidden = onLink || !JA;
-  els.leadEn.hidden = onLink || JA;
-  if (linked !== null) els.leadTitle.textContent = shareLabel(linked.kind, linked.source);
+  els.leadLink.hidden = !doc.fromLink;
+  els.leadJa.hidden = doc.fromLink || !JA;
+  els.leadEn.hidden = doc.fromLink || JA;
+  if (doc.fromLink) els.leadTitle.textContent = doc.title;
 }
 
 const reason = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -178,10 +198,14 @@ function paintNetlist(netlist: readonly { name: string; refs: readonly string[] 
  * 触った人は「壊れている」と読む (`demo.ts` の `nudge` が null で教える)。
  */
 function renderTry(): void {
-  const source = els.source.value;
-  const rows = nudgesFor(kind, shareLabel(kind, source))
-    .filter((one) => nudge(source, one) !== null);
-  const back = pristine !== '' && source !== pristine;
+  const fence = now();
+  // **探すのはいまのフェンスの中だけ。** 文書の全文を探すと、別のフェンスの
+  // 同じ字に当たって、見ていない図が変わる。
+  const source = fence?.source ?? '';
+  const rows = fence === null
+    ? []
+    : nudgesFor(fence.kind, fence.title ?? '').filter((one) => nudge(source, one) !== null);
+  const back = pristine !== '' && els.source.value !== pristine;
 
   els.try.replaceChildren();
   els.try.hidden = rows.length === 0 && !back;
@@ -196,12 +220,12 @@ function renderTry(): void {
     button.type = 'button';
     button.textContent = one.label;
     button.addEventListener('click', () => {
-      const next = nudge(els.source.value, one);
+      const target = now();
+      if (target === null) return;
+      const next = nudge(target.source, one);
       // 押した瞬間に当たらなくなっていたら何もしない (欄を手で直した後)。
       if (next === null) return;
-      els.source.value = next;
-      paint();
-      map?.refresh();
+      setText(replaceFence(els.source.value, target, next));
       // **欄に焦点は移さない** — スマホでキーボードが出て図が隠れる。
       say(one.said);
     });
@@ -214,24 +238,42 @@ function renderTry(): void {
   undo.className = 'back';
   undo.textContent = '元に戻す';
   undo.addEventListener('click', () => {
-    els.source.value = pristine;
-    paint();
-    map?.refresh();
-    say('例の字に戻した');
+    setText(pristine);
+    say('開いたときの字に戻した');
   });
   els.try.append(undo);
 }
 
+/** 描くものが無いとき (フェンスの無い文書) の姿。 */
+function paintEmpty(): void {
+  drawing += 1;
+  els.figure.replaceChildren();
+  els.tex.hidden = true;
+  paintNetlist([]);
+  els.messages.hidden = true;
+  showNote(doc.name === ''
+    ? null
+    : 'この文書に circuit / breadboard / perfboard のフェンスがありません');
+  renderTry();
+}
+
+/** **いまのフェンス 1 本**を描く。文書の他の行は図に出ない。 */
 function paint(): void {
-  const output = render(kind, els.source.value);
+  const fence = now();
+  if (fence === null) {
+    paintEmpty();
+    return;
+  }
+
+  const output = render(fence.kind, fence.source);
 
   // SVG は各コアが**それ自体で完結した形**で返し、フェンスから来た字は
   // 組む前にエスケープしてある (拡張のプレビューも同じものを貼っている)。
   els.figure.innerHTML = output.svg;
 
-  // circuit だけは図が非同期で来る。**種類を変えた時点で番号を進めて**、
+  // circuit だけは図が非同期で来る。**別のフェンスへ移った時点で番号を進めて**、
   // 描きかけの図が後から割り込まないようにする。
-  if (kind === 'circuit') {
+  if (fence.kind === 'circuit') {
     paintCircuit(output);
   } else {
     drawing += 1;
@@ -270,11 +312,22 @@ async function showMap(): Promise<void> {
 
   els.map.hidden = false;
   map = openMap({
-    kind,
     frame: els.map,
-    body: () => els.source.value,
-    setBody: (next) => {
+    text: () => els.source.value,
+    setText: (next) => {
+      // **殻が書き換えたのは文書の全文。** 数え直して、いまのフェンスを描く。
       els.source.value = next;
+      reread();
+      paint();
+    },
+    fenceLine: () => now()?.line ?? 0,
+    onBind: (line) => {
+      // 殻の一覧で選び直されたら、頁の側も揃える。**組み直しは頼まない** —
+      // 殻はもうそのフェンスを見ているので、呼ぶと堂々巡りになる。
+      const found = here.findIndex((one) => one.line === line);
+      if (found < 0 || found === at) return;
+      at = found;
+      els.fence.value = String(at);
       paint();
     },
   });
@@ -341,16 +394,8 @@ function toggleMap(): void {
   void showMap();
 }
 
-/**
- * 種類か中身が丸ごと入れ替わったときに、開いているマップを開き直す。
- * **文法ごとに別のマップ**なので、開いたまま種類を変えると前の盤面が残る
- * (共有リンクを貼られたときに実際に残った)。
- */
-function reopenMap(): void {
-  if (map === null) return;
-  closeMap();
-  toggleMap();
-}
+// **マップは開き直さない。** 3 つの言語を一度に渡してあるので、別の言語の
+// フェンスへ移っても殻の側で乗り換わる (52 の docs/43)。
 
 /**
  * URL からリンクの印を落とす。**URL は文書ではない** (52 の docs/43)。
@@ -377,147 +422,137 @@ function say(text: string, holds = false): void {
 }
 
 /**
- * リンクで来た図。**例の欄に題を出すために覚えておく。**
- *
- * これが無いと、共有リンクで開いた人の欄は空のままになる。1 行を丸ごと
- * 使う欄が空だと壊れて見えるうえ、**選び直して戻る道も無い** (例を 1 つ
- * 選んだら、リンクの図には二度と戻れなかった)。
- */
-let linked: { readonly kind: Kind; readonly source: string } | null = null;
-
-/** リンクの図を指す値。例は番号なので、字にしておけば混ざらない。 */
-const LINK_OPTION = 'link';
-
-/** 例を選ぶ欄。まともな例とわざと壊した例を分けて並べる。 */
-/** 例の出どころのファイル名 (`.../examples/01-led.md` → `01-led`)。 */
-const fileOf = (from: string): string =>
-  (from.split('/').pop() ?? from).replace(/\.[^.]+$/, '');
-
-/**
- * 例の選び手を組む。**出どころのファイルごとに小見出しを付ける。**
- *
- * 図の番号は `.md` ごとに 01 から数え直す約束なので、平らに並べると
- * 「図01」が何度も出て、どれがどれだか分からない (実機で「図の番号が
- * 重複している」)。番号の付け方は文書の側の決めなので変えず、
- * **出どころで括って**見分けられるようにする。
+ * 開ける `.md` の一覧を組む。**種類ごとに小見出しを付ける** — 1 つの
+ * 文書は 1 つの言語で書かれているので、束ねると探しやすい。
  */
 function fillExamples(): void {
   const list = mine();
   els.example.replaceChildren();
 
-  // **リンクで来た図は一番上。** 題は貼るときと同じ読み方をする
-  // (`shareLabel`) ので、送った人が見た札とここの札が揃う。
-  if (linked !== null && linked.kind === kind) {
+  const groups = new Map<string, HTMLOptionElement[]>();
+  const order: string[] = [];
+  for (const [index, example] of list.entries()) {
+    const label = example.broken
+      ? `わざと壊した例 — ${KIND_LABEL[example.kind]}`
+      : `${KIND_LABEL[example.kind]}（${KIND_READING[example.kind]}）`;
+    if (!groups.has(label)) { groups.set(label, []); order.push(label); }
+
     const option = document.createElement('option');
-    option.value = LINK_OPTION;
-    option.textContent = shareLabel(linked.kind, linked.source);
+    option.value = String(index);
+    // **図が何本あるかを添える。** 1 本しか無い文書と、10 本ある文書とで
+    // 開いたときの姿がまるで違う。
+    option.textContent = example.fences > 1
+      ? `${example.name} — ${example.title} (図 ${example.fences} 本)`
+      : `${example.name} — ${example.title}`;
+    groups.get(label)?.push(option);
+  }
+  for (const label of order) {
     const group = document.createElement('optgroup');
-    group.label = 'リンクで開いた図';
-    group.append(option);
+    group.label = label;
+    group.append(...(groups.get(label) ?? []));
     els.example.append(group);
   }
-
-  for (const [broken, label] of [
-    [false, '例'],
-    [true, 'わざと壊した例'],
-  ] as const) {
-    // ファイルの並びは JSON のまま (作る側が並べてある)。
-    const files: string[] = [];
-    const rows = new Map<string, HTMLOptionElement[]>();
-    for (const [index, example] of list.entries()) {
-      if (example.broken !== broken) continue;
-      const file = fileOf(example.from);
-      if (!rows.has(file)) { rows.set(file, []); files.push(file); }
-      const option = document.createElement('option');
-      option.value = String(index);
-      option.textContent = example.label;
-      rows.get(file)?.push(option);
-    }
-    for (const file of files) {
-      const group = document.createElement('optgroup');
-      group.label = broken ? `${label} — ${file}` : file;
-      group.append(...(rows.get(file) ?? []));
-      els.example.append(group);
-    }
-  }
-  // 例が 1 本も無くても、リンクの札があるなら欄は生かす (題を出す場所)。
-  els.example.disabled = list.length === 0 && els.example.options.length === 0;
+  els.example.disabled = list.length === 0;
 }
 
-/**
- * いま出しているフェンスの出どころ。**共有リンクで来たときは消す** —
- * 前に選んだ例を指したままだと、別のフェンスの出どころとして読まれる。
- */
-function showFrom(example: Example | null): void {
+/** 文書の中のフェンスを並べる。**1 本しか無くても出す** (何を見ているかの札)。 */
+function fillFences(): void {
+  els.fence.replaceChildren();
+  for (const [index, fence] of here.entries()) {
+    const option = document.createElement('option');
+    option.value = String(index);
+    // 言語を添える。**1 つの `.md` に 2 つの言語が混ざる**ことがある。
+    option.textContent = `${labelOf(fence)} — ${fence.kind}`;
+    els.fence.append(option);
+  }
+  els.fence.disabled = here.length === 0;
+  els.fence.value = String(at);
+}
+
+/** いま開いている文書の出どころ。手元で開いたものには無い。 */
+function showFrom(): void {
   els.from.replaceChildren();
-  // リンクの図には出どころのファイルが無いので、行ごと消す。
-  // **選びは動かさない** — 欄はリンクの札を選んだままにする。
-  if (example === null) return;
+  if (doc.from === null) return;
 
   const link = document.createElement('a');
-  link.href = `${REPO}/${example.from}`;
-  link.textContent = example.from;
+  link.href = `${REPO}/${doc.from}`;
+  link.textContent = doc.from;
   els.from.append('この例の出どころ: ', link);
 }
 
-/** リンクで来た図を出し直す。欄でその札を選んだときの行き先。 */
-function showLinked(): void {
-  if (linked === null) return;
-  els.source.value = linked.source;
-  pristine = linked.source;
-  map?.refresh();
-  els.example.value = LINK_OPTION;
-  showFrom(null);
-  syncLead();
-  paint();
+/**
+ * 欄の字を数え直す。**欄が正** — 打鍵でも、殻の書き換えでも、ここを通る。
+ * いまのフェンスは**行で追う** (行数が変わっても同じフェンスを見続ける)。
+ */
+function reread(): void {
+  const was = now();
+  here = fencesIn(els.source.value);
+  if (was !== null) {
+    const same = here.findIndex((one) => one.kind === was.kind && one.title === was.title);
+    at = same >= 0 ? same : Math.min(at, Math.max(0, here.length - 1));
+  }
+  if (at >= here.length) at = Math.max(0, here.length - 1);
+  fillFences();
 }
 
-function showExample(index: number): void {
+/** 欄の字を入れ替える (打鍵以外の道)。数え直して、図と殻を揃える。 */
+function setText(next: string): void {
+  els.source.value = next;
+  reread();
+  paint();
+  map?.refresh();
+}
+
+/** 文書を開く。**ここが唯一の入口** — 例もリンクも手元のファイルも通る。 */
+function openDoc(next: Doc, text: string): void {
+  doc = next;
+  pristine = text;
+  at = 0;
+  els.source.value = text;
+  reread();
+  showFrom();
+  syncLead();
+  paint();
+  map?.refresh();
+}
+
+/** 例 (`.md`) を開く。**中身はそのとき取りに行く** (一覧は名前だけ持つ)。 */
+async function openExample(index: number): Promise<void> {
   const example = mine()[index];
   if (example === undefined) return;
 
-  els.source.value = example.source;
-  pristine = example.source;
-  map?.refresh();
-  els.example.value = String(index);
-  showFrom(example);
-  syncLead();
+  try {
+    const response = await fetch(example.path);
+    if (!response.ok) throw new Error(`${response.status} で返りました`);
+    const text = await response.text();
+    els.example.value = String(index);
+    openDoc({ name: example.name, title: example.title, from: example.from, fromLink: false }, text);
+    forgetHash();
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    say(`${example.name} を開けませんでした: ${reason}`, true);
+  }
+}
+
+/** いまのフェンスを選び直す。 */
+function showFence(index: number): void {
+  if (index < 0 || index >= here.length || index === at) return;
+  at = index;
+  els.fence.value = String(index);
   paint();
-  forgetHash();
+  // 殻にも同じフェンスを見せる (カーソルの行が変わったことになる)。
+  map?.refresh();
 }
 
-/** どのタブが選ばれているかを画面に映す。 */
-function markKind(): void {
-  for (const button of els.kinds.querySelectorAll('button')) {
-    button.setAttribute('aria-pressed', String(button.dataset.kind === kind));
-  }
-}
-
-function setKind(next: Kind): void {
-  kind = next;
-  markKind();
-  fillExamples();
-  // 文法が別なので、種類を変えたらその言語の最初の例に入れ替える。
-  showExample(0);
-  reopenMap();
-}
-
-function buildKinds(): void {
-  for (const name of KINDS) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.dataset.kind = name;
-    // **綴りと呼び名を別の字にする。** 狭い画面では呼び名だけ畳んで、
-    // 3 つを 1 行に収める (綴りはフェンスに書く字なので畳めない)。
-    button.append(KIND_LABEL[name]);
-    const reading = document.createElement('span');
-    reading.className = 'reading';
-    reading.textContent = `（${KIND_READING[name]}）`;
-    button.append(reading);
-    button.setAttribute('aria-pressed', String(name === kind));
-    button.addEventListener('click', () => setKind(name));
-    els.kinds.append(button);
-  }
+/**
+ * 欄のカーソルが別のフェンスへ入ったら、そちらへ移る。**拡張と同じ決め方**
+ * (カーソルのあるフェンスが「いまのフェンス」)。
+ */
+function follow(): void {
+  const line = lineOfOffset(els.source.value, els.source.selectionStart);
+  const found = fenceAt(here, line);
+  // フェンスの外にカーソルがあるだけなら、見ているものは変えない。
+  if (found >= 0) showFence(found);
 }
 
 async function loadExamples(): Promise<void> {
@@ -542,16 +577,21 @@ function listen(): void {
   els.source.addEventListener('input', () => {
     window.clearTimeout(timer);
     timer = window.setTimeout(() => {
+      reread();
+      follow();
       paint();
       // 手で書き換えたときもマップを組み直す (拡張と同じ)。
       map?.refresh();
     }, QUIET_MS);
   });
 
-  els.example.addEventListener('change', () => {
-    if (els.example.value === LINK_OPTION) showLinked();
-    else showExample(Number(els.example.value));
-  });
+  // **カーソルのあるフェンスへ移る。** 打鍵は上で見ているので、動かすだけの
+  // 出来事をここで拾う (押した・矢印で動かした)。
+  els.source.addEventListener('click', follow);
+  els.source.addEventListener('keyup', follow);
+
+  els.example.addEventListener('change', () => { void openExample(Number(els.example.value)); });
+  els.fence.addEventListener('change', () => { showFence(Number(els.fence.value)); });
   els.mapToggle.addEventListener('click', toggleMap);
 
   // **共有リンクを、開いたままの頁に貼られたとき。** ハッシュだけの移動は
@@ -568,22 +608,24 @@ function listen(): void {
       return;
     }
 
-    linked = { kind: shared.kind, source: shared.source };
-    if (shared.kind !== kind) {
-      kind = shared.kind;
-      markKind();
-    }
-    // 種類が同じでも組み直す — **札の題が変わっている**ため。
-    fillExamples();
-    els.source.value = shared.source;
-    pristine = shared.source;
-    showFrom(null);
-    els.example.value = LINK_OPTION;
-    syncLead();
-    paint();
-    reopenMap();
+    openLink(shared.kind, shared.source);
   });
+}
 
+/**
+ * 配ってあるリンクを開く。**フェンス 1 本を、それだけの文書に仕立てる** —
+ * 以降の道は普通の `.md` と同じ (52 の docs/43)。
+ */
+function openLink(kind: Kind, source: string): void {
+  const text = asDocument(kind, source);
+  const fence = fencesIn(text)[0];
+  els.example.selectedIndex = -1;
+  openDoc({
+    name: 'リンクの図.md',
+    title: fence === undefined ? 'リンクの図' : labelOf(fence),
+    from: null,
+    fromLink: true,
+  }, text);
 }
 
 async function start(): Promise<void> {
@@ -592,30 +634,18 @@ async function start(): Promise<void> {
   els.leadNoteJa.hidden = !JA;
   els.leadNoteEn.hidden = JA;
   syncLead();
-  buildKinds();
   listen();
 
-  // 共有リンクで来た人には、例が届く前に、そのフェンスを出す。
+  // 共有リンクで来た人には、一覧が届く前に、その図を出す。
   const shared = decodeShare(location.hash);
   const opened = shared !== null && shared.ok;
-  if (shared !== null && shared.ok) {
-    kind = shared.kind;
-    linked = { kind: shared.kind, source: shared.source };
-    els.source.value = shared.source;
-    pristine = shared.source;
-    markKind();
-    showFrom(null);
-    paint();
-  }
+  if (shared !== null && shared.ok) openLink(shared.kind, shared.source);
 
   await loadExamples();
-  // **例を埋めたあとに選ぶ。** `fillExamples` は欄を作り直すので、先に
-  // 選んでも最初の例に戻ってしまう (リンクの中身と札が食い違う)。
-  if (!opened) showExample(0);
-  else {
-    els.example.value = LINK_OPTION;
-    syncLead();
-  }
+  // **一覧を埋めたあとに開く。** リンクで来た人の欄は、どれも選ばない形にする
+  // (開いているのは例ではないので、名前を指したままにすると嘘になる)。
+  if (!opened) await openExample(0);
+  else els.example.selectedIndex = -1;
 
   // **読めなかったリンクは、既定の例を出したあとに言う。** 先に言うと
   // `showExample` の一言に上書きされる。

@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import * as esbuild from 'esbuild';
-import { collectExamples } from './scripts/examples.mjs';
+import { writeExamples } from './scripts/examples.mjs';
 import { iconPng } from './scripts/icon.mjs';
 
 /**
@@ -22,10 +22,10 @@ const production = process.argv.includes('--production');
 await rm('dist', { recursive: true, force: true });
 await mkdir('dist', { recursive: true });
 
-// 例はビルド時に集める。取りこぼしたら collectExamples が止める。
-const examples = collectExamples();
-await writeFile('dist/examples.json', `${JSON.stringify(examples)}\n`);
-console.log(`examples.json: ${examples.length} 本`);
+// 例はビルド時に集める。**`.md` をそのまま写す** (52 の docs/43)。
+// 取りこぼしたら writeExamples が止める。
+const examples = await writeExamples();
+console.log(`examples: ${examples.length} 本の .md`);
 
 for (const name of ['index.html', 'style.css']) {
   await cp(`src/${name}`, `dist/${name}`);
