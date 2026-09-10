@@ -385,6 +385,11 @@ const STYLE = `
     /* 一覧の行は iOS も 44pt。**ここは縮めない** — 並んだ中の 1 つを
        選ぶので、隣を押すと別の部品が置かれる。 */
     .cf-pick, .cf-swatch, .kc-menu-item { min-height: 44px; }
+    /* **部品の一覧の行だけは詰める** (実機で「行間を狭くする」)。行は
+       引き出しの幅いっぱい (300px) なので、高さを 36px にしても押す面は
+       36 x 300 あり、44px 角の指針は面積として満たす。絵 20px + 上下 8px。
+       長押しの一覧 (行が狭い) と色見本 (升が小さい) は 44px のまま。 */
+    .cf-types .cf-pick { min-height: 36px; padding-top: 0; padding-bottom: 0; }
     .cf-icons { grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); }
     .cf-icons .cf-pick { min-height: 44px; }
 

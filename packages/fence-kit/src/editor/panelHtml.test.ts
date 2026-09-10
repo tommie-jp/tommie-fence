@@ -453,9 +453,19 @@ describe('狭いときの畳み方', () => {
     expect(narrow).toMatch(/\.kc-tool \.kc-glyph \{ font-size: 17px/);
   });
 
-  test('keeps the 44px row on the lists, where a miss places the wrong part', () => {
+  test('keeps the 44px row on the menu and the swatches, where a miss picks the wrong one', () => {
     const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
     expect(narrow).toMatch(/\.cf-pick, \.cf-swatch, \.kc-menu-item \{[^}]*min-height: 44px/);
+  });
+
+  /**
+   * 部品の一覧の行は引き出しの幅いっぱいなので、高さを詰めても押す面は
+   * 36 x 300 ある (実機で「行間を狭くする」)。長押しの一覧と色見本は
+   * 上の 44px のまま — 行が狭い・升が小さいので、詰めると隣を押す。
+   */
+  test('tightens the parts list rows, which are wide enough to keep their target', () => {
+    const narrow = html.slice(html.indexOf('@media (max-width: 720px)'));
+    expect(narrow).toMatch(/\.cf-types \.cf-pick \{[^}]*min-height: 36px/);
   });
 
   test('drops the icon-only buttons to the 36px iOS uses for small controls', () => {
