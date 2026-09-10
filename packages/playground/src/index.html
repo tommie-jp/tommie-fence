@@ -97,6 +97,13 @@
           <button type="button" id="qr" aria-expanded="false">QR</button>
           <button type="button" id="map-toggle" aria-pressed="false">GUI で編集</button>
           <span class="said" id="said" role="status"></span>
+          <!-- 何が起きたかの記録。**一言は 2 秒で消えて、スマホでは
+               見逃しやすい** (52 の docs/45)。開いても図を押し下げないよう
+               垂れ下げる。 -->
+          <details class="log" id="log">
+            <summary>ログ</summary>
+            <ol id="log-rows"></ol>
+          </details>
         </div>
       </div>
 

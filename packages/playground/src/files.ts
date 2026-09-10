@@ -84,6 +84,26 @@ export const canHold = (view: unknown): boolean =>
   typeof view === 'object' && view !== null && 'showOpenFilePicker' in view;
 
 /**
+ * ファイルを共有シートに出せる窓か (52 の docs/45)。
+ *
+ * **保存先を知らせられないなら、選ばせる。** ダウンロードの行き先を頁に
+ * 教える API は無いので、「どこへ入ったか」は言えない。共有シートなら
+ * 人が場所を決めるので、**選んだ人が知っている**。
+ *
+ * **名乗り (UA) で決めない** — 見て分岐すると次の版で外れる。
+ * `canShare` は中身も見るので、渡すファイルそのもので訊く。
+ */
+export function canSend(view: unknown, file: File): boolean {
+  const asked = (view as { navigator?: { canShare?: (data: unknown) => boolean } } | null)?.navigator;
+  if (typeof asked?.canShare !== 'function') return false;
+  try {
+    return asked.canShare({ files: [file] });
+  } catch {
+    return false;
+  }
+}
+
+/**
  * 問い合わせに置ける形にする。**`/` と `:` は戻す** — どちらも問い合わせに
  * 置いてよい字で、`%2F` に化けると URL が長く、読み合わせにくくなる
  * (QR の窓に出す字でもある)。

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { UNTITLED, asTyped, canHold, docFrom, isCrlf, linkTo, nameOf, withNewlines } from './files.ts';
+import { UNTITLED, asTyped, canHold, canSend, docFrom, isCrlf, linkTo, nameOf, withNewlines } from './files.ts';
 
 /**
  * **改行の形を保つ。** テキスト欄は値を LF に均すので、開いた時点で
@@ -135,5 +135,32 @@ describe('linkTo', () => {
     const search = link.slice(link.indexOf('?'));
 
     expect(docFrom(search, BASE)).toBe(`${BASE}examples/circuit/00-led.md`);
+  });
+});
+
+/**
+ * **知らせられないなら、選ばせる** (52 の docs/45)。使えるかは
+ * **名乗りではなく `canShare` で訊く** — UA を見て分岐すると次の版で外れる。
+ */
+describe('canSend', () => {
+  const file = new File(['x'], 'a.md', { type: 'text/markdown' });
+
+  test('canShare が受ければ出せる', () => {
+    expect(canSend({ navigator: { canShare: () => true } }, file)).toBe(true);
+  });
+
+  test('canShare が断れば出せない (ファイルを受けない窓)', () => {
+    expect(canSend({ navigator: { canShare: () => false } }, file)).toBe(false);
+  });
+
+  test('canShare を持たない窓では出せない', () => {
+    expect(canSend({ navigator: {} }, file)).toBe(false);
+    expect(canSend({}, file)).toBe(false);
+    expect(canSend(null, file)).toBe(false);
+  });
+
+  /** 投げてくる窓もある。**断られたものとして扱う** (落ちない)。 */
+  test('canShare が投げても落ちない', () => {
+    expect(canSend({ navigator: { canShare: () => { throw new Error('だめ'); } } }, file)).toBe(false);
   });
 });

@@ -5,7 +5,7 @@ import { decodeShare } from './share.ts';
 import { parseExamples, shown } from './examples.ts';
 import { nudge, nudgesFor } from './demo.ts';
 import { asDocument, fenceAt, fencesIn, labelOf, lineOfOffset, replaceFence } from './document.ts';
-import { UNTITLED, asTyped, canHold, docFrom, isCrlf, linkTo, nameOf, withNewlines } from './files.ts';
+import { UNTITLED, asTyped, canHold, canSend, docFrom, isCrlf, linkTo, nameOf, withNewlines } from './files.ts';
 import { qrSvg } from './qr.ts';
 import type { FileHandle } from './files.ts';
 import type { DocFence } from './document.ts';
@@ -44,6 +44,8 @@ const els = {
   qrUrl: need('qr-url'),
   qrKind: need('qr-kind'),
   qrCode: need('qr-code'),
+  log: need<HTMLDetailsElement>('log'),
+  logRows: need('log-rows'),
   said: need('said'),
   source: need<HTMLTextAreaElement>('source'),
   figure: need('figure'),
@@ -343,6 +345,9 @@ async function showMap(): Promise<void> {
       paint();
     },
     fenceLine: () => now()?.line ?? 0,
+    // 殻が中の帯へ出す一言も記録する (「R1 を a7 へ動かしました」など)。
+    // **帯には出さない** — マップは自分の帯に出しているので、二重になる。
+    onStatus: note,
     onBind: (line) => {
       // 殻の一覧で選び直されたら、頁の側も揃える。**組み直しは頼まない** —
       // 殻はもうそのフェンスを見ているので、呼ぶと堂々巡りになる。
@@ -387,6 +392,10 @@ const NARROW = '(max-width: 720px)';
  */
 function syncFull(): void {
   const editing = els.mapToggle.getAttribute('aria-pressed') === 'true';
+  // **GUI で編集しているあいだは、フェンスの字を出さない** (2026-09-10 の決め)。
+  // 畳み方は CSS の `body.editing` が持つ。狭い画面では `body.full` が
+  // 両方とも畳むので、効くのは広い画面。
+  document.body.classList.toggle('editing', editing);
   document.body.classList.toggle('full', asApp() || (editing && window.matchMedia(NARROW).matches));
   // **開いているあいだは「閉じる」と言う。** 同じ釦が行きと帰りを兼ねるので、
   // 「編集する」のままだと、いま何を押せるのかが読めない。
@@ -443,7 +452,51 @@ function showWhere(): void {
  * 帯に一言。**`holds` を立てると消えない** — 読めなかったリンクの断りは、
  * 2 秒で消すと「別の図が出ている」ことに気づけないまま終わる。
  */
+/**
+ * 何が起きたかの記録。**一言は 2 秒で消えて、スマホでは見逃しやすい**
+ * (52 の docs/45)。**残すのは最後の 20 行**で、読み込み直すと消える
+ * (文書は外のファイルなので、そちらを見れば分かる)。
+ */
+const LOG_ROWS = 20;
+const log: { readonly at: string; readonly text: string }[] = [];
+
+const clock = (): string => new Date().toTimeString().slice(0, 5);
+
+/** ログを組み直す。**新しいものが上**。 */
+function renderLog(): void {
+  els.logRows.replaceChildren();
+  if (log.length === 0) {
+    const none = document.createElement('li');
+    none.className = 'none';
+    none.textContent = 'まだ何も起きていません';
+    els.logRows.append(none);
+    return;
+  }
+  for (const row of [...log].reverse()) {
+    const line = document.createElement('li');
+    const at = document.createElement('time');
+    at.textContent = row.at;
+    line.append(at, row.text);
+    els.logRows.append(line);
+  }
+}
+
+/** 記録だけ足す (帯には出さない)。マップの帯へ出た一言もここへ落とす。 */
+function note(text: string): void {
+  log.push({ at: clock(), text });
+  if (log.length > LOG_ROWS) log.shift();
+  renderLog();
+}
+
+/**
+ * 帯に一言。**`holds` を立てると消えない** — 読めなかったリンクの断りは、
+ * 2 秒で消すと「別の図が出ている」ことに気づけないまま終わる。
+ *
+ * **ログにも書く。** 別の口を作ると、呼び忘れた出来事だけがログに出ない —
+ * 出来事は 1 か所を通す (52 の docs/45)。
+ */
 function say(text: string, holds = false): void {
+  note(text);
   els.said.textContent = text;
   if (holds) return;
   window.setTimeout(() => {
@@ -565,6 +618,8 @@ function openDoc(next: Doc, text: string): void {
   paint();
   showWhere();
   map?.refresh();
+  // **開いたことは 1 か所で記録する。** 呼び手ごとに書くと二重に並ぶ。
+  note(`${doc.name} を開きました`);
 }
 
 /** 例 (`.md`) を開く。**中身はそのとき取りに行く** (一覧は名前だけ持つ)。 */
@@ -620,7 +675,7 @@ async function openFile(file: File, handle: FileHandle | null = null): Promise<v
     openText(file.name, await file.text());
     // **開いた後に持たせる** (`openDoc` が掴み手を落とすので、順は逆にできない)。
     held = handle;
-    say(handle === null ? `${file.name} を開きました` : `${file.name} を開きました (保存で上書きします)`);
+    if (handle !== null) say(`${file.name} は保存で上書きします`);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     say(`${file.name} を読めませんでした: ${reason}`, true);
@@ -695,7 +750,26 @@ async function saveDoc(): Promise<void> {
     }
   }
 
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown;charset=utf-8' }));
+  const file = new File([text], doc.name, { type: 'text/markdown' });
+
+  // **保存先を知らせられないなら、選ばせる** (52 の docs/45)。
+  // 掴み手を持てない窓 (iPhone など) で共有シートが使えるなら、そちらへ出す —
+  // 「ファイルに保存」で人が場所を決めるので、**選んだ人が知っている**。
+  // 掴み手を持てる窓では使わない (その場に書くほうが速い)。
+  if (!canHold(window) && canSend(window, file)) {
+    try {
+      await navigator.share({ files: [file], title: doc.name });
+      kept(typed, `${doc.name} を共有シートに出しました (保存先はそちらで選んでください)`);
+      return;
+    } catch (error) {
+      // **取り消しは何も言わない。** 人が閉じただけで、失敗ではない。
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      const reason = error instanceof Error ? error.message : String(error);
+      say(`共有シートに出せませんでした (${reason})。落とします`, true);
+    }
+  }
+
+  const url = URL.createObjectURL(file);
   const link = document.createElement('a');
   link.href = url;
   link.download = doc.name;
@@ -703,8 +777,9 @@ async function saveDoc(): Promise<void> {
   URL.revokeObjectURL(url);
 
   // **落とせたものとして扱う。** ブラウザは落とし終わりを教えないので、
-  // ここで印を解く。
-  kept(typed, `${doc.name} を落としました`);
+  // ここで印を解く。**どこへ入ったかは言えない** (頁に教える API が無い) ので、
+  // 代わりに**どこを見ればよいか**を言う。
+  kept(typed, `${doc.name} をダウンロードに入れました (ブラウザの履歴から開けます)`);
 }
 
 /** 書き戻せたときの後始末。**「元に戻す」の行き先もここへ進む。** */
@@ -908,6 +983,7 @@ async function start(): Promise<void> {
   document.documentElement.lang = JA ? 'ja' : 'en';
   els.leadNoteJa.hidden = !JA;
   els.leadNoteEn.hidden = JA;
+  renderLog();
   syncLead();
   listen();
 

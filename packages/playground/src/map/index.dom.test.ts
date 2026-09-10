@@ -39,14 +39,16 @@ const openOne = (over: { readonly text?: () => string } = {}) => {
   let text = over.text?.() ?? DOC;
   const written: string[] = [];
   const bound: number[] = [];
+  const said: string[] = [];
   const handle = openMap({
     frame,
     text: () => text,
     setText: (next) => { written.push(next); text = next; },
     fenceLine: () => FENCE_LINE,
     onBind: (line) => bound.push(line),
+    onStatus: (line) => said.push(line),
   });
-  return { frame, handle, written, bound, body: () => text };
+  return { frame, handle, written, bound, said, body: () => text };
 };
 
 /** 中の頁が読み込まれた合図。jsdom は srcdoc を実際には読まないので、手で出す。 */
@@ -151,6 +153,7 @@ describe('マップを頁に開く', () => {
         setText: () => {},
         fenceLine: () => 3,
         onBind: () => {},
+        onStatus: () => {},
       });
 
       expect(frame.srcdoc, kind).toContain('<!DOCTYPE html>');

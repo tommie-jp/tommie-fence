@@ -36,9 +36,14 @@ export type MapOptions = {
   readonly fenceLine: () => number;
   /** 殻が掴むフェンスを変えたとき (中の一覧で選び直した)。 */
   readonly onBind: (line: number) => void;
+  /**
+   * 殻が中の帯へ出す一言。**頁のログにも落とす**ため (52 の docs/45)。
+   * 「R1 を a7 へ動かしました」など、何が起きたかの記録になる。
+   */
+  readonly onStatus: (text: string) => void;
 };
 
-export function openMap({ frame, text, setText, fenceLine, onBind }: MapOptions): MapHandle {
+export function openMap({ frame, text, setText, fenceLine, onBind, onStatus }: MapOptions): MapHandle {
   // **3 つの言語ぜんぶを渡す。** 文書に何が書いてあるかは開くまで分からず、
   // 1 つの `.md` に 2 つの言語が混ざっていることもある (52 の docs/43)。
   const editors = KINDS.map((kind) => EDITORS[kind]());
@@ -47,6 +52,8 @@ export function openMap({ frame, text, setText, fenceLine, onBind }: MapOptions)
   let ready = false;
   const waiting: Outgoing[] = [];
   const post = (message: Outgoing): void => {
+    // **通り道で覗く。** 中の帯へ出る一言は、頁のログにも残す。
+    if (message.kind === 'status' && typeof message.text === 'string') onStatus(message.text);
     if (!ready) {
       waiting.push(message);
       return;

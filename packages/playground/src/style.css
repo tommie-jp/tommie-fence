@@ -106,6 +106,22 @@ select, .bar button {
 .bar button { cursor: pointer; }
 .said { font-size: 0.85rem; color: var(--dim); }
 
+/* 何が起きたかの記録 (52 の docs/45)。**開いても帯を押し広げない** —
+   図の高さが変わると、見ていた所を見失う。垂れ下げて重ねる。 */
+.log { position: relative; font-size: 0.85rem; color: var(--dim); }
+.log summary { cursor: pointer; padding: 4px 8px; }
+.log ol {
+  position: absolute; z-index: 5; right: 0; top: 100%; width: max-content;
+  max-width: min(86vw, 460px); max-height: 40svh; overflow-y: auto;
+  margin: 4px 0 0; padding: 8px 12px; list-style: none;
+  color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 18%);
+}
+.log li { margin: 2px 0; }
+.log time { font-family: var(--mono); color: var(--dim); margin-right: 6px; }
+.log .none { color: var(--dim); }
+
 .panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
 /* **広い画面は左に字、右に図。** HTML は図が先なので、ここで入れ替える
    (狭い画面での並びのほうが本になる)。 */
@@ -220,6 +236,16 @@ td { font-family: var(--mono); font-size: 12px; }
   .map { height: 70svh; }
   select { font-size: 16px; }
 }
+
+/* **GUI で編集しているあいだは、フェンスの字を出さない** (2026-09-10 の決め)。
+   掴んで動かしている最中に同じ字が 2 か所にあると、どちらが正か迷ううえ、
+   打っている途中の字とマップの盤面が食い違って見える。
+
+   **図は残す。** マップの図は掴むための姿で、出来上がりは右の図が正
+   (circuit はとくに違う — あちらは TeX が描く)。字を畳んだ幅は図に渡す。
+   狭い画面と アプリでは `body.full` が両方とも畳むので、ここは広い画面の話。 */
+body.editing .pane-src { display: none; }
+body.editing .panes { grid-template-columns: minmax(0, 1fr); }
 
 /* ホーム画面から開いたとき (PWA)。**編集する所だけを出す** —
    見出しもフェンスの字も出るものも畳んで、図と道具に画面をまるごと渡す
