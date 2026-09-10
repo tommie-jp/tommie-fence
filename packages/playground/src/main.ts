@@ -70,6 +70,8 @@ const els = {
 
 /** 拡張の版。ビルドのときに焼き込む (`esbuild.mjs`)。 */
 declare const __VERSION__: string;
+/** いつ組んだか (UTC の「日 時分」)。同じく焼き込む。 */
+declare const __BUILT__: string;
 
 /** いま開いている文書。**フェンスではなく Markdown の全文**を持つ。 */
 type Doc = {
@@ -1006,6 +1008,9 @@ async function start(): Promise<void> {
   document.documentElement.lang = JA ? 'ja' : 'en';
   els.leadNoteJa.hidden = !JA;
   els.leadNoteEn.hidden = JA;
+  // **どの版を見ているかをログの頭に置く。** 配りかたが終わる前に見て
+  // 「直っていない」と読む取り違えを 3 度踏んだ (52 の docs/46)。
+  note(`版 ${__VERSION__}・${__BUILT__} に組んだもの`);
   renderLog();
   syncLead();
   listen();

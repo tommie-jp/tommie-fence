@@ -105,7 +105,15 @@ const options = {
   target: 'es2022',
   sourcemap: !production,
   minify: production,
-  define: { __VERSION__: JSON.stringify(version) },
+  /**
+   * **いつ組んだか**も焼き込む。配りかたが終わる前に見て「直っていない」と
+   * 読む取り違えを 3 度踏んだので、頁の側で見分けが付くようにする
+   * (ログの 1 行目に出る。52 の docs/46)。分・秒までは要らない。
+   */
+  define: {
+    __VERSION__: JSON.stringify(version),
+    __BUILT__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')),
+  },
   logLevel: 'info',
 };
 
