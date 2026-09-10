@@ -12,10 +12,15 @@ import { cp, mkdir, writeFile } from 'node:fs/promises';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
+/**
+ * 集める順。**回路図 → ブレッドボード → 基板** — 作る人の順そのもの
+ * (52 の docs/41 の「同じ回路を 3 通りで」と同じ並び。実機で頼まれた)。
+ * 一覧はこの順のまま並ぶ。
+ */
 const PACKAGE_OF = {
+  circuit: 'circuit-fence',
   breadboard: 'breadboard-fence',
   perfboard: 'perfboard-fence',
-  circuit: 'circuit-fence',
 };
 
 /** この数を下回ったら、集めるところが壊れたと見なして止める。 */

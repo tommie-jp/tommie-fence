@@ -113,6 +113,21 @@ const showsBroken = new URLSearchParams(location.search).has('dev');
 /** いま並べている例。**欄と `openExample` の番号を揃えるため 1 か所に置く。** */
 const mine = (): readonly Example[] => shown(examples, showsBroken);
 
+/**
+ * 最初に開く文書。**一覧の先頭にしない。**
+ *
+ * 一覧は circuit から並べる (作る人の順。52 の docs/41) が、circuit の図は
+ * 初回に TeX の資材 8.5 MB を落とすので、**開いた瞬間の 1 枚には向かない**
+ * (docs/15 の実測)。breadboard の LED を既定にして、circuit は選んだ人にだけ
+ * 落とさせる。見つからなければ先頭に落ちる。
+ */
+const FIRST_DOC = { kind: 'breadboard', name: '01-led.md' } as const;
+
+const firstDoc = (list: readonly Example[]): number => {
+  const found = list.findIndex((one) => one.kind === FIRST_DOC.kind && one.name === FIRST_DOC.name);
+  return found >= 0 ? found : 0;
+};
+
 /** いま図に出しているフェンス。無ければ null (フェンスの無い文書)。 */
 const now = (): DocFence | null => here[at] ?? null;
 
@@ -1065,7 +1080,7 @@ async function start(): Promise<void> {
   await loadExamples();
   // **一覧を埋めたあとに開く。** 外から開いた人の欄は、どれも選ばない形に
   // する (開いているのは例ではないので、名前を指したままにすると嘘になる)。
-  if (!opened) await openExample(0);
+  if (!opened) await openExample(firstDoc(mine()));
   else els.example.selectedIndex = -1;
 
   // **読めなかったリンクは、既定の例を出したあとに言う。** 先に言うと
