@@ -76,6 +76,9 @@
         <!-- **文書の中のどのフェンスを見ているか。** 狭い画面では図の上に置く
              (図の名札を兼ねる)。 -->
         <div class="picks">
+          <!-- いま開いている文書。**手元のファイルを開くと「例」の欄は何も
+               指さなくなる**ので、名前を出す場所が要る。 -->
+          <p class="doc" id="doc-name"></p>
           <label class="pick">
             フェンス
             <select id="fence"></select>
@@ -86,6 +89,11 @@
             例
             <select id="example"></select>
           </label>
+          <!-- 外の `.md` を開く。**欄は隠して釦で押させる** (見た目が
+               ブラウザごとに違ううえ、日本語の呼び名を付けられない)。 -->
+          <input type="file" id="file" accept=".md,.markdown,text/markdown" hidden />
+          <button type="button" id="open">開く</button>
+          <button type="button" id="save">保存</button>
           <button type="button" id="map-toggle" aria-pressed="false">GUI で編集</button>
           <span class="said" id="said" role="status"></span>
         </div>

@@ -5,6 +5,7 @@ import { decodeShare } from './share.ts';
 import { parseExamples, shown } from './examples.ts';
 import { nudge, nudgesFor } from './demo.ts';
 import { asDocument, fenceAt, fencesIn, labelOf, lineOfOffset, replaceFence } from './document.ts';
+import { UNTITLED, asTyped, docFrom, isCrlf, nameOf, withNewlines } from './files.ts';
 import type { DocFence } from './document.ts';
 import type { Example } from './examples.ts';
 import type { Output } from './fences.ts';
@@ -32,6 +33,10 @@ function need<E extends HTMLElement>(id: string): E {
 const els = {
   example: need<HTMLSelectElement>('example'),
   fence: need<HTMLSelectElement>('fence'),
+  docName: need('doc-name'),
+  file: need<HTMLInputElement>('file'),
+  open: need<HTMLButtonElement>('open'),
+  save: need<HTMLButtonElement>('save'),
   said: need('said'),
   source: need<HTMLTextAreaElement>('source'),
   figure: need('figure'),
@@ -66,9 +71,11 @@ type Doc = {
   readonly from: string | null;
   /** 配ってあるリンクから開いたか。 */
   readonly fromLink: boolean;
+  /** 開いたときが CRLF だったか。**書き戻すときに揃える。** */
+  readonly crlf: boolean;
 };
 
-let doc: Doc = { name: '', title: '', from: null, fromLink: false };
+let doc: Doc = { name: '', title: '', from: null, fromLink: false, crlf: false };
 /** 開いたときの全文。「元に戻す」の行き先。 */
 let pristine = '';
 /** いまの文書のフェンス。**欄の字が正**なので、変わるたびに数え直す。 */
@@ -255,6 +262,7 @@ function paintEmpty(): void {
     ? null
     : 'この文書に circuit / breadboard / perfboard のフェンスがありません');
   renderTry();
+  showDocName();
 }
 
 /** **いまのフェンス 1 本**を描く。文書の他の行は図に出ない。 */
@@ -289,6 +297,7 @@ function paint(): void {
   els.messages.textContent = output.messages.join('\n\n');
 
   renderTry();
+  showDocName();
 }
 
 /**
@@ -469,6 +478,24 @@ function fillFences(): void {
   els.fence.value = String(at);
 }
 
+/** 開いてから直したか。**保存すると解ける** (`pristine` がそこへ進む)。 */
+const dirty = (): boolean => doc.name !== '' && els.source.value !== pristine;
+
+/**
+ * いま開いている文書の名前。**直したままなら印を添える** — 頁を閉じると
+ * 消えるので、直したことを画面から読み取れるようにしておく。
+ */
+function showDocName(): void {
+  els.docName.replaceChildren();
+  if (doc.name === '') return;
+  els.docName.append(doc.name);
+  if (!dirty()) return;
+  const mark = document.createElement('span');
+  mark.className = 'dirty';
+  mark.textContent = ' — 直したまま';
+  els.docName.append(mark);
+}
+
 /** いま開いている文書の出どころ。手元で開いたものには無い。 */
 function showFrom(): void {
   els.from.replaceChildren();
@@ -526,12 +553,81 @@ async function openExample(index: number): Promise<void> {
     if (!response.ok) throw new Error(`${response.status} で返りました`);
     const text = await response.text();
     els.example.value = String(index);
-    openDoc({ name: example.name, title: example.title, from: example.from, fromLink: false }, text);
+    openText(example.name, text, { title: example.title, from: example.from });
     forgetHash();
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     say(`${example.name} を開けませんでした: ${reason}`, true);
   }
+}
+
+/**
+ * 外の `.md` を開く。**開く口はどれもここへ来る** (釦・落とす・`?doc=`・例)。
+ * 改行の形は開いたときのものを覚えておき、書き戻すときに揃える。
+ */
+function openText(name: string, text: string, over: Partial<Doc> = {}): void {
+  const crlf = isCrlf(text);
+  openDoc({
+    name: name === '' ? UNTITLED : name,
+    title: name,
+    from: null,
+    fromLink: false,
+    crlf,
+    ...over,
+  }, asTyped(text));
+}
+
+/** 手元のファイルを開く (釦でも、落としても、ここへ来る)。 */
+async function openFile(file: File): Promise<void> {
+  try {
+    openText(file.name, await file.text());
+    forgetHash();
+    say(`${file.name} を開きました`);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    say(`${file.name} を読めませんでした: ${reason}`, true);
+  }
+}
+
+/**
+ * `?doc=` の `.md` を開く。**取れなければそう言う** — 相手が CORS を
+ * 許していないことがあり、黙って既定の例を出すと「別の文書が出た」としか
+ * 見えない (約束 6)。
+ */
+async function openUrl(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`${response.status} で返りました`);
+    openText(nameOf(url), await response.text());
+    return true;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    say(`${url} を開けませんでした: ${reason}`, true);
+    return false;
+  }
+}
+
+/**
+ * 書き戻す。**同じ名前で落とす** — 頁からその場のファイルへ書く道は、
+ * ブラウザによっては無い (段 4 で `showOpenFilePicker` を足す)。
+ * iOS はダウンロードが Files に落ちるので、そこから戻せる。
+ */
+function saveDoc(): void {
+  if (doc.name === '') return;
+  const text = withNewlines(els.source.value, doc.crlf);
+  const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = doc.name;
+  link.click();
+  URL.revokeObjectURL(url);
+
+  // **落とせたものとして扱う。** ブラウザは落とし終わりを教えないので、
+  // ここで印を解く。以後の「元に戻す」はこの字へ戻る。
+  pristine = els.source.value;
+  showDocName();
+  renderTry();
+  say(`${doc.name} を落としました`);
 }
 
 /** いまのフェンスを選び直す。 */
@@ -594,6 +690,50 @@ function listen(): void {
   els.fence.addEventListener('change', () => { showFence(Number(els.fence.value)); });
   els.mapToggle.addEventListener('click', toggleMap);
 
+  els.open.addEventListener('click', () => els.file.click());
+  els.file.addEventListener('change', () => {
+    const file = els.file.files?.[0];
+    if (file !== undefined) void openFile(file);
+    // **同じファイルをもう一度選べるようにする。** 値が同じだと change が
+    // 鳴らないので、読み終わったら空に戻す。
+    els.file.value = '';
+  });
+  els.save.addEventListener('click', saveDoc);
+
+  // **落として開く。** 受け皿は頁ぜんぶ (どこへ落としても同じ)。
+  for (const kind of ['dragenter', 'dragover'] as const) {
+    document.addEventListener(kind, (event) => {
+      if (event.dataTransfer === null) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+      document.body.classList.add('dropping');
+    });
+  }
+  document.addEventListener('dragleave', (event) => {
+    // 頁の外へ出たときだけ消す (中の要素をまたぐたびに鳴るため)。
+    if (event.relatedTarget === null) document.body.classList.remove('dropping');
+  });
+  document.addEventListener('drop', (event) => {
+    event.preventDefault();
+    document.body.classList.remove('dropping');
+    const file = event.dataTransfer?.files[0];
+    if (file !== undefined) void openFile(file);
+  });
+
+  // **⌘S / Ctrl+S でも落とす。** 直す道具として当たり前の鍵で、押すと
+  // ブラウザが「頁を保存」を出してしまうので、こちらで受け取る。
+  document.addEventListener('keydown', (event) => {
+    if (!(event.metaKey || event.ctrlKey) || event.key !== 's') return;
+    event.preventDefault();
+    saveDoc();
+  });
+
+  // **直したまま閉じさせない。** 頁を閉じると字は消える (預け先が無い)。
+  window.addEventListener('beforeunload', (event) => {
+    if (!dirty()) return;
+    event.preventDefault();
+  });
+
   // **共有リンクを、開いたままの頁に貼られたとき。** ハッシュだけの移動は
   // 頁を読み込み直さないので、ここで拾わないと何も起きない (実際に踏んだ)。
   // 頁の側から `#` を書くことはもう無いので、鳴るのは人が貼ったときだけ。
@@ -625,6 +765,7 @@ function openLink(kind: Kind, source: string): void {
     title: fence === undefined ? 'リンクの図' : labelOf(fence),
     from: null,
     fromLink: true,
+    crlf: false,
   }, text);
 }
 
@@ -638,12 +779,16 @@ async function start(): Promise<void> {
 
   // 共有リンクで来た人には、一覧が届く前に、その図を出す。
   const shared = decodeShare(location.hash);
-  const opened = shared !== null && shared.ok;
+  let opened = shared !== null && shared.ok;
   if (shared !== null && shared.ok) openLink(shared.kind, shared.source);
 
+  // **`?doc=` が最優先。** あれが文書を名指すもので、`#` は図 1 枚の旧い形。
+  const asked = docFrom(location.search, location.href);
+  if (asked !== null) opened = await openUrl(asked) || opened;
+
   await loadExamples();
-  // **一覧を埋めたあとに開く。** リンクで来た人の欄は、どれも選ばない形にする
-  // (開いているのは例ではないので、名前を指したままにすると嘘になる)。
+  // **一覧を埋めたあとに開く。** 外から開いた人の欄は、どれも選ばない形に
+  // する (開いているのは例ではないので、名前を指したままにすると嘘になる)。
   if (!opened) await openExample(0);
   else els.example.selectedIndex = -1;
 

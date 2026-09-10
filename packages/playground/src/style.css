@@ -68,6 +68,12 @@ main { display: flex; flex-direction: column; }
 .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
 .picks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* いま開いている文書の名前。**直したままなら印を添える。** */
+.doc { margin: 0; font-size: 0.9rem; color: var(--dim); }
+.doc .dirty { color: var(--bad); font-weight: 600; }
+
+/* 図の落とし先 (ドラッグ & ドロップ)。**頁ぜんぶが受け皿。** */
+body.dropping { outline: 2px dashed var(--ink); outline-offset: -6px; }
 
 .pick { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; color: var(--dim); }
 select, .bar button {
