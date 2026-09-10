@@ -15,6 +15,8 @@
 #   ./doPlayground.sh -h              この説明を出す
 #
 # 止めるのは Ctrl+C か、別の端末から ./doPlayground.sh --stop。
+# **同じ番号で前に出した分は、始めるときに自分で畳む。** それでも塞がって
+# いたら、誰が掴んでいるかを言って断る (python の例外を出さない)。
 # **組み直したらブラウザを強制リロードする** (チャンク名が中身のハッシュなので、
 # 古い app.js を持っていると消えた名前を取りに行って 404 になる)。
 #
@@ -45,7 +47,7 @@ while [ "$#" -gt 0 ]; do
     --no-build) do_build=0 ;;
     --tailscale) do_tailscale=1 ;;
     --stop) do_stop=1 ;;
-    -h|--help) sed -n '3,23p' "$self" | sed 's/^#\( \|$\)//'; exit 0 ;;
+    -h|--help) sed -n '3,21p' "$self" | sed 's/^#\( \|$\)//'; exit 0 ;;
     *) echo "知らない引数です: $1 (--port / --no-build / --tailscale / --stop)" >&2; exit 2 ;;
   esac
   shift
@@ -57,8 +59,58 @@ esac
 
 # 出しっぱなしのサーバを畳む。**番号で見分ける** — 別の番号で出している
 # playground は残す (2 つ並べて見比べることがある)。
+# 出しっぱなしを畳む。**番号で見つけて、その中の `http.server` だけ止める。**
+#
+# 命令の字で探す (`pkill -f`) と、`--bind` を付けずに手で出したものを
+# 取りこぼすうえ、**その字を含むだけの別のもの (打った端末そのものなど) まで
+# 巻き込む** (実際に自分の親シェルを殺して踏んだ)。
+# 番号で引けば取りこぼさず、`http.server` かどうかを見れば巻き込まない。
 stop_server() {
-  pkill -f "http.server $port --bind 127.0.0.1" 2>/dev/null || true
+  if ! command -v ss >/dev/null 2>&1; then
+    pkill -f "http.server $port --bind" 2>/dev/null || true
+    return
+  fi
+  local pid
+  for pid in $(ss -ltnp 2>/dev/null | grep -E "[:.]${port}[[:space:]]" \
+    | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -u); do
+    # **こちらの出したものだけ。** 番号だけで殺すと、たまたま同じ番号を
+    # 使っている別のものを巻き込む。
+    if tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -q 'http\.server'; then
+      kill "$pid" 2>/dev/null || true
+    fi
+  done
+}
+
+# その番号を誰かが掴んでいるか。**確かめる手立てが無い機械では黙って進む**
+# (確かめられないことを、使われている扱いにしない)。
+port_taken() {
+  if command -v ss >/dev/null 2>&1; then
+    ss -ltn 2>/dev/null | grep -qE "[:.]${port}[[:space:]]"
+  elif command -v lsof >/dev/null 2>&1; then
+    lsof -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
+  else
+    return 1
+  fi
+}
+
+# 掴んでいる相手の pid (分かれば)。
+holder_pid() {
+  command -v ss >/dev/null 2>&1 || return 0
+  ss -ltnp 2>/dev/null | grep -E "[:.]${port}[[:space:]]" \
+    | grep -oE 'pid=[0-9]+' | cut -d= -f2 | head -1
+}
+
+# 掴んでいる相手を「名前 (pid N)」で。**誰が塞いでいるかまで言う** —
+# 「使われています」だけでは、次に何をすればよいか分からない。
+port_holder() {
+  local pid name
+  pid="$(holder_pid)"
+  [ -n "$pid" ] || return 0
+  # **1 行に潰す。** 命令の字に改行が混ざっていると (python -c など)、
+  # 断りの並びが崩れて読みにくい。
+  name="$(tr '\0\n\t' '   ' < "/proc/$pid/cmdline" 2>/dev/null | tr -s ' ' | cut -c1-56)"
+  [ -n "$name" ] || name="(名前を読めません)"
+  echo "$name (pid $pid)"
 }
 
 # tailnet の口を畳む。**自分のポートだけ**を消すので、ほかの道 (443 の / など)
@@ -106,6 +158,27 @@ fi
 
 # 前に出したものが残っていると「番号が使われています」で落ちるので、先に畳む。
 stop_server
+
+# **畳んでも塞がっているなら、こちらの出したものではない。** そのまま python に
+# 投げると意味の取りにくい例外 (Address already in use のスタック) が出るので、
+# その手前で、誰が掴んでいるかを言って断る。
+if port_taken; then
+  {
+    echo "$port 番は既に使われています。"
+    holder="$(port_holder)"
+    [ -n "$holder" ] && echo "  掴んでいるのは: $holder"
+    echo
+    echo "  別の番号で出すなら  ./$self --port 8766"
+    pid="$(holder_pid)"
+    if [ -n "$pid" ]; then
+      echo "  その相手を止めるなら kill $pid"
+    fi
+    echo
+    echo "(この番号で前に出した $self は自分で畳みます。"
+    echo " ここまで来たのは、別のものが掴んでいるときです)"
+  } >&2
+  exit 2
+fi
 
 echo "http://127.0.0.1:$port/ を開いてください (止めるのは Ctrl+C)"
 if [ "$do_tailscale" -eq 1 ]; then
