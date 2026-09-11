@@ -84,6 +84,36 @@ describe('鍵の下に 1 行足す', () => {
     expect(appendUnderKey(lines, 'wires', 2, '- b1 -- b3'))
       .toEqual([{ kind: 'insert', line: 3, text: '    - b1 -- b3' }]);
   });
+
+  // **最後の行が入れ子の頭なら、中身の後ろに足す。** 頭の次に足すと中身が
+  // 新しい行の続きに読まれ、フェンスがまるごと読めなくなる (52 の docs/51)。
+  test('goes after a nested block, not between its head and its body', () => {
+    const lines = ['parts:', '  BAT:', '    type: device', '    pins: [+, -]', 'wires:', '  - a1 -- a2'];
+
+    expect(appendUnderKey(lines, 'parts', 2, 'R1: resistor e5 e10'))
+      .toEqual([{ kind: 'insert', line: 5, text: '  R1: resistor e5 e10' }]);
+  });
+
+  test('steps over a blank line inside the block, but not the one after it', () => {
+    const lines = ['parts:', '  BAT:', '    type: device', '', '    pins: [+, -]', '', 'wires:'];
+
+    expect(appendUnderKey(lines, 'parts', 2, 'R1: resistor e5 e10'))
+      .toEqual([{ kind: 'insert', line: 6, text: '  R1: resistor e5 e10' }]);
+  });
+
+  test('keeps a deeper comment at the end of the block with the block', () => {
+    const lines = ['parts:', '  BAT:', '    type: device', '    # 予備', 'wires:'];
+
+    expect(appendUnderKey(lines, 'parts', 2, 'R1: resistor e5 e10'))
+      .toEqual([{ kind: 'insert', line: 5, text: '  R1: resistor e5 e10' }]);
+  });
+
+  test('stops at a comment as deep as the row, which heads the next group', () => {
+    const lines = ['parts:', '  R1: resistor a1 a5', '  # ボード外', '  BAT:', '    type: device'];
+
+    expect(appendUnderKey(lines, 'parts', 2, 'R2: resistor b1 b5'))
+      .toEqual([{ kind: 'insert', line: 3, text: '  R2: resistor b1 b5' }]);
+  });
 });
 
 describe('書き換えを丸ごと当てる', () => {

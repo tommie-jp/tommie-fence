@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest';
 import { applyLineEdits } from 'fence-kit';
 import { parseAddress } from '../model/address.ts';
 import type { Address } from '../types.ts';
-import { insertPart, insertWire, nextPartId, partCells } from './insert.ts';
+import { parseFence } from '../parser/parseFence.ts';
+import { duplicatePart, insertPart, insertWire, nextPartId, partCells } from './insert.ts';
 
 const at = (text: string): Address => {
   const address = parseAddress(text);
@@ -212,5 +213,42 @@ describe('配線の色 (色見本で選んだもの)', () => {
     const result = insertWire(WITH_WIRES, at('b6'), at('b8'), 'chartreuse');
 
     expect(result.ok && result.value.lines[0]).toMatchObject({ text: '  - b6 -- b8' });
+  });
+});
+
+/**
+ * **`parts:` の最後が機器のブロックの図** (breadboard の 09-am-radio と同じ形。
+ * 52 の docs/51)。perfboard は機器を部品と別の並びに持つので、新しい行は
+ * もとから板の部品の後ろに入る。それを字にしておく。
+ */
+describe('機器のブロックの後ろに足す', () => {
+  const WITH_DEVICES = `board: 12x7
+parts:
+  R1: resistor b2 b6 10k
+  # ボード外
+  BAT:
+    type: device
+    at: bottom
+    pins: ["+", "-"]
+wires:
+  - BAT.+ -- a2
+`;
+  const after = (result: ReturnType<typeof insertPart>): readonly string[] => {
+    if (!result.ok) throw new Error(result.error.message);
+    const text = applyLineEdits(WITH_DEVICES, result.value.lines);
+    expect(parseFence(text).doc).not.toBeNull();
+    return text.split('\n');
+  };
+
+  test('writes a board part among the board parts, above the heading of the devices', () => {
+    const lines = after(insertPart(WITH_DEVICES, { id: 'R2', type: 'resistor', at: [at('d2'), at('d6')] }));
+
+    expect(lines.indexOf('  R2: resistor d2 d6')).toBe(lines.indexOf('  R1: resistor b2 b6 10k') + 1);
+  });
+
+  test('puts a duplicate among the board parts too', () => {
+    const lines = after(duplicatePart(WITH_DEVICES, 'R1', 'R2'));
+
+    expect(lines.indexOf('  R2: resistor c3 c7 10k')).toBe(lines.indexOf('  R1: resistor b2 b6 10k') + 1);
   });
 });

@@ -14,6 +14,12 @@ const SOURCE = [
   '  vin: a1',
   'parts:',
   '  R1: resistor c1 c6',
+  // **最後の部品は機器のブロック。** 置く行が頭と中身の間に入ると、置いた
+  // あとが読めずに「穴を返しません」で落ちる (52 の docs/51)。
+  '  BAT:',
+  '    type: device',
+  '    at: bottom',
+  '    pins: ["+", "-"]',
   'wires:',
   '  - a1 -- b1',
   '',

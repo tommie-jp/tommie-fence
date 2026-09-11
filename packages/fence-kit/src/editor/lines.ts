@@ -56,6 +56,26 @@ const depthOf = (text: string): number => (/^\s*/.exec(text)?.[0] ?? '').length;
 const isTopKey = (text: string): boolean => /^[^\s#-]/.test(text);
 
 /**
+ * `line` 行目 (1 始まり) から始まるブロックの最後の行 (1 始まり)。
+ * **深い行が続くあいだはブロック** (入れ子の中身、深いコメント、値の続き)。
+ * 同じ深さか浅い行で終わる — 同じ深さのコメントは次の組の見出しなので含めない。
+ * 空行は越えるが、ブロックの後ろの空行はブロックに入れない。
+ *
+ * 1 行で書いたものなら `line` そのもの。
+ */
+function blockEndOf(lines: readonly string[], line: number): number {
+  const depth = depthOf(lines[line - 1] ?? '');
+  let end = line;
+  for (let at = line; at < lines.length; at += 1) {
+    const text = lines[at] ?? '';
+    if (isBlank(text)) continue;
+    if (depthOf(text) <= depth) break;
+    end = at + 1;
+  }
+  return end;
+}
+
+/**
  * `first` 行目 (0 始まり) から始まる組のうち、中身の行 (0 始まり)。
  *
  * **組は同じ深さの行が続くあいだ。** 次の見出し (同じ深さか浅いコメント) か、
@@ -147,8 +167,12 @@ export const afterLastLine = (lines: readonly string[]): number => {
 /**
  * 鍵 (`wires:` など) の下に 1 行足す書き換え。**鍵が無ければ鍵ごと足す。**
  *
- * `lastLine` はその鍵の下にある最後の行 (無ければ 0)。字下げをそこから写すので、
+ * `lastLine` はその鍵の下にある最後のもの (無ければ 0)。字下げをそこから写すので、
  * 手で整えた並びに合う。
+ *
+ * **足すのは `lastLine` から始まるブロックの後ろ。** 最後のものが入れ子で書かれて
+ * いると (breadboard の機器 `BAT:` + `type: device` …)、頭の次に足した行が中身を
+ * 自分の続きとして抱え込み、フェンスがまるごと読めなくなる (52 の docs/51)。
  */
 export function appendUnderKey(
   lines: readonly string[],
@@ -165,7 +189,7 @@ export function appendUnderKey(
     ];
   }
   return lastLine > 0
-    ? [{ kind: 'insert', line: lastLine + 1, text: `${indentOf(lines, lastLine)}${text}` }]
+    ? [{ kind: 'insert', line: blockEndOf(lines, lastLine) + 1, text: `${indentOf(lines, lastLine)}${text}` }]
     : [{ kind: 'insert', line: at + 1, text: `  ${text}` }];
 }
 

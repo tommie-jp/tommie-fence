@@ -12,7 +12,9 @@ import { flipPart, turnPart } from './turn.ts';
 import { handleAt } from './handles.ts';
 import { stepCell } from './move.ts';
 import type { LineEdit, RewriteResult } from './shared.ts';
-import { applyEdits, applyRewrite, orientInserted } from 'fence-kit';
+import {
+  afterLastLine, appendUnderKey, applyEdits, applyRewrite, isFlowKey, keyLineOf, orientInserted,
+} from 'fence-kit';
 
 /**
  * 部品と配線を足す。**フェンス本文 → 書き換えの並び**を返す純関数で、
@@ -77,35 +79,6 @@ function oriented(source: string, spec: NewPart, added: readonly LineEdit[]): Re
   return result.ok ? addition(source, result.lines, spec.preview === true) : { ok: false, error: result.error };
 }
 
-/** 鍵の行 (1 始まり)。無ければ 0。 */
-const keyLineOf = (lines: readonly string[], key: string): number =>
-  lines.findIndex((text) => new RegExp(`^\\s*${key}\\s*:`).test(text)) + 1;
-
-/** その鍵がフロー形式で書かれているか (鍵の行に中身まで載っている)。 */
-const isFlow = (lines: readonly string[], key: string): boolean => {
-  const line = keyLineOf(lines, key);
-  return line > 0 && (lines[line - 1] ?? '').replace(new RegExp(`^\\s*${key}\\s*:`), '').trim() !== '';
-};
-
-/**
- * その行 (1 始まり) の字下げ。足す行は**既にある行に合わせる**。
- *
- * **0 桁は「字下げが無い」ではない。** YAML の並びは列 0 にも書けるので、
- * そこへ 2 つ空けて足すと、足した行が前の値に畳み込まれてフェンスが読めなくなる
- * (図がまるごと消える)。行そのものが無いときだけ 2 つにする。
- */
-const indentOf = (lines: readonly string[], line: number): string => {
-  const text = lines[line - 1];
-  if (text === undefined) return '  ';
-  return /^\s*/.exec(text)?.[0] ?? '';
-};
-
-/** 末尾の空行より前。鍵ごと足すときの行き先 (末尾の空行の後ろに書かない)。 */
-const afterLast = (lines: readonly string[]): number => {
-  const last = lines.map((text) => text.trim() !== '').lastIndexOf(true);
-  return last < 0 ? 1 : last + 2;
-};
-
 const spell = (endpoint: Endpoint): string =>
   (endpoint.kind === 'cell' ? formatAddress(endpoint.address) : `${endpoint.part}.${endpoint.pin}`);
 
@@ -152,24 +125,12 @@ export function insertWire(
   }
 
   const lines = normalized.split('\n');
-  if (isFlow(lines, 'wires')) return fail('フロー形式 (1 行に書いた形) の配線には足せません。手で書きます', null);
+  if (isFlowKey(lines, 'wires')) return fail('フロー形式 (1 行に書いた形) の配線には足せません。手で書きます', null);
 
-  const key = keyLineOf(lines, 'wires');
   const last = doc.wires.reduce((deepest, wire) => Math.max(deepest, wire.line), 0);
   const written = `- ${spell(from)} ${operator} ${spell(to)}`;
-
-  if (key === 0) {
-    // 鍵ごと足す。**末尾の空行の前**に置く (フェンスの終わりに余りが残らない)。
-    const at = afterLast(lines);
-    return addition(normalized, [
-      { kind: 'insert', line: at, text: 'wires:' },
-      { kind: 'insert', line: at, text: `  ${written}` },
-    ]);
-  }
-
-  return last > 0
-    ? addition(normalized, [{ kind: 'insert', line: last + 1, text: `${indentOf(lines, last)}${written}` }])
-    : addition(normalized, [{ kind: 'insert', line: key + 1, text: `  ${written}` }]);
+  // 鍵が無ければ鍵ごと、**末尾の空行の前**に足す (フェンスの終わりに余りが残らない)。
+  return addition(normalized, appendUnderKey(lines, 'wires', last, written));
 }
 
 export function insertPart(source: string, spec: NewPart): RewriteResult {
@@ -205,7 +166,7 @@ export function insertPart(source: string, spec: NewPart): RewriteResult {
   if (at.some((address) => !isOnGrid(address))) return fail(OFF_GRID, null);
 
   const lines = normalized.split('\n');
-  if (isFlow(lines, 'parts')) return fail('フロー形式 (1 行に書いた形) の部品には足せません。手で書きます', null);
+  if (isFlowKey(lines, 'parts')) return fail('フロー形式 (1 行に書いた形) の部品には足せません。手で書きます', null);
 
   // **値は `setField` と同じ関所を通す。** ここだけ素通しにすると、
   // 空白で行が壊れ、`#` で値が黙って消え、`l=` が札になる。
@@ -225,7 +186,7 @@ export function insertPart(source: string, spec: NewPart): RewriteResult {
   if (key === 0) {
     // **`parts:` は `wires:` より前に置く。** 読む順が図の順と揃う。
     const before = ['wires', 'notes', 'style'].map((one) => keyLineOf(lines, one)).filter((line) => line > 0);
-    const where = before.length > 0 ? Math.min(...before) : afterLast(lines);
+    const where = before.length > 0 ? Math.min(...before) : afterLastLine(lines);
     return oriented(normalized, spec, [
       { kind: 'insert', line: where, text: 'parts:' },
       { kind: 'insert', line: where, text: `  ${written}` },
@@ -233,9 +194,7 @@ export function insertPart(source: string, spec: NewPart): RewriteResult {
   }
 
   const last = doc.parts.reduce((deepest, part) => Math.max(deepest, part.line), 0);
-  return last > 0
-    ? oriented(normalized, spec, [{ kind: 'insert', line: last + 1, text: `${indentOf(lines, last)}${written}` }])
-    : oriented(normalized, spec, [{ kind: 'insert', line: key + 1, text: `  ${written}` }]);
+  return oriented(normalized, spec, appendUnderKey(lines, 'parts', last, written));
 }
 
 /**
@@ -299,7 +258,7 @@ export function duplicatePart(source: string, handle: string, newId: string): Re
   const lines = normalized.split('\n');
   const found = locatePart(doc, lines, handle);
   if (found === null) return fail(`部品が見つかりません: ${handle}`, null);
-  if (isFlow(lines, 'parts')) return fail('フロー形式 (1 行に書いた形) の部品には足せません。手で書きます', null);
+  if (isFlowKey(lines, 'parts')) return fail('フロー形式 (1 行に書いた形) の部品には足せません。手で書きます', null);
 
   const { text } = found;
 
@@ -315,7 +274,5 @@ export function duplicatePart(source: string, handle: string, newId: string): Re
   const renamed = shifted.replace(/^(\s*)[^\s:]+\s*:/, `$1${newId}:`);
 
   const last = doc.parts.reduce((deepest, part) => Math.max(deepest, part.line), 0);
-  return addition(normalized, [
-    { kind: 'insert', line: last + 1, text: `${indentOf(lines, last)}${renamed.trim()}` },
-  ]);
+  return addition(normalized, appendUnderKey(lines, 'parts', last, renamed.trim()));
 }

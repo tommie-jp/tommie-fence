@@ -13,7 +13,7 @@ import { parseFence } from '../parser/parseFence.ts';
 import { resolveAlias } from '../parts/aliases.ts';
 import { splitPartType } from '../parts/variants.ts';
 import { holesOf, isAnchored, partPrefix } from '../parts/catalog.ts';
-import type { Address, Board, FenceError } from '../types.ts';
+import type { Address, Board, FenceError, PartSpec } from '../types.ts';
 import { placeParts } from '../placement/place.ts';
 import { isLocated, locatePart, stepCell } from './move.ts';
 import { diffAfterLines } from './diff.ts';
@@ -139,6 +139,19 @@ function oriented(source: string, part: NewPart, added: readonly LineEdit[]): Ad
     : { ok: false, error: result.error };
 }
 
+/**
+ * 新しい部品の行を続ける先 (その部品の行)。**板に挿す部品の並びの最後。**
+ *
+ * 機器は板の外のもので、例では `# ボード外` の見出しの下にまとめて書く。
+ * そこへ続けると、抵抗が「ボード外」の組に入って見出しが嘘になる
+ * (52 の docs/51)。板の部品が 1 つも無ければ機器の後ろへ
+ * (ブロックの終わりは `appendUnderKey` が数える)。
+ */
+function lastPartLine(parts: readonly PartSpec[]): number {
+  const onBoard = parts.filter((one) => one.type !== 'device');
+  return (onBoard.length > 0 ? onBoard : parts).reduce((deepest, one) => Math.max(deepest, one.line), 0);
+}
+
 /** 姿を落とした種類の名前 (`capacitor/electrolytic` → `capacitor`)。 */
 const baseTypeOf = (written: string): string => splitPartType(written).type;
 
@@ -223,9 +236,8 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
   const lines = normalized.split('\n');
   if (isFlowKey(lines, 'parts')) return fail(`部品: ${FLOW_REFUSAL.replace('消せません', '足せません')}`, null);
 
-  const last = doc.parts.reduce((deepest, one) => Math.max(deepest, one.line), 0);
   const holes = isAnchored(type) ? `@ ${spelled[0] ?? ''}` : spelled.join(' ');
-  const added = appendUnderKey(lines, 'parts', last, `${part.id}: ${written} ${holes}`);
+  const added = appendUnderKey(lines, 'parts', lastPartLine(doc.parts), `${part.id}: ${written} ${holes}`);
 
   // **アンカー 1 つで置く形は、足が書かれた穴より広がる。** 板に載るかどうかは
   // 並べてみないと分からないので、置いた姿を読み直して確かめる
@@ -289,7 +301,6 @@ export function duplicatePart(source: string, id: string, newId: string): Additi
   const lines = normalized.split('\n');
   if (isFlowKey(lines, 'parts')) return fail(`部品: ${FLOW_REFUSAL.replace('消せません', '足せません')}`, null);
 
-  const last = doc.parts.reduce((deepest, one) => Math.max(deepest, one.line), 0);
-  const added = appendUnderKey(lines, 'parts', last, renamed.trim());
+  const added = appendUnderKey(lines, 'parts', lastPartLine(doc.parts), renamed.trim());
   return { ok: true, value: { edits: [], lines: added, diff: diffAfterLines(normalized, added) } };
 }

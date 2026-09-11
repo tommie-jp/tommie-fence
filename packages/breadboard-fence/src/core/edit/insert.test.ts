@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest';
 import { applyLineEdits } from 'fence-kit';
 import { parseAddress } from '../model/address.ts';
 import type { Address } from '../types.ts';
-import { insertPart, insertWire, nextPartId, partCells } from './insert.ts';
+import { parseFence } from '../parser/parseFence.ts';
+import { duplicatePart, insertPart, insertWire, nextPartId, partCells } from './insert.ts';
 
 const at = (text: string): Address => {
   const address = parseAddress(text);
@@ -289,5 +290,81 @@ describe('配線の色 (色見本で選んだもの)', () => {
     const result = insertWire(BOARD, at('b5'), at('b10'), 'chartreuse');
 
     expect(result.ok && result.value.lines[0]).toMatchObject({ text: '  - b5 -- b10' });
+  });
+});
+
+/**
+ * **`parts:` の最後が入れ子のブロック (機器) の図。** 例の 09-am-radio が
+ * この形で、抵抗を置くと `BAT:` と `type: device` の間に行が入り、図が
+ * 真っ白になった (52 の docs/51)。
+ */
+describe('入れ子のブロックの後ろに足す', () => {
+  const WITH_DEVICES = `board: half
+parts:
+  R1: resistor a5 a10 330
+  # ボード外
+  ANT:
+    type: device
+    at: top
+    pins: [1a, 1b]
+  BAT:
+    type: device
+    at: bottom
+    pins: ["+", "-"]
+wires:
+  - BAT.+ -- +b6 red
+`;
+  const DEVICES_ONLY = `board: half
+parts:
+  BAT:
+    type: device
+    at: bottom
+    pins: ["+", "-"]
+wires:
+  - BAT.+ -- +b6 red
+`;
+  const BLOCK_PART = `board: half
+parts:
+  R1:
+    type: resistor
+    holes: [a5, a10]
+    value: 330
+wires:
+  - a10 -- b12
+`;
+  const after = (source: string, result: ReturnType<typeof insertPart>): readonly string[] => {
+    if (!result.ok) throw new Error(result.error.message);
+    const text = applyLineEdits(source, result.value.lines);
+    expect(parseFence(text).doc).not.toBeNull();
+    return text.split('\n');
+  };
+  const R2 = { id: 'R2', type: 'resistor', at: [at('e5'), at('e10')] };
+
+  test('keeps the fence readable when the last part is a device block', () => {
+    after(WITH_DEVICES, insertPart(WITH_DEVICES, R2));
+  });
+
+  test('writes a board part among the board parts, above the heading of the devices', () => {
+    const lines = after(WITH_DEVICES, insertPart(WITH_DEVICES, R2));
+
+    expect(lines.indexOf('  R2: resistor e5 e10')).toBe(lines.indexOf('  R1: resistor a5 a10 330') + 1);
+  });
+
+  test('goes after the block when every part is a device', () => {
+    const lines = after(DEVICES_ONLY, insertPart(DEVICES_ONLY, R2));
+
+    expect(lines.indexOf('  R2: resistor e5 e10')).toBe(lines.indexOf('    pins: ["+", "-"]') + 1);
+  });
+
+  test('goes after a board part written as a block, not into it', () => {
+    const lines = after(BLOCK_PART, insertPart(BLOCK_PART, R2));
+
+    expect(lines.indexOf('  R2: resistor e5 e10')).toBe(lines.indexOf('    value: 330') + 1);
+  });
+
+  test('puts a duplicate among the board parts too, leaving the device blocks whole', () => {
+    const lines = after(WITH_DEVICES, duplicatePart(WITH_DEVICES, 'R1', 'R2'));
+
+    expect(lines.indexOf('  R2: resistor b6 b11 330')).toBe(lines.indexOf('  R1: resistor a5 a10 330') + 1);
   });
 });
