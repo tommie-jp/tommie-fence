@@ -26,8 +26,9 @@ account, no sign-up. **Open a `.md`, edit the fences inside it, write the `.md`
 back** — the same steps the extension takes, in a browser alone.
 **All three fences draw** — schematics included, with TeX running in
 WebAssembly (the engine is fetched only the first time you draw a circuit).
-**The map opens there too**: drag a part and the address in the fence is
-rewritten, the same editor the extension carries. It carries the 47 `.md`
+**It opens on the map**: drag a part and the address in the fence is
+rewritten, the same editor the extension carries. The `.md` text and the drawn
+figure sit behind the "Markdown" button. It carries the 47 `.md`
 files from each package's `examples/`, unchanged. Open your own file (button,
 drop, or `?doc=`), edit it, and write it back.
 
