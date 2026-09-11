@@ -1,4 +1,4 @@
-import { isKind } from './kinds.ts';
+import { KIND_LABEL, KIND_READING, isKind } from './kinds.ts';
 import type { Kind } from './kinds.ts';
 
 /**
@@ -72,3 +72,37 @@ export function parseExamples(data: unknown): ExampleList {
  */
 export const shown = (examples: readonly Example[], broken = false): readonly Example[] =>
   examples.filter((example) => broken || !example.broken);
+
+/**
+ * 最初に開く文書。**一覧の先頭にしない。**
+ *
+ * 一覧は circuit から並べる (作る人の順。52 の docs/41) が、**開いた瞬間の
+ * 1 枚には向かない**。頁は editor から始まり (52 の docs/48)、circuit の
+ * マップは editor 用の絵 — 公開する図は TeX の資材 8.5 MB を落として描く
+ * (docs/15 の実測。いまは Markdown の窓を開いたときだけ)。breadboard の
+ * マップは本物の描画に掴む層を重ねたものなので、最初の 1 枚は本物になる。
+ */
+const FIRST_DOC = { kind: 'breadboard', name: '01-led.md' } as const;
+
+/** 最初に開く文書の番号。見つからなければ先頭に落ちる。 */
+export function firstDoc(list: readonly Example[]): number {
+  const found = list.findIndex((one) => one.kind === FIRST_DOC.kind && one.name === FIRST_DOC.name);
+  return found >= 0 ? found : 0;
+}
+
+/**
+ * 欄に出す名前。**図が何本あるかを添える** — 1 本しか無い文書と、10 本ある
+ * 文書とで開いたときの姿がまるで違う。
+ */
+export const optionLabel = (one: Example): string =>
+  (one.fences > 1 ? `${one.name} — ${one.title} (図 ${one.fences} 本)` : `${one.name} — ${one.title}`);
+
+/**
+ * 欄の小見出し。**種類ごとに束ねる** — 1 つの文書は 1 つの言語で書かれて
+ * いるので、束ねると探しやすい。壊した例は別の束。
+ */
+export const groupLabel = (one: Example): string =>
+  (one.broken
+    ? `わざと壊した例 — ${KIND_LABEL[one.kind]}`
+    : `${KIND_LABEL[one.kind]}（${KIND_READING[one.kind]}）`);
+

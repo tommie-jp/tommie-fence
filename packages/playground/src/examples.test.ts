@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { parseExamples, shown } from './examples.ts';
+import { firstDoc, groupLabel, optionLabel, parseExamples, shown } from './examples.ts';
 
 const one = {
   kind: 'breadboard',
@@ -56,5 +56,34 @@ describe('shown', () => {
 
   test('broken を立てると並ぶ (?dev で開いたとき)', () => {
     expect(shown(parseExamples([one, broken]).examples, true)).toEqual([one, broken]);
+  });
+});
+
+/** 最初に開く文書と、欄に出す名前 (52 の docs/49 で `main.ts` から移した)。 */
+describe('firstDoc', () => {
+  const led = { kind: 'breadboard', broken: false, name: '01-led.md', title: 'LED', fences: 1, path: 'examples/breadboard/01-led.md', from: 'x' } as const;
+  const rc = { ...led, kind: 'circuit', name: '01-rc.md', path: 'examples/circuit/01-rc.md' } as const;
+
+  test('breadboard の 01-led.md を選ぶ (一覧の先頭ではなく)', () => {
+    expect(firstDoc([rc, led])).toBe(1);
+  });
+
+  test('無ければ先頭に落ちる', () => {
+    expect(firstDoc([rc])).toBe(0);
+    expect(firstDoc([])).toBe(0);
+  });
+});
+
+describe('optionLabel / groupLabel', () => {
+  const one = { kind: 'breadboard', broken: false, name: '01-led.md', title: 'LED', fences: 1, path: 'examples/breadboard/01-led.md', from: 'x' } as const;
+
+  test('図が 2 本以上なら本数を添える', () => {
+    expect(optionLabel(one)).toBe('01-led.md — LED');
+    expect(optionLabel({ ...one, fences: 3 })).toBe('01-led.md — LED (図 3 本)');
+  });
+
+  test('種類ごとの小見出し。壊した例は別の束', () => {
+    expect(groupLabel(one)).toBe('breadboard（ブレッドボード図）');
+    expect(groupLabel({ ...one, broken: true })).toBe('わざと壊した例 — breadboard');
   });
 });

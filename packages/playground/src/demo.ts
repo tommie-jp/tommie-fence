@@ -6,7 +6,7 @@ import type { Kind } from './kinds.ts';
  * 図だけが変わると魔法に見えるが、この頁の値打ちは「Markdown に書くと
  * 図になる」ことのほうなので、字が動くのを見せないと伝わらない。
  *
- * ここは DOM を知らない。釦を組むのは `main.ts`。
+ * ここは DOM を知らない。釦を組むのは `page/demo.ts`。
  */
 
 export type Nudge = {
