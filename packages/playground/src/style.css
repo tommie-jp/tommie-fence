@@ -288,7 +288,12 @@ td { font-family: var(--mono); font-size: 12px; }
   .pick select { flex: 1; min-width: 0; }
 
   /* **狭い画面の窓は画面いっぱい** (52 の docs/48)。端の余白も字と図に渡す。 */
-  .md-box { width: 100%; height: 100%; margin: 0; border: 0; border-radius: 0; }
+  .md-box {
+    width: 100%; height: 100%; margin: 0; border: 0; border-radius: 0;
+    /* 画面いっぱいなので、角とホームバーも頁と同じに避ける (`body.full`)。
+       窓は頁の余白の外 (最上位の層) に出るので、自分で空ける。 */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
   .md-head { gap: 8px; padding: 6px 12px; }
   /* 字の欄は窓の半分より少し多く。**窓を開いた人は字を見に来ている** —
      図はその下 (巻き取れば出る)。
@@ -304,7 +309,16 @@ td { font-family: var(--mono); font-size: 12px; }
    **頁としては今までどおり。** 畳むのは `body.full` が付いたときだけで、
    ブラウザで開いた人には何も変わらない。 */
 body.full {
-  padding: 0; height: 100svh; display: flex; flex-direction: column; overflow: hidden;
+  /* **iPhone の角とホームバーを避ける** (52 の docs/50)。画面の下端まで届くと、
+     マップの道具が角の丸みとホームバーに載る (実機で「選ぶが左下のカーブで
+     押しにくい」)。iOS のタブ棒と同じく、ホームバーの分だけ持ち上げる。
+     横向きでは切り欠きの側も空く。**値は iPhone のような画面でだけ入る** —
+     PC では 4 辺とも 0 で、今までどおり端まで使う。
+     **頁の側で空ける。** マップ (iframe) の中の env() は、Safari は親の値を
+     そのまま、Chrome は 0 を返す — 中からは自分が画面の下端に居るかも
+     分からない。殻 (fence-kit) は触らない。 */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  height: 100svh; display: flex; flex-direction: column; overflow: hidden;
   /* **ブラウザの拡大を止める。** 図の拡大は 2 本指でマップがやるので、頁ごと
      拡大されると道具の列まで一緒に大きくなる (実機で「メニューアイコンは
      拡大対象にしないで」)。**iframe の中では止められない** — ピンチを受け持つ

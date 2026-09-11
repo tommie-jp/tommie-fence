@@ -2,7 +2,12 @@
 <html lang="ja">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- **cover で開いて、端は自分で避ける** (52 の docs/50)。ホーム画面から
+         開くと頁は画面の下端まで届き、角の丸みとホームバーの上にマップの
+         道具が載る (実機で「選ぶが左下のカーブで押しにくい」)。避ける分は
+         `env(safe-area-inset-*)` が教えるが、**cover でないと 4 辺とも 0** なので
+         これを外すと style.css の余白が黙って死ぬ。 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>tommie-fence playground</title>
     <meta
       name="description"
