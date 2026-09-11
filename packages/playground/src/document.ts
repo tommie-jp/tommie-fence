@@ -107,3 +107,44 @@ export function replaceFence(text: string, fence: DocFence, source: string): str
   const body = source.replace(/\n$/, '').split('\n');
   return [...lines.slice(0, fence.line), ...body, ...lines.slice(fence.line + was)].join('\n');
 }
+
+/** 行の範囲 (0 始まり、`to` は含まない)。`from === to` は幅の無い範囲 (その行の頭)。 */
+export type LineSpan = { readonly from: number; readonly to: number };
+
+/**
+ * `before` から `after` になったときの、**`after` の中の変わった行の範囲**。
+ * 同じなら null。頭と尻の同じ行を削って、残ったところを返す。
+ *
+ * Markdown の窓を開いたときに、殻が直前に書き換えた所を選んでおくのに使う
+ * (52 の docs/48)。行が消えただけなら幅の無い範囲になる — 選ぶ行が無いので、
+ * その位置にカーソルを置く。離れた 2 か所が変われば、その間ぜんぶ。
+ */
+export function changedSpan(before: string, after: string): LineSpan | null {
+  if (before === after) return null;
+  const was = before.split('\n');
+  const now = after.split('\n');
+  const most = Math.min(was.length, now.length);
+
+  let head = 0;
+  while (head < most && was[head] === now[head]) head += 1;
+  // **頭で数えた行を尻で数え直さない。** 同じ行が並ぶと、範囲が裏返る。
+  let tail = 0;
+  while (tail < most - head && was[was.length - 1 - tail] === now[now.length - 1 - tail]) tail += 1;
+
+  return { from: head, to: now.length - tail };
+}
+
+/**
+ * 行の範囲を、字の位置の範囲にする (改行は含めない)。**文書の外を指したら
+ * 文書の終わり** — 尻の行が消えたとき、指す行がもう無い。
+ */
+export function spanOffsets(text: string, span: LineSpan): { readonly start: number; readonly end: number } {
+  const lines = text.split('\n');
+  const startOf = (line: number): number =>
+    lines.slice(0, line).reduce((sum, one) => sum + one.length + 1, 0);
+  const start = Math.min(startOf(span.from), text.length);
+  if (span.to <= span.from) return { start, end: start };
+  // 最後の行の終わり = 次の行の頭から改行 1 つを引いたところ。
+  const end = Math.min(startOf(span.to) - 1, text.length);
+  return { start, end: Math.max(start, end) };
+}

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { asDocument, fenceAt, fencesIn, labelOf, lineOfOffset, replaceFence, titleOf } from './document.ts';
+import { asDocument, changedSpan, fenceAt, fencesIn, labelOf, lineOfOffset, replaceFence, spanOffsets, titleOf } from './document.ts';
 
 const DOC = [
   '# 例',                       // 0
@@ -164,5 +164,78 @@ describe('replaceFence', () => {
       ['breadboard', null],
       ['circuit', '図02 RC'],
     ]);
+  });
+});
+
+/**
+ * **殻が書き換えた所を、Markdown の窓を開いたときに選んでおく** (52 の docs/48)。
+ * 窓にすると「掴む → 字が変わる」を同時には見せられないので、開いた瞬間に
+ * 「ここが変わった」を見せる。頭と尻の同じ行を削って、残ったところが変わった所。
+ */
+describe('changedSpan', () => {
+  const WAS = ['# 例', '```breadboard', 'parts:', '  R1: resistor a5 a10', '  D1: led b12 b13', '```', ''].join('\n');
+
+  test('同じなら null', () => {
+    expect(changedSpan(WAS, WAS)).toBeNull();
+  });
+
+  test('1 行だけ変われば、その 1 行', () => {
+    // Arrange: 殻が R1 を動かした
+    const moved = WAS.replace('a5 a10', 'a7 a12');
+
+    // Act & Assert
+    expect(changedSpan(WAS, moved)).toEqual({ from: 3, to: 4 });
+  });
+
+  test('行が増えたら、増えた行', () => {
+    const added = WAS.replace('  D1: led b12 b13', '  D1: led b12 b13\n  R2: resistor c1 c3');
+
+    expect(changedSpan(WAS, added)).toEqual({ from: 5, to: 6 });
+  });
+
+  /** 消えただけのときは選ぶ行が無い。**その位置にカーソルを置く** (`from === to`)。 */
+  test('行が消えただけなら、幅の無い範囲', () => {
+    const dropped = WAS.replace('  R1: resistor a5 a10\n', '');
+
+    expect(changedSpan(WAS, dropped)).toEqual({ from: 3, to: 3 });
+  });
+
+  test('離れた 2 か所が変われば、その間ぜんぶ', () => {
+    const both = WAS.replace('a5 a10', 'a7 a12').replace('b12 b13', 'b14 b15');
+
+    expect(changedSpan(WAS, both)).toEqual({ from: 3, to: 5 });
+  });
+
+  /** 頭で数えた行を尻でもう一度数えない (同じ行が並ぶ文書で範囲が裏返る)。 */
+  test('頭と尻が重ならない', () => {
+    expect(changedSpan('a\nb\na', 'a')).toEqual({ from: 1, to: 1 });
+    expect(changedSpan('a', 'a\nb\na')).toEqual({ from: 1, to: 3 });
+  });
+
+  test('1 行目が変われば 0 から', () => {
+    expect(changedSpan(WAS, WAS.replace('# 例', '# 例 2'))).toEqual({ from: 0, to: 1 });
+  });
+});
+
+describe('spanOffsets', () => {
+  const TEXT = 'a\nbc\nd';
+
+  test('行の範囲を字の位置に直す。改行は含めない', () => {
+    expect(spanOffsets(TEXT, { from: 1, to: 2 })).toEqual({ start: 2, end: 4 });
+    expect(TEXT.slice(2, 4)).toBe('bc');
+  });
+
+  test('何行にもまたがる', () => {
+    expect(spanOffsets(TEXT, { from: 0, to: 3 })).toEqual({ start: 0, end: 6 });
+  });
+
+  test('幅の無い範囲は、その行の頭', () => {
+    expect(spanOffsets(TEXT, { from: 1, to: 1 })).toEqual({ start: 2, end: 2 });
+  });
+
+  /** 尻の行が消えたときは、指す行がもう無い。文書の終わりに置く。 */
+  test('文書の外を指したら、文書の終わり', () => {
+    expect(spanOffsets(TEXT, { from: 5, to: 5 })).toEqual({ start: 6, end: 6 });
+    expect(spanOffsets(TEXT, { from: 2, to: 9 })).toEqual({ start: 5, end: 6 });
   });
 });

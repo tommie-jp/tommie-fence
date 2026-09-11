@@ -50,28 +50,27 @@
     <link rel="stylesheet" href="tex/css/fonts.css" />
   </head>
   <body>
-    <!-- **見せる → 触る → 次へ** の順に組む (52 の docs/41)。最初の画面に
-         図が出ることを最優先にし、道具とリンクはその下へ降ろした。
-         広い画面では今までどおり左に字・右に図 (並べ替えは CSS の order)。 -->
+    <!-- **editor から始める** (52 の docs/48)。開いた瞬間に図を掴めることが
+         デモの本体 — 「図を動かすと Markdown が書き換わる」は、このプロジェクト
+         にしか無い動き。字は「Markdown」の窓で見る (前は字と図が先で、
+         editor は釦の向こうだった。docs/41 の決めを 48 で覆した)。 -->
     <header class="head">
       <h1>tommie-fence</h1>
       <!-- 一文は**片方だけ出す**。両方置いて `main.ts` が hidden を切り替える
            (組み立ては変えない)。「左に書くと右に出る」はスマホで嘘になるので
-           言わない。 -->
-      <p class="lead" id="lead-ja">Markdown に書くと、電子工作の図になる。</p>
-      <p class="lead" id="lead-en" lang="en" hidden>Write Markdown, get an electronics diagram.</p>
+           言わない。**2 文目が editor の話** — 開いてすぐ見えているものの説明。 -->
+      <p class="lead" id="lead-ja">Markdown に書くと、電子工作の図になる。図を動かすと、Markdown が書き換わる。</p>
+      <p class="lead" id="lead-en" lang="en" hidden>Write Markdown, get an electronics diagram. Move the diagram, and the Markdown is rewritten.</p>
       <!-- リンクで来た人には**その図の題**を出す。上の一文は初めて来た人への
            案内で、リンクを受けた人はもう図を見に来ている (52 の docs/41)。 -->
       <p class="lead lead-link" id="lead-link" hidden>
         <strong id="lead-title"></strong>
-        <span id="lead-note-ja">tommie-fence で描いた図。下の字を直すと図が変わる。</span>
-        <span id="lead-note-en" lang="en" hidden>Drawn with tommie-fence. Edit the text below and the figure changes.</span>
+        <span id="lead-note-ja">tommie-fence で描いた図。図を動かすと、Markdown が書き換わる。</span>
+        <span id="lead-note-en" lang="en" hidden>Drawn with tommie-fence. Move the diagram, and the Markdown is rewritten.</span>
       </p>
     </header>
 
     <main>
-      <!-- 狭い画面では帯をほどいて (`display: contents`)、札を図の上・
-           道具を字の下に置く。広い画面と `body.full` では 1 行の帯のまま。 -->
       <div class="bar">
         <!-- **たまにしか押さないものを畳む釦** (52 の docs/46)。畳んだ姿
              (`body.full`) でだけ出る。印を `≡` にしないのは、マップの左上に
@@ -91,14 +90,6 @@
              **押すと文書の一覧が開く** — 名前が「いま何を開いているか」なので、
              そこが入口として自然 (実機で頼まれた)。 -->
         <button type="button" class="doc" id="doc-name" aria-haspopup="listbox"></button>
-        <!-- **文書の中のどのフェンスを見ているか。** 狭い画面では図の上に置く
-             (図の名札を兼ねる)。 -->
-        <div class="picks">
-          <label class="pick">
-            フェンス
-            <select id="fence"></select>
-          </label>
-        </div>
         <div class="tools">
           <!-- **たまに押すもの。** 畳んだ姿では `···` の板の中へ回る。
                普段は `display: contents` で、行に直に並んでいるのと同じ。 -->
@@ -116,7 +107,9 @@
           <!-- **よく押すものは隠さない** (52 の docs/46)。保存が 2 タップに
                なるのは、直す道具として一番困る所 — 頁を閉じると字は消える。 -->
           <button type="button" id="save">保存</button>
-          <button type="button" id="map-toggle" aria-pressed="false">GUI で編集</button>
+          <!-- 字と図の窓を開く (52 の docs/48)。**「Markdown を表示」と言わない** —
+               窓の中の欄は直せるので、「表示」だと読むだけに聞こえる。 -->
+          <button type="button" id="md" aria-expanded="false" aria-controls="md-box">Markdown</button>
           <!-- 何が起きたかの記録。**一言は 2 秒で消えて、スマホでは見逃し
                やすい** (52 の docs/45)。開いても図を押し下げないよう垂れ下げる。
                **畳んだ姿でも `···` の中に入れない** — しくじりを読む場所なので、
@@ -129,7 +122,9 @@
         </div>
       </div>
 
-      <iframe class="map" id="map" title="図を掴んで動かすマップ" hidden></iframe>
+      <!-- 図を掴んで動かすマップ。**頁の主役なので最初から場所を取る** —
+           中身が届くまで畳んでおくと、届いた瞬間に下の行が押し下がる。 -->
+      <iframe class="map" id="map" title="図を掴んで動かすマップ"></iframe>
 
       <!-- **いま開いている文書を指すリンク**の QR。スマホで開き直す・人に渡す
            ための道 (52 の docs/44)。手元のファイルには置き場が無いので、
@@ -141,48 +136,69 @@
         <form method="dialog"><button type="submit">閉じる</button></form>
       </dialog>
 
-      <div class="panes">
-        <!-- **図が先。** 狭い画面ではこの順のまま、広い画面では order で
-             左右を入れ替える (字が左、図が右)。 -->
-        <section class="pane pane-out">
-          <div class="out">
-            <div class="figure" id="figure"></div>
-            <!-- 押すと**字と図が同時に変わる**釦 (52 の docs/41)。中身は
-                 `main.ts` が `demo.ts` から組む。当たる釦が無ければ畳む。 -->
-            <div class="try" id="try" hidden></div>
-            <p class="note" id="note" hidden></p>
-            <details id="tex" hidden>
-              <summary>circuitikz の TeX</summary>
-              <pre id="tex-body"></pre>
-            </details>
-            <div id="netlist"></div>
-            <pre class="messages" id="messages" hidden></pre>
+      <!-- **Markdown の窓** (52 の docs/48)。中身は前の頁の 2 つの欄そのもの —
+           文書の全文と、いまのフェンスの図。**字だけの窓にしない**: circuit の
+           マップは editor 用の絵で、公開する図 (TeX) ではない。本当の図を見る
+           場所と、「試す」釦の置き場を兼ねる。
+           **欄は文書の正のまま。** 閉じている窓の中でも値は生きているので、
+           打鍵 → マップの組み直しの道は変わらない。 -->
+      <dialog class="md-box" id="md-box" aria-labelledby="md-title">
+        <div class="md-head">
+          <h2 id="md-title"><label for="source">Markdown</label></h2>
+          <!-- **文書の中のどのフェンスを図にしているか。** 窓の図の名札を兼ねる。
+               マップの中にも同じ一覧があるので、頁の帯には置かない
+               (2 つ並べても迷うだけ)。 -->
+          <div class="picks">
+            <label class="pick">
+              フェンス
+              <select id="fence"></select>
+            </label>
           </div>
-        </section>
-
-        <section class="pane pane-src">
-          <h2><label for="source">Markdown</label></h2>
-          <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off"
-            placeholder="ここに Markdown を書く (中の ```circuit / ```breadboard / ```perfboard が図になる)"></textarea>
-        </section>
-      </div>
+          <!-- **最初の焦点はここ** (`autofocus`)。無いと窓は最初の欄 — 字の欄 —
+               に焦点を置くことがあり、スマホではキーボードが出て窓が隠れる。 -->
+          <form method="dialog"><button type="submit" autofocus>閉じる</button></form>
+        </div>
+        <div class="panes">
+          <section class="pane pane-src">
+            <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off"
+              placeholder="ここに Markdown を書く (中の ```circuit / ```breadboard / ```perfboard が図になる)"></textarea>
+          </section>
+          <section class="pane pane-out">
+            <div class="out">
+              <div class="figure" id="figure"></div>
+              <!-- 押すと**字と図が同時に変わる**釦 (52 の docs/41)。中身は
+                   `main.ts` が `demo.ts` から組む。当たる釦が無ければ畳む。 -->
+              <div class="try" id="try" hidden></div>
+              <p class="note" id="note" hidden></p>
+              <details id="tex" hidden>
+                <summary>circuitikz の TeX</summary>
+                <pre id="tex-body"></pre>
+              </details>
+              <div id="netlist"></div>
+              <pre class="messages" id="messages" hidden></pre>
+            </div>
+          </section>
+        </div>
+      </dialog>
 
       <!-- 気に入った人の行き先。**順は docs/15 の決めのまま** —
-           最初の 30 秒がこの頁、次が Codespaces、それでも気に入ったら .vsix。 -->
+           最初の 30 秒がこの頁、次が Codespaces、それでも気に入ったら .vsix。
+           **狭い画面では 1 行に詰める** (短い名前に替えて、添え書きを畳む) —
+           図の高さを削らないため (52 の docs/48)。 -->
       <section class="next">
         <h2>気に入ったら</h2>
         <ul>
           <li>
-            <a href="https://codespaces.new/tommie-jp/tommie-fence?quickstart=1">VS Code で試す (Codespaces)</a>
-            — ブラウザの中に本物の VS Code が立つ
+            <a href="https://codespaces.new/tommie-jp/tommie-fence?quickstart=1"><span class="long">VS Code で試す (Codespaces)</span><span class="short">Codespaces</span></a>
+            <span class="why">— ブラウザの中に本物の VS Code が立つ</span>
           </li>
           <li>
-            <a href="https://github.com/tommie-jp/tommie-fence/releases">拡張を入れる (.vsix)</a>
-            — 手元の VS Code で書く
+            <a href="https://github.com/tommie-jp/tommie-fence/releases"><span class="long">拡張を入れる (.vsix)</span><span class="short">.vsix</span></a>
+            <span class="why">— 手元の VS Code で書く</span>
           </li>
           <li>
             <a href="https://github.com/tommie-jp/tommie-fence">GitHub</a>
-            — 文法と中身
+            <span class="why">— 文法と中身</span>
           </li>
         </ul>
       </section>

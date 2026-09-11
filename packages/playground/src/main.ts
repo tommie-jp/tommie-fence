@@ -4,11 +4,12 @@ import { render } from './fences.ts';
 import { decodeShare } from './share.ts';
 import { parseExamples, shown } from './examples.ts';
 import { nudge, nudgesFor } from './demo.ts';
-import { asDocument, fenceAt, fencesIn, labelOf, lineOfOffset, replaceFence } from './document.ts';
+import { asDocument, changedSpan, fenceAt, fencesIn, labelOf, lineOfOffset, replaceFence, spanOffsets } from './document.ts';
 import { UNTITLED, asTyped, canHold, canSend, docFrom, isCrlf, linkTo, nameOf, withNewlines } from './files.ts';
 import { qrSvg } from './qr.ts';
 import type { FileHandle } from './files.ts';
-import type { DocFence } from './document.ts';
+import { showSpan } from './reveal.ts';
+import type { DocFence, LineSpan } from './document.ts';
 import type { Example } from './examples.ts';
 import type { Output } from './fences.ts';
 
@@ -58,7 +59,8 @@ const els = {
   messages: need('messages'),
   from: need('from'),
   map: need<HTMLIFrameElement>('map'),
-  mapToggle: need<HTMLButtonElement>('map-toggle'),
+  md: need<HTMLButtonElement>('md'),
+  mdBox: need<HTMLDialogElement>('md-box'),
   ver: need('ver'),
   leadJa: need('lead-ja'),
   leadEn: need('lead-en'),
@@ -116,10 +118,12 @@ const mine = (): readonly Example[] => shown(examples, showsBroken);
 /**
  * 最初に開く文書。**一覧の先頭にしない。**
  *
- * 一覧は circuit から並べる (作る人の順。52 の docs/41) が、circuit の図は
- * 初回に TeX の資材 8.5 MB を落とすので、**開いた瞬間の 1 枚には向かない**
- * (docs/15 の実測)。breadboard の LED を既定にして、circuit は選んだ人にだけ
- * 落とさせる。見つからなければ先頭に落ちる。
+ * 一覧は circuit から並べる (作る人の順。52 の docs/41) が、**開いた瞬間の
+ * 1 枚には向かない**。頁は editor から始まり (52 の docs/48)、circuit の
+ * マップは editor 用の絵 — 公開する図は TeX の資材 8.5 MB を落として描く
+ * (docs/15 の実測。いまは Markdown の窓を開いたときだけ)。breadboard の
+ * マップは本物の描画に掴む層を重ねたものなので、最初の 1 枚は本物になる。
+ * 見つからなければ先頭に落ちる。
  */
 const FIRST_DOC = { kind: 'breadboard', name: '01-led.md' } as const;
 
@@ -265,8 +269,14 @@ function renderTry(): void {
       const next = nudge(target.source, one);
       // 押した瞬間に当たらなくなっていたら何もしない (欄を手で直した後)。
       if (next === null) return;
-      setText(replaceFence(els.source.value, target, next));
-      // **欄に焦点は移さない** — スマホでキーボードが出て図が隠れる。
+      const before = els.source.value;
+      setText(replaceFence(before, target, next));
+      // **変わった行を字の欄でも見える所へ寄せる** — 字と図が同時に変わるのが
+      // 「試す」の値打ち (52 の docs/41)。例の文書は散文が長く、寄せないと
+      // 変わった行が欄の外にある。**焦点は移さない** — スマホでキーボードが
+      // 出て図が隠れる。
+      const span = changedSpan(before, els.source.value);
+      if (span !== null) showSpan(els.source, spanOffsets(els.source.value, span), { focus: false });
       say(one.said);
     });
     els.try.append(button);
@@ -298,8 +308,20 @@ function paintEmpty(): void {
   showDocName();
 }
 
-/** **いまのフェンス 1 本**を描く。文書の他の行は図に出ない。 */
+/**
+ * **いまのフェンス 1 本**を描く。文書の他の行は図に出ない。
+ *
+ * **Markdown の窓が閉じているあいだは図を描かない** (52 の docs/48)。
+ * 図の役はマップがしている。circuit の TeX (8.3 MB) を、窓を開かない人に
+ * 落とさせないため。描きかけの図は番号を進めて捨てる (閉じた窓に後から
+ * 割り込ませない)。文書の名前 (直したままの印) だけは、いつでも揃える。
+ */
 function paint(): void {
+  if (!els.mdBox.open) {
+    drawing += 1;
+    showDocName();
+    return;
+  }
   const fence = now();
   if (fence === null) {
     paintEmpty();
@@ -339,25 +361,39 @@ function paint(): void {
  */
 let map: { refresh: () => void; close: () => void; notice: (text: string, bad?: boolean) => void } | null = null;
 
-function closeMap(): void {
-  map?.close();
-  map = null;
-  els.map.hidden = true;
-  els.mapToggle.setAttribute('aria-pressed', 'false');
-  syncFull();
-}
+/**
+ * 殻が最後に書き換えた行。**Markdown の窓を開いたときに選んでおく**
+ * (52 の docs/48) — 窓にすると「掴む → 字が変わる」を同時には見せられない
+ * ので、開いた瞬間に「ここが変わった」を見せる。
+ * 窓で字を直した・別の文書を開いたら捨てる (もう「直前」ではない)。
+ */
+let touched: LineSpan | null = null;
 
+/**
+ * マップを開く。**頁は editor から始まる**ので、開いたら閉じない
+ * (52 の docs/48)。一式は `import()` で別のかたまりにしてある — とはいえ
+ * 重い中身 (3 つの editor) は描画と共有していて最初から読んであり、
+ * ここで取りに行くのは殻の入口の数 KB だけ (実測)。
+ */
 async function showMap(): Promise<void> {
-  const { openMap } = await import('./map/index.ts');
-  // 開くまでの間に閉じられていたら、そのまま何もしない。
-  if (els.mapToggle.getAttribute('aria-pressed') !== 'true') return;
+  let openMap: typeof import('./map/index.ts').openMap;
+  try {
+    ({ openMap } = await import('./map/index.ts'));
+  } catch (error) {
+    // **黙って空の枠にしない。** 頁の主役が出ないので、何が起きたかを残し
+    // (電波が切れて束が取れなかった、など)、字と図の窓を開いて、直す道を残す。
+    warn(`図を掴む editor を開けませんでした: ${reason(error)} (Markdown の窓で直せます)`);
+    showMarkdown();
+    return;
+  }
 
-  els.map.hidden = false;
   map = openMap({
     frame: els.map,
     text: () => els.source.value,
     setText: (next) => {
       // **殻が書き換えたのは文書の全文。** 数え直して、いまのフェンスを描く。
+      // どこが変わったかは、窓を開いたときのために控えておく。
+      touched = changedSpan(els.source.value, next) ?? touched;
       els.source.value = next;
       reread();
       paint();
@@ -396,47 +432,78 @@ const asApp = (): boolean => window.matchMedia('(display-mode: standalone)').mat
   || (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
 /**
- * 狭いと見なす幅。**マップの側の閾値と揃える** (`panelHtml` の 720px) —
- * ずれると、頁は畳んだのにマップは広いときの形、という食い違いが出る。
+ * 畳んで図に渡す画面。**マップの側の閾値と揃える** (`panelHtml` の幅 720px と
+ * 高さ 500px) — ずれると、頁は畳んだのにマップは広いときの形、という
+ * 食い違いが出る。
+ *
+ * **高さでも畳む** (約束 18、52 の docs/46)。横向きの iPhone は幅が 667〜932px で
+ * 720 の両側にまたがり、幅だけで決めると 14 以降は畳まれない — editor から
+ * 始める頁 (52 の docs/48) では、マップが最初の画面に半分しか入らなかった (実測)。
  */
-const NARROW = '(max-width: 720px)';
+const NARROW = '(max-width: 720px), (max-height: 500px)';
 
 /**
- * 図だけを出す形にするか。**アプリはいつも、頁は「狭いときの編集中」だけ。**
+ * 図だけを出す形にするか。**アプリと、狭い画面。**
  *
- * 広い画面で畳むと、フェンスの字と出るものが同時に見られる今までの形が
- * 失われる。狭い画面ではそもそも図に幅が残らないので、畳んで図に渡す
- * (実機で「編集するを押したら、その部分だけを表示する」)。
+ * 狭い画面では図に幅が残らないので、帯を 1 段に畳んで残りを図に渡す
+ * (52 の docs/46)。広い画面は見出し → 帯 → マップ → 気に入ったら の頁のまま。
+ * 頁として開いた人には、狭くても見出しと「気に入ったら」を 1 行ずつ残す
+ * (CSS の `body.full:not(.app)`。52 の docs/48)。
  */
 function syncFull(): void {
-  const editing = els.mapToggle.getAttribute('aria-pressed') === 'true';
-  document.body.classList.toggle('full', asApp() || (editing && window.matchMedia(NARROW).matches));
-  // **開いているあいだは「閉じる」と言う。** 同じ釦が行きと帰りを兼ねるので、
-  // 「編集する」のままだと、いま何を押せるのかが読めない。
-  els.mapToggle.textContent = editing ? '閉じる' : 'GUI で編集';
+  document.body.classList.toggle('full', asApp() || window.matchMedia(NARROW).matches);
 }
 
 /**
- * アプリとして開いたときの支度。**編集する所だけを出す** — 見出しも
- * フェンスの字も畳み、図は最初から開いておく (52 の docs/35)。
- * 畳み方は CSS の `body.full` が持つ。
+ * editor を開く。**頁は editor から始まる** — 開いた瞬間に図を掴めることが
+ * デモの本体 (52 の docs/48。docs/41 の「editor を最初に出さない」を覆した)。
+ * アプリ (ホーム画面) は、見出しと「気に入ったら」も畳む (docs/35)。
  */
-function startAsApp(): void {
-  if (!asApp()) return;
-  document.body.classList.add('app');
-  els.mapToggle.setAttribute('aria-pressed', 'true');
+function startEditor(): void {
+  if (asApp()) document.body.classList.add('app');
   syncFull();
   void showMap();
 }
 
-function toggleMap(): void {
-  if (map !== null || els.mapToggle.getAttribute('aria-pressed') === 'true') {
-    closeMap();
-    return;
-  }
-  els.mapToggle.setAttribute('aria-pressed', 'true');
-  syncFull();
-  void showMap();
+/** マウスのある端末か。**焦点を移してよいかの決め** (指の端末ではキーボードが出る)。 */
+const FINE = '(pointer: fine)';
+
+/**
+ * 窓の字の欄で、見せたい所を選んでおく。
+ *
+ * - 殻が直前に書き換えた所が**いまのフェンスの中に**あれば、そこ
+ *   (52 の docs/48)。別のフェンスの所は使わない — マップで A を直してから
+ *   一覧で B へ移ると、図は B なのに A の行が選ばれ、次に欄を触った瞬間に
+ *   図が A へ戻ってしまう (`follow`)
+ * - 無ければ、カーソルがいまのフェンスの中にある限りそのまま
+ *   (前に窓で直していた所を失わせない)
+ * - 外にあれば、いまのフェンスの本文の 1 行目 — マップの一覧で別の
+ *   フェンスへ移ったあとは、字の欄のカーソルは前のフェンスに残っている
+ *
+ * `focus` は窓を開いたときだけ立てる (それもマウスのある端末だけ)。
+ * フェンスの選び手から呼ぶときに焦点を奪うと、矢印キーで選び手を送る人が
+ * 1 つ目で止まる (閉じた選び手は矢印のたびに change を鳴らす)。
+ */
+function revealLine(focus: boolean): void {
+  const text = els.source.value;
+  const fence = now();
+  const fresh = touched !== null && fenceAt(here, touched.from) === at ? touched : null;
+  touched = null;
+  const caret = fenceAt(here, lineOfOffset(text, els.source.selectionStart));
+  const span = fresh ?? (fence === null || caret === at ? null : { from: fence.line, to: fence.line });
+  if (span === null) return;
+  showSpan(els.source, spanOffsets(text, span), { focus: focus && window.matchMedia(FINE).matches });
+}
+
+/**
+ * Markdown の窓を開く (52 の docs/48)。中身は文書の全文と、いまのフェンスの図。
+ * **図は開いたときに描く** — 閉じているあいだは描いていない (`paint`)。
+ */
+function showMarkdown(): void {
+  els.mdBox.showModal();
+  els.md.setAttribute('aria-expanded', 'true');
+  paint();
+  revealLine(true);
 }
 
 // **マップは開き直さない。** 3 つの言語を一度に渡してあるので、別の言語の
@@ -639,6 +706,7 @@ function openDoc(next: Doc, text: string): void {
   held = null;
   doc = next;
   pristine = text;
+  touched = null;
   at = 0;
   els.source.value = text;
   reread();
@@ -877,9 +945,9 @@ async function loadExamples(): Promise<void> {
     // **落とした数を黙らせない。** 頁と JSON の形が食い違っている印。
     if (dropped > 0) warn(`例を ${dropped} 本読めませんでした`);
   } catch (error) {
-    const reason = error instanceof Error ? error.message : String(error);
-    els.messages.hidden = false;
-    els.messages.textContent = `例を読み込めませんでした: ${reason}\n(フェンスは手で書けば動きます)`;
+    // **残る所に出す** (ログに赤で)。前は図の下の欄に出していたが、そこは
+    // 閉じた Markdown の窓の中になった (52 の docs/48)。
+    warn(`例を読み込めませんでした: ${reason(error)} (フェンスは手で書けば動きます)`);
   }
   fillExamples();
 }
@@ -887,6 +955,8 @@ async function loadExamples(): Promise<void> {
 function listen(): void {
   let timer = 0;
   els.source.addEventListener('input', () => {
+    // 窓で字を直したら、殻が直した所はもう「直前」ではない。
+    touched = null;
     window.clearTimeout(timer);
     timer = window.setTimeout(() => {
       reread();
@@ -906,8 +976,19 @@ function listen(): void {
     showSheet(false);
     void openExample(Number(els.example.value));
   });
-  els.fence.addEventListener('change', () => { showFence(Number(els.fence.value)); });
-  els.mapToggle.addEventListener('click', toggleMap);
+  els.fence.addEventListener('change', () => {
+    showFence(Number(els.fence.value));
+    // **選んだフェンスへ字の欄も寄せる** (52 の docs/43 の「選ぶと欄のカーソルを
+    // その中へ置く」)。窓の中で選ぶので、図だけ変わって字が動かないと、
+    // どこのフェンスを見ているのかが字の側で分からない。
+    if (els.mdBox.open) revealLine(false);
+  });
+  els.md.addEventListener('click', () => {
+    // 畳んだ姿の板が開いたままだと、窓を閉じたときに残っている。
+    showSheet(false);
+    showMarkdown();
+  });
+  els.mdBox.addEventListener('close', () => { els.md.setAttribute('aria-expanded', 'false'); });
 
   // **掴めるなら picker で開く** (2 回目からその場に上書きできる)。
   // 持てない窓 (iOS など) では今までどおり `<input>` を押す。
@@ -1094,15 +1175,18 @@ async function start(): Promise<void> {
   // **iOS はピンチを gesture* で送ってくる。** マップ (iframe) の側では
   // 止められない — 頁ごと拡大するのは最上位のこちらなので、ここで断る。
   // 図の拡大は 2 本指でマップがやる (52 の docs/32)。
+  // **Markdown の窓が開いているあいだは断らない** (52 の docs/48)。窓の図は
+  // 画面の幅に縮めて出すので、込み入った回路は指で広げないと読めない —
+  // 前は狭い画面でも頁の姿なら拡大できた。
   for (const kind of ['gesturestart', 'gesturechange', 'gestureend']) {
     document.addEventListener(kind, (event) => {
-      if (document.body.classList.contains('full')) event.preventDefault();
+      if (document.body.classList.contains('full') && !els.mdBox.open) event.preventDefault();
     }, { passive: false });
   }
 
   // **最後に支度する。** 図を開くのは中身が決まってから (先に開くと空の図に
   // なり、例が届いたところで組み直す)。
-  startAsApp();
+  startEditor();
   keepOffline();
 }
 

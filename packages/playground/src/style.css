@@ -78,9 +78,11 @@ h2 { font-size: 0.8rem; margin: 0 0 6px; color: var(--dim); font-weight: 600; }
 .next ul { margin: 0; padding-left: 1.2em; font-size: 0.9rem; color: var(--dim); }
 .next li { margin: 2px 0; }
 .next a { color: var(--ink); }
+/* 狭い画面で 1 行に詰めるときの短い名前。広い画面では長いほうを出す。 */
+.next .short { display: none; }
 
-/* 頁の骨。**縦に積んで order で並べ替える** — 狭い画面では図を字より
-   先に出すため (docs/41)。 */
+/* 頁の骨。**帯 → マップ → 気に入ったら** を縦に積む (52 の docs/48)。
+   字と図は Markdown の窓の中なので、並べ替えるものはもう無い。 */
 main { display: flex; flex-direction: column; }
 
 .bar {
@@ -152,24 +154,47 @@ select, .bar button {
 .log time { font-family: var(--mono); color: var(--dim); margin-right: 6px; }
 .log .none { color: var(--dim); }
 
-.panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
-/* **広い画面は左に字、右に図。** HTML は図が先なので、ここで入れ替える
-   (狭い画面での並びのほうが本になる)。 */
-@media (min-width: 861px) {
-  .pane-src { order: 1; }
-  .pane-out { order: 2; }
+/* Markdown の窓 (52 の docs/48)。**中身は前の頁の 2 つの欄** — 文書の全文と、
+   いまのフェンスの図。広い画面は左に字・右に図、狭い画面は字が先 (窓を
+   開いた人は字を見に来ている。図はマップが見せている)。 */
+.md-box {
+  width: min(96vw, 1200px); height: min(90svh, 900px);
+  max-width: none; max-height: none; padding: 0;
+  color: var(--ink); background: var(--ground);
+  border: 1px solid var(--line); border-radius: 10px;
 }
+/* **開いているときだけ flex にする。** 閉じた窓に display を当てると、
+   閉じたまま頁に出てくる。 */
+.md-box[open] { display: flex; flex-direction: column; }
+.md-box::backdrop { background: rgb(0 0 0 / 40%); }
+.md-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 12px; background: var(--paper); border-bottom: 1px solid var(--line);
+}
+.md-head h2 { margin: 0; font-size: 0.9rem; color: var(--ink); }
+/* フェンスの選び手は余った幅を取り、長い題は欄の中で切れる。 */
+.md-head .picks { flex: 1; min-width: 0; }
+.md-head .pick select { min-width: 0; max-width: 100%; }
+.md-head form { margin: 0; }
+.md-head button {
+  font: inherit; font-size: 0.9rem; padding: 4px 12px; cursor: pointer;
+  color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line); border-radius: 6px;
+}
+/* **巻き取りは窓の中で止める** — 端まで行っても、後ろの頁を流さない。 */
+.md-box .panes { flex: 1; min-height: 0; padding: 12px; overflow: auto; overscroll-behavior: contain; }
 
-/* **狭い画面は figure が先。** 帯をほどいて、札は図の上・道具は字の下に置く
-   (docs/41: 見せる → 触る → 次へ)。 */
+.panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+/* **広い窓は 2 つの欄を高さいっぱいに**して、それぞれの中で巻き取る
+   (字を読み進めても図が上へ逃げない)。 */
+@media (min-width: 861px) {
+  .md-box .panes { grid-template-rows: minmax(0, 1fr); overflow: hidden; }
+  .pane-src { display: flex; min-height: 0; }
+  .pane-src textarea { flex: 1; height: auto; resize: none; overscroll-behavior: contain; }
+  .pane-out { min-height: 0; overflow: auto; overscroll-behavior: contain; }
+}
 @media (max-width: 860px) {
   .panes { grid-template-columns: minmax(0, 1fr); }
-  .bar { display: contents; }
-  .doc { order: 1; margin: 12px 0 0; }
-  .picks { order: 1; margin: 4px 0 12px; }
-  .panes { order: 2; }
-  .tools { order: 3; margin-top: 12px; }
-  .next { order: 4; }
 }
 
 
@@ -187,9 +212,9 @@ textarea {
 .figure svg { display: block; max-width: 100%; height: auto; }
 
 /* マップは webview の代わり。中は別の頁 (fence-kit の殻) が動く。
-   **開いたら頁の幅いっぱいに置く。** 中の図はキャンバスの幅に合わせて
-   描かれるので、半分の幅に押し込めると図もその半分にしかならない
-   (属性の欄と道具の列が両端を取るぶん、さらに細くなる)。 */
+   **頁の主役なので、最初から幅いっぱいに置く** (52 の docs/48)。中の図は
+   キャンバスの幅に合わせて描かれるので、半分の幅に押し込めると図もその
+   半分にしかならない (属性の欄と道具の列が両端を取るぶん、さらに細くなる)。 */
 .map {
   width: 100%; height: min(72svh, 680px); margin-bottom: 16px;
   border: 1px solid var(--line); border-radius: 8px; background: var(--paper);
@@ -250,8 +275,13 @@ td { font-family: var(--mono); font-size: 12px; }
  * 560 と 720 のあいだ — **横向きの iPhone SE (667px) がちょうどここ** — では
  * 欄が縮む規則が効かず、釦が帯から溢れて 2 段目に落ちていた (実機の画像)。
  * 頁とマップが別の姿で組み合わさる所を作らない。
+ *
+ * **高さ 500px 以下にも当てる** (52 の docs/48)。頁は `main.ts` の `NARROW` で
+ * 高さでも畳むようになったので、横向きの iPhone 14 以降 (幅 844〜932px) も
+ * 指で触る姿になる。そこで字の欄が 13px のままだと、触った瞬間に頁ごと
+ * 拡大される (上の 2)。
  */
-@media (max-width: 720px) {
+@media (max-width: 720px), (max-height: 500px) {
   body { padding: 12px 12px 24px; }
   h1 { font-size: 1.25rem; }
   .lead { font-size: 1rem; }
@@ -262,13 +292,17 @@ td { font-family: var(--mono); font-size: 12px; }
      同じ 36px にして、字は 13px (註) に落とす。指で押す面は 36 x 115px
      あるので、44px 角の指針は面積として満たしている。 */
   .bar { gap: 8px; }
-  .bar button, select, .try button { min-height: 36px; padding: 6px 12px; }
-  .picks { width: 100%; }
+  .bar button, select, .try button, .md-head button { min-height: 36px; padding: 6px 12px; }
   .pick { width: 100%; }
   .pick select { flex: 1; min-width: 0; }
 
-  /* iOS Safari が頁を拡大しない大きさ。 */
-  textarea { font-size: 16px; height: 40svh; }
+  /* **狭い画面の窓は画面いっぱい** (52 の docs/48)。端の余白も字と図に渡す。 */
+  .md-box { width: 100%; height: 100%; margin: 0; border: 0; border-radius: 0; }
+  .md-head { gap: 8px; padding: 6px 12px; }
+  /* 字の欄は窓の半分より少し多く。**窓を開いた人は字を見に来ている** —
+     図はその下 (巻き取れば出る)。
+     iOS Safari が頁を拡大しない大きさ (16px) も守る。 */
+  textarea { font-size: 16px; height: 55svh; }
   .map { height: 70svh; }
   select { font-size: 16px; }
 }
@@ -288,16 +322,16 @@ body.full {
   touch-action: pan-x pan-y;
 }
 body.full .head,
-body.full .panes,
 body.full .next,
 body.full .foot { display: none; }
+/* **Markdown の窓が開いているあいだは、指で広げられるようにする** (52 の
+   docs/48)。窓の図は画面の幅に縮めて出すので、込み入った回路は広げないと
+   読めない。iOS のピンチは `main.ts` の gesture* でも同じ条件で通す。 */
+body.full:has(.md-box[open]) { touch-action: auto; }
 /* **帯は 1 行に戻す。** 狭いときの `display: contents` はほどいた形なので、
    畳んだ姿では札と道具が別々の段に散る (実機で頼まれた「種類の札と釦の行」)。 */
 body.full .bar { display: flex; }
-body.full .picks, body.full .tools { order: 0; margin: 0; }
-/* **畳んだ姿ではフェンスの選び手を出さない。** マップが同じ一覧を持っている
-   (殻の `renderFencePicker`)。2 つ並べても迷うだけ。 */
-body.full .picks { display: none; }
+body.full .tools { margin: 0; }
 
 /* **畳んだ姿の帯は 1 段** (52 の docs/46)。`[···] 文書名 ● [保存][閉じる]`。
    2 段で 90px 取っていたのを 44px にして、その分を図に渡す。
@@ -310,7 +344,7 @@ body.full .tools { position: static; flex-wrap: nowrap; flex: none; min-width: 0
 body.full .more { display: inline-flex; align-items: center; }
 /* 名前は真ん中で、長ければ端を詰める (釦の場所を押しのけない)。 */
 body.full .doc {
-  order: 0; margin: 0; flex: 1; min-width: 0;
+  margin: 0; flex: 1; min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 /* **たまに押すものは板の中へ。** 一言は出ているときだけ場所を取る。 */
@@ -330,9 +364,6 @@ body.full.sheet .more-items {
 body.full.sheet .more-items .pick { width: auto; }
 /* 畳んだ姿では、名前を詰めてログの場所を空ける (ログは `···` の外に置く)。 */
 body.full .log summary { padding: 4px 6px; }
-/* アプリでは図が出しっぱなしなので、開閉の釦は要らない。**頁のほうは残す** —
-   狭いときの「編集する」は、そのまま「閉じる」になる。 */
-body.app #map-toggle { display: none; }
 body.full main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 /* **帯は字 1 行ぶんの高さに** (実機で頼まれた)。畳んだ姿は図が主なので、
    帯は「そこに在る」ことが分かれば足りる。36px の釦と 8px の余白で 53px
@@ -343,9 +374,13 @@ body.full main { flex: 1; min-height: 0; display: flex; flex-direction: column; 
    得るものが無い。 */
 body.full .bar { margin: 0; padding: 3px clamp(8px, 3vw, 16px); gap: 6px; }
 body.full .bar button,
-body.full .log summary { min-height: 28px; padding: 2px 10px; }
+body.full .log summary { min-height: 28px; padding: 2px 8px; font-size: 0.85rem; }
 body.full .more { padding: 2px 8px; }
 body.full .doc { font-size: 0.85rem; }
+/* **文書名に幅を残す** (52 の docs/48)。「閉じる」が「Markdown」になって
+   釦が 35px 伸び、375px で名前が「01-l…」まで切れた (実測)。名前は
+   「何を直しているか」なので、釦の余白と間を詰めて返す。 */
+body.full .tools { gap: 4px; }
 /* **例の欄は 1 行を丸ごと使う。** 種類の札・例・釦を 1 行に詰めると、
    375px では例の名前が「図01 LED…」まで切れて、何を選んでいるか読めない
    (実機で「1 行にして」)。図の高さを 50px ほど譲る。
@@ -355,4 +390,30 @@ body.full .doc { font-size: 0.85rem; }
 body.full .map {
   flex: 1; height: auto; min-height: 0; margin: 0;
   border: 0; border-top: 1px solid var(--line); border-radius: 0;
+}
+
+/* **頁として開いた人には、何の頁かを残す** (52 の docs/48)。editor から
+   始めるので、説明が無いと何の道具か分からない。見出しと一文を 1 段に流し、
+   「気に入ったら」は短い名前で 1 行にする — どちらも図の高さを削るので、
+   **字を小さく、段を詰める**。
+   アプリ (`body.app`) には出さない — あちらに来た人の用は直すこと (docs/35)。 */
+body.full:not(.app) .head { display: block; padding: 6px clamp(8px, 3vw, 16px) 4px; line-height: 1.4; }
+body.full:not(.app) .head h1 { display: inline; margin: 0 6px 0 0; font-size: 0.95rem; }
+body.full:not(.app) .head .lead { display: inline; font-size: 0.8rem; }
+body.full:not(.app) .lead-link span { display: inline; margin-left: 4px; }
+body.full:not(.app) .next {
+  display: block; margin: 0; padding: 3px clamp(8px, 3vw, 16px);
+  font-size: 0.8rem; line-height: 1.4; color: var(--dim);
+  border-top: 1px solid var(--line);
+}
+body.full:not(.app) .next :is(h2, ul, li) { display: inline; margin: 0; padding: 0; font-size: inherit; }
+body.full:not(.app) .next h2 { margin-right: 6px; }
+body.full:not(.app) .next li + li::before { content: "·"; margin: 0 6px; }
+body.full:not(.app) .next :is(.long, .why) { display: none; }
+body.full:not(.app) .next .short { display: inline; }
+/* **横向きでは両方とも畳む。** 足りないのは高さで、図が一番それを要る
+   (52 の docs/46 の「高さで畳む」と同じ)。 */
+@media (max-height: 500px) {
+  body.full:not(.app) .head,
+  body.full:not(.app) .next { display: none; }
 }
