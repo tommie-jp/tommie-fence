@@ -56,7 +56,7 @@
          editor は釦の向こうだった。docs/41 の決めを 48 で覆した)。 -->
     <header class="head">
       <h1>tommie-fence</h1>
-      <!-- 一文は**片方だけ出す**。両方置いて `main.ts` が hidden を切り替える
+      <!-- 一文は**片方だけ出す**。両方置いて `page/labels.ts` が hidden を切り替える
            (組み立ては変えない)。「左に書くと右に出る」はスマホで嘘になるので
            言わない。**2 文目が editor の話** — 開いてすぐ見えているものの説明。 -->
       <p class="lead" id="lead-ja">Markdown に書くと、電子工作の図になる。図を動かすと、Markdown が書き換わる。</p>
@@ -73,8 +73,8 @@
     <main>
       <div class="bar">
         <!-- **たまにしか押さないものを畳む釦** (52 の docs/46)。畳んだ姿
-             (`body.full`) でだけ出る。印を `≡` にしないのは、マップの左上に
-             部品の絵 (抵抗) を出すので、こちらは**ハンバーガー**で役が分かれる
+             (`body.full`) でだけ出る。**ハンバーガー**でよいのは、マップの左上の
+             引き出しの印が部品の絵 (抵抗) になって、役が分かれたから
              (実機で決め直し。52 の docs/46)。
              **字の `≡` ではなく絵で描く** — 字の記号は細く、環境によって
              太さも高さも変わる。太い棒 3 本なら小さくても読める。 -->
@@ -167,7 +167,7 @@
             <div class="out">
               <div class="figure" id="figure"></div>
               <!-- 押すと**字と図が同時に変わる**釦 (52 の docs/41)。中身は
-                   `main.ts` が `demo.ts` から組む。当たる釦が無ければ畳む。 -->
+                   `page/demo.ts` が `demo.ts` から組む。当たる釦が無ければ畳む。 -->
               <div class="try" id="try" hidden></div>
               <p class="note" id="note" hidden></p>
               <details id="tex" hidden>
@@ -207,7 +207,7 @@
     <footer class="foot">
       <p>
         図は書いたフェンスから作られ、どこにも送られない (この頁はすべてブラウザの中で動く)。
-        「リンクをコピー」はフェンスを URL に載せるだけで、預け先を持たない。
+        開いた <code>.md</code> も、書き戻す先も手元のまま。
       </p>
       <p id="from"></p>
       <p>tommie-fence <span class="ver" id="ver"></span> playground</p>

@@ -58,7 +58,10 @@ h1 { font-size: 1.5rem; margin: 0 0 4px; }
 .qr-kind { margin: 0 0 12px; font-size: 0.8rem; color: var(--dim); }
 .qr-code svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
 .qr-box form { margin-top: 12px; text-align: right; }
-.qr-box button {
+
+/* 窓と「試す」の釦。帯の釦 (`select, .bar button`) と同じ見た目で、
+   余白だけ広い (押す面が字に近いので)。 */
+.qr-box button, .md-head button, .try button {
   font: inherit; font-size: 0.9rem; padding: 4px 12px; cursor: pointer;
   color: var(--ink); background: var(--paper);
   border: 1px solid var(--line); border-radius: 6px;
@@ -66,7 +69,7 @@ h1 { font-size: 1.5rem; margin: 0 0 4px; }
 
 h2 { font-size: 0.8rem; margin: 0 0 6px; color: var(--dim); font-weight: 600; }
 
-/* **一文は 1 つだけ出す** (`main.ts` が言語を選ぶ)。2 つ並べると、
+/* **一文は 1 つだけ出す** (`page/labels.ts` が言語を選ぶ)。2 つ並べると、
    読めないほうの行が図を 1 行ぶん押し下げる。 */
 .lead { margin: 0; font-size: 1.05rem; }
 /* リンクで来たときの一文。題を主に、案内は下に小さく。 */
@@ -176,11 +179,6 @@ select, .bar button {
 .md-head .picks { flex: 1; min-width: 0; }
 .md-head .pick select { min-width: 0; max-width: 100%; }
 .md-head form { margin: 0; }
-.md-head button {
-  font: inherit; font-size: 0.9rem; padding: 4px 12px; cursor: pointer;
-  color: var(--ink); background: var(--paper);
-  border: 1px solid var(--line); border-radius: 6px;
-}
 /* **巻き取りは窓の中で止める** — 端まで行っても、後ろの頁を流さない。 */
 .md-box .panes { flex: 1; min-height: 0; padding: 12px; overflow: auto; overscroll-behavior: contain; }
 
@@ -223,11 +221,6 @@ textarea {
 /* 「試す」の帯。**図のすぐ下**に置く — 図が変わるのを見ながら押すため。 */
 .try { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.9rem; }
 .try span { color: var(--dim); }
-.try button {
-  font: inherit; font-size: 0.9rem; padding: 4px 12px; cursor: pointer;
-  color: var(--ink); background: var(--paper);
-  border: 1px solid var(--line); border-radius: 6px;
-}
 /* 元に戻す釦は控えめに (押す順は「試す」が先)。 */
 .try button.back { color: var(--dim); }
 
@@ -269,30 +262,28 @@ td { font-family: var(--mono); font-size: 12px; }
  *    焦点が移ると**頁ごと拡大する**。戻す手立てが無く、以後ずっと横に溢れる
  * 3. **高さを `vh` で決めない** — iOS の `100vh` はアドレス欄を含む高さで、
  *    実際に見えている分より大きい。図と欄が画面からはみ出す
- * 4. **右上の QR は見出しの下へ回す** — 狭い画面では見出しに重なる
+ * 4. **帯は `body.full` が 1 段に畳む** — 狭い画面はいつも畳んだ姿なので、
+ *    頁の余白・見出し・帯の寸法はそちら (下) が決める。ここに書くのは
+ *    窓と板の中の欄と釦だけ
  *
  * **閾値はマップと揃えて 720px** (52 の docs/46)。かつては 560px だったが、
  * 560 と 720 のあいだ — **横向きの iPhone SE (667px) がちょうどここ** — では
  * 欄が縮む規則が効かず、釦が帯から溢れて 2 段目に落ちていた (実機の画像)。
  * 頁とマップが別の姿で組み合わさる所を作らない。
  *
- * **高さ 500px 以下にも当てる** (52 の docs/48)。頁は `main.ts` の `NARROW` で
+ * **高さ 500px 以下にも当てる** (52 の docs/48)。頁は `page/layout.ts` の `NARROW` で
  * 高さでも畳むようになったので、横向きの iPhone 14 以降 (幅 844〜932px) も
  * 指で触る姿になる。そこで字の欄が 13px のままだと、触った瞬間に頁ごと
  * 拡大される (上の 2)。
  */
 @media (max-width: 720px), (max-height: 500px) {
-  body { padding: 12px 12px 24px; }
-  h1 { font-size: 1.25rem; }
-  .lead { font-size: 1rem; }
-
   /* **釦は iOS の寸法に。** 44px 角は指の下限で、**枠の高さの決めではない**。
      3 段とも 44px にすると帯だけで 164px 取り、図より背が高くなる
      (実機で「全体的にボタンやフォントが大きい」)。iOS の小さい釦・検索欄と
      同じ 36px にして、字は 13px (註) に落とす。指で押す面は 36 x 115px
-     あるので、44px 角の指針は面積として満たしている。 */
-  .bar { gap: 8px; }
-  .bar button, select, .try button, .md-head button { min-height: 36px; padding: 6px 12px; }
+     あるので、44px 角の指針は面積として満たしている。
+     帯の釦は `body.full` がさらに 28px に詰める (下)。 */
+  select, .try button, .md-head button { min-height: 36px; padding: 6px 12px; }
   .pick { width: 100%; }
   .pick select { flex: 1; min-width: 0; }
 
@@ -303,7 +294,6 @@ td { font-family: var(--mono); font-size: 12px; }
      図はその下 (巻き取れば出る)。
      iOS Safari が頁を拡大しない大きさ (16px) も守る。 */
   textarea { font-size: 16px; height: 55svh; }
-  .map { height: 70svh; }
   select { font-size: 16px; }
 }
 
@@ -326,22 +316,30 @@ body.full .next,
 body.full .foot { display: none; }
 /* **Markdown の窓が開いているあいだは、指で広げられるようにする** (52 の
    docs/48)。窓の図は画面の幅に縮めて出すので、込み入った回路は広げないと
-   読めない。iOS のピンチは `main.ts` の gesture* でも同じ条件で通す。 */
+   読めない。iOS のピンチは `page/layout.ts` の gesture* でも同じ条件で通す。 */
 body.full:has(.md-box[open]) { touch-action: auto; }
-/* **帯は 1 行に戻す。** 狭いときの `display: contents` はほどいた形なので、
-   畳んだ姿では札と道具が別々の段に散る (実機で頼まれた「種類の札と釦の行」)。 */
-body.full .bar { display: flex; }
-body.full .tools { margin: 0; }
 
-/* **畳んだ姿の帯は 1 段** (52 の docs/46)。`[···] 文書名 ● [保存][閉じる]`。
-   2 段で 90px 取っていたのを 44px にして、その分を図に渡す。
-   板の置き場所を測る基準は帯そのもの (道具の行だと右半分にしか出ない)。 */
-body.full .bar { position: relative; flex-wrap: nowrap; }
+/* **畳んだ姿の帯は 1 段** (52 の docs/46)。`[≡] 文書名 ● [保存][Markdown][ログ]`。
+   2 段で 90px 取っていたのを 1 段にして、その分を図に渡す。
+   板の置き場所を測る基準は帯そのもの (道具の行だと右半分にしか出ない)。
+   **帯は字 1 行ぶんの高さに** (実機で頼まれた)。畳んだ姿は図が主なので、
+   帯は「そこに在る」ことが分かれば足りる。36px の釦と 8px の余白で 53px
+   取っていたのを、28px と 3px で 34px にする。
+   **押す面は横で稼ぐ** — 保存も Markdown も 28 x 60px あり、面積では 44px 角の
+   指針を満たす (52 の docs/40 の「的と見た目は別物」と同じ分け方)。
+   **頁の姿は 36px のまま** — あちらは帯を詰めても得るものが無い。 */
+body.full .bar {
+  position: relative; flex-wrap: nowrap;
+  margin: 0; padding: 3px clamp(8px, 3vw, 16px); gap: 6px;
+}
 /* **道具は要るだけ取る** (`flex: none`)。広い画面では余りを吸わせているが、
    畳んだ姿でそれをやると名前と幅を分け合って、釦のほうが折り返す
-   (実測で帯が 99px になった)。余りは名前に吸わせて、長ければ端を詰める。 */
-body.full .tools { position: static; flex-wrap: nowrap; flex: none; min-width: 0; }
-body.full .more { display: inline-flex; align-items: center; }
+   (実測で帯が 99px になった)。余りは名前に吸わせて、長ければ端を詰める。
+   **文書名に幅を残す** (52 の docs/48)。「閉じる」が「Markdown」になって
+   釦が 35px 伸び、375px で名前が「01-l…」まで切れた (実測)。名前は
+   「何を直しているか」なので、釦の余白と間 (`gap: 4px`) を詰めて返す。 */
+body.full .tools { position: static; flex-wrap: nowrap; flex: none; min-width: 0; margin: 0; gap: 4px; }
+body.full .more { display: inline-flex; align-items: center; padding: 2px 8px; }
 /* 名前は真ん中で、長ければ端を詰める (釦の場所を押しのけない)。 */
 body.full .doc {
   margin: 0; flex: 1; min-width: 0;
@@ -362,30 +360,10 @@ body.full.sheet .more-items {
   border-bottom: 1px solid var(--line); box-shadow: 0 6px 16px rgb(0 0 0 / 18%);
 }
 body.full.sheet .more-items .pick { width: auto; }
-/* 畳んだ姿では、名前を詰めてログの場所を空ける (ログは `···` の外に置く)。 */
-body.full .log summary { padding: 4px 6px; }
 body.full main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-/* **帯は字 1 行ぶんの高さに** (実機で頼まれた)。畳んだ姿は図が主なので、
-   帯は「そこに在る」ことが分かれば足りる。36px の釦と 8px の余白で 53px
-   取っていたのを、28px と 3px で 34px にする。
-   **押す面は横で稼ぐ** — 保存も閉じるも 28 x 60px あり、面積では 44px 角の
-   指針を満たす (52 の docs/40 の「的と見た目は別物」と同じ分け方)。
-   **頁の姿は 36px のまま** — あちらは図と字を並べて読む所で、帯を詰めても
-   得るものが無い。 */
-body.full .bar { margin: 0; padding: 3px clamp(8px, 3vw, 16px); gap: 6px; }
 body.full .bar button,
 body.full .log summary { min-height: 28px; padding: 2px 8px; font-size: 0.85rem; }
-body.full .more { padding: 2px 8px; }
 body.full .doc { font-size: 0.85rem; }
-/* **文書名に幅を残す** (52 の docs/48)。「閉じる」が「Markdown」になって
-   釦が 35px 伸び、375px で名前が「01-l…」まで切れた (実測)。名前は
-   「何を直しているか」なので、釦の余白と間を詰めて返す。 */
-body.full .tools { gap: 4px; }
-/* **例の欄は 1 行を丸ごと使う。** 種類の札・例・釦を 1 行に詰めると、
-   375px では例の名前が「図01 LED…」まで切れて、何を選んでいるか読めない
-   (実機で「1 行にして」)。図の高さを 50px ほど譲る。
-   狭いときの `width: 100%` は上の @media が持っているので、ここでは
-   打ち消さない。 */
 /* 高さは残り全部。**枠は取る** — 画面の端まで図に使う。 */
 body.full .map {
   flex: 1; height: auto; min-height: 0; margin: 0;
