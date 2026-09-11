@@ -106,6 +106,8 @@ export type EditChanges = {
   readonly diff: NetDiff;
   /** 部品と一緒に消えた配線の本数 (消すときだけ)。 */
   readonly wires?: number;
+  /** 一緒に消えた見出しのコメントの行数 (消すときだけ。殻が数える)。 */
+  readonly comments?: number;
 };
 
 /** 書き換えの答え。断りは**行番号つき**で返す (帯にそのまま出せる)。 */

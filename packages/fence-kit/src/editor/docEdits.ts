@@ -83,6 +83,14 @@ export function changesForFence(document: DocLike, fenceLine: number, edits: rea
   }));
 }
 
+/**
+ * **本文を 0 行にしない。** 0 行のフェンスには書き戻す範囲が無く (`replaceBody`
+ * は 0 行を断る)、中身を全部消したあとで戻すことも置くこともできなくなる。
+ * VS Code は範囲の中身を空にするだけなので元から 1 行残っていて、playground
+ * (行ごと抜く) でだけ起きていた。空の 1 行を残して揃える。
+ */
+const keepOneLine = (lines: readonly string[]): readonly string[] => (lines.length === 0 ? [''] : lines);
+
 /** フェンスの開き記号の字下げ (最大 3 つ)。**足す行はこれを頭に付ける。** */
 const fenceIndent = (document: DocLike, fenceLine: number): string =>
   /^ {0,3}/.exec(document.lineAt(fenceLine - 1).text)?.[0] ?? '';
@@ -128,5 +136,63 @@ export function bodyAfter(
     if (!dropped.has(index + 1)) out.push(text);
   });
   out.push(...(added.get(edited.length + 1) ?? []));
-  return out;
+  return keepOneLine(out);
+}
+
+/** 本文の行。末尾の改行が作る空の要素は落とす (`fenceBody` と同じ数え方)。 */
+const bodyLines = (source: string): readonly string[] => {
+  const lines = source.split('\n');
+  if (lines.at(-1) === '') lines.pop();
+  return lines;
+};
+
+/**
+ * `after` の各行 (0 始まり) が、`before` のどの行をそのまま残したものか。
+ * 並びを崩さずにいちばん多く対応させる (最長共通部分列)。フェンスの本文は
+ * 数十行なので、表を丸ごと作って足りる。
+ */
+function keptLines(before: readonly string[], after: readonly string[]): ReadonlyMap<number, number> {
+  const longest = Array.from({ length: before.length + 1 }, () => new Array<number>(after.length + 1).fill(0));
+  const at = (i: number, j: number): number => longest[i]?.[j] ?? 0;
+  for (let i = before.length - 1; i >= 0; i -= 1) {
+    for (let j = after.length - 1; j >= 0; j -= 1) {
+      const row = longest[i];
+      if (row !== undefined) row[j] = before[i] === after[j] ? at(i + 1, j + 1) + 1 : Math.max(at(i + 1, j), at(i, j + 1));
+    }
+  }
+  const kept = new Map<number, number>();
+  let i = 0;
+  let j = 0;
+  while (i < before.length && j < after.length) {
+    if (before[i] === after[j]) {
+      kept.set(j, i);
+      i += 1;
+      j += 1;
+    } else if (at(i + 1, j) >= at(i, j + 1)) i += 1;
+    else j += 1;
+  }
+  return kept;
+}
+
+/**
+ * 本文 (字下げを剥がしたもの) を丸ごと書き換えたあとの、フェンスの生の行。
+ *
+ * **まとめて当てる書き換え** (`runAll`) は途中の本文しか持たず、`bodyAfter` の
+ * ように書き換えを 1 つずつ文書へ写せない。そこで元の本文と突き合わせて、
+ * **変わっていない行は文書の行をそのまま**使う (字下げも行末の空白も剥がさない)。
+ * 変わった行と足した行は開き記号の字下げを頭に付ける (`bodyAfter` の足す行と同じ)。
+ *
+ * 前は剥がした本文をそのまま書き戻していて、末尾の改行のぶん**閉じ記号の前に
+ * 空行が 1 つ増え**、箇条書きの中のフェンスでは**字下げが消えていた** (52 の docs/47)。
+ */
+export function bodyFrom(document: DocLike, fenceLine: number, source: string, after: string): readonly string[] {
+  const written = fenceBody(document, fenceLine, source);
+  const now = bodyLines(after);
+  const kept = keptLines(bodyLines(source), now);
+  const pad = fenceIndent(document, fenceLine);
+  return keepOneLine(now.map((text, index) => {
+    const was = kept.get(index);
+    const same = was === undefined ? undefined : written[was];
+    return same ?? (text === '' ? '' : `${pad}${text}`);
+  }));
 }

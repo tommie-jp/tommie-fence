@@ -128,8 +128,13 @@ export function topOf(under: Under, kinds: readonly Kind[] = ['part', 'wire', 'n
  *
  * **節点より先に採るのは今までどおり** (`topOf` の 部品 > 配線 > 節点)。
  * 節点そのものを動かすのは `G` 引きずる。
+ *
+ * **端の的は線より先に採る。** 分岐点では、太い線の当たり判定が別の配線の
+ * ものかもしれない。線を先に採ると、光って選ばれる配線と、引いたときに端を
+ * 引き直される配線 (`pressed.wireEnd`) が食い違っていた (52 の docs/47)。
+ * 端の的は線より上に描いてあるので、端の上では端が勝つ — 図の重なりとも揃う。
  */
-const wireUnder = (under: Under): string | null => under.wire ?? under.wireEnd?.line ?? null;
+const wireUnder = (under: Under): string | null => under.wireEnd?.line ?? under.wire ?? null;
 
 /** カーソルに付いているもの。 */
 export type Carry =
@@ -367,6 +372,7 @@ export function hint(state: State): string {
     const step = state.fine === null ? '矢印で 1 穴' : `矢印で 1/${state.fine} 升 (Shift で 1 穴)`;
     return `${shownName(under.part)}: M 動かす / ${step} / R 回す / X 反転 / Ctrl+D 複製 / E 属性 / Del 消す`;
   }
+  if (under.wireEnd !== null) return `${under.wireEnd.line} 行目の配線の端: ドラッグで引き直す / Del 消す`;
   if (under.wire !== null) return `${under.wire} 行目の配線: Del 消す`;
   if (under.node !== null) return `${under.node} の節点: G 引きずる (来ているものが丸ごと動く)`;
   if (selected !== null && selected.kind === 'part') {

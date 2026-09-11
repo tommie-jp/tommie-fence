@@ -525,6 +525,96 @@ describe('配線', () => {
     expect(status()).toContain('引き直しています');
     expect(marked('cf-lifted')).toContain('7');
   });
+
+  /**
+   * **掴む端を輪で見せる** (52 の docs/47)。分岐点では 2 本の端が重なり、
+   * どちらを掴むかは手前の 1 つで決まる — 押す前に見えないと、引いてみる
+   * まで分からない。
+   */
+  test('rings the end it would grab, even when the cursor only moves onto it from its own line', async () => {
+    // 線の途中から端の上へ。**配線も升も同じまま**なので、端を見ていないと塗り直さない。
+    fire('pointermove', { clientX: 5 * CELL + 20, clientY: CELL + 10 });
+    fire('pointermove', { clientX: 5 * CELL + 2, clientY: CELL + 2 });
+    await nextFrame();
+
+    const ring = document.querySelector('.cf-end-hover');
+    expect(ring?.getAttribute('data-line')).toBe('7');
+    expect(ring?.getAttribute('data-end')).toBe('from');
+  });
+
+  test('at a junction, lights the wire whose end is on top, which is the one a drag takes', async () => {
+    // 7 の線の途中に、9 の端が載っている (T 字の分岐)。
+    document.querySelector('.cf-body svg')?.insertAdjacentHTML('beforeend',
+      `<g class="cf-wire" data-line="9" data-box="${6 * CELL},${2 * CELL},${CELL},${CELL}">`
+      + `<circle class="cf-wire-end" data-line="9" data-end="to" data-box="${6 * CELL},${CELL},4,4"/></g>`);
+    const join = { clientX: 6 * CELL + 2, clientY: CELL + 2 };
+
+    fire('pointermove', join);
+    await nextFrame();
+    expect(marked('cf-hover')).toEqual(['9']);
+
+    fire('pointerdown', join);
+    fire('pointermove', { clientX: 6 * CELL + 60, clientY: CELL * 1.5, buttons: 1 });
+    await nextFrame();
+    expect(marked('cf-lifted')).toEqual(['9']);
+  });
+
+  test('drags an end that sticks out past its line, instead of starting a selection band', async () => {
+    // 端の的は線の先をはみ出している。はみ出した所は線でも節点でもないので、
+    // 「何も無い所」と読んで囲みを始めていた — 端を引けない。
+    document.querySelector('.cf-body svg')?.insertAdjacentHTML('beforeend',
+      `<g class="cf-wire" data-line="9"><circle class="cf-wire-end" data-line="9" data-end="to"`
+      + ` data-box="${10 * CELL},${5 * CELL},6,6"/></g>`);
+    const tip = { clientX: 10 * CELL + 3, clientY: 5 * CELL + 3 };
+
+    fire('pointermove', tip);
+    fire('pointerdown', tip);
+    fire('pointermove', { clientX: 10 * CELL + 60, clientY: 5 * CELL + 3, buttons: 1 });
+    await nextFrame();
+
+    expect(document.querySelector('.kc-band-select')).toBeNull();
+    expect(status()).toContain('引き直しています');
+  });
+});
+
+/**
+ * **節点の引きずり (`G`) にも配線の影を出す** (52 の docs/47)。端の引き直しには
+ * 31 で出したが、節点は行き先の穴が光るだけで、来ている配線がどう引き直される
+ * かが見えなかった。
+ */
+describe('節点の引きずり', () => {
+  /** a1 から a3 への配線 8 と、a3 の節点。 */
+  const addJoin = (): void => {
+    document.querySelector('.cf-body svg')?.insertAdjacentHTML('beforeend',
+      `<g class="cf-wire" data-line="8" data-box="${CELL},${CELL},${CELL * 3},${CELL}">`
+      + `<circle class="cf-wire-end" data-line="8" data-end="from" data-box="${CELL + 8},${CELL + 8},4,4"/>`
+      + `<circle class="cf-wire-end" data-line="8" data-end="to" data-box="${3 * CELL + 8},${CELL + 8},4,4"/></g>`
+      + `<circle class="cf-dot" data-node="a3" data-box="${3 * CELL + 6},${CELL + 6},8,8"/>`);
+  };
+
+  test('draws each wire at the node from its far end to where the node is going, and dims the old ones', async () => {
+    addJoin();
+    fire('pointermove', at(3, 1));
+    key('g');
+    fire('pointermove', at(1, 2));
+    await nextFrame();
+
+    // 動かないほうの端 (a1 の真ん中) から、行き先 (b1 の真ん中) へ。
+    const shadow = document.querySelector('.cf-ghost-wire')?.getAttribute('d') ?? '';
+    expect(shadow).toContain(`${CELL * 1.5},${CELL * 1.5}`);
+    expect(shadow).toContain(`${CELL * 1.5},${CELL * 2.5}`);
+    expect(marked('cf-lifted')).toContain('8');
+  });
+
+  test('turns the shadow red where the node cannot go', async () => {
+    addJoin();
+    fire('pointermove', at(3, 1));
+    key('g');
+    fire('pointermove', at(1, 2));
+    await answerGhost({ cells: ['b1'], ok: false, why: 'ぶつかります' });
+
+    expect(document.querySelector('.cf-ghost-wire')?.classList.contains('cf-ghost-wire-bad')).toBe(true);
+  });
 });
 
 describe('右クリックの一覧', () => {

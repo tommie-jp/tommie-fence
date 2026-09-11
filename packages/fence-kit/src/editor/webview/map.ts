@@ -348,8 +348,13 @@ function fineIn(cell: Element, x: number, y: number): Fine | null {
   return fine.rows === 0 && fine.cols === 0 ? null : fine;
 }
 
+/**
+ * **端も見る。** 線の途中から同じ配線の端へ移っても、升も配線も変わらない。
+ * 端を見ないと塗り直さず、掴む端の輪 (`markHover`) が出なかった。
+ */
 const sameUnder = (a: Under, b: Under): boolean =>
   a.cell === b.cell && a.part === b.part && a.node === b.node && a.wire === b.wire && a.pin === b.pin
+  && a.wireEnd?.line === b.wireEnd?.line && a.wireEnd?.end === b.wireEnd?.end
   && sameFine(a.fine, b.fine);
 
 // ---------------------------------------------------------------- 印
@@ -452,8 +457,16 @@ function markSelected(picked: Picked | null, also: readonly Picked[] = []): void
  */
 function markHover(now: State): void {
   unmark('cf-hover');
+  unmark('cf-end-hover');
   if (now.carry !== null || now.tool !== 'select') return;
-  mark(shownFor(topOf(now.under)), 'cf-hover');
+  const on = topOf(now.under);
+  mark(shownFor(on), 'cf-hover');
+  // **掴む端も輪で見せる。** 分岐点では 2 本の端が重なり、どちらを掴むかは
+  // 手前の 1 つで決まる。押す前に見えないと、引いてみるまで分からない (52 の docs/47)。
+  const end = now.under.wireEnd;
+  if (on?.kind === 'wire' && end !== null && end.line === on.id) {
+    mark(query(`.cf-wire-end[data-line="${CSS.escape(end.line)}"][data-end="${end.end}"]`), 'cf-end-hover');
+  }
 }
 
 /**
@@ -749,9 +762,11 @@ function markCarried(now: State): void {
   unmark('cf-lifted');
   // **引き直している線は薄くする。** 行き先の影 (`markWireGhost`) と二重に
   // 見えないように — 部品を持ち上げたときと同じ見せ方に揃える。
-  if (now.carry?.kind === 'wireEnd') {
-    mark(query(`.cf-wire[data-line="${CSS.escape(now.carry.line)}"]`), 'cf-lifted');
-  }
+  // 節点の引きずりは、そこへ来ている線が全部引き直される。
+  const moving = now.carry?.kind === 'wireEnd' ? [now.carry.line]
+    : now.carry?.kind === 'drag' ? endsAtNode(now.carry.node).map((one) => one.line)
+      : [];
+  for (const line of moving) mark(query(`.cf-wire[data-line="${CSS.escape(line)}"]`), 'cf-lifted');
   if (now.carry === null || now.ghost === null) {
     dropCarried();
     return;
@@ -872,8 +887,13 @@ const GHOST_WIRE = 'cf-ghost-wire';
  * 線は**カーソルの下の穴・足まで**引く。生のカーソル位置まで引くと、
  * 見えている線と実際に書かれる線が食い違う (書かれるのは穴と穴の間)。
  */
-/** 引いている最中の線。**1 本を使い回す** (端数の四角と同じ理由で、作り直さない)。 */
-let wireGhost: SVGPolylineElement | null = null;
+/**
+ * 引いている最中の線。**1 つを使い回す** (端数の四角と同じ理由で、作り直さない)。
+ * 節点を引きずるときは何本も出るので、1 つの `path` に並べて描く。
+ */
+let wireGhost: SVGPathElement | null = null;
+
+type Point = { readonly x: number; readonly y: number };
 
 /**
  * 影を入れる層。**`.cf-wires` を持つのは circuit だけ** — 板の 2 つのマップは
@@ -926,21 +946,82 @@ function wireGhostLine(now: State): {
   return { from: offsetBy(fromCentre, fromCentre.box, now.wireFrom.fine), to };
 }
 
+/** 配線の端 1 つ (どの行の、どちらの端か)。 */
+type EndOf = { readonly line: string; readonly end: 'from' | 'to' };
+
+/** その節点に来ている配線の端。組み直すまで動かないので控える (`forgetPainted` で捨てる)。 */
+const nodeEnds = new Map<string, readonly EndOf[]>();
+
+/**
+ * その節点に来ている配線の端。**図に描かれた場所で数える** — 端の的
+ * (`.cf-wire-end`) の真ん中が、節点の升の真ん中に重なっているもの。
+ *
+ * 綴りで数えないのは、殻が配線の書き方を知らないため。場所で数えると、
+ * 足で書いた端 (`Q1.b`) でも、その足が節点に載っていれば入る — 節点を
+ * 動かすと足ごと動くので、引き直されるのはその線で合っている。
+ */
+function endsAtNode(node: string): readonly EndOf[] {
+  const known = nodeEnds.get(node);
+  if (known !== undefined) return known;
+  const spot = cellElement(node);
+  const at = spot === null ? null : centreOf(spot);
+  // 隠れている webview は大きさ 0 を返す。そのときは数えず、覚えもしない。
+  if (at === null || at.box.width === 0) return [];
+  const near = Math.min(at.box.width, at.box.height) / 4;
+  const ends = [...document.querySelectorAll<SVGGraphicsElement>('.cf-wire-end')].flatMap((one): readonly EndOf[] => {
+    const line = one.getAttribute('data-line');
+    const end = one.getAttribute('data-end');
+    const centre = centreOf(one);
+    if (line === null || (end !== 'from' && end !== 'to') || centre === null) return [];
+    return Math.hypot(centre.x - at.x, centre.y - at.y) <= near ? [{ line, end }] : [];
+  });
+  nodeEnds.set(node, ends);
+  return ends;
+}
+
+/**
+ * 影の線 (図の座標の折れ線の並び)。**3 通りある** — 新しく引いている最中と、
+ * 端を引き直している最中は 1 本。節点を引きずっている最中は、そこへ来ている
+ * 配線の数だけ (動かないほうの端 → 行き先)。
+ *
+ * 節点には**影が出ていなかった** — 行き先の穴が光るだけで、来ている線が
+ * どう引き直されるかが見えなかった (52 の docs/47)。
+ */
+function wireGhostStrokes(now: State): readonly (readonly Point[])[] {
+  if (now.carry?.kind === 'drag') {
+    const spot = spotOf(now, now.under);
+    const finish = spot.cell === null ? null : endElement(spot.cell);
+    const centre = finish === null ? null : centreOf(finish);
+    if (centre === null) return [];
+    const to = offsetBy(centre, centre.box, spot.fine);
+    return endsAtNode(now.carry.node).flatMap((one) => {
+      const from = heldEnd(one.line, one.end);
+      return from === null ? [] : [[from, to]];
+    });
+  }
+  const line = wireGhostLine(now);
+  if (line === null) return [];
+  const { from, to } = line;
+  // 折れる指定は先に横 (`-|`)。折れない板では真っ直ぐのまま。
+  return [shiftHeld && now.foldsWire ? [from, { x: to.x, y: from.y }, to] : [from, to]];
+}
+
 function markWireGhost(now: State): void {
   const layer = wireLayer();
-  const line = wireGhostLine(now);
-  if (line === null || layer === null) {
+  const strokes = wireGhostStrokes(now);
+  if (strokes.length === 0 || layer === null) {
     wireGhost?.remove();
     return;
   }
-  const { from, to } = line;
-  // 折れる指定は先に横 (`-|`)。折れない板では真っ直ぐのまま。
-  const corner = shiftHeld && now.foldsWire ? [{ x: to.x, y: from.y }] : [];
-  const points = [from, ...corner, to].map((at) => `${at.x},${at.y}`).join(' ');
-  const ghost = wireGhost ?? document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+  const path = strokes
+    .map((stroke) => stroke.map((at, index) => `${index === 0 ? 'M' : 'L'}${at.x},${at.y}`).join(' '))
+    .join(' ');
+  const ghost = wireGhost ?? document.createElementNS('http://www.w3.org/2000/svg', 'path');
   wireGhost = ghost;
-  ghost.setAttribute('class', GHOST_WIRE);
-  ghost.setAttribute('points', points);
+  // **行き先に置けないときは赤** (部品の影と同じ)。答えが来るのは節点を
+  // 引きずるときだけで、線を引くときは訊かないので今までの色のまま。
+  ghost.setAttribute('class', now.ghost?.ok === false ? `${GHOST_WIRE} cf-ghost-wire-bad` : GHOST_WIRE);
+  ghost.setAttribute('d', path);
   // 図を組み直すと層そのものが入れ替わるので、そのときだけ入れ直す。
   if (ghost.parentNode !== layer) layer.append(ghost);
 }
@@ -996,6 +1077,7 @@ function forgetPainted(): void {
   marked.clear();
   cellsSeen.clear();
   boxesSeen.clear();
+  nodeEnds.clear();
   unitSize = null;
   dropCarried();
   dropHeldBox();
@@ -1290,8 +1372,9 @@ document.addEventListener('pointerdown', (event) => {
   syncShift(event);
   const under = underAt(event.clientX, event.clientY);
   // **何も無い所から引いたら領域選択。** 掴むものがある所から始めたら今までどおり。
+  // 端の的も掴むもの — 線の先をはみ出した所では、囲みが始まって端を引けなかった。
   if (onCanvas && state.tool === 'select' && state.carry === null
-    && under.part === null && under.node === null && under.wire === null) {
+    && under.part === null && under.node === null && under.wire === null && under.wireEnd === null) {
     band = { x: event.clientX, y: event.clientY };
   }
   run({ kind: 'press', under, x: event.clientX, y: event.clientY, onMap: onCanvas, shift: event.shiftKey });

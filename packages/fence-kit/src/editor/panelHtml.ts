@@ -531,6 +531,9 @@ const STYLE = `
      (実機で「全フェンス、ホバーで部品をシャドウにする」)。姿に依らない印は
      影だけなので、選んだ印 (.cf-held) と同じ手を弱くして使う。 */
   .cf-hover { filter: drop-shadow(0 0 3px var(--vscode-focusBorder)); }
+  /* 掴む端。分岐点では 2 本の端が重なり、どちらを掴むかは手前の 1 つで決まる。
+     押す前に見えるように、その端だけを輪で出す (52 の docs/47)。 */
+  .cf-wire-end.cf-end-hover { stroke: var(--vscode-focusBorder); stroke-width: 2; }
 
   /* エディタのカーソルが指しているもの。掴んでいる印とは別の色。 */
   .cf-aim .cf-glyph, .cf-aim .cf-glyph-line, .cf-aim .cf-lead, .cf-aim .cf-pin,
@@ -625,6 +628,8 @@ const STYLE = `
     stroke-linecap: round; stroke-linejoin: round;
     stroke-dasharray: 4 3; pointer-events: none;
   }
+  /* 節点を置けない所へ引きずっているとき。部品の影と同じく赤。 */
+  .cf-ghost-wire.cf-ghost-wire-bad { stroke: var(--cf-bad); }
 
   /* 多端子部品の足の先の接続点。**配線の道具のときだけ濃く出す** — いつも
      目立たせると、足の丸が記号より先に目に入って図として読みにくい。

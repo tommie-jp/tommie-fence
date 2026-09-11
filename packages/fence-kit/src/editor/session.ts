@@ -1,11 +1,11 @@
 import { chipOf } from './chip.ts';
 import type { Edit, LineEdit, NetDiff, Span } from './edits.ts';
-import { bodyAfter, fenceBody } from './docEdits.ts';
+import { bodyAfter, bodyFrom, fenceBody } from './docEdits.ts';
 import { indentOn } from './documentLike.ts';
 import type { DocLike, EditorLike } from './documentLike.ts';
 import { createHistory, sameBody } from './history.ts';
 import { describeDiff } from './edits.ts';
-import { applyRewrite, lineNow } from './lines.ts';
+import { applyRewrite, dropLines, lineNow, orphanedHeadings } from './lines.ts';
 import type { EditResult, FenceEditor, FenceEntry, GridStep, PartFields } from './fenceEditor.ts';
 import { COLOR_LIST_ID, TYPE_LIST_ID, renderFencePicker, renderSwatches } from './panelHtml.ts';
 import type { PanelChrome } from './panelHtml.ts';
@@ -206,6 +206,8 @@ type Changes = {
   readonly diff: NetDiff;
   /** 部品と一緒に消えた配線の本数 (消すときだけ)。 */
   readonly wires?: number;
+  /** 一緒に消えた見出しのコメントの行数 (消すときだけ)。 */
+  readonly comments?: number;
 };
 
 /** 1 つの操作を書き換えに落とす前の 1 件。何をするかの違いは `plan` の中だけ。 */
@@ -241,6 +243,33 @@ const foldPlans = (
     else refusals.push(result.error.message);
   }
   return { body, refusals };
+};
+
+/**
+ * 消す書き換えに、**宙に残る見出しのコメント**を足す (52 の docs/47)。
+ * `parts:` を全部消すと `# 増幅段` だけが残っていた。
+ *
+ * どれを見出しと読むかは `orphanedHeadings` が決める。3 つのフェンスとも
+ * YAML で「1 部品 = 1 行」なので、フェンスごとに持たずにここで 1 度だけ掛ける。
+ * 行を足す書き換えには掛けない (消すときの話なので)。
+ */
+const withHeadings = (source: string, result: EditResult): EditResult => {
+  if (!result.ok) return result;
+  const lines = result.value.lines ?? [];
+  if (lines.length === 0 || lines.some((one) => one.kind !== 'delete')) return result;
+  const drop = new Set(lines.map((one) => one.line));
+  const headings = orphanedHeadings(normalizeNewlines(source).split('\n'), drop);
+  if (headings.length === 0) return result;
+  return { ok: true, value: { ...result.value, lines: dropLines([...drop, ...headings]), comments: headings.length } };
+};
+
+/**
+ * 一緒に消えたもの (「 (配線 2 本、コメント 1 行も一緒に)」)。無ければ空。
+ * **黙って消すと気づけない**ので、数えて言う。
+ */
+const alongWith = (wires: number, comments: number): string => {
+  const also = [...(wires > 0 ? [`配線 ${wires} 本`] : []), ...(comments > 0 ? [`コメント ${comments} 行`] : [])];
+  return also.length === 0 ? '' : ` (${also.join('、')}も一緒に)`;
 };
 
 const text = (value: unknown): string | null => (typeof value === 'string' ? value : null);
@@ -601,7 +630,7 @@ export function createSession<D extends DocLike>(
    * 戻すのも 1 回で済む。
    */
   async function runAll(
-    label: string,
+    labelled: string | (() => string),
     plans: readonly ((source: string) => EditResult)[],
   ): Promise<void> {
     const fence = fenceNow();
@@ -609,12 +638,17 @@ export function createSession<D extends DocLike>(
 
     const before = fenceBody(fence.document, fence.line, fence.source);
     const { body, refusals } = foldPlans(fence.source, plans);
+    // 札は当て終わってから組める (一緒に消えた数は、当てるあいだに数える)。
+    const label = typeof labelled === 'string' ? labelled : labelled();
     if (body === fence.source) {
       say(refusals[0] ?? '変わりません');
       return;
     }
 
-    const applied = await host.replaceBody(fence.document, fence.line, before.length, body.split('\n'));
+    // **文書の行に戻してから当てる** — 剥がした本文のままだと、閉じ記号の前に
+    // 空行が増え、箇条書きの中では字下げが消える (`bodyFrom`)。
+    const written = bodyFrom(fence.document, fence.line, fence.source, body);
+    const applied = await host.replaceBody(fence.document, fence.line, before.length, written);
     if (!applied) {
       say('書き換えられませんでした');
       return;
@@ -1347,10 +1381,15 @@ export function createSession<D extends DocLike>(
    *
    * 空になった `parts:` / `wires:` の鍵を落とすのは各フェンスの `delete…` が
    * やるので、**続けて当てる**ところ (`runAll`) は今までどおり。
+   *
+   * 見出しのコメントも 1 つずつ連れていく (`withHeadings`)。組の最後の 1 行を
+   * 消した回に落ちる。消すのは行ごとなので、下の数え直しはそのまま効く。
+   * `counted` には一緒に消えたコメントの行数を足していく。
    */
   function deletions(
     parts: readonly string[],
     wires: readonly string[],
+    counted: (comments: number) => void,
   ): readonly ((source: string) => EditResult)[] {
     const source = normalizeNewlines(fenceNow()?.source ?? '');
     const was = source.split('\n');
@@ -1366,13 +1405,18 @@ export function createSession<D extends DocLike>(
       })),
     ].sort((a, b) => b.line - a.line);
 
-    return targets.map((one) => (body: string) => {
+    const plan = (one: (typeof targets)[number], body: string): EditResult => {
       // 名前で引くものは、行がずれても正しく当たる。
       if (!one.wire && noteLineOf(one.id) === null) return editor.deletePart(body, one.id);
       const at = lineNow(was, normalizeNewlines(body).split('\n'), one.line);
       // **もう消えているものは断りにしない。** 一緒に連れていかれただけで、用は済んでいる。
       if (at === null) return { ok: true, value: { edits: [], diff: { lost: [], gained: [] } } };
       return one.wire ? editor.deleteWire(body, at) : editor.deletePart(body, `note:${at}`);
+    };
+    return targets.map((one) => (body: string) => {
+      const result = withHeadings(body, plan(one, body));
+      if (result.ok) counted(result.value.comments ?? 0);
+      return result;
     });
   }
 
@@ -1382,7 +1426,9 @@ export function createSession<D extends DocLike>(
     const picked = handles(message.ids);
     const wires = handles(message.wires);
     if (picked.length + wires.length > 1) {
-      await runAll(`${picked.length + wires.length} 個を消しました`, deletions(picked, wires));
+      let comments = 0;
+      const plans = deletions(picked, wires, (more) => { comments += more; });
+      await runAll(() => `${picked.length + wires.length} 個を消しました${alongWith(0, comments)}`, plans);
       return;
     }
     const id = text(message.id);
@@ -1395,9 +1441,9 @@ export function createSession<D extends DocLike>(
       const line = Number(id);
       await run({
         label: `${line} 行目の配線を`,
-        done: () => `${line} 行目の配線を消しました`,
+        done: (changes) => `${line} 行目の配線を消しました${alongWith(0, changes.comments ?? 0)}`,
         already: '消すものがありません',
-        plan: (source) => editor.deleteWire(source, line),
+        plan: (source) => withHeadings(source, editor.deleteWire(source, line)),
       });
       return;
     }
@@ -1406,9 +1452,9 @@ export function createSession<D extends DocLike>(
     await run({
       label: `${name} を`,
       // **一緒に消えた配線の本数を言う。** 黙って消すと気づけない。
-      done: (changes) => `${name} を消しました${changes.wires ? ` (配線 ${changes.wires} 本も一緒に)` : ''}`,
+      done: (changes) => `${name} を消しました${alongWith(changes.wires ?? 0, changes.comments ?? 0)}`,
       already: '消すものがありません',
-      plan: (source) => editor.deletePart(source, id),
+      plan: (source) => withHeadings(source, editor.deletePart(source, id)),
     });
   }
 

@@ -158,6 +158,23 @@ describe('持ち上げて、置く所で 1 クリック (KiCad の型 2)', () =>
     expect(after(PANEL, press(ON_END), drag(AT_B3, false), drag(AT_B3)).carry).toEqual(LIFTED);
   });
 
+  /**
+   * **分岐点では、手前の端がどの配線かを決める** (52 の docs/47)。太い線の当たり
+   * 判定は別の配線のものかもしれない — 線を先に採ると、光って選ばれる配線と、
+   * 引いたときに端を引き直される配線が食い違っていた。
+   */
+  const AT_JOIN = over({ cell: 'a2', node: 'a2', wire: '5', wireEnd: { line: '3', end: 'to' } });
+
+  test('at a junction, takes the wire whose end is on top, not the line underneath', () => {
+    expect(step(PANEL, press(AT_JOIN)).state.selected).toEqual({ kind: 'wire', id: '3' });
+    expect(after(PANEL, press(AT_JOIN), drag(AT_B3)).carry).toEqual({ kind: 'wireEnd', line: '3', end: 'to', byPointer: true });
+    expect(step(after(PANEL, hover(AT_JOIN)), key('Delete')).send).toEqual([{ kind: 'delete', what: 'wire', id: '3' }]);
+  });
+
+  test('says the cursor is on the end of a wire, which a drag re-routes', () => {
+    expect(hint(after(PANEL, hover(AT_JOIN)))).toContain('3 行目の配線の端');
+  });
+
   test('turns and flips a lifted part, which the docs promise for anything on the cursor', () => {
     const lifted = after(PANEL, hover(ON_R1), key('m'));
 

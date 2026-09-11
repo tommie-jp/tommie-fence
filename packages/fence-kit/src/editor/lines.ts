@@ -49,6 +49,58 @@ export function lineNow(before: readonly string[], after: readonly string[], lin
   return null;
 }
 
+const isComment = (text: string): boolean => text.trimStart().startsWith('#');
+const isBlank = (text: string): boolean => text.trim() === '';
+const depthOf = (text: string): number => (/^\s*/.exec(text)?.[0] ?? '').length;
+/** 一番上の鍵 (`parts:` など)。列 0 に書いた並び (`- a1 -- a2`) は鍵ではない。 */
+const isTopKey = (text: string): boolean => /^[^\s#-]/.test(text);
+
+/**
+ * `first` 行目 (0 始まり) から始まる組のうち、中身の行 (0 始まり)。
+ *
+ * **組は同じ深さの行が続くあいだ。** 次の見出し (同じ深さか浅いコメント) か、
+ * 浅い行で終わる。深い行は中身の続き (機器のブロック)。空行は数えずに越える。
+ * **一番上の鍵はそれぞれが 1 つの物**なので、深さ 0 の組は次の鍵で終わる。
+ */
+function groupFrom(lines: readonly string[], first: number): readonly number[] {
+  const depth = depthOf(lines[first] ?? '');
+  const group = [first];
+  for (let at = first + 1; at < lines.length; at += 1) {
+    const text = lines[at] ?? '';
+    if (isBlank(text)) continue;
+    const deep = depthOf(text);
+    if (isComment(text)) {
+      if (deep <= depth) break;
+      continue;
+    }
+    if (deep < depth || (depth === 0 && isTopKey(text))) break;
+    group.push(at);
+  }
+  return group;
+}
+
+/**
+ * 行を消すと宙に残る見出しのコメント (1 始まり)。**見出していた行が全部
+ * `drop` に入っているものだけ。** 1 行でも残るなら残す — 書き手の見出しを、
+ * まだ使っているうちは消さない (52 の docs/47)。
+ *
+ * **見出しは、すぐ下に中身が来るコメント。** 続けて書いたコメントは 1 つの
+ * 見出し。空行の前のコメントと、浅い行の前のコメント (塊の終わりの添え書き)
+ * は何も見出していないので、いつまでも残る。
+ */
+export function orphanedHeadings(lines: readonly string[], drop: ReadonlySet<number>): readonly number[] {
+  const found: number[] = [];
+  lines.forEach((text, index) => {
+    if (!isComment(text) || drop.has(index + 1)) return;
+    let first = index + 1;
+    while (first < lines.length && isComment(lines[first] ?? '')) first += 1;
+    const head = lines[first];
+    if (head === undefined || isBlank(head) || depthOf(head) < depthOf(text)) return;
+    if (groupFrom(lines, first).every((at) => drop.has(at + 1))) found.push(index + 1);
+  });
+  return found;
+}
+
 /**
  * 消す行を書き換えに直す。**行番号の順に並べて渡す** (当てる側が後ろから
  * 当てられるように)。0 は「鍵が無い」の印なので落とす。

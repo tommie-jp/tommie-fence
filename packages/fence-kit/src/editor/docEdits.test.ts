@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { bodyAfter, changesForFence, changesOf, fenceBody } from './docEdits.ts';
+import { bodyAfter, bodyFrom, changesForFence, changesOf, fenceBody } from './docEdits.ts';
 import { indentOn } from './documentLike.ts';
 
 const docOf = (lines: readonly string[]) => ({
@@ -148,6 +148,13 @@ describe('bodyAfter', () => {
     expect(bodyAfter(document, 2, source, rewrite)).toEqual(['  parts:']);
   });
 
+  test('keeps one empty line when every line is taken out', () => {
+    // 0 行の本文には書き戻す範囲が無い (戻すことも置くこともできなくなる)。
+    const rewrite = { edits: [], lines: [{ kind: 'delete' as const, line: 1 }, { kind: 'delete' as const, line: 2 }], diff: empty };
+
+    expect(bodyAfter(document, 2, source, rewrite)).toEqual(['']);
+  });
+
   test('puts a new line in with the indent of the fence opening', () => {
     const rewrite = {
       edits: [],
@@ -170,5 +177,42 @@ describe('bodyAfter', () => {
     expect(bodyAfter(document, 2, source, rewrite)).toEqual([
       '  parts:', '    C1: capacitor b1 b3', '    R1: resistor a1 b1',
     ]);
+  });
+});
+
+/**
+ * **まとめて当てた本文を、文書の行に戻す** (`runAll`)。途中の本文しか無いので、
+ * 元の本文と突き合わせて、変わっていない行は文書の行をそのまま使う。
+ *
+ * 前は剥がした本文をそのまま書き戻していて、2 つ踏んでいた (52 の docs/47):
+ * 本文の末尾の改行のぶん**閉じ記号の前に空行が 1 つ増える**のと、
+ * 箇条書きの中のフェンスで**字下げが消える**の。
+ */
+describe('bodyFrom', () => {
+  const document = docOf(['- item', '  ```circuit', '  parts:', '    R1: resistor a1 a3  ', '    C1: capacitor a3 c3', '  ```']);
+  const source = 'parts:\n  R1: resistor a1 a3  \n  C1: capacitor a3 c3\n';
+
+  test('gives nothing past the last line, so no blank line lands before the closing fence', () => {
+    expect(bodyFrom(document, 2, source, 'parts:\n  C1: capacitor a3 c3\n')).toEqual(['  parts:', '    C1: capacitor a3 c3']);
+  });
+
+  test('keeps a line that did not change exactly as the document has it', () => {
+    // 行末の空白も、剥がした字下げも、そのまま。
+    expect(bodyFrom(document, 2, source, 'parts:\n  R1: resistor a1 a3  \n')).toEqual(['  parts:', '    R1: resistor a1 a3  ']);
+  });
+
+  test('gives a new or changed line the indent of the fence opening', () => {
+    expect(bodyFrom(document, 2, source, 'parts:\n  R1: resistor b1 b3\n  C1: capacitor a3 c3\n  R2: resistor d1 d3\n'))
+      .toEqual(['  parts:', '    R1: resistor b1 b3', '    C1: capacitor a3 c3', '    R2: resistor d1 d3']);
+  });
+
+  test('keeps one empty line when everything is gone, so the fence still has a body to write into', () => {
+    expect(bodyFrom(document, 2, source, '')).toEqual(['']);
+  });
+
+  test('matches lines in order, even when the same text is written twice', () => {
+    const twice = docOf(['```circuit', '# x', 'a', '# x', 'b', '```']);
+
+    expect(bodyFrom(twice, 1, '# x\na\n# x\nb\n', '# x\nb\n')).toEqual(['# x', 'b']);
   });
 });

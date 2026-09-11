@@ -707,6 +707,126 @@ describe('消す・回す', () => {
     expect(doc.getText()).toContain('Q1: npn b5');
   });
 
+  /**
+   * **見出しのコメントは、見出していた行が全部消えたら一緒に消える** (52 の docs/47)。
+   * 残すと、部品を全部消したあとに `# 出力段` だけが宙に残る。
+   */
+  const HEADED = ['# ノート', '', '```circuit', 'parts:',
+    '  # 入力段', '  R1: resistor a1 a3 10k', '  C1: capacitor a3 c3 100n',
+    '  # 出力段', '  R2: resistor c1 c3 1k',
+    'wires:', '  # 戻り', '  - c1 -- a1', '```', ''].join('\n');
+
+  test('takes the heading over the last part under it, and says so', async () => {
+    const doc = docOf(A, HEADED);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'delete', what: 'part', id: 'R2' });
+
+    expect(doc.getText()).not.toContain('# 出力段');
+    expect(doc.getText()).toContain('# 入力段');
+    expect(last(host, 'status')?.text).toContain('コメント 1 行');
+  });
+
+  test('keeps a heading while a part under it is left', async () => {
+    const doc = docOf(A, HEADED);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'delete', what: 'part', id: 'R1' });
+
+    expect(doc.getText()).toContain('# 入力段');
+    expect(last(host, 'status')?.text).not.toContain('コメント');
+  });
+
+  test('takes the heading of a group deleted at once, and counts it', async () => {
+    const doc = docOf(A, HEADED);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'delete', what: 'part', id: 'R1', ids: ['R1', 'C1'], wires: [] });
+
+    expect(doc.getText()).not.toContain('# 入力段');
+    expect(doc.getText()).toContain('# 出力段');
+    expect(last(host, 'status')?.text).toContain('コメント 1 行');
+  });
+
+  /**
+   * **まとめて消しても、閉じ記号の前に空行を足さない。** 前は剥がした本文を
+   * そのまま書き戻していて、末尾の改行のぶん 1 行増えていた (52 の docs/47)。
+   */
+  test('leaves no blank line before the closing fence after deleting several at once', async () => {
+    const doc = docOf(A, HEADED);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'delete', what: 'part', id: 'R1', ids: ['R1', 'C1'], wires: [] });
+
+    expect(doc.getText()).toContain('  - c1 -- a1\n```');
+  });
+
+  test('keeps the indent of a fence inside a list item after deleting several at once', async () => {
+    const listed = ['- 項目', '', '  ```circuit', '  parts:', '    R1: resistor a1 a3 10k',
+      '    C1: capacitor a3 c3 100n', '    R2: resistor c1 c3 1k', '  ```', ''].join('\n');
+    const doc = docOf(A, listed);
+    const host = hostOf([doc], at(doc, 4));
+    const session = sessionOf(host);
+    session.view();
+
+    await session.handle({ kind: 'delete', what: 'part', id: 'R1', ids: ['R1', 'C1'], wires: [] });
+
+    expect(doc.getText()).toContain('  ```circuit\n  parts:\n    R2: resistor c1 c3 1k\n  ```');
+  });
+
+  /**
+   * **中身を全部消しても、本文を 0 行にしない。** 0 行のフェンスには書き戻す
+   * 範囲が無く、戻すことも置くこともできなくなる (playground で。VS Code は
+   * 1 行残していたので見えていなかった)。
+   */
+  const BARE = ['# ノート', '', '```circuit', 'parts:', '  R1: resistor a1 a3 10k', '  C1: capacitor a3 c3 100n', '```', ''].join('\n');
+
+  test('undoes deleting everything in a fence at once', async () => {
+    const doc = docOf(A, BARE);
+    const host = hostOf([doc], at(doc, 4));
+    const session = sessionOf(host);
+    session.view();
+    await session.handle({ kind: 'delete', what: 'part', id: 'R1', ids: ['R1', 'C1'], wires: [] });
+
+    await session.handle({ kind: 'undo' });
+
+    expect(doc.getText()).toBe(BARE);
+  });
+
+  test('undoes deleting the last part in a fence', async () => {
+    const doc = docOf(A, ['# ノート', '', '```circuit', 'parts:', '  R1: resistor a1 a3 10k', '```', ''].join('\n'));
+    const before = doc.getText();
+    const host = hostOf([doc], at(doc, 4));
+    const session = sessionOf(host);
+    session.view();
+    await session.handle({ kind: 'delete', what: 'part', id: 'R1' });
+
+    await session.handle({ kind: 'undo' });
+
+    expect(doc.getText()).toBe(before);
+  });
+
+  test('takes the heading over a wire along with the wire', async () => {
+    const doc = docOf(A, HEADED);
+    const host = hostOf([doc], at(doc, 5));
+    const session = sessionOf(host);
+    session.view();
+
+    // 9 行目 = `# 戻り` の下の配線 (フェンスの中で数える)。
+    await session.handle({ kind: 'delete', what: 'wire', id: '9' });
+
+    expect(doc.getText()).not.toContain('# 戻り');
+    expect(last(host, 'status')?.text).toContain('コメント 1 行');
+  });
+
   test('undoes a delete, because the copy is the whole body', async () => {
     // 桁の控えでは行の増減を戻せなかった。本文の控えなら 1 歩で戻る。
     const doc = docOf(A, RC);
