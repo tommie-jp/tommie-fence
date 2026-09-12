@@ -361,6 +361,8 @@ export function parseWireLine(
   }
 
   const endpoints: Endpoint[] = [];
+  // 書かれた綴りも順に控える (書き戻すときに名前が番地へ化けないように)。
+  const written: string[] = [];
   for (let index = 0; index < tokens.length; index += 2) {
     const token = tokens[index] ?? '';
     // 端点を書き忘れた (`a1 -- a3 --`)。空の字を「番地の形ではありません」と
@@ -370,6 +372,7 @@ export function parseWireLine(
     const endpoint = readEndpoint(token, line, points);
     if (!endpoint.ok) return endpoint;
     endpoints.push(endpoint.value);
+    written.push(token.trim());
   }
 
   const wires: WireSpec[] = [];
@@ -381,7 +384,10 @@ export function parseWireLine(
     if (from.kind === 'cell' && to.kind === 'cell' && isSameAddress(from.address, to.address)) {
       return fail(`配線の両端が同じ番地です (${formatAddress(from.address)})`, line);
     }
-    wires.push({ from, to, operator: operator as WireOperator, line });
+    wires.push({
+      from, to, operator: operator as WireOperator, line,
+      spelling: [written[index] ?? '', written[index + 1] ?? ''],
+    });
   }
 
   return ok(wires);

@@ -191,6 +191,8 @@ describe('parseWireLine', () => {
       to: { kind: 'cell', address: { row: 0, col: 3 } },
       operator: '--',
       line: 5,
+      // 書かれた端点の綴りも持つ (書き戻すときに名前が番地へ化けないように)。
+      spelling: ['a3', 'a4'],
     });
   });
 
@@ -784,6 +786,7 @@ describe('addresses between the cells', () => {
       to: { kind: 'cell', address: { row: 0.5, col: 2 } },
       operator: '--',
       line: 5,
+      spelling: ['a1f0', 'a3f0'],
     });
   });
 

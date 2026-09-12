@@ -182,6 +182,12 @@ export type WireSpec = {
   readonly to: Endpoint;
   readonly operator: WireOperator;
   readonly line: number;
+  /**
+   * 書かれた端点の綴り (`[from, to]`)。**番地は `points:` の名前でも書ける**
+   * ので、読んだ行と列だけでは書き戻すときに名前が番地へ化ける
+   * (部品の `spelling` と同じ理由。52 の docs/54 の段 1)。
+   */
+  readonly spelling: readonly [string, string];
 };
 
 /** 番地の端。図の幾何を見るところ (曲がり角・T 字) は番地しか扱えない。 */
