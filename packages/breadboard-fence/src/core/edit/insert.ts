@@ -1,5 +1,5 @@
 import {
-  appendUnderKey, applyEdits, applyLineEdits, FLOW_REFUSAL, isFlowKey, leadOffsets, needsRoom,
+  appendUnderKey, applyEdits, applyLineEdits, FLOW_REFUSAL, isFlowKey, keysUnder, leadOffsets, needsRoom,
   orientInserted, wireColor,
 } from 'fence-kit';
 import type { LineEdit, NetDiff } from 'fence-kit';
@@ -178,8 +178,15 @@ export function nextPartId(source: string, type: string): string | null {
   const prefix = partPrefix(baseTypeOf(type));
   if (prefix === null) return null;
 
-  const { doc } = parseFence(normalizeNewlines(source));
-  const used = new Set((doc?.parts ?? []).map((part) => part.id));
+  const normalized = normalizeNewlines(source);
+  const { doc } = parseFence(normalized);
+  // **読めなかった行の名前も使用中。** 種類の綴りを間違えた行は部品として
+  // 数えられないので、名前だけを見ると空いていることになり、同じ名前の行を
+  // 足してしまう (52 の docs/53)。字のほうからも名前を採る。
+  const used = new Set([
+    ...(doc?.parts ?? []).map((part) => part.id),
+    ...keysUnder(normalized.split('\n'), 'parts'),
+  ]);
   for (let number = 1; number <= LIMITS.parts + 1; number += 1) {
     const id = `${prefix}${number}`;
     if (!used.has(id)) return id;

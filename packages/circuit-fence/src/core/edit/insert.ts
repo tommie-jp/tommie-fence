@@ -13,7 +13,7 @@ import { handleAt } from './handles.ts';
 import { stepCell } from './move.ts';
 import type { LineEdit, RewriteResult } from './shared.ts';
 import {
-  afterLastLine, appendUnderKey, applyEdits, applyRewrite, isFlowKey, keyLineOf, orientInserted,
+  afterLastLine, appendUnderKey, applyEdits, applyRewrite, isFlowKey, keyLineOf, keysUnder, orientInserted,
 } from 'fence-kit';
 
 /**
@@ -212,9 +212,13 @@ const NET_NAMES: Readonly<Record<string, string>> = { port: 'IN', vcc: 'VCC', ve
  * **既定の名前で置く** (KiCad が `#PWR?` で置いてから直させるのと同じ)。
  */
 export function nextPartId(source: string, type: string): string | null {
-  const { doc } = parseFence(normalizeNewlines(source));
+  const normalized = normalizeNewlines(source);
+  const { doc } = parseFence(normalized);
   if (!doc) return null;
-  const used = new Set(doc.parts.map((part) => part.id));
+  // **読めなかった行の名前も使用中。** 種類の綴りを間違えた行は部品として
+  // 数えられないので、名前だけを見ると空いていることになり、同じ名前の行を
+  // 足してしまう (52 の docs/53)。字のほうからも名前を採る。
+  const used = new Set([...doc.parts.map((part) => part.id), ...keysUnder(normalized.split('\n'), 'parts')]);
 
   // **自分の持ち物だけを引く。** 素の添字だと `constructor` が Object.prototype から
   // 拾えて、名前として関数が返る (同じ理由で `lookupPartType` も `hasOwn` を使う)。

@@ -56,6 +56,38 @@ const depthOf = (text: string): number => (/^\s*/.exec(text)?.[0] ?? '').length;
 const isTopKey = (text: string): boolean => /^[^\s#-]/.test(text);
 
 /**
+ * その鍵の下に**字として書かれている名前** (`parts:` の下の `R1:`)。
+ *
+ * **読めなかった行の名前も数える。** 名前を付けるとき (`nextPartId`) に
+ * 読めた部品だけを見ると、種類の綴りを間違えた行の名前が空いていることになり、
+ * 同じ名前の行を足してしまう (52 の docs/53)。フェンスによって読み手が
+ * その行を落とすかどうかが違うので、**字のほうから数える**。
+ *
+ * 採るのは鍵のすぐ下の深さに並ぶ名前だけ。入れ子の中身 (機器の `type:` など) は
+ * その部品の持ち物で、名前ではない。並び (`- a1 -- b1`) には鍵が無いので何も返さない。
+ */
+export function keysUnder(lines: readonly string[], key: string): readonly string[] {
+  const at = keyLineOf(lines, key);
+  if (at === 0) return [];
+  const depth = depthOf(lines[at - 1] ?? '');
+  const found: string[] = [];
+  let child: number | null = null;
+  for (let index = at; index < lines.length; index += 1) {
+    const text = lines[index] ?? '';
+    if (isBlank(text) || isComment(text)) continue;
+    const deep = depthOf(text);
+    if (deep <= depth) break;
+    if (child === null) child = deep;
+    if (deep !== child) continue;
+    // 並びの行 (`- text: 仮組み`) は鍵ではない。`text:` はその注釈の欄。
+    if (text.trimStart().startsWith('-')) continue;
+    const name = /^\s*(?:"([^"]*)"|'([^']*)'|([^\s:#][^:]*?))\s*:/.exec(text);
+    if (name !== null) found.push((name[1] ?? name[2] ?? name[3] ?? '').trim());
+  }
+  return found;
+}
+
+/**
  * `line` 行目 (1 始まり) から始まるブロックの最後の行 (1 始まり)。
  * **深い行が続くあいだはブロック** (入れ子の中身、深いコメント、値の続き)。
  * 同じ深さか浅い行で終わる — 同じ深さのコメントは次の組の見出しなので含めない。

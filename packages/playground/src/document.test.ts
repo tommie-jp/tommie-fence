@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { asDocument, changedSpan, fenceAt, fencesIn, labelOf, lineOfOffset, replaceFence, spanOffsets, titleOf } from './document.ts';
+import {
+  asDocument, changedSpan, fenceAt, fencesIn, labelOf, lineAfterChange, lineOfOffset, replaceFence, spanOffsets,
+  titleOf,
+} from './document.ts';
 
 const DOC = [
   '# 例',                       // 0
@@ -214,6 +217,43 @@ describe('changedSpan', () => {
 
   test('1 行目が変われば 0 から', () => {
     expect(changedSpan(WAS, WAS.replace('# 例', '# 例 2'))).toEqual({ from: 0, to: 1 });
+  });
+});
+
+/**
+ * **いまのフェンスを行で追う** (52 の docs/53)。題は同じものが並ぶので
+ * (題を書かない図が 2 つあれば、どちらも null)、題だけでは見分けが付かない。
+ */
+describe('lineAfterChange', () => {
+  const WAS = ['# 例', '```breadboard', 'parts:', '  R1: resistor a5 a10', '```', ''].join('\n');
+
+  test('字が同じなら、その行のまま', () => {
+    expect(lineAfterChange(WAS, WAS, 2)).toBe(2);
+  });
+
+  test('変わった所より上の行は動かない', () => {
+    const added = WAS.replace('  R1: resistor a5 a10', '  R1: resistor a5 a10\n  R2: resistor c1 c6');
+
+    expect(lineAfterChange(WAS, added, 2)).toBe(2);
+  });
+
+  test('変わった所より下の行は、増えた行数だけずれる', () => {
+    const above = `# 前置き\n\n${WAS}`;
+
+    expect(lineAfterChange(WAS, above, 2)).toBe(4);
+  });
+
+  test('行が消えたぶんは、上へ詰まる', () => {
+    const dropped = WAS.replace('# 例\n', '');
+
+    expect(lineAfterChange(WAS, dropped, 2)).toBe(1);
+  });
+
+  /** 変わった所の中は、どこへ行ったとも言えない。 */
+  test('変わった所の中なら null', () => {
+    const inside = WAS.replace('parts:', 'parts: # 追記');
+
+    expect(lineAfterChange(WAS, inside, 2)).toBeNull();
   });
 });
 

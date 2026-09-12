@@ -1,4 +1,4 @@
-import { changedSpan, fenceAt, fencesIn, lineOfOffset } from './document.ts';
+import { changedSpan, fenceAt, fencesIn, lineAfterChange, lineOfOffset } from './document.ts';
 import type { DocFence, LineSpan } from './document.ts';
 
 /**
@@ -77,13 +77,34 @@ export type Workspace = {
 };
 
 /**
- * 字が変わったあとも**同じフェンスを見続ける**番号。種類と題で探し、
- * 無ければ残りの中で詰める (行数が変わっても見ているものを失わない)。
+ * 字が変わったあとも**同じフェンスを見続ける**番号。
+ *
+ * **まず行で探す** (`moved` = 元のフェンスの本文の 1 行目が、いまどこに居るか)。
+ * 題で探すと、**題を書いていない図が 2 つある文書**ではどちらも `null` で
+ * 見分けが付かず、2 本目を直すたびに 1 本目へ飛んでいた。1 本目が読めない
+ * フェンスなら図が白くなり、置いた部品が消えたように見える (52 の docs/53)。
+ *
+ * 行で当たらないとき (変わった所がフェンスの頭に掛かった) は題で探し、
+ * それも無ければ残りの中で番号を詰める (見ているものを失わない)。
  */
-function keepFence(was: DocFence | null, fences: readonly DocFence[], at: number): number {
+function keepFence(
+  was: DocFence | null,
+  moved: number | null,
+  fences: readonly DocFence[],
+  at: number,
+): number {
   const last = Math.max(0, fences.length - 1);
   if (was === null) return Math.min(at, last);
-  const same = fences.findIndex((one) => one.kind === was.kind && one.title === was.title);
+  const there = moved === null
+    ? -1
+    : fences.findIndex((one) => one.kind === was.kind && one.line === moved);
+  if (there >= 0) return there;
+  // **題が無いなら題では探さない。** 題の無い図はどれも `null` で見分けが
+  // 付かないので、探すと 1 本目に当たる (行で追えなかったときの落ち先が、
+  // 直そうとしている不具合そのものになる)。番号をそのまま使う。
+  const same = was.title === null
+    ? -1
+    : fences.findIndex((one) => one.kind === was.kind && one.title === was.title);
   return same >= 0 ? same : Math.min(at, last);
 }
 
@@ -91,16 +112,21 @@ function keepFence(was: DocFence | null, fences: readonly DocFence[], at: number
 type State = {
   doc: Doc;
   pristine: string;
+  /** 前に数えたときの全文。**行で追う**のに要る (どこが何行ずれたか)。 */
+  seen: string;
   fences: readonly DocFence[];
   at: number;
   touched: LineSpan | null;
 };
 
-/** 字が変わったら数え直す。いまのフェンスは種類と題で追う。 */
+/** 字が変わったら数え直す。いまのフェンスは行で追う (外れたら題)。 */
 function recount(s: State, box: TextBox): void {
   const was = s.fences[s.at] ?? null;
-  s.fences = fencesIn(box.text());
-  s.at = keepFence(was, s.fences, s.at);
+  const now = box.text();
+  const moved = was === null ? null : lineAfterChange(s.seen, now, was.line);
+  s.fences = fencesIn(now);
+  s.at = keepFence(was, moved, s.fences, s.at);
+  s.seen = now;
 }
 
 /** 番号でフェンスを選ぶ。範囲の外と、いまと同じ番号は false。 */
@@ -121,12 +147,13 @@ function openInto(s: State, box: TextBox, doc: Doc, text: string): void {
   s.touched = null;
   s.fences = [];
   s.at = 0;
+  s.seen = text;
   box.setText(text);
   recount(s, box);
 }
 
 export function createWorkspace(box: TextBox): Workspace {
-  const s: State = { doc: EMPTY_DOC, pristine: '', fences: [], at: 0, touched: null };
+  const s: State = { doc: EMPTY_DOC, pristine: '', seen: box.text(), fences: [], at: 0, touched: null };
   const setText = (next: string): void => {
     box.setText(next);
     recount(s, box);

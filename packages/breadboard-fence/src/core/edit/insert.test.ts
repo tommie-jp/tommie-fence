@@ -96,6 +96,16 @@ describe('nextPartId', () => {
     expect(nextPartId(WITH_WIRES, 'r')).toBe('R2');
   });
 
+  /**
+   * **読めなかった行の名前も使用中。** 種類の綴りを間違えた行の部品は数に入らない
+   * ので、名前が空いていることになり、同じ名前の行を足していた (52 の docs/53)。
+   */
+  test('counts a name written on a line it could not read', () => {
+    const typo = 'board: half\nparts:\n  R1: resistr a1 a5\n';
+
+    expect(nextPartId(typo, 'resistor')).toBe('R2');
+  });
+
   test('has no name for a type it cannot place', () => {
     // 板の外に並べる機器は穴を持たないので、置く先が無い。
     expect(nextPartId(WITH_WIRES, 'device')).toBeNull();

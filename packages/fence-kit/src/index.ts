@@ -70,7 +70,7 @@ export { indentOn } from './editor/documentLike.ts';
 export type { DocLike, EditorLike } from './editor/documentLike.ts';
 export {
   FLOW_REFUSAL, afterLastLine, appendUnderKey, applyEdits, applyLineEdits, applyRewrite, dropLines, indentOf,
-  insertLines, isFlowKey, isKeyLine, keyLineOf, wireEndToken,
+  insertLines, isFlowKey, isKeyLine, keyLineOf, keysUnder, wireEndToken,
 } from './editor/lines.ts';
 export { leadOffsets, leadSpan, needsRoom, orientInserted } from './editor/place.ts';
 export type { OrientResult, Rewritten } from './editor/place.ts';

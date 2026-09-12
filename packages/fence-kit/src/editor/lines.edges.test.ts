@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
-  afterLastLine, appendUnderKey, applyRewrite, dropLines, indentOf, insertLines, isFlowKey, wireEndToken,
+  afterLastLine, appendUnderKey, applyRewrite, dropLines, indentOf, insertLines, isFlowKey, keysUnder, wireEndToken,
 } from './lines.ts';
 
 /**
@@ -156,5 +156,43 @@ describe('配線の端を字として見つける', () => {
   test('says nothing when one side of the operator is empty', () => {
     expect(wireEndToken('--  b2', OPERATORS, 'from')).toBeNull();
     expect(wireEndToken('a1 --', OPERATORS, 'to')).toBeNull();
+  });
+});
+
+/**
+ * **鍵の下に字として書かれている名前。** 読めなかった行の名前も数える —
+ * 読める部品だけを見ると、綴りを間違えた行の名前が空いていることになり、
+ * 同じ名前の行を足してしまう (52 の docs/53)。
+ */
+describe('鍵の下に書かれている名前', () => {
+  test('lists the names written under the key, unreadable lines included', () => {
+    const lines = ['board: half', 'parts:', '  R1: resistr a1 a5', '  D1: led b1 b2', 'wires:', '  - a1 -- b1'];
+
+    expect(keysUnder(lines, 'parts')).toEqual(['R1', 'D1']);
+  });
+
+  test('takes the head of a nested block but not what is inside it', () => {
+    const lines = ['parts:', '  BAT:', '    type: device', '    at: bottom', '  R1: resistor a1 a5'];
+
+    expect(keysUnder(lines, 'parts')).toEqual(['BAT', 'R1']);
+  });
+
+  test('steps over comments and blank lines', () => {
+    const lines = ['parts:', '  # ボード外', '', '  R1: resistor a1 a5'];
+
+    expect(keysUnder(lines, 'parts')).toEqual(['R1']);
+  });
+
+  test('reads no names from a list, where the rows have no key', () => {
+    expect(keysUnder(['wires:', '  - a1 -- b1', '  - a2 -- b2'], 'wires')).toEqual([]);
+  });
+
+  /** 並びの中の `text:` は、その注釈の欄であって名前ではない。 */
+  test('reads no names from a list whose rows have fields of their own', () => {
+    expect(keysUnder(['notes:', '  - text: 仮組み', '  - mark: a1'], 'notes')).toEqual([]);
+  });
+
+  test('is empty when the key is not there', () => {
+    expect(keysUnder(['board: half'], 'parts')).toEqual([]);
   });
 });

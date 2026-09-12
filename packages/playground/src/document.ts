@@ -135,6 +135,25 @@ export function changedSpan(before: string, after: string): LineSpan | null {
 }
 
 /**
+ * `before` の `line` 行目 (0 始まり) が、`after` では何行目か。
+ * **変わった所の中なら null** — どこへ行ったとも言えない。
+ *
+ * 変わった所より上の行は動かず、下の行は増えた (減った) 行数だけずれる。
+ *
+ * **いまのフェンスを行で追う**のに使う (52 の docs/53)。題で追うと、題を
+ * 書いていない図が 2 つある文書で**どちらも `null`** になって見分けが付かず、
+ * 直すたびに 1 本目へ飛んでいた (1 本目が読めないフェンスなら図が白くなる)。
+ */
+export function lineAfterChange(before: string, after: string, line: number): number | null {
+  const span = changedSpan(before, after);
+  if (span === null) return line;
+  if (line < span.from) return line;
+  const delta = after.split('\n').length - before.split('\n').length;
+  // `span.to` は `after` の中の数え方。**`before` の中の尻の始まり**に直して比べる。
+  return line >= span.to - delta ? line + delta : null;
+}
+
+/**
  * 行の範囲を、字の位置の範囲にする (改行は含めない)。**文書の外を指したら
  * 文書の終わり** — 尻の行が消えたとき、指す行がもう無い。
  */

@@ -117,6 +117,99 @@ describe('reread', () => {
   });
 });
 
+/**
+ * **題の無いフェンスが並ぶ文書** (52 の docs/53)。題で追うと、どれを直しても
+ * 1 本目が当たり、図だけが別のフェンスへ飛んでいた。1 本目が読めないフェンス
+ * なら図が白くなる。行で追う。
+ */
+describe('題の無いフェンスが並ぶ文書', () => {
+  const UNTITLED = [
+    '```perfboard',   // 0
+    'board: 10x6',    // 1
+    '```',            // 2
+    '',               // 3
+    '```perfboard',   // 4
+    'board: 10x6',    // 5
+    'parts:',         // 6
+    '```',            // 7
+    '',               // 8
+    '```perfboard',   // 9
+    'board: 10x6',    // 10
+    '```',            // 11
+    '',               // 12
+  ].join('\n');
+  /** 2 本目を見ている状態から始める。 */
+  const watching = () => {
+    const box = boxed();
+    box.ws.open(led, UNTITLED);
+    box.ws.select(1);
+    return box;
+  };
+
+  test('殻が中に 1 行足しても、2 本目を見続ける', () => {
+    const { ws } = watching();
+
+    ws.replace(UNTITLED.replace('parts:', 'parts:\n  R1: resistor a1 a6'));
+
+    expect(ws.at).toBe(1);
+    expect(ws.current()?.line).toBe(5);
+  });
+
+  test('1 本目の中を打っても、2 本目を見続ける', () => {
+    const { ws } = watching();
+
+    ws.setText(UNTITLED.replace('```perfboard\nboard: 10x6\n```', '```perfboard\nboard: 10x6\ntitle: 図\n```'));
+
+    expect(ws.at).toBe(1);
+    expect(ws.current()?.line).toBe(6);
+  });
+
+  /** 足すフェンスは板を変える。1 字も同じだと、どこへ足したとも読める。 */
+  test('上に題の無いフェンスを 1 本足しても、同じフェンスを見続ける', () => {
+    const { ws } = watching();
+
+    ws.setText(`\`\`\`perfboard\nboard: 8x4\n\`\`\`\n\n${UNTITLED}`);
+
+    expect(ws.at).toBe(2);
+    expect(ws.current()?.line).toBe(9);
+  });
+
+  /**
+   * **題が無いなら、題では探さない。** 変わった所が本文の 1 行目に掛かると
+   * 行では追えないが、そこで題 (`null`) で探すと 1 本目に当たってしまう。
+   */
+  test('本文の 1 行目を書き換えても、2 本目を見続ける', () => {
+    const { ws } = watching();
+
+    ws.replace(UNTITLED.replace('board: 10x6\nparts:', 'board: 12x8\nparts:'));
+
+    expect(ws.at).toBe(1);
+  });
+
+  test('2 本目が消えたら、残りの中で番号を詰める', () => {
+    const { ws } = watching();
+
+    ws.setText(UNTITLED.split('\n').slice(0, 4).join('\n'));
+
+    expect(ws.at).toBe(0);
+  });
+});
+
+/** 行で追えないとき (変わった所がフェンスの頭に掛かる) は、今までどおり題で追う。 */
+describe('行で追えないとき', () => {
+  test('変わった所の中にフェンスの頭があれば、題で探す', () => {
+    const { ws } = boxed();
+    ws.open(led, DOC);
+    ws.select(1);
+
+    // 1 本目の中と 2 本目の頭が両方変わる (間もぜんぶ「変わった所」になる)。
+    ws.setText(DOC.replace('board: half', 'board: full').replace('parts:', 'parts: # 追記'));
+
+    expect(ws.at).toBe(1);
+    expect(ws.current()?.title).toBe('図02 RC');
+  });
+});
+
 describe('select / bind / follow', () => {
   test('範囲の外と、いまと同じ番号は false', () => {
     const { ws } = boxed();

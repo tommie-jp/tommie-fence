@@ -96,6 +96,20 @@ describe('nextPartId', () => {
     expect(nextPartId(WITH_WIRES, 'r')).toBe('R2');
   });
 
+  /** 読めなかった行の名前も使用中 (52 の docs/53)。 */
+  test('counts a name written on a line it could not read', () => {
+    const typo = 'board: 10x6\nparts:\n  R1: resistr b3 b7\n';
+
+    expect(nextPartId(typo, 'resistor')).toBe('R2');
+  });
+
+  /** 機器も同じ `parts:` の下に書くので、名前は部品と同じ入れ物から採る。 */
+  test('counts the name of a device, which shares the same names as the parts', () => {
+    const device = 'board: 10x6\nparts:\n  R1:\n    type: device\n    pins: ["+", "-"]\n';
+
+    expect(nextPartId(device, 'resistor')).toBe('R2');
+  });
+
   test('has no name for a type it cannot place', () => {
     // 板の外に並べる機器は入れ子で書くので、1 行では置けない。
     expect(nextPartId(WITH_WIRES, 'device')).toBeNull();

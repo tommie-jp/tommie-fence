@@ -195,6 +195,16 @@ describe('nextPartId', () => {
     expect(nextPartId(RC.replace('parts:', 'parts:\n  VCC: vcc a1'), 'vcc')).toBe('VCC');
   });
 
+  /**
+   * **読めなかった行の名前も使用中。** 種類の綴りを間違えた行の部品は数に入らない
+   * ので、名前が空いていることになり、同じ名前の行を足していた (52 の docs/53)。
+   */
+  test('counts a name written on a line it could not read', () => {
+    const typo = ['parts:', '  R1: resistr a1 a3 10k', ''].join('\n');
+
+    expect(nextPartId(typo, 'resistor')).toBe('R2');
+  });
+
   test('has nothing to offer for a type it does not know', () => {
     expect(nextPartId(RC, 'flux-capacitor')).toBeNull();
   });
