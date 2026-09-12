@@ -63,7 +63,13 @@ const isPlace = (token: string): token is NotePlace => (NOTE_PLACES as readonly 
  * プレーンスカラーに `: ` を書くとマップになってしまうため。値の側に置けば、
  * 引用が要るかどうかを YAML 自身に決めさせられる。
  */
-export function parseNoteLine(head: string, text: string | null, line: number): Result<NoteSpec> {
+export function parseNoteLine(
+  head: string,
+  text: string | null,
+  line: number,
+  /** 本文を書かれたまま (引用符を含む)。渡されなければ読んだ字そのもの。 */
+  bodyWritten: string | null = text,
+): Result<NoteSpec> {
   const tokens = head.trim().split(/\s+/).filter(Boolean);
   const [kindToken, ...rest] = tokens;
   if (!kindToken || !isKind(kindToken)) {
@@ -109,6 +115,8 @@ export function parseNoteLine(head: string, text: string | null, line: number): 
 
   return ok({
     kind,
+    written: tokens,
+    bodyWritten,
     targets,
     place: placed ? DEFAULT_PLACE : null,
     // 印は赤が既定。字だけは既定を置かず、図の文字色にそのまま従わせる。

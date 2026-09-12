@@ -184,7 +184,8 @@ function readFence(source: string): ParseResult {
         const text = scalarText(pair?.value);
         const at = lineOf(pair?.key as Node) ?? line;
         if (head !== null && text !== null) {
-          const result = parseNoteLine(head, text);
+          // 本文は書かれたまま控える (引用符も含めて)。
+        const result = parseNoteLine(head, text, writtenText(pair?.value, source) ?? text);
           if (!result.ok) errors.push({ ...result.error, line: at });
           else notes.push({ ...result.value, line: at });
           continue;

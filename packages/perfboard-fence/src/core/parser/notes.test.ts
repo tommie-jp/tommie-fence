@@ -6,7 +6,11 @@ describe('parseNoteLine', () => {
   test('reads a mark on one hole', () => {
     expect(parseNoteLine('mark b3', null)).toEqual({
       ok: true,
-      value: { kind: 'mark', turn: NO_TURN, from: 'b3', to: null, color: null, text: null },
+      // 書かれた語も控える (書き戻しで並びと綴りを変えないため)。
+      value: {
+        kind: 'mark', turn: NO_TURN, from: 'b3', to: null, color: null, text: null,
+        written: ['mark', 'b3'], bodyWritten: null,
+      },
     });
   });
 
@@ -64,7 +68,10 @@ describe('source', () => {
   test('reads a bare source, which takes no hole at all', () => {
     expect(parseNoteLine('source', null)).toEqual({
       ok: true,
-      value: { kind: 'source', turn: NO_TURN, from: null, to: null, color: null, text: null },
+      value: {
+        kind: 'source', turn: NO_TURN, from: null, to: null, color: null, text: null,
+        written: ['source'], bodyWritten: null,
+      },
     });
   });
 
@@ -90,7 +97,10 @@ describe('parts', () => {
   test('reads a bare parts, which takes no hole at all', () => {
     expect(parseNoteLine('parts', null)).toEqual({
       ok: true,
-      value: { kind: 'parts', turn: NO_TURN, from: null, to: null, color: null, text: null },
+      value: {
+        kind: 'parts', turn: NO_TURN, from: null, to: null, color: null, text: null,
+        written: ['parts'], bodyWritten: null,
+      },
     });
   });
 

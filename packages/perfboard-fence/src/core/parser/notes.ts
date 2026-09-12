@@ -24,6 +24,10 @@ export type { NoteKind };
 
 export type WrittenNote = {
   readonly kind: NoteKind;
+  /** 書かれた語 (種類の語も含む)。**そのまま書き戻す**ために持つ (52 の docs/54)。 */
+  readonly written: readonly string[];
+  /** `text` の本文を書かれたまま (引用符を含む)。`text` 以外は null。 */
+  readonly bodyWritten: string | null;
   /**
    * 向き。**種類に `/` で続けて書く** (`text/r90`)。
    *
@@ -82,7 +86,12 @@ function readWords(tokens: readonly string[]): Parsed<{ readonly color: string |
  * `- text c3 red: ここから電源` は 1 項目のマップとして読まれるため
  * (3 つのフェンスで同じ形。`parser/parseFence.ts` が割って渡す)。
  */
-export function parseNoteLine(line: string, written: string | null): Parsed<WrittenNote> {
+export function parseNoteLine(
+  line: string,
+  written: string | null,
+  /** `text` の本文を書かれたまま (引用符を含む)。渡されなければ読んだ字そのもの。 */
+  bodyWritten: string | null = written,
+): Parsed<WrittenNote> {
   const tokens = line.trim().split(/\s+/).filter((token) => token !== '');
   const [kind, ...rest] = tokens;
 
@@ -119,12 +128,16 @@ export function parseNoteLine(line: string, written: string | null): Parsed<Writ
       value: {
         kind, turn: words.value.turn, from, to: null,
         color: words.value.color, text: clampText(text, LIMITS.noteLength),
+        written: tokens, bodyWritten,
       },
     };
   }
 
   if (tail.length === 0) {
-    return { ok: true, value: { kind, turn: NO_TURN, from, to, color: null, text: null } };
+    return {
+      ok: true,
+      value: { kind, turn: NO_TURN, from, to, color: null, text: null, written: tokens, bodyWritten: null },
+    };
   }
   if (tail.length > 1) {
     // **余った言葉を黙って捨てない。** 色を 2 つ書いた人が、片方が効いて
@@ -148,5 +161,8 @@ export function parseNoteLine(line: string, written: string | null): Parsed<Writ
     }
     return fail(`知らない色です: ${safeToken(word)} (${colorHint()})`, word);
   }
-  return { ok: true, value: { kind, turn: NO_TURN, from, to, color, text: null } };
+  return {
+    ok: true,
+    value: { kind, turn: NO_TURN, from, to, color, text: null, written: tokens, bodyWritten: null },
+  };
 }

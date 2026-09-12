@@ -148,6 +148,17 @@ export type NoteSpec = {
   readonly color: string | null;
   readonly text: string | null;
   readonly line: number | null;
+  /**
+   * 書かれた語 (**種類の語も含む**)。**そのまま書き戻す**ために持つ
+   * (52 の docs/54 の段 1) — 色と向きの語は並びが自由なので、読んだ値からは
+   * 書かれた形に戻せない。
+   */
+  readonly written: readonly string[];
+  /**
+   * `text` の本文を書かれたまま (**引用符も含む**)。規則で引用し直すと、
+   * 要らない引用を外してしまう行がある。`text` 以外は null。
+   */
+  readonly bodyWritten: string | null;
 };
 
 /** 番地に直した注釈。板の上に置くものだけがここへ来る。 */

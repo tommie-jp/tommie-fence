@@ -202,6 +202,17 @@ export type WireSpec = {
 export type NoteSpec = {
   readonly kind: NoteKind;
   /**
+   * 書かれた語 (**種類の語も含む**)。**そのまま書き戻す**ために持つ
+   * (52 の docs/54 の段 1) — 色は書かなくても既定で埋まり、見た目の語は
+   * 並びが自由なので、読んだ値からは書かれた形に戻せない。
+   */
+  readonly written: readonly string[];
+  /**
+   * `text` の本文を書かれたまま (**引用符も含む**)。規則で引用し直すと、
+   * 要らない引用を外してしまう行がある。字を持たない注釈では null。
+   */
+  readonly bodyWritten: string | null;
+  /**
    * 部品 ID か穴番地。circle は 1 つ、box / arrow / line は 2 つ。
    * `text` / `source` は**場所を書かなければ空**で、`place` のほうが効く。
    */

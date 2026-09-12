@@ -166,7 +166,7 @@ function readFence(source: string): ParseResult {
     } else if (key === 'wires') {
       collectWires(pair.value as ParsedNode | null, { wires, errors, lineOf });
     } else if (key === 'notes') {
-      collectNotes(pair.value as ParsedNode | null, { notes, errors, lineOf });
+      collectNotes(pair.value as ParsedNode | null, { notes, errors, lineOf, source });
     } else {
       errors.push(
         fenceError(`知らないキーです: ${safeToken(key)} (${TOP_LEVEL_KEYS.join(' / ')} が使えます)`, line, key),
@@ -229,6 +229,12 @@ function collectPoints(
   }
 }
 
+/** 書かれたままの字。**引用符も含めて**返す (書き戻しで綴りを変えないため)。 */
+const rawText = (node: unknown, source: string): string | null => {
+  const range = (node as { range?: readonly [number, number, number] } | null)?.range;
+  return range ? source.slice(range[0], range[1]) : null;
+};
+
 /**
  * 注釈を読む。**`text` だけが「1 項目のマップ」**で来る。
  * YAML のプレーンスカラーには `: ` を書けないので、
@@ -237,9 +243,9 @@ function collectPoints(
  */
 function collectNotes(
   node: ParsedNode | null,
-  context: { notes: NoteSpec[]; errors: FenceError[]; lineOf: LineOf },
+  context: { notes: NoteSpec[]; errors: FenceError[]; lineOf: LineOf; source: string },
 ): void {
-  const { notes, errors, lineOf } = context;
+  const { notes, errors, lineOf, source } = context;
   if (!isSeq(node)) {
     errors.push(fenceError('notes は「- circle R1」のように並べたリストで書きます', lineOf(node)));
     return;
@@ -264,7 +270,8 @@ function collectNotes(
       const head = scalarText(pair?.key);
       const text = scalarText(pair?.value);
       if (head !== null && text !== null) {
-        push(parseNoteLine(head, text, lineOf(pair?.key) ?? line));
+        // 本文は書かれたまま控える (引用符も含めて)。
+        push(parseNoteLine(head, text, lineOf(pair?.key) ?? line, rawText(pair?.value, source) ?? text));
         continue;
       }
       // 数字だけの字 (`- text a5: 100`) は YAML が数値にするので、字として届かない。
