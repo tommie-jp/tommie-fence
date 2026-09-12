@@ -1,5 +1,5 @@
 import {
-  appendUnderKey, applyEdits, applyLineEdits, FLOW_REFUSAL, isFlowKey, keysUnder, leadOffsets, needsRoom,
+  appendUnderKey, applyEdits, applyLineEdits, FLOW_ADD_REFUSAL, isFlowKey, keysUnder, leadOffsets, needsRoom,
   normalizeNewlines, orientInserted, wireColor,
 } from 'fence-kit';
 import type { LineEdit, NetDiff } from 'fence-kit';
@@ -93,7 +93,7 @@ export function insertWire(source: string, from: Address, to: Address, color?: s
   }
 
   const lines = normalized.split('\n');
-  if (isFlowKey(lines, 'wires')) return fail(`配線: ${FLOW_REFUSAL.replace('消せません', '足せません')}`, null);
+  if (isFlowKey(lines, 'wires')) return fail(`配線: ${FLOW_ADD_REFUSAL}`, null);
 
   const last = doc.wires.reduce((deepest, wire) => Math.max(deepest, wire.line ?? 0), 0);
   // **色は色見本で選んだものだけ書く。** 知らない名前は書かない — 書式エラーの
@@ -249,7 +249,7 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
   }
 
   const lines = normalized.split('\n');
-  if (isFlowKey(lines, 'parts')) return fail(`部品: ${FLOW_REFUSAL.replace('消せません', '足せません')}`, null);
+  if (isFlowKey(lines, 'parts')) return fail(`部品: ${FLOW_ADD_REFUSAL}`, null);
 
   const last = doc.parts.reduce((deepest, one) => Math.max(deepest, one.line ?? 0), 0);
   const holes = spelled.join(' ');
@@ -317,7 +317,7 @@ export function duplicatePart(source: string, id: string, newId: string): Additi
   const renamed = shifted.replace(/^(\s*)[^\s:]+\s*:/, `$1${newId}:`);
 
   const lines = normalized.split('\n');
-  if (isFlowKey(lines, 'parts')) return fail(`部品: ${FLOW_REFUSAL.replace('消せません', '足せません')}`, null);
+  if (isFlowKey(lines, 'parts')) return fail(`部品: ${FLOW_ADD_REFUSAL}`, null);
 
   const last = doc.parts.reduce((deepest, one) => Math.max(deepest, one.line ?? 0), 0);
   // **複製も「置く」の一種**なので、`board:` が無ければ同じように書き足す。

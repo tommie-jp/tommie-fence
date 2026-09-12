@@ -159,6 +159,19 @@ describe('同じ行の YAML エラーは 1 件にする', () => {
   });
 });
 
+describe('フロー形式に足せないときの断り', () => {
+  // 綴りを差し替えて作っていたので「行ごと足せません。**手で消します**」と、
+  // 尻尾だけ消す側の文面が残っていた。足せないときは手で**書く**。
+  test('足せないと言うなら、直し方も足す側の言い方にする', () => {
+    const flow = 'board: half\nparts: {R1: resistor a5 a10}\n';
+    const result = insertPart(flow, { id: 'R9', type: 'resistor', at: [at('c1')] });
+    if (result.ok) throw new Error('断られるはずです');
+
+    expect(result.error.message).toContain('手で書きます');
+    expect(result.error.message).not.toContain('手で消します');
+  });
+});
+
 describe('図を組む側も落ちない', () => {
   test.each(NASTY)('%j から図を組もうとしても投げない', (source) => {
     expect(() => renderBreadboard(source)).not.toThrow();
