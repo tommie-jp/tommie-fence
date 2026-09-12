@@ -34,7 +34,6 @@ export function fenceAt(markdown: string, line: number): FenceBlock | null {
  */
 export function aimAt(source: string, line: number, column: number): Aim | null {
   const doc = scan(source);
-  if (doc === null) return null;
 
   const on = doc.written.find((one) =>
     one.line === line && column >= one.column && column <= one.column + one.length);

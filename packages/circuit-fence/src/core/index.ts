@@ -5,7 +5,7 @@ import { checkErc } from './model/erc.ts';
 import type { Net } from './model/nets.ts';
 import { normalizeNewlines } from './newlines.ts';
 import { parseFence } from './parser/parseFence.ts';
-import { DEFAULT_THEME, resolveTheme } from './render/theme.ts';
+import { resolveTheme } from './render/theme.ts';
 import type { Theme } from './render/theme.ts';
 import { generateTex } from './tex/generate.ts';
 import type { FenceError, NoteOverlay, TexTarget } from './types.ts';
@@ -80,21 +80,6 @@ export function compileCircuit(fence: string, options: CompileOptions = {}): Com
   // かつフェンスの中身を持っている場所はここしかない。
   const withSource = (items: readonly FenceError[]): readonly FenceError[] =>
     attachSourceText(items, source);
-
-  if (doc === null) {
-    return {
-      tex: null,
-      lineMap: EMPTY_LINE_MAP,
-      netlist: [],
-      theme: DEFAULT_THEME,
-      width: null,
-      notes: [],
-      errors: withSource(errors),
-      notices: [],
-      // style: ごと読めていないので、既定 (出す) のまま返す。
-      debug: true,
-    };
-  }
 
   const { theme, messages } = resolveTheme(doc.style);
   // テーマ名が読めなかった理由は style: の行に付けたいが、ここには行が無い。

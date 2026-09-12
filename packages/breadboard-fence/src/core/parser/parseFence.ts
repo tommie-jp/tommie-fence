@@ -28,7 +28,12 @@ const MAX_YAML_MESSAGE = 120;
 /** フェンスの一番外側に書けるキー。読めなかったときの案内はここから作る。 */
 export const TOP_LEVEL_KEYS = ['title', 'points', 'board', 'style', 'parts', 'parts-list', 'wires', 'notes'] as const;
 
-export type ParseResult = { readonly doc: FenceDocument | null; readonly errors: readonly FenceError[] };
+/**
+ * 読んだ結果。**`doc` は必ずある** — YAML が転んでも、読めた所は返す
+ * (52 の docs/54「エディターを YAML の都合で止めない」)。読めなかった行は
+ * `errors` に行番号つきで並ぶ。何も読めなければ中身の空な `doc` が返る。
+ */
+export type ParseResult = { readonly doc: FenceDocument; readonly errors: readonly FenceError[] };
 
 const scalarText = (node: unknown): string | null =>
   isScalar(node) && typeof node.value === 'string' ? node.value : null;
@@ -47,20 +52,20 @@ function readFence(source: string): ParseResult {
     return range ? lineCounter.linePos(range[0]).line : null;
   };
 
-  if (parsed.errors.length > 0) {
-    return {
-      doc: null,
-      // yaml のメッセージはライブラリ側の文言。描画時にエスケープされる前提で載せる。
-      errors: parsed.errors.map((error) =>
-        fenceError(
-          `YAML の構文エラー: ${(error.message.split('\n')[0] ?? '').slice(0, MAX_YAML_MESSAGE)}`,
-          lineCounter.linePos(error.pos[0]).line,
-        ),
-      ),
-    };
-  }
+  /**
+   * **YAML が転んでも、そこで止めない。** `yaml` は転んだ行より前後の読めた所を
+   * `contents` に残すので、読めた部品と配線はそのまま返し、読めなかった行だけ
+   * 行番号つきで言う (52 の docs/54)。前は 1 か所でも転ぶと `doc: null` を返し、
+   * 置く・動かす・消すが全部断られて**升目が空になっていた** (52 の docs/51 の姿)。
+   */
+  // yaml のメッセージはライブラリ側の文言。描画時にエスケープされる前提で載せる。
+  const errors: FenceError[] = parsed.errors.map((error) =>
+    fenceError(
+      `YAML の構文エラー: ${(error.message.split('\n')[0] ?? '').slice(0, MAX_YAML_MESSAGE)}`,
+      lineCounter.linePos(error.pos[0]).line,
+    ),
+  );
 
-  const errors: FenceError[] = [];
   const parts: PartSpec[] = [];
   const wires: WireSpec[] = [];
   const notes: NoteSpec[] = [];
@@ -94,10 +99,10 @@ function readFence(source: string): ParseResult {
   const contents = parsed.contents;
   if (contents === null) return { doc: document(), errors };
   if (!isMap(contents)) {
-    return {
-      doc: null,
-      errors: [fenceError(`フェンスの中身は ${TOP_LEVEL_KEYS.join(' / ')} のマップで書きます`, 1)],
-    };
+    // **読める所が 1 つも無くても、空の中身を返す。** ここで止めると、
+    // 打ちかけのフェンスに最初の 1 つを置けない (52 の docs/54)。
+    errors.push(fenceError(`フェンスの中身は ${TOP_LEVEL_KEYS.join(' / ')} のマップで書きます`, 1));
+    return { doc: document(), errors };
   }
 
   // 点の名前は**部品を読む前に**揃えておく。1 行の記法は「番地に見える語は穴、

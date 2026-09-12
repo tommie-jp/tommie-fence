@@ -40,9 +40,3 @@ function listHtml(errors: readonly FenceError[]): string {
 /** 図は描けたが一部が読めなかったときに、図の下へ貼る帯。 */
 export const renderErrorBanner = (errors: readonly FenceError[]): string =>
   errors.length === 0 ? '' : `<div class="breadboard-errors">${listHtml(errors)}</div>`;
-
-/** 図が 1 つも描けなかったときのカード。 */
-export const renderErrorCard = (errors: readonly FenceError[]): string =>
-  '<div class="breadboard-error-card">'
-  + '<p class="breadboard-error-title">breadboard フェンスを読めませんでした</p>'
-  + `${listHtml(errors)}</div>`;

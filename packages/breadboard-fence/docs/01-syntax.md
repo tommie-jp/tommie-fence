@@ -901,9 +901,15 @@ breadboard: 2 行目: 知らない部品の種類です: resistr (resistor の�
 
 | どこ | どう出るか |
 | --- | --- |
-| VS Code のプレビュー | 図の下に HTML の帯 (`.breadboard-errors`)。図が 1 枚も組めなければ、図の代わりにカード (`.breadboard-error-card`) |
+| VS Code のプレビュー | 図の下に HTML の帯 (`.breadboard-errors`) |
 | CLI | 標準エラーに同じ文面。読めなかった行が 1 つでもあれば終了コードは 1 |
-| コアを直に呼ぶとき | `renderBreadboard()` が `errors` / `notices` / `errorHtml` を返す。図が組めなければ `svg` は空文字列 |
+| コアを直に呼ぶとき | `renderBreadboard()` が `errors` / `notices` / `errorHtml` を返す |
+
+**板は必ず描く。** YAML が読めない行があっても、読めた所まで組んで返す。
+読めなかった行はその行だけが図から抜け、帯に出る。
+
+板を描き続けるのは**掴んで直せる場所を残すため**。図が消えると、エディタで
+部品を置くことも動かすこともできなくなり、字で直すしかなくなる。
 
 ### エラーとお知らせ
 

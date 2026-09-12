@@ -59,13 +59,20 @@ export function applyChanges(lines: readonly string[], changes: readonly Change[
   return out;
 }
 
-/** 本文を丸ごと書き戻す (戻す・やり直す)。範囲の外は断る。 */
+/**
+ * 本文を丸ごと書き戻す (戻す・やり直す)。範囲の外は断る。
+ *
+ * **0 行は断らない。** 本文が空のフェンス (` ```perfboard ` の次が閉じ記号) は
+ * 入れ替える行が無いだけで、書き足せないわけではない。断っていたころは
+ * 空のフェンスに最初の 1 つを置けず、「書き換えられませんでした」で終わっていた
+ * (52 の docs/54)。
+ */
 export function replaceLines(
   lines: readonly string[],
   from: number,
   count: number,
   body: readonly string[],
 ): string[] | null {
-  if (count <= 0 || from + count > lines.length) return null;
+  if (count < 0 || from < 0 || from > lines.length || from + count > lines.length) return null;
   return [...lines.slice(0, from), ...body, ...lines.slice(from + count)];
 }

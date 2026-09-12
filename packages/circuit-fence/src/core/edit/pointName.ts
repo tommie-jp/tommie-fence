@@ -47,7 +47,6 @@ export function nodeFields(source: string, handle: string): PartFields | null {
 
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return null;
   const node = nodesOf(doc, normalized).find((one) => formatAddress(one.address) === formatAddress(at));
   if (node === undefined) return null;
 
@@ -135,7 +134,6 @@ export function nameNode(source: string, handle: string, to: string): RewriteRes
 
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return fail('フェンスを読めないので名前を付けられません (先にエラーを直します)', null);
 
   const node = nodesOf(doc, normalized).find((one) => formatAddress(one.address) === formatAddress(at));
   if (node === undefined) return fail(`${formatAddress(at)} には節点がありません (何も書かれていません)`, null);

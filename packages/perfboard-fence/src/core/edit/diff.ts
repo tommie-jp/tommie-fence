@@ -26,7 +26,7 @@ const SEPARATOR = ' ';
  */
 function connectionsOf(source: string): Set<string> {
   const { doc } = parseFence(source);
-  const named = new Set((doc?.points ?? []).map((point) => point.name));
+  const named = new Set(doc.points.map((point) => point.name));
 
   const pairs = new Set<string>();
   for (const net of renderPerfboard(source).netlist) {

@@ -55,7 +55,7 @@ export function deviceBlock(lines: readonly string[], device: DeviceSpec): { fro
 }
 
 const deviceOf = (source: string, id: string): DeviceSpec | null =>
-  parseFence(normalizeNewlines(source)).doc?.devices.find((one) => one.id === id) ?? null;
+  parseFence(normalizeNewlines(source)).doc.devices.find((one) => one.id === id) ?? null;
 
 /** その名前が板の外の機器か。**部品と機器で編集の道が違う**ので、入口で分ける。 */
 export const isDevice = (source: string, id: string): boolean => deviceOf(source, id) !== null;
@@ -63,7 +63,7 @@ export const isDevice = (source: string, id: string): boolean => deviceOf(source
 /** 升目で掴める機器の名前。読めないフェンスでは空。 */
 export function deviceIds(source: string): readonly string[] {
   const { doc } = parseFence(normalizeNewlines(source));
-  return doc === null ? [] : doc.devices.filter((one) => one.line !== null).map((one) => one.id);
+  return doc.devices.filter((one) => one.line !== null).map((one) => one.id);
 }
 
 /** `at:` の値が書かれている場所。書いていなければ null (既定の `top`)。 */

@@ -56,7 +56,7 @@ const fieldsFor = (kind: PartSpec['kind']): readonly PartField[] => [
  */
 export function partFields(source: string, handle: string): PartFields | null {
   const { doc } = parseFence(normalizeNewlines(source));
-  const part = doc === null ? null : partOfHandle(doc.parts, handle);
+  const part = partOfHandle(doc.parts, handle);
   if (part === null) return null;
 
   return {
@@ -93,7 +93,6 @@ export function fieldProblem(text: string): string | null {
 export function setField(source: string, handle: string, field: PartField, text: string): RewriteResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (!doc) return fail('フェンスを読めないので書き換えられません (先にエラーを直します)', null);
 
   const part = partOfHandle(doc.parts, handle);
   const partId = nameOfHandle(handle);

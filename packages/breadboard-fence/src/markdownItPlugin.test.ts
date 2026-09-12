@@ -39,10 +39,12 @@ describe('breadboardPlugin', () => {
     expect(html).not.toContain('<svg');
   });
 
-  test('renders an error card in html instead of throwing when the fence is invalid', () => {
+  // **板は必ず描く** (52 の docs/54)。読めなかった行は図の下の帯に出る。
+  test('draws the board and puts the reason in the band when the fence cannot be read', () => {
     const html = md().render('```breadboard\nparts:\n  R1: [unclosed\n```');
 
-    expect(html).toContain('breadboard-error-card');
+    expect(html).toContain('<svg');
+    expect(html).toContain('breadboard-errors');
   });
 
   test('keeps working when the fence is empty', () => {

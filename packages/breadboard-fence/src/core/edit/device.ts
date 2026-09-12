@@ -32,9 +32,7 @@ export const isDevice = (source: string, id: string): boolean => deviceOf(source
 /** 升目で掴める機器の名前。読めないフェンスでは空。 */
 export function deviceIds(source: string): readonly string[] {
   const { doc } = parseFence(normalizeNewlines(source));
-  return doc === null
-    ? []
-    : doc.parts.filter((one) => one.type === 'device' && one.line !== null).map((one) => one.id);
+  return doc.parts.filter((one) => one.type === 'device' && one.line !== null).map((one) => one.id);
 }
 
 /** 機器の書かれている範囲。`AD2:` の行から、字下げが戻る手前まで。 */
@@ -233,9 +231,6 @@ export function setDeviceField(source: string, id: string, field: PartField, tex
 export function duplicateDevice(source: string, id: string, newId: string): AdditionResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) {
-    return { ok: false, error: fenceError('フェンスを読めないので複製できません (先にエラーを直します)', null) };
-  }
   const device = deviceOf(normalized, id);
   if (device?.line == null) {
     return { ok: false, error: fenceError(`機器が見つかりません: ${safeToken(id)}`, null) };
@@ -262,7 +257,6 @@ export function duplicateDevice(source: string, id: string, newId: string): Addi
 export function devicePinSpans(source: string, id: string): readonly Span[] {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return [];
   const lines = normalized.split('\n');
   const spans: Span[] = [];
   for (const wire of doc.wires) {

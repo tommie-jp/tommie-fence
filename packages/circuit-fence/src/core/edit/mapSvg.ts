@@ -1030,10 +1030,6 @@ export type MapLook = {
 };
 
 export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {}): string {
-  if (!map.readable) {
-    return '<p class="cf-note">フェンスを読めません。エラーを直すとマップが出ます。</p>';
-  }
-
   const nudges = nudgesOf(map.chips);
   // **画布は升目ではなく、描いたものに合わせる。** 40 本のマイコンボードは
   // 升 1 つに置くが箱は 20 行ぶんあり、升目の大きさで切ると図が丸ごと外へ出る

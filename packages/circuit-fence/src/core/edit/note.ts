@@ -56,7 +56,6 @@ function locate(source: string, handle: string): Found | Problem {
 
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return { problem: 'フェンスを読めないので直せません (先にエラーを直します)', line };
 
   const note = doc.notes.find((one) => one.line === line);
   if (note === undefined) return { problem: `${line} 行目に注釈がありません`, line };

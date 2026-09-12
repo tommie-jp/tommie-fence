@@ -772,12 +772,14 @@ describe('renderBreadboard', () => {
     expect(errorHtml).toContain('4 行目');
   });
 
-  test('returns no drawing at all when the fence cannot be read, and says so in html', () => {
+  // **読めない行があっても板は描く** (52 の docs/54)。掴んで直せる場所を
+  // 残すのが目的で、読めなかった行は図の下の帯に出る。
+  test('still draws the board when the fence cannot be read, and says so under it', () => {
     const { svg, errorHtml, errors } = renderBreadboard('parts:\n  R1: [unclosed\n');
 
     expect(errors.length).toBeGreaterThan(0);
-    expect(svg).toBe('');
-    expect(errorHtml).toContain('breadboard-error-card');
+    expect(svg).not.toBe('');
+    expect(errorHtml).toContain('breadboard-errors');
   });
 
   test('adds the line itself and a mark under the spelling it could not read', () => {

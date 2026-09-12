@@ -27,7 +27,7 @@ import { formatAddress, isCrossing, parseAddress } from './model/address.ts';
 import { offBoardReason } from './model/board.ts';
 import { fenceError, notice, safeToken, shiftErrors } from './errors.ts';
 import { renderDocument } from './render/document.ts';
-import { renderErrorBanner, renderErrorCard } from './render/errorHtml.ts';
+import { renderErrorBanner } from './render/errorHtml.ts';
 import { resolveStyle, themeForBoard } from './render/theme.ts';
 import type {
   Address, FenceError, PartSpec, PointSpec, ResolvedNote, RoutedWire,
@@ -118,20 +118,6 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
   const source = normalizeNewlines(input);
   const parsed = parseFence(source);
-
-  if (!parsed.doc) {
-    // **お知らせは図が出せないときも硬いエラーにしない。** 混ぜると CLI の
-    // 終了コードとカードの色分けが、直さなくても図が出るものを壊れ扱いする。
-    const reported = attachSourceText(parsed.errors, source);
-    const errors = reported.filter((error) => error.notice !== true);
-    const notices = reported.filter((error) => error.notice === true);
-    const at = (list: readonly FenceError[]): readonly FenceError[] => shiftErrors(list, options.offset ?? 0);
-    return {
-      svg: '', netlist: [],
-      errors: at(errors), notices: at(notices),
-      errorHtml: renderErrorCard([...at(errors), ...at(notices)]),
-    };
-  }
 
   const { board, title } = parsed.doc;
   const style = resolveStyle(parsed.doc.style);

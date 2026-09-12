@@ -44,7 +44,6 @@ const tokensOf = (text: string): readonly Token[] =>
 export function renamePart(source: string, handle: string, to: string): RewriteResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (!doc) return fail('フェンスを読めないので名前を変えられません (先にエラーを直します)', null);
 
   const part = partOfHandle(doc.parts, handle);
   const from = nameOfHandle(handle);

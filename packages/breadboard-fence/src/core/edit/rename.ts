@@ -31,7 +31,6 @@ function spanOf(text: string, word: string, from = 0): { column: number; length:
 export function renamePart(source: string, from: string, to: string): FieldResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return fail('フェンスを読めないので変えられません (先にエラーを直します)', null);
 
   const part = doc.parts.find((one) => one.id === from);
   if (part === undefined) return fail(`部品が見つかりません: ${safeToken(from)}`, null);

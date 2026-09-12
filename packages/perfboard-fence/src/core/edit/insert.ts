@@ -1,12 +1,13 @@
 import {
-  appendUnderKey, applyEdits, applyLineEdits, FLOW_REFUSAL, isFlowKey, keysUnder, leadOffsets, needsRoom,
+  appendUnderKey, applyEdits, applyLineEdits, FLOW_REFUSAL, isFlowKey, keyLineOf, keysUnder, leadOffsets,
+  needsRoom,
   normalizeNewlines, orientInserted, wireColor,
 } from 'fence-kit';
 import type { LineEdit, NetDiff } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { formatAddress } from '../model/address.ts';
-import { isOnBoard, isSolderable } from '../model/board.ts';
+import { DEFAULT_BOARD_SIZE, isOnBoard, isSolderable } from '../model/board.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { holesOf, partPrefix } from '../parts/catalog.ts';
 import { resolveTypeName, splitPartType } from '../parts/types.ts';
@@ -39,6 +40,19 @@ const fail = (message: string, line: number | null): AdditionResult =>
   ({ ok: false, error: fenceError(message, line) });
 
 /**
+ * `board:` が書かれていなければ、**頭に 1 行書き足す**。
+ *
+ * この板は穴の数が `board:` でしか決まらないので、書いていないフェンスは
+ * 既定の板 (`DEFAULT_BOARD`) で読んでいる。そこへ部品だけ足すと、**図は出るのに
+ * board: が要ると言われ続ける**フェンスが残る。最初に置いたときに書いてしまえば、
+ * 読み直した板と書いてある板が一致する (52 の docs/54 の決め 6)。
+ *
+ * 先に返すので `applyLineEdits` が同じ行への差し込みを**この順で**並べる。
+ */
+const boardLine = (lines: readonly string[]): readonly LineEdit[] =>
+  keyLineOf(lines, 'board') === 0 ? [{ kind: 'insert', line: 1, text: `board: ${DEFAULT_BOARD_SIZE}` }] : [];
+
+/**
  * 端点から端点へ 1 本。**色は色見本で選んでいるときだけ書く** (実機で
  * 「色パレットから色を選択した後、配線するとその色で配線できるようにする」)。
  * 選んでいなければ書かない — 既定の色で引いて、あとから欄で直せる。
@@ -46,7 +60,6 @@ const fail = (message: string, line: number | null): AdditionResult =>
 export function insertWire(source: string, from: Address, to: Address, color?: string): AdditionResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return fail('フェンスを読めないので足せません (先にエラーを直します)', null);
 
   const board = doc.board;
   for (const end of [from, to]) {
@@ -68,7 +81,7 @@ export function insertWire(source: string, from: Address, to: Address, color?: s
   // (色は属性の欄からいつでも直せる)。
   const inked = color !== undefined && wireColor(color) !== null ? ` ${color}` : '';
   const written = `- ${formatAddress(from)} -- ${formatAddress(to)}${inked}`;
-  const added = appendUnderKey(lines, 'wires', last, written);
+  const added = [...boardLine(lines), ...appendUnderKey(lines, 'wires', last, written)];
 
   return { ok: true, value: { edits: [], lines: added, diff: diffAfterLines(normalized, added) } };
 }
@@ -153,7 +166,7 @@ export function nextPartId(source: string, type: string): string | null {
   // 機器も同じ `parts:` の下に書くので、字から採ると名前が 1 つの入れ物で揃う
   // (機器は別の並び `doc.devices` に入るため、読めた部品だけでは数えられない)。
   const used = new Set([
-    ...(doc?.parts ?? []).map((part) => part.id),
+    ...doc.parts.map((part) => part.id),
     ...keysUnder(normalized.split('\n'), 'parts'),
   ]);
   for (let number = 1; number <= LIMITS.parts + 1; number += 1) {
@@ -172,7 +185,6 @@ export function nextPartId(source: string, type: string): string | null {
 export function insertPart(source: string, part: NewPart): AdditionResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return fail('フェンスを読めないので置けません (先にエラーを直します)', null);
 
   // **書かれた綴りはそのまま行に書き、足の数は種類から引く**。
   const written = resolveTypeName(part.type);
@@ -206,7 +218,7 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
 
   const last = doc.parts.reduce((deepest, one) => Math.max(deepest, one.line ?? 0), 0);
   const holes = spelled.join(' ');
-  const added = appendUnderKey(lines, 'parts', last, `${part.id}: ${written} ${holes}`);
+  const added = [...boardLine(lines), ...appendUnderKey(lines, 'parts', last, `${part.id}: ${written} ${holes}`)];
 
   // **穴 1 つで置く形 (DIP / SIP) は、足が書かれた穴より広がる。** 板に載るか
   // どうかは並べてみないと分からないので、置いた姿を読み直して確かめる
@@ -224,8 +236,8 @@ const baseTypeOf = (written: string): string => splitPartType(written).type;
 /** その部品が使っている穴 (書かれた綴り)。ゴーストの光らせ先。無ければ空。 */
 export function partCells(source: string, id: string): readonly string[] {
   const { doc } = parseFence(normalizeNewlines(source));
-  const part = doc?.parts.find((one) => one.id === id);
-  if (!doc || part === undefined) return [];
+  const part = doc.parts.find((one) => one.id === id);
+  if (part === undefined) return [];
   const placed = placeParts([part], doc.board).parts[0];
   return placed === undefined ? [] : placed.pins.map((pin) => formatAddress(pin.address));
 }
@@ -243,7 +255,6 @@ export function partCells(source: string, id: string): readonly string[] {
 export function duplicatePart(source: string, id: string, newId: string): AdditionResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return fail('フェンスを読めないので複製できません (先にエラーを直します)', null);
   if (doc.parts.some((one) => one.id === newId)) {
     return fail(`その名前はもう使われています: ${newId}`, null);
   }

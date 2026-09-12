@@ -57,10 +57,9 @@ export type Doc = {
  * `points:` は行番号をモデルが持っているので、本文から引き直す必要が無い
  * (breadboard は持っていないので引き直している — 揃えるならあちらを寄せる)。
  */
-export function scan(source: string): Doc | null {
+export function scan(source: string): Doc {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return null;
 
   const lines = normalized.split('\n');
   const names = new Map<string, Address>();
@@ -141,7 +140,6 @@ const same = (one: Address, other: Address): boolean => one.row === other.row &&
 /** マップで掴める節点。**何かが書かれている穴だけ**を、読み順に並べる。 */
 export function movableNodes(source: string): readonly NodeRef[] {
   const doc = scan(source);
-  if (doc === null) return [];
 
   const byAddress = new Map<string, { address: Address; uses: number }>();
   for (const one of doc.written) {
@@ -162,7 +160,6 @@ export function movableNodes(source: string): readonly NodeRef[] {
 /** その節点が書かれている場所。エディタで光らせるのに使う。 */
 export function nodeSpans(source: string, at: Address): readonly Span[] {
   const doc = scan(source);
-  if (doc === null) return [];
 
   return doc.written
     .filter((one) => same(one.address, at))
@@ -171,7 +168,6 @@ export function nodeSpans(source: string, at: Address): readonly Span[] {
 
 export function movePoint(source: string, at: Address, to: Address, trial = false): MoveResult {
   const doc = scan(source);
-  if (doc === null) return fail('フェンスを読めませんでした', null);
 
   const here = doc.written.filter((one) => same(one.address, at));
   if (here.length === 0) return fail(`${formatAddress(at)} には何も書かれていません`, null);

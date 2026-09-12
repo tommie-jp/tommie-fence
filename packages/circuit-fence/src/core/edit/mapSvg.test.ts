@@ -110,8 +110,8 @@ describe('renderMapHtml が描くもの', () => {
     expect(svg).not.toContain('<img');
   });
 
-  test('says so when the fence cannot be read, instead of an empty grid', () => {
-    expect(draw('parts: [')).toContain('読めません');
+  test('draws the grid even when the fence cannot be read', () => {
+    expect(draw('parts: [')).toContain('cf-map');
   });
 });
 

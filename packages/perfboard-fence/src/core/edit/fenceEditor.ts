@@ -51,7 +51,7 @@ export function createPerfboardEditor(): FenceEditor {
 
     fences: (markdown) => extractPerfboardFences(markdown).map((fence) => ({
       line: fence.line,
-      title: parseFence(normalizeNewlines(fence.source)).doc?.title ?? null,
+      title: parseFence(normalizeNewlines(fence.source)).doc.title,
     })),
     fenceAt,
     firstFence: (markdown) => extractPerfboardFences(markdown)[0] ?? null,

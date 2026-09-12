@@ -137,8 +137,6 @@ export type GridMap = {
   readonly dots: readonly Dot[];
   /** 引く線。部品の形と違い、**書かれたとおりの位置**に引ける。 */
   readonly wires: readonly WireLine[];
-  /** フェンスを読めたか。読めなければマップは空。 */
-  readonly readable: boolean;
 };
 
 /** 動かせる余地。部品が端に寄っていても、その先へ運べる升を出しておく。 */
@@ -270,12 +268,6 @@ function labelOf(type: PartType, anchor: string): string | null {
 export function gridMap(source: string): GridMap {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (!doc) {
-    return {
-      rows: MIN_ROWS, cols: MIN_COLS, chips: [], notes: [], dots: [], wires: [], readable: false,
-    };
-  }
-
   const chips: Chip[] = [];
 
   for (const [index, part] of doc.parts.entries()) {
@@ -340,7 +332,7 @@ export function gridMap(source: string): GridMap {
   const rows = Math.min(26, Math.max(MIN_ROWS, ...span((cell) => cell.row)));
   const cols = Math.min(LIMITS.columns, Math.max(MIN_COLS, ...span((cell) => cell.col)));
 
-  return { rows, cols, chips, notes, dots, wires, readable: true };
+  return { rows, cols, chips, notes, dots, wires };
 }
 
 /**
@@ -360,7 +352,6 @@ export type Aim =
 export function aimAt(source: string, line: number, column: number): Aim | null {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (!doc) return null;
 
   const text = normalized.split('\n')[line - 1];
   if (text === undefined) return null;
@@ -421,7 +412,7 @@ export function fenceAt(markdown: string, line: number): FenceBlock | null {
  */
 export function partCells(source: string, handle: string): readonly string[] {
   const { doc } = parseFence(normalizeNewlines(source));
-  const part = doc === null ? null : partOfHandle(doc.parts, handle);
+  const part = partOfHandle(doc.parts, handle);
   return part === null ? [] : addressesOf(part).map(formatAddress);
 }
 

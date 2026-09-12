@@ -17,6 +17,13 @@ export type BoardFinish = {
   readonly slotColor?: string | null;
 };
 
+/**
+ * `board:` が書かれていないときの板。**書き始める前から止めない**ために持つ
+ * (52 の docs/54)。綴りは文法リファレンスの見本と同じ `25x15` で、
+ * エディタが最初の部品を置いたときにこの綴りが書かれる。
+ */
+export const DEFAULT_BOARD_SIZE = '25x15';
+
 export const createBoard = (size: BoardSize, finish: BoardFinish = {}): Board => ({
   cols: size.cols,
   rows: size.rows,
@@ -33,6 +40,9 @@ export const createBoard = (size: BoardSize, finish: BoardFinish = {}): Board =>
  * **場所を決めるのはここ 1 か所。** 寸法 (`createLayout`) と描画
  * (`render/slots.ts`) が別々に決めると、板の余白と銅箔の位置が食い違う。
  */
+/** 書かれていないときの板そのもの。`DEFAULT_BOARD_SIZE` を読んだもの。 */
+export const DEFAULT_BOARD: Board = createBoard({ cols: 25, rows: 15 });
+
 export const slotEdges = (board: Board): 'sides' | 'ends' | null =>
   !board.slots ? null : board.cols >= board.rows ? 'sides' : 'ends';
 

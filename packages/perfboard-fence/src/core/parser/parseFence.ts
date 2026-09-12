@@ -1,7 +1,7 @@
 import { LineCounter, isMap, isScalar, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
 import { fenceError, notice, safeToken } from '../errors.ts';
-import { resolveBoard } from '../model/board.ts';
+import { DEFAULT_BOARD, resolveBoard } from '../model/board.ts';
 import { isLandColor, isPlateColor, landNames, plateNames } from '../render/finish.ts';
 import { boardNames } from '../model/catalog.ts';
 import { LIMITS } from '../limits.ts';
@@ -32,7 +32,17 @@ const BOARD_KEYS = ['size', 'slots', 'color', 'land'] as const;
 /** `on` / `off` は YAML 1.2 では字。`style:` と同じ受け方を board にも与える。 */
 const FLAG_WORDS: Record<string, boolean> = { on: true, off: false };
 
-export type ParseResult = { readonly doc: FenceDocument | null; readonly errors: readonly FenceError[] };
+/**
+ * 読んだ結果。**`doc` は必ずある** — YAML が転んでも、`board:` が書かれて
+ * いなくても、読めた所は返す (52 の docs/54「エディターを YAML の都合で
+ * 止めない」)。読めなかった行は `errors` に行番号つきで並ぶ。
+ */
+export type ParseResult = { readonly doc: FenceDocument; readonly errors: readonly FenceError[] };
+
+/** 何も読めなかったときに返す中身。板だけは既定のものを持つ。 */
+const emptyDocument = (): FenceDocument => ({
+  board: DEFAULT_BOARD, title: null, parts: [], wires: [], points: [], style: EMPTY_STYLE, notes: [], devices: [],
+});
 
 const scalarText = (node: unknown): string | null => {
   if (!isScalar(node)) return null;
@@ -63,25 +73,14 @@ const writtenText = (node: unknown, source: string): string | null => {
  */
 function readFence(source: string): ParseResult {
   if (source.trim() === '') {
-    return { doc: null, errors: [fenceError('perfboard フェンスが空です (board: から書き始めます)', null)] };
+    // **空でも板は返す。** ここで止めると、書き始める前からエディタが動かない。
+    return { doc: emptyDocument(), errors: [fenceError('perfboard フェンスが空です (board: から書き始めます)', null)] };
   }
 
   const lineCounter = new LineCounter();
   // 重複キーは YAML のエラーにせず、こちらで名指して報告する
   // (どのキーが 2 つあるのかを、こちらの言葉で言うため)。
   const parsed = parseDocument(source, { lineCounter, uniqueKeys: false });
-
-  if (parsed.errors.length > 0) {
-    return {
-      doc: null,
-      errors: parsed.errors.map((error) =>
-        fenceError(
-          `YAML の構文エラー: ${(error.message.split('\n')[0] ?? '').slice(0, MAX_YAML_MESSAGE)}`,
-          lineCounter.linePos(error.pos[0]).line,
-        ),
-      ),
-    };
-  }
 
   const lineOf = (node: Node | Pair | null | undefined): number | null => {
     const range = (node as { range?: readonly [number, number, number] } | null)?.range;
@@ -93,14 +92,22 @@ function readFence(source: string): ParseResult {
   // 何も書いていない行を名指すことになる。
   const contentLine = lineOf(root as Node | null);
 
-  if (!isMap(root)) {
-    return {
-      doc: null,
-      errors: [fenceError('フェンスの一番外側は `キーと値` の並びにします (`board: ...` から)', contentLine)],
-    };
-  }
+  /**
+   * **YAML が転んでも、そこで止めない。** `yaml` は転んだ行より前後の読めた所を
+   * `contents` に残すので、読めた部品と配線はそのまま返し、読めなかった行だけ
+   * 行番号つきで言う (52 の docs/54)。
+   */
+  const errors: FenceError[] = parsed.errors.map((error) =>
+    fenceError(
+      `YAML の構文エラー: ${(error.message.split('\n')[0] ?? '').slice(0, MAX_YAML_MESSAGE)}`,
+      lineCounter.linePos(error.pos[0]).line,
+    ),
+  );
 
-  const errors: FenceError[] = [];
+  if (!isMap(root)) {
+    errors.push(fenceError('フェンスの一番外側は `キーと値` の並びにします (`board: ...` から)', contentLine));
+    return { doc: emptyDocument(), errors };
+  }
   const parts: PartSpec[] = [];
   const devices: DeviceSpec[] = [];
   const wires: WireSpec[] = [];
@@ -471,16 +478,17 @@ function readFence(source: string): ParseResult {
     if (found.notice !== null) errors.push(notice(found.notice, at, written));
   }
 
-  if (board === null) {
-    // 板が決まらないと穴の数が決まらないので、番地も配置も読めない。
-    // **`board:` と書いてあって読めなかったときは言わない** — すぐ上で言っている。
-    if (!boardWritten) {
-      errors.push(fenceError(`board: が要ります。${BOARD_HINT}`, contentLine));
-    }
-    return { doc: null, errors };
+  // **板が決まらなくても既定の板で返す** (52 の docs/54)。穴の数が決まらないと
+  // 番地も配置も読めないが、止めると書き始められない。要ることは言う。
+  // **`board:` と書いてあって読めなかったときは言わない** — すぐ上で言っている。
+  if (board === null && !boardWritten) {
+    errors.push(fenceError(`board: が要ります。${BOARD_HINT}`, contentLine));
   }
 
-  return { doc: { board, title, style, parts, devices, wires, points, notes }, errors };
+  return {
+    doc: { board: board ?? DEFAULT_BOARD, title, style, parts, devices, wires, points, notes },
+    errors,
+  };
 }
 
 /**

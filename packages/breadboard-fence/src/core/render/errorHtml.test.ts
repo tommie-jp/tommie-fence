@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { fenceError, notice } from '../errors.ts';
-import { renderErrorBanner, renderErrorCard } from './errorHtml.ts';
+import { renderErrorBanner } from './errorHtml.ts';
 import { errorLine, errorText } from './errorText.ts';
 
 const withSource = { ...fenceError('知らない部品', 2, 'resistr'), text: '  R1: resistr a5', at: { column: 6, length: 7 } };
@@ -52,14 +52,5 @@ describe('renderErrorBanner', () => {
     const many = Array.from({ length: 12 }, (_, index) => fenceError(`だめ ${index}`, index + 1));
 
     expect(renderErrorBanner(many)).toContain('ほかに 4 件');
-  });
-});
-
-describe('renderErrorCard', () => {
-  test('says that the fence could not be read at all', () => {
-    const html = renderErrorCard([fenceError('YAML の構文エラー', 3)]);
-
-    expect(html).toContain('breadboard-error-card');
-    expect(html).toContain('読めませんでした');
   });
 });

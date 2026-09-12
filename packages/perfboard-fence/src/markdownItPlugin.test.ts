@@ -9,7 +9,7 @@ describe('perfboardPlugin', () => {
     const html = md().render('```perfboard\n```');
 
     expect(html).toContain('class="perfboard"');
-    expect(html).toContain('perfboard-error-card');
+    expect(html).toContain('perfboard-errors');
     expect(html).not.toContain('<code');
   });
 
@@ -20,9 +20,10 @@ describe('perfboardPlugin', () => {
     expect(html).not.toContain('perfboard-error-card');
   });
 
-  test('renders a card instead of throwing when the fence cannot be read', () => {
+  // **板は必ず描く** (52 の docs/54)。読めなかった行は図の下の帯に出る。
+  test('draws the board and puts the reason in the band when the fence cannot be read', () => {
     expect(() => md().render('```perfboard\nparts:\n  R1: [unclosed\n```')).not.toThrow();
-    expect(md().render('```perfboard\nparts:\n  R1: [unclosed\n```')).toContain('perfboard-error-card');
+    expect(md().render('```perfboard\nparts:\n  R1: [unclosed\n```')).toContain('perfboard-errors');
   });
 
   test('does not let the fence content escape into the surrounding html', () => {

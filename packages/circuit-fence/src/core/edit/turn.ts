@@ -50,10 +50,9 @@ function rewriteOf(source: string, edits: readonly Edit[]): RewriteResult {
 }
 
 /** 掴んだ部品を取り出す。回すのも裏返すのも、まずここを通る。 */
-function partAt(source: string, handle: string, what: string) {
+function partAt(source: string, handle: string) {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (!doc) return fail(`フェンスを読めないので${what}できません (先にエラーを直します)`, null);
 
   const part = partOfHandle(doc.parts, handle);
   if (!part) return fail(`部品が見つかりません: ${nameOfHandle(handle)}`, null);
@@ -162,7 +161,7 @@ const editsFor = (
   });
 
 export function turnPart(source: string, handle: string, quarters: number): RewriteResult {
-  const found = partAt(source, handle, '回');
+  const found = partAt(source, handle);
   if (!found.ok) return found;
 
   const { normalized, doc, part } = found;
@@ -227,7 +226,7 @@ export function turnPart(source: string, handle: string, quarters: number): Rewr
 }
 
 export function flipPart(source: string, handle: string): RewriteResult {
-  const found = partAt(source, handle, '反転');
+  const found = partAt(source, handle);
   if (!found.ok) return found;
 
   const { normalized, doc, part } = found;

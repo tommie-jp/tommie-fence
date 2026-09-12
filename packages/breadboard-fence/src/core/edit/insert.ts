@@ -49,7 +49,6 @@ const fail = (message: string, line: number | null): AdditionResult =>
 export function insertWire(source: string, from: Address, to: Address, color?: string): AdditionResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return fail('フェンスを読めないので足せません (先にエラーを直します)', null);
 
   const board = createBoard(doc.board);
   for (const end of [from, to]) {
@@ -203,7 +202,6 @@ export function nextPartId(source: string, type: string): string | null {
 export function insertPart(source: string, part: NewPart): AdditionResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return fail('フェンスを読めないので置けません (先にエラーを直します)', null);
 
   // **書かれた綴りはそのまま行に書き、足の数は種類から引く** (`led/3mm` の
   // 足の数は `led` のもの)。姿を落とすと、書いた姿が黙って消える。
@@ -259,8 +257,8 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
 /** その部品が使っている穴 (書かれた綴り)。ゴーストの光らせ先。無ければ空。 */
 export function partCells(source: string, id: string): readonly string[] {
   const { doc } = parseFence(normalizeNewlines(source));
-  const part = doc?.parts.find((one) => one.id === id);
-  if (!doc || part === undefined) return [];
+  const part = doc.parts.find((one) => one.id === id);
+  if (part === undefined) return [];
   const placed = placeParts([part], createBoard(doc.board)).parts[0];
   if (placed === undefined) return [];
   return placed.pins.map((pin) => pin.address).filter((one): one is Address => one !== null).map(formatAddress);
@@ -279,7 +277,6 @@ export function partCells(source: string, id: string): readonly string[] {
 export function duplicatePart(source: string, id: string, newId: string): AdditionResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return fail('フェンスを読めないので複製できません (先にエラーを直します)', null);
   if (doc.parts.some((one) => one.id === newId)) {
     return fail(`その名前はもう使われています: ${newId}`, null);
   }

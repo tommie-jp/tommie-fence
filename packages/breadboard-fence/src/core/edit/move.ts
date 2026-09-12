@@ -84,7 +84,6 @@ export type Located = {
 export function locatePart(source: string, id: string): Located | { readonly error: FenceError } {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return { error: fenceError('フェンスを読めませんでした', null) };
 
   const part = doc.parts.find((one) => one.id === id);
   if (part === undefined) return { error: fenceError(`部品がありません: ${safeToken(id)}`, null) };
@@ -120,7 +119,6 @@ export const isLocated = (found: Located | { error: FenceError }): found is Loca
 /** マップで掴める部品の名前。読めないフェンスでは空。 */
 export function movablePartIds(source: string): readonly string[] {
   const { doc } = parseFence(normalizeNewlines(source));
-  if (doc === null) return [];
   return doc.parts.filter((part) => part.holes.length > 0).map((part) => part.id);
 }
 

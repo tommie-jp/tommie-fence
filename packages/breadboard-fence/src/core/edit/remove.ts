@@ -52,7 +52,6 @@ function removal(source: string, drop: ReadonlySet<number>, extra: number): Remo
 export function deletePart(source: string, id: string): RemovalResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return fail('フェンスを読めないので消せません (先にエラーを直します)', null);
 
   const part = doc.parts.find((one) => one.id === id);
   if (part === undefined) return fail(`部品が見つかりません: ${safeToken(id)}`, null);
@@ -98,7 +97,6 @@ export function deletePart(source: string, id: string): RemovalResult {
 export function deleteWire(source: string, line: number): RemovalResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return fail('フェンスを読めないので消せません (先にエラーを直します)', null);
 
   const on = doc.wires.filter((wire) => wire.line === line);
   if (on.length === 0) return fail(`${line} 行目に配線がありません`, line);

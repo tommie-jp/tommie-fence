@@ -5,14 +5,14 @@ describe('parseFence', () => {
   test('says the fence is empty instead of drawing nothing in silence', () => {
     const parsed = parseFence('   \n\n');
 
-    expect(parsed.doc).toBeNull();
+    // **空でも既定の板は返す** (52 の docs/54)。ここで止めると書き始められない。
+    expect(parsed.doc.board.cols).toBeGreaterThan(0);
     expect(parsed.errors[0]?.message).toContain('空');
   });
 
   test('reports a yaml syntax error with the line it is on', () => {
     const parsed = parseFence('board: 28x18\n\tparts: 1\n');
 
-    expect(parsed.doc).toBeNull();
     expect(parsed.errors[0]?.message).toContain('YAML の構文エラー');
     expect(parsed.errors[0]?.line).toBe(2);
   });
@@ -28,7 +28,8 @@ describe('parseFence', () => {
   test('rejects a fence whose top level is not a mapping', () => {
     const parsed = parseFence('- board: 28x18\n');
 
-    expect(parsed.doc).toBeNull();
+    // 読める所が無くても空の中身を返す (52 の docs/54)。
+    expect(parsed.doc.parts).toEqual([]);
     expect(parsed.errors[0]?.message).toContain('キーと値');
   });
 
@@ -60,7 +61,6 @@ describe('parseFence', () => {
   test('names a board it cannot read, and shows how to write one', () => {
     const parsed = parseFence('board: elegoo-5x7\n');
 
-    expect(parsed.doc).toBeNull();
     expect(parsed.errors[0]?.message).toContain('elegoo-5x7');
     expect(parsed.errors[0]?.message).toContain('akizuki-c');
   });
@@ -86,7 +86,6 @@ describe('parseFence', () => {
     // 7×5cm は汎用基板の呼び名。**丸めて秋月 C に当てない** — 別の板で穴数も違う。
     const parsed = parseFence('board: 7x5cm\n');
 
-    expect(parsed.doc).toBeNull();
     expect(parsed.errors[0]?.message).toContain('akizuki-c');
     expect(parsed.errors[0]?.token).toBe('7x5cm');
   });
@@ -127,7 +126,6 @@ describe('parseFence', () => {
     // 直す手が違う。`offBoardReason` が行と列を言い分けるのと同じ理由。
     const parsed = parseFence('board: 1000x1000\n');
 
-    expect(parsed.doc).toBeNull();
     expect(parsed.errors[0]?.message).toContain('大きすぎ');
     expect(parsed.errors[0]?.message).toContain('120x120');
   });

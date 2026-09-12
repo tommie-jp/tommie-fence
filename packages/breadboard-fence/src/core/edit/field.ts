@@ -72,7 +72,6 @@ type Layout = {
 function layoutOf(source: string, id: string): Layout | null {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return null;
 
   const part = doc.parts.find((one) => one.id === id);
   const text = part === undefined ? undefined : normalized.split('\n')[part.line - 1];

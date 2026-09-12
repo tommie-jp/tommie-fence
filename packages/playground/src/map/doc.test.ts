@@ -104,6 +104,18 @@ describe('replaceLines', () => {
 
   test('文書からはみ出す指定は断る', () => {
     expect(replaceLines(lines, 3, 99, ['x'])).toBeNull();
-    expect(replaceLines(lines, 3, 0, ['x'])).toBeNull();
+    expect(replaceLines(lines, 99, 0, ['x'])).toBeNull();
+    expect(replaceLines(lines, 3, -1, ['x'])).toBeNull();
+  });
+
+  // **空のフェンスにも書ける** (52 の docs/54)。本文が 0 行のフェンスは
+  // 入れ替える行が無いだけで、書き足せないわけではない。
+  test('本文が 0 行のフェンスには差し込む', () => {
+    const empty = ['# 例', '', '```perfboard', '```', ''];
+    const out = replaceLines(empty, 3, 0, ['board: 25x15', 'parts:', '  R1: resistor b2 b6']);
+
+    expect(out?.join('\n')).toBe([
+      '# 例', '', '```perfboard', 'board: 25x15', 'parts:', '  R1: resistor b2 b6', '```', '',
+    ].join('\n'));
   });
 });

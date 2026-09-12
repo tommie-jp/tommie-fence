@@ -54,7 +54,6 @@ function locate(source: string, handle: string): Found | { readonly problem: str
 
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return { problem: 'フェンスを読めないので直せません (先にエラーを直します)', line };
 
   const note = doc.notes.find((one) => one.line === line);
   if (note === undefined) return { problem: `${line} 行目に注釈がありません`, line };
@@ -157,7 +156,7 @@ export function moveNote(source: string, handle: string, to: Address, trial = fa
 /** 板の大きさ。読めなければ null (そのときは板の外かどうかを見ない)。 */
 function boardOf(source: string): ReturnType<typeof createBoard> | null {
   const { doc } = parseFence(normalizeNewlines(source));
-  return doc?.board ?? null;
+  return doc.board;
 }
 
 /**
@@ -194,7 +193,7 @@ export function deleteNote(source: string, handle: string): NoteResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
   const drop = new Set<number>([found.line]);
-  if ((doc?.notes ?? []).every((one) => one.line === found.line)) drop.add(keyLineOf(found.lines, 'notes'));
+  if (doc.notes.every((one) => one.line === found.line)) drop.add(keyLineOf(found.lines, 'notes'));
 
   const lines = dropLines(drop);
   return { ok: true, value: { edits: [], lines, diff: diffAfterLines(normalized, lines) } };

@@ -36,14 +36,13 @@ export function movablePartIds(source: string): readonly string[] {
 /** 部品のいまの番地 (アンカー)。見つからなければ null。 */
 export function anchorOf(source: string, handle: string): Address | null {
   const { doc } = parseFence(normalizeNewlines(source));
-  const part = doc === null ? null : partOfHandle(doc.parts, handle);
+  const part = partOfHandle(doc.parts, handle);
   return part ? (addressesOf(part)[0] as Address) : null;
 }
 
 export function movePart(source: string, handle: string, to: Address, trial = false): MoveResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (!doc) return fail('フェンスを読めないので動かせません (先にエラーを直します)', null);
 
   const part = partOfHandle(doc.parts, handle);
   const partId = nameOfHandle(handle);
@@ -97,7 +96,6 @@ export function movePart(source: string, handle: string, to: Address, trial = fa
 export function partSpans(source: string, handle: string): readonly Span[] {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (!doc) return [];
 
   const located = locatePart(doc, normalized.split('\n'), handle);
   if (located === null) return [];

@@ -59,7 +59,12 @@ export type FenceDocument = {
   readonly style: StyleSpec;
 };
 
-export type ParseResult = { readonly doc: FenceDocument | null; readonly errors: readonly FenceError[] };
+/**
+ * 読んだ結果。**`doc` は必ずある** — YAML が転んでも、読めた所は返す
+ * (52 の docs/54「エディターを YAML の都合で止めない」)。読めなかった行は
+ * `errors` に行番号つきで並ぶ。何も読めなければ中身の空な `doc` が返る。
+ */
+export type ParseResult = { readonly doc: FenceDocument; readonly errors: readonly FenceError[] };
 
 type LineOf = (node: Node | Pair | null | undefined) => number | null;
 
@@ -82,23 +87,23 @@ function readFence(source: string): ParseResult {
     return range ? lineCounter.linePos(range[0]).line : null;
   };
 
-  if (parsed.errors.length > 0) {
-    return {
-      doc: null,
-      // yaml のメッセージはライブラリ側の文言。描画時にエスケープされる前提で載せる。
-      errors: parsed.errors.map((error) => {
-        const reason = (error.message.split('\n')[0] ?? '')
-          .replace(YAML_POSITION, '')
-          .slice(0, MAX_YAML_MESSAGE);
-        const hint = YAML_HINTS[error.code];
-        // 桁は yaml が数えたものをそのまま使う (こちらで綴りを探し直す必要がない)。
-        const { line, col } = lineCounter.linePos(error.pos[0]);
-        return fenceErrorAt(`YAML の構文エラー: ${reason}${hint === undefined ? '' : ` ${hint}`}`, line, col);
-      }),
-    };
-  }
+  /**
+   * **YAML が転んでも、そこで止めない。** `yaml` は転んだ行より前後の読めた所を
+   * `contents` に残すので、読めた部品と配線はそのまま返し、読めなかった行だけ
+   * 行番号つきで言う (52 の docs/54)。前は 1 か所でも転ぶと `doc: null` を返し、
+   * 置く・動かす・消すが全部断られて升目が空になっていた。
+   */
+  const errors: FenceError[] = parsed.errors.map((error) => {
+    // yaml のメッセージはライブラリ側の文言。描画時にエスケープされる前提で載せる。
+    const reason = (error.message.split('\n')[0] ?? '')
+      .replace(YAML_POSITION, '')
+      .slice(0, MAX_YAML_MESSAGE);
+    const hint = YAML_HINTS[error.code];
+    // 桁は yaml が数えたものをそのまま使う (こちらで綴りを探し直す必要がない)。
+    const { line, col } = lineCounter.linePos(error.pos[0]);
+    return fenceErrorAt(`YAML の構文エラー: ${reason}${hint === undefined ? '' : ` ${hint}`}`, line, col);
+  });
 
-  const errors: FenceError[] = [];
   const parts: PartSpec[] = [];
   const wires: WireSpec[] = [];
   const notes: NoteSpec[] = [];
@@ -108,10 +113,10 @@ function readFence(source: string): ParseResult {
   const contents = parsed.contents;
   if (contents === null) return { doc: { source, title, points: NO_POINTS, parts, wires, notes, style }, errors };
   if (!isMap(contents)) {
-    return {
-      doc: null,
-      errors: [fenceError(`フェンスの中身は ${TOP_LEVEL_KEYS.join(' / ')} のマップで書きます`, 1)],
-    };
+    // **読める所が 1 つも無くても、空の中身を返す。** ここで止めると、
+    // 打ちかけのフェンスに最初の 1 つを置けない (52 の docs/54 の決め 7)。
+    errors.push(fenceError(`フェンスの中身は ${TOP_LEVEL_KEYS.join(' / ')} のマップで書きます`, 1));
+    return { doc: { source, title, points: NO_POINTS, parts, wires, notes, style }, errors };
   }
 
   // 名前は**先に全部集める**。YAML のマップに順は無いので、`points:` を

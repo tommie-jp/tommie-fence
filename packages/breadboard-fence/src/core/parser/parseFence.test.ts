@@ -210,10 +210,11 @@ describe('parseFence', () => {
     expect(errors[0]?.message).toContain('parts-list');
   });
 
-  test('reports a yaml syntax error with the line it happens on', () => {
+  test('reports a yaml syntax error with the line it happens on, and still returns a document', () => {
     const { doc, errors } = parseFence('parts:\n  R1: [unclosed\n');
 
-    expect(doc).toBeNull();
+    // 読めた所は返す (52 の docs/54)。この本文は 1 つも読めないので中身は空。
+    expect(doc.parts).toEqual([]);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0]?.line).toBeGreaterThan(0);
   });

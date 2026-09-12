@@ -90,10 +90,9 @@ export type Doc = {
  * 本文の中で番地が書かれている場所を全部集める。
  * **`points:` の行も部品の行も配線の行も同じ形で並ぶ** (掴む先はどれも穴)。
  */
-export function scan(source: string): Doc | null {
+export function scan(source: string): Doc {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (doc === null) return null;
 
   const lines = normalized.split('\n');
   const names = new Map<string, Address>();
@@ -158,7 +157,6 @@ const sameAddress = (one: Address, other: Address): boolean =>
 /** マップで掴める節点。**何かが書かれている穴だけ**を、読み順に並べる。 */
 export function movableNodes(source: string): readonly NodeRef[] {
   const doc = scan(source);
-  if (doc === null) return [];
 
   const byAddress = new Map<string, { address: Address; uses: number }>();
   for (const one of doc.written) {
@@ -182,7 +180,6 @@ export function movableNodes(source: string): readonly NodeRef[] {
 /** その節点が書かれている場所。エディタで光らせるのに使う。 */
 export function nodeSpans(source: string, at: Address): readonly Span[] {
   const doc = scan(source);
-  if (doc === null) return [];
 
   return doc.written
     .filter((one) => sameAddress(one.address, at))
@@ -197,7 +194,6 @@ function shifted(address: Address, to: Address, columns: number): Address | null
 
 export function movePoint(source: string, at: Address, to: Address, trial = false): MoveResult {
   const doc = scan(source);
-  if (doc === null) return fail('フェンスを読めませんでした', null);
 
   const here = doc.written.filter((one) => sameAddress(one.address, at));
   if (here.length === 0) {

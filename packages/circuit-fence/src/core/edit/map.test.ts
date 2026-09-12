@@ -276,8 +276,13 @@ describe('renderMapHtml', () => {
     expect(renderMapHtml(map)).not.toContain('<img');
   });
 
-  test('says so when there is nothing to show', () => {
-    expect(renderMapHtml(gridMap('parts:\n  R1: [unclosed\n'))).toContain('読めません');
+  // **升目は必ず出す** (52 の docs/54)。読めない行があるあいだ升目が消えると、
+  // 掴んで直すこともできなくなる。
+  test('draws the grid even when part of the fence cannot be read', () => {
+    const html = renderMapHtml(gridMap('parts:\n  R1: [unclosed\n'));
+
+    expect(html).toContain('cf-map');
+    expect(html).not.toContain('読めません');
   });
 });
 

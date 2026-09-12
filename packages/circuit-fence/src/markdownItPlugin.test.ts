@@ -44,7 +44,14 @@ describe('circuitPlugin', () => {
   test('shows the reason on the line it was written rather than throwing', () => {
     const html = md().render('```circuit\nparts:\n  R1: resistor a1 a3\n bad: indent\n```');
 
+    // 読めた部品があるので図の側へ進み、読めなかった行は帯に出る (52 の docs/54)。
     expect(html).toContain('行目');
+    expect(html).toContain('circuit-errors');
+  });
+
+  test('falls back to the card when not one part could be read', () => {
+    const html = md().render('```circuit\nparts:\n  R1: [unclosed\n```');
+
     expect(html).toContain('circuit-error-card');
   });
 

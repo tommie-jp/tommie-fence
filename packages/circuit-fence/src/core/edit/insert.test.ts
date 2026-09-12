@@ -83,8 +83,10 @@ describe('insertWire', () => {
     expect(insertWire(source, at('a1'), at('c1')).ok === false).toBe(true);
   });
 
-  test('refuses a fence it cannot read', () => {
-    expect(insertWire('parts:\n  R1: [unclosed\n', at('a1'), at('a3')).ok).toBe(false);
+  // **読めない行があっても足す** (52 の docs/54)。直すのは書いた人で、
+  // エディタは邪魔をしない。読めなかった行はそのまま残る。
+  test('still adds the line when part of the fence cannot be read', () => {
+    expect(insertWire('parts:\n  R1: [unclosed\n', at('a1'), at('a3')).ok).toBe(true);
   });
 });
 
@@ -209,8 +211,8 @@ describe('nextPartId', () => {
     expect(nextPartId(RC, 'flux-capacitor')).toBeNull();
   });
 
-  test('has nothing to offer for a fence it cannot read', () => {
-    expect(nextPartId('parts:\n  R1: [unclosed\n', 'resistor')).toBeNull();
+  test('still offers a name when part of the fence cannot be read', () => {
+    expect(nextPartId('parts:\n  R1: [unclosed\n', 'resistor')).not.toBeNull();
   });
 });
 

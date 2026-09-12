@@ -67,11 +67,20 @@ export async function replaceBody(
   count: number,
   body: readonly string[],
 ): Promise<boolean> {
-  if (count <= 0 || fenceLine + count > document.lineCount) return false;
-  const last = fenceLine + count - 1;
-  const range = new vscode.Range(fenceLine, 0, last, document.lineAt(last).text.length);
+  if (count < 0 || fenceLine < 0 || fenceLine > document.lineCount || fenceLine + count > document.lineCount) {
+    return false;
+  }
   const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
   const edit = new vscode.WorkspaceEdit();
+  if (count === 0) {
+    // **本文が 0 行のフェンスへ差し込む。** 入れ替える範囲が無いので、閉じ記号の
+    // 行頭に空の範囲で足す (末尾の改行が閉じ記号を次の行へ送る)。断っていたころは
+    // 空のフェンスに最初の 1 つを置けなかった (52 の docs/54)。
+    edit.insert(document.uri, new vscode.Position(fenceLine, 0), `${body.join(eol)}${eol}`);
+    return vscode.workspace.applyEdit(edit);
+  }
+  const last = fenceLine + count - 1;
+  const range = new vscode.Range(fenceLine, 0, last, document.lineAt(last).text.length);
   edit.replace(document.uri, range, body.join(eol));
   return vscode.workspace.applyEdit(edit);
 }

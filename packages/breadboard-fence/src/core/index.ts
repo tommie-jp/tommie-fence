@@ -20,7 +20,7 @@ import type { DevicePlacement } from './render/devices.ts';
 import type { NoteAnchor, ResolvedNote } from './render/notes.ts';
 import { captionDrops } from './render/captions.ts';
 import { partObstacles } from './render/parts.ts';
-import { renderErrorBanner, renderErrorCard } from './render/errorHtml.ts';
+import { renderErrorBanner } from './render/errorHtml.ts';
 import { DEFAULT_WIRE_COLOR, wireColor as lookupWireColor, wireColorNames } from './render/palette.ts';
 import { resolveStyle } from './render/theme.ts';
 import { HOLE_ROWS } from './types.ts';
@@ -32,7 +32,9 @@ import type {
 export type RenderResult = {
   /**
    * それ自体で完結した SVG。外部リソースもスクリプトも参照しない。
-   * **図が 1 つも組めなかったときは空文字列**で、言うことは `errorHtml` に入る。
+   *
+   * **板は必ず描く。** 読めなかった行があっても、読めた所まで組んで返す
+   * (52 の docs/54)。読めなかった行は `errors` と `errorHtml` に出る。
    */
   readonly svg: string;
   /**
@@ -49,9 +51,9 @@ export type RenderResult = {
    */
   readonly notices: readonly FenceError[];
   /**
-   * 図の下に貼る帯 (図は描けた) か、カード (図が組めなかった) の HTML。
-   * 言うことが無ければ空文字列。**図の SVG には何も書き込まない**ので、
-   * 書き出した SVG を貼ったときに報告が付いてこない。
+   * 図の下に貼る帯の HTML。言うことが無ければ空文字列。
+   * **図の SVG には何も書き込まない**ので、書き出した SVG を貼ったときに
+   * 報告が付いてこない。
    */
   readonly errorHtml: string;
 };
@@ -128,12 +130,6 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
   const source = normalizeNewlines(input);
   const parsed = parseFence(source);
-  if (!parsed.doc) {
-    const reported = attachSourceText(parsed.errors, source);
-    const moved = shiftErrors(reported, options.offset ?? 0);
-    return { svg: '', netlist: [], errors: moved, notices: [], errorHtml: renderErrorCard(moved) };
-  }
-
   const errors: FenceError[] = [...parsed.errors];
   const board = createBoard(parsed.doc.board);
   const placement = placeParts(parsed.doc.parts, board);

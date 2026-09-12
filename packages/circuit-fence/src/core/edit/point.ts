@@ -259,7 +259,6 @@ function wouldSquash(doc: Circuit, at: Address, to: Address): string | null {
 export function movePoint(source: string, at: Address, to: Address, trial = false): MoveResult {
   const normalized = normalizeNewlines(source);
   const { doc, errors } = parseFence(normalized);
-  if (!doc) return fail('フェンスを読めないので動かせません (先にエラーを直します)', null);
 
   if (!isOnGrid(to)) {
     return fail(`${formatAddress(at)} をそこへ動かすと格子の外へ出ます`, null);

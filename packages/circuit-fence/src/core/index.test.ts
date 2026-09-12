@@ -59,11 +59,19 @@ describe('compileCircuit', () => {
     expect(result.tex).not.toContain('1,5k');
   });
 
-  test('reports a YAML syntax error with the line it was written on', () => {
+  test('reports a YAML syntax error with the line it was written on, and draws the rest', () => {
     const result = compileCircuit(lines('parts:', '  R1: resistor a1 a3', ' bad: indent'));
 
-    expect(result.tex).toBeNull();
+    // **図は読めた所まで描く** (52 の docs/54)。読めなかった行は帯に出る。
+    expect(result.tex).not.toBeNull();
     expect(result.errors[0]?.line).toBe(3);
+  });
+
+  test('has nothing to draw when not one part could be read', () => {
+    const result = compileCircuit(lines('parts:', '  R1: [unclosed'));
+
+    expect(result.tex).toBeNull();
+    expect(result.errors.some((error) => error.message.includes('YAML の構文エラー'))).toBe(true);
   });
 
   test('reports an unknown top level key without dropping the rest', () => {

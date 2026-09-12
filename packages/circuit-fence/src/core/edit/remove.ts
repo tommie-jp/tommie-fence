@@ -64,7 +64,6 @@ const notePoints = (note: NoteSpec, partId: string): boolean => {
 export function deletePart(source: string, handle: string): RemovalResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (!doc) return fail('フェンスを読めないので消せません (先にエラーを直します)', null);
 
   const part = partOfHandle(doc.parts, handle);
   const partId = nameOfHandle(handle);
@@ -112,7 +111,6 @@ export function deletePart(source: string, handle: string): RemovalResult {
 export function deleteWire(source: string, line: number): RemovalResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (!doc) return fail('フェンスを読めないので消せません (先にエラーを直します)', null);
 
   const on = doc.wires.filter((wire) => wire.line === line);
   if (on.length === 0) return fail(`${line} 行目に配線がありません`, line);

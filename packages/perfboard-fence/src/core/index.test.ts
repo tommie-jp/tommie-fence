@@ -3,26 +3,30 @@ import { renderPerfboard } from './index.ts';
 import { THEME } from './render/theme.ts';
 
 describe('renderPerfboard', () => {
-  test('returns a card instead of a drawing when the fence is empty', () => {
+  // **空でも既定の板を描く** (52 の docs/54)。図が出ないと、掴んで置く場所が
+  // 画面に無いまま「board: から書き始めます」とだけ言うことになる。
+  test('draws the default board when the fence is empty, and says it is empty', () => {
     const result = renderPerfboard('');
 
-    expect(result.svg).toBe('');
-    expect(result.errorHtml).toContain('perfboard-error-card');
+    expect(result.svg).not.toBe('');
+    expect(result.errorHtml).toContain('perfboard-errors');
     expect(result.errors[0]?.message).toContain('空');
   });
 
   test('reports a yaml syntax error with the line and the text of that line', () => {
     const result = renderPerfboard('parts:\n  R1: a: b: c\n');
+    const yaml = result.errors.find((one) => one.message.includes('YAML の構文エラー'));
 
-    expect(result.errors[0]?.line).toBe(2);
-    expect(result.errors[0]?.text).toBe('  R1: a: b: c');
+    expect(yaml?.line).toBe(2);
+    expect(yaml?.text).toBe('  R1: a: b: c');
   });
 
   test('normalises newlines without moving line numbers', () => {
     const result = renderPerfboard('parts:\r\n  R1: a: b: c\r\n');
+    const yaml = result.errors.find((one) => one.message.includes('YAML の構文エラー'));
 
-    expect(result.errors[0]?.line).toBe(2);
-    expect(result.errors[0]?.text).toBe('  R1: a: b: c');
+    expect(yaml?.line).toBe(2);
+    expect(yaml?.text).toBe('  R1: a: b: c');
   });
 
   test('does not throw on anything it is given', () => {

@@ -12,18 +12,21 @@ describe('parseFence', () => {
     expect(result.doc).toMatchObject({ parts: [], wires: [] });
   });
 
-  test('reports a YAML syntax error on the line it was written', () => {
+  // **転んでも読めた所は返す** (52 の docs/54)。行が 1 つ読めないだけで
+  // 図も編集も止まると、エディタが使い物にならない。
+  test('reports a YAML syntax error on the line it was written, keeping what it could read', () => {
     const result = parseFence(lines('parts:', '  R1: resistor a1 a3', ' bad: indent'));
 
-    expect(result.doc).toBeNull();
+    expect(result.doc.parts.map((one) => one.id)).toEqual(['R1']);
     expect(result.errors[0]?.line).toBe(3);
     expect(result.errors[0]?.message).toContain('YAML の構文エラー');
   });
 
-  test('asks for a map when the fence holds something else', () => {
+  test('asks for a map when the fence holds something else, and still returns an empty one', () => {
     const result = parseFence(lines('- a1 -- a3'));
 
-    expect(result.doc).toBeNull();
+    // 空の中身を返す — ここで止めると、打ちかけのフェンスに最初の 1 つを置けない。
+    expect(result.doc.parts).toEqual([]);
     expect(result.errors[0]?.message).toContain('parts');
   });
 
@@ -246,7 +249,6 @@ describe('parseFence の notes', () => {
   test('adds how to fix a colon written without quotes', () => {
     const result = parseFence(lines('notes:', '  - text b1: R1: resistor a1 a3 10k'));
 
-    expect(result.doc).toBeNull();
     expect(result.errors[0]?.message).toContain('"…" で囲みます');
     expect(result.errors[0]?.line).toBe(2);
   });

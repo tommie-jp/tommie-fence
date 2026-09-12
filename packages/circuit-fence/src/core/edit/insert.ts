@@ -103,7 +103,6 @@ export function insertWire(
 ): RewriteResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (!doc) return fail('フェンスを読めないので足せません (先にエラーを直します)', null);
 
   for (const end of [from, to]) {
     if (end.kind === 'cell') {
@@ -136,7 +135,6 @@ export function insertWire(
 export function insertPart(source: string, spec: NewPart): RewriteResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (!doc) return fail('フェンスを読めないので足せません (先にエラーを直します)', null);
 
   if (!isReferenceable(spec.id)) {
     return fail(`部品 ID ${spec.id} は使えません (英数字と _ - だけの ${LIMITS.idLength} 文字まで)`, null);
@@ -207,14 +205,13 @@ const NET_NAMES: Readonly<Record<string, string>> = { port: 'IN', vcc: 'VCC', ve
  * 置く部品に付ける ID。**接頭辞ごとに最小の未使用番号** (`P1` が lamp なら
  * potentiometer は `P2`。docs の例がそう書いている)。
  *
- * `null` を返すのは 2 つのとき — 種類を知らない、フェンスを読めない。
+ * `null` を返すのは**種類を知らないとき**だけ (読めない行があっても名前は出す)。
  * ID がそのままネットの名前になる種類 (`port` / `vcc` / `vee`) は
  * **既定の名前で置く** (KiCad が `#PWR?` で置いてから直させるのと同じ)。
  */
 export function nextPartId(source: string, type: string): string | null {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (!doc) return null;
   // **読めなかった行の名前も使用中。** 種類の綴りを間違えた行は部品として
   // 数えられないので、名前だけを見ると空いていることになり、同じ名前の行を
   // 足してしまう (52 の docs/53)。字のほうからも名前を採る。
@@ -254,7 +251,6 @@ export function nextPartId(source: string, type: string): string | null {
 export function duplicatePart(source: string, handle: string, newId: string): RewriteResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  if (!doc) return fail('フェンスを読めないので複製できません (先にエラーを直します)', null);
   if (!isReferenceable(newId)) {
     return fail(`部品 ID ${newId} は使えません (英数字と _ - だけの ${LIMITS.idLength} 文字まで)`, null);
   }
