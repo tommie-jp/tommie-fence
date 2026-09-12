@@ -253,6 +253,9 @@ export function parseWireSpec(text: string, line: number): Result<readonly WireS
     color,
     hints,
     line,
+    // 書かれた綴りをそのまま控える (書き戻すときに名前が番地へ化けないように)。
+    spelling: [from, chain[at + 1] ?? ''] as readonly [string, string],
+    hintsWritten: group === null ? null : (group[1] ?? ''),
   } satisfies WireSpec));
 
   return ok(wires);

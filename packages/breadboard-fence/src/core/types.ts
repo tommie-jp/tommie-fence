@@ -179,6 +179,20 @@ export type WireSpec = {
   readonly color: string | null;
   readonly hints: readonly WireHint[];
   readonly line: number;
+  /**
+   * 書かれた端の綴り (`[from, to]`)。**`points:` の名前で書けば名前のまま**
+   * (`from` / `to` は解決後の番地)。書き戻すときに名前が番地へ化けないように
+   * 持つ (52 の docs/54 の段 1)。
+   */
+  readonly spelling: readonly [string, string];
+  /**
+   * 迂回ヒントを書いた字 (角括弧の中身)。書かなければ null。
+   *
+   * **区切りは `,` でも空白でもよい**ので、読んだ `hints` からは書かれた形へ
+   * 戻せない (`[h-10, v74]` が `[h-10 v74]` になる)。書き戻しで書いた人の
+   * 綴りを変えないために、そのまま持つ。
+   */
+  readonly hintsWritten: string | null;
 };
 
 /**

@@ -92,6 +92,7 @@ export const resolveParts = (parts: readonly PartSpec[], points: Points): PartSp
 export const resolveWires = (wires: readonly WireSpec[], points: Points): WireSpec[] =>
   wires.map((wire) => ({
     ...wire,
+    // **`spelling` は解決しない** — 書き戻すときに、名前で書いた端を名前のまま戻す。
     from: resolvePoint(wire.from, points),
     to: resolvePoint(wire.to, points),
   }));

@@ -105,7 +105,10 @@ describe('parseWireSpec', () => {
   test('parses both endpoints and the colour', () => {
     const result = parseWireSpec('a10 -- b12 red', 11);
 
-    expect(result.ok && result.value).toEqual([{ from: 'a10', to: 'b12', color: 'red', hints: [], line: 11 }]);
+    // 書かれた綴りと迂回ヒントの字も持つ (書き戻しで綴りを変えないため)。
+    expect(result.ok && result.value).toEqual([
+      { from: 'a10', to: 'b12', color: 'red', hints: [], line: 11, spelling: ['a10', 'b12'], hintsWritten: null },
+    ]);
   });
 
   test('leaves the colour unset when the wire does not name one', () => {
@@ -170,8 +173,8 @@ describe('parseWireSpec', () => {
 
     // 1 行が 1 本の信号の道として読める。中間のモデルから先は 2 点の配線しか見ない。
     expect(result.ok && result.value).toEqual([
-      { from: '+t5', to: 'a5', color: 'red', hints: [], line: 11 },
-      { from: 'a5', to: 'a10', color: 'red', hints: [], line: 11 },
+      { from: '+t5', to: 'a5', color: 'red', hints: [], line: 11, spelling: ['+t5', 'a5'], hintsWritten: null },
+      { from: 'a5', to: 'a10', color: 'red', hints: [], line: 11, spelling: ['a5', 'a10'], hintsWritten: null },
     ]);
   });
 
