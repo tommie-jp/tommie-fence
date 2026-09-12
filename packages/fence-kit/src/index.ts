@@ -72,6 +72,8 @@ export {
   FLOW_REFUSAL, afterLastLine, appendUnderKey, applyEdits, applyLineEdits, applyRewrite, dropLines, indentOf,
   insertLines, isFlowKey, isKeyLine, keyLineOf, keysUnder, wireEndToken,
 } from './editor/lines.ts';
+export { fenceToAppend } from './editor/newFence.ts';
+export type { NewFence } from './editor/newFence.ts';
 export { leadOffsets, leadSpan, needsRoom, orientInserted } from './editor/place.ts';
 export type { OrientResult, Rewritten } from './editor/place.ts';
 export { slideBy, slideInto } from './editor/slide.ts';

@@ -1,4 +1,4 @@
-import { changesForFence, createSession } from 'fence-kit';
+import { changesForFence, createSession, fenceToAppend } from 'fence-kit';
 import type { DocLike, FenceEditor, Outgoing, Session } from 'fence-kit';
 import { DOC_URI, applyChanges, docOver, replaceLines } from './doc.ts';
 
@@ -59,6 +59,17 @@ export function createMapSession(port: MapPort): Session {
         Promise.resolve(write(applyChanges(lines(), changesForFence(target, fenceLine, edits)))),
       replaceBody: (_target, fenceLine, count, body) =>
         Promise.resolve(write(replaceLines(lines(), fenceLine, count, body))),
+      /**
+       * **フェンスが 1 本も無い文書に 1 本作る** (52 の docs/54 の決め 7)。
+       * 頁にカーソルは無いので置き場は文書の終わり。**全文で書き戻す**ので、
+       * 頁が持っている「前の字」の控えとも噛み合う (`setText` を通す)。
+       */
+      createFence: (_target, language) => {
+        const text = port.text();
+        const made = fenceToAppend(text, language);
+        port.setText(`${text}${made.added}`);
+        return Promise.resolve(made.line);
+      },
       // **光らせる先が無い。** 拡張はエディタの行に色を付けるが、頁にあるのは
       // テキスト欄 1 つで、掴んでいる最中に選択を動かすと打鍵の邪魔になる。
       highlight: () => {},

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { Incoming, LitRange, Session, SessionHost } from 'fence-kit';
-import { applyToDocument, markdownEditor, replaceBody } from './vscodePort.ts';
+import { applyToDocument, createFence, markdownEditor, replaceBody } from './vscodePort.ts';
 
 /**
  * `SessionHost` の vscode 版と、セッションを webview に結ぶ配線。
@@ -77,6 +77,9 @@ export function createSessionHost(webview: vscode.Webview, undo: 'own' | 'vscode
     openDocument: (uri) => vscode.workspace.textDocuments.find((one) => one.uri.toString() === uri) ?? null,
     applyEdits: applyToDocument,
     replaceBody,
+    // **フェンスが 1 本も無い文書に 1 本作る。** 殻が呼ぶのは文書を固定して
+    // いるとき (カスタムエディタ) だけ — パネルは今までどおり案内を出す。
+    createFence,
     highlight,
     showDocument,
     // 右クリックの「テキストコピー」。VS Code のクリップボードへ写す。

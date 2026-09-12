@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { bodyEdit } from './bodyEdit.ts';
+import { fenceToAppend } from 'fence-kit';
 import type { Edit } from 'circuit-fence/src/core/edit/move.ts';
 import { changesForFence } from 'fence-kit';
 import type { Change } from 'fence-kit';
@@ -87,6 +88,22 @@ export async function replaceBody(
     edit.replace(document.uri, new vscode.Range(from.line, from.column, to.line, to.column), planned.text);
   }
   return vscode.workspace.applyEdit(edit);
+}
+
+/**
+ * **フェンスが 1 本も無い文書に 1 本作る** (52 の docs/54 の決め 7)。
+ * 開き記号の行 (1 始まり) を返し、書けなければ null。
+ *
+ * 足すのは**文書の終わり**で、書いてある字は 1 字も消さない (`fenceToAppend`)。
+ * カーソルの行に割り込まないのは、この道を通るのが**タブそのものがマップ**の
+ * ときだけだから — そこにカーソルは無い (パネルは今までどおり案内を出す)。
+ */
+export async function createFence(document: vscode.TextDocument, language: string): Promise<number | null> {
+  const made = fenceToAppend(document.getText(), language);
+  const edit = new vscode.WorkspaceEdit();
+  const last = Math.max(0, document.lineCount - 1);
+  edit.insert(document.uri, new vscode.Position(last, document.lineAt(last).text.length), made.added);
+  return (await vscode.workspace.applyEdit(edit)) ? made.line : null;
 }
 
 export function createEditorPort(): EditorPort {

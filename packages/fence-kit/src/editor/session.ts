@@ -142,6 +142,14 @@ export type SessionHost<D extends DocLike> = {
    * **照合は呼ぶ側で済ませてある** (`sameBody`)。
    */
   readonly replaceBody: (document: D, fenceLine: number, count: number, body: readonly string[]) => Promise<boolean>;
+  /**
+   * **フェンスが 1 本も無い文書に 1 本作る。** 開き記号の行 (1 始まり) を返し、
+   * 作れなければ null (52 の docs/54 の決め 7)。
+   *
+   * 持たない殻もある — カーソルを追うパネルは、フェンスの外にあるカーソルから
+   * 「どの行に作るか」を決められない。持たなければ今までどおり案内を出す。
+   */
+  readonly createFence?: (document: D, language: string) => Promise<number | null>;
   /** その文書を見せているエディタで光らせる。空なら消す。 */
   readonly highlight: (uri: string, ranges: readonly LitRange[]) => void;
   /**
@@ -197,6 +205,11 @@ const noneNote = (language: string): string =>
   `<p class="cf-note">この文書に ${language} フェンスがありません。`
   + `<code>\`\`\`${language}</code> のフェンスを書くとマップが出ます。</p>`;
 
+/** フェンスが無いが、置けば作れるとき。**升目の下に出す。** */
+const willCreateNote = (language: string): string =>
+  `<p class="cf-issue cf-notice">この文書に ${language} フェンスがありません。`
+  + '置くと、文書の終わりに 1 本作ります。</p>';
+
 type FenceNow<D> = { readonly document: D; readonly source: string; readonly line: number };
 
 /** 書き換えの中身。行の出し入れを持たない `Move` も、ここでは同じ形で扱う。 */
@@ -219,6 +232,11 @@ type Request = {
   /** 何も変わらなかったときの一言。 */
   readonly already: string;
   readonly plan: (source: string) => EditResult;
+  /**
+   * フェンスが 1 本も無いとき、**作ってから当てるか**。置く操作だけが真。
+   * 動かす・消すで作ると、掴むものが無いのに空のフェンスだけが増える。
+   */
+  readonly creates?: boolean;
 };
 
 /**
@@ -499,6 +517,12 @@ export function createSession<D extends DocLike>(
   function viewNow(followCursor: boolean): MapView {
     const fence = currentFence(followCursor);
     if (fence === null) {
+      // **置けば作れるなら、空の升目を出す** (52 の docs/54 の決め 7)。
+      // 案内だけだと、パレットから種類を選んでも押す場所が無い。
+      if (canCreate()) {
+        const empty = editor.view('', 1);
+        return { html: empty.map, picker: '', issues: willCreateNote(editor.language), chrome: chromeOf(editor) };
+      }
       const note = pinned === null ? lostNote(languages()) : noneNote(languages());
       // どのフェンスにも居ないときは、いま選ばれている言語の語彙のまま残す
       // (パレットが空になると、置きに戻る道が消える)。
@@ -607,6 +631,38 @@ export function createSession<D extends DocLike>(
     sendAim();
   }
 
+  /**
+   * 置いたときにフェンスを作れるか。**文書を固定している殻だけ** — カーソルを
+   * 追うパネルでは、フェンスの外にあるカーソルから作る行を決められない。
+   */
+  const canCreate = (): boolean => pinned !== null && host.createFence !== undefined;
+
+  /**
+   * 置く先のフェンス。**無ければ作る** (52 の docs/54 の決め 7)。
+   * 作れない殻では今までどおり理由を言う。
+   */
+  async function fenceOrCreate(): Promise<FenceNow<D> | null> {
+    const found = currentFence(true);
+    if (found !== null) return found;
+    if (!canCreate()) return fenceNow();
+
+    const document = pinned as D;
+    const line = await (host.createFence as NonNullable<typeof host.createFence>)(document, editor.language);
+    if (line === null) {
+      say(`${editor.language} フェンスを作れませんでした`);
+      return null;
+    }
+    // **作ったフェンスを引き直す。** 返ってきた行をそのまま信じると、
+    // 殻が書いた姿とフェンスの読み手の見方が食い違ったときに気づけない。
+    const made = editor.fenceAt(document.getText(), line);
+    if (made === null) {
+      say(`${editor.language} フェンスを作れませんでした`);
+      return null;
+    }
+    rebind(document, made.line);
+    return { document, source: made.source, line: made.line };
+  }
+
   /** いま掴めるフェンス。見失っていたら理由を言う (**黙って戻らない** — webview は「…」のまま待ってしまう)。 */
   function fenceNow(): FenceNow<D> | null {
     const fence = currentFence(true);
@@ -665,7 +721,7 @@ export function createSession<D extends DocLike>(
   }
 
   async function run(request: Request): Promise<void> {
-    const fence = fenceNow();
+    const fence = request.creates === true ? await fenceOrCreate() : fenceNow();
     if (fence === null) return;
 
     const result = request.plan(fence.source);
@@ -956,10 +1012,15 @@ export function createSession<D extends DocLike>(
       return;
     }
 
-    const fence = fenceNow();
-    if (fence === null) return;
+    // **名前はフェンスを作る前に決める。** 作ってから種類を断ると、空のフェンスだけが
+    // 残る。フェンスが無いなら、空の本文に対して名前を付ける (`run` が作る)。
+    const fence = currentFence(true);
+    if (fence === null && !canCreate()) {
+      fenceNow();
+      return;
+    }
 
-    const id = editor.nextId(fence.source, type);
+    const id = editor.nextId(fence?.source ?? '', type);
     if (id === null) {
       say(`${type} には名前を付けられません (知らない種類です)`);
       return;
@@ -972,6 +1033,8 @@ export function createSession<D extends DocLike>(
       done: () => `${id} (${type}) を ${at.join(' ')} へ置きました`,
       already: '置くものがありません',
       plan: (source) => editor.addPart(source, { id, type, at, ...orientation }),
+      // **置くならフェンスを作ってよい** (52 の docs/54 の決め 7)。
+      creates: true,
     });
   }
 
@@ -1358,6 +1421,7 @@ export function createSession<D extends DocLike>(
       done: () => `${written} を引きました`,
       already: '引くものがありません',
       plan: (source) => editor.addWire(source, from, to, operator, color),
+      creates: true,
     });
   }
 
