@@ -203,7 +203,7 @@ describe('parseFence の notes', () => {
     const result = parseFence(lines('parts:', '  R1: resistor a1 a3', 'notes:', '  - circle R1'));
 
     expect(result.errors).toEqual([]);
-    expect(result.doc?.notes).toEqual([{ kind: 'circle', target: 'R1', color: 'red', line: 4 }]);
+    expect(result.doc?.notes).toEqual([{ kind: 'circle', target: 'R1', color: 'red', line: 4, written: ['R1'] }]);
   });
 
   test('reads text written as a value of a one entry map', () => {

@@ -274,6 +274,12 @@ export type CircleNote = {
   readonly target: string;
   /** パレットの色の名前。書かなかったときは既定の色が入る。 */
   readonly color: string;
+  /**
+   * 書かれた語 (種類の語の後ろ)。**そのまま書き戻す**ために持つ
+   * (52 の docs/54 の段 1)。色は書かなくても既定で埋まり、`box` の `solid` と
+   * 色は順不同、見た目の語も順不同なので、**読んだ値からは書かれた形に戻せない**。
+   */
+  readonly written: readonly string[];
   readonly line: number;
 };
 
@@ -295,6 +301,12 @@ export type BoxNote = {
    * 罫線 (表の枠) を引きたいときだけ実線にする。
    */
   readonly solid: boolean;
+  /**
+   * 書かれた語 (種類の語の後ろ)。**そのまま書き戻す**ために持つ
+   * (52 の docs/54 の段 1)。色は書かなくても既定で埋まり、`box` の `solid` と
+   * 色は順不同、見た目の語も順不同なので、**読んだ値からは書かれた形に戻せない**。
+   */
+  readonly written: readonly string[];
   readonly line: number;
 };
 
@@ -308,6 +320,12 @@ export type ArrowNote = {
   readonly to: string;
   /** パレットの色の名前。書かなかったときは既定の色が入る。 */
   readonly color: string;
+  /**
+   * 書かれた語 (種類の語の後ろ)。**そのまま書き戻す**ために持つ
+   * (52 の docs/54 の段 1)。色は書かなくても既定で埋まり、`box` の `solid` と
+   * 色は順不同、見た目の語も順不同なので、**読んだ値からは書かれた形に戻せない**。
+   */
+  readonly written: readonly string[];
   readonly line: number;
 };
 
@@ -336,6 +354,17 @@ export type TextNote = {
   readonly kind: 'text';
   readonly at: Address;
   readonly text: string;
+  /**
+   * 書かれたままの本文 (**引用符も含む**)。規則で引用し直すと、要らない引用を
+   * 外してしまう行がある (例と文法リファレンスで 8 行)。書いた人の綴りを変えない。
+   */
+  readonly bodyWritten: string;
+  /**
+   * 書かれた語 (種類の語の後ろ)。**そのまま書き戻す**ために持つ
+   * (52 の docs/54 の段 1)。色は書かなくても既定で埋まり、`box` の `solid` と
+   * 色は順不同、見た目の語も順不同なので、**読んだ値からは書かれた形に戻せない**。
+   */
+  readonly written: readonly string[];
   readonly line: number;
 } & NoteTextStyle;
 
@@ -354,6 +383,12 @@ export type SourceNote = {
    * 入れない。null は「書かなかった」— 色と同じで、既定は段の表の外にある。
    */
   readonly leading: NoteLeading | null;
+  /**
+   * 書かれた語 (種類の語の後ろ)。**そのまま書き戻す**ために持つ
+   * (52 の docs/54 の段 1)。色は書かなくても既定で埋まり、`box` の `solid` と
+   * 色は順不同、見た目の語も順不同なので、**読んだ値からは書かれた形に戻せない**。
+   */
+  readonly written: readonly string[];
   readonly line: number;
 } & NoteTextStyle;
 
@@ -367,6 +402,12 @@ export type LineNote = {
   readonly to: string;
   /** パレットの色の名前。書かなかったときは既定の色が入る。 */
   readonly color: string;
+  /**
+   * 書かれた語 (種類の語の後ろ)。**そのまま書き戻す**ために持つ
+   * (52 の docs/54 の段 1)。色は書かなくても既定で埋まり、`box` の `solid` と
+   * 色は順不同、見た目の語も順不同なので、**読んだ値からは書かれた形に戻せない**。
+   */
+  readonly written: readonly string[];
   readonly line: number;
 };
 

@@ -143,7 +143,7 @@ function readFence(source: string): ParseResult {
     } else if (key === 'wires') {
       collectWires(pair.value as ParsedNode | null, { wires, errors, lineOf, points });
     } else if (key === 'notes') {
-      collectNotes(pair.value as ParsedNode | null, { notes, errors, lineOf, points });
+      collectNotes(pair.value as ParsedNode | null, { notes, errors, lineOf, points, source });
     } else if (key === 'title') {
       title = readTitle(pair.value as ParsedNode | null, line, errors) ?? title;
     } else if (key === 'style') {
@@ -475,9 +475,9 @@ function collectWires(
  */
 function collectNotes(
   node: ParsedNode | null,
-  context: { notes: NoteSpec[]; errors: FenceError[]; lineOf: LineOf; points: Points },
+  context: { notes: NoteSpec[]; errors: FenceError[]; lineOf: LineOf; points: Points; source: string },
 ): void {
-  const { notes, errors, lineOf, points } = context;
+  const { notes, errors, lineOf, points, source } = context;
   if (!isSeq(node)) {
     errors.push(fenceError('notes は「- circle 部品ID」や「- text 番地: 文字」を並べたリストで書きます', lineOf(node)));
     return;
@@ -491,14 +491,26 @@ function collectNotes(
       return;
     }
 
-    const note = readNote(item as ParsedNode | null, line, lineOf, points);
+    const note = readNote(item as ParsedNode | null, line, lineOf, points, source);
     if (note.ok) notes.push(note.value);
     else errors.push(note.error);
   }
 }
 
+/** 書かれたままの字。**引用符も含めて**返す (書き戻しで書いた人の綴りを変えないため)。 */
+const rawText = (node: unknown, source: string): string | null => {
+  const range = (node as { range?: readonly [number, number, number] } | null)?.range;
+  return range ? source.slice(range[0], range[1]) : null;
+};
+
 /** 注釈 1 項目。書かれた形 (文字列かマップか) で読み方を選ぶ。 */
-function readNote(item: ParsedNode | null, line: number, lineOf: LineOf, points: Points): Result<NoteSpec> {
+function readNote(
+  item: ParsedNode | null,
+  line: number,
+  lineOf: LineOf,
+  points: Points,
+  source: string,
+): Result<NoteSpec> {
   const text = scalarText(item);
   if (text !== null) return parseNoteLine(text, line, points);
 
@@ -511,7 +523,9 @@ function readNote(item: ParsedNode | null, line: number, lineOf: LineOf, points:
     if (head === null) return fail('注釈の種類と場所は文字列で書きます', keyLine);
     // 数や真偽値をそのまま渡すと `1.0` が `1` になって図に出る。引用してもらう。
     if (body === null) return fail('注釈の文字は文字列で書きます (数だけのときは引用符で囲みます)', keyLine);
-    return parseNoteText(head, body, keyLine, points);
+    // **本文は書かれたまま控える** (引用符も含めて)。規則で引用し直すと、
+    // 要らない引用を外してしまう行がある (例と文法リファレンスで 8 行)。
+    return parseNoteText(head, body, keyLine, points, rawText(pair?.value, source) ?? body);
   }
 
   return fail('注釈は「- circle 部品ID」か「- text 番地: 文字」で書きます', line);

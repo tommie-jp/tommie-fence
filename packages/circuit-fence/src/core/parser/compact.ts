@@ -603,7 +603,7 @@ function readCircleNote(rest: readonly string[], line: number): Result<NoteSpec>
   if (!isNoteTarget(target)) return fail(notReferenceable(target), line, target);
 
   const color = readMarkColor(colorToken, `circle は ${CIRCLE_FORM}`, line);
-  return color.ok ? ok({ kind: 'circle', target, color: color.value, line }) : color;
+  return color.ok ? ok({ kind: 'circle', target, color: color.value, line, written: rest }) : color;
 }
 
 /**
@@ -626,7 +626,7 @@ function readBoxNote(rest: readonly string[], line: number, points: Points): Res
   const colorToken = words.find((word) => word !== NOTE_BOX_SOLID);
   const color = readMarkColor(colorToken, `box は ${BOX_FORM}`, line);
   return color.ok
-    ? ok({ kind: 'box', from: from.value, to: to.value, color: color.value, solid, line })
+    ? ok({ kind: 'box', from: from.value, to: to.value, color: color.value, solid, line, written: rest })
     : color;
 }
 
@@ -643,7 +643,9 @@ function readArrowNote(rest: readonly string[], line: number): Result<NoteSpec> 
   if (!isNoteTarget(toToken)) return fail(notReferenceable(toToken), line, toToken);
 
   const color = readMarkColor(colorToken, `arrow は ${ARROW_FORM}`, line);
-  return color.ok ? ok({ kind: 'arrow', from: fromToken, to: toToken, color: color.value, line }) : color;
+  return color.ok
+    ? ok({ kind: 'arrow', from: fromToken, to: toToken, color: color.value, line, written: rest })
+    : color;
 }
 
 /** `line a1 a5 ink` を読む。指し棒と同じ形で、矢が付かないだけ。 */
@@ -656,7 +658,9 @@ function readLineNote(rest: readonly string[], line: number): Result<NoteSpec> {
   if (!isNoteTarget(toToken)) return fail(notReferenceable(toToken), line, toToken);
 
   const color = readMarkColor(colorToken, `line は ${LINE_FORM}`, line);
-  return color.ok ? ok({ kind: 'line', from: fromToken, to: toToken, color: color.value, line }) : color;
+  return color.ok
+    ? ok({ kind: 'line', from: fromToken, to: toToken, color: color.value, line, written: rest })
+    : color;
 }
 
 /**
@@ -684,7 +688,7 @@ function readSourceNote(rest: readonly string[], line: number, points: Points): 
   if (!looks.ok) return looks;
 
   const { style, leading } = looks.value;
-  return ok({ kind: 'source', at: at.value, ...style, leading, line });
+  return ok({ kind: 'source', at: at.value, ...style, leading, line, written: rest });
 }
 
 /**
@@ -696,6 +700,8 @@ export function parseNoteText(
   body: string,
   line: number,
   points: Points = NO_POINTS,
+  /** 書かれたままの本文 (引用符も含む)。渡されなければ読んだ字そのもの。 */
+  bodyWritten: string = body,
 ): Result<NoteSpec> {
   const tokens = head.trim().split(/\s+/).filter((token) => token.length > 0);
   const [kind, atToken, ...words] = tokens;
@@ -722,5 +728,10 @@ export function parseNoteText(
   }
 
   const looks = readNoteWords(words, line, false);
-  return looks.ok ? ok({ kind: 'text', at: at.value, text: body, ...looks.value.style, line }) : looks;
+  return looks.ok
+    ? ok({
+      kind: 'text', at: at.value, text: body, bodyWritten,
+      ...looks.value.style, line, written: [atToken, ...words],
+    })
+    : looks;
 }

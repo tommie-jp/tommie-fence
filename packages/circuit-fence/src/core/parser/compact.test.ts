@@ -432,7 +432,10 @@ const textNoteProblem = (head: string, body: string) => {
 
 describe('parseNoteLine', () => {
   test('reads a circle drawn around a part', () => {
-    expect(noteOf('circle R1')).toEqual({ kind: 'circle', target: 'R1', color: 'red', line: 2 });
+    // 書かれた語も持つ (色を書かなくても既定で埋まるので、書き戻しに要る)。
+    expect(noteOf('circle R1')).toEqual({
+      kind: 'circle', target: 'R1', color: 'red', line: 2, written: ['R1'],
+    });
   });
 
   test('reads a circle drawn around a cell', () => {
@@ -482,6 +485,7 @@ describe('parseNoteLine', () => {
       to: 'a5',
       color: 'red',
       line: 2,
+      written: ['a1', 'a5'],
     });
   });
 
@@ -518,6 +522,7 @@ describe('parseNoteLine の box', () => {
       color: 'red',
       solid: false,
       line: 2,
+      written: ['a1', 'c3'],
     });
   });
 
@@ -547,7 +552,9 @@ describe('parseNoteLine の box', () => {
 
 describe('parseNoteLine の arrow', () => {
   test('reads an arrow drawn between two targets', () => {
-    expect(noteOf('arrow a5 R1')).toEqual({ kind: 'arrow', from: 'a5', to: 'R1', color: 'red', line: 2 });
+    expect(noteOf('arrow a5 R1')).toEqual({
+      kind: 'arrow', from: 'a5', to: 'R1', color: 'red', line: 2, written: ['a5', 'R1'],
+    });
   });
 
   // 起点も終点も、印と同じく部品 ID か番地。どちらかは circuit.ts が決める。
@@ -584,6 +591,8 @@ describe('parseNoteText', () => {
       bold: false,
       rotate: 0,
       line: 2,
+      written: ['b1'],
+      bodyWritten: 'ここで分圧する',
     });
   });
 
@@ -661,7 +670,9 @@ describe('parseNoteText の見た目', () => {
     const written = textNoteOf('text b1 bold center blue tiny', 'ここ');
     const reordered = textNoteOf('text b1 tiny blue center bold', 'ここ');
 
-    expect(written).toEqual(reordered);
+    // **読んだ見た目は同じ。** 書かれた語の控えだけが並び順を覚えている
+    // (書き戻しで並びを変えないため)。
+    expect({ ...written, written: [] }).toEqual({ ...reordered, written: [] });
     expect(written).toMatchObject({ color: 'blue', size: 'tiny', align: 'center', bold: true });
   });
 
@@ -708,6 +719,7 @@ describe('parseNoteLine の source', () => {
       rotate: 0,
       leading: null,
       line: 2,
+      written: ['a6'],
     });
   });
 
