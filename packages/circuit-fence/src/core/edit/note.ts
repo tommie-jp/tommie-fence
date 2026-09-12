@@ -180,7 +180,7 @@ export function deleteNote(source: string, handle: string): NoteResult {
   if (!isFound(found)) return fail(found.problem, found.line);
   if (isKeyLine(found.lines[found.line - 1], 'notes')) return fail(`注釈: ${FLOW_REFUSAL}`, found.line);
 
-  const notes = parseFence(normalizeNewlines(source)).doc?.notes ?? [];
+  const notes = parseFence(normalizeNewlines(source)).doc.notes;
   const drop = new Set<number>([found.line]);
   if (notes.every((one) => one.line === found.line)) drop.add(keyLineOf(found.lines, 'notes'));
 

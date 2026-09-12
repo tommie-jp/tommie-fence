@@ -83,7 +83,7 @@ export function locatePart(source: string, id: string): Located | { readonly err
 
 export const isLocated = (found: Located | { error: FenceError }): found is Located => !('error' in found);
 
-/** マップで掴める部品の名前。読めないフェンスでは空。 */
+/** マップで掴める部品の名前。読めた行のぶんだけ出る。 */
 export function movablePartIds(source: string): readonly string[] {
   const { doc } = parseFence(normalizeNewlines(source));
   return doc.parts.filter((part) => part.holes.length > 0 && part.line !== null).map((part) => part.id);

@@ -51,7 +51,7 @@ export async function runMovePart(port: EditorPort): Promise<void> {
 
   const ids = movablePartIds(fence.source);
   if (ids.length === 0) {
-    port.warn('このフェンスに動かせる部品がありません (フェンスを読めないときも出ません)');
+    port.warn('このフェンスに動かせる部品がありません');
     return;
   }
 

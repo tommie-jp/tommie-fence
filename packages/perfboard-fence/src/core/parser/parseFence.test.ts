@@ -54,8 +54,10 @@ describe('parseFence', () => {
   test('says once that board: has no value, not twice that it is missing', () => {
     const parsed = parseFence('board:\n');
 
-    expect(parsed.errors).toHaveLength(1);
-    expect(parsed.errors[0]?.message).toContain('列x行');
+    // 書き方は 1 度だけ言う。もう 1 件は「何の板で描いたか」で、別のことを言っている。
+    expect(parsed.errors.filter((one) => one.message.includes('列x行'))).toHaveLength(1);
+    expect(parsed.errors.some((one) => one.message.includes('board: が要ります'))).toBe(false);
+    expect(parsed.errors.some((one) => one.message.includes('既定の板'))).toBe(true);
   });
 
   test('names a board it cannot read, and shows how to write one', () => {

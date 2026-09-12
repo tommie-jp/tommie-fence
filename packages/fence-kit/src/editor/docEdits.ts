@@ -84,10 +84,13 @@ export function changesForFence(document: DocLike, fenceLine: number, edits: rea
 }
 
 /**
- * **本文を 0 行にしない。** 0 行のフェンスには書き戻す範囲が無く (`replaceBody`
- * は 0 行を断る)、中身を全部消したあとで戻すことも置くこともできなくなる。
- * VS Code は範囲の中身を空にするだけなので元から 1 行残っていて、playground
- * (行ごと抜く) でだけ起きていた。空の 1 行を残して揃える。
+ * **本文を 0 行にしない。** 中身を全部消したあと、フェンスの姿を残しておく
+ * (`` ```circuit `` の次の行が閉じ記号だけ、という形にしない)。VS Code は範囲の
+ * 中身を空にするだけなので元から 1 行残っていて、playground (行ごと抜く) でだけ
+ * 0 行になっていた。空の 1 行を残して揃える。
+ *
+ * **0 行のフェンスへ書き戻すことはできる** (52 の docs/54 で `replaceBody` が
+ * `count === 0` を通すようにした)。ここで 1 行残すのは、消したあとの見た目の話。
  */
 const keepOneLine = (lines: readonly string[]): readonly string[] => (lines.length === 0 ? [''] : lines);
 

@@ -153,10 +153,9 @@ export function moveNote(source: string, handle: string, to: Address, trial = fa
   return { ok: true, value: { edits, diff: trial ? { lost: [], gained: [] } : diffAfter(source, edits) } };
 }
 
-/** 板の大きさ。読めなければ null (そのときは板の外かどうかを見ない)。 */
-function boardOf(source: string): ReturnType<typeof createBoard> | null {
-  const { doc } = parseFence(normalizeNewlines(source));
-  return doc.board;
+/** 板の大きさ。**`board:` が読めなくても既定の板が返る** (52 の docs/54)。 */
+function boardOf(source: string): ReturnType<typeof createBoard> {
+  return parseFence(normalizeNewlines(source)).doc.board;
 }
 
 /**

@@ -151,6 +151,123 @@ describe('board: を書き足す', () => {
   });
 });
 
+describe('board: が読めないとき', () => {
+  // **書いた板と描いた板が食い違ったまま黙らない。** 前は `doc: null` で図が
+  // 出なかったので誤った図は出なかった。読めた所を返す形にした以上、
+  // 何の板で描いているかは言わないと、読み手が図を信じてしまう。
+  test('読めない board: では、既定の板で描いていることを言う', () => {
+    const { doc, errors } = parseFence('board: elegoo-5x7\nparts:\n  R1: resistor b2 b6\n');
+
+    expect(doc.board.cols).toBe(25);
+    expect(errors.some((one) => one.message.includes('既定の板'))).toBe(true);
+  });
+
+  test('大きすぎる板でも、描いた板を言う', () => {
+    const { errors } = parseFence('board: 1000x1000\n');
+
+    expect(errors.some((one) => one.message.includes('既定の板'))).toBe(true);
+  });
+
+  // **読めた所は捨てない。** 色が読めないだけで大きさまで捨てると、
+  // 書いてある 10x8 ではなく既定の 25x15 の図が黙って出る。
+  test('色が読めなくても、書いてある大きさで描く', () => {
+    const { doc, errors } = parseFence('board:\n  size: 10x8\n  color: gold\nparts:\n  R1: resistor b2 b6\n');
+
+    expect([doc.board.cols, doc.board.rows]).toEqual([10, 8]);
+    expect(errors.some((one) => one.message.includes('gold'))).toBe(true);
+    expect(errors.some((one) => one.message.includes('既定の板'))).toBe(false);
+  });
+
+  test('board: が書いてあれば「board: が要ります」は言わない', () => {
+    const { errors } = parseFence('board: elegoo-5x7\n');
+
+    expect(errors.some((one) => one.message.includes('board: が要ります'))).toBe(false);
+  });
+});
+
+describe('board: を書き足す先', () => {
+  // **YAML の文書開始記号やディレクティブの上に入れない。** 行 1 に無条件で
+  // 差し込むと、読めていたフェンスをエディタ自身が読めなくする。
+  test('--- の下に入れる', () => {
+    const source = '---\nparts:\n  R1: resistor c2 c6\n';
+    const result = insertPart(source, { id: 'R2', type: 'resistor', at: [at('e2')] });
+    if (!result.ok) throw new Error(result.error.message);
+    const out = applyLineEdits(source, result.value.lines);
+
+    expect(out.startsWith('---\n')).toBe(true);
+    expect(parseFence(out).doc.parts.map((one) => one.id)).toEqual(['R1', 'R2']);
+  });
+
+  test('%YAML のディレクティブの下に入れる', () => {
+    const source = '%YAML 1.2\n---\nparts:\n  R1: resistor c2 c6\n';
+    const result = insertPart(source, { id: 'R2', type: 'resistor', at: [at('e2')] });
+    if (!result.ok) throw new Error(result.error.message);
+    const out = applyLineEdits(source, result.value.lines);
+
+    expect(out.startsWith('%YAML 1.2\n---\n')).toBe(true);
+    expect(parseFence(out).doc.parts.map((one) => one.id)).toEqual(['R1', 'R2']);
+  });
+
+  test('先頭のコメントの下に入れる', () => {
+    const source = '# めも\nparts:\n  R1: resistor c2 c6\n';
+    const result = insertPart(source, { id: 'R2', type: 'resistor', at: [at('e2')] });
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(applyLineEdits(source, result.value.lines).startsWith('# めも\n')).toBe(true);
+  });
+
+  // 機器を `board` と名付けると、字下げされた `board:` が本文に現れる。
+  test('字下げされた board: は頭のキーと数えない', () => {
+    const source = 'devices:\n  board:\n    type: device\n    at: bottom\nparts:\n  R1: resistor c2 c6\n';
+    const result = insertPart(source, { id: 'R2', type: 'resistor', at: [at('e2')] });
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(applyLineEdits(source, result.value.lines)).toContain('board: 25x15');
+  });
+});
+
+describe('置いた行が読めないときは断る', () => {
+  // **「置きました」と言って何も増えないのが一番わるい。** 根がマップでない本文
+  // (ただの字) へ行を足すと、足した行ごと読めなくなる。読めた所を返す形に
+  // した以上、その代償は黙って払わずに理由を言う (52 の docs/54)。
+  test('ただの字の本文に置こうとすると断る', () => {
+    expect(insertPart('ただの字\n', { id: 'R9', type: 'resistor', at: [at('d2')] }).ok).toBe(false);
+  });
+
+  test('読めるフェンスなら今までどおり置ける', () => {
+    const result = insertPart(BROKEN_BLOCK, { id: 'R9', type: 'resistor', at: [at('d2')] });
+
+    expect(result.ok).toBe(true);
+  });
+
+  /**
+   * 並びの本文では**置ける**。`board:` を頭に書き足すぶん根がマップになり、
+   * 続く `parts:` も読めるようになるため。もとの `- a1 -- a3` は読めないまま
+   * 帯に出る (直すのは書いた人で、エディタは触らない)。
+   */
+  test('並びの本文では、board: を書くぶん置ける', () => {
+    const result = insertPart('- a1 -- a3\n', { id: 'R9', type: 'resistor', at: [at('d2')] });
+    if (!result.ok) throw new Error(result.error.message);
+    const out = applyLineEdits('- a1 -- a3\n', result.value.lines);
+
+    expect(parseFence(out).doc.parts.map((one) => one.id)).toEqual(['R9']);
+    expect(out).toContain('- a1 -- a3');
+  });
+});
+
+describe('同じ行の YAML エラーは 1 件にする', () => {
+  // yaml は 1 つの壊れ方を別の角度から 2 度言うことがある (「Nested mappings…」と
+  // 「Implicit keys…」)。帯は人が読む場所で件数に頭打ちがあるので、同じ行の
+  // 2 件目は落とす。**直す場所は行なので、行が分かれば足りる。**
+  test('1 つの行について 1 件だけ言う', () => {
+    const { errors } = parseFence(BROKEN_BLOCK);
+    const yaml = errors.filter((one) => one.message.includes('YAML の構文エラー'));
+    const lines = yaml.map((one) => one.line);
+
+    expect(new Set(lines).size).toBe(yaml.length);
+  });
+});
+
 describe('図を組む側も落ちない', () => {
   test.each(NASTY)('%j から図を組もうとしても投げない', (source) => {
     expect(() => renderPerfboard(source)).not.toThrow();

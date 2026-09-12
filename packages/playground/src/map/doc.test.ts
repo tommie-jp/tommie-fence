@@ -108,6 +108,15 @@ describe('replaceLines', () => {
     expect(replaceLines(lines, 3, -1, ['x'])).toBeNull();
   });
 
+  // 閉じ記号が無く開き記号が最終行のとき。拡張側はここで文書の外を指していた
+  // (`bodyEdit.ts` の同じ場面)。配列の `slice` なので、こちらは末尾へ足る。
+  test('閉じていないフェンスが最終行でも末尾へ足す', () => {
+    const unclosed = ['# 例', '```perfboard'];
+    const out = replaceLines(unclosed, 2, 0, ['board: 25x15']);
+
+    expect(out?.join('\n')).toBe(['# 例', '```perfboard', 'board: 25x15'].join('\n'));
+  });
+
   // **空のフェンスにも書ける** (52 の docs/54)。本文が 0 行のフェンスは
   // 入れ替える行が無いだけで、書き足せないわけではない。
   test('本文が 0 行のフェンスには差し込む', () => {

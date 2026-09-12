@@ -961,7 +961,7 @@ export function createSession<D extends DocLike>(
 
     const id = editor.nextId(fence.source, type);
     if (id === null) {
-      say(`${type} には名前を付けられません (知らない種類か、フェンスを読めません)`);
+      say(`${type} には名前を付けられません (知らない種類です)`);
       return;
     }
 

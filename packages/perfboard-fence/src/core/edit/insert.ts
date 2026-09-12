@@ -1,6 +1,5 @@
 import {
-  appendUnderKey, applyEdits, applyLineEdits, FLOW_REFUSAL, isFlowKey, keyLineOf, keysUnder, leadOffsets,
-  needsRoom,
+  appendUnderKey, applyEdits, applyLineEdits, FLOW_REFUSAL, isFlowKey, keysUnder, leadOffsets, needsRoom,
   normalizeNewlines, orientInserted, wireColor,
 } from 'fence-kit';
 import type { LineEdit, NetDiff } from 'fence-kit';
@@ -40,7 +39,28 @@ const fail = (message: string, line: number | null): AdditionResult =>
   ({ ok: false, error: fenceError(message, line) });
 
 /**
- * `board:` が書かれていなければ、**頭に 1 行書き足す**。
+ * 本文が始まる行 (1 始まり)。**YAML の文書開始記号 (`---`)・ディレクティブ
+ * (`%YAML`)・頭のコメント・空行を越えた、最初の中身の行。**
+ *
+ * `board:` をここより上へ入れると、読めていたフェンスが読めなくなる
+ * (`---` の上に書くと「Source contains multiple documents」)。**書き足しが
+ * 読めなくするなら、止めないために入れた枝が自分で穴を開けたことになる。**
+ * 中身が 1 行も無ければ 1 行目 (空のフェンスに最初の 1 つを置くとき)。
+ */
+function bodyStart(lines: readonly string[]): number {
+  const at = lines.findIndex((text) => {
+    const trimmed = text.trim();
+    return trimmed !== '' && !trimmed.startsWith('#') && !trimmed.startsWith('%')
+      && trimmed !== '---' && trimmed !== '...';
+  });
+  return at === -1 ? 1 : at + 1;
+}
+
+/** 頭のキーとしての `board:`。**字下げされた `board:` は数えない** (機器の名前でありうる)。 */
+const hasBoardKey = (lines: readonly string[]): boolean => lines.some((text) => /^board\s*:/.test(text));
+
+/**
+ * `board:` が書かれていなければ、**本文の頭に 1 行書き足す**。
  *
  * この板は穴の数が `board:` でしか決まらないので、書いていないフェンスは
  * 既定の板 (`DEFAULT_BOARD`) で読んでいる。そこへ部品だけ足すと、**図は出るのに
@@ -50,7 +70,7 @@ const fail = (message: string, line: number | null): AdditionResult =>
  * 先に返すので `applyLineEdits` が同じ行への差し込みを**この順で**並べる。
  */
 const boardLine = (lines: readonly string[]): readonly LineEdit[] =>
-  keyLineOf(lines, 'board') === 0 ? [{ kind: 'insert', line: 1, text: `board: ${DEFAULT_BOARD_SIZE}` }] : [];
+  hasBoardKey(lines) ? [] : [{ kind: 'insert', line: bodyStart(lines), text: `board: ${DEFAULT_BOARD_SIZE}` }];
 
 /**
  * 端点から端点へ 1 本。**色は色見本で選んでいるときだけ書く** (実機で
@@ -177,6 +197,21 @@ export function nextPartId(source: string, type: string): string | null {
 }
 
 /**
+ * 置いた行を**読み直して**、その部品がフェンスに現れたか。
+ *
+ * **「置きました」と言って何も増えないのが一番わるい。** 根がマップでない本文
+ * (ただの字・並び) へ行を足すと、足した行ごと読めなくなる。読めた所を返す形に
+ * した以上、その代償は黙って払わずに理由を言う (52 の docs/54)。
+ *
+ * **試し当て (ゴースト) では見ない** — 穴をまたぐたびに 1 回読み直すことになる。
+ */
+const LANDED = '置いた行を読み直せませんでした (フェンスの形を直してから置きます)';
+
+function landed(source: string, lines: readonly LineEdit[], id: string): boolean {
+  return parseFence(applyLineEdits(source, lines)).doc.parts.some((one) => one.id === id);
+}
+
+/**
  * 部品を 1 つ置く。**行を 1 行足すだけ。**
  *
  * **穴は並べて書くだけ。** この文法に `@` の形は無く、DIP / SIP も
@@ -227,6 +262,7 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
     return fail(`${part.type} は ${spelled[0] ?? ''} には収まりません (板から出ます)`, null);
   }
 
+  if (part.preview !== true && !landed(normalized, added, part.id)) return fail(LANDED, null);
   return oriented(normalized, part, added);
 }
 

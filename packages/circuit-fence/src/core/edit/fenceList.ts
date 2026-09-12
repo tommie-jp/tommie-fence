@@ -19,6 +19,6 @@ export type FenceEntry = {
 export function listFences(markdown: string): readonly FenceEntry[] {
   return extractCircuitFences(markdown).map((fence) => ({
     line: fence.line,
-    title: parseFence(normalizeNewlines(fence.source)).doc?.title ?? null,
+    title: parseFence(normalizeNewlines(fence.source)).doc.title,
   }));
 }

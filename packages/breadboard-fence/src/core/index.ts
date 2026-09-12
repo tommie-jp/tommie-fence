@@ -137,7 +137,7 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
 
   const resolved = resolveStyle(parsed.doc.style);
   const style = resolved.style;
-  errors.push(...resolved.messages.map((message) => fenceError(message, parsed.doc?.style.line ?? null)));
+  errors.push(...resolved.messages.map((message) => fenceError(message, parsed.doc.style.line)));
 
   const placed = placement.parts;
   const devices = placed.filter((part) => part.kind === 'device');

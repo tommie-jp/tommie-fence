@@ -55,7 +55,7 @@ export function createBreadboardEditor(): FenceEditor {
 
     fences: (markdown) => extractBreadboardFences(markdown).map((fence) => ({
       line: fence.line,
-      title: parseFence(normalizeNewlines(fence.source)).doc?.title ?? null,
+      title: parseFence(normalizeNewlines(fence.source)).doc.title,
     })),
     fenceAt,
     firstFence: (markdown) => extractBreadboardFences(markdown)[0] ?? null,

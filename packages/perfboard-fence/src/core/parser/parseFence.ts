@@ -1,7 +1,7 @@
 import { LineCounter, isMap, isScalar, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
 import { fenceError, notice, safeToken } from '../errors.ts';
-import { DEFAULT_BOARD, resolveBoard } from '../model/board.ts';
+import { DEFAULT_BOARD, DEFAULT_BOARD_SIZE, resolveBoard } from '../model/board.ts';
 import { isLandColor, isPlateColor, landNames, plateNames } from '../render/finish.ts';
 import { boardNames } from '../model/catalog.ts';
 import { LIMITS } from '../limits.ts';
@@ -97,12 +97,21 @@ function readFence(source: string): ParseResult {
    * `contents` に残すので、読めた部品と配線はそのまま返し、読めなかった行だけ
    * 行番号つきで言う (52 の docs/54)。
    */
-  const errors: FenceError[] = parsed.errors.map((error) =>
-    fenceError(
+  /**
+   * **同じ行は 1 件だけ。** yaml は 1 つの壊れ方を別の角度から 2 度言うことがある
+   * (「Nested mappings…」と「Implicit keys…」)。帯は人が読む場所で件数に頭打ちが
+   * あるので、2 件目は直す場所のある本物のエラーを押し出すだけになる。
+   */
+  const seen = new Set<number | null>();
+  const errors: FenceError[] = parsed.errors.flatMap((error) => {
+    const { line } = lineCounter.linePos(error.pos[0]);
+    if (seen.has(line)) return [];
+    seen.add(line);
+    return [fenceError(
       `YAML の構文エラー: ${(error.message.split('\n')[0] ?? '').slice(0, MAX_YAML_MESSAGE)}`,
-      lineCounter.linePos(error.pos[0]).line,
-    ),
-  );
+      line,
+    )];
+  });
 
   if (!isMap(root)) {
     errors.push(fenceError('フェンスの一番外側は `キーと値` の並びにします (`board: ...` から)', contentLine));
@@ -458,7 +467,10 @@ function readFence(source: string): ParseResult {
         errors.push(fenceError(`board: をマップで書くときは size: に大きさを書きます。${BOARD_HINT}`, at));
         continue;
       }
-      if (bad) continue;
+      // **読めなかったのが飾り (色・スロット・知らない項目) だけなら、大きさは活かす。**
+      // ここで板ごと捨てると、書いてある 10x8 ではなく既定の板の図が黙って出る
+      // (色の指摘だけが付いた、別の大きさの図になる)。読めた所は返す。
+      void bad;
     }
 
     const value = scalarText(sizeNode);
@@ -479,10 +491,14 @@ function readFence(source: string): ParseResult {
   }
 
   // **板が決まらなくても既定の板で返す** (52 の docs/54)。穴の数が決まらないと
-  // 番地も配置も読めないが、止めると書き始められない。要ることは言う。
-  // **`board:` と書いてあって読めなかったときは言わない** — すぐ上で言っている。
-  if (board === null && !boardWritten) {
-    errors.push(fenceError(`board: が要ります。${BOARD_HINT}`, contentLine));
+  // 番地も配置も読めないが、止めると書き始められない。
+  if (board === null) {
+    // **何の板で描いたかは必ず言う。** 前は図が出なかったので誤った図は出なかった。
+    // 読めた所を返す形にした以上、黙って別の大きさの板を描くと読み手が図を信じる。
+    // 書いてあって読めなかったときに理由を繰り返さないのは、すぐ上で言っているため。
+    errors.push(boardWritten
+      ? notice(`board: を読めないので、既定の板 (${DEFAULT_BOARD_SIZE}) で描いています`, contentLine)
+      : fenceError(`board: が要ります。${BOARD_HINT}`, contentLine));
   }
 
   return {

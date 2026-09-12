@@ -110,6 +110,39 @@ describe('どんな字でも落ちない', () => {
   });
 });
 
+describe('置いた行が読めないときは断る', () => {
+  // **「置きました」と言って何も増えないのが一番わるい。** 根がマップでない本文
+  // (ただの字) へ行を足すと、足した行ごと読めなくなる。読めた所を返す形に
+  // した以上、その代償は黙って払わずに理由を言う (52 の docs/54)。
+  test('ただの字の本文に置こうとすると断る', () => {
+    expect(insertPart('ただの字\n', { id: 'R9', type: 'resistor', at: [parseAddress('c1')!] }).ok).toBe(false);
+  });
+
+  test('読めるフェンスなら今までどおり置ける', () => {
+    const result = insertPart(BROKEN_NOTE, { id: 'R9', type: 'resistor', at: [parseAddress('c1')!] });
+
+    expect(result.ok).toBe(true);
+  });
+
+  // 並びの本文も同じ — `parts:` を足しても根は並びのままで、置いた行は読めない。
+  test('並びの本文に置こうとすると断る', () => {
+    expect(insertPart('- a1 -- a3\n', { id: 'R9', type: 'resistor', at: [parseAddress('c1')!] }).ok).toBe(false);
+  });
+});
+
+describe('同じ行の YAML エラーは 1 件にする', () => {
+  // yaml は 1 つの壊れ方を別の角度から 2 度言うことがある (「Nested mappings…」と
+  // 「Implicit keys…」)。帯は人が読む場所で件数に頭打ちがあるので、同じ行の
+  // 2 件目は落とす。**直す場所は行なので、行が分かれば足りる。**
+  test('1 つの行について 1 件だけ言う', () => {
+    const { errors } = parseFence('parts:\n  R1: resistor a1 a3\n  BAT:\n  R2: resistor e1 e3\n    type: device\n');
+    const yaml = errors.filter((one) => one.message.includes('YAML の構文エラー'));
+    const lines = yaml.map((one) => one.line);
+
+    expect(new Set(lines).size).toBe(yaml.length);
+  });
+});
+
 describe('図を組む側も落ちない', () => {
   test.each(NASTY)('%j から図を組もうとしても投げない', (source) => {
     expect(() => compileCircuit(source)).not.toThrow();

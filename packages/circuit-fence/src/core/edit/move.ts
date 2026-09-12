@@ -25,7 +25,7 @@ import type { MoveResult, Span } from './shared.ts';
 export type { Edit, NetDiff } from './shared.ts';
 
 /**
- * 掴める部品の**名札**。読めないフェンスでは空。
+ * 掴める部品の**名札**。読めた行のぶんだけ出る。
  * 名前が重なっていなければ名前そのもの (`handles.ts`)。
  */
 export function movablePartIds(source: string): readonly string[] {

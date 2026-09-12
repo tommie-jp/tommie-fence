@@ -59,12 +59,21 @@ function readFence(source: string): ParseResult {
    * 置く・動かす・消すが全部断られて**升目が空になっていた** (52 の docs/51 の姿)。
    */
   // yaml のメッセージはライブラリ側の文言。描画時にエスケープされる前提で載せる。
-  const errors: FenceError[] = parsed.errors.map((error) =>
-    fenceError(
+  /**
+   * **同じ行は 1 件だけ。** yaml は 1 つの壊れ方を別の角度から 2 度言うことがある
+   * (「Nested mappings…」と「Implicit keys…」)。帯は人が読む場所で件数に頭打ちが
+   * あるので、2 件目は直す場所のある本物のエラーを押し出すだけになる。
+   */
+  const seen = new Set<number | null>();
+  const errors: FenceError[] = parsed.errors.flatMap((error) => {
+    const { line } = lineCounter.linePos(error.pos[0]);
+    if (seen.has(line)) return [];
+    seen.add(line);
+    return [fenceError(
       `YAML の構文エラー: ${(error.message.split('\n')[0] ?? '').slice(0, MAX_YAML_MESSAGE)}`,
-      lineCounter.linePos(error.pos[0]).line,
-    ),
-  );
+      line,
+    )];
+  });
 
   const parts: PartSpec[] = [];
   const wires: WireSpec[] = [];

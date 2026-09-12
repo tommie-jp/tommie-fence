@@ -17,20 +17,7 @@
    字が選べて折り返しも効き、印の桁は等幅の pre がそのまま合わせてくれる。 */
 
 .perfboard-errors,
-.perfboard-error-card {
-  border: 1px solid var(--vscode-inputValidation-errorBorder, #d1544a);
-  background: var(--vscode-inputValidation-errorBackground, #fff0ee);
-  border-radius: 6px;
-  margin: 0.6em auto 0;
-  max-width: 100%;
-  padding: 0.6em 0.9em;
-  text-align: left;
-}
 
-.perfboard-error-title {
-  font-weight: bold;
-  margin: 0 0 0.4em;
-}
 
 .perfboard-error-list {
   list-style: none;

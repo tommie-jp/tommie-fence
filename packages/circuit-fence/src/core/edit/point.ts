@@ -92,13 +92,12 @@ export function nodesOf(doc: Circuit, source: string): readonly NodeRef[] {
 }
 
 /**
- * 掴める節点をフェンス本文から。**読めないフェンスでは空**にする —
- * 嘘の位置を見せると、掴めるように見えて書き換えだけが黙って失敗する。
+ * 掴める節点をフェンス本文から。**読めた行のぶんだけ出る** — 読めなかった行の
+ * 節点は出ないので、掴めるように見えて書き換えだけが黙って失敗することはない。
  */
 export function movableNodes(source: string): readonly NodeRef[] {
   const normalized = normalizeNewlines(source);
-  const { doc } = parseFence(normalized);
-  return doc ? nodesOf(doc, normalized) : [];
+  return nodesOf(parseFence(normalized).doc, normalized);
 }
 
 /** 行の中の 1 つの綴り。桁は 0 始まり。 */
@@ -223,7 +222,7 @@ function spansOf(doc: Circuit, source: string, at: Address): readonly Span[] {
   });
 }
 
-/** 上と同じものをフェンス本文から。読めないフェンスでは空。 */
+/** 上と同じものをフェンス本文から。読めた行のぶんだけ出る。 */
 export function nodeSpans(source: string, at: Address): readonly Span[] {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);

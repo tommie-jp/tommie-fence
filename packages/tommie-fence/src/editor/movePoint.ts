@@ -36,7 +36,7 @@ export async function runMovePoint(port: EditorPort): Promise<void> {
 
   const nodes = movableNodes(fence.source);
   if (nodes.length === 0) {
-    port.warn('このフェンスに動かせる節点がありません (フェンスを読めないときも出ません)');
+    port.warn('このフェンスに動かせる節点がありません');
     return;
   }
 

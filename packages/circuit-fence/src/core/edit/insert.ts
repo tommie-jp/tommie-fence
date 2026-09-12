@@ -62,7 +62,7 @@ const DEFAULT_SPAN = 2;
 function oriented(source: string, spec: NewPart, added: readonly LineEdit[]): RewriteResult {
   /** 置いた部品の名札と行番号。読み直せなければ null。 */
   const placedPart = (placed: string): { readonly handle: string; readonly line: number } | null => {
-    const parts = parseFence(placed).doc?.parts ?? [];
+    const parts = parseFence(placed).doc.parts;
     const index = parts.map((part) => part.id).lastIndexOf(spec.id);
     const part = parts[index];
     return part === undefined ? null : { handle: handleAt(parts, index), line: part.line };
@@ -81,6 +81,21 @@ function oriented(source: string, spec: NewPart, added: readonly LineEdit[]): Re
 
 const spell = (endpoint: Endpoint): string =>
   (endpoint.kind === 'cell' ? formatAddress(endpoint.address) : `${endpoint.part}.${endpoint.pin}`);
+
+/**
+ * 置いた行を**読み直して**、その部品がフェンスに現れたか。
+ *
+ * **「置きました」と言って何も増えないのが一番わるい。** 根がマップでない本文
+ * (ただの字・並び) へ行を足すと、足した行ごと読めなくなる。読めた所を返す形に
+ * した以上、その代償は黙って払わずに理由を言う (52 の docs/54)。
+ *
+ * **試し当て (ゴースト) では見ない** — 穴をまたぐたびに 1 回読み直すことになる。
+ */
+const LANDED = '置いた行を読み直せませんでした (フェンスの形を直してから置きます)';
+
+function landed(source: string, lines: readonly LineEdit[], id: string): boolean {
+  return parseFence(applyRewrite(source, { lines })).doc.parts.some((one) => one.id === id);
+}
 
 /**
  * 足した行から書き換えを組み立て、前後のネットリストを比べる。
@@ -181,18 +196,21 @@ export function insertPart(source: string, spec: NewPart): RewriteResult {
   ].join(' ');
 
   const key = keyLineOf(lines, 'parts');
-  if (key === 0) {
-    // **`parts:` は `wires:` より前に置く。** 読む順が図の順と揃う。
-    const before = ['wires', 'notes', 'style'].map((one) => keyLineOf(lines, one)).filter((line) => line > 0);
-    const where = before.length > 0 ? Math.min(...before) : afterLastLine(lines);
-    return oriented(normalized, spec, [
-      { kind: 'insert', line: where, text: 'parts:' },
-      { kind: 'insert', line: where, text: `  ${written}` },
-    ]);
-  }
-
   const last = doc.parts.reduce((deepest, part) => Math.max(deepest, part.line), 0);
-  return oriented(normalized, spec, appendUnderKey(lines, 'parts', last, written));
+  const added = key === 0
+    // **`parts:` は `wires:` より前に置く。** 読む順が図の順と揃う。
+    ? (() => {
+      const before = ['wires', 'notes', 'style'].map((one) => keyLineOf(lines, one)).filter((line) => line > 0);
+      const where = before.length > 0 ? Math.min(...before) : afterLastLine(lines);
+      return [
+        { kind: 'insert' as const, line: where, text: 'parts:' },
+        { kind: 'insert' as const, line: where, text: `  ${written}` },
+      ];
+    })()
+    : appendUnderKey(lines, 'parts', last, written);
+
+  if (spec.preview !== true && !landed(normalized, added, spec.id)) return fail(LANDED, null);
+  return oriented(normalized, spec, added);
 }
 
 /**

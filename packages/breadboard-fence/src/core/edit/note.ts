@@ -115,7 +115,7 @@ export function moveNote(source: string, handle: string, to: Address, trial = fa
     return fail('注釈はレールへは動かせません (穴どうしなら動かせます)', found.line);
   }
 
-  const board = boardOf(parseFence(normalizeNewlines(source)).doc?.board ?? null);
+  const board = boardOf(parseFence(normalizeNewlines(source)).doc.board);
   // **端数ごとずらす。** 交点の間へ落とされたぶんを捨てると、掴んだ場所と
   // 書き込む場所が食い違う (升目は既定で 1/10 升を送ってくる)。
   const delta = {
@@ -200,7 +200,7 @@ export function deleteNote(source: string, handle: string): NoteResult {
   if (isKeyLine(found.lines[found.line - 1], 'notes')) return fail(`注釈: ${FLOW_REFUSAL}`, found.line);
 
   const normalized = normalizeNewlines(source);
-  const notes = parseFence(normalized).doc?.notes ?? [];
+  const notes = parseFence(normalized).doc.notes;
   const drop = new Set<number>([found.line]);
   if (notes.every((one) => one.line === found.line)) drop.add(keyLineOf(found.lines, 'notes'));
 

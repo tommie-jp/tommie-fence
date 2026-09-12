@@ -40,9 +40,6 @@ export const createBoard = (size: BoardSize, finish: BoardFinish = {}): Board =>
  * **場所を決めるのはここ 1 か所。** 寸法 (`createLayout`) と描画
  * (`render/slots.ts`) が別々に決めると、板の余白と銅箔の位置が食い違う。
  */
-/** 書かれていないときの板そのもの。`DEFAULT_BOARD_SIZE` を読んだもの。 */
-export const DEFAULT_BOARD: Board = createBoard({ cols: 25, rows: 15 });
-
 export const slotEdges = (board: Board): 'sides' | 'ends' | null =>
   !board.slots ? null : board.cols >= board.rows ? 'sides' : 'ends';
 
@@ -188,3 +185,15 @@ export const isSolderable = (board: Board, address: Address): boolean =>
  * 導通は配線でしか生まれず、ネットは配線がつないだ穴の集まりになる。
  */
 export const holeStrip = (address: Address): StripId => `hole:${address.row},${address.col}`;
+
+/**
+ * `board:` が書かれていないときに使う板そのもの。**綴りから起こす** —
+ * `DEFAULT_BOARD_SIZE` と別々に数を書くと、片方だけ直したときに
+ * **エディタが書く綴りと当たり判定の板が食い違う** (この枝がいちばん避けたい形)。
+ */
+export const DEFAULT_BOARD: Board = (() => {
+  const found = resolveBoard(DEFAULT_BOARD_SIZE);
+  // 綴りは固定なので読めないことは無い。読めなければ作りの間違いなので気づける形にする。
+  if (!found.ok) throw new Error(`既定の板を読めません: ${DEFAULT_BOARD_SIZE}`);
+  return found.board;
+})();

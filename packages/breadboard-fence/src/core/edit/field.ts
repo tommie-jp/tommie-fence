@@ -103,7 +103,7 @@ function layoutOf(source: string, id: string): Layout | null {
 /** その部品の欄のいまの中身。無ければ null。 */
 export function partFields(source: string, id: string): PartFields | null {
   const { doc } = parseFence(normalizeNewlines(source));
-  const part = doc?.parts.find((one) => one.id === id);
+  const part = doc.parts.find((one) => one.id === id);
   if (part === undefined) return null;
 
   return {

@@ -37,7 +37,7 @@ function locate(source: string, handle: string) {
   if (line === null) return null;
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
-  const wire = doc?.wires.find((one) => one.line === line);
+  const wire = doc.wires.find((one) => one.line === line);
   if (wire === undefined) return null;
   return { wire, line, text: normalized.split('\n')[line - 1] ?? '' };
 }

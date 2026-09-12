@@ -183,7 +183,7 @@ export function nextPartId(source: string, type: string): string | null {
   // 数えられないので、名前だけを見ると空いていることになり、同じ名前の行を
   // 足してしまう (52 の docs/53)。字のほうからも名前を採る。
   const used = new Set([
-    ...(doc?.parts ?? []).map((part) => part.id),
+    ...doc.parts.map((part) => part.id),
     ...keysUnder(normalized.split('\n'), 'parts'),
   ]);
   for (let number = 1; number <= LIMITS.parts + 1; number += 1) {
@@ -191,6 +191,21 @@ export function nextPartId(source: string, type: string): string | null {
     if (!used.has(id)) return id;
   }
   return null;
+}
+
+/**
+ * 置いた行を**読み直して**、その部品がフェンスに現れたか。
+ *
+ * **「置きました」と言って何も増えないのが一番わるい。** 根がマップでない本文
+ * (ただの字・並び) へ行を足すと、足した行ごと読めなくなる。読めた所を返す形に
+ * した以上、その代償は黙って払わずに理由を言う (52 の docs/54)。
+ *
+ * **試し当て (ゴースト) では見ない** — 穴をまたぐたびに 1 回読み直すことになる。
+ */
+const LANDED = '置いた行を読み直せませんでした (フェンスの形を直してから置きます)';
+
+function landed(source: string, lines: readonly LineEdit[], id: string): boolean {
+  return parseFence(applyLineEdits(source, lines)).doc.parts.some((one) => one.id === id);
 }
 
 /**
@@ -251,6 +266,7 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
     return fail(`${part.type} は ${spelled[0] ?? ''} には収まりません (板から出ます)`, null);
   }
 
+  if (part.preview !== true && !landed(normalized, added, part.id)) return fail(LANDED, null);
   return oriented(normalized, part, added);
 }
 

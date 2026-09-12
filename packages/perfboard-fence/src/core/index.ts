@@ -41,7 +41,9 @@ const byLine = (errors: readonly FenceError[]): FenceError[] =>
 export type RenderResult = {
   /**
    * それ自体で完結した SVG。外部リソースもスクリプトも参照しない。
-   * **図が 1 つも組めなかったときは空文字列**で、言うことは `errorHtml` に入る。
+   *
+   * **板は必ず描く。** 読めなかった行があっても、`board:` が書かれていなくても、
+   * 読めた所まで組んで返す (52 の docs/54)。読めなかった行は `errors` に出る。
    */
   readonly svg: string;
   /**

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { bodyEdit } from './bodyEdit.ts';
 import type { Edit } from 'circuit-fence/src/core/edit/move.ts';
 import { changesForFence } from 'fence-kit';
 import type { Change } from 'fence-kit';
@@ -67,21 +68,24 @@ export async function replaceBody(
   count: number,
   body: readonly string[],
 ): Promise<boolean> {
-  if (count < 0 || fenceLine < 0 || fenceLine > document.lineCount || fenceLine + count > document.lineCount) {
-    return false;
-  }
-  const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+  // **どこへ何を書くかは `bodyEdit.ts` が決める** (vscode を知らないので試験に掛かる)。
+  // ここは vscode の型へ移すだけ。
+  const planned = bodyEdit(
+    { lineCount: document.lineCount, lengthOf: (line) => document.lineAt(line).text.length },
+    fenceLine,
+    count,
+    body,
+    document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n',
+  );
+  if (planned === null) return false;
+
   const edit = new vscode.WorkspaceEdit();
-  if (count === 0) {
-    // **本文が 0 行のフェンスへ差し込む。** 入れ替える範囲が無いので、閉じ記号の
-    // 行頭に空の範囲で足す (末尾の改行が閉じ記号を次の行へ送る)。断っていたころは
-    // 空のフェンスに最初の 1 つを置けなかった (52 の docs/54)。
-    edit.insert(document.uri, new vscode.Position(fenceLine, 0), `${body.join(eol)}${eol}`);
-    return vscode.workspace.applyEdit(edit);
+  if (planned.kind === 'insert') {
+    edit.insert(document.uri, new vscode.Position(planned.at.line, planned.at.column), planned.text);
+  } else {
+    const { from, to } = planned;
+    edit.replace(document.uri, new vscode.Range(from.line, from.column, to.line, to.column), planned.text);
   }
-  const last = fenceLine + count - 1;
-  const range = new vscode.Range(fenceLine, 0, last, document.lineAt(last).text.length);
-  edit.replace(document.uri, range, body.join(eol));
   return vscode.workspace.applyEdit(edit);
 }
 

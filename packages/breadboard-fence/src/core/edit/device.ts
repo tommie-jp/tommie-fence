@@ -22,14 +22,14 @@ import type { Address, PartSpec } from '../types.ts';
  */
 
 const deviceOf = (source: string, id: string): PartSpec | null => {
-  const found = parseFence(normalizeNewlines(source)).doc?.parts.find((one) => one.id === id);
+  const found = parseFence(normalizeNewlines(source)).doc.parts.find((one) => one.id === id);
   return found?.type === 'device' ? found : null;
 };
 
 /** その名前が板の外の機器か。**部品と機器で編集の道が違う**ので、入口で分ける。 */
 export const isDevice = (source: string, id: string): boolean => deviceOf(source, id) !== null;
 
-/** 升目で掴める機器の名前。読めないフェンスでは空。 */
+/** 升目で掴める機器の名前。読めた行のぶんだけ出る。 */
 export function deviceIds(source: string): readonly string[] {
   const { doc } = parseFence(normalizeNewlines(source));
   return doc.parts.filter((one) => one.type === 'device' && one.line !== null).map((one) => one.id);
