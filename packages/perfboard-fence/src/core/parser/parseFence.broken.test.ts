@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { applyLineEdits } from 'fence-kit';
 import { parseFence } from './parseFence.ts';
-import { insertPart } from '../edit/insert.ts';
+import { duplicatePart, insertPart } from '../edit/insert.ts';
 import { parseAddress } from '../model/address.ts';
 import type { Address } from '../types.ts';
 import { renderPerfboard } from '../index.ts';
@@ -119,6 +119,35 @@ describe('どんな字でも落ちない', () => {
 
   test.each(NASTY)('%j を読んだ答えには doc がある', (source) => {
     expect(parseFence(source).doc).not.toBeNull();
+  });
+});
+
+describe('board: を書き足す', () => {
+  const NO_BOARD = 'parts:\n  R1: resistor b2 b6 1k\n';
+
+  test('board: が無いフェンスに置くと書き足す', () => {
+    const result = insertPart(NO_BOARD, { id: 'R2', type: 'resistor', at: [at('d2')] });
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(applyLineEdits(NO_BOARD, result.value.lines)).toContain('board: ');
+  });
+
+  // **複製も「置く」の一種。** 置くときだけ書き足すと、複製で増やした
+  // フェンスは「board: が要ります」と言われ続ける。
+  test('board: が無いフェンスで複製しても書き足す', () => {
+    const result = duplicatePart(NO_BOARD, 'R1', 'R2');
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(applyLineEdits(NO_BOARD, result.value.lines)).toContain('board: ');
+  });
+
+  test('board: があるフェンスには足さない', () => {
+    const written = 'board: 12x7\nparts:\n  R1: resistor b2 b6 1k\n';
+    const result = insertPart(written, { id: 'R2', type: 'resistor', at: [at('d2')] });
+    if (!result.ok) throw new Error(result.error.message);
+
+    const out = applyLineEdits(written, result.value.lines);
+    expect(out.split('\n').filter((line) => line.startsWith('board:'))).toHaveLength(1);
   });
 });
 

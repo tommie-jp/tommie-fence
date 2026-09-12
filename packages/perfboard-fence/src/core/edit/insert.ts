@@ -284,6 +284,7 @@ export function duplicatePart(source: string, id: string, newId: string): Additi
   if (isFlowKey(lines, 'parts')) return fail(`部品: ${FLOW_REFUSAL.replace('消せません', '足せません')}`, null);
 
   const last = doc.parts.reduce((deepest, one) => Math.max(deepest, one.line ?? 0), 0);
-  const added = appendUnderKey(lines, 'parts', last, renamed.trim());
+  // **複製も「置く」の一種**なので、`board:` が無ければ同じように書き足す。
+  const added = [...boardLine(lines), ...appendUnderKey(lines, 'parts', last, renamed.trim())];
   return { ok: true, value: { edits: [], lines: added, diff: diffAfterLines(normalized, added) } };
 }
