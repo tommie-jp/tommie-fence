@@ -345,7 +345,9 @@ wires:
   const after = (source: string, result: ReturnType<typeof insertPart>): readonly string[] => {
     if (!result.ok) throw new Error(result.error.message);
     const text = applyLineEdits(source, result.value.lines);
-    expect(parseFence(text).doc).not.toBeNull();
+    // **置いた後も読める。** `doc` は必ず返るので、読めなかった行が増えて
+    // いないことを見る (機器のブロックに割り込むと YAML ごと転ぶ: 52 の docs/51)。
+    expect(parseFence(text).errors).toEqual([]);
     return text.split('\n');
   };
   const R2 = { id: 'R2', type: 'resistor', at: [at('e5'), at('e10')] };

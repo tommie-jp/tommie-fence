@@ -250,7 +250,9 @@ wires:
   const after = (result: ReturnType<typeof insertPart>): readonly string[] => {
     if (!result.ok) throw new Error(result.error.message);
     const text = applyLineEdits(WITH_DEVICES, result.value.lines);
-    expect(parseFence(text).doc).not.toBeNull();
+    // **置いた後も読める。** `doc` は必ず返るので、読めなかった行が増えて
+    // いないことを見る。
+    expect(parseFence(text).errors).toEqual([]);
     return text.split('\n');
   };
 

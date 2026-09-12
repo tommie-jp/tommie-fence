@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { applyLineEdits } from 'fence-kit';
 import { parseFence } from './parseFence.ts';
-import { duplicatePart, insertPart } from '../edit/insert.ts';
+import { duplicatePart, insertPart, insertWire } from '../edit/insert.ts';
 import { parseAddress } from '../model/address.ts';
 import type { Address } from '../types.ts';
 import { renderPerfboard } from '../index.ts';
@@ -33,8 +33,10 @@ const BROKEN_BLOCK = [
 ].join('\n');
 
 describe('空でも板が書いていなくても doc は返る', () => {
-  test('空のフェンスでも doc は返る', () => {
-    expect(parseFence('').doc).not.toBeNull();
+  test('空のフェンスでも、中身は空で形が揃う', () => {
+    const { doc } = parseFence('');
+
+    expect([doc.parts.length, doc.wires.length, doc.devices.length]).toEqual([0, 0, 0]);
   });
 
   test('空のフェンスには既定の板が入る', () => {
@@ -117,8 +119,10 @@ describe('どんな字でも落ちない', () => {
     expect(() => parseFence(source)).not.toThrow();
   });
 
-  test.each(NASTY)('%j を読んだ答えには doc がある', (source) => {
-    expect(parseFence(source).doc).not.toBeNull();
+  test.each(NASTY)('%j を読んでも、中身の形は揃っている', (source) => {
+    const { doc } = parseFence(source);
+
+    expect(doc.board.cols).toBeGreaterThan(0);
   });
 });
 
@@ -141,9 +145,23 @@ describe('board: を書き足す', () => {
     expect(applyLineEdits(NO_BOARD, result.value.lines)).toContain('board: ');
   });
 
-  test('board: があるフェンスには足さない', () => {
+  test('配線を引くときも書き足す', () => {
+    const source = 'parts:\n  R1: resistor b2 b6 1k\n';
+    const result = insertWire(source, at('b2'), at('b10'));
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(applyLineEdits(source, result.value.lines)).toContain('board: ');
+  });
+
+  // **2 つ書かれると「board: が 2 つあります」で図が出続ける** ので気づきにくい。
+  // 置く・配線・複製の 3 つとも見る。
+  test.each([
+    ['置く', (source: string) => insertPart(source, { id: 'R2', type: 'resistor', at: [at('d2')] })],
+    ['配線', (source: string) => insertWire(source, at('b2'), at('b10'))],
+    ['複製', (source: string) => duplicatePart(source, 'R1', 'R2')],
+  ])('board: があるフェンスに %s と、board: は 1 つのまま', (_label, run) => {
     const written = 'board: 12x7\nparts:\n  R1: resistor b2 b6 1k\n';
-    const result = insertPart(written, { id: 'R2', type: 'resistor', at: [at('d2')] });
+    const result = run(written);
     if (!result.ok) throw new Error(result.error.message);
 
     const out = applyLineEdits(written, result.value.lines);

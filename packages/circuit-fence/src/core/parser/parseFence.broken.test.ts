@@ -30,8 +30,10 @@ const BROKEN_NOTE = [
 const UNCLOSED = ['parts:', '  R1: [unclosed', ''].join('\n');
 
 describe('YAML が転んでも読めた所は返す', () => {
-  test('転んだ行があっても doc は返る', () => {
-    expect(parseFence(BROKEN_NOTE).doc).not.toBeNull();
+  test('転んだ行があっても、読めた行の数だけ中身が返る', () => {
+    const { doc } = parseFence(BROKEN_NOTE);
+
+    expect([doc.parts.length, doc.wires.length, doc.notes.length]).toEqual([1, 0, 0]);
   });
 
   test('転んだ行の上に書いた部品は読める', () => {
@@ -105,8 +107,10 @@ describe('どんな字でも落ちない', () => {
     expect(() => parseFence(source)).not.toThrow();
   });
 
-  test.each(NASTY)('%j を読んだ答えには doc がある', (source) => {
-    expect(parseFence(source).doc).not.toBeNull();
+  test.each(NASTY)('%j を読んでも、中身の形は揃っている', (source) => {
+    const { doc } = parseFence(source);
+
+    expect(Array.isArray(doc.parts) && Array.isArray(doc.wires)).toBe(true);
   });
 });
 
