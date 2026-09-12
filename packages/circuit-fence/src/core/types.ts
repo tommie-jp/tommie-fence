@@ -85,6 +85,20 @@ export type TwoTerminalPart = {
    * **ID を置き換えるのは図の見た目だけ**で、配線から指す名前もネット名も ID のまま。
    */
   readonly label: string | null;
+  /**
+   * 書かれた番地の綴り。`addressesOf` と同じ順 (2 端子は from・to、ほかは at 1 つ)。
+   *
+   * **番地は `points:` の名前でも書ける** (`R2: resistor fb d3`) ので、読んだ
+   * 行と列だけでは書き戻すときに名前が番地へ化ける。中身から本文を組み立てる
+   * ために、書かれた字をそのまま持つ (52 の docs/54 の段 1)。
+   */
+  readonly spelling: readonly string[];
+  /**
+   * 書かれた種類の綴り。**略記も別名もそのまま** (`dc` は `vsource` に畳まれるが、
+   * ここには `dc` が残る)。理由は `spelling` と同じ — 書き戻すときに、書いた人の
+   * 綴りが正式名へ化けないようにする。
+   */
+  readonly written: string;
   readonly line: number;
 };
 
@@ -96,6 +110,20 @@ export type OneTerminalPart = {
   readonly at: Address;
   /** 記号の向き。書けるのは `ground` だけ (parts.ts の `orient`)。 */
   readonly turn: Turn;
+  /**
+   * 書かれた番地の綴り。`addressesOf` と同じ順 (2 端子は from・to、ほかは at 1 つ)。
+   *
+   * **番地は `points:` の名前でも書ける** (`R2: resistor fb d3`) ので、読んだ
+   * 行と列だけでは書き戻すときに名前が番地へ化ける。中身から本文を組み立てる
+   * ために、書かれた字をそのまま持つ (52 の docs/54 の段 1)。
+   */
+  readonly spelling: readonly string[];
+  /**
+   * 書かれた種類の綴り。**略記も別名もそのまま** (`dc` は `vsource` に畳まれるが、
+   * ここには `dc` が残る)。理由は `spelling` と同じ — 書き戻すときに、書いた人の
+   * 綴りが正式名へ化けないようにする。
+   */
+  readonly written: string;
   readonly line: number;
 };
 
@@ -118,6 +146,20 @@ export type MultiTerminalPart = {
   readonly orientation: string | null;
   /** 記号の向き。回転は時計回り、`mirror` は左右反転 (parts.ts の `Turn`)。 */
   readonly turn: Turn;
+  /**
+   * 書かれた番地の綴り。`addressesOf` と同じ順 (2 端子は from・to、ほかは at 1 つ)。
+   *
+   * **番地は `points:` の名前でも書ける** (`R2: resistor fb d3`) ので、読んだ
+   * 行と列だけでは書き戻すときに名前が番地へ化ける。中身から本文を組み立てる
+   * ために、書かれた字をそのまま持つ (52 の docs/54 の段 1)。
+   */
+  readonly spelling: readonly string[];
+  /**
+   * 書かれた種類の綴り。**略記も別名もそのまま** (`dc` は `vsource` に畳まれるが、
+   * ここには `dc` が残る)。理由は `spelling` と同じ — 書き戻すときに、書いた人の
+   * 綴りが正式名へ化けないようにする。
+   */
+  readonly written: string;
   readonly line: number;
 };
 

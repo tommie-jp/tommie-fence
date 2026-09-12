@@ -194,6 +194,9 @@ function readMultiTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
   return ok({
     kind: 'multi-terminal', id, type, at: at.value, value,
     orientation: turned.orientation, turn: turned.turn, line,
+    // **書かれた綴りをそのまま持つ。** `points:` の名前で書いた番地や種類の
+    // 別名が、書き戻すときに化けないようにするため (52 の docs/54 の段 1)。
+    spelling: [atToken], written,
   });
 }
 
@@ -290,6 +293,10 @@ function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
     voltageReversed: reversed.v,
     label: tags.l,
     line,
+    // **書かれた綴りをそのまま持つ。** `points:` の名前で書いた番地や種類の
+    // 別名が、書き戻すときに化けないようにするため (52 の docs/54 の段 1)。
+    spelling: [fromToken, toToken],
+    written,
   });
 }
 
@@ -320,7 +327,11 @@ function readOneTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
   const at = readAddress(atToken, line, points);
   if (!at.ok) return at;
 
-  return ok({ kind: 'one-terminal', id, type, at: at.value, turn: turned.turn, line });
+  return ok({
+    kind: 'one-terminal', id, type, at: at.value, turn: turned.turn, line,
+    // 書かれた綴りをそのまま持つ (番地の名前・種類の別名のため)。
+    spelling: [atToken], written,
+  });
 }
 
 /** 配線 1 行の書き方。端点はいくつ並べてもよい。 */

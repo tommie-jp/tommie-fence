@@ -29,6 +29,10 @@ describe('parseCompactPart', () => {
       voltageReversed: false,
       label: null,
       line: 2,
+      // **書かれた綴りも持つ** — 書き戻すときに、番地の名前や種類の別名が
+      // 化けないようにするため (52 の docs/54 の段 1)。
+      spelling: ['a1', 'a3'],
+      written: 'resistor',
     });
   });
 
@@ -104,6 +108,8 @@ describe('parseCompactPart', () => {
       at: { row: 0, col: 0 },
       turn: { rotate: 0, mirror: false },
       line: 2,
+      spelling: ['a1'],
+      written: 'port',
     });
   });
 
