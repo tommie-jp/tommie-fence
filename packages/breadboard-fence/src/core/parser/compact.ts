@@ -27,8 +27,14 @@ const isHoleToken = (token: string, isPoint: (token: string) => boolean): boolea
 /** `b12(A)` のような極性タグ付きの穴。タグが無ければ 1 から始まる番号をピン名にする。 */
 export function parseHoleToken(token: string, index: number): HoleRef {
   const tagged = TAGGED_HOLE.exec(token);
-  if (tagged) return { addr: tagged[1] ?? token, tag: tagged[2] ?? String(index + 1) };
-  return { addr: token, tag: String(index + 1) };
+  if (tagged) {
+    const tag = tagged[2];
+    // **書かれたかどうかを覚える。** 書いていない `(1)` `(2)` を書き戻しで
+    // 足さないため (52 の docs/54 の段 1)。
+    const addr = tagged[1] ?? token;
+    return { addr, tag: tag ?? String(index + 1), tagged: tag !== undefined, written: addr };
+  }
+  return { addr: token, tag: String(index + 1), tagged: false, written: token };
 }
 
 /**
@@ -55,7 +61,7 @@ export function parseCompactPart(
   if (problem) return fail(`部品 ${safeToken(id)}: ${problem}`, line);
   const base: PartSpec = {
     id, type, written: typeToken, variant, holes: [], turn: NO_TURN,
-    value: null, label: null, at: null, pins: null, line,
+    value: null, label: null, at: null, pins: null, anchored: false, labelTagged: false, block: false, line,
   };
 
   if (rest[0] === '@') {
@@ -70,10 +76,15 @@ export function parseCompactPart(
     const joined = turn.value.rest.join(' ');
     // `@` の後ろの残りはそのままラベルだが、`l=` と書いても同じ意味に読む
     // (1 行の記法の中で、ラベルの書き方が 2 通りに見えないようにする)。
-    const written = LABEL_TAG.exec(joined)?.[1] ?? joined;
+    const tag = LABEL_TAG.exec(joined);
+    const written = tag?.[1] ?? joined;
     const label = written ? clampText(written, LIMITS.labelLength) : null;
-    if (target === 'top' || target === 'bottom') return ok({ ...base, at: target, label });
-    return ok({ ...base, holes: [{ addr: target, tag: '1' }], turn: turn.value.turn, label });
+    const labelTagged = tag !== null;
+    if (target === 'top' || target === 'bottom') return ok({ ...base, at: target, label, anchored: true, labelTagged });
+    return ok({
+      ...base, holes: [{ addr: target, tag: '1', tagged: false, written: target }],
+      turn: turn.value.turn, label, anchored: true, labelTagged,
+    });
   }
 
   const holes: HoleRef[] = [];
@@ -83,11 +94,15 @@ export function parseCompactPart(
   // 穴として読んだ語を、番地の形だったか点の名前だったかと一緒に覚えておく。
   const sources: { token: string; byName: boolean }[] = [];
 
+  let labelTagged = false;
+
   for (const token of rest) {
     const tagged = LABEL_TAG.exec(token);
     if (tagged) {
       if (label !== null) return fail(`部品 ${safeToken(id)}: l= が 2 回書かれています`, line);
       label = clampText(tagged[1] ?? '', LIMITS.labelLength);
+      // 裸で書いても同じ意味に読むので、どちらで書いたかを覚える (書き戻しのため)。
+      labelTagged = true;
       continue;
     }
     // **向きの語は値として拾わない。** `@` を書かずに `U1: dip8 e5 r180` とも
@@ -117,6 +132,7 @@ export function parseCompactPart(
     holes,
     turn,
     label,
+    labelTagged,
     value: value ? clampText(value, LIMITS.labelLength) : null,
     notes: unusedNotes(value, label, sources),
   });

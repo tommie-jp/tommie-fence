@@ -85,6 +85,7 @@ export const resolvePoint = (token: string, points: Points): string => points.ge
 export const resolveParts = (parts: readonly PartSpec[], points: Points): PartSpec[] =>
   parts.map((part) => ({
     ...part,
+    // **`written` は解決しない** — 書き戻すときに、名前で書いた穴を名前のまま戻す。
     holes: part.holes.map((hole) => ({ ...hole, addr: resolvePoint(hole.addr, points) })),
   }));
 

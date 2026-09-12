@@ -104,7 +104,24 @@ export type FenceError = {
 
 export type Result<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: FenceError };
 
-export type HoleRef = { readonly addr: string; readonly tag: string };
+/**
+ * 穴 1 つ。`addr` は書かれた番地の綴り (`points:` の名前でも書ける)、
+ * `tag` は足の名前 (`b12(A)` の `A`)。
+ *
+ * **`tagged` は「足の名前を書いたか」。** 書いていなければ `tag` には
+ * 1 から数えた番号が入るので、これが無いと**書き戻すときに書いていない
+ * `(1)` `(2)` が足される** (52 の docs/54 の段 1)。
+ */
+export type HoleRef = {
+  readonly addr: string;
+  readonly tag: string;
+  readonly tagged: boolean;
+  /**
+   * 書かれた綴り。**`points:` の名前で書けば名前のまま** (`addr` は解決後の番地)。
+   * 書き戻すときに名前が番地へ化けないように持つ (52 の docs/54 の段 1)。
+   */
+  readonly written: string;
+};
 
 export type PartSpec = {
   readonly id: string;
@@ -128,6 +145,22 @@ export type PartSpec = {
   readonly label: string | null;
   readonly at: 'top' | 'bottom' | null;
   readonly pins: readonly string[] | null;
+  /**
+   * `@` で書いた形か (`SW1: button @ e5`)。**書き戻すときに `@` を落とさない**
+   * ために持つ (52 の docs/54 の段 1)。読んだ中身からは見分けられない —
+   * `@` の形も穴 1 つの形も、同じ `holes` 1 つに落ちる。
+   */
+  readonly anchored: boolean;
+  /**
+   * ラベルを `l=` と書いたか。**裸で書いても同じ意味に読む**ので、
+   * これが無いと書き戻しで `l=` が落ちる (理由は `anchored` と同じ)。
+   */
+  readonly labelTagged: boolean;
+  /**
+   * マップ (ブロック) で書いたか。**1 行に落ちない**ので、組み直す側は
+   * 手を出さず、書かれた行をそのまま残す (52 の docs/54 の段 1)。
+   */
+  readonly block: boolean;
   /**
    * 読めはしたが、書いたとおりには図に出ない指定の理由。
    * **図は書いたとおりに描いたうえで**お知らせに出す

@@ -10,6 +10,9 @@ const board = createBoard('half');
 const spec = (over: Partial<PartSpec> & Pick<PartSpec, 'id' | 'type'>): PartSpec => ({
   // 書かれたままの綴りは、略記を使わなければ種類そのもの。
   written: over.variant == null ? over.type : `${over.type}/${over.variant}`,
+  anchored: false,
+  labelTagged: false,
+  block: false,
   holes: [],
   turn: NO_TURN,
   value: null,
@@ -21,7 +24,8 @@ const spec = (over: Partial<PartSpec> & Pick<PartSpec, 'id' | 'type'>): PartSpec
   ...over,
 });
 
-const holes = (...addresses: string[]) => addresses.map((addr, index) => ({ addr, tag: String(index + 1) }));
+const holes = (...addresses: string[]) =>
+  addresses.map((addr, index) => ({ addr, tag: String(index + 1), tagged: false, written: addr }));
 
 const pinMap = (part: { pins: readonly { name: string; address: unknown }[] }) =>
   Object.fromEntries(part.pins.map((pin) => [pin.name, pin.address ? formatAddress(pin.address as never) : null]));
@@ -67,8 +71,8 @@ describe('placeParts', () => {
       id: 'D1',
       type: 'led',
       holes: [
-        { addr: 'b12', tag: 'A' },
-        { addr: 'b13', tag: 'K' },
+        { addr: 'b12', tag: 'A', tagged: true, written: 'b12' },
+        { addr: 'b13', tag: 'K', tagged: true, written: 'b13' },
       ],
     });
 
@@ -82,9 +86,9 @@ describe('placeParts', () => {
       id: 'Q1',
       type: 'transistor',
       holes: [
-        { addr: 'h9', tag: 'B' },
-        { addr: 'h10', tag: 'C' },
-        { addr: 'h11', tag: 'E' },
+        { addr: 'h9', tag: 'B', tagged: true, written: 'h9' },
+        { addr: 'h10', tag: 'C', tagged: true, written: 'h10' },
+        { addr: 'h11', tag: 'E', tagged: true, written: 'h11' },
       ],
       label: '2SC1815',
     });
@@ -116,8 +120,8 @@ describe('placeParts', () => {
       id: 'D1',
       type: 'led',
       holes: [
-        { addr: 'b12', tag: 'A' },
-        { addr: 'b13', tag: 'A' },
+        { addr: 'b12', tag: 'A', tagged: true, written: 'b12' },
+        { addr: 'b13', tag: 'A', tagged: true, written: 'b13' },
       ],
       line: 4,
     });
@@ -431,7 +435,7 @@ describe('placeParts', () => {
         id: 'C1',
         type: 'capacitor',
         variant: 'ceramic',
-        holes: [{ addr: 'a5', tag: '+' }, { addr: 'a10', tag: '-' }],
+        holes: [{ addr: 'a5', tag: '+', tagged: true, written: 'a5' }, { addr: 'a10', tag: '-', tagged: true, written: 'a10' }],
       })],
       board,
     );
@@ -445,7 +449,7 @@ describe('placeParts', () => {
       [spec({
         id: 'C1',
         type: 'capacitor',
-        holes: [{ addr: 'a5', tag: '+' }, { addr: 'a10', tag: '-' }],
+        holes: [{ addr: 'a5', tag: '+', tagged: true, written: 'a5' }, { addr: 'a10', tag: '-', tagged: true, written: 'a10' }],
       })],
       board,
     );
@@ -462,7 +466,7 @@ describe('placeParts', () => {
         id: 'C1',
         type: 'capacitor',
         variant: 'electrolytic',
-        holes: [{ addr: 'a5', tag: '+' }, { addr: 'a10', tag: '2' }],
+        holes: [{ addr: 'a5', tag: '+', tagged: true, written: 'a5' }, { addr: 'a10', tag: '2', tagged: true, written: 'a10' }],
       })],
       board,
     );
@@ -483,7 +487,7 @@ describe('向き (r180)', () => {
     // 溝をまたぐので升は同じ (e/f 行 × 同じ 4 列)。変わるのは**どの升が 1 番か**。
     // `@ f5` で言えるのは「1 番が f 行の左端」までで、右端は言えない。
     const { parts } = placeParts([spec({
-      id: 'U1', type: 'dip8', holes: [{ addr: 'e5', tag: '1' }], turn: { rotate: 180, mirror: false },
+      id: 'U1', type: 'dip8', holes: [{ addr: 'e5', tag: '1', tagged: true, written: 'e5' }], turn: { rotate: 180, mirror: false },
     })], board);
 
     expect(at(parts[0]!, '1')).toBe('f8');
@@ -492,7 +496,7 @@ describe('向き (r180)', () => {
 
   test('covers exactly the same holes as before, since the part did not move', () => {
     const holes = (turn: { rotate: 0 | 180; mirror: false }) => placeParts([spec({
-      id: 'U1', type: 'dip8', holes: [{ addr: 'e5', tag: '1' }], turn,
+      id: 'U1', type: 'dip8', holes: [{ addr: 'e5', tag: '1', tagged: true, written: 'e5' }], turn,
     })], board).parts[0]!.pins.map((pin) => formatAddress(pin.address!)).sort();
 
     expect(holes({ rotate: 180, mirror: false })).toEqual(holes({ rotate: 0, mirror: false }));
@@ -502,7 +506,7 @@ describe('向き (r180)', () => {
     const { parts } = placeParts([spec({
       id: 'J1',
       type: 'sip4',
-      holes: [{ addr: 'a20', tag: '1' }],
+      holes: [{ addr: 'a20', tag: '1', tagged: true, written: 'a20' }],
       pins: ['VCC', 'SDA', 'SCL', 'GND'],
       turn: { rotate: 180, mirror: false },
     })], board);

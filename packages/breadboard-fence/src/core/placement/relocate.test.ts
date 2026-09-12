@@ -12,6 +12,9 @@ const board = createBoard('half');
 const spec = (over: Partial<PartSpec> & Pick<PartSpec, 'id' | 'type'>): PartSpec => ({
   // 書かれたままの綴りは、略記を使わなければ種類そのもの (place.test.ts と同じ形)。
   written: over.variant == null ? over.type : `${over.type}/${over.variant}`,
+  anchored: false,
+  labelTagged: false,
+  block: false,
   holes: [],
   turn: NO_TURN,
   value: null,
@@ -23,7 +26,8 @@ const spec = (over: Partial<PartSpec> & Pick<PartSpec, 'id' | 'type'>): PartSpec
   ...over,
 });
 
-const holes = (...addresses: string[]) => addresses.map((addr, index) => ({ addr, tag: String(index + 1) }));
+const holes = (...addresses: string[]) =>
+  addresses.map((addr, index) => ({ addr, tag: String(index + 1), tagged: false, written: addr }));
 
 const place = (...specs: PartSpec[]) => {
   const placed = placeParts(specs, board);

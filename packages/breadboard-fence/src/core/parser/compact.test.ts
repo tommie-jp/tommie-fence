@@ -36,9 +36,11 @@ describe('parseCompactPart', () => {
   test('keeps a polarity tag written in parentheses as the pin name', () => {
     const result = parseCompactPart('D1', 'led b12(A) b13(K) red', 4);
 
+    // `tagged` は「足の名前を書いたか」。書き戻すときに、書いていない
+    // `(1)` `(2)` を足さないために持つ (52 の docs/54 の段 1)。
     expect(result.ok && result.value.holes).toEqual([
-      { addr: 'b12', tag: 'A' },
-      { addr: 'b13', tag: 'K' },
+      { addr: 'b12', tag: 'A', tagged: true, written: 'b12' },
+      { addr: 'b13', tag: 'K', tagged: true, written: 'b13' },
     ]);
     expect(result.ok && result.value.value).toBe('red');
   });
@@ -47,8 +49,8 @@ describe('parseCompactPart', () => {
     const result = parseCompactPart('C1', 'capacitor b5(-) b12(+) 47uF', 3);
 
     expect(result.ok && result.value.holes).toEqual([
-      { addr: 'b5', tag: '-' },
-      { addr: 'b12', tag: '+' },
+      { addr: 'b5', tag: '-', tagged: true, written: 'b5' },
+      { addr: 'b12', tag: '+', tagged: true, written: 'b12' },
     ]);
   });
 
