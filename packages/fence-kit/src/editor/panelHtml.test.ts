@@ -179,6 +179,32 @@ describe('道具の色', () => {
   });
 });
 
+describe('検査の釦', () => {
+  // **釦と帯の行で印を分ける。** 帯の行は `renderIssues` が `cf-<kind>` を付けるので、
+  // 釦を `cf-erc` にすると ERC の行を押したときに帯が畳まれる (押す先が混ざる)。
+  test('does not take the class the ERC rows already use', () => {
+    const shown = shell({ view: { html: '', picker: '', issues: '', chrome: CHROME, erc: { count: 3, open: false, html: '' } } });
+
+    expect(shown).toContain('<button type="button" class="cf-erc-toggle"');
+    expect(shown).not.toContain('class="cf-erc"');
+  });
+
+  test('says how many there are before it is opened', () => {
+    const shown = shell({ view: { html: '', picker: '', issues: '', chrome: CHROME, erc: { count: 3, open: false, html: '' } } });
+
+    expect(shown).toContain('>3</span>');
+    expect(shown).toContain('aria-pressed="false"');
+  });
+
+  // 数えるものが無いフェンス (breadboard) で、常に 0 の釦を出さない。
+  test('shows no button at all when the fence has no ERC', () => {
+    const shown = shell();
+
+    // CSS には印が出るので、**釦そのもの**が無いことを見る。
+    expect(shown).not.toContain('<button type="button" class="cf-erc-toggle"');
+  });
+});
+
 describe('道具の説明', () => {
   test('says what the tool acts on when the name alone does not tell them apart', () => {
     // 動かすと引きずるは形が同じ (どちらも持ち上げて 1 クリック) なので、

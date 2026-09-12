@@ -1599,6 +1599,13 @@ document.addEventListener('click', (event) => {
   }
   closeMenu();
 
+  // 検査の釦。**`summary` の中にあるので、先に止めないと帯ごと畳まれる。**
+  if (target?.closest('.cf-erc-toggle') != null) {
+    event.preventDefault();
+    vscode.postMessage({ kind: 'erc' });
+    return;
+  }
+
   // 帯の 1 行。**書き換えはしない** — 直すのは書き手の仕事で、こちらは場所を指すだけ。
   const row = target?.closest<HTMLElement>('.cf-issue[data-line]');
   if (row?.dataset.line !== undefined) {
@@ -1752,6 +1759,8 @@ type Incoming =
     readonly kind: 'map'; readonly html: string; readonly picker: string; readonly issues: string;
     /** いまのフェンスの語彙と能力表。**言語が変わると入れ替わる** (52 の docs/19, 23)。 */
     readonly chrome?: PanelChrome;
+    /** 帯の「検査 N」の釦。**持たないフェンスでは無い** (52 の docs/55)。 */
+    readonly erc?: ErcView;
   }
   | { readonly kind: 'status'; readonly text: string }
   /**
@@ -1802,6 +1811,28 @@ const fill = (selector: string, html: string): void => {
   if (target) target.innerHTML = html;
 };
 
+/** 帯の「検査 N」の釦の姿。殻が組んで送ってくる (`panelHtml.ts` の `MapViewHtml`)。 */
+type ErcView = { readonly count: number; readonly open: boolean; readonly html: string };
+
+/**
+ * 帯の見出しの「検査 N」の釦と、その中身 (52 の docs/52・55)。
+ *
+ * **持たないフェンスでは釦ごと隠す** — 言語を切り替えたときに前の言語の
+ * 釦が残らないように、毎回当て直す。
+ */
+function applyErc(erc: ErcView | undefined): void {
+  const button = query<HTMLButtonElement>('.cf-erc-toggle');
+  if (button !== null) {
+    button.hidden = erc === undefined;
+    if (erc !== undefined) {
+      button.setAttribute('aria-pressed', erc.open ? 'true' : 'false');
+      const count = button.querySelector('.cf-erc-count');
+      if (count !== null) count.textContent = String(erc.count);
+    }
+  }
+  fill('.cf-erc-rows', erc?.open === true ? erc.html : '');
+}
+
 /**
  * **語彙も能力表も入れ替える。** 1 つの殻が 3 つのフェンスを扱うので、言語をまたぐと
  * 置ける部品も種類の候補も、升の間を刻めるかどうかも変わる。ここで受けないと、最初に
@@ -1824,6 +1855,7 @@ window.addEventListener('message', (event: MessageEvent<Incoming>) => {
     fill('.cf-body', message.html);
     fill('.cf-fences', message.picker);
     fill('.cf-band', message.issues);
+    applyErc(message.erc);
     if (message.chrome !== undefined) applyChrome(message.chrome);
     // 中身を入れ替えたので、控えている印と絵は捨てる (指す先が図から外れた)。
     forgetPainted();

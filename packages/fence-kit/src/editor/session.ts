@@ -531,7 +531,8 @@ export function createSession<D extends DocLike>(
 
     // 一覧は文書全体から組むので、本文だけでなく文書も鍵に入れる。
     const markdown = fence.document.getText();
-    const key = `${uriOf(fence.document)}\u0000${fence.line}\u0000${markdown}`;
+    // **開閉も鍵に入れる。** 本文が同じでも、広げた姿と畳んだ姿は別物。
+    const key = `${uriOf(fence.document)}\u0000${fence.line}\u0000${ercOpen ? '1' : '0'}\u0000${markdown}`;
     if (lastView !== null && lastView.key === key) return lastView.view;
 
     const view = editor.view(fence.source, fence.line);
@@ -539,6 +540,10 @@ export function createSession<D extends DocLike>(
       html: view.map,
       picker: renderFencePicker(allFences(markdown), fence.line),
       issues: view.issues,
+      // **件数は常に、中身は広げているときだけ。** 畳んだまま運んでも出さない。
+      ...(view.erc === undefined
+        ? {}
+        : { erc: { count: view.erc.count, open: ercOpen, html: ercOpen ? view.erc.html : '' } }),
       // **語彙はいまのフェンスのもの。** 言語が変わるとパレットも候補も
       // 入れ替わるので、升目と一緒に送り直す (52 の docs/19)。
       chrome: chromeOf(editor),
@@ -636,6 +641,13 @@ export function createSession<D extends DocLike>(
    * 追うパネルでは、フェンスの外にあるカーソルから作る行を決められない。
    */
   const canCreate = (): boolean => pinned !== null && host.createFence !== undefined;
+
+  /**
+   * 検査 (ERC) の帯を広げているか。**セッションが持ち、文書には書かない**
+   * (52 の docs/52 の決め 2) — 開き直すと畳んだ状態に戻る。作業のあいだ
+   * ずっと出しておくものではなく、**確かめたいときに開くもの**だから。
+   */
+  let ercOpen = false;
 
   /**
    * 置く先のフェンス。**無ければ作る** (52 の docs/54 の決め 7)。
@@ -1743,7 +1755,12 @@ export function createSession<D extends DocLike>(
         case 'fence':
           pickFence(message);
           return;
-        case 'goto':
+        case 'erc':
+          // **押すたびに反転する。** 釦は 1 つで、開くのと畳むのを兼ねる。
+          ercOpen = !ercOpen;
+          refreshWith(false);
+          return;
+      case 'goto':
           await goTo(message);
           return;
         default:

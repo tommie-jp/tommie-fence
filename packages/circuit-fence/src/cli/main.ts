@@ -131,7 +131,7 @@ function emitTex(job: Job): number {
  * KiCad と同じく**確かめたいときに走らせるもの**にしてある。
  */
 function checkJob(job: Job): number {
-  const { tex, netlist, errors: raw, notices } = compileCircuit(job.source, { erc: true });
+  const { tex, netlist, errors: raw, notices, erc } = compileCircuit(job.source, { erc: true });
   const errors = shiftErrors(raw, job.line);
 
   if (tex === null) {
@@ -143,7 +143,9 @@ function checkJob(job: Job): number {
   console.log(`${job.label}: 読めました`);
   reportNetlist(netlist);
   reportErrors(errors);
-  reportNotices(shiftErrors(notices, job.line));
+  // **ERC はお知らせと同じ並びに出す。** 分けて返るようになったのは editor の
+  // 帯で畳むためで (52 の docs/55)、ここでの見え方は変える理由が無い。
+  reportNotices(shiftErrors([...notices, ...erc], job.line));
   return errors.length;
 }
 

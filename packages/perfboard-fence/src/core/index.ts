@@ -54,8 +54,16 @@ export type RenderResult = {
   readonly netlist: readonly Net[];
   /** 読めなかったところ。行番号と、行の中身と、綴りを指す印を持つ。 */
   readonly errors: readonly FenceError[];
-  /** 読めてはいるが、思ったとおりには出ないところ。 */
+  /** 読めてはいるが、思ったとおりには出ないところ。**ERC は入らない** (下の `erc`)。 */
   readonly notices: readonly FenceError[];
+  /**
+   * ERC — 図のとおりに組んでも動かないところ。`style: check: off` の図では空。
+   *
+   * **`notices` と分けてある** (52 の docs/55)。editor の帯はこれだけを
+   * 「検査 N」の釦の向こうへ畳むので、混ざっていると畳む側が文面で見分ける
+   * ことになる。**図の下の帯 (`errorHtml`) と CLI は今までどおり両方を並べる。**
+   */
+  readonly erc: readonly FenceError[];
   /**
    * 図の下に貼る帯 (図は描けた) か、カード (読めなかった) の HTML。
    * 言うことが無ければ空文字列。**図の SVG には何も書き込まない**ので、
@@ -229,20 +237,32 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
     .filter((error) => error.notice !== true);
   // **`erc: off` は「伏せる」ではなく「見ない」。** 書いた人が外したのだから、
   // 外したことをこちらから言い足さない (`debug: off` との違いは文法の説明に書く)。
-  const erc = !style.check
+  const checking = style.check && hardErrors.length === 0;
+  /**
+   * ERC (つながっていない足・跨がれた部品・足を指さない配線)。
+   * **`notices` に混ぜず別に返す** — editor の帯はこれだけを「検査 N」の釦の
+   * 向こうへ畳む (52 の docs/55)。図の下の帯と CLI は今までどおり両方を並べる。
+   */
+  const erc = checking
+    ? checkErc({
+      parts: placement.parts,
+      wires: wiring.wires,
+      netlist,
+      namedStrips: new Set(named.map(([address]) => holeStrip(address))),
+      devices,
+    })
+    : [];
+  /**
+   * 当たり判定 (胴の重なり)。**釦の向こうへは隠さず、帯に残す** —
+   * 置いたその場で直す間違いで、作業中に当たり前に出る中間状態ではない。
+   * 隠すと、重ねて置いたことに気づくのが遅れる。
+   */
+  const fit = checking ? checkFit(placement.parts, layout) : [];
+  // **掛けなかったことは黙らずに言う。** 帯に残すのは、件数が 0 の理由が
+  // 「問題が無い」ではなく「見ていない」だからで、釦の数字だけでは伝わらない。
+  const notChecked = !style.check || hardErrors.length === 0
     ? []
-    : hardErrors.length > 0
-    ? [notice('読めなかったところがあるので ERC と当たり判定は掛けていません (直すと掛かります)', null)]
-    : [
-      ...checkErc({
-        parts: placement.parts,
-        wires: wiring.wires,
-        netlist,
-        namedStrips: new Set(named.map(([address]) => holeStrip(address))),
-        devices,
-      }),
-      ...checkFit(placement.parts, layout),
-    ];
+    : [notice('読めなかったところがあるので ERC と当たり判定は掛けていません (直すと掛かります)', null)];
 
   // **画布からはみ出す部品ぶん、画布を広げる。** 端面実装のコネクタは板の外へ
   // 張り出すので、板の寸法だけで画布を決めると図が黙って切れる。
@@ -382,7 +402,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   // 後ろの段の報告から先に消え、行を追って直せなくなる。
   const collected = [
     ...parsed.errors, ...pointErrors, ...placement.errors, ...wiring.errors, ...noteErrors,
-    ...placedDevices.notices, ...erc,
+    ...placedDevices.notices, ...fit, ...notChecked,
   ];
   const reported = attachSourceText(byLine(collected), source);
   const errors = reported.filter((error) => error.notice !== true);
@@ -395,8 +415,15 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   // **行番号は Markdown の行に直して出す。** 読むのはフェンスの中の数え方だが、
   // 書き手が直しに行くのは Markdown の行 (実機で指摘された)。
   const at = (list: readonly FenceError[]): readonly FenceError[] => shiftErrors(list, options.offset ?? 0);
-  const shown = style.debug ? [...at(errors), ...at(notices)] : at(errors);
-  return { svg, netlist, errors: at(errors), notices: at(notices), errorHtml: renderErrorBanner(shown) };
+  // **図の下の帯と CLI は今までどおり両方を並べる。** 分けて返るようになったのは
+  // editor の帯で畳むためで、読み手への見え方を変える理由は無い。
+  const ercAt = attachSourceText(byLine(erc), source);
+  const shown = style.debug ? [...at(errors), ...at(notices), ...at(ercAt)] : at(errors);
+  return {
+    svg, netlist,
+    errors: at(errors), notices: at(notices), erc: at(ercAt),
+    errorHtml: renderErrorBanner(shown),
+  };
 }
 
 export { extractPerfboardFences } from './fences.ts';

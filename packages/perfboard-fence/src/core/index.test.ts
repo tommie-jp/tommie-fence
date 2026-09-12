@@ -142,10 +142,11 @@ describe('renderPerfboard', () => {
 
     expect(result.errors).toEqual([]);
     // **部品ごとに 1 件**にまとめる (足 1 本ずつではない)。
-    expect(result.notices).toHaveLength(1);
-    expect(result.notices[0]?.line).toBe(3);
-    expect(result.notices[0]?.message).toContain('R1.1');
-    expect(result.notices[0]?.message).toContain('R1.2');
+    // ERC は `erc` に来る (52 の docs/55 — 帯の「検査 N」の釦で畳むため)。
+    expect(result.erc).toHaveLength(1);
+    expect(result.erc[0]?.line).toBe(3);
+    expect(result.erc[0]?.message).toContain('R1.1');
+    expect(result.erc[0]?.message).toContain('R1.2');
     expect(result.errorHtml).toContain('perfboard-notice');
     // 図は描けている。ERC が言うのは「そのとおりに組むと動かない」こと。
     expect(result.svg).toContain('<svg');
@@ -185,7 +186,7 @@ describe('renderPerfboard', () => {
       '',
     ].join('\n'));
 
-    expect(result.notices.some((n) => n.message.includes('短絡') && n.line === 5)).toBe(true);
+    expect(result.erc.some((n) => n.message.includes('短絡') && n.line === 5)).toBe(true);
   });
   test('keeps the hard errors in the banner when ERC has a lot to say', () => {
     // お知らせが行順で先に来ると、帯の打ち切り (8 件) で**読めなかった行が
@@ -287,7 +288,7 @@ describe('renderPerfboard', () => {
   test('says an ic has unwired pins once, not once per pin', () => {
     // DIP の余った足は普通のこと。1 本ずつ言うと**正しい図が毎回叱られる**。
     const result = renderPerfboard('board: 16x10\nparts:\n  U1: dip8 c4\n');
-    const unwired = result.notices.filter((n) => n.message.includes('つながっていません'));
+    const unwired = result.erc.filter((n) => n.message.includes('つながっていません'));
 
     expect(unwired).toHaveLength(1);
     expect(unwired[0]?.message).toContain('U1');
@@ -421,7 +422,7 @@ describe('板の外の機器', () => {
 
   test('says a device pin nothing reaches is unconnected', () => {
     const result = renderPerfboard(fence.replace('  - BAT.- -- b7\n', ''));
-    const said = result.notices.map((one) => one.message).join('\n');
+    const said = result.erc.map((one) => one.message).join('\n');
 
     expect(said).toContain('BAT.-');
     expect(said).toContain('板の外');
@@ -568,13 +569,13 @@ describe('ERC の切り替え (style: check)', () => {
   test('runs by default, so a missing connection is not silent', () => {
     const result = renderPerfboard(loose);
 
-    expect(result.notices.some((one) => one.message.includes('つながっていません'))).toBe(true);
+    expect(result.erc.some((one) => one.message.includes('つながっていません'))).toBe(true);
   });
 
   test('stops checking when it is turned off, rather than only hiding what it found', () => {
     const result = renderPerfboard(`style:\n  check: off\n${loose}`);
 
-    expect(result.notices).toEqual([]);
+    expect([...result.notices, ...result.erc]).toEqual([]);
     expect(result.svg).toContain('<svg');
   });
 

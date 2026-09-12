@@ -2,7 +2,7 @@ import { listFences } from './fenceList.ts';
 import { partFields, setField } from './field.ts';
 import type { PartField } from './field.ts';
 import { nameOfHandle } from './handles.ts';
-import { issuesOf, renderIssues, shiftIssues } from './issues.ts';
+import { ercOf, issuesOf, renderIssues, shiftIssues } from './issues.ts';
 import { aimAt, fenceAt, gridMap, partCells } from './map.ts';
 import { renderMapHtml } from './mapSvg.ts';
 import { duplicatePart, insertPart, insertWire, nextPartId } from './insert.ts';
@@ -94,10 +94,13 @@ export function createCircuitEditor(look: LookSource = PLAIN): FenceEditor {
           .map((issue) => issue.error.line)
           .filter((line): line is number => line !== null),
       );
+      // **ERC は数えるだけで、広げるかは殻が決める** (帯の「検査 N」の釦)。
+      const erc = ercOf(source);
       return {
         map: renderMapHtml(gridMap(source), bad, look()),
         // 帯は Markdown の行で出す。押すとそこへ飛べる (フェンスの中の行では飛べない)。
         issues: renderIssues(shiftIssues(issues, fenceLine)),
+        erc: { count: erc.length, html: renderIssues(shiftIssues(erc, fenceLine)) },
       };
     },
 

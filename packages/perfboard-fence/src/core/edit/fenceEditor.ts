@@ -4,7 +4,7 @@ import { normalizeNewlines } from 'fence-kit';
 import { renderPalette, renderTypeOptions } from './palette.ts';
 import { partFields, setField } from './field.ts';
 import type { PartField } from './field.ts';
-import { issuesOf, shiftIssues } from './issues.ts';
+import { ercOf, issuesOf, shiftIssues } from './issues.ts';
 import { aimAt, fenceAt } from './map.ts';
 import { insertPart, insertWire, duplicatePart, nextPartId, partCells } from './insert.ts';
 import { renamePart } from './rename.ts';
@@ -30,6 +30,12 @@ import { parseFence } from '../parser/parseFence.ts';
  * **マップは図そのもの。** 格子が一様なので、図の上に透明な層を重ねるだけで
  * 掴める (`renderPerfboard(source, { edit: true })`)。
  */
+
+/** 帯の「検査 N」に出す ERC。**数えるのは常に、広げるかは殻が決める。** */
+const ercView = (source: string, fenceLine: number): { readonly count: number; readonly html: string } => {
+  const rows = shiftIssues(ercOf(source), fenceLine);
+  return { count: rows.length, html: renderIssues(rows) };
+};
 
 /**
  * 穴の間へ置こうとしたときの断り。**足は穴に挿す**ので、交点の間に置けるのは
@@ -60,6 +66,8 @@ export function createPerfboardEditor(): FenceEditor {
       // **図そのものが升目。** 掴む層は編集のときだけ重なる。
       map: renderPerfboard(source, { edit: true }).svg,
       issues: renderIssues(shiftIssues(issuesOf(source), fenceLine)),
+      // **ERC は数えるだけで、広げるかは殻が決める** (帯の「検査 N」の釦)。
+      erc: ercView(source, fenceLine),
     }),
 
     aimAt,

@@ -18,21 +18,34 @@ const snippetOf = (error: FenceError): string => {
   return rows.length === 0 ? '' : `<pre class="cf-snippet">${escapeMarkup(rows.join('\n'))}</pre>`;
 };
 
+const rowOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => ({
+  kind,
+  line: error.line,
+  text: errorLine(error),
+  snippet: snippetOf(error),
+});
+
 /**
  * フェンス本文の読めなかったところとお知らせ。行はフェンスの中の行 (1 始まり)。
- * ERC のお知らせもここに出る (**編集はどれも繋ぎ忘れを生む**ので、
- * 直す場所を編集する場所と同じ窓に出す)。
+ *
+ * **ERC はここに出さない** (52 の docs/55 — 下の `ercOf`)。この板は全穴が
+ * 独立していて繋ぎ忘れが足 1 本ごとに出るので、作業の途中はほとんどが
+ * 「まだつないでいない」になる。**帯が中間状態で埋まると、直す場所のある
+ * 報告がそこに埋もれる。** 当たり判定 (胴の重なり) はこちらに残る —
+ * 置いたその場で直す間違いで、中間状態ではない。
  */
 export function issuesOf(source: string): readonly IssueRow[] {
   const { errors, notices } = renderPerfboard(source);
-  const rowOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => ({
-    kind,
-    line: error.line,
-    text: errorLine(error),
-    snippet: snippetOf(error),
-  });
 
   return [...errors.map(rowOf('error')), ...notices.map(rowOf('notice'))];
+}
+
+/**
+ * ERC — **そのとおりに組んでも動かない**ところ。帯の「検査 N」の釦の向こうに
+ * 畳むので、`issuesOf` とは別に取り出す。`style: check: off` の図では空。
+ */
+export function ercOf(source: string): readonly IssueRow[] {
+  return renderPerfboard(source).erc.map(rowOf('erc'));
 }
 
 /**

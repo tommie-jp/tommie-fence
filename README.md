@@ -32,6 +32,14 @@ figure sit behind the "Markdown" button. It carries the 47 `.md`
 files from each package's `examples/`, unchanged. Open your own file (button,
 drop, or `?doc=`), edit it, and write it back.
 
+**The editor does not stop when the YAML does.** A fence with a line it cannot
+read still draws what it could read, and you can keep placing parts; the lines
+it could not read stay exactly as you wrote them and are listed under the
+drawing with their line numbers. An empty fence works too, and a `.md` with no
+fence at all gets one written at the end the moment you place something. What
+the editor refuses is what it cannot write: a hole off the board, two legs in
+one hole, a body it cannot add a line to.
+
 [![Open in Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
 
 **For all three for real, use Codespaces.** VS Code opens in the browser with

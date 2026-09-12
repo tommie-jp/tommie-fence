@@ -23,10 +23,13 @@ import type { FenceError } from '../types.ts';
  * こちらに残るのは**並べ方だけ** — 行の目印、種類ごとの色、並べる件数。
  */
 
-/** 読めなかったところ 1 件と、それがエラーかお知らせか。 */
+/** 読めなかったところ 1 件と、それがエラーかお知らせか ERC か。 */
 export type Issue = {
-  /** `error` は読めなかったところ。`notice` は読めたが思ったとおりには出ないもの。 */
-  readonly kind: 'error' | 'notice';
+  /**
+   * `error` は読めなかったところ。`notice` は読めたが思ったとおりには出ないもの。
+   * `erc` は**そのとおりに組んでも動かない**ところ (帯の「検査 N」の釦の向こう)。
+   */
+  readonly kind: 'error' | 'notice' | 'erc';
   readonly error: FenceError;
 };
 
@@ -42,6 +45,20 @@ export function issuesOf(source: string): readonly Issue[] {
     ...errors.map((error) => ({ kind: 'error' as const, error })),
     ...(debug ? notices.map((error) => ({ kind: 'notice' as const, error })) : []),
   ];
+}
+
+/**
+ * ERC — **そのとおりに組んでも動かない**ところ。帯の「検査 N」の釦の向こうに
+ * 畳むので、`issuesOf` とは別に取り出す (52 の docs/55)。
+ *
+ * `style: check: off` の図では空 (core がそう返す)。`debug: off` では**伏せない** —
+ * あれは図に添える帯を黙らせる指定で、こちらは自分から押して開く場所。
+ *
+ * **数えるぶんは高くない。** `issuesOf` がもう `compileCircuit` を通しているので、
+ * 足すのはネットリストを 1 度歩く分だけ。
+ */
+export function ercOf(source: string): readonly Issue[] {
+  return compileCircuit(source, { erc: true }).erc.map((error) => ({ kind: 'erc' as const, error }));
 }
 
 /**

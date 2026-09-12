@@ -34,6 +34,15 @@ export type CompileResult = {
    */
   readonly notices: readonly FenceError[];
   /**
+   * ERC (**組んでも動かない**の指摘)。`erc: true` で頼んだときだけ中身が入る。
+   *
+   * **`notices` に混ぜない** (52 の docs/55)。editor の帯は ERC だけを
+   * 「検査 N」の釦の向こうへ畳むので、混ざっていると畳む側が文面で見分ける
+   * ことになる (どちらも「読めたが思ったとおりに出ない」)。図の下の帯と CLI は
+   * `[...notices, ...erc]` で今までどおり並べる。
+   */
+  readonly erc: readonly FenceError[];
+  /**
    * 上の `notices` を読み手に出すか (`style: debug`)。既定は true。
    *
    * **数えるのはここまでで、黙らせるのは出す側**。false でも notices は
@@ -101,6 +110,7 @@ export function compileCircuit(fence: string, options: CompileOptions = {}): Com
         ? [fenceError('部品がありません (parts: に「ID: 種類 番地 番地 値」を並べます)', null)]
         : withSource([...errors, ...themeErrors]),
       notices: [],
+      erc: [],
       debug: doc.style.debug !== false,
     };
   }
@@ -126,7 +136,8 @@ export function compileCircuit(fence: string, options: CompileOptions = {}): Com
     errors: withSource([...errors, ...modelErrors, ...themeErrors]),
     // 図は組めたが指定が効かなかったところ。行は style の項目に付けられない
     // ので (どの項目かは文面で分かる) 行なしで出す。
-    notices: withSource([...texMessages.map((message) => fenceError(message, null)), ...notices, ...erc]),
+    notices: withSource([...texMessages.map((message) => fenceError(message, null)), ...notices]),
+    erc: withSource(erc),
     debug: doc.style.debug !== false,
   };
 }

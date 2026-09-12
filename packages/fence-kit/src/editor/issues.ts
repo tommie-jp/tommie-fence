@@ -15,8 +15,12 @@ import { element, escapeMarkup } from '../markup.ts';
 
 /** 帯に並べる 1 件。 */
 export type IssueRow = {
-  /** `error` は読めなかったところ。`notice` は読めたが思ったとおりには出ないもの。 */
-  readonly kind: 'error' | 'notice';
+  /**
+   * `error` は読めなかったところ。`notice` は読めたが思ったとおりには出ないもの。
+   * `erc` は**そのとおりに組んでも動かない**ところ — 帯の「検査 N」の釦の
+   * 向こうへ畳むので、色も置き場も別にする (52 の docs/55)。
+   */
+  readonly kind: 'error' | 'notice' | 'erc';
   /**
    * Markdown の行 (1 始まり)。**分からなければ null** —
    * 手掛かりを付けると、押しても何も起きない行ができる。

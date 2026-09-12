@@ -463,6 +463,14 @@ const STYLE = `
   /* 帯: 読めなかったところとお知らせ。折り畳める。 */
   .kc-band { flex: none; max-height: 30%; overflow-y: auto; border-top: 1px solid var(--kc-line); background: var(--kc-chrome); }
   .kc-band summary { padding: 3px 8px; cursor: pointer; user-select: none; opacity: 0.8; }
+  /* **検査の釦は見出しの右端。** 押す所と広がる所を同じにする (道具の帯は狭い)。 */
+  .cf-erc-toggle {
+    float: right; margin: -1px 2px 0 8px; padding: 0 8px; border: 1px solid var(--kc-line);
+    border-radius: 10px; background: transparent; color: inherit; font: inherit; line-height: 1.6;
+    cursor: pointer; opacity: 0.9;
+  }
+  .cf-erc-toggle:hover { background: var(--kc-hover); }
+  .cf-erc-toggle[aria-pressed="true"] { background: var(--kc-hover); opacity: 1; }
   .cf-issues { list-style: none; margin: 0; padding: 0 8px 6px; }
   .cf-issue { margin-top: 2px; padding: 3px 8px; border-left: 3px solid var(--kc-line); }
   .cf-issue.cf-error {
@@ -473,6 +481,10 @@ const STYLE = `
     border-left-color: var(--cf-iffy);
     background: var(--vscode-inputValidation-warningBackground, transparent);
   }
+  /* 検査 (ERC)。読めなかった行 (赤) ともお知らせ (黄) とも別の色にする —
+     直さなくても図は出るが、組んでも動かないことを言っている。
+     テーマの系列色は明るいテーマで淡く出るので、濃さは決め打ちの青にする。 */
+  .cf-issue.cf-erc { border-left-color: var(--cf-joins); }
   /* 行の分かっているものだけが押せる。 */
   .cf-issue[data-line] { cursor: pointer; }
   .cf-issue[data-line]:hover { outline: 1px solid var(--vscode-focusBorder); }
@@ -643,6 +655,22 @@ const STYLE = `
   .cf-pin-hit.cf-from { fill: var(--vscode-focusBorder); opacity: 0.45; }
 `;
 
+/**
+ * 帯の見出しに置く「検査 N」の釦 (52 の docs/52・55)。
+ *
+ * **ERC を持たないフェンスでは何も出さない** — 数えるものが無いのに常に 0 の
+ * 釦は、狭い帯のノイズにしかならない。件数は畳んでいても出す (押す前に
+ * 「見るものがあるか」が分かる)。
+ */
+const renderErcButton = (erc: MapViewHtml['erc']): string =>
+  erc === undefined
+    ? ''
+    // **class は `cf-erc-toggle`。** 帯の行は `renderIssues` が `cf-${kind}` を
+    // 付けるので、釦を `cf-erc` にすると ERC の行と同じ印になり、行を押したのに
+    // 帯が畳まれる (押す先が混ざる)。
+    : `<button type="button" class="cf-erc-toggle" aria-pressed="${erc.open ? 'true' : 'false'}"`
+      + ` title="図のとおりに組んでも動かないところ">検査 <span class="cf-erc-count">${erc.count}</span></button>`;
+
 /** 升目とその頭の一覧。セッションが組む (`Session.view`)。 */
 export type MapViewHtml = {
   /** `renderMapHtml` が組んだ升目 (エスケープ済み)。 */
@@ -656,6 +684,18 @@ export type MapViewHtml = {
    * ので、升目と一緒に送り直す。1 つのフェンスしか扱わない殻では毎回同じ。
    */
   readonly chrome: PanelChrome;
+  /**
+   * 帯の「検査 N」の釦 (52 の docs/52・55)。**ERC を持たないフェンスでは
+   * 無い** — 数えるものが無いのに常に 0 の釦は、狭い帯のノイズにしかならない。
+   *
+   * `html` は**広げているときだけ**中身が入る。畳んでいるなら送っても出さない
+   * ので、書き換えのたびに運ぶ意味が無い。
+   */
+  readonly erc?: {
+    readonly count: number;
+    readonly open: boolean;
+    readonly html: string;
+  };
 };
 
 /** フェンスが組む帯 (`FenceEditor.palette` / `typeNames` の答え)。 */
@@ -913,8 +953,9 @@ export const panelHtml = ({ cspSource, nonce, scriptUri, view, undo }: PanelHtml
     + `</div></div>`
     + `<nav class="kc-tools">${renderTools()}</nav>`
     + `</div>`
-    + `<details class="kc-band" open><summary>読めなかった行とお知らせ</summary>`
-    + `<div class="cf-band">${view.issues}</div></details>`
+    + `<details class="kc-band" open><summary>読めなかった行とお知らせ${renderErcButton(view.erc)}</summary>`
+    + `<div class="cf-band">${view.issues}</div>`
+    + `<div class="cf-erc-rows">${view.erc?.open === true ? view.erc.html : ''}</div></details>`
     + `<footer class="kc-status"><span class="cf-status"></span>`
     + `<span class="kc-cell"></span><span class="kc-zoom">100 %</span></footer>`
     + `<div class="cf-chrome-lists">${chrome.typeNames}${chrome.colorNames}</div>`
