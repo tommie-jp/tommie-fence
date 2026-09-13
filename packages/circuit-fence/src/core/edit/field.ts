@@ -1,12 +1,13 @@
 import { LIMITS } from '../limits.ts';
 import type { PartSpec } from '../types.ts';
 import { normalizeNewlines } from '../newlines.ts';
-import { ORIENTATIONS } from '../parser/compact.ts';
 import { nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import { lookupPartType } from '../parts.ts';
-import { applyRewrite, diffOf, fail, keySpanOf, locatePart, tokensFrom, wordEdit } from './shared.ts';
-import type { Edit, RewriteResult, Token } from './shared.ts';
+import { lookupPartType, resolvePartTypeName } from '../parts.ts';
+import { lineEdit } from 'fence-kit';
+import { writeFence } from '../write/writeFence.ts';
+import { applyRewrite, diffOf, fail } from './shared.ts';
+import type { RewriteResult } from './shared.ts';
 
 /**
  * 部品の欄 (種類・値・ラベル) を書き換える。**フェンス本文 → 書き換えの並び**を
@@ -106,37 +107,28 @@ export function setField(source: string, handle: string, field: PartField, text:
   const problem = fieldProblem(text);
   if (problem !== null) return fail(problem, part.line);
 
-  const located = locatePart(doc, lines, handle);
-  const lineText = lines[part.line - 1];
-  if (located === null || lineText === undefined) {
-    return fail(`${partId} の行から番地を見つけられませんでした`, part.line);
-  }
+  const changed = withField(part, field, text);
+  if (!changed.ok) return changed;
 
-  const last = located.tokens.at(-1);
-  const after = last === undefined ? 0 : last.column + last.length;
-  const found = fieldEdits({ part, field, text, lineText, tail: tokensFrom(lineText, after), after });
-  if (!found.ok) return found;
+  // **中身を直して、その行だけ組み直す** (52 の docs/54 の段 3)。書かれた字下げ・
+  // 語の間の空白・コメントは `writeFence` が残すので、いまの当て方と同じ字になる
+  // (`write/parity.test.ts` が見張る)。差し替えは違う所だけに絞る。
+  const parts = doc.parts.map((one) => (one === part ? changed.part : one));
+  const next = writeFence(normalized, { ...doc, parts }, new Set([part.line]))[part.line - 1];
+  const edit = next === undefined ? null : lineEdit(part.line, lines[part.line - 1] ?? '', next);
 
-  const rewrite = { edits: found.edits, lines: [], diff: { lost: [], gained: [] } };
+  const rewrite = { edits: edit === null ? [] : [edit], lines: [], diff: { lost: [], gained: [] } };
   return { ok: true, value: { ...rewrite, diff: diffOf(normalized, applyRewrite(normalized, rewrite)) } };
 }
 
-type Context = {
-  readonly part: PartSpec;
-  readonly field: PartField;
-  readonly text: string;
-  readonly lineText: string;
-  readonly tail: readonly Token[];
-  readonly after: number;
-};
+type Changed = { readonly ok: true; readonly part: PartSpec } | ReturnType<typeof fail>;
 
-type Found = { readonly ok: true; readonly edits: readonly Edit[] } | ReturnType<typeof fail>;
-
-const found = (edits: readonly Edit[]): Found => ({ ok: true, edits });
-
-/** 欄ごとの探し方と足す場所。断るときは `fail` の結果をそのまま返す。 */
-function fieldEdits(context: Context): Found {
-  const { part, field, text, lineText, tail, after } = context;
+/**
+ * 欄を直した部品。**断りの規則はいままでと同じ** — 種類は消せない・番地の数が
+ * 違う種類へは替えない、`l=` は 2 端子だけ、1 端子に値は無い、値に `=` は
+ * 書けない、`v=` と値は同じ側に出るので片方だけ。
+ */
+function withField(part: PartSpec, field: PartField, text: string): Changed {
   const line = part.line;
 
   if (field === 'type') {
@@ -146,22 +138,15 @@ function fieldEdits(context: Context): Found {
     if (type.kind !== part.kind) {
       return fail(`${text} は番地の数が違うので、そのままでは差し替えられません`, line);
     }
-    const key = keySpanOf(lineText, part.id, 0);
-    const at = key === null ? 0 : key.column + key.length + 1;
-    const written = tokensFrom(lineText, at)[0];
-    if (written === undefined) return fail(`${part.id} の種類を書いている場所が見つかりませんでした`, line);
-    return found([{ line, column: written.column, length: written.text.length, text }]);
+    // 書かれた綴り (`written`) を差し替える。略記で書けば略記のまま出る。
+    return { ok: true, part: { ...part, type: resolvePartTypeName(text) ?? part.type, written: text } as PartSpec };
   }
 
   if (field === 'label') {
     if (part.kind !== 'two-terminal') {
       return fail(`${part.id} には l= を書けません (2 端子の部品だけ)`, line);
     }
-    const written = tail.find((token) => token.text.startsWith('l=')) ?? null;
-    // ラベルは値のうしろに足す (書く順の慣習に合わせる)。
-    const end = tail.at(-1);
-    const append = end === undefined ? after : end.column + end.text.length;
-    return found(wordEdit(line, written, text === '' ? '' : `l=${text}`, append));
+    return { ok: true, part: { ...part, label: text === '' ? null : text } };
   }
 
   if (part.kind === 'one-terminal') return fail(`${part.id} には値を書けません (「種類 番地」だけ)`, line);
@@ -169,10 +154,6 @@ function fieldEdits(context: Context): Found {
   if (part.kind === 'two-terminal' && part.voltage !== null && text !== '') {
     return fail('v= の字と値は図の同じ側に出ます (どちらか片方にします)', line);
   }
-
-  // 値は番地の次に書く綴り。札 (`l=`) と、多端子の向き (`+up`) は値ではない。
-  const written = tail.find((token) => (
-    !token.text.includes('=') && !(ORIENTATIONS as readonly string[]).includes(token.text)
-  )) ?? null;
-  return found(wordEdit(line, written, text, after));
+  return { ok: true, part: { ...part, value: text === '' ? null : text } };
 }
+
