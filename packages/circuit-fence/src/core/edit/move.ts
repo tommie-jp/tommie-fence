@@ -72,10 +72,13 @@ export function movePart(source: string, handle: string, to: Address, trial = fa
   const lineText = lines[part.line - 1];
   if (lineText === undefined) return fail(`${partId} の行が見つかりません`, part.line);
 
-  const edits = sharesLine(doc.parts, part)
-    ? tokenEdits(doc, lines, handle, part, next)
-    : rebuiltEdits(normalized, doc, part, next, lineText);
-  if (edits === null) return fail(`${partId} の行から番地を見つけられませんでした`, part.line);
+  // **フロー形式は動かさない** (欄を直すのと揃える。52 の docs/54)。1 行に部品が
+  // 並ぶので行まるごと組み直すと隣の部品を消し、綴りを探す別の道を持つことになる。
+  // 例にも文法リファレンスにも使われていない。図は描けるので、直すなら手で書く。
+  if (sharesLine(doc.parts, part) || /^\s*parts\s*:/.test(lineText)) {
+    return fail(`${partId}: フロー形式 (1 行に書いた形) の部品は動かせません。手で書きます`, part.line);
+  }
+  const edits = rebuiltEdits(normalized, doc, part, next, lineText);
 
   return {
     ok: true,
@@ -83,10 +86,7 @@ export function movePart(source: string, handle: string, to: Address, trial = fa
   };
 }
 
-/**
- * **1 行に部品が並んでいる** (フロー形式 `parts: {R1: …, R2: …}`)。
- * 行まるごと組み直すと隣の部品を消すので、この形だけは綴りを探して差し替える。
- */
+/** **1 行に部品が並んでいる** (フロー形式 `parts: {R1: …, R2: …}`)。 */
 const sharesLine = (parts: readonly PartSpec[], part: PartSpec): boolean =>
   parts.some((other) => other !== part && other.line === part.line);
 
@@ -107,26 +107,6 @@ function rebuiltEdits(
   return rebuilt === undefined ? [] : lineEdits(part.line, lineText, rebuilt);
 }
 
-/**
- * 綴りを探して差し替える (フロー形式だけ)。**光らせる桁 (`partSpans`) と
- * 同じ探し方**を通すので、光る場所と動く場所が食い違わない。
- */
-function tokenEdits(
-  doc: ReturnType<typeof parseFence>['doc'],
-  lines: readonly string[],
-  handle: string,
-  part: PartSpec,
-  next: readonly Address[],
-): readonly Edit[] | null {
-  const located = locatePart(doc, lines, handle);
-  if (located === null) return null;
-  return located.tokens.map((token, index) => ({
-    line: part.line,
-    column: token.column,
-    length: token.length,
-    text: formatAddress(next[index] as Address),
-  }));
-}
 
 /** 番地を差し替えた部品。**綴りも動かした先のもの**にする (`addressesOf` と同じ順)。 */
 function movedTo(part: PartSpec, next: readonly Address[]): PartSpec {
