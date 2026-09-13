@@ -55,10 +55,12 @@ describe('書き換えた行だけ組み直す', () => {
     expect(written[4]).toBe('wires:');
   });
 
-  test('組み直した行にも、書かれていた字下げを付ける', () => {
+  // **桁揃えも残す。** 値を 1 つ直しただけで揃えが崩れると、書き換えて
+  // いない行との並びが狂う (語の数が同じなら空白をそのまま使う)。
+  test('組み直した行にも、字下げと語の間の空白を付ける', () => {
     const { doc } = parseFence(SOURCE);
 
-    expect(writeFence(SOURCE, doc, new Set([4]))[3]).toBe('  R1: resistor a1 a3 10k');
+    expect(writeFence(SOURCE, doc, new Set([4]))[3]).toBe('  R1:  resistor a1 a3 10k');
   });
 
   // **行末のコメントは残す。** 読んだ中身には入っていないので、書かれた行から写す。
@@ -66,7 +68,7 @@ describe('書き換えた行だけ組み直す', () => {
     const withNote = SOURCE.replace('  R1:  resistor a1 a3 10k', '  R1:  resistor a1 a3 10k  # 分圧の上側');
     const { doc } = parseFence(withNote);
 
-    expect(writeFence(withNote, doc, new Set([4]))[3]).toBe('  R1: resistor a1 a3 10k # 分圧の上側');
+    expect(writeFence(withNote, doc, new Set([4]))[3]).toBe('  R1:  resistor a1 a3 10k  # 分圧の上側');
   });
 
   // 引用の中の `#` はコメントではない。

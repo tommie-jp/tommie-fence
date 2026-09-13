@@ -50,7 +50,7 @@ describe('書き換えた行だけ組み直す', () => {
     const { doc } = parseFence(SOURCE);
     const written = writeFence(SOURCE, doc, new Set([3]));
 
-    expect(written[2]).toBe('  R1: resistor a5 a10 330 # 分圧の上側');
+    expect(written[2]).toBe('  R1:  resistor a5 a10 330  # 分圧の上側');
     // 揃えて書いた D1 の行は動かない。
     expect(written[3]).toBe('  D1:  led a14(A) a17(K) red');
   });

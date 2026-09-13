@@ -32,9 +32,35 @@ export function commentAt(line: string): number {
   return -1;
 }
 
-/** 書かれた行から字下げと行末のコメントを写して、組み直した行を仕上げる。 */
+/**
+ * 書かれた行の**語の間の空白を残して**、語だけ差し替える。
+ *
+ * **桁を揃えて書く人がいる** (`R1:  resistor a1 a3` の 2 つめの空白)。値を 1 つ
+ * 直しただけで揃えが崩れると、書き換えていない行との並びが狂う。**語の数が
+ * 同じなら**、書かれた空白をそのまま使って語だけ入れ替える。
+ *
+ * 語の数が変わったとき (向きの語が増えた・値が消えた) は諦めて、組み直した行を
+ * そのまま返す。**行の形が変わったのだから、揃えも書いた人が直すほうが早い。**
+ */
+export function keepSpacing(written: string, made: string): string {
+  const gaps = written.trim().split(/\S+/).slice(1, -1);
+  const wrote = written.trim().split(/\s+/).filter((one) => one !== '');
+  const words = made.trim().split(/\s+/).filter((one) => one !== '');
+  if (wrote.length !== words.length) return made;
+
+  return words.reduce((line, word, at) => `${line}${gaps[at - 1] ?? ' '}${word}`, '').trimStart();
+}
+
+/**
+ * 書かれた行から**字下げ・語の間の空白・行末のコメント**を写して、
+ * 組み直した行を仕上げる。中身に入っていないものは、書かれた行から持ってくる。
+ */
 export function dressLine(written: string, made: string): string {
   const at = commentAt(written);
-  const tail = at < 0 ? '' : ` ${written.slice(at).trim()}`;
-  return `${indentOf(written)}${made}${tail}`;
+  const body = at < 0 ? written : written.slice(0, at);
+  // **コメントの前の空白も書かれたまま。** ここで詰めると、コメントを縦に
+  // 揃えて書いた人の並びが崩れる。
+  const gap = at < 0 ? '' : (/\s*$/.exec(body)?.[0] ?? ' ') || ' ';
+  const tail = at < 0 ? '' : `${gap}${written.slice(at).trimEnd()}`;
+  return `${indentOf(written)}${keepSpacing(body, made)}${tail}`;
 }
