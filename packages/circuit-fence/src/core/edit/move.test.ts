@@ -168,27 +168,25 @@ describe('部品の名前と番地の綴りが同じとき', () => {
 describe('1 行に部品が 2 つ以上あるとき (フロー形式)', () => {
   const FLOW = 'parts: {R1: resistor a1 a3, R2: resistor a3 a5}\n';
 
-  /**
-   * **動かさない** (欄を直すのと揃える。52 の docs/54)。1 行に部品が並ぶので、
-   * 行まるごと組み直すと隣の部品を消す。例にも文法リファレンスにも使われていない。
-   * **読むのと描くのはいままでどおり**で、直したい人は手で書く。
-   */
-  test('refuses to move a part written on a shared line, and says how to fix it', () => {
+  test('moves the part that was grabbed, not the one written before it', () => {
+    // 頭から探し直すと、先に書かれた R1 の `a3` を二度拾って**掴んでいないほう**が
+    // 動く。partSpans は続きの桁から探しているので、光る場所と動く場所が食い違う。
+    expect(moved(FLOW, 'R2', 'b5').source).toBe('parts: {R1: resistor a1 a3, R2: resistor b5 b7}\n');
+  });
+
+  test('still moves the first part on the line', () => {
+    expect(moved(FLOW, 'R1', 'b1').source).toBe('parts: {R1: resistor b1 b3, R2: resistor a3 a5}\n');
+  });
+
+  test('lights up the same spelling it rewrites', () => {
+    // partSpans が返す桁と、movePart が書き換える桁は同じでなければならない。
+    // partSpans の頭は名前 (`R2:` のほう) なので、端子はその次から。
+    const terminals = partSpans(FLOW, 'R2').slice(1);
     const result = movePart(FLOW, 'R2', at('b5'));
 
-    expect(result.ok).toBe(false);
-    expect(!result.ok && result.error.message).toContain('フロー形式');
-    expect(!result.ok && result.error.message).toContain('手で書きます');
-  });
-
-  test('refuses the first part on the line too', () => {
-    expect(movePart(FLOW, 'R1', at('b1')).ok).toBe(false);
-  });
-
-  // **光らせるのはいままでどおり。** 掴んだ部品がどこに書いてあるかは見せる。
-  test('still lights up where the grabbed part is written', () => {
-    expect(partSpans(FLOW, 'R2').map((span) => FLOW.slice(span.column, span.column + span.length)))
-      .toEqual(['R2', 'a3', 'a5']);
+    expect(result.ok && result.value.edits.map((edit) => edit.column)).toEqual(
+      terminals.map((span) => span.column),
+    );
   });
 });
 
