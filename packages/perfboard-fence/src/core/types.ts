@@ -140,7 +140,7 @@ export type OnBoardNoteKind = Exclude<NoteKind, 'source' | 'parts'>;
 /** 書かれたままの注釈 1 つ。 */
 export type NoteSpec = {
   readonly kind: NoteKind;
-  /** 向き (`text/r90`)。`text` 以外はいつも向き無し。 */
+  /** 向き (`- text b3 r90: 字` の `r90`)。`text` 以外はいつも向き無し。 */
   readonly turn: Turn;
   /** 指し先の番地。**`source` と `parts` は板の外に出すので null**。 */
   readonly from: string | null;
@@ -164,7 +164,7 @@ export type NoteSpec = {
 /** 番地に直した注釈。板の上に置くものだけがここへ来る。 */
 export type ResolvedNote = {
   readonly kind: OnBoardNoteKind;
-  /** 向き (`text/r90`)。`text` 以外はいつも向き無し。 */
+  /** 向き (`- text b3 r90: 字` の `r90`)。`text` 以外はいつも向き無し。 */
   readonly turn: Turn;
   readonly from: Address;
   readonly to: Address | null;
