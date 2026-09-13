@@ -43,12 +43,13 @@ export function commentAt(line: string): number {
  * そのまま返す。**行の形が変わったのだから、揃えも書いた人が直すほうが早い。**
  */
 export function keepSpacing(written: string, made: string): string {
+  // 語と語の間にあった空白を、頭から順に控える。
   const gaps = written.trim().split(/\S+/).slice(1, -1);
-  const wrote = written.trim().split(/\s+/).filter((one) => one !== '');
   const words = made.trim().split(/\s+/).filter((one) => one !== '');
-  if (wrote.length !== words.length) return made;
 
-  return words.reduce((line, word, at) => `${line}${gaps[at - 1] ?? ' '}${word}`, '').trimStart();
+  // **語が増えたぶんは 1 つの空白。** 末尾に値を足したときに、それまでの
+  // 揃えはそのまま残り、足した語だけが普通に続く (いまの当て方と同じ)。
+  return words.reduce((line, word, at) => `${line}${at === 0 ? '' : gaps[at - 1] ?? ' '}${word}`, '');
 }
 
 /**

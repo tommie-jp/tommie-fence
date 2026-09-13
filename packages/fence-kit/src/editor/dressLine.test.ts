@@ -33,9 +33,15 @@ describe('keepSpacing', () => {
       .toBe('R1:  resistor a1 a3 22k');
   });
 
-  test('語の数が変わったら、組み直した行をそのまま返す', () => {
+  // **末尾に語を足しても、それまでの揃えは残る。** 足した語だけが普通に続く。
+  test('語が増えても、それまでの空白は残す', () => {
     expect(keepSpacing('R1:  resistor a1 a3', 'R1: resistor a1 a3 10k'))
-      .toBe('R1: resistor a1 a3 10k');
+      .toBe('R1:  resistor a1 a3 10k');
+  });
+
+  test('語が減っても、残った語の空白は残す', () => {
+    expect(keepSpacing('R1:  resistor a1 a3 10k', 'R1: resistor a1 a3'))
+      .toBe('R1:  resistor a1 a3');
   });
 
   test('揃えていない行はそのまま', () => {
