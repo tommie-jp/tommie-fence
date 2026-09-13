@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { setField } from '../edit/field.ts';
+import { movePart } from '../edit/move.ts';
+import { applyEdits } from '../edit/shared.ts';
+import { formatAddress, parseAddress } from '../model/address.ts';
+import type { Address } from '../model/address.ts';
 import { applyRewrite } from '../edit/shared.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import type { PartSpec } from '../types.ts';
@@ -70,5 +74,50 @@ describe('中身から組み直しても、いまの当て方と同じ字', () =
 
     expect(byDocument(noted, 'R1', (part) => ({ ...part, value: '22k' } as PartSpec)))
       .toBe(byTokens(noted, 'R1', 'value', '22k'));
+  });
+});
+
+/** 部品を動かす — いまの当て方。 */
+const moveByTokens = (source: string, id: string, to: string): string => {
+  const result = movePart(source, id, parseAddress(to) as Address);
+  if (!result.ok) throw new Error(result.error.message);
+  return applyEdits(source, result.value.edits);
+};
+
+/** 部品を動かす — 中身を直して組み直す (アンカーの移動量で全部を平行移動)。 */
+const moveByDocument = (source: string, id: string, to: string): string =>
+  byDocument(source, id, (part) => {
+    const target = parseAddress(to) as Address;
+    const anchor = part.kind === 'two-terminal' ? part.from : part.at;
+    const shift = (address: Address): Address =>
+      ({ row: address.row + target.row - anchor.row, col: address.col + target.col - anchor.col });
+    if (part.kind === 'two-terminal') {
+      const from = shift(part.from);
+      const next = shift(part.to);
+      return { ...part, from, to: next, spelling: [formatAddress(from), formatAddress(next)] };
+    }
+    const at = shift(part.at);
+    return { ...part, at, spelling: [formatAddress(at)] } as PartSpec;
+  });
+
+describe('動かしても、いまの当て方と同じ字', () => {
+  test('2 端子を動かす (揃えあり)', () => {
+    expect(moveByDocument(ALIGNED, 'R1', 'c1')).toBe(moveByTokens(ALIGNED, 'R1', 'c1'));
+  });
+
+  test('1 端子を動かす', () => {
+    expect(moveByDocument(ALIGNED, 'IN', 'b3')).toBe(moveByTokens(ALIGNED, 'IN', 'b3'));
+  });
+
+  test('多端子を動かす (向きの語つき)', () => {
+    const turned = ['parts:', '  Q1:  npn b5 r90 2SC1815', ''].join('\n');
+
+    expect(moveByDocument(turned, 'Q1', 'd8')).toBe(moveByTokens(turned, 'Q1', 'd8'));
+  });
+
+  test('コメントの付いた行を動かす', () => {
+    const noted = ['parts:', '  R1:  resistor a1 a2 10k  # 分圧の上側', ''].join('\n');
+
+    expect(moveByDocument(noted, 'R1', 'e4')).toBe(moveByTokens(noted, 'R1', 'e4'));
   });
 });

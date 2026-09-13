@@ -1,3 +1,4 @@
+import { lineEdits } from 'fence-kit';
 import type { GridStep } from 'fence-kit';
 import { formatAddress, parseAddress, rowLetters } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
@@ -5,10 +6,12 @@ import { normalizeNewlines } from '../newlines.ts';
 import { handleAt, nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { LIMITS } from '../limits.ts';
+import type { PartSpec } from '../types.ts';
+import { writeFence } from '../write/writeFence.ts';
 import {
   addressesOf, applyEdits, diffOf, fail, isOnGrid, keySpanOf, locatePart,
 } from './shared.ts';
-import type { MoveResult, Span } from './shared.ts';
+import type { Edit, MoveResult, Span } from './shared.ts';
 
 /**
  * 部品を別の番地へ動かす。**フェンス本文 -> 編集の並び**を返す純関数で、
@@ -69,22 +72,69 @@ export function movePart(source: string, handle: string, to: Address, trial = fa
   const lineText = lines[part.line - 1];
   if (lineText === undefined) return fail(`${partId} の行が見つかりません`, part.line);
 
-  const located = locatePart(doc, lines, handle);
-  if (located === null) {
-    return fail(`${partId} の行から番地を見つけられませんでした`, part.line);
-  }
-
-  const edits = located.tokens.map((token, index) => ({
-    line: part.line,
-    column: token.column,
-    length: token.length,
-    text: formatAddress(next[index] as Address),
-  }));
+  const edits = sharesLine(doc.parts, part)
+    ? tokenEdits(doc, lines, handle, part, next)
+    : rebuiltEdits(normalized, doc, part, next, lineText);
+  if (edits === null) return fail(`${partId} の行から番地を見つけられませんでした`, part.line);
 
   return {
     ok: true,
     value: { edits, diff: trial ? { lost: [], gained: [] } : diffOf(normalized, applyEdits(normalized, edits)) },
   };
+}
+
+/**
+ * **1 行に部品が並んでいる** (フロー形式 `parts: {R1: …, R2: …}`)。
+ * 行まるごと組み直すと隣の部品を消すので、この形だけは綴りを探して差し替える。
+ */
+const sharesLine = (parts: readonly PartSpec[], part: PartSpec): boolean =>
+  parts.some((other) => other !== part && other.line === part.line);
+
+/**
+ * **中身を直して、その行だけ組み直す** (52 の docs/54 の段 3)。番地の綴りも
+ * 動かした先に書き換える — 書かれた字下げ・語の間の空白・コメントは
+ * `writeFence` が残すので、いまの当て方と同じ字になる (`write/parity.test.ts`)。
+ */
+function rebuiltEdits(
+  source: string,
+  doc: ReturnType<typeof parseFence>['doc'],
+  part: PartSpec,
+  next: readonly Address[],
+  lineText: string,
+): readonly Edit[] {
+  const parts = doc.parts.map((one) => (one === part ? movedTo(part, next) : one));
+  const rebuilt = writeFence(source, { ...doc, parts }, new Set([part.line]))[part.line - 1];
+  return rebuilt === undefined ? [] : lineEdits(part.line, lineText, rebuilt);
+}
+
+/**
+ * 綴りを探して差し替える (フロー形式だけ)。**光らせる桁 (`partSpans`) と
+ * 同じ探し方**を通すので、光る場所と動く場所が食い違わない。
+ */
+function tokenEdits(
+  doc: ReturnType<typeof parseFence>['doc'],
+  lines: readonly string[],
+  handle: string,
+  part: PartSpec,
+  next: readonly Address[],
+): readonly Edit[] | null {
+  const located = locatePart(doc, lines, handle);
+  if (located === null) return null;
+  return located.tokens.map((token, index) => ({
+    line: part.line,
+    column: token.column,
+    length: token.length,
+    text: formatAddress(next[index] as Address),
+  }));
+}
+
+/** 番地を差し替えた部品。**綴りも動かした先のもの**にする (`addressesOf` と同じ順)。 */
+function movedTo(part: PartSpec, next: readonly Address[]): PartSpec {
+  const spelling = next.map(formatAddress);
+  if (part.kind === 'two-terminal') {
+    return { ...part, from: next[0] as Address, to: next[1] as Address, spelling };
+  }
+  return { ...part, at: next[0] as Address, spelling };
 }
 
 /**

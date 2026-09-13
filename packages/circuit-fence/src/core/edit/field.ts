@@ -4,7 +4,7 @@ import { normalizeNewlines } from '../newlines.ts';
 import { nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { lookupPartType, resolvePartTypeName } from '../parts.ts';
-import { lineEdit } from 'fence-kit';
+import { lineEdits } from 'fence-kit';
 import { writeFence } from '../write/writeFence.ts';
 import { applyRewrite, diffOf, fail } from './shared.ts';
 import type { RewriteResult } from './shared.ts';
@@ -115,9 +115,9 @@ export function setField(source: string, handle: string, field: PartField, text:
   // (`write/parity.test.ts` が見張る)。差し替えは違う所だけに絞る。
   const parts = doc.parts.map((one) => (one === part ? changed.part : one));
   const next = writeFence(normalized, { ...doc, parts }, new Set([part.line]))[part.line - 1];
-  const edit = next === undefined ? null : lineEdit(part.line, lines[part.line - 1] ?? '', next);
+  const edits = next === undefined ? [] : lineEdits(part.line, lines[part.line - 1] ?? '', next);
 
-  const rewrite = { edits: edit === null ? [] : [edit], lines: [], diff: { lost: [], gained: [] } };
+  const rewrite = { edits, lines: [], diff: { lost: [], gained: [] } };
   return { ok: true, value: { ...rewrite, diff: diffOf(normalized, applyRewrite(normalized, rewrite)) } };
 }
 
