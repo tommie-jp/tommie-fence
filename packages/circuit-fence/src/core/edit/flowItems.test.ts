@@ -80,3 +80,25 @@ describe('1 行に並べた配線の端', () => {
     expect(editor.moveWireEnd?.(source, `wire:${L + 1}`, 'to', 'e5').ok).toBe(true);
   });
 });
+
+// **改名で指しているものを置いていくと、黙って指し先を見失う。** 1 行に並べた
+// 注釈の 2 つ目や、括弧に付いた綴りを取りこぼしていた。
+describe('1 行に並べたものの改名', () => {
+  test('同じ行の注釈 2 つが指す名前を両方書き換える', () => {
+    const source = `${HEAD}notes: [circle R1, circle R1 red]\n`;
+    const result = editor.rename(source, 'R1', 'R9');
+    expect(result.ok && applyRewrite(source, result.value)).toBe(`${HEAD.replace('R1:', 'R9:')}notes: [circle R9, circle R9 red]\n`);
+  });
+
+  test('1 つだけ並べた注釈の名前も書き換える', () => {
+    const source = `${HEAD}notes: [circle R1]\n`;
+    const result = editor.rename(source, 'R1', 'R9');
+    expect(result.ok && applyRewrite(source, result.value)).toBe(`${HEAD.replace('R1:', 'R9:')}notes: [circle R9]\n`);
+  });
+
+  test('並べた配線の足の名前も書き換える (括弧に付いた綴りも)', () => {
+    const source = 'parts:\n  U1: opamp b5\nwires: [U1.out -- a1, U1.+ -- c1]\n';
+    const result = editor.rename(source, 'U1', 'U9');
+    expect(result.ok && applyRewrite(source, result.value)).toBe('parts:\n  U9: opamp b5\nwires: [U9.out -- a1, U9.+ -- c1]\n');
+  });
+});

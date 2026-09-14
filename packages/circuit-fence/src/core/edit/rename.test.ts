@@ -89,10 +89,12 @@ describe('renamePart', () => {
     expect(renamePart('parts:\n  R1: [unclosed\n', 'R1', 'R2').ok).toBe(false);
   });
 
-  test('refuses when a reference cannot be found on its line, rather than half-renaming', () => {
-    // フロー形式の注釈は綴りが 1 つにつながっている。半分だけ書き換えると図が壊れる。
+  // フロー形式の注釈は綴りが括弧につながっている (`[circle R1]`)。前は取り出せずに
+  // 断っていたが、区切りでも切るようにしたので板の 2 つと同じく書き換える。
+  test('renames a reference written in flow style, bracket and all', () => {
     const source = ['parts:', '  R1: resistor a1 a3', 'notes: [circle R1]', ''].join('\n');
+    const result = renamePart(source, 'R1', 'R2');
 
-    expect(renamePart(source, 'R1', 'R2').ok).toBe(false);
+    expect(result.ok && applyRewrite(source, result.value)).toBe(['parts:', '  R2: resistor a1 a3', 'notes: [circle R2]', ''].join('\n'));
   });
 });

@@ -43,6 +43,9 @@ export const FLOW_ADD_REFUSAL = 'フロー形式 (1 行に書いた形) には�
  */
 export const SHARED_LINE_REFUSAL = '1 行に並べた注釈は、どれを掴んだか見分けられないので書き換えません。手で書きます';
 
+/** 改名で、古い名前を指しているものを**書き換えきれない**ときの文面。 */
+export const RENAME_REFUSAL = '名前を指している所をすべては書き換えられないので、改名しません。手で書きます';
+
 export const REWRITE_REFUSAL = 'この書き方の行は、書き換えると読み方が変わるので書き換えません。手で書きます';
 
 /**

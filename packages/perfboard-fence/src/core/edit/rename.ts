@@ -1,4 +1,4 @@
-import { normalizeNewlines } from 'fence-kit';
+import { RENAME_REFUSAL, applyEdits, normalizeNewlines } from 'fence-kit';
 import type { Edit } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { isReferenceable } from '../limits.ts';
@@ -51,20 +51,40 @@ export function renamePart(source: string, from: string, to: string): FieldResul
   edits.push({ line: part.line, ...key, text: to });
 
   // **その部品を指す注釈も一緒に。** 置いていくと指し先を見失う。
+  const cursors = new Map<number, number>();
   for (const note of doc.notes) {
     if (note.line === null) continue;
     const targets = [note.from, note.to].filter((one) => one !== null);
     if (!targets.includes(from)) continue;
     const text = lines[note.line - 1] ?? '';
-    let cursor = 0;
+    // **同じ行に先に書いた注釈の続きから探す** (`notes: [circle R1 red, circle R1 blue]`)。
+    // 頭から探すと 2 つ目も 1 つ目の綴りを拾い、2 つ目の名前が古いまま残る。
+    let cursor = cursors.get(note.line) ?? 0;
     for (const target of targets) {
       const span = spanOf(text, target, cursor);
       if (span === null) break;
       if (target === from) edits.push({ line: note.line, ...span, text: to });
       cursor = span.column + span.length;
     }
+    cursors.set(note.line, cursor);
   }
 
+  if (!renamedAll(normalized, edits, from)) return fail(`${safeToken(from)}: ${RENAME_REFUSAL}`, part.line);
   // **接続は変わらない** (名前が変わるだけで、どの穴に何が挿さるかは同じ)。
   return { ok: true, value: { edits, diff: { lost: [], gained: [] } } };
+}
+
+/**
+ * 書いたあと読み直して、**古い名前を指すものが残っていないか**。部品の数と YAML の
+ * 構文エラーも動かないこと。取りこぼすと、注釈が黙って指し先を見失う。
+ */
+function renamedAll(source: string, edits: readonly Edit[], from: string): boolean {
+  const before = parseFence(source);
+  const after = parseFence(applyEdits(source, edits));
+  const yamlErrors = (errors: readonly { readonly message: string }[]): number =>
+    errors.filter((error) => error.message.startsWith('YAML')).length;
+  return yamlErrors(after.errors) <= yamlErrors(before.errors)
+    && after.doc.parts.length === before.doc.parts.length
+    && !after.doc.parts.some((one) => one.id === from)
+    && !after.doc.notes.some((note) => note.from === from || note.to === from);
 }

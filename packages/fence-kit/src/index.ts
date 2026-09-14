@@ -69,7 +69,7 @@ export { bodyAfter, changesForFence, fenceBody } from './editor/docEdits.ts';
 export { indentOn } from './editor/documentLike.ts';
 export type { DocLike, EditorLike } from './editor/documentLike.ts';
 export {
-  FLOW_ADD_REFUSAL, FLOW_REFUSAL, REWRITE_REFUSAL, SHARED_LINE_REFUSAL, afterLastLine, appendUnderKey, applyEdits, applyLineEdits, applyRewrite, dropLines, indentOf,
+  FLOW_ADD_REFUSAL, FLOW_REFUSAL, RENAME_REFUSAL, REWRITE_REFUSAL, SHARED_LINE_REFUSAL, afterLastLine, appendUnderKey, applyEdits, applyLineEdits, applyRewrite, dropLines, indentOf,
   insertLines, isFlowKey, isKeyLine, keyLineOf, keysUnder, wireEndToken,
 } from './editor/lines.ts';
 export { fenceToAppend } from './editor/newFence.ts';
