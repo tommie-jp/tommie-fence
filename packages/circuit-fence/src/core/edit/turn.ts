@@ -7,7 +7,9 @@ import { MIRROR_WORD, isRotationWord, rotationWord } from '../parser/compact.ts'
 import { LIMITS } from '../limits.ts';
 import { lookupPartType, orientOf } from '../parts.ts';
 import type { Turn } from '../parts.ts';
-import { LAST_ROW, applyRewrite, diffOf, fail, isOnGrid, locatePart, tokensFrom, wordEdit } from './shared.ts';
+import {
+  LAST_ROW, applyRewrite, diffOf, entryOfPart, fail, isOnGrid, locatePart, tokensFrom, withinEntry, wordEdit,
+} from './shared.ts';
 import type { Edit, RewriteResult } from './shared.ts';
 import type { Circuit } from '../model/circuit.ts';
 import type { PartSpec } from '../types.ts';
@@ -93,18 +95,18 @@ function turnByWord(
   const lineText = lines[part.line - 1];
   if (lineText === undefined) return fail(`${partId} の行が見つかりませんでした`, part.line);
 
-  // フロー形式は 1 行が部品 1 つに対応しないので、語を足す場所が決まらない。
+  // **1 行に並べた形 (フロー形式) はその部品の範囲だけを見る。** 行まるごとだと
+  // 隣の部品の `r90` を自分の語と取り、区切りに付いた `r90,` を語と読めない。
+  const entry = entryOfPart(doc.parts, lines, part);
   const shares = doc.parts.some((other) => other.line === part.line && other !== part);
-  if (shares || /^\s*parts\s*:/.test(lineText)) {
-    return fail(`${partId}: フロー形式 (1 行に書いた形) の部品は向きを書けません。手で書きます`, part.line);
-  }
+  if (entry === null && shares) return fail(`${partId} の行から部品の書き出しを見つけられませんでした`, part.line);
 
   const ends = endsOf(normalized, doc, part, handle);
   if (!ends.ok) return ends;
 
   const last = ends.tokens.at(-1);
   const after = last === undefined ? 0 : last.column + last.length;
-  const tail = tokensFrom(lineText, after);
+  const tail = tokensFrom(entry === null ? lineText : withinEntry(lineText, entry), after);
   const was = part.kind === 'two-terminal' ? { rotate: 0 as const, mirror: false } : part.turn;
 
   const edits: readonly Edit[] = [

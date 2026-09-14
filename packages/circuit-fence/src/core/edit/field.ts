@@ -4,11 +4,10 @@ import { normalizeNewlines } from '../newlines.ts';
 import { nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { lookupPartType, resolvePartTypeName } from '../parts.ts';
-import { dressLine, entryOf, lineEdits } from 'fence-kit';
-import type { Entry } from 'fence-kit';
+import { dressLine, lineEdits } from 'fence-kit';
 import { spellPart } from '../write/spellPart.ts';
 import { writeFence } from '../write/writeFence.ts';
-import { applyRewrite, diffOf, fail } from './shared.ts';
+import { applyRewrite, diffOf, entryOfPart, fail } from './shared.ts';
 import type { RewriteResult } from './shared.ts';
 
 /**
@@ -135,22 +134,6 @@ export function setField(source: string, handle: string, field: PartField, text:
  */
 const flowProblem = (text: string): string | null =>
   /[,[\]{}]/.test(text) ? '1 行に並べた部品には , [ ] { } を書けません (そこで区切りと読まれます)' : null;
-
-/**
- * その部品を書いた範囲。**同じ行に先に書いた部品の続きから探す** —
- * 同じ名前の記号が 1 行に 2 つあるとき (`{VCC: vcc a1, VCC: vcc c1}`)、
- * 頭から探すと 1 つ目の鍵を拾う。
- */
-function entryOfPart(parts: readonly PartSpec[], lines: readonly string[], part: PartSpec): Entry | null {
-  let from = 0;
-  for (const other of parts) {
-    if (other.line !== part.line) continue;
-    const entry = entryOf(lines, part.line, other.id, from);
-    if (entry === null || other === part) return entry;
-    from = entry.end;
-  }
-  return null;
-}
 
 type Changed = { readonly ok: true; readonly part: PartSpec } | ReturnType<typeof fail>;
 

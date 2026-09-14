@@ -222,3 +222,34 @@ describe('名前で書かれた端 (レビューで出た穴)', () => {
     expect(result.value.edits).toEqual([]);
   });
 });
+
+// **1 行に並べた部品 (フロー形式) も、その部品の範囲に語を書く。**
+// 前は語を足す場所が決まらないとして断っていた。板の 2 つは書けていたので揃える。
+describe('向きの語を 1 行に並べた部品に書く', () => {
+  const FLOW = 'parts: {Q1: npn b2 r90 2SC1815, G1: ground b8, U1: opamp b5}\n';
+  const flipped = (source: string, id: string) => {
+    const result = flipPart(source, id);
+    if (!result.ok) throw new Error(result.error.message);
+    return { ...result.value, source: applyRewrite(source, result.value) };
+  };
+
+  test('足す語はその部品の範囲に入り、隣の部品の語を見ない', () => {
+    expect(turned(FLOW, 'G1', 1).source).toBe('parts: {Q1: npn b2 r90 2SC1815, G1: ground b8 r90, U1: opamp b5}\n');
+  });
+
+  test('最後の部品は } の手前に書く', () => {
+    expect(turned(FLOW, 'U1', 1).source).toBe('parts: {Q1: npn b2 r90 2SC1815, G1: ground b8, U1: opamp b5 r90}\n');
+    expect(flipped(FLOW, 'U1').source).toBe('parts: {Q1: npn b2 r90 2SC1815, G1: ground b8, U1: opamp b5 mirror}\n');
+  });
+
+  test('書いてある語はその場で差し替える', () => {
+    expect(turned(FLOW, 'Q1', 1).source).toBe('parts: {Q1: npn b2 r180 2SC1815, G1: ground b8, U1: opamp b5}\n');
+  });
+
+  // **区切りに付いた語** (`r90,`) も語として読む。読めないと 2 つ目を足してしまう。
+  test('区切りの , や } に付いた語も差し替える', () => {
+    const source = 'parts: {G1: ground b8 r90, U1: opamp b5 r90}\n';
+    expect(turned(source, 'G1', 1).source).toBe('parts: {G1: ground b8 r180, U1: opamp b5 r90}\n');
+    expect(turned(source, 'U1', -1).source).toBe('parts: {G1: ground b8 r90, U1: opamp b5}\n');
+  });
+});

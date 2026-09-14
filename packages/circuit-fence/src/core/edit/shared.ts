@@ -20,7 +20,8 @@ import type { FenceError, PartSpec } from '../types.ts';
  * ここから再び輸出するのは、円環の書き換えを避けるため
  * (`core/edit` の中は今までどおり `shared.ts` から取る)。
  */
-import type { Connection, Edit, NetDiff, Rewrite } from 'fence-kit';
+import { entryOf } from 'fence-kit';
+import type { Connection, Edit, Entry, NetDiff, Rewrite } from 'fence-kit';
 
 export { strippedIndent } from 'fence-kit';
 export type { Connection, Edit, LineEdit, NetDiff, Rewrite, Span } from 'fence-kit';
@@ -295,6 +296,29 @@ export function locatePart(
   }
   return null;
 }
+
+/**
+ * その部品を書いた範囲 (fence-kit の `entryOf`)。**同じ行に先に書いた部品の
+ * 続きから探す** — 同じ名前の記号が 1 行に 2 つあるとき (`{VCC: vcc a1, VCC: vcc c1}`)、
+ * 頭から探すと 1 つ目の鍵を拾う。鍵が見つからなければ null。
+ */
+export function entryOfPart(parts: readonly PartSpec[], lines: readonly string[], part: PartSpec): Entry | null {
+  let from = 0;
+  for (const other of parts) {
+    if (other.line !== part.line) continue;
+    const entry = entryOf(lines, part.line, other.id, from);
+    if (entry === null || other === part) return entry;
+    from = entry.end;
+  }
+  return null;
+}
+
+/**
+ * その範囲だけを残した行 (外は空白で埋めて桁を保つ)。**1 行に並べた形で、
+ * 隣の部品の語や区切りの `,` `}` を拾わない**ために、語を探す前に通す。
+ */
+export const withinEntry = (text: string, entry: Entry): string =>
+  `${' '.repeat(entry.start)}${text.slice(entry.start, entry.end)}${' '.repeat(Math.max(0, text.length - entry.end))}`;
 
 /** 行の中の `名前:` の名前のほう。前後が綴りの続きでないところだけを見る。 */
 export function keySpanOf(text: string, id: string, from: number): { column: number; length: number } | null {
