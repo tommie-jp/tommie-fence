@@ -234,3 +234,11 @@ describe('同じ名前が 2 つ以上ある記号', () => {
     expect(result.ok).toBe(true);
   });
 });
+
+// **1 行に 1 部品でも、`{ }` の中ならフロー形式。** 行ごと組み直すと区切りの `,` が消える。
+describe('折り返したフロー形式の部品を動かす', () => {
+  test('区切りの , を残して番地だけ差し替える', () => {
+    const source = 'parts: {\n  R1: resistor a1 a3,\n  G1: ground e3\n}\n';
+    expect(moved(source, 'R1', 'f5').source).toBe('parts: {\n  R1: resistor f5 f7,\n  G1: ground e3\n}\n');
+  });
+});

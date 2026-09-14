@@ -9,7 +9,7 @@ import { LIMITS } from '../limits.ts';
 import type { PartSpec } from '../types.ts';
 import { writeFence } from '../write/writeFence.ts';
 import {
-  addressesOf, applyEdits, diffOf, fail, isOnGrid, keySpanOf, locatePart,
+  addressesOf, applyEdits, diffOf, entryOfPart, fail, isOnGrid, keySpanOf, locatePart,
 } from './shared.ts';
 import type { Edit, MoveResult, Span } from './shared.ts';
 
@@ -72,7 +72,10 @@ export function movePart(source: string, handle: string, to: Address, trial = fa
   const lineText = lines[part.line - 1];
   if (lineText === undefined) return fail(`${partId} の行が見つかりません`, part.line);
 
-  const edits = sharesLine(doc.parts, part)
+  // **フロー形式の中なら綴りを差し替える。** 1 行に 1 部品でも `{ }` の中なら区切りの
+  // `,` があり、行ごと組み直すと消える。範囲が決まらないときも綴りを探す側に回す。
+  const entry = entryOfPart(doc.parts, lines, part);
+  const edits = entry === null || entry.flow
     ? tokenEdits(doc, lines, handle, part, next)
     : rebuiltEdits(normalized, doc, part, next, lineText);
   if (edits === null) return fail(`${partId} の行から番地を見つけられませんでした`, part.line);
@@ -82,13 +85,6 @@ export function movePart(source: string, handle: string, to: Address, trial = fa
     value: { edits, diff: trial ? { lost: [], gained: [] } : diffOf(normalized, applyEdits(normalized, edits)) },
   };
 }
-
-/**
- * **1 行に部品が並んでいる** (フロー形式 `parts: {R1: …, R2: …}`)。
- * 行まるごと組み直すと隣の部品を消すので、この形だけは綴りを探して差し替える。
- */
-const sharesLine = (parts: readonly PartSpec[], part: PartSpec): boolean =>
-  parts.some((other) => other !== part && other.line === part.line);
 
 /**
  * **中身を直して、その行だけ組み直す** (52 の docs/54 の段 3)。番地の綴りも
@@ -108,7 +104,7 @@ function rebuiltEdits(
 }
 
 /**
- * 綴りを探して差し替える (フロー形式だけ)。**光らせる桁 (`partSpans`) と
+ * 綴りを探して差し替える (フロー形式と、範囲が決まらない行)。**光らせる桁 (`partSpans`) と
  * 同じ探し方**を通すので、光る場所と動く場所が食い違わない。
  */
 function tokenEdits(
