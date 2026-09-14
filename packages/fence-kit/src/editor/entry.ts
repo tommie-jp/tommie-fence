@@ -91,3 +91,29 @@ function nextStartsWithStop(lines: readonly string[], line: number, state: YamlS
   }
   return false;
 }
+
+/**
+ * その行に**フロー形式の並びの中の項目**が書かれているか (`wires: [a1 -- a3, …]`、
+ * `notes: [circle R1, …]` と、その折り返しの行)。
+ *
+ * 行を項目 1 つと見て書き換える操作 (注釈の字・向き・複製、配線の色) が、
+ * 書き換える前に断るために使う。ブロック形式の項目の中身をフロー形式で書いた
+ * 形 (`- {text a1: hi}`) は、行が項目 1 つなので含めない。
+ */
+export function flowItemOn(lines: readonly string[], line: number): boolean {
+  const text = lines[line - 1];
+  if (text === undefined) return false;
+  let state: YamlState = YAML_START;
+  for (const before of lines.slice(0, line - 1)) state = readYamlLine(before, state).after;
+  const read = readYamlLine(text, state);
+
+  const body = text.slice(0, read.comment);
+  if (state.depth > 0 && body.trim() !== '') return true;
+  // `鍵: [` / `鍵: {` — 鍵の値がそのままフロー形式。
+  for (let at = 0; at < body.length; at += 1) {
+    const char = body[at];
+    if (read.quoted[at] === true || read.depths[at] !== 0 || (char !== '[' && char !== '{')) continue;
+    if (body.slice(0, at).trimEnd().endsWith(':')) return true;
+  }
+  return false;
+}

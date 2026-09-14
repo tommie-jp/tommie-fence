@@ -1,4 +1,4 @@
-import { wireEndToken } from 'fence-kit';
+import { REWRITE_REFUSAL, flowItemOn, wireEndToken } from 'fence-kit';
 import { wireColorNames } from './../render/palette.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import type { Edit, NetDiff } from 'fence-kit';
@@ -61,6 +61,8 @@ export function setWireField(source: string, handle: string, field: string, text
   const found = locate(source, handle);
   if (found === null) return fail(`${wireLineOf(handle) ?? '?'} 行目に配線がありません`, wireLineOf(handle));
   if (field !== 'color') return fail(`配線に直せる欄は色だけです (${safeToken(field)} は直せません)`, found.line);
+  // **1 行に並べた配線** (`wires: [a1 -- a3, …]`) は、行の終わりに色を足すと `]` の外に出る。
+  if (flowItemOn(normalizeNewlines(source).split('\n'), found.line)) return fail(`配線: ${REWRITE_REFUSAL}`, found.line);
 
   const wanted = text.trim().toLowerCase();
   if (wanted !== '' && !wireColorNames().includes(wanted)) {
@@ -98,6 +100,8 @@ export function moveWireEnd(source: string, handle: string, end: 'from' | 'to', 
   const found = locate(source, handle);
   const line = wireLineOf(handle);
   if (found === null) return fail(`${line ?? '?'} 行目に配線がありません`, line);
+  // **1 行に並べた配線**は、端を語で切り出すと `[a1` `a3,` の括弧と区切りまで差し替える。
+  if (flowItemOn(normalizeNewlines(source).split('\n'), found.line)) return fail(`配線: ${REWRITE_REFUSAL}`, found.line);
 
   const token = wireEndToken(found.text, WIRE_OPERATORS, end);
   if (token === null) {

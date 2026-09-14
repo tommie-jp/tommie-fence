@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { entryOf } from './entry.ts';
+import { entryOf, flowItemOn } from './entry.ts';
 
 /** その項目の字。範囲が正しいかを字で見る (桁の数字より読みやすい)。 */
 const written = (source: string, line: number, id: string, from = 0): string | null => {
@@ -121,5 +121,32 @@ describe('entryOf', () => {
   test('鍵が無ければ null', () => {
     expect(written('parts:\n  R1: resistor a1 a3\n', 2, 'R2')).toBeNull();
     expect(written('parts:\n', 9, 'R1')).toBeNull();
+  });
+});
+
+describe('flowItemOn', () => {
+  const on = (source: string, line: number): boolean => flowItemOn(source.split('\n'), line);
+
+  test('鍵の値をそのままフロー形式で書いた行', () => {
+    expect(on('wires: [a1 -- a3, b1 -- b5]\n', 1)).toBe(true);
+    expect(on('notes: [circle R1, {text b5: hi}]  # c\n', 1)).toBe(true);
+  });
+
+  test('折り返した続きの行', () => {
+    const source = 'notes: [\n  circle R1,\n\n  {text b5: hi}\n]\n';
+    expect(on(source, 2)).toBe(true);
+    expect(on(source, 4)).toBe(true);
+    expect(on(source, 3)).toBe(false);
+  });
+
+  test('ブロック形式の項目は含めない (中身をフロー形式で書いた形も)', () => {
+    const source = 'wires:\n  - a1 -- a3 -- a5\nnotes:\n  - {text b5: hi}\n  - text c1: "[x]"\n';
+    expect(on(source, 2)).toBe(false);
+    expect(on(source, 4)).toBe(false);
+    expect(on(source, 5)).toBe(false);
+  });
+
+  test('鍵だけの行は含めない', () => {
+    expect(on('wires:\n  - a1 -- a3\n', 1)).toBe(false);
   });
 });

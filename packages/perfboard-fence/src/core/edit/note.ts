@@ -1,4 +1,4 @@
-import { FLOW_REFUSAL, dropLines, isKeyLine, keyLineOf, normalizeNewlines } from 'fence-kit';
+import { FLOW_ADD_REFUSAL, FLOW_REFUSAL, REWRITE_REFUSAL, SHARED_LINE_REFUSAL, flowItemOn, dropLines, isKeyLine, keyLineOf, normalizeNewlines } from 'fence-kit';
 import type { Edit, LineEdit, NetDiff, Span } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
@@ -35,6 +35,8 @@ export function noteLineOf(handle: string): number | null {
 
 type Found = {
   readonly note: NoteSpec;
+  /** 1 行に並べた注釈 (フロー形式) の中か。行を注釈 1 つと見て書き換える操作が断る。 */
+  readonly flow: boolean;
   readonly line: number;
   readonly text: string;
   readonly lines: readonly string[];
@@ -57,11 +59,15 @@ function locate(source: string, handle: string): Found | { readonly problem: str
 
   const note = doc.notes.find((one) => one.line === line);
   if (note === undefined) return { problem: `${line} 行目に注釈がありません`, line };
+  // **名札は行番号**なので、1 行に並べた注釈の 2 つ目を掴んでも 1 つ目を書き換えてしまう。
+  if (doc.notes.filter((one) => one.line === line).length > 1) {
+    return { problem: `${line} 行目: ${SHARED_LINE_REFUSAL}`, line };
+  }
   if (note.from === null) return { problem: `${line} 行目の注釈は板の外に出るので掴めません`, line };
 
   const lines = normalized.split('\n');
   const text = lines[line - 1] ?? '';
-  return { note, line, text, lines };
+  return { note, flow: flowItemOn(lines, line), line, text, lines };
 }
 
 const isFound = (one: ReturnType<typeof locate>): one is Found => 'note' in one;
@@ -165,6 +171,7 @@ function boardOf(source: string): ReturnType<typeof createBoard> {
 export function duplicateNote(source: string, handle: string): NoteResult {
   const found = locate(source, handle);
   if (!isFound(found)) return fail(found.problem, found.line);
+  if (found.flow) return fail(`注釈: ${FLOW_ADD_REFUSAL}`, found.line);
 
   const written = writtenAddresses(found.note);
   const spans = tokensOf(found.text, written);
@@ -187,7 +194,7 @@ export function deleteNote(source: string, handle: string): NoteResult {
   const found = locate(source, handle);
   if (!isFound(found)) return fail(found.problem, found.line);
 
-  if (isKeyLine(found.lines[found.line - 1], 'notes')) return fail(`注釈: ${FLOW_REFUSAL}`, found.line);
+  if (found.flow || isKeyLine(found.lines[found.line - 1], 'notes')) return fail(`注釈: ${FLOW_REFUSAL}`, found.line);
 
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
@@ -220,6 +227,7 @@ export function noteFields(source: string, handle: string) {
 export function setNoteField(source: string, handle: string, field: string, text: string): NoteResult {
   const found = locate(source, handle);
   if (!isFound(found)) return fail(found.problem, found.line);
+  if (found.flow) return fail(`注釈: ${REWRITE_REFUSAL}`, found.line);
   if (field !== 'value') return fail(`注釈に直せる欄は字だけです (${safeToken(field)} は直せません)`, found.line);
   if (found.note.kind !== 'text') return fail(`${found.note.kind} の注釈に字はありません`, found.line);
 
@@ -268,6 +276,7 @@ function rewriteTurn(found: Found, turn: Turn): NoteResult {
 export function turnNote(source: string, handle: string, quarters: number): NoteResult {
   const found = locate(source, handle);
   if (!isFound(found)) return fail(found.problem, found.line);
+  if (found.flow) return fail(`注釈: ${REWRITE_REFUSAL}`, found.line);
   if (found.note.kind !== 'text') {
     return fail(`${found.note.kind} の注釈は回せません (向きがあるのは text だけです)`, found.line);
   }
@@ -285,6 +294,7 @@ export function turnNote(source: string, handle: string, quarters: number): Note
 export function flipNote(source: string, handle: string): NoteResult {
   const found = locate(source, handle);
   if (!isFound(found)) return fail(found.problem, found.line);
+  if (found.flow) return fail(`注釈: ${REWRITE_REFUSAL}`, found.line);
   if (found.note.kind !== 'text') {
     return fail(`${found.note.kind} の注釈は反転できません (向きがあるのは text だけです)`, found.line);
   }

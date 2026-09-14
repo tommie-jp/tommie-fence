@@ -1,4 +1,4 @@
-import { FLOW_REFUSAL, dropLines, isKeyLine, keyLineOf } from 'fence-kit';
+import { FLOW_ADD_REFUSAL, FLOW_REFUSAL, REWRITE_REFUSAL, SHARED_LINE_REFUSAL, flowItemOn, dropLines, isKeyLine, keyLineOf } from 'fence-kit';
 import type { Edit, LineEdit, NetDiff, Span } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
@@ -31,6 +31,8 @@ export function noteLineOf(handle: string): number | null {
 
 type Found = {
   readonly note: NoteSpec;
+  /** 1 行に並べた注釈 (フロー形式) の中か。行を注釈 1 つと見て書き換える操作が断る。 */
+  readonly flow: boolean;
   readonly line: number;
   readonly text: string;
   readonly lines: readonly string[];
@@ -59,13 +61,17 @@ function locate(source: string, handle: string): Found | Problem {
 
   const note = doc.notes.find((one) => one.line === line);
   if (note === undefined) return { problem: `${line} 行目に注釈がありません`, line };
+  // **名札は行番号**なので、1 行に並べた注釈の 2 つ目を掴んでも 1 つ目を書き換えてしまう。
+  if (doc.notes.filter((one) => one.line === line).length > 1) {
+    return { problem: `${line} 行目: ${SHARED_LINE_REFUSAL}`, line };
+  }
   if (note.kind === 'source') return { problem: `${line} 行目の注釈は図の下に出るので掴めません`, line };
 
   const lines = normalized.split('\n');
   // **`R1` は番地としても読める** (行 r・列 1)。綴りだけで見分けると、部品を
   // 指した注釈を番地に書き換えてしまう (実際に踏んだ)。文書の部品名で決める。
   const names = new Set(doc.parts.map((part) => part.id));
-  return { note, line, text: lines[line - 1] ?? '', lines, names };
+  return { note, flow: flowItemOn(lines, line), line, text: lines[line - 1] ?? '', lines, names };
 }
 
 const isFound = (one: Found | Problem): one is Found => 'note' in one;
@@ -152,6 +158,7 @@ export function moveNote(source: string, handle: string, to: Address): NoteResul
 export function duplicateNote(source: string, handle: string): NoteResult {
   const found = locate(source, handle);
   if (!isFound(found)) return fail(found.problem, found.line);
+  if (found.flow) return fail(`注釈: ${FLOW_ADD_REFUSAL}`, found.line);
 
   const targets = writtenTargets(found.note);
   const spans = tokensOf(found.text, targets);
@@ -178,7 +185,7 @@ export function duplicateNote(source: string, handle: string): NoteResult {
 export function deleteNote(source: string, handle: string): NoteResult {
   const found = locate(source, handle);
   if (!isFound(found)) return fail(found.problem, found.line);
-  if (isKeyLine(found.lines[found.line - 1], 'notes')) return fail(`注釈: ${FLOW_REFUSAL}`, found.line);
+  if (found.flow || isKeyLine(found.lines[found.line - 1], 'notes')) return fail(`注釈: ${FLOW_REFUSAL}`, found.line);
 
   const notes = parseFence(normalizeNewlines(source)).doc.notes;
   const drop = new Set<number>([found.line]);
@@ -205,6 +212,7 @@ export function noteFields(source: string, handle: string) {
 export function setNoteField(source: string, handle: string, field: string, text: string): NoteResult {
   const found = locate(source, handle);
   if (!isFound(found)) return fail(found.problem, found.line);
+  if (found.flow) return fail(`注釈: ${REWRITE_REFUSAL}`, found.line);
   if (field !== 'value') return fail(`注釈に直せる欄は字だけです (${safeToken(field)} は直せません)`, found.line);
   if (found.note.kind !== 'text') return fail(`${found.note.kind} の注釈に字はありません`, found.line);
 
@@ -245,6 +253,7 @@ function turnWords(found: Found): { readonly column: number; readonly length: nu
 export function turnNote(source: string, handle: string, quarters: number): NoteResult {
   const found = locate(source, handle);
   if (!isFound(found)) return fail(found.problem, found.line);
+  if (found.flow) return fail(`注釈: ${REWRITE_REFUSAL}`, found.line);
   if (found.note.kind !== 'text') {
     return fail(`${found.note.kind} の注釈は回せません (向きがあるのは text だけです)`, found.line);
   }
@@ -268,6 +277,7 @@ export function turnNote(source: string, handle: string, quarters: number): Note
 export function flipNote(source: string, handle: string): NoteResult {
   const found = locate(source, handle);
   if (!isFound(found)) return fail(found.problem, found.line);
+  if (found.flow) return fail(`注釈: ${REWRITE_REFUSAL}`, found.line);
   return fail(
     `注釈は反転できません (${NOTE_MIRROR_WORD} は書けません。字を指し先そのものに置くので、移す側がありません)`,
     found.line,
