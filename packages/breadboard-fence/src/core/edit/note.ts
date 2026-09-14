@@ -1,4 +1,4 @@
-import { FLOW_ADD_REFUSAL, FLOW_REFUSAL, REWRITE_REFUSAL, SHARED_LINE_REFUSAL, flowItemOn, dropLines, isKeyLine, keyLineOf } from 'fence-kit';
+import { FLOW_ADD_REFUSAL, FLOW_REFUSAL, REWRITE_REFUSAL, SHARED_LINE_REFUSAL, dropLines, emptiedUnder, flowItemOn, isKeyLine, keyLineOf } from 'fence-kit';
 import type { Edit, LineEdit, NetDiff, Span } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { normalizeNewlines } from '../newlines.ts';
@@ -214,7 +214,10 @@ export function deleteNote(source: string, handle: string): NoteResult {
   const normalized = normalizeNewlines(source);
   const notes = parseFence(normalized).doc.notes;
   const drop = new Set<number>([found.line]);
-  if (notes.every((one) => one.line === found.line)) drop.add(keyLineOf(found.lines, 'notes'));
+  // 読めない注釈の行が残るなら鍵は残す (`emptiedUnder`)。
+  if (notes.every((one) => one.line === found.line) && emptiedUnder(found.lines, 'notes', drop)) {
+    drop.add(keyLineOf(found.lines, 'notes'));
+  }
 
   const lines = dropLines(drop);
   return { ok: true, value: { edits: [], lines, diff: diffAfterLines(normalized, lines) } };

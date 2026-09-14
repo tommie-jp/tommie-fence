@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { applyEdits, applyLineEdits, applyRewrite, lineNow, orphanedHeadings, wireEndToken } from './lines.ts';
+import { applyEdits, applyLineEdits, applyRewrite, emptiedUnder, lineNow, orphanedHeadings, wireEndToken } from './lines.ts';
 
 const SOURCE = 'parts:\n  R1: resistor a9 b9 330\nwires:\n  - a9 -- b9\n';
 
@@ -170,5 +170,32 @@ describe('orphanedHeadings', () => {
 
   test('says nothing when nothing is dropped', () => {
     expect(gone()).toEqual([]);
+  });
+});
+
+describe('emptiedUnder', () => {
+  const lines = (text: string): readonly string[] => text.split('\n');
+
+  test('鍵の下の項目が全部消えるなら true', () => {
+    expect(emptiedUnder(lines('board: x\nwires:\n  - a1 -- a3\n  # c\n\nnotes:\n'), 'wires', new Set([3]))).toBe(true);
+  });
+
+  // **読めない行も項目。** 読めた配線だけで決めると、鍵を消して読めない行を上の鍵へ落とす。
+  test('消さない項目が残るなら false (読めるかどうかは問わない)', () => {
+    expect(emptiedUnder(lines('wires:\n  - a2 -- b2 -- c5\n  - c1 -- c5\n'), 'wires', new Set([3]))).toBe(false);
+  });
+
+  test('字下げしない並びも項目として数える', () => {
+    expect(emptiedUnder(lines('wires:\n- a1 -- a3\n- c1 -- c5\nnotes:\n'), 'wires', new Set([2]))).toBe(false);
+    expect(emptiedUnder(lines('wires:\n- a1 -- a3\nnotes:\n'), 'wires', new Set([2]))).toBe(true);
+  });
+
+  test('入れ子の中身は頭に付いていく', () => {
+    expect(emptiedUnder(lines('parts:\n  BAT:\n    type: device\n    at: top\n'), 'parts', new Set([2]))).toBe(true);
+  });
+
+  test('値を同じ行に書いた形と、鍵が無いときは false', () => {
+    expect(emptiedUnder(lines('wires: [a1 -- a3]\n'), 'wires', new Set([1]))).toBe(false);
+    expect(emptiedUnder(lines('parts:\n  R1: resistor a1 a3\n'), 'wires', new Set([2]))).toBe(false);
   });
 });

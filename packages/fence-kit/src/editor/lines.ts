@@ -111,6 +111,37 @@ export function keysUnder(lines: readonly string[], key: string): readonly strin
 }
 
 /**
+ * その鍵の下に字として書かれた項目が、**`drop` の行で全部消えるか**。消えるなら
+ * 鍵の行も一緒に消してよい。
+ *
+ * **読めた項目だけで決めない。** 読めない行 (perfboard の数珠つなぎなど) が鍵の下に
+ * 残っていると、鍵を消したとき上の鍵の中身として読まれてフェンスごと読めなくなる
+ * (段 0 の「読めない行は 1 字も触らない」に反する)。見るのは鍵のすぐ下の深さに並ぶ
+ * 項目の頭の行で、入れ子の中身はその頭に付いていく。鍵の値を同じ行に書いた形
+ * (`wires: [...]`) は項目の行が無いので false。
+ */
+export function emptiedUnder(lines: readonly string[], key: string, drop: ReadonlySet<number>): boolean {
+  const at = keyLineOf(lines, key);
+  if (at === 0) return false;
+  const depth = depthOf(lines[at - 1] ?? '');
+  let child: number | null = null;
+  let heads = 0;
+  for (let index = at; index < lines.length; index += 1) {
+    const text = lines[index] ?? '';
+    if (isBlank(text) || isComment(text)) continue;
+    const deep = depthOf(text);
+    // 字下げしない並び (`wires:\n- a1 -- a3`) の項目は鍵と同じ深さに並ぶ。
+    const indentless = deep === depth && text.trimStart().startsWith('-');
+    if (deep <= depth && !indentless) break;
+    if (child === null) child = deep;
+    if (deep !== child) continue;
+    heads += 1;
+    if (!drop.has(index + 1)) return false;
+  }
+  return heads > 0;
+}
+
+/**
  * `line` 行目 (1 始まり) から始まるブロックの最後の行 (1 始まり)。
  * **深い行が続くあいだはブロック** (入れ子の中身、深いコメント、値の続き)。
  * 同じ深さか浅い行で終わる — 同じ深さのコメントは次の組の見出しなので含めない。

@@ -1,3 +1,4 @@
+import { emptiedUnder } from 'fence-kit';
 import { normalizeNewlines } from '../newlines.ts';
 import { isRepeatedName, nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
@@ -96,11 +97,13 @@ export function deletePart(source: string, handle: string): RemovalResult {
 
   const drop = new Set<number>([part.line, ...wireLines, ...noteLines]);
   // **最後の 1 つを消したら鍵ごと。** 空の `parts:` / `wires:` は読めない。
-  if (doc.parts.length === 1) drop.add(keyLineOf(lines, 'parts'));
-  if (doc.wires.length > 0 && doc.wires.every((wire) => wireLines.has(wire.line))) {
+  // ただし**読めない行が鍵の下に残るなら鍵は残す** (`emptiedUnder`)。
+  const items = new Set(drop);
+  if (doc.parts.length === 1 && emptiedUnder(lines, 'parts', items)) drop.add(keyLineOf(lines, 'parts'));
+  if (doc.wires.length > 0 && doc.wires.every((wire) => wireLines.has(wire.line)) && emptiedUnder(lines, 'wires', items)) {
     drop.add(keyLineOf(lines, 'wires'));
   }
-  if (doc.notes.length > 0 && doc.notes.every((note) => noteLines.has(note.line))) {
+  if (doc.notes.length > 0 && doc.notes.every((note) => noteLines.has(note.line)) && emptiedUnder(lines, 'notes', items)) {
     drop.add(keyLineOf(lines, 'notes'));
   }
   drop.delete(0);
@@ -119,7 +122,9 @@ export function deleteWire(source: string, line: number): RemovalResult {
   if (isKeyLine(lines[line - 1], 'wires')) return fail(`配線: ${FLOW}`, line);
 
   const drop = new Set<number>([line]);
-  if (doc.wires.every((wire) => wire.line === line)) drop.add(keyLineOf(lines, 'wires'));
+  if (doc.wires.every((wire) => wire.line === line) && emptiedUnder(lines, 'wires', drop)) {
+    drop.add(keyLineOf(lines, 'wires'));
+  }
   drop.delete(0);
 
   return removal(normalized, drop, on.length);

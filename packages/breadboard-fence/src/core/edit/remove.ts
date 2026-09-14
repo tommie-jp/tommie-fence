@@ -1,4 +1,4 @@
-import { FLOW_REFUSAL, dropLines, isKeyLine, keyLineOf } from 'fence-kit';
+import { FLOW_REFUSAL, dropLines, emptiedUnder, isKeyLine, keyLineOf } from 'fence-kit';
 import type { LineEdit, NetDiff } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { normalizeNewlines } from '../newlines.ts';
@@ -80,14 +80,15 @@ export function deletePart(source: string, id: string): RemovalResult {
   for (const line of pinWires) {
     if (isKeyLine(lines[line - 1], 'wires')) return fail(`${safeToken(id)} を指す配線: ${FLOW_REFUSAL}`, line);
   }
-  if (doc.wires.length > 0 && doc.wires.every((wire) => pinWires.has(wire.line))) {
-    pinWires.add(keyLineOf(lines, 'wires'));
-  }
-
   const drop = new Set<number>([part.line, ...body, ...noteLines, ...pinWires]);
   // **最後の 1 つを消したら鍵ごと。** 空の `parts:` / `notes:` は読めない。
-  if (doc.parts.length === 1) drop.add(keyLineOf(lines, 'parts'));
-  if (doc.notes.length > 0 && doc.notes.every((note) => noteLines.has(note.line))) {
+  // ただし**読めない行が鍵の下に残るなら鍵は残す** (`emptiedUnder`)。
+  const items = new Set(drop);
+  if (doc.wires.length > 0 && doc.wires.every((wire) => pinWires.has(wire.line)) && emptiedUnder(lines, 'wires', items)) {
+    drop.add(keyLineOf(lines, 'wires'));
+  }
+  if (doc.parts.length === 1 && emptiedUnder(lines, 'parts', items)) drop.add(keyLineOf(lines, 'parts'));
+  if (doc.notes.length > 0 && doc.notes.every((note) => noteLines.has(note.line)) && emptiedUnder(lines, 'notes', items)) {
     drop.add(keyLineOf(lines, 'notes'));
   }
 
@@ -105,7 +106,9 @@ export function deleteWire(source: string, line: number): RemovalResult {
   if (isKeyLine(lines[line - 1], 'wires')) return fail(`配線: ${FLOW_REFUSAL}`, line);
 
   const drop = new Set<number>([line]);
-  if (doc.wires.every((wire) => wire.line === line)) drop.add(keyLineOf(lines, 'wires'));
+  if (doc.wires.every((wire) => wire.line === line) && emptiedUnder(lines, 'wires', drop)) {
+    drop.add(keyLineOf(lines, 'wires'));
+  }
 
   return removal(normalized, drop, 0);
 }
