@@ -91,3 +91,43 @@ describe('renamePart', () => {
     expect(result.ok && result.value.edits).toEqual([]);
   });
 });
+
+// **1 行に並べた部品 (フロー形式) は、その部品の範囲だけを書き換える。**
+// 行まるごとを 1 部品と見ると、隣の部品を消したり区切りの外へ書いたりする。
+describe('setField on parts written in flow style', () => {
+  const FLOW = 'board: 12x7\nparts: {R1: resistor b2 b6 10k, C1: capacitor b8 b11}\n';
+
+  test('changes the value of the first part, leaving the second', () => {
+    expect(after(FLOW, setField(FLOW, 'R1', 'value', '1k')))
+      .toBe('board: 12x7\nparts: {R1: resistor b2 b6 1k, C1: capacitor b8 b11}\n');
+  });
+
+  test('adds a value to the second part inside the braces', () => {
+    expect(after(FLOW, setField(FLOW, 'C1', 'value', '100n')))
+      .toBe('board: 12x7\nparts: {R1: resistor b2 b6 10k, C1: capacitor b8 b11 100n}\n');
+  });
+
+  test('changes the type of the part it names, not the key of the map', () => {
+    expect(after(FLOW, setField(FLOW, 'C1', 'type', 'resistor')))
+      .toBe('board: 12x7\nparts: {R1: resistor b2 b6 10k, C1: resistor b8 b11}\n');
+  });
+
+  test('clears a value without eating the separator', () => {
+    expect(after(FLOW, setField(FLOW, 'R1', 'value', '')))
+      .toBe('board: 12x7\nparts: {R1: resistor b2 b6, C1: capacitor b8 b11}\n');
+  });
+
+  test('works when the map starts on the next line', () => {
+    const source = 'board: 12x7\nparts:\n  {R1: resistor b2 b6 10k, C1: capacitor b8 b11}\n';
+    expect(after(source, setField(source, 'C1', 'value', '1u')))
+      .toBe('board: 12x7\nparts:\n  {R1: resistor b2 b6 10k, C1: capacitor b8 b11 1u}\n');
+  });
+});
+
+describe('setField on a line with a comment after it', () => {
+  test('adds a value before the comment, not inside it', () => {
+    const source = 'board: 12x7\nparts:\n  R1: resistor b2 b6  # 電流制限\n';
+    expect(after(source, setField(source, 'R1', 'value', '330')))
+      .toBe('board: 12x7\nparts:\n  R1: resistor b2 b6 330  # 電流制限\n');
+  });
+});

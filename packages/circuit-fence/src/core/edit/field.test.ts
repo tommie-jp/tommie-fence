@@ -93,10 +93,6 @@ describe('setField', () => {
     expect(setField(source, 'R1', 'value', '10k').ok).toBe(false);
   });
 
-  test('refuses parts written in flow style, where the line is not the part', () => {
-    expect(setField('parts: {R1: resistor a1 a3}\n', 'R1', 'value', '10k').ok).toBe(false);
-  });
-
   test('says so when there is no such part, and refuses a fence it cannot read', () => {
     expect(setField(RC, 'R9', 'value', '1k').ok).toBe(false);
     expect(setField('parts:\n  R1: [unclosed\n', 'R1', 'value', '1k').ok).toBe(false);
@@ -151,5 +147,54 @@ describe('YAML に食われる綴りを断る (レビューで出た穴)', () =>
 
   test('still takes an ordinary value', () => {
     expect(setField(source, 'R1', 'value', '4k7').ok).toBe(true);
+  });
+});
+
+// **1 行に並べた部品 (フロー形式) は、その部品の範囲だけを書き換える。**
+// 前は行が部品 1 つに対応しないので断っていた。ほかの 2 つのフェンスと揃える。
+describe('setField on parts written in flow style', () => {
+  const FLOW = 'parts: {R1: resistor a1 a3 10k, R2: resistor c1 c3}\n';
+
+  test('writes over the value of the first part, leaving the second', () => {
+    expect(set(FLOW, 'R1', 'value', '4k7').source).toBe('parts: {R1: resistor a1 a3 4k7, R2: resistor c1 c3}\n');
+  });
+
+  test('adds a value to the second part inside the braces', () => {
+    expect(set(FLOW, 'R2', 'value', '220').source).toBe('parts: {R1: resistor a1 a3 10k, R2: resistor c1 c3 220}\n');
+  });
+
+  test('takes the value away without eating the separator', () => {
+    expect(set(FLOW, 'R1', 'value', '').source).toBe('parts: {R1: resistor a1 a3, R2: resistor c1 c3}\n');
+  });
+
+  test('adds a label and changes the type in place', () => {
+    expect(set(FLOW, 'R2', 'label', 'R_2').source).toBe('parts: {R1: resistor a1 a3 10k, R2: resistor c1 c3 l=R_2}\n');
+    expect(set(FLOW, 'R2', 'type', 'capacitor').source).toBe('parts: {R1: resistor a1 a3 10k, R2: capacitor c1 c3}\n');
+  });
+
+  test('works on a map broken across lines', () => {
+    const source = 'parts: {R1: resistor a1 a3,\n  R2: resistor c1 c3}\n';
+    expect(set(source, 'R1', 'value', '1k').source).toBe('parts: {R1: resistor a1 a3 1k,\n  R2: resistor c1 c3}\n');
+    expect(set(source, 'R2', 'value', '1k').source).toBe('parts: {R1: resistor a1 a3,\n  R2: resistor c1 c3 1k}\n');
+  });
+
+  // **同じ名前の記号が 1 行に 2 つ** (`vcc`)。名札の 2 つ目は 2 つ目の項目を指す。
+  test('changes the second of two symbols with the same name', () => {
+    const source = 'parts: {VCC: vcc a1, VCC: vcc c1}\n';
+    expect(set(source, 'VCC#2', 'type', 'vee').source).toBe('parts: {VCC: vcc a1, VCC: vee c1}\n');
+  });
+
+  // **区切りの字は値に書けない。** 書くとその場で項目が割れる。
+  test('refuses a value with a flow separator in it', () => {
+    expect(setField(FLOW, 'R1', 'value', '1,0').ok).toBe(false);
+    expect(setField(FLOW, 'R1', 'label', 'R}').ok).toBe(false);
+  });
+
+  test('still rewrites a line whose key has a space before the colon', () => {
+    expect(set('parts:\n  R1 : resistor a1 a3\n', 'R1', 'value', '1k').source).toContain('resistor a1 a3 1k\n');
+  });
+
+  test('still takes a comma in a value written on its own line', () => {
+    expect(set(RC, 'R1', 'value', '1,0').source).toContain('  R1: resistor a1 a3 1,0');
   });
 });

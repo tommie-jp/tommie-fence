@@ -75,6 +75,8 @@ export {
 export { fenceToAppend } from './editor/newFence.ts';
 export { commentAt, dressLine, keepSpacing } from './editor/dressLine.ts';
 export { lineEdits } from './editor/lineEdit.ts';
+export { entryOf } from './editor/entry.ts';
+export type { Entry } from './editor/entry.ts';
 export type { NewFence } from './editor/newFence.ts';
 export { leadOffsets, leadSpan, needsRoom, orientInserted } from './editor/place.ts';
 export type { OrientResult, Rewritten } from './editor/place.ts';

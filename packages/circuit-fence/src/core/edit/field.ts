@@ -4,7 +4,9 @@ import { normalizeNewlines } from '../newlines.ts';
 import { nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { lookupPartType, resolvePartTypeName } from '../parts.ts';
-import { lineEdits } from 'fence-kit';
+import { dressLine, entryOf, lineEdits } from 'fence-kit';
+import type { Entry } from 'fence-kit';
+import { spellPart } from '../write/spellPart.ts';
 import { writeFence } from '../write/writeFence.ts';
 import { applyRewrite, diffOf, fail } from './shared.ts';
 import type { RewriteResult } from './shared.ts';
@@ -18,7 +20,8 @@ import type { RewriteResult } from './shared.ts';
  * 名前だけは 3 か所に散るので別 (`rename.ts`)。
  *
  * 空の字を渡すと**その欄を消す** (値やラベルは書かなくてよい)。種類は消せない。
- * フロー形式 (`parts: {…}`) は行が部品 1 つに対応しないので断る。
+ * フロー形式 (`parts: {…}`) は行が部品 1 つに対応しないので、その部品の範囲だけを
+ * 書き換える (範囲の決め方は fence-kit の `entryOf`。3 つのフェンスで同じ)。
  */
 
 export type PartField = 'id' | 'type' | 'value' | 'label';
@@ -100,11 +103,13 @@ export function setField(source: string, handle: string, field: PartField, text:
   if (!part) return fail(`部品が見つかりません: ${partId}`, null);
 
   const lines = normalized.split('\n');
+  const written = lines[part.line - 1] ?? '';
+  // 鍵を見つけられない行 (`R1 : …` と書いた形) は、いままでどおり行ごと組み直す。
+  // 1 行に部品が並んでいるときだけは範囲が決まらないので断る。
+  const entry = entryOfPart(doc.parts, lines, part);
   const shares = doc.parts.some((other) => other.line === part.line && other !== part);
-  if (shares || /^\s*parts\s*:/.test(lines[part.line - 1] ?? '')) {
-    return fail(`${partId}: フロー形式 (1 行に書いた形) の部品は欄を足せません。手で書きます`, part.line);
-  }
-  const problem = fieldProblem(text);
+  if (entry === null && shares) return fail(`${partId} の行から部品の書き出しを見つけられませんでした`, part.line);
+  const problem = fieldProblem(text) ?? (entry?.flow === true ? flowProblem(text) : null);
   if (problem !== null) return fail(problem, part.line);
 
   const changed = withField(part, field, text);
@@ -113,12 +118,38 @@ export function setField(source: string, handle: string, field: PartField, text:
   // **中身を直して、その行だけ組み直す** (52 の docs/54 の段 3)。書かれた字下げ・
   // 語の間の空白・コメントは `writeFence` が残すので、いまの当て方と同じ字になる
   // (`write/parity.test.ts` が見張る)。差し替えは違う所だけに絞る。
+  // **1 行に並べた形はその部品の範囲だけ組み直す** — 行まるごとだと隣の部品を消す。
   const parts = doc.parts.map((one) => (one === part ? changed.part : one));
-  const next = writeFence(normalized, { ...doc, parts }, new Set([part.line]))[part.line - 1];
-  const edits = next === undefined ? [] : lineEdits(part.line, lines[part.line - 1] ?? '', next);
+  const next = entry?.flow === true
+    ? `${written.slice(0, entry.start)}${dressLine(written.slice(entry.start, entry.end), spellPart(changed.part))}${written.slice(entry.end)}`
+    : writeFence(normalized, { ...doc, parts }, new Set([part.line]))[part.line - 1];
+  const edits = next === undefined ? [] : lineEdits(part.line, written, next);
 
   const rewrite = { edits, lines: [], diff: { lost: [], gained: [] } };
   return { ok: true, value: { ...rewrite, diff: diffOf(normalized, applyRewrite(normalized, rewrite)) } };
+}
+
+/**
+ * 1 行に並べた形 (`{R1: …, R2: …}`) で値に書けない字。書くとその場で項目が割れる。
+ * ブロック形式の行では `1,000` の `,` もただの字なので、並べた形のときだけ断る。
+ */
+const flowProblem = (text: string): string | null =>
+  /[,[\]{}]/.test(text) ? '1 行に並べた部品には , [ ] { } を書けません (そこで区切りと読まれます)' : null;
+
+/**
+ * その部品を書いた範囲。**同じ行に先に書いた部品の続きから探す** —
+ * 同じ名前の記号が 1 行に 2 つあるとき (`{VCC: vcc a1, VCC: vcc c1}`)、
+ * 頭から探すと 1 つ目の鍵を拾う。
+ */
+function entryOfPart(parts: readonly PartSpec[], lines: readonly string[], part: PartSpec): Entry | null {
+  let from = 0;
+  for (const other of parts) {
+    if (other.line !== part.line) continue;
+    const entry = entryOf(lines, part.line, other.id, from);
+    if (entry === null || other === part) return entry;
+    from = entry.end;
+  }
+  return null;
 }
 
 type Changed = { readonly ok: true; readonly part: PartSpec } | ReturnType<typeof fail>;

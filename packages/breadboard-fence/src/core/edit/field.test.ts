@@ -114,3 +114,57 @@ describe('renamePart', () => {
     expect(result.ok && result.value.edits).toEqual([]);
   });
 });
+
+// **1 行に並べた部品 (フロー形式) は、その部品の範囲だけを書き換える。**
+// 行まるごとを 1 部品と見ると、隣の部品を消したり区切りの外へ書いたりする。
+describe('setField on parts written in flow style', () => {
+  const FLOW = 'board: half\nparts: {R1: resistor a5 a10 330, D1: led b12 b13 red}\n';
+
+  test('changes the value of the second part, leaving the first', () => {
+    expect(after(FLOW, setField(FLOW, 'D1', 'value', 'blue')))
+      .toBe('board: half\nparts: {R1: resistor a5 a10 330, D1: led b12 b13 blue}\n');
+  });
+
+  test('changes the value of the first part, keeping the separator', () => {
+    expect(after(FLOW, setField(FLOW, 'R1', 'value', '1k')))
+      .toBe('board: half\nparts: {R1: resistor a5 a10 1k, D1: led b12 b13 red}\n');
+  });
+
+  test('changes the type of the part it names, not the key of the map', () => {
+    expect(after(FLOW, setField(FLOW, 'R1', 'type', 'capacitor')))
+      .toBe('board: half\nparts: {R1: capacitor a5 a10 330, D1: led b12 b13 red}\n');
+  });
+
+  test('adds a label inside the braces', () => {
+    expect(after(FLOW, setField(FLOW, 'R1', 'label', 'x')))
+      .toBe('board: half\nparts: {R1: resistor a5 a10 330 l=x, D1: led b12 b13 red}\n');
+  });
+
+  test('adds a value before the separator, on a line broken after it', () => {
+    const source = 'board: half\nparts: {D1: led b12 b13,\n  R1: resistor a5 a10}\n';
+    expect(after(source, setField(source, 'D1', 'value', 'red')))
+      .toBe('board: half\nparts: {D1: led b12 b13 red,\n  R1: resistor a5 a10}\n');
+    expect(after(source, setField(source, 'R1', 'value', '1k')))
+      .toBe('board: half\nparts: {D1: led b12 b13,\n  R1: resistor a5 a10 1k}\n');
+  });
+
+  test('clears a value without eating the separator', () => {
+    expect(after(FLOW, setField(FLOW, 'R1', 'value', '')))
+      .toBe('board: half\nparts: {R1: resistor a5 a10, D1: led b12 b13 red}\n');
+  });
+});
+
+describe('setField on a line with a comment after it', () => {
+  const COMMENTED = 'board: half\nparts:\n  D1: led b12 b13 red  # 表示, 赤\n';
+
+  test('adds the label before the comment, not inside it', () => {
+    expect(after(COMMENTED, setField(COMMENTED, 'D1', 'label', '状態')))
+      .toBe('board: half\nparts:\n  D1: led b12 b13 red l=状態  # 表示, 赤\n');
+  });
+
+  test('adds a value before the comment, not inside it', () => {
+    const source = 'board: half\nparts:\n  R1: resistor a5 a10  # 電流制限\n';
+    expect(after(source, setField(source, 'R1', 'value', '330')))
+      .toBe('board: half\nparts:\n  R1: resistor a5 a10 330  # 電流制限\n');
+  });
+});

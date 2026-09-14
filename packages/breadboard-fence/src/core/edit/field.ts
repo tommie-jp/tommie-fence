@@ -1,3 +1,4 @@
+import { entryOf } from 'fence-kit';
 import type { Edit, NetDiff } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
@@ -68,14 +69,28 @@ type Layout = {
   readonly value: readonly Token[];
 };
 
+/**
+ * その部品の範囲だけを残した行 (外は空白で埋めて桁を保つ)。**1 行に部品を
+ * 並べた形** (`parts: {R1: …, R2: …}`) で、隣の部品や区切りの `,` `}` を
+ * 欄と取り違えないため。ブロック形式でも**行末コメントは外す** — 残すと、
+ * 足す欄をコメントの後ろ (`red  # 赤 l=状態`) に書いてしまう。
+ */
+function ownPart(lines: readonly string[], line: number, id: string, written: string): string {
+  const entry = entryOf(lines, line, id);
+  if (entry === null) return written;
+  return `${' '.repeat(entry.start)}${written.slice(entry.start, entry.end)}${' '.repeat(written.length - entry.end)}`;
+}
+
 /** その部品の行を、欄ごとに切り分ける。読めなければ null。 */
 function layoutOf(source: string, id: string): Layout | null {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
 
   const part = doc.parts.find((one) => one.id === id);
-  const text = part === undefined ? undefined : normalized.split('\n')[part.line - 1];
-  if (part === undefined || text === undefined) return null;
+  const lines = normalized.split('\n');
+  const written = part === undefined ? undefined : lines[part.line - 1];
+  if (part === undefined || written === undefined) return null;
+  const text = ownPart(lines, part.line, id, written);
 
   const points = new Map<string, ReturnType<typeof parseAddress>>();
   for (const [name, addr] of doc.points) points.set(name, parseAddress(addr));
