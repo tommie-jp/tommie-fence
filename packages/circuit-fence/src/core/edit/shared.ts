@@ -2,6 +2,7 @@ import { compileCircuit } from '../index.ts';
 import type { Circuit } from '../model/circuit.ts';
 import { fenceError } from '../errors.ts';
 import { partOfHandle } from './handles.ts';
+import { parseFence } from '../parser/parseFence.ts';
 import { LIMITS } from '../limits.ts';
 import { LAST_ROW, formatAddress, parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
@@ -20,7 +21,7 @@ import type { FenceError, PartSpec } from '../types.ts';
  * ここから再び輸出するのは、円環の書き換えを避けるため
  * (`core/edit` の中は今までどおり `shared.ts` から取る)。
  */
-import { entryOf } from 'fence-kit';
+import { applyRewrite as rewritten, entryOf, sameShape } from 'fence-kit';
 import type { Connection, Edit, Entry, NetDiff, Rewrite } from 'fence-kit';
 
 export { strippedIndent } from 'fence-kit';
@@ -312,6 +313,24 @@ export function entryOfPart(parts: readonly PartSpec[], lines: readonly string[]
   }
   return null;
 }
+
+/**
+ * 書き換えを当てて読み直し、**部品の並びが `expected` のとおりに読めるか**。
+ * YAML の構文エラーが増えたときも外れ。
+ *
+ * 1 行に並べた部品の範囲は字面から決めているので、読み違えたときに
+ * **壊した字を書かずに断る**ための見張り。欄と向きの語が通す。
+ */
+export function landsAs(source: string, rewrite: Rewrite, expected: readonly PartSpec[]): boolean {
+  const yamlErrors = (errors: readonly FenceError[]): number =>
+    errors.filter((error) => error.message.startsWith('YAML')).length;
+  const before = parseFence(source);
+  const after = parseFence(rewritten(source, rewrite));
+  return yamlErrors(after.errors) <= yamlErrors(before.errors) && sameShape(after.doc.parts, expected);
+}
+
+/** 書き換えると崩れるときの断り (3 つのフェンスで同じ文面)。 */
+export { REWRITE_REFUSAL as UNLANDED } from 'fence-kit';
 
 /**
  * その範囲だけを残した行 (外は空白で埋めて桁を保つ)。**1 行に並べた形で、

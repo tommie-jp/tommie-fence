@@ -1,3 +1,5 @@
+import { YAML_START, readYamlLine } from './scanYaml.ts';
+
 /**
  * 組み直した 1 行に、**書かれていた字下げと行末のコメント**を着せる
  * (52 の docs/54 の段 1)。
@@ -15,21 +17,12 @@ const indentOf = (line: string): string => /^\s*/.exec(line)?.[0] ?? '';
 
 /**
  * 行末のコメント (` # …`) の始まり。**引用の中は数えない** — `"R1: #1"` の
- * `#` はコメントではない。無ければ -1。
+ * `#` はコメントではない。**値の途中の引用符は引用ではない** (`a3 "a #1"` の
+ * `#1"` はコメント。YAML もそう読む)。無ければ -1。読み方は `scanYaml.ts`。
  */
 export function commentAt(line: string): number {
-  let quote: string | null = null;
-  for (let at = 0; at < line.length; at += 1) {
-    const char = line[at] as string;
-    if (quote !== null) {
-      if (char === quote) quote = null;
-      continue;
-    }
-    if (char === '"' || char === "'") { quote = char; continue; }
-    // YAML のコメントは行頭か空白の直後だけ。
-    if (char === '#' && (at === 0 || /\s/.test(line[at - 1] as string))) return at;
-  }
-  return -1;
+  const { comment } = readYamlLine(line, YAML_START);
+  return comment === line.length ? -1 : comment;
 }
 
 /**

@@ -8,7 +8,8 @@ import { LIMITS } from '../limits.ts';
 import { lookupPartType, orientOf } from '../parts.ts';
 import type { Turn } from '../parts.ts';
 import {
-  LAST_ROW, applyRewrite, diffOf, entryOfPart, fail, isOnGrid, locatePart, tokensFrom, withinEntry, wordEdit,
+  LAST_ROW, UNLANDED, applyRewrite, diffOf, entryOfPart, fail, isOnGrid, landsAs, locatePart, tokensFrom, withinEntry,
+  wordEdit,
 } from './shared.ts';
 import type { Edit, RewriteResult } from './shared.ts';
 import type { Circuit } from '../model/circuit.ts';
@@ -98,15 +99,14 @@ function turnByWord(
   // **1 行に並べた形 (フロー形式) はその部品の範囲だけを見る。** 行まるごとだと
   // 隣の部品の `r90` を自分の語と取り、区切りに付いた `r90,` を語と読めない。
   const entry = entryOfPart(doc.parts, lines, part);
-  const shares = doc.parts.some((other) => other.line === part.line && other !== part);
-  if (entry === null && shares) return fail(`${partId} の行から部品の書き出しを見つけられませんでした`, part.line);
+  if (entry === null) return fail(`${partId}: ${UNLANDED}`, part.line);
 
   const ends = endsOf(normalized, doc, part, handle);
   if (!ends.ok) return ends;
 
   const last = ends.tokens.at(-1);
   const after = last === undefined ? 0 : last.column + last.length;
-  const tail = tokensFrom(entry === null ? lineText : withinEntry(lineText, entry), after);
+  const tail = tokensFrom(withinEntry(lineText, entry), after);
   const was = part.kind === 'two-terminal' ? { rotate: 0 as const, mirror: false } : part.turn;
 
   const edits: readonly Edit[] = [
@@ -123,6 +123,11 @@ function turnByWord(
       after,
     )),
   ];
+  // **書いたあと読み直して、向きだけが変わったかを確かめる。** 崩れるなら書かない。
+  const expected = doc.parts.map((one) => (one === part && one.kind !== 'two-terminal' ? { ...one, turn: next } : one));
+  if (!landsAs(normalized, { edits, lines: [], diff: { lost: [], gained: [] } }, expected)) {
+    return fail(`${partId}: ${UNLANDED}`, part.line);
+  }
   return rewriteOf(normalized, edits);
 }
 

@@ -168,3 +168,38 @@ describe('setField on a line with a comment after it', () => {
       .toBe('board: half\nparts:\n  R1: resistor a5 a10 330  # 電流制限\n');
   });
 });
+
+// ---- レビューで出た穴 (2026-09-14) ----
+// **範囲を読み違えそうな形は、書く前に読み直して確かめ、崩れるなら断る。**
+describe('setField refuses what it cannot write back cleanly', () => {
+  test('finds a key written with a space before the colon, or in quotes', () => {
+    const spaced = 'board: half\nparts: {R1 : resistor a5 a10 330, D1: led b12 b13 red}\n';
+    expect(after(spaced, setField(spaced, 'R1', 'type', 'capacitor')))
+      .toBe('board: half\nparts: {R1 : capacitor a5 a10 330, D1: led b12 b13 red}\n');
+    const quoted = 'board: half\nparts: {R1: resistor a5 a10 330, "D1": led b12 b13 red}\n';
+    expect(after(quoted, setField(quoted, 'D1', 'value', 'blue')))
+      .toBe('board: half\nparts: {R1: resistor a5 a10 330, "D1": led b12 b13 blue}\n');
+  });
+
+  test("does not swallow the next part after a ' in the middle of a value", () => {
+    const source = "board: half\nparts: {R1: resistor a5 a10 'x, D1: led b12 b13 red}\n";
+    expect(after(source, setField(source, 'R1', 'value', '1k')))
+      .toBe('board: half\nparts: {R1: resistor a5 a10 1k, D1: led b12 b13 red}\n');
+  });
+
+  test('does not take a key inside the quotes of another part', () => {
+    const source = 'board: half\nparts: {R2: "resistor a1 a3 R1: x", R1: resistor a5 a10}\n';
+    const result = setField(source, 'R1', 'value', '1k');
+    if (result.ok) expect(after(source, result)).toBe('board: half\nparts: {R2: "resistor a1 a3 R1: x", R1: resistor a5 a10 1k}\n');
+  });
+
+  test('does not mistake a block line after a value ending in a comma for flow style', () => {
+    const source = 'board: half\nparts:\n  R1: resistor a5 a10 1,\n  D1: led b12 b13 2,2\n';
+    const result = setField(source, 'D1', 'value', 'red');
+    if (result.ok) expect(after(source, result)).toBe('board: half\nparts:\n  R1: resistor a5 a10 1,\n  D1: led b12 b13 red\n');
+  });
+
+  test('refuses a part that goes on to the next line', () => {
+    expect(setField('board: half\nparts: {R1: resistor a5\n  a10 330, D1: led b12 b13}\n', 'R1', 'value', '1k').ok).toBe(false);
+  });
+});

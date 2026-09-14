@@ -1,4 +1,4 @@
-import { entryOf } from 'fence-kit';
+import { REWRITE_REFUSAL, applyEdits, entryOf, sameShape } from 'fence-kit';
 import type { Edit, NetDiff } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
@@ -7,7 +7,7 @@ import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { describeUnknownType, lookupFootprint } from '../placement/footprints.ts';
 import { splitPartType } from '../parts/variants.ts';
-import type { FenceError } from '../types.ts';
+import type { FenceError, PartSpec } from '../types.ts';
 import { diffAfter } from './diff.ts';
 import { locateTokens } from './shared.ts';
 
@@ -74,10 +74,12 @@ type Layout = {
  * 並べた形** (`parts: {R1: …, R2: …}`) で、隣の部品や区切りの `,` `}` を
  * 欄と取り違えないため。ブロック形式でも**行末コメントは外す** — 残すと、
  * 足す欄をコメントの後ろ (`red  # 赤 l=状態`) に書いてしまう。
+ * **範囲が決まらなければ null** (項目が次の行へ続く・鍵が見つからない)。行まるごとを
+ * 部品と見て書くと隣を壊すので、書き換えずに断る。
  */
-function ownPart(lines: readonly string[], line: number, id: string, written: string): string {
+function ownPart(lines: readonly string[], line: number, id: string, written: string): string | null {
   const entry = entryOf(lines, line, id);
-  if (entry === null) return written;
+  if (entry === null) return null;
   return `${' '.repeat(entry.start)}${written.slice(entry.start, entry.end)}${' '.repeat(written.length - entry.end)}`;
 }
 
@@ -91,6 +93,7 @@ function layoutOf(source: string, id: string): Layout | null {
   const written = part === undefined ? undefined : lines[part.line - 1];
   if (part === undefined || written === undefined) return null;
   const text = ownPart(lines, part.line, id, written);
+  if (text === null) return null;
 
   const points = new Map<string, ReturnType<typeof parseAddress>>();
   for (const [name, addr] of doc.points) points.set(name, parseAddress(addr));
@@ -142,7 +145,11 @@ const badText = (text: string): string | null => {
 
 export function setField(source: string, id: string, field: PartField, text: string): FieldResult {
   const layout = layoutOf(source, id);
-  if (layout === null) return fail(`部品の行を読めません: ${safeToken(id)}`, null);
+  if (layout === null) {
+    return partFields(source, id) === null
+      ? fail(`部品の行を読めません: ${safeToken(id)}`, null)
+      : fail(`${safeToken(id)}: ${REWRITE_REFUSAL}`, null);
+  }
 
   const written = text.trim();
   if (field !== 'type') {
@@ -185,5 +192,31 @@ export function setField(source: string, id: string, field: PartField, text: str
     }
   }
 
+  // **書いたあと読み直して、狙った欄だけが変わったかを確かめる。** 崩れるなら書かない。
+  if (edits.length > 0 && !landed(source, edits, id, field, written)) {
+    return fail(`${safeToken(id)}: ${REWRITE_REFUSAL}`, layout.line);
+  }
   return { ok: true, value: { edits, diff: diffAfter(source, edits) } };
+}
+
+/**
+ * 書いたあと読み直して、**その部品のその欄だけが `written` になったか**。
+ * ほかの部品・この部品の穴とほかの欄が動いたり、YAML の構文エラーが増えたり
+ * したら外れ。行の中の範囲は字面から決めているので、読み違えたときの見張り。
+ */
+function landed(source: string, edits: readonly Edit[], id: string, field: PartField, written: string): boolean {
+  const next = applyEdits(source, edits);
+  const before = parseFence(normalizeNewlines(source));
+  const after = parseFence(normalizeNewlines(next));
+  const yamlErrors = (errors: readonly FenceError[]): number =>
+    errors.filter((error) => error.message.startsWith('YAML')).length;
+  if (yamlErrors(after.errors) > yamlErrors(before.errors)) return false;
+
+  const others = (parts: readonly PartSpec[]) => parts.filter((part) => part.id !== id);
+  const holes = (parts: readonly PartSpec[]) => parts.find((part) => part.id === id)?.holes ?? null;
+  if (!sameShape(others(after.doc.parts), others(before.doc.parts))) return false;
+  if (!sameShape(holes(after.doc.parts), holes(before.doc.parts))) return false;
+
+  const was = partFields(source, id);
+  return was !== null && sameShape(partFields(next, id), { ...was, [field]: written.replace(/\s+/g, ' ') });
 }

@@ -15,6 +15,12 @@ describe('commentAt', () => {
     expect(commentAt('  - text b1: "R1: #1"')).toBe(-1);
   });
 
+  // **値の途中の引用符は引用ではない** (YAML のプレーンスカラーの字)。
+  test('値の途中の引用符の後ろの # は数える', () => {
+    expect(commentAt('  R1: resistor a1 a3 "a #1"')).toBe(24);
+    expect(commentAt("  D1: led b12 b13 'red  # 表示")).toBe(24);
+  });
+
   test('引用が閉じたあとの # は数える', () => {
     expect(commentAt('  - text b1: "R1" # めも')).toBe(18);
   });

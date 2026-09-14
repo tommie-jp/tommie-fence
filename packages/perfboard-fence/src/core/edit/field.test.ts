@@ -131,3 +131,22 @@ describe('setField on a line with a comment after it', () => {
       .toBe('board: 12x7\nparts:\n  R1: resistor b2 b6 330  # 電流制限\n');
   });
 });
+
+// ---- レビューで出た穴 (2026-09-14) ----
+describe('setField refuses what it cannot write back cleanly', () => {
+  test('finds a key written in quotes', () => {
+    const quoted = 'board: 12x7\nparts: {R1: resistor b2 b6 10k, "C1": capacitor b8 b11}\n';
+    expect(after(quoted, setField(quoted, 'C1', 'value', '1u')))
+      .toBe('board: 12x7\nparts: {R1: resistor b2 b6 10k, "C1": capacitor b8 b11 1u}\n');
+  });
+
+  test("does not swallow the next part after a ' in the middle of a value", () => {
+    const source = "board: 12x7\nparts: {R1: resistor b2 b6 'x, C1: capacitor b8 b11}\n";
+    expect(after(source, setField(source, 'R1', 'value', '1k')))
+      .toBe('board: 12x7\nparts: {R1: resistor b2 b6 1k, C1: capacitor b8 b11}\n');
+  });
+
+  test('refuses a part that goes on to the next line', () => {
+    expect(setField('board: 12x7\nparts: {R1: resistor b2\n  b6 10k, C1: capacitor b8 b11}\n', 'R1', 'value', '1k').ok).toBe(false);
+  });
+});

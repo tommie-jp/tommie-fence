@@ -253,3 +253,13 @@ describe('向きの語を 1 行に並べた部品に書く', () => {
     expect(turned(source, 'U1', -1).source).toBe('parts: {G1: ground b8 r90, U1: opamp b5}\n');
   });
 });
+
+describe('向きの語を 1 行に並べた部品に書くとき、崩す形は断る', () => {
+  test('鍵に空白を置いた形も、閉じ括弧の手前の語を差し替える', () => {
+    expect(turned('parts: {G1 : ground b8 r90}\n', 'G1', 1).source).toBe('parts: {G1 : ground b8 r180}\n');
+  });
+
+  test('次の行へ続く項目は断る', () => {
+    expect(turnPart('parts: {U1: opamp b5\n  r90, G1: ground b8}\n', 'U1', 1).ok).toBe(false);
+  });
+});

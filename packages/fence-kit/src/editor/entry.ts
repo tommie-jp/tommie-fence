@@ -1,3 +1,6 @@
+import { YAML_START, readYamlLine } from './scanYaml.ts';
+import type { ReadLine, YamlState } from './scanYaml.ts';
+
 /**
  * 行の中の、項目 1 つ (`R1: resistor a1 a3`) を書いた範囲。
  *
@@ -5,10 +8,12 @@
  * R2 の値を直すつもりで行まるごと組み直すと R1 が消える。欄を直す側は
  * この範囲の中だけを書き換える。
  *
- * YAML を読み直さずに字面から決める (fence-kit は YAML を知らない)。
+ * YAML を読み直さずに字面から決める (fence-kit は YAML を知らない)。**決められない
+ * ときは null** を返す — 範囲を読み違えて書くより、断るほうがよい。
+ * 読み違いの見張りは書き換える側にもある (書いたあと読み直す)。
  */
 export type Entry = {
-  /** 鍵の頭の桁。 */
+  /** 鍵の頭の桁 (引用符で囲んだ鍵なら引用符の桁)。 */
   readonly start: number;
   /** 項目の終わりの桁 (区切りの `,` `}`・コメント・後ろの空白を含まない)。 */
   readonly end: number;
@@ -19,83 +24,70 @@ export type Entry = {
 /**
  * `line` 行目 (1 始まり) の `id:` で始まる項目。`from` より前の鍵は見ない
  * (同じ名前が 1 行に 2 つあるとき、前の項目の続きから探すため)。
- * 鍵が見つからなければ null。
+ *
+ * null になるのは — 鍵が見つからない、フロー形式の項目が次の行へ続いている
+ * (`{R1: resistor a1\n  a3}`)、引用符が行をまたいでいる。
  */
 export function entryOf(lines: readonly string[], line: number, id: string, from = 0): Entry | null {
   const text = lines[line - 1];
   if (text === undefined) return null;
-  const body = uncommented(text);
-  const start = keyColumn(body, id, from);
-  if (start === null) return null;
 
-  const flow = /[{,]$/.test(body.slice(0, start).trimEnd()) || (body.slice(0, start).trim() === '' && continues(lines, line));
-  // **ブロック形式は区切りで切らない。** 値の `1,000` はプレーンスカラーの字。
-  const end = flow ? flowEnd(body, start) : body.length;
-  return { start, end: start + body.slice(start, end).trimEnd().length, flow };
+  // **深さは文書の頭から数える。** 前の行の終わりの字 (`,` `{`) だけで決めると、
+  // ブロック形式の値 `1,` の次の行をフロー形式と取り違える。
+  let state: YamlState = YAML_START;
+  for (const before of lines.slice(0, line - 1)) state = readYamlLine(before, state).after;
+  const read = readYamlLine(text, state);
+
+  const start = keyColumn(text, read, id, from);
+  if (start === null) return null;
+  const depth = read.depths[start] ?? 0;
+  if (depth === 0) return { start, end: trimmedEnd(text, start, read.comment), flow: false };
+
+  const stop = flowStop(text, read, start, depth);
+  if (stop !== null) return { start, end: trimmedEnd(text, start, stop), flow: true };
+  // 行の中で区切りが見つからない。次の行が区切りから始まるときだけ、行の終わりまで。
+  if (read.after.quote !== null || !nextStartsWithStop(lines, line, read.after)) return null;
+  return { start, end: trimmedEnd(text, start, read.comment), flow: true };
 }
 
+const trimmedEnd = (text: string, start: number, stop: number): number =>
+  start + text.slice(start, stop).trimEnd().length;
+
+const escaped = (id: string): string => id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /**
- * 名前の続きでなく、`:` の後ろが空白か行の終わりの `id:`。YAML の鍵は
- * `:` のあとに空白が要るので、値の中の `R2:b` は鍵ではない。
+ * 鍵の頭の桁。**値の頭にあたる所だけ**を見る (行頭・`{` `,` の後ろ) —
+ * 値の中や引用符の中の `R1:` は鍵ではない。`R1 :` `"R1":` `'R1':` も鍵。
  */
-function keyColumn(body: string, id: string, from: number): number | null {
-  const key = `${id}:`;
-  for (let at = body.indexOf(key, from); at !== -1; at = body.indexOf(key, at + 1)) {
-    if (!/[\w.-]/.test(body[at - 1] ?? ' ') && /^(\s|$)/.test(body.slice(at + key.length))) return at;
+function keyColumn(text: string, read: ReadLine, id: string, from: number): number | null {
+  const key = new RegExp(`^(?:${escaped(id)}|"${escaped(id)}"|'${escaped(id)}')\\s*:(?:\\s|$)`);
+  for (let at = from; at < read.comment; at += 1) {
+    if (read.quoted[at] === true) continue;
+    const previous = text.slice(0, at).trimEnd().at(-1);
+    if (previous !== undefined && previous !== '{' && previous !== ',') continue;
+    if (key.test(text.slice(at, read.comment))) return at;
   }
   return null;
 }
 
-/** 前の行 (空行とコメントだけの行は飛ばす) が `,` か `{` で終わる = フロー形式の続き。 */
-function continues(lines: readonly string[], line: number): boolean {
-  for (let index = line - 2; index >= 0; index -= 1) {
-    const before = uncommented(lines[index] ?? '').trimEnd();
-    if (before !== '') return /[{,]$/.test(before);
+/** 項目の区切り (`,`、閉じる `}` `]`) の桁。同じ深さで、引用符の外にあるもの。 */
+function flowStop(text: string, read: ReadLine, start: number, depth: number): number | null {
+  for (let at = start; at < read.comment; at += 1) {
+    if (read.quoted[at] === true || read.depths[at] !== depth) continue;
+    const char = text[at];
+    if (char === ',' || char === '}' || char === ']') return at;
+  }
+  return null;
+}
+
+/** 次の中身のある行 (空行とコメントだけの行は飛ばす) が区切りから始まるか。 */
+function nextStartsWithStop(lines: readonly string[], line: number, state: YamlState): boolean {
+  let now = state;
+  for (const after of lines.slice(line)) {
+    const read = readYamlLine(after, now);
+    const body = after.slice(0, read.comment).trim();
+    if (body !== '') return /^[,}\]]/.test(body);
+    now = read.after;
   }
   return false;
-}
-
-/** 引用符・入れ子の括弧の外で、最初の `,` `}` `]` の桁。無ければ行の終わり。 */
-function flowEnd(body: string, start: number): number {
-  let depth = 0;
-  for (let at = start; at < body.length; at += 1) {
-    const char = body[at] as string;
-    if (opensQuote(body, at)) {
-      at = closingQuote(body, at);
-    } else if (char === '{' || char === '[') {
-      depth += 1;
-    } else if (char === '}' || char === ']' || char === ',') {
-      if (depth === 0) return at;
-      if (char !== ',') depth -= 1;
-    }
-  }
-  return body.length;
-}
-
-/** 行末コメントを落とした字。引用符の中の `#` はコメントではない。 */
-function uncommented(text: string): string {
-  for (let at = 0; at < text.length; at += 1) {
-    if (opensQuote(text, at)) at = closingQuote(text, at);
-    else if (text[at] === '#' && (at === 0 || /\s/.test(text[at - 1] as string))) return text.slice(0, at);
-  }
-  return text;
-}
-
-/**
- * 引用符が始まる桁か。**語の頭の引用符だけ** — `R'` の `'` は字の一部で、
- * 引用符と取ると後ろの `,` を飲み込んで隣の項目まで範囲に入れてしまう。
- */
-const opensQuote = (text: string, at: number): boolean =>
-  (text[at] === '"' || text[at] === "'") && (at === 0 || /[\s{[,:]/.test(text[at - 1] as string));
-
-/** 閉じる引用符の桁 (閉じていなければ行の終わり)。`''` と `\"` は閉じない。 */
-function closingQuote(text: string, open: number): number {
-  const quote = text[open];
-  for (let at = open + 1; at < text.length; at += 1) {
-    if (quote === '"' && text[at] === '\\') { at += 1; continue; }
-    if (text[at] !== quote) continue;
-    if (quote === "'" && text[at + 1] === "'") { at += 1; continue; }
-    return at;
-  }
-  return text.length;
 }

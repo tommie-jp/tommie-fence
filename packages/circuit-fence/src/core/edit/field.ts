@@ -7,7 +7,7 @@ import { lookupPartType, resolvePartTypeName } from '../parts.ts';
 import { dressLine, lineEdits } from 'fence-kit';
 import { spellPart } from '../write/spellPart.ts';
 import { writeFence } from '../write/writeFence.ts';
-import { applyRewrite, diffOf, entryOfPart, fail } from './shared.ts';
+import { UNLANDED, applyRewrite, diffOf, entryOfPart, fail, landsAs } from './shared.ts';
 import type { RewriteResult } from './shared.ts';
 
 /**
@@ -103,12 +103,10 @@ export function setField(source: string, handle: string, field: PartField, text:
 
   const lines = normalized.split('\n');
   const written = lines[part.line - 1] ?? '';
-  // 鍵を見つけられない行 (`R1 : …` と書いた形) は、いままでどおり行ごと組み直す。
-  // 1 行に部品が並んでいるときだけは範囲が決まらないので断る。
+  // 範囲が決まらない (鍵が見つからない・項目が次の行へ続く) ときは断る。
   const entry = entryOfPart(doc.parts, lines, part);
-  const shares = doc.parts.some((other) => other.line === part.line && other !== part);
-  if (entry === null && shares) return fail(`${partId} の行から部品の書き出しを見つけられませんでした`, part.line);
-  const problem = fieldProblem(text) ?? (entry?.flow === true ? flowProblem(text) : null);
+  if (entry === null) return fail(`${partId}: ${UNLANDED}`, part.line);
+  const problem = fieldProblem(text) ?? (entry.flow ? flowProblem(text) : null);
   if (problem !== null) return fail(problem, part.line);
 
   const changed = withField(part, field, text);
@@ -119,12 +117,14 @@ export function setField(source: string, handle: string, field: PartField, text:
   // (`write/parity.test.ts` が見張る)。差し替えは違う所だけに絞る。
   // **1 行に並べた形はその部品の範囲だけ組み直す** — 行まるごとだと隣の部品を消す。
   const parts = doc.parts.map((one) => (one === part ? changed.part : one));
-  const next = entry?.flow === true
+  const next = entry.flow
     ? `${written.slice(0, entry.start)}${dressLine(written.slice(entry.start, entry.end), spellPart(changed.part))}${written.slice(entry.end)}`
     : writeFence(normalized, { ...doc, parts }, new Set([part.line]))[part.line - 1];
   const edits = next === undefined ? [] : lineEdits(part.line, written, next);
 
   const rewrite = { edits, lines: [], diff: { lost: [], gained: [] } };
+  // **書いたあと読み直して、狙った欄だけが変わったかを確かめる。** 崩れるなら書かない。
+  if (!landsAs(normalized, rewrite, parts)) return fail(`${partId}: ${UNLANDED}`, part.line);
   return { ok: true, value: { ...rewrite, diff: diffOf(normalized, applyRewrite(normalized, rewrite)) } };
 }
 

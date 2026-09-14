@@ -198,3 +198,39 @@ describe('setField on parts written in flow style', () => {
     expect(set(RC, 'R1', 'value', '1,0').source).toContain('  R1: resistor a1 a3 1,0');
   });
 });
+
+// ---- レビューで出た穴 (2026-09-14) ----
+// **範囲を読み違えそうな形は、書く前に読み直して確かめ、崩れるなら断る。**
+describe('欄を 1 行に並べた部品に書くとき、崩す形は断る', () => {
+  test('鍵に空白を置いた形も、範囲を見つけて書く', () => {
+    expect(set('parts: {R1 : resistor a1 a3}\n', 'R1', 'value', '10k').source).toBe('parts: {R1: resistor a1 a3 10k}\n');
+  });
+
+  test("値の途中の ' があっても、隣の部品を飲み込まない", () => {
+    const quoted = set('parts: {R1: resistor a1 a3, R2: resistor c1 c3}\n', 'R1', 'value', "'x").source;
+    expect(quoted).toBe("parts: {R1: resistor a1 a3 'x, R2: resistor c1 c3}\n");
+    expect(set(quoted, 'R1', 'value', '4k7').source).toBe('parts: {R1: resistor a1 a3 4k7, R2: resistor c1 c3}\n');
+    expect(set(quoted, 'R2', 'value', '1k').source).toBe("parts: {R1: resistor a1 a3 'x, R2: resistor c1 c3 1k}\n");
+  });
+
+  test('次の行へ続く項目は断る', () => {
+    expect(setField('parts: {R1: resistor a1\n  a3}\n', 'R1', 'value', '10k').ok).toBe(false);
+    expect(setField('parts: {R1:\n  resistor a1 a3, R2: resistor c1 c3}\n', 'R1', 'value', '10k').ok).toBe(false);
+  });
+
+  // 組み直すと引用符が外れ、中の , が区切りになる。
+  test('引用符で囲んだ値に区切りの字があれば断る', () => {
+    expect(setField('parts: {R1: "resistor a1 a3 1,0", R2: resistor c1 c3}\n', 'R1', 'label', 'x').ok).toBe(false);
+  });
+
+  test('前の行の値が , で終わるブロック形式を、並べた形と取り違えない', () => {
+    const source = 'parts:\n  R1: resistor a1 a3 1,\n  R2: resistor c1 c3 2,2\n';
+    expect(set(source, 'R2', 'label', 'x').source).toBe('parts:\n  R1: resistor a1 a3 1,\n  R2: resistor c1 c3 2,2 l=x\n');
+  });
+
+  // 1 つ目は読めないので数に入らず、名札 VCC は 2 つ目を指す。字の 1 つ目を書き換えてはいけない。
+  test('同じ名前の読めない項目が前にあるときは、書き換えずに断る', () => {
+    const result = setField('parts: {VCC: vcc zz, VCC: vcc c1}\n', 'VCC', 'type', 'vee');
+    if (result.ok) expect(applyRewrite('parts: {VCC: vcc zz, VCC: vcc c1}\n', result.value)).toBe('parts: {VCC: vcc zz, VCC: vee c1}\n');
+  });
+});

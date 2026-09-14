@@ -49,8 +49,8 @@ describe('entryOf', () => {
   });
 
   test('引用符の中の , と } では切らない', () => {
-    expect(written('parts: {R1: resistor a1 a3 "1,0}", R2: led b1 b2}\n', 1, 'R1'))
-      .toBe('flow:R1: resistor a1 a3 "1,0}"');
+    expect(written('parts: {R1: "resistor a1 a3 1,0}", R2: led b1 b2}\n', 1, 'R1'))
+      .toBe('flow:R1: "resistor a1 a3 1,0}"');
   });
 
   // **語の途中の ' は引用符ではない** (`R'` のラベル)。引用符と取ると , を飲み込む。
@@ -78,6 +78,44 @@ describe('entryOf', () => {
   test('from より前の鍵は見ない (同じ名前が 1 行に 2 つあるとき)', () => {
     const source = 'parts: {vcc: vcc a1, vcc: vcc b1}\n';
     expect(written(source, 1, 'vcc', 20)).toBe('flow:vcc: vcc b1');
+  });
+
+  // ---- レビューで出た穴 ----
+
+  // **値の途中の引用符は引用ではない。** 引用と取ると後ろの , と } を飲み込む。
+  test("値の途中の ' で後ろの項目を飲み込まない", () => {
+    expect(written("parts: {R1: resistor a5 a10 'x, D1: led b12 b13 red}\n", 1, 'R1')).toBe("flow:R1: resistor a5 a10 'x");
+    expect(written("parts: {R1: resistor a5 a10 'x, D1: led b12 b13 red}\n", 1, 'D1')).toBe('flow:D1: led b12 b13 red');
+  });
+
+  test('値の頭の引用符は引用 (中の , で切らない)', () => {
+    expect(written('parts: {R1: "resistor a1 a3 1,0", R2: led b1 b2}\n', 1, 'R1')).toBe('flow:R1: "resistor a1 a3 1,0"');
+  });
+
+  test('鍵の後ろに空白を置いた形と、引用符で囲んだ鍵', () => {
+    expect(written('parts: {R1 : resistor a1 a3, D1: led b1 b2}\n', 1, 'R1')).toBe('flow:R1 : resistor a1 a3');
+    expect(written('parts: {R1: resistor a1 a3, "D1": led b1 b2}\n', 1, 'D1')).toBe('flow:"D1": led b1 b2');
+    expect(written("parts:\n  'R1': resistor a1 a3\n", 2, 'R1')).toBe("block:'R1': resistor a1 a3");
+  });
+
+  test('引用符の中の R1: は鍵ではない', () => {
+    expect(written('parts: {R2: "resistor a1 a3 R1: x", R1: resistor a5 a10}\n', 1, 'R1')).toBe('flow:R1: resistor a5 a10');
+  });
+
+  // **前の行の値が , で終わっても、ブロック形式はブロック形式。**
+  test('ブロック形式の値の , の次の行をフロー形式と取り違えない', () => {
+    expect(written('parts:\n  R1: resistor a1 a3 1,\n  R2: resistor c1 c3 2,2\n', 3, 'R2')).toBe('block:R2: resistor c1 c3 2,2');
+  });
+
+  test('ブロック形式の値の途中の { は開き括弧ではない', () => {
+    expect(written('parts:\n  R1: resistor a1 a3 {x,\n  R2: resistor c1 c3 2,2\n', 3, 'R2')).toBe('block:R2: resistor c1 c3 2,2');
+  });
+
+  // **項目が次の行へ続くと、行の中だけでは範囲が決まらない。** 断らせる。
+  test('次の行へ続くフロー形式の項目は null', () => {
+    expect(written('parts: {R1: resistor a1\n  a3}\n', 1, 'R1')).toBeNull();
+    expect(written('parts: {R1:\n  resistor a1 a3, R2: resistor c1 c3}\n', 1, 'R1')).toBeNull();
+    expect(written('parts: {U1: opamp b5\n  r90, G1: ground b8}\n', 1, 'U1')).toBeNull();
   });
 
   test('鍵が無ければ null', () => {
