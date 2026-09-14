@@ -2,6 +2,8 @@ import { describe, expect, test } from 'vitest';
 import { applyRewrite } from 'fence-kit';
 import { parseFence } from '../parser/parseFence.ts';
 import { createPerfboardEditor } from './fenceEditor.ts';
+import { movableNodes } from './point.ts';
+import { formatAddress } from '../model/address.ts';
 
 /**
  * **1 行に並べた注釈と配線 (フロー形式)。** 名札は行番号なので、行を項目 1 つと
@@ -108,5 +110,13 @@ describe('1 行に並べたものの改名', () => {
     const source = `${HEAD}notes: [mark R1 red]\n`;
     const result = editor.rename(source, 'R1', 'R9');
     expect(result.ok && applyRewrite(source, result.value)).toBe(`${HEAD.replace('R1:', 'R9:')}notes: [mark R9 red]\n`);
+  });
+});
+
+describe('1 行に並べた配線の節点の数え方', () => {
+  test('同じ行を 2 度数えない', () => {
+    const source = `${HEAD}wires: [a2 -- b2, b2 -- c5]\n`;
+    const node = movableNodes(source).find((one) => formatAddress(one.address) === 'b2');
+    expect(node?.uses).toBe(3);
   });
 });

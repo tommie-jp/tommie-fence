@@ -116,13 +116,16 @@ export function scan(source: string): Doc {
     }
   }
 
-  for (const wire of doc.wires) {
-    const text = wire.line === null ? undefined : lines[wire.line - 1];
-    if (wire.line === null || text === undefined) continue;
+  // **行ごとに 1 度だけ読む。** 1 行に配線が 2 本以上ある (数珠つなぎ・フロー形式) と
+  // 配線ごとに行を読み直して、同じ綴りを二重に数えていた (circuit は直してあった)。
+  const wireLines = new Set(doc.wires.flatMap((wire) => (wire.line === null ? [] : [wire.line])));
+  for (const line of wireLines) {
+    const text = lines[line - 1];
+    if (text === undefined) continue;
     for (const token of addressTokensOn(text, names)) {
       const spelling = text.slice(token.column, token.column + token.length);
       written.push({
-        line: wire.line,
+        line,
         column: token.column,
         length: token.length,
         address: token.address,

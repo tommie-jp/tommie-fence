@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { applyRewrite } from 'fence-kit';
 import { parseFence } from '../parser/parseFence.ts';
 import { createBreadboardEditor } from './fenceEditor.ts';
+import { movableNodes } from './point.ts';
 
 /**
  * **1 行に並べた注釈と配線 (フロー形式)。** 名札は行番号なので、行を項目 1 つと
@@ -108,5 +109,29 @@ describe('1 行に並べたものの改名', () => {
     const source = `${HEAD}notes: [circle R1 red]\n`;
     const result = editor.rename(source, 'R1', 'R9');
     expect(result.ok && applyRewrite(source, result.value)).toBe(`${HEAD.replace('R1:', 'R9:')}notes: [circle R9 red]\n`);
+  });
+});
+
+// **行末の `[…]` はヒント (`- a1 -- a3 [v-20]`) として落としていた** ので、
+// `wires: [a10 -- b12, …]` の並びごと消えて、節点が 1 つも見つからなかった。
+describe('1 行に並べた配線の節点', () => {
+  test('節点を動かせる (ほかの 2 つのフェンスと同じ)', () => {
+    const source = `${HEAD}wires: [a10 -- b12, c1 -- c5 blue]\n`;
+    const result = editor.movePoint(source, 'b12', 'd12');
+    expect(result.ok && applyRewrite(source, result.value)).toBe(`${HEAD}wires: [a10 -- d12, c1 -- c5 blue]\n`);
+  });
+
+  test('ブロック形式の行末のヒントは今までどおり番地と取らない', () => {
+    const source = `${HEAD}wires:\n  - a10 -- b12 red [v-20]\n`;
+    const result = editor.movePoint(source, 'b12', 'd12');
+    expect(result.ok && applyRewrite(source, result.value)).toBe(`${HEAD}wires:\n  - a10 -- d12 red [v-20]\n`);
+  });
+});
+
+describe('1 行に並べた配線の節点の数え方', () => {
+  test('同じ行を 2 度数えない', () => {
+    const source = `${HEAD}wires: [a10 -- b12, b12 -- c5]\n`;
+    const node = movableNodes(source).find((one) => one.address.kind === 'hole' && one.address.row === 'b' && one.address.col === 12);
+    expect(node?.uses).toBe(2);
   });
 });

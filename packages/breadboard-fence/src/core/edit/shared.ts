@@ -70,7 +70,12 @@ const HINTS = /\s*\[[^\]]*\]?\s*$/;
 const withoutComment = (lineText: string): string => {
   const comment = COMMENT.exec(lineText);
   const body = comment === null ? lineText : lineText.slice(0, comment.index);
-  return body.replace(HINTS, '');
+  const hints = HINTS.exec(body);
+  if (hints === null) return body;
+  // **値の頭の `[` はヒントではなくフロー形式の並び** (`wires: [a10 -- b12, …]`)。
+  // 落とすと並べた配線の番地が 1 つも見つからず、節点を掴めなかった。
+  const before = body.slice(0, hints.index).trimEnd();
+  return before === '' || /[:,[{]$/.test(before) ? body : body.slice(0, hints.index);
 };
 
 const candidatesOn = (
