@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
-import { renderPerfboard } from './index.ts';
+import { renderPerfboard, STAMP_TEXT, VERSION } from './index.ts';
 import { THEME } from './render/theme.ts';
 
 describe('renderPerfboard', () => {
@@ -744,5 +746,26 @@ wires:
     expect(svg).toContain('data-node="b2"');
     expect(svg).toContain('data-name="IN"');
     expect(svg).not.toContain('data-node="g12"');
+  });
+});
+
+/**
+ * **版は core の入口から読める。** ライブラリとして読む側はキャッシュの鍵と
+ * 図の刻印に処理系の版を混ぜるので、入口から読めないと「上流が動いたのに
+ * 古い図が出続ける」という、いちばん気づきにくい壊れ方をする (52 の docs/56)。
+ * 版そのものが package.json と揃っているかは version.test.ts が見張る。
+ */
+const PACKAGE = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../../package.json', import.meta.url)), 'utf8'),
+) as { readonly version: string };
+
+describe('the library exit', () => {
+  test('exports the version the package declares', () => {
+    expect(VERSION).toBe(PACKAGE.version);
+  });
+
+  test('exports a stamp that names the tool as well as the number', () => {
+    expect(STAMP_TEXT).toContain('perfboard-fence');
+    expect(STAMP_TEXT).toContain(VERSION);
   });
 });

@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
-import { compileCircuit } from './index.ts';
+import { compileCircuit, STAMP_TEXT, VERSION } from './index.ts';
 
 const lines = (...rows: string[]): string => `${rows.join('\n')}\n`;
 /** 同じフェンスを Windows の改行 (CRLF) で書いたもの。 */
@@ -383,4 +385,25 @@ describe('compileCircuit が返す行の中身', () => {
     const result = compileCircuit(lines('parts:', '  R1: [a, b'));
 
     expect(result.errors[0]?.text).toBeUndefined();  });
+});
+
+/**
+ * **版は core の入口から読める。** ライブラリとして読む側はキャッシュの鍵と
+ * 図の刻印に処理系の版を混ぜるので、入口から読めないと「上流が動いたのに
+ * 古い図が出続ける」という、いちばん気づきにくい壊れ方をする (52 の docs/56)。
+ * 版そのものが package.json と揃っているかは version.test.ts が見張る。
+ */
+const PACKAGE = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../../package.json', import.meta.url)), 'utf8'),
+) as { readonly version: string };
+
+describe('the library exit', () => {
+  test('exports the version the package declares', () => {
+    expect(VERSION).toBe(PACKAGE.version);
+  });
+
+  test('exports a stamp that names the tool as well as the number', () => {
+    expect(STAMP_TEXT).toContain('circuit-fence');
+    expect(STAMP_TEXT).toContain(VERSION);
+  });
 });

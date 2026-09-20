@@ -49,7 +49,7 @@
   "scripts": {
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
-    "types": "tsc -p tsconfig.types.json",
+    "types": "node dts.mjs",
     "prepack": "rm -rf dist && node esbuild.mjs --production && npm run types",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -69,6 +69,8 @@
     "esbuild": "^0.28.2",
     "fence-kit": "*",
     "markdown-it": "^15.0.0",
+    "rollup": "^4.63.4",
+    "rollup-plugin-dts": "^6.5.1",
     "sharp": "^0.35.3",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"

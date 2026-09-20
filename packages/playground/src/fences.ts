@@ -1,5 +1,5 @@
-import { renderBreadboard, errorText as breadboardErrorText } from 'breadboard-fence/core';
-import { renderPerfboard, errorText as perfboardErrorText } from 'perfboard-fence/core';
+import { renderBreadboard, errorText as breadboardErrorText } from 'breadboard-fence/src/core';
+import { renderPerfboard, errorText as perfboardErrorText } from 'perfboard-fence/src/core';
 import { compileCircuit, errorLine, snippetLines } from 'circuit-fence/src/core';
 import type { FenceError } from 'circuit-fence/src/core';
 import type { Kind } from './kinds.ts';
