@@ -115,6 +115,15 @@ make help             # 目標の一覧
    `npx markdownlint-cli 'README.md' 'README.ja.md' 'CLAUDE.md' 'examples/*.md'`。
    パッケージの中は各パッケージの CLAUDE.md の指定に従う。
 10. **README は日本語が正、英語が追随**。節の構成は 2 本で 1 対 1 に保つ。
+11. **ライブラリの出口は 3 つとも同じ形**。`<パッケージ>/core` は **dist**
+    (`import` / `require` / `types`)、`<パッケージ>/src/core` は**ソース**。
+    ソースの入口も要るのは、dist だけだと**型チェックの前に build しないと
+    playground が通らない**ため。`src/**` は `.vsix` に入らないので、
+    ソースの入口はモノレポの中でだけ生きる。`npm pack` で配るのは `dist/` だけ
+    (`.npmignore`)。**型定義は `dts.mjs` が 1 ファイルに束ねる** — `fence-kit` は
+    tgz に入らないので、ファイルごとに書き出すと `.d.ts` が解決できない指定子を
+    持ったまま配られる。使う側が `skipLibCheck: true` なら**黙って any に落ちる**
+    ので気づけない。tgz の中身は CI が見る (52 の docs/56)。
 
 ## パッケージ間で違っていて、揃えていないもの
 
@@ -124,7 +133,6 @@ make help             # 目標の一覧
 | --- | --- | --- | --- |
 | web 版のエントリ | 専用の `extension.web.ts` (描けないと返すスタブ) | 同じ `extension.ts` を束ね直すだけ | 回路図の描画は WASM の TeX が要り、ブラウザで動かない |
 | `previewRefresher` | ある | ない | 回路図は描画が非同期 (TeX → SVG) なので、描き上がってからプレビューを促す仕組みが要る。フェンスに依存しないので `fence-kit` の候補 |
-| ライブラリの出口 | `circuit-fence/core` は **dist** を指す (`import`/`require`/`types`)。ソースを指す `circuit-fence/src/core` を別に持つ | `breadboard-fence/core` は **ソース** (`src/core/index.ts`) を指す | circuit だけサーバー側描画から呼ぶ要望があり、外へ出す形 (dist) が要った。3 つとも playground から呼ぶので、**ビルド前でも型が付くソースの入口**を別に用意した (dist を指すと、型チェックの前に circuit を build しないと通らない)。`src/**` は `.vscodeignore` で `.vsix` に入らないので、**ソースの入口はモノレポの中でだけ生きる** |
-| 実行時の依存 | `yaml` + `node-tikzjax` | `yaml` だけ | 同上 |
+| 実行時の依存 | `yaml` + `node-tikzjax` | `yaml` だけ | 回路図だけ TeX に描かせる。板の 2 つは SVG を自分で組む |
 | 図の組み立て | TeX (circuitikz) に描かせて後から色を塗り替える | SVG を直に組み立てる | だから `svg` `palette` `textFit` `title` にあたるものが circuit には無い。`theme` は名前が同じだけで別物 (circuit は塗り替えの色、breadboard は色 + 穴の寸法)。**例外は移動エディタのマップ** (`core/edit/mapSvg.ts`) — あれは公開する図ではなく掴むための UI なので SVG を組み立てる。形は**回路図になるべく寄せる**が、正確さは TeX が正 (細部だけが違うものは同じ形に落とす) |
 | エラーの帯のキャレット | 全角を 2 桁と数えて位置を合わせる | 桁数だけ合わせる | 同じ `errorText.ts` という名前で別実装。**circuit の方が正しい**ので、揃えるなら breadboard を寄せる (未着手) |

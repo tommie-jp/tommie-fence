@@ -150,6 +150,29 @@ node dist/cli.cjs check examples                       # check without writing
 `check` prints the netlist and whatever it has to say. It exits non-zero if any
 line could not be read, so it drives CI and an LLM's self-correcting loop.
 
+### From your own code (`perfboard-fence/core`)
+
+The core (YAML → validation → SVG) stays a synchronous pure function and loads
+as a library. Use it both when drawing straight in a browser and when drawing
+on a server.
+
+```js
+import { renderPerfboard, VERSION } from 'perfboard-fence/core'
+
+const { svg, netlist, errors } = renderPerfboard(source)
+// svg is a self-contained string that references no external resources.
+// errors carry line numbers. Neither the DOM nor Node APIs are needed, so the
+// drawing is the same wherever it is called from. VERSION is there to mix into
+// cache keys and the stamp on the drawing
+```
+
+It is not published to the npm registry, so hand consumers a tarball. A tarball
+per version, with `SHA256SUMS`, is on the [releases page](https://github.com/tommie-jp/tommie-fence/releases).
+
+```bash
+npm pack   # builds, emits the type definitions, and makes perfboard-fence-<version>.tgz
+```
+
 ## Development
 
 Run everything from the repository root (npm workspaces).

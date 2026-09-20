@@ -144,6 +144,27 @@ LLM に書かせて直させるループでは書き出しの分だけ回転が�
 場所に書く。`npm run examples` は PNG も書き出すが、こちらは sharp
 (プラットフォーム別のバイナリ) が要るので開発環境でだけ使う。
 
+### プログラムから使う (`breadboard-fence/core`)
+
+コア (YAML → 検証 → SVG) は同期の純関数のまま、ライブラリとして
+読み込める。ブラウザで直に描くときも、サーバー側で描くときもこちらを使う。
+
+```js
+import { renderBreadboard, VERSION } from 'breadboard-fence/core'
+
+const { svg, netlist, errors } = renderBreadboard(source)
+// svg は外部リソースを参照しない完結した文字列。errors は行番号つき。
+// DOM も Node の API も要らないので、どこから呼んでも同じ絵になる。
+// VERSION はキャッシュの鍵や図の刻印に混ぜるためにある
+```
+
+npm レジストリには公開していないので、使う側へは tarball で渡す。
+版ごとの tarball は [Releases](https://github.com/tommie-jp/tommie-fence/releases) に `SHA256SUMS` つきで置いてある。
+
+```bash
+npm pack   # ビルドと型定義の書き出しを済ませて breadboard-fence-<版>.tgz を作る
+```
+
 ## 文法
 
 [docs/01-syntax.md](docs/01-syntax.md) に全文法と図、

@@ -52,6 +52,9 @@ Markdown の行番号とその行の中身で返るエラー。
 (`breadboard-fence-v0.4.0` / `circuit-fence-v0.3.1`)。archive したリポジトリに
 残るのは `v0.3.0` までで、それ以降は
 [Releases](https://github.com/tommie-jp/tommie-fence/releases) にある。
+**拡張には `.vsix`、3 つのライブラリには `npm pack` の tarball** が
+`SHA256SUMS` つきで付く。npm レジストリには出していないので、
+別のアプリから使うときはこの tarball を落として `file:` で指す。
 
 4 つのパッケージは npm workspaces でリポジトリ直下からビルド・テスト・
 パッケージできる。

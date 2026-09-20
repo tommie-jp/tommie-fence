@@ -64,6 +64,9 @@ archived on 2026-09-01. Every commit came along, so
 (`breadboard-fence-v0.4.0`, `circuit-fence-v0.3.1`). The archived repositories
 keep their releases up to `v0.3.0`; everything after that is on the
 [releases page](https://github.com/tommie-jp/tommie-fence/releases).
+**The extension ships a `.vsix`, the three libraries ship an `npm pack`
+tarball**, each with `SHA256SUMS`. They are not on the npm registry, so an
+app that wants one downloads the tarball and points at it with `file:`.
 
 The four packages build, test and package from the repository root through npm
 workspaces.

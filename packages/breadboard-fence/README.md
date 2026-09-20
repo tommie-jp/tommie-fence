@@ -146,6 +146,29 @@ shells that do not expand wildcards work as-is). Without `--out` it writes besid
 the input. `npm run examples` also writes PNGs, but that needs sharp (a
 platform-specific binary), so it is for development machines only.
 
+### From your own code (`breadboard-fence/core`)
+
+The core (YAML → validation → SVG) stays a synchronous pure function and loads
+as a library. Use it both when drawing straight in a browser and when drawing
+on a server.
+
+```js
+import { renderBreadboard, VERSION } from 'breadboard-fence/core'
+
+const { svg, netlist, errors } = renderBreadboard(source)
+// svg is a self-contained string that references no external resources.
+// errors carry line numbers. Neither the DOM nor Node APIs are needed, so the
+// drawing is the same wherever it is called from. VERSION is there to mix into
+// cache keys and the stamp on the drawing
+```
+
+It is not published to the npm registry, so hand consumers a tarball. A tarball
+per version, with `SHA256SUMS`, is on the [releases page](https://github.com/tommie-jp/tommie-fence/releases).
+
+```bash
+npm pack   # builds, emits the type definitions, and makes breadboard-fence-<version>.tgz
+```
+
 ## Grammar
 
 [docs/01-syntax.md](docs/01-syntax.md) has the whole grammar with drawings, and

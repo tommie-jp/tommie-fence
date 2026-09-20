@@ -160,7 +160,8 @@ const { tex, errors } = compileCircuit(source)
 // errors carry line numbers. The rendering engine is not part of this entry point
 ```
 
-It is not published to the npm registry, so hand consumers a tarball.
+It is not published to the npm registry, so hand consumers a tarball. A
+tarball per version, with `SHA256SUMS`, is on the [releases page](https://github.com/tommie-jp/tommie-fence/releases).
 
 ```bash
 npm pack   # builds, emits the type definitions, and makes circuit-fence-<version>.tgz

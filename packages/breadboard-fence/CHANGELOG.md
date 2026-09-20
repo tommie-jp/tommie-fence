@@ -3,6 +3,29 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Added
+
+- **ライブラリとして tarball で配れるようになった** (`breadboard-fence/core`)。
+  `npm pack` が ESM (`dist/core.mjs`)・CJS (`dist/core.cjs`)・型定義
+  (`dist/types/index.d.ts`) を詰める。版ごとの tgz は
+  [Releases](https://github.com/tommie-jp/tommie-fence/releases) に
+  `SHA256SUMS` つきで置く。**型定義は 1 ファイルに束ねてある** — `fence-kit` は
+  tgz に入らない (esbuild が畳む) ので、指すだけだと使う側で解決できず、
+  `skipLibCheck: true` の使い手では**黙って `any` に落ちる**。
+
+- **`VERSION` と `STAMP_TEXT` を core の入口から読めるようにした。**
+  ライブラリとして読む側はキャッシュの鍵や図の刻印に処理系の版を混ぜるので、
+  入口から読めないと**上流が動いたのに古い図が出続ける**。
+
+### Changed
+
+- **読めなかった行があっても、読めたところまで描くようになった。**
+  これまではフェンスを丸ごと捨ててエラーのカードを出していた。
+  読めなかった行は今までどおり行番号つきで帯に出る。**プレビューも CLI も
+  同じ**で、掴んで動かすエディタのためだけの変更ではない。
+
 ## [0.8.0] - 2026-09-07
 
 ### Fixed

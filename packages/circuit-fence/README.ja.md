@@ -146,6 +146,7 @@ const { tex, errors } = compileCircuit(source)
 ```
 
 npm レジストリには公開していないので、使う側へは tarball で渡す。
+版ごとの tarball は [Releases](https://github.com/tommie-jp/tommie-fence/releases) に `SHA256SUMS` つきで置いてある。
 
 ```bash
 npm pack   # ビルドと型定義の書き出しを済ませて circuit-fence-<版>.tgz を作る

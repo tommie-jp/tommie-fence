@@ -135,6 +135,27 @@ node dist/cli.cjs check examples                       # 書かずに検証だ�
 `check` はネットリストと言うことだけを出す。読めない行が 1 つでもあれば
 終了コードは 1 になるので、CI や LLM の自己修正ループから回せる。
 
+### プログラムから使う (`perfboard-fence/core`)
+
+コア (YAML → 検証 → SVG) は同期の純関数のまま、ライブラリとして
+読み込める。ブラウザで直に描くときも、サーバー側で描くときもこちらを使う。
+
+```js
+import { renderPerfboard, VERSION } from 'perfboard-fence/core'
+
+const { svg, netlist, errors } = renderPerfboard(source)
+// svg は外部リソースを参照しない完結した文字列。errors は行番号つき。
+// DOM も Node の API も要らないので、どこから呼んでも同じ絵になる。
+// VERSION はキャッシュの鍵や図の刻印に混ぜるためにある
+```
+
+npm レジストリには公開していないので、使う側へは tarball で渡す。
+版ごとの tarball は [Releases](https://github.com/tommie-jp/tommie-fence/releases) に `SHA256SUMS` つきで置いてある。
+
+```bash
+npm pack   # ビルドと型定義の書き出しを済ませて perfboard-fence-<版>.tgz を作る
+```
+
 ## 開発
 
 リポジトリ直下から回す (npm workspaces)。
