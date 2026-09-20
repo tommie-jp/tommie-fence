@@ -21,17 +21,20 @@ jobs:
         include:
           # fence-kit は束ねる工程を持たないので、型チェックとテストだけ。
           - pkg: fence-kit
+            pack: false
             build: false
             docs: false
             generated: ""
           # 配る 1 つ。図は作らないが、**束ねられることは見る** —
           # ここが壊れると `.vsix` が作れない (52 の docs/19)。
           - pkg: tommie-fence
+            pack: false
             build: true
             docs: false
             generated: ""
           # 3 つのフェンスを 1 つの頁で動かす。全部を import する唯一の場所。
           - pkg: playground
+            pack: false
             build: true
             docs: false
             generated: ""
@@ -39,15 +42,18 @@ jobs:
           # circuit-fence: SVG は node-tikzjax の版で、PNG はフォント環境で変わる。
           # breadboard-fence: SVG は決まるが、PNG はフォントの描画で変わる。
           - pkg: circuit-fence
+            pack: true
             build: true
             docs: true
             generated: "'packages/circuit-fence/examples/out/*.tex' 'packages/circuit-fence/docs/out/*.tex'"
           - pkg: breadboard-fence
+            pack: true
             build: true
             docs: false
             generated: "'packages/breadboard-fence/examples/out/*.svg'"
           # perfboard-fence: SVG は決まる。docs にも図があるので両方作り直す。
           - pkg: perfboard-fence
+            pack: true
             build: true
             docs: true
             generated: "'packages/perfboard-fence/examples/out/*.svg' 'packages/perfboard-fence/docs/out/*.svg'"
@@ -74,3 +80,29 @@ jobs:
       # 差分が出たら、図の作り直しをコミットし忘れている。
       - if: matrix.generated != ''
         run: git diff --exit-code -- ${{ matrix.generated }}
+      # **配る形も見る。** 型チェックもテストも `npm run build` も `npm pack` を
+      # 通らないので、ライブラリの出口が壊れていても素通りする。実際、型の
+      # 書き出し (prepack) は 2026-09-03 から落ちていたのに 3 週間気づけなかった
+      # (52 の docs/56)。見るのは tgz の中身そのもの。
+      - if: matrix.pack
+        name: tgz の中身を確かめる (ライブラリのとき)
+        run: |
+          npm pack --workspace=${{ matrix.pkg }} --pack-destination "$RUNNER_TEMP"
+          tgz="$RUNNER_TEMP/${{ matrix.pkg }}-$(node -p "require('./packages/${{ matrix.pkg }}/package.json').version").tgz"
+          tar tzf "$tgz" > "$RUNNER_TEMP/files.txt"
+          for want in package/dist/core.mjs package/dist/core.cjs package/dist/types/index.d.ts; do
+            grep -qx "$want" "$RUNNER_TEMP/files.txt" || { echo "tgz に $want がない" >&2; exit 1; }
+          done
+          # ソースは配らない (.npmignore)。入ると 13 MB になる。
+          if grep -q '^package/src/' "$RUNNER_TEMP/files.txt"; then
+            echo "tgz に src/ が入っている (.npmignore が効いていない)" >&2
+            exit 1
+          fi
+          # **型は 1 ファイルに束ねる。** fence-kit は tgz に入らないので、
+          # `from 'fence-kit'` が残ると使う側で解決できない。`skipLibCheck: true`
+          # の使い手では**黙って any に落ちる**ので、ここで見ないと気づけない。
+          tar xzf "$tgz" -C "$RUNNER_TEMP" package/dist/types/index.d.ts
+          if grep -nE "from '[^.]" "$RUNNER_TEMP/package/dist/types/index.d.ts" | grep -v "from 'yaml'"; then
+            echo "型定義が yaml 以外の素の import を持っている" >&2
+            exit 1
+          fi

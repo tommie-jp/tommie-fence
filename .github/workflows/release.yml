@@ -53,6 +53,14 @@ jobs:
           else
             echo "VSIX=" >> "$GITHUB_ENV"
           fi
+          # ライブラリは tgz を添える。**配る形を持つものだけ** — 目印は
+          # prepack (ビルドと型の書き出しをする段取り。52 の docs/56)。
+          # fence-kit は束ねられて配られるので、自分の tgz を持たない。
+          if node -p "!!require('./packages/$pkg/package.json').scripts.prepack" | grep -q true; then
+            echo "TGZ=1" >> "$GITHUB_ENV"
+          else
+            echo "TGZ=" >> "$GITHUB_ENV"
+          fi
           # 図を作り直す口があるか (`examples` を持たないパッケージもある)。
           if node -p "!!require('./packages/$pkg/package.json').scripts.examples" | grep -q true; then
             echo "FIGURES=1" >> "$GITHUB_ENV"
@@ -70,10 +78,17 @@ jobs:
           test -f "$PKG-$VER.vsix"
           sha256sum "$PKG-$VER.vsix" > SHA256SUMS
 
-      # ライブラリは束ねられることだけ見る (`.vsix` は無い)。
-      - name: 束ねられることを確かめる (ライブラリのとき)
-        if: ${{ !env.VSIX }}
-        run: npm run build --workspace="$PKG"
+      # ライブラリは `.vsix` の代わりに tgz を配る。npm レジストリには出して
+      # いないので、使う側 (41 の QR ノートなど) は Release から落として
+      # `vendor/` に置く。**どの版かがタグと綴りで一意になる** (52 の docs/56)。
+      # `npm pack` が prepack を呼ぶので、束ねと型の書き出しもここで通る。
+      - name: tgz を作る (ライブラリのとき)
+        if: env.TGZ
+        run: |
+          npm pack --workspace="$PKG" --pack-destination "packages/$PKG"
+          cd "packages/$PKG"
+          test -f "$PKG-$VER.tgz"
+          sha256sum "$PKG-$VER.tgz" > SHA256SUMS
 
       - name: 生成物が作り直し済みか確かめる
         if: env.FIGURES
@@ -117,10 +132,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cd "packages/$PKG"
-          # 拡張なら `.vsix` を添える。ライブラリは版と CHANGELOG だけ。
+          # 拡張なら `.vsix`、ライブラリなら tgz を添える。どちらも SHA256SUMS つき。
           if [ -n "$VSIX" ]; then
             gh release create "$GITHUB_REF_NAME" \
               "$PKG-$VER.vsix" SHA256SUMS \
+              --verify-tag --title "$GITHUB_REF_NAME" --notes-file notes.md
+          elif [ -n "$TGZ" ]; then
+            gh release create "$GITHUB_REF_NAME" \
+              "$PKG-$VER.tgz" SHA256SUMS \
               --verify-tag --title "$GITHUB_REF_NAME" --notes-file notes.md
           else
             gh release create "$GITHUB_REF_NAME" \
