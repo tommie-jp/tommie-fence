@@ -115,6 +115,10 @@ make help             # 目標の一覧
    `npx markdownlint-cli 'README.md' 'README.ja.md' 'CLAUDE.md' 'examples/*.md'`。
    パッケージの中は各パッケージの CLAUDE.md の指定に従う。
 10. **README は日本語が正、英語が追随**。節の構成は 2 本で 1 対 1 に保つ。
+    **例外は拡張の README** (`packages/tommie-fence/README.md`) — 拡張ビューと
+    Marketplace に出るのは 1 本だけなので英語で書き、日本語はルートの
+    `README.ja.md` へ送る。図とリンクは絶対 URL (`vsce` の書き換えは
+    パッケージを基準にするので、`../` で上へ出るリンクを通さない)。
 11. **ライブラリの出口は 3 つとも同じ形**。`<パッケージ>/core` は **dist**
     (`import` / `require` / `types`)、`<パッケージ>/src/core` は**ソース**。
     ソースの入口も要るのは、dist だけだと**型チェックの前に build しないと
