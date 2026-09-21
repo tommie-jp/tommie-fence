@@ -28,7 +28,9 @@ code --install-extension packages/tommie-fence/tommie-fence-0.3.0.vsix
   または「エディターで開く」→ **Fence Editor** でタブそのものをマップにする
 - **書き始める**: 空の行で `circuit` / `breadboard` / `perfboard` と打って
   `Ctrl+Space` (骨組みのスニペット)
-- **設定**: `tommieFence.map.noteFrame` — マップで `notes: text` を枠で囲む
+- **読めない行を探す**: Problems パネル (`Ctrl+Shift+M`)。読めない行に波線が付く
+- **設定**: `tommieFence.map.noteFrame` — マップで `notes: text` を枠で囲む。
+  `tommieFence.problems.erc` — Problems に ERC も出す (既定は出さない)
 
 ## 畳んで変わること
 
