@@ -25,6 +25,13 @@ const SECTION = 'tommieFence.problems';
 const SOURCE = 'tommie-fence';
 
 /**
+ * 診断を置かない文書の置き場。**書き換えられない古い写し** — 差分の窓は
+ * 古い版を `git:` の文書として開くので、置くと同じ読めない行が Problems に
+ * 2 回並ぶ (いまのファイルと、直しようのない古い版)。
+ */
+const READ_ONLY_COPIES: ReadonlySet<string> = new Set(['git']);
+
+/**
  * 重さ。読めなかった行は直さないと図が出ないので Error、お知らせは読めたが
  * 思ったとおりには出ないので Warning、ERC は組んでも動かないところで、
  * 組んでいる途中は当たり前に出るので Information。
@@ -58,7 +65,7 @@ export function registerProblems(context: vscode.ExtensionContext, editors: read
   const pending = new Map<string, ReturnType<typeof setTimeout>>();
 
   const refresh = (document: vscode.TextDocument): void => {
-    if (document.languageId !== 'markdown') return;
+    if (document.languageId !== 'markdown' || READ_ONLY_COPIES.has(document.uri.scheme)) return;
     const problems = collectProblems(document.getText(), editors, { erc: wantsErc() });
     collection.set(document.uri, problems.map((one) => toDiagnostic(document, one)));
   };

@@ -11,13 +11,13 @@ import { PROBLEMS_DELAY_MS, registerProblems } from './diagnostics.ts';
 const BROKEN = '```perfboard\nboard: 12x7\nparts:\n  R1: resistr b2 b6\n```\n';
 const LOOSE = '```perfboard\nboard: 12x7\nparts:\n  R1: resistor b2 b6 1k\n```\n';
 
-type FakeDocument = { languageId: string; uri: { toString(): string }; text: string } & Record<string, unknown>;
+type FakeDocument = { languageId: string; uri: { scheme: string; toString(): string }; text: string } & Record<string, unknown>;
 
-const documentOf = (text: string, name = 'note.md', languageId = 'markdown'): FakeDocument => {
+const documentOf = (text: string, name = 'note.md', languageId = 'markdown', scheme = 'file'): FakeDocument => {
   const document: FakeDocument = {
     languageId,
     text,
-    uri: { toString: () => `file:///${name}` },
+    uri: { scheme, toString: () => `${scheme}:///${name}` },
     getText: () => document.text,
     get lineCount() { return document.text.split('\n').length; },
     lineAt: (line: number) => ({ range: { line } }),
@@ -108,6 +108,14 @@ describe('registerProblems', () => {
     register();
 
     for (const listen of listeners.open) listen(documentOf(BROKEN, 'a.txt', 'plaintext'));
+
+    expect(diagnosticLog).toEqual([]);
+  });
+
+  test('leaves the old copy in a diff view alone, so a broken line is not listed twice', () => {
+    register();
+
+    for (const listen of listeners.open) listen(documentOf(BROKEN, 'note.md', 'markdown', 'git'));
 
     expect(diagnosticLog).toEqual([]);
   });
