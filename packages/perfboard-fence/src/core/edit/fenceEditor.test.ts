@@ -158,6 +158,24 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
     expect(loud.filter((row) => row.kind === 'erc')).toHaveLength(editor.view(loose, 10).erc?.count ?? -1);
     for (const row of [...unread, ...loud]) expect(row.text).not.toContain('perfboard:');
   });
+
+  test('hides notices under style: debug: off in the band and the Problems panel, like the preview', () => {
+    // Arrange — 胴が重なる 2 つ (当たり判定のお知らせ)。
+    const loud = 'board: 12x7\nparts:\n  R1: resistor b2 b6 1k\n  R2: resistor b3 b7 1k\n';
+    const quiet = `style:\n  debug: off\n${loud}`;
+
+    // Act / Assert
+    expect(editor.problems?.(loud, 1, { erc: false }).some((row) => row.kind === 'notice')).toBe(true);
+    expect(editor.problems?.(quiet, 1, { erc: false })).toEqual([]);
+    expect(editor.view(quiet, 1).issues).toBe('');
+  });
+
+  test('still lists ERC under debug: off when the Problems panel asks for it', () => {
+    // ERC は自分から頼んで見るもの (circuit の ercOf と同じ。debug: off は図に添える帯の話)。
+    const quiet = 'style:\n  debug: off\nboard: 12x7\nparts:\n  R1: resistor b2 b6 1k\n';
+
+    expect(editor.problems?.(quiet, 1, { erc: true }).some((row) => row.kind === 'erc')).toBe(true);
+  });
 });
 
 /**

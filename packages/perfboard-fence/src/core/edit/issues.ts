@@ -1,7 +1,9 @@
-import { escapeMarkup } from 'fence-kit';
+import { escapeMarkup, normalizeNewlines } from 'fence-kit';
 import type { IssueRow } from 'fence-kit';
 import { errorLine, sourceRows } from '../render/errorText.ts';
 import { renderPerfboard } from '../index.ts';
+import { parseFence } from '../parser/parseFence.ts';
+import { resolveStyle } from '../render/theme.ts';
 import type { FenceError } from '../types.ts';
 
 /**
@@ -35,12 +37,20 @@ const rowOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => ({
  * **文面を組む前にずらす** — 文面は「N 行目:」を含むので、組んでからずらすと
  * 帯の字だけがフェンスの中の行を言う (circuit と揃える)。
  */
+/**
+ * お知らせを出すか (`style: debug: off` で伏せる)。**プレビューの帯と circuit の
+ * editor の帯と同じ規則** — 描き手はお知らせを常に返し、伏せるのは出す側の仕事。
+ * 読めなかった行は伏せない (伏せると「無かったこと」に化ける)。
+ */
+const showsNotices = (source: string): boolean =>
+  resolveStyle(parseFence(normalizeNewlines(source)).doc.style).debug;
+
 const shift = (fenceLine: number) => (error: FenceError): FenceError =>
   (error.line === null ? error : { ...error, line: error.line + fenceLine });
 
 /**
  * フェンス本文の読めなかったところとお知らせ。行は Markdown の行
- * (`fenceLine` はフェンスの開き記号の行。省けばフェンスの中の行のまま)。
+ * (`fenceLine` はフェンスの開き記号の行。省けば 0 で、フェンスの中の行のまま)。
  *
  * **ERC はここに出さない** (52 の docs/55 — 下の `ercOf`)。この板は全穴が
  * 独立していて繋ぎ忘れが足 1 本ごとに出るので、作業の途中はほとんどが
@@ -48,18 +58,19 @@ const shift = (fenceLine: number) => (error: FenceError): FenceError =>
  * 報告がそこに埋もれる。** 当たり判定 (胴の重なり) はこちらに残る —
  * 置いたその場で直す間違いで、中間状態ではない。
  */
-export function issuesOf(source: string, fenceLine = 1): readonly IssueRow[] {
+export function issuesOf(source: string, fenceLine = 0): readonly IssueRow[] {
   const { errors, notices } = renderPerfboard(source);
   const at = shift(fenceLine);
+  const shown = showsNotices(source) ? notices : [];
 
-  return [...errors.map(at).map(rowOf('error')), ...notices.map(at).map(rowOf('notice'))];
+  return [...errors.map(at).map(rowOf('error')), ...shown.map(at).map(rowOf('notice'))];
 }
 
 /**
  * ERC — **そのとおりに組んでも動かない**ところ。帯の「検査 N」の釦の向こうに
  * 畳むので、`issuesOf` とは別に取り出す。`style: check: off` の図では空。
  */
-export function ercOf(source: string, fenceLine = 1): readonly IssueRow[] {
+export function ercOf(source: string, fenceLine = 0): readonly IssueRow[] {
   return renderPerfboard(source).erc.map(shift(fenceLine)).map(rowOf('erc'));
 }
 
@@ -78,10 +89,11 @@ const problemOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => (
 export function problemsOf(source: string, fenceLine: number, want: { readonly erc: boolean }): readonly IssueRow[] {
   const { errors, notices, erc } = renderPerfboard(source);
   const at = shift(fenceLine);
+  const shown = showsNotices(source) ? notices : [];
 
   return [
     ...errors.map(at).map(problemOf('error')),
-    ...notices.map(at).map(problemOf('notice')),
+    ...shown.map(at).map(problemOf('notice')),
     ...(want.erc ? erc.map(at).map(problemOf('erc')) : []),
   ];
 }

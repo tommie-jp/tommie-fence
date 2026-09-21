@@ -2,6 +2,9 @@ import type { IssueRow } from 'fence-kit';
 import { escapeXml } from '../render/svg.ts';
 import { errorLine } from '../render/errorText.ts';
 import { renderBreadboard } from '../index.ts';
+import { normalizeNewlines } from '../newlines.ts';
+import { parseFence } from '../parser/parseFence.ts';
+import { resolveStyle } from '../render/theme.ts';
 import type { FenceError } from '../types.ts';
 
 /**
@@ -32,6 +35,14 @@ function snippetOf(error: FenceError): string {
  * **文面を組む前にずらす** — 文面は「N 行目:」を含むので、組んでからずらすと
  * 帯の字だけがフェンスの中の行を言う (circuit と揃える)。
  */
+/**
+ * お知らせを出すか (`style: debug: off` で伏せる)。**プレビューの帯と circuit の
+ * editor の帯と同じ規則** — 描き手はお知らせを常に返し、伏せるのは出す側の仕事。
+ * 読めなかった行は伏せない (伏せると「無かったこと」に化ける)。
+ */
+const showsNotices = (source: string): boolean =>
+  resolveStyle(parseFence(normalizeNewlines(source)).doc.style).style.debug;
+
 const shift = (fenceLine: number) => (error: FenceError): FenceError =>
   (error.line === null ? error : { ...error, line: error.line + fenceLine });
 
@@ -44,16 +55,17 @@ const rowOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => ({
 
 /**
  * フェンス本文の読めなかったところとお知らせ。行は Markdown の行
- * (`fenceLine` はフェンスの開き記号の行。省けばフェンスの中の行のまま)。
+ * (`fenceLine` はフェンスの開き記号の行。省けば 0 で、フェンスの中の行のまま)。
  *
  * **お知らせは `style: debug: off` で伏せられる** (図の下の帯と同じ規則)。
  * 読めなかった行は伏せられない — 伏せると直せるはずの間違いに気づけなくなる。
  */
-export function issuesOf(source: string, fenceLine = 1): readonly IssueRow[] {
+export function issuesOf(source: string, fenceLine = 0): readonly IssueRow[] {
   const { errors, notices } = renderBreadboard(source);
   const at = shift(fenceLine);
+  const shown = showsNotices(source) ? notices : [];
 
-  return [...errors.map(at).map(rowOf('error')), ...notices.map(at).map(rowOf('notice'))];
+  return [...errors.map(at).map(rowOf('error')), ...shown.map(at).map(rowOf('notice'))];
 }
 
 /** Problems の 1 行。**文面は本文だけ** — 行も出どころも Problems が別の欄に出す。 */
@@ -71,6 +83,7 @@ const problemOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => (
 export function problemsOf(source: string, fenceLine: number): readonly IssueRow[] {
   const { errors, notices } = renderBreadboard(source);
   const at = shift(fenceLine);
+  const shown = showsNotices(source) ? notices : [];
 
-  return [...errors.map(at).map(problemOf('error')), ...notices.map(at).map(problemOf('notice'))];
+  return [...errors.map(at).map(problemOf('error')), ...shown.map(at).map(problemOf('notice'))];
 }

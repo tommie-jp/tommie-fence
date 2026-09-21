@@ -161,4 +161,22 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
     expect(rows).toHaveLength(editor.view(source, 10).issues.split('<li').length - 1);
     for (const row of rows) expect(row.text).not.toContain('breadboard:');
   });
+
+  test('hides notices under style: debug: off in the band and the Problems panel, like the preview', () => {
+    // Arrange — 字の大きさが範囲の外 (お知らせ)。読めない行は無い。
+    const loud = 'board: half\nstyle:\n  text-size: 99\nparts:\n  R1: resistor a5 a10 330\n';
+    const quiet = loud.replace('style:\n', 'style:\n  debug: off\n');
+
+    // Act / Assert — 伏せないときは 1 件、伏せると帯も Problems も空 (circuit と同じ)。
+    expect(editor.problems?.(loud, 1, { erc: false }).map((row) => row.kind)).toEqual(['notice']);
+    expect(editor.view(loud, 1).issues).toContain('cf-notice');
+    expect(editor.problems?.(quiet, 1, { erc: false })).toEqual([]);
+    expect(editor.view(quiet, 1).issues).toBe('');
+  });
+
+  test('never hides a line it could not read, even under debug: off', () => {
+    const broken = 'board: half\nstyle:\n  debug: off\nparts:\n  R1: resistr a5 a10\n';
+
+    expect(editor.problems?.(broken, 1, { erc: false }).map((row) => row.kind)).toEqual(['error']);
+  });
 });
