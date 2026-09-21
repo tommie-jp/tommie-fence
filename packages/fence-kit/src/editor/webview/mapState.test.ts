@@ -114,6 +114,15 @@ describe('持ち上げて、置く所で 1 クリック (KiCad の型 2)', () =>
     expect(step(dragged, release(AT_B3)).send).toEqual([{ kind: 'move', part: 'R1', from: 'a1', to: 'b3' }]);
   });
 
+  test('asks for the first ghost of a drag with the grabbed cell, so the shadow does not jump on the next cell', () => {
+    const pressed = after(PANEL, press(ON_R1));
+
+    // **最初の試し当てから掴んだ升を添える。** 無いと影が 1 升目だけアンカーを
+    // カーソルに合わせて出て、隣の升へ移った瞬間に掴んだ差のぶん飛ぶ。
+    expect(step(pressed, drag(AT_B3)).send)
+      .toEqual([{ kind: 'preview', key: 'move:R1:b3', what: 'move', part: 'R1', from: 'a1', to: 'b3' }]);
+  });
+
   test('a drag let go where it started, or off the holes, only selects', () => {
     const dragged = after(PANEL, press(ON_R1), drag(AT_B3));
 
@@ -770,6 +779,22 @@ describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
     expect(step(lifted, release(quarter('a1', 0, 0.25))).send)
       .toEqual([{ kind: 'move', part: 'R1', from: 'a1', to: 'a1', fine: { rows: 0, cols: 0.25 } }]);
     expect(step(lifted, release(ON_R1)).send).toEqual([]);
+  });
+
+  test('carries the quarter the part was grabbed at, into the preview and the move', () => {
+    // 升の右寄りを掴み、行き先では左寄りを指す。出発点の端数を落とすと、
+    // 影も落とし先も掴んだ端数のぶん (最大で半升) カーソルからずれる。
+    const grabbed = quarter('a1', 0, 0.25, { part: 'R1' });
+    const pressed = after(FINE, press(grabbed));
+    const lifted = step(pressed, drag(AT_Q));
+
+    expect(lifted.send).toEqual([{
+      kind: 'preview', key: 'move:R1:b3:0.25,-0.25', what: 'move', part: 'R1',
+      from: 'a1', fromFine: { rows: 0, cols: 0.25 }, to: 'b3', fine: Q,
+    }]);
+    expect(step(lifted.state, release(AT_Q)).send).toEqual([{
+      kind: 'move', part: 'R1', from: 'a1', fromFine: { rows: 0, cols: 0.25 }, to: 'b3', fine: Q,
+    }]);
   });
 
   test('carries the pressed quarter as the first leg of a span', () => {

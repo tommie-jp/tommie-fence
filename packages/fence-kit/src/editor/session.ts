@@ -787,9 +787,13 @@ export function createSession<D extends DocLike>(
   /**
    * 掴んだ升とアンカーの差を引いた行き先。**掴んだ升が無い (鍵で持ち上げた)
    * ときや、差を数えられない綴りのときは、落とした升そのまま。**
+   *
+   * **掴んだ升に戻ってきたときも引く** — 差が 0 なら行き先はアンカーそのもの
+   * (落とした升ではない)。以前は同じ升なら落とした升を返していたので、
+   * 胴の途中を掴んで一回りして戻ると、影がアンカーをカーソルに合わせて飛んだ。
    */
   function shiftedTarget(source: string, handle: string, grabbed: string | null, dropped: string): string {
-    if (grabbed === null || grabbed === dropped) return dropped;
+    if (grabbed === null) return dropped;
     const anchor = editor.cellsOf(source, handle)[0];
     if (anchor === undefined) return dropped;
     return shiftCell(anchor, grabbed, dropped) ?? dropped;
@@ -906,7 +910,9 @@ export function createSession<D extends DocLike>(
       const anchor = text(message.part);
       const fence = fenceNow();
       const from = anchor === null || fence === null ? [] : editor.cellsOf(fence.source, anchor);
-      const start = from[0];
+      // **掴んだ升からの差で全部をずらす** (1 つのときの `shiftedTarget` と同じ勘定)。
+      // 鍵で持ち上げたときは掴んだ升が無いので、押した部品のアンカーから。
+      const start = text(message.from) ?? from[0];
       if (anchor === null || start === undefined) {
         say('マップからの知らせを読めませんでした (どこから動かすかがありません)');
         return;

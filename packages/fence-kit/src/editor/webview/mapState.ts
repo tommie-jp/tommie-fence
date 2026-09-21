@@ -497,7 +497,7 @@ function previewAt(state: State, carry: Carry, under: Under): readonly Message[]
   if (carry.kind === 'move') {
     return [{
       kind: 'preview', key, what: 'move', part: carry.part, to: to.cell,
-      ...(carry.byPointer && state.pressed !== null ? { from: state.pressed.cell } : {}),
+      ...grabbedAt(state, carry),
       ...withFine(to.fine),
     }];
   }
@@ -507,10 +507,36 @@ function previewAt(state: State, carry: Carry, under: Under): readonly Message[]
   return [{ kind: 'preview', key, what: 'node', from: carry.node, to: to.cell, ...withFine(to.fine) }];
 }
 
+/**
+ * 掴んだ場所 (押した升と、その中の端数)。ドラッグで持ち上げたときだけある
+ * (鍵で持ち上げたものに押した升は無い)。
+ *
+ * **端数も添える。** 升の中のどこを掴んだかを落とすと、影も落とし先も
+ * その端数のぶん (最大で半升) カーソルからずれる — 行き先は端数まで数えるのに、
+ * 出発点は升ちょうどで数えていた。
+ */
+const grabbedAt = (state: State, carry: Carry): { readonly from?: string; readonly fromFine?: Fine } => {
+  if (carry.kind === 'place' || !carry.byPointer || state.pressed === null || state.pressed.cell === null) return {};
+  return { from: state.pressed.cell, ...withFromFine(state.pressed.fine) };
+};
+
 /** 持ち物を持ち替える (ゴーストは訊き直す)。 */
 const carrying = (state: State, carry: Carry | null, handled = false): Outcome => {
   const next: State = { ...state, carry, ghost: null, pressed: null };
   return outcome(next, carry === null ? [] : previewAt(next, carry, state.under), null, handled);
+};
+
+/**
+ * 押したまま引いて持ち上げる。**押した升を残したまま最初の試し当てを出す。**
+ *
+ * `carrying` は押した升を捨てるので、あとから戻しても**最初の問い合わせには
+ * 掴んだ升が添わない**。影は 1 升目だけアンカーをカーソルに合わせて出て、
+ * 隣の升へ移った瞬間に掴んだ差のぶん飛んでいた (実機で「ドラッグ開始した
+ * 時点でのマウスと部品の相対的な位置が、移動するとズレる」)。
+ */
+const lifting = (state: State, carry: Carry): Outcome => {
+  const next: State = { ...state, carry, ghost: null };
+  return outcome(next, previewAt(next, carry, state.under));
 };
 
 function onHover(state: State, under: Under): Outcome {
@@ -572,24 +598,17 @@ function onDrag(state: State, event: Extract<Event, { kind: 'drag' }>): Outcome 
 
   // 押したまま離れたら持ち上げる (KiCad の M / G をドラッグでも)。配線は動かせない。
   if (selected.kind === 'part') {
-    const lifted = carrying(hovered.state, {
+    return lifting(hovered.state, {
       kind: 'move', part: selected.id, byPointer: true, note: hovered.state.under.note === true,
     });
-    return { ...lifted, state: { ...lifted.state, pressed } };
   }
-  if (selected.kind === 'node') {
-    const lifted = carrying(hovered.state, { kind: 'drag', node: selected.id, byPointer: true });
-    return { ...lifted, state: { ...lifted.state, pressed } };
-  }
+  if (selected.kind === 'node') return lifting(hovered.state, { kind: 'drag', node: selected.id, byPointer: true });
   // **配線は端だけ引き直せる。** 押したのが端なら、その端を持ち上げる
   // (線の途中を掴んでも何も起きないのは今までどおり — 線は 2 つの穴が決める)。
   // **押したときの端を見る** — ゆっくり引くと、`DRAG` を越えるころには
   // カーソルが端の丸から出ていて、いまの `under` には端が写っていない。
   const end = pressed.wireEnd ?? state.under.wireEnd;
-  if (selected.kind === 'wire' && end !== null) {
-    const lifted = carrying(hovered.state, { kind: 'wireEnd', ...end, byPointer: true });
-    return { ...lifted, state: { ...lifted.state, pressed } };
-  }
+  if (selected.kind === 'wire' && end !== null) return lifting(hovered.state, { kind: 'wireEnd', ...end, byPointer: true });
   return hovered;
 }
 
@@ -634,7 +653,7 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
         [{
           kind: 'move', part: carry.part, to: to.cell,
           // 掴んだ升 (アンカーとの差を引くため。`previewAt` と同じ理由)。
-          ...(carry.byPointer && pressed !== null ? { from: pressed.cell } : {}),
+          ...grabbedAt(state, carry),
           ...withFine(to.fine),
           ...(many.length > 1 ? { parts: many } : {}),
         }],

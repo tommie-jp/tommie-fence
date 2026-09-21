@@ -153,3 +153,46 @@ describe('置けない所のゴースト', () => {
     expect(ghost()?.chip).toBeUndefined();
   });
 });
+
+describe('掴んだ升とアンカーの差', () => {
+  /** 動かした先を控える盤。X1 は c4 d4 (アンカーは c4)、X2 は g2。 */
+  const grabbing = () => {
+    const calls: unknown[][] = [];
+    const { session } = open({
+      cellsOf: (_source, handle) => (handle === 'X1' ? ['c4', 'd4'] : handle === 'X2' ? ['g2'] : []),
+      movePart: (_source, handle, to) => { calls.push([handle, to]); return ok; },
+    });
+    return { session, calls };
+  };
+  const preview = (from: string, to: string) =>
+    ({ kind: 'preview', key: 'k', what: 'move', part: 'X1', from, to } as const);
+
+  test('lands the anchor at the grab offset, so the shadow keeps its distance from the cursor', async () => {
+    const { session, calls } = grabbing();
+
+    // 2 つ目の穴 (d4) を掴んで f6 を指すと、アンカー c4 は e6 に来る。
+    await session.handle(preview('d4', 'f6'));
+
+    expect(calls).toEqual([['X1', 'e6']]);
+  });
+
+  test('keeps the anchor where it is when the cursor is back on the grabbed cell', async () => {
+    // 掴んだ升へ戻ったら差は 0 — 行き先はアンカーそのもので、掴んだ升ではない
+    // (以前は落とした升を返していて、影がアンカーをカーソルに合わせて飛んだ)。
+    const { session, calls } = grabbing();
+
+    await session.handle(preview('d4', 'd4'));
+
+    expect(calls).toEqual([['X1', 'c4']]);
+  });
+
+  test('moves a whole selection by the grab offset, the same way as one part', async () => {
+    const { session, calls } = grabbing();
+
+    await session.handle({ kind: 'move', part: 'X1', parts: ['X1', 'X2'], from: 'd4', to: 'f6' });
+
+    // 全部が d4 → f6 の差 (2 行 2 列) だけ動く。押した部品のアンカーを f6 に
+    // 合わせると、影 (掴んだ差を引いてある) と落ちる所が食い違う。
+    expect(calls).toEqual([['X1', 'e6'], ['X2', 'i4']]);
+  });
+});

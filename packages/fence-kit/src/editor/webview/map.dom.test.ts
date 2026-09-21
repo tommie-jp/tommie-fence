@@ -46,7 +46,7 @@ const MAP = `<svg data-box="0,0,400,200">`
   + wire('7', 5, 1)
   + `</svg>`;
 
-const bodyHtml = (): string => {
+const bodyHtml = (fine: number | null = null): string => {
   const whole = panelHtml({
     cspSource: 'vscode-resource:',
     nonce: 'n',
@@ -62,7 +62,7 @@ const bodyHtml = (): string => {
         colorNames: '',
         swatches: '<button type="button" class="cf-swatch" data-color="red"><span></span>red</button>',
         foldsWire: false,
-        fine: null,
+        fine,
         fineFor: 'all',
       },
     },
@@ -118,8 +118,9 @@ const marked = (className: string): readonly string[] =>
   [...document.querySelectorAll(`.${className}`)].map((one) => one.getAttribute('data-part')
     ?? one.getAttribute('data-line') ?? one.getAttribute('data-address') ?? one.className.toString());
 
-beforeEach(async () => {
-  const laid = layDom(bodyHtml());
+/** 足場を敷いて `map.ts` を入れ直す。刻める升 (`fine`) はフェンスの能力表で決まる。 */
+const lay = async (fine: number | null = null): Promise<void> => {
+  const laid = layDom(bodyHtml(fine));
   posted = laid.posted;
   // **読み込みは 1 度きり**なので、毎回モジュールの記憶を捨てて入れ直す。
   const { resetModules } = await import('vitest').then((one) => ({ resetModules: one.vi.resetModules }));
@@ -127,7 +128,9 @@ beforeEach(async () => {
   await import('./map.ts');
   await nextFrame();
   posted.length = 0;
-});
+};
+
+beforeEach(() => lay());
 
 describe('カーソルの下', () => {
   test('marks the part under the cursor, so the keys show what they will hit', async () => {
@@ -302,6 +305,37 @@ describe('持ち上げて動かす', () => {
     await nextFrame();
 
     expect(sentKinds()).not.toContain('move');
+  });
+});
+
+describe('掴んだ升の中の端数', () => {
+  test('reads the quarter of the cell a part is grabbed at, and sends it with the first ghost', async () => {
+    // 1/4 升まで刻めるフェンス (circuit)。**掴む瞬間は持ち物が無くても端数を読む** —
+    // 落とすと、持ち上げたあとの影と落とし先が掴んだ端数のぶんずれる。
+    await lay(4);
+
+    // a1 の升の右寄り 1/4 を押し、隣の升 (a2) の真ん中へ引く。
+    fire('pointerdown', { clientX: CELL + CELL * 0.75, clientY: CELL + CELL / 2, buttons: 1 });
+    fire('pointermove', { ...at(2, 1), buttons: 1 });
+    await nextFrame();
+
+    expect(lastOf('preview')).toMatchObject({
+      what: 'move', part: 'R1', from: 'a1', fromFine: { rows: 0, cols: 0.25 }, to: 'a2',
+    });
+    expect(lastOf('preview')).not.toHaveProperty('fine');
+  });
+
+  test('does not count the quarter while merely hovering, where nothing is grabbed', async () => {
+    await lay(4);
+
+    fire('pointermove', { clientX: CELL + CELL * 0.75, clientY: CELL + CELL / 2 });
+    await nextFrame();
+    fire('pointerdown', { clientX: CELL + CELL * 0.75, clientY: CELL + CELL / 2, buttons: 1 });
+    fire('pointerup', { clientX: CELL + CELL * 0.75, clientY: CELL + CELL / 2 });
+
+    // 押して放しただけなら選ぶだけ (端数を読んでも動かさない)。
+    expect(sentKinds()).not.toContain('move');
+    expect(lastOf('select')).toMatchObject({ what: 'part', id: 'R1' });
   });
 });
 

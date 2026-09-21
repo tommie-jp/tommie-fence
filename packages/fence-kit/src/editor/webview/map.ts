@@ -294,7 +294,7 @@ let shiftHeld = false;
  * 重なった要素を上から順に返す) ので、部品の升に立つ節点も、部品の下の配線も、
  * どれも同時に分かる。どれを対象にするかは状態遷移が決める。
  */
-function underAt(x: number, y: number): Under {
+function underAt(x: number, y: number, grabbing = false): Under {
   const stack = document.elementsFromPoint(x, y);
   // 図の根は `.cf-body` の中の SVG (class はフェンスごとに違うので、箱で見る)。
   if (!stack.some((element) => element.closest('.cf-body'))) return NOTHING;
@@ -308,11 +308,12 @@ function underAt(x: number, y: number): Under {
   };
   const cell = find('.cf-cell', 'address');
   const chip = find('.cf-chip', 'part');
+  // **注釈かどうかは絵が言う** (`data-note`)。端数が注釈にだけ効く板で要る。
+  const note = chip?.hit.dataset.note === '1';
   return {
     cell: cell?.value ?? null,
     part: chip?.value ?? null,
-    // **注釈かどうかは絵が言う** (`data-note`)。端数が注釈にだけ効く板で要る。
-    note: chip?.hit.dataset.note === '1',
+    note,
     node: find('.cf-dot', 'node')?.value ?? null,
     wire: find('.cf-wire-hit', 'line')?.value ?? null,
     // 配線の**端**。線そのものより上にあるので、端の上では端が勝つ。
@@ -322,9 +323,16 @@ function underAt(x: number, y: number): Under {
       return found === null || end === undefined ? null : { line: found.value, end: end as 'from' | 'to' };
     })(),
     pin: find('.cf-pin-hit', 'pin')?.value ?? null,
-    fine: cell === null ? null : fineIn(cell.hit, x, y),
+    fine: cell === null ? null : fineIn(cell.hit, x, y, grabbing && chip !== null ? { note } : null),
   };
 }
+
+/**
+ * 部品を掴む最中か (押した・押したまま引いている)。**このときだけ、持ち物が
+ * 無くても升の中の端数を読む** — 掴んだ升のどこを押したかを落とすと、持ち上げた
+ * あとの影と落とし先がその端数のぶんずれる (最大で半升)。
+ */
+const grabbingNow = (): boolean => state.carry === null && state.wireFrom === null && state.tool === 'select';
 
 /**
  * 升の四角の中の端数。**端数を受けるフェンスでだけ**数える。
@@ -333,15 +341,17 @@ function underAt(x: number, y: number): Under {
  *
  * **`Shift` を押している間は数えない** — そのあいだは升ちょうどに吸い付く。
  */
-function fineIn(cell: Element, x: number, y: number): Fine | null {
-  // 端数が絵に出るのは、持ち物があるときと配線を引きかけているときだけ。
-  // それ以外で数えると、何も変わらない塗り直しが 1 升あたり 100 回になる。
-  const wanted = state.carry !== null || state.wireFrom !== null;
+function fineIn(cell: Element, x: number, y: number, grabbing: { readonly note: boolean } | null): Fine | null {
+  // 端数が絵に出るのは、持ち物があるときと配線を引きかけているとき、それに
+  // 部品を掴む瞬間 (`grabbing`) だけ。それ以外で数えると、何も変わらない
+  // 塗り直しが 1 升あたり 100 回になる。
+  const wanted = state.carry !== null || state.wireFrom !== null || grabbing !== null;
   // **端数が効く相手のときだけ数える。** 板の 2 つは足を穴に挿すので、
   // 刻めるのは注釈だけ (`fineFor`)。刻めない物に小さい四角を出すと、
-  // そこへ置けるように見えて置けない。
+  // そこへ置けるように見えて置けない。掴む瞬間は、掴む部品が注釈かで見る。
   const takesFine = state.fineFor === 'all'
-    || (state.carry?.kind === 'move' && state.carry.note === true);
+    || (state.carry?.kind === 'move' && state.carry.note === true)
+    || grabbing?.note === true;
   if (shiftHeld || state.fine === null || !wanted || !takesFine) return null;
   const box = cell.getBoundingClientRect();
   const fine = fineOf(x - box.left, y - box.top, box.width, box.height, state.fine);
@@ -1370,7 +1380,7 @@ document.addEventListener('pointerdown', (event) => {
   if (event.button !== 0) return;
   if (target?.closest(CHROME)) return;
   syncShift(event);
-  const under = underAt(event.clientX, event.clientY);
+  const under = underAt(event.clientX, event.clientY, grabbingNow());
   // **何も無い所から引いたら領域選択。** 掴むものがある所から始めたら今までどおり。
   // 端の的も掴むもの — 線の先をはみ出した所では、囲みが始まって端を引けなかった。
   if (onCanvas && state.tool === 'select' && state.carry === null
@@ -1405,12 +1415,14 @@ document.addEventListener('pointermove', (event) => {
     }
     return;
   }
-  const under = underAt(event.clientX, event.clientY);
+  // 押したまま引いているあいだは、掴む升の端数も読む (持ち上げる瞬間の試し当てに要る)。
+  const held = (event.buttons & 1) !== 0 && state.pressed !== null;
+  const under = underAt(event.clientX, event.clientY, held && grabbingNow());
   if (band !== null && (event.buttons & 1) !== 0) {
     showBand(band, event.clientX, event.clientY);
     return;
   }
-  if ((event.buttons & 1) !== 0 && state.pressed !== null) {
+  if (held) {
     run({ kind: 'drag', under, x: event.clientX, y: event.clientY });
     return;
   }
