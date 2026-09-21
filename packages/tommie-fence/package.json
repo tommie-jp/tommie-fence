@@ -20,6 +20,9 @@
     "Programming Languages",
     "Visualization"
   ],
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
   "main": "./dist/extension.cjs",
   "browser": "./dist/extension.web.cjs",
   "scripts": {
@@ -153,6 +156,11 @@
           "type": "boolean",
           "default": false,
           "description": "掴んで動かす升目で、notes: text を枠で囲む (既定は囲まない)。"
+        },
+        "tommieFence.problems.erc": {
+          "type": "boolean",
+          "default": false,
+          "description": "Problems パネルに ERC (そのとおりに組んでも動かないところ) も出す。既定は出さない — 組んでいる途中の板は、足 1 本ごとに「つながっていません」が出るため。"
         },
         "circuitFence.map.noteFrame": {
           "type": "boolean",

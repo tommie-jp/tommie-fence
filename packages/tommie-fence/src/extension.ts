@@ -4,6 +4,8 @@ import { renderTex } from 'circuit-fence/tex';
 import { createWorkerRenderer } from 'circuit-fence/tex-worker';
 import { activateWith } from './activate.ts';
 import { registerEditorCommands } from './editor/commands.ts';
+import { fenceEditors } from './editor/fences.ts';
+import { registerProblems } from './problems/diagnostics.ts';
 
 /**
  * デスクトップ版の入口。回路図の描画は WASM の TeX (node-tikzjax)。
@@ -15,6 +17,8 @@ import { registerEditorCommands } from './editor/commands.ts';
  */
 export function activate(context: vscode.ExtensionContext) {
   registerEditorCommands(context);
+  // 読めなかった行を Problems パネルにも出す。TeX を通らないので web 版でも動く。
+  registerProblems(context, fenceEditors());
 
   return activateWith({
     render: createWorkerRenderer({

@@ -57,6 +57,19 @@ describe('3 つを 1 つに畳んだ contributes', () => {
     }
   });
 
+  test('wakes up when a markdown file opens, so the title button and the Problems panel show without the preview', () => {
+    // **鍵も Problems も、拡張が起きていないと出ない。** いまは Markdown 拡張が
+    // プレビューの部品を読みに来るときに一緒に起きるが、それは向こうの作りの
+    // 都合なので当てにしない (52 の docs/57。VS Code 1.138 では外しても起きた)。
+    expect(manifest.activationEvents).toContain('onLanguage:markdown');
+  });
+
+  test('offers ERC in the Problems panel as a setting that is off by default', () => {
+    const properties: Record<string, Record<string, unknown>> = manifest.contributes.configuration.properties;
+
+    expect(properties['tommieFence.problems.erc']).toMatchObject({ type: 'boolean', default: false });
+  });
+
   test('renames the setting to tommieFence but keeps the old name, marked deprecated', () => {
     // **一度公開した設定の名前も消さない** (`mapLook.ts` が両方を読む)。
     const properties: Record<string, Record<string, unknown>> = manifest.contributes.configuration.properties;

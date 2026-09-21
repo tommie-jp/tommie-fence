@@ -18,13 +18,22 @@ export const listeners: {
   selection: ((event: unknown) => void)[];
   activeEditor: ((editor: unknown) => void)[];
   document: ((event: unknown) => void)[];
-} = { selection: [], activeEditor: [], document: [] };
+  open: ((document: unknown) => void)[];
+  close: ((document: unknown) => void)[];
+  configuration: ((event: { affectsConfiguration(section: string): boolean }) => void)[];
+} = { selection: [], activeEditor: [], document: [], open: [], close: [], configuration: [] };
 
 /** 呼ばれた命令 (`setContext` など)。引数ごと積む。 */
 export const executed: unknown[][] = [];
 
 /** テストが差し替える窓の状態。 */
-export const state: { activeTextEditor: unknown } = { activeTextEditor: undefined };
+export const state: { activeTextEditor: unknown; textDocuments: unknown[] } = {
+  activeTextEditor: undefined,
+  textDocuments: [],
+};
+
+/** 診断の置き場への書き込み (`['set', uri, 診断]` / `['delete', uri]`)。 */
+export const diagnosticLog: (readonly [string, string, unknown?])[] = [];
 
 /** 聞き手を積み、ほどくと外す。 */
 const listen = <T>(pick: () => T[], put: (next: T[]) => void) => (listener: T) => {
@@ -77,8 +86,11 @@ export const window = {
 
 export const workspace = {
   onDidChangeTextDocument: listen(() => listeners.document, (next) => { listeners.document = next; }),
-  onDidCloseTextDocument() {
-    return { dispose() {} };
+  onDidOpenTextDocument: listen(() => listeners.open, (next) => { listeners.open = next; }),
+  onDidCloseTextDocument: listen(() => listeners.close, (next) => { listeners.close = next; }),
+  onDidChangeConfiguration: listen(() => listeners.configuration, (next) => { listeners.configuration = next; }),
+  get textDocuments() {
+    return state.textDocuments;
   },
   getConfiguration(section: string) {
     // **書いてある値だけを返す。** 本物は `contributes` の既定値も返すが、
@@ -96,6 +108,24 @@ export const workspace = {
     return Promise.resolve(true);
   },
 };
+
+export const languages = {
+  createDiagnosticCollection(_name: string) {
+    return {
+      set(uri: unknown, diagnostics: unknown[]) { diagnosticLog.push(['set', String(uri), diagnostics]); },
+      delete(uri: unknown) { diagnosticLog.push(['delete', String(uri)]); },
+      dispose() {},
+    };
+  },
+};
+
+export const DiagnosticSeverity = { Error: 0, Warning: 1, Information: 2, Hint: 3 };
+
+export class Diagnostic {
+  source?: string;
+  code?: string;
+  constructor(public range: unknown, public message: string, public severity: number) {}
+}
 
 export const ViewColumn = { Beside: 2 };
 export const Uri = { joinPath: (...parts: unknown[]) => ({ toString: () => parts.join('/') }) };
