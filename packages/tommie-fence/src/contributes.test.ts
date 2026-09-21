@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
 import manifest from '../package.json' with { type: 'json' };
 import { ASSETS } from './assets.ts';
+import { HAS_FENCE } from './editor/context.ts';
 
 /**
  * VS Code に出すもの (52 の docs/19)。**3 つぶんを 1 つに畳んだ**ので、
@@ -37,6 +38,23 @@ describe('3 つを 1 つに畳んだ contributes', () => {
     expect(ids).toContain('tommie-fence.openMap');
     expect(ids).toContain('circuit-fence.movePart');
     expect(ids).toContain('circuit-fence.movePoint');
+  });
+
+  test('puts a button on the title of markdown tabs that hold a fence', () => {
+    // **フェンスの無い `.md` には出さない** (`context.ts` の鍵)。命令は実在し、絵を持つ。
+    const buttons = manifest.contributes.menus['editor/title'];
+    const ids = manifest.contributes.commands.map((one) => one.command);
+
+    expect(buttons).toHaveLength(1);
+    for (const button of buttons) {
+      expect(ids).toContain(button.command);
+      expect(button.group).toBe('navigation');
+      expect(button.when).toContain('resourceLangId == markdown');
+      expect(button.when).toContain(HAS_FENCE);
+      const command: { readonly icon?: string } | undefined =
+        manifest.contributes.commands.find((one) => one.command === button.command);
+      expect(command?.icon).toMatch(/^\$\([a-z-]+\)$/);
+    }
   });
 
   test('renames the setting to tommieFence but keeps the old name, marked deprecated', () => {

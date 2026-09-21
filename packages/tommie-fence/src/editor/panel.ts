@@ -4,7 +4,8 @@ import { makeNonce, panelHtml } from 'fence-kit';
 import { mapScriptUri, webviewRoot } from './vscodeHost.ts';
 import { fenceEditors } from './fences.ts';
 import { createSession } from 'fence-kit';
-import type { Session } from 'fence-kit';
+import type { FenceEditor, Session } from 'fence-kit';
+import { firstFenceBodyLine } from './hasFence.ts';
 import { attachSession, createSessionHost } from './vscodeHost.ts';
 import { markdownEditor } from './vscodePort.ts';
 
@@ -19,18 +20,38 @@ import { markdownEditor } from './vscodePort.ts';
 let panel: vscode.WebviewPanel | null = null;
 let session: Session | null = null;
 
+/**
+ * カーソルがフェンスの外なら、**文書のいちばん上のフェンスへ移す**。
+ * 題の釦から開く人はカーソルの場所を気にしていない (52 の docs/57)。
+ * 移した先を見せるので、パネルがどのフェンスを映しているかは字の側でも分かる。
+ * 移せた (もともと中に居た) なら true、フェンスが 1 つも無ければ false。
+ */
+function aimAtFence(editor: vscode.TextEditor, fences: readonly FenceEditor[]): boolean {
+  const text = editor.document.getText();
+  const line = editor.selection.active.line + 1;
+  if (fences.some((one) => one.fenceAt(text, line) !== null)) return true;
+
+  const body = firstFenceBodyLine(text, fences.map((one) => one.language));
+  if (body === null) return false;
+  // 閉じていない空のフェンスが文書の最後にあると、本文の行はまだ無い。
+  const at = new vscode.Position(Math.min(body - 1, editor.document.lineCount - 1), 0);
+  editor.selection = new vscode.Selection(at, at);
+  editor.revealRange(new vscode.Range(at, at), vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+  return true;
+}
+
 export function openMapPanel(context: vscode.ExtensionContext): void {
   // **どのフェンスでもよい。** 3 つとも扱えるので、カーソルの下にあるものを
-  // そのまま開く (52 の docs/19 の決め 6 — 開いたときの選び方)。
+  // そのまま開く (52 の docs/19 の決め 6 — 開いたときの選び方)。外なら最初のもの。
   const fences = fenceEditors();
   const editor = markdownEditor();
-  const text = editor?.document.getText() ?? '';
-  const line = (editor?.selection.active.line ?? 0) + 1;
-  const at = editor === null ? null : fences.find((one) => one.fenceAt(text, line) !== null) ?? null;
-  if (editor === null || at === null) {
-    void vscode.window.showWarningMessage(
-      `${fences.map((one) => one.language).join(' / ')} フェンスの中にカーソルを置いてから開きます`,
-    );
+  const names = fences.map((one) => one.language).join(' / ');
+  if (editor === null) {
+    void vscode.window.showWarningMessage(`${names} フェンスのある Markdown を開いてから使います`);
+    return;
+  }
+  if (!aimAtFence(editor, fences)) {
+    void vscode.window.showWarningMessage(`この文書には ${names} フェンスがありません`);
     return;
   }
 

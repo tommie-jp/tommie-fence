@@ -109,7 +109,8 @@
       {
         "command": "tommie-fence.openMap",
         "title": "Fence: 図を掴んで動かす",
-        "category": "tommie-fence"
+        "category": "tommie-fence",
+        "icon": "$(circuit-board)"
       },
       {
         "command": "circuit-fence.movePart",
@@ -123,6 +124,13 @@
       }
     ],
     "menus": {
+      "editor/title": [
+        {
+          "command": "tommie-fence.openMap",
+          "group": "navigation",
+          "when": "resourceLangId == markdown && tommieFence.hasFence"
+        }
+      ],
       "commandPalette": [
         {
           "command": "tommie-fence.openMap",

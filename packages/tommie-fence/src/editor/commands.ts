@@ -4,6 +4,8 @@ import { openMapPanel } from './panel.ts';
 import { runMovePart } from './movePart.ts';
 import { runMovePoint } from './movePoint.ts';
 import { createEditorPort } from './vscodePort.ts';
+import { watchFenceContext } from './context.ts';
+import { fenceEditors } from './fences.ts';
 
 /**
  * この拡張が出す命令。**掴んで動かす editor は 1 つ**で、3 つのフェンスを扱う
@@ -13,6 +15,8 @@ import { createEditorPort } from './vscodePort.ts';
  */
 export function registerEditorCommands(context: vscode.ExtensionContext): void {
   registerMapEditor(context);
+  // 題の右の釦 (`tommie-fence.openMap`) を、フェンスのある `.md` にだけ出す。
+  watchFenceContext(context, fenceEditors().map((one) => one.language));
   context.subscriptions.push(
     vscode.commands.registerCommand('tommie-fence.openMap', () => openMapPanel(context)),
     vscode.commands.registerCommand('circuit-fence.movePart', () => runMovePart(createEditorPort())),

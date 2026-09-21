@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { Incoming, LitRange, Session, SessionHost } from 'fence-kit';
 import { applyToDocument, createFence, markdownEditor, replaceBody } from './vscodePort.ts';
+import { FOLLOW_DELAY_MS } from './delay.ts';
 
 /**
  * `SessionHost` の vscode 版と、セッションを webview に結ぶ配線。
@@ -93,13 +94,6 @@ export function createSessionHost(webview: vscode.Webview, undo: 'own' | 'vscode
 }
 
 /**
- * カーソルを追うのをまとめる待ち時間。**マウスで文字を選ぶと 1 秒に何十回も来る** —
- * 1 回ごとに組み直すと、その間ずっと拡張ホストが埋まり、マップの操作が待たされる
- * (52 の docs/27)。人が「ついてこない」と感じない範囲でまとめる。
- */
-export const FOLLOW_DELAY_MS = 50;
-
-/**
  * セッションを webview に結ぶ。webview からの知らせ、文書の書き換え、
  * カーソルの移動を流し込み、閉じたら全部ほどく。
  *
@@ -110,7 +104,7 @@ export const FOLLOW_DELAY_MS = 50;
  * (マップの書き換え自体がこの経路で反映される)。
  *
  * **カーソルの移動だけはまとめる。** あちらは打鍵ではなくマウスの動きで来るので、
- * 数が 1 桁多い (`FOLLOW_DELAY_MS`)。
+ * 数が 1 桁多い (`FOLLOW_DELAY_MS`、`delay.ts`)。
  */
 export function attachSession(panel: vscode.WebviewPanel, session: Session): void {
   /** カーソルを追う予約。連続した動きを 1 回にまとめる。 */

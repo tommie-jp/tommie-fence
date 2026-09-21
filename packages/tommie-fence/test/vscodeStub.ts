@@ -14,14 +14,31 @@ export const registered: { commands: string[]; editors: string[] } = { commands:
 export const configuration: Record<string, Record<string, unknown>> = {};
 
 /** 受け止めた聞き手。テストが「その出来事が起きた」ことにするために使う。 */
-export const listeners: { selection: ((event: unknown) => void)[] } = { selection: [] };
+export const listeners: {
+  selection: ((event: unknown) => void)[];
+  activeEditor: ((editor: unknown) => void)[];
+  document: ((event: unknown) => void)[];
+} = { selection: [], activeEditor: [], document: [] };
+
+/** 呼ばれた命令 (`setContext` など)。引数ごと積む。 */
+export const executed: unknown[][] = [];
+
+/** テストが差し替える窓の状態。 */
+export const state: { activeTextEditor: unknown } = { activeTextEditor: undefined };
+
+/** 聞き手を積み、ほどくと外す。 */
+const listen = <T>(pick: () => T[], put: (next: T[]) => void) => (listener: T) => {
+  put([...pick(), listener]);
+  return { dispose() { put(pick().filter((one) => one !== listener)); } };
+};
 
 export const commands = {
   registerCommand(id: string, _run: unknown) {
     registered.commands.push(id);
     return { dispose() {} };
   },
-  executeCommand() {
+  executeCommand(...args: unknown[]) {
+    executed.push(args);
     return Promise.resolve();
   },
 };
@@ -44,11 +61,9 @@ export const window = {
   showWarningMessage() {},
   showErrorMessage() {},
   get activeTextEditor() {
-    return undefined;
+    return state.activeTextEditor;
   },
-  onDidChangeActiveTextEditor() {
-    return { dispose() {} };
-  },
+  onDidChangeActiveTextEditor: listen(() => listeners.activeEditor, (next) => { listeners.activeEditor = next; }),
   onDidChangeTextEditorSelection(listen: (event: unknown) => void) {
     // **聞き手を覚える。** カーソルを追う段取り (まとめ方) をテストが動かすため。
     listeners.selection.push(listen);
@@ -61,9 +76,7 @@ export const window = {
 };
 
 export const workspace = {
-  onDidChangeTextDocument() {
-    return { dispose() {} };
-  },
+  onDidChangeTextDocument: listen(() => listeners.document, (next) => { listeners.document = next; }),
   onDidCloseTextDocument() {
     return { dispose() {} };
   },

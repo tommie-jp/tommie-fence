@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import type * as vscode from 'vscode';
 import type { Session } from 'fence-kit';
 import { listeners } from '../../test/vscodeStub.ts';
-import { FOLLOW_DELAY_MS, attachSession } from './vscodeHost.ts';
+import { FOLLOW_DELAY_MS } from './delay.ts';
+import { attachSession } from './vscodeHost.ts';
 
 /**
  * カーソルを追う段取りだけを見る。**マウスで文字を選ぶと出来事は 1 秒に何十回も
