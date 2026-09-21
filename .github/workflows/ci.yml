@@ -106,3 +106,23 @@ jobs:
             echo "型定義が yaml 以外の素の import を持っている" >&2
             exit 1
           fi
+
+  # **拡張を本物の VS Code の中で試す** (52 の docs/57)。単体試験は vscode を
+  # スタブにしているので、有効化・manifest の綴り・webview が立つか・Problems に
+  # 載るかは、ここでしか見えない。デスクトップ (Electron) と web (Chromium) の両方。
+  e2e:
+    runs-on: ubuntu-latest
+    name: e2e (tommie-fence)
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      # VS Code (stable) を落として立てる。画面が無いので仮の画面の中で。
+      - run: xvfb-run -a npm run test:e2e --workspace=tommie-fence
+      # web 版は `@vscode/test-web` をその場で取る (Chromium を落とす依存を持つので、
+      # devDependencies に入れると全 job の npm ci が Chromium を落とす)。
+      - run: npm run test:web --workspace=tommie-fence
