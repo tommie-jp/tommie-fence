@@ -18,6 +18,10 @@ Release はこの版から取る。題の釦・スニペット・Problems は下
 
 ### Changed
 
+- **VS Code 1.90 以上が要る** (前は 1.75 と書いていた)。本物の VS Code で
+  試すようにしたら、1.75 ではマップが開かなかった — 窓の鍵 (nonce) を作る
+  `crypto` が、拡張ホストの Node が 20 になる 1.90 まで大域に無い。書いていた
+  下限は一度も確かめていなかった。1.90 と最新で試験が通る。
 - **命令の題を改めた。** 「Open the Fence Editor」(日本語では「図を掴んで動かす
   (Fence Editor)」)、「Move a Circuit Part by Address」「Move a Circuit Node by
   Address」。分類は 3 つとも `tommie-fence`。**命令の id は変わらない**

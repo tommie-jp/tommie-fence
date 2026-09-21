@@ -34,7 +34,8 @@ truth.
 
 ## Install
 
-The extension is not on the Marketplace yet. Download the `.vsix` from the
+Requires VS Code 1.90 or later. The extension is not on the Marketplace yet.
+Download the `.vsix` from the
 [releases page](https://github.com/tommie-jp/tommie-fence/releases) (tags
 `tommie-fence-v…`, with `SHA256SUMS`) and install it:
 

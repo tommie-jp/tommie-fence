@@ -123,6 +123,12 @@ jobs:
       - run: npm ci
       # VS Code (stable) を落として立てる。画面が無いので仮の画面の中で。
       - run: xvfb-run -a npm run test:e2e --workspace=tommie-fence
+      # **manifest が言う下限でも回す** (engines.vscode)。書いた下限を一度も
+      # 確かめていなかったので、1.75 と書いたままマップが開かなかった (52 の docs/57)。
+      - name: test:e2e (engines.vscode の下限)
+        run: |
+          VSCODE_TEST_VERSION="$(node -p "require('./packages/tommie-fence/package.json').engines.vscode.replace(/^\\^/, '')")" \
+            xvfb-run -a npm run test:e2e --workspace=tommie-fence
       # web 版は `@vscode/test-web` をその場で取る (Chromium を落とす依存を持つので、
       # devDependencies に入れると全 job の npm ci が Chromium を落とす)。
       - run: npm run test:web --workspace=tommie-fence

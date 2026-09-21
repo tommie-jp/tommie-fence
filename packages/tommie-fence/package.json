@@ -14,7 +14,7 @@
     "directory": "packages/tommie-fence"
   },
   "engines": {
-    "vscode": "^1.75.0",
+    "vscode": "^1.90.0",
     "node": ">=20"
   },
   "categories": [
