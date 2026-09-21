@@ -3,6 +3,8 @@ import { describe, expect, test } from 'vitest';
 import manifest from '../package.json' with { type: 'json' };
 import { ASSETS } from './assets.ts';
 import { HAS_FENCE } from './editor/context.ts';
+import { ICON_SIZE } from '../scripts/icon.mjs';
+import { iconPng } from '../../playground/scripts/icon.mjs';
 
 /**
  * VS Code に出すもの (52 の docs/19)。**3 つぶんを 1 つに畳んだ**ので、
@@ -55,6 +57,16 @@ describe('3 つを 1 つに畳んだ contributes', () => {
         manifest.contributes.commands.find((one) => one.command === button.command);
       expect(command?.icon).toMatch(/^\$\([a-z-]+\)$/);
     }
+  });
+
+  test('ships the icon, baked from the same drawing as the playground', () => {
+    // **焼いたものを git に入れている** (`scripts/icon.mjs`)。図案が向こうで
+    // 変わったのに焼き直し忘れると、ここで分かる。
+    const png = readFileSync(new URL(`../${manifest.icon}`, import.meta.url));
+
+    expect(png.subarray(1, 4).toString('latin1')).toBe('PNG');
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([ICON_SIZE, ICON_SIZE]);
+    expect(png.equals(iconPng(ICON_SIZE))).toBe(true);
   });
 
   test('wakes up when a markdown file opens, so the title button and the Problems panel show without the preview', () => {
