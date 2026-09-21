@@ -23,26 +23,35 @@ function snippetOf(error: FenceError): string {
 }
 
 /**
- * フェンス本文の読めなかったところとお知らせ。行はフェンスの中の行 (1 始まり)。
+ * フェンスの中の行を Markdown の行へずらす。押すとその行へ飛べるようにするため。
+ * **行の分からないものはそのまま** (足すと嘘の行を指す)。
+ *
+ * `fenceLine` は**開き記号の行**なので、中の 1 行目は `fenceLine + 1`。
+ * プレビュー (`token.map[0] + 1`) と CLI (`fence.line`) と circuit も同じ足し方。
+ *
+ * **文面を組む前にずらす** — 文面は「N 行目:」を含むので、組んでからずらすと
+ * 帯の字だけがフェンスの中の行を言う (circuit と揃える)。
+ */
+const shift = (fenceLine: number) => (error: FenceError): FenceError =>
+  (error.line === null ? error : { ...error, line: error.line + fenceLine });
+
+const rowOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => ({
+  kind,
+  line: error.line,
+  text: errorLine(error),
+  snippet: snippetOf(error),
+});
+
+/**
+ * フェンス本文の読めなかったところとお知らせ。行は Markdown の行
+ * (`fenceLine` はフェンスの開き記号の行。省けばフェンスの中の行のまま)。
  *
  * **お知らせは `style: debug: off` で伏せられる** (図の下の帯と同じ規則)。
  * 読めなかった行は伏せられない — 伏せると直せるはずの間違いに気づけなくなる。
  */
-export function issuesOf(source: string): readonly IssueRow[] {
+export function issuesOf(source: string, fenceLine = 1): readonly IssueRow[] {
   const { errors, notices } = renderBreadboard(source);
-  const rowOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => ({
-    kind,
-    line: error.line,
-    text: errorLine(error),
-    snippet: snippetOf(error),
-  });
+  const at = shift(fenceLine);
 
-  return [...errors.map(rowOf('error')), ...notices.map(rowOf('notice'))];
+  return [...errors.map(at).map(rowOf('error')), ...notices.map(at).map(rowOf('notice'))];
 }
-
-/**
- * フェンスの中の行を Markdown の行へずらす。押すとその行へ飛べるようにするため。
- * **行の分からないものはそのまま** (足すと嘘の行を指す)。
- */
-export const shiftIssues = (issues: readonly IssueRow[], offset: number): readonly IssueRow[] =>
-  issues.map((issue) => (issue.line === null ? issue : { ...issue, line: issue.line + offset - 1 }));

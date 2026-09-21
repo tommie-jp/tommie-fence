@@ -3,7 +3,7 @@ import type { EditResult, FenceEditor } from 'fence-kit';
 import { renderPalette, renderTypeOptions } from './palette.ts';
 import { partFields, setField } from './field.ts';
 import type { PartField } from './field.ts';
-import { issuesOf, shiftIssues } from './issues.ts';
+import { issuesOf } from './issues.ts';
 import { aimAt, fenceAt } from './map.ts';
 import { insertPart, insertWire, duplicatePart, nextPartId, partCells } from './insert.ts';
 import { renamePart } from './rename.ts';
@@ -63,7 +63,7 @@ export function createBreadboardEditor(): FenceEditor {
     view: (source, fenceLine) => ({
       // **図そのものが升目。** 掴む層は編集のときだけ重なる。
       map: renderBreadboard(source, { edit: true }).svg,
-      issues: renderIssues(shiftIssues(issuesOf(source), fenceLine)),
+      issues: renderIssues(issuesOf(source, fenceLine)),
     }),
 
     aimAt,

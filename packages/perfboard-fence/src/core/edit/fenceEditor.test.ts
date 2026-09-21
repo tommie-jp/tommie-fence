@@ -123,6 +123,21 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
 
     expect(editor.view(broken, 1).issues).toContain('cf-issue');
   });
+
+  test('says the Markdown line in the band, the same line a click jumps to', () => {
+    // Arrange — フェンスの開き記号が Markdown の 10 行目、読めない行はその中の 3 行目。
+    const broken = 'board: 12x7\nparts:\n  R1: resistr b2 b6\n';
+
+    // Act
+    const band = editor.view(broken, 10).issues;
+
+    // Assert — 中の 1 行目が 11 行目なので、読めない行は 13 行目。押すとそこへ
+    // 飛び、文面も 13 行目と言う (プレビュー・CLI・circuit と同じ)。
+    expect(band).toContain('data-line="13"');
+    expect(band).toContain('13 行目');
+    expect(band).not.toMatch(/(?<!\d)3 行目/);
+    expect(band).not.toContain('12 行目');
+  });
 });
 
 /**
