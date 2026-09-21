@@ -8,14 +8,19 @@
 # **公開済みの版だけを見せる。** ソースからは組まない — デモで見せるのは
 # リリースした版で、main の途中ではない。npm install も要らないぶん起動が速い。
 #
-# 落とし先はパッケージ名だけの固定名 (`circuit-fence.vsix`)。版が上がっても
+# 落とし先はパッケージ名だけの固定名 (`tommie-fence.vsix`)。版が上がっても
 # devcontainer.json を直さずに済む。
+#
+# **入れる拡張は 1 つ** (3 つのフェンスを 1 つに畳んだ。52 の docs/19)。
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 REPO="${FENCE_REPO:-tommie-jp/tommie-fence}"
-PACKAGES=(circuit-fence breadboard-fence perfboard-fence)
+PACKAGES=(tommie-fence)
+# 畳む前の 3 つ。残っていると文法もプレビューも二重に登録され、図が 2 つ出る
+# (`Makefile` の `RETIRED` と同じ)。09-03〜09-21 に作った Codespace には居る。
+RETIRED=(tommie.circuit-fence tommie.breadboard-fence tommie.perfboard-fence)
 VSIX_DIR=".devcontainer/vsix"
 API="https://api.github.com/repos/${REPO}/releases?per_page=100"
 
@@ -29,6 +34,8 @@ curl_api() {
 
 # パッケージごとに、いちばん新しいタグと .vsix の URL を選ぶ。
 # タグは `<パッケージ>-v<版>` (リポジトリ直下の CLAUDE.md の約束 4)。
+# **`.vsix` を持つものだけ** — 3 つのコアのタグもこの頭で始まるが、畳んだあとは
+# tgz しか持たないので、パッケージ名で選べば混ざらない。
 # 版の比較は数として行う — 文字列順だと v0.10.0 が v0.9.0 より古いことになる。
 pick_releases() {
   node -e '
@@ -129,6 +136,9 @@ probe_code() {
 # ここへ来る前に入っている。**入っていなかったときの保険**として、
 # 足りないものだけを入れる。
 #
+# **畳む前の 3 つが居れば先に消す。** 作り直していない Codespace には残っていて、
+# 新しい 1 つと並ぶと図が 2 つ出る。
+#
 # **ここで失敗しても止めない。** postAttachCommand が 0 以外を返すと
 # VS Code は残りの手順を飛ばしてエラーを出すが、こちらは保険なので、
 # 入れられない事情 (CLI が居ない・入れ直しに失敗した) は文面で伝えて先へ進む。
@@ -139,6 +149,15 @@ install() {
     echo "    $VSIX_DIR/*.vsix を入れてください" >&2
     return 0
   fi
+
+  local old
+  for old in "${RETIRED[@]}"; do
+    printf '%s\n' "$INSTALLED" | grep -qix "$old" || continue
+    echo "==> 畳む前の $old を消します (残っていると図が 2 つ出る)"
+    if ! "$CODE" --uninstall-extension "$old"; then
+      echo "==> $old を消せませんでした。拡張ビューから手で消してください" >&2
+    fi
+  done
 
   local pkg
   for pkg in "${PACKAGES[@]}"; do

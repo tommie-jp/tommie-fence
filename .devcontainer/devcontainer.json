@@ -1,5 +1,6 @@
 {
   // ブラウザの中に本物の VS Code を立てて、3 つのフェンスをそのまま試すための構成。
+  // 拡張は 3 つを畳んだ 1 つ (tommie-fence)。
   // README のバッジ (codespaces.new/...) から来た人が、何も入れずに触れる形。
   "name": "tommie-fence を試す",
 
@@ -24,9 +25,7 @@
       // **Marketplace の ID ではなく .vsix のパス**を渡す。Marketplace には
       // 出していないので ID では引けない。パスは onCreateCommand が用意する。
       "extensions": [
-        "${containerWorkspaceFolder}/.devcontainer/vsix/circuit-fence.vsix",
-        "${containerWorkspaceFolder}/.devcontainer/vsix/breadboard-fence.vsix",
-        "${containerWorkspaceFolder}/.devcontainer/vsix/perfboard-fence.vsix"
+        "${containerWorkspaceFolder}/.devcontainer/vsix/tommie-fence.vsix"
       ],
       "settings": {
         // 開いた直後に触ってほしいのは試すファイルなので、Welcome は出さない。
