@@ -3,6 +3,36 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.6.0] - 2026-09-21
+
+**0.4.0 と 0.5.0 は Release を出していない。** 同じ日に続けて入れたので、
+Release はこの版から取る。題の釦・スニペット・Problems は下の 2 つの節にある。
+
+### Added
+
+- **絵札。** 拡張ビューと Release の頁に、playground と同じ図案 (穴の並んだ板に
+  1 本の配線) が出る。
+- **英語。** 命令の題・設定の説明・拡張の案内文は英語が元になり、VS Code の
+  表示言語が日本語なら日本語で出る。マップ (webview) の字とフェンスが言う文面は
+  日本語のまま (マップは playground と共有している)。
+
+### Changed
+
+- **命令の題を改めた。** 「Open the Fence Editor」(日本語では「図を掴んで動かす
+  (Fence Editor)」)、「Move a Circuit Part by Address」「Move a Circuit Node by
+  Address」。分類は 3 つとも `tommie-fence`。**命令の id は変わらない**
+  (キー割り当てはそのまま効く)。
+- マップの操作に失敗したときの頭を「Circuit Fence:」から「tommie-fence:」に。
+- README を使う人向けに書き直した (英語。日本語はリポジトリの README.ja.md)。
+
+### Fixed
+
+- **板の 2 つで、`style: debug: off` がマップの帯と Problems のお知らせを
+  伏せていなかった。** プレビューの帯と circuit は伏せていた。読めなかった行と、
+  頼んで出す ERC は伏せない。
+- **差分の窓で古い版を開くと、同じ読めない行が Problems に 2 回並んでいた。**
+  古い写し (`git:`) には診断を置かない。
+
 ## [0.5.0] - 2026-09-21
 
 ### Added
