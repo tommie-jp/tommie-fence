@@ -7,6 +7,8 @@
  */
 export const registered: { commands: string[]; editors: string[] } = { commands: [], editors: [] };
 
+import { tJa } from './l10nJa.ts';
+
 /**
  * 利用者が書いた設定 (節 → 鍵 → 値)。**書いていない鍵は載せない** —
  * 本物の `inspect` が「書いていない」と答える形を写すため。
@@ -108,6 +110,9 @@ export const workspace = {
     return Promise.resolve(true);
   },
 };
+
+/** 日本語の画面を真似る (`test/l10nJa.ts`)。表に無い文は投げる。 */
+export const l10n = { t: tJa };
 
 export const languages = {
   createDiagnosticCollection(_name: string) {

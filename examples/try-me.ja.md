@@ -75,9 +75,10 @@ style:
 
 ## 打たずに掴んで動かす
 
-どのフェンスもマウスで編集できます。フェンスの中にカーソルを置いて、
-コマンドパレット (`Ctrl+Shift+P`) から
-**「tommie-fence: Fence: 図を掴んで動かす」**。
+どのフェンスもマウスで編集できます。このタブの右上の基板の絵の釦を押すと
+(コマンドパレット `Ctrl+Shift+P` の **「tommie-fence: 図を掴んで動かす
+(Fence Editor)」** でも同じ。英語の画面では「Open the Fence Editor」)、
+カーソルのあるフェンスのマップが横に開きます。
 または `Ctrl+Shift+P` →**「View: Reopen Editor With...」**→
 **Fence Editor** で、このタブ自体をマップにできます。3 つのフェンスを
 1 つのエディタで扱います。

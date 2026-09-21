@@ -77,11 +77,12 @@ derived, so `IN`, `OUT` and `GND` come out without being written down.
 
 ## Drag the parts instead of typing
 
-Every fence can also be edited with the mouse. Put the cursor inside one and run
-**"tommie-fence: Fence: 図を掴んで動かす"** from the command palette
-(`Ctrl+Shift+P`), or reopen this file with the map editor: `Ctrl+Shift+P` →
-**"View: Reopen Editor With..."** → **Fence Editor**. One editor handles all
-three fences.
+Every fence can also be edited with the mouse. Click the circuit-board button at
+the top right of this tab (or run **"tommie-fence: Open the Fence Editor"** from
+the command palette, `Ctrl+Shift+P`) and the map opens beside the text, showing
+the fence under the cursor. Or reopen this file as the map itself:
+`Ctrl+Shift+P` → **"View: Reopen Editor With..."** → **Fence Editor**. One editor
+handles all three fences.
 
 The map is a grab layer, not the drawing. Dragging a part rewrites the address
 in the fence, so the text stays the source of truth.

@@ -47,11 +47,11 @@ export function openMapPanel(context: vscode.ExtensionContext): void {
   const editor = markdownEditor();
   const names = fences.map((one) => one.language).join(' / ');
   if (editor === null) {
-    void vscode.window.showWarningMessage(`${names} フェンスのある Markdown を開いてから使います`);
+    void vscode.window.showWarningMessage(vscode.l10n.t('Open a Markdown file with a {0} fence first', names));
     return;
   }
   if (!aimAtFence(editor, fences)) {
-    void vscode.window.showWarningMessage(`この文書には ${names} フェンスがありません`);
+    void vscode.window.showWarningMessage(vscode.l10n.t('This document has no {0} fence', names));
     return;
   }
 

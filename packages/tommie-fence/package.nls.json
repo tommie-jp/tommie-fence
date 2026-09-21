@@ -1,0 +1,10 @@
+{
+  "description": "Three Markdown fences — circuit, breadboard, perfboard — drawn in the preview and edited by dragging",
+  "command.openMap": "Open the Fence Editor",
+  "command.movePart": "Move a Circuit Part by Address",
+  "command.movePoint": "Move a Circuit Node by Address",
+  "config.noteFrame": "In the Fence Editor, draw a frame around notes: text (off by default).",
+  "config.problemsErc": "Also list ERC findings (places that would not work as built) in the Problems panel. Off by default: a board still being wired reports every unconnected leg.",
+  "config.oldNoteFrame": "Old name. Use tommieFence.map.noteFrame.",
+  "config.oldNoteFrame.deprecated": "Renamed to tommieFence.map.noteFrame (this name is still read)."
+}

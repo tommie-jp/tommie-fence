@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
+import { tJa } from '../../test/l10nJa.ts';
 import { labelOf, runMovePoint } from './movePoint.ts';
 import type { EditorPort } from './movePart.ts';
 
@@ -24,12 +25,14 @@ const portOf = (over: Partial<EditorPort> = {}): EditorPort => ({
   apply: async () => true,
   info: () => {},
   warn: () => {},
+  // 日本語の画面を真似る (訳し忘れは投げる)。
+  t: tJa,
   ...over,
 });
 
 describe('labelOf', () => {
   test('shows the name, since a named node is a one-line rewrite', () => {
-    const label = labelOf({ address: { row: 2, col: 2 }, name: 'fb', uses: 2 });
+    const label = labelOf({ address: { row: 2, col: 2 }, name: 'fb', uses: 2 }, tJa);
 
     expect(label).toContain('c3');
     expect(label).toContain('fb');
@@ -37,7 +40,7 @@ describe('labelOf', () => {
   });
 
   test('leaves the brackets out when the node has no name', () => {
-    expect(labelOf({ address: { row: 2, col: 2 }, name: null, uses: 1 })).not.toContain('(');
+    expect(labelOf({ address: { row: 2, col: 2 }, name: null, uses: 1 }, tJa)).not.toContain('(');
   });
 });
 

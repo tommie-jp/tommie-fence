@@ -122,7 +122,7 @@ export function attachSession(panel: vscode.WebviewPanel, session: Session): voi
       session.handle(message).catch((error: unknown) => {
         // 握りつぶさない。webview は「…」のまま待ってしまう。
         const reason = error instanceof Error ? error.message : String(error);
-        void vscode.window.showErrorMessage(`Circuit Fence: マップの操作に失敗しました: ${reason}`);
+        void vscode.window.showErrorMessage(vscode.l10n.t('tommie-fence: the Fence Editor could not do that: {0}', reason));
       });
     }),
     vscode.workspace.onDidChangeTextDocument((event) => {

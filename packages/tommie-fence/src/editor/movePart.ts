@@ -27,6 +27,11 @@ export type EditorPort = {
   readonly apply: (fenceLine: number, edits: readonly Edit[]) => Promise<boolean>;
   readonly info: (message: string) => void;
   readonly warn: (message: string) => void;
+  /**
+   * 文を訳す (`vscode.l10n.t`)。**元の文は英語**で、日本語は
+   * `l10n/bundle.l10n.ja.json`。`{0}` は後ろの引数で埋まる。
+   */
+  readonly t: (message: string, ...args: readonly (string | number)[]) => string;
 };
 
 /**
@@ -39,32 +44,32 @@ export type EditorPort = {
 export async function runMovePart(port: EditorPort): Promise<void> {
   const view = port.document();
   if (!view) {
-    port.warn('Markdown のエディタで、circuit フェンスの中にカーソルを置いてから実行します');
+    port.warn(port.t('Put the cursor inside a circuit fence in a Markdown editor, then run this again'));
     return;
   }
 
   const fence = fenceAt(view.text, view.line);
   if (!fence) {
-    port.warn('カーソルの位置に circuit フェンスがありません');
+    port.warn(port.t('There is no circuit fence at the cursor'));
     return;
   }
 
   const ids = movablePartIds(fence.source);
   if (ids.length === 0) {
-    port.warn('このフェンスに動かせる部品がありません');
+    port.warn(port.t('This fence has no part to move'));
     return;
   }
 
-  const partId = await port.pick(ids, '動かす部品');
+  const partId = await port.pick(ids, port.t('Part to move'));
   if (partId === null) return;
 
   const anchor = anchorOf(fence.source, partId);
-  const written = await port.prompt('移動先の番地 (例: b3)', anchor === null ? '' : formatAddress(anchor));
+  const written = await port.prompt(port.t('Address to move to (e.g. b3)'), anchor === null ? '' : formatAddress(anchor));
   if (written === null) return;
 
   const to = parseAddress(written.trim());
   if (to === null) {
-    port.warn(`番地として読めません: ${written}`);
+    port.warn(port.t('Not an address: {0}', written));
     return;
   }
 
@@ -74,7 +79,7 @@ export async function runMovePart(port: EditorPort): Promise<void> {
     return;
   }
   if (result.value.edits.length === 0) {
-    port.info(`${partId} はすでに ${written.trim()} にあります`);
+    port.info(port.t('{0} is already at {1}', partId, written.trim()));
     return;
   }
 
@@ -82,9 +87,11 @@ export async function runMovePart(port: EditorPort): Promise<void> {
   // **当たらなかったときは黙らない。** 選んで番地まで打った人が、成功も失敗も
   // 分からずに終わる (`session.ts` の `run` と同じ扱いにする)。
   if (!await port.apply(fence.line, result.value.edits)) {
-    port.warn('書き換えられませんでした (そのあと文書が書き換わったかもしれません)');
+    port.warn(port.t('Could not rewrite the fence (the document may have changed in the meantime)'));
     return;
   }
   const changed = describeDiff(result.value.diff);
-  port.info(`${partId} を ${written.trim()} へ動かしました${changed === null ? '' : `。${changed}`}`);
+  port.info(changed === null
+    ? port.t('Moved {0} to {1}', partId, written.trim())
+    : port.t('Moved {0} to {1}. {2}', partId, written.trim(), changed));
 }

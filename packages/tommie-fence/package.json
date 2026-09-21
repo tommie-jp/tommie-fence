@@ -1,7 +1,7 @@
 {
   "name": "tommie-fence",
   "displayName": "tommie-fence",
-  "description": "circuit / breadboard / perfboard の 3 つのフェンスを 1 つの拡張で",
+  "description": "%description%",
   "version": "0.5.0",
   "private": true,
   "type": "module",
@@ -26,6 +26,7 @@
   ],
   "main": "./dist/extension.cjs",
   "browser": "./dist/extension.web.cjs",
+  "l10n": "./l10n",
   "scripts": {
     "build": "node scripts/assets.mjs && node esbuild.mjs",
     "typecheck": "tsc --noEmit",
@@ -112,19 +113,19 @@
     "commands": [
       {
         "command": "tommie-fence.openMap",
-        "title": "Fence: 図を掴んで動かす",
+        "title": "%command.openMap%",
         "category": "tommie-fence",
         "icon": "$(circuit-board)"
       },
       {
         "command": "circuit-fence.movePart",
-        "title": "Circuit Fence: 部品を動かす",
-        "category": "Circuit Fence"
+        "title": "%command.movePart%",
+        "category": "tommie-fence"
       },
       {
         "command": "circuit-fence.movePoint",
-        "title": "Circuit Fence: 節点を動かす",
-        "category": "Circuit Fence"
+        "title": "%command.movePoint%",
+        "category": "tommie-fence"
       }
     ],
     "menus": {
@@ -156,18 +157,18 @@
         "tommieFence.map.noteFrame": {
           "type": "boolean",
           "default": false,
-          "description": "掴んで動かす升目で、notes: text を枠で囲む (既定は囲まない)。"
+          "description": "%config.noteFrame%"
         },
         "tommieFence.problems.erc": {
           "type": "boolean",
           "default": false,
-          "description": "Problems パネルに ERC (そのとおりに組んでも動かないところ) も出す。既定は出さない — 組んでいる途中の板は、足 1 本ごとに「つながっていません」が出るため。"
+          "description": "%config.problemsErc%"
         },
         "circuitFence.map.noteFrame": {
           "type": "boolean",
           "default": false,
-          "description": "旧い名前。tommieFence.map.noteFrame を使う。",
-          "deprecationMessage": "tommieFence.map.noteFrame に改名しました (こちらも読み続けます)。"
+          "description": "%config.oldNoteFrame%",
+          "deprecationMessage": "%config.oldNoteFrame.deprecated%"
         }
       }
     }

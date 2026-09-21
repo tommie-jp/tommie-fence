@@ -15,48 +15,48 @@ import type { EditorPort } from './movePart.ts';
  */
 
 /** 一覧に出す 1 行。名前が付いていれば見せる (直すのがその 1 行だけになるため)。 */
-export const labelOf = (node: NodeRef): string => {
+export const labelOf = (node: NodeRef, t: EditorPort['t']): string => {
   const address = formatAddress(node.address);
   const name = node.name === null ? '' : ` (${node.name})`;
-  return `${address}${name} — ${node.uses} か所`;
+  return t('{0}{1} — used in {2} places', address, name, node.uses);
 };
 
 export async function runMovePoint(port: EditorPort): Promise<void> {
   const view = port.document();
   if (!view) {
-    port.warn('Markdown のエディタで、circuit フェンスの中にカーソルを置いてから実行します');
+    port.warn(port.t('Put the cursor inside a circuit fence in a Markdown editor, then run this again'));
     return;
   }
 
   const fence = fenceAt(view.text, view.line);
   if (!fence) {
-    port.warn('カーソルの位置に circuit フェンスがありません');
+    port.warn(port.t('There is no circuit fence at the cursor'));
     return;
   }
 
   const nodes = movableNodes(fence.source);
   if (nodes.length === 0) {
-    port.warn('このフェンスに動かせる節点がありません');
+    port.warn(port.t('This fence has no node to move'));
     return;
   }
 
-  const labels = nodes.map(labelOf);
-  const picked = await port.pick(labels, '動かす節点');
+  const labels = nodes.map((node) => labelOf(node, port.t));
+  const picked = await port.pick(labels, port.t('Node to move'));
   if (picked === null) return;
 
   const node = nodes[labels.indexOf(picked)];
   if (!node) {
-    port.warn(`選ばれた節点が分かりません: ${picked}`);
+    port.warn(port.t('Unknown node: {0}', picked));
     return;
   }
 
   const here = formatAddress(node.address);
-  const written = await port.prompt('移動先の番地 (例: b3)', here);
+  const written = await port.prompt(port.t('Address to move to (e.g. b3)'), here);
   if (written === null) return;
 
   const to = parseAddress(written.trim());
   if (to === null) {
-    port.warn(`番地として読めません: ${written}`);
+    port.warn(port.t('Not an address: {0}', written));
     return;
   }
 
@@ -66,7 +66,7 @@ export async function runMovePoint(port: EditorPort): Promise<void> {
     return;
   }
   if (result.value.edits.length === 0) {
-    port.info(`節点はすでに ${here} にあります`);
+    port.info(port.t('The node is already at {0}', here));
     return;
   }
 
@@ -74,13 +74,15 @@ export async function runMovePoint(port: EditorPort): Promise<void> {
   // 寄せた先で何かとつながったときだけ、動かしたあとのお知らせに添える。
   // **当たらなかったときは黙らない** (`movePart` と同じ扱い)。
   if (!await port.apply(fence.line, result.value.edits)) {
-    port.warn('書き換えられませんでした (そのあと文書が書き換わったかもしれません)');
+    port.warn(port.t('Could not rewrite the fence (the document may have changed in the meantime)'));
     return;
   }
   // 名前があっても、生の綴りで書いた場所が混ざっていれば 1 行では済まない。
   const how = node.name !== null && result.value.edits.length === 1
-    ? `${node.name} の 1 行を書き換えました`
-    : `${result.value.edits.length} か所を書き換えました`;
+    ? port.t('Rewrote the one line of {0}', node.name)
+    : port.t('Rewrote {0} places', result.value.edits.length);
   const changed = describeDiff(result.value.diff);
-  port.info(`${here} の節点を ${written.trim()} へ動かしました (${how})${changed === null ? '' : `。${changed}`}`);
+  port.info(changed === null
+    ? port.t('Moved the node at {0} to {1} ({2})', here, written.trim(), how)
+    : port.t('Moved the node at {0} to {1} ({2}). {3}', here, written.trim(), how, changed));
 }

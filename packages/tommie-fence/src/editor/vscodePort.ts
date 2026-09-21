@@ -132,5 +132,6 @@ export function createEditorPort(): EditorPort {
     warn: (message) => {
       void vscode.window.showWarningMessage(message);
     },
+    t: (message, ...args) => vscode.l10n.t(message, ...args),
   };
 }

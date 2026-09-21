@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
+import { tJa } from '../../test/l10nJa.ts';
 import { describeDiff } from 'fence-kit';
 import { runMovePart } from './movePart.ts';
 import type { EditorPort } from './movePart.ts';
@@ -21,6 +22,8 @@ const portOf = (over: Partial<EditorPort> = {}): EditorPort => ({
   apply: async () => true,
   info: () => {},
   warn: () => {},
+  // 日本語の画面を真似る (訳し忘れは投げる)。
+  t: tJa,
   ...over,
 });
 
