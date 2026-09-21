@@ -138,6 +138,26 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
     expect(band).not.toMatch(/(?<!\d)3 行目/);
     expect(band).not.toContain('12 行目');
   });
+
+  test('gives the Problems panel the same rows as the band, ERC only when asked', () => {
+    // Arrange — 読めない行 (中の 4 行目) と、つないでいない抵抗 (ERC)。
+    // **ERC は読めているときだけ掛ける**ので、見本を分ける (52 の docs/00)。
+    const broken = 'board: 12x7\nparts:\n  R1: resistor b2 b6 1k\n  R2: resistr d2 d6\n';
+    const loose = 'board: 12x7\nparts:\n  R1: resistor b2 b6 1k\n';
+
+    // Act
+    const unread = editor.problems?.(broken, 10, { erc: false }) ?? [];
+    const quiet = editor.problems?.(loose, 10, { erc: false }) ?? [];
+    const loud = editor.problems?.(loose, 10, { erc: true }) ?? [];
+
+    // Assert
+    expect(unread.filter((row) => row.kind === 'error').map((row) => row.line)).toEqual([14]);
+    expect(unread).toHaveLength(editor.view(broken, 10).issues.split('<li').length - 1);
+    expect(quiet.some((row) => row.kind === 'erc')).toBe(false);
+    expect(loud.some((row) => row.kind === 'erc' && row.text.includes('つながっていません'))).toBe(true);
+    expect(loud.filter((row) => row.kind === 'erc')).toHaveLength(editor.view(loose, 10).erc?.count ?? -1);
+    for (const row of [...unread, ...loud]) expect(row.text).not.toContain('perfboard:');
+  });
 });
 
 /**

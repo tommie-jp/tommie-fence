@@ -33,6 +33,8 @@ describe('breadboard の FenceEditor', () => {
       room: 'e20',
       part: 'R1',
       moveTo: 'e30',
+      // 3 行目の種類の綴りを間違えた本文 (Problems の行の表を見る)。
+      broken: { source: 'board: half\nparts:\n  R1: resistr a5 a10\n', line: 3 },
     })).toEqual([]);
   });
 });

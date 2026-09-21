@@ -55,3 +55,22 @@ export function issuesOf(source: string, fenceLine = 1): readonly IssueRow[] {
 
   return [...errors.map(at).map(rowOf('error')), ...notices.map(at).map(rowOf('notice'))];
 }
+
+/** Problems の 1 行。**文面は本文だけ** — 行も出どころも Problems が別の欄に出す。 */
+const problemOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => ({
+  kind,
+  line: error.line,
+  text: error.message,
+});
+
+/**
+ * Problems パネルの行 (52 の docs/57)。帯と同じもの (`renderBreadboard` の
+ * errors と notices) を Markdown の行で。**この板は ERC を持たない**ので、
+ * 頼まれても足すものが無い (列が最初から導通していて、繋ぎ忘れが目に留まる)。
+ */
+export function problemsOf(source: string, fenceLine: number): readonly IssueRow[] {
+  const { errors, notices } = renderBreadboard(source);
+  const at = shift(fenceLine);
+
+  return [...errors.map(at).map(problemOf('error')), ...notices.map(at).map(problemOf('notice'))];
+}

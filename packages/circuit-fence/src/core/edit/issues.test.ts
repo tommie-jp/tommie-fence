@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { issuesOf, renderIssues, shiftIssues } from './issues.ts';
+import { issuesOf, problemsOf, renderIssues, shiftIssues } from './issues.ts';
 
 const fence = (...lines: readonly string[]): string => lines.join('\n');
 
@@ -142,5 +142,38 @@ describe('renderIssues', () => {
 
     expect(html).not.toContain('data-line');
     expect(html).toContain('読めません');
+  });
+});
+
+/**
+ * Problems パネルの行 (52 の docs/57)。**帯と同じものを、行番号の付かない文面で**。
+ */
+describe('problemsOf', () => {
+  /** 片方しかつないでいない抵抗。図は描けるが、組んでも回路にならない。 */
+  const LOOSE = fence('parts:', '  IN: port a1', '  R1: resistor a1 a3 1k', 'wires:', '  - a1 -- a3', '');
+
+  test('puts an unreadable line on its Markdown line, without the number in the text', () => {
+    // Arrange — 開き記号が 10 行目、読めない行は中の 2 行目 (Markdown の 12 行目)。
+    const source = fence('parts:', '  R1: resistr a1 a3', '');
+
+    // Act
+    const rows = problemsOf(source, 10, { erc: false });
+
+    // Assert
+    expect(rows).toEqual([{ kind: 'error', line: 12, text: expect.stringContaining('resistr') }]);
+    expect(rows[0]?.text).not.toContain('行目');
+  });
+
+  test('adds ERC only when asked', () => {
+    expect(problemsOf(LOOSE, 1, { erc: false }).filter((row) => row.kind === 'erc')).toEqual([]);
+    expect(problemsOf(LOOSE, 1, { erc: true }).some((row) => row.kind === 'erc')).toBe(true);
+  });
+
+  test('counts as many rows as the band under the map shows', () => {
+    // 帯と Problems は同じものの写し。数が食い違うと、どちらかが黙って落としている。
+    const source = fence('parts:', '  R1: resistr a1 a3', '  R2: capacitr a4 a5', '');
+    const band = renderIssues(shiftIssues(issuesOf(source), 10));
+
+    expect(problemsOf(source, 10, { erc: false })).toHaveLength(band.split('<li').length - 1);
   });
 });

@@ -24,6 +24,8 @@ describe('circuit の FenceEditor', () => {
       room: 'j5',
       part: 'R1',
       moveTo: 'j9',
+      // 2 行目の種類の綴りを間違えた本文 (Problems の行の表を見る)。
+      broken: { source: 'parts:\n  R1: resistr a1 a3 10k\n', line: 2 },
     })).toEqual([]);
   });
 });

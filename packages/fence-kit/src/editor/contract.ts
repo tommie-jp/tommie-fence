@@ -24,7 +24,36 @@ export type ContractFixture = {
   readonly part: string;
   /** その部品を動かす先 (板の上で、`room` とは別の穴)。 */
   readonly moveTo: string;
+  /** 読めない行を 1 つだけ持つ本文と、その行 (フェンスの中の行、1 始まり)。 */
+  readonly broken: { readonly source: string; readonly line: number };
 };
+
+/**
+ * Problems の行を試すときの開き記号の行。1 以外にして、ずらし忘れを見つける。
+ * 中の 1 行目は `FENCE_LINE + 1` (プレビューも CLI も帯もそう数える)。
+ */
+const FENCE_LINE = 10;
+
+/**
+ * Problems の行の表 (52 の docs/57)。**読めない行を Markdown の行で、
+ * 行番号の付かない文面で返す**こと、頼んでいない ERC を混ぜないこと。
+ */
+function checkProblems(editor: FenceEditor, fixture: ContractFixture): readonly string[] {
+  if (editor.problems === undefined) return ['problems (Problems パネルの行の表) を持っていません'];
+  const problems: string[] = [];
+  const want = FENCE_LINE + fixture.broken.line;
+  const rows = editor.problems(fixture.broken.source, FENCE_LINE, { erc: false });
+  const errors = rows.filter((row) => row.kind === 'error');
+
+  if (errors.length === 0) problems.push('読めない行を problems が error で返しません');
+  else if (!errors.some((row) => row.line === want)) problems.push(`読めない行を Markdown の ${want} 行目で返しません`);
+  if (errors.some((row) => row.text.includes('行目: '))) problems.push('problems の文面に行番号が付いています (Problems は行を別の欄に出す)');
+  if (rows.some((row) => row.kind === 'erc')) problems.push('ERC を頼んでいないのに problems が返します');
+  if (editor.problems(fixture.source, FENCE_LINE, { erc: false }).some((row) => row.kind === 'error')) {
+    problems.push('読める見本に problems が error を返します');
+  }
+  return problems;
+}
 
 /** パレットの markup から、置ける種類を取り出す (webview が見るのと同じ印)。 */
 export const paletteTypes = (markup: string): readonly string[] =>
@@ -71,6 +100,9 @@ export function checkFenceEditor(editor: FenceEditor, fixture: ContractFixture):
   const problems: string[] = [];
   const say = (message: string): void => { problems.push(message); };
   const { source, room, part, moveTo } = fixture;
+
+  // --- Problems の行の表 ---
+  for (const problem of checkProblems(editor, fixture)) say(problem);
 
   // --- 見本そのもの (これが読めないと以下が全部嘘になる) ---
   const map = editor.view(source, 1).map;

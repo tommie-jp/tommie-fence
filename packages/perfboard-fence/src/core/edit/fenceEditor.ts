@@ -4,7 +4,7 @@ import { normalizeNewlines } from 'fence-kit';
 import { renderPalette, renderTypeOptions } from './palette.ts';
 import { partFields, setField } from './field.ts';
 import type { PartField } from './field.ts';
-import { ercOf, issuesOf } from './issues.ts';
+import { ercOf, issuesOf, problemsOf } from './issues.ts';
 import { aimAt, fenceAt } from './map.ts';
 import { insertPart, insertWire, duplicatePart, nextPartId, partCells } from './insert.ts';
 import { renamePart } from './rename.ts';
@@ -69,6 +69,7 @@ export function createPerfboardEditor(): FenceEditor {
       // **ERC は数えるだけで、広げるかは殻が決める** (帯の「検査 N」の釦)。
       erc: ercView(source, fenceLine),
     }),
+    problems: problemsOf,
 
     aimAt,
 

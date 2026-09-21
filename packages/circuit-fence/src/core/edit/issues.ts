@@ -86,3 +86,17 @@ export const issueRows = (issues: readonly Issue[]): readonly IssueRow[] =>
 
 /** マップの下に貼る帯。 */
 export const renderIssues = (issues: readonly Issue[]): string => renderBand(issueRows(issues));
+
+/**
+ * Problems パネルの行 (52 の docs/57)。**帯と同じもの** (`issuesOf` と、頼まれたら
+ * `ercOf`) を Markdown の行へずらし、文面には**行番号を付けない** — Problems は
+ * 行を別の欄に出す。相手の行 (related) はずらした数のまま「(N 行目)」で残る。
+ */
+export function problemsOf(source: string, fenceLine: number, want: { readonly erc: boolean }): readonly IssueRow[] {
+  const issues = [...issuesOf(source), ...(want.erc ? ercOf(source) : [])];
+  return shiftIssues(issues, fenceLine).map((issue) => ({
+    kind: issue.kind,
+    line: issue.error.line,
+    text: messageLine({ ...issue.error, line: null }),
+  }));
+}

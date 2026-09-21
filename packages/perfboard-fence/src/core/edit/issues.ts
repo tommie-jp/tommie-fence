@@ -62,3 +62,26 @@ export function issuesOf(source: string, fenceLine = 1): readonly IssueRow[] {
 export function ercOf(source: string, fenceLine = 1): readonly IssueRow[] {
   return renderPerfboard(source).erc.map(shift(fenceLine)).map(rowOf('erc'));
 }
+
+/** Problems の 1 行。**文面は本文だけ** — 行も出どころも Problems が別の欄に出す。 */
+const problemOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => ({
+  kind,
+  line: error.line,
+  text: error.message,
+});
+
+/**
+ * Problems パネルの行 (52 の docs/57)。帯と同じもの (errors と notices、
+ * 頼まれたら `erc`) を Markdown の行で。**1 回描いて 3 つとも取る**
+ * (帯は `issuesOf` と `ercOf` で 2 回描いている)。
+ */
+export function problemsOf(source: string, fenceLine: number, want: { readonly erc: boolean }): readonly IssueRow[] {
+  const { errors, notices, erc } = renderPerfboard(source);
+  const at = shift(fenceLine);
+
+  return [
+    ...errors.map(at).map(problemOf('error')),
+    ...notices.map(at).map(problemOf('notice')),
+    ...(want.erc ? erc.map(at).map(problemOf('erc')) : []),
+  ];
+}

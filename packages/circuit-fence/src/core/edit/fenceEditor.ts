@@ -2,7 +2,7 @@ import { listFences } from './fenceList.ts';
 import { partFields, setField } from './field.ts';
 import type { PartField } from './field.ts';
 import { nameOfHandle } from './handles.ts';
-import { ercOf, issuesOf, renderIssues, shiftIssues } from './issues.ts';
+import { ercOf, issuesOf, problemsOf, renderIssues, shiftIssues } from './issues.ts';
 import { aimAt, fenceAt, gridMap, partCells } from './map.ts';
 import { renderMapHtml } from './mapSvg.ts';
 import { duplicatePart, insertPart, insertWire, nextPartId } from './insert.ts';
@@ -103,6 +103,8 @@ export function createCircuitEditor(look: LookSource = PLAIN): FenceEditor {
         erc: { count: erc.length, html: renderIssues(shiftIssues(erc, fenceLine)) },
       };
     },
+
+    problems: problemsOf,
 
     aimAt: (source, line, column) => {
       const aim = aimAt(source, line, column);

@@ -3,7 +3,7 @@ import type { EditResult, FenceEditor } from 'fence-kit';
 import { renderPalette, renderTypeOptions } from './palette.ts';
 import { partFields, setField } from './field.ts';
 import type { PartField } from './field.ts';
-import { issuesOf } from './issues.ts';
+import { issuesOf, problemsOf } from './issues.ts';
 import { aimAt, fenceAt } from './map.ts';
 import { insertPart, insertWire, duplicatePart, nextPartId, partCells } from './insert.ts';
 import { renamePart } from './rename.ts';
@@ -65,6 +65,8 @@ export function createBreadboardEditor(): FenceEditor {
       map: renderBreadboard(source, { edit: true }).svg,
       issues: renderIssues(issuesOf(source, fenceLine)),
     }),
+    // ERC を持たないので `want` は見ない。
+    problems: (source, fenceLine) => problemsOf(source, fenceLine),
 
     aimAt,
 

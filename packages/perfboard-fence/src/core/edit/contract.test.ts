@@ -32,6 +32,8 @@ describe('perfboard の FenceEditor', () => {
       room: 'j2',
       part: 'R1',
       moveTo: 'j10',
+      // 3 行目の種類の綴りを間違えた本文 (Problems の行の表を見る)。
+      broken: { source: 'board: 12x7\nparts:\n  R1: resistr b2 b6\n', line: 3 },
     })).toEqual([]);
   });
 });

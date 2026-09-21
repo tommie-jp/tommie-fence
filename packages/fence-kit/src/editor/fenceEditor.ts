@@ -1,5 +1,6 @@
 import type { FenceBlock } from '../fences.ts';
 import type { Edit, LineEdit, NetDiff, Span } from './edits.ts';
+import type { IssueRow } from './issues.ts';
 
 /**
  * **殻がフェンスに求めるもの。** マップのセッション (`session.ts`) と webview は
@@ -153,6 +154,18 @@ export type FenceEditor = {
    * (押すとそこへ飛べる)。
    */
   readonly view: (source: string, fenceLine: number) => FenceView;
+  /**
+   * **Problems パネルに出す行の表** (52 の docs/57)。読めなかった行とお知らせ、
+   * `want.erc` なら ERC も。行は Markdown の行 (`fenceLine` は開き記号の行)。
+   *
+   * 中身は `view` の帯と同じものを通す (2 か所で数えると食い違う)。ただし
+   * **文面 (`text`) に行番号も名札も付けない** — Problems は行を別の欄に、
+   * 出どころを別の欄に出す。`snippet` は使わない (Problems は 1 行)。
+   *
+   * 型では任意 — 殻の試験の偽物に要らないため。**本物の 3 つは契約で必須**
+   * (`contract.ts`)。持たなければ宿主は「何も無い」として扱う。
+   */
+  readonly problems?: (source: string, fenceLine: number, want: { readonly erc: boolean }) => readonly IssueRow[];
   /** フェンスの中の行 (1 始まり) と桁 (0 始まり) が指しているもの。 */
   readonly aimAt: (source: string, line: number, column: number) => Aim | null;
   /** 掴んだものが書かれている場所 (エディタで光らせる先)。 */

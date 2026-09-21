@@ -147,4 +147,18 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
     expect(band).not.toMatch(/(?<!\d)3 行目/);
     expect(band).not.toContain('12 行目');
   });
+
+  test('gives the Problems panel the same rows as the band, and no ERC on this board', () => {
+    // Arrange — 読めない行 (中の 4 行目)。この板は ERC を持たない。
+    const source = 'board: half\nparts:\n  R1: resistor a5 a10 330\n  R2: resistr c5 c10\n';
+
+    // Act
+    const rows = editor.problems?.(source, 10, { erc: true }) ?? [];
+
+    // Assert
+    expect(rows.filter((row) => row.kind === 'error').map((row) => row.line)).toEqual([14]);
+    expect(rows.some((row) => row.kind === 'erc')).toBe(false);
+    expect(rows).toHaveLength(editor.view(source, 10).issues.split('<li').length - 1);
+    for (const row of rows) expect(row.text).not.toContain('breadboard:');
+  });
 });

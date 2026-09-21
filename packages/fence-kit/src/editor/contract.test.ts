@@ -12,7 +12,13 @@ import type { EditResult, FenceEditor } from './fenceEditor.ts';
  * (`R1: resistor a1 a3`)。3 つのフェンスの共通部分そのもの。
  */
 
-const FIXTURE: ContractFixture = { source: 'R1: resistor a1 a3\n', room: 'b1', part: 'R1', moveTo: 'c1' };
+const FIXTURE: ContractFixture = {
+  source: 'R1: resistor a1 a3\n',
+  room: 'b1',
+  part: 'R1',
+  moveTo: 'c1',
+  broken: { source: 'R1: resistor a1 a3\nR2: 読めない\n', line: 2 },
+};
 
 const ok = (lines: readonly { readonly kind: 'insert' | 'delete'; readonly line: number; readonly text?: string }[]): EditResult =>
   ({ ok: true, value: { lines: lines.map((one) => (one.kind === 'insert'
@@ -43,6 +49,10 @@ function fakeEditor(over: Partial<FenceEditor> = {}): FenceEditor {
         + '</svg>',
       issues: '',
     }),
+    // 読めない行は「読めない」と書いた行。開き記号の次の行が中の 1 行目。
+    problems: (source, fenceLine) => source.split('\n').flatMap((text, index) => (text.includes('読めない')
+      ? [{ kind: 'error' as const, line: fenceLine + index + 1, text: '部品として読めません' }]
+      : [])),
     aimAt: () => null,
     spansOf: (source, _what, id) => (lineOf(source, id) === null ? [] : [{ line: 1, column: 0, length: 2 }]),
     fieldsOf: (source, handle) => (lineOf(source, handle) === null
@@ -112,6 +122,47 @@ describe('paletteTypes / paletteTwoEnds', () => {
 describe('checkFenceEditor', () => {
   test('says nothing about an editor that keeps the contract', () => {
     expect(checkFenceEditor(fakeEditor(), FIXTURE)).toEqual([]);
+  });
+
+  test('catches an editor without the rows for the Problems panel', () => {
+    const { problems: _dropped, ...rest } = fakeEditor();
+
+    expect(checkFenceEditor(rest, FIXTURE)).toEqual(['problems (Problems パネルの行の表) を持っていません']);
+  });
+
+  test('catches rows left on the fence line instead of the Markdown line', () => {
+    const unshifted = fakeEditor({
+      problems: (source) => (source.includes('読めない')
+        ? [{ kind: 'error', line: 2, text: '部品として読めません' }]
+        : []),
+    });
+
+    expect(checkFenceEditor(unshifted, FIXTURE)).toEqual(['読めない行を Markdown の 12 行目で返しません']);
+  });
+
+  test('catches a line number written into the text, which the Problems panel shows on its own', () => {
+    const numbered = fakeEditor({
+      problems: (source, fenceLine) => (source.includes('読めない')
+        ? [{ kind: 'error', line: fenceLine + 2, text: `${fenceLine + 2} 行目: 部品として読めません` }]
+        : []),
+    });
+
+    expect(checkFenceEditor(numbered, FIXTURE))
+      .toEqual(['problems の文面に行番号が付いています (Problems は行を別の欄に出す)']);
+  });
+
+  test('catches ERC rows that were not asked for, and errors on a readable fence', () => {
+    const noisy = fakeEditor({
+      problems: (_source, fenceLine) => [
+        { kind: 'error', line: fenceLine + 2, text: '部品として読めません' },
+        { kind: 'erc', line: fenceLine, text: 'つながっていません' },
+      ],
+    });
+
+    expect(checkFenceEditor(noisy, FIXTURE)).toEqual([
+      'ERC を頼んでいないのに problems が返します',
+      '読める見本に problems が error を返します',
+    ]);
   });
 
   test('catches a type that is offered but cannot be named', () => {
