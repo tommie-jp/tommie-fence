@@ -28,6 +28,10 @@ dist/
 # テスト生成物
 coverage/
 .vscode-test/
+# 本物の VS Code で回す試験の束 (`packages/tommie-fence/esbuild.e2e.mjs`)
+dist-test/
+# @vscode/test-web が落とす web 版の VS Code
+.vscode-test-web/
 
 # LaTeX ビルド生成物 (circuitikz の検証用に .tex を回すことがある)
 .latex-build/

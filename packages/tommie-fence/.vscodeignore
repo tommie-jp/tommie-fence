@@ -24,6 +24,10 @@ CLAUDE.md
 **/*.test.*
 **/*.log
 esbuild.mjs
+esbuild.e2e.mjs
+dist-test/**
+.vscode-test/**
+.vscode-test-web/**
 tsconfig.json
 tsconfig.tsbuildinfo
 vitest.config.ts
