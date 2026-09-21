@@ -99,6 +99,12 @@
         }
       }
     ],
+    "snippets": [
+      {
+        "language": "markdown",
+        "path": "./snippets/fences.json"
+      }
+    ],
     "commands": [
       {
         "command": "tommie-fence.openMap",

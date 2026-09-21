@@ -1,0 +1,58 @@
+{
+  "circuit fence": {
+    "prefix": ["circuit"],
+    "description": "Schematic — a circuit fence to start from (回路図のフェンス)",
+    "body": [
+      "```circuit",
+      "title: ${1:RC low-pass}",
+      "parts:",
+      "  IN:  port a1",
+      "  R1:  resistor a1 a2 10k",
+      "  C1:  capacitor a2 b2 100n",
+      "  OUT: port a3",
+      "  G1:  ground b2",
+      "wires:",
+      "  - a2 -- a3$0",
+      "```"
+    ]
+  },
+  "breadboard fence": {
+    "prefix": ["breadboard", "bread"],
+    "description": "Breadboard wiring — a breadboard fence to start from (ブレッドボードのフェンス)",
+    "body": [
+      "```breadboard",
+      "title: ${1:An LED and a resistor}",
+      "board: half",
+      "parts:",
+      "  R1: resistor a5 a10 330",
+      "  D1: led b12(A) b13(K) red",
+      "wires:",
+      "  - +t5 -- a5 red",
+      "  - a10 -- b12",
+      "  - c13 -- -t13 black$0",
+      "```"
+    ]
+  },
+  "perfboard fence": {
+    "prefix": ["perfboard", "perf"],
+    "description": "Perfboard layout — a perfboard fence to start from (ユニバーサル基板のフェンス)",
+    "body": [
+      "```perfboard",
+      "board: 16x8",
+      "title: ${1:An LED and a resistor}",
+      "points:",
+      "  VCC: a1",
+      "  GND: f1",
+      "parts:",
+      "  R1: resistor c3 c7 330",
+      "  D1: led c9 c11 red",
+      "wires:",
+      "  - VCC -- a3",
+      "  - a3 -- c3",
+      "  - c7 -- c9",
+      "  - c11 -- f11",
+      "  - f11 -- GND$0",
+      "```"
+    ]
+  }
+}
