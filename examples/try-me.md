@@ -78,9 +78,10 @@ derived, so `IN`, `OUT` and `GND` come out without being written down.
 ## Drag the parts instead of typing
 
 Every fence can also be edited with the mouse. Put the cursor inside one and run
-**"Breadboard Fence: 図を掴んで動かす (マップ)"** from the command palette
+**"tommie-fence: Fence: 図を掴んで動かす"** from the command palette
 (`Ctrl+Shift+P`), or reopen this file with the map editor: `Ctrl+Shift+P` →
-**"View: Reopen Editor With..."** → **breadboard Editor**.
+**"View: Reopen Editor With..."** → **Fence Editor**. One editor handles all
+three fences.
 
 The map is a grab layer, not the drawing. Dragging a part rewrites the address
 in the fence, so the text stays the source of truth.
