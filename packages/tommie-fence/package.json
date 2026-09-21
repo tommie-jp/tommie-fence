@@ -133,12 +133,18 @@
       ]
     },
     "configuration": {
-      "title": "circuit-fence",
+      "title": "tommie-fence",
       "properties": {
-        "circuitFence.map.noteFrame": {
+        "tommieFence.map.noteFrame": {
           "type": "boolean",
           "default": false,
           "description": "掴んで動かす升目で、notes: text を枠で囲む (既定は囲まない)。"
+        },
+        "circuitFence.map.noteFrame": {
+          "type": "boolean",
+          "default": false,
+          "description": "旧い名前。tommieFence.map.noteFrame を使う。",
+          "deprecationMessage": "tommieFence.map.noteFrame に改名しました (こちらも読み続けます)。"
         }
       }
     }

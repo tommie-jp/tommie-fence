@@ -7,6 +7,12 @@
  */
 export const registered: { commands: string[]; editors: string[] } = { commands: [], editors: [] };
 
+/**
+ * 利用者が書いた設定 (節 → 鍵 → 値)。**書いていない鍵は載せない** —
+ * 本物の `inspect` が「書いていない」と答える形を写すため。
+ */
+export const configuration: Record<string, Record<string, unknown>> = {};
+
 /** 受け止めた聞き手。テストが「その出来事が起きた」ことにするために使う。 */
 export const listeners: { selection: ((event: unknown) => void)[] } = { selection: [] };
 
@@ -61,8 +67,17 @@ export const workspace = {
   onDidCloseTextDocument() {
     return { dispose() {} };
   },
-  getConfiguration() {
-    return { get: () => undefined };
+  getConfiguration(section: string) {
+    // **書いてある値だけを返す。** 本物は `contributes` の既定値も返すが、
+    // 「書いていない」を見分ける手 (`inspect`) の試験には、書いた値だけが要る。
+    const written = (key: string): unknown => configuration[section]?.[key];
+    return {
+      get: (key: string) => written(key),
+      inspect: (key: string) => {
+        const value = written(key);
+        return value === undefined ? { key: `${section}.${key}` } : { key: `${section}.${key}`, globalValue: value };
+      },
+    };
   },
   applyEdit() {
     return Promise.resolve(true);

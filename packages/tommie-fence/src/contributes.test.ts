@@ -38,4 +38,14 @@ describe('3 つを 1 つに畳んだ contributes', () => {
     expect(ids).toContain('circuit-fence.movePart');
     expect(ids).toContain('circuit-fence.movePoint');
   });
+
+  test('renames the setting to tommieFence but keeps the old name, marked deprecated', () => {
+    // **一度公開した設定の名前も消さない** (`mapLook.ts` が両方を読む)。
+    const properties: Record<string, Record<string, unknown>> = manifest.contributes.configuration.properties;
+
+    expect(manifest.contributes.configuration.title).toBe('tommie-fence');
+    expect(properties['tommieFence.map.noteFrame']).toBeDefined();
+    expect(properties['tommieFence.map.noteFrame']?.['deprecationMessage']).toBeUndefined();
+    expect(properties['circuitFence.map.noteFrame']?.['deprecationMessage']).toBeTruthy();
+  });
 });
