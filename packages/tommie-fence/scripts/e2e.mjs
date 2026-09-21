@@ -12,6 +12,9 @@ import { runTests } from '@vscode/test-electron';
  */
 const here = (path) => fileURLToPath(new URL(path, import.meta.url));
 
+/** 試す VS Code の版。**下で `VSCODE_*` を外す前に読む** (外すと消える)。 */
+const version = process.env.VSCODE_TEST_VERSION ?? 'stable';
+
 /**
  * **VS Code の端末から回すと、親の VS Code の印を受け継いでいる。**
  * `ELECTRON_RUN_AS_NODE` が残っていると、落とした VS Code が Node として立ち、
@@ -24,7 +27,7 @@ for (const key of Object.keys(process.env)) if (!(key in env)) delete process.en
 
 try {
   await runTests({
-    version: process.env.VSCODE_TEST_VERSION ?? 'stable',
+    version,
     extensionDevelopmentPath: here('..'),
     extensionTestsPath: here('../dist-test/e2e/desktop.cjs'),
     launchArgs: [here('../../../examples'), '--disable-extensions', '--disable-workspace-trust', '--skip-welcome', '--skip-release-notes'],
