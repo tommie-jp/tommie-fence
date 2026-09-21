@@ -113,6 +113,8 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     name: e2e (tommie-fence)
+    # test-web はブラウザを立てられないと、終わらずに待ち続ける (実際に 20 分止まった)。
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -131,4 +133,8 @@ jobs:
             xvfb-run -a npm run test:e2e --workspace=tommie-fence
       # web 版は `@vscode/test-web` をその場で取る (Chromium を落とす依存を持つので、
       # devDependencies に入れると全 job の npm ci が Chromium を落とす)。
+      # **ブラウザは test-web が抱える playwright で入れる** (版が揃う)。npx で入れた
+      # だけでは落ちてこない。OS の依存もここで (--with-deps)。
+      - run: npx -y -p @vscode/test-web@0.0.81 -- playwright install --with-deps chromium
       - run: npm run test:web --workspace=tommie-fence
+        timeout-minutes: 10

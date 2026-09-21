@@ -35,7 +35,7 @@
     "check": "npm run typecheck && npm run test",
     "vscode:prepublish": "node scripts/assets.mjs && node esbuild.mjs --production",
     "test:e2e": "npm run build && node esbuild.e2e.mjs && node scripts/e2e.mjs",
-    "test:web": "npm run build && node esbuild.e2e.mjs && npx -y @vscode/test-web@0.0.81 --browserType=chromium --headless --quality=stable --port=3791 --extensionDevelopmentPath=. --extensionTestsPath=dist-test/e2e/web.cjs ../../examples"
+    "test:web": "npm run build && node esbuild.e2e.mjs && npx -y -p @vscode/test-web@0.0.81 -- playwright install chromium && npx -y @vscode/test-web@0.0.81 --browserType=chromium --headless --quality=stable --port=3791 --extensionDevelopmentPath=. --extensionTestsPath=dist-test/e2e/web.cjs ../../examples"
   },
   "dependencies": {
     "node-tikzjax": "^1.0.5",
