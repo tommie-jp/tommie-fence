@@ -1,5 +1,6 @@
 import { bodySize, drawBody, hasBody } from './bodies.ts';
 import type { BodyInk, BodyPart } from './bodies.ts';
+import { connectorBox, drawConnector, lookupConnector } from './connectors.ts';
 import { drawPackage, packageHalfWidth, packageReach } from './packages.ts';
 import { element } from '../markup.ts';
 import { num } from '../svg.ts';
@@ -45,6 +46,8 @@ export function partIcon(
     return frame(width, leads + drawBody(part, SPAN, ink));
   }
 
+  if (lookupConnector(type) !== null) return connectorIcon(type, options.variant ?? null, ink);
+
   const reach = packageReach(part, 18);
   const halfWidth = packageHalfWidth(part, 18);
   if (!isPackage(type)) return null;
@@ -54,6 +57,31 @@ export function partIcon(
       cx: 0, cy: 0, reach, halfWidth, side: 1,
       plate: options.plate ?? '#2c7a4b', chipBody: options.chip ?? '#2b2f36',
     }, ink),
+  );
+}
+
+/** コネクタを描くときの足の間隔 (図と同じ)。絵は枠の高さに合わせて縮める。 */
+const CONNECTOR_PITCH = 20;
+
+/**
+ * USB コネクタ。**図と同じ関数で、電源だけの 2 本足**を描く。変換基板ごとの姿は
+ * 枠より背が高いので、枠に合わせて縮める (字は読めなくてよい。形で選ぶ)。
+ */
+function connectorIcon(type: string, variant: string | null, ink: BodyInk | undefined): string {
+  const shape = {
+    type, variant, pitch: CONNECTOR_PITCH, facing: 'up' as const,
+    points: [{ x: 0, y: 0 }, { x: CONNECTOR_PITCH, y: 0 }],
+  };
+  const box = connectorBox(shape);
+  const scale = (HEIGHT - 2) / box.height;
+  const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  return frame(
+    Math.max(box.width * scale + 8, 28),
+    element(
+      'g',
+      { transform: `scale(${num(scale)}) translate(${num(-centre.x)} ${num(-centre.y)})` },
+      drawConnector({ ...shape, ...(ink === undefined ? {} : { ink }) }),
+    ),
   );
 }
 

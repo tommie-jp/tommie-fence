@@ -32,6 +32,13 @@ describe('パレットの絵', () => {
     }
   });
 
+  test('draws a usb connector with its breakout board, one picture per kind and look', () => {
+    const drawn = ['usb-a', 'usb-c'].flatMap((type) =>
+      [null, 'male'].map((variant) => partIcon(type, { variant })));
+    for (const icon of drawn) expect(icon).toContain('class="cf-icon"');
+    expect(new Set(drawn).size).toBe(drawn.length);
+  });
+
   test('says nothing for a kind it cannot draw, rather than dropping the row', () => {
     // 絵が無いことより、行が消えるほうが困る (呼ぶ側が名前だけで並べる)。
     expect(partIcon('dip8')).toBeNull();

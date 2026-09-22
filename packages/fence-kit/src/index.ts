@@ -32,6 +32,11 @@ export {
 } from './parts/bodies.ts';
 export { boardPartNames, lookupBoardPart } from './parts/boards.ts';
 export {
+  CONNECTOR_LOOKS, MIN_CONNECTOR_PINS, connectorBox, connectorFacing, connectorNames, connectorPinNames,
+  drawConnector, lookupConnector,
+} from './parts/connectors.ts';
+export type { Connector, ConnectorFacing, ConnectorShape } from './parts/connectors.ts';
+export {
   boardBox, boardChip, chipAlongX, dipBox, dipChip, sipBox, sipHeader,
 } from './parts/chips.ts';
 export type {
