@@ -3,7 +3,7 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
-## [Unreleased]
+## [0.10.0] - 2026-09-22
 
 ### Added
 

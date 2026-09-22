@@ -3,6 +3,14 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.7.0] - 2026-09-22
+
+### Added
+
+- **3 つのフェンスに USB コネクタ (`usb-a` / `usb-c`) が入った** (circuit-fence 0.9.0 /
+  breadboard-fence 0.10.0 / perfboard-fence 0.7.0)。マップのパレットにも絵つきで
+  出る。板の 2 つはパレットから 2 つの穴を結んで置く (電源だけの変換基板)。
+
 ## [0.6.1] - 2026-09-22
 
 ### Fixed
