@@ -77,6 +77,8 @@ style:             # 任意。見た目
 - 三端子レギュレータ `regulator` (足は `in` `gnd` `out`。番号でも可)
 - ピンヘッダ (足は番号)
   `sip2` `sip3` `sip4` `sip5` `sip6` `sip8` `sip10` `sip20` `sip40`
+- USB コネクタ (足は `VBUS` `GND` `D+` `D-`、Type-C は `CC1` `CC2` も。番号でも可)
+  `usb-a` `usb-c`
 - マイコンボード (足は実物の印字で `U1.GP0`。図には `01 GP0` と番号も出る)
   `pico` `pico-w` `pico2` `pico2-w`
 

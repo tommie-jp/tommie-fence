@@ -1,5 +1,5 @@
-import { lookupBoardPart } from 'fence-kit';
-import { REGULATOR_SHAPE, SMA_SHAPE } from './tex/shapes.ts';
+import { lookupBoardPart, lookupConnector } from 'fence-kit';
+import { REGULATOR_SHAPE, SMA_SHAPE, usbShapeName } from './tex/shapes.ts';
 import type { BoardPart } from 'fence-kit';
 /**
  * 部品の種類の表。パーサ (どう書けるか) と TeX 生成 (どう描くか) の両方がここを見る。
@@ -454,6 +454,35 @@ function sipchip(count: number): PartType {
   };
 }
 
+/**
+ * USB コネクタ。**記号は自分で宣言する** (`tex/shapes.ts`) — 箱の右に足、左に
+ * 差し込み口の形。足は表の全部 (fence-kit — 実体配線図の 2 つと**同じ名前・同じ順**)
+ * を出し、使わない足は ERC が言わない (`model/erc.ts`)。
+ *
+ * **名前でも番号でも**書ける (`J1.VBUS` `J1.1`)。書かれた綴りは小文字で引かれる
+ * ので、印字の綴りと小文字の両方を入れる。先に書いたほうが代表の名前になる
+ * (`mainPinName`) ので、実物の印字を先に置く。
+ *
+ * 反転も許す。名前は描き上がった SVG に差し込むので裏返らない (ボードと同じ)。
+ */
+function usbchip(type: 'usb-a' | 'usb-c'): PartType {
+  const names = lookupConnector(type)?.pins ?? [];
+  const anchors = names.map((name, index) => [name, `pin ${index + 1}`] as const);
+  return {
+    kind: 'multi-terminal',
+    symbol: usbShapeName(type) ?? type,
+    // `draw` が要る (宣言した形の輪郭は `\backgroundpath` にある。sip と同じ)。
+    options: ['draw', 'font=\\scriptsize'],
+    ...NO_UNIT,
+    pins: Object.fromEntries(anchors.flatMap(([name, anchor], index) => [
+      [name, anchor], [name.toLowerCase(), anchor], [`${index + 1}`, anchor],
+    ])),
+    // 全部が右の辺に上から並ぶ。**中心線には乗らない** (だから `pinRow`)。
+    pinRow: Object.fromEntries(anchors.map(([, anchor]) => [anchor, 'right' as const])),
+    pinLabels: names,
+  };
+}
+
 export const PART_TYPES = {
   // 受動部品
   resistor: { kind: 'two-terminal', symbol: 'R', unitTex: OHM, unitSi: SI_OHM },
@@ -730,6 +759,10 @@ export const PART_TYPES = {
   sip20: sipchip(20),
   sip40: sipchip(40),
 
+  // USB コネクタ。**表は実体配線図の 2 つと共通** (fence-kit)。
+  'usb-a': usbchip('usb-a'),
+  'usb-c': usbchip('usb-c'),
+
   // マイコンボード。**表は実体配線図の 2 つと共通** (fence-kit)。
   pico: boardchip(lookupBoardPart('pico') as BoardPart),
   'pico-w': boardchip(lookupBoardPart('pico-w') as BoardPart),
@@ -839,6 +872,9 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   regulator: '三端子レギュレータ',
   buzzer: 'ブザー',
   sma: 'SMA コネクタ',
+  // 実体配線図の 2 つと同じ字。
+  'usb-a': 'USB Type-A コネクタ',
+  'usb-c': 'USB Type-C コネクタ',
   // 製品名は実体配線図の 2 つと同じ字 (fence-kit の表)。
   pico: 'Pico',
   'pico-w': 'Pico W',
@@ -949,6 +985,8 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   regulator: 'U',
   buzzer: 'B',
   sma: 'J',
+  'usb-a': 'J',
+  'usb-c': 'J',
   pico: 'U',
   'pico-w': 'U',
   pico2: 'U',

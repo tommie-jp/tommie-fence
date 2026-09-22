@@ -177,3 +177,40 @@ style:
 
 ワイパーは記号の**真上**に出るので、そのまま `--` で上の番地へ引ける。
 ゲートは横にずれた位置にあるので、ほかの足と同じく `|-` で直角に入れる。
+
+## USB コネクタ
+
+`usb-a` / `usb-c` は**箱の右に足が並び、左に差し込み口の形**が出る
+(Type-C は長丸、Type-A は角)。足は名前で指す (`J1.VBUS` `J1.CC1`)。
+名前と順は実体配線図の 2 つと同じで、番号でも書ける (`J1.1`)。
+
+Type-C の受け口から 5V をもらうには、**CC1 と CC2 を 5.1kΩ でグラウンドへ落とす**
+(つないだ相手が「電流を受け取る機器」だと分かって、VBUS に電圧を出す)。
+使わない `D+` `D-` は空けたままでよく、ERC も言わない。
+
+```circuit
+title: 図05 USB-C から 5V をもらう
+parts:
+  J1: usb-c d2
+  R1: resistor b4 b6 330
+  D1: led b6 b8
+  R2: resistor e5 g5 5.1k
+  R3: resistor e4 g4 5.1k
+  G1: ground g8
+wires:
+  - J1.VBUS -| b4
+  - b8 -- g8
+  - J1.GND -| g6
+  - J1.CC1 -| e5
+  - J1.CC2 -| e4
+  - g4 -- g8
+style:
+  grid: on
+```
+
+![図05 USB-C から 5V をもらう](out/03-multi-terminal-5.png)
+
+| 種類 | 足 |
+| --- | --- |
+| `usb-a` | `VBUS` `GND` `D+` `D-` (`1` 〜 `4`) |
+| `usb-c` | `VBUS` `GND` `D+` `D-` `CC1` `CC2` (`1` 〜 `6`) |

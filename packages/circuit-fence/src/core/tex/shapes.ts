@@ -1,3 +1,4 @@
+import { lookupConnector } from 'fence-kit';
 import { num } from './num.ts';
 
 /**
@@ -187,6 +188,94 @@ export function smaShapeTex(): string[] {
     '  }',
     '  \\foregroundpath{',
     `    \\pgfpathcircle{\\pgfpointorigin}{${num(SMA_CORE)}cm}`,
+    '    \\pgfusepath{fill}',
+    '  }',
+    '}',
+    '\\makeatother',
+  ];
+}
+
+/**
+ * USB コネクタ (`usb-a` / `usb-c`)。**箱の右に足が並び、左に差し込み口**という
+ * 置き方 (KiCad の USB の記号と同じ)。circuitikz 1.0 にコネクタの記号は無いので
+ * 宣言する。足の数は表の長さ (fence-kit。Type-A は 4 本、Type-C は 6 本) で、
+ * 名前は箱の中に書く (`pinLabels`。字は SVG に差し込む — 約束 7)。
+ *
+ * **口の形で種類を見分ける** — 正面から見た穴の形で、Type-C は長丸、Type-A は
+ * 角に舌が片側へ寄った形。回路図でオス・メスは描き分けない (足の意味は同じ)。
+ *
+ * 足はどれも**中心線に乗らない** (`pinRow`)。足の間隔と箱の縦はピンヘッダと同じ。
+ */
+const USB_HALF_WIDTH = 0.95;
+const USB_LEAD = 0.4;
+/** 口の中心。箱の左寄り (右半分は足の名前が入る)。 */
+const USB_MOUTH_X = -0.5;
+
+const USB_SHAPES: Readonly<Record<string, string>> = { 'usb-a': 'usbacon', 'usb-c': 'usbccon' };
+
+/** その種類の記号の名前。USB でなければ null。 */
+export const usbShapeName = (type: string): string | null =>
+  (Object.hasOwn(USB_SHAPES, type) ? USB_SHAPES[type] ?? null : null);
+
+const point = (x: number, y: number): string => `\\pgfpoint{${num(x)}cm}{${num(y)}cm}`;
+const rectangle = (x0: number, y0: number, x1: number, y1: number): string =>
+  `\\pgfpathrectanglecorners{${point(x0, y0)}}{${point(x1, y1)}}`;
+
+/**
+ * 差し込み口の輪郭 (線) と舌 (塗り)。Type-C は縦に長い長丸の中に細い舌、
+ * Type-A は縦長の角の中に、片側へ寄った舌。
+ */
+function usbMouth(round: boolean): { readonly outline: string[]; readonly tongue: string } {
+  const cx = USB_MOUTH_X;
+  if (round) {
+    const [r, straight] = [0.14, 0.34];
+    return {
+      outline: [
+        `    \\pgfpathmoveto{${point(cx - r, -straight)}}`,
+        `    \\pgfpathlineto{${point(cx - r, straight)}}`,
+        `    \\pgfpatharc{180}{0}{${num(r)}cm}`,
+        `    \\pgfpathlineto{${point(cx + r, -straight)}}`,
+        `    \\pgfpatharc{0}{-180}{${num(r)}cm}`,
+        '    \\pgfpathclose',
+      ],
+      tongue: rectangle(cx - 0.035, -0.26, cx + 0.035, 0.26),
+    };
+  }
+  const [halfW, halfH] = [0.17, 0.44];
+  return {
+    outline: [`    ${rectangle(cx - halfW, -halfH, cx + halfW, halfH)}`],
+    tongue: rectangle(cx - halfW + 0.05, -halfH + 0.09, cx - 0.01, halfH - 0.09),
+  };
+}
+
+export function usbShapeTex(type: string): string[] {
+  const name = usbShapeName(type);
+  const pins = lookupConnector(type)?.pins.length ?? 0;
+  if (name === null || pins === 0) return [];
+
+  const [w, lead] = [USB_HALF_WIDTH, USB_LEAD];
+  const half = halfHeightOf(pins);
+  const legs = Array.from({ length: pins }, (_, index) => index + 1);
+  const mouth = usbMouth(type === 'usb-c');
+
+  return [
+    '\\makeatletter',
+    `\\pgfdeclareshape{${name}}{`,
+    '  \\anchor{center}{\\pgfpointorigin}',
+    '  \\anchor{text}{\\pgfpointorigin}',
+    ...edgeAnchors(w, half),
+    ...legs.flatMap((at) => [
+      `  \\anchor{pin ${at}}{${point(w + lead, pinYOf(pins, at))}}`,
+      `  \\anchor{bpin ${at}}{${point(w, pinYOf(pins, at))}}`,
+    ]),
+    '  \\backgroundpath{',
+    `    ${rectangle(-w, -half, w, half)}`,
+    ...legs.map((at) =>
+      `    \\pgfpathmoveto{${point(w, pinYOf(pins, at))}}\\pgfpathlineto{${point(w + lead, pinYOf(pins, at))}}`),
+    ...mouth.outline,
+    '  }',
+    '  \\foregroundpath{',
+    `    ${mouth.tongue}`,
     '    \\pgfusepath{fill}',
     '  }',
     '}',

@@ -3,6 +3,24 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Added
+
+- **USB コネクタ (`usb-a` / `usb-c`) を置けるようになった。** 箱の右に足が並び、
+  左に**正面から見た差し込み口**を描く (Type-C は長丸、Type-A は角)。
+  circuitikz に記号が無いので宣言した (実機の TeX で確かめてある)。
+  足は `VBUS` `GND` `D+` `D-`、Type-C は `CC1` `CC2` も。**名前でも番号でも**
+  指せる (`J1.VBUS` / `J1.1`。大文字でも小文字でもよい)。名前と順は
+  breadboard / perfboard と同じ表から出す。**使わない足は ERC が言わない** —
+  電源だけの回路で `D+` `D-` を毎回叱られないように。オス・メスは描き分けない
+  (足の意味は同じ。実体配線図のほうで描き分ける)。
+
+### Fixed
+
+- README と文法リファレンスの部品の数が 77 種類のままだった (実際は 98)。
+  USB の 2 つを足して 100 種類と書き直した。
+
 ## [0.8.0] - 2026-09-21
 
 ### Added

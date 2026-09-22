@@ -20,7 +20,7 @@ import { NOTE_MARK_TEXT, noteFontTex, texColorOf } from '../notes.ts';
 import { escapeTex, hasUnicode } from './escape.ts';
 import { isMathLabel, mathInnerOf, mathLabelTex } from './mathLabel.ts';
 import { num } from './num.ts';
-import { regulatorShapeTex, sipShapeTex, smaShapeTex } from './shapes.ts';
+import { regulatorShapeTex, sipShapeTex, smaShapeTex, usbShapeName, usbShapeTex } from './shapes.ts';
 
 /**
  * 生成した TeX と、その行が元の YAML の何行目から来たかの対応。
@@ -189,9 +189,14 @@ function sipShapesFor(circuit: Circuit): string[] {
   const withReg = circuit.parts.some((part) => part.type === 'regulator')
     ? [...declared, ...regulatorShapeTex()]
     : declared;
-  return circuit.parts.some((part) => part.type === 'sma')
+  const withSma = circuit.parts.some((part) => part.type === 'sma')
     ? [...withReg, ...smaShapeTex()]
     : withReg;
+  // USB も自分で宣言した形。**使う種類だけ、1 回ずつ**。
+  const usb = [...new Set(circuit.parts.map((part) => part.type))]
+    .filter((type) => usbShapeName(type) !== null)
+    .sort();
+  return [...withSma, ...usb.flatMap((type) => usbShapeTex(type))];
 }
 
 const FOOTER = ['\\end{circuitikz}', '\\end{document}'];

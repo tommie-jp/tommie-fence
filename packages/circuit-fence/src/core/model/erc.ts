@@ -1,4 +1,5 @@
 import { fenceError, safeToken } from '../errors.ts';
+import { lookupConnector } from 'fence-kit';
 import { lookupPartType, mainPinName, pinPlaces } from '../parts.ts';
 import type { Circuit } from './circuit.ts';
 import type { Net } from './nets.ts';
@@ -33,8 +34,14 @@ const MAX_SHOWN = 4;
  */
 const PACKAGED = /^(dip|sip)\d+$/;
 
+/**
+ * **コネクタも余った足を言わない** — USB の D+ / D- は電源だけの回路では使わず、
+ * 足は差し出しているだけで、全部つなげという部品ではない。Type-A は 4 本なので
+ * 上の「5 本以上」には掛からない (52 の docs/58)。
+ */
 const isPackaged = (part: PartSpec): boolean =>
-  PACKAGED.test(part.type) || (lookupPartType(part.type)?.pinLabels?.length ?? 0) > 4;
+  PACKAGED.test(part.type) || lookupConnector(part.type) !== null
+  || (lookupPartType(part.type)?.pinLabels?.length ?? 0) > 4;
 
 /**
  * どこにも届いていない足。**自分しか乗っていないまとまり**にいて、しかも

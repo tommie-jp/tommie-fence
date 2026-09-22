@@ -253,8 +253,8 @@ Design commitments and working rules are in [CLAUDE.md](CLAUDE.md) (Japanese).
 
 ## Status
 
-Phase 3. 77 parts in all (4 one-terminal symbols, 44 two-terminal parts,
-29 multi-terminal parts). Done so far: `--` / `-|` / `|-` wires, pin
+Phase 3. 100 parts in all (4 one-terminal symbols, 44 two-terminal parts,
+52 multi-terminal parts, USB connectors among them). Done so far: `--` / `-|` / `|-` wires, pin
 references (`U1.out`), junction dots, T connections, overlap detection,
 `points:` (names for addresses), addresses between grid points (`a1a5`),
 orientation for multi-terminal parts and `ground` (`r90` / `r180` / `r270` /
