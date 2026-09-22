@@ -7,6 +7,7 @@
  * 「コンデンサだ」と分かるのは色、「どのコンデンサか」は形で読ませる。
  */
 
+import { CONNECTOR_LOOKS, connectorNames } from 'fence-kit';
 import { resolveAlias } from './aliases.ts';
 
 export type PartType = {
@@ -51,6 +52,8 @@ const VARIANTS: Record<string, readonly string[]> = {
   sma: ['male', 'female'],
   // 平たい缶 (HC-49) と円筒 (時計用の 32.768kHz などに多い)。輪郭がまるで違う。
   crystal: ['hc49', 'cylinder'],
+  // USB は差し込み (オス) と受け口 (メス)。**書かなければ受け口**。
+  ...Object.fromEntries(connectorNames().map((type) => [type, CONNECTOR_LOOKS])),
 };
 
 /**

@@ -54,13 +54,20 @@ export type LayoutOptions = {
   readonly labelRight?: boolean;
   readonly labelBottom?: boolean;
   /**
-   * 番地で置いた機器が、板の上と下へはみ出す高さ。**帯とは別に空ける** —
+   * 番地で置いた機器と USB コネクタが、板の上と下へはみ出す高さ。**帯とは別に空ける** —
    * 空けないと、上は題に、下は書き出しや半田面に重なる。
    * 板からの距離は番地で決まっていて、板がどこに来ても変わらないので、
    * 一度測った値をそのまま渡してよい。
    */
   readonly deviceAbove?: number;
   readonly deviceBelow?: number;
+  /**
+   * そのうち USB コネクタが**板のすぐ外**に要る高さ。機器の帯はこの外側へ置く —
+   * 帯は板のすぐ上 (下) に置くので、そのままだと張り出したコネクタと重なる。
+   * 空ける量そのものは `deviceAbove` / `deviceBelow` に含めて渡す (大きいほう)。
+   */
+  readonly partsAbove?: number;
+  readonly partsBelow?: number;
 };
 
 /** 板の外の機器を並べる帯。 */
@@ -108,6 +115,8 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   const back = options.back ?? null;
   const deviceAbove = Math.max(0, options.deviceAbove ?? 0);
   const deviceBelow = Math.max(0, options.deviceBelow ?? 0);
+  const partsAbove = Math.min(deviceAbove, Math.max(0, options.partsAbove ?? 0));
+  const partsBelow = Math.min(deviceBelow, Math.max(0, options.partsBelow ?? 0));
   const boardX = OUTER_MARGIN + LABEL_GUTTER;
   const boardY = OUTER_MARGIN + LABEL_GUTTER + titleBand + topBand + deviceAbove;
 
@@ -158,10 +167,10 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
     titleBaseline: OUTER_MARGIN + titleBand - 6,
     deviceBands: {
       top: options.deviceTop === true
-        ? { x: boardX, y: boardY - topBand, width: boardWidth, height: DEVICE_BAND }
+        ? { x: boardX, y: boardY - partsAbove - topBand, width: boardWidth, height: DEVICE_BAND }
         : null,
       bottom: options.deviceBottom === true
-        ? { x: boardX, y: boardY + boardHeight + DEVICE_GAP, width: boardWidth, height: DEVICE_BAND }
+        ? { x: boardX, y: boardY + boardHeight + partsBelow + DEVICE_GAP, width: boardWidth, height: DEVICE_BAND }
         : null,
     },
     legendBand: legend === null

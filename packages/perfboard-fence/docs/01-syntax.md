@@ -229,7 +229,7 @@ wires:
 **名前**は英数字と `_` `-` で 32 字まで。配線から指せる形にする。
 **同じ名前は 1 つだけ** — 2 つあると、配線がどちらを指すのか決まらない。
 
-**種類**は 2 本足が 27、3 本足が 6、それに `dipN` / `sipN` とマイコンボード。
+**種類**は 2 本足が 27、3 本足が 6、それに USB コネクタ、`dipN` / `sipN` とマイコンボード。
 
 ```text
 2 本足  resistor  capacitor  led  diode  inductor  crystal  buzzer
@@ -238,6 +238,7 @@ wires:
         speaker  mic  battery  solar  switch (a 接点)  switch-nc (b 接点)
 3 本足  transistor  potentiometer  thyristor  triac  slide-switch  regulator
 4 本足  transformer
+USB     usb-a  usb-c (穴は VBUS GND D+ D- CC1 CC2 の順に 2 つから)
 パッケージ  button (a 接点)  button-nc (b 接点)  dip4〜dip40 (偶数)  sip2〜sip40
 ボード      pico  pico-w  pico2  pico2-w
 ```
@@ -252,6 +253,7 @@ wires:
 | 2 本足 | 2 つ | 書かれたとおり |
 | 3 本足 | 3 つ | 書かれたとおり (足は曲げられる) |
 | 4 本足 | 4 つ | 書かれたとおり (巻線の端の並びは品ごとに違う) |
+| USB (`usb-a` / `usb-c`) | 2 つから (Type-A は 4 つ、Type-C は 6 つまで) | 書かれたとおり。足の名前は書いた順に `VBUS GND D+ D-` (`CC1 CC2`) |
 | `button` | 1 つ (左上の足) | パッケージが決める。4 本が 2 穴角の四角に並ぶ |
 | `dipN` | 1 つ (1 番ピン) | パッケージが決める。2 列の間隔は 300 mil = 3 穴 |
 | `sipN` | 1 つ (1 番ピン) | パッケージが決める。1 列に並ぶ |
@@ -268,6 +270,7 @@ DIP の番号は実物と同じ付き方 — 1 番ピンから右へ、折り返
 書ける姿は `capacitor` が `ceramic` `film` `electrolytic` `tantalum`、
 `led` が `3mm` `5mm`、3 本足の 4 種が `to92` `to220` (トランジスタは `sot23-dip` も)、
 `crystal` が `hc49` `cylinder`、`sma` が `male` `female` `male-edge` `female-edge`、
+`usb-a` と `usb-c` が `male` `female` (差し込み・受け口。書かなければ受け口)、
 `resistor` が `quarter` `half` (1/4W・1/2W)、
 ダイオードの仲間が `do35` `do41` (ガラス管・黒いプラスチック)、
 `inductor` が `axial` `radial` (軸物・立てた缶)、
@@ -314,6 +317,29 @@ LED は値を色として読む (`red` `green` `blue` `yellow` `white` `orange`)
 ただし**どの板にも載らない番地は書き間違いではない**。型番は番地とそっくりの
 綴りをしていて (`NE555` は ne 行 555 列、`C1815` は c 行 1815 列)、番地として
 弾くと正しい図が毎回叱られる。上限 (120 列 × 120 行) を超える綴りは型番のほう。
+
+### USB コネクタ (`usb-a` / `usb-c`)
+
+USB の受け口・差し込みを**変換基板ごと**描く。Type-C の受け口は面実装で穴に
+挿せないので、実物も変換基板に載せてから挿す。図は
+[examples/09-usb.md](../examples/09-usb.md)。
+
+**穴は足の名前の順に書く** — `VBUS GND D+ D-`、Type-C はそのあと `CC1 CC2`。
+**書いた数だけ足がある**ので、電源だけの変換基板は 2 つ
+(`J1: usb-c/female a11 a10`)、USB 2.0 は 4 つ、Type-C の CC まで 6 つ。
+足の並びは製品ごとに違うので決め打たず、**書いた穴がそのまま足**になる
+(表の順に並べ替えて書く。`J1: usb-a c3 c6 c5 c4` なら c3 が VBUS、c6 が GND)。
+
+- **足の名前はネットリストと ERC に出る** (`J1.VBUS`)。配線は足の穴へ引く
+  (部品の足を名前で指せるのは板の外の機器だけ — ほかの部品と同じ)。
+- 書かなかった足は無いものとして扱う。**書いた足がどこにもつながっていなければ
+  ERC が言う** (`J1.D+`)。使わないなら書かない。
+- **差し込み口は板の中心から遠い側**を向く — 縁の近くに置けば、そのまま縁を向く。
+  板からはみ出すぶんは、題と板の間 (下なら板の下) を空けて描く
+  (切って描くと、図を見た人は切れたことに気づけない)。
+- 姿は `male` (差し込み。金物が変換基板の縁から出る) と `female` (受け口、既定)。
+  足の名前は変換基板に刷る。
+- breadboard・circuit とも**同じ種類名・同じ足の名前**で書ける。
 
 ### 部品の向き (`r90` / `r180` / `r270` / `mirror`)
 

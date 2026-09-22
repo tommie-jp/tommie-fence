@@ -1,5 +1,5 @@
-import type { BoardPart } from 'fence-kit';
-import { boardPartNames, lookupBoardPart } from 'fence-kit';
+import type { BoardPart, Connector } from 'fence-kit';
+import { boardPartNames, connectorNames, lookupBoardPart, lookupConnector } from 'fence-kit';
 import { aliasNames } from '../parts/aliases.ts';
 import { safeToken } from '../errors.ts';
 
@@ -14,6 +14,11 @@ export type Footprint =
   | { readonly kind: 'dip'; readonly pins: number }
   | { readonly kind: 'sip'; readonly pins: number }
   | { readonly kind: 'board'; readonly board: BoardPart }
+  /**
+   * USB コネクタ。**書いた穴がそのまま足**で、数は 2 から表の長さまで。
+   * 足の名前は書いた順に表から当てる (表は fence-kit。perfboard と同じもの)。
+   */
+  | { readonly kind: 'connector'; readonly connector: Connector }
   | { readonly kind: 'device' };
 
 /**
@@ -77,6 +82,9 @@ export function lookupFootprint(type: string): Footprint | null {
   const board = lookupBoardPart(type);
   if (board) return { kind: 'board', board };
 
+  const connector = lookupConnector(type);
+  if (connector) return { kind: 'connector', connector };
+
   const dip = DIP_PATTERN.exec(type);
   if (dip) {
     const pins = Number(dip[1]);
@@ -113,7 +121,7 @@ export const packageTypes = (): readonly string[] => [
 ];
 
 export const placeableTypes = (): readonly string[] => [
-  ...TWO_LEAD_TYPES, ...THREE_LEAD_TYPES, ...FOUR_LEAD_TYPES, ...SWITCH_TYPES, ...packageTypes(),
+  ...TWO_LEAD_TYPES, ...THREE_LEAD_TYPES, ...FOUR_LEAD_TYPES, ...SWITCH_TYPES, ...connectorNames(), ...packageTypes(),
 ];
 
 export const knownPartTypes = (): readonly string[] => [
@@ -121,6 +129,7 @@ export const knownPartTypes = (): readonly string[] => [
   ...THREE_LEAD_TYPES,
   ...FOUR_LEAD_TYPES,
   ...SWITCH_TYPES,
+  ...connectorNames(),
   'dipN',
   'sipN',
   ...boardPartNames(),

@@ -3,6 +3,18 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Added
+
+- **USB コネクタ (`usb-a` / `usb-c`) を置けるようになった。** 受け口・差し込みを
+  **変換基板ごと**描く (Type-C の受け口は面実装で穴に挿せないので、実物も
+  変換基板に載せてから挿す)。穴は `VBUS GND D+ D-`、Type-C はそのあと `CC1 CC2`
+  の順に **2 つから**書き、**書いた数だけ足がある** — 電源だけの変換基板は 2 つで
+  書ける。足は名前で配線から指せる (`J1.VBUS`)。姿は `male` (差し込み) と
+  `female` (受け口、既定)。**差し込み口は溝の反対側**を向き、板からはみ出すぶんは
+  画布を伸ばす。種類名と足の名前は circuit / perfboard と同じ。
+
 ## [0.9.0] - 2026-09-21
 
 ### Added

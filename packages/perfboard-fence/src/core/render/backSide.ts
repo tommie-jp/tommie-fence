@@ -36,13 +36,23 @@ const GHOST = 0.35;
 /** 見出し。表の図と取り違えると、部品の左右が入れ替わったまま組むことになる。 */
 export const BACK_CAPTION = '半田面 (裏返した板)';
 
-/** 半田面の板を置くための寸法。表と同じ形なので、大きさも同じ。 */
-export const backSideLayout = (board: Board, labels: ResolvedLabels): Layout =>
+/**
+ * 半田面の板を置くための寸法。表と同じ形なので、大きさも同じ。
+ * **板の上下へ張り出す部品のぶんも表と同じだけ空ける** — 裏返すのは左右だけなので、
+ * 上の縁から出たコネクタは裏でも上の縁から出る。
+ */
+export const backSideLayout = (
+  board: Board,
+  labels: ResolvedLabels,
+  overhang: { readonly above: number; readonly below: number } = { above: 0, below: 0 },
+): Layout =>
   createLayout(board, {
     mirror: true,
     title: true,
     labelRight: labels.sides.includes('right'),
     labelBottom: labels.sides.includes('bottom'),
+    deviceAbove: overhang.above,
+    deviceBelow: overhang.below,
   });
 
 export function renderBackSide(

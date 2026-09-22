@@ -17,6 +17,7 @@ GitHub のようにフェンスが描画されない場所で、書き方と出�
 | [06-ic.md](06-ic.md) | DIP・SIP・3 本足の部品 |
 | [07-device.md](07-device.md) | 板の外の機器 (`device`。電池・スピーカーなど) |
 | [08-notes.md](08-notes.md) | 注釈 (`notes:`) と、テーマ・幅 (`style:`) |
+| [09-usb.md](09-usb.md) | USB コネクタ (`usb-a` / `usb-c`)。電源だけの変換基板と、種類と姿 |
 
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではない。

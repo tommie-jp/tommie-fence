@@ -1,6 +1,7 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
 import { boardBodyRect, renderBoardPart } from './boardPart.ts';
+import { connectorBodyRect, renderConnector } from './connector.ts';
 import {
   fourLeadBodyRect, renderDip, renderPushbutton, renderSip, renderTransformer, sipBarRect, switchBodyRect,
 } from './packages.ts';
@@ -32,6 +33,7 @@ export function partObstacles(
   if (part.kind === 'sip') return [sipBarRect(part, layout)];
   if (part.kind === 'switch') return [switchBodyRect(part, layout), ...bands];
   if (part.kind === 'four-lead') return [fourLeadBodyRect(part, layout), ...bands];
+  if (part.kind === 'connector') return [connectorBodyRect(part, layout), ...bands];
 
   const points = part.pins
     .map((pin) => (pin.address ? layout.point(pin.address) : null))
@@ -109,6 +111,7 @@ export function renderPart(
   if (part.kind === 'sip') return renderSip(part, layout, theme);
   if (part.kind === 'switch') return renderPushbutton(part, layout, theme, drop);
   if (part.kind === 'four-lead') return renderTransformer(part, layout, theme, drop);
+  if (part.kind === 'connector') return renderConnector(part, layout, theme, drop);
   if (part.kind === 'board') return renderBoardPart(part, layout, theme, drop);
   if (part.kind === 'three-lead') return renderThreeLead(part, layout, theme, drop);
   // 機器 (device) は帯の中に別の描き方で置くので、ここには来ない。

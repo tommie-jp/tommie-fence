@@ -19,6 +19,7 @@ import { layoutDevices } from './render/devices.ts';
 import type { DevicePlacement } from './render/devices.ts';
 import type { NoteAnchor, ResolvedNote } from './render/notes.ts';
 import { captionDrops } from './render/captions.ts';
+import { connectorOverhang } from './render/connector.ts';
 import { partObstacles } from './render/parts.ts';
 import { renderErrorBanner } from './render/errorHtml.ts';
 import { DEFAULT_WIRE_COLOR, wireColor as lookupWireColor, wireColorNames } from './render/palette.ts';
@@ -126,6 +127,9 @@ export type RenderOptions = {
   readonly offset?: number;
 };
 
+/** 板から張り出した部品と画布の縁の間に残す余白。縁に貼り付くと切れて見える。 */
+const OVERHANG_MARGIN = 8;
+
 export function renderBreadboard(input: string, options: RenderOptions = {}): RenderResult {
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
   const source = normalizeNewlines(input);
@@ -141,10 +145,19 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
 
   const placed = placement.parts;
   const devices = placed.filter((part) => part.kind === 'device');
-  const layout = createLayout(board, {
+  const bands = {
     deviceTop: devices.some((device) => device.at !== 'bottom'),
     deviceBottom: devices.some((device) => device.at === 'bottom'),
-  });
+  };
+  // **板の縁から張り出す USB コネクタのぶん、画布を伸ばす。** 一度組んで測り、
+  // はみ出すときだけ組み直す (はみ出さない図は 1 バイトも変わらない)。
+  const bare = createLayout(board, bands);
+  const jut = connectorOverhang(placed, bare, OVERHANG_MARGIN);
+  const layout = Object.values(jut).every((value) => value === 0)
+    ? bare
+    : createLayout(board, {
+      ...bands, overhangTop: jut.top, overhangBottom: jut.bottom, overhangLeft: jut.left, overhangRight: jut.right,
+    });
 
   // 配線と足が同じ穴を取り合う部品を、同じ列の空いた行へ寄せる。
   // resolveWire より前に済ませるので、ピン参照 (`Re.2`) の配線は寄せた後の穴に付く。

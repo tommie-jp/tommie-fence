@@ -16,7 +16,7 @@ export type PlaceableName =
   | 'resistor' | 'capacitor' | 'led' | 'diode' | 'inductor' | 'crystal' | 'buzzer'
   | 'photoresistor' | 'thermistor' | 'thermistor-ntc' | 'thermistor-ptc' | 'varistor'
   | 'zener' | 'schottky' | 'photodiode' | 'varicap' | 'diac'
-  | 'reed' | 'fuse' | 'lamp' | 'sma'
+  | 'reed' | 'fuse' | 'lamp' | 'sma' | 'usb-a' | 'usb-c'
   | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
   | 'button' | 'button-nc' | 'transformer'
   | 'transistor' | 'potentiometer' | 'thyristor' | 'triac' | 'slide-switch' | 'regulator';
@@ -44,6 +44,8 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   fuse: 'ヒューズ',
   lamp: 'ランプ',
   sma: 'SMA コネクタ',
+  'usb-a': 'USB Type-A コネクタ',
+  'usb-c': 'USB Type-C コネクタ',
   transistor: 'トランジスタ',
   potentiometer: 'ポテンショメータ',
   thyristor: 'サイリスタ (SCR)',
@@ -87,6 +89,8 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   fuse: 'F',
   lamp: 'LP',
   sma: 'J',
+  'usb-a': 'J',
+  'usb-c': 'J',
   transistor: 'Q',
   potentiometer: 'VR',
   thyristor: 'T',
@@ -133,6 +137,7 @@ export function partPrefix(type: string): string | null {
 /**
  * その種類に書く穴の数。**形が決める** (`footprint.ts`)。
  * 姿で変わるもの (端面実装の `sma` は 3 本) は、既定の姿の数を返す。
+ * 数を選べるもの (USB は 2〜6 本) は最少の数 — パレットからは電源の 2 本で置く。
  */
 export function holesOf(type: string): number {
   const footprint = footprintOf(type, null);

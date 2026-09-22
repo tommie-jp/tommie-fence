@@ -59,6 +59,7 @@ notes:                 # 任意。図に重ねる印と字
          speaker mic battery solar switch switch-nc
 3 本足   transistor potentiometer slide-switch thyristor triac regulator
 4 本足   transformer
+USB      usb-a usb-c (穴は VBUS GND D+ D- CC1 CC2 の順に 2 つから)
 まとまり  button button-nc dipN (4〜40 の偶数) sipN (2〜40)
 ボード    pico pico-w pico2 pico2-w
 ボード外  device
@@ -70,7 +71,7 @@ notes:                 # 任意。図に重ねる印と字
 capacitor/ceramic  capacitor/film  capacitor/electrolytic  capacitor/tantalum
 led/3mm  led/5mm
 transistor/to92  transistor/to220  transistor/sot23-dip  thyristor/…  triac/…  regulator/…
-sma/male  sma/female
+sma/male  sma/female  usb-a/male  usb-a/female  usb-c/male  usb-c/female
 crystal/hc49  crystal/cylinder
 resistor/quarter  resistor/half        diode/do35  diode/do41  (zener/…  schottky/…)
 inductor/axial  inductor/radial        potentiometer/trimmer  potentiometer/knob

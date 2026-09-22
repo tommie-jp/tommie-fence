@@ -1,4 +1,5 @@
-import { boardBox, crystalCan, dipBox, sipBox } from 'fence-kit';
+import { boardBox, connectorBox, connectorFacing, crystalCan, dipBox, sipBox } from 'fence-kit';
+import type { ConnectorShape } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import { footprintOf } from '../parts/footprint.ts';
 import { isEdgeMount } from '../parts/types.ts';
@@ -202,8 +203,56 @@ const isBoxed = (part: PlacedPart): boolean => {
     || kind === 'three-lead' || kind === 'four-lead';
 };
 
+/**
+ * USB コネクタの形。**差し込み口は板の中心から遠い側**を向く — ケーブルを板の
+ * 外へ出す置き方が普通で、縁の近くに置けばそのまま縁を向く (52 の docs/58)。
+ *
+ * 向きは**図の上の点**で決める。半田面は列を反転して描くので、表で右の縁を
+ * 向いたコネクタは裏では左の縁を向く — 実物の同じ縁なので、それで正しい。
+ */
+export function connectorShapeOf(part: PlacedPart, layout: Layout): ConnectorShape {
+  const points = part.pins.map((pin) => layout.point(pin.address));
+  const { x, y, width, height } = layout.board;
+  return {
+    type: part.type,
+    variant: part.variant,
+    points,
+    pitch: layout.pitch,
+    facing: connectorFacing(points, { x: x + width / 2, y: y + height / 2 }),
+  };
+}
+
+/**
+ * USB コネクタが板の上下へ張り出す分。**図を組む前に測って、板の上下に空ける** —
+ * 画布を広げるだけでは、上は題に、下は半田面や書き出しに重なる
+ * (番地で置いた機器と同じ扱い。`render/devices.ts` の `deviceOverhang`)。
+ * 左右へ張り出すぶんは画布を横に広げれば足りる (横には何も並べていない)。
+ */
+export function connectorOverhang(
+  parts: readonly PlacedPart[],
+  layout: Layout,
+): { readonly above: number; readonly below: number } {
+  const { y, height } = layout.board;
+  return parts
+    .filter((part) => footprintOf(part.type)?.kind === 'connector' && part.pins.length > 0)
+    .map((part) => connectorBox(connectorShapeOf(part, layout)))
+    .reduce(
+      (most, box) => ({
+        above: Math.max(most.above, y - box.y),
+        below: Math.max(most.below, box.y + box.height - (y + height)),
+      }),
+      { above: 0, below: 0 },
+    );
+}
+
 /** 胴の長方形。足が 1 本も無ければ null。 */
 export function bodyRect(part: PlacedPart, layout: Layout): OrientedRect | null {
+  // **USB は変換基板ごとの外形** — 描くのも同じ `connectorBox` から (約束 9)。
+  // 足が 2 本でも 2 本足の胴ではない (傾けず、足の外へ張り出す)。
+  if (footprintOf(part.type)?.kind === 'connector' && part.pins.length > 0) {
+    const box = connectorBox(connectorShapeOf(part, layout));
+    return { cx: box.x + box.width / 2, cy: box.y + box.height / 2, width: box.width, height: box.height, angle: 0 };
+  }
   // **端面実装は足が 3 本でも箱ではない。** 置き方は `edgeMountOf` が決める。
   if (isEdgeMount(part.type, part.variant)) {
     const mount = edgeMountOf(part, layout);

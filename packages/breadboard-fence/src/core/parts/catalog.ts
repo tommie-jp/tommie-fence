@@ -10,7 +10,7 @@
  */
 
 import { lookupFootprint, placeableTypes } from '../placement/footprints.ts';
-import { lookupBoardPart } from 'fence-kit';
+import { MIN_CONNECTOR_PINS, lookupBoardPart } from 'fence-kit';
 
 /**
  * 置ける種類の名前。**一覧そのものは `footprints.ts` が正** — 足の数を決めて
@@ -21,7 +21,7 @@ export type PlaceableName =
   | 'resistor' | 'capacitor' | 'led' | 'diode' | 'buzzer' | 'crystal' | 'inductor'
   | 'photoresistor' | 'thermistor' | 'thermistor-ntc' | 'thermistor-ptc' | 'varistor'
   | 'zener' | 'schottky' | 'photodiode' | 'varicap' | 'diac'
-  | 'reed' | 'fuse' | 'lamp' | 'sma'
+  | 'reed' | 'fuse' | 'lamp' | 'sma' | 'usb-a' | 'usb-c'
   | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
   | 'transistor' | 'potentiometer' | 'slide-switch' | 'thyristor' | 'triac'
   | 'regulator' | 'button' | 'button-nc' | 'transformer';
@@ -84,6 +84,8 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   thyristor: 'サイリスタ (SCR)',
   triac: 'トライアック',
   sma: 'SMA コネクタ',
+  'usb-a': 'USB Type-A コネクタ',
+  'usb-c': 'USB Type-C コネクタ',
   regulator: '三端子レギュレータ',
   button: 'タクトスイッチ (a 接点)',
   'button-nc': 'タクトスイッチ (b 接点)',
@@ -128,6 +130,8 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   thyristor: 'T',
   triac: 'T',
   sma: 'J',
+  'usb-a': 'J',
+  'usb-c': 'J',
   regulator: 'U',
   button: 'SW',
   'button-nc': 'SW',
@@ -146,12 +150,14 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
  * - 2 本足 → 2 つ (交点から交点へドラッグする)
  * - 3 本足 → 3 つ
  * - タクトスイッチ → **アンカー 1 つ** (`@ e5`。足の位置はパッケージが決める)
+ * - USB → 最少の 2 つ (電源だけの変換基板。穴は 2〜6 つ書ける)
  */
 export function holesOf(type: string): number {
   const footprint = lookupFootprint(type);
   if (footprint === null) return 0;
   if (footprint.kind === 'two-lead') return 2;
   if (footprint.kind === 'three-lead') return 3;
+  if (footprint.kind === 'connector') return MIN_CONNECTOR_PINS;
   return footprint.kind === 'four-lead' ? 4 : 1;
 }
 

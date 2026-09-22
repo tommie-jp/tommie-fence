@@ -2,7 +2,7 @@ import { NO_TURN } from './orient.ts';
 import type { Turn } from './orient.ts';
 import type { Address, Board } from '../types.ts';
 import { isEdgeMount, isFourLead, isSwitch, isThreeLead, isTwoLead } from './types.ts';
-import { lookupBoardPart } from 'fence-kit';
+import { MIN_CONNECTOR_PINS, lookupBoardPart, lookupConnector } from 'fence-kit';
 
 /**
  * 部品の形。**何個の穴を書くか**と、**足がどこに来るか**の 2 つを決める。
@@ -19,10 +19,13 @@ import { lookupBoardPart } from 'fence-kit';
  * 書かせると、アースの穴が中心導体の真下に埋まって信号線とつながって見えた。
  * **先端は片方だけ書けばよい** — 凹は 1 つの金物で、書かなかったほうは
  * 中心線を挟んで反対側に決まる (`pinsOf` が補う)。
+ *
+ * USB コネクタは**書いた穴がそのまま足**で、数は 2 から表の長さまで
+ * (電源だけの変換基板は 2 本)。足の名前は書いた順に表から当てる。
  */
 
 export type FootprintKind =
-  | 'two-lead' | 'three-lead' | 'four-lead' | 'switch' | 'edge' | 'dip' | 'sip' | 'board';
+  | 'two-lead' | 'three-lead' | 'four-lead' | 'switch' | 'edge' | 'connector' | 'dip' | 'sip' | 'board';
 
 export type Footprint = {
   readonly kind: FootprintKind;
@@ -67,6 +70,13 @@ export function footprintOf(type: string, variant: string | null = null): Footpr
   // 板に依らない)。並べ方は DIP と同じで、列の間隔だけが広い。
   const board = lookupBoardPart(type);
   if (board !== null) return { kind: 'board', pins: board.pins.length, holes: 1 };
+
+  // USB。**書いた数だけ足がある** — 足の数の上限は表の長さ。
+  const connector = lookupConnector(type);
+  if (connector !== null) {
+    const most = connector.pins.length;
+    return { kind: 'connector', pins: most, holes: most, minHoles: MIN_CONNECTOR_PINS };
+  }
 
   if (isTwoLead(type)) return { kind: 'two-lead', pins: 2, holes: 2 };
   if (isThreeLead(type)) return { kind: 'three-lead', pins: 3, holes: 3 };
@@ -124,7 +134,10 @@ export function pinsOf(
   const anchor = holes[0];
   if (!anchor) return [];
 
-  if (footprint.kind === 'two-lead' || footprint.kind === 'three-lead' || footprint.kind === 'four-lead') {
+  if (
+    footprint.kind === 'two-lead' || footprint.kind === 'three-lead' || footprint.kind === 'four-lead'
+    || footprint.kind === 'connector'
+  ) {
     return holes.slice(0, footprint.pins);
   }
 

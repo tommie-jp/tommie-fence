@@ -1,6 +1,7 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
 import { boardBodyRect } from './boardPart.ts';
+import { connectorCaptionAt } from './connector.ts';
 import { fourLeadBodyRect, switchBodyRect } from './packages.ts';
 import {
   CAPTION_CLEAR, CAPTION_HEIGHT, LEG_NAME_CLEAR, NAME_CAP, NAME_LINE,
@@ -61,6 +62,10 @@ export function captionBaselineOf(
   if (part.kind === 'four-lead') {
     const body = fourLeadBodyRect(part, layout);
     return { x: body.x + body.width / 2, y: body.y + body.height + CAPTION_CLEAR + cap, width };
+  }
+  if (part.kind === 'connector') {
+    const at = connectorCaptionAt(part, layout, theme);
+    return at === null ? null : { ...at, width };
   }
   // DIP と SIP は樹脂の上に刷る (板の字と食い合わない)。機器は帯の中で別に置く。
   if (part.kind === 'dip' || part.kind === 'sip' || part.kind === 'device') return null;

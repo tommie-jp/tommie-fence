@@ -1,5 +1,6 @@
 import {
-  REAL_INK, boardBox, boardChip, dipChip, drawBody, drawPackage, drawsOwnLeads, element, fit, hasBody,
+  REAL_INK, boardBox, boardChip, connectorBox, dipChip, drawBody, drawConnector, drawPackage, drawsOwnLeads,
+  element, fit, hasBody,
   lookupBoardPart, num, bodySize, packageHalfWidth, packageReach, sipHeader,
   smaBody as drawSmaBody, svgText, transformerCore, TEXT_HALO_WIDTH,
 } from 'fence-kit';
@@ -7,7 +8,7 @@ import type { BodyInk, BodyPart, ChipInk } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Layout } from '../model/layout.ts';
 import {
-  BODY_HEIGHT, SMA_BASE, SMA_PLAIN, SMA_SIZE, bodyRect, edgeMountOf,
+  BODY_HEIGHT, SMA_BASE, SMA_PLAIN, SMA_SIZE, bodyRect, connectorShapeOf, edgeMountOf,
 } from '../placement/geometry.ts';
 import type { OrientedRect } from '../placement/geometry.ts';
 import { hatchFill } from './hatch.ts';
@@ -676,6 +677,44 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme, room?: Captio
   return `${body}${switchMarks(part, rect)}${leads}${label}`;
 }
 
+/**
+ * USB コネクタ。**姿は fence-kit にある** (`parts/connectors.ts`) — 変換基板ごと描き、
+ * 足の名前は基板に刷る。breadboard と同じ絵になる。
+ *
+ * **名札は足の側** (板の内側)。差し込み口が下を向くとき、胴の下に書くと
+ * 板の外へ張り出した金物のさらに先になり、画布から出て切れる。そのときだけ
+ * 胴の上 (足の列の後ろ) に置く。
+ *
+ * **横は足の列の真ん中。** 胴の真ん中にすると、横の縁へ張り出したコネクタでは
+ * 字の基準が板の外になり、板に収める切り詰め (`fitToBoard`) で `…` だけになる
+ * (図を見て直した)。足は必ず板の穴にある。
+ */
+function renderConnector(part: PlacedPart, layout: Layout, theme: Theme, room?: CaptionRoom): string {
+  if (part.pins.length === 0) return '';
+  const shape = connectorShapeOf(part, layout);
+  const box = connectorBox(shape);
+  const drawn = drawConnector({ ...shape, ink: inkOf(theme) });
+  const xs = shape.points.map((point) => point.x);
+  const centre = { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: box.y + box.height / 2 };
+
+  if (shape.facing === 'down') {
+    const size = theme.metrics.textSize;
+    return drawn + svgText(centre.x, box.y - CAPTION_GAP, fitToBoard(caption(part), centre.x, size, layout), {
+      fill: theme.palette.plateText,
+      'font-size': num(size),
+      halo: theme.palette.plate,
+    });
+  }
+  return drawn + partLabel(
+    caption(part),
+    { cx: centre.x, cy: centre.y, height: box.height, angle: 0 },
+    centre,
+    theme,
+    layout,
+    room,
+  );
+}
+
 /** タクトスイッチの樹脂。**IC より黒い** (実物も真っ黒な成型品)。 */
 const SWITCH_FILL = '#23272e';
 const SWITCH_EDGE = '#12151a';
@@ -691,6 +730,15 @@ function switchMarks(part: PlacedPart, rect: OrientedRect): string {
     cx: num(rect.cx), cy: num(rect.cy), r: num(Math.min(rect.width, rect.height) * 0.28),
     fill: '#c9cfd8', stroke: '#6b7280', 'stroke-width': 1,
   });
+}
+
+/** 形ごとの描き方。 */
+function renderOne(part: PlacedPart, layout: Layout, theme: Theme, room: CaptionRoom): string {
+  const kind = footprintOf(part.type, part.variant)?.kind;
+  if (kind === 'connector') return renderConnector(part, layout, theme, room);
+  if (isBoxed(part)) return renderBox(part, layout, theme, room);
+  if (kind === 'three-lead') return renderPackage(part, layout, theme, room);
+  return renderTwoLead(part, layout, theme, room);
 }
 
 /**
@@ -710,12 +758,7 @@ export const renderParts = (
   const room = captionRoom(theme, taken);
   return parts
     .map((part) => {
-      const kind = footprintOf(part.type, part.variant)?.kind;
-      const drawn = isBoxed(part)
-        ? renderBox(part, layout, theme, room)
-        : kind === 'three-lead'
-          ? renderPackage(part, layout, theme, room)
-          : renderTwoLead(part, layout, theme, room);
+      const drawn = renderOne(part, layout, theme, room);
       return edit ? element('g', { class: 'cf-chip', 'data-part': part.id }, drawn) : drawn;
     })
     .join('');

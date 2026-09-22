@@ -19,7 +19,20 @@ const DEVICE_GAP = 54;
 /** 配線が通れる横レーン。halfHeight は重なりを避けるためにずらせる幅。 */
 export type Lane = { readonly y: number; readonly halfHeight: number };
 
-export type LayoutOptions = { readonly deviceTop?: boolean; readonly deviceBottom?: boolean };
+export type LayoutOptions = {
+  readonly deviceTop?: boolean;
+  readonly deviceBottom?: boolean;
+  /**
+   * 板から張り出す部品 (USB コネクタ) のために空ける幅。**板のすぐ外**に入れる —
+   * 上下は板と機器の帯の間、左右は板と画布の縁の間。画布の縁に足すと、上に機器の
+   * 帯がある図では張り出しが帯に食い込む。張り出す量は画布が決まらないと測れない
+   * ので、呼ぶ側が一度組んで測ってから渡す。
+   */
+  readonly overhangTop?: number;
+  readonly overhangBottom?: number;
+  readonly overhangLeft?: number;
+  readonly overhangRight?: number;
+};
 
 export type Layout = {
   readonly pitch: number;
@@ -51,6 +64,9 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   const rowY = new Map<HoleRow | RailRow, number>();
   const lanes: Lane[] = [];
 
+  const [top, bottom, left, right] = [
+    options.overhangTop, options.overhangBottom, options.overhangLeft, options.overhangRight,
+  ].map((value) => Math.max(0, value ?? 0)) as [number, number, number, number];
   let y = OUTER_MARGIN;
   const topBand: Rect | null = options.deviceTop
     ? { x: OUTER_MARGIN, y, width: 0, height: DEVICE_HEIGHT }
@@ -61,6 +77,7 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
     y += DEVICE_GAP;
   }
 
+  y += top;
   const boardY = y;
   // レールの縦位置は 4 スロット固定で、どの極性がどこに来るかだけが board.rails で動く。
   // レールを外した板 (board.rails が null) では、その 4 スロットごと無くなる。
@@ -102,6 +119,7 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
 
   const boardHeight = y - boardY;
   const boardWidth = BOARD_PAD_X * 2 + (board.columns - 1) * PITCH;
+  y += bottom;
 
   const bottomBand: Rect | null = options.deviceBottom
     ? { x: OUTER_MARGIN, y: y + DEVICE_GAP, width: 0, height: DEVICE_HEIGHT }
@@ -111,23 +129,24 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
     y += DEVICE_GAP + DEVICE_HEIGHT;
   }
 
-  const width = boardWidth + OUTER_MARGIN * 2;
+  const boardX = OUTER_MARGIN + left;
+  const width = boardWidth + OUTER_MARGIN * 2 + left + right;
   const height = y + OUTER_MARGIN;
-  const bandWidth = width - OUTER_MARGIN * 2;
+  const bandWidth = boardWidth;
 
-  const colX = (col: number): number => OUTER_MARGIN + BOARD_PAD_X + (col - 1) * PITCH;
+  const colX = (col: number): number => boardX + BOARD_PAD_X + (col - 1) * PITCH;
 
   return {
     pitch: PITCH,
     columns: board.columns,
     width,
     height,
-    board: { x: OUTER_MARGIN, y: boardY, width: boardWidth, height: boardHeight },
+    board: { x: boardX, y: boardY, width: boardWidth, height: boardHeight },
     ravineY,
     lanes,
     deviceBands: {
-      top: topBand ? { ...topBand, width: bandWidth } : null,
-      bottom: bottomBand ? { ...bottomBand, width: bandWidth } : null,
+      top: topBand ? { ...topBand, x: boardX, width: bandWidth } : null,
+      bottom: bottomBand ? { ...bottomBand, x: boardX, width: bandWidth } : null,
     },
     colX,
     rowY: (row) => rowY.get(row) ?? 0,

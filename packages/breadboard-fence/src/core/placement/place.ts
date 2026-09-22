@@ -6,7 +6,8 @@ import type {
   Address, Board, FenceError, HoleAddress, HoleRow, PartKind, PartSpec, PlacedPart, PlacedPin,
   RailAddress, Result,
 } from '../types.ts';
-import type { BoardPart } from 'fence-kit';
+import type { BoardPart, Connector } from 'fence-kit';
+import { MIN_CONNECTOR_PINS } from 'fence-kit';
 import type { Turn } from '../parts/orient.ts';
 import { isPolarVariant, typesWithVariants, variantsOf } from '../parts/variants.ts';
 import { describeUnknownType, lookupFootprint } from './footprints.ts';
@@ -257,6 +258,7 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
     return placeLegs(spec, board, base, legs, footprint.kind);
   }
 
+  if (footprint.kind === 'connector') return placeConnector(spec, board, base, footprint.connector);
   if (footprint.kind === 'switch') return placeSwitch(spec, board, base);
   if (footprint.kind === 'sip') return placeSip(spec, board, base, footprint.pins);
   if (footprint.kind === 'board') return placeBoard(spec, board, base, footprint.board);
@@ -286,6 +288,40 @@ function placeLegs(
     pins.push({ name: hole.tag, address: address.value });
   }
   return ok({ ...base, kind, bridges: [], pins });
+}
+
+/**
+ * USB コネクタ。**書いた穴がそのまま足**で、名前は書いた順に表から当てる
+ * (`VBUS GND D+ D-`)。実物の変換基板は足の並びが製品ごとに違うので、並びは
+ * 決め打たない (変圧器と同じ)。**穴に名前 `(GND)` は書かせない** — 名前は表が
+ * 決めるので、書けると同じ足が 2 つの名前を持つ。
+ */
+function placeConnector(spec: PartSpec, board: Board, base: PartBase, connector: Connector): Result<PlacedPart> {
+  const order = connector.pins.join(' ');
+  const most = connector.pins.length;
+  if (spec.holes.length < MIN_CONNECTOR_PINS || spec.holes.length > most) {
+    return fail(
+      `部品 ${safeToken(spec.id)}: 穴番地を ${MIN_CONNECTOR_PINS}〜${most} つ、${order} の順に書きます`
+      + ` (今は ${spec.holes.length} つ。電源だけなら 2 つ)`,
+      spec.line,
+    );
+  }
+  const tagged = spec.holes.find((hole) => hole.tagged);
+  if (tagged) {
+    return fail(
+      `部品 ${safeToken(spec.id)}: 足の名前は表の順で決まるので、穴に (${safeToken(tagged.tag)}) は書けません`
+      + ` (${order} の順に穴を書きます)`,
+      spec.line,
+    );
+  }
+
+  const pins: PlacedPin[] = [];
+  for (const [index, hole] of spec.holes.entries()) {
+    const address = resolveHole(hole.addr, board, spec.line);
+    if (!address.ok) return address;
+    pins.push({ name: connector.pins[index] ?? String(index + 1), address: address.value });
+  }
+  return ok({ ...base, kind: 'connector', bridges: [], pins });
 }
 
 /** `@ 穴` で置く部品の、ピン 1 の穴。 */

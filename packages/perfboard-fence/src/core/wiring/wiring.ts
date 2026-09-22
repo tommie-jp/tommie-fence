@@ -1,4 +1,4 @@
-import { computeNets, lookupBoardPart } from 'fence-kit';
+import { computeNets, lookupBoardPart, lookupConnector } from 'fence-kit';
 import { footprintOf } from '../parts/footprint.ts';
 import type { Net, NetMember } from 'fence-kit';
 import { fenceError, notice, safeToken } from '../errors.ts';
@@ -199,7 +199,7 @@ export function resolveWires(
 /**
  * 足の名前。2 本足は 1 / 2 の順で、書いた順そのまま。
  *
- * **マイコンボードだけは実物の印字** (`U1.GP0`)。40 本を番号で呼ぶと、
+ * **マイコンボードと USB は実物の印字** (`U1.GP0`、`J1.VBUS`)。40 本を番号で呼ぶと、
  * 手元のピンアウト図と突き合わせられない — breadboard が名前で呼んでいるのと
  * 食い違わないよう、同じ表から引く (fence-kit)。
  *
@@ -207,7 +207,7 @@ export function resolveWires(
  * 突き合わせが黙って外れ、ERC が何も言わなくなる (返るのは空なのでテストも通る)。
  */
 export function pinRef(part: PlacedPart, index: number): string {
-  const named = lookupBoardPart(part.type)?.pins[index];
+  const named = lookupBoardPart(part.type)?.pins[index] ?? lookupConnector(part.type)?.pins[index];
   return `${part.id}.${named ?? index + 1}`;
 }
 

@@ -202,6 +202,7 @@ inductor / photoresistor / thermistor / thermistor-ntc / thermistor-ptc /
 varistor / zener / schottky / photodiode / varicap / diac / reed / fuse / lamp;
 three-lead types are transistor / potentiometer / slide-switch / thyristor /
 triac; the packaged ones are button (a tactile switch) / dipN / sipN;
+the USB connectors are usb-a / usb-c (holes written in the order VBUS / GND / D+ / D-);
 the boards are pico / pico-w / pico2 / pico2-w; and off-board things are device.
 The names match the schematic fence
 ([circuit-fence](https://github.com/tommie-jp/circuit-fence)), so writing both in

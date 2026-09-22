@@ -21,7 +21,7 @@ import { deviceOverhang, layoutDevices, renderDevices } from './render/devices.t
 import { netlistOf, resolveWires } from './wiring/wiring.ts';
 import { checkErc } from './erc/erc.ts';
 import { checkFit } from './placement/collide.ts';
-import { drawnExtent } from './placement/geometry.ts';
+import { connectorOverhang, drawnExtent } from './placement/geometry.ts';
 import { holeStrip } from './model/board.ts';
 import { formatAddress, isCrossing, parseAddress } from './model/address.ts';
 import { offBoardReason } from './model/board.ts';
@@ -154,12 +154,20 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   // 図の中では言えないので、使った色の凡例を板のすぐ下に出す。
   // 色つきのテーマでは見たままなので、帯そのものを出さない。
   const painted = THEME.hatch === true ? legendColors(paintedColors(parsed.doc)) : [];
-  // 半田面は自分の寸法を持つので、**先に測ってから**表の図に場所を空けさせる。
-  const back = style.back ? backSideLayout(board, style.labels) : null;
-  // 番地で置いた機器のはみ出しを**先に測る**。板の寸法だけで組むと、
-  // 上は題に、下は書き出しや半田面に重なる。
+  // 部品を板に載せるのに画布は要らない (番地だけで決まる)。張り出しを測るので先に載せる。
+  const placement = placeParts(parsed.doc.parts, board);
+  // 番地で置いた機器と USB コネクタのはみ出しを**先に測る**。板の寸法だけで
+  // 組むと、上は題に、下は書き出しや半田面に重なる。
   const bare = createLayout(board, { title: title !== null });
-  const overhang = deviceOverhang(devices, bare);
+  const devicesJut = deviceOverhang(devices, bare);
+  const partsJut = connectorOverhang(placement.parts, bare);
+  const overhang = {
+    above: Math.max(devicesJut.above, partsJut.above),
+    below: Math.max(devicesJut.below, partsJut.below),
+  };
+  // 半田面は自分の寸法を持つので、**先に測ってから**表の図に場所を空けさせる。
+  // 上下の張り出しは表と同じ (裏返すのは左右だけ)。
+  const back = style.back ? backSideLayout(board, style.labels, partsJut) : null;
   const layout = createLayout(board, {
     title: title !== null,
     // 帯を空けるのは、番地で置いていない機器のぶんだけ。
@@ -173,10 +181,11 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
     labelBottom: style.labels.sides.includes('bottom'),
     deviceAbove: overhang.above,
     deviceBelow: overhang.below,
+    partsAbove: partsJut.above,
+    partsBelow: partsJut.below,
   });
   const placedDevices = layoutDevices(devices, layout);
   const devicePins = new Map(devices.map((device) => [device.id, new Set(device.pins)]));
-  const placement = placeParts(parsed.doc.parts, board);
 
   const pointErrors: FenceError[] = [];
   const points = new Map<string, Address>();

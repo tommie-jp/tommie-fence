@@ -1,4 +1,4 @@
-import { boardPartNames, lookupBoardPart } from 'fence-kit';
+import { CONNECTOR_LOOKS, boardPartNames, connectorNames, lookupBoardPart, lookupConnector } from 'fence-kit';
 /**
  * 置ける部品の語彙。**Phase 2 は 2 本足だけ。** 3 本足・DIP・SIP は次の Phase で、
  * 置けないものは「知らないふり」ではなく**置けないと言う**。
@@ -45,6 +45,13 @@ const FOUR_LEAD = new Set(['transformer']);
  * 実物も外から見て見分けが付かず、図で描き分けると実物に無い情報になる。
  */
 const SWITCH = new Set(['button', 'button-nc']);
+
+/**
+ * 基板に載せるコネクタ (USB)。**書いた穴がそのまま足**で、足の名前は表の順
+ * (`VBUS GND D+ D-`)。表は fence-kit にあり、3 つのフェンスが同じものを読む
+ * (52 の docs/58)。書く穴の数は 2 から表の長さまで (`parts/footprint.ts`)。
+ */
+export const isConnector = (type: string): boolean => lookupConnector(type) !== null;
 
 /**
  * 1 行では書けない種類。**板の外の機器は入れ子で書く** — 足の名前の並びを
@@ -102,6 +109,8 @@ const VARIANTS: Record<string, readonly string[]> = {
   // 図を見て挿す人が、合う相手を取り違えないように。
   // `-edge` は端面実装 (横置き)。板の縁から**胴が外へ張り出す**。
   sma: ['male', 'female', 'male-edge', 'female-edge'],
+  // USB は差し込み (オス) と受け口 (メス)。**書かなければ受け口**。
+  ...Object.fromEntries(connectorNames().map((type) => [type, CONNECTOR_LOOKS])),
 };
 
 /**
@@ -123,7 +132,7 @@ export const isFourLead = (type: string): boolean => FOUR_LEAD.has(type);
 export const isSwitch = (type: string): boolean => SWITCH.has(type);
 export const isKnownType = (type: string): boolean =>
   TWO_LEAD.has(type) || THREE_LEAD.has(type) || FOUR_LEAD.has(type) || SWITCH.has(type) || NESTED.has(type)
-  || lookupBoardPart(type) !== null;
+  || lookupBoardPart(type) !== null || isConnector(type);
 /**
  * パレットに出す**パッケージ物**。`dipN` / `sipN` は数を選べるが、一覧に全部
  * 並べても選べないので、**実物として売られている数**だけ出す。ここに無い数も
@@ -141,7 +150,7 @@ export const packageNames = (): readonly string[] => [
 ];
 
 export const placeableNames = (): readonly string[] =>
-  [...TWO_LEAD, ...THREE_LEAD, ...FOUR_LEAD, ...SWITCH, ...packageNames()];
+  [...TWO_LEAD, ...THREE_LEAD, ...FOUR_LEAD, ...SWITCH, ...connectorNames(), ...packageNames()];
 
 /** その種類を指せる略記 (`r` → resistor)。パレットの検索が引く。 */
 export const aliasesFor = (type: string): readonly string[] =>
@@ -149,8 +158,10 @@ export const aliasesFor = (type: string): readonly string[] =>
 
 /** 略記を正式名に畳む。知らない綴りはそのまま返す (呼ぶ側が断る)。 */
 export const resolveTypeName = (type: string): string => (own(ALIASES, type) ? ALIASES[type] ?? type : type);
-export const knownNames = (): readonly string[] =>
-  [...TWO_LEAD, ...THREE_LEAD, ...FOUR_LEAD, ...SWITCH, ...NESTED, ...boardPartNames(), ...Object.keys(ALIASES)];
+export const knownNames = (): readonly string[] => [
+  ...TWO_LEAD, ...THREE_LEAD, ...FOUR_LEAD, ...SWITCH, ...connectorNames(), ...NESTED, ...boardPartNames(),
+  ...Object.keys(ALIASES),
+];
 
 export type PartType = {
   readonly type: string;

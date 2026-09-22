@@ -197,6 +197,7 @@ photoresistor / thermistor / thermistor-ntc / thermistor-ptc / varistor /
 zener / schottky / photodiode / varicap / diac / reed / fuse / lamp、
 3 本足が transistor / potentiometer / slide-switch / thyristor / triac、
 まとまった足を持つものが button (タクトスイッチ) / dipN / sipN、
+USB コネクタが usb-a / usb-c (足は VBUS / GND / D+ / D- の順に書く)、
 マイコンボードが pico / pico-w / pico2 / pico2-w、
 ボード外の機器が device。
 名前は回路図フェンス

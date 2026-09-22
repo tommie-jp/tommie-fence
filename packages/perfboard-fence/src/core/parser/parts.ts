@@ -5,6 +5,7 @@ import { footprintOf } from '../parts/footprint.ts';
 import { MIRROR_WORD, NO_TURN, isTurned, orientOf, rotationOf } from '../parts/orient.ts';
 import type { Turn } from '../parts/orient.ts';
 import { isNestedType, placeableNames, splitPartType } from '../parts/types.ts';
+import { lookupConnector } from 'fence-kit';
 import type { FenceError, PartSpec } from '../types.ts';
 
 export type Parsed<T> =
@@ -25,6 +26,24 @@ function plausibleHole(token: string): boolean {
   const address = parseAddress(token);
   return address !== null && address.col <= LIMITS.cols && address.row <= LIMITS.rows;
 }
+
+/**
+ * 書かれた穴。**頭から続く番地だけ**を取る — 省いてよい足のある形 (端面実装・USB) では
+ * 足のあとに値が来ることがあり、値の先にある番地まで穴として拾うと、
+ * 間の値が黙って消える。
+ */
+function leadingHoles(tokens: readonly string[], wanted: number, most: number): string[] {
+  const holes: string[] = [];
+  for (const token of tokens.slice(0, most)) {
+    if (holes.length >= wanted && !plausibleHole(token)) break;
+    holes.push(token);
+  }
+  return holes;
+}
+
+/** 数を選べる形の穴の数 (`2〜6`)。決まった数なら 1 つ。 */
+const holeCount = (footprint: { readonly holes: number; readonly minHoles?: number }): string =>
+  (footprint.minHoles === undefined ? `${footprint.holes}` : `${footprint.minHoles}〜${footprint.holes}`);
 
 /**
  * `resistor b3 b7 10k` のような 1 行を読む。行番号は呼ぶ側が持っているので、
@@ -61,11 +80,10 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
     );
   }
 
-  // **番地に見える語だけを穴として取る。** 省いてよい足のある形 (端面実装) では、
-  // 3 つ目が値のこともある。
+  // **番地に見える語だけを穴として取る。** 省いてよい足のある形 (端面実装・USB) では、
+  // 最少の数より先は値のこともある。
   const wanted = footprint.minHoles ?? footprint.holes;
-  const holes = rest.slice(0, footprint.holes)
-    .filter((token, index) => index < wanted || plausibleHole(token));
+  const holes = leadingHoles(rest, wanted, footprint.holes);
   if (holes.length < wanted) {
     // **書く穴の数は形が決める。** DIP と SIP はアンカー 1 つだけ
     // (足の位置はパッケージが決めていて、書く人が選べない)。
@@ -73,6 +91,15 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
     if (footprint.kind === 'edge') {
       return fail(
         `${safeToken(written)} は中心導体と凹の先端の穴を書きます (例: ${written} e1 f0。先端は片方だけでよい)`,
+        written,
+      );
+    }
+    // USB は穴の順が足の名前の順。**順を言わないと、どの穴が VBUS か決められない。**
+    const connector = lookupConnector(type);
+    if (connector !== null) {
+      return fail(
+        `${safeToken(written)} は穴を ${holeCount(footprint)} つ、${connector.pins.join(' ')} の順に書きます`
+        + ` (例: ${written} b3 b4。電源だけなら 2 つ)`,
         written,
       );
     }
@@ -125,10 +152,8 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
   // 番地として弾くと正しい図が毎回叱られる。上限を超える列は型番のほう。
   const stray = tail.find((token) => plausibleHole(token));
   if (stray !== undefined) {
-    return fail(
-      `${safeToken(written)} が書く穴は ${footprint.holes} つです。余分な番地: ${safeToken(stray)}`,
-      stray,
-    );
+    const count = footprint.minHoles === undefined ? `${footprint.holes} つです` : `${footprint.holes} つまでです`;
+    return fail(`${safeToken(written)} が書く穴は ${count}。余分な番地: ${safeToken(stray)}`, stray);
   }
   const value = tail.join(' ');
   return {
