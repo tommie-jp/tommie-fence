@@ -3,6 +3,16 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.9.1] - 2026-09-24
+
+circuit-fence 0.9.4 を束ねた。
+
+### Fixed
+
+- **circuit: マップで、回した箱の足の名前と切り欠きが重ならなくなった。**
+  回した `pico2` で足の名前が真ん中で重なり、回した DIP で切り欠きが番号に
+  触れていた。
+
 ## [0.9.0] - 2026-09-24
 
 breadboard-fence 0.11.0 と perfboard-fence 0.9.0 を束ねた。
