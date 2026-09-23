@@ -28,6 +28,10 @@
 - `packages/playground` — 3 つのフェンスをブラウザだけで試す静的なページ
   (GitHub Pages)。**拡張ではない** ので `.vsix` の対象から外れ、`check` には乗る。
   約束は [packages/playground/CLAUDE.md](packages/playground/CLAUDE.md)
+- `.claude/skills/tommie-fence` — Claude Code がフェンスを書くときに読む手引き
+  (文法の所在、`check` → `render` → PNG で確かめる順、3 つで違う書き方)。
+  **文法は写さず所在を指す**。3 つで違う書き方の表は実物で確かめてから書いたので、
+  **番地・注釈・DIP・ERC の出方を変えたら表も直す**
 
 言語は別、作法は同じ。**先回りして共通化しない** — 実際に重複してから引き上げる。
 いま fence-kit にあるのは、実測で重複が確かめられたものだけ:

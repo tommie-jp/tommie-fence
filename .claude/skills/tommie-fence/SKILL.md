@@ -1,0 +1,85 @@
+---
+name: tommie-fence
+description: Markdown の ```circuit / ```breadboard / ```perfboard フェンス (回路図・ブレッドボードの実体配線図・ユニバーサル基板の実体配線図) を書く・直す・読むときに使う。文法リファレンスの所在、CLI の check で読めたか・つながったかを確かめる手順、図を PNG に焼いて目で確かめる手順、3 つのフェンスで取り違えやすい書き方をまとめてある。Use when writing or fixing circuit schematics, breadboard diagrams, or perfboard layouts in these Markdown fences.
+---
+
+# tommie-fence のフェンスを書く
+
+以下、`<root>` はこのリポジトリの直下 (この SKILL.md の 3 つ上)。
+
+## 1. どのフェンスか
+
+| 描きたいもの | フェンス | 文法 (先に読む順) | 例 |
+| --- | --- | --- | --- |
+| 回路図 | ` ```circuit ` | `packages/circuit-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/circuit-fence/examples/*.md` |
+| ブレッドボードの実体配線図 | ` ```breadboard ` | `packages/breadboard-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/breadboard-fence/examples/*.md` |
+| ユニバーサル基板の実体配線図 | ` ```perfboard ` | `packages/perfboard-fence/docs/01-syntax.md` (早見表は無い。目次から要る節だけ) | `packages/perfboard-fence/examples/*.md` |
+
+**書く前に文法を読む。** 3 つは似ているが同じではない (§4)。
+記憶や別のフェンスの感覚で書かない。例の中から近いものを写して直すのが早い。
+
+## 2. 書いたら check
+
+```bash
+node <root>/packages/<x>-fence/dist/cli.cjs check <file.md> 2>&1
+```
+
+- 言うことはフェンスによって標準出力と標準エラーに分かれるので、`2>&1` でまとめて読む
+- 読めなかった行は、行番号・その行・綴りを指す `^` つきで出る。
+  1 つでもあれば終了コードは 0 以外
+- ネットリスト (どの足がどのネットか) は標準出力。**意図した回路と突き合わせる**
+- ERC (つながっていない足、線で跨いだ部品など) は終了コードを変えない。
+  **読めない行があるうちは ERC を掛けない**ので、読めない行から直す
+- **何も出ずに終了コード 0** は、フェンスが 1 つも見つからなかったということ。
+  フェンス名を確かめる (§4)
+- `dist/cli.cjs` が無いときは `<root>` で `npm install` → `npm run build -w <x>-fence`。
+  文法リファレンスにある書き方が「知らない」と言われたら dist が古いので組み直す
+
+## 3. 図を PNG に焼いて見る
+
+check が通っても、字の重なり・部品の胴の重なり・注釈の置き場所は分からない。
+SVG は画像として読めないので PNG に焼いてから見る。
+**`render` には必ず `--out` で作業用のディレクトリを渡す** (省くと入力の隣に書き出す)。
+
+```bash
+# 板の 2 つ
+node <root>/packages/<x>-fence/dist/cli.cjs render <file.md> --out <tmp>
+node <root>/packages/<x>-fence/scripts/png.mjs <tmp>
+
+# circuit (TeX を回すので 1 枚 1 秒ほど。figures.mjs は SVG に地の色を焼き込んでから PNG にする)
+node <root>/packages/circuit-fence/dist/cli.cjs render <file.md> --out <tmp>
+node <root>/packages/circuit-fence/scripts/figures.mjs <file.md> <tmp>
+```
+
+できた `<tmp>/*.png` を画像として読む。見るもの: 題・注釈・ラベルの重なり、
+板の外の機器が列番号や部品を隠していないか、配線が部品の胴を横切っていないか、
+手書きや元の回路図と向き・並びが合っているか。
+
+## 4. 取り違えやすい所
+
+| | circuit | breadboard | perfboard |
+| --- | --- | --- | --- |
+| 番地 | 升目の交点 `a1`。行 `a`〜`cu`、列 `1`〜`99`。升目の宣言は要らない | 穴 `a`〜`j` + 列、レール `+t5` `-b20` | `board:` の穴の中。板の外は `a0` `-a1` (4 つ先まで) |
+| `board:` | 無い | `mini` / `half` / `full`。省くと `half` | **要る** (`20x4` は列 × 行、`akizuki-c` など) |
+| 印の注釈 | `circle 部品ID か番地` | `circle 部品ID か番地` | **`mark 番地`** (`circle` は無く、部品 ID は指せない) |
+| 注釈の種類 | circle box arrow line text source | circle box arrow line text source | mark box arrow text source parts |
+| DIP・SIP | 多端子部品 `ID: 種類 番地 [向き] [型番]` | 1 番ピンの穴 1 つ。文法表は `dip8 @ e5` (`@` は省いても読む) | 1 番ピンの穴 1 つ。**`dip8 e5`** (`@` を付けると読めない) |
+| ERC | `check` だけが掛ける (`render` は掛けない) | 無い | `check` と `render` の両方に出る |
+
+3 つに共通:
+
+- **フェンス名は `circuit` / `breadboard` / `perfboard` の 3 つだけ。**
+  `bread` や `perf` と書くと、プレビューでは灰色のコードブロック、CLI では黙って素通りする
+- **`text` の字は `:` の後ろ**: `- text c3 red: ここから電源`。
+  番地の後ろに引用で字を書く (`- text c3 "R1: 抵抗"`) と、字の頭が色や向きの語として読まれて通らない
+- circuit と breadboard の向きのある 2 端子は**先に書いた番地が + 側** (アノード)
+- 板の 2 つは**部品面**を描く。裏面から描いた手書きを写すときは列を反転する
+  (列数 + 1 − 手書きの列)。perfboard は `style: back: on` で裏返した板を下に足せる
+- 承知のうえで残す未接続 (抜いたピンなど) は、ERC が言い続けるので本文に理由を書く
+
+## 5. 返すとき
+
+- どのフェンスで何を描いたか、check の結果 (読めない行 0、ネットリストの要点、
+  残した ERC とその理由)、PNG で見て直した所を短く伝える
+- PNG と SVG は作業用のディレクトリに置いたままにし、リポジトリには足さない
+  (`docs/out` と `examples/out` は `npm run docs` / `npm run examples` が作る)
