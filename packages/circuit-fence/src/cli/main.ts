@@ -2,15 +2,14 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, resolve } from 'node:path';
 import {
-  STAMP_TEXT, attachSourceText, compileCircuit, errorLine, extractCircuitFences, finishSvg, messageLine,
-  outputStem, shiftErrors, snippetLines,
+  STAMP_TEXT, attachSourceText, compileCircuit, extractCircuitFences, finishSvg, outputStem, shiftErrors,
 } from '../core/index.ts';
-import type { FenceError } from '../core/index.ts';
 import { renderTex } from '../host/texSvg.ts';
 import { standaloneTex } from '../core/tex/generate.ts';
 import { texErrors } from '../core/tex/texLog.ts';
 import { collectFiles, reportNetlist } from 'fence-kit/cli';
 import { USAGE, emitsTex, parseArgs } from './args.ts';
+import { checkHeading, reportErrors, reportNotices, reportProblem } from './report.ts';
 
 type Job = {
   readonly source: string;
@@ -44,33 +43,6 @@ function jobsFor(path: string, outDir: string | null): Job[] {
     line: fence.line,
   }));
 }
-
-/** 標準エラーへ出す 1 行。どのコマンドが言っているかが分かるよう名札を付ける。 */
-const reportProblem = (message: string): void => console.error(`circuit: ${message}`);
-
-const reportErrors = (errors: readonly FenceError[]): void => {
-  // errorLine が名札を持っているので、ここでは字下げだけして並べる。
-  // 続けて出す行の中身も同じだけ字下げして、1 件のかたまりに見せる。
-  for (const error of errors) {
-    console.error(`  ${errorLine(error)}`);
-    for (const row of snippetLines(error)) console.error(`  ${row}`);
-  }
-};
-
-/**
- * 図が描けたうえでの補足。読めなかったわけではないので終了コードには数えない。
- *
- * `style: debug: off` と書いた図では出さない。ただし**それに従うのは
- * 描く道だけ** — `check` は文法を調べに行くために回すものなので、
- * 黙らせる指定より「見つけたことは言う」を優先する (最後の網になる)。
- */
-const reportNotices = (notices: readonly FenceError[], show = true): void => {
-  if (!show) return;
-  for (const notice of notices) {
-    console.log(`  お知らせ: ${messageLine(notice)}`);
-    for (const row of snippetLines(notice)) console.log(`  ${row}`);
-  }
-};
 
 const firstLine = (text: string): string => text.split('\n', 1)[0] ?? '';
 
@@ -140,7 +112,7 @@ function checkJob(job: Job): number {
     return Math.max(errors.length, 1);
   }
 
-  console.log(`${job.label}: 読めました`);
+  console.log(checkHeading(job.label, errors.length));
   reportNetlist(netlist);
   reportErrors(errors);
   // **ERC はお知らせと同じ並びに出す。** 分けて返るようになったのは editor の
