@@ -1,5 +1,6 @@
-import { element, fit, num, svgText, textWidth } from 'fence-kit';
+import { element, fit, num, svgText, textWidth, TEXT_HALO_WIDTH } from 'fence-kit';
 import { colorValue } from '../color.ts';
+import { LABEL_GUTTER } from '../model/layout.ts';
 import type { Layout } from '../model/layout.ts';
 import type { Rect, ResolvedNote } from '../types.ts';
 import type { Theme } from './theme.ts';
@@ -16,6 +17,13 @@ const MARK_RADIUS = 9;
 const STROKE = 2;
 /** 字を印からどれだけ上に置くか。 */
 const TEXT_RISE = 12;
+/** 指し棒の先の印の長さ。 */
+const ARROW_HEAD = 7;
+/** 板の上の注釈と題の間に残す隙間。 */
+const TITLE_CLEARANCE = 4;
+/** 字の上端と下端 (ベースラインからの比)。字幅の見積もりと同じ粗さでよい。 */
+const ASCENT = 0.72;
+const DESCENT = 0.2;
 
 const colorOf = (note: ResolvedNote, theme: Theme): string =>
   (note.color === null ? null : colorValue(note.color)) ?? theme.palette.plateText;
@@ -81,7 +89,7 @@ function renderNote(note: ResolvedNote, layout: Layout, theme: Theme): string {
 
   // 指し棒。**先端に印を付ける** — ただの線だと、どちらを指しているか読めない。
   const angle = Math.atan2(to.y - from.y, to.x - from.x);
-  const head = 7;
+  const head = ARROW_HEAD;
   const wing = (turn: number) => ({
     x: to.x - head * Math.cos(angle + turn),
     y: to.y - head * Math.sin(angle + turn),
@@ -139,4 +147,59 @@ export function noteBands(
     const x = anchor === 'start' ? from.x : anchor === 'end' ? from.x - width : from.x - width / 2;
     return [{ x, y: baseline - size * 0.72, width, height: size * 0.92 }];
   });
+}
+
+/** 注釈 1 つが縦に占める幅 (上端と下端)。書き出しと部品表は板の外の帯なので数えない。 */
+function noteSpan(note: ResolvedNote, layout: Layout, theme: Theme): { top: number; bottom: number } {
+  const from = layout.point(note.from);
+  const to = note.to === null ? from : layout.point(note.to);
+  const high = Math.min(from.y, to.y);
+  const low = Math.max(from.y, to.y);
+
+  if (note.kind === 'mark' || note.kind === 'box') {
+    const reach = MARK_RADIUS + STROKE / 2;
+    return { top: high - reach, bottom: low + reach };
+  }
+  if (note.kind !== 'text') return { top: high - ARROW_HEAD, bottom: low + ARROW_HEAD };
+
+  const size = theme.metrics.textSize;
+  const halo = TEXT_HALO_WIDTH / 2;
+  // **縦に回した字は長さがそのまま縦に伸びる** (回すのは指す穴のまわり)。
+  if (note.turn.rotate === 90 || note.turn.rotate === 270) {
+    const text = fit(note.text ?? '', Math.max(0, layout.height) / size);
+    const half = (textWidth(text) * size) / 2 + halo;
+    return { top: from.y - half, bottom: from.y + half };
+  }
+  const rise = note.turn.mirror ? -(TEXT_RISE + size * 0.8) : TEXT_RISE;
+  const baseline = from.y - rise;
+  const top = baseline - size * ASCENT - halo;
+  const bottom = baseline + size * DESCENT + halo;
+  // 逆さの字は指す穴を挟んで反対側に来る。
+  return note.turn.rotate === 180
+    ? { top: 2 * from.y - bottom, bottom: 2 * from.y - top }
+    : { top, bottom };
+}
+
+/**
+ * 板の外に書いた注釈のために、板の上と下へ空ける量。
+ *
+ * **書いた人が番地で決めた場所なので、図のほうが場所を空ける。** 空けないと、
+ * 上は題に重なり、離れた番地の字は画布の外で黙って切れる。
+ * 板の上の名前の帯 (`LABEL_GUTTER`) はいつも空いているので、そこに収まる注釈は
+ * 何も動かさない — 板に書いた注釈のために図の寸法を変えない。
+ */
+export function noteOverhang(
+  notes: readonly ResolvedNote[],
+  layout: Layout,
+  theme: Theme,
+  labelsBelow: boolean,
+): { readonly above: number; readonly below: number } {
+  const { y, height } = layout.board;
+  const spans = notes.map((note) => noteSpan(note, layout, theme));
+  const top = Math.min(y, ...spans.map((span) => span.top));
+  const bottom = Math.max(y + height, ...spans.map((span) => span.bottom));
+  return {
+    above: Math.max(0, y - top - (LABEL_GUTTER - TITLE_CLEARANCE)),
+    below: Math.max(0, bottom - (y + height) - (labelsBelow ? LABEL_GUTTER : 0)),
+  };
 }

@@ -3,7 +3,7 @@ import { attachSourceText } from './errors.ts';
 import { createLayout } from './model/layout.ts';
 import { parseFence } from './parser/parseFence.ts';
 import { placeParts } from './placement/place.ts';
-import { renderBoard } from './render/board.ts';
+import { renderAxisLabels, renderPlate } from './render/board.ts';
 import { renderSlots } from './render/slots.ts';
 import { renderJoints } from './render/joints.ts';
 import { renderHits } from './render/hits.ts';
@@ -11,7 +11,7 @@ import { renderParts } from './render/parts.ts';
 import { renderDeviceWires, renderWires } from './render/wires.ts';
 import { crossingPoints } from './render/crossings.ts';
 import { renderTitle } from './render/title.ts';
-import { noteBands, renderNotes } from './render/notes.ts';
+import { noteBands, noteOverhang, renderNotes } from './render/notes.ts';
 import { hatchDefs } from './render/hatch.ts';
 import { legendColors, legendSize, paintedColors, renderLegend } from './render/legend.ts';
 import { partsListSize, partsListing, renderPartsList } from './render/partsList.ts';
@@ -156,14 +156,38 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   const painted = THEME.hatch === true ? legendColors(paintedColors(parsed.doc)) : [];
   // 部品を板に載せるのに画布は要らない (番地だけで決まる)。張り出しを測るので先に載せる。
   const placement = placeParts(parsed.doc.parts, board);
+  // 注釈は回路の一員ではないので、読めなくても図は出る。
+  // **寸法を組む前に解決する** — 板の外に書いた注釈のぶんも場所を空けるので。
+  const noteErrors: FenceError[] = [];
+  const notes: ResolvedNote[] = [];
+  for (const note of parsed.doc.notes) {
+    // 書き出しと部品表は板の外に出すので、指し先の番地を持たない。帯は別に描く。
+    if (note.kind === 'source' || note.kind === 'parts') continue;
+    const from = parseAddress(note.from ?? '');
+    const to = note.to === null ? null : parseAddress(note.to);
+    // 見るのは書かれた番地だけ (`to` を書かない印では `from` 1 つ)。
+    const written = note.to === null ? [from] : [from, to];
+    const offBoard = written.some((address) => address === null || offBoardReason(board, address) !== null);
+    if (from === null || offBoard) {
+      noteErrors.push(fenceError(
+        `注釈の番地を板に置けません: ${safeToken(note.to === null ? note.from ?? '' : `${note.from} ${note.to}`)}`,
+        note.line,
+      ));
+      continue;
+    }
+    notes.push({ kind: note.kind, turn: note.turn, from, to, color: note.color, text: note.text, line: note.line });
+  }
+
   // 番地で置いた機器と USB コネクタのはみ出しを**先に測る**。板の寸法だけで
   // 組むと、上は題に、下は書き出しや半田面に重なる。
   const bare = createLayout(board, { title: title !== null });
   const devicesJut = deviceOverhang(devices, bare);
   const partsJut = connectorOverhang(placement.parts, bare);
+  // 注釈も同じ。**板の外の番地に書いた字は、測らないと題に重なるか画布の外で切れる。**
+  const notesJut = noteOverhang(notes, bare, PLATE, style.labels.sides.includes('bottom'));
   const overhang = {
-    above: Math.max(devicesJut.above, partsJut.above),
-    below: Math.max(devicesJut.below, partsJut.below),
+    above: Math.max(devicesJut.above, partsJut.above, notesJut.above),
+    below: Math.max(devicesJut.below, partsJut.below, notesJut.below),
   };
   // 半田面は自分の寸法を持つので、**先に測ってから**表の図に場所を空けさせる。
   // 上下の張り出しは表と同じ (裏返すのは左右だけ)。
@@ -204,27 +228,6 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
     }
     points.set(name, address);
     named.push([address, name]);
-  }
-
-  // 注釈は回路の一員ではないので、読めなくても図は出る。
-  const noteErrors: FenceError[] = [];
-  const notes: ResolvedNote[] = [];
-  for (const note of parsed.doc.notes) {
-    // 書き出しと部品表は板の外に出すので、指し先の番地を持たない。帯は別に描く。
-    if (note.kind === 'source' || note.kind === 'parts') continue;
-    const from = parseAddress(note.from ?? '');
-    const to = note.to === null ? null : parseAddress(note.to);
-    // 見るのは書かれた番地だけ (`to` を書かない印では `from` 1 つ)。
-    const written = note.to === null ? [from] : [from, to];
-    const offBoard = written.some((address) => address === null || offBoardReason(board, address) !== null);
-    if (from === null || offBoard) {
-      noteErrors.push(fenceError(
-        `注釈の番地を板に置けません: ${safeToken(note.to === null ? note.from ?? '' : `${note.from} ${note.to}`)}`,
-        note.line,
-      ));
-      continue;
-    }
-    notes.push({ kind: note.kind, turn: note.turn, from, to, color: note.color, text: note.text, line: note.line });
   }
 
   // **同じ書き出しを 2 枚重ねない。** 2 つ目を書いた人には、消えたのではなく
@@ -340,7 +343,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
 
   // 配線は板の上、部品の下。線が部品の胴を隠すと、何が載っているか読めなくなる。
   const drawn = renderTitle(title, layout, THEME)
-      + renderBoard(board, layout, PLATE, style.labels)
+      + renderPlate(board, layout, PLATE)
       // スロット用の銅箔は板の上、配線の下。**挿す穴ではない**ので、
       // 部品や線に隠れても困らない。
       + renderSlots(board, layout, PLATE)
@@ -354,6 +357,10 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
         wiring.deviceWires, placedDevices.placed, layout, THEME, hops.slice(wiring.wires.length),
       )
       + renderDevices(placedDevices.placed, THEME, options.edit === true)
+      // **行と列の名前は機器とその配線より上。** 板の上に置いた機器の足と線は
+      // 名前の帯を必ず横切るので、下に敷くと行く先の列の名前が隠れる。
+      // 部品と注釈よりは下 (縁から張り出すコネクタと、書いた人の印を隠さない)。
+      + renderAxisLabels(board, layout, PLATE, style.labels)
       // **名札は板に書いた字を避ける** (番地で置いたほうが強い)。
       + renderParts(placement.parts, layout, PLATE, options.edit === true, noteBands(notes, layout, PLATE))
       // 注釈は一番上。**指したものが下に隠れると印の意味が無くなる。**

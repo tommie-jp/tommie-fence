@@ -6,7 +6,8 @@ export const PITCH = 20;
 
 /** 画布の縁から板まで。行と列の名前がここに入る。 */
 const OUTER_MARGIN = 14;
-const LABEL_GUTTER = 16;
+/** 行と列の名前の帯。**板の上には必ず空けてある** (板の外の注釈が使える余白)。 */
+export const LABEL_GUTTER = 16;
 /** 板の縁から一番外の穴まで。実物にも縁の余白がある。 */
 const BOARD_PAD = 12;
 /** 題を置く帯の高さ。題が無ければ空けない。 */

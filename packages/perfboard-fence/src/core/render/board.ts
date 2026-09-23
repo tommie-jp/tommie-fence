@@ -12,20 +12,32 @@ const DEFAULT_LABELS: ResolvedLabels = {
 
 /** 名前を板の縁からどれだけ外へ置くか。 */
 const LABEL_OFFSET = 8;
+/**
+ * 地を塗らないテーマ (light) の名前の縁取り。light の字は暗い色で、
+ * **明るい地に載る前提**で選んである (暗い地では縁取りが無くても読めない)。
+ */
+const LIGHT_PAGE = '#ffffff';
 
 /**
- * 板と穴と、行・列の名前を描く。
+ * 板と穴と、行・列の名前を描く (続けて描いてよい図のため。半田面など)。
+ * 板の外の機器がある表の図は、名前を**機器と配線のあと**に描く
+ * (`renderPlate` と `renderAxisLabels` を分けて呼ぶ)。
+ */
+export const renderBoard = (
+  board: Board,
+  layout: Layout,
+  theme: Theme,
+  labels: ResolvedLabels = DEFAULT_LABELS,
+): string => renderPlate(board, layout, theme) + renderAxisLabels(board, layout, theme, labels);
+
+/**
+ * 板と穴を描く。
  *
  * **穴は 1 つにつき 1 つの円**。ランドは同じ円の縁 (stroke) で描く。
  * 別の円を重ねると要素数が倍になり、大きい板 (120 × 120 = 14,400 穴) で
  * SVG がそのぶん重くなる。
  */
-export function renderBoard(
-  board: Board,
-  layout: Layout,
-  theme: Theme,
-  labels: ResolvedLabels = DEFAULT_LABELS,
-): string {
+export function renderPlate(board: Board, layout: Layout, theme: Theme): string {
   const { palette, metrics } = theme;
   const { x, y, width, height } = layout.board;
 
@@ -60,8 +72,28 @@ export function renderBoard(
     }
   }
 
-  // **名前は書かれた辺にだけ出す。** 既定は左と上だけで、4 辺に出すと
-  // 小さい板では名前のほうが板より目立つ。
+  return `${plate}${holes.join('')}`;
+}
+
+/**
+ * 行と列の名前。**板の外の機器と、そこから板へ下りる配線より上に描く** —
+ * 機器を板の上に置くと足と配線が名前の帯を必ず横切り、下に敷くと
+ * その列の名前 (配線が行く先の穴を探す手掛かり) が線に隠れる。
+ *
+ * **名前は書かれた辺にだけ出す。** 既定は左と上だけで、4 辺に出すと
+ * 小さい板では名前のほうが板より目立つ。
+ */
+export function renderAxisLabels(
+  board: Board,
+  layout: Layout,
+  theme: Theme,
+  labels: ResolvedLabels = DEFAULT_LABELS,
+): string {
+  const { palette, metrics } = theme;
+  const { x, y, width, height } = layout.board;
+  // **地の色で縁取る。** 名前の上を機器の足や配線が通るので、上に描くだけでは
+  // 黒い線の上の字が沈む。縁取りが線を字の形に抜いて、どの色の線でも読める。
+  const halo = palette.canvas ?? LIGHT_PAGE;
   const drawn: string[] = [];
   const rowLabelAt = (at: number, row: number): string =>
     svgText(at, layout.rowY(row), axisLabel(row, labels.row, labels.case), {
@@ -69,12 +101,14 @@ export function renderBoard(
       // `Z` と `AA`) が左へはみ出して、列の名前と揃わない。
       anchor: 'middle',
       fill: palette.label,
+      halo,
       'font-size': num(metrics.textSize),
       'dominant-baseline': 'middle',
     });
   const colLabelAt = (at: number, col: number): string =>
     svgText(layout.colX(col), at, axisLabel(col, labels.col, labels.case), {
       fill: palette.label,
+      halo,
       'font-size': num(metrics.textSize),
     });
 
@@ -99,5 +133,5 @@ export function renderBoard(
     }
   }
 
-  return `${plate}${holes.join('')}${drawn.join('')}`;
+  return drawn.join('');
 }

@@ -1,6 +1,6 @@
 import { element, fit, num, svgText, textWidth } from 'fence-kit';
 import { notice, safeToken } from '../errors.ts';
-import { parseAddress } from '../model/address.ts';
+import { formatAddress, parseAddress } from '../model/address.ts';
 import type { Band, Layout } from '../model/layout.ts';
 import type { DeviceSpec, FenceError, Point } from '../types.ts';
 import type { Theme } from './theme.ts';
@@ -76,6 +76,17 @@ export type DeviceLayout = {
 };
 
 /**
+ * 番地で置いた機器の箱が、板にどれだけ食い込むか (縦の量。食い込まなければ 0)。
+ * 板の上に置いた箱は下端を、下に置いた箱は上端を見る。
+ */
+function coverOf(box: Band, layout: Layout, above: boolean): number {
+  const plate = layout.board;
+  const across = box.x < plate.x + plate.width && box.x + box.width > plate.x;
+  if (!across) return 0;
+  return Math.max(0, above ? box.y + box.height - plate.y : plate.y + plate.height - box.y);
+}
+
+/**
  * 帯の中に機器を横へ並べる。**幅は足の数で決まる** — 足を等間隔に置ける
  * 幅が要るので、足の多い機器ほど広くなる。
  */
@@ -104,6 +115,18 @@ export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout): D
     const last = columns[columns.length - 1] ?? at.x;
     const box: Band = { x: (first + last) / 2 - width / 2, y: at.y, width, height };
     const tip = above ? box.y + box.height + LEG : box.y - LEG;
+    const cover = coverOf(box, layout, above);
+    if (cover > 0) {
+      // **箱の左上がその番地**なので、板の上に置いた箱は下へ伸びる。`-a` や `0` に
+      // 置くと板の縁と列の名前に被るが、書いた場所なので動かさずに言う。
+      const rows = Math.ceil(cover / layout.pitch);
+      const clear = formatAddress({ row: address.row + (above ? -rows : rows), col: address.col });
+      notices.push(notice(
+        `${safeToken(device.id)} の箱が板に重なっています (${safeToken(device.where)})。`
+        + `${clear} から${above ? '上' : '下'}に置くと板を避けられます`,
+        device.line,
+      ));
+    }
     placed.push({
       device: { ...device, at: above ? 'top' : 'bottom' },
       box,

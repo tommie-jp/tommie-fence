@@ -134,3 +134,25 @@ describe('番地で置いた機器', () => {
     expect(placed.find((one) => one.device.id === 'BAT')?.box.y).toBe(layout.deviceBands.top?.y);
   });
 });
+
+describe('番地で置いた機器の箱が板に被る', () => {
+  const board = createBoard({ cols: 20, rows: 4 });
+  const layout = createLayout(board, { deviceTop: false, deviceBottom: false });
+  const said = (where: string): string =>
+    layoutDevices([device('USB', ['-', '+'], 'top', where)], layout).notices
+      .map((one) => one.message).join('\n');
+
+  test('names the row above that clears the board, for a box written just above it', () => {
+    // 箱の左上がその番地なので、`-a` に置いた箱は板の縁まで垂れる。
+    expect(said('-a10')).toMatch(/-b10 から上に置くと板を避けられます/);
+    expect(said('010')).toMatch(/-b10 から上/);
+  });
+
+  test('names the row below for a box that sits on the lower half', () => {
+    expect(said('c10')).toMatch(/から下に置くと板を避けられます/);
+  });
+
+  test('says nothing about a box beside the board, which covers no hole', () => {
+    expect(said('-a-6')).not.toMatch(/重なって/);
+  });
+});
