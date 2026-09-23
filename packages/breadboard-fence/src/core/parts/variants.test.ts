@@ -50,7 +50,16 @@ describe('variantsOf', () => {
   test('lists the looks of the parts whose package differs by size', () => {
     expect(variantsOf('led')).toEqual(['3mm', '5mm']);
     // 面実装は変換基板に載せて差すので、姿は「変換基板ごと 1 つの部品」。
-    expect(variantsOf('transistor')).toEqual(['to92', 'to220', 'sot23-dip']);
+    expect(variantsOf('transistor')).toEqual(['to92', 'to220', 'sot23-dip', 'sot346-dip', 'sot89-dip']);
+    expect(variantsOf('regulator')).toEqual(['to92', 'to220', 'sot23-dip', 'sot89-dip']);
+  });
+
+  test('takes an IC on a DIP adapter, but never a part soldered straight to a board', () => {
+    // 直付けの姿 (`2012` `sot346`) はユニバーサル基板のもの (52 の docs/64)。
+    expect(variantsOf('dip8')).toEqual(['sop', 'tssop']);
+    expect(variantsOf('resistor')).toEqual(['quarter', 'half']);
+    expect(variantsOf('transistor')).not.toContain('sot346');
+    expect(variantsOf('sip8')).toEqual([]);
   });
 
   test('gives the thyristor and the triac the same packages as the transistor', () => {
@@ -95,6 +104,8 @@ describe('typesWithVariants', () => {
     expect(typesWithVariants()).toEqual([
       'capacitor', 'resistor', 'diode', 'zener', 'schottky', 'inductor', 'potentiometer',
       'led', 'transistor', 'thyristor', 'triac', 'regulator', 'sma', 'crystal', 'usb-a', 'usb-c',
+      // DIP 化した変換基板 (`dip8/sop`)。種類は正規表現で読むので、書き方の名前で挙げる。
+      'dipN',
     ]);
   });
 });

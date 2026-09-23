@@ -4,7 +4,7 @@ import {
   CAPTION_CLEAR, NAME_CAP, caption, fitToBoard, haloWidth, partLabel, pinPoints, pointOfPin,
 } from './partCommon.ts';
 import { element, num } from './svg.ts';
-import { REAL_INK, dipChip, sipBox, sipHeader, transformerCore } from 'fence-kit';
+import { REAL_INK, dipChip, drawDipAdapter, sipBox, sipHeader, transformerCore } from 'fence-kit';
 import type { ChipInk } from 'fence-kit';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
@@ -39,7 +39,7 @@ export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme):
   // **`pins[0]` は 1 番ピンとは限らない** — 升の並びは固定で、回すと名前のほうが
   // 巡る (`placement/place.ts` の spun)。だから名前で引く。
   const pinOne = part.pins.findIndex((pin) => pin.name === '1');
-  return dipChip({
+  const options = {
     points,
     names: part.pins.map((pin) => pin.name),
     pinOne: pinOne < 0 ? 0 : pinOne,
@@ -47,7 +47,9 @@ export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme):
     caption: caption(part),
     scale: textScale(theme),
     ink: chipInk(theme),
-  });
+  };
+  // 姿があれば DIP 化した変換基板 (`dip8/sop`)。外形は DIP と同じ。
+  return part.variant === null ? dipChip(options) : drawDipAdapter({ ...options, variant: part.variant });
 }
 
 export function sipBarRect(part: PlacedPart, layout: Layout): Rect {

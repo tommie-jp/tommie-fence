@@ -70,7 +70,9 @@ USB      usb-a usb-c (穴は VBUS GND D+ D- CC1 CC2 の順に 2 つから)
 ```text
 capacitor/ceramic  capacitor/film  capacitor/electrolytic  capacitor/tantalum
 led/3mm  led/5mm
-transistor/to92  transistor/to220  transistor/sot23-dip  thyristor/…  triac/…  regulator/…
+transistor/to92  transistor/to220  thyristor/…  triac/…  regulator/…
+transistor/sot23-dip  transistor/sot346-dip (S-Mini)  transistor/sot89-dip  (regulator/…)
+dip8/sop  dip8/tssop  (dipN の姿。DIP 化した変換基板)
 sma/male  sma/female  usb-a/male  usb-a/female  usb-c/male  usb-c/female
 crystal/hc49  crystal/cylinder
 resistor/quarter  resistor/half        diode/do35  diode/do41  (zener/…  schottky/…)

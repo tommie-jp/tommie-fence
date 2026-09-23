@@ -45,6 +45,8 @@ describe('docs/01-syntax.md', () => {
     for (const type of typesWithVariants()) {
       variantsOf(type).forEach(listed(`${type} の姿`));
     }
+    // `dipN` の姿 (DIP 化した変換基板に載る IC) は正規表現で読む種類なので、表の外。
+    variantsOf('dip8').forEach(listed('dipN の姿'));
   });
 
   test('マイコンボードが全部載っている', () => {

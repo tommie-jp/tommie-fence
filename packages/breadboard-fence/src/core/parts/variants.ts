@@ -7,7 +7,7 @@
  * 「コンデンサだ」と分かるのは色、「どのコンデンサか」は形で読ませる。
  */
 
-import { CONNECTOR_LOOKS, connectorNames } from 'fence-kit';
+import { CONNECTOR_LOOKS, connectorNames, smdLooksOf, withSmdLooks } from 'fence-kit';
 import { resolveAlias } from './aliases.ts';
 
 export type PartType = {
@@ -21,10 +21,9 @@ export type PartType = {
 };
 
 /**
- * 種類ごとに選べる姿。ここに無い種類には `/…` を書けない。
- * 描き分けられない姿を黙って受け取ると、実物と違うかたちの図になるため。
+ * 差し込み型の姿。**面実装の姿は fence-kit の表から足す** (`VARIANTS`)。
  */
-const VARIANTS: Record<string, readonly string[]> = {
+const THROUGH_HOLE: Record<string, readonly string[]> = {
   capacitor: ['ceramic', 'film', 'electrolytic', 'tantalum'],
   // 実物のワット数。1/4W は 6.5mm、1/2W は 9mm ほどで、挿す穴の間隔も変わる。
   resistor: ['quarter', 'half'],
@@ -39,9 +38,8 @@ const VARIANTS: Record<string, readonly string[]> = {
   // 実物の玉の大きさ。挿す穴は同じなので、変わるのは丸の大きさだけ。
   led: ['3mm', '5mm'],
   // TO-92 は丸い小信号用、TO-220 は放熱タブつき。足の並びはどちらもピン名で示す。
-  // `sot23-dip` は**面実装を載せた変換基板**。SOT-23 の足の間隔は 0.95mm で
-  // 2.54mm の穴には届かないので、実物も変換基板に載せてから差す。
-  transistor: ['to92', 'to220', 'sot23-dip'],
+  // 面実装を載せた変換基板 (`sot346-dip` など) は下で表から足す。
+  transistor: ['to92', 'to220'],
   // サイリスタとトライアックも同じ 2 つのパッケージで売られている。
   thyristor: ['to92', 'to220'],
   triac: ['to92', 'to220'],
@@ -55,6 +53,15 @@ const VARIANTS: Record<string, readonly string[]> = {
   // USB は差し込み (オス) と受け口 (メス)。**書かなければ受け口**。
   ...Object.fromEntries(connectorNames().map((type) => [type, CONNECTOR_LOOKS])),
 };
+
+/**
+ * 種類ごとに選べる姿。ここに無い種類には `/…` を書けない。
+ * 描き分けられない姿を黙って受け取ると、実物と違うかたちの図になるため。
+ *
+ * **面実装は変換基板に載せた姿だけ** (`sot346-dip`)。直付けの姿 (`sot346` `2012`) は
+ * ユニバーサル基板のもので、ブレッドボードには挿せない (52 の docs/64)。
+ */
+const VARIANTS: Record<string, readonly string[]> = withSmdLooks(THROUGH_HOLE, 'breadboard');
 
 /**
  * 向きのある姿。**どちらの足がどちらかを図に描く**ので、ピン名に極性が要る。
@@ -99,10 +106,11 @@ function splitOnSlash(token: string): { type: string; variant: string | null } {
  * (fence-kit の `parts/boards.ts` と同じ理由。素の添字だと `constructor` が Object.prototype から拾える)。
  */
 export const variantsOf = (type: string): readonly string[] =>
-  Object.hasOwn(VARIANTS, type) ? VARIANTS[type] ?? [] : [];
+  // `dipN` は正規表現で読む種類なので、表の外で引く (`dip8/sop`)。
+  Object.hasOwn(VARIANTS, type) ? VARIANTS[type] ?? [] : smdLooksOf(type, 'breadboard');
 
 /** 向きのある姿か。ピン名 `(+)` `(-)` を要求するかどうかがこれで決まる。 */
 export const isPolarVariant = (variant: string): boolean => POLAR_VARIANTS.has(variant);
 
 /** 姿を選べる種類。書けない種類に姿が付いたときの案内に使う。 */
-export const typesWithVariants = (): readonly string[] => Object.keys(VARIANTS);
+export const typesWithVariants = (): readonly string[] => [...Object.keys(VARIANTS), 'dipN'];

@@ -71,3 +71,27 @@ notes:
 - `transistor/to92` が既定の丸い胴、`transistor/to220` は放熱タブつきの角い胴。
 - **どちらの姿でも、パッケージの向き (平らな面・タブの向き) は図では主張しない。**
   足の並びは品種ごとに違うので、どの穴がどの足かはピン名で示す。
+
+## 面実装を載せた変換基板
+
+面実装の部品は、変換基板に載せたまま挿す姿で書く (`-dip`)。載っている物は
+実寸で描くので、S-Mini (`sot346-dip`) は SOT-23 (`sot23-dip`) より胴が広い。
+SOP・TSSOP の IC を DIP 化した変換基板は `dipN/sop` `dipN/tssop` で、置き方は DIP と同じ。
+
+```breadboard
+title: 図04 面実装を載せた変換基板
+board: half
+parts:
+  Q1: transistor/sot23-dip f3(B) f4(E) f5(C) 2SC1815
+  Q2: transistor/sot346-dip f9(B) f10(E) f11(C) 2SC2712
+  Q3: transistor/sot89-dip f15(B) f16(C) f17(E) 2SD1664
+  U1: dip8/sop @ e20 NJM4580
+  U2: dip14/tssop @ e24 74HC00
+```
+
+![図04 面実装を載せた変換基板](out/05-capacitors-4.svg)
+
+- 3 本足の変換基板は**穴を 3 つ書く** (ピンヘッダの足)。どの穴がどの足かは
+  ピン名で示す — 足の並びは品種ごとに違う。
+- `dip8/sop` の向きは、1 番側の端の白い点と IC の 1 番の窪みで示す。
+- 直付けの姿 (`resistor/2012`) はユニバーサル基板のもので、ここでは書けない。

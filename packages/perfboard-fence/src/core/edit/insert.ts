@@ -1,6 +1,6 @@
 import {
   appendUnderKey, applyEdits, applyLineEdits, FLOW_ADD_REFUSAL, isFlowKey, keysUnder, leadOffsets, needsRoom,
-  normalizeNewlines, orientInserted, wireColor,
+  normalizeNewlines, orientInserted, smdOffsets, wireColor,
 } from 'fence-kit';
 import type { LineEdit, NetDiff } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
@@ -130,22 +130,39 @@ const diffFor = (part: NewPart, source: string, lines: readonly LineEdit[]): Net
   (part.preview === true ? NO_DIFF : diffAfterLines(source, lines));
 
 /**
- * 押した穴 1 つから、残りの足を**同じ行の右へ**並べる。押した穴がアンカー
+ * 押した穴 1 つから、残りの足を**同じ行の右へ**並べる (直付けの SOT だけは
+ * 3 番を次の行へ)。押した穴がアンカー
  * (先に書く足)。並べ方 (間隔) は `leadOffsets` が持つ — breadboard と同じ表なので
  * fence-kit にある (書く人の手癖は板が変わっても同じ)。
  *
  * 右へ入らなければ断る (左へ折り返すと、押した場所で向きが変わる)。
  * この板はレールが無く全穴が独立なので、断るのは板の外だけ。
  */
-function spreadFrom(type: string, anchor: Address, wanted: number, board: Board): readonly Address[] | string {
+function spreadFrom(
+  type: string,
+  variant: string | null,
+  anchor: Address,
+  wanted: number,
+  board: Board,
+): readonly Address[] | string {
   if (wanted <= 1) return [anchor];
-  const holes: Address[] = leadOffsets(type, wanted)
-    .map((step) => ({ row: anchor.row, col: anchor.col + step }));
-  const last = holes[holes.length - 1] ?? anchor;
-  if (holes.some((hole) => !isOnBoard(board, hole))) {
-    return needsRoom(formatAddress(anchor), formatAddress(last), last.col - anchor.col);
+  // **直付けの面実装は置き方が姿で決まる** (隣の穴・2 穴・三角。52 の docs/64)。
+  // 三角は 3 番を次の行に置くので、右だけでなく下にも 1 穴要る。
+  const shaped = smdOffsets(variant);
+  const offsets = shaped !== null && shaped.length === wanted
+    ? shaped
+    : leadOffsets(type, wanted).map((col) => ({ row: 0, col }));
+  const holes: Address[] = offsets.map((step) => ({ row: anchor.row + step.row, col: anchor.col + step.col }));
+  const outside = holes.filter((hole) => !isOnBoard(board, hole));
+  if (outside.length === 0) return holes;
+  // **三角は右と下の両方を言う。** 先に見つかった 1 つだけ言うと、1 つ左へ
+  // 押し直した人が今度は下で断られる (角の穴を押したとき)。
+  if (offsets.some((step) => step.row !== 0)) {
+    return `${formatAddress(anchor)} から右と下へ 1 穴ずつ要ります`
+      + ` (${outside.map(formatAddress).join(' と ')} が板の外です)。別の穴を押します`;
   }
-  return holes;
+  const last = holes.reduce((far, hole) => (hole.col > far.col ? hole : far), anchor);
+  return needsRoom(formatAddress(anchor), formatAddress(last), last.col - anchor.col);
 }
 
 /**
@@ -223,13 +240,13 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
 
   // **書かれた綴りはそのまま行に書き、足の数は種類から引く**。
   const written = resolveTypeName(part.type);
-  const type = baseTypeOf(part.type);
+  const { type, variant } = splitPartType(part.type);
   const wanted = holesOf(type);
   if (wanted === 0) return fail(`知らない部品の種類です: ${part.type}`, null);
   const anchor = part.at[0];
   // **穴 1 つで来たら残りを並べる** (2 本足・3 本足)。並べ方は板が決める。
   const at = part.at.length === 1 && anchor !== undefined && wanted > 1
-    ? spreadFrom(type, anchor, wanted, doc.board)
+    ? spreadFrom(type, variant, anchor, wanted, doc.board)
     : part.at;
   if (typeof at === 'string') return fail(at, null);
   if (at.length !== wanted) {

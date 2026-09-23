@@ -1,5 +1,6 @@
 import {
-  REAL_INK, boardBox, boardChip, connectorBox, dipChip, drawBody, drawConnector, drawPackage, drawsOwnLeads,
+  REAL_INK, boardBox, boardChip, connectorBox, dipChip, directSotSpec, drawBody, drawConnector, drawDipAdapter,
+  drawDirectSot, drawPackage, drawsOwnLeads,
   element, fit, hasBody,
   lookupBoardPart, num, bodySize, packageHalfWidth, packageReach, sipHeader,
   smaBody as drawSmaBody, svgText, transformerCore, TEXT_HALO_WIDTH,
@@ -582,7 +583,10 @@ function renderChip(
   if (kind === 'dip') {
     // **1 番ピンは書かれたアンカー。** 回しても足の並びのほうが回るので
     // (`parts/footprint.ts` の pinsOf)、切り欠きは常に 0 番の側。
-    return dipChip({ ...shared, names: numbers, pinOne: 0 });
+    // 姿があれば DIP 化した変換基板 (`dip8/sop`)。外形は DIP と同じ。
+    return part.variant === null
+      ? dipChip({ ...shared, names: numbers, pinOne: 0 })
+      : drawDipAdapter({ ...shared, names: numbers, pinOne: 0, variant: part.variant, paint: inkOf(theme) });
   }
   if (kind === 'sip') {
     // **名前は行の増える側へ。** この板に溝は無いので、どちらでも読めるほうを
@@ -732,10 +736,37 @@ function switchMarks(part: PlacedPart, rect: OrientedRect): string {
   });
 }
 
+/**
+ * 直付けの SOT。**姿は fence-kit にある** (`drawDirectSot`) — 胴を 1 番・2 番の行と
+ * 3 番の行の間に置き、足先から穴まで半田の線を引く。当たり判定と同じ置き方
+ * (`bodyRect` → `sotMountOf`)。名札は胴の下。
+ */
+function renderDirectSot(part: PlacedPart, layout: Layout, theme: Theme, room?: CaptionRoom): string {
+  const rect = bodyRect(part, layout);
+  if (rect === null || part.variant === null) return '';
+  const drawn = drawDirectSot({
+    points: part.pins.map((pin) => layout.point(pin.address)),
+    variant: part.variant,
+    lead: theme.palette.lead,
+    ink: inkOf(theme),
+  });
+  // 縦に置いた胴は、長さのほうが上下に伸びる。
+  const upright = Math.abs(Math.sin(rect.angle)) > Math.SQRT1_2;
+  return drawn + partLabel(
+    caption(part),
+    { cx: rect.cx, cy: rect.cy, height: upright ? rect.width : rect.height, angle: 0 },
+    { x: rect.cx, y: rect.cy },
+    theme,
+    layout,
+    room,
+  );
+}
+
 /** 形ごとの描き方。 */
 function renderOne(part: PlacedPart, layout: Layout, theme: Theme, room: CaptionRoom): string {
   const kind = footprintOf(part.type, part.variant)?.kind;
   if (kind === 'connector') return renderConnector(part, layout, theme, room);
+  if (kind === 'three-lead' && directSotSpec(part.variant) !== null) return renderDirectSot(part, layout, theme, room);
   if (isBoxed(part)) return renderBox(part, layout, theme, room);
   if (kind === 'three-lead') return renderPackage(part, layout, theme, room);
   return renderTwoLead(part, layout, theme, room);

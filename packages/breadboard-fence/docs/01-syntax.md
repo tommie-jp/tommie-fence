@@ -586,10 +586,10 @@ parts:
 | | `electrolytic` | 帯つきの缶。**マイナス側**に帯 |
 | | `tantalum` | 黄色い粒。**プラス側**に印 |
 | `led` | `3mm` / `5mm` | 玉の大きさ。既定は `5mm` |
-| `transistor` | `to92` / `to220` / `sot23-dip` | 丸い胴 (既定) / 放熱タブつきの角い胴 / 面実装を載せた変換基板 |
+| `transistor` | `to92` / `to220` / `sot23-dip` / `sot346-dip` / `sot89-dip` | 丸い胴 (既定) / 放熱タブつきの角い胴 / 面実装を載せた変換基板 (SOT-23・S-Mini・SOT-89) |
 | `thyristor` | `to92` / `to220` | 同上 |
 | `triac` | `to92` / `to220` | 同上 |
-| `regulator` | `to92` / `to220` | 1A クラスは TO-220、小電流は TO-92 |
+| `regulator` | `to92` / `to220` / `sot23-dip` / `sot89-dip` | 1A クラスは TO-220、小電流は TO-92。面実装は変換基板 |
 | `sma` | `male` / `female` | オスは中心にピン、メスは中心が穴 |
 | `usb-a` | `male` / `female` | 差し込み (金物が変換基板の縁から出る) / 受け口 (既定) |
 | `usb-c` | `male` / `female` | 同上 |
@@ -600,6 +600,7 @@ parts:
 | `schottky` | `do35` / `do41` | 同上 |
 | `inductor` | `axial` / `radial` | 芯に巻いた軸物 (既定) / 樹脂で固めた立てた缶 |
 | `potentiometer` | `trimmer` / `knob` | ねじで回す半固定 (既定) / 軸の立つボリューム |
+| `dipN` | `sop` / `tssop` | SOP・TSSOP の IC を DIP 化した変換基板。書き方は DIP と同じ |
 
 - **色は種類のもの、形が姿のもの**。図の中で「コンデンサだ」と分かるのは色で、
   「どのコンデンサか」は形で読ませる。
@@ -640,9 +641,22 @@ parts:
   Q1: transistor/to92 f5(B) f6(C) f7(E) 2SC1815
   Q2: transistor/to220 f14(B) f15(C) f16(E) 2SD880
   Q3: transistor/sot23-dip f23(B) f24(C) f25(E) 2N3904
+  Q4: transistor/sot346-dip f27(B) f28(E) f29(C)
 ```
 
 ![図15 姿を選べる部品](out/01-syntax-15.svg)
+
+**面実装は変換基板に載せた姿だけ**書ける (`-dip`)。基板ごと 1 つの部品として描き、
+載っている物は実寸で描く — S-Mini (東芝。SC-59・SOT-346 と同じ物) は `sot346-dip` で、
+SOT-23 (`sot23-dip`) より胴が 0.3mm 広い。`dipN/sop` と `dipN/tssop` は IC を DIP 化した
+変換基板で、置き方は DIP と同じ (`U1: dip8/sop @ e5`)。図は
+[examples/05-capacitors.md](../examples/05-capacitors.md) の図04。
+
+- **直付けの姿 (`resistor/2012` `transistor/sot346`) は断る** — ユニバーサル基板
+  (perfboard) のもので、ブレッドボードの穴には挿せない。断るときに書き直し先を言う
+  (`transistor/sot346` なら `transistor/sot346-dip`)。
+- 別名 (`s-mini` `sc59`) は綴りとしては受け取らず、表の綴りを返して断る。
+- SSOP の変換基板は列の間隔が 600mil で溝をまたげないので、まだ無い。
 
 ## スイッチと可変抵抗
 

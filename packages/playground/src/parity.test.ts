@@ -1,6 +1,8 @@
+import { smdLook } from 'fence-kit';
 import { describe, expect, test } from 'vitest';
 import { placeableTypes } from '../../breadboard-fence/src/core/placement/footprints.ts';
-import { placeableNames } from '../../perfboard-fence/src/core/parts/types.ts';
+import { variantsOf } from '../../breadboard-fence/src/core/parts/variants.ts';
+import { placeableNames, variantTable } from '../../perfboard-fence/src/core/parts/types.ts';
 import { partTypeNames } from '../../circuit-fence/src/core/parts.ts';
 
 /**
@@ -20,6 +22,18 @@ describe('3 つのフェンスの部品表', () => {
     // 片方に置けてもう片方に置けない理由が無い。片方に足したらここが落ちる。
     expect([...bb].filter((type) => !pf.has(type))).toEqual([]);
     expect([...pf].filter((type) => !bb.has(type))).toEqual([]);
+  });
+
+  test('lets the two boards take the same surface-mount adapters', () => {
+    // **変換基板に載せた姿は板の 2 つで同じ綴り** (52 の docs/64)。直付けの姿
+    // (`resistor/2012`) はユニバーサル基板だけのもので、ブレッドボードには挿せない。
+    const onAdapter = (looks: readonly string[]): readonly string[] =>
+      looks.filter((look) => smdLook(look)?.onAdapter === true);
+    const perfboard = new Map(variantTable());
+    for (const type of bb) {
+      expect(onAdapter(variantsOf(type)), type).toEqual(onAdapter(perfboard.get(type) ?? []));
+      expect(variantsOf(type).filter((look) => smdLook(look)?.onAdapter === false), type).toEqual([]);
+    }
   });
 
   test('lets the schematic write every part the boards can place', () => {

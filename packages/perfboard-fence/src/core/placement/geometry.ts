@@ -1,4 +1,6 @@
-import { boardBox, connectorBox, connectorFacing, crystalCan, dipBox, sipBox } from 'fence-kit';
+import {
+  boardBox, connectorBox, connectorFacing, crystalCan, dipBox, directSotSpec, sipBox, smdBodySize, sotMountOf,
+} from 'fence-kit';
 import type { ConnectorShape } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import { footprintOf } from '../parts/footprint.ts';
@@ -258,6 +260,9 @@ export function bodyRect(part: PlacedPart, layout: Layout): OrientedRect | null 
     const mount = edgeMountOf(part, layout);
     if (mount !== null) return mount.rect;
   }
+  // **直付けの SOT は箱ではない。** 胴は 1 番・2 番の行と 3 番の行の間に載る。
+  const sot = directSotRect(part, layout);
+  if (sot !== null) return sot;
   if (isBoxed(part) || part.pins.length > 2) return boxRect(part, layout);
 
   const [first, second] = part.pins;
@@ -279,7 +284,8 @@ export function bodyRect(part: PlacedPart, layout: Layout): OrientedRect | null 
 
   // **描かれている形をそのまま返す。** 玉やコネクタは足を広げても本体が伸びないので、
   // 足の間隔から胴を作ると、離れた部品と重なっていると言い出す。
-  const fixed = fixedSizeOf(part.type);
+  // **直付けの面実装も足の間隔で伸びない** (実物の寸法。描くのも同じ `smdBodySize`)。
+  const fixed = smdBodySize({ type: part.type, variant: part.variant, value: null, pins: [] }) ?? fixedSizeOf(part.type);
   const width = fixed?.width ?? Math.max(length - BODY_INSET * 2, BODY_HEIGHT);
 
   return {
@@ -289,6 +295,19 @@ export function bodyRect(part: PlacedPart, layout: Layout): OrientedRect | null 
     height: fixed?.height ?? BODY_HEIGHT,
     angle,
   };
+}
+
+/**
+ * 直付けの SOT の胴 (足先まで)。**描くのも同じ `sotMountOf`** — 胴の置き方を
+ * 2 か所に持つと、図と当たり判定が食い違う (約束 9)。直付けの SOT でなければ null。
+ */
+function directSotRect(part: PlacedPart, layout: Layout): OrientedRect | null {
+  const spec = directSotSpec(part.variant);
+  if (spec === null) return null;
+  const mount = sotMountOf(part.pins.map((pin) => layout.point(pin.address)), spec);
+  return mount === null
+    ? null
+    : { cx: mount.cx, cy: mount.cy, width: mount.width, height: mount.height, angle: mount.angle };
 }
 
 /** 長方形の 4 隅。 */

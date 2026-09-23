@@ -1,4 +1,8 @@
-import { CONNECTOR_LOOKS, boardPartNames, connectorNames, lookupBoardPart, lookupConnector } from 'fence-kit';
+import {
+  CONNECTOR_LOOKS, boardPartNames, connectorNames, lookupBoardPart, lookupConnector, smdLooksOf, smdSuggestion,
+  withSmdLooks,
+} from 'fence-kit';
+import { safeToken } from '../errors.ts';
 /**
  * 置ける部品の語彙。**Phase 2 は 2 本足だけ。** 3 本足・DIP・SIP は次の Phase で、
  * 置けないものは「知らないふり」ではなく**置けないと言う**。
@@ -82,8 +86,11 @@ const ALIASES: Record<string, string> = {
   xtal: 'crystal',
 };
 
-/** 種類ごとに選べる姿。ここに無い種類には `/…` を書けない。 */
-const VARIANTS: Record<string, readonly string[]> = {
+/**
+ * 差し込み型の姿。**面実装の姿は fence-kit の表から足す** (`VARIANTS`) —
+ * 変換基板に載せた姿 (`sot346-dip`) と、この板に直付けする姿 (`sot346` `2012`)。
+ */
+const THROUGH_HOLE: Record<string, readonly string[]> = {
   capacitor: ['ceramic', 'film', 'electrolytic', 'tantalum'],
   // 実物のワット数。1/4W は 6.5mm、1/2W は 9mm ほどで、挿す穴の間隔も変わる。
   resistor: ['quarter', 'half'],
@@ -99,9 +106,8 @@ const VARIANTS: Record<string, readonly string[]> = {
   // 平たい缶 (HC-49) と円筒 (時計用の 32.768kHz などに多い)。輪郭がまるで違う。
   crystal: ['hc49', 'cylinder'],
   // TO-92 は丸い小信号用、TO-220 は放熱タブつき。足の並びは書かれた穴で示す。
-  // `sot23-dip` は**面実装を載せた変換基板**。SOT-23 の足の間隔は 0.95mm で
-  // 2.54mm の穴には届かないので、実物も変換基板に載せてから差す。
-  transistor: ['to92', 'to220', 'sot23-dip'],
+  // 面実装 (`sot346-dip` `sot346` など) は下で表から足す。
+  transistor: ['to92', 'to220'],
   thyristor: ['to92', 'to220'],
   triac: ['to92', 'to220'],
   regulator: ['to92', 'to220'],
@@ -112,6 +118,17 @@ const VARIANTS: Record<string, readonly string[]> = {
   // USB は差し込み (オス) と受け口 (メス)。**書かなければ受け口**。
   ...Object.fromEntries(connectorNames().map((type) => [type, CONNECTOR_LOOKS])),
 };
+
+/**
+ * 種類ごとに選べる姿。ここに無い種類には `/…` を書けない。**面実装は fence-kit の
+ * 表から** — 変換基板 (`-dip`) は breadboard と同じ綴り、直付けはこの板だけ
+ * (ブレッドボードには挿せない。52 の docs/64)。
+ */
+const VARIANTS: Record<string, readonly string[]> = withSmdLooks(THROUGH_HOLE, 'perfboard');
+
+/** その種類に書ける姿。`dipN` は正規表現で読む種類なので、表の外で引く (`dip8/sop`)。 */
+const looksOf = (type: string): readonly string[] =>
+  (own(VARIANTS, type) ? VARIANTS[type] ?? [] : smdLooksOf(type, 'perfboard'));
 
 /**
  * **軸物** — 胴の両端から足が出る形。足を曲げて挿すので、胴そのものより
@@ -189,12 +206,18 @@ export function splitPartType(written: string): PartType {
   }
   if (variant === undefined || variant === null) return { type, variant: null, problem: null };
 
-  const allowed = own(VARIANTS, type) ? VARIANTS[type] ?? [] : [];
+  const allowed = looksOf(type);
   if (!allowed.includes(variant)) {
-    const hint = allowed.length === 0
-      ? `${type} に姿はありません`
-      : `${type} に書ける姿は ${allowed.join(' / ')} です`;
-    return { type, variant: null, problem: `知らない姿です: ${variant} (${hint})` };
+    // 別名 (`s-mini`) と変換基板 (`sot89` → `sot89-dip`) は、表の綴りを返す。
+    // **書かれた綴りは `safeToken` を通す** — 知らない綴りは何でも来うる (制御文字や
+    // 向きを入れ替える字も)。種類は既に表で引けた名前。
+    const target = smdSuggestion(type, variant, allowed);
+    const hint = target !== null
+      ? `${safeToken(variant)} は ${target} と書きます`
+      : allowed.length === 0
+        ? `${type} に姿はありません`
+        : `${type} に書ける姿は ${allowed.join(' / ')} です`;
+    return { type, variant: null, problem: `知らない姿です: ${safeToken(variant)} (${hint})` };
   }
   return { type, variant, problem: null };
 }
@@ -212,5 +235,7 @@ export const isEdgeMount = (type: string, variant: string | null): boolean =>
  * 出ているつもりで終わるので、**描けない姿はここに足さない**。
  * `render/parts.test.ts` が「姿ごとに図が違う」ことを見張る。
  */
-export const variantTable = (): readonly (readonly [string, readonly string[]])[] =>
-  Object.entries(VARIANTS).map(([type, looks]) => [type, looks] as const);
+export const variantTable = (): readonly (readonly [string, readonly string[]])[] => [
+  ...Object.entries(VARIANTS).map(([type, looks]) => [type, looks] as const),
+  ...DIP_SIZES.map((pins) => [`dip${pins}`, looksOf(`dip${pins}`)] as const),
+];

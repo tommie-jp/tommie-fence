@@ -7,7 +7,7 @@ import type {
   RailAddress, Result,
 } from '../types.ts';
 import type { BoardPart, Connector } from 'fence-kit';
-import { MIN_CONNECTOR_PINS } from 'fence-kit';
+import { MIN_CONNECTOR_PINS, adapterFor, isDirectSmd, smdLooksOf, smdSuggestion } from 'fence-kit';
 import type { Turn } from '../parts/orient.ts';
 import { isPolarVariant, typesWithVariants, variantsOf } from '../parts/variants.ts';
 import { describeUnknownType, lookupFootprint } from './footprints.ts';
@@ -80,6 +80,8 @@ function variantError(part: PlacedPart): FenceError | null {
   if (variant === null) return null;
 
   const allowed = variantsOf(part.type);
+  const direct = directSmdError(part, variant, allowed);
+  if (direct !== null) return direct;
   if (allowed.length === 0) {
     return {
       message:
@@ -90,10 +92,14 @@ function variantError(part: PlacedPart): FenceError | null {
     };
   }
   if (!allowed.includes(variant)) {
+    // 別名 (`s-mini`) は綴りとしては受け取らず、表の綴りを返す。
+    // この板は変換基板に載せた姿だけなので、`s-mini` は `sot346-dip` へ案内する。
+    const target = smdSuggestion(part.type, variant, allowed);
+    const hint = target !== null
+      ? `${safeToken(variant)} は ${target} と書きます`
+      : `${safeToken(part.type)} に使えるのは ${allowed.join(', ')}`;
     return {
-      message:
-        `知らない姿です: ${safeToken(variant)} ` +
-        `(${safeToken(part.type)} に使えるのは ${allowed.join(', ')})`,
+      message: `知らない姿です: ${safeToken(variant)} (${hint})`,
       line: part.line,
       token: part.written,
     };
@@ -108,6 +114,27 @@ function variantError(part: PlacedPart): FenceError | null {
     };
   }
   return null;
+}
+
+/**
+ * 直付けの面実装 (`resistor/2012` `transistor/sot346`)。**ユニバーサル基板の姿**で、
+ * 足がブレッドボードの穴に届かない。知らない姿として断ると「書けるのに表に無い」と
+ * 読めるので、**なぜ挿せないかと、書き直し先**を言う (52 の docs/64)。
+ */
+function directSmdError(part: PlacedPart, variant: string, allowed: readonly string[]): FenceError | null {
+  if (!isDirectSmd(variant) || allowed.includes(variant)) return null;
+  const adapter = adapterFor(part.type, variant);
+  // **その種類がその姿で直付けできるときだけ** perfboard を勧める。`diode/2012` のように
+  // どこでも書けない姿は、知らない姿として断る (書き直した先でまた断られないように)。
+  if (adapter === null && !smdLooksOf(part.type, 'perfboard').includes(variant)) return null;
+  const instead = adapter === null
+    ? 'ユニバーサル基板 (perfboard) なら直付けで書けます'
+    : `変換基板に載せて ${safeToken(part.type)}/${adapter} と書きます`;
+  return {
+    message: `部品 ${safeToken(part.id)}: ${variant} は面実装なので、ブレッドボードには挿せません。${instead}`,
+    line: part.line,
+    token: part.written,
+  };
 }
 
 /**
