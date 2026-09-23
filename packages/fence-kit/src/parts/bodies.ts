@@ -1,7 +1,11 @@
-import { DEFAULT_LED_COLOR, bandColor, ledColor } from '../colors.ts';
+import { DEFAULT_LED_COLOR, bandColor } from '../colors.ts';
 import { element } from '../markup.ts';
 import { num, svgText } from '../svg.ts';
 import { capacitorCode, parsePicofarads, parseResistor, resistorBands } from '../values.ts';
+import { REAL_INK } from './ink.ts';
+import type { BodyInk, BodyPart } from './ink.ts';
+import { cathodeIndex, ledLook, markedIndex } from './marks.ts';
+import { drawSmdBody, smdBodySize } from './smdDraw.ts';
 
 /**
  * 2 本足の部品の**胴の姿**。板に依らないので、breadboard と perfboard が共有する
@@ -21,26 +25,8 @@ import { capacitorCode, parsePicofarads, parseResistor, resistorBands } from '..
  * 数える側が別々に持たないようにする。
  */
 
-/** 胴を描くのに要る部品の情報。**両方の `PlacedPart` がそのまま当てはまる形**。 */
-export type BodyPart = {
-  readonly type: string;
-  readonly value?: string | null;
-  /** 姿 (`capacitor/electrolytic` の `electrolytic`、LED の `3mm`)。 */
-  readonly variant?: string | null;
-  /** 足。極性の印 (`+` `-` `A` `K`) を読む。 */
-  readonly pins: readonly { readonly name: string }[];
-};
-
-/**
- * 塗りの差し替え口。`name` は**実物の色の名前**が分かっているとき
- * (抵抗の帯、LED の色) だけ付く。白黒の図はそこで網に移す。
- */
-export type BodyInk = {
-  readonly paint: (color: string, name?: string) => string;
-};
-
-/** そのままの色で描く (色のある図)。 */
-export const REAL_INK: BodyInk = { paint: (color) => color };
+export type { BodyInk, BodyPart } from './ink.ts';
+export { REAL_INK } from './ink.ts';
 
 /** CdS の受光面の折り返しの数と、豆電球のフィラメントの巻き数。 */
 /** 積層鉄心の縞の数。実物の板の重なりが見える程度に。 */
@@ -87,31 +73,9 @@ const LED_RADIUS = 8.5;
 
 const domeScale = (part: BodyPart): number => (part.variant === '3mm' ? 6.5 / LED_RADIUS : 1);
 
-/**
- * 印が付く側の足。**片方にしか印が無くても、2 本足なら反対側が決まる**。
- *
- * どちらにも印が無ければ**先に書いた穴が + 側 (アノード)** とする。
- * これはフェンス全体にかかる 1 文の規則で、コンデンサの `(+)` `(-)` も
- * ダイオードの `(A)` `(K)` も同じ規則の別の顔。**片方だけ見て決めると、
- * 反対側だけを書いた図 (`diode a5 a10(A)`) が逆向きに描かれる。**
- *
- * @param whenBare どちらの印も無いときに返す足 (0 = 先に書いた穴)
- */
-function markedIndex(part: BodyPart, mark: string, opposite: string, whenBare: number): number {
-  const names = part.pins.map((pin) => pin.name.toUpperCase());
-  const found = names.indexOf(mark);
-  if (found !== -1) return found;
-  const other = names.indexOf(opposite);
-  if (other !== -1) return 1 - other;
-  return whenBare;
-}
-
 /** 電解の帯 (マイナス側) とタンタルの印 (プラス側)。既定の向きは規則から決まる。 */
 const polarityIndex = (part: BodyPart, mark: '+' | '-'): number =>
   (mark === '+' ? markedIndex(part, '+', '-', 0) : markedIndex(part, '-', '+', 1));
-
-/** カソード側の足。ダイオードの帯と LED の平らな面がここを見る。 */
-const cathodeIndex = (part: BodyPart): number => markedIndex(part, 'K', 'A', 1);
 
 /**
  * コンデンサの姿。**書かれていなければピン名 `(-)` の有無で選ぶ** —
@@ -255,13 +219,6 @@ function domeBody(part: BodyPart, color: string, ink: BodyInk, edge = '#7a2018',
   });
   return dome + flat;
 }
-
-/** LED の色。書かれた値から引き、知らない色でも既定で描く。 */
-const ledLook = (part: BodyPart): { readonly color: string; readonly name?: string } => {
-  const written = part.value ?? '';
-  const found = ledColor(written);
-  return found === null ? { color: DEFAULT_LED_COLOR } : { color: found, name: written.toLowerCase() };
-};
 
 type DiodeLook = {
   readonly fill: string;
@@ -886,6 +843,9 @@ export const hasBody = (type: string): boolean => Object.hasOwn(BODIES, type);
  * (`bodySize` と同じ数式)。知らない種類は砲弾型で描く。
  */
 export function drawBody(part: BodyPart, span: number, ink: BodyInk = REAL_INK): string {
+  // **直付けの面実装は姿が種類より先に効く** (`resistor/2012` は抵抗の胴ではない)。
+  const smd = drawSmdBody(part, ink);
+  if (smd !== null) return smd;
   const body = Object.hasOwn(BODIES, part.type) ? BODIES[part.type] : undefined;
   return body ? body(part, span, ink) : domeBody(part, DEFAULT_LED_COLOR, ink);
 }
@@ -897,6 +857,8 @@ export function drawBody(part: BodyPart, span: number, ink: BodyInk = REAL_INK):
  * 丸い胴は直径、角い胴は外形。足の線はここに入らない (胴の外)。
  */
 export function bodySize(part: BodyPart, span: number): { readonly width: number; readonly height: number } {
+  const smd = smdBodySize(part);
+  if (smd !== null) return smd;
   const twice = (radius: number): { readonly width: number; readonly height: number } =>
     ({ width: radius * 2, height: radius * 2 });
 

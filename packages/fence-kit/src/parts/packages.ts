@@ -2,6 +2,8 @@ import { element } from '../markup.ts';
 import { num } from '../svg.ts';
 import type { BodyInk, BodyPart } from './bodies.ts';
 import { REAL_INK } from './bodies.ts';
+import { isSmdAdapter, smdLook } from './smd.ts';
+import { ADAPTER_BOARD, sotGlyph } from './smdDraw.ts';
 
 /**
  * **足が 3 本以上ある部品のパッケージの姿**。2 本足の胴 (`bodies.ts`) と同じ理由で
@@ -42,8 +44,8 @@ export function packageReach(part: BodyPart, pitch: number): number {
   if (part.type === 'slide-switch') return 0.8 * pitch;
   // TO-220 は放熱タブのぶん胴が高い。実物 (10mm 角ほど) に寄せて丸より大きく取る。
   if (part.variant === 'to220') return 1.4 * pitch;
-  // 変換基板は SOT-23 の胴よりずっと大きい (ピンヘッダを載せる板そのもの)。
-  if (part.variant === 'sot23-dip') return 1.05 * pitch;
+  // 変換基板は SOT の胴よりずっと大きい (ピンヘッダを載せる板そのもの)。
+  if (isSmdAdapter(part.variant ?? null)) return 1.05 * pitch;
   // TO-92 は幅 4.5mm ほど。穴のピッチ 2.54mm に対して直径 2 ピッチ弱に収める。
   return 0.95 * pitch;
 }
@@ -59,7 +61,7 @@ export function packageHalfWidth(part: BodyPart, pitch: number): number {
   if (part.type === 'potentiometer') return part.variant === 'knob' ? reach : reach * 1.2;
   if (part.type === 'slide-switch') return reach * 1.6;
   if (part.variant === 'to220') return reach * 1.15;
-  if (part.variant === 'sot23-dip') return reach * 1.35;
+  if (isSmdAdapter(part.variant ?? null)) return reach * 1.35;
   return reach;
 }
 
@@ -68,6 +70,9 @@ const FLAT_AT = 0.62;
 
 /** つまみが走る溝の幅。胴の内側に収めて、端で切れないようにする。 */
 const SLOT_WIDTH_RATIO = 0.6875;
+
+/** 変換基板の上の胴を、ピンヘッダから離す量 (px)。 */
+const CHIP_CLEAR = 2;
 
 /**
  * パッケージの胴。種類と姿で選ぶ。知らない組み合わせは TO-92 の丸。
@@ -78,7 +83,7 @@ export function drawPackage(part: BodyPart, shape: PackageShape, ink: BodyInk = 
   }
   if (part.type === 'slide-switch') return slideSwitchShell(shape, ink);
   if (part.variant === 'to220') return to220Shell(shape, ink);
-  if (part.variant === 'sot23-dip') return adapterShell(shape, ink);
+  if (isSmdAdapter(part.variant ?? null)) return adapterShell(part, shape, ink);
   return to92Shell(shape, ink);
 }
 
@@ -129,45 +134,43 @@ function to220Shell(shape: PackageShape, ink: BodyInk): string {
 }
 
 /**
- * 面実装の部品を載せた**変換基板**。実物の作り方そのもの — SOT-23 の足の間隔は
+ * 面実装の部品を載せた**変換基板**。実物の作り方そのもの — SOT の足の間隔は
  * 0.95mm で、2.54mm の穴には届かないので、変換基板に載せてから差す。
  *
- * **描くのは基板ごと 1 つの部品**。小さな板の上に面実装の胴が乗り、下の縁から
- * ピンヘッダが出る (足はそのピンヘッダの位置)。
+ * **描くのは基板ごと 1 つの部品**。小さな板の上に面実装の胴が乗り、縁から
+ * ピンヘッダが出る (足はそのピンヘッダの位置)。**載っている物は表の実寸で描く**
+ * (`smd.ts`) — S-Mini (SOT-346) と SOT-23 は胴の幅が 0.3mm 違う。1 番と 2 番の足を
+ * ピンヘッダの側に向け、3 番 (SOT-89 はタブ) を反対に向ける。
  */
-function adapterShell(shape: PackageShape, ink: BodyInk): string {
+function adapterShell(part: BodyPart, shape: PackageShape, ink: BodyInk): string {
   const { cx, cy, reach, halfWidth, side } = shape;
   const board = element('rect', {
     x: num(cx - halfWidth), y: num(cy - reach), width: num(halfWidth * 2), height: num(reach * 2), rx: 2,
-    fill: ink.paint('#1f6b45'), stroke: ink.paint('#124a2b'),
+    fill: ink.paint(ADAPTER_BOARD.fill), stroke: ink.paint(ADAPTER_BOARD.edge),
   });
   // 白いシルク (変換基板の見分けどころ)。
   const silk = element('rect', {
     x: num(cx - halfWidth + 2), y: num(cy - reach + 2),
     width: num(Math.max(halfWidth * 2 - 4, 1)), height: num(Math.max(reach * 2 - 4, 1)), rx: 1.5,
-    fill: 'none', stroke: ink.paint('#dfe4ee'), 'stroke-width': 0.8,
+    fill: 'none', stroke: ink.paint(ADAPTER_BOARD.silk), 'stroke-width': 0.8,
   });
-  // 面実装の胴と、その両側から出るガルウィングの足。
-  const chipHalf = reach * 0.42;
-  const chip = element('rect', {
-    x: num(cx - chipHalf * 1.3), y: num(cy - chipHalf), width: num(chipHalf * 2.6), height: num(chipHalf * 2), rx: 1,
-    fill: ink.paint('#23272e'), stroke: ink.paint('#12151a'),
-  });
-  const legs = [-1, 1]
-    .map((at) => element('line', {
-      x1: num(cx + at * chipHalf * 1.3), y1: num(cy),
-      x2: num(cx + at * chipHalf * 1.9), y2: num(cy),
-      stroke: ink.paint('#b9c0c9'), 'stroke-width': 1.4,
-    }))
-    .join('');
   // ピンヘッダの列 (足の並ぶ側の縁)。
   const headerY = side > 0 ? cy - reach + 2.5 : cy + reach - 2.5;
   const header = element('rect', {
     x: num(cx - halfWidth + 1.5), y: num(headerY - 1.5),
     width: num(Math.max(halfWidth * 2 - 3, 1)), height: 3, rx: 1.5,
-    fill: ink.paint('#2b2f33'),
+    fill: ink.paint(ADAPTER_BOARD.header),
   });
-  return board + silk + chip + legs + header;
+  const look = smdLook(part.variant ?? null);
+  if (look === null || look.spec.kind !== 'sot') return board + silk + header;
+  // 胴はピンヘッダから少し離す。1 番・2 番の足 (-y) がピンヘッダの側を向くように、
+  // ピンヘッダが下にあるときは上下を裏返す。
+  const chip = element(
+    'g',
+    { transform: `translate(${num(cx)} ${num(cy + side * CHIP_CLEAR)})${side > 0 ? '' : ' scale(1 -1)'}` },
+    sotGlyph(look.spec, ink),
+  );
+  return board + silk + header + chip;
 }
 
 /** 半固定抵抗。上から見た四角い本体と、回すためのねじの頭。 */

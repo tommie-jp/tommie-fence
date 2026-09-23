@@ -45,6 +45,13 @@ export type {
 } from './parts/chips.ts';
 export type { BoardPart } from './parts/boards.ts';
 export { drawPackage, packageHalfWidth, packageReach } from './parts/packages.ts';
+export {
+  SMD_PX_PER_MM, adapterFor, directSotSpec, isDirectSmd, isSmdAdapter, smdLook, smdLooksOf, smdMount, smdOffsets,
+  smdSpelling, smdSuggestion, smdTable, withSmdLooks,
+} from './parts/smd.ts';
+export type { SmdLook, SmdMount, SmdSpec } from './parts/smd.ts';
+export { drawDipAdapter, drawDirectSot, smdBodySize, sotMountOf } from './parts/smdDraw.ts';
+export type { DipAdapterOptions, DirectSotOptions, SotMount } from './parts/smdDraw.ts';
 export { partIcon } from './parts/icon.ts';
 export type { PackageShape } from './parts/packages.ts';
 export type { BodyInk, BodyPart } from './parts/bodies.ts';
