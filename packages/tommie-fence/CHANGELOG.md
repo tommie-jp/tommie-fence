@@ -3,6 +3,22 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.8.0] - 2026-09-23
+
+perfboard-fence 0.8.0 を束ねた。
+
+### Added
+
+- **perfboard: 番地で置いた機器の箱が板に被ると、帯と Problems に出る。**
+  避けられる番地を添える (`USB の箱が板に重なっています (-a10)。-b10 から上に
+  置くと板を避けられます`)。
+
+### Fixed
+
+- **perfboard: 板の外に書いた注釈が題に重ならず、図の外で切れなくなった。**
+- **perfboard: 行と列の名前が、板の外の機器の足と配線に隠れなくなった。**
+  名前を線の上に、地の色で縁取って描く。
+
 ## [0.7.0] - 2026-09-22
 
 ### Added
