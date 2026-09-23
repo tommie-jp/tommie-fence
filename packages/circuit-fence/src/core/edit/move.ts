@@ -12,6 +12,7 @@ import {
   addressesOf, applyEdits, diffOf, entryOfPart, fail, isOnGrid, keySpanOf, locatePart,
 } from './shared.ts';
 import type { Edit, MoveResult, Span } from './shared.ts';
+import { FLOW_DEVICE, isDevicePart, setDeviceField } from './device.ts';
 
 /**
  * 部品を別の番地へ動かす。**フェンス本文 -> 編集の並び**を返す純関数で、
@@ -71,6 +72,17 @@ export function movePart(source: string, handle: string, to: Address, trial = fa
   const lines = normalized.split('\n');
   const lineText = lines[part.line - 1];
   if (lineText === undefined) return fail(`${partId} の行が見つかりません`, part.line);
+
+  // 機器はブロックで書くので、`at:` の 1 行だけを書き換える (`device.ts`)。
+  if (isDevicePart(part)) {
+    const rewrite = setDeviceField(normalized, part, 'at', formatAddress(next[0] as Address));
+    if (rewrite === null) return fail(`${partId}: ${FLOW_DEVICE}`, part.line);
+    const edits = rewrite.edits;
+    return {
+      ok: true,
+      value: { edits, diff: trial ? { lost: [], gained: [] } : diffOf(normalized, applyEdits(normalized, edits)) },
+    };
+  }
 
   // **フロー形式の中なら綴りを差し替える。** 1 行に 1 部品でも `{ }` の中なら区切りの
   // `,` があり、行ごと組み直すと消える。範囲が決まらないときも綴りを探す側に回す。

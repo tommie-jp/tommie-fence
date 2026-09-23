@@ -7,7 +7,7 @@ import {
   NOTE_KINDS, NOTE_LEADINGS, NOTE_SIZE_NAMES, isNoteAlign, isNoteLeading, isNoteSize, noteColor,
 } from '../notes.ts';
 import type { NoteAlign, NoteLeading, NoteSize } from '../notes.ts';
-import { NO_TURN, closestPartType, lookupPartType, partTypeNames, resolvePartTypeName } from '../parts.ts';
+import { DEVICE, NO_TURN, closestPartType, lookupPartType, partTypeNames, resolvePartTypeName } from '../parts.ts';
 import type { PartTypeName, Turn } from '../parts.ts';
 import { isNoteDrawable } from '../tex/escape.ts';
 import type { Endpoint, FenceError, NoteSpec, NoteTextStyle, PartSpec, Result, WireSpec } from '../types.ts';
@@ -78,6 +78,24 @@ const turnTwice = (written: string): string =>
   `${safeToken(written)} に向きが 2 つ書かれています (回転・mirror・± はそれぞれ 1 つまで)`;
 
 /**
+ * 向きの語だけの並び (`r90 mirror`) を読む。マップ形式の `turn:` が使う
+ * (1 行形式と**同じ語・同じ決まり**にするため、読み方はここ 1 つ)。
+ * ± の並びはオペアンプだけのものなので、ここでは読まない。
+ */
+export function readTurnWords(written: string, tokens: readonly string[], line: number): Result<Turn> {
+  let turned: Turned = NO_TURNED;
+  for (const token of tokens) {
+    const next = withTurn(turned, token);
+    if (next === 'twice') return fail(turnTwice(written), line);
+    if (next === null || next.orientation !== null) {
+      return fail(`向き ${safeToken(token)} は読めません (${[...Object.keys(ROTATIONS), MIRROR].join(' / ')})`, line, token);
+    }
+    turned = next;
+  }
+  return ok(turned.turn);
+}
+
+/**
  * 番地に付けた名前 (`points:`) の表。番地が書ける場所ならどこでも引く。
  * 名前が無いフェンスでは空の表が渡る (呼ぶ側で場合分けしない)。
  */
@@ -89,7 +107,7 @@ export const NO_POINTS: Points = new Map();
  * 番地を読む。**名前を先に引き、無ければ番地として読む**。
  * 名前には番地の形を許していない (parseFence) ので、どちらとも読める字はない。
  */
-const readAddress = (token: string, line: number, points: Points = NO_POINTS): Result<Address> => {
+export const readAddress = (token: string, line: number, points: Points = NO_POINTS): Result<Address> => {
   const named = points.get(token);
   if (named !== undefined) return ok(named);
 
@@ -143,6 +161,11 @@ export function parseCompactPart(
 
   if (written === undefined) {
     return fail(`部品 ${safeToken(id)} の種類がありません (${typeList()} が使えます)`, line);
+  }
+
+  // 機器は足の名前を並べるので 1 行に畳めない。種類を知らないとは言わず、書き方を返す。
+  if (written === DEVICE) {
+    return fail(`${DEVICE} は 1 行では書けません。type: ${DEVICE} と at・pins を並べたマップ形式で書きます`, line, written);
   }
 
   // 略記はここで正式名に畳む。以降と中間モデルには正式名だけが流れる。

@@ -4,7 +4,7 @@ import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
 import {
-  isTurned, lookupPartType, optionsFor, pinLabelText, pinPlaces, pinSideOf, symbolFor, turnSide,
+  DEVICE, isTurned, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, symbolFor, symbolOf, turnSide,
 } from '../parts.ts';
 import type { PartType, PinSide, SourceInner, Turn } from '../parts.ts';
 import { lookupBoardPart } from 'fence-kit';
@@ -20,7 +20,8 @@ import { NOTE_MARK_TEXT, noteFontTex, texColorOf } from '../notes.ts';
 import { escapeTex, hasUnicode } from './escape.ts';
 import { isMathLabel, mathInnerOf, mathLabelTex } from './mathLabel.ts';
 import { num } from './num.ts';
-import { regulatorShapeTex, sipShapeTex, smaShapeTex, usbShapeName, usbShapeTex } from './shapes.ts';
+import { deviceBox, deviceShapeName, deviceShapeTex, regulatorShapeTex, sipShapeTex, smaShapeTex, usbShapeName, usbShapeTex } from './shapes.ts';
+import type { DeviceBox } from './shapes.ts';
 
 /**
  * 生成した TeX と、その行が元の YAML の何行目から来たかの対応。
@@ -192,11 +193,19 @@ function sipShapesFor(circuit: Circuit): string[] {
   const withSma = circuit.parts.some((part) => part.type === 'sma')
     ? [...withReg, ...smaShapeTex()]
     : withReg;
+  // 機器も自分で宣言した形。**使う寸法 (本数・幅) だけ、1 回ずつ** (ピンヘッダと同じ)。
+  const boxes = new Map<string, DeviceBox>();
+  for (const part of circuit.parts) {
+    if (part.kind !== 'multi-terminal' || part.type !== DEVICE || part.pinNames === undefined) continue;
+    const box = deviceBox(part.pinNames, part.value);
+    boxes.set(deviceShapeName(box), box);
+  }
+  const devices = [...boxes.keys()].sort().flatMap((name) => deviceShapeTex(boxes.get(name) as DeviceBox));
   // USB も自分で宣言した形。**使う種類だけ、1 回ずつ**。
   const usb = [...new Set(circuit.parts.map((part) => part.type))]
     .filter((type) => usbShapeName(type) !== null)
     .sort();
-  return [...withSma, ...usb.flatMap((type) => usbShapeTex(type))];
+  return [...withSma, ...devices, ...usb.flatMap((type) => usbShapeTex(type))];
 }
 
 const FOOTER = ['\\end{circuitikz}', '\\end{document}'];
@@ -278,7 +287,12 @@ function annotationOf(value: string, unit: Unit, target: TexTarget): string {
   if (hasUnicode(value)) return `\\circuittext{${escapeTex(value)}}`;
 
   const matched = unit.tex === null ? null : SCALED_VALUE.exec(value);
-  if (!matched) return `$\\mathrm{${escapeTex(value)}}$`;
+  // 数式の中では空白が捨てられる (`Analog Discovery` が詰まった)。空白は `\ ` にする。
+  // `-` は数式では引き算の − になって前後が空く (`HC − SR04`)。型番の `-` は
+  // ハイフンなので字として組む (`\mbox{-}`)。
+  if (!matched) {
+    return `$\\mathrm{${escapeTex(value).replaceAll(' ', '\\ ').replaceAll('-', '\\mbox{-}')}}$`;
+  }
 
   const [, digits = '', prefix = ''] = matched;
   // siunitx なら u が µ で出る。フェンスには siunitx が無いので字のまま出す。
@@ -660,7 +674,7 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
   // ラベルは `l_` (下・左)、値は `a^` (上・右) と向かい合わせに置く。
   // どちらも既定の側に置くと、LED のように上へ張り出す記号とラベルが重なる
   // (回路図の定石。実機で重なりを確認して決めた)。
-  const type = lookupPartType(part.type);
+  const type = partTypeOf(part);
   // 種類そのものに要るオプション (抵抗計の Ω など) は記号のすぐ後ろ。
   const options = [symbolFor(part.type, target), ...optionsFor(part.type, target)];
   // 足を指せる種類だけ、記号そのものに名前を付ける (`P1.w` の行き先になる)。
@@ -709,7 +723,7 @@ function drawOneTerminal(part: OneTerminalPart, target: TexTarget): string {
   // 名前の出し方は種類ごとに決まっている (parts.ts の idLabel)。
   // 端子は白丸の横に添え、電源レールは記号そのものの文字として出す。
   // グラウンドのように名前を持たない記号は記号だけ。
-  switch (lookupPartType(part.type)?.idLabel) {
+  switch (partTypeOf(part)?.idLabel) {
     case 'beside':
       return `\\draw (${at}) node[${symbol}]{} node[above left]{${id}};`;
     case 'inside':
@@ -728,10 +742,11 @@ function drawOneTerminal(part: OneTerminalPart, target: TexTarget): string {
  * 書き出す `.tex` は本物の `op amp` を使うので、書き足しは要らない。
  */
 function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[] {
-  const type = lookupPartType(part.type);
-  const symbol = symbolFor(part.type, target);
+  const type = partTypeOf(part);
+  // 機器 (`device`) は足の本数で記号が決まるので、種類名ではなく部品から引く。
+  const symbol = type === null ? symbolFor(part.type, target) : symbolOf(type, target);
   // 種類そのものに要るオプション (DIP の足の本数) が先、書かれた向きが後。
-  const options = [symbol, ...optionsFor(part.type, target)];
+  const options = [symbol, ...(type === null ? optionsFor(part.type, target) : optionsOf(type, target))];
   const turned = part.orientation === null ? null : ORIENTATION_TEX[part.orientation];
   if (turned !== undefined && turned !== null) options.push(turned);
   options.push(...turnOptions(part.turn));

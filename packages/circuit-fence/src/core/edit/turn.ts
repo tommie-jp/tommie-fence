@@ -5,13 +5,14 @@ import { nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { MIRROR_WORD, isRotationWord, rotationWord } from '../parser/compact.ts';
 import { LIMITS } from '../limits.ts';
-import { lookupPartType, orientOf } from '../parts.ts';
+import { partTypeOf, orientOf } from '../parts.ts';
 import type { Turn } from '../parts.ts';
 import {
   LAST_ROW, UNLANDED, applyRewrite, diffOf, entryOfPart, fail, isOnGrid, landsAs, locatePart, tokensFrom, withinEntry,
   wordEdit,
 } from './shared.ts';
 import type { Edit, RewriteResult } from './shared.ts';
+import { FLOW_DEVICE, isDevicePart, setDeviceField } from './device.ts';
 import type { Circuit } from '../model/circuit.ts';
 import type { PartSpec } from '../types.ts';
 
@@ -96,6 +97,19 @@ function turnByWord(
   const lineText = lines[part.line - 1];
   if (lineText === undefined) return fail(`${partId} の行が見つかりませんでした`, part.line);
 
+  // 機器はブロックで書くので、`turn:` の 1 行を書き換える。**向きが元に戻ったら
+  // 行ごと消す** (`turn:` の空の行は読めない)。
+  if (isDevicePart(part)) {
+    const words = [
+      ...(next.rotate === 0 ? [] : [rotationWord(next.rotate)]),
+      ...(next.mirror ? [MIRROR_WORD] : []),
+    ];
+    const rewrite = setDeviceField(normalized, part, 'turn', words.length === 0 ? null : words.join(' '));
+    if (rewrite === null) return fail(`${partId}: ${FLOW_DEVICE}`, part.line);
+    const applied = { ...rewrite, diff: { lost: [], gained: [] } };
+    return { ok: true, value: { ...applied, diff: diffOf(normalized, applyRewrite(normalized, applied)) } };
+  }
+
   // **1 行に並べた形 (フロー形式) はその部品の範囲だけを見る。** 行まるごとだと
   // 隣の部品の `r90` を自分の語と取り、区切りに付いた `r90,` を語と読めない。
   const entry = entryOfPart(doc.parts, lines, part);
@@ -133,7 +147,7 @@ function turnByWord(
 
 /** その記号に向きを書けるか。書けないなら文法側と同じ文面で断る。 */
 function orientOfPart(part: PartSpec, aspect: 'rotate' | 'mirror') {
-  const type = lookupPartType(part.type);
+  const type = partTypeOf(part);
   if (type === null) return fail(`${part.type} は知らない部品の種類です`, part.line);
 
   const orient = orientOf(type);

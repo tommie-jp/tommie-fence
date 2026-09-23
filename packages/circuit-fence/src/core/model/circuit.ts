@@ -1,7 +1,7 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { addressHint, cornerOf, formatAddress, isNearlyZero, isSameAddress, parseAddress } from './address.ts';
-import { lookupPartType, lookupPin, orientOf, pinAxis, pinHint } from '../parts.ts';
+import { partTypeOf, lookupPin, orientOf, pinAxis, pinHint } from '../parts.ts';
 import type { Address } from './address.ts';
 import { NO_POINTS } from '../parser/compact.ts';
 import type { Points } from '../parser/compact.ts';
@@ -394,7 +394,7 @@ function slantedIntoPins(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>):
     const part = byId.get(pin.part);
     if (part === undefined || part.kind !== 'multi-terminal') continue;
 
-    const type = lookupPartType(part.type);
+    const type = partTypeOf(part);
     // **向きを渡す。** 記号を回すと足の乗る中心線も回るので、渡さないと
     // 回した部品では正しく引いた線に「斜めです」と言い、斜めの線を黙って通す。
     const axis = type === null ? null : pinAxis(type, pin.pin, part.turn);
@@ -470,7 +470,7 @@ function guessSegment(wire: WireSpec, byId: ReadonlyMap<string, PartSpec>): Segm
   if (pin === null || from === null || to === null || isSameAddress(from, to)) return null;
 
   const part = byId.get(pin.part);
-  const type = part === undefined ? null : lookupPartType(part.type);
+  const type = part === undefined ? null : partTypeOf(part);
   const centred = part !== undefined && part.kind === 'multi-terminal' && type != null
     && pinAxis(type, pin.pin, part.turn) !== null;
   if (centred) return { from, to };
@@ -539,7 +539,7 @@ function resolveEndpoint(
 
   // 足を指せるかは種類が多端子かどうかではなく、足の表を持っているかで決まる
   // (ポテンショメータのように 2 端子でも足を 1 本持つ種類がある)。
-  const type = lookupPartType(part.type);
+  const type = partTypeOf(part);
   if (type === null || type.pins === undefined) {
     errors.push(fenceError(`部品 ${safeToken(part.id)} (${safeToken(part.type)}) に足の名前はありません`, line));
     return null;
@@ -709,7 +709,7 @@ function checkOrientation<P extends MultiTerminalPart | OneTerminalPart>(
   part: P,
   errors: FenceError[],
 ): P {
-  const type = lookupPartType(part.type);
+  const type = partTypeOf(part);
   const orient = type === null ? null : orientOf(type);
   if (orient === null) return part;
 

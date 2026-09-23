@@ -1,5 +1,5 @@
 import { lookupBoardPart, lookupConnector } from 'fence-kit';
-import { REGULATOR_SHAPE, SMA_SHAPE, usbShapeName } from './tex/shapes.ts';
+import { REGULATOR_SHAPE, SMA_SHAPE, deviceBox, deviceShapeName, usbShapeName } from './tex/shapes.ts';
 import type { BoardPart } from 'fence-kit';
 /**
  * 部品の種類の表。パーサ (どう書けるか) と TeX 生成 (どう描くか) の両方がここを見る。
@@ -35,7 +35,7 @@ import type { BoardPart } from 'fence-kit';
  *   フェンスでだけ `mirror` を足して右上へ返す (latexOptions)
  */
 
-import type { TexTarget } from './types.ts';
+import type { PartSpec, TexTarget } from './types.ts';
 
 /**
  * 2 端子は `\draw (…) to[symbol] (…)`、1 端子と多端子は `\node[symbol] at (…)`。
@@ -437,6 +437,37 @@ function boardchip(board: BoardPart): PartType {
  * **反転も許す。** 番号は描き上がった SVG に差し込むので鏡文字にならない
  * (ボードと同じ理由)。
  */
+/**
+ * 板の外の機器・モジュール (`device`)。**足の名前は書き手が並べる**ので、表を
+ * 持たずに部品ごとに作る (`partTypeOf`)。形はピンヘッダと同じ「箱の片側に足」で、
+ * 箱の中に足の名前を刷る。
+ *
+ * 足は**名前でも番号でも**指せる (`M1.TRIG` / `M1.2`)。名前は大文字小文字を
+ * 問わない (ボードと同じ。書かれた綴りは小文字で引かれる)。
+ */
+export function deviceChip(names: readonly string[], label: string | null = null): PartType {
+  const anchors = names.map((name, index) => [name, `pin ${index + 1}`] as const);
+  return {
+    kind: 'multi-terminal',
+    // 箱の幅は名前の長さで決まる (`deviceBox`)。
+    symbol: deviceShapeName(deviceBox(names, label)),
+    options: ['draw', 'font=\\scriptsize'],
+    valueInside: true,
+    ...NO_UNIT,
+    pins: Object.fromEntries([
+      // **名前を先に置く** — 先に書いたほうが代表の名前になる (`mainPinName`)。
+      ...anchors.flatMap(([name, anchor]) =>
+        (name === name.toLowerCase() ? [[name, anchor]] : [[name, anchor], [name.toLowerCase(), anchor]])),
+      ...anchors.map(([, anchor], index) => [`${index + 1}`, anchor]),
+    ]),
+    pinRow: Object.fromEntries(anchors.map(([, anchor]) => [anchor, 'left' as const])),
+    pinLabels: names,
+  };
+}
+
+/** `device` の種類名。1 行では書けず、マップ形式 (`type: device`) だけで書く。 */
+export const DEVICE = 'device';
+
 function sipchip(count: number): PartType {
   const legs = Array.from({ length: count }, (_, index) => index + 1);
   return {
@@ -1050,14 +1081,26 @@ export const lookupPartType = (name: string): PartType | null =>
   Object.hasOwn(PART_TYPES, name) ? PART_TYPES[name as PartTypeName] : null;
 
 /**
+ * 部品の足の表。**機器 (`device`) は部品ごとに足の名前が違う**ので、種類名では
+ * 引けない。部品を手に持っている所はこちらを使う。
+ */
+export const partTypeOf = (part: PartSpec): PartType | null =>
+  part.type === DEVICE && part.kind === 'multi-terminal' && part.pinNames !== undefined
+    ? deviceChip(part.pinNames, part.value)
+    : lookupPartType(part.type);
+
+/**
  * その TeX で使う circuitikz の記号名。
  * 知らない種類は書かれた名前をそのまま返す (検証を通っていれば起きない)。
  */
 export function symbolFor(typeName: string, target: TexTarget): string {
   const type = lookupPartType(typeName);
-  if (type === null) return typeName;
-  return target === 'latex' ? (type.latexSymbol ?? type.symbol) : type.symbol;
+  return type === null ? typeName : symbolOf(type, target);
 }
+
+/** 表を手に持っているときの記号名 (機器は部品ごとに表を作るので、名前では引けない)。 */
+export const symbolOf = (type: PartType, target: TexTarget): string =>
+  (target === 'latex' ? (type.latexSymbol ?? type.symbol) : type.symbol);
 
 /**
  * その記号に必ず付ける circuitikz のオプション。
@@ -1066,9 +1109,11 @@ export function symbolFor(typeName: string, target: TexTarget): string {
  */
 export function optionsFor(typeName: string, target: TexTarget): readonly string[] {
   const type = lookupPartType(typeName);
-  if (type === null) return [];
-  return (target === 'latex' ? type.latexOptions : undefined) ?? type.options ?? [];
+  return type === null ? [] : optionsOf(type, target);
 }
+
+export const optionsOf = (type: PartType, target: TexTarget): readonly string[] =>
+  (target === 'latex' ? type.latexOptions : undefined) ?? type.options ?? [];
 
 /**
  * 書かれたピン名を circuitikz のアンカー名にする。読めなければ null。
@@ -1188,6 +1233,28 @@ export function pinLabelText(type: PartType, index: number, side: PinSide): stri
 export function mainPinName(type: PartType, anchor: string): string {
   const first = Object.entries(type.pins ?? {}).find(([, target]) => target === anchor)?.[0] ?? anchor;
   return first.length === 1 ? first.toUpperCase() : first;
+}
+
+/**
+ * 升目とネットリストに出す足の名前。**升目の接続点 (`pinsOf`)、足を指した線の端
+ * (`pinRefOf`)、ネットリストの箱の足 (`model/nets.ts`) がここを通る** — 線は点を名前で引くので、2 か所で別々に決めると
+ * 片方だけが食い違う (レギュレータで点の側だけ直し、USB で線の側が外れた)。
+ *
+ * 名前は**図に出るものと同じ字**にする。図に足の名前を書く部品
+ * (`pinLabels`) はそちらから引く — `mainPinName` は書ける綴りのうち最初の
+ * 1 つを返すので、数字と名前の両方で呼べる足 (レギュレータ・USB) では
+ * 図と食い違う (JS は数字めいた鍵を先に並べるため。実機で気づいた)。
+ */
+export function shownPinName(type: PartType, anchor: string): string {
+  return printedPinLabel(type, anchor) ?? mainPinName(type, anchor);
+}
+
+/** 図に書く足の名前 (`pinLabels`)。持たない種類は null。 */
+function printedPinLabel(type: PartType, anchor: string): string | null {
+  const labels = type.pinLabels;
+  const at = /^pin (\d+)$/.exec(anchor);
+  if (labels === undefined || at === null) return null;
+  return labels[Number(at[1]) - 1] ?? null;
 }
 
 export function pinAxis(type: PartType, anchor: string, turn: Turn = NO_TURN): PinAxis | null {

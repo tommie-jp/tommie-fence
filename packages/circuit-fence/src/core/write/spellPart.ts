@@ -1,4 +1,5 @@
-import { isTurned } from '../parts.ts';
+import { DEVICE, isTurned } from '../parts.ts';
+import { yamlScalar } from './yamlScalar.ts';
 import type { Turn } from '../parts.ts';
 import type { PartSpec } from '../types.ts';
 
@@ -36,6 +37,10 @@ const tag = (key: string, text: string | null, reversed = false): readonly strin
   (text === null ? [] : [`${key}${reversed ? '<' : ''}=${text}`]);
 
 export function spellPart(part: PartSpec): string {
+  // **機器はブロックで書くので、鍵の行は ID だけ** (`M1:`)。中身の行は
+  // `spellPartBlock` が組む。1 行に畳むと下の行が宙に浮く (52 の docs/66)。
+  if (part.type === DEVICE) return `${part.id}:`;
+
   // **種類も番地も、書かれた綴りをそのまま使う** (`written` / `spelling`)。
   // 読んだ正式名で書き戻すと、略記や別名で書いた行が勝手に長くなる。
   const head = [`${part.id}:`, part.written, ...part.spelling];
@@ -59,4 +64,24 @@ export function spellPart(part: PartSpec): string {
     ...turnWords(part.turn),
     ...(part.value === null ? [] : [part.value]),
   ].join(' ');
+}
+
+/** ブロックの中の項目の字下げ (鍵の行から 2 つ下げる)。 */
+const FIELD_INDENT = '  ';
+
+/**
+ * 部品を**書かれる形のまま**組む。1 行の部品は 1 行、機器 (`device`) は
+ * 鍵の行と中身の行 (`type` `at` `label` `pins` `turn`)。字下げは鍵の行からの相対。
+ */
+export function spellPartBlock(part: PartSpec): readonly string[] {
+  if (part.type !== DEVICE || part.kind !== 'multi-terminal') return [spellPart(part)];
+  const turn = turnWords(part.turn);
+  return [
+    `${part.id}:`,
+    `${FIELD_INDENT}type: ${DEVICE}`,
+    `${FIELD_INDENT}at: ${part.spelling[0] ?? ''}`,
+    ...(part.value === null ? [] : [`${FIELD_INDENT}label: ${yamlScalar(part.value)}`]),
+    `${FIELD_INDENT}pins: [${(part.pinNames ?? []).join(', ')}]`,
+    ...(turn.length === 0 ? [] : [`${FIELD_INDENT}turn: ${turn.join(' ')}`]),
+  ];
 }

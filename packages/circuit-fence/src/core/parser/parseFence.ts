@@ -9,6 +9,7 @@ import { isNoteDrawable } from '../tex/escape.ts';
 import { rememberRecent } from 'fence-kit';
 import { NO_POINTS, parseCompactPart, parseNoteLine, parseNoteText, parseWireLine } from './compact.ts';
 import type { Points } from './compact.ts';
+import { parseDevicePart } from './device.ts';
 import { namesNet } from '../parts.ts';
 import { EMPTY_STYLE, validateStyle } from './style.ts';
 
@@ -391,7 +392,10 @@ function collectParts(
     const text = scalarText(pair.value);
     // **中身まで読んでから二重定義を見る。** 同じ名前を 2 度書けるかどうかは
     // 種類で決まるので、種類が読めるまでは決められない。
-    const part = text === null ? null : parseCompactPart(id, text, line, points);
+    // 値がマップなら機器のマップ形式 (`type: device`)。1 行に畳めない形はこれだけ。
+    const part = text !== null
+      ? parseCompactPart(id, text, line, points)
+      : isMap(pair.value) ? parseDevicePart(id, pair.value, line, lineOf, points) : null;
 
     if (seen.has(id) && !repeatsName(parts, id, part)) {
       errors.push(fenceError(`部品 ${safeToken(id)} が二重に定義されています`, line, null, id));

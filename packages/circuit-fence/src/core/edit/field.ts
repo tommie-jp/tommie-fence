@@ -9,6 +9,8 @@ import { spellPart } from '../write/spellPart.ts';
 import { writeFence } from '../write/writeFence.ts';
 import { UNLANDED, applyRewrite, diffOf, entryOfPart, fail, landsAs } from './shared.ts';
 import type { RewriteResult } from './shared.ts';
+import { FLOW_DEVICE, isDevicePart, setDeviceField } from './device.ts';
+import { yamlScalar } from '../write/yamlScalar.ts';
 
 /**
  * 部品の欄 (種類・値・ラベル) を書き換える。**フェンス本文 → 書き換えの並び**を
@@ -103,6 +105,20 @@ export function setField(source: string, handle: string, field: PartField, text:
 
   const lines = normalized.split('\n');
   const written = lines[part.line - 1] ?? '';
+
+  // 機器はブロックで書くので、値は `label:` の 1 行に書く (`device.ts`)。
+  // 種類はマップ形式そのものを決めるので替えられない。ID は名前の変更の道で替える。
+  if (isDevicePart(part)) {
+    if (field !== 'value') return fail(`${partId}: 機器 (device) の${field === 'type' ? '種類' : 'この欄'}は升目からは替えられません。ブロックを手で書き換えます`, part.line);
+    // 機器の名前は空白を含んでよい (`Analog Discovery`)。YAML に書けない字は引用符で囲む。
+    if (/[\r\n]/.test(text)) return fail('改行を含む字は書けません', part.line);
+    if ([...text].length > LIMITS.valueLength) return fail(`長すぎます (${LIMITS.valueLength} 文字まで)`, part.line);
+    const set = setDeviceField(normalized, part, 'label', text === '' ? null : yamlScalar(text));
+    if (set === null) return fail(`${partId}: ${FLOW_DEVICE}`, part.line);
+    const rewrite = { ...set, diff: { lost: [], gained: [] } };
+    return { ok: true, value: { ...rewrite, diff: diffOf(normalized, applyRewrite(normalized, rewrite)) } };
+  }
+
   // 範囲が決まらない (鍵が見つからない・項目が次の行へ続く) ときは断る。
   const entry = entryOfPart(doc.parts, lines, part);
   if (entry === null) return fail(`${partId}: ${UNLANDED}`, part.line);

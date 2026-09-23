@@ -1,6 +1,6 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { lookupConnector } from 'fence-kit';
-import { lookupPartType, mainPinName, pinPlaces } from '../parts.ts';
+import { DEVICE, partTypeOf, mainPinName, pinPlaces } from '../parts.ts';
 import type { Circuit } from './circuit.ts';
 import type { Net } from './nets.ts';
 import { wiringOf } from './nets.ts';
@@ -41,7 +41,10 @@ const PACKAGED = /^(dip|sip)\d+$/;
  */
 const isPackaged = (part: PartSpec): boolean =>
   PACKAGED.test(part.type) || lookupConnector(part.type) !== null
-  || (lookupPartType(part.type)?.pinLabels?.length ?? 0) > 4;
+  // **機器も言わない** — モジュールの足は差し出しているだけで、使うのは一部
+  // (超音波センサーの 4 本、Analog Discovery の 30 本)。
+  || part.type === DEVICE
+  || (partTypeOf(part)?.pinLabels?.length ?? 0) > 4;
 
 /**
  * どこにも届いていない足。**自分しか乗っていないまとまり**にいて、しかも
@@ -75,7 +78,7 @@ function looseTerminals(circuit: Circuit): FenceError[] {
   for (const [root, group] of byRoot) {
     const alone = group[0];
     if (group.length > 1 || alone === undefined || wired.has(root) || named.has(root)) continue;
-    if (lookupPartType(alone.part.type)?.idLabel !== undefined) continue;
+    if (partTypeOf(alone.part)?.idLabel !== undefined) continue;
     found.push(fenceError(`${safeToken(alone.ref)} はどこにもつながっていません`, alone.part.line));
   }
   return found;
@@ -99,7 +102,7 @@ function unusedPins(circuit: Circuit): FenceError[] {
   const found: FenceError[] = [];
   for (const part of circuit.parts) {
     if (part.kind !== 'multi-terminal' || isPackaged(part)) continue;
-    const type = lookupPartType(part.type);
+    const type = partTypeOf(part);
     if (type === null || type === undefined) continue;
 
     const loose = pinPlaces(type)

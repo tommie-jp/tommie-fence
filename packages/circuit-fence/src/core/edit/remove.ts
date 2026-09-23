@@ -5,6 +5,7 @@ import { parseFence } from '../parser/parseFence.ts';
 import type { FenceError, NoteSpec, WireSpec } from '../types.ts';
 import { applyRewrite, diffOf, fail } from './shared.ts';
 import type { LineEdit, Rewrite } from './shared.ts';
+import { deviceBodyLines, isDevicePart } from './device.ts';
 
 /**
  * 部品と配線を消す。**フェンス本文 → 書き換えの並び**を返す純関数で、
@@ -95,7 +96,9 @@ export function deletePart(source: string, handle: string): RemovalResult {
     if (isKeyLine(lines[line - 1], 'notes')) return fail(`${partId} を指す注釈: ${FLOW}`, line);
   }
 
-  const drop = new Set<number>([part.line, ...wireLines, ...noteLines]);
+  // **機器はブロックごと消す** — 鍵の行だけ消すと中身が宙に浮いて読めなくなる。
+  const body = isDevicePart(part) ? deviceBodyLines(normalized, part) : [];
+  const drop = new Set<number>([part.line, ...body, ...wireLines, ...noteLines]);
   // **最後の 1 つを消したら鍵ごと。** 空の `parts:` / `wires:` は読めない。
   // ただし**読めない行が鍵の下に残るなら鍵は残す** (`emptiedUnder`)。
   const items = new Set(drop);

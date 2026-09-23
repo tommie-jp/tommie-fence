@@ -32,8 +32,8 @@ describe('種類', () => {
 });
 
 describe('図', () => {
-  // ネットリストの足はアンカー名で出る (`J1.pin 1`)。多端子部品はどれもそう (pico も)。
-  test('wires to a named pin, landing on the anchor the name stands for', () => {
+  // ネットリストの箱の足は図に刷ってある名前で出る (52 の docs/66。以前は `J1.pin 1`)。
+  test('wires to a named pin and lists it by that name', () => {
     const result = compileCircuit(circuit(
       'parts:',
       '  J1: usb-c b2',
@@ -45,8 +45,8 @@ describe('図', () => {
 
     expect(result.errors).toEqual([]);
     const netOf = (ref: string) => result.netlist.find((net) => net.refs.includes(ref));
-    expect(netOf('J1.pin 1')?.refs).toContain('R1.1');
-    expect(netOf('J1.pin 2')?.refs).toContain('R1.2');
+    expect(netOf('J1.VBUS')?.refs).toContain('R1.1');
+    expect(netOf('J1.GND')?.refs).toContain('R1.2');
   });
 
   test('declares the symbol only when it is used', () => {

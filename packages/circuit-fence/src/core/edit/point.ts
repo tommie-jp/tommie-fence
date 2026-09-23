@@ -1,4 +1,5 @@
 import { LineCounter, isMap, isScalar, parseDocument } from 'yaml';
+import { deviceAtSpan, isDevicePart } from './device.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
@@ -123,6 +124,14 @@ function bareTokens(doc: Circuit, source: string, wanted: Address): readonly Tok
   // 行ごとに続きの桁を覚えておかないと、同じ綴りを二度拾って後ろを取り逃す。
   const cursors = new Map<number, number>();
   for (const part of doc.parts) {
+    // 機器の置き場は鍵の行ではなく、ブロックの中の `at:` の行にある。
+    if (isDevicePart(part)) {
+      const span = deviceAtSpan(source, part);
+      const written = span === null ? '' : (lines[span.line - 1] ?? '').slice(span.column, span.column + span.length);
+      const at = parseAddress(written);
+      if (span !== null && at !== null && formatAddress(at) === target) found.push(span);
+      continue;
+    }
     const text = lines[part.line - 1];
     if (text === undefined) continue;
     const located = locateTokens(text, addressesOf(part), doc.points, cursors.get(part.line) ?? 0);

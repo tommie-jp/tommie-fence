@@ -161,6 +161,11 @@ export type MultiTerminalPart = {
    */
   readonly written: string;
   readonly line: number;
+  /**
+   * 機器 (`device`) の足の名前。書かれた順が箱の上からの順。**機器だけが持つ** —
+   * ほかの多端子部品の足は種類で決まる (parts.ts の表)。
+   */
+  readonly pinNames?: readonly string[];
 };
 
 export type PartSpec = TwoTerminalPart | OneTerminalPart | MultiTerminalPart;

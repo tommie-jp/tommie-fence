@@ -2,14 +2,15 @@ import { formatAddress, rowLetters } from '../model/address.ts';
 import type { Address, WireOperator } from '../model/address.ts';
 import { isReferenceable, LIMITS } from '../limits.ts';
 import { normalizeNewlines } from '../newlines.ts';
-import { lookupPartType, lookupPin, namesNet, PART_PREFIXES } from '../parts.ts';
+import { lookupPartType, partTypeOf, lookupPin, namesNet, PART_PREFIXES } from '../parts.ts';
 import type { PartTypeName } from '../parts.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { fieldProblem } from './field.ts';
 import type { Endpoint } from '../types.ts';
 import { diffOf, fail, isOnGrid, locatePart } from './shared.ts';
 import { flipPart, turnPart } from './turn.ts';
-import { handleAt } from './handles.ts';
+import { handleAt, partOfHandle } from './handles.ts';
+import { isDevicePart } from './device.ts';
 import { stepCell } from './move.ts';
 import type { LineEdit, RewriteResult } from './shared.ts';
 import {
@@ -127,7 +128,7 @@ export function insertWire(
     // 足は書ける名前かどうかを**置く前に**見る (書いてから帯で気づくのでは遅い)。
     const part = doc.parts.find((candidate) => candidate.id === end.part);
     if (!part) return fail(`部品が見つかりません: ${end.part}`, null);
-    const type = lookupPartType(part.type);
+    const type = partTypeOf(part);
     if (!type || lookupPin(type, end.pin) === null) {
       return fail(`${end.part} に ${end.pin} という足はありません`, part.line);
     }
@@ -274,6 +275,11 @@ export function duplicatePart(source: string, handle: string, newId: string): Re
   }
 
   const lines = normalized.split('\n');
+  const original = partOfHandle(doc.parts, handle);
+  // 機器はブロックで書くので、1 行を写す道では写せない。
+  if (original !== null && isDevicePart(original)) {
+    return fail(`${handle}: 機器 (device) は升目からは写せません。ブロックを写して ID と at: を書き換えます`, original.line);
+  }
   const found = locatePart(doc, lines, handle);
   if (found === null) return fail(`部品が見つかりません: ${handle}`, null);
   if (isFlowKey(lines, 'parts')) return fail('フロー形式 (1 行に書いた形) の部品には足せません。手で書きます', null);

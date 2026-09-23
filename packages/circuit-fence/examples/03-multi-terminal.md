@@ -214,3 +214,51 @@ style:
 | --- | --- |
 | `usb-a` | `VBUS` `GND` `D+` `D-` (`1` 〜 `4`) |
 | `usb-c` | `VBUS` `GND` `D+` `D-` `CC1` `CC2` (`1` 〜 `6`) |
+
+## 機器・モジュール (`device`)
+
+板の外の機器やモジュール (超音波センサー、充電モジュール、Analog Discovery など) は、
+**`type: device` のマップ形式**で書く。実体配線図の 2 つ (breadboard / perfboard) と
+同じ書き方なので、同じ回路を 3 つのフェンスで書くとき覚え直さなくてよい。
+足の名前は `pins:` に書いた順に**箱の上から**並び、配線からは名前で指す (`M1.ECHO`)。
+
+```circuit
+title: 図06 超音波センサーの ECHO を 3.3V に落とす
+parts:
+  M1:
+    type: device
+    at: c2
+    label: HC-SR04
+    pins: [VCC, TRIG, ECHO, GND]
+    turn: mirror
+  VBUS: port a7
+  GP14: port b8
+  GP15: port d8
+  R1: resistor c6 d6 1k
+  R2: resistor d6 f6 2k
+  G1: ground f6
+wires:
+  - M1.VCC -| a7
+  - M1.TRIG -| b8
+  - M1.ECHO -| c6
+  - d6 -- d8
+  - M1.GND -| f4 -- f6
+style:
+  grid: on
+```
+
+![図06 超音波センサーの ECHO を 3.3V に落とす](out/03-multi-terminal-6.png)
+
+| 鍵 | 中身 |
+| --- | --- |
+| `type` | `device` (マップ形式で書けるのは機器だけ) |
+| `at` | 箱の置き場。番地か `points:` の名前 |
+| `pins` | 足の名前の並び (2〜40 本)。英数字と `_ + -`。数字だけの名前は番号 (`M1.2`) と紛れるので書けない |
+| `label` | 箱の中に書く名前 (任意)。書かなければ箱には足の名前だけ |
+| `turn` | 向き。1 行形式と同じ語 (`r90` `r180` `r270` `mirror`)。`mirror` で足が右へ |
+
+- 足は**名前でも番号でも**指せる (`M1.ECHO` = `M1.3`)。名前は大文字小文字を問わない
+- 箱の幅は足の名前と `label` の長さから決まる
+- 使わない足は ERC が言わない (モジュールの足は差し出しているだけで、使うのは一部)
+- ネットリストには**名前で**出る (`M1.ECHO`)。Pico や USB などの箱の足も、
+  図に刷ってある名前で出る (`U1.GP0` `J1.VBUS`)

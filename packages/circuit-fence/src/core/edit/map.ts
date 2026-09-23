@@ -5,7 +5,7 @@ import { cornerOf, formatAddress, parseAddress } from '../model/address.ts';
 import type { Address, WireOperator } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import { NO_TURN, lookupPartType, lookupPin, mainPinName, pinLabelText, pinPlaces } from '../parts.ts';
+import { NO_TURN, partTypeOf, lookupPin, pinLabelText, pinPlaces, shownPinName } from '../parts.ts';
 import type { PartType, PinSide, Turn } from '../parts.ts';
 import { cellOf } from '../types.ts';
 import type { PartSpec } from '../types.ts';
@@ -193,8 +193,8 @@ function wireLinesOf(doc: Circuit): WireLine[] {
     if (anchor !== undefined) anchorAt.set(part.id, anchor);
   }
 
-  const typeOf = new Map<string, string>();
-  for (const part of doc.parts) typeOf.set(part.id, part.type);
+  const partById = new Map<string, PartSpec>();
+  for (const part of doc.parts) partById.set(part.id, part);
 
   /**
    * 書かれた足の綴り (`vbus` `1`) を、升目に出る足の名前 (`VBUS`) に直す。
@@ -204,8 +204,9 @@ function wireLinesOf(doc: Circuit): WireLine[] {
    */
   const pinRefOf = (endpoint: Endpoint): PinRef | null => {
     if (endpoint.kind !== 'pin') return null;
-    const type = lookupPartType(typeOf.get(endpoint.part) ?? '');
-    if (type === null || type === undefined) return null;
+    const part = partById.get(endpoint.part);
+    const type = part === undefined ? null : partTypeOf(part);
+    if (type === null) return null;
     const anchor = lookupPin(type, endpoint.pin);
     return anchor === null ? null : { part: endpoint.part, name: shownPinName(type, anchor) };
   };
@@ -257,20 +258,6 @@ function pinsOf(type: PartType | null, turn: Turn): readonly ChipPin[] {
 }
 
 /**
- * 升目に出す足の名前。**接続点 (`pinsOf`) と、足を指した線の端 (`pinRefOf`) の
- * 両方がここを通る** — 線は点を名前で引くので、2 か所で別々に決めると
- * 片方だけが食い違う (レギュレータで点の側だけ直し、USB で線の側が外れた)。
- *
- * 名前は**図に出るものと同じ字**にする。図に足の名前を書く部品
- * (`pinLabels`) はそちらから引く — `mainPinName` は書ける綴りのうち最初の
- * 1 つを返すので、数字と名前の両方で呼べる足 (レギュレータ・USB) では
- * 図と食い違う (JS は数字めいた鍵を先に並べるため。実機で気づいた)。
- */
-function shownPinName(type: PartType, anchor: string): string {
-  return labelOf(type, anchor) ?? mainPinName(type, anchor);
-}
-
-/**
  * 升目に出す字。**図と同じもの**にする (`pinLabelText`) — 足の番号を持つ種類
  * では名前と番号が並ぶ (実機で「pico のピン番号が付いていない」)。
  * 番号は辺で決まる端に付くので、回した部品でも外側に来る。
@@ -279,14 +266,6 @@ function drawnLabelOf(type: PartType, anchor: string, side: PinSide): string | n
   const at = /^pin (\d+)$/.exec(anchor);
   if (at === null || type.pinLabels === undefined) return null;
   return pinLabelText(type, Number(at[1]) - 1, side);
-}
-
-/** 図に書く足の名前 (`pinLabels`)。持たない種類は null。 */
-function labelOf(type: PartType, anchor: string): string | null {
-  const labels = type.pinLabels;
-  const at = /^pin (\d+)$/.exec(anchor);
-  if (labels === undefined || at === null) return null;
-  return labels[Number(at[1]) - 1] ?? null;
 }
 
 /** フェンス本文から升目のモデルを作る。**読めなければ空**で、嘘の位置を見せない。 */
@@ -311,7 +290,7 @@ export function gridMap(source: string): GridMap {
       to: far ? { row: far.row, col: far.col } : null,
       line: part.line,
       turn,
-      pins: pinsOf(lookupPartType(part.type), turn),
+      pins: pinsOf(partTypeOf(part), turn),
     });
   }
 

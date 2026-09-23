@@ -52,34 +52,81 @@ export const sipShapeName = (pins: number): string => `sip${pins}`;
  * 記号 1 つぶんの宣言。**使う本数のぶんだけ**前口上に書く
  * (読める数だけ書く。約束 6 と同じ考え方)。
  */
-export function sipShapeTex(pins: number): string[] {
+export const sipShapeTex = (pins: number): string[] =>
+  headerShapeTex(sipShapeName(pins), pins, HALF_WIDTH, SIP_NUMBER_AREA);
+
+/** ピンヘッダの足の番号 (2 桁まで) が占める幅。中の値はその右の真ん中に置く。 */
+const SIP_NUMBER_AREA = 0.3;
+
+/**
+ * 板の外の機器・モジュール (`device`)。**ピンヘッダと同じ「箱の片側に足」の形**で、
+ * 左の縁に足の名前、その右に機器の名前を刷る。**幅は名前の長さから決める** —
+ * 決め打ちの幅だと、`ECHO` と `HC-SR04` が重なり、`Analog Discovery` は縁から
+ * はみ出した (実機で焼いて確かめた)。
+ *
+ * 字の幅は見積もり (cm / 字)。足の名前は `\tiny`、機器の名前は `\scriptsize`。
+ */
+const PIN_NAME_CHAR = 0.1;
+const LABEL_CHAR = 0.15;
+/** 足の名前の列の左右の余白と、機器の名前の左右の余白。 */
+const PIN_NAME_PAD = 0.2;
+const LABEL_PAD = 0.25;
+const DEVICE_MIN_HALF_WIDTH = 0.8;
+
+/** 機器の箱の寸法 (cm)。**足の本数・半幅・足の名前の列の幅**で形が決まる。 */
+export type DeviceBox = { readonly pins: number; readonly halfWidth: number; readonly nameArea: number };
+
+/** 0.1 cm に切り上げる (形の名前に載せるので、細かい違いで形を増やさない)。 */
+const tenthsUp = (length: number): number => Math.ceil(length * 10 - 1e-9) / 10;
+
+export function deviceBox(names: readonly string[], label: string | null): DeviceBox {
+  const nameArea = tenthsUp(PIN_NAME_PAD + Math.max(0, ...names.map((name) => [...name].length)) * PIN_NAME_CHAR);
+  const labelArea = label === null ? 0 : [...label].length * LABEL_CHAR + LABEL_PAD * 2;
+  return { pins: names.length, halfWidth: tenthsUp(Math.max(DEVICE_MIN_HALF_WIDTH, (nameArea + labelArea) / 2)), nameArea };
+}
+
+/** 形の名前。**寸法が違えば別の形**にする (TeX の形は寸法を引数に取れない)。 */
+export const deviceShapeName = (box: DeviceBox): string =>
+  `dev${box.pins}w${Math.round(box.halfWidth * 10)}n${Math.round(box.nameArea * 10)}`;
+
+export const deviceShapeTex = (box: DeviceBox): string[] =>
+  headerShapeTex(deviceShapeName(box), box.pins, box.halfWidth, box.nameArea);
+
+/**
+ * 片側に足が並ぶ箱。ピンヘッダと機器が幅だけ違えて使う。`nameArea` は左の縁で
+ * 足の名前 (番号) が占める幅で、中の字 (値) はその右の残りの真ん中に置く。
+ */
+function headerShapeTex(name: string, pins: number, halfWidth: number, nameArea: number): string[] {
   const half = halfHeightOf(pins);
   const legs = Array.from({ length: pins }, (_, index) => index + 1);
 
   const anchors = legs.flatMap((at) => {
     const y = pinYOf(pins, at);
     return [
-      `  \\anchor{pin ${at}}{\\pgfpoint{${num(-HALF_WIDTH - LEAD)}cm}{${num(y)}cm}}`,
-      `  \\anchor{bpin ${at}}{\\pgfpoint{${num(-HALF_WIDTH)}cm}{${num(y)}cm}}`,
+      `  \\anchor{pin ${at}}{\\pgfpoint{${num(-halfWidth - LEAD)}cm}{${num(y)}cm}}`,
+      `  \\anchor{bpin ${at}}{\\pgfpoint{${num(-halfWidth)}cm}{${num(y)}cm}}`,
     ];
   });
 
   const leads = legs.map((at) => {
     const y = pinYOf(pins, at);
-    return `    \\pgfpathmoveto{\\pgfpoint{${num(-HALF_WIDTH - LEAD)}cm}{${num(y)}cm}}`
-      + `\\pgfpathlineto{\\pgfpoint{${num(-HALF_WIDTH)}cm}{${num(y)}cm}}`;
+    return `    \\pgfpathmoveto{\\pgfpoint{${num(-halfWidth - LEAD)}cm}{${num(y)}cm}}`
+      + `\\pgfpathlineto{\\pgfpoint{${num(-halfWidth)}cm}{${num(y)}cm}}`;
   });
 
   return [
     '\\makeatletter',
-    `\\pgfdeclareshape{${sipShapeName(pins)}}{`,
+    `\\pgfdeclareshape{${name}}{`,
     '  \\anchor{center}{\\pgfpointorigin}',
-    '  \\anchor{text}{\\pgfpointorigin}',
-    ...edgeAnchors(HALF_WIDTH, half),
+    // **中の字は、足の名前の列の右に残る場所の真ん中に置く。** `text` は字の左下を
+    // 置く点なので、原点のままだと字が右上へずれて縁からはみ出し、箱の真ん中に
+    // 置くと足の名前に掛かった (実機で `HC-SR04` と `UART` を焼いて確かめた)。
+    `  \\anchor{text}{\\pgfpoint{${num(nameArea / 2)}cm-.5\\wd\\pgfnodeparttextbox}{-.5\\ht\\pgfnodeparttextbox}}`,
+    ...edgeAnchors(halfWidth, half),
     ...anchors,
     '  \\backgroundpath{',
-    `    \\pgfpathrectanglecorners{\\pgfpoint{${num(-HALF_WIDTH)}cm}{${num(-half)}cm}}`
-      + `{\\pgfpoint{${num(HALF_WIDTH)}cm}{${num(half)}cm}}`,
+    `    \\pgfpathrectanglecorners{\\pgfpoint{${num(-halfWidth)}cm}{${num(-half)}cm}}`
+      + `{\\pgfpoint{${num(halfWidth)}cm}{${num(half)}cm}}`,
     ...leads,
     '  }',
     '}',

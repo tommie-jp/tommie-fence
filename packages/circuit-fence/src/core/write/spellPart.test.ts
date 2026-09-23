@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
 import { extractCircuitFences } from '../fences.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import { spellPart } from './spellPart.ts';
+import { spellPart, spellPartBlock } from './spellPart.ts';
 
 /**
  * **仕様から 1 行を組み直す** (52 の docs/54 の段 1)。
@@ -70,7 +70,8 @@ describe('組み直した行は読み直せる', () => {
       // 組み直した行だけを並べたフェンスにして読み直す (`points:` は連れていく)。
       const points = [...doc.points].map(([at, address]) => `  ${at}: ${address.row},${address.col}`);
       void points;
-      const rebuilt = ['parts:', ...doc.parts.map((part) => `  ${spellPart(part)}`), ''].join('\n');
+      // 機器 (`device`) はブロックごと組む。
+      const rebuilt = ['parts:', ...doc.parts.flatMap((part) => spellPartBlock(part).map((line) => `  ${line}`)), ''].join('\n');
       const again = parseFence(rebuilt).doc;
 
       // 名前で書かれた番地は名前のまま残るので、名前を知らないと読めない。
