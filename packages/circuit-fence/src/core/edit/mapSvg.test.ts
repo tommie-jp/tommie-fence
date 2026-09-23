@@ -601,6 +601,26 @@ describe('多端子部品の足', () => {
     expect(legs).toContain(first);
   });
 
+  test('keeps a bent wire square when it turns in the cell of the leg', () => {
+    // 真下・真横の升へ引くと、角の升が足の升と重なる。升の番地だけでは
+    // 「先に横か縦か」が決まらず、角が足に重なって 1 本の斜めになっていた。
+    const pointsOf = (wire: string): number[][] =>
+      (/class="cf-wire cf-approx"[^>]*points="([-\d., ]+)"/.exec(
+        draw(`parts:\n  U2: dip8 f7 r90\nwires:\n  - ${wire}\n`),
+      )?.[1] ?? '').split(' ').map((pair) => pair.split(',').map(Number));
+
+    // `-|` は先に横 — 1 本目は水平、2 本目は垂直。
+    const across = pointsOf('U2.8 -| h7');
+    expect(across).toHaveLength(3);
+    expect(across[0]?.[1]).toBe(across[1]?.[1]);
+    expect(across[1]?.[0]).toBe(across[2]?.[0]);
+    // `|-` は先に縦 — 1 本目は垂直、2 本目は水平。
+    const down = pointsOf('U2.5 |- f4');
+    expect(down).toHaveLength(3);
+    expect(down[0]?.[0]).toBe(down[1]?.[0]);
+    expect(down[1]?.[1]).toBe(down[2]?.[1]);
+  });
+
   test('leaves a two-lead part alone, since its ends are the holes themselves', () => {
     expect(draw('parts:\n  R1: resistor a1 a3\n')).not.toContain('cf-pin-dot');
   });

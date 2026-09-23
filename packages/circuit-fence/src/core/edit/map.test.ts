@@ -186,7 +186,7 @@ describe('gridMap の配線', () => {
     expect(linesOf('wires:\n  - a1 -- a3\n')).toEqual([
       {
         points: [{ row: 0, col: 0 }, { row: 0, col: 2 }],
-        approximate: false, line: 2, fromPin: null, toPin: null,
+        approximate: false, line: 2, fromPin: null, toPin: null, bend: null,
       },
     ]);
   });
@@ -197,7 +197,7 @@ describe('gridMap の配線', () => {
     expect(linesOf('wires:\n  - a1 -| c3\n')).toEqual([
       {
         points: [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 2 }],
-        approximate: false, line: 2, fromPin: null, toPin: null,
+        approximate: false, line: 2, fromPin: null, toPin: null, bend: '-|',
       },
     ]);
   });

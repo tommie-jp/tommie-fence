@@ -87,7 +87,17 @@ export type WireLine = {
    */
   readonly fromPin: PinRef | null;
   readonly toPin: PinRef | null;
+  /**
+   * 折れる向き (`-|` は先に横、`|-` は先に縦)。まっすぐなら null。
+   * **角の座標は升からは決まらない**ので持たせる — 真下・真横の升へ引くと
+   * 角の升が足の升と重なり、「先に横か縦か」が番地から消える
+   * (角が足に重なって 1 本の斜めになっていた)。
+   */
+  readonly bend: Bend | null;
 };
+
+/** 折れる配線の向き。`--` は折れないので入らない。 */
+export type Bend = Exclude<WireOperator, '--'>;
 
 /** 配線の端が指している足。名前は升目に出るものと同じ代表の綴り。 */
 export type PinRef = { readonly part: string; readonly name: string };
@@ -221,7 +231,8 @@ function wireLinesOf(doc: Circuit): WireLine[] {
     const points = corner === null
       ? [cellAt(from.cell), cellAt(to.cell)]
       : [cellAt(from.cell), cellAt(corner), cellAt(to.cell)];
-    lines.push({ points, approximate, line, fromPin: from.pin, toPin: to.pin });
+    const bend = corner === null || wire.operator === '--' ? null : wire.operator;
+    lines.push({ points, approximate, line, fromPin: from.pin, toPin: to.pin, bend });
   }
   return lines;
 }

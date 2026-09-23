@@ -229,28 +229,24 @@ const pinKey = (part: string, name: string): string => `${part}\u0000${name}`;
  *
  * **角は両端に合わせ直す。** `-|` と `|-` は直角に折れるという意味なので、
  * 足へずらした端に角が付いてこないと、そこだけ斜めの線になる
- * (実機で「斜め線を使わずに」と言われた)。角は元の升で「どちらの端と
- * 行・列を共にするか」が決まっているので、その端の座標をそのまま貰う。
+ * (実機で「斜め線を使わずに」と言われた)。
+ *
+ * **角の座標は折れの向きで決める。** `-|` は先に横なので、角は始まりの高さと
+ * 終わりの列。`|-` はその逆。升の番地から「どちらの端と行・列を共にするか」を
+ * 見る決め方では、真下・真横の升へ引いたときに角の升が足の升と重なり、
+ * 角が両方の座標を足から貰って足に重なる (1 本の斜めになっていた)。
  */
 function pathOf(wire: WireLine, dots: PinPoints): string {
   const ends = wire.points.map((cell, index) => {
     const pin = index === 0 ? wire.fromPin : index === wire.points.length - 1 ? wire.toPin : null;
     const dot = pin === null ? undefined : dots.get(pinKey(pin.part, pin.name));
-    return { cell, at: dot ?? { x: x(cell.col), y: y(cell.row) } };
+    return dot ?? { x: x(cell.col), y: y(cell.row) };
   });
 
-  const drawn = ends.map((end, index) => {
-    // 角 (真ん中の点) だけは、行・列を共にする端から座標を貰う。
-    if (index === 0 || index === ends.length - 1) return end.at;
-    const before = ends[index - 1];
-    const after = ends[index + 1];
-    if (before === undefined || after === undefined) return end.at;
-    const shares = (side: typeof before, of: 'row' | 'col'): boolean => side.cell[of] === end.cell[of];
-    return {
-      x: shares(before, 'col') ? before.at.x : shares(after, 'col') ? after.at.x : end.at.x,
-      y: shares(before, 'row') ? before.at.y : shares(after, 'row') ? after.at.y : end.at.y,
-    };
-  });
+  const [from, , to] = ends;
+  const drawn = ends.length === 3 && from !== undefined && to !== undefined && wire.bend !== null
+    ? [from, wire.bend === '-|' ? { x: to.x, y: from.y } : { x: from.x, y: to.y }, to]
+    : ends;
 
   return drawn.map((at) => `${num(at.x)},${num(at.y)}`).join(' ');
 }
