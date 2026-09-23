@@ -436,3 +436,51 @@ function antenna(
     .join('');
   return outline + traces;
 }
+
+/** 7 セグの桁の高さ (2 列の間に対する比) と、幅・太さ (高さに対する比)。 */
+const DIGIT_HEIGHT = 0.5;
+const DIGIT_WIDTH = 0.55;
+const SEGMENT_THICK = 0.12;
+/** 消えているセグメントの色。**実物の面と同じく、点いていなくても形は見える**。 */
+const SEGMENT_OFF = '#9aa0a8';
+
+/**
+ * 7 セグの面 (「8.」)。樹脂の上に重ねて描く (52 の docs/66)。
+ * **桁の上は `up` の向き** — 呼ぶ側が a の足 (上の辺) のある列の向きを渡す。
+ * 足の無い向き (2 列の間) に桁を立てるので、回した部品でも桁が寝ない。
+ */
+export function segmentFace(options: {
+  readonly centre: ChipPoint;
+  /** 2 列の間の距離 (px)。桁の大きさはここから決める。 */
+  readonly rowGap: number;
+  /** 桁の上の向き (単位ベクトル。SVG の座標で)。 */
+  readonly up: ChipPoint;
+}): string {
+  const { centre, rowGap, up } = options;
+  const h = rowGap * DIGIT_HEIGHT;
+  const w = h * DIGIT_WIDTH;
+  const t = h * SEGMENT_THICK;
+  // 桁の座標は y が上向き (a が +h/2)。SVG へは y を反転して描き、`up` へ回す。
+  const bar = (x0: number, y0: number, x1: number, y1: number): string => element('rect', {
+    x: num(Math.min(x0, x1) - t / 2), y: num(-Math.max(y0, y1) - t / 2),
+    width: num(Math.abs(x1 - x0) + t), height: num(Math.abs(y1 - y0) + t),
+    rx: num(t / 2), fill: SEGMENT_OFF,
+  });
+  const inset = t * 0.8;
+  const segments = [
+    bar(-w / 2 + inset, h / 2, w / 2 - inset, h / 2), // a
+    bar(w / 2, h / 2 - inset, w / 2, inset), // b
+    bar(w / 2, -inset, w / 2, -h / 2 + inset), // c
+    bar(-w / 2 + inset, -h / 2, w / 2 - inset, -h / 2), // d
+    bar(-w / 2, -inset, -w / 2, -h / 2 + inset), // e
+    bar(-w / 2, h / 2 - inset, -w / 2, inset), // f
+    bar(-w / 2 + inset, 0, w / 2 - inset, 0), // g
+  ].join('');
+  const dot = element('circle', { cx: num(w / 2 + t * 1.8), cy: num(h / 2), r: num(t * 0.8), fill: SEGMENT_OFF });
+  const angle = (Math.atan2(up.x, -up.y) * 180) / Math.PI;
+  return element(
+    'g',
+    { transform: `translate(${num(centre.x)} ${num(centre.y)}) rotate(${num(angle)})` },
+    `${segments}${dot}`,
+  );
+}

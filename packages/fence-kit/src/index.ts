@@ -32,13 +32,15 @@ export {
   REAL_INK, SMA_SIZE, bodySize, crystalCan, drawBody, drawsOwnLeads, hasBody, smaBody, transformerCore,
 } from './parts/bodies.ts';
 export { boardPartNames, lookupBoardPart } from './parts/boards.ts';
+export { drawNamedChip, lookupNamedChip, namedChipLooks, namedChipTypes } from './parts/namedChips.ts';
+export type { NamedChip, NamedChipPin } from './parts/namedChips.ts';
 export {
   CONNECTOR_LOOKS, MIN_CONNECTOR_PINS, connectorBox, connectorFacing, connectorNames, connectorPinNames,
   drawConnector, lookupConnector,
 } from './parts/connectors.ts';
 export type { Connector, ConnectorFacing, ConnectorShape } from './parts/connectors.ts';
 export {
-  boardBox, boardChip, chipAlongX, dipBox, dipChip, sipBox, sipHeader,
+  boardBox, boardChip, chipAlongX, dipBox, dipChip, segmentFace, sipBox, sipHeader,
 } from './parts/chips.ts';
 export type {
   BoardChipOptions, ChipBox, ChipInk, ChipPoint, DipOptions, SipOptions,

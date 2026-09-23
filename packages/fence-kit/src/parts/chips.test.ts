@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { boardBox, boardChip, dipBox, dipChip, sipBox, sipHeader } from './chips.ts';
+import { boardBox, boardChip, dipBox, dipChip, segmentFace, sipBox, sipHeader } from './chips.ts';
 import type { ChipInk, ChipPoint } from './chips.ts';
 import { lookupBoardPart } from './boards.ts';
 
@@ -148,5 +148,17 @@ describe('boardChip', () => {
 
     expect(wired).not.toContain('fill="none"');
     expect(wireless).toContain('fill="none"');
+  });
+});
+
+describe('7 セグの面', () => {
+  test('draws seven bars and a dot, turned so that the top faces up', () => {
+    const upright = segmentFace({ centre: { x: 100, y: 100 }, rowGap: 120, up: { x: 0, y: -1 } });
+    const sideways = segmentFace({ centre: { x: 100, y: 100 }, rowGap: 120, up: { x: 1, y: 0 } });
+
+    expect(upright.match(/<rect /g)).toHaveLength(7);
+    expect(upright).toContain('<circle');
+    expect(upright).toContain('rotate(0)');
+    expect(sideways).toContain('rotate(90)');
   });
 });
