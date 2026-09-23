@@ -186,13 +186,18 @@ function wireLinesOf(doc: Circuit): WireLine[] {
   const typeOf = new Map<string, string>();
   for (const part of doc.parts) typeOf.set(part.id, part.type);
 
-  /** 書かれた足の綴り (`C`) を、升目に出る代表の綴り (`C`) に直す。 */
+  /**
+   * 書かれた足の綴り (`vbus` `1`) を、升目に出る足の名前 (`VBUS`) に直す。
+   * **接続点と同じ関数で決める** (`shownPinName`) — 線は点を名前で引くので、
+   * 綴りが 1 字でも違うと引けず、端が箱の真ん中に落ちて斜めに見える
+   * (実機で「USB のピンの配線が斜めになる」)。
+   */
   const pinRefOf = (endpoint: Endpoint): PinRef | null => {
     if (endpoint.kind !== 'pin') return null;
     const type = lookupPartType(typeOf.get(endpoint.part) ?? '');
     if (type === null || type === undefined) return null;
     const anchor = lookupPin(type, endpoint.pin);
-    return anchor === null ? null : { part: endpoint.part, name: mainPinName(type, anchor) };
+    return anchor === null ? null : { part: endpoint.part, name: shownPinName(type, anchor) };
   };
 
   const resolve = (endpoint: Endpoint): {
@@ -231,18 +236,27 @@ function pinsOf(type: PartType | null, turn: Turn): readonly ChipPin[] {
   // **中心線に乗る足も乗らない足も置く。** 升目は掴むための道具なので、
   // 「まっすぐ引けるか」ではなく「どこから出ているか」で並べる。
   //
-  // 名前は**図に出るものと同じ字**にする。図に足の名前を書く部品
-  // (`pinLabels`) はそちらから引く — `mainPinName` は書ける綴りのうち最初の
-  // 1 つを返すので、数字と名前の両方で呼べる足 (レギュレータ) では
-  // 図と食い違う (JS は数字めいた鍵を先に並べるため。実機で気づいた)。
-  //
   // **足の番号 (`pinNumbers`) はここでは付けない。** 升目の名前は配線に
   // 書く綴りでもあるので (`U1.GP0`)、番号を混ぜると書けない字になる。
   // 番号を添えるのは図のほうだけ (`pinLabelText`)。
   return pinPlaces(type, turn).map(({ anchor, side }) => {
-    const name = labelOf(type, anchor) ?? mainPinName(type, anchor);
+    const name = shownPinName(type, anchor);
     return { name, label: drawnLabelOf(type, anchor, side) ?? name, side };
   });
+}
+
+/**
+ * 升目に出す足の名前。**接続点 (`pinsOf`) と、足を指した線の端 (`pinRefOf`) の
+ * 両方がここを通る** — 線は点を名前で引くので、2 か所で別々に決めると
+ * 片方だけが食い違う (レギュレータで点の側だけ直し、USB で線の側が外れた)。
+ *
+ * 名前は**図に出るものと同じ字**にする。図に足の名前を書く部品
+ * (`pinLabels`) はそちらから引く — `mainPinName` は書ける綴りのうち最初の
+ * 1 つを返すので、数字と名前の両方で呼べる足 (レギュレータ・USB) では
+ * 図と食い違う (JS は数字めいた鍵を先に並べるため。実機で気づいた)。
+ */
+function shownPinName(type: PartType, anchor: string): string {
+  return labelOf(type, anchor) ?? mainPinName(type, anchor);
 }
 
 /**

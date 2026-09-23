@@ -589,6 +589,18 @@ describe('多端子部品の足', () => {
     expect(points[1]?.[0]).toBe(points[2]?.[0]);
   });
 
+  test('runs a wire to a USB leg named as it is printed', () => {
+    // 実機で「USB のピンの配線が斜めになる。DIP は正しい」。線の端が
+    // 接続点を引けず、箱の真ん中から斜めに出ていた。
+    const svg = draw('parts:\n  J1: usb-c b2\nwires:\n  - J1.CC2 -| d6\n');
+    const first = (/class="cf-wire cf-approx"[^>]*points="([-\d., ]+)"/.exec(svg)?.[1] ?? '').split(' ')[0];
+    const cell = { x: 20 + 34, y: 32 + 34 };
+    const legs = [...svg.matchAll(/class="cf-pin-dot" cx="([-\d.]+)" cy="([-\d.]+)"/g)]
+      .map((one) => `${cell.x + Number(one[1])},${cell.y + Number(one[2])}`);
+
+    expect(legs).toContain(first);
+  });
+
   test('leaves a two-lead part alone, since its ends are the holes themselves', () => {
     expect(draw('parts:\n  R1: resistor a1 a3\n')).not.toContain('cf-pin-dot');
   });

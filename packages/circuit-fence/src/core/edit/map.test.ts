@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { aimAt, fenceAt, gridMap, partCells } from './map.ts';
-import { lookupPartType, partTypeNames, pinPlaces } from '../parts.ts';
+import { lookupPartType, pinNames, partTypeNames, pinPlaces } from '../parts.ts';
 import { renderMapHtml } from './mapSvg.ts';
 import { stepCell, stepsTo } from './move.ts';
 
@@ -209,6 +209,43 @@ describe('gridMap の配線', () => {
 
     expect(lines[0]?.fromPin).toEqual({ part: 'Q1', name: 'C' });
     expect(lines[0]?.toPin).toBeNull();
+  });
+
+  test('names the leg of a wire the way the point on the map is named', () => {
+    // 実機で「USB のピンの配線が斜めになる」。線は足の接続点を**名前で引く**ので、
+    // 点と同じ綴りでないと引けず、線の端が箱の真ん中に落ちる。USB とレギュレータは
+    // 番号でも呼べ、JS が数字めいた鍵を先に並べるせいで番号 (`1`) を返していた。
+    const pinOf = (source: string): string | undefined => linesOf(source)[0]?.fromPin?.name;
+
+    for (const spelling of ['VBUS', 'vbus', '1']) {
+      expect(pinOf(`parts:\n  J1: usb-c b2\nwires:\n  - J1.${spelling} -| d6\n`), spelling).toBe('VBUS');
+    }
+    expect(pinOf('parts:\n  J1: usb-a b2\nwires:\n  - J1.4 -| d6\n')).toBe('D-');
+    expect(pinOf('parts:\n  U1: regulator b2\nwires:\n  - U1.1 -| d6\n')).toBe('IN');
+    expect(pinOf('parts:\n  U1: regulator b2\nwires:\n  - U1.gnd -| d6\n')).toBe('GND');
+  });
+
+  test('finds a point on the map for every spelling of every leg', () => {
+    // 種類を足すたびに同じ食い違いを踏んだ (レギュレータ、USB)。**全部の種類の
+    // 全部の綴り**で、線の端が升目に出ている足の名前のどれかであることを見る。
+    const astray: string[] = [];
+    let seen = 0;
+    for (const name of partTypeNames()) {
+      const type = lookupPartType(name);
+      if (type === undefined || type === null || type.kind !== 'multi-terminal') continue;
+      for (const spelling of pinNames(type)) {
+        const map = gridMap(`parts:\n  X1: ${name} c5\nwires:\n  - X1.${spelling} -| a1\n`);
+        const pin = map.wires[0]?.fromPin;
+        if (pin === undefined || pin === null) continue;
+        seen += 1;
+        const shown = new Set(map.chips[0]?.pins.map((one) => one.name));
+        if (!shown.has(pin.name)) astray.push(`${name}.${spelling} → ${pin.name}`);
+      }
+    }
+
+    expect(astray).toEqual([]);
+    // 空回りしていないこと (読めない綴りを飛ばしたせいで 0 件、を防ぐ)。
+    expect(seen).toBeGreaterThan(200);
   });
 
   test('keeps the corner of a folded wire that ends on a leg', () => {
