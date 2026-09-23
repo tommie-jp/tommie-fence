@@ -937,6 +937,104 @@ describe('箱の中の字は重ならない', () => {
     }
   });
 
+  /**
+   * 字の上端と下端。基準線からの距離を字の大きさに掛けて見積もる (DejaVu Sans)。
+   * **下へ出るのは `g` `p` `y` `_` などを含むときだけ** — 大文字と数字は基準線で
+   * 止まるので、行の高さで数えると空いている字どうしを当たりと見る。
+   */
+  const ASCENT = 0.76;
+  const DESCENT = 0.24;
+  const descentOf = (text: string, font: number): number => (/[gjpqy_,]/.test(text) ? DESCENT * font : 0);
+
+  type Rect = {
+    readonly what: string;
+    readonly left: number; readonly top: number; readonly right: number; readonly bottom: number;
+  };
+
+  /**
+   * 升目に**出る**字の幅。`textWidth` (一律 0.55) より大文字と数字が広い
+   * (8px の sans-serif を DejaVu Sans で測った: `GND` 18.3、`14` 10.2)。
+   * 見積もりで測ると、見積もりの足りないぶんで触れている字を見逃す。
+   */
+  const shownWidth = (text: string, font: number): number =>
+    [...text].reduce((sum, char) => sum + (/[A-Z]/.test(char) ? 0.76 : /\d/.test(char) ? 0.64 : textWidth(char)), 0)
+      * font;
+
+  /** その `<text>` が局所座標で占める矩形。**縦に回した字** (`rotate(±90)`) は縦に伸びる。 */
+  const rectOf = (tag: string, font: number): Rect => {
+    const x = Number(/ x="([-\d.]+)"/.exec(tag)?.[1] ?? NaN);
+    const width = shownWidth(/>([^<]*)</.exec(tag)?.[1] ?? '', font);
+    const anchor = /text-anchor="(\w+)"/.exec(tag)?.[1] ?? 'start';
+    const left = anchor === 'middle' ? x - width / 2 : anchor === 'end' ? x - width : x;
+    const right = left + width;
+    const y = Number(/ y="([-\d.]+)"/.exec(tag)?.[1] ?? NaN);
+    const what = />([^<]*)</.exec(tag)?.[1] ?? '';
+    const turn = Number(/rotate\((-?\d+)/.exec(tag)?.[1] ?? 0);
+    // 90 度は下へ、-90 度は上へ読む。字の上端は 90 度で右、-90 度で左を向く。
+    if (turn === 90) {
+      return { what, left: x - descentOf(what, font), right: x + ASCENT * font, top: y + left - x, bottom: y + right - x };
+    }
+    if (turn === -90) {
+      return { what, left: x - ASCENT * font, right: x + descentOf(what, font), top: y - (right - x), bottom: y - (left - x) };
+    }
+    return { what, left, right, top: y - ASCENT * font, bottom: y + descentOf(what, font) };
+  };
+
+  const overlaps = (a: Rect, b: Rect): boolean =>
+    Math.min(a.right, b.right) > Math.max(a.left, b.left) && Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top);
+
+  /** 切り欠きの半円。中心は箱の縁の上にある。無ければ null。 */
+  const notchCircleOf = (svg: string): { readonly x: number; readonly y: number; readonly r: number } | null => {
+    const arc = /<path class="cf-glyph-line" d="M(-?[\d.]+),(-?[\d.]+) A([\d.]+),[^"]* (-?[\d.]+),(-?[\d.]+)"/.exec(svg);
+    if (arc === null) return null;
+    return {
+      x: (Number(arc[1]) + Number(arc[4])) / 2,
+      y: (Number(arc[2]) + Number(arc[5])) / 2,
+      r: Number(arc[3]),
+    };
+  };
+
+  /** 矩形が円に食い込むか。矩形の中で円の中心にいちばん近い点までの距離で見る。 */
+  const touches = (rect: Rect, circle: { readonly x: number; readonly y: number; readonly r: number }): boolean => {
+    const nearX = Math.min(Math.max(circle.x, rect.left), rect.right);
+    const nearY = Math.min(Math.max(circle.y, rect.top), rect.bottom);
+    return Math.hypot(circle.x - nearX, circle.y - nearY) < circle.r;
+  };
+
+  test('keeps the names, the type name and the notch apart in every turn', () => {
+    // 実機で「回した pico2 の足の名前が真ん中で重なる」「回した DIP の切り欠きが番号に
+    // 触れる」。上下の辺の名前は同じ列で向かい合うので、片側の長さで高さを取ると出会う。
+    // 箱に字を入れる全種類を回す (レギュレータの `IN` と `OUT` も向かい合う)。
+    const boxed = partTypeNames().filter((type) => glyphOf(type).name === 'box');
+    const clashes = boxed.flatMap((type) => {
+      const partType = lookupPartType(type);
+      const turns = partType !== null && orientOf(partType).rotate ? ROTATIONS : [0];
+      return turns.flatMap((rotate) => {
+        const words = turnWords(rotate, false);
+        const svg = draw(`parts:\n  U1: ${type} f8${words}\n`);
+        const rects = [
+          // 箱の中の字は縁取りを持たない (`drawPin`)。外の字は升目の上なので見ない。
+          ...[...svg.matchAll(/<text [^>]*class="cf-pin-name"[^>]*>[^<]*<\/text>/g)]
+            .map((found) => found[0])
+            .filter((tag) => !tag.includes('stroke='))
+            .map((tag) => rectOf(tag, 8)),
+          ...[...svg.matchAll(/<text [^>]*class="cf-mark"[^>]*>[^<]*<\/text>/g)]
+            .map((found) => rectOf(found[0], 9)),
+        ];
+        const notch = notchCircleOf(svg);
+        const met = rects.flatMap((a, at) => rects.slice(at + 1)
+          .filter((b) => overlaps(a, b))
+          .map((b) => `${a.what} × ${b.what}`));
+        const notched = notch === null ? [] : rects.filter((rect) => touches(rect, notch)).map((rect) => `${rect.what} × notch`);
+        return [...met, ...notched].map((clash) => `${type}${words}: ${clash}`);
+      });
+    });
+
+    // 空回りで通っていないことを確かめる (DIP・SIP・ボード・レギュレータ・USB)。
+    expect(boxed.length).toBeGreaterThan(20);
+    expect(clashes).toEqual([]);
+  });
+
   test('moves the row letters out from under a part that reaches left of the grid', () => {
     // 1 列目に置いたマイコンボードは足の名前が升目の左へ出る。決め打ちの位置だと
     // **行の字が箱の下に隠れて**、図の行を数えられなくなる。

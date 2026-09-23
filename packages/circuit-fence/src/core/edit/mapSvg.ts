@@ -160,6 +160,21 @@ const PIN_NAME_FONT = 8;
 const MARK_FONT = 9;
 
 /**
+ * 大文字 1 字の幅 (字の大きさを 1 として)。`textWidth` は英数字を一律 0.55 で
+ * 数えるが、升目の字 (sans-serif) の大文字はもっと広い (8px の `GND` は見積もり
+ * 13.2 に対して 18.3。DejaVu Sans で実測)。
+ */
+const UPPER_WIDTH = 0.76;
+
+/**
+ * 足の名前の長さを**大文字を広く数えて**見積もる。向かい合う名前 (回した箱の
+ * 上下の辺) は、見積もりの足りないぶんがそのまま重なりになるので、こちらで測る。
+ * 箱の幅はこれまでどおり `textWidth` で測る (広げると回していない箱まで変わる)。
+ */
+const nameReach = (text: string): number =>
+  [...text].reduce((sum, char) => sum + (/[A-Z]/.test(char) ? UPPER_WIDTH : textWidth(char)), 0) * PIN_NAME_FONT;
+
+/**
  * 画布に要る広さ。**升目・部品の箱・注釈の札**のどれも入るところまで取る。
  *
  * 升目だけで測ると、升 1 つに置く大きな部品 (40 本のボードは 20 行ぶんの箱に
@@ -183,7 +198,7 @@ function roomFor(map: GridMap, nudges: ReadonlyMap<Chip, number>): Room {
     if (chip.to !== null) continue;
     const glyph = glyphOf(chip.type).name;
     const rows = rowsOf(chip.pins, chip.turn);
-    const { halfW, halfH } = reachOf(rows, glyph, middleWidth(chip.type));
+    const { halfW, halfH } = reachOf(rows, glyph, chip.type);
     const at = { x: x(chip.col), y: y(chip.row) + (nudges.get(chip) ?? 0) };
     // 足の棒と、その先の名前。**辺ごとに要る幅が違う** (名前の長さが違う)。
     const beside = (side: PinSide): number => {
@@ -261,7 +276,7 @@ function pinPointsOf(chips: readonly Chip[], nudges: ReadonlyMap<Chip, number>):
     if (chip.to !== null || chip.pins.length === 0) continue;
     const rows = rowsOf(chip.pins, chip.turn);
     const glyph = glyphOf(chip.type).name;
-    const { halfW, halfH } = reachOf(rows, glyph, middleWidth(chip.type));
+    const { halfW, halfH } = reachOf(rows, glyph, chip.type);
     const nudge = nudges.get(chip) ?? 0;
     for (const [side, row] of rows) {
       row.forEach((pin, at) => {
@@ -472,12 +487,17 @@ const rowsOf = (pins: readonly ChipPin[], turn: Turn): PinRows => {
  * その部品の胴の大きさ。**同じ辺に何本並ぶかで決まる** — DIP のように片側に
  * 何本も出る部品は、既定の箱では足が重なって 1 本ずつ押せない
  * (実機で「すべての部品の足に接続点があるか」と言われて広げた)。
+ *
+ * 種類を渡すのは、**箱の真ん中に置くもの** (ボードの種類名、DIP の切り欠き) の
+ * 場所も空けるため。
  */
-function reachOf(rows: PinRows, glyph: GlyphName, middle = 0): {
+function reachOf(rows: PinRows, glyph: GlyphName, type: string): {
   readonly halfW: number; readonly halfFront: number; readonly halfBack: number; readonly halfH: number;
 } {
   const along = (...sides: readonly PinSide[]): number =>
     Math.max(0, ...sides.map((side) => rows.get(side)?.length ?? 0));
+  const middle = middleWidth(type);
+  const notched = hasNotch(type);
   const room = (count: number): number => ((count - 1) * legGap(glyph)) / 2 + PIN_MARGIN;
   // **棒は記号の縁から出す。** 決め打ちの 13 から出すと、記号が小さい種類
   // (オペアンプの三角、トランスの巻線) で縁と棒の間が切れて見える。
@@ -500,9 +520,34 @@ function reachOf(rows: PinRows, glyph: GlyphName, middle = 0): {
   // 内へ寄るので、真ん中の空きがその字より狭いと重なる (足に番号を添えて
   // 名前が伸びた回に踏んだ)。
   const forNames = (inside('left') + inside('right') + standing + middle) / 2 + NAME_INSIDE * 2 + 2;
+  // **真ん中の縦の列に置くものは、長いほうの名前から測って空ける。** 列に入るのは
+  // 立てた名前 (`GND`) と切り欠き。左右で名前の長さが違う (`dip14` の `7` と `14`、
+  // 回したレギュレータの `GND` と空の右) と、2 つを足して割った幅では長いほうが
+  // 列に届く。列に何も無ければ名前は真ん中を越えてよいので、測らない。
+  // ボードの種類名は真ん中の 1 行にしか無いので、ここでは数えない (`forNames`)。
+  const centre = Math.max(standing, notched ? (NOTCH + NOTCH_CLEAR) * 2 : 0);
+  const forCentre = centre === 0 ? 0 : Math.max(inside('left'), inside('right')) + NAME_INSIDE + centre / 2;
   // 立てた名前の**長さ**は箱の高さで飲む (縁からの余白の内側に収める)。
-  const forStanding = longest / 2 + NAME_INSIDE + PIN_NAME_FONT / 2;
-  const wide = Math.max(edge, room(along('top', 'bottom')), forNames);
+  //
+  // **上と下の両方に名前があれば、向かい合う** (回した DIP・ボード・レギュレータ)。
+  // 同じ列で真ん中へ伸びて出会うので、片側の長さで高さを取ると重なる (実機で
+  // 「pico2 を回すと足の名前が重なる」)。真ん中に帯を空け、長いほうから測る —
+  // 帯に入るもの (横に書く左右の名前、ボードの種類名、短い辺の切り欠き) は
+  // どれも箱の真ん中の高さにある。名前の長さは大文字を広く数える (`nameReach`) —
+  // 回したレギュレータで `OUT` の頭が `GND` に触れた。
+  const facing = inside('top') > 0 && inside('bottom') > 0;
+  const facingReach = Math.max(0, ...(['top', 'bottom'] as const)
+    .flatMap((side) => rows.get(side) ?? [])
+    .map((pin) => nameReach(pin.label)));
+  const band = Math.max(
+    PIN_NAME_FONT + NAME_INSIDE * 2,
+    middle > 0 ? MARK_FONT + NAME_INSIDE * 2 : 0,
+    notched ? (NOTCH + NOTCH_CLEAR) * 2 : 0,
+  );
+  const forStanding = facing
+    ? facingReach + NAME_INSIDE + band / 2
+    : longest / 2 + NAME_INSIDE + PIN_NAME_FONT / 2;
+  const wide = Math.max(edge, room(along('top', 'bottom')), forNames, forCentre);
   // **足を出すのは記号の縁から。箱だけが「箱の縁」。** 中に字を置くための幅で
   // 足まで押し出すと、三角の先と出口の丸が離れる (実機で「opamp, 出力を
   // ピンと接続する」)。箱は矩形そのものが縁なので、広げた幅がそのまま縁。
@@ -716,6 +761,8 @@ const hasNotch = (type: string): boolean => DIP_TYPE.test(type) || lookupBoardPa
 
 /** 切り欠きの半径。箱の縁に半円で食い込む。 */
 const NOTCH = 3.5;
+/** 切り欠きと足の名前の間に残す隙間。これより近いと半円が字に触れて見える。 */
+const NOTCH_CLEAR = 2;
 
 /** その足が箱のどこに出ているか。**足の棒の根元**を返す (`pinAt` と同じ数え方)。 */
 function pinPointOf(
@@ -771,7 +818,7 @@ function drawStanding(chip: Chip, nudge: number): string {
   // 中に入れると同じ部品が図と升目で違う所に名前を持つ (実機で並べて見つけた)。
   // 箱の中は型番の場所で、そちらは図が書く。
   const rows = rowsOf(chip.pins, chip.turn);
-  const { halfW, halfFront, halfBack, halfH } = reachOf(rows, glyph.name, middleWidth(chip.type));
+  const { halfW, halfFront, halfBack, halfH } = reachOf(rows, glyph.name, chip.type);
   // **記号の後ろ (-x) が画面のどちら側へ来るか。** 回すと入れ替わるので、
   // 辺そのものではなく、回す前のどの辺かで選ぶ。
   const backSide = turnSide('left', chip.turn);
