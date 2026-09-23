@@ -15,7 +15,7 @@ import { placeableNames } from './types.ts';
 export type PlaceableName =
   | 'resistor' | 'capacitor' | 'led' | 'diode' | 'inductor' | 'crystal' | 'buzzer'
   | 'photoresistor' | 'thermistor' | 'thermistor-ntc' | 'thermistor-ptc' | 'varistor'
-  | 'zener' | 'schottky' | 'photodiode' | 'varicap' | 'diac'
+  | 'zener' | 'schottky' | 'photodiode' | 'phototransistor' | 'varicap' | 'diac'
   | 'reed' | 'fuse' | 'lamp' | 'sma' | 'usb-a' | 'usb-c'
   | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
   | 'button' | 'button-nc' | 'transformer'
@@ -38,6 +38,7 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   zener: 'ツェナー',
   schottky: 'ショットキー',
   photodiode: 'フォトダイオード',
+  phototransistor: 'フォトトランジスタ',
   varicap: 'バリキャップ',
   diac: 'ダイアック',
   reed: 'リードスイッチ',
@@ -83,6 +84,7 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   zener: 'D',
   schottky: 'D',
   photodiode: 'D',
+  phototransistor: 'Q',
   varicap: 'D',
   diac: 'D',
   reed: 'SW',

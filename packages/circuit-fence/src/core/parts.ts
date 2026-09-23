@@ -222,6 +222,11 @@ export type PartType = {
    */
   readonly pinNames?: Readonly<Record<string, string>>;
   /**
+   * 足ではないが記号の外へ出る飾りの辺 (フォトトランジスタの光の矢)。名札は
+   * 足の無い辺へ逃げるので、ここを言っておかないと矢に重なる。
+   */
+  readonly ornament?: PinSide;
+  /**
    * ID の下にもう 1 行足す字。記号だけでは見分けが付かない種類だけが持つ。
    * circuitikz の記号がフェンスの TeX で壊れる字 (θ) を使っているとき、
    * 記号を素の形に落として、代わりにここで区別を書く。
@@ -711,6 +716,20 @@ export const PART_TYPES = {
   // 多端子。値は型番なので単位を足さない。
   npn: { kind: 'multi-terminal', symbol: 'npn', ...NO_UNIT, pins: BJT_PINS, pinSide: BJT_SIDE },
   pnp: { kind: 'multi-terminal', symbol: 'pnp', ...NO_UNIT, pins: BJT_PINS, pinSide: BJT_SIDE_P },
+  /**
+   * フォトトランジスタ。**B を持たない 2 本足** (砲弾型の実物に合わせる。
+   * 52 の docs/66)。circuitikz 1.0 の `photo` が光の矢を、`nobase` がベースの線を
+   * 消す (フェンス側の TeX で確かめた)。矢は左から来る。
+   */
+  phototransistor: {
+    kind: 'multi-terminal',
+    symbol: 'npn',
+    options: ['photo', 'nobase'],
+    ...NO_UNIT,
+    pins: { c: 'collector', collector: 'collector', e: 'emitter', emitter: 'emitter' },
+    pinSide: { collector: 'top', emitter: 'bottom' },
+    ornament: 'left',
+  },
   nmos: { kind: 'multi-terminal', symbol: 'nmos', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
   pmos: { kind: 'multi-terminal', symbol: 'pmos', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE_P },
   /**
@@ -934,6 +953,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   vee: '電源レール (下向きの矢印 + 名前)',
   npn: 'バイポーラトランジスタ (NPN)',
   pnp: 'バイポーラトランジスタ (PNP)',
+  phototransistor: 'フォトトランジスタ',
   nmos: 'MOSFET (N・簡易記号)',
   pmos: 'MOSFET (P・簡易記号)',
   njfet: '接合型 FET (N)',
@@ -1052,6 +1072,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   vee: null,
   npn: 'Q',
   pnp: 'Q',
+  phototransistor: 'Q',
   nmos: 'M',
   pmos: 'M',
   njfet: 'J',

@@ -843,6 +843,7 @@ function nameNode(part: MultiTerminalPart, name: string, type: PartType | null, 
 
   const taken = new Set<PinSide>(pinPlaces(type, part.turn).map((place) => place.side));
   if (valueSide !== null) taken.add(valueSide);
+  if (type.ornament !== undefined) taken.add(turnSide(type.ornament, part.turn));
 
   const free = NAME_ORDER.find((side) => !taken.has(side));
   const side = free ?? valueSide ?? 'top';

@@ -84,3 +84,22 @@ notes:
 - `varistor` はサーミスタと同じ円板だが、一回り大きく青い樹脂で塗る。
 - `thyristor` と `triac` は 3 本足で、`transistor` と同じ `to92` / `to220` の姿を選べる。
   足の名前は穴に書く (`f5(G)`)。書かなければ左から `1` `2` `3`。
+
+## フォトトランジスタ
+
+```breadboard
+title: 図04 フォトトランジスタ
+board: half
+parts:
+  Q1: phototransistor a3(C) a6(E)
+  Q2: phototransistor/3mm a9(C) a12(E)
+  D1: led a15(A) a18(K) red
+notes:
+  - source blue
+```
+
+![図04 フォトトランジスタ](out/11-sensors-4.svg)
+
+- `phototransistor` は**2 本足** (C と E。ベースは無い)。先に書いた穴が C。
+- 姿は LED と同じ砲弾型 (`3mm` / `5mm`)。LED と見分けが付くよう**胴を黒く**描き、
+  **平らな面は描かない** — 平らな側が C の品と E の品があるため。

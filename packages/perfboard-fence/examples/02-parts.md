@@ -218,3 +218,32 @@ N3  : R1.2, R2.1, R3.1
 3 本足・DIP・SIP は [06-ic.md](06-ic.md)。まだ置けない種類 (`button` `device`)
 は「知らない」ではなく**「まだ置けません」**と言う — 綴りを疑うべきものと、
 待つべきものとでは次にやることが違う。
+
+## フォトトランジスタ
+
+```perfboard
+board: 12x4
+title: 図06 フォトトランジスタ
+points:
+  VCC: a1
+  OUT: a12
+  GND: c12
+parts:
+  R1: resistor a2 a6 10k
+  Q1: phototransistor c6 c8
+wires:
+  - VCC -- a2
+  - a6 -- OUT
+  - a6 -- b6
+  - b6 -- c6
+  - c8 -- GND
+notes:
+  - source blue
+```
+
+![図06 フォトトランジスタ](out/02-parts-6.svg)
+
+光が当たると C から E へ電流が流れ、出力 (`OUT`) が下がる。
+`phototransistor` は**2 本足** (C と E。ベースは無い) で、先に書いた穴が C。
+姿は LED と同じ砲弾型 (`3mm` / `5mm`)。LED と見分けが付くよう**胴を黒く**描き、
+**平らな面は描かない** — 平らな側が C の品と E の品があるため。

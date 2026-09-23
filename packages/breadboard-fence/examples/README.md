@@ -17,7 +17,7 @@
 | [08-emitter-follower.md](08-emitter-follower.md) | 2SC1815 のエミッタフォロワ (電源 5V、スピーカー出力) |
 | [09-am-radio.md](09-am-radio.md) | 1 石中波ラジオ (高周波増幅 + 検波、バーアンテナとポリバリコン) |
 | [10-bh-ad2.md](10-bh-ad2.md) | B-H カーブ測定回路 (オペアンプ・測定器・トロイダルコア) |
-| [11-sensors.md](11-sensors.md) | CdS・サーミスタの分圧、ダイオードの仲間、ガラス封止の部品 |
+| [11-sensors.md](11-sensors.md) | CdS・サーミスタの分圧、ダイオードの仲間、ガラス封止の部品、フォトトランジスタ |
 | [12-notes.md](12-notes.md) | 図の題と注釈 (印・枠・指し棒・字・フェンスの書き出し) |
 | [13-points.md](13-points.md) | 番地に名前を付ける (`points:`)、配線をつないで書く、`l=` |
 | [14-named-chips.md](14-named-chips.md) | リレー・フォトカプラ・7 セグ (足に名前のある DIP 型) |

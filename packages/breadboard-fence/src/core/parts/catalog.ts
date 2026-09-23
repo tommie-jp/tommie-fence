@@ -20,7 +20,7 @@ import { MIN_CONNECTOR_PINS, lookupBoardPart, lookupNamedChip } from 'fence-kit'
 export type PlaceableName =
   | 'resistor' | 'capacitor' | 'led' | 'diode' | 'buzzer' | 'crystal' | 'inductor'
   | 'photoresistor' | 'thermistor' | 'thermistor-ntc' | 'thermistor-ptc' | 'varistor'
-  | 'zener' | 'schottky' | 'photodiode' | 'varicap' | 'diac'
+  | 'zener' | 'schottky' | 'photodiode' | 'phototransistor' | 'varicap' | 'diac'
   | 'reed' | 'fuse' | 'lamp' | 'sma' | 'usb-a' | 'usb-c'
   | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
   | 'transistor' | 'potentiometer' | 'slide-switch' | 'thyristor' | 'triac'
@@ -75,6 +75,7 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   zener: 'ツェナー',
   schottky: 'ショットキー',
   photodiode: 'フォトダイオード',
+  phototransistor: 'フォトトランジスタ',
   varicap: 'バリキャップ',
   diac: 'ダイアック',
   reed: 'リードスイッチ',
@@ -121,6 +122,7 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   zener: 'D',
   schottky: 'D',
   photodiode: 'D',
+  phototransistor: 'Q',
   varicap: 'D',
   diac: 'D',
   reed: 'SW',

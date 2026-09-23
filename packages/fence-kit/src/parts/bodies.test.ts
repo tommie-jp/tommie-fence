@@ -28,7 +28,7 @@ function extentOf(svg: string): { readonly left: number; readonly right: number 
 describe('drawBody', () => {
   test('draws a shape of its own for every type the palettes offer', () => {
     const types = [
-      'resistor', 'capacitor', 'led', 'diode', 'zener', 'schottky', 'photodiode', 'varicap', 'diac',
+      'resistor', 'capacitor', 'led', 'diode', 'zener', 'schottky', 'photodiode', 'phototransistor', 'varicap', 'diac',
       'crystal', 'inductor', 'buzzer', 'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc',
       'varistor', 'reed', 'fuse', 'lamp',
       // 回路図にあって板に無かった実物 (52 の docs/21 の手順 7)。
@@ -124,5 +124,19 @@ describe('bodySize', () => {
   test('shrinks a 3mm led without moving its leads', () => {
     expect(bodySize(part({ type: 'led', variant: '3mm' }), 60).width)
       .toBeLessThan(bodySize(part({ type: 'led' }), 60).width);
+  });
+});
+
+describe('フォトトランジスタの胴', () => {
+  test('draws a dark dome without the flat, since the flat side is not the same leg across makers', () => {
+    // 52 の docs/66 の段 6。砲弾型で LED と見分けにくいので、胴の色で描き分ける。
+    const svg = drawBody(part({ type: 'phototransistor' }), 60);
+    const led = drawBody(part({ type: 'led' }), 60);
+
+    expect(svg).toContain('<circle');
+    expect(svg).not.toContain('<line');
+    expect(led).toContain('<line');
+    expect(bodySize(part({ type: 'phototransistor', variant: '3mm' }), 60).width)
+      .toBeLessThan(bodySize(part({ type: 'phototransistor' }), 60).width);
   });
 });

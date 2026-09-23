@@ -18,7 +18,7 @@ const draw = (type: string, over: Partial<BodyPart> = {}): string => drawBody(pa
 
 /** `BODIES` に載っている種類。ここに足したら、この並びにも足す。 */
 const KINDS = [
-  'sma', 'resistor', 'capacitor', 'crystal', 'inductor', 'buzzer', 'led', 'photodiode',
+  'sma', 'resistor', 'capacitor', 'crystal', 'inductor', 'buzzer', 'led', 'photodiode', 'phototransistor',
   'diode', 'zener', 'schottky', 'varicap', 'diac', 'photoresistor',
   'thermistor', 'thermistor-ntc', 'thermistor-ptc', 'varistor',
   'reed', 'fuse', 'lamp', 'battery', 'solar', 'speaker', 'mic', 'switch', 'switch-nc',

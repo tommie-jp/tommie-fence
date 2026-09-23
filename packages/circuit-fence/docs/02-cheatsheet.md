@@ -84,7 +84,7 @@ parts:
   `galvanometer` `detector`
 - 1 端子 `port` `ground` `vcc` `vee`
 - 能動 `npn` `pnp` `nigbt` `pigbt` `nmos` `pmos` `njfet` `pjfet`
-  `nmos-e` `pmos-e` `nmos-d` `pmos-d` `opamp` `transformer`
+  `nmos-e` `pmos-e` `nmos-d` `pmos-d` `opamp` `transformer` `phototransistor`
 - 論理 `and` `or` `nand` `nor` `xor` `xnor` `not` `buffer` `spdt` `slide-switch`
   `dip4` `dip6` `dip8` `dip14` `dip16` `dip18` `dip20` `dip24` `dip28` `dip40`
 - ブザー `buzzer` (スピーカーの記号で描く)
@@ -107,6 +107,7 @@ parts:
 | 種類 | 足 |
 | --- | --- |
 | `npn` / `pnp` | `B` `C` `E` |
+| `phototransistor` | `C` `E` |
 | `nigbt` / `pigbt` | `G` `C` `E` |
 | FET 各種 | `G` `D` `S` |
 | `opamp` | `+` `-` `out` |

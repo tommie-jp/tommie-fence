@@ -36,6 +36,8 @@ const TWO_LEAD_TYPES = new Set([
   'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc', 'varistor',
   // ダイオードの仲間。実物はどれも同じ形の胴で、カソード帯の位置が意味を持つ。
   'zener', 'schottky', 'photodiode', 'varicap', 'diac',
+  // 砲弾型の受光素子。2 本足 (C E) で、先に書いた穴が C (52 の docs/66)。
+  'phototransistor',
   // ガラス管・玉に封じた部品。
   'reed', 'fuse', 'lamp',
   // 回路図にあって板に無かった実物 (52 の docs/21 の手順 7)。**電池は

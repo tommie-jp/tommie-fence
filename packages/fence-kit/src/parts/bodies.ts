@@ -201,19 +201,27 @@ function capacitorBody(part: BodyPart, span: number, ink: BodyInk): string {
 }
 
 /**
+ * 砲弾型の玉だけ (平らな面なし)。3mm は 5mm の形をそのまま縮める
+ * (5mm と省略時は今までの数字にそのまま戻る)。
+ */
+function plainDome(part: BodyPart, color: string, ink: BodyInk, edge: string, name?: string): string {
+  const scale = domeScale(part);
+  return element('circle', {
+    cx: 0, cy: num(-4 * scale), r: num(LED_RADIUS * scale),
+    fill: ink.paint(color, name), 'fill-opacity': 0.85, stroke: ink.paint(edge),
+  });
+}
+
+/**
  * 砲弾型の玉。LED とフォトダイオードが同じ形で、違うのは色だけ。
  * カソード側に平らな面を描く。
  */
 function domeBody(part: BodyPart, color: string, ink: BodyInk, edge = '#7a2018', name?: string): string {
-  // 3mm は 5mm の形をそのまま縮める (5mm と省略時は今までの数字にそのまま戻る)。
   const scale = domeScale(part);
   // カソード側の平らな面。部品の向きに合わせたいので、本体と同じ回転の中で置く。
   const flatX = (cathodeIndex(part) === 0 ? -6 : 6) * scale;
   const painted = ink.paint(edge);
-  const dome = element('circle', {
-    cx: 0, cy: num(-4 * scale), r: num(LED_RADIUS * scale),
-    fill: ink.paint(color, name), 'fill-opacity': 0.85, stroke: painted,
-  });
+  const dome = plainDome(part, color, ink, edge, name);
   const flat = element('line', {
     x1: num(flatX), y1: num(-11 * scale), x2: num(flatX), y2: num(3 * scale), stroke: painted, 'stroke-width': 2,
   });
@@ -801,6 +809,10 @@ const BODIES: Record<string, (part: BodyPart, span: number, ink: BodyInk) => str
   // フォトダイオードは砲弾型で売られている。受光面が見えるように淡く塗り、
   // 縁は LED の赤茶ではなく灰にする (赤い縁だと図の中で LED に見える)。
   photodiode: (part, _span, ink) => domeBody(part, '#9fc7e8', ink, '#5a6472'),
+  // フォトトランジスタも砲弾型で、LED と見分けにくい。**黒い胴** (可視光を切る
+  // 樹脂の品が多い) で描き分ける。**平らな面は描かない** — 平らな側が C の品と
+  // E の品があり、描くとどちらかの品で嘘になる。足は先に書いた穴が C。
+  phototransistor: (part, _span, ink) => plainDome(part, '#2b2f36', ink, '#12151a'),
 
   diode: (part, span, ink) =>
     diodeBody(part, span, { fill: '#23272e', stroke: '#12151a', band: '#dfe4ee' }, ink),
@@ -876,6 +888,7 @@ export function bodySize(part: BodyPart, span: number): { readonly width: number
     }
     case 'led':
     case 'photodiode':
+    case 'phototransistor':
       return twice(LED_RADIUS * domeScale(part));
     case 'diode':
     case 'zener':

@@ -37,6 +37,8 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
   potentiometer: ['trimmer', 'knob'],
   // 実物の玉の大きさ。挿す穴は同じなので、変わるのは丸の大きさだけ。
   led: ['3mm', '5mm'],
+  // フォトトランジスタも同じ砲弾型の 2 つ。
+  phototransistor: ['3mm', '5mm'],
   // TO-92 は丸い小信号用、TO-220 は放熱タブつき。足の並びはどちらもピン名で示す。
   // 面実装を載せた変換基板 (`sot346-dip` など) は下で表から足す。
   transistor: ['to92', 'to220'],

@@ -229,12 +229,12 @@ wires:
 **名前**は英数字と `_` `-` で 32 字まで。配線から指せる形にする。
 **同じ名前は 1 つだけ** — 2 つあると、配線がどちらを指すのか決まらない。
 
-**種類**は 2 本足が 27、3 本足が 6、それに USB コネクタ、`dipN` / `sipN` とマイコンボード。
+**種類**は 2 本足が 28、3 本足が 6、それに USB コネクタ、`dipN` / `sipN` とマイコンボード。
 
 ```text
 2 本足  resistor  capacitor  led  diode  inductor  crystal  buzzer
         photoresistor  thermistor  thermistor-ntc  thermistor-ptc  varistor
-        zener  schottky  photodiode  varicap  diac  reed  fuse  lamp  sma
+        zener  schottky  photodiode  phototransistor  varicap  diac  reed  fuse  lamp  sma
         speaker  mic  battery  solar  switch (a 接点)  switch-nc (b 接点)
 3 本足  transistor  potentiometer  thyristor  triac  slide-switch  regulator
 4 本足  transformer
@@ -268,7 +268,7 @@ DIP の番号は実物と同じ付き方 — 1 番ピンから右へ、折り返
 
 **姿**は種類のあとに `/` で書く (`capacitor/ceramic`)。
 書ける姿は `capacitor` が `ceramic` `film` `electrolytic` `tantalum`、
-`led` が `3mm` `5mm`、3 本足の 4 種が `to92` `to220`、
+`led` と `phototransistor` が `3mm` `5mm`、3 本足の 4 種が `to92` `to220`、
 `crystal` が `hc49` `cylinder`、`sma` が `male` `female` `male-edge` `female-edge`、
 `usb-a` と `usb-c` が `male` `female` (差し込み・受け口。書かなければ受け口)、
 `resistor` が `quarter` `half` (1/4W・1/2W)、

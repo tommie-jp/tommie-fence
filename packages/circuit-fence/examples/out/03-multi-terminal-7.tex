@@ -1,0 +1,41 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{grounds/scale=1.36}
+\foreach \x in {0,2,4,6,8,10} {\foreach \y in {0,-2,-4,-6,-8,-10,-12} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize] at (8,0.84) {5};
+\node[gray, font=\scriptsize] at (10,0.84) {6};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
+\coordinate (a3) at (4,0);
+\coordinate (c3) at (4,-4);
+\coordinate (e3) at (4,-8);
+\coordinate (g3) at (4,-12);
+\coordinate (c6) at (10,-4);
+\node[vcc] at (a3) {VCC}; % line 3
+\draw (a3) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (c3); % line 4
+\node[npn, photo, nobase] (part-Q1) at (e3) {}; % line 5
+\node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 5
+\node[ground] at (g3) {}; % line 6
+\draw (c6) node[ocirc]{} node[above left]{OUT}; % line 7
+\draw (c3) -- (part-Q1.collector); % line 9
+\draw (part-Q1.emitter) -- (g3); % line 10
+\draw (c3) -- (c6); % line 11
+\node[circ] at (c3) {};
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(10.058,0.853);
+\end{circuitikz}
+\end{document}

@@ -67,6 +67,7 @@ wires:
   - 2 本足 (センサー) — `photoresistor` / `thermistor` / `thermistor-ntc` /
     `thermistor-ptc` / `varistor`
   - 2 本足 (ダイオードの仲間) — `zener` / `schottky` / `photodiode` / `varicap` / `diac`
+  - 2 本足 (受光) — `phototransistor` (先に書いた穴が C、次が E。B は無い)
   - 2 本足 (ガラス封止) — `reed` / `fuse` / `lamp`
   - 2 本足 (音と光と電源) — `speaker` / `mic` / `battery` / `solar`
   - 2 本足 (スイッチ) — `switch` (a 接点) / `switch-nc` (b 接点)
@@ -586,6 +587,7 @@ parts:
 | | `electrolytic` | 帯つきの缶。**マイナス側**に帯 |
 | | `tantalum` | 黄色い粒。**プラス側**に印 |
 | `led` | `3mm` / `5mm` | 玉の大きさ。既定は `5mm` |
+| `phototransistor` | `3mm` / `5mm` | 同上。胴は黒く、平らな面は描かない (平らな側が C の品と E の品がある) |
 | `transistor` | `to92` / `to220` / `sot23-dip` / `sot346-dip` / `sot89-dip` | 丸い胴 (既定) / 放熱タブつきの角い胴 / 面実装を載せた変換基板 (SOT-23・S-Mini・SOT-89) |
 | `thyristor` | `to92` / `to220` | 同上 |
 | `triac` | `to92` / `to220` | 同上 |
