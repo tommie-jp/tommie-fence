@@ -44,6 +44,7 @@ GitHub のようにフェンスが描画されない場所で、ソースと図�
 | [14-half-step.md](14-half-step.md) | 交点の間の番地 (`a1a5` `a1f0`) |
 | [15-arrows.md](15-arrows.md) | 電流の矢と電圧の符号 (`i=` `v=`) |
 | [16-orientation.md](16-orientation.md) | 記号の向き (`r90` / `r180` / `r270` / `mirror`) |
+| [17-named-chips.md](17-named-chips.md) | 足に名前のある部品 (リレー・フォトカプラ・7 セグ) |
 
 ## わざと壊してある例
 

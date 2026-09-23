@@ -329,3 +329,153 @@ export function usbShapeTex(type: string): string[] {
     '\\makeatother',
   ];
 }
+
+/** 線分 1 本 (cm)。宣言の中の道の 1 行。 */
+const segment = (x0: number, y0: number, x1: number, y1: number): string =>
+  `    \\pgfpathmoveto{\\pgfpoint{${num(x0)}cm}{${num(y0)}cm}}`
+  + `\\pgfpathlineto{\\pgfpoint{${num(x1)}cm}{${num(y1)}cm}}`;
+
+/** 塗った三角 (矢の先) 1 つ。先端と、残りの 2 点。 */
+const triangle = (points: readonly (readonly [number, number])[]): string =>
+  points.map(([x, y], index) =>
+    `\\pgfpath${index === 0 ? 'moveto' : 'lineto'}{\\pgfpoint{${num(x)}cm}{${num(y)}cm}}`).join('')
+  + '\\pgfpathclose';
+
+/** 足のアンカーと、枠の上の同じ点 (`bpin`。ここでは足の根元)。 */
+const pinAnchors = (pins: readonly (readonly [number, number, number])[]): string[] =>
+  pins.flatMap(([at, x, y]) => [
+    `  \\anchor{pin ${at}}{\\pgfpoint{${num(x)}cm}{${num(y)}cm}}`,
+    `  \\anchor{bpin ${at}}{\\pgfpoint{${num(x)}cm}{${num(y)}cm}}`,
+  ]);
+
+/**
+ * リレー (2c。`relay`)。**左にコイル、右に c 接点 2 つ**、コイルと接点を破線で
+ * 結ぶ。circuitikz 1.0 にリレーの記号は無い (`relay` も `relais` も落ちる。
+ * 52 の docs/66 の段 0) ので宣言する。
+ *
+ * 足は**上と下の辺だけ**に出る — 上がコイルの A1 と接点の NC・NO、下が A2 と
+ * 共通 (COM)。アンカーの番号は DIP の位置 (G5V-2 の足の番号) で、足の名前は
+ * 表 (fence-kit) が当てる。接点は**コイルに電流が流れていない形** (共通が NC 側)。
+ */
+export const RELAY_SHAPE = 'relay2c';
+
+const RELAY_HALF_HEIGHT = 0.9;
+const COIL = { left: -1.35, right: -0.75, half: 0.45 } as const;
+/** 接点 1 つの幅と、2 つ目の接点までのずれ。 */
+const CONTACT = { width: 0.5, step: 1.0, pivot: -0.35, fixed: 0.3 } as const;
+
+export function relayShapeTex(): string[] {
+  const coilX = (COIL.left + COIL.right) / 2;
+  const h = RELAY_HALF_HEIGHT;
+  const contacts = [0, CONTACT.step];
+  const lines = [
+    // コイル: 箱と上下の足。
+    segment(COIL.left, -COIL.half, COIL.right, -COIL.half),
+    segment(COIL.right, -COIL.half, COIL.right, COIL.half),
+    segment(COIL.right, COIL.half, COIL.left, COIL.half),
+    segment(COIL.left, COIL.half, COIL.left, -COIL.half),
+    segment(coilX, COIL.half, coilX, h),
+    segment(coilX, -COIL.half, coilX, -h),
+    ...contacts.flatMap((x0) => {
+      const pivotX = x0 + CONTACT.width / 2;
+      return [
+        // 共通は下から支点まで。NC (左) と NO (右) は上から接点の高さまで下り、内側へ短く折れる。
+        segment(pivotX, -h, pivotX, CONTACT.pivot),
+        segment(x0, h, x0, CONTACT.fixed),
+        segment(x0, CONTACT.fixed, x0 + 0.1, CONTACT.fixed),
+        segment(x0 + CONTACT.width, h, x0 + CONTACT.width, CONTACT.fixed),
+        segment(x0 + CONTACT.width, CONTACT.fixed, x0 + CONTACT.width - 0.1, CONTACT.fixed),
+        // 可動片は支点から NC の接点へ (電流が流れていない形)。
+        segment(pivotX, CONTACT.pivot, x0 + 0.08, CONTACT.fixed - 0.02),
+      ];
+    }),
+  ];
+  const right = CONTACT.step + CONTACT.width;
+  const centreX = (COIL.left + right) / 2;
+  return [
+    '\\makeatletter',
+    `\\pgfdeclareshape{${RELAY_SHAPE}}{`,
+    `  \\anchor{center}{\\pgfpoint{${num(centreX)}cm}{0cm}}`,
+    `  \\anchor{north}{\\pgfpoint{${num(centreX)}cm}{${num(h)}cm}}`,
+    `  \\anchor{south}{\\pgfpoint{${num(centreX)}cm}{${num(-h)}cm}}`,
+    `  \\anchor{east}{\\pgfpoint{${num(right)}cm}{0cm}}`,
+    `  \\anchor{west}{\\pgfpoint{${num(COIL.left)}cm}{0cm}}`,
+    // 型番は**接点の右**に出す (上下は足で塞がっている)。字の左端を右の縁の少し外へ。
+    `  \\anchor{text}{\\pgfpoint{${num(right + 0.15)}cm}{-.5\\ht\\pgfnodeparttextbox}}`,
+    // DIP の位置: 1 A1 / 16 A2 / 4 COM1 / 6 NC1 / 8 NO1 / 13 COM2 / 11 NC2 / 9 NO2。
+    ...pinAnchors([
+      [1, coilX, h], [16, coilX, -h],
+      [4, CONTACT.width / 2, -h], [6, 0, h], [8, CONTACT.width, h],
+      [13, CONTACT.step + CONTACT.width / 2, -h], [11, CONTACT.step, h], [9, CONTACT.step + CONTACT.width, h],
+    ]),
+    '  \\backgroundpath{',
+    ...lines,
+    '  }',
+    '  \\foregroundpath{',
+    // 支点の点。
+    ...contacts.map((x0) => `    \\pgfpathcircle{\\pgfpoint{${num(x0 + CONTACT.width / 2)}cm}{${num(CONTACT.pivot)}cm}}{0.04cm}`),
+    '    \\pgfusepath{fill}',
+    // コイルと可動片を結ぶ破線 (連動していることの印)。
+    '    \\pgfsetdash{{0.07cm}{0.05cm}}{0cm}',
+    segment(COIL.right, 0, CONTACT.step + CONTACT.width / 2 - 0.08, 0),
+    '    \\pgfusepath{stroke}',
+    '    \\pgfsetdash{}{0cm}',
+    '  }',
+    '}',
+    '\\makeatother',
+  ];
+}
+
+/**
+ * フォトカプラ (`photocoupler`)。**左に LED、右にフォトトランジスタ**、間に光の
+ * 矢 2 本。外枠は 1 つの部品であることの印。circuitikz 1.0 には無い
+ * (`optocoupler` は落ちる) ので宣言する。足は左に A (上)・K (下)、右に C (上)・E (下)。
+ * アンカーの番号は PC817 の足の番号 (1 A / 2 K / 3 E / 4 C)。
+ */
+export const OPTO_SHAPE = 'opto4';
+
+export function optoShapeTex(): string[] {
+  const box = { x: 0.8, y: 0.7 };
+  const pinX = 1.1;
+  const pinY = 0.5;
+  const led = { x: -0.4, top: 0.15, bottom: -0.15, half: 0.2 };
+  const base = 0.25;
+  const lines = [
+    // 外枠。
+    segment(-box.x, -box.y, box.x, -box.y), segment(box.x, -box.y, box.x, box.y),
+    segment(box.x, box.y, -box.x, box.y), segment(-box.x, box.y, -box.x, -box.y),
+    // LED: 下向きの三角と棒。A は上から、K は下から。
+    segment(led.x - led.half, led.top, led.x + led.half, led.top),
+    segment(led.x + led.half, led.top, led.x, led.bottom),
+    segment(led.x, led.bottom, led.x - led.half, led.top),
+    segment(led.x - led.half, led.bottom, led.x + led.half, led.bottom),
+    segment(led.x, led.top, led.x, pinY), segment(led.x, pinY, -pinX, pinY),
+    segment(led.x, led.bottom, led.x, -pinY), segment(led.x, -pinY, -pinX, -pinY),
+    // フォトトランジスタ: ベースの棒、コレクタとエミッタ。
+    segment(base, -0.25, base, 0.25),
+    segment(base, 0.1, 0.5, 0.3), segment(0.5, 0.3, 0.5, pinY), segment(0.5, pinY, pinX, pinY),
+    segment(base, -0.1, 0.5, -0.3), segment(0.5, -0.3, 0.5, -pinY), segment(0.5, -pinY, pinX, -pinY),
+    // 光の矢 2 本 (LED からトランジスタへ)。
+    segment(-0.12, 0.08, 0.13, 0.08), segment(-0.12, -0.08, 0.13, -0.08),
+  ];
+  return [
+    '\\makeatletter',
+    `\\pgfdeclareshape{${OPTO_SHAPE}}{`,
+    '  \\anchor{center}{\\pgfpointorigin}',
+    '  \\anchor{text}{\\pgfpointorigin}',
+    ...edgeAnchors(box.x, box.y),
+    ...pinAnchors([[1, -pinX, pinY], [2, -pinX, -pinY], [3, pinX, -pinY], [4, pinX, pinY]]),
+    '  \\backgroundpath{',
+    ...lines,
+    '  }',
+    '  \\foregroundpath{',
+    // 矢の先 (光の矢 2 本と、エミッタの矢)。
+    `    ${triangle([[0.2, 0.08], [0.1, 0.13], [0.1, 0.03]])}`,
+    `    ${triangle([[0.2, -0.08], [0.1, -0.03], [0.1, -0.13]])}`,
+    `    ${triangle([[0.5, -0.3], [0.38, -0.29], [0.45, -0.2]])}`,
+    '    \\pgfusepath{fill}',
+    '  }',
+    '}',
+    '\\makeatother',
+  ];
+}

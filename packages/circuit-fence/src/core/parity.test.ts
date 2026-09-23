@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { boardPartNames, connectorNames } from 'fence-kit';
+import { boardPartNames, connectorNames, namedChipTypes } from 'fence-kit';
 import { partTypeNames } from './parts.ts';
 
 /**
@@ -21,7 +21,7 @@ describe('実体配線図と同じ綴りで書けること', () => {
       'potentiometer', 'thyristor', 'triac', 'slide-switch', 'regulator', 'transformer',
       'dip4', 'dip6', 'dip8', 'dip14', 'dip16', 'dip18', 'dip20', 'dip24', 'dip28', 'dip40',
       'sip2', 'sip3', 'sip4', 'sip5', 'sip6', 'sip8', 'sip10', 'sip20', 'sip40',
-      ...boardPartNames(), ...connectorNames(),
+      ...boardPartNames(), ...connectorNames(), ...namedChipTypes(),
     ];
 
     expect(onBoards.filter((type) => !known.has(type))).toEqual([]);
@@ -39,7 +39,7 @@ describe('実体配線図と同じ綴りで書けること', () => {
       'potentiometer', 'thyristor', 'triac', 'slide-switch', 'regulator', 'transformer',
       'ecap', 'dip4', 'dip6', 'dip8', 'dip14', 'dip16', 'dip18', 'dip20', 'dip24', 'dip28', 'dip40',
       'sip2', 'sip3', 'sip4', 'sip5', 'sip6', 'sip8', 'sip10', 'sip20', 'sip40',
-      ...boardPartNames(), ...connectorNames(),
+      ...boardPartNames(), ...connectorNames(), ...namedChipTypes(),
     ]);
 
     // **並びは表のまま** (`parts.ts` に書いた順)。並べ替えて読みやすくすると、

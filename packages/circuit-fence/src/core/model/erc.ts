@@ -1,6 +1,6 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { lookupConnector } from 'fence-kit';
-import { DEVICE, partTypeOf, mainPinName, pinPlaces } from '../parts.ts';
+import { DEVICE, partTypeOf, pinPlaces, shownPinName } from '../parts.ts';
 import type { Circuit } from './circuit.ts';
 import type { Net } from './nets.ts';
 import { wiringOf } from './nets.ts';
@@ -44,6 +44,10 @@ const isPackaged = (part: PartSpec): boolean =>
   // **機器も言わない** — モジュールの足は差し出しているだけで、使うのは一部
   // (超音波センサーの 4 本、Analog Discovery の 30 本)。
   || part.type === DEVICE
+  // **リレーも言わない** — 2 回路 (G5V-2) のうち 1 つしか使わないのが普通で、
+  // NC か NO の片方だけ使うことも多い (52 の docs/66)。フォトカプラの 4 本は
+  // 全部要るので言う。7 セグは足の名前を刷った箱 (5 本以上) なので下で外れる。
+  || part.type === 'relay'
   || (partTypeOf(part)?.pinLabels?.length ?? 0) > 4;
 
 /**
@@ -107,7 +111,7 @@ function unusedPins(circuit: Circuit): FenceError[] {
 
     const loose = pinPlaces(type)
       .filter((place) => !used.has(`${part.id}.${place.anchor}`))
-      .map((place) => mainPinName(type, place.anchor));
+      .map((place) => shownPinName(type, place.anchor));
     if (loose.length === 0) continue;
 
     const shown = loose.length > MAX_SHOWN

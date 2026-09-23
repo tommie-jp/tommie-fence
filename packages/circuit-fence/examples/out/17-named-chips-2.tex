@@ -1,0 +1,99 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\makeatletter
+\pgfdeclareshape{opto4}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{0.7cm}}
+  \anchor{south}{\pgfpoint{0cm}{-0.7cm}}
+  \anchor{east}{\pgfpoint{0.8cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.8cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{-1.1cm}{0.5cm}}
+  \anchor{bpin 1}{\pgfpoint{-1.1cm}{0.5cm}}
+  \anchor{pin 2}{\pgfpoint{-1.1cm}{-0.5cm}}
+  \anchor{bpin 2}{\pgfpoint{-1.1cm}{-0.5cm}}
+  \anchor{pin 3}{\pgfpoint{1.1cm}{-0.5cm}}
+  \anchor{bpin 3}{\pgfpoint{1.1cm}{-0.5cm}}
+  \anchor{pin 4}{\pgfpoint{1.1cm}{0.5cm}}
+  \anchor{bpin 4}{\pgfpoint{1.1cm}{0.5cm}}
+  \backgroundpath{
+    \pgfpathmoveto{\pgfpoint{-0.8cm}{-0.7cm}}\pgfpathlineto{\pgfpoint{0.8cm}{-0.7cm}}
+    \pgfpathmoveto{\pgfpoint{0.8cm}{-0.7cm}}\pgfpathlineto{\pgfpoint{0.8cm}{0.7cm}}
+    \pgfpathmoveto{\pgfpoint{0.8cm}{0.7cm}}\pgfpathlineto{\pgfpoint{-0.8cm}{0.7cm}}
+    \pgfpathmoveto{\pgfpoint{-0.8cm}{0.7cm}}\pgfpathlineto{\pgfpoint{-0.8cm}{-0.7cm}}
+    \pgfpathmoveto{\pgfpoint{-0.6cm}{0.15cm}}\pgfpathlineto{\pgfpoint{-0.2cm}{0.15cm}}
+    \pgfpathmoveto{\pgfpoint{-0.2cm}{0.15cm}}\pgfpathlineto{\pgfpoint{-0.4cm}{-0.15cm}}
+    \pgfpathmoveto{\pgfpoint{-0.4cm}{-0.15cm}}\pgfpathlineto{\pgfpoint{-0.6cm}{0.15cm}}
+    \pgfpathmoveto{\pgfpoint{-0.6cm}{-0.15cm}}\pgfpathlineto{\pgfpoint{-0.2cm}{-0.15cm}}
+    \pgfpathmoveto{\pgfpoint{-0.4cm}{0.15cm}}\pgfpathlineto{\pgfpoint{-0.4cm}{0.5cm}}
+    \pgfpathmoveto{\pgfpoint{-0.4cm}{0.5cm}}\pgfpathlineto{\pgfpoint{-1.1cm}{0.5cm}}
+    \pgfpathmoveto{\pgfpoint{-0.4cm}{-0.15cm}}\pgfpathlineto{\pgfpoint{-0.4cm}{-0.5cm}}
+    \pgfpathmoveto{\pgfpoint{-0.4cm}{-0.5cm}}\pgfpathlineto{\pgfpoint{-1.1cm}{-0.5cm}}
+    \pgfpathmoveto{\pgfpoint{0.25cm}{-0.25cm}}\pgfpathlineto{\pgfpoint{0.25cm}{0.25cm}}
+    \pgfpathmoveto{\pgfpoint{0.25cm}{0.1cm}}\pgfpathlineto{\pgfpoint{0.5cm}{0.3cm}}
+    \pgfpathmoveto{\pgfpoint{0.5cm}{0.3cm}}\pgfpathlineto{\pgfpoint{0.5cm}{0.5cm}}
+    \pgfpathmoveto{\pgfpoint{0.5cm}{0.5cm}}\pgfpathlineto{\pgfpoint{1.1cm}{0.5cm}}
+    \pgfpathmoveto{\pgfpoint{0.25cm}{-0.1cm}}\pgfpathlineto{\pgfpoint{0.5cm}{-0.3cm}}
+    \pgfpathmoveto{\pgfpoint{0.5cm}{-0.3cm}}\pgfpathlineto{\pgfpoint{0.5cm}{-0.5cm}}
+    \pgfpathmoveto{\pgfpoint{0.5cm}{-0.5cm}}\pgfpathlineto{\pgfpoint{1.1cm}{-0.5cm}}
+    \pgfpathmoveto{\pgfpoint{-0.12cm}{0.08cm}}\pgfpathlineto{\pgfpoint{0.13cm}{0.08cm}}
+    \pgfpathmoveto{\pgfpoint{-0.12cm}{-0.08cm}}\pgfpathlineto{\pgfpoint{0.13cm}{-0.08cm}}
+  }
+  \foregroundpath{
+    \pgfpathmoveto{\pgfpoint{0.2cm}{0.08cm}}\pgfpathlineto{\pgfpoint{0.1cm}{0.13cm}}\pgfpathlineto{\pgfpoint{0.1cm}{0.03cm}}\pgfpathclose
+    \pgfpathmoveto{\pgfpoint{0.2cm}{-0.08cm}}\pgfpathlineto{\pgfpoint{0.1cm}{-0.03cm}}\pgfpathlineto{\pgfpoint{0.1cm}{-0.13cm}}\pgfpathclose
+    \pgfpathmoveto{\pgfpoint{0.5cm}{-0.3cm}}\pgfpathlineto{\pgfpoint{0.38cm}{-0.29cm}}\pgfpathlineto{\pgfpoint{0.45cm}{-0.2cm}}\pgfpathclose
+    \pgfusepath{fill}
+  }
+}
+\makeatother
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{grounds/scale=1.36}
+\foreach \x in {0,2,4,6,8,10,12,14,16,18} {\foreach \y in {0,-2,-4,-6,-8} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize] at (8,0.84) {5};
+\node[gray, font=\scriptsize] at (10,0.84) {6};
+\node[gray, font=\scriptsize] at (12,0.84) {7};
+\node[gray, font=\scriptsize] at (14,0.84) {8};
+\node[gray, font=\scriptsize] at (16,0.84) {9};
+\node[gray, font=\scriptsize] at (18,0.84) {10};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
+\coordinate (b1) at (0,-2);
+\coordinate (b3) at (4,-2);
+\coordinate (c5) at (8,-4);
+\coordinate (e3) at (4,-8);
+\coordinate (a8) at (14,0);
+\coordinate (b8) at (14,-2);
+\coordinate (b10) at (18,-2);
+\coordinate (e8) at (14,-8);
+\draw (b1) node[ocirc]{} node[above left]{IN}; % line 3
+\draw (b1) to[R, l_=$R_{1}$, a^=$1\,\mathrm{k}\Omega$] (b3); % line 4
+\node[opto4, draw] (part-U1) at (c5) {}; % line 5
+\node[font=\scriptsize, anchor=north] at (part-U1.south) {$\mathrm{PC817}$}; % line 5
+\node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 5
+\node[ground] at (e3) {}; % line 6
+\node[vcc] at (a8) {VDD}; % line 7
+\draw (a8) to[R, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (b8); % line 8
+\draw (b10) node[ocirc]{} node[above left]{OUT}; % line 9
+\draw (e8) node[ocirc]{} node[above left]{GND2}; % line 10
+\draw (b3) -| (part-U1.pin 1); % line 12
+\draw (part-U1.pin 2) |- (e3); % line 13
+\draw (part-U1.pin 4) |- (b8); % line 14
+\draw (b8) -- (b10); % line 15
+\draw (part-U1.pin 3) |- (e8); % line 16
+\node[circ] at (b8) {};
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(9.418,0.853);
+\end{circuitikz}
+\end{document}

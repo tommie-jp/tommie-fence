@@ -4,7 +4,7 @@ import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
 import {
-  DEVICE, isTurned, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, symbolFor, symbolOf, turnSide,
+  DEVICE, isTurned, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, seg7DeviceBox, symbolFor, symbolOf, turnSide,
 } from '../parts.ts';
 import type { PartType, PinSide, SourceInner, Turn } from '../parts.ts';
 import { lookupBoardPart } from 'fence-kit';
@@ -20,7 +20,10 @@ import { NOTE_MARK_TEXT, noteFontTex, texColorOf } from '../notes.ts';
 import { escapeTex, hasUnicode } from './escape.ts';
 import { isMathLabel, mathInnerOf, mathLabelTex } from './mathLabel.ts';
 import { num } from './num.ts';
-import { deviceBox, deviceShapeName, deviceShapeTex, regulatorShapeTex, sipShapeTex, smaShapeTex, usbShapeName, usbShapeTex } from './shapes.ts';
+import {
+  deviceBox, deviceShapeName, deviceShapeTex, optoShapeTex, regulatorShapeTex, relayShapeTex,
+  sipShapeTex, smaShapeTex, usbShapeName, usbShapeTex,
+} from './shapes.ts';
 import type { DeviceBox } from './shapes.ts';
 
 /**
@@ -193,6 +196,12 @@ function sipShapesFor(circuit: Circuit): string[] {
   const withSma = circuit.parts.some((part) => part.type === 'sma')
     ? [...withReg, ...smaShapeTex()]
     : withReg;
+  // リレーとフォトカプラも自分で宣言した形 (circuitikz 1.0 に無い。52 の docs/66)。
+  const uses = (type: string): boolean => circuit.parts.some((part) => part.type === type);
+  const named = [
+    ...(uses('relay') ? relayShapeTex() : []),
+    ...(uses('photocoupler') ? optoShapeTex() : []),
+  ];
   // 機器も自分で宣言した形。**使う寸法 (本数・幅) だけ、1 回ずつ** (ピンヘッダと同じ)。
   const boxes = new Map<string, DeviceBox>();
   for (const part of circuit.parts) {
@@ -200,12 +209,14 @@ function sipShapesFor(circuit: Circuit): string[] {
     const box = deviceBox(part.pinNames, part.value);
     boxes.set(deviceShapeName(box), box);
   }
+  // 7 セグは機器と同じ箱。寸法は表から (同じ寸法の機器があれば 1 回で済む)。
+  if (uses('seg7')) boxes.set(deviceShapeName(seg7DeviceBox()), seg7DeviceBox());
   const devices = [...boxes.keys()].sort().flatMap((name) => deviceShapeTex(boxes.get(name) as DeviceBox));
   // USB も自分で宣言した形。**使う種類だけ、1 回ずつ**。
   const usb = [...new Set(circuit.parts.map((part) => part.type))]
     .filter((type) => usbShapeName(type) !== null)
     .sort();
-  return [...withSma, ...devices, ...usb.flatMap((type) => usbShapeTex(type))];
+  return [...withSma, ...named, ...devices, ...usb.flatMap((type) => usbShapeTex(type))];
 }
 
 const FOOTER = ['\\end{circuitikz}', '\\end{document}'];

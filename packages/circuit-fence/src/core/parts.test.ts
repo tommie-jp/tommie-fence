@@ -97,7 +97,7 @@ describe('PART_ALIASES', () => {
   test('does not answer for something that is not a type', () => {
     expect(resolvePartTypeName('toString')).toBeNull();
     expect(resolvePartTypeName('__proto__')).toBeNull();
-    expect(resolvePartTypeName('relay')).toBeNull();
+    expect(resolvePartTypeName('solenoid')).toBeNull();
   });
 });
 
@@ -113,8 +113,8 @@ describe('closestPartType', () => {
   });
 
   test('says nothing when there is nothing close', () => {
-    // リレーは (まだ) 無い種類。近いものが無ければ黙る。
-    expect(closestPartType('relay')).toBeNull();
+    // ソレノイドは無い種類。近いものが無ければ黙る。
+    expect(closestPartType('solenoid')).toBeNull();
     expect(closestPartType('')).toBeNull();
   });
 

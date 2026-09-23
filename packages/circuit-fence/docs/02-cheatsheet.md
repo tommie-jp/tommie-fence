@@ -96,6 +96,8 @@ parts:
   `usb-a` `usb-c`
 - マイコンボード (足は実物の印字で `U1.GP0`。図には `01 GP0` と番号も出る)
   `pico` `pico-w` `pico2` `pico2-w`
+- 足に名前のある部品 (名前でも実物の足の番号でも可。下の表)
+  `relay` `photocoupler` `seg7`
 
 略記: `r` `c` `l` `d` `i` `v` `dc` `ac` `gnd` `op` `ec` `pot` `ldr` `ntc`
 `ptc` `xtal` `scr` `bat` `sw` `btn`
@@ -115,6 +117,9 @@ parts:
 | `slide-switch` | 同上 (記号も同じ) |
 | `dipNN` | `1` 〜 足の本数 |
 | `device` | `pins:` に書いた名前 (`1` 〜 本数でも可) |
+| `relay` | `A1` `A2` / `COM1` `NC1` `NO1` / `COM2` `NC2` `NO2` |
+| `photocoupler` | `A` `K` / `C` `E` |
+| `seg7` | `a` 〜 `g` `dp` `COM1` `COM2` |
 | `potentiometer` | `w` |
 | `thyristor` / `triac` | `g` |
 

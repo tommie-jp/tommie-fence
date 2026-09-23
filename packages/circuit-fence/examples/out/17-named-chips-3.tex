@@ -1,0 +1,87 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\makeatletter
+\pgfdeclareshape{dev10w10n6}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{0.3cm-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{2.5cm}}
+  \anchor{south}{\pgfpoint{0cm}{-2.5cm}}
+  \anchor{east}{\pgfpoint{1cm}{0cm}}
+  \anchor{west}{\pgfpoint{-1cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{-1.4cm}{2.25cm}}
+  \anchor{bpin 1}{\pgfpoint{-1cm}{2.25cm}}
+  \anchor{pin 2}{\pgfpoint{-1.4cm}{1.75cm}}
+  \anchor{bpin 2}{\pgfpoint{-1cm}{1.75cm}}
+  \anchor{pin 3}{\pgfpoint{-1.4cm}{1.25cm}}
+  \anchor{bpin 3}{\pgfpoint{-1cm}{1.25cm}}
+  \anchor{pin 4}{\pgfpoint{-1.4cm}{0.75cm}}
+  \anchor{bpin 4}{\pgfpoint{-1cm}{0.75cm}}
+  \anchor{pin 5}{\pgfpoint{-1.4cm}{0.25cm}}
+  \anchor{bpin 5}{\pgfpoint{-1cm}{0.25cm}}
+  \anchor{pin 6}{\pgfpoint{-1.4cm}{-0.25cm}}
+  \anchor{bpin 6}{\pgfpoint{-1cm}{-0.25cm}}
+  \anchor{pin 7}{\pgfpoint{-1.4cm}{-0.75cm}}
+  \anchor{bpin 7}{\pgfpoint{-1cm}{-0.75cm}}
+  \anchor{pin 8}{\pgfpoint{-1.4cm}{-1.25cm}}
+  \anchor{bpin 8}{\pgfpoint{-1cm}{-1.25cm}}
+  \anchor{pin 9}{\pgfpoint{-1.4cm}{-1.75cm}}
+  \anchor{bpin 9}{\pgfpoint{-1cm}{-1.75cm}}
+  \anchor{pin 10}{\pgfpoint{-1.4cm}{-2.25cm}}
+  \anchor{bpin 10}{\pgfpoint{-1cm}{-2.25cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-1cm}{-2.5cm}}{\pgfpoint{1cm}{2.5cm}}
+    \pgfpathmoveto{\pgfpoint{-1.4cm}{2.25cm}}\pgfpathlineto{\pgfpoint{-1cm}{2.25cm}}
+    \pgfpathmoveto{\pgfpoint{-1.4cm}{1.75cm}}\pgfpathlineto{\pgfpoint{-1cm}{1.75cm}}
+    \pgfpathmoveto{\pgfpoint{-1.4cm}{1.25cm}}\pgfpathlineto{\pgfpoint{-1cm}{1.25cm}}
+    \pgfpathmoveto{\pgfpoint{-1.4cm}{0.75cm}}\pgfpathlineto{\pgfpoint{-1cm}{0.75cm}}
+    \pgfpathmoveto{\pgfpoint{-1.4cm}{0.25cm}}\pgfpathlineto{\pgfpoint{-1cm}{0.25cm}}
+    \pgfpathmoveto{\pgfpoint{-1.4cm}{-0.25cm}}\pgfpathlineto{\pgfpoint{-1cm}{-0.25cm}}
+    \pgfpathmoveto{\pgfpoint{-1.4cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{-1cm}{-0.75cm}}
+    \pgfpathmoveto{\pgfpoint{-1.4cm}{-1.25cm}}\pgfpathlineto{\pgfpoint{-1cm}{-1.25cm}}
+    \pgfpathmoveto{\pgfpoint{-1.4cm}{-1.75cm}}\pgfpathlineto{\pgfpoint{-1cm}{-1.75cm}}
+    \pgfpathmoveto{\pgfpoint{-1.4cm}{-2.25cm}}\pgfpathlineto{\pgfpoint{-1cm}{-2.25cm}}
+  }
+}
+\makeatother
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{grounds/scale=1.36}
+\foreach \x in {0,2,4,6,8} {\foreach \y in {0,-2,-4,-6,-8} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize] at (8,0.84) {5};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
+\coordinate (a1) at (0,0);
+\coordinate (a3) at (4,0);
+\coordinate (c5) at (8,-4);
+\coordinate (e3) at (4,-8);
+\draw (a1) node[ocirc]{} node[above left]{GP0}; % line 3
+\draw (a1) to[R, l_=$R_{1}$, a^=$330\,\Omega$] (a3); % line 4
+\node[dev10w10n6, draw, font=\scriptsize] (part-DS1) at (c5) {$\mathrm{5161AS}$}; % line 5
+\node[anchor=south] at (part-DS1.north) {$D_{S1}$}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-DS1.bpin 1) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-DS1.bpin 2) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-DS1.bpin 3) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-DS1.bpin 4) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-DS1.bpin 5) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-DS1.bpin 6) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-DS1.bpin 7) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-DS1.bpin 8) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-DS1.bpin 9) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-DS1.bpin 10) {X}; % line 5
+\node[ground] at (e3) {}; % line 6
+\draw (a3) -| (part-DS1.pin 1); % line 8
+\draw (part-DS1.pin 9) -| (e3); % line 9
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(9.053,0.853);
+\end{circuitikz}
+\end{document}

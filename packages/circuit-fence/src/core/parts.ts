@@ -1,6 +1,7 @@
-import { lookupBoardPart, lookupConnector } from 'fence-kit';
-import { REGULATOR_SHAPE, SMA_SHAPE, deviceBox, deviceShapeName, usbShapeName } from './tex/shapes.ts';
-import type { BoardPart } from 'fence-kit';
+import { lookupBoardPart, lookupConnector, lookupNamedChip } from 'fence-kit';
+import { OPTO_SHAPE, RELAY_SHAPE, REGULATOR_SHAPE, SMA_SHAPE, deviceBox, deviceShapeName, usbShapeName } from './tex/shapes.ts';
+import type { BoardPart, NamedChip } from 'fence-kit';
+import type { DeviceBox } from './tex/shapes.ts';
 /**
  * 部品の種類の表。パーサ (どう書けるか) と TeX 生成 (どう描くか) の両方がここを見る。
  * 表を 2 つに割ると片方だけ増えて食い違うので、1 か所に集める。
@@ -214,6 +215,12 @@ export type PartType = {
    * 箱で描く IC は中に書ける (そのほうが回路図の慣習に近い)。
    */
   readonly valueInside?: boolean;
+  /**
+   * ネットリストと升目に出す足の名前 (アンカー → 名前)。**名前でも DIP の番号でも
+   * 呼べて、図に名前を書かない**種類だけが持つ (リレー・フォトカプラ)。
+   * `pins` から引くと、JS が数字めいた鍵を先に並べるので `K1.8` になる。
+   */
+  readonly pinNames?: Readonly<Record<string, string>>;
   /**
    * ID の下にもう 1 行足す字。記号だけでは見分けが付かない種類だけが持つ。
    * circuitikz の記号がフェンスの TeX で壊れる字 (θ) を使っているとき、
@@ -465,6 +472,54 @@ export function deviceChip(names: readonly string[], label: string | null = null
     pinLabels: names,
   };
 }
+
+/**
+ * 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ。52 の docs/66)。**足の名前と
+ * DIP の番号は板の 2 つと同じ表** (fence-kit) から引く — 名前でも番号でも指せる
+ * (`K1.COM1` = `K1.4`)。足は記号の中心線に乗らないので `pinRow` で辺だけを持つ。
+ */
+function namedSymbol(chip: NamedChip, symbol: string, sides: readonly (readonly [number, PinSide])[]): PartType {
+  return {
+    kind: 'multi-terminal',
+    symbol,
+    options: ['draw'],
+    ...NO_UNIT,
+    pins: Object.fromEntries(chip.pins.flatMap(({ at, name }) => [
+      [name, `pin ${at}`],
+      ...(name === name.toLowerCase() ? [] : [[name.toLowerCase(), `pin ${at}`]]),
+      [`${at}`, `pin ${at}`],
+    ])),
+    // **並びは記号の上の順** (辺の中の左から右・上から下)。升目がこの順で足を並べる。
+    pinRow: Object.fromEntries(sides.map(([at, side]) => [`pin ${at}`, side])),
+    pinNames: Object.fromEntries(chip.pins.map(({ at, name }) => [`pin ${at}`, name])),
+  };
+}
+
+/** 7 セグの箱に並べる順 (セグメント、点、共通)。**番号は表の DIP の位置**のまま。 */
+const SEG7_ORDER = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'dp', 'COM1', 'COM2'];
+
+/**
+ * 7 セグの箱の寸法。幅は型番 (5161AS) が入るだけ取る。**TeX の宣言もこれから**
+ * 書く (`generate.ts`。機器は書いた足の名前から、こちらは表から)。
+ */
+export const seg7DeviceBox = (): DeviceBox => deviceBox(SEG7_ORDER, namedChipOf('seg7').name);
+
+/** 7 セグは名前を刷った箱 (機器と同じ形)。KiCad の記号も箱に足の名前。 */
+function seg7Box(chip: NamedChip): PartType {
+  const box = deviceChip(SEG7_ORDER, chip.name);
+  const anchorOf = (name: string): string => `pin ${SEG7_ORDER.indexOf(name) + 1}`;
+  return {
+    ...box,
+    pins: {
+      ...box.pins,
+      // DIP の番号 (`DS1.3` = COM1) は表の位置から。箱の並びの番号では呼ばない
+      // (位置は 1〜10 が全部あるので、箱の並びの番号は全部上書きされる)。
+      ...Object.fromEntries(chip.pins.map(({ at, name }) => [`${at}`, anchorOf(name)])),
+    },
+  };
+}
+
+const namedChipOf = (type: string): NamedChip => lookupNamedChip(type, null) as NamedChip;
 
 /** `device` の種類名。1 行では書けず、マップ形式 (`type: device`) だけで書く。 */
 export const DEVICE = 'device';
@@ -797,6 +852,18 @@ export const PART_TYPES = {
   sip20: sipchip(20),
   sip40: sipchip(40),
 
+  // 足に名前のある DIP 型。表は板の 2 つと同じ (fence-kit)。
+  // 型番は接点の右 (記号の `text` アンカー)。上下は足で塞がっている。
+  relay: {
+    ...namedSymbol(namedChipOf('relay'), RELAY_SHAPE, [
+      [1, 'top'], [6, 'top'], [8, 'top'], [11, 'top'], [9, 'top'],
+      [16, 'bottom'], [4, 'bottom'], [13, 'bottom'],
+    ]),
+    valueInside: true,
+  },
+  photocoupler: namedSymbol(namedChipOf('photocoupler'), OPTO_SHAPE, [[1, 'left'], [2, 'left'], [4, 'right'], [3, 'right']]),
+  seg7: seg7Box(namedChipOf('seg7')),
+
   // USB コネクタ。**表は実体配線図の 2 つと共通** (fence-kit)。
   'usb-a': usbchip('usb-a'),
   'usb-c': usbchip('usb-c'),
@@ -919,6 +986,10 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   'pico-w': 'Pico W',
   pico2: 'Pico 2',
   'pico2-w': 'Pico 2 W',
+  // 足に名前のある DIP 型も実体配線図の 2 つと同じ字 (fence-kit の表)。
+  relay: namedChipOf('relay').kindName,
+  photocoupler: namedChipOf('photocoupler').kindName,
+  seg7: namedChipOf('seg7').kindName,
 };
 
 /**
@@ -1031,6 +1102,9 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   'pico-w': 'U',
   pico2: 'U',
   'pico2-w': 'U',
+  relay: namedChipOf('relay').prefix,
+  photocoupler: namedChipOf('photocoupler').prefix,
+  seg7: namedChipOf('seg7').prefix,
 };
 
 /**
@@ -1255,7 +1329,7 @@ export function mainPinName(type: PartType, anchor: string): string {
  * 図と食い違う (JS は数字めいた鍵を先に並べるため。実機で気づいた)。
  */
 export function shownPinName(type: PartType, anchor: string): string {
-  return printedPinLabel(type, anchor) ?? mainPinName(type, anchor);
+  return type.pinNames?.[anchor] ?? printedPinLabel(type, anchor) ?? mainPinName(type, anchor);
 }
 
 /** 図に書く足の名前 (`pinLabels`)。持たない種類は null。 */

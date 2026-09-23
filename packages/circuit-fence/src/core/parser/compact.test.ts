@@ -399,7 +399,7 @@ describe('parseCompactPart の種類', () => {
   });
 
   test('lists what is available when nothing is close', () => {
-    const message = messageOf('relay a1 a3').message;
+    const message = messageOf('solenoid a1 a3').message;
 
     expect(message).toContain('resistor');
     expect(message).toContain('lamp');
