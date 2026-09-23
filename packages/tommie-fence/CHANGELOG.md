@@ -3,6 +3,15 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.8.2] - 2026-09-23
+
+circuit-fence 0.9.3 を束ねた。
+
+### Fixed
+
+- **circuit: マップで、回した DIP とマイコンボードの切り欠きが 1 番ピンの隣に
+  出るようになった。** `r90` と `r180` で反対の端に出ていた。
+
 ## [0.8.1] - 2026-09-23
 
 circuit-fence 0.9.2 を束ねた。
