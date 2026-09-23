@@ -6,8 +6,8 @@ import type {
   Address, Board, FenceError, HoleAddress, HoleRow, PartKind, PartSpec, PlacedPart, PlacedPin,
   RailAddress, Result,
 } from '../types.ts';
-import type { BoardPart, Connector } from 'fence-kit';
-import { MIN_CONNECTOR_PINS, adapterFor, isDirectSmd, smdLooksOf, smdSuggestion } from 'fence-kit';
+import type { BoardPart, Connector, NamedChip } from 'fence-kit';
+import { MIN_CONNECTOR_PINS, adapterFor, isDirectSmd, lookupNamedChip, smdLooksOf, smdSuggestion } from 'fence-kit';
 import type { Turn } from '../parts/orient.ts';
 import { isPolarVariant, typesWithVariants, variantsOf } from '../parts/variants.ts';
 import { describeUnknownType, lookupFootprint } from './footprints.ts';
@@ -289,6 +289,9 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
   if (footprint.kind === 'switch') return placeSwitch(spec, board, base);
   if (footprint.kind === 'sip') return placeSip(spec, board, base, footprint.pins);
   if (footprint.kind === 'board') return placeBoard(spec, board, base, footprint.board);
+  if (footprint.kind === 'named') {
+    return placeNamed(spec, board, base, lookupNamedChip(spec.type, spec.variant) ?? footprint.chip);
+  }
   return placeDip(spec, board, base, footprint.pins);
 }
 
@@ -417,6 +420,59 @@ function placeDip(spec: PartSpec, board: Board, base: PartBase, pinCount: number
     kind: 'dip',
     bridges: [],
     pins: dualRowPins(anchor.value, oppositeRow, spun(names, spec.turn)),
+  });
+}
+
+/**
+ * 穴の行の、板の上での位置 (ピッチ単位)。**溝は 3 ピッチぶん** — e と f の間が
+ * 0.3 インチで、DIP がちょうどまたぐ。
+ */
+const ROW_POSITION: Readonly<Record<HoleRow, number>> = {
+  a: 0, b: 1, c: 2, d: 3, e: 4, f: 7, g: 8, h: 9, i: 10, j: 11,
+};
+
+/** その行から、溝の向こうへ `span` ピッチ先の行。届かなければ null。 */
+function acrossGap(row: HoleRow, span: number): HoleRow | null {
+  const upper = ROW_POSITION[row] < ROW_POSITION.f;
+  const wanted = ROW_POSITION[row] + (upper ? span : -span);
+  const found = HOLE_ROWS.find((one) => ROW_POSITION[one] === wanted && (ROW_POSITION[one] < ROW_POSITION.f) !== upper);
+  return found ?? null;
+}
+
+/**
+ * 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。**DIP と同じ並べ方**で、
+ * 列の間は表の穴数、足があるのは表の位置だけ。1 番ピンの穴から、向かいの列は
+ * 溝の向こうの `rowSpan` ピッチ先 (G5V-2 は e↔f、7 セグは b↔f 〜 e↔i)。
+ */
+function placeNamed(spec: PartSpec, board: Board, base: PartBase, chip: NamedChip): Result<PlacedPart> {
+  const anchor = anchorHole(spec, board, `${chip.type} @ e5`);
+  if (!anchor.ok) return anchor;
+
+  const oppositeRow = acrossGap(anchor.value.row, chip.rowSpan);
+  if (oppositeRow === null) {
+    const upper = HOLE_ROWS.filter((row) => ROW_POSITION[row] < ROW_POSITION.f && acrossGap(row, chip.rowSpan) !== null);
+    const lower = HOLE_ROWS.filter((row) => ROW_POSITION[row] >= ROW_POSITION.f && acrossGap(row, chip.rowSpan) !== null);
+    return fail(
+      `部品 ${safeToken(spec.id)}: ${chip.type} は溝をまたぐので ${upper.join('・')} 行か ${lower.join('・')} 行に置きます`,
+      spec.line,
+    );
+  }
+
+  const perRow = chip.positions / 2;
+  const overflow = rightEdge(spec, board, anchor.value.col + perRow - 1);
+  if (overflow) return { ok: false, error: overflow };
+
+  // **足の無い位置は空の名前で持って回し、並べてから落とす** — 回すと位置が
+  // 巡るので、先に落とすと向かいの列へ行く足を数え違える。
+  const names = Array.from({ length: chip.positions }, (_, index) =>
+    chip.pins.find((pin) => pin.at === index + 1)?.name ?? '');
+  return ok({
+    ...base,
+    kind: 'dip',
+    bridges: [],
+    // 何も書かれていなければ品名を出す (マイコンボードと同じ)。
+    label: base.label ?? (base.value === null ? chip.name : null),
+    pins: dualRowPins(anchor.value, oppositeRow, spun(names, spec.turn)).filter((pin) => pin.name !== ''),
   });
 }
 

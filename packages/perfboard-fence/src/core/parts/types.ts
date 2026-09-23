@@ -1,6 +1,6 @@
 import {
-  CONNECTOR_LOOKS, boardPartNames, connectorNames, lookupBoardPart, lookupConnector, smdLooksOf, smdSuggestion,
-  withSmdLooks,
+  CONNECTOR_LOOKS, boardPartNames, connectorNames, lookupBoardPart, lookupConnector, lookupNamedChip, namedChipLooks,
+  namedChipTypes, smdLooksOf, smdSuggestion, withSmdLooks,
 } from 'fence-kit';
 import { safeToken } from '../errors.ts';
 /**
@@ -117,6 +117,8 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
   sma: ['male', 'female', 'male-edge', 'female-edge'],
   // USB は差し込み (オス) と受け口 (メス)。**書かなければ受け口**。
   ...Object.fromEntries(connectorNames().map((type) => [type, CONNECTOR_LOOKS])),
+  // 足に名前のある DIP 型は品名が姿 (`relay/g5v-2`)。**書かなければ表の最初**。
+  ...Object.fromEntries(namedChipTypes().map((type) => [type, namedChipLooks(type)])),
 };
 
 /**
@@ -149,7 +151,7 @@ export const isFourLead = (type: string): boolean => FOUR_LEAD.has(type);
 export const isSwitch = (type: string): boolean => SWITCH.has(type);
 export const isKnownType = (type: string): boolean =>
   TWO_LEAD.has(type) || THREE_LEAD.has(type) || FOUR_LEAD.has(type) || SWITCH.has(type) || NESTED.has(type)
-  || lookupBoardPart(type) !== null || isConnector(type);
+  || lookupBoardPart(type) !== null || isConnector(type) || lookupNamedChip(type, null) !== null;
 /**
  * パレットに出す**パッケージ物**。`dipN` / `sipN` は数を選べるが、一覧に全部
  * 並べても選べないので、**実物として売られている数**だけ出す。ここに無い数も
@@ -164,6 +166,8 @@ export const packageNames = (): readonly string[] => [
   ...SIP_SIZES.map((pins) => `sip${pins}`),
   // マイコンボード。**breadboard と同じ表**から出す (fence-kit)。
   ...boardPartNames(),
+  // 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。これも同じ表。
+  ...namedChipTypes(),
 ];
 
 export const placeableNames = (): readonly string[] =>
@@ -177,7 +181,7 @@ export const aliasesFor = (type: string): readonly string[] =>
 export const resolveTypeName = (type: string): string => (own(ALIASES, type) ? ALIASES[type] ?? type : type);
 export const knownNames = (): readonly string[] => [
   ...TWO_LEAD, ...THREE_LEAD, ...FOUR_LEAD, ...SWITCH, ...connectorNames(), ...NESTED, ...boardPartNames(),
-  ...Object.keys(ALIASES),
+  ...namedChipTypes(), ...Object.keys(ALIASES),
 ];
 
 export type PartType = {

@@ -1,5 +1,5 @@
-import type { BoardPart, Connector } from 'fence-kit';
-import { boardPartNames, connectorNames, lookupBoardPart, lookupConnector } from 'fence-kit';
+import type { BoardPart, Connector, NamedChip } from 'fence-kit';
+import { boardPartNames, connectorNames, lookupBoardPart, lookupConnector, lookupNamedChip, namedChipTypes } from 'fence-kit';
 import { aliasNames } from '../parts/aliases.ts';
 import { safeToken } from '../errors.ts';
 
@@ -12,6 +12,11 @@ export type Footprint =
   /** 溝をまたぐ 4 本足のスイッチ (6mm 角のタクトスイッチ)。 */
   | { readonly kind: 'switch' }
   | { readonly kind: 'dip'; readonly pins: number }
+  /**
+   * 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。**表は fence-kit** で、
+   * DIP の位置のうち足のある所に名前が付く。列の間の穴数は表が決める (52 の docs/66)。
+   */
+  | { readonly kind: 'named'; readonly chip: NamedChip }
   | { readonly kind: 'sip'; readonly pins: number }
   | { readonly kind: 'board'; readonly board: BoardPart }
   /**
@@ -85,6 +90,9 @@ export function lookupFootprint(type: string): Footprint | null {
   const connector = lookupConnector(type);
   if (connector) return { kind: 'connector', connector };
 
+  const named = lookupNamedChip(type, null);
+  if (named) return { kind: 'named', chip: named };
+
   const dip = DIP_PATTERN.exec(type);
   if (dip) {
     const pins = Number(dip[1]);
@@ -118,6 +126,7 @@ export const packageTypes = (): readonly string[] => [
   ...DIP_SIZES.map((pins) => `dip${pins}`),
   ...SIP_SIZES.map((pins) => `sip${pins}`),
   ...boardPartNames(),
+  ...namedChipTypes(),
 ];
 
 export const placeableTypes = (): readonly string[] => [
@@ -133,6 +142,7 @@ export const knownPartTypes = (): readonly string[] => [
   'dipN',
   'sipN',
   ...boardPartNames(),
+  ...namedChipTypes(),
   'device',
 ];
 

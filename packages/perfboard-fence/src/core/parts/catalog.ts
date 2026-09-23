@@ -1,4 +1,4 @@
-import { lookupBoardPart } from 'fence-kit';
+import { lookupBoardPart, lookupNamedChip } from 'fence-kit';
 import { footprintOf } from './footprint.ts';
 import { placeableNames } from './types.ts';
 
@@ -124,13 +124,15 @@ export function partName(type: string): string {
   const sip = SIP_NAME.exec(type);
   if (sip) return `ピンヘッダ ${sip[1]} ピン`;
   // マイコンボードは製品名 (**breadboard と同じ表**から出す)。
-  return lookupBoardPart(type)?.name ?? (isPlaceable(type) ? PART_NAMES[type] : type);
+  return lookupBoardPart(type)?.name ?? lookupNamedChip(type, null)?.kindName ?? (isPlaceable(type) ? PART_NAMES[type] : type);
 }
 
 /** ID の接頭辞。DIP は `U` (IC)、ピンヘッダは `J` (コネクタ)。 */
 export function partPrefix(type: string): string | null {
   if (DIP_NAME.test(type) || lookupBoardPart(type) !== null) return 'U';
   if (SIP_NAME.test(type)) return 'J';
+  const named = lookupNamedChip(type, null);
+  if (named !== null) return named.prefix;
   return isPlaceable(type) ? PART_PREFIXES[type] : null;
 }
 

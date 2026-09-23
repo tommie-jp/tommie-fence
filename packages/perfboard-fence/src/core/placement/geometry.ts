@@ -165,7 +165,7 @@ function boxRect(part: PlacedPart, layout: Layout): OrientedRect | null {
   // **パッケージの外形は fence-kit が持つ。** 描くのも同じ関数なので、
   // 「図では重なって見えるのに何も言わない」が起きない (この約束のためにここにいる)。
   const kind = footprintOf(part.type)?.kind;
-  const box = kind === 'dip' ? dipBox(points, layout.pitch)
+  const box = kind === 'dip' || kind === 'named' ? dipBox(points, layout.pitch)
     : kind === 'sip' ? sipBox(points, layout.pitch)
       : kind === 'board' ? boardBox(points, layout.pitch) : null;
   if (box !== null) {
@@ -201,7 +201,7 @@ function boxRect(part: PlacedPart, layout: Layout): OrientedRect | null {
  */
 const isBoxed = (part: PlacedPart): boolean => {
   const kind = footprintOf(part.type)?.kind;
-  return kind === 'dip' || kind === 'switch' || kind === 'sip' || kind === 'board'
+  return kind === 'dip' || kind === 'switch' || kind === 'sip' || kind === 'board' || kind === 'named'
     || kind === 'three-lead' || kind === 'four-lead';
 };
 

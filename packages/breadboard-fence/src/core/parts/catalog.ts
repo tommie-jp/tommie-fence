@@ -10,7 +10,7 @@
  */
 
 import { lookupFootprint, placeableTypes } from '../placement/footprints.ts';
-import { MIN_CONNECTOR_PINS, lookupBoardPart } from 'fence-kit';
+import { MIN_CONNECTOR_PINS, lookupBoardPart, lookupNamedChip } from 'fence-kit';
 
 /**
  * 置ける種類の名前。**一覧そのものは `footprints.ts` が正** — 足の数を決めて
@@ -43,7 +43,7 @@ export function partName(type: string): string {
   if (dip) return `DIP ${dip[1]} ピン`;
   const sip = SIP_NAME.exec(type);
   if (sip) return `ピンヘッダ ${sip[1]} ピン`;
-  return lookupBoardPart(type)?.name ?? (isPlaceable(type) ? PART_NAMES[type] : type);
+  return lookupBoardPart(type)?.name ?? lookupNamedChip(type, null)?.kindName ?? (isPlaceable(type) ? PART_NAMES[type] : type);
 }
 
 /**
@@ -52,6 +52,8 @@ export function partName(type: string): string {
  */
 export function partPrefix(type: string): string | null {
   if (DIP_NAME.test(type) || lookupBoardPart(type) !== null) return 'U';
+  const named = lookupNamedChip(type, null);
+  if (named !== null) return named.prefix;
   if (SIP_NAME.test(type)) return 'J';
   return isPlaceable(type) ? PART_PREFIXES[type] : null;
 }
@@ -167,7 +169,8 @@ export const isTwoLead = (type: string): boolean => holesOf(type) === 2;
 /** アンカー 1 つで置く形か (`@ 穴` と書く)。 */
 export const isAnchored = (type: string): boolean => {
   const footprint = lookupFootprint(type);
-  return footprint !== null && (footprint.kind === 'switch' || footprint.kind === 'dip' || footprint.kind === 'sip');
+  return footprint !== null
+    && (footprint.kind === 'switch' || footprint.kind === 'dip' || footprint.kind === 'sip' || footprint.kind === 'named');
 };
 
 export const isPlaceable = (type: string): type is PlaceableName =>

@@ -1,4 +1,4 @@
-import { computeNets, lookupBoardPart, lookupConnector } from 'fence-kit';
+import { computeNets, lookupBoardPart, lookupConnector, lookupNamedChip } from 'fence-kit';
 import { footprintOf } from '../parts/footprint.ts';
 import type { Net, NetMember } from 'fence-kit';
 import { fenceError, notice, safeToken } from '../errors.ts';
@@ -207,7 +207,8 @@ export function resolveWires(
  * 突き合わせが黙って外れ、ERC が何も言わなくなる (返るのは空なのでテストも通る)。
  */
 export function pinRef(part: PlacedPart, index: number): string {
-  const named = lookupBoardPart(part.type)?.pins[index] ?? lookupConnector(part.type)?.pins[index];
+  const named = lookupBoardPart(part.type)?.pins[index] ?? lookupConnector(part.type)?.pins[index]
+    ?? lookupNamedChip(part.type, part.variant)?.pins[index]?.name;
   return `${part.id}.${named ?? index + 1}`;
 }
 

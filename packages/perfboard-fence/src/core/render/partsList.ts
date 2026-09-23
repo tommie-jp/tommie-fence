@@ -1,4 +1,4 @@
-import { parseResistor, resistorBands } from 'fence-kit';
+import { lookupNamedChip, parseResistor, resistorBands } from 'fence-kit';
 import { colorValue } from '../color.ts';
 import type { Band } from '../model/layout.ts';
 import type { DeviceSpec } from '../types.ts';
@@ -91,7 +91,8 @@ export function partsListing(
 ): readonly PartsRow[] {
   const rows: PartsRow[] = [
     ...parts.map((part): PartsRow =>
-      [part.id, kindOf(part.type, part.variant), part.value ?? '', bandText(part.type, part.value)]),
+      [part.id, kindOf(part.type, part.variant), part.value ?? lookupNamedChip(part.type, part.variant)?.name ?? '',
+        bandText(part.type, part.value)]),
     // 機器は種類が 1 つしかないので、名札を値の欄に出す (`電池 3V`)。
     ...devices.map((device): PartsRow => [device.id, 'device', device.label, '']),
   ];

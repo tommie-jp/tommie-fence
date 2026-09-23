@@ -2,7 +2,7 @@ import {
   REAL_INK, boardBox, boardChip, connectorBox, dipChip, directSotSpec, drawBody, drawConnector, drawDipAdapter,
   drawDirectSot, drawPackage, drawsOwnLeads,
   element, fit, hasBody,
-  lookupBoardPart, num, bodySize, packageHalfWidth, packageReach, sipHeader,
+  drawNamedChip, lookupBoardPart, lookupNamedChip, num, bodySize, packageHalfWidth, packageReach, sipHeader,
   smaBody as drawSmaBody, svgText, transformerCore, TEXT_HALO_WIDTH,
 } from 'fence-kit';
 import type { BodyInk, BodyPart, ChipInk } from 'fence-kit';
@@ -461,7 +461,7 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme, room?: Ca
 const isBoxed = (part: PlacedPart): boolean => {
   const kind = footprintOf(part.type)?.kind;
   // マイコンボードも箱。**列の間隔が広い DIP** として同じ道を通る。
-  return kind === 'dip' || kind === 'switch' || kind === 'sip' || kind === 'board' || kind === 'four-lead';
+  return kind === 'dip' || kind === 'switch' || kind === 'sip' || kind === 'board' || kind === 'named' || kind === 'four-lead';
 };
 
 /**
@@ -563,7 +563,7 @@ const chipInk = (theme: Theme): ChipInk => ({
  */
 function renderChip(
   part: PlacedPart,
-  kind: 'dip' | 'sip' | 'board',
+  kind: 'dip' | 'sip' | 'board' | 'named',
   layout: Layout,
   theme: Theme,
   room?: CaptionRoom,
@@ -579,6 +579,14 @@ function renderChip(
     ink: chipInk(theme),
   };
   const numbers = points.map((_, index) => String(index + 1));
+
+  // 足に名前のある DIP 型。足の名前と品名 (7 セグは面) を載せる (52 の docs/66)。
+  const named = kind === 'named' ? lookupNamedChip(part.type, part.variant) : null;
+  if (named !== null) {
+    // 何も書かなければ品名を出す (breadboard と同じ)。
+    const shown = part.value === null ? `${part.id} ${named.name}` : shared.caption;
+    return drawNamedChip({ ...shared, caption: shown, names: named.pins.map((pin) => pin.name), chip: named });
+  }
 
   if (kind === 'dip') {
     // **1 番ピンは書かれたアンカー。** 回しても足の並びのほうが回るので
@@ -631,7 +639,7 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme, room?: Captio
   // **パッケージの姿は fence-kit が描く** (`parts/chips.ts`)。ここに残るのは
   // タクトスイッチと変圧器の 2 つだけ。
   const kind = footprintOf(part.type)?.kind;
-  if (kind === 'dip' || kind === 'sip' || kind === 'board') return renderChip(part, kind, layout, theme, room);
+  if (kind === 'dip' || kind === 'sip' || kind === 'board' || kind === 'named') return renderChip(part, kind, layout, theme, room);
 
   const leads = part.pins
     .map((pin) => {

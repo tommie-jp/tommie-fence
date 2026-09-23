@@ -54,7 +54,7 @@ export type Orient = 'none' | 'half';
 export function orientOf(type: string): Orient {
   const footprint = lookupFootprint(type);
   if (footprint === null) return 'none';
-  return footprint.kind === 'dip' || footprint.kind === 'sip' || footprint.kind === 'board'
+  return footprint.kind === 'dip' || footprint.kind === 'sip' || footprint.kind === 'board' || footprint.kind === 'named'
     ? 'half'
     : 'none';
 }

@@ -46,6 +46,7 @@ export function orientOf(type: string): Orient {
   const footprint = footprintOf(type, null);
   if (footprint === null) return 'none';
   // アンカー 1 つで置く形は回せる (足の位置をこちらが決めているので、回した先も出せる)。
-  const anchored = footprint.kind === 'dip' || footprint.kind === 'sip' || footprint.kind === 'switch';
+  const anchored = footprint.kind === 'dip' || footprint.kind === 'sip' || footprint.kind === 'switch'
+    || footprint.kind === 'named';
   return anchored ? 'full' : 'none';
 }

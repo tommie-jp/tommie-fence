@@ -42,6 +42,7 @@ notes:                 # 任意。図に重ねる印と字
 | タクトスイッチ | `ID: button @ 穴` | `SW1: button @ e5` |
 | DIP / ヘッダ | `ID: dipN @ 穴 [r180] [ラベル]` | `U1: dip8 @ e5 NJM4556A` |
 | マイコンボード | `ID: 種類 @ 穴 [r180]` | `MCU: pico2 @ h5` |
+| 名前つきの DIP 型 | `ID: 種類 @ 穴 [r180]` | `K1: relay @ f10` |
 | ボード外の機器 | マップ形式 (下記) | |
 
 穴にピン名を付けるときは `a5(A)`。付けなければ左から `1` `2` `3`。
@@ -62,6 +63,7 @@ notes:                 # 任意。図に重ねる印と字
 USB      usb-a usb-c (穴は VBUS GND D+ D- CC1 CC2 の順に 2 つから)
 まとまり  button button-nc dipN (4〜40 の偶数) sipN (2〜40)
 ボード    pico pico-w pico2 pico2-w
+名前つき  relay photocoupler seg7 (DIP 型。足は名前で呼ぶ。K1.COM1)
 ボード外  device
 ```
 
@@ -73,6 +75,7 @@ led/3mm  led/5mm
 transistor/to92  transistor/to220  thyristor/…  triac/…  regulator/…
 transistor/sot23-dip  transistor/sot346-dip (S-Mini)  transistor/sot89-dip  (regulator/…)
 dip8/sop  dip8/tssop  (dipN の姿。DIP 化した変換基板)
+relay/g5v-2  photocoupler/pc817  seg7/5161as  (品名。書かなければこれ)
 sma/male  sma/female  usb-a/male  usb-a/female  usb-c/male  usb-c/female
 crystal/hc49  crystal/cylinder
 resistor/quarter  resistor/half        diode/do35  diode/do41  (zener/…  schottky/…)

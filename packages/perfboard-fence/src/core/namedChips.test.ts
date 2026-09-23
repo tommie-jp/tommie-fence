@@ -1,0 +1,65 @@
+import { describe, expect, test } from 'vitest';
+import { renderPerfboard } from './index.ts';
+import { footprintOf, pinsOf } from './parts/footprint.ts';
+import { holesOf, partName, partPrefix } from './parts/catalog.ts';
+import { isKnownType, placeableNames, splitPartType } from './parts/types.ts';
+import { orientOf } from './parts/orient.ts';
+
+/**
+ * 足に名前のある DIP 型の部品 (リレー・フォトカプラ・7 セグ。52 の docs/66 の段 3)。
+ * **表は fence-kit で breadboard と同じ**。置き方は DIP と同じ (1 番ピンの穴 1 つ) で、
+ * 列の間は表の穴数、足があるのは表の位置だけ。
+ */
+
+const fence = (...lines: string[]): string => ['board: 20x10', ...lines, ''].join('\n');
+const at = (row: number, col: number) => ({ row, col });
+
+describe('種類と姿', () => {
+  test('knows the three kinds, placed from one hole like a DIP', () => {
+    for (const type of ['relay', 'photocoupler', 'seg7']) {
+      expect(isKnownType(type), type).toBe(true);
+      expect(placeableNames(), type).toContain(type);
+      expect(holesOf(type), type).toBe(1);
+      expect(orientOf(type), type).not.toBe('none');
+    }
+    expect(partName('photocoupler')).toBe('フォトカプラ');
+    expect(partPrefix('relay')).toBe('K');
+    expect(splitPartType('relay/g5v-2').problem).toBeNull();
+    expect(splitPartType('relay/g5v-1').problem).toContain('g5v-2');
+  });
+
+  test('puts the pins only where the table has them, the rows as far apart as the table says', () => {
+    const relay = footprintOf('relay');
+    const display = footprintOf('seg7');
+
+    expect(relay).toMatchObject({ kind: 'named', pins: 8, holes: 1 });
+    // A1 COM1 NC1 NO1 / NO2 NC2 COM2 A2 (DIP16 の 1・4・6・8 / 9・11・13・16)。
+    expect(pinsOf(relay!, [at(2, 3)])).toEqual([
+      at(2, 3), at(2, 6), at(2, 8), at(2, 10), at(5, 10), at(5, 8), at(5, 6), at(5, 3),
+    ]);
+    expect(pinsOf(display!, [at(1, 3)]).map((one) => one.row)).toEqual([1, 1, 1, 1, 1, 7, 7, 7, 7, 7]);
+  });
+});
+
+describe('図とネットリスト', () => {
+  test('names the pins after the table in the netlist', () => {
+    const { errors, netlist, svg } = renderPerfboard(fence(
+      'parts:',
+      '  K1: relay c3',
+      '  R1: resistor a6 a9 1k',
+      'wires:',
+      '  - a6 -- c6',
+    ));
+
+    expect(errors).toEqual([]);
+    expect(netlist.find((net) => net.refs.includes('R1.1'))?.refs).toContain('K1.COM1');
+    expect(svg).toContain('G5V-2');
+  });
+
+  test('draws the face of the display', () => {
+    const { errors, svg } = renderPerfboard(fence('parts:', '  DS1: seg7 b3'));
+
+    expect(errors).toEqual([]);
+    expect(svg).toMatch(/rotate\(/);
+  });
+});

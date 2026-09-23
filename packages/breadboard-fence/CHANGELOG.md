@@ -3,6 +3,18 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Added
+
+- **足に名前のある DIP 型の部品** — `relay` (Omron G5V-2、2 回路)、`photocoupler`
+  (シャープ PC817)、`seg7` (5161AS、1 桁・カソード共通)。書き方は DIP と同じ
+  (`K1: relay @ f10`) で、足は実物のデータシートどおりの名前で呼ぶ (`K1.COM1`)。
+  表は fence-kit にあり、3 つのフェンスで同じ。DIP の位置のうち足のある所にだけ
+  足が出る (G5V-2 は 16 か所のうち 8 か所)。列の間は種類で決まり、7 セグは 6 穴
+  (b↔f 〜 e↔i)。姿は品名 (`relay/g5v-2`)。7 セグは面に 8 の字を描く。
+  例 14 に図 2 つ。
+
 ## [0.11.0] - 2026-09-24
 
 ### Added

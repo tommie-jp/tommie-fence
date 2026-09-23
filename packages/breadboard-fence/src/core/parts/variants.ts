@@ -7,7 +7,7 @@
  * 「コンデンサだ」と分かるのは色、「どのコンデンサか」は形で読ませる。
  */
 
-import { CONNECTOR_LOOKS, connectorNames, smdLooksOf, withSmdLooks } from 'fence-kit';
+import { CONNECTOR_LOOKS, connectorNames, namedChipLooks, namedChipTypes, smdLooksOf, withSmdLooks } from 'fence-kit';
 import { resolveAlias } from './aliases.ts';
 
 export type PartType = {
@@ -52,6 +52,8 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
   crystal: ['hc49', 'cylinder'],
   // USB は差し込み (オス) と受け口 (メス)。**書かなければ受け口**。
   ...Object.fromEntries(connectorNames().map((type) => [type, CONNECTOR_LOOKS])),
+  // 足に名前のある DIP 型は品名が姿 (`relay/g5v-2`)。**書かなければ表の最初**。
+  ...Object.fromEntries(namedChipTypes().map((type) => [type, namedChipLooks(type)])),
 };
 
 /**

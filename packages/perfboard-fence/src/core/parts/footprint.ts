@@ -2,7 +2,8 @@ import { NO_TURN } from './orient.ts';
 import type { Turn } from './orient.ts';
 import type { Address, Board } from '../types.ts';
 import { isEdgeMount, isFourLead, isSwitch, isThreeLead, isTwoLead } from './types.ts';
-import { MIN_CONNECTOR_PINS, lookupBoardPart, lookupConnector } from 'fence-kit';
+import { MIN_CONNECTOR_PINS, lookupBoardPart, lookupConnector, lookupNamedChip } from 'fence-kit';
+import type { NamedChip } from 'fence-kit';
 
 /**
  * 部品の形。**何個の穴を書くか**と、**足がどこに来るか**の 2 つを決める。
@@ -25,7 +26,7 @@ import { MIN_CONNECTOR_PINS, lookupBoardPart, lookupConnector } from 'fence-kit'
  */
 
 export type FootprintKind =
-  | 'two-lead' | 'three-lead' | 'four-lead' | 'switch' | 'edge' | 'connector' | 'dip' | 'sip' | 'board';
+  | 'two-lead' | 'three-lead' | 'four-lead' | 'switch' | 'edge' | 'connector' | 'dip' | 'sip' | 'board' | 'named';
 
 export type Footprint = {
   readonly kind: FootprintKind;
@@ -35,6 +36,11 @@ export type Footprint = {
   readonly holes: number;
   /** 省いてよい足があるとき、書く穴の最小の数。無ければ `holes` と同じ。 */
   readonly minHoles?: number;
+  /**
+   * 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。**表は fence-kit** で、
+   * DIP の位置のうち足のある所と、列の間の穴数を持つ (52 の docs/66)。
+   */
+  readonly chip?: NamedChip;
 };
 
 /** DIP の 2 列の間隔 (穴の数)。300 mil = 7.62mm = 3 ピッチ。 */
@@ -70,6 +76,10 @@ export function footprintOf(type: string, variant: string | null = null): Footpr
   // 板に依らない)。並べ方は DIP と同じで、列の間隔だけが広い。
   const board = lookupBoardPart(type);
   if (board !== null) return { kind: 'board', pins: board.pins.length, holes: 1 };
+
+  // 足に名前のある DIP 型。**姿 (品名) で表の行が決まる**。書かなければ表の最初。
+  const named = lookupNamedChip(type, variant) ?? lookupNamedChip(type, null);
+  if (named !== null) return { kind: 'named', pins: named.pins.length, holes: 1, chip: named };
 
   // USB。**書いた数だけ足がある** — 足の数の上限は表の長さ。
   const connector = lookupConnector(type);
@@ -167,6 +177,16 @@ export function pinsOf(
       at({ row: 0, col: 0 }), at({ row: 0, col: SWITCH_SPAN }),
       at({ row: SWITCH_SPAN, col: 0 }), at({ row: SWITCH_SPAN, col: SWITCH_SPAN }),
     ];
+  }
+
+  // 足に名前のある DIP 型。**DIP と同じ回り方**で位置を数え、足のある位置だけ返す
+  // (表の位置の順。足の名前もこの順で当たる)。
+  if (footprint.kind === 'named' && footprint.chip !== undefined) {
+    const { chip } = footprint;
+    const perSide = chip.positions / 2;
+    return chip.pins.map((pin) => (pin.at <= perSide
+      ? at({ row: 0, col: pin.at - 1 })
+      : at({ row: chip.rowSpan, col: chip.positions - pin.at })));
   }
 
   const span = footprint.kind === 'board' ? BOARD_ROW_SPAN : DIP_ROW_SPAN;

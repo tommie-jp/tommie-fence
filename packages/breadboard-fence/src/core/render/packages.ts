@@ -4,7 +4,7 @@ import {
   CAPTION_CLEAR, NAME_CAP, caption, fitToBoard, haloWidth, partLabel, pinPoints, pointOfPin,
 } from './partCommon.ts';
 import { element, num } from './svg.ts';
-import { REAL_INK, dipChip, drawDipAdapter, sipBox, sipHeader, transformerCore } from 'fence-kit';
+import { REAL_INK, dipChip, drawDipAdapter, drawNamedChip, lookupNamedChip, sipBox, sipHeader, transformerCore } from 'fence-kit';
 import type { ChipInk } from 'fence-kit';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
@@ -48,6 +48,10 @@ export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme):
     scale: textScale(theme),
     ink: chipInk(theme),
   };
+  // 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。姿は品名なので、
+  // 変換基板の道へは行かせない (52 の docs/66)。
+  const named = lookupNamedChip(part.type, part.variant);
+  if (named !== null) return drawNamedChip({ ...options, chip: named });
   // 姿があれば DIP 化した変換基板 (`dip8/sop`)。外形は DIP と同じ。
   return part.variant === null ? dipChip(options) : drawDipAdapter({ ...options, variant: part.variant });
 }
