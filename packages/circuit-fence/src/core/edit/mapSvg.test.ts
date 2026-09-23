@@ -1,9 +1,9 @@
-import { textWidth } from 'fence-kit';
+import { lookupBoardPart, textWidth } from 'fence-kit';
 import { describe, expect, test } from 'vitest';
 import { gridMap } from './map.ts';
 import { glyphOf, glyphSpan, glyphTall } from './mapGlyphs.ts';
 import { renderMapHtml } from './mapSvg.ts';
-import { lookupPartType, partTypeNames } from '../parts.ts';
+import { lookupPartType, orientOf, partTypeNames } from '../parts.ts';
 
 const draw = (source: string): string => renderMapHtml(gridMap(source));
 
@@ -139,6 +139,56 @@ describe('向き', () => {
     const svg = draw('parts:\n  U1: dip8 b2 r90\n');
 
     expect(svg).not.toContain('rotate(90)');
+  });
+});
+
+/**
+ * 切り欠きの辺。**実物は回転だけで決まる** — 立てると上、時計回りに 90 度で右。
+ * 反転は上下を変えないので、反転しても同じ辺。足の位置から導くとコードと同じ
+ * 計算を写すことになるので、表で持つ。
+ */
+const NOTCH_SIDE = { 0: 'top', 90: 'right', 180: 'bottom', 270: 'left' } as const;
+const ROTATIONS = [0, 90, 180, 270] as const;
+
+/** 切り欠きの半円が食い込む辺。半円の両端の中点が箱のどの縁に乗るかで読む。 */
+const notchSide = (svg: string): string | null => {
+  const arc = /<path class="cf-glyph-line" d="M(-?[\d.]+),(-?[\d.]+) A[^"]* (-?[\d.]+),(-?[\d.]+)"/.exec(svg);
+  if (arc === null) return null;
+  const x = (Number(arc[1]) + Number(arc[3])) / 2;
+  const y = (Number(arc[2]) + Number(arc[4])) / 2;
+  if (Math.abs(x) > Math.abs(y)) return x > 0 ? 'right' : 'left';
+  return y > 0 ? 'bottom' : 'top';
+};
+
+const turnWords = (rotate: number, mirror: boolean): string =>
+  `${rotate === 0 ? '' : ` r${rotate}`}${mirror ? ' mirror' : ''}`;
+
+describe('DIP の切り欠き', () => {
+  test('keeps the notch next to pin 1 when the DIP is turned', () => {
+    // 実機で「DIP のピン番号の配置が正しくない」。番号は図と合っていて、
+    // 切り欠きだけが r90 と r180 で反対の端に出ていた (1 番の隣に無い)。
+    const sides = ROTATIONS.map((rotate) => notchSide(draw(`parts:\n  U1: dip8 f8${turnWords(rotate, false)}\n`)));
+
+    expect(sides).toEqual(ROTATIONS.map((rotate) => NOTCH_SIDE[rotate]));
+  });
+
+  test('puts the notch on the right side for every notched part, turned or flipped', () => {
+    // 種類を足すたびに同じ不具合を踏まないよう、切り欠きを持つ全部を回す。
+    // マイコンボードは反転もできるので、反転した姿も見る。
+    const notched = partTypeNames().filter((type) => /^dip\d+$/.test(type) || lookupBoardPart(type) !== null);
+    const wrong = notched.flatMap((type) => {
+      const partType = lookupPartType(type);
+      const flips = partType !== null && orientOf(partType).mirror ? [false, true] : [false];
+      return ROTATIONS.flatMap((rotate) => flips.flatMap((mirror) => {
+        const words = turnWords(rotate, mirror);
+        const side = notchSide(draw(`parts:\n  U1: ${type} f8${words}\n`));
+        return side === NOTCH_SIDE[rotate] ? [] : [`${type}${words}: ${side ?? 'none'}`];
+      }));
+    });
+
+    // 空回りで通っていないことを確かめる (dip は 4〜40 本、ボードは 4 種)。
+    expect(notched.length).toBeGreaterThan(10);
+    expect(wrong).toEqual([]);
   });
 });
 

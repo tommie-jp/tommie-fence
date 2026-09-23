@@ -743,7 +743,10 @@ function notchOf(chip: Chip, rows: PinRows, halfW: number, halfH: number, gap: n
   if (!hasNotch(chip.type)) return '';
   // **列の頭どうしの間**。`chip.pins` の並びは列の順 (左の列を上から、次に右の列を
   // 上から) なので、末尾は最終ピンではない — 数え違えると印が反対の端へ出る。
-  const heads = [...rows.values()].map((row) => row[0]);
+  // 頭は**書かれた順**の `chip.pins` から取る。`rows` の先頭ではない — `rowsOf` は
+  // r90 と r180 で辺の中の並びを裏返すので、先頭が列の尻になる (実機で
+  // 「DIP のピン番号の配置が正しくない」。切り欠きが 1 番の反対の端に出ていた)。
+  const heads = [...rows.keys()].map((side) => chip.pins.find((pin) => pin.side === side));
   const [from, to] = heads.map((pin) => (pin === undefined ? null : pinPointOf(pin, rows, halfW, halfH, gap)));
   if (heads.length !== 2 || from === null || to === null || from === undefined || to === undefined) return '';
 
