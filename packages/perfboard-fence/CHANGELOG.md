@@ -3,6 +3,16 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Fixed
+
+- **CLI の `check` と `render` が ERC を言わなくなっていたのを直した** (0.6.0 から)。
+  editor の「検査 N」の釦のためにコアが ERC を `notices` と分けて返すように
+  なったとき、CLI は `notices` だけを出し続けていた。つながっていない足・線で
+  跨いだ部品・足をつながない配線が、**文法リファレンスの約束どおり**また標準エラーに
+  出る。終了コードは今までどおり読めなかった行だけで決まる。
+
 ## [0.7.0] - 2026-09-22
 
 ### Added

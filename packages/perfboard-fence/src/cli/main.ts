@@ -7,6 +7,7 @@ import { collectFiles, readInput, reportNetlist } from 'fence-kit/cli';
 import { outputStem } from 'fence-kit';
 import { STAMP_TEXT } from '../core/version.ts';
 import { USAGE, parseArgs } from './args.ts';
+import { saidOf } from './said.ts';
 
 type Job = {
   readonly source: string;
@@ -35,13 +36,10 @@ function jobsFor(path: string, outDir: string | null): Job[] {
 
 /**
  * 言うことを標準エラーへ。**プレビューの帯と同じ文面**で、行番号・行の中身・
- * 綴りを指す印まで揃える (直す場所を探す手間を減らす)。
- *
- * **読めなかったものを先に出す。** ERC と当たり判定は足 1 本につき 1 件出るので、
- * 行順のままだと本物のエラーが流れていく (帯と同じ理由)。
+ * 綴りを指す印まで揃える (直す場所を探す手間を減らす)。何を言うかは `saidOf`。
  */
-const report = (errors: readonly FenceError[], notices: readonly FenceError[]): void => {
-  for (const error of [...errors, ...notices]) console.error(errorText(error));
+const report = (said: readonly FenceError[]): void => {
+  for (const error of said) console.error(errorText(error));
 };
 
 function main(argv: readonly string[]): number {
@@ -66,7 +64,8 @@ function main(argv: readonly string[]): number {
 
     for (const target of targets.flatMap(collectFiles)) {
       for (const job of jobsFor(target, outDir)) {
-        const { svg, netlist, errors, notices } = renderPerfboard(job.source, { offset: job.offset });
+        const result = renderPerfboard(job.source, { offset: job.offset });
+        const { svg, netlist, errors } = result;
         if (!writing) {
           console.log(job.label);
         } else if (svg) {
@@ -77,7 +76,7 @@ function main(argv: readonly string[]): number {
           console.log(`${job.label} → 図を組めませんでした`);
         }
         reportNetlist(netlist);
-        report(errors, notices);
+        report(saidOf(result));
         failed += errors.length;
       }
     }
