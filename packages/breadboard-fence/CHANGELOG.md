@@ -3,6 +3,27 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.11.0] - 2026-09-24
+
+### Added
+
+- **面実装の部品を変換基板に載せた姿で置けるようになった。**
+  `transistor/sot346-dip` `transistor/sot89-dip` `regulator/sot23-dip`
+  `regulator/sot89-dip` (穴は 3 つ、ピンヘッダの足) と、`dipN/sop` `dipN/tssop`
+  (SOP・TSSOP の IC を DIP 化した変換基板。置き方は DIP と同じ)。perfboard と同じ綴り。
+- **S-Mini (東芝。SC-59・SOT-346 と同じ物) は `sot346-dip`** と書く。載っている物を
+  実寸で描くので、SOT-23 (`sot23-dip`) より胴が 0.3mm 広い。
+- **直付けの姿 (`resistor/2012` `transistor/sot346`) は理由と書き直し先を言って断る** —
+  ユニバーサル基板のもので、ブレッドボードの穴には挿せない
+  (`transistor/sot346` なら「変換基板に載せて `transistor/sot346-dip` と書きます」)。
+  別名 (`s-mini`) も綴りとしては受け取らず、表の綴りを返す。
+
+### Changed
+
+- **`transistor/sot23-dip` の絵を実寸にした。** 載っている SOT-23 の足を長い辺から
+  出し (1 番・2 番がピンヘッダの側、3 番が反対)、胴の幅を実物の 1.3mm にした。
+  図15 が変わる。
+
 ## [0.10.0] - 2026-09-22
 
 ### Added

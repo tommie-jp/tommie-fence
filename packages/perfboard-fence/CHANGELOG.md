@@ -3,6 +3,36 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.9.0] - 2026-09-24
+
+### Added
+
+- **面実装の部品を置けるようになった。** 2 通りで書ける。
+  - **変換基板に載せた姿** — `transistor/sot346-dip` `transistor/sot89-dip`
+    `regulator/sot23-dip` など (穴は 3 つ、ピンヘッダの足)、`dip8/sop` `dip14/tssop`
+    (IC を DIP 化した変換基板。置き方は DIP と同じ)。breadboard と同じ綴り。
+  - **この板に直付けした姿** — `transistor/sot23` `transistor/sot346`
+    `regulator/sot23`、`resistor/1608` `/2012` `/3216` (コンデンサも)、
+    `led/1608` `/2012`、`diode/sod123` `/sod323` `/do214ac` (ツェナー・ショットキーも)。
+- **S-Mini (東芝。SC-59・SOT-346 と同じ物) は `sot346`** と書く。SOT-23 と同じ
+  0.95mm の足で胴が 0.3mm 広く、図も**実寸で描き分ける**。別名 (`s-mini` `sc59`
+  `0805`) は綴りとしては受け取らず、「`s-mini` は `sot346` と書きます」と言って断る。
+- **直付けの置き方を姿が決め、違えばお知らせで言う。** チップと SOD は隣の穴に跨ぎ、
+  `do214ac` は 2 穴離し、SOT は三角 (1 番と 2 番を隣の穴、3 番を次の行の隣)。
+  図は止めずに描く。軸物の「足の間隔が狭すぎます」は直付けには言わない。
+- 胴は実寸で描き、足の間隔では伸びない。当たり判定も同じ形 (直付けの SOT の胴は
+  行と行の間に載る)。部品表には姿ごと出る (`transistor/sot346`)。
+- マップのパレットから 1 穴で置くと、直付けの姿は置き方どおりに穴を並べる
+  (`resistor/2012` は隣の穴、`transistor/sot346` は三角)。種類の欄の候補に
+  `transistor/sot346` `dip8/sop` なども並ぶ。
+- 例 [examples/10-smd.md](examples/10-smd.md) — S-Mini のトランジスタで LED を点ける
+  直付けの基板、変換基板の姿、直付けの姿。
+
+### Fixed
+
+- 知らない姿を断る文面に、書かれた綴りを `safeToken` を通して載せる
+  (制御文字や向きを入れ替える字が文面に残っていた)。
+
 ## [0.8.0] - 2026-09-23
 
 ### Added

@@ -3,6 +3,19 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.9.0] - 2026-09-24
+
+breadboard-fence 0.11.0 と perfboard-fence 0.9.0 を束ねた。
+
+### Added
+
+- **面実装の部品を置けるようになった** (板の 2 つ)。変換基板に載せた姿
+  (`transistor/sot346-dip`、`dip8/sop`) は breadboard と perfboard の両方で、
+  板に直付けした姿 (`transistor/sot346`、`resistor/2012`、`diode/sod123` など) は
+  perfboard だけで書ける。**S-Mini (SC-59・SOT-346) は `sot346`**。
+- マップのパレットの種類の欄に、面実装の姿が並ぶ。perfboard で直付けの姿を
+  1 穴で置くと、置き方どおりに穴を並べる (チップは隣の穴、SOT は三角)。
+
 ## [0.8.2] - 2026-09-23
 
 circuit-fence 0.9.3 を束ねた。
