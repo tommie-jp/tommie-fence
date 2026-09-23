@@ -19,22 +19,27 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # fence-kit は束ねる工程を持たないので、型チェックとテストだけ。
+          # fence-kit はモノレポの中では src のまま束ねられる。配る形を持つのは
+          # 殻を他の宿主で動かす出口 2 つだけ (`./shell` と `./map.web.js`。
+          # 52 の docs/59)。
           - pkg: fence-kit
-            pack: false
-            build: false
+            pack: true
+            packed: "package/dist/shell.mjs package/dist/shell.cjs package/dist/types/shell.d.ts package/dist/map.web.js"
+            build: true
             docs: false
             generated: ""
           # 配る 1 つ。図は作らないが、**束ねられることは見る** —
           # ここが壊れると `.vsix` が作れない (52 の docs/19)。
           - pkg: tommie-fence
             pack: false
+            packed: ""
             build: true
             docs: false
             generated: ""
           # 3 つのフェンスを 1 つの頁で動かす。全部を import する唯一の場所。
           - pkg: playground
             pack: false
+            packed: ""
             build: true
             docs: false
             generated: ""
@@ -43,17 +48,20 @@ jobs:
           # breadboard-fence: SVG は決まるが、PNG はフォントの描画で変わる。
           - pkg: circuit-fence
             pack: true
+            packed: "package/dist/core.mjs package/dist/core.cjs package/dist/types/index.d.ts"
             build: true
             docs: true
             generated: "'packages/circuit-fence/examples/out/*.tex' 'packages/circuit-fence/docs/out/*.tex'"
           - pkg: breadboard-fence
             pack: true
+            packed: "package/dist/core.mjs package/dist/core.cjs package/dist/types/index.d.ts"
             build: true
             docs: false
             generated: "'packages/breadboard-fence/examples/out/*.svg'"
           # perfboard-fence: SVG は決まる。docs にも図があるので両方作り直す。
           - pkg: perfboard-fence
             pack: true
+            packed: "package/dist/core.mjs package/dist/core.cjs package/dist/types/index.d.ts"
             build: true
             docs: true
             generated: "'packages/perfboard-fence/examples/out/*.svg' 'packages/perfboard-fence/docs/out/*.svg'"
@@ -90,7 +98,8 @@ jobs:
           npm pack --workspace=${{ matrix.pkg }} --pack-destination "$RUNNER_TEMP"
           tgz="$RUNNER_TEMP/${{ matrix.pkg }}-$(node -p "require('./packages/${{ matrix.pkg }}/package.json').version").tgz"
           tar tzf "$tgz" > "$RUNNER_TEMP/files.txt"
-          for want in package/dist/core.mjs package/dist/core.cjs package/dist/types/index.d.ts; do
+          # 見るファイルはパッケージごとに違う (コアは `core`、fence-kit は `shell`)。
+          for want in ${{ matrix.packed }}; do
             grep -qx "$want" "$RUNNER_TEMP/files.txt" || { echo "tgz に $want がない" >&2; exit 1; }
           done
           # ソースは配らない (.npmignore)。入ると 13 MB になる。
@@ -101,8 +110,8 @@ jobs:
           # **型は 1 ファイルに束ねる。** fence-kit は tgz に入らないので、
           # `from 'fence-kit'` が残ると使う側で解決できない。`skipLibCheck: true`
           # の使い手では**黙って any に落ちる**ので、ここで見ないと気づけない。
-          tar xzf "$tgz" -C "$RUNNER_TEMP" package/dist/types/index.d.ts
-          if grep -nE "from '[^.]" "$RUNNER_TEMP/package/dist/types/index.d.ts" | grep -v "from 'yaml'"; then
+          tar xzf "$tgz" -C "$RUNNER_TEMP" --wildcards 'package/dist/types/*'
+          if grep -rnE "from '[^.]" "$RUNNER_TEMP/package/dist/types/" | grep -v "from 'yaml'"; then
             echo "型定義が yaml 以外の素の import を持っている" >&2
             exit 1
           fi

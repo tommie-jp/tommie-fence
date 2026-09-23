@@ -5,7 +5,8 @@ name: Release
 #
 # モノレポなので、タグはどのパッケージの版かを名前で表す:
 #   tommie-fence-v0.1.0 (拡張。`.vsix` が付く)
-#   circuit-fence-v0.5.0 (ライブラリ + CLI。版と CHANGELOG だけ)
+#   circuit-fence-v0.5.0 (ライブラリ + CLI。tgz が付く)
+#   fence-kit-v0.1.0 (殻を他の宿主で動かす出口。tgz が付く)
 # (旧リポジトリの `v0.3.0` 形式のタグは、archive したあちらに残る)
 on:
   push:
@@ -55,7 +56,9 @@ jobs:
           fi
           # ライブラリは tgz を添える。**配る形を持つものだけ** — 目印は
           # prepack (ビルドと型の書き出しをする段取り。52 の docs/56)。
-          # fence-kit は束ねられて配られるので、自分の tgz を持たない。
+          # 3 つのコアと fence-kit が持つ。fence-kit の tgz に入るのは殻を
+          # 他の宿主で動かす出口 (`./shell` と `./map.web.js`) だけで、本体の
+          # `"."` はモノレポの中で src のまま束ねられる (52 の docs/59)。
           if node -p "!!require('./packages/$pkg/package.json').scripts.prepack" | grep -q true; then
             echo "TGZ=1" >> "$GITHUB_ENV"
           else
