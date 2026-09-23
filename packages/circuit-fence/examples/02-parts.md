@@ -207,3 +207,35 @@ style:
 
 グラウンドは離して描いても同じ節点になるが、**電源レールはならない**
 (5V と 3V3 を同じネットにしてしまうため)。つなぐなら配線を引く。
+
+## モータ
+
+`motor` は**丸に M** の 2 端子。計器と同じ「丸に字」の記号で描く (circuitikz 1.0 の
+モータの記号は使えないため)。下は MOSFET でモータを回す回路で、モータの両端に
+**還流ダイオード** (D1) を逆向きに入れて、切った瞬間の逆起電力を逃がす。
+
+```circuit
+title: 図03 モータを MOSFET で回す
+parts:
+  B1: battery a1 e1 5
+  M1: motor a5 c5
+  D1: diode c7 a7 1N4001
+  Q1: nmos-e d5
+  R1: resistor d2 d4 100
+  PWM: port d2
+  G1: ground e5
+wires:
+  - a1 -- a5 -- a7
+  - c5 -- c7
+  - c5 -- Q1.D
+  - Q1.S -- e5
+  - d4 |- Q1.G
+  - e1 -- e5
+style:
+  grid: on
+```
+
+![図03 モータを MOSFET で回す](out/02-parts-3.png)
+
+モータは板 (breadboard / perfboard) に挿さず線でつなぐので、実体配線図では
+`type: device` の機器として書く。

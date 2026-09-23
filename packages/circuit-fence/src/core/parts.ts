@@ -336,6 +336,7 @@ const FARAD = '\\mathrm{F}';
 const HENRY = '\\mathrm{H}';
 const VOLT = '\\mathrm{V}';
 const AMPERE = '\\mathrm{A}';
+const MOTOR = '\\mathrm{M}';
 const WATT = '\\mathrm{W}';
 const GALVANO = '\\mathrm{G}';
 const DETECT = '\\mathrm{D}';
@@ -609,6 +610,12 @@ export const PART_TYPES = {
   lamp: { kind: 'two-terminal', symbol: 'lamp', ...NO_UNIT },
   speaker: { kind: 'two-terminal', symbol: 'loudspeaker', ...NO_UNIT },
   mic: { kind: 'two-terminal', symbol: 'mic', ...NO_UNIT },
+  /**
+   * モータ。**丸に M**。circuitikz 1.0 のモータの記号 (`elmech`) は書いても素の線
+   * しか描かない (実機で確かめた。52 の docs/66 の段 0) ので、計器と同じ丸に字で描く。
+   * 板の 2 つには無い — モータは板に挿さず線でつなぐので、板では `device` で書く。
+   */
+  motor: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${MOTOR}$}`], ...NO_UNIT },
 
   // 測るもの。どれも**丸に字だけ**で描く (回路図の慣習)。
   //
@@ -846,6 +853,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   lamp: 'ランプ',
   speaker: 'スピーカー',
   mic: 'マイク',
+  motor: 'モータ',
   ammeter: '電流計',
   voltmeter: '電圧計',
   ohmmeter: '抵抗計',
@@ -959,6 +967,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   lamp: 'P',
   speaker: 'LS',
   mic: 'MK',
+  motor: 'M',
   ammeter: 'A',
   voltmeter: 'V',
   ohmmeter: 'M',

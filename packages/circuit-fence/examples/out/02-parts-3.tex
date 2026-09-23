@@ -1,0 +1,53 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{grounds/scale=1.36}
+\foreach \x in {0,2,4,6,8,10,12} {\foreach \y in {0,-2,-4,-6,-8} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize] at (8,0.84) {5};
+\node[gray, font=\scriptsize] at (10,0.84) {6};
+\node[gray, font=\scriptsize] at (12,0.84) {7};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
+\coordinate (a1) at (0,0);
+\coordinate (e1) at (0,-8);
+\coordinate (a5) at (8,0);
+\coordinate (c5) at (8,-4);
+\coordinate (c7) at (12,-4);
+\coordinate (a7) at (12,0);
+\coordinate (d5) at (8,-6);
+\coordinate (d2) at (2,-6);
+\coordinate (d4) at (6,-6);
+\coordinate (e5) at (8,-8);
+\draw (a1) to[battery1, l_=$B_{1}$, a^=$5\,\mathrm{V}$] (e1); % line 3
+\draw (a5) to[rmeter, t={$\mathrm{M}$}, l_=$M_{1}$] (c5); % line 4
+\draw (c7) to[D, l_=$D_{1}$, a^=$\mathrm{1N4001}$] (a7); % line 5
+\node[nigfete] (part-Q1) at (d5) {}; % line 6
+\node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 6
+\draw (d2) to[R, l_=$R_{1}$, a^=$100\,\Omega$] (d4); % line 7
+\draw (d2) node[ocirc]{} node[above left]{PWM}; % line 8
+\node[ground] at (e5) {}; % line 9
+\draw (a1) -- (a5); % line 11
+\draw (a5) -- (a7); % line 11
+\draw (c5) -- (c7); % line 12
+\draw (c5) -- (part-Q1.drain); % line 13
+\draw (part-Q1.source) -- (e5); % line 14
+\draw (d4) |- (part-Q1.gate); % line 15
+\draw (e1) -- (e5); % line 16
+\node[circ] at (a5) {};
+\node[circ] at (c5) {};
+\node[circ] at (e5) {};
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(11.491,0.853);
+\end{circuitikz}
+\end{document}

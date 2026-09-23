@@ -57,7 +57,7 @@ const SHAPES: Record<string, GlyphName> = {
   isource: 'i-source', solar: 'solar', battery: 'battery',
   switch: 'switch', 'switch-nc': 'switch-nc',
   button: 'button', 'button-nc': 'button-nc', reed: 'reed', spdt: 'spdt',
-  ammeter: 'meter', voltmeter: 'meter', ohmmeter: 'meter',
+  ammeter: 'meter', voltmeter: 'meter', ohmmeter: 'meter', motor: 'meter',
   wattmeter: 'meter', galvanometer: 'meter', detector: 'meter',
   crystal: 'crystal', fuse: 'fuse', lamp: 'lamp', speaker: 'speaker', mic: 'mic',
   // 同軸コネクタ。**図と同じ丸と中心導体**にする (実機で頼まれた)。
@@ -86,7 +86,7 @@ const SHAPES: Record<string, GlyphName> = {
  * 論理ゲートには字を入れない — 図が背の形で描き分けているので、こちらも形で分ける。
  */
 const MARKS: Record<string, Mark> = {
-  ammeter: { text: 'A' }, voltmeter: { text: 'V' }, ohmmeter: { text: 'Ω' },
+  ammeter: { text: 'A' }, voltmeter: { text: 'V' }, ohmmeter: { text: 'Ω' }, motor: { text: 'M' },
   wattmeter: { text: 'W' }, galvanometer: { text: 'G' }, detector: { text: 'D' },
   // **サーミスタの品種は字でしか分からない。** 図が箱の下に 2 行目として
   // 書いているのと同じで、こちらも記号の下に出す (箱の中は斜めの線が通る)。
