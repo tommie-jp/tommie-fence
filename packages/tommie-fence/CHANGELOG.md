@@ -3,6 +3,17 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.8.1] - 2026-09-23
+
+circuit-fence 0.9.2 を束ねた。
+
+### Fixed
+
+- **circuit: マップで、USB コネクタとレギュレータの足へ引いた線が足の点から
+  出るようになった。** 箱の真ん中から斜めに出ているように見えていた。
+- **circuit: マップで、足の升の真下・真横へ折った線が直角になった。**
+  角が足に重なって 1 本の斜めの線になっていた。
+
 ## [0.8.0] - 2026-09-23
 
 perfboard-fence 0.8.0 を束ねた。
