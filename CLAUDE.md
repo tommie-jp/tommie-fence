@@ -9,10 +9,13 @@
 
 - `packages/circuit-fence` — ` ```circuit ` フェンス。回路図 (circuitikz / TeX)
 - `packages/breadboard-fence` — ` ```breadboard ` フェンス。ブレッドボード実体配線図
-- `packages/fence-kit` — 3 つで重複している部分の置き場。ビルド工程を持たず、
-  使う側の esbuild が束ねる。入口は 3 つ: `fence-kit` (本体。**DOM も Node も
-  使わない**)、`fence-kit/cli` (**CLI 専用。ここだけ Node を使ってよい**)、
-  `fence-kit/webview`
+- `packages/fence-kit` — 3 つで重複している部分の置き場。**モノレポの中では
+  ソースのまま**使う側の esbuild が束ねる。入口は 3 つ: `fence-kit` (本体。
+  **DOM も Node も使わない**)、`fence-kit/cli` (**CLI 専用。ここだけ Node を
+  使ってよい**)、`fence-kit/webview`。**外へ配る出口は別に 2 つ** —
+  `fence-kit/shell` と `fence-kit/map.web.js` (dist。マップの殻を VS Code の外で
+  動かす宿主のため。52 の docs/59)。約束は
+  [packages/fence-kit/CLAUDE.md](packages/fence-kit/CLAUDE.md)
 - `packages/perfboard-fence` — ` ```perfboard ` フェンス。ユニバーサル基板。
   **一通り動く** (2 本足・3 本足・DIP / SIP、板の外の機器、注釈、テーマ、
   文法リファレンスと例と CLI まで)。
@@ -128,6 +131,14 @@ make help             # 目標の一覧
     tgz に入らないので、ファイルごとに書き出すと `.d.ts` が解決できない指定子を
     持ったまま配られる。使う側が `skipLibCheck: true` なら**黙って any に落ちる**
     ので気づけない。tgz の中身は CI が見る (52 の docs/56)。
+    **fence-kit も同じ形で 2 つだけ配る** (`fence-kit/shell` と
+    `fence-kit/map.web.js`)。`"."` は src のまま — dist に向けると
+    `from 'fence-kit'` を持つ 156 ファイルが build 待ちになる (52 の docs/59)。
+12. **殻の型が変わったら 4 つ同時に切る。** `FenceEditor` などの殻の型は、
+    `fence-kit/shell` の `.d.ts` と 3 つのコアの `./core` の `.d.ts` の両方に
+    写されている (rollup-plugin-dts が畳む)。宿主はこの 2 つを構造で突き合わせる
+    ので、片方だけ切ると宿主の型チェックが割れる。fence-kit と 3 つのコアの版を
+    同じ日に切る (52 の docs/59 の決め 9)。
 
 ## パッケージ間で違っていて、揃えていないもの
 

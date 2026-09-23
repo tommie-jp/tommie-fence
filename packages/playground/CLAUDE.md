@@ -28,6 +28,9 @@
    頁が肩代わりするのは 3 つ: 送り口 (`acquireVsCodeApi`)、色の変数
    (`--vscode-*`)、そしてカーソル — 頁にカーソルは無いので、
    「いま見せているフェンス」の本文の 1 行目を渡す (`map/host.ts`)。
+   **前の 2 つは fence-kit の web 版の入口が持つ** (`src/editor/webview/web.ts`。
+   QR ノートも同じものを使うので引き上げた。52 の docs/59)。頁はそれを
+   束ねて iframe に読ませる。
    **3 つの言語を一度に渡す** ので、別の言語のフェンスへ移っても
    殻の側で乗り換わる (開き直さない)。
 4. **例は `.md` のまま配る。** `scripts/examples.mjs` が各パッケージの
@@ -252,9 +255,11 @@ TeX の資材 (`dist/tex/`) は **node_modules の node-tikzjax から写す**�
 - `page/map.ts` — マップ (iframe) を開く。殻からの書き換えと選び直しを受ける
 - `src/main.ts` — 組み立て。`sync` (文書に何かが起きたら、`PLAN` の表のとおりに
   映す) と `start`
-- `src/map/` — 図を掴んで動かすマップ。`doc.ts` (テキスト欄を Markdown に
-  見せる) と `host.ts` (殻が求める外の世界) が純関数でテストがあり、
-  `webview.ts` は iframe の中で動く。**`import()` で読む**ので別のかたまり
+- `src/map/` — 図を掴んで動かすマップの頁の側。`doc.ts` (テキスト欄を
+  Markdown に見せる) と `host.ts` (殻が求める外の世界) が純関数でテストがある。
+  **iframe の中で動く 1 本は fence-kit の `src/editor/webview/web.ts`** —
+  送り口と色の肩代わりは QR ノートも使うので、あちらへ引き上げた
+  (52 の docs/59)。`esbuild.mjs` がそれを `dist/map.js` に束ねる
 - `src/tex/` — circuit の図を描く一式 (node-tikzjax をブラウザへ移したもの)。
   `tar.ts` だけが純関数でテストがある。残りは fetch / WASM / DOM が要るので
   ブラウザで確かめる。**`import()` で読む**ので別のかたまりになる

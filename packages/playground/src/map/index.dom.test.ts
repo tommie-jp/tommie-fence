@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, test } from 'vitest';
 import { openMap } from './index.ts';
-import { THEME_CSS } from './theme.ts';
 
 /**
  * **iframe を webview の代わりにする橋。** 拡張では VS Code が webview を
@@ -161,18 +160,5 @@ describe('マップを頁に開く', () => {
       expect(frame.srcdoc, kind).toContain(kind);
       handle.close();
     }
-  });
-});
-
-describe('頁が配る色', () => {
-  test('defines the VS Code variables the shell is written against', () => {
-    // 頁には VS Code が居ないので、同じ名前の変数をこちらで配る。
-    for (const name of ['--vscode-foreground', '--vscode-editor-background', '--vscode-focusBorder']) {
-      expect(THEME_CSS, name).toContain(name);
-    }
-  });
-
-  test('answers the dark scheme too, like the rest of the page', () => {
-    expect(THEME_CSS).toContain('prefers-color-scheme: dark');
   });
 });

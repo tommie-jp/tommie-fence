@@ -1,9 +1,15 @@
 /**
  * マップの殻は **VS Code の色の変数**で書かれている (`--vscode-*`)。
- * 頁にはそれを配る人が居ないので、ここで配る。**頁の側の役** —
- * VS Code がテーマとしてやっていることを、同じ名前で肩代わりする。
+ * VS Code の外 (playground の頁、QR ノートの編集画面) にはそれを配る人が
+ * 居ないので、ここで配る。**宿主の役** — VS Code がテーマとしてやっている
+ * ことを、同じ名前で肩代わりする。`web.ts` が iframe の頭に差す。
  *
- * 明暗は `prefers-color-scheme` に従う (頁の他の部分と同じ)。
+ * 明暗は既定で `prefers-color-scheme` に従う (playground の頁と同じ)。
+ * **宿主が `<html data-theme="light">` を立てれば明るいまま** — iframe の
+ * 中には親の CSS が効かないので、暗色を止める口は中の印しか無い。
+ * `srcdoc` の iframe は宿主と同じ出所なので、宿主は `load` で
+ * `frame.contentDocument.documentElement.dataset.theme = 'light'` と書ける
+ * (ダークモードを持たない宿主のため。52 の docs/59 の決め 4)。
  */
 export const THEME_CSS = `
   :root {
@@ -40,8 +46,13 @@ export const THEME_CSS = `
     --vscode-statusBar-foreground: #59636e;
   }
 
+  /* 宿主が明るいと言ったら、入力欄とスクロールバーも明るいまま。 */
+  :root[data-theme="light"] {
+    color-scheme: light;
+  }
+
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
       --vscode-foreground: #e6edf3;
       --vscode-descriptionForeground: #9198a1;
       --vscode-editor-background: #0d1117;

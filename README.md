@@ -82,8 +82,10 @@ tommie-fence
 ```
 
 `fence-kit` only holds code that was **already duplicated** — nothing is put
-there in advance. The packages that use it bundle it with esbuild, so it has
-no build step and no runtime dependency of its own.
+there in advance. The packages that use it bundle its source with esbuild, so it
+has no runtime dependency of its own. The only parts shipped on their own are
+two entry points that run the drag-to-edit map outside VS Code
+([packages/fence-kit](packages/fence-kit/README.md)).
 
 ## Documentation
 

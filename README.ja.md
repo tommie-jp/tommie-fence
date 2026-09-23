@@ -70,7 +70,9 @@ tommie-fence
 ```
 
 `fence-kit` に入れるのは、**実際に重複してから引き上げたものだけ**。
-使う側の esbuild が束ねるので、ビルド工程も実行時の依存も持たない。
+使う側の esbuild がソースのまま束ねるので、実行時の依存を持たない。
+外へ配るのは、図を掴んで動かすエディタを VS Code の外で動かす出口 2 つだけ
+([packages/fence-kit](packages/fence-kit/README.ja.md))。
 
 ## ドキュメント
 

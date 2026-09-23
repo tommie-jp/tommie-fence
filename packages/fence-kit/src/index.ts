@@ -5,10 +5,11 @@
  * ここに置くのは**フェンスの言語に依らないもの**だけ。先回りして共通化せず、
  * 実際に重複してから引き上げる (リポジトリ直下の CLAUDE.md)。
  *
- * ビルド工程を持たない。`exports` が `src/index.ts` を直に指し、使う側の
- * esbuild が束ねる。**external にしない** — `.vsix` を詰めるときパッケージを
+ * **この入口はビルド工程を通らない。** `exports` が `src/index.ts` を直に指し、
+ * 使う側の esbuild が束ねる。**external にしない** — `.vsix` を詰めるときパッケージを
  * 単体で install するので、npm 上に無い fence-kit は解決できない
- * (理由は直下の CLAUDE.md の約束 3)。
+ * (理由は直下の CLAUDE.md の約束 3)。dist を持つのは VS Code の外の宿主へ
+ * 配る 2 つ (`fence-kit/shell` と `fence-kit/map.web.js`) だけ (52 の docs/59)。
  */
 export { normalizeNewlines } from './newlines.ts';
 export { rememberRecent } from './rememberRecent.ts';

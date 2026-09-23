@@ -27,6 +27,9 @@
   // `previewGate.ts` は DOM を知らないので、こちらでも見張る。
   "exclude": [
     "src/editor/webview/map.ts",
+    // VS Code の外での入口 (`dist/map.web.js`)。`theme.ts` は字だけなのでこちらに残す。
+    "src/editor/webview/web.ts",
+    "src/editor/webview/web.dom.test.ts",
     "src/editor/webview/domFixture.ts",
     "src/editor/webview/map.dom.test.ts",
     "src/editor/webview/map.chrome.test.ts"

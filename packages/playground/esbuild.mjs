@@ -131,9 +131,14 @@ const options = {
 /**
  * マップの中 (iframe) で動く 1 本。**拡張と同じ形** — 束ねた 1 本を
  * webview が読む。頁の側 (module) とは別の世界なので iife で出す。
+ *
+ * **入口は fence-kit の web 版** (送り口と色の肩代わり込み)。QR ノートも
+ * 同じものを `fence-kit/map.web.js` として受け取る (52 の docs/59)。
+ * 頁の中では src を束ねる — dist を読むと、先に fence-kit を build しないと
+ * 組めなくなる (3 つのコアの `./src/core` と同じ考え方)。
  */
 const mapOptions = {
-  entryPoints: ['src/map/webview.ts'],
+  entryPoints: ['../fence-kit/src/editor/webview/web.ts'],
   outfile: 'dist/map.js',
   bundle: true,
   format: 'iife',

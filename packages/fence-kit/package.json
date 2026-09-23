@@ -11,9 +11,20 @@
   "exports": {
     ".": "./src/index.ts",
     "./cli": "./src/cli/index.ts",
-    "./webview": "./src/editor/webview/map.ts"
+    "./webview": "./src/editor/webview/map.ts",
+    "./shell": {
+      "types": "./dist/types/shell.d.ts",
+      "import": "./dist/shell.mjs",
+      "require": "./dist/shell.cjs"
+    },
+    "./map.web.js": "./dist/map.web.js",
+    "./package.json": "./package.json"
   },
   "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "types": "node dts.mjs",
+    "prepack": "rm -rf dist && node esbuild.mjs --production && npm run types",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.webview.json",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -23,6 +34,9 @@
   "devDependencies": {
     "@types/node": "^24.10.1",
     "@vitest/coverage-v8": "^4.1.11",
+    "esbuild": "^0.28.2",
+    "rollup": "^4.63.4",
+    "rollup-plugin-dts": "^6.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"
   }
