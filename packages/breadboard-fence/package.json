@@ -49,7 +49,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
-    "examples": "npm run build && node dist/cli.cjs render examples --out examples/out && node scripts/png.mjs",
+    "examples": "npm run build && node dist/cli.cjs render examples --out examples/out && node scripts/png.mjs examples/out",
     "docs": "npm run build && node dist/cli.cjs render docs/01-syntax.md --out docs/out",
     "check": "npm run typecheck && npm run test"
   },
