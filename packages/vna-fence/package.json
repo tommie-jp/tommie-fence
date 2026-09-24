@@ -1,0 +1,75 @@
+{
+  "name": "vna-fence",
+  "displayName": "VNA Fence",
+  "description": "Markdown の ```vna フェンスを VNA (NanoVNA) の画面 — Log Mag・Smith チャート・SWR・TDR — として描く",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "publisher": "tommie",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tommie-jp/tommie-fence.git",
+    "directory": "packages/vna-fence"
+  },
+  "type": "module",
+  "engines": {
+    "vscode": "^1.75.0",
+    "node": ">=20"
+  },
+  "categories": [
+    "Programming Languages",
+    "Visualization"
+  ],
+  "keywords": [
+    "markdown",
+    "vna",
+    "nanovna",
+    "smith-chart",
+    "s-parameters",
+    "touchstone",
+    "rf",
+    "diagram"
+  ],
+  "exports": {
+    "./core": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/core.mjs",
+      "require": "./dist/core.cjs"
+    },
+    "./data": "./src/cli/data.ts",
+    "./src/core": "./src/core/index.ts",
+    "./package.json": "./package.json",
+    "./plugin": "./src/markdownItPlugin.ts"
+  },
+  "bin": {
+    "vna-fence": "./dist/cli.cjs"
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "types": "node dts.mjs",
+    "prepack": "rm -rf dist && node esbuild.mjs --production && npm run types",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "check": "npm run typecheck && npm run test",
+    "examples": "npm run build && node dist/cli.cjs render examples --out examples/out && node scripts/png.mjs examples/out",
+    "docs": "npm run build && node dist/cli.cjs render docs/01-syntax.md --out docs/out"
+  },
+  "dependencies": {
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@vitest/coverage-v8": "^4.1.11",
+    "esbuild": "^0.28.2",
+    "fence-kit": "*",
+    "markdown-it": "^15.0.0",
+    "rollup": "^4.63.4",
+    "rollup-plugin-dts": "^6.5.1",
+    "sharp": "^0.35.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}
