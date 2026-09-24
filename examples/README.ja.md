@@ -10,6 +10,7 @@
 | breadboard | 回路 13 本 + わざと壊した例 2 本 | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
 | perfboard | 回路 8 本 + わざと壊した例 1 本 | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) |
 | copper | 治具 9 本 + わざと壊した例 1 本 | [packages/copper-fence/examples/](../packages/copper-fence/examples/README.md) |
+| vna | 測る物 5 本 + わざと壊した例 1 本 | [packages/vna-fence/examples/](../packages/vna-fence/examples/README.md) |
 
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。
@@ -166,6 +167,26 @@ DIP は 1 番ピンだけ書けば足が並ぶ。トランジスタは穴を 3 �
 - [04-manhattan.md](../packages/copper-fence/examples/04-manhattan.md) — 表が地の板に Manhattan の島
 - [06-ground.md](../packages/copper-fence/examples/06-ground.md) — via・切り欠き・パッチアンテナ
 - [08-check.md](../packages/copper-fence/examples/08-check.md) — ERC が言うこと
+
+## vna — NanoVNA の画面
+
+Log Mag・Smith チャート・SWR・位相・群遅延・インピーダンス・TDR。理想の模型
+(`dut:`) は測る前から破線で、Markdown の隣に保存した Touchstone (`data:`) は
+実線で重なる。
+
+### 直列治具 — 模型と実測
+
+[![直列治具に 100 Ω](../packages/vna-fence/examples/out/00-series-1.png)](../packages/vna-fence/examples/00-series.md)
+
+CH0 と CH1 の間に 100 Ω。どちらも −6.02 dB、実測が模型から離れる所が治具の限界
+([00-series.md](../packages/vna-fence/examples/00-series.md))。
+
+### そのほか
+
+- [01-traces.md](../packages/vna-fence/examples/01-traces.md) — トレースの形式 (振幅・位相・群遅延・SWR・Smith・極)
+- [02-parts.md](../packages/vna-fence/examples/02-parts.md) — 寄生分のある部品 (コンデンサの SRF・コイルの並列共振・水晶)
+- [03-lines.md](../packages/vna-fence/examples/03-lines.md) — 伝送線路・スタブ・TDR
+- [04-notes.md](../packages/vna-fence/examples/04-notes.md) — 注釈 (`notes:`) と見た目
 
 ## なぜ実体をここに置かないか
 

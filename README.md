@@ -7,7 +7,8 @@
 > [playground](https://tommie-jp.github.io/tommie-fence/).
 
 A family of Markdown fence languages that draw electronics, kept in one
-monorepo: schematic, breadboard, perfboard, and copper-clad board.
+monorepo: schematic, breadboard, perfboard, copper-clad board, and the screen of a
+vector network analyser (NanoVNA).
 
 | Package | Fence | Draws |
 | --- | --- | --- |
@@ -15,21 +16,23 @@ monorepo: schematic, breadboard, perfboard, and copper-clad board.
 | breadboard-fence | ` ```breadboard ` | Breadboard wiring diagrams — netlist derived from the strips inside the board |
 | perfboard-fence | ` ```perfboard ` | Perfboard layouts — every hole independent, connections made only by wires |
 | copper-fence | ` ```copper ` | Copper-clad board drawings — positions in millimetres, connections made by the copper itself, Z0 printed on every line |
+| vna-fence | ` ```vna ` | The screen of a VNA (NanoVNA) — Log Mag, Smith chart, SWR, TDR, computed from an ideal model and overlaid with a measured Touchstone file |
 
 The languages are separate; the manners are shared: YAML-hosted fences,
 positions written as addresses, and mistakes reported with Markdown line
-numbers and the content of the offending line.
+numbers and the content of the offending line. (vna draws no board: its
+"positions" are frequencies, and it has no netlist or drag-to-edit map.)
 
 ## Try it without installing anything
 
 **[Open the playground](https://tommie-jp.github.io/tommie-fence/)** — no
 account, no sign-up. **Open a `.md`, edit the fences inside it, write the `.md`
 back** — the same steps the extension takes, in a browser alone.
-**All four fences draw** — schematics included, with TeX running in
+**All five fences draw** — schematics included, with TeX running in
 WebAssembly (the engine is fetched only the first time you draw a circuit).
 **It opens on the map**: drag a part and the address in the fence is
 rewritten, the same editor the extension carries. The `.md` text and the drawn
-figure sit behind the "Markdown" button. It carries the 47 `.md`
+figure sit behind the "Markdown" button. It carries the 68 `.md`
 files from each package's `examples/`, unchanged. Open your own file (button,
 drop, or `?doc=`), edit it, and write it back.
 
@@ -43,7 +46,7 @@ one hole, a body it cannot add a line to.
 
 [![Open in Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
 
-**For all four for real, use Codespaces.** VS Code opens in the browser with
+**For all five for real, use Codespaces.** VS Code opens in the browser with
 the extension installed and [examples/try-me.md](examples/try-me.md) in
 front of you. Open the Markdown preview (`Ctrl+Shift+V`) and the fences turn
 into drawings; you can also turn the `.md` tab itself into a drawing editor. A
@@ -65,7 +68,7 @@ archived on 2026-09-01. Every commit came along, so
 (`breadboard-fence-v0.4.0`, `circuit-fence-v0.3.1`). The archived repositories
 keep their releases up to `v0.3.0`; everything after that is on the
 [releases page](https://github.com/tommie-jp/tommie-fence/releases).
-**The extension ships a `.vsix`, the four libraries ship an `npm pack`
+**The extension ships a `.vsix`, the five libraries ship an `npm pack`
 tarball**, each with `SHA256SUMS`. They are not on the npm registry, so an
 app that wants one downloads the tarball and points at it with `file:`.
 
@@ -79,8 +82,9 @@ tommie-fence
 ├── packages/breadboard-fence  library + CLI
 ├── packages/perfboard-fence   library + CLI
 ├── packages/copper-fence      library + CLI
-├── packages/tommie-fence      the VS Code extension: all four folded into one
-└── packages/playground        one page that runs all four in a browser
+├── packages/vna-fence         library + CLI
+├── packages/tommie-fence      the VS Code extension: all five folded into one
+└── packages/playground        one page that runs all five in a browser
 ```
 
 `fence-kit` only holds code that was **already duplicated** — nothing is put
@@ -104,6 +108,7 @@ is the gallery** — every fence next to the drawing it produces.
 | circuit-fence | [docs/01-syntax.md](packages/circuit-fence/docs/01-syntax.md) | [docs/02-cheatsheet.md](packages/circuit-fence/docs/02-cheatsheet.md) | [examples/](packages/circuit-fence/examples/) — 15 circuits, 5 error cases |
 | breadboard-fence | [docs/01-syntax.md](packages/breadboard-fence/docs/01-syntax.md) | [docs/02-cheatsheet.md](packages/breadboard-fence/docs/02-cheatsheet.md) | [examples/](packages/breadboard-fence/examples/) — 13 circuits, 2 error cases |
 | copper-fence | [docs/01-syntax.md](packages/copper-fence/docs/01-syntax.md) | — | [examples/](packages/copper-fence/examples/) — 9 fixtures, 1 error case |
+| vna-fence | [docs/01-syntax.md](packages/vna-fence/docs/01-syntax.md) | — | [examples/](packages/vna-fence/examples/) — 5 measurements, 1 error case |
 
 Every example is followed by the drawing it produces (`examples/out/`), so the
 files read as documentation in the Markdown preview. Rebuild them with

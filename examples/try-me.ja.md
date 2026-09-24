@@ -2,7 +2,7 @@
 
 [English](try-me.md) | [日本語](try-me.ja.md)
 
-フェンスを 4 つ、パッケージごとに 1 つずつ置いてあります。
+フェンスを 5 つ、パッケージごとに 1 つずつ置いてあります。
 **Markdown プレビューを開くと図になります**: `Ctrl+Shift+V`
 (macOS は `Cmd+Shift+V`)、またはこのタブの右上にある分割プレビューのボタン。
 
@@ -90,6 +90,25 @@ parts:
 位置は板の左上からの mm です。線路の字に幅・**Z0**・電気長が出ます。
 線路の上に置いたチップは**線路を切ります**。
 
+## vna — その治具を測った NanoVNA の画面
+
+```vna
+device: h4
+sweep: 1M-300M 101
+title: 100 Ω を直列に
+dut: series R 100
+traces:
+  - S21 logmag
+  - S11 logmag
+  - S11 smith
+markers:
+  - 10M
+```
+
+`dut:` は理想の模型で、破線で出ます (どちらも −6.02 dB、Smith では 150 Ω)。
+測った値を Touchstone でこのファイルの隣に保存し、`data: <ファイル>.s2p` を
+書き足すと実線で重なります。このフェンスにはマップがありません。
+
 ## 打たずに掴んで動かす
 
 どのフェンスもマウスで編集できます。このタブの右上の基板の絵の釦を押すと
@@ -97,8 +116,8 @@ parts:
 (Fence Editor)」** でも同じ。英語の画面では「Open the Fence Editor」)、
 カーソルのあるフェンスのマップが横に開きます。
 または `Ctrl+Shift+P` →**「View: Reopen Editor With...」**→
-**Fence Editor** で、このタブ自体をマップにできます。4 つのフェンスを
-1 つのエディタで扱います。
+**Fence Editor** で、このタブ自体をマップにできます。板と回路図の 4 つのフェンスを
+1 つのエディタで扱います (vna にはマップがありません)。
 
 マップは図ではなく**掴むための層**です。部品を動かすとフェンスの番地が
 書き換わるので、正はいつもテキストのままです。
@@ -109,4 +128,5 @@ parts:
 - [circuit の文法](../packages/circuit-fence/docs/01-syntax.md) ·
   [breadboard の文法](../packages/breadboard-fence/docs/01-syntax.md) ·
   [perfboard の文法](../packages/perfboard-fence/docs/01-syntax.md) ·
-  [copper の文法](../packages/copper-fence/docs/01-syntax.md)
+  [copper の文法](../packages/copper-fence/docs/01-syntax.md) ·
+  [vna の文法](../packages/vna-fence/docs/01-syntax.md)

@@ -1,7 +1,7 @@
 {
   "name": "tommie-fence",
   "version": "0.0.0",
-  "description": "Markdown fences that draw electronics — schematic, breadboard, perfboard, copper-clad board",
+  "description": "Markdown fences that draw electronics — schematic, breadboard, perfboard, copper-clad board, VNA screen",
   "license": "MIT",
   "private": true,
   "repository": {

@@ -11,7 +11,7 @@ import { reason } from './log.ts';
  */
 
 /** フェンスの無い文書に出す断り。 */
-const NO_FENCE = 'この文書に circuit / breadboard / perfboard / copper のフェンスがありません';
+const NO_FENCE = 'この文書に circuit / breadboard / perfboard / copper / vna のフェンスがありません';
 
 /**
  * 図の上に出す一言 (circuit の描画の進み具合と、描けなかった理由)。
@@ -92,6 +92,18 @@ export function paintNetlist(netlist: readonly NetRow[]): void {
   els.netlist.append(table);
 }
 
+/**
+ * vna の読み値。**ネットリストの場所に出す** (vna にネットリストは無い)。
+ * 中身は生の字なので textContent で入れる。表は等幅で桁を揃えてある。
+ */
+export function paintReadings(lines: readonly string[]): void {
+  if (lines.length === 0) return;
+  const pre = document.createElement('pre');
+  pre.className = 'readings';
+  pre.textContent = lines.join('\n');
+  els.netlist.append(pre);
+}
+
 /** 描くものが無いとき (フェンスの無い文書) の姿。`missing` はその断り。 */
 function paintEmpty(missing: string | null): void {
   drawing += 1;
@@ -145,6 +157,7 @@ export function paintFence(fence: DocFence | null, { open, hasDoc }: PaintOption
   els.tex.hidden = output.tex === null;
   els.texBody.textContent = output.tex ?? '';
   paintNetlist(output.netlist);
+  paintReadings(output.readings);
   els.messages.hidden = output.messages.length === 0;
   els.messages.textContent = output.messages.join('\n\n');
 }

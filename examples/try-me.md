@@ -2,7 +2,7 @@
 
 [English](try-me.md) | [日本語](try-me.ja.md)
 
-Four fences, one per package. **Open the Markdown preview to see them drawn**:
+Five fences, one per package. **Open the Markdown preview to see them drawn**:
 `Ctrl+Shift+V` (`Cmd+Shift+V` on macOS), or the split-preview button at the top
 right of this tab.
 
@@ -92,6 +92,25 @@ parts:
 Positions are millimetres from the top-left corner. The caption of the line gives
 its width, **Z0** and electrical length; the chip placed on the line **cuts it**.
 
+## vna — the NanoVNA screen for that fixture
+
+```vna
+device: h4
+sweep: 1M-300M 101
+title: 100 ohms in series
+dut: series R 100
+traces:
+  - S21 logmag
+  - S11 logmag
+  - S11 smith
+markers:
+  - 10M
+```
+
+`dut:` is the ideal model, drawn dashed; it gives −6.02 dB both ways and 150 Ω on
+the Smith chart. Save the measurement next to this file as Touchstone and add
+`data: <file>.s2p` to draw it solid over the model. This fence has no map.
+
 ## Drag the parts instead of typing
 
 Every fence can also be edited with the mouse. Click the circuit-board button at
@@ -99,7 +118,7 @@ the top right of this tab (or run **"tommie-fence: Open the Fence Editor"** from
 the command palette, `Ctrl+Shift+P`) and the map opens beside the text, showing
 the fence under the cursor. Or reopen this file as the map itself:
 `Ctrl+Shift+P` → **"View: Reopen Editor With..."** → **Fence Editor**. One editor
-handles all four fences.
+handles the four board and schematic fences (vna has no map).
 
 The map is a grab layer, not the drawing. Dragging a part rewrites the address
 in the fence, so the text stays the source of truth.
@@ -110,4 +129,5 @@ in the fence, so the text stays the source of truth.
 - [circuit syntax](../packages/circuit-fence/docs/01-syntax.md) ·
   [breadboard syntax](../packages/breadboard-fence/docs/01-syntax.md) ·
   [perfboard syntax](../packages/perfboard-fence/docs/01-syntax.md) ·
-  [copper syntax](../packages/copper-fence/docs/01-syntax.md)
+  [copper syntax](../packages/copper-fence/docs/01-syntax.md) ·
+  [vna syntax](../packages/vna-fence/docs/01-syntax.md)

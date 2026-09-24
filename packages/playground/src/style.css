@@ -409,3 +409,10 @@ body.full:not(.app) .next .short { display: inline; }
   body.full:not(.app) .head,
   body.full:not(.app) .next { display: none; }
 }
+
+/* vna の読み値 (ネットリストの場所)。等幅で桁が揃う表。 */
+#netlist .readings {
+  margin: 0; padding: 12px; overflow: auto;
+  font-family: var(--mono); font-size: 12px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 8px;
+}

@@ -1,5 +1,5 @@
 {
-  "description": "Four Markdown fences — circuit, breadboard, perfboard, copper — drawn in the preview and edited by dragging",
+  "description": "Five Markdown fences — circuit, breadboard, perfboard, copper, vna — drawn in the preview and edited by dragging",
   "command.openMap": "Open the Fence Editor",
   "command.movePart": "Move a Circuit Part by Address",
   "command.movePoint": "Move a Circuit Node by Address",

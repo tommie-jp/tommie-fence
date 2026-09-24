@@ -30,7 +30,7 @@ describe('3 つを 1 つに畳んだ contributes', () => {
       expect(copied, grammar.path).toContain(grammar.path);
       expect(grammarOf(grammar.path).scopeName).toBe(grammar.scopeName);
     }
-    expect(manifest.contributes.grammars).toHaveLength(4);
+    expect(manifest.contributes.grammars).toHaveLength(5);
   });
 
   test('keeps the old command ids, so a key binding written before the fold still works', () => {

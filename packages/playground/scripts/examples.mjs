@@ -22,6 +22,7 @@ const PACKAGE_OF = {
   breadboard: 'breadboard-fence',
   perfboard: 'perfboard-fence',
   copper: 'copper-fence',
+  vna: 'vna-fence',
 };
 
 /** この数を下回ったら、集めるところが壊れたと見なして止める。 */

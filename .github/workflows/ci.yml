@@ -72,6 +72,13 @@ jobs:
             build: true
             docs: true
             generated: "'packages/copper-fence/examples/out/*.svg' 'packages/copper-fence/docs/out/*.svg'"
+          # vna-fence: SVG は決まる (数値は num で 2 桁に丸めてある)。docs にも図がある。
+          - pkg: vna-fence
+            pack: true
+            packed: "package/dist/core.mjs package/dist/core.cjs package/dist/types/index.d.ts"
+            build: true
+            docs: true
+            generated: "'packages/vna-fence/examples/out/*.svg' 'packages/vna-fence/docs/out/*.svg'"
     name: check (${{ matrix.pkg }})
     steps:
       - uses: actions/checkout@v7

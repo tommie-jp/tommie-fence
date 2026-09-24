@@ -1,6 +1,7 @@
 import { renderBreadboard, errorText as breadboardErrorText } from 'breadboard-fence/src/core';
 import { renderPerfboard, errorText as perfboardErrorText } from 'perfboard-fence/src/core';
 import { renderCopper, errorText as copperErrorText } from 'copper-fence/src/core';
+import { renderVna, errorText as vnaErrorText } from 'vna-fence/src/core';
 import { compileCircuit, errorLine, snippetLines } from 'circuit-fence/src/core';
 import type { FenceError } from 'circuit-fence/src/core';
 import type { Kind } from './kinds.ts';
@@ -23,6 +24,11 @@ export type Output = {
   /** circuitikz の TeX。circuit 以外は null。 */
   readonly tex: string | null;
   readonly netlist: readonly NetRow[];
+  /**
+   * マーカーの読み値 (vna だけ。CLI の `check` と同じ字の行)。ほかは空。
+   * vna にはネットリストが無いので、その場所に出す。
+   */
+  readonly readings: readonly string[];
   /** 読めなかったところと、お知らせ。CLI と同じ文面 (行番号・行の中身・印)。 */
   readonly messages: readonly string[];
   /** 読めなかったところがあったか (お知らせだけなら false)。 */
@@ -52,6 +58,7 @@ function renderCircuit(source: string): Output {
     svg: '',
     tex,
     netlist: nets(netlist),
+    readings: [],
     // **お知らせも必ず出す。** `style: debug: off` は図に添える帯を伏せる指定で、
     // ここは図の代わりに読むための場所 (CLI の `check` と同じ扱い)。
     messages: [...errors, ...notices].map(circuitText),
@@ -60,8 +67,26 @@ function renderCircuit(source: string): Output {
   };
 }
 
+/**
+ * vna。**`data:` (Touchstone) は読めない** — 頁は文書の隣のファイルに手が届かない。
+ * コアが「この宿主では読めません」と言い、理想の模型だけを描く。
+ */
+function renderVnaOutput(source: string): Output {
+  const { svg, readingLines, errors, notices } = renderVna(source);
+  return {
+    svg,
+    tex: null,
+    netlist: [],
+    readings: readingLines,
+    messages: [...errors, ...notices].map(vnaErrorText),
+    broken: errors.length > 0,
+    finishing: null,
+  };
+}
+
 export function render(kind: Kind, source: string): Output {
   if (kind === 'circuit') return renderCircuit(source);
+  if (kind === 'vna') return renderVnaOutput(source);
 
   const { svg, netlist, errors, notices } =
     kind === 'breadboard' ? renderBreadboard(source) : kind === 'copper' ? renderCopper(source) : renderPerfboard(source);
@@ -70,6 +95,7 @@ export function render(kind: Kind, source: string): Output {
     svg,
     tex: null,
     netlist: nets(netlist),
+    readings: [],
     messages: [...errors, ...notices].map(text),
     broken: errors.length > 0,
     finishing: null,

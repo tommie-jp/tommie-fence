@@ -5,7 +5,7 @@
  * 例の読み込み (`examples.ts`) もこれを要るが、3 つの描画コア
  * (`fences.ts` が束ねる) までは要らないため。
  */
-export const KINDS = ['circuit', 'breadboard', 'perfboard', 'copper'] as const;
+export const KINDS = ['circuit', 'breadboard', 'perfboard', 'copper', 'vna'] as const;
 
 export type Kind = (typeof KINDS)[number];
 
@@ -56,6 +56,7 @@ export const KIND_LABEL: Readonly<Record<Kind, string>> = {
   breadboard: 'breadboard',
   perfboard: 'perfboard',
   copper: 'copper',
+  vna: 'vna',
 };
 
 /**
@@ -67,4 +68,11 @@ export const KIND_READING: Readonly<Record<Kind, string>> = {
   breadboard: 'ブレッドボード図',
   perfboard: '基板図',
   copper: '銅張り基板図',
+  vna: 'VNA の画面',
 };
+
+/**
+ * 図を掴んで動かすマップ (殻) を持つか。**vna は持たない** — 図の中に動かす部品が
+ * 無い (52 の docs/75 の決め 10)。持たない種類を選んだら、頁は図の窓を開く。
+ */
+export const hasMap = (kind: Kind): boolean => kind !== 'vna';

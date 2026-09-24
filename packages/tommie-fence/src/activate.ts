@@ -3,12 +3,18 @@ import { createRenderQueue } from 'circuit-fence/queue';
 import type { TexRenderer } from 'circuit-fence/queue';
 import { createPreviewRefresher } from './previewRefresher.ts';
 import { allPlugins } from './markdownItPlugin.ts';
+import type { DataReader } from 'vna-fence/plugin';
 
 export type Wiring = {
   /** TeX を SVG にする人。デスクトップは WASM、web は「描けない」を返すスタブ。 */
   readonly render: TexRenderer;
   /** プレビューに描き直させる頼み先。 */
   readonly refresh: () => void;
+  /**
+   * vna の `data:` (Touchstone) を読む口。**デスクトップだけが持つ** — 描いている
+   * 文書の隣のファイルを読む。web 版は持たない (vna が「読めません」と言う)。
+   */
+  readonly readData?: DataReader;
 };
 
 /**
@@ -24,7 +30,7 @@ export function activateWith(wiring: Wiring) {
 
   return {
     extendMarkdownIt(md: MarkdownIt): MarkdownIt {
-      return allPlugins(queue)(md);
+      return allPlugins(queue, wiring.readData)(md);
     },
   };
 }

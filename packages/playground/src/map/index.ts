@@ -14,7 +14,8 @@ import type { Kind } from '../kinds.ts';
  * その形をそのまま写すと、殻も中身も 1 行も変えずに動く。
  */
 
-const EDITORS: Readonly<Record<Kind, () => FenceEditor>> = {
+/** 殻を持つ種類だけ (vna は持たない。`hasMap`)。 */
+const EDITORS: Readonly<Partial<Record<Kind, () => FenceEditor>>> = {
   breadboard: createBreadboardEditor,
   perfboard: createPerfboardEditor,
   circuit: createCircuitEditor,
@@ -48,12 +49,19 @@ export type MapOptions = {
    * 「R1 を a7 へ動かしました」など、何が起きたかの記録になる。
    */
   readonly onStatus: (text: string) => void;
+  /**
+   * 頁の「いま」を殻に動かさせないか。**いまが殻を持たない種類 (vna) のとき真** —
+   * 殻は vna を知らないので、組み直すたびに自分の最初のフェンスへ掴み直し、
+   * 頁の「いま」を circuit などへ連れていってしまう (レビューで見つかった)。
+   * 人が殻の一覧で選んだとき (`fence` の知らせ) だけは通す。
+   */
+  readonly holdBind?: () => boolean;
 };
 
-export function openMap({ frame, text, setText, fenceLine, onBind, onStatus }: MapOptions): MapHandle {
+export function openMap({ frame, text, setText, fenceLine, onBind, onStatus, holdBind }: MapOptions): MapHandle {
   // **3 つの言語ぜんぶを渡す。** 文書に何が書いてあるかは開くまで分からず、
   // 1 つの `.md` に 2 つの言語が混ざっていることもある (52 の docs/43)。
-  const editors = KINDS.map((kind) => EDITORS[kind]());
+  const editors = KINDS.flatMap((kind) => EDITORS[kind]?.() ?? []);
 
   // 中の頁ができるまでは送れないので、溜めておいて `load` で流す。
   let ready = false;
@@ -68,7 +76,17 @@ export function openMap({ frame, text, setText, fenceLine, onBind, onStatus }: M
     frame.contentWindow?.postMessage(message, '*');
   };
 
-  const session: Session = createMapSession({ editors, text, setText, fenceLine, onBind, post });
+  /** いま捌いているのが、人が殻の一覧でフェンスを選んだ知らせか。 */
+  let picking = false;
+  /** 選び直しの知らせのあいだに、殻が掴み直して頁へ伝えたか。 */
+  let passed = false;
+  const bind = (line: number): void => {
+    if (picking || holdBind?.() !== true) {
+      passed = true;
+      onBind(line);
+    }
+  };
+  const session: Session = createMapSession({ editors, text, setText, fenceLine, onBind: bind, post });
 
   const onLoad = (): void => {
     ready = true;
@@ -78,7 +96,18 @@ export function openMap({ frame, text, setText, fenceLine, onBind, onStatus }: M
   // **中から来たものだけ聞く。** 頁には他にも postMessage の相手が居うる。
   const onMessage = (event: MessageEvent<Incoming>): void => {
     if (event.source !== frame.contentWindow) return;
-    void session.handle(event.data);
+    // 選び直しは handle の同期の部分で起きる (掴み直して onBind を呼ぶ)。
+    const picked = event.data?.kind === 'fence' && typeof event.data.line === 'number' ? event.data.line : null;
+    picking = picked !== null;
+    passed = false;
+    try {
+      void session.handle(event.data);
+    } finally {
+      picking = false;
+    }
+    // **殻が掴んだままのフェンスを人が選び直したとき。** 殻は「動いていない」ので
+    // 知らせないが、頁の「いま」は vna に留めてあった。選んだことを頁へ伝える。
+    if (picked !== null && !passed && holdBind?.() === true) onBind(picked);
   };
 
   frame.addEventListener('load', onLoad);

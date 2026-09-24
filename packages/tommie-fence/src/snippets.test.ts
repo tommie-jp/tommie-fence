@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
 import manifest from '../package.json' with { type: 'json' };
 import { fenceEditors } from './editor/fences.ts';
+import { MAPLESS_LANGUAGES, vnaProblems } from './vna.ts';
 
 /**
  * 骨組みを出すスニペット (52 の docs/57)。**本文がそのフェンスで読めること**を
@@ -18,7 +19,8 @@ const snippetsIn = (path: string): readonly [string, Snippet][] =>
 /** 置き場の印 (`${1:題}` → `題`、`$0` → 空) を外して、確定したあとの字にする。 */
 const expand = (line: string): string => line.replace(/\$\{\d+:([^}]*)\}/g, '$1').replace(/\$\d+/g, '');
 
-const languages = fenceEditors().map((one) => one.language);
+/** 拡張が描くフェンス。**殻を持つ言語と、殻の無い vna**。 */
+const languages = [...fenceEditors().map((one) => one.language), ...MAPLESS_LANGUAGES];
 const all = contributed.flatMap((entry) => snippetsIn(entry.path));
 
 describe('フェンスのスニペット', () => {
@@ -48,11 +50,14 @@ describe('フェンスのスニペット', () => {
     const editor = fenceEditors().find((one) => one.language === language);
     const source = `${snippet.body.slice(1, -1).map(expand).join('\n')}\n`;
 
-    // Act
+    // Act — 殻の無い vna は Problems の口で見る (帯と同じ報告)。
     const view = editor?.view(source, 1);
+    const rows = editor === undefined ? vnaProblems().problems?.(source, 1, { erc: true }) : [];
 
     // Assert — 読めない行もお知らせも無い (帯が空)。
-    expect(view?.issues).toBe('');
+    expect(language === 'vna' || editor !== undefined).toBe(true);
+    expect(view?.issues ?? '').toBe('');
     expect(view?.erc?.count ?? 0).toBe(0);
+    expect(rows).toEqual([]);
   });
 });

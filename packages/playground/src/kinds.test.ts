@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { KINDS, isKind, toKind } from './kinds.ts';
+import { KINDS, hasMap, isKind, toKind } from './kinds.ts';
 
 /**
  * 種類の綴り。**共有リンクの寿命がここに掛かっている** — リンクは種類を
@@ -36,5 +36,11 @@ describe('種類の綴り', () => {
     // 例の JSON や画面の状態に 2 通りの綴りが混ざる。
     expect(isKind('breadboard')).toBe(true);
     expect(isKind('bread')).toBe(false);
+  });
+});
+
+describe('マップ (殻)', () => {
+  test('vna だけが持たない (図の中に動かす部品が無い)', () => {
+    expect(KINDS.filter((kind) => !hasMap(kind))).toEqual(['vna']);
   });
 });

@@ -4,6 +4,7 @@ import { activateWith } from './activate.ts';
 import { registerEditorCommands } from './editor/commands.ts';
 import { fenceEditors } from './editor/fences.ts';
 import { registerProblems } from './problems/diagnostics.ts';
+import { vnaProblems } from './vna.ts';
 
 /**
  * web 版 (vscode.dev / github.dev) の入口。
@@ -17,7 +18,8 @@ import { registerProblems } from './problems/diagnostics.ts';
 export function activate(context: vscode.ExtensionContext) {
   registerEditorCommands(context);
   // 読めなかった行を Problems パネルにも出す。TeX を通らないので web 版でも動く。
-  registerProblems(context, fenceEditors());
+  // vna の `data:` は読めない (fs が無い)。vna がそう言う。
+  registerProblems(context, [...fenceEditors(), vnaProblems()]);
 
   return activateWith({
     render: renderTex,

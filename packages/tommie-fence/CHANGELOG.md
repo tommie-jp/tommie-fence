@@ -3,6 +3,20 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.13.0] - 2026-09-25
+
+vna-fence 0.1.0 を束ねた。**5 つ目のフェンス ` ```vna `** — VNA (NanoVNA) の画面。
+
+### Added
+
+- **vna: NanoVNA の画面** — S21 / S11 の Log Mag・位相・群遅延・Smith・極・SWR・
+  R / X / |Z|・TDR を、理想の模型 (`dut:`、破線) から計算し、`.md` の隣に置いた
+  Touchstone (`data:`、実線) を重ねる。マーカーの読み値は図の下の表。
+  プレビュー・文法の色分け・スニペット (`vna`)・Problems パネルに出る。
+  **`data:` を読むのはデスクトップ版だけ** (プレビューしている文書と同じ場所の
+  通常のファイル。シンボリックリンクは辿らない。web 版は「読めません」と言って
+  理想だけ描く)。**マップ (Fence Editor) は無い** — 図の中に動かす部品が無い。
+
 ## [0.12.0] - 2026-09-25
 
 copper-fence 0.2.0 を束ねた。

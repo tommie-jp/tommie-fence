@@ -14,8 +14,10 @@ export const ASSETS: readonly (readonly [string, string])[] = [
   ['../breadboard-fence/media/breadboard.css', 'media/breadboard.css'],
   ['../perfboard-fence/media/perfboard.css', 'media/perfboard.css'],
   ['../copper-fence/media/copper.css', 'media/copper.css'],
+  ['../vna-fence/media/vna.css', 'media/vna.css'],
   ['../circuit-fence/syntaxes/circuit-injection.json', 'syntaxes/circuit-injection.json'],
   ['../breadboard-fence/syntaxes/breadboard-injection.json', 'syntaxes/breadboard-injection.json'],
   ['../perfboard-fence/syntaxes/perfboard-injection.json', 'syntaxes/perfboard-injection.json'],
   ['../copper-fence/syntaxes/copper-injection.json', 'syntaxes/copper-injection.json'],
+  ['../vna-fence/syntaxes/vna-injection.json', 'syntaxes/vna-injection.json'],
 ];

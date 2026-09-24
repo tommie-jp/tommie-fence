@@ -4,6 +4,12 @@ import type { FenceEditor, IssueRow } from 'fence-kit';
 /**
  * Problems パネルの 1 行 (vscode を知らない形)。`diagnostics.ts` が写す。
  */
+/**
+ * Problems の行を出す口。**殻 (`FenceEditor`) の全部は要らない** — 使うのは言語名と
+ * `problems` だけ。vna のようにマップを持たないフェンスもここに並べられる (52 の docs/76)。
+ */
+export type ProblemSource = Pick<FenceEditor, 'language' | 'problems'>;
+
 export type Problem = {
   /** どのフェンスが言ったか (Problems の「コード」の欄に出す)。 */
   readonly language: string;
@@ -27,7 +33,7 @@ export type Problem = {
  */
 export function collectProblems(
   markdown: string,
-  editors: readonly FenceEditor[],
+  editors: readonly ProblemSource[],
   want: { readonly erc: boolean },
 ): readonly Problem[] {
   return editors.flatMap((editor) => extractFences(markdown, editor.language).flatMap((block) =>

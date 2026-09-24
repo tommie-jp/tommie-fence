@@ -11,6 +11,7 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | breadboard | 13 circuits + 2 deliberately broken | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
 | perfboard | 8 circuits + 1 deliberately broken | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) |
 | copper | 9 fixtures + 1 deliberately broken | [packages/copper-fence/examples/](../packages/copper-fence/examples/README.md) |
+| vna | 5 measurements + 1 deliberately broken | [packages/vna-fence/examples/](../packages/vna-fence/examples/README.md) |
 
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for
@@ -173,6 +174,26 @@ The gaps between coupled lines are measured, not written
 - [04-manhattan.md](../packages/copper-fence/examples/04-manhattan.md) — Manhattan islands on a board whose front is ground
 - [06-ground.md](../packages/copper-fence/examples/06-ground.md) — vias, slots and a patch antenna
 - [08-check.md](../packages/copper-fence/examples/08-check.md) — what the ERC says
+
+## vna — the NanoVNA screen
+
+Log Mag, Smith chart, SWR, phase, group delay, impedance and TDR. An ideal model
+(`dut:`) is drawn dashed before you measure; a Touchstone file saved next to the
+Markdown (`data:`) is drawn solid over it.
+
+### A series fixture: model and measurement
+
+[![100 ohms in a series fixture](../packages/vna-fence/examples/out/00-series-1.png)](../packages/vna-fence/examples/00-series.md)
+
+100 Ω between CH0 and CH1: −6.02 dB both ways, and where the measurement leaves
+the model ([00-series.md](../packages/vna-fence/examples/00-series.md)).
+
+### More
+
+- [01-traces.md](../packages/vna-fence/examples/01-traces.md) — every trace format: magnitude, phase, delay, SWR, Smith, polar
+- [02-parts.md](../packages/vna-fence/examples/02-parts.md) — parts with parasitics: a capacitor's SRF, a coil's parallel resonance, a crystal
+- [03-lines.md](../packages/vna-fence/examples/03-lines.md) — lines, stubs and TDR
+- [04-notes.md](../packages/vna-fence/examples/04-notes.md) — annotations (`notes:`) and style
 
 ## Why the files are not kept here
 

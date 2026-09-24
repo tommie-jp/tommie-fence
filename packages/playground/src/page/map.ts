@@ -3,6 +3,7 @@ import { els } from './els.ts';
 import { note, reason, warn, warnTo } from './log.ts';
 import { showMarkdown } from './markdown.ts';
 import { changed, ws } from './workspace.ts';
+import { hasMap } from '../kinds.ts';
 
 /**
  * 図を掴んで動かすマップ。**拡張と同じ殻**を iframe の中で動かす。
@@ -49,6 +50,11 @@ export async function showMap(): Promise<void> {
     // 殻はもうそのフェンスを見ているので、呼ぶと堂々巡りになる。
     onBind: (line) => {
       if (ws.bind(line)) changed('bind');
+    },
+    // いまが vna なら、殻の掴み直しで「いま」を動かさない。
+    holdBind: () => {
+      const current = ws.current();
+      return current !== null && !hasMap(current.kind);
     },
   });
   // しくじりはマップの帯にも出す (実機で頼まれた)。

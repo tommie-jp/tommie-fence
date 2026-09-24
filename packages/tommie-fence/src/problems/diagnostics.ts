@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
-import type { FenceEditor } from 'fence-kit';
 import { collectProblems } from './collect.ts';
-import type { Problem } from './collect.ts';
+import type { Problem, ProblemSource } from './collect.ts';
 
 /**
  * 読めなかった行・お知らせ・(設定で) ERC を **Problems パネル**に出す (52 の docs/57)。
@@ -59,14 +58,22 @@ function toDiagnostic(document: vscode.TextDocument, problem: Problem): vscode.D
   return diagnostic;
 }
 
-export function registerProblems(context: vscode.ExtensionContext, editors: readonly FenceEditor[]): void {
+/**
+ * 文書ごとの口。**文書で変わるのは vna の `data:` の読み口だけ** (その文書の隣の
+ * ファイルを読む)。変わらないなら並びをそのまま渡してよい。
+ */
+export type SourcesFor = readonly ProblemSource[] | ((document: vscode.TextDocument) => readonly ProblemSource[]);
+
+export function registerProblems(context: vscode.ExtensionContext, sources: SourcesFor): void {
+  const sourcesOf = (document: vscode.TextDocument): readonly ProblemSource[] =>
+    (typeof sources === 'function' ? sources(document) : sources);
   const collection = vscode.languages.createDiagnosticCollection(SOURCE);
   /** 組み直しの予約 (文書の URI → 予約)。文書ごとに待つ。 */
   const pending = new Map<string, ReturnType<typeof setTimeout>>();
 
   const refresh = (document: vscode.TextDocument): void => {
     if (document.languageId !== 'markdown' || READ_ONLY_COPIES.has(document.uri.scheme)) return;
-    const problems = collectProblems(document.getText(), editors, { erc: wantsErc() });
+    const problems = collectProblems(document.getText(), sourcesOf(document), { erc: wantsErc() });
     collection.set(document.uri, problems.map((one) => toDiagnostic(document, one)));
   };
 

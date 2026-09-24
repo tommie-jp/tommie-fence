@@ -7,7 +7,8 @@ import { applyLanguage, showDocName, showFrom, syncLead } from './page/labels.ts
 import { keepOffline, listenGestures, listenSheet, startLayout } from './page/layout.ts';
 import { note, renderLog, warn } from './page/log.ts';
 import { refreshMap, showMap } from './page/map.ts';
-import { fillFences, isMarkdownOpen, listenMarkdown, pickFence } from './page/markdown.ts';
+import { fillFences, isMarkdownOpen, listenMarkdown, pickFence, showMarkdown } from './page/markdown.ts';
+import { hasMap } from './kinds.ts';
 import { paintFence } from './page/paint.ts';
 import { listenQr } from './page/qr.ts';
 import { showWhere } from './page/where.ts';
@@ -51,6 +52,20 @@ const PLAN: Record<Change, Plan> = {
   kept: { fences: 'keep', figure: false, map: false },
 };
 
+/** フェンスを移った知らせ (開いた・選んだ・殻の一覧で選び直した)。 */
+const MOVED: ReadonlySet<Change> = new Set(['open', 'select', 'bind']);
+
+/**
+ * **マップを持たない種類 (vna) へ移ったら、図の窓を開く** — マップには掴むものが
+ * 無く、図はこの窓にしか出ない。開くと `view` の知らせでもう一度 `sync` が走り、
+ * 図を描く (窓が開いているので、ここは 2 度目には何もしない)。
+ */
+function openFigureForMapless(kind: Change): void {
+  const current = ws.current();
+  if (current === null || hasMap(current.kind) || isMarkdownOpen() || !MOVED.has(kind)) return;
+  showMarkdown();
+}
+
 /**
  * 文書に何かが起きたら映す。**呼び手ごとに組み直す所を選ばない** —
  * 何が起きたかだけを受けて、上の表で 1 通りに揃える (`page/workspace.ts`)。
@@ -66,6 +81,7 @@ function sync(kind: Change): void {
   if (open) renderTry();
   showDocName(ws.doc, ws.dirty());
   if (plan.map) refreshMap();
+  openFigureForMapless(kind);
 
   if (kind !== 'open') return;
   showFrom(ws.doc);

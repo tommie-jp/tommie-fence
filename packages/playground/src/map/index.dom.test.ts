@@ -162,3 +162,47 @@ describe('マップを頁に開く', () => {
     }
   });
 });
+
+describe('殻を持たない種類 (vna) がいまのとき', () => {
+  /** vna が先、殻の言語 (breadboard) が後ろ。カーソルは vna の中。 */
+  const MIXED = ['```vna', 'sweep: 1M-2M', '```', '', '```breadboard', 'board: half', '```', ''].join('\n');
+
+  const openMixed = (hold: boolean) => {
+    const frame = document.createElement('iframe');
+    document.body.append(frame);
+    const bound: number[] = [];
+    const handle = openMap({
+      frame,
+      text: () => MIXED,
+      setText: () => {},
+      fenceLine: () => 1,
+      onBind: (line) => bound.push(line),
+      onStatus: () => {},
+      holdBind: () => hold,
+    });
+    return { frame, handle, bound };
+  };
+
+  test('the shell does not carry the page off to its own first fence', () => {
+    const { handle, bound } = openMixed(true);
+    handle.refresh();
+    expect(bound).toEqual([]);
+    handle.close();
+  });
+
+  test('without the hold, the shell rebinds as before', () => {
+    const { handle, bound } = openMixed(false);
+    handle.refresh();
+    expect(bound.length).toBeGreaterThan(0);
+    handle.close();
+  });
+
+  test('a fence picked by hand in the shell list still moves the page', () => {
+    const { frame, handle, bound } = openMixed(true);
+    loaded(frame);
+    // 殻は最初から breadboard (5 行目) を掴んでいる。同じフェンスを選び直しても頁へ届く。
+    fromFrame(frame, { kind: 'fence', line: 5 });
+    expect(bound).toContain(5);
+    handle.close();
+  });
+});

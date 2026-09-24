@@ -28,6 +28,16 @@ describe('render', () => {
     expect(output.broken).toBe(false);
   });
 
+  test('vna は図と読み値を返し、data: は読めないと言う (頁は隣のファイルに届かない)', () => {
+    const output = render('vna', 'sweep: 1M-300M\ndut: series R 100\ndata: a.s2p\nmarkers:\n  - 10M\n');
+
+    expect(output.svg).toMatch(/^<svg /);
+    expect(output.netlist).toEqual([]);
+    expect(output.readings[0]).toBe('読み値 — 理想 (dut: の模型)');
+    expect(output.messages.join('\n')).toContain('この宿主では a.s2p を読めません');
+    expect(output.broken).toBe(false);
+  });
+
   test('circuit は図の代わりに TeX を返す (ブラウザでは描けない)', () => {
     const output = render('circuit', 'parts:\n  R1: resistor a1 a2 10k\n');
 

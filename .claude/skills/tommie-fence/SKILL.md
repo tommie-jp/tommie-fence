@@ -1,6 +1,6 @@
 ---
 name: tommie-fence
-description: Markdown の ```circuit / ```breadboard / ```perfboard / ```copper フェンス (回路図・ブレッドボードの実体配線図・ユニバーサル基板の実体配線図・銅張り基板のマイクロストリップの寸法図) を書く・直す・読むときに使う。文法リファレンスの所在、CLI の check で読めたか・つながったかを確かめる手順、図を PNG に焼いて目で確かめる手順、フェンスどうしで取り違えやすい書き方をまとめてある。Use when writing or fixing circuit schematics, breadboard diagrams, perfboard layouts, or copper-clad board (microstrip) drawings in these Markdown fences.
+description: Markdown の ```circuit / ```breadboard / ```perfboard / ```copper / ```vna フェンス (回路図・ブレッドボードの実体配線図・ユニバーサル基板の実体配線図・銅張り基板のマイクロストリップの寸法図・VNA (NanoVNA) の画面) を書く・直す・読むときに使う。文法リファレンスの所在、CLI の check で読めたか・つながったかを確かめる手順、図を PNG に焼いて目で確かめる手順、フェンスどうしで取り違えやすい書き方をまとめてある。Use when writing or fixing circuit schematics, breadboard diagrams, perfboard layouts, copper-clad board (microstrip) drawings, or VNA (NanoVNA) screens — Log Mag, Smith chart, SWR, TDR — in these Markdown fences.
 ---
 
 # tommie-fence のフェンスを書く
@@ -15,8 +15,9 @@ description: Markdown の ```circuit / ```breadboard / ```perfboard / ```copper 
 | ブレッドボードの実体配線図 | ` ```breadboard ` | `packages/breadboard-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/breadboard-fence/examples/*.md` |
 | ユニバーサル基板の実体配線図 | ` ```perfboard ` | `packages/perfboard-fence/docs/01-syntax.md` (早見表は無い。目次から要る節だけ) | `packages/perfboard-fence/examples/*.md` |
 | 銅張り基板 (マイクロストリップ・CPW・Manhattan の島) の寸法図 | ` ```copper ` | `packages/copper-fence/docs/01-syntax.md` (早見表は無い) | `packages/copper-fence/examples/*.md` |
+| VNA (NanoVNA) の画面 (S21 / S11 の Log Mag・Smith・SWR・TDR) | ` ```vna ` | `packages/vna-fence/docs/01-syntax.md` (早見表は無い) | `packages/vna-fence/examples/*.md` |
 
-**書く前に文法を読む。** 4 つは似ているが同じではない (§4)。
+**書く前に文法を読む。** 5 つは似ているが同じではない (§4)。
 記憶や別のフェンスの感覚で書かない。例の中から近いものを写して直すのが早い。
 
 ## 2. 書いたら check
@@ -26,7 +27,8 @@ node <root>/packages/<x>-fence/dist/cli.cjs check <file.md> 2>&1
 ```
 
 - 見出しとネットリストは標準出力、読めなかった行・お知らせ・ERC は標準エラー
-  (4 つとも同じ)。まとめて読むので `2>&1` を付ける
+  (5 つとも同じ。vna はネットリストの代わりにマーカーの読み値を標準出力に出す)。
+  まとめて読むので `2>&1` を付ける
 - 読めなかった行は、行番号・その行・綴りを指す `^` つきで出る。
   1 つでもあれば終了コードは 0 以外
 - ネットリスト (どの足がどのネットか) は標準出力。**意図した回路と突き合わせる**
@@ -83,9 +85,20 @@ copper (銅張り基板) は**位置が穴ではなく mm** で、上の表の�
 | 印の注釈 | `mark 点` (部品名は指せない)。寸法線 `dim 点 点` がある |
 | ERC | `check` と `render` の両方に出る。**銅に乗っていない足**が多い — 線路の上に置いた 2 本足のチップは線路を切るので、シャントは `r90` で直角に置く |
 
-4 つに共通:
+vna (VNA の画面) は**板も部品も無い**。位置の代わりに周波数:
 
-- **フェンス名は `circuit` / `breadboard` / `perfboard` / `copper` の 4 つだけ。**
+| | vna |
+| --- | --- |
+| 書くもの | `sweep: 1M-300M 101` (開始-終了 点数)、`dut:` (理想の模型。`series R 100` / `shunt C 47p` / `line 50 1m vf 0.66` / 最後に `open` か `short`)、`traces:` (`S21 logmag` のように S11 か S21 と NanoVNA の形式名)、`markers:` (周波数) |
+| 値の綴り | R は板と同じ (`4k7`)。**L と C は接頭辞が要る** (`47p` `100n`。`C 47` は 47 F で断られる)。長さは単位が要る (`25cm`) |
+| 測った値 | `data: <名前>.s2p` は **`.md` と同じ場所のファイルだけ** (`/` `..` は書けない)。CLI は入力の隣を読む。読めない・見つからないはお知らせ (図は理想だけで出る) |
+| 部品の Z を見る | 最後に `short` を書いて 1 端子にする。書かないと CH1 の 50 Ω が直列に見える |
+| 注釈 | `mark 100M -6dB` / `text 100M -20dB: 字` / `band 88M 108M`。**値の単位で枠が決まる** (dB・deg・ns・Ω・単位なしは SWR) |
+| ネットリスト・ERC・マップ | 無い。`check` は読み値の表を出す。お知らせ (機種の範囲の外など) は終了コードを変えない |
+
+5 つに共通:
+
+- **フェンス名は `circuit` / `breadboard` / `perfboard` / `copper` / `vna` の 5 つだけ。**
   `bread` や `perf` と書くと、プレビューでは灰色のコードブロック、CLI では黙って素通りする
 - **`text` の字は `:` の後ろ**: `- text c3 red: ここから電源`。
   番地の後ろに引用で字を書く (`- text c3 "R1: 抵抗"`) と、字の頭が色や向きの語として読まれて通らない。
