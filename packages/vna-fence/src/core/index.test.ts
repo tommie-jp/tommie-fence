@@ -30,6 +30,23 @@ describe('renderVna', () => {
     expect(bold.find((text) => text.includes('Ω/目盛'))).toContain("font-family=\"&apos;Segoe UI&apos;");
   });
 
+  test('draws the key samples in the colours of the traces they stand for', () => {
+    const svg = renderVna(`${SERIES}\ndata: a.s2p`, { data: files({ 'a.s2p': S2P }) }).svg;
+    const key = svg.match(/<g data-vna-key="">(.*?)<\/g>/)?.[1] ?? '';
+    const strokes = [...key.matchAll(/stroke="([^"]+)"/g)].map((match) => match[1]);
+    // 既定の 3 本 (S21 logmag・S11 logmag・S11 smith) の色が、理想と実測の見本の両方に並ぶ。
+    expect(strokes).toEqual(['#b07d00', '#1f6fb5', '#2e8b3e', '#b07d00', '#1f6fb5', '#2e8b3e']);
+  });
+
+  test('a key sample leaves out the traces its line is not drawn on', () => {
+    const s1p = ['# HZ S RI R 50', '1000000 0.5 0', '300000000 0.5 0'].join('\n');
+    const svg = renderVna(`${SERIES}\ndata: a.s1p`, { data: files({ 'a.s1p': s1p }) }).svg;
+    const key = svg.match(/<g data-vna-key="">(.*?)<\/g>/)?.[1] ?? '';
+    const strokes = [...key.matchAll(/stroke="([^"]+)"/g)].map((match) => match[1]);
+    // .s1p に S21 は無いので、実測の見本に 1 本目 (S21) の色は出ない。
+    expect(strokes).toEqual(['#b07d00', '#1f6fb5', '#2e8b3e', '#1f6fb5', '#2e8b3e']);
+  });
+
   test('an empty fence still draws the empty frames', () => {
     const result = renderVna('');
     expect(result.svg).toContain('<svg');

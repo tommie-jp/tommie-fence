@@ -46,28 +46,45 @@ export function renderReadings(readings: Readings, dataName: string | null, band
     + renderLines(parts.extra, extraBand, theme, theme.palette.caption);
 }
 
-/** 凡例の字 (破線 = 理想、実線 = 実測)。どちらも無ければ null。 */
-export function keyText(hasModel: boolean, dataName: string | null): string | null {
-  const items = [...(hasModel ? ['理想 (dut:)'] : []), ...(dataName === null ? [] : [`実測 (${dataName})`])];
-  return items.length === 0 ? null : items.join('    ');
+/** 凡例の 1 項。`colors` はその線を引いたトレースの色 (書いた順)。 */
+export type KeyLine = { readonly text: string; readonly dashed: boolean; readonly colors: readonly string[] };
+
+/** 凡例の字 (破線 = 理想、実線 = 実測)。項が無ければ null。枠の幅を決めるのに使う。 */
+export function keyText(lines: readonly KeyLine[]): string | null {
+  return lines.length === 0 ? null : lines.map((line) => line.text).join('    ');
 }
 
-/** 凡例。**線の見本を字の前に**置く。 */
-export function renderKey(hasModel: boolean, dataName: string | null, layout: Layout, theme: Theme): string {
-  if (layout.keyY === null) return '';
+/** 見本の幅。色が何本あっても変えない (凡例の幅は字だけで決めてある)。 */
+const SAMPLE = 22;
+
+/**
+ * 凡例。**線の見本を字の前に**置く。見本は**その線を引いたトレースの色を並べて**描く
+ * — 地の文字色で描くと、グラフに無い色の線を指すことになる。
+ */
+export function renderKey(lines: readonly KeyLine[], layout: Layout, theme: Theme): string {
+  if (layout.keyY === null || lines.length === 0) return '';
   const y = layout.keyY;
   const size = theme.metrics.smallSize;
   let x = layout.panels[0]?.plot.x ?? 14;
   const out: string[] = [];
-  const item = (text: string, dashed: boolean): void => {
-    out.push(element('line', {
-      x1: num(x), y1: num(y), x2: num(x + 22), y2: num(y), stroke: theme.palette.caption, 'stroke-width': 1.5,
-      ...(dashed ? { 'stroke-dasharray': '5 3' } : {}),
-    }));
-    out.push(svgText(x + 27, y + size * 0.35, text, { anchor: 'start', fill: theme.palette.caption, 'font-size': num(size) }));
-    x += 27 + textWidth(text) * size + 20;
-  };
-  if (hasModel) item('理想 (dut:)', true);
-  if (dataName !== null) item(`実測 (${dataName})`, false);
-  return out.join('');
+  for (const { text, dashed, colors } of lines) {
+    out.push(sample(x, y, dashed, colors.length > 0 ? colors : [theme.palette.caption]));
+    out.push(svgText(x + SAMPLE + 5, y + size * 0.35, text, { anchor: 'start', fill: theme.palette.caption, 'font-size': num(size) }));
+    x += SAMPLE + 5 + textWidth(text) * size + 20;
+  }
+  return `<g data-vna-key="">${out.join('')}</g>`;
+}
+
+/** 色 1 つなら 1 本 (破線は `5 3`)、2 つ以上なら色ごとに区切る (破線は区切りの間を空ける)。 */
+function sample(x: number, y: number, dashed: boolean, colors: readonly string[]): string {
+  const step = SAMPLE / colors.length;
+  const solo = colors.length === 1;
+  return colors.map((color, index) => {
+    const x1 = x + index * step;
+    const x2 = x1 + (dashed && !solo ? step * 0.65 : step);
+    return element('line', {
+      x1: num(x1), y1: num(y), x2: num(x2), y2: num(y), stroke: color, 'stroke-width': 1.5,
+      ...(dashed && solo ? { 'stroke-dasharray': '5 3' } : {}),
+    });
+  }).join('');
 }

@@ -20,7 +20,9 @@ import { renderErrorBanner } from './render/errorHtml.ts';
 import { linesSize, renderLines, sourceListing, tableLines } from './render/mono.ts';
 import { UNIT_PANELS, renderPanel } from './render/panel.ts';
 import { keyText, readingsHeading, readingsSize, renderKey, renderReadings } from './render/readings.ts';
-import { resolveStyle } from './render/theme.ts';
+import type { KeyLine } from './render/readings.ts';
+import { resolveStyle, traceColor } from './render/theme.ts';
+import type { Theme } from './render/theme.ts';
 import { renderTitle } from './render/title.ts';
 import type { FenceDocument, FenceError, NoteSpec } from './types.ts';
 
@@ -173,10 +175,10 @@ export function renderVna(input: string, options: RenderOptions = {}): RenderRes
   for (const extra of sourceNotes.slice(1)) said.push(notice('書き出し (source) は 1 つだけ描きます (後のものは描いていません)', extra.line));
   const listing = sourceNotes.length > 0 ? sourceListing(source) : [];
 
-  const key = keyText(model !== null, dataName);
+  const key = keyLines(allSeries, model !== null, dataName, theme);
   const layout = createLayout({
     title: doc.title,
-    key,
+    key: keyText(key),
     groups,
     readings: readingsSize(readings, dataName, theme),
     source: listing.length > 0 ? linesSize(listing, theme) : null,
@@ -194,7 +196,7 @@ export function renderVna(input: string, options: RenderOptions = {}): RenderRes
   }));
 
   const body = renderTitle(doc.title, layout, theme)
-    + renderKey(model !== null, dataName, layout, theme)
+    + renderKey(key, layout, theme)
     + layout.panels.map((panel) => renderPanel({
       panel,
       series: allSeries.filter((one) => panel.traces.some((trace) => trace.index === one.trace.index)),
@@ -224,6 +226,17 @@ export function renderVna(input: string, options: RenderOptions = {}): RenderRes
 
 
 /** 読み値を字の行に (CLI・playground)。**図の帯と同じ見出し**。 */
+/** 凡例の項。見本の色は、**その線 (理想か実測か) を実際に引いたトレース**の色。 */
+function keyLines(series: readonly Series[], hasModel: boolean, dataName: string | null, theme: Theme): readonly KeyLine[] {
+  const colorsOf = (basis: Series['basis']): readonly string[] => [
+    ...new Set(series.filter((one) => one.basis === basis).map((one) => traceColor(theme, one.trace.index))),
+  ];
+  return [
+    ...(hasModel ? [{ text: '理想 (dut:)', dashed: true, colors: colorsOf('model') }] : []),
+    ...(dataName === null ? [] : [{ text: `実測 (${dataName})`, dashed: false, colors: colorsOf('data') }]),
+  ];
+}
+
 function readingLinesOf(readings: Readings, dataName: string | null): readonly string[] {
   if (readings.rows.length === 0 && readings.extra.length === 0) return [];
   return [
