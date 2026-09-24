@@ -11,6 +11,10 @@
 import { cp, mkdir, writeFile } from 'node:fs/promises';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+// **切り出しは fence-kit の規則そのもの** — 自前で数えると、フェンス名の別名
+// (` ```bread ` と ` ```breadboard `。52 の docs/08) を片方だけ数えて黙って 0 本になる。
+// .mjs から .ts を読むので Node 22.18 以上 (型を剥がして読む。CI は 22 の最新)。
+import { extractFences } from '../../fence-kit/src/fences.ts';
 
 /**
  * 集める順。**回路図 → ブレッドボード → 基板** — 作る人の順そのもの
@@ -39,9 +43,8 @@ const headingOf = (markdown, stem) => {
   return stem;
 };
 
-/** その言語のフェンスが何本あるか (行頭のフェンスだけ数える)。 */
-const countFences = (markdown, kind) =>
-  markdown.split('\n').filter((line) => line.startsWith(`\`\`\`${kind}`)).length;
+/** その言語のフェンスが何本あるか。**どちらの綴りでも数える。** */
+const countFences = (markdown, kind) => extractFences(markdown, kind).length;
 
 function fromDirectory(directory, kind, broken, repoPath, prefix) {
   if (!existsSync(directory)) return [];
