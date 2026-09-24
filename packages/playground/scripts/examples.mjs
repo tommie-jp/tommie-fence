@@ -21,6 +21,7 @@ const PACKAGE_OF = {
   circuit: 'circuit-fence',
   breadboard: 'breadboard-fence',
   perfboard: 'perfboard-fence',
+  copper: 'copper-fence',
 };
 
 /** この数を下回ったら、集めるところが壊れたと見なして止める。 */

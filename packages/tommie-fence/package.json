@@ -2,7 +2,7 @@
   "name": "tommie-fence",
   "displayName": "tommie-fence",
   "description": "%description%",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "private": true,
   "type": "module",
   "publisher": "tommie",
@@ -48,6 +48,7 @@
     "@vscode/vsce": "^3.9.2",
     "breadboard-fence": "*",
     "circuit-fence": "*",
+    "copper-fence": "*",
     "esbuild": "^0.28.2",
     "fence-kit": "*",
     "markdown-it": "^15.0.0",
@@ -73,6 +74,7 @@
       "./media/circuit.css",
       "./media/breadboard.css",
       "./media/perfboard.css",
+      "./media/copper.css",
       "./node_modules/node-tikzjax/css/fonts.css"
     ],
     "grammars": [
@@ -99,6 +101,16 @@
       {
         "scopeName": "markdown.perfboard.codeblock",
         "path": "./syntaxes/perfboard-injection.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml"
+        }
+      },
+      {
+        "scopeName": "markdown.copper.codeblock",
+        "path": "./syntaxes/copper-injection.json",
         "injectTo": [
           "text.html.markdown"
         ],

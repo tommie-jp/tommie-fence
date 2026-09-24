@@ -1,5 +1,6 @@
 import { renderBreadboard, errorText as breadboardErrorText } from 'breadboard-fence/src/core';
 import { renderPerfboard, errorText as perfboardErrorText } from 'perfboard-fence/src/core';
+import { renderCopper, errorText as copperErrorText } from 'copper-fence/src/core';
 import { compileCircuit, errorLine, snippetLines } from 'circuit-fence/src/core';
 import type { FenceError } from 'circuit-fence/src/core';
 import type { Kind } from './kinds.ts';
@@ -63,8 +64,8 @@ export function render(kind: Kind, source: string): Output {
   if (kind === 'circuit') return renderCircuit(source);
 
   const { svg, netlist, errors, notices } =
-    kind === 'breadboard' ? renderBreadboard(source) : renderPerfboard(source);
-  const text = kind === 'breadboard' ? breadboardErrorText : perfboardErrorText;
+    kind === 'breadboard' ? renderBreadboard(source) : kind === 'copper' ? renderCopper(source) : renderPerfboard(source);
+  const text = kind === 'breadboard' ? breadboardErrorText : kind === 'copper' ? copperErrorText : perfboardErrorText;
   return {
     svg,
     tex: null,

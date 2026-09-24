@@ -5,7 +5,7 @@
  * 例の読み込み (`examples.ts`) もこれを要るが、3 つの描画コア
  * (`fences.ts` が束ねる) までは要らないため。
  */
-export const KINDS = ['circuit', 'breadboard', 'perfboard'] as const;
+export const KINDS = ['circuit', 'breadboard', 'perfboard', 'copper'] as const;
 
 export type Kind = (typeof KINDS)[number];
 
@@ -55,6 +55,7 @@ export const KIND_LABEL: Readonly<Record<Kind, string>> = {
   circuit: 'circuit',
   breadboard: 'breadboard',
   perfboard: 'perfboard',
+  copper: 'copper',
 };
 
 /**
@@ -65,4 +66,5 @@ export const KIND_READING: Readonly<Record<Kind, string>> = {
   circuit: '回路図',
   breadboard: 'ブレッドボード図',
   perfboard: '基板図',
+  copper: '銅張り基板図',
 };

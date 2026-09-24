@@ -65,6 +65,13 @@ jobs:
             build: true
             docs: true
             generated: "'packages/perfboard-fence/examples/out/*.svg' 'packages/perfboard-fence/docs/out/*.svg'"
+          # copper-fence: SVG は決まる (perfboard と同じ)。docs にも図がある。
+          - pkg: copper-fence
+            pack: true
+            packed: "package/dist/core.mjs package/dist/core.cjs package/dist/types/index.d.ts"
+            build: true
+            docs: true
+            generated: "'packages/copper-fence/examples/out/*.svg' 'packages/copper-fence/docs/out/*.svg'"
     name: check (${{ matrix.pkg }})
     steps:
       - uses: actions/checkout@v7

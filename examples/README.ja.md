@@ -9,6 +9,7 @@
 | circuit | 回路 15 本 + わざと壊した例 5 本 | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 回路 13 本 + わざと壊した例 2 本 | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
 | perfboard | 回路 8 本 + わざと壊した例 1 本 | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) |
+| copper | 治具 9 本 + わざと壊した例 1 本 | [packages/copper-fence/examples/](../packages/copper-fence/examples/README.md) |
 
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。
@@ -139,6 +140,32 @@ DIP は 1 番ピンだけ書けば足が並ぶ。トランジスタは穴を 3 �
 - [04-points.md](../packages/perfboard-fence/examples/04-points.md) — 穴に名前を付ける (`points:`)
 - [08-notes.md](../packages/perfboard-fence/examples/08-notes.md) — 注釈 (`notes:`) と、テーマ・幅 (`style:`)
 - [errors/](../packages/perfboard-fence/examples/errors/) — わざと読めなく書いたもの
+
+## copper — 銅張り基板
+
+位置は mm、線路は幅つき、字にはどの線路にも Z0。NanoVNA の GHz の治具
+(マイクロストリップ・コプレーナ・Manhattan の島) のための図。
+
+### 50Ω のスルー線路
+
+[![50Ω のスルー線路](../packages/copper-fence/examples/out/00-through.png)](../packages/copper-fence/examples/00-through.md)
+
+いちばん小さな治具。FR4 1.6mm に幅 3.06mm の線路と、端面 SMA を 2 つ
+([00-through.md](../packages/copper-fence/examples/00-through.md))。
+
+### ヘアピン BPF
+
+[![ヘアピン BPF](../packages/copper-fence/examples/out/05-coupled.png)](../packages/copper-fence/examples/05-coupled.md)
+
+結合線路の隙間は書かずに測って出す
+([05-coupled.md](../packages/copper-fence/examples/05-coupled.md))。
+
+### そのほか
+
+- [03-parts.md](../packages/copper-fence/examples/03-parts.md) — 線路を切る直列のチップ、シャント、SOT-89 の MMIC
+- [04-manhattan.md](../packages/copper-fence/examples/04-manhattan.md) — 表が地の板に Manhattan の島
+- [06-ground.md](../packages/copper-fence/examples/06-ground.md) — via・切り欠き・パッチアンテナ
+- [08-check.md](../packages/copper-fence/examples/08-check.md) — ERC が言うこと
 
 ## なぜ実体をここに置かないか
 

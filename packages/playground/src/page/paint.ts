@@ -11,7 +11,7 @@ import { reason } from './log.ts';
  */
 
 /** フェンスの無い文書に出す断り。 */
-const NO_FENCE = 'この文書に circuit / breadboard / perfboard のフェンスがありません';
+const NO_FENCE = 'この文書に circuit / breadboard / perfboard / copper のフェンスがありません';
 
 /**
  * 図の上に出す一言 (circuit の描画の進み具合と、描けなかった理由)。

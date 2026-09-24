@@ -2,6 +2,7 @@ import type { MarkdownIt } from 'markdown-it';
 import { circuitPlugin } from 'circuit-fence/plugin';
 import { breadboardPlugin } from 'breadboard-fence/plugin';
 import { perfboardPlugin } from 'perfboard-fence/plugin';
+import { copperPlugin } from 'copper-fence/plugin';
 import type { FigureSource } from 'circuit-fence/plugin';
 
 /**
@@ -11,4 +12,4 @@ import type { FigureSource } from 'circuit-fence/plugin';
  * 描く順は関係ない (それぞれ自分の言語のフェンスしか触らない)。
  */
 export const allPlugins = (figures: FigureSource) => (md: MarkdownIt): MarkdownIt =>
-  md.use(circuitPlugin(figures)).use(breadboardPlugin).use(perfboardPlugin);
+  md.use(circuitPlugin(figures)).use(breadboardPlugin).use(perfboardPlugin).use(copperPlugin);

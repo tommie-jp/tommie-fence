@@ -86,6 +86,8 @@ const NUDGES: Record<Kind, readonly Nudge[]> = {
       said: 'LED を青にした',
     },
   ],
+  // copper には LED と抵抗の例が無い (銅張り基板の図は RF の治具)。釦は出さない。
+  copper: [],
 };
 
 /** その種類・その例に添える釦。**題で引く** — 別の例を選んだら空。 */

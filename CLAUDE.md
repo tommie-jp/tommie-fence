@@ -22,7 +22,11 @@
   全穴が独立しているので、breadboard の `board` / `layout` / `place` /
   `router` はそのままでは使えない。**実測すると土台に
   なるのは盤面モデルではなく描画層のほう** (52 の docs/05)
-- `packages/tommie-fence` — **VS Code に出るのはこれだけ。** 3 つのフェンスを
+- `packages/copper-fence` — ` ```copper ` フェンス。銅張り基板の寸法図
+  (マイクロストリップ・CPW・Manhattan の島)。**番地が穴ではなく mm** で、導通は
+  銅の形そのもの (触れ合う形は 1 つのネット)。線路の Z0 を図に出す。面実装の
+  寸法は fence-kit の表 (mm) をそのまま使う (52 の docs/73・74)
+- `packages/tommie-fence` — **VS Code に出るのはこれだけ。** 4 つのフェンスを
   1 つの拡張に畳んだもの (52 の docs/19)。中身は入口だけで、図を描くのは
   上の 3 つのコア。**3 つは拡張ではなくライブラリ + CLI**になった
 - `packages/playground` — 3 つのフェンスをブラウザだけで試す静的なページ

@@ -7,13 +7,14 @@
 > お試しできます。
 
 電子工作の図を描く Markdown フェンス言語のファミリーを、1 つのモノレポで育てる:
-回路図、ブレッドボード、ユニバーサル基板。
+回路図、ブレッドボード、ユニバーサル基板、銅張り基板。
 
 | パッケージ | フェンス | 描くもの |
 | --- | --- | --- |
 | circuit-fence | ` ```circuit ` | 回路図 — 部品を番地で置き、ネットリストを導出する |
 | breadboard-fence | ` ```breadboard ` | ブレッドボード実体配線図 — ボード内部の導通からネットリストを導出する |
 | perfboard-fence | ` ```perfboard ` | ユニバーサル基板の配線図 — 全穴が独立していて、導通は配線でしか生まれない |
+| copper-fence | ` ```copper ` | 銅張り基板の寸法図 — 位置は mm、導通は銅の形そのもの。線路の Z0 を図に出す |
 
 言語は別、作法は同じ: YAML をホストにしたフェンス、番地で書く位置、
 Markdown の行番号とその行の中身で返るエラー。
@@ -23,7 +24,7 @@ Markdown の行番号とその行の中身で返るエラー。
 **[playground を開く](https://tommie-jp.github.io/tommie-fence/)** —
 アカウントも登録も要らない。**`.md` を開いて、中のフェンスを直して、
 `.md` に書き戻す** — 拡張がしていることと同じ手順を、ブラウザだけでなぞる。
-**3 つとも描ける** — 回路図も、TeX を WebAssembly で走らせて同じ図を出す
+**4 つとも描ける** — 回路図も、TeX を WebAssembly で走らせて同じ図を出す
 (資材を落とすのは circuit を初めて描くときだけ)。**開くと、図を掴んで
 動かすマップが出ている** — 部品をドラッグするとフェンスの番地が書き換わる、
 拡張と同じものが動く。`.md` の字と描いた図は「Markdown」の窓で見る。例は各パッケージの `examples/` の `.md` がそのまま 47 本。
@@ -31,7 +32,7 @@ Markdown の行番号とその行の中身で返るエラー。
 
 [![Codespaces で開く](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
 
-**3 つとも本物で動かすなら Codespaces。** ブラウザの中に VS Code が立ち上がり、
+**4 つとも本物で動かすなら Codespaces。** ブラウザの中に VS Code が立ち上がり、
 拡張が入った状態で [examples/try-me.md](examples/try-me.ja.md) が開く。
 プレビュー (`Ctrl+Shift+V`) でフェンスが図になり、`.md` のタブそのものを
 図のエディタにもできる。GitHub のアカウントが要る (無料枠は月 120 コア時間)。
@@ -52,11 +53,11 @@ Markdown の行番号とその行の中身で返るエラー。
 (`breadboard-fence-v0.4.0` / `circuit-fence-v0.3.1`)。archive したリポジトリに
 残るのは `v0.3.0` までで、それ以降は
 [Releases](https://github.com/tommie-jp/tommie-fence/releases) にある。
-**拡張には `.vsix`、3 つのライブラリには `npm pack` の tarball** が
+**拡張には `.vsix`、4 つのライブラリには `npm pack` の tarball** が
 `SHA256SUMS` つきで付く。npm レジストリには出していないので、
 別のアプリから使うときはこの tarball を落として `file:` で指す。
 
-4 つのパッケージは npm workspaces でリポジトリ直下からビルド・テスト・
+パッケージは npm workspaces でリポジトリ直下からビルド・テスト・
 パッケージできる。
 
 ```text
@@ -65,8 +66,9 @@ tommie-fence
 ├── packages/circuit-fence     ライブラリ + CLI
 ├── packages/breadboard-fence  ライブラリ + CLI
 ├── packages/perfboard-fence   ライブラリ + CLI
-├── packages/tommie-fence      VS Code 拡張。3 つを 1 つに畳んだもの
-└── packages/playground        3 つをブラウザで試す 1 枚の頁 (拡張ではない)
+├── packages/copper-fence      ライブラリ + CLI
+├── packages/tommie-fence      VS Code 拡張。4 つを 1 つに畳んだもの
+└── packages/playground        4 つをブラウザで試す 1 枚の頁 (拡張ではない)
 ```
 
 `fence-kit` に入れるのは、**実際に重複してから引き上げたものだけ**。
@@ -88,6 +90,7 @@ tommie-fence
 | --- | --- | --- | --- |
 | circuit-fence | [docs/01-syntax.md](packages/circuit-fence/docs/01-syntax.md) | [docs/02-cheatsheet.md](packages/circuit-fence/docs/02-cheatsheet.md) | [examples/](packages/circuit-fence/examples/) — 回路 15 本、エラー例 5 本 |
 | breadboard-fence | [docs/01-syntax.md](packages/breadboard-fence/docs/01-syntax.md) | [docs/02-cheatsheet.md](packages/breadboard-fence/docs/02-cheatsheet.md) | [examples/](packages/breadboard-fence/examples/) — 回路 13 本、エラー例 2 本 |
+| copper-fence | [docs/01-syntax.md](packages/copper-fence/docs/01-syntax.md) | — | [examples/](packages/copper-fence/examples/) — 治具 9 本、エラー例 1 本 |
 
 例はどのフェンスの直後にも**そのフェンスを描いた図** (`examples/out/`) を貼って
 あるので、Markdown プレビューで開くとそのまま読み物になる。作り直しは

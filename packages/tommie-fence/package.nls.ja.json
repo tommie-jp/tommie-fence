@@ -1,5 +1,5 @@
 {
-  "description": "circuit / breadboard / perfboard の 3 つのフェンスを 1 つの拡張で",
+  "description": "circuit / breadboard / perfboard / copper の 4 つのフェンスを 1 つの拡張で",
   "command.openMap": "図を掴んで動かす (Fence Editor)",
   "command.movePart": "circuit の部品を番地で動かす",
   "command.movePoint": "circuit の節点を番地で動かす",

@@ -2,7 +2,7 @@
 
 [English](try-me.md) | [日本語](try-me.ja.md)
 
-フェンスを 3 つ、パッケージごとに 1 つずつ置いてあります。
+フェンスを 4 つ、パッケージごとに 1 つずつ置いてあります。
 **Markdown プレビューを開くと図になります**: `Ctrl+Shift+V`
 (macOS は `Cmd+Shift+V`)、またはこのタブの右上にある分割プレビューのボタン。
 
@@ -73,6 +73,23 @@ style:
 部品を番地に置き、配線を `--` で引きます。ネットリストは図から導けるので、
 `IN` `OUT` `GND` は書かなくても出てきます。
 
+## copper — 銅張り基板を切って作る治具
+
+```copper
+board: 40x20mm
+title: 50Ω のスルー線路
+f: 2.4G
+copper:
+  L1: line 0,10 40,10 3.06
+parts:
+  J1: sma left 10 CH0
+  J2: sma right 10 CH1
+  C1: capacitor/1608 20,10 10p
+```
+
+位置は板の左上からの mm です。線路の字に幅・**Z0**・電気長が出ます。
+線路の上に置いたチップは**線路を切ります**。
+
 ## 打たずに掴んで動かす
 
 どのフェンスもマウスで編集できます。このタブの右上の基板の絵の釦を押すと
@@ -80,7 +97,7 @@ style:
 (Fence Editor)」** でも同じ。英語の画面では「Open the Fence Editor」)、
 カーソルのあるフェンスのマップが横に開きます。
 または `Ctrl+Shift+P` →**「View: Reopen Editor With...」**→
-**Fence Editor** で、このタブ自体をマップにできます。3 つのフェンスを
+**Fence Editor** で、このタブ自体をマップにできます。4 つのフェンスを
 1 つのエディタで扱います。
 
 マップは図ではなく**掴むための層**です。部品を動かすとフェンスの番地が
@@ -91,4 +108,5 @@ style:
 - [examples/](README.ja.md) — フェンスと、それが描く図を並べた索引
 - [circuit の文法](../packages/circuit-fence/docs/01-syntax.md) ·
   [breadboard の文法](../packages/breadboard-fence/docs/01-syntax.md) ·
-  [perfboard の文法](../packages/perfboard-fence/docs/01-syntax.md)
+  [perfboard の文法](../packages/perfboard-fence/docs/01-syntax.md) ·
+  [copper の文法](../packages/copper-fence/docs/01-syntax.md)

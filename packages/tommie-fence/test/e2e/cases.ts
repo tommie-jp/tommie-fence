@@ -105,7 +105,7 @@ const opensPanelFromOutside: Case = {
   },
 };
 
-/** プレビューの markdown-it に 3 つとも載っている (板は SVG を自分で組むので待たずに出る)。 */
+/** プレビューの markdown-it に 4 つとも載っている (板は SVG を自分で組むので待たずに出る)。 */
 const rendersPreview: Case = {
   name: 'renders the fences through the markdown preview engine',
   run: async () => {
@@ -114,6 +114,7 @@ const rendersPreview: Case = {
     expectThat(typeof html === 'string', 'markdown.api.render が字を返しません');
     expectThat(html.includes('data-breadboard-fence'), 'breadboard の図が組まれていません');
     expectThat(html.includes('data-perfboard-fence'), 'perfboard の図が組まれていません');
+    expectThat(html.includes('data-copper-fence'), 'copper の図が組まれていません');
   },
 };
 

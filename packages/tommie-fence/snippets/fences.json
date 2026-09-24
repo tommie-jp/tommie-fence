@@ -54,5 +54,20 @@
       "  - f11 -- GND$0",
       "```"
     ]
+  },
+  "copper fence": {
+    "prefix": ["copper"],
+    "description": "Copper-clad board — a copper fence to start from (銅張り基板・マイクロストリップのフェンス)",
+    "body": [
+      "```copper",
+      "board: 40x20mm",
+      "title: ${1:A 50-ohm through line}",
+      "copper:",
+      "  L1: line 0,10 40,10 3.06",
+      "parts:",
+      "  J1: sma left 10",
+      "  J2: sma right 10$0",
+      "```"
+    ]
   }
 }

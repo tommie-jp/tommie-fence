@@ -22,7 +22,7 @@ import { join } from 'node:path';
 const SITE = 'https://tommie-jp.github.io/tommie-fence/';
 
 /** 種類のディレクトリ名。**綴りは短いほう** (52 の docs/08 に揃える)。 */
-const DIRECTORY = { circuit: 'circuit', breadboard: 'bread', perfboard: 'perf' };
+const DIRECTORY = { circuit: 'circuit', breadboard: 'bread', perfboard: 'perf', copper: 'copper' };
 
 /** `01-led.md` → `01-led`。 */
 const stemOf = (name) => name.replace(/\.[^.]+$/, '');

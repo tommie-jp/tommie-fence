@@ -3,6 +3,17 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.11.0] - 2026-09-24
+
+copper-fence 0.1.0 を束ねた。**4 つ目のフェンス ` ```copper `** — 銅張り基板の寸法図。
+
+### Added
+
+- **copper: 銅張り基板のマイクロストリップ・CPW・Manhattan の島** — 位置は mm の
+  `x,y`、線路の字に幅・Z0・電気長、線路の上のチップは線路を切る、端面 SMA、
+  ネットリストと ERC。プレビュー・文法の色分け・スニペット (`copper`)・Problems
+  パネル・マップのエディタ (1mm の升、線路を引くと 50Ω の幅) まで、他の 3 つと同じ。
+
 ## [0.10.1] - 2026-09-24
 
 breadboard-fence 0.12.1 と perfboard-fence 0.10.1 を束ねた。

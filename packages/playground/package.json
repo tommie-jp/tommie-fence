@@ -23,6 +23,7 @@
     "@vitest/coverage-v8": "^4.1.11",
     "breadboard-fence": "*",
     "circuit-fence": "*",
+    "copper-fence": "*",
     "esbuild": "^0.28.2",
     "node-tikzjax": "^1.0.5",
     "perfboard-fence": "*",

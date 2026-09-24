@@ -2,7 +2,7 @@
 
 [English](try-me.md) | [日本語](try-me.ja.md)
 
-Three fences, one per package. **Open the Markdown preview to see them drawn**:
+Four fences, one per package. **Open the Markdown preview to see them drawn**:
 `Ctrl+Shift+V` (`Cmd+Shift+V` on macOS), or the split-preview button at the top
 right of this tab.
 
@@ -75,6 +75,23 @@ style:
 Parts sit at grid addresses and wires are drawn with `--`. The netlist is
 derived, so `IN`, `OUT` and `GND` come out without being written down.
 
+## copper — the same kind of fixture, cut from a copper-clad board
+
+```copper
+board: 40x20mm
+title: A 50-ohm through line
+f: 2.4G
+copper:
+  L1: line 0,10 40,10 3.06
+parts:
+  J1: sma left 10 CH0
+  J2: sma right 10 CH1
+  C1: capacitor/1608 20,10 10p
+```
+
+Positions are millimetres from the top-left corner. The caption of the line gives
+its width, **Z0** and electrical length; the chip placed on the line **cuts it**.
+
 ## Drag the parts instead of typing
 
 Every fence can also be edited with the mouse. Click the circuit-board button at
@@ -82,7 +99,7 @@ the top right of this tab (or run **"tommie-fence: Open the Fence Editor"** from
 the command palette, `Ctrl+Shift+P`) and the map opens beside the text, showing
 the fence under the cursor. Or reopen this file as the map itself:
 `Ctrl+Shift+P` → **"View: Reopen Editor With..."** → **Fence Editor**. One editor
-handles all three fences.
+handles all four fences.
 
 The map is a grab layer, not the drawing. Dragging a part rewrites the address
 in the fence, so the text stays the source of truth.
@@ -92,4 +109,5 @@ in the fence, so the text stays the source of truth.
 - [examples/](README.md) — every fence next to the drawing it produces
 - [circuit syntax](../packages/circuit-fence/docs/01-syntax.md) ·
   [breadboard syntax](../packages/breadboard-fence/docs/01-syntax.md) ·
-  [perfboard syntax](../packages/perfboard-fence/docs/01-syntax.md)
+  [perfboard syntax](../packages/perfboard-fence/docs/01-syntax.md) ·
+  [copper syntax](../packages/copper-fence/docs/01-syntax.md)

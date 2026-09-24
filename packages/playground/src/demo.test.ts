@@ -6,6 +6,13 @@ import { fencesIn } from './document.ts';
 import { KINDS } from './kinds.ts';
 import type { Kind } from './kinds.ts';
 
+/**
+ * **同じ回路 (LED と抵抗) を描いた種類。** copper は銅張り基板 (RF の治具) の図で、
+ * LED と抵抗の例を持たないので釦も無い。
+ */
+type DemoKind = Exclude<Kind, 'copper'>;
+const DEMO_KINDS = KINDS.filter((kind): kind is DemoKind => kind !== 'copper');
+
 const one = { label: '抵抗を 1k に', find: 'a5 a10 330', replace: 'a5 a10 1k', said: '変えた' };
 
 describe('nudge', () => {
@@ -45,8 +52,9 @@ describe('nudgesFor', () => {
     expect(nudgesFor('breadboard', '図02 テーマ')).toEqual([]);
   });
 
-  test('3 つの種類すべてに釦がある', () => {
-    for (const kind of KINDS) expect(nudgesFor(kind, DEMO_TITLE).length).toBe(2);
+  test('LED と抵抗の例を持つ 3 つには釦があり、copper には無い', () => {
+    for (const kind of DEMO_KINDS) expect(nudgesFor(kind, DEMO_TITLE).length).toBe(2);
+    expect(nudgesFor('copper', DEMO_TITLE)).toEqual([]);
   });
 });
 
@@ -56,21 +64,21 @@ describe('nudgesFor', () => {
  * 例の本文をここで読んで、どの釦もちょうど 1 か所に当たることを確かめる。
  */
 describe('釦とデモの例', () => {
-  const EXAMPLES: Record<Kind, string> = {
+  const EXAMPLES: Record<DemoKind, string> = {
     circuit: 'circuit-fence/examples/00-led.md',
     breadboard: 'breadboard-fence/examples/01-led.md',
     perfboard: 'perfboard-fence/examples/00-led.md',
   };
 
   /** **頁と同じ数え方で取り出す** (`fencesIn`)。別々に数えると食い違う。 */
-  const fenceOf = (kind: Kind): string => {
+  const fenceOf = (kind: DemoKind): string => {
     const body = readFileSync(join(import.meta.dirname, '../..', EXAMPLES[kind]), 'utf8');
     const found = fencesIn(body)[0];
     if (found === undefined) throw new Error(`${EXAMPLES[kind]} にフェンスがありません`);
     return found.source;
   };
 
-  for (const kind of KINDS) {
+  for (const kind of DEMO_KINDS) {
     test(`${kind} の例は「${DEMO_TITLE}」で、どの釦も 1 か所に当たる`, () => {
       const source = fenceOf(kind);
 

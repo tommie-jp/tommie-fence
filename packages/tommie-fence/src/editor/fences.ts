@@ -1,6 +1,7 @@
 import { createCircuitEditor } from 'circuit-fence/editor';
 import { createBreadboardEditor } from 'breadboard-fence/editor';
 import { createPerfboardEditor } from 'perfboard-fence/editor';
+import { createCopperEditor } from 'copper-fence/editor';
 import type { FenceEditor } from 'fence-kit';
 import { mapLook } from './mapLook.ts';
 
@@ -15,4 +16,5 @@ export const fenceEditors = (): readonly FenceEditor[] => [
   createCircuitEditor(mapLook),
   createBreadboardEditor(),
   createPerfboardEditor(),
+  createCopperEditor(),
 ];

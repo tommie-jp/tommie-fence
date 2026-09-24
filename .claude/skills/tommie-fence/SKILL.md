@@ -1,6 +1,6 @@
 ---
 name: tommie-fence
-description: Markdown の ```circuit / ```breadboard / ```perfboard フェンス (回路図・ブレッドボードの実体配線図・ユニバーサル基板の実体配線図) を書く・直す・読むときに使う。文法リファレンスの所在、CLI の check で読めたか・つながったかを確かめる手順、図を PNG に焼いて目で確かめる手順、3 つのフェンスで取り違えやすい書き方をまとめてある。Use when writing or fixing circuit schematics, breadboard diagrams, or perfboard layouts in these Markdown fences.
+description: Markdown の ```circuit / ```breadboard / ```perfboard / ```copper フェンス (回路図・ブレッドボードの実体配線図・ユニバーサル基板の実体配線図・銅張り基板のマイクロストリップの寸法図) を書く・直す・読むときに使う。文法リファレンスの所在、CLI の check で読めたか・つながったかを確かめる手順、図を PNG に焼いて目で確かめる手順、フェンスどうしで取り違えやすい書き方をまとめてある。Use when writing or fixing circuit schematics, breadboard diagrams, perfboard layouts, or copper-clad board (microstrip) drawings in these Markdown fences.
 ---
 
 # tommie-fence のフェンスを書く
@@ -14,8 +14,9 @@ description: Markdown の ```circuit / ```breadboard / ```perfboard フェンス
 | 回路図 | ` ```circuit ` | `packages/circuit-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/circuit-fence/examples/*.md` |
 | ブレッドボードの実体配線図 | ` ```breadboard ` | `packages/breadboard-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/breadboard-fence/examples/*.md` |
 | ユニバーサル基板の実体配線図 | ` ```perfboard ` | `packages/perfboard-fence/docs/01-syntax.md` (早見表は無い。目次から要る節だけ) | `packages/perfboard-fence/examples/*.md` |
+| 銅張り基板 (マイクロストリップ・CPW・Manhattan の島) の寸法図 | ` ```copper ` | `packages/copper-fence/docs/01-syntax.md` (早見表は無い) | `packages/copper-fence/examples/*.md` |
 
-**書く前に文法を読む。** 3 つは似ているが同じではない (§4)。
+**書く前に文法を読む。** 4 つは似ているが同じではない (§4)。
 記憶や別のフェンスの感覚で書かない。例の中から近いものを写して直すのが早い。
 
 ## 2. 書いたら check
@@ -25,7 +26,7 @@ node <root>/packages/<x>-fence/dist/cli.cjs check <file.md> 2>&1
 ```
 
 - 見出しとネットリストは標準出力、読めなかった行・お知らせ・ERC は標準エラー
-  (3 つとも同じ)。まとめて読むので `2>&1` を付ける
+  (4 つとも同じ)。まとめて読むので `2>&1` を付ける
 - 読めなかった行は、行番号・その行・綴りを指す `^` つきで出る。
   1 つでもあれば終了コードは 0 以外
 - ネットリスト (どの足がどのネットか) は標準出力。**意図した回路と突き合わせる**
@@ -71,9 +72,20 @@ node <root>/packages/circuit-fence/scripts/figures.mjs <file.md> <tmp>
 | 面実装 | 無い。記号はパッケージに依らず、型番 1 語だけ書ける (`Q1: npn b3 2SC2712`)。`npn/sot346` も `2SC2712 S-Mini` も読めない | 変換基板に載せた姿だけ (`transistor/sot346-dip f3 f4 f5`、`dip8/sop @ e5`)。直付けの `transistor/sot346` は書き直し先を添えて断られる | 変換基板 (`-dip`、`dip8/sop b7`) と直付け (`transistor/sot346 d2 d3 c3` は三角、`resistor/2012 f2 f3` は隣の穴)。S-Mini は `sot346` |
 | 板の外の機器 | `type: device` + `at: 番地` + `pins: [名前, …]` (**箱の片側に足**。`label` は箱の中の名前、`turn: mirror` で足が右)。1 行では書けない | `type: device` + `at: top` / `bottom` (帯に並ぶ) | `at: top` / `bottom` か番地。**番地は箱の左上**で、板の上なら `-b` 行より上 (`-a` や `0` は箱が板に被り、お知らせが出る) |
 
-3 つに共通:
+copper (銅張り基板) は**位置が穴ではなく mm** で、上の表の書き方はほぼ当てはまらない:
 
-- **フェンス名は `circuit` / `breadboard` / `perfboard` の 3 つだけ。**
+| | copper |
+| --- | --- |
+| 番地 | **mm の `x,y`** (板の左上から。`20,10`)。小数は 2 桁まで (`0,10.125` は読めない) |
+| `board:` | 省くと 40×20mm・h 1.6・εr 4.4・裏ベタで描く (お知らせが出る)。**大きさに単位が要る** (`40x20mm`。`40x20` は断られる)。マップ形式 (`size:` の並び) で `h` `er` `ground` `cut` も書ける |
+| 銅 | `copper:` に `L1: line 0,10 40,10 3.06` (点を並べて最後に幅)。**縦横だけ**。`pad` `via` `slot` も |
+| 部品 | 端面 SMA は `sma left 10` (辺と位置。`sma/female` は断られる)、面実装は中心の点 (`capacitor/1608 20,10`)、足のある部品は端 2 つ (島の名前か点) |
+| 印の注釈 | `mark 点` (部品名は指せない)。寸法線 `dim 点 点` がある |
+| ERC | `check` と `render` の両方に出る。**銅に乗っていない足**が多い — 線路の上に置いた 2 本足のチップは線路を切るので、シャントは `r90` で直角に置く |
+
+4 つに共通:
+
+- **フェンス名は `circuit` / `breadboard` / `perfboard` / `copper` の 4 つだけ。**
   `bread` や `perf` と書くと、プレビューでは灰色のコードブロック、CLI では黙って素通りする
 - **`text` の字は `:` の後ろ**: `- text c3 red: ここから電源`。
   番地の後ろに引用で字を書く (`- text c3 "R1: 抵抗"`) と、字の頭が色や向きの語として読まれて通らない。

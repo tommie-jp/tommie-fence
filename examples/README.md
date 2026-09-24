@@ -10,6 +10,7 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | circuit | 15 circuits + 5 deliberately broken | [packages/circuit-fence/examples/](../packages/circuit-fence/examples/README.md) |
 | breadboard | 13 circuits + 2 deliberately broken | [packages/breadboard-fence/examples/](../packages/breadboard-fence/examples/README.md) |
 | perfboard | 8 circuits + 1 deliberately broken | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) |
+| copper | 9 fixtures + 1 deliberately broken | [packages/copper-fence/examples/](../packages/copper-fence/examples/README.md) |
 
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for
@@ -145,6 +146,33 @@ line it was written on
 - [04-points.md](../packages/perfboard-fence/examples/04-points.md) — naming holes (`points:`)
 - [08-notes.md](../packages/perfboard-fence/examples/08-notes.md) — annotations (`notes:`), themes and width (`style:`)
 - [errors/](../packages/perfboard-fence/examples/errors/) — fences written wrong on purpose
+
+## copper — copper-clad boards
+
+Positions in millimetres, lines with a width, and the Z0 of every line in its
+caption. For the GHz fixtures of a NanoVNA: microstrip, coplanar lines and
+Manhattan islands.
+
+### A 50-ohm through line
+
+[![A 50-ohm through line](../packages/copper-fence/examples/out/00-through.png)](../packages/copper-fence/examples/00-through.md)
+
+The smallest fixture: a 3.06 mm line on 1.6 mm FR4 between two edge-mount SMAs
+([00-through.md](../packages/copper-fence/examples/00-through.md)).
+
+### A hairpin band-pass filter
+
+[![A hairpin band-pass filter](../packages/copper-fence/examples/out/05-coupled.png)](../packages/copper-fence/examples/05-coupled.md)
+
+The gaps between coupled lines are measured, not written
+([05-coupled.md](../packages/copper-fence/examples/05-coupled.md)).
+
+### More
+
+- [03-parts.md](../packages/copper-fence/examples/03-parts.md) — a series chip that cuts the line, a shunt chip, a SOT-89 MMIC
+- [04-manhattan.md](../packages/copper-fence/examples/04-manhattan.md) — Manhattan islands on a board whose front is ground
+- [06-ground.md](../packages/copper-fence/examples/06-ground.md) — vias, slots and a patch antenna
+- [08-check.md](../packages/copper-fence/examples/08-check.md) — what the ERC says
 
 ## Why the files are not kept here
 

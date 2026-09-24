@@ -3,6 +3,7 @@ import type { FenceEditor, Incoming, Outgoing, Session } from 'fence-kit';
 import { createBreadboardEditor } from 'breadboard-fence/editor';
 import { createPerfboardEditor } from 'perfboard-fence/editor';
 import { createCircuitEditor } from 'circuit-fence/editor';
+import { createCopperEditor } from 'copper-fence/editor';
 import { createMapSession } from './host.ts';
 import { KINDS } from '../kinds.ts';
 import type { Kind } from '../kinds.ts';
@@ -17,6 +18,7 @@ const EDITORS: Readonly<Record<Kind, () => FenceEditor>> = {
   breadboard: createBreadboardEditor,
   perfboard: createPerfboardEditor,
   circuit: createCircuitEditor,
+  copper: createCopperEditor,
 };
 
 export type MapHandle = {
