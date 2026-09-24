@@ -14,6 +14,12 @@
   (`european resistors, cute inductors, european voltages, european currents,
   american ports`) で渡し、束の `european` には委ねない。
 
+### Changed
+
+- **電流の矢 (`i=`) を大きくした。** circuitikz の既定 (記号の長さ / 16) は 0.75 mm で、
+  0.8pt の線だと矢の形が潰れて見えなかった。記号の長さ / 6 (約 2 mm、字の高さの 6 割ほど)
+  にし、電流を描いた図にだけ `current arrow scale` を書く。
+
 ## [0.10.0] - 2026-09-24
 
 ### Added

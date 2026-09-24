@@ -64,6 +64,13 @@ const DEFAULT_WIRE_WIDTH = 0.8;
 const DEFAULT_STANDARD: Standard = 'american';
 
 /**
+ * 電流の矢の大きさ (記号の長さをこの数で割った長さ。小さいほど大きい)。circuitikz の
+ * 既定 16 は 1.2 cm の記号で 0.75 mm しかなく、線が 0.8pt あると矢の形が潰れて
+ * 見えない (実機で指摘)。10・8・6 を焼いて比べ、試験の図の矢に近い (字の高さの 6 割ほど) 6 にした。
+ */
+const CURRENT_ARROW_SCALE = 6;
+
+/**
  * 2 端子の記号の長さ (cm)。丸い電源の中身を描くのにも要るので定数にしてある
  * (circuitikz の記号の大きさはこの長さに対する割合で決まる)。
  */
@@ -143,6 +150,7 @@ const headerOf = (
   colors: readonly string[],
   groundWidening: number,
   hasVoltage: boolean,
+  hasCurrent: boolean,
   hasMos: boolean,
   shapes: readonly string[],
 ): string[] => [
@@ -171,6 +179,8 @@ const headerOf = (
   ...(hasVoltage
     ? ['\\ctikzset{voltage/distance from node=.7}', '\\ctikzset{voltage/american label distance=1.4}']
     : []),
+  // 電流の矢を大きくする。**電流を描く図にだけ**書く (約束 6)。
+  ...(hasCurrent ? [`\\ctikzset{current arrow scale=${CURRENT_ARROW_SCALE}}`] : []),
   // MOSFET の簡易記号にソースの矢を付ける。既定では `nmos` と `pmos` の違いが
   // ゲートの丸 1 つしか無く、印刷すると n 形か p 形か読み取れない
   // (実機で「FET に必ず矢印を入れて n・p の区別が付くように」)。
@@ -973,6 +983,7 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
       ? groundScale(style.wireWidth ?? DEFAULT_WIRE_WIDTH)
       : 1,
     circuit.parts.some((part) => part.kind === 'two-terminal' && part.voltage !== null),
+    circuit.parts.some((part) => part.kind === 'two-terminal' && part.current !== null),
     circuit.parts.some((part) => MOS_ARROW_TYPES.has(part.type)),
     sipShapesFor(circuit),
   );

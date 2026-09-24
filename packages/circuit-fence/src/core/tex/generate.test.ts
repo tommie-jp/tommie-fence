@@ -174,6 +174,13 @@ describe('generateTex', () => {
     expect(generate('parts:', '  C1: capacitor a1 c1 v=vC').tex).toContain('voltage/american label distance=1.4');
   });
 
+  // 電流の矢は circuitikz の既定 (記号の長さ / 16) だと 1 mm に満たず、印刷でも画面でも
+  // 見えない (実機で指摘)。**電流を描く図にだけ**大きくする (約束 6)。
+  test('enlarges the current arrow only when a current is drawn', () => {
+    expect(generate('parts:', '  R1: resistor a1 a3 i=i').tex).toContain('\\ctikzset{current arrow scale=');
+    expect(generate('parts:', '  R1: resistor a1 a3').tex).not.toContain('current arrow scale');
+  });
+
   test('turns the MOSFET arrows on, so the figure tells n from p', () => {
     // 実機で「FET に必ず矢印を入れて n・p の区別が付くように」。circuitikz の
     // 既定では nmos と pmos の違いがゲートの丸だけで、印刷すると読み取れない。
