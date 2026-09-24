@@ -1,4 +1,4 @@
-import { fit, num, svgText } from 'fence-kit';
+import { BOLD_FAMILY, fit, num, svgText } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Layout } from '../layout/figure.ts';
 import type { Theme } from './theme.ts';
@@ -14,5 +14,6 @@ export function renderTitle(title: string | null, layout: Layout, theme: Theme):
   const text = fit(clampText(title, LIMITS.titleLength), (layout.width - LEFT * 2) / size);
   return svgText(LEFT, layout.titleBaseline, text, {
     anchor: 'start', fill: theme.palette.caption, 'font-size': num(size), 'font-weight': 600,
+    'font-family': BOLD_FAMILY,
   });
 }

@@ -13,6 +13,14 @@ import type { Attributes } from './markup.ts';
 /** 座標の桁を落として出力を安定させる (同じ入力なら同じ文字列 = プレビューの差分更新が軽い)。 */
 export const num = (value: number): string => String(Math.round(value * 100) / 100);
 
+/**
+ * 太字の字の種類。**欧文のフォントを先に並べる** — `system-ui` だけだと
+ * Windows では日本語の UI フォントの太字が選ばれ、Ω が別の字に化けた
+ * (実機で「図01 50и」)。欧文フォントは Ω と数字を持ち、仮名と漢字は後ろの
+ * 日本語フォントへ 1 字ずつ落ちる。題や見出しなど、太字で Ω を含みうる字に渡す。
+ */
+export const BOLD_FAMILY = "'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', 'Hiragino Sans', 'Yu Gothic UI', 'Noto Sans CJK JP', sans-serif";
+
 /** 既定の字の大きさ (10) に対する縁取りの太さ。字を大きくする側が比例して広げる。 */
 export const TEXT_HALO_WIDTH = 3;
 

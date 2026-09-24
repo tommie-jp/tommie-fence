@@ -1,4 +1,4 @@
-import { element, num, svgText, textWidth } from 'fence-kit';
+import { BOLD_FAMILY, element, num, svgText, textWidth } from 'fence-kit';
 import type { Panel, PanelKind } from '../layout/panels.ts';
 import {
   DIVISIONS, dbAxis, degAxis, fraction, linAxis, logOhmAxis, niceAxis, ohmAxis, swrAxis, tickLabel,
@@ -90,13 +90,13 @@ function heading(input: PanelInput, axis: Axis | null): string {
   const title = panel.kind === 'tdr'
     ? `TDR  帯域通過 · vf ${tdrVf ?? 0.66}`
     : axis === null ? name : `${name}  ${perDivision(panel.kind, axis)}`;
-  const left = svgText(panel.plot.x, y, title, { anchor: 'start', fill: theme.palette.caption, 'font-size': num(size), 'font-weight': 600 });
+  const left = svgText(panel.plot.x, y, title, { anchor: 'start', fill: theme.palette.caption, 'font-size': num(size), 'font-weight': 600, 'font-family': BOLD_FAMILY });
   // **形式が混ざる枠では形式も添える** (R・X・|Z| を重ねた枠が「S11 S11 S11」にならない)。
   const mixed = new Set(panel.traces.map((trace) => trace.spec.format)).size > 1;
   let x = panel.plot.x + panel.plot.width;
   const names = [...panel.traces].reverse().map((trace) => {
     const label = mixed ? `${trace.spec.param} ${FORMAT_NAME[trace.spec.format] ?? ''}` : trace.spec.param;
-    const text = svgText(x, y, label, { anchor: 'end', fill: traceColor(theme, trace.index), 'font-size': num(size), 'font-weight': 600 });
+    const text = svgText(x, y, label, { anchor: 'end', fill: traceColor(theme, trace.index), 'font-size': num(size), 'font-weight': 600, 'font-family': BOLD_FAMILY });
     x -= textWidth(label) * size + size;
     return text;
   });
@@ -129,7 +129,7 @@ function markerGlyph(x: number, y: number, label: string, color: string, theme: 
   const size = theme.metrics.smallSize;
   return element('path', { d: path, fill: color })
     + svgText(x, below ? y + 9 + size * 0.8 : y - 9, label, {
-      fill: color, 'font-size': num(size), 'font-weight': 600, halo: theme.palette.halo, haloWidth: 2.5,
+      fill: color, 'font-size': num(size), 'font-weight': 600, 'font-family': BOLD_FAMILY, halo: theme.palette.halo, haloWidth: 2.5,
     });
 }
 

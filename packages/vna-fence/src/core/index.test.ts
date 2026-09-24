@@ -23,6 +23,13 @@ describe('renderVna', () => {
     expect(result.svg).not.toMatch(/NaN|Infinity/);
   });
 
+  test('bold text lists a Latin font first so Ω is not garbled on Windows', () => {
+    const svg = renderVna(fence(['sweep: 1M-300M', 'title: 図01 (0 Ω のスルー)', 'dut: series R 100', 'traces:', '  - S11 r'])).svg;
+    const bold = svg.match(/<text[^>]*font-weight="600"[^>]*>[^<]*/g) ?? [];
+    expect(bold.find((text) => text.includes('図01'))).toContain("font-family=\"&apos;Segoe UI&apos;");
+    expect(bold.find((text) => text.includes('Ω/目盛'))).toContain("font-family=\"&apos;Segoe UI&apos;");
+  });
+
   test('an empty fence still draws the empty frames', () => {
     const result = renderVna('');
     expect(result.svg).toContain('<svg');

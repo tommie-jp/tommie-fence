@@ -3,6 +3,15 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Fixed
+
+- **題と枠の見出しの Ω が Windows の VS Code で別の字に化けた** (`(0 Ω のスルー)` が
+  `(0 и のスルー)`)。太字の字の種類を `system-ui` だけで指していたため、日本語の UI
+  フォントの太字で描かれていた。太字 (題・枠の見出し・トレースの名前・マーカーの番号) は
+  欧文のフォントを先に並べる (copper-fence 0.1.1 と同じ直し)。
+
 ## [0.1.0] - 2026-09-25
 
 ### Added

@@ -18,7 +18,7 @@ export { stampText } from './stamp.ts';
 export { keptSourceLines } from './sourceListing.ts';
 export type { FenceBlock } from './fences.ts';
 export { escapeMarkup, element } from './markup.ts';
-export { num, svgText, TEXT_HALO_WIDTH } from './svg.ts';
+export { BOLD_FAMILY, num, svgText, TEXT_HALO_WIDTH } from './svg.ts';
 export {
   DEFAULT_TOLERANCE, capacitorCode, inductorCode, parseMicrohenries, parseOhms, parsePicofarads,
   parseResistor, resistorBandColors, resistorBands,
