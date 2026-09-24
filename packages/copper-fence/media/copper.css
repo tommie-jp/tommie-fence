@@ -1,0 +1,45 @@
+/* Markdown プレビューでの図の置き方。
+   拡張が previewStyles を 1 つも contribute しないと、拡張フォルダが webview の
+   localResourceRoots に入らないという事情もあってここに置いている。 */
+
+.copper {
+  margin: 1em 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.copper svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 読めなかったところは図の外に出す。SVG に描き込んでいた頃と違い、
+   字が選べて折り返しも効き、印の桁は等幅の pre がそのまま合わせてくれる。 */
+
+.copper-errors,
+
+
+.copper-error-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.copper-error-item + .copper-error-item {
+  margin-top: 0.5em;
+}
+
+/* お知らせは「読めてはいるが思ったとおりに出ない」もの。
+   読めなかった行と同じ強さで出すと、直すべきものが埋もれる。 */
+
+.copper-notice {
+  opacity: 0.8;
+}
+
+.copper-error-source {
+  font-family: var(--vscode-editor-font-family, ui-monospace, monospace);
+  font-size: 0.9em;
+  margin: 0.2em 0 0;
+  overflow-x: auto;
+  white-space: pre;
+}

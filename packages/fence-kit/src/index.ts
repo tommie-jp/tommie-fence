@@ -52,7 +52,7 @@ export {
   smdSpelling, smdSuggestion, smdTable, withSmdLooks,
 } from './parts/smd.ts';
 export type { SmdLook, SmdMount, SmdSpec } from './parts/smd.ts';
-export { drawDipAdapter, drawDirectSot, smdBodySize, sotMountOf } from './parts/smdDraw.ts';
+export { drawDipAdapter, drawDirectSot, smdBodySize, sotGlyph, sotMountOf } from './parts/smdDraw.ts';
 export type { DipAdapterOptions, DirectSotOptions, SotMount } from './parts/smdDraw.ts';
 export { partIcon } from './parts/icon.ts';
 export type { PackageShape } from './parts/packages.ts';
