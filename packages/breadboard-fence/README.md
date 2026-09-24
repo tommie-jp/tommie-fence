@@ -183,7 +183,7 @@ npm pack   # builds, emits the type definitions, and makes breadboard-fence-<ver
 | Two-lead part | `ID: type hole hole value` | `R1: resistor a5 a10 10k` |
 | Polarity | Tag the hole with a pin name | `D1: led b12(A) b13(K) red` |
 | Three-lead part | One hole per leg | `Q1: transistor h9(B) h10(C) h11(E) 2SC1815` |
-| DIP | Write pin 1's hole; the rest follows | `U1: dip8 @ e5 NJM4556A` |
+| DIP | Write the hole of the body's leftmost column; the rest follows the real top view | `U1: dip8 @ e5 NJM4556A` |
 | Orientation | `r180` on a part placed by one anchor (pin 1 moves to the other end) | `U1: dip8 @ e5 r180` |
 | Off-board device | Map form with `type: device` | see the examples |
 | Wire | `- end -- end [-- end …] [colour]` | `- a10 -- b12 -- b20 red` |
@@ -191,7 +191,7 @@ npm pack   # builds, emits the type definitions, and makes breadboard-fence-<ver
 | Routing hint | A detour in brackets (20 = one hole) | `- j20 -- -b20 black [v-20]` |
 | Parts list | Printed under the drawing by default; write this to drop it | `parts-list: none` |
 | Pushbutton | Four legs across the ravine; write pin 1a's hole | `SW1: button @ e5` |
-| Microcontroller board | Write pin 1's hole; pin names match the silkscreen | `MCU: pico2 @ h5` |
+| Microcontroller board | Write the hole of the board's leftmost column; pin names match the silkscreen | `MCU: pico2 @ h5` |
 | Shorthand | Common types have a short spelling | `R1: r a5 a10 10k` |
 | Title | One line at the top left of the drawing | `title: 図01 LED を点ける` |
 | Note | Marks and text laid over the drawing | `- circle R1` |
@@ -239,7 +239,8 @@ swapping a spelling inside a line.
   named with the smallest free number for its prefix. **Turning (`R`) and
   flipping (`X`) rewrite different things depending on what you grabbed** — a part
   written as a row of holes moves its addresses, while one placed by a single
-  anchor gets its orientation word and its row rewritten
+  anchor gets its orientation word rewritten (a DIP or a board cannot go into the
+  board upside down, so flipping one is refused)
 - **Nothing stops you before the move.** It compares the netlist before and after
   and lists the connections the move broke and the ones it made. Holes in the
   same column are already connected, so sliding within one strip says nothing

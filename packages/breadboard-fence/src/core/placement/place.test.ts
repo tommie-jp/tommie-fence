@@ -31,20 +31,24 @@ const pinMap = (part: { pins: readonly { name: string; address: unknown }[] }) =
   Object.fromEntries(part.pins.map((pin) => [pin.name, pin.address ? formatAddress(pin.address as never) : null]));
 
 describe('placeParts', () => {
-  test('resolves dip8 anchored at e5 to pins straddling the ravine', () => {
+  test('numbers the pins the way the real chip does seen from above: pin 1 bottom left, counter-clockwise', () => {
+    // 切り欠きを左にした DIP を上から見ると、1 番は左下 (f 行)、1〜4 が下の列を右へ、
+    // 5〜8 が上の列を左へ戻る (52 の docs/71)。以前は 1 番が e5 で、実物の鏡像だった。
     const { parts, errors } = placeParts([spec({ id: 'U1', type: 'dip8', holes: holes('e5') })], board);
 
     expect(errors).toEqual([]);
     expect(pinMap(parts[0]!)).toEqual({
-      '1': 'e5', '2': 'e6', '3': 'e7', '4': 'e8',
-      '5': 'f8', '6': 'f7', '7': 'f6', '8': 'f5',
+      '1': 'f5', '2': 'f6', '3': 'f7', '4': 'f8',
+      '5': 'e8', '6': 'e7', '7': 'e6', '8': 'e5',
     });
   });
 
-  test('mirrors the package when it is anchored in the bottom block', () => {
-    const { parts } = placeParts([spec({ id: 'U1', type: 'dip8', holes: holes('f5') })], board);
+  test('places the same chip whichever row of the pair the anchor names', () => {
+    // アンカーは胴の置き場 (左端の列) を決めるだけ。e5 でも f5 でも同じ 8 穴に同じ向きで挿さる。
+    const upper = placeParts([spec({ id: 'U1', type: 'dip8', holes: holes('e5') })], board);
+    const lower = placeParts([spec({ id: 'U1', type: 'dip8', holes: holes('f5') })], board);
 
-    expect(pinMap(parts[0]!)).toMatchObject({ '1': 'f5', '4': 'f8', '5': 'e8', '8': 'e5' });
+    expect(pinMap(lower.parts[0]!)).toEqual(pinMap(upper.parts[0]!));
   });
 
   test('reports a dip anchored in a row that does not touch the ravine', () => {
@@ -281,10 +285,12 @@ describe('placeParts', () => {
     expect(pinMap(parts[0]!)).toMatchObject({ GP0: 'h5', GP15: 'h24', GP16: 'c24', VBUS: 'c5' });
   });
 
-  test('flips the pico when it is anchored in the top block', () => {
+  test('puts the pico the same way when it is anchored in the top block', () => {
+    // USB を左にして上から見ると 1 番 (GP0) は左下 (52 の docs/71)。アンカーは置き場を
+    // 決めるだけなので、c5 に書いても h5 と同じ。以前は GP0 が c5 で、実物の鏡像だった。
     const { parts } = placeParts([spec({ id: 'MCU', type: 'pico2', holes: holes('c5') })], createBoard('full'));
 
-    expect(pinMap(parts[0]!)).toMatchObject({ GP0: 'c5', VBUS: 'h5' });
+    expect(pinMap(parts[0]!)).toMatchObject({ GP0: 'h5', VBUS: 'c5' });
   });
 
   test('labels a board with its product name when the fence does not', () => {
@@ -483,15 +489,16 @@ describe('向き (r180)', () => {
     return pin?.address === null || pin === undefined ? '' : formatAddress(pin.address);
   };
 
-  test('moves pin 1 to the far end of the other row, which no anchor can say', () => {
+  test('moves pin 1 to the top right, the chip turned round with its notch on the right', () => {
     // 溝をまたぐので升は同じ (e/f 行 × 同じ 4 列)。変わるのは**どの升が 1 番か**。
-    // `@ f5` で言えるのは「1 番が f 行の左端」までで、右端は言えない。
+    // 回しても上から見て反時計回りのまま (1 番が右上、1〜4 が上の列を左へ)。
     const { parts } = placeParts([spec({
       id: 'U1', type: 'dip8', holes: [{ addr: 'e5', tag: '1', tagged: true, written: 'e5' }], turn: { rotate: 180, mirror: false },
     })], board);
 
-    expect(at(parts[0]!, '1')).toBe('f8');
-    expect(at(parts[0]!, '5')).toBe('e5');
+    expect(at(parts[0]!, '1')).toBe('e8');
+    expect(at(parts[0]!, '4')).toBe('e5');
+    expect(at(parts[0]!, '5')).toBe('f5');
   });
 
   test('covers exactly the same holes as before, since the part did not move', () => {

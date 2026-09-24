@@ -8,7 +8,6 @@ import type { Address, Board, HoleRow, RailRow } from '../types.ts';
 import { diffAfter } from './diff.ts';
 import { TURN_WORD, isTurned, orientOf } from '../parts/orient.ts';
 import { lookupFootprint } from '../placement/footprints.ts';
-import { acrossGap } from '../placement/place.ts';
 import { isLocated, locatePart } from './move.ts';
 import type { Located, MoveResult } from './move.ts';
 import { locateTokens } from './shared.ts';
@@ -188,45 +187,16 @@ function turnByWord(source: string, found: Located, id: string): MoveResult {
 }
 
 /**
- * 溝の向こう側の行。**そこへ書き直したものが「裏返し」**。
- * 1 列に並ぶ形 (SIP) には向こう側が無い。足に名前のある DIP 型は、列の間の
- * 穴数 (`rowSpan`) だけ溝の向こうの行 (7 セグは b↔f 〜 e↔i)。
+ * アンカー 1 つで置く形は**どれも裏返せない**。1 列に並ぶ形 (SIP) は裏返しても
+ * 同じ穴に同じ順で挿さる。2 列の形 (DIP・名前付き DIP・マイコンボード) は、
+ * 実物を裏返して挿すことができない — 以前はアンカーを溝の向こうの行へ書き直して
+ * いたが、それは実物の鏡像を描いていただけだった (52 の docs/71)。向きは回して変える。
  */
-function flippedRow(type: string, row: HoleRow): HoleRow | null {
-  const footprint = lookupFootprint(type);
-  if (footprint?.kind === 'dip') return row === 'e' ? 'f' : 'e';
-  if (footprint?.kind === 'named') return acrossGap(row, footprint.chip.rowSpan);
-  if (footprint?.kind !== 'board') return null;
-  return HOLE_ROWS[(HOLE_ROWS.indexOf(row) + HOLE_ROWS.length / 2) % HOLE_ROWS.length] ?? null;
-}
-
-/** アンカーを溝の向こう側の行へ書き直す (`@ e5` → `@ f5`)。 */
-function flipByAnchor(source: string, found: Located, id: string): MoveResult {
-  const anchor = found.addresses[0];
-  const located = locateTokens(found.line, found.addresses, found.points);
-  const token = located?.tokens[0];
-  if (anchor === undefined || token === undefined) {
-    return fail(`${safeToken(id)} の穴を行の中に見つけられませんでした`, found.part.line);
-  }
-  if (anchor.kind !== 'hole') {
-    return fail(`${safeToken(id)} はレールに挿さっているので裏返せません`, found.part.line);
-  }
-
-  const row = flippedRow(found.part.type, anchor.row);
-  if (row === null) {
-    return fail(
-      `${safeToken(id)} は裏返せません (1 列に並ぶので、裏返しても同じ穴に同じ順で挿さります)`,
-      found.part.line,
-    );
-  }
-
-  const edits: readonly Edit[] = [{
-    line: found.part.line,
-    column: token.column,
-    length: token.length,
-    text: formatAddress({ kind: 'hole', row, col: anchor.col }),
-  }];
-  return { ok: true, value: { edits, diff: diffAfter(source, edits) } };
+function flipByAnchor(found: Located, id: string): MoveResult {
+  const reason = lookupFootprint(found.part.type)?.kind === 'sip'
+    ? '1 列に並ぶので、裏返しても同じ穴に同じ順で挿さります'
+    : '実物の IC やボードは裏返して挿せません。向きを変えるなら回します';
+  return fail(`${safeToken(id)} は裏返せません (${reason})`, found.part.line);
 }
 
 
@@ -367,7 +337,7 @@ export function turnPart(
 
 export function flipPart(source: string, id: string): MoveResult {
   const anchored = anchoredTurn(source, id);
-  if (anchored !== null) return flipByAnchor(source, anchored, id);
+  if (anchored !== null) return flipByAnchor(anchored, id);
 
   const grabbed = writtenLeadsAt(source, id, '反転');
   if (!grabbed.ok) return { ok: false, error: grabbed.error };

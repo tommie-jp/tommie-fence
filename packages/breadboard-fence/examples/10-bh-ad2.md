@@ -8,51 +8,51 @@ DIP 部品・ボード外の機器・ピン参照・電源レールを全部使�
 
 ```breadboard
 title: 図01 B-H カーブ測定回路
-# レール割当: 上+ = -5V / 下+ = +5V (各電源ピンに近い側)。青レールは両方 GND。
+# レール割当: 上+ = +5V / 下+ = -5V (各電源ピンに近い側)。青レールは両方 GND。
 board: half
 parts:
-  U1: dip8 @ e5 NJM4556A
-  R1: resistor c5 c12 1R
-  R2: resistor h6 h12 1R
-  Rs: resistor h16 h20 10R
-  R3: resistor h23 h27 10k
-  C1: capacitor i27 i30 1uF
+  U1: dip8 @ f5 NJM4556A
+  R1: resistor h5 h12 1R
+  R2: resistor c6 c12 1R
+  Rs: resistor c16 c20 10R
+  R3: resistor c23 c27 10k
+  C1: capacitor b27 b30 1uF
   AD2:
     type: device
-    at: top
+    at: bottom
     label: Analog Discovery 2
     pins: [V+, V-, GND, W1, 1+, 1-, 2-, 2+]
   T1:
     type: device
-    at: bottom
+    at: top
     label: FT-50-75 (N1=N2=100T)
     pins: [N1a, N1b, N2a, N2b]
 wires:
   # 電源 (AD2 のユーザー電源 ±5V)
-  - AD2.V+ -- +b2 red
-  - AD2.V- -- +t2 orange
-  - AD2.GND -- -t4 black
-  - -t30 -- -b30 black
-  - j5 -- +b5 red
-  - a8 -- +t8 orange
+  - AD2.V+ -- +t2 red
+  - AD2.V- -- +b2 orange
+  - AD2.GND -- -b4 black
+  - -b30 -- -t30 black
+  - a5 -- +t5 red
+  - j8 -- +b8 orange
   # バッファ: 2 回路をフォロワにして 1Ω 2 本で並列合流
-  - AD2.W1 -- a7 yellow
-  - d7 -- g8 yellow
-  - d5 -- d6 green
-  - g6 -- g7 green
-  - e12 -- f12 blue
+  - AD2.W1 -- j7 yellow
+  - g7 -- d8 yellow
+  - g5 -- g6 green
+  - d6 -- d7 green
+  - f12 -- e12 blue
   # 1 次側: 合流点 → N1 → Rs → GND。Rs の電圧を CH1 で見る
-  - T1.N1a -- j12 blue
-  - T1.N1b -- j16 blue
-  - j20 -- -b20 black
-  - AD2.1+ -- g16 orange
-  - AD2.1- -- -t22 orange
+  - T1.N1a -- a12 blue
+  - T1.N1b -- a16 blue
+  - a20 -- -t20 black
+  - AD2.1+ -- d16 orange
+  - AD2.1- -- -b22 orange
   # 2 次側: N2 → RC 積分 → GND。C の電圧を CH2 で見る
-  - T1.N2a -- j23 green
-  - T1.N2b -- -b26 black
-  - j30 -- -b29 black
-  - AD2.2+ -- f27 blue
-  - AD2.2- -- -t26 blue
+  - T1.N2a -- a23 green
+  - T1.N2b -- -t26 black
+  - a30 -- -t29 black
+  - AD2.2+ -- e27 blue
+  - AD2.2- -- -b26 blue
 notes:
   - source blue
 ```

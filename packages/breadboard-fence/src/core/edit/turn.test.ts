@@ -194,24 +194,24 @@ describe('アンカー 1 つで置く形 (DIP / SIP / ボード)', () => {
     expect(result.ok && result.value.edits).toEqual([]);
   });
 
-  test('flips by moving the anchor across the ravine, not by writing mirror', () => {
-    // 裏返した形は `@ f5` そのもの。語を足すと同じ置き方が 2 通りになる。
-    expect(after(DIP, flipPart(DIP, 'U1'))).toContain('U1: dip8 @ f5 NJM4556A');
+  test('refuses to flip a DIP, which cannot go into a board upside down', () => {
+    // 実物の IC は裏返して挿せない。アンカーを溝の向こうの行へ書き直しても、
+    // 同じ 8 穴に同じ向きで挿さるだけ (52 の docs/71)。向きは回す (R) で変える。
+    const result = flipPart(DIP, 'U1');
+
+    expect(result.ok).toBe(false);
+    expect(result.ok ? '' : result.error.message).toContain('回');
   });
 
-  test('flips a named chip to the other row of its own footprint', () => {
-    // リレーは DIP と同じ e↔f。7 セグは列の間が 6 穴なので b↔f (溝の向こうの 6 ピッチ先)。
-    const relay = 'board: half\nparts:\n  K1: relay @ e5\n';
-    const display = 'board: half\nparts:\n  DS1: seg7 @ b5 5161AS\n';
-
-    expect(after(relay, flipPart(relay, 'K1'))).toContain('K1: relay @ f5');
-    expect(after(display, flipPart(display, 'DS1'))).toContain('DS1: seg7 @ f5 5161AS');
-  });
-
-  test('flips a board to the paired row on the other block', () => {
-    const pico = 'board: full\nparts:\n  M1: pico @ h5\n';
-
-    expect(after(pico, flipPart(pico, 'M1'))).toContain('M1: pico @ c5');
+  test('refuses to flip a named chip or a board, for the same reason as a DIP', () => {
+    for (const source of [
+      'board: half\nparts:\n  K1: relay @ e5\n',
+      'board: half\nparts:\n  DS1: seg7 @ b5 5161AS\n',
+      'board: full\nparts:\n  M1: pico @ h5\n',
+    ]) {
+      const id = /^ {2}(\w+):/m.exec(source)?.[1] ?? '';
+      expect(flipPart(source, id).ok, id).toBe(false);
+    }
   });
 
   test('refuses to flip a single row part, which would land on the same holes', () => {

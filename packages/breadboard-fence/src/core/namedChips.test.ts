@@ -47,10 +47,11 @@ describe('置き方', () => {
 
     expect(errors).toEqual([]);
     expect(pins.map((pin) => pin.name)).toEqual(['A1', 'COM1', 'NC1', 'NO1', 'NO2', 'NC2', 'COM2', 'A2']);
-    expect(holeOf(pins, 'A1')).toBe('e5');
-    expect(holeOf(pins, 'NO1')).toBe('e12');
-    expect(holeOf(pins, 'NO2')).toBe('f12');
-    expect(holeOf(pins, 'A2')).toBe('f5');
+    // 実物を上から見た並び: 1 番 (A1) が左下、1〜8 の位置が下の列を右へ、9〜16 が上の列を左へ。
+    expect(holeOf(pins, 'A1')).toBe('f5');
+    expect(holeOf(pins, 'NO1')).toBe('f12');
+    expect(holeOf(pins, 'NO2')).toBe('e12');
+    expect(holeOf(pins, 'A2')).toBe('e5');
   });
 
   test('lets a wire say K1.COM1 and lists the pins by name', () => {
@@ -70,10 +71,11 @@ describe('置き方', () => {
     const { errors, pins } = placed('DS1: seg7 @ b5');
 
     expect(errors).toEqual([]);
-    expect(holeOf(pins, 'e')).toBe('b5');
-    expect(holeOf(pins, 'dp')).toBe('b9');
-    expect(holeOf(pins, 'b')).toBe('f9');
-    expect(holeOf(pins, 'g')).toBe('f5');
+    // 1〜5 (e d COM1 c dp) が下の列 (f)、6〜10 (b a COM2 f g) が上の列 (b)。
+    expect(holeOf(pins, 'e')).toBe('f5');
+    expect(holeOf(pins, 'dp')).toBe('f9');
+    expect(holeOf(pins, 'b')).toBe('b9');
+    expect(holeOf(pins, 'g')).toBe('b5');
   });
 
   test('says which rows fit when the gap cannot be spanned from there', () => {
@@ -87,9 +89,10 @@ describe('置き方', () => {
     const { errors, pins } = placed('K1: relay @ e5 r180');
 
     expect(errors).toEqual([]);
-    expect(holeOf(pins, 'NO2')).toBe('e5');
-    expect(holeOf(pins, 'A1')).toBe('f12');
-    expect(holeOf(pins, 'A2')).toBe('e12');
+    expect(holeOf(pins, 'A1')).toBe('e12');
+    expect(holeOf(pins, 'NO1')).toBe('e5');
+    expect(holeOf(pins, 'NO2')).toBe('f5');
+    expect(holeOf(pins, 'A2')).toBe('f12');
   });
 
   test('shows the part name in the drawing when nothing else is written', () => {

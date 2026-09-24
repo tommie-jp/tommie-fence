@@ -375,29 +375,45 @@ const rightEdge = (spec: PartSpec, board: Board, lastCol: number): FenceError | 
     : null;
 
 /**
- * 溝をまたいで 2 列に並ぶピンを穴に落とす。ピン 1 から anchor の行を右へ進み、
- * 折り返して opposite の行を左へ戻る (実物のピン番号の回り方そのまま)。
+ * 穴の行の、板の上での位置 (ピッチ単位)。**溝は 3 ピッチぶん** — e と f の間が
+ * 0.3 インチで、DIP がちょうどまたぐ。
  */
+const ROW_POSITION: Readonly<Record<HoleRow, number>> = {
+  a: 0, b: 1, c: 2, d: 3, e: 4, f: 7, g: 8, h: 9, i: 10, j: 11,
+};
+
 /**
  * **`r180` は名前を半周ずらす。** 穴は動かない — 2 列は溝をまたいで
  * e 行と f 行に固定されているので、回しても部品が覆う升は同じ。変わるのは
  * **どの升が 1 番ピンか**で、それは升の並びを一周とみなして半分だけ送るのと同じ
- * (並びを逆にすると裏返しになってしまう。裏返しは行を書くほうで言う)。
+ * (並びを逆にすると裏返しになる。実物の IC は裏返して挿せないので、書き方も無い)。
  */
 const spun = (names: readonly string[], turn: Turn): readonly string[] =>
   (turn.rotate === 0 ? names : [...names.slice(names.length / 2), ...names.slice(0, names.length / 2)]);
 
+/**
+ * 溝をまたいで 2 列に並ぶピンを穴に落とす。**実物を上から見た並び** — 切り欠きを
+ * 左にすると 1 番は左下で、下の列を右へ進み、折り返して上の列を左へ戻る
+ * (反時計回り)。**アンカーは胴の置き場 (左端の列) を決めるだけ**で、溝の上下の
+ * どちらの行に書いても同じ向きに挿さる。
+ *
+ * 以前は 1 番をアンカーの行に置いていて、上のブロックに書くと 1 番が左上に来た
+ * — 実物を裏から見た形 (鏡像) で、どう挿しても作れない (52 の docs/71)。
+ */
 function dualRowPins(anchor: HoleAddress, oppositeRow: HoleRow, names: readonly string[]): PlacedPin[] {
   const half = names.length / 2;
+  const anchorBelow = ROW_POSITION[anchor.row] > ROW_POSITION[oppositeRow];
+  const lower = anchorBelow ? anchor.row : oppositeRow;
+  const upper = anchorBelow ? oppositeRow : anchor.row;
   return names.map((name, index) => {
     const pin = index + 1;
-    const onAnchorRow = pin <= half;
+    const onLowerRow = pin <= half;
     return {
       name,
       address: {
         kind: 'hole',
-        row: onAnchorRow ? anchor.row : oppositeRow,
-        col: onAnchorRow ? anchor.col + pin - 1 : anchor.col + (names.length - pin),
+        row: onLowerRow ? lower : upper,
+        col: onLowerRow ? anchor.col + pin - 1 : anchor.col + (names.length - pin),
       } satisfies Address,
     };
   });
@@ -423,19 +439,8 @@ function placeDip(spec: PartSpec, board: Board, base: PartBase, pinCount: number
   });
 }
 
-/**
- * 穴の行の、板の上での位置 (ピッチ単位)。**溝は 3 ピッチぶん** — e と f の間が
- * 0.3 インチで、DIP がちょうどまたぐ。
- */
-const ROW_POSITION: Readonly<Record<HoleRow, number>> = {
-  a: 0, b: 1, c: 2, d: 3, e: 4, f: 7, g: 8, h: 9, i: 10, j: 11,
-};
-
-/**
- * その行から、溝の向こうへ `span` ピッチ先の行。届かなければ null。
- * 置くとき (`placeNamed`) と、エディターで裏返すとき (`edit/turn.ts`) が同じ行を引く。
- */
-export function acrossGap(row: HoleRow, span: number): HoleRow | null {
+/** その行から、溝の向こうへ `span` ピッチ先の行。届かなければ null。 */
+function acrossGap(row: HoleRow, span: number): HoleRow | null {
   const upper = ROW_POSITION[row] < ROW_POSITION.f;
   const wanted = ROW_POSITION[row] + (upper ? span : -span);
   const found = HOLE_ROWS.find((one) => ROW_POSITION[one] === wanted && (ROW_POSITION[one] < ROW_POSITION.f) !== upper);
@@ -444,7 +449,7 @@ export function acrossGap(row: HoleRow, span: number): HoleRow | null {
 
 /**
  * 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。**DIP と同じ並べ方**で、
- * 列の間は表の穴数、足があるのは表の位置だけ。1 番ピンの穴から、向かいの列は
+ * 列の間は表の穴数、足があるのは表の位置だけ。アンカーの行から、向かいの列は
  * 溝の向こうの `rowSpan` ピッチ先 (G5V-2 は e↔f、7 セグは b↔f 〜 e↔i)。
  */
 function placeNamed(spec: PartSpec, board: Board, base: PartBase, chip: NamedChip): Result<PlacedPart> {

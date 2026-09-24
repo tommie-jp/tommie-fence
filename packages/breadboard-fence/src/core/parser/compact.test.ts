@@ -234,11 +234,11 @@ describe('向きの語 (アンカー 1 つで置く形)', () => {
     expect(!result.ok && result.error.message).toContain('同じ 5 穴');
   });
 
-  test('refuses mirror, since the anchor row already says which side pin 1 is on', () => {
-    // 語を足すと `dip8 @ e5 mirror` と `dip8 @ f5` が同じ置き方の 2 通りになる。
+  test('refuses mirror, since a real chip cannot go in upside down', () => {
+    // 裏返した形は実物を裏から見た形で、どう挿しても作れない。向きは r180 で変える。
     const result = part('dip8 @ e5 mirror');
 
-    expect(!result.ok && result.error.message).toContain('反対の行');
+    expect(!result.ok && result.error.message).toContain('裏返して挿せません');
   });
 
   test('refuses a word on a part whose holes already say the direction', () => {

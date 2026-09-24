@@ -273,7 +273,8 @@ describe('partCells', () => {
     expect(partCells(WITH_WIRES, 'R1')).toEqual(['a5', 'a10']);
 
     const dip = 'board: half\nparts:\n  U1: dip8 @ e5\n';
-    expect(partCells(dip, 'U1')).toEqual(['e5', 'e6', 'e7', 'e8', 'f8', 'f7', 'f6', 'f5']);
+    // 1 番ピンから順に (実物を上から見た並び。1 番は左下の f5)。
+    expect(partCells(dip, 'U1')).toEqual(['f5', 'f6', 'f7', 'f8', 'e8', 'e7', 'e6', 'e5']);
   });
 
   test('is empty for a part that is not there', () => {

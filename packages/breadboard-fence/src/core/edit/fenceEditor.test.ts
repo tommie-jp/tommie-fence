@@ -120,11 +120,12 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
     expect(result.ok && result.value.edits?.[0]?.text).toBe(' r180');
   });
 
-  test('flips it by moving the anchor across the ravine, which is what mirror means here', () => {
+  test('refuses to flip a DIP, since a real chip cannot go in upside down', () => {
+    // 以前はアンカーを溝の向こうへ書き直していたが、それは実物の鏡像だった (52 の docs/71)。
     const dip = 'board: half\nparts:\n  U1: dip8 @ e5 NE555\n';
     const result = editor.flip(dip, 'U1');
 
-    expect(result.ok && result.value.edits?.[0]?.text).toBe('f5');
+    expect(result.ok).toBe(false);
   });
 
   test('draws the band the map shows under the drawing', () => {
