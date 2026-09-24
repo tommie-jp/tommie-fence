@@ -3,6 +3,14 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.1.1] - 2026-09-25
+
+### Fixed
+
+- **題の Ω が Windows の VS Code で別の字に化けた** (`図01 50Ω` が `50и`)。題は太字で、
+  字の種類を `system-ui` だけで指していたため、日本語の UI フォントの太字で描かれていた。
+  題だけ欧文のフォントを先に並べる。
+
 ## [0.1.0] - 2026-09-24
 
 ### Added

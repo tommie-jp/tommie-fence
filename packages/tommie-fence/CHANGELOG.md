@@ -3,6 +3,14 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.11.1] - 2026-09-25
+
+copper-fence 0.1.1 を束ねた。
+
+### Fixed
+
+- copper: 題の Ω が Windows で化けた (`50и`)。題の字の種類を欧文から並べる。
+
 ## [0.11.0] - 2026-09-24
 
 copper-fence 0.1.0 を束ねた。**4 つ目のフェンス ` ```copper `** — 銅張り基板の寸法図。
