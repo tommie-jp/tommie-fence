@@ -85,8 +85,10 @@ export function refusalFor(word: string, type: string): string | null {
   if (word === TURN_WORD) return null;
 
   if (word === 'mirror') {
-    return `${type} に mirror は書けません`
-      + ' (実物は裏返して挿せません。向きを変えるなら r180 です)';
+    // 1 列の形は逆向きに挿せるが、その並びは r180 と同じ (同じ穴を逆順に使う)。
+    return kind === 'sip'
+      ? `${type} に mirror は書けません (1 列に並ぶので、裏返した並びは r180 と同じです)`
+      : `${type} に mirror は書けません (実物は裏返して挿せません。向きを変えるなら r180 です)`;
   }
   return kind === 'sip'
     ? `${type} は 90 度回せません (1 列に並ぶので、縦にすると足が全部同じ 5 穴に入ります)`

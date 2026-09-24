@@ -589,8 +589,8 @@ function renderChip(
   }
 
   if (kind === 'dip') {
-    // **1 番ピンは書かれたアンカー。** 回しても足の並びのほうが回るので
-    // (`parts/footprint.ts` の pinsOf)、切り欠きは常に 0 番の側。
+    // **1 番ピンは足の並びの先頭** (`parts/footprint.ts` の pinsOf が 1 番から返す)。
+    // 回しても足の並びのほうが回るので、切り欠きは常に 0 番の側。
     // 姿があれば DIP 化した変換基板 (`dip8/sop`)。外形は DIP と同じ。
     return part.variant === null
       ? dipChip({ ...shared, names: numbers, pinOne: 0 })

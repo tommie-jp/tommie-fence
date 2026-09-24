@@ -354,11 +354,14 @@ function placeConnector(spec: PartSpec, board: Board, base: PartBase, connector:
   return ok({ ...base, kind: 'connector', bridges: [], pins });
 }
 
-/** `@ 穴` で置く部品の、ピン 1 の穴。 */
+/**
+ * `@ 穴` で置く部品のアンカーの穴。2 列の形 (DIP・ボード) は胴の左端の列、
+ * 1 列の形 (SIP) は 1 番ピンの穴。
+ */
 function anchorHole(spec: PartSpec, board: Board, example: string): Result<HoleAddress> {
   const anchorRef = spec.holes[0];
   if (spec.holes.length !== 1 || !anchorRef) {
-    return fail(`部品 ${safeToken(spec.id)}: ピン 1 の穴だけを書きます (例: ${example})`, spec.line);
+    return fail(`部品 ${safeToken(spec.id)}: アンカーの穴を 1 つだけ書きます (例: ${example})`, spec.line);
   }
 
   const anchor = resolveHole(anchorRef.addr, board, spec.line);
