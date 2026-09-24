@@ -479,6 +479,13 @@ export function deviceChip(names: readonly string[], label: string | null = null
 }
 
 /**
+ * 名前と、その小文字形をアンカーへ結ぶ組。**名前が既に小文字ならそのまま 1 つ**
+ * (大文字が混じる名前を小文字でも呼べるようにする。`namedSymbol` と `ic3Chip` が使う)。
+ */
+const withLowerAlias = (name: string, anchor: string): (readonly [string, string])[] =>
+  name === name.toLowerCase() ? [[name, anchor]] : [[name, anchor], [name.toLowerCase(), anchor]];
+
+/**
  * 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ。52 の docs/66)。**足の名前と
  * DIP の番号は板の 2 つと同じ表** (fence-kit) から引く — 名前でも番号でも指せる
  * (`K1.COM1` = `K1.4`)。足は記号の中心線に乗らないので `pinRow` で辺だけを持つ。
@@ -490,8 +497,7 @@ function namedSymbol(chip: NamedChip, symbol: string, sides: readonly (readonly 
     options: ['draw'],
     ...NO_UNIT,
     pins: Object.fromEntries(chip.pins.flatMap(({ at, name }) => [
-      [name, `pin ${at}`],
-      ...(name === name.toLowerCase() ? [] : [[name.toLowerCase(), `pin ${at}`]]),
+      ...withLowerAlias(name, `pin ${at}`),
       [`${at}`, `pin ${at}`],
     ])),
     // **並びは記号の上の順** (辺の中の左から右・上から下)。升目がこの順で足を並べる。
@@ -569,8 +575,7 @@ export function ic3Chip(names: readonly string[] | null): PartType {
     ...NO_UNIT,
     pins: Object.fromEntries([
       // **名前を先に置く** — 先に書いたほうが代表の名前になる (`mainPinName`)。
-      ...anchors.flatMap(([name, anchor]) =>
-        (name === name.toLowerCase() ? [[name, anchor]] : [[name, anchor], [name.toLowerCase(), anchor]])),
+      ...anchors.flatMap(([name, anchor]) => withLowerAlias(name, anchor)),
       ...anchors.map(([, anchor], index) => [`${index + 1}`, anchor]),
     ]),
     pinSide: { 'pin 1': 'left', 'pin 2': 'bottom', 'pin 3': 'right' },

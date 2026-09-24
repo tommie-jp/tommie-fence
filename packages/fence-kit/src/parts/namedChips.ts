@@ -98,15 +98,17 @@ export function drawNamedChip(options: Omit<DipOptions, 'pinOne'> & { readonly c
       y: picked.reduce((sum, point) => sum + point.y, 0) / picked.length,
     };
   };
-  const top = mean(true);
-  const bottom = mean(false);
-  const face = top === null || bottom === null ? '' : (() => {
-    const gap = Math.hypot(top.x - bottom.x, top.y - bottom.y) || 1;
-    return segmentFace({
-      centre: { x: (top.x + bottom.x) / 2, y: (top.y + bottom.y) / 2 },
-      rowGap: gap,
-      up: { x: (top.x - bottom.x) / gap, y: (top.y - bottom.y) / gap },
-    });
-  })();
+  const face = digitFace(mean(true), mean(false));
   return `${dipChip({ ...options, pinOne, caption: '' })}${face}`;
+}
+
+/** 桁の面 (「8.」)。上下どちらかの列が無ければ (足を寄せ切れない置き方) 何も描かない。 */
+function digitFace(top: ChipPoint | null, bottom: ChipPoint | null): string {
+  if (top === null || bottom === null) return '';
+  const gap = Math.hypot(top.x - bottom.x, top.y - bottom.y) || 1;
+  return segmentFace({
+    centre: { x: (top.x + bottom.x) / 2, y: (top.y + bottom.y) / 2 },
+    rowGap: gap,
+    up: { x: (top.x - bottom.x) / gap, y: (top.y - bottom.y) / gap },
+  });
 }
