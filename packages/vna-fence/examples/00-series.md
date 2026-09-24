@@ -4,6 +4,28 @@
 `dut:` に**理想の模型**を書くと、測る前から「見るべき値」が破線で出る。
 `data:` に**測った Touchstone** を書くと、同じ色の実線で重なる。
 
+DUT の等価回路 — CH0 (J1) と CH1 (J2) の間に 100 Ω が 1 本入るだけ。
+
+```circuit
+title: 回路図01 100 Ω を直列に入れた治具
+parts:
+  J1: sma b2 mirror
+  R1: resistor b4 b6 100
+  J2: sma b8
+  G1: ground c2
+  G2: ground c8
+wires:
+  - J1.1 -- b4
+  - b6 -- J2.1
+  - J1.2 -- c2
+  - J2.2 -- c8
+notes:
+  - text a2 center: CH0
+  - text a8 center: CH1
+```
+
+<img src="out/schematic/00-series.png" alt="回路図01 100 Ω を直列に入れた治具" width="492">
+
 ```vna
 device: h4
 sweep: 1M-300M 101

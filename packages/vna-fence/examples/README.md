@@ -13,6 +13,13 @@
 | [03-lines.md](03-lines.md) | 伝送線路とスタブ、TDR |
 | [04-notes.md](04-notes.md) | 注釈 (`notes:`) と見た目 (`style:`) |
 
+`dut:` の**等価回路** (` ```circuit ` の回路図) を vna の図の前に添えてある
+(何も入れない治具と、DUT の形がほかの例と同じ 04-notes は除く)。線路は伝送線路 (`tline`、値は Z0) で描く。
+回路図の作り直しは `npm run schematics --workspace=vna-fence`
+(circuit-fence を先に `npm run build` しておく)。
+回路図は `<img width>` で**PNG の半分の幅** (回路図の実寸。字が vna の図と同じくらいになる) に
+表示している。作り直して PNG の大きさが変わったら `width` も合わせる。
+
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではない。
 

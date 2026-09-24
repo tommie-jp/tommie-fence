@@ -4,6 +4,33 @@
 トレースは 1 つの枠に重なり**、Smith・極・TDR はそれぞれの枠になる。
 色は書いた順 (実機の 1〜4 本目と同じ黄・水色・緑・紫)。
 
+DUT の等価回路 — `dut:` の 3 行を CH0 (J1) から CH1 (J2) へ並べたもの。
+`shunt` は地へ落とす枝、`series` は信号の通り道に入る。
+
+```circuit
+title: 回路図01 3 次のローパス (C-L-C)
+parts:
+  J1: sma b2 mirror
+  C1: capacitor b4 d4 47p
+  L1: inductor b5 b7 235n
+  C2: capacitor b8 d8 47p
+  J2: sma b10
+  G1: ground c2
+  G2: ground d4
+  G3: ground d8
+  G4: ground c10
+wires:
+  - J1.1 -- b4 -- b5
+  - b7 -- b8 -- J2.1
+  - J1.2 -- c2
+  - J2.2 -- c10
+notes:
+  - text a2 center: CH0
+  - text a10 center: CH1
+```
+
+<img src="out/schematic/01-traces-1.png" alt="回路図01 3 次のローパス (C-L-C)" width="636">
+
 ```vna
 sweep: 1M-200M 201
 title: 図01 π 型ローパス — 振幅・位相・群遅延
@@ -29,6 +56,27 @@ markers:
 - 位相は ±180° で折り返す (線は繋がない)。群遅延は位相の傾き
 
 反射の見方 (S11) — SWR・|S|・極・Smith。
+
+DUT の等価回路 — R・L・C を直列に並べ、最後の `short` で地へ落とす。CH1 には繋がない。
+
+```circuit
+title: 回路図02 直列 RLC のアンテナ
+parts:
+  J1: sma b2 mirror
+  R1: resistor b3 b5 40
+  L1: inductor b5 b7 250n
+  C1: capacitor b7 b9 5.6p
+  G1: ground c2
+  G2: ground c9
+wires:
+  - J1.1 -- b3
+  - b9 -- c9
+  - J1.2 -- c2
+notes:
+  - text a2 center: CH0
+```
+
+<img src="out/schematic/01-traces-2.png" alt="回路図02 直列 RLC のアンテナ" width="556">
 
 ```vna
 sweep: 100M-200M 201
