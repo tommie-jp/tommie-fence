@@ -418,7 +418,7 @@ describe('generateTex の指し棒 (arrow)', () => {
   test('draws an arrow between two cells', () => {
     const { tex } = generate(...R, 'notes:', '  - arrow c1 c3');
 
-    expect(tex).toContain('\\draw[circuitnotered, -{Stealth[length=2.2mm]}] (0,-4) -- (4,-4);');
+    expect(tex).toContain('\\draw[circuitnotered, -{Stealth[length=3mm, width=3mm]}] (0,-4) -- (4,-4);');
   });
 
   // 先端の形は増やしたライブラリのもの。要るときだけ書く (約束 6)。
@@ -463,7 +463,7 @@ describe('generateTex の指し棒 (arrow)', () => {
   });
 
   test('draws the same arrow in the TeX that goes to LaTeX', () => {
-    expect(generateLatex(...R, 'notes:', '  - arrow c1 c3').tex).toContain('-{Stealth[length=2.2mm]}');
+    expect(generateLatex(...R, 'notes:', '  - arrow c1 c3').tex).toContain('-{Stealth[length=3mm, width=3mm]}');
   });
 
   test('carries the line of the note back for the TeX log', () => {

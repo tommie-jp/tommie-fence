@@ -3,7 +3,7 @@
 \usetikzlibrary{calc}
 \definecolor{circuitnotemark}{HTML}{FE00FE}
 \begin{document}
-\begin{circuitikz}[european resistors, cute inductors, european voltages, european currents, american ports, line width=0.8pt]
+\begin{circuitikz}[european resistors, cute inductors, european voltages, european currents, american ports, circuitikz/straight=true, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
 \foreach \x in {0,2,4,6,8} {\foreach \y in {0} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
 \node[gray, font=\scriptsize] at (0,0.84) {1};

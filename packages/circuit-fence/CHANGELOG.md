@@ -9,16 +9,27 @@
 
 - **記号の流儀に `jis` を足した** (`style: standard: jis`)。現行の JIS C 0617
   (旧 JIS C 0301 のギザギザではない) の形で、抵抗は `european` と同じ箱、**コイルは半円の連なり** (`european` は黒く塗った箱)、
-  電圧と電流は矢、論理ゲートは `american` と同じ MIL 記号。電験三種の問題用紙の図
-  (令和 6 年度上期 理論 問 8・10・13) で確かめた。circuitikz には部品ごとの鍵
+  電流は矢、**電圧は + 側を指すまっすぐな矢** (`european` の弧は − 側を指すドイツ式)、
+  論理ゲートは `american` と同じ MIL 記号。電験三種の問題用紙の図
+  (令和 6 年度上期 理論 問 8・10・13・15) で確かめた。circuitikz には部品ごとの鍵
   (`european resistors, cute inductors, european voltages, european currents,
-  american ports`) で渡し、束の `european` には委ねない。
+  american ports, circuitikz/straight=true`) で渡し、束の `european` には委ねない。
+  電圧の矢の向きは、jis のときだけ `v^>` と `v^<` を入れ替えて書き出す。
 
 ### Changed
 
-- **電流の矢 (`i=`) を大きくした。** circuitikz の既定 (記号の長さ / 16) は 0.75 mm で、
-  0.8pt の線だと矢の形が潰れて見えなかった。記号の長さ / 6 (約 2 mm、字の高さの 6 割ほど)
-  にし、電流を描いた図にだけ `current arrow scale` を書く。
+- **電流の矢 (`i=`) と、`european` / `jis` の電圧の矢 (`v=`) を大きくした。**
+  circuitikz の既定 (記号の長さ / 16) は 0.75 mm で、0.8pt の線だと矢の形が潰れて
+  見えなかった。記号の長さ / 6 (三角が約 3 mm 角) にし、矢を描く部品の線
+  (`to[...]`) の中にだけ `current arrow scale` を書く。図全体に掛けると、同じ形で描く
+  トランジスタと FET の矢まで膨らむため。電流の字は大きくした三角に触れたので、
+  電流を描く図にだけ字の余白を広げる (`bipole current style` の `inner sep=5pt`)。
+- **電源の電圧の矢を記号から離した** (`european` / `jis`)。circuitikz は電源の電圧の矢を
+  丸のすぐ脇に短く描くので、大きくした矢じりが軸と字を隠した。電源 (`vsource` `sine`
+  `square` `triangle` `battery` `solar`) の線にだけ `voltage/bump a=2.5` を書く。
+- **注釈の指し棒 (`arrow`) の先端を大きくした** (2.2 mm の細身 → 3 mm 角)。
+  電流・電圧の矢と並べたときに同じ大きさに見えるように揃えた。記号の中の矢
+  (光の矢・可変抵抗・摺動子) は、もとから 1.8 mm ほどあるので変えていない。
 
 ## [0.10.0] - 2026-09-24
 

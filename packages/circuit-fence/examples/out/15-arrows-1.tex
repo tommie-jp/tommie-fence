@@ -7,7 +7,7 @@
 \ctikzset{bipoles/length=1.2cm}
 \ctikzset{voltage/distance from node=.7}
 \ctikzset{voltage/american label distance=1.4}
-\ctikzset{current arrow scale=6}
+\ctikzset{bipole current style/.style={inner sep=5pt}}
 \foreach \x in {0,2,4} {\foreach \y in {0,-2,-4,-6} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
 \node[gray, font=\scriptsize] at (0,0.84) {1};
 \node[gray, font=\scriptsize] at (2,0.84) {2};
@@ -23,7 +23,7 @@
 \coordinate (d3) at (4,-6);
 \draw (b1) to[battery1, l_=$E$] (d1); % line 3
 \draw (b1) to[nos, l_=$S$] (b2); % line 4
-\draw (b2) to[R, l_=$R$, i>^=$i$] (b3); % line 5
+\draw (b2) to[R, l_=$R$, i>^=$i$, current arrow scale=6] (b3); % line 5
 \draw (b3) to[C, l_=$C$, v^>=$v_{C}$] (d3); % line 6
 \draw (d1) -- (d3); % line 8
 \path (8,-6.921) rectangle (15.514,0.593); % line 10

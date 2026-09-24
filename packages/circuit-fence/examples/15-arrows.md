@@ -66,3 +66,27 @@ style:
 ```
 
 ![図03 値と電流の矢は並べて書ける](out/15-arrows-3.png)
+
+## 流儀で変わる電圧の書き方
+
+`style: standard:` が `european` か `jis` (電験の図) だと、電圧は + と − の字ではなく
+**矢**で描かれる。`jis` の矢はまっすぐで、**+ 側** (先に書いた番地) を指す — 電験三種の
+問題用紙と同じ書き方。`european` は − 側を指す弧 (ドイツ式)。どちらも電流の矢と同じ大きさ。
+
+```circuit
+title: 図04 jis では電圧も矢になる
+parts:
+  E: battery b1 d1
+  S: switch b1 b2
+  R: resistor b2 b3 i=i
+  C: capacitor b3 d3 v=vC
+wires:
+  - d1 -- d3
+notes:
+  - source a5 blue
+style:
+  grid: on
+  standard: jis
+```
+
+![図04 jis では電圧も矢になる](out/15-arrows-4.png)

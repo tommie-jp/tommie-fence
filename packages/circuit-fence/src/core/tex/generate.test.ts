@@ -144,7 +144,7 @@ describe('generateTex', () => {
   test('leaves the plain wire without a name in the figure', () => {
     const tex = generate('parts:', '  SH: short a1 a3 i=I').tex;
 
-    expect(tex).toContain('to[short, i>^=$I$]');
+    expect(tex).toContain('to[short, i>^=$I$, ');
     expect(tex).not.toContain('l_=$S_{H}$');
   });
 
@@ -175,10 +175,91 @@ describe('generateTex', () => {
   });
 
   // 電流の矢は circuitikz の既定 (記号の長さ / 16) だと 1 mm に満たず、印刷でも画面でも
-  // 見えない (実機で指摘)。**電流を描く図にだけ**大きくする (約束 6)。
-  test('enlarges the current arrow only when a current is drawn', () => {
-    expect(generate('parts:', '  R1: resistor a1 a3 i=i').tex).toContain('\\ctikzset{current arrow scale=');
-    expect(generate('parts:', '  R1: resistor a1 a3').tex).not.toContain('current arrow scale');
+  // 見えない (実機で指摘)。大きさは**その部品の線の中だけ**に効かせる。
+  describe('arrow size', () => {
+    const lineOf = (tex: string, id: string) => tex.split('\n').find((row) => row.includes(`$${id}$`)) ?? '';
+
+    test('enlarges the current arrow on the line that draws it', () => {
+      const { tex } = generate('parts:', '  R1: resistor a1 a3 i=i', '  R2: resistor c1 c3');
+
+      expect(lineOf(tex, 'R_{1}')).toContain(', current arrow scale=');
+      expect(lineOf(tex, 'R_{2}')).not.toContain('current arrow scale');
+    });
+
+    // 同じ currarrow で描くトランジスタと FET の矢まで膨らむ (実測)。図全体には掛けない。
+    test('leaves the transistor arrows alone when a current is drawn', () => {
+      const { tex } = generate('parts:', '  R1: resistor a1 a3 i=i', '  Q1: npn c2', '  M1: nmos c5');
+
+      expect(tex).not.toContain('\\ctikzset{current arrow scale');
+    });
+
+    // european と jis の電圧は、電流と同じ currarrow の矢で描く。同じ大きさにする。
+    test('enlarges the voltage arrow in the standards that draw one', () => {
+      for (const standard of ['european', 'jis']) {
+        const { tex } = generate('parts:', '  C1: capacitor a1 c1 v=vC', 'style:', `  standard: ${standard}`);
+
+        expect(lineOf(tex, 'C_{1}')).toContain(', current arrow scale=');
+      }
+    });
+
+    // 字は矢の北の端 (矢の大きさの半分の高さ) に付くが、描かれる三角はそれより背が高い。
+    // 大きくした矢では字が三角に触れた (実測)。電流を描く図にだけ字の余白を広げる。
+    test('holds the current label off the enlarged arrow', () => {
+      expect(generate('parts:', '  R1: resistor a1 a3 i=i').tex).toContain('\\ctikzset{bipole current style/.style={inner sep=');
+      expect(generate('parts:', '  R1: resistor a1 a3').tex).not.toContain('bipole current style');
+    });
+
+    // american の電圧は + と − の字で、矢が無い。要らない指定は書かない (約束 6)。
+    test('writes no arrow size for the american voltage, which has no arrow', () => {
+      expect(generate('parts:', '  C1: capacitor a1 c1 v=vC').tex).not.toContain('current arrow scale');
+    });
+  });
+
+  // 電験の問題用紙 (令和 6 年度上期 理論 問 15) の電圧の矢は、+ 側を指すまっすぐな矢。
+  // circuitikz の european は − 側を指す弧 (ドイツ式) なので、jis では向きの印を返す。
+  // + 側が先に書いた番地という規則は流儀に依らない。
+  describe('voltage arrow direction', () => {
+    const voltageOf = (standard: string, written: string) =>
+      generate('parts:', `  C1: capacitor a1 c1 ${written}`, 'style:', `  standard: ${standard}`).tex;
+
+    test('points the jis arrow at the plus side, the address written first', () => {
+      expect(voltageOf('jis', 'v=vC')).toContain('v^<=$v_{C}$');
+    });
+
+    test('turns the jis arrow the other way when the voltage is written reversed', () => {
+      expect(voltageOf('jis', 'v<=vC')).toContain('v^>=$v_{C}$');
+    });
+
+    test('keeps the european arrow pointing at the minus side, as circuitikz draws it', () => {
+      expect(voltageOf('european', 'v=vC')).toContain('v^>=$v_{C}$');
+    });
+  });
+
+  // 電源の電圧の矢は circuitikz が丸の 60°〜120° の間に短く描くので、大きくした矢じりが
+  // 軸と字を隠す (実測)。丸から離して長くする。試験の図も電源から離した矢。
+  describe('voltage arrow of a source', () => {
+    const lineOf = (tex: string, id: string) => tex.split('\n').find((row) => row.includes(`$${id}$`)) ?? '';
+    const drawn = (standard: string) =>
+      generate(
+        'parts:',
+        '  V1: sine a1 c1 v=v',
+        '  B1: battery a3 c3 v=E',
+        '  C1: capacitor a5 c5 v=vC',
+        'style:',
+        `  standard: ${standard}`,
+      ).tex;
+
+    test('moves the arrow off the source in the standards that draw one', () => {
+      for (const standard of ['european', 'jis']) {
+        expect(lineOf(drawn(standard), 'V_{1}')).toContain(', voltage/bump a=');
+        expect(lineOf(drawn(standard), 'B_{1}')).toContain(', voltage/bump a=');
+      }
+    });
+
+    test('leaves the other parts and the american signs where they are', () => {
+      expect(lineOf(drawn('jis'), 'C_{1}')).not.toContain('bump a');
+      expect(drawn('american')).not.toContain('bump a');
+    });
   });
 
   test('turns the MOSFET arrows on, so the figure tells n from p', () => {
@@ -412,7 +493,7 @@ describe('style', () => {
   // 黒い箱ではない)。論理ゲートは MIL のまま。部品ごとの鍵で書き、circuitikz の束に委ねない。
   test('draws jis with box resistors, cute inductors and MIL gates', () => {
     expect(withStyle(['  standard: jis'])).toContain(
-      '\\begin{circuitikz}[european resistors, cute inductors, european voltages, european currents, american ports, line width=',
+      '\\begin{circuitikz}[european resistors, cute inductors, european voltages, european currents, american ports, circuitikz/straight=true, line width=',
     );
   });
 

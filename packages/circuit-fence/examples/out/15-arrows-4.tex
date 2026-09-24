@@ -3,7 +3,7 @@
 \usetikzlibrary{calc}
 \definecolor{circuitnotemark}{HTML}{FE00FE}
 \begin{document}
-\begin{circuitikz}[american, line width=0.8pt]
+\begin{circuitikz}[european resistors, cute inductors, european voltages, european currents, american ports, circuitikz/straight=true, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
 \ctikzset{voltage/distance from node=.7}
 \ctikzset{voltage/american label distance=1.4}
@@ -24,9 +24,9 @@
 \draw (b1) to[battery1, l_=$E$] (d1); % line 3
 \draw (b1) to[nos, l_=$S$] (b2); % line 4
 \draw (b2) to[R, l_=$R$, i>^=$i$, current arrow scale=6] (b3); % line 5
-\draw (b3) to[C, l_=$C$, v^>=$v_{C}$] (d3); % line 6
+\draw (b3) to[C, l_=$C$, v^<=$v_{C}$, current arrow scale=6] (d3); % line 6
 \draw (d1) -- (d3); % line 8
-\path (8,-6.921) rectangle (15.514,0.593); % line 10
+\path (8,-7.408) rectangle (16.12,0.593); % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,0) {X}; % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,-0.487) {X}; % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,-0.974) {X}; % line 10
@@ -41,7 +41,8 @@
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,-5.355) {X}; % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,-5.842) {X}; % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,-6.329) {X}; % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,-6.816) {X}; % line 10
 \node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
-\path (circuittitle.south west) rectangle ++(8.778,0.853);
+\path (circuittitle.south west) rectangle ++(10.455,0.853);
 \end{circuitikz}
 \end{document}

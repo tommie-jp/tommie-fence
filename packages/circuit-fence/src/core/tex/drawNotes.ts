@@ -50,9 +50,11 @@ const BOX_CORNER = 3;
 
 /**
  * 指し棒の先端。細い既定の矢印だと、線の太さに対して見えないほど小さい。
+ * 大きさは部品の電流・電圧の矢 (約 3 mm 角。generate.ts の CURRENT_ARROW_SCALE) に
+ * 揃えた — 2.2 mm の細身だと、並べたときに指し棒だけ小さく見えた (実機で比べて決めた)。
  * `arrows.meta` の形なので、書くときはライブラリも一緒に足す。
  */
-const ARROW_TIP = '-{Stealth[length=2.2mm]}';
+const ARROW_TIP = '-{Stealth[length=3mm, width=3mm]}';
 
 /**
  * フェンスの中身を、Markdown に書いたとおりの姿にする。

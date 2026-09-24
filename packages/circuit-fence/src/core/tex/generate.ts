@@ -9,7 +9,7 @@ import {
 import type { PartType, PinSide, SourceInner, Turn } from '../parts.ts';
 import { lookupBoardPart } from 'fence-kit';
 import { EMPTY_STYLE } from '../parser/style.ts';
-import { STANDARD_TEX } from '../standard.ts';
+import { STANDARD_TEX, VOLTAGE_STYLE } from '../standard.ts';
 import type { Standard } from '../standard.ts';
 import { cellOf as addressOf, nodeNameOf, texNameOfEndpoint } from '../types.ts';
 import type {
@@ -64,11 +64,33 @@ const DEFAULT_WIRE_WIDTH = 0.8;
 const DEFAULT_STANDARD: Standard = 'american';
 
 /**
- * 電流の矢の大きさ (記号の長さをこの数で割った長さ。小さいほど大きい)。circuitikz の
- * 既定 16 は 1.2 cm の記号で 0.75 mm しかなく、線が 0.8pt あると矢の形が潰れて
- * 見えない (実機で指摘)。10・8・6 を焼いて比べ、試験の図の矢に近い (字の高さの 6 割ほど) 6 にした。
+ * 電流の矢と、矢で描く電圧 (european / jis) の大きさ (記号の長さをこの数で割った長さ。
+ * 小さいほど大きい)。circuitikz の既定 16 は 1.2 cm の記号で 0.75 mm しかなく、線が 0.8pt
+ * あると矢の形が潰れて見えない (実機で指摘)。10・8・6 を焼いて比べ、試験の図の矢に近い
+ * (字の高さの 6 割ほど) 6 にした。記号の中の矢 (光の矢・摺動子) は `latexslim` で
+ * もとから 1.8 mm ほどあるので触らない。
+ *
+ * **部品の線 (`to[...]`) の中だけ**に効かせる。図全体 (`\ctikzset`) に掛けると、同じ
+ * `currarrow` で描くトランジスタと FET の矢まで膨らむ (実測)。
  */
 const CURRENT_ARROW_SCALE = 6;
+
+/**
+ * 電源の電圧の矢を丸から離す量 (circuitikz の `voltage/bump a`。既定 1.2)。電源の矢は
+ * 丸の 60°〜120° の間に短く描かれ、大きくした矢じりが軸と字を隠した (実測)。2〜3 を
+ * 焼いて比べ、丸から離れて字とも重ならない 2.5 にした。試験の図も電源から離した矢。
+ */
+const SOURCE_VOLTAGE_BUMP = 2.5;
+
+/**
+ * 電流の字の余白 (pt)。字は矢の北の端 (矢の大きさの半分の高さ) に付くが、描かれる三角は
+ * それより背が高く、大きくした矢では字が三角に触れた (実測)。3・5・7 を焼いて比べ、触れずに
+ * 離れすぎない 5 にした。
+ */
+const CURRENT_LABEL_SEP = 5;
+
+/** 電源として電圧を描く記号 (circuitikz の `bipole/is voltage`)。電圧の矢の置き方が違う。 */
+const SOURCE_SYMBOLS: ReadonlySet<string> = new Set(['esource', 'battery1', 'pvsource']);
 
 /**
  * 2 端子の記号の長さ (cm)。丸い電源の中身を描くのにも要るので定数にしてある
@@ -179,8 +201,8 @@ const headerOf = (
   ...(hasVoltage
     ? ['\\ctikzset{voltage/distance from node=.7}', '\\ctikzset{voltage/american label distance=1.4}']
     : []),
-  // 電流の矢を大きくする。**電流を描く図にだけ**書く (約束 6)。
-  ...(hasCurrent ? [`\\ctikzset{current arrow scale=${CURRENT_ARROW_SCALE}}`] : []),
+  // 電流の字を大きくした矢から離す (CURRENT_LABEL_SEP)。**電流を描く図にだけ**書く (約束 6)。
+  ...(hasCurrent ? [`\\ctikzset{bipole current style/.style={inner sep=${CURRENT_LABEL_SEP}pt}}`] : []),
   // MOSFET の簡易記号にソースの矢を付ける。既定では `nmos` と `pmos` の違いが
   // ゲートの丸 1 つしか無く、印刷すると n 形か p 形か読み取れない
   // (実機で「FET に必ず矢印を入れて n・p の区別が付くように」)。
@@ -698,7 +720,7 @@ function drawGrid(
   ];
 }
 
-function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number): string[] {
+function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number, standard: Standard): string[] {
   // ラベルは `l_` (下・左)、値は `a^` (上・右) と向かい合わせに置く。
   // どちらも既定の側に置くと、LED のように上へ張り出す記号とラベルが重なる
   // (回路図の定石。実機で重なりを確認して決めた)。
@@ -725,8 +747,19 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
     options.push(`i${part.currentReversed ? '<' : '>'}^=${labelOf(part.current, part.id)}`);
   }
   // 値・電流と同じ側に出るので、並べて書けないことはパーサが弾いている。
+  // jis の矢は + 側を指すが、circuitikz の矢は `>` で後の番地 (−) を指す。jis では印を返す。
+  const voltageStyle = VOLTAGE_STYLE[standard];
   if (part.voltage !== null) {
-    options.push(`v^${part.voltageReversed ? '<' : '>'}=${labelOf(part.voltage, part.id)}`);
+    const reversed = part.voltageReversed !== (voltageStyle === 'arrow-to-plus');
+    options.push(`v^${reversed ? '<' : '>'}=${labelOf(part.voltage, part.id)}`);
+  }
+  const hasVoltageArrow = part.voltage !== null && voltageStyle !== 'signs';
+  // 矢を大きくする (CURRENT_ARROW_SCALE)。矢を描く部品の線にだけ書く (約束 6)。
+  if (part.current !== null || hasVoltageArrow) {
+    options.push(`current arrow scale=${CURRENT_ARROW_SCALE}`);
+  }
+  if (hasVoltageArrow && SOURCE_SYMBOLS.has(type?.symbol ?? '')) {
+    options.push(`voltage/bump a=${SOURCE_VOLTAGE_BUMP}`);
   }
 
   const drawn = `\\draw (${texNameOfAddress(part.from)}) to[${options.join(', ')}] (${texNameOfAddress(part.to)});`;
@@ -939,9 +972,9 @@ function pinNamePlace(type: PartType, turn: Turn, index: number): {
   return { anchor: 'west', shift: 'yshift=2pt', rotate: 90, side };
 }
 
-const drawPart = (part: PartSpec, target: TexTarget, pitch: number): string[] =>
+const drawPart = (part: PartSpec, target: TexTarget, pitch: number, standard: Standard): string[] =>
   part.kind === 'two-terminal'
-    ? drawTwoTerminal(part, target, pitch)
+    ? drawTwoTerminal(part, target, pitch, standard)
     : part.kind === 'one-terminal'
       ? [drawOneTerminal(part, target)]
       : drawMultiTerminal(part, target);
@@ -1003,7 +1036,9 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
   }
 
   const drawings: { readonly tex: string; readonly line: number }[] = [
-    ...circuit.parts.flatMap((part) => drawPart(part, target, pitch).map((tex) => ({ tex, line: part.line }))),
+    ...circuit.parts.flatMap((part) =>
+      drawPart(part, target, pitch, style.standard ?? DEFAULT_STANDARD).map((tex) => ({ tex, line: part.line })),
+    ),
     ...circuit.wires.map((wire) => ({
       tex: `\\draw (${texNameOfEndpoint(wire.from)}) ${wire.operator} (${texNameOfEndpoint(wire.to)});`,
       line: wire.line,
