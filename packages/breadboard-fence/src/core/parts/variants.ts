@@ -47,6 +47,7 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
   triac: ['to92', 'to220'],
   // レギュレータも同じ 2 つ。1A クラスは TO-220、小電流は TO-92。
   regulator: ['to92', 'to220'],
+  ic3: ['to92', 'to220'],
   // オスは中心にピンが立ち、メスは中心が穴。**合う相手を取り違えない**ために
   // 描き分ける。板の縁に載せる横置き (`male-edge`) は perfboard だけ。
   sma: ['male', 'female'],

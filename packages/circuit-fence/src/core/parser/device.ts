@@ -2,7 +2,7 @@ import { isMap, isScalar, isSeq } from 'yaml';
 import type { Node, Pair } from 'yaml';
 import { fail, ok, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
-import { DEVICE, NO_TURN } from '../parts.ts';
+import { IC3, MAP_TYPES, NO_TURN } from '../parts.ts';
 import type { Turn } from '../parts.ts';
 import type { PartSpec, Result } from '../types.ts';
 import { readAddress, readTurnWords } from './compact.ts';
@@ -23,6 +23,9 @@ import type { Points } from './compact.ts';
  * ```
  *
  * 1 行形式は種類と番地と値を空白で並べるが、足の名前の並びは 1 行に畳めない。
+ *
+ * **3 本足の IC (`type: ic3`) も同じ形で書く** — 足の名前が品ごとに違うので、
+ * 書き手が並べる (`pins: [+Vs, Vout, GND]`)。本数は 3 本ちょうど。
  */
 
 type LineOf = (node: Node | Pair | null | undefined) => number | null;
@@ -40,6 +43,9 @@ const PIN_NAME = /^[\w+-]+$/;
 const DIGITS = /^\d+$/;
 
 const MIN_PINS = 2;
+
+/** 3 本足の IC の足の本数。 */
+const IC3_PINS = 3;
 
 const textOf = (node: unknown): string | null => {
   if (!isScalar(node)) return null;
@@ -66,10 +72,10 @@ export function parseDevicePart(
     fields.set(key, { value: pair.value, line: at });
   }
 
-  const type = fields.get('type');
-  if (textOf(type?.value) !== DEVICE) {
+  const type = textOf(fields.get('type')?.value);
+  if (type === null || !MAP_TYPES.includes(type)) {
     return fail(
-      `マップ形式で書けるのは type: ${DEVICE} だけです。ほかの部品は「${safeToken(id)}: 種類 番地 …」の 1 行で書きます`,
+      `マップ形式で書けるのは type: ${MAP_TYPES.join(' / ')} だけです。ほかの部品は「${safeToken(id)}: 種類 番地 …」の 1 行で書きます`,
       // 指すのは部品の ID の行 (1 行形式で書き直す行)。
       line,
     );
@@ -83,6 +89,9 @@ export function parseDevicePart(
 
   const pins = readPins(id, fields.get('pins'), line);
   if (!pins.ok) return pins;
+  if (type === IC3 && pins.value.length !== IC3_PINS) {
+    return fail(`${IC3} の足は ${IC3_PINS} 本です (1 = 左、2 = 下、3 = 右の順に名前を並べます)`, fields.get('pins')?.line ?? line);
+  }
 
   const labelField = fields.get('label');
   const label = labelField === undefined ? null : textOf(labelField.value);
@@ -96,15 +105,15 @@ export function parseDevicePart(
   if (turnField !== undefined) {
     const words = textOf(turnField.value);
     if (words === null) return fail(`部品 ${safeToken(id)} の turn は向きの語で書きます`, turnField.line);
-    const read = readTurnWords(DEVICE, words.trim().split(/\s+/), turnField.line);
+    const read = readTurnWords(type, words.trim().split(/\s+/), turnField.line);
     if (!read.ok) return read;
     turn = read.value;
   }
 
   return ok({
-    kind: 'multi-terminal', id, type: DEVICE, at: at.value, value: label,
+    kind: 'multi-terminal', id, type, at: at.value, value: label,
     orientation: null, turn, line, pinNames: pins.value,
-    spelling: [atToken], written: DEVICE,
+    spelling: [atToken], written: type,
   });
 }
 

@@ -58,7 +58,7 @@ notes:                 # 任意。図に重ねる印と字
          photoresistor thermistor thermistor-ntc thermistor-ptc varistor
          zener schottky photodiode phototransistor varicap diac reed fuse lamp sma
          speaker mic battery solar switch switch-nc
-3 本足   transistor potentiometer slide-switch thyristor triac regulator
+3 本足   transistor potentiometer slide-switch thyristor triac regulator ic3
 4 本足   transformer
 USB      usb-a usb-c (穴は VBUS GND D+ D- CC1 CC2 の順に 2 つから)
 まとまり  button button-nc dipN (4〜40 の偶数) sipN (2〜40)
@@ -72,7 +72,7 @@ USB      usb-a usb-c (穴は VBUS GND D+ D- CC1 CC2 の順に 2 つから)
 ```text
 capacitor/ceramic  capacitor/film  capacitor/electrolytic  capacitor/tantalum
 led/3mm  led/5mm  phototransistor/3mm  phototransistor/5mm
-transistor/to92  transistor/to220  thyristor/…  triac/…  regulator/…
+transistor/to92  transistor/to220  thyristor/…  triac/…  regulator/…  ic3/…
 transistor/sot23-dip  transistor/sot346-dip (S-Mini)  transistor/sot89-dip  (regulator/…)
 dip8/sop  dip8/tssop  (dipN の姿。DIP 化した変換基板)
 relay/g5v-2  photocoupler/pc817  seg7/5161as  (品名。書かなければこれ)

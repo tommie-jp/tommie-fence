@@ -24,7 +24,7 @@ export type PlaceableName =
   | 'reed' | 'fuse' | 'lamp' | 'sma' | 'usb-a' | 'usb-c'
   | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
   | 'transistor' | 'potentiometer' | 'slide-switch' | 'thyristor' | 'triac'
-  | 'regulator' | 'button' | 'button-nc' | 'transformer';
+  | 'regulator' | 'ic3' | 'button' | 'button-nc' | 'transformer';
 
 export const PLACEABLE = placeableTypes;
 
@@ -90,6 +90,7 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   'usb-a': 'USB Type-A コネクタ',
   'usb-c': 'USB Type-C コネクタ',
   regulator: '三端子レギュレータ',
+  ic3: '3 本足の IC',
   button: 'タクトスイッチ (a 接点)',
   'button-nc': 'タクトスイッチ (b 接点)',
   transformer: '変圧器',
@@ -137,6 +138,7 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   'usb-a': 'J',
   'usb-c': 'J',
   regulator: 'U',
+  ic3: 'U',
   button: 'SW',
   'button-nc': 'SW',
   transformer: 'T',

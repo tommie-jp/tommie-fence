@@ -1,4 +1,4 @@
-import { DEVICE, isTurned } from '../parts.ts';
+import { isMapForm, isTurned } from '../parts.ts';
 import { yamlScalar } from './yamlScalar.ts';
 import type { Turn } from '../parts.ts';
 import type { PartSpec } from '../types.ts';
@@ -39,7 +39,7 @@ const tag = (key: string, text: string | null, reversed = false): readonly strin
 export function spellPart(part: PartSpec): string {
   // **機器はブロックで書くので、鍵の行は ID だけ** (`M1:`)。中身の行は
   // `spellPartBlock` が組む。1 行に畳むと下の行が宙に浮く (52 の docs/66)。
-  if (part.type === DEVICE) return `${part.id}:`;
+  if (isMapForm(part)) return `${part.id}:`;
 
   // **種類も番地も、書かれた綴りをそのまま使う** (`written` / `spelling`)。
   // 読んだ正式名で書き戻すと、略記や別名で書いた行が勝手に長くなる。
@@ -74,11 +74,11 @@ const FIELD_INDENT = '  ';
  * 鍵の行と中身の行 (`type` `at` `label` `pins` `turn`)。字下げは鍵の行からの相対。
  */
 export function spellPartBlock(part: PartSpec): readonly string[] {
-  if (part.type !== DEVICE || part.kind !== 'multi-terminal') return [spellPart(part)];
+  if (!isMapForm(part) || part.kind !== 'multi-terminal') return [spellPart(part)];
   const turn = turnWords(part.turn);
   return [
     `${part.id}:`,
-    `${FIELD_INDENT}type: ${DEVICE}`,
+    `${FIELD_INDENT}type: ${part.type}`,
     `${FIELD_INDENT}at: ${part.spelling[0] ?? ''}`,
     ...(part.value === null ? [] : [`${FIELD_INDENT}label: ${yamlScalar(part.value)}`]),
     `${FIELD_INDENT}pins: [${(part.pinNames ?? []).join(', ')}]`,

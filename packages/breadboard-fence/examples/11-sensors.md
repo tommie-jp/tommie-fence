@@ -103,3 +103,26 @@ notes:
 - `phototransistor` は**2 本足** (C と E。ベースは無い)。先に書いた穴が C。
 - 姿は LED と同じ砲弾型 (`3mm` / `5mm`)。LED と見分けが付くよう**胴を黒く**描き、
   **平らな面は描かない** — 平らな側が C の品と E の品があるため。
+
+## 3 本足の IC
+
+```breadboard
+title: 図05 3 本足の IC (温度センサーとホール素子)
+board: half
+parts:
+  U1: ic3 f4(+Vs) f5(Vout) f6(GND) LM35
+  U2: ic3 f12(VCC) f13(GND) f14(OUT) A1324
+  U3: ic3/to220 f20 f21 f22
+wires:
+  - j4 -- +b4 red
+  - j6 -- -b6 black
+notes:
+  - source blue
+```
+
+![図05 3 本足の IC (温度センサーとホール素子)](out/11-sensors-5.svg)
+
+- `ic3` は**足の名前が品ごとに違う** 3 本足の IC をまとめて受ける (LM35 は
+  `+Vs Vout GND`、ホール素子の A1324 は `VCC GND OUT`)。名前は穴に書き、
+  書かなければ左から `1` `2` `3`。
+- 姿はトランジスタと同じ `to92` (既定) / `to220`。

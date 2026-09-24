@@ -19,7 +19,7 @@ export type PlaceableName =
   | 'reed' | 'fuse' | 'lamp' | 'sma' | 'usb-a' | 'usb-c'
   | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
   | 'button' | 'button-nc' | 'transformer'
-  | 'transistor' | 'potentiometer' | 'thyristor' | 'triac' | 'slide-switch' | 'regulator';
+  | 'transistor' | 'potentiometer' | 'thyristor' | 'triac' | 'slide-switch' | 'regulator' | 'ic3';
 
 /** 和名。**種類を足したら型エラーでここも要求される。** */
 export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
@@ -53,6 +53,7 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   triac: 'トライアック',
   'slide-switch': 'スライドスイッチ',
   regulator: '三端子レギュレータ',
+  ic3: '3 本足の IC',
   battery: '電池',
   solar: '太陽電池',
   speaker: 'スピーカー',
@@ -99,6 +100,7 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   triac: 'T',
   'slide-switch': 'SW',
   regulator: 'U',
+  ic3: 'U',
   battery: 'B',
   solar: 'PV',
   speaker: 'LS',

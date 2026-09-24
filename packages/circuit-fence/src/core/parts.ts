@@ -529,6 +529,48 @@ const namedChipOf = (type: string): NamedChip => lookupNamedChip(type, null) as 
 /** `device` の種類名。1 行では書けず、マップ形式 (`type: device`) だけで書く。 */
 export const DEVICE = 'device';
 
+/**
+ * 3 本足の IC の種類名。1 行 (`U1: ic3 c4 UM66T`) でも、足の名前を並べる
+ * マップ形式 (`type: ic3` + `pins:`) でも書ける (52 の docs/66 の段 7)。
+ */
+export const IC3 = 'ic3';
+
+/** マップ形式で書ける種類。足の名前を並べるので 1 行に畳めない形がある。 */
+export const MAP_TYPES: readonly string[] = [DEVICE, IC3];
+
+/**
+ * ブロック (マップ形式) で書かれた部品か。**足の名前の並びを持つのはマップ形式
+ * だけ**なので、それで見分ける (1 行の `ic3` は 1 行の部品のまま)。
+ */
+export const isMapForm = (part: PartSpec): boolean => part.kind === 'multi-terminal' && part.pinNames !== undefined;
+
+/**
+ * 3 本足の IC。**箱は三端子レギュレータと同じ** (1 = 左、2 = 下、3 = 右)。
+ * ホール素子・LM35・LMF501T・UM66T は足の名前が品ごとに違うので、名前は
+ * 書き手が与える。書かなければ番号を刷る。
+ */
+export function ic3Chip(names: readonly string[] | null): PartType {
+  const labels = names ?? ['1', '2', '3'];
+  const anchors = labels.map((name, index) => [name, `pin ${index + 1}`] as const);
+  return {
+    kind: 'multi-terminal',
+    symbol: REGULATOR_SHAPE,
+    options: ['draw', 'font=\\scriptsize'],
+    // 型番はレギュレータと同じく箱の外の上 (中は足の名前 3 つで埋まる)。
+    valueInside: false,
+    valueAwayFrom: 'pin 2',
+    ...NO_UNIT,
+    pins: Object.fromEntries([
+      // **名前を先に置く** — 先に書いたほうが代表の名前になる (`mainPinName`)。
+      ...anchors.flatMap(([name, anchor]) =>
+        (name === name.toLowerCase() ? [[name, anchor]] : [[name, anchor], [name.toLowerCase(), anchor]])),
+      ...anchors.map(([, anchor], index) => [`${index + 1}`, anchor]),
+    ]),
+    pinSide: { 'pin 1': 'left', 'pin 2': 'bottom', 'pin 3': 'right' },
+    pinLabels: labels,
+  };
+}
+
 function sipchip(count: number): PartType {
   const legs = Array.from({ length: count }, (_, index) => index + 1);
   return {
@@ -859,6 +901,8 @@ export const PART_TYPES = {
     pinSide: { 'pin 1': 'left', 'pin 2': 'bottom', 'pin 3': 'right' },
     pinLabels: ['IN', 'GND', 'OUT'],
   },
+  // 3 本足の IC。1 行で書くと足は番号。名前はマップ形式の `pins:` で与える。
+  ic3: ic3Chip(null),
 
   // ピンヘッダ。**数は実体配線図の 2 つと同じ表**。
   sip2: sipchip(2),
@@ -996,6 +1040,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   sip20: 'ピンヘッダ (20 ピン)',
   sip40: 'ピンヘッダ (40 ピン)',
   regulator: '三端子レギュレータ',
+  ic3: '3 本足の IC',
   buzzer: 'ブザー',
   sma: 'SMA コネクタ',
   // 実体配線図の 2 つと同じ字。
@@ -1115,6 +1160,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   sip20: 'J',
   sip40: 'J',
   regulator: 'U',
+  ic3: 'U',
   buzzer: 'B',
   sma: 'J',
   'usb-a': 'J',
@@ -1189,9 +1235,10 @@ export const lookupPartType = (name: string): PartType | null =>
  * 引けない。部品を手に持っている所はこちらを使う。
  */
 export const partTypeOf = (part: PartSpec): PartType | null =>
-  part.type === DEVICE && part.kind === 'multi-terminal' && part.pinNames !== undefined
-    ? deviceChip(part.pinNames, part.value)
-    : lookupPartType(part.type);
+  part.kind !== 'multi-terminal' || part.pinNames === undefined
+    ? lookupPartType(part.type)
+    : part.type === DEVICE ? deviceChip(part.pinNames, part.value)
+      : part.type === IC3 ? ic3Chip(part.pinNames) : lookupPartType(part.type);
 
 /**
  * その TeX で使う circuitikz の記号名。

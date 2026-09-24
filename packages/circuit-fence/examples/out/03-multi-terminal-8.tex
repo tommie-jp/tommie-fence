@@ -1,0 +1,71 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\makeatletter
+\pgfdeclareshape{reg3}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{0.62cm}}
+  \anchor{south}{\pgfpoint{0cm}{-0.62cm}}
+  \anchor{east}{\pgfpoint{0.95cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{-1.35cm}{0cm}}
+  \anchor{bpin 1}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 2}{\pgfpoint{0cm}{-1.02cm}}
+  \anchor{bpin 2}{\pgfpoint{0cm}{-0.62cm}}
+  \anchor{pin 3}{\pgfpoint{1.35cm}{0cm}}
+  \anchor{bpin 3}{\pgfpoint{0.95cm}{0cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-0.95cm}{-0.62cm}}{\pgfpoint{0.95cm}{0.62cm}}
+    \pgfpathmoveto{\pgfpoint{-1.35cm}{0cm}}\pgfpathlineto{\pgfpoint{-0.95cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-1.02cm}}\pgfpathlineto{\pgfpoint{0cm}{-0.62cm}}
+    \pgfpathmoveto{\pgfpoint{1.35cm}{0cm}}\pgfpathlineto{\pgfpoint{0.95cm}{0cm}}
+  }
+}
+\makeatother
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{grounds/scale=1.36}
+\foreach \x in {0,2,4,6,8,10,12} {\foreach \y in {0,-2,-4,-6,-8,-10,-12} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize] at (8,0.84) {5};
+\node[gray, font=\scriptsize] at (10,0.84) {6};
+\node[gray, font=\scriptsize] at (12,0.84) {7};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
+\coordinate (a2) at (2,0);
+\coordinate (c4) at (6,-4);
+\coordinate (c7) at (12,-4);
+\coordinate (e7) at (12,-8);
+\coordinate (e4) at (6,-8);
+\coordinate (g4) at (6,-12);
+\node[vcc] at (a2) {VCC}; % line 3
+\node[reg3, draw, font=\scriptsize] (part-U1) at (c4) {}; % line 4
+\node[font=\scriptsize, anchor=south] at (part-U1.north) {$\mathrm{LM35}$}; % line 4
+\node[anchor=south, yshift=9pt] at (part-U1.north) {$U_{1}$}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, yshift=2pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 3) {X}; % line 4
+\node[ground] at (c7) {}; % line 9
+\draw (e7) node[ocirc]{} node[above left]{OUT}; % line 10
+\draw (e4) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (g4); % line 11
+\node[ground] at (g4) {}; % line 12
+\draw (a2) |- (part-U1.pin 1); % line 14
+\draw (part-U1.pin 3) -| (c7); % line 15
+\draw (part-U1.pin 2) -- (e4); % line 16
+\draw (e4) -- (e7); % line 16
+\node[circ] at (e4) {};
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(15.972,0.853);
+\end{circuitikz}
+\end{document}

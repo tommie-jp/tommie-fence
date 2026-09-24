@@ -86,7 +86,7 @@ function connectorIcon(type: string, variant: string | null, ink: BodyInk | unde
 }
 
 /** 足の位置を形が決める種類は、パレットでは箱の絵になる (姿を持たない)。 */
-const PACKAGED = new Set(['transistor', 'potentiometer', 'slide-switch', 'thyristor', 'triac', 'regulator']);
+const PACKAGED = new Set(['transistor', 'potentiometer', 'slide-switch', 'thyristor', 'triac', 'regulator', 'ic3']);
 
 const isPackage = (type: string): boolean => PACKAGED.has(type);
 

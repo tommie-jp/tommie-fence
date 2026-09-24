@@ -36,6 +36,8 @@ const TWO_LEAD = new Set([
 /** 3 本足の部品。**足の位置は書かれたとおり** — 実物の足は曲げられる。 */
 const THREE_LEAD = new Set([
   'transistor', 'potentiometer', 'thyristor', 'triac', 'slide-switch', 'regulator',
+  // 3 本足の IC (ホール素子・LM35・UM66T など。52 の docs/66)。
+  'ic3',
 ]);
 
 /**
@@ -114,6 +116,7 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
   thyristor: ['to92', 'to220'],
   triac: ['to92', 'to220'],
   regulator: ['to92', 'to220'],
+  ic3: ['to92', 'to220'],
   // オスは中心にピンが立ち、メスは中心が穴。**姿で描き分ける** —
   // 図を見て挿す人が、合う相手を取り違えないように。
   // `-edge` は端面実装 (横置き)。板の縁から**胴が外へ張り出す**。

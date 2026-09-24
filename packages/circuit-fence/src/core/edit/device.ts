@@ -1,6 +1,6 @@
 import { LineCounter, isMap, isScalar, parseDocument } from 'yaml';
 import type { Edit, LineEdit } from 'fence-kit';
-import { DEVICE } from '../parts.ts';
+import { isMapForm } from '../parts.ts';
 import type { PartSpec } from '../types.ts';
 
 /**
@@ -16,7 +16,8 @@ import type { PartSpec } from '../types.ts';
  * 中の空行や浅いコメントで途切れ、消すと中身が宙に残った (コードレビューで出た)。
  */
 
-export const isDevicePart = (part: PartSpec): boolean => part.type === DEVICE;
+/** ブロックで書かれた部品 (機器と、足の名前を並べた `ic3`)。 */
+export const isDevicePart = isMapForm;
 
 /** 1 行に並べた形 (`M1: {type: device, …}`) は升目から書き換えない。 */
 export const FLOW_DEVICE = '1 行に並べた形の機器は升目からは書き換えられません。手で書き換えます';

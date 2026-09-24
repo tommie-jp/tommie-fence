@@ -27,6 +27,34 @@ export const bodyHalfHeight = (part: PlacedPart, layout: Layout): number =>
 export const bodyHalfWidth = (part: PlacedPart, layout: Layout): number =>
   packageHalfWidth(part, layout.pitch);
 
+/** 足の名前に使ってよい、隣の足までの間隔の割合 (残りは名前どうしの隙間)。 */
+const LEG_NAME_ROOM = 0.9;
+
+/**
+ * 太字の字の幅 (字の大きさを 1 とする)。足の名前は太字で、大文字が多い —
+ * `textWidth` の平均 (0.55) で見積もると `VCC` `GND` `OUT` が重なった (図で確かめた)。
+ */
+const BOLD_LOWER = 0.58;
+const BOLD_UPPER = 0.72;
+const WIDE = 1;
+
+const boldWidth = (text: string): number =>
+  [...text].reduce((sum, char) => sum + (/[a-z]/.test(char) ? BOLD_LOWER : /[ -~]/.test(char) ? BOLD_UPPER : WIDE), 0);
+
+/**
+ * 足の名前の字の大きさ。**隣の足の名前とぶつかるときだけ縮める** — 3 本足の IC
+ * (`ic3`) は `Vout` `GND` のような名前を隣り合う穴に書くので、既定の大きさでは
+ * 重なる。1 文字の名前 (`B` `C` `E`) は収まるので既定のまま。縦に並んだ足は
+ * 名前が横にずれないので縮めない。
+ */
+function legNameSize(names: readonly string[], xs: readonly number[], size: number): number {
+  const gaps = xs.slice(1).map((x, index) => Math.abs(x - (xs[index] ?? x))).filter((gap) => gap > 0);
+  if (gaps.length === 0) return size;
+  const widest = Math.max(0, ...names.map(boldWidth));
+  const room = Math.min(...gaps) * LEG_NAME_ROOM;
+  return widest * size <= room ? size : room / widest;
+}
+
 export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderTheme, drop = 0): string {
   const points = pinPoints(part, layout);
   const center = points?.[1];
@@ -46,12 +74,13 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
   // いたが、上下のブロックで側が変わって揃わなかった。
   const cap = metrics.textSize * NAME_CAP;
   const nameY = (y: number): number => y + reach + LEG_NAME_CLEAR + cap;
+  const nameSize = legNameSize(part.pins.map((pin) => pin.name), points.map((point) => point.x), metrics.textSize);
   const names = part.pins
     .map((pin, index) => {
       const point = points[index];
       return point
         ? svgText(point.x, nameY(point.y), pin.name, {
-            'font-size': num(metrics.textSize),
+            'font-size': num(nameSize),
             'font-weight': 700,
             fill: palette.partText,
             halo: palette.textHalo,

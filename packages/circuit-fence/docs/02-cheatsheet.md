@@ -90,6 +90,7 @@ parts:
 - ブザー `buzzer` (スピーカーの記号で描く)
 - SMA コネクタ `sma` (足は `1` 中心導体 / `2` 外皮)
 - 三端子レギュレータ `regulator` (足は `in` `gnd` `out`。番号でも可)
+- 3 本足の IC `ic3` (同じ箱。足は `1` `2` `3`、マップ形式の `pins:` で名前を付けられる)
 - ピンヘッダ (足は番号)
   `sip2` `sip3` `sip4` `sip5` `sip6` `sip8` `sip10` `sip20` `sip40`
 - USB コネクタ (足は `VBUS` `GND` `D+` `D-`、Type-C は `CC1` `CC2` も。番号でも可)

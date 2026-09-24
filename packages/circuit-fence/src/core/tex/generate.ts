@@ -4,7 +4,7 @@ import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
 import {
-  DEVICE, isTurned, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, seg7DeviceBox, symbolFor, symbolOf, turnSide,
+  DEVICE, IC3, isTurned, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, seg7DeviceBox, symbolFor, symbolOf, turnSide,
 } from '../parts.ts';
 import type { PartType, PinSide, SourceInner, Turn } from '../parts.ts';
 import { lookupBoardPart } from 'fence-kit';
@@ -190,7 +190,8 @@ function sipShapesFor(circuit: Circuit): string[] {
   }
   const declared = [...sizes].sort((a, b) => a - b).flatMap((pins) => sipShapeTex(pins));
   // 三端子レギュレータも自分で宣言した形。**使うときだけ**書く。
-  const withReg = circuit.parts.some((part) => part.type === 'regulator')
+  // 3 本足の IC (`ic3`) も同じ箱。
+  const withReg = circuit.parts.some((part) => part.type === 'regulator' || part.type === IC3)
     ? [...declared, ...regulatorShapeTex()]
     : declared;
   const withSma = circuit.parts.some((part) => part.type === 'sma')

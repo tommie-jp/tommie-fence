@@ -288,3 +288,35 @@ style:
 ![図07 光が当たると出力が下がる](out/03-multi-terminal-7.png)
 
 名札は足の無い辺に出るが、光の矢の出る辺 (左) は避ける。
+
+## 3 本足の IC (`ic3`)
+
+ホール素子・温度センサー・メロディ IC のように**足の名前が品ごとに違う
+3 本足の IC** は `ic3` で書く。箱は三端子レギュレータと同じ (1 = 左、2 = 下、
+3 = 右)。足の名前は機器と同じマップ形式の `pins:` で与え、1 行で書くと番号になる。
+
+```circuit
+title: 図08 温度センサー (LM35) の出力を取り出す
+parts:
+  VCC: vcc a2
+  U1:
+    type: ic3
+    at: c4
+    label: LM35
+    pins: [+Vs, Vout, GND]
+  G1: ground c7
+  OUT: port e7
+  C1: capacitor e4 g4 100n
+  G2: ground g4
+wires:
+  - a2 |- U1.+Vs
+  - U1.GND -| c7
+  - U1.Vout -- e4 -- e7
+style:
+  grid: on
+```
+
+![図08 温度センサー (LM35) の出力を取り出す](out/03-multi-terminal-8.png)
+
+LM35 の足は 1 = `+Vs`、2 = `Vout`、3 = `GND` なので、そのまま 1 = 左、2 = 下、
+3 = 右に並ぶ。配線からもネットリストからも書いた名前で指せる (`U1.Vout`)。

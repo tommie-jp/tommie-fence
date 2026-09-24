@@ -103,7 +103,7 @@ describe('typesWithVariants', () => {
   test('names the types whose look can be chosen', () => {
     expect(typesWithVariants()).toEqual([
       'capacitor', 'resistor', 'diode', 'zener', 'schottky', 'inductor', 'potentiometer',
-      'led', 'phototransistor', 'transistor', 'thyristor', 'triac', 'regulator', 'sma', 'crystal', 'usb-a', 'usb-c',
+      'led', 'phototransistor', 'transistor', 'thyristor', 'triac', 'regulator', 'ic3', 'sma', 'crystal', 'usb-a', 'usb-c',
       // 足に名前のある DIP 型。姿は品名 (52 の docs/66)。
       'relay', 'photocoupler', 'seg7',
       // DIP 化した変換基板 (`dip8/sop`)。種類は正規表現で読むので、書き方の名前で挙げる。

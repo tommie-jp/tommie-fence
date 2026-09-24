@@ -74,7 +74,7 @@ wires:
   - 2 本足 (コネクタ) — `sma`
   - USB コネクタ — `usb-a` / `usb-c` (穴は `VBUS GND D+ D-` の順。2 つから書ける)
   - 3 本足 — `transistor` / `potentiometer` / `slide-switch` / `thyristor` / `triac` /
-    `regulator`
+    `regulator` / `ic3` (3 本足の IC。足の名前は穴に書く — `h9(Vout)`)
   - 4 本足 — `transformer` (巻線の端。書かれた穴がそのまま足)
   - まとまった足 — `button` (a 接点) / `button-nc` (b 接点) / `dipN` / `sipN`
   - マイコンボード — `pico` / `pico-w` / `pico2` / `pico2-w`
@@ -592,6 +592,7 @@ parts:
 | `thyristor` | `to92` / `to220` | 同上 |
 | `triac` | `to92` / `to220` | 同上 |
 | `regulator` | `to92` / `to220` / `sot23-dip` / `sot89-dip` | 1A クラスは TO-220、小電流は TO-92。面実装は変換基板 |
+| `ic3` | `to92` / `to220` | 丸い胴 (既定) / 放熱タブつき。ホール素子・温度センサー・メロディ IC など |
 | `sma` | `male` / `female` | オスは中心にピン、メスは中心が穴 |
 | `usb-a` | `male` / `female` | 差し込み (金物が変換基板の縁から出る) / 受け口 (既定) |
 | `usb-c` | `male` / `female` | 同上 |
