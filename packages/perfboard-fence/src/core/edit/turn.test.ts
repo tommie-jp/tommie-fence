@@ -105,8 +105,22 @@ describe('アンカー 1 つで置く形 (DIP / SIP)', () => {
   });
 
   test('puts the word right after the hole, so the value stays last', () => {
-    // `ID: 種類 穴 [向き] [値]` の並びを崩さない。
-    expect(after(DIP, flipPart(DIP, 'U1'))).toContain('U1: dip8 h8 mirror NE555');
+    // `ID: 種類 穴 [向き] [値]` の並びを崩さない。裏返せるのは 1 列の形 (DIP は裏返して挿せない)。
+    const sip = 'board: 16x16\nparts:\n  J1: sip4 h8 OLED\n';
+
+    expect(after(sip, flipPart(sip, 'J1'))).toContain('J1: sip4 h8 mirror OLED');
+  });
+
+  test('refuses to flip a DIP or a named chip, which cannot go into a board upside down', () => {
+    // 以前は mirror を書いていたが、それは実物を裏から見た並び (52 の docs/71)。
+    for (const line of ['U1: dip8 h8 NE555', 'K1: relay h2']) {
+      const source = `board: 16x16\nparts:\n  ${line}\n`;
+      const id = line.split(':')[0] ?? '';
+      const result = flipPart(source, id);
+
+      expect(result.ok, id).toBe(false);
+      expect(result.ok ? '' : result.error.message, id).toContain('裏返して挿せません');
+    }
   });
 
   test('rewrites the word that is already there, rather than adding a second one', () => {
@@ -123,17 +137,17 @@ describe('アンカー 1 つで置く形 (DIP / SIP)', () => {
   });
 
   test('flips back by taking the mirror away', () => {
-    const flipped = 'board: 16x16\nparts:\n  U1: dip8 h8 mirror NE555\n';
+    const flipped = 'board: 16x16\nparts:\n  J1: sip4 h8 mirror OLED\n';
 
-    expect(after(flipped, flipPart(flipped, 'U1'))).toContain('U1: dip8 h8 NE555');
+    expect(after(flipped, flipPart(flipped, 'J1'))).toContain('J1: sip4 h8 OLED');
   });
 
   test('keeps the rotation when flipping, changing only the one thing asked for', () => {
     // 足す語は**穴のすぐ後ろ**なので、既にある回転より前に来る。読む側は
     // 順を問わない (circuit-fence も同じ位置に足す — 3 つのフェンスで揃える)。
-    const turned = 'board: 16x16\nparts:\n  U1: dip8 h8 r90 NE555\n';
+    const turned = 'board: 16x16\nparts:\n  J1: sip4 h8 r90 OLED\n';
 
-    expect(after(turned, flipPart(turned, 'U1'))).toContain('U1: dip8 h8 mirror r90 NE555');
+    expect(after(turned, flipPart(turned, 'J1'))).toContain('J1: sip4 h8 mirror r90 OLED');
   });
 
   test('slides a turn that walks the legs off the board back onto it', () => {

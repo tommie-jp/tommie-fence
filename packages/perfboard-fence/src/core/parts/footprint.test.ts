@@ -47,13 +47,15 @@ describe('pinsOf', () => {
     expect(pinsOf({ kind: 'three-lead', pins: 3, holes: 3 }, holes)).toEqual(holes);
   });
 
-  test('walks a dip anti-clockwise from pin 1, the way the package is numbered', () => {
-    // pin 1 が左上 (b3 = 2 行 3 列)。1〜4 は右へ、5〜8 は下の列を**左へ**戻る。
+  test('walks a dip anti-clockwise seen from above, pin 1 at the bottom left', () => {
+    // アンカー (b3 = 2 行 3 列) は胴の左上の穴。切り欠きを左にした実物を上から見ると
+    // 1 番は左下で、1〜4 が下の列を右へ、5〜8 が上の列を**左へ**戻る (52 の docs/71)。
+    // 以前は 1 番を左上に置いていて、上から見て時計回り (実物の鏡像) だった。
     const pins = pinsOf({ kind: 'dip', pins: 8, holes: 1 }, [at('b3')]);
 
     expect(pins.map((pin) => `${pin.row},${pin.col}`)).toEqual([
-      '2,3', '2,4', '2,5', '2,6',
-      `${2 + DIP_ROW_SPAN},6`, `${2 + DIP_ROW_SPAN},5`, `${2 + DIP_ROW_SPAN},4`, `${2 + DIP_ROW_SPAN},3`,
+      `${2 + DIP_ROW_SPAN},3`, `${2 + DIP_ROW_SPAN},4`, `${2 + DIP_ROW_SPAN},5`, `${2 + DIP_ROW_SPAN},6`,
+      '2,6', '2,5', '2,4', '2,3',
     ]);
   });
 
@@ -119,40 +121,43 @@ describe('回した DIP のピン', () => {
   const dip8 = { kind: 'dip', pins: 8, holes: 1 } as const;
   const anchor = [at(3, 3)];
 
-  test('lays the pins out along the row when nothing is written', () => {
+  test('lays the pins out along the rows when nothing is written', () => {
     const pins = pinsOf(dip8, anchor, null, { rotate: 0, mirror: false });
 
-    expect(pins[0]).toEqual(at(3, 3));
-    expect(pins[3]).toEqual(at(3, 6));
-    // 反対側の列は逆順 (1 番の向かいが 8 番)。
-    expect(pins[7]).toEqual(at(6, 3));
+    // 1 番は胴の左下 (アンカーの 3 行下)、4 番は右下。
+    expect(pins[0]).toEqual(at(6, 3));
+    expect(pins[3]).toEqual(at(6, 6));
+    // 反対側の列は逆順 (1 番の向かいが 8 番。8 番がアンカーの穴)。
+    expect(pins[7]).toEqual(at(3, 3));
   });
 
   test('turns the pins a quarter clockwise, leaving the anchor put', () => {
     const pins = pinsOf(dip8, anchor, null, { rotate: 90, mirror: false });
 
     // **アンカーは動かない。** 動かすと「回す」が「移動」になる。
-    expect(pins[0]).toEqual(at(3, 3));
-    // 右へ 3 だったピンは、時計回りで下へ 3。
-    expect(pins[3]).toEqual(at(6, 3));
+    expect(pins[7]).toEqual(at(3, 3));
+    // 下へ 3 だった 1 番は、時計回りで左へ 3。
+    expect(pins[0]).toEqual(at(3, 0));
+    expect(pins[3]).toEqual(at(6, 0));
   });
 
   test('turns them half way round', () => {
     const pins = pinsOf(dip8, anchor, null, { rotate: 180, mirror: false });
 
-    expect(pins[3]).toEqual(at(3, 0));
+    expect(pins[0]).toEqual(at(0, 3));
+    expect(pins[3]).toEqual(at(0, 0));
   });
 
   test('mirrors left to right, which flips the column side only', () => {
-    const pins = pinsOf(dip8, anchor, null, { rotate: 0, mirror: true });
+    // 裏返せるのは 1 列の形だけ (DIP は実物を裏返して挿せない)。
+    const pins = pinsOf({ kind: 'sip', pins: 4, holes: 1 }, anchor, null, { rotate: 0, mirror: true });
 
     expect(pins[3]).toEqual(at(3, 0));
-    expect(pins[7]).toEqual(at(6, 3));
   });
 
   test('mirrors first and turns after, the way the word reads', () => {
     // circuit と同じ意味 (52 の docs/11)。反転で左右が入れ替わってから回る。
-    const pins = pinsOf(dip8, anchor, null, { rotate: 90, mirror: true });
+    const pins = pinsOf({ kind: 'sip', pins: 4, holes: 1 }, anchor, null, { rotate: 90, mirror: true });
 
     expect(pins[3]).toEqual(at(0, 3));
   });

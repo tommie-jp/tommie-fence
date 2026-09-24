@@ -5,7 +5,7 @@ import { formatAddress, parseAddress } from '../model/address.ts';
 
 import { footprintOf, pinsOf } from '../parts/footprint.ts';
 import type { Address, FenceError } from '../types.ts';
-import { MIRROR_WORD, isRotationWord, orientOf, rotationWord } from '../parts/orient.ts';
+import { MIRROR_REFUSAL, MIRROR_WORD, isRotationWord, orientOf, refusesMirror, rotationWord } from '../parts/orient.ts';
 import type { Turn } from '../parts/orient.ts';
 import { diffAfter } from './diff.ts';
 import { isLocated, locatePart, offBoardCheck } from './move.ts';
@@ -83,10 +83,15 @@ function pivotOf(addresses: readonly Address[]): Address | null {
 function anchoredTurn(
   source: string,
   id: string,
-): { readonly ok: true; readonly turn: Turn } | { readonly ok: false; readonly error: FenceError } | null {
+):
+  | { readonly ok: true; readonly turn: Turn; readonly type: string; readonly line: number }
+  | { readonly ok: false; readonly error: FenceError }
+  | null {
   const found = locatePart(source, id);
   if (!isLocated(found)) return { ok: false, error: found.error };
-  return orientOf(found.part.type) === 'full' ? { ok: true, turn: found.part.turn } : null;
+  return orientOf(found.part.type) === 'full'
+    ? { ok: true, turn: found.part.turn, type: found.part.type, line: found.lineNumber }
+    : null;
 }
 
 /**
@@ -309,9 +314,9 @@ export function turnPart(
 export function flipPart(source: string, id: string): MoveResult {
   const anchored = anchoredTurn(source, id);
   if (anchored !== null) {
-    return anchored.ok
-      ? turnByWord(source, id, { ...anchored.turn, mirror: !anchored.turn.mirror })
-      : { ok: false, error: anchored.error };
+    if (!anchored.ok) return { ok: false, error: anchored.error };
+    if (refusesMirror(anchored.type)) return fail(`${safeToken(id)} は裏返せません (${MIRROR_REFUSAL})`, anchored.line);
+    return turnByWord(source, id, { ...anchored.turn, mirror: !anchored.turn.mirror });
   }
 
   const grabbed = writtenLeadsAt(source, id, '反転');

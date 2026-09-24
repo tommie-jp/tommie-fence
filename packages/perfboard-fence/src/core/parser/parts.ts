@@ -2,7 +2,7 @@ import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
 import { footprintOf } from '../parts/footprint.ts';
-import { MIRROR_WORD, NO_TURN, isTurned, orientOf, rotationOf } from '../parts/orient.ts';
+import { MIRROR_REFUSAL, MIRROR_WORD, NO_TURN, isTurned, orientOf, refusesMirror, rotationOf } from '../parts/orient.ts';
 import type { Turn } from '../parts/orient.ts';
 import { isNestedType, placeableNames, splitPartType } from '../parts/types.ts';
 import { lookupConnector } from 'fence-kit';
@@ -143,6 +143,9 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
       `${safeToken(written)} に向きは書けません (足を並べて書く部品の向きは穴の順そのものです)`,
       written,
     );
+  }
+  if (turn.mirror && refusesMirror(type)) {
+    return fail(`${safeToken(written)} に ${MIRROR_WORD} は書けません (${MIRROR_REFUSAL})`, MIRROR_WORD);
   }
   // **番地に見えるものを黙って値にしない。** 足を 1 本多く書いたつもりの人が、
   // 「値 b9」の図を見て気づけないまま終わる。

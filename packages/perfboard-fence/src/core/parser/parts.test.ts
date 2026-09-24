@@ -164,10 +164,20 @@ describe('向きの語', () => {
   });
 
   test('reads a mirror, and both together in either order', () => {
-    expect(parsePartLine('U1', 'dip8 c3 mirror').ok).toBe(true);
-    const both = parsePartLine('U1', 'dip8 c3 mirror r180');
+    expect(parsePartLine('J1', 'sip4 c3 mirror').ok).toBe(true);
+    const both = parsePartLine('J1', 'sip4 c3 mirror r180');
 
     expect(both.ok && both.value.turn).toEqual({ rotate: 180, mirror: true });
+  });
+
+  test('refuses a mirror on a DIP or a named chip, which cannot go into a board upside down', () => {
+    // 裏返した形は実物を裏から見た並びで、どう挿しても作れない (52 の docs/71)。
+    for (const line of ['dip8 c3 mirror', 'relay c3 mirror', 'dip8 c3 r90 mirror']) {
+      const read = parsePartLine('U1', line);
+
+      expect(read.ok, line).toBe(false);
+      expect(read.ok ? '' : read.error.message, line).toContain('裏返して挿せません');
+    }
   });
 
   test('stands still when nothing is written', () => {
@@ -178,7 +188,7 @@ describe('向きの語', () => {
 
   test('refuses two of the same kind, instead of letting the last one win', () => {
     expect(parsePartLine('U1', 'dip8 c3 r90 r180').ok).toBe(false);
-    expect(parsePartLine('U1', 'dip8 c3 mirror mirror').ok).toBe(false);
+    expect(parsePartLine('J1', 'sip4 c3 mirror mirror').ok).toBe(false);
   });
 
   test('refuses a turn on a part whose holes already say which way it faces', () => {

@@ -115,9 +115,11 @@ export function footprintOf(type: string, variant: string | null = null): Footpr
 /**
  * 書かれた穴から足の位置を出す。
  *
- * DIP は**パッケージの番号の付き方どおり**に反時計回り — pin 1 が左上、
- * そこから右へ数えて、折り返して下の列を左へ戻る。実物のノッチと同じ向きで、
- * ここを変えるとデータシートのピン番号と図が食い違う。
+ * DIP は**実物を上から見た並び**で反時計回り — アンカーは胴の左上の穴で、
+ * 切り欠きを左にすると 1 番は**左下**。下の列を右へ数えて、折り返して上の列を
+ * 左へ戻る。ここを変えるとデータシートのピン番号と図が食い違う。
+ * 以前は 1 番を左上に置いていて、上から見て時計回り (実物を裏から見た形) だった
+ * (52 の docs/71)。
  */
 /**
  * アンカーからの相対位置を、書かれた向きに回す。
@@ -159,7 +161,7 @@ export function pinsOf(
     return mirrored === null ? [anchor, tip] : [anchor, tip, mirrored];
   }
 
-  // **アンカーは動かさない。** 回しても 1 番ピンの穴はそのままで、
+  // **アンカーは動かさない。** 回してもアンカーの穴はそのままで、
   // 残りがその周りを回る (動かすと「回す」が「移動」になる)。
   const at = (offset: { readonly row: number; readonly col: number }): Address => {
     const spun = turned(offset, turn);
@@ -185,16 +187,15 @@ export function pinsOf(
     const { chip } = footprint;
     const perSide = chip.positions / 2;
     return chip.pins.map((pin) => (pin.at <= perSide
-      ? at({ row: 0, col: pin.at - 1 })
-      : at({ row: chip.rowSpan, col: chip.positions - pin.at })));
+      ? at({ row: chip.rowSpan, col: pin.at - 1 })
+      : at({ row: 0, col: chip.positions - pin.at })));
   }
 
   const span = footprint.kind === 'board' ? BOARD_ROW_SPAN : DIP_ROW_SPAN;
   const perSide = footprint.pins / 2;
-  const top = Array.from({ length: perSide }, (_, index) => at({ row: 0, col: index }));
-  const bottom = Array.from({ length: perSide }, (_, index) =>
-    at({ row: span, col: perSide - 1 - index }));
-  return [...top, ...bottom];
+  const bottom = Array.from({ length: perSide }, (_, index) => at({ row: span, col: index }));
+  const top = Array.from({ length: perSide }, (_, index) => at({ row: 0, col: perSide - 1 - index }));
+  return [...bottom, ...top];
 }
 
 /** 端面実装のコネクタが載る辺。 */

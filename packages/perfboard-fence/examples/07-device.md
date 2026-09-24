@@ -54,81 +54,81 @@ N3 : D1.2, BAT.-
 その場所**に置ける (箱の左上がその番地)。入る側と出る側を分けると、信号の流れが
 図の上から下へ読める。
 
-下の図は `-b1` `-b13` (板の上) と `n16` (板の下)。帯に並べると置きたかった場所と
+下の図は `-b17` `-b5` (板の上) と `n2` (板の下)。帯に並べると置きたかった場所と
 関係なく散るので、**並べ方を自分で決めたいときは番地で書く**。
 
 **足は穴の格子に載る**ので、機器の足からまず真下 (真上) の穴へ落として、そこから
-板の上を配線できる (`IN.SIG -- a13`、`a13 -- a11`…)。斜めに 1 本で引くより、
+板の上を配線できる (`IN.SIG -- a6`、`a6 -- a8`…)。斜めに 1 本で引くより、
 どの穴を通っているかが読みやすい。
 
 ```perfboard
 board: 18x12
 title: 図02 入りと出を上下に分ける
 parts:
-  U1: dip8 e8 NE555
-  R1: resistor j3 j6 10k
-  R2: resistor j9 j12 68k
-  C1: capacitor/ceramic j13 l13 10n
-  C2: capacitor/ceramic j18 l18 10n
-  R3: resistor c16 f16 100
+  U1: dip8 h11 r180 NE555
+  R1: resistor j16 j13 10k
+  R2: resistor j10 j7 68k
+  C1: capacitor/ceramic j6 l6 10n
+  C2: capacitor/ceramic j1 l1 10n
+  R3: resistor c3 f3 100
   BAT:
     type: device
-    at: -b1
+    at: -b17
     label: 電池 5V
-    pins: + -
+    pins: "- +"
   IN:
     type: device
-    at: -b13
+    at: -b5
     label: 信号源
-    pins: SIG GND
+    pins: GND SIG
   SPK:
     type: device
-    at: n16
+    at: n2
     label: スピーカー 8Ω
-    pins: + -
+    pins: "- +"
 wires:
-  - BAT.+ -- a1 red
-  - a1 -- h1 red
-  - h1 -- h8 red
-  - h1 -- j1 red
-  - j1 -- j3 red
-  - BAT.- -- a2 black
-  - a2 -- e2 black
-  - e2 -- l2 black
-  - e8 -- e7 black
-  - e7 -- e2 black
-  - l2 -- l13 black
-  - l13 -- l14 black
-  - a14 -- k14 black
-  - k14 -- l14 black
-  - k14 -- k18 black
-  - k18 -- l18 black
-  - l18 -- l17 black
-  - SPK.- -- l17 black
-  - IN.GND -- a14 black
-  - IN.SIG -- a13
-  - a13 -- a11
-  - a11 -- e11
-  - e9 -- d9 white
-  - d9 -- c9 white
-  - c9 -- c13 white
-  - c13 -- i13 white
-  - i13 -- j13 white
-  - h10 -- i10 white
-  - i10 -- i12 white
-  - i12 -- j12 white
-  - j12 -- j13 white
-  - h9 -- i9 yellow
-  - i9 -- j9 yellow
-  - j6 -- j9 yellow
-  - h11 -- h12 yellow
-  - h12 -- h18 yellow
-  - h18 -- j18 yellow
-  - e10 -- d10 yellow
-  - d10 -- d16 yellow
-  - d16 -- c16 yellow
-  - f16 -- l16 yellow
-  - SPK.+ -- l16 yellow
+  - BAT.+ -- a18 red
+  - a18 -- h18 red
+  - h18 -- h11 red
+  - h18 -- j18 red
+  - j18 -- j16 red
+  - BAT.- -- a17 black
+  - a17 -- e17 black
+  - e17 -- l17 black
+  - e11 -- e12 black
+  - e12 -- e17 black
+  - l17 -- l6 black
+  - l6 -- l5 black
+  - a5 -- k5 black
+  - k5 -- l5 black
+  - k5 -- k1 black
+  - k1 -- l1 black
+  - l1 -- l2 black
+  - SPK.- -- l2 black
+  - IN.GND -- a5 black
+  - IN.SIG -- a6
+  - a6 -- a8
+  - a8 -- e8
+  - e10 -- d10 white
+  - d10 -- c10 white
+  - c10 -- c6 white
+  - c6 -- i6 white
+  - i6 -- j6 white
+  - h9 -- i9 white
+  - i9 -- i7 white
+  - i7 -- j7 white
+  - j7 -- j6 white
+  - h10 -- i10 yellow
+  - i10 -- j10 yellow
+  - j13 -- j10 yellow
+  - h8 -- h7 yellow
+  - h7 -- h1 yellow
+  - h1 -- j1 yellow
+  - e9 -- d9 yellow
+  - d9 -- d3 yellow
+  - d3 -- c3 yellow
+  - f3 -- l3 yellow
+  - SPK.+ -- l3 yellow
 notes:
   - source blue
 ```
@@ -136,6 +136,10 @@ notes:
 ![図02 入りと出を上下に分ける](out/07-device-2.svg)
 
 足の名前は空白を含まなければ何でもよい (`+` `-` `SIG` `GND` など)。
+`-` で始まる並び (`- +`) は YAML の箇条書きと読まれるので引用符で囲む。
+
+NE555 は `r180` で切り欠きを右に向けて挿している (`dip8 h11 r180`)。電池を右上に、
+信号源を左上に置いたので、4 番ピン (RESET) が信号源の側に来る向きにした。
 実物の端子に書いてある綴りをそのまま使うと、組むときに読み替えずに済む。
 
 中身は **NE555 の非安定マルチバイブレータ**で、`R1` `R2` `C1` が周波数を決める

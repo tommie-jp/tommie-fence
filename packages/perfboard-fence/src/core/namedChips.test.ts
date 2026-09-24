@@ -34,10 +34,11 @@ describe('種類と姿', () => {
 
     expect(relay).toMatchObject({ kind: 'named', pins: 8, holes: 1 });
     // A1 COM1 NC1 NO1 / NO2 NC2 COM2 A2 (DIP16 の 1・4・6・8 / 9・11・13・16)。
+    // 実物を上から見た並び: 1〜8 の位置が下の列を右へ、9〜16 が上の列を左へ。
     expect(pinsOf(relay!, [at(2, 3)])).toEqual([
-      at(2, 3), at(2, 6), at(2, 8), at(2, 10), at(5, 10), at(5, 8), at(5, 6), at(5, 3),
+      at(5, 3), at(5, 6), at(5, 8), at(5, 10), at(2, 10), at(2, 8), at(2, 6), at(2, 3),
     ]);
-    expect(pinsOf(display!, [at(1, 3)]).map((one) => one.row)).toEqual([1, 1, 1, 1, 1, 7, 7, 7, 7, 7]);
+    expect(pinsOf(display!, [at(1, 3)]).map((one) => one.row)).toEqual([7, 7, 7, 7, 7, 1, 1, 1, 1, 1]);
   });
 });
 
@@ -46,9 +47,10 @@ describe('図とネットリスト', () => {
     const { errors, netlist, svg } = renderPerfboard(fence(
       'parts:',
       '  K1: relay c3',
-      '  R1: resistor a6 a9 1k',
+      '  R1: resistor h6 h9 1k',
       'wires:',
-      '  - a6 -- c6',
+      // COM1 は下の列 (実物を上から見た並びで、1〜8 の位置が下の列)。
+      '  - h6 -- f6',
     ));
 
     expect(errors).toEqual([]);
@@ -66,12 +68,13 @@ describe('図とネットリスト', () => {
 
 describe('板の縁', () => {
   test('refuses a named chip whose legs run off the board, like a DIP', () => {
-    // 20 列の板の 16 列目から G5V-2 (8 列) を置くと、右の足が 21〜23 列目に来る。
+    // 20 列の板の 16 列目から G5V-2 (8 列) を置くと、右の足が 21〜23 列目に来る
+    // (1 番から数えて最初にはみ出すのは、下の列の d21)。
     const relay = renderPerfboard(fence('parts:', '  K1: relay a16'));
     // 7 セグの向こうの列 (6 行先) は 10 行の板からはみ出す。
     const display = renderPerfboard(fence('parts:', '  DS1: seg7 h3'));
 
-    expect(relay.errors.map((one) => one.message).join('\n')).toContain('K1 の足 a21 が板の穴ではありません');
+    expect(relay.errors.map((one) => one.message).join('\n')).toContain('K1 の足 d21 が板の穴ではありません');
     expect(display.errors.map((one) => one.message).join('\n')).toContain('DS1 の足');
   });
 });

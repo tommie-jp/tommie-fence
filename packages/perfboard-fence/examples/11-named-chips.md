@@ -14,16 +14,16 @@ title: 図01 リレー・フォトカプラ・7 セグ
 board: 24x12
 parts:
   K1: relay b2
-  D1: diode a2 a4 1N4148
+  D1: diode a4 a2 1N4148
   U1: photocoupler b14
-  R1: resistor a14 a18 1k
+  R1: resistor e13 e10 1k
   DS1: seg7 f14
 wires:
   - a2 -- b2
   - a4 -- a1
   - a1 -- e1
   - e1 -- e2
-  - a14 -- b14
+  - e13 -- e14
 ```
 
 ![図01 リレー・フォトカプラ・7 セグ](out/11-named-chips.svg)

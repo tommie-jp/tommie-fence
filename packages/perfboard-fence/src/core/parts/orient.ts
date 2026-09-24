@@ -42,6 +42,18 @@ export const rotationWord = (rotate: Turn['rotate']): string =>
  */
 export type Orient = 'none' | 'full';
 
+/**
+ * 裏返し (`mirror`) を書けない形。**2 列の形 (DIP・名前付き DIP) は実物を裏返して
+ * 挿せない** — 裏返した並びは IC を裏から見た形で、どう挿しても作れない
+ * (52 の docs/71)。1 列の形 (SIP) は逆向きに挿せるので裏返せる。
+ */
+export const MIRROR_REFUSAL = '実物は裏返して挿せません。向きを変えるなら r90 / r180 / r270 です';
+
+export function refusesMirror(type: string): boolean {
+  const kind = footprintOf(type, null)?.kind;
+  return kind === 'dip' || kind === 'named' || kind === 'board';
+}
+
 export function orientOf(type: string): Orient {
   const footprint = footprintOf(type, null);
   if (footprint === null) return 'none';

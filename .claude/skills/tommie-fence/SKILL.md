@@ -65,8 +65,8 @@ node <root>/packages/circuit-fence/scripts/figures.mjs <file.md> <tmp>
 | `board:` | 無い | `mini` / `half` / `full`。省くと `half` | **要る** (`20x4` は列 × 行、`akizuki-c` など) |
 | 印の注釈 | `circle 部品ID か番地` | `circle 部品ID か番地` | **`mark 番地`** (`circle` は無く、部品 ID は指せない) |
 | 注釈の種類 | circle box arrow line text source | circle box arrow line text source | mark box arrow text source parts |
-| DIP・SIP | 多端子部品 `ID: 種類 番地 [向き] [型番]` | 1 番ピンの穴 1 つ。文法表は `dip8 @ e5` (`@` は省いても読む) | 1 番ピンの穴 1 つ。**`dip8 e5`** (`@` を付けると読めない) |
-| 足に名前のある DIP 型 (`relay` `photocoupler` `seg7`) | 多端子部品と同じ。足は名前でも DIP の番号でも (`K1.COM1` = `K1.4`) | DIP と同じ置き方。**7 セグだけ列の間が 6 穴**で、`@ b5`〜`@ e5` か `@ f5`〜`@ i5` (リレーとフォトカプラは e / f だけ) | DIP と同じ (`relay c3`)。板からはみ出すと断られる |
+| DIP・SIP | 多端子部品 `ID: 種類 番地 [向き] [型番]` | 胴の左端の列の穴 1 つ (e でも f でも同じ)。文法表は `dip8 @ e5` (`@` は省いても読む)。足は実物を上から見た並びで **1 番は左下の f 行** | 胴の左上の穴 1 つ。**`dip8 e5`** (`@` を付けると読めない)。**1 番は 3 行下の左下** (e5 なら h5)。DIP に `mirror` は書けない |
+| 足に名前のある DIP 型 (`relay` `photocoupler` `seg7`) | 多端子部品と同じ。足は名前でも DIP の番号でも (`K1.COM1` = `K1.4`) | DIP と同じ置き方。**7 セグだけ列の間が 6 穴**で、`@ b5`〜`@ e5` か `@ f5`〜`@ i5` (リレーとフォトカプラは e / f だけ)。1 番は下の列 | DIP と同じ (`relay c3`)。1 番は下の列。板からはみ出すと断られる |
 | ERC | `check` だけが掛ける (`render` は掛けない)。DIP・SIP・機器・リレーなどの使わない足は言わない | 無い | `check` と `render` の両方に出る |
 | 面実装 | 無い。記号はパッケージに依らず、型番 1 語だけ書ける (`Q1: npn b3 2SC2712`)。`npn/sot346` も `2SC2712 S-Mini` も読めない | 変換基板に載せた姿だけ (`transistor/sot346-dip f3 f4 f5`、`dip8/sop @ e5`)。直付けの `transistor/sot346` は書き直し先を添えて断られる | 変換基板 (`-dip`、`dip8/sop b7`) と直付け (`transistor/sot346 d2 d3 c3` は三角、`resistor/2012 f2 f3` は隣の穴)。S-Mini は `sot346` |
 | 板の外の機器 | `type: device` + `at: 番地` + `pins: [名前, …]` (**箱の片側に足**。`label` は箱の中の名前、`turn: mirror` で足が右)。1 行では書けない | `type: device` + `at: top` / `bottom` (帯に並ぶ) | `at: top` / `bottom` か番地。**番地は箱の左上**で、板の上なら `-b` 行より上 (`-a` や `0` は箱が板に被り、お知らせが出る) |
