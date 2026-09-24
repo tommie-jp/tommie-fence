@@ -35,6 +35,8 @@ parts:
   from Hammerstad-Jensen (microstrip) and complete elliptic integrals (CPW / CPWG)
 - **A chip placed on a line cuts the line**, as you would with a knife before
   soldering it. The gap is never written separately, so part and gap cannot disagree
+- A **view from the back** is drawn underneath: the back ground plane, vias, slots and
+  the SMA legs, with the front copper shown through faintly
 - An edge-mount SMA sits on **a side and a position along it** (`sma left 10`); its
   centre pin lands on the line and its shell on the ground
 - It derives a **netlist** (touching copper is one net) and an **ERC**: pins on no

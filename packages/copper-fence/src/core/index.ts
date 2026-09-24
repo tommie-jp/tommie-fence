@@ -19,6 +19,7 @@ import {
   blockParts, boardDescription, renderCouplings, renderDescription, renderLineCaptions, renderPartLabels,
 } from './render/captions.ts';
 import { createPlacer } from './render/placer.ts';
+import { renderBack } from './render/back.ts';
 import { renderDocument } from './render/document.ts';
 import { renderErrorBanner } from './render/errorHtml.ts';
 import { listSize, partsListing, renderList, renderSource, sourceListing, sourceSize } from './render/lists.ts';
@@ -203,6 +204,8 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
     list: rows.length > 0 ? listSize(rows, theme) : null,
     source: listing.length > 0 ? sourceSize(listing, theme) : null,
     descriptionWidth: textWidth(boardDescription(board, doc.f)) * theme.metrics.textSize,
+    // マップ (掴む図) には出さない — 掴むのは表だけ。
+    back: style.back && options.edit !== true,
   });
 
   // SMA が板の辺を覆う範囲 (目盛の数字を描かない所)。
@@ -235,6 +238,7 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
     + renderNotes(notes, layout, theme, colorOf)
     + renderRulers(board, layout, theme, { top: covered('top'), left: covered('left') })
     + renderDescription(board, doc.f, layout, theme)
+    + renderBack({ board, layout, theme, islands, slots: made.slots, vias, footprints })
     + (layout.listBand === null ? '' : renderList(rows, layout.listBand, theme, noteColor(listNotes[0]!, theme, colorOf)))
     + (layout.sourceBand === null ? '' : renderSource(listing, layout.sourceBand, theme, noteColor(sourceNotes[0]!, theme, colorOf)))
     // 掴む層は**いちばん上** (升と節点)。

@@ -132,6 +132,8 @@ export type ResolvedStyle = {
   readonly stamp: boolean;
   readonly check: boolean;
   readonly grid: boolean;
+  /** 裏から見た図を出すか。 */
+  readonly back: boolean;
 };
 
 /** `style:` を描く側の形に畳む。**書かれなかった項目の既定はここだけ**。 */
@@ -144,4 +146,7 @@ export const resolveStyle = (style: StyleSpec): ResolvedStyle => ({
   check: style.check ?? true,
   // **既定は敷く** — 図から寸法を読んで切るための定規の代わり。
   grid: style.grid ?? true,
+  // **既定は出す。** 銅張り基板は裏の地 (ベタか無いか)・via・切り欠きでネットが決まり、
+  // 表だけでは治具にならない (perfboard の半田面は既定で出さないのと逆)。
+  back: style.back ?? true,
 });

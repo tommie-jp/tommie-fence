@@ -2,7 +2,7 @@
   "name": "copper-fence",
   "displayName": "Copper Fence",
   "description": "Markdown の ```copper フェンスを銅張り基板 (マイクロストリップ・島・CPW) の寸法図としてプレビューする",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "license": "MIT",
   "private": true,
   "publisher": "tommie",

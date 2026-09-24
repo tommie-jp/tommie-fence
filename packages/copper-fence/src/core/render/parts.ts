@@ -39,7 +39,7 @@ export const bodyPart = (footprint: Footprint): BodyPart => ({
 });
 
 /** 端面 SMA。局所の座標は **u が板の内へ、v が辺に沿う** (px)。 */
-function smaEdge(layout: Layout, male: boolean, pinColor: string): string {
+export function smaEdge(layout: Pick<Layout, 'len'>, male: boolean, pinColor: string, pin = true): string {
   const mm = (value: number): number => layout.len(value);
   const box = (u: number, v: number, du: number, dv: number, fill: string, round = 0.6): string => element('rect', {
     x: num(mm(u)), y: num(mm(v)), width: num(mm(du)), height: num(mm(dv)), rx: num(round),
@@ -60,10 +60,11 @@ function smaEdge(layout: Layout, male: boolean, pinColor: string): string {
   const legs = [-1, 1]
     .map((side) => box(0, side * SMA.legOffset - SMA.legWidth / 2, SMA.legReach, SMA.legWidth, SMA_METAL, 0.3))
     .join('');
-  const pin = box(0, -SMA.pinWidth / 2, SMA.pinReach, SMA.pinWidth, pinColor, 0.3);
+  // 中心導体は表の銅に載る。**裏から見た図では描かない** (板に隠れる)。
+  const centre = pin ? box(0, -SMA.pinWidth / 2, SMA.pinReach, SMA.pinWidth, pinColor, 0.3) : '';
   return box(tip, -barrel, SMA.barrel, barrel * 2, SMA_METAL) + threads
     + box(tip + 0.3, -barrel * 0.5, 0.3, barrel, SMA_DIELECTRIC, 0.1) + face
-    + box(-SMA.base, -half, SMA.base, SMA.size, SMA_METAL) + legs + pin;
+    + box(-SMA.base, -half, SMA.base, SMA.size, SMA_METAL) + legs + centre;
 }
 
 /** 箱。黒い胴と、左右の辺の足の金物。1 番の足の側に丸の印。 */

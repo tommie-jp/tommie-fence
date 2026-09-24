@@ -6,9 +6,9 @@ import type { FenceError, StyleSpec, ThemeName } from '../types.ts';
  * `style:` を読む。**書かれた項目だけを持つ** — 既定はテーマ側 (`resolveStyle`) が
  * 決める。名前 1 つだけ書く近道も受ける (`style: dark`)。perfboard と同じ作り。
  */
-export const EMPTY_STYLE: StyleSpec = { theme: null, width: null, debug: null, stamp: null, check: null, grid: null };
+export const EMPTY_STYLE: StyleSpec = { theme: null, width: null, debug: null, stamp: null, check: null, grid: null, back: null };
 
-const KEYS = ['theme', 'width', 'debug', 'stamp', 'check', 'grid'] as const;
+const KEYS = ['theme', 'width', 'debug', 'stamp', 'check', 'grid', 'back'] as const;
 
 type Reader = (value: unknown) => { value: unknown } | { problem: string };
 
@@ -43,6 +43,7 @@ const READERS: Record<string, Reader> = {
   stamp: asFlag('stamp'),
   check: asFlag('check'),
   grid: asFlag('grid'),
+  back: asFlag('back'),
 };
 
 export type StyleResult = { readonly style: StyleSpec; readonly errors: readonly FenceError[] };

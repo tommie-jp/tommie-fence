@@ -150,3 +150,26 @@ test('draws node dots only at jumper ends written as points', () => {
   expect(svg).toContain('data-node="20,15"');
   expect(svg).not.toContain('data-node="5,5"');
 });
+
+describe('the back view', () => {
+  const VIA = ['board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3', '  P1: pad 30,15 3x3', '  V1: via 30,15', '  X1: slot 10,3 8x1', 'parts:', '  J1: sma left 10'].join('\n');
+
+  test('draws the back below the front by default, mirrored left to right', () => {
+    const { svg } = renderCopper(VIA);
+    expect(svg).toContain('裏から見た図 (左右反転) — 裏は銅のベタ (GND)');
+    expect(svg).toContain('scale(-1 1)');
+    // via は x=30 に。裏から見ると板の左から 10mm の所。
+    const holes = [...svg.matchAll(/<circle cx="([\d.]+)"[^>]*fill="#2a2620"/g)].map((found) => Number(found[1]));
+    expect(holes).toHaveLength(2);
+    expect(Math.round((holes[0] ?? 0) + (holes[1] ?? 0))).toBeGreaterThan(0);
+  });
+
+  test('says the back is bare on a board without a back ground', () => {
+    expect(renderCopper('board:\n  size: 40x20mm\n  ground: front').svg).toContain('裏に銅は無い');
+  });
+
+  test('can be turned off, and is never drawn on the map', () => {
+    expect(renderCopper(`${VIA}\nstyle:\n  back: off`).svg).not.toContain('裏から見た図');
+    expect(renderCopper(VIA, { edit: true }).svg).not.toContain('裏から見た図');
+  });
+});

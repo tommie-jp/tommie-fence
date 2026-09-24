@@ -3,6 +3,14 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.2.0] - 2026-09-25
+
+### Added
+
+- **裏から見た図** — どの図の下にも、板を裏返して見た姿 (左右反転) を出す。裏の地の
+  ベタ (無い板は基材)、via の穴、切り欠き、端面 SMA の腕、表の銅の透かし、裏返った目盛。
+  既定で出す。`style: back: off` で消せる。マップには出さない。
+
 ## [0.1.1] - 2026-09-25
 
 ### Fixed

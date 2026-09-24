@@ -3,6 +3,15 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.12.0] - 2026-09-25
+
+copper-fence 0.2.0 を束ねた。
+
+### Added
+
+- copper: どの図の下にも**裏から見た図** (左右反転。裏のベタ・via・切り欠き・SMA の腕)。
+  `style: back: off` で消せる。
+
 ## [0.11.1] - 2026-09-25
 
 copper-fence 0.1.1 を束ねた。

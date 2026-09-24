@@ -194,6 +194,8 @@ export type StyleSpec = {
   readonly check: boolean | null;
   /** 1mm の方眼を敷くか。 */
   readonly grid: boolean | null;
+  /** 裏から見た図を下に出すか。 */
+  readonly back: boolean | null;
 };
 
 export type FenceDocument = {
