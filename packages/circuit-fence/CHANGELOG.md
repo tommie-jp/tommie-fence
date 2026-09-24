@@ -7,8 +7,8 @@
 
 ### Added
 
-- **記号の流儀に `jis` を足した** (`style: standard: jis`)。JIS C 0617 の形で、
-  抵抗は `european` と同じ箱、**コイルは半円の連なり** (`european` は黒く塗った箱)、
+- **記号の流儀に `jis` を足した** (`style: standard: jis`)。現行の JIS C 0617
+  (旧 JIS C 0301 のギザギザではない) の形で、抵抗は `european` と同じ箱、**コイルは半円の連なり** (`european` は黒く塗った箱)、
   電圧と電流は矢、論理ゲートは `american` と同じ MIL 記号。電験三種の問題用紙の図
   (令和 6 年度上期 理論 問 8・10・13) で確かめた。circuitikz には部品ごとの鍵
   (`european resistors, cute inductors, european voltages, european currents,
