@@ -3,6 +3,33 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.10.0] - 2026-09-24
+
+circuit-fence 0.10.0、breadboard-fence 0.12.0、perfboard-fence 0.10.0 を束ねた。
+回路の教科書に要る部品を 3 つのフェンスに足した。
+
+### Added
+
+- **circuit: 板の外の機器・モジュール (`device`)** — 実体配線図の 2 つと同じ
+  マップ形式 (`type: device` / `at` / `pins` / `label` / `turn`)。足の名前を刷った箱で
+  描き、配線からは名前でも番号でも指せる。
+- **circuit: モータ (`motor`)** — 丸に M の 2 端子。
+- **リレー (`relay`)・フォトカプラ (`photocoupler`)・7 セグメント LED (`seg7`)** を
+  3 つのフェンスで。足の名前と番号は 3 つで同じ表 (G5V-2 / PC817 / 5161AS)。
+  板の 2 つは DIP と同じ置き方、回路図はリレーとフォトカプラを記号で、7 セグを
+  足の名前を刷った箱で描く。
+- **フォトトランジスタ (`phototransistor`)** — 足は C と E の 2 本。板では黒い
+  砲弾型 (`3mm` / `5mm`)。
+- **3 本足の IC (`ic3`)** — ホール素子・LM35・メロディ IC などを 1 つで受ける。
+  回路図はレギュレータと同じ箱に書き手の足の名前を刷り、板はトランジスタと同じ
+  3 つの穴 (`to92` / `to220`)。
+
+### Changed
+
+- circuit: ネットリスト・ERC・お知らせで、箱の足を図に刷ってある名前で言う
+  (`U1.GP0` `J1.VBUS` `U1.Vout`)。
+- breadboard: 3 本足の足の名前が隣とぶつかるときだけ縮める。
+
 ## [0.9.1] - 2026-09-24
 
 circuit-fence 0.9.4 を束ねた。
