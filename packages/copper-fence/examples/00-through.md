@@ -18,6 +18,27 @@ parts:
 
 ![図01 50Ω のスルー線路](out/00-through.svg)
 
+等価回路 (スルー線路の等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
+
+```circuit
+title: 回路図01 スルー線路の等価回路
+parts:
+  J1: sma b2 mirror CH0
+  TL1: tline b4 b8 50 l=$\mathrm{L1}$
+  J2: sma b10 CH1
+  G1: ground c2
+  G2: ground c10
+wires:
+  - J1.1 -- b4
+  - b8 -- J2.1
+  - J1.2 -- c2
+  - J2.2 -- c10
+```
+
+![回路図01 スルー線路の等価回路](out/schematic/00-through.png)
+
+L1 は 50Ω の線路 1 本。2.4GHz では 210° (0.58 波長) の長さになる。
+
 読み方:
 
 - 位置は **mm**。`0,10` は板の左上から右へ 0mm、下へ 10mm。板の上と左の目盛と

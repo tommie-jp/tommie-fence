@@ -21,5 +21,37 @@ parts:
 
 ![図01 ヘアピン BPF (2.4GHz)](out/05-coupled.svg)
 
+等価回路 (ヘアピン BPF の等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
+
+```circuit
+title: 回路図01 ヘアピン BPF の等価回路
+parts:
+  J1: sma b2 mirror
+  T1: tline b3 b5 50 l=$\mathrm{IN}$
+  H1: tline d6 g6 73 l=$\mathrm{H1}$
+  CC: capacitor b6 b9 l=$C_\mathrm{c}$
+  H2: tline d9 g9 73 l=$\mathrm{H2}$
+  T2: tline b10 b12 50 l=$\mathrm{OUT}$
+  J2: sma b13
+  G1: ground c2
+  G2: ground c13
+wires:
+  - J1.1 -- b3
+  - b5 -- b6
+  - b6 -- d6
+  - b9 -- b10
+  - b9 -- d9
+  - b12 -- J2.1
+  - J1.2 -- c2
+  - J2.2 -- c13
+notes:
+  - text g7: 開放
+  - text g10: 開放
+```
+
+![回路図01 ヘアピン BPF の等価回路](out/schematic/05-coupled.png)
+
+**近似。** H1・H2 は先が開いた半波長の共振器で、隙間 0.5mm の結合を結合容量 $C_c$ で表した。IN と OUT は共振器の腕にタップ (T1・T2) でつながる。
+
 字の `°` は `f:` での電気長。ヘアピンの共振器は折れ線ぜんぶの長さ (35mm) で数え、
 2.4GHz でほぼ半波長 (180°) になる。

@@ -17,6 +17,10 @@
 | [07-notes.md](07-notes.md) | 注釈 (`notes:`。寸法線 `dim`) と見た目 (`style:`) |
 | [08-check.md](08-check.md) | 図のとおりに組むと動かないところ (ERC) |
 
+どの例にも**等価回路** (` ```circuit ` の回路図) を添えてある。線路は伝送線路
+(`tline`、値は Z0) で描く。回路図の作り直しは `npm run schematics --workspace=copper-fence`
+(circuit-fence を先に `npm run build` しておく)。
+
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではない。
 

@@ -1,0 +1,94 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\makeatletter
+\pgfdeclareshape{reg3}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{0.62cm}}
+  \anchor{south}{\pgfpoint{0cm}{-0.62cm}}
+  \anchor{east}{\pgfpoint{0.95cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{-1.35cm}{0cm}}
+  \anchor{bpin 1}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 2}{\pgfpoint{0cm}{-1.02cm}}
+  \anchor{bpin 2}{\pgfpoint{0cm}{-0.62cm}}
+  \anchor{pin 3}{\pgfpoint{1.35cm}{0cm}}
+  \anchor{bpin 3}{\pgfpoint{0.95cm}{0cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-0.95cm}{-0.62cm}}{\pgfpoint{0.95cm}{0.62cm}}
+    \pgfpathmoveto{\pgfpoint{-1.35cm}{0cm}}\pgfpathlineto{\pgfpoint{-0.95cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-1.02cm}}\pgfpathlineto{\pgfpoint{0cm}{-0.62cm}}
+    \pgfpathmoveto{\pgfpoint{1.35cm}{0cm}}\pgfpathlineto{\pgfpoint{0.95cm}{0cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{smacoax}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{0.3cm}}
+  \anchor{south}{\pgfpoint{0cm}{-0.3cm}}
+  \anchor{east}{\pgfpoint{0.3cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.3cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{-0.7cm}{0cm}}
+  \anchor{pin 2}{\pgfpoint{0cm}{-0.7cm}}
+  \anchor{bpin 1}{\pgfpoint{-0.3cm}{0cm}}
+  \anchor{bpin 2}{\pgfpoint{0cm}{-0.3cm}}
+  \backgroundpath{
+    \pgfpathmoveto{\pgfpoint{-0.274cm}{-0.122cm}}
+    \pgfpatharc{204}{516}{0.3cm}
+    \pgfpathmoveto{\pgfpoint{-0.7cm}{0cm}}\pgfpathlineto{\pgfpointorigin}
+    \pgfpathmoveto{\pgfpoint{0cm}{-0.7cm}}\pgfpathlineto{\pgfpoint{0cm}{-0.3cm}}
+  }
+  \foregroundpath{
+    \pgfpathcircle{\pgfpointorigin}{0.07cm}
+    \pgfusepath{fill}
+  }
+}
+\makeatother
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{grounds/scale=1.36}
+\coordinate (b2) at (2,-2);
+\coordinate (b3) at (4,-2);
+\coordinate (b5) at (8,-2);
+\coordinate (b7) at (12,-2);
+\coordinate (b9) at (16,-2);
+\coordinate (b11) at (20,-2);
+\coordinate (b13) at (24,-2);
+\coordinate (b15) at (28,-2);
+\coordinate (b16) at (30,-2);
+\coordinate (c2) at (2,-4);
+\coordinate (c16) at (30,-4);
+\coordinate (d9) at (16,-6);
+\node[smacoax, draw, xscale=-1] (part-J1) at (b2) {}; % line 3
+\node[anchor=south] at (part-J1.north) {$J_{1}$}; % line 3
+\draw (b3) to[TL, l_=$\mathrm{L1}$, a^=$50\,\Omega$] (b5); % line 4
+\draw (b5) to[TL, l_=$\mathrm{N1}$, a^=$96\,\Omega$] (b7); % line 5
+\node[reg3, draw, font=\scriptsize] (part-U1) at (b9) {}; % line 6
+\node[font=\scriptsize, anchor=south] at (part-U1.north) {$\mathrm{SPF5189Z}$}; % line 6
+\node[anchor=south, yshift=9pt] at (part-U1.north) {$U_{1}$}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, yshift=2pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 3) {X}; % line 6
+\draw (b11) to[TL, l_=$\mathrm{N2}$, a^=$96\,\Omega$] (b13); % line 7
+\draw (b13) to[TL, l_=$\mathrm{L2}$, a^=$50\,\Omega$] (b15); % line 8
+\node[smacoax, draw] (part-J2) at (b16) {}; % line 9
+\node[anchor=south] at (part-J2.north) {$J_{2}$}; % line 9
+\node[ground] at (c2) {}; % line 10
+\node[ground] at (c16) {}; % line 11
+\node[ground] at (d9) {}; % line 12
+\draw (part-J1.pin 1) -- (b3); % line 14
+\draw (b7) -- (part-U1.pin 1); % line 15
+\draw (part-U1.pin 3) -- (b11); % line 16
+\draw (part-U1.pin 2) -- (d9); % line 17
+\draw (b15) -- (part-J2.pin 1); % line 18
+\draw (part-J1.pin 2) -- (c2); % line 19
+\draw (part-J2.pin 2) -- (c16); % line 20
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(9.754,0.853);
+\end{circuitikz}
+\end{document}

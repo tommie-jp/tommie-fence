@@ -29,6 +29,34 @@ parts:
 
 ![図01 直列の 0603 とシャントの 0603](out/03-parts-1.svg)
 
+等価回路 (直列とシャントの等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
+
+```circuit
+title: 回路図01 直列とシャントの等価回路
+parts:
+  J1: sma b2 mirror
+  T1: tline b3 b6 50 l=$\mathrm{L1}$
+  C1: capacitor b6 b8 10p
+  T2: tline b8 b11 50 l=$\mathrm{L1}$
+  T3: tline b11 b14 50 l=$\mathrm{L1}$
+  C2: capacitor d11 f11 1p
+  G3: ground g11
+  J2: sma b15
+  G1: ground c2
+  G2: ground c15
+wires:
+  - J1.1 -- b3
+  - b11 -- d11
+  - f11 -- g11
+  - b14 -- J2.1
+  - J1.2 -- c2
+  - J2.2 -- c15
+```
+
+![回路図01 直列とシャントの等価回路](out/schematic/03-parts-1.png)
+
+C1 は L1 を切って直列に、C2 は L1 から via を通って地へ落ちる。
+
 - C1 は L1 を 0.8mm 切って直列に入る。ネットリストでは L1 が 2 つ (`L1` と `L1~2`) に分かれる
 - C2 は L1 と、via で裏の地へ落ちた島 P1 に跨る
 
@@ -54,6 +82,35 @@ notes:
 ```
 
 ![図02 SOT-89 の MMIC](out/03-parts-2.svg)
+
+等価回路 (MMIC の等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
+
+```circuit
+title: 回路図02 MMIC の等価回路
+parts:
+  J1: sma b2 mirror
+  T1: tline b3 b5 50 l=$\mathrm{L1}$
+  T2: tline b5 b7 96 l=$\mathrm{N1}$
+  U1: ic3 b9 SPF5189Z
+  T3: tline b11 b13 96 l=$\mathrm{N2}$
+  T4: tline b13 b15 50 l=$\mathrm{L2}$
+  J2: sma b16
+  G1: ground c2
+  G2: ground c16
+  G3: ground d9
+wires:
+  - J1.1 -- b3
+  - b7 -- U1.1
+  - U1.3 -- b11
+  - U1.2 -- d9
+  - b15 -- J2.1
+  - J1.2 -- c2
+  - J2.2 -- c16
+```
+
+![回路図02 MMIC の等価回路](out/schematic/03-parts-2.png)
+
+MMIC の 2 番とタブは G1 と via で地へ。実物では出力 (3 番) にバイアスを入れる (ここでは描かない)。
 
 面実装の寸法は perfboard と同じ表 (fence-kit) から引く。書ける姿:
 

@@ -22,6 +22,26 @@ wires:
 
 ![図01 ERC が言うこと](out/08-check.svg)
 
+等価回路 (図のとおりに作ったときの回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
+
+```circuit
+title: 回路図01 図のとおりに作ったときの回路
+parts:
+  T1: tline b3 b7 50 l=$\mathrm{L1}$
+  C1: capacitor d7 d9 100p
+  C2: capacitor h3 h5 l=$C_2$
+  T2: tline j3 j7 146 l=$\mathrm{L2}$
+wires:
+  - b7 -- d7
+  - d7 -- f7
+  - f7 -- f9
+  - f9 -- d9
+```
+
+![回路図01 図のとおりに作ったときの回路](out/schematic/08-check.png)
+
+C1 は両端が L1 に乗っていて短絡している (線路と並列で、何もしない)。C2 はどこにもつながらず、L2 も浮いている。
+
 ```text
 copper: 5 行目: L2 の幅 0.2mm は手で残すには細すぎます (0.3mm から。エッチングなら描けます)
 copper: 7 行目: C1 の 1 番と 2 番が同じ銅 (L1) に乗っています (線路の上に置くと切れ目ができます。向きを確かめます)

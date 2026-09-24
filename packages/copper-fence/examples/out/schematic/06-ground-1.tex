@@ -1,0 +1,68 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\makeatletter
+\pgfdeclareshape{smacoax}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{0.3cm}}
+  \anchor{south}{\pgfpoint{0cm}{-0.3cm}}
+  \anchor{east}{\pgfpoint{0.3cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.3cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{-0.7cm}{0cm}}
+  \anchor{pin 2}{\pgfpoint{0cm}{-0.7cm}}
+  \anchor{bpin 1}{\pgfpoint{-0.3cm}{0cm}}
+  \anchor{bpin 2}{\pgfpoint{0cm}{-0.3cm}}
+  \backgroundpath{
+    \pgfpathmoveto{\pgfpoint{-0.274cm}{-0.122cm}}
+    \pgfpatharc{204}{516}{0.3cm}
+    \pgfpathmoveto{\pgfpoint{-0.7cm}{0cm}}\pgfpathlineto{\pgfpointorigin}
+    \pgfpathmoveto{\pgfpoint{0cm}{-0.7cm}}\pgfpathlineto{\pgfpoint{0cm}{-0.3cm}}
+  }
+  \foregroundpath{
+    \pgfpathcircle{\pgfpointorigin}{0.07cm}
+    \pgfusepath{fill}
+  }
+}
+\makeatother
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{grounds/scale=1.36}
+\coordinate (b2) at (2,-2);
+\coordinate (b4) at (6,-2);
+\coordinate (b8) at (14,-2);
+\coordinate (d8) at (14,-6);
+\coordinate (f8) at (14,-10);
+\coordinate (d10) at (18,-6);
+\coordinate (f10) at (18,-10);
+\coordinate (d12) at (22,-6);
+\coordinate (f12) at (22,-10);
+\coordinate (c2) at (2,-4);
+\coordinate (g10) at (18,-12);
+\coordinate (b12) at (22,-2);
+\coordinate (b10) at (18,-2);
+\node[smacoax, draw, xscale=-1] (part-J1) at (b2) {}; % line 3
+\node[anchor=south] at (part-J1.north) {$J_{1}$}; % line 3
+\draw (b4) to[TL, l_=$\mathrm{FEED}$, a^=$50\,\Omega$] (b8); % line 4
+\draw (d8) to[R, l_=$R_{\mathrm{r}}$] (f8); % line 5
+\draw (d10) to[L, l_=$L_{\mathrm{p}}$] (f10); % line 6
+\draw (d12) to[C, l_=$C_{\mathrm{p}}$] (f12); % line 7
+\node[ground] at (c2) {}; % line 8
+\node[ground] at (g10) {}; % line 9
+\draw (part-J1.pin 1) -- (b4); % line 11
+\draw (b8) -- (b12); % line 12
+\draw (b8) -- (d8); % line 13
+\draw (b10) -- (d10); % line 14
+\draw (b12) -- (d12); % line 15
+\draw (f8) -- (f12); % line 16
+\draw (f10) -- (g10); % line 17
+\draw (part-J1.pin 2) -- (c2); % line 18
+\node[circ] at (b8) {};
+\node[circ] at (f10) {};
+\node[circ] at (b10) {};
+\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(11.339,0.853);
+\end{circuitikz}
+\end{document}

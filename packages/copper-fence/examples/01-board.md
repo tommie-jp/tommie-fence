@@ -39,6 +39,27 @@ parts:
 
 ![図02 表も裏も地 (CPWG)](out/01-board-2.svg)
 
+等価回路 (図01・図02 の等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
+
+```circuit
+title: 回路図01 図01・図02 の等価回路
+parts:
+  J1: sma b2 mirror
+  TL1: tline b4 b8 50 l=$\mathrm{L1}$
+  J2: sma b10
+  G1: ground c2
+  G2: ground c10
+wires:
+  - J1.1 -- b4
+  - b8 -- J2.1
+  - J1.2 -- c2
+  - J2.2 -- c10
+```
+
+![回路図01 図01・図02 の等価回路](out/schematic/01-board.png)
+
+図01 (マイクロストリップ) も図02 (CPWG) も同じ 1 本の 50Ω の線路。板と地の違いは Z0 を決める幅に出る。
+
 表が地の板の線路はコプレーナ (CPW) で、字に溝の幅 (`s0.3`) が付く。
 Z0 は溝の幅でも変わる。
 

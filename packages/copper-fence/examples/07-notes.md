@@ -51,3 +51,24 @@ notes:
 ```
 
 ![図02 白黒で刷る](out/07-notes-2.svg)
+
+等価回路 (図01・図02 の等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
+
+```circuit
+title: 回路図01 図01・図02 の等価回路
+parts:
+  J1: sma b2 mirror
+  TL1: tline b4 b8 50 l=$\mathrm{L1}$
+  J2: sma b10
+  G1: ground c2
+  G2: ground c10
+wires:
+  - J1.1 -- b4
+  - b8 -- J2.1
+  - J1.2 -- c2
+  - J2.2 -- c10
+```
+
+![回路図01 図01・図02 の等価回路](out/schematic/07-notes.png)
+
+どちらも 50Ω の線路 1 本 (注釈と見た目は回路に出ない)。

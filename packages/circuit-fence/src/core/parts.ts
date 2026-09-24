@@ -730,6 +730,12 @@ export const PART_TYPES = {
    * 板の 2 つには無い — モータは板に挿さず線でつなぐので、板では `device` で書く。
    */
   motor: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${MOTOR}$}`], ...NO_UNIT },
+  /**
+   * 伝送線路 (マイクロストリップ・同軸)。**値は特性インピーダンス** で、抵抗と同じく
+   * Ω を補う (`TL1: tline a1 a5 50` → 50 Ω)。銅張り基板 (copper) の図の等価回路に使う。
+   * 板の 2 つには無い — 線路は銅の形で、部品ではない。
+   */
+  tline: { kind: 'two-terminal', symbol: 'TL', unitTex: OHM, unitSi: SI_OHM },
 
   // 測るもの。どれも**丸に字だけ**で描く (回路図の慣習)。
   //
@@ -996,6 +1002,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   speaker: 'スピーカー',
   mic: 'マイク',
   motor: 'モータ',
+  tline: '伝送線路',
   ammeter: '電流計',
   voltmeter: '電圧計',
   ohmmeter: '抵抗計',
@@ -1116,6 +1123,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   speaker: 'LS',
   mic: 'MK',
   motor: 'M',
+  tline: 'TL',
   ammeter: 'A',
   voltmeter: 'V',
   ohmmeter: 'M',
