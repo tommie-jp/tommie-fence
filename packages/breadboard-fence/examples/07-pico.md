@@ -4,7 +4,7 @@ Pico をブレッドボードにまたがせて、LED とタクトスイッチ�
 `pico` / `pico-w` / `pico2` / `pico2-w` はどれも同じ 40 ピンの並びなので、
 書き方は種類名を替えるだけ。
 
-```breadboard
+```bread
 title: 図01 Pico に LED とボタンをつなぐ
 board: full
 parts:

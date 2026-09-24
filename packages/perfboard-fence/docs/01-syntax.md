@@ -1,7 +1,9 @@
-# perfboard フェンスの書き方
+# perf フェンスの書き方
 
-Markdown の ` ```perfboard ` フェンスに YAML を書くと、Markdown プレビューで
+Markdown の ` ```perf ` フェンスに YAML を書くと、Markdown プレビューで
 ユニバーサル基板の実体配線図になる。ここは文法の全部。
+長い綴り ` ```perfboard ` も別名として**今後も動く** (短い綴りを読むのは 0.11.0 から)。
+報告の名札はどちらで書いても `perf:`。
 回路 1 つずつの例は [examples/](../examples/README.md) にある。
 
 **一通り書ける。** 2 本足・3 本足・DIP・SIP の部品、板の外の機器 (`device`)、
@@ -32,7 +34,7 @@ Markdown の ` ```perfboard ` フェンスに YAML を書くと、Markdown プ�
 
 **列 × 行**で書く。板が「72×47mm」と長辺 × 短辺で売られているのと同じ順。
 
-```perfboard
+```perf
 board: 12x7
 title: 図01 12 列 7 行の板
 ```
@@ -52,7 +54,7 @@ title: 図01 12 列 7 行の板
 | `akizuki-c` | `c` | 72×47mm | 25 列 15 行 |
 | `akizuki-d` | `d` | 47×36mm | 17 列 14 行 |
 
-```perfboard
+```perf
 board: akizuki-d
 title: 図02 名前で書いた板 (秋月 D タイプ)
 ```
@@ -152,7 +154,7 @@ land   silver  gold  copper  tin                              (と #RRGGBB)
 行の名前は**表計算と同じ数え方**で伸びる。`z` の次は `aa`、その次が `ab`。
 ユニバーサル基板は板ごとに行数が違い、大きい板は 26 行を超えるため。
 
-```perfboard
+```perf
 board: 4x30
 title: 図03 26 行を超える板
 ```
@@ -209,7 +211,7 @@ title: 図01 RC ローパス
 
 `名前: 種類 穴 穴 値` を 1 行ずつ。部品は**2 つの穴を結ぶ線の上に寝る**。
 
-```perfboard
+```perf
 board: 12x6
 title: 図04 部品の置き方
 points:
@@ -431,7 +433,7 @@ parts:
 同じ種類を 2 回書いたら断る。**語彙と意味は circuit フェンス・breadboard
 フェンスと同じ**なので、同じノートで書くときに覚え直さなくてよい。
 
-```perfboard
+```perf
 title: 図05 向きを書いた DIP
 board: 16x16
 style:
@@ -496,7 +498,7 @@ red  black  white  gray  grey  orange  yellow  green  blue  purple  brown  pink
 `名前: 番地` を 1 行ずつ。配線の端にその名前を書けるようになり、
 **ネットの名前にもなる**。
 
-```perfboard
+```perf
 board: 12x6
 title: 図06 points で名前を付ける
 points:
@@ -522,7 +524,7 @@ wires:
 電池・スピーカー・測定器のように**盤面に載らないもの**。`parts:` の中に
 **入れ子で**書く — 足の名前の並びを持つので 1 行に畳めない。
 
-```perfboard
+```perf
 board: 12x8
 title: 図07 板の外の機器
 parts:
@@ -586,7 +588,7 @@ wires:
 図に印を付けて、文章から指せるようにするためのもの。**回路の一員ではない**
 (ネットにもネットリストにも出ない)。
 
-```perfboard
+```perf
 board: 12x8
 title: 図08 注釈
 points:

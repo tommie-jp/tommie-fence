@@ -2,11 +2,11 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-A VS Code extension that renders ` ```breadboard ` fences (YAML) in Markdown
+A VS Code extension that renders ` ```bread ` fences (YAML) in Markdown
 as breadboard wiring diagrams.
 
 ````markdown
-```breadboard
+```bread
 board: half
 parts:
   R1: resistor a5 a10 330

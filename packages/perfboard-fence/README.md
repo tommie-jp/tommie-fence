@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-A VS Code extension that previews a ` ```perfboard ` fence (YAML) in Markdown as
+A VS Code extension that previews a ` ```perf ` fence (YAML) in Markdown as
 a perfboard wiring diagram.
 
 Two-lead, three-lead, DIP and SIP parts place, wire up to things off the board,
@@ -60,7 +60,7 @@ and the content of the offending line.
 
 | | State |
 | --- | --- |
-| Recognising a ` ```perfboard ` fence | works |
+| Recognising a ` ```perf ` fence | works |
 | Reporting an empty fence or a YAML syntax error with its line | works |
 | Naming a key it does not know | works |
 | **Drawing the board and its holes** (`board: 25x15` / `board: akizuki-c`) | works |

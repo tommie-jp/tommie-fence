@@ -17,8 +17,10 @@ truth.
 | Fence | Draws |
 | --- | --- |
 | ` ```circuit ` | Schematics — parts placed by grid address, netlist derived |
-| ` ```breadboard ` | Breadboard wiring — the strips inside the board make the nets |
-| ` ```perfboard ` | Perfboard layouts — every hole independent, only wires connect |
+| ` ```bread ` | Breadboard wiring — the strips inside the board make the nets |
+| ` ```perf ` | Perfboard layouts — every hole independent, only wires connect |
+
+The long spellings ` ```breadboard ` and ` ```perfboard ` keep working as aliases.
 
 - **Preview.** Open the Markdown preview (`Ctrl+Shift+V`) and each fence turns
   into its drawing. A line it cannot read is listed under the drawing with its
@@ -29,8 +31,8 @@ truth.
   Fence Editor**. One editor handles all three fences.
 - **Problems.** Lines a fence cannot read get a squiggle and a row in the
   Problems panel (`Ctrl+Shift+M`).
-- **Snippets.** On an empty line type `circuit`, `breadboard` or `perfboard`
-  and press `Ctrl+Space` for a fence that draws right away.
+- **Snippets.** On an empty line type `circuit`, `bread`, `perf`, `copper` or
+  `vna` and press `Ctrl+Space` for a fence that draws right away.
 
 ## Install
 

@@ -6,7 +6,7 @@
 
 ## 黙って捨てられていたもの
 
-```breadboard
+```bread
 parts:
   AD2:
     type: device
@@ -39,7 +39,7 @@ bread: 8 行目: 部品 R1: at は機器 (device) にだけ使います。板に
 
 ## YAML に食われる書き方
 
-```breadboard
+```bread
 style:
   text-color: #333
   text-size: 99
@@ -64,7 +64,7 @@ bread: 3 行目: style の text-size は 6〜24 です (24 にしました)
 
 ## 注釈の指し先が両取りになるとき
 
-```breadboard
+```bread
 parts:
   a5: resistor c5 c10 330
 notes:

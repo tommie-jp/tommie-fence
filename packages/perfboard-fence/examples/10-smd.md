@@ -17,7 +17,7 @@
 - 足の並びは品種ごとに違う (2SC2712 は 1 = B、2 = E、3 = C)。図は主張しないので、
   どの穴がどの足かはデータシートで確かめる
 
-```perfboard
+```perf
 board: 10x6
 title: 図01 S-Mini で LED を点ける
 points:
@@ -50,7 +50,7 @@ notes:
 **基板ごと 1 つの部品**として描き、載っている物は実寸で描く — S-Mini (`sot346`) は
 SOT-23 (`sot23`) より胴が 0.3mm 広い。
 
-```perfboard
+```perf
 board: 24x9
 title: 図02 変換基板に載せた姿
 parts:
@@ -78,7 +78,7 @@ style:
 チップ・SOD・SOT を板に直付けした姿。**どれも実寸で描く** — 足の間隔を広く
 書いても胴は伸びない。
 
-```perfboard
+```perf
 board: 20x9
 title: 図03 直付けの姿
 parts:

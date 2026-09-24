@@ -4,7 +4,7 @@
 ブレッドボードのような経路探索は無い — 溝もレールも無く、どの穴も同じ格子の
 上にあり、実物のジャンパも 2 点を最短で結ぶ。
 
-```perfboard
+```perf
 board: 12x7
 title: 図01 配線
 points:
@@ -52,7 +52,7 @@ GND : D1.2
 
 斜めにも引ける。
 
-```perfboard
+```perf
 board: 10x8
 title: 図02 斜めの配線
 points:

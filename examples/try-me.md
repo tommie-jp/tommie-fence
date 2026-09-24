@@ -12,7 +12,7 @@ by the line number, the line itself, and a caret under the spelling at fault.
 
 ## breadboard — an LED and a resistor
 
-```breadboard
+```bread
 title: An LED and a resistor
 board: half
 parts:
@@ -32,7 +32,7 @@ needed between the resistor and the LED.
 
 ## perfboard — the same circuit, hole by hole
 
-```perfboard
+```perf
 board: 16x8
 title: An LED and a resistor
 points:

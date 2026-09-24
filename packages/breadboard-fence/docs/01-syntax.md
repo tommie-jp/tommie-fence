@@ -10,7 +10,7 @@
 Markdown には次のように書く。VS Code のプレビュー (`Ctrl+Shift+V`) で図になる。
 
 ````markdown
-```breadboard
+```bread
 board: half
 parts:
   R1: resistor a5 a10 330
@@ -19,11 +19,14 @@ wires:
 ```
 ````
 
+フェンス名は ` ```bread `。長い綴り ` ```breadboard ` も別名として**今後も動く**
+(短い綴りを読むのは 0.13.0 から)。報告の名札はどちらで書いても `bread:`。
+
 **この文書のフェンスはすべて本物**で、直後にそのフェンスを描いた図を貼ってある
 ([out/](out/))。GitHub のようにフェンスが描画されない場所で、
 書き方と出力を対で読むためのもの。作り直しは `npm run docs`。
 
-```breadboard
+```bread
 title: 図01 最小の例
 board: half
 parts:
@@ -130,7 +133,7 @@ wires:
 | `half` (既定) | 30 | 400 穴 | 有り |
 | `full` | 63 | 830 穴 | 有り |
 
-```breadboard
+```bread
 title: 図02 ボードの印字を手元の実物に寄せる
 board:
   size: half        # mini / half (既定) / full
@@ -172,7 +175,7 @@ wires:
 **省略したときは `presentation`** で描く (そのままスライドや記事に貼れる大きさ)。
 並べた図は [examples/02-themes.md](../examples/02-themes.md)。
 
-```breadboard
+```bread
 title: 図03 テーマを選ぶ
 style: dark
 parts:
@@ -200,7 +203,7 @@ wires:
 
 テーマを土台にして、気になるところだけ上書きできる。
 
-```breadboard
+```bread
 title: 図04 テーマを上書きする
 style:
   theme: dark        # 省略すると presentation
@@ -257,7 +260,7 @@ wires:
 図だけを渡された人が、何を用意すればよいか図の外を見ずに分かるようにするため、
 **既定で出る**。並べた図は [examples/04-parts-list.md](../examples/04-parts-list.md)。
 
-```breadboard
+```bread
 title: 図05 部品リスト (既定)
 parts:
   R1: resistor a5 a10 330
@@ -267,7 +270,7 @@ parts:
 
 ![図05 部品リスト (既定)](out/01-syntax-5.svg)
 
-```breadboard
+```bread
 title: 図06 部品リストを消す
 parts-list: none    # below (既定) / none
 parts:
@@ -300,7 +303,7 @@ parts:
 
 ## 配線 (wires)
 
-```breadboard
+```bread
 title: 図07 配線の書き方
 parts:
   R1: resistor a5 a10 330
@@ -341,7 +344,7 @@ wires:
 
 図の左上に 1 行だけ載る題。
 
-```breadboard
+```bread
 title: 図08 題は図の左上に載る
 parts:
   R1: resistor a5 a10 330
@@ -362,7 +365,7 @@ wires:
 穴番地に名前を付けると、節点を動かすときの編集が 1 箇所で済む。
 並べた図は [examples/13-points.md](../examples/13-points.md)。
 
-```breadboard
+```bread
 title: 図09 番地に名前を付ける
 points:
   vin: a3
@@ -408,7 +411,7 @@ notes:
 
 図の上に印と字を重ねる。並べた図は [examples/12-notes.md](../examples/12-notes.md)。
 
-```breadboard
+```bread
 title: 図10 印・枠・指し棒・字
 parts:
   R1: resistor a5 a10 330
@@ -486,7 +489,7 @@ notes:
 - **注釈は回路の一員ではない。** ネットにもネットリストにも部品リストにも数えない。
   注釈を足しても、図から導いたネットリストは 1 行も変わらない。
 
-```breadboard
+```bread
 title: 図11 色と大きさと寄せ
 parts-list: none
 parts:
@@ -528,7 +531,7 @@ notes:
 - グラウンドや電源の略記は無い。板の上ではレール (`+t5` `-b20`) がその役をしていて、
   挿す部品としては存在しないため。
 
-```breadboard
+```bread
 title: 図12 略記で書いても図は同じ
 parts:
   R1: r a5 a10 10k
@@ -544,7 +547,7 @@ parts:
 **極性・向きのある 2 端子は、先に書いた穴が + 側 (アノード)。**
 これがフェンス全体にかかる 1 つの規則で、ピン名を書かなかったときの向きを決める。
 
-```breadboard
+```bread
 title: 図13 極性は先に書いた穴が + 側
 parts:
   D1: diode a3 a6 1N4148          # a3 がアノード、a6 がカソード
@@ -571,7 +574,7 @@ parts:
 同じ `capacitor` でもセラミックと電解では板の上の姿が違い、図から実物を
 探すときに効く。並べた図は [examples/05-capacitors.md](../examples/05-capacitors.md)。
 
-```breadboard
+```bread
 title: 図14 コンデンサの 4 つの姿
 parts:
   C1: capacitor/ceramic a5 a8 0.1u
@@ -636,7 +639,7 @@ parts:
 - **平らな面 (TO-92) とタブ (TO-220) は足の側に描くが、どの足が何かは主張しない。**
   足の並びは品種ごとに違うため、どの穴がどの足かはピン名で示す。
 
-```breadboard
+```bread
 title: 図15 姿を選べる部品
 parts:
   D1: led/5mm a5(A) a7(K) red
@@ -667,7 +670,7 @@ SOT-23 (`sot23-dip`) より胴が 0.3mm 広い。`dipN/sop` と `dipN/tssop` は
 
 並べた図は [examples/06-switches.md](../examples/06-switches.md)。
 
-```breadboard
+```bread
 title: 図16 タクトスイッチ
 parts:
   SW1: button @ e5                        # 溝をまたぐ 4 本足
@@ -708,7 +711,7 @@ N1 : SW1.2a, SW1.2b, R1.1
 3 本足の部品は**溝寄りの行 (`e` / `f`) に挿す**と、足の名前が板の列番号とぶつからず、
 配線も外側の空いた行から取れる。
 
-```breadboard
+```bread
 title: 図17 半固定抵抗とスライドスイッチ
 parts:
   SW2: slide-switch e3(1) e4(C) e5(2)
@@ -733,7 +736,7 @@ wires:
 足に名前を付けるときはマップ形式で `pins:` を書く。**書いた名前がそのまま図に出て、
 `M1.SCL` として配線からも指せる**。書かなければ左から `1` `2` … になる。
 
-```breadboard
+```bread
 title: 図18 1 列ヘッダのモジュール
 parts:
   M1:
@@ -755,7 +758,7 @@ wires:
 `pico` / `pico-w` / `pico2` / `pico2-w` の 4 つ。**40 ピンの並びはシリーズで共通**なので、
 書き方は種類名を替えるだけ。ソース: [examples/07-pico.md](../examples/07-pico.md)
 
-```breadboard
+```bread
 title: 図19 Pico を挿す
 board: full
 parts:
@@ -840,7 +843,7 @@ wires:
 
 書けるのは `r180` の 1 つ。**1 番ピンが反対の端へ移る**。部品が覆う穴は変わらない。
 
-```breadboard
+```bread
 title: 図20 同じ穴に、向きだけ変えて挿す
 parts:
   U1: dip8 @ e5 NJM4556A
@@ -876,7 +879,7 @@ U1:
 測定器・電池・スピーカーなど、板に挿さないものは `device` として板の上下の帯に置く。
 マップ形式で書き、`pins:` に並べた名前が箱の下に出て `AD2.W1` として配線から指せる。
 
-```breadboard
+```bread
 title: 図21 ボード外の機器をつなぐ
 parts:
   AD2:
@@ -916,7 +919,7 @@ USB の受け口・差し込みを**変換基板ごと**描く。Type-C の受�
 足の並びは製品ごとに違うので、並びは決め打たずに**書いた穴がそのまま足**になる
 (`J1: usb-a c3 c6 c5 c4` なら c3 が VBUS、c6 が GND)。
 
-```breadboard
+```bread
 title: 図22 USB の受け口から LED を点ける
 parts:
   J1: usb-c/female a10 a11

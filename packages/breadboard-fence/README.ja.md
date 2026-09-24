@@ -2,11 +2,11 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-Markdown の ` ```breadboard ` フェンスに YAML で配線を書くと、VS Code のプレビューに
+Markdown の ` ```bread ` フェンスに YAML で配線を書くと、VS Code のプレビューに
 ブレッドボードの実体配線図がレンダリングされる拡張機能。
 
 ````markdown
-```breadboard
+```bread
 board: half
 parts:
   R1: resistor a5 a10 330

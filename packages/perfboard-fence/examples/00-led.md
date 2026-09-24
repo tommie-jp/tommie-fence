@@ -3,7 +3,7 @@
 いちばん小さな回路。電池から抵抗を通して LED を光らせる。
 **同じ回路を circuit / breadboard でも描いてある** (どれも「図01 LED と抵抗」)。
 
-```perfboard
+```perf
 board: 12x6
 title: 図01 LED と抵抗
 parts:

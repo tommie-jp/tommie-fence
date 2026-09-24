@@ -13,10 +13,14 @@ vector network analyser (NanoVNA).
 | Package | Fence | Draws |
 | --- | --- | --- |
 | circuit-fence | ` ```circuit ` | Schematics — parts placed by grid address, netlist derived |
-| breadboard-fence | ` ```breadboard ` | Breadboard wiring diagrams — netlist derived from the strips inside the board |
-| perfboard-fence | ` ```perfboard ` | Perfboard layouts — every hole independent, connections made only by wires |
+| breadboard-fence | ` ```bread ` | Breadboard wiring diagrams — netlist derived from the strips inside the board |
+| perfboard-fence | ` ```perf ` | Perfboard layouts — every hole independent, connections made only by wires |
 | copper-fence | ` ```copper ` | Copper-clad board drawings — positions in millimetres, connections made by the copper itself, Z0 printed on every line |
 | vna-fence | ` ```vna ` | The screen of a VNA (NanoVNA) — Log Mag, Smith chart, SWR, TDR, computed from an ideal model and overlaid with a measured Touchstone file |
+
+` ```bread ` and ` ```perf ` are the short spellings. The long ones
+(` ```breadboard ` / ` ```perfboard `) draw just the same, so documents written
+with them need no rewriting.
 
 The languages are separate; the manners are shared: YAML-hosted fences,
 positions written as addresses, and mistakes reported with Markdown line

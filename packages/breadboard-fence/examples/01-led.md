@@ -2,7 +2,7 @@
 
 いちばん小さな例。電源レールから抵抗を通して LED を光らせる。
 
-```breadboard
+```bread
 title: 図01 LED と抵抗
 board: half
 parts:

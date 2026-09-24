@@ -11,7 +11,7 @@
 
 `board: half` のスカラー形と同じ。最も普及した印字 (Fritzing もこれ)。
 
-```breadboard
+```bread
 title: 図01 既定の印字
 board: half
 parts:
@@ -33,7 +33,7 @@ notes:
 `+b` は「下側の + レール」という極性ベースの番地なので、
 **並びを変えても配線の書き方は変わらない**。挿す行が図の中で入れ替わるだけ。
 
-```breadboard
+```bread
 title: 図02 レールの並びを +-+- に
 board:
   rails: "+-+-"
@@ -55,7 +55,7 @@ notes:
 行ラベルが A〜J で、列番号が全列に印字されたボード。
 `letters: upper` のときは番地も `A5` と大文字で書ける (`a5` と同じ意味)。
 
-```breadboard
+```bread
 title: 図03 大文字ラベルと全列番号
 board:
   letters: upper
@@ -79,7 +79,7 @@ notes:
 電源は穴のブロックまで直接引く。**レール番地 (`+t5`) は使えない** — 挿す先が無いので、
 書くと行番号つきのエラーになる。
 
-```breadboard
+```bread
 title: 図04 ミニボードに組む
 board: mini
 parts:
@@ -106,7 +106,7 @@ notes:
 剥がすことも継ぎ足すこともできるので、`rails:` を書けば mini にも付けられる。
 こうすると `+t5` が使えるようになる。
 
-```breadboard
+```bread
 title: 図05 ミニボードにレールを継ぎ足す
 board:
   size: mini
@@ -128,7 +128,7 @@ notes:
 
 逆向きの組み合わせ。`rails: none` はどのサイズにも効く。
 
-```breadboard
+```bread
 title: 図06 レールを剥がした half
 board:
   size: half

@@ -12,10 +12,13 @@
 | パッケージ | フェンス | 描くもの |
 | --- | --- | --- |
 | circuit-fence | ` ```circuit ` | 回路図 — 部品を番地で置き、ネットリストを導出する |
-| breadboard-fence | ` ```breadboard ` | ブレッドボード実体配線図 — ボード内部の導通からネットリストを導出する |
-| perfboard-fence | ` ```perfboard ` | ユニバーサル基板の配線図 — 全穴が独立していて、導通は配線でしか生まれない |
+| breadboard-fence | ` ```bread ` | ブレッドボード実体配線図 — ボード内部の導通からネットリストを導出する |
+| perfboard-fence | ` ```perf ` | ユニバーサル基板の配線図 — 全穴が独立していて、導通は配線でしか生まれない |
 | copper-fence | ` ```copper ` | 銅張り基板の寸法図 — 位置は mm、導通は銅の形そのもの。線路の Z0 を図に出す |
 | vna-fence | ` ```vna ` | VNA (NanoVNA) の画面 — Log Mag・Smith チャート・SWR・TDR。理想の模型から計算し、測った Touchstone を重ねる |
+
+` ```bread ` / ` ```perf ` は短い綴りで、長い綴り (` ```breadboard ` / ` ```perfboard `) も
+同じように図になる。長い綴りで書いた文書は、書き直さなくてよい。
 
 言語は別、作法は同じ: YAML をホストにしたフェンス、番地で書く位置、
 Markdown の行番号とその行の中身で返るエラー (vna は板を描かないので、

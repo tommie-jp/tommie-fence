@@ -8,7 +8,7 @@
 ## 構成
 
 - `packages/circuit-fence` — ` ```circuit ` フェンス。回路図 (circuitikz / TeX)
-- `packages/breadboard-fence` — ` ```breadboard ` フェンス。ブレッドボード実体配線図
+- `packages/breadboard-fence` — ` ```bread ` フェンス。ブレッドボード実体配線図
 - `packages/fence-kit` — 3 つで重複している部分の置き場。**モノレポの中では
   ソースのまま**使う側の esbuild が束ねる。入口は 3 つ: `fence-kit` (本体。
   **DOM も Node も使わない**)、`fence-kit/cli` (**CLI 専用。ここだけ Node を
@@ -16,7 +16,7 @@
   `fence-kit/shell` と `fence-kit/map.web.js` (dist。マップの殻を VS Code の外で
   動かす宿主のため。52 の docs/59)。約束は
   [packages/fence-kit/CLAUDE.md](packages/fence-kit/CLAUDE.md)
-- `packages/perfboard-fence` — ` ```perfboard ` フェンス。ユニバーサル基板。
+- `packages/perfboard-fence` — ` ```perf ` フェンス。ユニバーサル基板。
   **一通り動く** (2 本足・3 本足・DIP / SIP、板の外の機器、注釈、テーマ、
   文法リファレンスと例と CLI まで)。
   全穴が独立しているので、breadboard の `board` / `layout` / `place` /

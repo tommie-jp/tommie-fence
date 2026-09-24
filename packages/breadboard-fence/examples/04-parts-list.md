@@ -8,7 +8,7 @@
 `parts-list:` を書かなければこうなる。値を書かなかった部品は 2 列だけになり、
 `device` のように値の代わりにラベルを持つものはラベルが並ぶ。
 
-```breadboard
+```bread
 title: 図01 部品リスト (既定)
 parts:
   R1: resistor a5 a10 330
@@ -35,7 +35,7 @@ notes:
 部品が自明なときや、リストを本文側に自分で書くときは消せる。
 図の高さもリストのぶんだけ縮む。
 
-```breadboard
+```bread
 title: 図02 部品リストを消す
 parts-list: none
 parts:

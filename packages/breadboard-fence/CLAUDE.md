@@ -1,6 +1,6 @@
 # プロジェクト指示 (breadboard-fence)
 
-Markdown の ` ```breadboard ` フェンスをブレッドボード実体配線図としてレンダリングする
+Markdown の ` ```bread ` フェンスをブレッドボード実体配線図としてレンダリングする
 **ライブラリ + CLI**。全体像は [README.ja.md](README.ja.md) (英語は
 [README.md](README.md))、文法は [docs/01-syntax.md](docs/01-syntax.md)。
 VS Code に出る拡張は `packages/tommie-fence` の 1 つで、このコアはそこに

@@ -2,8 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-The pieces shared by the three fences — ` ```circuit `, ` ```breadboard ` and
-` ```perfboard `. Inside [tommie-fence](https://github.com/tommie-jp/tommie-fence)
+The pieces shared by the three fences — ` ```circuit `, ` ```bread ` and
+` ```perf `. Inside [tommie-fence](https://github.com/tommie-jp/tommie-fence)
 it is bundled from source.
 
 **Only two entry points are shipped: the ones that run the drag-to-edit map
@@ -55,7 +55,7 @@ import { changesForFence, createSession, makeNonce, panelHtml } from 'fence-kit/
 import type { DocLike, Incoming, Outgoing } from 'fence-kit/shell';
 import { createBreadboardEditor } from 'breadboard-fence/core';
 
-let text = '```breadboard\nboard: half\nparts:\n  R1: resistor a5 a10\n```\n';
+let text = '```bread\nboard: half\nparts:\n  R1: resistor a5 a10\n```\n';
 const lines = (): string[] => text.split('\n');
 const doc: DocLike = {
   uri: { toString: () => 'memo' },

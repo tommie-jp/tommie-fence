@@ -6,7 +6,7 @@ CdS セル・サーミスタ・ダイオードの仲間・ガラス封止の部�
 
 ## 明るさと温度を分圧で取り出す
 
-```breadboard
+```bread
 title: 図01 明るさと温度を分圧で取り出す
 board: half
 parts:
@@ -37,7 +37,7 @@ CdS は明るいほど抵抗が下がり、NTC サーミスタは温かいほど
 
 ## ダイオードの仲間
 
-```breadboard
+```bread
 title: 図02 ダイオードの仲間
 board: half
 parts:
@@ -63,7 +63,7 @@ notes:
 
 ## ガラス管・玉・円板
 
-```breadboard
+```bread
 title: 図03 ガラス管・玉・円板
 board: half
 parts:
@@ -87,7 +87,7 @@ notes:
 
 ## フォトトランジスタ
 
-```breadboard
+```bread
 title: 図04 フォトトランジスタ
 board: half
 parts:
@@ -106,7 +106,7 @@ notes:
 
 ## 3 本足の IC
 
-```breadboard
+```bread
 title: 図05 3 本足の IC (温度センサーとホール素子)
 board: half
 parts:

@@ -1,7 +1,7 @@
 {
   "name": "perfboard-fence",
   "displayName": "Perfboard Fence",
-  "description": "Markdown の ```perfboard フェンスをユニバーサル基板の実体配線図としてプレビューする",
+  "description": "Markdown の ```perf フェンスをユニバーサル基板の実体配線図としてプレビューする",
   "version": "0.11.0",
   "license": "MIT",
   "private": true,

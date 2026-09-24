@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-` ```circuit ` / ` ```breadboard ` / ` ```perfboard ` の 3 つのフェンスが共有する
+` ```circuit ` / ` ```bread ` / ` ```perf ` の 3 つのフェンスが共有する
 部品。[tommie-fence](https://github.com/tommie-jp/tommie-fence) の中では
 ソースのまま束ねられる。
 
@@ -52,7 +52,7 @@ import { changesForFence, createSession, makeNonce, panelHtml } from 'fence-kit/
 import type { DocLike, Incoming, Outgoing } from 'fence-kit/shell';
 import { createBreadboardEditor } from 'breadboard-fence/core';
 
-let text = '```breadboard\nboard: half\nparts:\n  R1: resistor a5 a10\n```\n';
+let text = '```bread\nboard: half\nparts:\n  R1: resistor a5 a10\n```\n';
 const lines = (): string[] => text.split('\n');
 const doc: DocLike = {
   uri: { toString: () => 'memo' },

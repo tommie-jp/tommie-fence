@@ -1,6 +1,6 @@
 # プロジェクト指示 (perfboard-fence)
 
-Markdown の ` ```perfboard ` フェンスをユニバーサル基板の実体配線図として
+Markdown の ` ```perf ` フェンスをユニバーサル基板の実体配線図として
 描く拡張。横断の作法は[リポジトリ直下の CLAUDE.md](../../CLAUDE.md)、
 **このパッケージについてはここが正**。
 

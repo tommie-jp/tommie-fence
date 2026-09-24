@@ -1,6 +1,6 @@
 ---
 name: tommie-fence
-description: Markdown の ```circuit / ```breadboard / ```perfboard / ```copper / ```vna フェンス (回路図・ブレッドボードの実体配線図・ユニバーサル基板の実体配線図・銅張り基板のマイクロストリップの寸法図・VNA (NanoVNA) の画面) を書く・直す・読むときに使う。文法リファレンスの所在、CLI の check で読めたか・つながったかを確かめる手順、図を PNG に焼いて目で確かめる手順、フェンスどうしで取り違えやすい書き方をまとめてある。Use when writing or fixing circuit schematics, breadboard diagrams, perfboard layouts, copper-clad board (microstrip) drawings, or VNA (NanoVNA) screens — Log Mag, Smith chart, SWR, TDR — in these Markdown fences.
+description: Markdown の ```circuit / ```bread / ```perf / ```copper / ```vna フェンス (回路図・ブレッドボードの実体配線図・ユニバーサル基板の実体配線図・銅張り基板のマイクロストリップの寸法図・VNA (NanoVNA) の画面) を書く・直す・読むときに使う。文法リファレンスの所在、CLI の check で読めたか・つながったかを確かめる手順、図を PNG に焼いて目で確かめる手順、フェンスどうしで取り違えやすい書き方をまとめてある。Use when writing or fixing circuit schematics, breadboard diagrams, perfboard layouts, copper-clad board (microstrip) drawings, or VNA (NanoVNA) screens — Log Mag, Smith chart, SWR, TDR — in these Markdown fences.
 ---
 
 # tommie-fence のフェンスを書く
@@ -12,8 +12,8 @@ description: Markdown の ```circuit / ```breadboard / ```perfboard / ```copper 
 | 描きたいもの | フェンス | 文法 (先に読む順) | 例 |
 | --- | --- | --- | --- |
 | 回路図 | ` ```circuit ` | `packages/circuit-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/circuit-fence/examples/*.md` |
-| ブレッドボードの実体配線図 | ` ```breadboard ` | `packages/breadboard-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/breadboard-fence/examples/*.md` |
-| ユニバーサル基板の実体配線図 | ` ```perfboard ` | `packages/perfboard-fence/docs/01-syntax.md` (早見表は無い。目次から要る節だけ) | `packages/perfboard-fence/examples/*.md` |
+| ブレッドボードの実体配線図 | ` ```bread ` | `packages/breadboard-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/breadboard-fence/examples/*.md` |
+| ユニバーサル基板の実体配線図 | ` ```perf ` | `packages/perfboard-fence/docs/01-syntax.md` (早見表は無い。目次から要る節だけ) | `packages/perfboard-fence/examples/*.md` |
 | 銅張り基板 (マイクロストリップ・CPW・Manhattan の島) の寸法図 | ` ```copper ` | `packages/copper-fence/docs/01-syntax.md` (早見表は無い) | `packages/copper-fence/examples/*.md` |
 | VNA (NanoVNA) の画面 (S21 / S11 の Log Mag・Smith・SWR・TDR) | ` ```vna ` | `packages/vna-fence/docs/01-syntax.md` (早見表は無い) | `packages/vna-fence/examples/*.md` |
 
@@ -98,8 +98,10 @@ vna (VNA の画面) は**板も部品も無い**。位置の代わりに周波�
 
 5 つに共通:
 
-- **フェンス名は `circuit` / `breadboard` / `perfboard` / `copper` / `vna` の 5 つだけ。**
-  `bread` や `perf` と書くと、プレビューでは灰色のコードブロック、CLI では黙って素通りする
+- **フェンス名は `circuit` / `bread` / `perf` / `copper` / `vna`。** 板の 2 つは長い綴り
+  (`breadboard` / `perfboard`) も同じに読む (拡張 0.15.0・breadboard-fence 0.13.0・
+  perfboard-fence 0.11.0 から。報告の名札は短い綴り)。新しく書くなら短い綴り。
+  **これ以外の綴りは**、プレビューでは灰色のコードブロック、CLI では黙って素通りする
 - **`text` の字は `:` の後ろ**: `- text c3 red: ここから電源`。
   番地の後ろに引用で字を書く (`- text c3 "R1: 抵抗"`) と、字の頭が色や向きの語として読まれて通らない。
   字の中にコロンと空白の並びがあるなら、`:` の後ろを囲む (`- text c3: "R1: 抵抗"`)

@@ -8,7 +8,7 @@
 実物のブレッドボードに寄せた配色。字も線も小さめで、地は塗らないので
 貼り先の背景がそのまま透ける。既定ではないので、使うときは名前で選ぶ。
 
-```breadboard
+```bread
 title: 図01 classic
 board: half
 style: classic
@@ -31,7 +31,7 @@ notes:
 穴には明るい縁を付けている。配線は**色を変えず**に明るい縁取りを敷いて、
 黒や紺の線が板に沈まないようにしている。
 
-```breadboard
+```bread
 title: 図02 dark
 board: half
 style: dark
@@ -54,7 +54,7 @@ notes:
 輪郭を黒で締め、字も配線も太くする。配線には黒い縁取りを敷くので、
 白や黄色の線も白い板の上で追える。
 
-```breadboard
+```bread
 title: 図03 high-contrast
 board: half
 style: high-contrast
@@ -77,7 +77,7 @@ notes:
 **配線の色と抵抗のカラーコードはそのまま残す** — あれは実物の色そのもので、
 グレーにすると「何色の線を挿すか」「何オームか」が読めなくなるため。
 
-```breadboard
+```bread
 title: 図04 mono
 board: half
 style: mono
@@ -101,7 +101,7 @@ notes:
 スライドに貼る図や、記事に載せるスクリーンショット向け。
 classic と違って**地は白で塗る** — 暗いスライドに貼ったときに余白だけ透けないようにするため。
 
-```breadboard
+```bread
 title: 図05 presentation
 board: half
 style: presentation
@@ -122,7 +122,7 @@ notes:
 
 テーマを土台にして、気になるところだけ上書きできる。
 
-```breadboard
+```bread
 title: 図06 テーマを個別に変える
 board: half
 style:

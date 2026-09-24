@@ -3,7 +3,7 @@
 `board:` に**列 × 行**で穴数を書く。板が「72×47mm」と長辺 × 短辺で
 売られているのと同じ順。
 
-```perfboard
+```perf
 board: 12x7
 title: 図01 12 列 7 行の板
 notes:
@@ -15,7 +15,7 @@ notes:
 番地は**行の名前 + 列の番号**で `b3`。行の名前は表計算と同じ数え方で伸びるので、
 26 行を超える板でも `aa` `ab` と続けて読める。
 
-```perfboard
+```perf
 board: 4x30
 title: 図02 26 行を超える板
 notes:
@@ -28,7 +28,7 @@ notes:
 `akizuki-b` (36 列 27 行) / `akizuki-c` (25 列 15 行) / `akizuki-d` (17 列 14 行)
 の 4 つ。短い名前 (`a` `b` `c` `d`) でも同じ板が出る。
 
-```perfboard
+```perf
 board: akizuki-a
 title: 図03 秋月 A タイプ (155×114mm、55 列 40 行)
 notes:
@@ -37,7 +37,7 @@ notes:
 
 ![図03 秋月 A タイプ (155×114mm、55 列 40 行)](out/01-board-3.svg)
 
-```perfboard
+```perf
 board: akizuki-b
 title: 図04 秋月 B タイプ (95×72mm、36 列 27 行)
 notes:
@@ -46,7 +46,7 @@ notes:
 
 ![図04 秋月 B タイプ (95×72mm、36 列 27 行)](out/01-board-4.svg)
 
-```perfboard
+```perf
 board: akizuki-c
 title: 図05 秋月 C タイプ (72×47mm、25 列 15 行)
 notes:
@@ -55,7 +55,7 @@ notes:
 
 ![図05 秋月 C タイプ (72×47mm、25 列 15 行)](out/01-board-5.svg)
 
-```perfboard
+```perf
 board: akizuki-d
 title: 図06 秋月 D タイプ (47×36mm、17 列 14 行)
 notes:
@@ -71,7 +71,7 @@ notes:
 実物には、**短いほうの両端に細長い銅箔**が並んでいる板がある。板をマップで書いて
 `slots: on` と足すと、その銅箔が出る。大きさは今までどおり `size:` に書く。
 
-```perfboard
+```perf
 board:
   size: 20x14
   slots: on
@@ -97,7 +97,7 @@ notes:
 板は**緑にはんだメッキ** (銀) が既定。手元の板が別の色なら、`color:` と `land:`
 で寄せられる。`slots:` に色を書けば、スロットの銅箔だけ別のめっきにもできる。
 
-```perfboard
+```perf
 board:
   size: 20x14
   color: blue

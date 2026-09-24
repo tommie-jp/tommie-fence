@@ -5,7 +5,7 @@
 
 ## 印・枠・指し棒・字
 
-```breadboard
+```bread
 title: 図01 LED を点ける
 board: half
 parts:
@@ -35,7 +35,7 @@ notes:
 
 ## 色・大きさ・寄せ
 
-```breadboard
+```bread
 title: 図02 色と大きさと寄せ
 board: half
 parts-list: none
@@ -68,7 +68,7 @@ notes:
 
 ## フェンスそのものを図に書き込む
 
-```breadboard
+```bread
 title: 図03 フェンスそのものを書き込む
 board: half
 parts-list: none

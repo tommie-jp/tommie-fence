@@ -7,7 +7,7 @@
 
 ## 読めた部分は描き、読めなかった行だけ帯に出す
 
-```breadboard
+```bread
 parts:
   R1: resistr a5 a10 10k
   D1: led a14(A) a17(K) red
@@ -35,7 +35,7 @@ bread: 6 行目: 配線の端点として読めません: nowhere
 
 ## YAML そのものが読めないとき
 
-```breadboard
+```bread
 parts:
   R1: [unclosed
 ```

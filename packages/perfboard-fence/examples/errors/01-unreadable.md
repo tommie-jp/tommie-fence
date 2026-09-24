@@ -5,14 +5,14 @@
 
 `board:` が無いと板の大きさが決まらないので、何も描けない。
 
-```perfboard
+```perf
 parts:
   R1: resistor b3 b7
 ```
 
 種類の綴りが違うとき。**似た名前を並べて返す。**
 
-```perfboard
+```perf
 board: 10x6
 parts:
   R1: resistr b3 b7
@@ -21,7 +21,7 @@ parts:
 まだ置けない種類は「知らない」ではなく**「まだ置けません」**と言う。
 綴りを疑うべきものと、待つべきものとでは次にやることが違う。
 
-```perfboard
+```perf
 board: 10x6
 parts:
   SW1: button b3 b5
@@ -29,7 +29,7 @@ parts:
 
 書く穴の数は形が決める。3 本足は 3 つ、DIP と SIP はアンカー 1 つ。
 
-```perfboard
+```perf
 board: 10x6
 parts:
   Q1: transistor b3 b4
@@ -37,7 +37,7 @@ parts:
 
 板の外を指したとき。**行が足りないのか列が足りないのか**を言い分ける。
 
-```perfboard
+```perf
 board: 10x6
 parts:
   R1: resistor b3 b99
@@ -45,7 +45,7 @@ parts:
 
 1 つの穴に挿せる足は 1 本。
 
-```perfboard
+```perf
 board: 10x6
 parts:
   R1: resistor b3 b7
@@ -54,7 +54,7 @@ parts:
 
 配線の色は持っている名前だけを通す。
 
-```perfboard
+```perf
 board: 10x6
 parts:
   R1: resistor b3 b7

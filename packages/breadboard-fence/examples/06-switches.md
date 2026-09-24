@@ -4,7 +4,7 @@
 
 ## タクトスイッチで LED を点ける
 
-```breadboard
+```bread
 title: 図01 タクトスイッチで LED を点ける
 board: half
 parts:
@@ -39,7 +39,7 @@ N2 : R1.2, D1.A
 
 ## 半固定抵抗とスライドスイッチ
 
-```breadboard
+```bread
 title: 図02 半固定抵抗とスライドスイッチ
 board: half
 parts:

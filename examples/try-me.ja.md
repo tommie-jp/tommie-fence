@@ -11,7 +11,7 @@
 
 ## breadboard — LED と抵抗
 
-```breadboard
+```bread
 title: LED と抵抗
 board: half
 parts:
@@ -30,7 +30,7 @@ notes:
 
 ## perfboard — 同じ回路を、穴ごとに
 
-```perfboard
+```perf
 board: 16x8
 title: LED と抵抗
 points:

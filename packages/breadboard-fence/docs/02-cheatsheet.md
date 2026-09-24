@@ -1,4 +1,4 @@
-# breadboard フェンス 早見表
+# bread フェンス 早見表
 
 **1 画面に収めた全形式。** LLM に書かせるときは、これをそのままプロンプトに貼る。
 詳しい説明と図は [01-syntax.md](01-syntax.md)。
@@ -6,7 +6,7 @@
 ## かたち
 
 ````text
-```breadboard
+```bread
 title: 図01 …          # 任意。図の左上に載る 1 行
 points:                # 任意。番地に名前を付ける
   vin: a5
