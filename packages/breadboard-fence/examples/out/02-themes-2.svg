@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="664" height="626.5" viewBox="0 0 664 626.5" data-breadboard-fence="0.12.1" role="img">
 <rect x="0" y="0" width="664" height="626.5" fill="#161a1f"/>
-<g><text x="14" y="20" text-anchor="start" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="700" fill="#e2e8f0">図02 dark</text></g>
+<g><text x="14" y="20" text-anchor="start" font-family="&apos;Segoe UI&apos;, &apos;Helvetica Neue&apos;, Arial, &apos;Noto Sans&apos;, &apos;Hiragino Sans&apos;, &apos;Yu Gothic UI&apos;, &apos;Noto Sans CJK JP&apos;, sans-serif" font-size="14" font-weight="700" fill="#e2e8f0">図02 dark</text></g>
 <g transform="translate(0 28)"><rect x="14" y="14" width="636" height="336" rx="7" fill="#2b3038" stroke="#434b56"/>
 <rect x="14" y="176" width="636" height="12" fill="#232830"/>
 <line x1="32" y1="20" x2="632" y2="20" stroke="#ff6f61" stroke-width="1.6"/>

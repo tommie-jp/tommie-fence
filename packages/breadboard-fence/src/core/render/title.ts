@@ -1,4 +1,4 @@
-import { element, num, svgText } from './svg.ts';
+import { BOLD_FAMILY, element, num, svgText } from './svg.ts';
 import { fit } from './textFit.ts';
 import type { RenderTheme } from './theme.ts';
 
@@ -27,6 +27,7 @@ export function renderTitle(title: string | null, x: number, width: number, them
     svgText(x, TITLE_TOP_PAD + size, fit(title, width / size), {
       'font-size': num(size),
       'font-weight': 700,
+      'font-family': BOLD_FAMILY,
       fill: theme.palette.partText,
       anchor: 'start',
     }),

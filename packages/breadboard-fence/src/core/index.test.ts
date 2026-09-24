@@ -327,6 +327,21 @@ describe('renderBreadboard', () => {
     expect(svg).toContain('R1: resistor a5 a10 330');
   });
 
+  test('bold text lists a Latin font first so Ω is not garbled on Windows', () => {
+    const { svg } = renderBreadboard([
+      'title: 図01 330 Ω',
+      'parts:',
+      '  R1: resistor a5 a10 330',
+      'notes:',
+      '  - text d20 bold: 330 Ω で絞る',
+      '',
+    ].join('\n'));
+    const textOf = (content: string) => new RegExp(`<text[^>]*>${content}`).exec(svg)?.[0] ?? '';
+
+    expect(textOf('図01 330 Ω')).toContain('font-family="&apos;Segoe UI&apos;');
+    expect(textOf('330 Ω で絞る')).toContain('font-family="&apos;Segoe UI&apos;');
+  });
+
   test('puts a source with no address in a band under the drawing', () => {
     // 板の番地はどれも実在の穴に縛られているので、板の外を指す番地が存在しない。
     // 板の上に重ねると穴と印字に重なるので、場所の語を書いたものは帯へ流す。

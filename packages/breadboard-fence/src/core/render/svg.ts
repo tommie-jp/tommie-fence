@@ -1,9 +1,9 @@
-import { TEXT_HALO_WIDTH, element, escapeMarkup, num, svgText } from 'fence-kit';
+import { BOLD_FAMILY, TEXT_HALO_WIDTH, element, escapeMarkup, num, svgText } from 'fence-kit';
 import type { Attributes, TextOptions } from 'fence-kit';
 import type { Point } from '../types.ts';
 
 export type { Attributes, TextOptions };
-export { element, num, svgText, TEXT_HALO_WIDTH };
+export { BOLD_FAMILY, element, num, svgText, TEXT_HALO_WIDTH };
 
 /**
  * 図に載る文字列は必ずここを通す。VS Code の Markdown プレビューは

@@ -18,6 +18,10 @@ describe('renderTitle', () => {
     expect(svg).toContain('text-anchor="start"');
   });
 
+  test('lists a Latin font first so Ω is not garbled in bold on Windows', () => {
+    expect(renderTitle('図01 50 Ω', layout, THEME)).toContain('font-family="&apos;Segoe UI&apos;');
+  });
+
   test('escapes the title, so a fence cannot inject markup', () => {
     expect(renderTitle('<img src=x>', layout, THEME)).not.toContain('<img');
     expect(renderTitle('<img src=x>', layout, THEME)).toContain('&lt;img');

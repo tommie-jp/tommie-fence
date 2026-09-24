@@ -3,6 +3,15 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Fixed
+
+- **題の Ω が、Windows の VS Code で別の字に化けうる。** 題は太字で、字の種類を
+  `system-ui` だけで指していたため、日本語の UI フォントの太字で描かれる
+  (vna の題で `0 Ω` が `0 и` になった)。題は欧文のフォントを先に並べる
+  (copper-fence 0.1.1 と同じ直し)。
+
 ## [0.10.1] - 2026-09-24
 
 ### Fixed

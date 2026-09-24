@@ -3,7 +3,7 @@ import { DEFAULT_MARK_COLOR, noteColorValue, noteLeading, noteSizeScale } from '
 import type { NoteAlign } from '../notes.ts';
 import type { NoteSpec, Point, Rect } from '../types.ts';
 import { haloWidth } from './partCommon.ts';
-import { element, num, svgText } from './svg.ts';
+import { BOLD_FAMILY, element, num, svgText } from './svg.ts';
 import { fit, textWidth } from './textFit.ts';
 import type { RenderTheme } from './theme.ts';
 
@@ -326,7 +326,7 @@ function textLines(
     .map((text, index) =>
       svgText(x, baseline + step * index, fit(text, limit), {
         'font-size': num(size),
-        ...(spec.bold ? { 'font-weight': 700 } : {}),
+        ...(spec.bold ? { 'font-weight': 700, 'font-family': BOLD_FAMILY } : {}),
         ...(mono ? { 'font-family': MONO_FAMILY, 'xml:space': 'preserve' } : {}),
         fill: textColorOf(spec, theme),
         anchor: ANCHORS[align],
