@@ -172,7 +172,7 @@ parts:
 | `grid` | `on` / `off` [大きさ] [色] | `off` |
 | `grid-to` | 番地 | 使っている範囲 |
 | `pitch` | 0.5〜5 (cm) | `2` |
-| `standard` | `american` / `european` | `american` |
+| `standard` | `american` / `european` / `jis` (電験の図) | `american` |
 | `wire-width` | 0.2〜4 (pt) | `0.8` |
 | `width` | 120〜4000 (ドット) | 読み手の字に合わせる |
 | `stamp` | `on` / `off` | `off` |

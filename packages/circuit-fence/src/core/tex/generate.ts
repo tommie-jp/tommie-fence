@@ -9,6 +9,8 @@ import {
 import type { PartType, PinSide, SourceInner, Turn } from '../parts.ts';
 import { lookupBoardPart } from 'fence-kit';
 import { EMPTY_STYLE } from '../parser/style.ts';
+import { STANDARD_TEX } from '../standard.ts';
+import type { Standard } from '../standard.ts';
 import { cellOf as addressOf, nodeNameOf, texNameOfEndpoint } from '../types.ts';
 import type {
   MultiTerminalPart, NoteOverlay, PartSpec, StyleSpec, TexTarget, TwoTerminalPart, OneTerminalPart,
@@ -58,8 +60,8 @@ export type GenerateOptions = {
 /** 既定の線の太さ (pt)。実機コンパイルを確認した値。 */
 const DEFAULT_WIRE_WIDTH = 0.8;
 
-/** 既定の記号の流儀。実機で検証したのは american のほう。 */
-const DEFAULT_STANDARD = 'american';
+/** 既定の記号の流儀。実機で検証したのは american のほう。鍵への写しは standard.ts。 */
+const DEFAULT_STANDARD: Standard = 'american';
 
 /**
  * 2 端子の記号の長さ (cm)。丸い電源の中身を描くのにも要るので定数にしてある
@@ -157,7 +159,7 @@ const headerOf = (
   // 自分で宣言する記号 (ピンヘッダ)。**図に出てくる本数のぶんだけ**書く。
   ...shapes,
   '\\begin{document}',
-  `\\begin{circuitikz}[${style.standard ?? DEFAULT_STANDARD}, line width=${num(style.wireWidth ?? DEFAULT_WIRE_WIDTH)}pt]`,
+  `\\begin{circuitikz}[${STANDARD_TEX[style.standard ?? DEFAULT_STANDARD]}, line width=${num(style.wireWidth ?? DEFAULT_WIRE_WIDTH)}pt]`,
   `\\ctikzset{bipoles/length=${num(BIPOLE_LENGTH)}cm}`,
   // グラウンドがあって、線が太くて棒が潰れるときだけ書く
   // (図に入る書き方を無条件には増やさない。約束 6)。

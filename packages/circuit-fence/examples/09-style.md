@@ -82,11 +82,28 @@ style:
 
 ![図04 記号の流儀 european](out/09-style-4.png)
 
+`jis` は JIS C 0617 (電験三種の問題用紙の図)。抵抗は `european` と同じ箱で、
+コイルが黒い箱ではなく半円の連なりになる。論理ゲートは `american` と同じ MIL 記号のまま。
+
+```circuit
+title: 図05 記号の流儀 jis
+parts:
+  R1: resistor a1 a2 10k
+  L1: inductor a4 a5 10m
+notes:
+  - source a6 blue
+style:
+  grid: on
+  standard: jis
+```
+
+![図05 記号の流儀 jis](out/09-style-5.png)
+
 `width` は出力の横ドット数 (120〜4000)。図の中身は動かさず、外寸だけ変える。
 資料の段幅に合わせたいときに使う。
 
 ```circuit
-title: 図05 出力の横幅
+title: 図06 出力の横幅
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
@@ -102,14 +119,14 @@ style:
   width: 320
 ```
 
-![図05 出力の横幅](out/09-style-5.png)
+![図06 出力の横幅](out/09-style-6.png)
 
 `stamp: on` は、その図を組んだ処理系の版を右下に刻む。**字は書かない** —
 処理系が埋めるので、拡張機能を更新すれば刻印も一緒に新しくなる。
 資料に貼った図が、どの版で描いたものかを後から辿れる。
 
 ```circuit
-title: 図06 版の刻印
+title: 図07 版の刻印
 parts:
   IN:  port a1
   R1:  resistor a1 a2 10k
@@ -125,7 +142,7 @@ style:
   stamp: on
 ```
 
-![図06 版の刻印](out/09-style-6.png)
+![図07 版の刻印](out/09-style-7.png)
 
 刻まないときも、版は書き出した `.svg` の根に `data-circuit-fence` として
 必ず入っている (図の見た目は変わらない)。

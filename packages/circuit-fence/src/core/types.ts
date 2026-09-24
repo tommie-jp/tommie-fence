@@ -4,6 +4,7 @@ import { formatAddress, texNameOfAddress } from './model/address.ts';
 import type { Address, WireOperator } from './model/address.ts';
 import type { NoteAlign, NoteLeading, NoteSize } from './notes.ts';
 import type { Turn } from './parts.ts';
+import type { Standard } from './standard.ts';
 
 /**
  * 読めなかったところ 1 件。line は元の YAML の行 (1 始まり)。
@@ -242,7 +243,7 @@ export type StyleSpec = {
   /** グリッドを描く範囲の右下。省略時は使っている番地の範囲。 */
   readonly gridTo: Address | null;
   readonly pitch: number | null;
-  readonly standard: string | null;
+  readonly standard: Standard | null;
   readonly wireWidth: number | null;
   /** 出力の横ドット数。図の中身ではなく貼り先の都合なので、テーマとは分ける。 */
   readonly width: number | null;

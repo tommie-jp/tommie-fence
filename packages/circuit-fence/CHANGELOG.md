@@ -3,6 +3,17 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Added
+
+- **記号の流儀に `jis` を足した** (`style: standard: jis`)。JIS C 0617 の形で、
+  抵抗は `european` と同じ箱、**コイルは半円の連なり** (`european` は黒く塗った箱)、
+  電圧と電流は矢、論理ゲートは `american` と同じ MIL 記号。電験三種の問題用紙の図
+  (令和 6 年度上期 理論 問 8・10・13) で確かめた。circuitikz には部品ごとの鍵
+  (`european resistors, cute inductors, european voltages, european currents,
+  american ports`) で渡し、束の `european` には委ねない。
+
 ## [0.10.0] - 2026-09-24
 
 ### Added

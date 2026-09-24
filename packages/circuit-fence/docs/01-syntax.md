@@ -1626,12 +1626,17 @@ style:
 | `grid` | `on` / `off` [大きさ] [色] | `off` |
 | `grid-to` | グリッドを伸ばす先の番地 (`e12`) | 使っている範囲 |
 | `pitch` | 1 マスの大きさ (cm、0.5〜5) | `2` |
-| `standard` | `american` / `european` | `american` |
+| `standard` | `american` / `european` / `jis` | `american` |
 | `wire-width` | 線の太さ (pt、0.2〜4) | `0.8` |
 | `width` | 出力の横ドット数 (120〜4000) | 読み手の字に合わせる |
 | `stamp` | `on` / `off` (版を図の隅に刻む) | `off` |
 | `check` | `on` / `off` (図の中身の検査を掛ける) | `on` |
 | `debug` | `on` / `off` (お知らせを出す) | `on` |
+
+`standard` は記号の流儀。`american` は抵抗がギザギザでコイルが巻線、`european`
+(IEC 60617) は抵抗が箱でコイルが黒く塗った箱、論理ゲートも IEC の箱。`jis`
+(JIS C 0617) は抵抗が箱で**コイルが半円の連なり**、電圧と電流は `european` と同じ矢、
+論理ゲートは `american` と同じ MIL 記号 — 電験三種の問題用紙の図がこの形。
 
 線を太くすると、**グラウンドの記号は自動で広がる**。3 本の横棒の間隔は
 記号の側で決まっているのに、棒の太さは線に付いてくるので、そのままだと

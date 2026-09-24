@@ -82,8 +82,16 @@ describe('validateStyle', () => {
     expect(valueOf({ standard: 'european' })).toMatchObject({ standard: 'european' });
   });
 
-  test('refuses a standard it does not know', () => {
-    expect(messagesOf({ standard: 'japanese' })[0]?.message).toContain('american');
+  // 電験三種の問題用紙の図 (JIS C 0617)。抵抗は箱、コイルは半円の連なり。
+  test('reads jis, the standard the exam papers draw in', () => {
+    expect(valueOf({ standard: 'jis' })).toMatchObject({ standard: 'jis' });
+  });
+
+  test('refuses a standard it does not know, naming the three it knows', () => {
+    const message = messagesOf({ standard: 'japanese' })[0]?.message;
+
+    expect(message).toContain('american');
+    expect(message).toContain('jis');
   });
 
   test('reads colours written as hex and normalises them', () => {

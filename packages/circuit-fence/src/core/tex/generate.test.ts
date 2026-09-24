@@ -401,6 +401,14 @@ describe('style', () => {
     expect(withStyle(['  standard: european'])).toContain('\\begin{circuitikz}[european,');
   });
 
+  // JIS C 0617 (電験三種の問題用紙の図) は抵抗が箱でコイルは半円の連なり (european の
+  // 黒い箱ではない)。論理ゲートは MIL のまま。部品ごとの鍵で書き、circuitikz の束に委ねない。
+  test('draws jis with box resistors, cute inductors and MIL gates', () => {
+    expect(withStyle(['  standard: jis'])).toContain(
+      '\\begin{circuitikz}[european resistors, cute inductors, european voltages, european currents, american ports, line width=',
+    );
+  });
+
   test('keeps american as the default, which the memo verified', () => {
     expect(generate('parts:', '  R1: resistor a1 a3').tex).toContain('[american,');
   });

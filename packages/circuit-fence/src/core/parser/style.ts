@@ -7,6 +7,7 @@ import type { Points } from './compact.ts';
 import { NOTE_COLOR_NAMES, NOTE_SIZE_NAMES, isNoteSize, noteColor } from '../notes.ts';
 import type { NoteSize } from '../notes.ts';
 import { THEME_NAMES } from '../render/theme.ts';
+import { STANDARDS } from '../standard.ts';
 import type { StyleSpec } from '../types.ts';
 
 /** 何も書かれていない状態。テーマも大きさも既定のまま。 */
@@ -56,8 +57,6 @@ export type StyleValidation = { readonly value: StyleSpec; readonly messages: re
  * 名前で選びたいときは、色ではなくテーマを指定してもらう。
  */
 const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
-
-const STANDARDS = ['american', 'european'] as const;
 
 /** `style:` に書ける項目。知らない項目を返すときの一覧でもある。 */
 export const STYLE_KEYS = [
@@ -152,13 +151,13 @@ const readGrid = (
   return { on, size, color };
 };
 
-const readChoice = (
+const readChoice = <T extends string>(
   raw: unknown,
   key: string,
-  allowed: readonly string[],
+  allowed: readonly T[],
   messages: StyleMessage[],
-): string | null => {
-  if (typeof raw === 'string' && allowed.includes(raw)) return raw;
+): T | null => {
+  if (typeof raw === 'string' && (allowed as readonly string[]).includes(raw)) return raw as T;
   messages.push({ message: `style の ${key} は ${allowed.join(' か ')} です`, key, token: tokenOf(raw) });
   return null;
 };
