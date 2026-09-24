@@ -51,7 +51,7 @@ const readAddress = (written: string): Address | null => parseAddress(written);
 
 export function createBreadboardEditor(): FenceEditor {
   return {
-    language: 'breadboard',
+    language: 'bread',
 
     fences: (markdown) => extractBreadboardFences(markdown).map((fence) => ({
       line: fence.line,

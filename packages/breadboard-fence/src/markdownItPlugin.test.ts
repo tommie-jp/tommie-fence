@@ -14,6 +14,16 @@ describe('breadboardPlugin', () => {
     expect(html).not.toContain('<code');
   });
 
+  // 52 の docs/08。短い綴りが正、長い綴りは期限を切らない別名。
+  test('draws the short spelling ```bread, and keeps drawing the long one', () => {
+    for (const fence of ['```bread\nboard: half\n```', '```breadboard\nboard: half\n```', '```bread title=x\nboard: half\n```']) {
+      const html = md().render(fence);
+
+      expect(html, fence).toContain('<svg');
+      expect(html, fence).toContain('class="breadboard"');
+    }
+  });
+
   test('puts what it could not read next to the drawing, not inside it', () => {
     const html = md().render('```breadboard\nparts:\n  R1: resistr a5 a10\n```');
 

@@ -13,6 +13,16 @@ describe('perfboardPlugin', () => {
     expect(html).not.toContain('<code');
   });
 
+  // 52 の docs/08。短い綴りが正、長い綴りは期限を切らない別名。
+  test('draws the short spelling ```perf, and keeps drawing the long one', () => {
+    for (const fence of ['```perf\nboard: 12x7\n```', '```perfboard\nboard: 12x7\n```']) {
+      const html = md().render(fence);
+
+      expect(html, fence).toContain('<svg');
+      expect(html, fence).toContain('class="perfboard"');
+    }
+  });
+
   test('leaves a fence of another language to the default renderer', () => {
     const html = md().render('```breadboard\nboard: half\n```');
 

@@ -139,12 +139,12 @@ describe('フェンスの題', () => {
   });
 
   test('題が無ければ種類で言う (無題のリンクにしない)', () => {
-    expect(shareLabel('perfboard', 'board: 12x7\n')).toBe('tommie-fence の perfboard 図');
+    expect(shareLabel('perfboard', 'board: 12x7\n')).toBe('tommie-fence の perf 図');
     expect(shareLabel('circuit', 'title:   \n')).toBe('tommie-fence の circuit 図');
   });
 
   test('字下げした title は拾わない (部品の中の題は図の題ではない)', () => {
-    expect(shareLabel('breadboard', 'parts:\n  title: これは部品\n')).toBe('tommie-fence の breadboard 図');
+    expect(shareLabel('breadboard', 'parts:\n  title: これは部品\n')).toBe('tommie-fence の bread 図');
   });
 
   test('長い題は切る (貼った先で 1 行に収まる長さに)', () => {

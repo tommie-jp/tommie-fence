@@ -22,6 +22,15 @@ const DOC = [
 ].join('\n');
 
 describe('fencesIn', () => {
+  // 52 の docs/08。短い綴りが正、長い綴りは別名。どちらも同じ種類として並ぶ。
+  test('短い綴り (bread / perf) も長い綴りと同じ種類として拾う', () => {
+    const doc = ['```bread', 'board: half', '```', '```perf', 'board: 12x7', '```', '```breadboard', 'board: half', '```'].join('\n');
+
+    expect(fencesIn(doc).map((one) => [one.kind, one.line])).toEqual([
+      ['breadboard', 1], ['perfboard', 4], ['breadboard', 7],
+    ]);
+  });
+
   /**
    * **`line` は本文の 1 行目で 0 始まり** (開き記号の行ではない)。
    * `fence-kit` の `fenceLine` と同じ数え方で、ここをずらすと書き換えが
@@ -83,7 +92,7 @@ describe('labelOf', () => {
   test('題が無ければ種類で言う (無題の行にしない)', () => {
     const [one] = fencesIn('```perfboard\nboard: 12x7\n```\n');
 
-    expect(one && labelOf(one)).toBe('perfboard の図');
+    expect(one && labelOf(one)).toBe('perf の図');
   });
 });
 
@@ -126,7 +135,7 @@ describe('lineOfOffset', () => {
 /** 配ってあるリンクはフェンス 1 本を運ぶ。開く前に文書へ仕立てる。 */
 describe('asDocument', () => {
   test('フェンス 1 本の Markdown にする', () => {
-    expect(asDocument('breadboard', 'board: half\n')).toBe('```breadboard\nboard: half\n```\n');
+    expect(asDocument('breadboard', 'board: half\n')).toBe('```bread\nboard: half\n```\n');
   });
 
   test('仕立てた文書は、そのフェンス 1 本として読み直せる', () => {

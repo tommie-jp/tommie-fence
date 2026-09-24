@@ -53,7 +53,7 @@ const readAddress = (written: string) => parseAddress(written);
 
 export function createPerfboardEditor(): FenceEditor {
   return {
-    language: 'perfboard',
+    language: 'perf',
 
     fences: (markdown) => extractPerfboardFences(markdown).map((fence) => ({
       line: fence.line,

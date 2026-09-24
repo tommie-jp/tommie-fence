@@ -2,7 +2,7 @@
   "name": "vna-fence",
   "displayName": "VNA Fence",
   "description": "Markdown の ```vna フェンスを VNA (NanoVNA) の画面 — Log Mag・Smith チャート・SWR・TDR — として描く",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "private": true,
   "publisher": "tommie",

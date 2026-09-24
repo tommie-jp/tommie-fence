@@ -5,11 +5,13 @@ import { firstFenceBodyLine, hasFence } from './hasFence.ts';
  * 題の右の釦を出すかどうか。**描かれるフェンスがあるときだけ** —
  * 切り出しは fence-kit の `extractFences` と同じ規則 (2 つ目の規則を持たない)。
  */
-const LANGUAGES = ['circuit', 'breadboard', 'perfboard'];
+const LANGUAGES = ['circuit', 'bread', 'perf'];
+/** 書かれうる綴り。長い綴りは別名として読み続ける (52 の docs/08)。 */
+const SPELLINGS = ['circuit', 'bread', 'breadboard', 'perf', 'perfboard'];
 const doc = (...lines: readonly string[]): string => `${lines.join('\n')}\n`;
 
 describe('hasFence', () => {
-  test.each(LANGUAGES)('finds a %s fence', (language) => {
+  test.each(SPELLINGS)('finds a %s fence', (language) => {
     expect(hasFence(doc('# 見出し', '', `\`\`\`${language}`, 'parts:', '```'), LANGUAGES)).toBe(true);
   });
 

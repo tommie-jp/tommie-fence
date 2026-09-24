@@ -180,7 +180,7 @@ style:
 読めなかった行は、行番号・行の中身・綴りの下の印つきで返る。
 
 ```text
-breadboard: 2 行目: 知らない部品の種類です: resistr (resistor のことですか?)
+bread: 2 行目: 知らない部品の種類です: resistr (resistor のことですか?)
       R1: resistr a5 a10 10k
           ^^^^^^^
 ```

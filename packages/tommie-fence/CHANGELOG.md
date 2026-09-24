@@ -3,6 +3,28 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.15.0] - 2026-09-25
+
+breadboard-fence 0.13.0 / perfboard-fence 0.11.0 / vna-fence 0.1.1 を束ねた。
+
+### Added
+
+- **短いフェンス名 ` ```bread ` / ` ```perf `。** こちらを正にした。長い綴り
+  (` ```breadboard ` / ` ```perfboard `) は別名として**今後も動く** — 期限を切らない。
+  プレビュー・文法の色分け・Fence Editor・Problems パネル・題の釦のどれもが
+  両方の綴りを読む。
+
+### Changed
+
+- スニペットの本文と、Fence Editor が空の文書に作るフェンスを短い綴りで書く。
+  スニペットは `bread` / `breadboard` (`perf` / `perfboard`) のどちらを打っても出る。
+- Problems パネルの「コード」の欄と報告の名札が `bread` / `perf` になった。
+
+### Fixed
+
+- **題と太字の Ω が Windows の VS Code で別の字に化けうる** (breadboard・perfboard・
+  vna)。太字は欧文のフォントを先に並べる。
+
 ## [0.14.0] - 2026-09-25
 
 circuit-fence 0.12.0 を束ねた。

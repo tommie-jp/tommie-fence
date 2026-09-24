@@ -323,7 +323,7 @@ describe('renderBreadboard', () => {
     expect(svg).toContain('<polygon');
     expect(svg).toContain('ここで分圧する');
     // source はフェンスそのものを囲みつきで書き出す。
-    expect(svg).toContain('```breadboard');
+    expect(svg).toContain('```bread<');
     expect(svg).toContain('R1: resistor a5 a10 330');
   });
 
@@ -350,7 +350,7 @@ describe('renderBreadboard', () => {
     const heightOf = (svg: string) => Number(/viewBox="0 0 [\d.]+ ([\d.]+)"/.exec(svg)?.[1]);
 
     expect(outside.errors).toEqual([]);
-    expect(outside.svg).toContain('```breadboard');
+    expect(outside.svg).toContain('```bread<');
     // 帯のぶんだけ高くなり、板そのものの高さは変わらない。
     expect(heightOf(outside.svg)).toBeGreaterThan(heightOf(bare.svg) ?? 0);
   });

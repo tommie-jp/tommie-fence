@@ -156,7 +156,7 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
     expect(quiet.some((row) => row.kind === 'erc')).toBe(false);
     expect(loud.some((row) => row.kind === 'erc' && row.text.includes('つながっていません'))).toBe(true);
     expect(loud.filter((row) => row.kind === 'erc')).toHaveLength(editor.view(loose, 10).erc?.count ?? -1);
-    for (const row of [...unread, ...loud]) expect(row.text).not.toContain('perfboard:');
+    for (const row of [...unread, ...loud]) expect(row.text).not.toContain('perf:');
   });
 
   test('hides notices under style: debug: off in the band and the Problems panel, like the preview', () => {

@@ -463,7 +463,7 @@ describe('書き出し (notes: - source)', () => {
     const result = renderPerfboard(fence);
 
     expect(result.svg).toContain('R1: resistor b3 b6 1k');
-    expect(result.svg).toContain('```perfboard');
+    expect(result.svg).toContain('```perf<');
     expect(result.errors).toEqual([]);
   });
 
@@ -559,7 +559,7 @@ describe('部品表 (notes: - parts)', () => {
     const both = renderPerfboard(fence.replace('  - parts\n', '  - parts\n  - source\n'));
 
     expect(both.svg).toContain('茶黒橙茶');
-    expect(both.svg).toContain('```perfboard');
+    expect(both.svg).toContain('```perf<');
     expect(both.errors).toEqual([]);
   });
 });

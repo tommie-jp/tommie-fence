@@ -10,8 +10,11 @@ import { expectThat, until } from './runner.ts';
 
 const EXTENSION_ID = 'tommie.tommie-fence';
 
-/** 読めない行を 1 つ持つ perfboard (中の 3 行目 = Markdown の 4 行目)。 */
-const BROKEN = ['# 壊れた板', '```perfboard', 'board: 12x7', 'parts:', '  R1: resistr b2 b6', '```', ''].join('\n');
+/**
+ * 読めない行を 1 つ持つ perf (中の 3 行目 = Markdown の 4 行目)。**短い綴りで書く** —
+ * 長い綴りは下の TWO_FENCES が通る (どちらも読む。52 の docs/08)。
+ */
+const BROKEN = ['# 壊れた板', '```perf', 'board: 12x7', 'parts:', '  R1: resistr b2 b6', '```', ''].join('\n');
 
 /** フェンスが 2 つあり、カーソルを置く 1 行目はどちらの外でもある文書。 */
 const TWO_FENCES = [
@@ -74,7 +77,7 @@ const listsProblems: Case = {
     await until(() => ours().some((one) => one.severity === vscode.DiagnosticSeverity.Error), 'Problems に Error が載る');
     const error = ours().find((one) => one.severity === vscode.DiagnosticSeverity.Error);
     expectThat(error?.range.start.line === 4, `Error の行が 0 始まりの 4 行目ではありません: ${error?.range.start.line}`);
-    expectThat(error?.code === 'perfboard', `コードが perfboard ではありません: ${String(error?.code)}`);
+    expectThat(error?.code === 'perf', `コードが perf ではありません: ${String(error?.code)}`);
     await closeAll();
   },
 };

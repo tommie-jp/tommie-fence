@@ -19,10 +19,10 @@ wires:
 図は R1 抜きで組み上がり、下に帯が出る。
 
 ```text
-breadboard: 2 行目: 知らない部品の種類です: resistr (resistor のことですか?)
+bread: 2 行目: 知らない部品の種類です: resistr (resistor のことですか?)
       R1: resistr a5 a10 10k
           ^^^^^^^
-breadboard: 6 行目: 配線の端点として読めません: nowhere
+bread: 6 行目: 配線の端点として読めません: nowhere
       - b10 -- nowhere
                ^^^^^^^
 ```
@@ -44,8 +44,8 @@ parts:
 下に帯が出る。読めた部品があればその部品も載る。
 
 ```text
-breadboard: 3 行目: YAML の構文エラー: Flow sequence in block collection must be sufficiently indented and end with a ] at line 3, column 1:
-breadboard: 2 行目: 部品 R1 の内容は 1 行の文字列かマップで書きます
+bread: 3 行目: YAML の構文エラー: Flow sequence in block collection must be sufficiently indented and end with a ] at line 3, column 1:
+bread: 2 行目: 部品 R1 の内容は 1 行の文字列かマップで書きます
 ```
 
 YAML パーサの言葉はそのまま載せる (どこが閉じていないかは、あちらのほうが詳しい)。

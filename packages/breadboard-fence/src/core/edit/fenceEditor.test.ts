@@ -56,6 +56,14 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
     expect(editor.fences(NOTE).map((one) => one.line)).toEqual([3]);
   });
 
+  test('reaches a fence written with the short spelling ```bread', () => {
+    const note = NOTE.replace('```breadboard', '```bread');
+
+    expect(editor.language).toBe('bread');
+    expect(editor.fenceAt(note, 6)?.line).toBe(3);
+    expect(editor.fences(note).map((one) => one.line)).toEqual([3]);
+  });
+
   test('points at what the cursor is on', () => {
     expect(editor.aimAt(LED, 5, 4)).toEqual({ kind: 'part', id: 'R1' });
   });
@@ -160,7 +168,7 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
     expect(rows.filter((row) => row.kind === 'error').map((row) => row.line)).toEqual([14]);
     expect(rows.some((row) => row.kind === 'erc')).toBe(false);
     expect(rows).toHaveLength(editor.view(source, 10).issues.split('<li').length - 1);
-    for (const row of rows) expect(row.text).not.toContain('breadboard:');
+    for (const row of rows) expect(row.text).not.toContain('bread:');
   });
 
   test('hides notices under style: debug: off in the band and the Problems panel, like the preview', () => {

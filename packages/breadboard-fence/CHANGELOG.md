@@ -3,7 +3,20 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
-## [Unreleased]
+## [0.13.0] - 2026-09-25
+
+### Added
+
+- **フェンス名の短い綴り ` ```bread `。** こちらを正にした。長い綴り ` ```breadboard ` は
+  別名として**今後も動く** (期限を切らない。旧い綴りで書いた文書はそのまま図になる)。
+  CLI (`check` / `render`)・markdown-it のプラグイン・`extractBreadboardFences`・
+  マップの口 (`createBreadboardEditor`) のどれもが両方の綴りを読む。
+
+### Changed
+
+- 報告の名札を `bread:` にした (長い綴りで書いたフェンスでも同じ名札)。
+- `- source` が図の下に書き出すフェンスの囲みを ` ```bread ` にした。
+- マップの口の `language` を `bread` にした (空の文書に作るフェンスの綴り)。
 
 ### Fixed
 

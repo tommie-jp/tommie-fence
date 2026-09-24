@@ -66,7 +66,7 @@ describe('registerProblems', () => {
     // Assert — 読めない行 (Markdown の 4 行目) は Error で、0 始まりの 3 行目の範囲。
     const errors = (lastFor('file:///note.md') ?? []).filter((one) => one.severity === 0);
     expect(errors).toHaveLength(1);
-    expect(errors[0]).toMatchObject({ source: 'tommie-fence', code: 'perfboard', range: { line: 3 } });
+    expect(errors[0]).toMatchObject({ source: 'tommie-fence', code: 'perf', range: { line: 3 } });
   });
 
   test('puts notices as warnings and ERC as information', () => {

@@ -1,8 +1,11 @@
 import { readFileSync } from 'node:fs';
+import { fenceNames } from 'fence-kit';
 import { describe, expect, test } from 'vitest';
 import manifest from '../package.json' with { type: 'json' };
 import { ASSETS } from './assets.ts';
 import { HAS_FENCE } from './editor/context.ts';
+import { fenceEditors } from './editor/fences.ts';
+import { MAPLESS_LANGUAGES } from './vna.ts';
 import { ICON_SIZE } from '../scripts/icon.mjs';
 import { iconPng } from '../../playground/scripts/icon.mjs';
 
@@ -11,8 +14,24 @@ import { iconPng } from '../../playground/scripts/icon.mjs';
  * 3 つとも載っていることをここで見張る — 落ちても図が出ないだけで、
  * エラーにはならない。
  */
-const grammarOf = (path: string): { readonly scopeName: string } =>
+type Grammar = {
+  readonly scopeName: string;
+  readonly repository: Record<string, { readonly begin?: string }>;
+};
+
+const grammarOf = (path: string): Grammar =>
   JSON.parse(readFileSync(new URL(`../${path}`, import.meta.url), 'utf8'));
+
+/**
+ * 文法の開き記号の正規表現 (Oniguruma) を JS で読める形にする。使っている
+ * 書き方は `(?i:…)` と `\G` だけ — 大文字小文字を問わない印を旗へ移し、
+ * `\G` (前の一致の終わり) は行頭の `^` と並んでいるので落とす。
+ */
+const openingOf = (grammar: Grammar): RegExp => {
+  const begins = Object.values(grammar.repository).flatMap((one) => (one.begin === undefined ? [] : [one.begin]));
+  expect(begins).toHaveLength(1);
+  return new RegExp((begins[0] ?? '').replaceAll('(?i:', '(?:').replaceAll('\\G', ''), 'i');
+};
 
 describe('3 つを 1 つに畳んだ contributes', () => {
   test('registers one custom editor, which is the whole point of folding', () => {
@@ -31,6 +50,20 @@ describe('3 つを 1 つに畳んだ contributes', () => {
       expect(grammarOf(grammar.path).scopeName).toBe(grammar.scopeName);
     }
     expect(manifest.contributes.grammars).toHaveLength(5);
+  });
+
+  // 52 の docs/08。**文法の直し忘れがいちばん起きやすい** — プラグインだけ直すと
+  // 「図は出るのに色分けが消える」片肺になり、ほかの試験では誰も気づかない。
+  test('colours every spelling of every fence, each by exactly one grammar', () => {
+    const openings = manifest.contributes.grammars.map((one) => openingOf(grammarOf(one.path)));
+    const languages = [...fenceEditors().map((one) => one.language), ...MAPLESS_LANGUAGES];
+
+    for (const name of languages.flatMap(fenceNames)) {
+      for (const line of [`\`\`\`${name}`, `~~~${name} title=x`]) {
+        expect(openings.filter((one) => one.test(line)), line).toHaveLength(1);
+      }
+      expect(openings.some((one) => one.test(`\`\`\`${name}s`)), `${name}s`).toBe(false);
+    }
   });
 
   test('keeps the old command ids, so a key binding written before the fold still works', () => {

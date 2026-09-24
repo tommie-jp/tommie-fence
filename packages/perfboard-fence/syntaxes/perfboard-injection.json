@@ -2,11 +2,11 @@
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "scopeName": "markdown.perfboard.codeblock",
   "injectionSelector": "L:text.html.markdown",
-  "comment": "```perfboard フェンスの中身を YAML として色分けする (エディタ側のみ。プレビューの描画とは無関係)",
+  "comment": "```perf (と別名の ```perfboard) フェンスの中身を YAML として色分けする (エディタ側のみ。プレビューの描画とは無関係)",
   "patterns": [{ "include": "#perfboard-fence" }],
   "repository": {
     "perfboard-fence": {
-      "begin": "(^|\\G)(\\s*)(`{3,}|~{3,})\\s*(?i:(perfboard))(\\s+[^`~]*)?$",
+      "begin": "(^|\\G)(\\s*)(`{3,}|~{3,})\\s*(?i:(perfboard|perf))(\\s+[^`~]*)?$",
       "beginCaptures": {
         "3": { "name": "punctuation.definition.markdown" },
         "4": { "name": "fenced_code.block.language.markdown" },

@@ -7,18 +7,18 @@ const withSource = { ...fenceError('知らない部品', 2, 'resistr'), text: ' 
 
 describe('errorLine', () => {
   test('puts the name of the tool in front, so the reader knows who is speaking', () => {
-    expect(errorLine(fenceError('だめ', 4))).toBe('breadboard: 4 行目: だめ');
+    expect(errorLine(fenceError('だめ', 4))).toBe('bread: 4 行目: だめ');
   });
 
   test('leaves the line out when the place cannot be pinned down', () => {
-    expect(errorLine(fenceError('だめ', null))).toBe('breadboard: だめ');
+    expect(errorLine(fenceError('だめ', null))).toBe('bread: だめ');
   });
 });
 
 describe('errorText', () => {
   test('puts the line under the message and the mark under the spelling', () => {
     expect(errorText(withSource)).toBe(
-      ['breadboard: 2 行目: 知らない部品', '      R1: resistr a5', '          ^^^^^^^'].join('\n'),
+      ['bread: 2 行目: 知らない部品', '      R1: resistr a5', '          ^^^^^^^'].join('\n'),
     );
   });
 });

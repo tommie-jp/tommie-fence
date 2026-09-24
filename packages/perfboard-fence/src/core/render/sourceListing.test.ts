@@ -7,11 +7,11 @@ const band = { x: 20, y: 200, width: 400, height: 100 };
 
 describe('sourceListing', () => {
   test('wraps the fence in its own markers, so the drawing can be copied back', () => {
-    expect(sourceListing('board: 12x7\n')).toEqual(['```perfboard', 'board: 12x7', '```']);
+    expect(sourceListing('board: 12x7\n')).toEqual(['```perf', 'board: 12x7', '```']);
   });
 
   test('drops the blank lines at the end, which the fence never had', () => {
-    expect(sourceListing('board: 12x7\n\n\n')).toEqual(['```perfboard', 'board: 12x7', '```']);
+    expect(sourceListing('board: 12x7\n\n\n')).toEqual(['```perf', 'board: 12x7', '```']);
   });
 
   test('keeps the indentation, since that is what YAML reads', () => {
@@ -33,7 +33,7 @@ describe('sourceListing', () => {
 describe('sourceBandSize', () => {
   test('grows with the number of lines', () => {
     const one = sourceBandSize(['board: 12x7'], THEME);
-    const three = sourceBandSize(['```perfboard', 'board: 12x7', '```'], THEME);
+    const three = sourceBandSize(['```perf', 'board: 12x7', '```'], THEME);
 
     expect(three.height).toBeGreaterThan(one.height);
   });
@@ -52,7 +52,7 @@ describe('sourceBandSize', () => {
 
 describe('renderSourceListing', () => {
   test('writes one line of the fence per line of text', () => {
-    const svg = renderSourceListing(['```perfboard', 'board: 12x7', '```'], band, THEME, null);
+    const svg = renderSourceListing(['```perf', 'board: 12x7', '```'], band, THEME, null);
 
     expect(svg.match(/<text/g)?.length).toBe(3);
     expect(svg).toContain('board: 12x7');

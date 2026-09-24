@@ -1,4 +1,4 @@
-import { toKind } from './kinds.ts';
+import { KIND_LABEL, toKind } from './kinds.ts';
 import type { Kind } from './kinds.ts';
 
 /**
@@ -90,6 +90,6 @@ const unquoted = (text: string): string =>
 export function shareLabel(kind: Kind, source: string): string {
   const found = TITLE.exec(source);
   const title = unquoted((found?.[1] ?? '').trim()).trim();
-  if (title === '') return `tommie-fence の ${kind} 図`;
+  if (title === '') return `tommie-fence の ${KIND_LABEL[kind]} 図`;
   return title.length <= LABEL_MAX ? title : `${title.slice(0, LABEL_MAX)}…`;
 }

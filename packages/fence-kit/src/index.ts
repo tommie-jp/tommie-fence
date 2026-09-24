@@ -14,6 +14,7 @@
 export { normalizeNewlines } from './newlines.ts';
 export { rememberRecent } from './rememberRecent.ts';
 export { extractFences, outputStem } from './fences.ts';
+export { fenceNames, isFenceOf } from './fenceNames.ts';
 export { stampText } from './stamp.ts';
 export { keptSourceLines } from './sourceListing.ts';
 export type { FenceBlock } from './fences.ts';

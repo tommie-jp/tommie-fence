@@ -83,7 +83,7 @@ describe('optionLabel / groupLabel', () => {
   });
 
   test('種類ごとの小見出し。壊した例は別の束', () => {
-    expect(groupLabel(one)).toBe('breadboard（ブレッドボード図）');
-    expect(groupLabel({ ...one, broken: true })).toBe('わざと壊した例 — breadboard');
+    expect(groupLabel(one)).toBe('bread（ブレッドボード図）');
+    expect(groupLabel({ ...one, broken: true })).toBe('わざと壊した例 — bread');
   });
 });

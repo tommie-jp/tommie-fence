@@ -1,10 +1,12 @@
 import type { MarkdownIt, RendererRule } from 'markdown-it';
+import { isFenceOf } from 'fence-kit';
 import { renderBreadboard } from './core/index.ts';
 
-const LANGUAGE = 'breadboard';
+/** 正の綴り。長い綴り (` ```breadboard `) も別名として読む (52 の docs/08)。 */
+const LANGUAGE = 'bread';
 
 /**
- * ```breadboard フェンスを図に差し替える markdown-it プラグイン。
+ * ```bread (と ```breadboard) フェンスを図に差し替える markdown-it プラグイン。
  * VS Code のプレビューはここが返した HTML をサニタイズしないので、
  * 文字列の組み立てはすべて core 側のエスケープを通ったものだけを使う。
  */
@@ -14,7 +16,7 @@ export function breadboardPlugin(md: MarkdownIt): MarkdownIt {
 
   md.renderer.rules.fence = (tokens, index, options, env, self) => {
     const token = tokens[index];
-    if (!token || token.info.trim().split(/\s+/)[0] !== LANGUAGE) {
+    if (!token || !isFenceOf(token.info, LANGUAGE)) {
       return fallback(tokens, index, options, env, self);
     }
 

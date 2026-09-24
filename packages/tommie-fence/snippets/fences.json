@@ -17,10 +17,10 @@
     ]
   },
   "breadboard fence": {
-    "prefix": ["breadboard", "bread"],
-    "description": "Breadboard wiring — a breadboard fence to start from (ブレッドボードのフェンス)",
+    "prefix": ["bread", "breadboard"],
+    "description": "Breadboard wiring — a bread fence to start from (ブレッドボードのフェンス)",
     "body": [
-      "```breadboard",
+      "```bread",
       "title: ${1:An LED and a resistor}",
       "board: half",
       "parts:",
@@ -34,10 +34,10 @@
     ]
   },
   "perfboard fence": {
-    "prefix": ["perfboard", "perf"],
-    "description": "Perfboard layout — a perfboard fence to start from (ユニバーサル基板のフェンス)",
+    "prefix": ["perf", "perfboard"],
+    "description": "Perfboard layout — a perf fence to start from (ユニバーサル基板のフェンス)",
     "body": [
-      "```perfboard",
+      "```perf",
       "board: 16x8",
       "title: ${1:An LED and a resistor}",
       "points:",

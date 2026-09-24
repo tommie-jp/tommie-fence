@@ -1,5 +1,5 @@
 import { extractFences } from 'fence-kit';
-import { KINDS } from './kinds.ts';
+import { KINDS, KIND_LABEL } from './kinds.ts';
 import type { Kind } from './kinds.ts';
 
 /**
@@ -53,7 +53,7 @@ export function titleOf(source: string): string | null {
 }
 
 /** 一覧に出す名前。題が無ければ種類で言う (無題の行にしない)。 */
-export const labelOf = (fence: DocFence): string => fence.title ?? `${fence.kind} の図`;
+export const labelOf = (fence: DocFence): string => fence.title ?? `${KIND_LABEL[fence.kind]} の図`;
 
 /**
  * 文書の中のフェンスを、**言語をまたいで行順に**並べる。
@@ -95,7 +95,7 @@ export const lineOfOffset = (text: string, offset: number): number =>
  * 文書に仕立ててから開く。以降の道は普通の文書と同じ)。
  */
 export const asDocument = (kind: Kind, source: string): string =>
-  `\`\`\`${kind}\n${source.replace(/\n$/, '')}\n\`\`\`\n`;
+  `\`\`\`${KIND_LABEL[kind]}\n${source.replace(/\n$/, '')}\n\`\`\`\n`;
 
 /**
  * フェンス 1 本の本文を入れ替えた文書を返す。**そのフェンスの行だけ**を

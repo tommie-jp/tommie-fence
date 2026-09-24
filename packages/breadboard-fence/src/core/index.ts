@@ -274,7 +274,7 @@ function pointStrips(points: ReadonlyMap<string, string>, board: Board): (readon
 function sourceListing(source: string): readonly string[] {
   // 切り方は fence-kit にある (3 つのフェンスで同じもの)。
   const kept = keptSourceLines(source, LIMITS.sourceLines);
-  return ['```breadboard', ...kept, '```'];
+  return ['```bread', ...kept, '```'];
 }
 
 /** 注釈 1 つぶんの、指し先を囲む形。穴 1 つならこの半径の丸になる。 */

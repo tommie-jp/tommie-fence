@@ -1,3 +1,4 @@
+import { isFenceOf } from './fenceNames.ts';
 import { normalizeNewlines } from './newlines.ts';
 
 export type FenceBlock = {
@@ -30,7 +31,8 @@ const stripIndent = (line: string, indent: number): string => {
  * markdown-it を通さずに使えるので、CLI や別アプリのサーバー側描画から呼べる。
  *
  * `language` はフェンスの情報文字列の**先頭の語**と突き合わせる
- * (` ```circuit title=... ` のように後ろに語が続いてもよい)。
+ * (` ```circuit title=... ` のように後ろに語が続いてもよい)。**別名も拾う** —
+ * `'bread'` でも `'breadboard'` でも、両方の綴りのフェンスが返る (`fenceNames.ts`)。
  * 各パッケージは自分の言語を渡す薄い包みを持つ (`extractCircuitFences` など)。
  */
 export function extractFences(markdown: string, language: string): FenceBlock[] {
@@ -59,7 +61,7 @@ export function extractFences(markdown: string, language: string): FenceBlock[] 
       char: fence[0] ?? '`',
       length: fence.length,
       indent: indent.length,
-      isTarget: info.trim().split(/\s+/)[0] === language,
+      isTarget: isFenceOf(info, language),
       startLine: index + 1,
       body: [],
     };

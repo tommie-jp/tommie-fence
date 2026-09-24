@@ -4,8 +4,11 @@ import type { FenceError } from '../types.ts';
  * 報告の文面。**プレビューの帯でも CLI の標準エラーでも同じ形**にする。
  * 頭に必ず名札を付けるのは、他人のノートに埋め込まれた図が出す言葉だから
  * (どの道具が言っているのか分からないと、直す場所を探せない)。
+ *
+ * 名札は**短い綴りに固定** (52 の docs/08)。長い綴り (` ```breadboard `) で書いた人にも
+ * `bread:` と名乗るが、道具は 1 つなので直す場所は迷わない。
  */
-export const LABEL = 'breadboard';
+export const LABEL = 'bread';
 
 export const errorLine = (error: FenceError): string => {
   const where = error.line === null ? '' : `${error.line} 行目: `;
@@ -16,7 +19,7 @@ export const errorLine = (error: FenceError): string => {
  * 行の中身と、読めなかった綴りの下に付ける印。
  *
  * ```text
- *   breadboard: 4 行目: 知らない部品の種類です: resistr (resistor のことですか?)
+ *   bread: 4 行目: 知らない部品の種類です: resistr (resistor のことですか?)
  *       R1: resistr a5 a10 10k
  *           ^^^^^^^
  * ```

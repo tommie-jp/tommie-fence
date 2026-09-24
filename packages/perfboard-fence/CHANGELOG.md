@@ -3,7 +3,20 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
-## [Unreleased]
+## [0.11.0] - 2026-09-25
+
+### Added
+
+- **フェンス名の短い綴り ` ```perf `。** こちらを正にした。長い綴り ` ```perfboard ` は
+  別名として**今後も動く** (期限を切らない。旧い綴りで書いた文書はそのまま図になる)。
+  CLI (`check` / `render`)・markdown-it のプラグイン・`extractPerfboardFences`・
+  マップの口 (`createPerfboardEditor`) のどれもが両方の綴りを読む。
+
+### Changed
+
+- 報告の名札を `perf:` にした (長い綴りで書いたフェンスでも同じ名札)。
+- `- source` が図の下に書き出すフェンスの囲みを ` ```perf ` にした。
+- マップの口の `language` を `perf` にした (空の文書に作るフェンスの綴り)。
 
 ### Fixed
 

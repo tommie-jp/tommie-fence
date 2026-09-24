@@ -19,8 +19,9 @@ export const isKind = (value: unknown): value is Kind =>
  * 共有リンクは種類を**平文で**載せている (`#breadboard/…`) ので、綴りを
  * 変えると配ってあるリンクが読めなくなる。52 の docs/08 で
  * 「短い綴りを正にして長い綴りを別名で残す。別名に期限を切らない」と
- * 決めてあるので、**入れ替える前から両方を読めるようにしておく** —
- * そうすれば正を入れ替える日は、この表の向きを変えるだけで済む。
+ * 決めてあるので、**両方の綴りを読む**。フェンスの正は短い綴りに入れ替えたが、
+ * 種類 (`Kind`) は長い綴りのまま (理由は `KIND_LABEL`) なので、この表の向きも
+ * このまま。
  *
  * `circuit` に短い綴りは無い (docs/08: 総称の `-board` を落とすので、
  * もともと識別子だけの `circuit` は変わらない)。
@@ -42,10 +43,17 @@ export const toKind = (value: unknown): Kind | null => {
 };
 
 /**
- * 画面に出す名前。**フェンスの綴りに、その図の呼び名を添える。**
+ * フェンスに書く綴り。画面に出す名前でもあり、文書を作るときの開き記号でもある
+ * (`document.ts` の `asDocument`)。**板の 2 つは短い綴りが正** (52 の docs/08)。
+ *
+ * **種類 (`Kind`) は長い綴りのまま。** 例の置き場 (`examples/breadboard/…`) と
+ * 例の JSON の `kind` がそれを名乗っているので、書く字だけをここで短くする。
+ * フェンスの切り出し (`extractFences`) はどちらの綴りでも両方を拾う。
+ *
+ * 画面では**綴りに、その図の呼び名を添える。**
  *
  * 綴りだけだと、初めて来た人には 3 つが何の図なのか分からない
- * (`perfboard` が「基板図」だと当てられない)。綴りは書くときに要るので
+ * (`perf` が「基板図」だと当てられない)。綴りは書くときに要るので
  * 落とさず、括弧で読み方を足す。
  *
  * 並びは**回路図 → ブレッドボード → 基板** (`KINDS`)。作る順そのものなので、
@@ -53,8 +61,8 @@ export const toKind = (value: unknown): Kind | null => {
  */
 export const KIND_LABEL: Readonly<Record<Kind, string>> = {
   circuit: 'circuit',
-  breadboard: 'breadboard',
-  perfboard: 'perfboard',
+  breadboard: 'bread',
+  perfboard: 'perf',
   copper: 'copper',
   vna: 'vna',
 };

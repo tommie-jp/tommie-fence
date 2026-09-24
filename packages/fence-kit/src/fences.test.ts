@@ -90,6 +90,17 @@ describe('extractFences', () => {
     expect(extractFences(markdown, 'breadboard')).toEqual([{ source: 'b\n', line: 4 }]);
     expect(extractFences(markdown, 'perfboard')).toEqual([{ source: 'p\n', line: 7 }]);
   });
+
+  // 52 の docs/08。短い綴りが正、長い綴りは別名として残す。**どちらで引いても
+  // 両方の綴りを拾う** — 片方だけだと、書いた綴りしだいで図が黙って消える。
+  test('picks up both spellings of a fence, whichever one it is asked for', () => {
+    const markdown = ['```bread', 'short', '```', '```breadboard title=x', 'long', '```'].join('\n');
+    const both = [{ source: 'short\n', line: 1 }, { source: 'long\n', line: 4 }];
+
+    expect(extractFences(markdown, 'bread')).toEqual(both);
+    expect(extractFences(markdown, 'breadboard')).toEqual(both);
+    expect(extractFences(markdown, 'perf')).toEqual([]);
+  });
 });
 
 /**

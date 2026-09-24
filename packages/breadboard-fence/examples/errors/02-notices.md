@@ -26,9 +26,9 @@ wires:
 **受理はするが図に出ない指定**は、そのままだと書いた人に何も伝わらない。
 
 ```text
-breadboard: 2 行目: 部品 AD2: 機器 (device) に value は使いません。箱に出す名前は label に書きます
+bread: 2 行目: 部品 AD2: 機器 (device) に value は使いません。箱に出す名前は label に書きます
       AD2:
-breadboard: 8 行目: 部品 R1: at は機器 (device) にだけ使います。板に挿す部品の位置は holes で決まります
+bread: 8 行目: 部品 R1: at は機器 (device) にだけ使います。板に挿す部品の位置は holes で決まります
       R1:
 ```
 
@@ -53,9 +53,9 @@ parts:
   寄せたことはお知らせに出す。
 
 ```text
-breadboard: 2 行目: style の text-color は色として読めません (#rgb か #rrggbb で書きます) (`#` から始まる値は "…" で囲みます。囲まないと YAML のコメントになります)
+bread: 2 行目: style の text-color は色として読めません (#rgb か #rrggbb で書きます) (`#` から始まる値は "…" で囲みます。囲まないと YAML のコメントになります)
       text-color: #333
-breadboard: 3 行目: style の text-size は 6〜24 です (24 にしました)
+bread: 3 行目: style の text-size は 6〜24 です (24 にしました)
       text-size: 99
 ```
 
@@ -75,7 +75,7 @@ notes:
 部品を囲むが、書いた人がどちらのつもりだったかは分からない。お知らせで添える。
 
 ```text
-breadboard: 4 行目: 注釈の a5 は部品を指しています (穴 a5 ではありません)
+bread: 4 行目: 注釈の a5 は部品を指しています (穴 a5 ではありません)
       - circle a5
                ^^
 ```

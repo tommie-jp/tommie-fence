@@ -241,7 +241,7 @@ wires:
   こちらは**「見るのをやめる」**。外れるのは**読めているものへの検査**
   (足と配線が同じ穴に来ている、など) だけで、**読めなかった行は必ず出る**。
   まだ描きかけの図や、実物にする気の無い説明図で外す。
-- `stamp: on` は右下に `breadboard-fence 0.12.1` と小さく刻む。**字は選べない**
+- `stamp: on` は右下に `breadboard-fence 0.13.0` と小さく刻む。**字は選べない**
   (処理系が埋めるものなので)。刻まない図にも SVG の根に
   `data-breadboard-fence` が入るので、あとから「どの版が描いた図か」を
   図そのものに聞ける。
@@ -970,7 +970,7 @@ GitHub でもそのまま読める。
 わざと壊した例は [examples/errors/](../examples/errors/)。
 
 ```text
-breadboard: 2 行目: 知らない部品の種類です: resistr (resistor のことですか?)
+bread: 2 行目: 知らない部品の種類です: resistr (resistor のことですか?)
       R1: resistr a5 a10 10k
           ^^^^^^^
 ```
@@ -1007,8 +1007,8 @@ breadboard: 2 行目: 知らない部品の種類です: resistr (resistor の�
 (お知らせ)** を分ける。
 
 ```text
-breadboard: 5 行目: 部品 BAT: 機器 (device) に value は使いません。箱に出す名前は label に書きます
-breadboard: 3 行目: style の text-size は 6〜24 です (24 にしました)
+bread: 5 行目: 部品 BAT: 機器 (device) に value は使いません。箱に出す名前は label に書きます
+bread: 3 行目: style の text-size は 6〜24 です (24 にしました)
 ```
 
 どちらもお知らせで、**図は描けたうえで出る**。読めた部分 (部品・ピン・配線) は

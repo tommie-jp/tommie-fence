@@ -19,7 +19,7 @@ import type { Theme } from './theme.ts';
  */
 
 /** フェンスの囲みも書き出す。囲みごと写せば、そのまま動くものになる。 */
-const FENCE = '```perfboard';
+const FENCE = '```perf';
 
 /**
  * 図に書き出すフェンスの中身。**長すぎるときは切るが、切ったことを図に書く** —
