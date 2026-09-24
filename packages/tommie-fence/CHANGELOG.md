@@ -3,6 +3,19 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.10.1] - 2026-09-24
+
+breadboard-fence 0.12.1 と perfboard-fence 0.10.1 を束ねた。
+
+### Fixed
+
+- **DIP・名前付き DIP・マイコンボードの足の番号が実物の鏡像だった** (breadboard の
+  上のブロックに置いたもの、perfboard の全部)。実物を上から見た並び (切り欠きを
+  左にして 1 番が左下、反時計回り) に直した。部品が覆う穴は変わらず、足の番号だけが
+  変わる。IC へ穴で配線していた図は、つながる先を確かめてほしい。
+- 2 列の形は裏返せない (`mirror` とマップの裏返しを断る)。実物は裏返して挿せない。
+- perfboard: フォトダイオードの当たり判定を描く玉 (砲弾型) に合わせた。
+
 ## [0.10.0] - 2026-09-24
 
 circuit-fence 0.10.0、breadboard-fence 0.12.0、perfboard-fence 0.10.0 を束ねた。

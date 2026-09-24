@@ -2,7 +2,7 @@
   "name": "tommie-fence",
   "displayName": "tommie-fence",
   "description": "%description%",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "private": true,
   "type": "module",
   "publisher": "tommie",
