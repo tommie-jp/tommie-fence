@@ -2,7 +2,7 @@ import { cornerOf, formatAddress } from './address.ts';
 import type { Address } from './address.ts';
 import { wireContacts } from './circuit.ts';
 import type { Circuit } from './circuit.ts';
-import { namesNet, partTypeOf, shownPinName } from '../parts.ts';
+import { namesNet, partTypeOf, pinRefName } from '../parts.ts';
 import { cellOf as addressOf, nameOfEndpoint } from '../types.ts';
 import type { Endpoint, PartSpec } from '../types.ts';
 
@@ -36,9 +36,6 @@ function membersOf(part: PartSpec): Member[] {
   ];
 }
 
-/** 箱の足のアンカー (`pin 3`)。TeX の都合の名前で、図にも実物にも無い。 */
-const BOX_ANCHOR = /^pin \d+$/;
-
 /**
  * ネットリストに出す足の呼び名。**箱の足は図に刷ってある名前**で出す (`U1.GP0`
  * `J1.VBUS` `M1.TRIG`。刷っていない箱は番号 `J1.2`)。アンカー名 (`J1.pin 1`) は
@@ -48,9 +45,7 @@ const BOX_ANCHOR = /^pin \d+$/;
  * **節点の鍵 (`cell`) はアンカー名のまま** — 綴りの違いでネットが割れないように。
  */
 function refOfPin(part: PartSpec, endpoint: Endpoint & { readonly kind: 'pin' }): string {
-  const type = partTypeOf(part);
-  if (type === null || !BOX_ANCHOR.test(endpoint.pin)) return nodeOf(endpoint);
-  return `${endpoint.part}.${shownPinName(type, endpoint.pin)}`;
+  return `${endpoint.part}.${pinRefName(partTypeOf(part), endpoint.pin)}`;
 }
 
 /** 配線から指された足。指された足だけがネットに現れる。 */

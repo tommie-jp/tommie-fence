@@ -1,7 +1,7 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { addressHint, cornerOf, formatAddress, isNearlyZero, isSameAddress, parseAddress } from './address.ts';
-import { partTypeOf, lookupPin, orientOf, pinAxis, pinHint, shownPinName } from '../parts.ts';
+import { partTypeOf, lookupPin, orientOf, pinAxis, pinHint, pinRefName } from '../parts.ts';
 import type { Address } from './address.ts';
 import { NO_POINTS } from '../parser/compact.ts';
 import type { Points } from '../parser/compact.ts';
@@ -403,11 +403,10 @@ function slantedIntoPins(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>):
     if (axis === 'h' && isNearlyZero(cell.row - part.at.row)) continue;
     if (axis === 'v' && isNearlyZero(cell.col - part.at.col)) continue;
 
-    // 足は図に刷ってある名前で言う (箱の足のアンカー名 `pin 2` は図に無い)。
-    const shown = type === null ? nameOfEndpoint(pin) : `${pin.part}.${shownPinName(type, pin.pin)}`;
+    // 足はネットリストと同じ呼び名で言う (箱の足は図に刷ってある名前)。
     errors.push(
       fenceError(
-        `${safeToken(shown)} へ -- で引くと斜めに入ります` +
+        `${safeToken(`${pin.part}.${pinRefName(type, pin.pin)}`)} へ -- で引くと斜めに入ります` +
           ` (|- か -| なら直角に入ります)`,
         wire.line,
       ),

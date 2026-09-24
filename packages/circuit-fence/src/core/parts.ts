@@ -36,7 +36,7 @@ import type { DeviceBox } from './tex/shapes.ts';
  *   フェンスでだけ `mirror` を足して右上へ返す (latexOptions)
  */
 
-import type { PartSpec, TexTarget } from './types.ts';
+import type { MultiTerminalPart, PartSpec, TexTarget } from './types.ts';
 
 /**
  * 2 端子は `\draw (…) to[symbol] (…)`、1 端子と多端子は `\node[symbol] at (…)`。
@@ -504,14 +504,16 @@ function namedSymbol(chip: NamedChip, symbol: string, sides: readonly (readonly 
 const SEG7_ORDER = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'dp', 'COM1', 'COM2'];
 
 /**
- * 7 セグの箱の寸法。幅は型番 (5161AS) が入るだけ取る。**TeX の宣言もこれから**
- * 書く (`generate.ts`。機器は書いた足の名前から、こちらは表から)。
+ * 7 セグの箱の寸法。幅は**箱に刷る型番**が入るだけ取る (書かなければ表の 5161AS)。
+ * **TeX の宣言もこれから**書く (`generate.ts`)。機器 (`device`) と同じく、
+ * 型番が長ければ箱も広がる。
  */
-export const seg7DeviceBox = (): DeviceBox => deviceBox(SEG7_ORDER, namedChipOf('seg7').name);
+export const seg7DeviceBox = (label: string | null): DeviceBox =>
+  deviceBox(SEG7_ORDER, label ?? namedChipOf('seg7').name);
 
 /** 7 セグは名前を刷った箱 (機器と同じ形)。KiCad の記号も箱に足の名前。 */
-function seg7Box(chip: NamedChip): PartType {
-  const box = deviceChip(SEG7_ORDER, chip.name);
+function seg7Box(chip: NamedChip, label: string | null = null): PartType {
+  const box = deviceChip(SEG7_ORDER, label ?? chip.name);
   const anchorOf = (name: string): string => `pin ${SEG7_ORDER.indexOf(name) + 1}`;
   return {
     ...box,
@@ -525,6 +527,8 @@ function seg7Box(chip: NamedChip): PartType {
 }
 
 const namedChipOf = (type: string): NamedChip => lookupNamedChip(type, null) as NamedChip;
+
+const SEG7 = 'seg7';
 
 /** `device` の種類名。1 行では書けず、マップ形式 (`type: device`) だけで書く。 */
 export const DEVICE = 'device';
@@ -542,7 +546,10 @@ export const MAP_TYPES: readonly string[] = [DEVICE, IC3];
  * ブロック (マップ形式) で書かれた部品か。**足の名前の並びを持つのはマップ形式
  * だけ**なので、それで見分ける (1 行の `ic3` は 1 行の部品のまま)。
  */
-export const isMapForm = (part: PartSpec): boolean => part.kind === 'multi-terminal' && part.pinNames !== undefined;
+export const isMapForm = (
+  part: PartSpec,
+): part is MultiTerminalPart & { readonly pinNames: readonly string[] } =>
+  part.kind === 'multi-terminal' && part.pinNames !== undefined;
 
 /**
  * 3 本足の IC。**箱は三端子レギュレータと同じ** (1 = 左、2 = 下、3 = 右)。
@@ -925,7 +932,7 @@ export const PART_TYPES = {
     valueInside: true,
   },
   photocoupler: namedSymbol(namedChipOf('photocoupler'), OPTO_SHAPE, [[1, 'left'], [2, 'left'], [4, 'right'], [3, 'right']]),
-  seg7: seg7Box(namedChipOf('seg7')),
+  seg7: seg7Box(namedChipOf(SEG7)),
 
   // USB コネクタ。**表は実体配線図の 2 つと共通** (fence-kit)。
   'usb-a': usbchip('usb-a'),
@@ -1231,14 +1238,17 @@ export const lookupPartType = (name: string): PartType | null =>
   Object.hasOwn(PART_TYPES, name) ? PART_TYPES[name as PartTypeName] : null;
 
 /**
- * 部品の足の表。**機器 (`device`) は部品ごとに足の名前が違う**ので、種類名では
- * 引けない。部品を手に持っている所はこちらを使う。
+ * 部品の足の表。**部品ごとに違う種類がある**ので、種類名では引けない —
+ * 機器と 3 本足の IC は書き手が並べた足の名前 (`pins:`)、7 セグは刷る型番の
+ * 長さで箱の幅が変わる。部品を手に持っている所はこちらを使う。
  */
-export const partTypeOf = (part: PartSpec): PartType | null =>
-  part.kind !== 'multi-terminal' || part.pinNames === undefined
-    ? lookupPartType(part.type)
-    : part.type === DEVICE ? deviceChip(part.pinNames, part.value)
-      : part.type === IC3 ? ic3Chip(part.pinNames) : lookupPartType(part.type);
+export function partTypeOf(part: PartSpec): PartType | null {
+  if (isMapForm(part) && part.type === DEVICE) return deviceChip(part.pinNames, part.value);
+  if (isMapForm(part) && part.type === IC3) return ic3Chip(part.pinNames);
+  // 7 セグは箱に型番を刷るので、型番の長さで箱の幅が変わる (機器と同じ)。
+  if (part.type === SEG7 && part.kind === 'multi-terminal') return seg7Box(namedChipOf(SEG7), part.value);
+  return lookupPartType(part.type);
+}
 
 /**
  * その TeX で使う circuitikz の記号名。
@@ -1399,6 +1409,18 @@ export function mainPinName(type: PartType, anchor: string): string {
 export function shownPinName(type: PartType, anchor: string): string {
   return type.pinNames?.[anchor] ?? printedPinLabel(type, anchor) ?? mainPinName(type, anchor);
 }
+
+/** 箱の足のアンカー (`pin 3`)。TeX の都合の名前で、図にも実物にも無い。 */
+const BOX_ANCHOR = /^pin \d+$/;
+
+/**
+ * ネットリストとお知らせに出す足の呼び名。**箱の足は図に刷ってある名前**
+ * (`U1.GP0` `U1.Vout`。刷っていない箱は番号 `J1.2`)、**箱でない足はアンカー名の
+ * まま** (`Q1.base` `U1.out`)。2 か所で別々に決めると、同じ足が出力の中で
+ * 2 通りの名前になる (コードレビューで出た)。
+ */
+export const pinRefName = (type: PartType | null, anchor: string): string =>
+  type !== null && BOX_ANCHOR.test(anchor) ? shownPinName(type, anchor) : anchor;
 
 /** 図に書く足の名前 (`pinLabels`)。持たない種類は null。 */
 function printedPinLabel(type: PartType, anchor: string): string | null {

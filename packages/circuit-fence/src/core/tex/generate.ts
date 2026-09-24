@@ -210,8 +210,12 @@ function sipShapesFor(circuit: Circuit): string[] {
     const box = deviceBox(part.pinNames, part.value);
     boxes.set(deviceShapeName(box), box);
   }
-  // 7 セグは機器と同じ箱。寸法は表から (同じ寸法の機器があれば 1 回で済む)。
-  if (uses('seg7')) boxes.set(deviceShapeName(seg7DeviceBox()), seg7DeviceBox());
+  // 7 セグは機器と同じ箱。幅は刷る型番から (同じ寸法の箱があれば 1 回で済む)。
+  for (const part of circuit.parts) {
+    if (part.type !== 'seg7' || part.kind !== 'multi-terminal') continue;
+    const box = seg7DeviceBox(part.value);
+    boxes.set(deviceShapeName(box), box);
+  }
   const devices = [...boxes.keys()].sort().flatMap((name) => deviceShapeTex(boxes.get(name) as DeviceBox));
   // USB も自分で宣言した形。**使う種類だけ、1 回ずつ**。
   const usb = [...new Set(circuit.parts.map((part) => part.type))]

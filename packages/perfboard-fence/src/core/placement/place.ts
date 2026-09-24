@@ -84,7 +84,9 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     // 足が来る図は実物では組めない。**回すと縁で踏みやすい**ので必ず見る
     // (端面実装は先端が板の外に出るのが正しいので、この検査から外す)。
     const anchored = footprint !== null
-      && (footprint.kind === 'dip' || footprint.kind === 'sip' || footprint.kind === 'switch');
+      && (footprint.kind === 'dip' || footprint.kind === 'sip' || footprint.kind === 'switch'
+        // 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ) も DIP と同じ置き方。
+        || footprint.kind === 'named');
     if (anchored) {
       const outside = pins.find((address) => !isOnBoard(board, address));
       if (outside !== undefined) {

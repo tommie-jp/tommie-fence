@@ -47,6 +47,13 @@ const MIN_PINS = 2;
 /** 3 本足の IC の足の本数。 */
 const IC3_PINS = 3;
 
+/**
+ * 3 本足の IC の足の名前の長さ。**箱はレギュレータと同じ大きさ**で、左右の名前と
+ * 下の縦の名前が真ん中で出会う。4 文字 (`Vout` `GNDA`) までは離れて読め、
+ * 5 文字から触れる (図で確かめた)。よく使う名前 (`+Vs` `VCC` `OUT` `ADJ`) は収まる。
+ */
+const IC3_NAME_LENGTH = 4;
+
 const textOf = (node: unknown): string | null => {
   if (!isScalar(node)) return null;
   const { value } = node;
@@ -62,7 +69,7 @@ export function parseDevicePart(
 ): Result<PartSpec> {
   if (!isMap(node)) return fail(`部品 ${safeToken(id)} の中身が読めません`, line);
 
-  const fields = new Map<string, { readonly value: unknown; readonly line: number }>();
+  const fields = new Map<string, Field>();
   for (const pair of node.items) {
     const key = textOf(pair.key);
     const at = lineOf(pair.key as Node) ?? line;
@@ -87,39 +94,60 @@ export function parseDevicePart(
   const at = readAddress(atToken, atField.line, points);
   if (!at.ok) return at;
 
-  const pins = readPins(id, fields.get('pins'), line);
+  const pinsField = fields.get('pins');
+  const pins = readPins(id, pinsField, line);
   if (!pins.ok) return pins;
-  if (type === IC3 && pins.value.length !== IC3_PINS) {
-    return fail(`${IC3} の足は ${IC3_PINS} 本です (1 = 左、2 = 下、3 = 右の順に名前を並べます)`, fields.get('pins')?.line ?? line);
+  if (type === IC3) {
+    const checked = checkIc3Pins(pins.value, pinsField?.line ?? line);
+    if (!checked.ok) return checked;
   }
 
-  const labelField = fields.get('label');
-  const label = labelField === undefined ? null : textOf(labelField.value);
-  if (labelField !== undefined && label === null) return fail(`部品 ${safeToken(id)} の label は字で書きます`, labelField.line);
-  if (label !== null && [...label].length > LIMITS.valueLength) {
-    return fail(`label が長すぎます (${LIMITS.valueLength} 文字まで)`, labelField?.line ?? line);
-  }
-
-  const turnField = fields.get('turn');
-  let turn: Turn = NO_TURN;
-  if (turnField !== undefined) {
-    const words = textOf(turnField.value);
-    if (words === null) return fail(`部品 ${safeToken(id)} の turn は向きの語で書きます`, turnField.line);
-    const read = readTurnWords(type, words.trim().split(/\s+/), turnField.line);
-    if (!read.ok) return read;
-    turn = read.value;
-  }
+  const label = readLabel(id, fields.get('label'));
+  if (!label.ok) return label;
+  const turn = readTurn(id, type, fields.get('turn'));
+  if (!turn.ok) return turn;
 
   return ok({
-    kind: 'multi-terminal', id, type, at: at.value, value: label,
-    orientation: null, turn, line, pinNames: pins.value,
+    kind: 'multi-terminal', id, type, at: at.value, value: label.value,
+    orientation: null, turn: turn.value, line, pinNames: pins.value,
     spelling: [atToken], written: type,
   });
 }
 
+type Field = { readonly value: unknown; readonly line: number };
+
+/** 3 本足の IC の足: **ちょうど 3 本**で、どれも箱に収まる長さ。 */
+function checkIc3Pins(names: readonly string[], line: number): Result<readonly string[]> {
+  if (names.length !== IC3_PINS) {
+    return fail(`${IC3} の足は ${IC3_PINS} 本です (1 = 左、2 = 下、3 = 右の順に名前を並べます)`, line);
+  }
+  const tooLong = names.find((name) => [...name].length > IC3_NAME_LENGTH);
+  if (tooLong !== undefined) {
+    return fail(`${IC3} の足の名前は ${IC3_NAME_LENGTH} 文字までです (${safeToken(tooLong)} は箱に収まりません)`, line, tooLong);
+  }
+  return ok(names);
+}
+
+/** 箱の中に書く名前 (任意)。 */
+function readLabel(id: string, field: Field | undefined): Result<string | null> {
+  if (field === undefined) return ok(null);
+  const label = textOf(field.value);
+  if (label === null) return fail(`部品 ${safeToken(id)} の label は字で書きます`, field.line);
+  if ([...label].length > LIMITS.valueLength) return fail(`label が長すぎます (${LIMITS.valueLength} 文字まで)`, field.line);
+  return ok(label);
+}
+
+/** 向き (任意)。1 行形式と同じ語。 */
+function readTurn(id: string, type: string, field: Field | undefined): Result<Turn> {
+  if (field === undefined) return ok(NO_TURN);
+  const words = textOf(field.value);
+  if (words === null) return fail(`部品 ${safeToken(id)} の turn は向きの語で書きます`, field.line);
+  return readTurnWords(type, words.trim().split(/\s+/), field.line);
+}
+
 function readPins(
   id: string,
-  field: { readonly value: unknown; readonly line: number } | undefined,
+  field: Field | undefined,
   line: number,
 ): Result<readonly string[]> {
   if (field === undefined) return fail(`部品 ${safeToken(id)} の足の名前 (pins: [名前, …]) を書きます`, line);

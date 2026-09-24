@@ -63,3 +63,15 @@ describe('図とネットリスト', () => {
     expect(svg).toMatch(/rotate\(/);
   });
 });
+
+describe('板の縁', () => {
+  test('refuses a named chip whose legs run off the board, like a DIP', () => {
+    // 20 列の板の 16 列目から G5V-2 (8 列) を置くと、右の足が 21〜23 列目に来る。
+    const relay = renderPerfboard(fence('parts:', '  K1: relay a16'));
+    // 7 セグの向こうの列 (6 行先) は 10 行の板からはみ出す。
+    const display = renderPerfboard(fence('parts:', '  DS1: seg7 h3'));
+
+    expect(relay.errors.map((one) => one.message).join('\n')).toContain('K1 の足 a21 が板の穴ではありません');
+    expect(display.errors.map((one) => one.message).join('\n')).toContain('DS1 の足');
+  });
+});

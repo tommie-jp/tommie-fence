@@ -45,6 +45,13 @@ describe('種類', () => {
     expect(type.pinLabels).toEqual(['+Vs', 'Vout', 'GND']);
   });
 
+  test('refuses names too long for the box', () => {
+    // 箱はレギュレータと同じ大きさ。5 文字から真ん中の縦の名前に触れる (図で確かめた)。
+    const result = parseFence(circuit('parts:', '  U1:', '    type: ic3', '    at: c4', '    pins: [VDDA1, Vout, GND]'));
+
+    expect(result.errors.map((one) => one.message).join('\n')).toContain('4 文字まで');
+  });
+
   test('asks for exactly three names', () => {
     const result = parseFence(circuit('parts:', '  U1:', '    type: ic3', '    at: c4', '    pins: [A, B]'));
 
@@ -73,6 +80,13 @@ describe('図', () => {
     const result = compileCircuit(circuit(...LM35, '  OUT: port c7', 'wires:', '  - U1.Vout -- c7'));
 
     expect(result.notices.map((one) => one.message).join('\n')).toContain('U1.Vout へ -- で引くと斜めに入ります');
+  });
+
+  test('names a transistor leg in the hint the same way the netlist does', () => {
+    // 箱でない記号の足はアンカー名のまま (ネットリストの `Q1.base` と同じ字)。
+    const result = compileCircuit(circuit('parts:', '  Q1: npn c4', '  R1: resistor a1 a2 1k', 'wires:', '  - a2 -- Q1.B'));
+
+    expect(result.notices.map((one) => one.message).join('\n')).toContain('Q1.base へ -- で引くと斜めに入ります');
   });
 
   test('shows the written names on the map', () => {

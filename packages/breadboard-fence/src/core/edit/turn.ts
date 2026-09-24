@@ -8,6 +8,7 @@ import type { Address, Board, HoleRow, RailRow } from '../types.ts';
 import { diffAfter } from './diff.ts';
 import { TURN_WORD, isTurned, orientOf } from '../parts/orient.ts';
 import { lookupFootprint } from '../placement/footprints.ts';
+import { acrossGap } from '../placement/place.ts';
 import { isLocated, locatePart } from './move.ts';
 import type { Located, MoveResult } from './move.ts';
 import { locateTokens } from './shared.ts';
@@ -188,12 +189,14 @@ function turnByWord(source: string, found: Located, id: string): MoveResult {
 
 /**
  * 溝の向こう側の行。**そこへ書き直したものが「裏返し」**。
- * 1 列に並ぶ形 (SIP) には向こう側が無い。
+ * 1 列に並ぶ形 (SIP) には向こう側が無い。足に名前のある DIP 型は、列の間の
+ * 穴数 (`rowSpan`) だけ溝の向こうの行 (7 セグは b↔f 〜 e↔i)。
  */
 function flippedRow(type: string, row: HoleRow): HoleRow | null {
-  const kind = lookupFootprint(type)?.kind;
-  if (kind === 'dip') return row === 'e' ? 'f' : 'e';
-  if (kind !== 'board') return null;
+  const footprint = lookupFootprint(type);
+  if (footprint?.kind === 'dip') return row === 'e' ? 'f' : 'e';
+  if (footprint?.kind === 'named') return acrossGap(row, footprint.chip.rowSpan);
+  if (footprint?.kind !== 'board') return null;
   return HOLE_ROWS[(HOLE_ROWS.indexOf(row) + HOLE_ROWS.length / 2) % HOLE_ROWS.length] ?? null;
 }
 

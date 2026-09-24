@@ -48,7 +48,9 @@ const boldWidth = (text: string): number =>
  * 名前が横にずれないので縮めない。
  */
 function legNameSize(names: readonly string[], xs: readonly number[], size: number): number {
-  const gaps = xs.slice(1).map((x, index) => Math.abs(x - (xs[index] ?? x))).filter((gap) => gap > 0);
+  // **並べ替えてから差を取る** — 足は書いた順に並ぶとは限らない (`h9 h12 h10`)。
+  const sorted = [...xs].sort((a, b) => a - b);
+  const gaps = sorted.slice(1).map((x, index) => x - (sorted[index] ?? x)).filter((gap) => gap > 0);
   if (gaps.length === 0) return size;
   const widest = Math.max(0, ...names.map(boldWidth));
   const room = Math.min(...gaps) * LEG_NAME_ROOM;

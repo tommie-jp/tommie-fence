@@ -55,6 +55,14 @@ describe('足の名前の大きさ', () => {
     expect(sizeOf(long, 'GND')).toBe(sizeOf(long, 'Vout'));
   });
 
+  test('measures the gap between the nearest legs, whatever order they are written in', () => {
+    // 書いた順 (9, 12, 10) で差を取ると 3 と 2 になるが、9 と 10 は 1 ピッチしか離れていない。
+    const shuffled = renderBreadboard(fence('parts:', '  U1: ic3 h9(Vout) h12(GND) h10(Vs) LM35')).svg;
+    const adjacent = renderBreadboard(fence('parts:', '  U1: ic3 h9(Vout) h10(Vs) h11(GND) LM35')).svg;
+
+    expect(sizeOf(shuffled, 'Vout')).toBe(sizeOf(adjacent, 'Vout'));
+  });
+
   test('keeps the size when the legs are spread apart', () => {
     const spread = renderBreadboard(fence('parts:', '  U1: ic3 f3(+Vs) f5(Vout) f7(GND) LM35')).svg;
     const short = renderBreadboard(fence('parts:', '  Q1: transistor f4(B) f5(C) f6(E)')).svg;

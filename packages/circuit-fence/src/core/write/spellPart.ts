@@ -74,14 +74,14 @@ const FIELD_INDENT = '  ';
  * 鍵の行と中身の行 (`type` `at` `label` `pins` `turn`)。字下げは鍵の行からの相対。
  */
 export function spellPartBlock(part: PartSpec): readonly string[] {
-  if (!isMapForm(part) || part.kind !== 'multi-terminal') return [spellPart(part)];
+  if (!isMapForm(part)) return [spellPart(part)];
   const turn = turnWords(part.turn);
   return [
     `${part.id}:`,
     `${FIELD_INDENT}type: ${part.type}`,
     `${FIELD_INDENT}at: ${part.spelling[0] ?? ''}`,
     ...(part.value === null ? [] : [`${FIELD_INDENT}label: ${yamlScalar(part.value)}`]),
-    `${FIELD_INDENT}pins: [${(part.pinNames ?? []).join(', ')}]`,
+    `${FIELD_INDENT}pins: [${part.pinNames.join(', ')}]`,
     ...(turn.length === 0 ? [] : [`${FIELD_INDENT}turn: ${turn.join(' ')}`]),
   ];
 }

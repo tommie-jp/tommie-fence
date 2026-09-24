@@ -199,6 +199,15 @@ describe('アンカー 1 つで置く形 (DIP / SIP / ボード)', () => {
     expect(after(DIP, flipPart(DIP, 'U1'))).toContain('U1: dip8 @ f5 NJM4556A');
   });
 
+  test('flips a named chip to the other row of its own footprint', () => {
+    // リレーは DIP と同じ e↔f。7 セグは列の間が 6 穴なので b↔f (溝の向こうの 6 ピッチ先)。
+    const relay = 'board: half\nparts:\n  K1: relay @ e5\n';
+    const display = 'board: half\nparts:\n  DS1: seg7 @ b5 5161AS\n';
+
+    expect(after(relay, flipPart(relay, 'K1'))).toContain('K1: relay @ f5');
+    expect(after(display, flipPart(display, 'DS1'))).toContain('DS1: seg7 @ f5 5161AS');
+  });
+
   test('flips a board to the paired row on the other block', () => {
     const pico = 'board: full\nparts:\n  M1: pico @ h5\n';
 

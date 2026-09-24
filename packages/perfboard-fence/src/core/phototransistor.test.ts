@@ -30,3 +30,15 @@ describe('フォトトランジスタ', () => {
     expect(result.svg).toContain('#2b2f36');
   });
 });
+
+describe('当たり判定', () => {
+  test('uses the drawn dome, not a body stretched between the legs', () => {
+    // 足を a1 と a8 に広げても玉は真ん中に 1 つ。足の間の a2〜a3 に置いた抵抗とは
+    // 重ならない (胴の形は描画と当たり判定で同じ。perfboard の約束 9)。
+    const result = renderPerfboard(fence(
+      'parts:', '  Q1: phototransistor a1 a8', '  R1: resistor a2 a3 1k',
+    ));
+
+    expect(result.notices.map((one) => one.message).join('\n')).not.toContain('重な');
+  });
+});

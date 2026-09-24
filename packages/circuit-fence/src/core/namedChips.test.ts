@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { compileCircuit } from './index.ts';
 import { gridMap } from './edit/map.ts';
-import { PART_NAMES, PART_PREFIXES, lookupPartType, lookupPin } from './parts.ts';
+import { PART_NAMES, PART_PREFIXES, lookupPartType, lookupPin, partTypeOf } from './parts.ts';
+import { parseFence } from './parser/parseFence.ts';
 
 /**
  * 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ。52 の docs/66 の段 4・5)。
@@ -57,6 +58,19 @@ describe('図', () => {
     expect(result.errors).toEqual([]);
     expect(result.tex).toContain('pgfdeclareshape{opto4}');
     expect(result.tex).toContain('{$\\mathrm{PC817}$}');
+  });
+});
+
+describe('7 セグの箱の幅', () => {
+  test('widens the box for a longer part number, as a device does', () => {
+    // 箱の中に型番を刷るので、表の 5161AS より長い型番なら箱も広げる。
+    const [short, long] = parseFence(circuit('parts:', '  DS1: seg7 c4 5161AS', '  DS2: seg7 c10 LTS-547AHR')).doc.parts;
+    const shortSymbol = partTypeOf(short!)?.symbol;
+    const longSymbol = partTypeOf(long!)?.symbol;
+
+    expect(longSymbol).not.toBe(shortSymbol);
+    expect(shortSymbol).toBe(lookupPartType('seg7')?.symbol);
+    expect(compileCircuit(circuit('parts:', '  DS2: seg7 c10 LTS-547AHR')).tex).toContain(`pgfdeclareshape{${longSymbol}}`);
   });
 });
 

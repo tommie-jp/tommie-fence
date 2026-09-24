@@ -431,8 +431,11 @@ const ROW_POSITION: Readonly<Record<HoleRow, number>> = {
   a: 0, b: 1, c: 2, d: 3, e: 4, f: 7, g: 8, h: 9, i: 10, j: 11,
 };
 
-/** その行から、溝の向こうへ `span` ピッチ先の行。届かなければ null。 */
-function acrossGap(row: HoleRow, span: number): HoleRow | null {
+/**
+ * その行から、溝の向こうへ `span` ピッチ先の行。届かなければ null。
+ * 置くとき (`placeNamed`) と、エディターで裏返すとき (`edit/turn.ts`) が同じ行を引く。
+ */
+export function acrossGap(row: HoleRow, span: number): HoleRow | null {
   const upper = ROW_POSITION[row] < ROW_POSITION.f;
   const wanted = ROW_POSITION[row] + (upper ? span : -span);
   const found = HOLE_ROWS.find((one) => ROW_POSITION[one] === wanted && (ROW_POSITION[one] < ROW_POSITION.f) !== upper);
