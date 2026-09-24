@@ -119,7 +119,8 @@ export function edgeMountOf(part: PlacedPart, layout: Layout): EdgeMount | null 
  */
 const FIXED_SIZE: Record<string, { readonly width: number; readonly height: number }> = {
   led: { width: DOME_SIZE, height: DOME_SIZE },
-  // フォトトランジスタも LED と同じ砲弾型の玉 (fence-kit の `plainDome`)。
+  // フォトダイオードとフォトトランジスタも LED と同じ砲弾型の玉 (fence-kit の胴)。
+  photodiode: { width: DOME_SIZE, height: DOME_SIZE },
   phototransistor: { width: DOME_SIZE, height: DOME_SIZE },
   sma: { width: SMA_SIZE, height: SMA_SIZE },
 };

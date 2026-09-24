@@ -144,7 +144,8 @@ const looksOf = (type: string): readonly string[] =>
  * サーミスタなど) は足の間隔が 2.54mm で作られているので、ここには入れない。
  */
 const AXIAL = new Set([
-  'resistor', 'diode', 'zener', 'schottky', 'photodiode', 'inductor', 'fuse',
+  'resistor', 'diode', 'zener', 'schottky', 'inductor', 'fuse',
+  // フォトダイオードは入れない — 砲弾型 (LED と同じ玉) で描くラジアル部品。
 ]);
 
 export const isAxial = (type: string): boolean => AXIAL.has(type);
