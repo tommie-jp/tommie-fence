@@ -3,6 +3,14 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.12.0] - 2026-09-25
+
+### Added
+
+- **伝送線路 (`tline`)** — circuitikz の `TL` (円筒)。値は特性インピーダンスで、抵抗と
+  同じく Ω を補う (`TL1: tline a1 a5 50`)。copper フェンスの例の等価回路に使う。
+  板の 2 つには無い部品 (線路は銅の形で、部品ではない)。
+
 ## [0.11.0] - 2026-09-24
 
 ### Added

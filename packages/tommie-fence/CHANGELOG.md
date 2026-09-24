@@ -3,6 +3,15 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.14.0] - 2026-09-25
+
+circuit-fence 0.12.0 を束ねた。
+
+### Added
+
+- circuit: **伝送線路 (`tline`)**。値は特性インピーダンス (Ω)。copper の例に添えた
+  等価回路がこれで描ける。
+
 ## [0.13.0] - 2026-09-25
 
 vna-fence 0.1.0 を束ねた。**5 つ目のフェンス ` ```vna `** — VNA (NanoVNA) の画面。
