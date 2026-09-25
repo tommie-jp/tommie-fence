@@ -3,6 +3,17 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.15.2] - 2026-09-26
+
+circuit-fence 0.13.1 を束ねた。
+
+### Fixed
+
+- circuit: **LED・フォトダイオードの値が光の矢に重なっていた**。値を矢の先より外に置く。
+- circuit: **DIP の型番が足の番号に重なり、長いと箱からはみ出していた**。立てた箱では
+  型番を箱の下の外に出す。
+- circuit: **`type: device` に `turn: mirror` を付けると、名前が足の名前に重なっていた**。
+
 ## [0.15.1] - 2026-09-25
 
 circuit-fence 0.13.0 を束ねた。
