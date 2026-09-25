@@ -20,7 +20,8 @@
 \coordinate (e1) at (0,-4);
 \coordinate (e4) at (3,-4);
 \coordinate (a4) at (3,0);
-\node[dipchip, num pins=8, font=\scriptsize] (part-U1) at (c2) {$\mathrm{NE555}$}; % line 3
+\node[dipchip, num pins=8, font=\scriptsize] (part-U1) at (c2) {}; % line 3
+\node[font=\scriptsize, anchor=north] at (part-U1.south) {$\mathrm{NE555}$}; % line 3
 \node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 3
 \draw (a1) |- (part-U1.pin 1); % line 5
 \draw (e1) |- (part-U1.pin 4); % line 6

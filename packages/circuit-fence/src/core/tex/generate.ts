@@ -748,7 +748,13 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
     const label = labelOf(part.label ?? part.id, part.id);
     options.push(type?.mark === undefined ? `l_=${label}` : `l2_=${label} and ${type.mark}`);
   }
-  if (part.value !== null) options.push(`a^=${annotationOf(part.value, unitOf(part.type), target)}`);
+  // 光の矢のある記号は、値を `a^` に任せず矢の先より外に置く (`lightValueNode`)。
+  const lightValue = part.value !== null && type?.lightArrows === true
+    ? lightValueNode(toPoint(part.from, pitch), toPoint(part.to, pitch), annotationOf(part.value, unitOf(part.type), target))
+    : null;
+  if (part.value !== null && lightValue === null) {
+    options.push(`a^=${annotationOf(part.value, unitOf(part.type), target)}`);
+  }
   // 電流の矢は from → to、電圧の + は from の側。**どちらも極性と同じ規則**
   // (先に書いた番地が + 側) なので、書き手が覚えることは増えない。
   // 綴りは 1.0 (フェンス) と 2023 (手元の LaTeX) の両方で同じ図になると実測済み。
@@ -773,9 +779,49 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
   }
 
   const drawn = `\\draw (${texNameOfAddress(part.from)}) to[${options.join(', ')}] (${texNameOfAddress(part.to)});`;
+  if (lightValue !== null) return [drawn, lightValue];
   if (type?.inner === undefined) return [drawn];
 
   return [drawn, ...sourceInner(type.inner, toPoint(part.from, pitch), toPoint(part.to, pitch))];
+}
+
+/**
+ * LED・フォトダイオードの光の矢が、記号の中心線から `a^` の側へ張り出す長さ (cm)。
+ * circuitikz 1.0 の `leD` / `pD` を焼いた SVG で測った (矢の先は 17.07pt = 0.60 cm。
+ * 記号の三角形は 0.30 cm)。`bipoles/length` を固定しているので番地の間隔に依らない。
+ */
+export const LIGHT_ARROW_REACH = 0.6;
+
+/**
+ * 光の矢のある 2 端子の値。**矢の先より外に、別ノードで置く。**
+ *
+ * circuitikz は矢を記号の枠に数えないので、`a^` の字は三角形のすぐ外 ——
+ * 矢の上に乗る (横でも縦でも逆向きでも。実機で焼いて確かめた)。矢の無い
+ * `_` の側は ID の名札が使っている。字を矢の分だけ外へ押し出すと、向きが
+ * どれでも矢と名札の両方を避けられる。
+ *
+ * `a^` の側は、from → to の向きの**左**の法線 (circuitikz の決まり)。字は
+ * その向きへ伸びるよう、法線の反対側のアンカーで掛ける — 右へ出すなら
+ * `west`、上へ出すなら `south`。斜めは 8 方位に丸める。
+ */
+export function lightValueNode(from: Point, to: Point, text: string): string {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy) || 1;
+  const nx = -dy / length;
+  const ny = dx / length;
+  // ノードは矢の先に掛ける。字との間はノードの inner sep (0.12 cm ほど) が空ける。
+  const x = (from.x + to.x) / 2 + nx * LIGHT_ARROW_REACH;
+  const y = (from.y + to.y) / 2 + ny * LIGHT_ARROW_REACH;
+  return `\\node[anchor=${anchorFacing(-nx, -ny)}] at (${num(x)},${num(y)}) {${text}};`;
+}
+
+/** その向き (単位ベクトル) を指すアンカー。8 方位に丸める。 */
+function anchorFacing(x: number, y: number): string {
+  const EDGE = Math.sin(Math.PI / 8);
+  const vertical = y > EDGE ? 'north' : y < -EDGE ? 'south' : '';
+  const horizontal = x > EDGE ? 'east' : x < -EDGE ? 'west' : '';
+  return [vertical, horizontal].filter((part) => part !== '').join(' ') || 'center';
 }
 
 function drawOneTerminal(part: OneTerminalPart, target: TexTarget): string {
@@ -832,8 +878,14 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
   // 寄るので真ん中が空いていて、そこが実物のチップの場所でもある。
   // 型番を書いてあればそれは箱の外へ回す (2 つを重ねない。実機で頼まれた)。
   const kind = lookupBoardPart(part.type) === null ? null : escapeTex(part.type);
-  const boxed = kind !== null || type?.valueInside === true;
-  const inside = boxTurned ? '' : (kind ?? (type?.valueInside === true ? (annotation ?? '') : ''));
+  // **立てた DIP の型番は箱の下の外。** 番号の列の間に字の入る幅が無い
+  // (`valueBelowUpright`)。中に書かない型番は、ほかの部品と同じ道で下に出る。
+  const valueBelow = type?.valueBelowUpright === true && (part.turn.rotate === 0 || part.turn.rotate === 180);
+  const valueInside = type?.valueInside === true && !valueBelow;
+  // 回した箱の中の字を掛ける先。片側に足が並ぶ箱は足の名前の反対側 (`value`)。
+  const inner = `${name}.${type?.turnedValueAnchor ?? 'center'}`;
+  const boxed = kind !== null || valueInside;
+  const inside = boxTurned ? '' : (kind ?? (valueInside ? (annotation ?? '') : ''));
   const node = `\\node[${options.join(', ')}] (${name}) at (${at}) {${inside}};`;
   // それ以外の型番は記号の下に来るアンカーに掛ける。`label=below:` はノードの
   // (空の) 文字を基準にするので、記号の体の上に字が乗る (実機で確認)。
@@ -846,20 +898,20 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
   // `north` に寄せる (回した先で下に来るアンカーを選ぶ形で実機で確かめてある)。
   const outward = free?.outward ?? 'north';
   // 回した箱の中の字は一緒に回る (`r180` で逆さま) ので、向きが付いたら
-  // 中心に立てた別ノードへ移す。
-  const turnedInside = boxTurned && (kind ?? (type?.valueInside === true ? annotation : null));
+  // 別ノードへ移す (掛け先は `inner`)。
+  const turnedInside = boxTurned && (kind ?? (valueInside ? annotation : null));
   const number = annotation === null && turnedInside === null
     ? []
     : kind !== null
       // ボードは中が種類。型番は箱の外 (足の無い辺) へ。
       ? [
         ...(boxTurned && turnedInside !== null && turnedInside !== ''
-          ? [`\\node[font=\\scriptsize] at (${name}.center) {${turnedInside}};`] : []),
+          ? [`\\node[font=\\scriptsize] at (${inner}) {${turnedInside}};`] : []),
         ...(annotation === null
           ? [] : [`\\node[font=\\scriptsize, anchor=${outward}] at (${name}.${place}) {${annotation}};`]),
       ]
-      : type?.valueInside === true
-        ? (boxTurned && annotation !== null ? [`\\node[font=\\scriptsize] at (${name}.center) {${annotation}};`] : [])
+      : valueInside
+        ? (boxTurned && annotation !== null ? [`\\node[font=\\scriptsize] at (${inner}) {${annotation}};`] : [])
         : (annotation === null
           ? [] : [`\\node[font=\\scriptsize, anchor=${outward}] at (${name}.${place}) {${annotation}};`]);
   // 値がどちらの側に出ているか (名札はそこを避ける)。**箱の中の値は外を塞がない。**

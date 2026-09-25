@@ -227,6 +227,28 @@ export type PartType = {
    */
   readonly ornament?: PinSide;
   /**
+   * 2 端子の記号で、**値を出す側 (`a^`) に光の矢が張り出す**か (LED・
+   * フォトダイオード)。circuitikz は矢を記号の枠に数えないので、`a^` に任せると
+   * 値の字が矢に重なる (どの向きに置いても。実機で焼いて確かめた)。持つ種類は
+   * 値を矢の先より外の別ノードに置く (`tex/generate.ts` の `lightValueNode`)。
+   */
+  readonly lightArrows?: boolean;
+  /**
+   * 箱の中の字 (型番・機器の名前) を、**向きが付いたとき**に掛ける記号の
+   * アンカー。省くと `center`。片側に足が並ぶ箱 (ピンヘッダ・機器) は足の名前の
+   * 列の反対側に字の場所があるので、そこを指す `value` を持つ — 中心に置くと
+   * 反転した箱で足の名前に重なる (実機で `turn: mirror` の機器を焼いて見つけた)。
+   */
+  readonly turnedValueAnchor?: string;
+  /**
+   * 箱を**立てて置いたとき** (回さない・`r180`) に、中の型番を箱の**下の外**に
+   * 出す。DIP の箱は足の番号が左右の縁から中へ並び、真ん中に字の入る幅が
+   * 残らない (`NE555` も `CD74HC283` も番号に重なり、長い型番は縁からはみ出した)。
+   * 寝かせた箱 (`r90` / `r270`) は長い辺が横になり、番号の列の間に 1 行ぶんの
+   * 帯が空くので、今までどおり中に書く。
+   */
+  readonly valueBelowUpright?: boolean;
+  /**
    * ID の下にもう 1 行足す字。記号だけでは見分けが付かない種類だけが持つ。
    * circuitikz の記号がフェンスの TeX で壊れる字 (θ) を使っているとき、
    * 記号を素の形に落として、代わりにここで区別を書く。
@@ -377,6 +399,8 @@ const dipchip = (count: number): PartType => ({
   // 型番は箱の中に書くので、既定の大きさだと足の番号に重なる (実機で確認)。
   options: [`num pins=${count}`, 'font=\\scriptsize'],
   valueInside: true,
+  // それでも立てた箱では番号の列の間に字の入る幅が無いので、下の外へ出す。
+  valueBelowUpright: true,
   ...NO_UNIT,
   pins: Object.fromEntries(Array.from({ length: count }, (_, index) => [`${index + 1}`, `pin ${index + 1}`])),
   pinRow: dipSides(count),
@@ -466,6 +490,8 @@ export function deviceChip(names: readonly string[], label: string | null = null
     symbol: deviceShapeName(deviceBox(names, label)),
     options: ['draw', 'font=\\scriptsize'],
     valueInside: true,
+    // 回した・反転した箱の名前は、足の名前の列の反対側 (`headerShapeTex`)。
+    turnedValueAnchor: 'value',
     ...NO_UNIT,
     pins: Object.fromEntries([
       // **名前を先に置く** — 先に書いたほうが代表の名前になる (`mainPinName`)。
@@ -592,6 +618,8 @@ function sipchip(count: number): PartType {
     // そこは節点に `draw` が付いたときだけ描かれる (実機で気づいた)。
     options: ['draw', 'font=\\scriptsize'],
     valueInside: true,
+    // 回した・反転した箱の値は、番号の列の反対側 (機器と同じ)。
+    turnedValueAnchor: 'value',
     ...NO_UNIT,
     pins: Object.fromEntries(legs.map((at) => [`${at}`, `pin ${at}`])),
     // 全部が左の辺に上から並ぶ。**中心線には乗らない** (だから `pinRow`)。
@@ -676,10 +704,10 @@ export const PART_TYPES = {
 
   // ダイオード類。値は型番 (1N4148 など) なので単位を足さない。
   diode: { kind: 'two-terminal', symbol: 'D', ...NO_UNIT },
-  led: { kind: 'two-terminal', symbol: 'leD', ...NO_UNIT },
+  led: { kind: 'two-terminal', symbol: 'leD', lightArrows: true, ...NO_UNIT },
   zener: { kind: 'two-terminal', symbol: 'zD', ...NO_UNIT },
   schottky: { kind: 'two-terminal', symbol: 'sD', ...NO_UNIT },
-  photodiode: { kind: 'two-terminal', symbol: 'pD', ...NO_UNIT },
+  photodiode: { kind: 'two-terminal', symbol: 'pD', lightArrows: true, ...NO_UNIT },
   /** ダイアック (双方向ダイオード)。トライアックの引き金に使う。 */
   diac: { kind: 'two-terminal', symbol: 'biD', ...NO_UNIT },
   /**

@@ -122,6 +122,11 @@ function headerShapeTex(name: string, pins: number, halfWidth: number, nameArea:
     // 置く点なので、原点のままだと字が右上へずれて縁からはみ出し、箱の真ん中に
     // 置くと足の名前に掛かった (実機で `HC-SR04` と `UART` を焼いて確かめた)。
     `  \\anchor{text}{\\pgfpoint{${num(nameArea / 2)}cm-.5\\wd\\pgfnodeparttextbox}{-.5\\ht\\pgfnodeparttextbox}}`,
+    // **その場所の真ん中そのもの。** 回した・反転した箱では字を別ノードに移すので
+    // (箱の中の字は一緒に回る)、掛け先がここになる。アンカーは節点ごと裏返るので、
+    // 反転した箱でも足の名前の反対側を指す。`center` に掛けると、反転した
+    // 機器の名前が足の名前に重なった (実機で焼いて見つけた)。
+    `  \\anchor{value}{\\pgfpoint{${num(nameArea / 2)}cm}{0cm}}`,
     ...edgeAnchors(halfWidth, half),
     ...anchors,
     '  \\backgroundpath{',

@@ -6,6 +6,7 @@
 \pgfdeclareshape{dev4w11n6}{
   \anchor{center}{\pgfpointorigin}
   \anchor{text}{\pgfpoint{0.3cm-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{value}{\pgfpoint{0.3cm}{0cm}}
   \anchor{north}{\pgfpoint{0cm}{1cm}}
   \anchor{south}{\pgfpoint{0cm}{-1cm}}
   \anchor{east}{\pgfpoint{1.1cm}{0cm}}
@@ -55,7 +56,7 @@
 \coordinate (f6) at (10,-10);
 \coordinate (f4) at (6,-10);
 \node[dev4w11n6, draw, font=\scriptsize, xscale=-1] (part-M1) at (c2) {}; % line 3
-\node[font=\scriptsize] at (part-M1.center) {$\mathrm{HC\mbox{-}SR04}$}; % line 3
+\node[font=\scriptsize] at (part-M1.value) {$\mathrm{HC\mbox{-}SR04}$}; % line 3
 \node[anchor=south] at (part-M1.north) {$M_{1}$}; % line 3
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-M1.bpin 1) {X}; % line 3
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-M1.bpin 2) {X}; % line 3
