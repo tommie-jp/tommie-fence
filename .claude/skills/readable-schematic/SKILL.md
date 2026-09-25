@@ -20,23 +20,23 @@ description: 人が読む回路図 (教科書・解説・記事の図) を、読
 によって描き方が変わる ([高知工大])。この skill が扱うのは**動作を説明する図**。
 
 「出典」の列は、本文を読んで確かめた出典の略号 (末尾の一覧)。
-**「未確認」は、本文を読めず検索結果の要約でしか見ていないもの**、
+**「未確認」は、読めた出典のどの本文にも書かれていなかったもの**、
 **「実測」はこの skill の §2 で描き比べて決めたもの**。
 
 | # | 決め | なぜ | 出典 |
 | --- | --- | --- | --- |
-| 1 | **信号は左から右**。入力を左、出力を右に置く | 横書きの字と同じ向きで、目線を一方向に流すだけで読める | [高知工大] [ト技] [zepto] |
+| 1 | **信号は左から右**。入力を左、出力を右に置く | 横書きの字と同じ向きで、目線を一方向に流すだけで読める | [高知工大] [ト技] [zepto] [Schemalyzer] [Flux] |
 | 2 | 逆向き (帰還など) や上下に流れる所は、そうと分かる形にする | #1 の例外。アナログ回路は帰還の輪を除けばほぼ #1 で描ける | [高知工大] |
-| 3 | **電位の高いほうを上、低いほうを下**。正の電源は上、負の電源は下 | 多くの技術者は正の電源が上にあると直感で読む。逆に描くと読み違える | [高知工大] [ト技] |
+| 3 | **電位の高いほうを上、低いほうを下**。正の電源は上、負の電源は下 | 多くの技術者は正の電源が上にあると直感で読む。逆に描くと読み違える | [高知工大] [ト技] [Schemalyzer] [Flux] |
 | 4 | 単電源の回路なら GND の線は一番下。正負の電源なら GND は間 (0 V を中心に上が +、下が −) | #3 から決まる。なお [ト技] は「グラウンドは自由に置いてよい」とする | [高知工大] |
-| 5 | GND の記号は下向きにする | 上下の約束 (#3) と揃う | 未確認 |
+| 5 | GND の記号は下向き、正の電源の記号は上向きにする | 上下の約束 (#3) と揃う | [Flux]。[SparkFun] は「正の電源は上向きの矢、GND は横棒 (か下向きの矢・三角)」と記号の慣習を書く |
 | 6 | 信号の線は短く、まっすぐに。縦と横だけで曲がり角は直角 | 短い直線の線は目で追える | 短く直線: [zepto]。直角: 未確認 |
-| 7 | **4 方向の交点 (十字の結線) を作らない**。枝分かれはすべて T 字にする | 十字の交点は、つながっているかどうかが黒丸の有無だけで決まる。黒丸は小さく、全体を引いて見たり縮小して刷ったりすると見落とす。黒丸の打ち忘れもよくある誤り。T 字だけなら黒丸が無くても意味が変わらない | [zepto] |
-| 8 | 線の交差を減らす | 交差の少ない図が読みやすい図の条件の 1 つ | [zepto] |
-| 9 | 関係する部品をまとめて置く (電源、測定、負荷など) | 同じ仲間がまとまっていることが読みやすい図の条件の 1 つ。機能ごとに塊にして示すと、図の構成が読める | [zepto] [ト技] の図 1 |
-| 10 | 部品の ID と値は部品のすぐ横に置き、字の向きを揃える | 隣の部品の近くに流れた字は、どの部品のものか分からなくなる | 未確認 |
-| 11 | 詰めすぎず、空けすぎない | 詰めると字が重なり、空けると部品が小さく線ばかりになる | 実測 (§2) |
-| 12 | 電流計は測る線に直列、電圧計は測る部品のすぐ横に並列に置く | 直列・並列は計器の測り方そのもの。「すぐ横」は、何を測る計器かを位置だけで分からせるための、この skill の決め | 直列・並列: 未確認 (計器の原理)。すぐ横: 実測 (§2) |
+| 7 | **4 方向の交点 (十字の結線) を作らない**。枝分かれはすべて T 字にし、つながる所には黒丸を打つ | 十字の交点は、つながっているかどうかが黒丸の有無だけで決まる。黒丸は小さく、全体を引いて見たり縮小して刷ったりすると見落とす。黒丸の打ち忘れもよくある誤り。T 字だけなら黒丸が無くても意味が変わらない | [zepto] [Schemalyzer] [Flux] |
+| 8 | 線の交差を減らす。避けられない交差には黒丸を打たない | 交差の少ない図が読みやすい図の条件の 1 つ。黒丸の無い交差は「つながっていない」と読まれる | [zepto] [Schemalyzer] [Flux] [SparkFun] |
+| 9 | 関係する部品をまとめて置く (電源、測定、負荷など) | 同じ仲間がまとまっていることが読みやすい図の条件の 1 つ。機能ごとに塊にして (枠や間隔で) 示すと、図の構成が読める | [zepto] [ト技] の図 1 [Schemalyzer] [Flux] |
+| 10 | 部品には ID と値を必ず添える。字は横書きで正立させ、縦や逆さにしない。ID と値は部品のすぐ横に置く | ID と値で部品が特定できる。回した字は読みにくい。隣の部品の近くに流れた字は、どの部品のものか分からなくなる | ID と値: [SparkFun] [Schemalyzer]。横書き・正立: [Schemalyzer]。すぐ横: 未確認 |
+| 11 | 詰めすぎず、空けすぎない | 詰めると字が重なり、空けると部品が小さく線ばかりになる | 詰めすぎない: [Flux]。空けすぎない: 実測 (§2) |
+| 12 | 電流計は測る線に直列、電圧計は測る部品のすぐ横に並列に置く | 直列・並列は計器の測り方そのもの。「すぐ横」は、何を測る計器かを位置だけで分からせるための、この skill の決め | 直列・並列: [LibreTexts]。すぐ横: 実測 (§2) |
 
 ## 2. circuit フェンスでの実現
 
@@ -111,10 +111,10 @@ description: 人が読む回路図 (教科書・解説・記事の図) を、読
   公開されているのは 1 ページ目だけで、「7 つの作法」のうち読めたのは ① と ②
 - [高知工大] [回路図 Schematics — 高知工科大学 橘 昌良](https://www.ele.kochi-tech.ac.jp/tacibana/etc/analog-intro/schematics.html)
 - [zepto] [見やすい電子回路図の書き方とは？【５つのポイントを紹介します】 — ZeptoElectronicDesign](https://zeptoelecdesign.com/schematics/)
+- [Schemalyzer] [Schematic Design Best Practices: 30 Rules for Clear, Professional Circuits — Schemalyzer](https://www.schemalyzer.com/en/blog/schematic-review/best-practices/schematic-design-best-practices)
+- [Flux] [PCB Schematic Design Best Practices for Clean Circuit Diagrams — Flux](https://www.flux.ai/p/blog/pcb-schematic-best-practices)
+- [SparkFun] [How to Read a Schematic — SparkFun Learn](https://learn.sparkfun.com/tutorials/how-to-read-a-schematic/all)
+- [LibreTexts] [20.4: Voltmeters and Ammeters — Physics LibreTexts](https://phys.libretexts.org/Bookshelves/University_Physics/Physics_(Boundless)/20:_Circuits_and_Direct_Currents/20.4:_Voltmeters_and_Ammeters)
 
-本文を読めず、検索結果の要約でしか見ていないもの (§1 の「未確認」はこれらによる):
-
-- [Rules and guidelines for drawing schematics? — Electrical Engineering Codidact](https://electrical.codidact.com/posts/278601)
-- [Rules For Drawing Readable Schematics — Electro Tech Online](https://www.electro-tech-online.com/threads/rules-for-drawing-readable-schematics.144863/)
-- [How to Read a Schematic — SparkFun Learn](https://learn.sparkfun.com/tutorials/how-to-read-a-schematic/all)
-- [Voltmeters and Ammeters — Physics LibreTexts](https://phys.libretexts.org/Bookshelves/University_Physics/Physics_(Boundless)/20:_Circuits_and_Direct_Currents/20.4:_Voltmeters_and_Ammeters)
+§1 の「未確認」(曲がり角を直角にする、ID と値を部品のすぐ横に置く) は、
+上のどの本文にも書かれていなかったもの。回路図の慣習として広く見かけるが、出典では確かめていない。
