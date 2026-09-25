@@ -1,54 +1,34 @@
 ---
 name: readable-schematic
-description: 人が読む回路図 (教科書・解説・記事の図) を、読みやすい配置で書く・直すときに使う。信号は左から右・電位の高いほうを上・4 方向の交点を作らない・計器は測る所の隣、といった回路図の一般的な流儀と、それを ```circuit フェンスの番地と style でどう実現するか (実測した寸法の目安)、PNG に焼いて確かめる点検表をまとめてある。文法そのものは tommie-fence の skill。Use when drawing or cleaning up circuit schematics meant for human readers — layout conventions (signal flow, power at top, ground at bottom, junctions, label placement, meter placement) and how to achieve them in the circuit fence.
+description: 人が読む回路図を ```circuit フェンスで書く・直すときに使う。回路図の配置の流儀そのもの (信号は左から右・電位の高いほうを上・4 方向の交点を作らない・計器は測る所の隣、と出典) は electronics-drawing-skills の readable-schematic にあり、ここには circuit フェンスでそれを実現する番地と style の目安 (実測) と、確かめる手順だけを置く。Use when laying out human-readable schematics in the circuit fence — this holds only the circuit-fence specifics (measured spacing, how each convention maps to addresses and style); the conventions themselves live in electronics-drawing-skills.
 ---
 
-# 人が読みやすい回路図を書く
+# circuit フェンスで読みやすい回路図を書く
 
-文法・`check`・PNG に焼く手順は [tommie-fence の skill](../tommie-fence/SKILL.md)。
-ここに書くのは**つながりは正しいが読みにくい図**を避けるための配置の決めごと。
-`check` はネットリストしか見ないので、この skill の点検は PNG を目で見て行う。
+**回路図の配置の流儀 (出典つき) と、画像で確かめる点検表は
+[electronics-drawing-skills の readable-schematic](https://github.com/tommie-jp/electronics-drawing-skills/blob/main/plugins/readable-schematic/skills/readable-schematic/SKILL.md)
+にある。先にそちらを読む。** 入れていなければ、Claude Code の入力欄で
+`/plugin marketplace add tommie-jp/electronics-drawing-skills` と
+`/plugin install readable-schematic@electronics-drawing-skills`。
 
-- §1 は回路図の一般的な流儀 (出典は末尾)。どの道具で描いても通用する
-- §2 は circuit フェンスでの実現。**寸法の目安は実測** (circuit-fence 0.11.0 の CLI、
-  `standard: jis` の図で確かめた)。版が上がって字や記号の大きさが変わったら測り直す
+ここに置くのは、その流儀を ` ```circuit ` フェンスで実現するための目安だけ。流儀を 2 か所に
+書くと片方だけ直るので、流儀の中身はここに写さない。文法・`check`・PNG に焼く手順は
+[tommie-fence の skill](../tommie-fence/SKILL.md)。
 
-## 1. 回路図の一般的な流儀
+寸法の目安は circuit-fence 0.11.0 の CLI で、`standard: jis` の図を描き比べて測った。
+記号や字の大きさ・置き方を変えたら測り直す。
 
-回路図の描き方に万人共通の決まりは無い。どれも**読み手が誤解しないため**の
-慣習で、会社や分野ごとの流儀がある ([ト技])。回路図は目的 (動作の説明・設計・製作)
-によって描き方が変わる ([高知工大])。この skill が扱うのは**動作を説明する図**。
+## 1. circuit フェンスでの目安
 
-「出典」の列は、本文を読んで確かめた出典の略号 (末尾の一覧)。
-**「未確認」は、読めた出典のどの本文にも書かれていなかったもの**、
-**「実測」はこの skill の §2 で描き比べて決めたもの**。
-
-| # | 決め | なぜ | 出典 |
-| --- | --- | --- | --- |
-| 1 | **信号は左から右**。入力を左、出力を右に置く | 横書きの字と同じ向きで、目線を一方向に流すだけで読める | [高知工大] [ト技] [zepto] [Schemalyzer] [Flux] |
-| 2 | 逆向き (帰還など) や上下に流れる所は、そうと分かる形にする | #1 の例外。アナログ回路は帰還の輪を除けばほぼ #1 で描ける | [高知工大] |
-| 3 | **電位の高いほうを上、低いほうを下**。正の電源は上、負の電源は下 | 多くの技術者は正の電源が上にあると直感で読む。逆に描くと読み違える | [高知工大] [ト技] [Schemalyzer] [Flux] |
-| 4 | 単電源の回路なら GND の線は一番下。正負の電源なら GND は間 (0 V を中心に上が +、下が −) | #3 から決まる。なお [ト技] は「グラウンドは自由に置いてよい」とする | [高知工大] |
-| 5 | GND の記号は下向き、正の電源の記号は上向きにする | 上下の約束 (#3) と揃う | [Flux]。[SparkFun] は「正の電源は上向きの矢、GND は横棒 (か下向きの矢・三角)」と記号の慣習を書く |
-| 6 | 信号の線は短く、まっすぐに。縦と横だけで曲がり角は直角 | 短い直線の線は目で追える | 短く直線: [zepto]。直角: 未確認 |
-| 7 | **4 方向の交点 (十字の結線) を作らない**。枝分かれはすべて T 字にし、つながる所には黒丸を打つ | 十字の交点は、つながっているかどうかが黒丸の有無だけで決まる。黒丸は小さく、全体を引いて見たり縮小して刷ったりすると見落とす。黒丸の打ち忘れもよくある誤り。T 字だけなら黒丸が無くても意味が変わらない | [zepto] [Schemalyzer] [Flux] |
-| 8 | 線の交差を減らす。避けられない交差には黒丸を打たない | 交差の少ない図が読みやすい図の条件の 1 つ。黒丸の無い交差は「つながっていない」と読まれる | [zepto] [Schemalyzer] [Flux] [SparkFun] |
-| 9 | 関係する部品をまとめて置く (電源、測定、負荷など) | 同じ仲間がまとまっていることが読みやすい図の条件の 1 つ。機能ごとに塊にして (枠や間隔で) 示すと、図の構成が読める | [zepto] [ト技] の図 1 [Schemalyzer] [Flux] |
-| 10 | 部品には ID と値を必ず添える。字は横書きで正立させ、縦や逆さにしない。ID と値は部品のすぐ横に置く | ID と値で部品が特定できる。回した字は読みにくい。隣の部品の近くに流れた字は、どの部品のものか分からなくなる | ID と値: [SparkFun] [Schemalyzer]。横書き・正立: [Schemalyzer]。すぐ横: 未確認 |
-| 11 | 詰めすぎず、空けすぎない | 詰めると字が重なり、空けると部品が小さく線ばかりになる | 詰めすぎない: [Flux]。空けすぎない: 実測 (§2) |
-| 12 | 電流計は測る線に直列、電圧計は測る部品のすぐ横に並列に置く | 直列・並列は計器の測り方そのもの。「すぐ横」は、何を測る計器かを位置だけで分からせるための、この skill の決め | 直列・並列: [LibreTexts]。すぐ横: 実測 (§2) |
-
-## 2. circuit フェンスでの実現
-
-### 2.1 大きさの基本
+### 1.1 大きさの基本
 
 - `pitch` (1 マスの大きさ) は既定で 2 cm。**2 端子部品の記号は 1 マスに収まる
   大きさ**で、番地の間がそれより長いと、残りは線になる
-- 番地の間を 3〜4 マス取ると、部品が小さく線ばかりの図になる (§1 #11 の「空けすぎ」)。
+- 番地の間を 3〜4 マス取ると、部品が小さく線ばかりの図になる (流儀 #11 の「空けすぎ」)。
   **図が間延びして見えたら、まず番地の間を詰めるか `pitch` を下げる**
 - `pitch` を下げると記号と字の大きさはそのままで、線だけが短くなる
 
-### 2.2 寸法の目安 (実測)
+### 1.2 寸法の目安 (実測)
 
 | 何と何の間 | 目安 | 実測で見たこと |
 | --- | --- | --- |
@@ -61,9 +41,9 @@ description: 人が読む回路図 (教科書・解説・記事の図) を、読
 **`pitch: 1.2`・縦の部品は 2 マス・枝の間は 2 マス** が、字の重なりが無く、
 空白も少ない組み合わせだった。まずこの組から始めて、PNG を見て直す。
 
-### 2.3 流儀の書き方
+### 1.3 流儀の書き方
 
-| §1 の決め | circuit フェンスでの書き方 |
+| 流儀の決め (番号は electronics-drawing-skills の §1) | circuit フェンスでの書き方 |
 | --- | --- |
 | #1 左から右 | 電源や入力を小さい列番号 (`1` 側)、負荷や出力を大きい列番号に置く |
 | #3・#4 上下 | 上の段 (行 `b` など) を電源側の線、下の段を GND の線にし (単電源のとき)、GND の記号 (`ground`) は下の線の上に置く。電源 (`vsource` / `sine` など) は**先に書いた番地が +** なので、上の番地を先に書く |
@@ -73,48 +53,21 @@ description: 人が読む回路図 (教科書・解説・記事の図) を、読
 | #10 字 | 字の置き場所は処理系が決める。重なったら、字ではなく**部品の番地の間を空ける** |
 | #12 計器 | 電圧計は測る部品と同じ 2 点を、1 マス外へ出した番地で結ぶ (横の部品なら 1 行上、縦の部品なら 1 列横)。測る点から遠く回して輪を大きくしない |
 
-## 3. 手順
+## 2. 手順
 
-1. 回路をまとまり (電源・測定・負荷など) に分け、左から右の順を決める
-2. 上の段・下の段の行と、各まとまりの列を決め、§2.2 の目安で番地を振る
+1. 流儀 (electronics-drawing-skills の §1) に従って、まとまりと左から右の順、電源と GND の段を決める
+2. §1.2 の目安で番地を振る。まず `pitch: 1.2`・縦の部品は 2 マス・枝の間は 2 マスから始める
 3. `check` でネットリストが意図どおりかを確かめる
-4. PNG に焼いて (tommie-fence の skill §3)、下の点検表で見る
+4. PNG に焼いて (tommie-fence の skill §3)、electronics-drawing-skills の点検表で見る
 5. 引っかかった所は番地の間か `pitch` で直し、4 に戻る
 
-### 点検表 (PNG を見て)
+## 3. 処理系の側で直したこと (circuit-fence 0.13.0)
 
-- [ ] 信号は左から右、電源は上・GND は下に並んでいるか
-- [ ] 字 (ID・値・`i=` `v=` の記号・計器のラベル) がほかの字・線・記号に重なっていないか。**1 字ずつ読めるか**
-- [ ] 矢が黒丸や記号に重なっていないか
-- [ ] 4 方向から線が集まる点が無いか
-- [ ] 計器は測る部品のすぐ横か。遠回りの大きな輪になっていないか
-- [ ] 部品に比べて線が長すぎないか (図の大半が空白になっていないか)
-- [ ] 同じ本の中で、同じ種類の回路が同じ向き・同じ並びで描かれているか
+前は描き手では直せなかったもの。0.13.0 より前の版で描いた図には、まだ出る。
 
-## 4. 描き手では直せないもの
-
-次のものは番地や `style:` では直らない。図を直そうとせず、そのまま残して報告する。
-
-- **題 (`title:`) と一番上の記号の間が狭い**。題の位置は図の広がりから決まるので、
-  一番上に計器などを置くと、題の文字と記号がほとんど接する
-- **値の `u` は µ にならない** (`1.5u` は `1.5 uF` と出る)。フェンスの中の TeX には
-  単位を組む仕組み (siunitx) が無いため。`.tex` を書き出したときだけ µ で出る
-- PNG で `Ω` が `¬` に、小数点が `:` に化けるのは、焼いた環境に TeX のフォントが
-  無いため。図の誤りではない (TeX のフォントがある環境で焼けば正しく出る。
-  `packages/circuit-fence/scripts/figures.mjs` の注記)
-
-## 出典 (§1)
-
-本文を読んで確かめたもの (略号は §1 の表の「出典」の列):
-
-- [ト技] [回路図の描き方作法 その① [共通基本編] — トランジスタ技術 2018 年 6 月号 p.63](https://toragi.cqpub.co.jp/Portals/0/backnumber/2018/06/p063.pdf)。
-  公開されているのは 1 ページ目だけで、「7 つの作法」のうち読めたのは ① と ②
-- [高知工大] [回路図 Schematics — 高知工科大学 橘 昌良](https://www.ele.kochi-tech.ac.jp/tacibana/etc/analog-intro/schematics.html)
-- [zepto] [見やすい電子回路図の書き方とは？【５つのポイントを紹介します】 — ZeptoElectronicDesign](https://zeptoelecdesign.com/schematics/)
-- [Schemalyzer] [Schematic Design Best Practices: 30 Rules for Clear, Professional Circuits — Schemalyzer](https://www.schemalyzer.com/en/blog/schematic-review/best-practices/schematic-design-best-practices)
-- [Flux] [PCB Schematic Design Best Practices for Clean Circuit Diagrams — Flux](https://www.flux.ai/p/blog/pcb-schematic-best-practices)
-- [SparkFun] [How to Read a Schematic — SparkFun Learn](https://learn.sparkfun.com/tutorials/how-to-read-a-schematic/all)
-- [LibreTexts] [20.4: Voltmeters and Ammeters — Physics LibreTexts](https://phys.libretexts.org/Bookshelves/University_Physics/Physics_(Boundless)/20:_Circuits_and_Direct_Currents/20.4:_Voltmeters_and_Ammeters)
-
-§1 の「未確認」(曲がり角を直角にする、ID と値を部品のすぐ横に置く) は、
-上のどの本文にも書かれていなかったもの。回路図の慣習として広く見かけるが、出典では確かめていない。
+- **題と一番上の記号の間** — 題を 4pt 持ち上げた。それでも近いと感じたら、一番上の記号を 1 段下げる
+- **値の `u`** — `1.5u` は `1.5 µF` (数式の斜体の µ) で出る。立体の µ は `--emit-tex` (siunitx) だけ
+- **プレビューの外で `Ω` や `µ` が化ける** — `render --embed-fonts` で書き出した `.svg` は、図が使う
+  TeX のフォントを埋め込むので化けない (1 枚が 150 KB ほど大きくなる)。付けずに書き出した `.svg` を
+  ブラウザや GitHub で開くと、今までどおり `Ω` が `¬`、`µ` が `¹`、小数点が `:` に化ける。
+  PNG に焼く環境に TeX のフォントが無いときも同じ (図の誤りではない)
