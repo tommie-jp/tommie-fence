@@ -3,6 +3,20 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.15.1] - 2026-09-25
+
+circuit-fence 0.13.0 を束ねた。
+
+### Changed
+
+- circuit: **値の接頭辞 `u` を `µ` で出す** (`1.5u` → `1.5 µF`)。今までは字のまま
+  `1.5 uF` と出ていた。数式の `\mu` で組む (斜体の µ)。
+
+### Fixed
+
+- circuit: **題が一番上の記号 (計器の丸など) に重なる**。題を図の上端から 4pt 離した
+  (図の高さが 4pt 増える)。
+
 ## [0.15.0] - 2026-09-25
 
 breadboard-fence 0.13.0 / perfboard-fence 0.11.0 / vna-fence 0.1.1 を束ねた。
