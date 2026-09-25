@@ -3,6 +3,25 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.13.0] - 2026-09-25
+
+### Added
+
+- **`render --embed-fonts`** — 書き出す `.svg` に、図が使っている TeX のフォント
+  (`cmr10` `cmmi10` など。node-tikzjax に同梱の BaKoMa の TTF) を `@font-face` で埋め込む。
+  TeX が描いた字は SVG の中で Unicode ではなくフォントの中の番号のまま入っている
+  (`Ω` は `¬`、`µ` は `¹`、数式の小数点は `:`) ので、プレビューの外 (ブラウザ・GitHub) で
+  開くと化けていた。1 枚が 150 KB ほど増えるので**既定では埋め込まない**。
+  `--emit-tex` と `check` とは一緒に使えない。
+
+### Changed
+
+- **接頭辞 `u` を `µ` で出す** (`1.5u` → `1.5 µF`)。今までは字のまま `1.5 uF` と出ていた。
+  フェンスの TeX には siunitx が無いので、数式の `\mu` で組む (斜体の µ)。
+  `--emit-tex` は今までどおり siunitx で組む (立体の µ)。
+- **題を図の上端から 4pt 離した**。日本語の太字の題が、一番上の記号 (計器の丸など) に
+  重なっていた。図の高さが 4pt 増える。
+
 ## [0.12.0] - 2026-09-25
 
 ### Added
