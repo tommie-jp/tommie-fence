@@ -60,6 +60,10 @@ node <root>/packages/circuit-fence/scripts/figures.mjs <file.md> <tmp>
 手書きや元の回路図と向き・並びが合っているか。**「重なりなし」と報告する前に、
 字の 1 つ 1 つが読めるかを見る** (見落としやすい)。
 
+人が読む回路図なら、配置の流儀 (信号は左から右、電源は上で GND は下、
+計器は測る所の隣) と、circuit フェンスでの番地の間の目安、PNG の点検表を
+[readable-schematic](../readable-schematic/SKILL.md) にまとめてある。
+
 ## 4. 取り違えやすい所
 
 | | circuit | breadboard | perfboard |
