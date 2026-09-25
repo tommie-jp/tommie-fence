@@ -96,7 +96,7 @@
 \draw (b5) to[vR, mirror, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (b7); % line 4
 \draw (b8) to[potentiometer, n=part-P2, l_=$P_{2}$, a^=$10\,\mathrm{k}\Omega$] (b10); % line 5
 \draw (b11) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (b13); % line 6
-\draw (d2) to[cC, l_=$C_{2}$, a^=$100\,\mathrm{u}\mathrm{F}$] (d4); % line 7
+\draw (d2) to[cC, l_=$C_{2}$, a^=$100\,\mu\mathrm{F}$] (d4); % line 7
 \draw (d5) to[varcap, l_=$D_{4}$, a^=$33\,\mathrm{p}\mathrm{F}$] (d7); % line 8
 \draw (d8) to[L, l_=$L_{1}$, a^=$10\,\mathrm{m}\mathrm{H}$] (d10); % line 9
 \draw (d11) to[phR, l_=$R_{3}$] (d13); % line 10
@@ -330,7 +330,7 @@
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-40.8) {X}; % line 148
 \path (13.587,-43.993) rectangle (18.413,-42.807); % line 149
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-43.4) {X}; % line 149
-\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(6.096,0.853);
 \end{circuitikz}
 \end{document}

@@ -130,10 +130,17 @@ xelatex -output-directory tex tex/notes.tex
 ```
 
 It differs from the preview in exactly three ways: Japanese values get
-through, units go through siunitx (so µF prints properly), and the op-amp
+through, units are typeset by siunitx, and the op-amp
 becomes the real symbol. Addresses and wires are identical, so you can settle
 the layout in the preview and then emit. Details in
 [docs/01-syntax.md](docs/01-syntax.md) (Japanese).
+
+If the `.svg` will be opened outside the preview (a browser, GitHub), add `--embed-fonts`.
+It embeds the TeX fonts so `Ω` and `µ` do not turn into other characters (each drawing grows by about 150 KB).
+
+```bash
+node dist/cli.cjs render notes.md --embed-fonts --out out
+```
 
 `--version` prints the version of the toolchain.
 

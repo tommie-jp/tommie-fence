@@ -208,3 +208,4 @@ circuit-fence --version
 `--version` は処理系の版を出す。
 
 図を書き出すのは `render`、手元の LaTeX 用の `.tex` は `render --emit-tex`。
+プレビューの外 (ブラウザ・GitHub) で開く `.svg` は `render --embed-fonts` (TeX のフォントを埋め込み、`Ω` `µ` を化けさせない)。

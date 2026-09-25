@@ -117,9 +117,16 @@ node dist/cli.cjs render notes.md --emit-tex --out tex
 xelatex -output-directory tex tex/notes.tex
 ```
 
-プレビューとの違いは 3 つだけ (日本語の値が通る・単位が siunitx で µF になる・
+プレビューとの違いは 3 つだけ (日本語の値が通る・単位を siunitx で組む・
 オペアンプが本物の記号になる)。番地も配線も同じなので、プレビューで位置を
 確かめてから書き出せる。書き方は [docs/01-syntax.md](docs/01-syntax.md)。
+
+書き出した `.svg` をプレビューの外 (ブラウザ・GitHub) で開くなら `--embed-fonts` を付ける。
+TeX のフォントを埋め込むので `Ω` や `µ` が化けない (1 枚が 150 KB ほど大きくなる)。
+
+```bash
+node dist/cli.cjs render notes.md --embed-fonts --out out
+```
 
 処理系の版は `--version` で出せる。
 

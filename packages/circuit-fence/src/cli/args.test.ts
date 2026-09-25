@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { emitsTex, parseArgs } from './args.ts';
+import { embedsFonts, emitsTex, parseArgs } from './args.ts';
 
 const parse = (...argv: string[]) => parseArgs(argv);
 
@@ -33,6 +33,19 @@ describe('parseArgs', () => {
 
   test('draws unless it is told to write latex', () => {
     expect(emitsTex(commandOf('render', 'examples'))).toBe(false);
+  });
+
+  test('reads the switch that embeds the TeX fonts in the drawings', () => {
+    expect(embedsFonts(commandOf('render', 'examples', '--embed-fonts'))).toBe(true);
+  });
+
+  test('leaves the fonts out unless it is told to embed them', () => {
+    // 1 枚が 7 KB から 150 KB ほどに膨らむので、既定では埋め込まない。
+    expect(embedsFonts(commandOf('render', 'examples'))).toBe(false);
+  });
+
+  test('refuses to embed fonts in latex, which has no drawing to put them in', () => {
+    expect(parse('render', 'examples', '--emit-tex', '--embed-fonts').ok).toBe(false);
   });
 
   test('asks for a command it knows', () => {
@@ -72,6 +85,7 @@ describe('parseArgs の check', () => {
     // 何も書き出さないコマンドなので、書き出し先を受けると嘘になる。
     expect(parse('check', 'a.md', '--out', 'tex').ok).toBe(false);
     expect(parse('check', 'a.md', '--emit-tex').ok).toBe(false);
+    expect(parse('check', 'a.md', '--embed-fonts').ok).toBe(false);
   });
 
   test('still reads render as before', () => {

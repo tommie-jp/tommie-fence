@@ -2,13 +2,15 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, resolve } from 'node:path';
 import {
-  STAMP_TEXT, attachSourceText, compileCircuit, extractCircuitFences, finishSvg, outputStem, shiftErrors,
+  STAMP_TEXT, attachSourceText, compileCircuit, embedFonts, extractCircuitFences, finishSvg, outputStem, shiftErrors,
+  texFontFamilies,
 } from '../core/index.ts';
+import { loadTexFonts, texFontDir } from '../host/texFonts.ts';
 import { renderTex } from '../host/texSvg.ts';
 import { standaloneTex } from '../core/tex/generate.ts';
 import { texErrors } from '../core/tex/texLog.ts';
 import { collectFiles, reportNetlist } from 'fence-kit/cli';
-import { USAGE, emitsTex, parseArgs } from './args.ts';
+import { USAGE, embedsFonts, emitsTex, parseArgs } from './args.ts';
 import { checkHeading, reportErrors, reportNotices, reportProblem } from './report.ts';
 
 type Job = {
@@ -122,7 +124,7 @@ function checkJob(job: Job): number {
 }
 
 /** 1 枚描く。図にできなかった数を返す。 */
-async function runJob(job: Job): Promise<number> {
+async function runJob(job: Job, withFonts: boolean): Promise<number> {
   const { tex, lineMap, netlist, theme, width, notes, errors: raw, notices, debug } = compileCircuit(job.source);
   const errors = shiftErrors(raw, job.line);
 
@@ -162,7 +164,10 @@ async function runJob(job: Job): Promise<number> {
   // プレビューと同じ注釈・色・大きさを当ててから書き出す (仕上げの順番は
   // core/render/finish.ts が持っている)。auto のときの線は currentColor の
   // ままで、単体で開けば地の文字色 (黒) になる。
-  writeFileSync(svgPath, `${finishSvg(outcome.svg, { notes, theme, width })}\n`);
+  const finished = finishSvg(outcome.svg, { notes, theme, width });
+  // フォントを埋め込むと、プレビューの外で開いても Ω や µ が化けない (core/render/fonts.ts)。
+  const svg = withFonts ? embedFonts(finished, loadTexFonts(texFontFamilies(finished), texFontDir())) : finished;
+  writeFileSync(svgPath, `${svg}\n`);
   console.log(`${job.label} → ${svgPath}`);
   reportNetlist(netlist);
   reportErrors(errors);
@@ -184,6 +189,7 @@ async function main(argv: readonly string[]): Promise<number> {
 
   const { command, targets, outDir } = parsed.value;
   const texOnly = emitsTex(parsed.value);
+  const withFonts = embedsFonts(parsed.value);
   let failed = 0;
 
   try {
@@ -209,7 +215,7 @@ async function main(argv: readonly string[]): Promise<number> {
           continue;
         }
         written.set(path, job.label);
-        failed += texOnly ? emitTex(job) : await runJob(job);
+        failed += texOnly ? emitTex(job) : await runJob(job, withFonts);
       }
     }
   } catch (error) {

@@ -75,7 +75,16 @@ describe('generateTex', () => {
     // 番地の順をそのまま TeX の順にする。
     const tex = generate('parts:', '  C1: ecap a1 a3 100u').tex;
 
-    expect(tex).toContain('\\draw (a1) to[cC, l_=$C_{1}$, a^=$100\\,\\mathrm{u}\\mathrm{F}$] (a3);');
+    expect(tex).toContain('\\draw (a1) to[cC, l_=$C_{1}$, a^=$100\\,\\mu\\mathrm{F}$] (a3);');
+  });
+
+  test('writes the micro prefix as the Greek mu, not the letter u', () => {
+    // フェンスの TeX には siunitx が無い。字のまま u を出すと 1.5 uF と読める図になる。
+    // \\mu は数式のフォント (cmmi10) にあるので斜体の µ で出る (実機で確かめた)。
+    const tex = generate('parts:', '  C1: capacitor a1 a3 1.5u').tex;
+
+    expect(tex).toContain('a^=$1.5\\,\\mu\\mathrm{F}$');
+    expect(tex).not.toContain('\\mathrm{u}');
   });
 
   test('leaves out the annotation when a part has no value', () => {
@@ -943,6 +952,20 @@ describe('generateTex の題 (title)', () => {
   test('hangs the title off the top of the finished drawing', () => {
     // 番地には a より上が無いので、題は図の広がりから測るしかない。
     expect(titled(...RESISTOR).tex).toContain('current bounding box.north west');
+  });
+
+  test('lifts the title clear of the top of the drawing, in both the fence and the exported tex', () => {
+    // 題の字は TeX の目印の場所に後から差し込む。日本語の太字は目印より下へはみ出し、
+    // 隙間が inner sep の 2pt だけだと一番上の記号 (計器の丸など) に字が重なった (実測)。
+    // inner sep を広げると左にもずれるので、上へだけ持ち上げる。
+    const fence = titled(...RESISTOR).tex ?? '';
+    const latex = generateLatex('title: 回路図01', ...RESISTOR).tex ?? '';
+
+    for (const tex of [fence, latex]) {
+      const line = tex.split('\n').find((row) => row.includes('current bounding box.north west')) ?? '';
+      expect(line).toContain('yshift=4pt');
+      expect(line).toContain('inner sep=2pt');
+    }
   });
 
   test('draws the title after the notes, so it clears everything drawn', () => {

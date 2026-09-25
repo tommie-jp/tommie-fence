@@ -27,7 +27,7 @@
 \coordinate (b6) at (10,-2);
 \coordinate (b5) at (8,-2);
 \draw (b1) node[ocirc]{} node[above left]{IN}; % line 3
-\draw (b1) to[C, l_=$C_{1}$, a^=$1\,\mathrm{u}\mathrm{F}$] (b2); % line 4
+\draw (b1) to[C, l_=$C_{1}$, a^=$1\,\mu\mathrm{F}$] (b2); % line 4
 \draw (b2) to[R, l_=$R_{b}$, a^=$100\,\mathrm{k}\Omega$] (d2); % line 5
 \node[ground] at (d2) {}; % line 6
 \node[plain amp, noinv input up] (part-U1) at (b4) {}; % line 7
@@ -70,7 +70,7 @@
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-9.25) {X}; % line 18
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-9.737) {X}; % line 18
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-10.223) {X}; % line 18
-\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(6.218,0.853);
 \end{circuitikz}
 \end{document}

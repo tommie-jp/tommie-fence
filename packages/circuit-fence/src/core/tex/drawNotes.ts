@@ -290,8 +290,15 @@ export function drawNote(
  */
 const TITLE_SIZE: NoteSize = 'large';
 
-/** 題と図の間に空ける幅 (pt)。刻印と同じで、字が図にくっつかない最小限。 */
+/** 題の字の周りに空ける幅 (pt)。刻印と同じで、字が図にくっつかない最小限。 */
 const TITLE_INSET = 2;
+
+/**
+ * 題を図の上端から持ち上げる幅 (pt)。題の字は TeX の目印の場所に後から差し込むが、
+ * 日本語の太字は目印より下へはみ出し、TITLE_INSET だけでは一番上の記号 (計器の丸など) に
+ * 重なった (実測)。TITLE_INSET を広げると左にもずれるので、上へだけ持ち上げる。
+ */
+const TITLE_LIFT = 4;
 
 /** 題のノードに付ける名前。幅を取っておく `\path` から呼ぶためだけに使う。 */
 const TITLE_NODE = 'circuittitle';
@@ -315,6 +322,7 @@ export function drawTitle(circuit: Circuit, target: TexTarget): string[] {
   const options = [
     'anchor=south west',
     `inner sep=${num(TITLE_INSET)}pt`,
+    `yshift=${num(TITLE_LIFT)}pt`,
     ...(target === 'latex' ? [] : [MARK_COLOR_NAME]),
     `font=${noteFontTex(TITLE_SIZE, true)}`,
   ];

@@ -145,6 +145,7 @@ export function compileCircuit(fence: string, options: CompileOptions = {}): Com
 export { recolorSvg, resizeSvg, scaleSvgToText, DEFAULT_THEME, LIGHT_THEME } from './render/theme.ts';
 export { applyNotes } from './render/noteText.ts';
 export { finishSvg, markSvg } from './render/finish.ts';
+export { embedFonts, texFontFamilies } from './render/fonts.ts';
 export { STAMP_TEXT, VERSION } from './version.ts';
 export type { Theme } from './render/theme.ts';
 export { errorLine, messageLine, renderErrorBanner, renderErrorCard } from './render/errorCard.ts';

@@ -35,7 +35,7 @@
 \draw (a5) to[R, l_=$R_{load}$, a^=$4.7\,\Omega$] (a6); % line 4
 \draw (a9) to[R, l_=$R$, a^=$1\,\mathrm{M}\Omega$] (a10); % line 5
 \draw (c1) to[L, l_=$L_{1}$, a^=$10\,\mathrm{m}\mathrm{H}$] (c2); % line 6
-\draw (c5) to[C, l_=$C_{1}$, a^=$2.2\,\mathrm{u}\mathrm{F}$] (c6); % line 7
+\draw (c5) to[C, l_=$C_{1}$, a^=$2.2\,\mu\mathrm{F}$] (c6); % line 7
 \draw (c9) to[D, l_=$D_{1}$, a^=$\mathrm{1N4148}$] (c10); % line 8
 \path (0,-2.593) rectangle (5.588,-1.407); % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-2) {X}; % line 10
@@ -70,7 +70,7 @@
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (24,-8.276) {X}; % line 16
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (24,-8.763) {X}; % line 16
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (24,-9.25) {X}; % line 16
-\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(7.315,0.853);
 \end{circuitikz}
 \end{document}

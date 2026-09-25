@@ -1824,7 +1824,7 @@ circuit-fence --version
 ## 書き出す (CLI)
 
 ```bash
-circuit-fence render <ファイルかディレクトリ...> [--out <出力先>] [--emit-tex]
+circuit-fence render <ファイルかディレクトリ...> [--out <出力先>] [--emit-tex | --embed-fonts]
 circuit-fence check  <ファイルかディレクトリ...>
 circuit-fence --version
 ```
@@ -1881,6 +1881,23 @@ circuit-fence check notes.md
 - **`points:` で名前を付けた節点**と `port` / `vcc` / `vee`。
   どれも「ここから外へ出入りする」という意思表示
 
+### `--embed-fonts` — プレビューの外でも字を化けさせない
+
+書き出す `.svg` に、図が使っている TeX のフォント (`cmr10` `cmmi10` など) を埋め込む。
+
+```bash
+circuit-fence render notes.md --embed-fonts --out out
+```
+
+TeX が描いた字は、SVG の中で Unicode ではなく**フォントの中の番号**のまま入っている
+(`Ω` は `¬`、`µ` は `¹`、数式の小数点は `:`)。プレビューはそのフォントを読み込んでいるので
+正しく出るが、書き出した `.svg` をブラウザや GitHub で開くと化ける。普通のフォントを
+入れても直らない (要るのは同じ番号の並びを持つ、このフォントそのもの)。
+
+埋め込むのは図が使っているフォントだけで、1 枚が 150 KB ほど大きくなる。
+**既定では埋め込まない**。`notes:` と題の字は Unicode なので、埋め込まなくても化けない。
+`--emit-tex` とは一緒に使えない (図を描かないので、埋め込む先が無い)。
+
 ### `--emit-tex` — 手元の LaTeX で組む
 
 図を描かず、**xelatex に渡す `.tex` だけ**を書き出す。
@@ -1896,7 +1913,7 @@ xelatex -output-directory tex tex/notes.tex
 | | プレビュー (フェンス) | `--emit-tex` |
 | --- | --- | --- |
 | 日本語の値 | 描けない (行番号つきで返る) | 描ける |
-| 単位 | `100 uF` (字のまま) | `100 µF` (siunitx) |
+| 単位 | `100 µF` (µ は数式の斜体) | `100 µF` (siunitx。µ は立体) |
 | オペアンプ | 三角形 + 手描きの ± | 本物の `op amp` |
 
 番地も配線も黒丸も同じなので、**プレビューで位置を確かめてから書き出せる**。

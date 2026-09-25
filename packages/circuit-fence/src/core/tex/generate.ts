@@ -310,6 +310,16 @@ const SI_PREFIXES: Readonly<Record<string, string>> = {
   k: '\\kilo', M: '\\mega', G: '\\giga', m: '\\milli', u: '\\micro', n: '\\nano', p: '\\pico',
 };
 
+/**
+ * フェンスの TeX での SI 接頭辞。u だけは \\mu (数式のフォント cmmi10 の µ。斜体で出る)。
+ * 字のまま \\mathrm{u} で出すと `1.5 uF` と読める図になる。立体の µ は textcomp の
+ * フォントが要り、フェンスの TeX にあるかは確かめていない。
+ */
+const texPrefix = (prefix: string): string => {
+  if (prefix === '') return '';
+  return prefix === 'u' ? '\\mu' : `\\mathrm{${prefix}}`;
+};
+
 /** 部品の種類から来る単位。書き出す `.tex` は siunitx に組ませる。 */
 type Unit = { readonly tex: string | null; readonly si: string | null };
 
@@ -345,12 +355,12 @@ function annotationOf(value: string, unit: Unit, target: TexTarget): string {
   }
 
   const [, digits = '', prefix = ''] = matched;
-  // siunitx なら u が µ で出る。フェンスには siunitx が無いので字のまま出す。
+  // siunitx なら u が µ で出る。フェンスには siunitx が無いので、接頭辞は自前で組む。
   if (target === 'latex' && unit.si !== null) {
     return `\\qty{${digits}}{${SI_PREFIXES[prefix] ?? ''}${unit.si}}`;
   }
 
-  const scale = prefix === '' ? '' : `\\mathrm{${prefix}}`;
+  const scale = texPrefix(prefix);
   return `$${digits}\\,${scale}${unit.tex ?? ''}$`;
 }
 
