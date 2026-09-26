@@ -129,6 +129,12 @@ jobs:
           if ! grep -q '[^[:space:]]' notes.md; then extract Unreleased > notes.md; fi
           # どちらも空なら、書くことが無いままリリースしない。
           grep -q '[^[:space:]]' notes.md
+          # 入れ方・使い方を毎回添える (CHANGELOG には書かない。リリースのページで要るため)。
+          if [ -n "$VSIX" ]; then extra=vsix; elif [ -n "$TGZ" ]; then extra=tgz; else extra=; fi
+          if [ -n "$extra" ]; then
+            sed -e "/markdownlint-disable/d" -e "s/{{VER}}/$VER/g" -e "s/{{PKG}}/$PKG/g" -e "s/{{TAG}}/$GITHUB_REF_NAME/g" \
+              "$GITHUB_WORKSPACE/.github/release-notes/$extra.md" >> notes.md
+          fi
 
       - name: Release を作る
         env:
