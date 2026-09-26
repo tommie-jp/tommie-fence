@@ -4,6 +4,8 @@ import { describe, expect, test } from 'vitest';
 import { renderBreadboard, STAMP_TEXT, VERSION } from './index.ts';
 import { textWidth } from './render/textFit.ts';
 import { DEFAULT_LED_COLOR, DEFAULT_WIRE_COLOR } from './render/palette.ts';
+import { createBoard } from './model/board.ts';
+import { createLayout } from './model/layout.ts';
 
 const led = `board: half
 parts:
@@ -1048,9 +1050,24 @@ describe('parts that share a hole with a wire endpoint', () => {
   });
 
   test('does not slide a part into a wire crossing from the other block', () => {
-    // e10 から下のレールへの直行はブロックをまたいで f10〜j10 の上を走る。
+    // a10 から j10 への直行はブロックをまたいで f10〜i10 の上を走る。
     // その通り道へは寄せず、寄せ先が無いのでお知らせを出す。
     const { notices } = renderBreadboard([
+      'parts:',
+      '  R1: resistor g6 g10',
+      'wires:',
+      '  - g6 -- -b6 black',
+      '  - a10 -- j10 red',
+    ].join('\n'));
+
+    expect(notices).toHaveLength(1);
+    expect(notices[0]?.message).toContain('g6');
+  });
+
+  test('keeps the rows free when a long wire to a rail runs between the columns', () => {
+    // e10 から下のレールへの線は、列の間を降りる (f10〜j10 の穴を隠さない)。
+    // 通り道が無くなったので、R1 は上へ寄せられる。
+    const { notices, svg } = renderBreadboard([
       'parts:',
       '  R1: resistor g6 g10',
       'wires:',
@@ -1058,8 +1075,9 @@ describe('parts that share a hole with a wire endpoint', () => {
       '  - e10 -- -b10 red',
     ].join('\n'));
 
-    expect(notices).toHaveLength(1);
-    expect(notices[0]?.message).toContain('g6');
+    expect(notices).toEqual([]);
+    const f = createLayout(createBoard('half')).rowY('f');
+    expect(svg).toContain(`y1="${f}"`);
   });
 
   test('reports a wire plugged into the same rail hole as a rail lead', () => {

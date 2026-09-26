@@ -5,7 +5,7 @@ import { connectorCaptionAt } from './connector.ts';
 import { fourLeadBodyRect, switchBodyRect } from './packages.ts';
 import {
   CAPTION_CLEAR, CAPTION_HEIGHT, LEG_NAME_CLEAR, NAME_CAP, NAME_LINE,
-  caption, charWidth, labelYOf, pinPoints,
+  caption, charWidth, haloWidth, labelYOf, pinPoints,
 } from './partCommon.ts';
 import { bodyHalfHeight } from './threeLead.ts';
 import type { RenderTheme } from './theme.ts';
@@ -40,6 +40,26 @@ export function captionBandOf(
   const baseline = captionBaselineOf(part, layout, theme);
   if (baseline === null) return null;
   return band(baseline.x, baseline.y + drop * theme.metrics.textSize * DROP_LINE, baseline.width, theme);
+}
+
+/**
+ * 名札の**字そのもの**が占める帯。`captionBandOf` は配線よけのために足の幅まで
+ * 広げてあるが、板の穴を伏せるのは字の下だけでよい — 足の下の穴まで消すと、
+ * 部品の脇の行に穴の無い帯ができる。
+ */
+export function captionTextBandOf(
+  part: PlacedPart,
+  layout: Layout,
+  theme: RenderTheme,
+  drop = 0,
+): Rect | null {
+  const baseline = captionBaselineOf(part, layout, theme);
+  if (baseline === null) return null;
+  const letters = band(baseline.x, baseline.y + drop * theme.metrics.textSize * DROP_LINE, captionWidth(part, theme), theme);
+  // **縁取りのぶん広げる。** 縁取りは字の外へはみ出して穴の端を削るので、
+  // 字の幅だけで穴を選ぶと、縁取りに削られた穴の欠片が字の脇に残る。
+  const pad = haloWidth(theme) / 2 + 1;
+  return { x: letters.x - pad, y: letters.y - pad, width: letters.width + pad * 2, height: letters.height + pad * 2 };
 }
 
 /** 名札の基準線と、その中心・幅。置く側 (描画) と数える側 (配線よけ) で同じ式を使う。 */

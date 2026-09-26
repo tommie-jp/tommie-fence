@@ -1,6 +1,6 @@
 import type { Layout } from '../model/layout.ts';
 import type { Board, PartsListMode, PlacedPart, Point, Rect } from '../types.ts';
-import { captionBandOf, captionDrops } from './captions.ts';
+import { captionBandOf, captionDrops, captionTextBandOf } from './captions.ts';
 import { renderBoard } from './board.ts';
 import type { DevicePlacement } from './devices.ts';
 import { renderDevice } from './devices.ts';
@@ -8,6 +8,7 @@ import { noteBands, notesBottom, outsideNotesHeight, renderNotes, renderOutsideN
 import type { ResolvedNote } from './notes.ts';
 import { renderHits } from './hits.ts';
 import { renderPart } from './parts.ts';
+import { CAPTION_CLASS } from './partCommon.ts';
 import { partsListHeight, renderPartsList } from './partsList.ts';
 import { element, num, roundedPath, svgText } from './svg.ts';
 import type { RenderStyle } from './theme.ts';
@@ -98,16 +99,26 @@ export function renderDocument(input: DocumentInput): string {
   const covered = input.parts
     .map((part) => captionBandOf(part, layout, theme, drops.get(part.id) ?? 0))
     .filter((band): band is Rect => band !== null);
+  // 穴を伏せる帯。名札の字の下だけ (`captionTextBandOf`)。
+  const lettered = input.parts
+    .map((part) => captionTextBandOf(part, layout, theme, drops.get(part.id) ?? 0))
+    .filter((band): band is Rect => band !== null);
+  const onBoard = input.parts
+    .filter((part) => part.kind !== 'device')
+    .map((part) => marked(renderPart(part, layout, theme, drops), { class: 'cf-chip', 'data-part': part.id }));
+  // 掴むための図では名札を部品の包みから出さない (名札を掴んで部品を動かせるように)。
+  const lifted = edit === null ? liftCaptions(onBoard) : { bodies: onBoard, captions: [] };
   const body = [
-    renderBoard(input.board, layout, theme, covered),
+    renderBoard(input.board, layout, theme, covered, lettered),
     ...wires.map((wire) => wire.halo),
     // 配線は細くて掴めないので、見える線に**太い透明な線**を重ねる (circuit と同じ手)。
     ...wires.map((wire, index) => marked(
       wire.line + (edit === null ? '' : hitLineOf(input.wires[index]?.points ?? [], input.wires[index]?.line ?? 0, theme)),
       { class: 'cf-wire', 'data-line': String(input.wires[index]?.line ?? 0) },
     )),
-    ...input.parts.filter((part) => part.kind !== 'device').map((part) =>
-      marked(renderPart(part, layout, theme, drops), { class: 'cf-chip', 'data-part': part.id })),
+    ...lifted.bodies,
+    // 名札は**すべての部品の胴の上**に描く (`liftCaptions`)。
+    ...lifted.captions,
     // 板の外の機器も**掴めるように包む** (実機で「基板外の部品も対象にする」)。
     ...input.parts
       .filter((part) => part.kind === 'device')
@@ -199,4 +210,19 @@ function renderStamp(layout: Layout, height: number, theme: RenderStyle['theme']
     'fill-opacity': 0.55,
     anchor: 'end',
   });
+}
+
+/**
+ * 部品の絵から名札 (`CAPTION_CLASS` の `<text>`) を抜き出して、胴と分けて返す。
+ * **字の中身は必ずエスケープ済み**なので (`svgText`)、`</text>` までを 1 つの名札と
+ * 読んでよい。
+ */
+function liftCaptions(parts: readonly string[]): { bodies: string[]; captions: string[] } {
+  const pattern = new RegExp(`<text [^>]*class="${CAPTION_CLASS}"[^>]*>[^<]*</text>`, 'g');
+  const captions: string[] = [];
+  const bodies = parts.map((svg) => svg.replace(pattern, (caption) => {
+    captions.push(caption);
+    return '';
+  }));
+  return { bodies, captions };
 }

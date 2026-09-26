@@ -21,6 +21,11 @@ export type WireEnd = {
 export type RelocateResult = {
   readonly parts: readonly PlacedPart[];
   readonly errors: readonly FenceError[];
+  /**
+   * 寄せたことのお知らせ。`errors` (寄せきれなかった) とは分けて返す —
+   * 寄せは描き方としては正しく、直すかどうかは書き手が決める。
+   */
+  readonly moves: readonly FenceError[];
 };
 
 /** 胴が板から浮いていて、同じ列のまま行を変えても絵が成り立つ種類。 */
@@ -61,7 +66,12 @@ type Ledger = {
  * - 縦に走る配線の**通り道には寄せない** (穴は空いていても、線が足の上を通る)。
  * - 横へ逃げる配線しか無ければどちらへも寄れる。見た目に良い側 (`away`) から試す。
  * - 同じ列の中の移動なのでストリップが変わらず、**ネットリストは変わらない**。
- *   だからこの寄せはお知らせにしない (文書化された標準の描き方)。
+ *   だからこの寄せはお知らせにしない (文書化された標準の描き方)。足と配線を
+ *   同じ穴に書くのはこの文法のふつうの書き方で、例と文書の図のほとんどが寄せを
+ *   使っている。言うと、ふつうに書いた図のすべてにお知らせが付く。
+ * - **2 本足どうしの胴が同じ行で重なる**ときは、後に書いたほうを同じ手で寄せ、
+ *   **こちらはお知らせで言う** (`moves`)。重なった胴は 2 つの部品に見えず、
+ *   どの足がどれか読めない。書いたとおりには組めないので、書き手に直してもらう。
  * - 寄せられないときは書かれたまま描き、**お知らせで実物に挿せないことだけ言う**。
  *   黙って通すと、図を写した人がその穴の前で手が止まる。
  */
@@ -75,7 +85,7 @@ export function relocateParts(
   // 続ける (図の見え方が変わってしまう) が、寄せきれなかったことは言わない。
   checking = true,
 ): RelocateResult {
-  if (ends.length === 0) return { parts, errors: [] };
+  if (ends.length === 0 && !hasOverlap(parts)) return { parts, errors: [], moves: [] };
 
   // 配線が塞ぐ穴 (端点そのもの) と、縦に走って通り過ぎる穴。
   const wireHoles = new Map<string, WireEnd[]>();
@@ -95,8 +105,9 @@ export function relocateParts(
 
   const ledger: Ledger = { wireHoles, corridors, partHoles };
   const errors: FenceError[] = [];
+  const moves: FenceError[] = [];
 
-  const result = parts.map((part) => {
+  const byWire = parts.map((part) => {
     const sharedEnds = part.pins.flatMap((pin) =>
       pin.address ? wireHoles.get(formatAddress(pin.address)) ?? [] : []);
     if (sharedEnds.length === 0) return part;
@@ -106,12 +117,66 @@ export function relocateParts(
     return slid ?? part;
   });
 
+  // 胴の重なり。**書かれた順に置いて、重なったほうが寄る** (名札の逃がしと同じ約束)。
+  // 先に書いた部品は動かないので、1 行足しても図の他の場所は動かない。
+  const settled = new Map<string, string>();
+  const result = byWire.map((part) => {
+    let current = part;
+    const clash = bodyHoles(current).map((name) => settled.get(name)).find((owner) => owner !== undefined);
+    if (clash !== undefined) {
+      const slid = slideAside(current, [], ledger, new Set(settled.keys()));
+      if (slid) {
+        if (checking) moves.push(slidNotice(part, slid, `部品 ${safeToken(clash)} の胴と重なるので`));
+        current = slid;
+      }
+    }
+    for (const name of bodyHoles(current)) settled.set(name, current.id);
+    return current;
+  });
+
   const anyMoved = result.some((part, index) => part !== parts[index]);
-  return { parts: anyMoved ? result : parts, errors };
+  return { parts: anyMoved ? result : parts, errors, moves };
 }
 
+/** 胴が 1 行に寝る 2 本足の、足と足の間を含めた穴。重なりを見るのに使う。 */
+function bodyHoles(part: PlacedPart): string[] {
+  if (part.kind !== 'two-lead') return [];
+  const holes = part.pins.map((pin) => pin.address);
+  if (!holes.every((address): address is HoleAddress => address?.kind === 'hole')) return [];
+  const between = betweenLeads(holes);
+  if (between.length === 0 && holes[0]?.row !== holes[1]?.row) return [];
+  return [...holes.map(formatAddress), ...between];
+}
+
+const hasOverlap = (parts: readonly PlacedPart[]): boolean => {
+  const seen = new Set<string>();
+  for (const part of parts) {
+    const holes = bodyHoles(part);
+    if (holes.some((name) => seen.has(name))) return true;
+    for (const name of holes) seen.add(name);
+  }
+  return false;
+};
+
+/** 寄せたことのお知らせ。書かれた番地と描いた番地を並べ、直し方を添える。 */
+const slidNotice = (written: PlacedPart, drawn: PlacedPart, because: string): FenceError => {
+  const spell = (part: PlacedPart): string =>
+    part.pins.map((pin) => (pin.address ? formatAddress(pin.address) : '?')).join(' ');
+  return notice(
+    `部品 ${safeToken(written.id)}: ${spell(written)} と書かれていますが、${because} ${spell(drawn)} に寄せて描きました`
+    + ' (同じ列なので導通は同じです。図とフェンスの番地を揃えるなら、フェンスの行を書き直します)',
+    written.line,
+  );
+};
+
 /** 寄せた先の姿。寄せられなければ null (呼ぶ側がお知らせを出す)。 */
-function slideAside(part: PlacedPart, sharedEnds: readonly WireEnd[], ledger: Ledger): PlacedPart | null {
+function slideAside(
+  part: PlacedPart,
+  sharedEnds: readonly WireEnd[],
+  ledger: Ledger,
+  // 胴どうしの重なりで寄せるときの、ほかの胴が寝ている穴 (足の間を含む)。
+  bodies: ReadonlySet<string> = new Set(),
+): PlacedPart | null {
   if (sharedEnds.some((end) => end.exit === 'unknown')) return null;
   if (!SLIDABLE_KINDS.has(part.kind)) return null;
   const holes = part.pins.map((pin) => pin.address);
@@ -137,7 +202,8 @@ function slideAside(part: PlacedPart, sharedEnds: readonly WireEnd[], ledger: Le
       const names = [...targets.map(formatAddress), ...betweenLeads(targets)];
       const blocked = names.some((name) =>
         ledger.wireHoles.has(name) || ledger.corridors.has(name)
-        || (ledger.partHoles.has(name) && !own.has(name)));
+        || (ledger.partHoles.has(name) && !own.has(name))
+        || bodies.has(name));
       if (blocked) continue;
 
       for (const name of own) ledger.partHoles.delete(name);

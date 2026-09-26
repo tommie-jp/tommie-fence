@@ -1,4 +1,6 @@
 import type { Lane, Layout } from '../model/layout.ts';
+import { isTopBlock } from '../model/address.ts';
+import { HOLE_ROWS, RAIL_ROWS } from '../types.ts';
 import type { Point, Rect, WireHint } from '../types.ts';
 import { boxHitsRect, segmentHitsAny } from './geometry.ts';
 
@@ -28,6 +30,17 @@ const SAME_AXIS_TOLERANCE = 0.5;
 /** これより近い穴どうしは、実物の短いジャンパと同じでレーンを経由せず直接つなぐ。 */
 const SHORT_HOP_PITCHES = 3;
 const SLOT_SPACING = 4;
+/**
+ * 板の外のレーン (機器の帯と板の間) の段の間隔。**線の太さより広く取る。**
+ * 板の中のレーンは行と行の間に収めるので 4px しか取れないが、ここは広い帯が
+ * 空いている。機器の線は何本も並んで走るので、4px では隣の段と太さが重なって
+ * 2 本が 1 本の太い線に見える。
+ */
+const WIDE_SLOT_SPACING = 8;
+/** この厚みがあれば広い段を使う (板の中のレーンはどれも 12px 以下)。 */
+const WIDE_LANE = 16;
+
+const slotSpacing = (lane: Lane): number => (lane.halfHeight >= WIDE_LANE ? WIDE_SLOT_SPACING : SLOT_SPACING);
 const SLOT_GAP = 8;
 const OBSTACLE_PENALTY = 10_000;
 const OBSTACLE_MARGIN = 3;
@@ -48,12 +61,169 @@ const dedupe = (points: readonly Point[]): readonly Point[] =>
  * ここで見る `obstacles` は、通るレーンを選ぶところまで。
  */
 export function routeWire(from: Point, to: Point, layout: Layout, options: RouteOptions = {}): readonly Point[] {
-  if (options.hints && options.hints.length > 0) return dedupe(followHints(from, to, options.hints));
+  if (options.hints && options.hints.length > 0) return dedupe(followHints(from, to, options.hints, layout));
   const obstacles = options.obstacles ?? [];
+  if (needsSidestep(from, to, layout)) {
+    return sidestepPath(from, to, sidestepOf(from, to, layout, obstacles, noReservations), layout);
+  }
   if (isStraight(from, to, layout, obstacles)) return [from, to];
+
+  const device = deviceLaneOf(from, to, layout);
+  if (device) {
+    const escapes = {
+      entry: descentOf(from, device, layout, obstacles, noReservations).escape,
+      exit: descentOf(to, device, layout, obstacles, noReservations).escape,
+    };
+    return buildPath(from, to, device, options.offset ?? 0, escapes);
+  }
 
   const lane = chooseLane(from, to, layout, obstacles);
   return buildPath(from, to, lane, options.offset ?? 0, { entry: null, exit: null });
+}
+
+/**
+ * 板の行 1 本と、その行が属する導通のまとまり (上のブロック・下のブロック・レール 1 本)。
+ * **縦の線がどの穴の上を通るか**を読むのに使う。レールの無い板では、レールの行は
+ * 座標が 0 に落ちて板の外になるので、ここで落ちる。
+ */
+type BoardRow = { readonly y: number; readonly group: string };
+
+const boardRows = (layout: Layout): readonly BoardRow[] => [
+  ...HOLE_ROWS.map((row) => ({ y: layout.rowY(row), group: isTopBlock(row) ? 'top' : 'bottom' })),
+  ...RAIL_ROWS.map((rail) => ({ y: layout.rowY(rail), group: rail as string })),
+].filter((row) => onBoardRow({ x: 0, y: row.y }, layout));
+
+/** その点が載っている行のまとまり。穴の行に無い点 (機器のピン・端数の番地) は null。 */
+const groupAt = (point: Point, layout: Layout): string | null =>
+  boardRows(layout).find((row) => Math.abs(row.y - point.y) < SAME_AXIS_TOLERANCE)?.group ?? null;
+
+/** x が穴の列の真上か。列と列の間を通る線は、どの穴も隠さない。 */
+const onColumn = (x: number, layout: Layout): boolean => {
+  const index = Math.round((x - layout.colX(1)) / layout.pitch) + 1;
+  return index >= 1 && index <= layout.columns && Math.abs(layout.colX(index) - x) < SAME_AXIS_TOLERANCE;
+};
+
+/**
+ * 列 `x` を `y1`〜`y2` まで縦に走ると、**端点とつながっていない穴**の上を通るか。
+ * 同じブロックの穴 (`a5 -- e5` の b〜d) は端点と同じ列の 5 穴なので、
+ * 上を通っても読み違えようがない。数えるのは、別のまとまりの穴だけ。
+ */
+function crossesForeignHoles(x: number, y1: number, y2: number, own: ReadonlySet<string | null>, layout: Layout): boolean {
+  if (!onColumn(x, layout)) return false;
+  const [low, high] = bounds(y1, y2);
+  return boardRows(layout).some((row) =>
+    row.y > low + SAME_AXIS_TOLERANCE && row.y < high - SAME_AXIS_TOLERANCE && !own.has(row.group));
+}
+
+/**
+ * 同じ列の 2 穴を結ぶ縦の線を、**列の上ではなく列と列の間に通す**か。
+ *
+ * 上下のレールを渡す線 (`-b20 -- -t20`) をまっすぐ引くと、板の 20 列の 10 穴の上を
+ * 縦に走る。そこに挿さった部品の足や配線の端も線に隠れ、**その列につながって
+ * 見える** (実機の電験 1-3 で、20 列の部品が上下のレールにつながって読めた)。
+ * 1 列目で上下のレールを 2 本渡すと、赤と黒が同じ列に重なって片方が消える。
+ *
+ * 短いホップ (レールから隣のブロックの a 行へ、など) は今までどおりまっすぐ引く。
+ * 実物のジャンパもそう挿すし、またぐのはもう 1 本のレールの穴 1 つだけで済む。
+ */
+const needsSidestep = (from: Point, to: Point, layout: Layout): boolean =>
+  Math.abs(from.x - to.x) < SAME_AXIS_TOLERANCE
+  && !isShortHop(from, to, layout)
+  && onBoardRow(from, layout) && onBoardRow(to, layout)
+  && crossesForeignHoles(from.x, from.y, to.y, new Set([groupAt(from, layout), groupAt(to, layout)]), layout);
+
+/**
+ * 列の間を通す縦の線。**両端では穴から半行だけ縦に出て、行と行の間で横に振る** —
+ * 自分の行の上を横に出ると、半列より遠くへ振ったときに隣の穴を踏む。
+ */
+function sidestepPath(from: Point, to: Point, x: number, layout: Layout): readonly Point[] {
+  const toward = Math.sign(to.y - from.y) || 1;
+  const half = layout.pitch / 2;
+  const fromGap = from.y + toward * half;
+  const toGap = to.y - toward * half;
+  return dedupe([from, { x: from.x, y: fromGap }, { x, y: fromGap }, { x, y: toGap }, { x: to.x, y: toGap }, to]);
+}
+
+/**
+ * 列の間のどこを通すか。**控え (`held`) に重ならず、部品に当たらない**半列を、
+ * 近い順に試す。2 本のレール渡しが同じ列にあっても、別々の半列に分かれる。
+ * どこも塞がっていれば、いちばん近い半列に戻す (線が穴の上に乗るよりはまし)。
+ */
+function sidestepOf(from: Point, to: Point, layout: Layout, obstacles: readonly Rect[], held: Reservations): number {
+  const reach = span(from.y, to.y);
+  const candidates = DETOUR_STEPS
+    .map((step) => halfColumn(from.x, step, layout))
+    .filter((x) => onBoard(x, layout));
+  // 部品の名札の帯は避けたいが、**遠くへ振ってまで避けない** — 名札は配線より上に
+  // 縁取りつきで描くので読めなくはならず、遠い半列は端点との結び付きが読みにくい。
+  // 名札を避けられるのは隣の半列 (±0.5) まで。
+  const near = candidates.slice(0, 2);
+  const fits = near.find((x) =>
+    isFree(held.columns, x, reach)
+    && !segmentHitsAny({ x, y: reach.low }, { x, y: reach.high }, obstacles, 0));
+  return fits ?? candidates.find((x) => isFree(held.columns, x, reach)) ?? candidates[0] ?? from.x;
+}
+
+/**
+ * 板の外の機器と板の穴を結ぶ配線が使うレーン。**機器の帯と板の間の、穴の無い帯**。
+ *
+ * 機器から来た線を板の中のレーン (レールの外の縁や、レールとブロックの間) で
+ * 横に走らせると、レールの縞や穴の行の上に寝て、**レールにつながって見える**
+ * (実機の AD の図で、GND の黒がレール + の穴の上を横切っていた)。
+ * 横の区間はすべて板の外で済ませ、板へは列ごとに縦に降りる。
+ */
+function deviceLaneOf(from: Point, to: Point, layout: Layout): Lane | null {
+  const [fromOn, toOn] = [onBoardArea(from, layout), onBoardArea(to, layout)];
+  if (fromOn === toOn) return null;
+  const outside = fromOn ? to : from;
+  const above = outside.y < layout.board.y;
+  return layout.lanes.find((lane) =>
+    (above ? lane.y < layout.board.y : lane.y > layout.board.y + layout.board.height)) ?? null;
+}
+
+const onBoardArea = (point: Point, layout: Layout): boolean =>
+  point.y >= layout.board.y && point.y <= layout.board.y + layout.board.height
+  && point.x >= layout.board.x && point.x <= layout.board.x + layout.board.width;
+
+/** 降りる道 1 本。`escape` が null ならその穴の列をまっすぐ降りる。`column` はその道の控え。 */
+type Descent = { readonly escape: Escape; readonly column: Claim | null };
+
+/**
+ * 板の外のレーンから穴 `end` へ降りる道。
+ *
+ * **まっすぐ降りると別のまとまりの穴 (レール) の上を通るときは、列と列の間を降りて、
+ * 穴の 1 つ手前の行間で横に入る。** 穴の列の上を降りると、通り過ぎるレールの穴が
+ * 線に隠れて、そこにも挿さっているように見えるため。降りる半列は控えに入れて、
+ * 2 本が同じ半列に重ならないようにする。
+ */
+function descentOf(end: Point, lane: Lane, layout: Layout, obstacles: readonly Rect[], held: Reservations): Descent {
+  if (!onBoardArea(end, layout)) return { escape: null, column: null };
+
+  const own = new Set([groupAt(end, layout)]);
+  const toward = Math.sign(end.y - lane.y) || 1;
+  const laneEdge = lane.y - toward * lane.halfHeight;
+  const straight: Claim = { at: end.x, span: span(laneEdge, end.y) };
+  const clear = (a: Point, b: Point): boolean => !segmentHitsAny(a, b, obstacles, 0);
+  if (
+    !crossesForeignHoles(end.x, lane.y, end.y, own, layout)
+    && isFree(held.columns, end.x, straight.span)
+    && clear({ x: end.x, y: lane.y }, end)
+  ) {
+    return { escape: null, column: straight };
+  }
+
+  const jogY = end.y - toward * (layout.pitch / 2);
+  for (const step of DETOUR_STEPS) {
+    const x = halfColumn(end.x, step, layout);
+    if (!onBoard(x, layout)) continue;
+    const column: Claim = { at: x, span: span(laneEdge, jogY) };
+    const row: Claim = { at: jogY, span: span(end.x, x) };
+    if (!isFree(held.columns, x, column.span) || !isFree(held.rows, jogY, row.span)) continue;
+    if (!clear({ x, y: lane.y }, { x, y: jogY }) || !clear({ x, y: jogY }, { x: end.x, y: jogY })) continue;
+    return { escape: { jogY, x, column, row }, column };
+  }
+
+  return { escape: null, column: straight };
 }
 
 /**
@@ -76,8 +246,14 @@ const isStraight = (from: Point, to: Point, layout: Layout, obstacles: readonly 
 const isShortHop = (from: Point, to: Point, layout: Layout): boolean =>
   Math.hypot(to.x - from.x, to.y - from.y) <= SHORT_HOP_PITCHES * layout.pitch;
 
+/**
+ * 板の外の機器から来た線は、**真下の穴でもまっすぐ引かない** — 板の外のレーンを
+ * 通って降りる (`deviceLaneOf`)。まっすぐ引くと、通り過ぎるレールの穴に
+ * 挿さっているように見えるうえ、仮の経路 (部品の寄せが読む) と本番の経路が食い違う。
+ */
 const isDirect = (from: Point, to: Point, layout: Layout): boolean =>
-  Math.abs(from.x - to.x) < SAME_AXIS_TOLERANCE || isShortHop(from, to, layout);
+  isShortHop(from, to, layout)
+  || (Math.abs(from.x - to.x) < SAME_AXIS_TOLERANCE && deviceLaneOf(from, to, layout) === null);
 
 /**
  * 板の同じ行の穴どうしか。**板の外の機器のピンは行に乗っていない**ので、
@@ -297,8 +473,17 @@ export function routeWires(
   // 段のほうは控えを読まなくてよい。レーンの厚みが `RAIL_TO_BLOCK / 2 - 5` の形で
   // 決めてあり (`model/layout.ts`)、**いちばん端の段でも隣の行から 5px 空く**。
   // 段どうしの 4px より広いので、行の上の線とはもともと離れている。
-  const lanes = requests.map((request): Lane | null => {
-    if (request.hints.length > 0) return null;
+  // 列の間へ逃がす縦の線 (上下のレールを渡す線など)。**レーンより先に**控える:
+  // 行を控える、まっすぐな配線と同じ理由で、あとから来る寄り道がその脇を並走しないように。
+  const sidesteps = requests.map((request): number | null => {
+    if (request.hints.length > 0 || !needsSidestep(request.from, request.to, layout)) return null;
+    const x = sidestepOf(request.from, request.to, layout, obstacles, held);
+    held = { ...held, columns: [...held.columns, { at: x, span: span(request.from.y, request.to.y) }] };
+    return x;
+  });
+
+  const lanes = requests.map((request, index): Lane | null => {
+    if (request.hints.length > 0 || sidesteps[index] !== null) return null;
 
     if (sameBoardRow(request.from, request.to, layout)) {
       const row = straightRow(request, layout, obstacles, taken, held);
@@ -309,12 +494,26 @@ export function routeWires(
     } else if (isDirect(request.from, request.to, layout)) {
       return null;
     }
-    return chooseLane(request.from, request.to, layout, obstacles);
+    return deviceLaneOf(request.from, request.to, layout) ?? chooseLane(request.from, request.to, layout, obstacles);
   });
 
   const escapes = requests.map((request, index): Escapes => {
     const lane = lanes[index];
     if (!lane) return { entry: null, exit: null };
+
+    // 機器の線は板の外のレーンから列ごとに降りる (`descentOf`)。部品よけの寄り道
+    // (`escapeOf`) は板の中のレーンのためのもので、ここでは降りる道が兼ねる。
+    if (deviceLaneOf(request.from, request.to, layout) === lane) {
+      const descend = (end: Point): Escape => {
+        const { escape, column } = descentOf(end, lane, layout, obstacles, held);
+        held = escape !== null
+          ? commit(held, escape)
+          : column === null ? held : { ...held, columns: [...held.columns, column] };
+        return escape;
+      };
+      const entry = descend(request.from);
+      return { entry, exit: descend(request.to) };
+    }
 
     const entry = escapeOf(request.from, request.to, lane, layout, obstacles, held);
     held = commit(held, entry);
@@ -328,6 +527,8 @@ export function routeWires(
 
   return requests.map((request, index) => {
     const lane = lanes[index];
+    const sidestep = sidesteps[index];
+    if (sidestep !== null && sidestep !== undefined) return sidestepPath(request.from, request.to, sidestep, layout);
     return lane
       ? buildPath(request.from, request.to, lane, offsets[index] ?? 0, escapes[index]!)
       : routeWire(request.from, request.to, layout, { hints: request.hints, obstacles });
@@ -406,7 +607,7 @@ function assignSlots(
       wires: (slot?.wires ?? 0) + 1,
     });
     takenByLane.set(lane.y, taken);
-    offsets[index] = level * SLOT_SPACING;
+    offsets[index] = level * slotSpacing(lane);
   }
 
   return offsets;
@@ -443,14 +644,14 @@ const comesFromBelow = (request: WireRequest, lane: Lane): boolean =>
  * 端に潰れ、離したつもりの 2 本が同じ高さに戻ってしまう。
  */
 function slotLevels(lane: Lane, fromBelow: boolean): readonly number[] {
-  const reach = Math.max(1, Math.floor(lane.halfHeight / SLOT_SPACING));
+  const reach = Math.max(1, Math.floor(lane.halfHeight / slotSpacing(lane)));
   const first = fromBelow ? 1 : -1;
   const levels = [0];
   for (let step = 1; step <= reach; step += 1) levels.push(first * step, -first * step);
   return levels;
 }
 
-function followHints(from: Point, to: Point, hints: readonly WireHint[]): readonly Point[] {
+function followHints(from: Point, to: Point, hints: readonly WireHint[], layout: Layout): readonly Point[] {
   const points: Point[] = [from];
   let current = from;
   let lastAxis: 'v' | 'h' = 'v';
@@ -465,7 +666,18 @@ function followHints(from: Point, to: Point, hints: readonly WireHint[]): readon
 
   // 最後の指示が縦なら次は横に振ってから入る。斜めに突っ込ませない。
   if (Math.abs(current.x - to.x) > SAME_AXIS_TOLERANCE && Math.abs(current.y - to.y) > SAME_AXIS_TOLERANCE) {
-    points.push(lastAxis === 'v' ? { x: to.x, y: current.y } : { x: current.x, y: to.y });
+    if (lastAxis === 'v') {
+      points.push({ x: to.x, y: current.y });
+    } else if (onBoardRow(to, layout) && Math.abs(current.y - to.y) > layout.pitch / 2) {
+      // **横の区間は行と行の間に通す。** 縦に降りきってから穴の行の上を横に走ると、
+      // その行のジャンパに見え (`[h10]` で半列ずらした AD の線がそうなっていた)、
+      // 同じ行に来た同じ色の線と重なって区別できなくなる。穴の半行手前で横に入り、
+      // 最後の半行だけ縦に挿す。
+      const gapY = to.y - Math.sign(to.y - current.y) * (layout.pitch / 2);
+      points.push({ x: current.x, y: gapY }, { x: to.x, y: gapY });
+    } else {
+      points.push({ x: current.x, y: to.y });
+    }
   }
 
   points.push(to);

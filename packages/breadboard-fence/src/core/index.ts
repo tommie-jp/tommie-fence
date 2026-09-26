@@ -167,7 +167,7 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
   const preObstacles = placed.flatMap((part) => partObstacles(part, layout, style.theme, preDrops));
   const plan = planWires(parsed.doc.wires, placed, board, layout, preObstacles);
   const relocation = relocateParts(placed, plan.ends, plan.corridor, style.check !== false);
-  errors.push(...relocation.errors);
+  errors.push(...relocation.errors, ...relocation.moves);
   const parts = relocation.parts;
 
   const wires: ResolvedWire[] = [];

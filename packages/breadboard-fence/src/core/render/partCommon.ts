@@ -113,12 +113,20 @@ export const partLabel = (
   extra: TextOptions = {},
 ): string =>
   svgText(x, y, text, {
+    class: CAPTION_CLASS,
     'font-size': num(theme.metrics.textSize),
     fill: theme.palette.partText,
     halo: theme.palette.textHalo,
     haloWidth: haloWidth(theme),
     ...extra,
   });
+
+/**
+ * 部品の名札に付ける印。**図を組むときに名札だけを部品の上の層へ移す**
+ * (`document.ts` の `liftCaptions`)。部品を書いた順に描くと、後に書いた部品の胴が
+ * 先の部品の名札を隠す (実機の水晶発振の図で `Rd 330` が水晶の缶の下に消えていた)。
+ */
+export const CAPTION_CLASS = 'bf-caption';
 
 /** その部品のピンが落ちた画布の座標。1 本でも置けていなければ null (描かない)。 */
 export function pinPoints(part: PlacedPart, layout: Layout): Point[] | null {

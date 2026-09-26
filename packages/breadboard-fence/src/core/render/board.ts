@@ -26,6 +26,11 @@ export function renderBoard(
   // (実機で `TH1 10k` の間に `5` の欠片が出ていた)。番号は 5 列おきに
   // 何度も出るので、1 つ伏せても数えられなくならない。
   covered: readonly Rect[] = [],
+  // **名札の字の下には穴を描かない。** 字の縁取りは字の形にしか穴を消せないので、
+  // 字の隙間と基準線の下から穴の欠片が覗き、足の目盛りのような印が字に付く
+  // (実機で `R1 1k` の下に `ˌ ˌ` が出ていた)。穴を丸ごと描かなければ欠片は出ない。
+  // 配線は穴の後に描くので、名札の下を通る線は隠れない。
+  lettered: readonly Rect[] = [],
 ): string {
   const { palette, metrics } = theme;
   const { x, y, width, height } = layout.board;
@@ -64,6 +69,13 @@ export function renderBoard(
 
   for (const row of [...rails, ...HOLE_ROWS]) {
     for (let col = 1; col <= board.columns; col += 1) {
+      const square = {
+        x: layout.colX(col) - metrics.holeSize / 2,
+        y: layout.rowY(row) - metrics.holeSize / 2,
+        width: metrics.holeSize,
+        height: metrics.holeSize,
+      };
+      if (lettered.some((band) => hides(band, square))) continue;
       parts.push(
         element('rect', {
           x: num(layout.colX(col) - metrics.holeSize / 2),

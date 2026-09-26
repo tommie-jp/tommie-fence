@@ -480,3 +480,116 @@ describe('routeWires around parts standing in the way', () => {
     expect(path).toHaveLength(4);
   });
 });
+
+/**
+ * 実体配線図が読みにくくなる形を、**座標で**見張る (教科書の図 192 枚を見て分けた症状)。
+ * 線が穴の上を通ると、そこにも挿さっているように見える。見るのは
+ * 「どの区間が、どの穴の中心の上を走るか」。
+ */
+describe('wires do not run over holes they do not plug into', () => {
+  const deviceLayout = createLayout(createBoard('half'), { deviceTop: true });
+  const hole = (text: string) => deviceLayout.point(parseAddress(text)!);
+  const pinAbove = (x: number): Point => ({ x, y: deviceLayout.deviceBands.top!.y + deviceLayout.deviceBands.top!.height });
+
+  const HOLE_ROWS_Y = (l: typeof layout) =>
+    ['+t', '-t', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', '-b', '+b'].map((row) => l.rowY(row as never));
+
+  /** 区間が、端点以外の穴の中心を踏むか。 */
+  const coveredHoles = (path: readonly Point[], l: typeof layout): Point[] => {
+    const holes = HOLE_ROWS_Y(l).flatMap((y) =>
+      Array.from({ length: l.columns }, (_, index) => ({ x: l.colX(index + 1), y })));
+    const [first, last] = [path[0]!, path.at(-1)!];
+    return holes.filter((h) => {
+      if ((h.x === first.x && h.y === first.y) || (h.x === last.x && h.y === last.y)) return false;
+      return path.slice(1).some((b, index) => {
+        const a = path[index]!;
+        const onX = Math.min(a.x, b.x) - 0.5 <= h.x && h.x <= Math.max(a.x, b.x) + 0.5;
+        const onY = Math.min(a.y, b.y) - 0.5 <= h.y && h.y <= Math.max(a.y, b.y) + 0.5;
+        return onX && onY;
+      });
+    });
+  };
+
+  test('a wire across the whole board between two rails runs between the columns', () => {
+    // 電験 1-3 の形: 下のレールから上のレールへ 20 列で渡す。
+    const path = routeWire(at('-b20'), at('-t20'), layout);
+
+    expect(path[0]).toEqual(at('-b20'));
+    expect(path.at(-1)).toEqual(at('-t20'));
+    expect(coveredHoles(path, layout)).toEqual([]);
+    const long = path.slice(1).find((point, index) => Math.abs(point.y - path[index]!.y) > layout.pitch * 3);
+    expect(Math.abs(((long!.x - layout.colX(1)) / layout.pitch) % 1)).toBeCloseTo(0.5);
+  });
+
+  test('two rail crossings in the same column take different gaps and do not overlap', () => {
+    // 1 列目で赤と黒が上下のレールを渡すと、同じ列に重なって赤が消えていた。
+    const [red, black] = routeWires([request('+t1', '+b1'), request('-t1', '-b1')], layout);
+    const runX = (path: readonly Point[]) =>
+      path.slice(1).find((point, index) => Math.abs(point.y - path[index]!.y) > layout.pitch * 3)!.x;
+
+    expect(Math.abs(runX(red!) - runX(black!))).toBeGreaterThanOrEqual(layout.pitch);
+    expect(coveredHoles(red!, layout)).toEqual([]);
+    expect(coveredHoles(black!, layout)).toEqual([]);
+  });
+
+  test('a short hop from a rail to the next block still goes straight', () => {
+    expect(routeWire(at('+t5'), at('a5'), layout)).toEqual([at('+t5'), at('a5')]);
+  });
+
+  test('a wire from a device above runs sideways only outside the board', () => {
+    // AD の図の形: 機器の線がレールの縞と + の穴の上を横に走っていた。
+    const path = routeWires([{ from: pinAbove(hole('a20').x - 13), to: hole('-t30'), hints: [] }], deviceLayout)[0]!;
+
+    const sideways = path.slice(1).filter((point, index) =>
+      Math.abs(point.y - path[index]!.y) < 0.5 && Math.abs(point.x - path[index]!.x) > deviceLayout.pitch / 2);
+    for (const point of sideways) expect(point.y).toBeLessThan(deviceLayout.board.y);
+    expect(coveredHoles(path, deviceLayout)).toEqual([]);
+  });
+
+  test('a device wire into the block drops between the columns past the rails', () => {
+    const path = routeWire(pinAbove(hole('a15').x - 30), hole('a15'), deviceLayout);
+
+    expect(path.at(-1)).toEqual(hole('a15'));
+    expect(coveredHoles(path, deviceLayout)).toEqual([]);
+  });
+
+  test('two device wires dropping side by side do not share a gap', () => {
+    const paths = routeWires([
+      { from: pinAbove(hole('a5').x - 40), to: hole('a5'), hints: [] },
+      { from: pinAbove(hole('b5').x - 20), to: hole('b5'), hints: [] },
+    ], deviceLayout);
+    const drops = paths.map((path) => path.find((point, index) =>
+      index > 0 && Math.abs(point.x - path[index - 1]!.x) < 0.5 && point.y > deviceLayout.board.y)!.x);
+
+    expect(drops[0]).not.toBe(drops[1]);
+  });
+
+  test('a hinted wire turns into its hole from the gap between the rows', () => {
+    // `AD.1+ -- b5 blue [h10]` の形。降りきってから b 行の上を横に走ると、
+    // b 行のジャンパに見えていた。
+    const from = pinAbove(hole('b5').x + 50);
+    const path = routeWire(from, hole('b5'), deviceLayout, { hints: [{ axis: 'h', delta: 10 }] });
+
+    const sideways = path.slice(1).filter((point, index) =>
+      Math.abs(point.y - path[index]!.y) < 0.5 && point.y > deviceLayout.board.y);
+    expect(sideways.length).toBeGreaterThan(0);
+    const rows = HOLE_ROWS_Y(deviceLayout);
+    for (const point of sideways) {
+      const nearest = Math.min(...rows.map((y) => Math.abs(y - point.y)));
+      expect(nearest).toBeGreaterThanOrEqual(deviceLayout.pitch / 2 - 0.5);
+    }
+    expect(path.at(-1)).toEqual(hole('b5'));
+  });
+
+  test('parallel device wires keep at least a wire width apart in the lane above the board', () => {
+    const paths = routeWires([
+      { from: pinAbove(hole('a20').x + 10), to: hole('a3'), hints: [] },
+      { from: pinAbove(hole('a20').x + 30), to: hole('a5'), hints: [] },
+    ], deviceLayout);
+    const laneY = (path: readonly Point[]) =>
+      path.slice(1).find((point, index) =>
+        Math.abs(point.y - path[index]!.y) < 0.5 && Math.abs(point.x - path[index]!.x) > 40)!.y;
+
+    expect(Math.abs(laneY(paths[0]!) - laneY(paths[1]!))).toBeGreaterThanOrEqual(8);
+  });
+});
