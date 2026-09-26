@@ -2,7 +2,7 @@
   "name": "breadboard-fence",
   "displayName": "Breadboard Fence",
   "description": "Markdown の ```bread フェンスをブレッドボード実体配線図としてプレビューする",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "license": "MIT",
   "private": true,
   "publisher": "tommie",

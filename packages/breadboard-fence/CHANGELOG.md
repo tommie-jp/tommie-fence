@@ -3,7 +3,7 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
-## [Unreleased]
+## [0.13.1] - 2026-09-26
 
 実体配線図が読みにくくなる形を直した (教科書の実体配線図 192 枚を 1 枚ずつ見て分けた症状)。
 **図の見た目が変わる** — 配線の通り道と、白と灰色の線の縁取り、名札の下の穴。

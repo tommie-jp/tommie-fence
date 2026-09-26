@@ -3,6 +3,18 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.15.3] - 2026-09-26
+
+breadboard-fence 0.13.1 / perfboard-fence 0.11.1 を束ねた。
+
+### Fixed
+
+- breadboard: **白い線と既定の灰色の線が板や部品の足に溶けて見えなかった**。縁取りを敷く。
+- breadboard: **`[h10]` などで曲げた線・機器からの線・上下のレールを渡す線が、穴の行や
+  列の上を走り、そこにつながって見えていた**。行と行、列と列の間を通す。
+- breadboard: **部品の名札に下の行の穴の欠片がかぶっていた**。名札の下には穴を描かない。
+- perfboard: **端面の SMA が行の名前を隠していた**。
+
 ## [0.15.2] - 2026-09-26
 
 circuit-fence 0.13.1 を束ねた。
