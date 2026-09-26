@@ -271,7 +271,12 @@ function smaEdgeBody(
  * **胴と一緒に回さない。** 板の右の縁に載せたコネクタは胴が 180 度回るので、
  * 一緒に回すと鏡文字になる。字はいつも水平に置く。
  */
-function smaBadge(part: PlacedPart, at: { x: number; y: number }, theme: Theme): string {
+function smaBadge(
+  part: PlacedPart,
+  at: { x: number; y: number },
+  theme: Theme,
+  anchor: 'middle' | 'start' | 'end' = 'middle',
+): string {
   if (part.type !== 'sma' || part.variant === null) return '';
 
   const male = part.variant.startsWith('male');
@@ -282,6 +287,7 @@ function smaBadge(part: PlacedPart, at: { x: number; y: number }, theme: Theme):
   const at2 = { x: at.x, y: at.y + SMA_SIZE / 2 + CAPTION_GAP + size * (CAPTION_CAP + 1.15) };
 
   return svgText(at2.x, at2.y, fit(`SMA ${male ? 'male' : 'female'}`, room), {
+    anchor,
     fill: theme.palette.plateText,
     'font-size': num(size),
     halo: theme.palette.plate,
@@ -445,13 +451,20 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme, room?: Ca
 
   // 姿の名前は**板の外に出ている胴の真ん中**に置く。台座は 1mm しかないので
   // そこに寄せると板に掛かり、足の側に寄せると配線に被る。
+  //
+  // **左右の縁に載せたときは、字を胴の先端 (板から遠い端) に揃える。** 真ん中に
+  // 置くと字の板側の端が板の縁まで届き、行の名前 (`G`) に掛かる (実機の NanoVNA の
+  // 冊の治具の図すべてで `SMA female` の `e` が `G` に重なっていた)。
   const blockX = mount === null ? 0 : (-width / 2 + mount.edgeX) / 2;
+  const sideways = mount !== null && Math.abs(Math.cos(rect.angle)) > 0.9;
+  const tipX = rect.cx + (-width / 2) * Math.cos(rect.angle);
   const badgeAt = {
-    x: rect.cx + blockX * Math.cos(rect.angle),
+    x: sideways ? tipX : rect.cx + blockX * Math.cos(rect.angle),
     y: rect.cy + blockX * Math.sin(rect.angle),
   };
+  const anchor = !sideways ? 'middle' : Math.cos(rect.angle) > 0 ? 'start' : 'end';
 
-  return `${lead}${body}${smaBadge(part, badgeAt, theme)}${label}`;
+  return `${lead}${body}${smaBadge(part, badgeAt, theme, anchor)}${label}`;
 }
 
 /**

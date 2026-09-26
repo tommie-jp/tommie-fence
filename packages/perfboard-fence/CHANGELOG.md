@@ -3,6 +3,15 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Fixed
+
+- **板の左右の縁に載せた端面の SMA が、行の名前を隠していた。** 台座が `D`〜`F` を
+  隠し、`SMA female` の字が `G` に掛かっていた (NanoVNA の冊の治具の図すべて)。
+  行と列の名前を部品より上に描き (地の色の縁取りで、金物の上でも読める)、
+  姿の名前は胴の先端 (板から遠い端) に揃えて置く。
+
 ## [0.11.0] - 2026-09-25
 
 ### Added

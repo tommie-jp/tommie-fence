@@ -357,12 +357,16 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
         wiring.deviceWires, placedDevices.placed, layout, THEME, hops.slice(wiring.wires.length),
       )
       + renderDevices(placedDevices.placed, THEME, options.edit === true)
-      // **行と列の名前は機器とその配線より上。** 板の上に置いた機器の足と線は
-      // 名前の帯を必ず横切るので、下に敷くと行く先の列の名前が隠れる。
-      // 部品と注釈よりは下 (縁から張り出すコネクタと、書いた人の印を隠さない)。
-      + renderAxisLabels(board, layout, PLATE, style.labels)
       // **名札は板に書いた字を避ける** (番地で置いたほうが強い)。
       + renderParts(placement.parts, layout, PLATE, options.edit === true, noteBands(notes, layout, PLATE))
+      // **行と列の名前は機器とその配線より上、部品よりも上。** 板の上に置いた
+      // 機器の足と線は名前の帯を必ず横切るので、下に敷くと行く先の列の名前が隠れる。
+      // 縁から張り出す端面の SMA も同じで、部品の下に敷くと台座が `D`〜`F` を
+      // 隠していた (実機の NanoVNA の冊の治具の図すべて)。コネクタの足の番地
+      // (`e1 d0 f0`) を読む手掛かりがちょうどその行なので、名前を上に出す。
+      // 名前は地の色で縁取ってあるので、金物の上でも読め、コネクタの形も残る。
+      // 注釈よりは下 (書いた人の印を隠さない)。
+      + renderAxisLabels(board, layout, PLATE, style.labels)
       // 注釈は一番上。**指したものが下に隠れると印の意味が無くなる。**
       + renderNotes(notes, layout, PLATE, options.edit === true)
       // 凡例・部品表・書き出しは板の外の帯。図とは重ならないので、順番はどこでもよい。
