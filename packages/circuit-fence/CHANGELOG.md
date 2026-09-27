@@ -3,6 +3,19 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Changed
+
+- **電流の矢 (`i=`) と、矢で描く電圧 (european / jis) を 4 分の 3 に縮めた** (記号の長さ /
+  6 → / 8)。教科書の図で、矢が字より目立ちすぎた。指し棒 (`arrow`) の矢は据え置き。
+
+### Fixed
+
+- **縦に置いた LED の値が光の矢に食い込んで見えた** (`D1: led a7 c7 red`)。値は矢の先に
+  掛けていたので、字との間が inner sep (0.12 cm ほど) しかなく、縮めて見るプレビューでは
+  重なって見えた。矢の先からさらに 0.2 cm 外 (向きの左の法線の側へ 0.8 cm) に置く。
+
 ## [0.14.0] - 2026-09-28
 
 ### Changed

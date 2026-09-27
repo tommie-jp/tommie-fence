@@ -67,13 +67,14 @@ const DEFAULT_STANDARD: Standard = 'american';
  * 電流の矢と、矢で描く電圧 (european / jis) の大きさ (記号の長さをこの数で割った長さ。
  * 小さいほど大きい)。circuitikz の既定 16 は 1.2 cm の記号で 0.75 mm しかなく、線が 0.8pt
  * あると矢の形が潰れて見えない (実機で指摘)。10・8・6 を焼いて比べ、試験の図の矢に近い
- * (字の高さの 6 割ほど) 6 にした。記号の中の矢 (光の矢・摺動子) は `latexslim` で
+ * (字の高さの 6 割ほど) 6 にしたが、教科書の図で矢が字より目立ちすぎた (実機で指摘)。
+ * 6・7・8 を焼き直して比べ、形が潰れず字とも釣り合う 8 にした。記号の中の矢 (光の矢・摺動子) は `latexslim` で
  * もとから 1.8 mm ほどあるので触らない。
  *
  * **部品の線 (`to[...]`) の中だけ**に効かせる。図全体 (`\ctikzset`) に掛けると、同じ
  * `currarrow` で描くトランジスタと FET の矢まで膨らむ (実測)。
  */
-const CURRENT_ARROW_SCALE = 6;
+const CURRENT_ARROW_SCALE = 8;
 
 /**
  * 電源の電圧の矢を丸から離す量 (circuitikz の `voltage/bump a`。既定 1.2)。電源の矢は
@@ -793,6 +794,12 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
 export const LIGHT_ARROW_REACH = 0.6;
 
 /**
+ * 光の矢の先から値のノードまでの間 (cm)。矢の先にノードを掛けるだけ (間は inner sep の
+ * 0.12 cm ほど) だと、縦に置いた LED で字が矢に食い込んで見えた (プレビューで指摘)。
+ */
+const LIGHT_VALUE_GAP = 0.2;
+
+/**
  * 光の矢のある 2 端子の値。**矢の先より外に、別ノードで置く。**
  *
  * circuitikz は矢を記号の枠に数えないので、`a^` の字は三角形のすぐ外 ——
@@ -810,9 +817,10 @@ export function lightValueNode(from: Point, to: Point, text: string): string {
   const length = Math.hypot(dx, dy) || 1;
   const nx = -dy / length;
   const ny = dx / length;
-  // ノードは矢の先に掛ける。字との間はノードの inner sep (0.12 cm ほど) が空ける。
-  const x = (from.x + to.x) / 2 + nx * LIGHT_ARROW_REACH;
-  const y = (from.y + to.y) / 2 + ny * LIGHT_ARROW_REACH;
+  // ノードは矢の先から LIGHT_VALUE_GAP だけ外に掛ける。字との間はさらに inner sep が空ける。
+  const reach = LIGHT_ARROW_REACH + LIGHT_VALUE_GAP;
+  const x = (from.x + to.x) / 2 + nx * reach;
+  const y = (from.y + to.y) / 2 + ny * reach;
   return `\\node[anchor=${anchorFacing(-nx, -ny)}] at (${num(x)},${num(y)}) {${text}};`;
 }
 
