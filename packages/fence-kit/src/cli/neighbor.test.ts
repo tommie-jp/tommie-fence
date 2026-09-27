@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
-import { readNeighbor } from './neighbor.ts';
+import { readNeighbor, sameFile } from './neighbor.ts';
 
 const LIMITS = { pattern: /^[\w-][\w.-]{0,63}\.dat$/i, maxBytes: 1000 };
 
@@ -45,5 +45,26 @@ describe('readNeighbor', () => {
   test('refuses a directory that happens to have the name', () => {
     mkdirSync(join(home, 'dir.dat'));
     expect(read('dir.dat')).toBeNull();
+  });
+});
+
+describe('sameFile', () => {
+  const file = (dev: bigint, ino: bigint, link = false) => ({ dev, ino, isSymbolicLink: () => link });
+
+  test('accepts the file that was opened, still under its name', () => {
+    expect(sameFile(file(1n, 42n), file(1n, 42n))).toBe(true);
+  });
+
+  test('refuses when the name was swapped for another file between lstat and open', () => {
+    expect(sameFile(file(1n, 42n), file(1n, 43n))).toBe(false);
+    expect(sameFile(file(1n, 42n), file(2n, 42n))).toBe(false);
+  });
+
+  test('refuses when the name is now a symlink, even to the same file', () => {
+    expect(sameFile(file(1n, 42n), file(1n, 42n, true))).toBe(false);
+  });
+
+  test('tells apart inode numbers above 2^53', () => {
+    expect(sameFile(file(1n, 2n ** 60n), file(1n, 2n ** 60n + 1n))).toBe(false);
   });
 });

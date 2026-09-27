@@ -13,7 +13,8 @@
 - **等幅の帯** (`mono.ts` — `monoText` `monoLinesSize` `monoTableSize` `renderMonoTable` など)。
   perfboard・copper・vna が同じ組み方を写して持っていた。行送りと余白は `MonoSpacing` で渡す。
 - **`data:` の読み口** (`fence-kit/cli` の `readNeighbor`)。vna が持っていた物。
-  シンボリックリンクを辿らず、通常のファイルだけを、上限まで読む。
+  シンボリックリンクを辿らず、通常のファイルだけを、上限まで読む。開いた後に、開いた物と
+  名前の指す物が同じファイル (`dev` と `ino`) かを見直す (`O_NOFOLLOW` の無い OS での差し替えに備える)。
 - **計器の画面の単位** (`units.ts` — `parseVolts` `parseSeconds` `parseDegrees` `parsePercent`
   `parsePerDiv` と `format*`)。**単位の無い数は読まない**。`-10dBm` は 50 Ω の正弦の peak に直す。
 - **波形発生器の波** (`wave.ts` — `parseWave` `sampleWave` `periodOf`)。`sine 1kHz 1V offset 1V`。
