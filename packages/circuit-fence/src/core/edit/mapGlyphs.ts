@@ -21,7 +21,7 @@ import type { PinSide } from '../parts.ts';
 
 export type GlyphName =
   | 'resistor' | 'resistor-var' | 'potentiometer' | 'resistor-iec' | 'photoresistor'
-  | 'capacitor' | 'ecap' | 'varicap' | 'inductor'
+  | 'capacitor' | 'capacitor-var' | 'ecap' | 'varicap' | 'inductor'
   | 'diode' | 'schottky' | 'photodiode' | 'led' | 'zener' | 'thyristor' | 'diac' | 'triac'
   | 'source' | 'dc-source' | 'ac-source' | 'square-source' | 'tri-source' | 'i-source' | 'solar'
   | 'battery' | 'switch' | 'switch-nc' | 'button' | 'button-nc'
@@ -46,7 +46,7 @@ const SHAPES: Record<string, GlyphName> = {
   thermistor: 'resistor-iec', 'thermistor-ntc': 'resistor-iec',
   'thermistor-ptc': 'resistor-iec', varistor: 'resistor-iec',
   photoresistor: 'photoresistor',
-  capacitor: 'capacitor', ecap: 'ecap', varicap: 'varicap',
+  capacitor: 'capacitor', 'capacitor-var': 'capacitor-var', ecap: 'ecap', varicap: 'varicap',
   inductor: 'inductor', transformer: 'transformer',
   diode: 'diode', schottky: 'schottky', photodiode: 'photodiode',
   led: 'led', zener: 'zener', diac: 'diac',
@@ -201,6 +201,8 @@ const SHAPE: Record<GlyphName, () => string> = {
   photoresistor: () => `${box(20, 10)}${path(`${arrow(-1.5, -12.5, -5, -8)} ${arrow(4.5, -12.5, 1, -8)}`)}`,
   // 極板 2 枚。間を空けるのが「切れている」ことの目印。
   capacitor: () => path('M-3,-9 L-3,9 M3,-9 L3,9'),
+  // 可変。極板 2 枚を、可変抵抗と同じ立った矢が貫く (図と同じ)。
+  'capacitor-var': () => `${SHAPE.capacitor()}${path(arrow(3.5, 8.5, -3.5, -8.5))}`,
   // 電解。片方が曲がった極板 (向きのある部品)。
   ecap: () => path('M-3,-9 L-3,9 M3,-9 q4,9 0,18'),
   // 可変容量。ダイオードの三角に極板 2 枚。
@@ -382,7 +384,7 @@ export const drawGlyph = (name: GlyphName): string => SHAPE[name]();
  */
 const SPAN: Record<GlyphName, number> = {
   resistor: HALF, 'resistor-var': HALF, potentiometer: HALF, 'resistor-iec': HALF, photoresistor: HALF,
-  capacitor: 3, ecap: 5, varicap: 4.5, inductor: HALF, transformer: 9,
+  capacitor: 3, 'capacitor-var': 3, ecap: 5, varicap: 4.5, inductor: HALF, transformer: 9,
   diode: 6, schottky: 6, photodiode: 6, led: 6, zener: 6, thyristor: 6, diac: 5, triac: 5,
   source: 9, 'dc-source': SOURCE_R, 'ac-source': SOURCE_R, 'square-source': SOURCE_R,
   'tri-source': SOURCE_R, 'i-source': SOURCE_R, solar: SOURCE_R, battery: 3, meter: 9,
@@ -450,7 +452,7 @@ export const glyphSpanBack = (name: GlyphName): number => SPAN_BACK[name] ?? SPA
  */
 const TALL: Record<GlyphName, number> = {
   resistor: 5, 'resistor-var': 9, potentiometer: 13, 'resistor-iec': 6, photoresistor: 13,
-  capacitor: 9, ecap: 9, varicap: 7, inductor: 5, transformer: 9,
+  capacitor: 9, 'capacitor-var': 9, ecap: 9, varicap: 7, inductor: 5, transformer: 9,
   diode: 7, schottky: 7, photodiode: 12, led: 12, zener: 10, thyristor: 8, diac: 8, triac: 9,
   source: 9, 'dc-source': 9, 'ac-source': 9, 'square-source': 9, 'tri-source': 9,
   'i-source': 9, solar: 15, battery: 8, meter: 9,
@@ -489,7 +491,7 @@ const LEG_GAP: Record<GlyphName, number> = {
   box: 12,
   // ここから下は 1 辺に 1 本だけ。値は使われない。
   resistor: 12, 'resistor-var': 12, potentiometer: 12, 'resistor-iec': 12, photoresistor: 12,
-  capacitor: 12, ecap: 12, varicap: 12, inductor: 12,
+  capacitor: 12, 'capacitor-var': 12, ecap: 12, varicap: 12, inductor: 12,
   diode: 12, schottky: 12, photodiode: 12, led: 12, zener: 12, thyristor: 12, diac: 12, triac: 12,
   source: 12, 'dc-source': 12, 'ac-source': 12, 'square-source': 12, 'tri-source': 12,
   'i-source': 12, solar: 12, battery: 12, meter: 12,

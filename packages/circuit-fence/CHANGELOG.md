@@ -5,6 +5,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- **可変コンデンサ (`capacitor-var`)**。極板 2 枚を斜めの矢が貫く記号 (circuitikz の `vC`) で、
+  ポリバリコン・トリマを描く (`VC1: capacitor-var a5 c5`)。値の単位は F。バリキャップ
+  (`varicap`、可変容量ダイオード) とは別の種類。矢は可変抵抗と同じく、どう置いても右上を向く。
+  Fence Editor のパレットは「バリコン」でも引ける。板のフェンスには足さない (板の外の機器として
+  `type: device` で書く)。
+
 ### Fixed
 
 - **可変抵抗 (`resistor-var`) の矢が、置いた向きによって右上を向かなかった**。circuitikz は

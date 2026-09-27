@@ -75,7 +75,7 @@ parts:
 
 - 抵抗系 `resistor` `resistor-var` `potentiometer` `photoresistor`
   `thermistor` `thermistor-ntc` `thermistor-ptc` `varistor`
-- 容量・コイル `capacitor` `ecap` `varicap` `inductor` `crystal`
+- 容量・コイル `capacitor` `capacitor-var` `ecap` `varicap` `inductor` `crystal`
 - ダイオード系 `diode` `led` `zener` `schottky` `photodiode` `diac`
   `thyristor` `triac`
 - 電源 `vsource` `sine` `square` `triangle` `isource` `battery` `solar`

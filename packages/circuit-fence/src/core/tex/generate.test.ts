@@ -830,7 +830,9 @@ describe('可変の矢の向き', () => {
 
   const cases = [
     ['resistor-var', 'vR', 'fence', [', mirror, invert', '', ', mirror', ', invert']],
+    ['capacitor-var', 'vC', 'fence', [', mirror', ', invert', ', mirror, invert', '']],
     ['resistor-var', 'vR', 'latex', ['', ', mirror, invert', ', invert', ', mirror']],
+    ['capacitor-var', 'vC', 'latex', ['', ', mirror, invert', ', invert', ', mirror']],
   ] as const;
 
   for (const [type, symbol, target, expected] of cases) {

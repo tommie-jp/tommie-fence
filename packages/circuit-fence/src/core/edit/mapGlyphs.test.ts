@@ -296,6 +296,16 @@ describe('図に寄せた形', () => {
     expect(y).toBeGreaterThan(glyphTall('resistor'));
   });
 
+  test('drives the same steep arrow through the variable capacitor plates', () => {
+    // 可変コンデンサは極板 2 枚を、可変抵抗と同じ立った矢が貫く (図と同じ)。
+    expect(glyphOf('capacitor-var')?.name).toBe('capacitor-var');
+    const arrowOnly = drawGlyph('capacitor-var').replace(drawGlyph('capacitor'), '');
+    const { x, y } = spread(arrowOnly);
+
+    expect(drawGlyph('capacitor-var').startsWith(drawGlyph('capacitor'))).toBe(true);
+    expect(y).toBeGreaterThan(x * 2);
+  });
+
   test('leaves a gap between the light arrows and the body, as the figure does', () => {
     // 実機で「photoresistor, 矢印と本体に隙間を開ける」。
     const arrows = drawGlyph('photoresistor').replace(/<rect[^>]*>/, '');

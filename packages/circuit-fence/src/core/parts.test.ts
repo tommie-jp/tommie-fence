@@ -232,7 +232,7 @@ describe('記事によく出る部品', () => {
   test('turns the variable arrows by the way the part is laid, not by a fixed option', () => {
     // 矢の返し方は置いた向きで変わる (tex/generate.test.ts の「可変の矢の向き」)。
     // 決め打ちの options で返すと、右上を向くのは 1 方向だけになる。
-    for (const [name, symbol] of [['resistor-var', 'vR']] as const) {
+    for (const [name, symbol] of [['resistor-var', 'vR'], ['capacitor-var', 'vC']] as const) {
       const type = lookupPartType(name);
 
       expect(type?.symbol).toBe(symbol);
@@ -241,6 +241,10 @@ describe('記事によく出る部品', () => {
     }
   });
 
+  test('draws the variable capacitor with farads, apart from the varicap diode', () => {
+    expect(lookupPartType('capacitor-var')?.unitSi).toBe(lookupPartType('capacitor')?.unitSi);
+    expect(lookupPartType('varicap')?.symbol).not.toBe('vC');
+  });
 
   test('tells the NTC and the PTC thermistor apart with letters', () => {
     // 記号の中の θ は tiny の数式フォントが無くて `#` で出る (実測)。

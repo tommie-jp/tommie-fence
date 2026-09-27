@@ -47,6 +47,8 @@ describe('実体配線図と同じ綴りで書けること', () => {
     expect(partTypeNames().filter((type) => !onBoards.has(type))).toEqual([
       // 可変抵抗はポテンショメータを 2 本足で使う書き方。物としては同じ。
       'resistor-var',
+      // 可変コンデンサ (ポリバリコン) は板に挿さず線でつなぐ。板では `device` で書く。
+      'capacitor-var',
       // 電源。実物は電池か機器 (`device`) で、記号のほうは「そこに何かが要る」印。
       'vsource', 'sine', 'square', 'triangle', 'isource',
       // モータは板に挿さず線でつなぐ。板では `device` で書く (52 の docs/66)。

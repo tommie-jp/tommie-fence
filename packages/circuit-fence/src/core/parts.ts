@@ -32,7 +32,7 @@ import type { DeviceBox } from './tex/shapes.ts';
  * - `ammeter` / `voltmeter` (電流計・電圧計) → 丸に指針の矢が入る。
  *   矢の無い `rmeter` に字を渡す (抵抗計と揃う)
  * - `transformer` (トランス) → 空芯。鉄芯の入る `transformer core` にする
- * - `vR` (可変抵抗) → 矢を記号と一緒に回すので、
+ * - `vR` / `vC` (可変抵抗・可変コンデンサ) → 矢を記号と一緒に回すので、
  *   置いた向きで矢先が 4 方向に散る。向きごとに返して右上へ揃える (tunable)
  */
 
@@ -679,6 +679,7 @@ export type TunableTurns = Readonly<Record<Laid, readonly string[]>>;
  */
 const TUNABLE_LATEX: TunableTurns = { right: [], left: ['mirror', 'invert'], down: ['invert'], up: ['mirror'] };
 const TUNABLE_FENCE_VR: TunableTurns = { right: ['mirror', 'invert'], left: [], down: ['mirror'], up: ['invert'] };
+const TUNABLE_FENCE_VC: TunableTurns = { right: ['mirror'], left: ['invert'], down: ['mirror', 'invert'], up: [] };
 
 export const PART_TYPES = {
   // 受動部品
@@ -704,6 +705,14 @@ export const PART_TYPES = {
    * (斜めに置いたときに字を置く場所を決められず、値のラベルとも近すぎる)。
    */
   ecap: { kind: 'two-terminal', symbol: 'cC', unitTex: FARAD, unitSi: SI_FARAD },
+  /**
+   * 可変コンデンサ (ポリバリコン・トリマ)。極板 2 枚を斜めの矢が貫く。
+   * 矢は可変抵抗と同じく右上へ揃える。**バリキャップ (ダイオード) とは別物**。
+   */
+  'capacitor-var': {
+    kind: 'two-terminal', symbol: 'vC', tunable: { fence: TUNABLE_FENCE_VC, latex: TUNABLE_LATEX },
+    unitTex: FARAD, unitSi: SI_FARAD,
+  },
   /** バリキャップ (可変容量ダイオード)。値は容量なので F を足す。 */
   varicap: { kind: 'two-terminal', symbol: 'varcap', unitTex: FARAD, unitSi: SI_FARAD },
   inductor: { kind: 'two-terminal', symbol: 'L', unitTex: HENRY, unitSi: SI_HENRY },
@@ -1019,6 +1028,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   potentiometer: 'ポテンショメータ (3 端子)',
   capacitor: 'コンデンサ',
   ecap: '電解コンデンサ',
+  'capacitor-var': '可変コンデンサ (バリコン)',
   varicap: 'バリキャップ',
   inductor: 'コイル',
   photoresistor: 'CdS セル',
@@ -1140,6 +1150,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   potentiometer: 'P',
   capacitor: 'C',
   ecap: 'C',
+  'capacitor-var': 'C',
   varicap: 'D',
   inductor: 'L',
   photoresistor: 'R',
