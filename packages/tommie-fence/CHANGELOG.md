@@ -3,6 +3,16 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.15.4] - 2026-09-28
+
+breadboard-fence 0.13.2 を束ねた。
+
+### Fixed
+
+- breadboard: **縦に立てた部品の名札が胴の下端に食い込んでいた** (a〜e 行に立てた抵抗で
+  一番下の色の帯が隠れた)。胴の長さも数えて、名札を胴の下端の下に出す。
+- breadboard: **縦に立てた胴の下から列番号の欠片が覗くことがあった**。胴が乗る所の番号は伏せる。
+
 ## [0.15.3] - 2026-09-26
 
 breadboard-fence 0.13.1 / perfboard-fence 0.11.1 を束ねた。
