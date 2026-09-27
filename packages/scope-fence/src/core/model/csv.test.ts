@@ -87,4 +87,22 @@ describe('parseCsv', () => {
     expect(reason).toBe('3 行目の値が読めません: ]0;pwnedx');
     expect(reason).not.toMatch(/[\u001b\u0007\u202E]/u);
   });
+
+  test('refuses a heading with too many columns before allocating anything, and quickly', () => {
+    // 1 MB の上限の中でも 行 × 列 が膨らむ形 (列 4 万・1 バイトの行 4 万)。
+    const heading = ['Time (s)', 'Channel 1 (V)', ...Array.from({ length: 40000 }, (_, index) => `X${index}`)].join(',');
+    const text = [heading, ...Array.from({ length: 40000 }, () => '0')].join('\n');
+    const started = performance.now();
+    const result = parseCsv(text);
+    expect(performance.now() - started).toBeLessThan(100);
+    expect(result).toEqual({ ok: false, reason: '列が多すぎます (16 列まで)' });
+  });
+
+  test('still reads 16 columns, dropping the ones it does not draw', () => {
+    const heading = ['Time (s)', 'Channel 1 (V)', ...Array.from({ length: 14 }, (_, index) => `X${index}`)].join(',');
+    const row = (t: number): string => [t, 1, ...Array.from({ length: 14 }, () => 0)].join(',');
+    const result = read([heading, row(0), row(1e-3)].join('\n'));
+    expect(result.columns.map((column) => column.name)).toEqual(['ch1']);
+    expect(result.notes).toHaveLength(14);
+  });
 });

@@ -28,6 +28,11 @@ export const LIMITS = {
   frequencyMax: 1e9,
   /** `data:` の行の数とファイルの大きさ。 */
   dataRows: 100001,
+  /**
+   * `data:` の列の数 (時刻 1 + ch 4 + Math など読み捨てる列の余裕)。**配列を確保する前に断る** —
+   * 列に上限が無いと、1 MB の上限の中でも 行 × 列 の確保が膨らんで拡張ホストが止まる。
+   */
+  dataColumns: 16,
   dataBytes: 1_000_000,
   /** 図の題の長さ。 */
   titleLength: 60,

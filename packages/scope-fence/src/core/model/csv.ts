@@ -77,6 +77,7 @@ export function parseCsv(input: string): CsvRead {
   const data = hasHeading ? rows.slice(1) : rows;
   if (data.length > LIMITS.dataRows) return refuse(`行が多すぎます (${LIMITS.dataRows} 行まで)`);
   const width = head.text.split(delimiter).length;
+  if (width > LIMITS.dataColumns) return refuse(`列が多すぎます (${LIMITS.dataColumns} 列まで)`);
   const heading: Heading = hasHeading
     ? readHeading(head.text.split(delimiter))
     : { timeScale: 1, columns: CHANNEL_NAMES.slice(0, width - 1).map((name) => ({ name, scale: 1 })), notes: [] };
@@ -85,7 +86,8 @@ export function parseCsv(input: string): CsvRead {
   if (data.length < 2) return refuse('点が 2 つ以上要ります');
 
   const time = new Float64Array(data.length);
-  const values = heading.columns.map(() => new Float64Array(data.length));
+  // 読み捨てる列には配列を作らない (確保は ch に当たる列だけ)。
+  const values = heading.columns.map((column) => (column === null ? undefined : new Float64Array(data.length)));
   for (const [row, { text, line }] of data.entries()) {
     const cells = text.split(delimiter);
     for (let column = 0; column <= heading.columns.length; column += 1) {
