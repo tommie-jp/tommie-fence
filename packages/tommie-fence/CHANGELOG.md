@@ -3,6 +3,21 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+scope-fence 0.1.0 を束ねる。
+
+### Added
+
+- **6 つ目のフェンス ` ```scope `** — オシロスコープの画面 (時間波形)。vna と同じく
+  マップ (殻) を持たず、プレビュー・文法の色分け・スニペット (`scope`)・Problems パネルに出る。
+  `data:` (WaveForms の CSV) はデスクトップ版だけが `.md` の隣から読む。
+
+### Changed
+
+- 殻を持たないフェンスの口を `vna.ts` / `vnaData.ts` から `mapless.ts` / `neighborData.ts` に
+  改めた (vna と scope の 2 つを並べる)。
+
 ## [0.17.1] - 2026-09-28
 
 circuit-fence 0.15.1 を束ねた。

@@ -40,7 +40,7 @@ describe('種類の綴り', () => {
 });
 
 describe('マップ (殻)', () => {
-  test('vna だけが持たない (図の中に動かす部品が無い)', () => {
-    expect(KINDS.filter((kind) => !hasMap(kind))).toEqual(['vna']);
+  test('vna と scope だけが持たない (図の中に動かす部品が無い)', () => {
+    expect(KINDS.filter((kind) => !hasMap(kind))).toEqual(['vna', 'scope']);
   });
 });

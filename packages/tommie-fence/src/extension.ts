@@ -6,8 +6,8 @@ import { activateWith } from './activate.ts';
 import { registerEditorCommands } from './editor/commands.ts';
 import { fenceEditors } from './editor/fences.ts';
 import { registerProblems } from './problems/diagnostics.ts';
-import { vnaProblems } from './vna.ts';
-import { dataForUri, readDataFromEnv } from './vnaData.ts';
+import { scopeProblems, vnaProblems } from './mapless.ts';
+import { NEIGHBOR_READERS, dataForUri, scopeDataFrom, vnaDataFrom } from './neighborData.ts';
 
 /**
  * デスクトップ版の入口。回路図の描画は WASM の TeX (node-tikzjax)。
@@ -20,9 +20,13 @@ import { dataForUri, readDataFromEnv } from './vnaData.ts';
 export function activate(context: vscode.ExtensionContext) {
   registerEditorCommands(context);
   // 読めなかった行を Problems パネルにも出す。TeX を通らないので web 版でも動く。
-  // vna は殻を持たないので Problems の口だけ。`data:` は文書の隣を読む。
+  // vna と scope は殻を持たないので Problems の口だけ。`data:` は文書の隣を読む。
   const editors = fenceEditors();
-  registerProblems(context, (document) => [...editors, vnaProblems(dataForUri(document.uri))]);
+  registerProblems(context, (document) => [
+    ...editors,
+    vnaProblems(dataForUri(document.uri, vnaDataFrom)),
+    scopeProblems(dataForUri(document.uri, scopeDataFrom)),
+  ]);
 
   return activateWith({
     render: createWorkerRenderer({
@@ -32,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
     refresh: () => {
       void vscode.commands.executeCommand('markdown.preview.refresh');
     },
-    readData: readDataFromEnv,
+    readers: NEIGHBOR_READERS,
   });
 }
 

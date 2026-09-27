@@ -31,7 +31,11 @@
   計算し、測った Touchstone (`data:`) を重ねる。**ネットリスト・ERC・マップ (殻) は
   無い**。拡張には `FenceEditor` を渡さず、Problems の口 (`problemsOf`) と、`.md` の
   隣を読む `data:` の口 (デスクトップだけ) を渡す (52 の docs/75・76)
-- `packages/tommie-fence` — **VS Code に出るのはこれだけ。** 5 つのフェンスを
+- `packages/scope-fence` — ` ```scope ` フェンス。オシロスコープの画面 (時間波形・
+  トリガ・カーソル・Measurements)。**vna と同じ形** — 理想の波 (波形発生器の波 + `| rc 1ms`
+  のような通す操作) を 8192 点で計算して破線、測った CSV (`data:`、WaveForms) を実線で重ねる。
+  ch は 1 つの格子に重ねる。**マップ (殻) は無い** (52 の docs/81・85)
+- `packages/tommie-fence` — **VS Code に出るのはこれだけ。** 6 つのフェンスを
   1 つの拡張に畳んだもの (52 の docs/19)。中身は入口だけで、図を描くのは
   上の 3 つのコア。**3 つは拡張ではなくライブラリ + CLI**になった
 - `packages/playground` — 3 つのフェンスをブラウザだけで試す静的なページ

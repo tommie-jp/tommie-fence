@@ -51,7 +51,7 @@ export async function showMap(): Promise<void> {
     onBind: (line) => {
       if (ws.bind(line)) changed('bind');
     },
-    // いまが vna なら、殻の掴み直しで「いま」を動かさない。
+    // いまが vna や scope なら、殻の掴み直しで「いま」を動かさない。
     holdBind: () => {
       const current = ws.current();
       return current !== null && !hasMap(current.kind);

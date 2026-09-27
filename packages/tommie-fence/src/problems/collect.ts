@@ -6,7 +6,7 @@ import type { FenceEditor, IssueRow } from 'fence-kit';
  */
 /**
  * Problems の行を出す口。**殻 (`FenceEditor`) の全部は要らない** — 使うのは言語名と
- * `problems` だけ。vna のようにマップを持たないフェンスもここに並べられる (52 の docs/76)。
+ * `problems` だけ。vna や scope のようにマップを持たないフェンスもここに並べられる (52 の docs/76)。
  */
 export type ProblemSource = Pick<FenceEditor, 'language' | 'problems'>;
 

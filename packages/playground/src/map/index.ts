@@ -14,7 +14,7 @@ import type { Kind } from '../kinds.ts';
  * その形をそのまま写すと、殻も中身も 1 行も変えずに動く。
  */
 
-/** 殻を持つ種類だけ (vna は持たない。`hasMap`)。 */
+/** 殻を持つ種類だけ (vna と scope は持たない。`hasMap`)。 */
 const EDITORS: Readonly<Partial<Record<Kind, () => FenceEditor>>> = {
   breadboard: createBreadboardEditor,
   perfboard: createPerfboardEditor,
@@ -50,7 +50,7 @@ export type MapOptions = {
    */
   readonly onStatus: (text: string) => void;
   /**
-   * 頁の「いま」を殻に動かさせないか。**いまが殻を持たない種類 (vna) のとき真** —
+   * 頁の「いま」を殻に動かさせないか。**いまが殻を持たない種類 (vna・scope) のとき真** —
    * 殻は vna を知らないので、組み直すたびに自分の最初のフェンスへ掴み直し、
    * 頁の「いま」を circuit などへ連れていってしまう (レビューで見つかった)。
    * 人が殻の一覧で選んだとき (`fence` の知らせ) だけは通す。
