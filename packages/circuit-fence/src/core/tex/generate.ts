@@ -22,6 +22,8 @@ import { NOTE_MARK_TEXT, noteFontTex, texColorOf } from '../notes.ts';
 import { escapeTex, hasUnicode } from './escape.ts';
 import { isMathLabel, mathInnerOf, mathLabelTex } from './mathLabel.ts';
 import { num } from './num.ts';
+import { readScaled } from '../values.ts';
+import type { ScaledValue } from '../values.ts';
 import {
   deviceBox, deviceShapeName, deviceShapeTex, optoShapeTex, regulatorShapeTex, relayShapeTex,
   sipShapeTex, smaShapeTex, usbShapeName, usbShapeTex,
@@ -303,8 +305,6 @@ function labelOf(written: string, fallback: string): string {
     : `$${escapeTex(first)}_{${escapeTex(subscript)}}$`;
 }
 
-// 数値 + SI 接頭辞。ここに当てはまるときだけ種類から単位を補う。
-const SCALED_VALUE = /^(\d+(?:\.\d+)?)([kMGmunp]?)$/;
 
 /** SI 接頭辞の siunitx での綴り。書き出す `.tex` でだけ使う。 */
 const SI_PREFIXES: Readonly<Record<string, string>> = {
@@ -326,9 +326,14 @@ type Unit = { readonly tex: string | null; readonly si: string | null };
 
 const NO_UNIT: Unit = { tex: null, si: null };
 
-const unitOf = (typeName: string): Unit => {
+/**
+ * 種類から来る単位と、値の数の読み。**数 + SI 接頭辞 (+ 単位) に当てはまるときだけ**
+ * 種類から単位を補う (`47pF` も `47p` と同じに読む。values.ts)。
+ */
+const unitOf = (typeName: string, value: string): Unit & { readonly scaled: ScaledValue | null } => {
   const type = lookupPartType(typeName);
-  return type === null ? NO_UNIT : { tex: type.unitTex, si: type.unitSi };
+  if (type === null) return { ...NO_UNIT, scaled: null };
+  return { tex: type.unitTex, si: type.unitSi, scaled: type.unitTex === null ? null : readScaled(typeName, value) };
 };
 
 /**
@@ -337,7 +342,11 @@ const unitOf = (typeName: string): Unit => {
  * (単位を勝手に足すと嘘になる)。数式モードに置くので、
  * そのままだと `1N4148` の N が変数扱いで斜体になる。立体で組む。
  */
-function annotationOf(value: string, unit: Unit, target: TexTarget): string {
+function annotationOf(
+  value: string,
+  unit: Unit & { readonly scaled?: ScaledValue | null },
+  target: TexTarget,
+): string {
   // 標準の TeX フォントに字形が無い字は、積んだフォントの側で組む。
   // フェンスにはこういう値が来ない (検証が値を落としている)。
   //
@@ -347,7 +356,7 @@ function annotationOf(value: string, unit: Unit, target: TexTarget): string {
   // 例外ではなくプロセスごと落ちる (実測)。捕まえられる失敗のほうを選ぶ。
   if (hasUnicode(value)) return `\\circuittext{${escapeTex(value)}}`;
 
-  const matched = unit.tex === null ? null : SCALED_VALUE.exec(value);
+  const matched = unit.tex === null ? null : unit.scaled ?? null;
   // 数式の中では空白が捨てられる (`Analog Discovery` が詰まった)。空白は `\ ` にする。
   // `-` は数式では引き算の − になって前後が空く (`HC − SR04`)。型番の `-` は
   // ハイフンなので字として組む (`\mbox{-}`)。
@@ -355,7 +364,7 @@ function annotationOf(value: string, unit: Unit, target: TexTarget): string {
     return `$\\mathrm{${escapeTex(value).replaceAll(' ', '\\ ').replaceAll('-', '\\mbox{-}')}}$`;
   }
 
-  const [, digits = '', prefix = ''] = matched;
+  const { digits, prefix } = matched;
   // siunitx なら u が µ で出る。フェンスには siunitx が無いので、接頭辞は自前で組む。
   if (target === 'latex' && unit.si !== null) {
     return `\\qty{${digits}}{${SI_PREFIXES[prefix] ?? ''}${unit.si}}`;
@@ -757,10 +766,10 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
   }
   // 光の矢のある記号は、値を `a^` に任せず矢の先より外に置く (`lightValueNode`)。
   const lightValue = part.value !== null && type?.lightArrows === true
-    ? lightValueNode(from, to, annotationOf(part.value, unitOf(part.type), target))
+    ? lightValueNode(from, to, annotationOf(part.value, unitOf(part.type, part.value), target))
     : null;
   if (part.value !== null && lightValue === null) {
-    options.push(`a^=${annotationOf(part.value, unitOf(part.type), target)}`);
+    options.push(`a^=${annotationOf(part.value, unitOf(part.type, part.value), target)}`);
   }
   // 電流の矢は from → to、電圧の + は from の側。**どちらも極性と同じ規則**
   // (先に書いた番地が + 側) なので、書き手が覚えることは増えない。

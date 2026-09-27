@@ -7,6 +7,7 @@ import { NO_POINTS } from '../parser/compact.ts';
 import type { Points } from '../parser/compact.ts';
 import type { FenceDocument } from '../parser/parseFence.ts';
 import { isDrawable, isSourceDrawable } from '../tex/escape.ts';
+import { unitValueProblem } from '../values.ts';
 import { isMathLabel, mathInnerOf, mathLabelTex } from '../tex/mathLabel.ts';
 import { cellOf, nameOfEndpoint } from '../types.ts';
 import type {
@@ -658,6 +659,13 @@ function checkPart(part: PartSpec, errors: FenceError[], target: TexTarget): Par
   const oriented = part.kind === 'two-terminal' ? part : checkOrientation(part, errors);
   const checked = oriented.kind === 'two-terminal' ? checkLabels(oriented, errors, target) : oriented;
   if (checked.kind === 'one-terminal' || checked.value === null) return checked;
+  // **数には単位を要る** (素の数の C・L・水晶・電流源、大きい K)。字と同じく
+  // 値だけ落として部品は残す — 黙って 47 F と描くよりは値の無い図のほうがよい。
+  const unitless = checked.kind === 'two-terminal' ? unitValueProblem(checked.type, checked.value) : null;
+  if (unitless !== null) {
+    errors.push(fenceError(`部品 ${safeToken(checked.id)}: ${unitless}`, checked.line));
+    return { ...checked, value: null };
+  }
   if (isDrawable(checked.value, target)) return checked;
 
   errors.push(fenceError(`部品 ${safeToken(checked.id)}: ${valueProblem(checked.value, target)}`, checked.line));
