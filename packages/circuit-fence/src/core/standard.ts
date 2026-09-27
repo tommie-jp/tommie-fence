@@ -24,6 +24,16 @@ export const STANDARD_TEX = {
 
 export type Standard = keyof typeof STANDARD_TEX;
 
+/**
+ * 抵抗を箱で描く流儀か (`european resistors` を含む束)。可変抵抗の矢の返し方が
+ * ギザギザと箱で違うので、parts.ts の `tunable` がこれを見る。
+ */
+export const BOXED_RESISTORS: Readonly<Record<Standard, boolean>> = {
+  american: false,
+  european: true,
+  jis: true,
+};
+
 /** `style: standard:` に書ける語。断るときの一覧にも使う。 */
 export const STANDARDS = Object.keys(STANDARD_TEX) as readonly Standard[];
 

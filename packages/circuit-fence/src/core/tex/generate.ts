@@ -742,7 +742,7 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
   const options = [
     symbolFor(part.type, target),
     ...optionsFor(part.type, target),
-    ...tunableOptions(part.type, target, laidOf(to.x - from.x, to.y - from.y)),
+    ...tunableOptions(part.type, target, laidOf(to.x - from.x, to.y - from.y), standard),
   ];
   // 足を指せる種類だけ、記号そのものに名前を付ける (`P1.w` の行き先になる)。
   // 指せない種類にまで付けると、要らない名前で TeX が太る。

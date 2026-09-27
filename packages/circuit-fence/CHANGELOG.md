@@ -3,6 +3,16 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Fixed
+
+- **抵抗を箱で描く流儀 (`standard: jis` / `european`) の可変抵抗の矢が、右上を向かなかった**。
+  0.15.0 の返し方の表はギザギザの抵抗で測ったもので、フェンスの circuitikz 1.0 は箱の抵抗の
+  矢を可変コンデンサと同じ引き方で描く。横に置くと左上 (0.15.0 で 0.14.1 より悪くなった)、
+  縦に置くと右下を向いていた。箱の流儀では可変コンデンサと同じ表で返す。書き出す `.tex`
+  (circuitikz 1.6.6) はギザギザでも箱でも同じ表のまま。
+
 ## [0.15.0] - 2026-09-28
 
 ### Added

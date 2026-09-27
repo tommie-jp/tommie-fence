@@ -1,6 +1,8 @@
 import { lookupBoardPart, lookupConnector, lookupNamedChip } from 'fence-kit';
 import { OPTO_SHAPE, RELAY_SHAPE, REGULATOR_SHAPE, SMA_SHAPE, deviceBox, deviceShapeName, usbShapeName } from './tex/shapes.ts';
 import type { BoardPart, NamedChip } from 'fence-kit';
+import { BOXED_RESISTORS } from './standard.ts';
+import type { Standard } from './standard.ts';
 import type { DeviceBox } from './tex/shapes.ts';
 /**
  * 部品の種類の表。パーサ (どう書けるか) と TeX 生成 (どう描くか) の両方がここを見る。
@@ -214,8 +216,13 @@ export type PartType = {
    * 可変の矢 (`vR` `vC`) を**置いた向きによらず右上へ**向けるオプションの表。
    * circuitikz は矢を記号と一緒に回すので、決め打ちのオプションでは 1 方向しか
    * 揃わない。的ごとに持つのは、**フェンスの 1.0 と手元の LaTeX で返し方が違う**ため。
+   * `fenceBoxed` は抵抗を箱で描く流儀 (european・jis) のフェンス。省くと `fence`。
    */
-  readonly tunable?: { readonly fence: TunableTurns; readonly latex: TunableTurns };
+  readonly tunable?: {
+    readonly fence: TunableTurns;
+    readonly fenceBoxed?: TunableTurns;
+    readonly latex: TunableTurns;
+  };
   /**
    * 型番を記号の**中**に書く種類。省くと記号の下に出る。
    * 箱で描く IC は中に書ける (そのほうが回路図の慣習に近い)。
@@ -674,12 +681,13 @@ export type TunableTurns = Readonly<Record<Laid, readonly string[]>>;
  * 右上を向いたものを拾った (52 の docs/93)。
  *
  * - 手元の LaTeX (circuitikz 1.6.6) は `fix tunable direction` が既定で入り、
- *   vR も vC も同じ返し方で済む
- * - **フェンスの 1.0 は vR と vC で矢の引き方が違い**、表も別になる
+ *   vR も vC も、抵抗がギザギザでも箱でも同じ返し方で済む
+ * - **フェンスの 1.0 はギザギザの vR だけ矢の引き方が違う**。箱の vR (european・jis)
+ *   は vC と同じ表になる (箱の流儀も 4 方向 × 4 通りを焼いて確かめた)
  */
 const TUNABLE_LATEX: TunableTurns = { right: [], left: ['mirror', 'invert'], down: ['invert'], up: ['mirror'] };
-const TUNABLE_FENCE_VR: TunableTurns = { right: ['mirror', 'invert'], left: [], down: ['mirror'], up: ['invert'] };
-const TUNABLE_FENCE_VC: TunableTurns = { right: ['mirror'], left: ['invert'], down: ['mirror', 'invert'], up: [] };
+const TUNABLE_FENCE_ZIGZAG: TunableTurns = { right: ['mirror', 'invert'], left: [], down: ['mirror'], up: ['invert'] };
+const TUNABLE_FENCE_PLATES: TunableTurns = { right: ['mirror'], left: ['invert'], down: ['mirror', 'invert'], up: [] };
 
 export const PART_TYPES = {
   // 受動部品
@@ -689,7 +697,8 @@ export const PART_TYPES = {
    * 矢は回路図の慣習どおり、どう置いても右上を向かせる (tunable)。
    */
   'resistor-var': {
-    kind: 'two-terminal', symbol: 'vR', tunable: { fence: TUNABLE_FENCE_VR, latex: TUNABLE_LATEX },
+    kind: 'two-terminal', symbol: 'vR',
+    tunable: { fence: TUNABLE_FENCE_ZIGZAG, fenceBoxed: TUNABLE_FENCE_PLATES, latex: TUNABLE_LATEX },
     unitTex: OHM, unitSi: SI_OHM,
   },
   /**
@@ -710,7 +719,7 @@ export const PART_TYPES = {
    * 矢は可変抵抗と同じく右上へ揃える。**バリキャップ (ダイオード) とは別物**。
    */
   'capacitor-var': {
-    kind: 'two-terminal', symbol: 'vC', tunable: { fence: TUNABLE_FENCE_VC, latex: TUNABLE_LATEX },
+    kind: 'two-terminal', symbol: 'vC', tunable: { fence: TUNABLE_FENCE_PLATES, latex: TUNABLE_LATEX },
     unitTex: FARAD, unitSi: SI_FARAD,
   },
   /** バリキャップ (可変容量ダイオード)。値は容量なので F を足す。 */
@@ -1355,8 +1364,13 @@ export const laidOf = (dx: number, dy: number): Laid =>
   (Math.abs(dx) >= Math.abs(dy) ? (dx >= 0 ? 'right' : 'left') : (dy >= 0 ? 'up' : 'down'));
 
 /** 可変の矢を右上へ向けるオプション。矢の無い種類は空。 */
-export function tunableOptions(typeName: string, target: TexTarget, laid: Laid): readonly string[] {
-  return lookupPartType(typeName)?.tunable?.[target][laid] ?? [];
+export function tunableOptions(typeName: string, target: TexTarget, laid: Laid, standard: Standard): readonly string[] {
+  const tunable = lookupPartType(typeName)?.tunable;
+  if (tunable === undefined) return [];
+  const turns = target === 'latex'
+    ? tunable.latex
+    : (BOXED_RESISTORS[standard] ? tunable.fenceBoxed : undefined) ?? tunable.fence;
+  return turns[laid];
 }
 
 /**

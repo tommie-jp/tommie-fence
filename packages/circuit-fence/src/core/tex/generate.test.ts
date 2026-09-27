@@ -847,6 +847,29 @@ describe('可変の矢の向き', () => {
     });
   }
 
+  // 抵抗を箱で描く流儀 (european・jis) では、**フェンスの 1.0 の vR が箱の矢を
+  // vC と同じ引き方で描く**ので、ギザギザの表とは返し方が違う。手元の LaTeX は同じ表。
+  const boxed = [
+    ['resistor-var', 'vR', 'fence', [', mirror', ', invert', ', mirror, invert', '']],
+    ['capacitor-var', 'vC', 'fence', [', mirror', ', invert', ', mirror, invert', '']],
+    ['resistor-var', 'vR', 'latex', ['', ', mirror, invert', ', invert', ', mirror']],
+    ['capacitor-var', 'vC', 'latex', ['', ', mirror, invert', ', invert', ', mirror']],
+  ] as const;
+
+  for (const standard of ['jis', 'european'] as const) {
+    for (const [type, symbol, target, expected] of boxed) {
+      test(`turns the ${type} arrow to the upper right in the ${target} tex drawn ${standard}`, () => {
+        const got = LAID.map(([, ends]) => {
+          const rows = ['parts:', `  X1: ${type} ${ends}`, 'style:', `  standard: ${standard}`];
+          const { tex } = target === 'fence' ? generate(...rows) : generateLatex(...rows);
+          return optionsBetween(tex, symbol);
+        });
+
+        expect(got).toEqual(expected);
+      });
+    }
+  }
+
   test('keeps the value on its usual side when the arrow is turned', () => {
     // mirror / invert は記号だけを返す。ID は l_、値は a^ のまま。
     expect(generate('parts:', '  R2: resistor-var a1 a3 10k').tex)
