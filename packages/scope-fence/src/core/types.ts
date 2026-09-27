@@ -1,4 +1,7 @@
 import type { THEME_NAMES } from './limits.ts';
+import type { ChannelName, ChannelSpec } from './model/channel.ts';
+import type { MeasureName } from './model/measure.ts';
+import type { TriggerEdge } from './model/screen.ts';
 
 /**
  * scope フェンスの型。**図の中に部品も板も無い** — 描くのは時間の関数 (電圧)。
@@ -37,11 +40,31 @@ export type StyleSpec = {
 /** 横軸の設定。`time: 1ms/div`。 */
 export type TimeSpec = { readonly perDiv: number; readonly line: number | null };
 
+/** `trigger: ch1 rising 1V`。水準が null なら波形の中央。 */
+export type TriggerSpec = {
+  readonly source: ChannelName;
+  readonly edge: TriggerEdge;
+  readonly level: number | null;
+  readonly line: number | null;
+};
+
+/** カーソル (時刻 s)。 */
+export type CursorSpec = { readonly t: number; readonly line: number | null };
+
 export type FenceDocument = {
   /** 画面の種類。**いまは time (時間波形) だけ** (xy は段 3)。 */
   readonly view: 'time';
   readonly title: string | null;
   /** 書かなければ null (一番遅い波から決める)。 */
   readonly time: TimeSpec | null;
+  /** 書かなければ null (最初の ch の立ち上がり、水準は中央)。 */
+  readonly trigger: TriggerSpec | null;
+  /** 読めた ch (ch1 → ch4 の順)。 */
+  readonly channels: readonly ChannelSpec[];
+  /** 測った値のファイル名 (`.md` の隣)。 */
+  readonly data: { readonly name: string; readonly line: number | null } | null;
+  readonly cursors: readonly CursorSpec[];
+  /** 書かなければ null (既定の vpp と freq)。 */
+  readonly measures: readonly MeasureName[] | null;
   readonly style: StyleSpec;
 };
