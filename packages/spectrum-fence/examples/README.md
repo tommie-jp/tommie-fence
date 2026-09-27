@@ -2,6 +2,8 @@
 
 計器の設定の表と同じ語で書いた ` ```spectrum ` の例。プレビュー (`Ctrl+Shift+V`) で開くと
 フェンスがそのまま図になる。
+文法の全部は [docs/01-syntax.md](../docs/01-syntax.md)、1 画面の早見表は
+[docs/02-cheatsheet.md](../docs/02-cheatsheet.md)。
 
 どのフェンスの直後にも、**そのフェンスを描いた図** ([out/](out/)) を貼ってある。
 

@@ -29,3 +29,5 @@
   桁で見分けて言う。列が 2 つでない・周波数が戻る・小数点のコンマは断る。読むのは CLI と
   VS Code の拡張 (デスクトップ) だけ。web と playground は「この宿主では読めません」と言う。
 - 例 `05-antenna.md` (本の 11-12)。CSV は `scripts/fakeData.mjs` が計算で書く (実測ではない)。
+- **文法リファレンス** (`docs/01-syntax.md`、図 6 枚) と **早見表** (`docs/02-cheatsheet.md`。
+  AI が毎回読む 1 画面)。早見表に載せた名前と例は `cheatsheet.test.ts` が実装と突き合わせる。
