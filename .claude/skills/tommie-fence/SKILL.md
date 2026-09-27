@@ -1,6 +1,6 @@
 ---
 name: tommie-fence
-description: Markdown の ```circuit / ```bread / ```perf / ```copper / ```vna フェンス (回路図・ブレッドボードの実体配線図・ユニバーサル基板の実体配線図・銅張り基板のマイクロストリップの寸法図・VNA (NanoVNA) の画面) を書く・直す・読むときに使う。文法リファレンスの所在、CLI の check で読めたか・つながったかを確かめる手順、図を PNG に焼いて目で確かめる手順、フェンスどうしで取り違えやすい書き方をまとめてある。Use when writing or fixing circuit schematics, breadboard diagrams, perfboard layouts, copper-clad board (microstrip) drawings, or VNA (NanoVNA) screens — Log Mag, Smith chart, SWR, TDR — in these Markdown fences.
+description: Markdown の ```circuit / ```bread / ```perf / ```copper / ```vna / ```scope / ```spectrum フェンス (回路図・ブレッドボードの実体配線図・ユニバーサル基板の実体配線図・銅張り基板のマイクロストリップの寸法図・VNA (NanoVNA) の画面・オシロスコープの画面・スペクトラムアナライザ (tinySA / Analog Discovery) の画面) を書く・直す・読むときに使う。文法リファレンスの所在、CLI の check で読めたか・つながったかを確かめる手順、図を PNG に焼いて目で確かめる手順、フェンスどうしで取り違えやすい書き方をまとめてある。Use when writing or fixing circuit schematics, breadboard diagrams, perfboard layouts, copper-clad board (microstrip) drawings, VNA (NanoVNA) screens — Log Mag, Smith chart, SWR, TDR — oscilloscope screens (waveforms, trigger, cursors, Measurements), or spectrum analyser screens (tinySA, Analog Discovery) in these Markdown fences.
 ---
 
 # tommie-fence のフェンスを書く
@@ -16,8 +16,10 @@ description: Markdown の ```circuit / ```bread / ```perf / ```copper / ```vna �
 | ユニバーサル基板の実体配線図 | ` ```perf ` | `packages/perfboard-fence/docs/01-syntax.md` (早見表は無い。目次から要る節だけ) | `packages/perfboard-fence/examples/*.md` |
 | 銅張り基板 (マイクロストリップ・CPW・Manhattan の島) の寸法図 | ` ```copper ` | `packages/copper-fence/docs/01-syntax.md` (早見表は無い) | `packages/copper-fence/examples/*.md` |
 | VNA (NanoVNA) の画面 (S21 / S11 の Log Mag・Smith・SWR・TDR) | ` ```vna ` | `packages/vna-fence/docs/01-syntax.md` (早見表は無い) | `packages/vna-fence/examples/*.md` |
+| オシロスコープの画面 (時間波形・トリガ・カーソル・Measurements) | ` ```scope ` | `packages/scope-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/scope-fence/examples/*.md` |
+| スペクトラムアナライザの画面 (tinySA の掃引型・Analog Discovery の FFT 型) | ` ```spectrum ` | `packages/spectrum-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/spectrum-fence/examples/*.md` |
 
-**書く前に文法を読む。** 5 つは似ているが同じではない (§4)。
+**書く前に文法を読む。** 7 つは似ているが同じではない (§4)。
 記憶や別のフェンスの感覚で書かない。例の中から近いものを写して直すのが早い。
 
 ## 2. 書いたら check
@@ -27,11 +29,15 @@ node <root>/packages/<x>-fence/dist/cli.cjs check <file.md> 2>&1
 ```
 
 - 見出しとネットリストは標準出力、読めなかった行・お知らせ・ERC は標準エラー
-  (5 つとも同じ。vna はネットリストの代わりにマーカーの読み値を標準出力に出す)。
+  (7 つとも同じ。計器の画面の 3 つはネットリストの代わりに読み値を標準出力に出す —
+  vna と spectrum はマーカー、scope は Measurements とカーソル)。
   まとめて読むので `2>&1` を付ける
 - 読めなかった行は、行番号・その行・綴りを指す `^` つきで出る。
   1 つでもあれば終了コードは 0 以外
 - ネットリスト (どの足がどのネットか) は標準出力。**意図した回路と突き合わせる**
+- 計器の画面 (vna・scope・spectrum) は、**読み値を本文の「見るべき値」の表と数で突き合わせ、
+  合ってから PNG を 1 度見る**。お知らせ (`time:` が無いので … で描いています、など) は
+  既定で埋めた所なので、意図と違えば書き足す
 - ERC (つながっていない足、線で跨いだ部品など) は終了コードを変えない。
   **読めない行があるうちは ERC を掛けない**ので、読めない行から直す
 - **何も出ずに終了コード 0** は、フェンスが 1 つも見つからなかったということ。
@@ -46,7 +52,7 @@ SVG は画像として読めないので PNG に焼いてから見る。
 **`render` には必ず `--out` で作業用のディレクトリを渡す** (省くと入力の隣に書き出す)。
 
 ```bash
-# 板の 2 つ
+# circuit 以外 (板の 2 つ・copper・計器の画面の vna・scope・spectrum)
 node <root>/packages/<x>-fence/dist/cli.cjs render <file.md> --out <tmp>
 node <root>/packages/<x>-fence/scripts/png.mjs <tmp>
 
@@ -101,9 +107,25 @@ vna (VNA の画面) は**板も部品も無い**。位置の代わりに周波�
 | 注釈 | `mark 100M -6dB` / `text 100M -20dB: 字` / `band 88M 108M`。**値の単位で枠が決まる** (dB・deg・ns・Ω・単位なしは SWR) |
 | ネットリスト・ERC・マップ | 無い。`check` は読み値の表を出す。お知らせ (機種の範囲の外など) は終了コードを変えない |
 
-5 つに共通:
+scope (オシロの画面) と spectrum (スペクトラムの画面) も**板も部品も無い**。波は同じ綴り
+(fence-kit の波) で書き、横軸は scope が時間、spectrum と vna が周波数:
 
-- **フェンス名は `circuit` / `bread` / `perf` / `copper` / `vna`。** 板の 2 つは長い綴り
+| | scope | spectrum |
+| --- | --- | --- |
+| 書くもの | `time: 1ms/div`、`trigger: ch1 rising 1V`、`ch1:`〜`ch4:` に波と操作 (`ch2: ch1 \| rc 1ms`)、`cursors: [0, 1ms]`、`measure: [vpp, freq]` | **`device:` (必須)** — `ad2` `ad3` (FFT 型) / `tinysa` `tinysa-ultra` `generic` (掃引型)。`sweep: 0-960M 450` か `center:` + `span:`、`signal:` に波、`markers: [100M, peak]` |
+| 波 | `sine 1kHz 1V offset 1V phase -58deg`。**周波数は `Hz` まで、周波数が先** | 同じ (`signal: square 100MHz -10dBm`)。**`signal:` の周波数も `Hz` まで** (`sweep:` とマーカーは `960M` と書ける) |
+| 振幅 | **peak**。`2Vpp` と書けば半分、`0.707Vrms` は sine だけ | 同じ。**`-10dBm` は同じ peak の正弦の電力** — 方形波の基本波は 4/π 倍で −7.90 dBm に立つ |
+| 取り違え | `phase -58deg` は**遅れ** (正は進み)。`time:` と `range:` は **`/div` 付き** (`time: 1ms` は断る) | **`span:` は幅** (`center:` と対。開始-終了は `sweep:`)。型に無いキーは断る (ad2 に `rbw:`、tinysa に `window:`) |
+| 通す操作 | `\| rc 1ms` `\| clip -0.7V 0.7V` `\| offset -1.4V` `\| gain 0.5` `\| abs` | **書けない** (加工した波は scope で描く) |
+| 読み値 (`check`) | Measurements とカーソルの表 (`CH1  2.00 V  100.0 Hz`) | マーカーの表 (`1  100.000 MHz  −7.90 dBm`) |
+
+**どの計器の画面か**: 加工した波の形 (RC の充電・整流・クリッパ) は scope、信号の中身
+(高調波・ノイズフロア・RBW) は spectrum、被測定物 (DUT) の通過・反射の周波数特性
+(フィルタの S21・SWR) は vna。vna は周波数・scope は時間。
+
+7 つに共通:
+
+- **フェンス名は `circuit` / `bread` / `perf` / `copper` / `vna` / `scope` / `spectrum`。** 板の 2 つは長い綴り
   (`breadboard` / `perfboard`) も同じに読む (拡張 0.15.0・breadboard-fence 0.13.0・
   perfboard-fence 0.11.0 から。報告の名札は短い綴り)。新しく書くなら短い綴り。
   **これ以外の綴りは**、プレビューでは灰色のコードブロック、CLI では黙って素通りする
