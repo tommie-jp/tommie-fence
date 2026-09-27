@@ -152,3 +152,28 @@ describe('renderSpectrum — 刻印', () => {
     expect(renderSpectrum(`${ELEVEN_FOUR}\nstyle:\n  stamp: off`).svg).not.toContain(STAMP_TEXT);
   });
 });
+
+describe('renderSpectrum — 書いてあって読めなかったキー', () => {
+  const said = (source: string): readonly string[] => renderSpectrum(source).notices.map((one) => one.message);
+  const errorCount = (source: string): number => renderSpectrum(source).errors.length;
+
+  test.each([
+    ['samples', 'device: ad2\nsweep: 0-20kHz\nsamples: 8000\nwindow: hann\nsignal: sine 1kHz 1V'],
+    ['window', 'device: ad2\nsweep: 0-20kHz\nsamples: 8192\nwindow: blackman\nsignal: sine 1kHz 1V'],
+    ['points', 'device: tinysa-ultra\nsweep: 0-960M\npoints: 10\nrbw: 300kHz\nsignal: sine 100MHz -10dBm'],
+    ['rbw', 'device: tinysa-ultra\nsweep: 0-960M 450\nrbw: 300\nsignal: sine 100MHz -10dBm'],
+    ['sweep', 'device: tinysa-ultra\nsweep: 960M-0\npoints: 450\nrbw: 300kHz\nsignal: sine 100MHz -10dBm'],
+    ['floor', 'device: generic\nsweep: 0-960M 450\nrbw: 300kHz\nfloor: -100\nsignal: sine 100MHz -10dBm'],
+  ])('%s: says it cannot read the value, and does not also say it is missing', (key, source) => {
+    expect(errorCount(source)).toBeGreaterThan(0);
+    expect(said(source).filter((message) => message.startsWith(`${key}: が無いので`))).toEqual([]);
+    if (key === 'floor') expect(said(source).filter((message) => message.includes('floor: で書きます'))).toEqual([]);
+  });
+
+  test('still says a default when the key was not written at all', () => {
+    const notices = said('device: ad2\nsweep: 0-20kHz\nsignal: sine 1kHz 1V');
+    expect(notices).toContain('samples: が無いので 8192 で描いています');
+    expect(notices).toContain('window: が無いので flattop で描いています');
+    expect(said('device: tinysa-ultra\nsweep: 0-960M\nsignal: sine 100MHz -10dBm').some((message) => message.startsWith('points: が無いので'))).toBe(true);
+  });
+});

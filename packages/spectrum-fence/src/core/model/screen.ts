@@ -42,6 +42,12 @@ const WINDOW_LABEL = { rect: 'Rectangular', hann: 'Hann', flattop: 'Flat Top' } 
 
 const hz = (f: number): string => formatHertzShort(f);
 
+/**
+ * キーが書いてあったか (読めなかった物も)。**書いてあって読めなかったキーは「無いので既定で」とは
+ * 言わない** — 読めない行のエラーが先に出ていて、「無い」と重ねて言うと書き手が迷う。
+ */
+const wrote = (doc: FenceDocument, ...keys: readonly string[]): boolean => keys.some((key) => doc.keys.includes(key));
+
 /** 掃引の字 (`START 0 Hz` `STOP 960 MHz` か `CENTER 30 MHz` `SPAN 2 MHz`)。 */
 const sweepWords = (sweep: SweepText, centered: boolean): readonly string[] => (centered
   ? [`CENTER ${hz((sweep.start + sweep.stop) / 2)}`, `SPAN ${hz(sweep.stop - sweep.start)}`]
@@ -51,7 +57,7 @@ type Common = { readonly sweep: SweepText; readonly centered: boolean; readonly 
 
 function common(doc: FenceDocument, device: Device, said: FenceError[]): Common {
   const sweep = doc.sweep?.value ?? deviceSweep(device);
-  if (doc.sweep === null) said.push(notice(`sweep: が無いので ${device.label} の範囲 (${hz(sweep.start)}〜${hz(sweep.stop)}) で描いています`, null));
+  if (doc.sweep === null && !wrote(doc, 'sweep', 'center', 'span')) said.push(notice(`sweep: が無いので ${device.label} の範囲 (${hz(sweep.start)}〜${hz(sweep.stop)}) で描いています`, null));
   const outside = rangeNotice(device, sweep.start, sweep.stop);
   if (outside !== null) said.push(notice(outside, doc.sweep?.line ?? null));
   const unit = doc.unit?.value ?? device.defaultUnit;
@@ -67,9 +73,9 @@ function fftScreen(doc: FenceDocument, device: Device, c: Common, said: FenceErr
   // samples: と window: の既定は、計算する物 (signal: か floor:) があるときだけ言う (図の中身を決めないので)。
   const computes = doc.signal.length > 0 || doc.floor !== null;
   const samples = doc.samples?.value ?? device.samples?.default ?? 8192;
-  if (doc.samples === null && computes) said.push(notice(`samples: が無いので ${samples} で描いています`, null));
+  if (doc.samples === null && computes && !wrote(doc, 'samples')) said.push(notice(`samples: が無いので ${samples} で描いています`, null));
   const window = doc.window?.value ?? DEFAULT_WINDOW;
-  if (doc.window === null && computes) said.push(notice(`window: が無いので ${window} で描いています`, null));
+  if (doc.window === null && computes && !wrote(doc, 'window')) said.push(notice(`window: が無いので ${window} で描いています`, null));
   const { start, stop } = c.sweep;
   const df = resolutionOf(stop, samples);
   const bins = Math.floor((stop - start) / df) + 1;
@@ -96,7 +102,8 @@ function sweptScreen(doc: FenceDocument, device: Device, c: Common, said: FenceE
   const errors: FenceError[] = [];
   const written = c.sweep.points ?? doc.points?.value ?? null;
   const fallback = device.points?.default ?? 450;
-  if (written === null) said.push(notice(`points: が無いので ${fallback} 点で描いています`, null));
+  const sweepUnread = doc.sweep === null && wrote(doc, 'sweep', 'center', 'span');
+  if (written === null && !wrote(doc, 'points') && !sweepUnread) said.push(notice(`points: が無いので ${fallback} 点で描いています`, null));
   const snapped = snapPoints(device, written ?? fallback);
   if (snapped.said !== null) said.push(notice(snapped.said, doc.points?.line ?? doc.sweep?.line ?? null));
   const points = snapped.points;
@@ -105,11 +112,11 @@ function sweptScreen(doc: FenceDocument, device: Device, c: Common, said: FenceE
   const problem = doc.rbw === null ? null : rbwProblem(device, doc.rbw.value);
   if (problem !== null) errors.push({ message: problem, line: doc.rbw?.line ?? null });
   const rbw = doc.rbw === null || problem !== null ? auto : doc.rbw.value;
-  if (doc.rbw === null) said.push(notice(`rbw: が無いので ${hz(rbw)} (掃引の幅 ÷ 点数から選んだ値) で描いています`, null));
+  if (doc.rbw === null && !wrote(doc, 'rbw')) said.push(notice(`rbw: が無いので ${hz(rbw)} (掃引の幅 ÷ 点数から選んだ値) で描いています`, null));
   const atten = doc.atten?.value ?? 0;
   const lna = doc.lna?.value ?? false;
   const writtenFloor = doc.floor === null ? null : toUnit(fromUnit(doc.floor.value.value, doc.floor.value.unit), 'dBm');
-  if (device.danl === undefined && writtenFloor === null) {
+  if (device.danl === undefined && writtenFloor === null && !wrote(doc, 'floor')) {
     said.push(notice(`${device.label} のフロアは floor: で書きます (いまは ${formatSetting(floorOf(device, rbw, 0, false, null), 'dBm')} で描いています)`, null));
   }
   const floor = floorOf(device, rbw, atten, lna, writtenFloor);
