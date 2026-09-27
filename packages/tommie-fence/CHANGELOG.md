@@ -3,6 +3,21 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.17.0] - 2026-09-28
+
+circuit-fence 0.15.0 を束ねた。
+
+### Added
+
+- circuit: **可変コンデンサ (`capacitor-var`)**。極板 2 枚を斜めの矢が貫く記号で、
+  ポリバリコン・トリマを描く。バリキャップ (`varicap`) とは別の種類。Fence Editor の
+  パレットは「バリコン」でも引ける。
+
+### Fixed
+
+- circuit: **可変抵抗の矢が、置いた向きによって右上を向かなかった** (横に置くと左上)。
+  置いた向きごとに返して、どう置いても右上を向く。
+
 ## [0.16.1] - 2026-09-28
 
 circuit-fence 0.14.1 を束ねた。
