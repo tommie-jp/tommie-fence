@@ -2,7 +2,7 @@
 
 [English](try-me.md) | [日本語](try-me.ja.md)
 
-フェンスを 5 つ、パッケージごとに 1 つずつ置いてあります。
+フェンスを 7 つ、パッケージごとに 1 つずつ置いてあります。
 **Markdown プレビューを開くと図になります**: `Ctrl+Shift+V`
 (macOS は `Cmd+Shift+V`)、またはこのタブの右上にある分割プレビューのボタン。
 
@@ -109,6 +109,39 @@ markers:
 測った値を Touchstone でこのファイルの隣に保存し、`data: <ファイル>.s2p` を
 書き足すと実線で重なります。このフェンスにはマップがありません。
 
+## scope — 上の RC ローパスに方形波を入れたオシロの画面
+
+```scope
+title: RC の充電 (τ = 1 ms)
+time: 1ms/div
+trigger: ch1 rising 1V
+ch1: square 100Hz 1V offset 1V
+ch2: ch1 | rc 1ms
+cursors: [0, 1ms]
+measure: [vpp, freq]
+```
+
+10 kΩ と 100 nF で τ = 1 ms。`ch1` は波形発生器の波 (振幅は peak なので 0〜2 V)、
+`ch2: ch1 | rc 1ms` はそれを RC に通した波です。画面の下の読み値で X2 は 1.27 V
+(63 % まで上がった所)。WaveForms の Scope を CSV で書き出してこのファイルの隣に置き、
+`data: <ファイル>.csv` を書き足すと実線で重なります。このフェンスにはマップがありません。
+
+## spectrum — NanoVNA の出力を tinySA Ultra で見る
+
+```spectrum
+title: 100 MHz の方形波の高調波
+device: tinysa-ultra
+sweep: 0-960M 450
+rbw: 300kHz
+ref: 0dBm
+signal: square 100MHz -10dBm
+markers: [100M, 300M, 500M]
+```
+
+`device:` は必須です (`ad2` / `ad3` は Analog Discovery の FFT、tinySA は掃引型の受信機)。
+`-10dBm` は同じ peak の正弦の電力なので、方形波の基本波は −7.90 dBm に立ち、
+奇数次の高調波が 1/n で並びます。このフェンスにはマップがありません。
+
 ## 打たずに掴んで動かす
 
 どのフェンスもマウスで編集できます。このタブの右上の基板の絵の釦を押すと
@@ -117,7 +150,7 @@ markers:
 カーソルのあるフェンスのマップが横に開きます。
 または `Ctrl+Shift+P` →**「View: Reopen Editor With...」**→
 **Fence Editor** で、このタブ自体をマップにできます。板と回路図の 4 つのフェンスを
-1 つのエディタで扱います (vna にはマップがありません)。
+1 つのエディタで扱います (vna・scope・spectrum にはマップがありません)。
 
 マップは図ではなく**掴むための層**です。部品を動かすとフェンスの番地が
 書き換わるので、正はいつもテキストのままです。
@@ -129,4 +162,6 @@ markers:
   [breadboard の文法](../packages/breadboard-fence/docs/01-syntax.md) ·
   [perfboard の文法](../packages/perfboard-fence/docs/01-syntax.md) ·
   [copper の文法](../packages/copper-fence/docs/01-syntax.md) ·
-  [vna の文法](../packages/vna-fence/docs/01-syntax.md)
+  [vna の文法](../packages/vna-fence/docs/01-syntax.md) ·
+  [scope の文法](../packages/scope-fence/docs/01-syntax.md) ·
+  [spectrum の文法](../packages/spectrum-fence/docs/01-syntax.md)

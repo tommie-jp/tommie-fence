@@ -2,7 +2,7 @@
 
 [English](try-me.md) | [日本語](try-me.ja.md)
 
-Five fences, one per package. **Open the Markdown preview to see them drawn**:
+Seven fences, one per package. **Open the Markdown preview to see them drawn**:
 `Ctrl+Shift+V` (`Cmd+Shift+V` on macOS), or the split-preview button at the top
 right of this tab.
 
@@ -111,6 +111,41 @@ markers:
 the Smith chart. Save the measurement next to this file as Touchstone and add
 `data: <file>.s2p` to draw it solid over the model. This fence has no map.
 
+## scope — the RC low-pass above, driven by a square wave
+
+```scope
+title: RC charging (tau = 1 ms)
+time: 1ms/div
+trigger: ch1 rising 1V
+ch1: square 100Hz 1V offset 1V
+ch2: ch1 | rc 1ms
+cursors: [0, 1ms]
+measure: [vpp, freq]
+```
+
+10 kΩ and 100 nF make τ = 1 ms. `ch1` is the generator's wave (amplitude is
+peak, so 0 to 2 V); `ch2: ch1 | rc 1ms` is that wave through the RC. The
+readings under the screen give 1.27 V at X2 — 63 % of the way up. Export the
+Scope screen of WaveForms as CSV next to this file and add `data: <file>.csv`
+to draw it solid. This fence has no map.
+
+## spectrum — the NanoVNA output on a tinySA Ultra
+
+```spectrum
+title: Harmonics of a 100 MHz square wave
+device: tinysa-ultra
+sweep: 0-960M 450
+rbw: 300kHz
+ref: 0dBm
+signal: square 100MHz -10dBm
+markers: [100M, 300M, 500M]
+```
+
+`device:` is required: `ad2` / `ad3` draw the FFT of Analog Discovery, the
+tinySA models a swept receiver. `-10dBm` is the power of a sine with the same
+peak, so the square wave's fundamental stands at −7.90 dBm and the odd harmonics
+fall as 1/n. This fence has no map.
+
 ## Drag the parts instead of typing
 
 Every fence can also be edited with the mouse. Click the circuit-board button at
@@ -118,7 +153,7 @@ the top right of this tab (or run **"tommie-fence: Open the Fence Editor"** from
 the command palette, `Ctrl+Shift+P`) and the map opens beside the text, showing
 the fence under the cursor. Or reopen this file as the map itself:
 `Ctrl+Shift+P` → **"View: Reopen Editor With..."** → **Fence Editor**. One editor
-handles the four board and schematic fences (vna has no map).
+handles the four board and schematic fences (vna, scope and spectrum have no map).
 
 The map is a grab layer, not the drawing. Dragging a part rewrites the address
 in the fence, so the text stays the source of truth.
@@ -130,4 +165,6 @@ in the fence, so the text stays the source of truth.
   [breadboard syntax](../packages/breadboard-fence/docs/01-syntax.md) ·
   [perfboard syntax](../packages/perfboard-fence/docs/01-syntax.md) ·
   [copper syntax](../packages/copper-fence/docs/01-syntax.md) ·
-  [vna syntax](../packages/vna-fence/docs/01-syntax.md)
+  [vna syntax](../packages/vna-fence/docs/01-syntax.md) ·
+  [scope syntax](../packages/scope-fence/docs/01-syntax.md) ·
+  [spectrum syntax](../packages/spectrum-fence/docs/01-syntax.md)
