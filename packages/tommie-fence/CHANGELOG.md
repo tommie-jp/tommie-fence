@@ -3,6 +3,15 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.17.1] - 2026-09-28
+
+circuit-fence 0.15.1 を束ねた。
+
+### Fixed
+
+- circuit: **抵抗を箱で描く流儀 (`standard: jis` / `european`) の可変抵抗の矢が、右上を
+  向かなかった** (横に置くと左上、縦に置くと右下)。どう置いても右上を向く。
+
 ## [0.17.0] - 2026-09-28
 
 circuit-fence 0.15.0 を束ねた。
