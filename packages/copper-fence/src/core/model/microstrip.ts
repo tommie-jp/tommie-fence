@@ -1,3 +1,5 @@
+import { formatHertzShort } from 'fence-kit';
+
 /**
  * 線路の特性インピーダンス (Z0) と実効比誘電率 (εeff)。**図のキャプションに出す
  * 目安**で、銅厚と周波数分散は見ない (35µm の銅厚は 3mm 幅で 1% ほど)。
@@ -78,25 +80,14 @@ export function microstripWidthFor(z0: number, h: number, er: number): number {
   return (lo + hi) / 2;
 }
 
-/**
- * 周波数 `2.4G` `2400M` `1.575GHz` `433MHz`。Hz で返す。
- * **接頭辞は k・M・G だけ** (m を M と取り違えると 10^9 倍違う)。
- */
-const FREQUENCY = /^(\d+(?:\.\d+)?)\s*([kMG])?(?:Hz)?$/;
-const SCALE: Readonly<Record<string, number>> = { k: 1e3, M: 1e6, G: 1e9 };
-
 export const F_MIN = 1e6;
 export const F_MAX = 1e11;
 
-export function parseHertz(text: string): number | null {
-  const found = FREQUENCY.exec(text.trim());
-  if (found === null) return null;
-  const value = Number(found[1]) * (found[2] === undefined ? 1 : SCALE[found[2]] ?? 1);
-  return value > 0 ? value : null;
-}
+/**
+ * 周波数 `2.4G` `2400M` `1.575GHz` `433MHz`。**読みは fence-kit の `parseHertz`**
+ * (vna・scope と同じ綴り。接頭辞は k・M・G だけ — m を M と取り違えると 10^9 倍違う)。
+ */
+export { parseHertz } from 'fence-kit';
 
-/** 周波数の綴り (`2.4GHz` `433MHz`)。 */
-export function formatHertz(hz: number): string {
-  const [scale, unit] = hz >= 1e9 ? [1e9, 'GHz'] : hz >= 1e6 ? [1e6, 'MHz'] : [1e3, 'kHz'];
-  return `${Math.round((hz / scale) * 1000) / 1000}${unit}`;
-}
+/** 周波数の綴り (`2.4GHz` `433MHz`)。数と単位を詰めて書く。 */
+export const formatHertz = (hz: number): string => formatHertzShort(hz, '');

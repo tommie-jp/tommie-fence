@@ -1,7 +1,7 @@
 import { LIMITS } from '../limits.ts';
 import { DEVICES } from './device.ts';
 import type { DeviceName } from './device.ts';
-import { formatHertzShort, parseHertz } from './frequency.ts';
+import { formatHertzShort, parseHertz } from 'fence-kit';
 
 /** 掃引。**実機と同じく線形**に点を並べる。 */
 export type Sweep = { readonly start: number; readonly stop: number; readonly points: number };

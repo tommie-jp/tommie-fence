@@ -3,6 +3,18 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Added
+
+- **周波数の読み書き** (`parseHertz` `formatHertz` `formatHertzShort` `hertzUnit`)。
+  vna と copper が同じ物を持っていたので引き上げた。接頭辞は `k` `M` `G`、単位は `Hz`
+  だけ。`{ unit: 'required' }` で単位の無い綴りを断る (scope が使う)。
+- **等幅の帯** (`mono.ts` — `monoText` `monoLinesSize` `monoTableSize` `renderMonoTable` など)。
+  perfboard・copper・vna が同じ組み方を写して持っていた。行送りと余白は `MonoSpacing` で渡す。
+- **`data:` の読み口** (`fence-kit/cli` の `readNeighbor`)。vna が持っていた物。
+  シンボリックリンクを辿らず、通常のファイルだけを、上限まで読む。
+
 ## [0.1.0] - 2026-09-23
 
 ### Added

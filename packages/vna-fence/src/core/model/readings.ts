@@ -4,7 +4,7 @@ import { abs } from './complex.ts';
 import type { Complex } from './complex.ts';
 import { sparamAt } from './dut.ts';
 import type { DutElement } from './dut.ts';
-import { formatHertz } from './frequency.ts';
+import { formatHertz } from 'fence-kit';
 import { gammaEdge, scalarOf } from './series.ts';
 import type { Basis, TdrSeries } from './series.ts';
 import { groupDelay, impedanceFrom, phaseDeg, valueOf } from './sparams.ts';

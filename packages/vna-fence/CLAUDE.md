@@ -21,7 +21,7 @@ Markdown の ` ```vna ` フェンスを VNA (NanoVNA) の画面として描く�
 
 1. **core はファイルを開かない**。`data:` は宿主が `DataSource` で渡す (CLI は `.md`
    の隣、拡張は `env.currentDocument` の隣)。**名前は `DATA_NAME` 1 か所で絞る**
-   (`/` も `..` も通さない)。**名前の形だけでは足りない** — 宿主の読み口 (`cli/data.ts`) は
+   (`/` も `..` も通さない)。**名前の形だけでは足りない** — 宿主の読み口 (`cli/data.ts` → fence-kit の `readNeighbor`) は
    シンボリックリンクを辿らず (`lstat` + `O_NOFOLLOW`)、通常のファイル以外 (`/dev/zero`・
    FIFO) を読まず、上限までしか読まない
 2. **エスケープが唯一の防御** (板のフェンスと同じ)。図と帯に載る字は `escapeMarkup`、
@@ -31,5 +31,6 @@ Markdown の ` ```vna ` フェンスを VNA (NanoVNA) の画面として描く�
 4. **SVG に `NaN` / `Infinity` を書かない**。log の −∞、Γ = 1 の Z、tan の発散は
    `model/sparams.ts` と `abcd.ts` で頭を打たせ、描く値は `fraction` で枠の縁に寄せる
 5. **上限を置く** (`limits.ts`)。点数・トレース・マーカー・素子・ファイルの大きさ
-6. **先回りして共有しない**。`parseHertz` は copper にも同じ物がある — fence-kit へ
-   上げるのは 2 つの綴りの受け方を見比べて揃えるとき
+6. **先回りして共有しない**。`parseHertz` `formatHertz`・等幅の帯 (`mono.ts`)・`data:` の読み口
+   (`readNeighbor`) は、copper・perfboard・scope と重なったので fence-kit へ上げた。
+   周波数の綴りは copper に揃え、**`m` (= M) は断る** (ミリと取り違えると 10^9 倍違う)

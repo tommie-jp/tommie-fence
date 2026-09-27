@@ -6,7 +6,7 @@ import { DATA_NAME, LIMITS } from '../limits.ts';
 import { DEFAULT_DEVICE, DEVICE_NAMES, isDeviceName } from '../model/device.ts';
 import type { DeviceName } from '../model/device.ts';
 import type { DutElement } from '../model/dut.ts';
-import { formatHertzShort, parseHertz } from '../model/frequency.ts';
+import { formatHertzShort, parseHertz } from 'fence-kit';
 import { deviceSweep, parseSweep } from '../model/sweep.ts';
 import type { Sweep } from '../model/sweep.ts';
 import { TOP_LEVEL_KEYS } from '../types.ts';

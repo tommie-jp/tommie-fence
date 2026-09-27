@@ -9,3 +9,5 @@ export { reportNetlist } from './report.ts';
 export type { NetLine } from './report.ts';
 export { parseCliArgs } from './args.ts';
 export type { ArgsResult, CliCommand, CliVerb } from './args.ts';
+export { readNeighbor } from './neighbor.ts';
+export type { NeighborLimits } from './neighbor.ts';

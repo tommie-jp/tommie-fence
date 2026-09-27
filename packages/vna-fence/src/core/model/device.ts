@@ -1,4 +1,4 @@
-import { formatHertzShort } from './frequency.ts';
+import { formatHertzShort } from 'fence-kit';
 
 /**
  * 機種と測れる範囲 (52 の docs/68 §1)。**図の絵は変えない** — 範囲の外を掃引して

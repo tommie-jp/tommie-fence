@@ -5,7 +5,7 @@ import {
 } from '../layout/scales.ts';
 import type { Axis } from '../layout/scales.ts';
 import type { Complex } from '../model/complex.ts';
-import { formatHertzShort } from '../model/frequency.ts';
+import { formatHertzShort } from 'fence-kit';
 import type { RectSeries, RoundSeries, Series, TdrSeries } from '../model/series.ts';
 import type { Sweep } from '../model/sweep.ts';
 import type { MarkerSpec, NoteSpec, NoteUnit } from '../types.ts';

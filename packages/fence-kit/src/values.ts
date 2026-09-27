@@ -290,3 +290,52 @@ export function parseMicrohenries(text: string): number | null {
  * ので、図では数字で書く (形が同じ胴なので、色だけの違いでは読めない)。
  */
 export const inductorCode = (microhenries: number): string | null => threeDigitCode(microhenries);
+
+/**
+ * 周波数の読み書き。**vna と copper の 2 つが同じ物を持っていた**ので、綴りの
+ * 受け方を揃えて引き上げた (scope が 3 つ目の使い手)。
+ *
+ * - **接頭辞は k・M・G だけ。** vna は `m` を M と読んでいたが、ミリと取り違えると
+ *   10^9 倍違う値を黙って描く (直下の CLAUDE.md の文法の方針 1)。copper の断り方に揃えた
+ * - **単位は `Hz` だけ** (`hz` `HZ` は受けない。正の書き方は 1 つ)
+ * - `unit: 'required'` なら `Hz` の無い綴り (`1k` `1000`) を断る。scope のように
+ *   **単位の無い数を断る**フェンスが使う
+ */
+const HERTZ = /^(\d+(?:\.\d+)?|\.\d+)\s*([kMG]?)(Hz)?$/;
+const HERTZ_SCALE: Readonly<Record<string, number>> = { '': 1, k: 1e3, M: 1e6, G: 1e9 };
+
+export type HertzOptions = { readonly unit?: 'optional' | 'required' };
+
+/** 周波数を Hz に。読めなければ null。0 以下も null。 */
+export function parseHertz(text: string, options: HertzOptions = {}): number | null {
+  const found = HERTZ.exec(text.trim());
+  if (found === null) return null;
+  if (options.unit === 'required' && found[3] === undefined) return null;
+  const value = Number(found[1]) * (HERTZ_SCALE[found[2] ?? ''] ?? 1);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+/** 周波数の単位 (Hz〜GHz)。 */
+export const hertzUnit = (hz: number): readonly [number, string] => {
+  const size = Math.abs(hz);
+  if (size >= 1e9) return [1e9, 'GHz'];
+  if (size >= 1e6) return [1e6, 'MHz'];
+  if (size >= 1e3) return [1e3, 'kHz'];
+  return [1, 'Hz'];
+};
+
+/** 読み値の綴り。**小数の桁を揃える** (既定 3 桁 — NanoVNA のマーカーの `10.000 MHz`)。 */
+export function formatHertz(hz: number, digits = 3): string {
+  const [scale, unit] = hertzUnit(hz);
+  return `${(hz / scale).toFixed(digits)} ${unit}`;
+}
+
+/**
+ * 目盛の綴り。**末尾の 0 を落とす** (`150 MHz` `1.5 GHz` `50 kHz`)。
+ * `separator` は数と単位の間 (copper は詰めて `2.4GHz`)。
+ */
+export function formatHertzShort(hz: number, separator = ' '): string {
+  const [scale, unit] = hertzUnit(hz);
+  const value = Math.round((hz / scale) * 1000) / 1000;
+  return `${value}${separator}${unit}`;
+}

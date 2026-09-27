@@ -3,6 +3,13 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Changed
+
+- 周波数の読み書きと等幅の帯を fence-kit の物に揃えた (vna・scope と共用)。
+  描く図は 1 バイトも変わらない。`f: .5G` のように頭の 0 を省いた綴りも読む。
+
 ## [0.3.0] - 2026-09-28
 
 ### Changed

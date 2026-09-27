@@ -53,7 +53,9 @@
 **部品の姿** — 2 本足と 3 本足の胴、DIP / SIP / マイコンボードのパッケージ)、
 **ネットリストの組み立て** (`computeNets`。盤面ごとの事情は `preferredName` に寄せた)、
 **CLI の共通部分** (`fence-kit/cli` — 引数の読み取り、入力ファイルの集め方、
-ネットリストの出し方)。
+ネットリストの出し方、`data:` で `.md` の隣を読む口 `readNeighbor`)、
+**周波数の読み書き** (`parseHertz` — vna・copper・scope)、
+**図の下の等幅の帯** (`mono.ts` — perfboard・copper・vna・scope)。
 図の中身 (板・部品・配線の形) は入っていない — circuit は TeX に描かせるので
 SVG を直に組み立てるコードを持たず、共有できるのが breadboard と
 perfboard の 2 つだけ。perfboard が描き進むあいだも、

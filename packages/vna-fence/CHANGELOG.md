@@ -3,6 +3,14 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Changed
+
+- **周波数の小文字の `m` を断る** (`300m` は 300 MHz と読んでいた)。ミリと取り違えると
+  10^9 倍違う値を黙って描くため。接頭辞は `k` `M` `G`、単位は `Hz` だけを受ける
+  (copper と同じ綴り。読みは fence-kit の `parseHertz` に揃えた)。`K` `g` `hz` `HZ` も断る。
+
 ## [0.2.0] - 2026-09-28
 
 ### Changed

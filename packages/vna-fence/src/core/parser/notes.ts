@@ -1,6 +1,6 @@
 import { safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
-import { parseHertz } from '../model/frequency.ts';
+import { parseHertz } from 'fence-kit';
 import type { NoteSpec, NoteUnit } from '../types.ts';
 import { fail, ok, wordsOf } from './result.ts';
 import type { LineResult } from './result.ts';

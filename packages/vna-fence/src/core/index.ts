@@ -5,7 +5,7 @@ import { groupPanels, isRound } from './layout/panels.ts';
 import type { Panel, PanelTrace } from './layout/panels.ts';
 import { rangeNotice } from './model/device.ts';
 import { endOf, sparamsOf } from './model/dut.ts';
-import { formatHertzShort } from './model/frequency.ts';
+import { formatHertzShort } from 'fence-kit';
 import { readingsOf } from './model/readings.ts';
 import type { Readings } from './model/readings.ts';
 import { isEvenlySpaced, seriesOf } from './model/series.ts';

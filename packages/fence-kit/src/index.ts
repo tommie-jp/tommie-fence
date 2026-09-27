@@ -21,9 +21,15 @@ export type { FenceBlock } from './fences.ts';
 export { escapeMarkup, element } from './markup.ts';
 export { BOLD_FAMILY, num, svgText, TEXT_HALO_WIDTH } from './svg.ts';
 export {
-  DEFAULT_TOLERANCE, capacitorCode, inductorCode, parseMicrohenries, parseOhms, parsePicofarads,
-  parseResistor, resistorBandColors, resistorBands,
+  DEFAULT_TOLERANCE, capacitorCode, formatHertz, formatHertzShort, hertzUnit, inductorCode, parseHertz,
+  parseMicrohenries, parseOhms, parsePicofarads, parseResistor, resistorBandColors, resistorBands,
 } from './values.ts';
+export type { HertzOptions } from './values.ts';
+export {
+  MONO_FAMILY, MONO_WIDEN, monoBandHeight, monoBaseline, monoLinesSize, monoTableLines, monoTableSize, monoText,
+  monoWidth, renderMonoLines, renderMonoTable,
+} from './mono.ts';
+export type { MonoBand, MonoSize, MonoSpacing } from './mono.ts';
 export {
   BAND_COLORS, LED_COLORS, WIRE_COLORS, DEFAULT_LED_COLOR, DEFAULT_WIRE_COLOR,
   bandColor, ledColor, wireColor, wireColorNames,
