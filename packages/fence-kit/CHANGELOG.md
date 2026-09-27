@@ -20,6 +20,8 @@
 - **波形発生器の波** (`wave.ts` — `parseWave` `sampleWave` `periodOf`)。`sine 1kHz 1V offset 1V`。
   振幅は peak (`2Vpp` は半分、`Vrms` は sine だけ)。scope と spectrum が同じ綴りで使う
   (spectrum の線スペクトル `linesOf` は型 `SpectralLine` だけ先に置いた)。
+- **FFT と窓** (`dsp.ts` — `fft` `fftArrays` `kaiser` `nextPowerOfTwo`)。vna の TDR が持っていた
+  逆 FFT と Kaiser 窓を、向き (`forward` / `inverse`) を引数にして引き上げた (spectrum が 2 つ目の使い手)。
 
 ## [0.1.0] - 2026-09-23
 

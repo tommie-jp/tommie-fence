@@ -36,6 +36,8 @@ export {
 } from './units.ts';
 export type { Amplitude, AmplitudeKind } from './units.ts';
 export { WAVE_SHAPES, parseWave, periodOf, sampleWave } from './wave.ts';
+export { fft, fftArrays, kaiser, nextPowerOfTwo } from './dsp.ts';
+export type { Complex, FftDirection } from './dsp.ts';
 export type { SpectralLine, WaveRead, WaveShape, WaveSpec } from './wave.ts';
 export {
   BAND_COLORS, LED_COLORS, WIRE_COLORS, DEFAULT_LED_COLOR, DEFAULT_WIRE_COLOR,
