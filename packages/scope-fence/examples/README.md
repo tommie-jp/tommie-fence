@@ -13,6 +13,9 @@
 | [03-rectifier.md](03-rectifier.md) | 半波・全波整流と平滑 — `clip 0V`・`abs`・`rc` |
 | [04-waves.md](04-waves.md) | 波形発生器の波 6 種と、V/div を手で決める並びの形 |
 
+00-rc-charging の図 04 は `data:` で CSV を重ねる。`00-rc-charging-ch.csv` は
+`node scripts/fakeData.mjs` が**計算で**書く (実測ではない)。
+
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではない。
 

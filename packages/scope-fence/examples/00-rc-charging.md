@@ -43,3 +43,21 @@ measure: [vpp, freq]
 ```
 
 ![図03 カーソルで 1 τ を読む](out/00-rc-charging-3.svg)
+
+測った波を重ねる。WaveForms の Scope で **Export → CSV** したファイルを `.md` の隣に置き、
+`data:` に名前を書くと実線で重なり、読み値の帯は**測った値**になる (見出しが「実測」に変わる)。
+ここの `00-rc-charging-ch.csv` は**計算で作った値** (理想にノイズ ±5 mV と ADC の刻みを足した物。
+`scripts/fakeData.mjs`) で、実測ではない。
+
+```scope
+title: 図04 測った波を重ねる (計算で作った CSV)
+time: 1ms/div
+trigger: ch1 rising 1V
+ch1: square 100Hz 1V offset 1V
+ch2: ch1 | rc 1ms
+data: 00-rc-charging-ch.csv
+cursors: [0, 1ms]
+measure: [vpp, freq]
+```
+
+![図04 測った波を重ねる (計算で作った CSV)](out/00-rc-charging-4.svg)

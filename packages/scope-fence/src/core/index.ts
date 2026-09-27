@@ -1,11 +1,12 @@
 import { formatPerDiv, formatSeconds, formatVolts, normalizeNewlines } from 'fence-kit';
 import { attachSourceText, notice, shiftErrors } from './errors.ts';
-import { autoRange, autoTimePerDiv, fractionY } from './layout/scales.ts';
+import { autoRange, autoTimePerDiv, fractionY, niceStep125 } from './layout/scales.ts';
 import { SIZE, createLayout } from './layout/screen.ts';
 import { LIMITS } from './limits.ts';
 import type { ChannelName, ChannelSpec } from './model/channel.ts';
 import { CHANNEL_NAMES, samplesOf } from './model/channel.ts';
 import type { MeasureName } from './model/measure.ts';
+import { parseCsv } from './model/csv.ts';
 import { readingsOf } from './model/readings.ts';
 import type { Readings, Trace } from './model/readings.ts';
 import { DIVISIONS, findTrigger, screenOf } from './model/screen.ts';
@@ -59,14 +60,26 @@ export type RenderOptions = {
   readonly data?: DataSource;
 };
 
-type Measured = { readonly traces: readonly Trace[]; readonly name: string | null; readonly said: readonly FenceError[] };
+type Measured = {
+  readonly traces: readonly Trace[];
+  readonly name: string | null;
+  /** 記録の始めと終わり (s)。読めなければ null。 */
+  readonly extent: readonly [number, number] | null;
+  readonly said: readonly FenceError[];
+};
 
-/** `data:` を読む。**読めなくても図は出す** (言うことはお知らせ)。CSV の読みは段 2。 */
+const NOTHING: Omit<Measured, 'said'> = { traces: [], name: null, extent: null };
+
+/**
+ * `data:` を読む。**読めなくても図は出す** (言うことはお知らせ)。記録はまるごと持つ —
+ * 描くのは画面の中だけ、読み値は記録全体から (実機のバッファと同じ)。
+ * **トリガの探索は掛けない** (WaveForms の CSV の t = 0 がトリガ)。
+ */
 function readData(doc: FenceDocument, source: DataSource | undefined): Measured {
-  if (doc.data === null) return { traces: [], name: null, said: [] };
+  if (doc.data === null) return { ...NOTHING, said: [] };
   const { name, line } = doc.data;
   if (source === undefined) {
-    return { traces: [], name: null, said: [notice(`この宿主では ${name} を読めません (CLI か VS Code の拡張で描くと実測が重なります)`, line, name)] };
+    return { ...NOTHING, said: [notice(`この宿主では ${name} を読めません (CLI か VS Code の拡張で描くと実測が重なります)`, line, name)] };
   }
   let text: string | null;
   try {
@@ -74,8 +87,17 @@ function readData(doc: FenceDocument, source: DataSource | undefined): Measured 
   } catch {
     text = null;
   }
-  if (text === null) return { traces: [], name: null, said: [notice(`${name} が見つかりません (.md と同じ場所に置きます)`, line, name)] };
-  return { traces: [], name: null, said: [notice(`${name} を読めません: CSV の読みはこの版にはまだありません`, line, name)] };
+  if (text === null) return { ...NOTHING, said: [notice(`${name} が見つかりません (.md と同じ場所に置きます)`, line, name)] };
+  const read = parseCsv(text);
+  if (!read.ok) return { ...NOTHING, said: [notice(`${name} を読めません: ${read.reason}`, line, name)] };
+  const t0 = read.time[0] ?? 0;
+  const traces = read.columns.map((column): Trace => ({ name: column.name, samples: column.values, dt: read.dt, t0, basis: 'data' }));
+  return {
+    traces,
+    name,
+    extent: [t0, read.time[read.time.length - 1] ?? t0],
+    said: read.notes.map((one) => notice(`${name}: ${one}`, line, name)),
+  };
 }
 
 /** 書かれなかった trigger: の既定 (最初の ch の立ち上がり、水準は中央)。 */
@@ -202,9 +224,15 @@ export function renderScope(input: string, options: RenderOptions = {}): RenderR
   if (!doc.keys.some((key) => /^ch\d$/.test(key)) && doc.data === null && source.trim() !== '') {
     said.push(notice('ch1: が無いので格子だけ描いています (ch1: sine 1kHz 1V のように書きます)', null));
   }
-  const perDiv = doc.time?.perDiv ?? autoTimePerDiv(channels);
-  if (!wrote('time') && channels.length > 0) {
-    said.push(notice(`time: が無いので ${formatPerDiv(perDiv, 's')} (一番遅い波の 2 周期) で描いています`, null));
+  const measured = readData(doc, options.data);
+  // time: が無く data: だけなら、記録の幅 / 10 を 1-2-5 に丸める。
+  const fromRecord = channels.length === 0 && measured.extent !== null;
+  const perDiv = doc.time?.perDiv ?? (fromRecord && measured.extent !== null
+    ? Math.min(LIMITS.perDiv.max, Math.max(LIMITS.perDiv.min, niceStep125((measured.extent[1] - measured.extent[0]) / DIVISIONS.x)))
+    : autoTimePerDiv(channels));
+  if (!wrote('time') && (channels.length > 0 || fromRecord)) {
+    const why = fromRecord ? '記録の幅から' : '一番遅い波の 2 周期';
+    said.push(notice(`time: が無いので ${formatPerDiv(perDiv, 's')} (${why}) で描いています`, null));
   }
   const screen = screenOf(perDiv, LIMITS.samples);
   const trigger = doc.trigger ?? defaultTrigger(channels);
@@ -214,8 +242,11 @@ export function renderScope(input: string, options: RenderOptions = {}): RenderR
 
   const ideal = idealOf(doc, screen, trigger);
   said.push(...ideal.said);
-  const measured = readData(doc, options.data);
   said.push(...measured.said);
+  if (measured.extent !== null && doc.data !== null
+    && (measured.extent[1] < screen.left || measured.extent[0] > screen.left + screen.span)) {
+    said.push(notice(`${doc.data.name} には画面 (${formatSeconds(screen.left)}〜${formatSeconds(screen.left + screen.span)}) の中の点がありません`, doc.data.line, doc.data.name));
+  }
 
   const cursors = doc.cursors.filter((cursor) => {
     const inside = cursor.t >= screen.left - 1e-15 && cursor.t <= screen.left + screen.span + 1e-15;
