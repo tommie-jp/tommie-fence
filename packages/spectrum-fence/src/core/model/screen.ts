@@ -64,10 +64,12 @@ function common(doc: FenceDocument, device: Device, said: FenceError[]): Common 
 const display = (c: Common): readonly string[] => [`REF ${formatSetting(c.ref, c.unit)}`, `${formatSetting(c.scale, 'dB')}/div`];
 
 function fftScreen(doc: FenceDocument, device: Device, c: Common, said: FenceError[]): Screen {
+  // samples: と window: の既定は、計算する物 (signal: か floor:) があるときだけ言う (図の中身を決めないので)。
+  const computes = doc.signal.length > 0 || doc.floor !== null;
   const samples = doc.samples?.value ?? device.samples?.default ?? 8192;
-  if (doc.samples === null) said.push(notice(`samples: が無いので ${samples} で描いています`, null));
+  if (doc.samples === null && computes) said.push(notice(`samples: が無いので ${samples} で描いています`, null));
   const window = doc.window?.value ?? DEFAULT_WINDOW;
-  if (doc.window === null) said.push(notice(`window: が無いので ${window} で描いています`, null));
+  if (doc.window === null && computes) said.push(notice(`window: が無いので ${window} で描いています`, null));
   const { start, stop } = c.sweep;
   const df = resolutionOf(stop, samples);
   const bins = Math.floor((stop - start) / df) + 1;

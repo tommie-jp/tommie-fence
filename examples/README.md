@@ -13,7 +13,7 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | copper | 9 fixtures + 1 deliberately broken | [packages/copper-fence/examples/](../packages/copper-fence/examples/README.md) |
 | vna | 5 measurements + 1 deliberately broken | [packages/vna-fence/examples/](../packages/vna-fence/examples/README.md) |
 | scope | 5 screens + 1 deliberately broken | [packages/scope-fence/examples/](../packages/scope-fence/examples/README.md) |
-| spectrum | 5 screens + 1 deliberately broken | [packages/spectrum-fence/examples/](../packages/spectrum-fence/examples/README.md) |
+| spectrum | 6 screens + 1 deliberately broken | [packages/spectrum-fence/examples/](../packages/spectrum-fence/examples/README.md) |
 
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for
@@ -236,6 +236,7 @@ A 100 MHz square wave (−10 dBm) on a tinySA Ultra. M1 to M3 read −7.90 / −
 - [02-ad-harmonics.md](../packages/spectrum-fence/examples/02-ad-harmonics.md) — harmonics of a square wave (AD, dBV)
 - [03-windows.md](../packages/spectrum-fence/examples/03-windows.md) — windows (rect / hann / flattop)
 - [04-two-paths.md](../packages/spectrum-fence/examples/04-two-paths.md) — FFT and swept read the same dBm
+- [05-antenna.md](../packages/spectrum-fence/examples/05-antenna.md) — the FM band from an antenna (`data:` overlays a measurement)
 
 ## Why the files are not kept here
 

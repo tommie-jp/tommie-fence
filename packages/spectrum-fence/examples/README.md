@@ -12,6 +12,9 @@
 | [02-ad-harmonics.md](02-ad-harmonics.md) | 方形波の高調波 (AD の 4-2) — FFT 型、dBV |
 | [03-windows.md](03-windows.md) | 窓関数 (AD の 4-3) — bin の間の正弦を 3 つの窓で |
 | [04-two-paths.md](04-two-paths.md) | FFT 型と掃引型 (11-5) — 同じ方形波が同じ dBm になる |
+| [05-antenna.md](05-antenna.md) | アンテナで受けた FM 放送帯 (11-12) — `data:` で実測を重ねる |
+
+05-antenna の `05-antenna-fm.csv` は `node scripts/fakeData.mjs` が**計算で**書く (実測ではない)。
 
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではない。

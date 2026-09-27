@@ -120,7 +120,7 @@ is the gallery** — every fence next to the drawing it produces.
 | copper-fence | [docs/01-syntax.md](packages/copper-fence/docs/01-syntax.md) | — | [examples/](packages/copper-fence/examples/) — 9 fixtures, 1 error case |
 | vna-fence | [docs/01-syntax.md](packages/vna-fence/docs/01-syntax.md) | — | [examples/](packages/vna-fence/examples/) — 5 measurements, 1 error case |
 | scope-fence | — | — | [examples/](packages/scope-fence/examples/) — 5 screens, 1 error case |
-| spectrum-fence | — | — | [examples/](packages/spectrum-fence/examples/) — 5 screens, 1 error case |
+| spectrum-fence | — | — | [examples/](packages/spectrum-fence/examples/) — 6 screens, 1 error case |
 
 Every example is followed by the drawing it produces (`examples/out/`), so the
 files read as documentation in the Markdown preview. Rebuild them with

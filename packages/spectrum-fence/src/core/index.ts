@@ -3,6 +3,8 @@ import { attachSourceText, notice, shiftErrors } from './errors.ts';
 import { frequencyTicks, levelTicks } from './layout/scales.ts';
 import type { Axes } from './layout/scales.ts';
 import { DIVISIONS, SIZE, createLayout } from './layout/screen.ts';
+import { readData } from './model/data.ts';
+import type { DataSource } from './model/data.ts';
 import { deviceOf } from './model/device.ts';
 import { markerPoint, readMarkers } from './model/markers.ts';
 import type { MarkerSpec, Readings } from './model/markers.ts';
@@ -29,7 +31,7 @@ const byLine = (errors: readonly FenceError[]): FenceError[] =>
  * (CLI は `.md` の隣、拡張は開いている文書の隣)。名前は core が `DATA_NAME` で
  * 絞ったものだけが来る。見つからなければ null。
  */
-export type DataSource = (name: string) => string | null;
+export type { DataSource } from './model/data.ts';
 
 export type RenderResult = {
   /** それ自体で完結した SVG。**格子は必ず描く** (読めなかった行があっても、読めた所まで)。 */
@@ -59,6 +61,9 @@ const EMPTY_AXES: Axes = { start: 0, stop: 1, ref: 0, scale: 10, unit: 'dBm' };
 type Drawn = {
   readonly axes: Axes;
   readonly points: readonly Point[];
+  /** 測った点 (`data:`)。読めなければ空。 */
+  readonly measured: readonly Point[];
+  readonly dataName: string | null;
   readonly markers: readonly MarkerSpec[];
   readonly status: readonly [readonly string[], readonly string[]] | null;
   readonly readings: Readings;
@@ -74,16 +79,25 @@ function markersInside(markers: readonly MarkerSpec[], screen: Screen, said: Fen
   });
 }
 
-function drawnOf(doc: FenceDocument): Drawn {
+function drawnOf(doc: FenceDocument, source: DataSource | undefined): Drawn {
   if (doc.device === null) {
-    return { axes: EMPTY_AXES, points: [], markers: [], status: null, readings: { rows: [], basis: null }, said: [] };
+    return {
+      axes: EMPTY_AXES, points: [], measured: [], dataName: null, markers: [], status: null, readings: { rows: [], basis: null }, said: [],
+    };
   }
   const screen = screenOf(doc, deviceOf(doc.device));
-  const said = [...screen.errors, ...screen.said];
+  const measured = readData(doc, screen, source);
+  const said = [...screen.errors, ...screen.said, ...measured.said];
   const markers = markersInside(doc.markers, screen, said);
   const axes: Axes = { start: screen.start, stop: screen.stop, ref: screen.ref, scale: screen.scale, unit: screen.unit };
-  const readings = readMarkers(markers, screen.points, screen.unit, screen.points.length === 0 ? null : 'model');
-  return { axes, points: screen.points, markers, status: screen.status, readings, said };
+  // **読み値は実測があれば実測** (実機のマーカーは測った点を読む)、無ければ理想。
+  const readings = measured.points.length > 0
+    ? readMarkers(markers, measured.points, screen.unit, 'data')
+    : readMarkers(markers, screen.points, screen.unit, screen.points.length === 0 ? null : 'model');
+  return {
+    axes, points: screen.points, measured: measured.points, dataName: measured.points.length > 0 ? measured.name : null,
+    markers, status: screen.status, readings, said,
+  };
 }
 
 /**
@@ -96,7 +110,7 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
   const { doc } = parsed;
   const style = resolveStyle(doc.style);
   const { theme } = style;
-  const drawn = drawnOf(doc);
+  const drawn = drawnOf(doc, options.data);
   const color = traceColor(theme, 0);
   const hasModel = drawn.points.length > 0;
 
@@ -107,25 +121,26 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
   const layout = createLayout({
     statusRows: Math.max(1, status.length),
     title: doc.title,
-    key: keyText(hasModel, null),
-    readings: readingsSize(drawn.readings, null, theme),
+    key: keyText(hasModel, drawn.dataName),
+    readings: readingsSize(drawn.readings, drawn.dataName, theme),
     source: null,
     theme,
   });
   const markerSvg = drawn.markers.map((marker, index) => {
-    const point = markerPoint(marker, drawn.points);
+    const point = markerPoint(marker, drawn.measured.length > 0 ? drawn.measured : drawn.points);
     return point === null ? '' : renderMarker(point, `${index + 1}`, drawn.axes, layout.grid, color, theme);
   }).join('');
 
   const body = renderTitle(doc.title, layout, theme)
-    + renderKey(hasModel, null, layout, theme)
+    + renderKey(hasModel, drawn.dataName, layout, theme)
     + renderGrid(layout, theme)
     + renderLevelLabels(levelTicks(drawn.axes), layout, theme)
     + renderFrequencyLabels(drawn.status === null ? null : frequencyTicks(drawn.axes), layout, theme)
     + renderTrace(drawn.points, 'model', drawn.axes, layout.grid, color)
+    + renderTrace(drawn.measured, 'data', drawn.axes, layout.grid, color)
     + markerSvg
     + renderStatus(status, layout, theme)
-    + (layout.readingsBand === null ? '' : renderReadings(drawn.readings, null, layout.readingsBand, theme));
+    + (layout.readingsBand === null ? '' : renderReadings(drawn.readings, drawn.dataName, layout.readingsBand, theme));
   const svg = renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
 
   const reported = attachSourceText(byLine([...parsed.errors, ...drawn.said]), source);
@@ -135,7 +150,7 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
   return {
     svg,
     readings: drawn.readings,
-    readingLines: readingLinesOf(drawn.readings, null),
+    readingLines: readingLinesOf(drawn.readings, drawn.dataName),
     errors,
     notices,
     errorHtml: renderErrorBanner(style.debug ? [...errors, ...notices] : errors),

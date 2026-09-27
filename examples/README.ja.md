@@ -12,7 +12,7 @@
 | copper | 治具 9 本 + わざと壊した例 1 本 | [packages/copper-fence/examples/](../packages/copper-fence/examples/README.md) |
 | vna | 測る物 5 本 + わざと壊した例 1 本 | [packages/vna-fence/examples/](../packages/vna-fence/examples/README.md) |
 | scope | 画面 5 本 + わざと壊した例 1 本 | [packages/scope-fence/examples/](../packages/scope-fence/examples/README.md) |
-| spectrum | 画面 5 本 + わざと壊した例 1 本 | [packages/spectrum-fence/examples/](../packages/spectrum-fence/examples/README.md) |
+| spectrum | 画面 6 本 + わざと壊した例 1 本 | [packages/spectrum-fence/examples/](../packages/spectrum-fence/examples/README.md) |
 
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。
@@ -227,6 +227,7 @@ FFT 型 (Analog Discovery の Spectrum) と掃引型 (tinySA) を `device:` で�
 - [02-ad-harmonics.md](../packages/spectrum-fence/examples/02-ad-harmonics.md) — 方形波の高調波 (AD、dBV)
 - [03-windows.md](../packages/spectrum-fence/examples/03-windows.md) — 窓関数 (rect / hann / flattop)
 - [04-two-paths.md](../packages/spectrum-fence/examples/04-two-paths.md) — FFT 型と掃引型で同じ dBm になる
+- [05-antenna.md](../packages/spectrum-fence/examples/05-antenna.md) — アンテナで受けた FM 放送帯 (`data:` で実測を重ねる)
 
 ## なぜ実体をここに置かないか
 

@@ -22,3 +22,10 @@
 - `markers:` (周波数か `peak`、4 つまで) と読み値の帯 (`1  100.000 MHz  −7.90 dBm`)。
   `check` が同じ字を出す。
 - 例 5 本 (本の 11-4・11-2・11-3・11-5、AD の 4-2・4-3) とわざと壊した例 1 本。
+- **測ったスペクトルを重ねる** (`data: 11-12-fm.csv`) — 2 列 (周波数・レベル) の CSV / TXT を
+  `.md` の隣から読み、同じ色の実線で重ねる。マーカーは実測の点を読む (見出しが「実測」)。
+  tinySA の SAVE TRACES (見出し無し、Hz と dBm。`unit:` で上書き) と WaveForms の Spectrum の
+  Export (`#` の頭書き、`Frequency (Hz),Trace 1 (dBV)`) の形を読む。見出しの無い「MHz の CSV」は
+  桁で見分けて言う。列が 2 つでない・周波数が戻る・小数点のコンマは断る。読むのは CLI と
+  VS Code の拡張 (デスクトップ) だけ。web と playground は「この宿主では読めません」と言う。
+- 例 `05-antenna.md` (本の 11-12)。CSV は `scripts/fakeData.mjs` が計算で書く (実測ではない)。
