@@ -45,7 +45,7 @@ export function renderGrid(layout: Layout, theme: Theme): string {
 /** 状態の行の 1 項目 (`CH1 500mV/div` など)。色は ch の色。 */
 export type StatusItem = { readonly text: string; readonly fill: string };
 
-const STATUS_GAP = 14;
+const STATUS_GAP = 16;
 
 /**
  * 格子の下の状態の行: `CH1 500mV/div  CH2 500mV/div  1ms/div  Trig CH1 ↑ 1.00 V`。
@@ -57,7 +57,7 @@ export function renderStatus(lines: readonly (readonly StatusItem[])[], layout: 
   return lines.map((items, row) => {
     let x = layout.grid.x;
     return items.map((item) => {
-      const text = svgText(x, layout.statusBaseline + row * STATUS_LEADING, item.text, { anchor: 'start', fill: item.fill, 'font-size': num(size) });
+      const text = svgText(x, layout.statusBaseline + row * statusLeading(theme), item.text, { anchor: 'start', fill: item.fill, 'font-size': num(size) });
       x += textWidth(item.text) * size + STATUS_GAP;
       return text;
     }).join('');
@@ -65,7 +65,7 @@ export function renderStatus(lines: readonly (readonly StatusItem[])[], layout: 
 }
 
 /** 状態の行の行送り (px)。 */
-export const STATUS_LEADING = 13;
+export const statusLeading = (theme: Theme): number => Math.round(theme.metrics.smallSize * 1.5);
 
 /**
  * 状態の行を格子の幅に収める。**収まらなければ ch の V/div を 1 行目、time/div と
@@ -80,13 +80,13 @@ export function statusLines(items: readonly StatusItem[], channels: number, room
 export const statusWidth = (items: readonly StatusItem[], theme: Theme): number =>
   items.reduce((sum, item) => sum + textWidth(item.text) * theme.metrics.smallSize, 0) + STATUS_GAP * Math.max(0, items.length - 1);
 
-const MARK = 7;
+export const MARK = 7;
 
 /** 基準の印の番号 1 つ (ch の番号と色)。 */
 export type MarkLabel = { readonly number: number; readonly color: string };
 
 /** 番号 1 字ぶんの幅 (字の大きさに対する倍率)。 */
-const DIGIT = 0.62;
+export const DIGIT = 0.62;
 
 /**
  * ch の基準 (0 V) の印 `12▶`。**格子の左の余白**に置く。格子の外なら縁に寄せる。

@@ -31,6 +31,7 @@ export type Palette = {
 };
 
 export type Metrics = {
+  /** 題の字の基準 (題はこの 1.5 倍)。 */
   readonly textSize: number;
   /** 目盛と読み値の字。 */
   readonly smallSize: number;
@@ -78,7 +79,11 @@ const MONO: Palette = {
   halo: '#ffffff',
 };
 
-const METRICS: Metrics = { textSize: 10, smallSize: 8.5 };
+/**
+ * 字の大きさ。**図を等倍で見て本文と同じくらい** (12 px) — 格子の幅 400 px の図を
+ * 縮めずに貼るので、字を小さくすると読めない。凡例・目盛・状態の行・読み値は同じ大きさ。
+ */
+const METRICS: Metrics = { textSize: 12, smallSize: 12 };
 
 export const THEMES: Record<ThemeName, Theme> = {
   light: { palette: LIGHT, metrics: METRICS },
