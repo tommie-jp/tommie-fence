@@ -104,7 +104,7 @@ jobs:
               git diff --exit-code -- \
                 "packages/$PKG/examples/out/*.tex" "packages/$PKG/docs/out/*.tex"
               ;;
-            perfboard-fence|copper-fence|vna-fence)
+            perfboard-fence|copper-fence|vna-fence|scope-fence|spectrum-fence)
               npm run docs --workspace="$PKG"
               git diff --exit-code -- \
                 "packages/$PKG/examples/out/*.svg" "packages/$PKG/docs/out/*.svg"

@@ -79,20 +79,20 @@ jobs:
             build: true
             docs: true
             generated: "'packages/vna-fence/examples/out/*.svg' 'packages/vna-fence/docs/out/*.svg'"
-          # scope-fence: SVG は決まる (vna と同じ)。docs の図は段 5 で (文法リファレンスを書いてから)。
+          # scope-fence: SVG は決まる (vna と同じ)。docs にも図がある。
           - pkg: scope-fence
             pack: true
             packed: "package/dist/core.mjs package/dist/core.cjs package/dist/types/index.d.ts"
             build: true
-            docs: false
-            generated: "'packages/scope-fence/examples/out/*.svg'"
-          # spectrum-fence: scope と同じ扱い。docs の図は段 4 で (文法リファレンスを書いてから)。
+            docs: true
+            generated: "'packages/scope-fence/examples/out/*.svg' 'packages/scope-fence/docs/out/*.svg'"
+          # spectrum-fence: scope と同じ扱い。docs にも図がある。
           - pkg: spectrum-fence
             pack: true
             packed: "package/dist/core.mjs package/dist/core.cjs package/dist/types/index.d.ts"
             build: true
-            docs: false
-            generated: "'packages/spectrum-fence/examples/out/*.svg'"
+            docs: true
+            generated: "'packages/spectrum-fence/examples/out/*.svg' 'packages/spectrum-fence/docs/out/*.svg'"
     name: check (${{ matrix.pkg }})
     steps:
       - uses: actions/checkout@v7

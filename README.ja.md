@@ -102,8 +102,8 @@ tommie-fence
 | breadboard-fence | [docs/01-syntax.md](packages/breadboard-fence/docs/01-syntax.md) | [docs/02-cheatsheet.md](packages/breadboard-fence/docs/02-cheatsheet.md) | [examples/](packages/breadboard-fence/examples/) — 回路 13 本、エラー例 2 本 |
 | copper-fence | [docs/01-syntax.md](packages/copper-fence/docs/01-syntax.md) | — | [examples/](packages/copper-fence/examples/) — 治具 9 本、エラー例 1 本 |
 | vna-fence | [docs/01-syntax.md](packages/vna-fence/docs/01-syntax.md) | — | [examples/](packages/vna-fence/examples/) — 測る物 5 本、エラー例 1 本 |
-| scope-fence | — | — | [examples/](packages/scope-fence/examples/) — 画面 5 本、エラー例 1 本 |
-| spectrum-fence | — | — | [examples/](packages/spectrum-fence/examples/) — 画面 6 本、エラー例 1 本 |
+| scope-fence | [docs/01-syntax.md](packages/scope-fence/docs/01-syntax.md) | [docs/02-cheatsheet.md](packages/scope-fence/docs/02-cheatsheet.md) | [examples/](packages/scope-fence/examples/) — 画面 5 本、エラー例 1 本 |
+| spectrum-fence | [docs/01-syntax.md](packages/spectrum-fence/docs/01-syntax.md) | [docs/02-cheatsheet.md](packages/spectrum-fence/docs/02-cheatsheet.md) | [examples/](packages/spectrum-fence/examples/) — 画面 6 本、エラー例 1 本 |
 
 例はどのフェンスの直後にも**そのフェンスを描いた図** (`examples/out/`) を貼って
 あるので、Markdown プレビューで開くとそのまま読み物になる。作り直しは
