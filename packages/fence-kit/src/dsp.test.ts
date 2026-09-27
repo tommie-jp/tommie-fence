@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { fft, fftArrays, kaiser, nextPowerOfTwo } from './dsp.ts';
+import { WINDOW_NAMES, fft, fftArrays, kaiser, nextPowerOfTwo, windowOf } from './dsp.ts';
 
 describe('fft', () => {
   test('inverse: a single frequency line becomes a rotating phasor of 1/n', () => {
@@ -51,5 +51,22 @@ describe('kaiser', () => {
 describe('nextPowerOfTwo', () => {
   test('rounds up to a power of two', () => {
     expect([1, 2, 3, 1000, 1024, 1025].map(nextPowerOfTwo)).toEqual([1, 2, 4, 1024, 1024, 2048]);
+  });
+});
+
+describe('windowOf', () => {
+  const sum = (weights: Float64Array): number => weights.reduce((total, weight) => total + weight, 0);
+
+  test('has the coherent gain of each window (1, 0.5, 0.2156)', () => {
+    expect(sum(windowOf('rect', 1024)) / 1024).toBe(1);
+    expect(sum(windowOf('hann', 1024)) / 1024).toBeCloseTo(0.5, 12);
+    expect(sum(windowOf('flattop', 1024)) / 1024).toBeCloseTo(0.21557895, 8);
+  });
+
+  test('is periodic: starts at its edge value and peaks in the middle', () => {
+    const hann = windowOf('hann', 8);
+    expect(hann[0]).toBe(0);
+    expect(hann[4]).toBeCloseTo(1, 12);
+    expect(WINDOW_NAMES).toEqual(['rect', 'hann', 'flattop']);
   });
 });

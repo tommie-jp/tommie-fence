@@ -19,9 +19,11 @@
   `parsePerDiv` と `format*`)。**単位の無い数は読まない**。`-10dBm` は 50 Ω の正弦の peak に直す。
 - **波形発生器の波** (`wave.ts` — `parseWave` `sampleWave` `periodOf`)。`sine 1kHz 1V offset 1V`。
   振幅は peak (`2Vpp` は半分、`Vrms` は sine だけ)。scope と spectrum が同じ綴りで使う
-  (spectrum の線スペクトル `linesOf` は型 `SpectralLine` だけ先に置いた)。
+  spectrum の線スペクトル `linesOf` (sine 1 本、square と pulse は 4A/πn·|sin(πnd)|、triangle は
+  奇数次 8A/π²n²、sawtooth は 2A/πn、dc と offset は 0 Hz の線)。`sampleWave` を FFT した値と一致する。
 - **FFT と窓** (`dsp.ts` — `fft` `fftArrays` `kaiser` `nextPowerOfTwo`)。vna の TDR が持っていた
   逆 FFT と Kaiser 窓を、向き (`forward` / `inverse`) を引数にして引き上げた (spectrum が 2 つ目の使い手)。
+  計器の窓 `windowOf` (`rect` `hann` `flattop`。周期形)。
 
 ## [0.1.0] - 2026-09-23
 

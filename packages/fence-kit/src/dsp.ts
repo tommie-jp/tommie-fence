@@ -88,3 +88,27 @@ export function kaiser(n: number, beta: number): readonly number[] {
     return besselI0(beta * Math.sqrt(Math.max(0, 1 - r * r))) / scale;
   });
 }
+
+/** 計器の窓 (WaveForms の Spectrum の窓の名前から、題に要る 3 つ)。 */
+export const WINDOW_NAMES = ['rect', 'hann', 'flattop'] as const;
+export type WindowName = (typeof WINDOW_NAMES)[number];
+
+/** Flat-top の係数 (5 項。振幅の誤差が bin の間でも ±0.02 dB 以内)。 */
+const FLATTOP = [0.21557895, 0.41663158, 0.277263158, 0.083578947, 0.006947368] as const;
+
+/**
+ * 窓の重み (n 点)。**周期形** (DFT で使う形。両端の片方を含まない) — FFT の bin に
+ * 乗った正弦が窓の和 (coherent gain) でちょうど割り戻せる。
+ */
+export function windowOf(name: WindowName, n: number): Float64Array {
+  const weights = new Float64Array(n);
+  for (let index = 0; index < n; index += 1) {
+    const x = (2 * Math.PI * index) / n;
+    weights[index] = name === 'rect'
+      ? 1
+      : name === 'hann'
+        ? 0.5 - 0.5 * Math.cos(x)
+        : FLATTOP.reduce((sum, a, k) => sum + (k % 2 === 0 ? a : -a) * Math.cos(k * x), 0);
+  }
+  return weights;
+}

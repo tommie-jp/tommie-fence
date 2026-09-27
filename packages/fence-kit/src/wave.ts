@@ -29,10 +29,11 @@ export type WaveSpec = {
 };
 
 /**
- * 波の線スペクトルの 1 本 (spectrum が使う)。**計算する `linesOf` は spectrum の
- * 段 1 でここに足す** — scope は時間波形しか描かないので、いまは型と置き場だけ。
+ * 波の線スペクトルの 1 本 (spectrum が使う)。`amplitude` は **peak (V)**。
+ * **0 Hz の線は直流の値そのもの** (負もある。rms は |値|)。位相は持たない
+ * (スペクトラムの画面は電力しか見ない)。
  */
-export type SpectralLine = { readonly frequency: number; readonly amplitude: number; readonly phase: number };
+export type SpectralLine = { readonly frequency: number; readonly amplitude: number };
 
 export type WaveRead =
   | {
@@ -193,4 +194,64 @@ export function sampleWave(spec: WaveSpec, t: number): number {
     case 'dc':
       return a;
   }
+}
+
+/** 線を打ち切る小ささ (振幅に対する比)。duty 50% の方形波の偶数次 (理論では 0) を落とす。 */
+const NEGLIGIBLE = 1e-9;
+
+/** n 次の高調波の振幅 (peak)。**`sampleWave` と同じ形の波の** Fourier 級数。 */
+function harmonic(spec: WaveSpec, n: number): number {
+  const a = spec.amplitude;
+  switch (spec.shape) {
+    case 'sine':
+      return n === 1 ? a : 0;
+    case 'square':
+    case 'pulse':
+      // ±A で high が duty の割合の波。duty 50% なら奇数次だけ 4A/πn。
+      return ((4 * a) / (Math.PI * n)) * Math.abs(Math.sin(Math.PI * n * spec.duty));
+    case 'triangle':
+      return n % 2 === 1 ? (8 * a) / (Math.PI ** 2 * n ** 2) : 0;
+    case 'sawtooth':
+      return (2 * a) / (Math.PI * n);
+    case 'dc':
+      return 0;
+  }
+}
+
+/** 直流の成分 (V)。方形波と pulse は duty で片寄る。 */
+function dcOf(spec: WaveSpec): number {
+  if (spec.shape === 'dc') return spec.amplitude;
+  if (spec.shape === 'square' || spec.shape === 'pulse') return spec.amplitude * (2 * spec.duty - 1) + spec.offset;
+  return spec.offset;
+}
+
+export type LinesRead = {
+  readonly lines: readonly SpectralLine[];
+  /** `maxLines` で打ち切ったか (呼ぶ側が言う)。 */
+  readonly truncated: boolean;
+};
+
+/**
+ * 波の線スペクトル — **周波数が `maxFrequency` 以下の線を、`maxLines` 本まで**。
+ * sine は 1 本、square は奇数次 4A/πn (duty が 50% でなければ偶数次も)、triangle は
+ * 奇数次 8A/π²n²、sawtooth は 2A/πn、pulse は square と同じ式 (±A の波なので
+ * 4A·d·sinc(nd))、dc と offset は 0 Hz の線。**`sampleWave` を FFT した値と一致する**
+ * (spectrum が 2 つの道の突き合わせで縛る)。
+ */
+export function linesOf(spec: WaveSpec, limits: { readonly maxFrequency: number; readonly maxLines: number }): LinesRead {
+  const lines: SpectralLine[] = [];
+  const dc = dcOf(spec);
+  if (dc !== 0) lines.push({ frequency: 0, amplitude: dc });
+  const f = spec.frequency;
+  if (f === null || !(f > 0)) return { lines, truncated: false };
+  for (let n = 1; n * f <= limits.maxFrequency; n += 1) {
+    const amplitude = harmonic(spec, n);
+    if (amplitude <= Math.abs(spec.amplitude) * NEGLIGIBLE) {
+      if (spec.shape === 'sine') break;
+      continue;
+    }
+    if (lines.length >= limits.maxLines) return { lines, truncated: true };
+    lines.push({ frequency: n * f, amplitude });
+  }
+  return { lines, truncated: false };
 }
