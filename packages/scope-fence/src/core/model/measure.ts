@@ -9,7 +9,7 @@ import { extentOf } from './screen.ts';
  * - freq / period は上向きの横切りの間隔の平均。**1 周期に満たなければ null** (`—`)
  * - avg / rms / duty は**整数の周期**の中で測る (画面の端の半端な周期で偏らない)。
  *   周期が見えなければ画面全体
- * - phase は reference (ch1) の横切りからの遅れ / 周期 × 360 (−180〜180。負は遅れ)
+ * - phase は reference (ch1) の横切りからの遅れ / 周期 × 360 ((−180, 180]。負は遅れ。±180° は 180°)
  * - rise は 10〜90 % の立ち上がり時間
  */
 export const MEASURE_NAMES = ['vpp', 'vmax', 'vmin', 'avg', 'rms', 'freq', 'period', 'duty', 'phase', 'rise'] as const;
@@ -112,8 +112,22 @@ function phaseOf(shape: Shape, reference: Samples): number | null {
   const offsets = shape.rising.map((own) => other.rising
     .map((ref) => wrap((own - ref) / period))
     .reduce((best, one) => (Math.abs(one) < Math.abs(best) ? one : best), 0.5));
-  const mean = offsets.reduce((sum, one) => sum + one, 0) / offsets.length;
-  return -mean * 360;
+  // **平均の前に 1 つの枝に揃える。** ちょうど半周期のずれは横切りごとに +0.5 と −0.5 に
+  // 分かれることがあり、そのまま平均すると打ち消し合って 0° になる (−180° が 0.0° と出た)。
+  // 最初のずれを基準に、各ずれを基準から ±0.5 周期の中へ 1 周期ずつ動かしてから平均する。
+  const base = offsets[0] ?? 0;
+  const aligned = offsets.map((one) => one - Math.round(one - base));
+  const mean = aligned.reduce((sum, one) => sum + one, 0) / aligned.length;
+  return toHalfOpen(-mean * 360);
+}
+
+/** 計算の誤差で −180° の側に来たものも 180° と読む幅 (度)。 */
+const PHASE_EDGE = 1e-6;
+
+/** (−180, 180] に丸める。**±180° はどちら向きに書いても 180°**。 */
+function toHalfOpen(degrees: number): number {
+  const wrapped = degrees - 360 * Math.ceil((degrees - 180) / 360);
+  return wrapped <= -180 + PHASE_EDGE ? wrapped + 360 : wrapped;
 }
 
 function riseOf(samples: Samples, shape: Shape): number | null {

@@ -102,6 +102,17 @@ describe('measure — 操作', () => {
     const { m } = run([channel('ch1', 'sine 1kHz 0.53V'), channel('ch2', 'sine 1kHz 0.85V phase -58deg')], 0.2e-3);
     expect(m('phase', 'ch2')).toBeCloseTo(-58.0, 1);
   });
+
+  test.each([
+    ['-180deg', 180],
+    ['180deg', 180],
+    ['-179deg', -179],
+    ['179deg', 179],
+    ['0deg', 0],
+  ])('phase %s reads %d degrees (half a period does not cancel out)', (written, expected) => {
+    const { m } = run([channel('ch1', 'sine 1kHz 1V'), channel('ch2', `sine 1kHz 1V phase ${written}`)], 0.2e-3);
+    expect(m('phase', 'ch2')).toBeCloseTo(expected, 1);
+  });
 });
 
 describe('measure — 測れないとき', () => {
