@@ -12,7 +12,7 @@ const csv = (() => {
   return rows.join('\n');
 })();
 
-const FENCE = 'title: 11-12\ndevice: tinysa-ultra\nsweep: 76M-95M 450\nrbw: 100kHz\ndata: fm.csv\nmarkers: [peak]';
+const FENCE = 'title: 11-12\ndevice: tinysa-ultra\nsweep: 76M-95M 450\nrbw: 100kHz\nref: -30dBm\ndata: fm.csv\nmarkers: [peak]';
 
 const polylines = (svg: string): readonly string[] => [...svg.matchAll(/<polyline [^>]*>/g)].map((match) => match[0]);
 
@@ -52,7 +52,7 @@ describe('renderSpectrum — data:', () => {
   });
 
   test('reads a headerless file in MHz, and says so', () => {
-    const result = renderSpectrum('device: tinysa-ultra\nsweep: 76M-95M 450\nrbw: 100kHz\ndata: m.csv\nmarkers: [peak]', { data: () => '76,-97\n82.5,-45\n95,-97' });
+    const result = renderSpectrum('device: tinysa-ultra\nsweep: 76M-95M 450\nrbw: 100kHz\nref: -30dBm\ndata: m.csv\nmarkers: [peak]', { data: () => '76,-97\n82.5,-45\n95,-97' });
     expect(result.notices.map((one) => one.message)).toEqual(['m.csv: 周波数が MHz で書かれているとみて読みました (見出しの無い CSV は Hz のはず)']);
     expect(result.readingLines[2]).toBe('1  82.500 MHz  −45.00 dBm');
   });

@@ -45,7 +45,7 @@ const ELEVEN_FOUR = [
   'device: tinysa-ultra',
   'sweep: 0-960M 450',
   'rbw: 300kHz',
-  'ref: -10dBm',
+  'ref: 0dBm',
   'signal: square 100MHz -10dBm',
   'markers: [100M, 300M, 500M]',
 ].join('\n');
@@ -76,7 +76,7 @@ describe('renderSpectrum — 段 1', () => {
       '3  500.000 MHz  −21.88 dBm',
     ]);
     expect(result.svg).not.toMatch(/NaN|Infinity/);
-    for (const word of ['tinySA Ultra', 'START 0 Hz', 'STOP 960 MHz', 'RBW 300 kHz', 'ATT 0 dB', '450 pt', 'REF −10 dBm', '10 dB/div']) {
+    for (const word of ['tinySA Ultra', 'START 0 Hz', 'STOP 960 MHz', 'RBW 300 kHz', 'ATT 0 dB', '450 pt', 'REF 0 dBm', '10 dB/div']) {
       expect(result.svg).toContain(word);
     }
   });
@@ -102,6 +102,8 @@ describe('renderSpectrum — 段 1', () => {
       'sweep: が無いので AD2 の範囲 (0 Hz〜25 MHz) で描いています',
       'samples: が無いので 8192 で描いています',
       'window: が無いので flattop で描いています',
+      // 1 kHz は分解能 (7.813 kHz) より細かく、理想の山が REF の上に出る (計算はそのまま)。
+      '一番高い山 (1.97 dBV、7.813 kHz) は REF (0 dBV) より上で切れています (ref: 10dBV なら入ります)',
     ]);
     expect(said('device: generic\nsweep: 0-1M 101\nrbw: 10kHz')).toEqual(['Generic のフロアは floor: で書きます (いまは −100 dBm で描いています)']);
   });
@@ -121,8 +123,8 @@ describe('renderSpectrum — 段 1', () => {
 
   test('says when a marker is outside the sweep, or the input is too strong', () => {
     expect(said('device: tinysa-ultra\nsweep: 0-1M 101\nrbw: 30kHz\nmarkers: [2M]')).toEqual(['マーカー 2 MHz は掃引 (0 Hz〜1 MHz) の外です (描いていません)']);
-    expect(said('device: tinysa-ultra\nsweep: 0-200M 101\nrbw: 30kHz\nsignal: sine 100MHz +10dBm')[0]).toContain('入力の上限 +6 dBm');
-    expect(said('device: ad2\nsweep: 0-20kHz\nsamples: 8192\nwindow: hann\nsignal: sine 1kHz 30V')[0]).toContain('入力の上限 ±25 V');
+    expect(said('device: tinysa-ultra\nsweep: 0-200M 101\nrbw: 30kHz\nsignal: sine 100MHz +10dBm').join('\n')).toContain('入力の上限 +6 dBm');
+    expect(said('device: ad2\nsweep: 0-20kHz\nsamples: 8192\nwindow: hann\nsignal: sine 1kHz 30V').join('\n')).toContain('入力の上限 ±25 V');
   });
 
   test('says when the sweep is too narrow for the FFT resolution, and when points are off the menu', () => {
@@ -192,5 +194,59 @@ describe('renderSpectrum — 波の周波数の綴り', () => {
   test('still refuses a bare number', () => {
     expect(renderSpectrum(`${base}signal: sine 100000000 -10dBm`).errors.map((one) => one.message))
       .toEqual(['周波数は 1kHz / 100MHz / 960M のように単位か接頭辞を付けます']);
+  });
+});
+
+/** 教科書 01-circuits/09-rf/07-am-modulation の図7 (搬送波 −27.1 dBm)。 */
+const AM = (ref: string, extra = ''): string => [
+  'device: tinysa-ultra', 'center: 686kHz', 'span: 10kHz', 'rbw: 200Hz', 'points: 450', ref,
+  'signal:', '  - sine 686kHz -27.1dBm', '  - sine 685kHz -55.1dBm', '  - sine 687kHz -55.1dBm',
+  'markers: [peak, 685k, 687k]', extra,
+].join('\n');
+
+describe('renderSpectrum — 山と REF', () => {
+  const said = (source: string): readonly string[] => renderSpectrum(source).notices.map((one) => one.message);
+  const low = (source: string): readonly string[] => said(source).filter((message) => message.includes('目盛下です'));
+  const cut = (source: string): readonly string[] => said(source).filter((message) => message.includes('切れています'));
+
+  test('says nothing while the peak sits less than 3 divisions below REF', () => {
+    expect(said(AM('ref: -20dBm'))).toEqual([]);
+    expect(said(AM('ref: -10dBm'))).toEqual([]);
+    expect(said(AM('ref: 0dBm'))).toEqual([]);
+  });
+
+  test('says how far down the peak is from 3 divisions, with a ref: to write', () => {
+    expect(low(AM('ref: 10dBm'))).toEqual(['一番高い山 (−27.10 dBm、686.000 kHz) は REF (10 dBm) より 3.7 目盛下です (ref: -10dBm なら上端から 1.7 目盛)']);
+  });
+
+  test('points at the ref: line (moved to the markdown line)', () => {
+    const [one] = renderSpectrum(AM('ref: 10dBm'), { offset: 100 }).notices;
+    expect(one?.line).toBe(106);
+  });
+
+  test('counts from the instrument REF when ref: is not written', () => {
+    const source = 'device: tinysa-ultra\nsweep: 0-50M 450\nrbw: 300kHz\nsignal: sine 10MHz -52.1dBm';
+    expect(low(source)).toEqual(['一番高い山 (−52.10 dBm、10.000 MHz) は REF (−10 dBm) より 4.2 目盛下です (ref: -40dBm なら上端から 1.2 目盛)']);
+  });
+
+  test('says the peak is cut off above REF', () => {
+    const source = 'device: tinysa-ultra\nsweep: 0-50M 450\nrbw: 300kHz\nsignal: sine 10MHz -5dBm';
+    expect(cut(source)).toEqual(['一番高い山 (−5.00 dBm、10.000 MHz) は REF (−10 dBm) より上で切れています (ref: 0dBm なら入ります)']);
+  });
+
+  test('says the same on an FFT instrument, in dBV', () => {
+    const source = 'device: ad2\nsweep: 0-20kHz\nsamples: 8192\nwindow: hann\nsignal: sine 1kHz 10V';
+    expect(cut(source)).toEqual(['一番高い山 (16.99 dBV、1.000 kHz) は REF (0 dBV) より上で切れています (ref: 20dBV なら入ります)']);
+  });
+
+  test('says nothing without a signal (only the floor is drawn)', () => {
+    expect(said('device: ad2\nsweep: 0-20kHz\nsamples: 8192\nwindow: hann\nfloor: -100dBV')).toEqual([]);
+    expect(low('device: generic\nsweep: 0-960M 450\nrbw: 300kHz\nfloor: -90dBm')).toEqual([]);
+  });
+
+  test('reads the measured peak when data: is there', () => {
+    const csv = 'Frequency (Hz),Trace (dBm)\n1000000,-97\n2000000,-62\n3000000,-97';
+    const result = renderSpectrum('device: tinysa-ultra\nsweep: 0-5M 101\nrbw: 30kHz\nref: -20dBm\ndata: m.csv', { data: () => csv });
+    expect(result.notices.map((one) => one.message)).toEqual(['一番高い山 (−62.00 dBm、2.000 MHz) は REF (−20 dBm) より 4.2 目盛下です (ref: -50dBm なら上端から 1.2 目盛)']);
   });
 });

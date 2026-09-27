@@ -234,6 +234,9 @@ duty 25 % の方形波は 4 次ごとに線が消える (2 GHz)。フロアは `
   `ref:` を `unit:` と違う単位で書けば換算する
 - **同じ波は 2 つの型で同じ dBm になる** (FFT 型を `unit: dBm` にして比べる)
 - 見た目の既定 (`ref:` `scale:` `unit:`) は状態の行と目盛に出るので、お知らせでは言わない
+- ただし**一番高い山が REF より 3 目盛以上下か、REF より上で切れる**ときは、書く `ref:` の値を添えて言う
+  (「一番高い山 (−27.10 dBm、686.000 kHz) は REF (10 dBm) より 3.7 目盛下です (ref: -10dBm なら上端から 1.7 目盛)」)。
+  山は `data:` があれば実測、無ければ理想。目盛は `scale:` で数える
 
 ```spectrum
 title: 図06 FFT 型を dBm で — 50 Ω に揃えて tinySA と比べる
@@ -350,6 +353,7 @@ npx spectrum-fence check examples
 | `sweep:` `points:` `samples:` `window:` `rbw:` を書かなかった (何で描いたか)、generic のフロア、pulse の duty | お知らせ |
 | 掃引が機種の範囲の外・点数を選択肢に丸めた・マーカーが掃引の外・入力の上限を超えた・bin が少ない | お知らせ |
 | `data:` が読めない・見つからない・掃引の中に点が無い・MHz とみて読んだ | お知らせ |
+| 一番高い山が REF より 3 目盛以上下・REF より上で切れる (書く `ref:` の値を添える) | お知らせ |
 
 わざと読めなく書いた例は [examples/errors/](../examples/errors/01-unreadable.md)。
 

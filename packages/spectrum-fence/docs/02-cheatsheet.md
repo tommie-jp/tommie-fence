@@ -11,7 +11,7 @@ title: 図01 NanoVNA の出力の高調波   # 任意。図の左上に載る 1 
 device: tinysa-ultra                 # 必須。ad2 ad3 (FFT 型) / tinysa tinysa-ultra generic (掃引型)
 sweep: 0-960M 450                    # 開始-終了 [点数]。か center: + span: の対
 rbw: 300kHz                          # 掃引型だけ。メニューの値
-ref: 0dBm                            # 任意。格子の上端
+ref: 0dBm                            # 任意。格子の上端。山が 3 目盛以上下・上で切れると言われる
 signal: square 100MHz -10dBm         # 波 (scope と同じ綴り)。並べれば和
 markers: [100M, 300M, 500M]          # 周波数か peak。4 つまで
 data: 11-4-harmonics.csv             # 任意。.md の隣の 2 列の CSV → 実線

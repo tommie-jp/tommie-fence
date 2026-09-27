@@ -6,7 +6,8 @@ import { DIVISIONS, SIZE, createLayout } from './layout/screen.ts';
 import { readData } from './model/data.ts';
 import type { DataSource } from './model/data.ts';
 import { deviceOf } from './model/device.ts';
-import { markerPoint, readMarkers } from './model/markers.ts';
+import { headroomNotice } from './model/headroom.ts';
+import { markerPoint, peakPoint, readMarkers } from './model/markers.ts';
 import type { MarkerSpec, Readings } from './model/markers.ts';
 import { screenOf } from './model/screen.ts';
 import type { Screen } from './model/screen.ts';
@@ -87,7 +88,10 @@ function drawnOf(doc: FenceDocument, source: DataSource | undefined): Drawn {
   }
   const screen = screenOf(doc, deviceOf(doc.device));
   const measured = readData(doc, screen, source);
-  const said = [...screen.errors, ...screen.said, ...measured.said];
+  // **山は実測があれば実測**、無ければ理想。信号が無い (フロアだけの) 画面では言わない。
+  const traced = measured.points.length > 0 ? measured.points : doc.signal.length > 0 ? screen.points : [];
+  const headroom = headroomNotice({ peak: peakPoint(traced), ref: screen.ref, scale: screen.scale, unit: screen.unit, line: doc.ref?.line ?? null });
+  const said = [...screen.errors, ...screen.said, ...measured.said, ...(headroom === null ? [] : [headroom])];
   const markers = markersInside(doc.markers, screen, said);
   const axes: Axes = { start: screen.start, stop: screen.stop, ref: screen.ref, scale: screen.scale, unit: screen.unit };
   // **読み値は実測があれば実測** (実機のマーカーは測った点を読む)、無ければ理想。
