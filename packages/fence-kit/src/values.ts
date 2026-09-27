@@ -359,8 +359,9 @@ function resistorValueProblem(value: string): string | null {
  * - **接頭辞は k・M・G だけ。** vna は `m` を M と読んでいたが、ミリと取り違えると
  *   10^9 倍違う値を黙って描く (直下の CLAUDE.md の文法の方針 1)。copper の断り方に揃えた
  * - **単位は `Hz` だけ** (`hz` `HZ` は受けない。正の書き方は 1 つ)
- * - 素の数 (`1000`) も受ける (vna の `sweep:`)。**単位の無い数を断る欄** (波の周波数) は
- *   呼ぶ側が素の数を先に断る — 接頭辞だけ (`100M`) と `Hz` 付き (`100MHz`) はどの欄でも同じに読む
+ * - `parseHertz` は素の数 (`1000`) も受ける。**フェンスの欄は `parsePrefixedHertz`** で読む —
+ *   素の数は 1 kHz か 1 GHz の書き間違いかもしれないので断る (直下の CLAUDE.md の文法の方針 1)。
+ *   接頭辞だけ (`100M`) と `Hz` 付き (`100MHz`) はどの欄でも同じに読む
  */
 const HERTZ = /^(\d+(?:\.\d+)?|\.\d+)\s*([kMG]?)(Hz)?$/;
 const HERTZ_SCALE: Readonly<Record<string, number>> = { '': 1, k: 1e3, M: 1e6, G: 1e9 };
@@ -372,6 +373,15 @@ export function parseHertz(text: string): number | null {
   const value = Number(found[1]) * (HERTZ_SCALE[found[2] ?? ''] ?? 1);
   return Number.isFinite(value) && value > 0 ? value : null;
 }
+
+/** 接頭辞も単位も無い数か (`1000` `0.5`)。周波数の欄が断る理由を選ぶのに使う。 */
+export const isBareNumber = (text: string): boolean => BARE_NUMBER.test(text.trim());
+
+export const HERTZ_HINT = '周波数は 10M / 2.4G / 455k / 900Hz のように接頭辞か Hz を付けます';
+
+/** 周波数を Hz に。**素の数は null** (接頭辞か `Hz` が要る)。0 以下も null。 */
+export const parsePrefixedHertz = (text: string): number | null =>
+  (isBareNumber(text) ? null : parseHertz(text));
 
 /** 周波数の単位 (Hz〜GHz)。 */
 export const hertzUnit = (hz: number): readonly [number, string] => {

@@ -2,8 +2,9 @@ import { parseOhms } from 'fence-kit';
 
 /**
  * 値の読み。**R は fence-kit の読み** (`100` `4k7` `1M` `50Ω`) — 板のフェンスと
- * 同じ綴りが通る。L と C は SI の接頭辞 (`47p` `100n` `0.1u` `1µ`)。
- * **接頭辞の無い数は F / H のまま**読む (`47` は 47 F)。範囲で書き間違いを弾く。
+ * 同じ綴りが通る。L と C は SI の接頭辞 (`47p` `100n` `0.1u` `1µ`) か単位 (`1F`) が要る。
+ * **接頭辞も単位も無い素の数は読まない** (`47` は 47 pF のつもりか 47 F か決まらない。
+ * 直下の CLAUDE.md の文法の方針 1)。範囲でも書き間違いを弾く。
  */
 
 const SI: Readonly<Record<string, number>> = {
@@ -12,10 +13,11 @@ const SI: Readonly<Record<string, number>> = {
 
 const PREFIXED = /^(\d+(?:\.\d+)?|\.\d+)\s*([fpnuµμm]?)([FH])?$/;
 
-/** L か C の値 (H / F)。読めなければ null。 */
+/** L か C の値 (H / F)。読めなければ null。**素の数も null。** */
 export function parseReactive(text: string, unit: 'F' | 'H'): number | null {
   const found = PREFIXED.exec(text.trim());
   if (found === null) return null;
+  if (found[2] === '' && found[3] === undefined) return null;
   if (found[3] !== undefined && found[3] !== unit) return null;
   const value = Number(found[1]) * (SI[found[2] ?? ''] ?? 1);
   return Number.isFinite(value) && value > 0 ? value : null;

@@ -1,7 +1,7 @@
 import { LIMITS } from '../limits.ts';
 import { DEVICES } from './device.ts';
 import type { DeviceName } from './device.ts';
-import { formatHertzShort, parseHertz } from 'fence-kit';
+import { HERTZ_HINT, formatHertzShort, isBareNumber, parsePrefixedHertz } from 'fence-kit';
 
 /** 掃引。**実機と同じく線形**に点を並べる。 */
 export type Sweep = { readonly start: number; readonly stop: number; readonly points: number };
@@ -22,8 +22,10 @@ export function parseSweep(text: string): SweepRead {
   if (words.length === 0 || words.length > 2) return { ok: false, reason: SWEEP_HINT };
   const range = (words[0] ?? '').split('-');
   if (range.length !== 2) return { ok: false, reason: SWEEP_HINT };
-  const start = parseHertz(range[0] ?? '');
-  const stop = parseHertz(range[1] ?? '');
+  const bare = range.find((text) => isBareNumber(text));
+  if (bare !== undefined) return { ok: false, reason: `周波数に接頭辞がありません: ${bare} (${HERTZ_HINT})` };
+  const start = parsePrefixedHertz(range[0] ?? '');
+  const stop = parsePrefixedHertz(range[1] ?? '');
   if (start === null || stop === null) return { ok: false, reason: SWEEP_HINT };
   if (stop <= start) {
     return { ok: false, reason: `掃引の終わり (${formatHertzShort(stop)}) は始め (${formatHertzShort(start)}) より上にします` };

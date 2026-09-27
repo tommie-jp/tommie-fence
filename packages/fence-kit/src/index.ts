@@ -21,7 +21,8 @@ export type { FenceBlock } from './fences.ts';
 export { escapeMarkup, element } from './markup.ts';
 export { BOLD_FAMILY, num, svgText, TEXT_HALO_WIDTH } from './svg.ts';
 export {
-  DEFAULT_TOLERANCE, capacitorCode, formatHertz, formatHertzShort, hertzUnit, inductorCode, parseHertz,
+  DEFAULT_TOLERANCE, HERTZ_HINT, capacitorCode, formatHertz, formatHertzShort, hertzUnit, inductorCode, isBareNumber,
+  parseHertz, parsePrefixedHertz,
   parseMicrohenries, parseOhms, parsePicofarads, parseResistor, partValueProblem, resistorBandColors, resistorBands,
 } from './values.ts';
 export {

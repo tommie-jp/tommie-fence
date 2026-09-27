@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { formatHertz, formatHertzShort, parseHertz } from './values.ts';
+import { formatHertz, formatHertzShort, isBareNumber, parseHertz, parsePrefixedHertz } from './values.ts';
 
 describe('parseHertz', () => {
   test.each([
@@ -36,5 +36,19 @@ describe('formatHertz', () => {
     expect(formatHertzShort(1e6)).toBe('1 MHz');
     expect(formatHertzShort(2.4e9, '')).toBe('2.4GHz');
     expect(formatHertzShort(1e4, '')).toBe('10kHz');
+  });
+});
+
+describe('parsePrefixedHertz — フェンスの周波数の欄', () => {
+  test('reads a prefix, and Hz with or without one', () => {
+    expect(parsePrefixedHertz('100M')).toBe(100e6);
+    expect(parsePrefixedHertz('2.4GHz')).toBe(2.4e9);
+    expect(parsePrefixedHertz('900Hz')).toBe(900);
+  });
+
+  test('refuses a bare number, which may be a slip of 1 kHz or 1 GHz', () => {
+    expect(parsePrefixedHertz('10000000')).toBeNull();
+    expect(isBareNumber('10000000')).toBe(true);
+    expect(isBareNumber('10M')).toBe(false);
   });
 });

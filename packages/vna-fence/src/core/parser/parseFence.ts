@@ -6,7 +6,7 @@ import { DATA_NAME, LIMITS } from '../limits.ts';
 import { DEFAULT_DEVICE, DEVICE_NAMES, isDeviceName } from '../model/device.ts';
 import type { DeviceName } from '../model/device.ts';
 import type { DutElement } from '../model/dut.ts';
-import { formatHertzShort, parseHertz } from 'fence-kit';
+import { HERTZ_HINT, formatHertzShort, isBareNumber, parsePrefixedHertz } from 'fence-kit';
 import { deviceSweep, parseSweep } from '../model/sweep.ts';
 import type { Sweep } from '../model/sweep.ts';
 import { TOP_LEVEL_KEYS } from '../types.ts';
@@ -182,7 +182,11 @@ function readFence(source: string): ParseResult {
         break;
       }
       const text = scalarText(node);
-      const f = text === null ? null : parseHertz(text);
+      if (text !== null && isBareNumber(text)) {
+        errors.push(fenceError(`マーカーの周波数に接頭辞がありません: ${safeToken(text)} (${HERTZ_HINT})`, line, text));
+        continue;
+      }
+      const f = text === null ? null : parsePrefixedHertz(text);
       if (f === null) {
         errors.push(fenceError(`マーカーの周波数が読めません: ${safeToken(text ?? '')} (100M / 2.4G / 455k)`, line, text ?? undefined));
         continue;

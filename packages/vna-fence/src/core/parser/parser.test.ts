@@ -60,7 +60,7 @@ describe('parseDutLine', () => {
     ['series', 'series R 100'],
     ['series Q 1', '知らない素子'],
     ['series R', '値を書きます'],
-    ['series C 47', '読めません'],
+    ['series C 47', '接頭辞がありません'],
     ['series R abc', '読めません'],
     ['series C 1p xyz 1', '知らない寄生分'],
     ['series C 1p esr', 'esr の値'],

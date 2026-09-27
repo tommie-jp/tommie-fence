@@ -1,3 +1,4 @@
+import { isBareNumber } from 'fence-kit';
 import { safeToken } from '../errors.ts';
 import type { DutBody, LineSpec, LumpedSpec, Place } from '../model/dut.ts';
 import { fail, ok, wordsOf } from './result.ts';
@@ -15,7 +16,7 @@ import { parseLength, parseNumber, parseReactive, parseResistance } from './valu
 
 const HINT = 'dut: の素子は「series R 100」「shunt C 47p」「line 50 1m vf 0.66」「open」の形で書きます';
 
-/** 値の範囲。外は書き間違い (`C 47` は 47 F)。 */
+/** 値の範囲。外は書き間違い (`C 2F` や `L 100` 相当)。素の数の L・C は範囲より先に断る。 */
 const RANGES = {
   R: { min: 0, max: 1e9, say: '0〜1GΩ' },
   L: { min: 1e-15, max: 10, say: '1fH〜10H' },
@@ -37,6 +38,9 @@ const unitHint = (part: 'R' | 'L' | 'C'): string =>
 function readLumped(place: Place, part: 'R' | 'L' | 'C', words: readonly string[]): LineResult<LumpedSpec> {
   const [valueText, ...rest] = words;
   if (valueText === undefined) return fail(`${part} の値を書きます (例: ${unitHint(part)})`);
+  if (part !== 'R' && isBareNumber(valueText)) {
+    return fail(`${part} の値に接頭辞がありません: ${safeToken(valueText)} (例: ${unitHint(part)}。単位だけなら 1${part === 'L' ? 'H' : 'F'})`, valueText);
+  }
   const value = readValue(part, valueText);
   if (value === null) {
     return fail(`${part} の値が読めません: ${safeToken(valueText)} (例: ${unitHint(part)}。${RANGES[part].say})`, valueText);
@@ -49,6 +53,9 @@ function readLumped(place: Place, part: 'R' | 'L' | 'C', words: readonly string[
       return fail(`知らない寄生分です: ${safeToken(key)} (${PARASITES.join(' / ')})`, key);
     }
     if (text === undefined) return fail(`${key} の値を書きます`, key);
+    if (key !== 'esr' && isBareNumber(text)) {
+      return fail(`${key} の値に接頭辞がありません: ${safeToken(text)} (例: ${key === 'esl' ? '1n / 0.5n' : '0.5p / 2p'})`, text);
+    }
     const read = key === 'esr' ? parseResistance(text) : parseReactive(text, key === 'esl' ? 'H' : 'F');
     if (read === null) return fail(`${key} の値が読めません: ${safeToken(text)}`, text);
     parasites[key as 'esr' | 'esl' | 'cp'] = read;

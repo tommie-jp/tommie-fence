@@ -15,6 +15,8 @@
 
 ### Added
 
+- **`parsePrefixedHertz` `isBareNumber` `HERTZ_HINT`** — フェンスの周波数の欄の読み。素の数
+  (`10000000`) は null (vna と copper が使う。`parseHertz` は素の数も受けたまま)。
 - **`partValueProblem(type, value)`** — breadboard と perfboard が部品の値を断る理由
   (読めない抵抗値・色の無い許容差と温度係数・コンデンサとインダクタの素の数)。直し方の例を添える。
 - **周波数の読み書き** (`parseHertz` `formatHertz` `formatHertzShort` `hertzUnit`)。

@@ -1,6 +1,6 @@
 import { safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
-import { parseHertz } from 'fence-kit';
+import { HERTZ_HINT, isBareNumber, parsePrefixedHertz } from 'fence-kit';
 import type { NoteSpec, NoteUnit } from '../types.ts';
 import { fail, ok, wordsOf } from './result.ts';
 import type { LineResult } from './result.ts';
@@ -44,15 +44,19 @@ export function parseNoteLine(head: string, body: string | null): LineResult<Omi
     if (words.length > 1 || body !== null) return fail('source の後ろには何も書きません', words[1]);
     return ok({ kind: 'source' });
   }
+  // **周波数の素の数は断る** (接頭辞か Hz が要る。文法の方針 1)。
+  const frequencies = kind === 'band' ? words.slice(1, 3) : kind === 'mark' || kind === 'text' ? words.slice(1, 2) : [];
+  const bare = frequencies.find((word) => isBareNumber(word));
+  if (bare !== undefined) return fail(`周波数に接頭辞がありません: ${safeToken(bare)} (${HERTZ_HINT})`, bare);
   if (kind === 'band') {
-    const from = parseHertz(words[1] ?? '');
-    const to = parseHertz(words[2] ?? '');
+    const from = parsePrefixedHertz(words[1] ?? '');
+    const to = parsePrefixedHertz(words[2] ?? '');
     if (from === null || to === null || words.length > 3) return fail('band は「band 88M 108M」の形で書きます', words[1]);
     if (to <= from) return fail('band の終わりは始めより上にします', words[2]);
     return ok({ kind: 'band', from, to, text: text === '' ? null : text });
   }
   if (kind !== 'mark' && kind !== 'text') return fail(HINT, words[0]);
-  const f = parseHertz(words[1] ?? '');
+  const f = parsePrefixedHertz(words[1] ?? '');
   if (f === null) return fail(`周波数が読めません: ${safeToken(words[1] ?? '')} (100M / 2.4G)`, words[1]);
   const read = readValue(words[2] ?? '');
   if (read === null || words.length > 3) {
