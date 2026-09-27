@@ -3,6 +3,16 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.16.0] - 2026-09-28
+
+circuit-fence 0.14.0 / breadboard-fence 0.14.0 / perfboard-fence 0.12.0 /
+copper-fence 0.3.0 / vna-fence 0.2.0 を束ねた。
+
+### Changed
+
+- 5 つのフェンスとも、**図の右下に処理系の版 (`circuit-fence 0.14.0` など) を既定で刻む**。
+  今までは `style: stamp: on` を書いた図だけだった。刻まないときは `style:` に `stamp: off` を書く。
+
 ## [0.15.4] - 2026-09-28
 
 breadboard-fence 0.13.2 を束ねた。
