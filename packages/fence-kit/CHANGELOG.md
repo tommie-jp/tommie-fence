@@ -9,7 +9,7 @@
 
 - **周波数の読み書き** (`parseHertz` `formatHertz` `formatHertzShort` `hertzUnit`)。
   vna と copper が同じ物を持っていたので引き上げた。接頭辞は `k` `M` `G`、単位は `Hz`
-  だけ。`{ unit: 'required' }` で単位の無い綴りを断る (scope が使う)。
+  だけ。素の数も受ける (単位の無い数を断る欄は呼ぶ側が先に断る)。
 - **等幅の帯** (`mono.ts` — `monoText` `monoLinesSize` `monoTableSize` `renderMonoTable` など)。
   perfboard・copper・vna が同じ組み方を写して持っていた。行送りと余白は `MonoSpacing` で渡す。
 - **`data:` の読み口** (`fence-kit/cli` の `readNeighbor`)。vna が持っていた物。
@@ -18,6 +18,7 @@
 - **計器の画面の単位** (`units.ts` — `parseVolts` `parseSeconds` `parseDegrees` `parsePercent`
   `parsePerDiv` と `format*`)。**単位の無い数は読まない**。`-10dBm` は 50 Ω の正弦の peak に直す。
 - **波形発生器の波** (`wave.ts` — `parseWave` `sampleWave` `periodOf`)。`sine 1kHz 1V offset 1V`。
+  周波数はほかの欄と同じ綴り (`1k` でも `1kHz` でも。素の数 `1000` は断る)。
   振幅は peak (`2Vpp` は半分、`Vrms` は sine だけ)。scope と spectrum が同じ綴りで使う
   spectrum の線スペクトル `linesOf` (sine 1 本、square と pulse は 4A/πn·|sin(πnd)|、triangle は
   奇数次 8A/π²n²、sawtooth は 2A/πn、dc と offset は 0 Hz の線)。`sampleWave` を FFT した値と一致する。

@@ -298,19 +298,16 @@ export const inductorCode = (microhenries: number): string | null => threeDigitC
  * - **接頭辞は k・M・G だけ。** vna は `m` を M と読んでいたが、ミリと取り違えると
  *   10^9 倍違う値を黙って描く (直下の CLAUDE.md の文法の方針 1)。copper の断り方に揃えた
  * - **単位は `Hz` だけ** (`hz` `HZ` は受けない。正の書き方は 1 つ)
- * - `unit: 'required'` なら `Hz` の無い綴り (`1k` `1000`) を断る。scope のように
- *   **単位の無い数を断る**フェンスが使う
+ * - 素の数 (`1000`) も受ける (vna の `sweep:`)。**単位の無い数を断る欄** (波の周波数) は
+ *   呼ぶ側が素の数を先に断る — 接頭辞だけ (`100M`) と `Hz` 付き (`100MHz`) はどの欄でも同じに読む
  */
 const HERTZ = /^(\d+(?:\.\d+)?|\.\d+)\s*([kMG]?)(Hz)?$/;
 const HERTZ_SCALE: Readonly<Record<string, number>> = { '': 1, k: 1e3, M: 1e6, G: 1e9 };
 
-export type HertzOptions = { readonly unit?: 'optional' | 'required' };
-
 /** 周波数を Hz に。読めなければ null。0 以下も null。 */
-export function parseHertz(text: string, options: HertzOptions = {}): number | null {
+export function parseHertz(text: string): number | null {
   const found = HERTZ.exec(text.trim());
   if (found === null) return null;
-  if (options.unit === 'required' && found[3] === undefined) return null;
   const value = Number(found[1]) * (HERTZ_SCALE[found[2] ?? ''] ?? 1);
   return Number.isFinite(value) && value > 0 ? value : null;
 }

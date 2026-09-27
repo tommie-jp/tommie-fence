@@ -88,7 +88,7 @@ describe('parseFence — 段 1', () => {
   test('refuses a reference to a later channel, and a reference to one that did not read', () => {
     expect(messages('ch1: ch2\nch2: sine 1kHz 1V')).toEqual(['ch1 は波で書きます (前に参照できる ch がありません。例: ch1: sine 1kHz 1V)']);
     expect(messages('ch1: sine 1000 1\nch2: ch1 | rc 1ms')).toEqual([
-      '周波数は 1kHz / 100Hz のように単位を付けます',
+      '周波数は 1kHz / 100MHz / 960M のように単位か接頭辞を付けます',
       'ch1 が読めないので ch2 も描けません',
     ]);
   });

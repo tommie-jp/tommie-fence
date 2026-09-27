@@ -58,7 +58,16 @@ const isBareNumber = (text: string): boolean => /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)[k
 const isWaveShape = (text: string): text is WaveShape => (WAVE_SHAPES as readonly string[]).includes(text);
 
 const SHAPE_LIST = `波は ${WAVE_SHAPES.join(' / ')} のどれかです`;
-const FREQUENCY_UNIT = '周波数は 1kHz / 100Hz のように単位を付けます';
+const FREQUENCY_UNIT = '周波数は 1kHz / 100MHz / 960M のように単位か接頭辞を付けます';
+
+/** 素の数 (接頭辞も Hz も無い)。周波数の欄では断る。 */
+const isPlainNumber = (text: string): boolean => /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(text);
+
+/**
+ * 波の周波数。**ほかの周波数の欄 (spectrum の `sweep:` やマーカー、vna) と同じ綴り** —
+ * `1kHz` `1k` `100MHz` `100M`。素の数 (`1000`) だけは断る (1 kHz か 1000 Hz か決まらない)。
+ */
+const readFrequency = (text: string): number | null => (isPlainNumber(text.trim()) ? null : parseHertz(text));
 const AMPLITUDE_UNIT = '振幅は 1V / 500mV / 2Vpp のように単位を付けます';
 
 /** 振幅を peak (V) に。読めなければ理由。 */
@@ -117,11 +126,11 @@ function readKeywords(shape: WaveShape, words: readonly string[]): Extras | Wave
 
 /** 周波数が読めないときの理由。**順を取り違えた** (`sine 1V 1kHz`) なら、そう言う。 */
 function frequencyReason(first: string, second: string | undefined): string {
-  if (parseVolts(first) !== null && second !== undefined && parseHertz(second, { unit: 'required' }) !== null) {
+  if (parseVolts(first) !== null && second !== undefined && readFrequency(second) !== null) {
     return '周波数を先に書きます (例: sine 1kHz 1V)';
   }
   if (isBareNumber(first) || parseHertz(first) !== null) return FREQUENCY_UNIT;
-  return `周波数が読めません: ${first} (1kHz / 100Hz / 2.5MHz)`;
+  return `周波数が読めません: ${first} (1kHz / 100MHz / 960M)`;
 }
 
 function readDc(words: readonly string[]): WaveRead {
@@ -148,7 +157,7 @@ export function parseWave(text: string): WaveRead {
 
   const [, first, second] = words;
   if (first === undefined || second === undefined) return fail(`${shape} は周波数と振幅を書きます (例: ${shape} 1kHz 1V)`, shape);
-  const frequency = parseHertz(first, { unit: 'required' });
+  const frequency = readFrequency(first);
   if (frequency === null) return fail(frequencyReason(first, second), first);
   const amplitude = readAmplitude(shape, second);
   if (typeof amplitude !== 'number') return fail(amplitude.reason, second);

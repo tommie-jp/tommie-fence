@@ -99,7 +99,7 @@ describe('parseFence — values', () => {
     expect(messages('device: tinysa-ultra\nrbw: 300')[0]).toContain('単位を付けます');
     expect(messages('device: tinysa-ultra\nref: -10')[0]).toBe('ref: は -10dBm / 0dBV のように単位を付けます');
     expect(messages('device: tinysa-ultra\natten: 20')[0]).toBe('atten: は 10dB のように dB を付けます');
-    expect(messages('device: tinysa-ultra\nsignal: sine 1000 1')[0]).toContain('単位を付けます');
+    expect(messages('device: tinysa-ultra\nsignal: sine 1000 1')[0]).toBe('周波数は 1kHz / 100MHz / 960M のように単位か接頭辞を付けます');
     expect(messages('device: tinysa-ultra\nmarkers: [1000]')[0]).toContain('単位か接頭辞');
   });
 

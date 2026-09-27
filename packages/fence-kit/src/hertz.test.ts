@@ -21,12 +21,6 @@ describe('parseHertz', () => {
     expect(parseHertz(text)).toBeNull();
   });
 
-  test('refuses a bare number or a bare prefix when the unit is required', () => {
-    expect(parseHertz('1000', { unit: 'required' })).toBeNull();
-    expect(parseHertz('1k', { unit: 'required' })).toBeNull();
-    expect(parseHertz('1kHz', { unit: 'required' })).toBe(1e3);
-    expect(parseHertz('100 Hz', { unit: 'required' })).toBe(100);
-  });
 });
 
 describe('formatHertz', () => {

@@ -64,7 +64,7 @@ markers: [10M, 1M, 4M]
 波は `sine` `square` `triangle` `sawtooth` `pulse` `dc` (`dc 0.5V`)。
 振幅は `1V` (peak) / `2Vpp` / `0.707Vrms` (sine だけ) / `-10dBm`。`offset 0.5V` は 0 Hz の線になる。
 `phase 90deg` は書けるが効かない (画面は電力だけ)。`duty 25%` は square と pulse だけ。
-**周波数は `Hz` まで** (`100MHz`)。**操作 (`| rc 1ms`) は書けない** (加工した波は scope)。
+周波数は `100M` でも `100MHz` でもよい (**素の数は断る**)。**操作 (`| rc 1ms`) は書けない** (加工した波は scope)。
 
 ## FFT 型
 
@@ -116,7 +116,6 @@ markers:
 | --- | --- | --- |
 | `device:` を省く | 断る (既定が無い) | `device: tinysa-ultra` など |
 | `span: 90M-110M` | 断る (span は幅。`center:` と対) | `sweep: 90M-110M` か `center: 100MHz` と `span: 20MHz` |
-| `signal: sine 100M -10dBm` | 断る (波の周波数は `Hz` まで) | `sine 100MHz -10dBm` |
 | `signal: sine 1000 1` | 断る (単位が無い) | `sine 1kHz 1V` |
 | `square 100MHz -10dBm` を「基本波 −10 dBm」のつもり | 基本波は **−7.90 dBm** (`-10dBm` は同じ peak の正弦の電力) | 基本波を −10 dBm にしたいなら `sine` で書く |
 | `signal: square 1MHz -10dBm \| rc 1us` | 断る (操作は scope) | scope で描く |
@@ -148,9 +147,9 @@ markers:
 読めなかった行は、行番号・行の中身・綴りの下の印つきで返る。
 
 ```text
-spectrum: 4 行目: 周波数は 1kHz / 100Hz のように単位を付けます
-    signal: sine 100M -10dBm
-                 ^^^^
+spectrum: 4 行目: 周波数は 1kHz / 100MHz / 960M のように単位か接頭辞を付けます
+    signal: sine 100000000 -10dBm
+                 ^^^^^^^^^
 ```
 
 `spectrum-fence check <ファイル>` で図を書かずに読み値と言うことだけ出せる

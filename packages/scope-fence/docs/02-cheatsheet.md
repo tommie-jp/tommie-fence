@@ -42,7 +42,7 @@ ch4: pulse 1kHz 2.5V offset 2.5V duty 20%
 | `pulse` | `pulse 1kHz 1V duty 20%` | duty を書かなければ 25 % (言われる) |
 | `dc` | `dc 3.3V` | 値だけ。周波数も offset も書かない |
 
-- 周波数は **`Hz` まで** (`1kHz` `100Hz` `2.5MHz`)。**周波数が先、振幅が後**
+- 周波数は `1kHz` でも `1k` でもよい (`100Hz` `2.5MHz` `2.5M`。**素の数は断る**)。**周波数が先、振幅が後**
 - 振幅: `1V` (peak) / `2Vpp` / `0.707Vrms` (sine だけ) / `-10dBm` (50 Ω の正弦の電力 → peak 0.1 V)
 - `offset 1V` `phase 90deg` (`90°` も) `duty 25%` (square と pulse だけ) は順不同
 
@@ -103,7 +103,6 @@ measure: [vpp, vmax, vmin, avg, rms, freq, period, duty]
 | 書いた | どうなる | 正しくは |
 | --- | --- | --- |
 | `sine 1000 1` | 断る (単位が無い) | `sine 1kHz 1V` |
-| `sine 1k 1V` | 断る (`Hz` が無い) | `sine 1kHz 1V` |
 | `sine 1V 1kHz` | 断る (順が逆) | `sine 1kHz 1V` |
 | `sine 1kHz 2V` のつもりで p-p | **peak 2 V (Vpp 4 V)** に描く | `sine 1kHz 2Vpp` か `sine 1kHz 1V` |
 | `square 1kHz 0.707Vrms` | 断る (Vrms は sine だけ) | `square 1kHz 1V` |
@@ -134,9 +133,9 @@ measure: [vpp, vmax, vmin, avg, rms, freq, period, duty]
 読めなかった行は、行番号・行の中身・綴りの下の印つきで返る。
 
 ```text
-scope: 3 行目: 周波数は 1kHz / 100Hz のように単位を付けます
-    ch1: sine 1k 1V
-              ^^
+scope: 3 行目: 周波数は 1kHz / 100MHz / 960M のように単位か接頭辞を付けます
+    ch1: sine 1000 1V
+              ^^^^
 ```
 
 `scope-fence check <ファイル>` で図を書かずに読み値と言うことだけ出せる

@@ -113,7 +113,7 @@ scope (オシロの画面) と spectrum (スペクトラムの画面) も**板�
 | | scope | spectrum |
 | --- | --- | --- |
 | 書くもの | `time: 1ms/div`、`trigger: ch1 rising 1V`、`ch1:`〜`ch4:` に波と操作 (`ch2: ch1 \| rc 1ms`)、`cursors: [0, 1ms]`、`measure: [vpp, freq]` | **`device:` (必須)** — `ad2` `ad3` (FFT 型) / `tinysa` `tinysa-ultra` `generic` (掃引型)。`sweep: 0-960M 450` か `center:` + `span:`、`signal:` に波、`markers: [100M, peak]` |
-| 波 | `sine 1kHz 1V offset 1V phase -58deg`。**周波数は `Hz` まで、周波数が先** | 同じ (`signal: square 100MHz -10dBm`)。**`signal:` の周波数も `Hz` まで** (`sweep:` とマーカーは `960M` と書ける) |
+| 波 | `sine 1kHz 1V offset 1V phase -58deg`。周波数は `1kHz` でも `1k` でもよい (**素の数 `1000` は断る**)。**周波数が先** | 同じ (`signal: square 100MHz -10dBm`)。周波数は `sweep:` やマーカーと同じ綴りで `100M` でも `100MHz` でもよい |
 | 振幅 | **peak**。`2Vpp` と書けば半分、`0.707Vrms` は sine だけ | 同じ。**`-10dBm` は同じ peak の正弦の電力** — 方形波の基本波は 4/π 倍で −7.90 dBm に立つ |
 | 取り違え | `phase -58deg` は**遅れ** (正は進み)。`time:` と `range:` は **`/div` 付き** (`time: 1ms` は断る) | **`span:` は幅** (`center:` と対。開始-終了は `sweep:`)。型に無いキーは断る (ad2 に `rbw:`、tinysa に `window:`) |
 | 通す操作 | `\| rc 1ms` `\| clip -0.7V 0.7V` `\| offset -1.4V` `\| gain 0.5` `\| abs` | **書けない** (加工した波は scope で描く) |

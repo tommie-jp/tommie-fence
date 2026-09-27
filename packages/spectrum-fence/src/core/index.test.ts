@@ -177,3 +177,20 @@ describe('renderSpectrum — 書いてあって読めなかったキー', () => 
     expect(said('device: tinysa-ultra\nsweep: 0-960M\nsignal: sine 100MHz -10dBm').some((message) => message.startsWith('points: が無いので'))).toBe(true);
   });
 });
+
+describe('renderSpectrum — 波の周波数の綴り', () => {
+  const base = 'device: tinysa-ultra\nsweep: 0-960M 450\nrbw: 300kHz\nmarkers: [100M]\n';
+
+  test('reads signal: 100M the same as 100MHz (the same spelling as sweep: and markers:)', () => {
+    const short = renderSpectrum(`${base}signal: square 100M -10dBm`);
+    const long = renderSpectrum(`${base}signal: square 100MHz -10dBm`);
+    expect(short.errors).toEqual([]);
+    expect(short.readingLines).toEqual(long.readingLines);
+    expect(short.readings.rows[1]).toEqual(['1', '100.000 MHz', '−7.90 dBm']);
+  });
+
+  test('still refuses a bare number', () => {
+    expect(renderSpectrum(`${base}signal: sine 100000000 -10dBm`).errors.map((one) => one.message))
+      .toEqual(['周波数は 1kHz / 100MHz / 960M のように単位か接頭辞を付けます']);
+  });
+});

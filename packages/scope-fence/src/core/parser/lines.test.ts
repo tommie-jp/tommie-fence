@@ -29,8 +29,13 @@ describe('parseChannelLine', () => {
     expect(pulse.ok && pulse.value.assumed).toEqual(['pulse の duty は既定の 25% で描いています']);
   });
 
+  test('reads a frequency written with a prefix only, like the other frequency fields', () => {
+    const read = parseChannelLine('ch1', 'sine 1k 1V', []);
+    expect(read.ok && read.value.source.kind === 'wave' && read.value.source.wave.frequency).toBe(1e3);
+  });
+
   test.each([
-    ['ch1', 'sine 1000 1', [], '周波数は 1kHz / 100Hz のように単位を付けます', '1000'],
+    ['ch1', 'sine 1000 1', [], '周波数は 1kHz / 100MHz / 960M のように単位か接頭辞を付けます', '1000'],
     ['ch1', 'cosine 1kHz 1V', [], '波は sine / square / triangle / sawtooth / pulse / dc のどれかです', 'cosine'],
     ['ch1', 'ch2 | rc 1ms', [], 'ch1 は波で書きます (前に参照できる ch がありません。例: ch1: sine 1kHz 1V)', 'ch2'],
     ['ch2', 'ch3', ['ch1'], 'ch2 が参照できるのは前の ch1 だけです', 'ch3'],

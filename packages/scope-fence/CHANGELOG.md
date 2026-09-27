@@ -20,7 +20,7 @@
   `ch1: {wave: …, range: 500mV/div, position: -2div}` で手で決められる。
 - **カーソルと Measurements** (`cursors: [0, 1ms]`、`measure: [vpp, freq, phase]`) を
   図の下の帯に表で出す。vpp / vmax / vmin / avg / rms / freq / period / duty / phase / rise。
-- **単位の無い数は断る** (`sine 1000 1` → 「周波数は 1kHz / 100Hz のように単位を付けます」)。
+- **単位の無い数は断る** (`sine 1000 1` → 「周波数は 1kHz / 100MHz / 960M のように単位か接頭辞を付けます」。周波数は `1kHz` でも `1k` でもよい)。
   `time:` と `trigger:` を書かなかったときは何で描いたかをお知らせで言う。
 - 例 5 本 (電験 5-1 の RC の充電、3-4 の位相、回路 1-9 のクリッパとクランパ、整流、波 6 種)。
 - **測った波を重ねる** (`data: 5-1-rc.csv`) — WaveForms の Scope の Export (CSV / TXT) を

@@ -24,7 +24,6 @@ export {
   DEFAULT_TOLERANCE, capacitorCode, formatHertz, formatHertzShort, hertzUnit, inductorCode, parseHertz,
   parseMicrohenries, parseOhms, parsePicofarads, parseResistor, resistorBandColors, resistorBands,
 } from './values.ts';
-export type { HertzOptions } from './values.ts';
 export {
   MONO_FAMILY, MONO_WIDEN, monoBandHeight, monoBaseline, monoLinesSize, monoTableLines, monoTableSize, monoText,
   monoWidth, renderMonoLines, renderMonoTable,

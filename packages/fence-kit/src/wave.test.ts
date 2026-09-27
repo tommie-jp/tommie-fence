@@ -29,6 +29,25 @@ describe('parseWave', () => {
     expect(wave('dc -0.7V').amplitude).toBe(-0.7);
   });
 
+  test.each([
+    ['sine 1k 1V', 1e3],
+    ['sine 1kHz 1V', 1e3],
+    ['sine 100M -10dBm', 100e6],
+    ['sine 100MHz -10dBm', 100e6],
+    ['square 2.4G 1V', 2.4e9],
+    ['sine 50Hz 1V', 50],
+  ])('reads the frequency %s the same way as every other frequency field', (text, hertz) => {
+    expect(wave(text).frequency).toBe(hertz);
+  });
+
+  test.each(['sine 1000 1V', 'sine 100m 1V', 'sine 1khz 1V'])('still refuses %s (a bare number, milli, or a lower-case hz)', (text) => {
+    expect(parseWave(text).ok).toBe(false);
+  });
+
+  test('says the order is wrong for a prefix-only frequency too', () => {
+    expect(parseWave('sine 1V 1k')).toMatchObject({ ok: false, reason: '周波数を先に書きます (例: sine 1kHz 1V)' });
+  });
+
   test('takes the amplitude as peak: Vpp is halved, Vrms of a sine is multiplied by root two', () => {
     expect(wave('sine 1kHz 2Vpp').amplitude).toBe(1);
     expect(wave('square 1kHz 2Vpp').amplitude).toBe(1);
@@ -44,9 +63,8 @@ describe('parseWave', () => {
   });
 
   test.each([
-    ['sine 1000 1', '周波数は 1kHz / 100Hz のように単位を付けます', '1000'],
+    ['sine 1000 1', '周波数は 1kHz / 100MHz / 960M のように単位か接頭辞を付けます', '1000'],
     ['sine 1kHz 1', '振幅は 1V / 500mV / 2Vpp のように単位を付けます', '1'],
-    ['sine 1k 1V', '周波数は 1kHz / 100Hz のように単位を付けます', '1k'],
     ['sine 1V 1kHz', '周波数を先に書きます (例: sine 1kHz 1V)', '1V'],
     ['cosine 1kHz 1V', '波は sine / square / triangle / sawtooth / pulse / dc のどれかです', 'cosine'],
     ['sine', 'sine は周波数と振幅を書きます (例: sine 1kHz 1V)', 'sine'],
