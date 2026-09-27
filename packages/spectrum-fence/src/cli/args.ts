@@ -20,7 +20,7 @@ export const USAGE = `使い方:
   data: に書いた CSV (tinySA の SAVE TRACES・WaveForms の Spectrum の Export。.csv / .txt) は、
   入力の .md と同じ場所から読みます。
 
-  --version は処理系の版を出します。図に刻むなら style: stamp: on を書きます
+  --version は処理系の版を出します。図の右下にも既定で刻みます (消すなら style: stamp: off)
   (字は処理系が埋めるので、手で書いて古びることがありません)。`;
 
 export const parseArgs = (argv: readonly string[]): ArgsResult => parseCliArgs(argv);

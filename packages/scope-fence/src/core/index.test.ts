@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { renderScope } from './index.ts';
+import { renderScope, STAMP_TEXT } from './index.ts';
 
 describe('renderScope — 段 0', () => {
   test('draws the grid even for an empty fence, and says it is empty', () => {
@@ -141,5 +141,16 @@ describe('renderScope — 段 1', () => {
     const start = performance.now();
     renderScope(`${source}\n`);
     expect(performance.now() - start).toBeLessThan(100);
+  });
+});
+
+// 刻印は既定で付く (5 つのフェンスと同じ)。書き手が消せるのは `stamp: off` だけ (字は書かせない)。
+describe('renderScope — 刻印', () => {
+  test('stamps the version at the bottom right without being asked', () => {
+    expect(renderScope(FIVE_ONE).svg).toContain(`>${STAMP_TEXT}</text>`);
+  });
+
+  test('leaves the stamp out when told stamp: off', () => {
+    expect(renderScope(`${FIVE_ONE}\nstyle:\n  stamp: off`).svg).not.toContain(STAMP_TEXT);
   });
 });

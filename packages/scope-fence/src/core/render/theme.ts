@@ -98,7 +98,7 @@ export const resolveStyle = (style: StyleSpec): ResolvedStyle => ({
   theme: THEMES[style.theme ?? 'light'],
   width: style.width,
   debug: style.debug ?? true,
-  stamp: style.stamp ?? false,
+  stamp: style.stamp ?? true,
 });
 
 /** ch の色 (ch1 が 0)。 */

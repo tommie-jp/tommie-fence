@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { renderSpectrum } from './index.ts';
+import { renderSpectrum, STAMP_TEXT } from './index.ts';
 
 describe('renderSpectrum — 段 0', () => {
   test('draws the 10 × 10 grid even for an empty fence, and asks for device:', () => {
@@ -139,5 +139,16 @@ describe('renderSpectrum — 段 1', () => {
   test('marks a marker near the top edge below the point', () => {
     const result = renderSpectrum('device: tinysa-ultra\nsweep: 0-200M 101\nrbw: 30kHz\nref: -40dBm\nsignal: sine 100MHz -40dBm\nmarkers: [peak]');
     expect(result.svg).toMatch(/data-marker="1"/);
+  });
+});
+
+// 刻印は既定で付く (ほかのフェンスと同じ)。書き手が消せるのは `stamp: off` だけ (字は書かせない)。
+describe('renderSpectrum — 刻印', () => {
+  test('stamps the version at the bottom right without being asked', () => {
+    expect(renderSpectrum(ELEVEN_FOUR).svg).toContain(`>${STAMP_TEXT}</text>`);
+  });
+
+  test('leaves the stamp out when told stamp: off', () => {
+    expect(renderSpectrum(`${ELEVEN_FOUR}\nstyle:\n  stamp: off`).svg).not.toContain(STAMP_TEXT);
   });
 });

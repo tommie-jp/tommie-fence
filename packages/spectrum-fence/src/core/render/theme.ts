@@ -93,7 +93,7 @@ export const resolveStyle = (style: StyleSpec): ResolvedStyle => ({
   theme: THEMES[style.theme ?? 'light'],
   width: style.width,
   debug: style.debug ?? true,
-  stamp: style.stamp ?? false,
+  stamp: style.stamp ?? true,
 });
 
 /** トレースの色 (1 本目が 0)。 */
