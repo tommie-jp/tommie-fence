@@ -3,6 +3,12 @@ import { buildCircuit } from '../model/circuit.ts';
 import { noteFontTex, noteSourceLine } from '../notes.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { generateTex } from './generate.ts';
+import type { StyleSpec } from '../types.ts';
+
+// 刻印は既定で付く (`stamp: off` で消す)。付くと注釈の差し込みの並びの末尾に
+// 1 つ増えるので、刻印を見ない試験では**書かれていなければ外して**比べる。
+// 既定で付くことは「generateTex のバージョン刻印」で確かめる。
+const unstamped = (style: StyleSpec): StyleSpec => ({ ...style, stamp: style.stamp ?? false });
 
 /** 既定の段の TeX 名。表から引く — 段をずらしてもテストが古びないように。 */
 const NORMAL = noteFontTex('normal', false);
@@ -18,14 +24,14 @@ const MARKED_AT = new RegExp(
 const generate = (...rows: string[]) => {
   const { doc } = parseFence(`${rows.join('\n')}\n`);
   if (doc === null) throw new Error('YAML を読めませんでした');
-  return generateTex(buildCircuit(doc).circuit, { style: doc.style });
+  return generateTex(buildCircuit(doc).circuit, { style: unstamped(doc.style) });
 };
 
 /** 書き出す `.tex` のほう。フェンスに無いフォントとパッケージが使える。 */
 const generateLatex = (...rows: string[]) => {
   const { doc } = parseFence(`${rows.join('\n')}\n`);
   if (doc === null) throw new Error('YAML を読めませんでした');
-  return generateTex(buildCircuit(doc, { target: 'latex' }).circuit, { style: doc.style, target: 'latex' });
+  return generateTex(buildCircuit(doc, { target: 'latex' }).circuit, { style: unstamped(doc.style), target: 'latex' });
 };
 
 describe('generateTex の注釈', () => {
@@ -140,7 +146,7 @@ describe('generateTex の書き出し (source)', () => {
     const source = `${rows.join('\n')}\n`;
     const { doc } = parseFence(source);
     if (doc === null) throw new Error('YAML を読めませんでした');
-    return generateTex(buildCircuit(doc).circuit, { style: doc.style, source });
+    return generateTex(buildCircuit(doc).circuit, { style: unstamped(doc.style), source });
   };
 
   test('writes the fence out as it was written in the Markdown', () => {
@@ -229,7 +235,7 @@ describe('generateTex の書き出し (source)', () => {
     const { doc } = parseFence(source);
     if (doc === null) throw new Error('YAML を読めませんでした');
     const { tex, notes } = generateTex(buildCircuit(doc, { target: 'latex' }).circuit, {
-      style: doc.style,
+      style: unstamped(doc.style),
       target: 'latex',
       source,
     });
@@ -245,7 +251,7 @@ describe('generateTex の書き出し (source)', () => {
     if (doc === null) throw new Error('YAML を読めませんでした');
     const latex = (rows: typeof doc) =>
       generateTex(buildCircuit(rows, { target: 'latex' }).circuit, {
-        style: rows.style, target: 'latex', source,
+        style: unstamped(rows.style), target: 'latex', source,
       }).tex;
 
     expect(latex(doc)).toContain('\\newfontfamily\\circuitmono');

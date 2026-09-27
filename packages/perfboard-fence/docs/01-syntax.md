@@ -706,7 +706,7 @@ style:
 | `theme` | `light` / `dark` / `mono` | `light` |
 | `width` | 図の幅 (120〜4000) | 板の大きさなり |
 | `debug` | お知らせを帯に出すか | `on` |
-| `stamp` | 版を SVG に刻むか | `off` |
+| `stamp` | 版を図の右下に刻むか | `on` |
 | `check` | ERC と当たり判定を掛けるか | `on` |
 | `back` | 半田面 (裏返した板) も描くか | `off` |
 | `labels` | 板の外の名前の付け方 (`row` / `col` / `case` / `sides`) | 行 `alpha` / 列 `numeric` / `upper` / `left top` |

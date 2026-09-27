@@ -198,10 +198,10 @@ export function resolveStyle(style: StyleSpec): ResolvedStyle {
   return {
     theme: (style.theme === null ? null : THEMES[style.theme]) ?? THEME,
     width: style.width,
-    // 既定はどちらも「言う」「刻まない」。お知らせは伏せられるが、
+    // 既定はどちらも「言う」「刻む」。お知らせは伏せられるが、
     // **読めなかった行はこの切り替えの対象ではない** (約束 4)。
     debug: style.debug ?? true,
-    stamp: style.stamp ?? false,
+    stamp: style.stamp ?? true,
     // **既定は掛ける。** 全穴独立の板では繋ぎ忘れが図の上で沈黙するので、
     // 見張りを外すのは書いた人がそう言ったときだけにする。
     check: style.check ?? true,

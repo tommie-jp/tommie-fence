@@ -52,8 +52,8 @@ describe('resolveStyle', () => {
     expect(resolveStyle(written).theme).toBe(THEME);
   });
 
-  test('says notices by default, checks by default, and stamps nothing', () => {
-    expect(resolveStyle(EMPTY_STYLE)).toMatchObject({ debug: true, stamp: false, check: true, width: null });
+  test('says notices by default, checks by default, and stamps the version', () => {
+    expect(resolveStyle(EMPTY_STYLE)).toMatchObject({ debug: true, stamp: true, check: true, width: null });
   });
 
   test('takes what was written', () => {

@@ -175,7 +175,7 @@ parts:
 | `standard` | `american` / `european` / `jis` (現行の JIS C 0617。電験の図) | `american` |
 | `wire-width` | 0.2〜4 (pt) | `0.8` |
 | `width` | 120〜4000 (ドット) | 読み手の字に合わせる |
-| `stamp` | `on` / `off` | `off` |
+| `stamp` | `on` / `off` | `on` |
 | `debug` | `on` / `off` (お知らせを出す) | `on` |
 | `ink-color` / `paper-color` / `grid-color` | `"#rgb"` / `"#rrggbb"` | テーマの色 |
 
@@ -184,7 +184,7 @@ parts:
 
 テーマだけなら `style: dark` の 1 行でよい。
 **色は `"…"` で囲む** (`#` から先は YAML のコメント)。
-`stamp: on` は処理系の版を右下に刻む (**字は書かない**。処理系が埋める)。
+処理系の版は既定で右下に刻む。消すなら `stamp: off` (**字は書かない**。処理系が埋める)。
 `debug: off` はお知らせ (描けてはいるが思ったとおりには出ない、の類) を伏せる。
 **読めなかった行は伏せられない**。`check` は off でも言う。
 

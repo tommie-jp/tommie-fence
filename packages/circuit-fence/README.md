@@ -148,9 +148,10 @@ node dist/cli.cjs render notes.md --embed-fonts --out out
 node dist/cli.cjs --version
 ```
 
-To stamp it onto the diagram, write `style: stamp: on`. **Don't write the text
-yourself** — the toolchain fills the number in, so the stamp is renewed
-whenever you update. Even an unstamped diagram always carries the version on
+The version is also stamped at the bottom right of every diagram; write
+`style: stamp: off` to leave it out. **Don't write the text yourself** — the
+toolchain fills the number in, so the stamp is renewed whenever you update.
+Even an unstamped diagram always carries the version on
 the root of the `.svg`, as `data-circuit-fence`.
 
 ### From your own code (`circuit-fence/core`)

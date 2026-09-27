@@ -134,7 +134,7 @@ node dist/cli.cjs render notes.md --embed-fonts --out out
 node dist/cli.cjs --version
 ```
 
-図に刻むなら `style: stamp: on` を書く。**字は書かない** — 番号は処理系が
+版は図の右下にも既定で刻む。消すなら `style: stamp: off` を書く。**字は書かない** — 番号は処理系が
 埋めるので、更新すれば刻印も一緒に新しくなる。刻まない図にも、版は
 `.svg` の根に `data-circuit-fence` として必ず入っている。
 

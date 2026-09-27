@@ -1134,7 +1134,7 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
   // 刻印は**題まで含めた**箱の右下に付く。逆にすると、長い題を書いたときだけ
   // 刻印が図の途中の幅に取り残される。
   lines.push(...drawTitle(circuit, target));
-  if (style.stamp === true) lines.push(...drawStamp(target));
+  if (style.stamp !== false) lines.push(...drawStamp(target));
 
   lines.push(...FOOTER);
 
@@ -1142,6 +1142,6 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
     tex: lines.join('\n'),
     lineMap,
     messages,
-    notes: noteOverlays(circuit, target, listing, style.stamp === true),
+    notes: noteOverlays(circuit, target, listing, style.stamp !== false),
   };
 }

@@ -3,6 +3,15 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Changed
+
+- **図の右下に処理系の版 (`breadboard-fence x.y.z`) を既定で刻む。** 今までは `style: stamp: on` を
+  書いた図だけだった。刻まないときは `style:` に `stamp: off` を書く。資料に貼った図が
+  どの版で描いたものかを、図を見ただけで辿れるようにするため。字は今までどおり書けない
+  (処理系が埋める)。
+
 ## [0.13.2] - 2026-09-28
 
 ### Fixed

@@ -244,6 +244,8 @@ describe('compileCircuit の注釈', () => {
     expect(result.errors).toEqual([]);
     expect(result.notes).toEqual([
       { text: 'ここで分圧する', color: '#e5534b', mono: false, bold: false, align: 'left', rotate: 0 },
+      // 刻印は既定で付き、注釈と同じ道で差し込む (題 → 刻印の順でいちばん後)。
+      { text: STAMP_TEXT, color: 'gray', mono: false, bold: false, align: 'right', rotate: 0 },
     ]);
   });
 
@@ -278,6 +280,7 @@ describe('compileCircuit の書き出し (source)', () => {
       'notes:',
       '  - source b1',
       '```',
+      STAMP_TEXT,
     ]);
   });
 });

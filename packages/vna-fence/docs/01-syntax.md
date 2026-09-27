@@ -220,7 +220,7 @@ notes:
 | --- | --- | --- |
 | `theme` | `light` `dark` `mono` (白黒で刷る) | `light` |
 | `width` | 図の幅 (px、120〜4000) | 描いた大きさ |
-| `stamp` | 右下に処理系の版を刻む (`on` / `off`) | `off` |
+| `stamp` | 右下に処理系の版を刻む (`on` / `off`) | `on` |
 | `debug` | お知らせを図の下の帯に出す (`on` / `off`) | `on` |
 
 テーマだけなら `style: dark` と 1 語で書ける。

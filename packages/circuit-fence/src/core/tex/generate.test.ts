@@ -5,18 +5,24 @@ import { DEFAULT_NOTE_SIZE, noteFontTex, noteWidth } from '../notes.ts';
 import { lookupPartType, partTypeNames, pinPlaces } from '../parts.ts';
 import { VERSION } from '../version.ts';
 import { generateTex, standaloneTex } from './generate.ts';
+import type { StyleSpec } from '../types.ts';
+
+// 刻印は既定で付く (`stamp: off` で消す)。付くと注釈の差し込みの並びの末尾に
+// 1 つ増えるので、刻印を見ない試験では**書かれていなければ外して**比べる。
+// 既定で付くことは「generateTex のバージョン刻印」で確かめる。
+const unstamped = (style: StyleSpec): StyleSpec => ({ ...style, stamp: style.stamp ?? false });
 
 const generate = (...rows: string[]) => {
   const { doc } = parseFence(`${rows.join('\n')}\n`);
   if (doc === null) throw new Error('YAML を読めませんでした');
-  return generateTex(buildCircuit(doc).circuit, { style: doc.style });
+  return generateTex(buildCircuit(doc).circuit, { style: unstamped(doc.style) });
 };
 
 /** 書き出す `.tex` のほう。フェンスに無いフォントとパッケージが使える。 */
 const generateLatex = (...rows: string[]) => {
   const { doc } = parseFence(`${rows.join('\n')}\n`);
   if (doc === null) throw new Error('YAML を読めませんでした');
-  return generateTex(buildCircuit(doc, { target: 'latex' }).circuit, { style: doc.style, target: 'latex' });
+  return generateTex(buildCircuit(doc, { target: 'latex' }).circuit, { style: unstamped(doc.style), target: 'latex' });
 };
 
 const RC_LOWPASS = [
@@ -873,8 +879,25 @@ describe('グラウンドの記号の大きさ', () => {
 describe('generateTex のバージョン刻印', () => {
   const STAMPED = ['parts:', '  R1: resistor a1 a3', 'style:', '  stamp: on'];
 
-  test('writes nothing when the stamp was not asked for', () => {
-    expect(generate('parts:', '  R1: resistor a1 a3').tex).not.toContain('circuit-fence');
+  // 補助の generate は刻印を外すので、既定はここだけ generateTex に直に渡して見る。
+  const raw = (...rows: string[]) => {
+    const { doc } = parseFence(`${rows.join('\n')}\n`);
+    if (doc === null) throw new Error('YAML を読めませんでした');
+    return generateTex(buildCircuit(doc).circuit, { style: doc.style });
+  };
+
+  test('stamps the figure without being asked', () => {
+    const { tex, notes } = raw('parts:', '  R1: resistor a1 a3');
+
+    expect(tex).toContain('circuitstamp');
+    expect(notes.at(-1)).toMatchObject({ text: `circuit-fence ${VERSION}` });
+  });
+
+  test('writes nothing when the stamp is turned off', () => {
+    const { tex, notes } = raw('parts:', '  R1: resistor a1 a3', 'style:', '  stamp: off');
+
+    expect(tex).not.toContain('circuitstamp');
+    expect(notes).toEqual([]);
   });
 
   test('stamps the version of the tool that generated the figure', () => {
@@ -1213,7 +1236,7 @@ describe('マイコンボード', () => {
   const board = (...rows: string[]) => {
     const { doc } = parseFence(`${rows.join('\n')}\n`);
     if (doc === null) throw new Error('YAML を読めませんでした');
-    return generateTex(buildCircuit(doc).circuit, { style: doc.style });
+    return generateTex(buildCircuit(doc).circuit, { style: unstamped(doc.style) });
   };
 
   test('draws it as a chip whose numbers are hidden, since the names take their place', () => {
@@ -1274,7 +1297,7 @@ describe('マイコンボード', () => {
     const { doc } = parseFence('parts:\n  U1: pico b2\n');
     if (doc === null) throw new Error('YAML を読めませんでした');
     const { tex } = generateTex(buildCircuit(doc, { target: 'latex' }).circuit, {
-      style: doc.style, target: 'latex',
+      style: unstamped(doc.style), target: 'latex',
     });
 
     expect(tex).toContain('{01 GP0}');
@@ -1286,7 +1309,7 @@ describe('回したマイコンボードの足の名前', () => {
   const board = (...rows: string[]) => {
     const { doc } = parseFence(`${rows.join('\n')}\n`);
     if (doc === null) throw new Error('YAML を読めませんでした');
-    return generateTex(buildCircuit(doc).circuit, { style: doc.style });
+    return generateTex(buildCircuit(doc).circuit, { style: unstamped(doc.style) });
   };
 
   test('stands the names up when the legs move to the top and bottom', () => {
@@ -1320,7 +1343,7 @@ describe('回したマイコンボードの足の名前', () => {
     const { doc } = parseFence('parts:\n  U1: pico b2 r90\n');
     if (doc === null) throw new Error('YAML を読めませんでした');
     const { tex } = generateTex(buildCircuit(doc, { target: 'latex' }).circuit, {
-      style: doc.style, target: 'latex',
+      style: unstamped(doc.style), target: 'latex',
     });
     const legs = tex.split('\n').filter((line) => line.includes('bpin'));
 
@@ -1347,7 +1370,7 @@ describe('字が出る部品を全部当たる', () => {
       const { doc } = parseFence(`parts:\n  U1: ${type} b2 r90\n`);
       if (doc === null) throw new Error(`${type} を読めませんでした`);
       const { circuit } = buildCircuit(doc);
-      const { notes } = generateTex(circuit, { style: doc.style });
+      const { notes } = generateTex(circuit, { style: unstamped(doc.style) });
       const part = circuit.parts[0];
       if (part === undefined || part.kind !== 'multi-terminal') throw new Error(`${type} を置けませんでした`);
       const places = pinPlaces(lookupPartType(type)!, part.turn);
@@ -1406,7 +1429,7 @@ describe('字が出る部品を全部当たる', () => {
       const at = lookupPartType(type)?.kind === 'two-terminal' ? 'X1: ${type} b2 b4' : 'X1: ${type} b2';
       const { doc } = parseFence(`parts:\n  ${at.replace('${type}', type)}\n`);
       if (doc === null) throw new Error(`${type} を読めませんでした`);
-      const { tex } = generateTex(buildCircuit(doc).circuit, { style: doc.style });
+      const { tex } = generateTex(buildCircuit(doc).circuit, { style: unstamped(doc.style) });
       // 電源と端子の名前は**綴りのまま** (ネットの名前として図に出るもの)。
       // ほかは 2 端子と同じ組み方 (`R_1` の形)。どちらでも「出ている」と数える。
       return !tex.includes('$X_{1}$') && !tex.includes('{X1}');

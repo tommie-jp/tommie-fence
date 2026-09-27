@@ -250,6 +250,7 @@ export type StyleSpec = {
   /**
    * 図の隅に処理系のバージョンを刻むか。
    * **字は書き手に書かせない** (処理系が埋めるので古びない)。書けるのは出す/出さないだけ。
+   * null は既定の on (`stamp: off` で消す)。
    */
   readonly stamp: boolean | null;
   /**

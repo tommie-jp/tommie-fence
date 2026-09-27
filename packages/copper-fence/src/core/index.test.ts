@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { renderCopper } from './index.ts';
+import { renderCopper, STAMP_TEXT } from './index.ts';
 import { VERSION } from './version.ts';
 import { boardDescription, lineCaption, pathLength } from './render/captions.ts';
 import { createBoard } from './model/board.ts';
@@ -64,6 +64,15 @@ describe('renderCopper', () => {
     expect(dark).toMatch(/width="800"/);
     expect(renderCopper(THROUGH).svg).toContain('stroke-opacity="0.12"');
     expect(renderCopper(`${THROUGH}\nstyle: mono`).svg).toContain('fill="#ffffff"');
+  });
+
+  // 刻印は既定で付く。書き手が消せるのは `stamp: off` だけ (字は書かせない)。
+  test('stamps the version at the bottom right without being asked', () => {
+    expect(renderCopper(THROUGH).svg).toContain(`>${STAMP_TEXT}</text>`);
+  });
+
+  test('leaves the stamp out when told stamp: off', () => {
+    expect(renderCopper(`${THROUGH}\nstyle:\n  stamp: off`).svg).not.toContain(STAMP_TEXT);
   });
 
   test('draws the grooves of a board whose ground is on the front', () => {

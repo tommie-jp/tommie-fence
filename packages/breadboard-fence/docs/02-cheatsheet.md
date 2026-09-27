@@ -151,7 +151,7 @@ style:
   hole-color: "#0d1014"
   width: 1200          # 120〜4000
   debug: on            # on (既定) / off。お知らせを出すか
-  stamp: off           # on / off (既定)。右下に版を刻むか
+  stamp: off           # on (既定) / off。右下に版を刻むか
 ```
 
 ## 落とし穴

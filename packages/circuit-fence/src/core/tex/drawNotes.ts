@@ -347,7 +347,7 @@ const STAMP_INSET = 2;
 const STAMP_NODE = 'circuitstamp';
 
 /**
- * 図の隅に、その図を組んだ処理系のバージョンを刻む (`style: stamp: on`)。
+ * 図の隅に、その図を組んだ処理系のバージョンを刻む (既定。`style: stamp: off` で消す)。
  *
  * **置き場所は番地から測らない**。図がどこまで広がるかは、ラベルも注釈も
  * 描き終わるまで決まらないので、TikZ に測らせた `current bounding box` の

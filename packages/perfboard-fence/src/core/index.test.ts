@@ -454,6 +454,15 @@ describe('style: の報告の行', () => {
     expect(renderPerfboard('board: 10x6\nstyle:\n  stamp: on\n').errors).toEqual([]);
     expect(renderPerfboard('board: 10x6\nstyle:\n  stamp: on\n').svg).toContain('perfboard-fence 0');
   });
+
+  // 刻印は既定で付く。書き手が消せるのは `stamp: off` だけ (字は書かせない)。
+  test('stamps the version at the bottom right without being asked', () => {
+    expect(renderPerfboard('board: 10x6').svg).toContain(`>${STAMP_TEXT}</text>`);
+  });
+
+  test('leaves the stamp out when told stamp: off', () => {
+    expect(renderPerfboard(`${'board: 10x6'}\nstyle:\n  stamp: off`).svg).not.toContain(STAMP_TEXT);
+  });
 });
 
 describe('書き出し (notes: - source)', () => {

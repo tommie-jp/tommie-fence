@@ -141,7 +141,7 @@ export const resolveStyle = (style: StyleSpec): ResolvedStyle => ({
   theme: THEMES[style.theme ?? 'light'],
   width: style.width,
   debug: style.debug ?? true,
-  stamp: style.stamp ?? false,
+  stamp: style.stamp ?? true,
   // **既定は掛ける** (乗っていない足は図の上で沈黙する)。
   check: style.check ?? true,
   // **既定は敷く** — 図から寸法を読んで切るための定規の代わり。

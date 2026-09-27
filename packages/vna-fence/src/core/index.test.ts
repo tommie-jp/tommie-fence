@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { renderVna } from './index.ts';
+import { renderVna, STAMP_TEXT } from './index.ts';
 import type { DataSource } from './index.ts';
 
 const fence = (lines: readonly string[]): string => lines.join('\n');
@@ -144,5 +144,14 @@ describe('renderVna', () => {
     const result = renderVna(`${SERIES}\nstyle:\n  stamp: on\n  width: 400\n  theme: mono`);
     expect(result.svg).toContain('vna-fence');
     expect(result.svg).toContain('width="400"');
+  });
+
+  // 刻印は既定で付く。書き手が消せるのは `stamp: off` だけ (字は書かせない)。
+  test('stamps the version at the bottom right without being asked', () => {
+    expect(renderVna(SERIES).svg).toContain(`>${STAMP_TEXT}</text>`);
+  });
+
+  test('leaves the stamp out when told stamp: off', () => {
+    expect(renderVna(`${SERIES}\nstyle:\n  stamp: off`).svg).not.toContain(STAMP_TEXT);
   });
 });

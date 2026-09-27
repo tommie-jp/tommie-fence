@@ -1267,4 +1267,13 @@ describe('the library exit', () => {
     expect(STAMP_TEXT).toContain('breadboard-fence');
     expect(STAMP_TEXT).toContain(VERSION);
   });
+
+  // 刻印は既定で付く。書き手が消せるのは `stamp: off` だけ (字は書かせない)。
+  test('stamps the version at the bottom right without being asked', () => {
+    expect(renderBreadboard('parts:\n  R1: resistor a5 a9 1k').svg).toContain(`>${STAMP_TEXT}</text>`);
+  });
+
+  test('leaves the stamp out when told stamp: off', () => {
+    expect(renderBreadboard(`${'parts:\n  R1: resistor a5 a9 1k'}\nstyle:\n  stamp: off`).svg).not.toContain(STAMP_TEXT);
+  });
 });

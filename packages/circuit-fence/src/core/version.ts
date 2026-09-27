@@ -17,7 +17,7 @@ import { stampText } from 'fence-kit';
 export const VERSION = '0.13.1';
 
 /**
- * 図の隅に刻む字 (`style: stamp: on`)。名前まで書く。
+ * 図の隅に刻む字 (既定で刻む。`style: stamp: off` で消す)。名前まで書く。
  * 番号だけでは、何の 0.1.0 なのかが図から離れると分からない。
  */
 export const STAMP_TEXT = stampText('circuit-fence', VERSION);

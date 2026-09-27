@@ -255,7 +255,7 @@ export type StyleSpec = {
   readonly width: number | null;
   /** お知らせを図の下に出すか。読めなかった行はこれに関わらず必ず出る。 */
   readonly debug: boolean | null;
-  /** 図の右下に処理系の版を刻むか。 */
+  /** 図の右下に処理系の版を刻むか。null は既定の on (`stamp: off` で消す)。 */
   readonly stamp: boolean | null;
   /**
    * 図の中身の検査を掛けるか (`check: off` で外す)。null は既定の on。

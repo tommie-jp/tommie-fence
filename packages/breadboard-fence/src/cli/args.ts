@@ -18,7 +18,7 @@ export const USAGE = `使い方:
   check は何も書かず、ネットリストと読めなかったところだけを出します
   (読めない行が 1 つでもあれば終了コードは 1)。
 
-  --version は処理系の版を出します。図に刻むなら style: stamp: on を書きます
+  --version は処理系の版を出します。図の右下にも既定で刻みます (消すなら style: stamp: off)
   (字は処理系が埋めるので、手で書いて古びることがありません)。`;
 
 export const parseArgs = (argv: readonly string[]): ArgsResult => parseCliArgs(argv);
