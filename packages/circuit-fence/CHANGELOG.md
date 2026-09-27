@@ -3,6 +3,8 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
 ## [0.15.1] - 2026-09-28
 
 ### Fixed
@@ -27,6 +29,8 @@
   - **抵抗の仲間 (Ω) と電圧源 (V) の素の数は今までどおり受ける** (単位が 1 つに決まる)
 - **単位まで書いた値 (`47pF` `16MHz` `5V`) を、単位を落とした綴りと同じ値に読む。**
   今までは字のまま (`47pF`) 図に出ていた。
+
+## [0.15.0] - 2026-09-28
 
 ### Added
 
