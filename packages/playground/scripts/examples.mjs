@@ -28,6 +28,7 @@ const PACKAGE_OF = {
   copper: 'copper-fence',
   vna: 'vna-fence',
   scope: 'scope-fence',
+  spectrum: 'spectrum-fence',
 };
 
 /** この数を下回ったら、集めるところが壊れたと見なして止める。 */

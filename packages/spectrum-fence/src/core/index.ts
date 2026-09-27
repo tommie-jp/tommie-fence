@@ -1,15 +1,24 @@
-import { normalizeNewlines } from 'fence-kit';
-import { attachSourceText, shiftErrors } from './errors.ts';
-import { DIVISIONS, createLayout } from './layout/screen.ts';
+import { formatHertzShort, normalizeNewlines } from 'fence-kit';
+import { attachSourceText, notice, shiftErrors } from './errors.ts';
+import { frequencyTicks, levelTicks } from './layout/scales.ts';
+import type { Axes } from './layout/scales.ts';
+import { DIVISIONS, SIZE, createLayout } from './layout/screen.ts';
 import { deviceOf } from './model/device.ts';
-import { formatTick } from './model/level.ts';
+import { markerPoint, readMarkers } from './model/markers.ts';
+import type { MarkerSpec, Readings } from './model/markers.ts';
+import { screenOf } from './model/screen.ts';
+import type { Screen } from './model/screen.ts';
+import type { Point } from './model/trace.ts';
 import { parseFence } from './parser/parseFence.ts';
 import { renderDocument } from './render/document.ts';
 import { renderErrorBanner } from './render/errorHtml.ts';
-import { renderGrid, renderLevelLabels, renderStatus } from './render/grid.ts';
-import { resolveStyle } from './render/theme.ts';
+import { renderFrequencyLabels, renderGrid, renderLevelLabels, renderStatus, statusLines } from './render/grid.ts';
+import type { StatusItem } from './render/grid.ts';
+import { keyText, readingLinesOf, readingsSize, renderKey, renderReadings } from './render/readings.ts';
+import { renderTrace, renderMarker } from './render/trace.ts';
+import { resolveStyle, traceColor } from './render/theme.ts';
 import { renderTitle } from './render/title.ts';
-import type { FenceError } from './types.ts';
+import type { FenceDocument, FenceError } from './types.ts';
 
 /** 行の無いものを先に、あとは行の順に。同じ行なら見つけた順を保つ。 */
 const byLine = (errors: readonly FenceError[]): FenceError[] =>
@@ -25,6 +34,8 @@ export type DataSource = (name: string) => string | null;
 export type RenderResult = {
   /** それ自体で完結した SVG。**格子は必ず描く** (読めなかった行があっても、読めた所まで)。 */
   readonly svg: string;
+  /** マーカーの読み値。**エスケープしていない生のデータ**。 */
+  readonly readings: Readings;
   /** 読み値を字の行にしたもの (CLI と playground が出す)。 */
   readonly readingLines: readonly string[];
   /** 読めなかったところ。行番号と、行の中身と、綴りを指す印を持つ。 */
@@ -42,8 +53,38 @@ export type RenderOptions = {
   readonly data?: DataSource;
 };
 
-/** device: が無いときの縦軸 (0〜−100、10 dB/div)。**空でも格子と目盛は描く** (54)。 */
-const EMPTY_TICKS = Array.from({ length: DIVISIONS.y + 1 }, (_, index) => formatTick(-10 * index));
+/** device: が無いときの画面 (0〜−100、10 dB/div、横の字無し)。**空でも格子と目盛は描く** (54)。 */
+const EMPTY_AXES: Axes = { start: 0, stop: 1, ref: 0, scale: 10, unit: 'dBm' };
+
+type Drawn = {
+  readonly axes: Axes;
+  readonly points: readonly Point[];
+  readonly markers: readonly MarkerSpec[];
+  readonly status: readonly [readonly string[], readonly string[]] | null;
+  readonly readings: Readings;
+  readonly said: readonly FenceError[];
+};
+
+/** マーカーのうち掃引の中の物。外の物は言って外す。 */
+function markersInside(markers: readonly MarkerSpec[], screen: Screen, said: FenceError[]): readonly MarkerSpec[] {
+  return markers.filter((marker) => {
+    if (marker.kind === 'peak' || (marker.f >= screen.start && marker.f <= screen.stop)) return true;
+    said.push(notice(`マーカー ${formatHertzShort(marker.f)} は掃引 (${formatHertzShort(screen.start)}〜${formatHertzShort(screen.stop)}) の外です (描いていません)`, marker.line));
+    return false;
+  });
+}
+
+function drawnOf(doc: FenceDocument): Drawn {
+  if (doc.device === null) {
+    return { axes: EMPTY_AXES, points: [], markers: [], status: null, readings: { rows: [], basis: null }, said: [] };
+  }
+  const screen = screenOf(doc, deviceOf(doc.device));
+  const said = [...screen.errors, ...screen.said];
+  const markers = markersInside(doc.markers, screen, said);
+  const axes: Axes = { start: screen.start, stop: screen.stop, ref: screen.ref, scale: screen.scale, unit: screen.unit };
+  const readings = readMarkers(markers, screen.points, screen.unit, screen.points.length === 0 ? null : 'model');
+  return { axes, points: screen.points, markers, status: screen.status, readings, said };
+}
 
 /**
  * フェンスの中身 1 つを図に変換する。DOM も Node も使わない同期の純関数なので、
@@ -55,23 +96,46 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
   const { doc } = parsed;
   const style = resolveStyle(doc.style);
   const { theme } = style;
-  const device = doc.device === null ? null : deviceOf(doc.device);
-  const status = device === null ? [] : [[{ text: device.label, fill: theme.palette.caption }]];
+  const drawn = drawnOf(doc);
+  const color = traceColor(theme, 0);
+  const hasModel = drawn.points.length > 0;
 
-  const layout = createLayout({ statusRows: 1, title: doc.title, key: null, readings: null, source: null, theme });
+  const items = (texts: readonly string[] | undefined): readonly StatusItem[] =>
+    (texts ?? []).map((text) => ({ text, fill: theme.palette.caption }));
+  const first = items(drawn.status?.[0]);
+  const status = drawn.status === null ? [] : statusLines([...first, ...items(drawn.status[1])], first.length, SIZE.divX * DIVISIONS.x, theme);
+  const layout = createLayout({
+    statusRows: Math.max(1, status.length),
+    title: doc.title,
+    key: keyText(hasModel, null),
+    readings: readingsSize(drawn.readings, null, theme),
+    source: null,
+    theme,
+  });
+  const markerSvg = drawn.markers.map((marker, index) => {
+    const point = markerPoint(marker, drawn.points);
+    return point === null ? '' : renderMarker(point, `${index + 1}`, drawn.axes, layout.grid, color, theme);
+  }).join('');
+
   const body = renderTitle(doc.title, layout, theme)
+    + renderKey(hasModel, null, layout, theme)
     + renderGrid(layout, theme)
-    + renderLevelLabels(EMPTY_TICKS, layout, theme)
-    + renderStatus(status, layout, theme);
+    + renderLevelLabels(levelTicks(drawn.axes), layout, theme)
+    + renderFrequencyLabels(drawn.status === null ? null : frequencyTicks(drawn.axes), layout, theme)
+    + renderTrace(drawn.points, 'model', drawn.axes, layout.grid, color)
+    + markerSvg
+    + renderStatus(status, layout, theme)
+    + (layout.readingsBand === null ? '' : renderReadings(drawn.readings, null, layout.readingsBand, theme));
   const svg = renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
 
-  const reported = attachSourceText(byLine([...parsed.errors]), source);
+  const reported = attachSourceText(byLine([...parsed.errors, ...drawn.said]), source);
   const at = (list: readonly FenceError[]): readonly FenceError[] => shiftErrors(list, options.offset ?? 0);
   const errors = at(reported.filter((error) => error.notice !== true));
   const notices = at(reported.filter((error) => error.notice === true));
   return {
     svg,
-    readingLines: [],
+    readings: drawn.readings,
+    readingLines: readingLinesOf(drawn.readings, null),
     errors,
     notices,
     errorHtml: renderErrorBanner(style.debug ? [...errors, ...notices] : errors),
@@ -81,6 +145,7 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
 export { extractSpectrumFences } from './fences.ts';
 export type { FenceBlock } from './fences.ts';
 export type { FenceError } from './types.ts';
+export type { Readings } from './model/markers.ts';
 export { errorText } from './render/errorText.ts';
 export { STAMP_TEXT, VERSION } from './version.ts';
 export { problemsOf } from './problems.ts';

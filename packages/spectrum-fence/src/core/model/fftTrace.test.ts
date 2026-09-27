@@ -5,7 +5,7 @@ import { nearestPoint, peakPoint } from './markers.ts';
 import { wave } from './testWave.ts';
 
 const trace = (text: string, window: WindowName, stop = 20e3, floor: number | null = null) =>
-  fftTrace({ signal: [wave(text)], start: 0, stop, samples: 8192, window, floor });
+  fftTrace({ signal: [wave(text)], start: 0, stop, samples: 8192, window, floor }).points;
 
 describe('fftTrace — AD の 4-2 (Python で検算した値)', () => {
   test('samples at 2.56 × the stop, so 0–20 kHz with 8192 samples has bins of 6.25 Hz', () => {
@@ -27,6 +27,17 @@ describe('fftTrace — AD の 4-2 (Python で検算した値)', () => {
     expect(points[0]?.f).toBe(0);
     expect(points.at(-1)?.f).toBe(20e3);
     expect(points).toHaveLength(3201);
+  });
+
+  test('does not fold the harmonics above Nyquist back between the lines', () => {
+    const points = trace('square 1kHz 1V', 'hann');
+    expect(nearestPoint(points, 2e3)?.level).toBeLessThan(-100);
+    expect(nearestPoint(points, 12.2e3)?.level).toBeLessThan(-100);
+  });
+
+  test('cuts the lines at the budget and says so', () => {
+    const read = fftTrace({ signal: [wave('sawtooth 1Hz 1V')], start: 0, stop: 50e6, samples: 65536, window: 'hann', floor: null });
+    expect(read.truncated).toBe(true);
   });
 
   test('puts dc on the 0 Hz bin as its own value', () => {

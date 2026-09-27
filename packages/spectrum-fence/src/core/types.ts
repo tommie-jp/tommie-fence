@@ -1,5 +1,9 @@
 import type { THEME_NAMES } from './limits.ts';
-import type { DeviceKind, DeviceName } from './model/device.ts';
+import type { WaveSpec, WindowName } from 'fence-kit';
+import type { DeviceKind, DeviceName, LevelUnit } from './model/device.ts';
+import type { MarkerSpec } from './model/markers.ts';
+import type { SweepText } from './model/sweep.ts';
+import type { Level } from './parser/values.ts';
 
 /**
  * spectrum フェンスの型。**図の中に部品も板も無い** — 描くのはスペクトル (周波数ごとの
@@ -65,10 +69,31 @@ export type StyleSpec = {
   readonly stamp: boolean | null;
 };
 
+/** 読んだ値と、書いてあった行 (お知らせとエラーの行番号に使う)。 */
+export type Located<T> = { readonly value: T; readonly line: number | null };
+
 export type FenceDocument = {
   /** 書かれなかった・読めなかったときは null (**既定を作らない** — 計算の道が変わる)。 */
   readonly device: DeviceName | null;
   readonly title: string | null;
+  /** `sweep:` か `center:` + `span:`。書かなければ null (機種の範囲)。 */
+  readonly sweep: Located<SweepText & { readonly centered: boolean }> | null;
+  /** `points:` (掃引型)。 */
+  readonly points: Located<number> | null;
+  readonly samples: Located<number> | null;
+  readonly window: Located<WindowName> | null;
+  readonly rbw: Located<number> | null;
+  readonly atten: Located<number> | null;
+  readonly lna: Located<boolean> | null;
+  readonly ref: Located<Level> | null;
+  readonly scale: Located<number> | null;
+  readonly unit: Located<LevelUnit> | null;
+  readonly floor: Located<Level> | null;
+  /** 読めた波 (和を取る)。 */
+  readonly signal: readonly Located<WaveSpec>[];
+  readonly markers: readonly MarkerSpec[];
+  /** 測った値のファイル名 (`.md` の隣)。 */
+  readonly data: Located<string> | null;
   readonly style: StyleSpec;
   /** 書いてあった一番外側のキー (読めなかったものも)。「無いので既定で」と言うかを決める。 */
   readonly keys: readonly string[];

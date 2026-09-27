@@ -15,7 +15,7 @@ import { wave } from './testWave.ts';
  */
 describe('the FFT path and the swept path agree', () => {
   const signal = [wave('square 1MHz -10dBm')];
-  const fft = fftTrace({ signal, start: 0, stop: 20e6, samples: 8192, window: 'hann', floor: null })
+  const fft = fftTrace({ signal, start: 0, stop: 20e6, samples: 8192, window: 'hann', floor: null }).points
     .map((point) => ({ ...point, level: dbmFromDbv(point.level) }));
   const rbw = 3e3;
   const swept = sweptTrace({

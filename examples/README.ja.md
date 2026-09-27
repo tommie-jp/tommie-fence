@@ -12,6 +12,7 @@
 | copper | 治具 9 本 + わざと壊した例 1 本 | [packages/copper-fence/examples/](../packages/copper-fence/examples/README.md) |
 | vna | 測る物 5 本 + わざと壊した例 1 本 | [packages/vna-fence/examples/](../packages/vna-fence/examples/README.md) |
 | scope | 画面 5 本 + わざと壊した例 1 本 | [packages/scope-fence/examples/](../packages/scope-fence/examples/README.md) |
+| spectrum | 画面 5 本 + わざと壊した例 1 本 | [packages/spectrum-fence/examples/](../packages/spectrum-fence/examples/README.md) |
 
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。
@@ -207,6 +208,25 @@ CH0 と CH1 の間に 100 Ω。どちらも −6.02 dB、実測が模型から�
 - [02-clipper.md](../packages/scope-fence/examples/02-clipper.md) — クリッパとクランパ
 - [03-rectifier.md](../packages/scope-fence/examples/03-rectifier.md) — 半波・全波整流と平滑
 - [04-waves.md](../packages/scope-fence/examples/04-waves.md) — 波形発生器の波 6 種と、V/div を手で決める形
+
+## spectrum — スペクトラムの画面
+
+FFT 型 (Analog Discovery の Spectrum) と掃引型 (tinySA) を `device:` で分ける。波は scope と
+同じ綴り (`square 100MHz -10dBm`)、計器はメニューの語 (`rbw: 300kHz`、`atten: 20dB`、`window: hann`)。
+
+### NanoVNA の出力の高調波
+
+[![NanoVNA の出力の高調波](../packages/spectrum-fence/examples/out/00-harmonics.png)](../packages/spectrum-fence/examples/00-harmonics.md)
+
+100 MHz の方形波 (−10 dBm) を tinySA Ultra で。M1〜M3 は −7.90 / −17.44 / −21.88 dBm
+([00-harmonics.md](../packages/spectrum-fence/examples/00-harmonics.md))。
+
+### そのほか
+
+- [01-rbw-floor.md](../packages/spectrum-fence/examples/01-rbw-floor.md) — RBW とノイズフロア、アッテネータ
+- [02-ad-harmonics.md](../packages/spectrum-fence/examples/02-ad-harmonics.md) — 方形波の高調波 (AD、dBV)
+- [03-windows.md](../packages/spectrum-fence/examples/03-windows.md) — 窓関数 (rect / hann / flattop)
+- [04-two-paths.md](../packages/spectrum-fence/examples/04-two-paths.md) — FFT 型と掃引型で同じ dBm になる
 
 ## なぜ実体をここに置かないか
 

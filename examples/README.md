@@ -13,6 +13,7 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | copper | 9 fixtures + 1 deliberately broken | [packages/copper-fence/examples/](../packages/copper-fence/examples/README.md) |
 | vna | 5 measurements + 1 deliberately broken | [packages/vna-fence/examples/](../packages/vna-fence/examples/README.md) |
 | scope | 5 screens + 1 deliberately broken | [packages/scope-fence/examples/](../packages/scope-fence/examples/README.md) |
+| spectrum | 5 screens + 1 deliberately broken | [packages/spectrum-fence/examples/](../packages/spectrum-fence/examples/README.md) |
 
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for
@@ -215,6 +216,26 @@ A 100 Hz square wave into an RC of tau = 1 ms. At X2 = 1 ms CH2 has risen by 1.2
 - [02-clipper.md](../packages/scope-fence/examples/02-clipper.md) — clipper and clamper
 - [03-rectifier.md](../packages/scope-fence/examples/03-rectifier.md) — half- and full-wave rectifiers, smoothing
 - [04-waves.md](../packages/scope-fence/examples/04-waves.md) — the six generator waves, and setting V/div by hand
+
+## spectrum — the spectrum analyser screen
+
+An FFT instrument (Analog Discovery's Spectrum) or a swept one (tinySA), chosen by
+`device:`. Waves are written as in scope (`square 100MHz -10dBm`), the instrument in
+the words of its menu (`rbw: 300kHz`, `atten: 20dB`, `window: hann`).
+
+### Harmonics of the NanoVNA output
+
+[![Harmonics of the NanoVNA output](../packages/spectrum-fence/examples/out/00-harmonics.png)](../packages/spectrum-fence/examples/00-harmonics.md)
+
+A 100 MHz square wave (−10 dBm) on a tinySA Ultra. M1 to M3 read −7.90 / −17.44 / −21.88 dBm
+([00-harmonics.md](../packages/spectrum-fence/examples/00-harmonics.md)).
+
+### More
+
+- [01-rbw-floor.md](../packages/spectrum-fence/examples/01-rbw-floor.md) — RBW and the noise floor, the attenuator
+- [02-ad-harmonics.md](../packages/spectrum-fence/examples/02-ad-harmonics.md) — harmonics of a square wave (AD, dBV)
+- [03-windows.md](../packages/spectrum-fence/examples/03-windows.md) — windows (rect / hann / flattop)
+- [04-two-paths.md](../packages/spectrum-fence/examples/04-two-paths.md) — FFT and swept read the same dBm
 
 ## Why the files are not kept here
 

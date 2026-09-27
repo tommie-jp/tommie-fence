@@ -48,3 +48,96 @@ describe('parseFence — keys', () => {
     expect(messages('- a\n- b')[0]).toContain('キーと値');
   });
 });
+
+describe('parseFence — keys of the other kind of instrument', () => {
+  test('refuses rbw: on ad2, saying what sets the resolution now', () => {
+    expect(messages('device: ad2\nsweep: 0-20kHz\nrbw: 1kHz')).toEqual([
+      'ad2 では rbw: は書けません (分解能は samples: と掃引の幅で決まります。いまは 6.250 Hz)',
+    ]);
+  });
+
+  test('refuses window: on tinysa, and the other swept-only or fft-only keys', () => {
+    expect(messages('device: tinysa\nwindow: hann')).toEqual(['tinysa では window: は書けません (掃引型に窓はありません)']);
+    expect(messages('device: tinysa-ultra\nsamples: 8192')[0]).toContain('samples: は書けません');
+    for (const key of ['points: 101', 'atten: 10dB', 'lna: on']) {
+      expect(messages(`device: ad3\n${key}`)[0]).toMatch(/^ad3 では (points|atten|lna): は書けません/);
+    }
+  });
+
+  test('refuses floor: where the floor comes from the instrument, and lna: on where there is no LNA', () => {
+    expect(messages('device: tinysa-ultra\nfloor: -90dBm')[0]).toContain('tinysa-ultra では floor: は書けません');
+    expect(messages('device: tinysa\nlna: on')[0]).toContain('LNA がありません');
+    expect(parseFence('device: tinysa-ultra\nlna: on').doc.lna?.value).toBe(true);
+    expect(parseFence('device: generic\nfloor: -120dBm').doc.floor?.value).toEqual({ value: -120, unit: 'dBm' });
+  });
+
+  test('refuses points in sweep: on an FFT instrument', () => {
+    expect(messages('device: ad2\nsweep: 0-20kHz 101')[0]).toContain('sweep: に点数は書けません');
+  });
+});
+
+describe('parseFence — values', () => {
+  test('reads 11-4 without a word', () => {
+    const { doc, errors } = parseFence('device: tinysa-ultra\nsweep: 0-960M 450\nrbw: 300kHz\nref: -10dBm\nsignal: square 100MHz -10dBm\nmarkers: [100M, 300M, 500M]');
+    expect(errors).toEqual([]);
+    expect(doc.sweep?.value).toEqual({ start: 0, stop: 960e6, points: 450, centered: false });
+    expect(doc.rbw?.value).toBe(300e3);
+    expect(doc.ref?.value).toEqual({ value: -10, unit: 'dBm' });
+    expect(doc.signal).toHaveLength(1);
+    expect(doc.markers.map((marker) => (marker.kind === 'f' ? marker.f : marker.kind))).toEqual([100e6, 300e6, 500e6]);
+  });
+
+  test('reads center: + span:, and refuses them beside sweep: or alone', () => {
+    expect(parseFence('device: tinysa-ultra\ncenter: 30MHz\nspan: 2MHz').doc.sweep?.value).toEqual({ start: 29e6, stop: 31e6, points: null, centered: true });
+    expect(messages('device: tinysa-ultra\nsweep: 0-1M\ncenter: 30MHz\nspan: 2MHz')).toEqual(['sweep: と center: + span: は片方だけ書きます']);
+    expect(messages('device: tinysa-ultra\ncenter: 30MHz')[0]).toContain('対で書きます');
+    expect(messages('device: tinysa-ultra\ncenter: 30MHz\nspan: 0')[0]).toContain('ゼロスパン');
+    expect(messages('device: tinysa-ultra\ncenter: 30\nspan: 2MHz')[0]).toContain('単位か接頭辞');
+  });
+
+  test('refuses numbers without a unit', () => {
+    expect(messages('device: tinysa-ultra\nrbw: 300')[0]).toContain('単位を付けます');
+    expect(messages('device: tinysa-ultra\nref: -10')[0]).toBe('ref: は -10dBm / 0dBV のように単位を付けます');
+    expect(messages('device: tinysa-ultra\natten: 20')[0]).toBe('atten: は 10dB のように dB を付けます');
+    expect(messages('device: tinysa-ultra\nsignal: sine 1000 1')[0]).toContain('単位を付けます');
+    expect(messages('device: tinysa-ultra\nmarkers: [1000]')[0]).toContain('単位か接頭辞');
+  });
+
+  test('refuses operations in signal:, sending them to scope', () => {
+    expect(messages('device: ad2\nsignal: square 1kHz 1V | rc 1ms')).toEqual(['spectrum の signal: に操作は書けません (加工した波は scope で描きます)']);
+  });
+
+  test('refuses a fifth marker, and delta / noise for now', () => {
+    expect(messages('device: ad2\nmarkers: [1kHz, 2kHz, 3kHz, 4kHz, 5kHz]')).toEqual(['マーカーは 4 つまでです (M1〜M4)']);
+    expect(messages('device: ad2\nmarkers:\n  - delta 1kHz')[0]).toContain('delta はまだ書けません');
+    expect(messages('device: ad2\nmarkers: [foo]')[0]).toContain('peak で書きます');
+  });
+
+  test('reads a list of waves, up to sixteen, and says the pulse duty it assumed', () => {
+    const { doc, errors } = parseFence('device: ad2\nsignal:\n  - sine 1kHz 1V\n  - pulse 2kHz 1V');
+    expect(doc.signal).toHaveLength(2);
+    expect(errors).toEqual([{ message: 'pulse の duty は既定の 25% で描いています', line: 4, notice: true }]);
+    const many = Array.from({ length: 17 }, () => '  - sine 1kHz 1V').join('\n');
+    expect(messages(`device: ad2\nsignal:\n${many}`)).toEqual(['signal: の波は 16 本までです']);
+    expect(messages('device: ad2\nsignal:\n  - ""')[0]).toContain('波を 1 行で');
+  });
+
+  test('checks samples:, window:, unit:, scale: and lna:', () => {
+    expect(messages('device: ad2\nsamples: 1000')[0]).toContain('2 の冪');
+    expect(messages('device: ad2\nwindow: kaiser')[0]).toBe('window: は rect / hann / flattop のどれかです');
+    expect(messages('device: ad2\nunit: W')[0]).toBe('unit: は dBm か dBV です');
+    expect(messages('device: ad2\nscale: 100dB')[0]).toBe('scale: は 0.1〜50 dB です');
+    expect(messages('device: tinysa-ultra\nlna: maybe')[0]).toBe('lna: は on か off で書きます');
+    expect(messages('device: tinysa-ultra\nref: -300dBm')[0]).toContain('-200〜40');
+  });
+
+  test('refuses both points in sweep: and points:, and notes: for now', () => {
+    expect(messages('device: tinysa-ultra\nsweep: 0-1M 101\npoints: 101')).toEqual(['点数は sweep: か points: の片方に書きます']);
+    expect(messages('device: tinysa-ultra\nnotes: []')[0]).toContain('notes: はまだ書けません');
+  });
+
+  test('takes a data file name next to the markdown only', () => {
+    expect(parseFence('device: tinysa-ultra\ndata: fm.csv').doc.data?.value).toBe('fm.csv');
+    expect(messages('device: tinysa-ultra\ndata: ../x.csv')[0]).toContain('/ や .. は書けません');
+  });
+});

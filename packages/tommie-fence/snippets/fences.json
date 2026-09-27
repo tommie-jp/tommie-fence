@@ -107,7 +107,12 @@
     "body": [
       "```spectrum",
       "title: ${1:Harmonics of a 100 MHz square wave}",
-      "device: ${2:tinysa-ultra}$0",
+      "device: ${2:tinysa-ultra}",
+      "sweep: 0-960M 450",
+      "rbw: 300kHz",
+      "ref: 0dBm",
+      "signal: square 100MHz -10dBm",
+      "markers: [100M, 300M, 500M]$0",
       "```"
     ]
   }
