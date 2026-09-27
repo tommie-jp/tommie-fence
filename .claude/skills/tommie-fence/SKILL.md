@@ -66,9 +66,12 @@ node <root>/packages/circuit-fence/scripts/figures.mjs <file.md> <tmp>
 手書きや元の回路図と向き・並びが合っているか。**「重なりなし」と報告する前に、
 字の 1 つ 1 つが読めるかを見る** (見落としやすい)。
 
-人が読む図なら、配置の流儀 (出典つき) と PNG の点検表は
+人が読む図なら、流儀 (出典つき) と PNG の点検表は
 [electronics-drawing-skills](https://github.com/tommie-jp/electronics-drawing-skills) にある
-(回路図・ブレッドボード・ユニバーサル基板・銅張り基板の 4 つ)。circuit フェンスでの番地の間の目安は
+(回路図・ブレッドボード・ユニバーサル基板・銅張り基板・計器の画面・グラフの 6 つ)。
+計器の画面 (vna・scope・spectrum) は **instrument-screen** — 並べ方ではなく設定の選び方
+(尺度・掃引・表示形式・マーカー) の流儀と、**`check` の読み値を本文の表と数で合わせてから**
+PNG を見る点検表。グラフは **readable-graph**。circuit フェンスでの番地の間の目安は
 [readable-schematic](../readable-schematic/SKILL.md)。
 
 ## 4. 取り違えやすい所
