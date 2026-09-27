@@ -32,8 +32,8 @@ import type { DeviceBox } from './tex/shapes.ts';
  * - `ammeter` / `voltmeter` (電流計・電圧計) → 丸に指針の矢が入る。
  *   矢の無い `rmeter` に字を渡す (抵抗計と揃う)
  * - `transformer` (トランス) → 空芯。鉄芯の入る `transformer core` にする
- * - `vR` (可変抵抗) → **フェンスの circuitikz 1.0 だけ**矢先が左下を向く。
- *   フェンスでだけ `mirror` を足して右上へ返す (latexOptions)
+ * - `vR` (可変抵抗) → 矢を記号と一緒に回すので、
+ *   置いた向きで矢先が 4 方向に散る。向きごとに返して右上へ揃える (tunable)
  */
 
 import type { MultiTerminalPart, PartSpec, TexTarget } from './types.ts';
@@ -210,6 +210,12 @@ export type PartType = {
    * 省くと options をそのまま使う。出る図はどちらも同じ形になる。
    */
   readonly latexOptions?: readonly string[];
+  /**
+   * 可変の矢 (`vR` `vC`) を**置いた向きによらず右上へ**向けるオプションの表。
+   * circuitikz は矢を記号と一緒に回すので、決め打ちのオプションでは 1 方向しか
+   * 揃わない。的ごとに持つのは、**フェンスの 1.0 と手元の LaTeX で返し方が違う**ため。
+   */
+  readonly tunable?: { readonly fence: TunableTurns; readonly latex: TunableTurns };
   /**
    * 型番を記号の**中**に書く種類。省くと記号の下に出る。
    * 箱で描く IC は中に書ける (そのほうが回路図の慣習に近い)。
@@ -657,16 +663,32 @@ function usbchip(type: 'usb-a' | 'usb-c'): PartType {
   };
 }
 
+/** 2 端子を置いた向き (先に書いた番地から後の番地へ)。斜めは近いほうの軸に寄せる。 */
+export type Laid = 'right' | 'left' | 'down' | 'up';
+
+/** 置いた向き → 矢を右上へ向ける circuitikz のオプション。 */
+export type TunableTurns = Readonly<Record<Laid, readonly string[]>>;
+
+/**
+ * 可変の矢の返し方。4 方向 × 4 通り (なし・mirror・invert・両方) を焼いて、
+ * 右上を向いたものを拾った (52 の docs/93)。
+ *
+ * - 手元の LaTeX (circuitikz 1.6.6) は `fix tunable direction` が既定で入り、
+ *   vR も vC も同じ返し方で済む
+ * - **フェンスの 1.0 は vR と vC で矢の引き方が違い**、表も別になる
+ */
+const TUNABLE_LATEX: TunableTurns = { right: [], left: ['mirror', 'invert'], down: ['invert'], up: ['mirror'] };
+const TUNABLE_FENCE_VR: TunableTurns = { right: ['mirror', 'invert'], left: [], down: ['mirror'], up: ['invert'] };
+
 export const PART_TYPES = {
   // 受動部品
   resistor: { kind: 'two-terminal', symbol: 'R', unitTex: OHM, unitSi: SI_OHM },
   /**
    * 2 端子の可変抵抗。3 本目の足が要るなら potentiometer のほう。
-   * 矢は回路図の慣習どおり右上を向かせる。**フェンスの circuitikz 1.0 だけが
-   * 矢先を左下に描く**ので、上下を返して直す (1.6.6 では直っていると実測)。
+   * 矢は回路図の慣習どおり、どう置いても右上を向かせる (tunable)。
    */
   'resistor-var': {
-    kind: 'two-terminal', symbol: 'vR', options: ['mirror'], latexOptions: [],
+    kind: 'two-terminal', symbol: 'vR', tunable: { fence: TUNABLE_FENCE_VR, latex: TUNABLE_LATEX },
     unitTex: OHM, unitSi: SI_OHM,
   },
   /**
@@ -1316,6 +1338,15 @@ export function optionsFor(typeName: string, target: TexTarget): readonly string
 
 export const optionsOf = (type: PartType, target: TexTarget): readonly string[] =>
   (target === 'latex' ? type.latexOptions : undefined) ?? type.options ?? [];
+
+/** 2 端子を置いた向き。`dy` は上が正 (TikZ の座標)。斜めは近いほうの軸に寄せる。 */
+export const laidOf = (dx: number, dy: number): Laid =>
+  (Math.abs(dx) >= Math.abs(dy) ? (dx >= 0 ? 'right' : 'left') : (dy >= 0 ? 'up' : 'down'));
+
+/** 可変の矢を右上へ向けるオプション。矢の無い種類は空。 */
+export function tunableOptions(typeName: string, target: TexTarget, laid: Laid): readonly string[] {
+  return lookupPartType(typeName)?.tunable?.[target][laid] ?? [];
+}
 
 /**
  * 書かれたピン名を circuitikz のアンカー名にする。読めなければ null。

@@ -4,7 +4,7 @@ import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
 import {
-  DEVICE, IC3, isTurned, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, seg7DeviceBox, symbolFor, symbolOf, turnSide,
+  DEVICE, IC3, isTurned, laidOf, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, seg7DeviceBox, symbolFor, symbolOf, tunableOptions, turnSide,
 } from '../parts.ts';
 import type { PartType, PinSide, SourceInner, Turn } from '../parts.ts';
 import { lookupBoardPart } from 'fence-kit';
@@ -737,7 +737,13 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
   // (回路図の定石。実機で重なりを確認して決めた)。
   const type = partTypeOf(part);
   // 種類そのものに要るオプション (抵抗計の Ω など) は記号のすぐ後ろ。
-  const options = [symbolFor(part.type, target), ...optionsFor(part.type, target)];
+  const from = toPoint(part.from, pitch);
+  const to = toPoint(part.to, pitch);
+  const options = [
+    symbolFor(part.type, target),
+    ...optionsFor(part.type, target),
+    ...tunableOptions(part.type, target, laidOf(to.x - from.x, to.y - from.y)),
+  ];
   // 足を指せる種類だけ、記号そのものに名前を付ける (`P1.w` の行き先になる)。
   // 指せない種類にまで付けると、要らない名前で TeX が太る。
   if (type?.pins !== undefined) options.push(`n=${nodeNameOf(part.id)}`);
@@ -751,7 +757,7 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
   }
   // 光の矢のある記号は、値を `a^` に任せず矢の先より外に置く (`lightValueNode`)。
   const lightValue = part.value !== null && type?.lightArrows === true
-    ? lightValueNode(toPoint(part.from, pitch), toPoint(part.to, pitch), annotationOf(part.value, unitOf(part.type), target))
+    ? lightValueNode(from, to, annotationOf(part.value, unitOf(part.type), target))
     : null;
   if (part.value !== null && lightValue === null) {
     options.push(`a^=${annotationOf(part.value, unitOf(part.type), target)}`);

@@ -229,15 +229,18 @@ describe('記事によく出る部品', () => {
     expect(lookupPartType('transformer')?.symbol).toBe('transformer core');
   });
 
-  test('turns the variable resistor arrow the way it is usually drawn', () => {
-    // フェンスの circuitikz 1.0 は矢先を左下に描く。上下を返すと右上を向く。
-    // 手元の LaTeX (1.6.6 で確認) は最初から右上なので、そちらには足さない。
-    const type = lookupPartType('resistor-var');
+  test('turns the variable arrows by the way the part is laid, not by a fixed option', () => {
+    // 矢の返し方は置いた向きで変わる (tex/generate.test.ts の「可変の矢の向き」)。
+    // 決め打ちの options で返すと、右上を向くのは 1 方向だけになる。
+    for (const [name, symbol] of [['resistor-var', 'vR']] as const) {
+      const type = lookupPartType(name);
 
-    expect(type?.symbol).toBe('vR');
-    expect(type?.options).toEqual(['mirror']);
-    expect(type?.latexOptions).toEqual([]);
+      expect(type?.symbol).toBe(symbol);
+      expect(type?.options).toBeUndefined();
+      expect(type?.tunable).toBeDefined();
+    }
   });
+
 
   test('tells the NTC and the PTC thermistor apart with letters', () => {
     // 記号の中の θ は tiny の数式フォントが無くて `#` で出る (実測)。
@@ -378,14 +381,14 @@ describe('フェンス向けと .tex 向けの違い', () => {
     expect(different).toEqual(['opamp']);
   });
 
-  test('only the variable resistor carries different options', () => {
-    // circuitikz 1.0 だけ矢先が左下を向く。出る図は同じ形になるので、
-    // 「3 つの違い」には数えない (綴りだけが違う)。
+  test('no part carries different fixed options', () => {
+    // 可変の矢は版ごとに返し方が違うが、それは置いた向きで選ぶ表
+    // (`tunable`) に持つ。決め打ちのオプションで違うものは無い。
     const different = named.filter(
       (name) => optionsFor(name, 'fence').join() !== optionsFor(name, 'latex').join(),
     );
 
-    expect(different).toEqual(['resistor-var']);
+    expect(different).toEqual([]);
   });
 });
 

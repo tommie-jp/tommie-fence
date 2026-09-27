@@ -812,19 +812,49 @@ describe('記号だけでは見分けが付かない部品', () => {
   });
 });
 
-describe('記号の向きが版で違う部品', () => {
-  test('turns the variable resistor arrow up in the fence', () => {
-    // フェンスの circuitikz 1.0 だけ矢先が左下を向く。上下を返して直す。
+describe('可変の矢の向き', () => {
+  // 可変抵抗・可変コンデンサの矢は、**どう置いても右上を向く**のが回路図の慣習。
+  // circuitikz は矢を記号と一緒に回すので、置いた向きごとに返し方を選ぶ。
+  // 表は 4 方向 × 4 通り (なし・mirror・invert・両方) を焼いて目で見て決めた
+  // (52 の docs/93)。**フェンスの 1.0 は vR と vC で返し方が違い**、
+  // 手元の LaTeX (1.6.6) は vR も vC も同じ。
+  const LAID = [
+    ['左から右', 'a1 a3'],
+    ['右から左', 'a3 a1'],
+    ['上から下', 'a1 c1'],
+    ['下から上', 'c1 a1'],
+  ] as const;
+
+  const optionsBetween = (tex: string, symbol: string): string =>
+    new RegExp(`to\\[${symbol}(.*?), l_=`).exec(tex)?.[1] ?? '(記号が無い)';
+
+  const cases = [
+    ['resistor-var', 'vR', 'fence', [', mirror, invert', '', ', mirror', ', invert']],
+    ['resistor-var', 'vR', 'latex', ['', ', mirror, invert', ', invert', ', mirror']],
+  ] as const;
+
+  for (const [type, symbol, target, expected] of cases) {
+    test(`turns the ${type} arrow to the upper right in the ${target} tex`, () => {
+      const got = LAID.map(([, ends]) => {
+        const rows = ['parts:', `  X1: ${type} ${ends}`];
+        const { tex } = target === 'fence' ? generate(...rows) : generateLatex(...rows);
+        return optionsBetween(tex, symbol);
+      });
+
+      expect(got).toEqual(expected);
+    });
+  }
+
+  test('keeps the value on its usual side when the arrow is turned', () => {
+    // mirror / invert は記号だけを返す。ID は l_、値は a^ のまま。
     expect(generate('parts:', '  R2: resistor-var a1 a3 10k').tex)
-      .toContain('\\draw (a1) to[vR, mirror, l_=$R_{2}$, a^=$10\\,\\mathrm{k}\\Omega$] (a3);');
+      .toContain('\\draw (a1) to[vR, mirror, invert, l_=$R_{2}$, a^=$10\\,\\mathrm{k}\\Omega$] (a3);');
   });
 
-  test('leaves it alone in the tex it writes out', () => {
-    // 手元の LaTeX (1.6.6) は最初から右上を向く。返すと逆に寝る。
-    const { tex } = generateLatex('parts:', '  R2: resistor-var a1 a3 10k');
-
-    expect(tex).toContain('to[vR, l_=$R_{2}$');
-    expect(tex).not.toContain('mirror');
+  test('picks the nearer axis for a part laid on a slant', () => {
+    // 斜めに置いた部品は、横と縦の近いほうの向きで返す。
+    expect(optionsBetween(generate('parts:', '  X1: resistor-var a1 b4').tex, 'vR')).toBe(', mirror, invert');
+    expect(optionsBetween(generate('parts:', '  X1: resistor-var a1 d2').tex, 'vR')).toBe(', mirror');
   });
 });
 

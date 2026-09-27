@@ -3,6 +3,16 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 バージョン番号は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [Unreleased]
+
+### Fixed
+
+- **可変抵抗 (`resistor-var`) の矢が、置いた向きによって右上を向かなかった**。circuitikz は
+  矢を記号と一緒に回すので、決め打ちの `mirror` で右上を向くのは、フェンスでは上から下へ
+  置いたときだけ (横に置くと左上)、書き出す `.tex` では左から右へ置いたときだけだった。
+  置いた向き (左右・上下。斜めは近いほう) ごとに `mirror` / `invert` を選んで返す。
+  返し方はフェンスの circuitikz 1.0 と手元の LaTeX (1.6.6) で違うので、的ごとに表を持つ。
+
 ## [0.14.1] - 2026-09-28
 
 ### Changed
