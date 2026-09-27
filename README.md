@@ -8,7 +8,8 @@
 
 A family of Markdown fence languages that draw electronics, kept in one
 monorepo: schematic, breadboard, perfboard, copper-clad board, the screen of a
-vector network analyser (NanoVNA), and the screen of an oscilloscope.
+vector network analyser (NanoVNA), the screen of an oscilloscope, and the
+screen of a spectrum analyser.
 
 | Package | Fence | Draws |
 | --- | --- | --- |
@@ -18,6 +19,7 @@ vector network analyser (NanoVNA), and the screen of an oscilloscope.
 | copper-fence | ` ```copper ` | Copper-clad board drawings — positions in millimetres, connections made by the copper itself, Z0 printed on every line |
 | vna-fence | ` ```vna ` | The screen of a VNA (NanoVNA) — Log Mag, Smith chart, SWR, TDR, computed from an ideal model and overlaid with a measured Touchstone file |
 | scope-fence | ` ```scope ` | The screen of an oscilloscope — waveforms, trigger, cursors, Measurements, computed from generator waves passed through operations (RC, clipping) and overlaid with a measured CSV (WaveForms) |
+| spectrum-fence | ` ```spectrum ` | The screen of a spectrum analyser — FFT (Analog Discovery's Spectrum) or swept (tinySA), chosen by `device:`. Computed from generator waves through a window and an FFT, or through a receiver (RBW, attenuator, noise floor) |
 
 ` ```bread ` and ` ```perf ` are the short spellings. The long ones
 (` ```breadboard ` / ` ```perfboard `) draw just the same, so documents written
@@ -25,7 +27,7 @@ with them need no rewriting.
 
 The languages are separate; the manners are shared: YAML-hosted fences,
 positions written as addresses, and mistakes reported with Markdown line
-numbers and the content of the offending line. (vna and scope draw no board:
+numbers and the content of the offending line. (vna, scope and spectrum draw no board:
 their "positions" are frequencies or times, and they have no netlist or
 drag-to-edit map.)
 
@@ -34,7 +36,7 @@ drag-to-edit map.)
 **[Open the playground](https://tommie-jp.github.io/tommie-fence/)** — no
 account, no sign-up. **Open a `.md`, edit the fences inside it, write the `.md`
 back** — the same steps the extension takes, in a browser alone.
-**All six fences draw** — schematics included, with TeX running in
+**All seven fences draw** — schematics included, with TeX running in
 WebAssembly (the engine is fetched only the first time you draw a circuit).
 **It opens on the map**: drag a part and the address in the fence is
 rewritten, the same editor the extension carries. The `.md` text and the drawn
@@ -52,7 +54,7 @@ one hole, a body it cannot add a line to.
 
 [![Open in Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
 
-**For all six for real, use Codespaces.** VS Code opens in the browser with
+**For all seven for real, use Codespaces.** VS Code opens in the browser with
 the extension installed and [examples/try-me.md](examples/try-me.md) in
 front of you. Open the Markdown preview (`Ctrl+Shift+V`) and the fences turn
 into drawings; you can also turn the `.md` tab itself into a drawing editor. A
@@ -74,7 +76,7 @@ archived on 2026-09-01. Every commit came along, so
 (`breadboard-fence-v0.4.0`, `circuit-fence-v0.3.1`). The archived repositories
 keep their releases up to `v0.3.0`; everything after that is on the
 [releases page](https://github.com/tommie-jp/tommie-fence/releases).
-**The extension ships a `.vsix`, the six libraries ship an `npm pack`
+**The extension ships a `.vsix`, the seven libraries ship an `npm pack`
 tarball**, each with `SHA256SUMS`. They are not on the npm registry, so an
 app that wants one downloads the tarball and points at it with `file:`.
 
@@ -90,8 +92,9 @@ tommie-fence
 ├── packages/copper-fence      library + CLI
 ├── packages/vna-fence         library + CLI
 ├── packages/scope-fence       library + CLI
-├── packages/tommie-fence      the VS Code extension: all six folded into one
-└── packages/playground        one page that runs all six in a browser
+├── packages/spectrum-fence    library + CLI
+├── packages/tommie-fence      the VS Code extension: all seven folded into one
+└── packages/playground        one page that runs all seven in a browser
 ```
 
 `fence-kit` only holds code that was **already duplicated** — nothing is put

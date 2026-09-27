@@ -51,6 +51,7 @@
     "copper-fence": "*",
     "vna-fence": "*",
     "scope-fence": "*",
+    "spectrum-fence": "*",
     "esbuild": "^0.28.2",
     "fence-kit": "*",
     "markdown-it": "^15.0.0",
@@ -79,6 +80,7 @@
       "./media/copper.css",
       "./media/vna.css",
       "./media/scope.css",
+      "./media/spectrum.css",
       "./node_modules/node-tikzjax/css/fonts.css"
     ],
     "grammars": [
@@ -135,6 +137,16 @@
       {
         "scopeName": "markdown.scope.codeblock",
         "path": "./syntaxes/scope-injection.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml"
+        }
+      },
+      {
+        "scopeName": "markdown.spectrum.codeblock",
+        "path": "./syntaxes/spectrum-injection.json",
         "injectTo": [
           "text.html.markdown"
         ],

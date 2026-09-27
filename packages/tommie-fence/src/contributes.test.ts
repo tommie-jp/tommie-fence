@@ -49,7 +49,7 @@ describe('3 つを 1 つに畳んだ contributes', () => {
       expect(copied, grammar.path).toContain(grammar.path);
       expect(grammarOf(grammar.path).scopeName).toBe(grammar.scopeName);
     }
-    expect(manifest.contributes.grammars).toHaveLength(6);
+    expect(manifest.contributes.grammars).toHaveLength(7);
   });
 
   // 52 の docs/08。**文法の直し忘れがいちばん起きやすい** — プラグインだけ直すと

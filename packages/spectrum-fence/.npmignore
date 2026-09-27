@@ -1,0 +1,10 @@
+# npm pack で配るのは dist だけ (ライブラリの出口と CLI)。
+#
+# **3 つとも .npmignore で揃える。** circuit-fence は `files` を使えない
+# (vsce が「.vscodeignore と files の併用は支持しない」として止まる) ので、
+# 揃える先をそちらにした。理由があって違うもの以外は揃える (直下の CLAUDE.md)。
+#
+# **`.vsix` の作り方には触らない。** scripts/vsix.sh は作業場の node_modules へ
+# tar でソースごと写すので、npm から隠しても拡張のビルドは src/ を見つける。
+/*
+!/dist

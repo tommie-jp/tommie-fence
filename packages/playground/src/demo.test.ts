@@ -10,8 +10,8 @@ import type { Kind } from './kinds.ts';
  * **同じ回路 (LED と抵抗) を描いた種類。** copper は銅張り基板 (RF の治具) の図で、
  * LED と抵抗の例を持たないので釦も無い。
  */
-type DemoKind = Exclude<Kind, 'copper' | 'vna' | 'scope'>;
-const DEMO_KINDS = KINDS.filter((kind): kind is DemoKind => kind !== 'copper' && kind !== 'vna' && kind !== 'scope');
+type DemoKind = Exclude<Kind, 'copper' | 'vna' | 'scope' | 'spectrum'>;
+const DEMO_KINDS = KINDS.filter((kind): kind is DemoKind => kind !== 'copper' && kind !== 'vna' && kind !== 'scope' && kind !== 'spectrum');
 
 const one = { label: '抵抗を 1k に', find: 'a5 a10 330', replace: 'a5 a10 1k', said: '変えた' };
 
@@ -57,6 +57,7 @@ describe('nudgesFor', () => {
     expect(nudgesFor('copper', DEMO_TITLE)).toEqual([]);
     expect(nudgesFor('vna', DEMO_TITLE)).toEqual([]);
     expect(nudgesFor('scope', DEMO_TITLE)).toEqual([]);
+    expect(nudgesFor('spectrum', DEMO_TITLE)).toEqual([]);
   });
 });
 

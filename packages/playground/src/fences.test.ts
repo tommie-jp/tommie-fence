@@ -37,6 +37,15 @@ describe('render', () => {
     expect(render('scope', 'time: 1ms\n').messages.join('\n')).toContain('scope: 1 行目');
   });
 
+  test('spectrum は図を返し、ネットリストを持たない', () => {
+    const output = render('spectrum', 'device: tinysa-ultra\n');
+
+    expect(output.svg).toMatch(/^<svg /);
+    expect(output.netlist).toEqual([]);
+    expect(output.broken).toBe(false);
+    expect(render('spectrum', 'device: ultra\n').messages.join('\n')).toContain('spectrum: 1 行目');
+  });
+
   test('vna は図と読み値を返し、data: は読めないと言う (頁は隣のファイルに届かない)', () => {
     const output = render('vna', 'sweep: 1M-300M\ndut: series R 100\ndata: a.s2p\nmarkers:\n  - 10M\n');
 

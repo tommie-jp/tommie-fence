@@ -7,7 +7,7 @@
 > お試しできます。
 
 電子工作の図を描く Markdown フェンス言語のファミリーを、1 つのモノレポで育てる:
-回路図、ブレッドボード、ユニバーサル基板、銅張り基板、VNA (NanoVNA) の画面、オシロスコープの画面。
+回路図、ブレッドボード、ユニバーサル基板、銅張り基板、VNA (NanoVNA) の画面、オシロスコープの画面、スペクトラムの画面。
 
 | パッケージ | フェンス | 描くもの |
 | --- | --- | --- |
@@ -17,12 +17,13 @@
 | copper-fence | ` ```copper ` | 銅張り基板の寸法図 — 位置は mm、導通は銅の形そのもの。線路の Z0 を図に出す |
 | vna-fence | ` ```vna ` | VNA (NanoVNA) の画面 — Log Mag・Smith チャート・SWR・TDR。理想の模型から計算し、測った Touchstone を重ねる |
 | scope-fence | ` ```scope ` | オシロスコープの画面 — 時間波形・トリガ・カーソル・Measurements。波形発生器の波と通す操作 (RC・頭打ち) から計算し、測った CSV (WaveForms) を重ねる |
+| spectrum-fence | ` ```spectrum ` | スペクトラムの画面 — FFT 型 (Analog Discovery の Spectrum) と掃引型 (tinySA) を `device:` で分ける。波形発生器の波から窓と FFT か受信機 (RBW・ATT・フロア) で計算する |
 
 ` ```bread ` / ` ```perf ` は短い綴りで、長い綴り (` ```breadboard ` / ` ```perfboard `) も
 同じように図になる。長い綴りで書いた文書は、書き直さなくてよい。
 
 言語は別、作法は同じ: YAML をホストにしたフェンス、番地で書く位置、
-Markdown の行番号とその行の中身で返るエラー (vna と scope は板を描かないので、
+Markdown の行番号とその行の中身で返るエラー (vna・scope・spectrum は板を描かないので、
 位置は周波数か時間。ネットリストとマップは無い)。
 
 ## 何も入れずに試す
@@ -30,7 +31,7 @@ Markdown の行番号とその行の中身で返るエラー (vna と scope は�
 **[playground を開く](https://tommie-jp.github.io/tommie-fence/)** —
 アカウントも登録も要らない。**`.md` を開いて、中のフェンスを直して、
 `.md` に書き戻す** — 拡張がしていることと同じ手順を、ブラウザだけでなぞる。
-**6 つとも描ける** — 回路図も、TeX を WebAssembly で走らせて同じ図を出す
+**7 つとも描ける** — 回路図も、TeX を WebAssembly で走らせて同じ図を出す
 (資材を落とすのは circuit を初めて描くときだけ)。**開くと、図を掴んで
 動かすマップが出ている** — 部品をドラッグするとフェンスの番地が書き換わる、
 拡張と同じものが動く。`.md` の字と描いた図は「Markdown」の窓で見る。例は各パッケージの `examples/` の `.md` がそのまま 74 本。
@@ -38,7 +39,7 @@ Markdown の行番号とその行の中身で返るエラー (vna と scope は�
 
 [![Codespaces で開く](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
 
-**6 つとも本物で動かすなら Codespaces。** ブラウザの中に VS Code が立ち上がり、
+**7 つとも本物で動かすなら Codespaces。** ブラウザの中に VS Code が立ち上がり、
 拡張が入った状態で [examples/try-me.md](examples/try-me.ja.md) が開く。
 プレビュー (`Ctrl+Shift+V`) でフェンスが図になり、`.md` のタブそのものを
 図のエディタにもできる。GitHub のアカウントが要る (無料枠は月 120 コア時間)。
@@ -59,7 +60,7 @@ Markdown の行番号とその行の中身で返るエラー (vna と scope は�
 (`breadboard-fence-v0.4.0` / `circuit-fence-v0.3.1`)。archive したリポジトリに
 残るのは `v0.3.0` までで、それ以降は
 [Releases](https://github.com/tommie-jp/tommie-fence/releases) にある。
-**拡張には `.vsix`、6 つのライブラリには `npm pack` の tarball** が
+**拡張には `.vsix`、7 つのライブラリには `npm pack` の tarball** が
 `SHA256SUMS` つきで付く。npm レジストリには出していないので、
 別のアプリから使うときはこの tarball を落として `file:` で指す。
 
@@ -75,8 +76,9 @@ tommie-fence
 ├── packages/copper-fence      ライブラリ + CLI
 ├── packages/vna-fence         ライブラリ + CLI
 ├── packages/scope-fence       ライブラリ + CLI
-├── packages/tommie-fence      VS Code 拡張。6 つを 1 つに畳んだもの
-└── packages/playground        6 つをブラウザで試す 1 枚の頁 (拡張ではない)
+├── packages/spectrum-fence    ライブラリ + CLI
+├── packages/tommie-fence      VS Code 拡張。7 つを 1 つに畳んだもの
+└── packages/playground        7 つをブラウザで試す 1 枚の頁 (拡張ではない)
 ```
 
 `fence-kit` に入れるのは、**実際に重複してから引き上げたものだけ**。

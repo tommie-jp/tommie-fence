@@ -5,7 +5,7 @@
  * 例の読み込み (`examples.ts`) もこれを要るが、3 つの描画コア
  * (`fences.ts` が束ねる) までは要らないため。
  */
-export const KINDS = ['circuit', 'breadboard', 'perfboard', 'copper', 'vna', 'scope'] as const;
+export const KINDS = ['circuit', 'breadboard', 'perfboard', 'copper', 'vna', 'scope', 'spectrum'] as const;
 
 export type Kind = (typeof KINDS)[number];
 
@@ -66,6 +66,7 @@ export const KIND_LABEL: Readonly<Record<Kind, string>> = {
   copper: 'copper',
   vna: 'vna',
   scope: 'scope',
+  spectrum: 'spectrum',
 };
 
 /**
@@ -79,13 +80,14 @@ export const KIND_READING: Readonly<Record<Kind, string>> = {
   copper: '銅張り基板図',
   vna: 'VNA の画面',
   scope: 'オシロの画面',
+  spectrum: 'スペクトラムの画面',
 };
 
 /** マップ (殻) を持たない種類。**計器の画面** — 図の中に動かす部品が無い (52 の docs/75 の決め 10・81 の決め 12)。 */
-export const MAPLESS: readonly Kind[] = ['vna', 'scope'];
+export const MAPLESS: readonly Kind[] = ['vna', 'scope', 'spectrum'];
 
 /**
- * 図を掴んで動かすマップ (殻) を持つか。**vna と scope は持たない**。持たない種類を
+ * 図を掴んで動かすマップ (殻) を持つか。**vna・scope・spectrum は持たない**。持たない種類を
  * 選んだら、頁は図の窓を開く。
  */
 export const hasMap = (kind: Kind): boolean => !MAPLESS.includes(kind);

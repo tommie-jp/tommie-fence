@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 import { collectProblems } from './problems/collect.ts';
-import { MAPLESS_LANGUAGES, scopeProblems, vnaProblems } from './mapless.ts';
-import { NEIGHBOR_READERS, dataForUri, readerFor, scopeDataFrom, vnaDataFrom } from './neighborData.ts';
+import { MAPLESS_LANGUAGES, scopeProblems, spectrumProblems, vnaProblems } from './mapless.ts';
+import { NEIGHBOR_READERS, dataForUri, readerFor, scopeDataFrom, spectrumDataFrom, vnaDataFrom } from './neighborData.ts';
 
 const home = mkdtempSync(join(tmpdir(), 'mapless-ext-'));
 writeFileSync(join(home, 'm.s1p'), '# HZ S RI R 50\n1000000 0.5 0\n2000000 0.5 0\n');
@@ -19,6 +19,8 @@ describe('data: の読み口 (デスクトップ)', () => {
     // 名前の形はフェンスごと: vna は .csv を、scope は .s1p を読まない。
     expect(dataForUri(doc, vnaDataFrom)?.('w.csv')).toBeNull();
     expect(dataForUri(doc, scopeDataFrom)?.('m.s1p')).toBeNull();
+    expect(dataForUri(doc, spectrumDataFrom)?.('w.csv')).toContain('Channel 1');
+    expect(dataForUri(doc, spectrumDataFrom)?.('m.s1p')).toBeNull();
   });
 
   test('has no neighbour for untitled or git documents', () => {
@@ -31,12 +33,13 @@ describe('data: の読み口 (デスクトップ)', () => {
     expect(NEIGHBOR_READERS.scope({ currentDocument: doc })?.('w.csv')).toContain('0,1');
     expect(NEIGHBOR_READERS.vna({})).toBeUndefined();
     expect(NEIGHBOR_READERS.scope(null)).toBeUndefined();
+    expect(NEIGHBOR_READERS.spectrum({ currentDocument: doc })?.('w.csv')).toContain('0,1');
   });
 });
 
 describe('殻を持たないフェンスの Problems', () => {
-  test('names both fences without a map', () => {
-    expect(MAPLESS_LANGUAGES).toEqual(['vna', 'scope']);
+  test('names the fences without a map', () => {
+    expect(MAPLESS_LANGUAGES).toEqual(['vna', 'scope', 'spectrum']);
   });
 
   test('lists vna lines in Problems, with the file found when a reader is given', () => {
@@ -52,5 +55,10 @@ describe('殻を持たないフェンスの Problems', () => {
   test('lists scope lines in Problems on the markdown line', () => {
     const said = collectProblems('# 題\n\n```scope\ntime: 1ms\ntrigger: ch1 rising\nch1: sine 1kHz 1V\n```\n', [scopeProblems()], { erc: false });
     expect(said).toEqual([{ language: 'scope', line: 4, kind: 'error', message: expect.stringContaining('/div を付けます') }]);
+  });
+
+  test('lists spectrum lines in Problems on the markdown line', () => {
+    const said = collectProblems('# 題\n\n```spectrum\ntitle: x\ndevice: ultra\n```\n', [spectrumProblems()], { erc: false });
+    expect(said).toEqual([{ language: 'spectrum', line: 5, kind: 'error', message: expect.stringContaining('tinysa-ultra') }]);
   });
 });

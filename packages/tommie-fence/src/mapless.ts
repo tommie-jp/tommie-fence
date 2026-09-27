@@ -1,6 +1,7 @@
 import { problemsOf as vnaProblemsOf } from 'vna-fence/src/core';
 import type { DataSource } from 'vna-fence/src/core';
 import { problemsOf as scopeProblemsOf } from 'scope-fence/src/core';
+import { problemsOf as spectrumProblemsOf } from 'spectrum-fence/src/core';
 import type { ProblemSource } from './problems/collect.ts';
 
 /**
@@ -18,5 +19,10 @@ export const scopeProblems = (data?: DataSource): ProblemSource => ({
   problems: (source, fenceLine, want) => scopeProblemsOf(source, fenceLine, want, data),
 });
 
+export const spectrumProblems = (data?: DataSource): ProblemSource => ({
+  language: 'spectrum',
+  problems: (source, fenceLine, want) => spectrumProblemsOf(source, fenceLine, want, data),
+});
+
 /** マップ (殻) を持たずに図と Problems だけを出す言語。**拡張が描くフェンス = 殻の言語 + これ**。 */
-export const MAPLESS_LANGUAGES: readonly string[] = ['vna', 'scope'];
+export const MAPLESS_LANGUAGES: readonly string[] = ['vna', 'scope', 'spectrum'];

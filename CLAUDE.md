@@ -35,7 +35,12 @@
   トリガ・カーソル・Measurements)。**vna と同じ形** — 理想の波 (波形発生器の波 + `| rc 1ms`
   のような通す操作) を 8192 点で計算して破線、測った CSV (`data:`、WaveForms) を実線で重ねる。
   ch は 1 つの格子に重ねる。**マップ (殻) は無い** (52 の docs/81・85)
-- `packages/tommie-fence` — **VS Code に出るのはこれだけ。** 6 つのフェンスを
+- `packages/spectrum-fence` — ` ```spectrum ` フェンス。スペクトラムの画面。**1 つのフェンスで
+  2 つの計器** — `device:` (必須) が計算の道を選ぶ: FFT 型 (`ad2` `ad3`、Analog Discovery の
+  Spectrum。波を標本化 → 窓 → FFT) と掃引型 (`tinysa` `tinysa-ultra` `generic`。線スペクトルを
+  受信機の RBW・ATT・フロアでなぞる)。波の書き方は scope と同じ (fence-kit の `wave.ts`)。
+  片方の型にしか無いキーはもう片方で断る。**マップ (殻) は無い** (52 の docs/86・88)
+- `packages/tommie-fence` — **VS Code に出るのはこれだけ。** 7 つのフェンスを
   1 つの拡張に畳んだもの (52 の docs/19)。中身は入口だけで、図を描くのは
   上の 3 つのコア。**3 つは拡張ではなくライブラリ + CLI**になった
 - `packages/playground` — 3 つのフェンスをブラウザだけで試す静的なページ

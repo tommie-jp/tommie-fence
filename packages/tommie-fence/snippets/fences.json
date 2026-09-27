@@ -100,5 +100,15 @@
       "ch2: ch1 | rc 1ms$0",
       "```"
     ]
+  },
+  "spectrum fence": {
+    "prefix": ["spectrum"],
+    "description": "Spectrum screen (FFT or swept) — a spectrum fence to start from (スペクトラムの画面のフェンス)",
+    "body": [
+      "```spectrum",
+      "title: ${1:Harmonics of a 100 MHz square wave}",
+      "device: ${2:tinysa-ultra}$0",
+      "```"
+    ]
   }
 }

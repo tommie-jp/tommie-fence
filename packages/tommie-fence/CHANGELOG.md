@@ -5,10 +5,13 @@
 
 ## [Unreleased]
 
-scope-fence 0.1.0 を束ねる。
+scope-fence 0.1.0 と spectrum-fence 0.1.0 を束ねる。
 
 ### Added
 
+- **7 つ目のフェンス ` ```spectrum `** — スペクトラムの画面 (FFT 型の Analog Discovery と
+  掃引型の tinySA)。scope・vna と同じくマップ (殻) を持たず、プレビュー・文法の色分け・
+  スニペット (`spectrum`)・Problems パネルに出る。`data:` はデスクトップ版だけが `.md` の隣から読む。
 - **6 つ目のフェンス ` ```scope `** — オシロスコープの画面 (時間波形)。vna と同じく
   マップ (殻) を持たず、プレビュー・文法の色分け・スニペット (`scope`)・Problems パネルに出る。
   `data:` (WaveForms の CSV) はデスクトップ版だけが `.md` の隣から読む。
