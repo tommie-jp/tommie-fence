@@ -11,8 +11,11 @@ export type DeviceKind = 'fft' | 'swept';
 
 export type LevelUnit = 'dBV' | 'dBm';
 
-/** 受信機の分解能帯域。`choices` は実機のメニューにある値 (auto はこの中から選ぶ)。 */
-export type RbwSpec = { readonly min: number; readonly max: number; readonly choices: readonly number[] };
+/**
+ * 受信機の分解能帯域。`choices` は実機のメニューにある値 (auto はこの中から選ぶ)。
+ * `free` なら範囲の中の値を何でも受ける (generic)。そうでなければ選択肢の値だけ。
+ */
+export type RbwSpec = { readonly min: number; readonly max: number; readonly choices: readonly number[]; readonly free?: boolean };
 
 /** 表示の雑音の床 (DANL)。**この RBW・この周波数で、ATT 0・LNA 無しの値** (dBm)。 */
 export type Danl = { readonly level: number; readonly rbw: number };
@@ -59,15 +62,16 @@ export const DEVICES = {
     maxInput: { volts: 25 }, defaultUnit: 'dBV', defaultRef: 0,
   },
   // Basic の DANL は Ultra と同じ仮の値 (要確認)。REF LEVEL の既定 −10 dBm も要確認。
+  // START は 0 Hz から書ける (実機も 0 Hz から掃引できる。仕様の下限 100 kHz より下は校正の外 — 要確認)。
   tinysa: {
-    kind: 'swept', label: 'tinySA', range: { min: 100e3, max: 960e6 },
+    kind: 'swept', label: 'tinySA', range: { min: 0, max: 960e6 },
     points: { choices: [51, 101, 145, 290], default: 290 },
     rbw: { min: 3e3, max: 600e3, choices: BASIC_RBW }, danl: { level: -102, rbw: 30e3 },
     attenMax: 31, maxInput: { dbm: 10 }, defaultUnit: 'dBm', defaultRef: -10,
   },
   // 仕様: LNA 無し・30 MHz・RBW 30 kHz で −102 dBm、入力の上限 +6 dBm。LNA の利得 20 dB は要確認。
   'tinysa-ultra': {
-    kind: 'swept', label: 'tinySA Ultra', range: { min: 100e3, max: 5.3e9 },
+    kind: 'swept', label: 'tinySA Ultra', range: { min: 0, max: 5.3e9 },
     points: { choices: [51, 101, 145, 290, 450], default: 450 },
     rbw: { min: 200, max: 850e3, choices: ULTRA_RBW }, danl: { level: -102, rbw: 30e3 }, lnaGain: 20,
     attenMax: 31.5, maxInput: { dbm: 6 }, defaultUnit: 'dBm', defaultRef: -10,
@@ -76,7 +80,7 @@ export const DEVICES = {
   generic: {
     kind: 'swept', label: 'Generic', range: { min: 0, max: 10e9 },
     points: { choices: [], default: 450 },
-    rbw: { min: 1, max: 10e6, choices: GENERIC_RBW },
+    rbw: { min: 1, max: 10e6, choices: GENERIC_RBW, free: true },
     attenMax: 70, defaultUnit: 'dBm', defaultRef: -10,
   },
 } as const satisfies Record<string, Device>;
