@@ -105,17 +105,29 @@ export function resolveBoard(text: string): BoardResolution {
     if (tooBig(size)) {
       return { ok: false, reason: `板が大きすぎます。上限は ${LIMITS.cols}x${LIMITS.rows} です` };
     }
-    // 単位を書き忘れた取り違えは黙って通る (`72x47` は 72 列 47 行として読める)。
-    // **図は出るが別物**なので、エラーではなくお知らせで言う。
-    const asSize = lookupBoard(`${parsedRaw[1]}x${parsedRaw[2]}mm`);
-    const notice = asSize === null
-      ? null
-      : `${parsedRaw[1]}x${parsedRaw[2]} は穴数として読みました (${size.cols} 列 ${size.rows} 行)。`
-        + `${parsedRaw[1]}×${parsedRaw[2]}mm の板のことなら board: ${asSize.key} と書きます`;
-    return { ok: true, board: createBoard(size), named: null, notice };
+    return { ok: true, board: createBoard(size), named: null, notice: unitlessNotice(size) };
   }
 
   return { ok: false, reason: `板として読めません。${NAME_HINT}。${SIZE_HINT}` };
+}
+
+/**
+ * 単位の無い `列x行` が**実寸の書き忘れかもしれない**ときの一言。無ければ null。
+ *
+ * `72x47` は 72 列 47 行として読める — **図は出るが別物**なので、エラーではなく
+ * お知らせで言う。持っている板と寸分違わない時だけでなく、**近い板がある時も言う**
+ * (`70x50` は 7×5cm の汎用基板のつもりが多い。実寸の綴りに掛けているのと同じ
+ * `nearestBoard` の判定を、単位の無い綴りにも掛ける)。
+ */
+function unitlessNotice(size: BoardSize): string | null {
+  const read = `${size.cols}x${size.rows} は穴数として読みました (${size.cols} 列 ${size.rows} 行)。`;
+  const asMm = `${size.cols}×${size.rows}mm`;
+  const exact = lookupBoard(`${size.cols}x${size.rows}mm`);
+  if (exact !== null) return `${read}${asMm} の板のことなら board: ${exact.key} と書きます`;
+  const near = nearestBoard([size.cols, size.rows]);
+  if (near === null) return null;
+  return `${read}${asMm} の板のことなら、持っている中で近いのは ${describeBoard(near)}`
+    + ` — その板なら board: ${near.key} と書きます`;
 }
 
 /**

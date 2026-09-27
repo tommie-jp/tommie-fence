@@ -109,6 +109,17 @@ describe('resolveBoard', () => {
     expect(found.ok && found.notice).toContain('akizuki-c');
   });
 
+  test('warns when a bare number is near the size of a board it knows (70x50 for 7x5cm)', () => {
+    // 7×5cm の汎用基板のつもりの `70x50` は 70 列 × 50 行 (3,500 穴) として通る。
+    // 持っている板と寸分違わない時だけ言うと、実寸で書いた人の大半を黙って通す。
+    const found = resolveBoard('70x50');
+
+    expect(found.ok && found.board).toMatchObject({ cols: 70, rows: 50 });
+    expect(found.ok && found.notice).toContain('70x50 は穴数として読みました');
+    expect(found.ok && found.notice).toContain('70×50mm');
+    expect(found.ok && found.notice).toContain('akizuki-c');
+  });
+
   test('says nothing extra about a hole count that is not a board size', () => {
     const found = resolveBoard('25x15');
 

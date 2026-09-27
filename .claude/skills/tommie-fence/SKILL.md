@@ -76,7 +76,7 @@ node <root>/packages/circuit-fence/scripts/figures.mjs <file.md> <tmp>
 | | circuit | breadboard | perfboard |
 | --- | --- | --- | --- |
 | 番地 | 升目の交点 `a1`。行 `a`〜`cu`、列 `1`〜`99`。升目の宣言は要らない | 穴 `a`〜`j` + 列、レール `+t5` `-b20` | `board:` の穴の中。板の外は `a0` `-a1` (4 つ先まで) |
-| `board:` | 無い | `mini` / `half` / `full`。省くと `half` | **要る** (`20x4` は列 × 行、`akizuki-c` など) |
+| `board:` | 無い | `mini` / `half` / `full`。省くと `half` | **要る** (`20x4` は列 × 行、`akizuki-c` など)。**単位の無い数は穴数** — 7×5cm の板を `70x50` と書くと 3,500 穴になる (お知らせが出る)。実寸なら名前か `72x47mm` |
 | 印の注釈 | `circle 部品ID か番地` | `circle 部品ID か番地` | **`mark 番地`** (`circle` は無く、部品 ID は指せない) |
 | 注釈の種類 | circle box arrow line text source | circle box arrow line text source | mark box arrow text source parts |
 | DIP・SIP | 多端子部品 `ID: 種類 番地 [向き] [型番]` | 胴の左端の列の穴 1 つ (e でも f でも同じ)。文法表は `dip8 @ e5` (`@` は省いても読む)。足は実物を上から見た並びで **1 番は左下の f 行** | 胴の左上の穴 1 つ。**`dip8 e5`** (`@` を付けると読めない)。**1 番は 3 行下の左下** (e5 なら h5)。DIP に `mirror` は書けない |
