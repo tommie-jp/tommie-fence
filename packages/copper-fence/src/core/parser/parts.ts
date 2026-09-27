@@ -1,6 +1,6 @@
 import { LIMITS } from '../limits.ts';
 import { safeToken } from '../errors.ts';
-import { parsePoint, parseSize, pointProblem } from '../model/point.ts';
+import { parsePoint, parseSize, pointProblem, unitProblem } from '../model/point.ts';
 import { resolveKind } from '../parts/catalog.ts';
 import type { Mm, PartSpec, Side } from '../types.ts';
 import { takeOrient } from './orient.ts';
@@ -26,9 +26,9 @@ function readAt(word: string | undefined, example: string): Mm | string {
  *
  * | 種類 | 書き方 |
  * | --- | --- |
- * | 同軸 | `sma left 10 [値]` — 辺と、辺に沿った位置 (mm) |
+ * | 同軸 | `sma left 10 [値]` — 辺と、辺に沿った位置 (mm。番地なので素の数) |
  * | 面実装 | `capacitor/1608 12,10 [r90] [値]` — 中心の点 |
- * | 箱 | `box 20,10 5x5 6 [r90] [値]` — 中心・大きさ・足の数 |
+ * | 箱 | `box 20,10 5x5mm 6 [r90] [値]` — 中心・大きさ・足の数 |
  * | 足のある部品 | `resistor P1 P2 [値]` — 端 2 つ (島の名前か点) |
  */
 export function parsePartLine(id: string, text: string): LineResult<PartSpec> {
@@ -66,16 +66,19 @@ export function parsePartLine(id: string, text: string): LineResult<PartSpec> {
       });
     }
     case 'box': {
-      const at = readAt(words[1], 'box 20,10 5x5 6');
+      const at = readAt(words[1], 'box 20,10 5x5mm 6');
       if (typeof at === 'string') return fail(at, words[1]);
       const size = words[2] === undefined ? null : parseSize(words[2]);
       if (size === null || [size.width, size.height].some((side) => side < LIMITS.sizeMin || side > LIMITS.sizeMax)) {
-        return fail(`箱の大きさを 幅x高さ (mm、${LIMITS.sizeMin}〜${LIMITS.sizeMax}) で書きます (例: box 20,10 5x5 6)`, words[2]);
+        const hint = words[2] === undefined ? null : unitProblem(words[2]);
+        return fail(
+          `箱の大きさを 幅x高さmm (${LIMITS.sizeMin}〜${LIMITS.sizeMax}) で書きます (${hint ?? '例: box 20,10 5x5mm 6'})`, words[2],
+        );
       }
       const pinsWord = words[3];
       const pins = pinsWord !== undefined && /^\d{1,2}$/.test(pinsWord) ? Number(pinsWord) : null;
       if (pins === null || pins < 1 || pins > LIMITS.boxPins) {
-        return fail(`箱の足の数を書きます (1〜${LIMITS.boxPins}。例: box 20,10 5x5 6)`, pinsWord);
+        return fail(`箱の足の数を書きます (1〜${LIMITS.boxPins}。例: box 20,10 5x5mm 6)`, pinsWord);
       }
       const { orient, rest } = takeOrient(words.slice(4));
       return ok({

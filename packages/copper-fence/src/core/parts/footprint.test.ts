@@ -81,11 +81,11 @@ describe('sot', () => {
 
 describe('box', () => {
   test('numbers its pins down the left side and up the right', () => {
-    expect(pins('box 20,10 4x6 6')).toEqual([
+    expect(pins('box 20,10 4x6mm 6')).toEqual([
       ['1', [[17.75, 8]]], ['2', [[17.75, 10]]], ['3', [[17.75, 12]]],
       ['4', [[22.25, 12]]], ['5', [[22.25, 10]]], ['6', [[22.25, 8]]],
     ]);
-    expect(pins('box 20,10 4x2 3').map(([name]) => name)).toEqual(['1', '2', '3']);
+    expect(pins('box 20,10 4x2mm 3').map(([name]) => name)).toEqual(['1', '2', '3']);
   });
 });
 

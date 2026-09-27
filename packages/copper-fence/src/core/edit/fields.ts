@@ -1,7 +1,7 @@
 import { REWRITE_REFUSAL, RENAME_REFUSAL, wireColor } from 'fence-kit';
 import type { Edit, EditResult, PartFields } from 'fence-kit';
 import { isReferenceable } from '../limits.ts';
-import { formatPoint, parseLength, parsePoint, parseSize } from '../model/point.ts';
+import { formatLength, formatPoint, formatSize, parseLength, parsePoint, parseSize, unitProblem } from '../model/point.ts';
 import { isOrientWord } from '../parser/orient.ts';
 import { parseCopperLine } from '../parser/copper.ts';
 import { parsePartLine } from '../parser/parts.ts';
@@ -53,11 +53,11 @@ export function fieldsOf(source: string, handle: string): PartFields | null {
       };
     case 'shape': {
       const spec = found.shape;
-      const value = spec.kind === 'via' ? String(spec.drill) : `${spec.width}x${spec.height}`;
+      const value = spec.kind === 'via' ? formatLength(spec.drill) : formatSize(spec.width, spec.height);
       return { id: spec.id, type: spec.kind, value, label: '', color: '', can: ['id', 'value'] };
     }
     case 'line':
-      return { id: found.shape.id, type: 'line', value: String(found.shape.width), label: '', color: '', can: ['id', 'value'] };
+      return { id: found.shape.id, type: 'line', value: formatLength(found.shape.width), label: '', color: '', can: ['id', 'value'] };
     case 'jumper':
       return { id: `配線 (${found.wire.line ?? '?'} 行目)`, type: '--', value: '', label: '', color: found.wire.color ?? '', can: ['color'], kinds: ['--'] };
   }
@@ -95,6 +95,12 @@ export function rename(source: string, handle: string, to: string): EditResult {
   }
   return changed(state.source, { edits });
 }
+
+/** 単位を忘れた値に添える付け方 (` (単位 mm を付けます (3mm))`)。 */
+const hintOf = (written: string): string => {
+  const hint = unitProblem(written);
+  return hint === null ? '' : ` (${hint})`;
+};
 
 /** 1 行を書き換えて答えにする (読み直して読めなければ断る)。 */
 function rewritten(state: Read, item: Item, words: readonly string[]): EditResult {
@@ -137,12 +143,12 @@ export function setField(source: string, handle: string, field: string, text: st
   if (field !== 'value') return refuse(`${spec.id} に ${field} の欄はありません`);
   if (found.kind === 'line') {
     const at = widthAt(item);
-    if (parseLength(written) === null) return refuse(`線路の幅として読めません: ${written}`);
+    if (parseLength(written) === null) return refuse(`線路の幅として読めません: ${written}${hintOf(written)}`);
     return rewritten(state, item, words.map((word, index) => (index === at ? written : word)));
   }
   const shape = found.shape;
   const valid = shape.kind === 'via' ? parseLength(written) !== null : parseSize(written) !== null;
-  if (!valid) return refuse(`${shape.kind === 'via' ? '穴の径' : '大きさ'}として読めません: ${written}`);
+  if (!valid) return refuse(`${shape.kind === 'via' ? '穴の径' : '大きさ'}として読めません: ${written}${hintOf(written)}`);
   const next = [...words.slice(0, 2), written, ...words.slice(3)];
   const reread = parseCopperLine(shape.id, next.join(' '));
   return reread.ok ? rewritten(state, item, next) : refuse(reread.error.message, shape.line);
@@ -180,7 +186,7 @@ export function turn(source: string, handle: string, quarters: number): EditResu
   if (found.kind === 'shape') {
     const shape = found.shape;
     if (shape.kind === 'via' || quarters % 2 === 0) return changed(state.source, { edits: [] });
-    return rewritten(state, item, [...words.slice(0, 2), `${shape.height}x${shape.width}`, ...words.slice(3)]);
+    return rewritten(state, item, [...words.slice(0, 2), formatSize(shape.height, shape.width), ...words.slice(3)]);
   }
   const part = found.part;
   if (part.kind === 'edge') return refuse(`${part.id} の向きは載せる辺で決まります (動かすと辺が変わります)`, part.line);

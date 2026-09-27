@@ -5,7 +5,7 @@ import { createCopperEditor } from './fenceEditor.ts';
 const SOURCE = [
   'board: 40x30mm',
   'copper:',
-  '  L1: line 0,10 40,10 3.06',
+  '  L1: line 0,10 40,10 3.06mm',
   '  P1: pad 30,20',
   'parts:',
   '  J1: sma left 10',

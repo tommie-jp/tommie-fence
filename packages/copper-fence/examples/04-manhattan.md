@@ -10,10 +10,10 @@ board:
   ground: front
 title: 図01 π 型アッテネータ (Manhattan)
 copper:
-  S1: pad 2.5,10 5x2
-  S2: pad 37.5,10 5x2
-  P1: pad 10,10 4x4
-  P2: pad 30,10 4x4
+  S1: pad 2.5,10 5x2mm
+  S2: pad 37.5,10 5x2mm
+  P1: pad 10,10 4x4mm
+  P2: pad 30,10 4x4mm
 parts:
   J1: sma left 10
   J2: sma right 10

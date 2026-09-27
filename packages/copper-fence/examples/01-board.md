@@ -6,11 +6,11 @@
 ```copper
 board:
   size: 30x15mm
-  h: 0.8
+  h: 0.8mm
   er: 4.2
 title: 図01 0.8mm の薄い板
 copper:
-  L1: line 0,7.5 30,7.5 1.58
+  L1: line 0,7.5 30,7.5 1.58mm
 parts:
   J1: sma left 7.5
   J2: sma right 7.5
@@ -28,10 +28,10 @@ parts:
 board:
   size: 30x15mm
   ground: both
-  cut: 0.3
+  cut: 0.3mm
 title: 図02 表も裏も地 (CPWG)
 copper:
-  L1: line 0,7.5 30,7.5 1.6
+  L1: line 0,7.5 30,7.5 1.6mm
 parts:
   J1: sma left 7.5
   J2: sma right 7.5

@@ -7,7 +7,9 @@ import {
   DEFAULT_BOARD, DEFAULT_ER, DEFAULT_GROUND, DEFAULT_H, DEFAULT_SIZE, GROUNDS, SIZE_HINT, createBoard,
   isGround, resolveSize,
 } from '../model/board.ts';
-import { F_MAX, F_MIN, formatHertz, parseHertz } from '../model/microstrip.ts';
+import { HERTZ_HINT, isBareNumber, parsePrefixedHertz } from 'fence-kit';
+import { F_MAX, F_MIN, formatHertz } from '../model/microstrip.ts';
+import { parseLength, unitProblem } from '../model/point.ts';
 import { TOP_LEVEL_KEYS } from '../types.ts';
 import type {
   Board, CopperSpec, FenceDocument, FenceError, Ground, NoteSpec, PartSpec, StyleSpec, WireSpec,
@@ -206,6 +208,9 @@ function readFence(source: string): ParseResult {
     }
   };
 
+  /** 無次元の数 (`4.4`)。単位の付いた綴りは NaN。 */
+  const bareNumber = (text: string): number => (/^\d+(?:\.\d+)?$/.test(text.trim()) ? Number(text) : Number.NaN);
+
   /** `board:` の値。スカラーなら大きさ、マップなら大きさと基材と地。 */
   const readBoard = (value: unknown, at: number | null): void => {
     let sizeNode: unknown = value;
@@ -236,13 +241,20 @@ function readFence(source: string): ParseResult {
           rest.ground = word;
           continue;
         }
-        const number = text === null ? Number.NaN : Number(text);
+        // **h と cut は長さなので mm を付ける。er は無次元なので素の数** (文法の方針 1)。
+        const isLength = name !== 'er';
+        const number = text === null ? Number.NaN
+          : isLength ? parseLength(text.trim()) ?? Number.NaN : bareNumber(text);
         const [min, max] = name === 'h' ? [LIMITS.hMin, LIMITS.hMax]
           : name === 'er' ? [LIMITS.erMin, LIMITS.erMax]
             : [LIMITS.sizeMin, LIMITS.sizeMax];
         if (!Number.isFinite(number) || number < min || number > max) {
-          const what = name === 'h' ? '基材の厚さ (mm)' : name === 'er' ? '比誘電率' : '溝の幅 (mm)';
-          errors.push(fenceError(`board の ${name} は${what}を ${min}〜${max} で書きます`, itemAt, name));
+          const what = name === 'h' ? '基材の厚さ' : name === 'er' ? '比誘電率' : '溝の幅';
+          const unit = isLength ? 'mm' : '';
+          const hint = isLength && text !== null ? unitProblem(text.trim()) : null;
+          errors.push(fenceError(
+            `board の ${name} は${what}を ${min}${unit}〜${max}${unit} で書きます${hint === null ? '' : ` (${hint})`}`, itemAt, name,
+          ));
           continue;
         }
         rest[name as 'h' | 'er' | 'cut'] = number;
@@ -296,7 +308,12 @@ function readFence(source: string): ParseResult {
         break;
       case 'f': {
         const text = scalarText(pair.value);
-        const hz = text === null ? null : parseHertz(text);
+        // **素の数は断る** (`2400000000` は桁を数え違えると別の周波数。接頭辞か Hz が要る)。
+        if (text !== null && isBareNumber(text)) {
+          errors.push(fenceError(`f: の周波数に接頭辞がありません: ${safeToken(text)} (${HERTZ_HINT})`, at, 'f'));
+          break;
+        }
+        const hz = text === null ? null : parsePrefixedHertz(text);
         if (hz === null || hz < F_MIN || hz > F_MAX) {
           errors.push(fenceError(
             `f: は周波数を ${formatHertz(F_MIN)}〜${formatHertz(F_MAX)} で書きます (例: f: 2.4G、f: 433M)`, at, 'f',
@@ -350,7 +367,7 @@ function readFence(source: string): ParseResult {
   if (!boardWritten) {
     // **書かなくても止めない。** 既定の板で描き、何の板で描いたかは言う (54)。
     errors.push(notice(
-      `board: が無いので、既定の板 (${DEFAULT_SIZE}・h ${DEFAULT_H}・εr ${DEFAULT_ER}・${DEFAULT_GROUND}) で描いています`,
+      `board: が無いので、既定の板 (${DEFAULT_SIZE}・h ${DEFAULT_H}mm・εr ${DEFAULT_ER}・${DEFAULT_GROUND}) で描いています`,
       contentLine,
     ));
   }

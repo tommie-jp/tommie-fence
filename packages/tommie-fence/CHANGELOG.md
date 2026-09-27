@@ -21,7 +21,8 @@ scope-fence 0.1.0 と spectrum-fence 0.1.0 を束ねる。
 - **束ねるフェンスが、黙って別の意味に読んでいた値の書き方を断る** (直下の CLAUDE.md の
   文法の方針 1)。breadboard と perfboard は読めない抵抗値 (`whatever` `10k 1% 2%`) と
   コンデンサ・インダクタの素の数 (`47`) を断る。circuit は C・L・水晶・電流源の素の数と
-  大きい `K` (`100K`) を断る。vna は L・C と周波数の素の数を断る。書き方は各フェンスの CHANGELOG。
+  大きい `K` (`100K`) を断る。vna は L・C と周波数の素の数を断る。copper は長さに `mm` を要り (`3.06mm` `4x4mm` `h: 1.6mm`)、
+  `f:` の素の数を断る。書き方は各フェンスの CHANGELOG。スニペットの copper も `mm` 付きに直した。
 - 殻を持たないフェンスの口を `vna.ts` / `vnaData.ts` から `mapless.ts` / `neighborData.ts` に
   改めた (vna と scope の 2 つを並べる)。
 

@@ -58,14 +58,14 @@ describe('surface mount', () => {
 
 describe('box', () => {
   test('has a centre, a size and a number of pins', () => {
-    const saw = read('box 20,10 5x5 6 r90 SAW433');
+    const saw = read('box 20,10 5x5mm 6 r90 SAW433');
     expect(saw.ok && saw.value).toMatchObject({ kind: 'box', at: { x: 20, y: 10 }, width: 5, height: 5, pins: 6, orient: { turn: 90 }, value: 'SAW433' });
   });
 
   test('says what is missing', () => {
     expect(reason('box 20,10')).toMatch(/箱の大きさ/);
-    expect(reason('box 20,10 5x5')).toMatch(/足の数/);
-    expect(reason('box 20,10 5x5 0')).toMatch(/足の数/);
+    expect(reason('box 20,10 5x5mm')).toMatch(/足の数/);
+    expect(reason('box 20,10 5x5mm 0')).toMatch(/足の数/);
     expect(reason('box/qfn 20,10 5x5 6')).toMatch(/box に姿はありません/);
   });
 });
@@ -93,6 +93,6 @@ test('names an unknown kind, and says an empty line is empty', () => {
 });
 
 test('caps the size of a box like any other shape', () => {
-  const read = parsePartLine('U1', 'box 10,10 1x900 1');
+  const read = parsePartLine('U1', 'box 10,10 1x900mm 1');
   expect(read.ok ? '' : read.error.message).toMatch(/0.05〜100/);
 });

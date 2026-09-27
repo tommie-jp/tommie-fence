@@ -3,7 +3,7 @@ import { renderCopper } from '../core/index.ts';
 import { saidOf } from './said.ts';
 
 /** C1 がどの銅にも乗っていない板。 */
-const LOOSE = ['board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3', 'parts:', '  C1: capacitor/1608 20,2 10p'].join('\n');
+const LOOSE = ['board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3mm', 'parts:', '  C1: capacitor/1608 20,2 10p'].join('\n');
 
 const messagesOf = (source: string): string[] => saidOf(renderCopper(source)).map((said) => said.message);
 

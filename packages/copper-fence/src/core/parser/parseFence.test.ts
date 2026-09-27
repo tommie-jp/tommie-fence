@@ -8,14 +8,14 @@ describe('parseFence', () => {
     const { doc, errors } = parseFence([
       'board:',
       '  size: 50x30mm',
-      '  h: 0.8',
+      '  h: 0.8mm',
       '  er: 4.2',
       '  ground: both',
-      '  cut: 0.3',
+      '  cut: 0.3mm',
       'f: 2.4G',
       'title: 図1',
       'copper:',
-      '  L1: line 0,10 50,10 1.5',
+      '  L1: line 0,10 50,10 1.5mm',
       'parts:',
       '  J1: sma left 10',
       'wires:',
@@ -42,13 +42,13 @@ describe('parseFence', () => {
     expect(doc.board.width).toBe(40);
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatchObject({ notice: true });
-    expect(errors[0]?.message).toMatch(/既定の板 \(40x20mm・h 1.6・εr 4.4・back\)/);
+    expect(errors[0]?.message).toMatch(/既定の板 \(40x20mm・h 1.6mm・εr 4.4・back\)/);
   });
 
   test('keeps what it could read of the board', () => {
-    const { doc } = parseFence('board:\n  h: 0.8\n  ground: front');
+    const { doc } = parseFence('board:\n  h: 0.8mm\n  ground: front');
     expect(doc.board).toMatchObject({ width: 40, h: 0.8, ground: 'front' });
-    expect(messages('board:\n  h: 0.8')).toEqual([expect.stringMatching(/size: が無いので/)]);
+    expect(messages('board:\n  h: 0.8mm')).toEqual([expect.stringMatching(/size: が無いので/)]);
     expect(parseFence('board: 40x20\n').doc.board.width).toBe(40);
   });
 
@@ -71,7 +71,7 @@ describe('parseFence', () => {
   });
 
   test('keeps going past a YAML error, and says it once per line', () => {
-    const { doc, errors } = parseFence('board: 40x20mm\ncopper:\n  L1: line 0,10 40,10 3\n  L2: [unclosed\n');
+    const { doc, errors } = parseFence('board: 40x20mm\ncopper:\n  L1: line 0,10 40,10 3mm\n  L2: [unclosed\n');
     expect(doc.copper.map((spec) => spec.id)).toContain('L1');
     expect(errors.some((error) => error.message.startsWith('YAML の構文エラー'))).toBe(true);
   });

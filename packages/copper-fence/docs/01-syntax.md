@@ -29,7 +29,7 @@ Markdown の ` ```copper ` フェンスに YAML を書くと、Markdown プレ�
 board: 30x12mm
 title: 図01 大きさだけの板
 copper:
-  L1: line 0,6 30,6 3.06
+  L1: line 0,6 30,6 3.06mm
 ```
 
 ![図01 大きさだけの板](out/01-syntax-1.svg)
@@ -37,13 +37,19 @@ copper:
 **大きさには単位を付ける** (`40x20mm` `4x2cm`)。perfboard では同じ `40x20` が
 穴の数になるので、黙って mm と読まない。辺は 5〜200mm。
 
+**長さはどこでも `mm` を付ける** — 基材の厚さ (`h: 1.6mm`)、溝 (`cut: 0.3mm`)、線路の幅
+(`3.06mm`)、溝の幅 (`gap 0.3mm`)、島・切り欠き・箱の大きさ (`4x4mm`)、穴の径 (`0.8mm`)。
+素の数 (`3`) は断る。**素の数のままでよいのは番地** (点 `20,10` と SMA の辺に沿った
+位置 `sma left 10` — 板の上の位置はいつも mm で、別の読み方が無い) と、無次元の
+比誘電率 (`er: 4.4`) だけ。
+
 | 項目 | 書くもの | 既定 |
 | --- | --- | --- |
 | `size` | 幅x高さ (`mm` か `cm`) | `40x20mm` |
-| `h` | 基材の厚さ (mm) | `1.6` |
+| `h` | 基材の厚さ (`mm`) | `1.6mm` |
 | `er` | 比誘電率 | `4.4` |
 | `ground` | 地の在りか (`back` `front` `both` `none`) | `back` |
-| `cut` | 表が地の板で、島のまわりに切る溝の幅 (mm) | `0.5` |
+| `cut` | 表が地の板で、島のまわりに切る溝の幅 (`mm`) | `0.5mm` |
 
 **地の在りか (`ground:`) で描き方と Z0 の式が変わる。**
 
@@ -58,10 +64,10 @@ copper:
 board:
   size: 30x12mm
   ground: both
-  cut: 0.3
+  cut: 0.3mm
 title: 図02 表も裏も地の板
 copper:
-  L1: line 0,6 30,6 1.6
+  L1: line 0,6 30,6 1.6mm
 ```
 
 ![図02 表も裏も地の板](out/01-syntax-2.svg)
@@ -84,6 +90,7 @@ copper:
 
 `f:` は設計の周波数 (`2.4G` `2400M` `1.575GHz` `433M`)。**書くと線路の字に電気長
 (度) が付く** — 90° が λ/4。接頭辞は k・M・G だけ (m と M を取り違えると 10 億倍違う)。
+**接頭辞も `Hz` も無い素の数 (`2400000000`) は断る** (桁を数え違えると別の周波数になる)。
 
 ## 銅の形 (`copper:`)
 
@@ -91,21 +98,21 @@ copper:
 
 | 形 | 書き方 | 意味 |
 | --- | --- | --- |
-| `line` | `line 点 点 … 幅 [gap 溝]` | 線路。縦横の区間の折れ線と幅 (mm) |
-| `pad` | `pad 中心 [幅x高さ]` | 矩形の島 (既定 4x4) |
-| `via` | `via 中心 [穴の径]` | 裏の地へ落とす穴 (既定 0.8) |
-| `slot` | `slot 中心 幅x高さ` | 地の切り欠き (銅ではない) |
+| `line` | `line 点 点 … 幅 [gap 溝]` | 線路。縦横の区間の折れ線と幅 (`3.06mm`、溝は `gap 0.3mm`) |
+| `pad` | `pad 中心 [幅x高さ]` | 矩形の島 (`3x3mm`。既定 4x4mm) |
+| `via` | `via 中心 [穴の径]` | 裏の地へ落とす穴 (`1.2mm`。既定 0.8mm) |
+| `slot` | `slot 中心 幅x高さ` | 地の切り欠き (`12x1mm`。銅ではない) |
 
 ```copper
 board: 40x20mm
 title: 図03 線路・島・via・切り欠き
 f: 2.4G
 copper:
-  L1: line 0,8 20,8 20,14 40,14 3.06
-  S1: line 30,14 30,4 1.5
-  P1: pad 8,15 3x3
+  L1: line 0,8 20,8 20,14 40,14 3.06mm
+  S1: line 30,14 30,4 1.5mm
+  P1: pad 8,15 3x3mm
   V1: via 8,15.5
-  X1: slot 10,3 12x1
+  X1: slot 10,3 12x1mm
 ```
 
 ![図03 線路・島・via・切り欠き](out/01-syntax-3.svg)
@@ -136,17 +143,17 @@ copper:
 board: 40x20mm
 title: 図04 部品
 copper:
-  L1: line 0,6 40,6 3.06
-  P1: pad 6,15 3x3
-  P2: pad 16,15 3x3
-  Q1: pad 27.5,15 1.4x3
-  Q2: pad 32.5,15 1.4x3
+  L1: line 0,6 40,6 3.06mm
+  P1: pad 6,15 3x3mm
+  P2: pad 16,15 3x3mm
+  Q1: pad 27.5,15 1.4x3mm
+  Q2: pad 32.5,15 1.4x3mm
 parts:
   J1: sma left 6 CH0
   J2: sma right 6 CH1
   C1: capacitor/1608 20,6 10p
   R1: resistor P1 P2 51
-  U1: box 30,15 4x3 4 SAW
+  U1: box 30,15 4x3mm 4 SAW
 ```
 
 ![図04 部品](out/01-syntax-4.svg)
@@ -194,7 +201,7 @@ SOT       transistor ic3 regulator                 /sot23 /sot346 /sot89
 board: 40x20mm
 title: 図05 寸法線と字
 copper:
-  L1: line 0,12 40,12 3.06
+  L1: line 0,12 40,12 3.06mm
 notes:
   - dim 0,4 40,4
   - dim 34,10.47 34,13.53 red

@@ -8,8 +8,8 @@ board: 40x25mm
 title: 図01 折れ線とスタブ
 f: 2.4G
 copper:
-  L1: line 0,15 12,15 12,6 28,6 28,15 40,15 3.06
-  S1: line 20,6 20,20 3.06
+  L1: line 0,15 12,15 12,6 28,6 28,15 40,15 3.06mm
+  S1: line 20,6 20,20 3.06mm
 parts:
   J1: sma left 15
   J2: sma right 15
@@ -54,13 +54,13 @@ board: 50x20mm
 title: 図02 ステップインピーダンス LPF (1GHz)
 f: 1G
 copper:
-  L1: line 0,10 8,10 3.06
-  L2: line 8,10 16,10 0.5
-  L3: line 16,10 24,10 8
-  L4: line 24,10 32,10 0.5
-  L5: line 32,10 40,10 8
-  L6: line 40,10 42,10 0.5
-  L7: line 42,10 50,10 3.06
+  L1: line 0,10 8,10 3.06mm
+  L2: line 8,10 16,10 0.5mm
+  L3: line 16,10 24,10 8mm
+  L4: line 24,10 32,10 0.5mm
+  L5: line 32,10 40,10 8mm
+  L6: line 40,10 42,10 0.5mm
+  L7: line 42,10 50,10 3.06mm
 parts:
   J1: sma left 10
   J2: sma right 10

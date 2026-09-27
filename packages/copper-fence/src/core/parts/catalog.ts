@@ -111,7 +111,7 @@ export function resolveKind(written: string): KindResult {
   if (variant !== null) {
     const spec = smdSpecOf(variant);
     if (spec !== null) {
-      if (spec.kind === 'row') return { ok: false, reason: `${variant} は box で書きます (例: U1: box 20,10 5x4 8)` };
+      if (spec.kind === 'row') return { ok: false, reason: `${variant} は box で書きます (例: U1: box 20,10 5x4mm 8)` };
       const allowed = SMD_TYPES[spec.kind];
       if (!allowed.includes(type)) {
         return { ok: false, reason: `${variant} に載る種類は ${allowed.join(' / ')} です: ${type}` };

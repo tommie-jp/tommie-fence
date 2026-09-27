@@ -31,18 +31,20 @@ describe('formatPoint', () => {
 
 describe('parseLength / parseSize', () => {
   test('reads a positive length with up to three decimals', () => {
-    expect(parseLength('3.06')).toBe(3.06);
-    expect(parseLength('0.15')).toBe(0.15);
-    expect(parseLength('0')).toBeNull();
-    expect(parseLength('-1')).toBeNull();
-    expect(parseLength('3mm')).toBeNull();
+    expect(parseLength('3.06mm')).toBe(3.06);
+    expect(parseLength('0.15mm')).toBe(0.15);
+    expect(parseLength('0mm')).toBeNull();
+    expect(parseLength('-1mm')).toBeNull();
+    // **素の数は読まない** (長さはどこでも mm を付ける)。
+    expect(parseLength('3.06')).toBeNull();
   });
 
-  test('reads a size with or without the unit', () => {
-    expect(parseSize('4x4')).toEqual({ width: 4, height: 4 });
+  test('reads a size with mm, and nothing without it', () => {
+    expect(parseSize('4x4mm')).toEqual({ width: 4, height: 4 });
     expect(parseSize('20x1mm')).toEqual({ width: 20, height: 1 });
-    expect(parseSize('4×2.5')).toEqual({ width: 4, height: 2.5 });
-    expect(parseSize('0x4')).toBeNull();
+    expect(parseSize('4×2.5mm')).toEqual({ width: 4, height: 2.5 });
+    expect(parseSize('4x4')).toBeNull();
+    expect(parseSize('0x4mm')).toBeNull();
     expect(parseSize('4')).toBeNull();
   });
 });

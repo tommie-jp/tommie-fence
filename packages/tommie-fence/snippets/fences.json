@@ -63,7 +63,7 @@
       "board: 40x20mm",
       "title: ${1:A 50-ohm through line}",
       "copper:",
-      "  L1: line 0,10 40,10 3.06",
+      "  L1: line 0,10 40,10 3.06mm",
       "parts:",
       "  J1: sma left 10",
       "  J2: sma right 10$0",

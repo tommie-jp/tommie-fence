@@ -11,8 +11,8 @@
 board: 40x20mm
 title: 図01 ERC が言うこと
 copper:
-  L1: line 0,10 40,10 3.06
-  L2: line 0,4 40,4 0.2
+  L1: line 0,10 40,10 3.06mm
+  L2: line 0,4 40,4 0.2mm
 parts:
   C1: capacitor/3216 20,10 r90 100p
   C2: capacitor/1608 30,16

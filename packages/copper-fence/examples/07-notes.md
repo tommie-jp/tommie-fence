@@ -7,7 +7,7 @@
 board: 40x20mm
 title: 図01 注釈
 copper:
-  L1: line 0,10 40,10 3.06
+  L1: line 0,10 40,10 3.06mm
 parts:
   J1: sma left 10
   J2: sma right 10
@@ -42,7 +42,7 @@ style:
   grid: off
   stamp: on
 copper:
-  L1: line 0,10 40,10 3.06
+  L1: line 0,10 40,10 3.06mm
 parts:
   J1: sma left 10
   J2: sma right 10

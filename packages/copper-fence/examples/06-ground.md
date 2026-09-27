@@ -8,8 +8,8 @@ board: 50x50mm
 title: 図01 2.4GHz のパッチアンテナ
 f: 2.4G
 copper:
-  PATCH: pad 25,20 29x29
-  FEED: line 25,34.5 25,50 3.06
+  PATCH: pad 25,20 29x29mm
+  FEED: line 25,34.5 25,50 3.06mm
 parts:
   J1: sma bottom 25
 notes:
@@ -52,11 +52,11 @@ wires:
 board:
   size: 40x20mm
   ground: both
-  cut: 0.3
+  cut: 0.3mm
 title: 図02 CPWG と via の列
 copper:
-  L1: line 0,10 40,10 1.6
-  X1: slot 20,3 20x1
+  L1: line 0,10 40,10 1.6mm
+  X1: slot 20,3 20x1mm
   V1: via 8,7.5
   V2: via 20,7.5
   V3: via 32,7.5

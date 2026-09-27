@@ -6,20 +6,20 @@ const nets = (source: string): Record<string, string[]> =>
 
 describe('the netlist', () => {
   test('puts the two SMA centres on the through line and their shells on the ground', () => {
-    expect(nets(['board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3', 'parts:', '  J1: sma left 10', '  J2: sma right 10'].join('\n')))
+    expect(nets(['board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3mm', 'parts:', '  J1: sma left 10', '  J2: sma right 10'].join('\n')))
       .toEqual({ L1: ['J1.1', 'J2.1'], GND: ['J1.2', 'J2.2'] });
   });
 
   test('splits the line under a series chip into two nets', () => {
     expect(nets([
-      'board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3',
+      'board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3mm',
       'parts:', '  J1: sma left 10', '  J2: sma right 10', '  C1: capacitor/1608 20,10',
     ].join('\n'))).toEqual({ L1: ['C1.1', 'J1.1'], 'L1~2': ['C1.2', 'J2.1'], GND: ['J1.2', 'J2.2'] });
   });
 
   test('drops a pad to the ground through a via on a board with a back ground', () => {
     const source = [
-      'board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3', '  P1: pad 20,13.5 3x2', '  V1: via 20,14',
+      'board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3mm', '  P1: pad 20,13.5 3x2mm', '  V1: via 20,14',
       'parts:', '  C1: capacitor/1608 20,12 r90',
     ].join('\n');
     expect(nets(source)).toMatchObject({ L1: ['C1.1'], GND: ['C1.2'] });
@@ -29,7 +29,7 @@ describe('the netlist', () => {
   test('takes the copper around the islands as the ground when the ground is on the front', () => {
     const source = [
       'board:', '  size: 40x20mm', '  ground: front',
-      'copper:', '  P1: pad 10,10 4x4',
+      'copper:', '  P1: pad 10,10 4x4mm',
       'parts:', '  R1: resistor P1 20,10', '  R2: resistor P1 11.5,10',
     ].join('\n');
     expect(nets(source)).toEqual({ P1: ['R1.1', 'R2.1', 'R2.2'], GND: ['R1.2'] });
@@ -39,7 +39,7 @@ describe('the netlist', () => {
   });
 
   test('gives the shell of an SMA its own net when there is no ground', () => {
-    expect(nets(['board:', '  size: 40x20mm', '  ground: none', 'copper:', '  L1: line 0,10 40,10 3', 'parts:', '  J1: sma left 10'].join('\n')))
+    expect(nets(['board:', '  size: 40x20mm', '  ground: none', 'copper:', '  L1: line 0,10 40,10 3mm', 'parts:', '  J1: sma left 10'].join('\n')))
       .toEqual({ L1: ['J1.1'], N1: ['J1.2'] });
   });
 
@@ -54,7 +54,7 @@ describe('the netlist', () => {
 
   test('refuses an end that is a line, a slot, a part or nothing at all', () => {
     const said = (end: string) => renderCopper([
-      'board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3', '  X1: slot 20,18 4x1', 'parts:', '  J1: sma left 10',
+      'board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3mm', '  X1: slot 20,18 4x1mm', 'parts:', '  J1: sma left 10',
       'wires:', `  - ${end} -- 5,5`,
     ].join('\n')).errors.map((error) => error.message).join('\n');
     expect(said('L1')).toMatch(/線路の名前は端にできません: L1/);

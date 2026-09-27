@@ -8,12 +8,12 @@ board: 40x22mm
 title: 図01 ヘアピン BPF (2.4GHz)
 f: 2.4G
 copper:
-  IN: line 0,8 9,8 3.06
-  T1: line 9,8 9,18 1.5
-  H1: line 11,18 11,4 18,4 18,18 1.5
-  H2: line 20,18 20,4 27,4 27,18 1.5
-  T2: line 29,18 29,8 1.5
-  OUT: line 29,8 40,8 3.06
+  IN: line 0,8 9,8 3.06mm
+  T1: line 9,8 9,18 1.5mm
+  H1: line 11,18 11,4 18,4 18,18 1.5mm
+  H2: line 20,18 20,4 27,4 27,18 1.5mm
+  T2: line 29,18 29,8 1.5mm
+  OUT: line 29,8 40,8 3.06mm
 parts:
   J1: sma left 8
   J2: sma right 8

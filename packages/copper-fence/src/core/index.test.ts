@@ -10,7 +10,7 @@ const THROUGH = [
   'title: 図1 スルー',
   'f: 2.4G',
   'copper:',
-  '  L1: line 0,10 40,10 3.06',
+  '  L1: line 0,10 40,10 3.06mm',
   'parts:',
   '  J1: sma left 10 CH0',
   '  J2: sma right 10 CH1',
@@ -76,26 +76,26 @@ describe('renderCopper', () => {
   });
 
   test('draws the grooves of a board whose ground is on the front', () => {
-    const svg = renderCopper(['board:', '  size: 40x20mm', '  ground: both', 'copper:', '  L1: line 0,10 40,10 1 gap 0.2', '  X1: slot 20,4 10x1'].join('\n')).svg;
+    const svg = renderCopper(['board:', '  size: 40x20mm', '  ground: both', 'copper:', '  L1: line 0,10 40,10 1mm gap 0.2mm', '  X1: slot 20,4 10x1mm'].join('\n')).svg;
     expect(svg).toContain('fill="#6f6436"');
     expect(svg).toContain('L1 1mm s0.2');
   });
 
   test('draws a slot on the back as a dashed outline', () => {
-    const svg = renderCopper('board: 40x20mm\ncopper:\n  X1: slot 20,4 10x1').svg;
+    const svg = renderCopper('board: 40x20mm\ncopper:\n  X1: slot 20,4 10x1mm').svg;
     expect(svg).toContain('stroke-dasharray="3 2"');
   });
 
   test('draws every kind of part, and a via, a jumper and the notes', () => {
     const result = renderCopper([
       'board:', '  size: 50x30mm', '  ground: front',
-      'copper:', '  P1: pad 10,10', '  P2: pad 20,10', '  L1: line 30,2 30,28 3', '  V1: via 40,25',
+      'copper:', '  P1: pad 10,10', '  P2: pad 20,10', '  L1: line 30,2 30,28 3mm', '  V1: via 40,25',
       'parts:',
       '  R1: resistor P1 P2 51',
       '  L2: inductor P2 20,20 1u',
       '  C1: capacitor/1608 30,15 10p',
       '  Q1: transistor/sot23 40,10 r90',
-      '  U1: box 40,18 4x4 4 SAW',
+      '  U1: box 40,18 4x4mm 4 SAW',
       '  J1: sma/male-edge top 30',
       '  J2: sma bottom 30',
       'wires:', '  - P1 -- 10,20 red',
@@ -161,7 +161,7 @@ test('draws node dots only at jumper ends written as points', () => {
 });
 
 describe('the back view', () => {
-  const VIA = ['board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3', '  P1: pad 30,15 3x3', '  V1: via 30,15', '  X1: slot 10,3 8x1', 'parts:', '  J1: sma left 10'].join('\n');
+  const VIA = ['board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3mm', '  P1: pad 30,15 3x3mm', '  V1: via 30,15', '  X1: slot 10,3 8x1mm', 'parts:', '  J1: sma left 10'].join('\n');
 
   test('draws the back below the front by default, mirrored left to right', () => {
     const { svg } = renderCopper(VIA);

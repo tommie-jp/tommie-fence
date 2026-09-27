@@ -2,7 +2,7 @@ import {
   FLOW_ADD_REFUSAL, REWRITE_REFUSAL, appendUnderKey, element, escapeMarkup, insertLines, isFlowKey, partIcon, wireColorNames,
 } from 'fence-kit';
 import type { EditResult, NewPart } from 'fence-kit';
-import { formatMm, formatPoint, parsePoint, round2 } from '../model/point.ts';
+import { formatLength, formatMm, formatPoint, parsePoint, round2 } from '../model/point.ts';
 import { resolveKind, typeNames as allTypes } from '../parts/catalog.ts';
 import { SMA } from '../parts/footprint.ts';
 import { lineModel } from '../render/captions.ts';
@@ -103,7 +103,7 @@ export function addPart(source: string, part: NewPart): EditResult {
   if (base === 'pad') return appended(state, 'copper', `${part.id}: pad ${formatPoint(first)}`, preview);
   if (base === 'via') return appended(state, 'copper', `${part.id}: via ${formatPoint(first)}`, preview);
   if (base === 'slot') {
-    const size = (part.turn ?? 0) % 2 === 0 ? '10x1' : '1x10';
+    const size = (part.turn ?? 0) % 2 === 0 ? '10x1mm' : '1x10mm';
     return appended(state, 'copper', `${part.id}: slot ${formatPoint(first)} ${size}`, preview);
   }
   const kind = resolveKind(part.type);
@@ -114,7 +114,7 @@ export function addPart(source: string, part: NewPart): EditResult {
       return appended(state, 'parts', `${part.id}: ${part.type} ${edge.side} ${formatMm(edge.offset)}`, preview);
     }
     case 'box':
-      return appended(state, 'parts', [`${part.id}: box ${formatPoint(first)} 4x4 4`, ...orient].join(' '), preview);
+      return appended(state, 'parts', [`${part.id}: box ${formatPoint(first)} 4x4mm 4`, ...orient].join(' '), preview);
     case 'chip':
     case 'sot':
       return appended(state, 'parts', [`${part.id}: ${part.type} ${formatPoint(first)}`, ...orient].join(' '), preview);
@@ -137,7 +137,7 @@ export function addWire(source: string, from: string, to: string): EditResult {
   const state = read(source);
   const id = nextId(source, 'line') ?? 'TL1';
   const points = straighten([a, b]).map(formatPoint).join(' ');
-  return appended(state, 'copper', `${id}: line ${points} ${formatMm(fiftyOhmWidth(state.doc.board))}`, false);
+  return appended(state, 'copper', `${id}: line ${points} ${formatLength(fiftyOhmWidth(state.doc.board))}`, false);
 }
 
 /** 複製 — 行を写して名前と場所だけ変える。**2mm 右下** (SMA は辺に沿って隣)。 */

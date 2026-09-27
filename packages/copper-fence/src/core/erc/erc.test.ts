@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { renderCopper } from '../index.ts';
 
 const erc = (lines: readonly string[]): string[] => renderCopper(lines.join('\n')).erc.map((said) => said.message);
-const THROUGH = ['board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3'];
+const THROUGH = ['board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3mm'];
 
 describe('checkErc', () => {
   test('says nothing about a well-made through line', () => {
@@ -24,15 +24,15 @@ describe('checkErc', () => {
   test('names a two-pin part with both ends on the ground, but not a box with many ground pins', () => {
     const front = ['board:', '  size: 40x20mm', '  ground: front'];
     expect(erc([...front, 'parts:', '  C1: capacitor/1608 30,5'])).toEqual([expect.stringMatching(/C1 の 1 番と 2 番が同じ銅 \(GND\)/)]);
-    expect(erc([...front, 'parts:', '  U1: box 30,10 4x4 4'])).toEqual([]);
+    expect(erc([...front, 'parts:', '  U1: box 30,10 4x4mm 4'])).toEqual([]);
   });
 
   test('names an SMA whose centre pin lies on the ground of the front', () => {
     const front = ['board:', '  size: 40x20mm', '  ground: front', 'copper:'];
-    expect(erc([...front, '  P1: pad 3,10 4x2', 'parts:', '  J1: sma left 10'])).toEqual([
+    expect(erc([...front, '  P1: pad 3,10 4x2mm', 'parts:', '  J1: sma left 10'])).toEqual([
       'J1 の中心導体 (0.05,10) が表の地に触れています (縁まで島か線路を伸ばします)',
     ]);
-    expect(erc([...front, '  P1: pad 2.5,10 5x2', 'parts:', '  J1: sma left 10'])).toEqual([]);
+    expect(erc([...front, '  P1: pad 2.5,10 5x2mm', 'parts:', '  J1: sma left 10'])).toEqual([]);
   });
 
   test('takes a via that touches no copper on a front-ground board as part of the ground', () => {
@@ -48,9 +48,9 @@ describe('checkErc', () => {
   test('warns about widths, grooves and gaps too narrow to cut by hand', () => {
     const said = erc([
       'board:', '  size: 40x20mm', '  ground: both', 'copper:',
-      '  L1: line 0,10 40,10 0.2 gap 0.15',
-      '  L2: line 0,4 40,4 1 gap 0.5',
-      '  L3: line 0,5.2 40,5.2 1 gap 0.5',
+      '  L1: line 0,10 40,10 0.2mm gap 0.15mm',
+      '  L2: line 0,4 40,4 1mm gap 0.5mm',
+      '  L3: line 0,5.2 40,5.2 1mm gap 0.5mm',
     ]);
     expect(said).toEqual(expect.arrayContaining([
       expect.stringMatching(/L1 の幅 0.2mm は手で残すには細すぎます/),

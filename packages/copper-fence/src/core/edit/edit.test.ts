@@ -8,7 +8,7 @@ const editor = createCopperEditor();
 const SOURCE = [
   'board: 40x30mm',
   'copper:',
-  '  L1: line 0,10 40,10 3.06',
+  '  L1: line 0,10 40,10 3.06mm',
   '  P1: pad 30,20  # 地の島',
   '  V1: via 30,21',
   'parts:',
@@ -41,7 +41,7 @@ describe('moving', () => {
   });
 
   test('moves a whole line by its first point, and refuses a part tied to an island by name', () => {
-    expect(line(after(editor.movePart(SOURCE, 'wire:3', '0,12')), 3)).toBe('  L1: line 0,12 40,12 3.06');
+    expect(line(after(editor.movePart(SOURCE, 'wire:3', '0,12')), 3)).toBe('  L1: line 0,12 40,12 3.06mm');
     expect(refused(editor.movePart(SOURCE, 'R1', '5,5'))).toMatch(/島の名前で書いてあります/);
     expect(refused(editor.movePart(SOURCE, 'C1', 'x'))).toMatch(/点として読めません/);
     expect(refused(editor.movePart(SOURCE, 'Z9', '1,1'))).toMatch(/動かせるものではありません/);
@@ -49,14 +49,14 @@ describe('moving', () => {
 
   test('moves every end written at a point, and bends a line that would slant', () => {
     const moved = after(editor.movePoint(SOURCE, '40,10', '40,14'));
-    expect(line(moved, 3)).toBe('  L1: line 0,10 40,10 40,14 3.06');
+    expect(line(moved, 3)).toBe('  L1: line 0,10 40,10 40,14 3.06mm');
     const both = after(editor.movePoint(SOURCE, '35,25', '36,26'));
     expect(line(both, 12)).toBe('  - P1 -- 36,26 red');
     expect(refused(editor.movePoint(SOURCE, '1,1', '2,2'))).toMatch(/動かせる点がありません/);
   });
 
   test('moves one end of a line or a jumper', () => {
-    expect(line(after(editor.moveWireEnd?.(SOURCE, 'wire:3', 'to', '30,15') as EditResult), 3)).toBe('  L1: line 0,10 30,10 30,15 3.06');
+    expect(line(after(editor.moveWireEnd?.(SOURCE, 'wire:3', 'to', '30,15') as EditResult), 3)).toBe('  L1: line 0,10 30,10 30,15 3.06mm');
     expect(line(after(editor.moveWireEnd?.(SOURCE, 'wire:12', 'from', '28,20') as EditResult), 12)).toBe('  - 28,20 -- 35,25 red');
     expect(refused(editor.moveWireEnd?.(SOURCE, 'C1', 'to', '1,1') as EditResult)).toMatch(/配線ではありません/);
   });
@@ -67,9 +67,9 @@ describe('placing', () => {
     const chip = after(editor.addPart(SOURCE, { id: 'C2', type: 'capacitor/1608', at: ['10,10'], turn: 1, flip: true }));
     expect(chip).toContain('  C2: capacitor/1608 10,10 r90 mirror');
     expect(after(editor.addPart(SOURCE, { id: 'V2', type: 'via', at: ['5,5'] }))).toContain('  V2: via 5,5\nparts:');
-    expect(after(editor.addPart(SOURCE, { id: 'X1', type: 'slot', at: ['5,5'], turn: 1 }))).toContain('X1: slot 5,5 1x10');
+    expect(after(editor.addPart(SOURCE, { id: 'X1', type: 'slot', at: ['5,5'], turn: 1 }))).toContain('X1: slot 5,5 1x10mm');
     expect(after(editor.addPart(SOURCE, { id: 'J2', type: 'sma', at: ['38,20'] }))).toContain('J2: sma right 20');
-    expect(after(editor.addPart(SOURCE, { id: 'U2', type: 'box', at: ['5,25'] }))).toContain('U2: box 5,25 4x4 4');
+    expect(after(editor.addPart(SOURCE, { id: 'U2', type: 'box', at: ['5,25'] }))).toContain('U2: box 5,25 4x4mm 4');
     expect(after(editor.addPart(SOURCE, { id: 'R2', type: 'resistor', at: ['5,5'] }))).toContain('R2: resistor 5,5 15,5');
     expect(after(editor.addPart(SOURCE, { id: 'R3', type: 'resistor', at: ['5,5'], turn: 1 }))).toContain('R3: resistor 5,5 5,15');
     expect(refused(editor.addPart(SOURCE, { id: 'Q1', type: 'flux', at: ['5,5'] }))).toMatch(/知らない種類/);
@@ -81,10 +81,10 @@ describe('placing', () => {
   });
 
   test('draws a line 50 ohms wide, bent where it would slant', () => {
-    expect(after(editor.addWire(SOURCE, '5,20', '15,25', '--'))).toContain('  TL1: line 5,20 15,20 15,25 3.06');
+    expect(after(editor.addWire(SOURCE, '5,20', '15,25', '--'))).toContain('  TL1: line 5,20 15,20 15,25 3.06mm');
     expect(refused(editor.addWire(SOURCE, '5,20', '5,20', '--'))).toMatch(/同じ点どうし/);
-    const both = 'board:\n  size: 40x20mm\n  ground: both\n  cut: 0.15';
-    expect(afterOn(both, editor.addWire(both, '0,5', '10,5', '--'))).toContain('line 0,5 10,5 1.05');
+    const both = 'board:\n  size: 40x20mm\n  ground: both\n  cut: 0.15mm';
+    expect(afterOn(both, editor.addWire(both, '0,5', '10,5', '--'))).toContain('line 0,5 10,5 1.05mm');
   });
 
   test('names parts after the custom of RF drawings', () => {
@@ -121,9 +121,9 @@ describe('removing', () => {
 describe('fields', () => {
   test('show what each thing can change', () => {
     expect(editor.fieldsOf(SOURCE, 'C1')).toMatchObject({ id: 'C1', type: 'capacitor/1608', value: '10p', can: ['id', 'type', 'value'] });
-    expect(editor.fieldsOf(SOURCE, 'P1')).toMatchObject({ type: 'pad', value: '4x4', can: ['id', 'value'] });
-    expect(editor.fieldsOf(SOURCE, 'V1')).toMatchObject({ type: 'via', value: '0.8' });
-    expect(editor.fieldsOf(SOURCE, 'wire:3')).toMatchObject({ id: 'L1', type: 'line', value: '3.06' });
+    expect(editor.fieldsOf(SOURCE, 'P1')).toMatchObject({ type: 'pad', value: '4x4mm', can: ['id', 'value'] });
+    expect(editor.fieldsOf(SOURCE, 'V1')).toMatchObject({ type: 'via', value: '0.8mm' });
+    expect(editor.fieldsOf(SOURCE, 'wire:3')).toMatchObject({ id: 'L1', type: 'line', value: '3.06mm' });
     expect(editor.fieldsOf(SOURCE, 'wire:12')).toMatchObject({ color: 'red', can: ['color'] });
     expect(editor.fieldsOf(SOURCE, 'nothing')).toBeNull();
   });
@@ -132,8 +132,8 @@ describe('fields', () => {
     expect(line(after(editor.setField(SOURCE, 'C1', 'value', '22p')), 8)).toBe('  C1: capacitor/1608 20,10 22p');
     expect(line(after(editor.setField(SOURCE, 'U1', 'value', '')), 10)).toBe('  U1: ic3/sot89 10,20 r90');
     expect(line(after(editor.setField(SOURCE, 'C1', 'type', 'resistor/2012')), 8)).toBe('  C1: resistor/2012 20,10 10p');
-    expect(line(after(editor.setField(SOURCE, 'wire:3', 'value', '1.5')), 3)).toBe('  L1: line 0,10 40,10 1.5');
-    expect(line(after(editor.setField(SOURCE, 'P1', 'value', '5x3')), 4)).toBe('  P1: pad 30,20 5x3  # 地の島');
+    expect(line(after(editor.setField(SOURCE, 'wire:3', 'value', '1.5mm')), 3)).toBe('  L1: line 0,10 40,10 1.5mm');
+    expect(line(after(editor.setField(SOURCE, 'P1', 'value', '5x3mm')), 4)).toBe('  P1: pad 30,20 5x3mm  # 地の島');
     expect(line(after(editor.setField(SOURCE, 'wire:12', 'color', 'blue')), 12)).toBe('  - P1 -- 35,25 blue');
     expect(line(after(editor.setField(SOURCE, 'wire:12', 'color', '')), 12)).toBe('  - P1 -- 35,25');
   });
@@ -143,6 +143,9 @@ describe('fields', () => {
     expect(refused(editor.setField(SOURCE, 'C1', 'type', 'flux/1608'))).toMatch(/知らない種類|載る種類/);
     expect(refused(editor.setField(SOURCE, 'wire:3', 'value', 'wide'))).toMatch(/幅として読めません/);
     expect(refused(editor.setField(SOURCE, 'P1', 'value', 'big'))).toMatch(/大きさとして読めません/);
+    // 単位を忘れた値は、付け方を添えて断る (長さはどこでも mm を付ける)。
+    expect(refused(editor.setField(SOURCE, 'wire:3', 'value', '1.5'))).toMatch(/1\.5mm/);
+    expect(refused(editor.setField(SOURCE, 'P1', 'value', '5x3'))).toMatch(/5x3mm/);
     expect(refused(editor.setField(SOURCE, 'wire:12', 'color', 'plaid'))).toMatch(/線の色/);
     expect(refused(editor.setField(SOURCE, 'wire:12', 'value', '1'))).toMatch(/value の欄はありません/);
     expect(refused(editor.setField(SOURCE, 'C1', 'label', 'x'))).toMatch(/label の欄はありません/);
@@ -163,8 +166,8 @@ describe('turning and flipping', () => {
   test('turns chips by the orient words, pads by their size, leaded parts around their middle', () => {
     expect(line(after(editor.turn(SOURCE, 'C1', 1)), 8)).toBe('  C1: capacitor/1608 20,10 r90 10p');
     expect(line(after(editor.turn(SOURCE, 'U1', 3)), 10)).toBe('  U1: ic3/sot89 10,20 SPF');
-    const wide = after(editor.setField(SOURCE, 'P1', 'value', '5x3'));
-    expect(line(afterOn(wide, editor.turn(wide, 'P1', 1)), 4)).toBe('  P1: pad 30,20 3x5  # 地の島');
+    const wide = after(editor.setField(SOURCE, 'P1', 'value', '5x3mm'));
+    expect(line(afterOn(wide, editor.turn(wide, 'P1', 1)), 4)).toBe('  P1: pad 30,20 3x5mm  # 地の島');
     expect(afterOn(SOURCE, editor.turn(SOURCE, 'V1', 1))).toBe(SOURCE);
     const leaded = SOURCE.replace('R1: resistor P1 25,25 51', 'R1: resistor 20,25 30,25 51');
     expect(editor.turn(leaded, 'R1', 1).ok && applyRewrite(leaded, (editor.turn(leaded, 'R1', 1) as { value: object }).value)).toContain('R1: resistor 25,20 25,30 51');
@@ -235,7 +238,7 @@ describe('review findings', () => {
   };
 
   test('takes an all-digit name as a name, not as a line number', () => {
-    const source = ['board: 40x20mm', 'copper:', '  A: pad 5,5', '  B: pad 30,5', '  TL: line 0,10 40,10 3', '  5: pad 20,15'].join('\n');
+    const source = ['board: 40x20mm', 'copper:', '  A: pad 5,5', '  B: pad 30,5', '  TL: line 0,10 40,10 3mm', '  5: pad 20,15'].join('\n');
     const gone = on(source, editor.deletePart(source, '5'));
     expect(gone).toContain('TL: line');
     expect(gone).not.toContain('5: pad');
@@ -243,7 +246,7 @@ describe('review findings', () => {
   });
 
   test('turns and flips a chip from the direction its vertical line gives it', () => {
-    const source = ['board: 40x20mm', 'copper:', '  TL: line 20,0 20,20 3', 'parts:', '  C1: capacitor/1608 20,10 10p'].join('\n');
+    const source = ['board: 40x20mm', 'copper:', '  TL: line 20,0 20,20 3mm', 'parts:', '  C1: capacitor/1608 20,10 10p'].join('\n');
     expect(on(source, editor.turn(source, 'C1', 1))).toContain('C1: capacitor/1608 20,10 r180 10p');
     expect(on(source, editor.flip(source, 'C1'))).toContain('C1: capacitor/1608 20,10 r90 mirror 10p');
   });

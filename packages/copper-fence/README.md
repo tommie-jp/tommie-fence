@@ -20,7 +20,7 @@ the caption of the drawing.
 board: 40x20mm
 f: 2.4G
 copper:
-  L1: line 0,10 40,10 3.06
+  L1: line 0,10 40,10 3.06mm
 parts:
   J1: sma left 10 CH0
   J2: sma right 10 CH1

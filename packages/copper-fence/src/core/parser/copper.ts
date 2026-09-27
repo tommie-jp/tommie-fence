@@ -1,6 +1,6 @@
 import { LIMITS } from '../limits.ts';
 import { safeToken } from '../errors.ts';
-import { parseLength, parsePoint, parseSize, pointProblem } from '../model/point.ts';
+import { parseLength, parsePoint, parseSize, pointProblem, unitProblem } from '../model/point.ts';
 import type { CopperSpec, Mm } from '../types.ts';
 import { fail, ok, wordsOf } from './result.ts';
 import type { LineResult } from './result.ts';
@@ -15,7 +15,7 @@ export const DEFAULT_DRILL = 0.8;
 
 const inRange = (value: number): boolean => value >= LIMITS.sizeMin && value <= LIMITS.sizeMax;
 
-const sizeHint = `${LIMITS.sizeMin}〜${LIMITS.sizeMax}mm`;
+const sizeHint = `${LIMITS.sizeMin}mm〜${LIMITS.sizeMax}mm`;
 
 /** 点を 1 つ読む。点らしいが読めないなら、そのわけ。 */
 function readPoint(word: string | undefined, what: string, example: string): Mm | string {
@@ -30,7 +30,7 @@ const extra = (words: readonly string[]): string | null =>
   (words.length === 0 ? null : `読めない語です: ${safeToken(words.join(' '))}`);
 
 /**
- * `line 0,10 40,10 3.0 [gap 0.3]` — 点を 2 つ以上、幅、表が地の板なら溝の幅。
+ * `line 0,10 40,10 3mm [gap 0.3mm]` — 点を 2 つ以上、幅、表が地の板なら溝の幅。
  * **斜めの区間はここでは断らない** (形にするとき区間ごとに言い、残りは描く)。
  */
 function readLine(id: string, words: string[]): LineResult<CopperSpec> {
@@ -43,7 +43,7 @@ function readLine(id: string, words: string[]): LineResult<CopperSpec> {
     if (point === null) return fail(pointProblem(word) ?? `点として読めません: ${safeToken(word)}`, word);
     points.push(point);
   }
-  if (points.length < 2) return fail('線路は点を 2 つ以上と幅を書きます (例: line 0,10 40,10 3.0)');
+  if (points.length < 2) return fail('線路は点を 2 つ以上と幅を書きます (例: line 0,10 40,10 3mm)');
   if (points.length > LIMITS.polylinePoints) {
     return fail(`線路の点が多すぎます (${LIMITS.polylinePoints} 個まで)`);
   }
@@ -54,10 +54,10 @@ function readLine(id: string, words: string[]): LineResult<CopperSpec> {
     }
   }
   const widthWord = words[index];
-  if (widthWord === undefined) return fail('線路の幅 (mm) を書きます (例: line 0,10 40,10 3.0)');
+  if (widthWord === undefined) return fail('線路の幅を書きます (例: line 0,10 40,10 3mm)');
   const width = parseLength(widthWord);
   if (width === null || !inRange(width)) {
-    return fail(`線路の幅として読めません: ${safeToken(widthWord)} (${sizeHint})`, widthWord);
+    return fail(`線路の幅として読めません: ${safeToken(widthWord)} (${unitProblem(widthWord) ?? sizeHint})`, widthWord);
   }
   let gap: number | null = null;
   let rest = words.slice(index + 1);
@@ -65,7 +65,8 @@ function readLine(id: string, words: string[]): LineResult<CopperSpec> {
     const gapWord = rest[1];
     const read = gapWord === undefined ? null : parseLength(gapWord);
     if (read === null || !inRange(read)) {
-      return fail(`gap のあとに溝の幅 (mm) を書きます (${sizeHint})`, gapWord ?? 'gap');
+      const hint = gapWord === undefined ? null : unitProblem(gapWord);
+      return fail(`gap のあとに溝の幅を書きます (${hint ?? `例: gap 0.3mm。${sizeHint}`})`, gapWord ?? 'gap');
     }
     gap = read;
     rest = rest.slice(2);
@@ -75,30 +76,32 @@ function readLine(id: string, words: string[]): LineResult<CopperSpec> {
   return ok({ kind: 'line', id, points, width, gap, line: null });
 }
 
-/** `pad 30,3 [4x4]` と `slot 5,16 20x1`。中心と大きさ。 */
+/** `pad 30,3 [4x4mm]` と `slot 5,16 20x1mm`。中心と大きさ。 */
 function readBox(id: string, kind: 'pad' | 'slot', words: string[]): LineResult<CopperSpec> {
-  const example = kind === 'pad' ? 'pad 30,3 4x4' : 'slot 20,16 20x1';
+  const example = kind === 'pad' ? 'pad 30,3 4x4mm' : 'slot 20,16 20x1mm';
   const at = readPoint(words[1], '中心', example);
   if (typeof at === 'string') return fail(at, words[1]);
   const sizeWord = words[2];
   if (sizeWord === undefined && kind === 'slot') return fail(`切り欠きの大きさを書きます (例: ${example})`);
   const size = sizeWord === undefined ? { width: DEFAULT_PAD, height: DEFAULT_PAD } : parseSize(sizeWord);
   if (size === null || !inRange(size.width) || !inRange(size.height)) {
-    return fail(`大きさとして読めません: ${safeToken(sizeWord ?? '')} (幅x高さを mm で。${sizeHint})`, sizeWord);
+    const hint = sizeWord === undefined ? null : unitProblem(sizeWord);
+    return fail(`大きさとして読めません: ${safeToken(sizeWord ?? '')} (${hint ?? `幅x高さmm で。${sizeHint}`})`, sizeWord);
   }
   const left = extra(words.slice(3));
   if (left !== null) return fail(left, words[3]);
   return ok({ kind, id, at, width: size.width, height: size.height, line: null });
 }
 
-/** `via 30,5 [0.8]`。中心と穴の径。 */
+/** `via 30,5 [0.8mm]`。中心と穴の径。 */
 function readVia(id: string, words: string[]): LineResult<CopperSpec> {
   const at = readPoint(words[1], '中心', 'via 30,5');
   if (typeof at === 'string') return fail(at, words[1]);
   const drillWord = words[2];
   const drill = drillWord === undefined ? DEFAULT_DRILL : parseLength(drillWord);
   if (drill === null || !inRange(drill)) {
-    return fail(`穴の径として読めません: ${safeToken(drillWord ?? '')} (${sizeHint})`, drillWord);
+    const hint = drillWord === undefined ? null : unitProblem(drillWord);
+    return fail(`穴の径として読めません: ${safeToken(drillWord ?? '')} (${hint ?? sizeHint})`, drillWord);
   }
   const left = extra(words.slice(3));
   if (left !== null) return fail(left, words[3]);
