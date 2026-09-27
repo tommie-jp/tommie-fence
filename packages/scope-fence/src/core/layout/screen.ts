@@ -1,14 +1,14 @@
 import { textWidth } from 'fence-kit';
 import { DIVISIONS } from '../model/screen.ts';
 import type { Band, Size } from '../render/mono.ts';
-import { DIGIT, MARK, statusLeading } from '../render/grid.ts';
+import { DIGIT, MARK, markStep, statusLeading } from '../render/grid.ts';
 import type { Theme } from '../render/theme.ts';
 
 /**
  * 図全体の割り付け。上から **題 → 凡例 (理想・実測) → 格子 (▶ と ◀T ▼ の余白込み) →
  * 状態の行 → 読み値の帯 → 書き出し**。格子の大きさは決まっている (1 目盛 40 px、
  * 400 × 320) — 画面は 1 枚で、並べる枠が無いので折り返さない。左の余白は ▶ の印と
- * 番号 4 字ぶん (0 V の基準が同じ高さの ch は 1 つの印に番号を並べる)。右の余白は ◀T。
+ * 番号 4 字ぶん。0 V の基準が同じ高さの ch は印を横に並べるので、並ぶ数が多いときは広げる。右の余白は ◀T。
  * **字に掛かる帯と余白は字の大きさから割り出す** (字を変えても重ならない)。
  */
 export const SIZE = { div: 40, marginTop: 14 } as const;
@@ -49,6 +49,8 @@ export type LayoutOptions = {
   readonly key: string | null;
   readonly readings: Size | null;
   readonly source: Size | null;
+  /** 同じ高さに並ぶ基準の印の数の最大 (既定 1)。左の余白をその分だけ取る。 */
+  readonly markSlots?: number;
   readonly theme: Theme;
 };
 
@@ -64,8 +66,9 @@ export function createLayout(options: LayoutOptions): Layout {
   const keyY = key === null ? null : y + keyBand / 2 - 2;
   if (key !== null) y += keyBand;
   y += SIZE.marginTop;
+  const marginLeft = Math.max(margins.left, Math.ceil(Math.max(1, options.markSlots ?? 1) * markStep(theme)));
   const grid: Rect = {
-    x: OUTER + margins.left, y, width: SIZE.div * DIVISIONS.x, height: SIZE.div * DIVISIONS.y,
+    x: OUTER + marginLeft, y, width: SIZE.div * DIVISIONS.x, height: SIZE.div * DIVISIONS.y,
   };
   y += grid.height;
   const status = small + BAND_PAD;
@@ -82,9 +85,9 @@ export function createLayout(options: LayoutOptions): Layout {
   const readingsBand = band(readings);
   const sourceBand = band(source);
 
-  const screenWidth = margins.left + grid.width + margins.right;
+  const screenWidth = marginLeft + grid.width + margins.right;
   const titleWidth = title === null ? 0 : textWidth(title) * titleSize;
-  const keyWidth = key === null ? 0 : margins.left + textWidth(key) * small + 80;
+  const keyWidth = key === null ? 0 : marginLeft + textWidth(key) * small + 80;
   const inner = Math.max(screenWidth, titleWidth, keyWidth, readingsBand?.width ?? 0, sourceBand?.width ?? 0);
   return {
     width: Math.ceil(inner + OUTER * 2),

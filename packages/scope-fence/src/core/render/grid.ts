@@ -87,28 +87,48 @@ export type MarkLabel = { readonly number: number; readonly color: string };
 
 /** 番号 1 字ぶんの幅 (字の大きさに対する倍率)。 */
 export const DIGIT = 0.62;
+/** 並べた印どうしの隙間 (px)。 */
+const MARK_GAP = 2;
+/** 基準がこれより近い (目盛) ch は同じ高さとみなし、印を横に並べる。 */
+const SAME_HEIGHT = 0.25;
+
+/** 印 1 つ (三角 + 番号) が横に取る幅 (px)。左の余白はこれ × 並ぶ数だけ要る。 */
+export const markStep = (theme: Theme): number => MARK + 1 + theme.metrics.smallSize * DIGIT + MARK_GAP;
 
 /**
- * ch の基準 (0 V) の印 `12▶`。**格子の左の余白**に置く。格子の外なら縁に寄せる。
- * `fraction` は 0 = 下、1 = 上。**同じ高さの ch は 1 つの三角にまとめ**、番号を ch の色で
- * 左に並べる (三角を横に並べると 4 本で画布からはみ出す)。三角は最初の ch の色。
+ * 基準の高さ (`fraction`。0 = 下、1 = 上) が **0.25 目盛未満**しか離れていない ch を 1 組にする。
+ * 組の高さは最初の ch の高さ。順は渡した順 (ch の番号順)。
+ */
+export function groupMarks(marks: readonly { readonly fraction: number; readonly label: MarkLabel }[]): readonly { readonly fraction: number; readonly labels: readonly MarkLabel[] }[] {
+  const groups: { readonly fraction: number; readonly labels: MarkLabel[] }[] = [];
+  for (const { fraction, label } of marks) {
+    const group = groups.find((one) => Math.abs(one.fraction - fraction) * DIVISIONS.y < SAME_HEIGHT);
+    if (group === undefined) groups.push({ fraction, labels: [label] });
+    else group.labels.push(label);
+  }
+  return groups;
+}
+
+/**
+ * ch の基準 (0 V) の印 `1▶`。**格子の左の余白**に置く。格子の外なら縁に寄せる。
+ * `fraction` は 0 = 下、1 = 上。**同じ高さの ch は印ごと横にずらして並べる** (`2▶1▶`)。
+ * 番号を 1 つの三角の左に詰めると `12▶` と 1 つの番号に読める。三角と番号は各 ch の色。
+ * 並ぶ数だけ左の余白を広げるのは割り付け (`createLayout` の `markSlots`) の役目。
  */
 export function renderChannelMark(labels: readonly MarkLabel[], fraction: number, layout: Layout, theme: Theme): string {
-  const first = labels[0];
-  if (first === undefined) return '';
   const { x, y, height } = layout.grid;
   const my = y + (1 - fraction) * height;
-  const tip = x - 1;
   const size = theme.metrics.smallSize;
-  const triangle = element('polygon', {
-    points: `${num(tip - MARK)},${num(my - MARK / 2)} ${num(tip)},${num(my)} ${num(tip - MARK)},${num(my + MARK / 2)}`,
-    fill: first.color,
-  });
-  const right = tip - MARK - 1;
-  const digits = labels.map((label, index) => svgText(right - (labels.length - 1 - index) * size * DIGIT, my + size * 0.35, String(label.number), {
-    anchor: 'end', fill: label.color, 'font-size': num(size),
-  })).join('');
-  return triangle + digits;
+  return labels.map((label, index) => {
+    const tip = x - 1 - index * markStep(theme);
+    const triangle = element('polygon', {
+      points: `${num(tip - MARK)},${num(my - MARK / 2)} ${num(tip)},${num(my)} ${num(tip - MARK)},${num(my + MARK / 2)}`,
+      fill: label.color,
+    });
+    return triangle + svgText(tip - MARK - 1, my + size * 0.35, String(label.number), {
+      anchor: 'end', fill: label.color, 'font-size': num(size),
+    });
+  }).join('');
 }
 
 /** トリガの水準 `◀T` (格子の右の余白) と位置 `▼` (上の余白、t = 0 = 中央)。 */

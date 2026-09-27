@@ -66,6 +66,8 @@ ch1: {wave: square 500Hz 2.5V offset 2.5V, range: 2V/div, position: -3div}
 ```
 
 並びに書けるのは `wave` `range` (`/div` が要る) `position` (`-3div`。中央 0、上が正) の 3 つ。
+手で書いた尺度で振れが 2 目盛未満か、画面からはみ出すと、直す `range:` `position:` の値つきでお知らせが出る。
+同じ尺度で重ねて比べる ch (同じ `range:` と `position:` で、振れの大きい相手がいる) の小ささには言わない。
 
 ## トリガ・カーソル・Measurements
 
@@ -109,6 +111,7 @@ measure: [vpp, vmax, vmin, avg, rms, freq, period, duty]
 | `phase 58deg` のつもりで遅れ | **進み**に描く | `phase -58deg` |
 | `time: 1ms` | 断る (`/div` が無い) | `time: 1ms/div` |
 | `range: 500mV` | 断る (`/div` が無い) | `range: 500mV/div` |
+| 小さく振れる ch だけに `range:` を書く (同じ尺度の相手がいない) | お知らせ (2 目盛未満) | その ch は Auto か、お知らせの値 |
 | `trigger: ch1 up` / `ch1 rising 0.5` | 断る | `ch1 rising` / `ch1 rising 500mV` |
 | `offset 1` / `gain 2dB` | 断る | `offset 1V` / `gain 2` |
 | `ch1: ch2 \| rc 1ms` | 断る (後ろの ch) | 並びを入れ替える |

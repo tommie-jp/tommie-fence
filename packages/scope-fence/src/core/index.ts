@@ -1,5 +1,6 @@
 import { formatPerDiv, formatSeconds, formatVolts, normalizeNewlines } from 'fence-kit';
 import { attachSourceText, notice, shiftErrors } from './errors.ts';
+import { fitNotice, screenExtent } from './layout/fit.ts';
 import { autoRange, autoTimePerDiv, fractionY, niceStep125 } from './layout/scales.ts';
 import { SIZE, createLayout } from './layout/screen.ts';
 import { LIMITS } from './limits.ts';
@@ -14,8 +15,8 @@ import type { Screen } from './model/screen.ts';
 import { parseFence } from './parser/parseFence.ts';
 import { renderDocument } from './render/document.ts';
 import { renderErrorBanner } from './render/errorHtml.ts';
-import { renderChannelMark, renderGrid, renderStatus, renderTriggerMarks, statusLines } from './render/grid.ts';
-import type { MarkLabel, StatusItem } from './render/grid.ts';
+import { groupMarks, renderChannelMark, renderGrid, renderStatus, renderTriggerMarks, statusLines } from './render/grid.ts';
+import type { StatusItem } from './render/grid.ts';
 import { keyText, readingLinesOf, readingsSize, renderKey, renderReadings } from './render/readings.ts';
 import { channelColor, resolveStyle } from './render/theme.ts';
 import type { Theme } from './render/theme.ts';
@@ -192,6 +193,26 @@ function scalesOf(traces: readonly Trace[], channels: readonly ChannelSpec[]): R
   return scales;
 }
 
+/**
+ * 手で書いた尺度の読みにくさ (振れが 2 目盛未満・はみ出し)。**判定は読み値と同じ列** —
+ * 実測があれば実測、無ければ理想の、画面の中の点で見る。振れの小ささは、同じ尺度で重ねた
+ * 相手と比べて言うかを決めるので、ch を全部そろえてから見る。
+ */
+function fitNotices(traces: readonly Trace[], channels: readonly ChannelSpec[], scales: ReadonlyMap<ChannelName, Scale>, screen: Screen): readonly FenceError[] {
+  const inputs = channels.flatMap((channel) => {
+    const trace = traces.find((one) => one.name === channel.name);
+    const scale = scales.get(channel.name);
+    const extent = trace === undefined ? null : screenExtent(trace, screen);
+    if (extent === null || scale === undefined) return [];
+    return [{ input: { name: channel.name, extent, range: channel.range, position: channel.position, scale }, line: channel.line }];
+  });
+  const all = inputs.map((one) => one.input);
+  return inputs.flatMap(({ input, line }) => {
+    const message = fitNotice(input, all);
+    return message === null ? [] : [notice(message, line)];
+  });
+}
+
 function statusItems(scales: ReadonlyMap<ChannelName, Scale>, screen: Screen, trigger: TriggerSpec | null, level: number | null, theme: Theme): readonly StatusItem[] {
   const items: StatusItem[] = [...scales].map(([name, scale]) => ({
     text: `${name.toUpperCase()} ${formatPerDiv(scale.perDiv, 'V')}`,
@@ -263,6 +284,11 @@ export function renderScope(input: string, options: RenderOptions = {}): RenderR
 
   const drawn = [...ideal.traces, ...measured.traces];
   const scales = scalesOf(drawn, channels);
+  said.push(...fitNotices(readingTraces, channels, scales, screen));
+  const groups = groupMarks([...scales].map(([name, scale]) => {
+    const index = CHANNEL_NAMES.indexOf(name);
+    return { fraction: fractionY(0, scale.perDiv, scale.position), label: { number: index + 1, color: channelColor(theme, index) } };
+  }));
   const key = drawn.length === 0 ? null : keyText(ideal.traces.length > 0, measured.name);
   const status = statusLines(statusItems(scales, screen, trigger, ideal.triggerLevel, theme), scales.size, SIZE.div * DIVISIONS.x, theme);
   const layout = createLayout({
@@ -271,6 +297,7 @@ export function renderScope(input: string, options: RenderOptions = {}): RenderR
     key,
     readings: readingsSize(readings, measured.name, theme),
     source: null,
+    markSlots: Math.max(1, ...groups.map((group) => group.labels.length)),
     theme,
   });
 
@@ -278,16 +305,6 @@ export function renderScope(input: string, options: RenderOptions = {}): RenderR
     const scale = scales.get(trace.name);
     return scale === undefined ? '' : renderTrace(trace, layout.grid, screen, scale, channelColor(theme, CHANNEL_NAMES.indexOf(trace.name)));
   }).join('');
-  // 0 V の基準が同じ高さ (印の高さより近い) の ch は 1 つの印にまとめる (重なると番号が読めない)。
-  const groups: { readonly fraction: number; readonly labels: MarkLabel[] }[] = [];
-  for (const [name, scale] of scales) {
-    const index = CHANNEL_NAMES.indexOf(name);
-    const fraction = fractionY(0, scale.perDiv, scale.position);
-    const label = { number: index + 1, color: channelColor(theme, index) };
-    const group = groups.find((one) => Math.abs(one.fraction - fraction) * layout.grid.height < 8);
-    if (group === undefined) groups.push({ fraction, labels: [label] });
-    else group.labels.push(label);
-  }
   const marks = groups.map((group) => renderChannelMark(group.labels, group.fraction, layout, theme)).join('');
   const triggerScale = trigger === null ? undefined : scales.get(trigger.source);
   const triggerMarks = trigger === null || triggerScale === undefined

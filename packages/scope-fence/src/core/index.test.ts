@@ -154,3 +154,94 @@ describe('renderScope — 刻印', () => {
     expect(renderScope(`${FIVE_ONE}\nstyle:\n  stamp: off`).svg).not.toContain(STAMP_TEXT);
   });
 });
+
+// 読みにくい尺度を数で言う (range: / position: を手で書いたときだけ。Auto は入る尺度を選ぶ)。
+const RC_SCREEN = (ch2: string, ch1 = 'range: 1V/div, position: -3div'): string => [
+  'time: 200us/div',
+  'trigger: ch1 rising 2.5V',
+  `ch1: {wave: square 1kHz 2.5V offset 2.5V, ${ch1}}`,
+  `ch2: {wave: ch1 | rc 1ms, ${ch2}}`,
+  'measure: [vpp, vmax, vmin, avg]',
+].join('\n');
+
+describe('renderScope — 読みにくい尺度', () => {
+  test('says a channel whose swing is under 2 divisions, with the range and position that fix it', () => {
+    // CH1 は別の尺度 (2V/div) なので、CH2 には同じ尺度で比べる相手がいない。
+    const result = renderScope(RC_SCREEN('range: 1V/div, position: -3div', 'range: 2V/div, position: -1.5div'), { offset: 10 });
+    expect(result.notices.map((one) => [one.message, one.line])).toEqual([
+      ['CH2 の振れは 1.2 目盛です (range: 200mV/div と position: -12.5div なら 6.1 目盛で中央に来ます)', 14],
+    ]);
+    expect(result.errors).toEqual([]);
+  });
+
+  test('says nothing of a small channel laid on the same scale as a channel that swings 2 divisions or more', () => {
+    // 平滑後を入力と同じ尺度に重ねて、小さいことを見せる図 (比べる 2 本は同じ尺度)。
+    expect(said(RC_SCREEN('range: 1V/div, position: -3div'))).toEqual([]);
+    for (const time of ['500us/div', '1ms/div']) {
+      expect(said(RC_SCREEN('range: 1V/div, position: -3div').replace('200us/div', time))).toEqual([]);
+    }
+  });
+
+  test('still says a small channel whose same-scale partner is small too, or that is alone', () => {
+    const pair = [
+      'time: 5ms/div',
+      'trigger: ch1 rising',
+      'ch1: {wave: sine 100Hz 0.3V, range: 1V/div, position: 0div}',
+      'ch2: {wave: ch1 | gain 0.5, range: 1V/div, position: 0div}',
+    ].join('\n');
+    expect(said(pair)).toEqual([
+      'CH1 の振れは 0.6 目盛です (range: 100mV/div と position: 0div なら 6.0 目盛で中央に来ます)',
+      'CH2 の振れは 0.3 目盛です (range: 50mV/div と position: 0div なら 6.0 目盛で中央に来ます)',
+    ]);
+    expect(said('time: 5ms/div\ntrigger: ch1 rising\nch1: {wave: sine 100Hz 0.3V, range: 1V/div}')).toEqual([
+      'CH1 の振れは 0.6 目盛です (range: 100mV/div なら 6.0 目盛になります)',
+    ]);
+  });
+
+  test('still says a small channel whose partner shares the range but not the position', () => {
+    expect(said(RC_SCREEN('range: 1V/div, position: -2div'))).toEqual([
+      'CH2 の振れは 1.2 目盛です (range: 200mV/div と position: -12.5div なら 6.1 目盛で中央に来ます)',
+    ]);
+  });
+
+  test('says nothing from 2 divisions up, or when the range is left to Auto', () => {
+    expect(said(RC_SCREEN('range: 500mV/div, position: -4div'))).toEqual([]);
+    expect(said(RC_SCREEN('range: 200mV/div, position: -12.5div'))).toEqual([]);
+    expect(said(RC_SCREEN('position: -3div'))).toEqual([]);
+  });
+
+  test('says how far a wave runs off the screen, and how to bring it back', () => {
+    expect(said('time: 1ms/div\ntrigger: ch1 rising\nch1: {wave: square 1kHz 2.5V offset 2.5V, range: 1V/div, position: 0div}')).toEqual([
+      'CH1 は画面の上に 1.0 目盛はみ出しています (position: -2.5div なら入ります)',
+    ]);
+  });
+
+  test('judges a channel by its measured points when data: has them', () => {
+    // 理想は 0〜2 V (1V/div で 2 目盛) だが、実測は 0〜0.5 V しか振れていない。
+    const csv = ['Time (s),Channel 1 (V)', ...Array.from({ length: 101 }, (_, index) =>
+      `${((index - 50) * 1e-4).toExponential(3)},${index % 2 === 0 ? 0 : 0.5}`)].join('\n');
+    const source = 'time: 1ms/div\ntrigger: ch1 rising\nch1: {wave: square 1kHz 1V offset 1V, range: 1V/div, position: 0div}\ndata: a.csv';
+    expect(renderScope(source, { data: () => csv }).notices.map((one) => one.message)).toEqual([
+      'CH1 の振れは 0.5 目盛です (range: 100mV/div と position: -2.5div なら 5.0 目盛で中央に来ます)',
+    ]);
+  });
+});
+
+describe('renderScope — 基準の印', () => {
+  test('draws one ▶ a channel, side by side, when two channels share a baseline', () => {
+    const { svg } = renderScope(RC_SCREEN('range: 1V/div, position: -3div'));
+    const triangles = [...svg.matchAll(/<polygon points="([\d.]+),[\d.]+ ([\d.]+),([\d.]+) /g)]
+      .filter((match) => Number(match[2]) < 60);
+    expect(triangles).toHaveLength(2);
+    const [first, second] = triangles.map((match) => Number(match[2]));
+    expect(Math.abs((first ?? 0) - (second ?? 0))).toBeGreaterThan(12);
+    expect(new Set(triangles.map((match) => match[3])).size).toBe(1);
+  });
+
+  test('keeps a single ▶ for a channel whose baseline is a quarter division or more away', () => {
+    const { svg } = renderScope(RC_SCREEN('range: 1V/div, position: -2.75div'));
+    const tips = [...svg.matchAll(/<polygon points="[\d.]+,[\d.]+ ([\d.]+),/g)].map((match) => Number(match[1])).filter((x) => x < 60);
+    expect(new Set(tips).size).toBe(1);
+    expect(tips).toHaveLength(2);
+  });
+});
