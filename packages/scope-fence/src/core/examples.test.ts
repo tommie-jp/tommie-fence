@@ -62,7 +62,36 @@ describe('examples', () => {
   });
 });
 
-// docs/01-syntax.md の図は段 5 (文法リファレンスを書くとき) にここへ足す (vna と同じ形)。
+describe('docs/01-syntax.md', () => {
+  const DOCS = fileURLToPath(new URL('../../docs/', import.meta.url));
+  const text = readFileSync(`${DOCS}01-syntax.md`, 'utf8');
+  const fences = extractScopeFences(text);
+
+  test('has fences to check', () => {
+    expect(fences.length).toBeGreaterThan(0);
+  });
+
+  test('renders to the drawings committed in docs/out', () => {
+    for (const [index, fence] of fences.entries()) {
+      const { svg, errors } = renderScope(fence.source);
+      expect(errors).toEqual([]);
+      const name = outName('01-syntax', index, fences.length);
+      expect(`${svg}\n`).toBe(readFileSync(`${DOCS}out/${name}`, 'utf8'));
+    }
+  });
+
+  test('pastes a drawing after every fence', () => {
+    for (const [index] of fences.entries()) {
+      expect(text).toContain(`(out/${outName('01-syntax', index, fences.length)})`);
+    }
+  });
+
+  test('gives every fence a title, so prose can point at it', () => {
+    for (const fence of fences) {
+      expect(fence.source).toMatch(/^title:/m);
+    }
+  });
+});
 
 describe('errors/', () => {
   const errorFiles = readdirSync(`${EXAMPLES}errors`).filter((name) => name.endsWith('.md')).sort();

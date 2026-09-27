@@ -30,7 +30,8 @@ const emptyDocument = (): FenceDocument => ({
   keys: [],
 });
 
-const CHANNEL_KEYS = ['wave', 'range', 'position'] as const;
+/** ch を並びの形で書くときの項目。 */
+export const CHANNEL_KEYS = ['wave', 'range', 'position'] as const;
 
 export const scalarText = (node: unknown): string | null => {
   if (!isScalar(node)) return null;
