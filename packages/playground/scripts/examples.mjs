@@ -27,6 +27,7 @@ const PACKAGE_OF = {
   perfboard: 'perfboard-fence',
   copper: 'copper-fence',
   vna: 'vna-fence',
+  scope: 'scope-fence',
 };
 
 /** この数を下回ったら、集めるところが壊れたと見なして止める。 */

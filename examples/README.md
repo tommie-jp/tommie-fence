@@ -12,6 +12,7 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | perfboard | 8 circuits + 1 deliberately broken | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) |
 | copper | 9 fixtures + 1 deliberately broken | [packages/copper-fence/examples/](../packages/copper-fence/examples/README.md) |
 | vna | 5 measurements + 1 deliberately broken | [packages/vna-fence/examples/](../packages/vna-fence/examples/README.md) |
+| scope | 5 screens + 1 deliberately broken | [packages/scope-fence/examples/](../packages/scope-fence/examples/README.md) |
 
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for
@@ -194,6 +195,26 @@ the model ([00-series.md](../packages/vna-fence/examples/00-series.md)).
 - [02-parts.md](../packages/vna-fence/examples/02-parts.md) — parts with parasitics: a capacitor's SRF, a coil's parallel resonance, a crystal
 - [03-lines.md](../packages/vna-fence/examples/03-lines.md) — lines, stubs and TDR
 - [04-notes.md](../packages/vna-fence/examples/04-notes.md) — annotations (`notes:`) and style
+
+## scope — the oscilloscope screen
+
+Waveforms, trigger, cursors and Measurements. Write the wave in the words of the
+instrument settings table (`square 100Hz 1V offset 1V`, `1ms/div`), pass it through
+operations such as `| rc 1ms`, and the fence computes the waveform and draws it dashed.
+
+### RC charging: reading one tau with the cursors
+
+[![RC charging](../packages/scope-fence/examples/out/00-rc-charging-3.png)](../packages/scope-fence/examples/00-rc-charging.md)
+
+A 100 Hz square wave into an RC of tau = 1 ms. At X2 = 1 ms CH2 has risen by 1.26 V
+([00-rc-charging.md](../packages/scope-fence/examples/00-rc-charging.md)).
+
+### More
+
+- [01-phase.md](../packages/scope-fence/examples/01-phase.md) — the phase of a series RC (`phase -58deg` and `| rc 1ms`)
+- [02-clipper.md](../packages/scope-fence/examples/02-clipper.md) — clipper and clamper
+- [03-rectifier.md](../packages/scope-fence/examples/03-rectifier.md) — half- and full-wave rectifiers, smoothing
+- [04-waves.md](../packages/scope-fence/examples/04-waves.md) — the six generator waves, and setting V/div by hand
 
 ## Why the files are not kept here
 

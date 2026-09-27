@@ -104,7 +104,8 @@ const PREFIXES: Readonly<Record<number, string>> = { [-9]: 'n', [-6]: 'µ', [-3]
  * 届いたら次の接頭辞へ (`999.96 mV` → `1.00 V`)。`minExponent` より下には寄せない。
  */
 function scaled(value: number, digits: number, minExponent: number): { readonly text: string; readonly prefix: string } {
-  if (value === 0 || !Number.isFinite(value)) return { text: '0', prefix: '' };
+  // 一番小さい接頭辞でも 0.00… になる値 (計算の誤差の 1e-16 など) は 0 と書く。
+  if (!Number.isFinite(value) || Math.abs(value) < 10 ** minExponent * 1e-3) return { text: '0', prefix: '' };
   const clamp = (exponent: number): number => Math.max(minExponent, Math.min(9, exponent));
   let exponent = clamp(Math.floor(Math.log10(Math.abs(value)) / 3) * 3);
   if (Math.abs(Number((value / 10 ** exponent).toPrecision(digits))) >= 1000 && exponent < 9) exponent += 3;

@@ -11,6 +11,7 @@
 | perfboard | 回路 8 本 + わざと壊した例 1 本 | [packages/perfboard-fence/examples/](../packages/perfboard-fence/examples/README.md) |
 | copper | 治具 9 本 + わざと壊した例 1 本 | [packages/copper-fence/examples/](../packages/copper-fence/examples/README.md) |
 | vna | 測る物 5 本 + わざと壊した例 1 本 | [packages/vna-fence/examples/](../packages/vna-fence/examples/README.md) |
+| scope | 画面 5 本 + わざと壊した例 1 本 | [packages/scope-fence/examples/](../packages/scope-fence/examples/README.md) |
 
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。
@@ -187,6 +188,25 @@ CH0 と CH1 の間に 100 Ω。どちらも −6.02 dB、実測が模型から�
 - [02-parts.md](../packages/vna-fence/examples/02-parts.md) — 寄生分のある部品 (コンデンサの SRF・コイルの並列共振・水晶)
 - [03-lines.md](../packages/vna-fence/examples/03-lines.md) — 伝送線路・スタブ・TDR
 - [04-notes.md](../packages/vna-fence/examples/04-notes.md) — 注釈 (`notes:`) と見た目
+
+## scope — オシロスコープの画面
+
+時間波形・トリガ・カーソル・Measurements。計器の設定の表と同じ語 (`square 100Hz 1V offset 1V`、
+`1ms/div`) で波を書き、`| rc 1ms` のような操作を通すと、フェンスが波形を計算して破線で描く。
+
+### RC の充電 — カーソルで 1 τ を読む
+
+[![RC の充電](../packages/scope-fence/examples/out/00-rc-charging-3.png)](../packages/scope-fence/examples/00-rc-charging.md)
+
+τ = 1 ms の RC に 100 Hz の方形波。X2 = 1 ms で CH2 は 1.26 V 上がる
+([00-rc-charging.md](../packages/scope-fence/examples/00-rc-charging.md))。
+
+### そのほか
+
+- [01-phase.md](../packages/scope-fence/examples/01-phase.md) — RC 直列の位相 (`phase -58deg` と `| rc 1ms`)
+- [02-clipper.md](../packages/scope-fence/examples/02-clipper.md) — クリッパとクランパ
+- [03-rectifier.md](../packages/scope-fence/examples/03-rectifier.md) — 半波・全波整流と平滑
+- [04-waves.md](../packages/scope-fence/examples/04-waves.md) — 波形発生器の波 6 種と、V/div を手で決める形
 
 ## なぜ実体をここに置かないか
 

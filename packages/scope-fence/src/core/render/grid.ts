@@ -49,18 +49,83 @@ const STATUS_GAP = 14;
 
 /**
  * 格子の下の状態の行: `CH1 500mV/div  CH2 500mV/div  1ms/div  Trig CH1 ↑ 1.00 V`。
- * **左から詰めて置く** (幅は字の見積もり)。
+ * **左から詰めて置く** (幅は字の見積もり)。行は `statusLines` で分けて渡す
+ * (格子の幅に収まらなければ 2 行。`statusLines`)。
  */
-export function renderStatus(items: readonly StatusItem[], layout: Layout, theme: Theme): string {
+export function renderStatus(lines: readonly (readonly StatusItem[])[], layout: Layout, theme: Theme): string {
   const size = theme.metrics.smallSize;
-  let x = layout.grid.x;
-  return items.map((item) => {
-    const text = svgText(x, layout.statusBaseline, item.text, { anchor: 'start', fill: item.fill, 'font-size': num(size) });
-    x += textWidth(item.text) * size + STATUS_GAP;
-    return text;
+  return lines.map((items, row) => {
+    let x = layout.grid.x;
+    return items.map((item) => {
+      const text = svgText(x, layout.statusBaseline + row * STATUS_LEADING, item.text, { anchor: 'start', fill: item.fill, 'font-size': num(size) });
+      x += textWidth(item.text) * size + STATUS_GAP;
+      return text;
+    }).join('');
   }).join('');
+}
+
+/** 状態の行の行送り (px)。 */
+export const STATUS_LEADING = 13;
+
+/**
+ * 状態の行を格子の幅に収める。**収まらなければ ch の V/div を 1 行目、time/div と
+ * トリガを 2 行目**に分ける (4 ch だと 1 行に入らない)。`channels` は先頭の ch の項目の数。
+ */
+export function statusLines(items: readonly StatusItem[], channels: number, room: number, theme: Theme): readonly (readonly StatusItem[])[] {
+  if (statusWidth(items, theme) <= room) return [items];
+  return [items.slice(0, channels), items.slice(channels)];
 }
 
 /** 状態の行が要る幅 (px)。格子の幅に収まるかを試験で見る。 */
 export const statusWidth = (items: readonly StatusItem[], theme: Theme): number =>
   items.reduce((sum, item) => sum + textWidth(item.text) * theme.metrics.smallSize, 0) + STATUS_GAP * Math.max(0, items.length - 1);
+
+const MARK = 7;
+
+/** 基準の印の番号 1 つ (ch の番号と色)。 */
+export type MarkLabel = { readonly number: number; readonly color: string };
+
+/** 番号 1 字ぶんの幅 (字の大きさに対する倍率)。 */
+const DIGIT = 0.62;
+
+/**
+ * ch の基準 (0 V) の印 `12▶`。**格子の左の余白**に置く。格子の外なら縁に寄せる。
+ * `fraction` は 0 = 下、1 = 上。**同じ高さの ch は 1 つの三角にまとめ**、番号を ch の色で
+ * 左に並べる (三角を横に並べると 4 本で画布からはみ出す)。三角は最初の ch の色。
+ */
+export function renderChannelMark(labels: readonly MarkLabel[], fraction: number, layout: Layout, theme: Theme): string {
+  const first = labels[0];
+  if (first === undefined) return '';
+  const { x, y, height } = layout.grid;
+  const my = y + (1 - fraction) * height;
+  const tip = x - 1;
+  const size = theme.metrics.smallSize;
+  const triangle = element('polygon', {
+    points: `${num(tip - MARK)},${num(my - MARK / 2)} ${num(tip)},${num(my)} ${num(tip - MARK)},${num(my + MARK / 2)}`,
+    fill: first.color,
+  });
+  const right = tip - MARK - 1;
+  const digits = labels.map((label, index) => svgText(right - (labels.length - 1 - index) * size * DIGIT, my + size * 0.35, String(label.number), {
+    anchor: 'end', fill: label.color, 'font-size': num(size),
+  })).join('');
+  return triangle + digits;
+}
+
+/** トリガの水準 `◀T` (格子の右の余白) と位置 `▼` (上の余白、t = 0 = 中央)。 */
+export function renderTriggerMarks(fraction: number | null, layout: Layout, theme: Theme, color: string): string {
+  const { x, y, width, height } = layout.grid;
+  const cx = x + width / 2;
+  const top = element('polygon', {
+    points: `${num(cx - MARK / 2)},${num(y - 1 - MARK)} ${num(cx + MARK / 2)},${num(y - 1 - MARK)} ${num(cx)},${num(y - 1)}`,
+    fill: color,
+  });
+  if (fraction === null) return top;
+  const my = y + (1 - fraction) * height;
+  const tip = x + width + 1;
+  return top + element('polygon', {
+    points: `${num(tip + MARK)},${num(my - MARK / 2)} ${num(tip)},${num(my)} ${num(tip + MARK)},${num(my + MARK / 2)}`,
+    fill: color,
+  }) + svgText(tip + MARK + 1, my + theme.metrics.smallSize * 0.35, 'T', {
+    anchor: 'start', fill: color, 'font-size': num(theme.metrics.smallSize),
+  });
+}

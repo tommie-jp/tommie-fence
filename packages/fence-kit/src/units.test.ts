@@ -107,6 +107,8 @@ describe('format', () => {
     expect(formatVolts(0)).toBe('0 V');
     expect(formatVolts(0.9996)).toBe('1.00 V');
     expect(formatVolts(5e-7)).toBe('500 nV');
+    expect(formatVolts(-1.2e-16)).toBe('0 V');
+    expect(formatSeconds(3e-20)).toBe('0 s');
   });
 
   test('writes seconds with four significant digits', () => {

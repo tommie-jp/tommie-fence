@@ -33,7 +33,7 @@ Markdown の行番号とその行の中身で返るエラー (vna と scope は�
 **6 つとも描ける** — 回路図も、TeX を WebAssembly で走らせて同じ図を出す
 (資材を落とすのは circuit を初めて描くときだけ)。**開くと、図を掴んで
 動かすマップが出ている** — 部品をドラッグするとフェンスの番地が書き換わる、
-拡張と同じものが動く。`.md` の字と描いた図は「Markdown」の窓で見る。例は各パッケージの `examples/` の `.md` がそのまま 68 本。
+拡張と同じものが動く。`.md` の字と描いた図は「Markdown」の窓で見る。例は各パッケージの `examples/` の `.md` がそのまま 74 本。
 手元のファイルを開いて (釦・落とす・`?doc=`)、直して、書き戻せる。
 
 [![Codespaces で開く](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
@@ -100,6 +100,7 @@ tommie-fence
 | breadboard-fence | [docs/01-syntax.md](packages/breadboard-fence/docs/01-syntax.md) | [docs/02-cheatsheet.md](packages/breadboard-fence/docs/02-cheatsheet.md) | [examples/](packages/breadboard-fence/examples/) — 回路 13 本、エラー例 2 本 |
 | copper-fence | [docs/01-syntax.md](packages/copper-fence/docs/01-syntax.md) | — | [examples/](packages/copper-fence/examples/) — 治具 9 本、エラー例 1 本 |
 | vna-fence | [docs/01-syntax.md](packages/vna-fence/docs/01-syntax.md) | — | [examples/](packages/vna-fence/examples/) — 測る物 5 本、エラー例 1 本 |
+| scope-fence | — | — | [examples/](packages/scope-fence/examples/) — 画面 5 本、エラー例 1 本 |
 
 例はどのフェンスの直後にも**そのフェンスを描いた図** (`examples/out/`) を貼って
 あるので、Markdown プレビューで開くとそのまま読み物になる。作り直しは

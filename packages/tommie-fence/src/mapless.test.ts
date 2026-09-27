@@ -50,7 +50,7 @@ describe('殻を持たないフェンスの Problems', () => {
   });
 
   test('lists scope lines in Problems on the markdown line', () => {
-    const said = collectProblems('# 題\n\n```scope\ntime: 1ms\n```\n', [scopeProblems()], { erc: false });
+    const said = collectProblems('# 題\n\n```scope\ntime: 1ms\ntrigger: ch1 rising\nch1: sine 1kHz 1V\n```\n', [scopeProblems()], { erc: false });
     expect(said).toEqual([{ language: 'scope', line: 4, kind: 'error', message: expect.stringContaining('/div を付けます') }]);
   });
 });

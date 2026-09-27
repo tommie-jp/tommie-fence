@@ -67,4 +67,6 @@ export type FenceDocument = {
   /** 書かなければ null (既定の vpp と freq)。 */
   readonly measures: readonly MeasureName[] | null;
   readonly style: StyleSpec;
+  /** 書いてあった一番外側のキー (読めなかったものも)。「無いので既定で」と言うかを決める。 */
+  readonly keys: readonly string[];
 };

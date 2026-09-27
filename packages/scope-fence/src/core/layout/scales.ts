@@ -20,19 +20,18 @@ export function niceStep125(raw: number): number {
   return step * decade;
 }
 
-/** V/div と 0 V の基準の位置 (目盛。中央が 0、上が正)。 */
-export function autoRange(samples: ArrayLike<number>): { readonly perDiv: number; readonly position: number } {
+/**
+ * V/div と 0 V の基準の位置 (目盛。中央が 0、上が正)。`fixed` を渡せばその V/div で
+ * 基準だけ決める (`range:` だけ書いたとき)。
+ */
+export function autoRange(samples: ArrayLike<number>, fixed: number | null = null): { readonly perDiv: number; readonly position: number } {
   const extent = extentOf(samples);
-  if (extent === null) return { perDiv: 1, position: 0 };
+  if (extent === null) return { perDiv: fixed ?? 1, position: 0 };
   const vpp = extent.max - extent.min;
-  if (vpp === 0) {
-    const value = extent.max;
-    if (value === 0) return { perDiv: 1, position: 0 };
-    const perDiv = niceStep125(Math.abs(value) / 3);
-    return { perDiv, position: -Math.round(value / perDiv) || 0 };
-  }
-  const perDiv = niceStep125(vpp / FILL);
-  return { perDiv, position: -Math.round((extent.max + extent.min) / 2 / perDiv) || 0 };
+  const middle = (extent.max + extent.min) / 2;
+  if (middle === 0 && vpp === 0) return { perDiv: fixed ?? 1, position: 0 };
+  const perDiv = fixed ?? niceStep125(vpp === 0 ? Math.abs(middle) / 3 : vpp / FILL);
+  return { perDiv, position: -Math.round(middle / perDiv) || 0 };
 }
 
 /** 一番遅い波の 2 周期が 10 目盛に入る time/div。波が無ければ 1 ms/div。 */

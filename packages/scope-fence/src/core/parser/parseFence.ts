@@ -27,6 +27,7 @@ const emptyDocument = (): FenceDocument => ({
   cursors: [],
   measures: null,
   style: EMPTY_STYLE,
+  keys: [],
 });
 
 const CHANNEL_KEYS = ['wave', 'range', 'position'] as const;
@@ -233,7 +234,7 @@ function readFence(source: string): ParseResult {
     trigger = null;
   }
 
-  return { doc: { view: 'time', title, time, trigger, channels, data, cursors, measures, style }, errors };
+  return { doc: { view: 'time', title, time, trigger, channels, data, cursors, measures, style, keys: [...written] }, errors };
 }
 
 type LineOf = (node: Node | Pair | null | undefined) => number | null;

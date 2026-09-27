@@ -1,14 +1,17 @@
 import { textWidth } from 'fence-kit';
 import { DIVISIONS } from '../model/screen.ts';
 import type { Band, Size } from '../render/mono.ts';
+import { STATUS_LEADING } from '../render/grid.ts';
 import type { Theme } from '../render/theme.ts';
 
 /**
  * 図全体の割り付け。上から **題 → 凡例 (理想・実測) → 格子 (▶ と ◀T ▼ の余白込み) →
  * 状態の行 → 読み値の帯 → 書き出し**。格子の大きさは決まっている (1 目盛 40 px、
- * 400 × 320) — 画面は 1 枚で、並べる枠が無いので折り返さない。
+ * 400 × 320) — 画面は 1 枚で、並べる枠が無いので折り返さない。左の余白は ▶ の印と
+ * 番号 4 字ぶん (0 V の基準が同じ高さの ch は 1 つの印に番号を並べる)。
  */
-export const SIZE = { div: 40, marginLeft: 18, marginRight: 18, marginTop: 14, status: 18 } as const;
+export const SIZE = { div: 40, marginLeft: 28, marginRight: 18, marginTop: 14, status: 18 } as const;
+
 
 export const OUTER = 14;
 const TITLE_BAND = 24;
@@ -32,6 +35,8 @@ export type Layout = {
 };
 
 export type LayoutOptions = {
+  /** 状態の行の数 (1 か 2)。 */
+  readonly statusRows?: number;
   readonly title: string | null;
   readonly key: string | null;
   readonly readings: Size | null;
@@ -52,7 +57,7 @@ export function createLayout(options: LayoutOptions): Layout {
   };
   y += grid.height;
   const statusBaseline = y + SIZE.status * 0.75;
-  y += SIZE.status;
+  y += SIZE.status + (Math.max(1, options.statusRows ?? 1) - 1) * STATUS_LEADING;
 
   const band = (size: Size | null): Band | null => {
     if (size === null || size.height === 0) return null;
