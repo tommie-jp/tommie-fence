@@ -9,7 +9,7 @@
 
 - `packages/circuit-fence` — ` ```circuit ` フェンス。回路図 (circuitikz / TeX)
 - `packages/breadboard-fence` — ` ```bread ` フェンス。ブレッドボード実体配線図
-- `packages/fence-kit` — 3 つで重複している部分の置き場。**モノレポの中では
+- `packages/fence-kit` — フェンスどうしで重複している部分の置き場。**モノレポの中では
   ソースのまま**使う側の esbuild が束ねる。入口は 3 つ: `fence-kit` (本体。
   **DOM も Node も使わない**)、`fence-kit/cli` (**CLI 専用。ここだけ Node を
   使ってよい**)、`fence-kit/webview`。**外へ配る出口は別に 2 つ** —
@@ -42,14 +42,15 @@
   片方の型にしか無いキーはもう片方で断る。**マップ (殻) は無い** (52 の docs/86・88)
 - `packages/tommie-fence` — **VS Code に出るのはこれだけ。** 7 つのフェンスを
   1 つの拡張に畳んだもの (52 の docs/19)。中身は入口だけで、図を描くのは
-  上の 3 つのコア。**3 つは拡張ではなくライブラリ + CLI**になった
-- `packages/playground` — 3 つのフェンスをブラウザだけで試す静的なページ
+  上の 7 つのコア。**7 つは拡張ではなくライブラリ + CLI**
+- `packages/playground` — 7 つのフェンスをブラウザだけで試す静的なページ
   (GitHub Pages)。**拡張ではない** ので `.vsix` の対象から外れ、`check` には乗る。
   約束は [packages/playground/CLAUDE.md](packages/playground/CLAUDE.md)
 - `.claude/skills/tommie-fence` — Claude Code がフェンスを書くときに読む手引き
-  (文法の所在、`check` → `render` → PNG で確かめる順、3 つで違う書き方)。
-  **文法は写さず所在を指す**。3 つで違う書き方の表は実物で確かめてから書いたので、
-  **番地・注釈・DIP・ERC の出方を変えたら表も直す**
+  (7 つの文法と早見表の所在、`check` → `render` → PNG で確かめる順、フェンスどうしで
+  取り違えやすい書き方)。**文法は写さず所在を指す**。取り違えやすい書き方の表は
+  実物 (CLI の `check`) で確かめてから書いたので、**番地・注釈・DIP・ERC・波や単位の
+  綴りを変えたら表も直す**
 - `.claude/skills/readable-schematic` — 人が読む回路図を circuit フェンスで描くときの番地の間の
   目安 (実測)。**流儀そのものは [electronics-drawing-skills](https://github.com/tommie-jp/electronics-drawing-skills)
   に置き、ここには写さない** (2 か所にあると片方だけ直る)。**記号や字の大きさ・置き方を変えたら目安を測り直す**
@@ -134,7 +135,7 @@ make help             # 目標の一覧
 ## 約束
 
 1. **`vsce` を直に呼ばない**。`.vsix` を作るのは `./doBuild.sh` (と、その中身の
-   `make`) だけ。**拡張は `tommie-fence` の 1 つ**で、3 つのコアはその依存として
+   `make`) だけ。**拡張は `tommie-fence` の 1 つ**で、7 つのコアはその依存として
    作業場へ写される (`WSDEPS` は入れ子まで辿る)。
    **入れ直す前に畳む前の 3 つを消す** (`RETIRED`) — 残っていると文法も
    プレビューも二重に登録され、図が 2 つ出る。
@@ -179,7 +180,7 @@ make help             # 目標の一覧
     Marketplace に出るのは 1 本だけなので英語で書き、日本語はルートの
     `README.ja.md` へ送る。図とリンクは絶対 URL (`vsce` の書き換えは
     パッケージを基準にするので、`../` で上へ出るリンクを通さない)。
-11. **ライブラリの出口は 3 つとも同じ形**。`<パッケージ>/core` は **dist**
+11. **ライブラリの出口は 7 つとも同じ形**。`<パッケージ>/core` は **dist**
     (`import` / `require` / `types`)、`<パッケージ>/src/core` は**ソース**。
     ソースの入口も要るのは、dist だけだと**型チェックの前に build しないと
     playground が通らない**ため。`src/**` は `.vsix` に入らないので、
@@ -191,10 +192,11 @@ make help             # 目標の一覧
     **fence-kit も同じ形で 2 つだけ配る** (`fence-kit/shell` と
     `fence-kit/map.web.js`)。`"."` は src のまま — dist に向けると
     `from 'fence-kit'` を持つ 156 ファイルが build 待ちになる (52 の docs/59)。
-12. **殻の型が変わったら 4 つ同時に切る。** `FenceEditor` などの殻の型は、
-    `fence-kit/shell` の `.d.ts` と 3 つのコアの `./core` の `.d.ts` の両方に
+12. **殻の型が変わったら 5 つ同時に切る。** `FenceEditor` などの殻の型は、
+    `fence-kit/shell` の `.d.ts` と、マップのある 4 つのコア (circuit・breadboard・
+    perfboard・copper) の `./core` の `.d.ts` の両方に
     写されている (rollup-plugin-dts が畳む)。宿主はこの 2 つを構造で突き合わせる
-    ので、片方だけ切ると宿主の型チェックが割れる。fence-kit と 3 つのコアの版を
+    ので、片方だけ切ると宿主の型チェックが割れる。fence-kit と 4 つのコアの版を
     同じ日に切る (52 の docs/59 の決め 9)。
 13. **例の部品の値は E24 から選ぶ** (C と L は E12 を優先。系列に無い値は E24 の 2 本の
     直列・並列で作ってよい)。等価回路の例 (vna-fence の水晶・アンテナの模型など) は除く。
