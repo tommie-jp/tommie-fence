@@ -24,5 +24,5 @@ board: 40x20mm
 copper:
   L1: line 0,10 40,10 3
 parts:
-  R1: resistor L1 20,15 50
+  R1: resistor L1 20,15 51
 ```

@@ -36,7 +36,7 @@ parts:
   R1:  resistor a1 a5 1k
   R2:  resistor b1 b5 2k
   R3:  resistor b1f0 b5f0 3k
-  R4:  resistor c1 c5 4k
+  R4:  resistor c1 c5 4.7k
   OUT: port a5
 wires:
   - a1 -- b1 -- c1

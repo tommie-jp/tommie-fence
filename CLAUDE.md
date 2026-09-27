@@ -155,6 +155,10 @@ make help             # 目標の一覧
     写されている (rollup-plugin-dts が畳む)。宿主はこの 2 つを構造で突き合わせる
     ので、片方だけ切ると宿主の型チェックが割れる。fence-kit と 3 つのコアの版を
     同じ日に切る (52 の docs/59 の決め 9)。
+13. **例の部品の値は E24 から選ぶ** (C と L は E12 を優先。系列に無い値は E24 の 2 本の
+    直列・並列で作ってよい)。等価回路の例 (vna-fence の水晶・アンテナの模型など) は除く。
+    流儀の本体は [electronics-drawing-skills](https://github.com/tommie-jp/electronics-drawing-skills)
+    の readable-schematic §1 #13。
 
 ## パッケージ間で違っていて、揃えていないもの
 
