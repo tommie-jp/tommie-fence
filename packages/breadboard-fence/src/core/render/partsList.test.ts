@@ -10,7 +10,8 @@ const part = (id: string, type: string, value: string | null = null, label: stri
 
 const theme = DEFAULT_THEME;
 
-const texts = (svg: string): string[] => [...svg.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((match) => match[1] ?? '');
+// 見える字だけ。縁だけを描く写し (aria-hidden) は数えない。
+const texts = (svg: string): string[] => [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*>([^<]*)<\/text>/g)].map((match) => match[1] ?? '');
 
 const render = (parts: readonly PlacedPart[]): string => renderPartsList(parts, 14, 400, 636, theme);
 
@@ -56,7 +57,7 @@ describe('renderPartsList', () => {
     const plate = /<rect[^>]*y="([\d.]+)"[^>]*height="([\d.]+)"/.exec(svg);
     const top = Number(plate?.[1]);
     const bottom = top + Number(plate?.[2]);
-    const baselines = [...svg.matchAll(/<text[^>]*y="([\d.]+)"/g)].map((match) => Number(match[1]));
+    const baselines = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*y="([\d.]+)"/g)].map((match) => Number(match[1]));
 
     expect(baselines).toHaveLength(6);
     for (const baseline of baselines) {
@@ -69,7 +70,7 @@ describe('renderPartsList', () => {
 
   test('lines the three columns up so the list can be read down', () => {
     const svg = render([part('R1', 'resistor', '330'), part('C1', 'capacitor', '47uF')]);
-    const columns = [...svg.matchAll(/<text[^>]*x="([\d.]+)"/g)].map((match) => Number(match[1]));
+    const columns = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*x="([\d.]+)"/g)].map((match) => Number(match[1]));
 
     expect(columns.slice(0, 3)).toEqual(columns.slice(3, 6));
     // 左から ID・種類・値の順に並ぶ。
@@ -88,7 +89,7 @@ describe('renderPartsList', () => {
 
   test('keeps a full width value inside the plate, where a half width guess would let it run off', () => {
     const svg = render([part('R1', 'resistor', 'あ'.repeat(200))]);
-    const cells = [...svg.matchAll(/<text[^>]*x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)];
+    const cells = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)];
     const [, valueX = '', size = '', shown = ''] = cells[2] ?? [];
 
     // 全角なので 1 文字ぶんの幅は字の大きさそのまま。板は x=14 から 636 幅。
@@ -99,7 +100,7 @@ describe('renderPartsList', () => {
     // サロゲートペアの文字。BMP だけを見る幅の見積もりでは半角に数えてはみ出す。
     for (const wide of ['\u{20BB7}', '\u{1F50B}']) {
       const svg = render([part('R1', 'resistor', wide.repeat(200))]);
-      const cells = [...svg.matchAll(/<text[^>]*x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)];
+      const cells = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)];
       const [, valueX = '', size = '', shown = ''] = cells[2] ?? [];
 
       expect(shown.endsWith('…')).toBe(true);
@@ -126,7 +127,7 @@ describe('renderPartsList', () => {
       expect(texts(svg)).toContain(id);
     }
     // 値の列が残らないので値は諦める。板の外に字を置いてはいけない。
-    for (const cellX of [...svg.matchAll(/<text[^>]*x="([\d.]+)"/g)].map((match) => Number(match[1]))) {
+    for (const cellX of [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*x="([\d.]+)"/g)].map((match) => Number(match[1]))) {
       expect(cellX).toBeLessThan(14 + 636);
     }
   });
@@ -148,7 +149,8 @@ describe('renderPartsList', () => {
     const svg = renderPartsList([part('R1', 'resistor', '330')], 14, 400, 636, ink);
 
     expect(svg).toContain('stroke="#000000"');
-    expect(svg).toContain('paint-order="stroke"');
+    // 図の名札と同じく、縁は半分透かす。
+    expect(svg).toContain('opacity="0.5"');
   });
 
   test('still shows a short type column, which is narrower than the room a column needs', () => {
@@ -168,7 +170,7 @@ describe('renderPartsList', () => {
 
   test('holds back a type long enough to run off the plate', () => {
     const svg = render([part('U1', `dip${'0'.repeat(300)}8`, '100uF')]);
-    const cells = [...svg.matchAll(/<text[^>]*x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)];
+    const cells = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)];
     const [, typeX = '', size = '', shown = ''] = cells[1] ?? [];
 
     expect(shown.endsWith('…')).toBe(true);

@@ -1,5 +1,5 @@
 import { element } from '../markup.ts';
-import { num, svgText } from '../svg.ts';
+import { BOARD_HALO_OPACITY, num, svgText } from '../svg.ts';
 import { textWidth } from '../textFit.ts';
 import type { BoardPart } from './boards.ts';
 
@@ -221,7 +221,7 @@ function outerNames(
       if (name === '') return '';
       const outward = -inward(point);
       const size = Math.min(scale * NAME_FONT, (pitch - NAME_PAD) / (textWidth(name) * NAME_CAPS));
-      const style = { 'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: NAME_HALO };
+      const style = { 'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: NAME_HALO, haloOpacity: BOARD_HALO_OPACITY };
       const clear = DIP_ACROSS + NAME_HALO / 2 + NAME_CLEAR;
       if (alongX) {
         // 字は基準線から上へ伸びるので、下へ出す側だけ字の高さを足す。
@@ -321,6 +321,7 @@ export function sipHeader(options: SipOptions): string {
     fill: ink.outside,
     halo: ink.halo,
     haloWidth: SIP_NAME_HALO,
+    haloOpacity: BOARD_HALO_OPACITY,
   };
   const legends = points
     .map((point, index) => (alongX

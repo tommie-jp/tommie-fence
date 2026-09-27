@@ -7,6 +7,7 @@
 
 ### Changed
 
+- **SIP の足の名前の縁取りを半分透かす** (`BOARD_HALO_OPACITY`)。
 - **`parsePicofarads` と `parseMicrohenries` は素の数 (`47` `470`) を読まない** (null)。接頭辞か
   単位 (`47p` `47pF` `100u` `10mH`) が要る。今までは pF・µH で読んでいた。
 - **`resistorBands(0)` は黒 1 本** (0Ω のジャンパ)。今までは null。
@@ -34,6 +35,9 @@
   足の名前を引く。本数がパッケージと合わない型番と表に無い型番は null。NE555・TLC555・LM358・
   TL071・TL072・CD4017B・CD4040B・CD4069UB・CD4071B・CD4081B・CD4011B・CD4001B の 12 行。
   3 つのフェンスが同じ表を読む (52 の docs/95)。
+- **`svgText` の `haloOpacity`** — 縁取りの不透明度 (既定 1)。1 未満なら縁を字と別の `<text>`
+  (aria-hidden) に分けて要素の `opacity` で透かし、字は不透明のまま上に重ねる。
+  実体配線図の既定値は `BOARD_HALO_OPACITY` (0.5)。
 - **`parsePrefixedHertz` `isBareNumber` `HERTZ_HINT`** — フェンスの周波数の欄の読み。素の数
   (`10000000`) は null (vna と copper が使う。`parseHertz` は素の数も受けたまま)。
 - **`partValueProblem(type, value)`** — breadboard と perfboard が部品の値を断る理由

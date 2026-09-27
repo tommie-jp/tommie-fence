@@ -77,15 +77,15 @@ describe('名前を出す辺', () => {
   test('writes the names on the left and top only, by default', () => {
     const svg = sidesOf(['left', 'top']);
 
-    expect((svg.match(/>A<\/text>/g) ?? []).length).toBe(1);
-    expect((svg.match(/>1<\/text>/g) ?? []).length).toBe(1);
+    expect((svg.match(/<text(?![^>]*aria-hidden)[^>]*>A<\/text>/g) ?? []).length).toBe(1);
+    expect((svg.match(/<text(?![^>]*aria-hidden)[^>]*>1<\/text>/g) ?? []).length).toBe(1);
   });
 
   test('writes them on both sides when both sides were asked for', () => {
     const svg = sidesOf(['left', 'right', 'top', 'bottom']);
 
-    expect((svg.match(/>A<\/text>/g) ?? []).length).toBe(2);
-    expect((svg.match(/>1<\/text>/g) ?? []).length).toBe(2);
+    expect((svg.match(/<text(?![^>]*aria-hidden)[^>]*>A<\/text>/g) ?? []).length).toBe(2);
+    expect((svg.match(/<text(?![^>]*aria-hidden)[^>]*>1<\/text>/g) ?? []).length).toBe(2);
   });
 
   test('puts the second row of names past the far edge of the board', () => {

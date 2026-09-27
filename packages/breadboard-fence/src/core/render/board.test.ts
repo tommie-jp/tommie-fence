@@ -17,8 +17,9 @@ const renderSpec = (over: Partial<BoardSpec>): string => {
 const fontSizesOf = (markup: string): number[] =>
   [...markup.matchAll(/font-size="([\d.]+)"/g)].map((match) => Number(match[1]));
 
+/** 見える字だけ。縁だけを描く写し (aria-hidden) は数えない。 */
 const textsOf = (markup: string): string[] =>
-  [...markup.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((match) => match[1] ?? '');
+  [...markup.matchAll(/<text(?![^>]*aria-hidden)[^>]*>([^<]*)<\/text>/g)].map((match) => match[1] ?? '');
 
 describe('renderBoard', () => {
   test('draws a hole for every position of the board', () => {

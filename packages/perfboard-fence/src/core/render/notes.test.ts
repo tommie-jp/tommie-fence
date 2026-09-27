@@ -102,8 +102,8 @@ describe('text の向き', () => {
   test('sends the words to the other side instead of mirroring them', () => {
     // **鏡文字は読めない。** 反転は「指す穴の反対側へ移す」の意味にしてある。
     const point = layout.point(at('e5'));
-    const above = /<text[^>]*y="([-0-9.]+)"/.exec(words())?.[1];
-    const below = /<text[^>]*y="([-0-9.]+)"/.exec(words({ turn: { rotate: 0, mirror: true } }))?.[1];
+    const above = /<text(?![^>]*aria-hidden)[^>]* y="([-0-9.]+)"/.exec(words())?.[1];
+    const below = /<text(?![^>]*aria-hidden)[^>]* y="([-0-9.]+)"/.exec(words({ turn: { rotate: 0, mirror: true } }))?.[1];
 
     expect(Number(above)).toBeLessThan(point.y);
     expect(Number(below)).toBeGreaterThan(point.y);

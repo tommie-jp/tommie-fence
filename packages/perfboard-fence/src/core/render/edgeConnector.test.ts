@@ -20,7 +20,7 @@ const FIXTURE = [
 type Text = { readonly x: number; readonly y: number; readonly anchor: string; readonly size: number; readonly body: string; readonly at: number };
 
 const texts = (svg: string): Text[] =>
-  [...svg.matchAll(/<text x="([\d.-]+)" y="([\d.-]+)" text-anchor="(\w+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)]
+  [...svg.matchAll(/<text x="([\d.-]+)" y="([\d.-]+)" text-anchor="(\w+)"(?![^>]*aria-hidden)[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)]
     .map((match) => ({
       x: Number(match[1]), y: Number(match[2]), anchor: match[3]!, size: Number(match[4]), body: match[5]!, at: match.index ?? 0,
     }));

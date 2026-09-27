@@ -34,6 +34,29 @@ describe('svgText', () => {
     expect(svgText(0, 0, 'R1', { halo: '#fff', haloWidth: 6 })).toContain('stroke-width="6"');
   });
 
+  test('draws a see-through halo as its own text under opaque glyphs', () => {
+    const text = svgText(0, 0, 'R1', { halo: '#fff', haloOpacity: 0.5, fill: '#111', class: 'cap' });
+    const [under, over] = text.split('</text>');
+
+    // 縁は字の形のまま半分透かす。stroke-opacity だと Chromium で字ごとの縁が
+    // 重なって濃い跡が出るので、要素の opacity で 1 枚にまとめて透かす。
+    expect(under).toContain('opacity="0.5"');
+    expect(under).not.toContain('stroke-opacity');
+    expect(under).toContain('fill="#fff"');
+    expect(under).toContain('stroke="#fff"');
+    expect(under).toContain('aria-hidden="true"');
+    // 名札を上の層へ移す印は縁にも付ける。付けないと縁だけが部品の下に残る。
+    expect(under).toContain('class="cap"');
+    // 字そのものは透かさない。
+    expect(over).toContain('fill="#111"');
+    expect(over).not.toContain('opacity');
+    expect(over).not.toContain('stroke=');
+  });
+
+  test('keeps the single opaque text when the halo is not see-through', () => {
+    expect(svgText(0, 0, 'R1', { halo: '#fff', haloOpacity: 1 })).toBe(svgText(0, 0, 'R1', { halo: '#fff' }));
+  });
+
   test('passes other attributes straight through', () => {
     expect(svgText(0, 0, 'R1', { anchor: 'start', fill: '#123456', 'font-size': 8 }))
       .toContain('text-anchor="start"');

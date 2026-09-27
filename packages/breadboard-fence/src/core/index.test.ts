@@ -725,7 +725,8 @@ describe('renderBreadboard', () => {
         '    pins: [W1, GND]',
       ].join('\n'),
     );
-    const texts = [...svg.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((match) => match[1]);
+    // 縁だけを描く写し (aria-hidden) は数えない。
+    const texts = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*>([^<]*)<\/text>/g)].map((match) => match[1]);
 
     // 機器の箱と部品リストの 2 か所に、同じ名前で出る。
     expect(texts.filter((text) => text === 'Analog Discovery 2')).toHaveLength(2);
@@ -889,7 +890,7 @@ describe('renderBreadboard', () => {
     // 上のブロックと下のブロックで名前の出る側が変わって揃わなかった。
     const { svg } = renderBreadboard('parts:\n  R1: resistor a5 a10 330\n  R2: resistor j5 j10 330\n');
 
-    const captions = [...svg.matchAll(/<text[^>]*y="([\d.]+)"[^>]*>(R\d 330)<\/text>/g)];
+    const captions = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*y="([\d.]+)"[^>]*>(R\d 330)<\/text>/g)];
     const rowA = Number([...svg.matchAll(/<text[^>]*y="([\d.]+)"[^>]*>a<\/text>/g)][0]?.[1]);
     const rowJ = Number([...svg.matchAll(/<text[^>]*y="([\d.]+)"[^>]*>j<\/text>/g)][0]?.[1]);
 
@@ -1234,8 +1235,10 @@ describe('板の印字と名札', () => {
     const over = renderBreadboard('board: half\nparts:\n  TH1: thermistor-ntc j3 j7 10k\n').svg;
 
     // 板の下の段の `5` が消える。上の段には残る (名札は下にしか出ない)。
-    expect((bare.match(/>5</g) ?? []).length).toBe(2);
-    expect((over.match(/>5</g) ?? []).length).toBe(1);
+    // 縁だけを描く写し (aria-hidden) は数えない。
+    const fives = /<text(?![^>]*aria-hidden)[^>]*>5</g;
+    expect((bare.match(fives) ?? []).length).toBe(2);
+    expect((over.match(fives) ?? []).length).toBe(1);
   });
 
   test('moves a caption out of the way of a note the writer placed by address', () => {

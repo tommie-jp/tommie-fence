@@ -101,6 +101,14 @@ describe('dipChip', () => {
       expect(drawn.some((one) => one.text === 'NE555')).toBe(true);
     });
 
+    test('lays the halo of the names half see-through, so a wire under a name still shows', () => {
+      const svg = dipChip({
+        points: twoRows(8, 3), names: TIMER, numbers: names(8), pinOne: 0, pitch: PITCH, caption: 'NE555', scale: 1, ink: INK,
+      });
+      const halo = /<text [^>]*opacity="0.5"[^>]*aria-hidden="true"[^>]*>TRIG<\/text>/u.exec(svg);
+      expect(halo?.[0]).toContain(`fill="${INK.halo}"`);
+    });
+
     test('keeps the numbers inside the resin and the names within a pitch outside it', () => {
       const points = twoRows(8, 3);
       const box = dipBox(points, PITCH);

@@ -1,5 +1,5 @@
 import {
-  REAL_INK, boardBox, boardChip, connectorBox, dipChip, directSotSpec, drawBody, drawConnector, drawDipAdapter,
+  BOARD_HALO_OPACITY, REAL_INK, boardBox, boardChip, connectorBox, dipChip, directSotSpec, drawBody, drawConnector, drawDipAdapter,
   drawDirectSot, drawPackage, drawsOwnLeads,
   element, fit, hasBody,
   drawNamedChip, lookupBoardPart, lookupNamedChip, num, bodySize, packageHalfWidth, packageReach, sipHeader,
@@ -84,6 +84,7 @@ function partLabel(
     fill: theme.palette.plateText,
     'font-size': num(size),
     halo: theme.palette.plate,
+    haloOpacity: BOARD_HALO_OPACITY,
   };
   // **横に寝ている胴はそのまま下に書く。** 図の大半はこれなので、傾きの計算に
   // 巻き込まないでおく (`sin` の丸めで字が 0.01 度ずれるようなことも起きない)。
@@ -292,6 +293,7 @@ function smaBadge(
     fill: theme.palette.plateText,
     'font-size': num(size),
     halo: theme.palette.plate,
+    haloOpacity: BOARD_HALO_OPACITY,
   });
 }
 
@@ -732,6 +734,7 @@ function renderConnector(part: PlacedPart, layout: Layout, theme: Theme, room?: 
       fill: theme.palette.plateText,
       'font-size': num(size),
       halo: theme.palette.plate,
+      haloOpacity: BOARD_HALO_OPACITY,
     });
   }
   return drawn + partLabel(

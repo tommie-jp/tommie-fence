@@ -642,7 +642,7 @@ describe('半田面 (style: back)', () => {
   test('turns the columns over, so column 1 comes out on the right', () => {
     const result = renderPerfboard(`style:\n  back: on\nboard: 4x2\n`);
     const [, panel = ''] = result.svg.split('<g transform="translate(0 ');
-    const columns = [...panel.matchAll(/<text x="([0-9.]+)"[^>]*>([1-4])<\/text>/g)]
+    const columns = [...panel.matchAll(/<text x="([0-9.]+)"(?![^>]*aria-hidden)[^>]*>([1-4])<\/text>/g)]
       .map(([, x = '0', label = '']) => ({ x: Number(x), label }));
 
     expect(columns.length).toBe(4);

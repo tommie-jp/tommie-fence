@@ -114,17 +114,18 @@ describe('番地で置いた機器の箱', () => {
 describe('列の名前の縁取り', () => {
   test('rings the names in the page colour, so a dark wire under a name does not swallow it', () => {
     const { svg } = renderPerfboard('board: 12x6');
-    const name = /<text [^>]*>3<\/text>/.exec(svg)?.[0] ?? '';
+    // 縁は字の下に別の字として敷き、半分透かす (下の配線が縁越しに覗く)。
+    const ring = /<text [^>]*aria-hidden="true"[^>]*>3<\/text>/.exec(svg)?.[0] ?? '';
 
-    expect(name).toContain('stroke="#ffffff"');
-    expect(name).toContain('paint-order="stroke"');
+    expect(ring).toContain('stroke="#ffffff"');
+    expect(ring).toContain('opacity="0.5"');
   });
 
   test('rings them in the canvas colour when the theme paints one', () => {
     const { svg } = renderPerfboard('board: 12x6\nstyle: dark');
-    const name = /<text [^>]*>3<\/text>/.exec(svg)?.[0] ?? '';
+    const ring = /<text [^>]*aria-hidden="true"[^>]*>3<\/text>/.exec(svg)?.[0] ?? '';
 
-    expect(name).not.toContain('stroke="#ffffff"');
-    expect(name).toContain('paint-order="stroke"');
+    expect(ring).toContain('stroke=');
+    expect(ring).not.toContain('stroke="#ffffff"');
   });
 });

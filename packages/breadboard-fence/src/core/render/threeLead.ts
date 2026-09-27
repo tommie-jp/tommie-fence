@@ -2,7 +2,7 @@ import type { Layout } from '../model/layout.ts';
 import type { PlacedPart } from '../types.ts';
 import { LEG_NAME_CLEAR, NAME_CAP, NAME_LINE, caption, fitToBoard, haloWidth, partLabel, pinPoints } from './partCommon.ts';
 import { drawPackage, packageHalfWidth, packageReach } from 'fence-kit';
-import { element, num, svgText } from './svg.ts';
+import { BOARD_HALO_OPACITY, element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
 
 /**
@@ -87,6 +87,7 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
             fill: palette.partText,
             halo: palette.textHalo,
             haloWidth: haloWidth(theme),
+            haloOpacity: BOARD_HALO_OPACITY,
           })
         : '';
     })

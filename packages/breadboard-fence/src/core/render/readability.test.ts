@@ -94,7 +94,7 @@ describe('the board printing stays out from under an upright part', () => {
     // ころは名札の帯が番号も覆っていたが、名札を胴の下端の下へ出すと、胴の下から
     // 番号の欠片 (`10`) が覗いた (教科書のマイクのスペクトルの図の R2)。
     const { svg } = fence('parts:', '  R2: resistor -t10 c10 100k');
-    const printed = [...svg.matchAll(/<text x="([\d.]+)" y="([\d.]+)"[^>]*>10<\/text>/g)]
+    const printed = [...svg.matchAll(/<text x="([\d.]+)" y="([\d.]+)"(?![^>]*aria-hidden)[^>]*>10<\/text>/g)]
       .map((match) => Number(match[2]));
 
     // 下の番号 (j 行の下) だけが残り、上の番号は伏せる。
@@ -103,7 +103,7 @@ describe('the board printing stays out from under an upright part', () => {
 
   test('a horizontal part leaves the column numbers alone', () => {
     const { svg } = fence('parts:', '  R1: resistor a8 a12 1k');
-    expect([...svg.matchAll(/>10<\/text>/g)]).toHaveLength(2);
+    expect([...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*>10<\/text>/g)]).toHaveLength(2);
   });
 });
 
