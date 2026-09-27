@@ -46,6 +46,14 @@ export const notice = (message: string, line: number | null, token?: string): Fe
 const INVISIBLE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/gu;
 
 /**
+ * 見えない字を除く。**ファイルから読んだ字 (CSV の見出しやセル) を言うことに載せる入口**。
+ * 言うことは CLI では端末に生で出るので、ESC (`\x1b[2K` や OSC) が残ると端末の表示を
+ * 偽装できる。プレビューでも bidi の上書きや幅 0 の字で文面を並べ替え・隠せる。
+ * 行の中身 (`snippetOf`) と違って桁を合わせる印が無いので、置き換えずに落とす。
+ */
+export const dropInvisible = (text: string): string => text.replace(INVISIBLE, '');
+
+/**
  * 行の中身を報告に載せられる形にする。**1 文字を 1 文字に置き換える**のが要で、
  * 詰めたり伸ばしたりすると、下に付ける印の桁が本文とずれる。
  * 字下げは残す (どの入れ子の行かが分かる)。

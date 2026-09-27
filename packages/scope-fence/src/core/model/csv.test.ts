@@ -77,4 +77,14 @@ describe('parseCsv', () => {
     const rows = Array.from({ length: 100_002 }, (_, i) => `${i * 1e-6},1`);
     expect(parseCsv(`Time (s),Channel 1 (V)\n${rows.join('\n')}`)).toEqual({ ok: false, reason: '行が多すぎます (100001 行まで)' });
   });
+
+  test('drops control and bidi characters read from the file before saying anything about them', () => {
+    const heading = parseCsv('Time (s),Channel 1 (V),\u001b[2KEvil\u202Egnp.exe\u200B\n0,1,1\n1e-3,1,1');
+    expect(heading.ok && heading.notes).toEqual(['[2KEvilgnp.exe の列は読み捨てました']);
+    const cell = parseCsv('Time (s),Channel 1 (V)\n0,1\n1e-3,\u001b]0;pwned\u0007x\u202E');
+    expect(cell.ok).toBe(false);
+    const reason = cell.ok ? '' : cell.reason;
+    expect(reason).toBe('3 行目の値が読めません: ]0;pwnedx');
+    expect(reason).not.toMatch(/[\u001b\u0007\u202E]/u);
+  });
 });

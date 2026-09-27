@@ -1,4 +1,5 @@
 import { normalizeNewlines } from 'fence-kit';
+import { dropInvisible } from '../errors.ts';
 import { LIMITS, clampText } from '../limits.ts';
 import { CHANNEL_NAMES } from './channel.ts';
 import type { ChannelName } from './channel.ts';
@@ -48,7 +49,7 @@ function readHeading(cells: readonly string[]): Heading {
   const seen = new Set<ChannelName>();
   const columns: Column[] = [];
   for (const cell of rest) {
-    const shown = clampText(cell, LIMITS.idLength);
+    const shown = clampText(dropInvisible(cell), LIMITS.idLength);
     const channel = CHANNEL.exec(cell);
     if (channel === null) {
       notes.push(/^Math/i.test(cell) ? `${shown} の列は読み捨てました (Math は描きません)` : `${shown} の列は読み捨てました`);
@@ -91,7 +92,7 @@ export function parseCsv(input: string): CsvRead {
       const cell = (cells[column] ?? '').trim();
       if (delimiter === ';' && DECIMAL_COMMA.test(cell)) return refuse('小数点がコンマです (WaveForms の設定で小数点をピリオドにして書き出し直します)');
       const value = cell === '' ? NaN : Number(cell);
-      if (!Number.isFinite(value)) return refuse(`${line} 行目の値が読めません: ${clampText(cell, LIMITS.idLength)}`);
+      if (!Number.isFinite(value)) return refuse(`${line} 行目の値が読めません: ${clampText(dropInvisible(cell), LIMITS.idLength)}`);
       if (column === 0) {
         time[row] = value * heading.timeScale;
         if (row > 0 && (time[row] ?? 0) <= (time[row - 1] ?? 0)) return refuse(`時刻が ${line} 行目で戻っています (時刻の順に並べます)`);
