@@ -1,15 +1,16 @@
 import { normalizeNewlines } from 'fence-kit';
+import { sweepAdvice } from './advice.ts';
 import { attachSourceText, notice, shiftErrors } from './errors.ts';
 import { createLayout } from './layout/figure.ts';
 import { groupPanels, isRound } from './layout/panels.ts';
 import type { Panel, PanelTrace } from './layout/panels.ts';
-import { rangeNotice } from './model/device.ts';
+import { DEVICES, rangeNotice } from './model/device.ts';
 import { endOf, sparamsOf } from './model/dut.ts';
 import { formatHertzShort } from 'fence-kit';
 import { readingsOf } from './model/readings.ts';
 import type { Readings } from './model/readings.ts';
 import { isEvenlySpaced, seriesOf } from './model/series.ts';
-import type { Series, TdrSeries } from './model/series.ts';
+import type { RectSeries, Series, TdrSeries } from './model/series.ts';
 import type { SPoint } from './model/sparams.ts';
 import { frequenciesOf } from './model/sweep.ts';
 import { parseTouchstone, portsOf } from './model/touchstone.ts';
@@ -183,6 +184,14 @@ export function renderVna(input: string, options: RenderOptions = {}): RenderRes
   });
   const placed = notesFor(layout.panels, doc.notes);
   said.push(...placed.said);
+  said.push(...sweepAdvice({
+    panels: layout.panels.map((panel) => ({
+      kind: panel.kind,
+      series: allSeries.filter((one): one is RectSeries => one.kind === 'rect' && panel.traces.some((trace) => trace.index === one.trace.index)),
+    })),
+    sweep: doc.sweep,
+    device: DEVICES[doc.device],
+  }));
 
   const body = renderTitle(doc.title, layout, theme)
     + renderKey(model !== null, dataName, layout, theme)

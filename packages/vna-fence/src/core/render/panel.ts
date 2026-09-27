@@ -1,5 +1,5 @@
 import { BOLD_FAMILY, element, num, svgText, textWidth } from 'fence-kit';
-import type { Panel, PanelKind } from '../layout/panels.ts';
+import type { Panel, PanelKind, Rect } from '../layout/panels.ts';
 import {
   DIVISIONS, dbAxis, degAxis, fraction, linAxis, logOhmAxis, niceAxis, ohmAxis, swrAxis, tickLabel,
 } from '../layout/scales.ts';
@@ -70,12 +70,17 @@ export function axisOf(kind: PanelKind, series: readonly Series[]): Axis {
   }
 }
 
-const perDivision = (kind: PanelKind, axis: Axis): string => {
+/** 枠の単位つきの量 (`3.5 dB` `45°` `0.42`)。°と単位の無い数は詰める。 */
+export const amountText = (kind: PanelKind, value: number): string => {
+  const unit = UNIT_TEXT[kind];
+  return `${value}${unit === '' || unit === '°' ? unit : ` ${unit}`}`;
+};
+
+/** 1 目盛の幅 (`10 dB/目盛`)。見出しとお知らせが同じ綴りを使う。 */
+export const perDivision = (kind: PanelKind, axis: Axis): string => {
   if (axis.log) return '10 倍/目盛 (対数)';
   const step = (axis.max - axis.min) / DIVISIONS;
-  const shown = Math.round(step * 1000) / 1000;
-  const unit = UNIT_TEXT[kind];
-  return `${shown}${unit === '' || unit === '°' ? unit : ` ${unit}`}/目盛`;
+  return `${amountText(kind, Math.round(step * 1000) / 1000)}/目盛`;
 };
 
 function heading(input: PanelInput, axis: Axis | null): string {
@@ -120,16 +125,21 @@ const GLYPH_REACH = 17;
 
 /**
  * マーカーの印 (▽ と番号)。先が点を指す。**格子の上の縁に近い点では ▲ を点の下に**
- * 置く — 上に出すと枠の見出しに重なる (0 dB の LOGMAG で踏んだ)。
+ * 置く — 上に出すと枠の見出しに重なる (0 dB の LOGMAG で踏んだ)。**左右の縁に近い点
+ * (掃引の最初と最後) では番号を枠の内側へ寄せる** — 真ん中に置くと半分が枠の外に出て、
+ * 縦軸の字や隣の枠に重なる (Thru の 1M と 300M で踏んだ)。
  */
-function markerGlyph(x: number, y: number, label: string, color: string, theme: Theme, top: number): string {
-  const below = y - GLYPH_REACH < top;
+function markerGlyph(x: number, y: number, label: string, color: string, theme: Theme, plot: Rect): string {
+  const below = y - GLYPH_REACH < plot.y;
   const tip = below ? 7 : -7;
   const path = `M${num(x)},${num(y)} L${num(x - 4)},${num(y + tip)} L${num(x + 4)},${num(y + tip)} Z`;
   const size = theme.metrics.smallSize;
+  const half = (textWidth(label) * size) / 2;
+  const anchor = x - half < plot.x ? 'start' : x + half > plot.x + plot.width ? 'end' : 'middle';
+  const labelX = anchor === 'start' ? Math.max(x, plot.x) + 1 : anchor === 'end' ? Math.min(x, plot.x + plot.width) - 1 : x;
   return element('path', { d: path, fill: color })
-    + svgText(x, below ? y + 9 + size * 0.8 : y - 9, label, {
-      fill: color, 'font-size': num(size), 'font-weight': 600, 'font-family': BOLD_FAMILY, halo: theme.palette.halo, haloWidth: 2.5,
+    + svgText(labelX, below ? y + 9 + size * 0.8 : y - 9, label, {
+      anchor, fill: color, 'font-size': num(size), 'font-weight': 600, 'font-family': BOLD_FAMILY, halo: theme.palette.halo, haloWidth: 2.5,
     });
 }
 
@@ -213,7 +223,7 @@ function renderRect(input: PanelInput): string {
 
   const glyphs = shownSeries(series).flatMap((one) => markers.flatMap((marker, index) => {
     const at = valueAt(one.points, marker.f, one.basis === 'data', panel.kind === 'deg' ? mixPhase : mixNumber);
-    return at === null ? [] : [markerGlyph(xOf(at.f), yOf(at.value), `${index + 1}`, traceColor(theme, one.trace.index), theme, plot.y)];
+    return at === null ? [] : [markerGlyph(xOf(at.f), yOf(at.value), `${index + 1}`, traceColor(theme, one.trace.index), theme, plot)];
   }));
 
   const noted = notes.flatMap((note) => {
@@ -308,7 +318,7 @@ function renderTdr(input: PanelInput): string {
   ));
   const peaks = shownSeries(series).flatMap((one) => (one.tdr.peak === null
     ? []
-    : [markerGlyph(xOf(one.tdr.peak.distance), yOf(one.tdr.peak.value), '山', traceColor(theme, one.trace.index), theme, plot.y)]));
+    : [markerGlyph(xOf(one.tdr.peak.distance), yOf(one.tdr.peak.value), '山', traceColor(theme, one.trace.index), theme, plot)]));
   const xLabels = [0, HORIZONTAL / 2, HORIZONTAL].map((division) => {
     const anchor = division === 0 ? 'start' : division === HORIZONTAL ? 'end' : 'middle';
     const meters = (range * division) / HORIZONTAL;
@@ -338,7 +348,7 @@ function renderRound(input: PanelInput): string {
     const found = valueAt(one.points, marker.f, one.basis === 'data', mixComplex);
     if (found === null) return [];
     const [x, y] = at(found.value);
-    return [markerGlyph(x, y, `${index + 1}`, traceColor(theme, one.trace.index), theme, plot.y)];
+    return [markerGlyph(x, y, `${index + 1}`, traceColor(theme, one.trace.index), theme, plot)];
   }));
   const chart = panel.kind === 'smith' ? smithGrid(cx, cy, radius, theme) : polarGrid(cx, cy, radius, theme);
   return heading(input, null) + chart + lines.join('') + glyphs.join('');
