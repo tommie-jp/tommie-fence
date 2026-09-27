@@ -281,6 +281,19 @@ describe('renderPerfboard', () => {
     }
   });
 
+  test('takes a value that reads like an address beyond this board, whatever order the keys come in', () => {
+    // `C102` (c 行 102 列) は上限 120 列の内側だが、この板 (25 列) には載らない —
+    // 値 (容量の 3 桁コード) であって、足の書き間違いではない。**板の実際の大きさで見る。**
+    for (const fence of [
+      'board: 25x15\nparts:\n  R1: resistor b3 b7 C102\n',
+      'parts:\n  R1: resistor b3 b7 C102\nboard: 25x15\n',
+    ]) {
+      const result = renderPerfboard(fence);
+      expect(result.errors.map((error) => error.message)).toEqual([expect.stringContaining('抵抗値')]);
+    }
+    expect(renderPerfboard('board: 25x15\nparts:\n  C1: capacitor b3 b5 C102\n').errors).toEqual([]);
+  });
+
   test('still refuses an extra hole that could really be one', () => {
     const result = renderPerfboard('board: 12x8\nparts:\n  Q1: transistor b3 b4 b5 b6\n');
 

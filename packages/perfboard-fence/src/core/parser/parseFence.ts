@@ -130,6 +130,7 @@ function readFence(source: string): ParseResult {
   let boardWritten = false;
   let titleWritten = false;
   let partsWritten = false;
+  let partsNode: { readonly node: unknown; readonly keyLine: number | null } | null = null;
   let wiresWritten = false;
   let pointsWritten = false;
 
@@ -283,7 +284,7 @@ function readFence(source: string): ParseResult {
         errors.push(fenceError(`${safeToken(id)} の中身が書かれていません (例: resistor b3 b7 10k)`, line));
         continue;
       }
-      const result = parsePartLine(id, written);
+      const result = parsePartLine(id, written, board ?? DEFAULT_BOARD);
       if (!result.ok) {
         errors.push({ ...result.error, line });
         continue;
@@ -312,7 +313,9 @@ function readFence(source: string): ParseResult {
         continue;
       }
       partsWritten = true;
-      readParts(pair.value, keyLine);
+      // **板を読んでから読む** (番地らしさを板の大きさで見るため)。`parts:` が
+      // `board:` より先に書かれていても同じに読む。報告は行番号で並べ直される。
+      partsNode = { node: pair.value, keyLine };
       continue;
     }
     if (key === 'title') {
@@ -490,6 +493,8 @@ function readFence(source: string): ParseResult {
     // 単位の書き忘れは**図が出てしまう**取り違えなので、エラーではなくお知らせ。
     if (found.notice !== null) errors.push(notice(found.notice, at, written));
   }
+
+  if (partsNode !== null) readParts(partsNode.node, partsNode.keyLine);
 
   // **板が決まらなくても既定の板で返す** (52 の docs/54)。穴の数が決まらないと
   // 番地も配置も読めないが、止めると書き始められない。

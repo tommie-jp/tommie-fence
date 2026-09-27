@@ -1,6 +1,7 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
+import { OFF_BOARD_REACH } from '../model/board.ts';
 import { footprintOf } from '../parts/footprint.ts';
 import { MIRROR_REFUSAL, MIRROR_WORD, NO_TURN, isTurned, orientOf, refusesMirror, rotationOf } from '../parts/orient.ts';
 import type { Turn } from '../parts/orient.ts';
@@ -21,10 +22,21 @@ const fail = (message: string, token?: string): Parsed<never> =>
  */
 export type WrittenPart = Omit<PartSpec, 'line'>;
 
-/** どんな板にも載りうる番地か。載らない桁のものは型番とみなす。 */
-function plausibleHole(token: string): boolean {
+/** 番地らしさを見る板の大きさ (穴の数)。 */
+export type BoardExtent = { readonly cols: number; readonly rows: number };
+
+/** 板が決まっていないとき。**どんな板にも載りうる**かで見る (上限の板)。 */
+const ANY_BOARD: BoardExtent = { cols: LIMITS.cols, rows: LIMITS.rows };
+
+/**
+ * **この板に**載りうる番地か (板の外は `OFF_BOARD_REACH` まで)。載らないものは
+ * 型番や値とみなす。上限の 120 列で見ていたころは、25 列の板の `C102` (容量の
+ * コードのつもり) を c 行 102 列と読んで「余分な番地」と断っていた。
+ */
+function plausibleHole(token: string, board: BoardExtent): boolean {
   const address = parseAddress(token);
-  return address !== null && address.col <= LIMITS.cols && address.row <= LIMITS.rows;
+  return address !== null
+    && address.col <= board.cols + OFF_BOARD_REACH && address.row <= board.rows + OFF_BOARD_REACH;
 }
 
 /**
@@ -32,10 +44,10 @@ function plausibleHole(token: string): boolean {
  * 足のあとに値が来ることがあり、値の先にある番地まで穴として拾うと、
  * 間の値が黙って消える。
  */
-function leadingHoles(tokens: readonly string[], wanted: number, most: number): string[] {
+function leadingHoles(tokens: readonly string[], wanted: number, most: number, board: BoardExtent): string[] {
   const holes: string[] = [];
   for (const token of tokens.slice(0, most)) {
-    if (holes.length >= wanted && !plausibleHole(token)) break;
+    if (holes.length >= wanted && !plausibleHole(token, board)) break;
     holes.push(token);
   }
   return holes;
@@ -52,7 +64,7 @@ const holeCount = (footprint: { readonly holes: number; readonly minHoles?: numb
  * **書かれた綴りを落とさない** (`written`)。略記を畳んだ綴りは行のどこにも
  * 無いので、それで報告の位置を探すと印が消えるか、別の語を指す。
  */
-export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
+export function parsePartLine(id: string, line: string, board: BoardExtent = ANY_BOARD): Parsed<WrittenPart> {
   if (!isReferenceable(id)) {
     return fail(`部品の名前に使えません: ${safeToken(id)} (英数字と _ - で ${LIMITS.idLength} 字まで)`, id);
   }
@@ -83,7 +95,7 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
   // **番地に見える語だけを穴として取る。** 省いてよい足のある形 (端面実装・USB) では、
   // 最少の数より先は値のこともある。
   const wanted = footprint.minHoles ?? footprint.holes;
-  const holes = leadingHoles(rest, wanted, footprint.holes);
+  const holes = leadingHoles(rest, wanted, footprint.holes, board);
   if (holes.length < wanted) {
     // **書く穴の数は形が決める。** DIP と SIP はアンカー 1 つだけ
     // (足の位置はパッケージが決めていて、書く人が選べない)。
@@ -150,10 +162,10 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
   // **番地に見えるものを黙って値にしない。** 足を 1 本多く書いたつもりの人が、
   // 「値 b9」の図を見て気づけないまま終わる。
   //
-  // ただし**どんな板にも載らない番地は足の書き間違いではない**。型番は番地と
-  // そっくりの綴りをしていて (`NE555` は ne 行 555 列、`C1815` は c 行 1815 列)、
-  // 番地として弾くと正しい図が毎回叱られる。上限を超える列は型番のほう。
-  const stray = tail.find((token) => plausibleHole(token));
+  // ただし**この板に載らない番地は足の書き間違いではない**。型番や値は番地と
+  // そっくりの綴りをしていて (`NE555` は ne 行 555 列、`C1815` は c 行 1815 列、
+  // `C102` は c 行 102 列)、番地として弾くと正しい図が毎回叱られる。
+  const stray = tail.find((token) => plausibleHole(token, board));
   if (stray !== undefined) {
     const count = footprint.minHoles === undefined ? `${footprint.holes} つです` : `${footprint.holes} つまでです`;
     return fail(`${safeToken(written)} が書く穴は ${count}。余分な番地: ${safeToken(stray)}`, stray);
