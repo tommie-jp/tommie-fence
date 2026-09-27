@@ -79,6 +79,7 @@ export const DEFAULT_TOLERANCE = 1;
  * - 2 桁で表せる値 (`10k` `4k7`) → **4 帯** (数字 2 + 乗数 + 許容差)。E24 の並び
  * - 3 桁要る値 (`4k99`) → **5 帯** (数字 3 + 乗数 + 許容差)。E96 の並び
  * - 温度係数を書いたとき → **6 帯** (5 帯 + 温度係数)
+ * - 0Ω (ジャンパ) → **黒 1 本**
  *
  * 実物も同じ分かれ方をする。**桁数から決める**ので、書いた値がそのまま帯になり、
  * 「5 帯で描きたいから桁を足す」という書き換えが要らない。
@@ -90,7 +91,9 @@ export function resistorBands(
   ohms: number,
   options: { readonly tolerance?: number; readonly tempco?: number } = {},
 ): readonly string[] | null {
-  if (!Number.isFinite(ohms) || ohms <= 0) return null;
+  // **0Ω (ジャンパ) は黒の帯 1 本。** 実物も許容差・温度係数の帯を持たない。
+  if (ohms === 0) return options.tolerance === undefined && options.tempco === undefined ? ['black'] : null;
+  if (!Number.isFinite(ohms) || ohms < 0) return null;
 
   const tolerance = TOLERANCE_COLORS[options.tolerance ?? DEFAULT_TOLERANCE];
   if (tolerance === undefined) return null;
@@ -202,14 +205,18 @@ export function parseResistor(text: string): {
 /** 静電容量の単位。**基準は pF** — 3 桁のコードが pF で書かれているため。 */
 const FARAD_UNITS: Record<string, number> = { p: 1, n: 1e3, u: 1e6, µ: 1e6, μ: 1e6, m: 1e9, f: 1e12 };
 
-const FARAD_PLAIN = /^([0-9]+(?:\.[0-9]+)?)\s*([pnuµμmf]?)f?$/i;
+/**
+ * 接頭辞か `F` の少なくとも一方が要る。**素の数 (`47`) は読まない** — pF のつもりか
+ * F のつもりか決まらない (以前は pF で読み、circuit は F で読んでいた。直下の
+ * CLAUDE.md の文法の方針 1)。
+ */
+const FARAD_PLAIN = /^([0-9]+(?:\.[0-9]+)?)\s*(?:([pnuµμm])f?|f)$/i;
 const FARAD_INFIX = /^([0-9]+)([pnuµμ])([0-9]+)f?$/i;
 
 /**
  * `100n` `0.1u` `10p` `4n7` などの静電容量をピコファラドに直す。読めなければ null。
  *
- * **単位が無ければピコファラド**として読む (`104` のような裸の数は容量ではなく
- * コードそのものなので、ここでは扱わない — 呼ぶ側が桁で見分ける)。
+ * **接頭辞の無い素の数は null** (`47` も、3 桁コードの `104` も)。
  */
 export function parsePicofarads(text: string): number | null {
   const cleaned = text.trim();
@@ -224,7 +231,7 @@ export function parsePicofarads(text: string): number | null {
   const plain = FARAD_PLAIN.exec(cleaned);
   if (!plain) return null;
   const [, digits, unit] = plain;
-  const scale = unit ? FARAD_UNITS[unit.toLowerCase()] ?? 1 : 1;
+  const scale = FARAD_UNITS[(unit ?? 'f').toLowerCase()] ?? 1;
   const value = Number(digits) * scale;
   return Number.isFinite(value) && value > 0 ? value : null;
 }
@@ -263,10 +270,14 @@ function threeDigitCode(value: number): string | null {
 /** インダクタンスの単位。**基準は µH** — 3 桁のコードが µH で書かれているため。 */
 const HENRY_UNITS: Record<string, number> = { n: 1e-3, u: 1, µ: 1, μ: 1, m: 1e3, h: 1e6 };
 
-const HENRY_PLAIN = /^([0-9]+(?:\.[0-9]+)?)\s*([nuµμmh]?)h?$/i;
+/** 接頭辞か `H` の少なくとも一方が要る。**素の数 (`470`) は読まない** (容量と同じ理由)。 */
+const HENRY_PLAIN = /^([0-9]+(?:\.[0-9]+)?)\s*(?:([nuµμm])h?|h)$/i;
 const HENRY_INFIX = /^([0-9]+)([nuµμm])([0-9]+)h?$/i;
 
-/** `100u` `10m` `4u7` などのインダクタンスをマイクロヘンリーに直す。読めなければ null。 */
+/**
+ * `100u` `10m` `4u7` などのインダクタンスをマイクロヘンリーに直す。読めなければ null。
+ * **接頭辞の無い素の数は null。**
+ */
 export function parseMicrohenries(text: string): number | null {
   const cleaned = text.trim();
 
@@ -279,7 +290,7 @@ export function parseMicrohenries(text: string): number | null {
   const plain = HENRY_PLAIN.exec(cleaned);
   if (!plain) return null;
   const [, digits, unit] = plain;
-  const value = Number(digits) * (unit ? HENRY_UNITS[unit.toLowerCase()] ?? 1 : 1);
+  const value = Number(digits) * (HENRY_UNITS[(unit ?? 'h').toLowerCase()] ?? 1);
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
@@ -290,6 +301,56 @@ export function parseMicrohenries(text: string): number | null {
  * ので、図では数字で書く (形が同じ胴なので、色だけの違いでは読めない)。
  */
 export const inductorCode = (microhenries: number): string | null => threeDigitCode(microhenries);
+
+const RESISTOR_HINT = '抵抗値は 330 / 4k7 / 1M / 10k 5% のように書きます';
+const CAPACITOR_HINT = '容量は 100n / 47p / 10u のように接頭辞を付けます';
+const INDUCTOR_HINT = 'インダクタンスは 100u / 10m / 4u7 のように接頭辞を付けます';
+const TOLERANCE_WORDS = Object.keys(TOLERANCE_COLORS).map(Number).sort((a, b) => a - b).join(' / ');
+const TEMPCO_WORDS = Object.keys(TEMPCO_COLORS).map(Number).sort((a, b) => b - a).join(' / ');
+
+/** 接頭辞も単位も無い数 (`47` `0.1` `.5`)。 */
+const BARE_NUMBER = /^(?:\d+(?:\.\d+)?|\.\d+)$/;
+
+/**
+ * 部品の値の綴りを見て、**読めない・取り違えうる**なら断る理由を返す (無ければ null)。
+ * breadboard と perfboard が同じ物を見る (直下の CLAUDE.md の文法の方針 1)。
+ *
+ * - **抵抗**: 読めない値 (`whatever`、許容差が 2 つ) と色帯の無い値 (`10k 3%`) は断る。
+ *   以前は既定の帯 (茶黒黒金) を黙って描いていた。素の数 (`330`) は Ω に決まるので受ける
+ * - **コンデンサ・インダクタ**: 頭の語が素の数なら断る (`47` は pF とも F とも読める)。
+ *   頭が数でない語 (`電解`) はラベルとして受ける — 数として読んでいないので取り違えは無い
+ */
+export function partValueProblem(type: string, value: string | null): string | null {
+  if (value === null || value.trim() === '') return null;
+  if (type === 'resistor') return resistorValueProblem(value);
+  const head = value.trim().split(/\s+/)[0] ?? '';
+  if (!BARE_NUMBER.test(head)) return null;
+  if (type === 'capacitor') return `容量に接頭辞がありません: ${head} (${CAPACITOR_HINT})`;
+  if (type === 'inductor') return `インダクタンスに接頭辞がありません: ${head} (${INDUCTOR_HINT})`;
+  return null;
+}
+
+function resistorValueProblem(value: string): string | null {
+  const read = parseResistor(value);
+  if (read === null) {
+    const [head = '', ...rest] = value.trim().split(/\s+/);
+    // 値は読めて、うしろの語 (許容差・温度係数) が読めないなら、そちらを言う。
+    if (parseOhms(head) !== null) {
+      return `抵抗値のうしろが読めません: ${rest.join(' ')} (許容差と温度係数は 1 つずつ。${RESISTOR_HINT})`;
+    }
+    return `抵抗値として読めません: ${head} (${RESISTOR_HINT})`;
+  }
+  if (read.tolerance !== undefined && TOLERANCE_COLORS[read.tolerance] === undefined) {
+    return `許容差 ${read.tolerance}% の色帯はありません (書けるのは ${TOLERANCE_WORDS} %)`;
+  }
+  if (read.tempco !== undefined && TEMPCO_COLORS[read.tempco] === undefined) {
+    return `温度係数 ${read.tempco}ppm の色帯はありません (書けるのは ${TEMPCO_WORDS} ppm)`;
+  }
+  if (resistorBands(read.ohms, read) === null) {
+    return `抵抗値 ${value.trim()} は色帯で書けません (${RESISTOR_HINT})`;
+  }
+  return null;
+}
 
 /**
  * 周波数の読み書き。**vna と copper の 2 つが同じ物を持っていた**ので、綴りの

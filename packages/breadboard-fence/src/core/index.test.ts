@@ -737,7 +737,8 @@ describe('renderBreadboard', () => {
 
   test('cuts a caption that would run off the canvas, and marks where it cut', () => {
     const value = 'あ'.repeat(60);
-    const { svg } = renderBreadboard(`parts:\n  R1: resistor a25 a30 ${value}\n`);
+    // 抵抗の値は読めないと断るので、字のまま受けるコンデンサの値で試す。
+    const { svg } = renderBreadboard(`parts:\n  R1: capacitor a25 a30 ${value}\n`);
     const width = Number(/viewBox="0 0 ([\d.]+)/.exec(svg)?.[1]);
     const [, x = '', size = '', text = ''] = caption(svg, 'R1 ') ?? [];
     // キャプションは部品の中心に置くので、使えるのは近いほうの端までの倍。

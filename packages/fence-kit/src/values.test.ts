@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   capacitorCode, inductorCode, parseMicrohenries, parseOhms, parsePicofarads, parseResistor,
-  resistorBandColors, resistorBands,
+  partValueProblem, resistorBandColors, resistorBands,
 } from './values.ts';
 
 describe('parseOhms', () => {
@@ -81,7 +81,7 @@ describe('resistorBands', () => {
   });
 
   test('answers null for a value no colour code can carry', () => {
-    for (const ohms of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+    for (const ohms of [-1, Number.NaN, Number.POSITIVE_INFINITY]) {
       expect(resistorBands(ohms)).toBeNull();
     }
   });
@@ -148,7 +148,9 @@ describe('インダクタの 3 桁コード', () => {
     expect(parseMicrohenries('100u')).toBe(100);
     expect(parseMicrohenries('10m')).toBe(10000);
     expect(parseMicrohenries('4u7')).toBe(4.7);
-    expect(parseMicrohenries('470')).toBe(470);
+    // **素の数は読まない** — µH のつもりか H のつもりか決まらない (文法の方針 1)。
+    expect(parseMicrohenries('470')).toBeNull();
+    expect(parseMicrohenries('10mH')).toBe(10000);
   });
 
   test('writes the code in microhenries, the way the part is printed', () => {
@@ -159,5 +161,54 @@ describe('インダクタの 3 桁コード', () => {
 
   test('answers null below ten, where the part prints the value itself', () => {
     expect(inductorCode(4.7)).toBeNull();
+  });
+});
+
+describe('partValueProblem — 読めない値を既定で埋めない', () => {
+  test('accepts the spellings each part is written with', () => {
+    for (const value of ['330', '4k7', '1M', '10k 5%', '4k99 0.5%', '10k 1% 50ppm', '1R', '220Ω']) {
+      expect(partValueProblem('resistor', value)).toBeNull();
+    }
+    for (const value of ['100n', '47p', '10u', '4n7', '100nF', '100u 16V', '電解']) {
+      expect(partValueProblem('capacitor', value)).toBeNull();
+    }
+    for (const value of ['100u', '10m', '4u7', '10mH']) expect(partValueProblem('inductor', value)).toBeNull();
+  });
+
+  test('says nothing when no value is written', () => {
+    expect(partValueProblem('resistor', null)).toBeNull();
+    expect(partValueProblem('capacitor', null)).toBeNull();
+  });
+
+  test('refuses a resistor value it cannot read, instead of drawing the default bands', () => {
+    for (const value of ['whatever', '10k 1% 2%', '10k 50ppm 100ppm', '10k 1/4W']) {
+      expect(partValueProblem('resistor', value)).toMatch(/330 \/ 4k7 \/ 1M \/ 10k 5%/);
+    }
+  });
+
+  test('refuses a resistor value that has no colour code', () => {
+    // 3% の帯の色は無い。既定の帯にすり替えると、図を信じた人を間違えさせる。
+    expect(partValueProblem('resistor', '10k 3%')).toMatch(/3%/);
+    expect(partValueProblem('resistor', '10k 30ppm')).toMatch(/30ppm/);
+  });
+
+  test('refuses a bare number for a capacitor or an inductor', () => {
+    // 素の数は pF か F か µH か H か決まらない (circuit は F、bread と perf は pF だった)。
+    for (const value of ['47', '0.1', '104', '100 16V']) {
+      expect(partValueProblem('capacitor', value)).toMatch(/100n \/ 47p \/ 10u/);
+    }
+    for (const value of ['1', '470']) expect(partValueProblem('inductor', value)).toMatch(/100u \/ 10m/);
+  });
+
+  test('draws a zero-ohm jumper with its single black band, and refuses a tolerance on it', () => {
+    // 0Ω の実物は黒の帯 1 本。以前は既定の帯 (茶黒黒金 = 10Ω) に黙ってすり替えていた。
+    expect(resistorBands(0)).toEqual(['black']);
+    expect(partValueProblem('resistor', '0')).toBeNull();
+    expect(partValueProblem('resistor', '0 1%')).not.toBeNull();
+  });
+
+  test('leaves the other parts alone', () => {
+    expect(partValueProblem('led', 'red')).toBeNull();
+    expect(partValueProblem('potentiometer', '10k B')).toBeNull();
   });
 });

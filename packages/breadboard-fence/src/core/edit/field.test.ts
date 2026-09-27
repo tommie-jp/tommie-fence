@@ -36,8 +36,10 @@ describe('partFields', () => {
 
 describe('setField', () => {
   test('changes the type in place, leaving the holes and the value', () => {
-    expect(after(LED, setField(LED, 'R1', 'type', 'capacitor')))
-      .toContain('R1: capacitor a5 a10 330');
+    // 値 (330) が読める種類へ。**素の数は抵抗の Ω にしか読まない**ので、
+    // capacitor へ替えると読めない行になる (文法の方針 1)。
+    expect(after(LED, setField(LED, 'R1', 'type', 'resistor/half')))
+      .toContain('R1: resistor/half a5 a10 330');
   });
 
   test('refuses a type the grammar cannot read', () => {
@@ -131,8 +133,8 @@ describe('setField on parts written in flow style', () => {
   });
 
   test('changes the type of the part it names, not the key of the map', () => {
-    expect(after(FLOW, setField(FLOW, 'R1', 'type', 'capacitor')))
-      .toBe('board: half\nparts: {R1: capacitor a5 a10 330, D1: led b12 b13 red}\n');
+    expect(after(FLOW, setField(FLOW, 'R1', 'type', 'resistor/half')))
+      .toBe('board: half\nparts: {R1: resistor/half a5 a10 330, D1: led b12 b13 red}\n');
   });
 
   test('adds a label inside the braces', () => {
@@ -174,17 +176,18 @@ describe('setField on a line with a comment after it', () => {
 describe('setField refuses what it cannot write back cleanly', () => {
   test('finds a key written with a space before the colon, or in quotes', () => {
     const spaced = 'board: half\nparts: {R1 : resistor a5 a10 330, D1: led b12 b13 red}\n';
-    expect(after(spaced, setField(spaced, 'R1', 'type', 'capacitor')))
-      .toBe('board: half\nparts: {R1 : capacitor a5 a10 330, D1: led b12 b13 red}\n');
+    expect(after(spaced, setField(spaced, 'R1', 'type', 'resistor/half')))
+      .toBe('board: half\nparts: {R1 : resistor/half a5 a10 330, D1: led b12 b13 red}\n');
     const quoted = 'board: half\nparts: {R1: resistor a5 a10 330, "D1": led b12 b13 red}\n';
     expect(after(quoted, setField(quoted, 'D1', 'value', 'blue')))
       .toBe('board: half\nparts: {R1: resistor a5 a10 330, "D1": led b12 b13 blue}\n');
   });
 
   test("does not swallow the next part after a ' in the middle of a value", () => {
-    const source = "board: half\nparts: {R1: resistor a5 a10 'x, D1: led b12 b13 red}\n";
-    expect(after(source, setField(source, 'R1', 'value', '1k')))
-      .toBe('board: half\nparts: {R1: resistor a5 a10 1k, D1: led b12 b13 red}\n');
+    // 抵抗の値は読めないと断るので、字のまま受けるコンデンサで試す。
+    const source = "board: half\nparts: {C1: capacitor a5 a8 'x, D1: led b12 b13 red}\n";
+    expect(after(source, setField(source, 'C1', 'value', '100n')))
+      .toBe('board: half\nparts: {C1: capacitor a5 a8 100n, D1: led b12 b13 red}\n');
   });
 
   test('does not take a key inside the quotes of another part', () => {

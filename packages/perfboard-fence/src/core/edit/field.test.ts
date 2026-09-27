@@ -141,9 +141,10 @@ describe('setField refuses what it cannot write back cleanly', () => {
   });
 
   test("does not swallow the next part after a ' in the middle of a value", () => {
-    const source = "board: 12x7\nparts: {R1: resistor b2 b6 'x, C1: capacitor b8 b11}\n";
-    expect(after(source, setField(source, 'R1', 'value', '1k')))
-      .toBe('board: 12x7\nparts: {R1: resistor b2 b6 1k, C1: capacitor b8 b11}\n');
+    // 抵抗の値は読めないと断るので、字のまま受けるコンデンサで試す。
+    const source = "board: 12x7\nparts: {C2: capacitor b2 b6 'x, C1: capacitor b8 b11}\n";
+    expect(after(source, setField(source, 'C2', 'value', '100n')))
+      .toBe('board: 12x7\nparts: {C2: capacitor b2 b6 100n, C1: capacitor b8 b11}\n');
   });
 
   test('refuses a part that goes on to the next line', () => {

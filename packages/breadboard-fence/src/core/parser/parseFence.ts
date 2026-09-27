@@ -10,7 +10,7 @@ import type {
   BoardSpec, FenceDocument, FenceError, NoteSpec, PartSpec, PartsListMode, Result, StyleSpec, WireSpec,
 } from '../types.ts';
 import { splitPartType } from '../parts/variants.ts';
-import { rememberRecent } from 'fence-kit';
+import { partValueProblem, rememberRecent } from 'fence-kit';
 import { parseCompactPart, parseHoleToken, parseWireSpec } from './compact.ts';
 import { parseNoteLine } from './notes.ts';
 import {
@@ -475,6 +475,11 @@ function expandPart(id: string, raw: unknown, line: number) {
   const { at, label, value, pins, holes, turn } = validated.value;
   const { type, variant, problem } = splitPartType(validated.value.type);
   if (problem) return { ok: false as const, error: fenceError(`部品 ${safeToken(id)}: ${problem}`, line) };
+  // **読めない値を既定で埋めない** (1 行の記法と同じ所で断る)。
+  const refused = partValueProblem(type, value);
+  if (refused !== null) {
+    return { ok: false as const, error: fenceError(`部品 ${safeToken(id)}: ${refused}`, line, value ?? undefined) };
+  }
   return {
     ok: true as const,
     value: {

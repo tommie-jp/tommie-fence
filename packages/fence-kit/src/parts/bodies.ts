@@ -94,15 +94,17 @@ function resistorBody(part: BodyPart, span: number, ink: BodyInk): string {
   const width = Math.min(span * 0.6, 38) * resistorScale(part);
   const half = 6.5 * resistorScale(part);
   // 値のうしろに許容差と温度係数を書ける (`10k 1% 50ppm`)。帯の本数はそれで決まる。
+  // **読めない値は既定の帯で埋めない** — フェンスが読む所で断る (`partValueProblem`)。
+  // ここに来て帯が決まらないなら帯を描かない。値を書かなかったときだけ既定の帯。
   const read = part.value ? parseResistor(part.value) : null;
-  const bands = (read === null
-    ? null
-    : resistorBands(read.ohms, { tolerance: read.tolerance, tempco: read.tempco }))
-    ?? ['brown', 'black', 'black', 'gold'];
+  const bands = part.value
+    ? (read === null ? null : resistorBands(read.ohms, { tolerance: read.tolerance, tempco: read.tempco })) ?? []
+    : ['brown', 'black', 'black', 'gold'];
   // **帯は胴からはみ出さない。** 隣り合う穴に挿した抵抗は胴が短く、間隔を
   // 決め打つと帯が板の地や隣の穴の上に乗る。入りきらないときは**間隔と幅を
   // 一緒に詰める** — 隙間だけ詰めると 2 色が 1 本に見え、読み違いになる。
-  const start = -width / 4;
+  // 帯が 1 本 (0Ω のジャンパ) なら胴の真ん中に。
+  const start = bands.length === 1 ? -BAND_WIDTH / 2 : -width / 4;
   const room = Math.max(width / 2 - BAND_EDGE - start, 1);
   const needed = (bands.length - 1) * (width / 5) + BAND_WIDTH;
   const fit = needed > room ? room / needed : 1;

@@ -75,7 +75,8 @@ describe('カラーコード', () => {
 
   test('says nothing for a value no multiplier reaches', () => {
     expect(resistorBands(1e30)).toBeNull();
-    expect(resistorBands(0)).toBeNull();
+    // 0Ω は乗数ではなく黒 1 本 (ジャンパ)。
+    expect(resistorBands(0)).toEqual(['black']);
   });
 });
 
@@ -93,7 +94,9 @@ describe('コンデンサ', () => {
   test('reads the plain and the infix forms', () => {
     expect(parsePicofarads('100n')).toBe(100_000);
     expect(parsePicofarads('4u7')).toBe(4_700_000);
-    expect(parsePicofarads('47')).toBe(47);
+    // **素の数は読まない** — pF のつもりか F のつもりか決まらない (文法の方針 1)。
+    expect(parsePicofarads('47')).toBeNull();
+    expect(parsePicofarads('47p')).toBe(47);
   });
 
   test('says nothing for what it cannot read, or for nothing at all', () => {

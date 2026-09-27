@@ -5,8 +5,18 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **`parsePicofarads` と `parseMicrohenries` は素の数 (`47` `470`) を読まない** (null)。接頭辞か
+  単位 (`47p` `47pF` `100u` `10mH`) が要る。今までは pF・µH で読んでいた。
+- **`resistorBands(0)` は黒 1 本** (0Ω のジャンパ)。今までは null。
+- **部品の胴は、書いてあって読めない抵抗値を既定の帯で埋めない** (帯を描かない)。読めない値は
+  フェンスの側で断る。値を書かなかった抵抗だけ既定の帯。
+
 ### Added
 
+- **`partValueProblem(type, value)`** — breadboard と perfboard が部品の値を断る理由
+  (読めない抵抗値・色の無い許容差と温度係数・コンデンサとインダクタの素の数)。直し方の例を添える。
 - **周波数の読み書き** (`parseHertz` `formatHertz` `formatHertzShort` `hertzUnit`)。
   vna と copper が同じ物を持っていたので引き上げた。接頭辞は `k` `M` `G`、単位は `Hz`
   だけ。素の数も受ける (単位の無い数を断る欄は呼ぶ側が先に断る)。

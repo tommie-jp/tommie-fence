@@ -83,6 +83,7 @@ node <root>/packages/circuit-fence/scripts/figures.mjs <file.md> <tmp>
 | 足に名前のある DIP 型 (`relay` `photocoupler` `seg7`) | 多端子部品と同じ。足は名前でも DIP の番号でも (`K1.COM1` = `K1.4`) | DIP と同じ置き方。**7 セグだけ列の間が 6 穴**で、`@ b5`〜`@ e5` か `@ f5`〜`@ i5` (リレーとフォトカプラは e / f だけ)。1 番は下の列 | DIP と同じ (`relay c3`)。1 番は下の列。板からはみ出すと断られる |
 | ERC | `check` だけが掛ける (`render` は掛けない)。DIP・SIP・機器・リレーなどの使わない足は言わない | 無い | `check` と `render` の両方に出る |
 | 面実装 | 無い。記号はパッケージに依らず、型番 1 語だけ書ける (`Q1: npn b3 2SC2712`)。`npn/sot346` も `2SC2712 S-Mini` も読めない | 変換基板に載せた姿だけ (`transistor/sot346-dip f3 f4 f5`、`dip8/sop @ e5`)。直付けの `transistor/sot346` は書き直し先を添えて断られる | 変換基板 (`-dip`、`dip8/sop b7`) と直付け (`transistor/sot346 d2 d3 c3` は三角、`resistor/2012 f2 f3` は隣の穴)。S-Mini は `sot346` |
+| 部品の値の数 | (circuit は下の段) | **素の数は抵抗だけ** (`330` = 330Ω)。C・L は接頭辞が要る (`47p` `100n` `10u` / `100u` `10m`。`47` は断られる)。読めない抵抗値 (`whatever` `10k 1% 2%`、色の無い `10k 3%`) も断られる。0Ω は `0` (黒 1 本) | breadboard と同じ |
 | 板の外の機器 | `type: device` + `at: 番地` + `pins: [名前, …]` (**箱の片側に足**。`label` は箱の中の名前、`turn: mirror` で足が右)。1 行では書けない | `type: device` + `at: top` / `bottom` (帯に並ぶ) | `at: top` / `bottom` か番地。**番地は箱の左上**で、板の上なら `-b` 行より上 (`-a` や `0` は箱が板に被り、お知らせが出る) |
 
 copper (銅張り基板) は**位置が穴ではなく mm** で、上の表の書き方はほぼ当てはまらない:

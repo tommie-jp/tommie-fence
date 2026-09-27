@@ -5,7 +5,7 @@ import { footprintOf } from '../parts/footprint.ts';
 import { MIRROR_REFUSAL, MIRROR_WORD, NO_TURN, isTurned, orientOf, refusesMirror, rotationOf } from '../parts/orient.ts';
 import type { Turn } from '../parts/orient.ts';
 import { isNestedType, placeableNames, splitPartType } from '../parts/types.ts';
-import { lookupConnector } from 'fence-kit';
+import { lookupConnector, partValueProblem } from 'fence-kit';
 import type { FenceError, PartSpec } from '../types.ts';
 
 export type Parsed<T> =
@@ -159,6 +159,9 @@ export function parsePartLine(id: string, line: string): Parsed<WrittenPart> {
     return fail(`${safeToken(written)} が書く穴は ${count}。余分な番地: ${safeToken(stray)}`, stray);
   }
   const value = tail.join(' ');
+  // **読めない値を既定で埋めない** (直下の CLAUDE.md の文法の方針 1)。
+  const refused = partValueProblem(type, value);
+  if (refused !== null) return fail(refused, tail[0]);
   return {
     ok: true,
     value: { id, type, variant, written, holes, value: value === '' ? null : value, turn },

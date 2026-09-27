@@ -22,7 +22,7 @@ export { escapeMarkup, element } from './markup.ts';
 export { BOLD_FAMILY, num, svgText, TEXT_HALO_WIDTH } from './svg.ts';
 export {
   DEFAULT_TOLERANCE, capacitorCode, formatHertz, formatHertzShort, hertzUnit, inductorCode, parseHertz,
-  parseMicrohenries, parseOhms, parsePicofarads, parseResistor, resistorBandColors, resistorBands,
+  parseMicrohenries, parseOhms, parsePicofarads, parseResistor, partValueProblem, resistorBandColors, resistorBands,
 } from './values.ts';
 export {
   MONO_FAMILY, MONO_WIDEN, monoBandHeight, monoBaseline, monoLinesSize, monoTableLines, monoTableSize, monoText,

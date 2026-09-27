@@ -1,3 +1,4 @@
+import { partValueProblem } from 'fence-kit';
 import { fail, ok, safeToken } from '../errors.ts';
 import { LIMITS, clampText } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
@@ -126,6 +127,9 @@ export function parseCompactPart(
   }
 
   const value = words.join(' ');
+  // **読めない値を既定で埋めない** (直下の CLAUDE.md の文法の方針 1)。
+  const refused = partValueProblem(type, value);
+  if (refused !== null) return fail(`部品 ${safeToken(id)}: ${refused}`, line, words[0]);
 
   return ok({
     ...base,
