@@ -8,7 +8,7 @@ import { noteBands, notesBottom, outsideNotesHeight, renderNotes, renderOutsideN
 import type { ResolvedNote } from './notes.ts';
 import { renderHits } from './hits.ts';
 import { renderPart } from './parts.ts';
-import { CAPTION_CLASS } from './partCommon.ts';
+import { CAPTION_CLASS, uprightBodyRectOf } from './partCommon.ts';
 import { partsListHeight, renderPartsList } from './partsList.ts';
 import { element, num, roundedPath, svgText } from './svg.ts';
 import type { RenderStyle } from './theme.ts';
@@ -95,9 +95,13 @@ export function renderDocument(input: DocumentInput): string {
     input.parts, layout, theme,
     noteBands(input.notes, theme, input.sourceLines ?? []),
   );
-  // 板の印字 (列番号) を伏せる帯。名札が乗る所だけ。
+  // 板の印字 (列番号) を伏せる帯。名札と、縦に立てた 2 本足の胴が乗る所
+  // (縦に立てた胴は番号の行を横切り、胴の下から番号の欠片が覗く)。
   const covered = input.parts
-    .map((part) => captionBandOf(part, layout, theme, drops.get(part.id) ?? 0))
+    .flatMap((part) => [
+      captionBandOf(part, layout, theme, drops.get(part.id) ?? 0),
+      uprightBodyRectOf(part, layout),
+    ])
     .filter((band): band is Rect => band !== null);
   // 穴を伏せる帯。名札の字の下だけ (`captionTextBandOf`)。
   const lettered = input.parts

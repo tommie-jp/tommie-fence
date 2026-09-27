@@ -189,6 +189,47 @@ describe('名札は胴の外', () => {
 });
 
 
+/**
+ * 縦に立てた部品の名札も胴の外。**胴は足の向きに長い**ので、立てると
+ * 中心から下へ「長さの半分」伸びる。厚みだけで測っていたころは、a〜e 行に立てた
+ * 抵抗の名札が一番下の色の帯に乗り、レールと a 行の間の抵抗 (教科書の 30 dB
+ * パッドの図) では縁取りが胴の下端を削っていた。
+ */
+describe('縦に立てた部品の名札も胴の外', () => {
+  const labelBaselineOf = (svg: string, id: string): number =>
+    Number(new RegExp(`<text x="[\\d.]+" y="([\\d.]+)"[^>]*>${id}`).exec(svg)?.[1] ?? NaN);
+  const capOf = (): number => theme.metrics.textSize * 0.72;
+
+  const cases: readonly string[] = [
+    'R1: resistor a5 e5 10k', 'R2: resistor a5 -t5 3.3', 'R3: resistor d5 h5 47',
+    'R4: resistor/half a5 e5', 'C1: capacitor/electrolytic a5 e5', 'D1: diode a5 e5',
+  ];
+
+  for (const line of cases) {
+    test(`keeps the label below the bottom of an upright body: ${line.split(':')[1]?.trim()}`, () => {
+      const part = place(line);
+      const from = layout.point(part.pins[0]!.address!);
+      const to = layout.point(part.pins[1]!.address!);
+      const span = Math.hypot(to.x - from.x, to.y - from.y);
+      const bottom = (from.y + to.y) / 2 + bodySize(part, span).width / 2;
+      const baseline = labelBaselineOf(renderPart(part, layout, theme), part.id);
+
+      expect(baseline - capOf()).toBeGreaterThan(bottom);
+    });
+  }
+
+  test('leaves a horizontal part where it was', () => {
+    // 横は厚みで測る今までの式のまま。横の図が 1 px も動かないこと。
+    const part = place('R1: resistor b5 b10 1k');
+    const centre = layout.point(part.pins[0]!.address!);
+    const baseline = labelBaselineOf(renderPart(part, layout, theme), part.id);
+
+    const half = bodySize(part, 5 * layout.pitch).height / 2;
+
+    expect(baseline).toBeCloseTo(centre.y + Math.max(18, half + 4 + capOf()), 5);
+  });
+});
+
 describe('マイコンボードの名前', () => {
   test('keeps the name below the board, clear of the pin names written inside it', () => {
     // 基板の中に置いていたころは、長い足の名前 (`ADC_VREF 35`) と食い合っていた

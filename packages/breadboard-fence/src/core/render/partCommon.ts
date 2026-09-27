@@ -1,6 +1,6 @@
 import { bodySize } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
-import type { PlacedPart, Point } from '../types.ts';
+import type { PlacedPart, Point, Rect } from '../types.ts';
 import { TEXT_HALO_WIDTH, num, svgText } from './svg.ts';
 import { fit } from './textFit.ts';
 import type { TextOptions } from './svg.ts';
@@ -78,6 +78,48 @@ function bodyHeightOf(part: PlacedPart, layout: Layout): number {
   return bodySize(part, Math.hypot(to.x - from.x, to.y - from.y)).height;
 }
 
+/**
+ * 2 本足の胴が図の上で占める外枠 (傾いた胴を囲む縦横の矩形)。板の印字を伏せるのと、
+ * 名札の高さを決めるのにも使う。2 本足でなければ `null`。
+ */
+function twoLeadBodyRectOf(part: PlacedPart, layout: Layout): Rect | null {
+  const [first, second] = part.pins;
+  if (part.kind !== 'two-lead' || !first?.address || !second?.address) return null;
+  const from = layout.point(first.address);
+  const to = layout.point(second.address);
+  const span = Math.hypot(to.x - from.x, to.y - from.y);
+  if (span === 0) return null;
+  const size = bodySize(part, span);
+  const sin = Math.abs(to.y - from.y) / span;
+  const cos = Math.abs(to.x - from.x) / span;
+  const width = size.width * cos + size.height * sin;
+  const height = size.width * sin + size.height * cos;
+  const centre = midpoint(from, to);
+  return { x: centre.x - width / 2, y: centre.y - height / 2, width, height };
+}
+
+/**
+ * 縦に立てた (横より縦に長く傾いた) 2 本足の胴の外枠。**列番号を伏せるのはこれだけ** —
+ * 横に寝た胴は穴の行に乗るので番号の行に届かない。背の高い横の胴 (電解コンデンサ) は
+ * 番号の判定枠 (字の下に少し余白を持つ) にわずかに触れるが、見た目は離れていて伏せる理由がない。
+ */
+export function uprightBodyRectOf(part: PlacedPart, layout: Layout): Rect | null {
+  const [first, second] = part.pins;
+  if (!first?.address || !second?.address) return null;
+  const from = layout.point(first.address);
+  const to = layout.point(second.address);
+  return Math.abs(to.y - from.y) > Math.abs(to.x - from.x) ? twoLeadBodyRectOf(part, layout) : null;
+}
+
+/**
+ * 胴が中心から**下へ**どれだけ伸びるか。横 (傾き 0) なら厚みの半分で今までと同じ値、
+ * **縦に立てれば長さの半分** — 厚みだけで測ると、立てた抵抗の名札が下の色の帯に乗る。
+ */
+function bodyDropOf(part: PlacedPart, layout: Layout): number {
+  const rect = twoLeadBodyRectOf(part, layout);
+  return rect === null ? bodyHeightOf(part, layout) / 2 : rect.height / 2;
+}
+
 /** 胴と名札のあいだに空ける隙間。 */
 export const CAPTION_CLEAR = 4;
 
@@ -89,19 +131,19 @@ const capHeight = (theme: RenderTheme): number => theme.metrics.textSize * 0.72;
  * ブロックで名前の出る側が変わり、同じ図の中で揃わなかった
  * (実機で「すべての部品名は部品の下側に表示する」)。
  *
- * **胴の高さから測る。** 決め打ちの距離だと、背の高い胴 (円板のバリスタや
+ * **胴の下端から測る。** 決め打ちの距離だと、背の高い胴 (円板のバリスタや
  * CdS、箱のヒューズ・電池・太陽電池・スイッチ、砲弾のダイオード) に字が乗る
  * (実機で「文字と図形が被らないように文字をずらす」と 18 種類を並べて言われた)。
  * **姿もそのまま効く** — 胴の寸法は `bodySize` が姿ごとに持っているので、
  * `capacitor/electrolytic` のように姿で背の伸びる部品も一緒に逃げる。
+ * 縦に立てた部品は胴の長さが下へ伸びるので、それも数える (`bodyDropOf`)。
  *
  * 下に置くときは**字の高さも足す** — 基準線は字の下端なので、隙間だけ足すと
  * 字の頭が胴に食い込む。
  */
 export function labelYOf(part: PlacedPart, center: Point, layout: Layout, theme: RenderTheme): number {
   if (OVER_AXIS_TYPES.has(part.type)) return center.y + bodyHeightOf(part, layout);
-  const half = bodyHeightOf(part, layout) / 2;
-  return center.y + Math.max(CAPTION_DROP, half + CAPTION_CLEAR + capHeight(theme));
+  return center.y + Math.max(CAPTION_DROP, bodyDropOf(part, layout) + CAPTION_CLEAR + capHeight(theme));
 }
 
 /** 板と穴の上に載る部品の字。縁取りを敷いて、下の穴に食われないようにする。 */
