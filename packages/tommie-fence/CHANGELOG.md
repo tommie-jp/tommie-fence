@@ -3,6 +3,19 @@
 書き方は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、
 版のつけ方は [Semantic Versioning](https://semver.org/lang/ja/) に従う。
 
+## [0.16.1] - 2026-09-28
+
+circuit-fence 0.14.1 を束ねた。
+
+### Changed
+
+- circuit: **電流の矢 (`i=`) と、矢で描く電圧 (european / jis) を 4 分の 3 に縮めた**。
+  矢が字より目立ちすぎた。
+
+### Fixed
+
+- circuit: **縦に置いた LED の値が光の矢に食い込んで見えた**。値を矢の先からさらに 0.2 cm 外に置く。
+
 ## [0.16.0] - 2026-09-28
 
 circuit-fence 0.14.0 / breadboard-fence 0.14.0 / perfboard-fence 0.12.0 /
