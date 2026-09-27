@@ -31,6 +31,13 @@ export {
 } from './mono.ts';
 export type { MonoBand, MonoSize, MonoSpacing } from './mono.ts';
 export {
+  formatDegrees, formatHertzReading, formatPercent, formatPerDiv, formatSeconds, formatVolts,
+  parseDegrees, parsePerDiv, parsePercent, parseSeconds, parseVolts,
+} from './units.ts';
+export type { Amplitude, AmplitudeKind } from './units.ts';
+export { WAVE_SHAPES, parseWave, periodOf, sampleWave } from './wave.ts';
+export type { SpectralLine, WaveRead, WaveShape, WaveSpec } from './wave.ts';
+export {
   BAND_COLORS, LED_COLORS, WIRE_COLORS, DEFAULT_LED_COLOR, DEFAULT_WIRE_COLOR,
   bandColor, ledColor, wireColor, wireColorNames,
 } from './colors.ts';

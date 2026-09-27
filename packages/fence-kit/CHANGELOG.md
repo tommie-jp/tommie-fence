@@ -14,6 +14,11 @@
   perfboard・copper・vna が同じ組み方を写して持っていた。行送りと余白は `MonoSpacing` で渡す。
 - **`data:` の読み口** (`fence-kit/cli` の `readNeighbor`)。vna が持っていた物。
   シンボリックリンクを辿らず、通常のファイルだけを、上限まで読む。
+- **計器の画面の単位** (`units.ts` — `parseVolts` `parseSeconds` `parseDegrees` `parsePercent`
+  `parsePerDiv` と `format*`)。**単位の無い数は読まない**。`-10dBm` は 50 Ω の正弦の peak に直す。
+- **波形発生器の波** (`wave.ts` — `parseWave` `sampleWave` `periodOf`)。`sine 1kHz 1V offset 1V`。
+  振幅は peak (`2Vpp` は半分、`Vrms` は sine だけ)。scope と spectrum が同じ綴りで使う
+  (spectrum の線スペクトル `linesOf` は型 `SpectralLine` だけ先に置いた)。
 
 ## [0.1.0] - 2026-09-23
 
