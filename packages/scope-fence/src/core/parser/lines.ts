@@ -1,4 +1,5 @@
 import { formatHertzShort, isBareNumber, parseSeconds, parseVolts, parseWave } from 'fence-kit';
+import { safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { CHANNEL_NAMES } from '../model/channel.ts';
 import type { ChannelName, ChannelSource } from '../model/channel.ts';
@@ -207,7 +208,7 @@ export function parseTriggerLine(text: string): LineResult<TriggerLine> {
   if (level === undefined) return ok({ source, edge, level: null });
   const volts = plainVolts(level);
   if (volts === null) {
-    return fail(isBareNumber(level) ? 'trigger: の水準は 1V / -500mV のように単位を付けます' : `trigger: の水準が読めません: ${level} (1V / -500mV)`, level);
+    return fail(isBareNumber(level) ? 'trigger: の水準は 1V / -500mV のように単位を付けます' : `trigger: の水準が読めません: ${safeToken(level)} (1V / -500mV)`, level);
   }
   return ok({ source, edge, level: volts });
 }

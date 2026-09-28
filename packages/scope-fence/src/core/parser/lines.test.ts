@@ -107,6 +107,13 @@ describe('parseTriggerLine', () => {
   ])('refuses %s', (text, message, token) => {
     expect(parseTriggerLine(text)).toEqual({ ok: false, error: { message, line: null, token } });
   });
+
+  test('does not put a raw unreadable level into the message (control characters could forge terminal output)', () => {
+    const result = parseTriggerLine('ch1 rising \x1b[31mFAKE');
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).not.toContain('\x1b');
+    expect(!result.ok && result.error.message).toContain('FAKE');
+  });
 });
 
 describe('parseCursor / parseMeasureNames / parsePosition', () => {
