@@ -32,7 +32,7 @@ wires:
   - AD2.V+ -- +t2 red
   - AD2.V- -- +b2 orange
   - AD2.GND -- -b4 black
-  - -b30 -- -t30 black
+  - -b1 -- -t1 black
   - a5 -- +t5 red
   - j8 -- +b8 orange
   # バッファ: 2 回路をフォロワにして 1Ω 2 本で並列合流
@@ -50,7 +50,7 @@ wires:
   # 2 次側: N2 → RC 積分 → GND。C の電圧を CH2 で見る
   - T1.N2a -- a23 green
   - T1.N2b -- -t26 black
-  - a30 -- -t29 black
+  - a30 -- -t30 black
   - AD2.2+ -- e27 blue
   - AD2.2- -- -b26 blue
 notes:

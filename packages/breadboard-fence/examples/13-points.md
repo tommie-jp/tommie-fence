@@ -54,7 +54,8 @@ parts:
 wires:
   - +t5 -- b5 red
   - b10 -- b14 -- b21 orange
-  - -t17 -- b17 -- b24 black
+  - -t17 -- b17 black
+  - -t24 -- b24 black
 notes:
   - source blue
 ```
