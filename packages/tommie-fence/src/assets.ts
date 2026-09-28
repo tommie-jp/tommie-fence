@@ -17,6 +17,7 @@ export const ASSETS: readonly (readonly [string, string])[] = [
   ['../vna-fence/media/vna.css', 'media/vna.css'],
   ['../scope-fence/media/scope.css', 'media/scope.css'],
   ['../spectrum-fence/media/spectrum.css', 'media/spectrum.css'],
+  ['../graph-fence/media/graph.css', 'media/graph.css'],
   ['../circuit-fence/syntaxes/circuit-injection.json', 'syntaxes/circuit-injection.json'],
   ['../breadboard-fence/syntaxes/breadboard-injection.json', 'syntaxes/breadboard-injection.json'],
   ['../perfboard-fence/syntaxes/perfboard-injection.json', 'syntaxes/perfboard-injection.json'],
@@ -24,4 +25,5 @@ export const ASSETS: readonly (readonly [string, string])[] = [
   ['../vna-fence/syntaxes/vna-injection.json', 'syntaxes/vna-injection.json'],
   ['../scope-fence/syntaxes/scope-injection.json', 'syntaxes/scope-injection.json'],
   ['../spectrum-fence/syntaxes/spectrum-injection.json', 'syntaxes/spectrum-injection.json'],
+  ['../graph-fence/syntaxes/graph-injection.json', 'syntaxes/graph-injection.json'],
 ];

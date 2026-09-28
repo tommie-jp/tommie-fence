@@ -13,6 +13,7 @@
 | vna | 測る物 5 本 + わざと壊した例 1 本 | [packages/vna-fence/examples/](../packages/vna-fence/examples/README.md) |
 | scope | 画面 5 本 + わざと壊した例 1 本 | [packages/scope-fence/examples/](../packages/scope-fence/examples/README.md) |
 | spectrum | 画面 6 本 + わざと壊した例 1 本 | [packages/spectrum-fence/examples/](../packages/spectrum-fence/examples/README.md) |
+| graph | グラフ 5 本 + わざと壊した例 1 本 | [packages/graph-fence/examples/](../packages/graph-fence/examples/README.md) |
 
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。
@@ -228,6 +229,25 @@ FFT 型 (Analog Discovery の Spectrum) と掃引型 (tinySA) を `device:` で�
 - [03-windows.md](../packages/spectrum-fence/examples/03-windows.md) — 窓関数 (rect / hann / flattop)
 - [04-two-paths.md](../packages/spectrum-fence/examples/04-two-paths.md) — FFT 型と掃引型で同じ dBm になる
 - [05-antenna.md](../packages/spectrum-fence/examples/05-antenna.md) — アンテナで受けた FM 放送帯 (`data:` で実測を重ねる)
+
+## graph — 教科書のグラフ
+
+計器の画面ではなく、値を集めて描く図。線は `x` の式か表の点 (破線)、測った CSV は ○ で打ち
+線で結ばない。単位の違う線は横軸を共有して縦に積んだ枠に置く。
+
+### 共振曲線
+
+[![共振曲線](../packages/graph-fence/examples/out/00-resonance.png)](../packages/graph-fence/examples/00-resonance.md)
+
+発生器の出力抵抗が 50 Ω とほぼ 0 Ω のときの直列共振の電流。mark は 15.9 kHz で 17.6 / 24.9 mA を読む
+([00-resonance.md](../packages/graph-fence/examples/00-resonance.md))。
+
+### そのほか
+
+- [01-bode.md](../packages/graph-fence/examples/01-bode.md) — ボード線図。利得と位相の 2 枠 (`data:` で実測を重ねる)
+- [02-diode.md](../packages/graph-fence/examples/02-diode.md) — ダイオードの I-V。電流を対数の軸で
+- [03-reactance.md](../packages/graph-fence/examples/03-reactance.md) — X<sub>L</sub> と X<sub>C</sub> を両対数で
+- [04-solar.md](../packages/graph-fence/examples/04-solar.md) — 太陽電池の I-V と P-V。peak が最大電力点
 
 ## なぜ実体をここに置かないか
 

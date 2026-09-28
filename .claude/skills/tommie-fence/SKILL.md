@@ -1,6 +1,6 @@
 ---
 name: tommie-fence
-description: Markdown の ```circuit / ```bread / ```perf / ```copper / ```vna / ```scope / ```spectrum フェンス (回路図・ブレッドボードの実体配線図・ユニバーサル基板の実体配線図・銅張り基板のマイクロストリップの寸法図・VNA (NanoVNA) の画面・オシロスコープの画面・スペクトラムアナライザ (tinySA / Analog Discovery) の画面) を書く・直す・読むときに使う。文法リファレンスの所在、CLI の check で読めたか・つながったかを確かめる手順、図を PNG に焼いて目で確かめる手順、フェンスどうしで取り違えやすい書き方をまとめてある。Use when writing or fixing circuit schematics, breadboard diagrams, perfboard layouts, copper-clad board (microstrip) drawings, VNA (NanoVNA) screens — Log Mag, Smith chart, SWR, TDR — oscilloscope screens (waveforms, trigger, cursors, Measurements), or spectrum analyser screens (tinySA, Analog Discovery) in these Markdown fences.
+description: Markdown の ```circuit / ```bread / ```perf / ```copper / ```vna / ```scope / ```spectrum / ```graph フェンス (回路図・ブレッドボードの実体配線図・ユニバーサル基板の実体配線図・銅張り基板のマイクロストリップの寸法図・VNA (NanoVNA) の画面・オシロスコープの画面・スペクトラムアナライザ (tinySA / Analog Discovery) の画面・教科書の x-y グラフ (共振曲線・ボード線図・特性曲線)) を書く・直す・読むときに使う。文法リファレンスの所在、CLI の check で読めたか・つながったかを確かめる手順、図を PNG に焼いて目で確かめる手順、フェンスどうしで取り違えやすい書き方をまとめてある。Use when writing or fixing circuit schematics, breadboard diagrams, perfboard layouts, copper-clad board (microstrip) drawings, VNA (NanoVNA) screens — Log Mag, Smith chart, SWR, TDR — oscilloscope screens (waveforms, trigger, cursors, Measurements), spectrum analyser screens (tinySA, Analog Discovery), or textbook x-y graphs (resonance curves, Bode plots, characteristic curves) in these Markdown fences.
 ---
 
 # tommie-fence のフェンスを書く
@@ -18,8 +18,9 @@ description: Markdown の ```circuit / ```bread / ```perf / ```copper / ```vna /
 | VNA (NanoVNA) の画面 (S21 / S11 の Log Mag・Smith・SWR・TDR) | ` ```vna ` | `packages/vna-fence/docs/01-syntax.md` (早見表は無い) | `packages/vna-fence/examples/*.md` |
 | オシロスコープの画面 (時間波形・トリガ・カーソル・Measurements) | ` ```scope ` | `packages/scope-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/scope-fence/examples/*.md` |
 | スペクトラムアナライザの画面 (tinySA の掃引型・Analog Discovery の FFT 型) | ` ```spectrum ` | `packages/spectrum-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/spectrum-fence/examples/*.md` |
+| 教科書の x-y グラフ (共振曲線・ボード線図・I-V などの特性曲線。**計器の画面ではない**) | ` ```graph ` | `packages/graph-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/graph-fence/examples/*.md` |
 
-**書く前に文法を読む。** 7 つは似ているが同じではない (§4)。
+**書く前に文法を読む。** 8 つは似ているが同じではない (§4)。
 記憶や別のフェンスの感覚で書かない。例の中から近いものを写して直すのが早い。
 
 ## 2. 書いたら check
@@ -29,13 +30,13 @@ node <root>/packages/<x>-fence/dist/cli.cjs check <file.md> 2>&1
 ```
 
 - 見出しとネットリストは標準出力、読めなかった行・お知らせ・ERC は標準エラー
-  (7 つとも同じ。計器の画面の 3 つはネットリストの代わりに読み値を標準出力に出す —
-  vna と spectrum はマーカー、scope は Measurements とカーソル)。
+  (8 つとも同じ。計器の画面の 3 つと graph はネットリストの代わりに読み値を標準出力に出す —
+  vna と spectrum はマーカー、scope は Measurements とカーソル、graph は mark と peak)。
   まとめて読むので `2>&1` を付ける
 - 読めなかった行は、行番号・その行・綴りを指す `^` つきで出る。
   1 つでもあれば終了コードは 0 以外
 - ネットリスト (どの足がどのネットか) は標準出力。**意図した回路と突き合わせる**
-- 計器の画面 (vna・scope・spectrum) は、**読み値を本文の「見るべき値」の表と数で突き合わせ、
+- 計器の画面 (vna・scope・spectrum) と graph は、**読み値を本文の「見るべき値」の表と数で突き合わせ、
   合ってから PNG を 1 度見る**。お知らせ (`time:` が無いので … で描いています、など) は
   既定で埋めた所なので、意図と違えば書き足す
 - ERC (つながっていない足、線で跨いだ部品など) は終了コードを変えない。
@@ -52,7 +53,7 @@ SVG は画像として読めないので PNG に焼いてから見る。
 **`render` には必ず `--out` で作業用のディレクトリを渡す** (省くと入力の隣に書き出す)。
 
 ```bash
-# circuit 以外 (板の 2 つ・copper・計器の画面の vna・scope・spectrum)
+# circuit 以外 (板の 2 つ・copper・計器の画面の vna・scope・spectrum・graph)
 node <root>/packages/<x>-fence/dist/cli.cjs render <file.md> --out <tmp>
 node <root>/packages/<x>-fence/scripts/png.mjs <tmp>
 
@@ -131,9 +132,21 @@ scope (オシロの画面) と spectrum (スペクトラムの画面) も**板�
 (高調波・ノイズフロア・RBW) は spectrum、被測定物 (DUT) の通過・反射の周波数特性
 (フィルタの S21・SWR) は vna。vna は周波数・scope は時間。
 
-7 つに共通:
+graph (教科書の x-y グラフ) も**板も部品も無い**が、**計器の画面ではない** — 画面を見せる題は
+scope・spectrum・vna、**値を集めて描く題** (共振曲線・ボード線図・I-V・リアクタンス) が graph。
 
-- **フェンス名は `circuit` / `bread` / `perf` / `copper` / `vna` / `scope` / `spectrum`。** 板の 2 つは長い綴り
+| | graph |
+| --- | --- |
+| 書くもの | `x: 周波数 Hz log 2k..32k` (名前 単位 [log] [範囲])、`y:` (同じ形。単位ごとに並び)、`lines:` に「名前 単位: 式」か点列 (`- 2k 0.38` を 1 行 1 点)、`data:` (CSV)、`notes:` (`mark` `level` `band` `text` `peak` `source`) |
+| 取り違え | **範囲の区切りは `..`** (`2k-32k` は vna の掃引の綴りで、graph では断る)。**線のキーの最後の語が単位** (`電流:` は断る。`電流 mA:`)。**掛け算の `*` は省けない** (`2x` は断る)。**`m` と `M` は別** (1/1000 と 10⁶) |
+| 式 | 無次元で、値は線の単位で読む (A で出る式を mA の線に書くなら `* 1000`)。式だけの図は `x:` に範囲が要る |
+| 枠 | 単位の違う線は横軸を共有して縦に積んだ枠 (3 つまで)。`level -3dB` `text 16k 27mA: 字` は単位で枠が決まる |
+| 実測 | `data:` の CSV は ○ で打ち、**線で結ばない**。列は単位と名前で線に当たる。x は軸の単位に直す (kHz → Hz) |
+| 読み値 (`check`) | mark の表 (`1.59 kHz  −3.01 dB  −45.0°`) と peak の表 |
+
+8 つに共通:
+
+- **フェンス名は `circuit` / `bread` / `perf` / `copper` / `vna` / `scope` / `spectrum` / `graph`。** 板の 2 つは長い綴り
   (`breadboard` / `perfboard`) も同じに読む (拡張 0.15.0・breadboard-fence 0.13.0・
   perfboard-fence 0.11.0 から。報告の名札は短い綴り)。新しく書くなら短い綴り。
   **これ以外の綴りは**、プレビューでは灰色のコードブロック、CLI では黙って素通りする

@@ -52,6 +52,7 @@
     "vna-fence": "*",
     "scope-fence": "*",
     "spectrum-fence": "*",
+    "graph-fence": "*",
     "esbuild": "^0.28.2",
     "fence-kit": "*",
     "markdown-it": "^15.0.0",
@@ -81,6 +82,7 @@
       "./media/vna.css",
       "./media/scope.css",
       "./media/spectrum.css",
+      "./media/graph.css",
       "./node_modules/node-tikzjax/css/fonts.css"
     ],
     "grammars": [
@@ -147,6 +149,16 @@
       {
         "scopeName": "markdown.spectrum.codeblock",
         "path": "./syntaxes/spectrum-injection.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml"
+        }
+      },
+      {
+        "scopeName": "markdown.graph.codeblock",
+        "path": "./syntaxes/graph-injection.json",
         "injectTo": [
           "text.html.markdown"
         ],

@@ -4,6 +4,7 @@ import { renderCopper, errorText as copperErrorText } from 'copper-fence/src/cor
 import { renderVna, errorText as vnaErrorText } from 'vna-fence/src/core';
 import { renderScope, errorText as scopeErrorText } from 'scope-fence/src/core';
 import { renderSpectrum, errorText as spectrumErrorText } from 'spectrum-fence/src/core';
+import { renderGraph, errorText as graphErrorText } from 'graph-fence/src/core';
 import { compileCircuit, errorLine, snippetLines } from 'circuit-fence/src/core';
 import type { FenceError } from 'circuit-fence/src/core';
 import type { Kind } from './kinds.ts';
@@ -27,7 +28,7 @@ export type Output = {
   readonly tex: string | null;
   readonly netlist: readonly NetRow[];
   /**
-   * 読み値 (vna と spectrum のマーカー、scope の Measurements・カーソル。CLI の `check` と同じ字の行)。
+   * 読み値 (vna と spectrum のマーカー、scope の Measurements・カーソル、graph の mark と peak。CLI の `check` と同じ字の行)。
    * ほかは空。計器の画面にはネットリストが無いので、その場所に出す。
    */
   readonly readings: readonly string[];
@@ -120,11 +121,29 @@ function renderSpectrumOutput(source: string): Output {
   };
 }
 
+/**
+ * graph。**`data:` (測った値の CSV) は読めない** — 計器の画面と同じく、コアが
+ * 「この宿主では読めません」と言い、理想の線だけを描く。
+ */
+function renderGraphOutput(source: string): Output {
+  const { svg, readingLines, errors, notices } = renderGraph(source);
+  return {
+    svg,
+    tex: null,
+    netlist: [],
+    readings: readingLines,
+    messages: [...errors, ...notices].map(graphErrorText),
+    broken: errors.length > 0,
+    finishing: null,
+  };
+}
+
 export function render(kind: Kind, source: string): Output {
   if (kind === 'circuit') return renderCircuit(source);
   if (kind === 'vna') return renderVnaOutput(source);
   if (kind === 'scope') return renderScopeOutput(source);
   if (kind === 'spectrum') return renderSpectrumOutput(source);
+  if (kind === 'graph') return renderGraphOutput(source);
 
   const { svg, netlist, errors, notices } =
     kind === 'breadboard' ? renderBreadboard(source) : kind === 'copper' ? renderCopper(source) : renderPerfboard(source);

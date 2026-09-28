@@ -46,6 +46,16 @@ describe('render', () => {
     expect(render('spectrum', 'device: ultra\n').messages.join('\n')).toContain('spectrum: 1 行目');
   });
 
+  test('graph は図と読み値を返し、ネットリストを持たない', () => {
+    const output = render('graph', 'x: 周波数 Hz log 100..100k\nlines:\n  利得 dB: 20*log10(1/sqrt(1+(x/1.59k)^2))\nnotes:\n  - mark 1.59k\n');
+
+    expect(output.svg).toMatch(/^<svg /);
+    expect(output.netlist).toEqual([]);
+    expect(output.broken).toBe(false);
+    expect(output.readings.join('\n')).toContain('−3.01 dB');
+    expect(render('graph', 'x: 周波数 Hz 2k-32k\n').messages.join('\n')).toContain('graph: 1 行目');
+  });
+
   test('vna は図と読み値を返し、data: は読めないと言う (頁は隣のファイルに届かない)', () => {
     const output = render('vna', 'sweep: 1M-300M\ndut: series R 100\ndata: a.s2p\nmarkers:\n  - 10M\n');
 

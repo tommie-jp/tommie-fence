@@ -5,10 +5,13 @@
 
 ## [Unreleased]
 
-scope-fence 0.1.0 と spectrum-fence 0.1.0 を束ねる。
+scope-fence 0.1.0 と spectrum-fence 0.1.0 と graph-fence 0.1.0 を束ねる。
 
 ### Added
 
+- **8 つ目のフェンス ` ```graph `** — 教科書の x-y グラフ (周波数応答・特性曲線)。計器の画面ではない。
+  scope・spectrum・vna と同じくマップ (殻) を持たず、プレビュー・文法の色分け・スニペット (`graph`)・
+  Problems パネルに出る。`data:` (測った値の CSV) はデスクトップ版だけが `.md` の隣から読む。
 - **7 つ目のフェンス ` ```spectrum `** — スペクトラムの画面 (FFT 型の Analog Discovery と
   掃引型の tinySA)。scope・vna と同じくマップ (殻) を持たず、プレビュー・文法の色分け・
   スニペット (`spectrum`)・Problems パネルに出る。`data:` はデスクトップ版だけが `.md` の隣から読む。

@@ -6,8 +6,8 @@ import { activateWith } from './activate.ts';
 import { registerEditorCommands } from './editor/commands.ts';
 import { fenceEditors } from './editor/fences.ts';
 import { registerProblems } from './problems/diagnostics.ts';
-import { scopeProblems, spectrumProblems, vnaProblems } from './mapless.ts';
-import { NEIGHBOR_READERS, dataForUri, scopeDataFrom, spectrumDataFrom, vnaDataFrom } from './neighborData.ts';
+import { graphProblems, scopeProblems, spectrumProblems, vnaProblems } from './mapless.ts';
+import { NEIGHBOR_READERS, dataForUri, graphDataFrom, scopeDataFrom, spectrumDataFrom, vnaDataFrom } from './neighborData.ts';
 
 /**
  * デスクトップ版の入口。回路図の描画は WASM の TeX (node-tikzjax)。
@@ -20,13 +20,14 @@ import { NEIGHBOR_READERS, dataForUri, scopeDataFrom, spectrumDataFrom, vnaDataF
 export function activate(context: vscode.ExtensionContext) {
   registerEditorCommands(context);
   // 読めなかった行を Problems パネルにも出す。TeX を通らないので web 版でも動く。
-  // vna・scope・spectrum は殻を持たないので Problems の口だけ。`data:` は文書の隣を読む。
+  // vna・scope・spectrum・graph は殻を持たないので Problems の口だけ。`data:` は文書の隣を読む。
   const editors = fenceEditors();
   registerProblems(context, (document) => [
     ...editors,
     vnaProblems(dataForUri(document.uri, vnaDataFrom)),
     scopeProblems(dataForUri(document.uri, scopeDataFrom)),
     spectrumProblems(dataForUri(document.uri, spectrumDataFrom)),
+    graphProblems(dataForUri(document.uri, graphDataFrom)),
   ]);
 
   return activateWith({

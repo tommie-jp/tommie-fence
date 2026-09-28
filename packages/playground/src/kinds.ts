@@ -5,7 +5,7 @@
  * 例の読み込み (`examples.ts`) もこれを要るが、3 つの描画コア
  * (`fences.ts` が束ねる) までは要らないため。
  */
-export const KINDS = ['circuit', 'breadboard', 'perfboard', 'copper', 'vna', 'scope', 'spectrum'] as const;
+export const KINDS = ['circuit', 'breadboard', 'perfboard', 'copper', 'vna', 'scope', 'spectrum', 'graph'] as const;
 
 export type Kind = (typeof KINDS)[number];
 
@@ -67,6 +67,7 @@ export const KIND_LABEL: Readonly<Record<Kind, string>> = {
   vna: 'vna',
   scope: 'scope',
   spectrum: 'spectrum',
+  graph: 'graph',
 };
 
 /**
@@ -81,13 +82,14 @@ export const KIND_READING: Readonly<Record<Kind, string>> = {
   vna: 'VNA の画面',
   scope: 'オシロの画面',
   spectrum: 'スペクトラムの画面',
+  graph: 'グラフ',
 };
 
 /** マップ (殻) を持たない種類。**計器の画面** — 図の中に動かす部品が無い (52 の docs/75 の決め 10・81 の決め 12)。 */
-export const MAPLESS: readonly Kind[] = ['vna', 'scope', 'spectrum'];
+export const MAPLESS: readonly Kind[] = ['vna', 'scope', 'spectrum', 'graph'];
 
 /**
- * 図を掴んで動かすマップ (殻) を持つか。**vna・scope・spectrum は持たない**。持たない種類を
+ * 図を掴んで動かすマップ (殻) を持つか。**vna・scope・spectrum・graph は持たない**。持たない種類を
  * 選んだら、頁は図の窓を開く。
  */
 export const hasMap = (kind: Kind): boolean => !MAPLESS.includes(kind);

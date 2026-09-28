@@ -14,6 +14,7 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | vna | 5 measurements + 1 deliberately broken | [packages/vna-fence/examples/](../packages/vna-fence/examples/README.md) |
 | scope | 5 screens + 1 deliberately broken | [packages/scope-fence/examples/](../packages/scope-fence/examples/README.md) |
 | spectrum | 6 screens + 1 deliberately broken | [packages/spectrum-fence/examples/](../packages/spectrum-fence/examples/README.md) |
+| graph | 5 graphs + 1 deliberately broken | [packages/graph-fence/examples/](../packages/graph-fence/examples/README.md) |
 
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for
@@ -237,6 +238,26 @@ A 100 MHz square wave (−10 dBm) on a tinySA Ultra. M1 to M3 read −7.90 / −
 - [03-windows.md](../packages/spectrum-fence/examples/03-windows.md) — windows (rect / hann / flattop)
 - [04-two-paths.md](../packages/spectrum-fence/examples/04-two-paths.md) — FFT and swept read the same dBm
 - [05-antenna.md](../packages/spectrum-fence/examples/05-antenna.md) — the FM band from an antenna (`data:` overlays a measurement)
+
+## graph — the textbook graph
+
+Not an instrument screen: a task that collects values and plots them. Lines are an
+expression of `x` or the table's points (dashed); a measured CSV is plotted as circles
+and never joined. Lines with different units stack in panels that share the x axis.
+
+### Resonance curve
+
+[![Resonance curve](../packages/graph-fence/examples/out/00-resonance.png)](../packages/graph-fence/examples/00-resonance.md)
+
+The series-resonance current with a 50 Ω and a near-0 Ω generator. The mark reads
+17.6 / 24.9 mA at 15.9 kHz ([00-resonance.md](../packages/graph-fence/examples/00-resonance.md)).
+
+### More
+
+- [01-bode.md](../packages/graph-fence/examples/01-bode.md) — a Bode plot, gain and phase in two panels (`data:` overlays a measurement)
+- [02-diode.md](../packages/graph-fence/examples/02-diode.md) — a diode I-V on a log current axis
+- [03-reactance.md](../packages/graph-fence/examples/03-reactance.md) — X<sub>L</sub> and X<sub>C</sub> on log-log axes
+- [04-solar.md](../packages/graph-fence/examples/04-solar.md) — solar-cell I-V and P-V, the peak as the maximum power point
 
 ## Why the files are not kept here
 

@@ -40,14 +40,18 @@
   Spectrum。波を標本化 → 窓 → FFT) と掃引型 (`tinysa` `tinysa-ultra` `generic`。線スペクトルを
   受信機の RBW・ATT・フロアでなぞる)。波の書き方は scope と同じ (fence-kit の `wave.ts`)。
   片方の型にしか無いキーはもう片方で断る。**マップ (殻) は無い** (52 の docs/86・88)
-- `packages/tommie-fence` — **VS Code に出るのはこれだけ。** 7 つのフェンスを
+- `packages/graph-fence` — ` ```graph ` フェンス。教科書の x-y グラフ (周波数応答・特性曲線)。
+  **計器の画面ではない** — 画面を見せる題は scope・spectrum・vna、値を集めて描く題が graph。
+  線は式 (自前の再帰下降。`eval` 無し) か点列で破線、測った CSV (`data:`) は ○ で打ち線で結ばない。
+  単位の違う線は横軸を共有して縦に積んだ枠に置く。**マップ (殻) は無い** (52 の docs/92・96)
+- `packages/tommie-fence` — **VS Code に出るのはこれだけ。** 8 つのフェンスを
   1 つの拡張に畳んだもの (52 の docs/19)。中身は入口だけで、図を描くのは
-  上の 7 つのコア。**7 つは拡張ではなくライブラリ + CLI**
-- `packages/playground` — 7 つのフェンスをブラウザだけで試す静的なページ
+  上の 8 つのコア。**8 つは拡張ではなくライブラリ + CLI**
+- `packages/playground` — 8 つのフェンスをブラウザだけで試す静的なページ
   (GitHub Pages)。**拡張ではない** ので `.vsix` の対象から外れ、`check` には乗る。
   約束は [packages/playground/CLAUDE.md](packages/playground/CLAUDE.md)
 - `.claude/skills/tommie-fence` — Claude Code がフェンスを書くときに読む手引き
-  (7 つの文法と早見表の所在、`check` → `render` → PNG で確かめる順、フェンスどうしで
+  (8 つの文法と早見表の所在、`check` → `render` → PNG で確かめる順、フェンスどうしで
   取り違えやすい書き方)。**文法は写さず所在を指す**。取り違えやすい書き方の表は
   実物 (CLI の `check`) で確かめてから書いたので、**番地・注釈・DIP・ERC・波や単位の
   綴りを変えたら表も直す**
@@ -135,7 +139,7 @@ make help             # 目標の一覧
 ## 約束
 
 1. **`vsce` を直に呼ばない**。`.vsix` を作るのは `./doBuild.sh` (と、その中身の
-   `make`) だけ。**拡張は `tommie-fence` の 1 つ**で、7 つのコアはその依存として
+   `make`) だけ。**拡張は `tommie-fence` の 1 つ**で、8 つのコアはその依存として
    作業場へ写される (`WSDEPS` は入れ子まで辿る)。
    **入れ直す前に畳む前の 3 つを消す** (`RETIRED`) — 残っていると文法も
    プレビューも二重に登録され、図が 2 つ出る。
@@ -180,7 +184,7 @@ make help             # 目標の一覧
     Marketplace に出るのは 1 本だけなので英語で書き、日本語はルートの
     `README.ja.md` へ送る。図とリンクは絶対 URL (`vsce` の書き換えは
     パッケージを基準にするので、`../` で上へ出るリンクを通さない)。
-11. **ライブラリの出口は 7 つとも同じ形**。`<パッケージ>/core` は **dist**
+11. **ライブラリの出口は 8 つとも同じ形**。`<パッケージ>/core` は **dist**
     (`import` / `require` / `types`)、`<パッケージ>/src/core` は**ソース**。
     ソースの入口も要るのは、dist だけだと**型チェックの前に build しないと
     playground が通らない**ため。`src/**` は `.vsix` に入らないので、

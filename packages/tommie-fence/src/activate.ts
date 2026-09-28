@@ -11,7 +11,7 @@ export type Wiring = {
   /** プレビューに描き直させる頼み先。 */
   readonly refresh: () => void;
   /**
-   * vna の `data:` (Touchstone) と scope・spectrum の `data:` (CSV) を読む口。**デスクトップだけが
+   * vna の `data:` (Touchstone) と scope・spectrum・graph の `data:` (CSV) を読む口。**デスクトップだけが
    * 持つ** — 描いている文書の隣のファイルを読む。web 版は持たない (フェンスが「読めません」と言う)。
    */
   readonly readers?: NeighborReaders;

@@ -59,7 +59,7 @@ function toDiagnostic(document: vscode.TextDocument, problem: Problem): vscode.D
 }
 
 /**
- * 文書ごとの口。**文書で変わるのは vna・scope・spectrum の `data:` の読み口だけ** (その文書の隣の
+ * 文書ごとの口。**文書で変わるのは vna・scope・spectrum・graph の `data:` の読み口だけ** (その文書の隣の
  * ファイルを読む)。変わらないなら並びをそのまま渡してよい。
  */
 export type SourcesFor = readonly ProblemSource[] | ((document: vscode.TextDocument) => readonly ProblemSource[]);

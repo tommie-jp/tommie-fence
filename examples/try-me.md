@@ -2,7 +2,7 @@
 
 [English](try-me.md) | [日本語](try-me.ja.md)
 
-Seven fences, one per package. **Open the Markdown preview to see them drawn**:
+Eight fences, one per package. **Open the Markdown preview to see them drawn**:
 `Ctrl+Shift+V` (`Cmd+Shift+V` on macOS), or the split-preview button at the top
 right of this tab.
 
@@ -146,6 +146,26 @@ tinySA models a swept receiver. `-10dBm` is the power of a sine with the same
 peak, so the square wave's fundamental stands at −7.90 dBm and the odd harmonics
 fall as 1/n. This fence has no map.
 
+## graph — a Bode plot
+
+```graph
+title: RC low-pass — −45° where the gain is −3 dB
+x: 周波数 Hz log 100..100k
+y:
+  - 利得 dB
+  - 位相 deg
+lines:
+  利得 dB: 20*log10(1/sqrt(1+(x/1.59k)^2))
+  位相 deg: -deg(atan(x/1.59k))
+notes:
+  - level -3dB
+  - mark 1.59k
+```
+
+A textbook graph, not an instrument screen. The last word of a line's key is its
+unit, and lines with different units stack in panels that share the x axis. The
+readings under the graph give −3.01 dB and −45.0° at 1.59 kHz. This fence has no map.
+
 ## Drag the parts instead of typing
 
 Every fence can also be edited with the mouse. Click the circuit-board button at
@@ -153,7 +173,7 @@ the top right of this tab (or run **"tommie-fence: Open the Fence Editor"** from
 the command palette, `Ctrl+Shift+P`) and the map opens beside the text, showing
 the fence under the cursor. Or reopen this file as the map itself:
 `Ctrl+Shift+P` → **"View: Reopen Editor With..."** → **Fence Editor**. One editor
-handles the four board and schematic fences (vna, scope and spectrum have no map).
+handles the four board and schematic fences (vna, scope, spectrum and graph have no map).
 
 The map is a grab layer, not the drawing. Dragging a part rewrites the address
 in the fence, so the text stays the source of truth.
@@ -167,4 +187,5 @@ in the fence, so the text stays the source of truth.
   [copper syntax](../packages/copper-fence/docs/01-syntax.md) ·
   [vna syntax](../packages/vna-fence/docs/01-syntax.md) ·
   [scope syntax](../packages/scope-fence/docs/01-syntax.md) ·
-  [spectrum syntax](../packages/spectrum-fence/docs/01-syntax.md)
+  [spectrum syntax](../packages/spectrum-fence/docs/01-syntax.md) ·
+  [graph syntax](../packages/graph-fence/docs/01-syntax.md)

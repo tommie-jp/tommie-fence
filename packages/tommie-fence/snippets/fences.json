@@ -115,5 +115,17 @@
       "markers: [100M, 300M, 500M]$0",
       "```"
     ]
+  },
+  "graph fence": {
+    "prefix": ["graph"],
+    "description": "Textbook graph (frequency response, characteristic curve) — a graph fence to start from (グラフのフェンス)",
+    "body": [
+      "```graph",
+      "title: ${1:図01 RC ローパスの利得}",
+      "x: ${2:周波数 Hz log 100..100k}",
+      "lines:",
+      "  ${3:利得 dB}: ${4:20*log10(1/sqrt(1+(x/1.59k)^2))}$0",
+      "```"
+    ]
   }
 }

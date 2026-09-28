@@ -56,7 +56,7 @@ const PLAN: Record<Change, Plan> = {
 const MOVED: ReadonlySet<Change> = new Set(['open', 'select', 'bind']);
 
 /**
- * **マップを持たない種類 (vna・scope・spectrum) へ移ったら、図の窓を開く** — マップには掴むものが
+ * **マップを持たない種類 (vna・scope・spectrum・graph) へ移ったら、図の窓を開く** — マップには掴むものが
  * 無く、図はこの窓にしか出ない。開くと `view` の知らせでもう一度 `sync` が走り、
  * 図を描く (窓が開いているので、ここは 2 度目には何もしない)。
  */

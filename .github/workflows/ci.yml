@@ -93,6 +93,13 @@ jobs:
             build: true
             docs: true
             generated: "'packages/spectrum-fence/examples/out/*.svg' 'packages/spectrum-fence/docs/out/*.svg'"
+          # graph-fence: scope・spectrum と同じ扱い。docs にも図がある。
+          - pkg: graph-fence
+            pack: true
+            packed: "package/dist/core.mjs package/dist/core.cjs package/dist/types/index.d.ts"
+            build: true
+            docs: true
+            generated: "'packages/graph-fence/examples/out/*.svg' 'packages/graph-fence/docs/out/*.svg'"
     name: check (${{ matrix.pkg }})
     steps:
       - uses: actions/checkout@v7

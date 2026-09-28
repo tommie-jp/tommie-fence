@@ -2,7 +2,7 @@
 
 [English](try-me.md) | [日本語](try-me.ja.md)
 
-フェンスを 7 つ、パッケージごとに 1 つずつ置いてあります。
+フェンスを 8 つ、パッケージごとに 1 つずつ置いてあります。
 **Markdown プレビューを開くと図になります**: `Ctrl+Shift+V`
 (macOS は `Cmd+Shift+V`)、またはこのタブの右上にある分割プレビューのボタン。
 
@@ -142,6 +142,26 @@ markers: [100M, 300M, 500M]
 `-10dBm` は同じ peak の正弦の電力なので、方形波の基本波は −7.90 dBm に立ち、
 奇数次の高調波が 1/n で並びます。このフェンスにはマップがありません。
 
+## graph — ボード線図
+
+```graph
+title: RC ローパス — −3 dB の所が −45°
+x: 周波数 Hz log 100..100k
+y:
+  - 利得 dB
+  - 位相 deg
+lines:
+  利得 dB: 20*log10(1/sqrt(1+(x/1.59k)^2))
+  位相 deg: -deg(atan(x/1.59k))
+notes:
+  - level -3dB
+  - mark 1.59k
+```
+
+計器の画面ではなく教科書のグラフです。線のキーの最後の語が単位で、単位の違う線は横軸を共有して
+縦に積んだ枠に分かれます。図の下の読み値は 1.59 kHz で −3.01 dB・−45.0° です。
+このフェンスにはマップがありません。
+
 ## 打たずに掴んで動かす
 
 どのフェンスもマウスで編集できます。このタブの右上の基板の絵の釦を押すと
@@ -150,7 +170,7 @@ markers: [100M, 300M, 500M]
 カーソルのあるフェンスのマップが横に開きます。
 または `Ctrl+Shift+P` →**「View: Reopen Editor With...」**→
 **Fence Editor** で、このタブ自体をマップにできます。板と回路図の 4 つのフェンスを
-1 つのエディタで扱います (vna・scope・spectrum にはマップがありません)。
+1 つのエディタで扱います (vna・scope・spectrum・graph にはマップがありません)。
 
 マップは図ではなく**掴むための層**です。部品を動かすとフェンスの番地が
 書き換わるので、正はいつもテキストのままです。
@@ -164,4 +184,5 @@ markers: [100M, 300M, 500M]
   [copper の文法](../packages/copper-fence/docs/01-syntax.md) ·
   [vna の文法](../packages/vna-fence/docs/01-syntax.md) ·
   [scope の文法](../packages/scope-fence/docs/01-syntax.md) ·
-  [spectrum の文法](../packages/spectrum-fence/docs/01-syntax.md)
+  [spectrum の文法](../packages/spectrum-fence/docs/01-syntax.md) ·
+  [graph の文法](../packages/graph-fence/docs/01-syntax.md)
