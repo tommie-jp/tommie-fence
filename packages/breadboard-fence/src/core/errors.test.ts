@@ -15,6 +15,10 @@ describe('safeToken', () => {
 });
 
 describe('snippetOf', () => {
+  test('replaces the bidi isolates (U+2066–2069) too, so the line cannot be reordered', () => {
+    expect(snippetOf('a\u2066b\u2069c')).toBe('a·b·c');
+  });
+
   test('leaves an ordinary line alone, indent included', () => {
     expect(snippetOf('  R1: resistor a5 a10')).toBe('  R1: resistor a5 a10');
   });

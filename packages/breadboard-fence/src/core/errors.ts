@@ -52,7 +52,7 @@ export const fail = <T>(message: string, line: number | null, token?: string): R
  * 制御文字・双方向制御・幅ゼロの文字。そのまま見せると桁がずれるうえ、
  * 双方向制御は**見えている並びと実際の並びを食い違わせられる**ので必ず置き換える。
  */
-const INVISIBLE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/gu;
+const INVISIBLE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]/gu;
 
 /**
  * 行の中身を報告に載せられる形にする。**1 文字を 1 文字に置き換える**のが要で、

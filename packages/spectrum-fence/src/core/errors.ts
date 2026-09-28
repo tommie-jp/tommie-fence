@@ -43,7 +43,7 @@ export const notice = (message: string, line: number | null, token?: string): Fe
  * 制御文字・双方向制御・幅ゼロの文字。そのまま見せると桁がずれるうえ、
  * 双方向制御は**見えている並びと実際の並びを食い違わせられる**ので必ず置き換える。
  */
-const INVISIBLE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/gu;
+const INVISIBLE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]/gu;
 
 /**
  * 見えない字を除く。**ファイルから読んだ字 (CSV の見出しやセル) を言うことに載せる入口**。

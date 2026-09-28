@@ -22,6 +22,10 @@ describe('safeToken', () => {
 });
 
 describe('snippetOf', () => {
+  test('replaces the bidi isolates (U+2066–2069) too, so the line cannot be reordered', () => {
+    expect(snippetOf('a\u2066b\u2069c')).toBe('a·b·c');
+  });
+
   test('replaces invisible characters one for one so the caret stays aligned', () => {
     expect(snippetOf('a​b')).toBe('a·b');
     expect(snippetOf('a\tb')).toBe('a b');
