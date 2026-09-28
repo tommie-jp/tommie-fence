@@ -44,8 +44,18 @@ function readVolts(text: string | undefined): LineResult<number> {
   return fail(`${why}: ${safeToken(text ?? '')} (1.26V / -500mV)`, text);
 }
 
+/**
+ * 図に載せる字は最後は `LIMITS.noteLength` に切るが、その前に見えない字を落とす正規表現も
+ * 全コードポイントへの展開も**綴りの長さだけ重くなる** (`math.ts` の式の長さの断りと同じ理由)。
+ * 削った先の字数を数えるより先に、十分すぎる余裕を残して生の綴りを切っておく。
+ */
+const NOTE_TEXT_BAIL = LIMITS.noteLength * 8;
+
 /** 図に載せる字。見えない字を落とし、長さを切る。 */
-const noteText = (body: string): string => [...dropInvisible(body).trim()].slice(0, LIMITS.noteLength).join('');
+const noteText = (body: string): string => {
+  const short = body.length > NOTE_TEXT_BAIL ? body.slice(0, NOTE_TEXT_BAIL) : body;
+  return [...dropInvisible(short).trim()].slice(0, LIMITS.noteLength).join('');
+};
 
 function readBand(words: readonly string[], text: string | null): LineResult<Omit<NoteSpec, 'line'>> {
   if (words.length !== 3) return fail('band は「band 0 1ms」(始めと終わりの時刻) の形で書きます', words[3] ?? words[0]);

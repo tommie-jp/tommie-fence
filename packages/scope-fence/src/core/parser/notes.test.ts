@@ -35,6 +35,14 @@ describe('parseNoteLine', () => {
     const read = parseNoteLine('text 0 0V', `‮abc${'あ'.repeat(100)}`);
     expect(read.ok && 'text' in read.value && read.value.text).toBe(`abc${'あ'.repeat(LIMITS.noteLength - 3)}`);
   });
+
+  test('bounds the cost of a YAML value far longer than any note could show (only ever 60 chars show)', () => {
+    const body = `abc${'x'.repeat(30_000_000)}`;
+    const start = performance.now();
+    const read = parseNoteLine('text 0 0V', body);
+    expect(performance.now() - start).toBeLessThan(150);
+    expect(read.ok && 'text' in read.value && read.value.text).toBe(`abc${'x'.repeat(LIMITS.noteLength - 3)}`);
+  });
 });
 
 describe('parseFence — notes:', () => {
