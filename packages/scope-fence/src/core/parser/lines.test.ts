@@ -64,6 +64,8 @@ describe('parseChannelLine', () => {
     ['ch2', 'ch1 | clip 0.7', ['ch1'], 'clip は「clip -0.7V 0.7V」(両側) か「clip 0V」(下だけ) の形で書きます', '0.7'],
     ['ch2', 'ch1 | offset 4.3', ['ch1'], 'offset は 4.3V / -0.7V のように単位を付けます', '4.3'],
     ['ch2', 'ch1 | gain 6dB', ['ch1'], 'gain は 0.5 / 2 / -1 のように倍率 (単位なし) で書きます', '6dB'],
+    ['ch2', 'ch1 | gain --2', ['ch1'], 'gain は 0.5 / 2 / -1 のように倍率 (単位なし) で書きます', '--2'],
+    ['ch2', 'ch1 | gain -2000000', ['ch1'], 'gain の倍率は ±1000000 までです', '-2000000'],
     ['ch2', `ch1 | gain ${'9'.repeat(320)}`, ['ch1'], 'gain の倍率は ±1000000 までです', '9'.repeat(320)],
     ['ch2', 'ch1 | gain 2000000', ['ch1'], 'gain の倍率は ±1000000 までです', '2000000'],
     ['ch2', 'ch1 | abs 1V', ['ch1'], 'abs の後ろには何も書きません', '1V'],
@@ -174,5 +176,17 @@ describe('parseChannelLine — lc', () => {
     [`ch1 | lc 1kHz ${'9'.repeat(400)}`, 'lc の Q は 0.1〜100 です', '9'.repeat(400)],
   ])('refuses %s', (text, message, token) => {
     expect(parseChannelLine('ch2', text, ['ch1'])).toEqual({ ok: false, error: { message, line: null, token } });
+  });
+});
+
+describe('gain の負の倍率', () => {
+  test.each([
+    ['-1', -1],
+    ['-4.68', -4.68],
+    ['-.5', -0.5],
+    ['+2', 2],
+  ])('gain %s を倍率 %d として読む (反転増幅の利得)', (written, factor) => {
+    const result = parseChannelLine('ch2', `ch1 | gain ${written}`, ['ch1']);
+    expect(result.ok && result.value.ops).toEqual([{ kind: 'gain', factor }]);
   });
 });

@@ -84,10 +84,16 @@ function offsetOp(words: readonly string[]): LineResult<Op> {
   return ok({ kind: 'offset', volts });
 }
 
+/**
+ * 符号つきの素の数 (`-4.68` `+2` `-.5`)。fence-kit の `isBareNumber` は符号を受けないので、
+ * 頭の符号を 1 つだけ外してから見る (反転増幅の利得を `gain -4.68` と書けるように)。
+ */
+const isSignedBareNumber = (text: string): boolean => isBareNumber(text.replace(/^[+-]/, ''));
+
 function gainOp(words: readonly string[]): LineResult<Op> {
   const [, first] = words;
   // 倍率は単位の無い量 — 素の数を受ける唯一の所 (dB と紛れないよう dB は断る)。
-  if (first === undefined || !isBareNumber(first) || words.length > 2) {
+  if (first === undefined || !isSignedBareNumber(first) || words.length > 2) {
     return fail('gain は 0.5 / 2 / -1 のように倍率 (単位なし) で書きます', first ?? 'gain');
   }
   const factor = Number(first);
