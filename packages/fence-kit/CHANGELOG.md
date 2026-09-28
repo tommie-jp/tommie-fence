@@ -15,6 +15,11 @@
 
 ### Added
 
+- **DIP の足の名前の表** (`parts/pinouts.ts` — `lookupPinout(model, pins)` `pinoutModels` `pinoutTable`)。
+  型番 (大文字小文字を問わず完全一致。別名を行に並べる) と足の本数から、TI のデータシートの印字の
+  足の名前を引く。本数がパッケージと合わない型番と表に無い型番は null。NE555・TLC555・LM358・
+  TL071・TL072・CD4017B・CD4040B・CD4069UB・CD4071B・CD4081B・CD4011B・CD4001B の 12 行。
+  3 つのフェンスが同じ表を読む (52 の docs/95)。
 - **`parsePrefixedHertz` `isBareNumber` `HERTZ_HINT`** — フェンスの周波数の欄の読み。素の数
   (`10000000`) は null (vna と copper が使う。`parseHertz` は素の数も受けたまま)。
 - **`partValueProblem(type, value)`** — breadboard と perfboard が部品の値を断る理由
