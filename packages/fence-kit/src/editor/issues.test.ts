@@ -90,6 +90,11 @@ describe('フェンスの書き出し', () => {
   test('keeps everything when it fits', () => {
     expect(keptSourceLines('a\nb', 5)).toEqual(['a', 'b']);
   });
+
+  test('drops bidi overrides/isolates, zero-width characters and the BOM — the listing is drawn as-is, with no other escaping', () => {
+    expect(keptSourceLines('title: ‮evil‬\n', 10)).toEqual(['title: evil']);
+    expect(keptSourceLines('a​b⁦c⁩d﻿e\n', 10)).toEqual(['abcde']);
+  });
 });
 
 describe('版の印', () => {
