@@ -193,24 +193,59 @@ export function parseChannelLine(name: ChannelName, text: string, before: readon
   return ok({ name, source, ops, assumed });
 }
 
-export type TriggerLine = { readonly source: ChannelName; readonly edge: TriggerEdge; readonly level: number | null };
+export type TriggerLine = {
+  readonly source: ChannelName;
+  readonly edge: TriggerEdge;
+  readonly level: number | null;
+  /** t = 0 (トリガの点) を置く横の位置 (目盛。中央が 0、左端 −5、右端 +5)。 */
+  readonly position: number;
+};
 
 const TRIGGER_HINT = 'trigger: は「ch1 rising 1V」の形で書きます (向きは rising / falling、水準は省けます)';
+const TRIGGER_AT_HINT = 'trigger: は「ch1 rising 1V at -5div」の形で書きます (at は省けます)';
+const AT_HINT = 'trigger: の at は -5div / 2div のように目盛 (div) で書きます (-5div〜5div)';
 
-/** `ch1 rising 1V` / `ch2 falling` (水準は省ける = 波形の中央)。 */
+/** トリガの位置の範囲 (目盛。格子の半分)。 */
+export const TRIGGER_POSITION_MAX = 5;
+
+/** `at -5div` の後ろ (at の次の語)。 */
+function triggerPosition(word: string | undefined): LineResult<number> {
+  const found = word === undefined ? null : /^([+-]?(?:\d+(?:\.\d+)?|\.\d+))div$/.exec(word);
+  if (found === null) return fail(AT_HINT, word ?? 'at');
+  const position = Number(found[1]);
+  if (Math.abs(position) > TRIGGER_POSITION_MAX) return fail('trigger: の at は -5div〜5div です (左端が -5div、右端が 5div)', word);
+  return ok(position);
+}
+
+/** 水準の語 (省けば null)。`-5div` を水準の場所に書いたら at を促す。 */
+function triggerLevel(level: string | undefined): LineResult<number | null> {
+  if (level === undefined) return ok(null);
+  if (parsePosition(level) !== null) return fail('trigger: の位置は at を付けて書きます (例: ch1 rising 0V at -5div)', level);
+  const volts = plainVolts(level);
+  if (volts !== null) return ok(volts);
+  return fail(isBareNumber(level) ? 'trigger: の水準は 1V / -500mV のように単位を付けます' : `trigger: の水準が読めません: ${safeToken(level)} (1V / -500mV)`, level);
+}
+
+/** `ch1 rising 1V` / `ch2 falling` / `ch1 rising 0V at -5div` (水準は省ける = 波形の中央、at は省ける = 中央)。 */
 export function parseTriggerLine(text: string): LineResult<TriggerLine> {
   const words = wordsOf(text);
-  const [source = '', edge, level] = words;
+  const [source = '', edge] = words;
   if (!isChannelName(source)) return fail('trigger: は ch1〜ch4 のどれかで合わせます', source || undefined);
   if (edge === undefined) return fail(TRIGGER_HINT, source);
   if (edge !== 'rising' && edge !== 'falling') return fail('trigger: の向きは rising か falling です', edge);
-  if (words.length > 3) return fail(TRIGGER_HINT, words[3]);
-  if (level === undefined) return ok({ source, edge, level: null });
-  const volts = plainVolts(level);
-  if (volts === null) {
-    return fail(isBareNumber(level) ? 'trigger: の水準は 1V / -500mV のように単位を付けます' : `trigger: の水準が読めません: ${safeToken(level)} (1V / -500mV)`, level);
+  const atIndex = words.indexOf('at');
+  const head = atIndex === -1 ? words : words.slice(0, atIndex);
+  const extra = head[3];
+  if (extra !== undefined && atIndex === -1 && parsePosition(extra) !== null) {
+    return fail('trigger: の位置は at を付けて書きます (例: ch1 rising 0V at -5div)', extra);
   }
-  return ok({ source, edge, level: volts });
+  if (extra !== undefined) return fail(atIndex === -1 ? TRIGGER_HINT : TRIGGER_AT_HINT, extra);
+  const level = triggerLevel(head[2]);
+  if (!level.ok) return level;
+  if (atIndex === -1) return ok({ source, edge, level: level.value, position: 0 });
+  if (words.length > atIndex + 2) return fail(TRIGGER_AT_HINT, words[atIndex + 2]);
+  const position = triggerPosition(words[atIndex + 1]);
+  return position.ok ? ok({ source, edge, level: level.value, position: position.value }) : position;
 }
 
 /** カーソルの時刻。`0` `1ms` `-500us`。 */

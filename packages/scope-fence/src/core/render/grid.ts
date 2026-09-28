@@ -131,10 +131,13 @@ export function renderChannelMark(labels: readonly MarkLabel[], fraction: number
   }).join('');
 }
 
-/** トリガの水準 `◀T` (格子の右の余白) と位置 `▼` (上の余白、t = 0 = 中央)。 */
-export function renderTriggerMarks(fraction: number | null, layout: Layout, theme: Theme, color: string): string {
+/**
+ * トリガの水準 `◀T` (格子の右の余白) と位置 `▼` (上の余白、t = 0 の所。`at` は格子の左端 0〜右端 1 の割合。
+ * 既定は中央)。
+ */
+export function renderTriggerMarks(fraction: number | null, layout: Layout, theme: Theme, color: string, at = 0.5): string {
   const { x, y, width, height } = layout.grid;
-  const cx = x + width / 2;
+  const cx = x + width * at;
   const top = element('polygon', {
     points: `${num(cx - MARK / 2)},${num(y - 1 - MARK)} ${num(cx + MARK / 2)},${num(y - 1 - MARK)} ${num(cx)},${num(y - 1)}`,
     fill: color,

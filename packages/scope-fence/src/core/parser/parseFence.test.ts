@@ -73,7 +73,7 @@ describe('parseFence — 段 1', () => {
     const { doc, errors } = parseFence(FIVE_ONE);
     expect(errors).toEqual([]);
     expect(doc.channels.map((channel) => [channel.name, channel.source.kind, channel.line])).toEqual([['ch1', 'wave', 4], ['ch2', 'ref', 5]]);
-    expect(doc.trigger).toEqual({ source: 'ch1', edge: 'rising', level: 1, line: 3 });
+    expect(doc.trigger).toEqual({ source: 'ch1', edge: 'rising', level: 1, position: 0, line: 3 });
     expect(doc.cursors).toEqual([{ t: 0, line: 6 }, { t: 1e-3, line: 6 }]);
     expect(doc.measures).toEqual(['vpp', 'freq']);
   });

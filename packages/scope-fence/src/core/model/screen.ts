@@ -1,6 +1,6 @@
 /**
- * 画面の横軸。**格子は 10 × 8 目盛** (実機と同じ)、t = 0 (トリガの位置) は画面の中央
- * (WaveForms の既定 Trigger position 0 s)。
+ * 画面の横軸。**格子は 10 × 8 目盛** (実機と同じ)、t = 0 (トリガの位置) は既定で画面の中央
+ * (WaveForms の既定 Trigger position 0 s)。`trigger: … at -5div` で左右に動かす (左端 −5、右端 +5)。
  */
 export const DIVISIONS = { x: 10, y: 8 } as const;
 
@@ -11,16 +11,19 @@ export type Screen = {
   readonly span: number;
   /** 画面 1 枚の点数。 */
   readonly samples: number;
-  /** 左端の時刻 (s) = −span / 2。 */
+  /** 左端の時刻 (s) = −span / 2 − position × perDiv (position はトリガの位置の目盛)。 */
   readonly left: number;
   /** 点の間隔 (s)。両端の点を含めて `samples` 点。 */
   readonly dt: number;
 };
 
-export function screenOf(perDiv: number, samples: number): Screen {
+export function screenOf(perDiv: number, samples: number, position = 0): Screen {
   const span = perDiv * DIVISIONS.x;
-  return { perDiv, span, samples, left: -span / 2, dt: span / (samples - 1) };
+  return { perDiv, span, samples, left: -span / 2 - position * perDiv, dt: span / (samples - 1) };
 }
+
+/** 同じ画面を t = 0 が中央に来るように置き直す (トリガを探す窓)。 */
+export const centredOf = (screen: Screen): Screen => ({ ...screen, left: -screen.span / 2 });
 
 /** 画面の点の時刻。 */
 export const timesOf = (screen: Screen): readonly number[] =>

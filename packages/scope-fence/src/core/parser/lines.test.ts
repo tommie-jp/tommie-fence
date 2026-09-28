@@ -94,8 +94,14 @@ describe('parseChannelLine', () => {
 
 describe('parseTriggerLine', () => {
   test('reads the source, the edge and the level (which may be left out)', () => {
-    expect(parseTriggerLine('ch1 rising 1V')).toEqual({ ok: true, value: { source: 'ch1', edge: 'rising', level: 1 } });
-    expect(parseTriggerLine('ch2 falling')).toEqual({ ok: true, value: { source: 'ch2', edge: 'falling', level: null } });
+    expect(parseTriggerLine('ch1 rising 1V')).toEqual({ ok: true, value: { source: 'ch1', edge: 'rising', level: 1, position: 0 } });
+    expect(parseTriggerLine('ch2 falling')).toEqual({ ok: true, value: { source: 'ch2', edge: 'falling', level: null, position: 0 } });
+  });
+
+  test('reads the horizontal position of the trigger point (at, in div, −5 to +5)', () => {
+    expect(parseTriggerLine('ch1 rising 0V at -5div')).toEqual({ ok: true, value: { source: 'ch1', edge: 'rising', level: 0, position: -5 } });
+    expect(parseTriggerLine('ch1 falling at 2.5div')).toEqual({ ok: true, value: { source: 'ch1', edge: 'falling', level: null, position: 2.5 } });
+    expect(parseTriggerLine('ch1 rising 1V at 5div')).toEqual({ ok: true, value: { source: 'ch1', edge: 'rising', level: 1, position: 5 } });
   });
 
   test.each([
@@ -104,6 +110,12 @@ describe('parseTriggerLine', () => {
     ['ch1 rising 1', 'trigger: の水準は 1V / -500mV のように単位を付けます', '1'],
     ['cha rising', 'trigger: は ch1〜ch4 のどれかで合わせます', 'cha'],
     ['ch1 rising 1V 2V', 'trigger: は「ch1 rising 1V」の形で書きます (向きは rising / falling、水準は省けます)', '2V'],
+    ['ch1 rising 0V at -5', 'trigger: の at は -5div / 2div のように目盛 (div) で書きます (-5div〜5div)', '-5'],
+    ['ch1 rising 0V at 1ms', 'trigger: の at は -5div / 2div のように目盛 (div) で書きます (-5div〜5div)', '1ms'],
+    ['ch1 rising 0V at', 'trigger: の at は -5div / 2div のように目盛 (div) で書きます (-5div〜5div)', 'at'],
+    ['ch1 rising 0V at 6div', 'trigger: の at は -5div〜5div です (左端が -5div、右端が 5div)', '6div'],
+    ['ch1 rising 0V at -5div 1V', 'trigger: は「ch1 rising 1V at -5div」の形で書きます (at は省けます)', '1V'],
+    ['ch1 rising 0V -5div', 'trigger: の位置は at を付けて書きます (例: ch1 rising 0V at -5div)', '-5div'],
   ])('refuses %s', (text, message, token) => {
     expect(parseTriggerLine(text)).toEqual({ ok: false, error: { message, line: null, token } });
   });

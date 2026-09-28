@@ -42,11 +42,13 @@ export type StyleSpec = {
 /** 横軸の設定。`time: 1ms/div`。 */
 export type TimeSpec = { readonly perDiv: number; readonly line: number | null };
 
-/** `trigger: ch1 rising 1V`。水準が null なら波形の中央。 */
+/** `trigger: ch1 rising 1V at -5div`。水準が null なら波形の中央。 */
 export type TriggerSpec = {
   readonly source: ChannelName;
   readonly edge: TriggerEdge;
   readonly level: number | null;
+  /** t = 0 を置く横の位置 (目盛。中央 0、左端 −5、右端 +5)。 */
+  readonly position: number;
   readonly line: number | null;
 };
 

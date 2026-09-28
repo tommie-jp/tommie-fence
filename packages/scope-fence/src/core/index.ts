@@ -82,7 +82,7 @@ function readData(doc: FenceDocument, source: DataSource | undefined): Measured 
 /** 書かれなかった trigger: の既定 (最初の ch の立ち上がり、水準は中央)。 */
 const defaultTrigger = (channels: readonly ChannelSpec[]): TriggerSpec | null => {
   const first = channels[0];
-  return first === undefined ? null : { source: first.name, edge: 'rising', level: null, line: null };
+  return first === undefined ? null : { source: first.name, edge: 'rising', level: null, position: 0, line: null };
 };
 
 /** 描く線ごとの V/div と基準。**書いた range: / position: が先、無ければ Auto**。 */
@@ -206,7 +206,7 @@ function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>, said
   const triggerMarks = trigger === null || triggerScale === undefined
     ? ''
     : renderTriggerMarks(scene.triggerLevel === null ? null : fractionY(scene.triggerLevel, triggerScale.perDiv, triggerScale.position),
-      layout, theme, channelColor(theme, CHANNEL_NAMES.indexOf(trigger.source)));
+      layout, theme, channelColor(theme, CHANNEL_NAMES.indexOf(trigger.source)), -screen.left / screen.span);
   const notes = placeNotes({ notes: doc.notes, grid: layout.grid, screen, scales, theme });
   said.push(...notes.said);
   const body = renderTitle(doc.title, layout, theme)
@@ -235,8 +235,8 @@ function renderTime(doc: FenceDocument, source: string, options: RenderOptions, 
   const measured = readData(doc, options.data);
   const time = timeOf(doc, measured);
   said.push(...time.said);
-  const screen = screenOf(time.perDiv, LIMITS.samples);
   const trigger = doc.trigger ?? defaultTrigger(channels);
+  const screen = screenOf(time.perDiv, LIMITS.samples, trigger?.position ?? 0);
   if (!wrote('trigger') && trigger !== null) {
     said.push(notice(`trigger: が無いので ${trigger.source} の立ち上がり (水準は波形の中央) で合わせています`, null));
   }

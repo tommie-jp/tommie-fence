@@ -5,7 +5,7 @@ import { channelPeriods, exprWorkOf, samplesOf } from './model/channel.ts';
 import type { ChannelSpec, Sampled } from './model/channel.ts';
 import type { Expr } from './model/expr.ts';
 import type { Trace } from './model/readings.ts';
-import { findTrigger } from './model/screen.ts';
+import { centredOf, findTrigger } from './model/screen.ts';
 import type { Screen } from './model/screen.ts';
 import type { FenceDocument, FenceError, TriggerSpec } from './types.ts';
 
@@ -29,6 +29,7 @@ const RECORD_MAX = 3;
  * 理想の記録 (測る範囲)。**画面に 2 周期入らないときは、前後を足して 2.2 周期にする**
  * (画面の 3 倍まで)。実機のバッファが画面より長いのと同じで、5-1 の `1ms/div` (画面に
  * ちょうど 1 周期) でも Freq が出る。描くのは画面の中だけ。点の間隔は画面と同じ。
+ * 足すのは画面の中央から前後に同じだけ (トリガの位置 `at` で画面が動いても同じ)。
  */
 export function recordOf(screen: Screen, channels: readonly ChannelSpec[]): Screen {
   const periods = channels.flatMap((channel) =>
@@ -38,7 +39,8 @@ export function recordOf(screen: Screen, channels: readonly ChannelSpec[]): Scre
   if (wanted <= screen.span || wanted > RECORD_MAX * screen.span) return screen;
   const samples = Math.ceil(wanted / screen.dt / 2) * 2 + 1;
   const span = (samples - 1) * screen.dt;
-  return { perDiv: screen.perDiv, span, samples, left: -span / 2, dt: screen.dt };
+  const centre = screen.left + screen.span / 2;
+  return { perDiv: screen.perDiv, span, samples, left: centre - span / 2, dt: screen.dt };
 }
 
 /**
@@ -115,19 +117,25 @@ function triggerOf(sampled: Sampled, screen: Screen, trigger: TriggerSpec): { re
   return { shift: 0, level, said: [notice(`トリガ水準 (${written}) が ${trigger.source} の波形の外なので、t = 0 に合わせていません`, trigger.line)] };
 }
 
-/** 理想の波を計算する。トリガの横切りを探して t = 0 を合わせる。 */
+/**
+ * 理想の波を計算する。トリガの横切りを探して t = 0 を合わせる。**探すのは t = 0 を中央に
+ * 置いた窓** — `at -5div` で画面が t ≥ 0 だけになっても、t = 0 の前後の横切りから選ぶ
+ * (画面の端の横切りを取り逃がさない)。描く記録はその後で `display` (動かした画面) の位置に取る。
+ */
 export function idealOf(doc: FenceDocument, display: Screen, trigger: TriggerSpec | null): Ideal {
   const { channels } = doc;
   if (channels.length === 0 && doc.math === null) return { traces: [], triggerLevel: null, said: [] };
   const screen = recordOf(display, channels);
+  const search = centredOf(screen);
   const math = doc.math?.expr ?? null;
   const heavy = tooHeavy(channels, math, screen);
   if (heavy !== null) return { traces: [], triggerLevel: null, said: [heavy] };
   // 1 回目はトリガを探すだけ (トリガは ch に掛ける) なので Math は計算しない。
-  const first = samplesOf(channels, screen, 0, trigger === null ? math : null);
-  const found = trigger === null ? { shift: 0, level: null, said: [] } : triggerOf(first, screen, trigger);
-  // シフトが 0 で Math も無ければ、1 回目がそのまま最終と同じ (無駄な 2 回目を省く)。
-  const final = trigger === null || (found.shift === 0 && math === null) ? first : samplesOf(channels, screen, found.shift, math);
+  const first = samplesOf(channels, search, 0, trigger === null ? math : null);
+  const found = trigger === null ? { shift: 0, level: null, said: [] } : triggerOf(first, search, trigger);
+  // 画面が動かず、シフトが 0 で Math も無ければ、1 回目がそのまま最終と同じ (無駄な 2 回目を省く)。
+  const same = search.left === screen.left && (trigger === null || (found.shift === 0 && math === null));
+  const final = same ? first : samplesOf(channels, screen, found.shift, math);
   return {
     traces: tracesOf(doc, final, screen),
     triggerLevel: found.level,

@@ -15,6 +15,13 @@ describe('screen', () => {
     expect(times[0]).toBe(-5e-3);
     expect(times[8191]).toBeCloseTo(5e-3, 15);
   });
+
+  test('puts t = 0 at the trigger position (at -5div = left edge, +5div = right edge)', () => {
+    expect(screenOf(1e-3, 8192, -5).left).toBeCloseTo(0, 15);
+    expect(screenOf(1e-3, 8192, 5).left).toBeCloseTo(-10e-3, 15);
+    expect(screenOf(1e-3, 8192, 2).left).toBeCloseTo(-7e-3, 15);
+    expect(screenOf(1e-3, 8192, -5).span).toBe(10e-3);
+  });
 });
 
 describe('findTrigger', () => {
