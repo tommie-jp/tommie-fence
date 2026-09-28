@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-09-29
+
 ### Documentation
 
 - 文法リファレンス (`docs/01-syntax.md`) の `dut:` のある図 5 枚に、模型の**等価回路** (` ```circuit `) を添えた
