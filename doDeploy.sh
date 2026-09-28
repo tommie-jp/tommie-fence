@@ -17,15 +17,37 @@
 # 教科書の検査 (npm run all) が落ちたら、コミットせずに止まる。版上げで増えた
 # お知らせは直さないので、落ちた所を直してから ./doDeploy.sh をもう一度。
 #
+# 時間の掛かる実行 (1 分より長い見込み) では、始めと各段で予想終了時刻を出す。
+# 見込みは前回の実測 (.git の中の deploy-times。worktree で共通) から。無ければ既定の目安。
+#
 set -euo pipefail
 
 cd "$(dirname "$0")"
 TF="$PWD"
 
-HELP_LINES='3,19p'
+HELP_LINES='3,22p'
 die() { echo "doDeploy: $*" >&2; exit 1; }
 
 book="${WORKBOOK_DIR:-$TF/../tommie-circuit-workbook}"
+
+# ---- 予想終了時刻 ----
+# 段ごとの所要秒数を覚えておき、次の見込みに使う。release は 1 パッケージあたり。
+TIMES="$(cd "$(git rev-parse --git-common-dir)" && pwd)/deploy-times"   # worktree で共通
+declare -A DEFAULT_SEC=([release_base]=150 [release_per_pkg]=55 [install]=30 [check]=30)
+sec_of() {  # 前回の実測、無ければ既定
+  local v=""
+  [ -f "$TIMES" ] && v="$(awk -v k="$1" '$1 == k { print $2 }' "$TIMES" | tail -1)"
+  echo "${v:-${DEFAULT_SEC[$1]}}"
+}
+remember() {  # 段の名前と秒数を記録 (同じ名前は置き換える)
+  local tmp="$TIMES.tmp"
+  { [ -f "$TIMES" ] && awk -v k="$1" '$1 != k' "$TIMES"; echo "$1 $2"; } > "$tmp" && mv "$tmp" "$TIMES"
+}
+show_eta() {  # 残りの見込み秒数から予想終了時刻を出す (1 分以下なら黙る)
+  local rest="$1"
+  [ "$rest" -gt 60 ] || return 0
+  echo "    予想終了時刻: $(date -d "+${rest} seconds" +%H:%M) (残り約 $(( (rest + 59) / 60 )) 分、$2)"
+}
 push=1; specs=()
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -41,10 +63,23 @@ done
 [ -f "$book/package.json" ] || die "教科書が見つかりません: $book (--book か WORKBOOK_DIR で指定)"
 book="$(cd "$book" && pwd)"
 
+n=${#specs[@]}
+est_release=0
+[ "$n" -gt 0 ] && est_release=$(( $(sec_of release_base) + n * $(sec_of release_per_pkg) ))
+est_book=$(( $(sec_of install) + $(sec_of check) ))
+echo "==> 見込み: Release 約 $(( est_release / 60 )) 分、教科書 約 $(( (est_book + 59) / 60 )) 分"
+basis="目安"; [ -s "$TIMES" ] && basis="前回の実測から"
+show_eta $(( est_release + est_book )) "$basis"
+
 # ---- 1. Release ----
-if [ ${#specs[@]} -gt 0 ]; then
+if [ "$n" -gt 0 ]; then
   echo "==> 1. Release: ${specs[*]}"
+  t0=$SECONDS
   ./doRelease.sh "${specs[@]}" --push
+  took=$(( SECONDS - t0 ))
+  per=$(( (took - $(sec_of release_base)) / n )); [ "$per" -gt 0 ] || per=$(( took / n ))
+  remember release_per_pkg "$per"
+  show_eta "$est_book" "教科書の版上げと検査"
 else
   echo "==> 1. Release はしない (教科書を今の最新に揃えるだけ)"
 fi
@@ -87,14 +122,19 @@ if [ -z "$changes" ]; then
 fi
 echo "    $changes"
 
+t0=$SECONDS
 npm install --silent
+remember install $(( SECONDS - t0 ))
 echo "==> 3. 教科書の検査 (npm run all)"
+show_eta "$(sec_of check)" "検査"
+t0=$SECONDS
 if ! npm run -s all; then
   git checkout -q -- package.json package-lock.json
   npm install --silent   # node_modules も元の版へ
   die "教科書の検査が落ちました。版上げは戻しました (上のエラーを直してから、もう一度)"
 fi
 
+remember check $(( SECONDS - t0 ))
 git add package.json package-lock.json
 git commit -q -m "chore: フェンスの版を上げる ($changes)" -m "doDeploy.sh で作った。"
 echo "==> コミット: $(git log --oneline -1)"
