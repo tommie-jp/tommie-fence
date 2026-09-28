@@ -1,65 +1,41 @@
 import { formatPerDiv, formatSeconds, formatVolts, normalizeNewlines } from 'fence-kit';
-import { attachSourceText, notice, shiftErrors } from './errors.ts';
+import { notice } from './errors.ts';
+import { idealOf } from './ideal.ts';
 import { fitNotice, screenExtent } from './layout/fit.ts';
-import { autoRange, autoTimePerDiv, fractionY, niceStep125 } from './layout/scales.ts';
+import { autoTimePerDiv, fractionY, niceStep125 } from './layout/scales.ts';
 import { SIZE, createLayout } from './layout/screen.ts';
+import { scaleOf, scaleSpecsOf } from './layout/traceScales.ts';
+import type { ScaleSpec } from './layout/traceScales.ts';
 import { LIMITS } from './limits.ts';
-import type { ChannelName, ChannelSpec } from './model/channel.ts';
-import { CHANNEL_NAMES, samplesOf } from './model/channel.ts';
+import type { ChannelSpec, TraceName } from './model/channel.ts';
+import { CHANNEL_NAMES, TRACE_NAMES } from './model/channel.ts';
 import type { MeasureName } from './model/measure.ts';
 import { parseCsv } from './model/csv.ts';
+import { formatQuantityPerDiv } from './model/quantity.ts';
 import { readingsOf } from './model/readings.ts';
-import type { Readings, Trace } from './model/readings.ts';
-import { DIVISIONS, findTrigger, screenOf } from './model/screen.ts';
+import type { Trace } from './model/readings.ts';
+import { DIVISIONS, screenOf } from './model/screen.ts';
 import type { Screen } from './model/screen.ts';
 import { parseFence } from './parser/parseFence.ts';
 import { renderDocument } from './render/document.ts';
-import { renderErrorBanner } from './render/errorHtml.ts';
 import { groupMarks, renderChannelMark, renderGrid, renderStatus, renderTriggerMarks, statusLines } from './render/grid.ts';
 import type { StatusItem } from './render/grid.ts';
 import { keyText, readingLinesOf, readingsSize, renderKey, renderReadings } from './render/readings.ts';
-import { channelColor, resolveStyle } from './render/theme.ts';
+import { channelColor, resolveStyle, traceColor } from './render/theme.ts';
 import type { Theme } from './render/theme.ts';
 import { renderTitle } from './render/title.ts';
 import { renderCursor, renderTrace } from './render/trace.ts';
 import type { Scale } from './render/trace.ts';
+import { finishResult } from './result.ts';
+import type { DataSource, RenderOptions, RenderResult } from './result.ts';
 import type { FenceDocument, FenceError, TriggerSpec } from './types.ts';
+import { renderXyView } from './xyView.ts';
 
-/** 行の無いものを先に、あとは行の順に。同じ行なら見つけた順を保つ。 */
-const byLine = (errors: readonly FenceError[]): FenceError[] =>
-  [...errors].sort((a, b) => (a.line ?? 0) - (b.line ?? 0));
+export type { DataSource, RenderOptions, RenderResult } from './result.ts';
+export { recordOf } from './ideal.ts';
 
 /** `measure:` を書かなかったときに測る物。 */
 const DEFAULT_MEASURES: readonly MeasureName[] = ['vpp', 'freq'];
-
-/**
- * `data:` のファイルを読む口。**core はファイルを開かない** — 開くのは宿主
- * (CLI は `.md` の隣、拡張は開いている文書の隣)。名前は core が `DATA_NAME` で
- * 絞ったものだけが来る。見つからなければ null。
- */
-export type DataSource = (name: string) => string | null;
-
-export type RenderResult = {
-  /** それ自体で完結した SVG。**格子は必ず描く** (読めなかった行があっても、読めた所まで)。 */
-  readonly svg: string;
-  /** 読み値 (Measurements とカーソル)。**エスケープしていない生のデータ**。 */
-  readonly readings: Readings;
-  /** 読み値を字の行にしたもの (CLI と playground が出す)。 */
-  readonly readingLines: readonly string[];
-  /** 読めなかったところ。行番号と、行の中身と、綴りを指す印を持つ。 */
-  readonly errors: readonly FenceError[];
-  /** 読めてはいるが、思ったとおりには出ないところ。 */
-  readonly notices: readonly FenceError[];
-  /** 図の下に貼る帯の HTML。言うことが無ければ空文字列。**SVG には何も書き込まない**。 */
-  readonly errorHtml: string;
-};
-
-export type RenderOptions = {
-  /** フェンスが始まる行 (Markdown の中での 1 始まり)。言うことの行番号を Markdown の行に直す。 */
-  readonly offset?: number;
-  /** `data:` のファイルを読む口。渡さなければ「この宿主では読めません」と言って理想だけ描く。 */
-  readonly data?: DataSource;
-};
 
 type Measured = {
   readonly traces: readonly Trace[];
@@ -107,88 +83,12 @@ const defaultTrigger = (channels: readonly ChannelSpec[]): TriggerSpec | null =>
   return first === undefined ? null : { source: first.name, edge: 'rising', level: null, line: null };
 };
 
-type Ideal = {
-  readonly traces: readonly Trace[];
-  /** トリガの水準 (V。null なら印を描かない)。 */
-  readonly triggerLevel: number | null;
-  readonly said: readonly FenceError[];
-};
-
-/** 記録を画面より長くするときの周期の数と、画面に対する長さの上限。 */
-const RECORD_PERIODS = 2.2;
-const RECORD_MAX = 3;
-
-/**
- * 理想の記録 (測る範囲)。**画面に 2 周期入らないときは、前後を足して 2.2 周期にする**
- * (画面の 3 倍まで)。実機のバッファが画面より長いのと同じで、5-1 の `1ms/div` (画面に
- * ちょうど 1 周期) でも Freq が出る。描くのは画面の中だけ。点の間隔は画面と同じ。
- */
-export function recordOf(screen: Screen, channels: readonly ChannelSpec[]): Screen {
-  const periods = channels.flatMap((channel) =>
-    (channel.source.kind === 'wave' && channel.source.wave.frequency !== null ? [1 / channel.source.wave.frequency] : []));
-  const longest = Math.max(0, ...periods);
-  const wanted = RECORD_PERIODS * longest;
-  if (wanted <= screen.span || wanted > RECORD_MAX * screen.span) return screen;
-  const samples = Math.ceil(wanted / screen.dt / 2) * 2 + 1;
-  const span = (samples - 1) * screen.dt;
-  return { perDiv: screen.perDiv, span, samples, left: -span / 2, dt: screen.dt };
-}
-
-/** 理想の波を計算する。トリガの横切りを探して t = 0 を合わせる。 */
-function idealOf(doc: FenceDocument, display: Screen, trigger: TriggerSpec | null): Ideal {
-  const said: FenceError[] = [];
-  const { channels } = doc;
-  if (channels.length === 0) return { traces: [], triggerLevel: null, said };
-  const screen = recordOf(display, channels);
-  const first = samplesOf(channels, screen, 0);
-  let shift = 0;
-  let triggerLevel: number | null = null;
-  const source = trigger === null ? undefined : first.samples.get(trigger.source);
-  if (trigger !== null && source !== undefined) {
-    const found = findTrigger(source, screen, trigger.edge, trigger.level);
-    if (found === null) {
-      const level = trigger.level === null ? '中央' : formatVolts(trigger.level);
-      said.push(notice(`トリガ水準 (${level}) が ${trigger.source} の波形の外なので、t = 0 に合わせていません`, trigger.line));
-    } else {
-      shift = found;
-    }
-    let min = Infinity;
-    let max = -Infinity;
-    for (const value of source) {
-      min = Math.min(min, value);
-      max = Math.max(max, value);
-    }
-    triggerLevel = trigger.level ?? (max + min) / 2;
-  }
-  const final = shift === 0 ? first : samplesOf(channels, screen, shift);
-  if (!final.settled) said.push(notice('rc の τ が画面の幅に比べて長いので、定常まで回しきれていません (time: を遅くします)', null));
-  for (const channel of channels) {
-    for (const op of channel.ops) {
-      if (op.kind === 'rc' && op.tau < screen.dt) {
-        said.push(notice(`rc の τ (${formatSeconds(op.tau)}) が画面の点の間隔 (${formatSeconds(screen.dt)}) より短いので、ほぼ素通しに描いています`, channel.line));
-      }
-    }
-  }
-  const traces = channels.map((channel): Trace => ({
-    name: channel.name,
-    samples: final.samples.get(channel.name) ?? new Float64Array(screen.samples),
-    dt: screen.dt,
-    t0: screen.left,
-    basis: 'model',
-  }));
-  return { traces, triggerLevel, said };
-}
-
-/** 描く ch ごとの V/div と基準。**書いた range: / position: が先、無ければ Auto**。 */
-function scalesOf(traces: readonly Trace[], channels: readonly ChannelSpec[]): ReadonlyMap<ChannelName, Scale> {
-  const scales = new Map<ChannelName, Scale>();
-  for (const name of CHANNEL_NAMES) {
+/** 描く線ごとの V/div と基準。**書いた range: / position: が先、無ければ Auto**。 */
+function scalesOf(traces: readonly Trace[], specs: readonly ScaleSpec[]): ReadonlyMap<TraceName, Scale> {
+  const scales = new Map<TraceName, Scale>();
+  for (const name of TRACE_NAMES) {
     const shown = traces.filter((trace) => trace.name === name);
-    if (shown.length === 0) continue;
-    const spec = channels.find((channel) => channel.name === name);
-    const joined = Float64Array.from(shown.flatMap((trace) => [...trace.samples]));
-    const auto = autoRange(joined, spec?.range ?? null);
-    scales.set(name, { perDiv: auto.perDiv, position: spec?.position ?? auto.position });
+    if (shown.length > 0) scales.set(name, scaleOf(shown, specs.find((spec) => spec.name === name)));
   }
   return scales;
 }
@@ -196,15 +96,15 @@ function scalesOf(traces: readonly Trace[], channels: readonly ChannelSpec[]): R
 /**
  * 手で書いた尺度の読みにくさ (振れが 2 目盛未満・はみ出し)。**判定は読み値と同じ列** —
  * 実測があれば実測、無ければ理想の、画面の中の点で見る。振れの小ささは、同じ尺度で重ねた
- * 相手と比べて言うかを決めるので、ch を全部そろえてから見る。
+ * 相手と比べて言うかを決めるので、線を全部そろえてから見る。Math は書き手の単位で言う。
  */
-function fitNotices(traces: readonly Trace[], channels: readonly ChannelSpec[], scales: ReadonlyMap<ChannelName, Scale>, screen: Screen): readonly FenceError[] {
-  const inputs = channels.flatMap((channel) => {
-    const trace = traces.find((one) => one.name === channel.name);
-    const scale = scales.get(channel.name);
+function fitNotices(traces: readonly Trace[], specs: readonly ScaleSpec[], scales: ReadonlyMap<TraceName, Scale>, screen: Screen): readonly FenceError[] {
+  const inputs = specs.flatMap((spec) => {
+    const trace = traces.find((one) => one.name === spec.name);
+    const scale = scales.get(spec.name);
     const extent = trace === undefined ? null : screenExtent(trace, screen);
     if (extent === null || scale === undefined) return [];
-    return [{ input: { name: channel.name, extent, range: channel.range, position: channel.position, scale }, line: channel.line }];
+    return [{ input: { name: spec.name, unit: spec.unit, extent, range: spec.range, position: spec.position, scale }, line: spec.line }];
   });
   const all = inputs.map((one) => one.input);
   return inputs.flatMap(({ input, line }) => {
@@ -213,10 +113,10 @@ function fitNotices(traces: readonly Trace[], channels: readonly ChannelSpec[], 
   });
 }
 
-function statusItems(scales: ReadonlyMap<ChannelName, Scale>, screen: Screen, trigger: TriggerSpec | null, level: number | null, theme: Theme): readonly StatusItem[] {
+function statusItems(scales: ReadonlyMap<TraceName, Scale>, specs: readonly ScaleSpec[], screen: Screen, trigger: TriggerSpec | null, level: number | null, theme: Theme): readonly StatusItem[] {
   const items: StatusItem[] = [...scales].map(([name, scale]) => ({
-    text: `${name.toUpperCase()} ${formatPerDiv(scale.perDiv, 'V')}`,
-    fill: channelColor(theme, CHANNEL_NAMES.indexOf(name)),
+    text: `${name.toUpperCase()} ${formatQuantityPerDiv(scale.perDiv, specs.find((spec) => spec.name === name)?.unit)}`,
+    fill: traceColor(theme, name),
   }));
   items.push({ text: formatPerDiv(screen.perDiv, 's'), fill: theme.palette.caption });
   if (trigger !== null) {
@@ -228,113 +128,137 @@ function statusItems(scales: ReadonlyMap<ChannelName, Scale>, screen: Screen, tr
   return items;
 }
 
-/**
- * フェンスの中身 1 つを図に変換する。DOM も Node も使わない同期の純関数なので、
- * VS Code のプレビュー・CLI・ブラウザのどこからでも同じように呼べる。
- */
-export function renderScope(input: string, options: RenderOptions = {}): RenderResult {
-  const source = normalizeNewlines(input);
-  const parsed = parseFence(source);
-  const { doc } = parsed;
-  const style = resolveStyle(doc.style);
-  const { theme } = style;
-  const said: FenceError[] = [];
+/** time: を書かなかったときの time/div と、言うこと。 */
+function timeOf(doc: FenceDocument, measured: Measured): { readonly perDiv: number; readonly said: readonly FenceError[] } {
   const { channels } = doc;
+  const fromRecord = channels.length === 0 && measured.extent !== null;
+  if (doc.time !== null) return { perDiv: doc.time.perDiv, said: [] };
+  const perDiv = fromRecord && measured.extent !== null
+    ? Math.min(LIMITS.perDiv.max, Math.max(LIMITS.perDiv.min, niceStep125((measured.extent[1] - measured.extent[0]) / DIVISIONS.x)))
+    : autoTimePerDiv(channels);
+  if (channels.length === 0 && !fromRecord) return { perDiv, said: [] };
+  const periodic = channels.some((channel) => channel.source.kind === 'wave' && channel.source.wave.frequency !== null);
+  const why = fromRecord ? '記録の幅から' : periodic ? '一番遅い波の 2 周期' : '周期のある波が無いので既定';
+  return { perDiv, said: [notice(`time: が無いので ${formatPerDiv(perDiv, 's')} (${why}) で描いています`, null)] };
+}
 
+/** 基準の印の番号 (ch は 1〜4、Math は M)。 */
+const markLabel = (name: TraceName): number | string => (name === 'math' ? 'M' : CHANNEL_NAMES.indexOf(name) + 1);
+
+/** カーソルのうち画面の中の物 (外の物は言う)。 */
+function cursorsOn(doc: FenceDocument, screen: Screen, said: FenceError[]): readonly number[] {
+  return doc.cursors.filter((cursor) => {
+    const inside = cursor.t >= screen.left - 1e-15 && cursor.t <= screen.left + screen.span + 1e-15;
+    if (!inside) said.push(notice(`カーソル ${formatSeconds(cursor.t)} は画面の外です (描いていません)`, cursor.line));
+    return inside;
+  }).map((cursor) => cursor.t);
+}
+
+/** 描く物 (時間の画面)。 */
+type TimeScene = {
+  readonly doc: FenceDocument;
+  readonly screen: Screen;
+  readonly trigger: TriggerSpec | null;
+  readonly triggerLevel: number | null;
+  readonly idealTraces: readonly Trace[];
+  readonly measured: Measured;
+  readonly cursors: readonly number[];
+  readonly readings: ReturnType<typeof readingsOf>;
+  readonly specs: readonly ScaleSpec[];
+  readonly scales: ReadonlyMap<TraceName, Scale>;
+};
+
+/** 時間の画面を SVG に。 */
+function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>): string {
+  const { doc, screen, trigger, measured, scales } = scene;
+  const { theme } = style;
+  const drawn = [...scene.idealTraces, ...measured.traces];
+  const groups = groupMarks([...scales].map(([name, scale]) => ({
+    fraction: fractionY(0, scale.perDiv, scale.position), label: { number: markLabel(name), color: traceColor(theme, name) },
+  })));
+  const status = statusLines(statusItems(scales, scene.specs, screen, trigger, scene.triggerLevel, theme), scales.size, SIZE.div * DIVISIONS.x, theme);
+  const layout = createLayout({
+    statusRows: status.length,
+    title: doc.title,
+    key: drawn.length === 0 ? null : keyText(scene.idealTraces.length > 0, measured.name),
+    readings: readingsSize(scene.readings, measured.name, theme),
+    source: null,
+    markSlots: Math.max(1, ...groups.map((group) => group.labels.length)),
+    theme,
+  });
+  const traceSvg = drawn.map((trace) => {
+    const scale = scales.get(trace.name);
+    return scale === undefined ? '' : renderTrace(trace, layout.grid, screen, scale, traceColor(theme, trace.name));
+  }).join('');
+  const triggerScale = trigger === null ? undefined : scales.get(trigger.source);
+  const triggerMarks = trigger === null || triggerScale === undefined
+    ? ''
+    : renderTriggerMarks(scene.triggerLevel === null ? null : fractionY(scene.triggerLevel, triggerScale.perDiv, triggerScale.position),
+      layout, theme, channelColor(theme, CHANNEL_NAMES.indexOf(trigger.source)));
+  const body = renderTitle(doc.title, layout, theme)
+    + renderKey(scene.idealTraces.length > 0, measured.name, layout, theme)
+    + renderGrid(layout, theme)
+    + traceSvg
+    + scene.cursors.map((t, index) => renderCursor(t, `X${index + 1}`, layout.grid, screen, theme)).join('')
+    + groups.map((group) => renderChannelMark(group.labels, group.fraction, layout, theme)).join('')
+    + triggerMarks
+    + renderStatus(status, layout, theme)
+    + (layout.readingsBand === null ? '' : renderReadings(scene.readings, measured.name, layout.readingsBand, theme));
+  return renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
+}
+
+/** 時間の画面 (view: time)。 */
+function renderTime(doc: FenceDocument, source: string, options: RenderOptions, said: FenceError[]): RenderResult {
+  const style = resolveStyle(doc.style);
+  const { channels } = doc;
   const wrote = (key: string): boolean => doc.keys.includes(key);
   if (!doc.keys.some((key) => /^ch\d$/.test(key)) && doc.data === null && source.trim() !== '') {
     said.push(notice('ch1: が無いので格子だけ描いています (ch1: sine 1kHz 1V のように書きます)', null));
   }
   const measured = readData(doc, options.data);
-  // time: が無く data: だけなら、記録の幅 / 10 を 1-2-5 に丸める。
-  const fromRecord = channels.length === 0 && measured.extent !== null;
-  const perDiv = doc.time?.perDiv ?? (fromRecord && measured.extent !== null
-    ? Math.min(LIMITS.perDiv.max, Math.max(LIMITS.perDiv.min, niceStep125((measured.extent[1] - measured.extent[0]) / DIVISIONS.x)))
-    : autoTimePerDiv(channels));
-  if (!wrote('time') && (channels.length > 0 || fromRecord)) {
-    const why = fromRecord ? '記録の幅から' : '一番遅い波の 2 周期';
-    said.push(notice(`time: が無いので ${formatPerDiv(perDiv, 's')} (${why}) で描いています`, null));
-  }
-  const screen = screenOf(perDiv, LIMITS.samples);
+  const time = timeOf(doc, measured);
+  said.push(...time.said);
+  const screen = screenOf(time.perDiv, LIMITS.samples);
   const trigger = doc.trigger ?? defaultTrigger(channels);
   if (!wrote('trigger') && trigger !== null) {
     said.push(notice(`trigger: が無いので ${trigger.source} の立ち上がり (水準は波形の中央) で合わせています`, null));
   }
 
   const ideal = idealOf(doc, screen, trigger);
-  said.push(...ideal.said);
-  said.push(...measured.said);
+  said.push(...ideal.said, ...measured.said);
   if (measured.extent !== null && doc.data !== null
     && (measured.extent[1] < screen.left || measured.extent[0] > screen.left + screen.span)) {
     said.push(notice(`${doc.data.name} には画面 (${formatSeconds(screen.left)}〜${formatSeconds(screen.left + screen.span)}) の中の点がありません`, doc.data.line, doc.data.name));
   }
+  const cursors = cursorsOn(doc, screen, said);
 
-  const cursors = doc.cursors.filter((cursor) => {
-    const inside = cursor.t >= screen.left - 1e-15 && cursor.t <= screen.left + screen.span + 1e-15;
-    if (!inside) said.push(notice(`カーソル ${formatSeconds(cursor.t)} は画面の外です (描いていません)`, cursor.line));
-    return inside;
-  }).map((cursor) => cursor.t);
-
-  // 読み値は ch ごとに実測があれば実測、無ければ理想。
-  const readingTraces = CHANNEL_NAMES.flatMap((name) => {
+  // 読み値は線ごとに実測があれば実測、無ければ理想 (Math はいつも理想)。
+  const readingTraces = TRACE_NAMES.flatMap((name) => {
     const one = measured.traces.find((trace) => trace.name === name) ?? ideal.traces.find((trace) => trace.name === name);
     return one === undefined ? [] : [one];
   });
   const readings = readingsOf({ traces: readingTraces, cursors, measures: doc.measures ?? DEFAULT_MEASURES });
+  const specs = scaleSpecsOf(doc);
+  const scales = scalesOf([...ideal.traces, ...measured.traces], specs);
+  said.push(...fitNotices(readingTraces, specs, scales, screen));
 
-  const drawn = [...ideal.traces, ...measured.traces];
-  const scales = scalesOf(drawn, channels);
-  said.push(...fitNotices(readingTraces, channels, scales, screen));
-  const groups = groupMarks([...scales].map(([name, scale]) => {
-    const index = CHANNEL_NAMES.indexOf(name);
-    return { fraction: fractionY(0, scale.perDiv, scale.position), label: { number: index + 1, color: channelColor(theme, index) } };
-  }));
-  const key = drawn.length === 0 ? null : keyText(ideal.traces.length > 0, measured.name);
-  const status = statusLines(statusItems(scales, screen, trigger, ideal.triggerLevel, theme), scales.size, SIZE.div * DIVISIONS.x, theme);
-  const layout = createLayout({
-    statusRows: status.length,
-    title: doc.title,
-    key,
-    readings: readingsSize(readings, measured.name, theme),
-    source: null,
-    markSlots: Math.max(1, ...groups.map((group) => group.labels.length)),
-    theme,
+  const svg = drawTime({
+    doc, screen, trigger, triggerLevel: ideal.triggerLevel, idealTraces: ideal.traces, measured, cursors, readings, specs, scales,
+  }, style);
+  return finishResult({
+    source, said, svg, readings, readingLines: readingLinesOf(readings, measured.name), debug: style.debug, offset: options.offset ?? 0,
   });
+}
 
-  const traceSvg = drawn.map((trace) => {
-    const scale = scales.get(trace.name);
-    return scale === undefined ? '' : renderTrace(trace, layout.grid, screen, scale, channelColor(theme, CHANNEL_NAMES.indexOf(trace.name)));
-  }).join('');
-  const marks = groups.map((group) => renderChannelMark(group.labels, group.fraction, layout, theme)).join('');
-  const triggerScale = trigger === null ? undefined : scales.get(trigger.source);
-  const triggerMarks = trigger === null || triggerScale === undefined
-    ? ''
-    : renderTriggerMarks(ideal.triggerLevel === null ? null : fractionY(ideal.triggerLevel, triggerScale.perDiv, triggerScale.position),
-      layout, theme, channelColor(theme, CHANNEL_NAMES.indexOf(trigger.source)));
-
-  const body = renderTitle(doc.title, layout, theme)
-    + renderKey(ideal.traces.length > 0, measured.name, layout, theme)
-    + renderGrid(layout, theme)
-    + traceSvg
-    + cursors.map((t, index) => renderCursor(t, `X${index + 1}`, layout.grid, screen, theme)).join('')
-    + marks
-    + triggerMarks
-    + renderStatus(status, layout, theme)
-    + (layout.readingsBand === null ? '' : renderReadings(readings, measured.name, layout.readingsBand, theme));
-  const svg = renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
-
-  const reported = attachSourceText(byLine([...parsed.errors, ...said]), source);
-  const at = (list: readonly FenceError[]): readonly FenceError[] => shiftErrors(list, options.offset ?? 0);
-  const errors = at(reported.filter((error) => error.notice !== true));
-  const notices = at(reported.filter((error) => error.notice === true));
-  return {
-    svg,
-    readings,
-    readingLines: readingLinesOf(readings, measured.name),
-    errors,
-    notices,
-    errorHtml: renderErrorBanner(style.debug ? [...errors, ...notices] : errors),
-  };
+/**
+ * フェンスの中身 1 つを図に変換する。DOM も Node も使わない同期の純関数なので、
+ * VS Code のプレビュー・CLI・ブラウザのどこからでも同じように呼べる。
+ */
+export function renderScope(input: string, options: RenderOptions = {}): RenderResult {
+  const source = normalizeNewlines(input);
+  const { doc, errors } = parseFence(source);
+  const said: FenceError[] = [...errors];
+  return doc.view === 'xy' ? renderXyView(doc, source, options, said) : renderTime(doc, source, options, said);
 }
 
 export { extractScopeFences } from './fences.ts';

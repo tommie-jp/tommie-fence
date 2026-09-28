@@ -4,12 +4,15 @@ import { formatPerDiv, parsePerDiv, rememberRecent } from 'fence-kit';
 import { fenceError, notice, safeToken } from '../errors.ts';
 import { DATA_NAME, LIMITS } from '../limits.ts';
 import { CHANNEL_NAMES } from '../model/channel.ts';
-import type { ChannelName, ChannelSpec } from '../model/channel.ts';
+import type { ChannelName, ChannelSpec, TraceName } from '../model/channel.ts';
 import type { MeasureName } from '../model/measure.ts';
 import { TOP_LEVEL_KEYS } from '../types.ts';
-import type { CursorSpec, FenceDocument, FenceError, StyleSpec, TimeSpec, TriggerSpec } from '../types.ts';
+import type { CursorSpec, FenceDocument, FenceError, MathSpec, StyleSpec, TimeSpec, TriggerSpec } from '../types.ts';
 import { parseChannelLine, parseCursor, parseMeasureNames, parsePosition, parseTriggerLine } from './lines.ts';
+import { readMath } from './math.ts';
 import { EMPTY_STYLE, parseStyle } from './style.ts';
+import { readXy } from './xy.ts';
+import { scalarText, writtenText } from './yamlText.ts';
 
 /** yaml のメッセージはライブラリ側の文言なので、載せる長さを切る。 */
 const MAX_YAML_MESSAGE = 120;
@@ -23,6 +26,8 @@ const emptyDocument = (): FenceDocument => ({
   time: null,
   trigger: null,
   channels: [],
+  math: null,
+  xy: null,
   data: null,
   cursors: [],
   measures: null,
@@ -32,24 +37,6 @@ const emptyDocument = (): FenceDocument => ({
 
 /** ch を並びの形で書くときの項目。 */
 export const CHANNEL_KEYS = ['wave', 'range', 'position'] as const;
-
-export const scalarText = (node: unknown): string | null => {
-  if (!isScalar(node)) return null;
-  if (typeof node.value === 'string') return node.value;
-  if (typeof node.value === 'number') return String(node.value);
-  return null;
-};
-
-/**
- * **書かれたとおりの綴り**を元の字面から切り出す。YAML は `1.50` を `1.5` に
- * 読むので、解決後の値を名指すと行のどこにも無い綴りになる。
- */
-export const writtenText = (node: unknown, source: string): string | null => {
-  const range = (node as { range?: readonly [number, number, number] } | null)?.range;
-  if (!range) return null;
-  const text = source.slice(range[0], range[1]).trim();
-  return text === '' ? null : text;
-};
 
 const TIME_HINT = 'time: は 1ms/div / 200us/div のように /div を付けます';
 
@@ -98,7 +85,11 @@ function readFence(source: string): ParseResult {
   const cursors: CursorSpec[] = [];
   let measures: readonly MeasureName[] | null = null;
   let style: StyleSpec = EMPTY_STYLE;
+  let view: FenceDocument['view'] = 'time';
+  let mathPair: Pair | null = null;
+  let xyText: { readonly text: string; readonly line: number | null } | null = null;
   const written = new Set<string>();
+  const keyLines = new Map<string, number | null>();
   /** ch の行は全部集めてから ch1 → ch4 の順に読む (参照は前の ch だけ)。 */
   const channelPairs = new Map<ChannelName, Pair>();
 
@@ -155,14 +146,21 @@ function readFence(source: string): ParseResult {
       continue;
     }
     written.add(key);
+    keyLines.set(key, keyLine);
 
     switch (key) {
       case 'view': {
         const text = (scalarText(pair.value) ?? '').trim();
-        if (text === 'xy') errors.push(fenceError('view: xy はまだ描けません (この版で描けるのは time だけ)', at, text));
-        else if (text !== 'time') errors.push(fenceError('view: は time か xy です', at, text || undefined));
+        if (text === 'xy' || text === 'time') view = text;
+        else errors.push(fenceError('view: は time か xy です', at, text || undefined));
         break;
       }
+      case 'math':
+        mathPair = pair;
+        break;
+      case 'xy':
+        xyText = { text: scalarText(pair.value) ?? '', line: at };
+        break;
       case 'title': {
         const text = scalarText(pair.value);
         if (text === null) {
@@ -215,9 +213,8 @@ function readFence(source: string): ParseResult {
       case 'measure':
         readMeasures(pair.value, at);
         break;
-      case 'math':
       case 'notes':
-        errors.push(fenceError(`${key}: はまだ書けません (この版で描けるのは ch1〜ch4 の波と操作だけ)`, keyLine, key));
+        errors.push(fenceError('notes: はまだ書けません (この版で描けるのは波・操作・式・Math・XY まで)', keyLine, key));
         break;
       default:
         channelPairs.set(key as ChannelName, pair);
@@ -226,6 +223,15 @@ function readFence(source: string): ParseResult {
   }
 
   const channels = readChannels(channelPairs, source, lineOf, errors);
+  const math = mathOf(mathPair, { source, lineOf, read: channels.map((channel) => channel.name), written }, errors);
+  const read: TraceName[] = [...channels.map((channel) => channel.name), ...(math === null ? [] : ['math' as const])];
+  const xyRead = readXy({ view, text: xyText?.text ?? null, line: xyText?.line ?? null, viewLine: keyLines.get('view') ?? null, keyLines, read });
+  errors.push(...xyRead.errors);
+  if (view === 'xy') {
+    // XY で書けないキーは言ったので、描く側へは渡さない。
+    [time, trigger, data, measures] = [null, null, null, null];
+    cursors.length = 0;
+  }
   if (trigger !== null && !channels.some((channel) => channel.name === trigger?.source)) {
     const written = channelPairs.has(trigger.source);
     errors.push(fenceError(
@@ -235,7 +241,18 @@ function readFence(source: string): ParseResult {
     trigger = null;
   }
 
-  return { doc: { view: 'time', title, time, trigger, channels, data, cursors, measures, style, keys: [...written] }, errors };
+  return {
+    doc: { view, title, time, trigger, channels, math, xy: xyRead.xy, data, cursors, measures, style, keys: [...written] },
+    errors,
+  };
+}
+
+/** math: を読む (ch を全部読んだ後)。 */
+function mathOf(pair: Pair | null, context: Parameters<typeof readMath>[1], errors: FenceError[]): MathSpec | null {
+  if (pair === null) return null;
+  const read = readMath(pair, context);
+  errors.push(...read.errors);
+  return read.math;
 }
 
 type LineOf = (node: Node | Pair | null | undefined) => number | null;
@@ -289,6 +306,18 @@ function channelText(
   return broken ? null : { text, range, position };
 }
 
+/**
+ * 前に書いてあって読めなかった ch への参照 (`ch1 | …` の頭か、`= …` の式の中)。
+ * 「参照できません」より「ch1 が読めないので」のほうが直す所を指す。
+ */
+function brokenReference(text: string, name: ChannelName, pairs: ReadonlyMap<ChannelName, Pair>, channels: readonly ChannelSpec[]): string | undefined {
+  const head = text.trim().startsWith('=') ? [...text.matchAll(/\bch\d\b/g)].map((found) => found[0]) : [/^\s*(ch\d)\b/.exec(text)?.[1]];
+  return head.find((target) => target !== undefined
+    && pairs.has(target as ChannelName)
+    && CHANNEL_NAMES.indexOf(target as ChannelName) < CHANNEL_NAMES.indexOf(name)
+    && !channels.some((channel) => channel.name === target));
+}
+
 /** ch を ch1 → ch4 の順に読む。**参照できるのは自分より前の、読めた ch だけ**。 */
 function readChannels(pairs: ReadonlyMap<ChannelName, Pair>, source: string, lineOf: LineOf, errors: FenceError[]): readonly ChannelSpec[] {
   const channels: ChannelSpec[] = [];
@@ -298,9 +327,8 @@ function readChannels(pairs: ReadonlyMap<ChannelName, Pair>, source: string, lin
     const at = lineOf((pair.value ?? pair.key) as Node);
     const written = channelText(pair, source, lineOf, errors);
     if (written === null) continue;
-    const target = /^\s*(ch\d)\b/.exec(written.text)?.[1];
-    if (target !== undefined && pairs.has(target as ChannelName) && CHANNEL_NAMES.indexOf(target as ChannelName) < CHANNEL_NAMES.indexOf(name)
-      && !channels.some((channel) => channel.name === target)) {
+    const target = brokenReference(written.text, name, pairs, channels);
+    if (target !== undefined) {
       errors.push(fenceError(`${target} が読めないので ${name} も描けません`, at, target));
       continue;
     }

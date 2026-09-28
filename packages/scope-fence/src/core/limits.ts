@@ -17,6 +17,12 @@ export const LIMITS = {
   samples: 8192,
   /** 助走 (定常まで回す分) の点数の上限。画面の 128 枚ぶん。 */
   warmupSamples: 8192 * 128,
+  /**
+   * 式 (`ch2: = …` と `math:`) の長さ (字) と入れ子の深さ (括弧・単項の符号・`^` の段)。
+   * 深さに上限が無いと、`((((…` の 1 行で再帰が積み上がる。
+   */
+  exprLength: 200,
+  exprDepth: 16,
   /** カーソルと Measurements の数。 */
   cursors: 2,
   measures: 8,

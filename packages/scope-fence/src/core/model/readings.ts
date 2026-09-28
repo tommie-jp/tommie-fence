@@ -1,5 +1,7 @@
-import { formatDegrees, formatHertzReading, formatPercent, formatSeconds, formatVolts } from 'fence-kit';
-import type { ChannelName } from './channel.ts';
+import { formatDegrees, formatHertzReading, formatPercent, formatSeconds } from 'fence-kit';
+import type { TraceName } from './channel.ts';
+import { formatQuantity } from './quantity.ts';
+import type { QuantityUnit } from './quantity.ts';
 import { measure } from './measure.ts';
 import type { MeasureName } from './measure.ts';
 
@@ -11,7 +13,9 @@ import type { MeasureName } from './measure.ts';
 
 /** 1 本の波の点の列。`t0` は最初の点の時刻、`dt` は間隔。 */
 export type Trace = {
-  readonly name: ChannelName;
+  readonly name: TraceName;
+  /** 縦の量の単位 (書かなければ V。Math だけが W や無次元になる)。 */
+  readonly unit?: QuantityUnit;
   readonly samples: Float64Array;
   readonly dt: number;
   readonly t0: number;
@@ -27,7 +31,7 @@ export type Readings = {
   /** 値の出どころ。mixed は実測の ch と理想の ch が両方ある。 */
   readonly basis: 'model' | 'data' | 'mixed';
   /** mixed のときの理想の ch。 */
-  readonly idealNames: readonly ChannelName[];
+  readonly idealNames: readonly TraceName[];
 };
 
 const HEADINGS: Readonly<Record<MeasureName, string>> = {
@@ -36,9 +40,9 @@ const HEADINGS: Readonly<Record<MeasureName, string>> = {
 
 const DASH = '—';
 
-const label = (name: ChannelName): string => name.toUpperCase();
+const label = (name: TraceName): string => name.toUpperCase();
 
-function formatMeasure(name: MeasureName, value: number | null): string {
+function formatMeasure(name: MeasureName, value: number | null, unit: QuantityUnit | undefined): string {
   if (value === null || !Number.isFinite(value)) return DASH;
   switch (name) {
     case 'freq':
@@ -51,7 +55,7 @@ function formatMeasure(name: MeasureName, value: number | null): string {
     case 'phase':
       return formatDegrees(value);
     default:
-      return formatVolts(value);
+      return formatQuantity(value, unit);
   }
 }
 
@@ -66,12 +70,12 @@ export function valueAtTime(trace: Pick<Trace, 'samples' | 'dt' | 't0'>, t: numb
   return a + (b - a) * Math.min(1, Math.max(0, index - i));
 }
 
-const volts = (value: number | null): string => (value === null ? DASH : formatVolts(value));
+const quantity = (value: number | null, unit: QuantityUnit | undefined): string => (value === null ? DASH : formatQuantity(value, unit));
 
 function cursorRowsOf(traces: readonly Trace[], cursors: readonly number[]): readonly (readonly string[])[] {
   const [x1, x2] = cursors;
   if (x1 === undefined) return [];
-  const row = (name: string, t: number): readonly string[] => [name, formatSeconds(t), ...traces.map((trace) => volts(valueAtTime(trace, t)))];
+  const row = (name: string, t: number): readonly string[] => [name, formatSeconds(t), ...traces.map((trace) => quantity(valueAtTime(trace, t), trace.unit))];
   const rows = [['', 't', ...traces.map((trace) => label(trace.name))], row('X1', x1)];
   if (x2 === undefined) return rows;
   const span = x2 - x1;
@@ -80,7 +84,7 @@ function cursorRowsOf(traces: readonly Trace[], cursors: readonly number[]): rea
     span === 0 ? formatSeconds(0) : `${formatSeconds(span)} (${formatHertzReading(1 / Math.abs(span))})`,
     ...traces.map((trace) => {
       const [a, b] = [valueAtTime(trace, x1), valueAtTime(trace, x2)];
-      return a === null || b === null ? DASH : formatVolts(b - a);
+      return a === null || b === null ? DASH : formatQuantity(b - a, trace.unit);
     }),
   ];
   return [...rows, row('X2', x2), delta];
@@ -98,7 +102,7 @@ export function readingsOf(input: {
     ['CH', ...measures.map((name) => HEADINGS[name])],
     ...traces.map((trace) => [label(trace.name), ...measures.map((name) => (name === 'phase' && trace === reference
       ? DASH
-      : formatMeasure(name, measure(name, trace.samples, trace.dt, reference?.samples))))]),
+      : formatMeasure(name, measure(name, trace.samples, trace.dt, reference?.samples), trace.unit)))]),
   ];
   const measured = traces.filter((trace) => trace.basis === 'data');
   const basis = measured.length === 0 ? 'model' : measured.length === traces.length ? 'data' : 'mixed';

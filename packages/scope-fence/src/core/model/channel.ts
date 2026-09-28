@@ -1,6 +1,8 @@
 import { periodOf, sampleWave } from 'fence-kit';
 import type { WaveSpec } from 'fence-kit';
 import { LIMITS } from '../limits.ts';
+import type { Expr } from './expr.ts';
+import { evaluateExpr } from './exprEval.ts';
 import { applyOps, tauOf } from './ops.ts';
 import type { Op } from './ops.ts';
 import type { Screen } from './screen.ts';
@@ -11,10 +13,15 @@ import type { Screen } from './screen.ts';
  */
 export const CHANNEL_NAMES = ['ch1', 'ch2', 'ch3', 'ch4'] as const;
 export type ChannelName = (typeof CHANNEL_NAMES)[number];
+/** 描く線の名前 — ch と Math (5 本目)。 */
+export const TRACE_NAMES = [...CHANNEL_NAMES, 'math'] as const;
+export type TraceName = (typeof TRACE_NAMES)[number];
 
 export type ChannelSource =
   | { readonly kind: 'wave'; readonly wave: WaveSpec }
-  | { readonly kind: 'ref'; readonly channel: ChannelName };
+  | { readonly kind: 'ref'; readonly channel: ChannelName }
+  /** 式 (`ch2: = 2V * (1 - exp(-t/1ms))`)。`refs` は式が参照する前の ch。 */
+  | { readonly kind: 'expr'; readonly expr: Expr; readonly refs?: readonly ChannelName[] };
 
 export type ChannelSpec = {
   readonly name: ChannelName;
@@ -70,30 +77,49 @@ export function valueAt(wave: WaveSpec, t: number, dt: number): number {
 }
 
 export type Sampled = {
-  /** 画面 1 枚ぶんの点 (ch ごと)。 */
-  readonly samples: ReadonlyMap<ChannelName, Float64Array>;
+  /** 画面 1 枚ぶんの点 (ch ごと。Math を渡せば `math` も)。 */
+  readonly samples: ReadonlyMap<TraceName, Float64Array>;
   /** 助走を上限で切ったら false (定常に届いていないかもしれない)。 */
   readonly settled: boolean;
+  /** 式が計算できずに 0 にした点の数 (助走を含む。0 の ch は載せない)。 */
+  readonly invalid: ReadonlyMap<TraceName, number>;
 };
+
+/** 標本化の時刻の格子 (助走込み)。 */
+export type Grid = { readonly start: number; readonly dt: number; readonly length: number };
+
+/** 元の点の列 1 本。式は前の ch の列を参照する。 */
+function inputOf(source: ChannelSource, grid: Grid, extended: ReadonlyMap<TraceName, Float64Array>): { readonly values: Float64Array; readonly invalid: number } {
+  switch (source.kind) {
+    case 'wave':
+      return { values: Float64Array.from({ length: grid.length }, (_, index) => valueAt(source.wave, grid.start + index * grid.dt, grid.dt)), invalid: 0 };
+    case 'ref':
+      return { values: extended.get(source.channel) ?? new Float64Array(grid.length), invalid: 0 };
+    case 'expr':
+      return evaluateExpr(source.expr, { ...grid, channels: extended });
+  }
+}
 
 /**
  * 助走ぶん左から標本化して操作を掛け、**画面の中だけ**返す。`shift` はトリガで
- * 決めた時刻のずれ (画面の t は波の t + shift)。
+ * 決めた時刻のずれ (画面の t は波の t + shift)。`math` は **ch を全部出した後に 1 回**、
+ * 同じ時刻の格子で計算する (ch と同じ道。52 の docs/99 決め 2)。
  */
-export function samplesOf(channels: readonly ChannelSpec[], screen: Screen, shift: number): Sampled {
+export function samplesOf(channels: readonly ChannelSpec[], screen: Screen, shift: number, math: Expr | null = null): Sampled {
   const wanted = Math.ceil(warmupOf(channels) / screen.dt);
   const warmup = Math.min(wanted, LIMITS.warmupSamples);
   const total = warmup + screen.samples;
   const start = screen.left + shift - warmup * screen.dt;
-  const extended = new Map<ChannelName, Float64Array>();
-  for (const channel of channels) {
-    const { source } = channel;
-    const input = source.kind === 'wave'
-      ? Float64Array.from({ length: total }, (_, index) => valueAt(source.wave, start + index * screen.dt, screen.dt))
-      : extended.get(source.channel) ?? new Float64Array(total);
-    extended.set(channel.name, applyOps(input, screen.dt, channel.ops));
-  }
-  const samples = new Map<ChannelName, Float64Array>();
+  const grid: Grid = { start, dt: screen.dt, length: total };
+  const extended = new Map<TraceName, Float64Array>();
+  const invalid = new Map<TraceName, number>();
+  const put = (name: TraceName, input: { readonly values: Float64Array; readonly invalid: number }, ops: readonly Op[]): void => {
+    if (input.invalid > 0) invalid.set(name, input.invalid);
+    extended.set(name, applyOps(input.values, screen.dt, ops));
+  };
+  for (const channel of channels) put(channel.name, inputOf(channel.source, grid, extended), channel.ops);
+  if (math !== null) put('math', inputOf({ kind: 'expr', expr: math }, grid, extended), []);
+  const samples = new Map<TraceName, Float64Array>();
   for (const [name, values] of extended) samples.set(name, values.subarray(warmup));
-  return { samples, settled: warmup === wanted };
+  return { samples, settled: warmup === wanted, invalid };
 }

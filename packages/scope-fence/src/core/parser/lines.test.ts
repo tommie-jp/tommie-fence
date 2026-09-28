@@ -24,6 +24,14 @@ describe('parseChannelLine', () => {
     expect(low.ok && low.value.ops).toEqual([{ kind: 'clip', low: 0, high: null }]);
   });
 
+  test('reads an expression after =, with operations after it', () => {
+    const read = parseChannelLine('ch2', '= 2V * (1 - exp(-t/1ms)) | rc 1ms | peak 150ms', ['ch1']);
+    expect(read.ok && read.value.source.kind).toBe('expr');
+    expect(read.ok && read.value.ops).toEqual([{ kind: 'rc', tau: 1e-3 }, { kind: 'peak', tau: 0.15 }]);
+    const ref = parseChannelLine('ch2', '= ch1 * 2', ['ch1']);
+    expect(ref.ok && ref.value.source.kind === 'expr' && ref.value.source.refs).toEqual(['ch1']);
+  });
+
   test('passes on the default it filled in', () => {
     const pulse = parseChannelLine('ch1', 'pulse 1kHz 1V', []);
     expect(pulse.ok && pulse.value.assumed).toEqual(['pulse の duty は既定の 25% で描いています']);
@@ -40,7 +48,7 @@ describe('parseChannelLine', () => {
     ['ch1', 'ch2 | rc 1ms', [], 'ch1 は波で書きます (前に参照できる ch がありません。例: ch1: sine 1kHz 1V)', 'ch2'],
     ['ch2', 'ch3', ['ch1'], 'ch2 が参照できるのは前の ch1 だけです', 'ch3'],
     ['ch2', 'ch5', ['ch1'], 'ch は ch1〜ch4 です', 'ch5'],
-    ['ch2', 'ch1 | lowpass 1ms', ['ch1'], '操作は rc / clip / offset / gain / abs のどれかです', 'lowpass'],
+    ['ch2', 'ch1 | lowpass 1ms', ['ch1'], '操作は rc / peak / clip / offset / gain / abs のどれかです', 'lowpass'],
     ['ch2', 'ch1 | rc 1', ['ch1'], 'rc は τ を 1ms / 200us のように書きます (例: rc 1ms)', '1'],
     ['ch2', 'ch1 | clip 0.7V -0.7V', ['ch1'], 'clip は下の値を先に書きます (例: clip -0.7V 0.7V)', '0.7V'],
     ['ch2', 'ch1 | clip 0.7', ['ch1'], 'clip は「clip -0.7V 0.7V」(両側) か「clip 0V」(下だけ) の形で書きます', '0.7'],
@@ -48,7 +56,9 @@ describe('parseChannelLine', () => {
     ['ch2', 'ch1 | gain 6dB', ['ch1'], 'gain は 0.5 / 2 / -1 のように倍率 (単位なし) で書きます', '6dB'],
     ['ch2', 'ch1 | abs 1V', ['ch1'], 'abs の後ろには何も書きません', '1V'],
     ['ch2', 'ch1 || abs', ['ch1'], '| の後ろに操作を書きます (例: ch1 | rc 1ms)', '|'],
-    ['ch1', '= 2V * t', [], '式 (= で始まる行) はまだ書けません (この版は波と操作だけ)', '='],
+    ['ch1', '= 5 * exp(-t/1ms)', [], 'ch1 の式は電圧 (V) にします (いまは 無次元。5V * … のように単位を付けます)', '='],
+    ['ch2', '= ch3 * 2', ['ch1'], 'ch3 は参照できません (参照できるのは ch1)', 'ch3'],
+    ['ch2', 'ch1 | peak 150', ['ch1'], 'peak は τ を 150ms のように書きます (例: peak 150ms)', '150'],
     ['ch1', 'sine 2GHz 1V', [], '周波数は 1 GHz までです', '2GHz'],
     ['ch1', 'dc 2000kV', [], '電圧は ±1 MV までです', '2000kV'],
   ])('%s: %s is refused with how to write it', (name, text, before, message, token) => {

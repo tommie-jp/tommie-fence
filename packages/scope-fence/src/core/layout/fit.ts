@@ -1,6 +1,7 @@
-import { formatPerDiv, formatVolts } from 'fence-kit';
 import { LIMITS } from '../limits.ts';
-import type { ChannelName } from '../model/channel.ts';
+import type { TraceName } from '../model/channel.ts';
+import { formatQuantity, formatQuantityPerDiv } from '../model/quantity.ts';
+import type { QuantityUnit } from '../model/quantity.ts';
 import type { Trace } from '../model/readings.ts';
 import { DIVISIONS } from '../model/screen.ts';
 import type { Screen } from '../model/screen.ts';
@@ -66,7 +67,7 @@ export const centerPosition = (middle: number, perDiv: number): number =>
 
 const divText = (divisions: number): string => divisions.toFixed(1);
 const positionText = (position: number): string => `position: ${position}div`;
-const rangeText = (perDiv: number): string => `range: ${formatPerDiv(perDiv, 'V')}`;
+const rangeText = (perDiv: number, unit?: QuantityUnit): string => `range: ${formatQuantityPerDiv(perDiv, unit)}`;
 
 /** 上と下のはみ出し (目盛。はみ出していなければ 0)。 */
 function overflowOf(extent: Extent, scale: Scale): { readonly above: number; readonly below: number } {
@@ -82,7 +83,9 @@ const fits = (extent: Extent, scale: Scale): boolean => {
 };
 
 export type FitInput = {
-  readonly name: ChannelName;
+  readonly name: TraceName;
+  /** 縦の量の単位 (Math だけ W や無次元。書かなければ V)。 */
+  readonly unit?: QuantityUnit;
   /** 画面の中の点の最大と最小 (実測があれば実測、無ければ理想)。 */
   readonly extent: Extent;
   /** 書いた range: / position: (書かなければ null)。 */
@@ -115,15 +118,15 @@ function recenter(extent: Extent): { readonly perDiv: number; readonly position:
   return Math.abs(position) > POSITION_MAX ? null : { perDiv, position };
 }
 
-const farAway = (extent: Extent): string =>
-  `中央の ${formatVolts((extent.max + extent.min) / 2)} が遠く、range: を細かくすると position: の範囲 (±${POSITION_MAX}div) に入りません`;
+const farAway = (extent: Extent, unit?: QuantityUnit): string =>
+  `中央の ${formatQuantity((extent.max + extent.min) / 2, unit)} が遠く、range: を細かくすると position: の範囲 (±${POSITION_MAX}div) に入りません`;
 
 /** はみ出しの直し方。振れが小さければ範囲と中央、入る範囲なら中央、入らなければ範囲 (中央はそのまま) を広げる。 */
 function overflowFix(input: FitInput, small: boolean): string {
   const { extent, scale } = input;
   const both = (): string => {
     const fix = recenter(extent);
-    return fix === null ? farAway(extent) : `${rangeText(fix.perDiv)} と ${positionText(fix.position)} なら入ります`;
+    return fix === null ? farAway(extent, input.unit) : `${rangeText(fix.perDiv, input.unit)} と ${positionText(fix.position)} なら入ります`;
   };
   if (small) return both();
   const centred = centerPosition((extent.max + extent.min) / 2, scale.perDiv);
@@ -133,7 +136,7 @@ function overflowFix(input: FitInput, small: boolean): string {
   let perDiv = scale.perDiv;
   for (let step = 0; step < WIDEN_STEPS && perDiv < LIMITS.voltsPerDiv.max; step += 1) {
     perDiv = nextStep(perDiv);
-    if (fits(extent, { perDiv, position: scale.position })) return `${rangeText(perDiv)} なら入ります`;
+    if (fits(extent, { perDiv, position: scale.position })) return `${rangeText(perDiv, input.unit)} なら入ります`;
   }
   return both();
 }
@@ -143,11 +146,11 @@ function smallFix(input: FitInput): string {
   const { extent } = input;
   const vpp = extent.max - extent.min;
   const fix = recenter(extent);
-  if (fix === null) return farAway(extent);
+  if (fix === null) return farAway(extent, input.unit);
   const spans = divText(vpp / fix.perDiv);
   return input.position === null
-    ? `${rangeText(fix.perDiv)} なら ${spans} 目盛になります`
-    : `${rangeText(fix.perDiv)} と ${positionText(fix.position)} なら ${spans} 目盛で中央に来ます`;
+    ? `${rangeText(fix.perDiv, input.unit)} なら ${spans} 目盛になります`
+    : `${rangeText(fix.perDiv, input.unit)} と ${positionText(fix.position)} なら ${spans} 目盛で中央に来ます`;
 }
 
 /**

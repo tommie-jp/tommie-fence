@@ -1,5 +1,7 @@
 import type { THEME_NAMES } from './limits.ts';
-import type { ChannelName, ChannelSpec } from './model/channel.ts';
+import type { ChannelName, ChannelSpec, TraceName } from './model/channel.ts';
+import type { Dim, Expr } from './model/expr.ts';
+import type { QuantityUnit } from './model/quantity.ts';
 import type { MeasureName } from './model/measure.ts';
 import type { TriggerEdge } from './model/screen.ts';
 
@@ -23,7 +25,7 @@ export type FenceError = {
 
 /** フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。 */
 export const TOP_LEVEL_KEYS = [
-  'view', 'title', 'time', 'trigger', 'ch1', 'ch2', 'ch3', 'ch4', 'math', 'data', 'cursors', 'measure', 'notes', 'style',
+  'view', 'title', 'time', 'trigger', 'ch1', 'ch2', 'ch3', 'ch4', 'math', 'xy', 'data', 'cursors', 'measure', 'notes', 'style',
 ] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
@@ -51,9 +53,28 @@ export type TriggerSpec = {
 /** カーソル (時刻 s)。 */
 export type CursorSpec = { readonly t: number; readonly line: number | null };
 
+/**
+ * Math (`math: ch1 * ch2 / 10`)。**ch と同じ扱いの 5 本目** — 色は 5 本目、range: と position: も書ける。
+ * 単位は書き手が言う (`unit:`。書かなければ V)。
+ */
+export type MathSpec = {
+  readonly expr: Expr;
+  /** 式の次元 (unit: と合わなければお知らせ)。 */
+  readonly dim: Dim;
+  readonly refs: readonly ChannelName[];
+  readonly unit: QuantityUnit;
+  readonly unitWritten: boolean;
+  readonly range: number | null;
+  readonly position: number | null;
+  readonly line: number | null;
+};
+
+/** XY の軸 (`xy: ch1 math`)。書かなければ横 ch1・縦 ch2 (line は null)。 */
+export type XySpec = { readonly x: TraceName; readonly y: TraceName; readonly line: number | null };
+
 export type FenceDocument = {
-  /** 画面の種類。**いまは time (時間波形) だけ** (xy は段 3)。 */
-  readonly view: 'time';
+  /** 画面の種類。time (時間波形) か xy (リサージュ・V–I の曲線)。 */
+  readonly view: 'time' | 'xy';
   readonly title: string | null;
   /** 書かなければ null (一番遅い波から決める)。 */
   readonly time: TimeSpec | null;
@@ -61,6 +82,10 @@ export type FenceDocument = {
   readonly trigger: TriggerSpec | null;
   /** 読めた ch (ch1 → ch4 の順)。 */
   readonly channels: readonly ChannelSpec[];
+  /** 読めた Math (書かなければ null)。 */
+  readonly math: MathSpec | null;
+  /** XY の軸。view: xy のときだけ (time なら null)。 */
+  readonly xy: XySpec | null;
   /** 測った値のファイル名 (`.md` の隣)。 */
   readonly data: { readonly name: string; readonly line: number | null } | null;
   readonly cursors: readonly CursorSpec[];

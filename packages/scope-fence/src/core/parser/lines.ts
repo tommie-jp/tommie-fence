@@ -2,6 +2,7 @@ import { formatHertzShort, parseSeconds, parseVolts, parseWave } from 'fence-kit
 import { LIMITS } from '../limits.ts';
 import { CHANNEL_NAMES } from '../model/channel.ts';
 import type { ChannelName, ChannelSource } from '../model/channel.ts';
+import { dimText, isVolts, parseExpr } from '../model/expr.ts';
 import { MEASURE_NAMES } from '../model/measure.ts';
 import type { MeasureName } from '../model/measure.ts';
 import { OP_NAMES } from '../model/ops.ts';
@@ -47,6 +48,11 @@ function parseOp(text: string): LineResult<Op> {
       if (tau === null || tau <= 0 || words.length > 2) return fail('rc は τ を 1ms / 200us のように書きます (例: rc 1ms)', words[words.length > 2 ? 2 : 1] ?? 'rc');
       return ok({ kind: 'rc', tau });
     }
+    case 'peak': {
+      const tau = first === undefined ? null : parseSeconds(first);
+      if (tau === null || tau <= 0 || words.length > 2) return fail('peak は τ を 150ms のように書きます (例: peak 150ms)', words[words.length > 2 ? 2 : 1] ?? 'peak');
+      return ok({ kind: 'peak', tau });
+    }
     case 'clip': {
       const low = plainVolts(first);
       const high = second === undefined ? null : plainVolts(second);
@@ -90,6 +96,16 @@ function waveLimits(source: ChannelSource, words: readonly string[]): LineResult
   return ok(null);
 }
 
+/** ch の行の式 (`= …`)。**結果は電圧** — 単位の無い式を黙って V と読まない。 */
+function channelExpr(name: ChannelName, text: string, before: readonly ChannelName[]): LineResult<ChannelSource> {
+  const read = parseExpr(text, before);
+  if (!read.ok) return read;
+  if (!isVolts(read.value.dim)) {
+    return fail(`${name} の式は電圧 (V) にします (いまは ${dimText(read.value.dim)}。5V * … のように単位を付けます)`, '=');
+  }
+  return ok({ kind: 'expr', expr: read.value.expr, refs: read.value.refs });
+}
+
 /**
  * ch の 1 行: `sine 1kHz 1V offset 1V` / `ch1 | rc 1ms | clip -0.7V 0.7V`。
  * **参照できるのは自分より前の ch だけ** (`before`)。
@@ -97,12 +113,15 @@ function waveLimits(source: ChannelSource, words: readonly string[]): LineResult
 export function parseChannelLine(name: ChannelName, text: string, before: readonly ChannelName[]): LineResult<ChannelLine> {
   const [head = '', ...rest] = text.split('|');
   const headText = head.trim();
-  if (headText.startsWith('=')) return fail('式 (= で始まる行) はまだ書けません (この版は波と操作だけ)', '=');
   if (rest.length > LIMITS.opsPerChannel) return fail(`操作は 1 つの ch に ${LIMITS.opsPerChannel} つまでです`);
 
   let source: ChannelSource;
   let assumed: readonly string[] = [];
-  if (/^ch\d+$/.test(headText)) {
+  if (headText.startsWith('=')) {
+    const read = channelExpr(name, headText.slice(1), before);
+    if (!read.ok) return read;
+    source = read.value;
+  } else if (/^ch\d+$/.test(headText)) {
     if (!isChannelName(headText)) return fail('ch は ch1〜ch4 です', headText);
     if (!before.includes(headText)) {
       return fail(before.length === 0

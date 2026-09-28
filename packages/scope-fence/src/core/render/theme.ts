@@ -1,3 +1,5 @@
+import { CHANNEL_NAMES } from '../model/channel.ts';
+import type { TraceName } from '../model/channel.ts';
 import type { StyleSpec, ThemeName } from '../types.ts';
 
 /**
@@ -108,3 +110,7 @@ export const resolveStyle = (style: StyleSpec): ResolvedStyle => ({
 
 /** ch の色 (ch1 が 0)。 */
 export const channelColor = (theme: Theme, index: number): string => theme.palette.channels[index % 4] ?? theme.palette.caption;
+
+/** 線の色。**Math は 5 本目の色** (ch の 4 色と別)。 */
+export const traceColor = (theme: Theme, name: TraceName): string =>
+  (name === 'math' ? theme.palette.math : channelColor(theme, CHANNEL_NAMES.indexOf(name)));

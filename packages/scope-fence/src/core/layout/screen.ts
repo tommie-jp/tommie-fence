@@ -51,6 +51,8 @@ export type LayoutOptions = {
   readonly source: Size | null;
   /** 同じ高さに並ぶ基準の印の数の最大 (既定 1)。左の余白をその分だけ取る。 */
   readonly markSlots?: number;
+  /** 格子の目盛の数 (既定は時間の画面の 10 × 8。XY は 8 × 8)。 */
+  readonly divisions?: { readonly x: number; readonly y: number };
   readonly theme: Theme;
 };
 
@@ -68,7 +70,7 @@ export function createLayout(options: LayoutOptions): Layout {
   y += SIZE.marginTop;
   const marginLeft = Math.max(margins.left, Math.ceil(Math.max(1, options.markSlots ?? 1) * markStep(theme)));
   const grid: Rect = {
-    x: OUTER + marginLeft, y, width: SIZE.div * DIVISIONS.x, height: SIZE.div * DIVISIONS.y,
+    x: OUTER + marginLeft, y, width: SIZE.div * (options.divisions ?? DIVISIONS).x, height: SIZE.div * (options.divisions ?? DIVISIONS).y,
   };
   y += grid.height;
   const status = small + BAND_PAD;

@@ -7,13 +7,18 @@
 export type Op =
   /** 1 次の低域 (RC)。τ (s)。 */
   | { readonly kind: 'rc'; readonly tau: number }
+  /**
+   * ピークホールド (τ で落ちる): `y = max(x, y·e^(−dt/τ))`。**理想のダイオードの後ろの
+   * コンデンサ入力** — 入力が上ならコンデンサは入力に付いて行き、下なら負荷 (τ = RL·C) で放電する。
+   */
+  | { readonly kind: 'peak'; readonly tau: number }
   /** 頭打ち。null の側は切らない (`clip 0V` は下だけ)。 */
   | { readonly kind: 'clip'; readonly low: number | null; readonly high: number | null }
   | { readonly kind: 'offset'; readonly volts: number }
   | { readonly kind: 'gain'; readonly factor: number }
   | { readonly kind: 'abs' };
 
-export const OP_NAMES = ['rc', 'clip', 'offset', 'gain', 'abs'] as const;
+export const OP_NAMES = ['rc', 'peak', 'clip', 'offset', 'gain', 'abs'] as const;
 export type OpName = (typeof OP_NAMES)[number];
 
 function applyOne(input: Float64Array, dt: number, op: Op): Float64Array {
@@ -27,6 +32,15 @@ function applyOne(input: Float64Array, dt: number, op: Op): Float64Array {
       let y = input[0] ?? 0;
       for (let index = 0; index < input.length; index += 1) {
         if (index > 0) y += (((input[index - 1] ?? 0) + (input[index] ?? 0)) / 2 - y) * k;
+        output[index] = y;
+      }
+      return output;
+    }
+    case 'peak': {
+      const decay = Math.exp(-dt / op.tau);
+      let y = input[0] ?? 0;
+      for (let index = 0; index < input.length; index += 1) {
+        if (index > 0) y = Math.max(input[index] ?? 0, y * decay);
         output[index] = y;
       }
       return output;
@@ -54,6 +68,6 @@ export function applyOps(samples: Float64Array, dt: number, ops: readonly Op[]):
   return ops.reduce<Float64Array>((current, op) => applyOne(current, dt, op), Float64Array.from(samples));
 }
 
-/** 操作の τ の和 (助走の長さを決める)。 */
+/** 操作の τ の和 (助走の長さを決める)。**rc と peak は同じ助走** (どちらも τ で定常に入る)。 */
 export const tauOf = (ops: readonly Op[]): number =>
-  ops.reduce((sum, op) => sum + (op.kind === 'rc' ? op.tau : 0), 0);
+  ops.reduce((sum, op) => sum + (op.kind === 'rc' || op.kind === 'peak' ? op.tau : 0), 0);

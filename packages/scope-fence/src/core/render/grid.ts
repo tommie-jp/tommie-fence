@@ -10,28 +10,28 @@ import type { Theme } from './theme.ts';
 const MINOR = 5;
 const MINOR_LENGTH = 3;
 
-export function renderGrid(layout: Layout, theme: Theme): string {
+export function renderGrid(layout: Layout, theme: Theme, divisions: { readonly x: number; readonly y: number } = DIVISIONS): string {
   const { x, y, width, height } = layout.grid;
-  const dx = width / DIVISIONS.x;
-  const dy = height / DIVISIONS.y;
+  const dx = width / divisions.x;
+  const dy = height / divisions.y;
   const lines: string[] = [];
   const line = (x1: number, y1: number, x2: number, y2: number, stroke: string, extra: Record<string, string | number> = {}): void => {
     lines.push(element('line', { x1: num(x1), y1: num(y1), x2: num(x2), y2: num(y2), stroke, 'stroke-width': 1, ...extra }));
   };
-  for (let index = 1; index < DIVISIONS.x; index += 1) {
-    line(x + index * dx, y, x + index * dx, y + height, theme.palette.grid, index === DIVISIONS.x / 2 ? {} : { 'stroke-dasharray': '1 3' });
+  for (let index = 1; index < divisions.x; index += 1) {
+    line(x + index * dx, y, x + index * dx, y + height, theme.palette.grid, index === divisions.x / 2 ? {} : { 'stroke-dasharray': '1 3' });
   }
-  for (let index = 1; index < DIVISIONS.y; index += 1) {
-    line(x, y + index * dy, x + width, y + index * dy, theme.palette.grid, index === DIVISIONS.y / 2 ? {} : { 'stroke-dasharray': '1 3' });
+  for (let index = 1; index < divisions.y; index += 1) {
+    line(x, y + index * dy, x + width, y + index * dy, theme.palette.grid, index === divisions.y / 2 ? {} : { 'stroke-dasharray': '1 3' });
   }
   const cx = x + width / 2;
   const cy = y + height / 2;
-  for (let index = 1; index < DIVISIONS.x * MINOR; index += 1) {
+  for (let index = 1; index < divisions.x * MINOR; index += 1) {
     if (index % MINOR === 0) continue;
     const tx = x + (index * dx) / MINOR;
     line(tx, cy - MINOR_LENGTH, tx, cy + MINOR_LENGTH, theme.palette.grid);
   }
-  for (let index = 1; index < DIVISIONS.y * MINOR; index += 1) {
+  for (let index = 1; index < divisions.y * MINOR; index += 1) {
     if (index % MINOR === 0) continue;
     const ty = y + (index * dy) / MINOR;
     line(cx - MINOR_LENGTH, ty, cx + MINOR_LENGTH, ty, theme.palette.grid);
@@ -82,8 +82,8 @@ export const statusWidth = (items: readonly StatusItem[], theme: Theme): number 
 
 export const MARK = 7;
 
-/** 基準の印の番号 1 つ (ch の番号と色)。 */
-export type MarkLabel = { readonly number: number; readonly color: string };
+/** 基準の印の番号 1 つ (ch の番号と色。Math は `M`)。 */
+export type MarkLabel = { readonly number: number | string; readonly color: string };
 
 /** 番号 1 字ぶんの幅 (字の大きさに対する倍率)。 */
 export const DIGIT = 0.62;

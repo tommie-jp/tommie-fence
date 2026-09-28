@@ -37,9 +37,8 @@ describe('parseFence — 段 0', () => {
     expect(messages('time: 100s/div')).toEqual(['time: は 1ns/div〜60s/div です']);
   });
 
-  test('reads view: time and turns away the views it cannot draw yet', () => {
+  test('reads view: time and turns away the views it does not know', () => {
     expect(messages('view: time')).toEqual([]);
-    expect(messages('view: xy')).toEqual(['view: xy はまだ描けません (この版で描けるのは time だけ)']);
     expect(messages('view: fft')).toEqual(['view: は time か xy です']);
   });
 
@@ -134,9 +133,8 @@ describe('parseFence — 段 1', () => {
     }
   });
 
-  test('turns away math: and notes: for now', () => {
-    expect(messages('math: ch1 * ch2')).toEqual(['math: はまだ書けません (この版で描けるのは ch1〜ch4 の波と操作だけ)']);
-    expect(messages('notes:\n  - text 1ms 1V: x')).toEqual(['notes: はまだ書けません (この版で描けるのは ch1〜ch4 の波と操作だけ)']);
+  test('turns away notes: for now', () => {
+    expect(messages('notes:\n  - text 1ms 1V: x')).toEqual(['notes: はまだ書けません (この版で描けるのは波・操作・式・Math・XY まで)']);
   });
 
   test('asks for a wave on an empty channel', () => {
