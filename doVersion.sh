@@ -93,7 +93,8 @@ echo "==> $pkg $old → $new"
 cd "packages/$pkg"
 if grep -rFq -- "$old" README.md README.ja.md CHANGELOG.md docs/*.md 2>/dev/null; then
   echo "    まだ $old と書いてある文書があります (手で直してください):"
-  grep -rFn -- "$old" README.md README.ja.md CHANGELOG.md docs/*.md 2>/dev/null |
+  # 無い文書 (docs/ の無いパッケージ) で grep が 2 を返しても落とさない (pipefail)
+  { grep -rFn -- "$old" README.md README.ja.md CHANGELOG.md docs/*.md 2>/dev/null || true; } |
     sed "s|^|      packages/$pkg/|"
 fi
 echo "    CHANGELOG.md の [Unreleased] を $new の節に移すのも手作業です"
