@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-28
+
 ### Added
 
 - **トリガの位置** (段 3c) — `trigger: ch1 rising 0V at -5div` で t = 0 (トリガの点) を横に動かす
