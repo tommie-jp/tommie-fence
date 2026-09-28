@@ -923,6 +923,9 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
   // 回した箱の中の字は一緒に回る (`r180` で逆さま) ので、向きが付いたら
   // 別ノードへ移す (掛け先は `inner`)。
   const turnedInside = boxTurned && (kind ?? (valueInside ? annotation : null));
+  // 記号の外の辺に出す型番 (リレー)。画面でどの辺に来たかを見て、字をその外へ寄せる。
+  const besideSide = valueInside && type?.turnedValueSide !== undefined ? turnSide(type.turnedValueSide, part.turn) : null;
+  const besideAnchor = besideSide === null ? null : (OPPOSITE[ANCHOR_OF[besideSide] ?? 'west'] ?? null);
   const number = annotation === null && turnedInside === null
     ? []
     : kind !== null
@@ -934,14 +937,17 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[]
           ? [] : [`\\node[font=\\scriptsize, anchor=${outward}] at (${name}.${place}) {${annotation}};`]),
       ]
       : valueInside
-        ? (boxTurned && annotation !== null ? [`\\node[font=\\scriptsize] at (${inner}) {${annotation}};`] : [])
+        ? (boxTurned && annotation !== null
+          ? [`\\node[font=\\scriptsize${besideAnchor === null ? '' : `, anchor=${besideAnchor}`}] at (${inner}) {${annotation}};`]
+          : [])
         : (annotation === null
           ? [] : [`\\node[font=\\scriptsize, anchor=${outward}] at (${name}.${place}) {${annotation}};`]);
   // 値がどちらの側に出ているか (名札はそこを避ける)。**箱の中の値は外を塞がない。**
   // **寄せの反対が字の出る側** — `anchor=south` なら点の上に出る。
-  const valueSide = annotation === null || (boxed && kind === null)
+  const outside = annotation === null || (boxed && kind === null)
     ? null
     : (SIDE_OF[OPPOSITE[outward] ?? 'south'] ?? null);
+  const valueSide = besideSide !== null && boxTurned && annotation !== null ? besideSide : outside;
   const named = nameNode(part, name, type, valueSide);
   if (symbol === 'plain amp') return [node, ...number, named, ...amplifierSigns(name, part.turn)];
 

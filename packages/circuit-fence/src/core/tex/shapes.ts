@@ -407,6 +407,9 @@ export function relayShapeTex(): string[] {
     `  \\anchor{west}{\\pgfpoint{${num(COIL.left)}cm}{0cm}}`,
     // 型番は**接点の右**に出す (上下は足で塞がっている)。字の左端を右の縁の少し外へ。
     `  \\anchor{text}{\\pgfpoint{${num(right + 0.15)}cm}{-.5\\ht\\pgfnodeparttextbox}}`,
+    // 回した・反転した図の型番の置き場 (字は回らない別のノード)。接点の右の縁の外、
+    // 破線の高さ。字は画面で外へ寄せるので、破線にも接点にも重ならない。
+    `  \\anchor{value}{\\pgfpoint{${num(right + 0.15)}cm}{0cm}}`,
     // DIP の位置: 1 A1 / 16 A2 / 4 COM1 / 6 NC1 / 8 NO1 / 13 COM2 / 11 NC2 / 9 NO2。
     ...pinAnchors([
       [1, coilX, h], [16, coilX, -h],

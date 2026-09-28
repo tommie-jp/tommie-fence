@@ -255,6 +255,12 @@ export type PartType = {
    */
   readonly turnedValueAnchor?: string;
   /**
+   * 向きが付いたとき、中の型番を**記号の外のこの辺** (記号の中の向き) に出す。
+   * 掛ける先は `turnedValueAnchor`、字は画面でその辺の外へ寄せる。リレーは真ん中を
+   * コイルと接点を結ぶ破線が通るので、中心に置くと型番が破線に重なった。
+   */
+  readonly turnedValueSide?: PinSide;
+  /**
    * 箱を**立てて置いたとき** (回さない・`r180`) に、中の型番を箱の**下の外**に
    * 出す。DIP の箱は足の番号が左右の縁から中へ並び、真ん中に字の入る幅が
    * 残らない (`NE555` も `CD74HC283` も番号に重なり、長い型番は縁からはみ出した)。
@@ -1109,6 +1115,8 @@ export const PART_TYPES = {
       [16, 'bottom'], [4, 'bottom'], [13, 'bottom'],
     ]),
     valueInside: true,
+    turnedValueAnchor: 'value',
+    turnedValueSide: 'right',
   },
   photocoupler: namedSymbol(namedChipOf('photocoupler'), OPTO_SHAPE, [[1, 'left'], [2, 'left'], [4, 'right'], [3, 'right']]),
   seg7: seg7Box(namedChipOf(SEG7)),

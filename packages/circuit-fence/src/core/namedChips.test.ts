@@ -93,3 +93,34 @@ describe('升目と ERC', () => {
     expect(result.erc.map((one) => one.message).join('\n')).toContain('U1 の足 K、C、E をどの配線も指していません');
   });
 });
+
+describe('リレーの型番', () => {
+  // 回した・反転したリレーの型番 (G5V-2) が記号の真ん中に出て、コイルと接点を結ぶ破線に重なった。
+  // 型番は回さない図と同じく**接点の外側** (記号の `value` アンカー) に出し、字は外へ寄せる。
+  test.each([
+    ['r90', 'north'],
+    ['r180', 'east'],
+    ['r270', 'south'],
+    ['mirror', 'east'],
+  ] as const)('keeps the part number off the dashed link when turned %s', (turn, anchor) => {
+    const { tex } = compileCircuit(circuit('parts:', `  K1: relay d5 ${turn} G5V-2`));
+
+    expect(tex).not.toMatch(/at \(part-K1\.center\) \{\$\\mathrm\{G5V/);
+    expect(tex).toContain(`\\node[font=\\scriptsize, anchor=${anchor}] at (part-K1.value) {$\\mathrm{G5V\\mbox{-}2}$};`);
+  });
+
+  test('puts the name on another side than the part number', () => {
+    const { tex } = compileCircuit(circuit('parts:', '  K1: relay d5 r180 G5V-2'));
+
+    expect(tex).not.toMatch(/at \(part-K1\.east\) \{\$K_\{1\}\$\}/);
+  });
+
+  test('declares the value anchor beyond the end of the dashed link', () => {
+    const tex = compileCircuit(circuit('parts:', '  K1: relay d5 r90 G5V-2')).tex ?? '';
+    const value = Number(/\\anchor\{value\}\{\\pgfpoint\{([-\d.]+)cm\}/.exec(tex)?.[1]);
+    const dash = tex.slice(tex.indexOf('pgfsetdash{{'));
+    const dashEnd = Number(/pgfpathlineto\{\\pgfpoint\{([-\d.]+)cm\}/.exec(dash)?.[1]);
+
+    expect(value).toBeGreaterThan(dashEnd);
+  });
+});
