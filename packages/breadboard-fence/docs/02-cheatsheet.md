@@ -40,7 +40,7 @@ notes:                 # 任意。図に重ねる印と字
 | 2 本足 | `ID: 種類 穴 穴 [値]` | `R1: resistor a5 a10 10k` |
 | 3 本足 | `ID: 種類 穴 穴 穴 [値]` | `Q1: transistor h9(B) h10(C) h11(E) 2SC1815` |
 | タクトスイッチ | `ID: button @ 穴` | `SW1: button @ e5` |
-| DIP / ヘッダ | `ID: dipN @ 穴 [r180] [ラベル]` | `U1: dip8 @ e5 NJM4556A` |
+| DIP / ヘッダ | `ID: dipN @ 穴 [r180] [型番]` | `U1: dip8 @ e5 NE555` |
 | マイコンボード | `ID: 種類 @ 穴 [r180]` | `MCU: pico2 @ h5` |
 | 名前つきの DIP 型 | `ID: 種類 @ 穴 [r180]` | `K1: relay @ f10` |
 | ボード外の機器 | マップ形式 (下記) | |
@@ -64,7 +64,7 @@ DIP・マイコンボードは実物を上から見た並び (切り欠きを左
 USB      usb-a usb-c (穴は VBUS GND D+ D- CC1 CC2 の順に 2 つから)
 まとまり  button button-nc dipN (4〜40 の偶数) sipN (2〜40)
 ボード    pico pico-w pico2 pico2-w
-名前つき  relay photocoupler seg7 (DIP 型。足は名前で呼ぶ。K1.COM1)
+名前つき  relay photocoupler seg7 (DIP 型。足は名前でも番号でも。K1.COM1 = K1.4)
 ボード外  device
 ```
 
@@ -103,6 +103,24 @@ parts:
 ```
 
 マップ形式で書けるキーは `type` `at` `label` `value` `pins` `holes` の 6 つ。
+
+### DIP の足の名前
+
+型番 (`U1: dip8 @ e5 NE555`) が下の表にあれば、胴に番号 (縁) と名前 (胴の外、足の向こう側) が出る。
+型番の綴りは完全一致 (大文字小文字は問わない)。配線は名前でも番号でも指せ (`U1.TRIG` = `U1.2`)、
+ネットリストは名前。2 本以上に刷られた名前 (`NC`) は番号で呼ぶ。表に無い型番は番号だけで、お知らせが出る。
+
+| 型番 (別名) | 種類 | 足の名前 (1 番から) |
+| --- | --- | --- |
+| `NE555` (`NE555P` `SA555` `SE555` …) | `dip8` | `GND` `TRIG` `OUT` `RESET` `CONT` `THRES` `DISCH` `VCC` |
+| `TLC555` (`TLC555CP` `TLC555IP`) | `dip8` | `GND` `TRIG` `OUT` `RESET` `CONT` `THRES` `DISCH` `VDD` |
+| `LM358` (`LM358P` `LM358N` `LM2904` `LM258` …) | `dip8` | `OUT1` `IN1-` `IN1+` `V-` `IN2+` `IN2-` `OUT2` `V+` |
+| `TL071` (`TL071CP` …) | `dip8` | `NC` `IN-` `IN+` `VCC-` `NC` `OUT` `VCC+` `NC` |
+| `TL072` (`TL072CP` …) | `dip8` | `1OUT` `1IN-` `1IN+` `VCC-` `2IN+` `2IN-` `2OUT` `VCC+` |
+| `CD4017B` (`CD4017` `CD4017BE`) | `dip16` | `Q5` `Q1` `Q0` `Q2` `Q6` `Q7` `Q3` `VSS` `Q8` `Q4` `Q9` `CO` `INH` `CLOCK` `RESET` `VDD` |
+| `CD4040B` (`CD4040` `CD4040BE`) | `dip16` | `Q12` `Q6` `Q5` `Q7` `Q4` `Q3` `Q2` `VSS` `Q1` `CLOCK` `R` `Q9` `Q8` `Q10` `Q11` `VDD` |
+| `CD4069UB` (`CD4069` `CD4069UBE`) | `dip14` | `A` `G` `B` `H` `C` `I` `VSS` `J` `D` `K` `E` `L` `F` `VDD` |
+| `CD4071B` `CD4081B` `CD4011B` `CD4001B` (`B` / `BE` 無しも) | `dip14` | `A` `B` `J` `K` `C` `D` `VSS` `E` `F` `L` `M` `G` `H` `VDD` |
 
 ## 配線
 

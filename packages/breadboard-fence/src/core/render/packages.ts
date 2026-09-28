@@ -4,7 +4,9 @@ import {
   CAPTION_CLEAR, NAME_CAP, caption, fitToBoard, haloWidth, partLabel, pinPoints, pointOfPin,
 } from './partCommon.ts';
 import { element, num } from './svg.ts';
-import { REAL_INK, dipChip, drawDipAdapter, drawNamedChip, lookupNamedChip, sipBox, sipHeader, transformerCore } from 'fence-kit';
+import {
+  REAL_INK, dipChip, drawDipAdapter, drawNamedChip, lookupNamedChip, lookupPinout, sipBox, sipHeader, transformerCore,
+} from 'fence-kit';
 import type { ChipInk } from 'fence-kit';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
@@ -38,10 +40,19 @@ export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme):
 
   // **`pins[0]` は 1 番ピンとは限らない** — 升の並びは固定で、回すと名前のほうが
   // 巡る (`placement/place.ts` の spun)。だから名前で引く。
-  const pinOne = part.pins.findIndex((pin) => pin.name === '1');
+  const pinOne = part.pins.findIndex((pin) => (pin.number ?? pin.name) === '1');
+  // **名前で呼ぶ DIP は番号と名前の 2 段** (52 の docs/95)。刷る名前は表の印字
+  // (呼び名が番号になった `NC` も `NC` と刷る)。
+  // 名前で呼ぶかは置いたとき (`placeDip`) に決まっている — 足が番号を持つか。
+  const printed = part.pins.some((pin) => pin.number !== undefined) && lookupNamedChip(part.type, part.variant) === null
+    ? lookupPinout(part.value ?? part.label, part.pins.length)
+    : null;
   const options = {
     points,
-    names: part.pins.map((pin) => pin.name),
+    names: printed === null
+      ? part.pins.map((pin) => pin.name)
+      : part.pins.map((pin) => printed.names[Number(pin.number) - 1] ?? pin.name),
+    ...(printed === null ? {} : { numbers: part.pins.map((pin) => pin.number ?? pin.name) }),
     pinOne: pinOne < 0 ? 0 : pinOne,
     pitch: layout.pitch,
     caption: caption(part),

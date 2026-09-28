@@ -582,11 +582,13 @@ function resolveEndpoint(
     const [, partId = '', pinName = ''] = ref;
     const part = parts.find((candidate) => candidate.id === partId);
     if (!part) return fail(`配線の端点 ${safeToken(text)}: そんな部品はありません`, line, text);
-    const pin = part.pins.find((candidate) => candidate.name === pinName);
+    // 名前が先、無ければ DIP の番号 (`U1.2` = `U1.TRIG`)。
+    const pin = part.pins.find((candidate) => candidate.name === pinName)
+      ?? part.pins.find((candidate) => candidate.number === pinName);
     if (!pin) return fail(`配線の端点 ${safeToken(text)}: そのピンはありません${nearbyPins(part, pinName)}`, line, text);
     return pin.address
       ? ok({ kind: 'hole', address: pin.address, viaPin: true })
-      : ok({ kind: 'device', partId, pin: pinName });
+      : ok({ kind: 'device', partId, pin: pin.name });
   }
 
   const address = parseAddress(text);
@@ -610,7 +612,11 @@ function nearbyPins(part: PlacedPart, wanted: string): string {
     .slice(0, MAX_PIN_HINTS)
     .map((pin) => safeToken(pin.name));
 
-  return near.length === 0 ? '' : ` (${near.join(', ')} のことですか)`;
+  if (near.length > 0) return ` (${near.join(', ')} のことですか)`;
+  // 名前で呼ぶ DIP は、書き出しが合わなくても足の名前を並べる (8〜16 本なので読める)。
+  const numbered = part.pins.filter((pin) => pin.number !== undefined);
+  if (numbered.length === 0) return '';
+  return ` (足は ${numbered.map((pin) => safeToken(pin.name)).join(' / ')}。DIP の番号でも指せます)`;
 }
 
 const stripOfEndpoint = (endpoint: Endpoint): StripId =>

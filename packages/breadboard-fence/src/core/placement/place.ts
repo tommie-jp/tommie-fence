@@ -1,4 +1,4 @@
-import { fail, ok, safeToken } from '../errors.ts';
+import { fail, notice, ok, safeToken } from '../errors.ts';
 import { formatAddress, isCrossing, parseAddress } from '../model/address.ts';
 import { offBoardReason } from '../model/board.ts';
 import { HOLE_ROWS } from '../types.ts';
@@ -7,7 +7,9 @@ import type {
   RailAddress, Result,
 } from '../types.ts';
 import type { BoardPart, Connector, NamedChip } from 'fence-kit';
-import { MIN_CONNECTOR_PINS, adapterFor, isDirectSmd, lookupNamedChip, smdLooksOf, smdSuggestion } from 'fence-kit';
+import {
+  MIN_CONNECTOR_PINS, adapterFor, isDirectSmd, lookupNamedChip, lookupPinout, pinoutModels, smdLooksOf, smdSuggestion,
+} from 'fence-kit';
 import type { Turn } from '../parts/orient.ts';
 import { isPolarVariant, typesWithVariants, variantsOf } from '../parts/variants.ts';
 import { describeUnknownType, lookupFootprint } from './footprints.ts';
@@ -54,6 +56,7 @@ export function placeParts(specs: readonly PartSpec[], board: Board): PlaceResul
     }
     for (const address of covered) claims.set(formatAddress(address), { id: placed.value.id, body: true });
     parts.push(placed.value);
+    errors.push(...unnamedDipNotice(spec, placed.value));
   }
 
   return { parts, errors };
@@ -434,12 +437,50 @@ function placeDip(spec: PartSpec, board: Board, base: PartBase, pinCount: number
 
   const names = Array.from({ length: pinCount }, (_, index) => String(index + 1));
   const oppositeRow: HoleRow = anchor.value.row === 'e' ? 'f' : 'e';
+  const pins = dualRowPins(anchor.value, oppositeRow, spun(names, spec.turn));
+  // **型番が足の名前の表にあれば名前で呼ぶ** (52 の docs/95)。番号は `number` に残す。
+  // 変換基板 (`dip8/sop`) は中身の IC が違うので引かない。
+  const pinout = spec.variant === null ? lookupPinout(modelOf(spec), pinCount) : null;
   return ok({
     ...base,
     kind: 'dip',
     bridges: [],
-    pins: dualRowPins(anchor.value, oppositeRow, spun(names, spec.turn)),
+    pins: pinout === null ? pins : pins.map((pin) => ({ ...pin, name: printedName(pinout.names, pin.name), number: pin.name })),
   });
+}
+
+/**
+ * DIP の型番。1 行の形では穴の後ろの字 (`U1: dip8 @ e5 NE555`) がラベルに入るので、
+ * 値が無ければそちらを見る。`l=` で差し替えた字は図のラベルであって型番ではない。
+ */
+const modelOf = (spec: PartSpec): string | null => spec.value ?? (spec.labelTagged ? null : spec.label);
+
+/**
+ * 型番が足の名前の表に無い DIP のお知らせ (52 の docs/95 の決め 3。回路図と同じ文面)。
+ * **エラーにはしない** — 表に無い IC も番号で描ければ試せる。型番を書かない DIP と
+ * 変換基板 (`dip8/sop`) は言わない。
+ */
+function unnamedDipNotice(spec: PartSpec, part: PlacedPart): FenceError[] {
+  const model = modelOf(spec);
+  if (part.kind !== 'dip' || spec.variant !== null || model === null || lookupNamedChip(spec.type, null) !== null) return [];
+  if (part.pins.some((pin) => pin.number !== undefined)) return [];
+  const known = pinoutModels(part.pins.length);
+  const listed = known.length === 0
+    ? `${spec.type} の型番は表にありません`
+    : `${spec.type} で表にあるのは ${known.join(' / ')}`;
+  return [notice(
+    `${safeToken(spec.id)} の型番 ${safeToken(model)} の足の名前は表に無いので、番号で描きました (${listed})`,
+    spec.line,
+  )];
+}
+
+/**
+ * 番号 (`'2'`) の足を表の名前で呼ぶ。**2 本以上に刷られた名前** (TL071 の `NC`) は
+ * どの足か決まらないので番号のまま (回路図と同じ)。
+ */
+function printedName(names: readonly string[], number: string): string {
+  const name = names[Number(number) - 1] ?? number;
+  return names.filter((other) => other === name).length === 1 ? name : number;
 }
 
 /** その行から、溝の向こうへ `span` ピッチ先の行。届かなければ null。 */
@@ -483,7 +524,10 @@ function placeNamed(spec: PartSpec, board: Board, base: PartBase, chip: NamedChi
     bridges: [],
     // 何も書かれていなければ品名を出す (マイコンボードと同じ)。
     label: base.label ?? (base.value === null ? chip.name : null),
-    pins: dualRowPins(anchor.value, oppositeRow, spun(names, spec.turn)).filter((pin) => pin.name !== ''),
+    // 番号 (`K1.4`) でも指せるよう、表の位置を `number` に持たせる。
+    pins: dualRowPins(anchor.value, oppositeRow, spun(names, spec.turn))
+      .filter((pin) => pin.name !== '')
+      .map((pin) => ({ ...pin, number: String(chip.pins.find((one) => one.name === pin.name)?.at ?? '') })),
   });
 }
 

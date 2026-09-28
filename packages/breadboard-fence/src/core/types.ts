@@ -285,7 +285,15 @@ export type FenceDocument = {
 export type PartKind =
   | 'two-lead' | 'three-lead' | 'four-lead' | 'switch' | 'connector' | 'dip' | 'sip' | 'board' | 'device';
 
-export type PlacedPin = { readonly name: string; readonly address: Address | null };
+export type PlacedPin = {
+  readonly name: string;
+  readonly address: Address | null;
+  /**
+   * DIP の足の番号 (`1`〜)。**名前で呼ぶ DIP 型だけが持つ** (足の名前の表にある型番の
+   * `dipN`、リレーなど)。配線はこちらでも指せ (`U1.2` = `U1.TRIG`)、胴には名前の外側に刷る。
+   */
+  readonly number?: string;
+};
 
 /**
  * 部品の中でつながっている足の組。**押した・倒した状態に依らない導通だけ**を載せる
