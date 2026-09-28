@@ -31,7 +31,7 @@ die() { echo "doRelease: $*" >&2; exit 1; }
 push=0; push_only=0; specs=()
 for a in "$@"; do
   case "$a" in
-    -h | --help) sed -n "$HELP_LINES" "$0"; exit 0 ;;
+    -h | --help) sed -n "$HELP_LINES" "$0" | sed 's/^#\( \|$\)//'; exit 0 ;;
     --push) push=1 ;;
     --push-only) push_only=1 ;;
     *=*) specs+=("$a") ;;
