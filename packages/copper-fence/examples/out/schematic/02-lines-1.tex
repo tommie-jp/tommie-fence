@@ -59,7 +59,9 @@
 \node[circ] at (b8) {};
 \path (16,-12.593) rectangle (16.889,-11.407); % line 18
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (16,-12) {X}; % line 18
-\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(8.778,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at (current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
 \end{circuitikz}
 \end{document}

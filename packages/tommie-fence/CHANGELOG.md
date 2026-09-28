@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-09-29
+
 scope-fence 0.4.1 と spectrum-fence 0.1.0 と graph-fence 0.1.0 を束ねる。
 
 ### Added

@@ -47,7 +47,9 @@
 \draw (b8) -- (part-J2.pin 1); % line 10
 \draw (part-J1.pin 2) -- (c2); % line 11
 \draw (part-J2.pin 2) -- (c10); % line 12
-\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(9.754,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at (current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
 \end{circuitikz}
 \end{document}
