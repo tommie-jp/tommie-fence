@@ -66,6 +66,16 @@ export type MathSpec = {
   readonly line: number | null;
 };
 
+/**
+ * 注釈 (`notes:`)。番地は「時刻 電圧」。**電圧は `channel` の V/div と基準で置く**
+ * (書かなければ ch1)。band は時刻の帯 (縦は格子いっぱい)。
+ */
+export type NoteSpec =
+  | { readonly kind: 'text'; readonly channel: ChannelName; readonly t: number; readonly volts: number; readonly text: string; readonly line: number | null }
+  | { readonly kind: 'mark'; readonly channel: ChannelName; readonly t: number; readonly volts: number; readonly line: number | null }
+  | { readonly kind: 'band'; readonly from: number; readonly to: number; readonly text: string | null; readonly line: number | null }
+  | { readonly kind: 'source'; readonly line: number | null };
+
 /** XY の軸 (`xy: ch1 math`)。書かなければ横 ch1・縦 ch2 (line は null)。 */
 export type XySpec = { readonly x: TraceName; readonly y: TraceName; readonly line: number | null };
 
@@ -88,6 +98,8 @@ export type FenceDocument = {
   readonly cursors: readonly CursorSpec[];
   /** 書かなければ null (既定の vpp と freq)。 */
   readonly measures: readonly MeasureName[] | null;
+  /** 注釈 (時間の画面だけ。XY では断って空)。 */
+  readonly notes: readonly NoteSpec[];
   readonly style: StyleSpec;
   /** 書いてあった一番外側のキー (読めなかったものも)。「無いので既定で」と言うかを決める。 */
   readonly keys: readonly string[];

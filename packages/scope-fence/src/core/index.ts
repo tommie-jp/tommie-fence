@@ -18,6 +18,8 @@ import { DIVISIONS, screenOf } from './model/screen.ts';
 import type { Screen } from './model/screen.ts';
 import { parseFence } from './parser/parseFence.ts';
 import { renderDocument } from './render/document.ts';
+import { linesSize, renderLines, sourceListing } from './render/mono.ts';
+import { placeNotes } from './render/notes.ts';
 import { groupMarks, renderChannelMark, renderGrid, renderStatus, renderTriggerMarks, statusLines } from './render/grid.ts';
 import type { StatusItem } from './render/grid.ts';
 import { keyText, readingLinesOf, readingsSize, renderKey, renderReadings } from './render/readings.ts';
@@ -167,10 +169,19 @@ type TimeScene = {
   readonly readings: ReturnType<typeof readingsOf>;
   readonly specs: readonly ScaleSpec[];
   readonly scales: ReadonlyMap<TraceName, Scale>;
+  /** `- source` の書き出し (無ければ空)。 */
+  readonly listing: readonly string[];
 };
 
-/** 時間の画面を SVG に。 */
-function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>): string {
+/** `- source` の書き出し (2 つ目からは言って描かない)。 */
+function sourceOf(doc: FenceDocument, source: string, said: FenceError[]): readonly string[] {
+  const written = doc.notes.filter((note) => note.kind === 'source');
+  for (const extra of written.slice(1)) said.push(notice('書き出し (source) は 1 つだけ描きます (後のものは描いていません)', extra.line));
+  return written.length > 0 ? sourceListing(source) : [];
+}
+
+/** 時間の画面を SVG に。注釈で言うことは `said` に足す。 */
+function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>, said: FenceError[]): string {
   const { doc, screen, trigger, measured, scales } = scene;
   const { theme } = style;
   const drawn = [...scene.idealTraces, ...measured.traces];
@@ -183,7 +194,7 @@ function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>): str
     title: doc.title,
     key: drawn.length === 0 ? null : keyText(scene.idealTraces.length > 0, measured.name),
     readings: readingsSize(scene.readings, measured.name, theme),
-    source: null,
+    source: scene.listing.length > 0 ? linesSize(scene.listing, theme) : null,
     markSlots: Math.max(1, ...groups.map((group) => group.labels.length)),
     theme,
   });
@@ -196,15 +207,20 @@ function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>): str
     ? ''
     : renderTriggerMarks(scene.triggerLevel === null ? null : fractionY(scene.triggerLevel, triggerScale.perDiv, triggerScale.position),
       layout, theme, channelColor(theme, CHANNEL_NAMES.indexOf(trigger.source)));
+  const notes = placeNotes({ notes: doc.notes, grid: layout.grid, screen, scales, theme });
+  said.push(...notes.said);
   const body = renderTitle(doc.title, layout, theme)
     + renderKey(scene.idealTraces.length > 0, measured.name, layout, theme)
     + renderGrid(layout, theme)
+    + notes.under
     + traceSvg
     + scene.cursors.map((t, index) => renderCursor(t, `X${index + 1}`, layout.grid, screen, theme)).join('')
+    + notes.over
     + groups.map((group) => renderChannelMark(group.labels, group.fraction, layout, theme)).join('')
     + triggerMarks
     + renderStatus(status, layout, theme)
-    + (layout.readingsBand === null ? '' : renderReadings(scene.readings, measured.name, layout.readingsBand, theme));
+    + (layout.readingsBand === null ? '' : renderReadings(scene.readings, measured.name, layout.readingsBand, theme))
+    + (layout.sourceBand === null ? '' : renderLines(scene.listing, layout.sourceBand, theme, theme.palette.caption));
   return renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
 }
 
@@ -243,9 +259,10 @@ function renderTime(doc: FenceDocument, source: string, options: RenderOptions, 
   const scales = scalesOf([...ideal.traces, ...measured.traces], specs);
   said.push(...fitNotices(readingTraces, specs, scales, screen));
 
+  const listing = sourceOf(doc, source, said);
   const svg = drawTime({
-    doc, screen, trigger, triggerLevel: ideal.triggerLevel, idealTraces: ideal.traces, measured, cursors, readings, specs, scales,
-  }, style);
+    doc, screen, trigger, triggerLevel: ideal.triggerLevel, idealTraces: ideal.traces, measured, cursors, readings, specs, scales, listing,
+  }, style, said);
   return finishResult({
     source, said, svg, readings, readingLines: readingLinesOf(readings, measured.name), debug: style.debug, offset: options.offset ?? 0,
   });

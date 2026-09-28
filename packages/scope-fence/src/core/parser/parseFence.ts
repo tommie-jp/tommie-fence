@@ -7,9 +7,10 @@ import { CHANNEL_NAMES } from '../model/channel.ts';
 import type { ChannelName, ChannelSpec, TraceName } from '../model/channel.ts';
 import type { MeasureName } from '../model/measure.ts';
 import { TOP_LEVEL_KEYS } from '../types.ts';
-import type { CursorSpec, FenceDocument, FenceError, MathSpec, StyleSpec, TimeSpec, TriggerSpec } from '../types.ts';
+import type { CursorSpec, FenceDocument, FenceError, MathSpec, NoteSpec, StyleSpec, TimeSpec, TriggerSpec } from '../types.ts';
 import { parseChannelLine, parseCursor, parseMeasureNames, parsePosition, parseTriggerLine } from './lines.ts';
 import { readMath } from './math.ts';
+import { readNotes } from './notes.ts';
 import { EMPTY_STYLE, parseStyle } from './style.ts';
 import { readXy } from './xy.ts';
 import { commaHint, scalarText, splitByComma, writtenText } from './yamlText.ts';
@@ -31,6 +32,7 @@ const emptyDocument = (): FenceDocument => ({
   data: null,
   cursors: [],
   measures: null,
+  notes: [],
   style: EMPTY_STYLE,
   keys: [],
 });
@@ -84,6 +86,7 @@ function readFence(source: string): ParseResult {
   let data: FenceDocument['data'] = null;
   const cursors: CursorSpec[] = [];
   let measures: readonly MeasureName[] | null = null;
+  let notes: readonly NoteSpec[] = [];
   let style: StyleSpec = EMPTY_STYLE;
   let view: FenceDocument['view'] = 'time';
   let mathPair: Pair | null = null;
@@ -213,9 +216,12 @@ function readFence(source: string): ParseResult {
       case 'measure':
         readMeasures(pair.value, at);
         break;
-      case 'notes':
-        errors.push(fenceError('notes: はまだ書けません (この版で描けるのは波・操作・式・Math・XY まで)', keyLine, key));
+      case 'notes': {
+        const read = readNotes(pair.value, keyLine, lineOf);
+        notes = read.notes;
+        errors.push(...read.errors);
         break;
+      }
       default:
         channelPairs.set(key as ChannelName, pair);
         break;
@@ -229,7 +235,7 @@ function readFence(source: string): ParseResult {
   errors.push(...xyRead.errors);
   if (view === 'xy') {
     // XY で書けないキーは言ったので、描く側へは渡さない。
-    [time, trigger, data, measures] = [null, null, null, null];
+    [time, trigger, data, measures, notes] = [null, null, null, null, []];
     cursors.length = 0;
   }
   if (trigger !== null && !channels.some((channel) => channel.name === trigger?.source)) {
@@ -242,7 +248,7 @@ function readFence(source: string): ParseResult {
   }
 
   return {
-    doc: { view, title, time, trigger, channels, math, xy: xyRead.xy, data, cursors, measures, style, keys: [...written] },
+    doc: { view, title, time, trigger, channels, math, xy: xyRead.xy, data, cursors, measures, notes, style, keys: [...written] },
     errors,
   };
 }

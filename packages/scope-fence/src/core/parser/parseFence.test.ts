@@ -133,8 +133,9 @@ describe('parseFence — 段 1', () => {
     }
   });
 
-  test('turns away notes: for now', () => {
-    expect(messages('notes:\n  - text 1ms 1V: x')).toEqual(['notes: はまだ書けません (この版で描けるのは波・操作・式・Math・XY まで)']);
+  test('reads notes: (stage 3b)', () => {
+    expect(messages('notes:\n  - text 1ms 1V: x')).toEqual([]);
+    expect(parseFence('notes:\n  - text 1ms 1V: x').doc.notes).toHaveLength(1);
   });
 
   test('asks for a wave on an empty channel', () => {

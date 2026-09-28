@@ -11,7 +11,17 @@ import { wordsOf } from './result.ts';
  */
 
 /** XY では書けないキー。data: は実測の XY を重ねられるようになるまで (段 3a では断る)。 */
-export const XY_REFUSED = ['time', 'trigger', 'cursors', 'measure', 'data'] as const;
+export const XY_REFUSED = ['time', 'trigger', 'cursors', 'measure', 'data', 'notes'] as const;
+
+/** 断る理由 (キーごと)。 */
+const XY_REASON: Readonly<Record<(typeof XY_REFUSED)[number], string>> = {
+  time: 'XY には時間軸がありません。読み値は各軸の Vpp・Vmax・Vmin です',
+  trigger: 'XY には時間軸がありません。読み値は各軸の Vpp・Vmax・Vmin です',
+  cursors: 'XY には時間軸がありません。読み値は各軸の Vpp・Vmax・Vmin です',
+  measure: 'XY には時間軸がありません。読み値は各軸の Vpp・Vmax・Vmin です',
+  data: '実測の XY はまだ重ねられません',
+  notes: '注釈の番地は「時刻 電圧」なので時間の画面 (view: time) にだけ置けます',
+};
 
 const XY_HINT = `xy: は横と縦を 2 つ書きます (例: xy: ch1 ch2。書けるのは ${TRACE_NAMES.join(' / ')})`;
 
@@ -63,7 +73,7 @@ export function readXy(context: XyContext): { readonly xy: XySpec | null; readon
     return { xy: null, errors: context.text === null ? [] : [fenceError('xy: は view: xy のときだけ書けます', context.line, 'xy')] };
   }
   const refused = XY_REFUSED.filter((key) => context.keyLines.has(key)).map((key) => fenceError(
-    `view: xy では ${key}: は書けません (${key === 'data' ? '実測の XY はまだ重ねられません' : 'XY には時間軸がありません。読み値は各軸の Vpp・Vmax・Vmin です'})`,
+    `view: xy では ${key}: は書けません (${XY_REASON[key]})`,
     context.keyLines.get(key) ?? null, key,
   ));
   const axes = axesOf(context);
