@@ -76,6 +76,33 @@ describe('配線とネットリスト', () => {
     }
   });
 
+  test("wires to a name with a prime or mixed case in it (74HC595 QH', CD4511B Oa)", () => {
+    for (const [chip, pin] of [['dip16 @ e10 74HC595', "QH'"], ['dip16 @ e10 CD4511B', 'Oa'], ['dip16 @ e10 CD74HC283', 'COUT']] as const) {
+      const { errors, netlist } = renderBreadboard(fence(
+        'parts:',
+        `  U1: ${chip}`,
+        '  R1: resistor a5 a8 10k',
+        'wires:',
+        `  - U1.${pin} -- b5`,
+      ));
+      expect(errors, chip).toEqual([]);
+      expect(netlist.find((net) => net.refs.includes('R1.1'))?.refs, chip).toContain(`U1.${pin}`);
+    }
+  });
+
+  test('refuses the bare letters of the CD4511B, which would name an input or an output depending on case', () => {
+    for (const pin of ['A', 'a']) {
+      const { errors } = renderBreadboard(fence(
+        'parts:',
+        '  U1: dip16 @ e10 CD4511B',
+        '  R1: resistor a5 a8 10k',
+        'wires:',
+        `  - U1.${pin} -- b5`,
+      ));
+      expect(errors.length, pin).toBeGreaterThan(0);
+    }
+  });
+
   test('says which pins it has when the name is wrong', () => {
     const { errors } = timer('U1.TRG -- b5');
     expect(errors.map((one) => one.message).join('\n')).toContain('TRIG');

@@ -77,6 +77,29 @@ describe('足の名前の表', () => {
     ]);
   });
 
+  test('names the 74HC595 as printed on the TI data sheet (SCLS041J), the barred inputs without the bar', () => {
+    expect(lookupPinout('74HC595', 16)?.names).toEqual([
+      'QB', 'QC', 'QD', 'QE', 'QF', 'QG', 'QH', 'GND', "QH'", 'SRCLR', 'SRCLK', 'RCLK', 'OE', 'SER', 'QA', 'VCC',
+    ]);
+    expect(lookupPinout('SN74HC595N', 16)?.model).toBe('74HC595');
+  });
+
+  test('names the CD4511B with the BCD inputs and the segment outputs told apart in any case', () => {
+    expect(lookupPinout('CD4511B', 16)?.names).toEqual([
+      'INB', 'INC', 'LT', 'BL', 'LE/STROBE', 'IND', 'INA', 'VSS', 'Oe', 'Od', 'Oc', 'Ob', 'Oa', 'Og', 'Of', 'VDD',
+    ]);
+    expect(lookupPinout('CD4511', 16)?.model).toBe('CD4511B');
+    expect(lookupPinout('CD4511BE', 16)?.model).toBe('CD4511B');
+  });
+
+  test('names the CD74HC283 as printed on the TI data sheet (SCHS176E)', () => {
+    expect(lookupPinout('CD74HC283', 16)?.names).toEqual([
+      'S1', 'B1', 'A1', 'S0', 'A0', 'B0', 'CIN', 'GND', 'COUT', 'S3', 'B3', 'A3', 'S2', 'A2', 'B2', 'VCC',
+    ]);
+    expect(lookupPinout('CD74HC283E', 16)?.model).toBe('CD74HC283');
+    expect(lookupPinout('74HC283', 16)?.model).toBe('CD74HC283');
+  });
+
   test('finds a model by any of its listed spellings and answers the first one', () => {
     expect(lookupPinout('NE555P', 8)?.model).toBe('NE555');
     expect(lookupPinout('CD4017', 16)?.model).toBe('CD4017B');
@@ -109,8 +132,9 @@ describe('足の名前の表', () => {
       'NE555', 'TLC555', 'LM358', 'TL071', 'TL072',
       'CD4017B', 'CD4040B', 'CD4069UB', 'CD4071B', 'CD4081B', 'CD4011B', 'CD4001B',
       'CD4013B', 'CD4070B', 'CD40106B', '74HC04', '74HC08', '74HC32', 'L293D', 'MCP3008',
+      '74HC595', 'CD4511B', 'CD74HC283',
     ]);
-    expect(pinoutModels(16)).toEqual(['CD4017B', 'CD4040B', 'L293D', 'MCP3008']);
+    expect(pinoutModels(16)).toEqual(['CD4017B', 'CD4040B', 'L293D', 'MCP3008', '74HC595', 'CD4511B', 'CD74HC283']);
     expect(pinoutModels(20)).toEqual([]);
   });
 
@@ -130,6 +154,14 @@ describe('足の名前の表', () => {
         expect(name).not.toContain('.');
         expect(name).not.toContain(',');
       }
+    }
+  });
+
+  test('never prints two names that differ only in case (the schematic reads pin names in any case)', () => {
+    for (const model of pinoutModels()) {
+      const names = [...new Set(lookupPinout(model, lookupCount(model))?.names ?? [])];
+      const folded = new Set(names.map((name) => name.toUpperCase()));
+      expect(folded.size, model).toBe(names.length);
     }
   });
 });

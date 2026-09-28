@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- **DIP の足の名前の表に 3 つの型番を足した** (74HC595・CD4511B・CD74HC283)。
+  束ねる circuit・breadboard・perfboard のフェンスで足に名前が出る。
+
 ## [0.19.0] - 2026-09-29
 
 ### Added

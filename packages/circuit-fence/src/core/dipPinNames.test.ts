@@ -178,6 +178,21 @@ describe('図とネットリスト', () => {
     }
   });
 
+  test("wires to a name with a prime or mixed case in it (74HC595 QH', CD4511B Oa)", () => {
+    for (const [chip, pin] of [['dip16 c4 74HC595', "QH'"], ['dip16 c4 CD4511B', 'Oa'], ['dip16 c4 CD74HC283', 'COUT']] as const) {
+      const result = compileCircuit(circuit('parts:', `  U1: ${chip}`, 'wires:', `  - a1 |- U1.${pin}`));
+      expect(result.errors, chip).toEqual([]);
+      expect(result.netlist.flatMap((net) => net.refs), chip).toContain(`U1.${pin}`);
+    }
+  });
+
+  test('refuses the bare letters of the CD4511B, which would name an input or an output depending on case', () => {
+    for (const pin of ['A', 'a']) {
+      const result = compileCircuit(circuit('parts:', '  U1: dip16 c4 CD4511B', 'wires:', `  - a1 |- U1.${pin}`));
+      expect(result.errors.length, pin).toBeGreaterThan(0);
+    }
+  });
+
   test('offers the pins on the map by the printed names', () => {
     const map = gridMap(circuit('parts:', '  U1: dip8 c4 NE555'));
     const names = (map.chips[0]?.pins ?? []).map((pin) => pin.name);

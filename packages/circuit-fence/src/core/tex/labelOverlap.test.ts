@@ -144,13 +144,14 @@ describe('DIP の型番は足の番号に重ならない', () => {
   }
 
   // 立てた箱は足の番号が左右の縁から中へ並び、真ん中に字の入る幅が無い。
+  // 型番は足の名前の表に無いもの (表にあれば名前の箱になり、型番の置き方が違う)。
   for (const [turn, rotate] of [['', 0], [' r180', 180]] as const) {
     test(`puts a long part number under the upright box${turn}`, () => {
-      const tex = generate('parts:', `  U1: dip16 c3 CD74HC283${turn}`);
+      const tex = generate('parts:', `  U1: dip16 c3 CD74HC4094${turn}`);
 
       // 箱の中には何も書かない (番号の列の間に置くと掛かる)。
       expect(tex).toMatch(/\\node\[dipchip, num pins=16, font=\\scriptsize[^\]]*\] \(part-U1\) at \(c3\) \{\};/u);
-      const found = /\\node\[font=\\scriptsize, anchor=(\w+)\] at \(part-U1\.(\w+)\) \{\$\\mathrm\{CD74HC283\}\$\}/u.exec(tex);
+      const found = /\\node\[font=\\scriptsize, anchor=(\w+)\] at \(part-U1\.(\w+)\) \{\$\\mathrm\{CD74HC4094\}\$\}/u.exec(tex);
       expect(found).not.toBeNull();
       // 掛けたアンカーは画面の下の縁 (番号は縁より内側にしか無い)。
       expect(onScreen(found?.[2] ?? '', rotate)).toEqual([0, -1]);
@@ -163,9 +164,9 @@ describe('DIP の型番は足の番号に重ならない', () => {
 
   test('keeps the part number inside a box laid on its side', () => {
     // 寝かせた箱は長い辺が横になり、番号の列の間に 1 行ぶんの帯が空く。
-    const tex = generate('parts:', '  U1: dip16 c3 CD74HC283 r90');
+    const tex = generate('parts:', '  U1: dip16 c3 CD74HC4094 r90');
 
-    expect(tex).toContain('\\node[font=\\scriptsize] at (part-U1.center) {$\\mathrm{CD74HC283}$};');
+    expect(tex).toContain('\\node[font=\\scriptsize] at (part-U1.center) {$\\mathrm{CD74HC4094}$};');
   });
 });
 

@@ -6,7 +6,7 @@
  *
  * **名前はメーカー (TI・Microchip) のデータシートの端子図 (TOP VIEW) の印字を 1 つだけ**
  * (`CV` `THR` のような略は入れない)。2026-09-28 (NE555〜CD4001B) と 2026-09-29
- * (CD4013B 以降) に次の版で確かめた:
+ * (CD4013B〜MCP3008 と、74HC595 以降) に次の版で確かめた:
  *
  * | 行 | データシート |
  * | --- | --- |
@@ -24,6 +24,9 @@
  * | 74HC04 / 74HC08 / 74HC32 | SN74HC04 SCLS078H / SN74HC08 SCLS081J / SN74HC32 SCLS200F、Pin Functions (N) |
  * | L293D | SLRS008D (L293 / L293D)、NE の端子図と Pin Functions |
  * | MCP3008 | Microchip DS21295D (MCP3004/3008)、Table 3-1 (PDIP) |
+ * | 74HC595 | SN74HC595 SCLS041J、Figure と Table 5-1 (PDIP) |
+ * | CD4511B | SCHS072B、端子図 (TERMINAL ASSIGNMENT) |
+ * | CD74HC283 | SCHS176E、4 Pin Configuration (PDIP) |
  *
  * **足の名前として書けない印字だけは直した** (`U1.TRIG` と書けて、番号と取り違えないため):
  *
@@ -35,12 +38,20 @@
  * - 論理ゲートの出力 (`J=A+B` `G=A` のような式) は、式の左辺の文字 (`J`) だけ。
  *   CD4070B の `J=A⊕B` も CD40106B の `G=A` (A の上に線) も同じ
  * - 上に線のある印字 (負論理) は、線を落としても 1 つに決まるならそのまま
- *   (NE555 の `RESET`、MCP3008 の `CS/SHDN` — `/` は印字のまま)。**線を落とすと
+ *   (NE555 の `RESET`、MCP3008 の `CS/SHDN`、74HC595 の `OE` `SRCLR`、CD4511B の `LT` `BL`
+ *   `LE/STROBE` — `/` は印字のまま)。**線を落とすと
  *   別の足と同じ名前になるものだけ** `/` を前に付ける: CD4013B の Q の上に線 → `/Q1` `/Q2`
  * - 印字の `,` は落とす: L293D の `1,2EN` → `12EN`、`3,4EN` → `34EN`
  *   (YAML のフロー形式の区切りと取り違えないため)
  * - L293D の 4・5・12・13 番の印字 `HEAT SINK AND GROUND` は、Pin Functions の名前 `GROUND`。
  *   4 本に同じ名前なので、TL071 の `NC` と同じく名前では指せず番号で出る
+ * - 74HC595 の 9 番の印字 `QH′` (プライム) は ASCII の `'` (`QH'`)。下付きの字 (`Q_A` `C_IN`) は並べて書く
+ *   (`QA` `CIN` `COUT`)
+ * - **大文字と小文字だけが違う印字は分ける** (回路図は足の名前を大文字小文字を問わず引くので、
+ *   `A` と `a` は同じ足に読める): CD4511B の BCD 入力 `A`〜`D` は `INA`〜`IND`、
+ *   セグメント出力 `a`〜`g` は `Oa`〜`Og`。**片方だけ変えると、もう片方の印字で書いた配線が
+ *   黙って別の足に付く** (`U1.a` が入力 A に) ので両方を変え、印字のままの `A` `a` はどちらも
+ *   「知らない足」として断らせる
  * - 74HC の型番は TI の `SN` を付けない綴りが代表 (教科書の書き方)。`SN74HC04N` も書ける
  *
  * **鍵は型番の完全一致** (大文字小文字は問わない)。接尾辞を削らないのは、
@@ -124,6 +135,19 @@ const ROWS: readonly PinoutRow[] = [
   {
     models: ['MCP3008'],
     names: ['CH0', 'CH1', 'CH2', 'CH3', 'CH4', 'CH5', 'CH6', 'CH7', 'DGND', 'CS/SHDN', 'DIN', 'DOUT', 'CLK', 'AGND', 'VREF', 'VDD'],
+  },
+  {
+    models: ['74HC595', 'SN74HC595', 'SN74HC595N'],
+    names: ['QB', 'QC', 'QD', 'QE', 'QF', 'QG', 'QH', 'GND', "QH'", 'SRCLR', 'SRCLK', 'RCLK', 'OE', 'SER', 'QA', 'VCC'],
+  },
+  {
+    models: ['CD4511B', 'CD4511', 'CD4511BE'],
+    names: ['INB', 'INC', 'LT', 'BL', 'LE/STROBE', 'IND', 'INA', 'VSS', 'Oe', 'Od', 'Oc', 'Ob', 'Oa', 'Og', 'Of', 'VDD'],
+  },
+  {
+    // CD74HCT283 (TTL の入力の段) は同じ印字だが別の品なので入れない。
+    models: ['CD74HC283', 'CD74HC283E', '74HC283'],
+    names: ['S1', 'B1', 'A1', 'S0', 'A0', 'B0', 'CIN', 'GND', 'COUT', 'S3', 'B3', 'A3', 'S2', 'A2', 'B2', 'VCC'],
   },
 ];
 

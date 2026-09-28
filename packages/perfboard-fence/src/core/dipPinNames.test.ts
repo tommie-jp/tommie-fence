@@ -31,6 +31,14 @@ describe('ネットリスト', () => {
     expect(refs).not.toContain('U1.NC');
   });
 
+  test('lists the pins of the 74HC595, CD4511B and CD74HC283 by their names', () => {
+    for (const [model, names] of [['74HC595', ["U1.QH'", 'U1.SRCLR', 'U1.OE']], ['CD4511B', ['U1.INA', 'U1.Oa', 'U1.LE/STROBE']], ['CD74HC283', ['U1.CIN', 'U1.COUT']]] as const) {
+      const { errors, netlist } = renderPerfboard(fence('parts:', `  U1: dip16 c3 ${model}`));
+      expect(errors, model).toEqual([]);
+      expect(netlist.flatMap((net) => net.refs), model).toEqual(expect.arrayContaining([...names]));
+    }
+  });
+
   test('keeps the numbers for an unknown model, says so, and says nothing when no model is written', () => {
     const unknown = renderPerfboard(fence('parts:', '  U1: dip8 c3 LM741'));
 

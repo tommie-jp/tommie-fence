@@ -148,6 +148,9 @@ parts:
 | `74HC08` `74HC32` (`SN` 付き・`N` 付きも) | `dip14` | `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3A` `3B` `4Y` `4A` `4B` `VCC` |
 | `L293D` (`L293DNE` `L293` `L293NE`) | `dip16` | `12EN` `1A` `1Y` `GROUND` `GROUND` `2Y` `2A` `VCC2` `34EN` `3A` `3Y` `GROUND` `GROUND` `4Y` `4A` `VCC1` |
 | `MCP3008` | `dip16` | `CH0` `CH1` `CH2` `CH3` `CH4` `CH5` `CH6` `CH7` `DGND` `CS/SHDN` `DIN` `DOUT` `CLK` `AGND` `VREF` `VDD` |
+| `74HC595` (`SN74HC595` `SN74HC595N`) | `dip16` | `QB` `QC` `QD` `QE` `QF` `QG` `QH` `GND` `QH'` `SRCLR` `SRCLK` `RCLK` `OE` `SER` `QA` `VCC` (`OE` `SRCLR` は上に線) |
+| `CD4511B` (`CD4511` `CD4511BE`) | `dip16` | `INB` `INC` `LT` `BL` `LE/STROBE` `IND` `INA` `VSS` `Oe` `Od` `Oc` `Ob` `Oa` `Og` `Of` `VDD` (印字の入力 `A`〜`D` と出力 `a`〜`g` は大文字小文字だけが違うので `IN` と `O` を付けた) |
+| `CD74HC283` (`CD74HC283E` `74HC283`) | `dip16` | `S1` `B1` `A1` `S0` `A0` `B0` `CIN` `GND` `COUT` `S3` `B3` `A3` `S2` `A2` `B2` `VCC` |
 
 ## 配線 (`wires:`)
 
