@@ -161,7 +161,7 @@ export function dipChip(options: DipOptions): string {
       );
     })
     .join('');
-  const outer = options.numbers === undefined ? '' : outerNames(points, names, inward, alongX, pitch, scale, ink);
+  const outer = options.numbers === undefined ? '' : outerNames(points, names, inward, alongX, pitch, box, scale, ink);
 
   const shell = element('rect', {
     x: num(box.x), y: num(box.y), width: num(box.width), height: num(box.height), rx: 3,
@@ -187,28 +187,40 @@ export function dipChip(options: DipOptions): string {
  * 下の穴に食われないようにする。**2 つの板で同じ絵**にするため perfboard も同じ。
  *
  * 横に寝た胴 (足の列が横) では足の真上に中央揃え、1 ピッチに収まらなければ字を縮める
- * (隣の足の名前に食い込ませない)。縦に立てた胴では足の外へ向けて書く。
+ * (隣の足の名前に食い込ませない)。**縦に立てた胴** (perfboard の `r90` / `r270`) だけは
+ * 胴の中、番号の内側に書く — 横書きの字は外へ出すと隣の穴の列に乗る。
  */
 const NAME_FONT = 6;
-const NAME_PAD = 7;
+const NAME_PAD = 3;
+/**
+ * 足の名前は大文字ばかり (`RESET` `THRES`) で、`textWidth` の半角 0.55 より広い
+ * (焼いて測ると 1.25 倍ほど)。狭く見積もると隣の名前やキャプションに食い込む。
+ */
+const NAME_CAPS = 1.25;
 const NAME_HALO = 2;
 const NAME_CLEAR = 0.5;
 const NAME_CAP = 0.72;
+/** 立てた胴で、番号の中心から名前の書き出しまで。 */
+const NAME_BESIDE = 5;
+/** 立てた胴の真ん中で、寝かせたキャプションが占める幅の半分。 */
+const CAPTION_HALF = 8;
 function outerNames(
   points: readonly ChipPoint[],
   names: readonly string[],
   inward: (point: ChipPoint) => number,
   alongX: boolean,
   pitch: number,
+  box: ChipBox,
   scale: number,
   ink: ChipInk,
 ): string {
+  const besideRoom = box.width / 2 - NUMBER_IN - NAME_BESIDE - CAPTION_HALF;
   return points
     .map((point, index) => {
       const name = names[index] ?? '';
       if (name === '') return '';
       const outward = -inward(point);
-      const size = Math.min(scale * NAME_FONT, (pitch - NAME_PAD) / textWidth(name));
+      const size = Math.min(scale * NAME_FONT, (pitch - NAME_PAD) / (textWidth(name) * NAME_CAPS));
       const style = { 'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: NAME_HALO };
       const clear = DIP_ACROSS + NAME_HALO / 2 + NAME_CLEAR;
       if (alongX) {
@@ -216,8 +228,11 @@ function outerNames(
         const y = outward > 0 ? point.y + clear + size * NAME_CAP : point.y - clear;
         return svgText(point.x, y, name, style);
       }
-      return svgText(point.x + outward * clear, point.y + NUMBER_MIDDLE, name, {
-        ...style, anchor: outward > 0 ? 'start' : 'end',
+      // **立てた胴 (perfboard で回したとき) は胴の中。** 外へ横書きで出すと隣の穴の列に
+      // 字が乗った (焼いて確かめた)。番号の内側から真ん中のキャプションの手前までに収める。
+      const inside = Math.min(scale * NAME_FONT, besideRoom / (textWidth(name) * NAME_CAPS));
+      return svgText(point.x - outward * (NUMBER_IN + NAME_BESIDE), point.y + NUMBER_MIDDLE, name, {
+        'font-size': num(inside), fill: ink.chipText, anchor: outward > 0 ? 'end' : 'start',
       });
     })
     .join('');

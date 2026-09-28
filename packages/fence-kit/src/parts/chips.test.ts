@@ -101,22 +101,35 @@ describe('dipChip', () => {
       expect(drawn.some((one) => one.text === 'NE555')).toBe(true);
     });
 
-    test('keeps the numbers inside the resin and the names within a pitch outside it, standing upright too', () => {
-      for (const vertical of [false, true]) {
-        const points = twoRows(8, 3, vertical);
-        const box = dipBox(points, PITCH);
-        const drawn = texts(dipChip({
-          points, names: TIMER, numbers: names(8), pinOne: 0, pitch: PITCH, caption: 'NE555', scale: 1, ink: INK,
-        }));
-        const inside = (one: { x: number; y: number }, margin: number) =>
-          one.x > box.x - margin && one.x < box.x + box.width + margin
-          && one.y > box.y - margin && one.y < box.y + box.height + margin;
-        for (const one of drawn) {
-          const isName = TIMER.includes(one.text);
-          expect(inside(one, 0), `${one.text} ${vertical}`).toBe(!isName);
-          expect(inside(one, PITCH), `${one.text} ${vertical}`).toBe(true);
-        }
+    test('keeps the numbers inside the resin and the names within a pitch outside it', () => {
+      const points = twoRows(8, 3);
+      const box = dipBox(points, PITCH);
+      const drawn = texts(dipChip({
+        points, names: TIMER, numbers: names(8), pinOne: 0, pitch: PITCH, caption: 'NE555', scale: 1, ink: INK,
+      }));
+      const inside = (one: { x: number; y: number }, margin: number) =>
+        one.x > box.x - margin && one.x < box.x + box.width + margin
+        && one.y > box.y - margin && one.y < box.y + box.height + margin;
+      for (const one of drawn) {
+        expect(inside(one, 0), one.text).toBe(!TIMER.includes(one.text));
+        expect(inside(one, PITCH), one.text).toBe(true);
       }
+    });
+
+    test('writes the names inside an upright body, between the numbers and the caption', () => {
+      const points = twoRows(8, 3, true);
+      const box = dipBox(points, PITCH);
+      const drawn = texts(dipChip({
+        points, names: TIMER, numbers: names(8), pinOne: 0, pitch: PITCH, caption: 'NE555', scale: 1, ink: INK,
+      }));
+      const at = (text: string) => drawn.find((one) => one.text === text)!;
+      for (const one of drawn) {
+        expect(one.x, one.text).toBeGreaterThan(box.x);
+        expect(one.x, one.text).toBeLessThan(box.x + box.width);
+      }
+      // 1 番の列は x = 0 (左)。名前は番号より内側 (右)。
+      expect(at('GND').x).toBeGreaterThan(at('1').x);
+      expect(at('VCC').x).toBeLessThan(at('8').x);
     });
 
     test('draws exactly as before when no numbers are given', () => {
