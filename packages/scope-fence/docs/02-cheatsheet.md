@@ -8,11 +8,12 @@
 ````text
 ```scope
 title: 図01 RC の充電        # 任意。図の左上に載る 1 行
-view: time                 # 任意。time だけ (xy はまだ)
+view: time                 # 任意。time (既定) か xy
 time: 1ms/div              # 横 1 目盛。/div が要る。無ければ一番遅い波の 2 周期
 trigger: ch1 rising 1V     # ch 向き [水準]。無ければ ch1 の立ち上がり・中央
 ch1: square 100Hz 1V offset 1V
 ch2: ch1 | rc 1ms          # 前の ch を操作に通す
+math: {expr: ch1 * ch2 / 10, unit: W}   # 任意。5 本目 (Math)。単位は書き手が言う
 data: 5-1-rc.csv           # 任意。.md の隣の WaveForms の CSV → 実線
 cursors: [0, 1ms]          # 任意。X1 X2
 measure: [vpp, freq]       # 任意。無ければ vpp と freq
@@ -55,9 +56,61 @@ ch3: ch1 | abs | offset -1.4V | clip 0V     # 全波整流 − 1.4 V、下だけ
 ch4: ch3 | rc 20ms | gain 0.5               # 平滑 (τ) と倍率
 ```
 
-`rc 1ms` (τ) / `clip -0.7V 0.7V` / `clip 0V` (下だけ) / `offset -1.4V` / `gain 0.5` (単位なし) / `abs`
+`rc 1ms` (τ) / `peak 150ms` (山で充電して τ で放電 = コンデンサ入力) / `clip -0.7V 0.7V` / `clip 0V` (下だけ) /
+`offset -1.4V` / `gain 0.5` (単位なし) / `abs`
 
-参照できるのは**自分より前の ch だけ**。
+参照できるのは**自分より前の ch だけ**。`rc` と `peak` は 10 τ ぶん助走してから画面に入る (定常)。
+
+```yaml
+ch1: sine 50Hz 5V
+ch2: ch1 | abs | offset -1.2V | clip 0V | peak 150ms   # 全波整流 + 100 µF・1.5 kΩ の平滑
+```
+
+## 式 (`= …`)
+
+ch の行は `=` で始めれば式。`math:` はいつも式 (`=` は付けない)。
+
+```yaml
+ch1: = 2V * step(t) * (1 - exp(-t/1ms))       # RC の充電 (t = 0 の段から)
+ch2: = 1V * sin(2 * pi * 1kHz * t) | rc 1ms   # 式の後ろにも操作を繋げる
+ch3: {wave: = 1.4uV * (exp(ch1 / 52mV) - 1), range: 200mV/div}
+```
+
+- 数は**単位つき**: `1V` `500mV` `1ms` `20us` `1kHz`。**素の数は無次元の倍率だけ** (`2 * pi`、`/ 10`)
+- 名前: `t` (s) `pi` `ch1`〜`ch4` (前の ch だけ)。関数: `sin` `cos` `exp` `abs` `sqrt` `min` `max` `clip(x, lo, hi)` `step(x)` (x ≥ 0 で 1)
+- 演算: `+ - * / ^` と括弧。`^` > 単項の `-` > `* /` > `+ -` (`-2^2` は −4)
+- **単位を数える**: `sin` `cos` `exp` の中は無次元、`+ - min max clip` の両側は同じ単位、ch の式の結果は V。
+  合わなければ断る (`sin(2*pi*1000*t)` は「sin の中は無次元」)
+- 計算できない点 (0 で割る・負の平方根) は 0 で描いてお知らせ。200 字・入れ子 16 段まで
+
+## Math (`math:`)
+
+```yaml
+ch1: sine 1kHz 1V
+ch2: sine 1kHz 1V phase -60deg
+math: {expr: ch1 * ch2, unit: W, range: 200mW/div, position: -2div}
+measure: [avg, vpp]
+```
+
+- 並びに書けるのは `expr` `unit` `range` `position`。1 行 (`math: ch1 - ch2`) なら unit は V
+- `unit:` は `V` `W` `1` (無次元)。**道具は単位を推定しない** — 式の次元 (`ch1 * ch2` は V^2) と合わなければお知らせ
+- `range:` は unit の単位で (`200mW/div`、`0.5/div`)。色は 5 本目、基準の印は `M`
+- Measurements・カーソルの表に `MATH` の行が unit の単位で出る (`Avg 250 mW`)。`data:` があっても Math は理想
+
+## XY (`view: xy`)
+
+```yaml
+title: リサージュ 1:2
+view: xy
+ch1: sine 2kHz 1V
+ch2: sine 1kHz 1V
+xy: ch1 ch2                # 横 縦。math も軸にできる。無ければ ch1 ch2 (言われる)
+```
+
+- 格子は 8 × 8。軸ごとに Auto の 1-2-5 (ch の `range:` `position:` を書けばそれ)
+- 読み値は各軸の `Vpp` `Vmax` `Vmin` (V–I の曲線は端の値を読む)
+- 標本化するのは周波数の揃う最短の時間 (1 kHz と 1.5 kHz なら 2 ms)。曲線はちょうど 1 周する
+- `time:` `trigger:` `cursors:` `measure:` `data:` は書けない (断る)
 
 ## V/div と基準 (書かなければ Auto)
 
@@ -116,7 +169,15 @@ measure: [vpp, vmax, vmin, avg, rms, freq, period, duty]
 | `offset 1` / `gain 2dB` | 断る | `offset 1V` / `gain 2` |
 | `ch1: ch2 \| rc 1ms` | 断る (後ろの ch) | 並びを入れ替える |
 | `measure: [frequency]` | 断る | `freq` |
-| `math:` `notes:` `view: xy` `ch3: =ch1-ch2` | 断る (まだ書けない) | — |
+| `ch2: = 5 * exp(-t/1ms)` | 断る (結果が V でない) | `ch2: = 5V * exp(-t/1ms)` |
+| `= 1V * sin(2*pi*1000*t)` | 断る (sin の中に s が残る) | `sin(2 * pi * 1kHz * t)` |
+| `= 1V * sin 1kHz` / `= 1 V` | 断る | `sin(…)` と括弧、`1V` と続けて |
+| `= max(ch1, 0)` | 断る (V と無次元) | `max(ch1, 0V)` |
+| `math: ch1 * ch2` で電力 | **V** で出る (お知らせ: 式は V^2) | `math: {expr: ch1 * ch2, unit: W}` |
+| `math: = ch1 * 2` / `math: sine 1kHz 1V` | 断る | `math: ch1 * 2` (波は ch の行) |
+| `view: xy` と `time:` `trigger:` `cursors:` | 断る (XY に時間軸は無い) | 書かない |
+| `ch2: ch1 \| rc 150ms` でコンデンサ入力の平滑 | 形が違う (1 次の低域) | `\| peak 150ms` (整流の後ろに) |
+| `notes:` | 断る (まだ書けない) | — |
 
 ## vna・spectrum との違い
 
