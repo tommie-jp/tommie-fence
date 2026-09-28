@@ -58,13 +58,13 @@ export function samplingNotices(doc: FenceDocument, sampled: Sampled, screen: Sc
   const said: FenceError[] = [];
   if (!sampled.settled) {
     said.push(notice(doc.view === 'xy'
-      ? 'rc / peak の τ が XY の窓 (周波数から決まる) に比べて長いので、定常まで回しきれていません (τ を短くします)'
-      : 'rc / peak の τ が画面の幅に比べて長いので、定常まで回しきれていません (time: を遅くします)', null));
+      ? 'rc / hp / peak の τ か delay が XY の窓 (周波数から決まる) に比べて長いので、定常まで回しきれていません (τ を短くします)'
+      : 'rc / hp / peak の τ か delay が画面の幅に比べて長いので、定常まで回しきれていません (time: を遅くします)', null));
   }
   for (const channel of doc.channels) {
     for (const op of channel.ops) {
-      if ((op.kind === 'rc' || op.kind === 'peak') && op.tau < screen.dt) {
-        said.push(notice(`${op.kind} の τ (${formatSeconds(op.tau)}) が画面の点の間隔 (${formatSeconds(screen.dt)}) より短いので、ほぼ素通しに描いています`, channel.line));
+      if ((op.kind === 'rc' || op.kind === 'hp' || op.kind === 'peak') && op.tau < screen.dt) {
+        said.push(notice(`${op.kind} の τ (${formatSeconds(op.tau)}) が画面の点の間隔 (${formatSeconds(screen.dt)}) より短いので、${op.kind === 'hp' ? 'ほぼ 0 (跳びの点だけ) に' : 'ほぼ素通しに'}描いています`, channel.line));
       }
     }
   }

@@ -17,6 +17,8 @@ math: {expr: ch1 * ch2 / 10, unit: W}   # 任意。5 本目 (Math)。単位は�
 data: 5-1-rc.csv           # 任意。.md の隣の WaveForms の CSV → 実線
 cursors: [0, 1ms]          # 任意。X1 X2
 measure: [vpp, freq]       # 任意。無ければ vpp と freq
+notes:                     # 任意。注釈 (時刻 電圧)
+  - text 1ms 1.26V: 1 τ で 63 %
 style: dark                # 任意
 ```
 ````
@@ -56,10 +58,19 @@ ch3: ch1 | abs | offset -1.4V | clip 0V     # 全波整流 − 1.4 V、下だけ
 ch4: ch3 | rc 20ms | gain 0.5               # 平滑 (τ) と倍率
 ```
 
-`rc 1ms` (τ) / `peak 150ms` (山で充電して τ で放電 = コンデンサ入力) / `clip -0.7V 0.7V` / `clip 0V` (下だけ) /
-`offset -1.4V` / `gain 0.5` (単位なし) / `abs`
+`rc 1ms` (τ) / `hp 1ms` (1 次の高域 = CR の微分回路) / `peak 150ms` (山で充電して τ で放電 = コンデンサ入力) /
+`integrate 1ms` (= (1/τ)∫x dt。RC の積分器、結果も V) / `delay 250us` (遅らせる。0 以上) /
+`clip -0.7V 0.7V` / `clip 0V` (下だけ) / `offset -1.4V` / `gain 0.5` (単位なし) / `abs` / `invert` (×−1)
 
-参照できるのは**自分より前の ch だけ**。`rc` と `peak` は 10 τ ぶん助走してから画面に入る (定常)。
+参照できるのは**自分より前の ch だけ**。`rc` `hp` `peak` は 10 τ ぶん助走してから画面に入る (定常)。
+`integrate` は助走の最後の 1 周期の平均が 0 になるよう定数を決める (直流分のある入力は傾いて出る)。
+
+```yaml
+ch1: square 1kHz 1V
+ch2: ch1 | integrate 1ms    # 三角波。Vpp = V·T/(2τ) = 0.5 V
+ch3: ch1 | hp 100us         # 微分回路 — 跳びのたびに ±2 V の山が τ で落ちる
+ch4: ch1 | delay 250us | invert
+```
 
 ```yaml
 ch1: sine 50Hz 5V
@@ -113,6 +124,23 @@ xy: ch1 ch2                # 横 縦。math も軸にできる。無ければ ch
 - 標本化するのは周波数の揃う最短の時間 (1 kHz と 1.5 kHz なら 2 ms)。曲線はちょうど 1 周する
 - `time:` `trigger:` `cursors:` `measure:` `data:` は書けない (断る)
 
+## 注釈 (`notes:`)
+
+```yaml
+ch1: square 100Hz 1V offset 1V
+ch2: ch1 | rc 1ms
+notes:
+  - band 0 1ms: 充電              # 時刻の帯を塗る (字は任意)
+  - text ch2 1ms 1.26V: 1 τ で 63 %   # 点に丸と字
+  - mark ch2 1ms 1.26V            # 点に丸だけ
+  - source                        # フェンスの中身を図の下に書き出す
+```
+
+- 番地は **時刻 電圧**。時刻は `0` `1ms` `-500us` (0 以外は単位が要る)、電圧は `1.26V` `-500mV` (素の数は断る)
+- 電圧は **ch1 の V/div と基準**で置く。ほかの ch に置くときは種類の後ろに ch を書く (`text ch2 …`)
+- 画面の外・描いていない ch の注釈は言われる (描かない)。`view: xy` では書けない (断る)
+- 字は 60 字まで、注釈は 50 個まで
+
 ## V/div と基準 (書かなければ Auto)
 
 ```yaml
@@ -136,6 +164,7 @@ measure: [vpp, vmax, vmin, avg, rms, freq, period, duty]
 
 `measure:` に書ける名前 (8 つまで): `vpp` `vmax` `vmin` `avg` `rms` `freq` `period` `duty` `phase` `rise`。
 `phase` は**一番上の ch に対する遅れ** (負が遅れ)、`rise` は 10〜90 %。
+周波数が一番上の ch と違う線 (2f で振れる瞬時電力の Math など) の `phase` は `—`。
 
 ## 読み値の見方
 
@@ -152,7 +181,7 @@ measure: [vpp, vmax, vmin, avg, rms, freq, period, duty]
   ΔX  1.000 ms (1.000 kHz)  1.00 V  1.26 V   ← X2 − X1 (時間差と 1/ΔX、電圧の差)
 ```
 
-測れない値は `—` (1 周期に満たない Freq、基準の ch 自身の Phase)。
+測れない値は `—` (1 周期に満たない Freq、基準の ch 自身の Phase、周波数が基準と違う線の Phase)。
 
 ## 取り違えやすい書き方
 
@@ -177,9 +206,13 @@ measure: [vpp, vmax, vmin, avg, rms, freq, period, duty]
 | `{wave: = max(ch1, 0V)}` | 断る (`,` が YAML の区切り) | `{wave: "= max(ch1, 0V)"}` |
 | `math: ch1 * ch2` で電力 | **V** で出る (お知らせ: 式は V^2) | `math: {expr: ch1 * ch2, unit: W}` |
 | `math: = ch1 * 2` / `math: sine 1kHz 1V` | 断る | `math: ch1 * 2` (波は ch の行) |
-| `view: xy` と `time:` `trigger:` `cursors:` | 断る (XY に時間軸は無い) | 書かない |
+| `view: xy` と `time:` `trigger:` `cursors:` `notes:` | 断る (XY に時間軸は無い) | 書かない |
 | `ch2: ch1 \| rc 150ms` でコンデンサ入力の平滑 | 形が違う (1 次の低域) | `\| peak 150ms` (整流の後ろに) |
-| `notes:` | 断る (まだ書けない) | — |
+| `- text 1ms 1.26: 字` / `- band 0 1: 字` | 断る (単位が無い) | `1.26V` / `1ms` |
+| ch2 の上の点に `- text 1ms 1.26V: 字` | **ch1 の V/div で置く** (ずれる) | `- text ch2 1ms 1.26V: 字` |
+| `- source: 電験 3-6` (出典のつもり) | 断る (source は書き出し) | 出典は `title:` か本文に |
+| `ch2: ch1 \| integrate 1ms` の縦を V·s で読む | **V** で出る ((1/τ)∫) | τ で割った値と読む |
+| `delay -250us` | 断る (遅らせるだけ) | `delay 750us` (1 kHz なら同じ) か `phase 90deg` |
 
 ## vna・spectrum との違い
 
