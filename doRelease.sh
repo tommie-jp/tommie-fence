@@ -128,7 +128,8 @@ EOF
   npm run -s check >/dev/null || die "npm run check が落ちました (コミットはしていません)"
 
   git add -A
-  msg="chore: 版を上げる ($(IFS=' / '; echo "${summary[*]}"))"
+  joined="$(printf '%s / ' "${summary[@]}")"
+  msg="chore: 版を上げる (${joined% / })"
   git commit -q -m "$msg" -m "doRelease.sh で作った。"
   echo "==> コミット: $(git log --oneline -1)"
 fi
