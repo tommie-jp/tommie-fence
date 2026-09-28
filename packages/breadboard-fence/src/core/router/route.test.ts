@@ -593,3 +593,27 @@ describe('wires do not run over holes they do not plug into', () => {
     expect(Math.abs(laneY(paths[0]!) - laneY(paths[1]!))).toBeGreaterThanOrEqual(8);
   });
 });
+
+describe('device leads in the same order as their holes do not cross', () => {
+  // 教科書の図: AD の `2+` の線が `1+` の線の上を横切った (`wires:` を並べ替えても直らなかった)。
+  // 足の並び (左から) と行き先の列の並びが同じなら、交差させずに引ける。
+  const deviceLayout = createLayout(createBoard('half'), { deviceTop: true, deviceBottom: true });
+  const hole = (text: string) => deviceLayout.point(parseAddress(text)!);
+  const pinAbove = (x: number): Point => ({ x, y: deviceLayout.deviceBands.top!.y + deviceLayout.deviceBands.top!.height });
+  const pinBelow = (x: number): Point => ({ x, y: deviceLayout.deviceBands.bottom!.y });
+  const lead = (from: Point, to: string) => ({ from, to: hole(to), hints: [] });
+  const shuffled = <T,>(items: readonly T[]): T[][] => [items.slice(), items.slice().reverse(),
+    [...items.slice(1), items[0]!]];
+
+  test.each([
+    ['going left from a device above', [lead(pinAbove(300), 'b3'), lead(pinAbove(340), 'b4'), lead(pinAbove(380), 'b5'), lead(pinAbove(420), 'b6')]],
+    ['going right from a device above', [lead(pinAbove(100), 'b20'), lead(pinAbove(140), 'b21'), lead(pinAbove(180), 'b22')]],
+    ['going left from a device below', [lead(pinBelow(300), 'i3'), lead(pinBelow(340), 'i4'), lead(pinBelow(380), 'i5')]],
+    ['going right from a device below', [lead(pinBelow(100), 'i20'), lead(pinBelow(140), 'i21'), lead(pinBelow(180), 'i22')]],
+    ['both ways from one device above', [lead(pinAbove(300), 'b3'), lead(pinAbove(340), 'b5'), lead(pinAbove(380), 'b25'), lead(pinAbove(420), 'b27')]],
+  ] as const)('%s, whatever order they are written in', (_, leads) => {
+    for (const order of shuffled(leads)) {
+      expect(countCrossings(routeWires(order, deviceLayout))).toBe(0);
+    }
+  });
+});

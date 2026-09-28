@@ -523,7 +523,9 @@ export function routeWires(
     return { entry, exit };
   });
 
-  const offsets = assignSlots(requests, lanes, escapes);
+  const onDeviceLane = requests.map((request, index) =>
+    lanes[index] !== null && deviceLaneOf(request.from, request.to, layout) === lanes[index]);
+  const offsets = assignSlots(requests, lanes, escapes, onDeviceLane, layout);
 
   return requests.map((request, index) => {
     const lane = lanes[index];
@@ -582,11 +584,14 @@ function assignSlots(
   requests: readonly WireRequest[],
   lanes: readonly (Lane | null)[],
   escapes: readonly Escapes[],
+  onDeviceLane: readonly boolean[],
+  layout: Layout,
 ): readonly number[] {
   const offsets = new Array<number>(requests.length).fill(0);
+  for (const [index, offset] of deviceLaneSlots(requests, lanes, escapes, onDeviceLane, layout)) offsets[index] = offset;
   const order = requests
     .map((request, index) => ({ index, ...laneRun(request, escapes[index]!) }))
-    .filter(({ index }) => lanes[index] !== null)
+    .filter(({ index }) => lanes[index] !== null && !onDeviceLane[index])
     .sort((a, b) => a.left - b.left);
 
   const takenByLane = new Map<number, Map<number, Slot>>();
@@ -611,6 +616,96 @@ function assignSlots(
   }
 
   return offsets;
+}
+
+/** 機器のレーンを走る 1 本。`pin` は機器の側の端 (降りる道が振れたならその先) の x。 */
+type DeviceRun = {
+  readonly index: number;
+  readonly left: number;
+  readonly right: number;
+  readonly pin: number;
+  /** 行き先の穴が機器の足より右にあるか。 */
+  readonly rightward: boolean;
+};
+
+const overlaps = (a: DeviceRun, b: DeviceRun): boolean =>
+  a.left < b.right + SLOT_GAP && b.left < a.right + SLOT_GAP;
+
+/**
+ * 機器のレーン (板の外) の段。**足の並びと行き先の列の並びが同じ配線どうしを交差させない。**
+ *
+ * 機器の線は、機器の足から段まで縦に降り、段を横に走り、行き先の列で板へ縦に降りる。
+ * 横の区間が重なる 2 本は、**曲がり角が内側にあるほうを板の側の段に**置くと交わらない:
+ * 左へ行く線どうしなら足が右にあるほう、右へ行く線どうしなら足が左にあるほう。
+ * 逆に置くと、板の側の線の横の区間を、機器の側の線が板へ降りる縦の区間が切る
+ * (教科書の図で AD の `2+` が `1+` の上を横切った)。左端の順に中央から配っていた
+ * ころは、どちらに転ぶかが足の位置まかせだった。
+ *
+ * 左へ行く線と右へ行く線の横の区間が重なるのは、足の並びと行き先の並びが入れ替わって
+ * いるときだけで、そのときはどう置いても 1 回は交わる。
+ *
+ * 段は、先に置いた重なる線より 1 つ機器の側 (最長路の層分け)。重なる線の塊ごとに
+ * 真ん中へ寄せるので、1 本しか通らないレーンは今までどおり真上を走る。
+ */
+function deviceLaneSlots(
+  requests: readonly WireRequest[],
+  lanes: readonly (Lane | null)[],
+  escapes: readonly Escapes[],
+  onDeviceLane: readonly boolean[],
+  layout: Layout,
+): ReadonlyMap<number, number> {
+  const result = new Map<number, number>();
+  const byLane = new Map<Lane, DeviceRun[]>();
+  requests.forEach((request, index) => {
+    const lane = lanes[index];
+    if (!lane || !onDeviceLane[index]) return;
+    const run = laneRun(request, escapes[index]!);
+    // 機器の足は、板から見てレーンの向こう側の端。
+    const fromIsPin = Math.sign(request.from.y - lane.y) === -boardSideOf(lane, layout);
+    const pinX = fromIsPin ? (escapes[index]!.entry?.x ?? request.from.x) : (escapes[index]!.exit?.x ?? request.to.x);
+    const holeX = fromIsPin ? (escapes[index]!.exit?.x ?? request.to.x) : (escapes[index]!.entry?.x ?? request.from.x);
+    const runs = byLane.get(lane) ?? [];
+    runs.push({ index, ...run, pin: pinX, rightward: holeX > pinX });
+    byLane.set(lane, runs);
+  });
+
+  for (const [lane, runs] of byLane) {
+    // 板の側に置くものから順に: 右へ行く線は足の左から、左へ行く線は足の右から。
+    const order = [
+      ...runs.filter((run) => run.rightward).sort((a, b) => a.pin - b.pin || a.index - b.index),
+      ...runs.filter((run) => !run.rightward).sort((a, b) => b.pin - a.pin || a.index - b.index),
+    ];
+    const rank = new Map<number, number>();
+    for (const run of order) {
+      const below = order.filter((other) => rank.has(other.index) && overlaps(run, other));
+      rank.set(run.index, below.reduce((most, other) => Math.max(most, (rank.get(other.index) ?? 0) + 1), 0));
+    }
+
+    const toBoard = boardSideOf(lane, layout);
+    const reach = Math.max(1, Math.floor(lane.halfHeight / slotSpacing(lane)));
+    for (const cluster of clustersOf(order)) {
+      const deepest = Math.max(...cluster.map((run) => rank.get(run.index) ?? 0));
+      for (const run of cluster) {
+        const level = clamp(Math.floor(deepest / 2) - (rank.get(run.index) ?? 0), reach);
+        result.set(run.index, toBoard * level * slotSpacing(lane));
+      }
+    }
+  }
+  return result;
+}
+
+/** レーンから見て板のある向き (y の符号)。 */
+const boardSideOf = (lane: Lane, layout: Layout): number => (lane.y < layout.board.y ? 1 : -1);
+
+/** 横の区間が (間接にでも) 重なる線の塊。 */
+function clustersOf(runs: readonly DeviceRun[]): DeviceRun[][] {
+  const clusters: DeviceRun[][] = [];
+  for (const run of [...runs].sort((a, b) => a.left - b.left)) {
+    const last = clusters[clusters.length - 1];
+    if (last && last.some((other) => overlaps(run, other))) last.push(run);
+    else clusters.push([run]);
+  }
+  return clusters;
 }
 
 /** 段 1 つの埋まり具合。`right` は塞がっている右端、`wires` は載っている本数。 */
