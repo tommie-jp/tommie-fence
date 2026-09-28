@@ -61,4 +61,48 @@ if [ "$do_install" -eq 1 ]; then
   goal="install${pkg:+-$pkg}"
 fi
 
-exec make CHECK="$run_checks" "$goal"
+# **落ちたら、よくある原因を調べて直し方を出す。** make のエラーだけでは
+# 「graph-fence/src/core が見つからない」のように、本当の原因 (新しい
+# パッケージを取り込んだあと npm install していない) が読み取れない。
+diagnose() {
+  local hints=()
+  # 1. ワークスペースのリンク: npm install のときにしか作られない
+  local missing=()
+  for pj in packages/*/package.json; do
+    local name
+    name="$(node -p "require('./$pj').name" 2>/dev/null)" || continue
+    [ -e "node_modules/$name" ] || missing+=("$name")
+  done
+  if [ ${#missing[@]} -gt 0 ]; then
+    hints+=("node_modules に ${missing[*]} へのリンクがありません。新しいパッケージを取り込んだあと npm install していないはずです → npm install")
+  fi
+  # 2. 依存の定義が install より新しい
+  if [ -f node_modules/.package-lock.json ] && [ package-lock.json -nt node_modules/.package-lock.json ]; then
+    hints+=("package-lock.json が前の install より新しくなっています → npm install")
+  fi
+  # 3. main より遅れている (最後に fetch した時点で)
+  local behind
+  behind="$(git rev-list --count HEAD..@{u} 2>/dev/null || echo 0)"
+  if [ "${behind:-0}" -gt 0 ]; then
+    hints+=("手元は $(git rev-parse --abbrev-ref @{u}) より ${behind} コミット遅れています → git pull --ff-only (未コミットの変更があれば先に退避)")
+  fi
+  # 4. 未コミットの変更 (ほかのセッションの書きかけが混ざっていることがある)
+  if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+    hints+=("未コミットの変更があります (git status)。書きかけが原因で落ちていないか確かめてください")
+  fi
+
+  echo >&2
+  echo "==> $self: ビルドに失敗しました" >&2
+  if [ ${#hints[@]} -eq 0 ]; then
+    echo "    よくある原因には当たりませんでした。上の make のエラーを見てください" >&2
+  else
+    local h
+    for h in "${hints[@]}"; do echo "    - $h" >&2; done
+    echo "    直したら、もう一度 ./$self" >&2
+  fi
+}
+
+if ! make CHECK="$run_checks" "$goal"; then
+  diagnose
+  exit 1
+fi
