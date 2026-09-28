@@ -7,35 +7,46 @@
 # 移し替え、刻印の入った図、タグを 4 本以上まとめて送ると release.yml が
 # 動かない件、Latest が最後にできたライブラリに移る件を、毎回思い出す必要がある。
 #
-#   ./doRelease.sh                         [Unreleased] に項目があるパッケージを並べるだけ
-#   ./doRelease.sh circuit-fence=minor spectrum-fence=keep tommie-fence=minor
-#                                          ローカルで版上げ〜コミットまで (push しない)
-#   ./doRelease.sh --push circuit-fence=minor ...
-#                                          main へ push し、タグを 1 本ずつ出して Release を待つ
-#   ./doRelease.sh --push-only             上のローカルのコミットを後から出す
-#   ./doRelease.sh -h                      この説明を出す
+#   ./doRelease.sh                  出すべきものを全部出す (下の「自動で決めること」)
+#   ./doRelease.sh -n               何を出すかを並べるだけ (何も変えない)
+#   ./doRelease.sh --no-push        ローカルで版上げ〜コミットまで (push しない)
+#   ./doRelease.sh circuit-fence=minor tommie-fence=minor
+#                                   出すものと段階を手で決める (段階: minor / patch /
+#                                   x.y.z / keep。keep は今の版のまま出す = 初版)
+#   ./doRelease.sh --push-only      コミット済みで、まだ出していないタグだけを出す
+#   ./doRelease.sh -h               この説明を出す
 #
-# 段階: minor / patch / x.y.z / keep (keep は今の版のまま出す = 初版)。
-# 拡張 (tommie-fence) を含めると、最後に拡張の Release を Latest に付け直す。
+# 自動で決めること (引数に pkg=段階 が無いとき):
+#   - 出すのは [Unreleased] に項目があるパッケージ (playground は除く)
+#   - 段階は [Unreleased] の小見出しで決める。Added / Changed / Removed / Deprecated
+#     があれば minor、Fixed などだけなら patch。まだタグが 1 本も無ければ keep (初版)
+#   - 拡張 (tommie-fence) が束ねるパッケージを出すなら、拡張も一緒に出す。拡張の
+#     [Unreleased] が空なら「束ねるフェンスを上げた」の 1 行を足す
+#   - 前回 push の途中で止まったタグ (.git/release-tags) があれば、それも出す
+#
+# 最後に、一番新しい拡張の Release を Latest に付け直す。
 #
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
-HELP_LINES='3,21p'
+HELP_LINES='3,28p'
 KEEP_PNG_LIST='.release-keep-png'   # 焼き直しても残す PNG (刻印が見える図) の一覧
 SKIP_PKGS='playground'              # リリースしないパッケージ
+EXT='tommie-fence'                  # 拡張 (ほかのパッケージを束ねる)
 
 die() { echo "doRelease: $*" >&2; exit 1; }
 
-push=0; push_only=0; specs=()
+push=1; push_only=0; dry=0; specs=()
 for a in "$@"; do
   case "$a" in
     -h | --help) sed -n "$HELP_LINES" "$0" | sed 's/^#\( \|$\)//'; exit 0 ;;
-    --push) push=1 ;;
+    -n | --dry-run) dry=1 ;;
+    --push) push=1 ;;          # 既定。doDeploy.sh など前の書き方のために受ける
+    --no-push) push=0 ;;
     --push-only) push_only=1 ;;
     *=*) specs+=("$a") ;;
-    *) die "知らない引数です: $a (pkg=minor / --push / -h)" ;;
+    *) die "知らない引数です: $a (pkg=minor / -n / --no-push / --push-only / -h)" ;;
   esac
 done
 
@@ -46,22 +57,63 @@ unreleased_count() {
 
 version_of() { node -p "require('./packages/$1/package.json').version"; }
 
-# ---- 何も指定しなければ、出すべきパッケージを並べて終わる ----
-if [ ${#specs[@]} -eq 0 ] && [ "$push_only" -eq 0 ]; then
-  echo "[Unreleased] に項目があるパッケージ:"
-  for d in packages/*/; do
-    p="$(basename "$d")"
-    case " $SKIP_PKGS " in *" $p "*) continue ;; esac
-    [ -f "$d/CHANGELOG.md" ] || continue
-    n="$(unreleased_count "$p")"
-    [ "$n" -gt 0 ] && printf '  %-18s %s  (%s 項目)\n' "$p" "$(version_of "$p")" "$n"
-  done
-  echo
-  echo "出すには: ./doRelease.sh <pkg>=<minor|patch|x.y.z|keep> ... [--push]"
-  exit 0
-fi
+# [Unreleased] の小見出しから段階を決める (上の「自動で決めること」)
+auto_level() {
+  [ -n "$(git tag -l "$1-v*")" ] || { echo keep; return; }
+  if awk '/^## \[Unreleased\]/{on=1;next} /^## \[/{on=0} on' "packages/$1/CHANGELOG.md" |
+    grep -qE '^### (Added|Changed|Removed|Deprecated)'; then
+    echo minor
+  else
+    echo patch
+  fi
+}
+
+bundled_by_ext() {  # 拡張がこのパッケージを束ねるか
+  node -e "const p=require('./packages/$EXT/package.json');
+    process.exit({...p.dependencies,...p.devDependencies}['$1'] ? 0 : 1)"
+}
 
 tags_file="$(git rev-parse --absolute-git-dir)/release-tags"   # 作業ツリーに置くと add -A で混ざる
+pending_tags() { [ -s "$tags_file" ] && cat "$tags_file" || true; }
+
+# ---- 0. 段階を指定しなければ、出すものを [Unreleased] から決める ----
+add_bundle_note=0   # 拡張の [Unreleased] に「束ねるフェンスを上げた」を足すか
+if [ ${#specs[@]} -eq 0 ] && [ "$push_only" -eq 0 ]; then
+  git fetch -q --tags origin
+  ext_level=""
+  for d in packages/*/; do
+    p="$(basename "$d")"
+    case " $SKIP_PKGS $EXT " in *" $p "*) continue ;; esac
+    [ -f "$d/CHANGELOG.md" ] && [ "$(unreleased_count "$p")" -gt 0 ] || continue
+    level="$(auto_level "$p")"
+    specs+=("$p=$level")
+    # 束ねるものが新しい機能 (minor・初版) を持つなら拡張も minor
+    if bundled_by_ext "$p"; then
+      case "$level" in minor | keep) ext_level=minor ;; *) ext_level="${ext_level:-patch}" ;; esac
+    fi
+  done
+  if [ "$(unreleased_count "$EXT")" -gt 0 ]; then
+    own="$(auto_level "$EXT")"
+    case "$own" in minor | keep) ext_level="$own" ;; *) ext_level="${ext_level:-$own}" ;; esac
+  elif [ -n "$ext_level" ]; then
+    add_bundle_note=1
+  fi
+  [ -n "$ext_level" ] && specs+=("$EXT=$ext_level")   # 拡張は最後 (束ねる版が決まってから)
+
+  mapfile -t pending < <(pending_tags)
+  if [ ${#specs[@]} -eq 0 ] && [ ${#pending[@]} -eq 0 ]; then
+    echo "出すものはありません ([Unreleased] はどれも空、止まったタグも無し)"
+    exit 0
+  fi
+  [ ${#pending[@]} -gt 0 ] && echo "前回止まったタグ: ${pending[*]}"
+  [ ${#specs[@]} -gt 0 ] && echo "出すもの: ${specs[*]}"
+  [ "$add_bundle_note" -eq 1 ] && echo "  ($EXT の [Unreleased] に「束ねるフェンスを上げた」を足す)"
+  [ "$dry" -eq 0 ] || exit 0
+  [ ${#specs[@]} -gt 0 ] || push_only=1   # 止まったタグを出すだけ
+elif [ "$dry" -eq 1 ]; then
+  echo "出すもの: ${specs[*]:-(無し。止まったタグだけ: $(pending_tags | tr '\n' ' '))}"
+  exit 0
+fi
 
 # ---- 1. ローカル: 版上げ〜コミット ----
 if [ "$push_only" -eq 0 ]; then
@@ -70,11 +122,22 @@ if [ "$push_only" -eq 0 ]; then
   git merge-base --is-ancestor origin/main HEAD || die "origin/main より古い枝です。rebase してから"
 
   today="$(date +%F)"
-  : > "$tags_file"
+  touch "$tags_file"   # 前回止まったタグは残したまま足す (まとめて出す)
   summary=()
   for s in "${specs[@]}"; do
     pkg="${s%%=*}"; level="${s#*=}"
     [ -d "packages/$pkg" ] || die "packages/$pkg がありません"
+    if [ "$pkg" = "$EXT" ] && [ "$add_bundle_note" -eq 1 ]; then
+      note="$(printf '%s / ' "${summary[@]}")"
+      node - "$EXT" "${note% / }" <<'EOF'
+const fs = require('fs');
+const [pkg, list] = process.argv.slice(2);
+const p = `packages/${pkg}/CHANGELOG.md`;
+const s = fs.readFileSync(p, 'utf8');
+fs.writeFileSync(p, s.replace('## [Unreleased]',
+  `## [Unreleased]\n\n### Changed\n\n- **束ねるフェンスを上げた** (${list})。詳しくは各パッケージの CHANGELOG。`));
+EOF
+    fi
     [ "$(unreleased_count "$pkg")" -gt 0 ] || die "$pkg の [Unreleased] が空です"
     old="$(version_of "$pkg")"
     if [ "$level" != keep ]; then
@@ -154,7 +217,6 @@ wait_release() {  # タグの release.yml が終わるまで待つ
   gh run watch "$id" --exit-status >/dev/null || die "$tag の Release が失敗しました (gh run view $id)"
 }
 
-latest=""
 for tag in "${tags[@]}"; do
   echo "==> タグ $tag"
   # 途中で止まったあとの再実行: 既に出したタグは飛ばし、Release の完了だけ待つ
@@ -165,10 +227,11 @@ for tag in "${tags[@]}"; do
     git push -q origin "refs/tags/$tag"   # 1 本ずつ (4 本以上まとめると release.yml が動かない)
   fi
   wait_release "$tag"
-  case "$tag" in tommie-fence-v*) latest="$tag" ;; esac
 done
 
-# Latest は最後にできた Release に付くので、拡張の Release に付け直す
+# Latest は最後にできた Release に付くので、一番新しい拡張の Release に付け直す
+# (拡張を出さない回でも。ライブラリだけ出すと Latest がライブラリに移る)
+latest="$(git tag -l "$EXT-v*" --sort=-v:refname | head -1)"
 if [ -n "$latest" ]; then
   gh release edit "$latest" --latest >/dev/null
   echo "==> Latest: $latest"
