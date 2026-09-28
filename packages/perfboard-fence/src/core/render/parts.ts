@@ -6,6 +6,7 @@ import {
   smaBody as drawSmaBody, svgText, transformerCore, TEXT_HALO_WIDTH,
 } from 'fence-kit';
 import type { BodyInk, BodyPart, ChipInk } from 'fence-kit';
+import { dipPinout } from '../parts/pinout.ts';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Layout } from '../model/layout.ts';
 import {
@@ -605,6 +606,9 @@ function renderChip(
     // **1 番ピンは足の並びの先頭** (`parts/footprint.ts` の pinsOf が 1 番から返す)。
     // 回しても足の並びのほうが回るので、切り欠きは常に 0 番の側。
     // 姿があれば DIP 化した変換基板 (`dip8/sop`)。外形は DIP と同じ。
+    // 型番が足の名前の表にあれば、番号 (縁) と名前 (胴の外) の 2 段 (52 の docs/95)。
+    const printed = dipPinout(part);
+    if (printed !== null) return dipChip({ ...shared, names: printed, numbers, pinOne: 0 });
     return part.variant === null
       ? dipChip({ ...shared, names: numbers, pinOne: 0 })
       : drawDipAdapter({ ...shared, names: numbers, pinOne: 0, variant: part.variant, paint: inkOf(theme) });

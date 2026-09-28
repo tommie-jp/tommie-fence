@@ -6,6 +6,7 @@ import { LIMITS } from '../limits.ts';
 import { formatAddress, isCrossing, parseAddress } from '../model/address.ts';
 import { holeStrip, offBoardReason } from '../model/board.ts';
 import { isEdgeMount } from '../parts/types.ts';
+import { dipPinName, dipPinout } from '../parts/pinout.ts';
 import type {
   Address, Board, DeviceSpec, FenceError, PlacedPart, RoutedWire, StripId, WireSpec,
 } from '../types.ts';
@@ -207,8 +208,11 @@ export function resolveWires(
  * 突き合わせが黙って外れ、ERC が何も言わなくなる (返るのは空なのでテストも通る)。
  */
 export function pinRef(part: PlacedPart, index: number): string {
+  const printed = dipPinout(part);
   const named = lookupBoardPart(part.type)?.pins[index] ?? lookupConnector(part.type)?.pins[index]
-    ?? lookupNamedChip(part.type, part.variant)?.pins[index]?.name;
+    ?? lookupNamedChip(part.type, part.variant)?.pins[index]?.name
+    // 型番が足の名前の表にある DIP は印字の名前 (52 の docs/95)。
+    ?? (printed === null ? undefined : dipPinName(printed, index));
   return `${part.id}.${named ?? index + 1}`;
 }
 
