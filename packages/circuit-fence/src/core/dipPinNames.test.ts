@@ -170,6 +170,14 @@ describe('図とネットリスト', () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
+  test('wires to a name with a slash in it (CD4013B /Q1, MCP3008 CS/SHDN)', () => {
+    for (const [chip, pin] of [['dip14 c4 CD4013B', '/Q1'], ['dip16 c4 MCP3008', 'CS/SHDN']] as const) {
+      const result = compileCircuit(circuit('parts:', `  U1: ${chip}`, 'wires:', `  - a1 |- U1.${pin}`));
+      expect(result.errors, chip).toEqual([]);
+      expect(result.netlist.flatMap((net) => net.refs), chip).toContain(`U1.${pin}`);
+    }
+  });
+
   test('offers the pins on the map by the printed names', () => {
     const map = gridMap(circuit('parts:', '  U1: dip8 c4 NE555'));
     const names = (map.chips[0]?.pins ?? []).map((pin) => pin.name);

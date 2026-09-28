@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { pinoutModels } from 'fence-kit';
 import { describe, expect, test } from 'vitest';
 import { renderPerfboard } from './index.ts';
 
@@ -55,5 +58,12 @@ describe('絵', () => {
   test('prints the numbers on a relay as well as its names', () => {
     const shown = texts(renderPerfboard(fence('parts:', '  K1: relay c3')).svg);
     expect(shown).toEqual(expect.arrayContaining(['COM1', '4', '16']));
+  });
+});
+
+describe('docs/01-syntax.md', () => {
+  test('names every model in the table of DIP pin names', () => {
+    const syntax = readFileSync(fileURLToPath(new URL('../../docs/01-syntax.md', import.meta.url)), 'utf8');
+    expect(pinoutModels().filter((model) => !syntax.includes(`\`${model}\``))).toEqual([]);
   });
 });

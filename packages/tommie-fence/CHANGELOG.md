@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- **DIP の足の名前の表に 8 つの型番を足した** (CD4013B・CD4070B・CD40106B・74HC04・74HC08・74HC32・L293D・MCP3008)。
+  束ねる circuit・breadboard・perfboard のフェンスで足に名前が出る。
+
 ## [0.18.0] - 2026-09-29
 
 scope-fence 0.4.1 と spectrum-fence 0.1.0 と graph-fence 0.1.0 を束ねる。

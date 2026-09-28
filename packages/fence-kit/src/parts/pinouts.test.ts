@@ -41,6 +41,42 @@ describe('足の名前の表', () => {
     }
   });
 
+  test('names the 74HC gates as printed on the TI data sheets (SN74HC04 / 08 / 32, N package)', () => {
+    expect(lookupPinout('74HC04', 14)?.names).toEqual([
+      '1A', '1Y', '2A', '2Y', '3A', '3Y', 'GND', '4Y', '4A', '5Y', '5A', '6Y', '6A', 'VCC',
+    ]);
+    const quad = ['1A', '1B', '1Y', '2A', '2B', '2Y', 'GND', '3Y', '3A', '3B', '4Y', '4A', '4B', 'VCC'];
+    expect(lookupPinout('74HC08', 14)?.names).toEqual(quad);
+    expect(lookupPinout('74HC32', 14)?.names).toEqual(quad);
+    expect(lookupPinout('SN74HC04N', 14)?.model).toBe('74HC04');
+  });
+
+  test('names the CD4013B flip-flops, writing the barred outputs with a slash', () => {
+    expect(lookupPinout('CD4013B', 14)?.names).toEqual([
+      'Q1', '/Q1', 'CLOCK1', 'RESET1', 'D1', 'SET1', 'VSS', 'SET2', 'D2', 'RESET2', 'CLOCK2', '/Q2', 'Q2', 'VDD',
+    ]);
+  });
+
+  test('names the CD4070B and CD40106B like the gates and inverters of the same series', () => {
+    expect(lookupPinout('CD4070', 14)?.names).toEqual(lookupPinout('CD4071B', 14)?.names);
+    expect(lookupPinout('CD4070', 14)?.model).toBe('CD4070B');
+    expect(lookupPinout('CD40106', 14)?.names).toEqual(lookupPinout('CD4069UB', 14)?.names);
+    expect(lookupPinout('CD40106', 14)?.model).toBe('CD40106B');
+  });
+
+  test('names the L293D with the commas of its enable pins dropped and the ground printed on four pins', () => {
+    expect(lookupPinout('L293D', 16)?.names).toEqual([
+      '12EN', '1A', '1Y', 'GROUND', 'GROUND', '2Y', '2A', 'VCC2', '34EN', '3A', '3Y', 'GROUND', 'GROUND', '4Y', '4A', 'VCC1',
+    ]);
+    expect(lookupPinout('L293DNE', 16)?.model).toBe('L293D');
+  });
+
+  test('names the MCP3008 as printed on the Microchip data sheet', () => {
+    expect(lookupPinout('MCP3008', 16)?.names).toEqual([
+      'CH0', 'CH1', 'CH2', 'CH3', 'CH4', 'CH5', 'CH6', 'CH7', 'DGND', 'CS/SHDN', 'DIN', 'DOUT', 'CLK', 'AGND', 'VREF', 'VDD',
+    ]);
+  });
+
   test('finds a model by any of its listed spellings and answers the first one', () => {
     expect(lookupPinout('NE555P', 8)?.model).toBe('NE555');
     expect(lookupPinout('CD4017', 16)?.model).toBe('CD4017B');
@@ -72,8 +108,9 @@ describe('足の名前の表', () => {
     expect(pinoutModels()).toEqual([
       'NE555', 'TLC555', 'LM358', 'TL071', 'TL072',
       'CD4017B', 'CD4040B', 'CD4069UB', 'CD4071B', 'CD4081B', 'CD4011B', 'CD4001B',
+      'CD4013B', 'CD4070B', 'CD40106B', '74HC04', '74HC08', '74HC32', 'L293D', 'MCP3008',
     ]);
-    expect(pinoutModels(16)).toEqual(['CD4017B', 'CD4040B']);
+    expect(pinoutModels(16)).toEqual(['CD4017B', 'CD4040B', 'L293D', 'MCP3008']);
     expect(pinoutModels(20)).toEqual([]);
   });
 
@@ -91,6 +128,7 @@ describe('足の名前の表', () => {
         expect(name).not.toMatch(/^\d+$/);
         expect(name).toMatch(/^[\x21-\x7e]+$/);
         expect(name).not.toContain('.');
+        expect(name).not.toContain(',');
       }
     }
   });

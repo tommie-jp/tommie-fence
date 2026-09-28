@@ -62,6 +62,20 @@ describe('配線とネットリスト', () => {
     }
   });
 
+  test('wires to a name with a slash in it (CD4013B /Q1, MCP3008 CS/SHDN)', () => {
+    for (const [chip, pin] of [['dip14 @ e10 CD4013B', '/Q1'], ['dip16 @ e10 MCP3008', 'CS/SHDN']] as const) {
+      const { errors, netlist } = renderBreadboard(fence(
+        'parts:',
+        `  U1: ${chip}`,
+        '  R1: resistor a5 a8 10k',
+        'wires:',
+        `  - U1.${pin} -- b5`,
+      ));
+      expect(errors, chip).toEqual([]);
+      expect(netlist.find((net) => net.refs.includes('R1.1'))?.refs, chip).toContain(`U1.${pin}`);
+    }
+  });
+
   test('says which pins it has when the name is wrong', () => {
     const { errors } = timer('U1.TRG -- b5');
     expect(errors.map((one) => one.message).join('\n')).toContain('TRIG');
