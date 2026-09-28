@@ -19,6 +19,13 @@ describe('safeToken', () => {
     const cut = safeToken('𝒜'.repeat(40));
     expect([...cut]).toHaveLength(33); // 32 文字 + 省略記号
   });
+
+  test('bounds the cost of a spelling far longer than any name could show (notes: can call this up to 50 times per fence)', () => {
+    const start = performance.now();
+    const cut = safeToken('a'.repeat(30_000_000));
+    expect(performance.now() - start).toBeLessThan(150);
+    expect(cut).toBe(`${'a'.repeat(32)}…`);
+  });
 });
 
 describe('snippetOf', () => {
@@ -29,6 +36,13 @@ describe('snippetOf', () => {
   test('replaces invisible characters one for one so the caret stays aligned', () => {
     expect(snippetOf('a​b')).toBe('a·b');
     expect(snippetOf('a\tb')).toBe('a b');
+  });
+
+  test('bounds the cost of a line far longer than any snippet could show', () => {
+    const start = performance.now();
+    const cut = snippetOf('a'.repeat(30_000_000));
+    expect(performance.now() - start).toBeLessThan(150);
+    expect(cut).toBe(`${'a'.repeat(120)}…`);
   });
 });
 

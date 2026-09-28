@@ -3,6 +3,13 @@ import { LIMITS } from './limits.ts';
 import type { FenceError } from './types.ts';
 
 /**
+ * 生の長さで先に切ってから見る。**削る前の綴りが長いほど、正規表現も配列に開くのも
+ * 重くなる** (`notes:` は 1 つのフェンスで最大 50 回、この先の 2 つを呼べる。
+ * math.ts の式の長さの断りと同じ理由)。最後に残る字数よりも十分広い余裕を残す。
+ */
+const bail = (text: string, limit: number): string => (text.length > limit ? text.slice(0, limit) : text);
+
+/**
  * エラーメッセージに入力の断片を載せるときの唯一の入口。
  * 図は他人の書いたノートに埋め込まれるので、識別子として意味のある文字だけ残し、
  * 長さも切り詰める (描画側のエスケープと合わせて二重の防御)。
@@ -12,7 +19,7 @@ export const safeToken = (text: string): string => {
   // `抵抗` や `résistor` が丸ごと落ちて、行のどこにも無い綴りを名指すことになる。
   // 図と HTML を守っているのはエスケープのほうなので、ここで落とすのは
   // マークアップになりうる記号だけでよい。
-  const kept = text.replace(/[^\p{L}\p{N}_.+\-/#]+/gu, ' ').trim();
+  const kept = bail(text, LIMITS.idLength * 8).replace(/[^\p{L}\p{N}_.+\-/#]+/gu, ' ').trim();
   // 記号だけの綴り (`@` や `()`) は全部落ちて空になる。空のまま文に埋めると
   // 「点の名前  は使えません」と、何を指しているのか分からない文になる。
   if (kept === '') return '(記号)';
@@ -59,7 +66,7 @@ export const dropInvisible = (text: string): string => text.replace(INVISIBLE, '
  * 字下げは残す (どの入れ子の行かが分かる)。
  */
 export function snippetOf(text: string): string {
-  const shown = text.replace(INVISIBLE, '·').replace(/\t/g, ' ');
+  const shown = bail(text, LIMITS.snippetLength * 8).replace(INVISIBLE, '·').replace(/\t/g, ' ');
   const characters = [...shown];
   return characters.length > LIMITS.snippetLength
     ? `${characters.slice(0, LIMITS.snippetLength).join('')}…`
