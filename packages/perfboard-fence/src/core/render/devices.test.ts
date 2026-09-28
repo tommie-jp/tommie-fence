@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { PIN_NAME_GAP, pinNameWidth } from 'fence-kit';
 import { layoutDevices, renderDevices } from './devices.ts';
 import { THEME } from './theme.ts';
 import { createBoard } from '../model/board.ts';
@@ -154,5 +155,38 @@ describe('番地で置いた機器の箱が板に被る', () => {
 
   test('says nothing about a box beside the board, which covers no hole', () => {
     expect(said('-a-6')).not.toMatch(/重なって/);
+  });
+});
+
+describe('足の名前が隣と触れない', () => {
+  type Drawn = { readonly x: number; readonly y: number; readonly size: number; readonly text: string };
+  const drawnTexts = (svg: string): Drawn[] =>
+    [...svg.matchAll(/<text x="([\d.-]+)" y="([\d.-]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)]
+      .map(([, x, y, size, text]) => ({ x: Number(x), y: Number(y), size: Number(size), text: text ?? '' }));
+  /** 同じ高さに並んだ名前どうしの、字と字の隙間の最小。 */
+  const tightestGap = (names: readonly Drawn[]): number => {
+    let tightest = Infinity;
+    for (const one of names) {
+      for (const other of names) {
+        if (one === other || one.y !== other.y || other.x <= one.x) continue;
+        tightest = Math.min(tightest, other.x - one.x
+          - (pinNameWidth(one.text) * one.size + pinNameWidth(other.text) * other.size) / 2);
+      }
+    }
+    return tightest;
+  };
+
+  test.each([
+    ['隣り合う穴に足を落とした PIR (番地で置いた)', ['GND', 'VCC', 'OUT'], '-c3'],
+    ['隣り合う穴に足を落とした長い名前 (互い違いにする)', ['SIGNAL', 'ENABLE', 'SIGNAL2', 'ENABLE2'], '-c3'],
+    ['帯に並べた機器', ['GND', 'VCC', 'OUT'], null],
+  ] as const)('%s', (_, pins, where) => {
+    const devices = [device('PIR', pins, 'top', where)];
+    const layout = createLayout(createBoard({ cols: 16, rows: 8 }), { deviceTop: where === null });
+    const svg = renderDevices(layoutDevices(devices, layout).placed, THEME);
+    const names = drawnTexts(svg).filter((drawn) => (pins as readonly string[]).includes(drawn.text));
+
+    expect(names).toHaveLength(pins.length);
+    expect(tightestGap(names)).toBeGreaterThanOrEqual(PIN_NAME_GAP - 0.05);
   });
 });

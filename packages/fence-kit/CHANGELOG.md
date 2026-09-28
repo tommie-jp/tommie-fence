@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- **`pinNameRow` / `pinNameInner` / `pinNameWidth` / `PIN_NAME_GAP`** — 板の外の機器の足の名前を横 1 列に
+  並べるときの字の大きさ。隣の名前と `PIN_NAME_GAP` 空く大きさまで縮め、下限を割るなら 2 段に
+  互い違いにする (breadboard と perfboard が同じ形で `GNDVCCOUT` を踏んだ)。
+
 ## [0.2.0] - 2026-09-29
 
 ### Changed

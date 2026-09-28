@@ -1,4 +1,4 @@
-import { element, fit, num, svgText, textWidth } from 'fence-kit';
+import { PIN_NAME_GAP, element, fit, num, pinNameInner, pinNameRow, pinNameWidth, svgText } from 'fence-kit';
 import { notice, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import type { Band, Layout } from '../model/layout.ts';
@@ -30,8 +30,15 @@ const PIN_NAME_SCALE = 1.35;
  * テーマを渡されない置き場所の計算でも同じ値を使えるように定数で持つ。
  */
 const PIN_NAME_SIZE = 9 * PIN_NAME_SCALE;
-/** 名前どうしの間。これだけ空けないと `sig` と `gnd` が地続きに読める。 */
-const PIN_ROOM = 8;
+/**
+ * 足の名前をこれより小さくしない。足が穴の格子に載る (番地で置いた) 機器で、
+ * これでも隣の名前と触れるなら 2 段に互い違いに置く。
+ */
+const MIN_PIN_NAME = 6.5;
+/** 2 段に置くときの段の間 (字の大きさに対する比)。 */
+const STAGGER_LINE = 1.2;
+/** 足の名前を箱の縁からこれだけ内に収める。 */
+const NAME_INSET = 3;
 /** 足 1 本ぶんの幅。名前が並ぶので穴のピッチより広く取る。 */
 const PIN_GAP = 22;
 /** 箱の最小の幅。足が 1〜2 本でも名前が入るように。 */
@@ -41,14 +48,6 @@ const DEVICE_BOX_HEIGHT = 34;
 /** 足 1 本ぶんがこれより狭くなったら、名前は読めない。 */
 const CRAMPED = PIN_GAP / 2;
 
-/** 足と足の間。1 本しか無ければ箱の幅ぶん空いている。 */
-const pinPitch = (placed: PlacedDevice): number => {
-  const xs = [...placed.pins.values()].map((point) => point.x).sort((one, other) => one - other);
-  return xs.length < 2
-    ? placed.box.width
-    : xs.slice(1).reduce((least, x, index) => Math.min(least, x - (xs[index] as number)), Infinity);
-};
-
 /**
  * 箱の幅。**足の名前が並ぶ幅から決める。**
  *
@@ -56,10 +55,12 @@ const pinPitch = (placed: PlacedDevice): number => {
  * 1 つの綴りに読めた。どの端子へ引く線なのかを読むのはこの名前なので、
  * 名前が入る幅を先に取る。
  */
-const boxWidth = (device: DeviceSpec): number => {
-  const widest = device.pins.reduce((most, name) => Math.max(most, textWidth(name)), 0);
-  const pitch = Math.max(PIN_GAP, widest * PIN_NAME_SIZE + PIN_ROOM);
-  return Math.max(pitch * device.pins.length, MIN_WIDTH);
+const boxWidth = (device: DeviceSpec, inBand = false): number => {
+  const widest = device.pins.reduce((most, name) => Math.max(most, pinNameWidth(name)), 0);
+  const pitch = Math.max(PIN_GAP, widest * PIN_NAME_SIZE + PIN_NAME_GAP);
+  // 帯に並べた足は箱の幅を (本数 + 1) で割った所に来るので、その間で名前が入るように。
+  // 番地で置いた足は穴の格子に載るので、箱を広げても足の間は変わらない。
+  return Math.max(pitch * (device.pins.length + (inBand ? 1 : 0)), MIN_WIDTH);
 };
 
 export type PlacedDevice = {
@@ -139,7 +140,7 @@ export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout): D
     const here = devices.filter((device) => device.where === null && device.at === side);
     if (!band || here.length === 0) continue;
 
-    const wanted = here.map(boxWidth);
+    const wanted = here.map((device) => boxWidth(device, true));
     const asked = wanted.reduce((sum, width) => sum + width, 0) + GAP * (here.length - 1);
 
     // **帯からはみ出させない。** viewBox の外に描いた箱は黙って切れるので、
@@ -194,17 +195,28 @@ function renderDevice(placed: PlacedDevice, theme: Theme): string {
   // 板の列番号や配線に重なり、どの足の名前なのかも遠くなる。
   const edge = top ? box.y + box.height : box.y;
   const size = theme.metrics.textSize;
-  // **隣の名前とくっつかない大きさまで**。足が穴の格子に載る (番地で置いた)
-  // 機器では間隔が板のピッチで決まるので、箱を広げても名前の場所は増えない。
-  const room = pinPitch(placed) - PIN_ROOM;
-  const widest = device.pins.reduce((most, name) => Math.max(most, textWidth(name)), 0);
-  const nameSize = Math.max(size, Math.min(size * PIN_NAME_SCALE, widest === 0 ? size : room / widest));
+  // **隣の名前と触れない大きさまで**縮め、それでも触れるなら 2 段に互い違いに置く。
+  // 足が穴の格子に載る (番地で置いた) 機器では間隔が板のピッチで決まるので、
+  // 箱を広げても名前の場所は増えない (PIR の `GND VCC OUT` が `GNDVCCOUT` と読めた)。
+  const entries = [...placed.pins.entries()];
+  const xs = entries.map(([, point]) => point.x);
+  const names = entries.map(([name]) => name);
+  const within = { left: box.x + NAME_INSET, right: box.x + box.width - NAME_INSET };
+  const oneRow = pinNameRow(xs, names, { largest: size * PIN_NAME_SCALE, smallest: Math.min(size, MIN_PIN_NAME), within });
+  // 2 段にするときは板の字の大きさまで (箱の背丈に 2 段と機器の名前を収める)。
+  const nameRow = oneRow.staggered ? pinNameRow(xs, names, {
+    largest: size,
+    smallest: Math.min(size, MIN_PIN_NAME),
+    within,
+  }) : oneRow;
+  const nameSize = nameRow.size;
   const nameY = top ? edge - 5 : edge + nameSize;
-  const legs = [...placed.pins.entries()]
-    .map(([name, point]) => element('line', {
+  const inward = (top ? -1 : 1) * nameSize * STAGGER_LINE;
+  const legs = entries
+    .map(([name, point], index) => element('line', {
       x1: num(point.x), y1: num(edge), x2: num(point.x), y2: num(point.y),
       stroke: theme.palette.lead, 'stroke-width': 2, 'stroke-linecap': 'round',
-    }) + svgText(point.x, nameY, name, {
+    }) + svgText(point.x, nameY + (nameRow.staggered && pinNameInner(xs, index) ? inward : 0), name, {
       fill: theme.palette.caption,
       'font-size': num(nameSize),
     }))
@@ -212,7 +224,11 @@ function renderDevice(placed: PlacedDevice, theme: Theme): string {
 
   // 機器の名前は足の名前とぶつからない側へ寄せる (上の機器なら箱の上寄り)。
   const label = fit(device.label, box.width / size);
-  const caption = svgText(box.x + box.width / 2, box.y + box.height / 2 + (top ? -size * 0.5 : size * 0.9), label, {
+  // 名前が 2 段なら、機器の名前は箱の奥の縁まで下げる (真ん中だと奥の段に重なる)。
+  const captionY = nameRow.staggered
+    ? (top ? box.y + size * 0.65 : box.y + box.height - size * 0.65)
+    : box.y + box.height / 2 + (top ? -size * 0.5 : size * 0.9);
+  const caption = svgText(box.x + box.width / 2, captionY, label, {
     fill: theme.palette.caption,
     'font-size': num(size),
     'dominant-baseline': 'middle',

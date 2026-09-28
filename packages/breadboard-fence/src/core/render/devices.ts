@@ -3,6 +3,7 @@ import type { PlacedPart, Point, Rect } from '../types.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
 import { element, num, svgText } from './svg.ts';
+import { PIN_NAME_GAP, pinNameInner, pinNameRow, pinNameWidth } from 'fence-kit';
 
 const PIN_LENGTH = 8;
 const PIN_SPACING = 40;
@@ -12,6 +13,15 @@ const DEVICE_GAP = 16;
 // 機器のラベルとピン名は、部品のラベル (既定 10) との比で決める。
 const LABEL_FONT = 11;
 const PIN_FONT = 8.5;
+/**
+ * 足の名前をこれより小さくしない (部品のラベルの 6 割)。帯に詰め込まれてこれでも
+ * 隣と触れるなら、名前を 2 段に互い違いに置く。
+ */
+const MIN_PIN_FONT = 6;
+/** 足の名前を機器の箱の縁からこれだけ内に収める (角の丸みのぶん)。 */
+const NAME_INSET = 4;
+/** 2 段に置くときの段の間 (字の大きさに対する比)。 */
+const STAGGER_LINE = 1.2;
 
 export type DevicePlacement = {
   readonly rect: Rect;
@@ -21,8 +31,18 @@ export type DevicePlacement = {
 
 const captionOf = (part: PlacedPart): string => part.label ?? part.id;
 
+/**
+ * 足 1 本ぶんの幅。**足の名前が既定の大きさで隣と触れない幅**を取る
+ * (`PIN_SPACING` だけで決めていたので、長い名前は隣と地続きになった)。
+ */
+const pinSpacingOf = (part: PlacedPart, scale: number): number => {
+  const widest = part.pins.reduce((most, pin) => Math.max(most, pinNameWidth(pin.name)), 0);
+  // 端の名前も箱の縁から `NAME_INSET` 内に収まるように (足は箱の端から半ピッチ)。
+  return Math.max(PIN_SPACING, widest * scale * PIN_FONT + Math.max(PIN_NAME_GAP, 2 * NAME_INSET));
+};
+
 const widthOf = (part: PlacedPart, scale: number): number =>
-  Math.max(part.pins.length * PIN_SPACING, captionOf(part).length * scale * CHAR_WIDTH + 28, MIN_WIDTH);
+  Math.max(part.pins.length * pinSpacingOf(part, scale), captionOf(part).length * scale * CHAR_WIDTH + 28, MIN_WIDTH);
 
 /**
  * ボード外の機器を上下の帯に並べる。
@@ -104,16 +124,29 @@ export function renderDevice(part: PlacedPart, placement: DevicePlacement, theme
     fill: palette.deviceText,
   });
 
+  // 帯に詰め込まれて足の間が縮んだら、名前は隣と触れない大きさまで縮め、
+  // それでも触れるなら 2 段に互い違いに置く。
+  const xs = part.pins.map((pin) => placement.pins.get(pin.name)?.x ?? rect.x);
+  const largest = scale * PIN_FONT;
+  const nameRow = pinNameRow(xs, part.pins.map((pin) => pin.name), {
+    largest,
+    smallest: Math.min(largest, MIN_PIN_FONT),
+    within: { left: rect.x + NAME_INSET, right: rect.x + rect.width - NAME_INSET },
+  });
+  const nameY = side === 'top' ? edgeY - 6 : edgeY + 12 - (largest - nameRow.size) * 0.72;
+  const inwardStep = (side === 'top' ? -1 : 1) * nameRow.size * STAGGER_LINE;
+
   const pins = part.pins
-    .map((pin) => {
+    .map((pin, index) => {
       const point = placement.pins.get(pin.name);
       if (!point) return '';
+      const inner = nameRow.staggered && pinNameInner(xs, index);
       const stub = element('line', {
         x1: num(point.x), y1: num(edgeY), x2: num(point.x), y2: num(point.y),
         stroke: palette.chipPin, 'stroke-width': 3,
       });
-      const name = svgText(point.x, side === 'top' ? edgeY - 6 : edgeY + 12, pin.name, {
-        'font-size': num(scale * PIN_FONT),
+      const name = svgText(point.x, nameY + (inner ? inwardStep : 0), pin.name, {
+        'font-size': num(nameRow.size),
         fill: palette.chipPin,
       });
       return stub + name;
