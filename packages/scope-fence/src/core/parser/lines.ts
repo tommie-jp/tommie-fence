@@ -6,7 +6,6 @@ import type { ChannelName, ChannelSource } from '../model/channel.ts';
 import { dimText, isVolts, parseExpr } from '../model/expr.ts';
 import { MEASURE_NAMES } from '../model/measure.ts';
 import type { MeasureName } from '../model/measure.ts';
-import { LC_Q } from '../model/lc.ts';
 import { OP_NAMES } from '../model/ops.ts';
 import type { Op } from '../model/ops.ts';
 import type { TriggerEdge } from '../model/screen.ts';
@@ -110,7 +109,7 @@ function lcOp(words: readonly string[]): LineResult<Op> {
   if (f0 > LIMITS.frequencyMax) return fail(`lc の周波数は ${formatHertzShort(LIMITS.frequencyMax)} までです`, first);
   if (second === undefined || !isBareNumber(second) || words.length > 3) return fail(LC_HINT, words[words.length > 3 ? 3 : 2] ?? first);
   const q = Number(second);
-  if (!Number.isFinite(q) || q < LC_Q.min || q > LC_Q.max) return fail(`lc の Q は ${LC_Q.min}〜${LC_Q.max} です`, second);
+  if (!Number.isFinite(q) || q < LIMITS.lcQ.min || q > LIMITS.lcQ.max) return fail(`lc の Q は ${LIMITS.lcQ.min}〜${LIMITS.lcQ.max} です`, second);
   return ok({ kind: 'lc', f0, q });
 }
 
@@ -220,24 +219,24 @@ export type TriggerLine = {
 
 const TRIGGER_HINT = 'trigger: は「ch1 rising 1V」の形で書きます (向きは rising / falling、水準は省けます)';
 const TRIGGER_AT_HINT = 'trigger: は「ch1 rising 1V at -5div」の形で書きます (at は省けます)';
-const AT_HINT = 'trigger: の at は -5div / 2div のように目盛 (div) で書きます (-5div〜5div)';
+const AT_RANGE = `-${LIMITS.triggerPosition}div〜${LIMITS.triggerPosition}div`;
+const AT_HINT = `trigger: の at は -5div / 2div のように目盛 (div) で書きます (${AT_RANGE})`;
+const AT_MISSING = 'trigger: の位置は at を付けて書きます (例: ch1 rising 0V at -5div)';
 
-/** トリガの位置の範囲 (目盛。格子の半分)。 */
-export const TRIGGER_POSITION_MAX = 5;
-
-/** `at -5div` の後ろ (at の次の語)。 */
+/** `at -5div` の後ろ (at の次の語)。読みは position: と同じ、範囲は格子の半分。 */
 function triggerPosition(word: string | undefined): LineResult<number> {
-  const found = word === undefined ? null : /^([+-]?(?:\d+(?:\.\d+)?|\.\d+))div$/.exec(word);
-  if (found === null) return fail(AT_HINT, word ?? 'at');
-  const position = Number(found[1]);
-  if (Math.abs(position) > TRIGGER_POSITION_MAX) return fail('trigger: の at は -5div〜5div です (左端が -5div、右端が 5div)', word);
+  const position = word === undefined ? null : parsePosition(word);
+  if (position === null) return fail(AT_HINT, word ?? 'at');
+  if (Math.abs(position) > LIMITS.triggerPosition) return fail(`trigger: の at は ${AT_RANGE} です (左端が -${LIMITS.triggerPosition}div、右端が ${LIMITS.triggerPosition}div)`, word);
   return ok(position);
 }
 
-/** 水準の語 (省けば null)。`-5div` を水準の場所に書いたら at を促す。 */
-function triggerLevel(level: string | undefined): LineResult<number | null> {
+/** 水準の語 (省けば null)。`-5div` を水準の場所に書いたら、at の有無で直し方を変えて言う。 */
+function triggerLevel(level: string | undefined, hasAt: boolean): LineResult<number | null> {
   if (level === undefined) return ok(null);
-  if (parsePosition(level) !== null) return fail('trigger: の位置は at を付けて書きます (例: ch1 rising 0V at -5div)', level);
+  if (parsePosition(level) !== null) {
+    return fail(hasAt ? 'trigger: の水準は 1V / -500mV のように書きます (位置は at の後ろだけ)' : AT_MISSING, level);
+  }
   const volts = plainVolts(level);
   if (volts !== null) return ok(volts);
   return fail(isBareNumber(level) ? 'trigger: の水準は 1V / -500mV のように単位を付けます' : `trigger: の水準が読めません: ${safeToken(level)} (1V / -500mV)`, level);
@@ -253,11 +252,9 @@ export function parseTriggerLine(text: string): LineResult<TriggerLine> {
   const atIndex = words.indexOf('at');
   const head = atIndex === -1 ? words : words.slice(0, atIndex);
   const extra = head[3];
-  if (extra !== undefined && atIndex === -1 && parsePosition(extra) !== null) {
-    return fail('trigger: の位置は at を付けて書きます (例: ch1 rising 0V at -5div)', extra);
-  }
+  if (extra !== undefined && atIndex === -1 && parsePosition(extra) !== null) return fail(AT_MISSING, extra);
   if (extra !== undefined) return fail(atIndex === -1 ? TRIGGER_HINT : TRIGGER_AT_HINT, extra);
-  const level = triggerLevel(head[2]);
+  const level = triggerLevel(head[2], atIndex !== -1);
   if (!level.ok) return level;
   if (atIndex === -1) return ok({ source, edge, level: level.value, position: 0 });
   if (words.length > atIndex + 2) return fail(TRIGGER_AT_HINT, words[atIndex + 2]);

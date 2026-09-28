@@ -170,9 +170,13 @@ export function applyOps(samples: Float64Array, dt: number, ops: readonly Op[], 
   return ops.reduce<Float64Array>((current, op) => applierOf(op)(current, context), Float64Array.from(samples));
 }
 
+/** τ で定常に入る 1 次の操作 (rc・hp・peak)。助走と「τ が点の間隔より短い」のお知らせが同じ組を見る。 */
+export const isTauOp = (op: Op): op is Extract<Op, { kind: 'rc' | 'hp' | 'peak' }> =>
+  op.kind === 'rc' || op.kind === 'hp' || op.kind === 'peak';
+
 /** 1 つの操作が定常に入るまでの時定数 (s)。lc は減衰の包絡 (`lcSettleOf`)。 */
 const settleOf = (op: Op): number => {
-  if (op.kind === 'rc' || op.kind === 'hp' || op.kind === 'peak') return op.tau;
+  if (isTauOp(op)) return op.tau;
   return op.kind === 'lc' ? lcSettleOf(op.f0, op.q) : 0;
 };
 

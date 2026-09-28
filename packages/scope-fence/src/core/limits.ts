@@ -42,6 +42,10 @@ export const LIMITS = {
   gainMax: 1e6,
   /** delay の上限 (s)。一番遅い time/div (60 s/div) の画面 10 目盛ぶん。 */
   delayMax: 600,
+  /** lc の Q の範囲。0.1 未満は極が離れすぎ (実質 1 次)、100 を越える LC は実回路にない。 */
+  lcQ: { min: 0.1, max: 100 },
+  /** トリガの位置 `at` の範囲 (目盛。格子の半分 — 左端 −5、右端 +5)。 */
+  triggerPosition: 5,
   /** `data:` の行の数とファイルの大きさ。 */
   dataRows: 100001,
   /**

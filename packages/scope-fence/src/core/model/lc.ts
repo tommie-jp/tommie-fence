@@ -7,9 +7,6 @@
  * 1 刻みの入力は両端の平均を保持とみなす (`rc` と同じ扱い。段の応答が dt/2 ずれない)。
  */
 
-/** Q の範囲。0.1 未満は極が離れすぎ (実質 1 次)、100 を越える LC は実回路にない。 */
-export const LC_Q = { min: 0.1, max: 100 } as const;
-
 type Matrix = readonly [number, number, number, number];
 
 const multiply = (a: Matrix, b: Matrix): Matrix => [

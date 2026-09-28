@@ -241,7 +241,8 @@ function readFence(source: string): ParseResult {
   if (trigger !== null && !channels.some((channel) => channel.name === trigger?.source)) {
     const written = channelPairs.has(trigger.source);
     errors.push(fenceError(
-      written ? `trigger: の ${trigger.source} が読めないので、トリガを合わせられません` : `trigger: の ${trigger.source} が書かれていません`,
+      (written ? `trigger: の ${trigger.source} が読めないので、トリガを合わせられません` : `trigger: の ${trigger.source} が書かれていません`)
+        + (trigger.position === 0 ? '' : ' (at も効かず、t = 0 は中央です)'),
       trigger.line, trigger.source,
     ));
     trigger = null;

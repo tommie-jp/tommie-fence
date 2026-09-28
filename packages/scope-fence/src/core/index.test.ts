@@ -119,7 +119,7 @@ describe('renderScope — 段 1', () => {
       'rc の τ (1.000 µs) が画面の点の間隔 (1.221 ms) より短いので、ほぼ素通しに描いています',
     );
     expect(said('time: 1us/div\ntrigger: ch1 rising\nch1: square 1kHz 1V\nch2: ch1 | rc 1s')).toContain(
-      '助走 (rc / hp / peak の τ・delay・integrate の 1 周期) が画面の幅に比べて長いので、定常まで回しきれていません (time: を遅くします)',
+      '助走 (rc / hp / peak の τ・lc の減衰・delay・integrate の 1 周期) が画面の幅に比べて長いので、定常まで回しきれていません (time: を遅くします)',
     );
   });
 

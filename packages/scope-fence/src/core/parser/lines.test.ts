@@ -116,6 +116,8 @@ describe('parseTriggerLine', () => {
     ['ch1 rising 0V at 6div', 'trigger: の at は -5div〜5div です (左端が -5div、右端が 5div)', '6div'],
     ['ch1 rising 0V at -5div 1V', 'trigger: は「ch1 rising 1V at -5div」の形で書きます (at は省けます)', '1V'],
     ['ch1 rising 0V -5div', 'trigger: の位置は at を付けて書きます (例: ch1 rising 0V at -5div)', '-5div'],
+    ['ch1 rising -5div', 'trigger: の位置は at を付けて書きます (例: ch1 rising 0V at -5div)', '-5div'],
+    ['ch1 rising -5div at 2div', 'trigger: の水準は 1V / -500mV のように書きます (位置は at の後ろだけ)', '-5div'],
   ])('refuses %s', (text, message, token) => {
     expect(parseTriggerLine(text)).toEqual({ ok: false, error: { message, line: null, token } });
   });

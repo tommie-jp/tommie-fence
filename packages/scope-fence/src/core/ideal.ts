@@ -4,6 +4,7 @@ import { LIMITS } from './limits.ts';
 import { channelPeriods, exprWorkOf, samplesOf } from './model/channel.ts';
 import type { ChannelSpec, Sampled } from './model/channel.ts';
 import type { Expr } from './model/expr.ts';
+import { isTauOp } from './model/ops.ts';
 import type { Op } from './model/ops.ts';
 import type { Trace } from './model/readings.ts';
 import { centredOf, findTrigger } from './model/screen.ts';
@@ -61,13 +62,13 @@ const LC_STEPS_PER_CYCLE = 20;
 
 /** 操作 1 つについて、画面の点の間隔が粗すぎるときに言うこと。 */
 function stepNotice(op: Op, screen: Screen): string | null {
-  if ((op.kind === 'rc' || op.kind === 'hp' || op.kind === 'peak') && op.tau < screen.dt) {
+  if (isTauOp(op) && op.tau < screen.dt) {
     return `${op.kind} の τ (${formatSeconds(op.tau)}) が画面の点の間隔 (${formatSeconds(screen.dt)}) より短いので、${op.kind === 'hp' ? 'ほぼ 0 (跳びの点だけ) に' : 'ほぼ素通しに'}描いています`;
   }
   if (op.kind !== 'lc') return null;
   const finest = 1 / (LC_STEPS_PER_CYCLE * op.f0);
   if (screen.dt <= finest) return null;
-  return `lc の f0 (${formatHertzShort(op.f0)}) に比べて画面の点の間隔 (${formatSeconds(screen.dt)}) が 1/(20 f0) = ${formatSeconds(finest)} より粗いので、共振のあたりは正しく描けていません (time: を速くします)`;
+  return `lc の f0 (${formatHertzShort(op.f0)}) に比べて画面の点の間隔 (${formatSeconds(screen.dt)}) が 1/(${LC_STEPS_PER_CYCLE} f0) = ${formatSeconds(finest)} より粗いので、共振のあたりは正しく描けていません (time: を速くします)`;
 }
 
 /** 標本化について言うこと — 助走が足りない、τ が点の間隔より短い、式が計算できない点。 */
@@ -75,8 +76,8 @@ export function samplingNotices(doc: FenceDocument, sampled: Sampled, screen: Sc
   const said: FenceError[] = [];
   if (!sampled.settled) {
     said.push(notice(doc.view === 'xy'
-      ? '助走 (rc / hp / peak の τ・delay・integrate の 1 周期) が XY の窓 (周波数から決まる) に比べて長いので、定常まで回しきれていません (τ を短くします)'
-      : '助走 (rc / hp / peak の τ・delay・integrate の 1 周期) が画面の幅に比べて長いので、定常まで回しきれていません (time: を遅くします)', null));
+      ? '助走 (rc / hp / peak の τ・lc の減衰・delay・integrate の 1 周期) が XY の窓 (周波数から決まる) に比べて長いので、定常まで回しきれていません (τ を短くします)'
+      : '助走 (rc / hp / peak の τ・lc の減衰・delay・integrate の 1 周期) が画面の幅に比べて長いので、定常まで回しきれていません (time: を遅くします)', null));
   }
   const periods = channelPeriods(doc.channels);
   for (const channel of doc.channels) {

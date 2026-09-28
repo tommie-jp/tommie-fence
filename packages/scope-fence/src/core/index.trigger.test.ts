@@ -92,3 +92,10 @@ describe('renderScope — trigger position shifts data: by the same amount', () 
     expect(left.notices).toEqual([]);
   });
 });
+
+describe('renderScope — trigger position on a channel that is not there', () => {
+  test('says the at was not applied either', () => {
+    const result = renderScope('time: 50us/div\ntrigger: ch3 rising 0V at -5div\nch1: sine 1kHz 1V');
+    expect(result.errors.map((one) => one.message)).toEqual(['trigger: の ch3 が書かれていません (at も効かず、t = 0 は中央です)']);
+  });
+});
