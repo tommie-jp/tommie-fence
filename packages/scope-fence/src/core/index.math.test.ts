@@ -85,4 +85,22 @@ describe('renderScope — expressions', () => {
   test('does not also say the default time/div when time: was written but did not read', () => {
     expect(said('time: 1ms\ntrigger: ch1 rising\nch1: sine 1kHz 1V')).toEqual(['time: は 1ms/div / 200us/div のように /div を付けます']);
   });
+
+  test('a math-only fence draws math and does not claim only the grid is drawn', () => {
+    const source = 'time: 200us/div\nmath: 1V * sin(2 * pi * 1kHz * t)';
+    expect(said(source)).toEqual([]);
+    expect(renderScope(source).svg).toContain('data-channel="math"');
+  });
+
+  test('counts only the points on the screen, not the warm-up', () => {
+    const source = 'time: 1ms/div\ntrigger: ch1 rising\nch1: sine 1kHz 1V | rc 1s\nch2: = 1V * step(t) * (1 - exp(-t/1ms))';
+    expect(said(source).filter((message) => message.includes('計算できない'))).toEqual([]);
+  });
+
+  test('cuts an expression that runs past ±1 MV, and says so', () => {
+    const source = 'time: 100us/div\ntrigger: ch1 rising\nch1: = 1V * exp(t/10us)\nmeasure: [vmax]';
+    const messages = said(source);
+    expect(messages.some((message) => /^ch1 の式が \d+ 点で ±1 MV を越えるので、±1 MV で切っています$/.test(message))).toBe(true);
+    expect(renderScope(source).readingLines.find((line) => line.startsWith('CH1'))).toMatch(/1\.00 MV$/);
+  });
 });

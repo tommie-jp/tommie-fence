@@ -95,4 +95,14 @@ describe('renderScope — view: xy', () => {
     expect(Math.abs((first?.[0] ?? 0) - (last?.[0] ?? 99))).toBeLessThan(1);
     expect(Math.abs((first?.[1] ?? 0) - (last?.[1] ?? 99))).toBeLessThan(1);
   });
+
+  test('says the default axis ch2 is missing, instead of drawing an empty grid silently', () => {
+    const result = renderScope('view: xy\nch1: sine 1kHz 1V\nmath: ch1 / 2');
+    expect(result.errors.map((error) => error.message)).toEqual(['xy: の ch2 が書かれていません']);
+  });
+
+  test('tells a warm-up it could not finish without pointing at time:', () => {
+    const messages = said('view: xy\nch1: sine 10kHz 1V\nch2: ch1 | rc 1s\nxy: ch1 ch2');
+    expect(messages).toContain('rc / peak の τ が XY の窓 (周波数から決まる) に比べて長いので、定常まで回しきれていません (τ を短くします)');
+  });
 });

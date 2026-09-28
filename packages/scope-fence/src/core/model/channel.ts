@@ -21,7 +21,7 @@ export type ChannelSource =
   | { readonly kind: 'wave'; readonly wave: WaveSpec }
   | { readonly kind: 'ref'; readonly channel: ChannelName }
   /** 式 (`ch2: = 2V * (1 - exp(-t/1ms))`)。`refs` は式が参照する前の ch。 */
-  | { readonly kind: 'expr'; readonly expr: Expr; readonly refs?: readonly ChannelName[] };
+  | { readonly kind: 'expr'; readonly expr: Expr };
 
 export type ChannelSpec = {
   readonly name: ChannelName;
@@ -81,20 +81,30 @@ export type Sampled = {
   readonly samples: ReadonlyMap<TraceName, Float64Array>;
   /** 助走を上限で切ったら false (定常に届いていないかもしれない)。 */
   readonly settled: boolean;
-  /** 式が計算できずに 0 にした点の数 (助走を含む。0 の ch は載せない)。 */
+  /** 式が計算できずに 0 にした画面の点の数 (0 の線は載せない)。 */
   readonly invalid: ReadonlyMap<TraceName, number>;
+  /** 式が ±1 MV を越えて切った画面の点の数 (0 の線は載せない)。 */
+  readonly clipped: ReadonlyMap<TraceName, number>;
 };
 
 /** 標本化の時刻の格子 (助走込み)。 */
-export type Grid = { readonly start: number; readonly dt: number; readonly length: number };
+export type Grid = {
+  readonly start: number;
+  readonly dt: number;
+  readonly length: number;
+  /** 助走の点の数 (式の計算できない点はこれより後ろだけ数える)。 */
+  readonly countFrom: number;
+};
+
+type Input = { readonly values: Float64Array; readonly invalid: number; readonly clipped: number };
 
 /** 元の点の列 1 本。式は前の ch の列を参照する。 */
-function inputOf(source: ChannelSource, grid: Grid, extended: ReadonlyMap<TraceName, Float64Array>): { readonly values: Float64Array; readonly invalid: number } {
+function inputOf(source: ChannelSource, grid: Grid, extended: ReadonlyMap<TraceName, Float64Array>): Input {
   switch (source.kind) {
     case 'wave':
-      return { values: Float64Array.from({ length: grid.length }, (_, index) => valueAt(source.wave, grid.start + index * grid.dt, grid.dt)), invalid: 0 };
+      return { values: Float64Array.from({ length: grid.length }, (_, index) => valueAt(source.wave, grid.start + index * grid.dt, grid.dt)), invalid: 0, clipped: 0 };
     case 'ref':
-      return { values: extended.get(source.channel) ?? new Float64Array(grid.length), invalid: 0 };
+      return { values: extended.get(source.channel) ?? new Float64Array(grid.length), invalid: 0, clipped: 0 };
     case 'expr':
       return evaluateExpr(source.expr, { ...grid, channels: extended });
   }
@@ -110,16 +120,18 @@ export function samplesOf(channels: readonly ChannelSpec[], screen: Screen, shif
   const warmup = Math.min(wanted, LIMITS.warmupSamples);
   const total = warmup + screen.samples;
   const start = screen.left + shift - warmup * screen.dt;
-  const grid: Grid = { start, dt: screen.dt, length: total };
+  const grid: Grid = { start, dt: screen.dt, length: total, countFrom: warmup };
   const extended = new Map<TraceName, Float64Array>();
   const invalid = new Map<TraceName, number>();
-  const put = (name: TraceName, input: { readonly values: Float64Array; readonly invalid: number }, ops: readonly Op[]): void => {
+  const clipped = new Map<TraceName, number>();
+  const put = (name: TraceName, input: Input, ops: readonly Op[]): void => {
     if (input.invalid > 0) invalid.set(name, input.invalid);
+    if (input.clipped > 0) clipped.set(name, input.clipped);
     extended.set(name, applyOps(input.values, screen.dt, ops));
   };
   for (const channel of channels) put(channel.name, inputOf(channel.source, grid, extended), channel.ops);
   if (math !== null) put('math', inputOf({ kind: 'expr', expr: math }, grid, extended), []);
   const samples = new Map<TraceName, Float64Array>();
   for (const [name, values] of extended) samples.set(name, values.subarray(warmup));
-  return { samples, settled: warmup === wanted, invalid };
+  return { samples, settled: warmup === wanted, invalid, clipped };
 }

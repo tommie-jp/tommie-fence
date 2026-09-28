@@ -122,7 +122,7 @@ scope (オシロの画面) と spectrum (スペクトラムの画面) も**板�
 | 振幅 | **peak**。`2Vpp` と書けば半分、`0.707Vrms` は sine だけ | 同じ。**`-10dBm` は同じ peak の正弦の電力** — 方形波の基本波は 4/π 倍で −7.90 dBm に立つ |
 | 取り違え | `phase -58deg` は**遅れ** (正は進み)。`time:` と `range:` は **`/div` 付き** (`time: 1ms` は断る)。コンデンサ入力の平滑は `\| rc` でなく **`\| peak 150ms`** (整流の後ろ) | **`span:` は幅** (`center:` と対。開始-終了は `sweep:`)。型に無いキーは断る (ad2 に `rbw:`、tinysa に `window:`) |
 | 通す操作 | `\| rc 1ms` `\| peak 150ms` `\| clip -0.7V 0.7V` `\| offset -1.4V` `\| gain 0.5` `\| abs` | **書けない** (加工した波は scope で描く) |
-| 式 | ch の行を `=` で始める: `ch2: = 2V * step(t) * (1 - exp(-t/1ms))`。**数は単位つき** (`1V` `1ms` `1kHz`)、素の数は倍率だけ — `sin(2*pi*1000*t)` は「sin の中は無次元」と断る。ch の式の結果は V (`= 5 * exp(…)` は断る) | 無い |
+| 式 | ch の行を `=` で始める: `ch2: = 2V * step(t) * (1 - exp(-t/1ms))`。**数は単位つき** (`1V` `1ms` `1kHz`)、素の数は倍率だけ — `sin(2*pi*1000*t)` は「sin の中は無次元」と断る。ch の式の結果は V (`= 5 * exp(…)` は断る)。並びの形で `,` のある式は引用で囲む (`{wave: "= max(ch1, 0V)"}`) | 無い |
 | Math | `math: {expr: ch1 * ch2 / 10, unit: W}` (`=` は付けない)。**unit は書き手が言う** (`V` 既定・`W`・`1`)。書かないと V で出て、式が V^2 ならお知らせ。Avg が有効電力 | 無い |
 | XY | `view: xy` + `xy: ch1 ch2` (math も軸に。無ければ ch1 ch2 とお知らせ)。読み値は各軸の Vpp・Vmax・Vmin。**`time:` `trigger:` `cursors:` `measure:` `data:` は断る** | 無い |
 | 読み値 (`check`) | Measurements とカーソルの表 (`CH1  2.00 V  100.0 Hz`) | マーカーの表 (`1  100.000 MHz  −7.90 dBm`) |

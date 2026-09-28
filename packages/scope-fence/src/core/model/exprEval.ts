@@ -1,11 +1,13 @@
+import { LIMITS } from '../limits.ts';
 import type { TraceName } from './channel.ts';
 import type { Expr } from './expr.ts';
 
 /**
  * 式を点の列の上で計算する。**木を 1 度だけ関数に畳み**、点ごとに呼ぶ (点ごとに木を
  * 辿り直さない。配列を節ごとに確保すると、助走込みで 100 万点 × 節の数になる)。
- * 計算できない点 (0 で割る・負の平方根・桁あふれ) は **0 にして数を返す** — 呼ぶ側が
- * お知らせで言う。SVG にも読み値にも NaN / Infinity を流さない (CLAUDE.md の約束 4)。
+ * 計算できない点 (0 で割る・負の平方根・桁あふれ) は **0 にして数を返す**、±1 MV を越える点は
+ * **±1 MV で切って数を返す** — 呼ぶ側がお知らせで言う。SVG にも読み値にも NaN / Infinity も
+ * 桁外れの値も流さない (CLAUDE.md の約束 4・5。波の電圧の上限と同じ)。
  */
 
 type Point = (index: number, t: number) => number;
@@ -17,12 +19,16 @@ export type ExprInput = {
   readonly length: number;
   /** 参照する ch の点の列 (同じ時刻の格子)。無い ch は 0。 */
   readonly channels: ReadonlyMap<TraceName, Float64Array>;
+  /** この番号より前の点 (助走) は数えない (画面に出ない点のことは言わない)。 */
+  readonly countFrom?: number;
 };
 
 export type Evaluated = {
   readonly values: Float64Array;
-  /** 計算できずに 0 にした点の数。 */
+  /** 計算できずに 0 にした点の数 (`countFrom` から)。 */
   readonly invalid: number;
+  /** ±1 MV で切った点の数 (`countFrom` から)。 */
+  readonly clipped: number;
 };
 
 const UNARY: Readonly<Record<'sin' | 'cos' | 'exp' | 'abs' | 'sqrt' | 'step', (x: number) => number>> = {
@@ -44,14 +50,23 @@ function binary(op: Extract<Expr, { kind: 'bin' }>['op'], left: Point, right: Po
   }
 }
 
+/** 引数を左から畳む (点ごとに配列を作らない)。 */
+function fold(args: readonly Point[], f: (a: number, b: number) => number): Point {
+  return (i, t) => {
+    let value = (args[0] ?? (() => 0))(i, t);
+    for (let index = 1; index < args.length; index += 1) value = f(value, (args[index] ?? (() => 0))(i, t));
+    return value;
+  };
+}
+
 function call(expr: Extract<Expr, { kind: 'call' }>, channels: ExprInput['channels']): Point {
   const args = expr.args.map((arg) => compile(arg, channels));
   const [x = () => 0, lo = () => 0, hi = () => 0] = args;
   switch (expr.fn) {
     case 'min':
-      return (i, t) => Math.min(...args.map((arg) => arg(i, t)));
+      return fold(args, Math.min);
     case 'max':
-      return (i, t) => Math.max(...args.map((arg) => arg(i, t)));
+      return fold(args, Math.max);
     case 'clip':
       return (i, t) => Math.min(hi(i, t), Math.max(lo(i, t), x(i, t)));
     default: {
@@ -88,14 +103,21 @@ function compile(expr: Expr, channels: ExprInput['channels']): Point {
 export function evaluateExpr(expr: Expr, input: ExprInput): Evaluated {
   const point = compile(expr, input.channels);
   const values = new Float64Array(input.length);
+  const from = input.countFrom ?? 0;
+  const max = LIMITS.voltsMax;
   let invalid = 0;
+  let clipped = 0;
   for (let index = 0; index < input.length; index += 1) {
     const value = point(index, input.start + index * input.dt);
-    if (Number.isFinite(value)) {
-      values[index] = value;
+    const counted = index >= from ? 1 : 0;
+    if (!Number.isFinite(value)) {
+      invalid += counted;
+    } else if (Math.abs(value) > max) {
+      values[index] = Math.sign(value) * max;
+      clipped += counted;
     } else {
-      invalid += 1;
+      values[index] = value;
     }
   }
-  return { values, invalid };
+  return { values, invalid, clipped };
 }

@@ -103,7 +103,7 @@ function channelExpr(name: ChannelName, text: string, before: readonly ChannelNa
   if (!isVolts(read.value.dim)) {
     return fail(`${name} の式は電圧 (V) にします (いまは ${dimText(read.value.dim)}。5V * … のように単位を付けます)`, '=');
   }
-  return ok({ kind: 'expr', expr: read.value.expr, refs: read.value.refs });
+  return ok({ kind: 'expr', expr: read.value.expr });
 }
 
 /**
@@ -187,8 +187,12 @@ export function parseMeasureNames(names: readonly string[]): LineResult<readonly
   return ok(read);
 }
 
-/** 0 V の基準の位置 (`-2div`)。読めなければ null。 */
+/** position: の範囲 (目盛。中央から上下に)。 */
+export const POSITION_MAX = 100;
+
+/** 0 の基準の位置 (`-2div`)。読めないか ±100 目盛の外なら null。ch も Math も同じ読み。 */
 export function parsePosition(text: string): number | null {
   const found = /^([+-]?(?:\d+(?:\.\d+)?|\.\d+))\s*div$/.exec(text.trim());
-  return found === null ? null : Number(found[1]);
+  const position = found === null ? null : Number(found[1]);
+  return position === null || Math.abs(position) > POSITION_MAX ? null : position;
 }

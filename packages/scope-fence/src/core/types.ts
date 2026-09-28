@@ -1,6 +1,6 @@
 import type { THEME_NAMES } from './limits.ts';
 import type { ChannelName, ChannelSpec, TraceName } from './model/channel.ts';
-import type { Dim, Expr } from './model/expr.ts';
+import type { Expr } from './model/expr.ts';
 import type { QuantityUnit } from './model/quantity.ts';
 import type { MeasureName } from './model/measure.ts';
 import type { TriggerEdge } from './model/screen.ts';
@@ -59,11 +59,8 @@ export type CursorSpec = { readonly t: number; readonly line: number | null };
  */
 export type MathSpec = {
   readonly expr: Expr;
-  /** 式の次元 (unit: と合わなければお知らせ)。 */
-  readonly dim: Dim;
-  readonly refs: readonly ChannelName[];
+  /** 書き手の言った単位 (書かなければ V。式の次元と合わなければ読みのほうでお知らせ)。 */
   readonly unit: QuantityUnit;
-  readonly unitWritten: boolean;
   readonly range: number | null;
   readonly position: number | null;
   readonly line: number | null;

@@ -20,17 +20,33 @@ describe('parseFence — expressions on a channel line', () => {
   });
 });
 
+describe('parseFence — a comma in the map form', () => {
+  test('says to quote an expression whose commas YAML split', () => {
+    expect(messages('ch1: {wave: = clip(1V * sin(2*pi*1kHz*t), -0.5V, 0.5V)}')).toEqual([
+      '並びの形の式に , があると YAML の区切りに読まれます。式を引用で囲みます (例: {wave: "= max(ch1, 0V)"})',
+    ]);
+    expect(messages('ch1: sine 1kHz 1V\nch2: sine 1kHz 1V\nmath: {expr: max(ch1, ch2), unit: V}')).toEqual([
+      '並びの形の式に , があると YAML の区切りに読まれます。式を引用で囲みます (例: {expr: "max(ch1, ch2)"})',
+    ]);
+  });
+
+  test('reads the quoted form', () => {
+    const { errors } = parseFence('ch1: sine 1kHz 1V\nch2: {wave: "= clip(ch1, -0.5V, 0.5V)", range: 500mV/div}\nmath: {expr: "max(ch1, ch2)", unit: V}');
+    expect(errors).toEqual([]);
+  });
+});
+
 describe('parseFence — math:', () => {
   test('reads a plain expression, unit V unless written', () => {
     const { doc, errors } = parseFence('ch1: sine 1kHz 1V\nch2: ch1 | rc 1ms\nmath: (ch1 - ch2) / 10');
     expect(errors).toEqual([]);
-    expect(doc.math).toMatchObject({ refs: ['ch1', 'ch2'], unit: 'V', unitWritten: false, range: null, position: null, line: 3 });
+    expect(doc.math).toMatchObject({ unit: 'V', range: null, position: null, line: 3 });
   });
 
   test('reads the map form with unit, range and position', () => {
     const { doc, errors } = parseFence('ch1: sine 1kHz 1V\nmath: {expr: ch1 * ch1, unit: W, range: 200mW/div, position: -2div}');
     expect(errors).toEqual([]);
-    expect(doc.math).toMatchObject({ unit: 'W', unitWritten: true, range: 0.2, position: -2 });
+    expect(doc.math).toMatchObject({ unit: 'W', range: 0.2, position: -2 });
     expect(parseFence('ch1: sine 1kHz 1V\nmath: {expr: ch1 / 1V, unit: 1, range: 0.5/div}').doc.math).toMatchObject({ unit: '1', range: 0.5 });
   });
 

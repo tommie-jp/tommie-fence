@@ -20,3 +20,14 @@ export const writtenText = (node: unknown, source: string): string | null => {
   return text === '' ? null : text;
 };
 
+
+/**
+ * 並びの形 (`{wave: …}` `{expr: …}`) の式の `,` は YAML の区切りに読まれ、式が途中で切れる
+ * (`{wave: = max(ch1, 0V)}` は `= max(ch1` と `0V)` に割れる)。括弧の数が合わなければそれと見て、
+ * 「知らない項目です: 0V)」ではなく引用で囲む直し方を言う。
+ */
+export const splitByComma = (text: string | null): boolean =>
+  text !== null && (text.match(/\(/g) ?? []).length > (text.match(/\)/g) ?? []).length;
+
+export const commaHint = (key: 'wave' | 'expr'): string =>
+  `並びの形の式に , があると YAML の区切りに読まれます。式を引用で囲みます (例: {${key}: "${key === 'wave' ? '= max(ch1, 0V)' : 'max(ch1, ch2)'}"})`;

@@ -81,7 +81,8 @@ ch3: {wave: = 1.4uV * (exp(ch1 / 52mV) - 1), range: 200mV/div}
 - 演算: `+ - * / ^` と括弧。`^` > 単項の `-` > `* /` > `+ -` (`-2^2` は −4)
 - **単位を数える**: `sin` `cos` `exp` の中は無次元、`+ - min max clip` の両側は同じ単位、ch の式の結果は V。
   合わなければ断る (`sin(2*pi*1000*t)` は「sin の中は無次元」)
-- 計算できない点 (0 で割る・負の平方根) は 0 で描いてお知らせ。200 字・入れ子 16 段まで
+- 並びの形 (`{wave: …}` `{expr: …}`) で式に `,` があれば**引用で囲む** (`{wave: "= max(ch1, 0V)"}`)。囲まないと YAML の区切りに読まれる (言われる)
+- 計算できない点 (0 で割る・負の平方根) は 0 で、±1 MV を越える点は ±1 MV で描いてお知らせ。200 字・入れ子 16 段まで
 
 ## Math (`math:`)
 
@@ -173,6 +174,7 @@ measure: [vpp, vmax, vmin, avg, rms, freq, period, duty]
 | `= 1V * sin(2*pi*1000*t)` | 断る (sin の中に s が残る) | `sin(2 * pi * 1kHz * t)` |
 | `= 1V * sin 1kHz` / `= 1 V` | 断る | `sin(…)` と括弧、`1V` と続けて |
 | `= max(ch1, 0)` | 断る (V と無次元) | `max(ch1, 0V)` |
+| `{wave: = max(ch1, 0V)}` | 断る (`,` が YAML の区切り) | `{wave: "= max(ch1, 0V)"}` |
 | `math: ch1 * ch2` で電力 | **V** で出る (お知らせ: 式は V^2) | `math: {expr: ch1 * ch2, unit: W}` |
 | `math: = ch1 * 2` / `math: sine 1kHz 1V` | 断る | `math: ch1 * 2` (波は ch の行) |
 | `view: xy` と `time:` `trigger:` `cursors:` | 断る (XY に時間軸は無い) | 書かない |

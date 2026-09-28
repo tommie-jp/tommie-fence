@@ -9,7 +9,7 @@ import { MATH_UNITS, UNIT_DIMS, formatQuantityPerDiv, parseQuantityPerDiv } from
 import type { QuantityUnit } from '../model/quantity.ts';
 import type { FenceError, MathSpec } from '../types.ts';
 import { parsePosition } from './lines.ts';
-import { scalarText, writtenText } from './yamlText.ts';
+import { commaHint, scalarText, splitByComma, writtenText } from './yamlText.ts';
 
 /**
  * `math:` の読み。**必ず式** (`math: ch1 * ch2 / 10`)、並びなら
@@ -43,6 +43,11 @@ const EXAMPLE = '例: math: ch1 * ch2 / 10';
 function collect(pair: Pair, context: MathContext, errors: FenceError[]): Written | null {
   if (!isMap(pair.value)) {
     return { text: scalarText(pair.value), unit: null, range: null, position: null, unitLine: null };
+  }
+  const expr = pair.value.items.find((item) => scalarText(item.key) === 'expr');
+  if (expr !== undefined && splitByComma(scalarText(expr.value))) {
+    errors.push(fenceError(commaHint('expr'), context.lineOf((expr.value ?? expr.key) as Node)));
+    return null;
   }
   let written: Written = { text: null, unit: null, range: null, position: null, unitLine: null };
   let broken = false;
@@ -90,8 +95,9 @@ function scaleOf(written: Written, errors: FenceError[]): { readonly unit: Quant
     }
   }
   const position = written.position === null ? null : parsePosition(written.position.text);
-  if (written.position !== null && (position === null || Math.abs(position) > 100)) {
-    errors.push(fenceError('position: は 0 V の基準の位置を -2div のように書きます (中央が 0、上が正)', written.position.line, written.position.text || undefined));
+  if (written.position !== null && position === null) {
+    const zero = unit === 'V' ? '0 V' : unit === 'W' ? '0 W' : '0';
+    errors.push(fenceError(`position: は ${zero} の基準の位置を -2div のように書きます (中央が 0、上が正)`, written.position.line, written.position.text || undefined));
     return null;
   }
   return { unit, range, position };
@@ -128,8 +134,5 @@ export function readMath(pair: Pair, context: MathContext): { readonly math: Mat
   if (!sameDim(read.value.dim, UNIT_DIMS[scale.unit])) {
     errors.push(notice(`math: の式は ${dimText(read.value.dim)} ですが、unit: ${scale.unit} で出しています (電力なら unit: W、比なら unit: 1 と書きます)`, at));
   }
-  return {
-    math: { ...read.value, ...scale, unitWritten: written.unit !== null, line: at },
-    errors,
-  };
+  return { math: { expr: read.value.expr, ...scale, line: at }, errors };
 }

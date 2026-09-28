@@ -42,7 +42,11 @@ export function recordOf(screen: Screen, channels: readonly ChannelSpec[]): Scre
 /** 標本化について言うこと — 助走が足りない、τ が点の間隔より短い、式が計算できない点。 */
 export function samplingNotices(doc: FenceDocument, sampled: Sampled, screen: Screen): readonly FenceError[] {
   const said: FenceError[] = [];
-  if (!sampled.settled) said.push(notice('rc / peak の τ が画面の幅に比べて長いので、定常まで回しきれていません (time: を遅くします)', null));
+  if (!sampled.settled) {
+    said.push(notice(doc.view === 'xy'
+      ? 'rc / peak の τ が XY の窓 (周波数から決まる) に比べて長いので、定常まで回しきれていません (τ を短くします)'
+      : 'rc / peak の τ が画面の幅に比べて長いので、定常まで回しきれていません (time: を遅くします)', null));
+  }
   for (const channel of doc.channels) {
     for (const op of channel.ops) {
       if ((op.kind === 'rc' || op.kind === 'peak') && op.tau < screen.dt) {
@@ -50,9 +54,14 @@ export function samplingNotices(doc: FenceDocument, sampled: Sampled, screen: Sc
       }
     }
   }
+  const lineOf = (name: string): number | null =>
+    (name === 'math' ? doc.math?.line ?? null : doc.channels.find((channel) => channel.name === name)?.line ?? null);
+  const label = (name: string): string => (name === 'math' ? 'math:' : name);
   for (const [name, count] of sampled.invalid) {
-    const line = name === 'math' ? doc.math?.line ?? null : doc.channels.find((channel) => channel.name === name)?.line ?? null;
-    said.push(notice(`${name === 'math' ? 'math:' : name} の式が ${count} 点で計算できないので (0 で割る・負の平方根・桁あふれ)、その点は 0 で描いています`, line));
+    said.push(notice(`${label(name)} の式が ${count} 点で計算できないので (0 で割る・負の平方根・桁あふれ)、その点は 0 で描いています`, lineOf(name)));
+  }
+  for (const [name, count] of sampled.clipped) {
+    said.push(notice(`${label(name)} の式が ${count} 点で ±1 MV を越えるので、±1 MV で切っています`, lineOf(name)));
   }
   return said;
 }
@@ -94,9 +103,10 @@ export function idealOf(doc: FenceDocument, display: Screen, trigger: TriggerSpe
   if (channels.length === 0 && doc.math === null) return { traces: [], triggerLevel: null, said: [] };
   const screen = recordOf(display, channels);
   const math = doc.math?.expr ?? null;
-  const first = samplesOf(channels, screen, 0, math);
+  // 1 回目はトリガを探すだけ (トリガは ch に掛ける) なので Math は計算しない。
+  const first = samplesOf(channels, screen, 0, trigger === null ? math : null);
   const found = trigger === null ? { shift: 0, level: null, said: [] } : triggerOf(first, screen, trigger);
-  const final = found.shift === 0 ? first : samplesOf(channels, screen, found.shift, math);
+  const final = trigger === null ? first : samplesOf(channels, screen, found.shift, math);
   return {
     traces: tracesOf(doc, final, screen),
     triggerLevel: found.level,

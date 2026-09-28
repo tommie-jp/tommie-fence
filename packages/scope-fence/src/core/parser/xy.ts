@@ -30,27 +30,31 @@ export type XyContext = {
 
 const isTraceName = (text: string): text is TraceName => (TRACE_NAMES as readonly string[]).includes(text);
 
-/** 軸 1 つが描けるか。書かれていない・読めなければ言う。 */
+/** 軸 1 つが描けるか。書かれていない・読めなければ言う (xy: を書かなければ view: の行に)。 */
 function axisError(name: TraceName, context: XyContext): FenceError | null {
   if (context.read.includes(name)) return null;
+  const line = context.text === null ? context.viewLine : context.line;
   return context.keyLines.has(name)
-    ? fenceError(`xy: の ${name} が読めないので XY を描けません`, context.line, name)
-    : fenceError(`xy: の ${name} が書かれていません`, context.line, name);
+    ? fenceError(`xy: の ${name} が読めないので XY を描けません`, line, context.text === null ? undefined : name)
+    : fenceError(`xy: の ${name} が書かれていません`, line, context.text === null ? undefined : name);
+}
+
+/** 横と縦が描けるか見て組にする。 */
+function pairOf(x: TraceName, y: TraceName, context: XyContext): { readonly xy: XySpec | null; readonly errors: readonly FenceError[] } {
+  const errors = [axisError(x, context), axisError(y, context)].filter((error): error is FenceError => error !== null);
+  return { xy: errors.length === 0 ? { x, y, line: context.line } : null, errors };
 }
 
 function axesOf(context: XyContext): { readonly xy: XySpec | null; readonly errors: readonly FenceError[] } {
   if (context.text === null) {
-    return {
-      xy: { x: 'ch1', y: 'ch2', line: null },
-      errors: [notice('xy: が無いので 横 CH1・縦 CH2 で描いています', context.viewLine)],
-    };
+    const axes = pairOf('ch1', 'ch2', context);
+    return axes.xy === null ? axes : { xy: axes.xy, errors: [notice('xy: が無いので 横 CH1・縦 CH2 で描いています', context.viewLine)] };
   }
   const words = wordsOf(context.text);
   const [x = '', y = ''] = words;
   if (words.length !== 2 || !isTraceName(x) || !isTraceName(y)) return { xy: null, errors: [fenceError(XY_HINT, context.line)] };
   if (x === y) return { xy: null, errors: [fenceError('xy: の横と縦は別の ch にします', context.line, y)] };
-  const errors = [axisError(x, context), axisError(y, context)].filter((error): error is FenceError => error !== null);
-  return { xy: errors.length === 0 ? { x, y, line: context.line } : null, errors };
+  return pairOf(x, y, context);
 }
 
 /** view: と xy: の組を見る。XY で書けないキーは行ごとに言う。 */

@@ -213,7 +213,7 @@ function renderTime(doc: FenceDocument, source: string, options: RenderOptions, 
   const style = resolveStyle(doc.style);
   const { channels } = doc;
   const wrote = (key: string): boolean => doc.keys.includes(key);
-  if (!doc.keys.some((key) => /^ch\d$/.test(key)) && doc.data === null && source.trim() !== '') {
+  if (!doc.keys.some((key) => /^ch\d$/.test(key) || key === 'math') && doc.data === null && source.trim() !== '') {
     said.push(notice('ch1: が無いので格子だけ描いています (ch1: sine 1kHz 1V のように書きます)', null));
   }
   const measured = readData(doc, options.data);

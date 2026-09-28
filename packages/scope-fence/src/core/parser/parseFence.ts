@@ -12,7 +12,7 @@ import { parseChannelLine, parseCursor, parseMeasureNames, parsePosition, parseT
 import { readMath } from './math.ts';
 import { EMPTY_STYLE, parseStyle } from './style.ts';
 import { readXy } from './xy.ts';
-import { scalarText, writtenText } from './yamlText.ts';
+import { commaHint, scalarText, splitByComma, writtenText } from './yamlText.ts';
 
 /** yaml のメッセージはライブラリ側の文言なので、載せる長さを切る。 */
 const MAX_YAML_MESSAGE = 120;
@@ -271,6 +271,11 @@ function channelText(
     }
     return { text, range: null, position: null };
   }
+  const wave = pair.value.items.find((item) => scalarText(item.key) === 'wave');
+  if (wave !== undefined && splitByComma(scalarText(wave.value))) {
+    errors.push(fenceError(commaHint('wave'), lineOf((wave.value ?? wave.key) as Node)));
+    return null;
+  }
   let text: string | null = null;
   let range: number | null = null;
   let position: number | null = null;
@@ -290,7 +295,7 @@ function channelText(
       }
     } else if (key === 'position') {
       position = parsePosition(value);
-      if (position === null || Math.abs(position) > 100) {
+      if (position === null) {
         errors.push(fenceError('position: は 0 V の基準の位置を -2div のように書きます (中央が 0、上が正)', line, value || undefined));
         broken = true;
       }
