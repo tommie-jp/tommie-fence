@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-29
+
 ### Added
 
 - **`pinNameRow` / `pinNameInner` / `pinNameWidth` / `PIN_NAME_GAP`** — 板の外の機器の足の名前を横 1 列に
