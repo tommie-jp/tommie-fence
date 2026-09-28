@@ -5,6 +5,28 @@
 
 ## [Unreleased]
 
+### Added
+
+- **式** (段 3a) — ch の行を `=` で始めると式 (`ch2: = 2V * step(t) * (1 - exp(-t/1ms))`)。
+  数は単位つき (`1V` `1ms` `1kHz`)、`t` `pi` `ch1`〜`ch4` (前の ch だけ)、`+ - * / ^` と括弧、
+  `sin cos exp abs sqrt min max clip step`。**単位 (V と s) を数えて断る** — 周波数を素の数で書いた
+  `sin(2*pi*1000*t)` や、結果が V でない ch の式。知らない関数・名前は一覧つきで断る。
+  200 字・入れ子 16 段まで。再帰下降で読み、`eval` は使わない。計算できない点は 0 で描いてお知らせ
+- **Math** — `math: ch1 * ch2 / 10`、並びなら `{expr, unit, range, position}`。5 本目の線 (色・`M` の印・
+  状態の行)。Measurements とカーソルの表に `MATH` の行。**単位は書き手が `unit:` で言う** (`V` 既定・
+  `W`・無次元の `1`) — 式の単位と合わなければお知らせ。振れの小ささとはみ出しのお知らせも Math の単位で言う
+- **XY** — `view: xy` と `xy: ch1 math` (既定は横 ch1・縦 ch2、補ったら言う)。8 × 8 の格子、軸ごとに
+  Auto の 1-2-5 か ch の `range:`。読み値は各軸の Vpp・Vmax・Vmin。標本化は周波数の揃う最短の時間。
+  `time:` `trigger:` `cursors:` `measure:` `data:` は XY では断る
+- **`peak τ`** — ピークホールド (`y = max(x, y·e^(−dt/τ))`)。整流の後ろに置けばコンデンサ入力の平滑
+  (5 V の全波整流・100 µF・1.5 kΩ で Vdc 3.69 V・リップル 222 mVpp — 数値解と合う)。`rc` と同じ助走
+- 例 `04-power.md` (交流の電力と Math)、`05-xy.md` (リサージュ)、`06-diode.md` (ダイオードの式を XY で)、
+  `03-rectifier.md` にコンデンサ入力の平滑
+
+### Changed
+
+- `math:` と `view: xy` と `ch の行の =` を「まだ書けません」と断るのをやめた (`notes:` はまだ断る)
+
 ## [0.1.1] - 2026-09-28
 
 ### Changed

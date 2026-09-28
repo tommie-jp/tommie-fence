@@ -12,8 +12,11 @@
 | [00-rc-charging.md](00-rc-charging.md) | RC の充電 (電験 5-1) — 入力、入出力、カーソルで 1 τ を読む |
 | [01-phase.md](01-phase.md) | RC 直列の位相 (電験 3-4) — `phase -58deg` と `rc 1ms` |
 | [02-clipper.md](02-clipper.md) | クリッパとクランパ (回路 1-9) — `clip` と `offset` |
-| [03-rectifier.md](03-rectifier.md) | 半波・全波整流と平滑 — `clip 0V`・`abs`・`rc` |
+| [03-rectifier.md](03-rectifier.md) | 半波・全波整流と平滑 — `clip 0V`・`abs`・`rc`・`peak` (コンデンサ入力) |
+| [04-power.md](04-power.md) | 交流の電力 (電験 3-6) — `math: ch1 * ch2 / 10` と `unit: W`、Avg が P |
 | [04-waves.md](04-waves.md) | 波形発生器の波 6 種と、V/div を手で決める並びの形 |
+| [05-xy.md](05-xy.md) | リサージュ (AD 2-5) — `view: xy` と `xy: ch1 ch2` |
+| [06-diode.md](06-diode.md) | ダイオードの V–I (AD 2-13) — ch の行の式 (`= …`) を XY で |
 
 00-rc-charging の図 04 は `data:` で CSV を重ねる。`00-rc-charging-ch.csv` は
 `node scripts/fakeData.mjs` が**計算で**書く (実測ではない)。
