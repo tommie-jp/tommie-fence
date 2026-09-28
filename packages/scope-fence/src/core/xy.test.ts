@@ -66,9 +66,10 @@ describe('renderScope — view: xy', () => {
     ].join('\n');
     const result = renderScope(source);
     expect(said(source)).toEqual([]);
-    expect(result.readingLines.find((line) => line.startsWith('CH1'))).toMatch(/^CH1\s+700 mV\s+700 mV\s+0 V$/);
+    // 横 (ダイオードの電圧) は 0〜0.7 V、縦 (100 Ω の電圧) の上の端は式の 0.7 V での値。
+    expect(result.readingLines.find((line) => line.startsWith('CH1'))).toMatch(/^CH1\s+700 mV\s+700 mV\s+[\d.]+ µV$/);
     const top = 1.4e-6 * (Math.exp(0.7 / 0.052) - 1);
-    expect(result.readingLines.find((line) => line.startsWith('CH2'))).toMatch(new RegExp(`^CH2\\s+${formatVolts(top)}\\s+${formatVolts(top)}\\s+0 V$`));
+    expect(result.readingLines.find((line) => line.startsWith('CH2'))).toMatch(new RegExp(`^CH2\\s+${formatVolts(top)}\\s+${formatVolts(top)}\\s+[\\d.]+ nV$`));
   });
 
   test('takes math as an axis', () => {

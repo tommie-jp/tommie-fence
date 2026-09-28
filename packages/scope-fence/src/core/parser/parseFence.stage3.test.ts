@@ -22,7 +22,7 @@ describe('parseFence — expressions on a channel line', () => {
 
 describe('parseFence — math:', () => {
   test('reads a plain expression, unit V unless written', () => {
-    const { doc, errors } = parseFence('ch1: sine 1kHz 1V\nch2: ch1 | rc 1ms\nmath: ch1 * ch2 / 10');
+    const { doc, errors } = parseFence('ch1: sine 1kHz 1V\nch2: ch1 | rc 1ms\nmath: (ch1 - ch2) / 10');
     expect(errors).toEqual([]);
     expect(doc.math).toMatchObject({ refs: ['ch1', 'ch2'], unit: 'V', unitWritten: false, range: null, position: null, line: 3 });
   });

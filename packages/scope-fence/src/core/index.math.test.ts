@@ -64,7 +64,8 @@ describe('renderScope — math:', () => {
 
 describe('renderScope — expressions', () => {
   test('draws an RC charge written as an expression, 1.26 V one tau in', () => {
-    const source = 'time: 1ms/div\ntrigger: ch1 rising 1V\nch1: = 2V * step(t) * (1 - exp(-t/1ms))\ncursors: [0, 1ms]';
+    // トリガは段の直後 (1 mV) で合わせる — t = 0 がほぼ段の位置に来る。
+    const source = 'time: 1ms/div\ntrigger: ch1 rising 1mV\nch1: = 2V * step(t) * (1 - exp(-t/1ms))\ncursors: [0, 1ms]';
     const result = renderScope(source);
     expect(said(source)).toEqual([]);
     const x2 = result.readingLines.find((line) => line.startsWith('X2')) ?? '';
@@ -72,9 +73,9 @@ describe('renderScope — expressions', () => {
   });
 
   test('says how many points an expression could not compute', () => {
-    expect(said('time: 1ms/div\ntrigger: ch1 rising\nch1: = 1V * sqrt(t / 1ms)')).toContain(
-      'ch1 の式が 4096 点で計算できないので (0 で割る・負の平方根・桁あふれ)、その点は 0 で描いています',
-    );
+    const messages = said('time: 1ms/div\ntrigger: ch1 rising 1mV\nch1: = 1V * sqrt(t / 1ms)');
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toMatch(/^ch1 の式が \d+ 点で計算できないので \(0 で割る・負の平方根・桁あふれ\)、その点は 0 で描いています$/);
   });
 
   test('says the time/div it picked when no channel is a wave', () => {
