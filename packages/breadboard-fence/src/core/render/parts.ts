@@ -5,9 +5,9 @@ import { connectorBodyRect, renderConnector } from './connector.ts';
 import {
   fourLeadBodyRect, renderDip, renderPushbutton, renderSip, renderTransformer, sipBarRect, switchBodyRect,
 } from './packages.ts';
-import { CAPTION_DROP, LEG_NAME_CLEAR, NAME_CAP, charWidth } from './partCommon.ts';
+import { CAPTION_DROP, charWidth } from './partCommon.ts';
 import { band, captionBandOf, captionDropOf } from './captions.ts';
-import { bodyHalfHeight, bodyHalfWidth, renderThreeLead } from './threeLead.ts';
+import { bodyHalfHeight, bodyHalfWidth, legNameBaseline, renderThreeLead } from './threeLead.ts';
 import { renderTwoLead } from './twoLead.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
@@ -71,7 +71,7 @@ export function partObstacles(
       },
       ...bands,
       // 足の名前は反対側に並ぶ。名前が長ければ胴からはみ出す。
-      ...legNameBands(part, points, center, halfHeight, theme),
+      ...legNameBands(part, points, center, layout, theme),
     ];
   }
 
@@ -87,11 +87,11 @@ function legNameBands(
   part: PlacedPart,
   points: readonly Point[],
   center: Point,
-  halfHeight: number,
+  layout: Layout,
   theme: RenderTheme,
 ): Rect[] {
-  // **名前は胴の下** (`threeLead.ts` と同じ勘定)。字の高さも足す。
-  const baseline = center.y + halfHeight + LEG_NAME_CLEAR + theme.metrics.textSize * NAME_CAP;
+  // **名前は胴の下の行間** (`threeLead.ts` と同じ勘定)。
+  const baseline = legNameBaseline(part, center.y, layout, theme);
   return part.pins.flatMap((pin, index) => {
     const point = points[index];
     if (!point) return [];
@@ -113,7 +113,8 @@ export function renderPart(
   if (part.kind === 'four-lead') return renderTransformer(part, layout, theme, drop);
   if (part.kind === 'connector') return renderConnector(part, layout, theme, drop);
   if (part.kind === 'board') return renderBoardPart(part, layout, theme, drop);
-  if (part.kind === 'three-lead') return renderThreeLead(part, layout, theme, drop);
+  // 3 本足の名札は置き場の候補 (足の名前の横・1 行下) から選ぶので、段の番号をそのまま渡す。
+  if (part.kind === 'three-lead') return renderThreeLead(part, layout, theme, drops?.get(part.id) ?? 0);
   // 機器 (device) は帯の中に別の描き方で置くので、ここには来ない。
   return renderTwoLead(part, layout, theme, drop);
 }

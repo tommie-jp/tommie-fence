@@ -6,7 +6,9 @@ import { placeParts } from '../placement/place.ts';
 import type { PlacedPart } from '../types.ts';
 import { partObstacles, renderPart } from './parts.ts';
 import { boardBodyRect } from './boardPart.ts';
-import { captionDrops } from './captions.ts';
+import { captionDrops, captionTextBandOf } from './captions.ts';
+import { NAME_CAP, haloWidth } from './partCommon.ts';
+import { parseAddress } from '../model/address.ts';
 import { bodyHalfHeight, bodyHalfWidth } from './threeLead.ts';
 import { num } from './svg.ts';
 import { resolveStyle } from './theme.ts';
@@ -294,5 +296,45 @@ describe('名札はぶつかったら逃げる', () => {
     const alone = drawAll('parts:\n  Q1: transistor h11(B) h12(C) h13(E) 2SC1815\n');
 
     expect(baselineOf(both, 'Q1')).toBe(baselineOf(alone, 'Q1'));
+  });
+});
+
+/**
+ * 3 本足の名札と足の名前が、**足の列の穴を全部伏せない**こと。`Q1 2SC1815` を足の名前の
+ * 1 行下に積んでいたので、横に並んだ足 (h 行) の列の i と j が字の下に消え、E の足の
+ * 列を下のレールへ降ろす線 (`j13 -- -b13`) が名札の下から出ていた。
+ */
+describe('3 本足の名札は足の列の穴を空けておく', () => {
+  const HOLE = 3;
+  const holeSquare = (col: number, row: string) => {
+    const at = layout.point(parseAddress(`${row}${col}`)!);
+    return { x: at.x - HOLE, y: at.y - HOLE, width: HOLE * 2, height: HOLE * 2 };
+  };
+  const touches = (a: { x: number; y: number; width: number; height: number }, b: typeof a) =>
+    Math.min(a.x + a.width, b.x + b.width) > Math.max(a.x, b.x) && Math.min(a.y + a.height, b.y + b.height) > Math.max(a.y, b.y);
+  const legNameBaseline = (svg: string, name: string): number =>
+    Number(new RegExp(`<text x="[\\d.]+" y="([\\d.]+)"[^>]*font-weight="700"[^>]*>${name}</text>`).exec(svg)?.[1] ?? NaN);
+
+  test.each([
+    ['Q1: transistor h11(B) h12(C) h13(E) 2SC1815', [11, 12, 13], ['i', 'j']],
+    ['Q1: transistor b11(E) b12(B) b13(C) 2SA1015', [11, 12, 13], ['c', 'd', 'e']],
+    ['Q1: transistor h28(B) h29(C) h30(E) 2SC1815', [28, 29, 30], ['i', 'j']],
+  ] as const)('%s', (line, columns, rows) => {
+    const part = place(line);
+    const band = captionTextBandOf(part, layout, theme)!;
+    for (const col of columns) {
+      for (const row of rows) expect(touches(band, holeSquare(col, row)), `${row}${col}`).toBe(false);
+    }
+    // 足の名前は行と行の間 (穴の上に字も縁取りも載らない)。
+    const svg = renderPart(part, layout, theme);
+    const baseline = legNameBaseline(svg, part.pins[0]!.name);
+    const top = baseline - theme.metrics.textSize * NAME_CAP - haloWidth(theme) / 2;
+    const bottom = baseline + haloWidth(theme) / 2;
+    const [first, second] = [rows[0]!, rows[1]!];
+    expect(top).toBeGreaterThanOrEqual(layout.point(parseAddress(`${first}${columns[0]}`)!).y + HOLE);
+    expect(bottom).toBeLessThanOrEqual(layout.point(parseAddress(`${second}${columns[0]}`)!).y - HOLE);
+    // 名札は板の穴の並びの中に収まる。
+    expect(band.x).toBeGreaterThanOrEqual(layout.colX(1) - layout.pitch / 2);
+    expect(band.x + band.width).toBeLessThanOrEqual(layout.colX(layout.columns) + layout.pitch / 2);
   });
 });

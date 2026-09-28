@@ -55,6 +55,14 @@ export const midpoint = (a: Point, b: Point): Point => ({ x: (a.x + b.x) / 2, y:
 export const charWidth = (theme: RenderTheme): number => textScale(theme) * CHAR_WIDTH;
 
 /**
+ * 名札の字が図の上で占める横幅。**コードポイントで数え、ラテン文字より広いものは 2 文字ぶん**。
+ * 狭く見るほうが危ない側で、塞ぎ損ねた字の上を配線が走る。
+ */
+export const captionTextWidth = (part: PlacedPart, theme: RenderTheme): number =>
+  [...caption(part)].reduce((sum, char) => sum + ((char.codePointAt(0) ?? 0) > 0xff ? 2 : 1), 0)
+  * charWidth(theme);
+
+/**
  * ラベルの縁取りの太さ。ラベルは必ず隣の穴の列にかかる位置に来るので、
  * **縁取りがその穴を消しきれる太さでなければ字が穴に食われる**。
  * 字が伸びれば覆う範囲が広がり、穴が大きくなれば消すべき量も増えるので、両方で決める。

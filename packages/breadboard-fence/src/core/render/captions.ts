@@ -4,10 +4,10 @@ import { boardBodyRect } from './boardPart.ts';
 import { connectorCaptionAt } from './connector.ts';
 import { fourLeadBodyRect, switchBodyRect } from './packages.ts';
 import {
-  CAPTION_CLEAR, CAPTION_HEIGHT, LEG_NAME_CLEAR, NAME_CAP, NAME_LINE,
-  caption, charWidth, haloWidth, labelYOf, pinPoints,
+  CAPTION_CLEAR, CAPTION_HEIGHT, NAME_CAP, NAME_LINE,
+  captionTextWidth, haloWidth, labelYOf, pinPoints,
 } from './partCommon.ts';
-import { bodyHalfHeight } from './threeLead.ts';
+import { bodyHalfHeight, bodyHalfWidth, legNameBoxes, threeLeadCaptionAt, threeLeadCaptionSpots } from './threeLead.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
 
@@ -37,9 +37,18 @@ export function captionBandOf(
   theme: RenderTheme,
   drop = 0,
 ): Rect | null {
+  const spot = captionSpotOf(part, layout, theme, drop);
+  return spot === null ? null : band(spot.x, spot.y, spot.width, theme);
+}
+
+/**
+ * 名札の基準線 (段を下げたあと)。**3 本足は段の番号で置き場の候補を選ぶ**
+ * (`threeLeadCaptionAt`)。ほかは基準線から段の数だけ下げる。
+ */
+function captionSpotOf(part: PlacedPart, layout: Layout, theme: RenderTheme, drop: number): CaptionBaseline | null {
+  if (part.kind === 'three-lead') return threeLeadCaptionAt(part, layout, theme, captionWidth(part, theme), drop);
   const baseline = captionBaselineOf(part, layout, theme);
-  if (baseline === null) return null;
-  return band(baseline.x, baseline.y + drop * theme.metrics.textSize * DROP_LINE, baseline.width, theme);
+  return baseline === null ? null : { ...baseline, y: baseline.y + drop * theme.metrics.textSize * DROP_LINE };
 }
 
 /**
@@ -53,21 +62,38 @@ export function captionTextBandOf(
   theme: RenderTheme,
   drop = 0,
 ): Rect | null {
-  const baseline = captionBaselineOf(part, layout, theme);
+  const baseline = captionSpotOf(part, layout, theme, drop);
   if (baseline === null) return null;
-  const letters = band(baseline.x, baseline.y + drop * theme.metrics.textSize * DROP_LINE, captionWidth(part, theme), theme);
+  const { y } = baseline;
+  const width = captionWidth(part, theme);
+  // **行と行の間に置いた名札** (3 本足の、足の名前の横) は字の背丈 (大文字の高さ) だけを
+  // 伏せる。1 行ぶんの帯で数えると、上下の行の穴まで伏せてしまう。
+  if (baseline.betweenRows === true) {
+    const cap = theme.metrics.textSize * NAME_CAP;
+    const edge = haloWidth(theme) / 2;
+    return { x: baseline.x - width / 2 - edge, y: y - cap - edge, width: width + edge * 2, height: cap + edge * 2 };
+  }
+  const letters = band(baseline.x, y, width, theme);
   // **縁取りのぶん広げる。** 縁取りは字の外へはみ出して穴の端を削るので、
   // 字の幅だけで穴を選ぶと、縁取りに削られた穴の欠片が字の脇に残る。
   const pad = haloWidth(theme) / 2 + 1;
   return { x: letters.x - pad, y: letters.y - pad, width: letters.width + pad * 2, height: letters.height + pad * 2 };
 }
 
+export type CaptionBaseline = {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  /** 穴の行と行の間に置いた (字の下の穴を伏せなくてよい)。 */
+  readonly betweenRows?: boolean;
+};
+
 /** 名札の基準線と、その中心・幅。置く側 (描画) と数える側 (配線よけ) で同じ式を使う。 */
 export function captionBaselineOf(
   part: PlacedPart,
   layout: Layout,
   theme: RenderTheme,
-): { readonly x: number; readonly y: number; readonly width: number } | null {
+): CaptionBaseline | null {
   const cap = theme.metrics.textSize * NAME_CAP;
   const width = captionWidth(part, theme);
 
@@ -93,12 +119,7 @@ export function captionBaselineOf(
   const points = pinPoints(part, layout);
   if (!points || points.length === 0) return null;
 
-  if (part.kind === 'three-lead') {
-    const centre = points[1] ?? points[0]!;
-    // 足の名前の 1 行下 (`threeLead.ts` と同じ勘定)。
-    const legs = centre.y + bodyHalfHeight(part, layout) + LEG_NAME_CLEAR + cap;
-    return { x: centre.x, y: legs + theme.metrics.textSize * NAME_LINE, width };
-  }
+  if (part.kind === 'three-lead') return threeLeadCaptionAt(part, layout, theme, width, 0);
 
   const centre = middleOf(points);
   return {
@@ -122,11 +143,25 @@ export function captionDrops(
 ): ReadonlyMap<string, number> {
   const drops = new Map<string, number>();
   const placed: Rect[] = [...taken];
-  for (const part of parts) {
+  // 3 本足の足の名前は動かないので、先に場所を取っている (自分の名前とは数えない)。
+  // 空ける字数: 3 本足の名札は 3 字 — 自分の名札 (名前から 2 字) より近いと、
+  // `E  Q2 2SD880  B` のようにどちらの部品の名札か読めなくなる。ほかの名札は 1 字
+  // (`E D1 1N60` と続けて読めなければよい。広く取ると 2 本足の名札が無駄に下がる)。
+  const legNamesOf = (margin: number): Rect[][] =>
+    parts.map((part) => (part.kind === 'three-lead' ? legNameBoxes(part, layout, theme, margin) : []));
+  const legNames = { near: legNamesOf(1), far: legNamesOf(3) };
+  for (const [index, part] of parts.entries()) {
+    const others = legNames[part.kind === 'three-lead' ? 'far' : 'near'].filter((_, at) => at !== index).flat();
+    // 3 本足は足の名前の横を先に試す。**ほかの部品の胴にも掛けない** — 横に置くと、
+    // 隣の行に寝かせた部品 (09-am-radio の D1) の上に名札が乗る。
+    const spots = part.kind === 'three-lead' ? threeLeadCaptionSpots(part, layout, theme, captionWidth(part, theme)).length : 1;
+    const bodies = spots > 1 ? parts.filter((other) => other !== part).flatMap((other) => footprintOf(other, layout)) : [];
+    const limit = spots - 1 + DROP_LIMIT;
+    const blocked = (box: Rect): boolean => [...placed, ...others, ...bodies].some((one) => overlaps(one, box));
     let drop = 0;
     let box = captionBandOf(part, layout, theme, drop);
     if (box === null) continue;
-    while (drop < DROP_LIMIT && placed.some((taken) => overlaps(taken, box!))) {
+    while (drop < limit && blocked(box!)) {
       drop += 1;
       box = captionBandOf(part, layout, theme, drop);
     }
@@ -134,6 +169,24 @@ export function captionDrops(
     if (drop > 0) drops.set(part.id, drop);
   }
   return drops;
+}
+
+/**
+ * 部品の胴と足がおおよそ占める所 (足の穴の外接矩形を少し広げたもの)。3 本足の名札の
+ * 置き場を選ぶときだけ見る。2 本足の胴は足を結ぶ線の上に乗る。
+ */
+function footprintOf(part: PlacedPart, layout: Layout): Rect[] {
+  if (part.kind === 'device') return [];
+  const points = pinPoints(part, layout);
+  if (!points || points.length === 0) return [];
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+  const [padX, padY] = part.kind === 'three-lead'
+    ? [bodyHalfWidth(part, layout), bodyHalfHeight(part, layout)]
+    : [layout.pitch * 0.4, layout.pitch * 0.4];
+  const left = Math.min(...xs) - padX;
+  const top = Math.min(...ys) - padY;
+  return [{ x: left, y: top, width: Math.max(...xs) + padX - left, height: Math.max(...ys) + padY - top }];
 }
 
 /** 名札が下がる距離 (px)。描く側はこれを基準線に足すだけ。 */
@@ -158,10 +211,5 @@ const overlaps = (a: Rect, b: Rect): boolean =>
   Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 0
   && Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) > 0;
 
-/**
- * 字が図の上で占める横幅。**コードポイントで数え、ラテン文字より広いものは 2 文字ぶん**。
- * 狭く見るほうが危ない側で、塞ぎ損ねた字の上を配線が走る。
- */
-export const captionWidth = (part: PlacedPart, theme: RenderTheme): number =>
-  [...caption(part)].reduce((sum, char) => sum + ((char.codePointAt(0) ?? 0) > 0xff ? 2 : 1), 0)
-  * charWidth(theme);
+/** 字が図の上で占める横幅 (`partCommon.ts` の `captionTextWidth`)。 */
+export const captionWidth = captionTextWidth;
