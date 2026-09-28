@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-09-28
+
 ### Added
 
 - **アンテナ (`antenna`)**。棒の上に逆三角の 1 端子の記号 (circuitikz の `antenna`)。
