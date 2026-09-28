@@ -138,6 +138,8 @@ describe('dipChip', () => {
       // 1 番の列は x = 0 (左)。名前は番号より内側 (右)。
       expect(at('GND').x).toBeGreaterThan(at('1').x);
       expect(at('VCC').x).toBeLessThan(at('8').x);
+      // キャプションは胴の下 (真ん中に寝かせると両側の名前に重なった)。
+      expect(at('NE555').y).toBeGreaterThan(box.y + box.height);
     });
 
     test('draws exactly as before when no numbers are given', () => {
@@ -145,6 +147,88 @@ describe('dipChip', () => {
       const options = { points, names: names(8), pinOne: 0, pitch: PITCH, caption: 'U1', scale: 1, ink: INK };
       expect(dipChip({ ...options, numbers: undefined })).toBe(dipChip(options));
       expect(texts(dipChip(options)).filter((one) => /^\d$/.test(one.text))).toHaveLength(8);
+    });
+
+    /** 名前 (番号でも縁の写しでもない字) の大きさ。 */
+    const nameSizes = (svg: string, wanted: readonly string[]): Map<string, number> => new Map(
+      [...svg.matchAll(/<text [^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)]
+        .filter(([whole, , text]) => !whole.includes('aria-hidden') && wanted.includes(text ?? ''))
+        .map(([, size, text]) => [text ?? '', Number(size)] as const),
+    );
+    const two = (count: number, list: readonly string[], caption: string, extra: object = {}) => dipChip({
+      points: twoRows(count, 3), names: list, numbers: names(count), pinOne: 0, pitch: PITCH, caption, scale: 1, ink: INK, ...extra,
+    });
+
+    test('prints every name on one side of the body at one size', () => {
+      const amp = ['OUT1', 'IN1-', 'IN1+', 'V-', 'IN2+', 'IN2-', 'OUT2', 'V+'];
+      // 字を大きくしたテーマ (scale > 1) で、長い名前だけが縮んでいた。
+      const sizes = nameSizes(two(8, amp, 'LM358', { scale: 1.4 }), amp);
+      expect(sizes.get('V-')).toBe(sizes.get('IN1+'));
+      expect(sizes.get('OUT1')).toBe(sizes.get('V-'));
+      expect(sizes.get('V+')).toBe(sizes.get('IN2+'));
+    });
+
+    test('keeps the full size when a long name sits next to short ones (NE555 RESET)', () => {
+      const sizes = nameSizes(two(8, TIMER, 'NE555'), TIMER);
+      expect(sizes.get('RESET')).toBe(6);
+      expect(sizes.get('GND')).toBe(6);
+    });
+
+    test('prints GROUND as GND when the full word would shrink its side (L293D)', () => {
+      const driver = ['12EN', '1A', '1Y', 'GROUND', 'GROUND', '2Y', '2A', 'VCC2', '34EN', '3A', '3Y', 'GROUND', 'GROUND', '4Y', '4A', 'VCC1'];
+      const svg = two(16, driver, 'L293D');
+      expect(svg).not.toContain('>GROUND<');
+      expect(nameSizes(svg, ['GND', '1Y']).get('GND')).toBe(6);
+      expect(nameSizes(svg, ['GND', '1Y']).get('1Y')).toBe(6);
+    });
+
+    test('keeps a slashed name whole while its side stays above the smallest size (MCP3008 CS/SHDN)', () => {
+      const adc = ['CH0', 'CH1', 'CH2', 'CH3', 'CH4', 'CH5', 'CH6', 'CH7', 'DGND', 'CS/SHDN', 'DIN', 'DOUT', 'CLK', 'AGND', 'VREF', 'VDD'];
+      const sizes = nameSizes(two(16, adc, 'MCP3008'), adc);
+      expect(sizes.get('CS/SHDN')).toBeGreaterThanOrEqual(4.5);
+      expect(sizes.get('DGND')).toBe(sizes.get('CS/SHDN'));
+      expect(sizes.get('CH0')).toBe(6);
+    });
+
+    test('prints the first role of a slashed name that would not fit even at the smallest size (CD4511B LE/STROBE)', () => {
+      const decoder = ['INB', 'INC', 'LT', 'BL', 'LE/STROBE', 'IND', 'INA', 'VSS', 'Oe', 'Od', 'Oc', 'Ob', 'Oa', 'Og', 'Of', 'VDD'];
+      const svg = two(16, decoder, 'CD4511B');
+      expect(svg).not.toContain('LE/STROBE');
+      const sizes = nameSizes(svg, [...decoder, 'LE']);
+      expect(sizes.get('LE')).toBe(sizes.get('INB'));
+      expect(sizes.get('LE')).toBeGreaterThanOrEqual(4.5);
+      // 上に線の印の `/` (CD4013B の /Q1) は削らない。
+      const flip = ['Q1', '/Q1', 'CLOCK1', 'RESET1', 'D1', 'SET1', 'VSS', 'SET2', 'D2', 'RESET2', 'CLOCK2', '/Q2', 'Q2', 'VDD'];
+      expect(two(14, flip, 'CD4013B')).toContain('>/Q1<');
+    });
+
+    test('writes the names inside the body, just inside the numbers, when asked (perfboard)', () => {
+      const points = twoRows(8, 3);
+      const box = dipBox(points, PITCH);
+      const drawn = texts(two(8, TIMER, 'NE555', { namesInside: true }));
+      const at = (text: string) => drawn.find((one) => one.text === text)!;
+      for (const name of TIMER) {
+        expect(at(name).y, name).toBeGreaterThan(box.y);
+        expect(at(name).y, name).toBeLessThan(box.y + box.height);
+      }
+      // 1 番の列は y = 0 (上)。名前は番号より内側 (下)、真ん中のキャプションより外側。
+      const middle = box.y + box.height / 2;
+      expect(at('GND').y).toBeGreaterThan(at('1').y);
+      expect(at('GND').y).toBeLessThan(middle - 4);
+      expect(at('VCC').y).toBeLessThan(at('8').y);
+      expect(at('VCC').y).toBeGreaterThan(middle + 4);
+      // 胴の上の字なので縁取りは無い (配線は胴の下を通らない)。
+      expect(two(8, TIMER, 'NE555', { namesInside: true })).not.toContain('aria-hidden');
+    });
+
+    test('keeps the end names inside the body when they are written inside', () => {
+      const points = twoRows(8, 3);
+      const box = dipBox(points, PITCH);
+      const svg = two(8, TIMER, 'NE555', { namesInside: true });
+      const sizes = nameSizes(svg, TIMER);
+      const reset = texts(svg).find((one) => one.text === 'RESET')!;
+      const half = ((sizes.get('RESET') ?? 0) * textWidthOf('RESET') * 1.25) / 2;
+      expect(reset.x + half).toBeLessThanOrEqual(box.x + box.width);
     });
 
     test('shrinks a long name to the pitch so that it does not run into the next pin', () => {

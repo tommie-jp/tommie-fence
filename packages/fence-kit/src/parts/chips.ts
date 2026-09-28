@@ -114,6 +114,11 @@ export type DipOptions = {
    * 名前は無いので、切り欠きから数えるための番号は消さない)。
    */
   readonly numbers?: readonly string[];
+  /**
+   * `numbers` と一緒に渡すと、名前を胴の外ではなく**胴の中、番号のすぐ内側**に刷る。
+   * 足の穴から線が出る板 (perfboard) で、線が名前を横切らないように。
+   */
+  readonly namesInside?: boolean;
   /** 1 番ピンの添字。回すと名前のほうが巡るので、呼ぶ側が名前で引いて渡す。 */
   readonly pinOne: number;
   readonly pitch: number;
@@ -161,7 +166,9 @@ export function dipChip(options: DipOptions): string {
       );
     })
     .join('');
-  const outer = options.numbers === undefined ? '' : outerNames(points, names, inward, alongX, pitch, box, scale, ink);
+  const outer: { svg: string; band: 'below' | null } = options.numbers === undefined
+    ? { svg: '', band: null }
+    : pinNames(points, names, inward, alongX, pitch, box, scale, ink, options.namesInside === true);
 
   const shell = element('rect', {
     x: num(box.x), y: num(box.y), width: num(box.width), height: num(box.height), rx: 3,
@@ -175,23 +182,38 @@ export function dipChip(options: DipOptions): string {
     r: NOTCH, fill: ink.plate,
   });
 
-  return `${stubs}${shell}${notch}${numbers}${outer}${chipCaption(caption, box, alongX, scale, ink)}`;
+  const label = outer.band === null
+    ? chipCaption(caption, box, alongX, scale, ink)
+    : bandCaption(caption, box, scale, ink);
+  return `${stubs}${shell}${notch}${numbers}${outer.svg}${label}`;
 }
 
 /**
- * 足の名前。**胴の外、足の向こう側** (胴の縁と隣の穴の列のあいだ) に刷る。
+ * 足の名前。**既定は胴の外、足の向こう側** (胴の縁と隣の穴の列のあいだ) に刷る。
  *
  * 計画 (52 の docs/95 の決め 2) は番号の 1 段内側だったが、ブレッドボードの胴は溝を
  * またぐ 2 行 (e・f) の間しか無く、番号とキャプションの間に名前の段が入らなかった
  * (焼いて確かめた。判断の記録の代案)。1 列ヘッダの名前と同じ置き場で、縁取りを付けて
- * 下の穴に食われないようにする。**2 つの板で同じ絵**にするため perfboard も同じ。
+ * 下の穴に食われないようにする。ブレッドボードの線は同じ 5 穴の組の別の穴に挿すので、
+ * 足の向こう側の帯を通らない。
  *
- * 横に寝た胴 (足の列が横) では足の真上に中央揃え、1 ピッチに収まらなければ字を縮める
- * (隣の足の名前に食い込ませない)。**縦に立てた胴** (perfboard の `r90` / `r270`) だけは
- * 胴の中、番号の内側に書く — 横書きの字は外へ出すと隣の穴の列に乗る。
+ * **`namesInside` なら胴の中、番号のすぐ内側** (perfboard)。ユニバーサル基板の線は足の
+ * 穴そのものから出るので、胴の外の帯に書くと、足から出る線が必ず名前を横切った
+ * (リレーの NC1・COM1、DIP の GND。焼いて確かめた)。胴は 3 穴の奥行きがあり、番号と
+ * 真ん中のキャプションの間に 1 段入る。**縦に立てた胴** (perfboard の `r90` / `r270`) は
+ * どちらでも胴の中、番号の内側に書く — 横書きの字は外へ出すと隣の穴の列に乗る。
+ *
+ * **字の大きさは列 (胴の片側) ごとに 1 つ** (`sideFontSize`)。足ごとに縮めると、同じ胴の
+ * 上で `V-` と `IN1+` の字の大きさが揃わなかった。
  */
 const NAME_FONT = 6;
-const NAME_PAD = 3;
+/**
+ * 列の字をこれより小さくしない。焼いた PNG (1.5 倍) でも 1 字ずつ読める下限。
+ * これでも入らない名前は、隣の名前との隙間を詰めて (はみ出して) 書く。
+ */
+const MIN_NAME_FONT = 4.5;
+/** 隣り合う名前の字と字の隙間。縁取りは半分透けるので、重なってよいのは縁だけ。 */
+const NAME_GAP = 1.5;
 /**
  * 足の名前は大文字ばかり (`RESET` `THRES`) で、`textWidth` の半角 0.55 より広い
  * (焼いて測ると 1.25 倍ほど)。狭く見積もると隣の名前やキャプションに食い込む。
@@ -200,11 +222,95 @@ const NAME_CAPS = 1.25;
 const NAME_HALO = 2;
 const NAME_CLEAR = 0.5;
 const NAME_CAP = 0.72;
+/** 胴の中に書くとき、足の穴の中心から名前の字の真ん中まで (番号の真ん中は `NUMBER_IN`)。 */
+const NAME_IN = 18;
 /** 立てた胴で、番号の中心から名前の書き出しまで。 */
 const NAME_BESIDE = 5;
-/** 立てた胴の真ん中で、寝かせたキャプションが占める幅の半分。 */
-const CAPTION_HALF = 8;
-function outerNames(
+/**
+ * **列の字を縮めると読めなくなる名前だけ、決まった略で刷る** (印字は表のまま。
+ * ネットリストと配線の名前は変わらない)。`GROUND` は L293D の 4 本で、同じ名前が 2 本
+ * 以上あるので名前では指せず番号で呼ぶ — 絵の字を変えても書き方は変わらない。
+ * `GND` は同じ働きの足の印字として NE555・74HC などの表にある綴り。
+ */
+const SHORT_NAMES: ReadonlyMap<string, string> = new Map([['GROUND', 'GND']]);
+
+type SideName = {
+  readonly index: number;
+  /** 足の並ぶ向きの座標。 */
+  readonly at: number;
+  readonly name: string;
+};
+
+/** 字の大きさ 1 のときの名前の幅 (大文字の見積もり)。 */
+const nameWidth = (name: string): number => textWidth(name) * NAME_CAPS;
+
+/**
+ * 列 (胴の片側) の名前の字の大きさと、端の名前を内へ寄せる量。
+ *
+ * 名前は足の真上に中央揃え。**隣どうしの幅の和の半分 + 隙間が足の間隔に収まる**
+ * 大きさにする (長い名前は、短い隣の名前が空けた所へはみ出してよい — NE555 の `RESET` は
+ * 隣が `OUT` なので縮まない)。列の端の名前は、胴の端から `endRoom` まで出てよく、
+ * それでも出るなら隣が空けた分だけ内へ寄せる。大きさは `[MIN_NAME_FONT, largest]`。
+ */
+function sideFontSize(
+  side: readonly SideName[],
+  largest: number,
+  gap: number,
+  endRoom: number,
+): { size: number; wanted: number; shift: ReadonlyMap<number, number> } {
+  const sorted = [...side].sort((a, b) => a.at - b.at);
+  let size = largest;
+  for (let i = 1; i < sorted.length; i += 1) {
+    const [a, b] = [sorted[i - 1]!, sorted[i]!];
+    const both = (nameWidth(a.name) + nameWidth(b.name)) / 2;
+    if (both > 0) size = Math.min(size, (Math.abs(b.at - a.at) - gap) / both);
+  }
+  const ends = sorted.length === 0 ? [] : [[sorted[0]!, sorted[1]], [sorted[sorted.length - 1]!, sorted[sorted.length - 2]]] as const;
+  for (const [end, next] of ends) {
+    const own = nameWidth(end.name);
+    if (own === 0) continue;
+    const spare = next === undefined ? 0 : Math.abs(next.at - end.at) - gap;
+    const neighbour = next === undefined ? 0 : nameWidth(next.name);
+    size = Math.min(size, Math.max(endRoom / (own / 2), (endRoom + spare) / (own + neighbour / 2)));
+  }
+  const wanted = size;
+  size = Math.max(MIN_NAME_FONT, size);
+
+  const shift = new Map<number, number>();
+  for (const [end, next] of ends) {
+    const over = (nameWidth(end.name) * size) / 2 - endRoom;
+    if (over <= 0) continue;
+    const inward = next === undefined ? 0 : Math.sign(next.at - end.at);
+    shift.set(end.index, inward * over);
+  }
+  return { size, wanted, shift };
+}
+
+/**
+ * 列ごとに略を当てるか決める。**印字のままで入るなら印字のまま。**
+ *
+ * 1. 既定の大きさを割るなら `SHORT_NAMES` (`GROUND` → `GND`)
+ * 2. それでも下限 (`MIN_NAME_FONT`) を割るなら、`/` で 2 つの働きを並べた名前は前の働きだけ
+ *    (`LE/STROBE` → `LE`、`CS/SHDN` → `CS`)。前が空の名前 (`/Q1` — 上に線の印) はそのまま
+ */
+function shownNames(
+  side: readonly SideName[],
+  fits: (side: readonly SideName[]) => boolean,
+  readable: (side: readonly SideName[]) => boolean,
+): readonly SideName[] {
+  if (fits(side)) return side;
+  const short = side.map((one) => ({ ...one, name: SHORT_NAMES.get(one.name) ?? one.name }));
+  if (readable(short)) return short;
+  return short.map((one) => ({ ...one, name: firstRole(one.name) }));
+}
+
+/** `LE/STROBE` の `LE`。`/` が無いか先頭にある名前はそのまま。 */
+const firstRole = (name: string): string => {
+  const slash = name.indexOf('/');
+  return slash > 0 ? name.slice(0, slash) : name;
+};
+
+function pinNames(
   points: readonly ChipPoint[],
   names: readonly string[],
   inward: (point: ChipPoint) => number,
@@ -213,29 +319,91 @@ function outerNames(
   box: ChipBox,
   scale: number,
   ink: ChipInk,
+  inside: boolean,
+): { svg: string; band: 'below' | null } {
+  const largest = scale * NAME_FONT;
+  // 列は足から胴の中心への向きで分ける (2 列の DIP の上下、立てた胴の左右)。
+  const sides = [1, -1].map((sign) => points
+    .map((point, index) => ({ index, point, name: names[index] ?? '' }))
+    .filter((one) => one.name !== '' && inward(one.point) === sign)
+    .map(({ index, point, name }) => ({ index, name, at: alongX ? point.x : point.y })));
+
+  if (!alongX) {
+    const centre = centreOf(box).x;
+    const svg = sides.map((side) => uprightNames(side, points, inward, centre, scale, ink)).join('');
+    return { svg, band: sides.some((side) => side.length > 0) ? 'below' : null };
+  }
+
+  // 胴の中なら端の名前は胴の端まで、外なら隣の列との真ん中まで。
+  const endRoom = inside ? DIP_ALONG * pitch - 1 : pitch / 2;
+  const gap = inside ? NAME_GAP + 0.5 : NAME_GAP;
+  const svg = sides
+    .map((raw) => {
+      const side = shownNames(raw, (one) => sideFontSize(one, largest, gap, endRoom).size >= largest, (one) => sideFontSize(one, largest, gap, endRoom).wanted >= MIN_NAME_FONT);
+      const { size, shift } = sideFontSize(side, largest, gap, endRoom);
+      return side
+        .map(({ index, name }) => {
+          const point = points[index]!;
+          const x = point.x + (shift.get(index) ?? 0);
+          if (inside) {
+            // 番号の内側。字の真ん中を足から `NAME_IN` の所に置く (基準線は字の下端)。
+            const y = point.y + inward(point) * NAME_IN + (size * NAME_CAP) / 2;
+            return svgText(x, y, name, { 'font-size': num(size), fill: ink.chipText });
+          }
+          // 字は基準線から上へ伸びるので、下へ出す側だけ字の高さを足す。
+          const clear = DIP_ACROSS + NAME_HALO / 2 + NAME_CLEAR;
+          const y = inward(point) < 0 ? point.y + clear + size * NAME_CAP : point.y - clear;
+          return svgText(x, y, name, {
+            'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: NAME_HALO, haloOpacity: BOARD_HALO_OPACITY,
+          });
+        })
+        .join('');
+    })
+    .join('');
+  return { svg, band: null };
+}
+
+/**
+ * **立てた胴 (perfboard で回したとき) は胴の中。** 外へ横書きで出すと隣の穴の列に
+ * 字が乗った (焼いて確かめた)。胴は 3 穴の幅しか無く、両側の番号と名前でほぼ埋まるので、
+ * キャプションは胴の下に出し (`bandCaption`)、名前は番号の内側から胴の真ん中までを使う。
+ * 列の字は一番長い名前に合わせて 1 つの大きさ (下限は `MIN_NAME_FONT`)。
+ */
+function uprightNames(
+  side: readonly SideName[],
+  points: readonly ChipPoint[],
+  inward: (point: ChipPoint) => number,
+  centre: number,
+  scale: number,
+  ink: ChipInk,
 ): string {
-  const besideRoom = box.width / 2 - NUMBER_IN - NAME_BESIDE - CAPTION_HALF;
-  return points
-    .map((point, index) => {
-      const name = names[index] ?? '';
-      if (name === '') return '';
+  const first = side[0];
+  if (first === undefined) return '';
+  const room = Math.abs(centre - points[first.index]!.x) - NUMBER_IN - NAME_BESIDE - NAME_GAP / 2;
+  const wantedOf = (list: readonly SideName[]): number =>
+    Math.min(scale * NAME_FONT, ...list.map((one) => room / Math.max(nameWidth(one.name), 1e-9)));
+  const shown = shownNames(side, (list) => wantedOf(list) >= scale * NAME_FONT, (list) => wantedOf(list) >= MIN_NAME_FONT);
+  const size = Math.max(MIN_NAME_FONT, wantedOf(shown));
+  return shown
+    .map(({ index, name }) => {
+      const point = points[index]!;
       const outward = -inward(point);
-      const size = Math.min(scale * NAME_FONT, (pitch - NAME_PAD) / (textWidth(name) * NAME_CAPS));
-      const style = { 'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: NAME_HALO, haloOpacity: BOARD_HALO_OPACITY };
-      const clear = DIP_ACROSS + NAME_HALO / 2 + NAME_CLEAR;
-      if (alongX) {
-        // 字は基準線から上へ伸びるので、下へ出す側だけ字の高さを足す。
-        const y = outward > 0 ? point.y + clear + size * NAME_CAP : point.y - clear;
-        return svgText(point.x, y, name, style);
-      }
-      // **立てた胴 (perfboard で回したとき) は胴の中。** 外へ横書きで出すと隣の穴の列に
-      // 字が乗った (焼いて確かめた)。番号の内側から真ん中のキャプションの手前までに収める。
-      const inside = Math.min(scale * NAME_FONT, besideRoom / (textWidth(name) * NAME_CAPS));
       return svgText(point.x - outward * (NUMBER_IN + NAME_BESIDE), point.y + NUMBER_MIDDLE, name, {
-        'font-size': num(inside), fill: ink.chipText, anchor: outward > 0 ? 'end' : 'start',
+        'font-size': num(size), fill: ink.chipText, anchor: outward > 0 ? 'end' : 'start',
       });
     })
     .join('');
+}
+
+/**
+ * 立てた胴に名前を書いたときのキャプション。**胴の下に横書きで出す** (縁取りつき)。
+ * 胴の真ん中に寝かせて置くと、両側の名前に重なった (焼いて確かめた)。
+ */
+function bandCaption(text: string, box: ChipBox, scale: number, ink: ChipInk): string {
+  const size = Math.min(scale * 9.5, fittedFontSize(text, box.width + 2 * CHIP_LABEL_PAD, scale));
+  return svgText(centreOf(box).x, box.y + box.height + size * NAME_CAP + 2, text, {
+    'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: NAME_HALO, haloOpacity: BOARD_HALO_OPACITY,
+  });
 }
 
 /** 樹脂の真ん中に置くキャプション。**縦に置いた胴では字も寝かせる**。 */

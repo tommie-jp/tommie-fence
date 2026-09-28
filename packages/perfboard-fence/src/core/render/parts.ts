@@ -593,6 +593,9 @@ function renderChip(
     caption: caption(part),
     scale: CHIP_SCALE,
     ink: chipInk(theme),
+    // **足の名前は胴の中** (番号のすぐ内側)。この板の線は足の穴から出るので、胴の外の
+    // 帯 (breadboard の置き場) に書くと、足から出る線が必ず名前を横切った。
+    namesInside: true,
   };
   const numbers = points.map((_, index) => String(index + 1));
 

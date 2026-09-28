@@ -58,6 +58,22 @@ describe('絵', () => {
     }
   });
 
+  test('prints the names inside the body, where no wire leaving a pin runs across them', () => {
+    const svg = renderPerfboard(fence('parts:', '  U1: dip8 e6 NE555', '  K1: relay e11', 'wires:', '  - h6 -- j6', '  - h13 -- j13')).svg;
+    const drawn = [...svg.matchAll(/<text x="([-\d.]+)" y="([-\d.]+)"(?![^>]*aria-hidden)[^>]*>([^<]*)<\/text>/g)]
+      .map(([, x, y, text]) => ({ x: Number(x), y: Number(y), text }));
+    const name = (text: string) => drawn.find((one) => one.text === text)!;
+    // 名前と同じ x の番号 (軸の番号は x が違うか、板の外)。
+    const number = (text: string, x: number) => drawn.filter((one) => one.text === text && one.x === x).at(-1)!;
+    // 1 番 (h6) は下の列。名前は番号より上 (胴の中)。
+    for (const [text, low] of [['GND', '1'], ['COM1', '4']] as const) {
+      const at = name(text);
+      expect(at.y, text).toBeLessThan(number(low, at.x).y);
+      expect(at.y - number(low, at.x).y, text).toBeGreaterThan(-20);
+    }
+    expect(svg).not.toMatch(/aria-hidden="true"[^>]*>(GND|COM1)</);
+  });
+
   test('prints only the numbers for a model not in the table', () => {
     const shown = texts(renderPerfboard(fence('parts:', '  U1: dip8 c3 LM741')).svg);
     expect(shown).not.toContain('GND');
