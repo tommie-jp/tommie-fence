@@ -1,4 +1,4 @@
-import { formatHertzShort, parseSeconds, parseVolts, parseWave } from 'fence-kit';
+import { formatHertzShort, isBareNumber, parseSeconds, parseVolts, parseWave } from 'fence-kit';
 import { LIMITS } from '../limits.ts';
 import { CHANNEL_NAMES } from '../model/channel.ts';
 import type { ChannelName, ChannelSource } from '../model/channel.ts';
@@ -19,7 +19,6 @@ import type { LineResult } from './result.ts';
 
 const isChannelName = (text: string): text is ChannelName => (CHANNEL_NAMES as readonly string[]).includes(text);
 
-const isBareNumber = (text: string): boolean => /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(text);
 
 /** 1 つの ch の読んだ結果。`assumed` は補った既定 (呼ぶ側がお知らせで言う)。 */
 export type ChannelLine = {

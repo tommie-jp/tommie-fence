@@ -50,6 +50,20 @@ describe('parseFence — notes:', () => {
     expect(parseFence(fence('{a: 1, b: 2}')).errors[0]?.message).toMatch(/^注釈は「- mark/);
   });
 
+  test('keeps the spelling of a text that YAML would read as a number or a boolean', () => {
+    const { doc, errors } = parseFence(fence('text 1ms 0.5V: 1.260', 'text 1ms 0.5V: 1e3', 'text 1ms 0.5V: true'));
+    expect(errors).toEqual([]);
+    expect(doc.notes.map((note) => ('text' in note ? note.text : null))).toEqual(['1.260', '1e3', 'true']);
+  });
+
+  test('says what is wrong with a trailing colon and with a note on math', () => {
+    expect(parseFence(fence('mark 1ms 0.5V:', 'text 1ms 0.5V:', 'text math 1ms 1V: p')).errors.map((error) => error.message)).toEqual([
+      'mark には字を書きません (字は text で)',
+      'text はコロンの後ろに字を書きます (- text 1ms 1.26V: 字)',
+      '注釈は ch1〜ch4 の線の上に置きます (Math の上には置けません。番地の電圧は V)',
+    ]);
+  });
+
   test('stops at the limit and says so', () => {
     const { doc, errors } = parseFence(fence(...Array.from({ length: LIMITS.notes + 5 }, () => 'mark 0 0V')));
     expect(doc.notes).toHaveLength(LIMITS.notes);

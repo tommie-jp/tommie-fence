@@ -1,7 +1,7 @@
 import { element, formatSeconds, formatVolts, num, svgText } from 'fence-kit';
 import { notice } from '../errors.ts';
 import type { Rect } from '../layout/screen.ts';
-import { fractionY } from '../layout/scales.ts';
+import { DIVISIONS } from '../model/screen.ts';
 import type { TraceName } from '../model/channel.ts';
 import type { Screen } from '../model/screen.ts';
 import type { FenceError, NoteSpec } from '../types.ts';
@@ -39,6 +39,8 @@ const TEXT_GAP = 6;
 const BAND_OPACITY = 0.35;
 
 const xFraction = (t: number, screen: Screen): number => (t - screen.left) / screen.span;
+/** 縦の比。**`fractionY` と違って格子の縁に寄せない** (画面の外かを見るため)。 */
+const yFraction = (volts: number, scale: Scale): number => (volts / scale.perDiv + scale.position + DIVISIONS.y / 2) / DIVISIONS.y;
 
 function renderBand(note: Extract<NoteSpec, { kind: 'band' }>, input: NotesInput): { readonly svg: string; readonly said: FenceError | null } {
   const { grid, screen, theme } = input;
@@ -64,8 +66,8 @@ function pointOf(note: PointNote, input: NotesInput): { readonly x: number; read
   const scale = scales.get(note.channel);
   if (scale === undefined) return notice(`${note.kind} の ${note.channel} を描いていないので、置けません (${note.channel}: を書くか、注釈に描いている ch を書きます)`, note.line, note.channel);
   const fx = xFraction(note.t, screen);
-  const fy = fractionY(note.volts, scale.perDiv, scale.position);
-  if (fx < -EDGE || fx > 1 + EDGE || fy < -EDGE || fy > 1 + EDGE) {
+  const fy = yFraction(note.volts, scale);
+  if (!(fx >= -EDGE && fx <= 1 + EDGE && fy >= -EDGE && fy <= 1 + EDGE)) {
     return notice(`${note.kind} ${formatSeconds(note.t)} ${formatVolts(note.volts)} は画面の外です (描いていません。${note.channel} の V/div で置きます)`, note.line);
   }
   return { x: grid.x + fx * grid.width, y: grid.y + (1 - fy) * grid.height };

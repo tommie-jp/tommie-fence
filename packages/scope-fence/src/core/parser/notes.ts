@@ -1,6 +1,6 @@
-import { isMap, isSeq } from 'yaml';
+import { isMap, isScalar, isSeq } from 'yaml';
 import type { Node } from 'yaml';
-import { parseSeconds, parseVolts } from 'fence-kit';
+import { isBareNumber, parseSeconds, parseVolts } from 'fence-kit';
 import { dropInvisible, fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { CHANNEL_NAMES } from '../model/channel.ts';
@@ -8,7 +8,7 @@ import type { ChannelName } from '../model/channel.ts';
 import type { FenceError, NoteSpec } from '../types.ts';
 import { fail, ok, wordsOf } from './result.ts';
 import type { LineResult } from './result.ts';
-import { scalarText } from './yamlText.ts';
+import { scalarText, writtenText } from './yamlText.ts';
 
 /**
  * 注釈 (`notes:`)。**種類と形は vna と同じ 4 つ**、番地だけが「時刻 電圧」
@@ -25,8 +25,6 @@ import { scalarText } from './yamlText.ts';
  */
 
 const HINT = '注釈は「- mark 1ms 1.26V」「- text 1ms 1.26V: 字」「- band 0 1ms: 字」「- source」の形で書きます';
-
-const isBareNumber = (text: string): boolean => /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(text);
 
 const isChannelName = (text: string): text is ChannelName => (CHANNEL_NAMES as readonly string[]).includes(text);
 
@@ -61,6 +59,7 @@ function readBand(words: readonly string[], text: string | null): LineResult<Omi
 
 /** `mark` と `text` の番地 (`[ch2] 1ms 1.26V`)。 */
 function readPoint(words: readonly string[]): LineResult<{ readonly channel: ChannelName; readonly t: number; readonly volts: number }> {
+  if (words[1] === 'math') return fail('注釈は ch1〜ch4 の線の上に置きます (Math の上には置けません。番地の電圧は V)', 'math');
   const named = words[1] !== undefined && /^ch\d+$/.test(words[1]);
   if (named && !isChannelName(words[1] ?? '')) return fail('注釈の ch は ch1〜ch4 です', words[1]);
   const channel: ChannelName = named ? (words[1] as ChannelName) : 'ch1';
@@ -93,8 +92,19 @@ export function parseNoteLine(head: string, body: string | null): LineResult<Omi
 
 type LineOf = (node: Node) => number | null;
 
+/**
+ * コロンの後ろの字。**書いたとおりの綴り** — YAML は `1.260` を `1.26`、`1e3` を `1000` に、
+ * `true` を真偽に読むので、文字列でない値は元の字面から切り出す。何も無ければ空。
+ */
+function bodyOf(node: unknown, source: string): string | null {
+  if (!isScalar(node)) return node === null || node === undefined ? '' : null;
+  if (typeof node.value === 'string') return node.value;
+  return writtenText(node, source) ?? '';
+}
+
 /** 1 項目 (`- mark …` のスカラーか、`- text …: 字` の 1 項目のマップ)。 */
-function readItem(item: unknown, line: number | null, lineOf: LineOf): LineResult<NoteSpec> {
+function readItem(item: unknown, line: number | null, context: { readonly lineOf: LineOf; readonly source: string }): LineResult<NoteSpec> {
+  const { lineOf, source } = context;
   const text = scalarText(item);
   if (text !== null) {
     const read = parseNoteLine(text, null);
@@ -102,7 +112,7 @@ function readItem(item: unknown, line: number | null, lineOf: LineOf): LineResul
   }
   const pair = isMap(item) && item.items.length === 1 ? item.items[0] : undefined;
   const head = scalarText(pair?.key);
-  const body = scalarText(pair?.value);
+  const body = pair === undefined ? null : bodyOf(pair.value, source);
   const at = (pair === undefined ? null : lineOf(pair.key as Node)) ?? line;
   if (head === null || body === null) return { ok: false, error: fenceError(HINT, at) };
   const read = parseNoteLine(head, body);
@@ -110,7 +120,7 @@ function readItem(item: unknown, line: number | null, lineOf: LineOf): LineResul
 }
 
 /** `notes:` の並びを読む。**上限を越えた分は言って捨てる**。 */
-export function readNotes(value: unknown, keyLine: number | null, lineOf: LineOf): { readonly notes: readonly NoteSpec[]; readonly errors: readonly FenceError[] } {
+export function readNotes(value: unknown, keyLine: number | null, lineOf: LineOf, source: string): { readonly notes: readonly NoteSpec[]; readonly errors: readonly FenceError[] } {
   if (!isSeq(value)) return { notes: [], errors: [fenceError('notes: は `- text 1ms 1.26V: 字` のような並びにします', keyLine)] };
   const notes: NoteSpec[] = [];
   const errors: FenceError[] = [];
@@ -120,7 +130,7 @@ export function readNotes(value: unknown, keyLine: number | null, lineOf: LineOf
       errors.push(fenceError(`注釈が多すぎます (${LIMITS.notes} 個まで)`, line));
       break;
     }
-    const read = readItem(item, line, lineOf);
+    const read = readItem(item, line, { lineOf, source });
     if (read.ok) notes.push(read.value);
     else errors.push(read.error);
   }

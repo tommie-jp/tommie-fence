@@ -14,11 +14,12 @@ import { wordsOf } from './result.ts';
 export const XY_REFUSED = ['time', 'trigger', 'cursors', 'measure', 'data', 'notes'] as const;
 
 /** 断る理由 (キーごと)。 */
+const NO_TIME_AXIS = 'XY には時間軸がありません。読み値は各軸の Vpp・Vmax・Vmin です';
 const XY_REASON: Readonly<Record<(typeof XY_REFUSED)[number], string>> = {
-  time: 'XY には時間軸がありません。読み値は各軸の Vpp・Vmax・Vmin です',
-  trigger: 'XY には時間軸がありません。読み値は各軸の Vpp・Vmax・Vmin です',
-  cursors: 'XY には時間軸がありません。読み値は各軸の Vpp・Vmax・Vmin です',
-  measure: 'XY には時間軸がありません。読み値は各軸の Vpp・Vmax・Vmin です',
+  time: NO_TIME_AXIS,
+  trigger: NO_TIME_AXIS,
+  cursors: NO_TIME_AXIS,
+  measure: NO_TIME_AXIS,
   data: '実測の XY はまだ重ねられません',
   notes: '注釈の番地は「時刻 電圧」なので時間の画面 (view: time) にだけ置けます',
 };

@@ -217,7 +217,7 @@ function readFence(source: string): ParseResult {
         readMeasures(pair.value, at);
         break;
       case 'notes': {
-        const read = readNotes(pair.value, keyLine, lineOf);
+        const read = readNotes(pair.value, keyLine, lineOf, source);
         notes = read.notes;
         errors.push(...read.errors);
         break;

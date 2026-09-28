@@ -180,3 +180,19 @@ describe('samplesOf — stage 3b operations', () => {
     expect(warmupOf([ch('ch1', 'sine 1kHz 1V', [{ kind: 'integrate', tau: 1 }])])).toBeCloseTo(1e-3, 12);
   });
 });
+
+describe('samplesOf — integrate takes the constant from its own period', () => {
+  test('an unrelated channel at another frequency does not move the integral off 0', () => {
+    const screen = screenOf(0.2e-3, 8192);
+    const alone = samplesOf([ch('ch1', 'sine 1kHz 1V', [{ kind: 'integrate', tau: 159e-6 }])], screen, 0).samples.get('ch1');
+    const beside = samplesOf([ch('ch1', 'sine 1kHz 1V', [{ kind: 'integrate', tau: 159e-6 }]), ch('ch2', 'sine 600Hz 1V')], screen, 0).samples.get('ch1');
+    expect(measure('avg', beside ?? new Float64Array(), screen.dt)).toBeCloseTo(0, 3);
+    expect(measure('vmax', beside ?? new Float64Array(), screen.dt)).toBeCloseTo(measure('vmax', alone ?? new Float64Array(), screen.dt) ?? 0, 3);
+  });
+
+  test('a reference integrates over the period of the wave it refers to', () => {
+    const screen = screenOf(0.2e-3, 8192);
+    const { samples } = samplesOf([ch('ch1', 'square 1kHz 1V'), ch('ch2', 'ch1', [{ kind: 'integrate', tau: 1e-3 }]), ch('ch3', 'sine 600Hz 1V')], screen, 0);
+    expect(measure('avg', samples.get('ch2') ?? new Float64Array(), screen.dt)).toBeCloseTo(0, 3);
+  });
+});

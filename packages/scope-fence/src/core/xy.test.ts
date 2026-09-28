@@ -103,6 +103,6 @@ describe('renderScope — view: xy', () => {
 
   test('tells a warm-up it could not finish without pointing at time:', () => {
     const messages = said('view: xy\nch1: sine 10kHz 1V\nch2: ch1 | rc 1s\nxy: ch1 ch2');
-    expect(messages).toContain('rc / hp / peak の τ か delay が XY の窓 (周波数から決まる) に比べて長いので、定常まで回しきれていません (τ を短くします)');
+    expect(messages).toContain('助走 (rc / hp / peak の τ・delay・integrate の 1 周期) が XY の窓 (周波数から決まる) に比べて長いので、定常まで回しきれていません (τ を短くします)');
   });
 });

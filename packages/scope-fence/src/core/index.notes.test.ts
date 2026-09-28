@@ -32,8 +32,9 @@ describe('renderScope — notes:', () => {
   });
 
   test('says which notes it could not place (off screen, a channel not drawn) instead of dropping them silently', () => {
-    expect(said(`${RC}\nnotes:\n  - mark 9ms 1V\n  - mark ch3 0 0V\n  - band 6ms 7ms`)).toEqual([
+    expect(said(`${RC}\nnotes:\n  - mark 9ms 1V\n  - mark 1ms 10V\n  - mark ch3 0 0V\n  - band 6ms 7ms`)).toEqual([
       'mark 9.000 ms 1.00 V は画面の外です (描いていません。ch1 の V/div で置きます)',
+      'mark 1.000 ms 10.0 V は画面の外です (描いていません。ch1 の V/div で置きます)',
       'mark の ch3 を描いていないので、置けません (ch3: を書くか、注釈に描いている ch を書きます)',
       'band 6.000 ms〜7.000 ms は画面の外です (描いていません)',
     ]);
@@ -45,5 +46,13 @@ describe('renderScope — notes:', () => {
     expect(svg).toContain('```scope');
     expect(svg).toContain('ch2: ch1 | rc 1ms');
     expect(said(source)).toEqual(['書き出し (source) は 1 つだけ描きます (後のものは描いていません)']);
+  });
+});
+
+describe('renderScope — integrate without a period', () => {
+  test('says the integral starts at 0 when the source has no period (an expression)', () => {
+    expect(said('time: 200us/div\ntrigger: ch1 rising 0V\nch1: = 1V * sin(2 * pi * 1kHz * t)\nch2: ch1 | integrate 159us')).toContain(
+      'ch2 の元に周期のある波が無いので、integrate は助走の頭を 0 として積分しています (直流分を除いていません)',
+    );
   });
 });

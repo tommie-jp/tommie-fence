@@ -38,7 +38,7 @@ export type OpName = (typeof OP_NAMES)[number];
 
 /**
  * 操作を掛けるときの時刻の格子。`warmup` は助走の点の数 (画面はその後ろ)、`period` は
- * 一番長い波の周期 (s。周期のある波が無ければ 0)。積分の定数を決めるのに使う。
+ * その ch の元の波の周期 (s。式や周期の無い波なら 0)。積分の定数を決めるのに使う。
  */
 export type OpContext = { readonly dt: number; readonly warmup: number; readonly period: number };
 

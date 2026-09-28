@@ -35,6 +35,21 @@ export type ChannelSpec = {
   readonly line: number | null;
 };
 
+/**
+ * ch ごとの元の周期 (s)。波はその周期、参照は参照先の周期、式は 0 (周期を決めない)。
+ * **integrate の定数はこの周期で決める** — ほかの ch の周期で平均すると、周期が整数倍で
+ * ないとき半端な周期の平均になり、積分が直流分だけずれる。
+ */
+export function channelPeriods(channels: readonly ChannelSpec[]): ReadonlyMap<ChannelName, number> {
+  const periods = new Map<ChannelName, number>();
+  for (const channel of channels) {
+    const { source } = channel;
+    const period = source.kind === 'wave' ? periodOf(source.wave) ?? 0 : source.kind === 'ref' ? periods.get(source.channel) ?? 0 : 0;
+    periods.set(channel.name, period);
+  }
+  return periods;
+}
+
 /** 一番長い波の周期 (s)。周期のある波が無ければ 0。 */
 export function longestPeriodOf(channels: readonly ChannelSpec[]): number {
   const periods = channels.flatMap((channel) =>
@@ -150,10 +165,11 @@ export function samplesOf(channels: readonly ChannelSpec[], screen: Screen, shif
   const extended = new Map<TraceName, Float64Array>();
   const invalid = new Map<TraceName, number>();
   const clipped = new Map<TraceName, number>();
-  const period = longestPeriodOf(channels);
+  const periods = channelPeriods(channels);
   const put = (name: TraceName, input: Input, ops: readonly Op[]): void => {
     if (input.invalid > 0) invalid.set(name, input.invalid);
     if (input.clipped > 0) clipped.set(name, input.clipped);
+    const period = name === 'math' ? 0 : periods.get(name) ?? 0;
     extended.set(name, applyOps(input.values, screen.dt, ops, { warmup, period }));
   };
   for (const channel of channels) put(channel.name, inputOf(channel.source, grid, extended), channel.ops);

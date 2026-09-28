@@ -1,7 +1,7 @@
 import { formatSeconds, formatVolts } from 'fence-kit';
 import { fenceError, notice } from './errors.ts';
 import { LIMITS } from './limits.ts';
-import { exprWorkOf, samplesOf } from './model/channel.ts';
+import { channelPeriods, exprWorkOf, samplesOf } from './model/channel.ts';
 import type { ChannelSpec, Sampled } from './model/channel.ts';
 import type { Expr } from './model/expr.ts';
 import type { Trace } from './model/readings.ts';
@@ -58,10 +58,14 @@ export function samplingNotices(doc: FenceDocument, sampled: Sampled, screen: Sc
   const said: FenceError[] = [];
   if (!sampled.settled) {
     said.push(notice(doc.view === 'xy'
-      ? 'rc / hp / peak の τ か delay が XY の窓 (周波数から決まる) に比べて長いので、定常まで回しきれていません (τ を短くします)'
-      : 'rc / hp / peak の τ か delay が画面の幅に比べて長いので、定常まで回しきれていません (time: を遅くします)', null));
+      ? '助走 (rc / hp / peak の τ・delay・integrate の 1 周期) が XY の窓 (周波数から決まる) に比べて長いので、定常まで回しきれていません (τ を短くします)'
+      : '助走 (rc / hp / peak の τ・delay・integrate の 1 周期) が画面の幅に比べて長いので、定常まで回しきれていません (time: を遅くします)', null));
   }
+  const periods = channelPeriods(doc.channels);
   for (const channel of doc.channels) {
+    if (channel.ops.some((op) => op.kind === 'integrate') && (periods.get(channel.name) ?? 0) === 0) {
+      said.push(notice(`${channel.name} の元に周期のある波が無いので、integrate は助走の頭を 0 として積分しています (直流分を除いていません)`, channel.line));
+    }
     for (const op of channel.ops) {
       if ((op.kind === 'rc' || op.kind === 'hp' || op.kind === 'peak') && op.tau < screen.dt) {
         said.push(notice(`${op.kind} の τ (${formatSeconds(op.tau)}) が画面の点の間隔 (${formatSeconds(screen.dt)}) より短いので、${op.kind === 'hp' ? 'ほぼ 0 (跳びの点だけ) に' : 'ほぼ素通しに'}描いています`, channel.line));
