@@ -1,0 +1,4 @@
+# doRelease.sh が図を焼き直したあとも残す PNG (刻印の版が見える図)。
+# ほかの PNG は焼き方の差で変わるだけなので戻す。
+packages/circuit-fence/docs/out/01-syntax-27.png
+packages/circuit-fence/examples/out/09-style-6.png
