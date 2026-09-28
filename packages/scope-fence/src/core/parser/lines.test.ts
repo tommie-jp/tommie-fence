@@ -58,7 +58,7 @@ describe('parseChannelLine', () => {
     ['ch1', 'ch2 | rc 1ms', [], 'ch1 は波で書きます (前に参照できる ch がありません。例: ch1: sine 1kHz 1V)', 'ch2'],
     ['ch2', 'ch3', ['ch1'], 'ch2 が参照できるのは前の ch1 だけです', 'ch3'],
     ['ch2', 'ch5', ['ch1'], 'ch は ch1〜ch4 です', 'ch5'],
-    ['ch2', 'ch1 | lowpass 1ms', ['ch1'], '操作は rc / hp / peak / integrate / delay / clip / offset / gain / abs / invert のどれかです', 'lowpass'],
+    ['ch2', 'ch1 | lowpass 1ms', ['ch1'], '操作は rc / hp / peak / lc / integrate / delay / clip / offset / gain / abs / invert のどれかです', 'lowpass'],
     ['ch2', 'ch1 | rc 1', ['ch1'], 'rc の τ は単位を付けます (例: rc 1ms)', '1'],
     ['ch2', 'ch1 | clip 0.7V -0.7V', ['ch1'], 'clip は下の値を先に書きます (例: clip -0.7V 0.7V)', '0.7V'],
     ['ch2', 'ch1 | clip 0.7', ['ch1'], 'clip は「clip -0.7V 0.7V」(両側) か「clip 0V」(下だけ) の形で書きます', '0.7'],
@@ -149,5 +149,28 @@ describe('parseCursor / parseMeasureNames / parsePosition', () => {
     expect(parsePosition('-2div')).toBe(-2);
     expect(parsePosition('1.5 div')).toBe(1.5);
     expect(parsePosition('-2')).toBeNull();
+  });
+});
+
+describe('parseChannelLine — lc', () => {
+  test('reads lc f0 Q (the frequency with its unit, Q as a bare number)', () => {
+    const result = parseChannelLine('ch2', 'ch1 | lc 1.59kHz 0.7', ['ch1']);
+    expect(result.ok && result.value.ops).toEqual([{ kind: 'lc', f0: 1590, q: 0.7 }]);
+  });
+
+  const HINT = 'lc は共振周波数と Q を「lc 1.59kHz 0.7」の形で書きます (周波数は単位を付け、Q は単位なし)';
+  test.each([
+    ['ch1 | lc 1590 0.7', HINT, '1590'],
+    ['ch1 | lc', HINT, 'lc'],
+    ['ch1 | lc 1.59kHz', HINT, '1.59kHz'],
+    ['ch1 | lc 1.59kHz 0.7V', HINT, '0.7V'],
+    ['ch1 | lc 1.59kHz 0.7 1', HINT, '1'],
+    ['ch1 | lc 0Hz 1', HINT, '0Hz'],
+    ['ch1 | lc 2GHz 1', 'lc の周波数は 1 GHz までです', '2GHz'],
+    ['ch1 | lc 1kHz 0.05', 'lc の Q は 0.1〜100 です', '0.05'],
+    ['ch1 | lc 1kHz 1000', 'lc の Q は 0.1〜100 です', '1000'],
+    [`ch1 | lc 1kHz ${'9'.repeat(400)}`, 'lc の Q は 0.1〜100 です', '9'.repeat(400)],
+  ])('refuses %s', (text, message, token) => {
+    expect(parseChannelLine('ch2', text, ['ch1'])).toEqual({ ok: false, error: { message, line: null, token } });
   });
 });

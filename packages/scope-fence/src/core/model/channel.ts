@@ -58,7 +58,7 @@ export function longestPeriodOf(channels: readonly ChannelSpec[]): number {
 }
 
 /**
- * 助走の長さ (s)。**10 τ (全部の rc・hp・peak の τ の和) + 一番長い周期 + delay の和** — 定常に
+ * 助走の長さ (s)。**10 τ (全部の rc・hp・peak の τ と lc の減衰の時定数の和) + 一番長い周期 + delay の和** — 定常に
  * 入ってから画面に入る (5-1 の「毎回ほぼ 0 V まで戻る」がそのまま出る)。5 τ では始めの状態の
  * 違いが e^−5 ≈ 0.7 % 残り、読み値の 3 桁目が動く (正弦 + rc で実測)。integrate は τ が
  * 無くても 1 周期を助走に取る (その 1 周期の平均で積分の定数を決める)。delay だけなら、ずらす分だけ。

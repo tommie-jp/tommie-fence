@@ -1,9 +1,10 @@
-import { formatSeconds, formatVolts } from 'fence-kit';
+import { formatHertzShort, formatSeconds, formatVolts } from 'fence-kit';
 import { fenceError, notice } from './errors.ts';
 import { LIMITS } from './limits.ts';
 import { channelPeriods, exprWorkOf, samplesOf } from './model/channel.ts';
 import type { ChannelSpec, Sampled } from './model/channel.ts';
 import type { Expr } from './model/expr.ts';
+import type { Op } from './model/ops.ts';
 import type { Trace } from './model/readings.ts';
 import { centredOf, findTrigger } from './model/screen.ts';
 import type { Screen } from './model/screen.ts';
@@ -55,6 +56,20 @@ export function tooHeavy(channels: readonly ChannelSpec[], math: Expr | null, sc
     : null;
 }
 
+/** lc の刻みの目安 — 点の間隔が 1/(20 f0) より粗いと、共振の山が数点でしか描けない。 */
+const LC_STEPS_PER_CYCLE = 20;
+
+/** 操作 1 つについて、画面の点の間隔が粗すぎるときに言うこと。 */
+function stepNotice(op: Op, screen: Screen): string | null {
+  if ((op.kind === 'rc' || op.kind === 'hp' || op.kind === 'peak') && op.tau < screen.dt) {
+    return `${op.kind} の τ (${formatSeconds(op.tau)}) が画面の点の間隔 (${formatSeconds(screen.dt)}) より短いので、${op.kind === 'hp' ? 'ほぼ 0 (跳びの点だけ) に' : 'ほぼ素通しに'}描いています`;
+  }
+  if (op.kind !== 'lc') return null;
+  const finest = 1 / (LC_STEPS_PER_CYCLE * op.f0);
+  if (screen.dt <= finest) return null;
+  return `lc の f0 (${formatHertzShort(op.f0)}) に比べて画面の点の間隔 (${formatSeconds(screen.dt)}) が 1/(20 f0) = ${formatSeconds(finest)} より粗いので、共振のあたりは正しく描けていません (time: を速くします)`;
+}
+
 /** 標本化について言うこと — 助走が足りない、τ が点の間隔より短い、式が計算できない点。 */
 export function samplingNotices(doc: FenceDocument, sampled: Sampled, screen: Screen): readonly FenceError[] {
   const said: FenceError[] = [];
@@ -69,9 +84,8 @@ export function samplingNotices(doc: FenceDocument, sampled: Sampled, screen: Sc
       said.push(notice(`${channel.name} の元に周期のある波が無いので、integrate は助走の頭を 0 として積分しています (直流分を除いていません)`, channel.line));
     }
     for (const op of channel.ops) {
-      if ((op.kind === 'rc' || op.kind === 'hp' || op.kind === 'peak') && op.tau < screen.dt) {
-        said.push(notice(`${op.kind} の τ (${formatSeconds(op.tau)}) が画面の点の間隔 (${formatSeconds(screen.dt)}) より短いので、${op.kind === 'hp' ? 'ほぼ 0 (跳びの点だけ) に' : 'ほぼ素通しに'}描いています`, channel.line));
-      }
+      const message = stepNotice(op, screen);
+      if (message !== null) said.push(notice(message, channel.line));
     }
   }
   const lineOf = (name: string): number | null =>

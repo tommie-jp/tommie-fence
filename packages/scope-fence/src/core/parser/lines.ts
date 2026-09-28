@@ -1,4 +1,4 @@
-import { formatHertzShort, isBareNumber, parseSeconds, parseVolts, parseWave } from 'fence-kit';
+import { formatHertzShort, isBareNumber, parsePrefixedHertz, parseSeconds, parseVolts, parseWave } from 'fence-kit';
 import { safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { CHANNEL_NAMES } from '../model/channel.ts';
@@ -6,6 +6,7 @@ import type { ChannelName, ChannelSource } from '../model/channel.ts';
 import { dimText, isVolts, parseExpr } from '../model/expr.ts';
 import { MEASURE_NAMES } from '../model/measure.ts';
 import type { MeasureName } from '../model/measure.ts';
+import { LC_Q } from '../model/lc.ts';
 import { OP_NAMES } from '../model/ops.ts';
 import type { Op } from '../model/ops.ts';
 import type { TriggerEdge } from '../model/screen.ts';
@@ -99,6 +100,20 @@ function gainOp(words: readonly string[]): LineResult<Op> {
   return ok({ kind: 'gain', factor });
 }
 
+const LC_HINT = 'lc は共振周波数と Q を「lc 1.59kHz 0.7」の形で書きます (周波数は単位を付け、Q は単位なし)';
+
+/** `lc 1.59kHz 0.7` — 2 次の低域。f0 は単位つき、Q は素の数 (gain と同じく単位の無い量)。 */
+function lcOp(words: readonly string[]): LineResult<Op> {
+  const [, first, second] = words;
+  const f0 = first === undefined ? null : parsePrefixedHertz(first);
+  if (f0 === null) return fail(LC_HINT, first ?? 'lc');
+  if (f0 > LIMITS.frequencyMax) return fail(`lc の周波数は ${formatHertzShort(LIMITS.frequencyMax)} までです`, first);
+  if (second === undefined || !isBareNumber(second) || words.length > 3) return fail(LC_HINT, words[words.length > 3 ? 3 : 2] ?? first);
+  const q = Number(second);
+  if (!Number.isFinite(q) || q < LC_Q.min || q > LC_Q.max) return fail(`lc の Q は ${LC_Q.min}〜${LC_Q.max} です`, second);
+  return ok({ kind: 'lc', f0, q });
+}
+
 /** 後ろに何も取らない操作 (`abs` `invert`)。 */
 const bareOp = (kind: 'abs' | 'invert', words: readonly string[]): LineResult<Op> =>
   (words.length > 1 ? fail(`${kind} の後ろには何も書きません`, words[1]) : ok({ kind }));
@@ -113,6 +128,8 @@ function parseOp(text: string): LineResult<Op> {
     case 'peak':
     case 'integrate':
       return tauOp(name, words);
+    case 'lc':
+      return lcOp(words);
     case 'delay':
       return delayOp(words);
     case 'clip':

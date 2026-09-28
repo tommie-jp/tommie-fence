@@ -10,7 +10,7 @@
 title: 図01 RC の充電        # 任意。図の左上に載る 1 行
 view: time                 # 任意。time (既定) か xy
 time: 1ms/div              # 横 1 目盛。/div が要る。無ければ一番遅い波の 2 周期
-trigger: ch1 rising 1V     # ch 向き [水準]。無ければ ch1 の立ち上がり・中央
+trigger: ch1 rising 1V     # ch 向き [水準] [at 位置]。無ければ ch1 の立ち上がり・中央
 ch1: square 100Hz 1V offset 1V
 ch2: ch1 | rc 1ms          # 前の ch を操作に通す
 math: {expr: ch1 * ch2 / 10, unit: W}   # 任意。5 本目 (Math)。単位は書き手が言う
@@ -23,7 +23,7 @@ style: dark                # 任意
 ```
 ````
 
-画面は横 10 目盛・縦 8 目盛、t = 0 (トリガ) が真ん中。理想は**破線**、`data:` は**実線**。
+画面は横 10 目盛・縦 8 目盛、t = 0 (トリガ) が真ん中 (`at -5div` で左端へ)。理想は**破線**、`data:` は**実線**。
 
 `style:` は 1 語 (`light` `dark` `mono`) か並び (`theme` `width` (120〜4000) `stamp` `debug` (`on` / `off`))。
 
@@ -59,10 +59,12 @@ ch4: ch3 | rc 20ms | gain 0.5               # 平滑 (τ) と倍率
 ```
 
 `rc 1ms` (τ) / `hp 1ms` (1 次の高域 = CR の微分回路) / `peak 150ms` (山で充電して τ で放電 = コンデンサ入力) /
+`lc 1.59kHz 0.7` (2 次の低域。共振周波数と Q (単位なし、0.1〜100)。LC なら f0 = 1/(2π√(LC))、負荷 R で Q = R·√(C/L)) /
 `integrate 1ms` (= (1/τ)∫x dt。RC の積分器、結果も V) / `delay 250us` (遅らせる。0 以上) /
 `clip -0.7V 0.7V` / `clip 0V` (下だけ) / `offset -1.4V` / `gain 0.5` (単位なし) / `abs` / `invert` (×−1)
 
-参照できるのは**自分より前の ch だけ**。`rc` `hp` `peak` は 10 τ ぶん助走してから画面に入る (定常)。
+参照できるのは**自分より前の ch だけ**。`rc` `hp` `peak` は 10 τ ぶん、`lc` は 10 × Q/(π f0) ぶん助走してから画面に入る (定常。
+助走は画面の点 128 枚ぶんまで — 足りなければお知らせ。`lc` は点の間隔が 1/(20 f0) より粗くてもお知らせ)。
 `integrate` は助走の最後の 1 周期の平均が 0 になるよう定数を決める (直流分のある入力は傾いて出る)。
 
 ```yaml
@@ -75,6 +77,13 @@ ch4: ch1 | delay 250us | invert
 ```yaml
 ch1: sine 50Hz 5V
 ch2: ch1 | abs | offset -1.2V | clip 0V | peak 150ms   # 全波整流 + 100 µF・1.5 kΩ の平滑
+```
+
+```yaml
+time: 20us/div
+ch1: square 100kHz 2.5V offset 2.5V   # チョッパ 0/5 V・D = 50 %
+ch2: ch1 | lc 1.59kHz 10              # L 100 µH・C 100 µF・負荷 10 Ω → 平均 2.50 V・リップル 1.56 mVpp
+measure: [avg, vpp]
 ```
 
 ## 式 (`= …`)
@@ -162,6 +171,15 @@ cursors: [0, 500us]        # 2 本まで。0 以外は単位が要る。負も�
 measure: [vpp, vmax, vmin, avg, rms, freq, period, duty]
 ```
 
+```yaml
+time: 50us/div
+trigger: ch1 rising 0V at -5div   # t = 0 を左端に (at は -5div〜5div、既定 0 = 中央)
+ch1: sine 1kHz 1V                 # 正の半周期がちょうど 1 画面 → avg 637 mV (2/π)
+measure: [avg]
+```
+
+`at` は理想も `data:` も同じだけずらす (カーソルの `0` はいつもトリガの点)。
+
 `measure:` に書ける名前 (8 つまで): `vpp` `vmax` `vmin` `avg` `rms` `freq` `period` `duty` `phase` `rise`。
 `phase` は**一番上の ch に対する遅れ** (負が遅れ)、`rise` は 10〜90 %。
 周波数が一番上の ch と違う線 (2f で振れる瞬時電力の Math など) の `phase` は `—`。
@@ -196,6 +214,8 @@ measure: [vpp, vmax, vmin, avg, rms, freq, period, duty]
 | `range: 500mV` | 断る (`/div` が無い) | `range: 500mV/div` |
 | 小さく振れる ch だけに `range:` を書く (同じ尺度の相手がいない) | お知らせ (2 目盛未満) | その ch は Auto か、お知らせの値 |
 | `trigger: ch1 up` / `ch1 rising 0.5` | 断る | `ch1 rising` / `ch1 rising 500mV` |
+| `trigger: ch1 rising 0V -5div` / `at -5` / `at 1ms` | 断る (at と div が要る) | `ch1 rising 0V at -5div` |
+| `lc 1590 0.7` / `lc 1.59kHz` | 断る (単位・Q が無い) | `lc 1.59kHz 0.7` |
 | `offset 1` / `gain 2dB` | 断る | `offset 1V` / `gain 2` |
 | `ch1: ch2 \| rc 1ms` | 断る (後ろの ch) | 並びを入れ替える |
 | `measure: [frequency]` | 断る | `freq` |

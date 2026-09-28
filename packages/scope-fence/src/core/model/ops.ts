@@ -1,3 +1,5 @@
+import { lcSettleOf, secondOrderLowPass } from './lc.ts';
+
 /**
  * 波に通す操作 (`ch2: ch1 | rc 1ms | clip -0.7V 0.7V`)。**点の列に掛ける** — 閉じた式に
  * しないので、波と操作を 1 つの道で扱え、理想と実測を同じ算法で測れる (52 の docs/85)。
@@ -31,9 +33,11 @@ export type Op =
   | { readonly kind: 'gain'; readonly factor: number }
   | { readonly kind: 'abs' }
   /** 符号を反転 (×−1。反転増幅器・トランスの逆の巻き方)。 */
-  | { readonly kind: 'invert' };
+  | { readonly kind: 'invert' }
+  /** 2 次の低域 (LC)。共振周波数 f0 (Hz) と Q (単位なし)。`model/lc.ts`。 */
+  | { readonly kind: 'lc'; readonly f0: number; readonly q: number };
 
-export const OP_NAMES = ['rc', 'hp', 'peak', 'integrate', 'delay', 'clip', 'offset', 'gain', 'abs', 'invert'] as const;
+export const OP_NAMES = ['rc', 'hp', 'peak', 'lc', 'integrate', 'delay', 'clip', 'offset', 'gain', 'abs', 'invert'] as const;
 export type OpName = (typeof OP_NAMES)[number];
 
 /**
@@ -155,6 +159,8 @@ function applierOf(op: Op): Apply {
       return (input) => each(input, Math.abs);
     case 'invert':
       return (input) => each(input, (value) => -value);
+    case 'lc':
+      return (input, { dt, warmup }) => secondOrderLowPass(input, dt, op.f0, op.q, warmup);
   }
 }
 
@@ -164,12 +170,19 @@ export function applyOps(samples: Float64Array, dt: number, ops: readonly Op[], 
   return ops.reduce<Float64Array>((current, op) => applierOf(op)(current, context), Float64Array.from(samples));
 }
 
+/** 1 つの操作が定常に入るまでの時定数 (s)。lc は減衰の包絡 (`lcSettleOf`)。 */
+const settleOf = (op: Op): number => {
+  if (op.kind === 'rc' || op.kind === 'hp' || op.kind === 'peak') return op.tau;
+  return op.kind === 'lc' ? lcSettleOf(op.f0, op.q) : 0;
+};
+
 /**
  * 操作の τ の和 (助走の長さを決める)。**rc・hp・peak は同じ助走** (どれも τ で定常に入る)。
+ * lc は減衰の時定数 (Q ≥ 0.5 なら 2Q/ω0 = Q/(π f0)) を同じく数える — 助走は 10 τ で
+ * `warmupSamples` が上限 (計算量は rc と同じく点の数に比例)。
  * integrate の τ は倍率なので数えない (積分は助走の 1 周期で定数を決める。`needsPeriod`)。
  */
-export const tauOf = (ops: readonly Op[]): number =>
-  ops.reduce((sum, op) => sum + (op.kind === 'rc' || op.kind === 'hp' || op.kind === 'peak' ? op.tau : 0), 0);
+export const tauOf = (ops: readonly Op[]): number => ops.reduce((sum, op) => sum + settleOf(op), 0);
 
 /** delay の和 (s)。助走をその分だけ伸ばす (画面の頭に、ずらす前の値が要る)。 */
 export const delayOf = (ops: readonly Op[]): number =>
