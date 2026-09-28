@@ -76,10 +76,18 @@ if [ "$push_only" -eq 0 ]; then
     pkg="${s%%=*}"; level="${s#*=}"
     [ -d "packages/$pkg" ] || die "packages/$pkg がありません"
     [ "$(unreleased_count "$pkg")" -gt 0 ] || die "$pkg の [Unreleased] が空です"
+    old="$(version_of "$pkg")"
     if [ "$level" != keep ]; then
       ./doVersion.sh "$pkg" "$level" >/dev/null
     fi
     ver="$(version_of "$pkg")"
+    # 文書に書いた刻印の例 (`breadboard-fence 0.14.0`) を新しい版に合わせる。
+    # 「名前 + 空白 + 版」の形だけを置き換え、CHANGELOG の過去の節には触らない
+    if [ "$old" != "$ver" ]; then
+      for f in packages/"$pkg"/README*.md packages/"$pkg"/docs/*.md; do
+        if [ -f "$f" ]; then sed -i "s/$pkg ${old//./\\.}/$pkg $ver/g" "$f"; fi
+      done
+    fi
     git rev-parse -q --verify "refs/tags/$pkg-v$ver" >/dev/null && die "タグ $pkg-v$ver は既にあります"
     # [Unreleased] の中身を新しい節へ移し、空の [Unreleased] を残す
     node - "$pkg" "$ver" "$today" <<'EOF'
