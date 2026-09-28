@@ -103,8 +103,17 @@ const NOTCH = 4.5;
 
 export type DipOptions = {
   readonly points: readonly ChipPoint[];
-  /** 足の番号 (`1`〜)。**書かれた順**。 */
+  /**
+   * 足に刷る字 (`points` と同じ順)。番号だけの DIP は番号 (`1`〜)、名前のある DIP は
+   * 名前。`numbers` が無ければ胴の縁 (足のすぐ内側) に刷る。
+   */
   readonly names: readonly string[];
+  /**
+   * 足の番号 (`points` と同じ順)。**渡すと 2 段になる** — 番号を胴の縁、`names` を
+   * 胴の外の足の向こう側に刷る (52 の docs/95 の決め 2 と判断の記録の代案。実物の胴に
+   * 名前は無いので、切り欠きから数えるための番号は消さない)。
+   */
+  readonly numbers?: readonly string[];
   /** 1 番ピンの添字。回すと名前のほうが巡るので、呼ぶ側が名前で引いて渡す。 */
   readonly pinOne: number;
   readonly pitch: number;
@@ -140,17 +149,19 @@ export function dipChip(options: DipOptions): string {
     })
     .join('');
 
+  const edgeLabels = options.numbers ?? names;
   const numbers = points
     .map((point, index) => {
       const step = inward(point) * NUMBER_IN;
       return svgText(
         point.x + (alongX ? 0 : step),
         point.y + (alongX ? step + NUMBER_MIDDLE : NUMBER_MIDDLE),
-        names[index] ?? '',
+        edgeLabels[index] ?? '',
         { 'font-size': num(scale * NUMBER_FONT), fill: ink.pin },
       );
     })
     .join('');
+  const outer = options.numbers === undefined ? '' : outerNames(points, names, inward, alongX, pitch, scale, ink);
 
   const shell = element('rect', {
     x: num(box.x), y: num(box.y), width: num(box.width), height: num(box.height), rx: 3,
@@ -164,7 +175,52 @@ export function dipChip(options: DipOptions): string {
     r: NOTCH, fill: ink.plate,
   });
 
-  return `${stubs}${shell}${notch}${numbers}${chipCaption(caption, box, alongX, scale, ink)}`;
+  return `${stubs}${shell}${notch}${numbers}${outer}${chipCaption(caption, box, alongX, scale, ink)}`;
+}
+
+/**
+ * 足の名前。**胴の外、足の向こう側** (胴の縁と隣の穴の列のあいだ) に刷る。
+ *
+ * 計画 (52 の docs/95 の決め 2) は番号の 1 段内側だったが、ブレッドボードの胴は溝を
+ * またぐ 2 行 (e・f) の間しか無く、番号とキャプションの間に名前の段が入らなかった
+ * (焼いて確かめた。判断の記録の代案)。1 列ヘッダの名前と同じ置き場で、縁取りを付けて
+ * 下の穴に食われないようにする。**2 つの板で同じ絵**にするため perfboard も同じ。
+ *
+ * 横に寝た胴 (足の列が横) では足の真上に中央揃え、1 ピッチに収まらなければ字を縮める
+ * (隣の足の名前に食い込ませない)。縦に立てた胴では足の外へ向けて書く。
+ */
+const NAME_FONT = 6;
+const NAME_PAD = 7;
+const NAME_HALO = 2;
+const NAME_CLEAR = 0.5;
+const NAME_CAP = 0.72;
+function outerNames(
+  points: readonly ChipPoint[],
+  names: readonly string[],
+  inward: (point: ChipPoint) => number,
+  alongX: boolean,
+  pitch: number,
+  scale: number,
+  ink: ChipInk,
+): string {
+  return points
+    .map((point, index) => {
+      const name = names[index] ?? '';
+      if (name === '') return '';
+      const outward = -inward(point);
+      const size = Math.min(scale * NAME_FONT, (pitch - NAME_PAD) / textWidth(name));
+      const style = { 'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: NAME_HALO };
+      const clear = DIP_ACROSS + NAME_HALO / 2 + NAME_CLEAR;
+      if (alongX) {
+        // 字は基準線から上へ伸びるので、下へ出す側だけ字の高さを足す。
+        const y = outward > 0 ? point.y + clear + size * NAME_CAP : point.y - clear;
+        return svgText(point.x, y, name, style);
+      }
+      return svgText(point.x + outward * clear, point.y + NUMBER_MIDDLE, name, {
+        ...style, anchor: outward > 0 ? 'start' : 'end',
+      });
+    })
+    .join('');
 }
 
 /** 樹脂の真ん中に置くキャプション。**縦に置いた胴では字も寝かせる**。 */

@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { boardBox, boardChip, dipBox, dipChip, segmentFace, sipBox, sipHeader } from './chips.ts';
 import type { ChipInk, ChipPoint } from './chips.ts';
 import { lookupBoardPart } from './boards.ts';
+import { textWidth as textWidthOf } from '../textFit.ts';
 
 /**
  * パッケージの姿は 2 つの板が共有する (実機で「全ての部品の見た目を
@@ -77,6 +78,64 @@ describe('dipChip', () => {
       expect(y).toBeGreaterThan(box.y);
       expect(y).toBeLessThan(box.y + box.height);
     }
+  });
+
+  describe('番号と名前の 2 段 (52 の docs/95)', () => {
+    const TIMER = ['GND', 'TRIG', 'OUT', 'RESET', 'CONT', 'THRES', 'DISCH', 'VCC'];
+    const texts = (svg: string): { x: number; y: number; text: string }[] =>
+      [...svg.matchAll(/<text x="([-\d.]+)" y="([-\d.]+)"[^>]*>([^<]*)<\/text>/g)]
+        .map(([, x, y, text]) => ({ x: Number(x), y: Number(y), text: text ?? '' }));
+
+    test('prints the numbers at the edge and the names outside the body, beyond the pins', () => {
+      const points = twoRows(8, 3);
+      const drawn = texts(dipChip({
+        points, names: TIMER, numbers: names(8), pinOne: 0, pitch: PITCH, caption: 'NE555', scale: 1, ink: INK,
+      }));
+      const at = (text: string) => drawn.find((one) => one.text === text);
+
+      // 1 番の列は y = 0 (上の列)。外は上向き。
+      expect(at('GND')?.x).toBe(at('1')?.x);
+      expect(at('GND')!.y).toBeLessThan(at('1')!.y);
+      // 向かいの列 (y = 60) は外が下向き。
+      expect(at('VCC')!.y).toBeGreaterThan(at('8')!.y);
+      expect(drawn.some((one) => one.text === 'NE555')).toBe(true);
+    });
+
+    test('keeps the numbers inside the resin and the names within a pitch outside it, standing upright too', () => {
+      for (const vertical of [false, true]) {
+        const points = twoRows(8, 3, vertical);
+        const box = dipBox(points, PITCH);
+        const drawn = texts(dipChip({
+          points, names: TIMER, numbers: names(8), pinOne: 0, pitch: PITCH, caption: 'NE555', scale: 1, ink: INK,
+        }));
+        const inside = (one: { x: number; y: number }, margin: number) =>
+          one.x > box.x - margin && one.x < box.x + box.width + margin
+          && one.y > box.y - margin && one.y < box.y + box.height + margin;
+        for (const one of drawn) {
+          const isName = TIMER.includes(one.text);
+          expect(inside(one, 0), `${one.text} ${vertical}`).toBe(!isName);
+          expect(inside(one, PITCH), `${one.text} ${vertical}`).toBe(true);
+        }
+      }
+    });
+
+    test('draws exactly as before when no numbers are given', () => {
+      const points = twoRows(8, 3);
+      const options = { points, names: names(8), pinOne: 0, pitch: PITCH, caption: 'U1', scale: 1, ink: INK };
+      expect(dipChip({ ...options, numbers: undefined })).toBe(dipChip(options));
+      expect(texts(dipChip(options)).filter((one) => /^\d$/.test(one.text))).toHaveLength(8);
+    });
+
+    test('shrinks a long name to the pitch so that it does not run into the next pin', () => {
+      const points = twoRows(16, 3);
+      const long = ['Q5', 'Q1', 'Q0', 'Q2', 'Q6', 'Q7', 'Q3', 'VSS', 'Q8', 'Q4', 'Q9', 'CO', 'INH', 'CLOCK', 'RESET', 'VDD'];
+      const svg = dipChip({
+        points, names: long, numbers: names(16), pinOne: 0, pitch: PITCH, caption: 'CD4017B', scale: 1, ink: INK,
+      });
+      const size = Number(/font-size="([\d.]+)"[^>]*>CLOCK</.exec(svg)?.[1] ?? 0);
+      expect(size).toBeGreaterThan(0);
+      expect(size * textWidthOf('CLOCK')).toBeLessThanOrEqual(PITCH);
+    });
   });
 });
 

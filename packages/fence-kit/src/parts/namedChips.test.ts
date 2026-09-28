@@ -51,6 +51,26 @@ describe('名前つきの DIP 型の絵', () => {
 
     expect(svg).toContain('COM1');
     expect(svg).toContain('G5V-2');
+    // 名前の外側に DIP の番号も刷る (52 の docs/95 の決め 2)。COM1 は 4 番、NO2 は 9 番。
+    expect(svg).toMatch(/>4<\/text>/);
+    expect(svg).toMatch(/>9<\/text>/);
+  });
+
+  test('prints the numbers of a photocoupler too, but not on the face of a display', () => {
+    const coupler = lookupNamedChip('photocoupler', null)!;
+    const svg = drawNamedChip({
+      chip: coupler, points: [...row(100, 2), ...row(160, 2)], names: ['A', 'K', 'E', 'C'],
+      pitch: 20, caption: 'PC817', scale: 1, ink: INK,
+    });
+    expect(svg).toMatch(/>1<\/text>/);
+    expect(svg).toMatch(/>K<\/text>/);
+
+    const display = drawNamedChip({
+      chip: lookupNamedChip('seg7', null)!, points: [...row(100, 5), ...row(220, 5).reverse()],
+      names: ['e', 'd', 'COM1', 'c', 'dp', 'b', 'a', 'COM2', 'f', 'g'],
+      pitch: 20, caption: '5161AS', scale: 1, ink: INK,
+    });
+    expect(display).not.toMatch(/>3<\/text>/);
   });
 
   test('draws the face of the display instead of its name', () => {

@@ -85,7 +85,10 @@ export function drawNamedChip(options: Omit<DipOptions, 'pinOne'> & { readonly c
   const { chip, names, points } = options;
   const firstName = chip.pins.find((pin) => pin.at === 1)?.name;
   const pinOne = Math.max(0, names.findIndex((name) => name === firstName));
-  if (chip.body !== 'display') return dipChip({ ...options, pinOne });
+  // **リレーとフォトカプラは番号も刷る** (名前の外側。52 の docs/95 の決め 2)。
+  // 7 セグは面を描くので今のまま (名前だけ)。
+  const numbers = names.map((name) => String(chip.pins.find((pin) => pin.name === name)?.at ?? ''));
+  if (chip.body !== 'display') return dipChip({ ...options, numbers, pinOne });
 
   // 桁の上は 6〜10 番の列 (データシートの上から見た図で a が上)。
   const half = chip.positions / 2;
