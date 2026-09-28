@@ -6,6 +6,9 @@ Markdown の ` ```vna ` フェンスに YAML を書くと、Markdown プレビ�
 「見るべき値」が破線で、**測った Touchstone** (`data:`) を書けば実線で重なる。
 ここは文法の全部。形ごとの例は [examples/](../examples/README.md) にある。
 
+`dut:` のある図の後には、その模型の**等価回路**を ` ```circuit ` フェンスで添えてある
+(描き方は [理想の模型](#理想の模型-dut) の終わり)。
+
 ## 目次
 
 - [機種と掃引 (`device:` `sweep:`)](#機種と掃引-device-sweep)
@@ -33,6 +36,25 @@ traces:
 ```
 
 ![図01 1〜300 MHz を 101 点で (0 Ω のスルー)](out/01-syntax-1.svg)
+
+等価回路:
+
+```circuit
+title: 回路図01 図01 の等価回路 (0 Ω のスルー)
+parts:
+  J1: sma c2 mirror CH0
+  R1: resistor c4 c6 0
+  J2: sma c8 CH1
+  G1: ground d2
+  G2: ground d8
+wires:
+  - J1.1 -- c4
+  - c6 -- J2.1
+  - J1.2 -- d2
+  - J2.2 -- d8
+```
+
+![回路図01 図01 の等価回路 (0 Ω のスルー)](out/schematic/01-syntax-1.png)
 
 周波数は `50k` `1M` `2.4G` `1575MHz` `900Hz` のどれでも書ける。
 接頭辞は `k` `M` `G` だけ (小文字の `m` はミリと紛れるので断る)。
@@ -74,6 +96,31 @@ markers:
 
 ![図02 π 型ローパス (47p / 235n / 47p)](out/01-syntax-2.svg)
 
+等価回路:
+
+```circuit
+title: 回路図02 図02 の等価回路 (パイ型ローパス)
+parts:
+  J1: sma c2 mirror CH0
+  C1: capacitor c4 e4 47p
+  L1: inductor c5 c7 235n
+  C2: capacitor c8 e8 47p
+  J2: sma c10 CH1
+  G1: ground d2
+  G2: ground d10
+  G3: ground e4
+  G4: ground e8
+wires:
+  - J1.1 -- c4 -- c5
+  - c7 -- c8 -- J2.1
+  - J1.2 -- d2
+  - J2.2 -- d10
+```
+
+![回路図02 図02 の等価回路 (パイ型ローパス)](out/schematic/01-syntax-2.png)
+
+C1・L1・C2 は `dut:` に書いた順に、CH0 から CH1 へ並ぶ。
+
 | 書き方 | 意味 |
 | --- | --- |
 | `series R 100` | 直列の抵抗 (置き方を省くと series) |
@@ -110,6 +157,37 @@ markers:
 ```
 
 ![図03 1000 pF の SRF (1 端子にして |Z|)](out/01-syntax-3.svg)
+
+等価回路:
+
+```circuit
+title: 回路図03 図03 の等価回路 (1000 pF、先を短絡)
+parts:
+  J1: sma c2 mirror CH0
+  C1: capacitor c4 c6 1000p
+  R1: resistor c6 c8 0.1 l=$\mathrm{ESR}$
+  L1: inductor c8 c10 1.2n l=$\mathrm{ESL}$
+  G1: ground d2
+  G2: ground d11
+wires:
+  - J1.1 -- c4
+  - c10 -- c11 -- d11
+  - J1.2 -- d2
+notes:
+  - text c11f1 left small: 短絡
+```
+
+![回路図03 図03 の等価回路 (1000 pF、先を短絡)](out/schematic/01-syntax-3.png)
+
+`esr` と `esl` は C に直列の R と L。最後の `short` は先を地へ落とす線で、CH0 から見た 1 端子になる。
+
+**等価回路の描き方** — 模型を ` ```circuit ` で描くときは、CH0 と CH1 を `sma`
+(型番の位置に `CH0` `CH1`、外皮 `.2` は地)、`series` を横に並べた 2 端子、
+`shunt` を地へ下ろした 2 端子、`esr` `esl` を直列の R と L、`cp` を全体を跨ぐ C、
+線路を `tline` (値は Z0、`l=` に長さ)、`short` を地へ落とす線、`open` を開いた
+ままの端にする。circuit の値は接頭辞 `f` と `µ` を読まず、`l=` には `.` を
+書けないので、`20f` は `0.02p`、`1µ` は `1u`、`34.4cm` は `344mm` と書き直す。
+この文書と例の図は `npm run schematics` で作り直す (`out/schematic/` に出る)。
 
 ## 測った値 (`data:`)
 
@@ -173,6 +251,26 @@ traces:
 
 ![図04 先を開放した 2 m のケーブルの TDR](out/01-syntax-4.svg)
 
+等価回路:
+
+```circuit
+title: 回路図04 図04 の等価回路 (2 m のケーブル、先を開放)
+parts:
+  J1: sma c2 mirror CH0
+  T1: tline c4 c7 50 l=$\mathrm{2m}$
+  G1: ground d2
+wires:
+  - J1.1 -- c4
+  - c7 -- c8
+  - J1.2 -- d2
+notes:
+  - text c8a2 left small: 開放
+```
+
+![回路図04 図04 の等価回路 (2 m のケーブル、先を開放)](out/schematic/01-syntax-4.png)
+
+T1 は 50 Ω・2 m (vf 0.66) の線路。最後の `open` は先を開いたままにする。
+
 ## マーカー (`markers:`)
 
 周波数で 4 つまで。どの枠にも ▽ と番号が付き、**読み値は図の下の表**に出る
@@ -215,6 +313,27 @@ notes:
 ```
 
 ![図05 帯と字と丸](out/01-syntax-5.svg)
+
+等価回路:
+
+```circuit
+title: 回路図05 図05 の等価回路 (直列 RLC、先を短絡)
+parts:
+  J1: sma c2 mirror CH0
+  R1: resistor c4 c6 38
+  L1: inductor c6 c8 180n
+  C1: capacitor c8 c10 0.77p
+  G1: ground d2
+  G2: ground d11
+wires:
+  - J1.1 -- c4
+  - c10 -- c11 -- d11
+  - J1.2 -- d2
+notes:
+  - text c11f1 left small: 短絡
+```
+
+![回路図05 図05 の等価回路 (直列 RLC、先を短絡)](out/schematic/01-syntax-5.png)
 
 単位の合う枠が無い注釈は描かずに言う (黙って消さない)。
 

@@ -45,7 +45,7 @@
 \coordinate (d9) at (16,-6);
 \node[smacoax, draw, xscale=-1] (part-J1) at (b2) {}; % line 3
 \node[anchor=south] at (part-J1.north) {$J_{1}$}; % line 3
-\draw (b4) to[L, l_=$L_{1}$, a^=$1\,\mathrm{u}\mathrm{H}$] (b6); % line 4
+\draw (b4) to[L, l_=$L_{1}$, a^=$1\,\mu\mathrm{H}$] (b6); % line 4
 \draw (b6) to[R, l_=$\mathrm{ESR}$, a^=$0.5\,\Omega$] (b8); % line 5
 \draw (d5) to[C, l_=$C_{\mathrm{p}}$, a^=$1.5\,\mathrm{p}\mathrm{F}$] (d7); % line 6
 \node[ground] at (c2) {}; % line 7
@@ -62,7 +62,9 @@
 \node[circ] at (b9) {};
 \path (1.619,-0.593) rectangle (2.381,0.593); % line 17
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,0) {X}; % line 17
-\node[anchor=south west, inner sep=2pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(10.394,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at (current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
 \end{circuitikz}
 \end{document}

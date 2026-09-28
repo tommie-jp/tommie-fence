@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Documentation
+
+- 文法リファレンス (`docs/01-syntax.md`) の `dut:` のある図 5 枚に、模型の**等価回路** (` ```circuit `) を添えた
+  (例には既に添えてある)。図は `npm run schematics` で `docs/out/schematic/` にも作る。
+
 ### Fixed
 
 - **凡例の線の見本をトレースの色で描く** — 地の文字色で描いていたので、グラフに無い色の
