@@ -1,4 +1,4 @@
-import { samplingNotices, tracesOf } from './ideal.ts';
+import { samplingNotices, tooHeavy, tracesOf } from './ideal.ts';
 import { fractionY } from './layout/scales.ts';
 import { SIZE, createLayout } from './layout/screen.ts';
 import { scaleOf, scaleSpecsOf } from './layout/traceScales.ts';
@@ -103,8 +103,11 @@ function drawXy(doc: FenceDocument, axes: Axes | null, readings: ReturnType<type
 export function renderXyView(doc: FenceDocument, source: string, options: RenderOptions, said: FenceError[]): RenderResult {
   const style = resolveStyle(doc.style);
   const screen = screenOf(xyWindow(doc.channels) / DIVISIONS.x, LIMITS.samples);
-  const drawable = doc.channels.length > 0 || doc.math !== null;
-  const sampled = drawable ? samplesOf(doc.channels, screen, 0, doc.math?.expr ?? null) : null;
+  const math = doc.math?.expr ?? null;
+  const heavy = tooHeavy(doc.channels, math, screen);
+  const drawable = heavy === null && (doc.channels.length > 0 || doc.math !== null);
+  if (heavy !== null) said.push(heavy);
+  const sampled = drawable ? samplesOf(doc.channels, screen, 0, math) : null;
   if (sampled !== null) said.push(...samplingNotices(doc, sampled, screen));
   const traces = sampled === null ? [] : tracesOf(doc, sampled, screen);
   const axes = axesOf(doc, traces);

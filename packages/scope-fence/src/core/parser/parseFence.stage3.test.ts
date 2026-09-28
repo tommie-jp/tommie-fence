@@ -71,6 +71,11 @@ describe('parseFence — math:', () => {
       'ch1 が読めないので math: も描けません',
     ]);
   });
+
+  test('refuses a math: line too long before scanning it for broken ch references', () => {
+    const long = `1V${' + 1V'.repeat(60)}`;
+    expect(messages(`ch1: sine 1kHz 1V\nmath: ${long}`)).toEqual(['式は 200 字までです']);
+  });
 });
 
 describe('parseFence — view: xy', () => {

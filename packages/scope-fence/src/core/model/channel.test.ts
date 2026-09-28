@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { parseWave } from 'fence-kit';
 import type { WaveSpec } from 'fence-kit';
-import { samplesOf, valueAt, warmupOf } from './channel.ts';
+import { LIMITS } from '../limits.ts';
+import { exprWorkOf, lengthOf, samplesOf, valueAt, warmupOf } from './channel.ts';
 import { parseExpr } from './expr.ts';
 import { measure } from './measure.ts';
 import type { ChannelSpec } from './channel.ts';
@@ -81,6 +82,25 @@ describe('valueAt', () => {
     expect(valueAt(saw, 0.5e-3, 1e-6)).toBeCloseTo(1, 9);
     expect(valueAt(wave('sine 1kHz 1V'), 0.25e-3, 1e-6)).toBe(1);
     expect(valueAt(wave('dc 2V'), 1, 1)).toBe(2);
+  });
+});
+
+describe('exprWorkOf', () => {
+  test('is 0 when no channel and no math has an expression, whatever the warm-up', () => {
+    const screen = screenOf(1e-6, 8192);
+    expect(exprWorkOf([ch('ch1', 'square 1kHz 1V', [{ kind: 'rc', tau: 1 }])], null, screen)).toBe(0);
+  });
+
+  test('grows with the number of points times the total node count, across channels and math', () => {
+    const screen = screenOf(1e-3, 8192);
+    const many = `= min(${Array(48).fill('ch1').join(',')})`;
+    const eightRc: readonly Op[] = Array(8).fill({ kind: 'rc', tau: 1 });
+    const withExpr = [ch('ch1', 'sine 1kHz 1V', eightRc), ch('ch2', many)];
+    // 節が 1 つ増えるだけで、点の数ぶん重さが増える (48 引数の min は 49 節)。
+    expect(exprWorkOf(withExpr, null, screen)).toBe(49 * lengthOf(withExpr, screen));
+    // 8 つの rc (τ 1 s) で助走が上限に張り付き、48 引数の min と重なると上限を越える —
+    // これが cpu-multi.md の再現 (52 の docs/99 段 3a の見直し)。
+    expect(exprWorkOf(withExpr, null, screen)).toBeGreaterThan(LIMITS.exprWork);
   });
 });
 

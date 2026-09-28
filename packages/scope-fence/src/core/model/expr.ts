@@ -51,6 +51,26 @@ export const sameDim = (a: Dim, b: Dim): boolean => Math.abs(a.v - b.v) < EPSILO
 export const isDimensionless = (dim: Dim): boolean => sameDim(dim, NONE);
 export const isVolts = (dim: Dim): boolean => sameDim(dim, VOLT);
 
+/**
+ * 木の節の数。**計算の重さの見積もりに使う** — 1 点ぶんの計算は木を 1 回辿るので、
+ * 節の数がそのまま 1 点あたりのコストになる (`min(ch1,ch1,…)` は引数の数だけ節が増える)。
+ * 深さは `exprDepth` で絞っているので、この再帰も同じだけ浅い。
+ */
+export function exprNodes(expr: Expr): number {
+  switch (expr.kind) {
+    case 'num':
+    case 't':
+    case 'ch':
+      return 1;
+    case 'neg':
+      return 1 + exprNodes(expr.arg);
+    case 'bin':
+      return 1 + exprNodes(expr.left) + exprNodes(expr.right);
+    case 'call':
+      return 1 + expr.args.reduce((sum, arg) => sum + exprNodes(arg), 0);
+  }
+}
+
 /** 次元を読める字に (`V` `V^2` `1/s` `V/s` `無次元`)。 */
 export function dimText(dim: Dim): string {
   const part = (unit: string, power: number): string => (Math.abs(power - 1) < EPSILON ? unit : `${unit}^${Number(power.toFixed(3))}`);

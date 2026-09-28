@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { dimText, parseExpr } from './expr.ts';
+import { dimText, exprNodes, parseExpr } from './expr.ts';
 import type { ParsedExpr } from './expr.ts';
 import { evaluateExpr } from './exprEval.ts';
 
@@ -97,6 +97,20 @@ describe('parseExpr — values', () => {
   test('a channel that is missing from the input reads as 0', () => {
     const { values } = evaluateExpr(read('ch1', ['ch1']).expr, { start: 0, dt: 1, length: 2, channels: new Map() });
     expect([...values]).toEqual([0, 0]);
+  });
+});
+
+describe('exprNodes', () => {
+  test('counts one node per number, name and operator', () => {
+    expect(exprNodes(read('1V').expr)).toBe(1);
+    expect(exprNodes(read('1V + 2V').expr)).toBe(3);
+    expect(exprNodes(read('-1V').expr)).toBe(2);
+    expect(exprNodes(read('sin(1)').expr)).toBe(2);
+  });
+
+  test('grows with every argument of a variadic call, the way min(ch1,ch1,…) does', () => {
+    const many = `min(${Array(48).fill('ch1').join(',')})`;
+    expect(exprNodes(read(many, ['ch1']).expr)).toBe(49);
   });
 });
 

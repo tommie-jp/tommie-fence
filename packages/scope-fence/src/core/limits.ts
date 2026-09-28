@@ -23,6 +23,12 @@ export const LIMITS = {
    */
   exprLength: 200,
   exprDepth: 16,
+  /**
+   * 式の計算量の上限 (助走 + 画面の点数 × 式の節の数の合計)。長い τ (助走を伸ばす) と
+   * 長い式 (`min(ch1,ch1,…)` のように節を増やす) が重なると、上限の中でも 1 枚の図の
+   * 計算だけで止まって見えるほど遅くなる (52 の docs/99 段 3a の見直しで実測)。
+   */
+  exprWork: 20_000_000,
   /** カーソルと Measurements の数。 */
   cursors: 2,
   measures: 8,
@@ -32,6 +38,8 @@ export const LIMITS = {
   /** 電圧と周波数の上の端。 */
   voltsMax: 1e6,
   frequencyMax: 1e9,
+  /** gain の倍率 (単位が無いので桁の手がかりが無い。桁あふれの Infinity を断る)。 */
+  gainMax: 1e6,
   /** `data:` の行の数とファイルの大きさ。 */
   dataRows: 100001,
   /**

@@ -1,6 +1,7 @@
 import { periodOf, sampleWave } from 'fence-kit';
 import type { WaveSpec } from 'fence-kit';
 import { LIMITS } from '../limits.ts';
+import { exprNodes } from './expr.ts';
 import type { Expr } from './expr.ts';
 import { evaluateExpr } from './exprEval.ts';
 import { applyOps, tauOf } from './ops.ts';
@@ -45,6 +46,24 @@ export function warmupOf(channels: readonly ChannelSpec[]): number {
   const periods = channels.flatMap((channel) =>
     (channel.source.kind === 'wave' ? [periodOf(channel.source.wave) ?? 0] : []));
   return 10 * tau + Math.max(0, ...periods);
+}
+
+/** 助走を上限で切った、実際に標本化する点の数 (`samplesOf` と同じ数え方)。 */
+export function lengthOf(channels: readonly ChannelSpec[], screen: Screen): number {
+  const wanted = Math.ceil(warmupOf(channels) / screen.dt);
+  return Math.min(wanted, LIMITS.warmupSamples) + screen.samples;
+}
+
+/**
+ * 式の計算量の見積もり (点の数 × 式の節の数の合計)。**式を持つ ch と Math だけ数える** —
+ * 波と操作だけの ch は `warmupSamples` の上限がそのまま守る。長い τ (助走) と長い式
+ * (`min(ch1,ch1,…)` のような多い引数) が重なると点ごとの計算が積もって遅くなるので、
+ * 実際に標本化する前にここで見積もって断る (52 の docs/99 段 3a の見直し)。
+ */
+export function exprWorkOf(channels: readonly ChannelSpec[], math: Expr | null, screen: Screen): number {
+  const nodes = channels.reduce((sum, channel) => sum + (channel.source.kind === 'expr' ? exprNodes(channel.source.expr) : 0), 0)
+    + (math === null ? 0 : exprNodes(math));
+  return nodes === 0 ? 0 : nodes * lengthOf(channels, screen);
 }
 
 /** ∫ (frac(u) < duty ? 1 : 0) du の原始関数。 */

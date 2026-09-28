@@ -1,7 +1,9 @@
 import { formatSeconds, formatVolts } from 'fence-kit';
-import { notice } from './errors.ts';
-import { samplesOf } from './model/channel.ts';
+import { fenceError, notice } from './errors.ts';
+import { LIMITS } from './limits.ts';
+import { exprWorkOf, samplesOf } from './model/channel.ts';
 import type { ChannelSpec, Sampled } from './model/channel.ts';
+import type { Expr } from './model/expr.ts';
 import type { Trace } from './model/readings.ts';
 import { findTrigger } from './model/screen.ts';
 import type { Screen } from './model/screen.ts';
@@ -37,6 +39,18 @@ export function recordOf(screen: Screen, channels: readonly ChannelSpec[]): Scre
   const samples = Math.ceil(wanted / screen.dt / 2) * 2 + 1;
   const span = (samples - 1) * screen.dt;
   return { perDiv: screen.perDiv, span, samples, left: -span / 2, dt: screen.dt };
+}
+
+/**
+ * 式の計算量が上限を越えていないか。**実際に標本化する前に見積もって断る** — 長い τ
+ * (助走を伸ばす) と長い式 (`min(ch1,ch1,…)` のように節を増やす) が重なると、上限の中でも
+ * 1 枚の図の計算だけで止まって見えるほど遅くなる (52 の docs/99 段 3a の見直しで実測)。
+ * 越えていれば描かず、理由を返す (格子は呼ぶ側がそれでも描く)。
+ */
+export function tooHeavy(channels: readonly ChannelSpec[], math: Expr | null, screen: Screen): FenceError | null {
+  return exprWorkOf(channels, math, screen) > LIMITS.exprWork
+    ? fenceError('式の計算量が多すぎるので描けません (τ を短くするか、式や ch の数を減らします)', null)
+    : null;
 }
 
 /** 標本化について言うこと — 助走が足りない、τ が点の間隔より短い、式が計算できない点。 */
@@ -103,10 +117,13 @@ export function idealOf(doc: FenceDocument, display: Screen, trigger: TriggerSpe
   if (channels.length === 0 && doc.math === null) return { traces: [], triggerLevel: null, said: [] };
   const screen = recordOf(display, channels);
   const math = doc.math?.expr ?? null;
+  const heavy = tooHeavy(channels, math, screen);
+  if (heavy !== null) return { traces: [], triggerLevel: null, said: [heavy] };
   // 1 回目はトリガを探すだけ (トリガは ch に掛ける) なので Math は計算しない。
   const first = samplesOf(channels, screen, 0, trigger === null ? math : null);
   const found = trigger === null ? { shift: 0, level: null, said: [] } : triggerOf(first, screen, trigger);
-  const final = trigger === null ? first : samplesOf(channels, screen, found.shift, math);
+  // シフトが 0 で Math も無ければ、1 回目がそのまま最終と同じ (無駄な 2 回目を省く)。
+  const final = trigger === null || (found.shift === 0 && math === null) ? first : samplesOf(channels, screen, found.shift, math);
   return {
     traces: tracesOf(doc, final, screen),
     triggerLevel: found.level,

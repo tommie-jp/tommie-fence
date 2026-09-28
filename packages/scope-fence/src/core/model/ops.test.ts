@@ -22,6 +22,11 @@ describe('applyOps', () => {
     expect(output[1]).toBeCloseTo(3.8, 12);
   });
 
+  test('gain never lets Infinity or NaN through, even with a factor the parser should have refused', () => {
+    const output = applyOps(of([1, 0, -1]), 1, [{ kind: 'gain', factor: Number.POSITIVE_INFINITY }]);
+    expect([...output]).toEqual([0, 0, 0]);
+  });
+
   test('rc follows a step: 1 tau after the edge reaches 63.2 %', () => {
     const dt = 1e-6;
     const n = 1001;

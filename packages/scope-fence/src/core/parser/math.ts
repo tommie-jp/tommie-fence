@@ -124,6 +124,11 @@ export function readMath(pair: Pair, context: MathContext): { readonly math: Mat
   if (written.text === null || written.text.trim() === '') {
     return { math: null, errors: [fenceError(`math: には式を 1 行で書きます (${EXAMPLE})`, at)] };
   }
+  // 長さは `parseExpr` も断るが、それより前に `screenText` が全体を正規表現で走る
+  // (書き手の綴りが長いほど重くなる)。先にここで切って、あとの見立てを軽くする。
+  if ([...written.text].length > LIMITS.exprLength) {
+    return { math: null, errors: [fenceError(`式は ${LIMITS.exprLength} 字までです`, at)] };
+  }
   const screened = screenText(written.text, context, at);
   if (screened !== null) return { math: null, errors: [screened] };
   const scale = scaleOf(written, errors);

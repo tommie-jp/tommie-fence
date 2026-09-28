@@ -74,7 +74,13 @@ function parseOp(text: string): LineResult<Op> {
       if (first === undefined || !isBareNumber(first) || words.length > 2) {
         return fail('gain は 0.5 / 2 / -1 のように倍率 (単位なし) で書きます', first ?? 'gain');
       }
-      return ok({ kind: 'gain', factor: Number(first) });
+      const factor = Number(first);
+      // 桁が大きすぎる綴り (`999…9`) は Number() で Infinity になる。断らずに通すと
+      // NaN / Infinity の線になる (描画側で中央に落ちるだけで、書き手には理由が分からない)。
+      if (!Number.isFinite(factor) || Math.abs(factor) > LIMITS.gainMax) {
+        return fail(`gain の倍率は ±${LIMITS.gainMax} までです`, first);
+      }
+      return ok({ kind: 'gain', factor });
     }
     case 'abs':
       return words.length > 1 ? fail('abs の後ろには何も書きません', first) : ok({ kind: 'abs' });

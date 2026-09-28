@@ -55,7 +55,12 @@ function applyOne(input: Float64Array, dt: number, op: Op): Float64Array {
       for (let index = 0; index < input.length; index += 1) output[index] = (input[index] ?? 0) + op.volts;
       return output;
     case 'gain':
-      for (let index = 0; index < input.length; index += 1) output[index] = (input[index] ?? 0) * op.factor;
+      // 桁あふれで factor か入力が Infinity / NaN になっても、線は 0 に落として通す
+      // (呼ぶ側まで NaN / Infinity を運ばない。断るのは読みの側の役目)。
+      for (let index = 0; index < input.length; index += 1) {
+        const value = (input[index] ?? 0) * op.factor;
+        output[index] = Number.isFinite(value) ? value : 0;
+      }
       return output;
     case 'abs':
       for (let index = 0; index < input.length; index += 1) output[index] = Math.abs(input[index] ?? 0);

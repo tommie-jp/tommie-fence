@@ -104,3 +104,31 @@ describe('renderScope — expressions', () => {
     expect(renderScope(source).readingLines.find((line) => line.startsWith('CH1'))).toMatch(/1\.00 MV$/);
   });
 });
+
+describe('renderScope — 式の計算量の上限', () => {
+  // 長い τ (助走が上限に張り付く) と、48 引数の min (200 字の中で節を増やせる上限) が
+  // 重なると、1 枚の図の計算だけで秒単位まで遅くなった (52 の docs/99 段 3a の見直しで実測)。
+  const many = `min(${Array(48).fill('ch1').join(',')})`;
+  const heavy = [
+    'ch1: sine 1kHz 1V | rc 1s | rc 1s | rc 1s | rc 1s | rc 1s | rc 1s | rc 1s | rc 1s',
+    `ch2: = ${many}`,
+    `ch3: = ${many}`,
+    `ch4: = ${many}`,
+    `math: ${many}`,
+  ].join('\n');
+
+  test('refuses to draw a fence whose expressions would be too heavy to compute, quickly', () => {
+    const start = performance.now();
+    const result = renderScope(heavy);
+    expect(performance.now() - start).toBeLessThan(500);
+    expect(result.errors.map((error) => error.message)).toContain('式の計算量が多すぎるので描けません (τ を短くするか、式や ch の数を減らします)');
+    expect(result.svg).toContain('<rect');
+    expect(result.svg).not.toContain('data-channel="ch2"');
+  });
+
+  test('a whole document of many such fences stays well under a second per fence', () => {
+    const start = performance.now();
+    for (let index = 0; index < 20; index += 1) renderScope(heavy);
+    expect(performance.now() - start).toBeLessThan(2000);
+  });
+});
