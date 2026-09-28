@@ -4,7 +4,7 @@ import { LIMITS } from '../limits.ts';
 import { exprNodes } from './expr.ts';
 import type { Expr } from './expr.ts';
 import { evaluateExpr } from './exprEval.ts';
-import { applyOps, tauOf } from './ops.ts';
+import { applyOps, delayOf, needsPeriod, tauOf } from './ops.ts';
 import type { Op } from './ops.ts';
 import type { Screen } from './screen.ts';
 
@@ -35,17 +35,24 @@ export type ChannelSpec = {
   readonly line: number | null;
 };
 
+/** 一番長い波の周期 (s)。周期のある波が無ければ 0。 */
+export function longestPeriodOf(channels: readonly ChannelSpec[]): number {
+  const periods = channels.flatMap((channel) =>
+    (channel.source.kind === 'wave' ? [periodOf(channel.source.wave) ?? 0] : []));
+  return Math.max(0, ...periods);
+}
+
 /**
- * 助走の長さ (s)。**10 τ (全部の rc の τ の和) + 一番長い周期** — 定常に入ってから
- * 画面に入る (5-1 の「毎回ほぼ 0 V まで戻る」がそのまま出る)。5 τ では始めの状態の
- * 違いが e^−5 ≈ 0.7 % 残り、読み値の 3 桁目が動く (正弦 + rc で実測)。
+ * 助走の長さ (s)。**10 τ (全部の rc・hp・peak の τ の和) + 一番長い周期 + delay の和** — 定常に
+ * 入ってから画面に入る (5-1 の「毎回ほぼ 0 V まで戻る」がそのまま出る)。5 τ では始めの状態の
+ * 違いが e^−5 ≈ 0.7 % 残り、読み値の 3 桁目が動く (正弦 + rc で実測)。integrate は τ が
+ * 無くても 1 周期を助走に取る (その 1 周期の平均で積分の定数を決める)。delay だけなら、ずらす分だけ。
  */
 export function warmupOf(channels: readonly ChannelSpec[]): number {
   const tau = channels.reduce((sum, channel) => sum + tauOf(channel.ops), 0);
-  if (tau === 0) return 0;
-  const periods = channels.flatMap((channel) =>
-    (channel.source.kind === 'wave' ? [periodOf(channel.source.wave) ?? 0] : []));
-  return 10 * tau + Math.max(0, ...periods);
+  const delay = channels.reduce((sum, channel) => sum + delayOf(channel.ops), 0);
+  if (!channels.some((channel) => needsPeriod(channel.ops))) return delay;
+  return 10 * tau + longestPeriodOf(channels) + delay;
 }
 
 /** 助走を上限で切った、実際に標本化する点の数 (`samplesOf` と同じ数え方)。 */
@@ -143,10 +150,11 @@ export function samplesOf(channels: readonly ChannelSpec[], screen: Screen, shif
   const extended = new Map<TraceName, Float64Array>();
   const invalid = new Map<TraceName, number>();
   const clipped = new Map<TraceName, number>();
+  const period = longestPeriodOf(channels);
   const put = (name: TraceName, input: Input, ops: readonly Op[]): void => {
     if (input.invalid > 0) invalid.set(name, input.invalid);
     if (input.clipped > 0) clipped.set(name, input.clipped);
-    extended.set(name, applyOps(input.values, screen.dt, ops));
+    extended.set(name, applyOps(input.values, screen.dt, ops, { warmup, period }));
   };
   for (const channel of channels) put(channel.name, inputOf(channel.source, grid, extended), channel.ops);
   if (math !== null) put('math', inputOf({ kind: 'expr', expr: math }, grid, extended), []);

@@ -151,3 +151,32 @@ describe('peak — the capacitor-input rectifier (full-wave bridge, 5 V peak, Vf
   });
 });
 
+
+describe('samplesOf — stage 3b operations', () => {
+  test('integrate turns a symmetric square into a triangle of Vpp = V·T/(2τ), centred on 0', () => {
+    const screen = screenOf(0.2e-3, 8192);
+    const { samples } = samplesOf([ch('ch1', 'square 1kHz 1V'), ch('ch2', 'ch1', [{ kind: 'integrate', tau: 1e-3 }])], screen, 0);
+    const out = samples.get('ch2') ?? new Float64Array();
+    const dt = screen.dt;
+    // V = 1 V (振幅)、T = 1 ms、τ = 1 ms → 0.5 V。
+    expect(measure('vpp', out, dt)).toBeCloseTo(0.5, 3);
+    expect(measure('avg', out, dt)).toBeCloseTo(0, 3);
+  });
+
+  test('delay 250us puts a 1 kHz sine 90° behind, and invert 180°', () => {
+    const screen = screenOf(0.2e-3, 8192);
+    const { samples } = samplesOf([
+      ch('ch1', 'sine 1kHz 1V'),
+      ch('ch2', 'ch1', [{ kind: 'delay', seconds: 250e-6 }]),
+      ch('ch3', 'ch1', [{ kind: 'invert' }]),
+    ], screen, 0);
+    const ref = samples.get('ch1') ?? new Float64Array();
+    expect(measure('phase', samples.get('ch2') ?? new Float64Array(), screen.dt, ref)).toBeCloseTo(-90, 1);
+    expect(measure('phase', samples.get('ch3') ?? new Float64Array(), screen.dt, ref)).toBeCloseTo(180, 1);
+  });
+
+  test('warms up by the delay, and by a period for integrate even without a tau', () => {
+    expect(warmupOf([ch('ch1', 'sine 1kHz 1V', [{ kind: 'delay', seconds: 250e-6 }])])).toBeCloseTo(250e-6, 12);
+    expect(warmupOf([ch('ch1', 'sine 1kHz 1V', [{ kind: 'integrate', tau: 1 }])])).toBeCloseTo(1e-3, 12);
+  });
+});

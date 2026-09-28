@@ -40,6 +40,8 @@ export const LIMITS = {
   frequencyMax: 1e9,
   /** gain の倍率 (単位が無いので桁の手がかりが無い。桁あふれの Infinity を断る)。 */
   gainMax: 1e6,
+  /** delay の上限 (s)。一番遅い time/div (60 s/div) の画面 10 目盛ぶん。 */
+  delayMax: 600,
   /** `data:` の行の数とファイルの大きさ。 */
   dataRows: 100001,
   /**

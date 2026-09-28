@@ -102,7 +102,7 @@ export function readingsOf(input: {
     ['CH', ...measures.map((name) => HEADINGS[name])],
     ...traces.map((trace) => [label(trace.name), ...measures.map((name) => (name === 'phase' && trace === reference
       ? DASH
-      : formatMeasure(name, measure(name, trace.samples, trace.dt, reference?.samples), trace.unit)))]),
+      : formatMeasure(name, measure(name, trace.samples, trace.dt, reference?.samples, reference?.dt), trace.unit)))]),
   ];
   const measured = traces.filter((trace) => trace.basis === 'data');
   const basis = measured.length === 0 ? 'model' : measured.length === traces.length ? 'data' : 'mixed';

@@ -31,6 +31,17 @@ describe('parseChannelLine', () => {
     expect(parseChannelLine('ch2', '= ch1 * 2', ['ch1']).ok).toBe(true);
   });
 
+  test('reads hp, integrate, delay and invert (stage 3b)', () => {
+    const read = parseChannelLine('ch2', 'ch1 | hp 1ms | integrate 2ms | delay 250us | delay 0 | invert', ['ch1']);
+    expect(read.ok && read.value.ops).toEqual([
+      { kind: 'hp', tau: 1e-3 },
+      { kind: 'integrate', tau: 2e-3 },
+      { kind: 'delay', seconds: 250e-6 },
+      { kind: 'delay', seconds: 0 },
+      { kind: 'invert' },
+    ]);
+  });
+
   test('passes on the default it filled in', () => {
     const pulse = parseChannelLine('ch1', 'pulse 1kHz 1V', []);
     expect(pulse.ok && pulse.value.assumed).toEqual(['pulse の duty は既定の 25% で描いています']);
@@ -47,8 +58,8 @@ describe('parseChannelLine', () => {
     ['ch1', 'ch2 | rc 1ms', [], 'ch1 は波で書きます (前に参照できる ch がありません。例: ch1: sine 1kHz 1V)', 'ch2'],
     ['ch2', 'ch3', ['ch1'], 'ch2 が参照できるのは前の ch1 だけです', 'ch3'],
     ['ch2', 'ch5', ['ch1'], 'ch は ch1〜ch4 です', 'ch5'],
-    ['ch2', 'ch1 | lowpass 1ms', ['ch1'], '操作は rc / peak / clip / offset / gain / abs のどれかです', 'lowpass'],
-    ['ch2', 'ch1 | rc 1', ['ch1'], 'rc は τ を 1ms / 200us のように書きます (例: rc 1ms)', '1'],
+    ['ch2', 'ch1 | lowpass 1ms', ['ch1'], '操作は rc / hp / peak / integrate / delay / clip / offset / gain / abs / invert のどれかです', 'lowpass'],
+    ['ch2', 'ch1 | rc 1', ['ch1'], 'rc の τ は単位を付けます (例: rc 1ms)', '1'],
     ['ch2', 'ch1 | clip 0.7V -0.7V', ['ch1'], 'clip は下の値を先に書きます (例: clip -0.7V 0.7V)', '0.7V'],
     ['ch2', 'ch1 | clip 0.7', ['ch1'], 'clip は「clip -0.7V 0.7V」(両側) か「clip 0V」(下だけ) の形で書きます', '0.7'],
     ['ch2', 'ch1 | offset 4.3', ['ch1'], 'offset は 4.3V / -0.7V のように単位を付けます', '4.3'],
@@ -59,7 +70,15 @@ describe('parseChannelLine', () => {
     ['ch2', 'ch1 || abs', ['ch1'], '| の後ろに操作を書きます (例: ch1 | rc 1ms)', '|'],
     ['ch1', '= 5 * exp(-t/1ms)', [], 'ch1 の式は電圧 (V) にします (いまは 無次元。5V * … のように単位を付けます)', '='],
     ['ch2', '= ch3 * 2', ['ch1'], 'ch3 は参照できません (参照できるのは ch1)', 'ch3'],
-    ['ch2', 'ch1 | peak 150', ['ch1'], 'peak は τ を 150ms のように書きます (例: peak 150ms)', '150'],
+    ['ch2', 'ch1 | peak 150', ['ch1'], 'peak の τ は単位を付けます (例: peak 150ms)', '150'],
+    ['ch2', 'ch1 | hp 0', ['ch1'], 'hp は τ を 1ms / 200us のように書きます (例: hp 1ms)', '0'],
+    ['ch2', 'ch1 | integrate', ['ch1'], 'integrate は τ を 1ms / 200us のように書きます (例: integrate 1ms)', 'integrate'],
+    ['ch2', 'ch1 | integrate 1ms 2ms', ['ch1'], 'integrate は τ を 1ms / 200us のように書きます (例: integrate 1ms)', '2ms'],
+    ['ch2', 'ch1 | delay 250', ['ch1'], 'delay は 250us / 1ms のように単位を付けます (例: delay 250us)', '250'],
+    ['ch2', 'ch1 | delay', ['ch1'], 'delay はずらす時間を 250us / 1ms のように書きます (例: delay 250us)', 'delay'],
+    ['ch2', 'ch1 | delay -1ms', ['ch1'], 'delay は 0 以上です (遅らせるだけ。進めるなら trigger: か phase で)', '-1ms'],
+    ['ch2', 'ch1 | delay 1000s', ['ch1'], 'delay は 600s までです', '1000s'],
+    ['ch2', 'ch1 | invert 2', ['ch1'], 'invert の後ろには何も書きません', '2'],
     ['ch1', 'sine 2GHz 1V', [], '周波数は 1 GHz までです', '2GHz'],
     ['ch1', 'dc 2000kV', [], '電圧は ±1 MV までです', '2000kV'],
   ])('%s: %s is refused with how to write it', (name, text, before, message, token) => {

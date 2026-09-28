@@ -9,7 +9,8 @@ import { extentOf } from './screen.ts';
  * - freq / period は上向きの横切りの間隔の平均。**1 周期に満たなければ null** (`—`)
  * - avg / rms / duty は**整数の周期**の中で測る (画面の端の半端な周期で偏らない)。
  *   周期が見えなければ画面全体
- * - phase は reference (ch1) の横切りからの遅れ / 周期 × 360 ((−180, 180]。負は遅れ。±180° は 180°)
+ * - phase は reference (ch1) の横切りからの遅れ / 周期 × 360 ((−180, 180]。負は遅れ。±180° は 180°)。
+ *   **周期が基準と 2 % 以上違えば null** (周波数の違う波の位相差は無意味)
  * - rise は 10〜90 % の立ち上がり時間
  */
 export const MEASURE_NAMES = ['vpp', 'vmax', 'vmin', 'avg', 'rms', 'freq', 'period', 'duty', 'phase', 'rise'] as const;
@@ -105,9 +106,16 @@ function meanOver(samples: Samples, [from, to]: readonly [number, number], f: (v
 /** (−0.5, 0.5] に畳む。 */
 const wrap = (cycles: number): number => cycles - Math.ceil(cycles - 0.5);
 
-function phaseOf(shape: Shape, reference: Samples): number | null {
+/**
+ * 周期が基準とこれ以上違えば phase を出さない (比)。**周波数の違う波どうしの位相差には
+ * 意味が無い** — 2f で振れる瞬時電力 (Math = v × i) に角度を出すと、読み手は遅れと読む。
+ */
+const PHASE_PERIOD_TOLERANCE = 0.02;
+
+function phaseOf(shape: Shape, reference: Samples, dt: number, referenceDt: number): number | null {
   const other = shapeOf(reference);
-  if (shape.period === null || other === null || other.rising.length === 0 || shape.rising.length === 0) return null;
+  if (shape.period === null || other === null || other.period === null || other.rising.length === 0 || shape.rising.length === 0) return null;
+  if (Math.abs((shape.period * dt) / (other.period * referenceDt) - 1) > PHASE_PERIOD_TOLERANCE) return null;
   const period = shape.period;
   const offsets = shape.rising.map((own) => other.rising
     .map((ref) => wrap((own - ref) / period))
@@ -152,10 +160,10 @@ function riseOf(samples: Samples, shape: Shape): number | null {
 }
 
 /**
- * 点の列から 1 つ測る。`dt` は点の間隔 (s)、`reference` は phase の基準 (ch1)。
- * **測れなければ null** (読み値の帯には `—`)。
+ * 点の列から 1 つ測る。`dt` は点の間隔 (s)、`reference` は phase の基準 (ch1)、`referenceDt` はその間隔。
+ * **測れなければ null** (読み値の帯には `—`)。phase は周期が基準と違えば null。
  */
-export function measure(name: MeasureName, samples: Samples, dt: number, reference?: Samples): number | null {
+export function measure(name: MeasureName, samples: Samples, dt: number, reference?: Samples, referenceDt = dt): number | null {
   const shape = shapeOf(samples);
   if (shape === null) return null;
   switch (name) {
@@ -176,7 +184,7 @@ export function measure(name: MeasureName, samples: Samples, dt: number, referen
     case 'duty':
       return shape.period === null ? null : meanOver(samples, windowOf(shape, samples.length), (value) => (value > shape.level ? 1 : 0));
     case 'phase':
-      return reference === undefined ? null : phaseOf(shape, reference);
+      return reference === undefined ? null : phaseOf(shape, reference, dt, referenceDt);
     case 'rise': {
       const rise = riseOf(samples, shape);
       return rise === null ? null : rise * dt;

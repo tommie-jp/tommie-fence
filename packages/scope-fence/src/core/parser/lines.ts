@@ -38,52 +38,92 @@ const plainVolts = (text: string | undefined): number | null => {
   return read !== null && read.kind === 'peak' ? read.volts : null;
 };
 
+/** τ 1 つを取る操作 (`rc 1ms` `hp 1ms` `peak 150ms` `integrate 1ms`)。 */
+const TAU_EXAMPLE = { rc: '1ms', hp: '1ms', peak: '150ms', integrate: '1ms' } as const;
+
+function tauOp(kind: keyof typeof TAU_EXAMPLE, words: readonly string[]): LineResult<Op> {
+  const [, first] = words;
+  const tau = first === undefined ? null : parseSeconds(first);
+  if (tau === null || tau <= 0 || words.length > 2) {
+    const hint = first !== undefined && isBareNumber(first) && Number(first) !== 0 ? `${kind} の τ は単位を付けます` : `${kind} は τ を 1ms / 200us のように書きます`;
+    return fail(`${hint} (例: ${kind} ${TAU_EXAMPLE[kind]})`, words[words.length > 2 ? 2 : 1] ?? kind);
+  }
+  return ok({ kind, tau });
+}
+
+/** `delay 250us`。**0 以上** (先へ進める = 未来の値は計算できない)。 */
+function delayOp(words: readonly string[]): LineResult<Op> {
+  const [, first] = words;
+  const seconds = first === undefined ? null : parseSeconds(first);
+  if (seconds === null || words.length > 2) {
+    const hint = first !== undefined && isBareNumber(first) && Number(first) !== 0 ? 'delay は 250us / 1ms のように単位を付けます' : 'delay はずらす時間を 250us / 1ms のように書きます';
+    return fail(`${hint} (例: delay 250us)`, words[words.length > 2 ? 2 : 1] ?? 'delay');
+  }
+  if (seconds < 0) return fail('delay は 0 以上です (遅らせるだけ。進めるなら trigger: か phase で)', first);
+  if (seconds > LIMITS.delayMax) return fail(`delay は ${LIMITS.delayMax}s までです`, first);
+  return ok({ kind: 'delay', seconds });
+}
+
+function clipOp(words: readonly string[]): LineResult<Op> {
+  const [, first, second] = words;
+  const low = plainVolts(first);
+  const high = second === undefined ? null : plainVolts(second);
+  if (low === null || (second !== undefined && high === null) || words.length > 3) {
+    return fail(CLIP_HINT, (low === null ? first : second) ?? 'clip');
+  }
+  if (high !== null && high <= low) return fail('clip は下の値を先に書きます (例: clip -0.7V 0.7V)', first);
+  return ok({ kind: 'clip', low, high });
+}
+
+function offsetOp(words: readonly string[]): LineResult<Op> {
+  const [, first] = words;
+  const volts = plainVolts(first);
+  if (volts === null || words.length > 2) {
+    return fail(first !== undefined && isBareNumber(first) ? 'offset は 4.3V / -0.7V のように単位を付けます' : 'offset は 4.3V / -0.7V のように書きます', first ?? 'offset');
+  }
+  return ok({ kind: 'offset', volts });
+}
+
+function gainOp(words: readonly string[]): LineResult<Op> {
+  const [, first] = words;
+  // 倍率は単位の無い量 — 素の数を受ける唯一の所 (dB と紛れないよう dB は断る)。
+  if (first === undefined || !isBareNumber(first) || words.length > 2) {
+    return fail('gain は 0.5 / 2 / -1 のように倍率 (単位なし) で書きます', first ?? 'gain');
+  }
+  const factor = Number(first);
+  // 桁が大きすぎる綴り (`999…9`) は Number() で Infinity になる。断らずに通すと
+  // NaN / Infinity の線になる (描画側で中央に落ちるだけで、書き手には理由が分からない)。
+  if (!Number.isFinite(factor) || Math.abs(factor) > LIMITS.gainMax) {
+    return fail(`gain の倍率は ±${LIMITS.gainMax} までです`, first);
+  }
+  return ok({ kind: 'gain', factor });
+}
+
+/** 後ろに何も取らない操作 (`abs` `invert`)。 */
+const bareOp = (kind: 'abs' | 'invert', words: readonly string[]): LineResult<Op> =>
+  (words.length > 1 ? fail(`${kind} の後ろには何も書きません`, words[1]) : ok({ kind }));
+
 function parseOp(text: string): LineResult<Op> {
   const words = wordsOf(text);
-  const [name, first, second] = words;
+  const [name] = words;
   if (name === undefined) return fail('| の後ろに操作を書きます (例: ch1 | rc 1ms)', '|');
   switch (name) {
-    case 'rc': {
-      const tau = first === undefined ? null : parseSeconds(first);
-      if (tau === null || tau <= 0 || words.length > 2) return fail('rc は τ を 1ms / 200us のように書きます (例: rc 1ms)', words[words.length > 2 ? 2 : 1] ?? 'rc');
-      return ok({ kind: 'rc', tau });
-    }
-    case 'peak': {
-      const tau = first === undefined ? null : parseSeconds(first);
-      if (tau === null || tau <= 0 || words.length > 2) return fail('peak は τ を 150ms のように書きます (例: peak 150ms)', words[words.length > 2 ? 2 : 1] ?? 'peak');
-      return ok({ kind: 'peak', tau });
-    }
-    case 'clip': {
-      const low = plainVolts(first);
-      const high = second === undefined ? null : plainVolts(second);
-      if (low === null || (second !== undefined && high === null) || words.length > 3) {
-        return fail(CLIP_HINT, (low === null ? first : second) ?? 'clip');
-      }
-      if (high !== null && high <= low) return fail('clip は下の値を先に書きます (例: clip -0.7V 0.7V)', first);
-      return ok({ kind: 'clip', low, high });
-    }
-    case 'offset': {
-      const volts = plainVolts(first);
-      if (volts === null || words.length > 2) {
-        return fail(first !== undefined && isBareNumber(first) ? 'offset は 4.3V / -0.7V のように単位を付けます' : 'offset は 4.3V / -0.7V のように書きます', first ?? 'offset');
-      }
-      return ok({ kind: 'offset', volts });
-    }
-    case 'gain': {
-      // 倍率は単位の無い量 — 素の数を受ける唯一の所 (dB と紛れないよう dB は断る)。
-      if (first === undefined || !isBareNumber(first) || words.length > 2) {
-        return fail('gain は 0.5 / 2 / -1 のように倍率 (単位なし) で書きます', first ?? 'gain');
-      }
-      const factor = Number(first);
-      // 桁が大きすぎる綴り (`999…9`) は Number() で Infinity になる。断らずに通すと
-      // NaN / Infinity の線になる (描画側で中央に落ちるだけで、書き手には理由が分からない)。
-      if (!Number.isFinite(factor) || Math.abs(factor) > LIMITS.gainMax) {
-        return fail(`gain の倍率は ±${LIMITS.gainMax} までです`, first);
-      }
-      return ok({ kind: 'gain', factor });
-    }
+    case 'rc':
+    case 'hp':
+    case 'peak':
+    case 'integrate':
+      return tauOp(name, words);
+    case 'delay':
+      return delayOp(words);
+    case 'clip':
+      return clipOp(words);
+    case 'offset':
+      return offsetOp(words);
+    case 'gain':
+      return gainOp(words);
     case 'abs':
-      return words.length > 1 ? fail('abs の後ろには何も書きません', first) : ok({ kind: 'abs' });
+    case 'invert':
+      return bareOp(name, words);
     default:
       return fail(OP_HINT, name);
   }

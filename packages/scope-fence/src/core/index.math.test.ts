@@ -132,3 +132,19 @@ describe('renderScope — 式の計算量の上限', () => {
     expect(performance.now() - start).toBeLessThan(2000);
   });
 });
+
+describe('renderScope — phase of a trace at another frequency', () => {
+  const EXAMPLE = [
+    'time: 200us/div',
+    'trigger: ch1 rising 0V',
+    'ch1: sine 1kHz 1V',
+    'ch2: sine 1kHz 500mV phase -30deg',
+    'math: {expr: ch1 * ch2 / 10, unit: W, range: 10mW/div, position: -2div}',
+    'measure: [vpp, avg, phase]',
+  ].join('\n');
+
+  test('04-power: MATH (v × i at 2f) shows — for phase, CH2 still reads -30°', () => {
+    expect(row(EXAMPLE, 'MATH')).toMatch(/—$/);
+    expect(row(EXAMPLE, 'CH2')).toMatch(/-30\.0°$/);
+  });
+});
