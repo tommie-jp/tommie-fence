@@ -108,10 +108,12 @@ EOF
   # 焼き方の差で変わるだけの PNG は戻す。一覧にある PNG (刻印が見える図) だけ残す
   keep=()
   [ -f "$KEEP_PNG_LIST" ] && mapfile -t keep < <(grep -v '^\s*\(#\|$\)' "$KEEP_PNG_LIST")
-  while IFS= read -r f; do
+  # 一覧を先に読み切ってから戻す (読みながら checkout すると index.lock がぶつかる)
+  mapfile -t changed < <(git diff --name-only -- '*.png')
+  for f in "${changed[@]}"; do
     case " ${keep[*]-} " in *" $f "*) continue ;; esac
     git checkout -q -- "$f"
-  done < <(git diff --name-only -- '*.png')
+  done
   # 新しく増えた図は残す (untracked のまま add される)
 
   echo "==> 試験"
