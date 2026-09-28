@@ -157,8 +157,13 @@ wait_release() {  # タグの release.yml が終わるまで待つ
 latest=""
 for tag in "${tags[@]}"; do
   echo "==> タグ $tag"
-  git tag "$tag"
-  git push -q origin "refs/tags/$tag"   # 1 本ずつ (4 本以上まとめると release.yml が動かない)
+  # 途中で止まったあとの再実行: 既に出したタグは飛ばし、Release の完了だけ待つ
+  if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+    echo "    既に push 済み"
+  else
+    git rev-parse -q --verify "refs/tags/$tag" >/dev/null || git tag "$tag"
+    git push -q origin "refs/tags/$tag"   # 1 本ずつ (4 本以上まとめると release.yml が動かない)
+  fi
   wait_release "$tag"
   case "$tag" in tommie-fence-v*) latest="$tag" ;; esac
 done
