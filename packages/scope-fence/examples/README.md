@@ -18,6 +18,7 @@
 | [05-xy.md](05-xy.md) | リサージュ (AD 2-5) — `view: xy` と `xy: ch1 ch2` |
 | [06-diode.md](06-diode.md) | ダイオードの V–I (AD 2-13) — ch の行の式 (`= …`) を XY で |
 | [07-notes.md](07-notes.md) | 注釈 (電験 5-1) — `notes:` の `text` `band` `mark`、微分 `hp`・積分 `integrate`・`delay` |
+| [08-trigger-lc.md](08-trigger-lc.md) | トリガの位置 (電験 3-1) と 2 次の低域 (電験 10-3) — `trigger: … at -5div` で正の半周期、`lc` でチョッパのリップル |
 
 00-rc-charging の図 04 は `data:` で CSV を重ねる。`00-rc-charging-ch.csv` は
 `node scripts/fakeData.mjs` が**計算で**書く (実測ではない)。
