@@ -73,7 +73,11 @@ const MONO: Palette = {
   halo: '#ffffff',
 };
 
-const METRICS: Metrics = { textSize: 10, smallSize: 8.5 };
+/**
+ * 字の大きさ。**図を等倍で見て本文と同じくらい** (12 px。scope と同じ) — 幅 400 px の枠を
+ * 縮めずに貼るので、字を小さくすると読めない。凡例・目盛・名札・読み値は同じ大きさ。
+ */
+const METRICS: Metrics = { textSize: 12, smallSize: 12 };
 
 export const THEMES: Record<ThemeName, Theme> = {
   light: { palette: LIGHT, metrics: METRICS },
