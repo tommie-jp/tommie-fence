@@ -270,3 +270,42 @@ style:
 
 可変コンデンサも板に挿さず線でつなぐので、実体配線図では `type: device` の
 機器として書く。
+
+## アンテナとイヤホン
+
+`antenna` は棒の上に逆三角の 1 端子の記号。`port` と同じく **ID が記号の横に出て、
+乗っているネットの名前にもなる**。上に立つのが記号の意味なので、向きは書けない。
+`earphone` はイヤホンで、circuitikz にイヤホンの記号が無いので、ブザーと同じく
+スピーカーの記号を借りている。下はゲルマラジオで、アンテナで受けた電波を
+L1 と VC1 の同調回路で選び、D1 で検波してイヤホンで聞く。
+
+```circuit
+title: 図05 アンテナからイヤホンまでのゲルマラジオ
+parts:
+  ANT: antenna a1
+  L1: inductor a3 c3 330u
+  VC1: capacitor-var a5 c5 l=$\mathrm{VC}_1$
+  D1: diode a7 a9 1N60
+  C1: capacitor a11 c11 1n
+  R1: resistor a13 c13 100k
+  EAR: earphone a15 c15 l=$\mathrm{EAR}$
+  G1: ground c3
+  G2: ground c5
+  G3: ground c11
+  G4: ground c13
+  G5: ground c15
+wires:
+  - a1 -- a7
+  - a9 -- a15
+style:
+  grid: on
+```
+
+![図05 アンテナからイヤホンまでのゲルマラジオ](out/02-parts-5.png)
+
+イヤホンの ID `EAR` は、先頭 1 文字が本体・残りが添字の決まりで E の添字 AR に
+組まれる。`l=` で字を差し替える。クリスタルイヤホンの容量 (約 15 nF) や
+インピーダンスは値に書かず、本文や表に書く。
+
+アンテナもイヤホンも板に挿さず線でつなぐので、実体配線図では `type: device` の
+機器として書く。

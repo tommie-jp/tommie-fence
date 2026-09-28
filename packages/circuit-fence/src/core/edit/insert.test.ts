@@ -193,6 +193,9 @@ describe('nextPartId', () => {
     expect(nextPartId(RC, 'vcc')).toBe('VCC');
     expect(nextPartId(RC, 'vee')).toBe('VEE');
     expect(nextPartId(RC.replace('parts:', 'parts:\n  IN: port a1'), 'port')).toBe('IN2');
+    // アンテナも別々の信号なので、port と同じく番号を足す。
+    expect(nextPartId(RC, 'antenna')).toBe('ANT');
+    expect(nextPartId(RC.replace('parts:', 'parts:\n  ANT: antenna a1'), 'antenna')).toBe('ANT2');
     // VCC はどこにあっても同じ節点なので、2 つ目も VCC。
     expect(nextPartId(RC.replace('parts:', 'parts:\n  VCC: vcc a1'), 'vcc')).toBe('VCC');
   });

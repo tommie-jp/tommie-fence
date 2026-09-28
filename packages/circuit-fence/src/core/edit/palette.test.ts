@@ -31,6 +31,12 @@ describe('renderPalette', () => {
     expect(PALETTE).toContain('data-find="resistor r 抵抗"');
   });
 
+  test('finds the radio parts by the words the textbook uses', () => {
+    // 教科書は「アンテナ」「クリスタルイヤホン」と書く。和名の括弧の中も引ける。
+    expect(PALETTE).toContain('data-find="antenna アンテナ"');
+    expect(PALETTE).toContain('data-find="earphone イヤホン (クリスタルイヤホン)"');
+  });
+
   test('folds away, so the grid keeps the full width of a narrow panel', () => {
     expect(PALETTE).toContain('<details class="cf-palette">');
     expect(PALETTE).toContain('<summary>部品を置く</summary>');

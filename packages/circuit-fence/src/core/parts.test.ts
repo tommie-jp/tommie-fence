@@ -31,6 +31,30 @@ describe('PART_TYPES', () => {
     expect(lookupPartType('ground')?.kind).toBe('one-terminal');
   });
 
+  test('stands the antenna on one terminal and names its net with the ID, as a port does', () => {
+    // ラジオの図は port (外へ出す端子) でアンテナを代用していた。アンテナは回路の一部。
+    const antenna = lookupPartType('antenna');
+
+    expect(antenna?.kind).toBe('one-terminal');
+    expect(antenna?.symbol).toBe('antenna');
+    expect(antenna?.idLabel).toBe('beside');
+    // 上に立つのが記号の意味なので、回すのも裏返すのも断る (vcc / vee と同じ)。
+    expect(orientOf(antenna!).rotate).toBe(false);
+    expect(orientOf(antenna!).mirror).toBe(false);
+    expect(PART_PREFIXES.antenna).toBeNull();
+  });
+
+  test('draws the earphone with the loudspeaker symbol, as the buzzer does', () => {
+    // circuitikz 1.0 にイヤホンの記号は無い。音を出す仲間のスピーカーの記号を借りる。
+    const earphone = lookupPartType('earphone');
+
+    expect(earphone?.kind).toBe('two-terminal');
+    expect(earphone?.symbol).toBe(lookupPartType('buzzer')?.symbol);
+    expect(earphone?.unitTex).toBeNull();
+    // 教科書の図がみな EAR で書いている。
+    expect(PART_PREFIXES.earphone).toBe('EAR');
+  });
+
   test('gives a unit only where the value has one', () => {
     expect(lookupPartType('resistor')?.unitTex).toBe('\\Omega');
     expect(lookupPartType('inductor')?.unitTex).toBe('\\mathrm{H}');

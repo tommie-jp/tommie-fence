@@ -218,14 +218,17 @@ export function insertPart(source: string, spec: NewPart): RewriteResult {
  * ID がそのままネットの名前になる種類の、既定の名前。**どれも `namesNet`** なので、
  * 同じ名前を何度でも置ける (`VCC` は何か所にあっても同じ節点)。
  */
-const NET_NAMES: Readonly<Record<string, string>> = { port: 'IN', vcc: 'VCC', vee: 'VEE' };
+const NET_NAMES: Readonly<Record<string, string>> = { port: 'IN', antenna: 'ANT', vcc: 'VCC', vee: 'VEE' };
+
+/** 別々の信号が普通なので、使われていれば番号を足す種類 (`IN` → `IN2`)。 */
+const NUMBERED_NET_NAMES: ReadonlySet<string> = new Set(['port', 'antenna']);
 
 /**
  * 置く部品に付ける ID。**接頭辞ごとに最小の未使用番号** (`P1` が lamp なら
  * potentiometer は `P2`。docs の例がそう書いている)。
  *
  * `null` を返すのは**種類を知らないとき**だけ (読めない行があっても名前は出す)。
- * ID がそのままネットの名前になる種類 (`port` / `vcc` / `vee`) は
+ * ID がそのままネットの名前になる種類 (`port` / `antenna` / `vcc` / `vee`) は
  * **既定の名前で置く** (KiCad が `#PWR?` で置いてから直させるのと同じ)。
  */
 export function nextPartId(source: string, type: string): string | null {
@@ -241,9 +244,9 @@ export function nextPartId(source: string, type: string): string | null {
   const named = Object.hasOwn(NET_NAMES, type) ? NET_NAMES[type] : undefined;
   if (named !== undefined) {
     // **既定の名前で置く** (置く流れを窓で止めない。名前は欄で直す)。
-    // `VCC` / `VEE` は何か所にあっても同じ節点なのでそのまま。`port` は
-    // 別々の信号が普通なので、使われていれば番号を足す (`IN` → `IN2`)。
-    if (type !== 'port') return named;
+    // `VCC` / `VEE` は何か所にあっても同じ節点なのでそのまま。`port` と
+    // `antenna` は別々の信号が普通なので、使われていれば番号を足す (`IN` → `IN2`)。
+    if (!NUMBERED_NET_NAMES.has(type)) return named;
     if (!used.has(named)) return named;
     for (let number = 2; number <= LIMITS.parts + 1; number += 1) {
       if (!used.has(`${named}${number}`)) return `${named}${number}`;

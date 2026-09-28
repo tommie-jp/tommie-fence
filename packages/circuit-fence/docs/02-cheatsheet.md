@@ -85,12 +85,12 @@ parts:
 - 開閉・出力・計器 `switch` `switch-nc` `button` `button-nc` `reed` `fuse` `motor` `tline` (伝送線路。値は Z0)
   `lamp` `speaker` `mic` `short` `ammeter` `voltmeter` `ohmmeter` `wattmeter`
   `galvanometer` `detector`
-- 1 端子 `port` `ground` `vcc` `vee`
+- 1 端子 `port` `antenna` `ground` `vcc` `vee`
 - 能動 `npn` `pnp` `nigbt` `pigbt` `nmos` `pmos` `njfet` `pjfet`
   `nmos-e` `pmos-e` `nmos-d` `pmos-d` `opamp` `transformer` `phototransistor`
 - 論理 `and` `or` `nand` `nor` `xor` `xnor` `not` `buffer` `spdt` `slide-switch`
   `dip4` `dip6` `dip8` `dip14` `dip16` `dip18` `dip20` `dip24` `dip28` `dip40`
-- ブザー `buzzer` (スピーカーの記号で描く)
+- ブザー・イヤホン `buzzer` `earphone` (スピーカーの記号で描く)
 - SMA コネクタ `sma` (足は `1` 中心導体 / `2` 外皮)
 - 三端子レギュレータ `regulator` (足は `in` `gnd` `out`。番号でも可)
 - 3 本足の IC `ic3` (同じ箱。足は `1` `2` `3`、マップ形式の `pins:` で名前を付けられる)

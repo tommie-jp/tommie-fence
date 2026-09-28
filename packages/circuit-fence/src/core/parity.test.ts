@@ -58,7 +58,10 @@ describe('実体配線図と同じ綴りで書けること', () => {
       // 計器。回路に挿す物ではなく、当てて測る物。
       'ammeter', 'voltmeter', 'ohmmeter', 'wattmeter', 'galvanometer', 'detector',
       // 記法。図の上の印であって、挿す物が無い。
-      'short', 'port', 'ground', 'vcc', 'vee',
+      'short', 'port',
+      // アンテナは線を垂らすだけで板に挿さない。板では `device` で書く。
+      'antenna',
+      'ground', 'vcc', 'vee',
       // 個別半導体。板は総称の `transistor` 1 つで持ち、姿 (TO-92 / TO-220) で分ける。
       'npn', 'pnp', 'nmos', 'pmos', 'njfet', 'pjfet',
       'nmos-e', 'pmos-e', 'nmos-d', 'pmos-d',
@@ -68,6 +71,8 @@ describe('実体配線図と同じ綴りで書けること', () => {
       // 切り替えスイッチ。物としてはスライドスイッチと同じ。
       'spdt',
       'and', 'or', 'nand', 'nor', 'xor', 'xnor', 'not', 'buffer',
+      // イヤホンはプラグかリード線で、板に挿さない。板では `device` で書く。
+      'earphone',
     ]);
   });
 

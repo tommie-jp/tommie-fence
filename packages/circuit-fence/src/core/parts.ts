@@ -832,6 +832,12 @@ export const PART_TYPES = {
 
   // 記号
   port: { kind: 'one-terminal', symbol: 'ocirc', idLabel: 'beside', ...NO_UNIT },
+  /**
+   * アンテナ。棒の上に逆三角。**名前は端子と同じく記号の横に出て、ネットの名前になる**
+   * (ラジオの図は port で代用していて、ANT のネットで数えていた)。上に立つのが
+   * 記号の意味なので、向きは書けない (vcc / vee と同じ)。
+   */
+  antenna: { kind: 'one-terminal', symbol: 'antenna', idLabel: 'beside', ...NO_UNIT },
   ground: { kind: 'one-terminal', symbol: 'ground', ...NO_UNIT, orient: TURN_ONLY },
   /**
    * 電源レール。名前は記号そのものの文字として出る。
@@ -941,6 +947,12 @@ export const PART_TYPES = {
    * (実機で確かめた)。**別の部品の記号を使っていることは文法リファレンスに書く。**
    */
   buzzer: { kind: 'two-terminal', symbol: 'loudspeaker', ...NO_UNIT },
+  /**
+   * イヤホン (クリスタル・セラミック型もダイナミック型も記号は同じ)。**circuitikz 1.0 に
+   * イヤホンの記号は無い**ので、ブザーと同じくスピーカーの記号を借りる。
+   * 借りていることは文法リファレンスに書く。
+   */
+  earphone: { kind: 'two-terminal', symbol: 'loudspeaker', ...NO_UNIT },
 
   /**
    * 同軸コネクタ (SMA)。**記号はこの拡張が宣言する** (`tex/shapes.ts`) —
@@ -1080,6 +1092,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   detector: '検出器 (交流ブリッジ)',
   short: '素の線 (記号なし)',
   port: '端子 (白丸 + 名前)',
+  antenna: 'アンテナ',
   ground: 'グラウンド',
   vcc: '電源レール (上向きの矢印 + 名前)',
   vee: '電源レール (下向きの矢印 + 名前)',
@@ -1130,6 +1143,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   regulator: '三端子レギュレータ',
   ic3: '3 本足の IC',
   buzzer: 'ブザー',
+  earphone: 'イヤホン (クリスタルイヤホン)',
   sma: 'SMA コネクタ',
   // 実体配線図の 2 つと同じ字。
   'usb-a': 'USB Type-A コネクタ',
@@ -1202,6 +1216,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   detector: 'D',
   short: 'SH',
   port: null,
+  antenna: null,
   ground: 'G',
   vcc: null,
   vee: null,
@@ -1252,6 +1267,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   regulator: 'U',
   ic3: 'U',
   buzzer: 'B',
+  earphone: 'EAR',
   sma: 'J',
   'usb-a': 'J',
   'usb-c': 'J',

@@ -139,6 +139,17 @@ describe('glyphOf', () => {
     expect(drawGlyph('supply-up')).not.toBe(drawGlyph('supply-down'));
   });
 
+  test('draws the antenna as a mast under a closed triangle, not as the supply arrow', () => {
+    // 図は棒の上に逆三角。電源レールの矢と取り違えない形にする。
+    expect(glyphOf('antenna').name).toBe('antenna');
+    expect(drawGlyph('antenna')).not.toBe(drawGlyph('supply-up'));
+    expect(drawGlyph('antenna')).toContain('Z');
+  });
+
+  test('draws the earphone with the speaker shape the figure borrows', () => {
+    expect(glyphOf('earphone').name).toBe('speaker');
+  });
+
   test('draws the parts the figure boxes as boxes, not as a zigzag', () => {
     // サーミスタとバリスタは IEC の箱、感光は箱に光の矢。抵抗だけが折れ線。
     expect(glyphOf('thermistor').name).toBe('resistor-iec');

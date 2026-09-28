@@ -37,6 +37,13 @@ const RC_LOWPASS = [
 ];
 
 describe('generateTex', () => {
+  test('stands the antenna on its address and writes its name beside it, as a port', () => {
+    const { tex } = generate('parts:', '  ANT: antenna a1', '  EAR: earphone a3 c3');
+
+    expect(tex).toContain('\\draw (a1) node[antenna]{} node[above left]{ANT}; % line 2');
+    expect(tex).toContain('to[loudspeaker, l_=$E_{AR}$] (c3); % line 3');
+  });
+
   test('writes the RC low pass exactly', () => {
     expect(generate(...RC_LOWPASS).tex).toBe(
       [

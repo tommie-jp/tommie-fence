@@ -30,7 +30,7 @@ export type GlyphName =
   | 'bjt' | 'bjt-p' | 'fet' | 'fet-p' | 'fet-e' | 'fet-e-p' | 'fet-d' | 'fet-d-p'
   | 'jfet' | 'jfet-p' | 'igbt' | 'igbt-p' | 'opamp'
   | 'and' | 'and-inv' | 'or' | 'or-inv' | 'xor' | 'xor-inv' | 'buffer' | 'buffer-inv'
-  | 'ground' | 'port' | 'supply-up' | 'supply-down' | 'short' | 'box';
+  | 'ground' | 'port' | 'antenna' | 'supply-up' | 'supply-down' | 'short' | 'box';
 
 /** 記号に添える字。**下に出すもの**は品種の名前 (`NTC`)、そうでなければ中に入る。 */
 export type Mark = { readonly text: string; readonly below?: boolean };
@@ -63,7 +63,7 @@ const SHAPES: Record<string, GlyphName> = {
   // 同軸コネクタ。**図と同じ丸と中心導体**にする (実機で頼まれた)。
   sma: 'coax',
   // ブザーは図がスピーカーの記号で描く (circuitikz にブザーの記号が無い)。
-  buzzer: 'speaker',
+  buzzer: 'speaker', earphone: 'speaker',
   // スライドスイッチは図が切り替えスイッチと同じ記号。
   'slide-switch': 'spdt',
   npn: 'bjt', pnp: 'bjt-p',
@@ -76,7 +76,7 @@ const SHAPES: Record<string, GlyphName> = {
   or: 'or', nor: 'or-inv',
   xor: 'xor', xnor: 'xor-inv',
   buffer: 'buffer', not: 'buffer-inv',
-  ground: 'ground', port: 'port',
+  ground: 'ground', port: 'port', antenna: 'antenna',
   // **電源レールは矢印**で、上下がその記号の意味 (だから回すのを断っている)。
   vcc: 'supply-up', vee: 'supply-down', short: 'short',
 };
@@ -360,6 +360,8 @@ const SHAPE: Record<GlyphName, () => string> = {
   ground: () => path('M0,-6 L0,0 M-8,0 L8,0 M-5,4 L5,4 M-2,8 L2,8'),
   port: () => circle(4, 'cf-glyph cf-glyph-open'),
   'supply-up': () => path('M0,8 L0,-8 M0,-8 L-4,-3 M0,-8 L4,-3'),
+  // アンテナ。棒の上に逆三角 (電源レールの矢と取り違えない、閉じた形)。
+  antenna: () => path('M0,8 L0,-2 M-6,-8 L6,-8 L0,-2 Z'),
   'supply-down': () => path('M0,-8 L0,8 M0,8 L-4,3 M0,8 L4,3'),
   // 線だけ (`short` は記号を持たない)。
   short: () => '',
@@ -399,7 +401,7 @@ const SPAN: Record<GlyphName, number> = {
   // 棒が丸を突き抜けて出てくる (実機で見つけた)。
   and: 9, 'and-inv': 14, or: 9, 'or-inv': 14, xor: 9, 'xor-inv': 14,
   buffer: 8, 'buffer-inv': 13,
-  ground: 8, port: 4, 'supply-up': 8, 'supply-down': 8,
+  ground: 8, port: 4, antenna: 8, 'supply-up': 8, 'supply-down': 8,
   // 線そのものなので切らない。切ると何も残らない。
   short: 0,
   box: 13,
@@ -461,7 +463,7 @@ const TALL: Record<GlyphName, number> = {
   bjt: 9, 'bjt-p': 9, fet: 9, 'fet-p': 9, 'fet-e': 9, 'fet-e-p': 9, 'fet-d': 9, 'fet-d-p': 9,
   jfet: 9, 'jfet-p': 9, igbt: 9, 'igbt-p': 9, opamp: 9,
   and: 9, 'and-inv': 9, or: 9, 'or-inv': 9, xor: 9, 'xor-inv': 9, buffer: 9, 'buffer-inv': 9,
-  ground: 8, port: 4, 'supply-up': 8, 'supply-down': 8,
+  ground: 8, port: 4, antenna: 8, 'supply-up': 8, 'supply-down': 8,
   // 線そのもの。張り出さない。
   short: 0,
   // 箱は足の本数で伸びるので、呼ぶ側が測る (`reachOf`)。
@@ -500,7 +502,7 @@ const LEG_GAP: Record<GlyphName, number> = {
   bjt: 12, 'bjt-p': 12, fet: 12, 'fet-p': 12,
   'fet-e': 12, 'fet-e-p': 12, 'fet-d': 12, 'fet-d-p': 12,
   jfet: 12, 'jfet-p': 12, igbt: 12, 'igbt-p': 12, buffer: 12, 'buffer-inv': 12,
-  ground: 12, port: 12, 'supply-up': 12, 'supply-down': 12, short: 12,
+  ground: 12, port: 12, antenna: 12, 'supply-up': 12, 'supply-down': 12, short: 12,
 };
 
 export const legGap = (name: GlyphName): number => LEG_GAP[name];
