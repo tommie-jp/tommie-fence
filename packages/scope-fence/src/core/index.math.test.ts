@@ -81,4 +81,8 @@ describe('renderScope — expressions', () => {
   test('says the time/div it picked when no channel is a wave', () => {
     expect(said('trigger: ch1 rising\nch1: = 1V * step(t)')).toContain('time: が無いので 1ms/div (周期のある波が無いので既定) で描いています');
   });
+
+  test('does not also say the default time/div when time: was written but did not read', () => {
+    expect(said('time: 1ms\ntrigger: ch1 rising\nch1: sine 1kHz 1V')).toEqual(['time: は 1ms/div / 200us/div のように /div を付けます']);
+  });
 });

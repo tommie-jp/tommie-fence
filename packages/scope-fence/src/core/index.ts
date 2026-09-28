@@ -136,7 +136,8 @@ function timeOf(doc: FenceDocument, measured: Measured): { readonly perDiv: numb
   const perDiv = fromRecord && measured.extent !== null
     ? Math.min(LIMITS.perDiv.max, Math.max(LIMITS.perDiv.min, niceStep125((measured.extent[1] - measured.extent[0]) / DIVISIONS.x)))
     : autoTimePerDiv(channels);
-  if (channels.length === 0 && !fromRecord) return { perDiv, said: [] };
+  // 書いたが読めなかった time: は読みのほうで言った。既定の言い直しは重ねない。
+  if ((channels.length === 0 && !fromRecord) || doc.keys.includes('time')) return { perDiv, said: [] };
   const periodic = channels.some((channel) => channel.source.kind === 'wave' && channel.source.wave.frequency !== null);
   const why = fromRecord ? '記録の幅から' : periodic ? '一番遅い波の 2 周期' : '周期のある波が無いので既定';
   return { perDiv, said: [notice(`time: が無いので ${formatPerDiv(perDiv, 's')} (${why}) で描いています`, null)] };
