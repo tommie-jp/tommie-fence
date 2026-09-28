@@ -120,13 +120,29 @@ parts:
 | `not` / `buffer` | `in` / `out` |
 | `spdt` | `in` (`c`) / `1` `2` |
 | `slide-switch` | 同上 (記号も同じ) |
-| `dipNN` | `1` 〜 足の本数 |
+| `dipNN` | `1` 〜 足の本数。型番が下の表にあれば印字の名前でも (`U1.TRIG` = `U1.2`) |
 | `device` | `pins:` に書いた名前 (`1` 〜 本数でも可) |
 | `relay` | `A1` `A2` / `COM1` `NC1` `NO1` / `COM2` `NC2` `NO2` |
 | `photocoupler` | `A` `K` / `C` `E` |
 | `seg7` | `a` 〜 `g` `dp` `COM1` `COM2` |
 | `potentiometer` | `w` |
 | `thyristor` / `triac` | `g` |
+
+**DIP の足の名前の表** (型番を書くと箱の中に `1 GND` `VCC 8` のように名前と番号が出る。
+大文字小文字は問わないが、綴りは完全一致。ネットリストは名前で出る)。
+表に無い型番は番号だけで描き、お知らせが出る。2 本以上に刷られた名前 (`NC`) は番号で指す。
+
+| 型番 (別名) | 種類 | 足の名前 (1 番から) |
+| --- | --- | --- |
+| `NE555` (`NE555P` `SA555` `SE555` …) | `dip8` | `GND` `TRIG` `OUT` `RESET` `CONT` `THRES` `DISCH` `VCC` |
+| `TLC555` (`TLC555CP` `TLC555IP`) | `dip8` | `GND` `TRIG` `OUT` `RESET` `CONT` `THRES` `DISCH` `VDD` |
+| `LM358` (`LM358P` `LM358N` `LM2904` `LM258` …) | `dip8` | `OUT1` `IN1-` `IN1+` `V-` `IN2+` `IN2-` `OUT2` `V+` |
+| `TL071` (`TL071CP` …) | `dip8` | `NC` `IN-` `IN+` `VCC-` `NC` `OUT` `VCC+` `NC` |
+| `TL072` (`TL072CP` …) | `dip8` | `1OUT` `1IN-` `1IN+` `VCC-` `2IN+` `2IN-` `2OUT` `VCC+` |
+| `CD4017B` (`CD4017` `CD4017BE`) | `dip16` | `Q5` `Q1` `Q0` `Q2` `Q6` `Q7` `Q3` `VSS` `Q8` `Q4` `Q9` `CO` `INH` `CLOCK` `RESET` `VDD` |
+| `CD4040B` (`CD4040` `CD4040BE`) | `dip16` | `Q12` `Q6` `Q5` `Q7` `Q4` `Q3` `Q2` `VSS` `Q1` `CLOCK` `R` `Q9` `Q8` `Q10` `Q11` `VDD` |
+| `CD4069UB` (`CD4069` `CD4069UBE`) | `dip14` | `A` `G` `B` `H` `C` `I` `VSS` `J` `D` `K` `E` `L` `F` `VDD` |
+| `CD4071B` `CD4081B` `CD4011B` `CD4001B` (`B` / `BE` 無しも) | `dip14` | `A` `B` `J` `K` `C` `D` `VSS` `E` `F` `L` `M` `G` `H` `VDD` |
 
 ## 配線 (`wires:`)
 

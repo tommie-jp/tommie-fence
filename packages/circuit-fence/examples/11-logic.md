@@ -60,20 +60,21 @@ style:
 
 `dip8` `dip14` `dip16` `dip20` `dip28` `dip40` があり、足は**番号で指す**
 (`U1.1`)。型番は箱の**下**に出る (箱の中は足の番号で埋まる。寝かせた
-`r90` / `r270` の箱では中に入る)。
+`r90` / `r270` の箱では中に入る)。**型番が足の名前の表にあれば** (`NE555` など)、
+箱の中に名前と番号が出て、名前でも指せる (`U1.GND` = `U1.1`)。
 
 ```circuit
 title: 図02 DIP の IC
 parts:
-  U1: dip8 c2 NE555
+  U1: dip8 c3 NE555
 wires:
-  - a1 |- U1.1
-  - e1 |- U1.4
-  - U1.5 -| e4
-  - U1.8 -| a4
+  - a1 |- U1.GND
+  - e1 |- U1.RESET
+  - U1.CONT -| e5
+  - U1.VCC -| a5
 notes:
-  - text f1 blue: "U1: dip8 c2 NE555"
-  - source a6 blue
+  - text f1 blue: "U1: dip8 c3 NE555"
+  - source a7 blue
 style:
   grid: on
   pitch: 1
@@ -82,7 +83,7 @@ style:
 ![図02 DIP の IC](out/11-logic-2.png)
 
 足の番号は DIP の実物と同じで、左上が 1、左を下りて、右下から上がって戻る
-(8 ピンなら左が 1〜4、右が 5〜8)。
+(8 ピンなら左が 1〜4、右が 5〜8)。名前は番号の内側に並ぶ (`1 GND` / `VCC 8`)。
 
 ## 切り替えスイッチ
 

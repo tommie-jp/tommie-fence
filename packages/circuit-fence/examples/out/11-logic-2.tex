@@ -5,47 +5,56 @@
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\foreach \x in {0,1,2,3} {\foreach \y in {0,-1,-2,-3,-4} {\fill[gray, opacity=0.35] (\x,\y) circle (0.55pt);}}
+\foreach \x in {0,1,2,3,4} {\foreach \y in {0,-1,-2,-3,-4} {\fill[gray, opacity=0.35] (\x,\y) circle (0.55pt);}}
 \node[gray, font=\scriptsize] at (0,0.42) {1};
 \node[gray, font=\scriptsize] at (1,0.42) {2};
 \node[gray, font=\scriptsize] at (2,0.42) {3};
 \node[gray, font=\scriptsize] at (3,0.42) {4};
+\node[gray, font=\scriptsize] at (4,0.42) {5};
 \node[gray, font=\scriptsize, anchor=east] at (-0.42,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.42,-1) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.42,-2) {c};
 \node[gray, font=\scriptsize, anchor=east] at (-0.42,-3) {d};
 \node[gray, font=\scriptsize, anchor=east] at (-0.42,-4) {e};
-\coordinate (c2) at (1,-2);
+\coordinate (c3) at (2,-2);
 \coordinate (a1) at (0,0);
 \coordinate (e1) at (0,-4);
-\coordinate (e4) at (3,-4);
-\coordinate (a4) at (3,0);
-\node[dipchip, num pins=8, font=\scriptsize] (part-U1) at (c2) {}; % line 3
+\coordinate (e5) at (4,-4);
+\coordinate (a5) at (4,0);
+\node[dipchip, num pins=8, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5] (part-U1) at (c3) {}; % line 3
 \node[font=\scriptsize, anchor=north] at (part-U1.south) {$\mathrm{NE555}$}; % line 3
 \node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 3
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 3
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 3
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 3) {X}; % line 3
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 4) {X}; % line 3
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 5) {X}; % line 3
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 6) {X}; % line 3
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 7) {X}; % line 3
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 8) {X}; % line 3
 \draw (a1) |- (part-U1.pin 1); % line 5
 \draw (e1) |- (part-U1.pin 4); % line 6
-\draw (part-U1.pin 5) -| (e4); % line 7
-\draw (part-U1.pin 8) -| (a4); % line 8
+\draw (part-U1.pin 5) -| (e5); % line 7
+\draw (part-U1.pin 8) -| (a5); % line 8
 \path (0,-5.593) rectangle (4.318,-4.407); % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-5) {X}; % line 10
-\path (5,-7.895) rectangle (14.711,0.593); % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,0) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-0.487) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-0.974) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-1.46) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-1.947) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-2.434) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-2.921) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-3.408) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-3.895) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-4.381) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-4.868) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-5.355) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-5.842) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-6.329) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-6.816) {X}; % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (5,-7.302) {X}; % line 11
+\path (6,-7.895) rectangle (15.711,0.593); % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,0) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-0.487) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-0.974) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-1.46) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-1.947) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-2.434) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-2.921) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-3.408) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-3.895) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-4.381) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-4.868) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-5.355) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-5.842) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-6.329) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-6.816) {X}; % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-7.302) {X}; % line 11
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(7.071,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at (current bounding box.south east) {X};

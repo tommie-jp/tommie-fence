@@ -788,11 +788,12 @@ describe('足のある 2 端子部品', () => {
 
 describe('DIP の IC', () => {
   test('writes the pin count into the symbol and the part number under it', () => {
-    const { tex } = generate('parts:', '  U1: dip8 c2 NE555', 'wires:', '  - U1.1 |- a1');
+    // 足の名前の表に無い型番 (表にある型番は dipPinNames.test.ts)。
+    const { tex } = generate('parts:', '  U1: dip8 c2 LM386', 'wires:', '  - U1.1 |- a1');
 
     // 立てた箱の中は足の番号で埋まるので、型番は下の外 (labelOverlap.test.ts)。
     expect(tex).toContain('\\node[dipchip, num pins=8, font=\\scriptsize] (part-U1) at (c2) {}; % line 2');
-    expect(tex).toContain('\\node[font=\\scriptsize, anchor=north] at (part-U1.south) {$\\mathrm{NE555}$}; % line 2');
+    expect(tex).toContain('\\node[font=\\scriptsize, anchor=north] at (part-U1.south) {$\\mathrm{LM386}$}; % line 2');
     expect(tex).toContain('\\draw (part-U1.pin 1) |- (a1); % line 4');
   });
 
@@ -1260,10 +1261,10 @@ describe('向き', () => {
     });
 
     test('lifts it out to an upright node once the box is turned', () => {
-      const { tex } = generate('parts:', '  U1: dip8 c3 r90 NE555');
+      const { tex } = generate('parts:', '  U1: dip8 c3 r90 LM386');
 
       expect(tex).toContain('\\node[dipchip, num pins=8, font=\\scriptsize, rotate=-90] (part-U1) at (c3) {};');
-      expect(tex).toContain('at (part-U1.center) {$\\mathrm{NE555}$};');
+      expect(tex).toContain('at (part-U1.center) {$\\mathrm{LM386}$};');
     });
   });
 

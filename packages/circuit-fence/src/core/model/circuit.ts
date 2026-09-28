@@ -1,7 +1,7 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { addressHint, cornerOf, formatAddress, isNearlyZero, isSameAddress, parseAddress } from './address.ts';
-import { partTypeOf, lookupPin, orientOf, pinAxis, pinHint, pinRefName } from '../parts.ts';
+import { partTypeOf, lookupPin, orientOf, pinAxis, pinHint, pinRefName, unnamedDip } from '../parts.ts';
 import type { Address } from './address.ts';
 import { NO_POINTS } from '../parser/compact.ts';
 import type { Points } from '../parser/compact.ts';
@@ -143,8 +143,26 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
   return {
     circuit,
     errors,
-    notices: checking ? ambiguousTouches(circuit, byId) : [],
+    // 足の名前を補えなかった DIP は `check: off` でも言う — 検査ではなく、
+    // 何で描いたか (番号) の知らせ (文法の方針 2)。
+    notices: [...parts.flatMap(unnamedDipNotice), ...(checking ? ambiguousTouches(circuit, byId) : [])],
   };
+}
+
+/**
+ * 型番が足の名前の表に無い DIP のお知らせ (52 の docs/95 の決め 3)。**エラーには
+ * しない** — 表に無い IC も番号で描ければ試せる。直し方は 2 つ (表に足す・`device`)。
+ */
+function unnamedDipNotice(part: PartSpec): FenceError[] {
+  const unnamed = unnamedDip(part);
+  if (unnamed === null) return [];
+  const known = unnamed.known.length === 0
+    ? `${part.type} の型番は表にありません`
+    : `${part.type} で表にあるのは ${unnamed.known.join(' / ')}`;
+  return [fenceError(
+    `${part.id} の型番 ${safeToken(unnamed.model)} の足の名前は表に無いので、番号で描きました (${known}。表に無い IC の足に名前を出すなら device で pins: を書きます)`,
+    part.line,
+  )];
 }
 
 /**

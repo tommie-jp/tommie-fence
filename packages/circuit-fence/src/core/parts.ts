@@ -1,4 +1,4 @@
-import { lookupBoardPart, lookupConnector, lookupNamedChip } from 'fence-kit';
+import { lookupBoardPart, lookupConnector, lookupNamedChip, lookupPinout, pinoutModels } from 'fence-kit';
 import { OPTO_SHAPE, RELAY_SHAPE, REGULATOR_SHAPE, SMA_SHAPE, deviceBox, deviceShapeName, usbShapeName } from './tex/shapes.ts';
 import type { BoardPart, NamedChip } from 'fence-kit';
 import { BOXED_RESISTORS } from './standard.ts';
@@ -230,7 +230,8 @@ export type PartType = {
   readonly valueInside?: boolean;
   /**
    * ネットリストと升目に出す足の名前 (アンカー → 名前)。**名前でも DIP の番号でも
-   * 呼べて、図に名前を書かない**種類だけが持つ (リレー・フォトカプラ)。
+   * 呼べて、図に名前を書かない**種類 (リレー・フォトカプラ) と、**同じ名前が 2 本以上に
+   * 刷られた DIP** (TL071 の `NC` は番号で呼ぶ) が持つ。
    * `pins` から引くと、JS が数字めいた鍵を先に並べるので `K1.8` になる。
    */
   readonly pinNames?: Readonly<Record<string, string>>;
@@ -418,6 +419,93 @@ const dipchip = (count: number): PartType => ({
   pins: Object.fromEntries(Array.from({ length: count }, (_, index) => [`${index + 1}`, `pin ${index + 1}`])),
   pinRow: dipSides(count),
 });
+
+/**
+ * 足の名前を刷る DIP (52 の docs/95)。**型番が fence-kit の足の名前の表にあれば**
+ * `partTypeOf` がこちらを返す。形はマイコンボードと同じ道 — circuitikz の番号を
+ * 消し (`hide numbers`)、名前と番号を 1 つの字にして箱の中に差し込む
+ * (`pinLabels` + `pinNumbers`。番号は箱の外側の端)。
+ *
+ * 足は**名前でも番号でも**指せる (`U1.TRIG` = `U1.2`)。**2 本以上に刷られた名前**
+ * (TL071 の `NC`) は、どの足か決まらないので名前では指せない (番号で指す)。
+ * 反転は今の `dipN` と同じく断る — 板が裏返しを断るので、回路図だけ許しても
+ * 実体配線図と突き合わせられない。
+ */
+function namedDip(count: number, names: readonly string[], lying: boolean): PartType {
+  const plain = dipchip(count);
+  const digits = String(count).length;
+  const once = (name: string): boolean => names.filter((other) => other.toLowerCase() === name.toLowerCase()).length === 1;
+  return {
+    ...plain,
+    options: [
+      `num pins=${count}`,
+      'hide numbers',
+      'font=\\scriptsize',
+      // **箱を広げる** (ボードと同じ鍵)。左右の列の字が真ん中でぶつからない幅を、
+      // 一番長い名前と番号の桁から見積もる。
+      `/tikz/circuitikz/multipoles/dipchip/width=${num(dipWidth(names, digits, lying))}`,
+    ],
+    pins: {
+      // **名前を先に置く** — 先に書いたほうが代表の名前になる (`mainPinName`)。
+      ...Object.fromEntries(names.flatMap((name, index) => (once(name) ? withLowerAlias(name, `pin ${index + 1}`) : []))),
+      ...plain.pins,
+    },
+    pinLabels: names,
+    pinNumbers: names.map((_, index) => String(index + 1).padStart(digits, '0')),
+    // ネットリストと升目の呼び名。**2 本以上に刷られた名前は番号で呼ぶ** — `NC` のままだと
+    // TL071 の 1・5・8 番が 1 つの名前に潰れ、升目の線も同じ点に落ちる (レビューで出た)。
+    pinNames: Object.fromEntries(names.map((name, index) => [`pin ${index + 1}`, once(name) ? name : `${index + 1}`])),
+  };
+}
+
+/**
+ * 名前を刷った DIP の箱の幅 (circuitikz の `dipchip/width`)。**左右の列に
+ * 「番号 名前」が 1 つずつ入り、その間が少し空く**だけ取る。広げすぎると足の先が
+ * 隣の番地を越え、その番地から引いた線が箱の中を通る。
+ *
+ * 字の幅は `\tiny` の見積もり (機器の箱と同じ 0.1 cm / 字)。circuitikz は
+ * `width` を 1.2 倍して描く (焼いた SVG で測った: 1.8 → 2.16 cm)。
+ * 既定の DIP (1.2) より狭くはしない。
+ */
+const DIP_NAME_CHAR = 0.1;
+const DIP_NAME_INSET = 0.1;
+const DIP_NAME_GAP = 0.2;
+/**
+ * 寝かせた箱 (`r90` / `r270`) は型番が箱の**中**の真ん中に入る (`valueBelowUpright`)
+ * ので、上下の列の間に型番 1 行ぶんを空ける。空けないと `7 2OUT` と `TL072` が
+ * くっついた (焼いて確かめた)。
+ */
+const DIP_VALUE_GAP = 0.5;
+const DIP_WIDTH_SCALE = 1.2;
+const DIP_MIN_WIDTH = 1.2;
+const dipWidth = (names: readonly string[], digits: number, lying: boolean): number => {
+  const longest = Math.max(0, ...names.map((name) => [...name].length));
+  const column = (digits + 1 + longest) * DIP_NAME_CHAR + DIP_NAME_INSET;
+  const drawn = column * 2 + (lying ? DIP_VALUE_GAP : DIP_NAME_GAP);
+  return Math.max(DIP_MIN_WIDTH, Math.ceil((drawn / DIP_WIDTH_SCALE) * 10 - 1e-9) / 10);
+};
+
+/** 小数を TeX に渡す字 (0.1 刻み)。 */
+const num = (value: number): string => String(Math.round(value * 10) / 10);
+
+/** 種類の名前から DIP の足の本数。DIP でなければ null。 */
+const DIP_TYPE = /^dip(\d+)$/;
+const dipCountOf = (type: string): number | null => {
+  const match = DIP_TYPE.exec(type);
+  return match === null ? null : Number(match[1]);
+};
+
+/**
+ * 型番で足の名前を引けなかった DIP か (お知らせを出す)。**型番を書いていない DIP は
+ * 入らない** — 名前を出す手がかりが無いだけで、補ったものが無い。
+ * 返すのは型番と、その本数で表にある型番。
+ */
+export function unnamedDip(part: PartSpec): { readonly model: string; readonly known: readonly string[] } | null {
+  const count = dipCountOf(part.type);
+  if (count === null || part.kind !== 'multi-terminal' || part.value === null) return null;
+  if (lookupPinout(part.value, count) !== null) return null;
+  return { model: part.value, known: pinoutModels(count) };
+}
 
 /**
  * DIP の足が出る辺。**実物と同じ番号の回り方** — 1 番から半分までが左の辺を
@@ -1346,6 +1434,12 @@ export function partTypeOf(part: PartSpec): PartType | null {
   if (isMapForm(part) && part.type === IC3) return ic3Chip(part.pinNames);
   // 7 セグは箱に型番を刷るので、型番の長さで箱の幅が変わる (機器と同じ)。
   if (part.type === SEG7 && part.kind === 'multi-terminal') return seg7Box(namedChipOf(SEG7), part.value);
+  // DIP は型番が足の名前の表にあれば名前を刷る (52 の docs/95)。無ければ番号だけ。
+  const count = dipCountOf(part.type);
+  const pinout = count === null || part.kind !== 'multi-terminal' ? null : lookupPinout(part.value, count);
+  if (count !== null && pinout !== null) {
+    return namedDip(count, pinout.names, part.kind === 'multi-terminal' && part.turn.rotate % 180 === 90);
+  }
   return lookupPartType(part.type);
 }
 
@@ -1557,9 +1651,16 @@ const LISTED_PINS = 4;
  */
 export function pinHint(type: PartType): string {
   const names = pinNames(type);
-  const numbered = names.length > LISTED_PINS && names.every((name) => /^\d+$/.test(name));
-
-  return numbered ? `1〜${names.length}` : names.join(' / ');
+  const numbers = names.filter((name) => /^\d+$/.test(name));
+  const numbered = numbers.length > LISTED_PINS;
+  if (numbered && numbers.length === names.length) return `1〜${names.length}`;
+  // **名前を刷った DIP** は番号を範囲に畳み、名前は印字の綴りだけを並べる
+  // (小文字の別名まで並べると 2 倍の長さになる)。
+  if (numbered && type.pinNumbers !== undefined && type.pinLabels !== undefined) {
+    const printed = type.pinLabels.filter((label) => names.includes(label));
+    return `1〜${numbers.length} / ${printed.join(' / ')}`;
+  }
+  return names.join(' / ');
 }
 
 /**
