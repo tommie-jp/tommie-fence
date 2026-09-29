@@ -338,3 +338,15 @@ describe('3 本足の名札は足の列の穴を空けておく', () => {
     expect(band.x + band.width).toBeLessThanOrEqual(layout.colX(layout.columns) + layout.pitch / 2);
   });
 });
+
+describe('3 本足を広げて挿すと、胴から足へ線を引く', () => {
+  const lines = (line: string): number => (renderPart(place(line), layout, theme).match(/<line /g) ?? []).length;
+
+  test('隣り合う穴の足には線を引かない', () => {
+    expect(lines('Q1: transistor j17(B) j18(C) j19(E)')).toBe(0);
+  });
+
+  test('離れた穴の B と E には胴から線を引く', () => {
+    expect(lines('Q1: transistor j14(B) j18(C) j22(E)')).toBe(2);
+  });
+});

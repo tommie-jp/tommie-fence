@@ -1,7 +1,7 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart } from '../types.ts';
 import {
-  LEG_NAME_CLEAR, NAME_CAP, NAME_LINE, caption, captionTextWidth, charWidth, fitToBoard, haloWidth, partLabel, pinPoints,
+  LEAD_WIDTH, LEG_NAME_CLEAR, NAME_CAP, NAME_LINE, caption, captionTextWidth, charWidth, fitToBoard, haloWidth, partLabel, pinPoints,
 } from './partCommon.ts';
 import { HOLE_ROWS, RAIL_ROWS } from '../types.ts';
 import type { Point, Rect } from '../types.ts';
@@ -196,6 +196,22 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
   const reach = bodyHalfHeight(part, layout);
   const towardRavine = center.y < layout.ravineY ? 1 : -1;
 
+  // **胴から離れた足は線で胴へつなぐ** (`j14 j18 j22` のように広げて挿したとき)。
+  // 足の四角だけでは、どの穴が胴の足か読めなかった。隣の穴 (1 ピッチ) の足は今までどおり四角だけ。
+  const halfWidth = bodyHalfWidth(part, layout);
+  const leads = points
+    .filter((point) => Math.hypot(point.x - center.x, point.y - center.y) > layout.pitch * 1.5)
+    .map((point) => {
+      const dx = point.x - center.x;
+      const dy = point.y - center.y;
+      const length = Math.hypot(dx, dy);
+      return element('line', {
+        x1: num(center.x + (dx / length) * halfWidth), y1: num(center.y + (dy / length) * halfWidth),
+        x2: num(point.x), y2: num(point.y),
+        stroke: palette.lead, 'stroke-width': LEAD_WIDTH, 'stroke-linecap': 'round',
+      });
+    })
+    .join('');
   const legs = points
     .map((point) =>
       element('rect', { x: num(point.x - 3), y: num(point.y - 3), width: 6, height: 6, fill: palette.chipPin }),
@@ -236,6 +252,6 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
     plate: theme.palette.plate,
     chipBody: theme.palette.chipBody,
   });
-  return `${shell}${legs}${names}${label}`;
+  return `${leads}${shell}${legs}${names}${label}`;
 }
 
