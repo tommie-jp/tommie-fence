@@ -7,6 +7,7 @@
 
 ### Changed
 
+- **束ねる breadboard-fence・perfboard-fence を上げる** — 部品表の IC に働き (`2 入力 AND ×4`) を出す。
 - **束ねる breadboard-fence・perfboard-fence を上げる** — 部品表を名前の順に並べる。
 
 ## [0.26.0] - 2026-09-29

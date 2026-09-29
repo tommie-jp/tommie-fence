@@ -144,6 +144,18 @@ describe('renderPartsList', () => {
     expect(texts(render([device]))).toEqual(['AD2', 'device']);
   });
 
+  test('adds what an IC does after its model, so the list says which chip is which', () => {
+    const svg = render([part('U1', 'dip14', 'CD4081'), part('R1', 'resistor', '330')]);
+
+    expect(texts(svg)).toEqual(['R1', 'resistor', '330', 'U1', 'dip14', 'CD4081', '2 入力 AND ×4']);
+  });
+
+  test('finds the role of a chip whose model is written as its label, as a DIP is placed', () => {
+    const svg = render([part('U1', 'dip14', null, 'CD4071')]);
+
+    expect(texts(svg)).toContain('2 入力 OR ×4');
+  });
+
   test('sorts the rows by name, numbers as numbers', () => {
     // 表から部品を探すので名前の順に並べる (書いた順だと U1 の後に R1 が来て探しにくかった)。
     const svg = render([part('U1', 'dip14', 'CD4081'), part('R10', 'resistor', '1k'), part('R2', 'resistor', '330'), part('A', 'switch')]);

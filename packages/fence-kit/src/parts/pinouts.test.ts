@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { lookupPinout, pinoutModels, pinoutTable } from './pinouts.ts';
+import { lookupPinout, lookupRole, pinoutModels, pinoutTable } from './pinouts.ts';
 
 /**
  * DIP の足の名前の表 (52 の docs/95 の段 1)。**型番で引いて、3 つのフェンスが
@@ -170,3 +170,20 @@ describe('足の名前の表', () => {
 function lookupCount(model: string): number {
   return [8, 14, 16].find((count) => lookupPinout(model, count) !== null) ?? 0;
 }
+
+describe('lookupRole', () => {
+  test('names what the chip does, the way its datasheet title says it', () => {
+    expect(lookupRole('CD4081')).toBe('2 入力 AND ×4');
+    expect(lookupRole('cd4069ube')).toBe('NOT ×6');
+    expect(lookupRole('NE555')).toBe('タイマー');
+  });
+
+  test('says nothing for a model that is not in the table', () => {
+    expect(lookupRole('XYZ123')).toBeNull();
+    expect(lookupRole(null)).toBeNull();
+  });
+
+  test('gives every row of the table a role', () => {
+    for (const row of pinoutTable()) expect(row.role, row.models[0]).not.toBe('');
+  });
+});

@@ -49,6 +49,12 @@ describe('partsListing', () => {
     expect(rows[1]?.[1]).toBe('capacitor/ceramic');
   });
 
+  test('adds what an IC does after its model, so the table says which chip is which', () => {
+    const rows = partsListing([part('U1', 'dip14', 'CD4081')], []);
+
+    expect(rows[1]?.[2]).toBe('CD4081 (2 入力 AND ×4)');
+  });
+
   test('lists the devices off the board — they still have to be bought', () => {
     const rows = partsListing([], [device('BAT', '電池 3V')]);
 

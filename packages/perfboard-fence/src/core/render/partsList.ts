@@ -1,4 +1,4 @@
-import { lookupNamedChip, parseResistor, resistorBands } from 'fence-kit';
+import { lookupNamedChip, lookupRole, parseResistor, resistorBands } from 'fence-kit';
 import { colorValue } from '../color.ts';
 import type { Band } from '../model/layout.ts';
 import type { DeviceSpec } from '../types.ts';
@@ -85,13 +85,22 @@ const kindOf = (type: string, variant: string | null): string =>
  * 読む人が行を見失う (`R1` `R2` は書いた順に置いてあることが多い)。
  * 先頭は見出し — 番号と型番だけが並ぶと、どの欄が値なのかが読めない。
  */
+/**
+ * IC の型番に働きを添える (`CD4081 (2 入力 AND ×4)`)。型番だけだと、どの IC が何をするのか
+ * 表から読めない。足の名前の表 (fence-kit) にある型番だけ。
+ */
+function withRole(value: string): string {
+  const role = value === '' ? null : lookupRole(value);
+  return role === null ? value : `${value} (${role})`;
+}
+
 export function partsListing(
   parts: readonly ListedPart[],
   devices: readonly DeviceSpec[],
 ): readonly PartsRow[] {
   const rows: PartsRow[] = [
     ...parts.map((part): PartsRow =>
-      [part.id, kindOf(part.type, part.variant), part.value ?? lookupNamedChip(part.type, part.variant)?.name ?? '',
+      [part.id, kindOf(part.type, part.variant), withRole(part.value ?? lookupNamedChip(part.type, part.variant)?.name ?? ''),
         bandText(part.type, part.value)]),
     // 機器は種類が 1 つしかないので、名札を値の欄に出す (`電池 3V`)。
     ...devices.map((device): PartsRow => [device.id, 'device', device.label, '']),

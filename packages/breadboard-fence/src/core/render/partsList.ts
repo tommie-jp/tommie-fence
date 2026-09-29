@@ -1,3 +1,4 @@
+import { lookupRole } from 'fence-kit';
 import { LIMITS } from '../limits.ts';
 import { fit, textWidth } from './textFit.ts';
 import type { PlacedPart } from '../types.ts';
@@ -25,7 +26,7 @@ const MIN_COLUMN_WIDTH = 4;
  */
 const MAX_TYPE_WIDTH = 13;
 
-type Row = { readonly id: string; readonly type: string; readonly value: string };
+type Row = { readonly id: string; readonly type: string; readonly value: string; readonly role: string };
 
 /**
  * 値は**図に出ているのと同じ文字列**だけを選ぶ。整えたり (`10k` → `10kΩ`) はしない。
@@ -46,7 +47,14 @@ const typeOf = (part: PlacedPart): string =>
   part.variant === null ? part.type : `${part.type}/${part.variant}`;
 
 const rowsOf = (parts: readonly PlacedPart[]): readonly Row[] =>
-  parts.map((part) => ({ id: part.id, type: typeOf(part), value: valueOf(part) }));
+  parts.map((part) => ({ id: part.id, type: typeOf(part), value: valueOf(part), role: roleOf(part) }));
+
+/**
+ * IC の働き (`2 入力 AND ×4`)。型番だけだと、どの IC が何をするのか表から読めない。
+ * 足の名前の表 (fence-kit) にある型番だけ。機器や表に無い型番は空。
+ */
+const roleOf = (part: PlacedPart): string =>
+  (part.kind === 'device' ? null : lookupRole(valueOf(part))) ?? '';
 
 const widest = (values: readonly string[]): number => Math.max(0, ...values.map(textWidth));
 
@@ -112,6 +120,10 @@ export function renderPartsList(
 
   const valueX = typeX + (typeWidth + COLUMN_GAP) * textSize;
   const valueRoom = room(valueX);
+  const valueWidth = Math.min(widest(rows.map((row) => row.value)), valueRoom);
+
+  const roleX = valueX + (valueWidth + COLUMN_GAP) * textSize;
+  const roleRoom = room(roleX);
 
   const baselineOf = (index: number): number => y + pad + textSize * CAP_RATIO + line * index;
   // 縁取りは図のキャプションと同じものを敷く。`style` の `text-color` は板ではなく
@@ -138,6 +150,9 @@ export function renderPartsList(
       ...(row.value === '' || valueRoom < MIN_COLUMN_WIDTH
         ? []
         : [cell(valueX, baseline, fit(row.value, valueRoom), ink)]),
+      ...(row.role === '' || roleRoom < MIN_COLUMN_WIDTH
+        ? []
+        : [cell(roleX, baseline, fit(row.role, roleRoom), ink)]),
     ];
   });
 

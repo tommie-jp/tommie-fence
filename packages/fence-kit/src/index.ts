@@ -49,7 +49,7 @@ export {
 } from './parts/bodies.ts';
 export { boardPartNames, lookupBoardPart } from './parts/boards.ts';
 export { drawNamedChip, lookupNamedChip, namedChipLooks, namedChipTypes } from './parts/namedChips.ts';
-export { lookupPinout, pinoutModels, pinoutTable } from './parts/pinouts.ts';
+export { lookupPinout, lookupRole, pinoutModels, pinoutTable } from './parts/pinouts.ts';
 export type { Pinout, PinoutRow } from './parts/pinouts.ts';
 export type { NamedChip, NamedChipPin } from './parts/namedChips.ts';
 export {

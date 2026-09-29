@@ -65,6 +65,8 @@ export type PinoutRow = {
   readonly models: readonly string[];
   /** 足の名前 (1 番から順)。本数がパッケージの足の数。 */
   readonly names: readonly string[];
+  /** 働きの名前 (データシートの題の働き: `2 入力 AND ×4`)。部品表に型番と並べて出す。 */
+  readonly role: string;
 };
 
 export type Pinout = {
@@ -85,68 +87,68 @@ const HC_QUAD_GATE = ['1A', '1B', '1Y', '2A', '2B', '2Y', 'GND', '3Y', '3A', '3B
 const TIMER_555 = ['GND', 'TRIG', 'OUT', 'RESET', 'CONT', 'THRES', 'DISCH'];
 
 const ROWS: readonly PinoutRow[] = [
-  { models: ['NE555', 'NE555P', 'SA555', 'SA555P', 'SE555', 'SE555P'], names: [...TIMER_555, 'VCC'] },
-  { models: ['TLC555', 'TLC555CP', 'TLC555IP'], names: [...TIMER_555, 'VDD'] },
+  { models: ['NE555', 'NE555P', 'SA555', 'SA555P', 'SE555', 'SE555P'], role: 'タイマー', names: [...TIMER_555, 'VCC'] },
+  { models: ['TLC555', 'TLC555CP', 'TLC555IP'], role: 'タイマー (CMOS)', names: [...TIMER_555, 'VDD'] },
   {
-    models: ['LM358', 'LM358P', 'LM358N', 'LM358A', 'LM358AP', 'LM358B', 'LM358BP', 'LM2904', 'LM2904P', 'LM258', 'LM258P'],
+    models: ['LM358', 'LM358P', 'LM358N', 'LM358A', 'LM358AP', 'LM358B', 'LM358BP', 'LM2904', 'LM2904P', 'LM258', 'LM258P'], role: 'オペアンプ ×2',
     names: ['OUT1', 'IN1-', 'IN1+', 'V-', 'IN2+', 'IN2-', 'OUT2', 'V+'],
   },
   {
     // P (PDIP) の印字。1・5・8 番は NC (オフセット調整の足があるのは TL071C の PS だけ)。
-    models: ['TL071', 'TL071CP', 'TL071ACP', 'TL071BCP', 'TL071H'],
+    models: ['TL071', 'TL071CP', 'TL071ACP', 'TL071BCP', 'TL071H'], role: 'オペアンプ',
     names: ['NC', 'IN-', 'IN+', 'VCC-', 'NC', 'OUT', 'VCC+', 'NC'],
   },
   {
-    models: ['TL072', 'TL072CP', 'TL072ACP', 'TL072BCP', 'TL072H'],
+    models: ['TL072', 'TL072CP', 'TL072ACP', 'TL072BCP', 'TL072H'], role: 'オペアンプ ×2',
     names: ['1OUT', '1IN-', '1IN+', 'VCC-', '2IN+', '2IN-', '2OUT', 'VCC+'],
   },
   {
-    models: ['CD4017B', 'CD4017', 'CD4017BE'],
+    models: ['CD4017B', 'CD4017', 'CD4017BE'], role: '10 進カウンタ',
     names: ['Q5', 'Q1', 'Q0', 'Q2', 'Q6', 'Q7', 'Q3', 'VSS', 'Q8', 'Q4', 'Q9', 'CO', 'INH', 'CLOCK', 'RESET', 'VDD'],
   },
   {
-    models: ['CD4040B', 'CD4040', 'CD4040BE'],
+    models: ['CD4040B', 'CD4040', 'CD4040BE'], role: '12 段 2 進カウンタ',
     names: ['Q12', 'Q6', 'Q5', 'Q7', 'Q4', 'Q3', 'Q2', 'VSS', 'Q1', 'CLOCK', 'R', 'Q9', 'Q8', 'Q10', 'Q11', 'VDD'],
   },
-  { models: ['CD4069UB', 'CD4069', 'CD4069UBE'], names: HEX_INVERTER },
-  { models: ['CD4071B', 'CD4071', 'CD4071BE'], names: QUAD_GATE },
-  { models: ['CD4081B', 'CD4081', 'CD4081BE'], names: QUAD_GATE },
-  { models: ['CD4011B', 'CD4011', 'CD4011BE'], names: QUAD_GATE },
-  { models: ['CD4001B', 'CD4001', 'CD4001BE'], names: QUAD_GATE },
+  { models: ['CD4069UB', 'CD4069', 'CD4069UBE'], role: 'NOT ×6', names: HEX_INVERTER },
+  { models: ['CD4071B', 'CD4071', 'CD4071BE'], role: '2 入力 OR ×4', names: QUAD_GATE },
+  { models: ['CD4081B', 'CD4081', 'CD4081BE'], role: '2 入力 AND ×4', names: QUAD_GATE },
+  { models: ['CD4011B', 'CD4011', 'CD4011BE'], role: '2 入力 NAND ×4', names: QUAD_GATE },
+  { models: ['CD4001B', 'CD4001', 'CD4001BE'], role: '2 入力 NOR ×4', names: QUAD_GATE },
   {
-    models: ['CD4013B', 'CD4013', 'CD4013BE'],
+    models: ['CD4013B', 'CD4013', 'CD4013BE'], role: 'D フリップフロップ ×2',
     names: ['Q1', '/Q1', 'CLOCK1', 'RESET1', 'D1', 'SET1', 'VSS', 'SET2', 'D2', 'RESET2', 'CLOCK2', '/Q2', 'Q2', 'VDD'],
   },
-  { models: ['CD4070B', 'CD4070', 'CD4070BE'], names: QUAD_GATE },
-  { models: ['CD40106B', 'CD40106', 'CD40106BE'], names: HEX_INVERTER },
+  { models: ['CD4070B', 'CD4070', 'CD4070BE'], role: '2 入力 XOR ×4', names: QUAD_GATE },
+  { models: ['CD40106B', 'CD40106', 'CD40106BE'], role: 'シュミット NOT ×6', names: HEX_INVERTER },
   {
-    models: ['74HC04', 'SN74HC04', 'SN74HC04N'],
+    models: ['74HC04', 'SN74HC04', 'SN74HC04N'], role: 'NOT ×6',
     names: ['1A', '1Y', '2A', '2Y', '3A', '3Y', 'GND', '4Y', '4A', '5Y', '5A', '6Y', '6A', 'VCC'],
   },
-  { models: ['74HC08', 'SN74HC08', 'SN74HC08N'], names: HC_QUAD_GATE },
-  { models: ['74HC32', 'SN74HC32', 'SN74HC32N'], names: HC_QUAD_GATE },
+  { models: ['74HC08', 'SN74HC08', 'SN74HC08N'], role: '2 入力 AND ×4', names: HC_QUAD_GATE },
+  { models: ['74HC32', 'SN74HC32', 'SN74HC32N'], role: '2 入力 OR ×4', names: HC_QUAD_GATE },
   {
     // L293 (ダイオード無し) も同じデータシート・同じ印字。
-    models: ['L293D', 'L293DNE', 'L293', 'L293NE'],
+    models: ['L293D', 'L293DNE', 'L293', 'L293NE'], role: 'ハーフ H ブリッジ ×4',
     names: [
       '12EN', '1A', '1Y', 'GROUND', 'GROUND', '2Y', '2A', 'VCC2', '34EN', '3A', '3Y', 'GROUND', 'GROUND', '4Y', '4A', 'VCC1',
     ],
   },
   {
-    models: ['MCP3008'],
+    models: ['MCP3008'], role: '10 bit A/D 変換 8 ch',
     names: ['CH0', 'CH1', 'CH2', 'CH3', 'CH4', 'CH5', 'CH6', 'CH7', 'DGND', 'CS/SHDN', 'DIN', 'DOUT', 'CLK', 'AGND', 'VREF', 'VDD'],
   },
   {
-    models: ['74HC595', 'SN74HC595', 'SN74HC595N'],
+    models: ['74HC595', 'SN74HC595', 'SN74HC595N'], role: '8 bit シフトレジスタ',
     names: ['QB', 'QC', 'QD', 'QE', 'QF', 'QG', 'QH', 'GND', "QH'", 'SRCLR', 'SRCLK', 'RCLK', 'OE', 'SER', 'QA', 'VCC'],
   },
   {
-    models: ['CD4511B', 'CD4511', 'CD4511BE'],
+    models: ['CD4511B', 'CD4511', 'CD4511BE'], role: 'BCD → 7 セグ デコーダ',
     names: ['INB', 'INC', 'LT', 'BL', 'LE/STROBE', 'IND', 'INA', 'VSS', 'Oe', 'Od', 'Oc', 'Ob', 'Oa', 'Og', 'Of', 'VDD'],
   },
   {
     // CD74HCT283 (TTL の入力の段) は同じ印字だが別の品なので入れない。
-    models: ['CD74HC283', 'CD74HC283E', '74HC283'],
+    models: ['CD74HC283', 'CD74HC283E', '74HC283'], role: '4 bit 全加算器',
     names: ['S1', 'B1', 'A1', 'S0', 'A0', 'B0', 'CIN', 'GND', 'COUT', 'S3', 'B3', 'A3', 'S2', 'A2', 'B2', 'VCC'],
   },
 ];
@@ -165,6 +167,12 @@ export function lookupPinout(model: string | null, pins: number): Pinout | null 
   const row = BY_MODEL.get(model.trim().toUpperCase());
   if (row === undefined || row.names.length !== pins) return null;
   return { model: row.models[0] ?? '', names: row.names };
+}
+
+/** 型番から働きの名前を引く (本数は問わない)。表に無い型番は null。 */
+export function lookupRole(model: string | null): string | null {
+  if (model === null) return null;
+  return BY_MODEL.get(model.trim().toUpperCase())?.role ?? null;
 }
 
 /** 表にある型番 (行ごとに代表の綴り 1 つ)。本数を渡すとそのパッケージの行だけ。 */
