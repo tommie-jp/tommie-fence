@@ -1,7 +1,7 @@
 import { drawBody, drawsOwnLeads } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart } from '../types.ts';
-import { LEAD_WIDTH, caption, fitToBoard, labelYOf, midpoint, partLabel } from './partCommon.ts';
+import { caption, fitToBoard, labelYOf, midpoint, partLabel } from './partCommon.ts';
 import { element, num } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
 
@@ -27,7 +27,7 @@ export function renderTwoLead(part: PlacedPart, layout: Layout, theme: RenderThe
   // **自分で足を描く胴には引かない** (水晶)。穴を渡る線が実物に無いため。
   const lead = drawsOwnLeads(part.type) ? '' : element('line', {
     x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y),
-    stroke: palette.lead, 'stroke-width': LEAD_WIDTH,
+    stroke: palette.lead, 'stroke-width': num(theme.metrics.wireWidth), 'stroke-linecap': 'round',
   });
   const text = fitToBoard(caption(part), center.x, theme.metrics.textSize, layout);
   const label = partLabel(center.x, labelYOf(part, center, layout, theme) + drop, text, theme);

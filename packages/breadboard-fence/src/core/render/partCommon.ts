@@ -8,7 +8,6 @@ import type { RenderTheme } from './theme.ts';
 import { BASE_HOLE_SIZE, textScale } from './theme.ts';
 
 /** 部品の種類ごとの描画で共有する寸法と字の置き方。 */
-export const LEAD_WIDTH = 2;
 export const CHAR_WIDTH = 5.6;
 export const CAPTION_HEIGHT = 14;
 

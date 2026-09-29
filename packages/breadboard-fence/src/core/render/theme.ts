@@ -92,7 +92,8 @@ const CLASSIC: Palette = {
   label: '#5f5748',
   positive: '#d33a2f',
   negative: '#2b6fd4',
-  lead: '#8f98a3',
+  // 足は配線と同じ太さで描くので、灰色の配線 (#8a929c) より暗い鋼の色にして見分ける。
+  lead: '#55606b',
   chipBody: '#2b2f36',
   chipPin: '#b9bec7',
   chipText: '#e8ebf0',
@@ -121,7 +122,7 @@ const DARK: Palette = {
   label: '#aab4c0',
   positive: '#ff6f61',
   negative: '#6ba7ff',
-  lead: '#8d97a3',
+  lead: '#c3ccd6',
   chipBody: '#12161b',
   chipPin: '#c9cfd8',
   chipText: '#eef1f6',

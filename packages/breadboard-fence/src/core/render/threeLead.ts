@@ -1,7 +1,7 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart } from '../types.ts';
 import {
-  LEAD_WIDTH, LEG_NAME_CLEAR, NAME_CAP, NAME_LINE, caption, captionTextWidth, charWidth, fitToBoard, haloWidth, partLabel, pinPoints,
+  LEG_NAME_CLEAR, NAME_CAP, NAME_LINE, caption, captionTextWidth, charWidth, fitToBoard, haloWidth, partLabel, pinPoints,
 } from './partCommon.ts';
 import { HOLE_ROWS, RAIL_ROWS } from '../types.ts';
 import type { Point, Rect } from '../types.ts';
@@ -208,13 +208,13 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
       return element('line', {
         x1: num(center.x + (dx / length) * halfWidth), y1: num(center.y + (dy / length) * halfWidth),
         x2: num(point.x), y2: num(point.y),
-        stroke: palette.lead, 'stroke-width': LEAD_WIDTH, 'stroke-linecap': 'round',
+        stroke: palette.lead, 'stroke-width': num(theme.metrics.wireWidth), 'stroke-linecap': 'round',
       });
     })
     .join('');
   const legs = points
     .map((point) =>
-      element('rect', { x: num(point.x - 3), y: num(point.y - 3), width: 6, height: 6, fill: palette.chipPin }),
+      element('rect', { x: num(point.x - 3), y: num(point.y - 3), width: 6, height: 6, fill: palette.lead }),
     )
     .join('');
   // **足の名前もキャプションも胴の下へ。** 図の中で名前の出る側が揃う
