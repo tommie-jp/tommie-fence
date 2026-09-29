@@ -1,9 +1,9 @@
 import {
-  REAL_INK, drawBody, drawsOwnLeads, element, num, sotGlyph,
+  REAL_INK, drawBody, drawPackage, drawsOwnLeads, element, num, sotGlyph, svgText,
 } from 'fence-kit';
 import type { BodyPart } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
-import { BOX_PAD_OUT, SMA, boxPitch } from '../parts/footprint.ts';
+import { BOX_PAD_OUT, SMA, boxPitch, multiShape } from '../parts/footprint.ts';
 import type { Footprint } from '../parts/footprint.ts';
 import { smdSpecOf } from '../parts/catalog.ts';
 import type { Theme } from './theme.ts';
@@ -115,6 +115,66 @@ function leadedBody(layout: Layout, footprint: Footprint, theme: Theme): string 
   return lead + solder + drawBody(part, span, REAL_INK);
 }
 
+/** 足の名前の字の大きさ (字の高さの比。名札より小さい)。 */
+const PIN_NAME_SCALE = 0.8;
+/** 足の名前を足から横へ離す量 (px)。 */
+const PIN_NAME_SIDE = 6;
+
+/**
+ * 3 本足の足の名前。**足の途中に、足の並びの外側へ** 置く (端の 2 本は外へ、
+ * 真ん中は先に書いた側の反対へ)。字は回さない — 読めなくなる。
+ */
+function pinNames(layout: Layout, footprint: Footprint, theme: Theme): string {
+  const leads = footprint.leads ?? [];
+  return leads.map(([from, to], index) => {
+    const [a, b] = [layout.toPx(from), layout.toPx(to)];
+    const length = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    // 足に直角な向き。並びの左端は負、右端と真ん中は正の側へ逃がす。
+    const [nx, ny] = [-(b.y - a.y) / length, (b.x - a.x) / length];
+    const side = index === 0 ? -1 : 1;
+    const along = index === 1 ? 0.7 : 0.45;
+    const size = theme.metrics.textSize * PIN_NAME_SCALE;
+    const x = a.x + (b.x - a.x) * along + nx * side * PIN_NAME_SIDE;
+    const y = a.y + (b.y - a.y) * along + ny * side * PIN_NAME_SIDE + size * 0.35;
+    const anchor = Math.abs(nx) < 0.3 ? 'middle' : nx * side > 0 ? 'start' : 'end';
+    return svgText(x, y, footprint.pins[index]?.name ?? '', {
+      anchor, fill: theme.palette.caption, 'font-size': num(size), 'font-weight': 700, halo: theme.palette.halo, haloWidth: 2.4,
+    });
+  }).join('');
+}
+
+/** 多足の胴。`mmic` は面実装の SOT-89、他は fence-kit のパッケージ (TO-92・TO-220)。 */
+function multiGlyph(layout: Layout, footprint: Footprint, theme: Theme): string {
+  const part = footprint.part;
+  if (part.type === 'mmic') {
+    const spec = smdSpecOf(part.variant ?? 'sot89');
+    return spec === null || spec.kind !== 'sot' ? '' : sotGlyph(spec, REAL_INK);
+  }
+  const { box } = multiShape(part.type, part.variant);
+  return drawPackage(bodyPart(footprint), {
+    cx: 0, cy: 0, reach: layout.len(box.height / 2), halfWidth: layout.len(box.width / 2), side: 1,
+    plate: theme.palette.substrate, chipBody: theme.palette.box,
+  }, REAL_INK);
+}
+
+/**
+ * 多足 (3〜4 本足)。**足は胴から端までの直線**で、端に半田の玉。胴は fence-kit の
+ * パッケージ (TO-92 の D 形は平らな面が足の側)。`mmic` は SOT-89 の絵。
+ */
+function multiBody(layout: Layout, footprint: Footprint, theme: Theme, attrs: Record<string, string>): string {
+  const leads = (footprint.leads ?? []).map(([from, to]) => {
+    const [a, b] = [layout.toPx(from), layout.toPx(to)];
+    return element('line', {
+      x1: num(a.x), y1: num(a.y), x2: num(b.x), y2: num(b.y), stroke: theme.palette.lead, 'stroke-width': 1.6,
+      'stroke-linecap': 'round',
+    }) + element('circle', {
+      cx: num(b.x), cy: num(b.y), r: 2.2, fill: theme.palette.solder, stroke: theme.palette.lead, 'stroke-width': 0.5,
+    });
+  }).join('');
+  const body = multiGlyph(layout, footprint, theme);
+  return leads + placed(layout, footprint, body, attrs) + pinNames(layout, footprint, theme);
+}
+
 /** 部品 1 つ。`edit` のときは掴むための印を付ける (マップのエディタ)。 */
 export function renderPart(layout: Layout, footprint: Footprint, theme: Theme, edit = false): string {
   const part = footprint.part;
@@ -130,6 +190,8 @@ export function renderPart(layout: Layout, footprint: Footprint, theme: Theme, e
     }
     case 'box':
       return placed(layout, footprint, boxBody(layout, footprint, theme), attrs);
+    case 'multi':
+      return multiBody(layout, footprint, theme, attrs);
     case 'leaded': {
       const at = layout.toPx(footprint.center);
       return element('g', {

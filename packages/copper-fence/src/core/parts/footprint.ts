@@ -1,8 +1,9 @@
+import { packageHalfWidth, packageReach } from 'fence-kit';
 import type { SmdSpec } from 'fence-kit';
 import { edgeLength, edgePoint } from '../model/board.ts';
 import type { Axis } from '../geometry/shapes.ts';
-import type { Board, Mm, PartSpec, RectMm, Side } from '../types.ts';
-import { smdSpecOf } from './catalog.ts';
+import type { Board, MultiPartSpec, Mm, PartSpec, RectMm, Side, Turn } from '../types.ts';
+import { multiPins, smdSpecOf } from './catalog.ts';
 
 /**
  * 部品の足が**銅のどこに乗るか** (mm)。描画・ネット・ERC が同じ点を読む。
@@ -30,6 +31,8 @@ export type Footprint = {
   readonly outline: RectMm;
   /** 足のある部品の両端。 */
   readonly ends?: readonly [Mm, Mm];
+  /** 多足の部品の足。**胴から出る点と、その先の端** (足の順)。 */
+  readonly leads?: readonly (readonly [Mm, Mm])[];
 };
 
 /** SOT-89 のタブが胴から出る長さ (mm)。**fence-kit の絵と同じ値**。 */
@@ -138,6 +141,82 @@ function boxPins(width: number, height: number, count: number): PinPlace[] {
 /** 足の間隔 (箱の辺の上)。描画が足の金物の幅に使う。 */
 export const boxPitch = (height: number, count: number): number => height / Math.ceil(count / 2);
 
+/**
+ * 多足の胴 (局所。足は -v の側から出る)。**TO-92・TO-220 の寸法は fence-kit の胴の表** —
+ * ピッチ 2.54mm (= 穴 1 つ) に対する比で持っているので、その値を mm でそのまま引く。
+ * TO-92 の足は 1.27mm 間隔、TO-220 は 2.54mm 間隔。
+ * `mmic` の SOT-89 は面実装の表の寸法で、4 番の足はタブ (+v の側)。
+ */
+const HOLE_MM = 2.54;
+/** 平らな面の位置 (半径に対する比)。fence-kit の TO-92 の絵 (`FLAT_AT`) と同じ値。 */
+const TO92_FLAT_AT = 0.62;
+const TURNS: readonly Turn[] = [0, 90, 180, 270];
+
+export type MultiShape = {
+  /** 胴の外形 (局所)。 */
+  readonly box: RectMm;
+  /** 足が胴から出る点 (局所。足の順)。 */
+  readonly exits: readonly Mm[];
+};
+
+/** 多足の胴の寸法 (mm)。 */
+export function multiShape(type: string, variant: string | null): MultiShape {
+  if (type === 'mmic') {
+    const spec = smdSpecOf(variant ?? 'sot89');
+    const pins = spec === null ? [] : sotPins(spec);
+    const tab = pins[1]?.points[1];
+    const exits = [pins[0]?.points[0], pins[1]?.points[0], pins[2]?.points[0], tab].filter((point): point is Mm => point !== undefined);
+    return { box: spec === null ? { x: 0, y: 0, width: 0, height: 0 } : sotOutline(spec), exits };
+  }
+  const body = { type, variant, value: null, pins: [] };
+  const reach = packageReach(body, HOLE_MM);
+  const halfWidth = packageHalfWidth(body, HOLE_MM);
+  const to220 = variant === 'to220';
+  const [pitch, v] = to220 ? [HOLE_MM, -reach] : [HOLE_MM / 2, -reach * TO92_FLAT_AT];
+  return {
+    box: { x: -halfWidth, y: -reach, width: halfWidth * 2, height: reach * 2 },
+    exits: [-1, 0, 1].map((index) => ({ x: index * pitch, y: v })),
+  };
+}
+
+const distance = (a: Mm, b: Mm): number => Math.hypot(a.x - b.x, a.y - b.y);
+const centroid = (points: readonly Mm[]): Mm => ({
+  x: points.reduce((sum, point) => sum + point.x, 0) / points.length,
+  y: points.reduce((sum, point) => sum + point.y, 0) / points.length,
+});
+
+function multiFootprint(part: MultiPartSpec, resolve: EndResolver): FootprintResult {
+  const points = part.ends.map((written) => resolve(written));
+  const bad = points.findIndex((point) => typeof point === 'string');
+  if (bad >= 0) {
+    return {
+      ok: false,
+      reason: `${part.id} の ${bad + 1} つ目の端: ${points[bad] as string} (端は ${part.ends.length} つ。値は端のあとに書きます)`,
+    };
+  }
+  const ends = points as Mm[];
+  const [first, ...others] = ends;
+  if (first === undefined || others.every((end) => end.x === first.x && end.y === first.y)) {
+    return { ok: false, reason: `${part.id} の ${ends.length} つの端が同じ点です` };
+  }
+  const center = centroid(ends);
+  const shape = multiShape(part.type, part.variant);
+  const exitsAt = (turn: number, mirror: boolean): Mm[] => shape.exits.map((exit) => place(center, turn, mirror, exit.x, exit.y));
+  const cost = (turn: number): number => exitsAt(turn, false).reduce((sum, exit, index) => sum + distance(exit, ends[index] ?? exit), 0);
+  // 向きを書かなければ、足の総延長がいちばん短くなる向き (同点なら先に試した向き)。
+  const angle = part.orient?.turn ?? TURNS.reduce((best, turn) => (cost(turn) < cost(best) ? turn : best), 0);
+  const mirror = part.orient?.mirror ?? false;
+  return {
+    ok: true,
+    value: {
+      part, center, angle, mirror,
+      outline: placeRect(center, angle, mirror, shape.box),
+      pins: multiPins(part.type).map((name, index) => ({ name, points: [ends[index] ?? center] })),
+      leads: exitsAt(angle, mirror).map((exit, index) => [exit, ends[index] ?? exit] as const),
+    },
+  };
+}
+
 export type EndResolver = (written: string) => Mm | string;
 
 export type FootprintResult = { readonly ok: true; readonly value: Footprint } | { readonly ok: false; readonly reason: string };
@@ -226,6 +305,8 @@ export function footprintOf(
         },
       };
     }
+    case 'multi':
+      return multiFootprint(part, resolve);
     case 'leaded': {
       const ends = part.ends.map((written) => resolve(written));
       const bad = ends.findIndex((end) => typeof end === 'string');

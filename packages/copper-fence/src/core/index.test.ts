@@ -182,3 +182,80 @@ describe('the back view', () => {
     expect(renderCopper(VIA, { edit: true }).svg).not.toContain('裏から見た図');
   });
 });
+
+describe('three-lead parts', () => {
+  const AMP = [
+    'board: 40x20mm',
+    'copper:',
+    '  PB: pad 8,14 3x3mm',
+    '  PC: pad 20,14 3x3mm',
+    '  PE: pad 32,14 3x3mm',
+    'parts:',
+    '  Q1: transistor/to92 PB PC PE 2SC1815',
+  ].join('\n');
+
+  test('draws the body, three leads and the pin names', () => {
+    const { svg, errors, notices, erc } = renderCopper(AMP);
+    expect([errors, notices, erc]).toEqual([[], [], []]);
+    expect(svg).toContain('data-part="Q1"');
+    expect(svg).toContain('Q1 2SC1815');
+    expect(svg.match(/stroke="#9aa0a6" stroke-width="1.6"/g)).toHaveLength(3);
+    for (const name of ['B', 'C', 'E']) expect(svg).toMatch(new RegExp(`>${name}</text>`));
+    expect(svg).toContain(' A ');
+  });
+
+  test('lists Q1.B, Q1.C and Q1.E in the netlist, each on its own island', () => {
+    const { netlist } = renderCopper(AMP);
+    const refs = netlist.flatMap((net) => net.refs.map((ref) => `${net.name}:${ref}`)).sort();
+    expect(refs).toEqual(['PB:Q1.B', 'PC:Q1.C', 'PE:Q1.E']);
+  });
+
+  test('connects a third lead like the first two', () => {
+    const joined = renderCopper(AMP.replace('Q1: transistor/to92 PB PC PE', 'Q1: transistor/to92 PB PC PC'));
+    const emitter = joined.netlist.find((net) => net.refs.includes('Q1.E'));
+    expect(emitter?.refs).toEqual(expect.arrayContaining(['Q1.C', 'Q1.E']));
+    expect(joined.erc.map((notice) => notice.message).join('\n')).toMatch(/Q1 の C 番と E 番が同じ銅 \(PC\)/);
+  });
+
+  test('says when the third lead lands on no copper', () => {
+    const { erc, netlist } = renderCopper(AMP.replace('Q1: transistor/to92 PB PC PE', 'Q1: transistor/to92 PB PC 30,4'));
+    expect(erc.map((notice) => notice.message)).toEqual(['Q1 の E 番の足 (30,4) の下に銅がありません']);
+    expect(netlist.some((net) => net.refs.includes('Q1.E') && net.refs.length === 1)).toBe(true);
+  });
+
+  test('says how many ends are needed, in Japanese', () => {
+    const { errors } = renderCopper(AMP.replace('PB PC PE', 'PB PC'));
+    expect(errors[0]?.message).toMatch(/3 つ目の端: 島の名前でも点でもありません: 2SC1815 \(端は 3 つ/);
+  });
+
+  test('turns the body when a turn is written', () => {
+    const plain = renderCopper(AMP.replace('PB PC PE', 'PB PC PE r180')).svg;
+    expect(plain).toContain('rotate(180)');
+  });
+
+  test('draws a four-lead MMIC on the SOT-89 body with the names of the book', () => {
+    const source = [
+      'board: 30x20mm',
+      'copper:',
+      '  IN: pad 6,6 3x3mm',
+      '  G1: pad 12,4 3x3mm',
+      '  OUT: pad 18,6 3x3mm',
+      '  G2: pad 12,16 3x3mm',
+      'parts:',
+      '  U1: mmic IN G1 OUT G2 ERA-3SM+',
+    ].join('\n');
+    const { svg, errors, netlist } = renderCopper(source);
+    expect(errors).toEqual([]);
+    expect(svg).toContain('U1 ERA-3SM+');
+    expect(svg.match(/stroke="#9aa0a6" stroke-width="1.6"/g)).toHaveLength(4);
+    for (const name of ['IN', 'GND', 'OUT', 'GND2']) expect(svg).toContain(`>${name}</text>`);
+    expect(netlist.flatMap((net) => net.refs).sort()).toEqual(['U1.GND', 'U1.GND2', 'U1.IN', 'U1.OUT']);
+  });
+
+  test('draws a TO-220 body with its tab', () => {
+    const { svg, errors } = renderCopper(AMP.replace('transistor/to92', 'regulator/to220').replace('2SC1815', '7805'));
+    expect(errors).toEqual([]);
+    expect(svg).toContain('Q1 7805');
+    expect(svg).toContain('#b9c0c9');
+  });
+});

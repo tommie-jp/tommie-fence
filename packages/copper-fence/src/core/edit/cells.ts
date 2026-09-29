@@ -43,7 +43,7 @@ export function cellsOf(source: string, handle: string): readonly string[] {
       case 'part': {
         const part = found.part;
         if (part.kind === 'edge') return [edgePoint(doc.board, part.side, part.offset)];
-        if (part.kind === 'leaded') return part.ends.map((end) => endPoint(doc, end));
+        if (part.kind === 'leaded' || part.kind === 'multi') return part.ends.map((end) => endPoint(doc, end));
         return [part.at];
       }
     }

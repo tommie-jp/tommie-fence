@@ -30,7 +30,7 @@ export function aimAt(source: string, line: number, column: number): Aim | null 
   const { doc } = state;
   const lineShape = doc.copper.find((spec) => spec.kind === 'line' && spec.line === line);
   const wire = doc.wires.find((one) => one.line === line);
-  const leaded = doc.parts.find((part) => part.kind === 'leaded' && part.line === line);
+  const leaded = doc.parts.find((part) => (part.kind === 'leaded' || part.kind === 'multi') && part.line === line);
   if (on !== undefined && (lineShape !== undefined || wire !== undefined || leaded !== undefined)) return { kind: 'node', id: on.written };
   if (lineShape !== undefined || wire !== undefined) return { kind: 'wire', id: String(line) };
   const part = doc.parts.find((one) => one.line === line) ?? doc.copper.find((one) => one.line === line);

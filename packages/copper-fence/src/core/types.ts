@@ -158,7 +158,18 @@ export type LeadedPartSpec = PartCommon & {
   readonly ends: readonly [string, string];
 };
 
-export type PartSpec = EdgePartSpec | ChipPartSpec | SotPartSpec | BoxPartSpec | LeadedPartSpec;
+/**
+ * 足が 3〜4 本の部品 (TO-92・TO-220 のトランジスタ、4 本足の MMIC など)。
+ * **端は足の並びの順**に足の数だけ、島の名前か点。姿を書かなければ種類ごとの既定。
+ */
+export type MultiPartSpec = PartCommon & {
+  readonly kind: 'multi';
+  readonly ends: readonly string[];
+  /** 書いていなければ null (足の総延長がいちばん短い向きを選ぶ)。 */
+  readonly orient: Orient | null;
+};
+
+export type PartSpec = EdgePartSpec | ChipPartSpec | SotPartSpec | BoxPartSpec | LeadedPartSpec | MultiPartSpec;
 
 /** 島どうしのジャンパ。端は島の名前か点。 */
 export type WireSpec = {

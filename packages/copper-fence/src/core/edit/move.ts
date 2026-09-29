@@ -54,9 +54,10 @@ export function movePart(source: string, handle: string, to: string, preview = f
     const edge = nearestEdge(state.doc.board, target);
     words[1] = edge.side;
     words[2] = formatMm(edge.offset);
-  } else if (found.kind === 'part' && found.part.kind === 'leaded') {
-    const [a, b] = found.part.ends;
-    if (parsePoint(a) === null || parsePoint(b) === null) {
+  } else if (found.kind === 'part' && (found.part.kind === 'leaded' || found.part.kind === 'multi')) {
+    const ends = found.part.ends;
+    const [a] = ends;
+    if (ends.some((end) => parsePoint(end) === null)) {
       return refuse(`${spec.id} の端は島の名前で書いてあります (島を動かすか、端を点で書きます)`, spec.line);
     }
     const anchor = endPoint(state.doc, a);
@@ -65,8 +66,9 @@ export function movePart(source: string, handle: string, to: string, preview = f
       const point = parsePoint(written) as Mm;
       return formatPoint({ x: round2(point.x + target.x - anchor.x), y: round2(point.y + target.y - anchor.y) });
     };
-    words[1] = shift(a);
-    words[2] = shift(b);
+    ends.forEach((end, at) => {
+      words[at + 1] = shift(end);
+    });
   } else {
     words[1] = formatPoint(target);
   }
@@ -93,10 +95,10 @@ export function movePoint(source: string, from: string, to: string, preview = fa
     touched.push(made.line);
   }
   for (const part of state.doc.parts) {
-    if (part.kind !== 'leaded' || !part.ends.some((end) => same(parsePoint(end), was))) continue;
+    if ((part.kind !== 'leaded' && part.kind !== 'multi') || !part.ends.some((end) => same(parsePoint(end), was))) continue;
     const item = itemOf(state.lines, part.line, part.id);
     if (item === null) return refuse(`${part.id}: ${REWRITE_REFUSAL}`, part.line);
-    const words = item.words.map((word, at) => (at > 0 && at < 3 && same(parsePoint(word.text), was) ? formatPoint(now) : word.text));
+    const words = item.words.map((word, at) => (at > 0 && at <= part.ends.length && same(parsePoint(word.text), was) ? formatPoint(now) : word.text));
     edits.push(...rewrite(state.lines, item, words));
     touched.push(item.line);
   }

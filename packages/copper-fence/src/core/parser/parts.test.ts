@@ -51,7 +51,7 @@ describe('surface mount', () => {
   });
 
   test('asks for the package of a part that only comes surface-mounted here', () => {
-    expect(reason('transistor 1,1')).toMatch(/transistor は姿を書きます \(transistor\/sot23/);
+    expect(reason('transistor/foo 1,1')).toMatch(/transistor は姿を書きます \(transistor\/to92 \/ transistor\/to220 \/ transistor\/sot23/);
     expect(reason('bead 1,1 2,2')).toMatch(/bead は姿を書きます/);
   });
 });
@@ -95,4 +95,44 @@ test('names an unknown kind, and says an empty line is empty', () => {
 test('caps the size of a box like any other shape', () => {
   const read = parsePartLine('U1', 'box 10,10 1x900mm 1');
   expect(read.ok ? '' : read.error.message).toMatch(/0.05〜100/);
+});
+
+describe('multi-lead parts', () => {
+  test('take three ends in pin order, an optional turn and a value', () => {
+    const q = read('transistor/to92 B1 C1 E1 r90 2SC1815');
+    expect(q.ok && q.value).toMatchObject({
+      kind: 'multi', type: 'transistor', variant: 'to92', ends: ['B1', 'C1', 'E1'], orient: { turn: 90, mirror: false }, value: '2SC1815',
+    });
+  });
+
+  test('default to the TO-92 look, and take an alias and points', () => {
+    const q = read('q 10,5 12,8 14,5');
+    expect(q.ok && q.value).toMatchObject({ kind: 'multi', variant: 'to92', ends: ['10,5', '12,8', '14,5'], orient: null, value: null });
+    expect(read('mosfet/to220 G D S').ok).toBe(true);
+    expect(read('regulator/to220 IN GND OUT 7805').ok).toBe(true);
+  });
+
+  test('say how many ends the type needs', () => {
+    expect(reason('transistor/to92 P1 P2')).toMatch(/transistor は端を 3 つ書きます \(B C E の順/);
+    expect(reason('mosfet')).toMatch(/mosfet は端を 3 つ書きます \(G D S の順/);
+    expect(reason('transistor P1 P2')).toMatch(/面実装なら transistor\/sot23/);
+  });
+
+  test('refuse an unknown look and a badly written point', () => {
+    expect(reason('transistor/to3 P1 P2 P3')).toMatch(/transistor は姿を書きます \(transistor\/to92/);
+    expect(reason('mosfet/to3 P1 P2 P3')).toMatch(/mosfet の姿は to92 \/ to220 です: to3/);
+    expect(reason('transistor/to92 10.123,5 P2 P3')).toMatch(/小数は 2 桁まで/);
+  });
+
+  test('take four ends for a MMIC, and say four in the message', () => {
+    const u = read('mmic P1 P2 P3 P4 r180 ERA-3SM+');
+    expect(u.ok && u.value).toMatchObject({ kind: 'multi', type: 'mmic', variant: 'sot89', ends: ['P1', 'P2', 'P3', 'P4'], orient: { turn: 180 }, value: 'ERA-3SM+' });
+    expect(reason('mmic P1 P2 P3')).toMatch(/mmic は端を 4 つ書きます \(IN GND OUT GND2 の順に/);
+    expect(reason('mmic/to92 P1 P2 P3 P4')).toMatch(/mmic の姿は sot89 です: to92/);
+  });
+
+  test('leave surface-mount packages to the point-placed kind', () => {
+    const sot = read('transistor/sot23 20,10');
+    expect(sot.ok && sot.value).toMatchObject({ kind: 'sot' });
+  });
 });

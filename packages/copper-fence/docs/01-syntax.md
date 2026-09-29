@@ -138,6 +138,7 @@ copper:
 | 面実装 SOT | `種類/姿 中心 [r90] [mirror] [値]` | `1` `2` `3` (SOT-89 のタブは `2`) |
 | 箱 | `box 中心 幅x高さ 足の数 [r90] [値]` | 左の辺を上から、右の辺を下から |
 | 足のある部品 | `種類[/姿] 端 端 [値]` | `1` `2`。端は島の名前か点 |
+| 多足 (3〜4 本) | `種類[/姿] 端 端 端 [端] [r90] [値]` | 種類ごとの名前 (下の表)。端は足の並びの順 |
 
 ```copper
 board: 40x20mm
@@ -170,6 +171,8 @@ SOT と箱は切らない (足の落とし先は板ごとに違うので、線�
 チップ     resistor capacitor inductor bead led     /1608 /2012 /3216
 ダイオード  diode zener schottky varicap             /sod123 /sod323 /do214ac
 SOT       transistor ic3 regulator                 /sot23 /sot346 /sot89
+多足       transistor mosfet regulator  /to92 (既定) /to220     3 本足
+          mmic  /sot89                                         4 本足
 箱         box
 足のある   resistor capacitor inductor led diode crystal zener schottky varicap …
 ```
@@ -177,6 +180,47 @@ SOT       transistor ic3 regulator                 /sot23 /sot346 /sot89
 - 別名 (`0603` `s-mini`) は綴りとしては受けず、「`0603` は `1608` と書きます」と言う
 - 向きは `r90` `r180` `r270` (時計回り) と `mirror` (左右を裏返す)。perfboard と同じ語
 - 略記 (`r` `c` `l` `d` `q` `tr` `reg` `xtal` `ec`) も書ける
+
+### 多足 (3 本足・4 本足)
+
+スルーホール部品の TO-92 のトランジスタなどを、島から島へ足で渡して載せる。
+**端は足の並びの順に足の数だけ書く** (島の名前か点)。足の名前は種類で決まり、
+`check` のネットリストにも `Q1.B` `Q1.C` `Q1.E` のように出る。
+
+| 種類 | 姿 | 足 (端を書く順) |
+| --- | --- | --- |
+| `transistor` | `to92` (既定) `to220` | `B` `C` `E` |
+| `mosfet` | `to92` (既定) `to220` | `G` `D` `S` |
+| `regulator` | `to92` (既定) `to220` | `IN` `GND` `OUT` |
+| `mmic` | `sot89` | `IN` `GND` `OUT` `GND2` (`GND2` は SOT-89 のタブ。本の 8-6 の 1・2・3・4 番) |
+
+- 胴は 3 つ (4 つ) の端の**重心**に置き、足は胴から各端への直線で引く。胴は端の間に
+  収まる大きさ (TO-92 は直径 4.8mm ほど)。端が一直線に並ぶと胴が線に重なるので、
+  1 つをずらす
+- TO-92 は丸い胴の平らな面 (D 形の平らな側) から足が出る。**向きは書かなければ足の総延長が
+  いちばん短い向き**。決めたいときは `r90` `r180` `r270` `mirror` を端のあとに書く
+- 端の数が足りないときは種類が足の数を言う (`transistor は端を 3 つ書きます (B C E の順に …)`)。
+  端のあとの語は値になる
+- 足がどの島にも乗っていなければ、ほかの部品と同じく「下に銅がありません」と知らせる
+- 面実装の `transistor/sot23` などは今までどおり中心の点で置く (SOT 参照)
+
+```copper
+board: 60x24mm
+title: 図05 多足の部品
+copper:
+  B1: pad 6,18 4x4mm
+  C1: pad 16,5 4x4mm
+  E1: pad 26,18 4x4mm
+  IN: pad 34,12 4x4mm
+  G1: pad 44,4 4x4mm
+  OUT: pad 54,12 4x4mm
+  G2: pad 44,20 4x4mm
+parts:
+  Q1: transistor/to92 B1 C1 E1 2SC1815
+  U1: mmic IN G1 OUT G2 ERA-3SM+
+```
+
+![図05 多足の部品](out/01-syntax-5.svg)
 
 ## 配線 (`wires:`)
 
@@ -199,7 +243,7 @@ SOT       transistor ic3 regulator                 /sot23 /sot346 /sot89
 
 ```copper
 board: 40x20mm
-title: 図05 寸法線と字
+title: 図06 寸法線と字
 copper:
   L1: line 0,12 40,12 3.06mm
 notes:
@@ -208,7 +252,7 @@ notes:
   - text 22,17: 周りの銅を剥がす
 ```
 
-![図05 寸法線と字](out/01-syntax-5.svg)
+![図06 寸法線と字](out/01-syntax-6.svg)
 
 `text` だけは字を `:` の後ろに書く (3 つのフェンスと同じ形)。字にコロンと空白の
 並びがあるときは、`:` の後ろを引用で囲む。

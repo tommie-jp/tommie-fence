@@ -101,7 +101,7 @@ function editNodes(copper: readonly CopperSpec[], parts: readonly PartSpec[], wi
   return [
     ...copper.flatMap((spec) => (spec.kind === 'line' ? spec.points : [])),
     ...wires.flatMap((wire) => [...written(wire.from), ...written(wire.to)]),
-    ...parts.flatMap((part) => (part.kind === 'leaded'
+    ...parts.flatMap((part) => (part.kind === 'leaded' || part.kind === 'multi'
       ? part.ends.map((end) => parsePoint(end)).filter((point): point is Mm => point !== null)
       : [])),
   ];

@@ -41,6 +41,32 @@ const SMD_TYPES: Readonly<Record<'chip' | 'leaded' | 'sot', readonly string[]>> 
   sot: ['transistor', 'ic3', 'regulator'],
 };
 
+/**
+ * 足が 3〜4 本の部品 (島から島へ足を渡す)。**足の名前は並びの順** — 端を書く順でもある。
+ * `transistor` と `regulator` は面実装 (SOT) も持つので、姿が下の表にあるときだけここへ来る。
+ * 書かなければ表の最初の姿。
+ *
+ * `mmic` は 4 本足の MMIC アンプ (SOT-89: 1 番 IN、2 番 GND、3 番 OUT、タブの 4 番も GND)。
+ * 足の名前は本の 8-6 (MMIC LNA) の表記に揃え、2 本目の GND は `GND2`。
+ */
+type MultiDef = { readonly pins: readonly string[]; readonly looks: readonly string[] };
+
+const MULTI: Readonly<Record<string, MultiDef>> = {
+  transistor: { pins: ['B', 'C', 'E'], looks: ['to92', 'to220'] },
+  mosfet: { pins: ['G', 'D', 'S'], looks: ['to92', 'to220'] },
+  regulator: { pins: ['IN', 'GND', 'OUT'], looks: ['to92', 'to220'] },
+  mmic: { pins: ['IN', 'GND', 'OUT', 'GND2'], looks: ['sot89'] },
+};
+
+/** 多足の部品か。 */
+export const isMulti = (type: string): boolean => Object.hasOwn(MULTI, type);
+
+/** 多足の足の名前 (端を書く順)。 */
+export const multiPins = (type: string): readonly string[] => MULTI[type]?.pins ?? [];
+
+/** 多足の姿 (先頭が既定)。 */
+export const multiLooks = (type: string): readonly string[] => MULTI[type]?.looks ?? [];
+
 /** 略記。**perfboard と同じ** (畳んだ先の正式名しか出口には出ない)。 */
 const ALIASES: Readonly<Record<string, string>> = {
   r: 'resistor',
@@ -68,13 +94,14 @@ export type Kind =
   | { readonly kind: 'chip'; readonly type: string; readonly variant: string; readonly spec: SmdSpec }
   | { readonly kind: 'sot'; readonly type: string; readonly variant: string; readonly spec: SmdSpec }
   | { readonly kind: 'box'; readonly type: 'box'; readonly variant: null }
-  | { readonly kind: 'leaded'; readonly type: string; readonly variant: string | null };
+  | { readonly kind: 'leaded'; readonly type: string; readonly variant: string | null }
+  | { readonly kind: 'multi'; readonly type: string; readonly variant: string };
 
 export type KindResult = { readonly ok: true; readonly value: Kind } | { readonly ok: false; readonly reason: string };
 
 /** 書ける種類 (文書と `知らない種類` の文面に出す)。 */
 export const typeNames = (): readonly string[] =>
-  ['sma', BOX, ...new Set([...SMD_TYPES.chip, ...SMD_TYPES.leaded, ...SMD_TYPES.sot, ...LEADED])];
+  ['sma', BOX, ...new Set([...SMD_TYPES.chip, ...SMD_TYPES.leaded, ...SMD_TYPES.sot, ...Object.keys(MULTI), ...LEADED])];
 
 /** 面実装の姿の見出し (`1608` `sot89`)。表の並び。 */
 export const smdKeys = (kind: 'chip' | 'leaded' | 'sot'): readonly string[] =>
@@ -108,6 +135,13 @@ export function resolveKind(written: string): KindResult {
       : { ok: false, reason: `box に姿はありません: ${variant}` };
   }
 
+  if (isMulti(type) && (variant === null || multiLooks(type).includes(variant))) {
+    return { ok: true, value: { kind: 'multi', type, variant: variant ?? multiLooks(type)[0] ?? '' } };
+  }
+  if (isMulti(type) && !SMD_TYPES.sot.includes(type)) {
+    return { ok: false, reason: `${type} の姿は ${multiLooks(type).join(' / ')} です: ${variant}` };
+  }
+
   if (variant !== null) {
     const spec = smdSpecOf(variant);
     if (spec !== null) {
@@ -133,7 +167,8 @@ export function resolveKind(written: string): KindResult {
       const keys = type === 'transistor' || type === 'ic3' || type === 'regulator'
         ? smdKeys('sot')
         : [...smdKeys('chip'), ...smdKeys('leaded')];
-      return { ok: false, reason: `${type} は姿を書きます (${keys.map((key) => `${type}/${key}`).slice(0, 3).join(' / ')} …)` };
+      const looks = isMulti(type) ? [...multiLooks(type), ...keys] : keys;
+      return { ok: false, reason: `${type} は姿を書きます (${looks.map((key) => `${type}/${key}`).slice(0, 4).join(' / ')} …)` };
     }
     return { ok: false, reason: `知らない種類です: ${written}` };
   }

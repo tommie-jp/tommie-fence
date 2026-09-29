@@ -103,6 +103,51 @@ describe('leaded parts', () => {
   });
 });
 
+describe('multi-lead parts', () => {
+  test('put pin B, C and E on the ends, in the order written', () => {
+    expect(pins('transistor/to92 10,5 12,8 14,5')).toEqual([['B', [[10, 5]]], ['C', [[12, 8]]], ['E', [[14, 5]]]]);
+    expect(pins('mosfet 10,5 12,8 14,5').map(([name]) => name)).toEqual(['G', 'D', 'S']);
+    expect(pins('regulator/to220 10,5 12,8 14,5').map(([name]) => name)).toEqual(['IN', 'GND', 'OUT']);
+  });
+
+  test('sit at the centre of the ends, with a lead from the body to each end', () => {
+    const found = at('transistor/to92 10,5 12,8 14,5');
+    expect(found.ok && found.value.center).toEqual({ x: 12, y: 6 });
+    expect(found.ok && found.value.leads?.map(([, end]) => end)).toEqual([{ x: 10, y: 5 }, { x: 12, y: 8 }, { x: 14, y: 5 }]);
+    expect(found.ok && found.value.leads).toHaveLength(3);
+  });
+
+  test('turn the flat face towards the ends unless a turn is written', () => {
+    const [, , below] = [0, 1, 2].map((index) => {
+      const found = at('transistor/to92 10,9 12,9 14,9');
+      return found.ok ? found.value.leads?.[index]?.[0] : undefined;
+    });
+    // 3 本とも胴の下にあるので、足は胴の下側 (y が大きい側) から出る。
+    expect(below?.y).toBeGreaterThan(6);
+    const turned = at('transistor/to92 10,9 12,9 14,9 r0');
+    expect(turned.ok && turned.value.leads?.[1]?.[0].y).toBeLessThan(9);
+    expect(turned.ok && turned.value.angle).toBe(0);
+  });
+
+  test('put the four pins of a MMIC on its ends, the fourth on the tab', () => {
+    expect(pins('mmic 10,5 12,8 14,5 12,11')).toEqual([
+      ['IN', [[10, 5]]], ['GND', [[12, 8]]], ['OUT', [[14, 5]]], ['GND2', [[12, 11]]],
+    ]);
+    const found = at('mmic 10,5 12,8 14,5 12,11 r0');
+    const [, , , tab] = found.ok ? found.value.leads ?? [] : [];
+    // 4 番の足は胴の反対側 (タブ) から出る。
+    expect(tab?.[0].y).toBeGreaterThan(found.ok ? found.value.center.y : 99);
+    expect(found.ok && found.value.leads).toHaveLength(4);
+  });
+
+  test('refuse an unreadable end and three ends in one place', () => {
+    const bad = at('transistor/to92 10,5 P9 14,5');
+    expect(!bad.ok && bad.reason).toMatch(/2 つ目の端: 読めない端: P9/);
+    const same = at('transistor/to92 10,5 10,5 10,5');
+    expect(!same.ok && same.reason).toMatch(/3 つの端が同じ点/);
+  });
+});
+
 describe('catalog', () => {
   test('lists the kinds it takes and the packages of each', () => {
     expect(typeNames()).toEqual(expect.arrayContaining(['sma', 'box', 'resistor', 'bead', 'ic3']));
@@ -112,6 +157,9 @@ describe('catalog', () => {
   });
 
   test('expands an alias that carries a look', () => {
+    expect(resolveKind('transistor')).toMatchObject({ ok: true, value: { kind: 'multi', variant: 'to92' } });
+    expect(resolveKind('transistor/sot23')).toMatchObject({ ok: true, value: { kind: 'sot' } });
+    expect(typeNames()).toEqual(expect.arrayContaining(['mosfet']));
     expect(resolveKind('ec')).toMatchObject({ ok: true, value: { kind: 'leaded', type: 'capacitor', variant: 'electrolytic' } });
   });
 });

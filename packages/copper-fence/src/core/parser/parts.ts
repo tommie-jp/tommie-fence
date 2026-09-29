@@ -1,7 +1,7 @@
 import { LIMITS } from '../limits.ts';
 import { safeToken } from '../errors.ts';
 import { parsePoint, parseSize, pointProblem, unitProblem } from '../model/point.ts';
-import { resolveKind } from '../parts/catalog.ts';
+import { multiPins, resolveKind } from '../parts/catalog.ts';
 import type { Mm, PartSpec, Side } from '../types.ts';
 import { takeOrient } from './orient.ts';
 import { fail, ok, wordsOf } from './result.ts';
@@ -30,6 +30,7 @@ function readAt(word: string | undefined, example: string): Mm | string {
  * | 面実装 | `capacitor/1608 12,10 [r90] [値]` — 中心の点 |
  * | 箱 | `box 20,10 5x5mm 6 [r90] [値]` — 中心・大きさ・足の数 |
  * | 足のある部品 | `resistor P1 P2 [値]` — 端 2 つ (島の名前か点) |
+ * | 多足 | `transistor/to92 P1 P2 P3 [r90] [値]` — 端を足の数だけ (足の並びの順) |
  */
 export function parsePartLine(id: string, text: string): LineResult<PartSpec> {
   const words = wordsOf(text);
@@ -84,6 +85,25 @@ export function parsePartLine(id: string, text: string): LineResult<PartSpec> {
       return ok({
         ...common, kind: 'box', type: 'box', variant: null,
         at, width: size.width, height: size.height, pins, orient, value: valueOf(rest),
+      });
+    }
+    case 'multi': {
+      const { type } = kind.value;
+      const pins = multiPins(type);
+      const ends = words.slice(1, 1 + pins.length);
+      if (ends.length < pins.length) {
+        const smd = type === 'transistor' || type === 'regulator' ? `。面実装なら ${type}/sot23 のように姿と中心を書きます` : '';
+        return fail(
+          `${type} は端を ${pins.length} つ書きます (${pins.join(' ')} の順に、島の名前か x,y。例: ${type} ${pins.map((_pin, at) => `P${at + 1}`).join(' ')}${smd})`,
+        );
+      }
+      for (const end of ends) {
+        const problem = end.includes(',') && parsePoint(end) === null ? pointProblem(end) : null;
+        if (problem !== null) return fail(problem, end);
+      }
+      const { orient, rest } = takeOrient(words.slice(1 + pins.length));
+      return ok({
+        ...common, kind: 'multi', type, variant: kind.value.variant, ends, orient, value: valueOf(rest),
       });
     }
     case 'leaded': {

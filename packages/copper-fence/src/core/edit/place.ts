@@ -118,6 +118,8 @@ export function addPart(source: string, part: NewPart): EditResult {
     case 'chip':
     case 'sot':
       return appended(state, 'parts', [`${part.id}: ${part.type} ${formatPoint(first)}`, ...orient].join(' '), preview);
+    case 'multi':
+      return refuse('3 本足の部品は行に書いて置きます (端を 3 つ。例: transistor/to92 P1 P2 P3)');
     case 'leaded': {
       const along = (part.turn ?? 0) % 2 === 0 ? { x: LEAD_SPAN, y: 0 } : { x: 0, y: LEAD_SPAN };
       const end = second ?? { x: round2(first.x + along.x), y: round2(first.y + along.y) };
@@ -158,7 +160,7 @@ export function duplicate(source: string, handle: string, id: string): EditResul
     const next = found.part.offset + SMA.size + 1;
     words[2] = formatMm(next + SMA.size / 2 <= length ? next : Math.max(found.part.offset - SMA.size - 1, SMA.size / 2));
   } else {
-    const last = found.kind === 'part' && found.part.kind === 'leaded' ? 3 : 2;
+    const last = found.kind !== 'part' ? 2 : found.part.kind === 'leaded' ? 3 : found.part.kind === 'multi' ? found.part.ends.length + 1 : 2;
     for (let at = 1; at < last; at += 1) words[at] = shift(words[at] ?? '');
   }
   const text = state.lines[item.line - 1] ?? '';

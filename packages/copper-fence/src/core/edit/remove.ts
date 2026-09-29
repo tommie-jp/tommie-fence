@@ -27,10 +27,10 @@ export function deletePart(source: string, handle: string): EditResult {
   if (found.kind === 'shape') {
     const point = formatPoint(found.shape.at);
     for (const part of state.doc.parts) {
-      if (part.kind !== 'leaded' || !part.ends.includes(spec.id)) continue;
+      if ((part.kind !== 'leaded' && part.kind !== 'multi') || !part.ends.includes(spec.id)) continue;
       const item = itemOf(state.lines, part.line, part.id);
       if (item === null) continue;
-      edits.push(...rewrite(state.lines, item, item.words.map((word, at) => (at > 0 && at < 3 && word.text === spec.id ? point : word.text))));
+      edits.push(...rewrite(state.lines, item, item.words.map((word, at) => (at > 0 && at <= part.ends.length && word.text === spec.id ? point : word.text))));
     }
     for (const wire of state.doc.wires) {
       if (wire.line === null || (wire.from !== spec.id && wire.to !== spec.id)) continue;

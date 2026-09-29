@@ -18,6 +18,7 @@ const shapeWords = (part: PartSpec): number => {
   switch (part.kind) {
     case 'edge': return 3;
     case 'leaded': return 3;
+    case 'multi': return part.ends.length + 1;
     case 'box': return 4;
     default: return 2;
   }
@@ -81,10 +82,11 @@ export function rename(source: string, handle: string, to: string): EditResult {
   const keyLength = text.slice(item.start).startsWith(spec.id) ? spec.id.length : spec.id.length + 2;
   const edits: Edit[] = [{ line: item.line, column: item.start, length: keyLength, text: name }];
   for (const part of state.doc.parts) {
-    if (part.kind !== 'leaded' || !part.ends.includes(spec.id)) continue;
+    if ((part.kind !== 'leaded' && part.kind !== 'multi') || !part.ends.includes(spec.id)) continue;
     const other = itemOf(state.lines, part.line, part.id);
     if (other === null) return refuse(`${part.id}: ${RENAME_REFUSAL}`, part.line);
-    edits.push(...rewrite(state.lines, other, other.words.map((word, at) => (at > 0 && at < 3 && word.text === spec.id ? name : word.text))));
+    const last = part.ends.length;
+    edits.push(...rewrite(state.lines, other, other.words.map((word, at) => (at > 0 && at <= last && word.text === spec.id ? name : word.text))));
   }
   for (const wire of state.doc.wires) {
     if (wire.line === null || (wire.from !== spec.id && wire.to !== spec.id)) continue;
@@ -159,7 +161,7 @@ export function setField(source: string, handle: string, field: string, text: st
  * 0 度から数えると、1 回目の回転が効かず、裏返すと横に倒れて線路を切らなくなる。
  */
 function drawnTurn(state: Read, part: PartSpec): number {
-  if (part.kind !== 'chip' && part.kind !== 'sot' && part.kind !== 'box') return 0;
+  if (part.kind !== 'chip' && part.kind !== 'sot' && part.kind !== 'box' && part.kind !== 'multi') return 0;
   if (part.orient !== null) return part.orient.turn;
   if (part.kind !== 'chip') return 0;
   const shapes = shapesOf(state.doc.copper, state.doc.board).shapes;
