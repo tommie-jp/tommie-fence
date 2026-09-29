@@ -82,7 +82,7 @@ and the content of the offending line.
 | **Turning the ERC off** (`style: check: off`; on by default) | works |
 | **The solder side** (`style: back: on`; off by default) | works |
 | **Axis labels** (`style: labels:`: letters/digits, upper/lower) | works |
-| **Slot copper** (`board: slots: on`; off by default) | works |
+| **Substrate thickness and material** (`board: h: 1.6mm` / `material: FR-4`; kept for cross-sections, the top view does not change) | read |
 | **Board and pad colours** (`board: color:` / `land:`; green and silver) | works |
 
 A board is written as a **hole count** or as a **name**. The count is columns by

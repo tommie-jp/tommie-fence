@@ -65,7 +65,21 @@ export type Board = BoardSize & {
   readonly land: string | null;
   /** スロットの銅箔の色。**既定はランドと同じ** (同じめっきなので)。 */
   readonly slotColor: string | null;
+  /**
+   * 基材の厚さ (mm)。**既定は 1.6** — 手に入るユニバーサル基板の厚み。
+   * 綴りは copper フェンスの `h:` と同じ。断面を描くときの値で、
+   * **いまの図 (上から見た板) は変わらない**。
+   */
+  readonly h: number;
+  /** 基材 (`FR-4` など)。**既定は `FR-4`**。`h` と同じく断面を描くときの値。 */
+  readonly material: BoardMaterial;
 };
+
+/**
+ * 基材の呼び名。**売り場の表記に揃える** (ガラスエポキシ = `FR-4`、
+ * ガラスコンポジット = `CEM-3`、紙フェノール = `FR-1` / `FR-2`、紙エポキシ = `FR-3`)。
+ */
+export type BoardMaterial = 'FR-4' | 'CEM-3' | 'CEM-1' | 'FR-1' | 'FR-2' | 'FR-3';
 
 /**
  * 導通グループの名前。ユニバーサル基板では穴 1 つが 1 グループになる

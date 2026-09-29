@@ -116,10 +116,28 @@ board:
 | `color` | 板 (レジスト) の色 | `green` |
 | `land` | 穴の銅箔 (ランド) の色 | `silver` |
 | `slots` | 短いほうの両端の銅箔。`on` / `off` か、その色 | `off` |
+| `h` | 基材の厚さ (`mm` を付ける) | `1.6mm` |
+| `material` | 基材 (`FR-4` `CEM-3` `CEM-1` `FR-1` `FR-2` `FR-3`) | `FR-4` |
 
 ```text
 color  green  blue  red  black  white  yellow  purple  bare   (と #RRGGBB)
 land   silver  gold  copper  tin                              (と #RRGGBB)
+```
+
+**基材の厚さ (`h:`) と種類 (`material:`) は断面を描くときの値。** 上から見た板の図は
+変わらない。綴りは copper フェンスの `h:` と同じで、**単位 `mm` が要る** (`h: 1.6` は
+「`1.6mm` と書きます」と言って断る)。基材は売り場の表記のまま書く — ガラスエポキシは
+`FR-4`、ガラスコンポジットは `CEM-3`、紙フェノールは `FR-1` か `FR-2`、紙エポキシは `FR-3`。
+大小は問わないが、**ハイフンの無い `FR4` は受けない** (正の綴りを 1 つにする)。
+既定の 1.6mm・FR-4 は、手に入りやすいアリエクスプレスの両面スルーホール基板に合わせてある。
+**名前の板は基材を決めない** — 秋月の 72×47mm (`akizuki-c`) はガラスコンポジット (`CEM-3`) で、
+同じ「C タイプ」の FR-4 版は 72×47.5mm の別の板。名前で書いた板も、基材は `material:` に書く。
+
+```yaml
+board:
+  size: akizuki-c
+  h: 1.6mm
+  material: CEM-3
 ```
 
 **板の色とランドの色は表を分けてある。** 混ぜると板に `gold`、ランドに `green` と

@@ -1,5 +1,5 @@
 import { LIMITS } from '../limits.ts';
-import type { Address, Board, BoardSize, StripId } from '../types.ts';
+import type { Address, Board, BoardMaterial, BoardSize, StripId } from '../types.ts';
 import { formatAddress, rowLabel } from './address.ts';
 import type { CatalogBoard } from './catalog.ts';
 import { boardNames, describeBoard, lookupBoard, nearestBoard, parseMillimetres } from './catalog.ts';
@@ -15,7 +15,50 @@ export type BoardFinish = {
   readonly color?: string | null;
   readonly land?: string | null;
   readonly slotColor?: string | null;
+  readonly h?: number;
+  readonly material?: BoardMaterial;
 };
+
+/**
+ * 基材の厚さの既定 (mm)。**確かめた売り物がどれも 1.6mm だった** — アリエクスプレスの
+ * FR-4 両面スルーホール、秋月の C タイプ (FR-4 版・ガラスコンポジット版とも)。
+ * 0.8mm もあるが品種が少ない (秋月の A タイプの 0.8mm 厚など)。
+ */
+export const DEFAULT_H = 1.6;
+
+/** 基材の既定。**アリエクスプレスの定番 (FR-4・1.6mm・両面スルーホール)** に揃える。 */
+export const DEFAULT_MATERIAL: BoardMaterial = 'FR-4';
+
+/** 書ける基材。**売り場の表記のまま** — 本文や商品ページの字をそのまま写せるように。 */
+export const MATERIALS: readonly BoardMaterial[] = ['FR-4', 'CEM-3', 'CEM-1', 'FR-1', 'FR-2', 'FR-3'];
+
+/** 厚さの上限と下限 (mm)。copper フェンスの `h:` と同じ幅。 */
+export const H_MIN = 0.1;
+export const H_MAX = 10;
+
+/** `1.6mm`。**単位が要る** (文法の方針 1)。copper フェンスの長さと同じ綴り。 */
+const LENGTH = /^(\d{1,3}(?:\.\d{1,3})?)mm$/;
+const BARE_LENGTH = /^\d{1,3}(?:\.\d{1,3})?$/;
+
+/** 厚さを読む。読めなければ直し方を添えた理由。 */
+export function parseThickness(text: string): { readonly ok: true; readonly h: number } | { readonly ok: false; readonly reason: string } {
+  const trimmed = text.trim();
+  const found = LENGTH.exec(trimmed);
+  const value = found === null ? Number.NaN : Number(found[1]);
+  if (Number.isFinite(value) && value >= H_MIN && value <= H_MAX) return { ok: true, h: value };
+  // 素の数は mm とも穴数とも読めるので断る。直し方 (単位を付けた綴り) を言う。
+  const hint = BARE_LENGTH.test(trimmed) ? ` (単位 mm を付けます: ${trimmed}mm)` : '';
+  return { ok: false, reason: `board の h は基材の厚さを ${H_MIN}mm〜${H_MAX}mm で書きます (例: h: 1.6mm)${hint}` };
+}
+
+/**
+ * 基材を読む。**大小は問わず、表記に揃えて返す** (`fr-4` → `FR-4`)。
+ * ハイフンの無い `FR4` は受けない — 正の綴りを 1 つにする (文法の方針 5)。
+ */
+export function parseMaterial(text: string): BoardMaterial | null {
+  const wanted = text.trim().toUpperCase();
+  return MATERIALS.find((m) => m === wanted) ?? null;
+}
 
 /**
  * `board:` が書かれていないときの板。**書き始める前から止めない**ために持つ
@@ -31,6 +74,8 @@ export const createBoard = (size: BoardSize, finish: BoardFinish = {}): Board =>
   color: finish.color ?? null,
   land: finish.land ?? null,
   slotColor: finish.slotColor ?? null,
+  h: finish.h ?? DEFAULT_H,
+  material: finish.material ?? DEFAULT_MATERIAL,
 });
 
 /**

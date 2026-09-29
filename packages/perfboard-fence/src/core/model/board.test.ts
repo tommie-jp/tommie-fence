@@ -6,7 +6,7 @@ const at = (text: string) => parseAddress(text)!;
 
 describe('createBoard', () => {
   test('keeps the size it was given', () => {
-    expect(createBoard({ cols: 28, rows: 18 })).toEqual({ cols: 28, rows: 18, slots: false, color: null, land: null, slotColor: null });
+    expect(createBoard({ cols: 28, rows: 18 })).toEqual({ cols: 28, rows: 18, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
   });
 });
 
@@ -58,20 +58,20 @@ describe('resolveBoard', () => {
     // 秋月 C タイプは 72×47mm、つまり長辺 × 短辺。板の呼び方と同じ順にする。
     const found = resolveBoard('28x18');
 
-    expect(found.ok && found.board).toEqual({ cols: 28, rows: 18, slots: false, color: null, land: null, slotColor: null });
+    expect(found.ok && found.board).toEqual({ cols: 28, rows: 18, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
   });
 
   test('takes the multiplication sign the reports themselves print', () => {
     // 報告も docs の表も `25×15` と書く。読めないと、写して貼った人が転ぶ。
     const found = resolveBoard('25×15');
 
-    expect(found.ok && found.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null });
+    expect(found.ok && found.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
   });
 
   test('takes a capital X and spaces around it', () => {
     const found = resolveBoard('28 X 18');
 
-    expect(found.ok && found.board).toEqual({ cols: 28, rows: 18, slots: false, color: null, land: null, slotColor: null });
+    expect(found.ok && found.board).toEqual({ cols: 28, rows: 18, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
   });
 
   test('refuses a size that is not two numbers', () => {
@@ -83,7 +83,7 @@ describe('resolveBoard', () => {
   test('reads a hole count as a hole count', () => {
     const found = resolveBoard('25x15');
 
-    expect(found.ok && found.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null });
+    expect(found.ok && found.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
     expect(found.ok && found.named).toBeNull();
     expect(found.ok && found.notice).toBeNull();
   });
@@ -91,7 +91,7 @@ describe('resolveBoard', () => {
   test('reads a name from the catalogue', () => {
     const found = resolveBoard('akizuki-c');
 
-    expect(found.ok && found.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null });
+    expect(found.ok && found.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
     expect(found.ok && found.named?.key).toBe('akizuki-c');
   });
 
@@ -104,7 +104,7 @@ describe('resolveBoard', () => {
     // ミリのつもりで書いた人に、**黙って別物の図が出る**。
     const found = resolveBoard('72x47');
 
-    expect(found.ok && found.board).toEqual({ cols: 72, rows: 47, slots: false, color: null, land: null, slotColor: null });
+    expect(found.ok && found.board).toEqual({ cols: 72, rows: 47, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
     expect(found.ok && found.notice).toContain('穴数として読みました');
     expect(found.ok && found.notice).toContain('akizuki-c');
   });

@@ -1,7 +1,7 @@
 import { LineCounter, isMap, isScalar, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
 import { fenceError, notice, safeToken } from '../errors.ts';
-import { DEFAULT_BOARD, DEFAULT_BOARD_SIZE, resolveBoard } from '../model/board.ts';
+import { DEFAULT_BOARD, DEFAULT_BOARD_SIZE, MATERIALS, parseMaterial, parseThickness, resolveBoard } from '../model/board.ts';
 import { isLandColor, isPlateColor, landNames, plateNames } from '../render/finish.ts';
 import { boardNames } from '../model/catalog.ts';
 import { LIMITS } from '../limits.ts';
@@ -16,7 +16,7 @@ import { parseAddress } from '../model/address.ts';
 import { isSeq } from 'yaml';
 import { TOP_LEVEL_KEYS } from '../types.ts';
 import type {
-  Board, DeviceSpec, FenceDocument, FenceError, NoteSpec, PartSpec, PointSpec, StyleSpec, WireSpec,
+  BoardMaterial, Board, DeviceSpec, FenceDocument, FenceError, NoteSpec, PartSpec, PointSpec, StyleSpec, WireSpec,
 } from '../types.ts';
 
 /** yaml のメッセージはライブラリ側の文言なので、載せる長さを切る。 */
@@ -27,7 +27,7 @@ const BOARD_HINT = `board: は穴数を 列x行 で書くか (例: board: 25x15)
   + `上限は ${LIMITS.cols}x${LIMITS.rows} です`;
 
 /** `board:` をマップで書いたときに置ける項目。 */
-const BOARD_KEYS = ['size', 'slots', 'color', 'land'] as const;
+const BOARD_KEYS = ['size', 'slots', 'color', 'land', 'h', 'material'] as const;
 
 /** `on` / `off` は YAML 1.2 では字。`style:` と同じ受け方を board にも与える。 */
 const FLAG_WORDS: Record<string, boolean> = { on: true, off: false };
@@ -407,6 +407,8 @@ function readFence(source: string): ParseResult {
     let color: string | null = null;
     let land: string | null = null;
     let slotColor: string | null = null;
+    let h: number | undefined;
+    let material: BoardMaterial | undefined;
     if (isMap(pair.value)) {
       let sizeSeen = false;
       let bad = false;
@@ -428,6 +430,32 @@ function readFence(source: string): ParseResult {
           continue;
         }
         const written = scalarText(item.value);
+        // h と material: 断面を描くときの基材。**上から見た図は変わらない**ので、
+        // 書かなかったときの既定 (1.6mm・FR-4) はまだ言わない (断面図を描くときに言う)。
+        if (name === 'h') {
+          const read = parseThickness(written ?? '');
+          if (!read.ok) {
+            errors.push(fenceError(read.reason, itemAt, name));
+            bad = true;
+            continue;
+          }
+          h = read.h;
+          continue;
+        }
+        if (name === 'material') {
+          const read = parseMaterial(written ?? '');
+          if (read === null) {
+            errors.push(fenceError(
+              `board の material は ${MATERIALS.join(' / ')} で書きます: ${safeToken(written ?? '')}`,
+              itemAt,
+              name,
+            ));
+            bad = true;
+            continue;
+          }
+          material = read;
+          continue;
+        }
         if (name === 'color' || name === 'land') {
           // 板の色とランドの色。**表を分けてある** — 板に `gold`、ランドに `green` と
           // 書けてしまうと、綴りは通るのに実物にない板が出る。
@@ -489,7 +517,10 @@ function readFence(source: string): ParseResult {
       errors.push(fenceError(`${safeToken(written)}: ${found.reason}`, at, written));
       continue;
     }
-    board = { ...found.board, slots, color, land, slotColor };
+    board = {
+      ...found.board, slots, color, land, slotColor,
+      h: h ?? found.board.h, material: material ?? found.board.material,
+    };
     // 単位の書き忘れは**図が出てしまう**取り違えなので、エラーではなくお知らせ。
     if (found.notice !== null) errors.push(notice(found.notice, at, written));
   }

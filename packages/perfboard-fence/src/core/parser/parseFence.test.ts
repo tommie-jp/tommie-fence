@@ -48,7 +48,7 @@ describe('parseFence', () => {
   test('keeps the document when the fence is well formed', () => {
     const parsed = parseFence('board: 28x18\n');
 
-    expect(parsed.doc?.board).toEqual({ cols: 28, rows: 18, slots: false, color: null, land: null, slotColor: null });
+    expect(parsed.doc?.board).toEqual({ cols: 28, rows: 18, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
     expect(parsed.errors).toEqual([]);
   });
   test('says once that board: has no value, not twice that it is missing', () => {
@@ -71,7 +71,7 @@ describe('parseFence', () => {
     const parsed = parseFence('board: akizuki-c\n');
 
     expect(parsed.errors).toEqual([]);
-    expect(parsed.doc?.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null });
+    expect(parsed.doc?.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
   });
 
   test('reads a board written as the size it is sold at', () => {
@@ -80,7 +80,7 @@ describe('parseFence', () => {
       const parsed = parseFence(`board: ${spelling}\n`);
 
       expect(parsed.errors).toEqual([]);
-      expect(parsed.doc?.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null });
+      expect(parsed.doc?.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
     }
   });
 
@@ -97,7 +97,7 @@ describe('parseFence', () => {
     // エラーではなくお知らせだが、言わないと**別物の図に気づけない**。
     const parsed = parseFence('board: 72x47\n');
 
-    expect(parsed.doc?.board).toEqual({ cols: 72, rows: 47, slots: false, color: null, land: null, slotColor: null });
+    expect(parsed.doc?.board).toEqual({ cols: 72, rows: 47, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
     expect(parsed.errors).toHaveLength(1);
     expect(parsed.errors[0]?.notice).toBe(true);
     expect(parsed.errors[0]?.message).toContain('akizuki-c');
@@ -224,12 +224,12 @@ describe('board: のマップ形式 (スロット用の銅箔)', () => {
     const parsed = parseFence('board:\n  size: 12x7\n');
 
     expect(parsed.errors).toEqual([]);
-    expect(parsed.doc?.board).toEqual({ cols: 12, rows: 7, slots: false, color: null, land: null, slotColor: null });
+    expect(parsed.doc?.board).toEqual({ cols: 12, rows: 7, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
   });
 
   test('takes a name there too, since it is the same spelling as before', () => {
     expect(parseFence('board:\n  size: akizuki-c\n').doc?.board)
-      .toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null });
+      .toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
   });
 
   test('draws the slot copper when it was asked for', () => {
@@ -301,5 +301,54 @@ parts:
 
     // Assert — **答えは共有される。** 受け取った側は書き換えない (読み取り専用の型)。
     expect(again).toBe(first);
+  });
+});
+
+describe('board: の基材 (h と material)', () => {
+  test('defaults to 1.6mm FR-4, the board most shops sell', () => {
+    const board = parseFence('board: 12x7\n').doc?.board;
+
+    expect(board?.h).toBe(1.6);
+    expect(board?.material).toBe('FR-4');
+  });
+
+  test('takes the thickness in mm, spelled like the copper fence', () => {
+    const parsed = parseFence('board:\n  size: 12x7\n  h: 0.8mm\n');
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.doc?.board.h).toBe(0.8);
+  });
+
+  test('refuses a bare number, which could be mm or anything else, and says how to fix it', () => {
+    const parsed = parseFence('board:\n  size: 12x7\n  h: 1.6\n');
+
+    expect(parsed.errors[0]?.message).toContain('1.6mm');
+    expect(parsed.doc?.board.h).toBe(1.6);
+    expect(parsed.doc?.board.cols).toBe(12);
+  });
+
+  test('refuses a thickness no board has', () => {
+    expect(parseFence('board:\n  size: 12x7\n  h: 20mm\n').errors[0]?.message).toContain('0.1mm〜10mm');
+  });
+
+  test('takes the material as the shop spells it, in either case', () => {
+    const parsed = parseFence('board:\n  size: 12x7\n  material: cem-3\n');
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.doc?.board.material).toBe('CEM-3');
+  });
+
+  test('refuses FR4 without the hyphen and lists what it takes', () => {
+    const parsed = parseFence('board:\n  size: 12x7\n  material: FR4\n');
+
+    expect(parsed.errors[0]?.message).toContain('FR-4 / CEM-3');
+    expect(parsed.doc?.board.material).toBe('FR-4');
+  });
+
+  test('keeps the thickness and material on a named board', () => {
+    const board = parseFence('board:\n  size: akizuki-c\n  h: 0.8mm\n  material: FR-4\n').doc?.board;
+
+    expect(board?.cols).toBe(25);
+    expect(board?.h).toBe(0.8);
   });
 });
