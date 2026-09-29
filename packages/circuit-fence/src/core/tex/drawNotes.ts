@@ -451,6 +451,7 @@ export function noteOverlays(
         // 上下の辺に来た足は縦に読む。SVG の `rotate` は時計回りなので、
         // 上の辺 (下へ読む) が 90、下の辺 (上へ読む) が 270。
         rotate: side === 'top' ? (90 as const) : side === 'bottom' ? (270 as const) : (0 as const),
+        centered: side === 'top' || side === 'bottom',
       };
     });
   });

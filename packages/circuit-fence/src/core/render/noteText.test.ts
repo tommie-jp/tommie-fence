@@ -157,6 +157,20 @@ describe('字を回す', () => {
     expect(attributes).toContain('translate(1 2) rotate(90 ');
   });
 
+  test('centres a turned pin name on its pin, so the names of neighbouring pins do not touch', () => {
+    // 555 の下の辺で「1 GND」と「5 CONT」が片側に寄ってくっついた。字の高さの半分だけずらす。
+    const svg = applyNotes(SVG, [note('1 GND', { rotate: 270, centered: true })]);
+    const attributes = /<text([^>]*)>/.exec(svg)?.[1] ?? '';
+
+    expect(attributes).toContain('dy="0.35em"');
+  });
+
+  test('keeps a turned note where it was written (only pin names are centred)', () => {
+    const svg = applyNotes(SVG, [note('ここ', { rotate: 90 })]);
+
+    expect(svg).not.toContain('dy=');
+  });
+
   test('leaves the marker alone when there is no turn', () => {
     const svg = applyNotes(SVG, [note('ここ')]);
 

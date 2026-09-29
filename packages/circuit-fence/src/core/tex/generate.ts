@@ -1083,8 +1083,9 @@ function pinNamePlace(type: PartType, turn: Turn, index: number): {
   if (side === 'left') return { anchor: 'west', shift: 'xshift=2pt', rotate: 0, side };
   if (side === 'right') return { anchor: 'east', shift: 'xshift=-2pt', rotate: 0, side };
   // 上の辺: 字は下 (箱の中) へ読む。下の辺: 上へ読む。
-  if (side === 'top') return { anchor: 'west', shift: 'yshift=-2pt', rotate: -90, side };
-  return { anchor: 'west', shift: 'yshift=2pt', rotate: 90, side };
+  // 上下は縁から 4pt 離す。2pt では縦書きの字の頭が足の線の端に触れて読みにくかった。
+  if (side === 'top') return { anchor: 'west', shift: 'yshift=-4pt', rotate: -90, side };
+  return { anchor: 'west', shift: 'yshift=4pt', rotate: 90, side };
 }
 
 const drawPart = (part: PartSpec, target: TexTarget, pitch: number, standard: Standard): string[] =>

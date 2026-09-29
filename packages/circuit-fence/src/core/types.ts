@@ -446,4 +446,9 @@ export type NoteOverlay = {
   readonly align: NoteAlign;
   /** 字を回す角度 (**時計回り**)。0 は回さない。 */
   readonly rotate: 0 | 90 | 180 | 270;
+  /**
+   * 回した字を、指し先の線が字の真ん中を通るようにずらすか (IC の上下の辺の足の名前)。
+   * ずらさないと字の胴が線の片側に寄り、隣の足の名前とくっつく。
+   */
+  readonly centered?: boolean;
 };
