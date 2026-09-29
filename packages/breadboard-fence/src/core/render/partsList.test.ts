@@ -34,10 +34,10 @@ describe('renderPartsList', () => {
     expect(render([])).toBe('');
   });
 
-  test('lists the id, the type and the value of every part in the order they were written', () => {
+  test('lists the id, the type and the value of every part, sorted by name', () => {
     const svg = render([part('R1', 'resistor', '330'), part('D1', 'led', 'red')]);
 
-    expect(texts(svg)).toEqual(['R1', 'resistor', '330', 'D1', 'led', 'red']);
+    expect(texts(svg)).toEqual(['D1', 'led', 'red', 'R1', 'resistor', '330']);
   });
 
   test('falls back to the label when a part has no value', () => {
@@ -142,6 +142,14 @@ describe('renderPartsList', () => {
     const device: PlacedPart = { ...part('AD2', 'device', 'SIG'), kind: 'device' };
 
     expect(texts(render([device]))).toEqual(['AD2', 'device']);
+  });
+
+  test('sorts the rows by name, numbers as numbers', () => {
+    // 表から部品を探すので名前の順に並べる (書いた順だと U1 の後に R1 が来て探しにくかった)。
+    const svg = render([part('U1', 'dip14', 'CD4081'), part('R10', 'resistor', '1k'), part('R2', 'resistor', '330'), part('A', 'switch')]);
+    const ids = texts(svg).filter((text) => ['A', 'R2', 'R10', 'U1'].includes(text));
+
+    expect(ids).toEqual(['A', 'R2', 'R10', 'U1']);
   });
 
   test('writes the list in solid black on a light plate, not in the gray of the board print', () => {

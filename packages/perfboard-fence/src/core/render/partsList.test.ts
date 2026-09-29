@@ -55,13 +55,14 @@ describe('partsListing', () => {
     expect(rows[1]).toEqual(['BAT', 'device', '電池 3V', '']);
   });
 
-  test('keeps the order they were written in, so the drawing can be followed', () => {
+  test('sorts the rows by name, numbers as numbers, devices among the parts', () => {
+    // 表から部品を探すので名前の順に並べる (R2 の次は R10。機器も同じ並びに入る)。
     const rows = partsListing(
-      [part('R2', 'resistor', '1k'), part('R1', 'resistor', '2k')],
-      [device('SPK', 'スピーカー')],
+      [part('R10', 'resistor', '1k'), part('U1', 'dip8'), part('R2', 'resistor', '2k'), part('D1', 'led', 'red')],
+      [device('BAT', '電池 3V')],
     );
 
-    expect(rows.slice(1).map((row) => row[0])).toEqual(['R2', 'R1', 'SPK']);
+    expect(rows.slice(1).map((row) => row[0])).toEqual(['BAT', 'D1', 'R2', 'R10', 'U1']);
   });
 
   test('returns nothing at all when there is nothing to list', () => {

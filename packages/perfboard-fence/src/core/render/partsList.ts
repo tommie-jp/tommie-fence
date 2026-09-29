@@ -96,7 +96,9 @@ export function partsListing(
     // 機器は種類が 1 つしかないので、名札を値の欄に出す (`電池 3V`)。
     ...devices.map((device): PartsRow => [device.id, 'device', device.label, '']),
   ];
-  return rows.length === 0 ? [] : [HEADINGS, ...rows];
+  // 表から部品を探すので名前の順に並べる (数字は数として: R2 の次は R10。機器も同じ並びに入る)。
+  const sorted = [...rows].sort((a, b) => a[0].localeCompare(b[0], 'en', { numeric: true }));
+  return sorted.length === 0 ? [] : [HEADINGS, ...sorted];
 }
 
 /** 列の間。1 桁だと隣の欄と地続きに見えるので 2 桁ぶん空ける。 */

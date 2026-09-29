@@ -79,7 +79,9 @@ export function renderPartsList(
 ): string {
   if (parts.length === 0) return '';
 
-  const rows = rowsOf(parts.slice(0, LIMITS.listedParts));
+  // 表から部品を探すので名前の順に並べる (数字は数として: R2 の次は R10)。上限で切る前に並べる。
+  const sorted = [...parts].sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }));
+  const rows = rowsOf(sorted.slice(0, LIMITS.listedParts));
   const hidden = parts.length - rows.length;
   const { palette } = theme;
   const { textSize } = theme.metrics;
