@@ -23,7 +23,6 @@ export type ImageAfterFenceOptions = {
   readonly label: (alt: string) => string;
 };
 
-
 const isFigureFence = (token: Token | undefined): boolean =>
   token?.type === 'fence' && FIGURE_LANGUAGES.some((language) => isFenceOf(token.info, language));
 
