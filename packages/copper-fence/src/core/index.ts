@@ -7,11 +7,14 @@ import { cutUnderChips } from './geometry/cut.ts';
 import { islandsOf } from './geometry/islands.ts';
 import { shapesOf } from './geometry/shapes.ts';
 import type { Axis } from './geometry/shapes.ts';
-import { farFromBoard, hasFrontGround } from './model/board.ts';
+import { farFromBoard, farFromDevice, hasFrontGround } from './model/board.ts';
 import { PX, createLayout } from './model/layout.ts';
 import type { Bounds } from './model/layout.ts';
+import { LIMITS } from './limits.ts';
 import { parseFence } from './parser/parseFence.ts';
 import { smdSpecOf } from './parts/catalog.ts';
+import { deviceCorners, overlapsBoard, placeDevice } from './parts/device.ts';
+import type { PlacedDevice } from './parts/device.ts';
 import { SMA, chipGeometry, footprintOf } from './parts/footprint.ts';
 import type { Footprint } from './parts/footprint.ts';
 import { renderGrid, renderIslands, renderPlate, renderRulers, renderVias } from './render/board.ts';
@@ -19,6 +22,7 @@ import {
   blockParts, boardDescription, renderCouplings, renderDescription, renderLineCaptions, renderPartLabels,
 } from './render/captions.ts';
 import { createPlacer } from './render/placer.ts';
+import { renderDevices } from './render/devices.ts';
 import { renderBack } from './render/back.ts';
 import { renderDocument } from './render/document.ts';
 import { renderErrorBanner } from './render/errorHtml.ts';
@@ -154,8 +158,26 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
     footprints.push(found.value);
   }
 
+  // 板の外の機器。**遠すぎるものは描かない** (図の広がりが際限なく伸びる)。
+  const devices: PlacedDevice[] = [];
+  const skippedDevices = new Set<string>();
+  for (const spec of doc.devices) {
+    if (farFromDevice(board, spec.at)) {
+      placeErrors.push(fenceError(
+        `機器 ${safeToken(spec.id)} が板から離れすぎです (機器の中心は板の外 ${LIMITS.offDevice}mm まで)`, spec.line, spec.id,
+      ));
+      skippedDevices.add(spec.id);
+      continue;
+    }
+    const placed = placeDevice(spec, board);
+    if (overlapsBoard(placed.box, board)) {
+      placeErrors.push(notice(`機器 ${safeToken(spec.id)} の箱が板に重なっています (機器は板の外に置きます)`, spec.line, spec.id));
+    }
+    devices.push(placed);
+  }
+
   const ground = { board, islands, slots: made.slots };
-  const wiring = wire(ground, cut.shapes, footprints, doc.wires, resolve);
+  const wiring = wire(ground, cut.shapes, footprints, doc.wires, resolve, devices, skippedDevices);
   const couplings = couplingsOf(cut.shapes, board);
 
   // 注釈は回路の一員ではないので、読めなくても図は出る。
@@ -179,6 +201,7 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
   const erc = checking
     ? checkErc({
       board, copper: doc.copper, footprints, landings: wiring.landings, jumpers: wiring.jumpers, islands, couplings,
+      devices, wiredPins: wiring.wiredPins,
       stripAt: (point) => stripAt(point, ground),
     })
     : [];
@@ -195,6 +218,7 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
       footprints,
       [
         ...wiring.jumpers.flatMap((jumper) => [jumper.from, jumper.to]),
+        ...devices.flatMap(deviceCorners),
         ...noteBounds(notes, theme, PX),
       ],
       labelMm,
@@ -231,10 +255,14 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
     + (style.grid ? renderGrid(board, layout, theme) : '')
     + renderVias(vias, layout, theme)
     + (edit ? renderShapeHits(doc.copper, layout) + renderLineHits(lines, layout) : '')
-    + renderJumpers(wiring.jumpers, layout, theme, colorOf, edit)
+    + renderJumpers(wiring.jumpers.filter((jumper) => !jumper.device), layout, theme, colorOf, edit)
     + footprints.map((footprint) => renderPart(layout, footprint, theme, edit)).join('')
     + captions
     + labels
+    // 機器の配線は銅にも部品にも重ねて**いちばん上**に (板の縁をまたいで銅へ届く線)。
+    // マップでは掴ませない (足の書き換えは editor の対象外)。
+    + renderJumpers(wiring.jumpers.filter((jumper) => jumper.device), layout, theme, colorOf)
+    + renderDevices(devices, layout, theme)
     + renderNotes(notes, layout, theme, colorOf)
     + renderRulers(board, layout, theme, { top: covered('top'), left: covered('left') })
     + renderDescription(board, doc.f, layout, theme)

@@ -83,6 +83,12 @@ export function farFromBoard(board: Board, point: Mm): string | null {
   return inside ? null : `板から離れすぎです (板の外は ${reach}mm まで)`;
 }
 
+/** 機器の中心が板から離れすぎか (機器は注釈より遠くへ置ける)。 */
+export function farFromDevice(board: Board, point: Mm): boolean {
+  const reach = LIMITS.offDevice;
+  return point.x < -reach || point.x > board.width + reach || point.y < -reach || point.y > board.height + reach;
+}
+
 /** 辺の上の点。`left 10` は `0,10`、`top 5` は `5,0`。 */
 export function edgePoint(board: Board, side: Side, offset: number): Mm {
   switch (side) {

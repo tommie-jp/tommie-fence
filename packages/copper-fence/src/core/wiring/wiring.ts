@@ -2,11 +2,12 @@ import { computeNets } from 'fence-kit';
 import type { Net, NetMember, StripId } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { hasBackGround, hasFrontGround, isOnBoard } from '../model/board.ts';
-import { formatPoint, parsePoint } from '../model/point.ts';
+import { formatPoint, parsePoint, round2 } from '../model/point.ts';
 import { GND, cutZones, islandAt } from '../geometry/islands.ts';
 import type { Island } from '../geometry/islands.ts';
 import { contains } from '../geometry/shapes.ts';
 import type { Shape } from '../geometry/shapes.ts';
+import type { PlacedDevice } from '../parts/device.ts';
 import type { Footprint } from '../parts/footprint.ts';
 import type { Board, CopperSpec, FenceError, Mm, PartSpec, RectMm, WireSpec } from '../types.ts';
 
@@ -24,6 +25,8 @@ export type Jumper = {
   readonly line: number | null;
   readonly fromStrip: StripId | null;
   readonly toStrip: StripId | null;
+  /** 板の外の機器の足につながる配線 (足の先から板の上の銅へ渡る。銅は作らない)。 */
+  readonly device: boolean;
 };
 
 /** 足 1 本の行き先。**点ごと**に持つ (乗っていない点を ERC が名指すため)。 */
@@ -42,6 +45,8 @@ export type Wiring = {
   readonly jumpers: readonly Jumper[];
   readonly netlist: readonly Net[];
   readonly errors: readonly FenceError[];
+  /** 配線がつながっている機器の足 (`BAT.+`)。つながっていない足を ERC が言う。 */
+  readonly wiredPins: ReadonlySet<string>;
 };
 
 export type Ground = {
@@ -60,28 +65,63 @@ export function stripAt(point: Mm, ground: Ground, zones: readonly RectMm[] = cu
   return GND;
 }
 
-/** 端 (島の名前か点) を点に直す。直せなければそのわけ。 */
-export function endResolver(copper: readonly CopperSpec[], parts: readonly PartSpec[]): (written: string) => Mm | string {
+/** 折れ線の上で `toward` にいちばん近い点。 */
+export function nearestOnPath(points: readonly Mm[], toward: Mm): Mm {
+  let best: Mm = points[0] ?? toward;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  points.slice(1).forEach((b, index) => {
+    const a = points[index] ?? b;
+    const [dx, dy] = [b.x - a.x, b.y - a.y];
+    const length = dx * dx + dy * dy;
+    const t = length === 0 ? 0 : Math.max(0, Math.min(1, ((toward.x - a.x) * dx + (toward.y - a.y) * dy) / length));
+    const candidate = { x: round2(a.x + t * dx), y: round2(a.y + t * dy) };
+    const distance = Math.hypot(candidate.x - toward.x, candidate.y - toward.y);
+    if (distance < bestDistance) [best, bestDistance] = [candidate, distance];
+  });
+  return best;
+}
+
+/**
+ * 端 (島の名前か点) を点に直す。直せなければそのわけ。
+ * **機器の足につなぐ配線だけは線路の名前も端にできる** — `toward` (機器の足の先) にいちばん近い
+ * 線路の上の点へ渡る (線路には端が 2 つ以上あり、どこへ半田付けするかを名前だけでは決められない)。
+ */
+export function endResolver(
+  copper: readonly CopperSpec[],
+  parts: readonly PartSpec[],
+): (written: string, toward?: Mm) => Mm | string {
   const byId = new Map(copper.map((spec) => [spec.id, spec]));
   const partIds = new Set(parts.map((part) => part.id));
-  return (written) => {
+  return (written, toward) => {
     const point = parsePoint(written);
     if (point !== null) return point;
     const spec = byId.get(written);
     if (spec?.kind === 'pad' || spec?.kind === 'via') return spec.at;
-    if (spec?.kind === 'line') return `線路の名前は端にできません: ${safeToken(written)} (x,y で書きます)`;
+    if (spec?.kind === 'line') {
+      return toward === undefined
+        ? `線路の名前は端にできません: ${safeToken(written)} (x,y で書きます)`
+        : nearestOnPath(spec.points, toward);
+    }
     if (spec?.kind === 'slot') return `切り欠きは銅ではありません: ${safeToken(written)}`;
     if (partIds.has(written)) return `部品の名前は端にできません: ${safeToken(written)} (島の名前か x,y)`;
     return `島の名前でも点でもありません: ${safeToken(written)}`;
   };
 }
 
+/** `BAT.+` の形か (機器の足のつもりの綴り)。点 `1.5,2` は `,` を含むので当たらない。 */
+const DEVICE_PIN = /^([\w-]+)\.([^\s,]+)$/;
+
+export const devicePinStrip = (ref: string): StripId => `pin:${ref}`;
+
 export function wire(
   ground: Ground,
   shapes: readonly Shape[],
   footprints: readonly Footprint[],
   wires: readonly WireSpec[],
-  resolve: (written: string) => Mm | string,
+  resolve: (written: string, toward?: Mm) => Mm | string,
+  devices: readonly PlacedDevice[] = [],
+  /** 読めなくて描かなかった機器の名前 (それにつなぐ配線は黙って飛ばす。理由は機器の側で言ってある)。 */
+  skipped: ReadonlySet<string> = new Set(),
 ): Wiring {
   const errors: FenceError[] = [];
   const zones = cutZones(ground.islands);
@@ -119,16 +159,51 @@ export function wire(
     }
   }
 
+  // **機器の足は部品の足と同じくネットの一員**。配線が無ければ自分だけのネット。
+  const pinTips = new Map<string, Mm>();
+  for (const device of devices) {
+    for (const pin of device.pins) {
+      const ref = `${device.spec.id}.${pin.name}`;
+      pinTips.set(ref, pin.tip);
+      members.push({ ref, strip: devicePinStrip(ref) });
+    }
+  }
+  const wired = new Set<string>();
+
+  /** 端が機器の足なら、足の先と導通グループ。足のつもりで引けなければそのわけ (string)。 */
+  const devicePin = (written: string): { at: Mm; strip: StripId } | string | null => {
+    const found = DEVICE_PIN.exec(written);
+    if (found === null) return null;
+    const [, id = '', pin = ''] = found;
+    if (skipped.has(id)) return 'skipped';
+    const tip = pinTips.get(written);
+    if (tip !== undefined) return { at: tip, strip: devicePinStrip(written) };
+    const own = devices.find((device) => device.spec.id === id);
+    if (own === undefined) return `${safeToken(written)} を機器の足として読みました。そんな機器はありません: ${safeToken(id)}`;
+    return `${safeToken(id)} に ${safeToken(pin)} という足はありません (${own.pins.map((one) => safeToken(one.name)).join(' / ')})`;
+  };
+
   const jumpers: Jumper[] = [];
   for (const spec of wires) {
-    const [from, to] = [resolve(spec.from), resolve(spec.to)];
+    const [pinA, pinB] = [devicePin(spec.from), devicePin(spec.to)];
+    if (pinA === 'skipped' || pinB === 'skipped') continue;
+    if (typeof pinA === 'string' || typeof pinB === 'string') {
+      const [message, written] = typeof pinA === 'string' ? [pinA, spec.from] : [pinB as string, spec.to];
+      errors.push(fenceError(message, spec.line, written));
+      continue;
+    }
+    const device = pinA !== null || pinB !== null;
+    // 機器の足のもう一方の端は、足の先へ向けて解く (線路の名前なら足に近い点)。
+    const from = pinA?.at ?? resolve(spec.from, pinB?.at);
+    const to = pinB?.at ?? resolve(spec.to, pinA?.at);
     if (typeof from === 'string' || typeof to === 'string') {
       errors.push(fenceError(typeof from === 'string' ? from : (to as string), spec.line));
       continue;
     }
-    const [fromStrip, toStrip] = [at(from), at(to)];
+    const [fromStrip, toStrip] = [pinA?.strip ?? at(from), pinB?.strip ?? at(to)];
     if (fromStrip !== null && toStrip !== null) links.push([fromStrip, toStrip]);
-    jumpers.push({ from, to, color: spec.color, line: spec.line, fromStrip, toStrip });
+    for (const [written, pin] of [[spec.from, pinA], [spec.to, pinB]] as const) if (pin !== null) wired.add(written);
+    jumpers.push({ from, to, color: spec.color, line: spec.line, fromStrip, toStrip, device });
   }
 
   const netlist = computeNets({
@@ -137,7 +212,7 @@ export function wire(
     names: ground.islands.map((island) => [island.strip, island.name] as const),
     preferredName: (strips) => (strips.includes(GND) ? 'GND' : null),
   });
-  return { landings, jumpers, netlist, errors };
+  return { landings, jumpers, netlist, errors, wiredPins: wired };
 }
 
 /** 点を報告に載せる綴り。 */

@@ -56,7 +56,7 @@ export function nextId(source: string, type: string): string | null {
   const prefix = PREFIX[base] ?? (kind !== null && kind.ok ? (PREFIX[kind.value.type] ?? 'U') : null);
   if (prefix === undefined || prefix === null) return null;
   const { doc } = read(source);
-  const taken = new Set([...doc.parts.map((part) => part.id), ...doc.copper.map((spec) => spec.id)]);
+  const taken = new Set([...doc.parts.map((part) => part.id), ...doc.devices.map((device) => device.id), ...doc.copper.map((spec) => spec.id)]);
   let number = 1;
   while (taken.has(`${prefix}${number}`)) number += 1;
   return `${prefix}${number}`;

@@ -32,6 +32,12 @@ export const LIMITS = {
   /** 板に載せられる部品の数と、箱 1 つの足の数。 */
   parts: 100,
   boxPins: 64,
+  /** 板の外の機器の数・足の数・足の名前の長さ。 */
+  devices: 30,
+  devicePins: 32,
+  pinNameLength: 12,
+  /** 機器の中心を置ける板からの距離 (mm)。注釈の 20mm より遠くへ置ける。 */
+  offDevice: 60,
   /** 引ける配線 (島どうしのジャンパ) の本数。 */
   wires: 200,
   /** 図に出る値・ラベルの長さ。 */
@@ -63,6 +69,10 @@ export const STYLE_RANGES = {
 /** 配線から `P1` の形で参照できる名前か。参照できない名前は書き間違いとして弾く。 */
 export const isReferenceable = (name: string): boolean =>
   /^[\w-]+$/.test(name) && name.length > 0 && name.length <= LIMITS.idLength;
+
+/** 機器の足の名前 (`+` `-` `CH1` `OUT`)。空白と `,` は入れない (点の綴りと取り違える)。 */
+export const isPinName = (name: string): boolean =>
+  name.length > 0 && name.length <= LIMITS.pinNameLength && !/[\s,]/.test(name);
 
 /** 図に載る文字の長さを切る。サロゲートペアを割らないようコードポイントで数える。 */
 export function clampText(text: string, max: number): string {

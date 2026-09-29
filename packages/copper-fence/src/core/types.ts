@@ -171,7 +171,21 @@ export type MultiPartSpec = PartCommon & {
 
 export type PartSpec = EdgePartSpec | ChipPartSpec | SotPartSpec | BoxPartSpec | LeadedPartSpec | MultiPartSpec;
 
-/** 島どうしのジャンパ。端は島の名前か点。 */
+/**
+ * 板の外の機器 (電源・測定器・マイク・アンテナ線)。**板には載らない**ので部品ではなく別に持つ。
+ * 位置は箱の中心 (mm。板の外)。足は板の側の辺から出て、配線からは `名前.足` で指す。
+ */
+export type DeviceSpec = {
+  readonly id: string;
+  readonly at: Mm;
+  readonly label: string;
+  readonly pins: readonly string[];
+  /** 足を出す辺。書かなければ null (板のいる側を向く)。 */
+  readonly face: Side | null;
+  readonly line: number | null;
+};
+
+/** 配線。端は島の名前・点・機器の足 (`名前.足`)。 */
 export type WireSpec = {
   readonly from: string;
   readonly to: string;
@@ -216,6 +230,8 @@ export type FenceDocument = {
   readonly title: string | null;
   readonly copper: readonly CopperSpec[];
   readonly parts: readonly PartSpec[];
+  /** 板の外の機器。`parts:` の中に入れ子で書いたもの。 */
+  readonly devices: readonly DeviceSpec[];
   readonly wires: readonly WireSpec[];
   readonly notes: readonly NoteSpec[];
   readonly style: StyleSpec;

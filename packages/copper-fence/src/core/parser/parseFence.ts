@@ -12,10 +12,11 @@ import { F_MAX, F_MIN, formatHertz } from '../model/microstrip.ts';
 import { parseLength, unitProblem } from '../model/point.ts';
 import { TOP_LEVEL_KEYS } from '../types.ts';
 import type {
-  Board, CopperSpec, FenceDocument, FenceError, Ground, NoteSpec, PartSpec, StyleSpec, WireSpec,
+  Board, CopperSpec, DeviceSpec, FenceDocument, FenceError, Ground, NoteSpec, PartSpec, StyleSpec, WireSpec,
 } from '../types.ts';
 import { parseCopperLine } from './copper.ts';
 import { parseNoteLine } from './notes.ts';
+import { parseDevice } from './devices.ts';
 import { parsePartLine } from './parts.ts';
 import { EMPTY_STYLE, parseStyle } from './style.ts';
 import { parseWireLine } from './wires.ts';
@@ -33,7 +34,7 @@ const BOARD_KEYS = ['size', 'h', 'er', 'ground', 'cut'] as const;
 export type ParseResult = { readonly doc: FenceDocument; readonly errors: readonly FenceError[] };
 
 const emptyDocument = (): FenceDocument => ({
-  board: DEFAULT_BOARD, f: null, title: null, copper: [], parts: [], wires: [], notes: [], style: EMPTY_STYLE,
+  board: DEFAULT_BOARD, f: null, title: null, copper: [], parts: [], devices: [], wires: [], notes: [], style: EMPTY_STYLE,
 });
 
 const scalarText = (node: unknown): string | null => {
@@ -84,6 +85,7 @@ function readFence(source: string): ParseResult {
 
   const copper: CopperSpec[] = [];
   const parts: PartSpec[] = [];
+  const devices: DeviceSpec[] = [];
   const wires: WireSpec[] = [];
   const notes: NoteSpec[] = [];
   let board: Board | null = null;
@@ -118,6 +120,8 @@ function readFence(source: string): ParseResult {
     limit: number,
     read: (id: string, text: string) => { ok: true; value: T } | { ok: false; error: FenceError },
     push: (value: T, line: number | null) => void,
+    /** 入れ子の項目 (`parts:` の板の外の機器)。無ければ 1 行で書かせる。 */
+    nested?: (id: string, node: Node, line: number | null) => void,
   ): void => {
     if (!isMap(node)) {
       errors.push(fenceError(`${what}: は \`名前: 中身\` の並びにします`, keyLine));
@@ -136,6 +140,10 @@ function readFence(source: string): ParseResult {
         break;
       }
       if (!claim(id, line)) continue;
+      if (nested !== undefined && isMap(item.value)) {
+        nested(id, item.value as Node, line);
+        continue;
+      }
       const text = scalarText(item.value);
       if (text === null) {
         errors.push(fenceError(`${safeToken(id)} の中身を 1 行で書きます`, line));
@@ -340,6 +348,14 @@ function readFence(source: string): ParseResult {
       case 'parts':
         readEntries(pair.value, keyLine, 'parts', LIMITS.parts, parsePartLine, (value, line) => {
           parts.push({ ...value, line });
+        }, (id, node, line) => {
+          if (devices.length >= LIMITS.devices) {
+            errors.push(fenceError(`板の外の機器が多すぎます (${LIMITS.devices} 個まで)`, line));
+            return;
+          }
+          const result = parseDevice(id, (node as { toJSON?: () => Record<string, unknown> }).toJSON?.() ?? {});
+          if (!result.ok) errors.push({ ...result.error, line });
+          else devices.push({ ...result.value, line });
         });
         break;
       case 'wires':
@@ -373,7 +389,7 @@ function readFence(source: string): ParseResult {
   }
 
   return {
-    doc: { board: board ?? DEFAULT_BOARD, f, title, copper, parts, wires, notes, style },
+    doc: { board: board ?? DEFAULT_BOARD, f, title, copper, parts, devices, wires, notes, style },
     errors,
   };
 }

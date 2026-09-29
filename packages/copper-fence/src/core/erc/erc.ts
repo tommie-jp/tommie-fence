@@ -7,6 +7,7 @@ import type { Island } from '../geometry/islands.ts';
 import type { Coupling } from '../geometry/coupling.ts';
 import { SMA, place } from '../parts/footprint.ts';
 import type { Footprint } from '../parts/footprint.ts';
+import type { PlacedDevice } from '../parts/device.ts';
 import type { Jumper, PinLanding } from '../wiring/wiring.ts';
 import type { Board, CopperSpec, FenceError, Mm } from '../types.ts';
 
@@ -30,6 +31,9 @@ export type ErcInput = {
   readonly jumpers: readonly Jumper[];
   readonly islands: readonly Island[];
   readonly couplings: readonly Coupling[];
+  /** 板の外の機器と、配線がつながっている足 (`BAT.+`)。 */
+  readonly devices?: readonly PlacedDevice[];
+  readonly wiredPins?: ReadonlySet<string>;
   /** 点の導通グループ (島・地・どこでもない)。 */
   readonly stripAt: (point: Mm) => string | null;
 };
@@ -93,7 +97,24 @@ export function checkErc(input: ErcInput): FenceError[] {
   for (const jumper of input.jumpers) {
     for (const [end, strip] of [[jumper.from, jumper.fromStrip], [jumper.to, jumper.toStrip]] as const) {
       if (strip !== null) continue;
-      said.push(notice(`配線の端 (${formatPoint(end)}) の下に銅がありません`, jumper.line, formatPoint(end)));
+      said.push(notice(
+        `${jumper.device ? '機器から引いた' : ''}配線の端 (${formatPoint(end)}) の下に銅がありません`,
+        jumper.line,
+        formatPoint(end),
+      ));
+    }
+  }
+
+  // 3 の続き — 機器の足がどこにもつながっていない。**板の外の機器は配線を書かないと銅に届かない**。
+  for (const device of input.devices ?? []) {
+    for (const pin of device.pins) {
+      const ref = `${device.spec.id}.${pin.name}`;
+      if (input.wiredPins?.has(ref) === true) continue;
+      said.push(notice(
+        `${ref} の足がどこにもつながっていません (板の外の機器なので、配線を書かないと銅に届きません)`,
+        device.spec.line,
+        device.spec.id,
+      ));
     }
   }
 
