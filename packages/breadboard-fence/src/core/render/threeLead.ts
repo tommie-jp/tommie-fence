@@ -6,6 +6,7 @@ import {
 import { HOLE_ROWS, RAIL_ROWS } from '../types.ts';
 import type { Point, Rect } from '../types.ts';
 import { drawPackage, packageHalfWidth, packageReach } from 'fence-kit';
+import { insertionDot } from './wires.ts';
 import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
 
@@ -212,11 +213,8 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
       });
     })
     .join('');
-  const legs = points
-    .map((point) =>
-      element('rect', { x: num(point.x - 3), y: num(point.y - 3), width: 6, height: 6, fill: palette.lead }),
-    )
-    .join('');
+  // 足先は配線の端・2 本足の端と同じ金属の粒にする (挿した所の見え方を揃える)。
+  const legs = points.map((point) => insertionDot(point, theme)).join('');
   // **足の名前もキャプションも胴の下へ。** 図の中で名前の出る側が揃う
   // (実機で「すべての部品名は部品の下側に表示する」)。溝の側へ振り分けて
   // いたが、上下のブロックで側が変わって揃わなかった。

@@ -155,3 +155,14 @@ describe('the ends of a part lead show where it goes into the hole', () => {
     expect(svg).toMatch(new RegExp(`<circle cx="${x1}" cy="${y1}" r="[\\d.]+" fill="${chipPin}"`));
   });
 });
+
+describe('the legs of a three-lead part end in the same metal dot', () => {
+  test('each leg hole gets the dot instead of a square', () => {
+    const { svg } = fence('parts:', '  Q1: transistor e10(B) e12(C) e14(E) 2SC1815');
+    const { chipPin, lead } = DEFAULT_THEME.palette;
+    const dots = [...svg.matchAll(new RegExp(`<circle cx="[\\d.]+" cy="[\\d.]+" r="[\\d.]+" fill="${chipPin}"`, 'g'))];
+
+    expect(dots).toHaveLength(3);
+    expect(svg).not.toContain(`width="6" height="6" fill="${lead}"`);
+  });
+});
