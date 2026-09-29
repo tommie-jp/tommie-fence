@@ -3,8 +3,11 @@ import { formatHertzShort } from 'fence-kit';
 /**
  * 機種と測れる範囲 (52 の docs/68 §1)。**図の絵は変えない** — 範囲の外を掃引して
  * いないかを言うためだけに持つ。
+ * LiteVNA64 は S11 と S21 だけを測る (S12・S22 は測らない)。これは機種によらず、
+ * `S12` `S22` のトレースは断り、`.s2p` の逆向きの列は読んでも描かない。
  */
 export const DEVICES = {
+  litevna64: { label: 'LiteVNA64', min: 50e3, max: 6.3e9 },
   h4: { label: 'NanoVNA-H4', min: 50e3, max: 1.5e9 },
   v2: { label: 'NanoVNA V2', min: 50e3, max: 3e9 },
   plus4: { label: 'NanoVNA V2 Plus4', min: 50e3, max: 4.4e9 },
@@ -14,7 +17,7 @@ export type DeviceName = keyof typeof DEVICES;
 
 export const DEVICE_NAMES = Object.keys(DEVICES) as readonly DeviceName[];
 
-export const DEFAULT_DEVICE: DeviceName = 'h4';
+export const DEFAULT_DEVICE: DeviceName = 'litevna64';
 
 export const isDeviceName = (name: string): name is DeviceName => Object.hasOwn(DEVICES, name);
 

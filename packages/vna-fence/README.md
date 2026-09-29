@@ -16,7 +16,7 @@ Write the ideal model in one line and the fence computes the traces; point it at
 Touchstone file you saved and the measurement is drawn over them.
 
 ```yaml
-device: h4
+device: litevna64
 sweep: 1M-300M 101
 dut: series R 100            # ideal model → dashed
 data: 3-1-100ohm.s2p         # measured, next to the .md → solid
@@ -40,7 +40,7 @@ markers:
   panel
 - **Markers** are read out below the drawing in the NanoVNA format
   (`10.000 MHz  −6.02 dB  150.0 Ω + j0.0 Ω`), from the measurement if there is one
-- The device (`h4` / `v2` / `plus4`) only decides what is **said** when the sweep goes
+- The device (`litevna64` (default) / `h4` / `v2` / `plus4`) only decides what is **said** when the sweep goes
   beyond its range
 
 ## How it differs from its siblings

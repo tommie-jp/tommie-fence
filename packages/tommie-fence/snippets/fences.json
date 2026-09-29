@@ -75,7 +75,7 @@
     "description": "VNA screen — a vna fence to start from (VNA・NanoVNA の画面のフェンス)",
     "body": [
       "```vna",
-      "device: h4",
+      "device: litevna64",
       "sweep: ${1:1M-300M 101}",
       "title: ${2:A 100-ohm resistor in series}",
       "dut: series R 100",

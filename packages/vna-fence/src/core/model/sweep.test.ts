@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { rangeNotice } from './device.ts';
+import { DEFAULT_DEVICE, DEVICE_NAMES, DEVICES, rangeNotice } from './device.ts';
 import { DEFAULT_POINTS, deviceSweep, frequenciesOf, parseSweep } from './sweep.ts';
 
 describe('parseSweep', () => {
@@ -42,6 +42,20 @@ describe('frequenciesOf', () => {
 describe('devices', () => {
   test('the default sweep is the whole range of the device', () => {
     expect(deviceSweep('h4')).toEqual({ start: 50e3, stop: 1.5e9, points: 101 });
+    expect(deviceSweep('litevna64')).toEqual({ start: 50e3, stop: 6.3e9, points: 101 });
+  });
+
+  test('has the LiteVNA64 and makes it the default', () => {
+    expect(DEVICES.litevna64).toEqual({ label: 'LiteVNA64', min: 50e3, max: 6.3e9 });
+    expect(DEFAULT_DEVICE).toBe('litevna64');
+    expect(DEVICE_NAMES).toEqual(['litevna64', 'h4', 'v2', 'plus4']);
+  });
+
+  test('LiteVNA64 says nothing up to 6.3 GHz and says so beyond', () => {
+    expect(rangeNotice('litevna64', 1.5e9, 6.3e9)).toBeNull();
+    expect(rangeNotice('litevna64', 1e6, 3e9)).toBeNull();
+    expect(rangeNotice('litevna64', 1e6, 7e9)).toBe('LiteVNA64 は 6.3 GHz までです (掃引の終わりが 7 GHz)');
+    expect(rangeNotice('litevna64', 10e3, 1e6)).toContain('50 kHz から');
   });
 
   test('says when a sweep goes past what the device measures', () => {

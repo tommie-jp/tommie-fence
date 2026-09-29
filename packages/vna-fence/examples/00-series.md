@@ -27,7 +27,7 @@ notes:
 <img src="out/schematic/00-series.png" alt="回路図01 100 Ω を直列に入れた治具" width="492">
 
 ```vna
-device: h4
+device: litevna64
 sweep: 1M-300M 101
 title: 図01 100 Ω を直列に入れたときの画面
 dut: series R 100

@@ -64,11 +64,18 @@ wires:
 
 | `device:` | 機種 | 範囲 |
 | --- | --- | --- |
-| `h4` (既定) | NanoVNA-H4 | 50 kHz〜1.5 GHz |
+| `litevna64` (既定) | LiteVNA64 | 50 kHz〜6.3 GHz |
+| `h4` | NanoVNA-H4 | 50 kHz〜1.5 GHz |
 | `v2` | NanoVNA V2 | 50 kHz〜3 GHz |
 | `plus4` | NanoVNA V2 Plus4 | 50 kHz〜4.4 GHz |
 
 `sweep:` を書かなければ機種の範囲いっぱい (101 点) で描き、そう描いたことを言う。
+既定は `litevna64` なので、`device:` を書かなければ 1.5〜6.3 GHz を掃引してもお知らせは出ない
+(NanoVNA-H4 で測る図には `device: h4` と書く)。
+
+LiteVNA64 は ミキサー 1 つと内蔵の RF スイッチで **S11 と S21 だけ**を測る (S12・S22 は測らない)。
+これは機種によらず、`S12` `S22` のトレースは断り、`.s2p` の S12・S22 の列は読んでも描かない。
+機種ごとの追加のお知らせは無い。
 
 ## 題 (`title:`)
 

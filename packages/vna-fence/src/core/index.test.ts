@@ -63,6 +63,15 @@ describe('renderVna', () => {
     expect(said(renderVna('device: h4\nsweep: 1M-3G\ndut: series R 1'))).toContain('1.5 GHz まで');
   });
 
+  test('says nothing about 1.5-6.3 GHz by default (LiteVNA64), but does for an explicit h4', () => {
+    expect(said(renderVna('sweep: 1M-3G\ndut: series R 1'))).not.toContain('まで');
+    expect(said(renderVna('device: h4\nsweep: 1M-3G\ndut: series R 1'))).toContain('1.5 GHz まで');
+  });
+
+  test('says when the sweep is beyond 6.3 GHz by default', () => {
+    expect(said(renderVna('sweep: 1M-7G\ndut: series R 1'))).toContain('LiteVNA64 は 6.3 GHz まで');
+  });
+
   test('markers outside the sweep are said and not drawn', () => {
     const result = renderVna('sweep: 1M-2M\ndut: series R 1\nmarkers:\n  - 5M');
     expect(said(result)).toContain('掃引の外');

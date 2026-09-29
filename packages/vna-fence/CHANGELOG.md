@@ -5,6 +5,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- **LiteVNA64** (`device: litevna64`、50 kHz〜6.3 GHz) を機種に足した。S11 と S21 だけを測る機器で、
+  S12・S22 を描かない扱いは従来のまま
+
+### Changed
+
+- **既定の機種を `h4` から `litevna64` に変えた** — `device:` を書かない図は 50 kHz〜6.3 GHz で描き、
+  1.5〜6.3 GHz の掃引にお知らせが出なくなる。NanoVNA-H4 で測る図は `device: h4` と書く
+
 ## [0.3.0] - 2026-09-29
 
 ### Changed
