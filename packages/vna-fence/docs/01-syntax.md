@@ -3,7 +3,7 @@
 Markdown の ` ```vna ` フェンスに YAML を書くと、Markdown プレビューで
 **VNA (NanoVNA) の画面**になる — S21 / S11 の Log Mag、Smith チャート、SWR、
 位相、群遅延、インピーダンス、TDR。**理想の模型** (`dut:`) を書けば測る前の
-「見るべき値」が破線で、**測った Touchstone** (`data:`) を書けば実線で重なる。
+「見るべき値」が実線で描け、**測った Touchstone** (`data:`) を書けば実線で重なり、理想のほうは破線に変わる。
 ここは文法の全部。形ごとの例は [examples/](../examples/README.md) にある。
 
 `dut:` のある図の後には、その模型の**等価回路**を ` ```circuit ` フェンスで添えてある

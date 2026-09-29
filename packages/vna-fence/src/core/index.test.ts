@@ -16,7 +16,8 @@ describe('renderVna', () => {
     expect(result.errors).toEqual([]);
     expect(result.svg).toContain('data-vna-fence');
     expect(result.svg.match(/<polyline/g)).toHaveLength(3);
-    expect(result.svg).toContain('stroke-dasharray="5 3"');
+    // 実測が無いので理想は実線 (分ける相手が無い)。
+    expect(result.svg).not.toContain('stroke-dasharray="5 3"');
     expect(result.readings.basis).toBe('model');
     expect(result.readings.rows[0]).toEqual(['1', '10.000 MHz', '−6.02 dB', '−6.02 dB', '150.0 Ω + j0.0 Ω']);
     expect(result.readingLines[0]).toBe('読み値 — 理想 (dut: の模型)');
@@ -82,6 +83,8 @@ describe('renderVna', () => {
       expect(result.readings.basis).toBe('data');
       expect(result.readings.rows[0]?.[1]).toBe('150.000 MHz');
       expect(result.svg.match(/<polyline/g)).toHaveLength(6);
+      // 重ねたときだけ理想 (3 本) が破線。
+      expect(result.svg.match(/<polyline[^>]*stroke-dasharray="5 3"/g)).toHaveLength(3);
       expect(result.svg).toContain('実測 (m.s2p)');
       expect(result.readingLines[0]).toBe('読み値 — 実測 (m.s2p)');
     });

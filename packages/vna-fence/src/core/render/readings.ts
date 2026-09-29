@@ -49,7 +49,7 @@ export function renderReadings(readings: Readings, dataName: string | null, band
 /** 凡例の 1 項。`colors` はその線を引いたトレースの色 (書いた順)。 */
 export type KeyLine = { readonly text: string; readonly dashed: boolean; readonly colors: readonly string[] };
 
-/** 凡例の字 (破線 = 理想、実線 = 実測)。項が無ければ null。枠の幅を決めるのに使う。 */
+/** 凡例の字 (重ねたときは 破線 = 理想、実線 = 実測)。項が無ければ null。枠の幅を決めるのに使う。 */
 export function keyText(lines: readonly KeyLine[]): string | null {
   return lines.length === 0 ? null : lines.map((line) => line.text).join('    ');
 }

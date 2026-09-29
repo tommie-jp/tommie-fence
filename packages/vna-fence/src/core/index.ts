@@ -232,7 +232,7 @@ function keyLines(series: readonly Series[], hasModel: boolean, dataName: string
     ...new Set(series.filter((one) => one.basis === basis).map((one) => traceColor(theme, one.trace.index))),
   ];
   return [
-    ...(hasModel ? [{ text: '理想 (dut:)', dashed: true, colors: colorsOf('model') }] : []),
+    ...(hasModel ? [{ text: '理想 (dut:)', dashed: dataName !== null, colors: colorsOf('model') }] : []),
     ...(dataName === null ? [] : [{ text: `実測 (${dataName})`, dashed: false, colors: colorsOf('data') }]),
   ];
 }

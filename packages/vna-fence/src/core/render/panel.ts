@@ -120,6 +120,10 @@ const polyline = (points: readonly (readonly [number, number])[], color: string,
       ...(dashed ? { 'stroke-dasharray': DASH } : {}),
     }));
 
+/** 理想は実測と重ねるときだけ破線。理想だけなら分ける相手が無いので実線。 */
+const dashedOf = (one: { readonly basis: 'model' | 'data' }, all: readonly { readonly basis: 'model' | 'data' }[]): boolean =>
+  one.basis === 'model' && all.some((other) => other.basis === 'data');
+
 /** 番号が格子の上にはみ出す高さ。これより上の点では印を下向きに返す。 */
 const GLYPH_REACH = 17;
 
@@ -219,7 +223,7 @@ function renderRect(input: PanelInput): string {
   });
 
   const lines = ordered(series).flatMap((one) => pieces(one.points, panel.kind === 'deg').map((piece) =>
-    polyline(piece.map((point) => [xOf(point.f), yOf(point.value)] as const), traceColor(theme, one.trace.index), one.basis === 'model')));
+    polyline(piece.map((point) => [xOf(point.f), yOf(point.value)] as const), traceColor(theme, one.trace.index), dashedOf(one, input.series))));
 
   const glyphs = shownSeries(series).flatMap((one) => markers.flatMap((marker, index) => {
     const at = valueAt(one.points, marker.f, one.basis === 'data', panel.kind === 'deg' ? mixPhase : mixNumber);
@@ -314,7 +318,7 @@ function renderTdr(input: PanelInput): string {
   const lines = ordered(series).map((one) => polyline(
     one.tdr.points.filter((point) => point.distance <= range).map((point) => [xOf(point.distance), yOf(point.value)] as const),
     traceColor(theme, one.trace.index),
-    one.basis === 'model',
+    dashedOf(one, input.series),
   ));
   const peaks = shownSeries(series).flatMap((one) => (one.tdr.peak === null
     ? []
@@ -343,7 +347,7 @@ function renderRound(input: PanelInput): string {
   const at = (g: Complex): readonly [number, number] => [cx + radius * g.re, cy - radius * g.im];
   const series = input.series.filter((one): one is RoundSeries => one.kind === 'round');
   const lines = ordered(series).map((one) =>
-    polyline(one.points.map((point) => at(point.value)), traceColor(theme, one.trace.index), one.basis === 'model'));
+    polyline(one.points.map((point) => at(point.value)), traceColor(theme, one.trace.index), dashedOf(one, input.series)));
   const glyphs = shownSeries(series).flatMap((one) => markers.flatMap((marker, index) => {
     const found = valueAt(one.points, marker.f, one.basis === 'data', mixComplex);
     if (found === null) return [];
