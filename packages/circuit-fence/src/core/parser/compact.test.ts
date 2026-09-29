@@ -841,3 +841,26 @@ describe('交点の間の番地を書ける場所', () => {
     expect(result.ok).toBe(false);
   });
 });
+
+describe('電源レールの電圧', () => {
+  test('reads a voltage after the address of a vcc rail and shows it with a plus sign', () => {
+    expect(partOf('vcc d3 5V', 'VCC')).toMatchObject({ kind: 'one-terminal', type: 'vcc', supply: '+5V' });
+    expect(partOf('vcc d3 3.3V', 'VCC')).toMatchObject({ supply: '+3.3V' });
+  });
+
+  test('shows a vee rail with a minus sign', () => {
+    expect(partOf('vee d3 5V', 'VEE')).toMatchObject({ type: 'vee', supply: '-5V' });
+  });
+
+  test('leaves the rail without a voltage as it was', () => {
+    expect(partOf('vcc d3', 'VCC')).not.toHaveProperty('supply');
+  });
+
+  test('refuses a bare number, because the unit decides what it means', () => {
+    expect(messageOf('vcc d3 5', 'VCC').message).toContain('5V');
+  });
+
+  test('refuses a voltage on a symbol that is not a rail', () => {
+    expect(messageOf('port a1 5V', 'IN').message).toContain('種類 番地');
+  });
+});

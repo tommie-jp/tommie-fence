@@ -340,9 +340,15 @@ function checkLabelLength(text: string, subject: string, line: number): Result<P
 function readOneTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
   const { id, type, written, line, points } = head;
   const shape = `${safeToken(written)} は「種類 番地」で書きます`;
-  const [atToken, ...extra] = rest;
+  const [atToken, ...afterAt] = rest;
 
   if (atToken === undefined) return fail(shape, line);
+
+  // 電源レールだけ、番地のあとに電圧を 1 つ書ける (`VCC: vcc d3 5V`)。図に `+5V` と出す。
+  const rail = type === 'vcc' || type === 'vee';
+  const volts = rail ? readRailVolts(afterAt[0]) : null;
+  if (volts !== null && !volts.ok) return fail(volts.message(written), line);
+  const extra = volts === null ? afterAt : afterAt.slice(1);
 
   // 番地のあとに書けるのは向きの語だけ (書けるのは `ground`。種類ごとの
   // 可否は表引きで見るので、ここでは形だけを見る)。± は多端子の鍵なので通さない。
@@ -359,9 +365,26 @@ function readOneTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
 
   return ok({
     kind: 'one-terminal', id, type, at: at.value, turn: turned.turn, line,
+    ...(volts === null ? {} : { supply: `${type === 'vee' ? '-' : '+'}${volts.value}V` }),
     // 書かれた綴りをそのまま持つ (番地の名前・種類の別名のため)。
     spelling: [atToken], written,
   });
+}
+
+/**
+ * 電源レールの電圧の字。`5V` `3.3V` を読む。単位の無い数 (`5`) は、書き手が
+ * 電圧のつもりか分からないので断る (文法の方針 1)。向きの語などは電圧ではないので null。
+ */
+function readRailVolts(
+  token: string | undefined,
+): { ok: true; value: string } | { ok: false; message: (written: string) => string } | null {
+  if (token === undefined) return null;
+  const withUnit = /^(\d+(?:\.\d+)?)V$/.exec(token);
+  if (withUnit) return { ok: true, value: withUnit[1] as string };
+  if (/^\d+(?:\.\d+)?$/.test(token)) {
+    return { ok: false, message: (written) => `${safeToken(written)} の電圧には単位 V を付けます (${safeToken(token)}V)` };
+  }
+  return null;
 }
 
 /** 配線 1 行の書き方。端点はいくつ並べてもよい。 */

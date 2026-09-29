@@ -879,10 +879,16 @@ function drawOneTerminal(part: OneTerminalPart, target: TexTarget): string {
     case 'beside':
       return `\\draw (${at}) node[${symbol}]{} node[above left]{${id}};`;
     case 'inside':
-      return `\\node[${symbol}] at (${at}) {${id}};`;
+      // 電圧を書いたレールは、ID の代わりに電圧を出す (負は TeX の数式のマイナス)。
+      return `\\node[${symbol}] at (${at}) {${part.supply === undefined ? id : supplyTex(part.supply)}};`;
     default:
       return `\\node[${symbol}] at (${at}) {};`;
   }
+}
+
+/** 電源レールの電圧の字 (`+5V` / `-5V`)。マイナスは数式にして、ハイフンに見えないようにする。 */
+function supplyTex(supply: string): string {
+  return supply.startsWith('-') ? `$-$${escapeTex(supply.slice(1))}` : escapeTex(supply);
 }
 
 /**

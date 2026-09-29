@@ -112,6 +112,11 @@ export type OneTerminalPart = {
   /** 記号の向き。書けるのは `ground` だけ (parts.ts の `orient`)。 */
   readonly turn: Turn;
   /**
+   * 電源レール (`vcc` / `vee`) の電圧を符号付きで (`+5V` / `-5V`)。書いたときだけある。
+   * 図には ID の代わりにこれを出し、ネットの名前は ID のまま。
+   */
+  readonly supply?: string;
+  /**
    * 書かれた番地の綴り。`addressesOf` と同じ順 (2 端子は from・to、ほかは at 1 つ)。
    *
    * **番地は `points:` の名前でも書ける** (`R2: resistor fb d3`) ので、読んだ

@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **束ねる circuit-fence を上げる** — 電源レールに電圧を書ける (`VCC: vcc a1 5V` で図に `+5V`)。
+
 ### Changed
 
 - **束ねる circuit-fence を上げる** — 版の刻印を図の下から 1 行分離して置く。

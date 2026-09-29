@@ -766,6 +766,13 @@ describe('電源レールの記号', () => {
     expect(tex).toContain('\\node[vcc] at (a1) {V5}; % line 2');
     expect(tex).toContain('\\node[vee] at (c1) {VN}; % line 3');
   });
+
+  test('writes the voltage instead of the id when the rail has one, and keeps the id as the net', () => {
+    const { tex } = generate('parts:', '  VCC: vcc a1 5V', '  VEE: vee c1 5V');
+
+    expect(tex).toContain('\\node[vcc] at (a1) {+5V}; % line 2');
+    expect(tex).toContain('\\node[vee] at (c1) {$-$5V}; % line 3');
+  });
 });
 
 describe('足のある 2 端子部品', () => {
