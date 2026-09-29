@@ -3,7 +3,7 @@ import { DEFAULT_MARK_COLOR, noteColorValue, noteLeading, noteSizeScale } from '
 import type { NoteAlign } from '../notes.ts';
 import type { NoteSpec, Point, Rect } from '../types.ts';
 import { haloWidth } from './partCommon.ts';
-import { BOARD_HALO_OPACITY, BOLD_FAMILY, element, num, svgText } from './svg.ts';
+import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, BOLD_FAMILY, element, num, svgText } from './svg.ts';
 import { fit, textWidth } from './textFit.ts';
 import type { RenderTheme } from './theme.ts';
 
@@ -331,7 +331,7 @@ function textLines(
         fill: textColorOf(spec, theme),
         anchor: ANCHORS[align],
         // 帯の中は下地が無地なので縁取りは要らない。板に重ねるときだけ敷く。
-        ...(halo ? { halo: theme.palette.textHalo, haloWidth: haloWidth(theme), haloOpacity: BOARD_HALO_OPACITY } : {}),
+        ...(halo ? { halo: theme.palette.textHalo, haloWidth: haloWidth(theme), haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY } : {}),
       }),
     )
     .join('');

@@ -57,7 +57,7 @@ describe('renderPartsList', () => {
     const plate = /<rect[^>]*y="([\d.]+)"[^>]*height="([\d.]+)"/.exec(svg);
     const top = Number(plate?.[1]);
     const bottom = top + Number(plate?.[2]);
-    const baselines = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*y="([\d.]+)"/g)].map((match) => Number(match[1]));
+    const baselines = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]* y="([\d.]+)"/g)].map((match) => Number(match[1]));
 
     expect(baselines).toHaveLength(6);
     for (const baseline of baselines) {

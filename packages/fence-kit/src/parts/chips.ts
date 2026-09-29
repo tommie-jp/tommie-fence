@@ -1,5 +1,5 @@
 import { element } from '../markup.ts';
-import { BOARD_HALO_OPACITY, num, svgText } from '../svg.ts';
+import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, num, svgText } from '../svg.ts';
 import { textWidth } from '../textFit.ts';
 import type { BoardPart } from './boards.ts';
 
@@ -354,7 +354,7 @@ function pinNames(
           const clear = DIP_ACROSS + NAME_HALO / 2 + NAME_CLEAR;
           const y = inward(point) < 0 ? point.y + clear + size * NAME_CAP : point.y - clear;
           return svgText(x, y, name, {
-            'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: NAME_HALO, haloOpacity: BOARD_HALO_OPACITY,
+            'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: NAME_HALO, haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
           });
         })
         .join('');
@@ -402,7 +402,7 @@ function uprightNames(
 function bandCaption(text: string, box: ChipBox, scale: number, ink: ChipInk): string {
   const size = Math.min(scale * 9.5, fittedFontSize(text, box.width + 2 * CHIP_LABEL_PAD, scale));
   return svgText(centreOf(box).x, box.y + box.height + size * NAME_CAP + 2, text, {
-    'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: NAME_HALO, haloOpacity: BOARD_HALO_OPACITY,
+    'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: NAME_HALO, haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
   });
 }
 
@@ -489,7 +489,7 @@ export function sipHeader(options: SipOptions): string {
     fill: ink.outside,
     halo: ink.halo,
     haloWidth: SIP_NAME_HALO,
-    haloOpacity: BOARD_HALO_OPACITY,
+    haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
   };
   const legends = points
     .map((point, index) => (alongX

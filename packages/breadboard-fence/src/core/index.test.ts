@@ -890,9 +890,9 @@ describe('renderBreadboard', () => {
     // 上のブロックと下のブロックで名前の出る側が変わって揃わなかった。
     const { svg } = renderBreadboard('parts:\n  R1: resistor a5 a10 330\n  R2: resistor j5 j10 330\n');
 
-    const captions = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*y="([\d.]+)"[^>]*>(R\d 330)<\/text>/g)];
-    const rowA = Number([...svg.matchAll(/<text[^>]*y="([\d.]+)"[^>]*>a<\/text>/g)][0]?.[1]);
-    const rowJ = Number([...svg.matchAll(/<text[^>]*y="([\d.]+)"[^>]*>j<\/text>/g)][0]?.[1]);
+    const captions = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]* y="([\d.]+)"[^>]*>(R\d 330)<\/text>/g)];
+    const rowA = Number([...svg.matchAll(/<text[^>]* y="([\d.]+)"[^>]*>a<\/text>/g)][0]?.[1]);
+    const rowJ = Number([...svg.matchAll(/<text[^>]* y="([\d.]+)"[^>]*>j<\/text>/g)][0]?.[1]);
 
     expect(captions).toHaveLength(2);
     // どちらも胴より下 (行の綴りの基準線より下に来る)。

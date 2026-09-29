@@ -1,4 +1,4 @@
-import { BOARD_HALO_OPACITY, element, fit, num, svgText, textWidth, TEXT_HALO_WIDTH } from 'fence-kit';
+import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, element, fit, num, svgText, textWidth, TEXT_HALO_WIDTH } from 'fence-kit';
 import { colorValue } from '../color.ts';
 import { LABEL_GUTTER } from '../model/layout.ts';
 import type { Layout } from '../model/layout.ts';
@@ -69,7 +69,7 @@ function renderNote(note: ResolvedNote, layout: Layout, theme: Theme): string {
       fill: stroke,
       'font-size': num(theme.metrics.textSize),
       halo: theme.palette.plate,
-      haloOpacity: BOARD_HALO_OPACITY,
+      haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
     });
     // 回すのは**指す穴のまわり**。字の真ん中で回すと、指す先から離れていく。
     return note.turn.rotate === 0

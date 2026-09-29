@@ -103,7 +103,7 @@ describe('renderBoard', () => {
   test('moves the rail stripes and signs with the configured arrangement', () => {
     const markup = renderSpec({ rails: railOrder('+-+-')! });
     const signYs = (sign: string): number[] =>
-      [...markup.matchAll(/<text[^>]*y="([\d.]+)"[^>]*>([+−])<\/text>/g)]
+      [...markup.matchAll(/<text[^>]* y="([\d.]+)"[^>]*>([+−])<\/text>/g)]
         .filter((match) => match[2] === sign)
         .map((match) => Number(match[1]));
 

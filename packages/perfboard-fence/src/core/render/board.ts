@@ -1,4 +1,4 @@
-import { BOARD_HALO_OPACITY, element, num, svgText } from 'fence-kit';
+import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, element, num, svgText } from 'fence-kit';
 import { slotEdges } from '../model/board.ts';
 import { axisLabel } from './labels.ts';
 import type { Layout } from '../model/layout.ts';
@@ -102,7 +102,7 @@ export function renderAxisLabels(
       anchor: 'middle',
       fill: palette.label,
       halo,
-      haloOpacity: BOARD_HALO_OPACITY,
+      haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
       'font-size': num(metrics.textSize),
       'dominant-baseline': 'middle',
     });
@@ -110,7 +110,7 @@ export function renderAxisLabels(
     svgText(layout.colX(col), at, axisLabel(col, labels.col, labels.case), {
       fill: palette.label,
       halo,
-      haloOpacity: BOARD_HALO_OPACITY,
+      haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
       'font-size': num(metrics.textSize),
     });
 

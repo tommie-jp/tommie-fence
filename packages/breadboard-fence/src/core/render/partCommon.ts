@@ -1,7 +1,7 @@
 import { bodySize } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
-import { BOARD_HALO_OPACITY, TEXT_HALO_WIDTH, num, svgText } from './svg.ts';
+import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, TEXT_HALO_WIDTH, num, svgText } from './svg.ts';
 import { fit } from './textFit.ts';
 import type { TextOptions } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
@@ -168,7 +168,7 @@ export const partLabel = (
     fill: theme.palette.partText,
     halo: theme.palette.textHalo,
     haloWidth: haloWidth(theme),
-    haloOpacity: BOARD_HALO_OPACITY,
+    haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
     ...extra,
   });
 

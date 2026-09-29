@@ -74,7 +74,7 @@ describe('図', () => {
     const bottom = renderBreadboard(fence('parts:', '  J1: usb-c h10 h11')).svg;
     const nameY = (svg: string): number => Number(/<text x="[-\d.]+" y="([-\d.]+)"[^>]*>VBUS</.exec(svg)?.[1]);
     const yOf = (svg: string, row: string): number =>
-      Number(new RegExp(`<text[^>]*y="([-\\d.]+)"[^>]*>${row}<`).exec(svg)?.[1]);
+      Number(new RegExp(`<text[^>]* y="([-\\d.]+)"[^>]*>${row}<`).exec(svg)?.[1]);
 
     // 上の段では名前が足の上 (差し込み口は上)、下の段では足の下。
     expect(nameY(top)).toBeLessThan(yOf(top, 'c'));

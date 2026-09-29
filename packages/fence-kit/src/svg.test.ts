@@ -47,10 +47,23 @@ describe('svgText', () => {
     expect(under).toContain('aria-hidden="true"');
     // 名札を上の層へ移す印は縁にも付ける。付けないと縁だけが部品の下に残る。
     expect(under).toContain('class="cap"');
-    // 字そのものは透かさない。
+    // inkOpacity を渡さなければ字そのものは透かさない。
     expect(over).toContain('fill="#111"');
     expect(over).not.toContain('opacity');
     expect(over).not.toContain('stroke=');
+  });
+
+  test('makes the text itself see-through with inkOpacity, keeping the halo as its own layer', () => {
+    const text = svgText(0, 0, 'R1', { halo: '#fff', haloOpacity: 0.5, inkOpacity: 0.7, fill: '#111', class: 'cap' });
+    const [under, over] = text.split('</text>');
+
+    // 字の下を通る配線は縁を透かしても字に隠れるので、字も透かす。
+    expect(under).toContain('opacity="0.5"');
+    expect(over).toContain('opacity="0.7"');
+    expect(over).toContain('fill="#111"');
+    // 名札を上の層へ移す印は字と縁の両方に残る (<g> で包まない)。
+    expect(text).not.toContain('<g');
+    expect(over).toContain('class="cap"');
   });
 
   test('keeps the single opaque text when the halo is not see-through', () => {

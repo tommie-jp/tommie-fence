@@ -2,7 +2,7 @@ import type { Layout } from '../model/layout.ts';
 import { HOLE_ROWS } from '../types.ts';
 import type { Board, HoleRow, RailRow, Rect } from '../types.ts';
 import type { Palette, RenderTheme } from './theme.ts';
-import { BOARD_HALO_OPACITY, TEXT_HALO_WIDTH, element, num, svgText } from './svg.ts';
+import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, TEXT_HALO_WIDTH, element, num, svgText } from './svg.ts';
 
 const STRIPE_GAP = 10;
 const LABEL_INSET = 11;
@@ -110,7 +110,7 @@ export function renderBoard(
       // 配線がレーンを通るので、番号が読めるように地の色で縁取る。
       halo: palette.plate,
       haloWidth: TEXT_HALO_WIDTH * metrics.boardTextScale,
-      haloOpacity: BOARD_HALO_OPACITY,
+      haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
     };
     const width = String(col).length * COLUMN_FONT * metrics.boardTextScale * 0.6;
     for (const y of [layout.rowY('a') - 12, layout.rowY('j') + 17]) {

@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- **`svgText` の `inkOpacity`** — 字そのものの不透明度。縁 (`haloOpacity`) とは別に、字の `<text>` に
+  `opacity` を付ける (`<g>` で包まないので、名札を上の層へ移す処理はそのまま効く)。
+  実体配線図の既定は `BOARD_INK_OPACITY` (0.7)。DIP・SIP の足の名前と名札に掛ける。
+
 ## [0.3.0] - 2026-09-29
 
 ### Added

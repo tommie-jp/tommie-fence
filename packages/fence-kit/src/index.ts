@@ -19,7 +19,7 @@ export { stampText } from './stamp.ts';
 export { keptSourceLines } from './sourceListing.ts';
 export type { FenceBlock } from './fences.ts';
 export { escapeMarkup, element } from './markup.ts';
-export { BOARD_HALO_OPACITY, BOLD_FAMILY, num, svgText, TEXT_HALO_WIDTH } from './svg.ts';
+export { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, BOLD_FAMILY, num, svgText, TEXT_HALO_WIDTH } from './svg.ts';
 export {
   DEFAULT_TOLERANCE, HERTZ_HINT, capacitorCode, formatHertz, formatHertzShort, hertzUnit, inductorCode, isBareNumber,
   parseHertz, parsePrefixedHertz,

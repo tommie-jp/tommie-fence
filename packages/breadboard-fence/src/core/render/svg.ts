@@ -1,9 +1,9 @@
-import { BOARD_HALO_OPACITY, BOLD_FAMILY, TEXT_HALO_WIDTH, element, escapeMarkup, num, svgText } from 'fence-kit';
+import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, BOLD_FAMILY, TEXT_HALO_WIDTH, element, escapeMarkup, num, svgText } from 'fence-kit';
 import type { Attributes, TextOptions } from 'fence-kit';
 import type { Point } from '../types.ts';
 
 export type { Attributes, TextOptions };
-export { BOARD_HALO_OPACITY, BOLD_FAMILY, element, num, svgText, TEXT_HALO_WIDTH };
+export { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, BOLD_FAMILY, element, num, svgText, TEXT_HALO_WIDTH };
 
 /**
  * 図に載る文字列は必ずここを通す。VS Code の Markdown プレビューは

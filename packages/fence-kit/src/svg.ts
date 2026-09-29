@@ -30,15 +30,23 @@ export type TextOptions = Attributes & {
   readonly halo?: string;
   /** 縁取りの太さ。字を大きくしたときに広げないと、下の穴が字に透ける。 */
   readonly haloWidth?: number;
-  /** 縁取りの不透明度 (0〜1)。1 未満なら下の穴や配線が縁越しに透ける。字は透かさない。 */
+  /** 縁取りの不透明度 (0〜1)。1 未満なら下の穴や配線が縁越しに透ける。 */
   readonly haloOpacity?: number;
+  /** 字そのものの不透明度 (0〜1)。1 未満なら下の配線が字越しにも透ける。 */
+  readonly inkOpacity?: number;
 };
 
 /** 実体配線図 (breadboard / perfboard) の字の縁取りの不透明度。下の穴や配線を半分見せる。 */
 export const BOARD_HALO_OPACITY = 0.5;
 
+/**
+ * 実体配線図の字そのものの不透明度。縁だけ透かしても字の下を通る配線は字に隠れるので、
+ * 字も少し透かす。読める濃さは残す。
+ */
+export const BOARD_INK_OPACITY = 0.7;
+
 export function svgText(x: number, y: number, content: string, options: TextOptions = {}): string {
-  const { anchor = 'middle', halo, haloWidth = TEXT_HALO_WIDTH, haloOpacity = 1, ...rest } = options;
+  const { anchor = 'middle', halo, haloWidth = TEXT_HALO_WIDTH, haloOpacity = 1, inkOpacity = 1, ...rest } = options;
   const base = {
     x: num(x),
     y: num(y),
@@ -46,9 +54,10 @@ export function svgText(x: number, y: number, content: string, options: TextOpti
     'font-family': 'ui-sans-serif, system-ui, sans-serif',
   };
   const text = escapeMarkup(content);
-  if (!halo) return element('text', { ...base, ...rest }, text);
+  const ink = inkOpacity < 1 ? { opacity: num(inkOpacity) } : {};
+  if (!halo) return element('text', { ...base, ...rest, ...ink }, text);
   const stroke = { stroke: halo, 'stroke-width': num(haloWidth) };
-  if (haloOpacity >= 1) return element('text', { ...base, ...stroke, 'paint-order': 'stroke', ...rest }, text);
+  if (haloOpacity >= 1) return element('text', { ...base, ...stroke, 'paint-order': 'stroke', ...rest, ...ink }, text);
 
   // **縁は字と別の要素に分けて、要素ごと透かす。** stroke-opacity で透かすと、
   // Chromium は字ごとに縁を塗るので、隣の字と重なった所だけ濃い跡が出る。
@@ -60,5 +69,5 @@ export function svgText(x: number, y: number, content: string, options: TextOpti
     { ...base, ...stroke, ...rest, fill: halo, opacity: num(haloOpacity), 'aria-hidden': 'true' },
     text,
   );
-  return under + element('text', { ...base, ...rest }, text);
+  return under + element('text', { ...base, ...rest, ...ink }, text);
 }

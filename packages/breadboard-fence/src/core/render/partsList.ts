@@ -1,7 +1,7 @@
 import { LIMITS } from '../limits.ts';
 import { fit, textWidth } from './textFit.ts';
 import type { PlacedPart } from '../types.ts';
-import { BOARD_HALO_OPACITY, TEXT_HALO_WIDTH, element, num, svgText } from './svg.ts';
+import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, TEXT_HALO_WIDTH, element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
 
@@ -121,7 +121,7 @@ export function renderPartsList(
       anchor: 'start',
       halo: palette.textHalo,
       haloWidth: TEXT_HALO_WIDTH * textScale(theme),
-      haloOpacity: BOARD_HALO_OPACITY,
+      haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
     });
 
   const cells = rows.flatMap((row, index) => {

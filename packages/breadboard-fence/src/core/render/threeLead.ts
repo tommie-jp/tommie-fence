@@ -6,7 +6,7 @@ import {
 import { HOLE_ROWS, RAIL_ROWS } from '../types.ts';
 import type { Point, Rect } from '../types.ts';
 import { drawPackage, packageHalfWidth, packageReach } from 'fence-kit';
-import { BOARD_HALO_OPACITY, element, num, svgText } from './svg.ts';
+import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
 
 /**
@@ -216,7 +216,7 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
             fill: palette.partText,
             halo: palette.textHalo,
             haloWidth: haloWidth(theme),
-            haloOpacity: BOARD_HALO_OPACITY,
+            haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
           })
         : '';
     })
