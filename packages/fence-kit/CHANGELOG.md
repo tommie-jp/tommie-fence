@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-29
+
 ### Added
 
 - **`svgText` の `inkOpacity`** — 字そのものの不透明度。縁 (`haloOpacity`) とは別に、字の `<text>` に
