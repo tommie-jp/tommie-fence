@@ -2,7 +2,7 @@
   "name": "spectrum-fence",
   "displayName": "Spectrum Fence",
   "description": "Markdown の ```spectrum フェンスをスペクトラムの画面 — FFT 型 (Analog Discovery の Spectrum) と掃引型 (tinySA) — として描く",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "MIT",
   "private": true,
   "publisher": "tommie",

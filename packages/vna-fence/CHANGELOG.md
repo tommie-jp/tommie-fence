@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-30
+
 ### Added
 
 - **LiteVNA64** (`device: litevna64`、50 kHz〜6.3 GHz) を機種に足した。S11 と S21 だけを測る機器で、

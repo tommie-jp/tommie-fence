@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-09-30
+
+### Changed
+
+- **束ねるフェンスを上げた** (breadboard-fence 0.22.0 / spectrum-fence 0.3.0 / vna-fence 0.4.0)。詳しくは各パッケージの CHANGELOG。
+
 ## [0.30.0] - 2026-09-30
 
 ### Changed

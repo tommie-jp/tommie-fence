@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-09-30
+
 ### Added
 
 - **Analog Discovery 3 の例** (`examples/10-bh-ad3.md`)。AD2 の B-H カーブ測定回路と同じ回路を、
