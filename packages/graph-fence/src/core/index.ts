@@ -218,7 +218,7 @@ export function renderGraph(input: string, options: RenderOptions = {}): RenderR
   });
   const dataName = doc.data?.name ?? null;
 
-  // 凡例: 線の名前と見本 (理想は破線、実測は ○)。
+  // 凡例: 線の名前と見本 (理想は実線、実測は ○)。
   const legendItems: LegendItem[] = drawn.map((line) => ({
     name: isMeasured(line) && drawn.some((other) => !isMeasured(other) && other.index === line.index) ? `${line.name} (実測)` : line.name,
     color: lineColor(theme, line.index),

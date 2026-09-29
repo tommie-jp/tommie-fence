@@ -83,7 +83,7 @@ export function legendRows(items: readonly LegendItem[], width: number, theme: T
   return rows;
 }
 
-/** 凡例。**理想は破線の見本、実測は ○ の見本**。 */
+/** 凡例。**理想は実線の見本、実測は ○ の見本**。 */
 export function renderLegend(rows: readonly (readonly LegendItem[])[], centers: readonly number[], left: number, theme: Theme): string {
   const size = theme.metrics.smallSize;
   return rows.map((row, index) => {
@@ -92,7 +92,7 @@ export function renderLegend(rows: readonly (readonly LegendItem[])[], centers: 
     return row.map((item) => {
       const sample = item.measured
         ? element('circle', { cx: num(x + SAMPLE / 2), cy: num(y), r: 3, fill: 'none', stroke: item.color, 'stroke-width': 1.3 })
-        : element('line', { x1: num(x), y1: num(y), x2: num(x + SAMPLE), y2: num(y), stroke: item.color, 'stroke-width': 1.5, 'stroke-dasharray': '5 3' });
+        : element('line', { x1: num(x), y1: num(y), x2: num(x + SAMPLE), y2: num(y), stroke: item.color, 'stroke-width': 1.5 });
       const label = svgText(x + SAMPLE + 5, y + size * 0.35, item.name, { anchor: 'start', fill: theme.palette.caption, 'font-size': num(size) });
       x += itemWidth(item, theme) + ITEM_GAP;
       return sample + label;

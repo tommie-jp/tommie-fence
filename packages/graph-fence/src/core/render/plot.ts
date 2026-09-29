@@ -6,14 +6,13 @@ import { xAt, yAt } from './axes.ts';
 import type { Theme } from './theme.ts';
 
 /**
- * 枠の中身。重ねる順は **band → 理想 (破線) → 実測 (○) → level → mark → peak → text**
+ * 枠の中身。重ねる順は **band → 理想 (実線) → 実測 (○) → level → mark → peak → text**
  * (指した印が線の下に隠れないように。vna と同じ)。
  *
  * **枠の外の点は縁に寄せず、線を切る** — 縁を這う線は、無い値を在るように見せる。
  */
 
 const STROKE = 1.5;
-const DASH = '5 3';
 const DOT_RADIUS = 3;
 
 const inside = (axis: Axis, value: number): boolean =>
@@ -36,13 +35,13 @@ function segments(points: readonly Point[], xAxis: Axis, yAxis: Axis): readonly 
   return out;
 }
 
-/** 理想の線 (式・点列)。**破線** (52 の docs/92 の決め 7)。 */
+/** 理想の線 (式・点列)。**実線** — 実測は ○ なので線種で分けなくてよい (52 の docs/92 の決め 7)。 */
 export function renderIdeal(points: readonly Point[], xAxis: Axis, yAxis: Axis, rect: Rect, color: string): string {
   return segments(points, xAxis, yAxis).map((run) => (run.length < 2
     ? element('circle', { cx: num(xAt(xAxis, rect, run[0]?.x ?? 0)), cy: num(yAt(yAxis, rect, run[0]?.y ?? 0)), r: 1.5, fill: color })
     : element('polyline', {
       points: run.map((point) => `${num(xAt(xAxis, rect, point.x))},${num(yAt(yAxis, rect, point.y))}`).join(' '),
-      fill: 'none', stroke: color, 'stroke-width': STROKE, 'stroke-linejoin': 'round', 'stroke-dasharray': DASH,
+      fill: 'none', stroke: color, 'stroke-width': STROKE, 'stroke-linejoin': 'round',
     }))).join('');
 }
 

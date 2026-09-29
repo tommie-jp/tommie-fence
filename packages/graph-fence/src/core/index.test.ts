@@ -56,7 +56,7 @@ describe('renderGraph — 読み値', () => {
 });
 
 describe('renderGraph — 図', () => {
-  test('draws two panels for two units, dashed ideal lines, and no NaN', () => {
+  test('draws two panels for two units, solid ideal lines, and no NaN', () => {
     const { svg } = renderGraph(BODE);
     expect(svg).toMatch(/^<svg /);
     expect(svg).toContain('data-graph-fence');
@@ -64,7 +64,7 @@ describe('renderGraph — 図', () => {
     expect(svg).toContain('位相/°');
     expect(svg).toContain('周波数/Hz (対数)');
     expect((svg.match(/<polyline/g) ?? []).length).toBe(2);
-    expect(svg).toContain('stroke-dasharray="5 3"');
+    expect(svg).not.toContain('stroke-dasharray="5 3"');
     expect(svg).not.toMatch(/NaN|Infinity/);
   });
 
