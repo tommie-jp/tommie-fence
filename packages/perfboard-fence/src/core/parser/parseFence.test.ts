@@ -85,11 +85,11 @@ describe('parseFence', () => {
   });
 
   test('offers the nearest board when a rounded size is not one it has', () => {
-    // 7×5cm は汎用基板の呼び名。**丸めて秋月 C に当てない** — 別の板で穴数も違う。
-    const parsed = parseFence('board: 7x5cm\n');
+    // 71×49mm は汎用板でも秋月 C でもない。**丸めて当てない** — 別の板で穴数も違う。
+    const parsed = parseFence('board: 71x49mm\n');
 
     expect(parsed.errors[0]?.message).toContain('akizuki-c');
-    expect(parsed.errors[0]?.token).toBe('7x5cm');
+    expect(parsed.errors[0]?.token).toBe('71x49mm');
   });
 
   test('draws a bare size as holes but says so when it is also a board size', () => {
@@ -251,6 +251,97 @@ describe('board: のマップ形式 (スロット用の銅箔)', () => {
 
   test('says the size is missing rather than drawing a board it guessed', () => {
     expect(parseFence('board:\n  slots: on\n').errors.length).toBeGreaterThan(0);
+  });
+});
+
+describe('board: の標準板と grid:', () => {
+  const board = (grid: string, size = '12x18cm') => parseFence(`board:\n  size: ${size}\n  grid: ${grid}\n`);
+
+  test('reads each standard board with its counted grid', () => {
+    const counted: Record<string, [number, number]> = {
+      '5x7cm': [18, 24], '7x9cm': [26, 31], '9x15cm': [33, 54], '10x15cm': [36, 55], '12x18cm': [44, 60],
+    };
+    for (const [key, [cols, rows]] of Object.entries(counted)) {
+      const parsed = parseFence(`board: ${key}\n`);
+
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.doc?.board).toMatchObject({ cols, rows });
+    }
+  });
+
+  test('still reads a bare 5x7 as 5 columns by 7 rows', () => {
+    expect(parseFence('board: 5x7\n').doc?.board).toMatchObject({ cols: 5, rows: 7 });
+  });
+
+  test('reads the landscape spelling as the same board turned', () => {
+    const parsed = parseFence('board: 7x5cm\n');
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.doc?.board).toMatchObject({ cols: 24, rows: 18 });
+  });
+
+  test('says which board was meant when 70x50 is written without a unit', () => {
+    const parsed = parseFence('board: 70x50\n');
+
+    expect(parsed.errors[0]?.notice).toBe(true);
+    expect(parsed.errors[0]?.message).toContain('70×50mm の板のことなら board: 7x5cm');
+  });
+
+  test('takes a grid inside the range of 12x18cm silently', () => {
+    const parsed = board('46x65');
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.doc?.board).toMatchObject({ cols: 46, rows: 65 });
+  });
+
+  test('draws a grid outside the range but says it was not counted', () => {
+    const parsed = board('47x60');
+
+    expect(parsed.doc?.board).toMatchObject({ cols: 47, rows: 60 });
+    expect(parsed.errors).toHaveLength(1);
+    expect(parsed.errors[0]?.notice).toBe(true);
+    expect(parsed.errors[0]?.message).toContain('数えていません');
+    expect(parsed.errors[0]?.message).toContain('44〜46x60〜65');
+  });
+
+  test('says the counted grid for a board with a single counted grid', () => {
+    const parsed = board('19x24', '5x7cm');
+
+    expect(parsed.doc?.board).toMatchObject({ cols: 19, rows: 24 });
+    expect(parsed.errors[0]?.notice).toBe(true);
+    expect(parsed.errors[0]?.message).toContain('数えてあるのは 18x24 です');
+    expect(board('18x24', '5x7cm').errors).toEqual([]);
+  });
+
+  test('takes the grid in the orientation of the drawing for a turned board', () => {
+    const parsed = board('62x45', '18x12cm');
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.doc?.board).toMatchObject({ cols: 62, rows: 45 });
+    // 縦長の向き (44〜46 x 60〜65) で書くと、横置きの図としては範囲の外。
+    expect(board('45x62', '18x12cm').errors[0]?.notice).toBe(true);
+    expect(board('58x43', '18x12cm').doc?.board).toMatchObject({ cols: 58, rows: 43 });
+  });
+
+  test('refuses a grid on an akizuki board or a plain size but keeps the board', () => {
+    for (const size of ['akizuki-c', '25x15']) {
+      const parsed = board('20x10', size);
+
+      expect(parsed.errors).toHaveLength(1);
+      expect(parsed.errors[0]?.notice).toBeUndefined();
+      expect(parsed.errors[0]?.message).toContain('名前の板の格子を替える項目です');
+      expect(parsed.doc?.board.cols).not.toBe(20);
+    }
+  });
+
+  test('refuses a badly written or oversized grid but keeps the board', () => {
+    for (const grid of ['big', '0x5', '999x999']) {
+      const parsed = board(grid);
+
+      expect(parsed.errors).toHaveLength(1);
+      expect(parsed.errors[0]?.notice).toBeUndefined();
+      expect(parsed.doc?.board).toMatchObject({ cols: 44, rows: 60 });
+    }
   });
 });
 

@@ -110,6 +110,64 @@ const NAME_HINT = `名前で書くなら ${boardNames().join(' / ')} です`;
 const tooBig = (size: BoardSize): boolean => size.cols > LIMITS.cols || size.rows > LIMITS.rows;
 
 /**
+ * `列x行` (単位なし) の綴りを穴数にする。綴りが違えば null (別の読み方へ回す)。
+ * 読めても 0 や上限超えなら理由を返す — `board:` の穴数と `grid:` が**同じ上限**を通る。
+ */
+function parseHoleCount(text: string):
+  | { readonly ok: true; readonly size: BoardSize }
+  | { readonly ok: false; readonly reason: string }
+  | null {
+  const parsed = SIZE.exec(text);
+  if (!parsed) return null;
+  const size = { cols: Number(parsed[1]), rows: Number(parsed[2]) };
+  if (size.cols < 1 || size.rows < 1) return { ok: false, reason: SIZE_HINT };
+  // 上限が無いと、フェンス 1 つで巨大な SVG を作らせられる。
+  if (tooBig(size)) {
+    return { ok: false, reason: `板が大きすぎます。上限は ${LIMITS.cols}x${LIMITS.rows} です` };
+  }
+  return { ok: true, size };
+}
+
+/** 格子の指定 (`grid:`) を穴数にする。**向きは図と同じ** (列 x 行、横置きなら列が多い)。 */
+export type GridResolution =
+  | { readonly ok: true; readonly size: BoardSize; readonly notice: string | null }
+  | { readonly ok: false; readonly reason: string };
+
+const within = (n: number, [low, high]: readonly [number, number]): boolean => n >= low && n <= high;
+
+const inRange = (named: CatalogBoard, size: BoardSize): boolean =>
+  named.gridRange !== undefined
+    ? within(size.cols, named.gridRange.cols) && within(size.rows, named.gridRange.rows)
+    : size.cols === named.cols && size.rows === named.rows;
+
+/** 「数えてあるのは 18x24 です」。範囲があれば 44〜46x60〜65 と言う。 */
+const countedText = (named: CatalogBoard): string => {
+  const { gridRange } = named;
+  if (gridRange === undefined) return `${named.cols}x${named.rows}`;
+  return `${gridRange.cols[0]}〜${gridRange.cols[1]}x${gridRange.rows[0]}〜${gridRange.rows[1]}`;
+}
+
+/**
+ * 名前の標準板に `grid:` を当てる。**板の穴数を替えるのは、数えた標準板だけ** —
+ * 秋月の板や穴数直書きの大きさに掛けると、何を替えたのか分からなくなる。
+ * 数えていない格子は**図は出す**が、お知らせで言う (実物の穴数は作者が数えたもの)。
+ */
+export function resolveGrid(named: CatalogBoard | null, text: string): GridResolution {
+  if (named === null || !named.turnable) {
+    return { ok: false, reason: 'grid: は名前の板の格子を替える項目です (例: size: 12x18cm)' };
+  }
+  const holes = parseHoleCount(text);
+  if (holes === null) return { ok: false, reason: `grid: は穴数を 列x行 で書きます (例: grid: ${named.cols}x${named.rows})` };
+  if (!holes.ok) return holes;
+  if (inRange(named, holes.size)) return { ok: true, size: holes.size, notice: null };
+  return {
+    ok: true,
+    size: holes.size,
+    notice: `この格子は数えていません。数えてあるのは ${countedText(named)} です`,
+  };
+}
+
+/**
  * `board:` に書かれた綴りを板にする。受けるのは 3 つ。
  *
  * - `25x15` — **穴数**。単位が無ければこれ。primitive で、他は全部ここへ落ちる
@@ -128,7 +186,7 @@ export function resolveBoard(text: string): BoardResolution {
   const mm = parseMillimetres(text);
   if (mm) {
     // 実寸として読めたのに持っていない板。**丸めて近い板を当てない** —
-    // 7×5cm (汎用基板) と 72×47mm (秋月 C) は別の板で、穴数も違う。
+    // 70×50mm (汎用基板) と 72×47mm (秋月 C) は別の板で、穴数も違う。
     const near = nearestBoard(mm);
     // 近い板が挙がるなら、そこまで言えば足りる。名前を全部並べ直すと
     // **本当に読んでほしい 1 行が長さに埋もれる**。
@@ -142,15 +200,10 @@ export function resolveBoard(text: string): BoardResolution {
     return { ok: false, reason: `その実寸の板は持っていません。${NAME_HINT}。${SIZE_HINT}` };
   }
 
-  const parsedRaw = SIZE.exec(text);
-  if (parsedRaw) {
-    const size = { cols: Number(parsedRaw[1]), rows: Number(parsedRaw[2]) };
-    if (size.cols < 1 || size.rows < 1) return { ok: false, reason: SIZE_HINT };
-    // 上限が無いと、フェンス 1 つで巨大な SVG を作らせられる。
-    if (tooBig(size)) {
-      return { ok: false, reason: `板が大きすぎます。上限は ${LIMITS.cols}x${LIMITS.rows} です` };
-    }
-    return { ok: true, board: createBoard(size), named: null, notice: unitlessNotice(size) };
+  const holes = parseHoleCount(text);
+  if (holes) {
+    if (!holes.ok) return holes;
+    return { ok: true, board: createBoard(holes.size), named: null, notice: unitlessNotice(holes.size) };
   }
 
   return { ok: false, reason: `板として読めません。${NAME_HINT}。${SIZE_HINT}` };

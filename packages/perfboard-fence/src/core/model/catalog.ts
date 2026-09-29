@@ -30,6 +30,17 @@ export type CatalogBoard = {
   readonly rows: number;
   /** 正式な名前の代わりに書ける綴り (店の呼ぶ型番の 1 文字など)。 */
   readonly aliases: readonly string[];
+  /**
+   * 汎用の標準板 (縦長で数えた) かどうか。**横に置いた綴り (`7x5cm`) を同じ板の
+   * 向き違いとして読める**のはこの板だけ。秋月の板は綴りごとに別の板のことが
+   * あるので、向きを替えて当てはめない。
+   */
+  readonly turnable: boolean;
+  /**
+   * 実物が揺れる板の、穴数の許す範囲 (この向きでの列と行)。無ければ数えた
+   * 1 通りだけ。`grid:` がこの内側なら黙って受け、外なら「数えていない」と言う。
+   */
+  readonly gridRange?: { readonly cols: readonly [number, number]; readonly rows: readonly [number, number] };
 };
 
 /**
@@ -44,6 +55,38 @@ export type CatalogBoard = {
  * 27 × 17 の格子で、四隅が取付穴に取られている。だから**実寸の綴りは、
  * その綴りで売られている板を数えたときだけ**別名にする。
  */
+/**
+ * 汎用の標準板 5 種 (海外の量販品。縁のパッドと四隅の取付穴があり、
+ * スルーホールの両面板)。穴数は**作者が数えた**値で、縦長 (列 < 行) で持つ。
+ * **名前に `cm` が要る** — 単位の無い `5x7` は 5 列 × 7 行の穴数として読まれる。
+ * 12x18cm だけは実物が揺れるので許す範囲を持つ (列 44〜46、行 60〜65)。
+ */
+const standard = (
+  key: string,
+  wide: number,
+  tall: number,
+  cols: number,
+  rows: number,
+  gridRange?: CatalogBoard['gridRange'],
+): CatalogBoard => ({
+  key,
+  label: `汎用 ${key}`,
+  mm: [[wide, tall]],
+  cols,
+  rows,
+  aliases: [],
+  turnable: true,
+  ...(gridRange ? { gridRange } : {}),
+});
+
+const STANDARD_BOARDS: readonly CatalogBoard[] = [
+  standard('5x7cm', 50, 70, 18, 24),
+  standard('7x9cm', 70, 90, 26, 31),
+  standard('9x15cm', 90, 150, 33, 54),
+  standard('10x15cm', 100, 150, 36, 55),
+  standard('12x18cm', 120, 180, 44, 60, { cols: [44, 46], rows: [60, 65] }),
+];
+
 const BOARDS: readonly CatalogBoard[] = [
   {
     key: 'akizuki-a',
@@ -52,6 +95,7 @@ const BOARDS: readonly CatalogBoard[] = [
     cols: 55,
     rows: 40,
     aliases: ['a'],
+    turnable: false,
   },
   {
     key: 'akizuki-b',
@@ -60,6 +104,7 @@ const BOARDS: readonly CatalogBoard[] = [
     cols: 36,
     rows: 27,
     aliases: ['b'],
+    turnable: false,
   },
   {
     // 72×47.5mm と 72×48mm は**別の板**で、穴数も違う (頭書き)。
@@ -70,6 +115,7 @@ const BOARDS: readonly CatalogBoard[] = [
     cols: 25,
     rows: 15,
     aliases: ['c'],
+    turnable: false,
   },
   {
     key: 'akizuki-d',
@@ -78,7 +124,9 @@ const BOARDS: readonly CatalogBoard[] = [
     cols: 17,
     rows: 14,
     aliases: ['d'],
+    turnable: false,
   },
+  ...STANDARD_BOARDS,
 ];
 
 /** `72x47mm` `7.2x4.7cm`。**単位が要る** — 単位が無い数は穴数。 */
@@ -121,7 +169,32 @@ export function lookupBoard(text: string): CatalogBoard | null {
 
   const mm = parseMillimetres(wanted);
   if (!mm) return null;
-  return BOARDS.find((b) => b.mm.some((sold) => sameSize(sold, mm))) ?? null;
+  const sold = BOARDS.find((b) => b.mm.some((size) => sameSize(size, mm)));
+  if (sold) return sold;
+  // 標準板を横に置いた綴り (`7x5cm` = 5x7cm を寝かせた板)。
+  const upright = BOARDS.find((b) => b.turnable && sameSize(b.mm[0]!, [mm[1], mm[0]]));
+  return upright ? turned(upright) : null;
+}
+
+/** `5x7cm` → `7x5cm`。cm の綴りを前後入れ替える。 */
+const turnedKey = (key: string): string => key.replace(/^([0-9.]+)x([0-9.]+)cm$/, '$2x$1cm');
+
+/**
+ * 向きを替えた板。**列と行 (と許す範囲) を入れ替えるだけ**で、穴の数え直しは
+ * しない。実寸の綴りも入れ替える (報告の呼び名が寝かせた向きで出る)。
+ */
+function turned(board: CatalogBoard): CatalogBoard {
+  const [wide, tall] = board.mm[0]!;
+  const { gridRange } = board;
+  return {
+    ...board,
+    key: turnedKey(board.key),
+    label: `汎用 ${turnedKey(board.key)}`,
+    mm: [[tall, wide]],
+    cols: board.rows,
+    rows: board.cols,
+    ...(gridRange ? { gridRange: { cols: gridRange.rows, rows: gridRange.cols } } : {}),
+  };
 }
 
 /** `board:` に書ける名前。報告で「持っているのはこれ」と並べるのに使う。 */
@@ -129,18 +202,21 @@ export const boardNames = (): readonly string[] => BOARDS.map((b) => b.key);
 
 export const catalogBoards = (): readonly CatalogBoard[] => BOARDS;
 
-/** 近いと言ってよい差。7×5cm と 72×47mm はこの内側、5×7cm は外側。 */
+/** 近いと言ってよい差。70×50mm と 72×47mm はこの内側、50×70mm は外側。 */
 const NEAR = 0.12;
 
 /**
  * 書かれた実寸に近い板。**当てはめるためではなく、教えるため**にある。
  * 丸めて勝手に当てると違う板の穴数で図が出るので、返すのは報告の文面用。
  * 寝かせた板 (50×70mm) は近いと言わない — 書かれたとおりに読む。
+ * 標準板 (`5x7cm` など) は名前と実寸で引けるので、ここでは挙げない。
  */
 export function nearestBoard(mm: Millimetres): CatalogBoard | null {
   let best: CatalogBoard | null = null;
   let bestGap = NEAR;
   for (const board of BOARDS) {
+    // 標準板は向きも寸法も言い切っているので、近いとは言わない (秋月の板だけ)。
+    if (board.turnable) continue;
     for (const sold of board.mm) {
       const gap = Math.max(Math.abs(mm[0] - sold[0]) / sold[0], Math.abs(mm[1] - sold[1]) / sold[1]);
       if (gap < bestGap) {

@@ -1,7 +1,7 @@
 import { LineCounter, isMap, isScalar, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
 import { fenceError, notice, safeToken } from '../errors.ts';
-import { DEFAULT_BOARD, DEFAULT_BOARD_SIZE, MATERIALS, parseMaterial, parseThickness, resolveBoard } from '../model/board.ts';
+import { DEFAULT_BOARD, DEFAULT_BOARD_SIZE, MATERIALS, parseMaterial, parseThickness, resolveBoard, resolveGrid } from '../model/board.ts';
 import { isLandColor, isPlateColor, landNames, plateNames } from '../render/finish.ts';
 import { boardNames } from '../model/catalog.ts';
 import { LIMITS } from '../limits.ts';
@@ -27,7 +27,7 @@ const BOARD_HINT = `board: は穴数を 列x行 で書くか (例: board: 25x15)
   + `上限は ${LIMITS.cols}x${LIMITS.rows} です`;
 
 /** `board:` をマップで書いたときに置ける項目。 */
-const BOARD_KEYS = ['size', 'slots', 'color', 'land', 'h', 'material'] as const;
+const BOARD_KEYS = ['size', 'grid', 'slots', 'color', 'land', 'h', 'material'] as const;
 
 /** `on` / `off` は YAML 1.2 では字。`style:` と同じ受け方を board にも与える。 */
 const FLAG_WORDS: Record<string, boolean> = { on: true, off: false };
@@ -409,6 +409,7 @@ function readFence(source: string): ParseResult {
     let slotColor: string | null = null;
     let h: number | undefined;
     let material: BoardMaterial | undefined;
+    let grid: { readonly text: string; readonly at: number | null } | null = null;
     if (isMap(pair.value)) {
       let sizeSeen = false;
       let bad = false;
@@ -454,6 +455,16 @@ function readFence(source: string): ParseResult {
             continue;
           }
           material = read;
+          continue;
+        }
+        if (name === 'grid') {
+          // 格子は大きさが決まってから当てる (名前の標準板でなければ断るため)。
+          if (written === null) {
+            errors.push(fenceError('grid: は穴数を 列x行 で書きます (例: grid: 43x58)', itemAt, name));
+            bad = true;
+          } else {
+            grid = { text: written, at: itemAt };
+          }
           continue;
         }
         if (name === 'color' || name === 'land') {
@@ -517,8 +528,19 @@ function readFence(source: string): ParseResult {
       errors.push(fenceError(`${safeToken(written)}: ${found.reason}`, at, written));
       continue;
     }
+    // **格子が読めなくても大きさは活かす** (飾りと同じ: 書いた板と違う板を出さない)。
+    let holes = found.board;
+    if (grid !== null) {
+      const gridFound = resolveGrid(found.named, grid.text);
+      if (!gridFound.ok) {
+        errors.push(fenceError(gridFound.reason, grid.at, safeToken(grid.text)));
+      } else {
+        holes = { ...holes, cols: gridFound.size.cols, rows: gridFound.size.rows };
+        if (gridFound.notice !== null) errors.push(notice(gridFound.notice, grid.at, safeToken(grid.text)));
+      }
+    }
     board = {
-      ...found.board, slots, color, land, slotColor,
+      ...holes, slots, color, land, slotColor,
       h: h ?? found.board.h, material: material ?? found.board.material,
     };
     // 単位の書き忘れは**図が出てしまう**取り違えなので、エラーではなくお知らせ。

@@ -116,8 +116,7 @@ describe('resolveBoard', () => {
 
     expect(found.ok && found.board).toMatchObject({ cols: 70, rows: 50 });
     expect(found.ok && found.notice).toContain('70x50 は穴数として読みました');
-    expect(found.ok && found.notice).toContain('70×50mm');
-    expect(found.ok && found.notice).toContain('akizuki-c');
+    expect(found.ok && found.notice).toContain('70×50mm の板のことなら board: 7x5cm');
   });
 
   test('says nothing extra about a hole count that is not a board size', () => {
@@ -135,10 +134,18 @@ describe('resolveBoard', () => {
     expect(!found.ok && found.reason).not.toContain('読めません');
   });
 
-  test('offers the board a rounded size was probably meant for', () => {
-    // 7×5cm は汎用基板の呼び名で、秋月 C (72×47mm) とは別の板。
-    // **当てはめずに教える** — 丸めて当てると違う板の穴数で図が出る。
+  test('reads 7x5cm as the standard board turned, not as akizuki-c', () => {
     const found = resolveBoard('7x5cm');
+
+    expect(found.ok && found.board).toMatchObject({ cols: 24, rows: 18 });
+    expect(found.ok && found.named?.key).toBe('7x5cm');
+    expect(resolveBoard('70x50mm')).toEqual(found);
+  });
+
+  test('offers the board a rounded size was probably meant for', () => {
+    // 71×49mm は汎用板にも秋月 C (72×47mm) にも当たらない。
+    // **当てはめずに教える** — 丸めて当てると違う板の穴数で図が出る。
+    const found = resolveBoard('71x49mm');
 
     expect(found.ok).toBe(false);
     expect(!found.ok && found.reason).toContain('akizuki-c');
