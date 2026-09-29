@@ -1021,6 +1021,13 @@ describe('generateTex のバージョン刻印', () => {
     expect(generateLatex(...STAMPED).notes).toEqual([]);
   });
 
+  test('hangs the stamp one text line below the drawing, so it does not touch the lowest symbol', () => {
+    // 図の下の端 (グラウンドの記号) に刻印がくっついて読みにくかった。
+    const row = (generate(...STAMPED).tex ?? '').split('\n').find((line) => line.includes('(circuitstamp)'));
+
+    expect(row).toMatch(/at \(\[yshift=-[\d.]+cm\]current bounding box\.south east\)/);
+  });
+
   test('carries no line number, because no line of the fence is to blame for it', () => {
     const stamped = (generate(...STAMPED).tex ?? '').split('\n').filter((row) => row.includes('circuitstamp'));
 

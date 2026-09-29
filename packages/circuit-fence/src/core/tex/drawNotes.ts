@@ -369,7 +369,9 @@ export function drawStamp(target: TexTarget): string[] {
     target === 'latex' ? STAMP_COLOR : MARK_COLOR_NAME,
     `font=${noteFontTex(STAMP_SIZE, false)}`,
   ];
-  const at = 'at (current bounding box.south east)';
+  // 図の下の端から字 1 行分下げる。すぐ下に掛けると、いちばん下の記号 (グラウンドなど) に
+  // 刻印がくっついて読みにくかった。
+  const at = `at ([yshift=-${num(noteLine(STAMP_SIZE))}cm]current bounding box.south east)`;
 
   if (target === 'latex') return [`\\node[${options.join(', ')}] ${at} {${escapeTex(STAMP_TEXT)}};`];
 

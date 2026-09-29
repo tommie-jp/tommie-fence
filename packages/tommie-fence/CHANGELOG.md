@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **束ねる circuit-fence を上げる** — 版の刻印を図の下から 1 行分離して置く。
+
 ## [0.25.4] - 2026-09-29
 
 ### Changed
