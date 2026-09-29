@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-09-29
+
 ### Changed
 
 - **束ねる breadboard-fence・perfboard-fence を上げる** — 部品表の IC に働き (`2 入力 AND ×4`) を出す。
