@@ -44,14 +44,19 @@
   **計器の画面ではない** — 画面を見せる題は scope・spectrum・vna、値を集めて描く題が graph。
   線は式 (自前の再帰下降。`eval` 無し) か点列で破線、測った CSV (`data:`) は ○ で打ち線で結ばない。
   単位の違う線は横軸を共有して縦に積んだ枠に置く。**マップ (殻) は無い** (52 の docs/92・96)
-- `packages/tommie-fence` — **VS Code に出るのはこれだけ。** 8 つのフェンスを
+- `packages/logic-fence` — ` ```logic ` フェンス。ロジックアナライザの画面 (WaveForms / Analog Discovery 3 の Logic)。
+  **scope の ch が電圧の波なのに対し、レーンは 0 / 1** — 信号を `clock` `pulse` `pattern` `edges` と、
+  前のレーンの edge を数える `counter` で書き、バス (`A3..A0 hex`)・カーソル (X1・X2)・トリガの印・UART の読み下しを描く。
+  波は時間の関数と窓の中の変わり目の 2 つの道を同じ物から出し、**変わり目が 3 px より近いレーンは塗り**にして言う。
+  トリガは書いた edge が本当にあるか確かめる。**マップ (殻) は無い**、`data:` はまだ無い
+- `packages/tommie-fence` — **VS Code に出るのはこれだけ。** 9 つのフェンスを
   1 つの拡張に畳んだもの (52 の docs/19)。中身は入口だけで、図を描くのは
-  上の 8 つのコア。**8 つは拡張ではなくライブラリ + CLI**
-- `packages/playground` — 8 つのフェンスをブラウザだけで試す静的なページ
+  上の 9 つのコア。**9 つは拡張ではなくライブラリ + CLI**
+- `packages/playground` — 9 つのフェンスをブラウザだけで試す静的なページ
   (GitHub Pages)。**拡張ではない** ので `.vsix` の対象から外れ、`check` には乗る。
   約束は [packages/playground/CLAUDE.md](packages/playground/CLAUDE.md)
 - `.claude/skills/tommie-fence` — Claude Code がフェンスを書くときに読む手引き
-  (8 つの文法と早見表の所在、`check` → `render` → PNG で確かめる順、フェンスどうしで
+  (9 つの文法と早見表の所在、`check` → `render` → PNG で確かめる順、フェンスどうしで
   取り違えやすい書き方)。**文法は写さず所在を指す**。取り違えやすい書き方の表は
   実物 (CLI の `check`) で確かめてから書いたので、**番地・注釈・DIP・ERC・波や単位の
   綴りを変えたら表も直す**
@@ -139,7 +144,7 @@ make help             # 目標の一覧
 ## 約束
 
 1. **`vsce` を直に呼ばない**。`.vsix` を作るのは `./doBuild.sh` (と、その中身の
-   `make`) だけ。**拡張は `tommie-fence` の 1 つ**で、8 つのコアはその依存として
+   `make`) だけ。**拡張は `tommie-fence` の 1 つ**で、9 つのコアはその依存として
    作業場へ写される (`WSDEPS` は入れ子まで辿る)。
    **入れ直す前に畳む前の 3 つを消す** (`RETIRED`) — 残っていると文法も
    プレビューも二重に登録され、図が 2 つ出る。
@@ -184,7 +189,7 @@ make help             # 目標の一覧
     Marketplace に出るのは 1 本だけなので英語で書き、日本語はルートの
     `README.ja.md` へ送る。図とリンクは絶対 URL (`vsce` の書き換えは
     パッケージを基準にするので、`../` で上へ出るリンクを通さない)。
-11. **ライブラリの出口は 8 つとも同じ形**。`<パッケージ>/core` は **dist**
+11. **ライブラリの出口は 9 つとも同じ形**。`<パッケージ>/core` は **dist**
     (`import` / `require` / `types`)、`<パッケージ>/src/core` は**ソース**。
     ソースの入口も要るのは、dist だけだと**型チェックの前に build しないと
     playground が通らない**ため。`src/**` は `.vsix` に入らないので、

@@ -88,11 +88,12 @@ const NUDGES: Record<Kind, readonly Nudge[]> = {
   ],
   // copper には LED と抵抗の例が無い (銅張り基板の図は RF の治具)。釦は出さない。
   copper: [],
-  // vna・scope・spectrum・graph は図の中に部品が無い (計器の画面とグラフ)。釦は出さない。
+  // vna・scope・spectrum・graph・logic は図の中に部品が無い (計器の画面とグラフ)。釦は出さない。
   vna: [],
   scope: [],
   spectrum: [],
   graph: [],
+  logic: [],
 };
 
 /** その種類・その例に添える釦。**題で引く** — 別の例を選んだら空。 */

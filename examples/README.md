@@ -15,6 +15,7 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | scope | 5 screens + 1 deliberately broken | [packages/scope-fence/examples/](../packages/scope-fence/examples/README.md) |
 | spectrum | 6 screens + 1 deliberately broken | [packages/spectrum-fence/examples/](../packages/spectrum-fence/examples/README.md) |
 | graph | 5 graphs + 1 deliberately broken | [packages/graph-fence/examples/](../packages/graph-fence/examples/README.md) |
+| logic | 5 screens + 1 deliberately broken | [packages/logic-fence/examples/](../packages/logic-fence/examples/README.md) |
 
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for
@@ -258,6 +259,27 @@ The series-resonance current with a 50 Ω and a near-0 Ω generator. The mark re
 - [02-diode.md](../packages/graph-fence/examples/02-diode.md) — a diode I-V on a log current axis
 - [03-reactance.md](../packages/graph-fence/examples/03-reactance.md) — X<sub>L</sub> and X<sub>C</sub> on log-log axes
 - [04-solar.md](../packages/graph-fence/examples/04-solar.md) — solar-cell I-V and P-V, the peak as the maximum power point
+
+## logic — the logic analyser screen
+
+Lanes are 0 / 1 (an oscilloscope channel is a voltage). Signals are clocks, patterns and counters;
+lanes bundle into buses whose value boxes change at the transitions; the cursors read every row.
+The trigger is checked against the lane's real edges, and a lane whose edges are closer than 3 px
+is drawn as a band and said so.
+
+### The address of a 74HC163
+
+[![74HC163 address counting 0 1 2 3 4 5 3 4 5 3](../packages/logic-fence/examples/out/00-counter.png)](../packages/logic-fence/examples/00-counter.md)
+
+The address changes once a second (`0 1 2 3 4 5 3 4 5 3`). The cursors read `0x4` at 4.5 s and `0x5` at
+5.5 s ([00-counter.md](../packages/logic-fence/examples/00-counter.md)).
+
+### More
+
+- [01-binary-counter.md](../packages/logic-fence/examples/01-binary-counter.md) — a 4-bit binary counter, the bus in decimal
+- [02-uart.md](../packages/logic-fence/examples/02-uart.md) — one UART byte, decoded (`decode:`)
+- [03-pretrigger.md](../packages/logic-fence/examples/03-pretrigger.md) — the time before the trigger (`start:`, `pulse`, `edges`)
+- [04-spi-byte.md](../packages/logic-fence/examples/04-spi-byte.md) — one SPI byte (mode 0), read at the rising clock edge with the cursors
 
 ## Why the files are not kept here
 

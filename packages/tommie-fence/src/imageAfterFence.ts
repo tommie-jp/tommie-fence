@@ -14,7 +14,7 @@ import { isFenceOf } from 'fence-kit';
 export type ImageAfterFence = 'collapse' | 'hide' | 'show';
 
 /** 拡張が図にするフェンス (正の綴り)。別名は `isFenceOf` が拾う。 */
-export const FIGURE_LANGUAGES = ['circuit', 'bread', 'perf', 'copper', 'vna', 'scope', 'spectrum', 'graph'] as const;
+export const FIGURE_LANGUAGES = ['circuit', 'bread', 'perf', 'copper', 'vna', 'scope', 'spectrum', 'graph', 'logic'] as const;
 
 export type ImageAfterFenceOptions = {
   /** 設定 `tommieFence.preview.imageAfterFence`。**描くたびに読む** — 変えても入れ直しが要らない。 */

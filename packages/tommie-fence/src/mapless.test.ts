@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 import { collectProblems } from './problems/collect.ts';
-import { MAPLESS_LANGUAGES, graphProblems, scopeProblems, spectrumProblems, vnaProblems } from './mapless.ts';
+import { MAPLESS_LANGUAGES, graphProblems, logicProblems, scopeProblems, spectrumProblems, vnaProblems } from './mapless.ts';
 import { NEIGHBOR_READERS, dataForUri, graphDataFrom, readerFor, scopeDataFrom, spectrumDataFrom, vnaDataFrom } from './neighborData.ts';
 
 const home = mkdtempSync(join(tmpdir(), 'mapless-ext-'));
@@ -42,7 +42,7 @@ describe('data: の読み口 (デスクトップ)', () => {
 
 describe('殻を持たないフェンスの Problems', () => {
   test('names the fences without a map', () => {
-    expect(MAPLESS_LANGUAGES).toEqual(['vna', 'scope', 'spectrum', 'graph']);
+    expect(MAPLESS_LANGUAGES).toEqual(['vna', 'scope', 'spectrum', 'graph', 'logic']);
   });
 
   test('lists vna lines in Problems, with the file found when a reader is given', () => {
@@ -68,5 +68,10 @@ describe('殻を持たないフェンスの Problems', () => {
   test('lists graph lines in Problems on the markdown line', () => {
     const said = collectProblems('# 題\n\n```graph\nx: 周波数 Hz 2k-32k\nlines:\n  a mA:\n    - 1 2\n```\n', [graphProblems()], { erc: false });
     expect(said).toEqual([{ language: 'graph', line: 4, kind: 'error', message: expect.stringContaining('.. で区切ります') }]);
+  });
+
+  test('lists logic lines in Problems on the markdown line', () => {
+    const said = collectProblems('# 題\n\n```logic\ndevice: ad3\ntime: 1s/div\nsignals:\n  A: dio0 sqare 1Hz\n```\n', [logicProblems()], { erc: false });
+    expect(said).toEqual([{ language: 'logic', line: 7, kind: 'error', message: expect.stringContaining('clock') }]);
   });
 });

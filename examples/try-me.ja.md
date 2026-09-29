@@ -2,7 +2,7 @@
 
 [English](try-me.md) | [日本語](try-me.ja.md)
 
-フェンスを 8 つ、パッケージごとに 1 つずつ置いてあります。
+フェンスを 9 つ、パッケージごとに 1 つずつ置いてあります。
 **Markdown プレビューを開くと図になります**: `Ctrl+Shift+V`
 (macOS は `Cmd+Shift+V`)、またはこのタブの右上にある分割プレビューのボタン。
 
@@ -162,6 +162,25 @@ notes:
 縦に積んだ枠に分かれます。図の下の読み値は 1.59 kHz で −3.01 dB・−45.0° です。
 このフェンスにはマップがありません。
 
+## logic — 74HC163 のアドレス
+
+```logic
+title: 74HC163 のアドレス — 1 s ごとに 0 1 2 3 4 5 3 4 5 3
+device: ad3
+time: 1s/div
+signals:
+  CLK: dio0 clock 1Hz
+  A:   dio1..dio4 counter on CLK rising sequence 0 1 2 3 4 5 3 4 5 3
+buses:
+  Address: A3..A0 hex
+cursors: [4.5s, 5.5s]
+trigger: CLK rising at 0s
+```
+
+ロジックアナライザの画面です。レーンは 0 / 1 で、`counter` は前のレーンの edge を数え、
+バスは書いた基数で値を箱に書きます。図の下の表がカーソルの時刻の全行の値を読みます
+(`0x4` と `0x5`)。トリガは書いた edge が本当にあるかを確かめます。このフェンスにはマップがありません。
+
 ## 打たずに掴んで動かす
 
 どのフェンスもマウスで編集できます。このタブの右上の基板の絵の釦を押すと
@@ -170,7 +189,7 @@ notes:
 カーソルのあるフェンスのマップが横に開きます。
 または `Ctrl+Shift+P` →**「View: Reopen Editor With...」**→
 **Fence Editor** で、このタブ自体をマップにできます。板と回路図の 4 つのフェンスを
-1 つのエディタで扱います (vna・scope・spectrum・graph にはマップがありません)。
+1 つのエディタで扱います (vna・scope・spectrum・graph・logic にはマップがありません)。
 
 マップは図ではなく**掴むための層**です。部品を動かすとフェンスの番地が
 書き換わるので、正はいつもテキストのままです。
@@ -185,4 +204,5 @@ notes:
   [vna の文法](../packages/vna-fence/docs/01-syntax.md) ·
   [scope の文法](../packages/scope-fence/docs/01-syntax.md) ·
   [spectrum の文法](../packages/spectrum-fence/docs/01-syntax.md) ·
-  [graph の文法](../packages/graph-fence/docs/01-syntax.md)
+  [graph の文法](../packages/graph-fence/docs/01-syntax.md) ·
+  [logic の文法](../packages/logic-fence/docs/01-syntax.md)

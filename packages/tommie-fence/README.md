@@ -32,7 +32,7 @@ The long spellings ` ```breadboard ` and ` ```perfboard ` keep working as aliase
 - **Problems.** Lines a fence cannot read get a squiggle and a row in the
   Problems panel (`Ctrl+Shift+M`).
 - **Snippets.** On an empty line type `circuit`, `bread`, `perf`, `copper`,
-  `vna`, `scope`, `spectrum` or `graph` and press `Ctrl+Space` for a fence that draws right away.
+  `vna`, `scope`, `spectrum`, `graph` or `logic` and press `Ctrl+Space` for a fence that draws right away.
 
 ## Install
 

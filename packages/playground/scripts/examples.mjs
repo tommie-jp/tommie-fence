@@ -30,6 +30,7 @@ const PACKAGE_OF = {
   scope: 'scope-fence',
   spectrum: 'spectrum-fence',
   graph: 'graph-fence',
+  logic: 'logic-fence',
 };
 
 /** この数を下回ったら、集めるところが壊れたと見なして止める。 */

@@ -9,7 +9,8 @@
 A family of Markdown fence languages that draw electronics, kept in one
 monorepo: schematic, breadboard, perfboard, copper-clad board, the screen of a
 vector network analyser (NanoVNA), the screen of an oscilloscope, the
-screen of a spectrum analyser, and the x-y graphs of a textbook.
+screen of a spectrum analyser, the x-y graphs of a textbook, and the screen of
+a logic analyser.
 
 | Package | Fence | Draws |
 | --- | --- | --- |
@@ -21,6 +22,7 @@ screen of a spectrum analyser, and the x-y graphs of a textbook.
 | scope-fence | ` ```scope ` | The screen of an oscilloscope — waveforms, trigger, cursors, Measurements, computed from generator waves passed through operations (RC, clipping) and overlaid with a measured CSV (WaveForms) |
 | spectrum-fence | ` ```spectrum ` | The screen of a spectrum analyser — FFT (Analog Discovery's Spectrum) or swept (tinySA), chosen by `device:`. Computed from generator waves through a window and an FFT, or through a receiver (RBW, attenuator, noise floor) |
 | graph-fence | ` ```graph ` | Textbook x-y graphs — frequency responses (resonance curves, Bode plots) and characteristic curves, from expressions or the table's points, with log axes and a measured CSV plotted as circles. Not an instrument screen |
+| logic-fence | ` ```logic ` | The screen of a logic analyser — lanes, buses with their values, a time axis, cursors, a checked trigger mark and UART decode (WaveForms / Analog Discovery 3). Computed from clocks, patterns and counters |
 
 ` ```bread ` and ` ```perf ` are the short spellings. The long ones
 (` ```breadboard ` / ` ```perfboard `) draw just the same, so documents written
@@ -28,7 +30,7 @@ with them need no rewriting.
 
 The languages are separate; the manners are shared: YAML-hosted fences,
 positions written as addresses, and mistakes reported with Markdown line
-numbers and the content of the offending line. (vna, scope, spectrum and graph draw no board:
+numbers and the content of the offending line. (vna, scope, spectrum, graph and logic draw no board:
 their "positions" are frequencies, times or axis values, and they have no netlist or
 drag-to-edit map.)
 
@@ -37,7 +39,7 @@ drag-to-edit map.)
 **[Open the playground](https://tommie-jp.github.io/tommie-fence/)** — no
 account, no sign-up. **Open a `.md`, edit the fences inside it, write the `.md`
 back** — the same steps the extension takes, in a browser alone.
-**All eight fences draw** — schematics included, with TeX running in
+**All nine fences draw** — schematics included, with TeX running in
 WebAssembly (the engine is fetched only the first time you draw a circuit).
 **It opens on the map**: drag a part and the address in the fence is
 rewritten, the same editor the extension carries. The `.md` text and the drawn
@@ -55,7 +57,7 @@ one hole, a body it cannot add a line to.
 
 [![Open in Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/tommie-jp/tommie-fence?quickstart=1)
 
-**For all eight for real, use Codespaces.** VS Code opens in the browser with
+**For all nine for real, use Codespaces.** VS Code opens in the browser with
 the extension installed and [examples/try-me.md](examples/try-me.md) in
 front of you. Open the Markdown preview (`Ctrl+Shift+V`) and the fences turn
 into drawings; you can also turn the `.md` tab itself into a drawing editor. A
@@ -77,7 +79,7 @@ archived on 2026-09-01. Every commit came along, so
 (`breadboard-fence-v0.4.0`, `circuit-fence-v0.3.1`). The archived repositories
 keep their releases up to `v0.3.0`; everything after that is on the
 [releases page](https://github.com/tommie-jp/tommie-fence/releases).
-**The extension ships a `.vsix`, the eight libraries ship an `npm pack`
+**The extension ships a `.vsix`, the nine libraries ship an `npm pack`
 tarball**, each with `SHA256SUMS`. They are not on the npm registry, so an
 app that wants one downloads the tarball and points at it with `file:`.
 
@@ -95,8 +97,9 @@ tommie-fence
 ├── packages/scope-fence       library + CLI
 ├── packages/spectrum-fence    library + CLI
 ├── packages/graph-fence       library + CLI
-├── packages/tommie-fence      the VS Code extension: all eight folded into one
-└── packages/playground        one page that runs all eight in a browser
+├── packages/logic-fence       library + CLI
+├── packages/tommie-fence      the VS Code extension: all nine folded into one
+└── packages/playground        one page that runs all nine in a browser
 ```
 
 `fence-kit` only holds code that was **already duplicated** — nothing is put
@@ -124,6 +127,7 @@ is the gallery** — every fence next to the drawing it produces.
 | scope-fence | [docs/01-syntax.md](packages/scope-fence/docs/01-syntax.md) | [docs/02-cheatsheet.md](packages/scope-fence/docs/02-cheatsheet.md) | [examples/](packages/scope-fence/examples/) — 5 screens, 1 error case |
 | spectrum-fence | [docs/01-syntax.md](packages/spectrum-fence/docs/01-syntax.md) | [docs/02-cheatsheet.md](packages/spectrum-fence/docs/02-cheatsheet.md) | [examples/](packages/spectrum-fence/examples/) — 6 screens, 1 error case |
 | graph-fence | [docs/01-syntax.md](packages/graph-fence/docs/01-syntax.md) | [docs/02-cheatsheet.md](packages/graph-fence/docs/02-cheatsheet.md) | [examples/](packages/graph-fence/examples/) — 5 graphs, 1 error case |
+| logic-fence | [docs/01-syntax.md](packages/logic-fence/docs/01-syntax.md) | [docs/02-cheatsheet.md](packages/logic-fence/docs/02-cheatsheet.md) | [examples/](packages/logic-fence/examples/) — 5 screens, 1 error case |
 
 Every example is followed by the drawing it produces (`examples/out/`), so the
 files read as documentation in the Markdown preview. Rebuild them with

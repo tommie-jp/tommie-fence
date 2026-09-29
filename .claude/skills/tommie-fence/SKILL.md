@@ -1,6 +1,6 @@
 ---
 name: tommie-fence
-description: Markdown の ```circuit / ```bread / ```perf / ```copper / ```vna / ```scope / ```spectrum / ```graph フェンス (回路図・ブレッドボードの実体配線図・ユニバーサル基板の実体配線図・銅張り基板のマイクロストリップの寸法図・VNA (NanoVNA) の画面・オシロスコープの画面・スペクトラムアナライザ (tinySA / Analog Discovery) の画面・教科書の x-y グラフ (共振曲線・ボード線図・特性曲線)) を書く・直す・読むときに使う。文法リファレンスの所在、CLI の check で読めたか・つながったかを確かめる手順、図を PNG に焼いて目で確かめる手順、フェンスどうしで取り違えやすい書き方をまとめてある。Use when writing or fixing circuit schematics, breadboard diagrams, perfboard layouts, copper-clad board (microstrip) drawings, VNA (NanoVNA) screens — Log Mag, Smith chart, SWR, TDR — oscilloscope screens (waveforms, trigger, cursors, Measurements), spectrum analyser screens (tinySA, Analog Discovery), or textbook x-y graphs (resonance curves, Bode plots, characteristic curves) in these Markdown fences.
+description: Markdown の ```circuit / ```bread / ```perf / ```copper / ```vna / ```scope / ```spectrum / ```graph / ```logic フェンス (回路図・ブレッドボードの実体配線図・ユニバーサル基板の実体配線図・銅張り基板のマイクロストリップの寸法図・VNA (NanoVNA) の画面・オシロスコープの画面・スペクトラムアナライザ (tinySA / Analog Discovery) の画面・教科書の x-y グラフ (共振曲線・ボード線図・特性曲線)・ロジックアナライザの画面 (Analog Discovery の Logic のレーン・バス・カーソル・トリガ)) を書く・直す・読むときに使う。文法リファレンスの所在、CLI の check で読めたか・つながったかを確かめる手順、図を PNG に焼いて目で確かめる手順、フェンスどうしで取り違えやすい書き方をまとめてある。Use when writing or fixing circuit schematics, breadboard diagrams, perfboard layouts, copper-clad board (microstrip) drawings, VNA (NanoVNA) screens — Log Mag, Smith chart, SWR, TDR — oscilloscope screens (waveforms, trigger, cursors, Measurements), spectrum analyser screens (tinySA, Analog Discovery), textbook x-y graphs (resonance curves, Bode plots, characteristic curves), or logic analyser screens (lanes, buses, cursors, trigger, UART decode) in these Markdown fences.
 ---
 
 # tommie-fence のフェンスを書く
@@ -19,8 +19,9 @@ description: Markdown の ```circuit / ```bread / ```perf / ```copper / ```vna /
 | オシロスコープの画面 (時間波形・トリガ・カーソル・Measurements) | ` ```scope ` | `packages/scope-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/scope-fence/examples/*.md` |
 | スペクトラムアナライザの画面 (tinySA の掃引型・Analog Discovery の FFT 型) | ` ```spectrum ` | `packages/spectrum-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/spectrum-fence/examples/*.md` |
 | 教科書の x-y グラフ (共振曲線・ボード線図・I-V などの特性曲線。**計器の画面ではない**) | ` ```graph ` | `packages/graph-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/graph-fence/examples/*.md` |
+| ロジックアナライザの画面 (レーン・バス・カーソル・トリガ・UART の読み下し。Analog Discovery の Logic) | ` ```logic ` | `packages/logic-fence/docs/02-cheatsheet.md` → `01-syntax.md` | `packages/logic-fence/examples/*.md` |
 
-**書く前に文法を読む。** 8 つは似ているが同じではない (§4)。
+**書く前に文法を読む。** 9 つは似ているが同じではない (§4)。
 記憶や別のフェンスの感覚で書かない。例の中から近いものを写して直すのが早い。
 
 ## 2. 書いたら check
@@ -30,13 +31,14 @@ node <root>/packages/<x>-fence/dist/cli.cjs check <file.md> 2>&1
 ```
 
 - 見出しとネットリストは標準出力、読めなかった行・お知らせ・ERC は標準エラー
-  (8 つとも同じ。計器の画面の 3 つと graph はネットリストの代わりに読み値を標準出力に出す —
-  vna と spectrum はマーカー、scope は Measurements とカーソル、graph は mark と peak)。
+  (9 つとも同じ。計器の画面の 3 つと graph と logic はネットリストの代わりに読み値を標準出力に出す —
+  vna と spectrum はマーカー、scope は Measurements とカーソル、graph は mark と peak、
+  logic はカーソルの表と、レーンの変わり目の数・バスの値の並び)。
   まとめて読むので `2>&1` を付ける
 - 読めなかった行は、行番号・その行・綴りを指す `^` つきで出る。
   1 つでもあれば終了コードは 0 以外
 - ネットリスト (どの足がどのネットか) は標準出力。**意図した回路と突き合わせる**
-- 計器の画面 (vna・scope・spectrum) と graph は、**読み値を本文の「見るべき値」の表と数で突き合わせ、
+- 計器の画面 (vna・scope・spectrum・logic) と graph は、**読み値を本文の「見るべき値」の表と数で突き合わせ、
   合ってから PNG を 1 度見る**。お知らせ (`time:` が無いので … で描いています、など) は
   既定で埋めた所なので、意図と違えば書き足す
 - ERC (つながっていない足、線で跨いだ部品など) は終了コードを変えない。
@@ -53,7 +55,7 @@ SVG は画像として読めないので PNG に焼いてから見る。
 **`render` には必ず `--out` で作業用のディレクトリを渡す** (省くと入力の隣に書き出す)。
 
 ```bash
-# circuit 以外 (板の 2 つ・copper・計器の画面の vna・scope・spectrum・graph)
+# circuit 以外 (板の 2 つ・copper・計器の画面の vna・scope・spectrum・logic・graph)
 node <root>/packages/<x>-fence/dist/cli.cjs render <file.md> --out <tmp>
 node <root>/packages/<x>-fence/scripts/png.mjs <tmp>
 
@@ -70,7 +72,7 @@ node <root>/packages/circuit-fence/scripts/figures.mjs <file.md> <tmp>
 人が読む図なら、流儀 (出典つき) と PNG の点検表は
 [electronics-drawing-skills](https://github.com/tommie-jp/electronics-drawing-skills) にある
 (回路図・ブレッドボード・ユニバーサル基板・銅張り基板・計器の画面・グラフの 6 つ)。
-計器の画面 (vna・scope・spectrum) は **instrument-screen** — 並べ方ではなく設定の選び方
+計器の画面 (vna・scope・spectrum) は **instrument-screen** (logic の流儀はまだ載っていない) — 並べ方ではなく設定の選び方
 (尺度・掃引・表示形式・マーカー) の流儀と、**`check` の読み値を本文の表と数で合わせてから**
 PNG を見る点検表。グラフは **readable-graph**。circuit フェンスでの番地の間の目安は
 [readable-schematic](../readable-schematic/SKILL.md)。
@@ -146,9 +148,17 @@ scope・spectrum・vna、**値を集めて描く題** (共振曲線・ボード�
 | 実測 | `data:` の CSV は ○ で打ち、**線で結ばない**。列は単位と名前で線に当たる。x は軸の単位に直す (kHz → Hz) |
 | 読み値 (`check`) | mark の表 (`1.59 kHz  −3.01 dB  −45.0°`) と peak の表 |
 
-8 つに共通:
+logic (ロジックアナライザの画面) も**板も部品も無い**。scope の ch が電圧の波なのに対し、logic のレーンは 0 / 1。
 
-- **フェンス名は `circuit` / `bread` / `perf` / `copper` / `vna` / `scope` / `spectrum` / `graph`。** 板の 2 つは長い綴り
+| | logic |
+| --- | --- |
+| 書くもの | **`device:` (必須)** — `ad3` (DIO 16 本・125 MS/s) / `generic`。**時間軸は `time: 1s/div` か `window: 10s` のどちらか** (目盛は 10 で固定)。`signals:` に `名前: [dioN] 種類 …` (`clock 1Hz` `pulse 2s 500ms` `pattern 0110 bit 1ms` `high` `low` `edges 0s=0 1s=1` `counter …`)、`buses:` に `名前: A3..A0 hex` (MSB が先・基数は最後)、`cursors: [4.5s, 5.5s]`、`trigger: CLK rising at 0s`、`decode:` (uart) |
+| 取り違え | 周波数・時間は**単位が要る** (`1Hz` `500ms`。素の数は断る。`baud` だけ素の整数)。`time:` は **`/div` 付き**。**counter は前に書いたレーンの edge を数え**、`dio1..dio4` の範囲がビット数でレーンは `名前0`〜。`sequence` と `start` / `wrap` は一緒に書けない。**変わり目ちょうどの時刻は新しい値**。**変わり目が 3 px より近いレーンは塗りで描いてお知らせ** (`time:` を細かく)。SPI・I2C は書けない |
+| 読み値 (`check`) | カーソルの表 (`Address  0x4  0x5`、ΔX と 1/ΔX) と、レーンごとの変わり目の数・バスの値と時刻の並び (`Address (hex): 0x0@0 s 0x1@1 s …`) |
+
+9 つに共通:
+
+- **フェンス名は `circuit` / `bread` / `perf` / `copper` / `vna` / `scope` / `spectrum` / `graph` / `logic`。** 板の 2 つは長い綴り
   (`breadboard` / `perfboard`) も同じに読む (拡張 0.15.0・breadboard-fence 0.13.0・
   perfboard-fence 0.11.0 から。報告の名札は短い綴り)。新しく書くなら短い綴り。
   **これ以外の綴りは**、プレビューでは灰色のコードブロック、CLI では黙って素通りする

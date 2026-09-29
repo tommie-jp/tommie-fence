@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- **9 つ目のフェンス ` ```logic `** — ロジックアナライザの画面 (Analog Discovery 3 の Logic。レーン・バス・カーソル・
+  トリガ・UART の読み下し)。scope・spectrum・graph と同じくマップ (殻) を持たず、プレビュー・文法の色分け・
+  スニペット (`logic`)・Problems パネルに出る。`data:` はまだ無い。詳しくは logic-fence の CHANGELOG。
+
 ## [0.32.0] - 2026-09-30
 
 ### Changed

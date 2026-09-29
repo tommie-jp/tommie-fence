@@ -56,6 +56,16 @@ describe('render', () => {
     expect(render('graph', 'x: 周波数 Hz 2k-32k\n').messages.join('\n')).toContain('graph: 1 行目');
   });
 
+  test('logic は図と読み値を返し、ネットリストを持たない', () => {
+    const output = render('logic', 'device: ad3\ntime: 1s/div\nsignals:\n  CLK: clock 1Hz\ncursors: [0.25s]\n');
+
+    expect(output.svg).toMatch(/^<svg /);
+    expect(output.netlist).toEqual([]);
+    expect(output.broken).toBe(false);
+    expect(output.readings.join('\n')).toContain('CLK');
+    expect(render('logic', 'device: ad3\ntime: 1s\n').messages.join('\n')).toContain('logic: 2 行目');
+  });
+
   test('vna は図と読み値を返し、data: は読めないと言う (頁は隣のファイルに届かない)', () => {
     const output = render('vna', 'sweep: 1M-300M\ndut: series R 100\ndata: a.s2p\nmarkers:\n  - 10M\n');
 

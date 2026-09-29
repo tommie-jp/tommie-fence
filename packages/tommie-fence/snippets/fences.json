@@ -127,5 +127,22 @@
       "  ${3:利得 dB}: ${4:20*log10(1/sqrt(1+(x/1.59k)^2))}$0",
       "```"
     ]
+  },
+  "logic fence": {
+    "prefix": ["logic"],
+    "description": "Logic analyser screen (lanes, bus, cursors, trigger) — a logic fence to start from (ロジックアナライザの画面のフェンス)",
+    "body": [
+      "```logic",
+      "title: ${1:図01 74HC163 のアドレス}",
+      "device: ${2:ad3}",
+      "time: ${3:1s/div}",
+      "signals:",
+      "  CLK: dio0 clock ${4:1Hz}",
+      "  A:   dio1..dio4 counter on CLK rising ${5:sequence 0 1 2 3 4 5 3 4 5 3}",
+      "buses:",
+      "  Address: A3..A0 hex",
+      "cursors: [${6:4.5s, 5.5s}]$0",
+      "```"
+    ]
   }
 }

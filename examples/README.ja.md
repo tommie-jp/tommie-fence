@@ -14,6 +14,7 @@
 | scope | 画面 5 本 + わざと壊した例 1 本 | [packages/scope-fence/examples/](../packages/scope-fence/examples/README.md) |
 | spectrum | 画面 6 本 + わざと壊した例 1 本 | [packages/spectrum-fence/examples/](../packages/spectrum-fence/examples/README.md) |
 | graph | グラフ 5 本 + わざと壊した例 1 本 | [packages/graph-fence/examples/](../packages/graph-fence/examples/README.md) |
+| logic | 画面 5 本 + わざと壊した例 1 本 | [packages/logic-fence/examples/](../packages/logic-fence/examples/README.md) |
 
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。
@@ -248,6 +249,26 @@ FFT 型 (Analog Discovery の Spectrum) と掃引型 (tinySA) を `device:` で�
 - [02-diode.md](../packages/graph-fence/examples/02-diode.md) — ダイオードの I-V。電流を対数の軸で
 - [03-reactance.md](../packages/graph-fence/examples/03-reactance.md) — X<sub>L</sub> と X<sub>C</sub> を両対数で
 - [04-solar.md](../packages/graph-fence/examples/04-solar.md) — 太陽電池の I-V と P-V。peak が最大電力点
+
+## logic — ロジックアナライザの画面
+
+レーンは 0 / 1 (オシロの ch は電圧)。信号はクロック・パターン・カウンタで書き、レーンを束ねたバスは
+変わり目で値の箱が切り替わり、カーソルが全行の値を読む。トリガは書いた edge が本当にあるかを確かめ、
+変わり目が 3 px より近いレーンは塗りで描いて言う。
+
+### 74HC163 のアドレス
+
+[![74HC163 のアドレス 0 1 2 3 4 5 3 4 5 3](../packages/logic-fence/examples/out/00-counter.png)](../packages/logic-fence/examples/00-counter.md)
+
+アドレスは 1 s ごとに変わる (`0 1 2 3 4 5 3 4 5 3`)。カーソルは 4.5 s で `0x4`、5.5 s で `0x5` を読む
+([00-counter.md](../packages/logic-fence/examples/00-counter.md))。
+
+### そのほか
+
+- [01-binary-counter.md](../packages/logic-fence/examples/01-binary-counter.md) — 4 ビットの 2 進カウンタ。バスを 10 進で
+- [02-uart.md](../packages/logic-fence/examples/02-uart.md) — UART の 1 バイトの読み下し (`decode:`)
+- [03-pretrigger.md](../packages/logic-fence/examples/03-pretrigger.md) — トリガの前を見る (`start:`・`pulse`・`edges`)
+- [04-spi-byte.md](../packages/logic-fence/examples/04-spi-byte.md) — SPI の 1 バイト (モード 0)。立ち上がりの所をカーソルで読む
 
 ## なぜ実体をここに置かないか
 

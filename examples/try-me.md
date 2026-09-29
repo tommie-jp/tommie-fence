@@ -2,7 +2,7 @@
 
 [English](try-me.md) | [日本語](try-me.ja.md)
 
-Eight fences, one per package. **Open the Markdown preview to see them drawn**:
+Nine fences, one per package. **Open the Markdown preview to see them drawn**:
 `Ctrl+Shift+V` (`Cmd+Shift+V` on macOS), or the split-preview button at the top
 right of this tab.
 
@@ -166,6 +166,25 @@ A textbook graph, not an instrument screen. The last word of a line's key is its
 unit, and lines with different units stack in panels that share the x axis. The
 readings under the graph give −3.01 dB and −45.0° at 1.59 kHz. This fence has no map.
 
+## logic — the address of a 74HC163
+
+```logic
+title: 74HC163 address — 0 1 2 3 4 5 3 4 5 3, once a second
+device: ad3
+time: 1s/div
+signals:
+  CLK: dio0 clock 1Hz
+  A:   dio1..dio4 counter on CLK rising sequence 0 1 2 3 4 5 3 4 5 3
+buses:
+  Address: A3..A0 hex
+cursors: [4.5s, 5.5s]
+trigger: CLK rising at 0s
+```
+
+A logic analyser screen: lanes are 0 / 1, `counter` counts the edges of an earlier lane, and the
+bus shows its value in the radix it is written with. The table under the drawing reads every row
+at the cursors (`0x4` and `0x5`). The trigger is checked against the lane's real edge. This fence has no map.
+
 ## Drag the parts instead of typing
 
 Every fence can also be edited with the mouse. Click the circuit-board button at
@@ -173,7 +192,7 @@ the top right of this tab (or run **"tommie-fence: Open the Fence Editor"** from
 the command palette, `Ctrl+Shift+P`) and the map opens beside the text, showing
 the fence under the cursor. Or reopen this file as the map itself:
 `Ctrl+Shift+P` → **"View: Reopen Editor With..."** → **Fence Editor**. One editor
-handles the four board and schematic fences (vna, scope, spectrum and graph have no map).
+handles the four board and schematic fences (vna, scope, spectrum, graph and logic have no map).
 
 The map is a grab layer, not the drawing. Dragging a part rewrites the address
 in the fence, so the text stays the source of truth.
@@ -188,4 +207,5 @@ in the fence, so the text stays the source of truth.
   [vna syntax](../packages/vna-fence/docs/01-syntax.md) ·
   [scope syntax](../packages/scope-fence/docs/01-syntax.md) ·
   [spectrum syntax](../packages/spectrum-fence/docs/01-syntax.md) ·
-  [graph syntax](../packages/graph-fence/docs/01-syntax.md)
+  [graph syntax](../packages/graph-fence/docs/01-syntax.md) ·
+  [logic syntax](../packages/logic-fence/docs/01-syntax.md)

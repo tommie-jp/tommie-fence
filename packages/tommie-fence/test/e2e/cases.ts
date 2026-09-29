@@ -110,7 +110,7 @@ const opensPanelFromOutside: Case = {
 
 /**
  * プレビューの markdown-it に載っている (板と画面は SVG を自分で組むので待たずに出る)。
- * circuit は TeX を回すので待たない。計器の画面は vna・scope・spectrum の 3 つとも見る。グラフ (graph) も見る。
+ * circuit は TeX を回すので待たない。計器の画面は vna・scope・spectrum の 3 つとも見る。グラフ (graph) とロジックアナライザの画面 (logic) も見る。
  */
 const rendersPreview: Case = {
   name: 'renders the fences through the markdown preview engine',
@@ -125,6 +125,7 @@ const rendersPreview: Case = {
     expectThat(html.includes('data-scope-fence'), 'scope の図が組まれていません');
     expectThat(html.includes('data-spectrum-fence'), 'spectrum の図が組まれていません');
     expectThat(html.includes('data-graph-fence'), 'graph の図が組まれていません');
+    expectThat(html.includes('data-logic-fence'), 'logic の図が組まれていません');
   },
 };
 

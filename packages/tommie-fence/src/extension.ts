@@ -7,7 +7,7 @@ import { imageAfterFenceOptions } from './previewSettings.ts';
 import { registerEditorCommands } from './editor/commands.ts';
 import { fenceEditors } from './editor/fences.ts';
 import { registerProblems } from './problems/diagnostics.ts';
-import { graphProblems, scopeProblems, spectrumProblems, vnaProblems } from './mapless.ts';
+import { graphProblems, logicProblems, scopeProblems, spectrumProblems, vnaProblems } from './mapless.ts';
 import { NEIGHBOR_READERS, dataForUri, graphDataFrom, scopeDataFrom, spectrumDataFrom, vnaDataFrom } from './neighborData.ts';
 
 /**
@@ -21,7 +21,7 @@ import { NEIGHBOR_READERS, dataForUri, graphDataFrom, scopeDataFrom, spectrumDat
 export function activate(context: vscode.ExtensionContext) {
   registerEditorCommands(context);
   // 読めなかった行を Problems パネルにも出す。TeX を通らないので web 版でも動く。
-  // vna・scope・spectrum・graph は殻を持たないので Problems の口だけ。`data:` は文書の隣を読む。
+  // vna・scope・spectrum・graph・logic は殻を持たないので Problems の口だけ。`data:` は文書の隣を読む (logic にはまだ無い)。
   const editors = fenceEditors();
   registerProblems(context, (document) => [
     ...editors,
@@ -29,6 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
     scopeProblems(dataForUri(document.uri, scopeDataFrom)),
     spectrumProblems(dataForUri(document.uri, spectrumDataFrom)),
     graphProblems(dataForUri(document.uri, graphDataFrom)),
+    logicProblems(),
   ]);
 
   const refresh = (): void => {

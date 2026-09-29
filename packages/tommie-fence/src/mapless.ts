@@ -3,6 +3,7 @@ import type { DataSource } from 'vna-fence/src/core';
 import { problemsOf as scopeProblemsOf } from 'scope-fence/src/core';
 import { problemsOf as spectrumProblemsOf } from 'spectrum-fence/src/core';
 import { problemsOf as graphProblemsOf } from 'graph-fence/src/core';
+import { problemsOf as logicProblemsOf } from 'logic-fence/src/core';
 import type { ProblemSource } from './problems/collect.ts';
 
 /**
@@ -30,5 +31,11 @@ export const graphProblems = (data?: DataSource): ProblemSource => ({
   problems: (source, fenceLine, want) => graphProblemsOf(source, fenceLine, want, data),
 });
 
+/** logic に `data:` はまだ無いので、読む口は要らない。 */
+export const logicProblems = (): ProblemSource => ({
+  language: 'logic',
+  problems: (source, fenceLine, want) => logicProblemsOf(source, fenceLine, want),
+});
+
 /** マップ (殻) を持たずに図と Problems だけを出す言語。**拡張が描くフェンス = 殻の言語 + これ**。 */
-export const MAPLESS_LANGUAGES: readonly string[] = ['vna', 'scope', 'spectrum', 'graph'];
+export const MAPLESS_LANGUAGES: readonly string[] = ['vna', 'scope', 'spectrum', 'graph', 'logic'];

@@ -28,6 +28,7 @@
     "scope-fence": "*",
     "spectrum-fence": "*",
     "graph-fence": "*",
+    "logic-fence": "*",
     "esbuild": "^0.28.2",
     "node-tikzjax": "^1.0.5",
     "perfboard-fence": "*",

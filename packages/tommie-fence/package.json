@@ -53,6 +53,7 @@
     "scope-fence": "*",
     "spectrum-fence": "*",
     "graph-fence": "*",
+    "logic-fence": "*",
     "esbuild": "^0.28.2",
     "fence-kit": "*",
     "markdown-it": "^15.0.0",
@@ -83,6 +84,7 @@
       "./media/scope.css",
       "./media/spectrum.css",
       "./media/graph.css",
+      "./media/logic.css",
       "./styles/preview.css",
       "./node_modules/node-tikzjax/css/fonts.css"
     ],
@@ -160,6 +162,16 @@
       {
         "scopeName": "markdown.graph.codeblock",
         "path": "./syntaxes/graph-injection.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml"
+        }
+      },
+      {
+        "scopeName": "markdown.logic.codeblock",
+        "path": "./syntaxes/logic-injection.json",
         "injectTo": [
           "text.html.markdown"
         ],
