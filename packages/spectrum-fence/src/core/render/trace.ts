@@ -8,7 +8,7 @@ import type { Theme } from './theme.ts';
 /**
  * トレースの折れ線。**点が格子の px より多ければ、px の列ごとの min / max に間引く**
  * (FFT 型の 3200 bin を 400 px に。scope の trace.ts と同じ描き方)。
- * 理想は破線 `5 3`、実測は実線。読み値は間引く前の点で読む。
+ * 理想は実測と重ねるときだけ破線 `5 3`、それ以外は実線。読み値は間引く前の点で読む。
  */
 const DASH = '5 3';
 
@@ -44,7 +44,8 @@ export function decimate(points: readonly Point[], axes: Axes, grid: Rect): read
   return out;
 }
 
-export function renderTrace(points: readonly Point[], basis: 'model' | 'data', axes: Axes, grid: Rect, color: string): string {
+/** `dashed` は理想を実測と重ねるときだけ真。理想だけなら実線 (破線の切れ目で細い山が途切れて見える)。 */
+export function renderTrace(points: readonly Point[], basis: 'model' | 'data', axes: Axes, grid: Rect, color: string, dashed = false): string {
   const drawn = decimate(points, axes, grid);
   if (drawn.length === 0) return '';
   return element('polyline', {
@@ -53,7 +54,7 @@ export function renderTrace(points: readonly Point[], basis: 'model' | 'data', a
     stroke: color,
     'stroke-width': 1.5,
     'stroke-linejoin': 'round',
-    ...(basis === 'model' ? { 'stroke-dasharray': DASH } : {}),
+    ...(dashed ? { 'stroke-dasharray': DASH } : {}),
     'data-basis': basis,
   });
 }

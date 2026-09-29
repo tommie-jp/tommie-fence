@@ -140,7 +140,7 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
     + renderGrid(layout, theme)
     + renderLevelLabels(levelTicks(drawn.axes), layout, theme)
     + renderFrequencyLabels(drawn.status === null ? null : frequencyTicks(drawn.axes), layout, theme)
-    + renderTrace(drawn.points, 'model', drawn.axes, layout.grid, color)
+    + renderTrace(drawn.points, 'model', drawn.axes, layout.grid, color, drawn.measured.length > 0)
     + renderTrace(drawn.measured, 'data', drawn.axes, layout.grid, color)
     + markerSvg
     + renderStatus(status, layout, theme)

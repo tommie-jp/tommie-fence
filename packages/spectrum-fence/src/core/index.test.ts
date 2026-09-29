@@ -61,12 +61,12 @@ const said = (source: string): readonly string[] => {
 };
 
 describe('renderSpectrum — 段 1', () => {
-  test('draws 11-4: one dashed trace, three markers on the peaks and the readings, saying nothing', () => {
+  test('draws 11-4: one solid trace (no measurement to tell it from), three markers on the peaks and the readings, saying nothing', () => {
     const result = renderSpectrum(ELEVEN_FOUR);
     expect(result.errors).toEqual([]);
     expect(result.notices).toEqual([]);
     expect(result.svg.match(/<polyline /g)).toHaveLength(1);
-    expect(result.svg).toContain('stroke-dasharray="5 3"');
+    expect(result.svg).not.toContain('stroke-dasharray="5 3"');
     expect(result.svg.match(/data-marker=/g)).toHaveLength(3);
     expect(result.readingLines).toEqual([
       '読み値 — 理想 (計算)',

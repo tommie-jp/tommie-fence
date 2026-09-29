@@ -3,8 +3,8 @@
 Markdown の ` ```spectrum ` フェンスに YAML を書くと、Markdown プレビューで
 **スペクトラムアナライザの画面**になる。1 つのフェンスで 2 つの型の計器を描く —
 **FFT 型** (Analog Discovery の Spectrum) と**掃引型** (tinySA)。どちらかは `device:` で決まる。
-信号を波形発生器の語 (`square 100MHz -10dBm`) で書けば測る前の「見えるはずの画面」が破線で、
-**測った CSV** (`data:`) を書けば実線で重なる。
+信号を波形発生器の語 (`square 100MHz -10dBm`) で書けば測る前の「見えるはずの画面」が実線で描け、
+**測った CSV** (`data:`) を書けば実線で重なり、理想のほうは破線に変わる。
 ここは文法の全部。1 画面にまとめた物は [02-cheatsheet.md](02-cheatsheet.md)、
 形ごとの例は [examples/](../examples/README.md) にある。
 

@@ -38,7 +38,7 @@ export function readingLinesOf(readings: Readings, dataName: string | null): rea
   return [...parts.heading, ...tableLines(parts.rows)];
 }
 
-/** 凡例の字 (破線 = 理想、実線 = 実測)。どちらも無ければ null。 */
+/** 凡例の字 (重ねたときは 破線 = 理想、実線 = 実測)。どちらも無ければ null。 */
 export function keyText(hasModel: boolean, dataName: string | null): string | null {
   const items = [...(hasModel ? ['理想 (計算)'] : []), ...(dataName === null ? [] : [`実測 (${dataName})`])];
   return items.length === 0 ? null : items.join('    ');
@@ -59,7 +59,7 @@ export function renderKey(hasModel: boolean, dataName: string | null, layout: La
     out.push(svgText(x + 27, y + size * 0.35, text, { anchor: 'start', fill: theme.palette.caption, 'font-size': num(size) }));
     x += 27 + textWidth(text) * size + 20;
   };
-  if (hasModel) item('理想 (計算)', true);
+  if (hasModel) item('理想 (計算)', dataName !== null);
   if (dataName !== null) item(`実測 (${dataName})`, false);
   return out.join('');
 }
