@@ -72,7 +72,7 @@
 \node[font=\scriptsize, anchor=south] at (part-U1.north) {$\mathrm{SPF5189Z}$}; % line 6
 \node[anchor=south, yshift=9pt] at (part-U1.north) {$U_{1}$}; % line 6
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 6
-\node[circuitnotemark, font=\tiny, anchor=west, yshift=2pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, yshift=4pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 6
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 3) {X}; % line 6
 \draw (b11) to[TL, l_=$\mathrm{N2}$, a^=$96\,\Omega$] (b13); % line 7
 \draw (b13) to[TL, l_=$\mathrm{L2}$, a^=$50\,\Omega$] (b15); % line 8
@@ -90,7 +90,7 @@
 \draw (part-J2.pin 2) -- (c16); % line 20
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(9.754,0.853);
-\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at (current bounding box.south east) {X};
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};
 \path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
 \end{circuitikz}
 \end{document}
