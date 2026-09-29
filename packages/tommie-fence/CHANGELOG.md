@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.25.2] - 2026-09-29
+
 ### Changed
 
 - **束ねる breadboard-fence を上げる** — 配線の両端を剥き、芯線が穴の中央まで出ているように描く。詳しくは breadboard-fence の CHANGELOG。
