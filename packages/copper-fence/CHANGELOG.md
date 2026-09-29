@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-30
+
 ### Added
 
 - **板の外の機器 (`type: device`) を `parts:` に書ける** — 電源・測定器 (Analog Discovery の
