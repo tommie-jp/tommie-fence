@@ -141,3 +141,17 @@ describe('parts are drawn where they were written unless they cannot be', () => 
     expect(notices).toEqual([]);
   });
 });
+
+describe('the ends of a part lead show where it goes into the hole', () => {
+  test('a two-lead part puts the same metal dot as a wire end on both hole centres', () => {
+    const { svg } = fence('parts:', '  R1: resistor a5 a10 22k');
+    const { lead, chipPin } = DEFAULT_THEME.palette;
+    const line = new RegExp(`<line x1="([\\d.]+)" y1="([\\d.]+)" x2="([\\d.]+)" y2="([\\d.]+)" stroke="${lead}"`).exec(svg);
+    expect(line).not.toBeNull();
+    const [, x1, y1, x2, y2] = line!;
+
+    expect(svg).toContain(`<circle cx="${x1}" cy="${y1}"`);
+    expect(svg).toContain(`<circle cx="${x2}" cy="${y2}"`);
+    expect(svg).toMatch(new RegExp(`<circle cx="${x1}" cy="${y1}" r="[\\d.]+" fill="${chipPin}"`));
+  });
+});

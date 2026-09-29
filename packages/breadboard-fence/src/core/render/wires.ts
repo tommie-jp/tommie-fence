@@ -100,14 +100,22 @@ export function renderWire(points: readonly Point[], color: string, theme: Rende
   const ends = [points[0], points[points.length - 1]]
     .map((point) =>
       point
-        ? element('circle', {
-            cx: num(point.x), cy: num(point.y), r: num(wireWidth * END_RADIUS_RATIO), fill: chipPin,
-          })
+        ? insertionDot(point, theme)
         : '',
     )
     .join('');
 
   return { halo, line: core + line + ends };
+}
+
+/**
+ * 穴に挿した所の金属の粒。配線の端と部品の足の端で同じものを置き、
+ * どこに挿さっているかを同じ見え方で示す。
+ */
+export function insertionDot(point: Point, theme: RenderTheme): string {
+  return element('circle', {
+    cx: num(point.x), cy: num(point.y), r: num(theme.metrics.wireWidth * END_RADIUS_RATIO), fill: theme.palette.chipPin,
+  });
 }
 
 /** 端の点から隣の点へ `length` だけ進んだ点。区間が短ければ区間の半分で止める。 */

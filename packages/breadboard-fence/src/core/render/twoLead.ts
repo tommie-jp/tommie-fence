@@ -3,6 +3,7 @@ import type { Layout } from '../model/layout.ts';
 import type { PlacedPart } from '../types.ts';
 import { caption, fitToBoard, labelYOf, midpoint, partLabel } from './partCommon.ts';
 import { element, num } from './svg.ts';
+import { insertionDot } from './wires.ts';
 import type { RenderTheme } from './theme.ts';
 
 /**
@@ -28,7 +29,7 @@ export function renderTwoLead(part: PlacedPart, layout: Layout, theme: RenderThe
   const lead = drawsOwnLeads(part.type) ? '' : element('line', {
     x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y),
     stroke: palette.lead, 'stroke-width': num(theme.metrics.wireWidth), 'stroke-linecap': 'round',
-  });
+  }) + insertionDot(from, theme) + insertionDot(to, theme);
   const text = fitToBoard(caption(part), center.x, theme.metrics.textSize, layout);
   const label = partLabel(center.x, labelYOf(part, center, layout, theme) + drop, text, theme);
   // 3 引数 rotate() を読まないレンダラがあるので translate と rotate に分ける。
