@@ -137,13 +137,24 @@ export type Grid = {
   readonly countFrom: number;
 };
 
+/**
+ * 波の点の列。**`Float64Array.from({ length }, fn)` にしない** — Node 22 (V8) では初回の呼び出しの
+ * 途中で TurboFan に切り替わると、そこから先の点が 0 になることがあった (1:2 のリサージュが
+ * 半分ほどの確率で崩れた)。素の for で埋める。
+ */
+function sampleGrid(wave: WaveSpec, grid: Grid): Float64Array {
+  const values = new Float64Array(grid.length);
+  for (let index = 0; index < grid.length; index += 1) values[index] = valueAt(wave, grid.start + index * grid.dt, grid.dt);
+  return values;
+}
+
 type Input = { readonly values: Float64Array; readonly invalid: number; readonly clipped: number };
 
 /** 元の点の列 1 本。式は前の ch の列を参照する。 */
 function inputOf(source: ChannelSource, grid: Grid, extended: ReadonlyMap<TraceName, Float64Array>): Input {
   switch (source.kind) {
     case 'wave':
-      return { values: Float64Array.from({ length: grid.length }, (_, index) => valueAt(source.wave, grid.start + index * grid.dt, grid.dt)), invalid: 0, clipped: 0 };
+      return { values: sampleGrid(source.wave, grid), invalid: 0, clipped: 0 };
     case 'ref':
       return { values: extended.get(source.channel) ?? new Float64Array(grid.length), invalid: 0, clipped: 0 };
     case 'expr':
