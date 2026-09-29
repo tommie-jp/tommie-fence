@@ -186,6 +186,11 @@ export type PartType = {
    */
   readonly pinLabels?: readonly string[];
   /**
+   * 足の名前の字の大きさ (TeX の命令)。既定は `\\tiny` — 40 本の DIP・ボードが
+   * 箱に収まる大きさ。足の少ない箱 (`ic`・`device`) は読める `\\scriptsize` にする。
+   */
+  readonly pinFont?: string;
+  /**
    * 足に書く番号 (`pinLabels` と同じ並び)。**名前と一緒に 1 つの字**として出し、
    * 番号は箱の外側の端に置く (`pinLabelText`)。持たない種類は名前だけ。
    */
@@ -617,6 +622,7 @@ export function deviceChip(names: readonly string[], label: string | null = null
     ]),
     pinRow: Object.fromEntries(anchors.map(([, anchor]) => [anchor, 'left' as const])),
     pinLabels: names,
+    pinFont: '\\scriptsize',
   };
 }
 
@@ -717,6 +723,7 @@ export function icChip(pinout: IcPinout): PartType {
     ...NO_UNIT,
     pins: named.pins,
     pinLabels: named.pinLabels,
+    pinFont: '\\scriptsize',
     pinNumbers: named.pinNumbers,
     pinNames: named.pinNames,
     // 並びは箱の上の順 (上の辺・左の辺・右の辺・下の辺)。升目がこの順で足を並べる。

@@ -64,9 +64,9 @@ const SIP_NUMBER_AREA = 0.3;
  * 決め打ちの幅だと、`ECHO` と `HC-SR04` が重なり、`Analog Discovery` は縁から
  * はみ出した (実機で焼いて確かめた)。
  *
- * 字の幅は見積もり (cm / 字)。足の名前は `\tiny`、機器の名前は `\scriptsize`。
+ * 字の幅は見積もり (cm / 字)。足の名前も機器の名前も `\scriptsize`。
  */
-const PIN_NAME_CHAR = 0.1;
+const PIN_NAME_CHAR = 0.14;
 const LABEL_CHAR = 0.15;
 /** 足の名前の列の左右の余白と、機器の名前の左右の余白。 */
 const PIN_NAME_PAD = 0.2;

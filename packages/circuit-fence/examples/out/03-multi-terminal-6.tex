@@ -3,28 +3,28 @@
 \usetikzlibrary{calc}
 \definecolor{circuitnotemark}{HTML}{FE00FE}
 \makeatletter
-\pgfdeclareshape{dev4w11n6}{
+\pgfdeclareshape{dev4w12n8}{
   \anchor{center}{\pgfpointorigin}
-  \anchor{text}{\pgfpoint{0.3cm-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
-  \anchor{value}{\pgfpoint{0.3cm}{0cm}}
+  \anchor{text}{\pgfpoint{0.4cm-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{value}{\pgfpoint{0.4cm}{0cm}}
   \anchor{north}{\pgfpoint{0cm}{1cm}}
   \anchor{south}{\pgfpoint{0cm}{-1cm}}
-  \anchor{east}{\pgfpoint{1.1cm}{0cm}}
-  \anchor{west}{\pgfpoint{-1.1cm}{0cm}}
-  \anchor{pin 1}{\pgfpoint{-1.5cm}{0.75cm}}
-  \anchor{bpin 1}{\pgfpoint{-1.1cm}{0.75cm}}
-  \anchor{pin 2}{\pgfpoint{-1.5cm}{0.25cm}}
-  \anchor{bpin 2}{\pgfpoint{-1.1cm}{0.25cm}}
-  \anchor{pin 3}{\pgfpoint{-1.5cm}{-0.25cm}}
-  \anchor{bpin 3}{\pgfpoint{-1.1cm}{-0.25cm}}
-  \anchor{pin 4}{\pgfpoint{-1.5cm}{-0.75cm}}
-  \anchor{bpin 4}{\pgfpoint{-1.1cm}{-0.75cm}}
+  \anchor{east}{\pgfpoint{1.2cm}{0cm}}
+  \anchor{west}{\pgfpoint{-1.2cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{-1.6cm}{0.75cm}}
+  \anchor{bpin 1}{\pgfpoint{-1.2cm}{0.75cm}}
+  \anchor{pin 2}{\pgfpoint{-1.6cm}{0.25cm}}
+  \anchor{bpin 2}{\pgfpoint{-1.2cm}{0.25cm}}
+  \anchor{pin 3}{\pgfpoint{-1.6cm}{-0.25cm}}
+  \anchor{bpin 3}{\pgfpoint{-1.2cm}{-0.25cm}}
+  \anchor{pin 4}{\pgfpoint{-1.6cm}{-0.75cm}}
+  \anchor{bpin 4}{\pgfpoint{-1.2cm}{-0.75cm}}
   \backgroundpath{
-    \pgfpathrectanglecorners{\pgfpoint{-1.1cm}{-1cm}}{\pgfpoint{1.1cm}{1cm}}
-    \pgfpathmoveto{\pgfpoint{-1.5cm}{0.75cm}}\pgfpathlineto{\pgfpoint{-1.1cm}{0.75cm}}
-    \pgfpathmoveto{\pgfpoint{-1.5cm}{0.25cm}}\pgfpathlineto{\pgfpoint{-1.1cm}{0.25cm}}
-    \pgfpathmoveto{\pgfpoint{-1.5cm}{-0.25cm}}\pgfpathlineto{\pgfpoint{-1.1cm}{-0.25cm}}
-    \pgfpathmoveto{\pgfpoint{-1.5cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{-1.1cm}{-0.75cm}}
+    \pgfpathrectanglecorners{\pgfpoint{-1.2cm}{-1cm}}{\pgfpoint{1.2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-1.6cm}{0.75cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{0.75cm}}
+    \pgfpathmoveto{\pgfpoint{-1.6cm}{0.25cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{0.25cm}}
+    \pgfpathmoveto{\pgfpoint{-1.6cm}{-0.25cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{-0.25cm}}
+    \pgfpathmoveto{\pgfpoint{-1.6cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{-0.75cm}}
   }
 }
 \makeatother
@@ -55,13 +55,13 @@
 \coordinate (d6) at (10,-6);
 \coordinate (f6) at (10,-10);
 \coordinate (f4) at (6,-10);
-\node[dev4w11n6, draw, font=\scriptsize, xscale=-1] (part-M1) at (c2) {}; % line 3
+\node[dev4w12n8, draw, font=\scriptsize, xscale=-1] (part-M1) at (c2) {}; % line 3
 \node[font=\scriptsize] at (part-M1.value) {$\mathrm{HC\mbox{-}SR04}$}; % line 3
 \node[anchor=south] at (part-M1.north) {$M_{1}$}; % line 3
-\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-M1.bpin 1) {X}; % line 3
-\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-M1.bpin 2) {X}; % line 3
-\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-M1.bpin 3) {X}; % line 3
-\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-M1.bpin 4) {X}; % line 3
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-M1.bpin 1) {X}; % line 3
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-M1.bpin 2) {X}; % line 3
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-M1.bpin 3) {X}; % line 3
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-M1.bpin 4) {X}; % line 3
 \draw (a7) node[ocirc]{} node[above left]{VBUS}; % line 9
 \draw (b8) node[ocirc]{} node[above left]{GP14}; % line 10
 \draw (d8) node[ocirc]{} node[above left]{GP15}; % line 11

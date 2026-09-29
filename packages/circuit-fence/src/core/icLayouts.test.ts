@@ -33,3 +33,15 @@ describe('IC の働きの並び', () => {
     expect([...placed].sort()).toEqual([...pinout.names].sort());
   });
 });
+
+describe('CD4511 の働きの並び', () => {
+  it('入力 A〜D は左、出力 a〜g は右にセグメントの順で並ぶ', () => {
+    // Act
+    const layout = lookupIcPinout('CD4511')?.layout;
+
+    // Assert
+    expect(layout?.left).toEqual(['INA', 'INB', 'INC', 'IND']);
+    expect(layout?.right).toEqual(['Oa', 'Ob', 'Oc', 'Od', 'Oe', 'Of', 'Og']);
+    expect(layout?.bottom).toEqual(['VSS', 'LE/STROBE']);
+  });
+});

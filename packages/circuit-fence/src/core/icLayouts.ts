@@ -31,10 +31,23 @@ const timer555 = (power: string): IcLayout => ({
   bottom: ['GND', 'CONT'],
 });
 
+/**
+ * CD4511 (BCD → 7 セグ)。**入力 A〜D は左に下の桁から**、**出力 a〜g は右に
+ * セグメントの順** — 7 セグの箱を同じ順に並べれば線が交差しない。LT・BL は
+ * 普段 VDD に結ぶので VDD の隣 (上)、LE は普段 GND に結ぶので VSS の隣 (下)。
+ */
+const CD4511_LAYOUT: IcLayout = {
+  top: ['VDD', 'LT', 'BL'],
+  left: ['INA', 'INB', 'INC', 'IND'],
+  right: ['Oa', 'Ob', 'Oc', 'Od', 'Oe', 'Of', 'Og'],
+  bottom: ['VSS', 'LE/STROBE'],
+};
+
 /** 型番は fence-kit の表の**代表の綴り** (別の綴りも同じ行に当たる)。 */
 const LAYOUTS: readonly { readonly pins: number; readonly model: string; readonly layout: IcLayout }[] = [
   { pins: 8, model: 'NE555', layout: timer555('VCC') },
   { pins: 8, model: 'TLC555', layout: timer555('VDD') },
+  { pins: 16, model: 'CD4511B', layout: CD4511_LAYOUT },
 ];
 
 /** 型番から足の名前と働きの並びを引く。並びを持たない型番は null。 */

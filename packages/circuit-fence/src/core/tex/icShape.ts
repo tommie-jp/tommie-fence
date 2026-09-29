@@ -27,8 +27,8 @@ export function icStepOf(pitch: number): number {
   if (half < MIN_STEP) return pitch;
   return half > MAX_STEP ? pitch / 4 : half;
 }
-/** 足の名前 (`\tiny`) と型番 (`\scriptsize`) の字の幅の見積もり (cm / 字)。 */
-const PIN_CHAR = 0.1;
+/** 足の名前と型番 (どちらも `\scriptsize`) の字の幅の見積もり (cm / 字)。 */
+const PIN_CHAR = 0.14;
 const MODEL_CHAR = 0.15;
 const MODEL_HEIGHT = 0.3;
 /** 縁から字まで、字と字の間、字の太さの半分、端の足から角まで。 */

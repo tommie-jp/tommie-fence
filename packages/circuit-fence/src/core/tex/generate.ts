@@ -1042,9 +1042,9 @@ function pinNameNodes(part: MultiTerminalPart, name: string, type: PartType | nu
     const options = [
       // フェンスは目印の色で置く (SVG で本物の字に差し替わる)。
       ...(target === 'latex' ? [] : [MARK_COLOR_NAME]),
-      // **40 本が箱に収まる大きさ**にする。`\scriptsize` だと左右の列が
-      // 箱の真ん中でぶつかった (実機で焼いて確かめた)。
-      'font=\\tiny',
+      // 既定は **40 本が箱に収まる大きさ**。`\scriptsize` だと左右の列が
+      // 箱の真ん中でぶつかった (実機で焼いて確かめた)。足の少ない箱は種類が大きくする (`pinFont`)。
+      `font=${type.pinFont ?? '\\tiny'}`,
       `anchor=${place.anchor}`,
       // 縁のすぐ内側へ。**`bpin` は枠の上の足** (`pin` は足の先) なので、
       // 線の太さぶんだけ逃がせば中に収まる。
