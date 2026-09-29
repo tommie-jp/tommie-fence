@@ -4,12 +4,15 @@ import type { TexRenderer } from 'circuit-fence/queue';
 import { createPreviewRefresher } from './previewRefresher.ts';
 import { allPlugins } from './markdownItPlugin.ts';
 import type { NeighborReaders } from './neighborData.ts';
+import type { ImageAfterFenceOptions } from './imageAfterFence.ts';
 
 export type Wiring = {
   /** TeX を SVG にする人。デスクトップは WASM、web は「描けない」を返すスタブ。 */
   readonly render: TexRenderer;
   /** プレビューに描き直させる頼み先。 */
   readonly refresh: () => void;
+  /** フェンスの直後の GitHub 用の画像をどう出すか (設定と見出しの訳は入口が持つ)。 */
+  readonly imageAfterFence: ImageAfterFenceOptions;
   /**
    * vna の `data:` (Touchstone) と scope・spectrum・graph の `data:` (CSV) を読む口。**デスクトップだけが
    * 持つ** — 描いている文書の隣のファイルを読む。web 版は持たない (フェンスが「読めません」と言う)。
@@ -30,7 +33,7 @@ export function activateWith(wiring: Wiring) {
 
   return {
     extendMarkdownIt(md: MarkdownIt): MarkdownIt {
-      return allPlugins(queue, wiring.readers)(md);
+      return allPlugins(queue, wiring.imageAfterFence, wiring.readers)(md);
     },
   };
 }

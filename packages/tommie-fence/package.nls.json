@@ -6,5 +6,9 @@
   "config.noteFrame": "In the Fence Editor, draw a frame around notes: text (off by default).",
   "config.problemsErc": "Also list ERC findings (places that would not work as built) in the Problems panel. Off by default: a board still being wired reports every unconnected leg.",
   "config.oldNoteFrame": "Old name. Use tommieFence.map.noteFrame.",
-  "config.oldNoteFrame.deprecated": "Renamed to tommieFence.map.noteFrame (this name is still read)."
+  "config.oldNoteFrame.deprecated": "Renamed to tommieFence.map.noteFrame (this name is still read).",
+  "config.imageAfterFence": "How the preview shows an image that sits right after a fence, alone in its paragraph. Such an image is usually a copy of the same figure for GitHub, which does not draw fences.",
+  "config.imageAfterFence.collapse": "Fold it under a closed heading (open it to compare).",
+  "config.imageAfterFence.hide": "Leave it out of the preview.",
+  "config.imageAfterFence.show": "Show it as written (the figure appears twice)."
 }

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { renderTex } from 'circuit-fence/tex.web';
 import { activateWith } from './activate.ts';
+import { imageAfterFenceOptions } from './previewSettings.ts';
 import { registerEditorCommands } from './editor/commands.ts';
 import { fenceEditors } from './editor/fences.ts';
 import { registerProblems } from './problems/diagnostics.ts';
@@ -21,11 +22,13 @@ export function activate(context: vscode.ExtensionContext) {
   // vna・scope・spectrum・graph の `data:` は読めない (fs が無い)。フェンスがそう言う。
   registerProblems(context, [...fenceEditors(), vnaProblems(), scopeProblems(), spectrumProblems(), graphProblems()]);
 
+  const refresh = (): void => {
+    void vscode.commands.executeCommand('markdown.preview.refresh');
+  };
   return activateWith({
     render: renderTex,
-    refresh: () => {
-      void vscode.commands.executeCommand('markdown.preview.refresh');
-    },
+    refresh,
+    imageAfterFence: imageAfterFenceOptions(context, refresh),
   });
 }
 

@@ -9,6 +9,8 @@ import { spectrumPlugin } from 'spectrum-fence/plugin';
 import { graphPlugin } from 'graph-fence/plugin';
 import type { NeighborReaders } from './neighborData.ts';
 import type { FigureSource } from 'circuit-fence/plugin';
+import { imageAfterFencePlugin } from './imageAfterFence.ts';
+import type { ImageAfterFenceOptions } from './imageAfterFence.ts';
 
 /**
  * プレビューの拡張。**8 つとも 1 つの `extendMarkdownIt` で登録する。**
@@ -16,8 +18,12 @@ import type { FigureSource } from 'circuit-fence/plugin';
  *
  * 描く順は関係ない (それぞれ自分の言語のフェンスしか触らない)。
  * vna・scope・spectrum・graph の `data:` を読む口 (`readers`) はデスクトップだけが渡す。
+ * 最後に、フェンスの直後の GitHub 用の画像を畳む (52 の docs/101)。
  */
-export const allPlugins = (figures: FigureSource, readers?: NeighborReaders) => (md: MarkdownIt): MarkdownIt =>
+export const allPlugins = (
+  figures: FigureSource, imageAfterFence: ImageAfterFenceOptions, readers?: NeighborReaders,
+) => (md: MarkdownIt): MarkdownIt =>
   md.use(circuitPlugin(figures)).use(breadboardPlugin).use(perfboardPlugin).use(copperPlugin)
     .use(vnaPlugin(readers?.vna)).use(scopePlugin(readers?.scope))
-    .use(spectrumPlugin(readers?.spectrum)).use(graphPlugin(readers?.graph));
+    .use(spectrumPlugin(readers?.spectrum)).use(graphPlugin(readers?.graph))
+    .use(imageAfterFencePlugin(imageAfterFence));

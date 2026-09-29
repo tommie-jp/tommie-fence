@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { renderTex } from 'circuit-fence/tex';
 import { createWorkerRenderer } from 'circuit-fence/tex-worker';
 import { activateWith } from './activate.ts';
+import { imageAfterFenceOptions } from './previewSettings.ts';
 import { registerEditorCommands } from './editor/commands.ts';
 import { fenceEditors } from './editor/fences.ts';
 import { registerProblems } from './problems/diagnostics.ts';
@@ -30,14 +31,16 @@ export function activate(context: vscode.ExtensionContext) {
     graphProblems(dataForUri(document.uri, graphDataFrom)),
   ]);
 
+  const refresh = (): void => {
+    void vscode.commands.executeCommand('markdown.preview.refresh');
+  };
   return activateWith({
     render: createWorkerRenderer({
       workerPath: join(__dirname, 'tex-worker.cjs'),
       fallback: renderTex,
     }),
-    refresh: () => {
-      void vscode.commands.executeCommand('markdown.preview.refresh');
-    },
+    refresh,
+    imageAfterFence: imageAfterFenceOptions(context, refresh),
     readers: NEIGHBOR_READERS,
   });
 }

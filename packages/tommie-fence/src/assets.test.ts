@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
 import { ASSETS } from './assets.ts';
 import manifest from '../package.json' with { type: 'json' };
@@ -24,11 +24,20 @@ describe('コアから写した資材', () => {
 
   test('has a copy for every style and grammar the manifest points at', () => {
     const wanted = [
-      ...manifest.contributes['markdown.previewStyles'].filter((path) => !path.includes('node_modules')),
+      // 拡張そのものの CSS (`styles/`) は写さず、この包みが原本を持つ。
+      ...manifest.contributes['markdown.previewStyles']
+        .filter((path) => !path.includes('node_modules') && !path.startsWith('./styles/')),
       ...manifest.contributes.grammars.map((one) => one.path),
     ].map((path) => path.replace('./', ''));
 
     expect(wanted.every((path) => ASSETS.some(([, to]) => to === path))).toBe(true);
     expect(wanted).toHaveLength(ASSETS.length);
+  });
+
+  test('ships its own preview styles as they are', () => {
+    const own = manifest.contributes['markdown.previewStyles'].filter((path) => path.startsWith('./styles/'));
+
+    expect(own).toEqual(['./styles/preview.css']);
+    expect(existsSync(new URL(`../${own[0]}`, import.meta.url))).toBe(true);
   });
 });

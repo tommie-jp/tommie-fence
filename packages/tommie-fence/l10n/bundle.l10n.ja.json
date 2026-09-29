@@ -20,5 +20,6 @@
   "Rewrote {0} places": "{0} か所を書き換えました",
   "Moved the node at {0} to {1} ({2})": "{0} の節点を {1} へ動かしました ({2})",
   "Moved the node at {0} to {1} ({2}). {3}": "{0} の節点を {1} へ動かしました ({2})。{3}",
-  "{0}{1} — used in {2} places": "{0}{1} — {2} か所"
+  "{0}{1} — used in {2} places": "{0}{1} — {2} か所",
+  "Image for GitHub: {0}": "GitHub 用の画像: {0}"
 }

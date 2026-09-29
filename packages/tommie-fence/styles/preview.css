@@ -1,0 +1,19 @@
+/*
+ * 拡張そのもののプレビューの見た目 (フェンスごとの CSS は各コアの media/ から写す)。
+ *
+ * フェンスの直後の GitHub 用の画像を畳んだ見出し (52 の docs/101)。
+ * 図の下に小さく薄く置き、本文の見出しや図と張り合わないようにする。
+ */
+details.tf-mirror {
+  margin: -0.5em 0 1em;
+}
+
+details.tf-mirror > summary {
+  cursor: pointer;
+  font-size: 0.85em;
+  color: var(--vscode-descriptionForeground, #717171);
+}
+
+details.tf-mirror[open] > summary {
+  margin-bottom: 0.5em;
+}

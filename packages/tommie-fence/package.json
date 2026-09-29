@@ -83,6 +83,7 @@
       "./media/scope.css",
       "./media/spectrum.css",
       "./media/graph.css",
+      "./styles/preview.css",
       "./node_modules/node-tikzjax/css/fonts.css"
     ],
     "grammars": [
@@ -221,6 +222,21 @@
           "type": "boolean",
           "default": false,
           "description": "%config.noteFrame%"
+        },
+        "tommieFence.preview.imageAfterFence": {
+          "type": "string",
+          "enum": [
+            "collapse",
+            "hide",
+            "show"
+          ],
+          "enumDescriptions": [
+            "%config.imageAfterFence.collapse%",
+            "%config.imageAfterFence.hide%",
+            "%config.imageAfterFence.show%"
+          ],
+          "default": "collapse",
+          "description": "%config.imageAfterFence%"
         },
         "tommieFence.problems.erc": {
           "type": "boolean",
