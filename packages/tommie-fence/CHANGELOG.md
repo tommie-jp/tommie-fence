@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **束ねる breadboard-fence を上げる** — 部品の足を配線と同じ太さ・見やすい色で描く。詳しくは breadboard-fence の CHANGELOG。
+
 ## [0.25.0] - 2026-09-29
 
 ### Changed
