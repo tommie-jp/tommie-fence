@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **束ねる breadboard-fence を上げる** — 部品リストの字を黒 (暗い配色は白) で書く。
+
 ## [0.25.2] - 2026-09-29
 
 ### Changed
