@@ -99,11 +99,11 @@ describe('renderSpectrum — 段 1', () => {
 
   test('says which defaults it filled in, but not the look', () => {
     expect(said('device: ad2\nsignal: sine 1kHz 1V')).toEqual([
-      'sweep: が無いので AD2 の範囲 (0 Hz〜25 MHz) で描いています',
+      'sweep: が無いので AD2 の範囲 (0 Hz〜30 MHz) で描いています',
       'samples: が無いので 8192 で描いています',
       'window: が無いので flattop で描いています',
       // 1 kHz は分解能 (7.813 kHz) より細かく、理想の山が REF の上に出る (計算はそのまま)。
-      '一番高い山 (1.97 dBV、7.813 kHz) は REF (0 dBV) より上で切れています (ref: 10dBV なら入ります)',
+      '一番高い山 (2.20 dBV、9.375 kHz) は REF (0 dBV) より上で切れています (ref: 10dBV なら入ります)',
     ]);
     expect(said('device: generic\nsweep: 0-1M 101\nrbw: 10kHz')).toEqual(['Generic のフロアは floor: で書きます (いまは −100 dBm で描いています)']);
   });

@@ -5,6 +5,14 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **`ad2` `ad3` の範囲を 30 MHz に直した** (仮の 25 / 50 MHz を、Digilent の仕様の BNC アダプター使用時の
+  −3 dB 帯域 30 MHz+ に)。BNC 無しの 2×15 ヘッダーは AD3 で −3 dB 9 MHz (−0.5 dB 2.9 MHz) なので、
+  ヘッダーで測る図は `sweep:` を狭く書く (docs/01-syntax.md に記載)。AD3 は 14 bit・125 MS/s・±25 V・1 MΩ ‖ 24 pF
+- **`tinysa-ultra` の範囲を 6 GHz (ULTRA モード) に直した** (5.3 GHz から)。通常モードは 100 kHz〜800 MHz、
+  直線性は 5.3 GHz まで ±2 dB・6 GHz まで ±5 dB、入力の絶対最大は +6 dBm (推奨 +0 dBm 以下) とドキュメントに明記
+
 ### Added
 
 - **`hold:` — MAX HOLD (掃引を重ねて点ごとの最大を残す)**。掃引ごとの信号を並べれば、点ごとの最大を

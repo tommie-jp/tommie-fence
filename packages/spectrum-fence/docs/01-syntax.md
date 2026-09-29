@@ -34,12 +34,20 @@ MAX HOLD の画面は掃引を並べた `hold:` で描く。
 
 | `device:` | 型 | 機種 | 範囲 | 縦軸の既定 |
 | --- | --- | --- | --- | --- |
-| `ad2` | FFT | Analog Discovery 2 | 0〜25 MHz | dBV、REF 0 dBV |
-| `ad3` | FFT | Analog Discovery 3 | 0〜50 MHz | dBV、REF 0 dBV |
+| `ad2` | FFT | Analog Discovery 2 | 0〜30 MHz | dBV、REF 0 dBV |
+| `ad3` | FFT | Analog Discovery 3 | 0〜30 MHz | dBV、REF 0 dBV |
 | `tinysa` | 掃引 | tinySA (Basic) | 0〜960 MHz | dBm、REF −10 dBm |
-| `tinysa-ultra` | 掃引 | tinySA Ultra | 0〜5.3 GHz | dBm、REF −10 dBm |
+| `tinysa-ultra` | 掃引 | tinySA Ultra | 0〜6 GHz | dBm、REF −10 dBm |
 | `generic` | 掃引 | ほかのスペアナ・SDR | 0〜10 GHz | dBm、REF −10 dBm |
 
+- **AD の範囲は BNC アダプター使用時の −3 dB 帯域 (30 MHz+)**。AD3 は −0.5 dB で 15 MHz、
+  −0.1 dB で 6 MHz。**BNC 無しの 2×15 ヘッダーは −3 dB で 9 MHz** (−0.5 dB で 2.9 MHz) なので、
+  ヘッダーで測る図は `sweep:` を 0〜9 MHz 以内に書く。WaveForms は標本化の 1/4 まで設定できるが、
+  結果はアナログ帯域で決まる。入力は 14 bit、AD3 は最大 125 MS/s (AD2 は 100 MS/s)、
+  ±25 V、1 MΩ ‖ 24 pF (出典: Digilent の AD3 / AD2 の仕様)
+- **tinySA Ultra の範囲**は通常モードで 100 kHz〜800 MHz、ULTRA モードで 6 GHz まで
+  (直線性は 5.3 GHz まで ±2 dB、6 GHz まで ±5 dB。出典: [tinySA wiki](https://www.tinysa.org/wiki/pmwiki.php?n=TinySA4.Specification))。
+  入力の絶対最大は +6 dBm (推奨は +0 dBm 以下、DC は ±5 V)
 - **FFT 型**は信号を標本化して窓を掛け FFT する。題は窓・分解能・リーク
 - **掃引型**は信号の線スペクトルを受信機 (RBW の山・アッテネータ・LNA・ノイズフロア) でなぞる
 - **片方の型にしか無いキーは、もう片方の機種では断る** (「ad2 では rbw: は書けません
@@ -142,7 +150,7 @@ markers:
 M1 −20.00 dBm、M2 −70.00 dBm。フロアは RBW 10 kHz の −106.8 dBm。RBW を広げると
 小さい信号の山は大きい信号の裾とフロアに埋もれる。
 
-入力の上限 (tinySA は +10 dBm、Ultra は +6 dBm の電力の和、AD は ±25 V の peak の和) を
+入力の上限 (tinySA は +10 dBm、Ultra は絶対最大 +6 dBm の電力の和、AD は ±25 V の peak の和) を
 超えればお知らせで言う。
 
 ## FFT 型の設定 (`samples:` `window:`)

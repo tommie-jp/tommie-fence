@@ -45,7 +45,16 @@ describe('centered', () => {
 
 describe('the device and the sweep', () => {
   test('takes the whole range when sweep: is not written', () => {
-    expect(deviceSweep(DEVICES.ad2)).toEqual({ start: 0, stop: 25e6, points: null });
+    expect(deviceSweep(DEVICES.ad2)).toEqual({ start: 0, stop: 30e6, points: null });
+  });
+
+  test('sets the AD and tinySA ranges and input limits from the makers\' specs', () => {
+    expect(DEVICES.ad2.range.max).toBe(30e6);
+    expect(DEVICES.ad3.range.max).toBe(30e6);
+    expect(DEVICES.ad3.maxInput.volts).toBe(25);
+    expect(DEVICES['tinysa-ultra'].range.max).toBe(6e9);
+    expect(DEVICES['tinysa-ultra'].maxInput.dbm).toBe(6);
+    expect(DEVICES.tinysa.maxInput.dbm).toBe(10);
   });
 
   test('says when the sweep leaves the range', () => {

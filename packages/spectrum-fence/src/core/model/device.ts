@@ -51,14 +51,18 @@ const BASIC_RBW = [3e3, 10e3, 30e3, 100e3, 300e3, 600e3];
 const GENERIC_RBW = Array.from({ length: 15 }, (_, index) => (index % 2 === 0 ? 1 : 3) * 10 ** Math.floor(index / 2));
 
 export const DEVICES = {
-  // AD2 は 100 MS/s。帯域の上限は仮に 25 MHz (要確認)。samples の既定 8192 (要確認)。
+  // AD2: 14 bit・100 MS/s・±25 V・1 MΩ ‖ 24 pF。範囲は **BNC アダプター使用時の −3 dB 帯域 (30 MHz+)**
+  // (Digilent の AD2 製品仕様。ヘッダーに直付けの帯域は未確認)。samples の既定 8192 (要確認)。
   ad2: {
-    kind: 'fft', label: 'AD2', range: { min: 0, max: 25e6 }, samples: { default: 8192 },
+    kind: 'fft', label: 'AD2', range: { min: 0, max: 30e6 }, samples: { default: 8192 },
     maxInput: { volts: 25 }, defaultUnit: 'dBV', defaultRef: 0,
   },
-  // AD3 は帯域の上限を仮に 50 MHz (要確認)。
+  // AD3: 14 bit・125 MS/s・±25 V・1 MΩ ‖ 24 pF。範囲は **BNC アダプター使用時の −3 dB 帯域 30 MHz+**
+  // (−0.5 dB は 15 MHz、−0.1 dB は 6 MHz)。**BNC 無しの 2×15 ヘッダーは −3 dB で 9 MHz** (−0.5 dB は 2.9 MHz)。
+  // WaveForms は標本化の 1/4 (31.25 MHz) まで設定できるが、結果はアナログ帯域で決まる。
+  // 出典: Digilent AD3 Specifications / Reference Manual (Rev. 11/2023)。
   ad3: {
-    kind: 'fft', label: 'AD3', range: { min: 0, max: 50e6 }, samples: { default: 8192 },
+    kind: 'fft', label: 'AD3', range: { min: 0, max: 30e6 }, samples: { default: 8192 },
     maxInput: { volts: 25 }, defaultUnit: 'dBV', defaultRef: 0,
   },
   // Basic の DANL は Ultra と同じ仮の値 (要確認)。REF LEVEL の既定 −10 dBm も要確認。
@@ -69,9 +73,11 @@ export const DEVICES = {
     rbw: { min: 3e3, max: 600e3, choices: BASIC_RBW }, danl: { level: -102, rbw: 30e3 },
     attenMax: 31, maxInput: { dbm: 10 }, defaultUnit: 'dBm', defaultRef: -10,
   },
-  // 仕様: LNA 無し・30 MHz・RBW 30 kHz で −102 dBm、入力の上限 +6 dBm。LNA の利得 20 dB は要確認。
+  // 仕様: LNA 無し・30 MHz・RBW 30 kHz で −102 dBm、入力の絶対最大 +6 dBm (推奨は +0 dBm 以下、DC ±5 V)。
+  // 範囲は ULTRA モードの 6 GHz まで (通常は 100 kHz〜800 MHz。直線性は 5.3 GHz まで ±2 dB、6 GHz まで ±5 dB)。
+  // 出典: https://www.tinysa.org/wiki/pmwiki.php?n=TinySA4.SpecificationLNA の利得 20 dB は要確認。
   'tinysa-ultra': {
-    kind: 'swept', label: 'tinySA Ultra', range: { min: 0, max: 5.3e9 },
+    kind: 'swept', label: 'tinySA Ultra', range: { min: 0, max: 6e9 },
     points: { choices: [51, 101, 145, 290, 450], default: 450 },
     rbw: { min: 200, max: 850e3, choices: ULTRA_RBW }, danl: { level: -102, rbw: 30e3 }, lnaGain: 20,
     attenMax: 31.5, maxInput: { dbm: 6 }, defaultUnit: 'dBm', defaultRef: -10,

@@ -102,6 +102,9 @@ parts:
     pins: [W1, GND]
 ```
 
+`label` は機種名 (`Analog Discovery 2` / `Analog Discovery 3` など)。AD3 の例は
+`examples/10-bh-ad3.md` (`pins: [V+, V-, GND, W1, 1+, 1-, 2+, 2-]`、AD2 の `10-bh-ad2.md` と同じ回路)。
+
 マップ形式で書けるキーは `type` `at` `label` `value` `pins` `holes` の 6 つ。
 
 ### DIP の足の名前

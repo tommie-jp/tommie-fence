@@ -27,10 +27,10 @@ MAX HOLD は `data:` の代わりに `hold:` (下の「MAX HOLD」。`data:` と
 
 | `device:` | 型 | 範囲 | 既定の縦軸 | 点数 / 標本 |
 | --- | --- | --- | --- | --- |
-| `ad2` | FFT | 0〜25 MHz | dBV、REF 0 dBV | `samples:` 8192 |
-| `ad3` | FFT | 0〜50 MHz | dBV、REF 0 dBV | `samples:` 8192 |
+| `ad2` | FFT | 0〜30 MHz (BNC 有り −3 dB) | dBV、REF 0 dBV | `samples:` 8192 |
+| `ad3` | FFT | 0〜30 MHz (BNC 有り −3 dB。ヘッダーは 9 MHz) | dBV、REF 0 dBV | `samples:` 8192 |
 | `tinysa` | 掃引 | 0〜960 MHz | dBm、REF −10 dBm | 51 / 101 / 145 / **290** |
-| `tinysa-ultra` | 掃引 | 0〜5.3 GHz | dBm、REF −10 dBm | 51 / 101 / 145 / 290 / **450** |
+| `tinysa-ultra` | 掃引 | 0〜6 GHz (通常は 800 MHz まで) | dBm、REF −10 dBm | 51 / 101 / 145 / 290 / **450** |
 | `generic` | 掃引 | 0〜10 GHz | dBm、REF −10 dBm | 51〜1001 (既定 450) |
 
 | キー | FFT 型 | 掃引型 | 書き方 |

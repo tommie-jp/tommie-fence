@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Analog Discovery 3 の例** (`examples/10-bh-ad3.md`)。AD2 の B-H カーブ測定回路と同じ回路を、
+  `label: Analog Discovery 3`・機器名 `AD3` で描く。描画の変更は無い
+
 ## [0.21.0] - 2026-09-29
 
 ### Changed
