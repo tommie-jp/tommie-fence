@@ -43,11 +43,41 @@ const CD4511_LAYOUT: IcLayout = {
   bottom: ['VSS', 'LE/STROBE'],
 };
 
+/**
+ * 74HC163 (同期カウンタ)。**A〜D (プリセット) と ENP・ENT・CLK は左**、Q は下の桁から右に、
+ * 桁上げ RCO は Q の下。CLR と LOAD は普段 VCC に結ぶので VCC の隣 (上)。
+ */
+const HC163_LAYOUT: IcLayout = {
+  top: ['VCC', 'CLR', 'LOAD'],
+  left: ['A', 'B', 'C', 'D', 'ENP', 'ENT', 'CLK'],
+  right: ['QA', 'QB', 'QC', 'QD', 'RCO'],
+  bottom: ['GND'],
+};
+
+/** 74HC154 (4 → 16 デコーダ)。アドレスは左に下の桁から、Y は右に 0 から。E1・E2 は普段 GND に結ぶので GND の隣 (下)。 */
+const HC154_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['A0', 'A1', 'A2', 'A3'],
+  right: ['Y0', 'Y1', 'Y2', 'Y3', 'Y4', 'Y5', 'Y6', 'Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13', 'Y14', 'Y15'],
+  bottom: ['GND', 'E1', 'E2'],
+};
+
+/** 62256 (SRAM 32K×8)。アドレスは左に A0 から、データは右に DQ0 から、制御 CE・OE・WE は下 (VSS の隣)。 */
+const SRAM62256_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10', 'A11', 'A12', 'A13', 'A14'],
+  right: ['DQ0', 'DQ1', 'DQ2', 'DQ3', 'DQ4', 'DQ5', 'DQ6', 'DQ7'],
+  bottom: ['VSS', 'CE', 'OE', 'WE'],
+};
+
 /** 型番は fence-kit の表の**代表の綴り** (別の綴りも同じ行に当たる)。 */
 const LAYOUTS: readonly { readonly pins: number; readonly model: string; readonly layout: IcLayout }[] = [
   { pins: 8, model: 'NE555', layout: timer555('VCC') },
   { pins: 8, model: 'TLC555', layout: timer555('VDD') },
   { pins: 16, model: 'CD4511B', layout: CD4511_LAYOUT },
+  { pins: 16, model: '74HC163', layout: HC163_LAYOUT },
+  { pins: 24, model: '74HC154', layout: HC154_LAYOUT },
+  { pins: 28, model: '62256', layout: SRAM62256_LAYOUT },
 ];
 
 /** 型番から足の名前と働きの並びを引く。並びを持たない型番は null。 */

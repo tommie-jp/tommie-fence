@@ -132,17 +132,21 @@ describe('足の名前の表', () => {
       'NE555', 'TLC555', 'LM358', 'TL071', 'TL072',
       'CD4017B', 'CD4040B', 'CD4069UB', 'CD4071B', 'CD4081B', 'CD4011B', 'CD4001B',
       'CD4013B', 'CD4070B', 'CD40106B', '74HC04', '74HC08', '74HC32', 'L293D', 'MCP3008',
-      '74HC595', 'CD4511B', 'CD74HC283',
+      '74HC595', 'CD4511B', 'CD74HC283', '74HC163', '74HC154', '62256', '6116', '74HC245', '74HC273',
     ]);
-    expect(pinoutModels(16)).toEqual(['CD4017B', 'CD4040B', 'L293D', 'MCP3008', '74HC595', 'CD4511B', 'CD74HC283']);
-    expect(pinoutModels(20)).toEqual([]);
+    expect(pinoutModels(16)).toEqual([
+      'CD4017B', 'CD4040B', 'L293D', 'MCP3008', '74HC595', 'CD4511B', 'CD74HC283', '74HC163',
+    ]);
+    expect(pinoutModels(20)).toEqual(['74HC245', '74HC273']);
+    expect(pinoutModels(24)).toEqual(['74HC154', '6116']);
+    expect(pinoutModels(28)).toEqual(['62256']);
   });
 
   test('hands out the whole table with every spelling, for the cheat sheet', () => {
     const table = pinoutTable();
     expect(table.map((row) => row.models[0])).toEqual(pinoutModels());
     expect(table[0]?.models).toContain('NE555P');
-    expect(table.every((row) => [8, 14, 16].includes(row.names.length))).toBe(true);
+    expect(table.every((row) => [8, 14, 16, 20, 24, 28].includes(row.names.length))).toBe(true);
   });
 
   test('gives every pin a name that cannot be mistaken for a pin number or split by a space', () => {
@@ -166,9 +170,69 @@ describe('足の名前の表', () => {
   });
 });
 
-/** 表の行の足の本数 (8・14・16 のどれか)。 */
+describe('the counter, decoder, memory and bus chips of the CPU-like problem', () => {
+  test('names the 74HC163 as printed on the TI data sheet (SCLS298D)', () => {
+    expect(lookupPinout('74HC163', 16)?.names).toEqual([
+      'CLR', 'CLK', 'A', 'B', 'C', 'D', 'ENP', 'GND', 'LOAD', 'ENT', 'QD', 'QC', 'QB', 'QA', 'RCO', 'VCC',
+    ]);
+    for (const model of ['SN74HC163', 'SN74HC163N', 'CD74HC163E', '74HC163N', 'sn74hc163n']) {
+      expect(lookupPinout(model, 16)?.model, model).toBe('74HC163');
+    }
+    expect(lookupRole('74HC163')).toBe('4 ビット同期カウンタ (同期クリア)');
+  });
+
+  test('names the 74HC154 as printed on the TI data sheet (SCHS152D)', () => {
+    const names = lookupPinout('74HC154', 24)?.names ?? [];
+    expect(names).toHaveLength(24);
+    expect(names.slice(0, 12)).toEqual(['Y0', 'Y1', 'Y2', 'Y3', 'Y4', 'Y5', 'Y6', 'Y7', 'Y8', 'Y9', 'Y10', 'GND']);
+    expect(names.slice(12)).toEqual(['Y11', 'Y12', 'Y13', 'Y14', 'Y15', 'E1', 'E2', 'A3', 'A2', 'A1', 'A0', 'VCC']);
+    expect(lookupPinout('CD74HC154E', 24)?.model).toBe('74HC154');
+    expect(lookupPinout('SN74HC154N', 24)?.model).toBe('74HC154');
+    expect(lookupRole('74HC154')).toBe('4 → 16 デコーダ');
+  });
+
+  test('names the 62256 as printed on the Alliance AS6C62256 data sheet', () => {
+    expect(lookupPinout('62256', 28)?.names).toEqual([
+      'A14', 'A12', 'A7', 'A6', 'A5', 'A4', 'A3', 'A2', 'A1', 'A0', 'DQ0', 'DQ1', 'DQ2', 'VSS',
+      'DQ3', 'DQ4', 'DQ5', 'DQ6', 'DQ7', 'CE', 'A10', 'OE', 'A11', 'A9', 'A8', 'A13', 'WE', 'VCC',
+    ]);
+    for (const model of ['AS6C62256', 'AS6C62256-55PCN', 'HM62256', 'HM62256B']) {
+      expect(lookupPinout(model, 28)?.model, model).toBe('62256');
+    }
+    expect(lookupRole('AS6C62256-55PCN')).toBe('SRAM 32K×8');
+  });
+
+  test('names the 6116 as printed on the IDT6116SA data sheet', () => {
+    expect(lookupPinout('6116', 24)?.names).toEqual([
+      'A7', 'A6', 'A5', 'A4', 'A3', 'A2', 'A1', 'A0', 'IO0', 'IO1', 'IO2', 'GND',
+      'IO3', 'IO4', 'IO5', 'IO6', 'IO7', 'CS', 'A10', 'OE', 'WE', 'A9', 'A8', 'VCC',
+    ]);
+    expect(lookupPinout('IDT6116SA', 24)?.model).toBe('6116');
+    expect(lookupRole('6116')).toBe('SRAM 2K×8');
+  });
+
+  test('names the 74HC245 and 74HC273 as printed on the TI data sheets', () => {
+    expect(lookupPinout('74HC245', 20)?.names).toEqual([
+      'DIR', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'GND', 'B8', 'B7', 'B6', 'B5', 'B4', 'B3', 'B2', 'B1', 'OE', 'VCC',
+    ]);
+    expect(lookupPinout('SN74HC245N', 20)?.model).toBe('74HC245');
+    expect(lookupRole('74HC245')).toBe('8 ビット バス トランシーバ');
+    expect(lookupPinout('74HC273', 20)?.names).toEqual([
+      'CLR', '1Q', '1D', '2D', '2Q', '3Q', '3D', '4D', '4Q', 'GND', 'CLK', '5Q', '5D', '6D', '6Q', '7Q', '7D', '8D', '8Q', 'VCC',
+    ]);
+    expect(lookupPinout('CD74HC273E', 20)?.model).toBe('74HC273');
+    expect(lookupRole('74HC273')).toBe('8 ビット D フリップフロップ (クリア付き)');
+  });
+
+  test('answers null when the package does not match', () => {
+    expect(lookupPinout('74HC163', 14)).toBeNull();
+    expect(lookupPinout('62256', 24)).toBeNull();
+  });
+});
+
+/** 表の行の足の本数 (8〜28 の DIP のどれか)。 */
 function lookupCount(model: string): number {
-  return [8, 14, 16].find((count) => lookupPinout(model, count) !== null) ?? 0;
+  return [8, 14, 16, 20, 24, 28].find((count) => lookupPinout(model, count) !== null) ?? 0;
 }
 
 describe('lookupRole', () => {

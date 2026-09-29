@@ -132,6 +132,12 @@ parts:
 | `74HC595` (`SN74HC595` `SN74HC595N`) | `dip16` | `QB` `QC` `QD` `QE` `QF` `QG` `QH` `GND` `QH'` `SRCLR` `SRCLK` `RCLK` `OE` `SER` `QA` `VCC` (`OE` `SRCLR` は上に線) |
 | `CD4511B` (`CD4511` `CD4511BE`) | `dip16` | `INB` `INC` `LT` `BL` `LE/STROBE` `IND` `INA` `VSS` `Oe` `Od` `Oc` `Ob` `Oa` `Og` `Of` `VDD` (印字の入力 `A`〜`D` と出力 `a`〜`g` は大文字小文字だけが違うので `IN` と `O` を付けた) |
 | `CD74HC283` (`CD74HC283E` `74HC283`) | `dip16` | `S1` `B1` `A1` `S0` `A0` `B0` `CIN` `GND` `COUT` `S3` `B3` `A3` `S2` `A2` `B2` `VCC` |
+| `74HC163` (`SN74HC163N` `CD74HC163E` …) | `dip16` | `CLR` `CLK` `A` `B` `C` `D` `ENP` `GND` `LOAD` `ENT` `QD` `QC` `QB` `QA` `RCO` `VCC` (`CLR` `LOAD` は上に線。クリアは同期) |
+| `74HC154` (`CD74HC154E` `SN74HC154N` …) | `dip24` | `Y0` `Y1` `Y2` `Y3` `Y4` `Y5` `Y6` `Y7` `Y8` `Y9` `Y10` `GND` `Y11` `Y12` `Y13` `Y14` `Y15` `E1` `E2` `A3` `A2` `A1` `A0` `VCC` (`E1` `E2` は上に線) |
+| `62256` (`AS6C62256` `AS6C62256-55PCN` `HM62256` …) | `dip28` | `A14` `A12` `A7` `A6` `A5` `A4` `A3` `A2` `A1` `A0` `DQ0` `DQ1` `DQ2` `VSS` `DQ3` `DQ4` `DQ5` `DQ6` `DQ7` `CE` `A10` `OE` `A11` `A9` `A8` `A13` `WE` `VCC` (`CE` `OE` `WE` は上に線) |
+| `6116` (`IDT6116SA` `HM6116` …) | `dip24` | `A7` `A6` `A5` `A4` `A3` `A2` `A1` `A0` `IO0` `IO1` `IO2` `GND` `IO3` `IO4` `IO5` `IO6` `IO7` `CS` `A10` `OE` `WE` `A9` `A8` `VCC` (`CS` `OE` `WE` は上に線。印字の `I/O` は `IO`) |
+| `74HC245` (`SN74HC245N` `CD74HC245E` …) | `dip20` | `DIR` `A1` `A2` `A3` `A4` `A5` `A6` `A7` `A8` `GND` `B8` `B7` `B6` `B5` `B4` `B3` `B2` `B1` `OE` `VCC` |
+| `74HC273` (`SN74HC273N` `CD74HC273E` …) | `dip20` | `CLR` `1Q` `1D` `2D` `2Q` `3Q` `3D` `4D` `4Q` `GND` `CLK` `5Q` `5D` `6D` `6Q` `7Q` `7D` `8D` `8Q` `VCC` (`CLR` は上に線) |
 
 ## 配線
 

@@ -27,6 +27,12 @@
  * | 74HC595 | SN74HC595 SCLS041J、Figure と Table 5-1 (PDIP) |
  * | CD4511B | SCHS072B、端子図 (TERMINAL ASSIGNMENT) |
  * | CD74HC283 | SCHS176E、4 Pin Configuration (PDIP) |
+ * | 74HC163 | SN74HC163 SCLS298D、TOP VIEW (N) |
+ * | 74HC154 | CD74HC154 SCHS152D、Pinout (PDIP) |
+ * | 62256 | Alliance AS6C62256 (rev 1.2、2016-03)、PIN CONFIGURATION (PDIP) |
+ * | 6116 | Renesas (IDT) IDT6116SA/LA DSC-3089/03、Pin Configurations (DIP) — I/O 0〜7 は `IO0`〜`IO7` |
+ * | 74HC245 | SN74HC245 SCLS131F、Table 5-1 (N) |
+ * | 74HC273 | SN74HC273 SCLS136F、Table 5-1 (N) |
  *
  * **足の名前として書けない印字だけは直した** (`U1.TRIG` と書けて、番号と取り違えないため):
  *
@@ -150,6 +156,47 @@ const ROWS: readonly PinoutRow[] = [
     // CD74HCT283 (TTL の入力の段) は同じ印字だが別の品なので入れない。
     models: ['CD74HC283', 'CD74HC283E', '74HC283'], role: '4 bit 全加算器',
     names: ['S1', 'B1', 'A1', 'S0', 'A0', 'B0', 'CIN', 'GND', 'COUT', 'S3', 'B3', 'A3', 'S2', 'A2', 'B2', 'VCC'],
+  },
+  {
+    // 同期クリア (CLR はクロックの立ち上がりで効く)。非同期クリアは 74HC161 (未収録)。
+    models: ['74HC163', 'SN74HC163', 'SN74HC163N', '74HC163N', 'CD74HC163', 'CD74HC163E'], role: '4 ビット同期カウンタ (同期クリア)',
+    names: ['CLR', 'CLK', 'A', 'B', 'C', 'D', 'ENP', 'GND', 'LOAD', 'ENT', 'QD', 'QC', 'QB', 'QA', 'RCO', 'VCC'],
+  },
+  {
+    // E1・E2 は上に線 (両方 L で Y が動く)。
+    models: ['74HC154', 'SN74HC154', 'SN74HC154N', '74HC154N', 'CD74HC154', 'CD74HC154E'], role: '4 → 16 デコーダ',
+    names: [
+      'Y0', 'Y1', 'Y2', 'Y3', 'Y4', 'Y5', 'Y6', 'Y7', 'Y8', 'Y9', 'Y10', 'GND',
+      'Y11', 'Y12', 'Y13', 'Y14', 'Y15', 'E1', 'E2', 'A3', 'A2', 'A1', 'A0', 'VCC',
+    ],
+  },
+  {
+    // CE・OE・WE は上に線 (`#` 付きの印字)。データの足の名前は DQ。
+    models: ['62256', 'AS6C62256', 'AS6C62256-55PCN', 'AS6C62256-55PIN', 'HM62256', 'HM62256B', 'CY62256', 'CY62256N'], role: 'SRAM 32K×8',
+    names: [
+      'A14', 'A12', 'A7', 'A6', 'A5', 'A4', 'A3', 'A2', 'A1', 'A0', 'DQ0', 'DQ1', 'DQ2', 'VSS',
+      'DQ3', 'DQ4', 'DQ5', 'DQ6', 'DQ7', 'CE', 'A10', 'OE', 'A11', 'A9', 'A8', 'A13', 'WE', 'VCC',
+    ],
+  },
+  {
+    // CS・OE・WE は上に線。I/O の `/` は落とす。
+    models: ['6116', 'IDT6116SA', 'IDT6116LA', 'HM6116', 'HM6116P'], role: 'SRAM 2K×8',
+    names: [
+      'A7', 'A6', 'A5', 'A4', 'A3', 'A2', 'A1', 'A0', 'IO0', 'IO1', 'IO2', 'GND',
+      'IO3', 'IO4', 'IO5', 'IO6', 'IO7', 'CS', 'A10', 'OE', 'WE', 'A9', 'A8', 'VCC',
+    ],
+  },
+  {
+    models: ['74HC245', 'SN74HC245', 'SN74HC245N', '74HC245N', 'CD74HC245', 'CD74HC245E'], role: '8 ビット バス トランシーバ',
+    names: ['DIR', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'GND', 'B8', 'B7', 'B6', 'B5', 'B4', 'B3', 'B2', 'B1', 'OE', 'VCC'],
+  },
+  {
+    // CLR は上に線 (L でクリア、非同期)。
+    models: ['74HC273', 'SN74HC273', 'SN74HC273N', '74HC273N', 'CD74HC273', 'CD74HC273E'], role: '8 ビット D フリップフロップ (クリア付き)',
+    names: [
+      'CLR', '1Q', '1D', '2D', '2Q', '3Q', '3D', '4D', '4Q', 'GND',
+      'CLK', '5Q', '5D', '6D', '6Q', '7Q', '7D', '8D', '8Q', 'VCC',
+    ],
   },
 ];
 

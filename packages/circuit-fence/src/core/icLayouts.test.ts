@@ -45,3 +45,30 @@ describe('CD4511 の働きの並び', () => {
     expect(layout?.bottom).toEqual(['VSS', 'LE/STROBE']);
   });
 });
+
+describe('カウンタ・デコーダ・SRAM の働きの並び', () => {
+  it('74HC163 は別の綴りでも引け、電源と CLR・LOAD は上、Q は右', () => {
+    for (const model of ['74HC163', 'SN74HC163N', 'CD74HC163E']) {
+      const layout = lookupIcPinout(model)?.layout;
+      expect(layout?.top, model).toEqual(['VCC', 'CLR', 'LOAD']);
+      expect(layout?.right, model).toEqual(['QA', 'QB', 'QC', 'QD', 'RCO']);
+      expect(layout?.left, model).toEqual(['A', 'B', 'C', 'D', 'ENP', 'ENT', 'CLK']);
+      expect(layout?.bottom, model).toEqual(['GND']);
+    }
+  });
+
+  it('74HC154 はアドレスが左、Y0〜Y15 が右、イネーブルは GND の隣', () => {
+    const layout = lookupIcPinout('CD74HC154E')?.layout;
+    expect(layout?.left).toEqual(['A0', 'A1', 'A2', 'A3']);
+    expect(layout?.right).toHaveLength(16);
+    expect(layout?.bottom).toEqual(['GND', 'E1', 'E2']);
+  });
+
+  it('62256 はアドレスが左、データが右、CE・OE・WE は下', () => {
+    const layout = lookupIcPinout('AS6C62256')?.layout;
+    expect(layout?.left).toHaveLength(15);
+    expect(layout?.right).toEqual(['DQ0', 'DQ1', 'DQ2', 'DQ3', 'DQ4', 'DQ5', 'DQ6', 'DQ7']);
+    expect(layout?.bottom).toEqual(['VSS', 'CE', 'OE', 'WE']);
+    expect(layout?.top).toEqual(['VCC']);
+  });
+});
