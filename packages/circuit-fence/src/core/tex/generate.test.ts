@@ -1028,6 +1028,14 @@ describe('generateTex のバージョン刻印', () => {
     expect(generateLatex(...STAMPED).notes).toEqual([]);
   });
 
+  test('defines the mark colour for the stamp even when the drawing has no title and no notes', () => {
+    // 題も注釈も無い図で、刻印の目印の色が定義されず TeX が止まった (circuitnotemark を知らない)。
+    const tex = raw('parts:', '  R1: resistor a1 a3').tex ?? '';
+
+    expect(tex).toContain('circuitstamp');
+    expect(tex).toContain('\\definecolor{circuitnotemark}');
+  });
+
   test('hangs the stamp one text line below the drawing, so it does not touch the lowest symbol', () => {
     // 図の下の端 (グラウンドの記号) に刻印がくっついて読みにくかった。
     const row = (generate(...STAMPED).tex ?? '').split('\n').find((line) => line.includes('(circuitstamp)'));

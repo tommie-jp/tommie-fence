@@ -1127,7 +1127,9 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
     needs.monoFont,
     needs.arrowTips,
     // グリッドの字に選んだ色も宣言に混ぜる (注釈と同じパレットから引く)。
-    noteColorLines(circuit, target, style.grid === true && style.gridLabelColor !== null ? [style.gridLabelColor] : []),
+    noteColorLines(
+      circuit, target, style.grid === true && style.gridLabelColor !== null ? [style.gridLabelColor] : [], style.stamp !== false,
+    ),
     circuit.parts.some((part) => part.type === 'ground')
       ? groundScale(style.wireWidth ?? DEFAULT_WIRE_WIDTH)
       : 1,

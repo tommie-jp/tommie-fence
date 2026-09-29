@@ -395,6 +395,7 @@ export function noteColorLines(
   circuit: Circuit,
   target: TexTarget,
   extra: readonly string[] = [],
+  stamped = false,
 ): string[] {
   const names = new Set<string>(extra);
   for (const note of circuit.notes) {
@@ -411,7 +412,9 @@ export function noteColorLines(
 
   const marked =
     target === 'fence'
-    && (circuit.title !== null
+    // 刻印も目印で置く。題も注釈も無い図でも、刻印があれば色を定義する (無いと TeX が止まる)。
+    && (stamped
+      || circuit.title !== null
       || circuit.notes.some((note) => note.kind === 'text' || note.kind === 'source')
       // 足の名前も目印で置く (マイコンボード)。
       || circuit.parts.some((part) => partTypeOf(part)?.pinLabels !== undefined));
