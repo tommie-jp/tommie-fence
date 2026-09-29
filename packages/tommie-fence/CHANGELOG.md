@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- **フェンスの直後の GitHub 用の画像をプレビューで畳む。** フェンスの閉じの直後に画像 1 枚だけの段落
+  (フェンスを図にしない GitHub のために置いた、同じ図の SVG) があると、図が 2 重に出ていた。
+  閉じた見出し「GitHub 用の画像: 回路図」の下に畳み、開けば見比べられる。
+  設定 `tommieFence.preview.imageAfterFence` (`collapse` 既定 / `hide` / `show`)。
+
 ## [0.23.0] - 2026-09-29
 
 ### Changed
