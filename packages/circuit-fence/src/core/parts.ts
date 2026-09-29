@@ -4,6 +4,9 @@ import type { BoardPart, NamedChip } from 'fence-kit';
 import { BOXED_RESISTORS } from './standard.ts';
 import type { Standard } from './standard.ts';
 import type { DeviceBox } from './tex/shapes.ts';
+import { lookupIcPinout } from './icLayouts.ts';
+import type { IcPinout } from './icLayouts.ts';
+import { icSides } from './tex/icShape.ts';
 /**
  * 部品の種類の表。パーサ (どう書けるか) と TeX 生成 (どう描くか) の両方がここを見る。
  * 表を 2 つに割ると片方だけ増えて食い違うので、1 か所に集める。
@@ -268,6 +271,12 @@ export type PartType = {
    * 帯が空くので、今までどおり中に書く。
    */
   readonly valueBelowUpright?: boolean;
+  /**
+   * 名札 (`U1`) を**箱の左上の角の上**に出す。4 辺とも足が出る箱 (`ic`) は
+   * 空いている辺が無く、辺の真ん中に出すと上の足の線に重なる。上の辺の足は
+   * 中心から右へ並ぶので、左上の角の上は空いている (`tex/icShape.ts`)。
+   */
+  readonly nameAtCorner?: boolean;
   /**
    * ID の下にもう 1 行足す字。記号だけでは見分けが付かない種類だけが持つ。
    * circuitikz の記号がフェンスの TeX で壊れる字 (θ) を使っているとき、
@@ -677,6 +686,43 @@ export const DEVICE = 'device';
  * マップ形式 (`type: ic3` + `pins:`) でも書ける (52 の docs/66 の段 7)。
  */
 export const IC3 = 'ic3';
+
+/**
+ * 回路図の IC の種類名。**足を働きで 4 辺に並べた箱** (52 の docs/100)。
+ * 型番が要る (`U1: ic c4 TLC555`) — 並びは型番ごとの表 (`icLayouts.ts`) が持つ。
+ */
+export const IC = 'ic';
+
+/** 型番の無い `ic` の表の行。1 行の読み手が型番を求めるので、図には出てこない。 */
+const IC_PLACEHOLDER: PartType = {
+  kind: 'multi-terminal', symbol: 'ic', orient: NO_ORIENT, valueInside: true, ...NO_UNIT,
+};
+
+/**
+ * 働きで並べた IC。**足の名前と番号は名前付きの DIP と同じ** (`U1.TRIG` = `U1.2`、
+ * ネットリストも同じ名前) で、違うのは箱の形と足の出る辺だけ。
+ *
+ * **向きは書けない** — 並びそのものが向き (電源が上・入力が左) を決めている。
+ */
+export function icChip(pinout: IcPinout): PartType {
+  const named = namedDip(pinout.names.length, pinout.names, false);
+  return {
+    kind: 'multi-terminal',
+    // 形は足の間隔 (図の pitch) で変わるので、描く所 (`tex/generate.ts`) が決める。
+    symbol: IC,
+    options: ['draw', 'font=\\scriptsize'],
+    orient: NO_ORIENT,
+    valueInside: true,
+    nameAtCorner: true,
+    ...NO_UNIT,
+    pins: named.pins,
+    pinLabels: named.pinLabels,
+    pinNumbers: named.pinNumbers,
+    pinNames: named.pinNames,
+    // 並びは箱の上の順 (上の辺・左の辺・右の辺・下の辺)。升目がこの順で足を並べる。
+    pinRow: Object.fromEntries(icSides(pinout).map((place) => [`pin ${place.pin}`, place.side])),
+  };
+}
 
 /** マップ形式で書ける種類。足の名前を並べるので 1 行に畳めない形がある。 */
 export const MAP_TYPES: readonly string[] = [DEVICE, IC3];
@@ -1095,6 +1141,8 @@ export const PART_TYPES = {
   },
   // 3 本足の IC。1 行で書くと足は番号。名前はマップ形式の `pins:` で与える。
   ic3: ic3Chip(null),
+  // 働きで並べた IC。型番で並びを引く (`partTypeOf`)。
+  ic: IC_PLACEHOLDER,
 
   // ピンヘッダ。**数は実体配線図の 2 つと同じ表**。
   sip2: sipchip(2),
@@ -1238,6 +1286,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   sip40: 'ピンヘッダ (40 ピン)',
   regulator: '三端子レギュレータ',
   ic3: '3 本足の IC',
+  ic: 'IC (足を働きで並べた箱)',
   buzzer: 'ブザー',
   earphone: 'イヤホン (クリスタルイヤホン)',
   sma: 'SMA コネクタ',
@@ -1362,6 +1411,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   sip40: 'J',
   regulator: 'U',
   ic3: 'U',
+  ic: 'U',
   buzzer: 'B',
   earphone: 'EAR',
   sma: 'J',
@@ -1440,6 +1490,11 @@ export const lookupPartType = (name: string): PartType | null =>
 export function partTypeOf(part: PartSpec): PartType | null {
   if (isMapForm(part) && part.type === DEVICE) return deviceChip(part.pinNames, part.value);
   if (isMapForm(part) && part.type === IC3) return ic3Chip(part.pinNames);
+  // 働きで並べた IC は型番で並びを引く (無い型番は 1 行の読み手が断る)。
+  if (part.type === IC && part.kind === 'multi-terminal') {
+    const pinout = lookupIcPinout(part.value);
+    return pinout === null ? IC_PLACEHOLDER : icChip(pinout);
+  }
   // 7 セグは箱に型番を刷るので、型番の長さで箱の幅が変わる (機器と同じ)。
   if (part.type === SEG7 && part.kind === 'multi-terminal') return seg7Box(namedChipOf(SEG7), part.value);
   // DIP は型番が足の名前の表にあれば名前を刷る (52 の docs/95)。無ければ番号だけ。

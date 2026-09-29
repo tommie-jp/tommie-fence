@@ -1489,7 +1489,10 @@ describe('字が出る部品を全部当たる', () => {
     // 出ないのは 2 つだけで、どちらも回路図の決まりごと:
     // 素の線 (`short`) は名札を掛ける記号が無く、グラウンドは番号を振らない。
     const nameless = partTypeNames().filter((type) => {
-      const at = lookupPartType(type)?.kind === 'two-terminal' ? 'X1: ${type} b2 b4' : 'X1: ${type} b2';
+      // 働きで並べた IC (`ic`) は型番が要る。
+      const at = lookupPartType(type)?.kind === 'two-terminal'
+        ? 'X1: ${type} b2 b4'
+        : type === 'ic' ? 'X1: ${type} b2 NE555' : 'X1: ${type} b2';
       const { doc } = parseFence(`parts:\n  ${at.replace('${type}', type)}\n`);
       if (doc === null) throw new Error(`${type} を読めませんでした`);
       const { tex } = generateTex(buildCircuit(doc).circuit, { style: unstamped(doc.style) });

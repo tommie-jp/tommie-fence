@@ -2,7 +2,8 @@ import { formatAddress, rowLetters } from '../model/address.ts';
 import type { Address, WireOperator } from '../model/address.ts';
 import { isReferenceable, LIMITS } from '../limits.ts';
 import { normalizeNewlines } from '../newlines.ts';
-import { lookupPartType, partTypeOf, lookupPin, namesNet, PART_PREFIXES } from '../parts.ts';
+import { IC, lookupPartType, partTypeOf, lookupPin, namesNet, PART_PREFIXES } from '../parts.ts';
+import { icLayoutModels } from '../icLayouts.ts';
 import type { PartTypeName } from '../parts.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { fieldProblem } from './field.ts';
@@ -189,11 +190,13 @@ export function insertPart(source: string, spec: NewPart): RewriteResult {
     if (problem !== null) return fail(problem, null);
   }
 
+  // 働きで並べた IC は型番が無いと読めない。パレットから置いたら表の先頭の型番で置く。
+  const value = spec.value ?? (spec.type === IC ? icLayoutModels()[0] : undefined);
   const written = [
     `${spec.id}:`,
     spec.type,
     ...at.map(formatAddress),
-    ...(spec.value === undefined ? [] : [spec.value]),
+    ...(value === undefined ? [] : [value]),
   ].join(' ');
 
   const key = keyLineOf(lines, 'parts');

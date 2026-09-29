@@ -7,7 +7,8 @@ import {
   NOTE_KINDS, NOTE_LEADINGS, NOTE_SIZE_NAMES, isNoteAlign, isNoteLeading, isNoteSize, noteColor,
 } from '../notes.ts';
 import type { NoteAlign, NoteLeading, NoteSize } from '../notes.ts';
-import { DEVICE, NO_TURN, closestPartType, lookupPartType, partTypeNames, resolvePartTypeName } from '../parts.ts';
+import { icLayoutModels, lookupIcPinout } from '../icLayouts.ts';
+import { DEVICE, IC, NO_TURN, closestPartType, lookupPartType, partTypeNames, resolvePartTypeName } from '../parts.ts';
 import type { PartTypeName, Turn } from '../parts.ts';
 import { isNoteDrawable } from '../tex/escape.ts';
 import type { Endpoint, FenceError, NoteSpec, NoteTextStyle, PartSpec, Result, WireSpec } from '../types.ts';
@@ -212,6 +213,12 @@ function readMultiTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
       return fail(`値が長すぎます (${LIMITS.valueLength} 文字まで)`, line);
     }
     value = token;
+  }
+
+  // 働きで並べた IC は型番で並びを引く。引けなければ描けないので断る。
+  if (type === IC && lookupIcPinout(value) === null) {
+    const models = icLayoutModels().join(' / ');
+    return fail(`${IC} には働きの並びのある型番を書きます (${models})。ほかの IC は dip8 などで書きます`, line, value ?? written);
   }
 
   return ok({

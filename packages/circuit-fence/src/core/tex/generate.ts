@@ -4,7 +4,7 @@ import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
 import {
-  DEVICE, IC3, isTurned, laidOf, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, seg7DeviceBox, symbolFor, symbolOf, tunableOptions, turnSide,
+  DEVICE, IC, IC3, isTurned, laidOf, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, seg7DeviceBox, symbolFor, symbolOf, tunableOptions, turnSide,
 } from '../parts.ts';
 import type { PartType, PinSide, SourceInner, Turn } from '../parts.ts';
 import { lookupBoardPart } from 'fence-kit';
@@ -29,6 +29,9 @@ import {
   sipShapeTex, smaShapeTex, usbShapeName, usbShapeTex,
 } from './shapes.ts';
 import type { DeviceBox } from './shapes.ts';
+import { icBox, icShapeTex, icStepOf } from './icShape.ts';
+import type { IcBox } from './icShape.ts';
+import { lookupIcPinout } from '../icLayouts.ts';
 
 /**
  * 生成した TeX と、その行が元の YAML の何行目から来たかの対応。
@@ -219,7 +222,7 @@ const headerOf = (
  * 図に出てくるピンヘッダの記号の宣言。**同じ本数は 1 回だけ**。
  * 使わない本数を書かないのは、図に入る書き方を増やさないため (約束 6)。
  */
-function sipShapesFor(circuit: Circuit): string[] {
+function sipShapesFor(circuit: Circuit, pitch: number): string[] {
   const sizes = new Set<number>();
   for (const part of circuit.parts) {
     const found = /^sip(\d+)$/.exec(part.type);
@@ -253,12 +256,21 @@ function sipShapesFor(circuit: Circuit): string[] {
     const box = seg7DeviceBox(part.value);
     boxes.set(deviceShapeName(box), box);
   }
+  // 働きで並べた IC も自分で宣言した形。**使う型番だけ、1 回ずつ**。
+  const ics = new Map<string, IcBox>();
+  for (const part of circuit.parts) {
+    const pinout = part.type === IC && part.kind === 'multi-terminal' ? lookupIcPinout(part.value) : null;
+    if (pinout === null) continue;
+    const box = icBox(pinout, icStepOf(pitch));
+    ics.set(box.name, box);
+  }
+  const icShapes = [...ics.keys()].sort().flatMap((name) => icShapeTex(ics.get(name) as IcBox));
   const devices = [...boxes.keys()].sort().flatMap((name) => deviceShapeTex(boxes.get(name) as DeviceBox));
   // USB も自分で宣言した形。**使う種類だけ、1 回ずつ**。
   const usb = [...new Set(circuit.parts.map((part) => part.type))]
     .filter((type) => usbShapeName(type) !== null)
     .sort();
-  return [...withSma, ...named, ...devices, ...usb.flatMap((type) => usbShapeTex(type))];
+  return [...withSma, ...named, ...devices, ...icShapes, ...usb.flatMap((type) => usbShapeTex(type))];
 }
 
 const FOOTER = ['\\end{circuitikz}', '\\end{document}'];
@@ -881,10 +893,14 @@ function drawOneTerminal(part: OneTerminalPart, target: TexTarget): string {
  * 書き足す。位置は実機で詰めた値。
  * 書き出す `.tex` は本物の `op amp` を使うので、書き足しは要らない。
  */
-function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget): string[] {
+function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget, pitch: number): string[] {
   const type = partTypeOf(part);
   // 機器 (`device`) は足の本数で記号が決まるので、種類名ではなく部品から引く。
-  const symbol = type === null ? symbolFor(part.type, target) : symbolOf(type, target);
+  // 働きで並べた IC は足の間隔が図の pitch で決まるので、ここで形を選ぶ。
+  const icPinout = part.type === IC ? lookupIcPinout(part.value) : null;
+  const symbol = icPinout !== null
+    ? icBox(icPinout, icStepOf(pitch)).name
+    : type === null ? symbolFor(part.type, target) : symbolOf(type, target);
   // 種類そのものに要るオプション (DIP の足の本数) が先、書かれた向きが後。
   const options = [symbol, ...(type === null ? optionsFor(part.type, target) : optionsOf(type, target))];
   const turned = part.orientation === null ? null : ORIENTATION_TEX[part.orientation];
@@ -981,6 +997,8 @@ const STACK: Readonly<Record<PinSide, string>> = {
 function nameNode(part: MultiTerminalPart, name: string, type: PartType | null, valueSide: PinSide | null): string {
   const label = labelOf(part.id, part.id);
   if (type === null) return `\\node[anchor=south] at (${name}.north) {${label}};`;
+  // 4 辺とも足が出る箱は、左上の角の上 (上の足は中心から右へ並ぶ)。
+  if (type.nameAtCorner === true) return `\\node[anchor=south west] at (${name}.north west) {${label}};`;
 
   const taken = new Set<PinSide>(pinPlaces(type, part.turn).map((place) => place.side));
   if (valueSide !== null) taken.add(valueSide);
@@ -1068,7 +1086,7 @@ const drawPart = (part: PartSpec, target: TexTarget, pitch: number, standard: St
     ? drawTwoTerminal(part, target, pitch, standard)
     : part.kind === 'one-terminal'
       ? [drawOneTerminal(part, target)]
-      : drawMultiTerminal(part, target);
+      : drawMultiTerminal(part, target, pitch);
 
 /** 部品の値に、積んだフォントが要る字があるか。注釈の側は drawNotes.ts が見る。 */
 /**
@@ -1109,7 +1127,7 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
     circuit.parts.some((part) => part.kind === 'two-terminal' && part.voltage !== null),
     circuit.parts.some((part) => part.kind === 'two-terminal' && part.current !== null),
     circuit.parts.some((part) => MOS_ARROW_TYPES.has(part.type)),
-    sipShapesFor(circuit),
+    sipShapesFor(circuit, pitch),
   );
   const cells = cellsOf(circuit);
   const byId = new Map(circuit.parts.map((part) => [part.id, part]));
