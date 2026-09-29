@@ -1,9 +1,9 @@
 import { LIMITS } from '../limits.ts';
 import { fit, textWidth } from './textFit.ts';
 import type { PlacedPart } from '../types.ts';
-import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, TEXT_HALO_WIDTH, element, num, svgText } from './svg.ts';
+import { BOARD_HALO_OPACITY, TEXT_HALO_WIDTH, element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
-import { textScale } from './theme.ts';
+import { isLight, textScale } from './theme.ts';
 
 /** 部品リストと、その下に続く帯との間に空ける高さ。 */
 const GAP = 12;
@@ -114,6 +114,8 @@ export function renderPartsList(
   const baselineOf = (index: number): number => y + pad + textSize * CAP_RATIO + line * index;
   // 縁取りは図のキャプションと同じものを敷く。`style` の `text-color` は板ではなく
   // この縁取りとの対比で読ませる指定なので、外すとリストだけが地に沈む。
+  // リストは板の上の字ではなく読む表なので、透かさず地に対して一番濃い色 (黒か白) で書く。
+  const ink = isLight(palette.plate) ? '#000000' : '#ffffff';
   const cell = (cellX: number, baseline: number, text: string, fill: string): string =>
     svgText(cellX, baseline, text, {
       'font-size': num(textSize),
@@ -121,25 +123,24 @@ export function renderPartsList(
       anchor: 'start',
       halo: palette.textHalo,
       haloWidth: TEXT_HALO_WIDTH * textScale(theme),
-      haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
+      haloOpacity: BOARD_HALO_OPACITY, inkOpacity: 1,
     });
 
   const cells = rows.flatMap((row, index) => {
     const baseline = baselineOf(index);
     return [
-      cell(idX, baseline, fit(row.id, idWidth), palette.partText),
+      cell(idX, baseline, fit(row.id, idWidth), ink),
       // 板に幅が残っていない列は諦める。ID を切ると図の部品と突き合わせられなく
       // なるが、種類と値のほうは図 (部品の形とキャプション `R1 330`) にも出ている。
-      // 種類は板の印字と同じ色に落とす。目で追うのは ID と値なので、その間で沈ませる。
-      ...(typeRoom < MIN_COLUMN_WIDTH ? [] : [cell(typeX, baseline, fit(row.type, typeWidth), palette.label)]),
+      ...(typeRoom < MIN_COLUMN_WIDTH ? [] : [cell(typeX, baseline, fit(row.type, typeWidth), ink)]),
       ...(row.value === '' || valueRoom < MIN_COLUMN_WIDTH
         ? []
-        : [cell(valueX, baseline, fit(row.value, valueRoom), palette.partText)]),
+        : [cell(valueX, baseline, fit(row.value, valueRoom), ink)]),
     ];
   });
 
   // 収まらなかったぶんは黙って落とさず、件数を最後の行に出す。
-  const more = hidden === 0 ? '' : cell(idX, baselineOf(rows.length), `ほかに ${hidden} 件`, palette.label);
+  const more = hidden === 0 ? '' : cell(idX, baselineOf(rows.length), `ほかに ${hidden} 件`, ink);
 
   return plate + cells.join('') + more;
 }

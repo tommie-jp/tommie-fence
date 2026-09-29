@@ -253,7 +253,7 @@ function darken(hex: string, amount: number): string {
 }
 
 /** その色が明るいか。ITU-R BT.601 の輝度で足りる (人が読めるかの判定にしか使わない)。 */
-const isLight = (hex: string): boolean => {
+export const isLight = (hex: string): boolean => {
   const [r, g, b] = channels(hex);
   return (r * 299 + g * 587 + b * 114) / 1000 > 140;
 };

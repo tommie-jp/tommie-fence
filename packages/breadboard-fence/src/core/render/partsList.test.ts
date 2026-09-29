@@ -144,6 +144,21 @@ describe('renderPartsList', () => {
     expect(texts(render([device]))).toEqual(['AD2', 'device']);
   });
 
+  test('writes the list in solid black on a light plate, not in the gray of the board print', () => {
+    const svg = render([part('R1', 'resistor', '330')]);
+    const fills = [...svg.matchAll(/<text [^>]*fill="(#[0-9a-f]+)"(?![^>]*aria-hidden)[^>]*>/g)].map((m) => m[1]);
+
+    expect(new Set(fills)).toEqual(new Set(['#000000']));
+    expect(svg).not.toMatch(/<text (?![^>]*aria-hidden)[^>]*opacity="0\.7"/);
+  });
+
+  test('writes the list in white on a dark plate', () => {
+    const dark = { ...theme, palette: { ...theme.palette, plate: '#2b3038' } };
+    const svg = renderPartsList([part('R1', 'resistor', '330')], 14, 400, 636, dark);
+
+    expect(svg).toContain('fill="#ffffff"');
+  });
+
   test('backs the text with the same halo the drawing puts behind its captions', () => {
     const ink = { ...theme, palette: { ...theme.palette, partText: '#ffffff', textHalo: '#000000' } };
     const svg = renderPartsList([part('R1', 'resistor', '330')], 14, 400, 636, ink);
