@@ -37,7 +37,7 @@ export type Readings = {
   /** 1 行目は見出し (`M 周波数 レベル`)、続いて M1〜M4。マーカーが無ければ空。 */
   readonly rows: readonly (readonly string[])[];
   /** 値の出どころ。null は読む点が無い。 */
-  readonly basis: 'model' | 'data' | null;
+  readonly basis: 'model' | 'data' | 'hold' | null;
 };
 
 const DASH = '—';
@@ -47,7 +47,7 @@ export function readMarkers(
   markers: readonly MarkerSpec[],
   points: readonly Point[],
   unit: LevelUnit,
-  basis: 'model' | 'data' | null,
+  basis: Readings['basis'],
 ): Readings {
   if (markers.length === 0) return { rows: [], basis };
   const rows = markers.map((marker, index) => {

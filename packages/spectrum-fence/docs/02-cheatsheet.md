@@ -19,6 +19,7 @@ style: dark                          # 任意
 ```
 ````
 
+MAX HOLD は `data:` の代わりに `hold:` (下の「MAX HOLD」。`data:` とは一緒に書けない)。
 画面は横 10 目盛・縦 10 目盛。理想だけなら**実線**。`data:` を重ねると理想は**破線**、`data:` は**実線**。
 `style:` は 1 語 (`light` `dark` `mono`) か並び (`theme` `width` (120〜4000) `stamp` `debug` (`on` / `off`))。
 
@@ -44,7 +45,7 @@ style: dark                          # 任意
 | `lna:` | — | ○ (`on` は Ultra だけ) | `on` / `off` |
 | `ref:` `scale:` `unit:` | ○ | ○ | `-10dBm` / `10dB` / `dBm` か `dBV` |
 | `floor:` | ○ | generic だけ | `-100dBm` (tinySA は DANL で決まるので断る) |
-| `signal:` `markers:` `data:` | ○ | ○ | 下 |
+| `signal:` `hold:` `markers:` `data:` | ○ | ○ | 下 |
 
 型に無いキーは断る (「ad2 では rbw: は書けません (分解能は samples: と掃引の幅で決まります …)」)。
 
@@ -96,6 +97,23 @@ markers:
 
 `generic` はフロアを書く: `floor: -90dBm` (書かなければ −100 dBm で描いて言う)。
 
+## MAX HOLD (`hold:`)
+
+```yaml
+device: tinysa-ultra
+sweep: 70M-110M 450
+rbw: 100kHz
+signal: sine 88MHz -54.4dBm             # 今の掃引 (任意。書けば 2 本目の色の線)
+hold:                                   # 掃引ごとの信号。点ごとの最大が保持したトレースになる
+  - sine 74MHz..102MHz -54.4dBm         # from..to は、その波を動かした掃引の全部 (刻みは /2MHz と書ける)
+  - sine 2440MHz -50dBm                 # 1 行 = 1 回の掃引 (波は signal: と同じ綴り)
+  - [sine 80MHz -60dBm, sine 82MHz -60dBm]   # 1 回の掃引に波が複数 (和)
+markers: [74M, 102M]                    # マーカーは保持したトレースを読む (「読み値 — MAX HOLD (計算)」)
+```
+
+刻みを書かなければ掃引の点ごとに置く。FFT 型 (`ad2` `ad3`) は刻みを書く (`1kHz..9kHz/2kHz`)。
+積める掃引は掃引型 1000・FFT 型 32。**`data:` とは一緒に書けない。**
+
 ## マーカーと読み値の見方
 
 マーカーは周波数 (`100M` `30.5MHz` `0`) か `peak`。周波数は一番近い点に吸い付き、`peak` は一番高い点。
@@ -127,6 +145,8 @@ markers:
 | `samples: 8000` | 断る (2 の冪) | `samples: 8192` |
 | `window: blackman` | 断る | `rect` / `hann` / `flattop` |
 | `lna: on` を tinysa で | 断る (LNA は Ultra だけ) | `device: tinysa-ultra` |
+| `sine 74M..102M` を `signal:` に書く | 断る (範囲は `hold:` の中だけ) | `hold: sine 74M..102M -54dBm` |
+| `hold:` と `data:` を一緒に | 断る (`hold:` を外す) | どちらか |
 | `notes:`、マーカーの `delta` `noise`、`span: 0` | 断る (まだ書けない) | — |
 
 ## scope・vna との違い

@@ -1,6 +1,7 @@
 import type { THEME_NAMES } from './limits.ts';
 import type { WaveSpec, WindowName } from 'fence-kit';
 import type { DeviceKind, DeviceName, LevelUnit } from './model/device.ts';
+import type { HoldEntry } from './model/hold.ts';
 import type { MarkerSpec } from './model/markers.ts';
 import type { SweepText } from './model/sweep.ts';
 import type { Level } from './parser/values.ts';
@@ -27,7 +28,7 @@ export type FenceError = {
 /** フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。 */
 export const TOP_LEVEL_KEYS = [
   'device', 'title', 'sweep', 'center', 'span', 'points', 'samples', 'window', 'rbw', 'atten', 'lna',
-  'ref', 'scale', 'unit', 'floor', 'signal', 'data', 'markers', 'notes', 'style',
+  'ref', 'scale', 'unit', 'floor', 'signal', 'hold', 'data', 'markers', 'notes', 'style',
 ] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
@@ -54,6 +55,7 @@ export const KEY_KINDS: Readonly<Record<TopLevelKey, readonly DeviceKind[]>> = {
   unit: ['fft', 'swept'],
   floor: ['fft', 'swept'],
   signal: ['fft', 'swept'],
+  hold: ['fft', 'swept'],
   data: ['fft', 'swept'],
   markers: ['fft', 'swept'],
   notes: ['fft', 'swept'],
@@ -91,6 +93,8 @@ export type FenceDocument = {
   readonly floor: Located<Level> | null;
   /** 読めた波 (和を取る)。 */
   readonly signal: readonly Located<WaveSpec>[];
+  /** MAX HOLD で積んだ掃引 (`hold:`)。無ければ空。 */
+  readonly hold: readonly HoldEntry[];
   readonly markers: readonly MarkerSpec[];
   /** 測った値のファイル名 (`.md` の隣)。 */
   readonly data: Located<string> | null;

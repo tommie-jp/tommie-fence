@@ -18,6 +18,7 @@ import { renderErrorBanner } from './render/errorHtml.ts';
 import { renderFrequencyLabels, renderGrid, renderLevelLabels, renderStatus, statusLines } from './render/grid.ts';
 import type { StatusItem } from './render/grid.ts';
 import { keyText, readingLinesOf, readingsSize, renderKey, renderReadings } from './render/readings.ts';
+import { renderHeld } from './render/held.ts';
 import { renderTrace, renderMarker } from './render/trace.ts';
 import { resolveStyle, traceColor } from './render/theme.ts';
 import { renderTitle } from './render/title.ts';
@@ -62,6 +63,9 @@ const EMPTY_AXES: Axes = { start: 0, stop: 1, ref: 0, scale: 10, unit: 'dBm' };
 type Drawn = {
   readonly axes: Axes;
   readonly points: readonly Point[];
+  /** MAX HOLD のトレース (`hold:`)。無ければ空。 */
+  readonly held: readonly Point[];
+  readonly holdSweeps: number;
   /** 測った点 (`data:`)。読めなければ空。 */
   readonly measured: readonly Point[];
   readonly dataName: string | null;
@@ -83,23 +87,25 @@ function markersInside(markers: readonly MarkerSpec[], screen: Screen, said: Fen
 function drawnOf(doc: FenceDocument, source: DataSource | undefined): Drawn {
   if (doc.device === null) {
     return {
-      axes: EMPTY_AXES, points: [], measured: [], dataName: null, markers: [], status: null, readings: { rows: [], basis: null }, said: [],
+      axes: EMPTY_AXES, points: [], held: [], holdSweeps: 0, measured: [], dataName: null, markers: [], status: null, readings: { rows: [], basis: null }, said: [],
     };
   }
   const screen = screenOf(doc, deviceOf(doc.device));
   const measured = readData(doc, screen, source);
   // **山は実測があれば実測**、無ければ理想。信号が無い (フロアだけの) 画面では言わない。
-  const traced = measured.points.length > 0 ? measured.points : doc.signal.length > 0 ? screen.points : [];
+  const traced = measured.points.length > 0 ? measured.points : screen.held.length > 0 ? screen.held : doc.signal.length > 0 ? screen.points : [];
   const headroom = headroomNotice({ peak: peakPoint(traced), ref: screen.ref, scale: screen.scale, unit: screen.unit, line: doc.ref?.line ?? null });
   const said = [...screen.errors, ...screen.said, ...measured.said, ...(headroom === null ? [] : [headroom])];
   const markers = markersInside(doc.markers, screen, said);
   const axes: Axes = { start: screen.start, stop: screen.stop, ref: screen.ref, scale: screen.scale, unit: screen.unit };
-  // **読み値は実測があれば実測** (実機のマーカーは測った点を読む)、無ければ理想。
+  // **読み値は実測があれば実測** (実機のマーカーは測った点を読む)、次に MAX HOLD (保持したトレースを読む)、無ければ理想。
   const readings = measured.points.length > 0
     ? readMarkers(markers, measured.points, screen.unit, 'data')
-    : readMarkers(markers, screen.points, screen.unit, screen.points.length === 0 ? null : 'model');
+    : screen.held.length > 0
+      ? readMarkers(markers, screen.held, screen.unit, 'hold')
+      : readMarkers(markers, screen.points, screen.unit, screen.points.length === 0 ? null : 'model');
   return {
-    axes, points: screen.points, measured: measured.points, dataName: measured.points.length > 0 ? measured.name : null,
+    axes, points: screen.points, held: screen.held, holdSweeps: screen.holdSweeps, measured: measured.points, dataName: measured.points.length > 0 ? measured.name : null,
     markers, status: screen.status, readings, said,
   };
 }
@@ -115,7 +121,10 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
   const style = resolveStyle(doc.style);
   const { theme } = style;
   const drawn = drawnOf(doc, options.data);
+  const isHeld = drawn.held.length > 0;
+  // MAX HOLD があれば 1 本目の色は保持した線、今の掃引は 2 本目の色 (実機のトレース 1・2 の順)。
   const color = traceColor(theme, 0);
+  const liveColor = traceColor(theme, isHeld ? 1 : 0);
   const hasModel = drawn.points.length > 0;
 
   const items = (texts: readonly string[] | undefined): readonly StatusItem[] =>
@@ -125,22 +134,23 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
   const layout = createLayout({
     statusRows: Math.max(1, status.length),
     title: doc.title,
-    key: keyText(hasModel, drawn.dataName),
+    key: keyText(hasModel, drawn.dataName, drawn.holdSweeps),
     readings: readingsSize(drawn.readings, drawn.dataName, theme),
     source: null,
     theme,
   });
   const markerSvg = drawn.markers.map((marker, index) => {
-    const point = markerPoint(marker, drawn.measured.length > 0 ? drawn.measured : drawn.points);
+    const point = markerPoint(marker, drawn.measured.length > 0 ? drawn.measured : isHeld ? drawn.held : drawn.points);
     return point === null ? '' : renderMarker(point, `${index + 1}`, drawn.axes, layout.grid, color, theme);
   }).join('');
 
   const body = renderTitle(doc.title, layout, theme)
-    + renderKey(hasModel, drawn.dataName, layout, theme)
+    + renderKey(hasModel, drawn.dataName, layout, theme, drawn.holdSweeps)
     + renderGrid(layout, theme)
     + renderLevelLabels(levelTicks(drawn.axes), layout, theme)
     + renderFrequencyLabels(drawn.status === null ? null : frequencyTicks(drawn.axes), layout, theme)
-    + renderTrace(drawn.points, 'model', drawn.axes, layout.grid, color, drawn.measured.length > 0)
+    + renderHeld(drawn.held, drawn.axes, layout.grid, color)
+    + renderTrace(drawn.points, 'model', drawn.axes, layout.grid, liveColor, drawn.measured.length > 0)
     + renderTrace(drawn.measured, 'data', drawn.axes, layout.grid, color)
     + markerSvg
     + renderStatus(status, layout, theme)

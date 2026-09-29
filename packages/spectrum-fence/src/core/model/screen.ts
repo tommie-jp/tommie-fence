@@ -1,16 +1,20 @@
 import { formatHertzReading, formatHertzShort } from 'fence-kit';
+import type { SpectralLine } from 'fence-kit';
 import { notice } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import type { FenceDocument, FenceError } from '../types.ts';
 import type { Device, LevelUnit } from './device.ts';
 import { SYNTH_BUDGET, fftTrace, resolutionOf } from './fftTrace.ts';
+import { heldTrace, snapshotsOf } from './hold.ts';
+import type { HoldRoom } from './hold.ts';
 import { fromUnit, toUnit, dbvFromDbm, formatSetting } from './level.ts';
 import { autoRbw, floorOf, inputNotice, rbwProblem } from './receiver.ts';
 import { linesOfSignal, peakOf } from './signal.ts';
-import { deviceSweep, rangeNotice, snapPoints } from './sweep.ts';
+import { deviceSweep, frequenciesOf, rangeNotice, snapPoints } from './sweep.ts';
 import type { SweepText } from './sweep.ts';
 import { sweptTrace } from './sweptTrace.ts';
 import type { Point } from './trace.ts';
+import type { WaveSpec } from 'fence-kit';
 
 /**
  * 画面の中身を計算する — **機種の型で道を分ける** (FFT 型は窓と FFT、掃引型は線と受信機)。
@@ -27,6 +31,10 @@ export type Screen = {
   readonly scale: number;
   /** 理想の点の列 (表示の単位)。描く物が無ければ空。 */
   readonly points: readonly Point[];
+  /** MAX HOLD のトレース (`hold:`。今の掃引 `signal:` も含めた点ごとの最大)。無ければ空。 */
+  readonly held: readonly Point[];
+  /** 積んだ掃引の数 (`hold:` が無ければ 0)。 */
+  readonly holdSweeps: number;
   /** 状態の行の字。1 行目 (機種と掃引) と 2 行目 (受信機と表示)。 */
   readonly status: readonly [readonly string[], readonly string[]];
   readonly said: readonly FenceError[];
@@ -69,6 +77,25 @@ function common(doc: FenceDocument, device: Device, said: FenceError[]): Common 
 
 const display = (c: Common): readonly string[] => [`REF ${formatSetting(c.ref, c.unit)}`, `${formatSetting(c.scale, 'dB')}/div`];
 
+type Held = { readonly held: readonly Point[]; readonly sweeps: number };
+
+/**
+ * `hold:` があれば掃引ごとの点を作って点ごとの最大を取る (道は 1 つ — 今の掃引と同じ `compute`)。
+ * **今の掃引 (`signal:`) も保持に入る** (実機は今の掃引も積む)。`signal:` が無ければ今の掃引は描かない。
+ */
+function holdOf(
+  doc: FenceDocument, room: HoldRoom, live: readonly Point[],
+  compute: (waves: readonly WaveSpec[]) => readonly Point[], said: FenceError[],
+): Held {
+  if (doc.hold.length === 0) return { held: [], sweeps: 0 };
+  const plan = snapshotsOf(doc.hold, room);
+  said.push(...plan.said);
+  const held = heldTrace(plan.waves, doc.signal.length > 0 && live.length > 0 ? live : null, compute);
+  return { held, sweeps: plan.waves.length };
+}
+
+const withHold = (words: readonly string[], sweeps: number): readonly string[] => (sweeps > 0 ? ['MAX HOLD', ...words] : words);
+
 function fftScreen(doc: FenceDocument, device: Device, c: Common, said: FenceError[]): Screen {
   // samples: と window: の既定は、計算する物 (signal: か floor:) があるときだけ言う (図の中身を決めないので)。
   const computes = doc.signal.length > 0 || doc.floor !== null;
@@ -90,11 +117,15 @@ function fftScreen(doc: FenceDocument, device: Device, c: Common, said: FenceErr
   const floor = doc.floor === null ? null : fromUnit(doc.floor.value.value, doc.floor.value.unit);
   const read = signal.length === 0 && floor === null ? null : fftTrace({ signal, start, stop, samples, window, floor });
   if (read?.truncated === true) said.push(notice(`線が多すぎるので Nyquist より下の ${Math.floor(SYNTH_BUDGET / samples)} 本で打ち切りました`, doc.signal[0]?.line ?? null));
-  const points = (read?.points ?? []).map((point) => ({ ...point, level: toUnit(point.level, c.unit) }));
+  const convert = (list: readonly Point[]): readonly Point[] => list.map((point) => ({ ...point, level: toUnit(point.level, c.unit) }));
+  const live = convert(read?.points ?? []);
+  const grid = { grid: [], rbw: null, cap: LIMITS.holdSweepsFft };
+  const hold = holdOf(doc, grid, live, (waves) => convert(fftTrace({ signal: waves, start, stop, samples, window, floor }).points), said);
+  const points = doc.hold.length > 0 && doc.signal.length === 0 ? [] : live;
   const first = [device.label, `${hz(start)}〜${hz(stop)}`, `${samples} pt`, `分解能 ${formatHertzReading(df)}`, WINDOW_LABEL[window]];
   return {
-    start, stop, centered: c.centered, unit: c.unit, ref: c.ref, scale: c.scale, points,
-    status: [first, display(c)], said, errors: [],
+    start, stop, centered: c.centered, unit: c.unit, ref: c.ref, scale: c.scale, points, held: hold.held, holdSweeps: hold.sweeps,
+    status: [first, withHold(display(c), hold.sweeps)], said, errors: [],
   };
 }
 
@@ -124,12 +155,16 @@ function sweptScreen(doc: FenceDocument, device: Device, c: Common, said: FenceE
   if (read.truncated) said.push(notice(`線が多すぎるので ${LIMITS.lines} 本で打ち切りました`, doc.signal[0]?.line ?? null));
   const tooMuch = inputNotice(device, read.lines);
   if (tooMuch !== null) said.push(notice(tooMuch, doc.signal[0]?.line ?? null));
-  const trace = sweptTrace({ lines: read.lines, start, stop, points, rbw, floor })
+  const traceOf = (lines: readonly SpectralLine[]): readonly Point[] => sweptTrace({ lines, start, stop, points, rbw, floor })
     .map((point) => ({ ...point, level: toUnit(dbvFromDbm(point.level), c.unit) }));
+  const trace = traceOf(read.lines);
+  const room = { grid: frequenciesOf(c.sweep, points), rbw, cap: LIMITS.holdSweeps };
+  const hold = holdOf(doc, room, trace, (waves) => traceOf(linesOfSignal(waves, stop + 5 * rbw, LIMITS.lines).lines), said);
   const first = [device.label, ...sweepWords(c.sweep, c.centered), `${points} pt`];
-  const second = [`RBW ${hz(rbw)}`, `ATT ${formatSetting(atten, 'dB')}`, ...(lna ? ['LNA'] : []), ...display(c)];
+  const second = withHold([`RBW ${hz(rbw)}`, `ATT ${formatSetting(atten, 'dB')}`, ...(lna ? ['LNA'] : []), ...display(c)], hold.sweeps);
   return {
-    start, stop, centered: c.centered, unit: c.unit, ref: c.ref, scale: c.scale, points: trace,
+    start, stop, centered: c.centered, unit: c.unit, ref: c.ref, scale: c.scale,
+    points: doc.hold.length > 0 && doc.signal.length === 0 ? [] : trace, held: hold.held, holdSweeps: hold.sweeps,
     status: [first, second], said, errors,
   };
 }

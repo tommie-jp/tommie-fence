@@ -45,7 +45,7 @@ export function decimate(points: readonly Point[], axes: Axes, grid: Rect): read
 }
 
 /** `dashed` は理想を実測と重ねるときだけ真。理想だけなら実線 (破線の切れ目で細い山が途切れて見える)。 */
-export function renderTrace(points: readonly Point[], basis: 'model' | 'data', axes: Axes, grid: Rect, color: string, dashed = false): string {
+export function renderTrace(points: readonly Point[], basis: 'model' | 'data' | 'hold', axes: Axes, grid: Rect, color: string, dashed = false): string {
   const drawn = decimate(points, axes, grid);
   if (drawn.length === 0) return '';
   return element('polyline', {

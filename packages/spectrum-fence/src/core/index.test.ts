@@ -250,3 +250,73 @@ describe('renderSpectrum — 山と REF', () => {
     expect(result.notices.map((one) => one.message)).toEqual(['一番高い山 (−62.00 dBm、2.000 MHz) は REF (−20 dBm) より 4.2 目盛下です (ref: -50dBm なら上端から 1.2 目盛)']);
   });
 });
+
+describe('renderSpectrum — hold: (MAX HOLD)', () => {
+  const source = [
+    'title: 図 VC1 を回す',
+    'device: tinysa-ultra',
+    'sweep: 70M-110M 450',
+    'rbw: 100kHz',
+    'ref: -40dBm',
+    'hold: sine 74MHz..102MHz -54.4dBm',
+    'markers: [peak, 74M, 88M, 102M]',
+  ].join('\n');
+
+  test('draws the envelope as a filled shape and an outline in the first trace colour', () => {
+    const result = renderSpectrum(source);
+    expect(result.errors).toEqual([]);
+    expect(result.svg).toContain('data-basis="hold"');
+    expect(result.svg).toContain('data-hold-fill');
+    expect(result.svg).not.toMatch(/NaN|Infinity/);
+  });
+
+  test('reads the held trace at the markers, flat along the path and at the floor outside', () => {
+    const rows = renderSpectrum(source).readings.rows;
+    expect(rows[0]).toEqual(['M', '周波数', 'レベル']);
+    for (const row of rows.slice(1)) expect(row[2]).toBe('−54.40 dBm');
+    const outside = renderSpectrum(`${source.replace('markers: [peak, 74M, 88M, 102M]', 'markers: [108M]')}`).readings.rows[1];
+    expect(Number(outside?.[2]?.replace('−', '-').replace(' dBm', ''))).toBeLessThan(-95);
+  });
+
+  test('labels the readings and the key as MAX HOLD, not as the ideal', () => {
+    const result = renderSpectrum(source);
+    expect(result.readings.basis).toBe('hold');
+    expect(result.readingLines[0]).toContain('MAX HOLD');
+    expect(result.svg).toContain('MAX HOLD (計算 ');
+  });
+
+  test('draws the live signal: trace beside the envelope, and the envelope covers it', () => {
+    const result = renderSpectrum(source.replace('hold:', 'signal: sine 108MHz -60dBm\nhold:').replace('markers: [peak, 74M, 88M, 102M]', 'markers: [108M]'));
+    expect(result.svg).toContain('data-basis="model"');
+    expect(result.svg).toContain('data-basis="hold"');
+    expect(result.readings.rows[1]?.[2]).toBe('−60.00 dBm');
+  });
+
+  test('makes no live trace when only hold: is written', () => {
+    expect(renderSpectrum(source).svg).not.toContain('data-basis="model"');
+  });
+
+  test('says MAX HOLD on the status row', () => {
+    expect(renderSpectrum(source).svg).toContain('MAX HOLD');
+  });
+
+  test('works on the FFT type, with the written step', () => {
+    const result = renderSpectrum('device: ad2\nsweep: 0-10kHz\nhold:\n  - sine 1kHz..5kHz/1kHz 1V\nmarkers: [1kHz, 3kHz, 5kHz]');
+    expect(result.errors).toEqual([]);
+    const levels = result.readings.rows.slice(1).map((row) => row[2]);
+    expect(new Set(levels).size).toBe(1);
+    expect(result.readings.basis).toBe('hold');
+  });
+
+  test('keeps the measured trace when data: and hold: are both written', () => {
+    const result = renderSpectrum('device: tinysa\ndata: a.csv\nhold: sine 90MHz -50dBm');
+    expect(result.errors[0]?.message).toContain('data:');
+    expect(result.svg).not.toContain('data-basis="hold"');
+  });
+
+  test('is the same as writing every position out', () => {
+    const tuned = renderSpectrum(source.replace('markers: [peak, 74M, 88M, 102M]', 'markers: [peak]'));
+    const listed = renderSpectrum(source.replace('hold: sine 74MHz..102MHz -54.4dBm', 'hold:\n  - sine 74MHz -54.4dBm\n  - sine 90MHz -54.4dBm\n  - sine 102MHz -54.4dBm').replace('markers: [peak, 74M, 88M, 102M]', 'markers: [peak]'));
+    expect(tuned.readings.rows[1]?.[2]).toBe(listed.readings.rows[1]?.[2]);
+  });
+});

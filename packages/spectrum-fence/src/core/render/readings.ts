@@ -11,7 +11,8 @@ import type { Theme } from './theme.ts';
  * (tinySA の画面では上だが、3 つの計器の図で読み値の場所を揃える — 52 の docs/88 §1)。
  */
 export function readingsHeading(readings: Readings, dataName: string | null): string {
-  return readings.basis === 'data' ? `読み値 — 実測 (${dataName ?? 'data'})` : '読み値 — 理想 (計算)';
+  if (readings.basis === 'data') return `読み値 — 実測 (${dataName ?? 'data'})`;
+  return readings.basis === 'hold' ? '読み値 — MAX HOLD (計算)' : '読み値 — 理想 (計算)';
 }
 
 const partsOf = (readings: Readings, dataName: string | null): { readonly heading: readonly string[]; readonly rows: Readings['rows'] } =>
@@ -38,20 +39,27 @@ export function readingLinesOf(readings: Readings, dataName: string | null): rea
   return [...parts.heading, ...tableLines(parts.rows)];
 }
 
-/** 凡例の字 (重ねたときは 破線 = 理想、実線 = 実測)。どちらも無ければ null。 */
-export function keyText(hasModel: boolean, dataName: string | null): string | null {
-  const items = [...(hasModel ? ['理想 (計算)'] : []), ...(dataName === null ? [] : [`実測 (${dataName})`])];
+const holdLabel = (sweeps: number): string => `MAX HOLD (計算 ${sweeps} 掃引)`;
+
+/** 凡例の字 (重ねたときは 破線 = 理想、実線 = 実測)。何も無ければ null。`holdSweeps` は積んだ掃引の数。 */
+export function keyText(hasModel: boolean, dataName: string | null, holdSweeps = 0): string | null {
+  const items = [
+    ...(holdSweeps > 0 ? [holdLabel(holdSweeps)] : []),
+    ...(hasModel ? [holdSweeps > 0 ? '今の掃引 (計算)' : '理想 (計算)'] : []),
+    ...(dataName === null ? [] : [`実測 (${dataName})`]),
+  ];
   return items.length === 0 ? null : items.join('    ');
 }
 
 /** 凡例。**線の見本を字の前に**置く (vna・scope と同じ形)。 */
-export function renderKey(hasModel: boolean, dataName: string | null, layout: Layout, theme: Theme): string {
+export function renderKey(hasModel: boolean, dataName: string | null, layout: Layout, theme: Theme, holdSweeps = 0): string {
   if (layout.keyY === null) return '';
   const y = layout.keyY;
   const size = theme.metrics.smallSize;
   let x = layout.grid.x;
   const out: string[] = [];
-  const item = (text: string, dashed: boolean): void => {
+  const item = (text: string, dashed: boolean, filled = false): void => {
+    if (filled) out.push(element('rect', { x: num(x), y: num(y - 4), width: 22, height: 8, fill: theme.palette.caption, 'fill-opacity': 0.18 }));
     out.push(element('line', {
       x1: num(x), y1: num(y), x2: num(x + 22), y2: num(y), stroke: theme.palette.caption, 'stroke-width': 1.5,
       ...(dashed ? { 'stroke-dasharray': '5 3' } : {}),
@@ -59,7 +67,8 @@ export function renderKey(hasModel: boolean, dataName: string | null, layout: La
     out.push(svgText(x + 27, y + size * 0.35, text, { anchor: 'start', fill: theme.palette.caption, 'font-size': num(size) }));
     x += 27 + textWidth(text) * size + 20;
   };
-  if (hasModel) item('理想 (計算)', dataName !== null);
+  if (holdSweeps > 0) item(holdLabel(holdSweeps), false, true);
+  if (hasModel) item(holdSweeps > 0 ? '今の掃引 (計算)' : '理想 (計算)', dataName !== null);
   if (dataName !== null) item(`実測 (${dataName})`, false);
   return out.join('');
 }

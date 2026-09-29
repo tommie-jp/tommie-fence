@@ -5,6 +5,7 @@ Markdown の ` ```spectrum ` フェンスに YAML を書くと、Markdown プレ
 **FFT 型** (Analog Discovery の Spectrum) と**掃引型** (tinySA)。どちらかは `device:` で決まる。
 信号を波形発生器の語 (`square 100MHz -10dBm`) で書けば測る前の「見えるはずの画面」が実線で描け、
 **測った CSV** (`data:`) を書けば実線で重なり、理想のほうは破線に変わる。
+MAX HOLD の画面は掃引を並べた `hold:` で描く。
 ここは文法の全部。1 画面にまとめた物は [02-cheatsheet.md](02-cheatsheet.md)、
 形ごとの例は [examples/](../examples/README.md) にある。
 
@@ -19,6 +20,7 @@ Markdown の ` ```spectrum ` フェンスに YAML を書くと、Markdown プレ
 - [レベルと単位 (`ref:` `scale:` `unit:` `floor:`)](#レベルと単位-ref-scale-unit-floor)
 - [測った値 (`data:`)](#測った値-data)
 - [マーカー (`markers:`)](#マーカー-markers)
+- [MAX HOLD (`hold:`)](#max-hold-hold)
 - [まだ書けないもの (注釈・delta・noise・ゼロスパン)](#まだ書けないもの-注釈deltanoiseゼロスパン)
 - [見た目 (`style:`)](#見た目-style)
 - [読み値](#読み値)
@@ -297,6 +299,69 @@ markers:
 - 掃引の外のマーカーは描かずに言う
 - 点の上に ▼ と番号が付く (格子の上の縁に近ければ ▲ を点の下に返す)
 
+## MAX HOLD (`hold:`)
+
+tinySA の MAX HOLD (掃引を重ねて、点ごとの最大を残す) は `hold:` で書く。
+**掃引ごとの信号を並べれば、点ごとの最大を包絡として描く。** 機種は選ばない
+(掃引型も FFT 型 — WaveForms の Maximum — も同じ書き方)。
+
+```yaml
+signal: sine 88MHz -54.4dBm            # 今の掃引 (任意)
+hold:
+  - sine 74MHz..102MHz -54.4dBm        # 波を 74 から 102 MHz まで動かした掃引の全部
+  - sine 90MHz -50dBm                  # 1 回の掃引 (波は signal: と同じ綴り)
+  - [sine 80MHz -60dBm, sine 82MHz -60dBm]   # 1 回の掃引に波が複数 (和)
+```
+
+- **`hold:` の 1 行は 1 回の掃引** (`[波, 波]` なら 1 回の掃引の波の和)。1 行だけなら並びにしなくてよい
+- **`from..to`** (`sine 74MHz..102MHz -54.4dBm`) は、周波数を動かしたときの掃引を全部積む
+  (VC を回したときの発振など。**形・振幅・duty はそのまま動く**)。刻みを書かなければ
+  **掃引の点ごと**に置く (山の平らな頂が途切れない)。`74MHz..102MHz/2MHz` と刻みも書ける —
+  RBW より粗い刻みは山が離れる (言う)。範囲は 1 行に 1 つ、`[波, 波]` の中には書けない
+- **FFT 型は刻みを書く** (`sine 1kHz..9kHz/2kHz 1V`)。位置ごとに FFT をするので、積めるのは 32 掃引まで
+  (掃引型は 1000 掃引まで。超えたら打ち切って言う)
+- 描くのは**保持したトレース**: 1 本目の色の線と、その下の薄い塗り。**`signal:` (今の掃引) も保持に入り**、
+  書けば 2 本目の色の線で重なる。書かなければ今の掃引は描かない
+- **マーカーは保持したトレースを読む** (実機のマーカーを MAX HOLD のトレースに置いたときと同じ)。
+  見出しは「読み値 — MAX HOLD (計算)」、凡例は「MAX HOLD (計算 N 掃引)」、状態の行に `MAX HOLD`
+- `data:` とは一緒に書けない (測った CSV はすでに保持したトレース)。言って `hold:` を外す
+
+```spectrum
+title: 図07 VC1 を回したときの発振の範囲 (MAX HOLD)
+device: tinysa-ultra
+sweep: 70M-110M 450
+rbw: 100kHz
+ref: -40dBm
+signal: sine 88MHz -54.4dBm
+hold: sine 74MHz..102MHz -54.4dBm
+markers: [74M, 88M, 102M]
+```
+
+![図07 VC1 を回したときの発振の範囲 (MAX HOLD)](out/01-syntax-7.svg)
+
+74〜102 MHz の間が−54.40 dBm の平らな帯になる (山の幅は RBW 100 kHz)。青い線が今の掃引 (88 MHz)。
+M1〜M3 はどれも保持したトレースの値。
+
+チャンネルが離れているときは 1 行ずつ書く。
+
+```spectrum
+title: 図08 nRF24 の 4 チャンネルのパケットを MAX HOLD で重ねる
+device: tinysa-ultra
+sweep: 2400M-2484M 450
+rbw: 300kHz
+ref: -30dBm
+hold:
+  - sine 2402MHz -52dBm
+  - sine 2426MHz -48dBm
+  - sine 2440MHz -50dBm
+  - sine 2480MHz -54dBm
+markers: [peak, 2402M, 2480M]
+```
+
+![図08 nRF24 の 4 チャンネルのパケットを MAX HOLD で重ねる](out/01-syntax-8.svg)
+
+M1 は一番高い ch 26 (2426 MHz、−48 dBm)。
+
 ## まだ書けないもの (注釈・delta・noise・ゼロスパン)
 
 キーや語は予約してあり、**書くと「まだ書けません」と断る** (黙って捨てない)。
@@ -350,6 +415,8 @@ npx spectrum-fence check examples
 | 型に無いキー (`ad2` の `rbw:`、`tinysa` の `window:` など)、tinySA の `floor:`、LNA の無い機種の `lna: on` | 読めない |
 | `sweep:` と `center:` の両方・`center:` だけ、点数を `sweep:` と `points:` の両方に | 読めない |
 | `signal:` の操作 (`\|`) | 読めない |
+| `hold:` の範囲 (始めが終わりより上・刻みが 0・FFT 型で刻み無し・`[波, 波]` の中の範囲)、`data:` と一緒 | 読めない |
+| `hold:` の刻みが RBW より粗い・掃引が多すぎて打ち切った | お知らせ |
 | `sweep:` `points:` `samples:` `window:` `rbw:` を書かなかった (何で描いたか)、generic のフロア、pulse の duty | お知らせ |
 | 掃引が機種の範囲の外・点数を選択肢に丸めた・マーカーが掃引の外・入力の上限を超えた・bin が少ない | お知らせ |
 | `data:` が読めない・見つからない・掃引の中に点が無い・MHz とみて読んだ | お知らせ |
@@ -362,6 +429,8 @@ npx spectrum-fence check examples
 | 何 | 上限 |
 | --- | --- |
 | `signal:` の波 | 16 |
+| `hold:` の行 | 64 (範囲 1 行で何回でも動かせる) |
+| `hold:` の掃引 | 掃引型 1000・FFT 型 32 (超えれば打ち切って言う) |
 | 線 (全部の波の高調波の和) | 4096 (超えれば打ち切って言う) |
 | 掃引型の点数 | 51〜1001 (機種の選択肢の中) |
 | FFT 型の `samples:` | 1024〜65536 |

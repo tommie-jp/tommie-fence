@@ -141,3 +141,61 @@ describe('parseFence — values', () => {
     expect(messages('device: tinysa-ultra\ndata: ../x.csv')[0]).toContain('/ や .. は書けません');
   });
 });
+
+describe('parseFence — hold:', () => {
+  const read = (extra: string, device = 'tinysa-ultra') => parseFence(`device: ${device}\n${extra}`);
+
+  test('reads one line, a list of lines and a nested list as snapshots', () => {
+    const { doc, errors } = read('hold:\n  - sine 90MHz -50dBm\n  - [sine 80MHz -60dBm, sine 82MHz -60dBm]\n  - sine 74M..102M -54dBm');
+    expect(errors).toEqual([]);
+    expect(doc.hold.map((entry) => entry.kind)).toEqual(['waves', 'waves', 'tune']);
+    const nested = doc.hold[1];
+    expect(nested?.kind === 'waves' ? nested.waves : []).toHaveLength(2);
+    expect(doc.hold[0]?.line).toBe(3);
+  });
+
+  test('takes a single line without a list', () => {
+    expect(read('hold: sine 74M..102M -54dBm').doc.hold).toHaveLength(1);
+  });
+
+  test('is allowed on every device, and the FFT type asks for a step', () => {
+    expect(read('hold: sine 1kHz 1V', 'ad2').errors).toEqual([]);
+    const { errors } = read('hold: sine 1kHz..9kHz 1V', 'ad2');
+    expect(errors[0]).toMatchObject({ line: 2, token: '1kHz..9kHz' });
+    expect(errors[0]?.message).toContain('刻み');
+  });
+
+  test('says which line of the list is unreadable, and keeps the rest', () => {
+    const { doc, errors } = read('hold:\n  - sine 90MHz -50dBm\n  - sine 90 -50dBm');
+    expect(doc.hold).toHaveLength(1);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.line).toBe(4);
+  });
+
+  test('refuses a range inside a nested snapshot', () => {
+    const { errors } = read('hold:\n  - [sine 74M..80M -50dBm, sine 90MHz -50dBm]');
+    expect(errors[0]?.message).toContain('範囲');
+    expect(errors[0]?.line).toBe(3);
+  });
+
+  test('refuses an item that is not a wave line', () => {
+    expect(read('hold:\n  - {a: 1}').errors[0]?.message).toContain('hold:');
+  });
+
+  test('refuses more entries than the limit', () => {
+    const lines = Array.from({ length: 65 }, () => '  - sine 90MHz -50dBm').join('\n');
+    expect(read(`hold:\n${lines}`).errors.some((error) => error.message.includes('64'))).toBe(true);
+  });
+
+  test('refuses hold: together with data:, keeping the measured trace', () => {
+    const { doc, errors } = read('data: a.csv\nhold: sine 90MHz -50dBm');
+    expect(doc.hold).toEqual([]);
+    expect(errors[0]?.message).toContain('data:');
+    expect(errors[0]?.message).toContain('hold:');
+  });
+
+  test('says a wave the duty was assumed for, once for a range', () => {
+    const { errors } = read('hold: pulse 74MHz..80MHz -50dBm');
+    expect(errors.filter((error) => error.notice === true)).toHaveLength(1);
+  });
+});

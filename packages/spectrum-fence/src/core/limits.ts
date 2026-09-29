@@ -11,6 +11,11 @@ export const LIMITS = {
   idLength: 32,
   /** `signal:` に並べられる波の数 (和を取る)。 */
   signals: 16,
+  /** `hold:` に並べられる行の数 (1 行が範囲なら、その位置ごとに掃引が増える)。 */
+  holdEntries: 64,
+  /** MAX HOLD で積める掃引の数。FFT 型は掃引ごとに FFT をするので少ない。 */
+  holdSweeps: 1000,
+  holdSweepsFft: 32,
   /** 線スペクトルの本数 (全部の波の高調波の和)。掃引型の計算は線の数 × 点数。 */
   lines: 4096,
   /** 掃引型の点数 (機種ごとの選択肢はこの中)。 */

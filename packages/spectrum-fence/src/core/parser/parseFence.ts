@@ -5,13 +5,15 @@ import type { WaveSpec } from 'fence-kit';
 import { fenceError, notice, safeToken } from '../errors.ts';
 import { DATA_NAME, LIMITS } from '../limits.ts';
 import { DEVICE_HINT, deviceOf, isDeviceName } from '../model/device.ts';
-import type { Device, DeviceName } from '../model/device.ts';
+import type { Device, DeviceKind, DeviceName } from '../model/device.ts';
 import { resolutionOf } from '../model/fftTrace.ts';
+import type { HoldEntry } from '../model/hold.ts';
 import type { MarkerSpec } from '../model/markers.ts';
 import { FREQUENCY_HINT, centered, deviceSweep, parseFrequency, parsePoints, parseSweep } from '../model/sweep.ts';
 import type { Read } from '../model/sweep.ts';
 import { KEY_KINDS, TOP_LEVEL_KEYS } from '../types.ts';
 import type { FenceDocument, FenceError, Located, TopLevelKey } from '../types.ts';
+import { parseHoldItem } from './hold.ts';
 import { parseMarker, parseSignalLine } from './lines.ts';
 import { EMPTY_STYLE, parseStyle } from './style.ts';
 import { parseDb, parseLevel, parseSamples, parseSwitch, parseUnit, parseWindow } from './values.ts';
@@ -24,7 +26,7 @@ export type ParseResult = { readonly doc: FenceDocument; readonly errors: readon
 
 const emptyDocument = (): FenceDocument => ({
   device: null, title: null, sweep: null, points: null, samples: null, window: null, rbw: null, atten: null, lna: null,
-  ref: null, scale: null, unit: null, floor: null, signal: [], markers: [], data: null, style: EMPTY_STYLE, keys: [],
+  ref: null, scale: null, unit: null, floor: null, signal: [], hold: [], markers: [], data: null, style: EMPTY_STYLE, keys: [],
 });
 
 export const scalarText = (node: unknown): string | null => {
@@ -186,6 +188,53 @@ function readSignal(context: Context): readonly Located<WaveSpec>[] {
   return waves;
 }
 
+/** `hold:` の 1 つ (1 行の波・範囲) を読み、お知らせと読めなかった行を積む。 */
+function readHoldLine(context: Context, node: unknown, line: number | null, kind: DeviceKind, nested: boolean): HoldEntry | null {
+  const text = scalarText(node);
+  if (text === null || text.trim() === '') {
+    context.errors.push(fenceError('hold: には波を 1 行で書きます (例: hold: sine 74MHz..102MHz -54.4dBm)。1 回の掃引に波が複数なら [波, 波] と並べます', line));
+    return null;
+  }
+  const read = parseHoldItem(text, kind);
+  if (!read.ok) {
+    context.errors.push(fenceError(read.reason, line, read.token));
+    return null;
+  }
+  for (const said of read.value.assumed) context.errors.push(notice(said, line));
+  if (read.value.kind === 'tune') {
+    if (nested) {
+      context.errors.push(fenceError('[波, 波] の中に範囲は書けません (動かす波は 1 行で `- sine 74M..102M …` と書きます)', line));
+      return null;
+    }
+    return { kind: 'tune', wave: read.value.wave, from: read.value.from, to: read.value.to, step: read.value.step, line };
+  }
+  return { kind: 'waves', waves: [read.value.wave], line };
+}
+
+/** `hold:` — 掃引の並び。1 つの掃引は 1 行の波か、`[波, 波]` (和)。 */
+function readHold(context: Context, kind: DeviceKind): readonly HoldEntry[] {
+  const entry = context.entries.get('hold');
+  if (entry === undefined) return [];
+  const value = entry.pair.value;
+  const items = isSeq(value) ? value.items.map((item) => ({ node: item, line: context.lineOf(item) })) : [{ node: value, line: entry.at }];
+  const entries: HoldEntry[] = [];
+  for (const { node, line } of items) {
+    if (entries.length >= LIMITS.holdEntries) {
+      context.errors.push(fenceError(`hold: の行は ${LIMITS.holdEntries} までです (範囲 \`74M..102M\` なら 1 行で何回でも動かせます)`, line));
+      break;
+    }
+    if (!isSeq(node)) {
+      const one = readHoldLine(context, node, line, kind, false);
+      if (one !== null) entries.push(one);
+      continue;
+    }
+    const parts = node.items.map((item) => readHoldLine(context, item, context.lineOf(item) ?? line, kind, true));
+    const waves = parts.flatMap((part) => (part?.kind === 'waves' ? part.waves : []));
+    if (waves.length > 0) entries.push({ kind: 'waves', waves, line });
+  }
+  return entries;
+}
+
 /** `markers:` — 並びか 1 つ。4 つまで。 */
 function readMarkers(context: Context): readonly MarkerSpec[] {
   const entry = context.entries.get('markers');
@@ -302,6 +351,11 @@ function readFence(source: string): ParseResult {
     context.errors.push(fenceError(`${name ?? ''} には LNA がありません (lna: on を書けるのは tinysa-ultra)`, lna?.at ?? null));
   }
 
+  const data = readData(context);
+  const holdRead = device === null ? [] : readHold(context, device.kind);
+  const hold = data !== null && holdRead.length > 0 ? [] : holdRead;
+  if (hold !== holdRead) context.errors.push(fenceError('data: と hold: は一緒に書けません (測った CSV は保持済みのトレースなので、hold: は外して描きます)', context.entries.get('hold')?.keyLine ?? null, 'hold'));
+
   const doc: FenceDocument = {
     device: name,
     title: readTitle(context),
@@ -320,8 +374,9 @@ function readFence(source: string): ParseResult {
     unit: one(context, 'unit', parseUnit),
     floor: one(context, 'floor', (text) => parseLevel(text, 'floor')),
     signal: readSignal(context),
+    hold,
     markers: readMarkers(context),
-    data: readData(context),
+    data,
     style: readStyle(context),
     keys: collected.keys,
   };
