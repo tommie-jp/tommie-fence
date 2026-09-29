@@ -53,12 +53,12 @@ const said = (source: string): readonly string[] => {
 };
 
 describe('renderScope — 段 1', () => {
-  test('draws 5-1: two dashed waves, two cursors and the readings, saying nothing', () => {
+  test('draws 5-1: two solid waves (no measurement to tell them from), two cursors and the readings, saying nothing', () => {
     const result = renderScope(FIVE_ONE);
     expect(result.errors).toEqual([]);
     expect(result.notices).toEqual([]);
     expect(result.svg.match(/<polyline /g)).toHaveLength(2);
-    expect(result.svg.match(/stroke-dasharray="5 3"/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(result.svg).not.toMatch(/<polyline [^>]*stroke-dasharray/);
     expect(result.svg.match(/stroke-dasharray="2 2"/g)).toHaveLength(2);
     expect(result.svg).toContain('CH1 500mV/div');
     expect(result.svg).toContain('Trig CH1 ↑ 1.00 V');

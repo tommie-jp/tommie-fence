@@ -3,7 +3,7 @@
 Markdown の ` ```scope ` フェンスに YAML を書くと、Markdown プレビューで
 **オシロスコープの画面**になる — 時間波形・トリガ・カーソル・Measurements。
 **波形発生器の波と通す操作** (`square 100Hz 1V offset 1V`、`ch1 | rc 1ms`) を書けば
-測る前の「見えるはずの画面」が破線で、**測った CSV** (`data:`) を書けば実線で重なる。
+測る前の「見えるはずの画面」が実線で描け、**測った CSV** (`data:`) を書けば実線で重なり、理想のほうは破線に変わる。
 ここは文法の全部。1 画面にまとめた物は [02-cheatsheet.md](02-cheatsheet.md)、
 形ごとの例は [examples/](../examples/README.md) にある。
 

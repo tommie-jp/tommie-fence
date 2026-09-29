@@ -8,7 +8,7 @@ import type { Theme } from './theme.ts';
 /**
  * 波の折れ線。**8192 点を px の列ごとの min / max に間引く** (実機の描き方と同じ)。
  * 1 本の `polyline` は格子の幅 × 2 点まで (400 px なら 800 点)。読み値は間引く前の点で測る。
- * 理想は破線 `5 3`、実測は実線。
+ * 理想は実測と重ねるときだけ破線 `5 3`、それ以外は実線。
  */
 export type Scale = { readonly perDiv: number; readonly position: number };
 
@@ -53,7 +53,8 @@ export function decimate(trace: Trace, grid: Rect, screen: Screen, scale: Scale)
   return points;
 }
 
-export function renderTrace(trace: Trace, grid: Rect, screen: Screen, scale: Scale, color: string): string {
+/** `dashed` は理想を実測と重ねるときだけ真。理想だけなら分ける相手が無いので実線。 */
+export function renderTrace(trace: Trace, grid: Rect, screen: Screen, scale: Scale, color: string, dashed = false): string {
   const points = decimate(trace, grid, screen, scale);
   if (points.length === 0) return '';
   return element('polyline', {
@@ -62,7 +63,7 @@ export function renderTrace(trace: Trace, grid: Rect, screen: Screen, scale: Sca
     stroke: color,
     'stroke-width': 1.5,
     'stroke-linejoin': 'round',
-    ...(trace.basis === 'model' ? { 'stroke-dasharray': DASH } : {}),
+    ...(dashed ? { 'stroke-dasharray': DASH } : {}),
     'data-channel': trace.name,
   });
 }

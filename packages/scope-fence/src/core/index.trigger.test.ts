@@ -58,7 +58,7 @@ describe('renderScope — trigger position (at)', () => {
   test('the peak of the half-cycle is at the centre of the screen (the ideal)', () => {
     const svg = renderScope(HALF).svg;
     const grid = gridOf(svg);
-    expect(peakX(pointsOf(svg, true))).toBeCloseTo(grid.x + grid.width / 2, -1);
+    expect(peakX(pointsOf(svg, false))).toBeCloseTo(grid.x + grid.width / 2, -1);
   });
 });
 

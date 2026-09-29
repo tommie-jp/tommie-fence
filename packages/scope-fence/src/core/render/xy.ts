@@ -8,10 +8,9 @@ import type { Scale } from './trace.ts';
 /**
  * XY の曲線。**横も縦も 8 目盛** — `fractionY` (8 目盛・縁に寄せる) を両軸に使う。
  * 点は 0.5 px より動かないものを間引く (8192 点をそのまま書くと SVG が 100 kB を越える)。
- * 最後の点は必ず残す (閉じた曲線が閉じて見える)。理想は破線 (時間の画面と同じ)。
+ * 最後の点は必ず残す (閉じた曲線が閉じて見える)。理想だけなので実線 (実測を重ねない)。
  */
 const MIN_STEP = 0.5;
-const DASH = '5 3';
 
 export function xyPoints(x: ArrayLike<number>, y: ArrayLike<number>, grid: Rect, xScale: Scale, yScale: Scale): readonly (readonly [number, number])[] {
   const count = Math.min(x.length, y.length);
@@ -37,7 +36,6 @@ export function renderXyCurve(points: readonly (readonly [number, number])[], co
     stroke: color,
     'stroke-width': 1.5,
     'stroke-linejoin': 'round',
-    'stroke-dasharray': DASH,
     'data-channel': 'xy',
   });
 }

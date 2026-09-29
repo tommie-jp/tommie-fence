@@ -198,9 +198,10 @@ function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>, said
     markSlots: Math.max(1, ...groups.map((group) => group.labels.length)),
     theme,
   });
+  const overlaid = drawn.some((trace) => trace.basis === 'data');
   const traceSvg = drawn.map((trace) => {
     const scale = scales.get(trace.name);
-    return scale === undefined ? '' : renderTrace(trace, layout.grid, screen, scale, traceColor(theme, trace.name));
+    return scale === undefined ? '' : renderTrace(trace, layout.grid, screen, scale, traceColor(theme, trace.name), overlaid && trace.basis === 'model');
   }).join('');
   const triggerScale = trigger === null ? undefined : scales.get(trigger.source);
   const triggerMarks = trigger === null || triggerScale === undefined
