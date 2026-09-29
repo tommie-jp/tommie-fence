@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-30
+
 ### Fixed
 
 - 引用符で囲んだ値 (`window: "10s"`・`CLK: "dio0 clock 1Hz"`・`cursors: ["1s"]`) を読む。`cursors: 1s 2s` はリストで書くよう言う

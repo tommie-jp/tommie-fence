@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.33.0] - 2026-09-30
+
 ### Added
 
 - **9 つ目のフェンス ` ```logic `** — ロジックアナライザの画面 (Analog Discovery 3 の Logic。レーン・バス・カーソル・
