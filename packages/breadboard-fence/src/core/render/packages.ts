@@ -3,6 +3,7 @@ import type { PlacedPart, Point, Rect } from '../types.ts';
 import {
   CAPTION_CLEAR, NAME_CAP, caption, fitToBoard, haloWidth, partLabel, pinPoints, pointOfPin,
 } from './partCommon.ts';
+import { isWideDip } from '../parts/wide.ts';
 import { element, num } from './svg.ts';
 import {
   REAL_INK, dipChip, drawDipAdapter, drawNamedChip, lookupNamedChip, lookupPinout, sipBox, sipHeader, transformerCore,
@@ -58,13 +59,15 @@ export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme):
     caption: caption(part),
     scale: textScale(theme),
     ink: chipInk(theme),
+    // 幅広 (600 mil) は胴が 6 ピッチ奥行きなので、名前は胴の中に刷る (足の外は配線の通り道)。
+    ...(isWideDip(part.variant) ? { namesInside: true } : {}),
   };
   // 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。姿は品名なので、
   // 変換基板の道へは行かせない (52 の docs/66)。
   const named = lookupNamedChip(part.type, part.variant);
   if (named !== null) return drawNamedChip({ ...options, chip: named });
   // 姿があれば DIP 化した変換基板 (`dip8/sop`)。外形は DIP と同じ。
-  return part.variant === null ? dipChip(options) : drawDipAdapter({ ...options, variant: part.variant });
+  return part.variant === null || isWideDip(part.variant) ? dipChip(options) : drawDipAdapter({ ...options, variant: part.variant });
 }
 
 export function sipBarRect(part: PlacedPart, layout: Layout): Rect {

@@ -12,6 +12,7 @@ import {
 } from 'fence-kit';
 import type { Turn } from '../parts/orient.ts';
 import { isPolarVariant, typesWithVariants, variantsOf } from '../parts/variants.ts';
+import { WIDE_ROW_SPAN, WIDE_VARIANT, isWideDip, wideSizesText } from '../parts/wide.ts';
 import { describeUnknownType, lookupFootprint } from './footprints.ts';
 
 export type PlaceResult = { readonly parts: readonly PlacedPart[]; readonly errors: readonly FenceError[] };
@@ -83,6 +84,8 @@ function variantError(part: PlacedPart): FenceError | null {
   if (variant === null) return null;
 
   const allowed = variantsOf(part.type);
+  const wide = wideError(part, variant, allowed);
+  if (wide !== null) return wide;
   const direct = directSmdError(part, variant, allowed);
   if (direct !== null) return direct;
   if (allowed.length === 0) {
@@ -425,22 +428,47 @@ function dualRowPins(anchor: HoleAddress, oppositeRow: HoleRow, names: readonly 
   });
 }
 
+/**
+ * 幅広 DIP (600 mil) の断り。**`wide` を書けない大きさには、書ける大きさを言う**
+ * (`dip8` に使えるのは sop, tssop、では直し先が分からない)。
+ */
+function wideError(part: PlacedPart, variant: string, allowed: readonly string[]): FenceError | null {
+  if (variant !== WIDE_VARIANT || allowed.includes(variant) || !/^dip\d+$/.test(part.type)) return null;
+  return {
+    message: `部品 ${safeToken(part.id)}: ${safeToken(part.type)}/wide は書けません`
+      + ` (幅広 DIP (600 mil) は ${wideSizesText()}。それ以外は 0.3 インチ幅の ${safeToken(part.type)} です)`,
+    line: part.line,
+    token: part.written,
+  };
+}
+
 function placeDip(spec: PartSpec, board: Board, base: PartBase, pinCount: number): Result<PlacedPart> {
-  const anchor = anchorHole(spec, board, 'dip8 @ e5');
+  const wide = isWideDip(spec.variant);
+  const anchor = anchorHole(spec, board, wide ? `${spec.type}/wide @ d5` : 'dip8 @ e5');
   if (!anchor.ok) return anchor;
-  if (anchor.value.row !== 'e' && anchor.value.row !== 'f') {
-    return fail(`部品 ${safeToken(spec.id)}: dip は溝をまたぐので e 行か f 行に置きます`, spec.line);
+
+  // 幅広は足の列が 6 ピッチ離れる (b↔f・c↔g・d↔h・e↔i)。並べ方は 7 セグと同じ勘定。
+  const oppositeRow: HoleRow | null = wide
+    ? acrossGap(anchor.value.row, WIDE_ROW_SPAN)
+    : anchor.value.row === 'e' ? 'f' : anchor.value.row === 'f' ? 'e' : null;
+  if (oppositeRow === null) {
+    return fail(
+      wide
+        ? `部品 ${safeToken(spec.id)}: ${spec.type}/wide は溝をまたぐので ${rowsAcross(true)} 行か ${rowsAcross(false)} 行に置きます`
+          + ' (足の行は 0.6 インチ = 6 ピッチ離れる。d 行と h 行がおすすめ)'
+        : `部品 ${safeToken(spec.id)}: dip は溝をまたぐので e 行か f 行に置きます`,
+      spec.line,
+    );
   }
 
   const overflow = rightEdge(spec, board, anchor.value.col + pinCount / 2 - 1);
   if (overflow) return { ok: false, error: overflow };
 
   const names = Array.from({ length: pinCount }, (_, index) => String(index + 1));
-  const oppositeRow: HoleRow = anchor.value.row === 'e' ? 'f' : 'e';
   const pins = dualRowPins(anchor.value, oppositeRow, spun(names, spec.turn));
   // **型番が足の名前の表にあれば名前で呼ぶ** (52 の docs/95)。番号は `number` に残す。
   // 変換基板 (`dip8/sop`) は中身の IC が違うので引かない。
-  const pinout = spec.variant === null ? lookupPinout(modelOf(spec), pinCount) : null;
+  const pinout = spec.variant === null || wide ? lookupPinout(modelOf(spec), pinCount) : null;
   return ok({
     ...base,
     kind: 'dip',
@@ -462,7 +490,7 @@ const modelOf = (spec: PartSpec): string | null => spec.value ?? (spec.labelTagg
  */
 function unnamedDipNotice(spec: PartSpec, part: PlacedPart): FenceError[] {
   const model = modelOf(spec);
-  if (part.kind !== 'dip' || spec.variant !== null || model === null || lookupNamedChip(spec.type, null) !== null) return [];
+  if (part.kind !== 'dip' || !(spec.variant === null || isWideDip(spec.variant)) || model === null || lookupNamedChip(spec.type, null) !== null) return [];
   if (part.pins.some((pin) => pin.number !== undefined)) return [];
   const known = pinoutModels(part.pins.length);
   const listed = known.length === 0
@@ -482,6 +510,10 @@ function printedName(names: readonly string[], number: string): string {
   const name = names[Number(number) - 1] ?? number;
   return names.filter((other) => other === name).length === 1 ? name : number;
 }
+
+/** 幅広 DIP の足の行として書ける行 (溝の上か下か)。 */
+const rowsAcross = (upper: boolean): string =>
+  HOLE_ROWS.filter((row) => (ROW_POSITION[row] < ROW_POSITION.f) === upper && acrossGap(row, WIDE_ROW_SPAN) !== null).join('・');
 
 /** その行から、溝の向こうへ `span` ピッチ先の行。届かなければ null。 */
 function acrossGap(row: HoleRow, span: number): HoleRow | null {

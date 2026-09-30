@@ -22,6 +22,7 @@
 | [12-notes.md](12-notes.md) | 図の題と注釈 (印・枠・指し棒・字・フェンスの書き出し) |
 | [13-points.md](13-points.md) | 番地に名前を付ける (`points:`)、配線をつないで書く、`l=` |
 | [14-named-chips.md](14-named-chips.md) | リレー・フォトカプラ・7 セグ (足に名前のある DIP 型) |
+| [15-wide-dip.md](15-wide-dip.md) | 幅広 DIP (600 mil。AS6C62256 などの 28 ピン SRAM、`dip28/wide`) |
 
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではなく、

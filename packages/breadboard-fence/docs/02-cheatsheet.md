@@ -41,6 +41,7 @@ notes:                 # 任意。図に重ねる印と字
 | 3 本足 | `ID: 種類 穴 穴 穴 [値]` | `Q1: transistor h9(B) h10(C) h11(E) 2SC1815` |
 | タクトスイッチ | `ID: button @ 穴` | `SW1: button @ e5` |
 | DIP / ヘッダ | `ID: dipN @ 穴 [r180] [型番]` | `U1: dip8 @ e5 NE555` |
+| 幅広 DIP (0.6 インチ) | `ID: dipN/wide @ 穴 [r180] [型番]` | `U1: dip28/wide @ d10 62256` |
 | マイコンボード | `ID: 種類 @ 穴 [r180]` | `MCU: pico2 @ h5` |
 | 名前つきの DIP 型 | `ID: 種類 @ 穴 [r180]` | `K1: relay @ f10` |
 | ボード外の機器 | マップ形式 (下記) | |
@@ -51,6 +52,11 @@ notes:                 # 任意。図に重ねる印と字
 足を並べて書く部品の向きは穴の順そのもの。`r90` / `r270` は溝をまたぐので書けず、
 DIP・マイコンボードは実物を上から見た並び (切り欠きを左にして 1 番が左下)。
 アンカーは胴の左端の列で、溝の上下どちらの行に書いても同じ。裏返し (`mirror`) は無い。
+
+**幅広 DIP (`dipN/wide`、24・28・32・40 ピン) は足の行が 6 ピッチ (0.6 インチ) 離れる。**
+行の組は b↔f・c↔g・d↔h・e↔i (おすすめは d↔h)。胴は足の行のあいだを覆い、
+d↔h なら e・f・g 行が胴の下。空くのは d の上の a〜c と h の下の i・j。
+`dip16/wide` のようにほかの大きさは書けない。
 
 ### 種類
 
@@ -76,6 +82,7 @@ led/3mm  led/5mm  phototransistor/3mm  phototransistor/5mm
 transistor/to92  transistor/to220  thyristor/…  triac/…  regulator/…  ic3/…
 transistor/sot23-dip  transistor/sot346-dip (S-Mini)  transistor/sot89-dip  (regulator/…)
 dip8/sop  dip8/tssop  (dipN の姿。DIP 化した変換基板)
+dip24/wide  dip28/wide  dip32/wide  dip40/wide  (600 mil 幅。足の行は d↔h など 6 ピッチ離れた組。下記)
 relay/g5v-2  photocoupler/pc817  seg7/5161as  (品名。書かなければこれ)
 sma/male  sma/female  usb-a/male  usb-a/female  usb-c/male  usb-c/female
 crystal/hc49  crystal/cylinder

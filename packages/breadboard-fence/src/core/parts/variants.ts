@@ -9,6 +9,7 @@
 
 import { CONNECTOR_LOOKS, connectorNames, namedChipLooks, namedChipTypes, smdLooksOf, withSmdLooks } from 'fence-kit';
 import { resolveAlias } from './aliases.ts';
+import { WIDE_VARIANT, hasWideLook } from './wide.ts';
 
 export type PartType = {
   readonly type: string;
@@ -112,7 +113,10 @@ function splitOnSlash(token: string): { type: string; variant: string | null } {
  */
 export const variantsOf = (type: string): readonly string[] =>
   // `dipN` は正規表現で読む種類なので、表の外で引く (`dip8/sop`)。
-  Object.hasOwn(VARIANTS, type) ? VARIANTS[type] ?? [] : smdLooksOf(type, 'breadboard');
+  // 600 mil の幅広 (`dip28/wide`) は売られている大きさにだけ足す。
+  Object.hasOwn(VARIANTS, type)
+    ? VARIANTS[type] ?? []
+    : [...smdLooksOf(type, 'breadboard'), ...(hasWideLook(type) ? [WIDE_VARIANT] : [])];
 
 /** 向きのある姿か。ピン名 `(+)` `(-)` を要求するかどうかがこれで決まる。 */
 export const isPolarVariant = (variant: string): boolean => POLAR_VARIANTS.has(variant);
