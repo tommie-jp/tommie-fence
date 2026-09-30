@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.34.0] - 2026-09-30
+
+### Changed
+
+- **束ねるフェンスを上げた** (breadboard-fence 0.24.0)。詳しくは各パッケージの CHANGELOG。
+
 ## [0.33.1] - 2026-09-30
 
 ### Changed
