@@ -104,9 +104,9 @@ const NOTE_ROTATIONS: Readonly<Record<string, 90 | 180 | 270>> = { r90: 90, r180
 
 export const NOTE_MIRROR_WORD = 'mirror';
 
-export const isNoteRotation = (word: string): boolean => word in NOTE_ROTATIONS;
+export const isNoteRotation = (word: string): boolean => Object.hasOwn(NOTE_ROTATIONS, word);
 
-export const noteRotationOf = (word: string): NoteTurn['rotate'] | null => NOTE_ROTATIONS[word] ?? null;
+export const noteRotationOf = (word: string): NoteTurn['rotate'] | null => (Object.hasOwn(NOTE_ROTATIONS, word) ? NOTE_ROTATIONS[word] ?? null : null);
 
 /** その角度を書く語。0 度は語を書かない (書かないのと同じ意味)。 */
 export const noteRotationWord = (rotate: NoteTurn['rotate']): string => (rotate === 0 ? '' : `r${rotate}`);

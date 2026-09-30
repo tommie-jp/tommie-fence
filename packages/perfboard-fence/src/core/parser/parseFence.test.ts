@@ -443,3 +443,16 @@ describe('board: の基材 (h と material)', () => {
     expect(board?.h).toBe(0.8);
   });
 });
+
+describe('parseFence — board の slots の語', () => {
+  test.each(['constructor', 'toString', '__proto__', 'hasOwnProperty'])(
+    'rejects the inherited name %s as slots',
+    (word) => {
+      const parsed = parseFence(`board:\n  size: 28x18\n  slots: ${word}\n`);
+
+      expect(parsed.errors.map((error) => error.message)).toEqual([
+        expect.stringContaining('board の slots は on / off か、銅箔の色'),
+      ]);
+    },
+  );
+});

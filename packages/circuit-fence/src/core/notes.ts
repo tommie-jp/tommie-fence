@@ -278,6 +278,6 @@ const NOTE_ROTATIONS: Readonly<Record<string, 90 | 180 | 270>> = { r90: 90, r180
 
 export const NOTE_MIRROR_WORD = 'mirror';
 
-export const isNoteRotation = (word: string): boolean => word in NOTE_ROTATIONS;
+export const isNoteRotation = (word: string): boolean => Object.hasOwn(NOTE_ROTATIONS, word);
 
-export const noteRotationOf = (word: string): 90 | 180 | 270 | null => NOTE_ROTATIONS[word] ?? null;
+export const noteRotationOf = (word: string): 90 | 180 | 270 | null => (Object.hasOwn(NOTE_ROTATIONS, word) ? NOTE_ROTATIONS[word] ?? null : null);

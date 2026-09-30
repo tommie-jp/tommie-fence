@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **向きの語・注釈の回転の語・記号の形の引きに `constructor` などの継承された名前が通っていた** — 自分の持つ語だけ受け、それ以外は従来どおり読めない語として断る (`readTurnWords` / `isNoteRotation` / `glyphOf`)
+
 ## [0.23.0] - 2026-09-30
 
 ### Added

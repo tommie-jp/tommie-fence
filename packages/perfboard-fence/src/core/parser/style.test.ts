@@ -136,3 +136,13 @@ describe('labels の sides', () => {
       .toEqual(['left', 'top']);
   });
 });
+
+// 利用者の語で普通のオブジェクトを引くと、継承された名前 (constructor など) まで当たる。
+describe('parseStyle — on / off の語', () => {
+  test.each(['constructor', 'toString', '__proto__', 'hasOwnProperty', 'valueOf'])(
+    'rejects the inherited name %s as a flag',
+    (word) => {
+      expect(read({ stamp: word }).errors.map((error) => error.message)).toEqual(['stamp は on か off で書きます']);
+    },
+  );
+});

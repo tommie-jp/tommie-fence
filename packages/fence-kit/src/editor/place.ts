@@ -21,7 +21,7 @@ import type { Edit, LineEdit } from './edits.ts';
 const LEAD_SPANS: Readonly<Record<string, number>> = { resistor: 5, led: 1 };
 const FALLBACK_SPAN = 3;
 
-export const leadSpan = (type: string): number => LEAD_SPANS[type] ?? FALLBACK_SPAN;
+export const leadSpan = (type: string): number => (Object.hasOwn(LEAD_SPANS, type) ? LEAD_SPANS[type] : undefined) ?? FALLBACK_SPAN;
 
 /**
  * 押した穴をアンカーに、足を並べる位置 (アンカーからいくつ先か)。

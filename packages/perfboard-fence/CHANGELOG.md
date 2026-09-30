@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **`style:` の `on` / `off` と `board:` の `slots:` に `constructor` などの継承された名前が通っていた** — 語を普通のオブジェクトで引いていたので、`stamp: constructor` が真として読まれ刻印が出た。自分の持つ語だけ受け、それ以外は従来どおり「on か off で書きます」と断る
+- **向きの語に `constructor` などの継承された名前が通っていた** — `rotationOf` / `isRotationWord` が継承された名前まで拾っていた。自分の持つ語 (`r90` `r180` `r270`) だけ受ける
+
 ## [0.19.0] - 2026-09-30
 
 ### Added

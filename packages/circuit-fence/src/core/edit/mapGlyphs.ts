@@ -95,8 +95,8 @@ const MARKS: Record<string, Mark> = {
 };
 
 export const glyphOf = (type: string): Glyph => ({
-  name: SHAPES[type] ?? 'box',
-  mark: MARKS[type] ?? null,
+  name: (Object.hasOwn(SHAPES, type) ? SHAPES[type] : undefined) ?? 'box',
+  mark: (Object.hasOwn(MARKS, type) ? MARKS[type] : undefined) ?? null,
 });
 
 /** 2 端子の胴の長さ。マスの間隔より短くして、隣の記号とくっつかないようにする。 */

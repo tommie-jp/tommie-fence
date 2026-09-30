@@ -44,3 +44,9 @@ describe('マップ (殻)', () => {
     expect(KINDS.filter((kind) => !hasMap(kind))).toEqual(['vna', 'scope', 'spectrum', 'graph', 'logic']);
   });
 });
+
+describe('継承された名前は種類ではない', () => {
+  test.each(['constructor', 'toString', '__proto__', 'hasOwnProperty'])('rejects %s', (word) => {
+    expect(toKind(word)).toBeNull();
+  });
+});

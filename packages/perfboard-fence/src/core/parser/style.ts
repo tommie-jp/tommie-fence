@@ -76,7 +76,8 @@ const FLAG_WORDS: Record<string, boolean> = { on: true, off: false };
 
 const asFlag = (key: string): Reader => (value) => {
   if (typeof value === 'boolean') return { value };
-  const word = typeof value === 'string' ? FLAG_WORDS[value.trim().toLowerCase()] : undefined;
+  const spelled = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  const word = Object.hasOwn(FLAG_WORDS, spelled) ? FLAG_WORDS[spelled] : undefined;
   return word === undefined ? { problem: `${key} は on か off で書きます` } : { value: word };
 };
 

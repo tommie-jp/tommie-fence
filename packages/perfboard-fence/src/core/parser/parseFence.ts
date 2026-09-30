@@ -488,7 +488,8 @@ function readFence(source: string): ParseResult {
 
         // slots: 短いほうの両端に並ぶスロット用の銅箔。**既定は描かない。**
         // **色を書けば描く** — 銅箔を出すかどうかと、その色は 1 つの指定で足りる。
-        const flag = typeof written === 'string' ? FLAG_WORDS[written.trim().toLowerCase()] : undefined;
+        const spelled = typeof written === 'string' ? written.trim().toLowerCase() : '';
+        const flag = Object.hasOwn(FLAG_WORDS, spelled) ? FLAG_WORDS[spelled] : undefined;
         if (flag === undefined) {
           if (written !== null && isLandColor(written)) {
             slots = true;

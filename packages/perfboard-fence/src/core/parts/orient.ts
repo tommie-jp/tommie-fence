@@ -26,9 +26,9 @@ export const MIRROR_WORD = 'mirror';
 /** 向きの語。**値ではないもの**の一覧として外からも引く。 */
 export const ORIENTATIONS: readonly string[] = [...Object.keys(ROTATIONS), MIRROR_WORD];
 
-export const isRotationWord = (token: string): boolean => token in ROTATIONS;
+export const isRotationWord = (token: string): boolean => Object.hasOwn(ROTATIONS, token);
 
-export const rotationOf = (token: string): Turn['rotate'] | null => ROTATIONS[token] ?? null;
+export const rotationOf = (token: string): Turn['rotate'] | null => (Object.hasOwn(ROTATIONS, token) ? ROTATIONS[token] ?? null : null);
 
 /** その角度を書く語。0 度は語を書かない。 */
 export const rotationWord = (rotate: Turn['rotate']): string =>

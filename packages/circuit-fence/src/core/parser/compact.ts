@@ -62,7 +62,7 @@ const NO_TURNED: Turned = { turn: NO_TURN, orientation: null };
  * 後勝ちで黙らない — `r90 r180` と書いた人がどちらのつもりかは決められない。
  */
 function withTurn(got: Turned, token: string): Turned | 'twice' | null {
-  const rotate = ROTATIONS[token];
+  const rotate = Object.hasOwn(ROTATIONS, token) ? ROTATIONS[token] : undefined;
   if (rotate !== undefined) {
     return got.turn.rotate === 0 ? { ...got, turn: { ...got.turn, rotate } } : 'twice';
   }

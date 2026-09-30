@@ -39,7 +39,7 @@ const ALSO: Readonly<Record<string, Kind>> = {
  */
 export const toKind = (value: unknown): Kind | null => {
   if (isKind(value)) return value;
-  return typeof value === 'string' ? ALSO[value] ?? null : null;
+  return typeof value === 'string' ? (Object.hasOwn(ALSO, value) ? ALSO[value] : undefined) ?? null : null;
 };
 
 /**
