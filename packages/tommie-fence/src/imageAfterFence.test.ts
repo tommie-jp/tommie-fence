@@ -34,6 +34,21 @@ describe('フェンスの直後の画像を畳む', () => {
     }
   });
 
+  test('also folds the image after a plantuml fence, which another extension draws', () => {
+    expect(render('```plantuml\n@startuml\nA --> B\n@enduml\n```\n\n![ブロック図](a.svg)\n')).toContain('<details class="tf-mirror">');
+  });
+
+  test('folds the image even when the PlantUML extension has already retyped the fence', () => {
+    const md = new MarkdownIt();
+    md.core.ruler.push('retype_plantuml', (state) => {
+      for (const token of state.tokens) if (token.type === 'fence' && token.info === 'plantuml') token.type = 'plantuml';
+    });
+    md.renderer.rules.plantuml = () => '<img src="uml.svg">';
+    md.use(imageAfterFencePlugin({ mode: () => 'collapse', label: (alt) => `GitHub: ${alt}` }));
+
+    expect(md.render('```plantuml\n@startuml\n@enduml\n```\n\n![ブロック図](a.svg)\n')).toContain('<details class="tf-mirror">');
+  });
+
   test('escapes the alt text in the summary', () => {
     expect(render('```graph\nx\n```\n\n![a<b>&c](a.svg)\n')).toContain('<summary>GitHub: a&lt;b&gt;&amp;c</summary>');
   });

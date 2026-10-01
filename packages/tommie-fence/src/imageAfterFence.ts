@@ -23,8 +23,25 @@ export type ImageAfterFenceOptions = {
   readonly label: (alt: string) => string;
 };
 
-const isFigureFence = (token: Token | undefined): boolean =>
-  token?.type === 'fence' && FIGURE_LANGUAGES.some((language) => isFenceOf(token.info, language));
+/**
+ * 拡張は描かないが、別の拡張 (PlantUML など) が図にするフェンス。GitHub 用の画像を同じ流儀で
+ * フェンスの直後に置くので、プレビューでは同じく図が 2 枚続く。畳む対象にだけ足す
+ * (`FIGURE_LANGUAGES` は拡張が描くフェンスの一覧で、テストが固定している)。
+ */
+export const MIRRORED_ONLY_LANGUAGES = ['plantuml'] as const;
+
+/**
+ * PlantUML 拡張は、先に動くと `fence` のトークンの種類を `plantuml` に書き換える
+ * (`markdown-it-plantuml/rule.js`)。どちらの順で動いても畳めるよう、両方を受ける。
+ */
+const PLANTUML_TOKEN_TYPE = 'plantuml';
+
+const isFigureFence = (token: Token | undefined): boolean => {
+  if (token === undefined) return false;
+  if (token.type === PLANTUML_TOKEN_TYPE) return true;
+  return token.type === 'fence'
+    && [...FIGURE_LANGUAGES, ...MIRRORED_ONLY_LANGUAGES].some((language) => isFenceOf(token.info, language));
+};
 
 /** 画像 1 枚だけの段落の中身 (`inline`) か。前後の空白は markdown-it が落としてある。 */
 const soleImage = (inline: Token | undefined): Token | undefined => {
