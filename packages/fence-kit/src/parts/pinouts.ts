@@ -27,6 +27,7 @@
  * | 74HC595 | SN74HC595 SCLS041J、Figure と Table 5-1 (PDIP) |
  * | CD4511B | SCHS072B、端子図 (TERMINAL ASSIGNMENT) |
  * | CD74HC283 | SCHS176E、4 Pin Configuration (PDIP) |
+ * | 74HC74 / 74HC86 / 74HC02 | SN74HC74 SCLS094D / SN74HC86 SCLS109F / SN74HC02 SCLS076F、端子図 (N)。**未確認 (記憶による)。データシートで突き合わせること** |
  * | 74HC163 | SN74HC163 SCLS298D、TOP VIEW (N) |
  * | 74HC154 | CD74HC154 SCHS152D、Pinout (PDIP) |
  * | 62256 | Alliance AS6C62256 (rev 1.2、2016-03)、PIN CONFIGURATION (PDIP) |
@@ -133,6 +134,17 @@ const ROWS: readonly PinoutRow[] = [
   },
   { models: ['74HC08', 'SN74HC08', 'SN74HC08N'], role: '2 入力 AND ×4', names: HC_QUAD_GATE },
   { models: ['74HC32', 'SN74HC32', 'SN74HC32N'], role: '2 入力 OR ×4', names: HC_QUAD_GATE },
+  { models: ['74HC86', 'SN74HC86', 'SN74HC86N'], role: '2 入力 XOR ×4', names: HC_QUAD_GATE },
+  {
+    // NOR は Y が A・B より前に来る (74HC08 などと並びが違う)。
+    models: ['74HC02', 'SN74HC02', 'SN74HC02N'], role: '2 入力 NOR ×4',
+    names: ['1Y', '1A', '1B', '2Y', '2A', '2B', 'GND', '3A', '3B', '3Y', '4A', '4B', '4Y', 'VCC'],
+  },
+  {
+    // CLR・PRE は上に線 (L で効く)。Q の反転は `/1Q`・`/2Q`。
+    models: ['74HC74', 'SN74HC74', 'SN74HC74N'], role: 'D フリップフロップ ×2',
+    names: ['1CLR', '1D', '1CLK', '1PRE', '1Q', '/1Q', 'GND', '/2Q', '2Q', '2PRE', '2CLK', '2D', '2CLR', 'VCC'],
+  },
   {
     // L293 (ダイオード無し) も同じデータシート・同じ印字。
     models: ['L293D', 'L293DNE', 'L293', 'L293NE'], role: 'ハーフ H ブリッジ ×4',

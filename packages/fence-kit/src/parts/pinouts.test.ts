@@ -131,7 +131,7 @@ describe('足の名前の表', () => {
     expect(pinoutModels()).toEqual([
       'NE555', 'TLC555', 'LM358', 'TL071', 'TL072',
       'CD4017B', 'CD4040B', 'CD4069UB', 'CD4071B', 'CD4081B', 'CD4011B', 'CD4001B',
-      'CD4013B', 'CD4070B', 'CD40106B', '74HC04', '74HC08', '74HC32', 'L293D', 'MCP3008',
+      'CD4013B', 'CD4070B', 'CD40106B', '74HC04', '74HC08', '74HC32', '74HC86', '74HC02', '74HC74', 'L293D', 'MCP3008',
       '74HC595', 'CD4511B', 'CD74HC283', '74HC163', '74HC154', '62256', '6116', '74HC245', '74HC273',
     ]);
     expect(pinoutModels(16)).toEqual([

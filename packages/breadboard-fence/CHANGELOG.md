@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- 足の名前の表に 74HC86・74HC02・74HC74 (fence-kit)。
+
 ## [0.24.0] - 2026-09-30
 
 ### Added
