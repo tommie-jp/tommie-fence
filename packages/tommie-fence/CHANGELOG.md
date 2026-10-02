@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.35.0] - 2026-10-02
+
 ### Fixed
 
 - **` ```plantuml ` の直後の GitHub 用の画像も、プレビューで畳む。** PlantUML は別の拡張が図にするので、

@@ -2,7 +2,7 @@
   "name": "logic-fence",
   "displayName": "Logic Fence",
   "description": "Markdown の ```logic フェンスをロジックアナライザの画面 — レーン・バス・時間軸・カーソル・トリガ・UART の読み下し — として描く",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "private": true,
   "publisher": "tommie",
