@@ -8,7 +8,7 @@ import type { Window } from '../model/window.ts';
 import type { Theme } from './theme.ts';
 
 /**
- * 行の絵。**1 ビットは線、バスは値の箱、読み下しはフレームの箱**。
+ * 行の絵。**1 ビットは線 (H の区間は同じ色で塗る)、バスは値の箱、読み下しはフレームの箱**。
  * 変わり目が 3 px より近い行 (`dense`) は線でなく塗りで描く (`model/window.ts` の `PLOT.minGapPx`)。
  */
 const STROKE = 1.6;
@@ -39,7 +39,10 @@ function bitRow(row: BitRow, window: Window, plot: Rect, frame: Frame, theme: Th
     path += `H${num(x)}V${num(levelY(edge.v))}`;
   }
   path += `H${num(plot.x + plot.width)}`;
-  return element('path', { d: path, fill: 'none', stroke: color, 'stroke-width': STROKE, 'stroke-linejoin': 'miter' });
+  // H の区間は線と同じ色で薄く塗る (底の線まで閉じた形)
+  const area = `${path}V${num(frame.bottom)}H${num(plot.x)}Z`;
+  return element('path', { d: area, fill: color, 'fill-opacity': 0.3, stroke: 'none' })
+    + element('path', { d: path, fill: 'none', stroke: color, 'stroke-width': STROKE, 'stroke-linejoin': 'miter' });
 }
 
 /** 箱の字。入りきらなければ書かない (切った字は別の値に読める)。 */
