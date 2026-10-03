@@ -8,6 +8,7 @@ import { renderSlots } from './render/slots.ts';
 import { renderJoints } from './render/joints.ts';
 import { renderHits } from './render/hits.ts';
 import { renderParts } from './render/parts.ts';
+import { renderLeadWires } from './render/leadWires.ts';
 import { renderDeviceWires, renderWires } from './render/wires.ts';
 import { crossingPoints } from './render/crossings.ts';
 import { renderTitle } from './render/title.ts';
@@ -360,6 +361,8 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       + renderDevices(placedDevices.placed, THEME, options.edit === true)
       // **名札は板に書いた字を避ける** (番地で置いたほうが強い)。
       + renderParts(placement.parts, layout, PLATE, options.edit === true, noteBands(notes, layout, PLATE))
+      // 足へ来る線は胴の上にも重ね、足の真ん中まで線を見せる (USB-C のパッドも同じ)。
+      + renderLeadWires(placement.parts, wiring.wires, layout, PLATE, hops.slice(0, wiring.wires.length))
       // **行と列の名前は機器とその配線より上、部品よりも上。** 板の上に置いた
       // 機器の足と線は名前の帯を必ず横切るので、下に敷くと行く先の列の名前が隠れる。
       // 縁から張り出す端面の SMA も同じで、部品の下に敷くと台座が `D`〜`F` を

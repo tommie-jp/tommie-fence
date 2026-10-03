@@ -21,6 +21,9 @@ const WIRE_WIDTH = 4;
  */
 const OUTLINE_MARGIN = 2;
 
+/** 黒い線の縁。**白で 1 px** — 板の暗い緑と黒は明るさが近く、暗い縁では線が沈む。 */
+const BLACK_OUTLINE = '#ffffff';
+
 /**
  * 穴の間で渡る跨ぎの半径。**穴の間隔 (20) の 1/4。** これより小さいと線の太さに埋もれ、
  * 大きいと隣の穴まで届いて、跨いだ先の穴が塞がって見える。
@@ -194,7 +197,7 @@ function strand(
     halo: outlined
       ? draw({
         class: 'cf-wire-outline',
-        stroke: outlineOn(theme.palette.plate),
+        stroke: color === 'black' ? BLACK_OUTLINE : outlineOn(theme.palette.plate),
         'stroke-width': WIRE_WIDTH + OUTLINE_MARGIN,
         'stroke-linecap': 'round',
         'pointer-events': 'none',

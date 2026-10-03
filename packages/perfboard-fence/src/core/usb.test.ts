@@ -113,9 +113,15 @@ describe('ネットリストと ERC', () => {
 describe('図', () => {
   test('draws the breakout with the pin names printed on it', () => {
     const { svg } = renderPerfboard(fence('parts:', '  J1: usb-c c5 c6 c7 c8'));
-    expect(svg).toContain('>VBUS<');
+    expect(svg).toContain('>V<');
     expect(svg).toContain('>GND<');
     expect(svg).toContain('>J1<');
+  });
+
+  test('draws the wire again over the type-c breakout, so it reaches the pad on the component side', () => {
+    const { svg } = renderPerfboard(fence('parts:', '  J1: usb-c c5 c6 c7 c8', 'wires:', '  - c8 -- c10 red'));
+    expect(svg).toMatch(/<clipPath id="pf-lead-J1-[^"]+">/);
+    expect(svg.indexOf('clip-path="url(#pf-lead-J1')).toBeGreaterThan(svg.indexOf('>V<'));
   });
 
   test('widens the canvas when the connector hangs off the edge, instead of cutting it', () => {

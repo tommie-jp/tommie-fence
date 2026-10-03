@@ -29,6 +29,8 @@ type ConnectorSpec = {
   readonly pins: readonly string[];
   /** 変換基板の足 (実体配線図が書く穴の順)。省くと `pins` と同じ。**書いた穴の数は 4 本とも**。 */
   readonly breakout?: readonly string[];
+  /** 変換基板に刷ってある字 (`breakout` の順)。省くと `breakout` と同じ。配線の名前は `breakout` のまま。 */
+  readonly silk?: readonly string[];
   /** 受け口 (メス) の金物。幅と奥行き (mm)。 */
   readonly receptacle: { readonly width: number; readonly depth: number };
   /** 差し込み (オス) の金物。幅、基板の縁から出る長さ、基板に載る根元 (mm)。 */
@@ -55,6 +57,8 @@ const CONNECTORS: Record<string, ConnectorSpec> = {
     // 変換基板は 4 本のピンヘッダ (GND D+ D- VBUS)。CC は基板の中で終端済みで出ていないので、
     // 実体配線図の 2 つだけがこの 4 本を読む (回路図の記号は `pins` の 6 本)。
     breakout: ['GND', 'D+', 'D-', 'VBUS'],
+    // 実物の基板の刷り字は VBUS を `V` と縮める。
+    silk: ['GND', 'D+', 'D-', 'V'],
     receptacle: { width: 8.94, depth: 7.35 },
     plug: { width: 8.25, reach: 6.65, root: 2.5 },
     round: true,
@@ -209,7 +213,7 @@ function frameOf(shape: ConnectorShape): Frame | null {
     y: origin.y + (centre + a) * u.y + (front + b) * v.y,
   });
 
-  const names = (spec.breakout ?? spec.pins).slice(0, pins.length);
+  const names = (spec.silk ?? spec.breakout ?? spec.pins).slice(0, pins.length);
   const widest = Math.max(...names.map((name) => textWidth(name)));
   const along = [...pins.map((pin) => pin.a)].sort((x, y) => x - y);
   const gaps = along.slice(1).map((value, index) => value - (along[index] ?? value)).filter((gap) => gap > 0);
@@ -218,11 +222,15 @@ function frameOf(shape: ConnectorShape): Frame | null {
   const room = Math.min(gaps.length === 0 ? shape.pitch : Math.min(...gaps), shape.pitch) - NAME_GAP;
   const font = sideways(shape.facing) ? NAME_FONT : Math.min(NAME_FONT, room / widest);
   const reach = sideways(shape.facing) ? font * widest * NAME_SLACK : font * NAME_CAP;
-  const bandFrom = shape.pitch * PAD + 1.5;
-  const band = { b0: bandFrom, b1: bandFrom + reach };
-
   const male = shape.variant === 'male';
-  const metalFrom = band.b1 + METAL_GAP;
+  // **実寸のある受け口は、名前を図の上でパッドの下に刷る** — 上向き・横向きは金物と反対の側、
+  // 下向きはパッドと金物の間。線はパッドの上 (後ろ) から来るので、字に被らない。
+  const behind = spec.board !== undefined && !male && shape.facing !== 'down';
+  const pinRearmost = Math.min(...pins.map((pin) => pin.b));
+  const bandFrom = behind ? pinRearmost - (REAR_PAD / 2) * mm - NAME_GAP : shape.pitch * PAD + 1.5;
+  const band = behind ? { b0: bandFrom, b1: bandFrom - reach } : { b0: bandFrom, b1: bandFrom + reach };
+
+  const metalFrom = (behind ? shape.pitch * PAD + 1.5 : band.b1) + METAL_GAP;
   const width = (male ? spec.plug.width : spec.receptacle.width) * mm;
   const pinRear = Math.min(...pins.map((pin) => pin.b)) - shape.pitch * BACK;
   // 実寸の基板は縁が足の列に近い (4 本で 7.62mm の列が 9.2mm の幅に収まる)。
@@ -233,9 +241,8 @@ function frameOf(shape: ConnectorShape): Frame | null {
   // **実寸のある受け口は、後ろの縁のパッドが足** (実物の変換基板どおり。配線はパッドへ届く)。
   // 基板は足のすぐ後ろから実物の長さだけ前へ伸び、金物はその先の縁に合わせる。
   const real = male ? undefined : spec.board;
-  const rear = real === undefined
-    ? pinRear
-    : Math.min(...pins.map((pin) => pin.b)) - (REAR_PAD_INSET + REAR_PAD / 2) * mm;
+  const padRear = pinRearmost - (REAR_PAD_INSET + REAR_PAD / 2) * mm;
+  const rear = real === undefined ? pinRear : padRear;
   const loose = male ? metalFrom + spec.plug.root * mm : metalFrom + (spec.receptacle.depth - LIP) * mm;
   const plateFront = real === undefined ? loose : rear + real.length * mm;
   const metalTo = male ? plateFront + spec.plug.reach * mm : plateFront + LIP * mm;
@@ -250,10 +257,18 @@ function frameOf(shape: ConnectorShape): Frame | null {
     names,
     font,
     band,
-    plate: { a0: -plateHalf, a1: plateHalf, b0: rear, b1: plateFront },
+    plate: { a0: -plateHalf, a1: plateHalf, b0: behind ? Math.min(rear, band.b1 - NAME_GAP) : rear, b1: plateFront },
     metal: { a0: -width / 2, a1: width / 2, b0: metalStart, b1: metalTo },
     at,
   };
+}
+
+/**
+ * 足が変換基板の後ろの縁の四角いパッドか (実寸のある受け口)。そのとき配線は
+ * パッドの真ん中へ届き、**部品面の図でもパッドの上に線が見える**ように引く。
+ */
+export function hasPadFeet(type: string, variant: string | null): boolean {
+  return specOf(type)?.board !== undefined && variant !== 'male';
 }
 
 /** 局所座標の長方形を図の上の長方形に。軸が 90 度単位なので、角 2 つで決まる。 */
@@ -281,9 +296,9 @@ export function connectorBox(shape: ConnectorShape): ChipBox {
   };
 }
 
-/** 変換基板 (青いガラエポ) と、白い字。 */
-const PLATE = '#1d5fb8';
-const PLATE_EDGE = '#123d7c';
+/** 変換基板 (濃い青のガラエポ) と、白い字。 */
+const PLATE = '#123f86';
+const PLATE_EDGE = '#0a2552';
 const SILK = '#eef2f8';
 /** ランド (金めっき) と、挿したピンヘッダの頭。 */
 const LAND = '#d4ae4c';
@@ -350,7 +365,7 @@ function pinNames(frame: Frame, facing: ConnectorFacing, ink: BodyInk): string {
     if (sideways(facing)) {
       const point = frame.at(pin.a, frame.band.b0);
       return svgText(point.x, point.y + frame.font * NAME_CAP / 2, name, {
-        ...style, anchor: facing === 'right' ? 'start' : 'end',
+        ...style, anchor: (facing === 'right') !== frame.band.b1 < frame.band.b0 ? 'start' : 'end',
       });
     }
     // 字は基準線から上へ伸びるので、帯の下の縁 (図の上で) に基準線を置く。

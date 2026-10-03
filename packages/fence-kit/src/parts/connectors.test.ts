@@ -86,8 +86,10 @@ describe('外形', () => {
     const mm = pitch / 2.54;
 
     expect(box.width / mm).toBeCloseTo(9.2, 1);
-    // 基板が 12.7mm で、金物が縁から 0.5mm 出る。
-    expect(box.height / mm).toBeCloseTo(13.2, 1);
+    // 基板が 12.7mm で、金物が縁から 0.5mm 出る。後ろの縁はパッドの 0.5mm 後ろより、
+    // パッドの下に刷った名前のぶん延びる。
+    expect((100 - box.y) / mm).toBeCloseTo(13.2 - 1.25, 1);
+    expect(box.height / mm).toBeGreaterThan(13.2);
   });
 
   test('grows from the pins toward the side it faces', () => {
@@ -158,7 +160,9 @@ describe('姿', () => {
     expect(two).not.toContain('>D+<');
 
     const four = drawConnector(shape({ points: row(4) }));
-    for (const name of ['GND', 'D+', 'D-', 'VBUS']) expect(four).toContain(`>${name}<`);
+    // Type-C の基板の刷り字は VBUS を `V` と縮める (配線の名前は VBUS のまま)。
+    for (const name of ['GND', 'D+', 'D-', 'V']) expect(four).toContain(`>${name}<`);
+    expect(four).not.toContain('>VBUS<');
     expect(four).not.toContain('>CC1<');
   });
 
@@ -204,8 +208,16 @@ describe('姿', () => {
     const box = connectorBox(shape({ points, facing: 'down' }));
     const mm = PITCH / 2.54;
     // 後ろの縁はパッドの 0.5mm 後ろ。基板 12.7mm の先に金物が 0.5mm 出る。
+    // 下向きの名前はパッドと金物の間 (図の上でパッドの下) なので、後ろへは延びない。
     expect(box.y).toBeCloseTo(100 - 1.25 * mm, 1);
     expect(box.height).toBeCloseTo(13.2 * mm, 1);
+  });
+
+  test('prints the type-c pin names below the pads in the picture, whichever way it faces', () => {
+    const nameY = (facing: 'up' | 'down'): number =>
+      Number(/<text[^>]*y="([\d.]+)"[^>]*>GND</.exec(drawConnector(shape({ points: row(4), facing })))?.[1]);
+    expect(nameY('up')).toBeGreaterThan(100);
+    expect(nameY('down')).toBeGreaterThan(100);
   });
 
   test('lets a black-and-white figure repaint every colour', () => {

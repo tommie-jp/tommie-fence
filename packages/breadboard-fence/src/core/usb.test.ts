@@ -66,7 +66,7 @@ describe('置き方', () => {
 describe('図', () => {
   test('draws the breakout with the pin names printed on it', () => {
     const { svg } = renderBreadboard(fence('parts:', '  J1: usb-c c10 c11 c12 c13'));
-    expect(svg).toContain('>VBUS<');
+    expect(svg).toContain('>V<');
     expect(svg).toContain('>GND<');
     expect(svg).toContain('>J1<');
   });
@@ -74,11 +74,14 @@ describe('図', () => {
   test('faces away from the ravine', () => {
     const top = renderBreadboard(fence('parts:', '  J1: usb-c c10 c11 c12 c13')).svg;
     const bottom = renderBreadboard(fence('parts:', '  J1: usb-c h10 h11 h12 h13')).svg;
-    const nameY = (svg: string): number => Number(/<text x="[-\d.]+" y="([-\d.]+)"[^>]*>VBUS</.exec(svg)?.[1]);
+    // Type-C の名前はパッドの後ろに刷るので、向きは金物の位置で見る。
+    // パッドも同じ色なので、最後に描く金物の胴を読む。
+    const nameY = (svg: string): number =>
+      Number([...svg.matchAll(/<rect x="[-\d.]+" y="([-\d.]+)"[^>]*fill="#c3c8ce"/g)].at(-1)?.[1]);
     const yOf = (svg: string, row: string): number =>
       Number(new RegExp(`<text[^>]* y="([-\\d.]+)"[^>]*>${row}<`).exec(svg)?.[1]);
 
-    // 上の段では名前が足の上 (差し込み口は上)、下の段では足の下。
+    // 上の段では金物が足の上 (差し込み口は上)、下の段では足の下。
     expect(nameY(top)).toBeLessThan(yOf(top, 'c'));
     expect(nameY(bottom)).toBeGreaterThan(yOf(bottom, 'h') - 10);
   });
