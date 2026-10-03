@@ -128,20 +128,25 @@ describe('足の名前の表', () => {
   });
 
   test('lists the models it knows, one spelling per row, optionally for one package', () => {
-    expect(pinoutModels()).toEqual([
-      'NE555', 'TLC555', 'LM358', 'TL071', 'TL072',
-      'CD4017B', 'CD4040B', 'CD4069UB', 'CD4071B', 'CD4081B', 'CD4011B', 'CD4001B',
-      'CD4013B', 'CD4070B', 'CD40106B', '74HC04', '74HC08', '74HC32', '74HC86', '74HC02', '74HC74', 'L293D', 'MCP3008',
-      '74HC595', 'CD4511B', 'CD74HC283', '74HC163', '74HC154', '62256', '6116', '74HC245', '74HC273',
-      '3SK291',
-    ]);
+    const all = pinoutModels();
+
+    // 先頭の 31 行は 74HC273 まで (既存の並び)、そのあとにロジック IC、最後が 3SK291。
+    expect(all.slice(0, 5)).toEqual(['NE555', 'TLC555', 'LM358', 'TL071', 'TL072']);
+    expect(all.slice(28, 35)).toEqual(['62256', '6116', '74HC245', '74HC273', '74HC14', '74HC00', '74HC161']);
+    expect(all.at(-1)).toBe('3SK291');
+    expect(new Set(all).size).toBe(all.length);
     expect(pinoutModels(4)).toEqual(['3SK291']);
-    expect(pinoutModels(16)).toEqual([
-      'CD4017B', 'CD4040B', 'L293D', 'MCP3008', '74HC595', 'CD4511B', 'CD74HC283', '74HC163',
+    expect(pinoutModels(20)).toEqual([
+      '74HC245', '74HC273', '74HC244', '74HC541', '74HC240', '74HC573', '74HC574',
     ]);
-    expect(pinoutModels(20)).toEqual(['74HC245', '74HC273']);
     expect(pinoutModels(24)).toEqual(['74HC154', '6116']);
     expect(pinoutModels(28)).toEqual(['62256']);
+    for (const model of ['74HC14', '74HC00', '74HC10', '74HC20', '74HC125', '74HC393', '74HC164', '74HC4066']) {
+      expect(pinoutModels(14), model).toContain(model);
+    }
+    for (const model of ['74HC161', '74HC138', '74HC157', '74HC175', '74HC4060', '74HC85', '74HC4051']) {
+      expect(pinoutModels(16), model).toContain(model);
+    }
   });
 
   test('hands out the whole table with every spelling, for the cheat sheet', () => {
@@ -264,3 +269,63 @@ describe('3SK291 (面実装の 4 本足)', () => {
   });
 });
 
+
+describe('表の全部の行', () => {
+  // 電源の足を持たない部品 (トランジスタを変換基板に載せた物)。
+  const NO_SUPPLY = ['3SK291'];
+  const SUPPLY = /^(V|GND|AGND|DGND|GROUND)/;
+
+  test('has an even number of pins between 4 and 40, and no empty or spaced name', () => {
+    for (const row of pinoutTable()) {
+      const model = row.models[0];
+      expect(row.names.length % 2, model).toBe(0);
+      expect(row.names.length, model).toBeGreaterThanOrEqual(4);
+      expect(row.names.length, model).toBeLessThanOrEqual(40);
+      expect(row.names.every((name) => name.trim() !== '' && !/\s/.test(name)), model).toBe(true);
+    }
+  });
+
+  test('has a supply pin and a ground pin unless it is a bare transistor', () => {
+    for (const row of pinoutTable().filter((one) => !NO_SUPPLY.includes(one.models[0] ?? ''))) {
+      expect(row.names.some((name) => SUPPLY.test(name)), row.models[0]).toBe(true);
+      expect(row.names.some((name) => /^(GND|AGND|DGND|GROUND|VSS|VEE|VCC-|V-)/.test(name)), `${row.models[0]} ground`).toBe(true);
+    }
+  });
+
+  test('spells a model once per row, in capitals for the representative', () => {
+    const seen = new Set<string>();
+    for (const row of pinoutTable()) {
+      for (const model of row.models) {
+        expect(seen.has(model.toUpperCase()), model).toBe(false);
+        seen.add(model.toUpperCase());
+      }
+    }
+  });
+});
+
+describe('ロジック IC の足の名前 (TI のデータシートから写したもの)', () => {
+  test.each([
+    ['74HC14', 14, ['1A', '1Y', '2A', '2Y', '3A', '3Y', 'GND', '4Y', '4A', '5Y', '5A', '6Y', '6A', 'VCC']],
+    ['74HC20', 14, ['1A', '1B', 'NC', '1C', '1D', '1Y', 'GND', '2Y', '2A', '2B', 'NC', '2C', '2D', 'VCC']],
+    ['74HC85', 16, ['B3', 'LTIN', 'EQIN', 'GTIN', 'GTOUT', 'EQOUT', 'LTOUT', 'GND', 'B0', 'A0', 'B1', 'A1', 'A2', 'B2', 'A3', 'VCC']],
+    ['74HC138', 16, ['A', 'B', 'C', 'G2A', 'G2B', 'G1', 'Y7', 'GND', 'Y6', 'Y5', 'Y4', 'Y3', 'Y2', 'Y1', 'Y0', 'VCC']],
+    ['74HC244', 20, ['1OE', '1A1', '2Y4', '1A2', '2Y3', '1A3', '2Y2', '1A4', '2Y1', 'GND', '2A1', '1Y4', '2A2', '1Y3', '2A3', '1Y2', '2A4', '1Y1', '2OE', 'VCC']],
+  ])('names the pins of %s in the order of the package', (model, pins, names) => {
+    expect(lookupPinout(model, pins)?.names).toEqual(names);
+  });
+
+  test('keeps the pins of 74HC161 in the order of 74HC163 (only the clear differs)', () => {
+    expect(lookupPinout('74HC161', 16)?.names).toEqual(lookupPinout('74HC163', 16)?.names);
+  });
+
+  test('reads the spellings of the manufacturers that print the same pins', () => {
+    for (const [one, other] of [['74HC14', 'SN74HC14N'], ['74HC194', 'CD74HC194E'], ['74HC4051', 'CD74HC4051E']] as const) {
+      expect(lookupPinout(other, lookupPinout(one, 14)?.names.length ?? lookupPinout(one, 16)?.names.length ?? 0)?.names)
+        .toEqual((lookupPinout(one, 14) ?? lookupPinout(one, 16))?.names);
+    }
+  });
+
+  test('calls the NC pins of 74HC20 and 74HC30 by number (the name is shared)', () => {
+    expect(lookupPinout('74HC30', 14)?.names.filter((name) => name === 'NC')).toHaveLength(3);
+  });
+});

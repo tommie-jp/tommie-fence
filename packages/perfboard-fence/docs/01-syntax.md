@@ -488,6 +488,44 @@ USB の受け口・差し込みを**変換基板ごと**描く。Type-C の受�
 | `6116` (`IDT6116SA` `HM6116` …) | `dip24` | `A7` `A6` `A5` `A4` `A3` `A2` `A1` `A0` `IO0` `IO1` `IO2` `GND` `IO3` `IO4` `IO5` `IO6` `IO7` `CS` `A10` `OE` `WE` `A9` `A8` `VCC` (`CS` `OE` `WE` は上に線。印字の `I/O` は `IO`) |
 | `74HC245` (`SN74HC245N` `CD74HC245E` …) | `dip20` | `DIR` `A1` `A2` `A3` `A4` `A5` `A6` `A7` `A8` `GND` `B8` `B7` `B6` `B5` `B4` `B3` `B2` `B1` `OE` `VCC` |
 | `74HC273` (`SN74HC273N` `CD74HC273E` …) | `dip20` | `CLR` `1Q` `1D` `2D` `2Q` `3Q` `3D` `4D` `4Q` `GND` `CLK` `5Q` `5D` `6D` `6Q` `7Q` `7D` `8D` `8Q` `VCC` (`CLR` は上に線) |
+| `74HC14` (`SN74HC14` `SN74HC14N`) | `dip14` | `1A` `1Y` `2A` `2Y` `3A` `3Y` `GND` `4Y` `4A` `5Y` `5A` `6Y` `6A` `VCC` |
+| `74HC00` (`SN74HC00` `SN74HC00N`) | `dip14` | `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3A` `3B` `4Y` `4A` `4B` `VCC` |
+| `74HC161` (`SN74HC161` `SN74HC161N`) | `dip16` | `CLR` `CLK` `A` `B` `C` `D` `ENP` `GND` `LOAD` `ENT` `QD` `QC` `QB` `QA` `RCO` `VCC` (`CLR` `LOAD` は上に線。クリアは非同期。並びは 74HC163 と同じ) |
+| `74HC194` (`CD74HC194` `CD74HC194E`) | `dip16` | `MR` `DSR` `D0` `D1` `D2` `D3` `DSL` `GND` `S0` `S1` `CP` `Q3` `Q2` `Q1` `Q0` `VCC` (`MR` は上に線) |
+| `74HC10` (`SN74HC10` `SN74HC10N`) | `dip14` | `1A` `1B` `2A` `2B` `2C` `2Y` `GND` `3Y` `3A` `3B` `3C` `1Y` `1C` `VCC` (1 回路目の `1C` `1Y` は 13・12 番に離れて出る) |
+| `74HC11` (`SN74HC11` `SN74HC11N`) | `dip14` | `1A` `1B` `2A` `2B` `2C` `2Y` `GND` `3Y` `3A` `3B` `3C` `1Y` `1C` `VCC` (並びは 74HC10 と同じ) |
+| `74HC27` (`SN74HC27` `SN74HC27N`) | `dip14` | `1A` `1B` `2A` `2B` `2C` `2Y` `GND` `3Y` `3A` `3B` `3C` `1Y` `1C` `VCC` (並びは 74HC10 と同じ) |
+| `74HC20` (`SN74HC20` `SN74HC20N`) | `dip14` | `1A` `1B` `NC` `1C` `1D` `1Y` `GND` `2Y` `2A` `2B` `NC` `2C` `2D` `VCC` (`NC` は 3・11 番。名前では指せず番号で呼ぶ) |
+| `74HC30` (`CD74HC30` `CD74HC30E`) | `dip14` | `A` `B` `C` `D` `E` `F` `GND` `Y` `NC` `NC` `G` `H` `NC` `VCC` (`NC` は 9・10・13 番。番号で呼ぶ) |
+| `74HC132` (`SN74HC132` `SN74HC132N`) | `dip14` | `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3A` `3B` `4Y` `4A` `4B` `VCC` (並びは 74HC08 と同じ) |
+| `74HC125` (`SN74HC125` `SN74HC125N`) | `dip14` | `1OE` `1A` `1Y` `2OE` `2A` `2Y` `GND` `3Y` `3A` `3OE` `4Y` `4A` `4OE` `VCC` (`OE` は上に線) |
+| `74HC126` (`SN74HC126` `SN74HC126N`) | `dip14` | `1OE` `1A` `1Y` `2OE` `2A` `2Y` `GND` `3Y` `3A` `3OE` `4Y` `4A` `4OE` `VCC` (並びは 74HC125 と同じ。`OE` の極性だけ違う) |
+| `74HC393` (`SN74HC393` `SN74HC393N`) | `dip14` | `1CLK` `1CLR` `1QA` `1QB` `1QC` `1QD` `GND` `2QD` `2QC` `2QB` `2QA` `2CLR` `2CLK` `VCC` (`CLR` は H でクリア) |
+| `74HC164` (`SN74HC164` `SN74HC164N`) | `dip14` | `A` `B` `QA` `QB` `QC` `QD` `GND` `CLK` `CLR` `QE` `QF` `QG` `QH` `VCC` (`CLR` は上に線) |
+| `74HC4066` (`CD74HC4066` `CD74HC4066E`) | `dip14` | `1Y` `1Z` `2Z` `2Y` `2E` `3E` `GND` `3Y` `3Z` `4Z` `4Y` `4E` `1E` `VCC` (`Y` `Z` は双方向。`E` が制御 (H で導通)。端子図は D・PW の 14 ピンから (PDIP も同じ番号)) |
+| `74HC138` (`SN74HC138` `SN74HC138N`) | `dip16` | `A` `B` `C` `G2A` `G2B` `G1` `Y7` `GND` `Y6` `Y5` `Y4` `Y3` `Y2` `Y1` `Y0` `VCC` (`G2A` `G2B` `Y0`〜`Y7` は上に線) |
+| `74HC139` (`SN74HC139` `SN74HC139N`) | `dip16` | `1G` `1A` `1B` `1Y0` `1Y1` `1Y2` `1Y3` `GND` `2Y3` `2Y2` `2Y1` `2Y0` `2B` `2A` `2G` `VCC` (`G` と `Y` は上に線) |
+| `74HC157` (`SN74HC157` `SN74HC157N`) | `dip16` | `A/B` `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3B` `3A` `4Y` `4B` `4A` `G` `VCC` (`A/B` が選択 (L で A)。`G` は上に線) |
+| `74HC153` (`SN74HC153` `SN74HC153N`) | `dip16` | `1G` `B` `1C3` `1C2` `1C1` `1C0` `1Y` `GND` `2Y` `2C0` `2C1` `2C2` `2C3` `A` `2G` `VCC` (`A` `B` が選択。`G` は上に線) |
+| `74HC151` (`SN74HC151` `SN74HC151N`) | `dip16` | `D3` `D2` `D1` `D0` `Y` `W` `G` `GND` `C` `B` `A` `D7` `D6` `D5` `D4` `VCC` (`W` は `Y` の反転。`A` `B` `C` が選択。`G` は上に線) |
+| `74HC175` (`SN74HC175` `SN74HC175N`) | `dip16` | `CLR` `1Q` `/1Q` `1D` `2D` `/2Q` `2Q` `GND` `CLK` `3Q` `/3Q` `3D` `4D` `/4Q` `4Q` `VCC` (`CLR` は上に線。`/Q` は Q の上に線) |
+| `74HC174` (`SN74HC174` `SN74HC174N`) | `dip16` | `CLR` `1Q` `1D` `2D` `2Q` `3D` `3Q` `GND` `CLK` `4Q` `4D` `5Q` `5D` `6Q` `6D` `VCC` (`CLR` は上に線) |
+| `74HC112` (`SN74HC112` `SN74HC112N`) | `dip16` | `1CLK` `1K` `1J` `1PRE` `1Q` `/1Q` `/2Q` `GND` `2Q` `2PRE` `2J` `2K` `2CLK` `2CLR` `1CLR` `VCC` (`CLK` `PRE` `CLR` は上に線 (CLK は立ち下がりで動く)。`/Q` は Q の上に線) |
+| `74HC390` (`CD74HC390` `CD74HC390E`) | `dip16` | `1CLKA` `1CLR` `1QA` `1CLKB` `1QB` `1QC` `1QD` `GND` `2QD` `2QC` `2QB` `2CLKB` `2QA` `2CLR` `2CLKA` `VCC` (`CLKA` `CLKB` `CLR` は上に線) |
+| `74HC4040` (`SN74HC4040` `SN74HC4040N`) | `dip16` | `QL` `QF` `QE` `QG` `QD` `QC` `QB` `GND` `QA` `CLK` `CLR` `QI` `QH` `QJ` `QK` `VCC` (`QA` が 2 分周 (CD4040B の `Q1`)、`QL` が 4096 分周 (`Q12`)。`CLR` は H でクリア) |
+| `74HC4060` (`SN74HC4060` `SN74HC4060N`) | `dip16` | `QL` `QM` `QN` `QF` `QE` `QG` `QD` `GND` `CLKO` `/CLKO` `CLKI` `CLR` `QI` `QH` `QJ` `VCC` (`QD` が 16 分周 … `QN` が 16384 分周 (`Q14`)。`/CLKO` は `CLKO` の上に線) |
+| `74HC193` (`SN74HC193` `SN74HC193N`) | `dip16` | `B` `QB` `QA` `DOWN` `UP` `QC` `QD` `GND` `D` `C` `LOAD` `CO` `BO` `CLR` `A` `VCC` (`LOAD` `CO` `BO` は上に線。`CLR` は H でクリア) |
+| `74HC165` (`SN74HC165` `SN74HC165N`) | `dip16` | `SH/LD` `CLK` `E` `F` `G` `H` `/QH` `GND` `QH` `SER` `A` `B` `C` `D` `CLKINH` `VCC` (`SH/LD` は LD の上に線。`/QH` は `QH` の上に線。`CLKINH` は印字の `CLK INH`) |
+| `74HC85` (`CD74HC85` `CD74HC85E`) | `dip16` | `B3` `LTIN` `EQIN` `GTIN` `GTOUT` `EQOUT` `LTOUT` `GND` `B0` `A0` `B1` `A1` `A2` `B2` `A3` `VCC` (`LTIN` `EQIN` `GTIN` は印字の `(A < B) IN` `(A = B) IN` `(A > B) IN`、`GTOUT` `EQOUT` `LTOUT` は `(A > B) OUT` …) |
+| `74HC123` (`CD74HC123` `CD74HC123E`) | `dip16` | `1A` `1B` `1R` `/1Q` `2Q` `2CX` `2RXCX` `GND` `2A` `2B` `2R` `/2Q` `1Q` `1CX` `1RXCX` `VCC` (`A` `R` は上に線。`/Q` は Q の上に線。`R` はリセット、`CX` `RXCX` は外付けの C と R) |
+| `74HC4051` (`CD74HC4051` `CD74HC4051E`) | `dip16` | `A4` `A6` `A` `A7` `A5` `E` `VEE` `GND` `S2` `S1` `S0` `A3` `A0` `A1` `A2` `VCC` (`A` が共通、`A0`〜`A7` がチャネル、`S0`〜`S2` が選択。`E` は上に線。電源は `VCC` `VEE` `GND`) |
+| `74HC4052` (`CD74HC4052` `CD74HC4052E`) | `dip16` | `B0` `B2` `BN` `B3` `B1` `E` `VEE` `GND` `S1` `S0` `A3` `A0` `AN` `A1` `A2` `VCC` (`AN` `BN` が共通、`A0`〜`A3` `B0`〜`B3` がチャネル。`E` は上に線) |
+| `74HC4053` (`CD74HC4053` `CD74HC4053E`) | `dip16` | `B1` `B0` `C1` `CN` `C0` `E` `VEE` `GND` `S2` `S1` `S0` `A0` `A1` `AN` `BN` `VCC` (`AN` `BN` `CN` が共通、`A0` `A1` …がチャネル。`E` は上に線) |
+| `74HC244` (`SN74HC244` `SN74HC244N`) | `dip20` | `1OE` `1A1` `2Y4` `1A2` `2Y3` `1A3` `2Y2` `1A4` `2Y1` `GND` `2A1` `1Y4` `2A2` `1Y3` `2A3` `1Y2` `2A4` `1Y1` `2OE` `VCC` (`OE` は上に線) |
+| `74HC541` (`SN74HC541` `SN74HC541N`) | `dip20` | `OE1` `A1` `A2` `A3` `A4` `A5` `A6` `A7` `A8` `GND` `Y8` `Y7` `Y6` `Y5` `Y4` `Y3` `Y2` `Y1` `OE2` `VCC` (`OE1` `OE2` は上に線) |
+| `74HC240` (`SN74HC240` `SN74HC240N`) | `dip20` | `1OE` `1A1` `2Y4` `1A2` `2Y3` `1A3` `2Y2` `1A4` `2Y1` `GND` `2A1` `1Y4` `2A2` `1Y3` `2A3` `1Y2` `2A4` `1Y1` `2OE` `VCC` (並びは 74HC244 と同じ。`OE` は上に線) |
+| `74HC573` (`CD74HC573` `CD74HC573E`) | `dip20` | `OE` `1D` `2D` `3D` `4D` `5D` `6D` `7D` `8D` `GND` `LE` `8Q` `7Q` `6Q` `5Q` `4Q` `3Q` `2Q` `1Q` `VCC` (`OE` は上に線。`LE` が H の間つながる) |
+| `74HC574` (`SN74HC574` `SN74HC574N`) | `dip20` | `OE` `1D` `2D` `3D` `4D` `5D` `6D` `7D` `8D` `GND` `CLK` `8Q` `7Q` `6Q` `5Q` `4Q` `3Q` `2Q` `1Q` `VCC` (`OE` は上に線。並びは 74HC573 と同じ (`LE` が `CLK`)) |
 | `3SK291` | `dip4` (2 列の変換基板) / `sip4` (1 列の変換基板) | `G1` `G2` `D` `S` (SMQ の 1〜4 番。基板が番号を変えていれば `pins:` で名前を書く) |
 
 ### 足に名前のある DIP 型 (`relay` / `photocoupler` / `seg7`)
