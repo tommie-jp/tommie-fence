@@ -60,3 +60,35 @@ describe('色を書かなかった配線', () => {
     expect(renderWires([wire('b3', 'c5', 'red')], layout, onBoard)).not.toContain('#123456');
   });
 });
+
+describe('跨ぎの大きさと向き', () => {
+  const hole = (address: string) => layout.point(parseAddress(address)!);
+  const between = (one: string, other: string) => {
+    const a = hole(one);
+    const b = hole(other);
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  };
+
+  test('hops wide over a hole, so the arc clears the land and the solder', () => {
+    const svg = renderWires([wire('a5', 'e5')], layout, THEME, [[hole('c5')]]);
+
+    expect(svg).toContain('A 8 8 ');
+  });
+
+  test('hops small between holes, where a wide arc would touch the neighbours', () => {
+    const svg = renderWires([wire('a5', 'e5')], layout, THEME, [[between('c5', 'c6')]]);
+
+    expect(svg).toContain('A 5 5 ');
+  });
+
+  test('bulges the same way however the wire was written', () => {
+    // 縦の線は右へ、横の線は上へ。書いた端の順で膨らむ側が変わらない。
+    const sweeps = (from: string, to: string, at: string) =>
+      renderWires([wire(from, to)], layout, THEME, [[hole(at)]]).match(/ 0 0 ([01]) /)?.[1];
+
+    expect(sweeps('a5', 'e5', 'c5')).toBe('1');
+    expect(sweeps('e5', 'a5', 'c5')).toBe('0');
+    expect(sweeps('c2', 'c8', 'c5')).toBe('1');
+    expect(sweeps('c8', 'c2', 'c5')).toBe('0');
+  });
+});

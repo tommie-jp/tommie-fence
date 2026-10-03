@@ -11,10 +11,30 @@ import type { Theme } from './theme.ts';
 const WIRE_WIDTH = 3;
 
 /**
- * 跨ぎの半径。**穴の間隔 (20) の 1/4。** これより小さいと線の太さに埋もれ、
+ * 穴の間で渡る跨ぎの半径。**穴の間隔 (20) の 1/4。** これより小さいと線の太さに埋もれ、
  * 大きいと隣の穴まで届いて、跨いだ先の穴が塞がって見える。
  */
 const HOP = 5;
+
+/**
+ * **穴の真上で渡る**跨ぎの半径。ランド (半径 4.5) と半田の玉 (半径 6) の外に
+ * 線の帯 (中心 ± 1.5) が収まる大きさ。HOP のままだと半円がランドの縁に重なり、
+ * 輪郭が色づいたようにしか見えない。隣の穴のランド (15.5 から) には届かない。
+ */
+const HOP_OVER_HOLE = 8;
+
+/** 座標の比べ方の許し。 */
+const EPSILON = 1e-6;
+
+/** 点が穴の真上か。格子は一様なので、1 番地の座標からの距離がピッチの倍数かで足りる。 */
+const isOverHole = (layout: Layout, point: Point): boolean => {
+  const origin = layout.point({ row: 1, col: 1 });
+  const onGrid = (delta: number): boolean => {
+    const rest = Math.abs(delta) % layout.pitch;
+    return rest < EPSILON || layout.pitch - rest < EPSILON;
+  };
+  return onGrid(point.x - origin.x) && onGrid(point.y - origin.y);
+};
 
 /**
  * 配線。**2 つの穴をまっすぐ結ぶ。**
@@ -44,6 +64,7 @@ export const renderWires = (
         hops[index] ?? [],
         wire.color,
         theme,
+        layout,
       );
       if (!edit) return drawn;
       // 線は細くて掴めないので、**同じ道に太い透明な線**を重ねる。
@@ -111,7 +132,7 @@ export const renderDeviceWires = (
       const from = pins.get(wire.device)?.get(wire.pin);
       // 機器が帯に置けなかったとき (帯そのものが無いとき) は線も引けない。
       if (!from) return '';
-      return strand(from, layout.point(wire.hole), hops[index] ?? [], wire.color, theme);
+      return strand(from, layout.point(wire.hole), hops[index] ?? [], wire.color, theme, layout);
     })
     .join('');
 };
@@ -128,6 +149,7 @@ function strand(
   hops: readonly Point[],
   color: string | null,
   theme: Theme,
+  layout: Layout,
 ): string {
   // **白黒の図では色を線の型に移す** (`hatch.ts`)。塗り分けを落とすだけだと
   // 「同じ色の線は同じ網」が読めなくなるので、形のほうに移して凡例で引かせる。
@@ -140,7 +162,7 @@ function strand(
     'stroke-opacity': theme.metrics.wireOpacity,
     ...(dash === '' ? {} : { 'stroke-dasharray': dash }),
   };
-  const path = hops.length === 0 ? null : hopPath(from, to, hops);
+  const path = hops.length === 0 ? null : hopPath(from, to, hops, layout);
 
   return path === null
     ? element('line', {
@@ -152,8 +174,12 @@ function strand(
 /**
  * 跨ぎを入れた道筋。**近すぎる跨ぎは 1 つにまとめる** — 弧が前の弧の中から
  * 始まると線が折り返して見え、跨ぎのつもりが結び目になる。
+ *
+ * 半径は穴の真上かどうかで決める (`HOP_OVER_HOLE`)。**膨らむ向きは線の向きに
+ * よらず揃える** — 横寄りの線は上へ、縦寄りの線は右へ。書いた端の順で上下が
+ * 入れ替わると、同じ形の交差が別物に見える。
  */
-function hopPath(from: Point, to: Point, hops: readonly Point[]): string | null {
+function hopPath(from: Point, to: Point, hops: readonly Point[], layout: Layout): string | null {
   const length = Math.hypot(to.x - from.x, to.y - from.y);
   if (length === 0) return null;
 
@@ -161,11 +187,17 @@ function hopPath(from: Point, to: Point, hops: readonly Point[]): string | null 
   const at = (along: number) =>
     `${num(from.x + unit.x * along)} ${num(from.y + unit.y * along)}`;
 
+  // 弧の向き (sweep=1 は進行方向の左、画面では横へ進むと上へ膨らむ)。
+  const sweep = (Math.abs(unit.x) >= Math.abs(unit.y) ? unit.x > 0 : unit.y > 0) ? 1 : 0;
+
   const spans = hops
-    .map((hop) => (hop.x - from.x) * unit.x + (hop.y - from.y) * unit.y)
-    .sort((one, other) => one - other)
-    .reduce<readonly { readonly start: number; readonly end: number }[]>((kept, along) => {
-      const span = { start: Math.max(0, along - HOP), end: Math.min(length, along + HOP) };
+    .map((hop) => ({
+      along: (hop.x - from.x) * unit.x + (hop.y - from.y) * unit.y,
+      radius: isOverHole(layout, hop) ? HOP_OVER_HOLE : HOP,
+    }))
+    .sort((one, other) => one.along - other.along)
+    .reduce<readonly { readonly start: number; readonly end: number }[]>((kept, { along, radius }) => {
+      const span = { start: Math.max(0, along - radius), end: Math.min(length, along + radius) };
       const last = kept[kept.length - 1];
       return last !== undefined && span.start <= last.end
         ? [...kept.slice(0, -1), { start: last.start, end: Math.max(last.end, span.end) }]
@@ -173,7 +205,7 @@ function hopPath(from: Point, to: Point, hops: readonly Point[]): string | null 
     }, []);
 
   const drawn = spans
-    .map((span) => ` L ${at(span.start)} A ${num((span.end - span.start) / 2)} ${num((span.end - span.start) / 2)} 0 0 1 ${at(span.end)}`)
+    .map((span) => ` L ${at(span.start)} A ${num((span.end - span.start) / 2)} ${num((span.end - span.start) / 2)} 0 0 ${sweep} ${at(span.end)}`)
     .join('');
 
   return `M ${at(0)}${drawn} L ${at(length)}`;
