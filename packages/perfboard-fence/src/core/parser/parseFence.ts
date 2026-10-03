@@ -41,7 +41,7 @@ export type ParseResult = { readonly doc: FenceDocument; readonly errors: readon
 
 /** 何も読めなかったときに返す中身。板だけは既定のものを持つ。 */
 const emptyDocument = (): FenceDocument => ({
-  board: DEFAULT_BOARD, title: null, parts: [], wires: [], points: [], style: EMPTY_STYLE, notes: [], devices: [],
+  board: DEFAULT_BOARD, boardName: null, title: null, parts: [], wires: [], points: [], style: EMPTY_STYLE, notes: [], devices: [],
 });
 
 const scalarText = (node: unknown): string | null => {
@@ -122,6 +122,7 @@ function readFence(source: string): ParseResult {
   const wires: WireSpec[] = [];
   const points: PointSpec[] = [];
   let board: Board | null = null;
+  let boardName: string | null = null;
   let title: string | null = null;
   let style: StyleSpec = EMPTY_STYLE;
   let styleWritten = false;
@@ -540,6 +541,7 @@ function readFence(source: string): ParseResult {
         if (gridFound.notice !== null) errors.push(notice(gridFound.notice, grid.at, safeToken(grid.text)));
       }
     }
+    boardName = found.named?.key ?? null;
     board = {
       ...holes, slots, color, land, slotColor,
       h: h ?? found.board.h, material: material ?? found.board.material,
@@ -562,7 +564,7 @@ function readFence(source: string): ParseResult {
   }
 
   return {
-    doc: { board: board ?? DEFAULT_BOARD, title, style, parts, devices, wires, points, notes },
+    doc: { board: board ?? DEFAULT_BOARD, boardName, title, style, parts, devices, wires, points, notes },
     errors,
   };
 }

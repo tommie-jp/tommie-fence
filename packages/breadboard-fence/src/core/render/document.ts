@@ -61,7 +61,7 @@ export function renderDocument(input: DocumentInput): string {
   const { layout, style } = input;
   const { theme } = style;
   const listed = input.partsList === 'none' ? [] : input.parts;
-  const list = partsListHeight(listed, theme);
+  const list = partsListHeight(listed, theme, input.board);
   const head = titleHeight(input.title, theme);
   // 注釈の字は板の下へはみ出すことがある (`- source` はフェンス全体を書き出す)。
   // 切らずに画布のほうを伸ばす。横は板の幅で `…` に切る (render/notes.ts)。
@@ -134,7 +134,7 @@ export function renderDocument(input: DocumentInput): string {
       }),
     // 注釈は板・部品・配線の上に重ねる。回路の一員ではないので最後に置く。
     renderNotes(input.notes, layout, theme, input.sourceLines, edit !== null),
-    renderPartsList(listed, layout.board.x, figure, layout.board.width, theme),
+    renderPartsList(listed, layout.board.x, figure, layout.board.width, theme, input.board),
     renderOutsideNotes(input.notes, layout.board.x, figure + list, layout.board.width, theme, input.sourceLines),
     // 掴む層は**いちばん上**。下に敷くと、部品や配線が押しを先に取ってしまう。
     edit === null ? '' : renderHits(input.board, layout, edit.used, edit.names),

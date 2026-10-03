@@ -210,7 +210,7 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
     : [];
 
   const listing = sourceNotes.length > 0 ? sourceListing(source) : [];
-  const rows = listNotes.length > 0 ? partsListing(doc.parts) : [];
+  const rows = listNotes.length > 0 ? partsListing(doc.parts, board) : [];
   const labelMm = (theme.metrics.textSize * 0.9) / PX;
   const layout = createLayout(board, {
     title: doc.title !== null,

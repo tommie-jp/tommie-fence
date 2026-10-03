@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { LIMITS } from '../limits.ts';
-import type { PlacedPart } from '../types.ts';
-import { partsListHeight, renderPartsList } from './partsList.ts';
+import { DEFAULT_BOARD } from '../types.ts';
+import type { Board, PlacedPart } from '../types.ts';
+import { boardRow, partsListHeight, renderPartsList } from './partsList.ts';
 import { DEFAULT_THEME } from './theme.ts';
 
 const part = (id: string, type: string, value: string | null = null, label: string | null = null): PlacedPart => ({
@@ -14,6 +15,33 @@ const theme = DEFAULT_THEME;
 const texts = (svg: string): string[] => [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*>([^<]*)<\/text>/g)].map((match) => match[1] ?? '');
 
 const render = (parts: readonly PlacedPart[]): string => renderPartsList(parts, 14, 400, 636, theme);
+
+const boardOf = (size: Board['size'], rails: Board['rails'] = DEFAULT_BOARD.rails): Board => ({ ...DEFAULT_BOARD, size, rails, columns: 30 });
+
+describe('boardRow', () => {
+  test('names the size with its hole count', () => {
+    expect(boardRow(boardOf('half')).value).toBe('half (400 穴)');
+    expect(boardRow(boardOf('full')).value).toBe('full (830 穴)');
+  });
+
+  test('says nothing of the rails when they are the default for the size', () => {
+    expect(boardRow(boardOf('mini', null)).value).toBe('mini (170 穴)');
+  });
+
+  test('says so when the rails differ from the default for the size', () => {
+    expect(boardRow(boardOf('half', null)).value).toBe('half (400 穴) レール無し');
+    expect(boardRow(boardOf('mini')).value).toBe('mini (170 穴) レール有り');
+  });
+
+  test('is listed first and does not count against the part limit', () => {
+    const parts = Array.from({ length: LIMITS.listedParts }, (_, i) => part(`R${i + 1}`, 'resistor'));
+    const shown = texts(renderPartsList(parts, 14, 400, 636, theme, boardOf('half')));
+
+    expect(shown[0]).toBe('基板');
+    expect(shown).not.toContain(expect.stringContaining('ほかに'));
+    expect(partsListHeight(parts, theme, boardOf('half'))).toBeGreaterThan(partsListHeight(parts, theme));
+  });
+});
 
 describe('partsListHeight', () => {
   test('takes no room when there is nothing to list', () => {

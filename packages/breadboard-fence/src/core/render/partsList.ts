@@ -1,7 +1,7 @@
 import { lookupRole } from 'fence-kit';
 import { LIMITS } from '../limits.ts';
 import { fit, textWidth } from './textFit.ts';
-import type { PlacedPart } from '../types.ts';
+import type { Board, BoardSize, PlacedPart } from '../types.ts';
 import { BOARD_HALO_OPACITY, TEXT_HALO_WIDTH, element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
 import { isLight, textScale } from './theme.ts';
@@ -46,6 +46,19 @@ const valueOf = (part: PlacedPart): string =>
 const typeOf = (part: PlacedPart): string =>
   part.variant === null ? part.type : `${part.type}/${part.variant}`;
 
+/** 実物の穴数。`board:` のサイズ名では買えないので、売り場の呼び名に添える。 */
+const HOLES: Readonly<Record<BoardSize, number>> = { mini: 170, half: 400, full: 830 };
+
+/**
+ * 板の行。**サイズと穴数**を書き、電源レールは既定 (mini は無し、half / full は有り)
+ * と違うときだけ添える。印字 (`letters` `numbers`) は買う板を決めないので載せない。
+ */
+export function boardRow(board: Board): Row {
+  const hasRails = board.rails !== null;
+  const rails = hasRails === (board.size !== 'mini') ? '' : hasRails ? ' レール有り' : ' レール無し';
+  return { id: '基板', type: 'breadboard', value: `${board.size} (${HOLES[board.size]} 穴)${rails}`, role: '' };
+}
+
 const rowsOf = (parts: readonly PlacedPart[]): readonly Row[] =>
   parts.map((part) => ({ id: part.id, type: typeOf(part), value: valueOf(part), role: roleOf(part) }));
 
@@ -69,8 +82,8 @@ const plateHeight = (rows: number, theme: RenderTheme): number => {
 };
 
 /** 部品リストが図の下に足す高さ (板 + 下の余白)。並べるものが無ければ 0。 */
-export function partsListHeight(parts: readonly PlacedPart[], theme: RenderTheme): number {
-  return parts.length === 0 ? 0 : plateHeight(rowCount(parts.length), theme) + GAP;
+export function partsListHeight(parts: readonly PlacedPart[], theme: RenderTheme, board: Board | null = null): number {
+  return parts.length === 0 ? 0 : plateHeight(rowCount(parts.length) + (board === null ? 0 : 1), theme) + GAP;
 }
 
 /**
@@ -84,13 +97,16 @@ export function renderPartsList(
   y: number,
   width: number,
   theme: RenderTheme,
+  board: Board | null = null,
 ): string {
   if (parts.length === 0) return '';
 
   // 表から部品を探すので名前の順に並べる (数字は数として: R2 の次は R10)。上限で切る前に並べる。
   const sorted = [...parts].sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }));
-  const rows = rowsOf(sorted.slice(0, LIMITS.listedParts));
-  const hidden = parts.length - rows.length;
+  const listed = rowsOf(sorted.slice(0, LIMITS.listedParts));
+  const hidden = parts.length - listed.length;
+  // 板は最初に用意する物なので、名前の順には入れず先頭に置く。上限の数にも数えない。
+  const rows = board === null ? listed : [boardRow(board), ...listed];
   const { palette } = theme;
   const { textSize } = theme.metrics;
   const pad = textSize * PAD_RATIO;
@@ -99,7 +115,7 @@ export function renderPartsList(
   // 板は基板と同じ色で塗る。`board-color` を変えたときに印字の色が追従する仕掛け
   // (theme.ts の inkFor) にそのまま相乗りできるため。字の縁取りは cell が敷く。
   const plate = element('rect', {
-    x: num(x), y: num(y), width: num(width), height: num(plateHeight(rowCount(parts.length), theme)), rx: 6,
+    x: num(x), y: num(y), width: num(width), height: num(plateHeight(rows.length + (hidden === 0 ? 0 : 1), theme)), rx: 6,
     fill: palette.plate, stroke: palette.plateEdge,
   });
 

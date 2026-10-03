@@ -14,7 +14,7 @@ import { renderTitle } from './render/title.ts';
 import { noteBands, noteOverhang, renderNotes } from './render/notes.ts';
 import { hatchDefs } from './render/hatch.ts';
 import { legendColors, legendSize, paintedColors, renderLegend } from './render/legend.ts';
-import { partsListSize, partsListing, renderPartsList } from './render/partsList.ts';
+import { boardRow, partsListSize, partsListing, renderPartsList } from './render/partsList.ts';
 import { renderSourceListing, sourceBandSize, sourceListing } from './render/sourceListing.ts';
 import { backSideLayout, renderBackSide } from './render/backSide.ts';
 import { deviceOverhang, layoutDevices, renderDevices } from './render/devices.ts';
@@ -150,7 +150,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   // 部品表も板の外に出すので、**図を組む前に測る** (書き出しと同じ理由)。
   // 板に載せる前の部品から作る — 載せられなかった部品も、揃えるものには変わりない。
   const listNotes = parsed.doc.notes.filter((note) => note.kind === 'parts');
-  const listed = listNotes.length > 0 ? partsListing(parsed.doc.parts, devices) : [];
+  const listed = listNotes.length > 0 ? partsListing(parsed.doc.parts, devices, boardRow(board, parsed.doc.boardName)) : [];
   // **白黒の図では色を網と線の型に移す** (`render/hatch.ts`)。移した先が何色かは
   // 図の中では言えないので、使った色の凡例を板のすぐ下に出す。
   // 色つきのテーマでは見たままなので、帯そのものを出さない。

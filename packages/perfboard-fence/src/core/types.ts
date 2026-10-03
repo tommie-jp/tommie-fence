@@ -263,6 +263,8 @@ export type RoutedWire = {
  */
 export type FenceDocument = {
   readonly board: Board;
+  /** `board:` に名前 (または実寸) で書かれた板の名前。穴数の直書きなら null。部品表に出す。 */
+  readonly boardName: string | null;
   /** 図の上に出す題。書かれていなければ null。 */
   readonly title: string | null;
   readonly parts: readonly PartSpec[];

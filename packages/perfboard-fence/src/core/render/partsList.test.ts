@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { bandText, partsListing } from './partsList.ts';
+import { bandText, boardRow, partsListing } from './partsList.ts';
 import type { ListedPart } from './partsList.ts';
 import type { DeviceSpec } from '../types.ts';
 
@@ -32,6 +32,29 @@ describe('bandText', () => {
   test('says nothing for parts that carry no colour code', () => {
     expect(bandText('capacitor', '10n')).toBe('');
     expect(bandText('led', 'red')).toBe('');
+  });
+});
+
+describe('boardRow', () => {
+  const plain = { cols: 18, rows: 24, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' } as const;
+
+  test('names the board, its holes, thickness and base material', () => {
+    expect(boardRow(plain, '5x7cm')).toEqual(['基板', 'perfboard', '5x7cm (18×24 穴) 1.6mm FR-4', '']);
+  });
+
+  test('falls back to the hole count when the board was written as one', () => {
+    expect(boardRow({ ...plain, cols: 25, rows: 15, h: 0.8, material: 'CEM-3' }, null))
+      .toEqual(['基板', 'perfboard', '25×15 穴 0.8mm CEM-3', '']);
+  });
+
+  test('sits right under the headings, ahead of the sorted parts', () => {
+    const rows = partsListing([part('R1', 'resistor', '10k')], [], boardRow(plain, null));
+
+    expect(rows.map((row) => row[0])).toEqual(['部品', '基板', 'R1']);
+  });
+
+  test('prints no table for a board alone', () => {
+    expect(partsListing([], [], boardRow(plain, null))).toEqual([]);
   });
 });
 

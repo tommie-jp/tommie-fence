@@ -2,7 +2,7 @@ import { keptSourceLines, monoBandHeight, monoBaseline, monoLinesSize, monoText,
 import type { MonoSpacing } from 'fence-kit';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Band } from '../model/layout.ts';
-import type { PartSpec } from '../types.ts';
+import type { Board, PartSpec } from '../types.ts';
 import type { Theme } from './theme.ts';
 
 /**
@@ -21,10 +21,19 @@ export type Row = readonly [string, string, string];
 
 const HEADINGS: Row = ['部品', '種類', '値'];
 
-/** 部品表。**書いた順**に並べる (図を追いながら読む人が行を見失わない)。 */
-export function partsListing(parts: readonly PartSpec[]): readonly Row[] {
+/**
+ * 板の行。**買うときに要る値** (実寸・基材の厚さ・比誘電率・片面か両面か) だけ。
+ * 書かなかった値も既定のまま出す。地の在りか (表か裏か) は加工の話で、図の下の 1 行が言っている。
+ */
+export function boardRow(board: Board): Row {
+  const sides = board.ground === 'none' ? '片面' : '両面';
+  return ['基板', 'copper-clad', `${board.width}×${board.height}mm ${board.h}mm εr ${board.er} ${sides}`];
+}
+
+/** 部品表。**書いた順**に並べる (図を追いながら読む人が行を見失わない)。板は見出しのすぐ下。 */
+export function partsListing(parts: readonly PartSpec[], board: Board | null = null): readonly Row[] {
   if (parts.length === 0) return [];
-  return [HEADINGS, ...parts.map((part): Row => [
+  return [HEADINGS, ...(board === null ? [] : [boardRow(board)]), ...parts.map((part): Row => [
     part.id, part.variant === null ? part.type : `${part.type}/${part.variant}`, part.value ?? '',
   ])];
 }

@@ -1,7 +1,7 @@
 import { lookupNamedChip, lookupRole, parseResistor, resistorBands } from 'fence-kit';
 import { colorValue } from '../color.ts';
 import type { Band } from '../model/layout.ts';
-import type { DeviceSpec } from '../types.ts';
+import type { Board, DeviceSpec } from '../types.ts';
 import { monoBandHeight, monoBaseline, monoText, monoWidth } from './monoBand.ts';
 import type { Theme } from './theme.ts';
 
@@ -94,9 +94,21 @@ function withRole(value: string): string {
   return role === null ? value : `${value} (${role})`;
 }
 
+/**
+ * 板の行。**買うときに要る値**だけを、売り場の表記の順に並べる (呼び名・穴数・厚さ・基材)。
+ * 書かなかった厚さと基材も既定のまま出す — 表は買う物の一覧で、既定の板も買う板。
+ * 色は手元の板に図を寄せる設定なので載せない。
+ */
+export function boardRow(board: Board, name: string | null): PartsRow {
+  const holes = `${board.cols}×${board.rows} 穴`;
+  const size = name === null ? holes : `${name} (${holes})`;
+  return ['基板', 'perfboard', `${size} ${board.h}mm ${board.material}`, ''];
+}
+
 export function partsListing(
   parts: readonly ListedPart[],
   devices: readonly DeviceSpec[],
+  board: PartsRow | null = null,
 ): readonly PartsRow[] {
   const rows: PartsRow[] = [
     ...parts.map((part): PartsRow =>
@@ -107,7 +119,8 @@ export function partsListing(
   ];
   // 表から部品を探すので名前の順に並べる (数字は数として: R2 の次は R10。機器も同じ並びに入る)。
   const sorted = [...rows].sort((a, b) => a[0].localeCompare(b[0], 'en', { numeric: true }));
-  return sorted.length === 0 ? [] : [HEADINGS, ...sorted];
+  // 板は最初に用意する物なので、名前の順には入れず見出しのすぐ下に置く。部品が無ければ表ごと出さない。
+  return sorted.length === 0 ? [] : [HEADINGS, ...(board === null ? [] : [board]), ...sorted];
 }
 
 /** 列の間。1 桁だと隣の欄と地続きに見えるので 2 桁ぶん空ける。 */

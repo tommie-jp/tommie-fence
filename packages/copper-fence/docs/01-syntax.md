@@ -301,6 +301,10 @@ wires:
 | `parts` | `parts [色]` | 部品表を図の下に |
 | `source` | `source [色]` | フェンスの中身を囲みごと図の下に |
 
+`parts` の表は、見出しのすぐ下に**板の行**を出す (`基板` / `copper-clad` /
+`40×20mm 1.6mm εr 4.4 両面`)。書かなかった値も既定のまま出す。`ground: none` は片面、
+それ以外は両面。
+
 ```copper
 board: 40x20mm
 title: 図07 寸法線と字
