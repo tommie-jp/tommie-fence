@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-10-04
+
 ### Added
 
 - **セラミックフィルタ `ceramic-filter`** (略記 `cfilter`、参照名の頭 `CF`)。三端子レギュレータと同じ箱で、足は `IN` (左) `GND` (下) `OUT` (右)。板では `sip3` + `SFU455B` (足の名前の表。fence-kit)
