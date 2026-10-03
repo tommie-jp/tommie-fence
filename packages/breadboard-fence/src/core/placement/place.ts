@@ -592,7 +592,10 @@ function placeSip(spec: PartSpec, board: Board, base: PartBase, pinCount: number
   const anchor = anchorHole(spec, board, 'sip4 @ a20');
   if (!anchor.ok) return anchor;
 
-  const names = spec.pins ?? Array.from({ length: pinCount }, (_, index) => String(index + 1));
+  // `pins:` で書いた名前が先。無ければ**型番が足の名前の表にあれば印字の名前**
+  // (`Q1: sip4 @ b3 3SK291` の `Q1.G1`)、それも無ければ番号。
+  const printed = spec.pins === null ? lookupPinout(modelOf(spec), pinCount) : null;
+  const names = spec.pins ?? printed?.names ?? Array.from({ length: pinCount }, (_, index) => String(index + 1));
   if (names.length !== pinCount) {
     return fail(
       `部品 ${safeToken(spec.id)}: pins は ${pinCount} 本ぶんの名前を書きます (今は ${names.length} 本)`,

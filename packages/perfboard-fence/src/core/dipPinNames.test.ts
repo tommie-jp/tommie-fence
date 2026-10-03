@@ -39,6 +39,27 @@ describe('ネットリスト', () => {
     }
   });
 
+  test('lists the pins of the 3SK291 by name on a two column board (dip4) and a one column board (sip4)', () => {
+    for (const type of ['dip4', 'sip4']) {
+      const { errors, netlist } = renderPerfboard(fence('parts:', `  Q1: ${type} c3 3SK291`));
+
+      expect(errors, type).toEqual([]);
+      expect(netlist.flatMap((net) => net.refs), type).toEqual(expect.arrayContaining(['Q1.G1', 'Q1.G2', 'Q1.D', 'Q1.S']));
+    }
+  });
+
+  test('prints the names of a one column header on the board', () => {
+    const shown = texts(renderPerfboard(fence('parts:', '  Q1: sip4 c3 3SK291')).svg);
+
+    expect(shown).toEqual(expect.arrayContaining(['G1', 'G2', 'D', 'S']));
+  });
+
+  test('leaves a one column header of an unknown model on its numbers', () => {
+    const refs = renderPerfboard(fence('parts:', '  J1: sip4 c3 OLED')).netlist.flatMap((net) => net.refs);
+
+    expect(refs).toEqual(expect.arrayContaining(['J1.1', 'J1.4']));
+  });
+
   test('keeps the numbers for an unknown model, says so, and says nothing when no model is written', () => {
     const unknown = renderPerfboard(fence('parts:', '  U1: dip8 c3 LM741'));
 

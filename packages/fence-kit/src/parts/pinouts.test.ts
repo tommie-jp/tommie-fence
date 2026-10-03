@@ -133,7 +133,9 @@ describe('足の名前の表', () => {
       'CD4017B', 'CD4040B', 'CD4069UB', 'CD4071B', 'CD4081B', 'CD4011B', 'CD4001B',
       'CD4013B', 'CD4070B', 'CD40106B', '74HC04', '74HC08', '74HC32', '74HC86', '74HC02', '74HC74', 'L293D', 'MCP3008',
       '74HC595', 'CD4511B', 'CD74HC283', '74HC163', '74HC154', '62256', '6116', '74HC245', '74HC273',
+      '3SK291',
     ]);
+    expect(pinoutModels(4)).toEqual(['3SK291']);
     expect(pinoutModels(16)).toEqual([
       'CD4017B', 'CD4040B', 'L293D', 'MCP3008', '74HC595', 'CD4511B', 'CD74HC283', '74HC163',
     ]);
@@ -146,7 +148,7 @@ describe('足の名前の表', () => {
     const table = pinoutTable();
     expect(table.map((row) => row.models[0])).toEqual(pinoutModels());
     expect(table[0]?.models).toContain('NE555P');
-    expect(table.every((row) => [8, 14, 16, 20, 24, 28].includes(row.names.length))).toBe(true);
+    expect(table.every((row) => [4, 8, 14, 16, 20, 24, 28].includes(row.names.length))).toBe(true);
   });
 
   test('gives every pin a name that cannot be mistaken for a pin number or split by a space', () => {
@@ -251,3 +253,14 @@ describe('lookupRole', () => {
     for (const row of pinoutTable()) expect(row.role, row.models[0]).not.toBe('');
   });
 });
+
+describe('3SK291 (面実装の 4 本足)', () => {
+  test('names the four pins in the numbering of the SMQ package', () => {
+    expect(lookupPinout('3SK291', 4)?.names).toEqual(['G1', 'G2', 'D', 'S']);
+  });
+
+  test('is not a 4 pin chip of any other size', () => {
+    expect(lookupPinout('3SK291', 8)).toBeNull();
+  });
+});
+

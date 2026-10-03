@@ -35,6 +35,25 @@ describe('置き方', () => {
     }
   });
 
+  test('names the four pins of the 3SK291 on a two column board (dip4) and a one column board (sip4)', () => {
+    for (const line of ['Q1: dip4 @ e10 3SK291', 'Q1: sip4 @ b3 3SK291']) {
+      expect(pinsOf(line).map((pin) => pin.name), line).toEqual(['G1', 'G2', 'D', 'S']);
+    }
+  });
+
+  test('lets pins: win over the table for a one column header', () => {
+    const pins = placeParts(
+      parseFence(fence('parts:', '  Q1: sip4 @ b3 3SK291')).doc.parts.map((part) => ({ ...part, pins: ['A', 'B', 'C', 'D'] })),
+      createBoard('half'),
+    ).parts[0]?.pins ?? [];
+
+    expect(pins.map((pin) => pin.name)).toEqual(['A', 'B', 'C', 'D']);
+  });
+
+  test('leaves a one column header of an unknown model on its numbers', () => {
+    expect(pinsOf('J1: sip4 @ b3 OLED').map((pin) => pin.name)).toEqual(['1', '2', '3', '4']);
+  });
+
   test('keeps the names with their pins when the chip is turned', () => {
     const upright = pinsOf('U1: dip8 @ e10 NE555');
     const turned = pinsOf('U1: dip8 @ e10 r180 NE555');

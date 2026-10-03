@@ -201,3 +201,14 @@ describe('図とネットリスト', () => {
     expect(names).toContain('VCC');
   });
 });
+
+describe('3SK291 (面実装の 4 本足を変換基板に載せた形)', () => {
+  test('names the four pins of a dip4 whose model is 3SK291', () => {
+    const fet = typeOf('Q1: dip4 c2 3SK291')!;
+
+    expect(fet.pinLabels).toEqual(['G1', 'G2', 'D', 'S']);
+    expect(lookupPin(fet, 'G2')).toBe('pin 2');
+    expect(lookupPin(fet, 's')).toBe('pin 4');
+  });
+});
+

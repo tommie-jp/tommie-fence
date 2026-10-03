@@ -34,6 +34,7 @@
  * | 6116 | Renesas (IDT) IDT6116SA/LA DSC-3089/03、Pin Configurations (DIP) — I/O 0〜7 は `IO0`〜`IO7` |
  * | 74HC245 | SN74HC245 SCLS131F、Table 5-1 (N) |
  * | 74HC273 | SN74HC273 SCLS136F、Table 5-1 (N) |
+ * | 3SK291 | 東芝 3SK291 (2014-03-01)、外形図の端子の番号 (SMQ。1 G1・2 G2・3 D・4 S)。変換基板が SMQ の番号をそのまま DIP / SIP の番号にしている前提 |
  *
  * **足の名前として書けない印字だけは直した** (`U1.TRIG` と書けて、番号と取り違えないため):
  *
@@ -209,6 +210,12 @@ const ROWS: readonly PinoutRow[] = [
       'CLR', '1Q', '1D', '2D', '2Q', '3Q', '3D', '4D', '4Q', 'GND',
       'CLK', '5Q', '5D', '6D', '6Q', '7Q', '7D', '8D', '8Q', 'VCC',
     ],
+  },
+  {
+    // 面実装 (SMQ) の 4 本足。変換基板に載せて `dip4` (2 列) か `sip4` (1 列) で置く。
+    // 基板が SMQ の番号をそのまま使う前提 — 並びが違う基板は `pins:` で名前を書く。
+    models: ['3SK291'], role: 'デュアルゲート MOSFET (N)',
+    names: ['G1', 'G2', 'D', 'S'],
   },
 ];
 

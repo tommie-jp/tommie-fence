@@ -621,7 +621,8 @@ function renderChip(
   if (kind === 'sip') {
     // **名前は行の増える側へ。** この板に溝は無いので、どちらでも読めるほうを
     // 1 つに決める (breadboard は溝の側)。
-    return sipHeader({ ...shared, names: numbers, nameSide: 1 });
+    // 型番が足の名前の表にあれば印字の名前 (1 列の変換基板の `3SK291`)。
+    return sipHeader({ ...shared, names: dipPinout(part) ?? numbers, nameSide: 1 });
   }
 
   // **マイコンボードの名前は胴の下。** 基板の中に置くと長い足の名前
