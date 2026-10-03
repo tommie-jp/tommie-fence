@@ -526,7 +526,7 @@ function reachOf(rows: PinRows, glyph: GlyphName, type: string): {
   // 列に届く。列に何も無ければ名前は真ん中を越えてよいので、測らない。
   // ボードの種類名は真ん中の 1 行にしか無いので、ここでは数えない (`forNames`)。
   const centre = Math.max(standing, notched ? (NOTCH + NOTCH_CLEAR) * 2 : 0);
-  const forCentre = centre === 0 ? 0 : Math.max(inside('left'), inside('right')) + NAME_INSIDE + centre / 2;
+  const forCentre = centre === 0 ? 0 : Math.max(inside('left'), inside('right')) + NAME_INSIDE * 2 + centre / 2;
   // 立てた名前の**長さ**は箱の高さで飲む (縁からの余白の内側に収める)。
   //
   // **上と下の両方に名前があれば、向かい合う** (回した DIP・ボード・レギュレータ)。

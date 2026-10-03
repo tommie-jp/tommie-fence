@@ -4,7 +4,7 @@ import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
 import {
-  DEVICE, IC, IC3, isTurned, laidOf, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, seg7DeviceBox, symbolFor, symbolOf, tunableOptions, turnSide,
+  DEVICE, IC3, isTurned, laidOf, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, seg7DeviceBox, symbolFor, symbolOf, tunableOptions, turnSide,
 } from '../parts.ts';
 import type { PartType, PinSide, SourceInner, Turn } from '../parts.ts';
 import { lookupBoardPart } from 'fence-kit';
@@ -31,7 +31,7 @@ import {
 import type { DeviceBox } from './shapes.ts';
 import { icBox, icShapeTex, icStepOf } from './icShape.ts';
 import type { IcBox } from './icShape.ts';
-import { lookupIcPinout } from '../icLayouts.ts';
+import { boxPinoutOf } from '../icLayouts.ts';
 
 /**
  * 生成した TeX と、その行が元の YAML の何行目から来たかの対応。
@@ -259,7 +259,7 @@ function sipShapesFor(circuit: Circuit, pitch: number): string[] {
   // 働きで並べた IC も自分で宣言した形。**使う型番だけ、1 回ずつ**。
   const ics = new Map<string, IcBox>();
   for (const part of circuit.parts) {
-    const pinout = part.type === IC && part.kind === 'multi-terminal' ? lookupIcPinout(part.value) : null;
+    const pinout = part.kind === 'multi-terminal' ? boxPinoutOf(part.type, part.value) : null;
     if (pinout === null) continue;
     const box = icBox(pinout, icStepOf(pitch));
     ics.set(box.name, box);
@@ -903,7 +903,7 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget, pitch: nu
   const type = partTypeOf(part);
   // 機器 (`device`) は足の本数で記号が決まるので、種類名ではなく部品から引く。
   // 働きで並べた IC は足の間隔が図の pitch で決まるので、ここで形を選ぶ。
-  const icPinout = part.type === IC ? lookupIcPinout(part.value) : null;
+  const icPinout = boxPinoutOf(part.type, part.value);
   const symbol = icPinout !== null
     ? icBox(icPinout, icStepOf(pitch)).name
     : type === null ? symbolFor(part.type, target) : symbolOf(type, target);

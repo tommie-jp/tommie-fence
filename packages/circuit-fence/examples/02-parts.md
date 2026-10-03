@@ -309,3 +309,49 @@ style:
 
 アンテナもイヤホンも板に挿さず線でつなぐので、実体配線図では `type: device` の
 機器として書く。
+
+## デュアルゲート MOSFET
+
+`nmos-dg` は 3SK291 のような**ゲートが 2 本ある FET** (N チャネル)。circuitikz に足が 4 本の
+FET の記号が無いので、足の名前を書いた箱で描く。足は `G1` (信号を入れる) `G2` (バイアスや AGC)
+`D` `S`。箱の中に型番が出る。`G` だけでは G1 か G2 か分からないので、書くと断られる。
+下は高周波の 1 段増幅の書き方の例で、アンテナの信号を C1 で G1 に入れ、G2 には R3・R4 で
+分けた固定の電圧をかける。
+
+```circuit
+title: 図06 デュアルゲート MOSFET の高周波 1 段増幅
+parts:
+  ANT: antenna e1
+  C1: capacitor e2 e4 100p
+  R1: resistor c4 e4 100k
+  R2: resistor e4 h4 33k
+  R3: resistor a6 c6 10k
+  R4: resistor c6 c8 47k
+  Q1: nmos-dg e10 3SK291
+  R5: resistor a10 c10 330
+  R6: resistor g10 i10 100
+  C2: capacitor c10 c12 10n
+  OUT: port c13
+  VCC: vcc c4
+  VCC: vcc a6
+  VCC: vcc a10
+  GA: ground h4
+  GB: ground c8
+  GC: ground i10
+wires:
+  - e1 -- e2
+  - e4 |- Q1.G1
+  - Q1.G2 -| c6
+  - c10 |- Q1.D
+  - g10 |- Q1.S
+  - c12 -- c13
+style:
+  grid: on
+```
+
+![図06 デュアルゲート MOSFET の高周波 1 段増幅](out/02-parts-6.png)
+
+値は足のつなぎ方を見せるための例で、動作点は確かめていない。G1 は 0 V ではほぼ流れないので、
+実際には R1・R2 のような分圧で正のバイアスをかける。電源の `VCC` は同じ名前を何度書いても
+同じ節点になる。板には挿さない箱なので、実体配線図は変換基板を使う (段 2 で足す)。
+

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   NO_TURN, PART_ALIASES, PART_PREFIXES, PART_TYPES,
   closestPartType, lookupPartType, lookupPin, optionsFor, orientOf, partTypeNames, pinAxis,
-  pinHint, pinSideOf, resolvePartTypeName, symbolFor,
+  pinHint, pinPlaces, pinSideOf, resolvePartTypeName, symbolFor,
 } from './parts.ts';
 import type { PartTypeName } from './parts.ts';
 
@@ -554,5 +554,45 @@ describe('orientOf', () => {
 
   test('refuses a turn on a two terminal part, which turns by its addresses', () => {
     expect(orientOf(PART_TYPES.resistor!).rotate).toBe(false);
+  });
+});
+
+describe('デュアルゲート MOSFET (nmos-dg)', () => {
+  test('is a four pin box whose pins are G1, G2, D and S', () => {
+    // Arrange
+    const type = lookupPartType('nmos-dg');
+
+    // Act
+    const anchors = ['G1', 'g2', 'D', 's'].map((pin) => (type === null ? null : lookupPin(type, pin)));
+
+    // Assert
+    expect(type?.kind).toBe('multi-terminal');
+    expect(anchors).toEqual(['pin 1', 'pin 2', 'pin 3', 'pin 4']);
+  });
+
+  test('also reads the full pin names', () => {
+    const type = lookupPartType('nmos-dg');
+
+    expect(['gate1', 'gate2', 'drain', 'source'].map((pin) => (type === null ? null : lookupPin(type, pin))))
+      .toEqual(['pin 1', 'pin 2', 'pin 3', 'pin 4']);
+  });
+
+  test('refuses a bare G because it cannot tell the two gates apart', () => {
+    const type = lookupPartType('nmos-dg');
+
+    expect(type === null ? 'missing' : lookupPin(type, 'G')).toBeNull();
+  });
+
+  test('puts the gates on the left, the drain on top and the source below', () => {
+    const type = lookupPartType('nmos-dg');
+    if (type === null) throw new Error('nmos-dg');
+
+    expect(pinPlaces(type).map((place) => [place.anchor, place.side])).toEqual([
+      ['pin 3', 'top'], ['pin 2', 'left'], ['pin 1', 'left'], ['pin 4', 'bottom'],
+    ]);
+  });
+
+  test('is named M like the other MOSFETs', () => {
+    expect(PART_PREFIXES['nmos-dg']).toBe('M');
   });
 });

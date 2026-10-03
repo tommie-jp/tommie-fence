@@ -1448,7 +1448,10 @@ describe('字が出る部品を全部当たる', () => {
     // 実機で「回転でピン名が見えにくくなる不具合が他の部品に無いか」。
     // **足の名前を書くのは表に `pinLabels` を持つ種類だけ**なので、
     // その全部が回した辺で置き方を決めていることを見る。
-    const named = partTypeNames().filter((type) => lookupPartType(type)?.pinLabels !== undefined);
+    // 働きで並べた IC と同じ箱で描くもの (`nmos-dg`) は向きを書けず、字は箱の縁の内側へ
+    // 横のまま入る (`icShape.ts`)。回さないので、ここでは当たらない。
+    const named = partTypeNames()
+      .filter((type) => lookupPartType(type)?.pinLabels !== undefined && type !== 'nmos-dg');
     expect(named.length).toBeGreaterThan(0);
 
     for (const type of named) {
@@ -1533,11 +1536,25 @@ describe('字が出る部品を全部当たる', () => {
     const drawn = partTypeNames().filter((type) => lookupPartType(type)?.pinLabels !== undefined);
 
     expect(drawn).toEqual([
-      'regulator', 'ic3',
+      'regulator', 'ic3', 'nmos-dg',
       'sip2', 'sip3', 'sip4', 'sip5', 'sip6', 'sip8', 'sip10', 'sip20', 'sip40',
       'seg7',
       'usb-a', 'usb-c',
       'pico', 'pico-w', 'pico2', 'pico2-w',
     ]);
+  });
+});
+
+describe('デュアルゲート MOSFET', () => {
+  test('draws the box with the model inside and the four pin names', () => {
+    // Arrange / Act
+    const { tex } = generate('parts:', '  Q1: nmos-dg d5 3SK291');
+
+    // Assert
+    expect(tex).toContain('3SK291');
+    // 足の名前は差し込みの場所 (`bpin K`) だけ作り、字は注釈の差し込みが埋める。
+    for (const pin of [1, 2, 3, 4]) expect(tex).toContain(`(part-Q1.bpin ${pin})`);
+    expect(tex).not.toContain('(part-Q1.bpin 5)');
+    expect(tex).toContain('icDGFETs');
   });
 });

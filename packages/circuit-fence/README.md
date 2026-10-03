@@ -261,8 +261,8 @@ Design commitments and working rules are in [CLAUDE.md](CLAUDE.md) (Japanese).
 
 ## Status
 
-Phase 3. 110 parts in all (5 one-terminal symbols, 48 two-terminal parts,
-57 multi-terminal parts, USB connectors among them), plus off-board devices
+Phase 3. 112 parts in all (5 one-terminal symbols, 48 two-terminal parts,
+59 multi-terminal parts, USB connectors among them), plus off-board devices
 (the `type: device` map form). Done so far: `--` / `-|` / `|-` wires, pin
 references (`U1.out`), junction dots, T connections, overlap detection,
 `points:` (names for addresses), addresses between grid points (`a1a5`),

@@ -70,6 +70,26 @@ const SRAM62256_LAYOUT: IcLayout = {
   bottom: ['VSS', 'CE', 'OE', 'WE'],
 };
 
+/**
+ * デュアルゲート MOSFET (N)。**足の名前は実物の呼び名** (G1・G2・D・S) で、型番ではなく
+ * 種類 (`nmos-dg`) が並びを決める。G1 (信号) は S に近い下、G2 (バイアス・AGC) はその上。
+ * 箱の名前に使うので型番は英数字だけ。
+ */
+export const DUAL_GATE_FET_PINOUT: IcPinout = {
+  model: 'DGFET',
+  names: ['G1', 'G2', 'D', 'S'],
+  layout: { top: ['D'], left: ['G2', 'G1'], right: [], bottom: ['S'] },
+};
+
+/**
+ * 箱で描く部品の足の並び。働きで並べた IC (`ic`) は型番で引き、
+ * デュアルゲート MOSFET は種類で決まる。箱でなければ null。
+ */
+export function boxPinoutOf(type: string, model: string | null): IcPinout | null {
+  if (type === 'nmos-dg') return DUAL_GATE_FET_PINOUT;
+  return type === 'ic' ? lookupIcPinout(model) : null;
+}
+
 /** 型番は fence-kit の表の**代表の綴り** (別の綴りも同じ行に当たる)。 */
 const LAYOUTS: readonly { readonly pins: number; readonly model: string; readonly layout: IcLayout }[] = [
   { pins: 8, model: 'NE555', layout: timer555('VCC') },

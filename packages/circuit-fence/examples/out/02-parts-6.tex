@@ -1,0 +1,109 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\makeatletter
+\pgfdeclareshape{icDGFETs1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{1.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-1.4cm}}
+  \anchor{east}{\pgfpoint{1.2cm}{0cm}}
+  \anchor{west}{\pgfpoint{-1.2cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-1.2cm}{1.4cm}}
+  \anchor{pin 3}{\pgfpoint{0cm}{1.8cm}}
+  \anchor{bpin 3}{\pgfpoint{0cm}{1.4cm}}
+  \anchor{pin 2}{\pgfpoint{-1.6cm}{0cm}}
+  \anchor{bpin 2}{\pgfpoint{-1.2cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{-1.6cm}{-1cm}}
+  \anchor{bpin 1}{\pgfpoint{-1.2cm}{-1cm}}
+  \anchor{pin 4}{\pgfpoint{0cm}{-1.8cm}}
+  \anchor{bpin 4}{\pgfpoint{0cm}{-1.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-1.2cm}{-1.4cm}}{\pgfpoint{1.2cm}{1.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{1.8cm}}\pgfpathlineto{\pgfpoint{0cm}{1.4cm}}
+    \pgfpathmoveto{\pgfpoint{-1.6cm}{0cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-1.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-1.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-1.4cm}}
+  }
+}
+\makeatother
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{grounds/scale=1.36}
+\foreach \x in {0,2,4,6,8,10,12,14,16,18,20,22,24} {\foreach \y in {0,-2,-4,-6,-8,-10,-12,-14,-16} {\fill[gray, opacity=0.35] (\x,\y) circle (1.1pt);}}
+\node[gray, font=\scriptsize] at (0,0.84) {1};
+\node[gray, font=\scriptsize] at (2,0.84) {2};
+\node[gray, font=\scriptsize] at (4,0.84) {3};
+\node[gray, font=\scriptsize] at (6,0.84) {4};
+\node[gray, font=\scriptsize] at (8,0.84) {5};
+\node[gray, font=\scriptsize] at (10,0.84) {6};
+\node[gray, font=\scriptsize] at (12,0.84) {7};
+\node[gray, font=\scriptsize] at (14,0.84) {8};
+\node[gray, font=\scriptsize] at (16,0.84) {9};
+\node[gray, font=\scriptsize] at (18,0.84) {10};
+\node[gray, font=\scriptsize] at (20,0.84) {11};
+\node[gray, font=\scriptsize] at (22,0.84) {12};
+\node[gray, font=\scriptsize] at (24,0.84) {13};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-14) {h};
+\node[gray, font=\scriptsize, anchor=east] at (-0.84,-16) {i};
+\coordinate (e1) at (0,-8);
+\coordinate (e2) at (2,-8);
+\coordinate (e4) at (6,-8);
+\coordinate (c4) at (6,-4);
+\coordinate (h4) at (6,-14);
+\coordinate (a6) at (10,0);
+\coordinate (c6) at (10,-4);
+\coordinate (c8) at (14,-4);
+\coordinate (e10) at (18,-8);
+\coordinate (a10) at (18,0);
+\coordinate (c10) at (18,-4);
+\coordinate (g10) at (18,-12);
+\coordinate (i10) at (18,-16);
+\coordinate (c12) at (22,-4);
+\coordinate (c13) at (24,-4);
+\draw (e1) node[antenna]{} node[above left]{ANT}; % line 3
+\draw (e2) to[C, l_=$C_{1}$, a^=$100\,\mathrm{p}\mathrm{F}$] (e4); % line 4
+\draw (c4) to[R, l_=$R_{1}$, a^=$100\,\mathrm{k}\Omega$] (e4); % line 5
+\draw (e4) to[R, l_=$R_{2}$, a^=$33\,\mathrm{k}\Omega$] (h4); % line 6
+\draw (a6) to[R, l_=$R_{3}$, a^=$10\,\mathrm{k}\Omega$] (c6); % line 7
+\draw (c6) to[R, l_=$R_{4}$, a^=$47\,\mathrm{k}\Omega$] (c8); % line 8
+\node[icDGFETs1000, draw, font=\scriptsize] (part-Q1) at (e10) {$\mathrm{3SK291}$}; % line 9
+\node[anchor=south west] at (part-Q1.north west) {$Q_{1}$}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-Q1.bpin 1) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-Q1.bpin 2) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-Q1.bpin 3) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-Q1.bpin 4) {X}; % line 9
+\draw (a10) to[R, l_=$R_{5}$, a^=$330\,\Omega$] (c10); % line 10
+\draw (g10) to[R, l_=$R_{6}$, a^=$100\,\Omega$] (i10); % line 11
+\draw (c10) to[C, l_=$C_{2}$, a^=$10\,\mathrm{n}\mathrm{F}$] (c12); % line 12
+\draw (c13) node[ocirc]{} node[above left]{OUT}; % line 13
+\node[vcc] at (c4) {VCC}; % line 14
+\node[vcc] at (a6) {VCC}; % line 15
+\node[vcc] at (a10) {VCC}; % line 16
+\node[ground] at (h4) {}; % line 17
+\node[ground] at (c8) {}; % line 18
+\node[ground] at (i10) {}; % line 19
+\draw (e1) -- (e2); % line 21
+\draw (e4) |- (part-Q1.pin 1); % line 22
+\draw (part-Q1.pin 2) -| (c6); % line 23
+\draw (c10) |- (part-Q1.pin 3); % line 24
+\draw (g10) |- (part-Q1.pin 4); % line 25
+\draw (c12) -- (c13); % line 26
+\node[circ] at (e4) {};
+\node[circ] at (c6) {};
+\node[circ] at (c10) {};
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(17.709,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
+\end{circuitikz}
+\end{document}

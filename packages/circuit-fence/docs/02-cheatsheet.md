@@ -88,7 +88,7 @@ parts:
 - 1 端子 `port` `antenna` `ground` `vcc` `vee`
   (`vcc` / `vee` は電圧を書ける: `VCC: vcc a1 5V` で図に `+5V`、ネットは `VCC`)
 - 能動 `npn` `pnp` `nigbt` `pigbt` `nmos` `pmos` `njfet` `pjfet`
-  `nmos-e` `pmos-e` `nmos-d` `pmos-d` `opamp` `transformer` `phototransistor`
+  `nmos-e` `pmos-e` `nmos-d` `pmos-d` `nmos-dg` (デュアルゲート。足 4 本の箱: `G1` `G2` `D` `S`) `opamp` `transformer` `phototransistor`
 - 論理 `and` `or` `nand` `nor` `xor` `xnor` `not` `buffer` `spdt` `slide-switch`
   `dip4` `dip6` `dip8` `dip14` `dip16` `dip18` `dip20` `dip24` `dip28` `dip40`
 - ブザー・イヤホン `buzzer` `earphone` (スピーカーの記号で描く)
@@ -125,6 +125,7 @@ parts:
 | `slide-switch` | 同上 (記号も同じ) |
 | `dipNN` | `1` 〜 足の本数。型番が下の表にあれば印字の名前でも (`U1.TRIG` = `U1.2`) |
 | `ic` | 型番の印字の名前 (`U1.TRIG`) か番号 (`U1.2`)。`dipNN` と同じ |
+| `nmos-dg` | `G1` `G2` `D` `S` (`gate1` `gate2` `drain` `source` でも。`G` だけは断る) |
 | `device` | `pins:` に書いた名前 (`1` 〜 本数でも可) |
 | `relay` | `A1` `A2` / `COM1` `NC1` `NO1` / `COM2` `NC2` `NO2` |
 | `photocoupler` | `A` `K` / `C` `E` |
@@ -149,7 +150,9 @@ parts:
 | `CD4071B` `CD4081B` `CD4011B` `CD4001B` `CD4070B` (`B` / `BE` 無しも) | `dip14` | `A` `B` `J` `K` `C` `D` `VSS` `E` `F` `L` `M` `G` `H` `VDD` |
 | `CD4013B` (`CD4013` `CD4013BE`) | `dip14` | `Q1` `/Q1` `CLOCK1` `RESET1` `D1` `SET1` `VSS` `SET2` `D2` `RESET2` `CLOCK2` `/Q2` `Q2` `VDD` (`/Q` は Q の上に線) |
 | `74HC04` (`SN74HC04` `SN74HC04N`) | `dip14` | `1A` `1Y` `2A` `2Y` `3A` `3Y` `GND` `4Y` `4A` `5Y` `5A` `6Y` `6A` `VCC` |
-| `74HC08` `74HC32` (`SN` 付き・`N` 付きも) | `dip14` | `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3A` `3B` `4Y` `4A` `4B` `VCC` |
+| `74HC08` `74HC32` `74HC86` (`SN` 付き・`N` 付きも) | `dip14` | `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3A` `3B` `4Y` `4A` `4B` `VCC` |
+| `74HC02` (`SN74HC02` `SN74HC02N`) | `dip14` | `1Y` `1A` `1B` `2Y` `2A` `2B` `GND` `3A` `3B` `3Y` `4A` `4B` `4Y` `VCC` (NOR は Y が A・B より前) |
+| `74HC74` (`SN74HC74` `SN74HC74N`) | `dip14` | `1CLR` `1D` `1CLK` `1PRE` `1Q` `/1Q` `GND` `/2Q` `2Q` `2PRE` `2CLK` `2D` `2CLR` `VCC` (`CLR` `PRE` は上に線) |
 | `L293D` (`L293DNE` `L293` `L293NE`) | `dip16` | `12EN` `1A` `1Y` `GROUND` `GROUND` `2Y` `2A` `VCC2` `34EN` `3A` `3Y` `GROUND` `GROUND` `4Y` `4A` `VCC1` |
 | `MCP3008` | `dip16` | `CH0` `CH1` `CH2` `CH3` `CH4` `CH5` `CH6` `CH7` `DGND` `CS/SHDN` `DIN` `DOUT` `CLK` `AGND` `VREF` `VDD` |
 | `74HC595` (`SN74HC595` `SN74HC595N`) | `dip16` | `QB` `QC` `QD` `QE` `QF` `QG` `QH` `GND` `QH'` `SRCLR` `SRCLK` `RCLK` `OE` `SER` `QA` `VCC` (`OE` `SRCLR` は上に線) |

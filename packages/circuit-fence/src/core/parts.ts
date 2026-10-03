@@ -4,7 +4,7 @@ import type { BoardPart, NamedChip } from 'fence-kit';
 import { BOXED_RESISTORS } from './standard.ts';
 import type { Standard } from './standard.ts';
 import type { DeviceBox } from './tex/shapes.ts';
-import { lookupIcPinout } from './icLayouts.ts';
+import { DUAL_GATE_FET_PINOUT, lookupIcPinout } from './icLayouts.ts';
 import type { IcPinout } from './icLayouts.ts';
 import { icSides } from './tex/icShape.ts';
 /**
@@ -731,6 +731,20 @@ export function icChip(pinout: IcPinout): PartType {
   };
 }
 
+/**
+ * デュアルゲート MOSFET (N)。**足が 4 本の箱** (G1・G2・D・S)。circuitikz 1.0 に
+ * 記号が無く、3 本足の記号に線を描き足すと足の接続点を自分で持つことになるので、
+ * 働きで並べた IC (`icChip`) と同じ箱で描く。足は実物の呼び名 (`gate1` など) でも書ける。
+ * `G` だけは G1 か G2 か分からないので読まない。
+ */
+function dualGateFetChip(): PartType {
+  const chip = icChip(DUAL_GATE_FET_PINOUT);
+  return {
+    ...chip,
+    pins: { ...chip.pins, gate1: 'pin 1', gate2: 'pin 2', drain: 'pin 3', source: 'pin 4' },
+  };
+}
+
 /** マップ形式で書ける種類。足の名前を並べるので 1 行に畳めない形がある。 */
 export const MAP_TYPES: readonly string[] = [DEVICE, IC3];
 
@@ -1150,6 +1164,8 @@ export const PART_TYPES = {
   ic3: ic3Chip(null),
   // 働きで並べた IC。型番で並びを引く (`partTypeOf`)。
   ic: IC_PLACEHOLDER,
+  // デュアルゲート MOSFET (N)。足 4 本の箱 (`dualGateFetChip`)。
+  'nmos-dg': dualGateFetChip(),
 
   // ピンヘッダ。**数は実体配線図の 2 つと同じ表**。
   sip2: sipchip(2),
@@ -1257,6 +1273,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   'nmos-e': 'MOSFET (N・エンハンスメント型)',
   'pmos-e': 'MOSFET (P・エンハンスメント型)',
   'nmos-d': 'MOSFET (N・デプレッション型)',
+  'nmos-dg': 'デュアルゲート MOSFET (N)',
   'pmos-d': 'MOSFET (P・デプレッション型)',
   opamp: 'オペアンプ',
   transformer: 'トランス',
@@ -1382,6 +1399,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   'nmos-e': 'M',
   'pmos-e': 'M',
   'nmos-d': 'M',
+  'nmos-dg': 'M',
   'pmos-d': 'M',
   opamp: 'U',
   transformer: 'T',
