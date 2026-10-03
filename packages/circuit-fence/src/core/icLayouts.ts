@@ -71,6 +71,177 @@ const SRAM62256_LAYOUT: IcLayout = {
 };
 
 /**
+ * 74HC595 (シフトレジスタ)。**直列入力 SER とクロック SRCLK・RCLK は左**、並列出力 QA〜QH は右に上から、
+ * 直列出力 QH' はその下。SRCLR は普段 VCC、OE は普段 GND に結ぶので、それぞれ電源の隣。
+ */
+const HC595_LAYOUT: IcLayout = {
+  top: ['VCC', 'SRCLR'],
+  left: ['SER', 'SRCLK', 'RCLK'],
+  right: ['QA', 'QB', 'QC', 'QD', 'QE', 'QF', 'QG', 'QH', "QH'"],
+  bottom: ['GND', 'OE'],
+};
+
+/** 74HC164 (直列入力・並列出力)。A・B・CLK は左、QA〜QH は右に上から。CLR は普段 VCC に結ぶので電源の隣。 */
+const HC164_LAYOUT: IcLayout = {
+  top: ['VCC', 'CLR'],
+  left: ['A', 'B', 'CLK'],
+  right: ['QA', 'QB', 'QC', 'QD', 'QE', 'QF', 'QG', 'QH'],
+  bottom: ['GND'],
+};
+
+/** 74HC165 (並列入力・直列出力)。並列入力 A〜H は左に上から、その上に制御。CLKINH は普段 GND に結ぶので GND の隣。 */
+const HC165_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['SH/LD', 'CLK', 'SER', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+  right: ['QH', '/QH'],
+  bottom: ['GND', 'CLKINH'],
+};
+
+/** 74HC194 (双方向シフトレジスタ)。直列入力・並列入力・制御は左、Q0〜Q3 は右。MR は普段 VCC に結ぶので電源の隣。 */
+const HC194_LAYOUT: IcLayout = {
+  top: ['VCC', 'MR'],
+  left: ['DSR', 'D0', 'D1', 'D2', 'D3', 'DSL', 'S0', 'S1', 'CP'],
+  right: ['Q0', 'Q1', 'Q2', 'Q3'],
+  bottom: ['GND'],
+};
+
+/** 74HC138 (3 → 8 デコーダ)。アドレスは左に下の桁から、Y は右に 0 から。G1 は普段 VCC、G2A・G2B は普段 GND に結ぶ。 */
+const HC138_LAYOUT: IcLayout = {
+  top: ['VCC', 'G1'],
+  left: ['A', 'B', 'C'],
+  right: ['Y0', 'Y1', 'Y2', 'Y3', 'Y4', 'Y5', 'Y6', 'Y7'],
+  bottom: ['GND', 'G2A', 'G2B'],
+};
+
+/** 74HC139 (2 → 4 デコーダ ×2)。アドレスは左、Y は右に 0 から。G は普段 GND に結ぶので GND の隣。 */
+const HC139_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['1A', '1B', '2A', '2B'],
+  right: ['1Y0', '1Y1', '1Y2', '1Y3', '2Y0', '2Y1', '2Y2', '2Y3'],
+  bottom: ['GND', '1G', '2G'],
+};
+
+/** 74HC157 (2 入力データセレクタ ×4)。選択 A/B と入力は左、出力は右。G は普段 GND に結ぶので GND の隣。 */
+const HC157_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['A/B', '1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B'],
+  right: ['1Y', '2Y', '3Y', '4Y'],
+  bottom: ['GND', 'G'],
+};
+
+/** 74HC153 (4 入力データセレクタ ×2)。選択 A・B とデータは左、出力は右。G は普段 GND に結ぶ。 */
+const HC153_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['A', 'B', '1C0', '1C1', '1C2', '1C3', '2C0', '2C1', '2C2', '2C3'],
+  right: ['1Y', '2Y'],
+  bottom: ['GND', '1G', '2G'],
+};
+
+/** 74HC151 (8 入力データセレクタ)。選択 A〜C とデータ D0〜D7 は左、出力 Y・W は右。G は普段 GND に結ぶ。 */
+const HC151_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['A', 'B', 'C', 'D0', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7'],
+  right: ['Y', 'W'],
+  bottom: ['GND', 'G'],
+};
+
+/** 74HC573 (D ラッチ)・74HC574 (D フリップフロップ)。D は左、Q は右に同じ順 (線が交差しない)。OE は普段 GND に結ぶ。 */
+const latch8 = (clock: string): IcLayout => ({
+  top: ['VCC'],
+  left: ['1D', '2D', '3D', '4D', '5D', '6D', '7D', '8D', clock],
+  right: ['1Q', '2Q', '3Q', '4Q', '5Q', '6Q', '7Q', '8Q'],
+  bottom: ['GND', 'OE'],
+});
+
+/** 74HC273 (D フリップフロップ ×8)。D は左、Q は右に同じ順。CLR は普段 VCC に結ぶので電源の隣。 */
+const HC273_LAYOUT: IcLayout = {
+  top: ['VCC', 'CLR'],
+  left: ['1D', '2D', '3D', '4D', '5D', '6D', '7D', '8D', 'CLK'],
+  right: ['1Q', '2Q', '3Q', '4Q', '5Q', '6Q', '7Q', '8Q'],
+  bottom: ['GND'],
+};
+
+/** 74HC245 (バス トランシーバ)。A 側は左、B 側は右に同じ順。DIR は VCC か GND、OE は普段 GND に結ぶ。 */
+const HC245_LAYOUT: IcLayout = {
+  top: ['VCC', 'DIR'],
+  left: ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8'],
+  right: ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8'],
+  bottom: ['GND', 'OE'],
+};
+
+/** 74HC283 (4 ビット全加算器)。A・B は左に下の桁から組で、桁上げ入力 CIN はその下。和は右、桁上げ出力 COUT はその下。 */
+const HC283_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['A0', 'B0', 'A1', 'B1', 'A2', 'B2', 'A3', 'B3', 'CIN'],
+  right: ['S0', 'S1', 'S2', 'S3', 'COUT'],
+  bottom: ['GND'],
+};
+
+/** 74HC85 (4 ビット比較器)。A・B は左に下の桁から組で、下の桁の結果の入力 (カスケード) はその下。結果は右。 */
+const HC85_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['A0', 'B0', 'A1', 'B1', 'A2', 'B2', 'A3', 'B3', 'LTIN', 'EQIN', 'GTIN'],
+  right: ['LTOUT', 'EQOUT', 'GTOUT'],
+  bottom: ['GND'],
+};
+
+/** 74HC393 (2 進カウンタ ×2)。クロックは左、Q は右に下の桁から。CLR は普段 GND に結ぶ。 */
+const HC393_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['1CLK', '2CLK'],
+  right: ['1QA', '1QB', '1QC', '1QD', '2QA', '2QB', '2QC', '2QD'],
+  bottom: ['GND', '1CLR', '2CLR'],
+};
+
+/** 74HC4040 (12 段カウンタ)。クロックは左、QA〜QL は右に下の桁から。CLR は普段 GND に結ぶ。 */
+const HC4040_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['CLK'],
+  right: ['QA', 'QB', 'QC', 'QD', 'QE', 'QF', 'QG', 'QH', 'QI', 'QJ', 'QK', 'QL'],
+  bottom: ['GND', 'CLR'],
+};
+
+/** 74HC4060 (14 段カウンタ + 発振器)。CLKI は左、発振の CLKO・/CLKO と Q は右に。CLR は普段 GND に結ぶ。 */
+const HC4060_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['CLKI'],
+  right: ['CLKO', '/CLKO', 'QD', 'QE', 'QF', 'QG', 'QH', 'QI', 'QJ', 'QL', 'QM', 'QN'],
+  bottom: ['GND', 'CLR'],
+};
+
+/** 74HC74 (D フリップフロップ ×2)。D とクロックは左、Q と Q̅ は右。PRE・CLR は普段 VCC に結ぶので電源の隣。 */
+const HC74_LAYOUT: IcLayout = {
+  top: ['VCC', '1PRE', '1CLR', '2PRE', '2CLR'],
+  left: ['1D', '1CLK', '2D', '2CLK'],
+  right: ['1Q', '/1Q', '2Q', '/2Q'],
+  bottom: ['GND'],
+};
+
+/** 74HC174 (D フリップフロップ ×6)。D は左、Q は右に同じ順。CLR は普段 VCC に結ぶ。 */
+const HC174_LAYOUT: IcLayout = {
+  top: ['VCC', 'CLR'],
+  left: ['1D', '2D', '3D', '4D', '5D', '6D', 'CLK'],
+  right: ['1Q', '2Q', '3Q', '4Q', '5Q', '6Q'],
+  bottom: ['GND'],
+};
+
+/** 74HC193 (アップダウン カウンタ)。プリセット A〜D と UP・DOWN・LOAD は左、Q と CO・BO は右。CLR は普段 GND に結ぶ。 */
+const HC193_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['A', 'B', 'C', 'D', 'UP', 'DOWN', 'LOAD'],
+  right: ['QA', 'QB', 'QC', 'QD', 'CO', 'BO'],
+  bottom: ['GND', 'CLR'],
+};
+
+/** 74HC4051 (8 チャネル アナログ マルチプレクサ)。チャネル A0〜A7 は左、共通 A は右。選択 S0〜S2・E・VEE は GND の側。 */
+const HC4051_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7'],
+  right: ['A'],
+  bottom: ['GND', 'VEE', 'E', 'S0', 'S1', 'S2'],
+};
+
+/**
  * デュアルゲート MOSFET (N)。**足の名前は実物の呼び名** (G1・G2・D・S) で、型番ではなく
  * 種類 (`nmos-dg`) が並びを決める。G1 (信号) は S に近い下、G2 (バイアス・AGC) はその上。
  * 箱の名前に使うので型番は英数字だけ。
@@ -98,6 +269,29 @@ const LAYOUTS: readonly { readonly pins: number; readonly model: string; readonl
   { pins: 16, model: '74HC163', layout: HC163_LAYOUT },
   { pins: 24, model: '74HC154', layout: HC154_LAYOUT },
   { pins: 28, model: '62256', layout: SRAM62256_LAYOUT },
+  { pins: 16, model: '74HC161', layout: HC163_LAYOUT },
+  { pins: 16, model: '74HC595', layout: HC595_LAYOUT },
+  { pins: 14, model: '74HC164', layout: HC164_LAYOUT },
+  { pins: 16, model: '74HC165', layout: HC165_LAYOUT },
+  { pins: 16, model: '74HC194', layout: HC194_LAYOUT },
+  { pins: 16, model: '74HC138', layout: HC138_LAYOUT },
+  { pins: 16, model: '74HC139', layout: HC139_LAYOUT },
+  { pins: 16, model: '74HC157', layout: HC157_LAYOUT },
+  { pins: 16, model: '74HC153', layout: HC153_LAYOUT },
+  { pins: 16, model: '74HC151', layout: HC151_LAYOUT },
+  { pins: 20, model: '74HC573', layout: latch8('LE') },
+  { pins: 20, model: '74HC574', layout: latch8('CLK') },
+  { pins: 20, model: '74HC273', layout: HC273_LAYOUT },
+  { pins: 20, model: '74HC245', layout: HC245_LAYOUT },
+  { pins: 16, model: 'CD74HC283', layout: HC283_LAYOUT },
+  { pins: 16, model: '74HC85', layout: HC85_LAYOUT },
+  { pins: 14, model: '74HC393', layout: HC393_LAYOUT },
+  { pins: 16, model: '74HC4040', layout: HC4040_LAYOUT },
+  { pins: 16, model: '74HC4060', layout: HC4060_LAYOUT },
+  { pins: 14, model: '74HC74', layout: HC74_LAYOUT },
+  { pins: 16, model: '74HC174', layout: HC174_LAYOUT },
+  { pins: 16, model: '74HC193', layout: HC193_LAYOUT },
+  { pins: 16, model: '74HC4051', layout: HC4051_LAYOUT },
 ];
 
 /** 型番から足の名前と働きの並びを引く。並びを持たない型番は null。 */
