@@ -91,6 +91,22 @@ export function textOn(plate: string): string {
  * **書かれた色は動かさない** — あちらは実物の被覆の色なので、読みにくくても
  * 書いたとおりに描く (図と手元の線を見比べるためのもの)。
  */
+/**
+ * 配線の縁の色。**ふつうの板には暗い縁、ごく暗い板 (黒・暗いテーマ) には明るい縁。**
+ * しきい値は字の色 (`textOn`) より低い — 緑や青の板は字なら白が読めるが、
+ * 縁は暗いほうが線の色を立てる (52 の docs/110 の試し描き)。
+ */
+export function outlineOn(plate: string): string {
+  const hex = plate.replace('#', '');
+  const full = hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex;
+  const at = (i: number): number => Number.parseInt(full.slice(i, i + 2), 16) / 255;
+  const luma = 0.299 * at(0) + 0.587 * at(2) + 0.114 * at(4);
+  return luma < OUTLINE_DARK_PLATE ? '#e6ebef' : '#1b1d21';
+}
+
+/** これより暗い板には明るい縁。黒 (0.16) と暗いテーマの緑 (0.22) が入り、緑 (0.36) は入らない。 */
+const OUTLINE_DARK_PLATE = 0.25;
+
 export function wireOn(plate: string): string {
   // 明るい板には暗い線、暗い板には明るい線。しきい値は字の色と同じ。
   return textOn(plate) === '#1a1f1c' ? '#39414a' : '#e6ebef';

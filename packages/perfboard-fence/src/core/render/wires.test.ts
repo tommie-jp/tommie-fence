@@ -44,7 +44,7 @@ describe('renderWires', () => {
   test('draws every wire it is given', () => {
     const svg = renderWires([wire('b3', 'c5'), wire('d1', 'd4')], layout, THEME);
 
-    expect(svg.match(/<line /g)).toHaveLength(2);
+    expect(svg.match(/<line /g)).toHaveLength(4); // 縁 2 本 + 線 2 本
   });
 });
 
@@ -72,7 +72,7 @@ describe('跨ぎの大きさと向き', () => {
   test('hops wide over a hole, so the arc clears the land and the solder', () => {
     const svg = renderWires([wire('a5', 'e5')], layout, THEME, [[hole('c5')]]);
 
-    expect(svg).toContain('A 8 8 ');
+    expect(svg).toContain('A 9 9 ');
   });
 
   test('hops small between holes, where a wide arc would touch the neighbours', () => {
@@ -90,5 +90,31 @@ describe('跨ぎの大きさと向き', () => {
     expect(sweeps('e5', 'a5', 'c5')).toBe('0');
     expect(sweeps('c2', 'c8', 'c5')).toBe('1');
     expect(sweeps('c8', 'c2', 'c5')).toBe('0');
+  });
+});
+
+describe('wire outline (52 の docs/110)', () => {
+  test('lays every outline before any wire', () => {
+    const svg = renderWires([wire('b3', 'c5', 'blue'), wire('d1', 'd4', 'red')], layout, THEME);
+    const outlines = [...svg.matchAll(/cf-wire-outline/g)].map((m) => m.index);
+    const firstLine = svg.indexOf(WIRE_COLORS.blue as string);
+    expect(outlines).toHaveLength(2);
+    expect(Math.max(...outlines)).toBeLessThan(firstLine);
+  });
+
+  test('draws the wire 4 wide over a 6-wide dark outline on the green board', () => {
+    const svg = renderWires([wire('b3', 'c5', 'blue')], layout, THEME);
+    expect(svg).toContain('stroke="#1b1d21" stroke-width="6"');
+    expect(svg).toMatch(/stroke="#2b6fd4" stroke-width="4"/);
+    expect(svg).toContain('stroke-opacity="1"');
+  });
+
+  test('uses a light outline on a black board', () => {
+    const black = { ...THEME, palette: { ...THEME.palette, plate: '#26292c' } };
+    expect(renderWires([wire('b3', 'c5')], layout, black)).toContain('stroke="#e6ebef" stroke-width="6"');
+  });
+
+  test('leaves hatched (black-and-white) figures unoutlined', () => {
+    expect(renderWires([wire('b3', 'c5', 'red')], layout, { ...THEME, hatch: true })).not.toContain('cf-wire-outline');
   });
 });

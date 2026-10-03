@@ -1,5 +1,6 @@
 import { element, num } from 'fence-kit';
 import { wireStroke } from '../color.ts';
+import { outlineOn } from './finish.ts';
 import { hatchDash } from './hatch.ts';
 import type { Layout } from '../model/layout.ts';
 import type { Point, RoutedWire } from '../types.ts';
@@ -7,8 +8,18 @@ import type { DeviceWire } from '../wiring/wiring.ts';
 import type { PlacedDevice } from './devices.ts';
 import type { Theme } from './theme.ts';
 
-/** ジャンパの太さ。部品の足より少し太い (被覆があるぶん)。 */
-const WIRE_WIDTH = 3;
+/**
+ * ジャンパの太さ。部品の足より少し太い (被覆があるぶん)。3 では縮めて貼ると
+ * 1 px 前後になり、板と明るさの近い色 (青・赤・紫・茶) が沈んだ (52 の docs/110)。
+ */
+const WIRE_WIDTH = 4;
+
+/**
+ * 縁取りが線の両側に出る幅の合計 (片側 1)。**全部の線を縁取る** — 緑の板では
+ * 11 色のうち 4 色が板とほぼ同じ明るさで、色みの違いでしか見分けられない。
+ * 沈む色だけ縁取ると太さが 2 通りに見え、意味の違いに読まれる。
+ */
+const OUTLINE_MARGIN = 2;
 
 /**
  * 穴の間で渡る跨ぎの半径。**穴の間隔 (20) の 1/4。** これより小さいと線の太さに埋もれ、
@@ -18,10 +29,10 @@ const HOP = 5;
 
 /**
  * **穴の真上で渡る**跨ぎの半径。ランド (半径 4.5) と半田の玉 (半径 6) の外に
- * 線の帯 (中心 ± 1.5) が収まる大きさ。HOP のままだと半円がランドの縁に重なり、
+ * 縁込みの線の帯 (中心 ± 3) が収まる大きさ。HOP のままだと半円がランドの縁に重なり、
  * 輪郭が色づいたようにしか見えない。隣の穴のランド (15.5 から) には届かない。
  */
-const HOP_OVER_HOLE = 8;
+const HOP_OVER_HOLE = 9;
 
 /** 座標の比べ方の許し。 */
 const EPSILON = 1e-6;
@@ -55,10 +66,9 @@ export const renderWires = (
   theme: Theme,
   hops: readonly (readonly Point[])[] = [],
   edit = false,
-): string =>
-  wires
-    .map((wire, index) => {
-      const drawn = strand(
+): string => {
+  const painted = wires.map((wire, index) => {
+      const paint = strand(
         layout.point(wire.from),
         layout.point(wire.to),
         hops[index] ?? [],
@@ -66,7 +76,8 @@ export const renderWires = (
         theme,
         layout,
       );
-      if (!edit) return drawn;
+      const drawn = paint.line;
+      if (!edit) return { halo: paint.halo, line: drawn };
       // 線は細くて掴めないので、**同じ道に太い透明な線**を重ねる。
       // **行番号は掴み手そのものに持たせる。** webview はカーソルの下にある要素から
       // `data-line` を読むので、外の `g` にだけ付けると掴んでも行が分からない。
@@ -81,13 +92,23 @@ export const renderWires = (
         'stroke-linecap': 'round',
       });
       const ends = wireEndHits(from, to, String(wire.line ?? 0));
-      return element(
-        'g',
-        { class: 'cf-wire', 'data-line': String(wire.line ?? 0) },
-        drawn + hit + ends,
-      );
-    })
-    .join('');
+      return {
+        halo: paint.halo,
+        line: element('g', { class: 'cf-wire', 'data-line': String(wire.line ?? 0) }, drawn + hit + ends),
+      };
+    });
+  return layered(painted);
+};
+
+/**
+ * 1 本を縁と線に分けたもの。**縁を全部先に敷き、その上に線を重ねる** —
+ * 線ごとに縁を重ねると、同じ穴で出会う 2 本の継ぎ目に縁の輪が出て、
+ * つながっていないように見える (breadboard-fence の `WirePaint` と同じ順)。
+ */
+type WirePaint = { readonly halo: string; readonly line: string };
+
+const layered = (painted: readonly WirePaint[]): string =>
+  painted.map((paint) => paint.halo).join('') + painted.map((paint) => paint.line).join('');
 
 /**
  * 配線の**端だけ**を掴む的。線そのものより後に置く (端の上では端が勝つ)。
@@ -127,14 +148,12 @@ export const renderDeviceWires = (
 ): string => {
   const pins = new Map(devices.map((placed) => [placed.device.id, placed.pins]));
 
-  return wires
-    .map((wire, index) => {
-      const from = pins.get(wire.device)?.get(wire.pin);
-      // 機器が帯に置けなかったとき (帯そのものが無いとき) は線も引けない。
-      if (!from) return '';
-      return strand(from, layout.point(wire.hole), hops[index] ?? [], wire.color, theme, layout);
-    })
-    .join('');
+  return layered(wires.flatMap((wire, index) => {
+    const from = pins.get(wire.device)?.get(wire.pin);
+    // 機器が帯に置けなかったとき (帯そのものが無いとき) は線も引けない。
+    if (!from) return [];
+    return [strand(from, layout.point(wire.hole), hops[index] ?? [], wire.color, theme, layout)];
+  }));
 };
 
 /**
@@ -150,25 +169,39 @@ function strand(
   color: string | null,
   theme: Theme,
   layout: Layout,
-): string {
+): WirePaint {
   // **白黒の図では色を線の型に移す** (`hatch.ts`)。塗り分けを落とすだけだと
   // 「同じ色の線は同じ網」が読めなくなるので、形のほうに移して凡例で引かせる。
   const dash = theme.hatch === true && color !== null ? hatchDash(color) : '';
+  // **白黒の図は縁取らない** — 線の型で読ませる図に縁を足すと、破線の隙間が埋まる。
+  const outlined = theme.hatch !== true;
   const ink = {
     stroke: theme.hatch === true ? theme.palette.wire : wireStroke(color, theme.palette.wire),
     'stroke-width': WIRE_WIDTH,
     // 破線は端を丸めると隙間が埋まって実線に見える。
     'stroke-linecap': dash === '' ? 'round' : 'butt',
-    'stroke-opacity': theme.metrics.wireOpacity,
+    // 縁の上で透かすと暗い縁が透けて色が濁り、真ん中と端で色が違って見える。
+    'stroke-opacity': outlined ? 1 : theme.metrics.wireOpacity,
     ...(dash === '' ? {} : { 'stroke-dasharray': dash }),
   };
   const path = hops.length === 0 ? null : hopPath(from, to, hops, layout);
+  const draw = (attributes: Record<string, string | number>): string =>
+    path === null
+      ? element('line', { x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y), ...attributes })
+      : element('path', { d: path, fill: 'none', ...attributes });
 
-  return path === null
-    ? element('line', {
-      x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y), ...ink,
-    })
-    : element('path', { d: path, fill: 'none', ...ink });
+  return {
+    halo: outlined
+      ? draw({
+        class: 'cf-wire-outline',
+        stroke: outlineOn(theme.palette.plate),
+        'stroke-width': WIRE_WIDTH + OUTLINE_MARGIN,
+        'stroke-linecap': 'round',
+        'pointer-events': 'none',
+      })
+      : '',
+    line: draw(ink),
+  };
 }
 
 /**
