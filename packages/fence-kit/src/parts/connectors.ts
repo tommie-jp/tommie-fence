@@ -152,6 +152,9 @@ const METAL_GAP = 2;
 const LIP = 0.5;
 /** 金物の脇に残す基板 (mm)。 */
 const SIDE = 1;
+/** 実寸の基板の足になる四角いパッドの辺と、後ろの縁からパッドまでの間 (mm)。 */
+const REAR_PAD = 1.5;
+const REAR_PAD_INSET = 0.5;
 
 /** 局所座標の長方形。`a` は足の並ぶ向き、`b` は差し込み口の向き (足の列が 0)。 */
 type Span = { readonly a0: number; readonly a1: number; readonly b0: number; readonly b1: number };
@@ -227,13 +230,17 @@ function frameOf(shape: ConnectorShape): Frame | null {
   const spread = Math.max(...pins.map((pin) => Math.abs(pin.a))) + shape.pitch * edge;
 
   // 受け口は基板に載って縁から少し出る。差し込みは根元だけ基板に載り、先は外へ出る。
-  const plateFront = male ? metalFrom + spec.plug.root * mm : metalFrom + (spec.receptacle.depth - LIP) * mm;
-  const metalTo = male ? plateFront + spec.plug.reach * mm : metalFrom + spec.receptacle.depth * mm;
-
-  // 実寸のある受け口は、基板を実物の大きさに描く (足の列の後ろにパッドの帯が余る)。
+  // **実寸のある受け口は、後ろの縁のパッドが足** (実物の変換基板どおり。配線はパッドへ届く)。
+  // 基板は足のすぐ後ろから実物の長さだけ前へ伸び、金物はその先の縁に合わせる。
   const real = male ? undefined : spec.board;
+  const rear = real === undefined
+    ? pinRear
+    : Math.min(...pins.map((pin) => pin.b)) - (REAR_PAD_INSET + REAR_PAD / 2) * mm;
+  const loose = male ? metalFrom + spec.plug.root * mm : metalFrom + (spec.receptacle.depth - LIP) * mm;
+  const plateFront = real === undefined ? loose : rear + real.length * mm;
+  const metalTo = male ? plateFront + spec.plug.reach * mm : plateFront + LIP * mm;
+  const metalStart = real === undefined ? metalFrom : metalTo - spec.receptacle.depth * mm;
   const plateHalf = Math.max(spread, real === undefined ? width / 2 + SIDE * mm : (real.width / 2) * mm);
-  const rear = real === undefined ? pinRear : Math.min(pinRear, plateFront - real.length * mm);
 
   return {
     spec,
@@ -244,7 +251,7 @@ function frameOf(shape: ConnectorShape): Frame | null {
     font,
     band,
     plate: { a0: -plateHalf, a1: plateHalf, b0: rear, b1: plateFront },
-    metal: { a0: -width / 2, a1: width / 2, b0: metalFrom, b1: metalTo },
+    metal: { a0: -width / 2, a1: width / 2, b0: metalStart, b1: metalTo },
     at,
   };
 }
@@ -355,6 +362,7 @@ function pinNames(frame: Frame, facing: ConnectorFacing, ink: BodyInk): string {
 
 /**
  * USB コネクタを変換基板ごと描く。足はランドとピンヘッダの頭で、名前は基板に刷る。
+ * **実寸のある受け口 (Type-C) は、後ろの縁の四角いパッドが足** — ランドは描かない。
  * 知らない種類は何も描かない (呼ぶ側が種類を確かめている)。
  */
 export function drawConnector(shape: ConnectorShape & { readonly ink?: BodyInk }): string {
@@ -365,14 +373,13 @@ export function drawConnector(shape: ConnectorShape & { readonly ink?: BodyInk }
   const plate = rectOf(frame, frame.plate, {
     rx: 2, fill: ink.paint(PLATE), stroke: ink.paint(PLATE_EDGE), 'stroke-width': 1,
   });
-  // 実寸の基板は、後ろの縁に足ごとの四角いパッドが並ぶ (実物の写真どおり)。
-  const padSize = 1.5 * frame.mm;
-  const rearPads = frame.spec.board === undefined || frame.male ? '' : frame.pins.map((pin) => rectOf(frame, {
-    a0: pin.a - padSize / 2, a1: pin.a + padSize / 2,
-    b0: frame.plate.b0 + 0.5 * frame.mm, b1: frame.plate.b0 + 0.5 * frame.mm + padSize,
-  }, { fill: ink.paint(METAL), stroke: ink.paint(METAL_EDGE), 'stroke-width': 0.5 })).join('');
+  // 実寸の基板は、後ろの縁に足ごとの四角いパッドが並ぶ (実物の写真どおり)。**パッドが足**で、書いた穴の上に来る。
+  const padHalf = (REAR_PAD / 2) * frame.mm;
+  const padded = frame.spec.board !== undefined && !frame.male;
   const land = shape.pitch * PAD;
-  const pins = frame.pins.map((pin) => {
+  const pins = padded ? frame.pins.map((pin) => rectOf(frame, {
+    a0: pin.a - padHalf, a1: pin.a + padHalf, b0: pin.b - padHalf, b1: pin.b + padHalf,
+  }, { fill: ink.paint(METAL), stroke: ink.paint(METAL_EDGE), 'stroke-width': 0.5 })).join('') : frame.pins.map((pin) => {
     const point = frame.at(pin.a, pin.b);
     const head = land * 0.8;
     return element('circle', { cx: num(point.x), cy: num(point.y), r: num(land), fill: ink.paint(LAND) })
@@ -386,5 +393,5 @@ export function drawConnector(shape: ConnectorShape & { readonly ink?: BodyInk }
     fill: ink.paint(METAL), stroke: ink.paint(METAL_EDGE), 'stroke-width': 1,
   });
 
-  return `${plate}${rearPads}${pins}${pinNames(frame, shape.facing, ink)}${metal}${metalMarks(frame, ink)}`;
+  return `${plate}${pins}${pinNames(frame, shape.facing, ink)}${metal}${metalMarks(frame, ink)}`;
 }

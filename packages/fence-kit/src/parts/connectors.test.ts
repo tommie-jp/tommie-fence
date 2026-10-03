@@ -132,8 +132,9 @@ describe('外形', () => {
   });
 
   test('lets the plug stick out farther than the receptacle', () => {
-    const male = connectorBox(shape({ variant: 'male' }));
-    const female = connectorBox(shape({ variant: 'female' }));
+    // Type-C の受け口は実寸の基板 (パッドから 12.7mm) に載るので、実寸の無い Type-A で比べる。
+    const male = connectorBox(shape({ type: 'usb-a', variant: 'male' }));
+    const female = connectorBox(shape({ type: 'usb-a', variant: 'female' }));
     expect(male.y).toBeLessThan(female.y);
   });
 
@@ -177,6 +178,34 @@ describe('姿', () => {
         expect(rect.y + rect.height, where).toBeLessThanOrEqual(box.y + box.height + 0.01);
       }
     }
+  });
+
+  test('makes the pads of the type-c breakout its feet: a pad sits on every written hole, and no gold land', () => {
+    // 実物の変換基板は、後ろの縁の四角いパッドが足。配線はパッドへ届く。
+    const points = row(4);
+    const drawn = drawConnector(shape({ points }));
+    const pad = (1.5 * PITCH) / 2.54;
+    const centres = rectsOf(drawn)
+      .filter((rect) => Math.abs(rect.width - pad) < 0.01 && Math.abs(rect.height - pad) < 0.01)
+      .map((rect) => ({ x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }));
+
+    expect(centres).toHaveLength(points.length);
+    points.forEach((point, index) => {
+      expect(centres[index]?.x).toBeCloseTo(point.x, 1);
+      expect(centres[index]?.y).toBeCloseTo(point.y, 1);
+    });
+    expect(drawn).not.toContain('<circle');
+    // 実寸の無い Type-A は、ランドとピンヘッダの頭のまま。
+    expect(drawConnector(shape({ type: 'usb-a' }))).toContain('<circle');
+  });
+
+  test('keeps the type-c breakout at its real length, starting just behind the pads', () => {
+    const points = row(4);
+    const box = connectorBox(shape({ points, facing: 'down' }));
+    const mm = PITCH / 2.54;
+    // 後ろの縁はパッドの 0.5mm 後ろ。基板 12.7mm の先に金物が 0.5mm 出る。
+    expect(box.y).toBeCloseTo(100 - 1.25 * mm, 1);
+    expect(box.height).toBeCloseTo(13.2 * mm, 1);
   });
 
   test('lets a black-and-white figure repaint every colour', () => {
