@@ -1,3 +1,5 @@
+import type { SipLook } from './chips.ts';
+
 /**
  * DIP の IC の足の名前の表 (52 の docs/95)。**型番で引いて、3 つのフェンスが
  * 同じ名前を刷る** — 回路図は箱の中に名前と番号、実体配線図は胴に番号と名前。
@@ -80,12 +82,15 @@ export type PinoutRow = {
   readonly role: string;
   /** 文書の表に添える一言 (上に線の足など)。`scripts/pinout-rows.mjs` が行に書き出す。 */
   readonly note?: string;
+  /** 1 列の姿 (`sipN`) を樹脂の色と胴の字で描く部品。無ければ黒い 1 列ヘッダ。 */
+  readonly look?: SipLook;
 };
 
 export type Pinout = {
   /** 代表の型番 (表の行の先頭)。 */
   readonly model: string;
   readonly names: readonly string[];
+  readonly look?: SipLook;
 };
 
 /** 4 回路の 2 入力ゲート (CD4071B・CD4081B・CD4011B・CD4001B) は同じ並び。 */
@@ -524,6 +529,14 @@ const ROWS: readonly PinoutRow[] = [
     models: ['3SK291'], role: 'デュアルゲート MOSFET (N)',
     names: ['G1', 'G2', 'D', 'S'],
   },
+  {
+    // 村田の 455 kHz。足は 1 列 3 本 (a 入力・b アース・c 出力)、間隔 2.5 mm。
+    // 橙の樹脂に `SFU` の字。左右対称なので向きの目印は無い。
+    models: ['SFU455B', 'SFU455A', 'SFU455'], role: 'セラミックフィルタ 455 kHz',
+    names: ['IN', 'GND', 'OUT'],
+    look: { body: '#e8842a', edge: '#a85a12', text: '#7a3a08', mark: 'SFU' },
+    note: '`sip3` を橙の胴で描く',
+  },
 ];
 
 /** 型番 (大文字) → 行。`Map` にするのは `constructor` のような継ぎ物の名前を拾わないため。 */
@@ -539,7 +552,7 @@ export function lookupPinout(model: string | null, pins: number): Pinout | null 
   if (model === null) return null;
   const row = BY_MODEL.get(model.trim().toUpperCase());
   if (row === undefined || row.names.length !== pins) return null;
-  return { model: row.models[0] ?? '', names: row.names };
+  return { model: row.models[0] ?? '', names: row.names, ...(row.look === undefined ? {} : { look: row.look }) };
 }
 
 /** 型番から働きの名前を引く (本数は問わない)。表に無い型番は null。 */

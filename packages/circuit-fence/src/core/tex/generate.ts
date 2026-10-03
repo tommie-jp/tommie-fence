@@ -232,7 +232,7 @@ function sipShapesFor(circuit: Circuit, pitch: number): string[] {
   const declared = [...sizes].sort((a, b) => a - b).flatMap((pins) => sipShapeTex(pins));
   // 三端子レギュレータも自分で宣言した形。**使うときだけ**書く。
   // 3 本足の IC (`ic3`) も同じ箱。
-  const withReg = circuit.parts.some((part) => part.type === 'regulator' || part.type === IC3)
+  const withReg = circuit.parts.some((part) => part.type === 'regulator' || part.type === IC3 || part.type === 'ceramic-filter')
     ? [...declared, ...regulatorShapeTex()]
     : declared;
   const withSma = circuit.parts.some((part) => part.type === 'sma')

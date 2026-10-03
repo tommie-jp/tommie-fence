@@ -260,6 +260,19 @@ describe('sipHeader', () => {
     expect(firstName(above)).toBeLessThan(bar.y);
   });
 
+  test('paints the body in the colour of a part that has a look, and prints its mark instead of the caption', () => {
+    const look = { body: '#e8842a', edge: '#a85a12', text: '#7a3a08', mark: 'SFU' };
+    const plain = sipHeader({ points, names, pitch: PITCH, caption: 'CF1 SFU455B', scale: 1, nameSide: 1, ink: INK });
+    const looked = sipHeader({ points, names, pitch: PITCH, caption: 'CF1 SFU455B', scale: 1, nameSide: 1, ink: INK, look });
+
+    expect(plain).not.toContain('#e8842a');
+    expect(plain).toContain('CF1 SFU455B');
+    expect(looked).toContain('#e8842a');
+    expect(looked).toContain('#a85a12');
+    expect(looked).toContain('>SFU<');
+    expect(looked).not.toContain('CF1 SFU455B');
+  });
+
   test('lays the bar along the pins when the header stands upright', () => {
     const upright: ChipPoint[] = [{ x: 0, y: 0 }, { x: 0, y: PITCH }, { x: 0, y: 2 * PITCH }];
 

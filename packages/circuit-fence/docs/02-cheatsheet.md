@@ -98,6 +98,7 @@ parts:
 - 足を働きで並べた IC `ic` (型番が要る: `NE555` `TLC555` `CD4511B` `74HC163` `74HC154` `62256` と 74HC の `74HC161` `74HC595` `74HC164` `74HC165` `74HC194` `74HC138` `74HC139` `74HC157` `74HC153` `74HC151` `74HC573` `74HC574` `74HC273` `74HC245` `74HC283` `74HC85` `74HC393` `74HC4040` `74HC4060` `74HC74` `74HC174` `74HC193` `74HC4051`。電源が上・GND が下・入力が左・出力が右。
   足は箱の中心から半マス刻み。向きは書けない。板には無い)
 - 3 本足の IC `ic3` (同じ箱。足は `1` `2` `3`、マップ形式の `pins:` で名前を付けられる)
+- セラミックフィルタ `ceramic-filter` (同じ箱。足は `in` `gnd` `out`。番号でも可。板では `sip3` + `SFU455B`)
 - ピンヘッダ (足は番号)
   `sip2` `sip3` `sip4` `sip5` `sip6` `sip8` `sip10` `sip20` `sip40`
 - USB コネクタ (足は `VBUS` `GND` `D+` `D-`、Type-C は `CC1` `CC2` も。番号でも可)
@@ -108,7 +109,7 @@ parts:
   `relay` `photocoupler` `seg7`
 
 略記: `r` `c` `l` `d` `i` `v` `dc` `ac` `gnd` `op` `ec` `pot` `ldr` `ntc`
-`ptc` `xtal` `scr` `bat` `sw` `btn`
+`ptc` `xtal` `cfilter` `scr` `bat` `sw` `btn`
 
 ### 足の名前
 
@@ -204,6 +205,7 @@ parts:
 | `74HC573` (`CD74HC573` `CD74HC573E`) | `dip20` | `OE` `1D` `2D` `3D` `4D` `5D` `6D` `7D` `8D` `GND` `LE` `8Q` `7Q` `6Q` `5Q` `4Q` `3Q` `2Q` `1Q` `VCC` (`OE` は上に線。`LE` が H の間つながる) |
 | `74HC574` (`SN74HC574` `SN74HC574N`) | `dip20` | `OE` `1D` `2D` `3D` `4D` `5D` `6D` `7D` `8D` `GND` `CLK` `8Q` `7Q` `6Q` `5Q` `4Q` `3Q` `2Q` `1Q` `VCC` (`OE` は上に線。並びは 74HC573 と同じ (`LE` が `CLK`)) |
 | `3SK291` | `dip4` | `G1` `G2` `D` `S` (面実装 SMQ の 4 本足を変換基板に載せた形。回路図の記号は `nmos-dg`) |
+| `SFU455B` (`SFU455A` `SFU455`) | `sip3` | `IN` `GND` `OUT` (セラミックフィルタ。橙の胴で描く。回路図の記号は `ceramic-filter`) |
 
 ## 配線 (`wires:`)
 

@@ -2,7 +2,7 @@ import {
   BOARD_HALO_OPACITY, BOARD_INK_OPACITY, REAL_INK, boardBox, boardChip, connectorBox, dipChip, directSotSpec, drawBody, drawConnector, drawDipAdapter,
   drawDirectSot, drawPackage, drawsOwnLeads,
   element, fit, hasBody,
-  drawNamedChip, lookupBoardPart, lookupNamedChip, num, bodySize, packageHalfWidth, packageReach, sipHeader,
+  drawNamedChip, lookupBoardPart, lookupNamedChip, lookupPinout, num, bodySize, packageHalfWidth, packageReach, sipHeader,
   smaBody as drawSmaBody, svgText, transformerCore, TEXT_HALO_WIDTH,
 } from 'fence-kit';
 import type { BodyInk, BodyPart, ChipInk } from 'fence-kit';
@@ -622,7 +622,8 @@ function renderChip(
     // **名前は行の増える側へ。** この板に溝は無いので、どちらでも読めるほうを
     // 1 つに決める (breadboard は溝の側)。
     // 型番が足の名前の表にあれば印字の名前 (1 列の変換基板の `3SK291`)。
-    return sipHeader({ ...shared, names: dipPinout(part) ?? numbers, nameSide: 1 });
+    const look = lookupPinout(part.value, part.pins.length)?.look;
+    return sipHeader({ ...shared, names: dipPinout(part) ?? numbers, nameSide: 1, ...(look === undefined ? {} : { look }) });
   }
 
   // **マイコンボードの名前は胴の下。** 基板の中に置くと長い足の名前

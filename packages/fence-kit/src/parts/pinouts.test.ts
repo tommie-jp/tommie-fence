@@ -130,11 +130,13 @@ describe('足の名前の表', () => {
   test('lists the models it knows, one spelling per row, optionally for one package', () => {
     const all = pinoutModels();
 
-    // 先頭の 31 行は 74HC273 まで (既存の並び)、そのあとにロジック IC、最後が 3SK291。
+    // 先頭の 31 行は 74HC273 まで (既存の並び)、そのあとにロジック IC、そのあとに 3SK291、最後が SFU455B。
     expect(all.slice(0, 5)).toEqual(['NE555', 'TLC555', 'LM358', 'TL071', 'TL072']);
     expect(all.slice(28, 35)).toEqual(['62256', '6116', '74HC245', '74HC273', '74HC14', '74HC00', '74HC161']);
-    expect(all.at(-1)).toBe('3SK291');
+    expect(all.at(-2)).toBe('3SK291');
+    expect(all.at(-1)).toBe('SFU455B');
     expect(new Set(all).size).toBe(all.length);
+    expect(pinoutModels(3)).toEqual(['SFU455B']);
     expect(pinoutModels(4)).toEqual(['3SK291']);
     expect(pinoutModels(20)).toEqual([
       '74HC245', '74HC273', '74HC244', '74HC541', '74HC240', '74HC573', '74HC574',
@@ -153,7 +155,7 @@ describe('足の名前の表', () => {
     const table = pinoutTable();
     expect(table.map((row) => row.models[0])).toEqual(pinoutModels());
     expect(table[0]?.models).toContain('NE555P');
-    expect(table.every((row) => [4, 8, 14, 16, 20, 24, 28].includes(row.names.length))).toBe(true);
+    expect(table.every((row) => [3, 4, 8, 14, 16, 20, 24, 28].includes(row.names.length))).toBe(true);
   });
 
   test('gives every pin a name that cannot be mistaken for a pin number or split by a space', () => {
@@ -270,16 +272,34 @@ describe('3SK291 (面実装の 4 本足)', () => {
 });
 
 
+describe('SFU455B (1 列 3 本足のセラミックフィルタ)', () => {
+  test('names the three pins in the order a (input), b (ground), c (output)', () => {
+    expect(lookupPinout('SFU455B', 3)?.names).toEqual(['IN', 'GND', 'OUT']);
+  });
+
+  test('answers to the other spellings and carries the orange look', () => {
+    for (const model of ['SFU455A', 'sfu455']) expect(lookupPinout(model, 3)?.model, model).toBe('SFU455B');
+    expect(lookupPinout('SFU455B', 3)?.look).toMatchObject({ mark: 'SFU' });
+  });
+
+  test('is not a 4 pin chip, and a plain chip has no look', () => {
+    expect(lookupPinout('SFU455B', 4)).toBeNull();
+    expect(lookupPinout('3SK291', 4)?.look).toBeUndefined();
+  });
+});
+
 describe('表の全部の行', () => {
-  // 電源の足を持たない部品 (トランジスタを変換基板に載せた物)。
-  const NO_SUPPLY = ['3SK291'];
+  // 電源の足を持たない部品 (トランジスタ・フィルタを変換基板や 1 列で載せた物)。
+  const NO_SUPPLY = ['3SK291', 'SFU455B'];
+  // 姿 (`look`) を持つ行は 1 列の部品で、本数は 3 本でよい。
+  const isEvenChip = (row: { look?: unknown }) => row.look === undefined;
   const SUPPLY = /^(V|GND|AGND|DGND|GROUND)/;
 
   test('has an even number of pins between 4 and 40, and no empty or spaced name', () => {
     for (const row of pinoutTable()) {
       const model = row.models[0];
-      expect(row.names.length % 2, model).toBe(0);
-      expect(row.names.length, model).toBeGreaterThanOrEqual(4);
+      expect(row.names.length % 2, model).toBe(isEvenChip(row) ? 0 : 1);
+      expect(row.names.length, model).toBeGreaterThanOrEqual(3);
       expect(row.names.length, model).toBeLessThanOrEqual(40);
       expect(row.names.every((name) => name.trim() !== '' && !/\s/.test(name)), model).toBe(true);
     }

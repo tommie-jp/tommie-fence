@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- 足の名前と働きの表に SFU455B (村田の 455 kHz セラミックフィルタ。1 列 3 本 = IN・GND・OUT。`SFU455A` `SFU455` でも)。行に `look` (樹脂の色と胴の字) を持たせ、`sipHeader` が橙の胴で描く (`SipLook`)
+
 ## [0.6.0] - 2026-10-04
 
 ### Added

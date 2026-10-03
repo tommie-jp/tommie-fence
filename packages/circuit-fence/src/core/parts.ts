@@ -1162,6 +1162,8 @@ export const PART_TYPES = {
   },
   // 3 本足の IC。1 行で書くと足は番号。名前はマップ形式の `pins:` で与える。
   ic3: ic3Chip(null),
+  // セラミックフィルタ。箱は三端子レギュレータと同じ (1 = IN 左、2 = GND 下、3 = OUT 右)。
+  'ceramic-filter': ic3Chip(['IN', 'GND', 'OUT']),
   // 働きで並べた IC。型番で並びを引く (`partTypeOf`)。
   ic: IC_PLACEHOLDER,
   // デュアルゲート MOSFET (N)。足 4 本の箱 (`dualGateFetChip`)。
@@ -1310,6 +1312,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   sip40: 'ピンヘッダ (40 ピン)',
   regulator: '三端子レギュレータ',
   ic3: '3 本足の IC',
+  'ceramic-filter': 'セラミックフィルタ',
   ic: 'IC (足を働きで並べた箱)',
   buzzer: 'ブザー',
   earphone: 'イヤホン (クリスタルイヤホン)',
@@ -1436,6 +1439,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   sip40: 'J',
   regulator: 'U',
   ic3: 'U',
+  'ceramic-filter': 'CF',
   ic: 'U',
   buzzer: 'B',
   earphone: 'EAR',
@@ -1477,6 +1481,7 @@ export const PART_ALIASES = {
   ntc: 'thermistor-ntc',
   ptc: 'thermistor-ptc',
   xtal: 'crystal',
+  cfilter: 'ceramic-filter',
   scr: 'thyristor',
   bat: 'battery',
   sw: 'switch',

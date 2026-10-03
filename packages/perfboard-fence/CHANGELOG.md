@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **`sip3` に型番 `SFU455B` を添えると、橙の胴 (`SFU`) で描き、足は `IN` `GND` `OUT`** (村田の 455 kHz セラミックフィルタ。fence-kit の足の名前の表)
+
 ## [0.20.1] - 2026-10-04
 
 ### Changed

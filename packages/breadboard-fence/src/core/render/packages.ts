@@ -8,7 +8,7 @@ import { element, num } from './svg.ts';
 import {
   REAL_INK, dipChip, drawDipAdapter, drawNamedChip, lookupNamedChip, lookupPinout, sipBox, sipHeader, transformerCore,
 } from 'fence-kit';
-import type { ChipInk } from 'fence-kit';
+import type { ChipInk, SipLook } from 'fence-kit';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
 
@@ -81,6 +81,12 @@ export function sipBarRect(part: PlacedPart, layout: Layout): Rect {
  * 板の話として残るのは**ピン名をどちら側に出すか**だけ — 出す先は溝の側:
  * 盤の端には列番号が印字されていて、そこに重ねると両方読めなくなる。
  */
+/** 型番が姿を持つ部品 (SFU455) なら、その樹脂の色と胴の字。 */
+const lookOf = (part: PlacedPart): { look?: SipLook } => {
+  const look = lookupPinout(part.value ?? part.label, part.pins.length)?.look;
+  return look === undefined ? {} : { look };
+};
+
 export function renderSip(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
   const points = pinPoints(part, layout);
   const first = points?.[0];
@@ -94,6 +100,7 @@ export function renderSip(part: PlacedPart, layout: Layout, theme: RenderTheme):
     scale: textScale(theme),
     nameSide: first.y < layout.ravineY ? 1 : -1,
     ink: chipInk(theme),
+    ...lookOf(part),
   });
 }
 

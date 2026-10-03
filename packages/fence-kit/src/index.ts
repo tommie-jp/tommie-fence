@@ -61,7 +61,7 @@ export {
   boardBox, boardChip, chipAlongX, dipBox, dipChip, segmentFace, sipBox, sipHeader,
 } from './parts/chips.ts';
 export type {
-  BoardChipOptions, ChipBox, ChipInk, ChipPoint, DipOptions, SipOptions,
+  BoardChipOptions, ChipBox, ChipInk, ChipPoint, DipOptions, SipLook, SipOptions,
 } from './parts/chips.ts';
 export type { BoardPart } from './parts/boards.ts';
 export { PIN_NAME_GAP, pinNameInner, pinNameRow, pinNameWidth } from './parts/pinNameRow.ts';

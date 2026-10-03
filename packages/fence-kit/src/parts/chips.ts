@@ -442,6 +442,16 @@ export function sipBox(points: readonly ChipPoint[], pitch: number): ChipBox {
   return boxOf(points, half, half);
 }
 
+/** 樹脂の色と胴の字を持つ 1 列の部品 (セラミックフィルタ)。黒い樹脂の代わりに使う。 */
+export type SipLook = {
+  readonly body: string;
+  readonly edge: string;
+  /** 胴の字の色。 */
+  readonly text: string;
+  /** 胴に刷る字。キャプションの代わり (型番の全文は部品表に出る)。 */
+  readonly mark: string;
+};
+
 export type SipOptions = {
   readonly points: readonly ChipPoint[];
   readonly names: readonly string[];
@@ -451,6 +461,7 @@ export type SipOptions = {
   /** 足の名前を出す側 (+1 / -1)。横に寝た帯なら下が +1、縦なら右が +1。 */
   readonly nameSide: 1 | -1;
   readonly ink: ChipInk;
+  readonly look?: SipLook;
 };
 
 /**
@@ -458,7 +469,8 @@ export type SipOptions = {
  * **ピン名は本体の外**に出す。どの穴が何なのかが、図の中だけで分かる必要がある。
  */
 export function sipHeader(options: SipOptions): string {
-  const { points, names, pitch, caption, scale, nameSide, ink } = options;
+  const { points, names, pitch, scale, nameSide, ink, look } = options;
+  const caption = look?.mark ?? options.caption;
   const first = points[0];
   if (!first) return '';
 
@@ -468,7 +480,7 @@ export function sipHeader(options: SipOptions): string {
 
   const shell = element('rect', {
     x: num(bar.x), y: num(bar.y), width: num(bar.width), height: num(bar.height), rx: 3,
-    fill: ink.body, stroke: CHIP_EDGE,
+    fill: look?.body ?? ink.body, stroke: look?.edge ?? CHIP_EDGE,
   });
   // 足は本体の縁からピン名の側へ覗かせる。本体の真ん中に重ねるとキャプションと
   // 食い合い、本体の下に隠すとどの穴に挿さっているのかが読めなくなる。
@@ -505,11 +517,11 @@ export function sipHeader(options: SipOptions): string {
   const centre = centreOf(bar);
   const size = fittedFontSize(caption, alongX ? bar.width : bar.height, scale);
   const label = alongX
-    ? svgText(centre.x, first.y + 3.5, caption, { 'font-size': num(size), fill: ink.chipText })
+    ? svgText(centre.x, first.y + 3.5, caption, { 'font-size': num(size), fill: look?.text ?? ink.chipText })
     : element(
       'g',
       { transform: `translate(${num(first.x)} ${num(centre.y)}) rotate(-90)` },
-      svgText(0, 3.5, caption, { 'font-size': num(size), fill: ink.chipText }),
+      svgText(0, 3.5, caption, { 'font-size': num(size), fill: look?.text ?? ink.chipText }),
     );
 
   return `${shell}${stubs}${legends}${label}`;
