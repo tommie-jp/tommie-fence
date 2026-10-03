@@ -56,7 +56,7 @@ wires:
 | 部品の向き | アンカー 1 つで置く形に `r180` → [部品の向き](#部品の向き-r180) | `U1: dip8 @ e5 r180` |
 | 1 列ヘッダ | `ID: sipN @ 穴 ラベル`。足名は `pins:` で付ける | `M1: sip4 @ a20 OLED` |
 | 押しボタン | `ID: button @ 穴`。溝をまたぐ 4 本足 | `SW1: button @ e5` |
-| USB コネクタ | `ID: usb-c 穴 穴 …`。穴は `VBUS GND D+ D-` の順に 2 つから → [USB コネクタ](#usb-コネクタ-usb-a--usb-c) | `J1: usb-c a5 a6` |
+| USB コネクタ | `ID: usb-c 穴 穴 …`。穴は Type-A が `VBUS GND D+ D-` の順に 2 つから、Type-C が `GND D+ D- VBUS` の順に 4 つ → [USB コネクタ](#usb-コネクタ-usb-a--usb-c) | `J1: usb-c a5 a6 a7 a8` |
 | マイコンボード | `ID: 種類 @ 穴`。ピン名は実物の印字 | `MCU: pico2 @ h5` |
 | ボード外の機器 | マップ形式で `type: device` + `at:` + `pins:` → [ボード外の機器](#ボード外の機器-device) | `at: top` |
 | 配線 | `- 端点 -- 端点 [-- 端点 …] [色]` | `- a10 -- b12 red` |
@@ -76,7 +76,7 @@ wires:
   - 2 本足 (音と光と電源) — `speaker` / `mic` / `battery` / `solar`
   - 2 本足 (スイッチ) — `switch` (a 接点) / `switch-nc` (b 接点)
   - 2 本足 (コネクタ) — `sma`
-  - USB コネクタ — `usb-a` / `usb-c` (穴は `VBUS GND D+ D-` の順。2 つから書ける)
+  - USB コネクタ — `usb-a` / `usb-c` (穴は Type-A が `VBUS GND D+ D-` の順に 2 つから、Type-C が `GND D+ D- VBUS` の順に 4 つ)
   - 3 本足 — `transistor` / `potentiometer` / `slide-switch` / `thyristor` / `triac` /
     `regulator` / `ic3` (3 本足の IC。足の名前は穴に書く — `h9(Vout)`)
   - 4 本足 — `transformer` (巻線の端。書かれた穴がそのまま足)
@@ -951,15 +951,15 @@ wires:
 
 USB の受け口・差し込みを**変換基板ごと**描く。Type-C の受け口は面実装で穴に
 挿せないので、実物も変換基板に載せてから挿す。**穴は足の名前の順に書く** —
-`VBUS GND D+ D-`、Type-C はそのあと `CC1 CC2`。**書いた数だけ足がある**ので、
-電源だけの変換基板は 2 つ (`VBUS GND`)、USB 2.0 は 4 つ、Type-C の CC まで 6 つ。
+Type-A は `VBUS GND D+ D-`、Type-C の変換基板は `GND D+ D- VBUS`。Type-A は**書いた数だけ足がある**ので、
+電源だけの変換基板は 2 つ (`VBUS GND`)、USB 2.0 は 4 つ。Type-C は 4 本のピンヘッダなので 4 本とも書く。
 足の並びは製品ごとに違うので、並びは決め打たずに**書いた穴がそのまま足**になる
 (`J1: usb-a c3 c6 c5 c4` なら c3 が VBUS、c6 が GND)。
 
 ```bread
 title: 図22 USB の受け口から LED を点ける
 parts:
-  J1: usb-c/female a10 a11
+  J1: usb-c/female a10 a11 a12 a13
   R1: resistor c10 c15 1k
   D1: led d15(A) d18(K) red
   J2: usb-a/male j22 j23 j24 j25
@@ -969,7 +969,7 @@ wires:
 
 ![図22 USB の受け口から LED を点ける](out/01-syntax-22.svg)
 
-- `J1` は電源だけの変換基板 (穴 2 つ)。`J2` は Type-A の差し込みで、USB 2.0 の
+- `J1` は Type-C の変換基板 (穴 4 つ、`GND D+ D- VBUS`)。`J2` は Type-A の差し込みで、USB 2.0 の
   4 本 (`VBUS GND D+ D-`) を書いた形。
 - 足は `J1.VBUS` `J1.GND` のように**名前で配線から指せる**。穴に `(GND)` のような
   名前は書かない (名前は順番で決まる。書けると同じ足が 2 つの名前を持つ)。

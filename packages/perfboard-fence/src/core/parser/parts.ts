@@ -111,7 +111,7 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
     if (connector !== null) {
       return fail(
         `${safeToken(written)} は穴を ${holeCount(footprint)} つ、${connector.pins.join(' ')} の順に書きます`
-        + ` (例: ${written} b3 b4。電源だけなら 2 つ)`,
+        + ` (例: ${written} ${['b3', 'b4', 'b5', 'b6', 'b7', 'b8'].slice(0, connector.minPins).join(' ')})`,
         written,
       );
     }

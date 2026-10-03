@@ -17,7 +17,7 @@ const row = (count: number, y = 100, x0 = 100): { x: number; y: number }[] =>
   Array.from({ length: count }, (_, index) => ({ x: x0 + index * PITCH, y }));
 
 const shape = (over: Partial<ConnectorShape> = {}): ConnectorShape => ({
-  type: 'usb-c', variant: null, points: row(2), pitch: PITCH, facing: 'up', ...over,
+  type: 'usb-c', variant: null, points: row(4), pitch: PITCH, facing: 'up', ...over,
 });
 
 /** 描いた矩形 (`<rect x= y= width= height=`) を全部拾う。 */
@@ -35,14 +35,18 @@ describe('コネクタの表', () => {
     expect(lookupConnector('usb-b')).toBeNull();
   });
 
-  test('puts the power pair first, so a power-only breakout is written with two holes', () => {
+  test('puts the power pair first on type-a, and gives type-c the four pins of its breakout', () => {
     expect(lookupConnector('usb-a')?.pins).toEqual(['VBUS', 'GND', 'D+', 'D-']);
-    expect(lookupConnector('usb-c')?.pins).toEqual(['VBUS', 'GND', 'D+', 'D-', 'CC1', 'CC2']);
+    expect(lookupConnector('usb-a')?.minPins).toBe(2);
+    expect(lookupConnector('usb-c')?.pins).toEqual(['GND', 'D+', 'D-', 'VBUS']);
+    // Type-C の変換基板は 4 本とも書く。
+    expect(lookupConnector('usb-c')?.minPins).toBe(4);
     expect(MIN_CONNECTOR_PINS).toBe(2);
   });
 
   test('names only the pins that were written', () => {
-    expect(connectorPinNames('usb-c', 2)).toEqual(['VBUS', 'GND']);
+    expect(connectorPinNames('usb-a', 2)).toEqual(['VBUS', 'GND']);
+    expect(connectorPinNames('usb-c', 4)).toEqual(['GND', 'D+', 'D-', 'VBUS']);
     expect(connectorPinNames('usb-a', 4)).toEqual(['VBUS', 'GND', 'D+', 'D-']);
     // 表より多く書いた足には名前が無い (呼ぶ側が断る)。
     expect(connectorPinNames('usb-a', 5)).toEqual(['VBUS', 'GND', 'D+', 'D-']);
@@ -76,14 +80,25 @@ describe('差し込み口の向き', () => {
 });
 
 describe('外形', () => {
+  test('draws the Type-C breakout a board five holes tall (12.7 mm) and 9.2 mm wide, the metal sticking out past it', () => {
+    const pitch = 25.4;
+    const box = connectorBox({ ...shape({ facing: 'up', points: row(4) }), pitch });
+    const mm = pitch / 2.54;
+
+    expect(box.width / mm).toBeCloseTo(9.2, 1);
+    // 基板が 12.7mm で、金物が縁から 0.5mm 出る。
+    expect(box.height / mm).toBeCloseTo(13.2, 1);
+  });
+
   test('grows from the pins toward the side it faces', () => {
     const up = connectorBox(shape({ facing: 'up' }));
     const down = connectorBox(shape({ facing: 'down' }));
 
     expect(up.y).toBeLessThan(100 - PITCH);
-    expect(up.y + up.height).toBeLessThan(100 + PITCH);
+    // 実寸のある Type-C の基板は、足の列の後ろにパッドの帯を持つ (3 ピッチまで)。
+    expect(up.y + up.height).toBeLessThan(100 + 3 * PITCH);
     expect(down.y + down.height).toBeGreaterThan(100 + PITCH);
-    expect(down.y).toBeGreaterThan(100 - PITCH);
+    expect(down.y).toBeGreaterThan(100 - 3 * PITCH);
   });
 
   test('holds every pin inside it', () => {
@@ -136,13 +151,14 @@ describe('姿', () => {
   });
 
   test('prints the name of every written pin, and no more', () => {
-    const two = drawConnector(shape({ points: row(2) }));
+    const two = drawConnector(shape({ type: 'usb-a', points: row(2) }));
     expect(two).toContain('>VBUS<');
     expect(two).toContain('>GND<');
     expect(two).not.toContain('>D+<');
 
-    const six = drawConnector(shape({ points: row(6) }));
-    for (const name of ['VBUS', 'GND', 'D+', 'D-', 'CC1', 'CC2']) expect(six).toContain(`>${name}<`);
+    const four = drawConnector(shape({ points: row(4) }));
+    for (const name of ['GND', 'D+', 'D-', 'VBUS']) expect(four).toContain(`>${name}<`);
+    expect(four).not.toContain('>CC1<');
   });
 
   test('keeps every shape it draws inside the outline it reports', () => {

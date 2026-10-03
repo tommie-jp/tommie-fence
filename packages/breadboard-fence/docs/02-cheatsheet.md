@@ -67,7 +67,7 @@ d↔h なら e・f・g 行が胴の下。空くのは d の上の a〜c と h �
          speaker mic battery solar switch switch-nc
 3 本足   transistor potentiometer slide-switch thyristor triac regulator ic3
 4 本足   transformer
-USB      usb-a usb-c (穴は VBUS GND D+ D- CC1 CC2 の順に 2 つから)
+USB      usb-a (穴は VBUS GND D+ D- の順に 2 つから) usb-c (穴は GND D+ D- VBUS の順に 4 つ)
 まとまり  button button-nc dipN (4〜40 の偶数) sipN (2〜40)
 ボード    pico pico-w pico2 pico2-w
 名前つき  relay photocoupler seg7 (DIP 型。足は名前でも番号でも。K1.COM1 = K1.4)

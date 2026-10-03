@@ -1,4 +1,4 @@
-import { lookupBoardPart, lookupConnector, lookupNamedChip, lookupPinout, pinoutModels } from 'fence-kit';
+import { lookupBoardPart, lookupConnectorSymbol, lookupNamedChip, lookupPinout, pinoutModels } from 'fence-kit';
 import { OPTO_SHAPE, RELAY_SHAPE, REGULATOR_SHAPE, SMA_SHAPE, deviceBox, deviceShapeName, usbShapeName } from './tex/shapes.ts';
 import type { BoardPart, NamedChip } from 'fence-kit';
 import { BOXED_RESISTORS } from './standard.ts';
@@ -814,7 +814,7 @@ function sipchip(count: number): PartType {
  * 反転も許す。名前は描き上がった SVG に差し込むので裏返らない (ボードと同じ)。
  */
 function usbchip(type: 'usb-a' | 'usb-c'): PartType {
-  const names = lookupConnector(type)?.pins ?? [];
+  const names = lookupConnectorSymbol(type)?.pins ?? [];
   const anchors = names.map((name, index) => [name, `pin ${index + 1}`] as const);
   return {
     kind: 'multi-terminal',

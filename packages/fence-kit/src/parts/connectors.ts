@@ -12,9 +12,9 @@ import type { ChipBox, ChipPoint } from './chips.ts';
  *
  * **足は表の順に書く。** 実物の変換基板は足の並びが製品ごとに違うので、並びは
  * 決め打たず、**書いた穴がそのまま足** (変圧器と同じ)。穴は表の順に対応させ、
- * 書いた数だけ使う — 電源だけの変換基板は 2 本 (`VBUS GND`)、USB 2.0 は 4 本、
- * Type-C の CC まで 6 本。**表の順を規格のピン番号 (VBUS D- D+ GND) にしない**のは、
- * 2 本だけ書いたときに電源の組になるようにするため。
+ * 書いた数だけ使う。Type-A は電源だけの変換基板なら 2 本 (`VBUS GND`)、USB 2.0 は 4 本。
+ * **Type-C の変換基板は 4 本のピンヘッダ (`GND D+ D- VBUS`) で、4 本とも書く** —
+ * 実物の基板 (14.5 × 9.2mm) がその 4 本で、使わない D+ D- は ERC が言う。
  *
  * **姿は変換基板ごと**描く。Type-C の受け口は面実装で穴には挿せず、実物も
  * 変換基板に載せてから挿す (`transistor/sot23-dip` と同じ理由、52 の docs/18)。
@@ -27,12 +27,16 @@ type ConnectorSpec = {
   readonly name: string;
   /** 足の名前。**書く穴の順**。 */
   readonly pins: readonly string[];
+  /** 変換基板の足 (実体配線図が書く穴の順)。省くと `pins` と同じ。**書いた穴の数は 4 本とも**。 */
+  readonly breakout?: readonly string[];
   /** 受け口 (メス) の金物。幅と奥行き (mm)。 */
   readonly receptacle: { readonly width: number; readonly depth: number };
   /** 差し込み (オス) の金物。幅、基板の縁から出る長さ、基板に載る根元 (mm)。 */
   readonly plug: { readonly width: number; readonly reach: number; readonly root: number };
   /** Type-C は口が長丸。Type-A は角。 */
   readonly round: boolean;
+  /** 受け口を載せる変換基板の実寸 (mm)。幅と、基板 (青い部分) の長さ。金物の先は基板の縁から LIP だけ出る。無ければ足の列から決める。 */
+  readonly board?: { readonly width: number; readonly length: number };
 };
 
 const CONNECTORS: Record<string, ConnectorSpec> = {
@@ -48,9 +52,14 @@ const CONNECTORS: Record<string, ConnectorSpec> = {
   'usb-c': {
     name: 'USB Type-C',
     pins: ['VBUS', 'GND', 'D+', 'D-', 'CC1', 'CC2'],
+    // 変換基板は 4 本のピンヘッダ (GND D+ D- VBUS)。CC は基板の中で終端済みで出ていないので、
+    // 実体配線図の 2 つだけがこの 4 本を読む (回路図の記号は `pins` の 6 本)。
+    breakout: ['GND', 'D+', 'D-', 'VBUS'],
     receptacle: { width: 8.94, depth: 7.35 },
     plug: { width: 8.25, reach: 6.65, root: 2.5 },
     round: true,
+    // 変換基板の実物は 14.5 × 9.2mm (厚み 3.2mm)。**図は基板を縦 5 穴 (12.7mm) に収める** — 穴の升目に載せる図なので、実寸より 2 割ほど詰める。
+    board: { width: 9.2, length: 12.7 },
   },
 };
 
@@ -60,7 +69,8 @@ export const CONNECTOR_LOOKS = ['male', 'female'] as const;
 /** 書く足の最少。1 本ではどちらの線にもならない。 */
 export const MIN_CONNECTOR_PINS = 2;
 
-export type Connector = { readonly name: string; readonly pins: readonly string[] };
+/** `pins` は**書く穴の順**、`minPins` は書く穴の最少。 */
+export type Connector = { readonly name: string; readonly pins: readonly string[]; readonly minPins: number };
 
 export const connectorNames = (): readonly string[] => Object.keys(CONNECTORS);
 
@@ -71,14 +81,23 @@ export const connectorNames = (): readonly string[] => Object.keys(CONNECTORS);
 const specOf = (type: string): ConnectorSpec | null =>
   (Object.hasOwn(CONNECTORS, type) ? CONNECTORS[type] ?? null : null);
 
+/** 実体配線図 (breadboard・perfboard) が読む。変換基板の足 — Type-C は 4 本とも書く。 */
 export function lookupConnector(type: string): Connector | null {
   const spec = specOf(type);
-  return spec === null ? null : { name: spec.name, pins: spec.pins };
+  if (spec === null) return null;
+  const pins = spec.breakout ?? spec.pins;
+  return { name: spec.name, pins, minPins: spec.breakout === undefined ? MIN_CONNECTOR_PINS : pins.length };
+}
+
+/** 回路図の記号が読む。コネクタそのものの足 (Type-C は CC1・CC2 まで)。 */
+export function lookupConnectorSymbol(type: string): Connector | null {
+  const spec = specOf(type);
+  return spec === null ? null : { name: spec.name, pins: spec.pins, minPins: MIN_CONNECTOR_PINS };
 }
 
 /** 書いた足の数ぶんの名前。表より多い足には名前が無い (呼ぶ側が断る)。 */
 export const connectorPinNames = (type: string, count: number): readonly string[] =>
-  specOf(type)?.pins.slice(0, Math.max(0, count)) ?? [];
+  lookupConnector(type)?.pins.slice(0, Math.max(0, count)) ?? [];
 
 /** 差し込み口の向き (図の上の向き)。 */
 export type ConnectorFacing = 'up' | 'down' | 'left' | 'right';
@@ -187,7 +206,7 @@ function frameOf(shape: ConnectorShape): Frame | null {
     y: origin.y + (centre + a) * u.y + (front + b) * v.y,
   });
 
-  const names = spec.pins.slice(0, pins.length);
+  const names = (spec.breakout ?? spec.pins).slice(0, pins.length);
   const widest = Math.max(...names.map((name) => textWidth(name)));
   const along = [...pins.map((pin) => pin.a)].sort((x, y) => x - y);
   const gaps = along.slice(1).map((value, index) => value - (along[index] ?? value)).filter((gap) => gap > 0);
@@ -202,13 +221,19 @@ function frameOf(shape: ConnectorShape): Frame | null {
   const male = shape.variant === 'male';
   const metalFrom = band.b1 + METAL_GAP;
   const width = (male ? spec.plug.width : spec.receptacle.width) * mm;
-  const rear = Math.min(...pins.map((pin) => pin.b)) - shape.pitch * BACK;
-  const spread = Math.max(...pins.map((pin) => Math.abs(pin.a))) + shape.pitch * 0.5;
-  const plateHalf = Math.max(spread, width / 2 + SIDE * mm);
+  const pinRear = Math.min(...pins.map((pin) => pin.b)) - shape.pitch * BACK;
+  // 実寸の基板は縁が足の列に近い (4 本で 7.62mm の列が 9.2mm の幅に収まる)。
+  const edge = spec.board === undefined || male ? 0.5 : 0.3;
+  const spread = Math.max(...pins.map((pin) => Math.abs(pin.a))) + shape.pitch * edge;
 
   // 受け口は基板に載って縁から少し出る。差し込みは根元だけ基板に載り、先は外へ出る。
   const plateFront = male ? metalFrom + spec.plug.root * mm : metalFrom + (spec.receptacle.depth - LIP) * mm;
   const metalTo = male ? plateFront + spec.plug.reach * mm : metalFrom + spec.receptacle.depth * mm;
+
+  // 実寸のある受け口は、基板を実物の大きさに描く (足の列の後ろにパッドの帯が余る)。
+  const real = male ? undefined : spec.board;
+  const plateHalf = Math.max(spread, real === undefined ? width / 2 + SIDE * mm : (real.width / 2) * mm);
+  const rear = real === undefined ? pinRear : Math.min(pinRear, plateFront - real.length * mm);
 
   return {
     spec,
@@ -250,8 +275,8 @@ export function connectorBox(shape: ConnectorShape): ChipBox {
 }
 
 /** 変換基板 (青いガラエポ) と、白い字。 */
-const PLATE = '#1f3f78';
-const PLATE_EDGE = '#132a52';
+const PLATE = '#1d5fb8';
+const PLATE_EDGE = '#123d7c';
 const SILK = '#eef2f8';
 /** ランド (金めっき) と、挿したピンヘッダの頭。 */
 const LAND = '#d4ae4c';
@@ -295,7 +320,14 @@ function metalMarks(frame: Frame, ink: BodyInk): string {
   const lip = rectOf(frame, {
     a0: -width * 0.42, a1: width * 0.42, b0: metal.b1 - 1.3 * mm, b1: metal.b1 - 0.4 * mm,
   }, { fill: ink.paint(MOUTH), rx: num(spec.round ? 0.45 * mm : 0.1 * mm) });
-  if (spec.round) return lip;
+  if (spec.round) {
+    // 実物の天板には、後ろ寄りに 2 つの窓 (はんだの爪の逃げ)。
+    const windows = [-1, 1].map((side) => rectOf(frame, {
+      a0: side * width * 0.27 - 1.1 * mm, a1: side * width * 0.27 + 1.1 * mm,
+      b0: metal.b0 + 1.2 * mm, b1: metal.b0 + 2.6 * mm,
+    }, { fill: ink.paint(METAL_EDGE) })).join('');
+    return lip + windows;
+  }
   const springs = [-1, 1].map((side) => rectOf(frame, {
     a0: side * width * 0.25 - 0.8 * mm, a1: side * width * 0.25 + 0.8 * mm,
     b0: metal.b1 - 4.2 * mm, b1: metal.b1 - 2 * mm,
@@ -333,6 +365,12 @@ export function drawConnector(shape: ConnectorShape & { readonly ink?: BodyInk }
   const plate = rectOf(frame, frame.plate, {
     rx: 2, fill: ink.paint(PLATE), stroke: ink.paint(PLATE_EDGE), 'stroke-width': 1,
   });
+  // 実寸の基板は、後ろの縁に足ごとの四角いパッドが並ぶ (実物の写真どおり)。
+  const padSize = 1.5 * frame.mm;
+  const rearPads = frame.spec.board === undefined || frame.male ? '' : frame.pins.map((pin) => rectOf(frame, {
+    a0: pin.a - padSize / 2, a1: pin.a + padSize / 2,
+    b0: frame.plate.b0 + 0.5 * frame.mm, b1: frame.plate.b0 + 0.5 * frame.mm + padSize,
+  }, { fill: ink.paint(METAL), stroke: ink.paint(METAL_EDGE), 'stroke-width': 0.5 })).join('');
   const land = shape.pitch * PAD;
   const pins = frame.pins.map((pin) => {
     const point = frame.at(pin.a, pin.b);
@@ -348,5 +386,5 @@ export function drawConnector(shape: ConnectorShape & { readonly ink?: BodyInk }
     fill: ink.paint(METAL), stroke: ink.paint(METAL_EDGE), 'stroke-width': 1,
   });
 
-  return `${plate}${pins}${pinNames(frame, shape.facing, ink)}${metal}${metalMarks(frame, ink)}`;
+  return `${plate}${rearPads}${pins}${pinNames(frame, shape.facing, ink)}${metal}${metalMarks(frame, ink)}`;
 }

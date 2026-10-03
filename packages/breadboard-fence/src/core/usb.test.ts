@@ -24,8 +24,9 @@ describe('種類と姿', () => {
       expect(variantsOf(type), type).toEqual(['male', 'female']);
     }
     expect(partName('usb-a')).toBe('USB Type-A コネクタ');
-    // パレットからは 2 つの穴を結んで置く (電源だけの変換基板)。
-    expect(holesOf('usb-c')).toBe(2);
+    // Type-A はパレットから 2 つの穴を結んで置く (電源だけの変換基板)。Type-C は 4 本とも書く。
+    expect(holesOf('usb-a')).toBe(2);
+    expect(holesOf('usb-c')).toBe(4);
   });
 });
 
@@ -33,7 +34,7 @@ describe('置き方', () => {
   test('names the pins after the table, so a wire can say J1.VBUS', () => {
     const { errors, netlist } = renderBreadboard(fence(
       'parts:',
-      '  J1: usb-c/female a10 a11',
+      '  J1: usb-c/female a10 a11 a12 a13',
       '  R1: resistor f10 f14 1k',
       'wires:',
       '  - J1.VBUS -- f10 red',
@@ -49,29 +50,30 @@ describe('置き方', () => {
   test('takes up to the length of the table and no more', () => {
     expect(errorsOf('parts:', '  J1: usb-a a10 a11 a12 a13')).toBe('');
     expect(errorsOf('parts:', '  J1: usb-a a10 a11 a12 a13 a14')).toContain('2〜4');
-    expect(errorsOf('parts:', '  J1: usb-c a10')).toContain('VBUS GND D+ D- CC1 CC2');
+    expect(errorsOf('parts:', '  J1: usb-c a10')).toContain('GND D+ D- VBUS');
+    expect(errorsOf('parts:', '  J1: usb-c a10 a11 a12 a13')).toBe('');
   });
 
   test('refuses pin names written on the holes, since the table decides them', () => {
-    expect(errorsOf('parts:', '  J1: usb-c a10(GND) a11')).toContain('表の順');
+    expect(errorsOf('parts:', '  J1: usb-c a10(GND) a11 a12 a13')).toContain('表の順');
   });
 
   test('refuses a pin that is not in the table', () => {
-    expect(errorsOf('parts:', '  J1: usb-c a10 a11', 'wires:', '  - J1.D+ -- f10')).toContain('そのピンはありません');
+    expect(errorsOf('parts:', '  J1: usb-c a10 a11 a12 a13', 'wires:', '  - J1.CC1 -- f10')).toContain('そのピンはありません');
   });
 });
 
 describe('図', () => {
   test('draws the breakout with the pin names printed on it', () => {
-    const { svg } = renderBreadboard(fence('parts:', '  J1: usb-c c10 c11'));
+    const { svg } = renderBreadboard(fence('parts:', '  J1: usb-c c10 c11 c12 c13'));
     expect(svg).toContain('>VBUS<');
     expect(svg).toContain('>GND<');
     expect(svg).toContain('>J1<');
   });
 
   test('faces away from the ravine', () => {
-    const top = renderBreadboard(fence('parts:', '  J1: usb-c c10 c11')).svg;
-    const bottom = renderBreadboard(fence('parts:', '  J1: usb-c h10 h11')).svg;
+    const top = renderBreadboard(fence('parts:', '  J1: usb-c c10 c11 c12 c13')).svg;
+    const bottom = renderBreadboard(fence('parts:', '  J1: usb-c h10 h11 h12 h13')).svg;
     const nameY = (svg: string): number => Number(/<text x="[-\d.]+" y="([-\d.]+)"[^>]*>VBUS</.exec(svg)?.[1]);
     const yOf = (svg: string, row: string): number =>
       Number(new RegExp(`<text[^>]* y="([-\\d.]+)"[^>]*>${row}<`).exec(svg)?.[1]);
@@ -107,7 +109,7 @@ describe('図', () => {
   });
 
   test('widens the canvas when the connector hangs off the board, instead of cutting it', () => {
-    const inside = renderBreadboard(fence('parts:', '  J1: usb-c e10 e11')).svg;
+    const inside = renderBreadboard(fence('parts:', '  J1: usb-c e10 e11 e12 e13')).svg;
     const edge = renderBreadboard(fence('parts:', '  J1: usb-a/male a10 a11')).svg;
     const heightOf = (svg: string): number => Number(/viewBox="[-\d.]+ [-\d.]+ [-\d.]+ ([-\d.]+)"/.exec(svg)?.[1]);
 

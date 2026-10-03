@@ -1,8 +1,8 @@
 # USB コネクタ
 
 USB の受け口・差し込みを**変換基板ごと**置く (`usb-a` / `usb-c`)。
-**穴は足の名前の順に書く** — `VBUS GND D+ D-`、Type-C はそのあと `CC1 CC2`。
-書いた数だけ足があるので、電源だけの変換基板は 2 つで書ける。
+**穴は足の名前の順に書く** — Type-A は `VBUS GND D+ D-`、Type-C の変換基板は `GND D+ D- VBUS` の 4 本。
+Type-A は書いた数だけ足があり、Type-C は 4 本とも書く。
 書き方の全部は [docs/01-syntax.md](../docs/01-syntax.md#usb-コネクタ-usb-a--usb-c)。
 
 ## 電源スイッチの基板
@@ -11,7 +11,8 @@ USB の受け口・差し込みを**変換基板ごと**置く (`usb-a` / `usb-c
 +5V をスライドスイッチで入り切りし、スイッチを切ったときは L ピンヘッダ (`J3`)
 に電流計をつないで電流を測れる。
 
-- Type-C は**電源だけの変換基板** — 穴は `VBUS GND` の 2 つ (`a11 a10`)
+- Type-C は 4 本のピンヘッダの変換基板 — 穴は `GND D+ D- VBUS` の順に 4 つ (`a8 a9 a10 a11`)。
+  使わない `D+` `D-` は ERC が言うのは承知のうえ
 - 両端の `sip2` がブレッドボードのレールに挿すピン (1 番が +5V、2 番が −)
 - `J3` は中央のピンを抜いた L ピンヘッダ。ERC が「`J3.2` がつながっていない」と
   言うのは承知のうえ (スイッチの `SW1.1` も使っていない)
@@ -31,12 +32,12 @@ parts:
   J3: sip3 b16 電流計
   SW1: slide-switch a14 b14 c14
   R1: resistor a7 d7 0
-  J4: usb-c/female a11 a10
+  J4: usb-c/female a8 a9 a10 a11
 wires:
   - a11 -- b11 red
   - b11 -- b14 red
   - b14 -- b16 red
-  - a10 -- a7 blue
+  - a8 -- a7 blue
   - d7 -- d20 blue
   - d20 -- b20 blue
   - d7 -- d2 blue
@@ -71,11 +72,11 @@ style:
 board: 24x14
 title: 図02 USB の種類と姿
 parts:
-  J1: usb-c/female a3 a4
-  J2: usb-c/male a12 a13
+  J1: usb-c/female a3 a4 a5 a6
+  J2: usb-c/male a12 a13 a14 a15
   J3: usb-a/female n3 n4 n5 n6
   J4: usb-a/male n14 n15 n16 n17
-  J5: usb-c f24 g24 h24 i24 j24 k24
+  J5: usb-c f24 g24 h24 i24
 notes:
   - parts
 style:
@@ -89,5 +90,5 @@ style:
 | `female` (受け口、既定) | 金物が変換基板に載り、縁から少し出る。Type-C は口が長丸、Type-A は角で天板にばねの窓 |
 | `male` (差し込み) | 金物が変換基板の縁から長く出る。Type-A は天板に 2 つの角窓 |
 
-`J5` は Type-C の 6 本 (`VBUS GND D+ D- CC1 CC2`) を縦に書いた形。
+`J5` は Type-C の 4 本 (`GND D+ D- VBUS`) を縦に書いた形。
 足の名前は変換基板に刷る。

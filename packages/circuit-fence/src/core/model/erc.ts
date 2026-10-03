@@ -1,5 +1,5 @@
 import { fenceError, safeToken } from '../errors.ts';
-import { lookupConnector } from 'fence-kit';
+import { lookupConnectorSymbol } from 'fence-kit';
 import { DEVICE, partTypeOf, pinPlaces, shownPinName } from '../parts.ts';
 import type { Circuit } from './circuit.ts';
 import type { Net } from './nets.ts';
@@ -40,7 +40,7 @@ const PACKAGED = /^(dip|sip)\d+$/;
  * 上の「5 本以上」には掛からない (52 の docs/58)。
  */
 const isPackaged = (part: PartSpec): boolean =>
-  PACKAGED.test(part.type) || lookupConnector(part.type) !== null
+  PACKAGED.test(part.type) || lookupConnectorSymbol(part.type) !== null
   // **機器も言わない** — モジュールの足は差し出しているだけで、使うのは一部
   // (超音波センサーの 4 本、Analog Discovery の 30 本)。
   || part.type === DEVICE

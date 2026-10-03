@@ -54,7 +54,7 @@ export type { GateUnit, Pinout, PinoutRow } from './parts/pinouts.ts';
 export type { NamedChip, NamedChipPin } from './parts/namedChips.ts';
 export {
   CONNECTOR_LOOKS, MIN_CONNECTOR_PINS, connectorBox, connectorFacing, connectorNames, connectorPinNames,
-  drawConnector, lookupConnector,
+  drawConnector, lookupConnector, lookupConnectorSymbol,
 } from './parts/connectors.ts';
 export type { Connector, ConnectorFacing, ConnectorShape } from './parts/connectors.ts';
 export {

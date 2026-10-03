@@ -31,9 +31,11 @@ describe('種類と姿', () => {
 
   test('is written hole by hole, from two up to the length of the table', () => {
     expect(footprintOf('usb-a')).toEqual({ kind: 'connector', pins: 4, holes: 4, minHoles: 2 });
-    expect(footprintOf('usb-c')).toEqual({ kind: 'connector', pins: 6, holes: 6, minHoles: 2 });
+    // Type-C の変換基板は 4 本のピンヘッダ (GND D+ D- VBUS)。4 本とも書く。
+    expect(footprintOf('usb-c')).toEqual({ kind: 'connector', pins: 4, holes: 4 });
     // パレットからは 2 つの穴を結んで置く (電源だけの変換基板)。
-    expect(holesOf('usb-c')).toBe(2);
+    expect(holesOf('usb-a')).toBe(2);
+    expect(holesOf('usb-c')).toBe(4);
     // 足の向きは穴の順そのものなので、向きの語は書けない。
     expect(orientOf('usb-c')).toBe('none');
   });
@@ -45,14 +47,14 @@ describe('種類と姿', () => {
 });
 
 describe('書き方', () => {
-  test('reads two holes as the power pair', () => {
-    const read = parsePartLine('J1', 'usb-c/female a11 a10');
-    expect(read.ok && read.value.holes).toEqual(['a11', 'a10']);
+  test('reads four holes as the pins of the Type-C breakout', () => {
+    const read = parsePartLine('J1', 'usb-c/female a11 a10 a9 a8');
+    expect(read.ok && read.value.holes).toEqual(['a11', 'a10', 'a9', 'a8']);
   });
 
   test('reads as many holes as the table has', () => {
-    const read = parsePartLine('J1', 'usb-c c1 c2 c3 c4 c5 c6');
-    expect(read.ok && read.value.holes).toEqual(['c1', 'c2', 'c3', 'c4', 'c5', 'c6']);
+    const read = parsePartLine('J1', 'usb-a c1 c2 c3 c4');
+    expect(read.ok && read.value.holes).toEqual(['c1', 'c2', 'c3', 'c4']);
   });
 
   test('keeps a trailing value that does not look like a hole', () => {
@@ -63,7 +65,7 @@ describe('書き方', () => {
   test('refuses a single hole, naming the order the holes go in', () => {
     const read = parsePartLine('J1', 'usb-c a1');
     expect(read.ok).toBe(false);
-    expect(!read.ok && read.error.message).toContain('VBUS GND D+ D- CC1 CC2');
+    expect(!read.ok && read.error.message).toContain('GND D+ D- VBUS');
   });
 
   test('refuses one hole more than the table has', () => {
@@ -77,11 +79,11 @@ describe('ネットリストと ERC', () => {
   test('names the pins after the table, so the netlist reads like the breakout', () => {
     const { netlist, errors } = renderPerfboard(fence(
       'parts:',
-      '  J1: usb-c/female a11 a10',
+      '  J1: usb-c/female a11 a10 a9 a8',
       '  R1: resistor c4 c9 1k',
       'wires:',
-      '  - a11 -- c4',
-      '  - a10 -- c9',
+      '  - a8 -- c4',
+      '  - a11 -- c9',
     ));
 
     expect(errors).toEqual([]);
@@ -110,15 +112,15 @@ describe('ネットリストと ERC', () => {
 
 describe('図', () => {
   test('draws the breakout with the pin names printed on it', () => {
-    const { svg } = renderPerfboard(fence('parts:', '  J1: usb-c c5 c6'));
+    const { svg } = renderPerfboard(fence('parts:', '  J1: usb-c c5 c6 c7 c8'));
     expect(svg).toContain('>VBUS<');
     expect(svg).toContain('>GND<');
     expect(svg).toContain('>J1<');
   });
 
   test('widens the canvas when the connector hangs off the edge, instead of cutting it', () => {
-    const inside = renderPerfboard(fence('parts:', '  J1: usb-c c5 c6')).svg;
-    const edge = renderPerfboard(fence('parts:', '  J1: usb-c a5 a6')).svg;
+    const inside = renderPerfboard(fence('parts:', '  J1: usb-c c5 c6 c7 c8')).svg;
+    const edge = renderPerfboard(fence('parts:', '  J1: usb-c a5 a6 a7 a8')).svg;
     const heightOf = (svg: string): number => Number(/viewBox="[-\d.]+ [-\d.]+ [-\d.]+ ([-\d.]+)"/.exec(svg)?.[1]);
 
     expect(heightOf(edge)).toBeGreaterThan(heightOf(inside));
@@ -138,7 +140,7 @@ describe('図', () => {
   });
 
   test('says the bodies overlap when another part sits under the breakout', () => {
-    const { notices } = renderPerfboard(fence('parts:', '  J1: usb-c c5 c6', '  R1: resistor b4 b8 1k'));
+    const { notices } = renderPerfboard(fence('parts:', '  J1: usb-c c5 c6 c7 c8', '  R1: resistor b4 b8 1k'));
     expect(notices.some((one) => one.message.includes('J1') && one.message.includes('重なって'))).toBe(true);
   });
 });

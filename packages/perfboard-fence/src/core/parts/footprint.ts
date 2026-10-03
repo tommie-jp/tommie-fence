@@ -2,7 +2,7 @@ import { NO_TURN } from './orient.ts';
 import type { Turn } from './orient.ts';
 import type { Address, Board } from '../types.ts';
 import { isEdgeMount, isFourLead, isSwitch, isThreeLead, isTwoLead } from './types.ts';
-import { MIN_CONNECTOR_PINS, lookupBoardPart, lookupConnector, lookupNamedChip } from 'fence-kit';
+import { lookupBoardPart, lookupConnector, lookupNamedChip } from 'fence-kit';
 import type { NamedChip } from 'fence-kit';
 
 /**
@@ -85,7 +85,9 @@ export function footprintOf(type: string, variant: string | null = null): Footpr
   const connector = lookupConnector(type);
   if (connector !== null) {
     const most = connector.pins.length;
-    return { kind: 'connector', pins: most, holes: most, minHoles: MIN_CONNECTOR_PINS };
+    return connector.minPins === most
+      ? { kind: 'connector', pins: most, holes: most }
+      : { kind: 'connector', pins: most, holes: most, minHoles: connector.minPins };
   }
 
   if (isTwoLead(type)) return { kind: 'two-lead', pins: 2, holes: 2 };

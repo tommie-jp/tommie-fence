@@ -290,7 +290,7 @@ wires:
         speaker  mic  battery  solar  switch (a 接点)  switch-nc (b 接点)
 3 本足  transistor  potentiometer  thyristor  triac  slide-switch  regulator  ic3 (3 本足の IC)
 4 本足  transformer
-USB     usb-a  usb-c (穴は VBUS GND D+ D- CC1 CC2 の順に 2 つから)
+USB     usb-a (穴は VBUS GND D+ D- の順に 2 つから)  usb-c (穴は GND D+ D- VBUS の順に 4 つ)
 パッケージ  button (a 接点)  button-nc (b 接点)  dip4〜dip40 (偶数)  sip2〜sip40
 ボード      pico  pico-w  pico2  pico2-w
 ```
@@ -305,7 +305,7 @@ USB     usb-a  usb-c (穴は VBUS GND D+ D- CC1 CC2 の順に 2 つから)
 | 2 本足 | 2 つ | 書かれたとおり |
 | 3 本足 | 3 つ | 書かれたとおり (足は曲げられる) |
 | 4 本足 | 4 つ | 書かれたとおり (巻線の端の並びは品ごとに違う) |
-| USB (`usb-a` / `usb-c`) | 2 つから (Type-A は 4 つ、Type-C は 6 つまで) | 書かれたとおり。足の名前は書いた順に `VBUS GND D+ D-` (`CC1 CC2`) |
+| USB (`usb-a` / `usb-c`) | Type-A は 2 つから 4 つまで、Type-C は 4 つ | 書かれたとおり。足の名前は書いた順に、Type-A は `VBUS GND D+ D-`、Type-C は `GND D+ D- VBUS` |
 | `button` | 1 つ (左上の足) | パッケージが決める。4 本が 2 穴角の四角に並ぶ |
 | `dipN` | 1 つ (胴の左上) | パッケージが決める。2 列の間隔は 300 mil = 3 穴 |
 | `sipN` | 1 つ (1 番ピン) | パッケージが決める。1 列に並ぶ |
@@ -386,9 +386,9 @@ USB の受け口・差し込みを**変換基板ごと**描く。Type-C の受�
 挿せないので、実物も変換基板に載せてから挿す。図は
 [examples/09-usb.md](../examples/09-usb.md)。
 
-**穴は足の名前の順に書く** — `VBUS GND D+ D-`、Type-C はそのあと `CC1 CC2`。
-**書いた数だけ足がある**ので、電源だけの変換基板は 2 つ
-(`J1: usb-c/female a11 a10`)、USB 2.0 は 4 つ、Type-C の CC まで 6 つ。
+**穴は足の名前の順に書く** — Type-A は `VBUS GND D+ D-`、Type-C の変換基板は `GND D+ D- VBUS`。
+Type-A は**書いた数だけ足がある**ので、電源だけの変換基板は 2 つ、USB 2.0 は 4 つ。
+Type-C の変換基板は 4 本のピンヘッダなので、**4 本とも書く** (`J1: usb-c/female a8 a9 a10 a11`)。
 足の並びは製品ごとに違うので決め打たず、**書いた穴がそのまま足**になる
 (表の順に並べ替えて書く。`J1: usb-a c3 c6 c5 c4` なら c3 が VBUS、c6 が GND)。
 

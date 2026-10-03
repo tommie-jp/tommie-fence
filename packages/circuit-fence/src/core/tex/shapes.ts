@@ -1,4 +1,4 @@
-import { lookupConnector } from 'fence-kit';
+import { lookupConnectorSymbol } from 'fence-kit';
 import { num } from './num.ts';
 
 /**
@@ -302,7 +302,7 @@ function usbMouth(round: boolean): { readonly outline: string[]; readonly tongue
 
 export function usbShapeTex(type: string): string[] {
   const name = usbShapeName(type);
-  const pins = lookupConnector(type)?.pins.length ?? 0;
+  const pins = lookupConnectorSymbol(type)?.pins.length ?? 0;
   if (name === null || pins === 0) return [];
 
   const [w, lead] = [USB_HALF_WIDTH, USB_LEAD];

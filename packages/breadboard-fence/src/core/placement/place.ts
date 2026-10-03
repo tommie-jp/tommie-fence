@@ -8,7 +8,7 @@ import type {
 } from '../types.ts';
 import type { BoardPart, Connector, NamedChip } from 'fence-kit';
 import {
-  MIN_CONNECTOR_PINS, adapterFor, isDirectSmd, lookupNamedChip, lookupPinout, pinoutModels, smdLooksOf, smdSuggestion,
+  adapterFor, isDirectSmd, lookupNamedChip, lookupPinout, pinoutModels, smdLooksOf, smdSuggestion,
 } from 'fence-kit';
 import type { Turn } from '../parts/orient.ts';
 import { isPolarVariant, typesWithVariants, variantsOf } from '../parts/variants.ts';
@@ -335,10 +335,10 @@ function placeLegs(
 function placeConnector(spec: PartSpec, board: Board, base: PartBase, connector: Connector): Result<PlacedPart> {
   const order = connector.pins.join(' ');
   const most = connector.pins.length;
-  if (spec.holes.length < MIN_CONNECTOR_PINS || spec.holes.length > most) {
+  if (spec.holes.length < connector.minPins || spec.holes.length > most) {
     return fail(
-      `部品 ${safeToken(spec.id)}: 穴番地を ${MIN_CONNECTOR_PINS}〜${most} つ、${order} の順に書きます`
-      + ` (今は ${spec.holes.length} つ。電源だけなら 2 つ)`,
+      `部品 ${safeToken(spec.id)}: 穴番地を ${connector.minPins === most ? `${most}` : `${connector.minPins}〜${most}`} つ、${order} の順に書きます`
+      + ` (今は ${spec.holes.length} つ${connector.minPins === 2 ? '。電源だけなら 2 つ' : ''})`,
       spec.line,
     );
   }

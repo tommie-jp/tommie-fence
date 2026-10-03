@@ -10,7 +10,7 @@
  */
 
 import { lookupFootprint, placeableTypes } from '../placement/footprints.ts';
-import { MIN_CONNECTOR_PINS, lookupBoardPart, lookupNamedChip } from 'fence-kit';
+import { lookupBoardPart, lookupNamedChip } from 'fence-kit';
 
 /**
  * 置ける種類の名前。**一覧そのものは `footprints.ts` が正** — 足の数を決めて
@@ -163,7 +163,7 @@ export function holesOf(type: string): number {
   if (footprint === null) return 0;
   if (footprint.kind === 'two-lead') return 2;
   if (footprint.kind === 'three-lead') return 3;
-  if (footprint.kind === 'connector') return MIN_CONNECTOR_PINS;
+  if (footprint.kind === 'connector') return footprint.connector.minPins;
   return footprint.kind === 'four-lead' ? 4 : 1;
 }
 
