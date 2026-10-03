@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-04
+
 ### Added
 
 - **部品表 (`- parts`) の見出しの下に板の行** — `基板` / `copper-clad` / `40×20mm 1.6mm εr 4.4 両面`。`ground: none` は片面
