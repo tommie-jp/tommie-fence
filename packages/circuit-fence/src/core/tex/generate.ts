@@ -32,6 +32,7 @@ import type { DeviceBox } from './shapes.ts';
 import { icBox, icShapeTex, icStepOf } from './icShape.ts';
 import type { IcBox } from './icShape.ts';
 import { boxPinoutOf } from '../icLayouts.ts';
+import { gateNumbersOf } from '../gateNumbers.ts';
 
 /**
  * 生成した TeX と、その行が元の YAML の何行目から来たかの対応。
@@ -973,7 +974,35 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget, pitch: nu
   const named = nameNode(part, name, type, valueSide);
   if (symbol === 'plain amp') return [node, ...number, named, ...amplifierSigns(name, part.turn)];
 
-  return [node, ...number, named, ...pinNameNodes(part, name, type, target)];
+  return [node, ...number, named, ...pinNameNodes(part, name, type, target), ...gateNumberNodes(part, name, type, target)];
+}
+
+/**
+ * ゲートの足の番号 (`gateNumbers.ts`)。**足の外側の少し上**に小さく置く — 入力は線の上で左へ、
+ * 出力は線の上で右へ、上下の足は線の脇。字は足の名前と同じく目印のノードで、差し込む側が
+ * 同じ辺で揃える (`drawNotes.ts` の `gateNumberOverlays`)。
+ */
+function gateNumberNodes(part: MultiTerminalPart, name: string, type: PartType | null, target: TexTarget): string[] {
+  if (type === null) return [];
+  const places = pinPlaces(type, part.turn);
+  return gateNumbersOf(part).numbers.flatMap(({ anchor, text }) => {
+    const side = places.find((place) => place.anchor === anchor)?.side;
+    if (side === undefined) return [];
+    const put = gateNumberPlace(side);
+    const options = [
+      ...(target === 'latex' ? [] : [MARK_COLOR_NAME]),
+      'font=\\scriptsize', `anchor=${put.anchor}`, put.shift, 'inner sep=0',
+    ];
+    return [`\\node[${options.join(', ')}] at (${name}.${anchor}) {${target === 'latex' ? text : NOTE_MARK_TEXT}};`];
+  });
+}
+
+/** 番号を置く辺ごとの寄せ。左右の足は線の上 (左の足は左へ、右の足は右へ伸ばす)、上下の足は線の右。 */
+export function gateNumberPlace(side: PinSide): { readonly anchor: string; readonly shift: string } {
+  if (side === 'left') return { anchor: 'south west', shift: 'xshift=-1pt, yshift=1pt' };
+  if (side === 'right') return { anchor: 'south west', shift: 'xshift=1pt, yshift=1pt' };
+  // 上下の足は線の脇。下の足だけ 2pt 胴の側へ寄せる (足の先に置くと下の型番に触れる)。
+  return { anchor: 'west', shift: side === 'bottom' ? 'xshift=2pt, yshift=2pt' : 'xshift=2pt' };
 }
 
 /** 辺の名前 (画面の側)。**アンカー名から辺へ**戻すとき使う。 */

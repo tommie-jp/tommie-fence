@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { lookupPinout, lookupRole, pinoutModels, pinoutTable } from './pinouts.ts';
+import { lookupGateUnits, lookupPinout, lookupRole, pinoutModels, pinoutTable } from './pinouts.ts';
 
 /**
  * DIP の足の名前の表 (52 の docs/95 の段 1)。**型番で引いて、3 つのフェンスが
@@ -327,5 +327,54 @@ describe('ロジック IC の足の名前 (TI のデータシートから写し�
 
   test('calls the NC pins of 74HC20 and 74HC30 by number (the name is shared)', () => {
     expect(lookupPinout('74HC30', 14)?.names.filter((name) => name === 'NC')).toHaveLength(3);
+  });
+});
+
+describe('ゲートの回路ごとの足の番号', () => {
+  test('derives the units of a quad two-input gate from the printed names', () => {
+    expect(lookupGateUnits('74HC00')).toEqual([
+      { inputs: [1, 2], output: 3 },
+      { inputs: [4, 5], output: 6 },
+      { inputs: [9, 10], output: 8 },
+      { inputs: [12, 13], output: 11 },
+    ]);
+  });
+
+  test('puts the output of a NOR first on the package', () => {
+    expect(lookupGateUnits('74HC02')?.[0]).toEqual({ inputs: [2, 3], output: 1 });
+  });
+
+  test('reads the six inverters, the three input gates and the single 8 input gate', () => {
+    expect(lookupGateUnits('74HC14')).toHaveLength(6);
+    expect(lookupGateUnits('74HC14')?.[0]).toEqual({ inputs: [1], output: 2 });
+    expect(lookupGateUnits('74HC10')).toHaveLength(3);
+    expect(lookupGateUnits('74HC10')?.[0]).toEqual({ inputs: [1, 2, 13], output: 12 });
+    expect(lookupGateUnits('74HC30')).toEqual([{ inputs: [1, 2, 3, 4, 5, 6, 11, 12], output: 8 }]);
+  });
+
+  test('reads the six inverters of the 74HC04 whose role is written NOT', () => {
+    expect(lookupGateUnits('74HC04')).toHaveLength(6);
+    expect(lookupGateUnits('74HC04')?.[3]).toEqual({ inputs: [9], output: 8 });
+  });
+
+  test('pairs the letters of the CD4000 gates: inputs first, then the outputs in order', () => {
+    expect(lookupGateUnits('CD4011B')).toEqual([
+      { inputs: [1, 2], output: 3 },
+      { inputs: [5, 6], output: 4 },
+      { inputs: [8, 9], output: 10 },
+      { inputs: [12, 13], output: 11 },
+    ]);
+    expect(lookupGateUnits('CD4069UB')?.[1]).toEqual({ inputs: [3], output: 4 });
+    expect(lookupGateUnits('CD4069UB')).toHaveLength(6);
+  });
+
+  test('reads the buffers with an enable pin as one input gates', () => {
+    expect(lookupGateUnits('74HC125')?.[0]).toEqual({ inputs: [2], output: 3 });
+  });
+
+  test('is null for a part that is not a gate, an unknown model and none', () => {
+    for (const model of ['74HC74', '74HC595', '74HC163', '74HC244', 'NE555', 'LM741', null]) {
+      expect(lookupGateUnits(model), String(model)).toBeNull();
+    }
   });
 });

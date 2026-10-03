@@ -19,6 +19,7 @@ import {
   noteFontTex, noteLine, noteMonoWidth, noteSourceLine, noteSpan, noteWidth, texAnchorOf, texColorOf,
 } from '../notes.ts';
 import type { NoteSize } from '../notes.ts';
+import { gateNumbersOf } from '../gateNumbers.ts';
 import { NO_TURN, partTypeOf, pinLabelText, pinPlaces } from '../parts.ts';
 import { STAMP_TEXT } from '../version.ts';
 import type {
@@ -436,10 +437,25 @@ export function noteOverlays(
   // 先に出てくる (差し込みは出てくる順で当たる)。
   const pins = circuit.parts.flatMap((part): NoteOverlay[] => {
     const type = partTypeOf(part);
-    const labels = type?.pinLabels;
-    if (labels === undefined || type === null || type === undefined) return [];
+    if (type === null || type === undefined) return [];
     const turn = part.kind === 'multi-terminal' ? part.turn : NO_TURN;
-    return labels.map((_label, index) => {
+    // ゲートの足の番号は足の名前のあと (置く順は generate.ts の `drawMultiTerminal` と同じ)。
+    const gates = gateNumbersOf(part).numbers.flatMap(({ anchor }, index): NoteOverlay[] => {
+      const side = pinPlaces(type, turn).find((place) => place.anchor === anchor)?.side;
+      if (side === undefined) return [];
+      return [{
+        text: gateNumbersOf(part).numbers[index]?.text ?? '',
+        color: NOTE_INK,
+        mono: false,
+        bold: false,
+        // 左の足の番号は足の先で終わり、それ以外は足の先から右へ。
+        align: side === 'left' ? ('right' as const) : ('left' as const),
+        rotate: 0 as const,
+      }];
+    });
+    const labels = type.pinLabels;
+    if (labels === undefined) return gates;
+    const named = labels.map((_label, index) => {
       // **差し込む字も、置いたときと同じ辺で決める** (generate.ts の
       // `pinNamePlace` と同じ話)。片方だけ直すと字と位置が食い違う。
       const side = pinPlaces(type, turn).find((place) => place.anchor === `pin ${index + 1}`)?.side ?? 'left';
@@ -457,6 +473,7 @@ export function noteOverlays(
         centered: side === 'top' || side === 'bottom',
       };
     });
+    return [...named, ...gates];
   });
 
   const notes = circuit.notes.flatMap((note): NoteOverlay[] => {

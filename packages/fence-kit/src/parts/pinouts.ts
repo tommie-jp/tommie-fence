@@ -554,3 +554,71 @@ export const pinoutModels = (pins?: number): readonly string[] =>
 
 /** 表の全部 (早見表と文法リファレンスに並べる)。 */
 export const pinoutTable = (): readonly PinoutRow[] => ROWS;
+
+/** ゲート 1 回路の足の番号 (1 始まり)。入力は A・B・C … の順。 */
+export type GateUnit = {
+  readonly inputs: readonly number[];
+  readonly output: number;
+};
+
+/** ゲートとして読む行の働きの名前。シフトレジスタなどの `1A` `1Y` に似た印字を拾わないため。 */
+const GATE_ROLE = /\b(N?AND|N?OR|XN?OR|NOT)\b|インバータ|バッファ/;
+
+/**
+ * 型番のゲートの回路ごとの足の番号 (`74HC00` → A: 1・2 → 3、B: 4・5 → 6 …)。
+ * **足の名前の表から導く** (`1A` `1B` `1Y` の印字) ので、番号の表は別に持たない。
+ * 表に無い型番・ゲートでない型番・出力の名前 (`Y`) が無い型番は null。
+ * 74HC30 のように回路が 1 つだけの品は印字が `A`〜`H` と `Y`。
+ */
+export function lookupGateUnits(model: string | null): readonly GateUnit[] | null {
+  if (model === null) return null;
+  const row = BY_MODEL.get(model.trim().toUpperCase());
+  if (row === undefined || !GATE_ROLE.test(row.role)) return null;
+
+  const units = new Map<number, { inputs: [string, number][]; output: number | null }>();
+  const unitOf = (key: number) => {
+    const found = units.get(key) ?? { inputs: [], output: null };
+    units.set(key, found);
+    return found;
+  };
+  row.names.forEach((name, index) => {
+    const indexed = /^(\d)([A-H])$/.exec(name);
+    if (indexed !== null) unitOf(Number(indexed[1])).inputs.push([indexed[2] ?? '', index + 1]);
+    const out = /^(\d)Y$/.exec(name);
+    if (out !== null) unitOf(Number(out[1])).output = index + 1;
+    // 回路が 1 つだけの品 (74HC30)。
+    if (/^[A-H]$/.test(name)) unitOf(0).inputs.push([name, index + 1]);
+    if (name === 'Y') unitOf(0).output = index + 1;
+  });
+
+  // CD4000 系 (`A` `B` `J` …) は印字に回路の番号が無い。**入力の字が先 (A から)、出力の字がそのあと** で、
+  // k 番目の回路は k 番目の入力の組と k 番目の出力。入力の数は働きの名前 (`2 入力`、`NOT` は 1)。
+
+  const found = [...units.entries()]
+    .sort(([a], [b]) => a - b)
+    .flatMap(([, unit]) => (unit.output === null || unit.inputs.length === 0
+      ? []
+      : [{ inputs: unit.inputs.sort(([a], [b]) => a.localeCompare(b)).map(([, pin]) => pin), output: unit.output }]));
+  return found.length === 0 ? lettersUnits(row) : found;
+}
+
+/** CD4011B などの回路ごとの足 (字の並びから)。読めなければ null。 */
+function lettersUnits(row: PinoutRow): readonly GateUnit[] | null {
+  const arity = /(\d) 入力/.exec(row.role)?.[1] ?? (/\bNOT\b/.test(row.role) ? '1' : null);
+  if (arity === null) return null;
+  const inputsPerUnit = Number(arity);
+  const letters = row.names
+    .flatMap((name, index) => (/^[A-Z]$/.test(name) ? [[name, index + 1] as const] : []))
+    .sort(([a], [b]) => a.localeCompare(b));
+  const count = letters.length / (inputsPerUnit + 1);
+  if (!Number.isInteger(count) || count === 0) return null;
+
+  const pins = letters.map(([, pin]) => pin);
+  const inputs = pins.slice(0, count * inputsPerUnit);
+  const outputs = pins.slice(count * inputsPerUnit);
+  return Array.from({ length: count }, (_, index) => ({
+    inputs: inputs.slice(index * inputsPerUnit, (index + 1) * inputsPerUnit),
+    output: outputs[index] ?? 0,
+  }));
+}
+

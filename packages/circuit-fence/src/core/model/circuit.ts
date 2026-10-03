@@ -1,5 +1,6 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
+import { gateNumbersOf } from '../gateNumbers.ts';
 import { addressHint, cornerOf, formatAddress, isNearlyZero, isSameAddress, parseAddress } from './address.ts';
 import { partTypeOf, lookupPin, orientOf, pinAxis, pinHint, pinRefName, unnamedDip } from '../parts.ts';
 import type { Address } from './address.ts';
@@ -145,8 +146,14 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
     errors,
     // 足の名前を補えなかった DIP は `check: off` でも言う — 検査ではなく、
     // 何で描いたか (番号) の知らせ (文法の方針 2)。
-    notices: [...parts.flatMap(unnamedDipNotice), ...(checking ? ambiguousTouches(circuit, byId) : [])],
+    notices: [...parts.flatMap(unnamedDipNotice), ...parts.flatMap(gateNumberNotice), ...(checking ? ambiguousTouches(circuit, byId) : [])],
   };
+}
+
+/** ゲートに足の番号を添えられなかったときのお知らせ (`gateNumbers.ts`)。 */
+function gateNumberNotice(part: PartSpec): FenceError[] {
+  const { problem } = gateNumbersOf(part);
+  return problem === null ? [] : [fenceError(problem, part.line)];
 }
 
 /**

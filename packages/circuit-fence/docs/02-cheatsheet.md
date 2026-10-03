@@ -90,6 +90,7 @@ parts:
 - 能動 `npn` `pnp` `nigbt` `pigbt` `nmos` `pmos` `njfet` `pjfet`
   `nmos-e` `pmos-e` `nmos-d` `pmos-d` `nmos-dg` (デュアルゲート。足 4 本の箱: `G1` `G2` `D` `S`) `opamp` `transformer` `phototransistor`
 - 論理 `and` `or` `nand` `nor` `xor` `xnor` `not` `buffer` `spdt` `slide-switch`
+  (IC のゲートは ID の末尾の大文字が回路 + 型番: `U1A: nand c3 74HC00` で足の番号 1・2 → 3 が添わる。`U1B` は 4・5 → 6)
   `dip4` `dip6` `dip8` `dip14` `dip16` `dip18` `dip20` `dip24` `dip28` `dip40`
 - ブザー・イヤホン `buzzer` `earphone` (スピーカーの記号で描く)
 - SMA コネクタ `sma` (足は `1` 中心導体 / `2` 外皮)
