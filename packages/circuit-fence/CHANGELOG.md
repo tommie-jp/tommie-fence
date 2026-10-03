@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-10-04
+
 ### Changed
 
 - `usb-c` の記号は `lookupConnectorSymbol` を読む (足は CC1・CC2 まで、従来どおり)

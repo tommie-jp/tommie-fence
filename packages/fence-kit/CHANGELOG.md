@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-04
+
 ### Changed
 
 - USB Type-C の変換基板を実物どおり 4 ピン (`GND D+ D- VBUS`、14.5 × 9.2mm) で描く。`lookupConnector` は変換基板の足、回路図の記号用に `lookupConnectorSymbol` (CC1・CC2 まで) を分けた

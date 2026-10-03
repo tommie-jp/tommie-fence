@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-10-04
+
 ### Changed
 
 - USB Type-C の変換基板は 4 本のピンヘッダ (`GND D+ D- VBUS`) で描く。4 本とも書く

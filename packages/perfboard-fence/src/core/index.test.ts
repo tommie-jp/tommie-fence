@@ -552,7 +552,7 @@ describe('部品表 (notes: - parts)', () => {
   test('lists what has to be gathered, with the colour code spelled out', () => {
     const result = renderPerfboard(fence);
 
-    expect(result.svg).toContain('茶黒橙茶');
+    expect(result.svg).toContain('fill="#6b4423" stroke=');
     expect(result.svg).toContain('部品');
     expect(result.errors).toEqual([]);
   });
@@ -580,7 +580,7 @@ describe('部品表 (notes: - parts)', () => {
   test('stands together with the listing, one above the other', () => {
     const both = renderPerfboard(fence.replace('  - parts\n', '  - parts\n  - source\n'));
 
-    expect(both.svg).toContain('茶黒橙茶');
+    expect(both.svg).toContain('色・記号');
     expect(both.svg).toContain('```perf<');
     expect(both.errors).toEqual([]);
   });

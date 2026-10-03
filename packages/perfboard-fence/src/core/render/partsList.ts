@@ -1,4 +1,4 @@
-import { lookupNamedChip, lookupRole, parseResistor, resistorBands } from 'fence-kit';
+import { bandColor, capacitorCode, lookupNamedChip, lookupRole, parsePicofarads, parseResistor, resistorBands } from 'fence-kit';
 import { colorValue } from '../color.ts';
 import type { Band } from '../model/layout.ts';
 import type { Board, DeviceSpec } from '../types.ts';
@@ -12,9 +12,9 @@ import type { Theme } from './theme.ts';
  * 図を目で拾わないと分からない。**図と同じフェンスから出す**ので、
  * 部品を足したのに表を直し忘れる、が起きない。
  *
- * **抵抗にはカラーコードを字で添える** (`10k` → `茶黒橙金`)。実物を選ぶときに
- * 見るのは帯の色そのもので、図の帯は小さく、白黒で刷ると消える。
- * 字にしておけば、図を刷っても手元の部品と読み合わせられる。
+ * **抵抗にはカラーコードを実際の色の四角で添える** (`10k` → 茶・黒・橙・茶の四角)。実物を
+ * 選ぶときに見るのは帯の色そのもので、図の帯は小さくて読みにくい。
+ * **コンデンサには胴に刷ってある 3 桁の記号を添える** (`100n` → `104`)。
  *
  * 板の外の機器も並べる。**盤面に載らないだけで、揃えるものには変わりない。**
  *
@@ -24,40 +24,28 @@ import type { Theme } from './theme.ts';
  */
 
 /**
- * カラーコードの帯の色の名前。**実物を選ぶときに使う日本語の呼び名**で、
- * 図の中の色 (`fence-kit` の `BAND_COLORS`) と 1 対 1 に対応する。
- * ここに無い名前が来たら英語のまま出す (黙って落とすと帯の本数が変わる)。
- */
-const BAND_NAMES: Record<string, string> = {
-  black: '黒',
-  brown: '茶',
-  red: '赤',
-  orange: '橙',
-  yellow: '黄',
-  green: '緑',
-  blue: '青',
-  violet: '紫',
-  gray: '灰',
-  white: '白',
-  gold: '金',
-  silver: '銀',
-};
-
-const bandName = (name: string): string =>
-  Object.hasOwn(BAND_NAMES, name) ? BAND_NAMES[name] ?? name : name;
-
-/**
- * 抵抗のカラーコードを字にする。**値として読めないときは何も出さない** —
+ * 抵抗のカラーコードの帯の色 (`fence-kit` の帯の名前、`brown` など)。**値として読めないときは空** —
  * 実物と違う帯を書くと、図を信じた人が違う抵抗を挿す (図の帯と同じ約束)。
+ * 表には字ではなく**実際の色の四角**で出す (`renderPartsList`)。
  */
-export function bandText(type: string, value: string | null): string {
-  if (type !== 'resistor' || value === null) return '';
+export function bandColors(type: string, value: string | null): readonly string[] {
+  if (type !== 'resistor' || value === null) return [];
 
   const read = parseResistor(value);
-  if (read === null) return '';
+  if (read === null) return [];
 
-  const bands = resistorBands(read.ohms, { tolerance: read.tolerance, tempco: read.tempco });
-  return bands === null ? '' : bands.map(bandName).join('');
+  return resistorBands(read.ohms, { tolerance: read.tolerance, tempco: read.tempco }) ?? [];
+}
+
+/**
+ * コンデンサの胴に刷ってある 3 桁の記号 (`100n` → `104`)。**電解は値をそのまま刷る**ので出さない。
+ * 3 桁で書けない値 (10pF 未満・丸めると別の値) も出さない。
+ */
+export function capacitorMark(type: string, variant: string | null, value: string | null): string {
+  if (type !== 'capacitor' || variant === 'electrolytic' || value === null) return '';
+
+  const picofarads = parsePicofarads(value);
+  return picofarads === null ? '' : capacitorCode(picofarads) ?? '';
 }
 
 /**
@@ -71,14 +59,33 @@ export type ListedPart = {
   readonly value: string | null;
 };
 
+/** 最後の欄。抵抗は帯の色の並び (四角で描く)、ほかは字 (コンデンサの記号 `104` など)。 */
+export type PartsMark = string | readonly string[];
+
 /** 部品表の 1 行ぶん。列に分けて持ち、幅を測ってから置き場所を決める。 */
-export type PartsRow = readonly [id: string, kind: string, value: string, bands: string];
+export type PartsRow = readonly [id: string, kind: string, value: string, mark: PartsMark];
 
-const HEADINGS: PartsRow = ['部品', '種類', '値', '色'];
+const HEADINGS: PartsRow = ['部品', '種類', '値', '色・記号'];
 
-/** 種類の綴り。姿を書いてあれば添える (`capacitor/ceramic`)。 */
-const kindOf = (type: string, variant: string | null): string =>
-  variant === null ? type : `${type}/${variant}`;
+/** 種類の欄に、綴り (`sip3`) の代わりに出す呼び名。型番の働きの表 (fence-kit) から引く。 */
+const CERAMIC_FILTER = 'セラミックフィルター';
+
+/**
+ * 種類の綴り。姿を書いてあれば添える (`capacitor/ceramic`)。セラミックフィルタの型番
+ * (`sip3` + `SFU455B`) は、足の数の綴りでは何の部品か分からないので呼び名で出す。
+ */
+const CERAMIC_ROLE = 'セラミックフィルタ';
+
+function kindOf(type: string, variant: string | null, value: string | null): string {
+  const role = value === null || value === '' ? null : lookupRole(value);
+  if (role?.startsWith(CERAMIC_ROLE) === true) return CERAMIC_FILTER;
+  return variant === null ? type : `${type}/${variant}`;
+}
+
+const markOf = (part: ListedPart): PartsMark => {
+  const bands = bandColors(part.type, part.value);
+  return bands.length > 0 ? bands : capacitorMark(part.type, part.variant, part.value);
+};
 
 /**
  * 部品表の行。**書いた順に並べる** — 番号で並べ直すと、図を追いながら表を
@@ -91,7 +98,10 @@ const kindOf = (type: string, variant: string | null): string =>
  */
 function withRole(value: string): string {
   const role = value === '' ? null : lookupRole(value);
-  return role === null ? value : `${value} (${role})`;
+  if (role === null) return value;
+  // セラミックフィルタは種類の欄に呼び名を出すので、値の欄には周波数だけ残す (`SFU455B (455 kHz)`)。
+  const rest = role.startsWith(CERAMIC_ROLE) ? role.slice(CERAMIC_ROLE.length).trim() : role;
+  return rest === '' ? value : `${value} (${rest})`;
 }
 
 /**
@@ -112,8 +122,8 @@ export function partsListing(
 ): readonly PartsRow[] {
   const rows: PartsRow[] = [
     ...parts.map((part): PartsRow =>
-      [part.id, kindOf(part.type, part.variant), withRole(part.value ?? lookupNamedChip(part.type, part.variant)?.name ?? ''),
-        bandText(part.type, part.value)]),
+      [part.id, kindOf(part.type, part.variant, part.value),
+        withRole(part.value ?? lookupNamedChip(part.type, part.variant)?.name ?? ''), markOf(part)]),
     // 機器は種類が 1 つしかないので、名札を値の欄に出す (`電池 3V`)。
     ...devices.map((device): PartsRow => [device.id, 'device', device.label, '']),
   ];
@@ -126,12 +136,33 @@ export function partsListing(
 /** 列の間。1 桁だと隣の欄と地続きに見えるので 2 桁ぶん空ける。 */
 const GAP = '  ';
 
+/** 帯の色の四角。1 本ぶんの幅と間 (字の大きさに対する比)。高さは字の高さに合わせる。 */
+const SWATCH = { width: 0.9, gap: 0.25, height: 0.8 } as const;
+
+const swatchesWidth = (count: number, size: number): number =>
+  count === 0 ? 0 : count * SWATCH.width * size + (count - 1) * SWATCH.gap * size;
+
+const cellWidth = (cell: PartsMark, size: number): number =>
+  typeof cell === 'string' ? monoWidth(cell, size) : swatchesWidth(cell.length, size);
+
+/** 帯の色の四角を並べる。白と黒も地と見分けられるよう、細い縁を付ける。 */
+function renderSwatches(x: number, baseline: number, colors: readonly string[], size: number, edge: string): string {
+  const height = SWATCH.height * size;
+  const y = baseline - height;
+  return colors
+    .map((name, index) => {
+      const left = x + index * (SWATCH.width + SWATCH.gap) * size;
+      return `<rect x="${left.toFixed(2)}" y="${y.toFixed(2)}" width="${(SWATCH.width * size).toFixed(2)}" height="${height.toFixed(2)}" fill="${bandColor(name)}" stroke="${edge}" stroke-width="0.5"/>`;
+    })
+    .join('');
+}
+
 /** 列ごとの幅と、帯の左から測った左端。 */
 function columns(rows: readonly PartsRow[], size: number): readonly { x: number; width: number }[] {
   const gap = monoWidth(GAP, size);
   let x = 0;
   return [0, 1, 2, 3].map((column) => {
-    const width = Math.max(...rows.map((row) => monoWidth(row[column] ?? '', size)));
+    const width = Math.max(...rows.map((row) => cellWidth(row[column] ?? '', size)));
     const here = { x, width };
     x += width + gap;
     return here;
@@ -169,8 +200,11 @@ export function renderPartsList(
     .map((row, index) => {
       const y = monoBaseline(band, size, index);
       return row
-        .map((cell, column) =>
-          cell === '' ? '' : monoText(band.x + (laid[column]?.x ?? 0), y, cell, { fill, size }))
+        .map((cell, column) => {
+          const x = band.x + (laid[column]?.x ?? 0);
+          if (typeof cell !== 'string') return renderSwatches(x, y, cell, size, fill);
+          return cell === '' ? '' : monoText(x, y, cell, { fill, size });
+        })
         .join('');
     })
     .join('');

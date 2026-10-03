@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { bandText, boardRow, partsListing } from './partsList.ts';
+import { bandColors, boardRow, capacitorMark, partsListing } from './partsList.ts';
 import type { ListedPart } from './partsList.ts';
 import type { DeviceSpec } from '../types.ts';
 
@@ -13,25 +13,43 @@ const part = (
 const device = (id: string, label: string): DeviceSpec =>
   ({ id, at: 'top', where: null, label, pins: ['+', '-'], line: 1 });
 
-describe('bandText', () => {
-  test('names the bands of a resistor in the words used to pick one out of a box', () => {
+describe('bandColors', () => {
+  test('lists the colours of the bands, to be drawn as swatches', () => {
     // Arrange / Act / Assert — 10k は茶黒橙、許容差の既定 (±1%) が茶。
-    expect(bandText('resistor', '10k')).toBe('茶黒橙茶');
+    expect(bandColors('resistor', '10k')).toEqual(['brown', 'black', 'orange', 'brown']);
   });
 
   test('follows the tolerance written after the value', () => {
-    expect(bandText('resistor', '47k 5%')).toBe('黄紫橙金');
+    expect(bandColors('resistor', '47k 5%')).toEqual(['yellow', 'violet', 'orange', 'gold']);
   });
 
   test('says nothing when the value cannot be read as a resistance', () => {
     // 実物と違う帯を書くと、図を信じた人が違う抵抗を挿す (図の帯と同じ約束)。
-    expect(bandText('resistor', 'ほどほど')).toBe('');
-    expect(bandText('resistor', null)).toBe('');
+    expect(bandColors('resistor', 'ほどほど')).toEqual([]);
+    expect(bandColors('resistor', null)).toEqual([]);
   });
 
   test('says nothing for parts that carry no colour code', () => {
-    expect(bandText('capacitor', '10n')).toBe('');
-    expect(bandText('led', 'red')).toBe('');
+    expect(bandColors('capacitor', '10n')).toEqual([]);
+    expect(bandColors('led', 'red')).toEqual([]);
+  });
+});
+
+describe('capacitorMark', () => {
+  test('gives the three-digit code printed on the body', () => {
+    expect(capacitorMark('capacitor', 'ceramic', '100n')).toBe('104');
+    expect(capacitorMark('capacitor', 'ceramic', '1u')).toBe('105');
+    expect(capacitorMark('capacitor', 'ceramic', '560p')).toBe('561');
+    expect(capacitorMark('capacitor', 'ceramic', '1.2n')).toBe('122');
+  });
+
+  test('gives nothing for electrolytics, which print the value itself', () => {
+    expect(capacitorMark('capacitor', 'electrolytic', '10u')).toBe('');
+  });
+
+  test('gives nothing for values three digits cannot hold, or other parts', () => {
+    expect(capacitorMark('capacitor', 'ceramic', '4.7p')).toBe('');
+    expect(capacitorMark('resistor', null, '10k')).toBe('');
   });
 });
 
@@ -62,14 +80,22 @@ describe('partsListing', () => {
   test('heads the table, so the columns can be read without the drawing', () => {
     const rows = partsListing([part('R1', 'resistor', '10k')], []);
 
-    expect(rows[0]).toEqual(['部品', '種類', '値', '色']);
-    expect(rows[1]).toEqual(['R1', 'resistor', '10k', '茶黒橙茶']);
+    expect(rows[0]).toEqual(['部品', '種類', '値', '色・記号']);
+    expect(rows[1]).toEqual(['R1', 'resistor', '10k', ['brown', 'black', 'orange', 'brown']]);
   });
 
   test('carries the package into the kind, the way the drawing shows it', () => {
     const rows = partsListing([part('C2', 'capacitor', '10n', 'ceramic')], []);
 
     expect(rows[1]?.[1]).toBe('capacitor/ceramic');
+    expect(rows[1]?.[3]).toBe('103');
+  });
+
+  test('names a ceramic filter by what it is, not by its pin count', () => {
+    const rows = partsListing([part('FL1', 'sip3', 'SFU455B')], []);
+
+    expect(rows[1]?.[1]).toBe('セラミックフィルター');
+    expect(rows[1]?.[2]).toBe('SFU455B (455 kHz)');
   });
 
   test('adds what an IC does after its model, so the table says which chip is which', () => {
