@@ -241,23 +241,8 @@ const HC4051_LAYOUT: IcLayout = {
   bottom: ['GND', 'VEE', 'E', 'S0', 'S1', 'S2'],
 };
 
-/**
- * デュアルゲート MOSFET (N)。**足の名前は実物の呼び名** (G1・G2・D・S) で、型番ではなく
- * 種類 (`nmos-dg`) が並びを決める。G1 (信号) は S に近い下、G2 (バイアス・AGC) はその上。
- * 箱の名前に使うので型番は英数字だけ。
- */
-export const DUAL_GATE_FET_PINOUT: IcPinout = {
-  model: 'DGFET',
-  names: ['G1', 'G2', 'D', 'S'],
-  layout: { top: ['D'], left: ['G2', 'G1'], right: [], bottom: ['S'] },
-};
-
-/**
- * 箱で描く部品の足の並び。働きで並べた IC (`ic`) は型番で引き、
- * デュアルゲート MOSFET は種類で決まる。箱でなければ null。
- */
+/** 箱で描く部品の足の並び。働きで並べた IC (`ic`) は型番で引く。箱でなければ null。 */
 export function boxPinoutOf(type: string, model: string | null): IcPinout | null {
-  if (type === 'nmos-dg') return DUAL_GATE_FET_PINOUT;
   return type === 'ic' ? lookupIcPinout(model) : null;
 }
 

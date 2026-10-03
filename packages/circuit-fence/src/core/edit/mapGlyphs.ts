@@ -27,7 +27,7 @@ export type GlyphName =
   | 'battery' | 'switch' | 'switch-nc' | 'button' | 'button-nc'
   | 'reed' | 'spdt' | 'meter'
   | 'crystal' | 'fuse' | 'lamp' | 'speaker' | 'mic' | 'transformer' | 'coax'
-  | 'bjt' | 'bjt-p' | 'fet' | 'fet-p' | 'fet-e' | 'fet-e-p' | 'fet-d' | 'fet-d-p'
+  | 'bjt' | 'bjt-p' | 'fet' | 'fet-p' | 'fet-e' | 'fet-e-p' | 'fet-d' | 'fet-d-p' | 'fet-dg'
   | 'jfet' | 'jfet-p' | 'igbt' | 'igbt-p' | 'opamp'
   | 'and' | 'and-inv' | 'or' | 'or-inv' | 'xor' | 'xor-inv' | 'buffer' | 'buffer-inv'
   | 'ground' | 'port' | 'antenna' | 'supply-up' | 'supply-down' | 'short' | 'box';
@@ -70,6 +70,8 @@ const SHAPES: Record<string, GlyphName> = {
   nmos: 'fet', pmos: 'fet-p', njfet: 'jfet', pjfet: 'jfet-p',
   // **増強形と空乏形はチャネルで分かれる** (図と同じ。実機で頼まれた)。
   'nmos-e': 'fet-e', 'pmos-e': 'fet-e-p', 'nmos-d': 'fet-d', 'pmos-d': 'fet-d-p',
+  // デュアルゲート。ゲートの板が 2 枚 (図と同じ)。
+  'nmos-dg': 'fet-dg',
   nigbt: 'igbt', pigbt: 'igbt-p',
   opamp: 'opamp',
   and: 'and', nand: 'and-inv',
@@ -335,6 +337,10 @@ const SHAPE: Record<GlyphName, () => string> = {
   'fet-e-p': () => fetBulk(CHANNEL_BROKEN, BULK_OUT),
   'fet-d': () => fetBulk(CHANNEL_SOLID, BULK_IN),
   'fet-d-p': () => fetBulk(CHANNEL_SOLID, BULK_OUT),
+  // デュアルゲート (N)。**ゲートの足と板が 2 組** (上が G2、下が G1)、チャネルは 1 本、
+  // 基板の線はソースへ落ちる (図と同じ)。足の高さは `LEG_GAP` と揃える。
+  'fet-dg': () => path('M-13,-4.5 L-7,-4.5 M-7,-7.5 L-7,-1.5 M-13,4.5 L-7,4.5 M-7,1.5 L-7,7.5'
+    + ` ${CHANNEL_SOLID} M-3.5,-5 L6,-5 L6,-9 M-3.5,5 L6,5 L6,9 M-3.5,0 L6,0 L6,5 ${BULK_IN}`),
   // 接合形。**チャネルは 1 本の棒**で、ゲートの矢がそこへ刺さる (絶縁ゲートと
   // 違って棒が離れていない)。n 形は内へ、p 形は外へ。
   jfet: () => path(`M-4,-7 L-4,7 M-4,-5 L6,-5 L6,-9 M-4,5 L6,5 L6,9 ${arrow(-13, 0, -4, 0)}`),
@@ -395,7 +401,7 @@ const SPAN: Record<GlyphName, number> = {
   // **線が記号を貫く**ので切らない (ヒューズは溶断線、マイクは丸の底)。
   fuse: 0, mic: 0,
   bjt: 13, 'bjt-p': 13, fet: 13, 'fet-p': 13,
-  'fet-e': 13, 'fet-e-p': 13, 'fet-d': 13, 'fet-d-p': 13,
+  'fet-e': 13, 'fet-e-p': 13, 'fet-d': 13, 'fet-d-p': 13, 'fet-dg': 13,
   jfet: 13, 'jfet-p': 13, igbt: 13, 'igbt-p': 13, opamp: 8,
   // 反転する形は**出口の丸の外側**まで取る。丸の手前から棒を出すと、
   // 棒が丸を突き抜けて出てくる (実機で見つけた)。
@@ -460,7 +466,7 @@ const TALL: Record<GlyphName, number> = {
   'i-source': 9, solar: 15, battery: 8, meter: 9,
   switch: 8, 'switch-nc': 6, button: 9, 'button-nc': 8, reed: 5, spdt: 6,
   crystal: 9, fuse: 4, lamp: 8, speaker: 10, mic: 11, coax: 8,
-  bjt: 9, 'bjt-p': 9, fet: 9, 'fet-p': 9, 'fet-e': 9, 'fet-e-p': 9, 'fet-d': 9, 'fet-d-p': 9,
+  bjt: 9, 'bjt-p': 9, fet: 9, 'fet-p': 9, 'fet-e': 9, 'fet-e-p': 9, 'fet-d': 9, 'fet-d-p': 9, 'fet-dg': 9,
   jfet: 9, 'jfet-p': 9, igbt: 9, 'igbt-p': 9, opamp: 9,
   and: 9, 'and-inv': 9, or: 9, 'or-inv': 9, xor: 9, 'xor-inv': 9, buffer: 9, 'buffer-inv': 9,
   ground: 8, port: 4, antenna: 8, 'supply-up': 8, 'supply-down': 8,
@@ -489,6 +495,8 @@ const LEG_GAP: Record<GlyphName, number> = {
   transformer: 18,
   // 開いた接点 2 つ。記号がその高さに描いてある。
   spdt: 12,
+  // ゲート 2 本。記号が ±4.5 の高さに足を描いている。
+  'fet-dg': 9,
   // 箱は自分で伸びるので、読める間隔を選べる (名前が 8px)。
   box: 12,
   // ここから下は 1 辺に 1 本だけ。値は使われない。
@@ -542,7 +550,7 @@ const NAMES_INSIDE: Partial<Record<GlyphName, PinSide>> = { opamp: 'left' };
  * **辺で置くので回転にそのまま乗る** — 左の足は丸の下、上下の足は丸の右。
  */
 const NAMES_BESIDE: ReadonlySet<GlyphName> = new Set<GlyphName>([
-  'fet', 'fet-p', 'fet-e', 'fet-e-p', 'fet-d', 'fet-d-p', 'jfet', 'jfet-p',
+  'fet', 'fet-p', 'fet-e', 'fet-e-p', 'fet-d', 'fet-d-p', 'fet-dg', 'jfet', 'jfet-p',
   'bjt', 'bjt-p', 'igbt', 'igbt-p',
   // 接点と丸の中も空いていない。切り替えスイッチは名前が接点に、同軸は
   // 中心導体に乗っていた (実機で「他の部品でもピン名が図形と重なっている

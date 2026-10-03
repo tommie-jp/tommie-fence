@@ -1448,8 +1448,8 @@ describe('字が出る部品を全部当たる', () => {
     // 実機で「回転でピン名が見えにくくなる不具合が他の部品に無いか」。
     // **足の名前を書くのは表に `pinLabels` を持つ種類だけ**なので、
     // その全部が回した辺で置き方を決めていることを見る。
-    // 働きで並べた IC と同じ箱で描くもの (`nmos-dg`) は向きを書けず、字は箱の縁の内側へ
-    // 横のまま入る (`icShape.ts`)。回さないので、ここでは当たらない。
+    // デュアルゲート MOSFET (`nmos-dg`) は名前がゲートの 2 本だけで、足の置き場の並び
+    // (中心線に乗る D・S が先) と名前の並びが揃わない。下の「デュアルゲート MOSFET」で見る。
     const named = partTypeNames()
       .filter((type) => lookupPartType(type)?.pinLabels !== undefined && type !== 'nmos-dg');
     expect(named.length).toBeGreaterThan(0);
@@ -1546,15 +1546,35 @@ describe('字が出る部品を全部当たる', () => {
 });
 
 describe('デュアルゲート MOSFET', () => {
-  test('draws the box with the model inside and the four pin names', () => {
+  test('draws its own symbol and names only the two gates', () => {
     // Arrange / Act
-    const { tex } = generate('parts:', '  Q1: nmos-dg d5 3SK291');
+    const { tex, notes } = generate('parts:', '  Q1: nmos-dg d5 3SK291');
 
     // Assert
+    expect(tex).toContain('\\pgfdeclareshape{dgfetn}');
+    expect(tex).toContain('\\node[dgfetn, draw] (part-Q1)');
     expect(tex).toContain('3SK291');
     // 足の名前は差し込みの場所 (`bpin K`) だけ作り、字は注釈の差し込みが埋める。
-    for (const pin of [1, 2, 3, 4]) expect(tex).toContain(`(part-Q1.bpin ${pin})`);
-    expect(tex).not.toContain('(part-Q1.bpin 5)');
-    expect(tex).toContain('icDGFETs');
+    for (const pin of [1, 2]) expect(tex).toContain(`(part-Q1.bpin ${pin})`);
+    expect(tex).not.toContain('(part-Q1.bpin 3)');
+    expect(notes.map((one) => one.text)).toEqual(['G1', 'G2']);
+  });
+
+  test('does not declare the symbol in a figure without one', () => {
+    const { tex } = generate('parts:', '  Q1: nmos-d d5');
+
+    expect(tex).not.toContain('dgfetn');
+  });
+
+  test('wires reach the gates, the drain and the source by name', () => {
+    const { tex } = generate('parts:', '  Q1: nmos-dg d5', 'wires:', '  - a5 -- Q1.D', '  - Q1.S -- g5', '  - d1 -| Q1.G1', '  - c1 -| Q1.G2');
+
+    for (const anchor of ['drain', 'source', 'pin 1', 'pin 2']) expect(tex).toContain(`(part-Q1.${anchor})`);
+  });
+
+  test('stands the gate names upright when the symbol is turned onto its side', () => {
+    const { notes } = generate('parts:', '  Q1: nmos-dg d5 r90');
+
+    expect(notes.map((one) => one.rotate !== 0)).toEqual([true, true]);
   });
 });

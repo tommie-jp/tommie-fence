@@ -1,5 +1,5 @@
 import {
-  BOARD_HALO_OPACITY, BOARD_INK_OPACITY, REAL_INK, boardBox, boardChip, connectorBox, dipChip, directSotSpec, drawBody, drawConnector, drawDipAdapter,
+  BOARD_HALO_OPACITY, BOARD_INK_OPACITY, REAL_INK, boardBox, boardChip, connectorBox, dipChip, directSotSpec, drawBody, drawConnector, drawDipAdapter, drawSipAdapter,
   drawDirectSot, drawPackage, drawsOwnLeads,
   element, fit, hasBody,
   drawNamedChip, lookupBoardPart, lookupNamedChip, lookupPinout, num, bodySize, packageHalfWidth, packageReach, sipHeader,
@@ -613,6 +613,11 @@ function renderChip(
     // 姿があれば DIP 化した変換基板 (`dip8/sop`)。外形は DIP と同じ。
     // 型番が足の名前の表にあれば、番号 (縁) と名前 (胴の外) の 2 段 (52 の docs/95)。
     const printed = dipPinout(part);
+    // 面実装しか無い型番 (3SK291) は、変換基板に載せた実寸の胴で描く。
+    const chip = printed === null ? undefined : lookupPinout(part.value, part.pins.length)?.chip;
+    if (printed !== null && chip !== undefined) {
+      return drawDipAdapter({ ...shared, names: printed, pinOne: 0, chip, label: part.id, paint: inkOf(theme) });
+    }
     if (printed !== null) return dipChip({ ...shared, names: printed, numbers, pinOne: 0 });
     return part.variant === null
       ? dipChip({ ...shared, names: numbers, pinOne: 0 })
@@ -622,7 +627,11 @@ function renderChip(
     // **名前は行の増える側へ。** この板に溝は無いので、どちらでも読めるほうを
     // 1 つに決める (breadboard は溝の側)。
     // 型番が足の名前の表にあれば印字の名前 (1 列の変換基板の `3SK291`)。
-    const look = lookupPinout(part.value, part.pins.length)?.look;
+    const pinout = lookupPinout(part.value, part.pins.length);
+    const look = pinout?.look;
+    if (pinout?.chip !== undefined) {
+      return drawSipAdapter({ ...shared, names: dipPinout(part) ?? numbers, nameSide: 1, chip: pinout.chip, label: part.id, paint: inkOf(theme) });
+    }
     return sipHeader({ ...shared, names: dipPinout(part) ?? numbers, nameSide: 1, ...(look === undefined ? {} : { look }) });
   }
 

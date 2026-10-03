@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- 足の名前の表の行に**面実装の胴の寸法** (`chip`。mm) — 3SK291 の SMQ (2.9 mm 角、胴の幅 1.5 mm、足の間隔 1.9 mm、足 0.4 mm で 4 番だけ 0.6 mm、印字 `U.F`)。`drawDipAdapter` に `chip` を渡すと変換基板に実寸の胴を載せて描く。1 列の変換基板は `drawSipAdapter`。1 列ヘッダの足の名前だけを描く `sipLegends`
+
 ## [0.8.0] - 2026-10-04
 
 ### Changed

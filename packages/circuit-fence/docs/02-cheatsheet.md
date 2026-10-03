@@ -88,7 +88,7 @@ parts:
 - 1 端子 `port` `antenna` `ground` `vcc` `vee`
   (`vcc` / `vee` は電圧を書ける: `VCC: vcc a1 5V` で図に `+5V`、ネットは `VCC`)
 - 能動 `npn` `pnp` `nigbt` `pigbt` `nmos` `pmos` `njfet` `pjfet`
-  `nmos-e` `pmos-e` `nmos-d` `pmos-d` `nmos-dg` (デュアルゲート。足 4 本の箱: `G1` `G2` `D` `S`) `opamp` `transformer` `phototransistor`
+  `nmos-e` `pmos-e` `nmos-d` `pmos-d` `nmos-dg` (デュアルゲート。足 4 本: `G1` `G2` `D` `S`) `opamp` `transformer` `phototransistor`
 - 論理 `and` `or` `nand` `nor` `xor` `xnor` `not` `buffer` `spdt` `slide-switch`
   (IC のゲートは ID の末尾の大文字が回路 + 型番: `U1A: nand c3 74HC00` で足の番号 1・2 → 3 が添わる。`U1B` は 4・5 → 6)
   `dip4` `dip6` `dip8` `dip14` `dip16` `dip18` `dip20` `dip24` `dip28` `dip40`
@@ -204,7 +204,7 @@ parts:
 | `74HC240` (`SN74HC240` `SN74HC240N`) | `dip20` | `1OE` `1A1` `2Y4` `1A2` `2Y3` `1A3` `2Y2` `1A4` `2Y1` `GND` `2A1` `1Y4` `2A2` `1Y3` `2A3` `1Y2` `2A4` `1Y1` `2OE` `VCC` (並びは 74HC244 と同じ。`OE` は上に線) |
 | `74HC573` (`CD74HC573` `CD74HC573E`) | `dip20` | `OE` `1D` `2D` `3D` `4D` `5D` `6D` `7D` `8D` `GND` `LE` `8Q` `7Q` `6Q` `5Q` `4Q` `3Q` `2Q` `1Q` `VCC` (`OE` は上に線。`LE` が H の間つながる) |
 | `74HC574` (`SN74HC574` `SN74HC574N`) | `dip20` | `OE` `1D` `2D` `3D` `4D` `5D` `6D` `7D` `8D` `GND` `CLK` `8Q` `7Q` `6Q` `5Q` `4Q` `3Q` `2Q` `1Q` `VCC` (`OE` は上に線。並びは 74HC573 と同じ (`LE` が `CLK`)) |
-| `3SK291` | `dip4` | `G1` `G2` `D` `S` (面実装 SMQ の 4 本足を変換基板に載せた形。回路図の記号は `nmos-dg`) |
+| `3SK291` | `dip4` | `G1` `G2` `D` `S` (面実装 SMQ の 4 本足を変換基板に載せた形。回路図の記号は `nmos-dg` で、`dip4` には書かない) |
 | `SFU455B` (`SFU455A` `SFU455`) | `sip3` | `IN` `GND` `OUT` (セラミックフィルタ。橙の胴で描く。回路図の記号は `ceramic-filter`) |
 
 ## 配線 (`wires:`)

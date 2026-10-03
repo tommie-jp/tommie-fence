@@ -189,6 +189,26 @@ export function dipChip(options: DipOptions): string {
 }
 
 /**
+ * 足の名前だけを、DIP と同じ**胴の外、足の向こう側**に刷る。変換基板 (`smdDraw.ts`) が、
+ * 板の上に名前の入る場所が無いとき (ブレッドボードの溝をまたぐ 2 行) に使う。
+ */
+export function dipOutsideNames(options: DipOptions): string {
+  const { points, names, pitch, scale, ink } = options;
+  if (points.length === 0) return '';
+  const box = dipBox(points, pitch);
+  const centre = centreOf(box);
+  const alongX = chipAlongX(points);
+  const inward = (point: ChipPoint): number =>
+    (alongX ? Math.sign(centre.y - point.y) : Math.sign(centre.x - point.x)) || 1;
+  return pinNames(points, names, inward, alongX, pitch, box, scale, ink, false).svg;
+}
+
+/** 板の上 (胴の外) に出す字の書式。縁取りつきで、下の穴に食われない。 */
+export const outsideTextStyle = (size: number, ink: ChipInk): Record<string, string | number> => ({
+  'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: NAME_HALO, haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
+});
+
+/**
  * 足の名前。**既定は胴の外、足の向こう側** (胴の縁と隣の穴の列のあいだ) に刷る。
  *
  * 計画 (52 の docs/95 の決め 2) は番号の 1 段内側だったが、ブレッドボードの胴は溝を
@@ -465,11 +485,40 @@ export type SipOptions = {
 };
 
 /**
+ * 1 列ヘッダの足の名前。**本体の外、`nameSide` の側**に縁取りつきで刷る。
+ * 1 列の変換基板 (`smdDraw.ts`) も同じ置き場に同じ字で出す。
+ */
+export function sipLegends(options: SipOptions): string {
+  const { points, names, pitch, scale, nameSide, ink } = options;
+  const bar = sipBox(points, pitch);
+  const alongX = chipAlongX(points);
+  const across = alongX ? bar.height : bar.width;
+  const gap = across / 2 + SIP_NAME_HALO / 2 + SIP_NAME_CLEAR + scale * SIP_NAME_FONT * SIP_NAME_CAP;
+  const nameStyle = {
+    'font-size': num(scale * SIP_NAME_FONT),
+    fill: ink.outside,
+    halo: ink.halo,
+    haloWidth: SIP_NAME_HALO,
+    haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
+  };
+  return points
+    .map((point, index) => (alongX
+      ? svgText(point.x, point.y + nameSide * gap, names[index] ?? '', nameStyle)
+      : svgText(
+        point.x + nameSide * gap,
+        point.y + NUMBER_MIDDLE,
+        names[index] ?? '',
+        { ...nameStyle, anchor: nameSide > 0 ? 'start' : 'end' },
+      )))
+    .join('');
+}
+
+/**
  * 1 列に並んだヘッダ。ヘッダ 1 列のモジュール (OLED や測距センサ) をこれで賄うので、
  * **ピン名は本体の外**に出す。どの穴が何なのかが、図の中だけで分かる必要がある。
  */
 export function sipHeader(options: SipOptions): string {
-  const { points, names, pitch, scale, nameSide, ink, look } = options;
+  const { points, pitch, scale, nameSide, ink, look } = options;
   const caption = look?.mark ?? options.caption;
   const first = points[0];
   if (!first) return '';
@@ -495,24 +544,7 @@ export function sipHeader(options: SipOptions): string {
     }))
     .join('');
 
-  const gap = across / 2 + SIP_NAME_HALO / 2 + SIP_NAME_CLEAR + scale * SIP_NAME_FONT * SIP_NAME_CAP;
-  const nameStyle = {
-    'font-size': num(scale * SIP_NAME_FONT),
-    fill: ink.outside,
-    halo: ink.halo,
-    haloWidth: SIP_NAME_HALO,
-    haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
-  };
-  const legends = points
-    .map((point, index) => (alongX
-      ? svgText(point.x, point.y + nameSide * gap, names[index] ?? '', nameStyle)
-      : svgText(
-        point.x + nameSide * gap,
-        point.y + NUMBER_MIDDLE,
-        names[index] ?? '',
-        { ...nameStyle, anchor: nameSide > 0 ? 'start' : 'end' },
-      )))
-    .join('');
+  const legends = sipLegends(options);
 
   const centre = centreOf(bar);
   const size = fittedFontSize(caption, alongX ? bar.width : bar.height, scale);

@@ -3,28 +3,36 @@
 \usetikzlibrary{calc}
 \definecolor{circuitnotemark}{HTML}{FE00FE}
 \makeatletter
-\pgfdeclareshape{icDGFETs1000}{
+\pgfdeclareshape{dgfetn}{
   \anchor{center}{\pgfpointorigin}
-  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
-  \anchor{north}{\pgfpoint{0cm}{1.4cm}}
-  \anchor{south}{\pgfpoint{0cm}{-1.4cm}}
-  \anchor{east}{\pgfpoint{1.2cm}{0cm}}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{-0.6cm}{0.58cm}}
+  \anchor{south}{\pgfpoint{-0.6cm}{-0.58cm}}
+  \anchor{east}{\pgfpoint{0.28cm}{0cm}}
   \anchor{west}{\pgfpoint{-1.2cm}{0cm}}
-  \anchor{north west}{\pgfpoint{-1.2cm}{1.4cm}}
-  \anchor{pin 3}{\pgfpoint{0cm}{1.8cm}}
-  \anchor{bpin 3}{\pgfpoint{0cm}{1.4cm}}
-  \anchor{pin 2}{\pgfpoint{-1.6cm}{0cm}}
-  \anchor{bpin 2}{\pgfpoint{-1.2cm}{0cm}}
-  \anchor{pin 1}{\pgfpoint{-1.6cm}{-1cm}}
-  \anchor{bpin 1}{\pgfpoint{-1.2cm}{-1cm}}
-  \anchor{pin 4}{\pgfpoint{0cm}{-1.8cm}}
-  \anchor{bpin 4}{\pgfpoint{0cm}{-1.4cm}}
+  \anchor{pin 1}{\pgfpoint{-1.2cm}{-0.3cm}}
+  \anchor{pin 2}{\pgfpoint{-1.2cm}{0.3cm}}
+  \anchor{bpin 1}{\pgfpoint{-1.2cm}{-0.44cm}}
+  \anchor{bpin 2}{\pgfpoint{-1.2cm}{0.44cm}}
+  \anchor{drain}{\pgfpoint{0cm}{0.77cm}}
+  \anchor{source}{\pgfpoint{0cm}{-0.77cm}}
   \backgroundpath{
-    \pgfpathrectanglecorners{\pgfpoint{-1.2cm}{-1.4cm}}{\pgfpoint{1.2cm}{1.4cm}}
-    \pgfpathmoveto{\pgfpoint{0cm}{1.8cm}}\pgfpathlineto{\pgfpoint{0cm}{1.4cm}}
-    \pgfpathmoveto{\pgfpoint{-1.6cm}{0cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{0cm}}
-    \pgfpathmoveto{\pgfpoint{-1.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{-1cm}}
-    \pgfpathmoveto{\pgfpoint{0cm}{-1.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-1.4cm}}
+    \pgfpathcircle{\pgfpoint{-0.3cm}{0cm}}{0.58cm}
+    \pgfpathmoveto{\pgfpoint{-1.2cm}{0.3cm}}\pgfpathlineto{\pgfpoint{-0.54cm}{0.3cm}}
+    \pgfpathmoveto{\pgfpoint{-0.54cm}{0.08cm}}\pgfpathlineto{\pgfpoint{-0.54cm}{0.4cm}}
+    \pgfpathmoveto{\pgfpoint{-1.2cm}{-0.3cm}}\pgfpathlineto{\pgfpoint{-0.54cm}{-0.3cm}}
+    \pgfpathmoveto{\pgfpoint{-0.54cm}{-0.08cm}}\pgfpathlineto{\pgfpoint{-0.54cm}{-0.4cm}}
+    \pgfpathmoveto{\pgfpoint{-0.42cm}{-0.44cm}}\pgfpathlineto{\pgfpoint{-0.42cm}{0.44cm}}
+    \pgfpathmoveto{\pgfpoint{-0.42cm}{0.3cm}}\pgfpathlineto{\pgfpoint{0cm}{0.3cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{0.3cm}}\pgfpathlineto{\pgfpoint{0cm}{0.77cm}}
+    \pgfpathmoveto{\pgfpoint{-0.42cm}{-0.3cm}}\pgfpathlineto{\pgfpoint{0cm}{-0.3cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-0.3cm}}\pgfpathlineto{\pgfpoint{0cm}{-0.77cm}}
+    \pgfpathmoveto{\pgfpoint{-0.42cm}{0cm}}\pgfpathlineto{\pgfpoint{0cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{0cm}}\pgfpathlineto{\pgfpoint{0cm}{-0.3cm}}
+  }
+  \foregroundpath{
+    \pgfpathmoveto{\pgfpoint{-0.42cm}{0cm}}\pgfpathlineto{\pgfpoint{-0.25cm}{0.07cm}}\pgfpathlineto{\pgfpoint{-0.25cm}{-0.07cm}}\pgfpathclose
+    \pgfusepath{fill}
   }
 }
 \makeatother
@@ -76,12 +84,11 @@
 \draw (e4) to[R, l_=$R_{2}$, a^=$33\,\mathrm{k}\Omega$] (h4); % line 6
 \draw (a6) to[R, l_=$R_{3}$, a^=$10\,\mathrm{k}\Omega$] (c6); % line 7
 \draw (c6) to[R, l_=$R_{4}$, a^=$47\,\mathrm{k}\Omega$] (c8); % line 8
-\node[icDGFETs1000, draw, font=\scriptsize] (part-Q1) at (e10) {$\mathrm{3SK291}$}; % line 9
-\node[anchor=south west] at (part-Q1.north west) {$Q_{1}$}; % line 9
+\node[dgfetn, draw] (part-Q1) at (e10) {}; % line 9
+\node[font=\scriptsize, anchor=north] at (part-Q1.south) {$\mathrm{3SK291}$}; % line 9
+\node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 9
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-Q1.bpin 1) {X}; % line 9
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-Q1.bpin 2) {X}; % line 9
-\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-Q1.bpin 3) {X}; % line 9
-\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-Q1.bpin 4) {X}; % line 9
 \draw (a10) to[R, l_=$R_{5}$, a^=$330\,\Omega$] (c10); % line 10
 \draw (g10) to[R, l_=$R_{6}$, a^=$100\,\Omega$] (i10); % line 11
 \draw (c10) to[C, l_=$C_{2}$, a^=$10\,\mathrm{n}\mathrm{F}$] (c12); % line 12
@@ -93,10 +100,10 @@
 \node[ground] at (c8) {}; % line 18
 \node[ground] at (i10) {}; % line 19
 \draw (e1) -- (e2); % line 21
-\draw (e4) |- (part-Q1.pin 1); % line 22
+\draw (e4) -| (part-Q1.pin 1); % line 22
 \draw (part-Q1.pin 2) -| (c6); % line 23
-\draw (c10) |- (part-Q1.pin 3); % line 24
-\draw (g10) |- (part-Q1.pin 4); % line 25
+\draw (c10) -- (part-Q1.drain); % line 24
+\draw (g10) -- (part-Q1.source); % line 25
 \draw (c12) -- (c13); % line 26
 \node[circ] at (e4) {};
 \node[circ] at (c6) {};

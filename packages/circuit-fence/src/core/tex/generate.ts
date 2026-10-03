@@ -25,7 +25,7 @@ import { num } from './num.ts';
 import { readScaled } from '../values.ts';
 import type { ScaledValue } from '../values.ts';
 import {
-  deviceBox, deviceShapeName, deviceShapeTex, optoShapeTex, regulatorShapeTex, relayShapeTex,
+  deviceBox, deviceShapeName, deviceShapeTex, dualGateFetShapeTex, optoShapeTex, regulatorShapeTex, relayShapeTex,
   sipShapeTex, smaShapeTex, usbShapeName, usbShapeTex,
 } from './shapes.ts';
 import type { DeviceBox } from './shapes.ts';
@@ -243,6 +243,7 @@ function sipShapesFor(circuit: Circuit, pitch: number): string[] {
   const named = [
     ...(uses('relay') ? relayShapeTex() : []),
     ...(uses('photocoupler') ? optoShapeTex() : []),
+    ...(uses('nmos-dg') ? dualGateFetShapeTex() : []),
   ];
   // 機器も自分で宣言した形。**使う寸法 (本数・幅) だけ、1 回ずつ** (ピンヘッダと同じ)。
   const boxes = new Map<string, DeviceBox>();

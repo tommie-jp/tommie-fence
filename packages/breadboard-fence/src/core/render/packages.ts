@@ -6,7 +6,7 @@ import {
 import { isWideDip } from '../parts/wide.ts';
 import { element, num } from './svg.ts';
 import {
-  REAL_INK, dipChip, drawDipAdapter, drawNamedChip, lookupNamedChip, lookupPinout, sipBox, sipHeader, transformerCore,
+  REAL_INK, dipChip, drawDipAdapter, drawNamedChip, drawSipAdapter, lookupNamedChip, lookupPinout, sipBox, sipHeader, transformerCore,
 } from 'fence-kit';
 import type { ChipInk, SipLook } from 'fence-kit';
 import type { RenderTheme } from './theme.ts';
@@ -66,6 +66,8 @@ export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme):
   // 変換基板の道へは行かせない (52 の docs/66)。
   const named = lookupNamedChip(part.type, part.variant);
   if (named !== null) return drawNamedChip({ ...options, chip: named });
+  // 面実装しか無い型番 (3SK291) は、変換基板に載せた実寸の胴で描く。
+  if (printed?.chip !== undefined) return drawDipAdapter({ ...options, chip: printed.chip, label: part.id });
   // 姿があれば DIP 化した変換基板 (`dip8/sop`)。外形は DIP と同じ。
   return part.variant === null || isWideDip(part.variant) ? dipChip(options) : drawDipAdapter({ ...options, variant: part.variant });
 }
@@ -92,16 +94,19 @@ export function renderSip(part: PlacedPart, layout: Layout, theme: RenderTheme):
   const first = points?.[0];
   if (!points || !first) return '';
 
-  return sipHeader({
+  const options = {
     points,
     names: part.pins.map((pin) => pin.name),
     pitch: layout.pitch,
     caption: caption(part),
     scale: textScale(theme),
-    nameSide: first.y < layout.ravineY ? 1 : -1,
+    nameSide: first.y < layout.ravineY ? 1 as const : -1 as const,
     ink: chipInk(theme),
-    ...lookOf(part),
-  });
+  };
+  // 面実装しか無い型番 (3SK291) は、1 列の変換基板に載せた実寸の胴で描く。
+  const chip = lookupPinout(part.value ?? part.label, part.pins.length)?.chip;
+  if (chip !== undefined) return drawSipAdapter({ ...options, chip, label: part.id });
+  return sipHeader({ ...options, ...lookOf(part) });
 }
 
 /** タクトスイッチの本体が覆う範囲 (ピッチに対する比)。6mm 角なので 2 列 + 溝ぶん。 */

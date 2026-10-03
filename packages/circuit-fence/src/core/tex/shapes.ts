@@ -487,3 +487,75 @@ export function optoShapeTex(): string[] {
     '\\makeatother',
   ];
 }
+
+/**
+ * デュアルゲート MOSFET (N。`nmos-dg`)。**丸の中にチャネルの棒 1 本とゲートの板 2 枚**、
+ * 基板の矢はチャネルへ向く (N チャネル)。circuitikz 1.0 に足が 4 本の FET の記号が
+ * 無いので宣言する。
+ *
+ * D と S は**中心線に乗る** (ほかの FET と同じ高さ。`--` でまっすぐ引ける)。ゲートは
+ * 左に 2 本で、**G1 (信号) が S に近い下、G2 (バイアス・AGC) が上**。アンカーは
+ * `pin 1` = G1、`pin 2` = G2 (3SK291 の足の番号)、`drain`、`source`。`bpin K` は
+ * 足の名前を書く場所 (足の線の外側。G2 は線の上、G1 は線の下)。
+ */
+export const DGFET_SHAPE = 'dgfetn';
+
+const DGFET = {
+  /** D・S の足の先の高さ (circuitikz の FET と同じ)。 */
+  reach: 0.77,
+  /** ゲートの足の先の x と高さ。 */
+  gateX: -1.2, gateY: 0.3,
+  /** ゲートの板とチャネルの棒の x。 */
+  plateX: -0.54, channelX: -0.42,
+  /** 丸の中心の x と半径。 */
+  circleX: -0.3, radius: 0.58,
+  /** 足の名前を足の線からどれだけ離すか。 */
+  nameOff: 0.14,
+  /**
+   * 型番を掛ける点 (`north` / `south`) の x。**D・S の線より左**に寄せる — 線の上に
+   * 掛けると型番を足の線が貫く (実機で焼いて見つけた)。circuitikz の FET も同じ寄せ方。
+   */
+  valueX: -0.6,
+} as const;
+
+export function dualGateFetShapeTex(): string[] {
+  const { reach, gateX, gateY, plateX, channelX, circleX, radius, nameOff, valueX } = DGFET;
+  const lines = [
+    // ゲート 2 本: 足と、チャネルに沿った板。
+    segment(gateX, gateY, plateX, gateY), segment(plateX, 0.08, plateX, 0.4),
+    segment(gateX, -gateY, plateX, -gateY), segment(plateX, -0.08, plateX, -0.4),
+    // チャネルは端から端までの 1 本。
+    segment(channelX, -0.44, channelX, 0.44),
+    // ドレインは上へ、ソースは下へ。基板の線は真ん中からソースへ落とす。
+    segment(channelX, gateY, 0, gateY), segment(0, gateY, 0, reach),
+    segment(channelX, -gateY, 0, -gateY), segment(0, -gateY, 0, -reach),
+    segment(channelX, 0, 0, 0), segment(0, 0, 0, -gateY),
+  ];
+  return [
+    '\\makeatletter',
+    `\\pgfdeclareshape{${DGFET_SHAPE}}{`,
+    '  \\anchor{center}{\\pgfpointorigin}',
+    '  \\anchor{text}{\\pgfpointorigin}',
+    `  \\anchor{north}{\\pgfpoint{${num(valueX)}cm}{${num(radius)}cm}}`,
+    `  \\anchor{south}{\\pgfpoint{${num(valueX)}cm}{${num(-radius)}cm}}`,
+    `  \\anchor{east}{\\pgfpoint{${num(circleX + radius)}cm}{0cm}}`,
+    `  \\anchor{west}{\\pgfpoint{${num(gateX)}cm}{0cm}}`,
+    `  \\anchor{pin 1}{\\pgfpoint{${num(gateX)}cm}{${num(-gateY)}cm}}`,
+    `  \\anchor{pin 2}{\\pgfpoint{${num(gateX)}cm}{${num(gateY)}cm}}`,
+    `  \\anchor{bpin 1}{\\pgfpoint{${num(gateX)}cm}{${num(-gateY - nameOff)}cm}}`,
+    `  \\anchor{bpin 2}{\\pgfpoint{${num(gateX)}cm}{${num(gateY + nameOff)}cm}}`,
+    `  \\anchor{drain}{\\pgfpoint{0cm}{${num(reach)}cm}}`,
+    `  \\anchor{source}{\\pgfpoint{0cm}{${num(-reach)}cm}}`,
+    '  \\backgroundpath{',
+    `    \\pgfpathcircle{\\pgfpoint{${num(circleX)}cm}{0cm}}{${num(radius)}cm}`,
+    ...lines,
+    '  }',
+    '  \\foregroundpath{',
+    // 基板の矢。N チャネルなのでチャネルへ向く。
+    `    ${triangle([[channelX, 0], [channelX + 0.17, 0.07], [channelX + 0.17, -0.07]])}`,
+    '    \\pgfusepath{fill}',
+    '  }',
+    '}',
+    '\\makeatother',
+  ];
+}

@@ -50,7 +50,7 @@ export {
 export { boardPartNames, lookupBoardPart } from './parts/boards.ts';
 export { drawNamedChip, lookupNamedChip, namedChipLooks, namedChipTypes } from './parts/namedChips.ts';
 export { lookupGateUnits, lookupPinout, lookupRole, pinoutModels, pinoutTable } from './parts/pinouts.ts';
-export type { GateUnit, Pinout, PinoutRow } from './parts/pinouts.ts';
+export type { AdapterChip, GateUnit, Pinout, PinoutRow } from './parts/pinouts.ts';
 export type { NamedChip, NamedChipPin } from './parts/namedChips.ts';
 export {
   CONNECTOR_LOOKS, MIN_CONNECTOR_PINS, connectorBox, connectorFacing, connectorNames, connectorPinNames,
@@ -58,7 +58,7 @@ export {
 } from './parts/connectors.ts';
 export type { Connector, ConnectorFacing, ConnectorShape } from './parts/connectors.ts';
 export {
-  boardBox, boardChip, chipAlongX, dipBox, dipChip, segmentFace, sipBox, sipHeader,
+  boardBox, boardChip, chipAlongX, dipBox, dipChip, segmentFace, sipBox, sipHeader, sipLegends,
 } from './parts/chips.ts';
 export type {
   BoardChipOptions, ChipBox, ChipInk, ChipPoint, DipOptions, SipLook, SipOptions,
@@ -72,8 +72,8 @@ export {
   smdSpelling, smdSuggestion, smdTable, withSmdLooks,
 } from './parts/smd.ts';
 export type { SmdLook, SmdMount, SmdSpec } from './parts/smd.ts';
-export { drawDipAdapter, drawDirectSot, smdBodySize, sotGlyph, sotMountOf } from './parts/smdDraw.ts';
-export type { DipAdapterOptions, DirectSotOptions, SotMount } from './parts/smdDraw.ts';
+export { drawDipAdapter, drawDirectSot, drawSipAdapter, smdBodySize, sotGlyph, sotMountOf } from './parts/smdDraw.ts';
+export type { DipAdapterOptions, DirectSotOptions, SipAdapterOptions, SotMount } from './parts/smdDraw.ts';
 export { partIcon } from './parts/icon.ts';
 export type { PackageShape } from './parts/packages.ts';
 export type { BodyInk, BodyPart } from './parts/bodies.ts';

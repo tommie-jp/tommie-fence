@@ -269,6 +269,17 @@ describe('3SK291 (面実装の 4 本足)', () => {
   test('is not a 4 pin chip of any other size', () => {
     expect(lookupPinout('3SK291', 8)).toBeNull();
   });
+
+  test('carries the real size of the SMQ body and its marking', () => {
+    // 東芝の外形図 2-3J1A: 2.9 mm 角、胴の幅 1.5 mm、足の間隔 1.9 mm、4 番だけ 0.6 mm。
+    expect(lookupPinout('3SK291', 4)?.chip).toEqual({
+      length: 2.9, width: 1.5, span: 2.9, pitch: 1.9, lead: 0.4, wide: { pin: 4, lead: 0.6 }, mark: 'U.F',
+    });
+  });
+
+  test('leaves through-hole chips without a surface-mount body', () => {
+    expect(lookupPinout('NE555', 8)?.chip).toBeUndefined();
+  });
 });
 
 

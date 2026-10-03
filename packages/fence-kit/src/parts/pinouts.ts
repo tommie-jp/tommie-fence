@@ -84,6 +84,27 @@ export type PinoutRow = {
   readonly note?: string;
   /** 1 列の姿 (`sipN`) を樹脂の色と胴の字で描く部品。無ければ黒い 1 列ヘッダ。 */
   readonly look?: SipLook;
+  /** 面実装しか無い型番の胴。`dipN` / `sipN` を**変換基板に載せた実寸の胴**で描く。 */
+  readonly chip?: AdapterChip;
+};
+
+/**
+ * 変換基板に載せて描く面実装の胴 (mm。上から見た姿)。足は 2 辺に同じ数ずつ並ぶ。
+ * 寸法は実物の外形図から写す。
+ */
+export type AdapterChip = {
+  /** 胴の長さ (足の並ぶ向き) と幅。 */
+  readonly length: number;
+  readonly width: number;
+  /** 足先から足先。 */
+  readonly span: number;
+  /** 同じ辺の足の間隔と、足の幅。 */
+  readonly pitch: number;
+  readonly lead: number;
+  /** 1 本だけ幅の違う足 (向きの目印)。足の番号と幅。 */
+  readonly wide?: { readonly pin: number; readonly lead: number };
+  /** 胴の印字。 */
+  readonly mark: string;
 };
 
 export type Pinout = {
@@ -91,6 +112,7 @@ export type Pinout = {
   readonly model: string;
   readonly names: readonly string[];
   readonly look?: SipLook;
+  readonly chip?: AdapterChip;
 };
 
 /** 4 回路の 2 入力ゲート (CD4071B・CD4081B・CD4011B・CD4001B) は同じ並び。 */
@@ -528,6 +550,9 @@ const ROWS: readonly PinoutRow[] = [
     // 基板が SMQ の番号をそのまま使う前提 — 並びが違う基板は `pins:` で名前を書く。
     models: ['3SK291'], role: 'デュアルゲート MOSFET (N)',
     names: ['G1', 'G2', 'D', 'S'],
+    // 東芝の外形図 2-3J1A: 2.9 mm 角 (足先まで)、胴の幅 1.5 mm、同じ辺の足の間隔 1.9 mm。
+    // 足は 0.4 mm で、4 番 (S) だけ 0.6 mm。胴の印字は `U.F`。
+    chip: { length: 2.9, width: 1.5, span: 2.9, pitch: 1.9, lead: 0.4, wide: { pin: 4, lead: 0.6 }, mark: 'U.F' },
   },
   {
     // 村田の 455 kHz。足は 1 列 3 本 (a 入力・b アース・c 出力)、間隔 2.5 mm。
@@ -552,7 +577,11 @@ export function lookupPinout(model: string | null, pins: number): Pinout | null 
   if (model === null) return null;
   const row = BY_MODEL.get(model.trim().toUpperCase());
   if (row === undefined || row.names.length !== pins) return null;
-  return { model: row.models[0] ?? '', names: row.names, ...(row.look === undefined ? {} : { look: row.look }) };
+  return {
+    model: row.models[0] ?? '', names: row.names,
+    ...(row.look === undefined ? {} : { look: row.look }),
+    ...(row.chip === undefined ? {} : { chip: row.chip }),
+  };
 }
 
 /** 型番から働きの名前を引く (本数は問わない)。表に無い型番は null。 */

@@ -558,7 +558,7 @@ describe('orientOf', () => {
 });
 
 describe('デュアルゲート MOSFET (nmos-dg)', () => {
-  test('is a four pin box whose pins are G1, G2, D and S', () => {
+  test('has four pins: G1, G2, D and S', () => {
     // Arrange
     const type = lookupPartType('nmos-dg');
 
@@ -567,14 +567,14 @@ describe('デュアルゲート MOSFET (nmos-dg)', () => {
 
     // Assert
     expect(type?.kind).toBe('multi-terminal');
-    expect(anchors).toEqual(['pin 1', 'pin 2', 'pin 3', 'pin 4']);
+    expect(anchors).toEqual(['pin 1', 'pin 2', 'drain', 'source']);
   });
 
   test('also reads the full pin names', () => {
     const type = lookupPartType('nmos-dg');
 
     expect(['gate1', 'gate2', 'drain', 'source'].map((pin) => (type === null ? null : lookupPin(type, pin))))
-      .toEqual(['pin 1', 'pin 2', 'pin 3', 'pin 4']);
+      .toEqual(['pin 1', 'pin 2', 'drain', 'source']);
   });
 
   test('refuses a bare G because it cannot tell the two gates apart', () => {
@@ -588,8 +588,19 @@ describe('デュアルゲート MOSFET (nmos-dg)', () => {
     if (type === null) throw new Error('nmos-dg');
 
     expect(pinPlaces(type).map((place) => [place.anchor, place.side])).toEqual([
-      ['pin 3', 'top'], ['pin 2', 'left'], ['pin 1', 'left'], ['pin 4', 'bottom'],
+      ['drain', 'top'], ['source', 'bottom'], ['pin 2', 'left'], ['pin 1', 'left'],
     ]);
+  });
+
+  test('lets a wire run straight into the drain and the source, like the other FETs', () => {
+    const type = lookupPartType('nmos-dg');
+    if (type === null) throw new Error('nmos-dg');
+
+    expect(type.pinSide).toEqual({ drain: 'top', source: 'bottom' });
+  });
+
+  test('prints a name only on the two gates, which the symbol cannot tell apart', () => {
+    expect(lookupPartType('nmos-dg')?.pinLabels).toEqual(['G1', 'G2']);
   });
 
   test('is named M like the other MOSFETs', () => {

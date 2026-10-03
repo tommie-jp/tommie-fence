@@ -6,7 +6,8 @@ import type { PackageShape } from './packages.ts';
 import { dipChip } from './chips.ts';
 import type { ChipInk } from './chips.ts';
 import { SMD_PX_PER_MM, smdLook } from './smd.ts';
-import { drawDipAdapter, drawDirectSot, drawSmdBody, smdBodySize, sotGlyph, sotMountOf } from './smdDraw.ts';
+import { lookupPinout } from './pinouts.ts';
+import { drawDipAdapter, drawDirectSot, drawSipAdapter, drawSmdBody, smdBodySize, sotGlyph, sotMountOf } from './smdDraw.ts';
 
 /**
  * 面実装の姿。**寸法は表の実寸**なので、見張るのは「姿ごとに絵が違う」
@@ -166,5 +167,65 @@ describe('DIP 化した変換基板', () => {
 
   test('falls back to the DIP resin for a shape it does not know', () => {
     expect(drawDipAdapter({ ...options, variant: 'sot23' })).toBe(dipChip(options));
+  });
+});
+
+describe('型番が胴を決める面実装 (3SK291) の変換基板', () => {
+  const chip = lookupPinout('3SK291', 4)!.chip!;
+  const names = ['G1', 'G2', 'D', 'S'];
+  // 2 列: 1・2 番が下の行、3・4 番が上の行 (足の並びは 1 番から巡る)。行は 3 ピッチ離れる。
+  const dip = [{ x: 100, y: 160 }, { x: 120, y: 160 }, { x: 120, y: 100 }, { x: 100, y: 100 }];
+  const dipOptions = { points: dip, names, pinOne: 0, pitch: 20, caption: 'Q1 3SK291', scale: 1, ink: INK, chip, label: 'Q1' };
+  const sip = [0, 1, 2, 3].map((at) => ({ x: 100 + at * 20, y: 100 }));
+  const sipOptions = { points: sip, names, pitch: 20, caption: 'Q1 3SK291', scale: 1, nameSide: 1 as const, ink: INK, chip, label: 'Q1' };
+
+  test('draws the body at its real size on a board, with the marking instead of the model', () => {
+    // Act
+    const drawn = drawDipAdapter(dipOptions);
+
+    // Assert
+    expect(drawn).toContain('#1f6b45'); // 変換基板の緑
+    expect(drawn).toContain(`width="${(2.9 * SMD_PX_PER_MM).toFixed(2)}"`);
+    expect(drawn).toContain('>U.F<');
+    expect(drawn).not.toContain('3SK291');
+  });
+
+  test('names every pin and the part', () => {
+    const drawn = drawDipAdapter(dipOptions);
+
+    for (const text of [...names, 'Q1']) expect(drawn).toContain(`>${text}<`);
+  });
+
+  test('draws one lead wider than the other three', () => {
+    const drawn = drawDipAdapter(dipOptions);
+    const count = (width: number): number => drawn.split(`width="${(width * SMD_PX_PER_MM).toFixed(2)}"`).length - 1;
+
+    expect(count(0.4)).toBe(3);
+    expect(count(0.6)).toBe(1);
+  });
+
+  test('moves the pin names off the board when the rows are too close for them', () => {
+    // ブレッドボードの溝をまたぐ 2 行は近い。シルクの白ではなく、板の外の字で出る。
+    const close = dip.map((point) => ({ x: point.x, y: point.y === 160 ? 136 : 100 }));
+
+    const drawn = drawDipAdapter({ ...dipOptions, points: close });
+
+    expect(drawn).toContain('>G1<');
+    expect(drawn).toContain(`fill="${INK.outside}"`);
+  });
+
+  test('draws the single row board with the same body, the header and the names outside', () => {
+    const drawn = drawSipAdapter(sipOptions);
+
+    expect(drawn).toContain('#1f6b45');
+    expect(drawn).toContain('>U.F<');
+    for (const text of [...names, 'Q1']) expect(drawn).toContain(`>${text}<`);
+  });
+
+  test('hangs the single row board away from the side the names are on', () => {
+    const below = drawSipAdapter(sipOptions);
+    const above = drawSipAdapter({ ...sipOptions, nameSide: -1 });
+
+    expect(below).not.toBe(above);
   });
 });
