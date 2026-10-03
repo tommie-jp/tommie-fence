@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- USB-C の変換基板の色と刷り字の置き方が変わった (濃い青・名前はパッドの下・VBUS は `V`。fence-kit)
+
 ## [0.28.0] - 2026-10-04
 
 ### Changed
