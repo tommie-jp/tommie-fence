@@ -12,14 +12,14 @@ import type { Theme } from './theme.ts';
  * ジャンパの太さ。部品の足より少し太い (被覆があるぶん)。3 では縮めて貼ると
  * 1 px 前後になり、板と明るさの近い色 (青・赤・紫・茶) が沈んだ (52 の docs/110)。
  */
-const WIRE_WIDTH = 4;
+export const WIRE_WIDTH = 4;
 
 /**
  * 縁取りが線の両側に出る幅の合計 (片側 1)。**全部の線を縁取る** — 緑の板では
  * 11 色のうち 4 色が板とほぼ同じ明るさで、色みの違いでしか見分けられない。
  * 沈む色だけ縁取ると太さが 2 通りに見え、意味の違いに読まれる。
  */
-const OUTLINE_MARGIN = 2;
+export const OUTLINE_MARGIN = 2;
 
 /** 黒い線の縁。**白で 1 px** — 板の暗い緑と黒は明るさが近く、暗い縁では線が沈む。 */
 const BLACK_OUTLINE = '#ffffff';
