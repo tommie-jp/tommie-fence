@@ -4,6 +4,7 @@ import { THEME } from './theme.ts';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
 import { parseAddress } from '../model/address.ts';
+import { PLAIN_LOOK } from '../types.ts';
 import type { ResolvedNote } from '../types.ts';
 import { NO_TURN } from '../parts/orient.ts';
 
@@ -11,7 +12,7 @@ const layout = createLayout(createBoard({ cols: 12, rows: 8 }));
 const at = (hole: string) => parseAddress(hole)!;
 
 const note = (over: Partial<ResolvedNote> & Pick<ResolvedNote, 'kind' | 'from'>): ResolvedNote =>
-  ({ to: null, color: null, text: null, line: null, turn: NO_TURN, ...over });
+  ({ to: null, color: null, text: null, line: null, turn: NO_TURN, look: PLAIN_LOOK, ...over });
 
 const draw = (one: ResolvedNote): string => renderNotes([one], layout, THEME);
 
@@ -107,5 +108,28 @@ describe('text の向き', () => {
 
     expect(Number(above)).toBeLessThan(point.y);
     expect(Number(below)).toBeGreaterThan(point.y);
+  });
+});
+
+describe('text の見た目 (large / bold)', () => {
+  const plain = draw(note({ kind: 'text', from: at('e5'), text: 'IN 5V' }));
+  const sizeIn = (svg: string): number => Number(/font-size="([\d.]+)"/.exec(svg)?.[1]);
+
+  test('large draws the text bigger than a plain note', () => {
+    const large = draw(note({ kind: 'text', from: at('e5'), text: 'IN 5V', look: { large: true, bold: false } }));
+    expect(sizeIn(large)).toBeGreaterThan(sizeIn(plain));
+  });
+
+  test('bold sets the weight, and a plain note has none', () => {
+    const bold = draw(note({ kind: 'text', from: at('e5'), text: 'IN 5V', look: { large: false, bold: true } }));
+    expect(bold).toContain('font-weight="bold"');
+    expect(plain).not.toContain('font-weight');
+  });
+
+  test('a loud note is not faded like the other notes', () => {
+    // 目立たせたい字まで透かすと、書いた人の意図が図に出ない。
+    const loud = draw(note({ kind: 'text', from: at('e5'), text: 'IN 5V', look: { large: true, bold: true } }));
+    expect(plain).toMatch(/opacity="0\./);
+    expect(loud).not.toMatch(/opacity="0\./);
   });
 });

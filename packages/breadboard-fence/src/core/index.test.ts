@@ -344,6 +344,31 @@ describe('renderBreadboard', () => {
     expect(textOf('330 Ω で絞る')).toContain('font-family="&apos;Segoe UI&apos;');
   });
 
+  test('large draws a note bigger, and bold sets the weight only where written', () => {
+    const noteSvg = (words: string) =>
+      renderBreadboard(`parts:\n  R1: resistor a5 a10 330\nnotes:\n  - text e20${words}: IN 5V\n`).svg;
+    const textOf = (svg: string) => /<text[^>]*>IN 5V/.exec(svg)?.[0] ?? '';
+    const sizeIn = (svg: string) => Number(/font-size="([\d.]+)"/.exec(textOf(svg))?.[1]);
+    const plain = noteSvg('');
+
+    expect(sizeIn(noteSvg(' large'))).toBeCloseTo(sizeIn(plain) * 1.4, 1);
+    expect(textOf(noteSvg(' bold'))).toContain('font-weight="700"');
+    expect(textOf(plain)).not.toContain('font-weight');
+  });
+
+  test('a loud note is drawn solid with a white halo, a plain one is faded', () => {
+    // 目立たせたい字まで透かすと、書いた人の意図が図に出ない。
+    const noteSvg = (words: string) =>
+      renderBreadboard(`parts:\n  R1: resistor a5 a10 330\nnotes:\n  - text e20${words}: IN 5V\n`).svg;
+    const textsOf = (svg: string) => (svg.match(/<text[^>]*>IN 5V/g) ?? []).join('\n');
+    const plain = textsOf(noteSvg(''));
+    const loud = textsOf(noteSvg(' red large bold'));
+
+    expect(plain).toMatch(/opacity="0\./);
+    expect(loud).not.toMatch(/opacity="0\./);
+    expect(loud).toContain('#ffffff');
+  });
+
   test('puts a source with no address in a band under the drawing', () => {
     // 基板の番地はどれも実在の穴に縛られているので、基板の外を指す番地が存在しない。
     // 基板の上に重ねると穴と印字に重なるので、場所の語を書いたものは帯へ流す。

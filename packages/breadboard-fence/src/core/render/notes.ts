@@ -47,6 +47,15 @@ const textColorOf = (note: NoteSpec, theme: RenderTheme): string =>
 const fontSizeOf = (note: NoteSpec, theme: RenderTheme): number =>
   theme.metrics.textSize * noteSizeScale(note.size ?? 'normal');
 
+/**
+ * 目立たせた字 (`large` `huge` か `bold`) は**透かさない**。ほかの字は基板の穴が透けて
+ * 見えるよう薄く置くが、目立たせたい字まで薄いと、書いた人の意図が図に出ない。
+ */
+const isLoud = (note: NoteSpec): boolean => note.bold || note.size === 'large' || note.size === 'huge';
+
+/** 目立たせた字の縁の色。基板の白や暗いテーマの上でも、赤などの字が沈まない。 */
+const LOUD_HALO = '#ffffff';
+
 const ANCHORS: Record<NoteAlign, 'start' | 'middle' | 'end'> = {
   left: 'start', center: 'middle', right: 'end',
 };
@@ -331,10 +340,21 @@ function textLines(
         fill: textColorOf(spec, theme),
         anchor: ANCHORS[align],
         // 帯の中は下地が無地なので縁取りは要らない。基板に重ねるときだけ敷く。
-        ...(halo ? { halo: theme.palette.textHalo, haloWidth: haloWidth(theme), haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY } : {}),
+        ...(halo ? haloOf(spec, theme) : {}),
       }),
     )
     .join('');
+}
+
+/** 基板に重ねる字の縁取り。目立たせた字は白い縁で、透かさずに置く。 */
+function haloOf(spec: NoteSpec, theme: RenderTheme) {
+  const loud = isLoud(spec);
+  return {
+    halo: loud ? LOUD_HALO : theme.palette.textHalo,
+    haloWidth: haloWidth(theme),
+    haloOpacity: loud ? 1 : BOARD_HALO_OPACITY,
+    inkOpacity: loud ? 1 : BOARD_INK_OPACITY,
+  };
 }
 
 /** その置き方で基板の中に残っている幅。 */

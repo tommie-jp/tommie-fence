@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { parseNoteLine } from './notes.ts';
 import { NO_TURN } from '../parts/orient.ts';
+import { PLAIN_LOOK } from '../types.ts';
 
 describe('parseNoteLine', () => {
   test('reads a mark on one hole', () => {
@@ -8,7 +9,7 @@ describe('parseNoteLine', () => {
       ok: true,
       // 書かれた語も控える (書き戻しで並びと綴りを変えないため)。
       value: {
-        kind: 'mark', turn: NO_TURN, from: 'b3', to: null, color: null, text: null,
+        kind: 'mark', turn: NO_TURN, look: PLAIN_LOOK, from: 'b3', to: null, color: null, text: null,
         written: ['mark', 'b3'], bodyWritten: null,
       },
     });
@@ -69,7 +70,7 @@ describe('source', () => {
     expect(parseNoteLine('source', null)).toEqual({
       ok: true,
       value: {
-        kind: 'source', turn: NO_TURN, from: null, to: null, color: null, text: null,
+        kind: 'source', turn: NO_TURN, look: PLAIN_LOOK, from: null, to: null, color: null, text: null,
         written: ['source'], bodyWritten: null,
       },
     });
@@ -98,7 +99,7 @@ describe('parts', () => {
     expect(parseNoteLine('parts', null)).toEqual({
       ok: true,
       value: {
-        kind: 'parts', turn: NO_TURN, from: null, to: null, color: null, text: null,
+        kind: 'parts', turn: NO_TURN, look: PLAIN_LOOK, from: null, to: null, color: null, text: null,
         written: ['parts'], bodyWritten: null,
       },
     });
@@ -178,5 +179,26 @@ describe('text の向き', () => {
 
     expect(result.ok).toBe(false);
     expect(result.ok || result.error.message).toContain('知らない色です');
+  });
+});
+
+describe('text の見た目 (large / bold)', () => {
+  test('reads large and bold in any order, with a colour', () => {
+    const result = parseNoteLine('text p2 bold red large', 'IN 5V');
+    expect(result.ok && result.value).toMatchObject({
+      color: 'red', look: { large: true, bold: true }, text: 'IN 5V',
+    });
+  });
+
+  test('a note without the words is plain', () => {
+    const result = parseNoteLine('text p2', 'IN 5V');
+    expect(result.ok && result.value).toMatchObject({ look: PLAIN_LOOK });
+  });
+
+  test('refuses a look word written twice, and names the words it knows', () => {
+    const twice = parseNoteLine('text p2 large large', 'IN 5V');
+    expect(twice.ok).toBe(false);
+    const unknown = parseNoteLine('text p2 huge', 'IN 5V');
+    expect(!unknown.ok && unknown.error.message).toContain('large / bold');
   });
 });

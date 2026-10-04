@@ -39,6 +39,8 @@ type ConnectorSpec = {
   readonly round: boolean;
   /** 受け口を載せる変換基板の実寸 (mm)。幅と、基板 (青い部分) の長さ。金物の先は基板の縁から LIP だけ出る。無ければピンの列から決める。 */
   readonly board?: { readonly width: number; readonly length: number };
+  /** 受け口の金物に刻む種類の名前 (`USB-C`)。**同じ形の変換基板が並んでも、種類が図で読める**。 */
+  readonly stamp?: string;
 };
 
 const CONNECTORS: Record<string, ConnectorSpec> = {
@@ -64,6 +66,7 @@ const CONNECTORS: Record<string, ConnectorSpec> = {
     round: true,
     // 変換基板の実物は 14.5 × 9.2mm (厚み 3.2mm)。**図は基板を縦 5 穴 (12.7mm) に収める** — 穴の升目に載せる図なので、実寸より 2 割ほど詰める。
     board: { width: 9.2, length: 12.7 },
+    stamp: 'USB-C',
   },
 };
 
@@ -408,5 +411,24 @@ export function drawConnector(shape: ConnectorShape & { readonly ink?: BodyInk }
     fill: ink.paint(METAL), stroke: ink.paint(METAL_EDGE), 'stroke-width': 1,
   });
 
-  return `${plate}${pins}${pinNames(frame, shape.facing, ink)}${metal}${metalMarks(frame, ink)}`;
+  return `${plate}${pins}${pinNames(frame, shape.facing, ink)}${metal}${metalMarks(frame, ink)}${stampOf(frame, ink)}`;
 }
+
+/**
+ * 受け口の金物に刻んだ種類の名前 (`USB-C`)。**口の縁のすぐ内側** (向きが下なら金物の下のほう) に、
+ * 天板の窓と口の暗がりの間に収めて横書きで置く。差し込みと、名前の無い種類は何も描かない。
+ */
+function stampOf(frame: Frame, ink: BodyInk): string {
+  const { metal, mm, spec } = frame;
+  if (frame.male || spec.stamp === undefined) return '';
+  // 窓 (金物の後ろから 2.6mm まで) と口の暗がり (前の縁から 1.3mm) の間の真ん中。
+  const middle = (metal.b0 + 2.6 * mm + metal.b1 - 1.3 * mm) / 2;
+  const point = frame.at(0, middle);
+  const size = frame.font * STAMP_SCALE;
+  return svgText(point.x, point.y + size * NAME_CAP / 2, spec.stamp, {
+    'font-size': num(size), 'font-weight': 'bold', fill: ink.paint(MOUTH),
+  });
+}
+
+/** 金物に刻む名前の大きさ (ピンの名前の何倍か)。窓と口の間の 3.4mm に収まる高さ。 */
+const STAMP_SCALE = 1.1;

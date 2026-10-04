@@ -179,7 +179,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       ));
       continue;
     }
-    notes.push({ kind: note.kind, turn: note.turn, from, to, color: note.color, text: note.text, line: note.line });
+    notes.push({ kind: note.kind, turn: note.turn, look: note.look, from, to, color: note.color, text: note.text, line: note.line });
   }
 
   // 番地で置いた機器と USB コネクタのはみ出しを**先に測る**。基板の寸法だけで

@@ -25,6 +25,25 @@ const TITLE_CLEARANCE = 4;
 const ASCENT = 0.72;
 const DESCENT = 0.2;
 
+/**
+ * `large` の字の大きさ (基板に書く字の何倍か)。**breadboard の `large` と同じ比** (circuit の
+ * `large` は TeX の字の段で 1.44 倍) — 同じ語は 3 つのフェンスでほぼ同じ大きさにする。
+ */
+const LARGE_SCALE = 1.4;
+
+/** 注釈の字の大きさ。`large` を書いた字だけ大きくする。 */
+const sizeOf = (note: ResolvedNote, theme: Theme): number =>
+  theme.metrics.textSize * (note.look.large ? LARGE_SCALE : 1);
+
+/**
+ * 目立たせた字 (`large` か `bold`) は**透かさない**。ほかの字は基板の穴が透けて見えるよう
+ * 薄く置くが、目立たせたい字まで薄いと、書いた人の意図が図に出ない。
+ */
+const isLoud = (note: ResolvedNote): boolean => note.look.large || note.look.bold;
+
+/** 目立たせた字の縁の色。 */
+const LOUD_HALO = '#ffffff';
+
 const colorOf = (note: ResolvedNote, theme: Theme): string =>
   (note.color === null ? null : colorValue(note.color)) ?? theme.palette.plateText;
 
@@ -57,19 +76,23 @@ function renderNote(note: ResolvedNote, layout: Layout, theme: Theme): string {
     // 測る相手は基板ではなく画布 — 基板の外にも余白があり、そこは使える。
     // **縦に回した字は高さで測る** (横幅で切ると基板の広い側で無駄に切れる)。
     const sideways = note.turn.rotate === 90 || note.turn.rotate === 270;
+    const size = sizeOf(note, theme);
     const { anchor, room } = sideways
       ? { anchor: 'middle' as const, room: layout.height }
       : textRoom(from.x, layout.width);
-    const text = fit(note.text ?? '', Math.max(0, room) / theme.metrics.textSize);
+    const text = fit(note.text ?? '', Math.max(0, room) / size);
     // **反転は字を裏返さない。** 鏡文字は読めないので、指す穴の**反対側**へ移す。
     // 上に何かあって字が重なるときに、下へ逃がすためのもの。
-    const rise = note.turn.mirror ? -(TEXT_RISE + theme.metrics.textSize * 0.8) : TEXT_RISE;
+    const rise = note.turn.mirror ? -(TEXT_RISE + size * 0.8) : TEXT_RISE;
+    const loud = isLoud(note);
     const drawn = svgText(from.x, from.y - rise, text, {
       anchor,
       fill: stroke,
-      'font-size': num(theme.metrics.textSize),
-      halo: theme.palette.plate,
-      haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
+      'font-size': num(size),
+      ...(note.look.bold ? { 'font-weight': 'bold' } : {}),
+      // 目立たせた字の縁は白。基板の緑や変換基板の青の上でも、赤などの字が沈まない。
+      halo: loud ? LOUD_HALO : theme.palette.plate,
+      haloOpacity: loud ? 1 : BOARD_HALO_OPACITY, inkOpacity: loud ? 1 : BOARD_INK_OPACITY,
     });
     // 回すのは**指す穴のまわり**。字の真ん中で回すと、指す先から離れていく。
     return note.turn.rotate === 0
@@ -136,9 +159,9 @@ export function noteBands(
   layout: Layout,
   theme: Theme,
 ): Rect[] {
-  const size = theme.metrics.textSize;
   return notes.flatMap((note) => {
     if (note.kind !== 'text' || note.turn.rotate !== 0) return [];
+    const size = sizeOf(note, theme);
     const from = layout.point(note.from);
     const { anchor, room } = textRoom(from.x, layout.width);
     const text = fit(note.text ?? '', Math.max(0, room) / size);
@@ -163,7 +186,7 @@ function noteSpan(note: ResolvedNote, layout: Layout, theme: Theme): { top: numb
   }
   if (note.kind !== 'text') return { top: high - ARROW_HEAD, bottom: low + ARROW_HEAD };
 
-  const size = theme.metrics.textSize;
+  const size = sizeOf(note, theme);
   const halo = TEXT_HALO_WIDTH / 2;
   // **縦に回した字は長さがそのまま縦に伸びる** (回すのは指す穴のまわり)。
   if (note.turn.rotate === 90 || note.turn.rotate === 270) {

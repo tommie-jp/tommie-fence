@@ -148,6 +148,20 @@ export type DeviceSpec = {
  */
 export type NoteKind = 'mark' | 'box' | 'arrow' | 'text' | 'source' | 'parts';
 
+/**
+ * `text` の字の見た目。**目立たせたい字だけ**に書く (`- text p2 red large bold: IN 5V`)。
+ * 書かなければ両方 false で、ほかの字と同じ大きさ・太さ・薄さで出る。
+ */
+export type TextLook = {
+  /** 字を大きく (基板に書く字の 1.4 倍。breadboard の `large` と同じ比)。 */
+  readonly large: boolean;
+  /** 字を太く。 */
+  readonly bold: boolean;
+};
+
+/** 見た目の語を書かなかった字。 */
+export const PLAIN_LOOK: TextLook = { large: false, bold: false };
+
 /** 基板の上に置く注釈の種類。指し先の番地を必ず持つ。 */
 export type OnBoardNoteKind = Exclude<NoteKind, 'source' | 'parts'>;
 
@@ -156,6 +170,8 @@ export type NoteSpec = {
   readonly kind: NoteKind;
   /** 向き (`- text b3 r90: 字` の `r90`)。`text` 以外はいつも向き無し。 */
   readonly turn: Turn;
+  /** 字の見た目 (`large` `bold`)。`text` 以外はいつも `PLAIN_LOOK`。 */
+  readonly look: TextLook;
   /** 指し先の番地。**`source` と `parts` は基板の外に出すので null**。 */
   readonly from: string | null;
   readonly to: string | null;
@@ -180,6 +196,8 @@ export type ResolvedNote = {
   readonly kind: OnBoardNoteKind;
   /** 向き (`- text b3 r90: 字` の `r90`)。`text` 以外はいつも向き無し。 */
   readonly turn: Turn;
+  /** 字の見た目 (`large` `bold`)。`text` 以外はいつも `PLAIN_LOOK`。 */
+  readonly look: TextLook;
   readonly from: Address;
   readonly to: Address | null;
   readonly color: string | null;

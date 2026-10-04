@@ -233,3 +233,24 @@ describe('姿', () => {
     expect(drawConnector(shape({ type: 'nonsense' }))).toBe('');
   });
 });
+
+describe('受け口の金物の刻み', () => {
+  // 同じ形の変換基板が並んでも、種類が図で読めるように。
+  test('stamps USB-C on the receptacle, and nothing on the plug or on Type-A', () => {
+    expect(drawConnector(shape())).toContain('>USB-C</text>');
+    expect(drawConnector(shape({ variant: 'male' }))).not.toContain('USB-C');
+    expect(drawConnector(shape({ type: 'usb-a' }))).not.toContain('USB-C');
+  });
+
+  test('puts the stamp inside the metal, whichever way the receptacle faces', () => {
+    for (const facing of ['up', 'down', 'left', 'right'] as const) {
+      const svg = drawConnector(shape({ facing }));
+      const box = connectorBox(shape({ facing }));
+      const [, x, y] = /<text x="([-\d.]+)" y="([-\d.]+)"[^>]*>USB-C</.exec(svg) ?? [];
+      expect(Number(x)).toBeGreaterThan(box.x);
+      expect(Number(x)).toBeLessThan(box.x + box.width);
+      expect(Number(y)).toBeGreaterThan(box.y);
+      expect(Number(y)).toBeLessThan(box.y + box.height);
+    }
+  });
+});

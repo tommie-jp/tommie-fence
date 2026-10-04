@@ -212,12 +212,15 @@ notes:
   - arrow d22 R1                 # 指し棒
   - line +t20 -t20 green         # 直線
   - text d24 large bold: 電流を決めるのはここ
+  - text e5 red large bold: IN 5V  # 目立たせる字 (透かさず白い縁)
   - source tiny                  # フェンスそのものを書き出す (板の下の帯へ)
   - text: 仮組み。あとで直す       # 番地を書かなければ板の下
 ```
 
 語 (順不同): 色 `red blue green orange ink` / 大きさ `tiny small normal large huge` /
 寄せ `left center right` / `bold` / `solid` (box) / 行送り `tight loose` (source)
+
+`large` (1.4 倍) か `huge` か `bold` を書いた字は、基板に重ねても**透かさず**、縁を白にする。
 
 **`text` と `source` は番地を書かなければ基板の下の帯に置く** (`below` が既定)。
 `- source below tiny` と書き出しても同じ。場所を書けるのはこの 2 つだけ。

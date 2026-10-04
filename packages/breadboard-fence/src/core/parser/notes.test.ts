@@ -134,3 +134,21 @@ describe('parseNoteLine', () => {
     expect([...(noteOf('text a5', long).text ?? '')].length).toBeLessThanOrEqual(61);
   });
 });
+
+describe('text の見た目 (large / bold)', () => {
+  test('reads large and bold in any order, with a colour', () => {
+    expect(noteOf('text e5 bold red large', 'IN 5V')).toMatchObject({
+      color: 'red', size: 'large', bold: true, text: 'IN 5V',
+    });
+  });
+
+  test('a note without the words is plain', () => {
+    expect(noteOf('text e5', 'IN 5V')).toMatchObject({ size: null, bold: false });
+  });
+
+  test('refuses a look word written twice, and names the words it knows', () => {
+    expect(errorOf('text e5 large large', 'IN 5V').message).toContain('2 回');
+    expect(errorOf('text e5 bold bold', 'IN 5V').message).toContain('2 回');
+    expect(errorOf('text e5 loud', 'IN 5V').message).toContain('large / bold');
+  });
+});

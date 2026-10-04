@@ -29,6 +29,9 @@ const SLOT_NAMES: Record<WordSlot, string> = {
   rotate: '向き', mirror: '反転',
 };
 
+/** 知らない語を書いたときに添える、書ける語の案内。 */
+const WORD_HINT = `語なら色、r90 / r180 / r270 / ${NOTE_MIRROR_WORD}、large / bold などが書けます`;
+
 const isKind = (word: string): word is NoteKind => (NOTE_KINDS as readonly string[]).includes(word);
 
 /** 語 → どの枠に入るか。順不同に書けるので、語のほうから枠を決める。 */
@@ -163,9 +166,13 @@ function readWords(kind: NoteKind, tokens: readonly string[], line: number): Res
       // 番地や ID がここに来たということは、指し先を書きすぎている。
       // 「知らない語です」より、数のほうを言ったほうが直す場所が分かる。
       if (isNoteTarget(token)) {
-        return fail(`${kind} は指し先を ${noteTargetCount(kind)} つ書きます (${safeToken(token)} が余っています)`, line);
+        // 綴りを誤った語 (`larg`) も部品 ID の形に読めるので、書ける語も添える。
+        return fail(
+          `${kind} は指し先を ${noteTargetCount(kind)} つ書きます (${safeToken(token)} が余っています。${WORD_HINT})`,
+          line,
+        );
       }
-      return fail(`注釈の知らない語です: ${safeToken(token)}`, line, token);
+      return fail(`注釈の知らない語です: ${safeToken(token)} (${WORD_HINT})`, line, token);
     }
     if (!allowed.includes(slot)) {
       return fail(`${kind} に ${token} は書けません (書けるのは ${allowed.map((s) => SLOT_NAMES[s]).join(' / ')})`, line);

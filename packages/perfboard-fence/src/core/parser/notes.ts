@@ -11,12 +11,12 @@ import type { Parsed } from './parts.ts';
  * 印は 6 つ。`mark` (丸)、`box` (枠)、`arrow` (指し棒)、`text` (字)、
  * `source` (そのフェンスの中身の書き出し)、`parts` (部品表)。
  *
- * **色は `text` には書けない。** 字は残り全部を言葉として取るので、色を許すと
- * 「色の名前で始まる注釈」が黙って色になる。区別の付かない書き方を作らない。
- * **`source` と `parts` には書ける** — 言葉を取らないので、色と紛れる余地がない。
+ * **`text` の字は `:` の後ろ**なので、番地のあとの語 (色・向き・`large` `bold`) と
+ * 紛れない。`source` と `parts` には色だけが書ける。
  */
 
-import type { NoteKind } from '../types.ts';
+import { PLAIN_LOOK } from '../types.ts';
+import type { NoteKind, TextLook } from '../types.ts';
 import { MIRROR_WORD, NO_TURN, isRotationWord, rotationOf } from '../parts/orient.ts';
 import type { Turn } from '../parts/orient.ts';
 
@@ -35,6 +35,8 @@ export type WrittenNote = {
    * 字は `: ` の後ろなので、番地のあとに語を置いても字と紛れない (色も同じ場所に書ける)。
    */
   readonly turn: Turn;
+  /** 字の見た目。`large` (大きく) と `bold` (太く) の語で書く。`text` 以外はいつも `PLAIN_LOOK`。 */
+  readonly look: TextLook;
   /** 指し先の番地。**`source` と `parts` は基板の外に出すので null**。 */
   readonly from: string | null;
   /** `box` と `arrow` の 2 つ目の番地。ほかは null。 */
@@ -54,29 +56,40 @@ const fail = (message: string, token?: string): Parsed<never> =>
 
 const isKind = (word: string): word is NoteKind => (KINDS as readonly string[]).includes(word);
 
+/** 字の見た目の語。**閉じた並び**なので、色や向きと順不同に書いても紛れない。 */
+const LOOK_WORDS = ['large', 'bold'] as const;
+type LookWord = (typeof LOOK_WORDS)[number];
+const isLookWord = (word: string): word is LookWord => (LOOK_WORDS as readonly string[]).includes(word);
+
 /**
- * `text` の語。**色と向きだけ**で、どちらも閉じた並び。
+ * `text` の語。**色と向きと見た目 (`large` `bold`)** で、どれも閉じた並び。
  * 順不同に書けるので、語のほうからどの枠かを決める。
  */
-function readWords(tokens: readonly string[]): Parsed<{ readonly color: string | null; readonly turn: Turn }> {
+function readWords(
+  tokens: readonly string[],
+): Parsed<{ readonly color: string | null; readonly turn: Turn; readonly look: TextLook }> {
   let color: string | null = null;
   let turn = NO_TURN;
+  let look = PLAIN_LOOK;
   for (const token of tokens) {
     const word = token.toLowerCase();
     if (isRotationWord(word)) turn = { ...turn, rotate: rotationOf(word) ?? turn.rotate };
     else if (word === MIRROR_WORD) turn = { ...turn, mirror: true };
-    else if (isColor(word)) {
+    else if (isLookWord(word)) {
+      if (look[word]) return fail(`注釈の ${word} が 2 回書かれています`, token);
+      look = { ...look, [word]: true };
+    } else if (isColor(word)) {
       if (color !== null) return fail(`注釈の色が 2 回書かれています: ${safeToken(token)}`, token);
       color = word;
     } else {
       return fail(
         `注釈の知らない語です: ${safeToken(token)}`
-        + ` (色か r90 / r180 / r270 / ${MIRROR_WORD} が書けます)`,
+        + ` (色、r90 / r180 / r270 / ${MIRROR_WORD}、${LOOK_WORDS.join(' / ')} が書けます)`,
         token,
       );
     }
   }
-  return { ok: true, value: { color, turn } };
+  return { ok: true, value: { color, turn, look } };
 }
 
 /**
@@ -124,7 +137,7 @@ export function parseNoteLine(
     return {
       ok: true,
       value: {
-        kind, turn: words.value.turn, from, to: null,
+        kind, turn: words.value.turn, look: words.value.look, from, to: null,
         color: words.value.color, text: clampText(text, LIMITS.noteLength),
         written: tokens, bodyWritten,
       },
@@ -134,7 +147,7 @@ export function parseNoteLine(
   if (tail.length === 0) {
     return {
       ok: true,
-      value: { kind, turn: NO_TURN, from, to, color: null, text: null, written: tokens, bodyWritten: null },
+      value: { kind, turn: NO_TURN, look: PLAIN_LOOK, from, to, color: null, text: null, written: tokens, bodyWritten: null },
     };
   }
   if (tail.length > 1) {
@@ -161,6 +174,6 @@ export function parseNoteLine(
   }
   return {
     ok: true,
-    value: { kind, turn: NO_TURN, from, to, color, text: null, written: tokens, bodyWritten: null },
+    value: { kind, turn: NO_TURN, look: PLAIN_LOOK, from, to, color, text: null, written: tokens, bodyWritten: null },
   };
 }
