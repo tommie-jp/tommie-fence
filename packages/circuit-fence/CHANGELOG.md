@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- DIP スイッチ `dip-switch4` / `dip-switch8` (足は `A1`〜 / `B1`〜。k 番のスイッチは `Ak` と `Bk` の間の開いた接点)
+- `tang-nano-9k` (48 本の箱。足は `IO38` など。箱の中には `GW1NR` を書く)
+
 ## [0.30.0] - 2026-10-05
 
 ### Added

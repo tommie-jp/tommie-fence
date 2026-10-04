@@ -104,7 +104,7 @@ parts:
 - USB コネクタ (足は `VBUS` `GND` `D+` `D-`、Type-C は `CC1` `CC2` も。番号でも可)
   `usb-a` `usb-c`
 - マイコンボード (足は実物の印字で `U1.GP0`。図には `01 GP0` と番号も出る)
-  `pico` `pico-w` `pico2` `pico2-w`
+  `pico` `pico-w` `pico2` `pico2-w` `tang-nano-9k` (FPGA。足は `IO38` など)
 - 足に名前のある部品 (名前でも実物の足の番号でも可。下の表)
   `relay` `photocoupler` `seg7` `dip-switch4` `dip-switch8`
 

@@ -713,7 +713,7 @@ function renderChip(
   // **マイコンボードの名前は胴の下。** 基板の中に置くと長い足の名前
   // (`ADC_VREF 35`) と食い合う。ほかの部品と側も揃う。
   const definition = lookupBoardPart(part.type);
-  const box = boardBox(points, layout.pitch);
+  const box = boardBox(points, layout.pitch, definition);
   const drawn = boardChip({
     points,
     pitch: layout.pitch,

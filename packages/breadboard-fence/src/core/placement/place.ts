@@ -516,7 +516,7 @@ const rowsAcross = (upper: boolean): string =>
   HOLE_ROWS.filter((row) => (ROW_POSITION[row] < ROW_POSITION.f) === upper && acrossGap(row, WIDE_ROW_SPAN) !== null).join('・');
 
 /** その行から、溝の向こうへ `span` ピッチ先の行。届かなければ null。 */
-function acrossGap(row: HoleRow, span: number): HoleRow | null {
+export function acrossGap(row: HoleRow, span: number): HoleRow | null {
   const upper = ROW_POSITION[row] < ROW_POSITION.f;
   const wanted = ROW_POSITION[row] + (upper ? span : -span);
   const found = HOLE_ROWS.find((one) => ROW_POSITION[one] === wanted && (ROW_POSITION[one] < ROW_POSITION.f) !== upper);
@@ -564,18 +564,36 @@ function placeNamed(spec: PartSpec, board: Board, base: PartBase, chip: NamedChi
 }
 
 /**
- * 0.7 インチ (7 ピッチ) 幅のマイコンボード。ピンの 2 列は上下ブロックの同じ位置の行
- * (a↔f, b↔g, c↔h, …) にちょうど落ちる。
+ * 9 ピッチ幅のボードをマップの 1 クリックで置くとき、**向かいの行が無い行 (d〜g) を押した**なら、
+ * 同じ側のおすすめの行 (上は b、下は i) へ寄せる。どの行を押しても置ける (Pico と同じ)。
+ */
+export function boardAnchorRow(rowSpan: number, row: HoleRow): HoleRow {
+  if (rowSpan === 7 || acrossGap(row, rowSpan) !== null) return row;
+  return ROW_POSITION[row] < ROW_POSITION.f ? 'b' : 'i';
+}
+
+/**
+ * 溝をまたぐマイコンボード。**列の間は 0.7 インチ (Pico、7 ピッチ) なら上下ブロックの同じ位置の行**
+ * (a↔f, b↔g, c↔h, …) にちょうど落ちる。**Tang Nano 9K は 9 ピッチ**で、a↔h・b↔i・c↔j の
+ * 3 組だけ (外側の 1 穴を残す b↔i がおすすめ)。
  */
 function placeBoard(spec: PartSpec, board: Board, base: PartBase, part: BoardPart): Result<PlacedPart> {
-  const anchor = anchorHole(spec, board, 'pico @ h5');
+  const anchor = anchorHole(spec, board, part.rowSpan === 7 ? 'pico @ h5' : `${spec.type} @ b5`);
   if (!anchor.ok) return anchor;
 
   const overflow = rightEdge(spec, board, anchor.value.col + part.pins.length / 2 - 1);
   if (overflow) return { ok: false, error: overflow };
 
-  const oppositeRow = HOLE_ROWS[(HOLE_ROWS.indexOf(anchor.value.row) + HOLE_ROWS.length / 2) % HOLE_ROWS.length];
-  if (!oppositeRow) return fail(`部品 ${safeToken(spec.id)}: この行には置けません`, spec.line);
+  const oppositeRow = part.rowSpan === 7
+    ? HOLE_ROWS[(HOLE_ROWS.indexOf(anchor.value.row) + HOLE_ROWS.length / 2) % HOLE_ROWS.length]
+    : acrossGap(anchor.value.row, part.rowSpan);
+  if (!oppositeRow) {
+    const rows = HOLE_ROWS.filter((row) => acrossGap(row, part.rowSpan) !== null).join('・');
+    return fail(
+      `部品 ${safeToken(spec.id)}: ${safeToken(spec.type)} は列の間が ${part.rowSpan} ピッチなので ${rows} 行に置きます (b 行と i 行がおすすめ)`,
+      spec.line,
+    );
+  }
 
   return ok({
     ...base,

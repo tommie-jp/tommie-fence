@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- DIP スイッチ `dip-switch4` / `dip-switch8` (足は `A1`〜 / `B1`〜。k 番のスイッチは `Ak` と `Bk` の間の開いた接点)
+- `tang-nano-9k`。列の間が 9 ピッチなので a↔h・b↔i・c↔j に置く。マップで d〜g 行を押したときは b / i 行へ寄せる
+
 ## [0.32.0] - 2026-10-05
 
 ### Added

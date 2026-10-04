@@ -82,7 +82,7 @@ wires:
     `regulator` / `ic3` (3 本足の IC。足の名前は穴に書く — `h9(Vout)`)
   - 4 本足 — `transformer` (巻線の端。書かれた穴がそのまま足)
   - まとまった足 — `button` (a 接点) / `button-nc` (b 接点) / `dipN` / `sipN`
-  - マイコンボード — `pico` / `pico-w` / `pico2` / `pico2-w`
+  - マイコンボード — `pico` / `pico-w` / `pico2` / `pico2-w` / `tang-nano-9k` (FPGA)
   - ボード外の機器 — `device`
 - 略記でも書ける → [種類の略記](#種類の略記)。図・部品リスト・エラーには
   正式名だけが出る。
@@ -793,6 +793,20 @@ wires:
 ![図18 1 列ヘッダのモジュール](out/01-syntax-18.svg)
 
 `pins:` の本数がヘッダの本数と違うときは、行番号つきのエラーにする。
+
+## FPGA ボード (Tang Nano 9K)
+
+`tang-nano-9k` (Sipeed、Gowin GW1NR-9)。**2×24 ピン、列の間は 22.8 mm = 9 ピッチ**で、
+溝をまたぐと **a↔h・b↔i・c↔j** の 3 組にだけ落ちる (**`b` 行 (または `i` 行) がおすすめ**。
+外側の 1 穴と内側の 3 穴が配線に残る)。1 番は USB-C 側の左上、足は 48 本。
+足の名前は Sipeed のピン配置図の FPGA のピン番号に `IO` を付けた物 (`U1.IO38`)、電源は `3V3` `GND` `5V`。
+**`IO79`〜`IO86` は 1.8 V** (BANK3。ほかの IO は 3.3 V) なので、3.3 V の回路をつながない。
+
+```yaml
+board: full
+parts:
+  U1: tang-nano-9k @ b5
+```
 
 ## マイコンボード (Pico シリーズ)
 

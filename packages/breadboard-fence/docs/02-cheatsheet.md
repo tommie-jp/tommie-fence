@@ -69,7 +69,7 @@ d↔h なら e・f・g 行が胴の下。空くのは d の上の a〜c と h �
 4 本足   transformer
 USB      usb-a (穴は VBUS GND D+ D- の順に 2 つから) usb-c (穴は GND D+ D- VBUS の順に 4 つ)
 まとまり  button button-nc dipN (4〜40 の偶数) sipN (2〜40)
-ボード    pico pico-w pico2 pico2-w
+ボード    pico pico-w pico2 pico2-w tang-nano-9k (FPGA。列の間が 9 ピッチ: a↔h b↔i c↔j)
 名前つき  relay photocoupler seg7 dip-switch4 dip-switch8 (DIP 型。足は名前でも番号でも。K1.COM1 = K1.4)
 ボード外  device
 ```

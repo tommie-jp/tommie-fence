@@ -230,7 +230,7 @@ function roomFor(map: GridMap, nudges: ReadonlyMap<Chip, number>): Room {
  * **書く側と同じ字**で測る (`cf-mark` の 9px)。
  */
 const middleWidth = (type: string): number =>
-  (lookupBoardPart(type) === null ? 0 : textWidth(type) * MARK_FONT + NAME_INSIDE * 2);
+  (lookupBoardPart(type) === null ? 0 : textWidth(lookupBoardPart(type)?.mark ?? type) * MARK_FONT + NAME_INSIDE * 2);
 
 /** 升目に出ている足の接続点。部品の名前と足の名前で引く。 */
 type PinPoints = ReadonlyMap<string, { readonly x: number; readonly y: number }>;
@@ -497,6 +497,9 @@ function reachOf(rows: PinRows, glyph: GlyphName, type: string): {
   const along = (...sides: readonly PinSide[]): number =>
     Math.max(0, ...sides.map((side) => rows.get(side)?.length ?? 0));
   const middle = middleWidth(type);
+  // 名前が大文字ばかりのボード (Tang Nano 9K の `IO38`) は、見積もりより広く並ぶ。
+  // 真ん中の字と食い合うので、大文字を広く数える。Pico の箱は今までどおり。
+  const capitals = lookupBoardPart(type)?.mark !== undefined;
   const notched = hasNotch(type);
   const room = (count: number): number => ((count - 1) * legGap(glyph)) / 2 + PIN_MARGIN;
   // **棒は記号の縁から出す。** 決め打ちの 13 から出すと、記号が小さい種類
@@ -506,7 +509,7 @@ function reachOf(rows: PinRows, glyph: GlyphName, type: string): {
   // **中に書く名前が入るだけの幅を取る。** 左右の名前を内側へ寄せるので、
   // 狭い箱だと `IN` と `OUT` がくっついて 1 語に読める (実機で見つけた)。
   const inside = (side: PinSide): number => (namePlace(glyph, side) === 'inside'
-    ? Math.max(0, ...(rows.get(side) ?? []).map((pin) => textWidth(pin.label) * PIN_NAME_FONT))
+    ? Math.max(0, ...(rows.get(side) ?? []).map((pin) => (capitals ? nameReach(pin.label) : textWidth(pin.label) * PIN_NAME_FONT)))
     : 0);
   // **縦に立てた名前 (`GND`) には、真ん中に自分の縦の列を空ける。**
   // 上下の辺の名前は縁から内へ伸びて左右の名前 (`IN` `OUT`) の高さを通るので、
@@ -861,9 +864,10 @@ function drawStanding(chip: Chip, nudge: number): string {
   // **マイコンボードは種類を箱の中に書く** (`pico2`)。40 本の足の名前は左右の
   // 縁に寄るので真ん中が空いていて、そこが実物のチップの場所でもある
   // (実機で頼まれた)。名前 (`U1`) は箱の外なので、2 つが重ならない。
-  const kind = lookupBoardPart(chip.type) === null
+  const board = lookupBoardPart(chip.type);
+  const kind = board === null
     ? ''
-    : svgText(0, nudge + 4, chip.type, { class: 'cf-mark' });
+    : svgText(0, nudge + 4, board.mark ?? chip.type, { class: 'cf-mark' });
   // 名札は**足の無い辺**へ。足のある辺に出すと、棒と足の名前に重なる。
   const place = standingNameAt(nameSideOf(chip.pins), { w: halfW, h: halfH });
   const name = NAMELESS.has(chip.type)

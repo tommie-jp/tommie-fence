@@ -1241,6 +1241,7 @@ export const PART_TYPES = {
   'pico-w': boardchip(lookupBoardPart('pico-w') as BoardPart),
   pico2: boardchip(lookupBoardPart('pico2') as BoardPart),
   'pico2-w': boardchip(lookupBoardPart('pico2-w') as BoardPart),
+  'tang-nano-9k': boardchip(lookupBoardPart('tang-nano-9k') as BoardPart),
 } as const satisfies Record<string, PartType>;
 
 export type PartTypeName = keyof typeof PART_TYPES;
@@ -1364,6 +1365,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   'pico-w': 'Pico W',
   pico2: 'Pico 2',
   'pico2-w': 'Pico 2 W',
+  'tang-nano-9k': 'Tang Nano 9K',
   // 足に名前のある DIP 型も実体配線図の 2 つと同じ字 (fence-kit の表)。
   relay: namedChipOf('relay').kindName,
   photocoupler: namedChipOf('photocoupler').kindName,
@@ -1492,6 +1494,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   'pico-w': 'U',
   pico2: 'U',
   'pico2-w': 'U',
+  'tang-nano-9k': 'U',
   relay: namedChipOf('relay').prefix,
   photocoupler: namedChipOf('photocoupler').prefix,
   seg7: namedChipOf('seg7').prefix,

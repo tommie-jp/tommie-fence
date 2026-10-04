@@ -938,7 +938,8 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget, pitch: nu
   // **マイコンボードは箱の中に種類を書く** (`pico2`)。足の名前は左右の縁に
   // 寄るので真ん中が空いていて、そこが実物のチップの場所でもある。
   // 型番を書いてあればそれは箱の外へ回す (2 つを重ねない。実機で頼まれた)。
-  const kind = lookupBoardPart(part.type) === null ? null : escapeTex(part.type);
+  const boardDef = lookupBoardPart(part.type);
+  const kind = boardDef === null ? null : escapeTex(boardDef.mark ?? part.type);
   // **立てた DIP の型番は箱の下の外。** 番号の列の間に字の入る幅が無い
   // (`valueBelowUpright`)。中に書かない型番は、ほかの部品と同じ道で下に出る。
   const valueBelow = type?.valueBelowUpright === true && (part.turn.rotate === 0 || part.turn.rotate === 180);

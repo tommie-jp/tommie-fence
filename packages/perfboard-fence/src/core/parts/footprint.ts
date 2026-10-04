@@ -41,6 +41,8 @@ export type Footprint = {
    * DIP の位置のうち足のある所と、列の間の穴数を持つ (52 の docs/66)。
    */
   readonly chip?: NamedChip;
+  /** マイコンボードの 2 列の間隔 (穴の数)。ボードごとに違う (`BOARD_ROW_SPAN` は Pico)。 */
+  readonly span?: number;
 };
 
 /** DIP の 2 列の間隔 (穴の数)。300 mil = 7.62mm = 3 ピッチ。 */
@@ -75,7 +77,7 @@ export function footprintOf(type: string, variant: string | null = null): Footpr
   // マイコンボード。**表は fence-kit と共有** (どのボードに何番のピンがあるかは
   // 板に依らない)。並べ方は DIP と同じで、列の間隔だけが広い。
   const board = lookupBoardPart(type);
-  if (board !== null) return { kind: 'board', pins: board.pins.length, holes: 1 };
+  if (board !== null) return { kind: 'board', pins: board.pins.length, holes: 1, span: board.rowSpan };
 
   // 足に名前のある DIP 型。**姿 (品名) で表の行が決まる**。書かなければ表の最初。
   const named = lookupNamedChip(type, variant) ?? lookupNamedChip(type, null);
@@ -193,7 +195,7 @@ export function pinsOf(
       : at({ row: 0, col: chip.positions - pin.at })));
   }
 
-  const span = footprint.kind === 'board' ? BOARD_ROW_SPAN : DIP_ROW_SPAN;
+  const span = footprint.kind === 'board' ? footprint.span ?? BOARD_ROW_SPAN : DIP_ROW_SPAN;
   const perSide = footprint.pins / 2;
   const bottom = Array.from({ length: perSide }, (_, index) => at({ row: span, col: index }));
   const top = Array.from({ length: perSide }, (_, index) => at({ row: 0, col: perSide - 1 - index }));

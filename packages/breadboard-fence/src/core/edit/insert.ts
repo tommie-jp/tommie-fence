@@ -14,7 +14,8 @@ import { resolveAlias } from '../parts/aliases.ts';
 import { splitPartType } from '../parts/variants.ts';
 import { holesOf, isAnchored, partPrefix } from '../parts/catalog.ts';
 import type { Address, Board, FenceError, PartSpec } from '../types.ts';
-import { placeParts } from '../placement/place.ts';
+import { boardAnchorRow, placeParts } from '../placement/place.ts';
+import { lookupBoardPart } from 'fence-kit';
 import { isLocated, locatePart, stepCell } from './move.ts';
 import { diffAfterLines } from './diff.ts';
 import { locateTokens } from './shared.ts';
@@ -227,9 +228,14 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
   const board = createBoard(doc.board);
   const anchor = part.at[0];
   // **穴 1 つで来たら残りを並べる** (2 本足・3 本足)。並べ方は板が決める。
-  const at = part.at.length === 1 && anchor !== undefined && wanted > 1
+  const spread = part.at.length === 1 && anchor !== undefined && wanted > 1
     ? spreadFrom(type, anchor, wanted, board)
     : part.at;
+  // 列の間が 9 ピッチのボードは d〜g 行に置けないので、押した行をおすすめの行へ寄せる。
+  const wide = lookupBoardPart(type);
+  const at = typeof spread !== 'string' && wide !== null && spread[0]?.kind === 'hole'
+    ? [{ ...spread[0], row: boardAnchorRow(wide.rowSpan, spread[0].row) }, ...spread.slice(1)]
+    : spread;
   if (typeof at === 'string') return fail(at, null);
   if (at.length !== wanted) {
     return fail(`${part.type} は穴を ${wanted} つ書きます (${at.length} つ渡されました)`, null);

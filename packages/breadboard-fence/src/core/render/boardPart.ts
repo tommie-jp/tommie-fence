@@ -11,7 +11,7 @@ import { textScale } from './theme.ts';
 export function boardBodyRect(part: PlacedPart, layout: Layout): Rect {
   const points = pinPoints(part, layout);
   if (!points || points.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
-  return boardBox(points, layout.pitch);
+  return boardBox(points, layout.pitch, lookupBoardPart(part.type));
 }
 
 /**

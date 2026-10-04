@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- DIP スイッチ `dip-switch4` / `dip-switch8` (足は `A1`〜 / `B1`〜。k 番のスイッチは `Ak` と `Bk` の間の開いた接点)
+- `tang-nano-9k` (列の間 9 穴、USB-C と HDMI を描く)
+
 ## [0.29.0] - 2026-10-05
 
 ### Added

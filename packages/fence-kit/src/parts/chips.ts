@@ -574,12 +574,13 @@ const CHIP_SIDE = 2.2;
 const PIN_NUMBER_DIGITS = 2;
 
 /** マイコンボードの外形。**当たり判定と描画で同じ形を使う**ので、外にも出す。 */
-export function boardBox(points: readonly ChipPoint[], pitch: number): ChipBox {
+export function boardBox(points: readonly ChipPoint[], pitch: number, definition: BoardPart | null = null): ChipBox {
   const alongX = chipAlongX(points);
+  const along = definition?.reach ?? EDGE_ALONG;
   return boxOf(
     points,
-    (alongX ? EDGE_ALONG : EDGE_ACROSS) * pitch,
-    (alongX ? EDGE_ACROSS : EDGE_ALONG) * pitch,
+    (alongX ? along : EDGE_ACROSS) * pitch,
+    (alongX ? EDGE_ACROSS : along) * pitch,
   );
 }
 
@@ -610,7 +611,7 @@ export function boardChip(options: BoardChipOptions): string {
   const first = points[pinOne] ?? points[0];
   if (!first) return '';
 
-  const box = boardBox(points, pitch);
+  const box = boardBox(points, pitch, definition);
   const centre = centreOf(box);
   const alongX = chipAlongX(points);
   // **USB はピン 1 の側の端。** 回すと 1 番も回るので、点から見る。
@@ -682,8 +683,35 @@ export function boardChip(options: BoardChipOptions): string {
     })
     .join('');
 
-  return `${usb}${shell}${antenna(definition, box, centre, alongX, nearStart, ink.pin)}`
+  return `${usb}${hdmi(definition, box, centre, alongX, nearStart, pitch)}${shell}${antenna(definition, box, centre, alongX, nearStart, ink.pin)}`
     + `${chip}${chipName}${stubs}${legends}`;
+}
+
+/** HDMI の幅 (ピッチ数) と、基板の端から外へ出る量 (px)。USB と反対の端に付く。 */
+const HDMI_WIDTH = 6;
+const HDMI_LENGTH = 24;
+const HDMI_OVERHANG = 4;
+
+/** HDMI つきの版 (Tang Nano 9K) は、USB と反対の端にコネクタが出ている。基板より先に描いて縁を隠す。 */
+function hdmi(
+  definition: BoardPart | null,
+  box: ChipBox,
+  centre: ChipPoint,
+  alongX: boolean,
+  nearStart: boolean,
+  pitch: number,
+): string {
+  if (!definition?.hdmi) return '';
+
+  const thick = HDMI_WIDTH * pitch;
+  const start = (from: number, size: number): number => (nearStart ? from + size - HDMI_LENGTH + HDMI_OVERHANG : from - HDMI_OVERHANG);
+  return element('rect', {
+    x: num(alongX ? start(box.x, box.width) : centre.x - thick / 2),
+    y: num(alongX ? centre.y - thick / 2 : start(box.y, box.height)),
+    width: num(alongX ? HDMI_LENGTH : thick),
+    height: num(alongX ? thick : HDMI_LENGTH), rx: 2.5,
+    fill: '#d9dde3', stroke: '#8a929c',
+  });
 }
 
 /** 無線つきの版は USB と反対の端にアンテナが載っている。 */

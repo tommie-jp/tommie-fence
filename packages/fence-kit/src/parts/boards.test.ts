@@ -2,8 +2,26 @@ import { describe, expect, test } from 'vitest';
 import { boardPartNames, lookupBoardPart } from './boards.ts';
 
 describe('lookupBoardPart', () => {
-  test('knows the four boards of the pico series', () => {
-    expect(boardPartNames()).toEqual(['pico', 'pico-w', 'pico2', 'pico2-w']);
+  test('knows the four boards of the pico series and the Tang Nano 9K', () => {
+    expect(boardPartNames()).toEqual(['pico', 'pico-w', 'pico2', 'pico2-w', 'tang-nano-9k']);
+  });
+
+  test('puts the 48 pins of the Tang Nano 9K in DIP order, 9 pitches apart, with the power pins by name', () => {
+    const board = lookupBoardPart('tang-nano-9k');
+    const pins = board?.pins ?? [];
+
+    expect(board).toMatchObject({ rowSpan: 9, hdmi: true, wireless: false, chip: 'GW1NR-9' });
+    expect(pins).toHaveLength(48);
+    // 1 番は USB-C 側の左上、24 番は左下の端、25 番は右下の 3V3。
+    expect([pins[0], pins[23], pins[24], pins[25], pins[47]]).toEqual(['IO38', 'IO69', '3V3', 'GND', 'IO63']);
+    expect(pins.filter((name) => !name.startsWith('IO'))).toEqual(['3V3', 'GND', '5V']);
+    expect(new Set(pins).size).toBe(48);
+    // 1.8 V の BANK3 は右の列の IO79〜IO86。
+    expect(pins).toEqual(expect.arrayContaining(['IO79', 'IO86']));
+  });
+
+  test('keeps the pico series at seven pitches', () => {
+    expect(lookupBoardPart('pico2')).toMatchObject({ rowSpan: 7, hdmi: false });
   });
 
   test('names the 40 pins in the order of the official pico pinout', () => {

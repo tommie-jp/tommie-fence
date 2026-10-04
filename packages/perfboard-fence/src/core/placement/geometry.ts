@@ -1,5 +1,5 @@
 import {
-  boardBox, connectorBox, connectorFacing, crystalCan, dipBox, directSotSpec, sipBox, smdBodySize, sotMountOf,
+  boardBox, connectorBox, connectorFacing, crystalCan, dipBox, directSotSpec, lookupBoardPart, sipBox, smdBodySize, sotMountOf,
 } from 'fence-kit';
 import type { ConnectorShape } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
@@ -170,7 +170,7 @@ function boxRect(part: PlacedPart, layout: Layout): OrientedRect | null {
   const kind = footprintOf(part.type)?.kind;
   const box = kind === 'dip' || kind === 'named' ? dipBox(points, layout.pitch)
     : kind === 'sip' ? sipBox(points, layout.pitch)
-      : kind === 'board' ? boardBox(points, layout.pitch) : null;
+      : kind === 'board' ? boardBox(points, layout.pitch, lookupBoardPart(part.type)) : null;
   if (box !== null) {
     return {
       cx: box.x + box.width / 2,

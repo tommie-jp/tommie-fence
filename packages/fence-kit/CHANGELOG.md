@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- DIP スイッチ `dip-switch4` / `dip-switch8` (足は `A1`〜 / `B1`〜。k 番のスイッチは `Ak` と `Bk` の間の開いた接点)
+- FPGA ボード `tang-nano-9k` (Sipeed Tang Nano 9K、48 本)。`BoardPart` に `rowSpan` `reach` `hdmi` `mark` を足し、`boardBox` はボードの定義を受けて縁の出を変えられる
+
 ## [0.13.0] - 2026-10-05
 
 ### Added

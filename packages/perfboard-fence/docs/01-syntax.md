@@ -292,7 +292,7 @@ wires:
 4 本足  transformer
 USB     usb-a (穴は VBUS GND D+ D- の順に 2 つから)  usb-c (穴は GND D+ D- VBUS の順に 4 つ)
 パッケージ  button (a 接点)  button-nc (b 接点)  dip4〜dip40 (偶数)  sip2〜sip40
-ボード      pico  pico-w  pico2  pico2-w
+ボード      pico  pico-w  pico2  pico2-w  tang-nano-9k
 ```
 
 `ferrite-bead` はリード付きのフェライトビーズ。帯の無い濃い灰色の円筒で描く。
