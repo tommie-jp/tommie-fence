@@ -81,23 +81,22 @@ describe('labels', () => {
     expect(parseStyle({ theme: 'dark' }, 1).style.labels).toBeNull();
   });
 
-  test('takes a kind per axis, and the case of the letters', () => {
-    const { style, errors } = parseStyle({ labels: { row: 'numeric', col: 'alpha', case: 'lower' } }, 1);
+  test('takes the case of the letters', () => {
+    const { style, errors } = parseStyle({ labels: { case: 'lower' } }, 1);
 
     expect(errors).toEqual([]);
-    expect(style.labels).toEqual({ row: 'numeric', col: 'alpha', case: 'lower', sides: null });
+    expect(style.labels).toEqual({ case: 'lower', sides: null });
   });
 
-  test('keeps the axes that were not written open, so the default fills them', () => {
-    expect(parseStyle({ labels: { col: 'alpha' } }, 1).style.labels)
-      .toEqual({ row: null, col: 'alpha', case: null, sides: null });
-  });
+  test('refuses row and col, which are retired, and points to silk of board', () => {
+    // 印字だけ替えると、図の名前と番地の綴りが食い違う。
+    for (const key of ['row', 'col']) {
+      const { errors } = parseStyle({ labels: { [key]: 'numeric' } }, 4);
 
-  test('names a kind it does not know instead of guessing', () => {
-    const { errors } = parseStyle({ labels: { row: 'roman' } }, 4);
-
-    expect(errors[0]?.message).toContain('roman');
-    expect(errors[0]?.line).toBe(4);
+      expect(errors[0]?.message).toContain(`labels の ${key} は廃止しました`);
+      expect(errors[0]?.message).toContain('silk:');
+      expect(errors[0]?.line).toBe(4);
+    }
   });
 
   test('names an item it does not know inside labels', () => {
@@ -121,7 +120,7 @@ describe('labels の sides', () => {
   });
 
   test('leaves it unwritten when it was not written, so the default (left and top) fills it', () => {
-    expect(parseStyle({ labels: { row: 'alpha' } }, 1).style.labels?.sides).toBeNull();
+    expect(parseStyle({ labels: { case: 'lower' } }, 1).style.labels?.sides).toBeNull();
   });
 
   test('names a word it does not know instead of dropping it', () => {

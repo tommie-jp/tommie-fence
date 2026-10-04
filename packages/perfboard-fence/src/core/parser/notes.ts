@@ -1,6 +1,6 @@
 import { colorHint, isColor } from '../color.ts';
 import { fenceError, safeToken } from '../errors.ts';
-import { parseAddress } from '../model/address.ts';
+import { isAddressSpelling } from '../model/address.ts';
 import { LIMITS, clampText } from '../limits.ts';
 import type { Parsed } from './parts.ts';
 
@@ -178,7 +178,7 @@ export function parseNoteLine(
     // **綴りは書かれたまま返す** (小文字に直して返すと、探す字と違う字を見せる)。
     // 番地を書いた人には、色の話ではなく**置き場所は選べない**ことを言う —
     // 書き出しは図の下の帯に出るので、番地を書いても動かせない。
-    if (wanted === 0 && parseAddress(word) !== null) {
+    if (wanted === 0 && isAddressSpelling(word)) {
       return fail(`${kind} に番地は書けません (図の下に出します): ${safeToken(word)}`, word);
     }
     return fail(`知らない色です: ${safeToken(word)} (${colorHint()})`, word);

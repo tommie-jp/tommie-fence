@@ -37,12 +37,12 @@ export function aimAt(source: string, line: number, column: number): Aim | null 
 
   const on = doc.written.find((one) =>
     one.line === line && column >= one.column && column <= one.column + one.length);
-  if (on !== undefined) return { kind: 'node', id: formatAddress(on.address) };
+  if (on !== undefined) return { kind: 'node', id: formatAddress(on.address, doc.board) };
 
   // `points:` の行が持っているのはその穴そのもの。**行の上ならどこでも**同じ答え
   // (名前の上にカーソルがあるほうが普通なので、綴りの上だけでは拾えない)。
   const named = doc.written.find((one) => one.line === line && one.from === 'point');
-  if (named !== undefined) return { kind: 'node', id: formatAddress(named.address) };
+  if (named !== undefined) return { kind: 'node', id: formatAddress(named.address, doc.board) };
 
   const { doc: parsed } = parseFence(normalizeNewlines(source));
   if (parsed === null) return null;

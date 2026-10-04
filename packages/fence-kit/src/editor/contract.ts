@@ -146,18 +146,18 @@ export function checkFenceEditor(editor: FenceEditor, fixture: ContractFixture):
   }
 
   // --- 1 つ隣の穴 (矢印と複製が使う) ---
-  const right = editor.step(room, 0, 1);
+  const right = editor.step(room, 0, 1, source);
   if (right === null) say(`${room} の隣の穴を数えられません`);
   else if (right === room) say(`${room} の隣が同じ穴になります`);
-  else if (editor.step(right, 0, -1) !== room) say(`${room} の隣の隣が元に戻りません`);
-  if (editor.step(room, 0, 0) !== room) say(`${room} から 0 だけ動かすと別の穴になります`);
-  if (editor.step('読めない綴り', 0, 1) !== null) say('読めない綴りの隣を返します');
+  else if (editor.step(right, 0, -1, source) !== room) say(`${room} の隣の隣が元に戻りません`);
+  if (editor.step(room, 0, 0, source) !== room) say(`${room} から 0 だけ動かすと別の穴になります`);
+  if (editor.step('読めない綴り', 0, 1, source) !== null) say('読めない綴りの隣を返します');
 
   // **まとめて選んだものを同じだけずらす**ので、2 つの穴の差を数えられること。
-  const apart = right === null ? null : editor.stepsTo(room, right);
+  const apart = right === null ? null : editor.stepsTo(room, right, source);
   if (apart === null) say(`${room} と隣の穴の差を数えられません`);
-  else if (editor.step(room, apart.rows, apart.cols) !== right) say(`${room} の差を戻すと別の穴になります`);
-  if (editor.stepsTo(room, room)?.rows !== 0 || editor.stepsTo(room, room)?.cols !== 0) {
+  else if (editor.step(room, apart.rows, apart.cols, source) !== right) say(`${room} の差を戻すと別の穴になります`);
+  if (editor.stepsTo(room, room, source)?.rows !== 0 || editor.stepsTo(room, room, source)?.cols !== 0) {
     say(`${room} と同じ穴の差が 0 になりません`);
   }
 
@@ -171,11 +171,11 @@ export function checkFenceEditor(editor: FenceEditor, fixture: ContractFixture):
     // 戻れなくても契約が通る。
     const quarter = 1 / editor.fine;
     const stuck = ([[0, quarter], [quarter, 0]] as const).some(([rows, cols]) => {
-      const aside = editor.step(room, rows, cols);
-      return aside === null || editor.step(aside, -rows, -cols) !== room;
+      const aside = editor.step(room, rows, cols, source);
+      return aside === null || editor.step(aside, -rows, -cols, source) !== room;
     });
     if (stuck) say(`${room} を 1/${editor.fine} 升ずらして戻せません`);
-  } else if (editor.step(room, 0, 0.25) !== null || editor.step(room, 0.25, 0) !== null) {
+  } else if (editor.step(room, 0, 0.25, source) !== null || editor.step(room, 0.25, 0, source) !== null) {
     say('穴の間が無いのに端数の穴を返します');
   }
 

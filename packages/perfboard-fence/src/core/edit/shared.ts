@@ -1,5 +1,5 @@
 import { formatAddress, parseAddress } from '../model/address.ts';
-import type { Address } from '../types.ts';
+import type { Address, Spelling } from '../types.ts';
 
 /**
  * フェンスの本文の中で**穴の綴りがどこに書かれているか**を探す。
@@ -66,10 +66,11 @@ const candidatesOn = (scanned: string, resolve: (text: string) => Address | null
  */
 export function addressTokensOn(
   lineText: string,
+  spelling: Spelling,
   points?: ReadonlyMap<string, Address>,
 ): readonly AddressToken[] {
   const scanned = withoutComment(lineText);
-  const resolve = (text: string): Address | null => parseAddress(text) ?? points?.get(text) ?? null;
+  const resolve = (text: string): Address | null => parseAddress(text, spelling) ?? points?.get(text) ?? null;
 
   return candidatesOn(scanned, resolve).flatMap((candidate) => {
     const address = resolve(candidate.text);
@@ -85,23 +86,24 @@ export function locateTokens(
   lineText: string,
   addresses: readonly Address[],
   points: ReadonlyMap<string, Address>,
+  spelling: Spelling,
   from = 0,
 ): { readonly tokens: readonly { column: number; length: number }[]; readonly end: number } | null {
   const scanned = withoutComment(lineText);
-  const resolve = (text: string): Address | null => parseAddress(text) ?? points.get(text) ?? null;
+  const resolve = (text: string): Address | null => parseAddress(text, spelling) ?? points.get(text) ?? null;
   const candidates = candidatesOn(scanned, resolve);
 
   const found: { column: number; length: number }[] = [];
   let cursor = from;
 
   for (const address of addresses) {
-    const wanted = formatAddress(address);
+    const wanted = formatAddress(address, spelling);
     let hit: { column: number; length: number } | null = null;
 
     for (const candidate of candidates) {
       if (candidate.column < cursor) continue;
       const resolved = resolve(candidate.text);
-      if (resolved === null || formatAddress(resolved) !== wanted) continue;
+      if (resolved === null || formatAddress(resolved, spelling) !== wanted) continue;
       hit = { column: candidate.column, length: candidate.length };
       break;
     }

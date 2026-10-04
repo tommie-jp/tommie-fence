@@ -3,7 +3,7 @@ import type { SmdMount } from 'fence-kit';
 import { notice, safeToken } from '../errors.ts';
 import type { Layout } from '../model/layout.ts';
 import { isAxial } from '../parts/types.ts';
-import type { Address, FenceError, PlacedPart } from '../types.ts';
+import type { Address, FenceError, PlacedPart, Spelling } from '../types.ts';
 import { formatAddress } from '../model/address.ts';
 import { bodyRect, overlaps, spanOf } from './geometry.ts';
 
@@ -63,14 +63,14 @@ function collisions(parts: readonly PlacedPart[], layout: Layout): FenceError[] 
  * **どの部品でも確実に入らない**間隔だけにしてある — 迷ったら黙るほうが、
  * 正しい図を叱るより良い。
  */
-function tooTight(parts: readonly PlacedPart[]): FenceError[] {
+function tooTight(parts: readonly PlacedPart[], spelling: Spelling): FenceError[] {
   return parts.flatMap((part) => {
     // **直付けの面実装は軸物ではない。** `resistor/2012` は隣の穴に跨ぐのが正しい。
     if (!isAxial(part.type) || isDirectSmd(part.variant)) return [];
     const span = spanOf(part);
     if (span === null || span >= MIN_AXIAL_SPAN) return [];
 
-    const holes = part.pins.map((pin) => formatAddress(pin.address)).join(' と ');
+    const holes = part.pins.map((pin) => formatAddress(pin.address, spelling)).join(' と ');
     return [notice(
       `${safeToken(part.id)} (${part.type}) のピンの間隔が狭すぎます (${holes})`
       + '。胴の両端からピンが出る部品なので、実物では入りません',
@@ -113,7 +113,7 @@ function mountFits(mount: SmdMount, holes: readonly Address[]): boolean {
  * 直付けの面実装の置き方 (52 の docs/64)。**表が決めた置き方と違えば言う** —
  * 止めない (54 の流儀)。図はそのまま描き、届かない分はピン先から穴への線に出る。
  */
-function wrongMount(parts: readonly PlacedPart[]): FenceError[] {
+function wrongMount(parts: readonly PlacedPart[], spelling: Spelling): FenceError[] {
   return parts.flatMap((part) => {
     const mount = smdMount(part.variant);
     const holes = part.pins.map((pin) => pin.address);
@@ -121,11 +121,11 @@ function wrongMount(parts: readonly PlacedPart[]): FenceError[] {
     // 種類と姿は表にある綴りなので、そのまま文面に出してよい。
     return [notice(
       `${safeToken(part.id)} (${part.type}/${part.variant ?? ''}) は${MOUNT_WORDS[mount]}`
-      + ` (書かれた穴: ${holes.map(formatAddress).join(' ')})`,
+      + ` (書かれた穴: ${holes.map((hole) => formatAddress(hole, spelling)).join(' ')})`,
       part.line,
     )];
   });
 }
 
-export const checkFit = (parts: readonly PlacedPart[], layout: Layout): FenceError[] =>
-  [...collisions(parts, layout), ...tooTight(parts), ...wrongMount(parts)];
+export const checkFit = (parts: readonly PlacedPart[], layout: Layout, spelling: Spelling): FenceError[] =>
+  [...collisions(parts, layout), ...tooTight(parts, spelling), ...wrongMount(parts, spelling)];

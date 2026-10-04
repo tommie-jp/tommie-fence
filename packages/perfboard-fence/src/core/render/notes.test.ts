@@ -3,13 +3,13 @@ import { renderNotes } from './notes.ts';
 import { THEME } from './theme.ts';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
-import { parseAddress } from '../model/address.ts';
+import { FENCE_SPELLING, parseAddress } from '../model/address.ts';
 import { PLAIN_LOOK } from '../types.ts';
 import type { ResolvedNote } from '../types.ts';
 import { NO_TURN } from '../parts/orient.ts';
 
 const layout = createLayout(createBoard({ cols: 12, rows: 8 }));
-const at = (hole: string) => parseAddress(hole)!;
+const at = (hole: string) => parseAddress(hole, FENCE_SPELLING)!;
 
 const note = (over: Partial<ResolvedNote> & Pick<ResolvedNote, 'kind' | 'from'>): ResolvedNote =>
   ({ to: null, color: null, text: null, line: null, turn: NO_TURN, look: PLAIN_LOOK, ...over });

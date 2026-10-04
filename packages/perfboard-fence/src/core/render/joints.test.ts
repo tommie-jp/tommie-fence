@@ -3,10 +3,10 @@ import { renderJoints } from './joints.ts';
 import { THEME } from './theme.ts';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
-import { parseAddress } from '../model/address.ts';
+import { FENCE_SPELLING, parseAddress } from '../model/address.ts';
 
 const layout = createLayout(createBoard({ cols: 10, rows: 6 }));
-const at = (text: string) => parseAddress(text)!;
+const at = (text: string) => parseAddress(text, FENCE_SPELLING)!;
 
 describe('renderJoints', () => {
   test('fills the hole with solder where something was connected', () => {

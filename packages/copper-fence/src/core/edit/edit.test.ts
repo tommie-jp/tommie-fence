@@ -211,9 +211,9 @@ describe('finding', () => {
   });
 
   test('counts steps in millimetres, with half a millimetre as the fine step', () => {
-    expect(editor.step('10,5', 0.5, -1)).toBe('9,5.5');
-    expect(editor.stepsTo('10,5', '12.5,4')).toEqual({ rows: -1, cols: 2.5 });
-    expect(editor.stepsTo('x', '1,1')).toBeNull();
+    expect(editor.step('10,5', 0.5, -1, SOURCE)).toBe('9,5.5');
+    expect(editor.stepsTo('10,5', '12.5,4', SOURCE)).toEqual({ rows: -1, cols: 2.5 });
+    expect(editor.stepsTo('x', '1,1', SOURCE)).toBeNull();
     expect(editor.fine).toBe(2);
     expect(editor.cellsOf(SOURCE, 'J1')).toEqual(['0,10']);
     expect(editor.cellsOf(SOURCE, 'R1')).toEqual(['30,20', '25,25']);

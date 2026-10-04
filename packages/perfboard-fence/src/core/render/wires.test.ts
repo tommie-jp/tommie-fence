@@ -4,21 +4,21 @@ import { THEME } from './theme.ts';
 import { renderWires } from './wires.ts';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
-import { parseAddress } from '../model/address.ts';
+import { FENCE_SPELLING, parseAddress } from '../model/address.ts';
 import type { RoutedWire } from '../types.ts';
 
 const layout = createLayout(createBoard({ cols: 10, rows: 6 }));
 
 const wire = (from: string, to: string, color: string | null = null): RoutedWire =>
-  ({ from: parseAddress(from)!, to: parseAddress(to)!, color, line: null });
+  ({ from: parseAddress(from, FENCE_SPELLING)!, to: parseAddress(to, FENCE_SPELLING)!, color, line: null });
 
 describe('renderWires', () => {
   test('runs a straight line from hole to hole', () => {
     // ユニバーサル基板のジャンパは 2 点をまっすぐ結ぶ。ブレッドボードのように
     // 横レーンへ迂回する必要が無い (溝もレールも無く、どの穴も同じ格子の上)。
     const svg = renderWires([wire('b3', 'c5')], layout, THEME);
-    const from = layout.point(parseAddress('b3')!);
-    const to = layout.point(parseAddress('c5')!);
+    const from = layout.point(parseAddress('b3', FENCE_SPELLING)!);
+    const to = layout.point(parseAddress('c5', FENCE_SPELLING)!);
 
     expect(svg).toContain(`x1="${from.x}"`);
     expect(svg).toContain(`y2="${to.y}"`);
@@ -62,7 +62,7 @@ describe('色を書かなかった配線', () => {
 });
 
 describe('跨ぎの大きさと向き', () => {
-  const hole = (address: string) => layout.point(parseAddress(address)!);
+  const hole = (address: string) => layout.point(parseAddress(address, FENCE_SPELLING)!);
   const between = (one: string, other: string) => {
     const a = hole(one);
     const b = hole(other);

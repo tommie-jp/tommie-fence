@@ -60,19 +60,30 @@ describe('renderBoard', () => {
     expect(drawn).toContain('>AB</text>');
   });
 
-  test('takes the kind of name each axis was given, and the case of the letters', () => {
-    // 手元の基板のシルクに寄せるためのもの。**番地は変わらない** (`b3` のまま)。
-    const drawn = renderBoard(board, layout, THEME, { row: 'numeric', col: 'alpha', case: 'lower', sides: ['left', 'top'] });
+  test('names the columns with letters and the rows with numbers counted from the bottom on an alpha-cols board', () => {
+    // 手元の基板 (横置きの 5x7cm) のシルク。**番地の綴りと同じ字** — 図の `C` と `2` の穴は `c2`。
+    const turned = createBoard({ cols: 6, rows: 4 }, { silk: 'alpha-cols' });
+    const drawn = renderBoard(turned, createLayout(turned), THEME, { case: 'lower', sides: ['left', 'top'] });
 
-    expect(drawn).toContain('>2</text>');
     expect(drawn).toContain('>c</text>');
+    expect(drawn).toContain('>4</text>');
     expect(drawn).not.toContain('>B</text>');
+  });
+
+  test('counts the rows from the bottom on an alpha-rows board, the way the Akizuki boards are printed', () => {
+    const akizuki = createBoard({ cols: 6, rows: 4 }, { silk: 'alpha-rows' });
+    // 字は縁取りと本体の 2 度描かれるので、初めて出た順に並べる。
+    const rowNames = (drawn: string): string[] => [...new Set([...drawn.matchAll(/>([A-D])<\/text>/g)].map((found) => found[1] ?? ''))];
+    const drawn = renderBoard(akizuki, createLayout(akizuki), THEME, { case: 'upper', sides: ['left'] });
+
+    // 上の行が D、下の行が A。
+    expect(rowNames(drawn)).toEqual(['D', 'C', 'B', 'A']);
   });
 });
 
 describe('名前を出す辺', () => {
   const sidesOf = (sides: readonly ('left' | 'right' | 'top' | 'bottom')[]): string =>
-    renderBoard(board, layout, THEME, { row: 'alpha', col: 'numeric', case: 'upper', sides });
+    renderBoard(board, layout, THEME, { case: 'upper', sides });
 
   test('writes the names on the left and top only, by default', () => {
     const svg = sidesOf(['left', 'top']);

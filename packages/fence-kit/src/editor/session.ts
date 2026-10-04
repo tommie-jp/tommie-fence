@@ -779,9 +779,9 @@ export function createSession<D extends DocLike>(
    * その穴を、`start` から `to` への差だけずらした穴。**フェンスに数えさせる** —
    * 番地の綴りは基板ごとに違うので、殻は引き算を知らない。
    */
-  function shiftCell(cell: string, start: string, to: string): string | null {
-    const step = editor.stepsTo(start, to);
-    return step === null ? null : editor.step(cell, step.rows, step.cols);
+  function shiftCell(source: string, cell: string, start: string, to: string): string | null {
+    const step = editor.stepsTo(start, to, source);
+    return step === null ? null : editor.step(cell, step.rows, step.cols, source);
   }
 
   /**
@@ -796,7 +796,7 @@ export function createSession<D extends DocLike>(
     if (grabbed === null) return dropped;
     const anchor = editor.cellsOf(source, handle)[0];
     if (anchor === undefined) return dropped;
-    return shiftCell(anchor, grabbed, dropped) ?? dropped;
+    return shiftCell(source, anchor, grabbed, dropped) ?? dropped;
   }
 
   /**
@@ -807,7 +807,7 @@ export function createSession<D extends DocLike>(
     const start = from?.[0];
     const end = cells[0];
     if (start === undefined || end === undefined) return {};
-    const shift = editor.stepsTo(start, end);
+    const shift = editor.stepsTo(start, end, fenceNow()?.source ?? '');
     return shift === null ? {} : { shift };
   };
 
@@ -860,7 +860,7 @@ export function createSession<D extends DocLike>(
     if (!Number.isInteger(fine.rows * editor.fine) || !Number.isInteger(fine.cols * editor.fine)) {
       return refuse(`端数を読めませんでした (1/${editor.fine} 升の倍数ではありません)`);
     }
-    return editor.step(cell, fine.rows, fine.cols) ?? refuse(`${cell} の間には置けません`);
+    return editor.step(cell, fine.rows, fine.cols, fenceNow()?.source ?? '') ?? refuse(`${cell} の間には置けません`);
   }
 
   /**
@@ -921,7 +921,7 @@ export function createSession<D extends DocLike>(
         `${together.length} 個を動かしました`,
         together.map((one) => (source: string) => {
           const at = editor.cellsOf(source, one)[0];
-          const to = at === undefined ? null : shiftCell(at, start, written);
+          const to = at === undefined ? null : shiftCell(source, at, start, written);
           return to === null
             ? { ok: false as const, error: { message: `${editor.nameOf(one)} の動かし先を数えられません`, line: null } }
             : editor.movePart(source, one, to);
@@ -1217,10 +1217,10 @@ export function createSession<D extends DocLike>(
     if (drawn === null) return null;
 
     const anchor = drawn.from[0];
-    const shift = anchor === undefined ? null : editor.stepsTo(anchor, plan.at);
+    const shift = anchor === undefined ? null : editor.stepsTo(anchor, plan.at, source);
     if (shift === null) return null;
     const cells = drawn.from
-      .map((cell) => editor.step(cell, shift.rows, shift.cols))
+      .map((cell) => editor.step(cell, shift.rows, shift.cols, source))
       .filter((cell): cell is string => cell !== null);
     return cells.length === 0 ? null : { chip: drawn.chip, cells, from: drawn.from };
   }
@@ -1234,7 +1234,7 @@ export function createSession<D extends DocLike>(
     trial: (at: string) => EditResult,
   ): { readonly chip: string; readonly from: readonly string[] } | null {
     for (const step of nearby(ROOM_REACH)) {
-      const cell = editor.step(at, step.rows, step.cols);
+      const cell = editor.step(at, step.rows, step.cols, source);
       if (cell === null) continue;
       const fits = trial(cell);
       if (!fits.ok) continue;
@@ -1289,7 +1289,7 @@ export function createSession<D extends DocLike>(
     }
 
     const anchor = editor.cellsOf(fence.source, handle)[0];
-    const to = anchor === undefined ? null : editor.step(anchor, count(message.rows), count(message.cols));
+    const to = anchor === undefined ? null : editor.step(anchor, count(message.rows), count(message.cols), fence.source);
     if (to === null) {
       say(`${part} はこれ以上その向きへ動かせません`);
       return;

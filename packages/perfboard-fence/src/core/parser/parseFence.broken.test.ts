@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { applyLineEdits } from 'fence-kit';
 import { parseFence } from './parseFence.ts';
 import { duplicatePart, insertPart, insertWire } from '../edit/insert.ts';
-import { parseAddress } from '../model/address.ts';
+import { FENCE_SPELLING, parseAddress } from '../model/address.ts';
 import type { Address } from '../types.ts';
 import { renderPerfboard } from '../index.ts';
 
@@ -15,7 +15,7 @@ import { renderPerfboard } from '../index.ts';
  */
 
 const at = (text: string): Address => {
-  const address = parseAddress(text);
+  const address = parseAddress(text, FENCE_SPELLING);
   if (address === null) throw new Error(`番地ではありません: ${text}`);
   return address;
 };

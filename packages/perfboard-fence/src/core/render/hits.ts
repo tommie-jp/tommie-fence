@@ -78,7 +78,7 @@ export function renderHits(
   // 同じ番地を 2 度立てない (縁の銅箔と外周が重なる)。
   const seen = new Set<string>();
   const unique = addresses.filter((address) => {
-    const written = formatAddress(address);
+    const written = formatAddress(address, board);
     if (seen.has(written)) return false;
     seen.add(written);
     return true;
@@ -86,10 +86,10 @@ export function renderHits(
   addresses.length = 0;
   addresses.push(...unique);
 
-  const already = new Set(addresses.map((address) => formatAddress(address)));
+  const already = new Set(addresses.map((address) => formatAddress(address, board)));
   for (const written of used) {
     if (already.has(written)) continue;
-    const address = parseAddress(written);
+    const address = parseAddress(written, board);
     if (address === null) continue;
     already.add(written);
     addresses.push(address);
@@ -100,7 +100,7 @@ export function renderHits(
     const { x, y } = layout.point(address);
     return element('rect', {
       class: 'cf-cell',
-      'data-address': formatAddress(address),
+      'data-address': formatAddress(address, board),
       x: num(x - size / 2),
       y: num(y - size / 2),
       width: num(size),
@@ -110,9 +110,9 @@ export function renderHits(
   });
 
   const dots = addresses
-    .filter((address) => used.has(formatAddress(address)))
+    .filter((address) => used.has(formatAddress(address, board)))
     .map((address) => {
-      const written = formatAddress(address);
+      const written = formatAddress(address, board);
       const { x, y } = layout.point(address);
       const name = names.get(written);
       return element('circle', {

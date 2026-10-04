@@ -85,11 +85,11 @@ export function insertWire(source: string, from: Address, to: Address, color?: s
   for (const end of [from, to]) {
     // **配線の端は半田付けできる所なら通す。** 穴のほかにスロットの銅箔がある
     // (実物のスロットは電源を引き回すために付いている)。置く先は穴だけ。
-    if (!isSolderable(board, end)) return fail(`${formatAddress(end)} は基板の外です`, null);
+    if (!isSolderable(board, end)) return fail(`${formatAddress(end, board)} は基板の外です`, null);
   }
   // 長さ 0 の線は図に出ない (押し間違いでしか生まれない)。
-  if (formatAddress(from) === formatAddress(to)) {
-    return fail(`両端が同じ穴です (${formatAddress(from)})`, null);
+  if (formatAddress(from, board) === formatAddress(to, board)) {
+    return fail(`両端が同じ穴です (${formatAddress(from, board)})`, null);
   }
 
   const lines = normalized.split('\n');
@@ -100,7 +100,7 @@ export function insertWire(source: string, from: Address, to: Address, color?: s
   // 行を作るより、既定の色で引いておくほうが figure が読める
   // (色は属性の欄からいつでも直せる)。
   const inked = color !== undefined && wireColor(color) !== null ? ` ${color}` : '';
-  const written = `- ${formatAddress(from)} -- ${formatAddress(to)}${inked}`;
+  const written = `- ${formatAddress(from, board)} -- ${formatAddress(to, board)}${inked}`;
   const added = [...boardLine(lines), ...appendUnderKey(lines, 'wires', last, written)];
 
   return { ok: true, value: { edits: [], lines: added, diff: diffAfterLines(normalized, added) } };
@@ -158,11 +158,11 @@ function spreadFrom(
   // **三角は右と下の両方を言う。** 先に見つかった 1 つだけ言うと、1 つ左へ
   // 押し直した人が今度は下で断られる (角の穴を押したとき)。
   if (offsets.some((step) => step.row !== 0)) {
-    return `${formatAddress(anchor)} から右と下へ 1 穴ずつ要ります`
-      + ` (${outside.map(formatAddress).join(' と ')} が基板の外です)。別の穴を押します`;
+    return `${formatAddress(anchor, board)} から右と下へ 1 穴ずつ要ります`
+      + ` (${outside.map((hole) => formatAddress(hole, board)).join(' と ')} が基板の外です)。別の穴を押します`;
   }
   const last = holes.reduce((far, hole) => (hole.col > far.col ? hole : far), anchor);
-  return needsRoom(formatAddress(anchor), formatAddress(last), last.col - anchor.col);
+  return needsRoom(formatAddress(anchor, board), formatAddress(last, board), last.col - anchor.col);
 }
 
 /**
@@ -257,10 +257,10 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
   }
 
   for (const hole of at) {
-    if (!isOnBoard(doc.board, hole)) return fail(`${formatAddress(hole)} は基板の外です`, null);
+    if (!isOnBoard(doc.board, hole)) return fail(`${formatAddress(hole, doc.board)} は基板の外です`, null);
   }
   // 同じ穴に 2 本のピンは挿せない。
-  const spelled = at.map((hole) => formatAddress(hole));
+  const spelled = at.map((hole) => formatAddress(hole, doc.board));
   if (new Set(spelled).size !== spelled.length) {
     return fail('同じ穴に 2 本のピンは挿せません', null);
   }
@@ -292,7 +292,7 @@ export function partCells(source: string, id: string): readonly string[] {
   const part = doc.parts.find((one) => one.id === id);
   if (part === undefined) return [];
   const placed = placeParts([part], doc.board).parts[0];
-  return placed === undefined ? [] : placed.pins.map((pin) => formatAddress(pin.address));
+  return placed === undefined ? [] : placed.pins.map((pin) => formatAddress(pin.address, doc.board));
 }
 
 /**
@@ -315,12 +315,12 @@ export function duplicatePart(source: string, id: string, newId: string): Additi
   const found = locatePart(normalized, id);
   if (!isLocated(found)) return { ok: false, error: found.error };
 
-  const located = locateTokens(found.line, found.addresses, found.points);
+  const located = locateTokens(found.line, found.addresses, found.points, found.board);
   if (located === null) return fail(`${safeToken(id)} の穴を行の中に見つけられませんでした`, null);
 
   const moved = located.tokens.map((token) => {
     const written = found.line.slice(token.column, token.column + token.length);
-    return stepCell(written, 1, 1);
+    return stepCell(written, 1, 1, found.board);
   });
   const stuck = moved.indexOf(null);
   if (stuck >= 0) {

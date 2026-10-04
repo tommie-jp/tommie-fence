@@ -4,12 +4,12 @@ import { backSideLayout, renderBackSide } from './backSide.ts';
 import { THEME } from './theme.ts';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
-import { parseAddress } from '../model/address.ts';
+import { FENCE_SPELLING, parseAddress } from '../model/address.ts';
 import { placeParts } from '../placement/place.ts';
 
 const board = createBoard({ cols: 16, rows: 8 });
 const labels = { row: 'alpha', col: 'numeric', case: 'upper', sides: ['left', 'top'] } as const;
-const at = (text: string) => parseAddress(text)!;
+const at = (text: string) => parseAddress(text, FENCE_SPELLING)!;
 
 const dip = placeParts(
   [{ id: 'IC1', type: 'dip8', variant: null, holes: ['b3'], value: null, written: 'dip8 b3', turn: NO_TURN, line: 1 }],

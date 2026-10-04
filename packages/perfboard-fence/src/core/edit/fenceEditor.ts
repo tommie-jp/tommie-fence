@@ -22,6 +22,7 @@ import { extractPerfboardFences } from '../fences.ts';
 import { renderPerfboard } from '../index.ts';
 import { isCrossing, parseAddress } from '../model/address.ts';
 import { parseFence } from '../parser/parseFence.ts';
+import type { Spelling } from '../types.ts';
 
 /**
  * perfboard フェンスの編集を、殻が求める形 (`FenceEditor`) に束ねる。
@@ -49,7 +50,11 @@ const betweenHoles = (written: string) => ({
 const unreadable = (written: string): EditResult =>
   ({ ok: false, error: { message: `穴として読めません: ${written}`, line: null } });
 
-const readAddress = (written: string) => parseAddress(written);
+/** その本文の基板 (番地の綴りを決める面)。 */
+const spellingOf = (source: string): Spelling => parseFence(normalizeNewlines(source)).doc.board;
+
+/** その本文の基板のシルクで番地を読む。 */
+const readAddress = (source: string, written: string) => parseAddress(written, spellingOf(source));
 
 export function createPerfboardEditor(): FenceEditor {
   return {
@@ -78,7 +83,7 @@ export function createPerfboardEditor(): FenceEditor {
       // **基板の外の機器は入れ子で書く**ので、光らせるのは `at:` の値 (`device.ts`)。
       if (what !== 'node' && isDevice(source, id)) return deviceSpans(source, id);
       if (what !== 'node') return partSpans(source, id);
-      const at = readAddress(id);
+      const at = readAddress(source, id);
       return at === null ? [] : nodeSpans(source, at);
     },
 
@@ -106,8 +111,9 @@ export function createPerfboardEditor(): FenceEditor {
     // 既定が 1/10 升で、`Shift` を押している間だけ升ちょうど。
     fine: 10,
     fineFor: 'note' as const,
-    step: stepCell,
-    stepsTo,
+    // 隣の穴の綴りも、英字と数字のどちらが行かは本文の基板のシルクで決まる。
+    step: (cell, rows, cols, source) => stepCell(cell, rows, cols, spellingOf(source)),
+    stepsTo: (from, to, source) => stepsTo(from, to, spellingOf(source)),
 
     palette: renderPalette,
     typeNames: renderTypeOptions,
@@ -118,14 +124,14 @@ export function createPerfboardEditor(): FenceEditor {
     nextId: nextPartId,
 
     movePart: (source, handle, to, trial) => {
-      const at = readAddress(to);
+      const at = readAddress(source, to);
       if (at === null) return unreadable(to);
       if (isNoteHandle(handle)) return moveNote(source, handle, at, trial?.preview === true);
       // 機器は `at:` を書き換えて動かす (箱の左上が落ちた穴に来る)。
       // **機器も穴を指す** — `at:` に書けるのは番地なので、端数は断る。
       if (isDevice(source, handle)) {
         if (!isCrossing(at)) return betweenHoles(to);
-        return moveDevice(source, handle, deviceTarget(at), trial?.preview === true);
+        return moveDevice(source, handle, deviceTarget(at, parseFence(normalizeNewlines(source)).doc.board), trial?.preview === true);
       }
       if (!movablePartIds(source).includes(handle)) {
         return { ok: false, error: { message: `動かせる部品ではありません: ${handle}`, line: null } };
@@ -134,8 +140,8 @@ export function createPerfboardEditor(): FenceEditor {
     },
 
     movePoint: (source, from, to, trial) => {
-      const at = readAddress(from);
-      const target = readAddress(to);
+      const at = readAddress(source, from);
+      const target = readAddress(source, to);
       if (at === null) return unreadable(from);
       if (target === null) return unreadable(to);
       if (!isCrossing(target)) return betweenHoles(to);
@@ -148,8 +154,8 @@ export function createPerfboardEditor(): FenceEditor {
     deleteWire,
 
     addWire: (source, from, to, _operator, color) => {
-      const at = readAddress(from);
-      const target = readAddress(to);
+      const at = readAddress(source, from);
+      const target = readAddress(source, to);
       if (at === null) return unreadable(from);
       if (target === null) return unreadable(to);
       if (!isCrossing(at)) return betweenHoles(from);
@@ -170,7 +176,7 @@ export function createPerfboardEditor(): FenceEditor {
     ),
 
     addPart: (source, part) => {
-      const at = part.at.map((one) => readAddress(one));
+      const at = part.at.map((one) => readAddress(source, one));
       const bad = at.indexOf(null);
       if (bad >= 0) return unreadable(part.at[bad] ?? '');
       return insertPart(source, {

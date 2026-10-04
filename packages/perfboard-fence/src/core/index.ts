@@ -34,7 +34,7 @@ import { renderDocument } from './render/document.ts';
 import { renderErrorBanner } from './render/errorHtml.ts';
 import { resolveStyle, themeForBoard } from './render/theme.ts';
 import type {
-  Address, FenceError, PartSpec, PointSpec, ResolvedNote, RoutedWire,
+  Address, Board, FenceError, PartSpec, PointSpec, ResolvedNote, RoutedWire,
 } from './types.ts';
 import type { Net } from 'fence-kit';
 
@@ -103,6 +103,7 @@ export type RenderOptions = {
  * `points:` の名前を添える。
  */
 function editLayer(
+  board: Board,
   parts: readonly PartSpec[],
   wires: readonly RoutedWire[],
   points: readonly PointSpec[],
@@ -113,13 +114,13 @@ function editLayer(
   // この基板はピンを寄せないので今は同じだが、揃えておく (52 の docs/13)。
   for (const part of parts) {
     for (const hole of part.holes) {
-      const address = parseAddress(hole);
-      if (address !== null) used.add(formatAddress(address));
+      const address = parseAddress(hole, board);
+      if (address !== null) used.add(formatAddress(address, board));
     }
   }
   for (const wire of wires) {
-    used.add(formatAddress(wire.from));
-    used.add(formatAddress(wire.to));
+    used.add(formatAddress(wire.from, board));
+    used.add(formatAddress(wire.to, board));
   }
 
   // `points:` は名前 → 番地。掴んだ番地から名前を引きたいので裏返す。
@@ -167,8 +168,8 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   for (const note of parsed.doc.notes) {
     // 書き出しと部品表は基板の外に出すので、指し先の番地を持たない。帯は別に描く。
     if (note.kind === 'source' || note.kind === 'parts') continue;
-    const from = parseAddress(note.from ?? '');
-    const to = note.to === null ? null : parseAddress(note.to);
+    const from = parseAddress(note.from ?? '', board);
+    const to = note.to === null ? null : parseAddress(note.to, board);
     // 見るのは書かれた番地だけ (`to` を書かない印では `from` 1 つ)。
     const written = note.to === null ? [from] : [from, to];
     const offBoard = written.some((address) => address === null || offBoardReason(board, address) !== null);
@@ -185,7 +186,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   // 番地で置いた機器と USB コネクタのはみ出しを**先に測る**。基板の寸法だけで
   // 組むと、上は題に、下は書き出しや半田面に重なる。
   const bare = createLayout(board, { title: title !== null });
-  const devicesJut = deviceOverhang(devices, bare);
+  const devicesJut = deviceOverhang(devices, bare, board);
   const partsJut = connectorOverhang(placement.parts, bare);
   // 注釈も同じ。**基板の外の番地に書いた字は、測らないと題に重なるか画布の外で切れる。**
   const notesJut = noteOverhang(notes, bare, PLATE, style.labels.sides.includes('bottom'));
@@ -212,14 +213,14 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
     partsAbove: partsJut.above,
     partsBelow: partsJut.below,
   });
-  const placedDevices = layoutDevices(devices, layout);
+  const placedDevices = layoutDevices(devices, layout, board);
   const devicePins = new Map(devices.map((device) => [device.id, new Set(device.pins)]));
 
   const pointErrors: FenceError[] = [];
   const points = new Map<string, Address>();
   const named: [Address, string][] = [];
   for (const { name, written, line } of parsed.doc.points) {
-    const address = parseAddress(written);
+    const address = parseAddress(written, board);
     // **節点も穴に立てる。** 交点の間 (`b5c3`) を書けるのは注釈だけ。
     const reason = address === null
       ? `穴の番地として読めません: ${safeToken(written)}`
@@ -266,6 +267,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       netlist,
       namedStrips: new Set(named.map(([address]) => holeStrip(address))),
       devices,
+      spelling: board,
     })
     : [];
   /**
@@ -273,7 +275,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
    * 置いたその場で直す間違いで、作業中に当たり前に出る中間状態ではない。
    * 隠すと、重ねて置いたことに気づくのが遅れる。
    */
-  const fit = checking ? checkFit(placement.parts, layout) : [];
+  const fit = checking ? checkFit(placement.parts, layout, board) : [];
   // **掛けなかったことは黙らずに言う。** 帯に残すのは、件数が 0 の理由が
   // 「問題が無い」ではなく「見ていない」だからで、釦の数字だけでは伝わらない。
   const notChecked = !style.check || hardErrors.length === 0
@@ -418,7 +420,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       // 掴む層は**いちばん上**。下に敷くと、部品や配線が押しを先に取ってしまう。
       + (options.edit === true
         ? renderHits(board, layout, ...(() => {
-          const layer = editLayer(parsed.doc.parts, wiring.wires, parsed.doc.points);
+          const layer = editLayer(board, parsed.doc.parts, wiring.wires, parsed.doc.points);
           // **編集のときは基板のすぐ外にも升を立てる。** 基板の外に置くもの
           // (機器の箱、注釈) の動かし先になる。落とせない相手 (銅箔の無い所へ
           // 引く配線) は今までどおり断るので、升があっても嘘にはならない。

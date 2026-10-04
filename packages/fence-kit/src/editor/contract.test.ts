@@ -274,7 +274,7 @@ describe('checkFenceEditor', () => {
     const whole = fakeEditor().step;
     const loose = fakeEditor({
       fine: null,
-      step: (cell, rows, cols) => (Number.isInteger(rows) && Number.isInteger(cols) ? whole(cell, rows, cols) : 'a5.25'),
+      step: (cell, rows, cols, source) => (Number.isInteger(rows) && Number.isInteger(cols) ? whole(cell, rows, cols, source) : 'a5.25'),
     });
 
     expect(checkFenceEditor(loose, FIXTURE)).toContain('穴の間が無いのに端数の穴を返します');

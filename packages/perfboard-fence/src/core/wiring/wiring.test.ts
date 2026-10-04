@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { netlistOf, resolveWires } from './wiring.ts';
 import { createBoard } from '../model/board.ts';
 import { LIMITS } from '../limits.ts';
-import { parseAddress } from '../model/address.ts';
+import { FENCE_SPELLING, parseAddress } from '../model/address.ts';
 import { holeStrip } from '../model/board.ts';
 import type { PlacedPart, WireSpec } from '../types.ts';
 
@@ -17,7 +17,7 @@ const part = (id: string, holes: readonly string[]): PlacedPart => ({
   value: null,
   line: null,
   pins: holes.map((hole) => {
-    const address = parseAddress(hole)!;
+    const address = parseAddress(hole, FENCE_SPELLING)!;
     return { address, strip: holeStrip(address) };
   }),
 });
@@ -32,7 +32,7 @@ describe('resolveWires', () => {
   });
 
   test('looks a name up in points:', () => {
-    const points = new Map([['VCC', parseAddress('a1')!]]);
+    const points = new Map([['VCC', parseAddress('a1', FENCE_SPELLING)!]]);
     const { wires, errors } = resolveWires([wire('VCC', 'b3')], points, board);
 
     expect(errors).toEqual([]);
@@ -83,7 +83,7 @@ describe('netlistOf', () => {
   });
 
   test('uses a name from points: for the net', () => {
-    const nets = netlistOf([part('R1', ['b3', 'b7'])], [], [[parseAddress('b3')!, 'VCC']]);
+    const nets = netlistOf([part('R1', ['b3', 'b7'])], [], [[parseAddress('b3', FENCE_SPELLING)!, 'VCC']]);
 
     expect(nets.map((net) => net.name)).toContain('VCC');
   });
@@ -245,7 +245,7 @@ describe('機器へつなぐ配線 (図に線を引く)', () => {
 describe('端面実装の凹の両端', () => {
   const edge: PlacedPart = {
     id: 'J1', type: 'sma', variant: 'female-edge', value: null, line: 1,
-    pins: ['c1', 'b0', 'd0'].map((hole) => ({ address: parseAddress(hole)!, strip: holeStrip(parseAddress(hole)!) })),
+    pins: ['c1', 'b0', 'd0'].map((hole) => ({ address: parseAddress(hole, FENCE_SPELLING)!, strip: holeStrip(parseAddress(hole, FENCE_SPELLING)!) })),
   };
 
   test('sit on one net without a wire — they are one piece of metal', () => {

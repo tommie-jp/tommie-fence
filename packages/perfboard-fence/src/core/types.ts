@@ -42,6 +42,19 @@ export type Address = {
   readonly cols?: number;
 };
 
+/**
+ * 基板のシルク (番地の英字と数字の振り方)。**番地の綴りは図の端の名前と同じ** —
+ * 基板を見て綴りを書き、図を見て半田付けするので、3 つが同じ名前でないと取り違える。
+ *
+ * - `fence` — 英字が行 (上から)、数字が列 (左から)。breadboard フェンスと同じ
+ * - `alpha-rows` — 英字が行 (下から)、数字が列 (左から)。秋月の基板
+ * - `alpha-cols` — 英字が列 (左から)、数字が行 (下から)。横に置いた汎用 5x7cm
+ */
+export type Silk = 'fence' | 'alpha-rows' | 'alpha-cols';
+
+/** 番地を読み書きするのに要る基板の面 (行数は「下から」の数え方に使う)。 */
+export type Spelling = { readonly silk: Silk; readonly rows: number };
+
 /** 基板の大きさ。列 × 行 (基板の呼び方と同じ順)。 */
 export type BoardSize = { readonly cols: number; readonly rows: number };
 
@@ -56,6 +69,11 @@ export type Board = BoardSize & {
    * 穴ではないので挿せず、ネットにもネットリストにも出ない。
    */
   readonly slots: boolean;
+  /**
+   * 番地の振り方 (基板のシルク)。**名前の基板はその基板の刷りどおり**、
+   * 穴数直書きの基板は `fence` (シルクを知らない)。`board: silk:` で替えられる。
+   */
+  readonly silk: Silk;
   /**
    * 基板 (レジスト) の色。**既定は緑。** 書かれていなければテーマが決める。
    * 基板の色は実物の性質なので、テーマ (図の配色) ではなくここに持つ。
@@ -236,9 +254,6 @@ export type StyleSpec = {
   readonly back: boolean | null;
 };
 
-/** 軸の名前を英字で振るか、数字で振るか。 */
-export type LabelKind = 'alpha' | 'numeric';
-
 /** 英字の大小。 */
 export type LabelCase = 'upper' | 'lower';
 
@@ -250,8 +265,6 @@ export type LabelSide = 'left' | 'right' | 'top' | 'bottom';
  * 列が数字のまま動かない。手元の基板のシルクに寄せるためのもの。
  */
 export type LabelSpec = {
-  readonly row: LabelKind | null;
-  readonly col: LabelKind | null;
   readonly case: LabelCase | null;
   /** 名前を出す辺。書かなければ既定 (左と上)。 */
   readonly sides: readonly LabelSide[] | null;

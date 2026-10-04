@@ -3,7 +3,7 @@ import { notice, safeToken } from '../errors.ts';
 import { formatAddress } from '../model/address.ts';
 import { holeStrip } from '../model/board.ts';
 import { pinRef } from '../wiring/wiring.ts';
-import type { DeviceSpec, FenceError, PlacedPart, RoutedWire, StripId } from '../types.ts';
+import type { DeviceSpec, FenceError, PlacedPart, RoutedWire, Spelling, StripId } from '../types.ts';
 
 /**
  * ERC — 図のとおりに組んだら動かない、という指摘。
@@ -28,6 +28,8 @@ export type ErcInput = {
   readonly namedStrips: ReadonlySet<StripId>;
   /** 基板の外の機器。ピンは盤面に無いが、つなぎ忘れは部品と同じように沈黙する。 */
   readonly devices: readonly DeviceSpec[];
+  /** 番地を綴るときの基板のシルク (お知らせの穴の名前が図の端の名前と同じになる)。 */
+  readonly spelling: Spelling;
 };
 
 /** つなぎ忘れを見るまとまり。部品も機器も「名前 + 端子の並び」として同じに見る。 */
@@ -56,7 +58,7 @@ const terminalsOf = (input: ErcInput): Terminals[] => [
     id: part.id,
     line: part.line,
     pins: part.pins.map((pin, index) =>
-      [pinRef(part, index), formatAddress(pin.address)] as const),
+      [pinRef(part, index), formatAddress(pin.address, input.spelling)] as const),
     hint: PART_HINT,
   })),
   ...input.devices.map((device) => ({
@@ -144,7 +146,7 @@ function danglingWires(input: ErcInput): FenceError[] {
   return input.wires
     .filter((wire) => !live.has(holeStrip(wire.from)) && !live.has(holeStrip(wire.to)))
     .map((wire) => notice(
-      `${formatAddress(wire.from)} -- ${formatAddress(wire.to)} は部品のピンを 1 つもつないでいません`,
+      `${formatAddress(wire.from, input.spelling)} -- ${formatAddress(wire.to, input.spelling)} は部品のピンを 1 つもつないでいません`,
       wire.line,
     ));
 }

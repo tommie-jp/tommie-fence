@@ -54,7 +54,7 @@ describe('capacitorMark', () => {
 });
 
 describe('boardRow', () => {
-  const plain = { cols: 18, rows: 24, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' } as const;
+  const plain = { cols: 18, rows: 24, slots: false, silk: 'fence', color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' } as const;
 
   test('names the board, its holes, thickness and base material', () => {
     expect(boardRow(plain, '5x7cm')).toEqual(['基板', 'perfboard', '5x7cm (18×24 穴) 1.6mm FR-4', '']);

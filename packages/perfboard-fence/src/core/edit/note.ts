@@ -93,10 +93,11 @@ const writtenAddresses = (note: NoteSpec): readonly string[] =>
 export function noteCells(source: string, handle: string): readonly string[] {
   const found = locate(source, handle);
   if (!isFound(found)) return [];
+  const board = boardOf(source);
   return writtenAddresses(found.note)
-    .map((written) => parseAddress(written))
+    .map((written) => parseAddress(written, board))
     .filter((one): one is Address => one !== null)
-    .map(formatAddress);
+    .map((address) => formatAddress(address, board));
 }
 
 /** その注釈が書かれている場所。エディタで光らせるのに使う。 */
@@ -115,10 +116,10 @@ export function moveNote(source: string, handle: string, to: Address, trial = fa
   if (!isFound(found)) return fail(found.problem, found.line);
 
   const written = writtenAddresses(found.note);
-  const anchor = parseAddress(written[0] ?? '');
+  const board = boardOf(source);
+  const anchor = parseAddress(written[0] ?? '', board);
   if (anchor === null) return fail(`${found.line} 行目の注釈の番地を読めません`, found.line);
 
-  const board = boardOf(source);
   // **端数ごとずらす。** 交点の間へ落とされたぶんを捨てると、掴んだ場所と
   // 書き込む場所が食い違う (升目は既定で 1/10 升を送ってくる)。
   const delta = {
@@ -126,7 +127,7 @@ export function moveNote(source: string, handle: string, to: Address, trial = fa
     col: (to.col + (to.cols ?? 0)) - (anchor.col + (anchor.cols ?? 0)),
   };
   const landings = written.map((one) => {
-    const at = parseAddress(one);
+    const at = parseAddress(one, board);
     if (at === null) return null;
     const row = along(at.row, at.rows ?? 0, delta.row);
     const col = along(at.col, at.cols ?? 0, delta.col);
@@ -154,7 +155,7 @@ export function moveNote(source: string, handle: string, to: Address, trial = fa
     line: found.line,
     column: span.column,
     length: span.length,
-    text: formatAddress(landings[index] as Address),
+    text: formatAddress(landings[index] as Address, board),
   }));
   return { ok: true, value: { edits, diff: trial ? { lost: [], gained: [] } : diffAfter(source, edits) } };
 }
@@ -177,11 +178,12 @@ export function duplicateNote(source: string, handle: string): NoteResult {
   const spans = tokensOf(found.text, written);
   if (spans.length !== written.length) return fail(`${found.line} 行目の注釈の番地を行の中に見つけられませんでした`, found.line);
 
+  const board = boardOf(source);
   let copy = found.text;
   for (const [index, span] of [...spans.entries()].reverse()) {
-    const at = parseAddress(written[index] ?? '');
+    const at = parseAddress(written[index] ?? '', board);
     if (at === null) return fail(`${found.line} 行目の注釈の番地を読めません`, found.line);
-    const moved = formatAddress({ row: at.row + 1, col: at.col });
+    const moved = formatAddress({ row: at.row + 1, col: at.col }, board);
     copy = copy.slice(0, span.column) + moved + copy.slice(span.column + span.length);
   }
 

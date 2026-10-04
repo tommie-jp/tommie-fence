@@ -1,7 +1,7 @@
 import { LineCounter, isMap, isScalar, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
 import { fenceError, notice, safeToken } from '../errors.ts';
-import { DEFAULT_BOARD, DEFAULT_BOARD_SIZE, MATERIALS, parseMaterial, parseThickness, resolveBoard, resolveGrid } from '../model/board.ts';
+import { DEFAULT_BOARD, DEFAULT_BOARD_SIZE, MATERIALS, parseMaterial, parseThickness, resolveBoard, resolveGrid, resolveSilk, SILK_WORDS } from '../model/board.ts';
 import { isLandColor, isPlateColor, landNames, plateNames } from '../render/finish.ts';
 import { boardNames } from '../model/catalog.ts';
 import { LIMITS } from '../limits.ts';
@@ -12,7 +12,7 @@ import { EMPTY_STYLE, parseStyle } from './style.ts';
 import { parseNoteLine } from './notes.ts';
 import { parseDevice } from './devices.ts';
 import { isReferenceable } from '../limits.ts';
-import { parseAddress } from '../model/address.ts';
+import { isAddressSpelling } from '../model/address.ts';
 import { isSeq } from 'yaml';
 import { TOP_LEVEL_KEYS } from '../types.ts';
 import type {
@@ -27,7 +27,7 @@ const BOARD_HINT = `board: は穴数を 列x行 で書くか (例: board: 25x15)
   + `上限は ${LIMITS.cols}x${LIMITS.rows} です`;
 
 /** `board:` をマップで書いたときに置ける項目。 */
-const BOARD_KEYS = ['size', 'grid', 'slots', 'color', 'land', 'h', 'material'] as const;
+const BOARD_KEYS = ['size', 'grid', 'silk', 'slots', 'color', 'land', 'h', 'material'] as const;
 
 /** `on` / `off` は YAML 1.2 では字。`style:` と同じ受け方を board にも与える。 */
 const FLAG_WORDS: Record<string, boolean> = { on: true, off: false };
@@ -231,7 +231,7 @@ function readFence(source: string): ParseResult {
       }
       // **番地の綴りを名前にしない。** `b3: c5` と書けてしまうと、`b3` が
       // どちらを指すのか読む人にも処理にも決まらなくなる。
-      if (parseAddress(name) !== null) {
+      if (isAddressSpelling(name)) {
         errors.push(fenceError(`番地と同じ綴りは点の名前にできません: ${safeToken(name)}`, line, name));
         continue;
       }
@@ -411,6 +411,7 @@ function readFence(source: string): ParseResult {
     let h: number | undefined;
     let material: BoardMaterial | undefined;
     let grid: { readonly text: string; readonly at: number | null } | null = null;
+    let silkWord: { readonly text: string; readonly at: number | null } | null = null;
     if (isMap(pair.value)) {
       let sizeSeen = false;
       let bad = false;
@@ -465,6 +466,20 @@ function readFence(source: string): ParseResult {
             bad = true;
           } else {
             grid = { text: written, at: itemAt };
+          }
+          continue;
+        }
+        if (name === 'silk') {
+          // シルクは名前の基板が決まってから当てる (`board` はその基板の刷りどおりの意味)。
+          if (written === null || resolveSilk(written, null) === null) {
+            errors.push(fenceError(
+              `board の silk は ${SILK_WORDS.join(' / ')} で書きます: ${safeToken(written ?? '')}`,
+              itemAt,
+              name,
+            ));
+            bad = true;
+          } else {
+            silkWord = { text: written, at: itemAt };
           }
           continue;
         }
@@ -542,8 +557,9 @@ function readFence(source: string): ParseResult {
       }
     }
     boardName = found.named?.key ?? null;
+    const silk = silkWord === null ? found.board.silk : (resolveSilk(silkWord.text, found.named) ?? found.board.silk);
     board = {
-      ...holes, slots, color, land, slotColor,
+      ...holes, slots, silk, color, land, slotColor,
       h: h ?? found.board.h, material: material ?? found.board.material,
     };
     // 単位の書き忘れは**図が出てしまう**取り違えなので、エラーではなくお知らせ。

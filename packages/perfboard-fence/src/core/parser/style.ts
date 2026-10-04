@@ -1,5 +1,5 @@
 import { fenceError, safeToken } from '../errors.ts';
-import { LABEL_CASES, LABEL_KINDS, LABEL_SIDES, STYLE_RANGES, THEME_NAMES } from '../limits.ts';
+import { LABEL_CASES, LABEL_SIDES, STYLE_RANGES, THEME_NAMES } from '../limits.ts';
 import type { FenceError, LabelSide, LabelSpec, StyleSpec, ThemeName } from '../types.ts';
 
 /**
@@ -24,9 +24,12 @@ export const EMPTY_STYLE: StyleSpec = {
 const KEYS = ['theme', 'width', 'debug', 'stamp', 'check', 'labels', 'back'] as const;
 
 /** `labels:` に書ける項目。書かれなかった軸は null のままで、既定が埋める。 */
-const LABEL_KEYS = ['row', 'col', 'case', 'sides'] as const;
+const LABEL_KEYS = ['case', 'sides'] as const;
 
-const EMPTY_LABELS: LabelSpec = { row: null, col: null, case: null, sides: null };
+/** 廃止した項目。**図と綴りが食い違う**ので、書かれたら断って直し方を言う。 */
+const RETIRED_LABEL_KEYS = ['row', 'col'] as const;
+
+const EMPTY_LABELS: LabelSpec = { case: null, sides: null };
 
 /**
  * `sides:` に書ける言葉。**空白区切りで並べる** (`left top`)。`all` は 4 辺、
@@ -82,8 +85,8 @@ const asFlag = (key: string): Reader => (value) => {
 };
 
 /**
- * `labels:` を読む。**印字だけの話で、番地は変わらない** — 行が英字・列が数字と
- * いう番地の形は動かないので、ここで書けるのは基板の外に出す名前の付け方だけ。
+ * `labels:` を読む。**英字と数字のどちらが行かは基板のシルク (`board: silk:`) が決める**
+ * ので、ここで書けるのは英字の大小と、名前を出す辺だけ。
  */
 const asLabels: Reader = (value) => {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
@@ -93,6 +96,12 @@ const asLabels: Reader = (value) => {
   const labels: Record<string, unknown> = { ...EMPTY_LABELS };
 
   for (const key of Object.keys(entries)) {
+    if ((RETIRED_LABEL_KEYS as readonly string[]).includes(key)) {
+      return {
+        problem: `labels の ${key} は廃止しました (図の名前と番地の綴りが食い違うため)。`
+          + '英字と数字の振り方は board: の silk: で選びます (board / fence / alpha-rows / alpha-cols)',
+      };
+    }
     if (!(LABEL_KEYS as readonly string[]).includes(key)) {
       return { problem: `知らない labels の項目です: ${safeToken(key)} (${LABEL_KEYS.join(' / ')})` };
     }
@@ -103,7 +112,7 @@ const asLabels: Reader = (value) => {
       labels[key] = sides;
       continue;
     }
-    const allowed: readonly string[] = key === 'case' ? LABEL_CASES : LABEL_KINDS;
+    const allowed: readonly string[] = LABEL_CASES;
     if (typeof written !== 'string' || !allowed.includes(written)) {
       return {
         problem: `labels の ${key} は ${allowed.join(' / ')} で書きます: ${safeToken(String(written))}`,

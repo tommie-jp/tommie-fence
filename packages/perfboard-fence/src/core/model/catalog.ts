@@ -1,3 +1,5 @@
+import type { Silk } from '../types.ts';
+
 /**
  * 名前の付いた基板。**穴数は写真から数えた実物の値だけ**を持つ。
  *
@@ -36,6 +38,12 @@ export type CatalogBoard = {
    * あるので、向きを替えて当てはめない。
    */
   readonly turnable: boolean;
+  /**
+   * この基板のシルクの振り方。**実物の刷りどおり**で、`board:` に `silk:` が無ければこれが使われる。
+   * 秋月は短辺が英字・下から。汎用 5x7cm は縦置きなら `fence` と同じ並びで、横置き (`7x5cm`) は
+   * 長辺が英字・短辺が数字 (下から)。
+   */
+  readonly silk: Silk;
   /**
    * 実物が揺れる基板の、穴数の許す範囲 (この向きでの列と行)。無ければ数えた
    * 1 通りだけ。`grid:` がこの内側なら黙って受け、外なら「数えていない」と言う。
@@ -76,6 +84,7 @@ const standard = (
   rows,
   aliases: [],
   turnable: true,
+  silk: 'fence',
   ...(gridRange ? { gridRange } : {}),
 });
 
@@ -96,6 +105,7 @@ const BOARDS: readonly CatalogBoard[] = [
     rows: 40,
     aliases: ['a'],
     turnable: false,
+    silk: 'alpha-rows',
   },
   {
     key: 'akizuki-b',
@@ -105,6 +115,7 @@ const BOARDS: readonly CatalogBoard[] = [
     rows: 27,
     aliases: ['b'],
     turnable: false,
+    silk: 'alpha-rows',
   },
   {
     // 72×47.5mm と 72×48mm は**別の基板**で、穴数も違う (頭書き)。
@@ -116,6 +127,7 @@ const BOARDS: readonly CatalogBoard[] = [
     rows: 15,
     aliases: ['c'],
     turnable: false,
+    silk: 'alpha-rows',
   },
   {
     key: 'akizuki-d',
@@ -125,6 +137,7 @@ const BOARDS: readonly CatalogBoard[] = [
     rows: 14,
     aliases: ['d'],
     turnable: false,
+    silk: 'alpha-rows',
   },
   ...STANDARD_BOARDS,
 ];
@@ -193,6 +206,8 @@ function turned(board: CatalogBoard): CatalogBoard {
     mm: [[tall, wide]],
     cols: board.rows,
     rows: board.cols,
+    // 寝かせると長辺が横に来て、そちらに英字が刷られている (手持ちのアリエクスプレスの基板)。
+    silk: 'alpha-cols',
     ...(gridRange ? { gridRange: { cols: gridRange.rows, rows: gridRange.cols } } : {}),
   };
 }

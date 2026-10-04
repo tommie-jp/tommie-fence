@@ -6,7 +6,7 @@ import { formatAddress, isCrossing, parseAddress } from '../model/address.ts';
 import { isOnBoard, offBoardReason } from '../model/board.ts';
 import { isEdgeMount } from '../parts/types.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import type { Address, Board, FenceError, PartSpec } from '../types.ts';
+import type { Address, Board, FenceError, PartSpec, Spelling } from '../types.ts';
 import { diffAfter } from './diff.ts';
 import { locateTokens } from './shared.ts';
 
@@ -40,8 +40,8 @@ export type Located = {
 };
 
 /** 書かれた穴を番地にする。`points:` の名前でも引ける。 */
-const addressOf = (written: string, points: ReadonlyMap<string, Address>): Address | null =>
-  parseAddress(written) ?? points.get(written) ?? null;
+const addressOf = (written: string, points: ReadonlyMap<string, Address>, spelling: Spelling): Address | null =>
+  parseAddress(written, spelling) ?? points.get(written) ?? null;
 
 /**
  * 動かす部品と、その行と、書かれた穴。読めなければ理由を返す。
@@ -62,13 +62,13 @@ export function locatePart(source: string, id: string): Located | { readonly err
 
   const points = new Map<string, Address>();
   for (const point of doc.points) {
-    const address = parseAddress(point.written);
+    const address = parseAddress(point.written, doc.board);
     if (address !== null) points.set(point.name, address);
   }
 
   const addresses: Address[] = [];
   for (const hole of part.holes) {
-    const address = addressOf(hole, points);
+    const address = addressOf(hole, points, doc.board);
     if (address === null) {
       return { error: fenceError(`穴として読めません: ${safeToken(hole)}`, part.line) };
     }
@@ -94,7 +94,7 @@ export function partSpans(source: string, id: string): readonly Span[] {
   const found = locatePart(source, id);
   if (!isLocated(found)) return [];
 
-  const located = locateTokens(found.line, found.addresses, found.points);
+  const located = locateTokens(found.line, found.addresses, found.points, found.board);
   return located === null
     ? []
     : located.tokens.map((token) => ({ line: found.lineNumber, column: token.column, length: token.length }));
@@ -122,10 +122,10 @@ export function movePart(source: string, id: string, to: Address, trial = false)
   // 部品ができる (実機で踏んだ)。ほかの部品のピンは穴に入っていなければならない。
   const off = offBoardCheck(found, targets);
   if (off !== null) {
-    return fail(`${safeToken(id)} を ${formatAddress(to)} へは動かせません (${off})`, found.lineNumber);
+    return fail(`${safeToken(id)} を ${formatAddress(to, found.board)} へは動かせません (${off})`, found.lineNumber);
   }
 
-  const located = locateTokens(found.line, found.addresses, found.points);
+  const located = locateTokens(found.line, found.addresses, found.points, found.board);
   if (located === null) {
     return fail(`${safeToken(id)} の穴を行の中に見つけられませんでした`, found.lineNumber);
   }
@@ -135,9 +135,9 @@ export function movePart(source: string, id: string, to: Address, trial = false)
     const before = found.addresses[index];
     const after = targets[index];
     if (before === undefined || after === undefined) continue;
-    const written = formatAddress(after);
+    const written = formatAddress(after, found.board);
     // 動かない穴は書き換えない (名前で書いてある所を綴りに変えてしまわない)。
-    if (formatAddress(before) === written) continue;
+    if (formatAddress(before, found.board) === written) continue;
     edits.push({ line: found.lineNumber, column: token.column, length: token.length, text: written });
   }
 
@@ -148,14 +148,14 @@ export function movePart(source: string, id: string, to: Address, trial = false)
  * その穴から `rows` 行・`cols` 列だけ離れた穴。**格子が一様**なので、
  * 行と列をそのまま足すだけ。基板の外は当てる側 (`movePart`) が改めて断る。
  */
-export function stepCell(written: string, rows: number, cols: number): string | null {
-  const from = parseAddress(written);
+export function stepCell(written: string, rows: number, cols: number, spelling: Spelling): string | null {
+  const from = parseAddress(written, spelling);
   if (from === null) return null;
   // **端数も綴れる** (`b5c3`)。刻みは小数第 1 位までで、それより細かい数は
   // 綴りに直せない (`isCrossing` で見張っている番地の形に載らない)。
   const step = { rows: round(rows), cols: round(cols) };
   if (step.rows !== rows || step.cols !== cols) return null;
-  return shiftedOn(from, step.rows, step.cols);
+  return shiftedOn(from, step.rows, step.cols, spelling);
 }
 
 /** 小数第 1 位で丸める。綴りに載る刻みはここまで。 */
@@ -165,7 +165,7 @@ const round = (value: number): number => Number(value.toFixed(1));
  * その番地から行・列にずらした綴り。**端数は交点からの残り**として持つので、
  * 升をまたぐぶんは行と列の綴りへ、残りが組 (`c3`) になる。
  */
-function shiftedOn(from: Address, rows: number, cols: number): string | null {
+function shiftedOn(from: Address, rows: number, cols: number, spelling: Spelling): string | null {
   const along = (base: number, rest: number, step: number): { whole: number; rest: number } => {
     const moved = rest + step;
     const whole = Math.floor(moved);
@@ -179,16 +179,16 @@ function shiftedOn(from: Address, rows: number, cols: number): string | null {
     col: col.whole,
     ...(row.rest === 0 ? {} : { rows: row.rest }),
     ...(col.rest === 0 ? {} : { cols: col.rest }),
-  });
+  }, spelling);
 }
 
 /**
  * 2 つの穴の間の行数と列数。**まとめて選んだものを同じだけずらす**ために要る。
  * 格子が一様なので、そのまま引くだけ。
  */
-export function stepsTo(from: string, to: string): GridStep | null {
-  const start = parseAddress(from);
-  const end = parseAddress(to);
+export function stepsTo(from: string, to: string, spelling: Spelling): GridStep | null {
+  const start = parseAddress(from, spelling);
+  const end = parseAddress(to, spelling);
   return start === null || end === null ? null : { rows: end.row - start.row, cols: end.col - start.col };
 }
 
@@ -205,5 +205,5 @@ export function offBoardCheck(
     return targets.map((address) => offBoardReason(found.board, address)).find((why) => why !== null) ?? null;
   }
   const off = targets.find((address) => !isOnBoard(found.board, address));
-  return off === undefined ? null : `${formatAddress(off)} が基板の外です`;
+  return off === undefined ? null : `${formatAddress(off, found.board)} が基板の外です`;
 }

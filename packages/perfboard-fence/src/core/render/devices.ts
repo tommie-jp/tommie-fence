@@ -2,7 +2,7 @@ import { PIN_NAME_GAP, element, fit, num, pinNameInner, pinNameRow, pinNameWidth
 import { notice, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import type { Band, Layout } from '../model/layout.ts';
-import type { DeviceSpec, FenceError, Point } from '../types.ts';
+import type { DeviceSpec, FenceError, Point, Spelling } from '../types.ts';
 import type { Theme } from './theme.ts';
 
 /**
@@ -91,7 +91,7 @@ function coverOf(box: Band, layout: Layout, above: boolean): number {
  * 帯の中に機器を横へ並べる。**幅はピンの数で決まる** — ピンを等間隔に置ける
  * 幅が要るので、ピンの多い機器ほど広くなる。
  */
-export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout): DeviceLayout {
+export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout, spelling: Spelling): DeviceLayout {
   const placed: PlacedDevice[] = [];
   const notices: FenceError[] = [];
 
@@ -99,7 +99,7 @@ export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout): D
   // (箱の左上がその番地。ピンの位置は箱から決まる)。
   for (const device of devices) {
     if (device.where === null) continue;
-    const address = parseAddress(device.where);
+    const address = parseAddress(device.where, spelling);
     if (address === null) continue;
 
     const at = layout.point(address);
@@ -121,7 +121,7 @@ export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout): D
       // **箱の左上がその番地**なので、基板の上に置いた箱は下へ伸びる。`-a` や `0` に
       // 置くと基板の縁と列の名前に被るが、書いた場所なので動かさずに言う。
       const rows = Math.ceil(cover / layout.pitch);
-      const clear = formatAddress({ row: address.row + (above ? -rows : rows), col: address.col });
+      const clear = formatAddress({ row: address.row + (above ? -rows : rows), col: address.col }, spelling);
       notices.push(notice(
         `${safeToken(device.id)} の箱が基板に重なっています (${safeToken(device.where)})。`
         + `${clear} から${above ? '上' : '下'}に置くと基板を避けられます`,
@@ -260,13 +260,14 @@ export const renderDevices = (placed: readonly PlacedDevice[], theme: Theme, edi
 export function deviceOverhang(
   devices: readonly DeviceSpec[],
   layout: Layout,
+  spelling: Spelling,
 ): { readonly above: number; readonly below: number } {
   let above = 0;
   let below = 0;
 
   for (const device of devices) {
     if (device.where === null) continue;
-    const address = parseAddress(device.where);
+    const address = parseAddress(device.where, spelling);
     if (address === null) continue;
 
     const at = layout.point(address);

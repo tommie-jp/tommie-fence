@@ -4,7 +4,7 @@ import {
   deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans,
   setNoteField, turnNote,
 } from './note.ts';
-import { parseAddress } from '../model/address.ts';
+import { FENCE_SPELLING, parseAddress } from '../model/address.ts';
 
 const BOARD = `board: 12x8
 parts:
@@ -14,7 +14,7 @@ notes:
   - box e5 g7 blue
 `;
 
-const at = (hole: string) => parseAddress(hole)!;
+const at = (hole: string) => parseAddress(hole, FENCE_SPELLING)!;
 
 /** 行の出し入れと行の中の差し替えの両方を当てる (`applyRewrite` と同じ順)。 */
 const after = (source: string, result: ReturnType<typeof moveNote>): string => {

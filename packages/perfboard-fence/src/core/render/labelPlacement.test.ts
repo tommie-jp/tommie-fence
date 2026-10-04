@@ -51,6 +51,7 @@ const find = (svg: string, pattern: RegExp): Text => {
 const GND_UNDER = [
   'board:',
   '  size: 7x5cm',
+  '  silk: fence',
   'parts:',
   '  J1: sma/female-edge i1 h0 j0',
   '  J2: sma/female-edge i24 j25',
@@ -79,6 +80,7 @@ describe('part captions keep clear of the wires', () => {
     const { svg } = renderPerfboard([
       'board:',
       '  size: 7x5cm',
+  '  silk: fence',
       'parts:',
       '  FL1: ic3 i7 i8 i9 SFELF10M7',
       'wires:',
@@ -92,6 +94,7 @@ describe('part captions keep clear of the wires', () => {
     const { svg } = renderPerfboard([
       'board:',
       '  size: 7x5cm',
+  '  silk: fence',
       'parts:',
       '  FL1: sip3 i7 SFELF10M7',
       'wires:',

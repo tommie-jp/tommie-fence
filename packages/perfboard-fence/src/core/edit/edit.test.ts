@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { parseAddress } from '../model/address.ts';
+import { FENCE_SPELLING, parseAddress } from '../model/address.ts';
 import type { Address } from '../types.ts';
 import { aimAt, fenceAt } from './map.ts';
 import { movePart, movablePartIds, partSpans } from './move.ts';
@@ -7,7 +7,7 @@ import { movableNodes, movePoint, nodeSpans } from './point.ts';
 import { applyEdits } from './shared.ts';
 
 const at = (text: string): Address => {
-  const address = parseAddress(text);
+  const address = parseAddress(text, FENCE_SPELLING);
   if (address === null) throw new Error(`番地ではありません: ${text}`);
   return address;
 };

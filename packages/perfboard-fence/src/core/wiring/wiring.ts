@@ -102,7 +102,7 @@ export function resolveWires(
     const named = points.get(written);
     if (named !== undefined) return named;
 
-    const address = parseAddress(written);
+    const address = parseAddress(written, board);
     if (address === null) {
       errors.push(fenceError(
         `穴の番地としても points: の名前としても読めません: ${safeToken(written)}`,
@@ -188,7 +188,7 @@ export function resolveWires(
 
     if (holeStrip(from) === holeStrip(to)) {
       // 同じ穴を結ぶ線は導通を何も足さず、図の上では点にしかならない。
-      errors.push(fenceError(`配線の両端が同じ穴です (${formatAddress(from)})`, spec.line));
+      errors.push(fenceError(`配線の両端が同じ穴です (${formatAddress(from, board)})`, spec.line));
       continue;
     }
     wires.push({ from, to, color: spec.color, line: spec.line });

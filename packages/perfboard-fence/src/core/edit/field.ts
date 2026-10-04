@@ -98,13 +98,13 @@ function layoutOf(source: string, id: string): Layout | null {
 
   const resolved = new Map<string, NonNullable<ReturnType<typeof parseAddress>>>();
   for (const point of doc.points) {
-    const address = parseAddress(point.written);
+    const address = parseAddress(point.written, doc.board);
     if (address !== null) resolved.set(point.name, address);
   }
-  const holes = part.holes.map((hole) => parseAddress(hole) ?? resolved.get(hole) ?? null)
+  const holes = part.holes.map((hole) => parseAddress(hole, doc.board) ?? resolved.get(hole) ?? null)
     .filter((one) => one !== null);
 
-  const located = locateTokens(text, holes, resolved);
+  const located = locateTokens(text, holes, resolved, doc.board);
   const holeColumns = new Set((located?.tokens ?? []).map((token) => token.column));
 
   const tokens = tokensOn(text);

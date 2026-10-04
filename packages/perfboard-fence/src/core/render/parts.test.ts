@@ -5,7 +5,7 @@ import { THEME } from './theme.ts';
 import { renderParts } from './parts.ts';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
-import { formatAddress, parseAddress } from '../model/address.ts';
+import { FENCE_SPELLING, formatAddress, parseAddress } from '../model/address.ts';
 import { placeParts } from '../placement/place.ts';
 import { SMA_SIZE, edgeMountOf } from '../placement/geometry.ts';
 import type { PlacedPart } from '../types.ts';
@@ -19,7 +19,7 @@ const part = (over: Partial<PlacedPart> & { holes: readonly string[] }): PlacedP
   variant: over.variant ?? null,
   value: over.value ?? null,
   line: over.line ?? null,
-  pins: over.holes.map((hole) => ({ address: parseAddress(hole)!, strip: hole })),
+  pins: over.holes.map((hole) => ({ address: parseAddress(hole, FENCE_SPELLING)!, strip: hole })),
 });
 
 const draw = (p: PlacedPart): string => renderParts([p], layout, THEME);
@@ -27,8 +27,8 @@ const draw = (p: PlacedPart): string => renderParts([p], layout, THEME);
 describe('renderParts', () => {
   test('runs a lead from one hole to the other', () => {
     const svg = draw(part({ holes: ['b3', 'b7'] }));
-    const from = layout.point(parseAddress('b3')!);
-    const to = layout.point(parseAddress('b7')!);
+    const from = layout.point(parseAddress('b3', FENCE_SPELLING)!);
+    const to = layout.point(parseAddress('b7', FENCE_SPELLING)!);
 
     expect(svg).toContain(`x1="${from.x}"`);
     expect(svg).toContain(`x2="${to.x}"`);
@@ -159,8 +159,8 @@ describe('SMA の横置き (端面実装)', () => {
   test('reaches past the GND leg, which is the end that sits at the board edge', () => {
     const svg = renderParts(edge('female-edge'), layout, THEME);
     const body = /<g transform="translate\(([-0-9.]+) /.exec(svg);
-    const gnd = layout.point(parseAddress('b2')!);
-    const centre = layout.point(parseAddress('c4')!);
+    const gnd = layout.point(parseAddress('b2', FENCE_SPELLING)!);
+    const centre = layout.point(parseAddress('c4', FENCE_SPELLING)!);
 
     // 胴の中心は凹の先端 (2 列目) より外側 — 中心導体 (c4) から見て向こう側にある。
     expect(Number(body?.[1])).toBeLessThan(gnd.x);
@@ -197,14 +197,14 @@ describe('SMA の横置き (端面実装)', () => {
     const label = /<text x="([0-9.]+)"[^>]*>J1<\/text>/.exec(svg);
 
     expect(svg).toContain('>J1</text>');
-    expect(Number(label?.[1])).toBe(layout.point(parseAddress('c1')!).x);
+    expect(Number(label?.[1])).toBe(layout.point(parseAddress('c1', FENCE_SPELLING)!).x);
   });
 
   test('keeps the caption over the legs, not over the body that hangs off the board', () => {
     const svg = renderParts(edge('male-edge'), layout, THEME);
     const label = /<text x="([0-9.]+)"[^>]*>J1<\/text>/.exec(svg);
 
-    expect(Number(label?.[1])).toBe((layout.point(parseAddress('c4')!).x + layout.point(parseAddress('b2')!).x) / 2);
+    expect(Number(label?.[1])).toBe((layout.point(parseAddress('c4', FENCE_SPELLING)!).x + layout.point(parseAddress('b2', FENCE_SPELLING)!).x) / 2);
   });
 });
 
@@ -251,14 +251,14 @@ describe('SMA 横置きの 3 ピン (凹の両端)', () => {
   ).parts;
 
   test('takes three pins — the centre conductor and the two tips of the notch', () => {
-    expect(edge[0]?.pins.map((pin) => formatAddress(pin.address))).toEqual(['c4', 'b2', 'd2']);
+    expect(edge[0]?.pins.map((pin) => formatAddress(pin.address, FENCE_SPELLING))).toEqual(['c4', 'b2', 'd2']);
   });
 
   test('keeps the body level — the axis follows the board edge, not the legs', () => {
     const mount = edgeMountOf(edge[0]!, layout)!;
 
     expect(mount.rect.angle).toBe(0);
-    expect(mount.rect.cy).toBe(layout.point(parseAddress('c4')!).y);
+    expect(mount.rect.cy).toBe(layout.point(parseAddress('c4', FENCE_SPELLING)!).y);
   });
 
   test('puts one contact mark on each tip pin, above and below the centre line', () => {
@@ -291,8 +291,8 @@ describe('SMA 横置きの 3 ピン (凹の両端)', () => {
 
   test('draws no lead line between the legs — it would read as a short', () => {
     const svg = renderParts(edge, layout, THEME);
-    const c4 = layout.point(parseAddress('c4')!);
-    const b2 = layout.point(parseAddress('b2')!);
+    const c4 = layout.point(parseAddress('c4', FENCE_SPELLING)!);
+    const b2 = layout.point(parseAddress('b2', FENCE_SPELLING)!);
 
     expect(svg).not.toContain(`<line x1="${c4.x}" y1="${c4.y}" x2="${b2.x}" y2="${b2.y}"`);
   });
@@ -325,11 +325,11 @@ describe('縦に置いた部品のキャプション', () => {
     const upright = draw(part({ holes: ['b3', 'e3'], value: '10k' }));
     // 胴の group も rotate(90) なので、**字を抱えているほう**を見る。
     const at = /<g transform="translate\(([0-9.]+) ([0-9.]+)\) rotate\(90\)"><text/.exec(upright);
-    const hole = layout.point(parseAddress('b3')!);
+    const hole = layout.point(parseAddress('b3', FENCE_SPELLING)!);
 
     expect(Number(at?.[1])).toBeGreaterThan(hole.x);
     // ピンの真ん中の高さに来る (胴の中心ではなく、部品そのものの位置)。
-    expect(Number(at?.[2])).toBeCloseTo((hole.y + layout.point(parseAddress('e3')!).y) / 2, 5);
+    expect(Number(at?.[2])).toBeCloseTo((hole.y + layout.point(parseAddress('e3', FENCE_SPELLING)!).y) / 2, 5);
   });
 });
 

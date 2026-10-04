@@ -38,7 +38,7 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     const addresses: Address[] = [];
     let rejected = false;
     for (const hole of spec.holes) {
-      const address = parseAddress(hole);
+      const address = parseAddress(hole, board);
       // 番地として読めることは parser が見ているので、ここで見るのは基板に載るかと、
       // **交点そのものを指しているか**。ピンは穴に挿すので、交点の間 (`b5c3`) を
       // 書けるのは注釈だけ — 間に挿せる穴は実物に無い。
@@ -91,7 +91,7 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
       const outside = pins.find((address) => !isOnBoard(board, address));
       if (outside !== undefined) {
         errors.push(fenceError(
-          `${safeToken(spec.id)} のピン ${formatAddress(outside)} が基板の穴ではありません`
+          `${safeToken(spec.id)} のピン ${formatAddress(outside, board)} が基板の穴ではありません`
           + `${isTurned(spec.turn) ? ' (回した先が基板から出ています)' : ''}`,
           spec.line,
         ));
@@ -115,7 +115,7 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
       // 無いので、そちらを引くと範囲外になって投げる (プレビューが真っ白になる)。
       const address = pins[clash] as Address;
       errors.push(fenceError(
-        `${formatAddress(address)} には ${takenBy.get(strip)} のピンが入っています (1 つの穴に挿せるピンは 1 本)`,
+        `${formatAddress(address, board)} には ${takenBy.get(strip)} のピンが入っています (1 つの穴に挿せるピンは 1 本)`,
         spec.line,
       ));
       continue;

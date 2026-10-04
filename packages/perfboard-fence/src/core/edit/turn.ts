@@ -1,7 +1,7 @@
 import type { Edit } from 'fence-kit';
 import { slideBy, slideInto } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
-import { formatAddress, parseAddress } from '../model/address.ts';
+import { formatAddress, isAddressSpelling } from '../model/address.ts';
 
 import { footprintOf, pinsOf } from '../parts/footprint.ts';
 import type { Address, FenceError } from '../types.ts';
@@ -51,7 +51,7 @@ function pivotIndex(
   tokens: readonly { readonly column: number; readonly length: number }[],
 ): number | null {
   const named = tokens.findIndex(
-    (token) => parseAddress(lineText.slice(token.column, token.column + token.length)) === null,
+    (token) => !isAddressSpelling(lineText.slice(token.column, token.column + token.length)),
   );
   return named < 0 ? null : named;
 }
@@ -116,7 +116,7 @@ function writtenLeadsAt(source: string, id: string, what: string) {
     };
   }
 
-  const located = locateTokens(found.line, found.addresses, found.points);
+  const located = locateTokens(found.line, found.addresses, found.points, found.board);
   if (located === null) {
     return {
       ok: false as const,
@@ -159,7 +159,7 @@ function turnByWord(source: string, id: string, next: Turn): MoveResult {
   const found = locatePart(source, id);
   if (!isLocated(found)) return { ok: false, error: found.error };
 
-  const located = locateTokens(found.line, found.addresses, found.points);
+  const located = locateTokens(found.line, found.addresses, found.points, found.board);
   const last = located?.tokens.at(-1);
   if (last === undefined) {
     return fail(`${safeToken(id)} の穴を行の中に見つけられませんでした`, found.lineNumber);
@@ -202,7 +202,7 @@ function turnByWord(source: string, id: string, next: Turn): MoveResult {
   const held = located?.tokens[0];
   if (moved !== null && held !== undefined) {
     edits.push({
-      line: found.lineNumber, column: held.column, length: held.length, text: formatAddress(moved),
+      line: found.lineNumber, column: held.column, length: held.length, text: formatAddress(moved, found.board),
     });
   }
   if (next.rotate !== was.rotate) {
@@ -301,7 +301,8 @@ export function turnPart(
   const texts = landings.map((landing, index) => {
     const before = found.addresses[index];
     if (before === undefined) return null;
-    return formatAddress(landing) === formatAddress(before) ? null : formatAddress(landing);
+    const written = formatAddress(landing, found.board);
+    return written === formatAddress(before, found.board) ? null : written;
   });
   if (texts.every((text) => text === null)) {
     return { ok: true, value: { edits: [], diff: { lost: [], gained: [] } } };

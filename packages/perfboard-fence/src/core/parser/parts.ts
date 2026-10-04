@@ -1,13 +1,13 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
-import { parseAddress } from '../model/address.ts';
+import { isAddressSpelling, parseAddress } from '../model/address.ts';
 import { OFF_BOARD_REACH } from '../model/board.ts';
 import { footprintOf } from '../parts/footprint.ts';
 import { MIRROR_REFUSAL, MIRROR_WORD, NO_TURN, isTurned, orientOf, refusesMirror, rotationOf } from '../parts/orient.ts';
 import type { Turn } from '../parts/orient.ts';
 import { isNestedType, placeableNames, splitPartType } from '../parts/types.ts';
 import { lookupConnector, partValueProblem } from 'fence-kit';
-import type { FenceError, PartSpec } from '../types.ts';
+import type { FenceError, PartSpec, Spelling } from '../types.ts';
 
 export type Parsed<T> =
   | { readonly ok: true; readonly value: T }
@@ -23,10 +23,10 @@ const fail = (message: string, token?: string): Parsed<never> =>
 export type WrittenPart = Omit<PartSpec, 'line'>;
 
 /** 番地らしさを見る基板の大きさ (穴の数)。 */
-export type BoardExtent = { readonly cols: number; readonly rows: number };
+export type BoardExtent = Spelling & { readonly cols: number };
 
 /** 基板が決まっていないとき。**どんな基板にも載りうる**かで見る (上限の基板)。 */
-const ANY_BOARD: BoardExtent = { cols: LIMITS.cols, rows: LIMITS.rows };
+const ANY_BOARD: BoardExtent = { cols: LIMITS.cols, rows: LIMITS.rows, silk: 'fence' };
 
 /**
  * **この基板に**載りうる番地か (基板の外は `OFF_BOARD_REACH` まで)。載らないものは
@@ -34,7 +34,7 @@ const ANY_BOARD: BoardExtent = { cols: LIMITS.cols, rows: LIMITS.rows };
  * コードのつもり) を c 行 102 列と読んで「余分な番地」と断っていた。
  */
 function plausibleHole(token: string, board: BoardExtent): boolean {
-  const address = parseAddress(token);
+  const address = parseAddress(token, board);
   return address !== null
     && address.col <= board.cols + OFF_BOARD_REACH && address.row <= board.rows + OFF_BOARD_REACH;
 }
@@ -122,7 +122,7 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
     );
   }
   for (const hole of holes) {
-    if (parseAddress(hole) === null) {
+    if (!isAddressSpelling(hole)) {
       return fail(`穴の番地として読めません: ${safeToken(hole)} (行の名前 + 列の番号、例: b3)`, hole);
     }
   }

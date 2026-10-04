@@ -53,7 +53,6 @@ export const LIMITS = {
 export const THEME_NAMES = ['light', 'dark', 'mono'] as const;
 
 /** 軸の名前の振り方。**既定は行が alpha・列が numeric** (今までの図と同じ)。 */
-export const LABEL_KINDS = ['alpha', 'numeric'] as const;
 
 /** 英字の大小。**既定は upper** (基板のシルクが大文字なので、そちらに合わせる)。 */
 export const LABEL_CASES = ['upper', 'lower'] as const;

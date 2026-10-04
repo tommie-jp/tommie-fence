@@ -236,15 +236,16 @@ export type FenceEditor = {
    * 数に落ちない綴り (レールの行) は null。
    *
    * **矢印で 1 穴動かす・複製を隣に置く**ために要る。殻は番地の綴りを知らないので、
-   * 「1 つ隣」を数えられるのはフェンスだけ。
+   * 「1 つ隣」を数えられるのはフェンスだけ。**本文も渡す** — 番地の英字と数字のどちらが
+   * 行かは基板のシルクで変わり (perfboard の `board: silk:`)、綴りを読むのに本文の基板が要る。
    */
-  readonly step: (cell: string, rows: number, cols: number) => string | null;
+  readonly step: (cell: string, rows: number, cols: number, source: string) => string | null;
   /**
    * 2 つの穴の間の行数と列数。**まとめて選んだものを同じだけずらす**ために要る
    * (押した部品の動きを、ほかの部品にも掛ける)。数に落ちない綴り
    * (レールの行) や読めない綴りは null。
    */
-  readonly stepsTo: (from: string, to: string) => GridStep | null;
+  readonly stepsTo: (from: string, to: string, source: string) => GridStep | null;
 
   /** パレット (置ける部品の一覧) の HTML。 */
   readonly palette: () => string;

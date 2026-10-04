@@ -4,7 +4,7 @@ import { layoutDevices, renderDevices } from './devices.ts';
 import { THEME } from './theme.ts';
 import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
-import { parseAddress } from '../model/address.ts';
+import { FENCE_SPELLING, parseAddress } from '../model/address.ts';
 import type { DeviceSpec } from '../types.ts';
 
 const device = (
@@ -23,7 +23,7 @@ const layoutFor = (devices: readonly DeviceSpec[], cols = 16) => createLayout(
 );
 
 const place = (devices: readonly DeviceSpec[], cols = 16) =>
-  layoutDevices(devices, layoutFor(devices, cols));
+  layoutDevices(devices, layoutFor(devices, cols), FENCE_SPELLING);
 
 describe('layoutDevices', () => {
   test('places nothing when no device was written', () => {
@@ -33,7 +33,7 @@ describe('layoutDevices', () => {
   test('puts a device in the band on the side it asked for', () => {
     const devices = [device('BAT', ['+', '-']), device('SPK', ['1', '2'], 'bottom')];
     const layout = layoutFor(devices);
-    const { placed } = layoutDevices(devices, layout);
+    const { placed } = layoutDevices(devices, layout, FENCE_SPELLING);
 
     const bat = placed.find((one) => one.device.id === 'BAT')!;
     const spk = placed.find((one) => one.device.id === 'SPK')!;
@@ -43,7 +43,7 @@ describe('layoutDevices', () => {
 
   test('turns the legs towards the board, so a wire reads as reaching it', () => {
     const devices = [device('BAT', ['+', '-']), device('SPK', ['1', '2'], 'bottom')];
-    const { placed } = layoutDevices(devices, layoutFor(devices));
+    const { placed } = layoutDevices(devices, layoutFor(devices), FENCE_SPELLING);
 
     const bat = placed.find((one) => one.device.id === 'BAT')!;
     const spk = placed.find((one) => one.device.id === 'SPK')!;
@@ -55,7 +55,7 @@ describe('layoutDevices', () => {
     // viewBox の外に描いた箱は**黙って切れる**。切れた図は間違いに見えない。
     const devices = ['A', 'B', 'C', 'D'].map((id) => device(id, ['1', '2']));
     const layout = layoutFor(devices, 10);
-    const { placed } = layoutDevices(devices, layout);
+    const { placed } = layoutDevices(devices, layout, FENCE_SPELLING);
 
     for (const one of placed) {
       expect(one.box.x).toBeGreaterThanOrEqual(0);
@@ -99,8 +99,8 @@ describe('番地で置いた機器', () => {
     // 帯に並べると、書いた人が置きたかった場所と関係なく散る。
     const board = createBoard({ cols: 16, rows: 8 });
     const layout = createLayout(board, { deviceTop: false, deviceBottom: false });
-    const { placed } = layoutDevices([device('IN', ['sig', 'gnd'], 'top', '-c2')], layout);
-    const at = layout.point(parseAddress('-c2')!);
+    const { placed } = layoutDevices([device('IN', ['sig', 'gnd'], 'top', '-c2')], layout, FENCE_SPELLING);
+    const at = layout.point(parseAddress('-c2', FENCE_SPELLING)!);
 
     expect(placed).toHaveLength(1);
     expect(placed[0]?.box.y).toBe(at.y);
@@ -115,8 +115,8 @@ describe('番地で置いた機器', () => {
   test('turns the legs toward the board, whichever side it was put on', () => {
     const board = createBoard({ cols: 16, rows: 8 });
     const layout = createLayout(board, { deviceTop: false, deviceBottom: false });
-    const above = layoutDevices([device('IN', ['sig'], 'top', '-c2')], layout).placed[0]!;
-    const below = layoutDevices([device('SPK', ['1'], 'top', 'm2')], layout).placed[0]!;
+    const above = layoutDevices([device('IN', ['sig'], 'top', '-c2')], layout, FENCE_SPELLING).placed[0]!;
+    const below = layoutDevices([device('SPK', ['1'], 'top', 'm2')], layout, FENCE_SPELLING).placed[0]!;
 
     // 上に置いた機器のピンは箱の下、下に置いた機器のピンは箱の上へ出る。
     expect(above.pins.get('sig')!.y).toBeGreaterThan(above.box.y);
@@ -129,6 +129,7 @@ describe('番地で置いた機器', () => {
     const { placed } = layoutDevices(
       [device('IN', ['sig'], 'top', '-c2'), device('BAT', ['+', '-'])],
       layout,
+      FENCE_SPELLING,
     );
 
     expect(placed).toHaveLength(2);
@@ -140,7 +141,7 @@ describe('番地で置いた機器の箱が基板に被る', () => {
   const board = createBoard({ cols: 20, rows: 4 });
   const layout = createLayout(board, { deviceTop: false, deviceBottom: false });
   const said = (where: string): string =>
-    layoutDevices([device('USB', ['-', '+'], 'top', where)], layout).notices
+    layoutDevices([device('USB', ['-', '+'], 'top', where)], layout, FENCE_SPELLING).notices
       .map((one) => one.message).join('\n');
 
   test('names the row above that clears the board, for a box written just above it', () => {
@@ -183,7 +184,7 @@ describe('ピンの名前が隣と触れない', () => {
   ] as const)('%s', (_, pins, where) => {
     const devices = [device('PIR', pins, 'top', where)];
     const layout = createLayout(createBoard({ cols: 16, rows: 8 }), { deviceTop: where === null });
-    const svg = renderDevices(layoutDevices(devices, layout).placed, THEME);
+    const svg = renderDevices(layoutDevices(devices, layout, FENCE_SPELLING).placed, THEME);
     const names = drawnTexts(svg).filter((drawn) => (pins as readonly string[]).includes(drawn.text));
 
     expect(names).toHaveLength(pins.length);

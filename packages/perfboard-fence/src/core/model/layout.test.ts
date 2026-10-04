@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { PITCH, createLayout } from './layout.ts';
 import { createBoard } from './board.ts';
-import { parseAddress } from './address.ts';
+import { FENCE_SPELLING, parseAddress } from './address.ts';
 
-const at = (text: string) => parseAddress(text)!;
+const at = (text: string) => parseAddress(text, FENCE_SPELLING)!;
 const board = createBoard({ cols: 28, rows: 18 });
 const layout = createLayout(board);
 

@@ -1,4 +1,4 @@
-import type { Address } from '../types.ts';
+import type { Address, Spelling } from '../types.ts';
 
 const ALPHABET = 26;
 const CODE_A = 'a'.charCodeAt(0);
@@ -80,42 +80,106 @@ export function rowIndex(label: string): number | null {
 }
 
 /**
+ * 番地の綴りの形をしているか。**数え方 (`Spelling`) を問わない**ので、
+ * 「番地と同じ綴りは名前にできない」のような、綴りだけを見る所で使う。
+ */
+export function isAddressSpelling(text: string): boolean {
+  const found = ADDRESS.exec(text.toLowerCase());
+  return found !== null && found[3] !== EMPTY_PAIR;
+}
+
+/**
  * 穴番地 (`b3`) を読む。**基板に載るかどうかは見ない** — 行数と列数を
  * 知っているのは基板なので、そちらが言う (`offBoardReason`)。
+ *
+ * **英字と数字のどちらが行かは基板のシルクで決まる** (`Spelling`)。
+ * 中の持ち方 (`Address`) は数え方によらず「上から何行目・左から何列目」。
  */
-export function parseAddress(text: string): Address | null {
+export function parseAddress(text: string, spelling: Spelling): Address | null {
   // 基板の印字が大文字のことがあるので、どちらでも受けて小文字に正規化する。
   const found = ADDRESS.exec(text.toLowerCase());
   if (!found) return null;
 
   const [, label = '', digits = '', pair = ''] = found;
-  const row = rowIndex(label);
-  const col = Number(digits);
-  if (row === null || !Number.isFinite(col) || pair === EMPTY_PAIR) return null;
-  return { row, col, ...stepsOf(pair) };
+  const letters = rowIndex(label);
+  const number = Number(digits);
+  if (letters === null || !Number.isFinite(number) || pair === EMPTY_PAIR) return null;
+
+  const letterTenths = letters * TENTHS + (FRACTION_LETTERS.indexOf(pair[0] ?? 'a'));
+  const numberTenths = number * TENTHS + Number(pair[1] ?? 0);
+  const { rowTenths, colTenths } = toGrid(letterTenths, numberTenths, spelling);
+  return fromTenths(rowTenths, colTenths);
 }
 
-export const formatAddress = (address: Address): string =>
-  `${rowLabel(address.row)}${address.col}${pairOf(address)}`;
+export const formatAddress = (address: Address, spelling: Spelling): string => {
+  const rowTenths = Math.round((address.row + (address.rows ?? 0)) * TENTHS);
+  const colTenths = Math.round((address.col + (address.cols ?? 0)) * TENTHS);
+  const { letterTenths, numberTenths } = toSpelling(rowTenths, colTenths, spelling);
+  const letters = Math.floor(letterTenths / TENTHS);
+  const number = Math.floor(numberTenths / TENTHS);
+  return `${rowLabel(letters)}${number}${pairOfTenths(letterTenths - letters * TENTHS, numberTenths - number * TENTHS)}`;
+};
+
+/** 0.1 穴を 1 とする整数で持つ。**浮動小数の誤差で綴りが揺れない**ように。 */
+const TENTHS = 10;
+
+/** 下から数える軸の名前の番号。**基板の外 (0 と負) も同じ式で続く**。 */
+const fromBottom = (tenths: number, spelling: Spelling): number => (spelling.rows + 1) * TENTHS - tenths;
+
+/** 行と列 (上から・左から) → 綴りの英字の軸と数字の軸 (どちらも 0.1 穴の整数)。 */
+function toSpelling(rowTenths: number, colTenths: number, spelling: Spelling) {
+  switch (spelling.silk) {
+    case 'alpha-rows': return { letterTenths: fromBottom(rowTenths, spelling), numberTenths: colTenths };
+    case 'alpha-cols': return { letterTenths: colTenths, numberTenths: fromBottom(rowTenths, spelling) };
+    case 'fence': return { letterTenths: rowTenths, numberTenths: colTenths };
+  }
+}
+
+/** `toSpelling` の逆。 */
+function toGrid(letterTenths: number, numberTenths: number, spelling: Spelling) {
+  switch (spelling.silk) {
+    case 'alpha-rows': return { rowTenths: fromBottom(letterTenths, spelling), colTenths: numberTenths };
+    case 'alpha-cols': return { rowTenths: fromBottom(numberTenths, spelling), colTenths: letterTenths };
+    case 'fence': return { rowTenths: letterTenths, colTenths: numberTenths };
+  }
+}
 
 /**
- * 組 → 行と列の端数。**端数が無ければ鍵ごと持たない** — 交点の番地は今までと
+ * 0.1 穴の整数 → 番地。**端数が無ければ鍵ごと持たない** — 交点の番地は今までと
  * 同じ形のままにする (`{ row, col }` を比べているところが多い)。
  */
-function stepsOf(pair: string): { readonly rows?: number; readonly cols?: number } {
-  if (pair === '') return {};
-  return {
-    rows: FRACTION_LETTERS.indexOf(pair[0] ?? 'a') / 10,
-    cols: Number(pair[1] ?? 0) / 10,
-  };
+function fromTenths(rowTenths: number, colTenths: number): Address {
+  const row = Math.floor(rowTenths / TENTHS);
+  const col = Math.floor(colTenths / TENTHS);
+  const rows = (rowTenths - row * TENTHS) / TENTHS;
+  const cols = (colTenths - col * TENTHS) / TENTHS;
+  return rows === 0 && cols === 0 ? { row, col } : { row, col, rows, cols };
 }
 
-/** 端数を綴りに戻す。0 なら組を書かない (同じ場所の綴りを 1 つに保つ)。 */
-function pairOf(address: Address): string {
-  const rows = Math.round((address.rows ?? 0) * 10);
-  const cols = Math.round((address.cols ?? 0) * 10);
-  return rows === 0 && cols === 0 ? '' : `${FRACTION_LETTERS[rows] ?? 'a'}${cols}`;
-}
+/** 端数を綴りの組にする。両方 0 なら組を書かない (同じ場所の綴りを 1 つに保つ)。 */
+const pairOfTenths = (letterFraction: number, numberFraction: number): string =>
+  letterFraction === 0 && numberFraction === 0 ? '' : `${FRACTION_LETTERS[letterFraction] ?? 'a'}${numberFraction}`;
+
+/**
+ * `fence` の綴りで読み書きするときの面 (`rows` は「下から」でしか使わない)。
+ * 基板を持たない所 (試験の下ごしらえ) 向け。
+ */
+export const FENCE_SPELLING: Spelling = { silk: 'fence', rows: 0 };
+
+/**
+ * 行と列それぞれの名前 (図の端に出す字。**番地の綴りと同じ字**)。
+ * 英字のほうは `a` `b` …、数字のほうは `1` `2` …。基板の外 (0 と範囲外) も同じ式で続く。
+ */
+export const rowName = (row: number, spelling: Spelling): string => {
+  switch (spelling.silk) {
+    case 'fence': return rowLabel(row);
+    case 'alpha-rows': return rowLabel(spelling.rows + 1 - row);
+    case 'alpha-cols': return String(spelling.rows + 1 - row);
+  }
+};
+
+export const colName = (col: number, spelling: Spelling): string =>
+  spelling.silk === 'alpha-cols' ? rowLabel(col) : String(col);
 
 /** 交点そのものか (端数を持たないか)。**穴に挿すものは交点だけ**。 */
 export const isCrossing = (address: Address): boolean =>

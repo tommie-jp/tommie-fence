@@ -1,5 +1,5 @@
 import { LIMITS } from '../limits.ts';
-import type { Address, Board, BoardMaterial, BoardSize, StripId } from '../types.ts';
+import type { Address, Board, BoardMaterial, BoardSize, Silk, StripId } from '../types.ts';
 import { formatAddress, rowLabel } from './address.ts';
 import type { CatalogBoard } from './catalog.ts';
 import { boardNames, describeBoard, lookupBoard, nearestBoard, parseMillimetres } from './catalog.ts';
@@ -12,6 +12,7 @@ const SIZE = /^\s*([0-9]+)\s*[xX×]\s*([0-9]+)\s*$/;
 /** 基板の仕上げ。書かれていないものは null で、テーマの既定 (緑と銀) が出る。 */
 export type BoardFinish = {
   readonly slots?: boolean;
+  readonly silk?: Silk;
   readonly color?: string | null;
   readonly land?: string | null;
   readonly slotColor?: string | null;
@@ -35,6 +36,19 @@ export const MATERIALS: readonly BoardMaterial[] = ['FR-4', 'CEM-3', 'CEM-1', 'F
 /** 厚さの上限と下限 (mm)。copper フェンスの `h:` と同じ幅。 */
 export const H_MIN = 0.1;
 export const H_MAX = 10;
+
+/**
+ * `silk:` に書ける言葉。**`board` は基板の刷りどおり** (名前の基板はカタログの振り方、
+ * 穴数直書きの基板はシルクを知らないので `fence`)。ほかの 3 つは振り方そのもの。
+ */
+export const SILK_WORDS = ['board', 'fence', 'alpha-rows', 'alpha-cols'] as const;
+
+/** `silk:` の言葉を振り方にする。読めなければ null。大小は問わない。 */
+export function resolveSilk(text: string, named: CatalogBoard | null): Silk | null {
+  const wanted = text.trim().toLowerCase();
+  if (wanted === 'board') return named?.silk ?? 'fence';
+  return wanted === 'fence' || wanted === 'alpha-rows' || wanted === 'alpha-cols' ? wanted : null;
+}
 
 /** `1.6mm`。**単位が要る** (文法の方針 1)。copper フェンスの長さと同じ綴り。 */
 const LENGTH = /^(\d{1,3}(?:\.\d{1,3})?)mm$/;
@@ -71,6 +85,7 @@ export const createBoard = (size: BoardSize, finish: BoardFinish = {}): Board =>
   cols: size.cols,
   rows: size.rows,
   slots: finish.slots ?? false,
+  silk: finish.silk ?? 'fence',
   color: finish.color ?? null,
   land: finish.land ?? null,
   slotColor: finish.slotColor ?? null,
@@ -180,7 +195,7 @@ export function resolveGrid(named: CatalogBoard | null, text: string): GridResol
 export function resolveBoard(text: string): BoardResolution {
   const named = lookupBoard(text);
   if (named) {
-    return { ok: true, board: createBoard({ cols: named.cols, rows: named.rows }), named, notice: null };
+    return { ok: true, board: createBoard({ cols: named.cols, rows: named.rows }, { silk: named.silk }), named, notice: null };
   }
 
   const mm = parseMillimetres(text);
@@ -236,6 +251,20 @@ function unitlessNotice(size: BoardSize): string | null {
 export const OFF_BOARD_REACH = 4;
 
 /**
+ * 基板の広がりを、シルクの名前で言う。**行が英字か数字かは `silk` で変わる**ので、
+ * 「a〜j の 10 行」「1〜25 列」のように綴りと同じ字で言わないと直す手がかりにならない。
+ */
+function extentText(board: Board): { readonly rows: string; readonly cols: string } {
+  const letters = (count: number, unit: string): string => `a〜${rowLabel(count)} の ${count} ${unit}`;
+  const numbers = (count: number, unit: string): string => `1〜${count} ${unit}`;
+  const rowsAreLetters = board.silk !== 'alpha-cols';
+  return {
+    rows: rowsAreLetters ? letters(board.rows, '行') : numbers(board.rows, '行'),
+    cols: rowsAreLetters ? numbers(board.cols, '列') : letters(board.cols, '列'),
+  };
+}
+
+/**
  * 番地がこの基板から離れすぎている理由。置けるなら null。
  *
  * **基板の外は指せる。** 縁の銅箔 (スロット) は穴の格子のちょうど 1 つ外に
@@ -248,12 +277,12 @@ export const OFF_BOARD_REACH = 4;
 export function offBoardReason(board: Board, address: Address): string | null {
   const reach = OFF_BOARD_REACH;
   if (address.col > board.cols + reach || address.col < 1 - reach) {
-    return `${formatAddress(address)} は基板から離れすぎです`
-      + ` (基板は 1〜${board.cols} 列、外は ${reach} つ先まで)`;
+    return `${formatAddress(address, board)} は基板から離れすぎです`
+      + ` (基板は ${extentText(board).cols}、外は ${reach} つ先まで)`;
   }
   if (address.row > board.rows + reach || address.row < 1 - reach) {
-    return `${formatAddress(address)} は基板から離れすぎです`
-      + ` (基板は a〜${rowLabel(board.rows)} の ${board.rows} 行、外は ${reach} つ先まで)`;
+    return `${formatAddress(address, board)} は基板から離れすぎです`
+      + ` (基板は ${extentText(board).rows}、外は ${reach} つ先まで)`;
   }
   return null;
 }

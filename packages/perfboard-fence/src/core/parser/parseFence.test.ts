@@ -48,7 +48,7 @@ describe('parseFence', () => {
   test('keeps the document when the fence is well formed', () => {
     const parsed = parseFence('board: 28x18\n');
 
-    expect(parsed.doc?.board).toEqual({ cols: 28, rows: 18, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
+    expect(parsed.doc?.board).toEqual({ cols: 28, rows: 18, slots: false, silk: 'fence', color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
     expect(parsed.errors).toEqual([]);
   });
   test('says once that board: has no value, not twice that it is missing', () => {
@@ -71,7 +71,7 @@ describe('parseFence', () => {
     const parsed = parseFence('board: akizuki-c\n');
 
     expect(parsed.errors).toEqual([]);
-    expect(parsed.doc?.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
+    expect(parsed.doc?.board).toEqual({ cols: 25, rows: 15, slots: false, silk: 'alpha-rows', color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
   });
 
   test('reads a board written as the size it is sold at', () => {
@@ -80,7 +80,7 @@ describe('parseFence', () => {
       const parsed = parseFence(`board: ${spelling}\n`);
 
       expect(parsed.errors).toEqual([]);
-      expect(parsed.doc?.board).toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
+      expect(parsed.doc?.board).toEqual({ cols: 25, rows: 15, slots: false, silk: 'alpha-rows', color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
     }
   });
 
@@ -97,7 +97,7 @@ describe('parseFence', () => {
     // エラーではなくお知らせだが、言わないと**別物の図に気づけない**。
     const parsed = parseFence('board: 72x47\n');
 
-    expect(parsed.doc?.board).toEqual({ cols: 72, rows: 47, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
+    expect(parsed.doc?.board).toEqual({ cols: 72, rows: 47, slots: false, silk: 'fence', color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
     expect(parsed.errors).toHaveLength(1);
     expect(parsed.errors[0]?.notice).toBe(true);
     expect(parsed.errors[0]?.message).toContain('akizuki-c');
@@ -224,12 +224,12 @@ describe('board: のマップ形式 (スロット用の銅箔)', () => {
     const parsed = parseFence('board:\n  size: 12x7\n');
 
     expect(parsed.errors).toEqual([]);
-    expect(parsed.doc?.board).toEqual({ cols: 12, rows: 7, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
+    expect(parsed.doc?.board).toEqual({ cols: 12, rows: 7, slots: false, silk: 'fence', color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
   });
 
   test('takes a name there too, since it is the same spelling as before', () => {
     expect(parseFence('board:\n  size: akizuki-c\n').doc?.board)
-      .toEqual({ cols: 25, rows: 15, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
+      .toEqual({ cols: 25, rows: 15, slots: false, silk: 'alpha-rows', color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
   });
 
   test('draws the slot copper when it was asked for', () => {

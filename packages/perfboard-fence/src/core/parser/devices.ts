@@ -1,6 +1,6 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, clampText, isPinName, isReferenceable } from '../limits.ts';
-import { parseAddress } from '../model/address.ts';
+import { isAddressSpelling } from '../model/address.ts';
 import type { DeviceSpec, DeviceSide } from '../types.ts';
 import type { Parsed } from './parts.ts';
 
@@ -46,7 +46,7 @@ export function parseDevice(id: string, entries: Record<string, unknown>): Parse
   }
   const side = SIDES.includes(at as DeviceSide) ? (at as DeviceSide) : null;
   const where = side === null ? at : null;
-  if (where !== null && parseAddress(where) === null) {
+  if (where !== null && !isAddressSpelling(where)) {
     return fail(
       `機器を置ける側は ${SIDES.join(' / ')} か番地です: ${safeToken(where)}`,
       where,

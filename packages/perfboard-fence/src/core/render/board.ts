@@ -1,6 +1,6 @@
 import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, element, num, svgText } from 'fence-kit';
 import { slotEdges } from '../model/board.ts';
-import { axisLabel } from './labels.ts';
+import { colAxisLabel, rowAxisLabel } from './labels.ts';
 import { LABEL_OFFSET, NO_SHIFTS } from './rowLabelShift.ts';
 import type { RowLabelShifts } from './rowLabelShift.ts';
 import type { Layout } from '../model/layout.ts';
@@ -9,7 +9,7 @@ import type { ResolvedLabels, Theme } from './theme.ts';
 
 /** 名前の付け方を書かなかったとき (図を組まずに基板だけ描くとき) の既定。 */
 const DEFAULT_LABELS: ResolvedLabels = {
-  row: 'alpha', col: 'numeric', case: 'upper', sides: ['left', 'top'],
+  case: 'upper', sides: ['left', 'top'],
 };
 
 /**
@@ -98,7 +98,7 @@ export function renderAxisLabels(
   const halo = palette.canvas ?? LIGHT_PAGE;
   const drawn: string[] = [];
   const rowLabelAt = (at: number, row: number): string =>
-    svgText(at, layout.rowY(row), axisLabel(row, labels.row, labels.case), {
+    svgText(at, layout.rowY(row), rowAxisLabel(row, board, labels.case), {
       // **縦に並ぶ名前は中央に寄せる。** 右端で揃えると、桁の違う名前 (`9` と `10`、
       // `Z` と `AA`) が左へはみ出して、列の名前と揃わない。
       anchor: 'middle',
@@ -109,7 +109,7 @@ export function renderAxisLabels(
       'dominant-baseline': 'middle',
     });
   const colLabelAt = (at: number, col: number): string =>
-    svgText(layout.colX(col), at, axisLabel(col, labels.col, labels.case), {
+    svgText(layout.colX(col), at, colAxisLabel(col, board, labels.case), {
       fill: palette.label,
       halo,
       haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,

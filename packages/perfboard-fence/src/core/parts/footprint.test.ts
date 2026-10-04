@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { DIP_ROW_SPAN, edgeSideOf, footprintOf, mirroredTip, pinsOf } from './footprint.ts';
-import { parseAddress } from '../model/address.ts';
+import { FENCE_SPELLING, parseAddress } from '../model/address.ts';
 
-const at = (text: string) => parseAddress(text)!;
+const at = (text: string) => parseAddress(text, FENCE_SPELLING)!;
 
 describe('footprintOf', () => {
   test('knows a two-lead part is written with two holes', () => {
@@ -75,7 +75,7 @@ describe('pinsOf', () => {
 });
 
 describe('端面実装の凹の先端', () => {
-  const at = (text: string) => parseAddress(text)!;
+  const at = (text: string) => parseAddress(text, FENCE_SPELLING)!;
   const board = { cols: 16, rows: 8 };
   const edge = footprintOf('sma', 'female-edge')!;
 

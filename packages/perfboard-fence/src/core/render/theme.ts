@@ -1,5 +1,5 @@
 import { LAND_COLORS, PLATE_COLORS, darken, landValue, plateValue, textOn, wireOn } from './finish.ts';
-import type { Board, LabelCase, LabelKind, LabelSide, StyleSpec, ThemeName } from '../types.ts';
+import type { Board, LabelCase, LabelSide, StyleSpec, ThemeName } from '../types.ts';
 
 /**
  * 基板と印字の配色と寸法。
@@ -187,8 +187,6 @@ export type ResolvedStyle = {
 
 /** 名前の付け方。**既定は行が英字・列が数字で、英字は大文字**。 */
 export type ResolvedLabels = {
-  readonly row: LabelKind;
-  readonly col: LabelKind;
   readonly case: LabelCase;
   /** 名前を出す辺。**既定は左と上だけ**。 */
   readonly sides: readonly LabelSide[];
@@ -206,10 +204,8 @@ export function resolveStyle(style: StyleSpec): ResolvedStyle {
     // 見張りを外すのは書いた人がそう言ったときだけにする。
     check: style.check ?? true,
     labels: {
-      // 行が英字・列が数字は**今までの図と同じ**。英字を大文字にしたのは、
-      // 基板のシルク (秋月 C タイプの A・E・J・O) が大文字だから。
-      row: style.labels?.row ?? 'alpha',
-      col: style.labels?.col ?? 'numeric',
+      // 英字を大文字にしたのは、基板のシルク (秋月 C タイプの A・E・J・O) が大文字だから。
+      // 英字と数字のどちらが行かは基板のシルクが決める (`board: silk:`)。
       case: style.labels?.case ?? 'upper',
       // **既定は左と上だけ。** 4 辺に出すと、小さい基板では名前のほうが目立つ。
       sides: style.labels?.sides ?? ['left', 'top'],

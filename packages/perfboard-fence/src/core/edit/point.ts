@@ -1,7 +1,7 @@
 import { normalizeNewlines } from 'fence-kit';
 import type { Edit, Span } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
-import { formatAddress, parseAddress } from '../model/address.ts';
+import { formatAddress, isAddressSpelling, parseAddress } from '../model/address.ts';
 import { isSolderable } from '../model/board.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import type { Address, Board } from '../types.ts';
@@ -64,14 +64,14 @@ export function scan(source: string): Doc {
   const lines = normalized.split('\n');
   const names = new Map<string, Address>();
   for (const point of doc.points) {
-    const address = parseAddress(point.written);
+    const address = parseAddress(point.written, doc.board);
     if (address !== null) names.set(point.name, address);
   }
 
   const written: Written[] = [];
 
   for (const point of doc.points) {
-    const address = parseAddress(point.written);
+    const address = parseAddress(point.written, doc.board);
     const text = point.line === null ? undefined : lines[point.line - 1];
     if (address === null || point.line === null || text === undefined) continue;
     const column = text.lastIndexOf(point.written);
@@ -93,13 +93,13 @@ export function scan(source: string): Doc {
 
     const holes: Address[] = [];
     for (const hole of part.holes) {
-      const address = parseAddress(hole) ?? names.get(hole) ?? null;
+      const address = parseAddress(hole, doc.board) ?? names.get(hole) ?? null;
       if (address !== null) holes.push(address);
     }
     if (holes.length !== part.holes.length) continue;
     parts.push({ id: part.id, line: part.line, holes });
 
-    const located = locateTokens(text, holes, names);
+    const located = locateTokens(text, holes, names, doc.board);
     if (located === null) continue;
     for (const [index, token] of located.tokens.entries()) {
       const address = holes[index];
@@ -110,7 +110,7 @@ export function scan(source: string): Doc {
         column: token.column,
         length: token.length,
         address,
-        byName: parseAddress(spelling) === null,
+        byName: !isAddressSpelling(spelling),
         from: 'part',
       });
     }
@@ -122,14 +122,14 @@ export function scan(source: string): Doc {
   for (const line of wireLines) {
     const text = lines[line - 1];
     if (text === undefined) continue;
-    for (const token of addressTokensOn(text, names)) {
+    for (const token of addressTokensOn(text, doc.board, names)) {
       const spelling = text.slice(token.column, token.column + token.length);
       written.push({
         line,
         column: token.column,
         length: token.length,
         address: token.address,
-        byName: parseAddress(spelling) === null,
+        byName: !isAddressSpelling(spelling),
         from: 'wire',
       });
     }
@@ -146,18 +146,18 @@ export function movableNodes(source: string): readonly NodeRef[] {
 
   const byAddress = new Map<string, { address: Address; uses: number }>();
   for (const one of doc.written) {
-    const key = formatAddress(one.address);
+    const key = formatAddress(one.address, doc.board);
     const found = byAddress.get(key);
     if (found === undefined) byAddress.set(key, { address: one.address, uses: 1 });
     else found.uses += 1;
   }
 
   const nameOf = new Map<string, string>();
-  for (const [name, address] of doc.names) nameOf.set(formatAddress(address), name);
+  for (const [name, address] of doc.names) nameOf.set(formatAddress(address, doc.board), name);
 
   return [...byAddress.values()]
     .sort((a, b) => a.address.row - b.address.row || a.address.col - b.address.col)
-    .map(({ address, uses }) => ({ address, name: nameOf.get(formatAddress(address)) ?? null, uses }));
+    .map(({ address, uses }) => ({ address, name: nameOf.get(formatAddress(address, doc.board)) ?? null, uses }));
 }
 
 /** その節点が書かれている場所。エディタで光らせるのに使う。 */
@@ -173,11 +173,11 @@ export function movePoint(source: string, at: Address, to: Address, trial = fals
   const doc = scan(source);
 
   const here = doc.written.filter((one) => same(one.address, at));
-  if (here.length === 0) return fail(`${formatAddress(at)} には何も書かれていません`, null);
+  if (here.length === 0) return fail(`${formatAddress(at, doc.board)} には何も書かれていません`, null);
   if (same(at, to)) return { ok: true, value: { edits: [], diff: { lost: [], gained: [] } } };
   // **半田付けできる所なら通す** — 穴と、`slots:` を書いた基板の縁の銅箔。
   // 節点は配線の端でもあるので、穴だけに限ると銅箔へ寄せられない。
-  if (!isSolderable(doc.board, to)) return fail(`${formatAddress(to)} は基板の外です`, null);
+  if (!isSolderable(doc.board, to)) return fail(`${formatAddress(to, doc.board)} は基板の外です`, null);
 
   // **縮退は断る。** 寄せた先に自分のもう一方のピンがある部品は長さ 0 になり、
   // 図から消えてネットリストでは短絡になる。動かす前に名指して断る。
@@ -193,7 +193,7 @@ export function movePoint(source: string, at: Address, to: Address, trial = fals
   }
 
   // 名前で書かれた場所は**行き先の 1 行**が動けば付いてくる。生の綴りは運ぶ。
-  const written = formatAddress(to);
+  const written = formatAddress(to, doc.board);
   const edits: Edit[] = here
     .filter((one) => !one.byName)
     .map((one) => ({ line: one.line, column: one.column, length: one.length, text: written }));

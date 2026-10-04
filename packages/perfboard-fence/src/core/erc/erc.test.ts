@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import { checkErc } from './erc.ts';
 import { createBoard, holeStrip } from '../model/board.ts';
-import { parseAddress } from '../model/address.ts';
+import { FENCE_SPELLING, parseAddress } from '../model/address.ts';
 import { netlistOf, resolveWires } from '../wiring/wiring.ts';
 import type { PlacedPart, RoutedWire } from '../types.ts';
 
 const board = createBoard({ cols: 10, rows: 6 });
-const at = (hole: string) => parseAddress(hole)!;
+const at = (hole: string) => parseAddress(hole, FENCE_SPELLING)!;
 
 const part = (id: string, holes: readonly string[], line = 1): PlacedPart => ({
   id,
@@ -34,6 +34,7 @@ const run = (
     netlist,
     namedStrips: new Set(namedPairs.map(([address]) => holeStrip(address))),
     devices: [],
+    spelling: board,
   });
 };
 

@@ -2,11 +2,11 @@ import { describe, expect, test } from 'vitest';
 import { bodyRect, overlaps, spanOf } from './geometry.ts';
 import { createBoard, holeStrip } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
-import { parseAddress } from '../model/address.ts';
+import { FENCE_SPELLING, parseAddress } from '../model/address.ts';
 import type { PlacedPart } from '../types.ts';
 
 const layout = createLayout(createBoard({ cols: 12, rows: 8 }));
-const at = (hole: string) => parseAddress(hole)!;
+const at = (hole: string) => parseAddress(hole, FENCE_SPELLING)!;
 
 const part = (holes: readonly string[], type = 'resistor'): PlacedPart => ({
   id: 'X',

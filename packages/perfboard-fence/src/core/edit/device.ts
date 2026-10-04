@@ -5,7 +5,7 @@ import { formatAddress } from '../model/address.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { diffAfter } from './diff.ts';
 import type { MoveResult } from './move.ts';
-import type { Address, DeviceSpec } from '../types.ts';
+import type { Address, DeviceSpec, Spelling } from '../types.ts';
 
 /**
  * 基板の外の機器 (`device`) を升目から掴む。
@@ -130,7 +130,7 @@ export function moveDevice(source: string, id: string, to: string, trial = false
 }
 
 /** 落ちた穴を `at:` に書ける綴りへ。基板の外の番地はそのまま使える。 */
-export const deviceTarget = (at: Address): string => formatAddress(at);
+export const deviceTarget = (at: Address, spelling: Spelling): string => formatAddress(at, spelling);
 
 /**
  * その機器が載っている穴。**番地で置いたときだけ**返す — 帯に並べた機器は
