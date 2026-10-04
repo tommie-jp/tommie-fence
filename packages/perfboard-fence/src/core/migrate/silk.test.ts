@@ -40,6 +40,35 @@ describe('migrateSilk', () => {
     expect(source).toContain('    at: s4');
   });
 
+  test('marks the board as counted by its silk, so a second run leaves the fence alone', () => {
+    const first = migrateSilk(FENCE);
+    const second = migrateSilk(first.source);
+
+    expect(first.source).toContain('board:\n  size: akizuki-c\n  silk: board\n');
+    expect(second).toEqual({ source: first.source, changed: false, problems: [] });
+  });
+
+  test('adds the mark under size: when the board is already a map, keeping its other items', () => {
+    const mapped = FENCE.replace('board: akizuki-c', 'board:\n  size: akizuki-c\n  slots: on');
+    const { source } = migrateSilk(mapped);
+
+    expect(source).toContain('board:\n  size: akizuki-c\n  silk: board\n  slots: on\n');
+  });
+
+  test('keeps the comment after a scalar board', () => {
+    const { source } = migrateSilk(FENCE.replace('board: akizuki-c', 'board: akizuki-c # 手持ち'));
+
+    expect(source).toContain('  size: akizuki-c  # 手持ち\n  silk: board');
+  });
+
+  test('refuses a fence that still has the retired labels row and col, leaving it as it was', () => {
+    const old = FENCE.replace('title:', 'style:\n  labels:\n    row: numeric\ntitle:');
+    const result = migrateSilk(old);
+
+    expect(result.changed).toBe(false);
+    expect(result.problems[0]).toContain('廃止');
+  });
+
   test('keeps the words that are not addresses, and the layout of the lines', () => {
     const { source } = migrateSilk(FENCE);
 

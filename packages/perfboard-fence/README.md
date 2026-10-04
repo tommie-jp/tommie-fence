@@ -28,8 +28,11 @@ wires:
   - c9 -- BAT.-
 ```
 
-- Positions are **grid addresses** (`b3` — row b, column 3), not coordinate
-  pairs, so a diff means something and an LLM has less to get wrong. Row letters
+- Positions are **grid addresses** (`b3` — a letter and a number), not coordinate
+  pairs, so a diff means something and an LLM has less to get wrong. **The
+  address is spelled the way the board is printed**: on a named board (`akizuki-c`,
+  `7x5cm`, …) the letters and numbers run like the real silkscreen, and
+  `board: … silk:` picks the other way (`fence`, `alpha-rows`, `alpha-cols`). Letters
   carry the way a spreadsheet's do, so a board taller than 26 rows keeps reading
   (`aa`, `ab`)
 - **Wires are drawn by hand.** No auto-router — it does not suit a use where a

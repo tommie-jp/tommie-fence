@@ -807,7 +807,8 @@ export function createSession<D extends DocLike>(
     const start = from?.[0];
     const end = cells[0];
     if (start === undefined || end === undefined) return {};
-    const shift = editor.stepsTo(start, end, fenceNow()?.source ?? '');
+    const fence = fenceNow();
+    const shift = fence === null ? null : editor.stepsTo(start, end, fence.source);
     return shift === null ? {} : { shift };
   };
 
@@ -857,10 +858,12 @@ export function createSession<D extends DocLike>(
   function spellOf(cell: string, fine: GridStep | null): string | Refused {
     if (fine === null) return cell;
     if (editor.fine === null) return refuse('この盤では穴の間に置けません');
+    const fence = fenceNow();
+    if (fence === null) return refuse('編集中のフェンスがありません');
     if (!Number.isInteger(fine.rows * editor.fine) || !Number.isInteger(fine.cols * editor.fine)) {
       return refuse(`端数を読めませんでした (1/${editor.fine} 升の倍数ではありません)`);
     }
-    return editor.step(cell, fine.rows, fine.cols, fenceNow()?.source ?? '') ?? refuse(`${cell} の間には置けません`);
+    return editor.step(cell, fine.rows, fine.cols, fence.source) ?? refuse(`${cell} の間には置けません`);
   }
 
   /**

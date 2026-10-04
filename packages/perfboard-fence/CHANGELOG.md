@@ -5,7 +5,19 @@
 
 ## [Unreleased]
 
+### Changed (互換が変わる)
+
+- **名前の基板の番地は、基板のシルクの刷りどおりに読む**。英字と数字のどちらが行か・どちらから数えるかを
+  `board:` の `silk:` (`board` / `fence` / `alpha-rows` / `alpha-cols`) で選ぶ。`board` が既定で、
+  秋月 (`akizuki-a`〜`d`) は `alpha-rows` (英字が行・下から)、横置きの汎用 5x7cm (`7x5cm` など) は
+  `alpha-cols` (英字が列・数字が行で下から)、縦置きは `fence`。**穴数で書いた基板 (`25x15`) は今までどおり
+  `fence`**。0.31 までの読み方に戻すなら `silk: fence`。図の端の名前も番地の綴りと同じ字になる
+- `labels:` の `row` / `col` は廃止 (書くと断って `silk:` を案内する)。印字だけ替えると、図の名前と綴りが食い違うため
+- `FenceEditor` の `step` / `stepsTo` に本文を渡す (fence-kit。番地の綴りに基板のシルクが要るため)
+
 ### Added
+
+- 既存の図の番地を替える移行 `node scripts/migrate-silk.mjs` (替えたフェンスに `silk: board` の印を足すので二度掛けても替わり直さない)
 
 - 注釈 `text` に置き場の語 `left` / `right`。字を穴の脇 (丸 `mark` のすぐ外、穴と同じ高さ) に置く
   (`- text n23 red large bold right: AD3 1+`)。向きの語とは一緒に書けない

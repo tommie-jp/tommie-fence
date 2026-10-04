@@ -131,7 +131,7 @@ export function createPerfboardEditor(): FenceEditor {
       // **機器も穴を指す** — `at:` に書けるのは番地なので、端数は断る。
       if (isDevice(source, handle)) {
         if (!isCrossing(at)) return betweenHoles(to);
-        return moveDevice(source, handle, deviceTarget(at, parseFence(normalizeNewlines(source)).doc.board), trial?.preview === true);
+        return moveDevice(source, handle, deviceTarget(at, spellingOf(source)), trial?.preview === true);
       }
       if (!movablePartIds(source).includes(handle)) {
         return { ok: false, error: { message: `動かせる部品ではありません: ${handle}`, line: null } };

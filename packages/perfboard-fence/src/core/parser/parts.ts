@@ -35,8 +35,11 @@ const ANY_BOARD: BoardExtent = { cols: LIMITS.cols, rows: LIMITS.rows, silk: 'fe
  */
 function plausibleHole(token: string, board: BoardExtent): boolean {
   const address = parseAddress(token, board);
+  // **下限も見る。** 下から数える振り方 (`alpha-rows` `alpha-cols`) では、大きな番号や英字
+  // (`C102`) が行の負のほうへ落ちるので、上限だけだと型番や値が穴に化ける。
   return address !== null
-    && address.col <= board.cols + OFF_BOARD_REACH && address.row <= board.rows + OFF_BOARD_REACH;
+    && address.col <= board.cols + OFF_BOARD_REACH && address.row <= board.rows + OFF_BOARD_REACH
+    && address.col >= 1 - OFF_BOARD_REACH && address.row >= 1 - OFF_BOARD_REACH;
 }
 
 /**

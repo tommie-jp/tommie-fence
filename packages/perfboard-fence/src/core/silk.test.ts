@@ -76,6 +76,17 @@ describe('board: silk:', () => {
   });
 });
 
+describe('a value that looks like an address stays a value on a bottom-up silk', () => {
+  test('C102 after the holes of a capacitor is not read as a hole on a turned 5x7cm', () => {
+    // 数字が行 (下から) なので、102 行目は行の負のほうへ落ちる。上限だけ見ていると穴に化ける。
+    for (const board of ['7x5cm', 'akizuki-c']) {
+      const { errors } = renderPerfboard(`board: ${board}\nparts:\n  C1: capacitor/ceramic c3 c5 C102`);
+
+      expect(errors.map((error) => error.message).join('\n'), board).not.toContain('余分な番地');
+    }
+  });
+});
+
 describe('off-board messages follow the silk', () => {
   test('say the board in the letters and numbers the board is printed with', () => {
     const { errors } = renderPerfboard('board: 7x5cm\nparts:\n  R1: resistor a1 zz1 10k');

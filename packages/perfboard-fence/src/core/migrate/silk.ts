@@ -13,7 +13,8 @@ import type { Address, Spelling } from '../types.ts';
  *
  * - 穴数で書いた基板 (`25x15`) は `fence` のままなので触らない
  * - `silk:` が書いてあるフェンスは、書いた人が数え方を決めているので触らない
- * - **二度掛けない** (番地がもう一度替わる)。掛けたファイルはコミットしてから次へ進む
+ * - 替えたフェンスには `silk: board` を書き足す。**書いてあるフェンスは触らないので二度掛けても
+ *   番地が替わり直さない** (印であり、基板の刷りどおりという既定の意味を明示する)
  * - 替えたあと、全部の番地を読み直して**図の中の位置が同じ**ことを確かめる。違えば何も替えない
  */
 
@@ -85,6 +86,33 @@ function editsFor(source: string): readonly Edit[] {
   return [...edits.values()];
 }
 
+/**
+ * `board:` に `silk: board` を書き足す。スカラー (`board: 7x5cm`) はマップにし、
+ * マップは `size:` の次の行に足す。書き足せない形 (フロー形式) は null。
+ */
+function markSilk(source: string): string | null {
+  const lines = source.split('\n');
+  const at = lines.findIndex((line) => /^board:/.test(line));
+  if (at < 0) return null;
+  const line = lines[at] ?? '';
+  const scalar = /^board:[ \t]+([^#\s{][^#]*?)[ \t]*(#.*)?$/.exec(line);
+  if (scalar !== null) {
+    const comment = scalar[2] === undefined ? '' : `  ${scalar[2]}`;
+    lines.splice(at, 1, 'board:', `  size: ${scalar[1] ?? ''}${comment}`, '  silk: board');
+    return lines.join('\n');
+  }
+  if (!/^board:[ \t]*(#.*)?$/.test(line)) return null;
+  for (let index = at + 1; index < lines.length; index += 1) {
+    const child = /^([ \t]+)size:/.exec(lines[index] ?? '');
+    if (child !== null) {
+      lines.splice(index + 1, 0, `${child[1] ?? '  '}silk: board`);
+      return lines.join('\n');
+    }
+    if (/^\S/.test(lines[index] ?? '')) break;
+  }
+  return null;
+}
+
 /** 後ろから当てる (前の編集で後ろの桁がずれない)。 */
 function applyEdits(source: string, edits: readonly Edit[]): string {
   const lines = source.split('\n');
@@ -123,9 +151,17 @@ export function migrateSilk(source: string): SilkMigration {
   const { doc } = parseFence(source);
   if (doc.board.silk === 'fence') return unchanged(source);
 
+  // `labels:` の `row` / `col` は廃止した。**替わる先が一通りではない**ので手で直す。
+  if (/^\s+(row|col):\s*(alpha|numeric)\b/m.test(source)) {
+    return unchanged(source, ['labels の row / col は廃止しました。silk: で振り方を選び直してください']);
+  }
+
   const edits = editsFor(source);
+  // 番地が 1 つも無い図は、数え方が替わっても図は同じ。印も足さない。
   if (edits.length === 0) return unchanged(source);
-  const migrated = applyEdits(source, edits);
+  const edited = applyEdits(source, edits);
+  const migrated = markSilk(edited);
+  if (migrated === null) return unchanged(source, ['board: の書き方が `silk: board` を足せない形です (フロー形式)。手で直してください']);
 
   // 確かめ: 古い数え方で読んだ元の本文と、新しい数え方で読んだ移行後の本文で、
   // 全部の番地が同じ場所を指していること。
