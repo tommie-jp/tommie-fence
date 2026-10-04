@@ -11,7 +11,7 @@ import type { Theme } from './theme.ts';
  * (tinySA の画面では上だが、3 つの計器の図で読み値の場所を揃える — 52 の docs/88 §1)。
  */
 export function readingsHeading(readings: Readings, dataName: string | null): string {
-  if (readings.basis === 'data') return `読み値 — 実測 (${dataName ?? 'data'})`;
+  if (readings.basis === 'data') return `読み値 — ${dataName ?? '実測 (data)'}`;
   return readings.basis === 'hold' ? '読み値 — MAX HOLD (計算)' : '読み値 — 理想 (計算)';
 }
 
@@ -41,12 +41,12 @@ export function readingLinesOf(readings: Readings, dataName: string | null): rea
 
 const holdLabel = (sweeps: number): string => `MAX HOLD (計算 ${sweeps} 掃引)`;
 
-/** 凡例の字 (重ねたときは 破線 = 理想、実線 = 実測)。何も無ければ null。`holdSweeps` は積んだ掃引の数。 */
+/** 凡例の字 (重ねたときは 破線 = 理想、実線 = 重ねた値。`dataName` は `実測 (a.csv)` の形)。何も無ければ null。`holdSweeps` は積んだ掃引の数。 */
 export function keyText(hasModel: boolean, dataName: string | null, holdSweeps = 0): string | null {
   const items = [
     ...(holdSweeps > 0 ? [holdLabel(holdSweeps)] : []),
     ...(hasModel ? [holdSweeps > 0 ? '今の掃引 (計算)' : '理想 (計算)'] : []),
-    ...(dataName === null ? [] : [`実測 (${dataName})`]),
+    ...(dataName === null ? [] : [dataName]),
   ];
   return items.length === 0 ? null : items.join('    ');
 }
@@ -69,6 +69,6 @@ export function renderKey(hasModel: boolean, dataName: string | null, layout: La
   };
   if (holdSweeps > 0) item(holdLabel(holdSweeps), false, true);
   if (hasModel) item(holdSweeps > 0 ? '今の掃引 (計算)' : '理想 (計算)', dataName !== null);
-  if (dataName !== null) item(`実測 (${dataName})`, false);
+  if (dataName !== null) item(dataName, false);
   return out.join('');
 }

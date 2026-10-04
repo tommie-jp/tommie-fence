@@ -18,8 +18,8 @@ export type Readings = {
 
 const DASH = '—';
 
-/** 見出しの線の名前。実測の線は (実測) を添える (同じ名前の理想と並ぶため)。 */
-export const columnName = (line: LineSpec): string => (isMeasured(line) ? `${line.name} (実測)` : line.name);
+/** 見出しの線の名前。重ねた線は凡例の名前 (既定は実測) を添える (同じ名前の理想と並ぶため)。 */
+export const columnName = (line: LineSpec, dataLabel: string): string => (isMeasured(line) ? `${line.name} (${dataLabel})` : line.name);
 
 export function readingsOf(input: {
   readonly lines: readonly LineSpec[];
@@ -30,6 +30,8 @@ export function readingsOf(input: {
   readonly xName: string;
   readonly xUnit: string;
   readonly xLog: boolean;
+  /** `data:` の凡例の名前 (既定は実測)。 */
+  readonly dataLabel: string;
 }): Readings {
   const { lines, marks, xUnit, xLog } = input;
   const measured = lines.some(isMeasured);
@@ -38,7 +40,7 @@ export function readingsOf(input: {
   const markRows = marks.length === 0 || lines.length === 0
     ? []
     : [
-      [input.xName, ...lines.map(columnName)],
+      [input.xName, ...lines.map((line) => columnName(line, input.dataLabel))],
       ...marks.map((x) => [
         formatReading(x, xUnit),
         ...lines.map((line) => {
@@ -53,7 +55,7 @@ export function readingsOf(input: {
       ['peak', input.xName, '値'],
       ...lines.map((line) => {
         const top = peakOf(input.sampled.get(line) ?? []);
-        return [columnName(line), top === null ? DASH : formatReading(top.x, xUnit), top === null ? DASH : formatReading(top.y, line.unit)];
+        return [columnName(line, input.dataLabel), top === null ? DASH : formatReading(top.x, xUnit), top === null ? DASH : formatReading(top.y, line.unit)];
       }),
     ];
   return { markRows, peakRows, basis };

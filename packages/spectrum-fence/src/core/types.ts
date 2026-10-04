@@ -96,8 +96,8 @@ export type FenceDocument = {
   /** MAX HOLD で積んだ掃引 (`hold:`)。無ければ空。 */
   readonly hold: readonly HoldEntry[];
   readonly markers: readonly MarkerSpec[];
-  /** 測った値のファイル名 (`.md` の隣)。 */
-  readonly data: Located<string> | null;
+  /** 重ねる値のファイル名 (`.md` の隣) と、凡例・読み値の見出しに出す名前 (書かなければ `実測`)。 */
+  readonly data: { readonly value: string; readonly label: string; readonly line: number | null } | null;
   readonly style: StyleSpec;
   /** 書いてあった一番外側のキー (読めなかったものも)。「無いので既定で」と言うかを決める。 */
   readonly keys: readonly string[];

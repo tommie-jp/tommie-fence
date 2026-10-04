@@ -3,7 +3,7 @@ import type { Pair } from 'yaml';
 import { formatHertzReading, rememberRecent } from 'fence-kit';
 import type { WaveSpec } from 'fence-kit';
 import { fenceError, notice, safeToken } from '../errors.ts';
-import { DATA_NAME, LIMITS } from '../limits.ts';
+import { DATA_NAME, LIMITS, MEASURED_LABEL } from '../limits.ts';
 import { DEVICE_HINT, deviceOf, isDeviceName } from '../model/device.ts';
 import type { Device, DeviceKind, DeviceName } from '../model/device.ts';
 import { resolutionOf } from '../model/fftTrace.ts';
@@ -310,15 +310,24 @@ function readTitle(context: Context): string | null {
 function readData(context: Context): FenceDocument['data'] {
   const entry = context.entries.get('data');
   if (entry === undefined) return null;
-  const text = (scalarText(entry.pair.value) ?? '').trim();
-  if (!DATA_NAME.test(text)) {
+  // ファイル名の後は凡例の名前 (`data: 11-12-fm.csv 計算`)。書かなければ実測。
+  const [file = '', ...words] = (scalarText(entry.pair.value) ?? '').trim().split(/\s+/);
+  if (!DATA_NAME.test(file)) {
     context.errors.push(fenceError(
       'data: には .md と同じ場所の CSV のファイル名を書きます (例: data: 11-12-fm.csv。/ や .. は書けません)',
-      entry.at, text || undefined,
+      entry.at, file || undefined,
     ));
     return null;
   }
-  return { value: text, line: entry.at };
+  const label = words.join(' ');
+  if ([...label].length > LIMITS.dataLabel) {
+    context.errors.push(fenceError(
+      `data: の凡例の名前は ${LIMITS.dataLabel} 字までです (例: data: ${file} 計算)`,
+      entry.at, label,
+    ));
+    return null;
+  }
+  return { value: file, label: label === '' ? MEASURED_LABEL : label, line: entry.at };
 }
 
 function readFence(source: string): ParseResult {

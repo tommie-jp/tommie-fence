@@ -3,7 +3,7 @@ import { attachSourceText, fenceError, notice, shiftErrors } from './errors.ts';
 import { linearAxis, logAxis, startsAtZero } from './layout/axis.ts';
 import type { Axis } from './layout/axis.ts';
 import { SIZE, createLayout } from './layout/page.ts';
-import { LIMITS } from './limits.ts';
+import { LIMITS, MEASURED_LABEL } from './limits.ts';
 import { parseCsv } from './model/csv.ts';
 import { matchColumns } from './model/data.ts';
 import { isMeasured, peakOf, sampleLine } from './model/lines.ts';
@@ -214,13 +214,14 @@ export function renderGraph(input: string, options: RenderOptions = {}): RenderR
   const marks = doc.notes.flatMap((note) => (note.kind === 'mark' ? [note.x] : [])).slice(0, LIMITS.marks);
   const readings = readingsOf({
     lines: drawn, sampled, marks, peak: doc.notes.some((note) => note.kind === 'peak'),
-    xName: xSpec.name ?? 'x', xUnit: xSpec.unit, xLog: xAxis.log,
+    xName: xSpec.name ?? 'x', xUnit: xSpec.unit, xLog: xAxis.log, dataLabel: doc.data?.label ?? MEASURED_LABEL,
   });
-  const dataName = doc.data?.name ?? null;
+  // 読み値の見出しに出す名前 (`実測 (a.csv)` `計算 (a.csv)`)。
+  const dataName = doc.data === null ? null : `${doc.data.label} (${doc.data.name})`;
 
   // 凡例: 線の名前と見本 (理想は実線、実測は ○)。
   const legendItems: LegendItem[] = drawn.map((line) => ({
-    name: isMeasured(line) && drawn.some((other) => !isMeasured(other) && other.index === line.index) ? `${line.name} (実測)` : line.name,
+    name: isMeasured(line) && drawn.some((other) => !isMeasured(other) && other.index === line.index) ? `${line.name} (${doc.data?.label ?? MEASURED_LABEL})` : line.name,
     color: lineColor(theme, line.index),
     measured: isMeasured(line),
   }));

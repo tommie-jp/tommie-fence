@@ -9,7 +9,7 @@ import type { Theme } from './theme.ts';
  * **測った値か理想の値か**を言う (取り違えると本文の数字が嘘になる。scope・vna と同じ)。
  */
 export function readingsHeading(readings: Readings, dataName: string | null): string {
-  const data = `実測 (${dataName ?? 'data'})`;
+  const data = dataName ?? '実測 (data)';
   if (readings.basis === 'data') return `読み値 — ${data}`;
   if (readings.basis === 'mixed') return `読み値 — 理想 (計算) と ${data}`;
   return '読み値 — 理想 (計算)';

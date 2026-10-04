@@ -56,7 +56,7 @@ const NOTHING: Omit<Measured, 'said'> = { traces: [], name: null, extent: null }
  */
 function readData(doc: FenceDocument, source: DataSource | undefined): Measured {
   if (doc.data === null) return { ...NOTHING, said: [] };
-  const { name, line } = doc.data;
+  const { name, label, line } = doc.data;
   if (source === undefined) {
     return { ...NOTHING, said: [notice(`この宿主では ${name} を読めません (CLI か VS Code の拡張で描くと実測が重なります)`, line, name)] };
   }
@@ -73,7 +73,8 @@ function readData(doc: FenceDocument, source: DataSource | undefined): Measured 
   const traces = read.columns.map((column): Trace => ({ name: column.name, samples: column.values, dt: read.dt, t0, basis: 'data' }));
   return {
     traces,
-    name,
+    // 凡例と読み値の見出しに出す名前 (`実測 (a.csv)` `計算 (a.csv)`)。
+    name: `${label} (${name})`,
     extent: [t0, read.time[read.time.length - 1] ?? t0],
     said: read.notes.map((one) => notice(`${name}: ${one}`, line, name)),
   };

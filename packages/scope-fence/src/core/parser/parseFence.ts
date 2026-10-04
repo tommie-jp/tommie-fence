@@ -2,7 +2,7 @@ import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
 import { formatPerDiv, parsePerDiv, rememberRecent } from 'fence-kit';
 import { fenceError, notice, safeToken } from '../errors.ts';
-import { DATA_NAME, LIMITS } from '../limits.ts';
+import { DATA_NAME, LIMITS, MEASURED_LABEL } from '../limits.ts';
 import { CHANNEL_NAMES } from '../model/channel.ts';
 import type { ChannelName, ChannelSpec, TraceName } from '../model/channel.ts';
 import type { MeasureName } from '../model/measure.ts';
@@ -199,15 +199,24 @@ function readFence(source: string): ParseResult {
         break;
       }
       case 'data': {
-        const text = (scalarText(pair.value) ?? '').trim();
-        if (!DATA_NAME.test(text)) {
+        // ファイル名の後は凡例の名前 (`data: 5-1-rc.csv 計算`)。書かなければ実測。
+        const [file = '', ...words] = (scalarText(pair.value) ?? '').trim().split(/\s+/);
+        if (!DATA_NAME.test(file)) {
           errors.push(fenceError(
             'data: には .md と同じ場所の WaveForms の CSV のファイル名を書きます (例: data: 5-1-rc.csv。/ や .. は書けません)',
-            at, text || undefined,
+            at, file || undefined,
           ));
           break;
         }
-        data = { name: text, line: at };
+        const label = words.join(' ');
+        if ([...label].length > LIMITS.dataLabel) {
+          errors.push(fenceError(
+            `data: の凡例の名前は ${LIMITS.dataLabel} 字までです (例: data: ${file} 計算)`,
+            at, label,
+          ));
+          break;
+        }
+        data = { name: file, label: label === '' ? MEASURED_LABEL : label, line: at };
         break;
       }
       case 'cursors':

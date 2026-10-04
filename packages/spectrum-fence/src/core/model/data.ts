@@ -28,7 +28,7 @@ export function readData(
   source: DataSource | undefined,
 ): Measured {
   if (doc.data === null) return NOTHING;
-  const { value: name, line } = doc.data;
+  const { value: name, label, line } = doc.data;
   const say = (message: string): Measured => ({ ...NOTHING, said: [notice(message, line, name)] });
   if (source === undefined) return say(`この宿主では ${name} を読めません (CLI か VS Code の拡張で描くと実測が重なります)`);
   let text: string | null;
@@ -55,5 +55,6 @@ export function readData(
   if (points.length === 0) {
     said.push(notice(`${name} には掃引 (${formatHertzShort(screen.start)}〜${formatHertzShort(screen.stop)}) の中の点がありません`, line, name));
   }
-  return { points, name, said };
+  // 凡例と読み値の見出しに出す名前 (`実測 (a.csv)` `計算 (a.csv)`)。
+  return { points, name: `${label} (${name})`, said };
 }

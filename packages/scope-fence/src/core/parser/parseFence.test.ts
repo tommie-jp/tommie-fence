@@ -127,7 +127,7 @@ describe('parseFence — 段 1', () => {
   });
 
   test('reads the name of data: and refuses a path', () => {
-    expect(parseFence('data: 5-1-rc.csv').doc.data).toEqual({ name: '5-1-rc.csv', line: 1 });
+    expect(parseFence('data: 5-1-rc.csv').doc.data).toEqual({ name: '5-1-rc.csv', label: '実測', line: 1 });
     for (const bad of ['../x.csv', '/etc/passwd', 'a/b.csv', 'x.s2p']) {
       expect(messages(`data: ${bad}`)[0]).toContain('data: には .md と同じ場所の WaveForms の CSV');
     }

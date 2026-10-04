@@ -96,7 +96,7 @@ export type FenceDocument = {
   /** XY の軸。view: xy のときだけ (time なら null)。 */
   readonly xy: XySpec | null;
   /** 測った値のファイル名 (`.md` の隣)。 */
-  readonly data: { readonly name: string; readonly line: number | null } | null;
+  readonly data: { readonly name: string; readonly label: string; readonly line: number | null } | null;
   readonly cursors: readonly CursorSpec[];
   /** 書かなければ null (既定の vpp と freq)。 */
   readonly measures: readonly MeasureName[] | null;

@@ -32,6 +32,8 @@ export const LIMITS = {
   dataRows: 100001,
   dataColumns: 16,
   dataBytes: 1_000_000,
+  /** `data:` の凡例の名前の字数 (`計算` `QucsStudio の計算`)。 */
+  dataLabel: 20,
   /** 図の題の長さ。 */
   titleLength: 60,
   /** 軸の名前と線の名前の長さ。 */
@@ -47,6 +49,12 @@ export const LIMITS = {
  * (vna・scope と同じ。52 の docs/76)。宿主の側でも名前がそのままファイル名であることを確かめる。
  */
 export const DATA_NAME = /^[\w-][\w.-]{0,63}\.(csv|txt)$/i;
+
+/**
+ * `data:` に凡例の名前を書かなかったときの名前。`data:` は測った値を重ねるキーなので、
+ * 既定は実測。計算で作ったファイルは名前を書く (`data: x.csv 計算`)。
+ */
+export const MEASURED_LABEL = '実測';
 
 /** 選べるテーマ。**既定は light**。 */
 export const THEME_NAMES = ['light', 'dark', 'mono'] as const;

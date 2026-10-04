@@ -14,7 +14,7 @@ rbw: 300kHz                          # 掃引型だけ。メニューの値
 ref: 0dBm                            # 任意。格子の上端。山が 3 目盛以上下・上で切れると言われる
 signal: square 100MHz -10dBm         # 波 (scope と同じ綴り)。並べれば和
 markers: [100M, 300M, 500M]          # 周波数か peak。4 つまで
-data: 11-4-harmonics.csv             # 任意。.md の隣の 2 列の CSV → 実線
+data: 11-4-harmonics.csv             # 任意。.md の隣の 2 列の CSV → 実線。後ろに凡例の名前 (既定は実測、20 字まで)
 style: dark                          # 任意
 ```
 ````

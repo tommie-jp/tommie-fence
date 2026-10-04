@@ -64,7 +64,7 @@ export type FenceDocument = {
   /** 読めた線 (書いた順)。 */
   readonly lines: readonly LineSpec[];
   /** 測った値のファイル名 (`.md` の隣)。 */
-  readonly data: { readonly name: string; readonly line: number | null } | null;
+  readonly data: { readonly name: string; readonly label: string; readonly line: number | null } | null;
   readonly notes: readonly NoteSpec[];
   readonly style: StyleSpec;
   /** 書いてあった一番外側のキー (読めなかったものも)。「無いので既定で」と言うかを決める。 */

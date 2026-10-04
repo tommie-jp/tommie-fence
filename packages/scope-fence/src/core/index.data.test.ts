@@ -72,3 +72,36 @@ describe('renderScope — data:', () => {
     expect(result.readingLines[0]).toBe('読み値 — 実測 (m.csv)。CH3 は理想');
   });
 });
+
+/** `data:` のファイル名の後に凡例の名前を書ける (vna と同じ)。書かなければ実測。 */
+describe('renderScope — the name of the overlay', () => {
+  const named = (name: string): string => FENCE.replace('data: m.csv', `data: m.csv ${name}`);
+  const run = (name: string) => renderScope(named(name), { data: () => csv });
+
+  test('names the overlay as written after the file, in the legend and the readings', () => {
+    const result = run('計算');
+    expect(result.errors).toEqual([]);
+    expect(result.svg).toContain('計算 (m.csv)');
+    expect(result.svg).not.toContain('実測');
+    expect(result.readingLines[0]).toBe('読み値 — 計算 (m.csv)');
+  });
+
+  test('keeps the words of a name with spaces', () => {
+    expect(run('QucsStudio の計算').readingLines[0]).toBe('読み値 — QucsStudio の計算 (m.csv)');
+  });
+
+  test('escapes the name in the figure', () => {
+    const result = run('<b>&');
+    expect(result.svg).toContain('&lt;b&gt;&amp;');
+    expect(result.svg).not.toContain('<b>');
+  });
+
+  test('refuses a name that is too long, and says how long it may be', () => {
+    const result = run('あ'.repeat(21));
+    expect(result.errors.map((error) => error.message).join('\n')).toContain('20 字まで');
+  });
+
+  test('accepts a name of exactly 20 characters', () => {
+    expect(run('あ'.repeat(20)).errors).toEqual([]);
+  });
+});

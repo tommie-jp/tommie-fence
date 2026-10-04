@@ -10,7 +10,7 @@ import type { Theme } from './theme.ts';
  * **測った値か理想の値か**を言う (取り違えると本文の数字が嘘になる。vna と同じ)。
  */
 export function readingsHeading(readings: Readings, dataName: string | null): string {
-  const data = `実測 (${dataName ?? 'data'})`;
+  const data = dataName ?? '実測 (data)';
   if (readings.basis === 'data') return `読み値 — ${data}`;
   if (readings.basis === 'mixed') return `読み値 — ${data}。${readings.idealNames.map((name) => name.toUpperCase()).join('・')} は理想`;
   return '読み値 — 理想 (計算)';
@@ -61,9 +61,9 @@ export function readingLinesOf(readings: Readings, dataName: string | null): rea
   return [...parts.heading, ...tableLines(parts.measures), ...tableLines(parts.cursors)];
 }
 
-/** 凡例の字 (重ねたときは 破線 = 理想、実線 = 実測)。どちらも無ければ null。 */
+/** 凡例の字 (重ねたときは 破線 = 理想、実線 = 重ねた値。`dataName` は `実測 (a.csv)` の形)。どちらも無ければ null。 */
 export function keyText(hasModel: boolean, dataName: string | null): string | null {
-  const items = [...(hasModel ? ['理想 (計算)'] : []), ...(dataName === null ? [] : [`実測 (${dataName})`])];
+  const items = [...(hasModel ? ['理想 (計算)'] : []), ...(dataName === null ? [] : [dataName])];
   return items.length === 0 ? null : items.join('    ');
 }
 
@@ -83,6 +83,6 @@ export function renderKey(hasModel: boolean, dataName: string | null, layout: La
     x += 27 + textWidth(text) * size + 20;
   };
   if (hasModel) item('理想 (計算)', dataName !== null);
-  if (dataName !== null) item(`実測 (${dataName})`, false);
+  if (dataName !== null) item(dataName, false);
   return out.join('');
 }

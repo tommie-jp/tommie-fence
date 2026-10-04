@@ -14,7 +14,7 @@ trigger: ch1 rising 1V     # ch 向き [水準] [at 位置]。無ければ ch1 �
 ch1: square 100Hz 1V offset 1V
 ch2: ch1 | rc 1ms          # 前の ch を操作に通す
 math: {expr: ch1 * ch2 / 10, unit: W}   # 任意。5 本目 (Math)。単位は書き手が言う
-data: 5-1-rc.csv           # 任意。.md の隣の WaveForms の CSV → 実線
+data: 5-1-rc.csv           # 任意。.md の隣の WaveForms の CSV → 実線。後ろに凡例の名前 (既定は実測、20 字まで: data: 5-1-rc.csv 計算)
 cursors: [0, 1ms]          # 任意。X1 X2
 measure: [vpp, freq]       # 任意。無ければ vpp と freq
 notes:                     # 任意。注釈 (時刻 電圧)

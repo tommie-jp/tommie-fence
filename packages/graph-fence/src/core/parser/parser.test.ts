@@ -117,7 +117,7 @@ describe('parseFence', () => {
     expect(doc.x).toMatchObject({ unit: 'Hz', log: true, line: 2 });
     expect(doc.y).toHaveLength(1);
     expect(doc.lines.map((line) => `${line.name} ${line.unit} ${line.source.kind} ${line.line}`)).toEqual(['出力 mA points 6', '式 mA expr 9']);
-    expect(doc.data).toEqual({ name: '9-1.csv', line: 10 });
+    expect(doc.data).toEqual({ name: '9-1.csv', label: '実測', line: 10 });
     expect(doc.notes.map((note) => `${note.kind} ${note.line}`)).toEqual(['mark 12', 'band 13']);
     expect(doc.style.theme).toBe('dark');
   });

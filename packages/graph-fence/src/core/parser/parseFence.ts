@@ -2,7 +2,7 @@ import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
 import { rememberRecent } from 'fence-kit';
 import { dropInvisible, fenceError, notice, safeToken } from '../errors.ts';
-import { DATA_NAME, LIMITS } from '../limits.ts';
+import { DATA_NAME, LIMITS, MEASURED_LABEL } from '../limits.ts';
 import type { LineSpec, Point } from '../model/lines.ts';
 import { TOP_LEVEL_KEYS } from '../types.ts';
 import type { AxisSpec, FenceDocument, FenceError, NoteSpec, StyleSpec } from '../types.ts';
@@ -230,15 +230,24 @@ function readLineValue(
 }
 
 function readData(value: unknown, at: number | null, errors: FenceError[]): FenceDocument['data'] {
-  const text = (scalarText(value) ?? '').trim();
-  if (!DATA_NAME.test(text)) {
+  // ファイル名の後は凡例の名前 (`data: 9-1.csv 計算`)。書かなければ実測。
+  const [file = '', ...words] = (scalarText(value) ?? '').trim().split(/\s+/);
+  if (!DATA_NAME.test(file)) {
     errors.push(fenceError(
       'data: には .md と同じ場所の CSV のファイル名を書きます (例: data: 9-1.csv。/ や .. は書けません)',
-      at, text || undefined,
+      at, file || undefined,
     ));
     return null;
   }
-  return { name: text, line: at };
+  const label = words.join(' ');
+  if ([...label].length > LIMITS.dataLabel) {
+    errors.push(fenceError(
+      `data: の凡例の名前は ${LIMITS.dataLabel} 字までです (例: data: ${file} 計算)`,
+      at, label,
+    ));
+    return null;
+  }
+  return { name: file, label: label === '' ? MEASURED_LABEL : label, line: at };
 }
 
 function readNotes(value: unknown, keyLine: number | null, xUnit: string, lineOf: LineOf, errors: FenceError[]): readonly NoteSpec[] {
