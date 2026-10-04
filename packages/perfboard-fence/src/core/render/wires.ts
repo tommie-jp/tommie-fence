@@ -7,6 +7,7 @@ import type { Point, RoutedWire } from '../types.ts';
 import type { DeviceWire } from '../wiring/wiring.ts';
 import type { PlacedDevice } from './devices.ts';
 import type { Theme } from './theme.ts';
+import type { Obstacle } from './captions.ts';
 
 /**
  * ジャンパの太さ。部品の足より少し太い (被覆があるぶん)。3 では縮めて貼ると
@@ -33,6 +34,11 @@ const HOP = 5;
  * 輪郭が色づいたようにしか見えない。隣の穴のランド (15.5 から) には届かない。
  */
 const HOP_OVER_HOLE = 9;
+
+/** 名札が避ける形としての配線 (`captions.ts`)。太さは縁取りの外まで。 */
+export const wireObstacle = (from: Point, to: Point): Obstacle => ({
+  from, to, half: (WIRE_WIDTH + OUTLINE_MARGIN) / 2, owner: null,
+});
 
 /** 座標の比べ方の許し。 */
 const EPSILON = 1e-6;

@@ -5,7 +5,7 @@ import { renderParts } from './parts.ts';
 import { renderSlots } from './slots.ts';
 import { renderJoints } from './joints.ts';
 import { renderTitle } from './title.ts';
-import { renderWires } from './wires.ts';
+import { renderWires, wireObstacle } from './wires.ts';
 import { crossingPoints } from './crossings.ts';
 import type { Layout } from '../model/layout.ts';
 import type { Address, Board, PlacedPart, RoutedWire } from '../types.ts';
@@ -74,7 +74,7 @@ export function renderBackSide(
     + renderBoard(board, layout, theme, labels)
     // 縁の銅箔は板そのものの持ち物なので、**裏返しても同じ場所にある**。
     + renderSlots(board, layout, theme)
-    + element('g', { opacity: GHOST }, renderParts(content.parts, layout, theme))
+    + element('g', { opacity: GHOST }, renderParts(content.parts, layout, theme, false, [], content.wires.map((wire) => wireObstacle(layout.point(wire.from), layout.point(wire.to)))))
     // 跨ぎは**この面の座標で数え直す** — 板を裏返すと列の並びが逆になるので、
     // 表と同じ番号のままでは弧が別の場所に出る。
     + renderWires(content.wires, layout, theme, crossingPoints(content.wires.map((wire) => ({

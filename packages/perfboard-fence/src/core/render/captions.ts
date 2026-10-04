@@ -13,6 +13,31 @@ import type { Theme } from './theme.ts';
 export type CaptionRoom = {
   /** その基準線に置いたときの、下げる距離 (px)。置いた帯は取られたものとして覚える。 */
   readonly drop: (x: number, baseline: number, width: number) => number;
+  /**
+   * 横書きの名札の基準線を選ぶ。**既定は胴の下** (`below`)。そこが線・ほかの胴・
+   * ほかの名札と重ならなければ動かさない (既存の図を変えない)。重なれば胴の上
+   * (`above`) と 1 行・2 行下げた位置を試し、どこも塞がっていれば今までどおり
+   * 名札だけを避けて下げる。`owner` の胴は避けない (自分の胴の脇に置くので)。
+   */
+  readonly place: (x: number, below: number, above: number, width: number, owner: string) => number;
+  /**
+   * 縦書き (90 度回した) の名札の置き場所を候補から選ぶ。先頭が既定。
+   * どれも塞がっていれば先頭。選んだ帯は取られたものとして覚える。
+   */
+  readonly pick: (candidates: readonly Rect[], owner: string) => number;
+  /** その帯に線・ほかの胴が掛かるか (名札どうしは見ない)。 */
+  readonly blocked: (box: Rect, owner: string) => boolean;
+};
+
+/**
+ * 名札が避ける形。**太さのある線分**で表す — 配線は線そのもの、胴は
+ * 長い軸に沿った線分と、その半分の厚み。`owner` は胴の持ち主 (配線は null)。
+ */
+export type Obstacle = {
+  readonly from: { readonly x: number; readonly y: number };
+  readonly to: { readonly x: number; readonly y: number };
+  readonly half: number;
+  readonly owner: string | null;
 };
 
 /** 逃がす段の高さ (字の大きさに対する比)。1 行ぶん。 */
@@ -25,10 +50,43 @@ const LIMIT = 2;
 const CAP = 0.72;
 const DESCENT = 0.2;
 
-export function captionRoom(theme: Theme, taken: readonly Rect[] = []): CaptionRoom {
+export function captionRoom(
+  theme: Theme,
+  taken: readonly Rect[] = [],
+  obstacles: readonly Obstacle[] = [],
+  bounds: Rect | null = null,
+): CaptionRoom {
   const placed: Rect[] = [...taken];
   const step = theme.metrics.textSize * LINE;
+  const labelFree = (box: Rect): boolean => !placed.some((one) => overlaps(one, box));
+  const shapeFree = (box: Rect, owner: string): boolean =>
+    !obstacles.some((one) => one.owner !== owner && segmentHits(one, box));
+  const inside = (box: Rect): boolean => bounds === null
+    || (box.y >= bounds.y && box.y + box.height <= bounds.y + bounds.height);
+  const free = (box: Rect, owner: string): boolean => labelFree(box) && shapeFree(box, owner) && inside(box);
   return {
+    place(x, below, above, width, owner) {
+      const at = (baseline: number): Rect => bandAt(x, baseline, width, theme);
+      const drops = [below, below + step, below + LIMIT * step];
+      const first = at(below);
+      // **線や胴に当たったときだけ上を先に試す** — 線は下に続いていることが多く、
+      // 下げても同じ線に当たる。名札どうしなら今までどおり下げるのが先。
+      const order = !shapeFree(first, owner)
+        ? [below, above, ...drops.slice(1)]
+        : [...drops, above];
+      const chosen = order.find((baseline) => free(at(baseline), owner))
+        ?? drops.find((baseline) => labelFree(at(baseline)))
+        ?? below + LIMIT * step;
+      placed.push(at(chosen));
+      return chosen;
+    },
+    blocked: (box, owner) => !shapeFree(box, owner),
+    pick(candidates, owner) {
+      const index = Math.max(0, candidates.findIndex((box) => free(box, owner)));
+      const chosen = candidates[index];
+      if (chosen !== undefined) placed.push(chosen);
+      return index;
+    },
     drop(x, baseline, width) {
       let drop = 0;
       let box = bandAt(x, baseline, width, theme);
@@ -57,3 +115,33 @@ export const captionWidth = (text: string, theme: Theme): number =>
 const overlaps = (a: Rect, b: Rect): boolean =>
   Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 0
   && Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) > 0;
+
+/**
+ * 太さのある線分が矩形に掛かるか。矩形を線の太さの半分だけ広げ、
+ * 線分をその矩形で切り取れるかを見る (Liang–Barsky)。
+ */
+export function segmentHits(line: Obstacle, box: Rect): boolean {
+  const left = box.x - line.half;
+  const right = box.x + box.width + line.half;
+  const top = box.y - line.half;
+  const bottom = box.y + box.height + line.half;
+  const dx = line.to.x - line.from.x;
+  const dy = line.to.y - line.from.y;
+  let enter = 0;
+  let leave = 1;
+  const edges: readonly (readonly [number, number])[] = [
+    [-dx, line.from.x - left], [dx, right - line.from.x],
+    [-dy, line.from.y - top], [dy, bottom - line.from.y],
+  ];
+  for (const [p, q] of edges) {
+    if (p === 0) {
+      if (q <= 0) return false;
+      continue;
+    }
+    const t = q / p;
+    if (p < 0) enter = Math.max(enter, t);
+    else leave = Math.min(leave, t);
+    if (enter >= leave) return false;
+  }
+  return true;
+}

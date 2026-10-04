@@ -4,6 +4,8 @@ import { createLayout } from './model/layout.ts';
 import { parseFence } from './parser/parseFence.ts';
 import { placeParts } from './placement/place.ts';
 import { renderAxisLabels, renderPlate } from './render/board.ts';
+import { rowLabelShifts as rowLabelShiftsOf, shiftedLabelPoints } from './render/rowLabelShift.ts';
+import { wireObstacle } from './render/wires.ts';
 import { renderSlots } from './render/slots.ts';
 import { jointsOnTop, renderJoints } from './render/joints.ts';
 import { renderHits } from './render/hits.ts';
@@ -24,7 +26,7 @@ import { unnamedDipNotices } from './parts/pinout.ts';
 import { checkErc } from './erc/erc.ts';
 import { checkFit } from './placement/collide.ts';
 import { connectorOverhang, drawnExtent } from './placement/geometry.ts';
-import { holeStrip } from './model/board.ts';
+import { holeStrip, slotEdges } from './model/board.ts';
 import { formatAddress, isCrossing, parseAddress } from './model/address.ts';
 import { offBoardReason } from './model/board.ts';
 import { fenceError, notice, safeToken, shiftErrors } from './errors.ts';
@@ -301,7 +303,15 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
     { x: box.x, y: box.y },
     { x: box.x + box.width, y: box.y + box.height + 14 },
   ]);
-  const front = drawnExtent(placement.parts, layout, [...pointsOn(layout), ...deviceCorners]);
+  // **縁の SMA に覆われる行の名前**は胴の外へ出すので、画布もそこまで広げる。
+  const edges = slotEdges(board);
+  const rowLabelShifts = rowLabelShiftsOf(placement.parts, layout, style.labels, PLATE.metrics.textSize, {
+    from: edges === 'ends' ? 0 : 1,
+    to: edges === 'ends' ? board.rows + 1 : board.rows,
+  });
+  const front = drawnExtent(placement.parts, layout, [
+    ...pointsOn(layout), ...deviceCorners, ...shiftedLabelPoints(rowLabelShifts, layout, PLATE.metrics.textSize),
+  ]);
   // **半田面も数える。** 裏返すと張り出す向きが逆になるので、表だけ見て決めると
   // 裏の板でコネクタが切れる。
   const behind = back === null || layout.backTop === null
@@ -360,7 +370,14 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       )
       + renderDevices(placedDevices.placed, THEME, options.edit === true)
       // **名札は板に書いた字を避ける** (番地で置いたほうが強い)。
-      + renderParts(placement.parts, layout, PLATE, options.edit === true, noteBands(notes, layout, PLATE))
+      + renderParts(placement.parts, layout, PLATE, options.edit === true, noteBands(notes, layout, PLATE), [
+        // **名札は線を避ける** (板の上の配線と、機器へ引いた線)。
+        ...wiring.wires.map((wire) => wireObstacle(layout.point(wire.from), layout.point(wire.to))),
+        ...wiring.deviceWires.flatMap((wire) => {
+          const from = devicePin.get(wire.device)?.get(wire.pin);
+          return from === undefined ? [] : [wireObstacle(from, layout.point(wire.hole))];
+        }),
+      ])
       // 足へ来る線は胴の上にも重ね、足の真ん中まで線を見せる (USB-C のパッドも同じ)。
       + renderLeadWires(placement.parts, wiring.wires, layout, PLATE, hops.slice(0, wiring.wires.length))
       // 半田付けした穴を部品と配線の上にもう一度。半田面と同じく、部品面の図でも
@@ -374,7 +391,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       // (`e1 d0 f0`) を読む手掛かりがちょうどその行なので、名前を上に出す。
       // 名前は地の色で縁取ってあるので、金物の上でも読め、コネクタの形も残る。
       // 注釈よりは下 (書いた人の印を隠さない)。
-      + renderAxisLabels(board, layout, PLATE, style.labels)
+      + renderAxisLabels(board, layout, PLATE, style.labels, rowLabelShifts)
       // 注釈は一番上。**指したものが下に隠れると印の意味が無くなる。**
       + renderNotes(notes, layout, PLATE, options.edit === true)
       // 凡例・部品表・書き出しは板の外の帯。図とは重ならないので、順番はどこでもよい。

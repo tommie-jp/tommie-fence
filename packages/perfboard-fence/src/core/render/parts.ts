@@ -3,7 +3,7 @@ import {
   drawDirectSot, drawPackage, drawsOwnLeads,
   element, fit, hasBody,
   drawNamedChip, lookupBoardPart, lookupNamedChip, lookupPinout, num, bodySize, packageHalfWidth, packageReach, sipHeader,
-  smaBody as drawSmaBody, svgText, transformerCore, TEXT_HALO_WIDTH,
+  smaBody as drawSmaBody, svgText, chipAlongX, sipBox, transformerCore, TEXT_HALO_WIDTH,
 } from 'fence-kit';
 import type { BodyInk, BodyPart, ChipInk } from 'fence-kit';
 import { dipPinout } from '../parts/pinout.ts';
@@ -18,7 +18,7 @@ import { isEdgeMount } from '../parts/types.ts';
 import { footprintOf } from '../parts/footprint.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
 import { captionRoom, captionWidth } from './captions.ts';
-import type { CaptionRoom } from './captions.ts';
+import type { CaptionRoom, Obstacle } from './captions.ts';
 import { jointMark } from './joints.ts';
 import { WHITE_OUTLINE } from './finish.ts';
 import { OUTLINE_MARGIN, WIRE_WIDTH } from './wires.ts';
@@ -33,6 +33,24 @@ const LEAD_WIDTH = 2;
 const CAPTION_GAP = 4;
 /** 字が基準線から上へ出る高さの、字の大きさに対する比 (大文字の高さ)。 */
 const CAPTION_CAP = 0.72;
+/** 字が基準線から下へ出る深さの、字の大きさに対する比。胴の上に置くときに使う。 */
+const CAPTION_DESCENT = 0.2;
+
+/**
+ * 部品 1 つぶんの名札の置き場所。`CaptionRoom` を部品の名前で包んだもの —
+ * 自分の胴は避けない (名札は胴の脇に置くので、必ず接している)。
+ */
+type PartRoom = {
+  readonly place: (x: number, below: number, above: number, width: number) => number;
+  readonly pick: (candidates: readonly Rect[]) => number;
+  readonly blocked: (box: Rect) => boolean;
+};
+
+const roomOf = (room: CaptionRoom, owner: string): PartRoom => ({
+  place: (x, below, above, width) => room.place(x, below, above, width, owner),
+  pick: (candidates) => room.pick(candidates, owner),
+  blocked: (box) => room.blocked(box, owner),
+});
 /** 図に出す名前と値。値が無ければ名前だけ。 */
 const caption = (part: PlacedPart): string =>
   part.value === null ? part.id : `${part.id} ${clampText(part.value, LIMITS.labelLength)}`;
@@ -79,7 +97,9 @@ function partLabel(
   pins: { readonly x: number; readonly y: number },
   theme: Theme,
   layout: Layout,
-  room?: CaptionRoom,
+  room?: PartRoom,
+  /** 胴の下に別の字 (SIP の足の名前) があるとき、その下まで下げる距離。 */
+  belowExtra = 0,
 ): string {
   const size = theme.metrics.textSize;
   const style = {
@@ -92,12 +112,15 @@ function partLabel(
   // 巻き込まないでおく (`sin` の丸めで字が 0.01 度ずれるようなことも起きない)。
   const tilt = turned(rect.angle);
   if (Math.abs(tilt) < UPRIGHT) {
-    const baseline = rect.cy + rect.height / 2 + CAPTION_GAP + size * CAPTION_CAP;
-    // **ぶつかったら 1 行下げる** (`captions.ts`)。隣の行の部品と名札が
-    // 同じ高さに並ぶことがある (実機で `Q1 2SC1815` と `D1 1N60` が重なった)。
+    const below = rect.cy + rect.height / 2 + belowExtra + CAPTION_GAP + size * CAPTION_CAP;
+    const above = rect.cy - rect.height / 2 - CAPTION_GAP - size * CAPTION_DESCENT;
+    // **線・ほかの胴・ほかの名札に当たったら避ける** (`captions.ts`)。真下に
+    // GND の線が通ると名札に取り消し線が引かれたように見え、3 本足の真ん中の足から
+    // 下ろした線は型番を縦に貫いた (教科書の図で)。名札どうしなら 1 行下げる
+    // (実機で `Q1 2SC1815` と `D1 1N60` が重なった)。
     const shown = fitToBoard(text, pins.x, size, layout);
-    const drop = room?.drop(pins.x, baseline, captionWidth(shown, theme)) ?? 0;
-    return svgText(pins.x, baseline + drop, shown, style);
+    const baseline = room?.place(pins.x, below, above, captionWidth(shown, theme)) ?? below;
+    return svgText(pins.x, baseline, shown, style);
   }
 
   // **傾いた胴には字も同じだけ傾ける。** 斜めに置いた部品の名前だけ水平だと、
@@ -107,10 +130,20 @@ function partLabel(
   // 回した字は真ん中で置くので、**字の厚みの半分だけ余分に**逃がす
   // (横向きの字は下端で置くため、その半分が要らない)。
   const gap = rect.height / 2 + CAPTION_GAP + size / 2;
-  const at = { x: pins.x + away.x * gap, y: pins.y + away.y * gap };
-  const fitted = Math.abs(Math.sin(tilt)) > Math.abs(Math.cos(tilt))
-    ? fitDown(text, at.y, size, layout)
-    : fitToBoard(text, at.x, size, layout);
+  const sideOf = (sign: number): Point => ({ x: pins.x + sign * away.x * gap, y: pins.y + sign * away.y * gap });
+  const upright = Math.abs(Math.sin(tilt)) > Math.abs(Math.cos(tilt));
+  const fittedAt = (point: Point): string => (upright
+    ? fitDown(text, point.y, size, layout)
+    : fitToBoard(text, point.x, size, layout));
+  // **縦に立った胴は、塞がっていれば反対の脇へ。** 斜めの胴は動かさない。
+  const sides = upright && Math.abs(Math.cos(tilt)) < 1e-9 && room !== undefined ? [1, -1] : [1];
+  const chosen = sides.length === 1 ? 0 : room!.pick(sides.map((sign) => {
+    const point = sideOf(sign);
+    const length = captionWidth(fittedAt(point), theme);
+    return { x: point.x - size / 2, y: point.y - length / 2, width: size, height: length };
+  }));
+  const at = sideOf(sides[chosen] ?? 1);
+  const fitted = fittedAt(at);
 
   return element(
     'g',
@@ -395,7 +428,7 @@ const SPAN_RATIO: Record<string, number> = {
  * 2 本足の部品。**胴は 2 つの穴を結ぶ線の上に、その傾きのまま描く**ので、
  * 各部品の形は「原点が中央・x 軸が足の向き」の座標で書けばよい。
  */
-function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme, room?: CaptionRoom): string {
+function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme, room?: PartRoom): string {
   const [first, second] = part.pins;
   const rect = bodyRect(part, layout);
   if (!first || !second || !rect) return '';
@@ -511,7 +544,7 @@ function packageAngle(part: PlacedPart): number {
   return ((step % 4) + 4) % 4 * 90;
 }
 
-function renderPackage(part: PlacedPart, layout: Layout, theme: Theme, room?: CaptionRoom): string {
+function renderPackage(part: PlacedPart, layout: Layout, theme: Theme, room?: PartRoom): string {
   const rect = bodyRect(part, layout);
   if (!rect) return '';
 
@@ -561,6 +594,23 @@ function renderPackage(part: PlacedPart, layout: Layout, theme: Theme, room?: Ca
  */
 const CHIP_SCALE = 1;
 
+/**
+ * SIP の足の名前 (胴の外、行の増える側) が胴の縁から出る深さ。fence-kit の
+ * `sipLegends` と同じ寸法 (縁取りの半分 + 隙間 + 字の高さと深さ)。
+ */
+const SIP_LEGEND_DEPTH = 1 + 0.5 + CHIP_SCALE * 6.5 * (0.72 + 0.2);
+/** 胴に刷る名前の字の高さの半分 (fence-kit の `sipHeader` は足の並びの 3.5 下が基準線)。 */
+const SIP_CAPTION_HALF = 4;
+
+/** SIP の胴に刷った名前が占める帯。胴の長さいっぱい、足の並びの上下に字の高さ。 */
+function sipCaptionBand(points: readonly Point[], pitch: number): Rect {
+  const bar = sipBox(points, pitch);
+  const first = points[0] ?? { x: 0, y: 0 };
+  return chipAlongX(points)
+    ? { x: bar.x, y: first.y - SIP_CAPTION_HALF + 1, width: bar.width, height: SIP_CAPTION_HALF * 2 }
+    : { x: first.x - SIP_CAPTION_HALF + 1, y: bar.y, width: SIP_CAPTION_HALF * 2, height: bar.height };
+}
+
 const chipInk = (theme: Theme): ChipInk => ({
   body: theme.palette.chipBody,
   pin: theme.palette.chipPin,
@@ -588,7 +638,7 @@ function renderChip(
   kind: 'dip' | 'sip' | 'board' | 'named',
   layout: Layout,
   theme: Theme,
-  room?: CaptionRoom,
+  room?: PartRoom,
 ): string {
   const points = part.pins.map((pin) => layout.point(pin.address));
   if (points.length === 0) return '';
@@ -638,7 +688,26 @@ function renderChip(
     if (pinout?.chip !== undefined) {
       return drawSipAdapter({ ...shared, names: dipPinout(part) ?? numbers, nameSide: 1, chip: pinout.chip, label: part.id, paint: inkOf(theme) });
     }
-    return sipHeader({ ...shared, names: dipPinout(part) ?? numbers, nameSide: 1, ...(look === undefined ? {} : { look }) });
+    const options = { ...shared, names: dipPinout(part) ?? numbers, nameSide: 1 as const, ...(look === undefined ? {} : { look }) };
+    // **胴に刷った名前を線が貫くなら、名前を胴の外へ出す。** 足へ来る線は胴の上にも
+    // 重ねるので (`leadWires.ts`)、真ん中の足から下ろした線が型番を縦に貫いた
+    // (教科書のセラミックフィルタの図)。外では線と字を避けて置く (`partLabel`)。
+    if (room === undefined || !room.blocked(sipCaptionBand(points, layout.pitch))) return sipHeader(options);
+    const bar = sipBox(points, layout.pitch);
+    const alongX = chipAlongX(points);
+    const bare = sipHeader({
+      ...options, caption: '', ...(look === undefined ? {} : { look: { ...look, mark: '' } }),
+    });
+    const centre = { x: bar.x + bar.width / 2, y: bar.y + bar.height / 2 };
+    return bare + partLabel(
+      caption(part),
+      { cx: centre.x, cy: centre.y, height: alongX ? bar.height : bar.width, angle: alongX ? 0 : Math.PI / 2 },
+      centre,
+      theme,
+      layout,
+      room,
+      SIP_LEGEND_DEPTH,
+    );
   }
 
   // **マイコンボードの名前は胴の下。** 基板の中に置くと長い足の名前
@@ -670,7 +739,7 @@ function renderChip(
  * DIP は 1 番ピン側にノッチを描く。実物と同じ向きの目印が無いと、
  * **図を見ながら挿すときに 180 度回して挿せてしまう**。
  */
-function renderBox(part: PlacedPart, layout: Layout, theme: Theme, room?: CaptionRoom): string {
+function renderBox(part: PlacedPart, layout: Layout, theme: Theme, room?: PartRoom): string {
   const rect = bodyRect(part, layout);
   const first = part.pins[0];
   if (!rect || !first) return '';
@@ -740,7 +809,7 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme, room?: Captio
  * 字の基準が板の外になり、板に収める切り詰め (`fitToBoard`) で `…` だけになる
  * (図を見て直した)。足は必ず板の穴にある。
  */
-function renderConnector(part: PlacedPart, layout: Layout, theme: Theme, room?: CaptionRoom): string {
+function renderConnector(part: PlacedPart, layout: Layout, theme: Theme, room?: PartRoom): string {
   if (part.pins.length === 0) return '';
   const shape = connectorShapeOf(part, layout);
   const box = connectorBox(shape);
@@ -789,7 +858,7 @@ function switchMarks(part: PlacedPart, rect: OrientedRect): string {
  * 3 番の行の間に置き、足先から穴まで半田の線を引く。当たり判定と同じ置き方
  * (`bodyRect` → `sotMountOf`)。名札は胴の下。
  */
-function renderDirectSot(part: PlacedPart, layout: Layout, theme: Theme, room?: CaptionRoom): string {
+function renderDirectSot(part: PlacedPart, layout: Layout, theme: Theme, room?: PartRoom): string {
   const rect = bodyRect(part, layout);
   if (rect === null || part.variant === null) return '';
   const drawn = drawDirectSot({
@@ -811,7 +880,7 @@ function renderDirectSot(part: PlacedPart, layout: Layout, theme: Theme, room?: 
 }
 
 /** 形ごとの描き方。 */
-function renderOne(part: PlacedPart, layout: Layout, theme: Theme, room: CaptionRoom): string {
+function renderOne(part: PlacedPart, layout: Layout, theme: Theme, room: PartRoom): string {
   const kind = footprintOf(part.type, part.variant)?.kind;
   if (kind === 'connector') return renderConnector(part, layout, theme, room);
   if (kind === 'three-lead' && directSotSpec(part.variant) !== null) return renderDirectSot(part, layout, theme, room);
@@ -832,13 +901,32 @@ export const renderParts = (
   edit = false,
   // **先に場所を取っているもの** (板に書いた注釈)。名札はそこを避ける。
   taken: readonly Rect[] = [],
+  // **名札が避ける線** (板の上の配線)。胴はここで足す。
+  lines: readonly Obstacle[] = [],
 ): string => {
   // **名札の逃がしは書かれた順に決まる** (`captions.ts`)。
-  const room = captionRoom(theme, taken);
+  const room = captionRoom(theme, taken, [...lines, ...parts.flatMap((part) => bodyObstacle(part, layout))], layout.board);
   return parts
     .map((part) => {
-      const drawn = renderOne(part, layout, theme, room);
+      const drawn = renderOne(part, layout, theme, roomOf(room, part.id));
       return edit ? element('g', { class: 'cf-chip', 'data-part': part.id }, drawn) : drawn;
     })
     .join('');
 };
+
+/** 胴を、長い軸に沿った太さのある線分として (`captions.ts` の避ける形)。 */
+function bodyObstacle(part: PlacedPart, layout: Layout): Obstacle[] {
+  const rect = part.pins.length === 0 ? null : bodyRect(part, layout);
+  if (rect === null) return [];
+  const long = rect.width >= rect.height;
+  const reach = (long ? rect.width - rect.height : rect.height - rect.width) / 2;
+  const angle = long ? rect.angle : rect.angle + Math.PI / 2;
+  const dx = Math.cos(angle) * reach;
+  const dy = Math.sin(angle) * reach;
+  return [{
+    from: { x: rect.cx - dx, y: rect.cy - dy },
+    to: { x: rect.cx + dx, y: rect.cy + dy },
+    half: Math.min(rect.width, rect.height) / 2,
+    owner: part.id,
+  }];
+}

@@ -1,6 +1,8 @@
 import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, element, num, svgText } from 'fence-kit';
 import { slotEdges } from '../model/board.ts';
 import { axisLabel } from './labels.ts';
+import { LABEL_OFFSET, NO_SHIFTS } from './rowLabelShift.ts';
+import type { RowLabelShifts } from './rowLabelShift.ts';
 import type { Layout } from '../model/layout.ts';
 import type { Board } from '../types.ts';
 import type { ResolvedLabels, Theme } from './theme.ts';
@@ -10,8 +12,6 @@ const DEFAULT_LABELS: ResolvedLabels = {
   row: 'alpha', col: 'numeric', case: 'upper', sides: ['left', 'top'],
 };
 
-/** 名前を板の縁からどれだけ外へ置くか。 */
-const LABEL_OFFSET = 8;
 /**
  * 地を塗らないテーマ (light) の名前の縁取り。light の字は暗い色で、
  * **明るい地に載る前提**で選んである (暗い地では縁取りが無くても読めない)。
@@ -88,6 +88,8 @@ export function renderAxisLabels(
   layout: Layout,
   theme: Theme,
   labels: ResolvedLabels = DEFAULT_LABELS,
+  // **縁の SMA に覆われる行だけ**、名前を胴の外へ出す (`rowLabelShift.ts`)。
+  shifts: RowLabelShifts = NO_SHIFTS,
 ): string {
   const { palette, metrics } = theme;
   const { x, y, width, height } = layout.board;
@@ -124,8 +126,8 @@ export function renderAxisLabels(
   const colTo = edges === 'sides' ? board.cols + 1 : board.cols;
 
   for (let row = rowFrom; row <= rowTo; row += 1) {
-    if (labels.sides.includes('left')) drawn.push(rowLabelAt(x - LABEL_OFFSET, row));
-    if (labels.sides.includes('right')) drawn.push(rowLabelAt(x + width + LABEL_OFFSET, row));
+    if (labels.sides.includes('left')) drawn.push(rowLabelAt(shifts.left.get(row) ?? x - LABEL_OFFSET, row));
+    if (labels.sides.includes('right')) drawn.push(rowLabelAt(shifts.right.get(row) ?? x + width + LABEL_OFFSET, row));
   }
   for (let col = colFrom; col <= colTo; col += 1) {
     if (labels.sides.includes('top')) drawn.push(colLabelAt(y - LABEL_OFFSET, col));
