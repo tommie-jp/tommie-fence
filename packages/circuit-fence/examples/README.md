@@ -30,8 +30,8 @@ GitHub のようにフェンスが描画されない場所で、ソースと図�
 | [00-led.md](00-led.md) | いちばん小さな回路 (3 つのフェンスで同じもの) |
 | [01-rc-lowpass.md](01-rc-lowpass.md) | 番地 / 部品 / 配線 / ネットリスト |
 | [02-parts.md](02-parts.md) | 2 端子部品 44 種、1 端子の記号 4 種 |
-| [03-multi-terminal.md](03-multi-terminal.md) | 多端子部品と足の名前、型番、FET の種類、2 端子の足 |
-| [04-non-inverting-amp.md](04-non-inverting-amp.md) | オペアンプの向き (`+up`)、足への引き方 |
+| [03-multi-terminal.md](03-multi-terminal.md) | 多端子部品とピンの名前、型番、FET の種類、2 端子のピン |
+| [04-non-inverting-amp.md](04-non-inverting-amp.md) | オペアンプの向き (`+up`)、ピンへの引き方 |
 | [05-labels.md](05-labels.md) | ID の出方 / 値の出方 |
 | [06-bends.md](06-bends.md) | 配線の `--` / `-\|` / `\|-`、分岐の黒丸と T 字、1 行につないで書く |
 | [07-diagonal.md](07-diagonal.md) | 斜めに置く |
@@ -44,7 +44,7 @@ GitHub のようにフェンスが描画されない場所で、ソースと図�
 | [14-half-step.md](14-half-step.md) | 交点の間の番地 (`a1a5` `a1f0`) |
 | [15-arrows.md](15-arrows.md) | 電流の矢と電圧の符号 (`i=` `v=`) |
 | [16-orientation.md](16-orientation.md) | 記号の向き (`r90` / `r180` / `r270` / `mirror`) |
-| [17-named-chips.md](17-named-chips.md) | 足に名前のある部品 (リレー・フォトカプラ・7 セグ) |
+| [17-named-chips.md](17-named-chips.md) | ピンに名前のある部品 (リレー・フォトカプラ・7 セグ) |
 
 ## わざと壊してある例
 

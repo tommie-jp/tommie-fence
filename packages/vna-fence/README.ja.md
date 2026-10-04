@@ -44,7 +44,7 @@ markers:
 | | 描くもの | 元になるもの |
 | --- | --- | --- |
 | [circuit-fence](../circuit-fence/) | 回路図 | 番地に置いた部品 |
-| [breadboard-fence](../breadboard-fence/) / [perfboard-fence](../perfboard-fence/) | 板の実体配線図 | 穴に挿した部品 |
+| [breadboard-fence](../breadboard-fence/) / [perfboard-fence](../perfboard-fence/) | 基板の実体配線図 | 穴に挿した部品 |
 | [copper-fence](../copper-fence/) | 銅張り基板 | mm で書いた銅 |
 | vna-fence | **計器の画面** | **模型と Touchstone** |
 

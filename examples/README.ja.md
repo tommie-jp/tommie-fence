@@ -36,7 +36,7 @@ VS Code のプレビュー (`Ctrl+Shift+V`) ではフェンス自体が図にな
 
 [![非反転増幅回路](../packages/circuit-fence/examples/out/04-non-inverting-amp.png)](../packages/circuit-fence/examples/04-non-inverting-amp.md)
 
-オペアンプの向き (`+up`) と、足の名前への配線の引き方
+オペアンプの向き (`+up`) と、ピンの名前への配線の引き方
 ([04-non-inverting-amp.md](../packages/circuit-fence/examples/04-non-inverting-amp.md))。
 
 ### ロジックゲート
@@ -77,14 +77,14 @@ VS Code のプレビュー (`Ctrl+Shift+V`) ではフェンス自体が図にな
 
 [![Raspberry Pi Pico](../packages/breadboard-fence/examples/out/07-pico.png)](../packages/breadboard-fence/examples/07-pico.md)
 
-マイコンボードを板にまたがせて、LED とボタンをつなぐ
+マイコンボードを基板にまたがせて、LED とボタンをつなぐ
 ([07-pico.md](../packages/breadboard-fence/examples/07-pico.md))。
 
 ### 1 石中波ラジオ
 
 [![1 石中波ラジオ](../packages/breadboard-fence/examples/out/09-am-radio.png)](../packages/breadboard-fence/examples/09-am-radio.md)
 
-板の外の機器 (バーアンテナ・ポリバリコン・イヤホン・電池) を `device` で置き、
+基板の外の機器 (バーアンテナ・ポリバリコン・イヤホン・電池) を `device` で置き、
 図の下に部品リストを出した例
 ([09-am-radio.md](../packages/breadboard-fence/examples/09-am-radio.md))。
 
@@ -97,7 +97,7 @@ VS Code のプレビュー (`Ctrl+Shift+V`) ではフェンス自体が図にな
 
 ### そのほか
 
-- [03-board-variants.md](../packages/breadboard-fence/examples/03-board-variants.md) — 板の印字を手元の実物に寄せる
+- [03-board-variants.md](../packages/breadboard-fence/examples/03-board-variants.md) — 基板の印字を手元の実物に寄せる
 - [05-capacitors.md](../packages/breadboard-fence/examples/05-capacitors.md) — 部品の姿を選ぶ (`capacitor/ceramic` など)
 - [11-sensors.md](../packages/breadboard-fence/examples/11-sensors.md) — CdS・サーミスタ・ダイオードの仲間
 - [13-points.md](../packages/breadboard-fence/examples/13-points.md) — 番地に名前を付ける (`points:`)
@@ -115,32 +115,32 @@ VS Code のプレビュー (`Ctrl+Shift+V`) ではフェンス自体が図にな
 いちばん小さい例。2 つの穴をまっすぐ結ぶだけで、経路探索は要らない
 ([03-wires.md](../packages/perfboard-fence/examples/03-wires.md))。
 
-### IC と 3 本足の部品
+### IC と 3 ピンの部品
 
-[![IC と 3 本足の部品](../packages/perfboard-fence/examples/out/06-ic-1.png)](../packages/perfboard-fence/examples/06-ic.md)
+[![IC と 3 ピンの部品](../packages/perfboard-fence/examples/out/06-ic-1.png)](../packages/perfboard-fence/examples/06-ic.md)
 
-DIP は 1 番ピンだけ書けば足が並ぶ。トランジスタは穴を 3 つ書く
+DIP は 1 番ピンだけ書けばピンが並ぶ。トランジスタは穴を 3 つ書く
 ([06-ic.md](../packages/perfboard-fence/examples/06-ic.md))。
 
-### 板の外の機器
+### 基板の外の機器
 
-[![板の外の機器](../packages/perfboard-fence/examples/out/07-device-2.png)](../packages/perfboard-fence/examples/07-device.md)
+[![基板の外の機器](../packages/perfboard-fence/examples/out/07-device-2.png)](../packages/perfboard-fence/examples/07-device.md)
 
-電池やスピーカーは `device` として板の外の帯に置き、`SPK.1` の形で指す。
-線は**その足から穴まで**引かれるので、どこへ半田付けするかが図に出る
+電池やスピーカーは `device` として基板の外の帯に置き、`SPK.1` の形で指す。
+線は**そのピンから穴まで**引かれるので、どこへ半田付けするかが図に出る
 ([07-device.md](../packages/perfboard-fence/examples/07-device.md))。
 
 ### つなぎ忘れを見張る (ERC)
 
 [![つなぎ忘れを見張る (ERC)](../packages/perfboard-fence/examples/out/05-check.png)](../packages/perfboard-fence/examples/05-check.md)
 
-繋ぎ忘れは図の上で沈黙するので、浮いた足・短絡した部品・部品につながらない
+繋ぎ忘れは図の上で沈黙するので、浮いたピン・短絡した部品・部品につながらない
 配線を行番号つきで名指す
 ([05-check.md](../packages/perfboard-fence/examples/05-check.md))。
 
 ### そのほか
 
-- [01-board.md](../packages/perfboard-fence/examples/01-board.md) — 板の穴数 (列 × 行) と名前 (`akizuki-c`)、26 行を超える板の番地
+- [01-board.md](../packages/perfboard-fence/examples/01-board.md) — 基板の穴数 (列 × 行) と名前 (`akizuki-c`)、26 行を超える基板の番地
 - [02-parts.md](../packages/perfboard-fence/examples/02-parts.md) — 抵抗のカラーコード、LED の色、斜めに置く
 - [04-points.md](../packages/perfboard-fence/examples/04-points.md) — 穴に名前を付ける (`points:`)
 - [08-notes.md](../packages/perfboard-fence/examples/08-notes.md) — 注釈 (`notes:`) と、テーマ・幅 (`style:`)
@@ -168,7 +168,7 @@ DIP は 1 番ピンだけ書けば足が並ぶ。トランジスタは穴を 3 �
 ### そのほか
 
 - [03-parts.md](../packages/copper-fence/examples/03-parts.md) — 線路を切る直列のチップ、シャント、SOT-89 の MMIC
-- [04-manhattan.md](../packages/copper-fence/examples/04-manhattan.md) — 表が地の板に Manhattan の島
+- [04-manhattan.md](../packages/copper-fence/examples/04-manhattan.md) — 表が地の基板に Manhattan の島
 - [06-ground.md](../packages/copper-fence/examples/06-ground.md) — via・切り欠き・パッチアンテナ
 - [08-check.md](../packages/copper-fence/examples/08-check.md) — ERC が言うこと
 

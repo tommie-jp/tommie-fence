@@ -91,7 +91,7 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   'usb-a': 'USB Type-A コネクタ',
   'usb-c': 'USB Type-C コネクタ',
   regulator: '三端子レギュレータ',
-  ic3: '3 本足の IC',
+  ic3: '3 ピンの IC',
   button: 'タクトスイッチ (a 接点)',
   'button-nc': 'タクトスイッチ (b 接点)',
   transformer: '変圧器',

@@ -12,12 +12,12 @@ import { knownPartTypes, placeableTypes } from './placement/footprints.ts';
 
 const fence = (...lines: string[]): string => ['board: half', ...lines, ''].join('\n');
 
-describe('3 本足の IC', () => {
+describe('3 ピンの IC', () => {
   test('is a three-lead part named like the schematic', () => {
     expect(placeableTypes()).toContain('ic3');
     expect(knownPartTypes()).toContain('ic3');
     expect(holesOf('ic3')).toBe(3);
-    expect(partName('ic3')).toBe('3 本足の IC');
+    expect(partName('ic3')).toBe('3 ピンの IC');
     expect(partPrefix('ic3')).toBe('U');
     expect(variantsOf('ic3')).toEqual(['to92', 'to220']);
   });

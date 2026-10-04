@@ -177,27 +177,27 @@ npm pack   # ビルドと型定義の書き出しを済ませて breadboard-fenc
 | レール番地 | `+`/`-` + `t`/`b` + 列番号 | `+t5`, `-b20` |
 | 2 端子部品 | `ID: 種類 穴 穴 値` | `R1: resistor a5 a10 10k` |
 | 極性 | 穴にピン名を付ける | `D1: led b12(A) b13(K) red` |
-| 3 端子部品 | 足の数だけ穴を書く | `Q1: transistor h9(B) h10(C) h11(E) 2SC1815` |
+| 3 端子部品 | ピンの数だけ穴を書く | `Q1: transistor h9(B) h10(C) h11(E) 2SC1815` |
 | DIP | 胴の左端の列の穴だけ書けば残りは自動 (実物を上から見た並び) | `U1: dip8 @ e5 NJM4556A` |
 | 部品の向き | アンカー 1 つで置く形に `r180` (1 番ピンが反対の端へ) | `U1: dip8 @ e5 r180` |
 | ボード外の機器 | マップ形式で `type: device` | 下のサンプル参照 |
 | 配線 | `- 端点 -- 端点 [-- 端点 …] [色]` | `- a10 -- b12 -- b20 red` |
-| 足と同じ穴への配線 | 部品のほうが同じ列の空いた行へ寄って描かれる (導通は同じ) | `- j20 -- -b20 black` |
+| ピンと同じ穴への配線 | 部品のほうが同じ列の空いた行へ寄って描かれる (導通は同じ) | `- j20 -- -b20 black` |
 | 迂回ヒント | 角括弧で道順を指定 (20 = 穴 1 つ) | `- j20 -- -b20 black [v-20]` |
 | 部品リスト | 図の下に自動で出る。消すときだけ書く | `parts-list: none` |
-| 押しボタン | 溝をまたいで 4 本足。ピン 1a の穴を書く | `SW1: button @ e5` |
+| 押しボタン | 溝をまたいで 4 ピン。ピン 1a の穴を書く | `SW1: button @ e5` |
 | マイコンボード | 基板の左端の列の穴を書く。ピン名は実物の印字 | `MCU: pico2 @ h5` |
 | 種類の略記 | よく書く種類は短い綴りでも書ける | `R1: r a5 a10 10k` |
 | 題 | 図の左上に 1 行 | `title: 図01 LED を点ける` |
 | 注釈 | 図の上に印と字を重ねる | `- circle R1` |
 | 点の名前 | `points:` で番地に名前を付ける | `vin: a5` |
 
-部品は 2 本足が resistor / capacitor / led / diode / buzzer / crystal / inductor /
+部品は 2 ピンが resistor / capacitor / led / diode / buzzer / crystal / inductor /
 photoresistor / thermistor / thermistor-ntc / thermistor-ptc / varistor /
 zener / schottky / photodiode / varicap / diac / reed / fuse / lamp、
-3 本足が transistor / potentiometer / slide-switch / thyristor / triac、
-まとまった足を持つものが button (タクトスイッチ) / dipN / sipN、
-USB コネクタが usb-a / usb-c (足は VBUS / GND / D+ / D- の順に書く)、
+3 ピンが transistor / potentiometer / slide-switch / thyristor / triac、
+まとまったピンを持つものが button (タクトスイッチ) / dipN / sipN、
+USB コネクタが usb-a / usb-c (ピンは VBUS / GND / D+ / D- の順に書く)、
 マイコンボードが pico / pico-w / pico2 / pico2-w、
 ボード外の機器が device。
 名前は回路図フェンス
@@ -225,11 +225,11 @@ USB コネクタが usb-a / usb-c (足は VBUS / GND / D+ / D- の順に書く)�
   部品はその 1 つだけが動いて接続が変わり、節点 (穴) は来ているものが
   丸ごと動いて接続は保たれる
 - **置く・消す・つなぐ・回す・名前や値を直す**までできる。`A` で種類を選ぶと
-  ゴーストがカーソルに付き、**1 クリックで置く** (2 本足は既定の間隔、3 本足は
+  ゴーストがカーソルに付き、**1 クリックで置く** (2 ピンは既定の間隔、3 ピンは
   右へ 2 穴)。種類名・略記・和名の 3 通りで探せ、名前は接頭辞ごとに最小の
   未使用番号が付く。
   **回す (`R`) と反転する (`X`) は掴む物によって行の直り方が変わる** —
-  足を並べて書く部品は番地が動き、アンカー 1 つで置く形は向きの語が直る
+  ピンを並べて書く部品は番地が動き、アンカー 1 つで置く形は向きの語が直る
   (DIP やボードは実物を裏返して挿せないので、反転は断る)
 - **動かす前に止めない。** 前後でネットリストを比べ、離れた接続とつながった
   接続を**動かしたあとに**帯へ出す。同じ列の 5 穴はつながっているので、

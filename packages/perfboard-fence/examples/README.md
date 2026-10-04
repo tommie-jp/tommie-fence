@@ -9,17 +9,17 @@ GitHub のようにフェンスが描画されない場所で、書き方と出�
 | ファイル | 内容 |
 | --- | --- |
 | [00-led.md](00-led.md) | いちばん小さな回路 (3 つのフェンスで同じもの) |
-| [01-board.md](01-board.md) | 板 (`board:`) の穴数と名前、番地。26 行を超える板の読み方 |
-| [02-parts.md](02-parts.md) | 2 本足の部品、抵抗のカラーコード、LED の色、斜めに置く、フォトトランジスタ |
+| [01-board.md](01-board.md) | 基板 (`board:`) の穴数と名前、番地。26 行を超える基板の読み方 |
+| [02-parts.md](02-parts.md) | 2 ピンの部品、抵抗のカラーコード、LED の色、斜めに置く、フォトトランジスタ |
 | [03-wires.md](03-wires.md) | 配線 (`wires:`) と、そこから出るネットリスト |
 | [04-points.md](04-points.md) | 穴に名前を付ける (`points:`) |
 | [05-check.md](05-check.md) | 図のとおりに組むと動かないところ (ERC と当たり判定) |
-| [06-ic.md](06-ic.md) | DIP・SIP・3 本足の部品 |
-| [07-device.md](07-device.md) | 板の外の機器 (`device`。電池・スピーカーなど) |
+| [06-ic.md](06-ic.md) | DIP・SIP・3 ピンの部品 |
+| [07-device.md](07-device.md) | 基板の外の機器 (`device`。電池・スピーカーなど) |
 | [08-notes.md](08-notes.md) | 注釈 (`notes:`) と、テーマ・幅 (`style:`) |
 | [09-usb.md](09-usb.md) | USB コネクタ (`usb-a` / `usb-c`)。Type-C の 4 ピンの変換基板と、種類と姿 |
 | [10-smd.md](10-smd.md) | 面実装 — S-Mini (`sot346`) やチップを直付けする、変換基板に載せる (`-dip`、`dip8/sop`) |
-| [11-named-chips.md](11-named-chips.md) | リレー・フォトカプラ・7 セグ (足に名前のある DIP 型) |
+| [11-named-chips.md](11-named-chips.md) | リレー・フォトカプラ・7 セグ (ピンに名前のある DIP 型) |
 
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではない。

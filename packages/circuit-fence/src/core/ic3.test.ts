@@ -29,7 +29,7 @@ describe('種類', () => {
     expect(lookupPin(type, '1')).toBe('pin 1');
     expect(lookupPin(type, '3')).toBe('pin 3');
     expect(lookupPin(type, 'out')).toBeNull();
-    expect(PART_NAMES.ic3).toBe('3 本足の IC');
+    expect(PART_NAMES.ic3).toBe('3 ピンの IC');
     expect(PART_PREFIXES.ic3).toBe('U');
   });
 

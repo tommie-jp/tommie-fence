@@ -10,12 +10,12 @@ import { isKnownType, placeableNames, splitPartType } from './parts/types.ts';
 
 const fence = (...lines: string[]): string => ['board: 20x10', ...lines, ''].join('\n');
 
-describe('3 本足の IC', () => {
+describe('3 ピンの IC', () => {
   test('is a three-lead part named like the schematic', () => {
     expect(isKnownType('ic3')).toBe(true);
     expect(placeableNames()).toContain('ic3');
     expect(holesOf('ic3')).toBe(3);
-    expect(partName('ic3')).toBe('3 本足の IC');
+    expect(partName('ic3')).toBe('3 ピンの IC');
     expect(partPrefix('ic3')).toBe('U');
     expect(splitPartType('ic3/to220').problem).toBeNull();
     expect(splitPartType('ic3/3mm').problem).not.toBeNull();

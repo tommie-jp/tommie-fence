@@ -54,7 +54,7 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   triac: 'トライアック',
   'slide-switch': 'スライドスイッチ',
   regulator: '三端子レギュレータ',
-  ic3: '3 本足の IC',
+  ic3: '3 ピンの IC',
   battery: '電池',
   solar: '太陽電池',
   speaker: 'スピーカー',

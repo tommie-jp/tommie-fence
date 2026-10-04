@@ -8,7 +8,7 @@
 | ファイル | 内容 |
 | --- | --- |
 | [00-through.md](00-through.md) | いちばん小さな治具 — 50Ω のスルー線路と端面 SMA |
-| [01-board.md](01-board.md) | 板 (`board:`) の実寸・厚さ・誘電率と、地の在りか (`ground:`) |
+| [01-board.md](01-board.md) | 基板 (`board:`) の実寸・厚さ・誘電率と、地の在りか (`ground:`) |
 | [02-lines.md](02-lines.md) | 線路の折れ線・スタブ・幅の段差 (ステップインピーダンス LPF) |
 | [03-parts.md](03-parts.md) | 部品 — 線路を切るチップ、シャント、SOT-89 の MMIC |
 | [04-manhattan.md](04-manhattan.md) | Manhattan の島と、島から島へ渡す部品・ジャンパ |
