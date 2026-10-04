@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-04
+
 ### Added
 
 - 部品表の欄の中身 `partKind` `valueWithRole` `partsMark` `bandColors` `capacitorMark` `PARTS_HEADINGS`
