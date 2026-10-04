@@ -25,6 +25,7 @@ import { resolveStyle, traceColor } from './render/theme.ts';
 import type { Theme } from './render/theme.ts';
 import { renderTitle } from './render/title.ts';
 import type { FenceDocument, FenceError, NoteSpec } from './types.ts';
+import { MEASURED_LABEL } from './limits.ts';
 
 /** 行の無いものを先に、あとは行の順に。同じ行なら見つけた順を保つ。 */
 const byLine = (errors: readonly FenceError[]): FenceError[] =>
@@ -168,8 +169,9 @@ export function renderVna(input: string, options: RenderOptions = {}): RenderRes
 
   const tdr = allSeries.filter((one): one is TdrSeries => one.kind === 'tdr');
   const step = (doc.sweep.stop - doc.sweep.start) / (doc.sweep.points - 1);
-  const readings = readingsOf({ traces, markers, dut: doc.dut, step, data, tdr });
-  const dataName = data === null ? null : doc.data?.name ?? null;
+  const readings = readingsOf({ traces, markers, dut: doc.dut, step, data, tdr, dataLabel: doc.data?.label ?? MEASURED_LABEL });
+  // 凡例と読み値の見出しに出す、重ねた線の名前 (`実測 (m.s2p)` `計算 (m.s2p)`)。
+  const dataName = data === null || doc.data === null ? null : `${doc.data.label} (${doc.data.name})`;
 
   const sourceNotes = doc.notes.filter((note) => note.kind === 'source');
   for (const extra of sourceNotes.slice(1)) said.push(notice('書き出し (source) は 1 つだけ描きます (後のものは描いていません)', extra.line));
@@ -233,7 +235,7 @@ function keyLines(series: readonly Series[], hasModel: boolean, dataName: string
   ];
   return [
     ...(hasModel ? [{ text: '理想 (dut:)', dashed: dataName !== null, colors: colorsOf('model') }] : []),
-    ...(dataName === null ? [] : [{ text: `実測 (${dataName})`, dashed: false, colors: colorsOf('data') }]),
+    ...(dataName === null ? [] : [{ text: dataName, dashed: false, colors: colorsOf('data') }]),
   ];
 }
 

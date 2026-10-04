@@ -84,10 +84,12 @@ export type ReadingInput = {
   readonly step: number;
   readonly data: readonly SPoint[] | null;
   readonly tdr: readonly TdrSeries[];
+  /** 重ねた値の名前 (`data:` のファイル名の後。既定は実測)。TDR の山の行に添える。 */
+  readonly dataLabel: string;
 };
 
 export function readingsOf(input: ReadingInput): Readings {
-  const { traces, markers, dut, step, data, tdr } = input;
+  const { traces, markers, dut, step, data, tdr, dataLabel } = input;
   const basis: Basis | null = data !== null && data.length > 0 ? 'data' : dut.length > 0 ? 'model' : null;
   const columns = ['M', '周波数', ...traces.map(traceLabel)];
 
@@ -118,7 +120,7 @@ export function readingsOf(input: ReadingInput): Readings {
   const extra = tdr.flatMap((series) => {
     const { peak, range } = series.tdr;
     if (peak === null) return [];
-    const where = series.basis === 'data' ? '実測' : '理想';
+    const where = series.basis === 'data' ? dataLabel : '理想';
     return [`${traceLabel(series.trace)} (${where}) の一番高い山: ${peak.distance.toFixed(3)} m (${(peak.t * 1e9).toFixed(2)} ns)。見える範囲 ${range.toFixed(1)} m`];
   });
 

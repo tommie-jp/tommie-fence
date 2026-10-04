@@ -102,6 +102,47 @@ describe('renderVna', () => {
       expect(said(renderVna(MEASURED))).toContain('この宿主では m.s2p を読めません');
     });
 
+    /**
+     * 計算で作った `.s2p` (例の 00-series-100.s2p、QucsStudio・scikit-rf の出力) を重ねると、
+     * 凡例と読み値の見出しが「実測」と言い切っていた。**ファイル名の後に凡例の名前を書ける**。
+     * 書かなければ今までどおり「実測」(`data:` は測った値を重ねるキー)。
+     */
+    describe('the name of the overlay', () => {
+      const named = (name: string) => MEASURED.replace('data: m.s2p', `data: m.s2p ${name}`);
+
+      test('names the overlay as written after the file, in the legend and the readings', () => {
+        const result = renderVna(named('計算'), { data: files({ 'm.s2p': S2P }) });
+        expect(result.errors).toEqual([]);
+        expect(result.svg).toContain('計算 (m.s2p)');
+        expect(result.svg).not.toContain('実測');
+        expect(result.readingLines[0]).toBe('読み値 — 計算 (m.s2p)');
+      });
+
+      test('keeps the words of a name with spaces', () => {
+        const result = renderVna(named('QucsStudio の計算'), { data: files({ 'm.s2p': S2P }) });
+        expect(result.readingLines[0]).toBe('読み値 — QucsStudio の計算 (m.s2p)');
+      });
+
+      test('uses the name for the TDR peak too', () => {
+        const even = '# HZ S RI R 50\n' + Array.from({ length: 11 }, (_, i) => `${(i + 1) * 1e6} 0.5 0`).join('\n');
+        const fenceText = fence(['sweep: 1M-11M', 'data: m.s1p 計算', 'traces:', '  - S11 tdr']);
+        const result = renderVna(fenceText, { data: files({ 'm.s1p': even }) });
+        expect(result.readings.extra.join('\n')).toContain('(計算) の一番高い山');
+        expect(result.readingLines.join('\n')).not.toContain('実測');
+      });
+
+      test('escapes the name in the figure', () => {
+        const result = renderVna(named('<b>&'), { data: files({ 'm.s2p': S2P }) });
+        expect(result.svg).toContain('&lt;b&gt;&amp; (m.s2p)');
+        expect(result.svg).not.toContain('<b>');
+      });
+
+      test('refuses a name that is too long, and says how long it may be', () => {
+        const result = renderVna(named('あ'.repeat(21)), { data: files({ 'm.s2p': S2P }) });
+        expect(result.errors.map((error) => error.message).join('\n')).toContain('20 字まで');
+      });
+    });
+
     test('says when the file is missing, broken, or out of the sweep', () => {
       expect(said(renderVna(MEASURED, { data: files({}) }))).toContain('見つかりません');
       expect(said(renderVna(MEASURED, { data: () => { throw new Error('x'); } }))).toContain('見つかりません');

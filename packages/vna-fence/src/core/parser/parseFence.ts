@@ -2,7 +2,7 @@ import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
 import { rememberRecent } from 'fence-kit';
 import { fenceError, notice, safeToken } from '../errors.ts';
-import { DATA_NAME, LIMITS } from '../limits.ts';
+import { DATA_NAME, LIMITS, MEASURED_LABEL } from '../limits.ts';
 import { DEFAULT_DEVICE, DEVICE_NAMES, isDeviceName } from '../model/device.ts';
 import type { DeviceName } from '../model/device.ts';
 import type { DutElement } from '../model/dut.ts';
@@ -284,15 +284,24 @@ function readFence(source: string): ParseResult {
         readDut(pair.value, keyLine);
         break;
       case 'data': {
-        const text = (scalarText(pair.value) ?? '').trim();
-        if (!DATA_NAME.test(text)) {
+        // ファイル名の後は凡例の名前 (`data: 00-series-100.s2p 計算`)。書かなければ実測。
+        const [file = '', ...words] = (scalarText(pair.value) ?? '').trim().split(/\s+/);
+        if (!DATA_NAME.test(file)) {
           errors.push(fenceError(
             `data: には .md と同じ場所の Touchstone のファイル名を書きます (例: data: 3-1-100ohm.s2p。/ や .. は書けません)`,
-            at, text || undefined,
+            at, file || undefined,
           ));
           break;
         }
-        data = { name: text, line: at };
+        const label = words.join(' ');
+        if ([...label].length > LIMITS.dataLabel) {
+          errors.push(fenceError(
+            `data: の凡例の名前は ${LIMITS.dataLabel} 字までです (例: data: ${file} 計算)`,
+            at, label,
+          ));
+          break;
+        }
+        data = { name: file, label: label === '' ? MEASURED_LABEL : label, line: at };
         break;
       }
       case 'traces':

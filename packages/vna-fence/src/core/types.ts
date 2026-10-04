@@ -71,8 +71,11 @@ export type FenceDocument = {
   readonly sweep: Sweep;
   readonly title: string | null;
   readonly dut: readonly DutElement[];
-  /** 測った値のファイル名 (`.md` の隣)。 */
-  readonly data: { readonly name: string; readonly line: number | null } | null;
+  /**
+   * 重ねる値のファイル名 (`.md` の隣) と、凡例・読み値の見出しに出す名前
+   * (ファイル名の後に書く。書かなければ `実測`)。
+   */
+  readonly data: { readonly name: string; readonly label: string; readonly line: number | null } | null;
   readonly traces: readonly TraceSpec[];
   /** `traces:` を書いたか (書かなければ既定の 3 本)。 */
   readonly tracesWritten: boolean;

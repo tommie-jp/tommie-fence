@@ -16,6 +16,8 @@ export const LIMITS = {
   /** `data:` の点の数とファイルの大きさ。 */
   dataPoints: 10001,
   dataBytes: 1_000_000,
+  /** `data:` の凡例の名前の字数 (`計算` `QucsStudio の計算`)。 */
+  dataLabel: 20,
   /** トレースとマーカーの数。**実機と同じ 4 つ**。 */
   traces: 4,
   markers: 4,
@@ -37,6 +39,12 @@ export const LIMITS = {
  * (52 の docs/76)。宿主の側でも名前がそのままファイル名であることを確かめる。
  */
 export const DATA_NAME = /^[\w-][\w.-]{0,63}\.s[12]p$/i;
+
+/**
+ * `data:` に凡例の名前を書かなかったときの名前。`data:` は測った値を重ねるキーなので、
+ * 既定は実測。計算で作った `.s2p` は名前を書く (`data: 00-series-100.s2p 計算`)。
+ */
+export const MEASURED_LABEL = '実測';
 
 /** 選べるテーマ。**既定は light**。 */
 export const THEME_NAMES = ['light', 'dark', 'mono'] as const;

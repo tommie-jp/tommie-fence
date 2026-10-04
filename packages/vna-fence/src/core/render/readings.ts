@@ -11,7 +11,7 @@ import type { Theme } from './theme.ts';
  */
 export const readingsHeading = (readings: Readings, dataName: string | null): string =>
   (readings.basis === 'data'
-    ? `読み値 — 実測 (${dataName ?? 'data'})`
+    ? `読み値 — ${dataName ?? '実測 (data)'}`
     : '読み値 — 理想 (dut: の模型)');
 
 type Parts = { readonly heading: readonly string[]; readonly table: readonly (readonly string[])[]; readonly extra: readonly string[] };
