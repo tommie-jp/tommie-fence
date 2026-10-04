@@ -109,6 +109,20 @@ describe('配線とネットリスト', () => {
     }
   });
 
+  test('wires to the ULN2003A by 1B-7B, GND, COM and 7C-1C', () => {
+    for (const pin of ['1B', '7B', 'GND', 'COM', '7C', '1C']) {
+      const { errors, netlist } = renderBreadboard(fence(
+        'parts:',
+        '  U1: dip16 @ e10 ULN2003A',
+        '  R1: resistor a5 a8 10k',
+        'wires:',
+        `  - U1.${pin} -- b5`,
+      ));
+      expect(errors, pin).toEqual([]);
+      expect(netlist.find((net) => net.refs.includes('R1.1'))?.refs, pin).toContain(`U1.${pin}`);
+    }
+  });
+
   test('refuses the bare letters of the CD4511B, which would name an input or an output depending on case', () => {
     for (const pin of ['A', 'a']) {
       const { errors } = renderBreadboard(fence(

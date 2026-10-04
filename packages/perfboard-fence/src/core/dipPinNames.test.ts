@@ -39,6 +39,12 @@ describe('ネットリスト', () => {
     }
   });
 
+  test('lists the pins of the ULN2003A by their names', () => {
+    const { errors, netlist } = renderPerfboard(fence('parts:', '  U1: dip16 c3 ULN2003A'));
+    expect(errors).toEqual([]);
+    expect(netlist.flatMap((net) => net.refs)).toEqual(expect.arrayContaining(['U1.1B', 'U1.GND', 'U1.COM', 'U1.7C', 'U1.1C']));
+  });
+
   test('lists the pins of the 3SK291 by name on a two column board (dip4) and a one column board (sip4)', () => {
     for (const type of ['dip4', 'sip4']) {
       const { errors, netlist } = renderPerfboard(fence('parts:', `  Q1: ${type} c3 3SK291`));

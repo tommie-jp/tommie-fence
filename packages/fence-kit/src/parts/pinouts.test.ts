@@ -92,6 +92,15 @@ describe('足の名前の表', () => {
     expect(lookupPinout('CD4511BE', 16)?.model).toBe('CD4511B');
   });
 
+  test('names the ULN2003A as printed on the TI data sheet: inputs 1B-7B, GND, COM, outputs 7C-1C', () => {
+    expect(lookupPinout('ULN2003A', 16)?.names).toEqual([
+      '1B', '2B', '3B', '4B', '5B', '6B', '7B', 'GND', 'COM', '7C', '6C', '5C', '4C', '3C', '2C', '1C',
+    ]);
+    expect(lookupPinout('ULN2003', 16)?.model).toBe('ULN2003A');
+    expect(lookupPinout('ULN2003APG', 16)?.model).toBe('ULN2003A');
+    expect(lookupRole('ULN2003A')).toBe('7 回路のダーリントン (シンクドライバ)');
+  });
+
   test('names the CD74HC283 as printed on the TI data sheet (SCHS176E)', () => {
     expect(lookupPinout('CD74HC283', 16)?.names).toEqual([
       'S1', 'B1', 'A1', 'S0', 'A0', 'B0', 'CIN', 'GND', 'COUT', 'S3', 'B3', 'A3', 'S2', 'A2', 'B2', 'VCC',

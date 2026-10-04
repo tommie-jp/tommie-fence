@@ -28,6 +28,7 @@ import type { SipLook } from './chips.ts';
  * | MCP3008 | Microchip DS21295D (MCP3004/3008)、Table 3-1 (PDIP) |
  * | 74HC595 | SN74HC595 SCLS041J、Figure と Table 5-1 (PDIP) |
  * | CD4511B | SCHS072B、端子図 (TERMINAL ASSIGNMENT) |
+ * | ULN2003A | TI ULN2003A SLRS027T (2025-03)、Pin Functions (D・N・NS・PW)。8 番の印字は `E` (エミッタ共通 = 接地) だが、他の行に合わせて `GND` にした |
  * | CD74HC283 | SCHS176E、4 Pin Configuration (PDIP) |
  * | 74HC14・00・10・11・27・20・132・125・126・393・164・74・86・02 | TI SN74HC14 などの Pin Functions (N)。74HC74・86・02 は 2026-10-04 に突き合わせ済み |
  * | 74HC30・4066・194・390・85・123・573 | TI の CD74HC30 / CD74HC4066 / CD74HC194 / CD74HC390 / CD74HC85 / CD74HC123 / CD74HC573 (SN74HC は無い)。4066 は D・PW の端子図 (14 ピンで PDIP と同じ番号) |
@@ -544,6 +545,12 @@ const ROWS: readonly PinoutRow[] = [
       'CLK', '8Q', '7Q', '6Q', '5Q', '4Q', '3Q', '2Q', '1Q', 'VCC',
     ],
     note: '`OE` は上に線。並びは 74HC573 と同じ (`LE` が `CLK`)',
+  },
+  {
+    // 入力は B (base)、出力は C (collector)、COM はクランプダイオードの共通 (負荷の電源側へ)。
+    models: ['ULN2003A', 'ULN2003', 'ULN2003APG', 'ULN2003AN'], role: '7 回路のダーリントン (シンクドライバ)',
+    names: ['1B', '2B', '3B', '4B', '5B', '6B', '7B', 'GND', 'COM', '7C', '6C', '5C', '4C', '3C', '2C', '1C'],
+    note: '`COM` は負荷の電源側へつなぐ (誘導負荷のクランプ)。出力は吸い込み (シンク) だけ',
   },
   {
     // 面実装 (SMQ) の 4 本足。変換基板に載せて `dip4` (2 列) か `sip4` (1 列) で置く。
