@@ -186,7 +186,7 @@ parts:
   CLK: port d1
   U1: ic e6 CD4013B
   OUT: port e11
-  VDD: vcc a6 5V
+  VDD: vcc a6
   G1: ground i6
 wires:
   - d1 -| U1.CLOCK1
@@ -218,7 +218,7 @@ parts:
   Q1: port c11
   Q4: port e11
   Q12: port i11
-  VDD: vcc a6 5V
+  VDD: vcc a6
   G1: ground k6
   G2: ground k3
 wires:
