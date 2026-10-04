@@ -2,7 +2,7 @@
   "name": "graph-fence",
   "displayName": "Graph Fence",
   "description": "Markdown の ```graph フェンスを教科書の x-y グラフ — 周波数応答・特性曲線、対数の軸、理想の破線と実測の点 — として描く",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "license": "MIT",
   "private": true,
   "publisher": "tommie",

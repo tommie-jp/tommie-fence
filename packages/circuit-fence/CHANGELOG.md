@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-10-05
+
 ### Added
 
 - 足の名前の表に ULN2003A (`ULN2003` `ULN2003APG` `ULN2003AN`、`dip16`) を足した。足は `1B`〜`7B` `GND` `COM` `7C`〜`1C`
