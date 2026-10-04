@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- 部品表の欄の中身 `partKind` `valueWithRole` `partsMark` `bandColors` `capacitorMark` `PARTS_HEADINGS`
+  (breadboard と perfboard の部品表で共有)
+
 ## [0.11.0] - 2026-10-04
 
 ### Added

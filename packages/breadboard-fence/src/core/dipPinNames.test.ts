@@ -144,7 +144,7 @@ describe('絵', () => {
   test('prints the numbers and the names on the body', () => {
     const shown = texts(renderBreadboard(fence('parts:', '  U1: dip8 @ e10 NE555')).svg);
 
-    expect(shown).toEqual(expect.arrayContaining(['1', '8', 'GND', 'TRIG', 'VCC', 'NE555']));
+    expect(shown).toEqual(expect.arrayContaining(['1', '8', 'GND', 'TRIG', 'VCC', 'U1 NE555']));
   });
 
   test('prints only the numbers for a model not in the table, and says so', () => {

@@ -1,9 +1,14 @@
-import { bandColor, capacitorCode, lookupNamedChip, lookupRole, parsePicofarads, parseResistor, resistorBands } from 'fence-kit';
+import { PARTS_HEADINGS, bandColor, lookupNamedChip, partKind, partsMark, valueWithRole } from 'fence-kit';
+import type { PartsMark } from 'fence-kit';
 import { colorValue } from '../color.ts';
 import type { Band } from '../model/layout.ts';
 import type { Board, DeviceSpec } from '../types.ts';
 import { monoBandHeight, monoBaseline, monoText, monoWidth } from './monoBand.ts';
 import type { Theme } from './theme.ts';
+
+/** 欄の中身 (種類・値・色・記号) は fence-kit に置き、breadboard の部品表と同じ字で出す。 */
+export { bandColors, capacitorMark } from 'fence-kit';
+export type { PartsMark } from 'fence-kit';
 
 /**
  * 部品表 (`- parts`)。**買う・箱から選ぶときに見る一覧**を図の下に出す。
@@ -24,31 +29,6 @@ import type { Theme } from './theme.ts';
  */
 
 /**
- * 抵抗のカラーコードの帯の色 (`fence-kit` の帯の名前、`brown` など)。**値として読めないときは空** —
- * 実物と違う帯を書くと、図を信じた人が違う抵抗を挿す (図の帯と同じ約束)。
- * 表には字ではなく**実際の色の四角**で出す (`renderPartsList`)。
- */
-export function bandColors(type: string, value: string | null): readonly string[] {
-  if (type !== 'resistor' || value === null) return [];
-
-  const read = parseResistor(value);
-  if (read === null) return [];
-
-  return resistorBands(read.ohms, { tolerance: read.tolerance, tempco: read.tempco }) ?? [];
-}
-
-/**
- * コンデンサの胴に刷ってある 3 桁の記号 (`100n` → `104`)。**電解は値をそのまま刷る**ので出さない。
- * 3 桁で書けない値 (10pF 未満・丸めると別の値) も出さない。
- */
-export function capacitorMark(type: string, variant: string | null, value: string | null): string {
-  if (type !== 'capacitor' || variant === 'electrolytic' || value === null) return '';
-
-  const picofarads = parsePicofarads(value);
-  return picofarads === null ? '' : capacitorCode(picofarads) ?? '';
-}
-
-/**
  * 部品表に要るところだけ。**板に載せる前の部品**から作れる形にしておく —
  * 帯の大きさは図を組む前に測るので、置き場所が決まるのを待てない。
  */
@@ -59,51 +39,16 @@ export type ListedPart = {
   readonly value: string | null;
 };
 
-/** 最後の欄。抵抗は帯の色の並び (四角で描く)、ほかは字 (コンデンサの記号 `104` など)。 */
-export type PartsMark = string | readonly string[];
-
 /** 部品表の 1 行ぶん。列に分けて持ち、幅を測ってから置き場所を決める。 */
 export type PartsRow = readonly [id: string, kind: string, value: string, mark: PartsMark];
 
-const HEADINGS: PartsRow = ['部品', '種類', '値', '色・記号'];
-
-/** 種類の欄に、綴り (`sip3`) の代わりに出す呼び名。型番の働きの表 (fence-kit) から引く。 */
-const CERAMIC_FILTER = 'セラミックフィルター';
-
-/**
- * 種類の綴り。姿を書いてあれば添える (`capacitor/ceramic`)。セラミックフィルタの型番
- * (`sip3` + `SFU455B`) は、足の数の綴りでは何の部品か分からないので呼び名で出す。
- */
-const CERAMIC_ROLE = 'セラミックフィルタ';
-
-function kindOf(type: string, variant: string | null, value: string | null): string {
-  const role = value === null || value === '' ? null : lookupRole(value);
-  if (role?.startsWith(CERAMIC_ROLE) === true) return CERAMIC_FILTER;
-  return variant === null ? type : `${type}/${variant}`;
-}
-
-const markOf = (part: ListedPart): PartsMark => {
-  const bands = bandColors(part.type, part.value);
-  return bands.length > 0 ? bands : capacitorMark(part.type, part.variant, part.value);
-};
+const HEADINGS: PartsRow = PARTS_HEADINGS;
 
 /**
  * 部品表の行。**書いた順に並べる** — 番号で並べ直すと、図を追いながら表を
  * 読む人が行を見失う (`R1` `R2` は書いた順に置いてあることが多い)。
  * 先頭は見出し — 番号と型番だけが並ぶと、どの欄が値なのかが読めない。
  */
-/**
- * IC の型番に働きを添える (`CD4081 (2 入力 AND ×4)`)。型番だけだと、どの IC が何をするのか
- * 表から読めない。足の名前の表 (fence-kit) にある型番だけ。
- */
-function withRole(value: string): string {
-  const role = value === '' ? null : lookupRole(value);
-  if (role === null) return value;
-  // セラミックフィルタは種類の欄に呼び名を出すので、値の欄には周波数だけ残す (`SFU455B (455 kHz)`)。
-  const rest = role.startsWith(CERAMIC_ROLE) ? role.slice(CERAMIC_ROLE.length).trim() : role;
-  return rest === '' ? value : `${value} (${rest})`;
-}
-
 /**
  * 板の行。**買うときに要る値**だけを、売り場の表記の順に並べる (呼び名・穴数・厚さ・基材)。
  * 書かなかった厚さと基材も既定のまま出す — 表は買う物の一覧で、既定の板も買う板。
@@ -122,8 +67,8 @@ export function partsListing(
 ): readonly PartsRow[] {
   const rows: PartsRow[] = [
     ...parts.map((part): PartsRow =>
-      [part.id, kindOf(part.type, part.variant, part.value),
-        withRole(part.value ?? lookupNamedChip(part.type, part.variant)?.name ?? ''), markOf(part)]),
+      [part.id, partKind(part.type, part.variant, part.value),
+        valueWithRole(part.value ?? lookupNamedChip(part.type, part.variant)?.name ?? ''), partsMark(part.type, part.variant, part.value)]),
     // 機器は種類が 1 つしかないので、名札を値の欄に出す (`電池 3V`)。
     ...devices.map((device): PartsRow => [device.id, 'device', device.label, '']),
   ];

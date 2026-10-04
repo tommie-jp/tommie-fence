@@ -182,9 +182,11 @@ describe('描く', () => {
 
   test('prints the numbers and the names of the pins, with the model in the body', () => {
     const printed = texts(svg);
-    for (const text of ['1', '14', '28', 'A14', 'VSS', 'VCC', 'DQ0', 'WE', 'AS6C62256-55PCN']) {
+    for (const text of ['1', '14', '28', 'A14', 'VSS', 'VCC', 'DQ0', 'WE']) {
       expect(printed, text).toContain(text);
     }
+    // 型番は名札 (`U1 AS6C…`) に出る。部品表のほうは働きを添えた字になる。
+    expect(printed.some((text) => text.includes('AS6C62256-55PCN'))).toBe(true);
   });
 
   test('draws the body as deep as the two pin rows are far apart, deeper than the narrow one', () => {

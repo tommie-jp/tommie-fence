@@ -10,9 +10,18 @@ const part = (id: string, type: string, value: string | null = null, label: stri
 });
 
 const theme = DEFAULT_THEME;
+const HEAD = ['部品', '種類', '値', '色・記号'];
+
 
 // 見える字だけ。縁だけを描く写し (aria-hidden) は数えない。
-const texts = (svg: string): string[] => [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*>([^<]*)<\/text>/g)].map((match) => match[1] ?? '');
+const allTexts = (svg: string): string[] => [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*>([^<]*)<\/text>/g)].map((match) => match[1] ?? '');
+// 見出しの字は除く (幅の足りない欄は見出しごと落ちるので、数ではなく字で除く)。
+const texts = (svg: string): string[] => allTexts(svg).filter((text) => !HEAD.includes(text));
+// 字の要素から、見出しの行を除いたもの。
+const bodyCells = (svg: string): string[] =>
+  [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*>([^<]*)<\/text>/g)]
+    .filter((match) => !HEAD.includes(match[1] ?? ''))
+    .map((match) => match[0]);
 
 const render = (parts: readonly PlacedPart[]): string => renderPartsList(parts, 14, 400, 636, theme);
 
@@ -85,9 +94,10 @@ describe('renderPartsList', () => {
     const plate = /<rect[^>]*y="([\d.]+)"[^>]*height="([\d.]+)"/.exec(svg);
     const top = Number(plate?.[1]);
     const bottom = top + Number(plate?.[2]);
-    const baselines = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]* y="([\d.]+)"/g)].map((match) => Number(match[1]));
+    const baselines = bodyCells(svg).map((text) => Number(/ y="([\d.]+)"/.exec(text)?.[1]));
 
-    expect(baselines).toHaveLength(6);
+    // C1 は胴の記号 (476) まで 4 欄、R1 は帯の色を四角で描くので字は 3 欄。
+    expect(baselines).toHaveLength(7);
     for (const baseline of baselines) {
       expect(baseline).toBeGreaterThan(top);
       expect(baseline).toBeLessThan(bottom);
@@ -98,9 +108,10 @@ describe('renderPartsList', () => {
 
   test('lines the three columns up so the list can be read down', () => {
     const svg = render([part('R1', 'resistor', '330'), part('C1', 'capacitor', '47uF')]);
-    const columns = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*x="([\d.]+)"/g)].map((match) => Number(match[1]));
+    const columns = bodyCells(svg).map((text) => Number(/x="([\d.]+)"/.exec(text)?.[1]));
 
-    expect(columns.slice(0, 3)).toEqual(columns.slice(3, 6));
+    // C1 は 4 欄 (記号 476 まで)、R1 は字が 3 欄。
+    expect(columns.slice(0, 3)).toEqual(columns.slice(4, 7));
     // 左から ID・種類・値の順に並ぶ。
     expect(columns[0]).toBeLessThan(columns[1] as number);
     expect(columns[1]).toBeLessThan(columns[2] as number);
@@ -117,7 +128,7 @@ describe('renderPartsList', () => {
 
   test('keeps a full width value inside the plate, where a half width guess would let it run off', () => {
     const svg = render([part('R1', 'resistor', 'あ'.repeat(200))]);
-    const cells = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)];
+    const cells = bodyCells(svg).map((text) => /x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)</.exec(text) ?? []);
     const [, valueX = '', size = '', shown = ''] = cells[2] ?? [];
 
     // 全角なので 1 文字ぶんの幅は字の大きさそのまま。板は x=14 から 636 幅。
@@ -128,7 +139,7 @@ describe('renderPartsList', () => {
     // サロゲートペアの文字。BMP だけを見る幅の見積もりでは半角に数えてはみ出す。
     for (const wide of ['\u{20BB7}', '\u{1F50B}']) {
       const svg = render([part('R1', 'resistor', wide.repeat(200))]);
-      const cells = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)];
+      const cells = bodyCells(svg).map((text) => /x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)</.exec(text) ?? []);
       const [, valueX = '', size = '', shown = ''] = cells[2] ?? [];
 
       expect(shown.endsWith('…')).toBe(true);
@@ -175,13 +186,13 @@ describe('renderPartsList', () => {
   test('adds what an IC does after its model, so the list says which chip is which', () => {
     const svg = render([part('U1', 'dip14', 'CD4081'), part('R1', 'resistor', '330')]);
 
-    expect(texts(svg)).toEqual(['R1', 'resistor', '330', 'U1', 'dip14', 'CD4081', '2 入力 AND ×4']);
+    expect(texts(svg)).toEqual(['R1', 'resistor', '330', 'U1', 'dip14', 'CD4081 (2 入力 AND ×4)']);
   });
 
   test('finds the role of a chip whose model is written as its label, as a DIP is placed', () => {
     const svg = render([part('U1', 'dip14', null, 'CD4071')]);
 
-    expect(texts(svg)).toContain('2 入力 OR ×4');
+    expect(texts(svg)).toContain('CD4071 (2 入力 OR ×4)');
   });
 
   test('sorts the rows by name, numbers as numbers', () => {
@@ -233,7 +244,7 @@ describe('renderPartsList', () => {
 
   test('holds back a type long enough to run off the plate', () => {
     const svg = render([part('U1', `dip${'0'.repeat(300)}8`, '100uF')]);
-    const cells = [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)];
+    const cells = bodyCells(svg).map((text) => /x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)</.exec(text) ?? []);
     const [, typeX = '', size = '', shown = ''] = cells[1] ?? [];
 
     expect(shown.endsWith('…')).toBe(true);
@@ -248,6 +259,26 @@ describe('renderPartsList', () => {
     expect(shown).toContain('ほかに 7 件');
     // 部品が増えても高さは頭打ちになる。
     expect(partsListHeight([...many, part('X1', 'led')], theme)).toBe(partsListHeight(many, theme));
+  });
+
+  test('heads the list with the names of its columns', () => {
+    const svg = render([part('R1', 'resistor', '10k')]);
+
+    expect(allTexts(svg).slice(0, 4)).toEqual(HEAD);
+  });
+
+  test('draws the colour code of a resistor as swatches in the last column', () => {
+    const svg = render([part('R1', 'resistor', '10k')]);
+    const fills = [...svg.matchAll(/<rect [^>]*fill="(#[0-9a-f]+)"[^>]*stroke-width="0.5"/g)].map((m) => m[1]);
+
+    // 茶・黒・橙・茶の 4 本。
+    expect(fills).toHaveLength(4);
+  });
+
+  test('prints the three digit code of a ceramic capacitor, and none for an electrolytic', () => {
+    expect(texts(render([part('C1', 'capacitor', '100n')]))).toContain('104');
+    const electrolytic: PlacedPart = { ...part('C1', 'capacitor', '10u'), variant: 'electrolytic' };
+    expect(texts(render([electrolytic]))).toEqual(['C1', 'capacitor/electrolytic', '10u']);
   });
 
   test('escapes markup that a value smuggles into the list', () => {

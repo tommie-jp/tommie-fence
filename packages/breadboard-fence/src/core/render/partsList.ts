@@ -1,4 +1,5 @@
-import { lookupRole } from 'fence-kit';
+import { PARTS_HEADINGS, bandColor, partKind, partsMark, valueWithRole } from 'fence-kit';
+import type { PartsMark } from 'fence-kit';
 import { LIMITS } from '../limits.ts';
 import { fit, textWidth } from './textFit.ts';
 import type { Board, BoardSize, PlacedPart } from '../types.ts';
@@ -26,7 +27,19 @@ const MIN_COLUMN_WIDTH = 4;
  */
 const MAX_TYPE_WIDTH = 13;
 
-type Row = { readonly id: string; readonly type: string; readonly value: string; readonly role: string };
+/** 帯の色の四角。1 本ぶんの幅と間 (字の大きさに対する比)。高さは字の高さに合わせる (perfboard と同じ)。 */
+const SWATCH = { width: 0.9, gap: 0.25, height: 0.8 } as const;
+
+/**
+ * 表の 1 行。最後の欄は抵抗なら帯の色の並び (四角で描く)、コンデンサなら胴の記号 (`104`)。
+ * 欄の中身は perfboard の部品表と同じもの (fence-kit)。
+ */
+type Row = { readonly id: string; readonly type: string; readonly value: string; readonly mark: PartsMark };
+
+/** 見出しの行。番号と型番だけが並ぶと、どの欄が値なのかが読めない。 */
+const HEADING_ROW: Row = {
+  id: PARTS_HEADINGS[0], type: PARTS_HEADINGS[1], value: PARTS_HEADINGS[2], mark: PARTS_HEADINGS[3],
+};
 
 /**
  * 値は**図に出ているのと同じ文字列**だけを選ぶ。整えたり (`10k` → `10kΩ`) はしない。
@@ -44,7 +57,7 @@ const valueOf = (part: PlacedPart): string =>
  * フィルムかは買うときに効く違いで、図だけを渡された人はここでしか読めない。
  */
 const typeOf = (part: PlacedPart): string =>
-  part.variant === null ? part.type : `${part.type}/${part.variant}`;
+  part.kind === 'device' ? part.type : partKind(part.type, part.variant, valueOf(part));
 
 /** 実物の穴数。`board:` のサイズ名では買えないので、売り場の呼び名に添える。 */
 const HOLES: Readonly<Record<BoardSize, number>> = { mini: 170, half: 400, full: 830 };
@@ -56,18 +69,34 @@ const HOLES: Readonly<Record<BoardSize, number>> = { mini: 170, half: 400, full:
 export function boardRow(board: Board): Row {
   const hasRails = board.rails !== null;
   const rails = hasRails === (board.size !== 'mini') ? '' : hasRails ? ' レール有り' : ' レール無し';
-  return { id: '基板', type: 'breadboard', value: `${board.size} (${HOLES[board.size]} 穴)${rails}`, role: '' };
+  return { id: '基板', type: 'breadboard', value: `${board.size} (${HOLES[board.size]} 穴)${rails}`, mark: '' };
 }
 
-const rowsOf = (parts: readonly PlacedPart[]): readonly Row[] =>
-  parts.map((part) => ({ id: part.id, type: typeOf(part), value: valueOf(part), role: roleOf(part) }));
-
 /**
- * IC の働き (`2 入力 AND ×4`)。型番だけだと、どの IC が何をするのか表から読めない。
- * 足の名前の表 (fence-kit) にある型番だけ。機器や表に無い型番は空。
+ * IC には働きを添える (`CD4081 (2 入力 AND ×4)`)。型番だけだと、どの IC が何をするのか
+ * 表から読めない。機器の名札には添えない。
  */
-const roleOf = (part: PlacedPart): string =>
-  (part.kind === 'device' ? null : lookupRole(valueOf(part))) ?? '';
+const rowsOf = (parts: readonly PlacedPart[]): readonly Row[] =>
+  parts.map((part) => part.kind === 'device'
+    ? { id: part.id, type: typeOf(part), value: valueOf(part), mark: '' }
+    : { id: part.id, type: typeOf(part), value: valueWithRole(valueOf(part)), mark: partsMark(part.type, part.variant, part.value) });
+
+const markWidth = (mark: PartsMark): number =>
+  typeof mark === 'string'
+    ? textWidth(mark)
+    : mark.length === 0 ? 0 : mark.length * SWATCH.width + (mark.length - 1) * SWATCH.gap;
+
+/** 帯の色の四角を並べる。白と黒も地と見分けられるよう、細い縁を付ける。 */
+function swatches(x: number, baseline: number, colors: readonly string[], size: number, edge: string): string {
+  const height = SWATCH.height * size;
+  return colors
+    .map((name, index) => element('rect', {
+      x: num(x + index * (SWATCH.width + SWATCH.gap) * size), y: num(baseline - height),
+      width: num(SWATCH.width * size), height: num(height),
+      fill: bandColor(name), stroke: edge, 'stroke-width': 0.5,
+    }))
+    .join('');
+}
 
 const widest = (values: readonly string[]): number => Math.max(0, ...values.map(textWidth));
 
@@ -83,7 +112,8 @@ const plateHeight = (rows: number, theme: RenderTheme): number => {
 
 /** 部品リストが図の下に足す高さ (板 + 下の余白)。並べるものが無ければ 0。 */
 export function partsListHeight(parts: readonly PlacedPart[], theme: RenderTheme, board: Board | null = null): number {
-  return parts.length === 0 ? 0 : plateHeight(rowCount(parts.length) + (board === null ? 0 : 1), theme) + GAP;
+  // 見出しの 1 行と、板の 1 行を足す。
+  return parts.length === 0 ? 0 : plateHeight(rowCount(parts.length) + 1 + (board === null ? 0 : 1), theme) + GAP;
 }
 
 /**
@@ -105,8 +135,8 @@ export function renderPartsList(
   const sorted = [...parts].sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }));
   const listed = rowsOf(sorted.slice(0, LIMITS.listedParts));
   const hidden = parts.length - listed.length;
-  // 板は最初に用意する物なので、名前の順には入れず先頭に置く。上限の数にも数えない。
-  const rows = board === null ? listed : [boardRow(board), ...listed];
+  // 先頭は見出し。板は最初に用意する物なので、名前の順には入れず見出しのすぐ下に置く。上限の数にも数えない。
+  const rows = [HEADING_ROW, ...(board === null ? [] : [boardRow(board)]), ...listed];
   const { palette } = theme;
   const { textSize } = theme.metrics;
   const pad = textSize * PAD_RATIO;
@@ -138,8 +168,8 @@ export function renderPartsList(
   const valueRoom = room(valueX);
   const valueWidth = Math.min(widest(rows.map((row) => row.value)), valueRoom);
 
-  const roleX = valueX + (valueWidth + COLUMN_GAP) * textSize;
-  const roleRoom = room(roleX);
+  const markX = valueX + (valueWidth + COLUMN_GAP) * textSize;
+  const markRoom = room(markX);
 
   const baselineOf = (index: number): number => y + pad + textSize * CAP_RATIO + line * index;
   // 縁取りは図のキャプションと同じものを敷く。`style` の `text-color` は板ではなく
@@ -166,9 +196,11 @@ export function renderPartsList(
       ...(row.value === '' || valueRoom < MIN_COLUMN_WIDTH
         ? []
         : [cell(valueX, baseline, fit(row.value, valueRoom), ink)]),
-      ...(row.role === '' || roleRoom < MIN_COLUMN_WIDTH
+      ...(row.mark.length === 0 || markRoom < MIN_COLUMN_WIDTH || markWidth(row.mark) > markRoom
         ? []
-        : [cell(roleX, baseline, fit(row.role, roleRoom), ink)]),
+        : [typeof row.mark === 'string'
+          ? cell(markX, baseline, row.mark, ink)
+          : swatches(markX, baseline, row.mark, textSize, ink)]),
     ];
   });
 
