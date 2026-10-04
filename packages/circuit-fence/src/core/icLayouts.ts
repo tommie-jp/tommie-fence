@@ -241,6 +241,25 @@ const HC4051_LAYOUT: IcLayout = {
   bottom: ['GND', 'VEE', 'E', 'S0', 'S1', 'S2'],
 };
 
+/**
+ * CD4040B (12 段リプルカウンタ。74HC4040 と同じ足の並び)。クロック CLOCK とリセット R は左、
+ * Q1〜Q12 は右に下の桁から。CMOS 4000 系なので電源は VDD (上)・VSS (下)。
+ */
+const CD4040_LAYOUT: IcLayout = {
+  top: ['VDD'],
+  left: ['CLOCK', 'R'],
+  right: ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10', 'Q11', 'Q12'],
+  bottom: ['VSS'],
+};
+
+/** CD4013B (D フリップフロップ ×2)。回路ごとに D・CLOCK・SET・RESET を左、Q・/Q を右に同じ順。 */
+const CD4013_LAYOUT: IcLayout = {
+  top: ['VDD'],
+  left: ['D1', 'CLOCK1', 'SET1', 'RESET1', 'D2', 'CLOCK2', 'SET2', 'RESET2'],
+  right: ['Q1', '/Q1', 'Q2', '/Q2'],
+  bottom: ['VSS'],
+};
+
 /** 箱で描く部品の足の並び。働きで並べた IC (`ic`) は型番で引く。箱でなければ null。 */
 export function boxPinoutOf(type: string, model: string | null): IcPinout | null {
   return type === 'ic' ? lookupIcPinout(model) : null;
@@ -277,6 +296,8 @@ const LAYOUTS: readonly { readonly pins: number; readonly model: string; readonl
   { pins: 16, model: '74HC174', layout: HC174_LAYOUT },
   { pins: 16, model: '74HC193', layout: HC193_LAYOUT },
   { pins: 16, model: '74HC4051', layout: HC4051_LAYOUT },
+  { pins: 16, model: 'CD4040B', layout: CD4040_LAYOUT },
+  { pins: 14, model: 'CD4013B', layout: CD4013_LAYOUT },
 ];
 
 /** 型番から足の名前と働きの並びを引く。並びを持たない型番は null。 */

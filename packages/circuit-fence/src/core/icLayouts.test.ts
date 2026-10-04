@@ -72,3 +72,26 @@ describe('カウンタ・デコーダ・SRAM の働きの並び', () => {
     expect(layout?.top).toEqual(['VCC']);
   });
 });
+
+describe('CMOS 4000 系のカウンタ・フリップフロップの働きの並び', () => {
+  it('CD4040B はクロックとリセットが左、Q1〜Q12 が右、VDD は上、VSS は下', () => {
+    for (const model of ['CD4040B', 'CD4040', 'CD4040BE']) {
+      const pinout = lookupIcPinout(model);
+      expect(pinout?.model, model).toBe('CD4040B');
+      expect(pinout?.layout.left, model).toEqual(['CLOCK', 'R']);
+      expect(pinout?.layout.right, model).toEqual(
+        ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10', 'Q11', 'Q12'],
+      );
+      expect(pinout?.layout.top, model).toEqual(['VDD']);
+      expect(pinout?.layout.bottom, model).toEqual(['VSS']);
+    }
+  });
+
+  it('CD4013B は D・CLOCK・SET・RESET が左、Q と /Q が右、VDD は上、VSS は下', () => {
+    const layout = lookupIcPinout('CD4013BE')?.layout;
+    expect(layout?.left).toEqual(['D1', 'CLOCK1', 'SET1', 'RESET1', 'D2', 'CLOCK2', 'SET2', 'RESET2']);
+    expect(layout?.right).toEqual(['Q1', '/Q1', 'Q2', '/Q2']);
+    expect(layout?.top).toEqual(['VDD']);
+    expect(layout?.bottom).toEqual(['VSS']);
+  });
+});
