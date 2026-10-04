@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- 注釈 `text` に置き場の語 `left` / `right`。字を穴の脇 (丸 `mark` のすぐ外、穴と同じ高さ) に置く
+  (`- text n23 red large bold right: AD3 1+`)。向きの語とは一緒に書けない
+
 ## [0.31.0] - 2026-10-05
 
 ### Added

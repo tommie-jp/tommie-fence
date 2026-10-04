@@ -207,7 +207,8 @@ logic (ロジックアナライザの画面) も**基板も部品も無い**。s
 - **Analog Discovery を測るときだけ挟む点は、AD3 の箱と線を描かず、挟むパッドを黄色の丸 (`mark 番地 yellow`) で囲み、
   `text 番地 red large bold: AD3 1+` のように赤の大きな太字で名前を書く。** 半田付けする線と見分けがつき、
   「常には配線しない」が図で読める。出力の確認なら 1+ は出力の USB-C の VBUS (5×7 cm 横使いなら n23)、1− は GND (n20)。
-  2 つの字は右端と n20 の真上に行を分けて置く (`text k23 …` と `text l20 …`)
+  字は丸の外側の脇に置く (`- text n23 red large bold right: AD3 1+`・`- text n20 red large bold left: AD3 1-`。
+  `left` / `right` は perfboard-fence の次の版から)。部品と重ならないか PNG で確かめる
 - **電源入力の USB-C 基板 (`usb-c/female`) は、ユニバーサル基板の左下端に置く。** 5×7 cm を横に使う基板 (24 列 × 18 行) なら
   **`J1: usb-c/female n2 n3 n4 n5`** (n 行の左から 2〜5 列。GND D+ D- VBUS の順)。受け口は下の縁を向き、基板の中に収まる。
   ほかの大きさの基板も同じ相対位置 (**下から 5 行目の行・左から 2 列目から 4 穴**) を基準にする。

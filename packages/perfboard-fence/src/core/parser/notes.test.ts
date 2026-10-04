@@ -202,3 +202,15 @@ describe('text の見た目 (large / bold)', () => {
     expect(!unknown.ok && unknown.error.message).toContain('large / bold');
   });
 });
+
+describe('text の置き場 (left / right)', () => {
+  test('reads left or right with the other words, in any order', () => {
+    const result = parseNoteLine('text n23 right red large bold', 'AD3 1+');
+    expect(result.ok && result.value).toMatchObject({ color: 'red', look: { large: true, bold: true, side: 'right' } });
+  });
+
+  test('refuses both sides at once, and a side together with a turn', () => {
+    expect(parseNoteLine('text n23 left right', 'x').ok).toBe(false);
+    expect(parseNoteLine('text n23 right r90', 'x').ok).toBe(false);
+  });
+});

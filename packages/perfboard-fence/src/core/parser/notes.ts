@@ -56,6 +56,11 @@ const fail = (message: string, token?: string): Parsed<never> =>
 
 const isKind = (word: string): word is NoteKind => (KINDS as readonly string[]).includes(word);
 
+/** 字を穴のどちら側へ置くかの語。 */
+const SIDE_WORDS = ['left', 'right'] as const;
+type SideWord = (typeof SIDE_WORDS)[number];
+const isSideWord = (word: string): word is SideWord => (SIDE_WORDS as readonly string[]).includes(word);
+
 /** 字の見た目の語。**閉じた並び**なので、色や向きと順不同に書いても紛れない。 */
 const LOOK_WORDS = ['large', 'bold'] as const;
 type LookWord = (typeof LOOK_WORDS)[number];
@@ -75,7 +80,10 @@ function readWords(
     const word = token.toLowerCase();
     if (isRotationWord(word)) turn = { ...turn, rotate: rotationOf(word) ?? turn.rotate };
     else if (word === MIRROR_WORD) turn = { ...turn, mirror: true };
-    else if (isLookWord(word)) {
+    else if (isSideWord(word)) {
+      if (look.side !== null) return fail(`注釈の left / right は 1 つだけ書けます: ${safeToken(token)}`, token);
+      look = { ...look, side: word };
+    } else if (isLookWord(word)) {
       if (look[word]) return fail(`注釈の ${word} が 2 回書かれています`, token);
       look = { ...look, [word]: true };
     } else if (isColor(word)) {
@@ -84,10 +92,13 @@ function readWords(
     } else {
       return fail(
         `注釈の知らない語です: ${safeToken(token)}`
-        + ` (色、r90 / r180 / r270 / ${MIRROR_WORD}、${LOOK_WORDS.join(' / ')} が書けます)`,
+        + ` (色、r90 / r180 / r270 / ${MIRROR_WORD}、${LOOK_WORDS.join(' / ')}、${SIDE_WORDS.join(' / ')} が書けます)`,
         token,
       );
     }
+  }
+  if (look.side !== null && (turn.rotate !== 0 || turn.mirror)) {
+    return fail(`${look.side} は向き (r90 / r180 / r270 / ${MIRROR_WORD}) と一緒には書けません`);
   }
   return { ok: true, value: { color, turn, look } };
 }

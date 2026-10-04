@@ -47,6 +47,28 @@ const LOUD_HALO = '#ffffff';
 const colorOf = (note: ResolvedNote, theme: Theme): string =>
   (note.color === null ? null : colorValue(note.color)) ?? theme.palette.plateText;
 
+/** 丸の脇に置く字と丸の間の隙間。 */
+const SIDE_GAP = 5;
+
+/**
+ * 字を置く場所。**`left` / `right` を書いた字は穴の脇** (丸 `mark` のすぐ外) に、穴と同じ高さで置く。
+ * 書かなければ穴の上 (`rise` だけ上) に、近いほうの縁から離れる向きへ伸ばす。
+ */
+function placeOf(
+  note: ResolvedNote, from: { x: number; y: number }, layout: Layout, size: number,
+): { x: number; baseline: number; anchor: 'start' | 'middle' | 'end'; room: number } {
+  const { side } = note.look;
+  if (side !== null) {
+    const x = from.x + (side === 'right' ? 1 : -1) * (MARK_RADIUS + SIDE_GAP);
+    return {
+      x, baseline: from.y + size * (ASCENT - DESCENT) / 2,
+      anchor: side === 'right' ? 'start' : 'end', room: side === 'right' ? layout.width - x : x,
+    };
+  }
+  const rise = note.turn.mirror ? -(TEXT_RISE + size * 0.8) : TEXT_RISE;
+  return { x: from.x, baseline: from.y - rise, ...textRoom(from.x, layout.width) };
+}
+
 /**
  * 字をどちら向きに伸ばすと一番多く入るか。**盤の端に置いた注釈が 1 字に
  * 切り詰められない**ようにする。中央寄せのまま端に置くと、使える幅は
@@ -77,15 +99,13 @@ function renderNote(note: ResolvedNote, layout: Layout, theme: Theme): string {
     // **縦に回した字は高さで測る** (横幅で切ると基板の広い側で無駄に切れる)。
     const sideways = note.turn.rotate === 90 || note.turn.rotate === 270;
     const size = sizeOf(note, theme);
-    const { anchor, room } = sideways
-      ? { anchor: 'middle' as const, room: layout.height }
-      : textRoom(from.x, layout.width);
+    const place = placeOf(note, from, layout, size);
+    const { anchor, room } = sideways ? { anchor: 'middle' as const, room: layout.height } : place;
     const text = fit(note.text ?? '', Math.max(0, room) / size);
     // **反転は字を裏返さない。** 鏡文字は読めないので、指す穴の**反対側**へ移す。
     // 上に何かあって字が重なるときに、下へ逃がすためのもの。
-    const rise = note.turn.mirror ? -(TEXT_RISE + size * 0.8) : TEXT_RISE;
     const loud = isLoud(note);
-    const drawn = svgText(from.x, from.y - rise, text, {
+    const drawn = svgText(place.x, sideways ? from.y - TEXT_RISE : place.baseline, text, {
       anchor,
       fill: stroke,
       'font-size': num(size),
@@ -163,12 +183,10 @@ export function noteBands(
     if (note.kind !== 'text' || note.turn.rotate !== 0) return [];
     const size = sizeOf(note, theme);
     const from = layout.point(note.from);
-    const { anchor, room } = textRoom(from.x, layout.width);
+    const { x: at, baseline, anchor, room } = placeOf(note, from, layout, size);
     const text = fit(note.text ?? '', Math.max(0, room) / size);
     const width = textWidth(text) * size;
-    const rise = note.turn.mirror ? -(TEXT_RISE + size * 0.8) : TEXT_RISE;
-    const baseline = from.y - rise;
-    const x = anchor === 'start' ? from.x : anchor === 'end' ? from.x - width : from.x - width / 2;
+    const x = anchor === 'start' ? at : anchor === 'end' ? at - width : at - width / 2;
     return [{ x, y: baseline - size * 0.72, width, height: size * 0.92 }];
   });
 }
@@ -194,8 +212,7 @@ function noteSpan(note: ResolvedNote, layout: Layout, theme: Theme): { top: numb
     const half = (textWidth(text) * size) / 2 + halo;
     return { top: from.y - half, bottom: from.y + half };
   }
-  const rise = note.turn.mirror ? -(TEXT_RISE + size * 0.8) : TEXT_RISE;
-  const baseline = from.y - rise;
+  const { baseline } = placeOf(note, from, layout, size);
   const top = baseline - size * ASCENT - halo;
   const bottom = baseline + size * DESCENT + halo;
   // 逆さの字は指す穴を挟んで反対側に来る。

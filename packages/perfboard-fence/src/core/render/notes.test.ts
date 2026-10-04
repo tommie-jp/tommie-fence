@@ -116,20 +116,40 @@ describe('text の見た目 (large / bold)', () => {
   const sizeIn = (svg: string): number => Number(/font-size="([\d.]+)"/.exec(svg)?.[1]);
 
   test('large draws the text bigger than a plain note', () => {
-    const large = draw(note({ kind: 'text', from: at('e5'), text: 'IN 5V', look: { large: true, bold: false } }));
+    const large = draw(note({ kind: 'text', from: at('e5'), text: 'IN 5V', look: { ...PLAIN_LOOK, large: true } }));
     expect(sizeIn(large)).toBeGreaterThan(sizeIn(plain));
   });
 
   test('bold sets the weight, and a plain note has none', () => {
-    const bold = draw(note({ kind: 'text', from: at('e5'), text: 'IN 5V', look: { large: false, bold: true } }));
+    const bold = draw(note({ kind: 'text', from: at('e5'), text: 'IN 5V', look: { ...PLAIN_LOOK, bold: true } }));
     expect(bold).toContain('font-weight="bold"');
     expect(plain).not.toContain('font-weight');
   });
 
   test('a loud note is not faded like the other notes', () => {
     // 目立たせたい字まで透かすと、書いた人の意図が図に出ない。
-    const loud = draw(note({ kind: 'text', from: at('e5'), text: 'IN 5V', look: { large: true, bold: true } }));
+    const loud = draw(note({ kind: 'text', from: at('e5'), text: 'IN 5V', look: { ...PLAIN_LOOK, large: true, bold: true } }));
     expect(plain).toMatch(/opacity="0\./);
     expect(loud).not.toMatch(/opacity="0\./);
+  });
+});
+
+describe('text の置き場 (left / right)', () => {
+  const side = (word: 'left' | 'right' | null): string =>
+    draw(note({ kind: 'text', from: at('e6'), text: 'AD3 1+', look: { ...PLAIN_LOOK, side: word } }));
+  const xOf = (svg: string): number => Number(/<text x="([-\d.]+)"/.exec(svg)?.[1]);
+  const yOf = (svg: string): number => Number(/<text x="[-\d.]+" y="([-\d.]+)"/.exec(svg)?.[1]);
+  const holeX = xOf(side(null)); // 字を穴の上に置くと x は穴の x
+  const holeY = layout.point(at('e6')).y;
+
+  test('right starts the text just right of the hole, and left ends it just left of the hole', () => {
+    expect(side('right')).toContain('text-anchor="start"');
+    expect(xOf(side('right'))).toBeGreaterThan(holeX);
+    expect(side('left')).toContain('text-anchor="end"');
+    expect(xOf(side('left'))).toBeLessThan(holeX);
+  });
+
+  test('puts a text beside the hole at the height of the hole, not above it', () => {
+    expect(Math.abs(yOf(side('right')) - holeY)).toBeLessThan(yOf(side(null)) < holeY ? holeY - yOf(side(null)) : 99);
   });
 });

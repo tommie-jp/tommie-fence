@@ -157,10 +157,15 @@ export type TextLook = {
   readonly large: boolean;
   /** 字を太く。 */
   readonly bold: boolean;
+  /**
+   * 字を穴のどちら側へ置くか。`left` は穴の左 (字の右端が穴のそば)、`right` は穴の右。
+   * 書かなければ null で、穴の上に置く。丸 (`mark`) のすぐ脇に名前を書くときに使う。
+   */
+  readonly side: 'left' | 'right' | null;
 };
 
 /** 見た目の語を書かなかった字。 */
-export const PLAIN_LOOK: TextLook = { large: false, bold: false };
+export const PLAIN_LOOK: TextLook = { large: false, bold: false, side: null };
 
 /** 基板の上に置く注釈の種類。指し先の番地を必ず持つ。 */
 export type OnBoardNoteKind = Exclude<NoteKind, 'source' | 'parts'>;
