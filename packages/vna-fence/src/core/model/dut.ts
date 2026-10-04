@@ -15,8 +15,8 @@ const C0 = 299_792_458;
 export type Place = 'series' | 'shunt';
 
 /**
- * 集中定数。値のほかに**寄生分**を持てる — `esr` と `esl` は直列に、`cp` は
- * 全体に並列に付く。これで水晶 (C + L + R に並列 C) も SRF を持つコンデンサも書ける。
+ * 集中定数。値のほかに**寄生分**を持てる — `esr` と `esl` は直列に、`cp` と `rp` は
+ * 全体 (esr・esl を含む本体の両端) に並列に付く。これで水晶 (C + L + R に並列 C) も SRF を持つコンデンサも書ける。
  */
 export type LumpedSpec = {
   readonly kind: 'lumped';
@@ -26,6 +26,8 @@ export type LumpedSpec = {
   readonly esr: number;
   readonly esl: number;
   readonly cp: number;
+  /** 全体に並列の抵抗 (Ω)。0 は付けない。 */
+  readonly rp: number;
 };
 
 /** 伝送線路 (損失なし)。先を `open` / `short` にするとスタブ。 */
@@ -72,8 +74,8 @@ export function impedanceOf(spec: LumpedSpec, f: number): Complex {
     : spec.part === 'L' ? complex(0, w * spec.value)
       : complex(0, -1 / (w * spec.value));
   const series = add(core, complex(spec.esr, w * spec.esl));
-  if (spec.cp === 0) return series;
-  return parallel(series, complex(0, -1 / (w * spec.cp)));
+  const withCp = spec.cp === 0 ? series : parallel(series, complex(0, -1 / (w * spec.cp)));
+  return spec.rp === 0 ? withCp : parallel(withCp, complex(spec.rp));
 }
 
 /** 線路の電気長 (ラジアン)。 */

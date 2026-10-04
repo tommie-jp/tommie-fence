@@ -36,7 +36,7 @@ describe('values', () => {
 
 describe('parseDutLine', () => {
   test('lumped parts, with and without the place', () => {
-    expect(parseDutLine('series R 100')).toEqual({ ok: true, value: { kind: 'lumped', place: 'series', part: 'R', value: 100, esr: 0, esl: 0, cp: 0 } });
+    expect(parseDutLine('series R 100')).toEqual({ ok: true, value: { kind: 'lumped', place: 'series', part: 'R', value: 100, esr: 0, esl: 0, cp: 0, rp: 0 } });
     expect(parseDutLine('shunt C 47p').ok && parseDutLine('shunt C 47p')).toMatchObject({ value: { place: 'shunt', part: 'C' } });
     expect(parseDutLine('L 100n')).toMatchObject({ ok: true, value: { place: 'series', part: 'L' } });
   });

@@ -10,6 +10,7 @@ import { parseLength, parseNumber, parseReactive, parseResistance } from './valu
  *
  * - `series R 100` / `shunt C 47p` — 集中定数 (置き方を省くと series)
  * - `series C 10p esr 0.2 esl 1n` / `series L 100n cp 0.5p` — 寄生分つき
+ * - `series L 100n rp 300 cp 2p esr 0.3` — `rp` は `cp` と同じく全体に並列の抵抗 (フェライトビーズ)
  * - `line 50 1m vf 0.66` — 伝送線路。`shunt line 50 12.5cm open` はスタブ
  * - `open` / `short` — 模型の終わり (CH1 には繋がない)
  */
@@ -23,7 +24,10 @@ const RANGES = {
   C: { min: 1e-18, max: 1, say: '1aF〜1F' },
 } as const;
 
-const PARASITES = ['esr', 'esl', 'cp'] as const;
+const PARASITES = ['esr', 'esl', 'cp', 'rp'] as const;
+
+/** `rp` の範囲。0 Ω は本体を短絡するので断る (並列に 0 Ω を書く意味が無い)。 */
+const RP_MAX = 1e9;
 
 function readValue(part: 'R' | 'L' | 'C', text: string): number | null {
   const value = part === 'R' ? parseResistance(text) : parseReactive(text, part === 'L' ? 'H' : 'F');
@@ -45,7 +49,7 @@ function readLumped(place: Place, part: 'R' | 'L' | 'C', words: readonly string[
   if (value === null) {
     return fail(`${part} の値が読めません: ${safeToken(valueText)} (例: ${unitHint(part)}。${RANGES[part].say})`, valueText);
   }
-  const parasites = { esr: 0, esl: 0, cp: 0 };
+  const parasites = { esr: 0, esl: 0, cp: 0, rp: 0 };
   for (let index = 0; index < rest.length; index += 2) {
     const key = rest[index] ?? '';
     const text = rest[index + 1];
@@ -53,6 +57,14 @@ function readLumped(place: Place, part: 'R' | 'L' | 'C', words: readonly string[
       return fail(`知らない寄生分です: ${safeToken(key)} (${PARASITES.join(' / ')})`, key);
     }
     if (text === undefined) return fail(`${key} の値を書きます`, key);
+    if (key === 'rp') {
+      const ohms = parseResistance(text);
+      if (ohms === null || ohms <= 0 || ohms > RP_MAX) {
+        return fail(`rp の値が読めません: ${safeToken(text)} (全体に並列の抵抗。例: 300 / 4k7。0 Ω より大きく 1GΩ まで)`, text);
+      }
+      parasites.rp = ohms;
+      continue;
+    }
     if (key !== 'esr' && isBareNumber(text)) {
       return fail(`${key} の値に接頭辞がありません: ${safeToken(text)} (例: ${key === 'esl' ? '1n / 0.5n' : '0.5p / 2p'})`, text);
     }

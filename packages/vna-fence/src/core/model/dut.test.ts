@@ -8,8 +8,8 @@ import { logMag, phaseDeg } from './sparams.ts';
 /**
  * 期待値は手元の Python (同じ式を numpy の複素数で) で出したもの (52 の docs/76 §3.1)。
  */
-const lumped = (place: 'series' | 'shunt', part: 'R' | 'L' | 'C', value: number, extra: Partial<{ esr: number; esl: number; cp: number }> = {}): DutElement =>
-  ({ kind: 'lumped', place, part, value, esr: 0, esl: 0, cp: 0, ...extra, line: null });
+const lumped = (place: 'series' | 'shunt', part: 'R' | 'L' | 'C', value: number, extra: Partial<{ esr: number; esl: number; cp: number; rp: number }> = {}): DutElement =>
+  ({ kind: 'lumped', place, part, value, esr: 0, esl: 0, cp: 0, rp: 0, ...extra, line: null });
 
 const db = (elements: readonly DutElement[], f: number): { s21: number; s11: number } => {
   const point = sparamAt(elements, f);

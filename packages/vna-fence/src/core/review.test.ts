@@ -24,7 +24,7 @@ describe('review findings', () => {
   });
 
   test('a 0 Ω shunt is a short to ground: S11 = −1, S21 ≈ 0', () => {
-    const point = sparamAt([{ kind: 'lumped', place: 'shunt', part: 'R', value: 0, esr: 0, esl: 0, cp: 0, line: null }], 50e6);
+    const point = sparamAt([{ kind: 'lumped', place: 'shunt', part: 'R', value: 0, esr: 0, esl: 0, cp: 0, rp: 0, line: null }], 50e6);
     expect(point.s11?.re).toBeCloseTo(-1, 9);
     expect(logMag(point.s21 ?? complex(1))).toBeLessThan(-200 + 1);
     const drawn = renderVna('sweep: 1M-100M\ndut: shunt R 0\nmarkers:\n  - 50M');
