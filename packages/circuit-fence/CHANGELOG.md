@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-10-05
+
 ### Added
 
 - DIP スイッチ `dip-switch4` / `dip-switch8` (足は `A1`〜 / `B1`〜。k 番のスイッチは `Ak` と `Bk` の間の開いた接点)
