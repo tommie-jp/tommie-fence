@@ -173,3 +173,64 @@ style:
 ![図05 74HC595 の箱](out/11-logic-5.png)
 
 足の名前と実物の番号が箱に刷られ、`U1.QA` も `U1.15` も同じ足を指す。
+
+## CMOS 4000 系の箱 (ic)
+
+4000 系の `CD4013B` (D フリップフロップ ×2) と `CD4040B` (12 段リプルカウンタ) も同じ流儀で、
+電源の足は `VDD` (上) と `VSS` (下)。下は CD4013B の /Q を D に戻して、クロックを 2 分周する
+(SET・RESET は H で効くので、使わない足は GND に結ぶ)。
+
+```circuit
+title: 図06 CD4013B で 2 分周
+parts:
+  CLK: port d1
+  U1: ic e6 CD4013B
+  OUT: port e11
+  VDD: vcc a6 5V
+  G1: ground i6
+wires:
+  - d1 -| U1.CLOCK1
+  - U1./Q1 -| e9
+  - e9 -- e11
+  - e9 -- b9
+  - b9 -- b3
+  - b3 |- U1.D1
+  - U1.SET1 -| f4
+  - U1.RESET1 -| f4
+  - f4 -- h4
+  - h4 -- h6
+  - a6 |- U1.VDD
+  - U1.VSS |- i6
+style:
+  grid: on
+```
+
+![図06 CD4013B で 2 分周](out/11-logic-6.png)
+
+CD4040B はクロック `CLOCK` を左から入れ、`Q1` (2 分周) から `Q12` (4096 分周) までを右に下の桁から並べる。
+`R` は H でクリアなので、普段は GND に結ぶ。
+
+```circuit
+title: 図07 CD4040B のリプルカウンタ
+parts:
+  CLK: port c1
+  U1: ic e6 CD4040B
+  Q1: port c11
+  Q4: port e11
+  Q12: port i11
+  VDD: vcc a6 5V
+  G1: ground k6
+  G2: ground k3
+wires:
+  - c1 -| U1.CLOCK
+  - U1.R -| k3
+  - U1.Q1 -| c11
+  - U1.Q4 -| e11
+  - U1.Q12 -| i11
+  - a6 |- U1.VDD
+  - U1.VSS |- k6
+style:
+  grid: on
+```
+
+![図07 CD4040B のリプルカウンタ](out/11-logic-7.png)
