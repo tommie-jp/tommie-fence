@@ -63,10 +63,10 @@ export function renderDocument(input: DocumentInput): string {
   const listed = input.partsList === 'none' ? [] : input.parts;
   const list = partsListHeight(listed, theme, input.board);
   const head = titleHeight(input.title, theme);
-  // 注釈の字は板の下へはみ出すことがある (`- source` はフェンス全体を書き出す)。
-  // 切らずに画布のほうを伸ばす。横は板の幅で `…` に切る (render/notes.ts)。
+  // 注釈の字は基板の下へはみ出すことがある (`- source` はフェンス全体を書き出す)。
+  // 切らずに画布のほうを伸ばす。横は基板の幅で `…` に切る (render/notes.ts)。
   const figure = Math.max(layout.height, notesBottom(input.notes, theme, input.sourceLines) + OUTER_PAD);
-  // 板の外に置いた字は、画布を伸ばすのではなく自分の帯を持つ (部品リストと同じ)。
+  // 基板の外に置いた字は、画布を伸ばすのではなく自分の帯を持つ (部品リストと同じ)。
   const outside = outsideNotesHeight(input.notes, theme, input.sourceLines);
   const height = head + figure + list + outside;
 
@@ -95,7 +95,7 @@ export function renderDocument(input: DocumentInput): string {
     input.parts, layout, theme,
     noteBands(input.notes, theme, input.sourceLines ?? []),
   );
-  // 板の印字 (列番号) を伏せる帯。名札と、縦に立てた 2 本足の胴が乗る所
+  // 基板の印字 (列番号) を伏せる帯。名札と、縦に立てた 2 ピンの胴が乗る所
   // (縦に立てた胴は番号の行を横切り、胴の下から番号の欠片が覗く)。
   const covered = input.parts
     .flatMap((part) => [
@@ -123,7 +123,7 @@ export function renderDocument(input: DocumentInput): string {
     ...lifted.bodies,
     // 名札は**すべての部品の胴の上**に描く (`liftCaptions`)。
     ...lifted.captions,
-    // 板の外の機器も**掴めるように包む** (実機で「基板外の部品も対象にする」)。
+    // 基板の外の機器も**掴めるように包む** (実機で「基板外の部品も対象にする」)。
     ...input.parts
       .filter((part) => part.kind === 'device')
       .map((part) => {
@@ -132,7 +132,7 @@ export function renderDocument(input: DocumentInput): string {
           ? marked(renderDevice(part, placement, theme), { class: 'cf-chip', 'data-part': part.id })
           : '';
       }),
-    // 注釈は板・部品・配線の上に重ねる。回路の一員ではないので最後に置く。
+    // 注釈は基板・部品・配線の上に重ねる。回路の一員ではないので最後に置く。
     renderNotes(input.notes, layout, theme, input.sourceLines, edit !== null),
     renderPartsList(listed, layout.board.x, figure, layout.board.width, theme, input.board),
     renderOutsideNotes(input.notes, layout.board.x, figure + list, layout.board.width, theme, input.sourceLines),

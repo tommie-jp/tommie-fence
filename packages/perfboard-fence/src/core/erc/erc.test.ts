@@ -69,7 +69,7 @@ describe('未結線のピン', () => {
   });
 });
 
-describe('部品の中でつながった足 (端面実装の凹の両端)', () => {
+describe('部品の中でつながったピン (端面実装の凹の両端)', () => {
   const edge: PlacedPart = {
     id: 'J1', type: 'sma', variant: 'female-edge', value: null, line: 3,
     pins: ['c1', 'b0', 'd0'].map((hole) => ({ address: at(hole), strip: holeStrip(at(hole)) })),

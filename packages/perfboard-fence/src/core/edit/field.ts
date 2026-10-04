@@ -173,7 +173,7 @@ export function setField(source: string, id: string, field: PartField, text: str
         layout.line,
       );
     }
-    // **足の数が変わる種類には替えない。** 穴の数が合わなくなると図が消える。
+    // **ピンの数が変わる種類には替えない。** 穴の数が合わなくなると図が消える。
     const now = splitPartType(layout.type.text);
     const before = footprintOf(now.type, now.variant);
     const after = footprintOf(type, variant);

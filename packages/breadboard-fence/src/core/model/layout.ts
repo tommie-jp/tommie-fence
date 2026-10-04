@@ -11,7 +11,7 @@ const BOARD_PAD_Y = 16;
 const RAIL_TO_BLOCK = 1.7 * PITCH;
 const RAVINE = 0.8 * PITCH;
 const BLOCK_TO_RAIL = RAIL_TO_BLOCK;
-// レールの無い板でも、列番号と配線レーンの居場所は要る。板の縁からブロックまでを同じだけ空ける。
+// レールの無い基板でも、列番号と配線レーンの居場所は要る。基板の縁からブロックまでを同じだけ空ける。
 const EDGE_TO_BLOCK = RAIL_TO_BLOCK;
 const DEVICE_HEIGHT = 62;
 const DEVICE_GAP = 54;
@@ -23,8 +23,8 @@ export type LayoutOptions = {
   readonly deviceTop?: boolean;
   readonly deviceBottom?: boolean;
   /**
-   * 板から張り出す部品 (USB コネクタ) のために空ける幅。**板のすぐ外**に入れる —
-   * 上下は板と機器の帯の間、左右は板と画布の縁の間。画布の縁に足すと、上に機器の
+   * 基板から張り出す部品 (USB コネクタ) のために空ける幅。**基板のすぐ外**に入れる —
+   * 上下は基板と機器の帯の間、左右は基板と画布の縁の間。画布の縁に足すと、上に機器の
    * 帯がある図では張り出しが帯に食い込む。張り出す量は画布が決まらないと測れない
    * ので、呼ぶ側が一度組んで測ってから渡す。
    */
@@ -80,7 +80,7 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   y += top;
   const boardY = y;
   // レールの縦位置は 4 スロット固定で、どの極性がどこに来るかだけが board.rails で動く。
-  // レールを外した板 (board.rails が null) では、その 4 スロットごと無くなる。
+  // レールを外した基板 (board.rails が null) では、その 4 スロットごと無くなる。
   if (board.rails) {
     const [railTopOuter, railTopInner] = board.rails;
     y += BOARD_PAD_Y;

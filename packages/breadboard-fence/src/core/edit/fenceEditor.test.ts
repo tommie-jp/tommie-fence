@@ -107,7 +107,7 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
   });
 
   test('turns a two lead part by its addresses, with no grammar change', () => {
-    // 軸は足の真ん中なので、回った先が板に収まる所に置く。
+    // 軸はピンの真ん中なので、回った先が基板に収まる所に置く。
     const room = 'board: half\nparts:\n  R1: resistor c5 c10 330\n';
 
     expect(editor.turn(room, 'R1', 1).ok).toBe(true);
@@ -158,7 +158,7 @@ describe('殻が呼ぶ口 (FenceEditor)', () => {
   });
 
   test('gives the Problems panel the same rows as the band, and no ERC on this board', () => {
-    // Arrange — 読めない行 (中の 4 行目)。この板は ERC を持たない。
+    // Arrange — 読めない行 (中の 4 行目)。この基板は ERC を持たない。
     const source = 'board: half\nparts:\n  R1: resistor a5 a10 330\n  R2: resistr c5 c10\n';
 
     // Act

@@ -43,7 +43,7 @@ describe('checkErc', () => {
   });
 
   test('points at the legs of a many-legged part that no wire names', () => {
-    // トランジスタは 3 本とも要る。指さない足は、書き忘れか置き忘れ。
+    // トランジスタは 3 本とも要る。指さないピンは、書き忘れか置き忘れ。
     const found = noticesOf(
       'parts:',
       '  IN: port a3',
@@ -58,7 +58,7 @@ describe('checkErc', () => {
   });
 
   test('leaves the spare legs of a package alone', () => {
-    // DIP の余った足は普通のこと。どのピンを使うかは型番の話で、
+    // DIP の余ったピンは普通のこと。どのピンを使うかは型番の話で、
     // 種類名からは決まらない (`dip8` に 8 本つなげとは言えない)。
     expect(noticesOf(
       'parts:',
@@ -70,13 +70,13 @@ describe('checkErc', () => {
   });
 
   test('leaves a leg alone once a wire runs to it, even if the wire ends nowhere', () => {
-    // 交点まで線を引いて終える書き方は、記号の足を見せる図がそうしている
+    // 交点まで線を引いて終える書き方は、記号のピンを見せる図がそうしている
     // (文法リファレンスの記号表)。線が引いてあるのは「ここまでは意図した」印。
     const found = noticesOf('parts:', '  Q1: npn c3', 'wires:', '  - a3 -| Q1.B');
 
     expect(found.some((one) => one.includes('Q1.base'))).toBe(false);
-    // 指されていない足は今までどおり言う。
-    expect(found.some((one) => one.includes('Q1 の足'))).toBe(true);
+    // 指されていないピンは今までどおり言う。
+    expect(found.some((one) => one.includes('Q1 のピン'))).toBe(true);
   });
 
   test('points at a part whose two legs land in one net', () => {

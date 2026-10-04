@@ -3,9 +3,9 @@ import { REAL_INK, bodySize, drawBody, hasBody } from './bodies.ts';
 import type { BodyInk, BodyPart } from './bodies.ts';
 
 /**
- * 胴の姿は 2 つの板が共有する (52 の docs/18)。ここで見るのは**板に依らない
+ * 胴の姿は 2 つの基板が共有する (52 の docs/18)。ここで見るのは**基板に依らない
  * 約束**だけ — 描いた形が `bodySize` の言う大きさに収まること、極性の印が
- * 効くこと、色が `ink` を通ること。板ごとの置き方は各パッケージが見る。
+ * 効くこと、色が `ink` を通ること。基板ごとの置き方は各パッケージが見る。
  */
 const part = (over: Partial<BodyPart> = {}): BodyPart =>
   ({ type: 'resistor', value: null, variant: null, pins: [{ name: '' }, { name: '' }], ...over });
@@ -31,7 +31,7 @@ describe('drawBody', () => {
       'resistor', 'capacitor', 'led', 'diode', 'zener', 'schottky', 'photodiode', 'phototransistor', 'varicap', 'diac',
       'crystal', 'inductor', 'buzzer', 'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc',
       'varistor', 'reed', 'fuse', 'lamp', 'ferrite-bead',
-      // 回路図にあって板に無かった実物 (52 の docs/21 の手順 7)。
+      // 回路図にあって基板に無かった実物 (52 の docs/21 の手順 7)。
       'battery', 'solar', 'speaker', 'mic', 'switch', 'switch-nc',
     ];
     const drawn = new Map(types.map((type) => [type, drawBody(part({ type }), 60)]));
@@ -45,7 +45,7 @@ describe('drawBody', () => {
   });
 
   test('keeps every mark inside the body it reports, even on the shortest span', () => {
-    // 隣り合う穴に挿した部品は胴が短い。はみ出すと板の地や隣の穴の上に乗る。
+    // 隣り合う穴に挿した部品は胴が短い。はみ出すと基板の地や隣の穴の上に乗る。
     for (const type of [
       'resistor', 'capacitor', 'diode', 'fuse', 'crystal',
       'battery', 'solar', 'speaker', 'mic', 'switch', 'switch-nc',
@@ -110,7 +110,7 @@ describe('bodySize', () => {
   test('grows with the span until the real part stops growing', () => {
     expect(bodySize(part(), 20).width).toBe(12);
     expect(bodySize(part(), 60).width).toBe(36);
-    // 実物の抵抗はどこまでも伸びない。足を曲げて広げても胴は同じ。
+    // 実物の抵抗はどこまでも伸びない。ピンを曲げて広げても胴は同じ。
     expect(bodySize(part(), 200).width).toBe(38);
   });
 

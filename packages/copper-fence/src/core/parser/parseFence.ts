@@ -94,7 +94,7 @@ function readFence(source: string): ParseResult {
   let title: string | null = null;
   let style: StyleSpec = EMPTY_STYLE;
   const written = new Set<string>();
-  /** 島と部品は**同じ名前の並び** — 配線と足のある部品が端として指すため。 */
+  /** 島と部品は**同じ名前の並び** — 配線とピンのある部品が端として指すため。 */
   const names = new Map<string, number | null>();
 
   const claim = (id: string, line: number | null): boolean => {
@@ -120,7 +120,7 @@ function readFence(source: string): ParseResult {
     limit: number,
     read: (id: string, text: string) => { ok: true; value: T } | { ok: false; error: FenceError },
     push: (value: T, line: number | null) => void,
-    /** 入れ子の項目 (`parts:` の板の外の機器)。無ければ 1 行で書かせる。 */
+    /** 入れ子の項目 (`parts:` の基板の外の機器)。無ければ 1 行で書かせる。 */
     nested?: (id: string, node: Node, line: number | null) => void,
   ): void => {
     if (!isMap(node)) {
@@ -350,7 +350,7 @@ function readFence(source: string): ParseResult {
           parts.push({ ...value, line });
         }, (id, node, line) => {
           if (devices.length >= LIMITS.devices) {
-            errors.push(fenceError(`板の外の機器が多すぎます (${LIMITS.devices} 個まで)`, line));
+            errors.push(fenceError(`基板の外の機器が多すぎます (${LIMITS.devices} 個まで)`, line));
             return;
           }
           const result = parseDevice(id, (node as { toJSON?: () => Record<string, unknown> }).toJSON?.() ?? {});
@@ -381,9 +381,9 @@ function readFence(source: string): ParseResult {
   }
 
   if (!boardWritten) {
-    // **書かなくても止めない。** 既定の板で描き、何の板で描いたかは言う (54)。
+    // **書かなくても止めない。** 既定の基板で描き、何の基板で描いたかは言う (54)。
     errors.push(notice(
-      `board: が無いので、既定の板 (${DEFAULT_SIZE}・h ${DEFAULT_H}mm・εr ${DEFAULT_ER}・${DEFAULT_GROUND}) で描いています`,
+      `board: が無いので、既定の基板 (${DEFAULT_SIZE}・h ${DEFAULT_H}mm・εr ${DEFAULT_ER}・${DEFAULT_GROUND}) で描いています`,
       contentLine,
     ));
   }

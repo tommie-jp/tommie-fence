@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { PIN_NAME_GAP, pinNameInner, pinNameRow, pinNameWidth } from './pinNameRow.ts';
 
 /**
- * 板の外の機器の足の名前は横 1 列に並ぶ。**隣の名前と字が触れない**ことだけを見る
+ * 基板の外の機器のピンの名前は横 1 列に並ぶ。**隣の名前と字が触れない**ことだけを見る
  * (PIR の `GND VCC OUT` が隣の穴へ落ちると `GNDVCCOUT` と地続きに読めた)。
  */
 type Name = { readonly x: number; readonly name: string };
@@ -46,11 +46,11 @@ describe('pinNameRow', () => {
     for (const gap of gaps(row(xs, names), result.size, true)) expect(gap).toBeGreaterThanOrEqual(PIN_NAME_GAP - 1e-9);
   });
 
-  test('足が 1 本なら縮めない', () => {
+  test('ピンが 1 本なら縮めない', () => {
     expect(pinNameRow([10], ['SIGNAL'], { largest: 9, smallest: 6 })).toEqual({ size: 9, staggered: false });
   });
 
-  test('足の並び順に依らない (x で並べ直して隣を決める)', () => {
+  test('ピンの並び順に依らない (x で並べ直して隣を決める)', () => {
     const one = pinNameRow([40, 0, 20], ['OUT', 'GND', 'VCC'], { largest: 12, smallest: 6 });
     const other = pinNameRow([0, 20, 40], ['GND', 'VCC', 'OUT'], { largest: 12, smallest: 6 });
     expect(one).toEqual(other);

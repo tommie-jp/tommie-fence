@@ -44,7 +44,7 @@ export const toKind = (value: unknown): Kind | null => {
 
 /**
  * フェンスに書く綴り。画面に出す名前でもあり、文書を作るときの開き記号でもある
- * (`document.ts` の `asDocument`)。**板の 2 つは短い綴りが正** (52 の docs/08)。
+ * (`document.ts` の `asDocument`)。**ブレッドボードとユニバーサル基板は短い綴りが正** (52 の docs/08)。
  *
  * **種類 (`Kind`) は長い綴りのまま。** 例の置き場 (`examples/breadboard/…`) と
  * 例の JSON の `kind` がそれを名乗っているので、書く字だけをここで短くする。

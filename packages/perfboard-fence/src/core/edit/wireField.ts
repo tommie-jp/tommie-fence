@@ -84,7 +84,7 @@ export function setWireField(source: string, handle: string, field: string, text
 export const renderColorOptions = (id: string): string =>
   `<datalist id="${id}">${wireColorNames().map((name) => `<option value="${name}">`).join('')}</datalist>`;
 
-/** 板の配線は 1 種類 (折れの綴りが無い)。 */
+/** 基板の配線は 1 種類 (折れの綴りが無い)。 */
 const WIRE_OPERATORS = ['--'];
 
 /**

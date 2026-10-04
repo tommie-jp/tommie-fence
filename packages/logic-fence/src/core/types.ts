@@ -5,7 +5,7 @@ import type { Radix } from './model/radix.ts';
 import type { SignalSpec } from './model/signalSpec.ts';
 
 /**
- * logic フェンスの型。**図の中に部品も板も無い** — 描くのは信号の高低 (レーン) と、
+ * logic フェンスの型。**図の中に部品も基板も無い** — 描くのは信号の高低 (レーン) と、
  * 束ねたバスの値、時間軸、カーソル、トリガの印。WaveForms (Analog Discovery 3) の
  * Logic と、ほかのロジックアナライザの画面を写す。
  */

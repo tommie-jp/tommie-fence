@@ -7,12 +7,12 @@ import { insertionDot } from './wires.ts';
 import type { RenderTheme } from './theme.ts';
 
 /**
- * 2 本足の部品。**本体は 2 つの穴を結ぶ線の上に、その傾きのまま描く**ので、
- * 各部品の形は「原点が中央・x 軸が足の向き」の座標で書けばよい。
+ * 2 ピンの部品。**本体は 2 つの穴を結ぶ線の上に、その傾きのまま描く**ので、
+ * 各部品の形は「原点が中央・x 軸がピンの向き」の座標で書けばよい。
  *
  * **胴の姿そのものは fence-kit にある** (`parts/bodies.ts`)。実物の部品の話で
- * 板に依らないので、perfboard と同じものを使う (52 の docs/18)。ここに残るのは
- * 板の話 — 足の線、キャプションの置き場、傾きと位置。
+ * 基板に依らないので、perfboard と同じものを使う (52 の docs/18)。ここに残るのは
+ * 基板の話 — ピンの線、キャプションの置き場、傾きと位置。
  */
 export function renderTwoLead(part: PlacedPart, layout: Layout, theme: RenderTheme, drop = 0): string {
   const [first, second] = part.pins;
@@ -25,7 +25,7 @@ export function renderTwoLead(part: PlacedPart, layout: Layout, theme: RenderThe
   const angle = (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
   const span = Math.hypot(to.x - from.x, to.y - from.y);
 
-  // **自分で足を描く胴には引かない** (水晶)。穴を渡る線が実物に無いため。
+  // **自分でピンを描く胴には引かない** (水晶)。穴を渡る線が実物に無いため。
   const lead = drawsOwnLeads(part.type) ? '' : element('line', {
     x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y),
     stroke: palette.lead, 'stroke-width': num(theme.metrics.wireWidth), 'stroke-linecap': 'round',

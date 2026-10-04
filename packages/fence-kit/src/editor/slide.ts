@@ -1,14 +1,14 @@
 /**
- * 回した足を**板の中へ寄せ直す**ための物差し。穴の綴りは知らない (行と列の数だけ)。
+ * 回したピンを**基板の中へ寄せ直す**ための物差し。穴の綴りは知らない (行と列の数だけ)。
  *
- * **回転そのものを断らない。** 縁に置いた部品を回すと足が板の外へ出るが、
+ * **回転そのものを断らない。** 縁に置いた部品を回すとピンが基板の外へ出るが、
  * 使う人が言ったのは「回して」であって「回せるか訊いた」のではない。
  * 断ると「この部品は回らない」に見える — 実機で
  * 「抵抗は回転できるが、capacitor, inductor などほとんど回転できない」と
  * 言われたのがこれで、実は**部品の種類ではなく置いた行**で決まっていた
- * (足の間隔が広いほど、板の端で外へ出やすい)。
+ * (ピンの間隔が広いほど、基板の端で外へ出やすい)。
  *
- * だから**回してから、いちばん近い所へ平行移動して板に載せる**。
+ * だから**回してから、いちばん近い所へ平行移動して基板に載せる**。
  * 動かす量は足りない分ちょうどなので、載っているものは 1 穴も動かない。
  */
 
@@ -18,7 +18,7 @@ export type Cell = { readonly row: number; readonly col: number };
 /** 端を含む範囲。 */
 export type Range = { readonly least: number; readonly most: number };
 
-/** その向きに寄せる量。**入りきらなければ null** (回しても板に収まらない形)。 */
+/** その向きに寄せる量。**入りきらなければ null** (回しても基板に収まらない形)。 */
 function shiftInto(landings: readonly number[], range: Range): number | null {
   const least = Math.min(...landings);
   const most = Math.max(...landings);
@@ -29,7 +29,7 @@ function shiftInto(landings: readonly number[], range: Range): number | null {
 }
 
 /**
- * 板の中へ寄せる量 (行と列)。**すでに載っていれば 0**。
+ * 基板の中へ寄せる量 (行と列)。**すでに載っていれば 0**。
  * どちらかの向きに入りきらなければ null。
  */
 export function slideInto(

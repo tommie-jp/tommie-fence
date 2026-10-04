@@ -2,24 +2,24 @@ import type { IcPinout, IcSide } from '../icLayouts.ts';
 import { num } from './num.ts';
 
 /**
- * 回路図の IC (`ic`) の箱。**4 辺に足**が出る (機器の箱は片側だけ、DIP は実物の
- * 並びで左右だけ)。どの足がどの辺かは働きの並び (`icLayouts.ts`) が決める。
+ * 回路図の IC (`ic`) の箱。**4 辺にピン**が出る (機器の箱は片側だけ、DIP は実物の
+ * 並びで左右だけ)。どのピンがどの辺かは働きの並び (`icLayouts.ts`) が決める。
  *
- * **足は箱の中心から半マス刻み**に置く (`icStepOf`)。箱の中心を番地に置けば
- * 足は半マスの番地 (`c8a5`) にちょうど乗るので、`-|` / `|-` で引いた線が
- * 折れずにまっすぐ届く。辺の中の足が偶数本なら、1 本目が中心に来て残りは
+ * **ピンは箱の中心から半マス刻み**に置く (`icStepOf`)。箱の中心を番地に置けば
+ * ピンは半マスの番地 (`c8a5`) にちょうど乗るので、`-|` / `|-` で引いた線が
+ * 折れずにまっすぐ届く。辺の中のピンが偶数本なら、1 本目が中心に来て残りは
  * 右 (下) へ並ぶ — 中心に揃えて半刻みずらすと、番地に乗らなくなる。
  *
- * アンカーは DIP と同じ呼び方: `pin K` が足の先 (配線が付く)、`bpin K` が
- * 箱の縁 (足の名前を書く場所)。K は実物の足の番号。
+ * アンカーは DIP と同じ呼び方: `pin K` がピンの先 (配線が付く)、`bpin K` が
+ * 箱の縁 (ピンの名前を書く場所)。K は実物のピンの番号。
  */
 const LEAD = 0.4;
-/** 足の間隔の範囲 (cm)。狭いと足の名前が重なり、広いと箱が間延びする。 */
+/** ピンの間隔の範囲 (cm)。狭いとピンの名前が重なり、広いと箱が間延びする。 */
 const MIN_STEP = 0.4;
 const MAX_STEP = 1;
 
 /**
- * 足の間隔 (cm)。**半マス** (`pitch / 2`) を基本に、狭すぎれば 1 マス、
+ * ピンの間隔 (cm)。**半マス** (`pitch / 2`) を基本に、狭すぎれば 1 マス、
  * 広すぎれば 1/4 マスにする。どれでも番地の刻みに乗る。
  */
 export function icStepOf(pitch: number): number {
@@ -27,18 +27,18 @@ export function icStepOf(pitch: number): number {
   if (half < MIN_STEP) return pitch;
   return half > MAX_STEP ? pitch / 4 : half;
 }
-/** 足の名前と型番 (どちらも `\scriptsize`) の字の幅の見積もり (cm / 字)。 */
+/** ピンの名前と型番 (どちらも `\scriptsize`) の字の幅の見積もり (cm / 字)。 */
 const PIN_CHAR = 0.14;
 const MODEL_CHAR = 0.15;
 const MODEL_HEIGHT = 0.3;
-/** 縁から字まで、字と字の間、字の太さの半分、端の足から角まで。 */
+/** 縁から字まで、字と字の間、字の太さの半分、端のピンから角まで。 */
 const INSET = 0.1;
 const GAP = 0.15;
 const TEXT_HALF = 0.1;
 const EDGE = 0.35;
 
 export type IcPlace = {
-  /** 実物の足の番号 (1 始まり)。 */
+  /** 実物のピンの番号 (1 始まり)。 */
   readonly pin: number;
   readonly side: IcSide;
   /** 辺に沿った位置 (cm)。左右の辺は y (上が +)、上下の辺は x (右が +)。 */
@@ -64,7 +64,7 @@ function alongOf(side: IcSide, count: number, index: number, step: number): numb
 /** 0.1 cm に切り上げる (形の寸法を細かく揺らさない)。 */
 const tenthsUp = (length: number): number => Math.ceil(length * 10 - 1e-9) / 10;
 
-/** 足に刷る字 (`7 DISCH`) の長さ。番号は桁を揃える (名前付きの DIP と同じ)。 */
+/** ピンに刷る字 (`7 DISCH`) の長さ。番号は桁を揃える (名前付きの DIP と同じ)。 */
 const labelLength = (name: string, digits: number): number => digits + 1 + [...name].length;
 
 export function icBox(pinout: IcPinout, step: number): IcBox {
@@ -82,7 +82,7 @@ export function icBox(pinout: IcPinout, step: number): IcBox {
   const modelHalf = ([...pinout.model].length * MODEL_CHAR) / 2;
 
   const halfWidth = Math.max(
-    // 上下の足の縦書きの名前が、左右の列の字に掛からない。
+    // 上下のピンの縦書きの名前が、左右の列の字に掛からない。
     ...(acrossX.length === 0 ? [] : [
       INSET + column('left') + GAP + TEXT_HALF - Math.min(...acrossX),
       INSET + column('right') + GAP + TEXT_HALF + Math.max(...acrossX),
@@ -101,7 +101,7 @@ export function icBox(pinout: IcPinout, step: number): IcBox {
   return { name: `ic${pinout.model}s${Math.round(step * 1000)}`, halfWidth: tenthsUp(halfWidth), halfHeight: tenthsUp(halfHeight), places };
 }
 
-/** 足の先と、箱の縁の点 (cm)。 */
+/** ピンの先と、箱の縁の点 (cm)。 */
 function pinPoints(box: IcBox, place: IcPlace): { readonly tip: readonly [number, number]; readonly edge: readonly [number, number] } {
   const { halfWidth: w, halfHeight: h } = box;
   const a = place.along;
@@ -141,6 +141,6 @@ export function icShapeTex(box: IcBox): string[] {
   ];
 }
 
-/** 足の出る辺だけ (間隔に依らない)。並びは `icBox` の `places` と同じ。 */
+/** ピンの出る辺だけ (間隔に依らない)。並びは `icBox` の `places` と同じ。 */
 export const icSides = (pinout: IcPinout): readonly { readonly pin: number; readonly side: IcSide }[] =>
   SIDES.flatMap((side) => pinout.layout[side].map((name) => ({ pin: pinout.names.indexOf(name) + 1, side })));

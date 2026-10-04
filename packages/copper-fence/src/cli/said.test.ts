@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { renderCopper } from '../core/index.ts';
 import { saidOf } from './said.ts';
 
-/** C1 がどの銅にも乗っていない板。 */
+/** C1 がどの銅にも乗っていない基板。 */
 const LOOSE = ['board: 40x20mm', 'copper:', '  L1: line 0,10 40,10 3mm', 'parts:', '  C1: capacitor/1608 20,2 10p'].join('\n');
 
 const messagesOf = (source: string): string[] => saidOf(renderCopper(source)).map((said) => said.message);
@@ -13,7 +13,7 @@ describe('saidOf', () => {
 
     expect(result.erc.length).toBeGreaterThan(0);
     expect(saidOf(result)).toEqual([...result.notices, ...result.erc]);
-    expect(messagesOf(LOOSE).join('\n')).toMatch(/C1 の 1 番の足 .* の下に銅がありません/);
+    expect(messagesOf(LOOSE).join('\n')).toMatch(/C1 の 1 番のピン .* の下に銅がありません/);
   });
 
   test('puts what could not be read ahead of everything else', () => {

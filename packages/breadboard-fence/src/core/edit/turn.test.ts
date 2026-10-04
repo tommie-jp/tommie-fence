@@ -19,7 +19,7 @@ const after = (source: string, result: ReturnType<typeof turnPart>): string => {
 
 describe('turnPart', () => {
   test('turns around the middle of the leads, the way KiCad turns around the selection', () => {
-    // 先に書いた足を軸にしていたころは、回すと胴が大きく振られて「移動」に
+    // 先に書いたピンを軸にしていたころは、回すと胴が大きく振られて「移動」に
     // 見えた (実機で指摘された)。KiCad の R も選んだものの中心を軸にする。
     // c5 → c10 の真ん中は c7。時計回りに 90 度で a7 と f7 (胴はその場に残る)。
     const mid = 'board: half\nparts:\n  R1: resistor c5 c10 330\n';
@@ -34,7 +34,7 @@ describe('turnPart', () => {
   });
 
   test('turns around a lead written by name, so the name never has to be rewritten', () => {
-    // **名前で書かれた足を番地に直さない。** 直すと名前が外れ、あとで点を
+    // **名前で書かれたピンを番地に直さない。** 直すと名前が外れ、あとで点を
     // 動かしても部品が付いてこなくなる。名前は場所を指す約束なので、
     // そこを軸にすれば書き換えずに済む (真ん中を軸にする規則より優先する)。
     const named = 'board: half\npoints:\n  vin: c5\nparts:\n  R1: resistor vin c10 330\n';
@@ -49,7 +49,7 @@ describe('turnPart', () => {
   });
 
   test('slides a turn that would walk off the board back onto it', () => {
-    // **縁に置いた部品も回せる。** a5 → a10 を回すと足が板の上へ出るが、
+    // **縁に置いた部品も回せる。** a5 → a10 を回すとピンが基板の上へ出るが、
     // 断ると「この部品は回らない」に見える (実機で「capacitor, inductor など
     // ほとんど回転できない」と言われたのがこれ)。足りない分だけ下へ寄せる。
     const top = 'board: half\nparts:\n  R1: resistor a5 a10 330\n';
@@ -59,7 +59,7 @@ describe('turnPart', () => {
   });
 
   test('slides the narrower parts too, which is why they looked unturnable', () => {
-    // 足の間隔が狭いほど寄せる量は小さい。回れるかどうかは**部品の種類ではなく
+    // ピンの間隔が狭いほど寄せる量は小さい。回れるかどうかは**部品の種類ではなく
     // 置いた行**で決まっていた。
     const top = 'board: half\nparts:\n  C1: capacitor a5 a8 0.1u\n';
 
@@ -74,7 +74,7 @@ describe('turnPart', () => {
   });
 
   test('refuses only when the part cannot fit on the board at all', () => {
-    // 12 列にまたがる部品を縦にすると 12 行要る。板は 10 行しかないので、
+    // 12 列にまたがる部品を縦にすると 12 行要る。基板は 10 行しかないので、
     // どこへ寄せても載らない。**そのときだけ**断る。
     const wide = 'board: half\nparts:\n  R1: resistor a1 a13 330\n';
     const result = turnPart(wide, 'R1', 1);
@@ -90,7 +90,7 @@ describe('turnPart', () => {
     const result = turnPart(low, 'R1', 1, 'anchor');
 
     expect(result.ok).toBe(false);
-    expect(!result.ok && result.error.message).toContain('板の外');
+    expect(!result.ok && result.error.message).toContain('基板の外');
   });
 
   test('turns a part that sits on a rail, counting the rails as rows of their own', () => {
@@ -154,7 +154,7 @@ describe('flipPart', () => {
   });
 
   test('says the polarity changed, since a different lead now sits in each hole', () => {
-    // 穴どうしのつながりは同じだが、**どちらの足がどちらの穴か**は入れ替わる。
+    // 穴どうしのつながりは同じだが、**どちらのピンがどちらの穴か**は入れ替わる。
     // 極性のある部品ではそこが意味を持つので、黙らせない。
     const result = flipPart(LED, 'R1');
 
@@ -163,7 +163,7 @@ describe('flipPart', () => {
 
   test('reverses the leads of a three lead part, leaving the middle in place', () => {
     // 実物を裏返したときと同じ — 両端が入れ替わり、真ん中はその場に残る。
-    // 印は動かないので、**B が h11 へ、E が h9 へ**移る (足の並びが本当に変わる)。
+    // 印は動かないので、**B が h11 へ、E が h9 へ**移る (ピンの並びが本当に変わる)。
     expect(after(LED, flipPart(LED, 'Q1'))).toContain('Q1: transistor h11(B) h10(C) h9(E) 2SC1815');
   });
 
@@ -173,7 +173,7 @@ describe('flipPart', () => {
 });
 
 describe('アンカー 1 つで置く形 (DIP / SIP / ボード)', () => {
-  // 足の位置を形が決めるので穴の順に向きが出ない。**回すのは語、裏返すのは行。**
+  // ピンの位置を形が決めるので穴の順に向きが出ない。**回すのは語、裏返すのは行。**
   const DIP = 'board: half\nparts:\n  U1: dip8 @ e5 NJM4556A\n';
 
   test('writes the word instead of moving holes, since the hole is the anchor', () => {

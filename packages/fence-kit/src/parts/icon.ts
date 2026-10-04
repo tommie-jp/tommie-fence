@@ -20,7 +20,7 @@ import { num } from '../svg.ts';
 /** 絵の縦幅。行の高さに収まるところで、いちばん大きい胴 (立てた缶) が入る大きさ。 */
 const HEIGHT = 26;
 
-/** 2 本足を描くときの足の間隔。実物の既定の間隔に近く、帯が全部見える長さ。 */
+/** 2 ピンを描くときのピンの間隔。実物の既定の間隔に近く、帯が全部見える長さ。 */
 const SPAN = 40;
 
 const partOf = (type: string, variant: string | null): BodyPart =>
@@ -60,11 +60,11 @@ export function partIcon(
   );
 }
 
-/** コネクタを描くときの足の間隔 (図と同じ)。絵は枠の高さに合わせて縮める。 */
+/** コネクタを描くときのピンの間隔 (図と同じ)。絵は枠の高さに合わせて縮める。 */
 const CONNECTOR_PITCH = 20;
 
 /**
- * USB コネクタ。**図と同じ関数で、電源だけの 2 本足**を描く。変換基板ごとの姿は
+ * USB コネクタ。**図と同じ関数で、電源だけの 2 ピン**を描く。変換基板ごとの姿は
  * 枠より背が高いので、枠に合わせて縮める (字は読めなくてよい。形で選ぶ)。
  */
 function connectorIcon(type: string, variant: string | null, ink: BodyInk | undefined): string {
@@ -85,7 +85,7 @@ function connectorIcon(type: string, variant: string | null, ink: BodyInk | unde
   );
 }
 
-/** 足の位置を形が決める種類は、パレットでは箱の絵になる (姿を持たない)。 */
+/** ピンの位置を形が決める種類は、パレットでは箱の絵になる (姿を持たない)。 */
 const PACKAGED = new Set(['transistor', 'potentiometer', 'slide-switch', 'thyristor', 'triac', 'regulator', 'ic3']);
 
 const isPackage = (type: string): boolean => PACKAGED.has(type);

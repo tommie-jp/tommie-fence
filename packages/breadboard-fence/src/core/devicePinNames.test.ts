@@ -3,8 +3,8 @@ import { PIN_NAME_GAP, pinNameWidth } from 'fence-kit';
 import { renderBreadboard } from './index.ts';
 
 /**
- * 板の外の機器の足の名前 (`type: device` の `pins:`)。**隣の名前と字が触れない。**
- * 帯に機器が詰め込まれると足の間が縮み、`GND VCC OUT` が `GNDVCCOUT` と読めた。
+ * 基板の外の機器のピンの名前 (`type: device` の `pins:`)。**隣の名前と字が触れない。**
+ * 帯に機器が詰め込まれるとピンの間が縮み、`GND VCC OUT` が `GNDVCCOUT` と読めた。
  */
 
 type Drawn = { readonly x: number; readonly y: number; readonly size: number; readonly text: string };
@@ -44,7 +44,7 @@ const crammed = [
   '',
 ].join('\n');
 
-describe('機器の足の名前', () => {
+describe('機器のピンの名前', () => {
   test('帯に詰め込んでも、隣の名前と字が触れない', () => {
     const { svg } = renderBreadboard(crammed);
     const pinNames = new Set(['GND', 'VCC', 'OUT', '1+', '1-', '2+', '2-', 'W1', 'W2', 'TRIG', 'ECHO']);

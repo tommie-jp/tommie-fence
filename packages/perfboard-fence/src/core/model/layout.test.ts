@@ -49,7 +49,7 @@ describe('createLayout', () => {
   });
 });
 
-describe('板の外の機器の帯', () => {
+describe('基板の外の機器の帯', () => {
   const board = createBoard({ cols: 10, rows: 6 });
   const plain = createLayout(board);
 
@@ -57,7 +57,7 @@ describe('板の外の機器の帯', () => {
     expect(plain.deviceBands).toEqual({ top: null, bottom: null });
   });
 
-  test('上に空けると板が下がり、画布が伸びる', () => {
+  test('上に空けると基板が下がり、画布が伸びる', () => {
     const withTop = createLayout(board, { deviceTop: true });
 
     expect(withTop.board.y).toBeGreaterThan(plain.board.y);
@@ -65,7 +65,7 @@ describe('板の外の機器の帯', () => {
     expect(withTop.deviceBands.top?.y).toBeLessThan(withTop.board.y);
   });
 
-  test('下に空けても板は動かず、画布だけ伸びる', () => {
+  test('下に空けても基板は動かず、画布だけ伸びる', () => {
     const withBottom = createLayout(board, { deviceBottom: true });
 
     expect(withBottom.board.y).toBe(plain.board.y);
@@ -73,7 +73,7 @@ describe('板の外の機器の帯', () => {
     expect(withBottom.deviceBands.bottom?.y).toBeGreaterThan(withBottom.board.y);
   });
 
-  test('帯は板と同じ幅', () => {
+  test('帯は基板と同じ幅', () => {
     const both = createLayout(board, { deviceTop: true, deviceBottom: true });
 
     expect(both.deviceBands.top?.width).toBe(both.board.width);
@@ -114,7 +114,7 @@ describe('書き出し (`- source`) の帯', () => {
   });
 });
 
-describe('裏返した板 (半田面)', () => {
+describe('裏返した基板 (半田面)', () => {
   const front = createLayout(board);
   const back = createLayout(board, { mirror: true });
 

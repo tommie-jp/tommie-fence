@@ -92,7 +92,7 @@ describe('読めない行があっても編集できる', () => {
 });
 
 describe('図は読めた所まで描く', () => {
-  test('転んだ行があっても、読めた部品で板が描ける', () => {
+  test('転んだ行があっても、読めた部品で基板が描ける', () => {
     const { svg, errors } = renderBreadboard(BROKEN_BLOCK);
     expect(svg).not.toBe('');
     expect(errors.length).toBeGreaterThan(0);

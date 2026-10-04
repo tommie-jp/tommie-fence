@@ -103,7 +103,7 @@ export function partSpans(source: string, id: string): readonly Span[] {
 export function movePart(source: string, id: string, to: Address, trial = false): MoveResult {
   const found = locatePart(source, id);
   if (!isLocated(found)) return { ok: false, error: found.error };
-  // **足は穴に挿す。** 交点の間へ落とされたら、書き込む前に断る (置く側と同じ
+  // **ピンは穴に挿す。** 交点の間へ落とされたら、書き込む前に断る (置く側と同じ
   // 規則。書いてしまうと、読み直したときにエラーになる図が残る)。
   if (!isCrossing(to)) {
     return fail(`${safeToken(id)} は穴の間には置けません (間に置けるのは注釈だけです)`, found.lineNumber);
@@ -117,9 +117,9 @@ export function movePart(source: string, id: string, to: Address, trial = false)
     row: address.row + step.rows,
     col: address.col + step.cols,
   }));
-  // **板から張り出す形だけが外に出られる。** 端面実装のコネクタは足が板の縁の
+  // **基板から張り出す形だけが外に出られる。** 端面実装のコネクタはピンが基板の縁の
   // 外にあるのが正しい姿なので、`isOnBoard` で見ると**書けるのに動かせない**
-  // 部品ができる (実機で踏んだ)。ほかの部品の足は穴に入っていなければならない。
+  // 部品ができる (実機で踏んだ)。ほかの部品のピンは穴に入っていなければならない。
   const off = offBoardCheck(found, targets);
   if (off !== null) {
     return fail(`${safeToken(id)} を ${formatAddress(to)} へは動かせません (${off})`, found.lineNumber);
@@ -146,7 +146,7 @@ export function movePart(source: string, id: string, to: Address, trial = false)
 
 /**
  * その穴から `rows` 行・`cols` 列だけ離れた穴。**格子が一様**なので、
- * 行と列をそのまま足すだけ。板の外は当てる側 (`movePart`) が改めて断る。
+ * 行と列をそのまま足すだけ。基板の外は当てる側 (`movePart`) が改めて断る。
  */
 export function stepCell(written: string, rows: number, cols: number): string | null {
   const from = parseAddress(written);
@@ -193,8 +193,8 @@ export function stepsTo(from: string, to: string): GridStep | null {
 }
 
 /**
- * 足が置けない所に落ちていないか。**張り出す形かどうかで規則が変わる** —
- * 端面実装のコネクタは板の縁の外に足があるのが正しい姿で、ほかの部品の足は
+ * ピンが置けない所に落ちていないか。**張り出す形かどうかで規則が変わる** —
+ * 端面実装のコネクタは基板の縁の外にピンがあるのが正しい姿で、ほかの部品のピンは
  * 穴に入っていなければならない。置く側 (`placement/place.ts`) と同じ見方。
  */
 export function offBoardCheck(
@@ -205,5 +205,5 @@ export function offBoardCheck(
     return targets.map((address) => offBoardReason(found.board, address)).find((why) => why !== null) ?? null;
   }
   const off = targets.find((address) => !isOnBoard(found.board, address));
-  return off === undefined ? null : `${formatAddress(off)} が板の外です`;
+  return off === undefined ? null : `${formatAddress(off)} が基板の外です`;
 }

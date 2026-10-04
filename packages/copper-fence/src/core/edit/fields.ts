@@ -64,7 +64,7 @@ export function fieldsOf(source: string, handle: string): PartFields | null {
   }
 }
 
-/** 改名。**その名前を端に書いた所 (足のある部品・ジャンパ) も書き換える**。 */
+/** 改名。**その名前を端に書いた所 (ピンのある部品・ジャンパ) も書き換える**。 */
 export function rename(source: string, handle: string, to: string): EditResult {
   const state = read(source);
   const found = find(state.doc, handle);
@@ -204,7 +204,7 @@ export function turn(source: string, handle: string, quarters: number): EditResu
   return reorient(state, part, item, next, part.orient?.mirror ?? false);
 }
 
-/** 裏返す。足のある部品は両端を入れ替える。 */
+/** 裏返す。ピンのある部品は両端を入れ替える。 */
 export function flip(source: string, handle: string): EditResult {
   const state = read(source);
   const found = find(state.doc, handle);

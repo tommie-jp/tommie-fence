@@ -6,9 +6,9 @@ import { isKnownType, placeableNames, splitPartType } from './parts/types.ts';
 import { orientOf } from './parts/orient.ts';
 
 /**
- * 足に名前のある DIP 型の部品 (リレー・フォトカプラ・7 セグ。52 の docs/66 の段 3)。
+ * ピンに名前のある DIP 型の部品 (リレー・フォトカプラ・7 セグ。52 の docs/66 の段 3)。
  * **表は fence-kit で breadboard と同じ**。置き方は DIP と同じ (1 番ピンの穴 1 つ) で、
- * 列の間は表の穴数、足があるのは表の位置だけ。
+ * 列の間は表の穴数、ピンがあるのは表の位置だけ。
  */
 
 const fence = (...lines: string[]): string => ['board: 20x10', ...lines, ''].join('\n');
@@ -66,15 +66,15 @@ describe('図とネットリスト', () => {
   });
 });
 
-describe('板の縁', () => {
+describe('基板の縁', () => {
   test('refuses a named chip whose legs run off the board, like a DIP', () => {
-    // 20 列の板の 16 列目から G5V-2 (8 列) を置くと、右の足が 21〜23 列目に来る
+    // 20 列の基板の 16 列目から G5V-2 (8 列) を置くと、右のピンが 21〜23 列目に来る
     // (1 番から数えて最初にはみ出すのは、下の列の d21)。
     const relay = renderPerfboard(fence('parts:', '  K1: relay a16'));
-    // 7 セグの向こうの列 (6 行先) は 10 行の板からはみ出す。
+    // 7 セグの向こうの列 (6 行先) は 10 行の基板からはみ出す。
     const display = renderPerfboard(fence('parts:', '  DS1: seg7 h3'));
 
-    expect(relay.errors.map((one) => one.message).join('\n')).toContain('K1 の足 d21 が板の穴ではありません');
-    expect(display.errors.map((one) => one.message).join('\n')).toContain('DS1 の足');
+    expect(relay.errors.map((one) => one.message).join('\n')).toContain('K1 のピン d21 が基板の穴ではありません');
+    expect(display.errors.map((one) => one.message).join('\n')).toContain('DS1 のピン');
   });
 });

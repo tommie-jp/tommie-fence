@@ -100,7 +100,7 @@ export function applyNotes(svg: string, notes: readonly NoteOverlay[]): string {
     index += 1;
     // 字下げは書き出しの意味そのものなので、SVG の既定 (空白を詰める) を止める。
     const space = note.mono ? ' xml:space="preserve"' : '';
-    // 回した足の名前は、字の高さの半分だけ下 (字の向きで) へずらして、足の線を字の真ん中に通す。
+    // 回したピンの名前は、字の高さの半分だけ下 (字の向きで) へずらして、ピンの線を字の真ん中に通す。
     const centre = note.centered === true && note.rotate !== 0 ? ' dy="0.35em"' : '';
     const shown = withRotation(
       withAnchor(

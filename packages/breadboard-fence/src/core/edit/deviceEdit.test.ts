@@ -3,7 +3,7 @@ import { applyRewrite } from 'fence-kit';
 import { createBreadboardEditor } from './fenceEditor.ts';
 
 /**
- * **板の外の機器も升目から触れること** (実機で「基板外のデバイスをマウスで
+ * **基板の外の機器も升目から触れること** (実機で「基板外のデバイスをマウスで
  * 動かせるようにする。他のマウスコマンドにも対応する」)。
  *
  * 機器は入れ子で書くので、1 行の綴りを書き換える部品の道には乗らない。
@@ -31,7 +31,7 @@ const after = (result: ReturnType<typeof editor.setField>): string => {
   return applyRewrite(SOURCE, result.value);
 };
 
-describe('板の外の機器を升目から触る', () => {
+describe('基板の外の機器を升目から触る', () => {
   test('moves to the band the hole was dropped in, since that is all the grammar has', () => {
     expect(after(editor.movePart(SOURCE, 'AD2', 'g3'))).toContain('at: bottom');
     expect(after(editor.movePart(SOURCE, 'AD2', 'b3'))).toContain('at: top');

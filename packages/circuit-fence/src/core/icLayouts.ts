@@ -2,12 +2,12 @@ import { lookupPinout } from 'fence-kit';
 import type { Pinout } from 'fence-kit';
 
 /**
- * 回路図の IC (`ic`) の**働きの並び** (52 の docs/100)。足を実物の順ではなく
+ * 回路図の IC (`ic`) の**働きの並び** (52 の docs/100)。ピンを実物の順ではなく
  * 働きで箱の 4 辺に振る — 正の電源は上、GND は下、入力・制御は左、出力は右、
- * 結ぶことの多い足は隣どうし (KiCad の部品記号の規約 KLC S4.2 と同じ置き方)。
+ * 結ぶことの多いピンは隣どうし (KiCad の部品記号の規約 KLC S4.2 と同じ置き方)。
  *
- * 足の名前と番号は fence-kit の足の名前の表 (板の 2 つと同じ表) から引き、
- * ここは**どの名前をどの辺に置くか**だけを持つ。板の上の IC は実物の並びしか
+ * ピンの名前と番号は fence-kit のピンの名前の表 (ブレッドボードとユニバーサル基板と同じ表) から引き、
+ * ここは**どの名前をどの辺に置くか**だけを持つ。基板の上の IC は実物の並びしか
  * ないので、この表は回路図だけのもの。
  *
  * 辺の中の並びは、左右の辺は上から下、上下の辺は左から右。
@@ -242,7 +242,7 @@ const HC4051_LAYOUT: IcLayout = {
 };
 
 /**
- * CD4040B (12 段リプルカウンタ。74HC4040 と同じ足の並び)。クロック CLOCK とリセット R は左、
+ * CD4040B (12 段リプルカウンタ。74HC4040 と同じピンの並び)。クロック CLOCK とリセット R は左、
  * Q1〜Q12 は右に下の桁から。CMOS 4000 系なので電源は VDD (上)・VSS (下)。
  */
 const CD4040_LAYOUT: IcLayout = {
@@ -260,7 +260,7 @@ const CD4013_LAYOUT: IcLayout = {
   bottom: ['VSS'],
 };
 
-/** 箱で描く部品の足の並び。働きで並べた IC (`ic`) は型番で引く。箱でなければ null。 */
+/** 箱で描く部品のピンの並び。働きで並べた IC (`ic`) は型番で引く。箱でなければ null。 */
 export function boxPinoutOf(type: string, model: string | null): IcPinout | null {
   return type === 'ic' ? lookupIcPinout(model) : null;
 }
@@ -300,7 +300,7 @@ const LAYOUTS: readonly { readonly pins: number; readonly model: string; readonl
   { pins: 14, model: 'CD4013B', layout: CD4013_LAYOUT },
 ];
 
-/** 型番から足の名前と働きの並びを引く。並びを持たない型番は null。 */
+/** 型番からピンの名前と働きの並びを引く。並びを持たない型番は null。 */
 export function lookupIcPinout(model: string | null): IcPinout | null {
   for (const row of LAYOUTS) {
     const pinout = lookupPinout(model, row.pins);

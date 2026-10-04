@@ -8,7 +8,7 @@ import { createPerfboardEditor } from './fenceEditor.ts';
  */
 const SOURCE = [
   'title: 契約',
-  // パレットに出す中でいちばん大きい物 (40 ピン) が収まる板で見る。
+  // パレットに出す中でいちばん大きい物 (40 ピン) が収まる基板で見る。
   'board: 44x30',
   'points:',
   '  vin: a1',

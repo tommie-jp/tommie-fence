@@ -128,7 +128,7 @@ describe('validateStyle', () => {
   });
 
   test('accepts the short and the long hex form in either case, and stores one form', () => {
-    // 下流 (縁の色を板から作るところ) が 1 つの形だけを相手にできるように揃えておく。
+    // 下流 (縁の色を基板から作るところ) が 1 つの形だけを相手にできるように揃えておく。
     expect(styleOf({ 'board-color': '#ABC' }).boardColor).toBe('#aabbcc');
     expect(styleOf({ 'hole-color': '#0a0B0c' }).holeColor).toBe('#0a0b0c');
   });

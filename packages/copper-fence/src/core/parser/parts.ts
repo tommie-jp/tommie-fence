@@ -28,9 +28,9 @@ function readAt(word: string | undefined, example: string): Mm | string {
  * | --- | --- |
  * | 同軸 | `sma left 10 [値]` — 辺と、辺に沿った位置 (mm。番地なので素の数) |
  * | 面実装 | `capacitor/1608 12,10 [r90] [値]` — 中心の点 |
- * | 箱 | `box 20,10 5x5mm 6 [r90] [値]` — 中心・大きさ・足の数 |
- * | 足のある部品 | `resistor P1 P2 [値]` — 端 2 つ (島の名前か点) |
- * | 多足 | `transistor/to92 P1 P2 P3 [r90] [値]` — 端を足の数だけ (足の並びの順) |
+ * | 箱 | `box 20,10 5x5mm 6 [r90] [値]` — 中心・大きさ・ピンの数 |
+ * | ピンのある部品 | `resistor P1 P2 [値]` — 端 2 つ (島の名前か点) |
+ * | 多ピン | `transistor/to92 P1 P2 P3 [r90] [値]` — 端をピンの数だけ (ピンの並びの順) |
  */
 export function parsePartLine(id: string, text: string): LineResult<PartSpec> {
   const words = wordsOf(text);
@@ -79,7 +79,7 @@ export function parsePartLine(id: string, text: string): LineResult<PartSpec> {
       const pinsWord = words[3];
       const pins = pinsWord !== undefined && /^\d{1,2}$/.test(pinsWord) ? Number(pinsWord) : null;
       if (pins === null || pins < 1 || pins > LIMITS.boxPins) {
-        return fail(`箱の足の数を書きます (1〜${LIMITS.boxPins}。例: box 20,10 5x5mm 6)`, pinsWord);
+        return fail(`箱のピンの数を書きます (1〜${LIMITS.boxPins}。例: box 20,10 5x5mm 6)`, pinsWord);
       }
       const { orient, rest } = takeOrient(words.slice(4));
       return ok({

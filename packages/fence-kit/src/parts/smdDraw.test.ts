@@ -11,7 +11,7 @@ import { drawDipAdapter, drawDirectSot, drawSipAdapter, drawSmdBody, smdBodySize
 
 /**
  * 面実装の姿。**寸法は表の実寸**なので、見張るのは「姿ごとに絵が違う」
- * 「足の間隔で伸び縮みしない」「向きの印が書いた足に従う」の 3 つ。
+ * 「ピンの間隔で伸び縮みしない」「向きの印が書いたピンに従う」の 3 つ。
  */
 const part = (type: string, variant: string | null, over: Partial<BodyPart> = {}): BodyPart =>
   ({ type, variant, value: null, pins: [{ name: '' }, { name: '' }], ...over });
@@ -21,7 +21,7 @@ const INK: ChipInk = {
   outside: '#111', halo: '#fff', haloWidth: 3,
 };
 
-describe('直付けの 2 本足', () => {
+describe('直付けの 2 ピン', () => {
   test('draws every chip size differently, and none of them as the through-hole body', () => {
     const drawn = ['1608', '2012', '3216'].map((size) => drawBody(part('resistor', size), 40));
     expect(new Set(drawn).size).toBe(3);
@@ -29,7 +29,7 @@ describe('直付けの 2 本足', () => {
   });
 
   test('keeps the real size whatever the span', () => {
-    // 足を遠くへ書いても胴は伸びない (実物の寸法)。
+    // ピンを遠くへ書いても胴は伸びない (実物の寸法)。
     expect(bodySize(part('resistor', '2012'), 20)).toEqual(bodySize(part('resistor', '2012'), 200));
     expect(bodySize(part('resistor', '2012'), 20).width).toBeCloseTo(2.0 * SMD_PX_PER_MM);
   });
@@ -41,7 +41,7 @@ describe('直付けの 2 本足', () => {
   });
 
   test('reaches two holes with the DO-214AC, and stays inside one gap with the SOD-323', () => {
-    // 2 穴 (40px) の足先に届く。SOD-323 は隣の穴 (20px) に収まる。
+    // 2 穴 (40px) のピン先に届く。SOD-323 は隣の穴 (20px) に収まる。
     expect(smdBodySize(part('diode', 'do214ac'))?.width).toBeGreaterThan(39);
     expect(smdBodySize(part('diode', 'sod323'))?.width).toBeLessThan(20);
   });
@@ -65,7 +65,7 @@ describe('直付けの 2 本足', () => {
 
   test('leaves the through-hole shapes alone', () => {
     expect(drawSmdBody(part('resistor', 'half'))).toBeNull();
-    expect(smdBodySize(part('transistor', 'sot346'))).toBeNull(); // 3 本足は別の道
+    expect(smdBodySize(part('transistor', 'sot346'))).toBeNull(); // 3 ピンは別の道
   });
 });
 
@@ -81,7 +81,7 @@ describe('SOT の胴', () => {
   });
 
   test('gives the SOT-89 its tab', () => {
-    // 3 本の足 + タブ + 胴。
+    // 3 本のピン + タブ + 胴。
     expect(sotGlyph(spec('sot89')).match(/<rect/g)?.length).toBe(5);
     expect(sotGlyph(spec('sot23')).match(/<rect/g)?.length).toBe(4);
   });
@@ -92,7 +92,7 @@ describe('SOT の胴', () => {
     expect(mount?.cx).toBeCloseTo(10);
     expect(mount?.cy).toBeCloseTo(10);
     expect(mount?.upright).toBe(true);
-    // 足先は両方の行に届く (1 行 = 20px)。
+    // ピン先は両方の行に届く (1 行 = 20px)。
     expect(mount?.tips[0]?.y).toBeCloseTo(10 - (2.8 * SMD_PX_PER_MM) / 2);
     expect(mount?.tips[2]?.y).toBeCloseTo(10 + (2.8 * SMD_PX_PER_MM) / 2);
   });
@@ -118,7 +118,7 @@ describe('SOT の胴', () => {
   });
 });
 
-describe('3 本足の変換基板', () => {
+describe('3 ピンの変換基板', () => {
   const shape: PackageShape = { cx: 100, cy: 50, reach: 21, halfWidth: 28, side: 1, plate: '#2c7a4b', chipBody: '#222' };
   const board = (variant: string): BodyPart => ({ type: 'transistor', variant, value: null, pins: [] });
 
@@ -173,7 +173,7 @@ describe('DIP 化した変換基板', () => {
 describe('型番が胴を決める面実装 (3SK291) の変換基板', () => {
   const chip = lookupPinout('3SK291', 4)!.chip!;
   const names = ['G1', 'G2', 'D', 'S'];
-  // 2 列: 1・2 番が下の行、3・4 番が上の行 (足の並びは 1 番から巡る)。行は 3 ピッチ離れる。
+  // 2 列: 1・2 番が下の行、3・4 番が上の行 (ピンの並びは 1 番から巡る)。行は 3 ピッチ離れる。
   const dip = [{ x: 100, y: 160 }, { x: 120, y: 160 }, { x: 120, y: 100 }, { x: 100, y: 100 }];
   const dipOptions = { points: dip, names, pinOne: 0, pitch: 20, caption: 'Q1 3SK291', scale: 1, ink: INK, chip, label: 'Q1' };
   const sip = [0, 1, 2, 3].map((at) => ({ x: 100 + at * 20, y: 100 }));
@@ -205,7 +205,7 @@ describe('型番が胴を決める面実装 (3SK291) の変換基板', () => {
   });
 
   test('moves the pin names off the board when the rows are too close for them', () => {
-    // ブレッドボードの溝をまたぐ 2 行は近い。シルクの白ではなく、板の外の字で出る。
+    // ブレッドボードの溝をまたぐ 2 行は近い。シルクの白ではなく、基板の外の字で出る。
     const close = dip.map((point) => ({ x: point.x, y: point.y === 160 ? 136 : 100 }));
 
     const drawn = drawDipAdapter({ ...dipOptions, points: close });

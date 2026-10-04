@@ -16,12 +16,12 @@ import { textScale } from './theme.ts';
  *
  * 名札は胴の下と決まっているが (実機で「すべての部品名は部品の下側に表示する」)、
  * 隣り合う行に部品を置くと**下の部品の名札と上の部品の名札が同じ高さに並ぶ**。
- * 3 本足は足の名前の 1 行下に名札が来るので、1 行違いでもぶつかる
+ * 3 ピンはピンの名前の 1 行下に名札が来るので、1 行違いでもぶつかる
  * (実機の 09-am-radio で `Q1 2SC1815` と `D1 1N60` が重なっていた)。
  * ぶつかったほうを 1 行ずつ下げて逃がす。
  */
 
-/** 逃がす段の高さ。字 1 行ぶん (足の名前と名札の送りと同じ)。 */
+/** 逃がす段の高さ。字 1 行ぶん (ピンの名前と名札の送りと同じ)。 */
 const DROP_LINE = NAME_LINE;
 
 /** 下げる上限。これ以上下げると、どの部品の名前か分からなくなる。 */
@@ -29,7 +29,7 @@ const DROP_LIMIT = 2;
 
 /**
  * 名札 1 つが占める帯。**中に刷る種類 (DIP・SIP) は `null`** — 樹脂の上に
- * 書くので、板の上の字とはぶつからない。
+ * 書くので、基板の上の字とはぶつからない。
  */
 export function captionBandOf(
   part: PlacedPart,
@@ -42,7 +42,7 @@ export function captionBandOf(
 }
 
 /**
- * 名札の基準線 (段を下げたあと)。**3 本足は段の番号で置き場の候補を選ぶ**
+ * 名札の基準線 (段を下げたあと)。**3 ピンは段の番号で置き場の候補を選ぶ**
  * (`threeLeadCaptionAt`)。ほかは基準線から段の数だけ下げる。
  */
 function captionSpotOf(part: PlacedPart, layout: Layout, theme: RenderTheme, drop: number): CaptionBaseline | null {
@@ -52,8 +52,8 @@ function captionSpotOf(part: PlacedPart, layout: Layout, theme: RenderTheme, dro
 }
 
 /**
- * 名札の**字そのもの**が占める帯。`captionBandOf` は配線よけのために足の幅まで
- * 広げてあるが、板の穴を伏せるのは字の下だけでよい — 足の下の穴まで消すと、
+ * 名札の**字そのもの**が占める帯。`captionBandOf` は配線よけのためにピンの幅まで
+ * 広げてあるが、基板の穴を伏せるのは字の下だけでよい — ピンの下の穴まで消すと、
  * 部品の脇の行に穴の無い帯ができる。
  */
 export function captionTextBandOf(
@@ -66,7 +66,7 @@ export function captionTextBandOf(
   if (baseline === null) return null;
   const { y } = baseline;
   const width = captionWidth(part, theme);
-  // **行と行の間に置いた名札** (3 本足の、足の名前の横) は字の背丈 (大文字の高さ) だけを
+  // **行と行の間に置いた名札** (3 ピンの、ピンの名前の横) は字の背丈 (大文字の高さ) だけを
   // 伏せる。1 行ぶんの帯で数えると、上下の行の穴まで伏せてしまう。
   if (baseline.betweenRows === true) {
     const cap = theme.metrics.textSize * NAME_CAP;
@@ -113,7 +113,7 @@ export function captionBaselineOf(
     const at = connectorCaptionAt(part, layout, theme);
     return at === null ? null : { ...at, width };
   }
-  // DIP と SIP は樹脂の上に刷る (板の字と食い合わない)。機器は帯の中で別に置く。
+  // DIP と SIP は樹脂の上に刷る (基板の字と食い合わない)。機器は帯の中で別に置く。
   if (part.kind === 'dip' || part.kind === 'sip' || part.kind === 'device') return null;
 
   const points = pinPoints(part, layout);
@@ -137,22 +137,22 @@ export function captionDrops(
   parts: readonly PlacedPart[],
   layout: Layout,
   theme: RenderTheme,
-  // **先に場所を取っているもの** (板に書いた注釈)。番地で置き場所を指定した
+  // **先に場所を取っているもの** (基板に書いた注釈)。番地で置き場所を指定した
   // ほうが強く、自動で置く名札が避ける。
   taken: readonly Rect[] = [],
 ): ReadonlyMap<string, number> {
   const drops = new Map<string, number>();
   const placed: Rect[] = [...taken];
-  // 3 本足の足の名前は動かないので、先に場所を取っている (自分の名前とは数えない)。
-  // 空ける字数: 3 本足の名札は 3 字 — 自分の名札 (名前から 2 字) より近いと、
+  // 3 ピンのピンの名前は動かないので、先に場所を取っている (自分の名前とは数えない)。
+  // 空ける字数: 3 ピンの名札は 3 字 — 自分の名札 (名前から 2 字) より近いと、
   // `E  Q2 2SD880  B` のようにどちらの部品の名札か読めなくなる。ほかの名札は 1 字
-  // (`E D1 1N60` と続けて読めなければよい。広く取ると 2 本足の名札が無駄に下がる)。
+  // (`E D1 1N60` と続けて読めなければよい。広く取ると 2 ピンの名札が無駄に下がる)。
   const legNamesOf = (margin: number): Rect[][] =>
     parts.map((part) => (part.kind === 'three-lead' ? legNameBoxes(part, layout, theme, margin) : []));
   const legNames = { near: legNamesOf(1), far: legNamesOf(3) };
   for (const [index, part] of parts.entries()) {
     const others = legNames[part.kind === 'three-lead' ? 'far' : 'near'].filter((_, at) => at !== index).flat();
-    // 3 本足は足の名前の横を先に試す。**ほかの部品の胴にも掛けない** — 横に置くと、
+    // 3 ピンはピンの名前の横を先に試す。**ほかの部品の胴にも掛けない** — 横に置くと、
     // 隣の行に寝かせた部品 (09-am-radio の D1) の上に名札が乗る。
     const spots = part.kind === 'three-lead' ? threeLeadCaptionSpots(part, layout, theme, captionWidth(part, theme)).length : 1;
     const bodies = spots > 1 ? parts.filter((other) => other !== part).flatMap((other) => footprintOf(other, layout)) : [];
@@ -172,8 +172,8 @@ export function captionDrops(
 }
 
 /**
- * 部品の胴と足がおおよそ占める所 (足の穴の外接矩形を少し広げたもの)。3 本足の名札の
- * 置き場を選ぶときだけ見る。2 本足の胴は足を結ぶ線の上に乗る。
+ * 部品の胴とピンがおおよそ占める所 (ピンの穴の外接矩形を少し広げたもの)。3 ピンの名札の
+ * 置き場を選ぶときだけ見る。2 ピンの胴はピンを結ぶ線の上に乗る。
  */
 function footprintOf(part: PlacedPart, layout: Layout): Rect[] {
   if (part.kind === 'device') return [];

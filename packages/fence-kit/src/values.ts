@@ -107,7 +107,7 @@ export function resistorBands(
   }
 
   // 2 桁で表せるか。表せない値だけ 3 桁にする (実物の E24 と E96 の分かれ方)。
-  // **温度係数を書いたときは必ず 3 桁** — 6 帯は 5 帯に 1 本足した形なので、
+  // **温度係数を書いたときは必ず 3 桁** — 6 帯は 5 帯に 1 ピンした形なので、
   // 数字が 2 桁の 6 帯という実物は無い。
   const figures = options.tempco !== undefined || !fitsInFigures(ohms, 2) ? 3 : 2;
   const exponent = Math.floor(Math.log10(ohms));

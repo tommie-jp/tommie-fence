@@ -8,14 +8,14 @@ import { cathodeIndex, ledLook, markedIndex } from './marks.ts';
 import { drawSmdBody, smdBodySize } from './smdDraw.ts';
 
 /**
- * 2 本足の部品の**胴の姿**。板に依らないので、breadboard と perfboard が共有する
+ * 2 ピンの部品の**胴の姿**。基板に依らないので、breadboard と perfboard が共有する
  * (52 の docs/18)。
  *
- * **座標は「原点が中央・x 軸が足の向き」。** 胴は 2 つの穴を結ぶ線の上に、その
- * 傾きのまま描かれるので、形の側は傾きも位置も知らなくてよい。両方の板が
+ * **座標は「原点が中央・x 軸がピンの向き」。** 胴は 2 つの穴を結ぶ線の上に、その
+ * 傾きのまま描かれるので、形の側は傾きも位置も知らなくてよい。両方の基板が
  * 元からこの約束で描いていたので、引き上げは形をそのまま移すだけで済んだ。
  *
- * **色は実物の色。** テーマでは動かない (抵抗はどの板に挿してもベージュ)。
+ * **色は実物の色。** テーマでは動かない (抵抗はどの基板に挿してもベージュ)。
  * ただし白黒で刷る図のために、塗りは `ink` を通す — perfboard はそこで
  * 網に移す (`render/hatch.ts`)。名前のある色 (帯・LED) は名前も渡すので、
  * 網と凡例が引き当てられる。
@@ -29,18 +29,18 @@ export type { BodyInk, BodyPart } from './ink.ts';
 export { REAL_INK } from './ink.ts';
 
 /** CdS の受光面の折り返しの数と、豆電球のフィラメントの巻き数。 */
-/** 積層鉄心の縞の数。実物の板の重なりが見える程度に。 */
+/** 積層鉄心の縞の数。実物の基板の重なりが見える程度に。 */
 const TRANSFORMER_PLATES = 5;
 
 const CDS_FINGERS = 5;
 const FILAMENT_TURNS = 3;
 
-/** 水晶の缶。足より張り出す幅 (片側) と、その下限・上限。 */
+/** 水晶の缶。ピンより張り出す幅 (片側) と、その下限・上限。 */
 const CAN_OVERHANG = 6;
 const CAN_MIN_WIDTH = 26;
 const CAN_MAX_WIDTH = 44;
 
-/** 円筒が板から浮いている分 (足の長さ)。 */
+/** 円筒が基板から浮いている分 (ピンの長さ)。 */
 const CAN_LIFT = 3;
 
 /**
@@ -50,7 +50,7 @@ const CAN_LIFT = 3;
 const TUBE_WIDTH = 9;
 const TUBE_HEIGHT = 24;
 
-/** 缶の下の口金 (巻き締め) の高さ。ここに足の出口の窪みが並ぶ。 */
+/** 缶の下の口金 (巻き締め) の高さ。ここにピンの出口の窪みが並ぶ。 */
 const CAN_COLLAR = 4;
 
 /** 平たい缶の厚み ÷ 長さ。実物の HC-49 は幅 11mm・厚さ 4.65mm。 */
@@ -68,7 +68,7 @@ const TURN_HALF = 6.5;
 const BAND_WIDTH = 3.2;
 const BAND_EDGE = 0.5;
 
-/** 5mm 砲弾型が既定。3mm はひと回り小さいだけで、置き方も足の名前も変わらない。 */
+/** 5mm 砲弾型が既定。3mm はひと回り小さいだけで、置き方もピンの名前も変わらない。 */
 const LED_RADIUS = 8.5;
 
 const domeScale = (part: BodyPart): number => (part.variant === '3mm' ? 6.5 / LED_RADIUS : 1);
@@ -101,7 +101,7 @@ function resistorBody(part: BodyPart, span: number, ink: BodyInk): string {
     ? (read === null ? null : resistorBands(read.ohms, { tolerance: read.tolerance, tempco: read.tempco })) ?? []
     : ['brown', 'black', 'black', 'gold'];
   // **帯は胴からはみ出さない。** 隣り合う穴に挿した抵抗は胴が短く、間隔を
-  // 決め打つと帯が板の地や隣の穴の上に乗る。入りきらないときは**間隔と幅を
+  // 決め打つと帯が基板の地や隣の穴の上に乗る。入りきらないときは**間隔と幅を
   // 一緒に詰める** — 隙間だけ詰めると 2 色が 1 本に見え、読み違いになる。
   // 帯が 1 本 (0Ω のジャンパ) なら胴の真ん中に。
   const start = bands.length === 1 ? -BAND_WIDTH / 2 : -width / 4;
@@ -152,7 +152,7 @@ function filmCapBody(part: BodyPart, span: number, ink: BodyInk): string {
 
 /**
  * セラミックの円板。色はフィルムと同じ系統に置いて、**形だけで見分けさせる**。
- * LED の丸とは、足の線の上に中心が乗ることと、平らな面が無いことで区別できる。
+ * LED の丸とは、ピンの線の上に中心が乗ることと、平らな面が無いことで区別できる。
  */
 function ceramicCapBody(part: BodyPart, span: number, ink: BodyInk): string {
   const radius = Math.min(span * 0.45, 9.5);
@@ -400,9 +400,9 @@ function lampBody(span: number, ink: BodyInk): string {
 }
 
 /**
- * 胴が自分で足を描く種類。**呼ぶ側は穴と穴を結ぶ線を引かない**。
+ * 胴が自分でピンを描く種類。**呼ぶ側は穴と穴を結ぶ線を引かない**。
  *
- * 水晶の足は胴の両端からではなく**缶の下から出て穴へ下りる**ので、
+ * 水晶のピンは胴の両端からではなく**缶の下から出て穴へ下りる**ので、
  * 穴と穴を渡る線は実物に無い (実機で「水平の線は実態と異なる」と指摘された)。
  */
 export const drawsOwnLeads = (type: string): boolean => type === 'crystal';
@@ -410,12 +410,12 @@ export const drawsOwnLeads = (type: string): boolean => type === 'crystal';
 /**
  * 水晶振動子。姿は 2 通りで、**輪郭がまるで違う**ので描き分ける。
  *
- * - `hc49` (既定) — 平たい缶。**上から見た姿**で、足の穴を覆う。実物は幅 11mm・
- *   足の間隔 4.88mm なので、缶は足より外まで張り出す (穴にかぶさる)
- * - `cylinder` — 円筒。径 3mm・長さ 8mm ほどの細い筒で、**足は同じ端から
+ * - `hc49` (既定) — 平たい缶。**上から見た姿**で、ピンの穴を覆う。実物は幅 11mm・
+ *   ピンの間隔 4.88mm なので、缶はピンより外まで張り出す (穴にかぶさる)
+ * - `cylinder` — 円筒。径 3mm・長さ 8mm ほどの細い筒で、**ピンは同じ端から
  *   2 本出て、穴の間隔まで開く**
  *
- * **足を結ぶ線は呼ぶ側で引かない** (`drawsOwnLeads`)。水晶の足は胴の両端から
+ * **ピンを結ぶ線は呼ぶ側で引かない** (`drawsOwnLeads`)。水晶のピンは胴の両端から
  * 出るのではなく缶の下から出て穴へ下りるので、穴と穴を結ぶ線は実物に無い。
  */
 function crystalBody(part: BodyPart, span: number, ink: BodyInk): string {
@@ -427,7 +427,7 @@ function crystalBody(part: BodyPart, span: number, ink: BodyInk): string {
 }
 
 /**
- * 平たい缶 (HC-49) を**上から**。台座の上に缶が載り、缶の下から足が穴へ下りる。
+ * 平たい缶 (HC-49) を**上から**。台座の上に缶が載り、缶の下からピンが穴へ下りる。
  * 足そのものは缶の下なので見えない — 出口の窪みだけを穴の真上に置く。
  */
 function flatCan(part: BodyPart, span: number, metal: string, edge: string, ink: BodyInk): string {
@@ -445,9 +445,9 @@ function flatCan(part: BodyPart, span: number, metal: string, edge: string, ink:
     x: num(-width / 2 + 4), y: num(-height / 2 + 3), width: num(Math.max(width - 8, 2)), height: 3, rx: 1.5,
     fill: ink.paint('#dfe4ee'),
   });
-  // 足の出口は**中心線の左と右**。足の穴は 2 つとも中心線の上に並ぶので、
-  // 足はそこへ向かって缶の両端から出る (下の角から出るのは実物と違う)。
-  // 缶より広い間隔に挿したときは、出口から穴まで足が伸びて見える。
+  // ピンの出口は**中心線の左と右**。ピンの穴は 2 つとも中心線の上に並ぶので、
+  // ピンはそこへ向かって缶の両端から出る (下の角から出るのは実物と違う)。
+  // 缶より広い間隔に挿したときは、出口から穴までピンが伸びて見える。
   const legX = Math.min(span / 2, Math.max(width / 2 - 4, 1));
   const eyelets = [-1, 1]
     .map((at) => element('circle', { cx: num(at * legX), cy: 0, r: 2, fill: edge }))
@@ -462,8 +462,8 @@ function flatCan(part: BodyPart, span: number, metal: string, edge: string, ink:
 }
 
 /**
- * 円筒の缶。**足は同じ端から 2 本出て、穴の間隔まで開く** — 実物も足を開いて挿す。
- * 細いのが見分けどころなので、足を広げても太くしない。
+ * 円筒の缶。**ピンは同じ端から 2 本出て、穴の間隔まで開く** — 実物もピンを開いて挿す。
+ * 細いのが見分けどころなので、ピンを広げても太くしない。
  */
 function tubeCan(span: number, metal: string, edge: string, ink: BodyInk): string {
   const width = TUBE_WIDTH;
@@ -511,9 +511,9 @@ export const crystalCan = (part: BodyPart, span: number): { readonly width: numb
 };
 
 /**
- * 缶そのもの。平たい缶は**足の穴を覆う**ので足の間隔より外まで張り出す
+ * 缶そのもの。平たい缶は**ピンの穴を覆う**のでピンの間隔より外まで張り出す
  * (狭い間隔でも潰さない下限と、広げすぎない上限を持つ)。
- * 円筒は足の間隔によらず実物の太さのまま。
+ * 円筒はピンの間隔によらず実物の太さのまま。
  */
 const canOf = (part: BodyPart, span: number): { readonly width: number; readonly height: number } => {
   if (part.variant === 'cylinder') return { width: TUBE_WIDTH, height: TUBE_HEIGHT };
@@ -567,7 +567,7 @@ function axialCoil(span: number, ink: BodyInk): string {
 
 /**
  * リード付きのフェライトビーズ。**濃い灰色の円筒で、帯も筋も無い**。
- * 実物はフェライトの焼き物の筒に足を通しただけで、印が何も無い。帯を描くと
+ * 実物はフェライトの焼き物の筒にピンを通しただけで、印が何も無い。帯を描くと
  * 抵抗に、筋を描くとコイルに見える。値 (`600R@100M` など) は字で書く。
  */
 function ferriteBeadBody(span: number, ink: BodyInk): string {
@@ -610,11 +610,11 @@ function buzzerBody(part: BodyPart, span: number, ink: BodyInk): string {
  * 派手に描き分けると、それは実物の情報ではなくなる。
  */
 /**
- * SMA コネクタの金物。**胴は足の間隔で変わらない** — 六角の胴 (6.35mm) の
+ * SMA コネクタの金物。**胴はピンの間隔で変わらない** — 六角の胴 (6.35mm) の
  * 大きさで描く。オスは中心にピンが立ち、メスは中心が穴。**姿で描き分ける**ので、
  * 図を見た人が合う相手を取り違えない。
  *
- * 板の縁に載せる横置きは perfboard だけの形なので、あちらに残してある
+ * 基板の縁に載せる横置きは perfboard だけの形なので、あちらに残してある
  * (縁が無い breadboard には置き場が無い)。
  */
 export const SMA_SIZE = 50;
@@ -629,9 +629,9 @@ const SMA_SOCKET = '#2b2f33';
  * 四角の真ん中**に来る — 実物のフランジは丸を中心に置いた正方形で、
  * ずらすと別の部品に見える (実機で「信号＋アースを四角の中心に置く」)。
  *
- * `badge` を立てたときだけ丸を上へ寄せる。**姿の名前を胴に刷る板**
- * (perfboard) が、その下半分を字の場所に使うため — 板の側の都合なので、
- * 何も刷らない板 (breadboard) では真ん中のままにする。
+ * `badge` を立てたときだけ丸を上へ寄せる。**姿の名前を胴に刷る基板**
+ * (perfboard) が、その下半分を字の場所に使うため — 基板の側の都合なので、
+ * 何も刷らない基板 (breadboard) では真ん中のままにする。
  */
 export function smaBody(part: BodyPart, _span: number, ink: BodyInk = REAL_INK, badge = false): string {
   const half = SMA_SIZE / 2;
@@ -653,7 +653,7 @@ export function smaBody(part: BodyPart, _span: number, ink: BodyInk = REAL_INK, 
   return `${shell}${barrel}${centre}`;
 }
 
-/** 乾電池の寸法 (足の間隔に対する比と上限)。缶の長さと太さ。 */
+/** 乾電池の寸法 (ピンの間隔に対する比と上限)。缶の長さと太さ。 */
 const BATTERY_LENGTH = 0.72;
 const BATTERY_MAX_LENGTH = 40;
 const BATTERY_THICK = 0.46;
@@ -666,7 +666,7 @@ const BATTERY_THICK = 0.46;
  * 品種を決め打った姿は嘘になる。**電池と言われて誰もが思い出す形**にしておき、
  * 品種は値やラベルに書いてもらう (`BAT1: battery a3 a7 単3` のように)。
  *
- * **＋の側は足の名前で決まる。** `(+)` を書いてあればその端に突起を描き、
+ * **＋の側はピンの名前で決まる。** `(+)` を書いてあればその端に突起を描き、
  * 書いていなければ**先に書いた穴が ＋** (極性のある 2 端子の約束と同じ)。
  */
 function batteryBody(part: BodyPart, span: number, ink: BodyInk): string {
@@ -718,7 +718,7 @@ function solarBody(span: number, ink: BodyInk): string {
     x1: num(-width / 2 + 2), y1: num(height * at), x2: num(width / 2 - 2), y2: num(height * at),
     stroke: ink.paint('#9fb0c8'), 'stroke-width': 1,
   })).join('');
-  // セルの区切り。実物は細い溝で、これがあるとただの青い板に見えない。
+  // セルの区切り。実物は細い溝で、これがあるとただの青い基板に見えない。
   const cuts = [-0.22, 0.22].map((at) => element('line', {
     x1: num(width * at), y1: num(-height / 2 + 1.5), x2: num(width * at), y2: num(height / 2 - 1.5),
     stroke: ink.paint('#0b1730'), 'stroke-width': 1,
@@ -728,7 +728,7 @@ function solarBody(span: number, ink: BodyInk): string {
 
 /**
  * スピーカー。**ブザーと同じ黒い丸だが、中身が違う** — ブザーは真ん中に
- * 小さな穴が 1 つ空くだけで、スピーカーは振動板 (コーン) とその中心の
+ * 小さな穴が 1 つ空くだけで、スピーカーは振動基板 (コーン) とその中心の
  * ダストキャップが見える。図で選び分けられるように、そこを描く。
  */
 function speakerBody(span: number, ink: BodyInk): string {
@@ -745,7 +745,7 @@ function speakerBody(span: number, ink: BodyInk): string {
 
 /**
  * エレクトレットマイク。**銀の缶を上から見た形**。前面に音の入る穴が開き、
- * 底の面は樹脂で塞がっている (足はそこから出る)。
+ * 底の面は樹脂で塞がっている (ピンはそこから出る)。
  */
 function micBody(span: number, ink: BodyInk): string {
   const radius = Math.min(span * 0.42, 11);
@@ -791,15 +791,15 @@ function switchBody(span: number, ink: BodyInk, closed: boolean): string {
 /**
  * 小型の変圧器。**四角い外形の中に、積んだ鉄心の縞と巻線の胴**が見える。
  *
- * 中身は板に依らないので、外形 (足をどこに書いたか) だけを受け取って中を描く。
- * 足の並べ方は板ごとに違うが、**載っている物は同じ**なので姿は 1 つで済む。
+ * 中身は基板に依らないので、外形 (ピンをどこに書いたか) だけを受け取って中を描く。
+ * ピンの並べ方は基板ごとに違うが、**載っている物は同じ**なので姿は 1 つで済む。
  */
 export function transformerCore(width: number, height: number, ink: BodyInk): string {
   const shell = element('rect', {
     x: num(-width / 2), y: num(-height / 2), width: num(width), height: num(height), rx: 2,
     fill: ink.paint('#3a4049'), stroke: ink.paint('#1c2026'), 'stroke-width': 1,
   });
-  // 積層鉄心の縞。**長いほうの辺に沿って積む** (実物の板の重なり)。
+  // 積層鉄心の縞。**長いほうの辺に沿って積む** (実物の基板の重なり)。
   const along = width >= height;
   const count = TRANSFORMER_PLATES;
   const reach = (along ? width : height) * 0.34;
@@ -837,7 +837,7 @@ const BODIES: Record<string, (part: BodyPart, span: number, ink: BodyInk) => str
   photodiode: (part, _span, ink) => domeBody(part, '#9fc7e8', ink, '#5a6472'),
   // フォトトランジスタも砲弾型で、LED と見分けにくい。**黒い胴** (可視光を切る
   // 樹脂の品が多い) で描き分ける。**平らな面は描かない** — 平らな側が C の品と
-  // E の品があり、描くとどちらかの品で嘘になる。足は先に書いた穴が C。
+  // E の品があり、描くとどちらかの品で嘘になる。ピンは先に書いた穴が C。
   phototransistor: (part, _span, ink) => plainDome(part, '#2b2f36', ink, '#12151a'),
 
   diode: (part, span, ink) =>
@@ -864,7 +864,7 @@ const BODIES: Record<string, (part: BodyPart, span: number, ink: BodyInk) => str
   fuse: (_part, span, ink) => fuseBody(span, ink),
   lamp: (_part, span, ink) => lampBody(span, ink),
 
-  // 回路図にあって板に無かった実物 (52 の docs/21 の手順 7)。
+  // 回路図にあって基板に無かった実物 (52 の docs/21 の手順 7)。
   battery: batteryBody,
   solar: (_part, span, ink) => solarBody(span, ink),
   speaker: (_part, span, ink) => speakerBody(span, ink),
@@ -877,7 +877,7 @@ const BODIES: Record<string, (part: BodyPart, span: number, ink: BodyInk) => str
 export const hasBody = (type: string): boolean => Object.hasOwn(BODIES, type);
 
 /**
- * 胴を描く。`span` は**足から足までの長さ**で、胴の大きさはそこから決まる
+ * 胴を描く。`span` は**ピンからピンまでの長さ**で、胴の大きさはそこから決まる
  * (`bodySize` と同じ数式)。知らない種類は砲弾型で描く。
  */
 export function drawBody(part: BodyPart, span: number, ink: BodyInk = REAL_INK): string {
@@ -892,7 +892,7 @@ export function drawBody(part: BodyPart, span: number, ink: BodyInk = REAL_INK):
  * 胴の大きさ。**当たり判定と描画で同じ数字を使う**ための 1 か所
  * (perfboard は重なりの判定にこれを読む)。
  *
- * 丸い胴は直径、角い胴は外形。足の線はここに入らない (胴の外)。
+ * 丸い胴は直径、角い胴は外形。ピンの線はここに入らない (胴の外)。
  */
 export function bodySize(part: BodyPart, span: number): { readonly width: number; readonly height: number } {
   const smd = smdBodySize(part);
@@ -939,7 +939,7 @@ export function bodySize(part: BodyPart, span: number): { readonly width: number
       return { width: Math.min(span * 0.6, 34), height: 13 };
     case 'lamp':
       return twice(Math.min(span * 0.42, 10));
-    // 缶は足を覆う (平たい缶) か足の上に立つ (円筒)。どちらも `crystalCan` が持つ。
+    // 缶はピンを覆う (平たい缶) かピンの上に立つ (円筒)。どちらも `crystalCan` が持つ。
     case 'crystal':
       return crystalCan(part, span);
     // 巻線が芯より高いので、高さは巻線のぶん。立てた缶は丸いので直径。
@@ -962,7 +962,7 @@ export function bodySize(part: BodyPart, span: number): { readonly width: number
     }
     case 'mic':
       return twice(Math.min(span * 0.42, 11));
-    // 上から見た四角いフランジ。**足の間隔では伸び縮みしない** (実物の寸法)。
+    // 上から見た四角いフランジ。**ピンの間隔では伸び縮みしない** (実物の寸法)。
     case 'sma':
       return { width: SMA_SIZE, height: SMA_SIZE };
     case 'switch':

@@ -7,7 +7,7 @@ const TITLE_SCALE = 1.5;
 /** 画布の左の余白 (layout の OUTER と同じ)。 */
 const LEFT = 14;
 
-/** 図の題。文章から「図02 を直して」と指せるように (板のフェンスと同じ作法)。 */
+/** 図の題。文章から「図02 を直して」と指せるように (基板のフェンスと同じ作法)。 */
 export function renderTitle(title: string | null, layout: Layout, theme: Theme): string {
   if (title === null) return '';
   const size = theme.metrics.textSize * TITLE_SCALE;

@@ -4,7 +4,7 @@ import { gridMap } from './edit/map.ts';
 import { PART_NAMES, PART_PREFIXES, lookupPartType, lookupPin } from './parts.ts';
 
 /**
- * DIP スイッチ (`dip-switch4` / `dip-switch8`)。**足の名前と DIP の番号は板の 2 つと
+ * DIP スイッチ (`dip-switch4` / `dip-switch8`)。**ピンの名前と DIP の番号はブレッドボードとユニバーサル基板と
  * 同じ表** (fence-kit) — k 番のスイッチは `Ak` (k 番) と `Bk` (2n+1−k 番) の間の開いた接点。
  * 記号は開閉スイッチを連の数だけ並べた箱で、左に A、右に B。
  */

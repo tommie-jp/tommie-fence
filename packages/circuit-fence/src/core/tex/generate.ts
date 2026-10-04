@@ -231,7 +231,7 @@ function sipShapesFor(circuit: Circuit, pitch: number): string[] {
   }
   const declared = [...sizes].sort((a, b) => a - b).flatMap((pins) => sipShapeTex(pins));
   // 三端子レギュレータも自分で宣言した形。**使うときだけ**書く。
-  // 3 本足の IC (`ic3`) も同じ箱。
+  // 3 ピンの IC (`ic3`) も同じ箱。
   const withReg = circuit.parts.some((part) => part.type === 'regulator' || part.type === IC3 || part.type === 'ceramic-filter')
     ? [...declared, ...regulatorShapeTex()]
     : declared;
@@ -434,7 +434,7 @@ function cellsOf(circuit: Circuit): Map<string, { readonly address: Address; end
     if (counted.has(ends)) continue;
     counted.add(ends);
 
-    // 足 (`U1.out`) は格子の上に無いので、交点としては数えない。
+    // ピン (`U1.out`) は格子の上に無いので、交点としては数えない。
     if (from !== null) add(from);
     if (to !== null) add(to);
 
@@ -473,9 +473,9 @@ const SIGN_BAR = 0.28;
 const SIGN_DX = 0.44;
 
 /**
- * ± を置く高さ。足のアンカーから、**もう一方の足のほうへ**この割合だけ寄せる。
- * 外へ寄せると三角形の縁と足の線に挟まれて、どちらの足の印か読めなくなる。
- * 割合で書くのは、向き (`+up`) で足が入れ替わっても付いていくため。
+ * ± を置く高さ。ピンのアンカーから、**もう一方のピンのほうへ**この割合だけ寄せる。
+ * 外へ寄せると三角形の縁とピンの線に挟まれて、どちらのピンの印か読めなくなる。
+ * 割合で書くのは、向き (`+up`) でピンが入れ替わっても付いていくため。
  */
 const SIGN_SHIFT = 0.22;
 
@@ -490,7 +490,7 @@ function amplifierSigns(name: string, turn: Turn): string[] {
   const bar = num(SIGN_BAR);
   const dx = num(SIGN_DX);
   const shift = num(SIGN_SHIFT);
-  // 足から足へ引いた線の上で、足の側に寄せた点 (calc の !割合! で取る)。
+  // ピンからピンへ引いた線の上で、ピンの側に寄せた点 (calc の !割合! で取る)。
   const plus = `($(${name}.+)!${shift}!(${name}.-)$)`;
   const minus = `($(${name}.-)!${shift}!(${name}.+)$)`;
 
@@ -506,11 +506,11 @@ function amplifierSigns(name: string, turn: Turn): string[] {
     ];
   }
 
-  // 回した記号では、**足から足へ引いた線に直角な向き**へ同じ距離だけ入る。
+  // 回した記号では、**ピンからピンへ引いた線に直角な向き**へ同じ距離だけ入る。
   // calc の `!長さ!角度:` は向きごと回るので、記号が何度回っても体の中へ入る。
   //
   // **中心へ寄せる形は採れなかった** — + と − が同じ点へ近づいて重なる
-  // (実測。0.75 まで寄せると 1 つの記号に見える)。直角なら足の間の高さが保たれる。
+  // (実測。0.75 まで寄せると 1 つの記号に見える)。直角ならピンの間の高さが保たれる。
   // 反転は左右の勝手が入れ替わるので、回す向きも入れ替える。
   const hand = turn.mirror ? 1 : -1;
   const into = (from: string, toward: string, quarter: number): string =>
@@ -668,7 +668,7 @@ function underAnchor(turn: Turn): string {
 /**
  * 反対の辺。2 つに使う:
  *
- * - **値を記号の上に出す**とき、下に足がある部品 (レギュレータの GND) の
+ * - **値を記号の上に出す**とき、下にピンがある部品 (レギュレータの GND) の
  *   逃がし先を決める
  * - 字を**外へ**向けるとき、掛けた辺の反対側に寄せる (`at (U.south)` に
  *   `anchor=north` で字が下に出る)。**回すと辺が変わる**ので、
@@ -684,11 +684,11 @@ const ANCHOR_OF: Readonly<Record<string, string>> = {
 };
 
 /**
- * 値を**塞がっている足の反対側**へ出すときの、点と寄せ。
+ * 値を**塞がっているピンの反対側**へ出すときの、点と寄せ。
  *
  * **点は記号の中の向きで、寄せは画面の向きで数える。** アンカーは節点ごと
- * 回るので、記号の中で「足の反対側」を指しておけば、回しても空いている側に
- * 付いてくる。字のほうは回らないので、**回した先で足がどちら側にあるか**を
+ * 回るので、記号の中で「ピンの反対側」を指しておけば、回しても空いている側に
+ * 付いてくる。字のほうは回らないので、**回した先でピンがどちら側にあるか**を
  * 見て、その反対へ押し出す (実機で 3 つの向きを焼いて確かめた)。
  */
 function awayFrom(type: PartType, anchor: string, turn: Turn): {
@@ -781,7 +781,7 @@ function drawTwoTerminal(part: TwoTerminalPart, target: TexTarget, pitch: number
     ...optionsFor(part.type, target),
     ...tunableOptions(part.type, target, laidOf(to.x - from.x, to.y - from.y), standard),
   ];
-  // 足を指せる種類だけ、記号そのものに名前を付ける (`P1.w` の行き先になる)。
+  // ピンを指せる種類だけ、記号そのものに名前を付ける (`P1.w` の行き先になる)。
   // 指せない種類にまで付けると、要らない名前で TeX が太る。
   if (type?.pins !== undefined) options.push(`n=${nodeNameOf(part.id)}`);
   // 記号だけでは見分けが付かない種類は、ID の下にもう 1 行書く (`l2_` は
@@ -908,7 +908,7 @@ function supplyTex(supply: string): string {
 }
 
 /**
- * 多端子部品。1 つの交点に記号を置き、足は circuitikz のアンカーに任せる。
+ * 多端子部品。1 つの交点に記号を置き、ピンは circuitikz のアンカーに任せる。
  *
  * フェンスではオペアンプだけ記号を差し替えている (`op amp` はフォントが無くて
  * 落ちる)。`plain amp` は三角形しか描かないので、± を普通のノードとして
@@ -917,13 +917,13 @@ function supplyTex(supply: string): string {
  */
 function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget, pitch: number): string[] {
   const type = partTypeOf(part);
-  // 機器 (`device`) は足の本数で記号が決まるので、種類名ではなく部品から引く。
-  // 働きで並べた IC は足の間隔が図の pitch で決まるので、ここで形を選ぶ。
+  // 機器 (`device`) はピンの本数で記号が決まるので、種類名ではなく部品から引く。
+  // 働きで並べた IC はピンの間隔が図の pitch で決まるので、ここで形を選ぶ。
   const icPinout = boxPinoutOf(part.type, part.value);
   const symbol = icPinout !== null
     ? icBox(icPinout, icStepOf(pitch)).name
     : type === null ? symbolFor(part.type, target) : symbolOf(type, target);
-  // 種類そのものに要るオプション (DIP の足の本数) が先、書かれた向きが後。
+  // 種類そのものに要るオプション (DIP のピンの本数) が先、書かれた向きが後。
   const options = [symbol, ...(type === null ? optionsFor(part.type, target) : optionsOf(type, target))];
   const turned = part.orientation === null ? null : ORIENTATION_TEX[part.orientation];
   if (turned !== undefined && turned !== null) options.push(turned);
@@ -935,7 +935,7 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget, pitch: nu
   // 字は一緒に回る** (実機で確認。`r180` で逆さま) ので、向きが付いたら中心に
   // 立てた別ノードへ移す。向きを書いた図だけが変わる。
   const boxTurned = isTurned(part.turn);
-  // **マイコンボードは箱の中に種類を書く** (`pico2`)。足の名前は左右の縁に
+  // **マイコンボードは箱の中に種類を書く** (`pico2`)。ピンの名前は左右の縁に
   // 寄るので真ん中が空いていて、そこが実物のチップの場所でもある。
   // 型番を書いてあればそれは箱の外へ回す (2 つを重ねない。実機で頼まれた)。
   const boardDef = lookupBoardPart(part.type);
@@ -944,15 +944,15 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget, pitch: nu
   // (`valueBelowUpright`)。中に書かない型番は、ほかの部品と同じ道で下に出る。
   const valueBelow = type?.valueBelowUpright === true && (part.turn.rotate === 0 || part.turn.rotate === 180);
   const valueInside = type?.valueInside === true && !valueBelow;
-  // 回した箱の中の字を掛ける先。片側に足が並ぶ箱は足の名前の反対側 (`value`)。
+  // 回した箱の中の字を掛ける先。片側にピンが並ぶ箱はピンの名前の反対側 (`value`)。
   const inner = `${name}.${type?.turnedValueAnchor ?? 'center'}`;
   const boxed = kind !== null || valueInside;
   const inside = boxTurned ? '' : (kind ?? (valueInside ? (annotation ?? '') : ''));
   const node = `\\node[${options.join(', ')}] (${name}) at (${at}) {${inside}};`;
   // それ以外の型番は記号の下に来るアンカーに掛ける。`label=below:` はノードの
   // (空の) 文字を基準にするので、記号の体の上に字が乗る (実機で確認)。
-  // **下が塞がっている部品は上に出す。** レギュレータは下がグラウンドの足で、
-  // 値を下に置くと足の線と `GND` の字に重なる (実機で指摘された)。
+  // **下が塞がっている部品は上に出す。** レギュレータは下がグラウンドのピンで、
+  // 値を下に置くとピンの線と `GND` の字に重なる (実機で指摘された)。
   const blocked = type?.valueAwayFrom;
   const free = type !== null && blocked !== undefined ? awayFrom(type, blocked, part.turn) : null;
   const place = free?.place ?? underAnchor(part.turn);
@@ -968,7 +968,7 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget, pitch: nu
   const number = annotation === null && turnedInside === null
     ? []
     : kind !== null
-      // ボードは中が種類。型番は箱の外 (足の無い辺) へ。
+      // ボードは中が種類。型番は箱の外 (ピンの無い辺) へ。
       ? [
         ...(boxTurned && turnedInside !== null && turnedInside !== ''
           ? [`\\node[font=\\scriptsize] at (${inner}) {${turnedInside}};`] : []),
@@ -994,8 +994,8 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget, pitch: nu
 }
 
 /**
- * ゲートの足の番号 (`gateNumbers.ts`)。**足の外側の少し上**に小さく置く — 入力は線の上で左へ、
- * 出力は線の上で右へ、上下の足は線の脇。字は足の名前と同じく目印のノードで、差し込む側が
+ * ゲートのピンの番号 (`gateNumbers.ts`)。**ピンの外側の少し上**に小さく置く — 入力は線の上で左へ、
+ * 出力は線の上で右へ、上下のピンは線の脇。字はピンの名前と同じく目印のノードで、差し込む側が
  * 同じ辺で揃える (`drawNotes.ts` の `gateNumberOverlays`)。
  */
 function gateNumberNodes(part: MultiTerminalPart, name: string, type: PartType | null, target: TexTarget): string[] {
@@ -1013,11 +1013,11 @@ function gateNumberNodes(part: MultiTerminalPart, name: string, type: PartType |
   });
 }
 
-/** 番号を置く辺ごとの寄せ。左右の足は線の上 (左の足は左へ、右の足は右へ伸ばす)、上下の足は線の右。 */
+/** 番号を置く辺ごとの寄せ。左右のピンは線の上 (左のピンは左へ、右のピンは右へ伸ばす)、上下のピンは線の右。 */
 export function gateNumberPlace(side: PinSide): { readonly anchor: string; readonly shift: string } {
   if (side === 'left') return { anchor: 'south west', shift: 'xshift=-1pt, yshift=1pt' };
   if (side === 'right') return { anchor: 'south west', shift: 'xshift=1pt, yshift=1pt' };
-  // 上下の足は線の脇。下の足だけ 2pt 胴の側へ寄せる (足の先に置くと下の型番に触れる)。
+  // 上下のピンは線の脇。下のピンだけ 2pt 胴の側へ寄せる (ピンの先に置くと下の型番に触れる)。
   return { anchor: 'west', shift: side === 'bottom' ? 'xshift=2pt, yshift=2pt' : 'xshift=2pt' };
 }
 
@@ -1040,15 +1040,15 @@ const STACK: Readonly<Record<PinSide, string>> = {
  * 付けてくれないので、こちらでノードを 1 つ足す (実機で「SMA と U2 の名前が
  * 出ていない」と指摘された。全種類で出ていなかった)。
  *
- * **置き場は空いている辺**。足のある辺に出すと線と字が重なる。
- * 塞がっていない辺が 1 つも無いとき (レギュレータ: 左右と下が足で、上は値) は、
+ * **置き場は空いている辺**。ピンのある辺に出すと線と字が重なる。
+ * 塞がっていない辺が 1 つも無いとき (レギュレータ: 左右と下がピンで、上は値) は、
  * **値のさらに外側**へ積む — 値の置き場は空くように選んであるので、
  * その 1 行外も空いている。
  */
 function nameNode(part: MultiTerminalPart, name: string, type: PartType | null, valueSide: PinSide | null): string {
   const label = labelOf(part.id, part.id);
   if (type === null) return `\\node[anchor=south] at (${name}.north) {${label}};`;
-  // 4 辺とも足が出る箱は、左上の角の上 (上の足は中心から右へ並ぶ)。
+  // 4 辺ともピンが出る箱は、左上の角の上 (上のピンは中心から右へ並ぶ)。
   if (type.nameAtCorner === true) return `\\node[anchor=south west] at (${name}.north west) {${label}};`;
 
   const taken = new Set<PinSide>(pinPlaces(type, part.turn).map((place) => place.side));
@@ -1074,7 +1074,7 @@ function anchorAt(side: PinSide, turn: Turn): string {
 }
 
 /**
- * 箱の足に書く名前 (マイコンボードだけ)。**左の列は右向き、右の列は左向き**に
+ * 箱のピンに書く名前 (マイコンボードだけ)。**左の列は右向き、右の列は左向き**に
  * 出して、字が箱の中へ入るようにする。
  *
  * フェンスでは**字を TeX に渡さない** — 目印を 1 文字置いて、描き上がった SVG に
@@ -1094,10 +1094,10 @@ function pinNameNodes(part: MultiTerminalPart, name: string, type: PartType | nu
       // フェンスは目印の色で置く (SVG で本物の字に差し替わる)。
       ...(target === 'latex' ? [] : [MARK_COLOR_NAME]),
       // 既定は **40 本が箱に収まる大きさ**。`\scriptsize` だと左右の列が
-      // 箱の真ん中でぶつかった (実機で焼いて確かめた)。足の少ない箱は種類が大きくする (`pinFont`)。
+      // 箱の真ん中でぶつかった (実機で焼いて確かめた)。ピンの少ない箱は種類が大きくする (`pinFont`)。
       `font=${type.pinFont ?? '\\tiny'}`,
       `anchor=${place.anchor}`,
-      // 縁のすぐ内側へ。**`bpin` は枠の上の足** (`pin` は足の先) なので、
+      // 縁のすぐ内側へ。**`bpin` は枠の上のピン** (`pin` はピンの先) なので、
       // 線の太さぶんだけ逃がせば中に収まる。
       place.shift,
       // **回すのは書き出す `.tex` のときだけ。** フェンスは目印を置くだけで、
@@ -1113,11 +1113,11 @@ function pinNameNodes(part: MultiTerminalPart, name: string, type: PartType | nu
 }
 
 /**
- * 足の名前を、**回した先の辺**に合わせて置く向き。
+ * ピンの名前を、**回した先の辺**に合わせて置く向き。
  *
- * 箱を回すと足も回る (`pinPlaces` が辺を返す)。左右の辺なら横書きのまま
+ * 箱を回すとピンも回る (`pinPlaces` が辺を返す)。左右の辺なら横書きのまま
  * 内側へ、上下の辺なら**縦に回して**内側へ書く — 横のままだと、隣り合う
- * 足の名前どうしが重なって読めない (40 本なら間隔は 1 文字ぶんも無い)。
+ * ピンの名前どうしが重なって読めない (40 本なら間隔は 1 文字ぶんも無い)。
  *
  * TeX の `rotate` は反時計回り。上の辺は下へ読ませたいので -90 度。
  */
@@ -1128,7 +1128,7 @@ function pinNamePlace(type: PartType, turn: Turn, index: number): {
   if (side === 'left') return { anchor: 'west', shift: 'xshift=2pt', rotate: 0, side };
   if (side === 'right') return { anchor: 'east', shift: 'xshift=-2pt', rotate: 0, side };
   // 上の辺: 字は下 (箱の中) へ読む。下の辺: 上へ読む。
-  // 上下は縁から 4pt 離す。2pt では縦書きの字の頭が足の線の端に触れて読みにくかった。
+  // 上下は縁から 4pt 離す。2pt では縦書きの字の頭がピンの線の端に触れて読みにくかった。
   if (side === 'top') return { anchor: 'west', shift: 'yshift=-4pt', rotate: -90, side };
   return { anchor: 'west', shift: 'yshift=4pt', rotate: 90, side };
 }

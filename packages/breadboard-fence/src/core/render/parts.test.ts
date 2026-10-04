@@ -26,7 +26,7 @@ function place(line: string): PlacedPart {
   return part;
 }
 
-/** 真ん中の足の位置。3 本足の胴はここを中心に描かれる。 */
+/** 真ん中のピンの位置。3 ピンの胴はここを中心に描かれる。 */
 const centerX = (part: PlacedPart): number => layout.point(part.pins[1]!.address!).x;
 
 /** 端の比較は丸め誤差ぶんだけ緩める (px として意味のない差)。 */
@@ -192,7 +192,7 @@ describe('名札は胴の外', () => {
 
 
 /**
- * 縦に立てた部品の名札も胴の外。**胴は足の向きに長い**ので、立てると
+ * 縦に立てた部品の名札も胴の外。**胴はピンの向きに長い**ので、立てると
  * 中心から下へ「長さの半分」伸びる。厚みだけで測っていたころは、a〜e 行に立てた
  * 抵抗の名札が一番下の色の帯に乗り、レールと a 行の間の抵抗 (教科書の 30 dB
  * パッドの図) では縁取りが胴の下端を削っていた。
@@ -234,7 +234,7 @@ describe('縦に立てた部品の名札も胴の外', () => {
 
 describe('マイコンボードの名前', () => {
   test('keeps the name below the board, clear of the pin names written inside it', () => {
-    // 基板の中に置いていたころは、長い足の名前 (`ADC_VREF 35`) と食い合っていた
+    // 基板の中に置いていたころは、長いピンの名前 (`ADC_VREF 35`) と食い合っていた
     // (実機で「文字が図形に被らないようにする」)。**ほかの部品と同じ側** —
     // 名前は胴の下 (実機で「すべての部品名は部品の下側に表示する」)。
     const part = place('U1: pico @ h5');
@@ -247,15 +247,15 @@ describe('マイコンボードの名前', () => {
   });
 });
 
-describe('マイコンボードの足の番号', () => {
+describe('マイコンボードのピンの番号', () => {
   test('writes the header number beside each pin name, as the schematic does', () => {
     // 実機で「pico のピン名にピン番号を表示する。circuit-editor の pico を参考に」。
     const part = place('U1: pico @ h5');
     const svg = renderPart(part, layout, theme);
 
-    // 下の列 (足が下、字は上へ伸びる) は番号が先。
+    // 下の列 (ピンが下、字は上へ伸びる) は番号が先。
     expect(svg).toContain('>01 GP0<');
-    // 上の列 (字は下へ伸びる) は名前が先 — **番号はどちらも足の側の端**。
+    // 上の列 (字は下へ伸びる) は名前が先 — **番号はどちらもピンの側の端**。
     expect(svg).toContain('>VBUS 40<');
     // 配線に書く綴りは名前のまま。
     expect(svg).not.toContain('01 GP0"');
@@ -264,7 +264,7 @@ describe('マイコンボードの足の番号', () => {
 
 /**
  * 名札どうしがぶつかったら 1 行下げること。**隣り合う行に部品を置くと、
- * 上の部品の名札と下の部品の名札が同じ高さに並ぶ** (3 本足は足の名前の
+ * 上の部品の名札と下の部品の名札が同じ高さに並ぶ** (3 ピンはピンの名前の
  * 1 行下に名札が来るので、1 行違いでもぶつかる)。
  * 実機の 09-am-radio で `Q1 2SC1815` と `D1 1N60` が重なっていた回。
  */
@@ -300,11 +300,11 @@ describe('名札はぶつかったら逃げる', () => {
 });
 
 /**
- * 3 本足の名札と足の名前が、**足の列の穴を全部伏せない**こと。`Q1 2SC1815` を足の名前の
- * 1 行下に積んでいたので、横に並んだ足 (h 行) の列の i と j が字の下に消え、E の足の
+ * 3 ピンの名札とピンの名前が、**ピンの列の穴を全部伏せない**こと。`Q1 2SC1815` をピンの名前の
+ * 1 行下に積んでいたので、横に並んだピン (h 行) の列の i と j が字の下に消え、E のピンの
  * 列を下のレールへ降ろす線 (`j13 -- -b13`) が名札の下から出ていた。
  */
-describe('3 本足の名札は足の列の穴を空けておく', () => {
+describe('3 ピンの名札はピンの列の穴を空けておく', () => {
   const HOLE = 3;
   const holeSquare = (col: number, row: string) => {
     const at = layout.point(parseAddress(`${row}${col}`)!);
@@ -325,7 +325,7 @@ describe('3 本足の名札は足の列の穴を空けておく', () => {
     for (const col of columns) {
       for (const row of rows) expect(touches(band, holeSquare(col, row)), `${row}${col}`).toBe(false);
     }
-    // 足の名前は行と行の間 (穴の上に字も縁取りも載らない)。
+    // ピンの名前は行と行の間 (穴の上に字も縁取りも載らない)。
     const svg = renderPart(part, layout, theme);
     const baseline = legNameBaseline(svg, part.pins[0]!.name);
     const top = baseline - theme.metrics.textSize * NAME_CAP - haloWidth(theme) / 2;
@@ -333,16 +333,16 @@ describe('3 本足の名札は足の列の穴を空けておく', () => {
     const [first, second] = [rows[0]!, rows[1]!];
     expect(top).toBeGreaterThanOrEqual(layout.point(parseAddress(`${first}${columns[0]}`)!).y + HOLE);
     expect(bottom).toBeLessThanOrEqual(layout.point(parseAddress(`${second}${columns[0]}`)!).y - HOLE);
-    // 名札は板の穴の並びの中に収まる。
+    // 名札は基板の穴の並びの中に収まる。
     expect(band.x).toBeGreaterThanOrEqual(layout.colX(1) - layout.pitch / 2);
     expect(band.x + band.width).toBeLessThanOrEqual(layout.colX(layout.columns) + layout.pitch / 2);
   });
 });
 
-describe('3 本足を広げて挿すと、胴から足へ線を引く', () => {
+describe('3 ピンを広げて挿すと、胴からピンへ線を引く', () => {
   const lines = (line: string): number => (renderPart(place(line), layout, theme).match(/<line /g) ?? []).length;
 
-  test('隣り合う穴の足には線を引かない', () => {
+  test('隣り合う穴のピンには線を引かない', () => {
     expect(lines('Q1: transistor j17(B) j18(C) j19(E)')).toBe(0);
   });
 
@@ -352,26 +352,26 @@ describe('3 本足を広げて挿すと、胴から足へ線を引く', () => {
 });
 
 /**
- * 足の名前の字を、**列番号の帯と溝に置かない**。どちらも書き手の線がよく通る所で、
+ * ピンの名前の字を、**列番号の帯と溝に置かない**。どちらも書き手の線がよく通る所で、
  * 教科書の図 (01-circuits 第 5〜8 章) で字が埋もれた:
  *
  * - i 行の TO-92 (`i4(E) i5(C) i6(B)`) は、胴の下の行間が胴で塞がり、名前が j 行と
  *   下のレールの間 (列番号の帯) に落ちた。`E` が列番号 `5` と、E の列を下のレールへ
  *   降ろす GND の線 (`j4 -- -b4`) に重なった
- * - TO-220 は胴が大きく、名前が溝に落ちた。足の列を溝の向こうへ渡す線
+ * - TO-220 は胴が大きく、名前が溝に落ちた。ピンの列を溝の向こうへ渡す線
  *   (`e8 -- f8`) の上に字が乗り、`in` `gnd` `out` どうしもくっついた
  *
  * 胴の下に行間が無ければ**胴の上の行間**へ置く。TO-220 は胴の樹脂の上に刷る
- * (DIP の足の番号と同じ。胴の上は線が通らない)。
+ * (DIP のピンの番号と同じ。胴の上は線が通らない)。
  */
-describe('3 本足の足の名前は列番号の帯と溝に置かない', () => {
+describe('3 ピンのピンの名前は列番号の帯と溝に置かない', () => {
   const HOLE = 3;
   const nameTexts = (svg: string) => [...svg.matchAll(
     /<text x="([\d.]+)" y="([\d.]+)"(?![^>]*aria-hidden)[^>]*font-size="([\d.]+)" font-weight="700" fill="([^"]+)"[^>]*>([^<]+)<\/text>/g,
   )].map((match) => ({ x: Number(match[1]), y: Number(match[2]), size: Number(match[3]), fill: match[4]!, text: match[5]! }));
   const rowY = (row: string) => layout.point(parseAddress(`${row}1`)!).y;
 
-  /** 足の名前の字が縦に占める範囲 (縁取りまで)。 */
+  /** ピンの名前の字が縦に占める範囲 (縁取りまで)。 */
   const spanOf = (name: { y: number; size: number }) => ({
     top: name.y - name.size * NAME_CAP - haloWidth(theme) / 2,
     bottom: name.y + haloWidth(theme) / 2,

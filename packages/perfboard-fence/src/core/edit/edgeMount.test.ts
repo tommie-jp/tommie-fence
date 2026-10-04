@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { createPerfboardEditor } from './fenceEditor.ts';
 
 /**
- * 板から張り出す形 (端面実装の同軸コネクタ)。**足が板の縁の外にあるのが
+ * 基板から張り出す形 (端面実装の同軸コネクタ)。**ピンが基板の縁の外にあるのが
  * 正しい姿**なので、置く側と同じ規則で動かせなければならない。
  * 実機で「基板端に付けた SMA を選べない・動かせない」と分かった回の見張り。
  */
@@ -30,7 +30,7 @@ describe('端面実装のコネクタ', () => {
 
   test('turns and flips', () => {
     expect(editor.flip(SRC, 'J1').ok).toBe(true);
-    // 回した先が板から離れすぎるときは、その理由を言って断る。
+    // 回した先が基板から離れすぎるときは、その理由を言って断る。
     const turned = editor.turn(SRC, 'J1', 1);
     expect(turned.ok || (!turned.ok && turned.error.message.includes('置けません'))).toBe(true);
   });
@@ -52,17 +52,17 @@ describe('端面実装のコネクタ', () => {
   });
 
   test('still keeps ordinary parts in their holes', () => {
-    // 抵抗の足は穴に入っていなければならない (張り出す形ではない)。
+    // 抵抗のピンは穴に入っていなければならない (張り出す形ではない)。
     const off = editor.movePart(SRC, 'R1', 'c24');
 
     expect(off.ok).toBe(false);
-    expect(!off.ok && off.error.message).toContain('板の外');
+    expect(!off.ok && off.error.message).toContain('基板の外');
   });
 });
 
 describe('端面実装の複製', () => {
   test('copies the arrangement, since an edge mount cannot be rebuilt from one hole', () => {
-    // 置き直す形にすると、足の並びが形で決まる部品は正しい姿を作り直せない。
+    // 置き直す形にすると、ピンの並びが形で決まる部品は正しい姿を作り直せない。
     const copied = editor.duplicate(SRC, 'J1', 'J2');
 
     expect(copied.ok).toBe(true);

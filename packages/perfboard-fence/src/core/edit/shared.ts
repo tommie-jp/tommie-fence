@@ -21,7 +21,7 @@ export type AddressToken = { readonly column: number; readonly length: number; r
  * 読めないときだけ、配線の演算子とフロー形式の区切りで割る
  * (`b3--b7` のように空白を省いて書けるため)。
  *
- * **先に割らない。** 機器の足 (`BAT.+`) や種類の姿 (`capacitor/ceramic`) を
+ * **先に割らない。** 機器のピン (`BAT.+`) や種類の姿 (`capacitor/ceramic`) を
  * 壊さないため — どちらも穴には読めないので、割らずにそのまま落ちる。
  */
 function candidatesOf(column: number, token: string, resolves: (text: string) => boolean): readonly Candidate[] {

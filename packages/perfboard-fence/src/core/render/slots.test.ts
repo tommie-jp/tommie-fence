@@ -20,7 +20,7 @@ describe('renderSlots', () => {
     const svg = renderSlots(board, layout, THEME);
     const xs = [...svg.matchAll(/<rect x="([0-9.]+)"/g)].map(([, x = '0']) => Number(x));
 
-    // 幅の広い板では短いほうの辺は左右。銅箔は 1 行につき 1 つ、両端に出る。
+    // 幅の広い基板では短いほうの辺は左右。銅箔は 1 行につき 1 つ、両端に出る。
     expect(xs.length).toBe(7 * 2);
     expect(Math.min(...xs)).toBeLessThan(layout.colX(1));
     expect(Math.max(...xs)).toBeGreaterThan(layout.colX(12));
@@ -64,9 +64,9 @@ describe('renderSlots', () => {
   });
 });
 
-describe('裏返した板の銅箔', () => {
+describe('裏返した基板の銅箔', () => {
   test('stays at the edges of the board, which is where the copper is', () => {
-    // 裏返すと列の並びが逆になる。番号で測ると、銅箔が板の内側へ入ってしまう。
+    // 裏返すと列の並びが逆になる。番号で測ると、銅箔が基板の内側へ入ってしまう。
     const board = { ...createBoard({ cols: 12, rows: 7 }), slots: true };
     const front = createLayout(board);
     const back = createLayout(board, { mirror: true });

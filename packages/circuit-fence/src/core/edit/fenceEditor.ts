@@ -38,14 +38,14 @@ const unreadable = (written: string): EditResult =>
   ({ ok: false, error: { message: `番地として読めません: ${written}`, line: null } });
 
 /**
- * 足を指す綴り (`Q1.C`)。**文法の読み手と同じ形**にしておく — 升目で押した足は
+ * ピンを指す綴り (`Q1.C`)。**文法の読み手と同じ形**にしておく — 升目で押したピンは
  * そのまま `wires:` の端として書かれるので、ここで受ける形が食い違うと
  * 「押せたのに書けない」になる。
  */
 const PIN_REFERENCE = /^([\w-]+)\.([^\s.]+)$/;
 
 /**
- * 配線の端 1 つ。**番地として読める綴りは番地**で、そうでなければ足として読む
+ * 配線の端 1 つ。**番地として読める綴りは番地**で、そうでなければピンとして読む
  * (文法の `readEndpoint` と同じ順)。どちらでもなければ null。
  */
 function endpointOf(written: string): Endpoint | null {

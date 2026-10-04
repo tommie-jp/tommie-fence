@@ -7,27 +7,27 @@ import { safeToken } from '../errors.ts';
 export type Footprint =
   | { readonly kind: 'two-lead' }
   | { readonly kind: 'three-lead' }
-  /** 巻線の端が 4 つ出ている部品 (変圧器)。**書かれた穴がそのまま足**。 */
+  /** 巻線の端が 4 つ出ている部品 (変圧器)。**書かれた穴がそのままピン**。 */
   | { readonly kind: 'four-lead' }
-  /** 溝をまたぐ 4 本足のスイッチ (6mm 角のタクトスイッチ)。 */
+  /** 溝をまたぐ 4 ピンのスイッチ (6mm 角のタクトスイッチ)。 */
   | { readonly kind: 'switch' }
   | { readonly kind: 'dip'; readonly pins: number }
   /**
-   * 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。**表は fence-kit** で、
-   * DIP の位置のうち足のある所に名前が付く。列の間の穴数は表が決める (52 の docs/66)。
+   * ピンに名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。**表は fence-kit** で、
+   * DIP の位置のうちピンのある所に名前が付く。列の間の穴数は表が決める (52 の docs/66)。
    */
   | { readonly kind: 'named'; readonly chip: NamedChip }
   | { readonly kind: 'sip'; readonly pins: number }
   | { readonly kind: 'board'; readonly board: BoardPart }
   /**
-   * USB コネクタ。**書いた穴がそのまま足**で、数は 2 から表の長さまで。
-   * 足の名前は書いた順に表から当てる (表は fence-kit。perfboard と同じもの)。
+   * USB コネクタ。**書いた穴がそのままピン**で、数は 2 から表の長さまで。
+   * ピンの名前は書いた順に表から当てる (表は fence-kit。perfboard と同じもの)。
    */
   | { readonly kind: 'connector'; readonly connector: Connector }
   | { readonly kind: 'device' };
 
 /**
- * 2 本足の部品。名前は circuit-fence と揃えてある (同じノートで両方のフェンスを
+ * 2 ピンの部品。名前は circuit-fence と揃えてある (同じノートで両方のフェンスを
  * 書くときに、頭の中の語彙を 1 つで済ませるため)。
  */
 const TWO_LEAD_TYPES = new Set([
@@ -36,19 +36,19 @@ const TWO_LEAD_TYPES = new Set([
   'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc', 'varistor',
   // ダイオードの仲間。実物はどれも同じ形の胴で、カソード帯の位置が意味を持つ。
   'zener', 'schottky', 'photodiode', 'varicap', 'diac',
-  // 砲弾型の受光素子。2 本足 (C E) で、先に書いた穴が C (52 の docs/66)。
+  // 砲弾型の受光素子。2 ピン (C E) で、先に書いた穴が C (52 の docs/66)。
   'phototransistor',
   // ガラス管・玉に封じた部品。
   'reed', 'fuse', 'lamp',
   // リード付きのフェライトビーズ (perfboard と同じ綴り)。
   'ferrite-bead',
-  // 回路図にあって板に無かった実物 (52 の docs/21 の手順 7)。**電池は
-  // ホルダーで数える** — 板に載るのはホルダーで、電池は差し替えるもの。
+  // 回路図にあって基板に無かった実物 (52 の docs/21 の手順 7)。**電池は
+  // ホルダーで数える** — 基板に載るのはホルダーで、電池は差し替えるもの。
   // トグルスイッチは a 接点 (`switch`) と b 接点 (`switch-nc`) で別の品。
   'battery', 'solar', 'speaker', 'mic', 'switch', 'switch-nc',
-  // 同軸コネクタ。**足は中心導体と GND の 2 本**で書く (実物は GND が 4 本だが、
+  // 同軸コネクタ。**ピンは中心導体と GND の 2 本**で書く (実物は GND が 4 本だが、
   // 図とネットリストで意味を持つのは「どこが中心でどこが GND か」の 2 つ)。
-  // **板の縁に載せる横置きは perfboard だけ** — ブレッドボードに縁は無い。
+  // **基板の縁に載せる横置きは perfboard だけ** — ブレッドボードに縁は無い。
   'sma',
 ]);
 const THREE_LEAD_TYPES = new Set([
@@ -56,14 +56,14 @@ const THREE_LEAD_TYPES = new Set([
   // 三端子レギュレータ。**perfboard と同じ綴り**で置けるようにしてある
   // (同じ回路を 2 つのフェンスで書くときに語彙を 1 つで済ませるため)。
   'regulator',
-  // 3 本足の IC (ホール素子・LM35・UM66T など)。足の名前は品ごとに違うので
+  // 3 ピンの IC (ホール素子・LM35・UM66T など)。ピンの名前は品ごとに違うので
   // 穴に書く (`h9(Vout)`)。姿はトランジスタと同じ (52 の docs/66)。
   'ic3',
 ]);
 /**
- * 4 本足の部品。**書かれた穴がそのまま足** — 2 本足・3 本足と同じ考え方で、
+ * 4 ピンの部品。**書かれた穴がそのままピン** — 2 ピン・3 ピンと同じ考え方で、
  * 巻線の端が 4 つ出ている変圧器を、どの穴に挿したかそのまま書く
- * (実物の足の並びは品によって違い、決め打てない)。
+ * (実物のピンの並びは品によって違い、決め打てない)。
  */
 const FOUR_LEAD_TYPES = new Set(['transformer']);
 
@@ -117,7 +117,7 @@ export function lookupFootprint(type: string): Footprint | null {
 }
 
 /**
- * 足の数が決まっていて、そのまま置ける種類。**`dipN` / `sipN` / ボード / 機器は
+ * ピンの数が決まっていて、そのまま置ける種類。**`dipN` / `sipN` / ボード / 機器は
  * 入らない** (ピン数や名前を選ばないと置けない)。マップのパレットが引く。
  */
 /**

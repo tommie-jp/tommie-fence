@@ -6,7 +6,7 @@ import { changed, refuse } from './result.ts';
 
 /**
  * 部品・島を消す。**消した島を名前で指していた端は、その島の中心の点に書き換える**
- * — 足のある部品やジャンパが「知らない名前」で読めなくならず、その場に残る。
+ * — ピンのある部品やジャンパが「知らない名前」で読めなくならず、その場に残る。
  */
 export function deletePart(source: string, handle: string): EditResult {
   const state = read(source);

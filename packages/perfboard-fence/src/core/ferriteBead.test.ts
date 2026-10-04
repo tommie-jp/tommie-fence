@@ -4,7 +4,7 @@ import { PART_NAMES, PART_PREFIXES } from './parts/catalog.ts';
 import { isAxial, isTwoLead } from './parts/types.ts';
 
 /**
- * フェライトビーズ (リード付きの軸物)。**2 本足で、足の間隔は抵抗と同じ規則**
+ * フェライトビーズ (リード付きの軸物)。**2 ピンで、ピンの間隔は抵抗と同じ規則**
  * (隣の穴には入らない)。値は型番や `600R@100M` のような書き方をそのまま受ける。
  */
 const fence = (...lines: string[]): string => ['board: 20x10', ...lines, ''].join('\n');

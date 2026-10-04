@@ -19,7 +19,7 @@ const WIRE_OPERATOR = /\s*(--|-\||\|-)\s*/;
 
 const typeList = (): string => partTypeNames().join(' / ');
 
-/** `U1.out` `Q1.B` の形。部品 ID と足の名前を分ける。 */
+/** `U1.out` `Q1.B` の形。部品 ID とピンの名前を分ける。 */
 const PIN_REFERENCE = /^([\w-]+)\.([^\s.]+)$/;
 
 /** オペアンプの ± の並び。回転では書けない別の鍵なので、回転と併記できる。 */
@@ -164,7 +164,7 @@ export function parseCompactPart(
     return fail(`部品 ${safeToken(id)} の種類がありません (${typeList()} が使えます)`, line);
   }
 
-  // 機器は足の名前を並べるので 1 行に畳めない。種類を知らないとは言わず、書き方を返す。
+  // 機器はピンの名前を並べるので 1 行に畳めない。種類を知らないとは言わず、書き方を返す。
   if (written === DEVICE) {
     return fail(`${DEVICE} は 1 行では書けません。type: ${DEVICE} と at・pins を並べたマップ形式で書きます`, line, written);
   }
@@ -447,10 +447,10 @@ export function parseWireLine(
 }
 
 /**
- * 配線の端。`a3` のような番地か、`U1.out` のような足。
+ * 配線の端。`a3` のような番地か、`U1.out` のようなピン。
  *
  * **番地に `.` は出てこない** (交点の間も `a1a5` と組で書く)。だから
- * `.` を含む綴りは足、と 1 行で分かれる (`U1.5` は DIP の 5 番ピン)。
+ * `.` を含む綴りはピン、と 1 行で分かれる (`U1.5` は DIP の 5 番ピン)。
  */
 function readEndpoint(token: string, line: number, points: Points): Result<Endpoint> {
   const named = points.get(token);
@@ -465,7 +465,7 @@ function readEndpoint(token: string, line: number, points: Points): Result<Endpo
     return ok({ kind: 'pin', part, pin: name });
   }
 
-  // ここまで来た綴りは番地でも足でもない。案内だけを返す
+  // ここまで来た綴りは番地でもピンでもない。案内だけを返す
   // (番地としての読み直しは済んでいる)。
   return fail(addressProblem(token, points), line, token);
 }

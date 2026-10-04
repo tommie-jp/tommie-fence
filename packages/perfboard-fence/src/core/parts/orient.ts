@@ -3,7 +3,7 @@ import { footprintOf } from './footprint.ts';
 /**
  * 部品の向き。**アンカー 1 つで置く形** (DIP / SIP) にだけ書ける。
  *
- * 足を並べて書く部品 (2 本足・3 本足) の向きは**穴の順そのもの**なので、
+ * ピンを並べて書く部品 (2 ピン・3 ピン) の向きは**穴の順そのもの**なので、
  * 語では書かない — 同じことを 2 通りで書けるようにすると、食い違ったときに
  * どちらが本当か決められなくなる (52 の docs/14)。
  *
@@ -38,7 +38,7 @@ export const rotationWord = (rotate: Turn['rotate']): string =>
  * 書ける向き。**形が決める** — アンカー 1 つで置く形だけが語で回る。
  *
  * `full` は 4 方向と反転 (格子が一様なので、どちらへ回しても挿せる)。
- * 足を並べて書く形は `none` (穴の順が向きなので、語は要らない)。
+ * ピンを並べて書く形は `none` (穴の順が向きなので、語は要らない)。
  */
 export type Orient = 'none' | 'full';
 
@@ -57,7 +57,7 @@ export function refusesMirror(type: string): boolean {
 export function orientOf(type: string): Orient {
   const footprint = footprintOf(type, null);
   if (footprint === null) return 'none';
-  // アンカー 1 つで置く形は回せる (足の位置をこちらが決めているので、回した先も出せる)。
+  // アンカー 1 つで置く形は回せる (ピンの位置をこちらが決めているので、回した先も出せる)。
   const anchored = footprint.kind === 'dip' || footprint.kind === 'sip' || footprint.kind === 'switch'
     || footprint.kind === 'named';
   return anchored ? 'full' : 'none';

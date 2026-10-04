@@ -5,8 +5,8 @@ import { variantsOf } from './parts/variants.ts';
 import { knownPartTypes, placeableTypes } from './placement/footprints.ts';
 
 /**
- * 3 本足の IC (`ic3`。52 の docs/66 の段 7)。ホール素子・LM35・LMF501T・UM66T の
- * TO-92 を 1 つで受ける。**置き方はトランジスタと同じ 3 つの穴**で、足の名前は
+ * 3 ピンの IC (`ic3`。52 の docs/66 の段 7)。ホール素子・LM35・LMF501T・UM66T の
+ * TO-92 を 1 つで受ける。**置き方はトランジスタと同じ 3 つの穴**で、ピンの名前は
  * 穴に書く (`h9(Vout)`)。書かなければ左から `1` `2` `3`。
  */
 
@@ -39,8 +39,8 @@ describe('3 ピンの IC', () => {
   });
 });
 
-describe('足の名前の大きさ', () => {
-  /** 足の名前の字の大きさ (`>名前<` の直前の font-size)。 */
+describe('ピンの名前の大きさ', () => {
+  /** ピンの名前の字の大きさ (`>名前<` の直前の font-size)。 */
   const sizeOf = (svg: string, name: string): number => {
     const found = new RegExp(`font-size="([\\d.]+)"[^>]*>${name.replace('+', '\\+')}<`).exec(svg);
     return Number(found?.[1] ?? NaN);
@@ -50,7 +50,7 @@ describe('足の名前の大きさ', () => {
     const long = renderBreadboard(fence('parts:', '  U1: ic3 f4(+Vs) f5(Vout) f6(GND) LM35')).svg;
     const short = renderBreadboard(fence('parts:', '  Q1: transistor f4(B) f5(C) f6(E)')).svg;
 
-    // 隣の足までは 1 ピッチ。4 文字の名前は収まらないので縮める。1 文字は既定のまま。
+    // 隣のピンまでは 1 ピッチ。4 文字の名前は収まらないので縮める。1 文字は既定のまま。
     expect(sizeOf(long, 'Vout')).toBeLessThan(sizeOf(short, 'B'));
     expect(sizeOf(long, 'GND')).toBe(sizeOf(long, 'Vout'));
   });

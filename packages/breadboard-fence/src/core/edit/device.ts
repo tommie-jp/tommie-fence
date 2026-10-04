@@ -11,10 +11,10 @@ import type { MoveResult } from './move.ts';
 import type { Address, PartSpec } from '../types.ts';
 
 /**
- * 板の外の機器 (`device`) を升目から掴む。
+ * 基板の外の機器 (`device`) を升目から掴む。
  *
  * **機器は入れ子で書く**ので、1 行の綴りを書き換える部品の道 (`move.ts`) には
- * 乗らない。この板で動かすというのは `at:` を上下どちらの帯にするかで、
+ * 乗らない。この基板で動かすというのは `at:` を上下どちらの帯にするかで、
  * 左右の位置はつながる穴から自動で決まる (文法リファレンス)。
  *
  * 掴めないと、**図に出ているのに升目から触れないものが残る**
@@ -26,7 +26,7 @@ const deviceOf = (source: string, id: string): PartSpec | null => {
   return found?.type === 'device' ? found : null;
 };
 
-/** その名前が板の外の機器か。**部品と機器で編集の道が違う**ので、入口で分ける。 */
+/** その名前が基板の外の機器か。**部品と機器で編集の道が違う**ので、入口で分ける。 */
 export const isDevice = (source: string, id: string): boolean => deviceOf(source, id) !== null;
 
 /** 升目で掴める機器の名前。読めた行のぶんだけ出る。 */
@@ -91,7 +91,7 @@ export function deviceSpans(source: string, id: string): readonly Span[] {
 }
 
 /**
- * 機器を動かす。**この板で選べるのは上下の帯だけ**なので、落とした穴が溝より
+ * 機器を動かす。**この基板で選べるのは上下の帯だけ**なので、落とした穴が溝より
  * 上なら `top`、下なら `bottom` にする。`at:` が無ければ `type:` の次に足す。
  */
 export function moveDevice(source: string, id: string, to: Address, trial = false): MoveResult {

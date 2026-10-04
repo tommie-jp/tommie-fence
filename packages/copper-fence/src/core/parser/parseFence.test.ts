@@ -42,7 +42,7 @@ describe('parseFence', () => {
     expect(doc.board.width).toBe(40);
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatchObject({ notice: true });
-    expect(errors[0]?.message).toMatch(/既定の板 \(40x20mm・h 1.6mm・εr 4.4・back\)/);
+    expect(errors[0]?.message).toMatch(/既定の基板 \(40x20mm・h 1.6mm・εr 4.4・back\)/);
   });
 
   test('keeps what it could read of the board', () => {

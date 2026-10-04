@@ -28,7 +28,7 @@ wires:
 ```text
 bread: 2 行目: 部品 AD2: 機器 (device) に value は使いません。箱に出す名前は label に書きます
       AD2:
-bread: 8 行目: 部品 R1: at は機器 (device) にだけ使います。板に挿す部品の位置は holes で決まります
+bread: 8 行目: 部品 R1: at は機器 (device) にだけ使います。基板に挿す部品の位置は holes で決まります
       R1:
 ```
 

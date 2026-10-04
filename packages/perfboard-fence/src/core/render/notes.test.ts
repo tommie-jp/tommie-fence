@@ -56,7 +56,7 @@ describe('盤の端に置いた字', () => {
 
   test('keeps the whole word at either edge, not just its first character', () => {
     // 中央寄せのまま端に置くと、使える幅は近いほうの縁までの 2 倍しかない。
-    // 端では向きを変えて、板の外の余白まで使う。
+    // 端では向きを変えて、基板の外の余白まで使う。
     for (const hole of ['a1', 'a6', 'a12']) expect(room(hole)).toContain('ここから電源');
   });
 

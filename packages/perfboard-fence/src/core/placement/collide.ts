@@ -8,12 +8,12 @@ import { formatAddress } from '../model/address.ts';
 import { bodyRect, overlaps, spanOf } from './geometry.ts';
 
 /**
- * 実物に載るかを見る。**足の穴が別でも、胴は重なる。**
+ * 実物に載るかを見る。**ピンの穴が別でも、胴は重なる。**
  *
  * 47 の 06 メモで「Lcapy は並列部品を黙って重ねる」を弱点として挙げた以上、
  * こちらが同じことをしては筋が通らない。
  *
- * 見るのは 3 つ — 胴どうしの重なり、実物では入らない足の間隔、
+ * 見るのは 3 つ — 胴どうしの重なり、実物では入らないピンの間隔、
  * 直付けの面実装の置き方。
  */
 
@@ -52,13 +52,13 @@ function collisions(parts: readonly PlacedPart[], layout: Layout): FenceError[] 
 }
 
 /**
- * 実物では入らない足の間隔。
+ * 実物では入らないピンの間隔。
  *
- * **軸物 (胴の両端から足が出る形) は、隣り合う穴に挿せない。** 胴そのものが
- * 2.54mm より長いため。ラジアル (足が同じ側から出る形) は、そもそも足の間隔が
+ * **軸物 (胴の両端からピンが出る形) は、隣り合う穴に挿せない。** 胴そのものが
+ * 2.54mm より長いため。ラジアル (ピンが同じ側から出る形) は、そもそもピンの間隔が
  * 2.54mm で作られているので見ない。
  *
- * **上限は置いていない。** 足は伸ばせるし、部品ごとの実寸は種類だけでは
+ * **上限は置いていない。** ピンは伸ばせるし、部品ごとの実寸は種類だけでは
  * 決まらない (1/4W と 1/6W で胴の長さが違う)。ここで見るのは
  * **どの部品でも確実に入らない**間隔だけにしてある — 迷ったら黙るほうが、
  * 正しい図を叱るより良い。
@@ -72,8 +72,8 @@ function tooTight(parts: readonly PlacedPart[]): FenceError[] {
 
     const holes = part.pins.map((pin) => formatAddress(pin.address)).join(' と ');
     return [notice(
-      `${safeToken(part.id)} (${part.type}) の足の間隔が狭すぎます (${holes})`
-      + '。胴の両端から足が出る部品なので、実物では入りません',
+      `${safeToken(part.id)} (${part.type}) のピンの間隔が狭すぎます (${holes})`
+      + '。胴の両端からピンが出る部品なので、実物では入りません',
       part.line,
     )];
   });
@@ -85,7 +85,7 @@ const straight = (a: Address, b: Address, apart: number): boolean =>
 
 /**
  * 三角 — 1 番と 2 番が隣の穴、3 番はその隣の行 (列) の、1 番か 2 番の並び。
- * SOT の 1 番・2 番の足 (1.9mm) は隣の穴 (2.54mm) のランドに載り、3 番は反対側に出る。
+ * SOT の 1 番・2 番のピン (1.9mm) は隣の穴 (2.54mm) のランドに載り、3 番は反対側に出る。
  */
 function isTriangle(first: Address, second: Address, third: Address): boolean {
   if (!straight(first, second, 1)) return false;
@@ -111,7 +111,7 @@ function mountFits(mount: SmdMount, holes: readonly Address[]): boolean {
 
 /**
  * 直付けの面実装の置き方 (52 の docs/64)。**表が決めた置き方と違えば言う** —
- * 止めない (54 の流儀)。図はそのまま描き、届かない分は足先から穴への線に出る。
+ * 止めない (54 の流儀)。図はそのまま描き、届かない分はピン先から穴への線に出る。
  */
 function wrongMount(parts: readonly PlacedPart[]): FenceError[] {
   return parts.flatMap((part) => {

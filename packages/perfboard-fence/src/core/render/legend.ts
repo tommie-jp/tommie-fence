@@ -32,7 +32,7 @@ const entryWidth = (color: string, size: number): number =>
  * 図の中で色として出るもの。**配線の色・LED の色・抵抗のカラーコード**の 3 つ。
  * 白黒の図ではどれも網に移るので、引き当てる表もこの 3 つから作る。
  *
- * 板や胴の色はここに入れない — あれは**テーマが動かす見た目**で、意味を
+ * 基板や胴の色はここに入れない — あれは**テーマが動かす見た目**で、意味を
  * 持っていない (凡例に並べても引くものがない)。
  */
 export function paintedColors(doc: {
@@ -64,8 +64,8 @@ export const legendColors = (used: readonly (string | null)[]): readonly string[
 };
 
 /**
- * 項目を行に割る。**板の幅で折り返す** — 色を多く使った図で 1 行に伸ばすと、
- * 凡例のために画布が板の何倍にもなる。見出しは 1 行目の頭にだけ置く。
+ * 項目を行に割る。**基板の幅で折り返す** — 色を多く使った図で 1 行に伸ばすと、
+ * 凡例のために画布が基板の何倍にもなる。見出しは 1 行目の頭にだけ置く。
  */
 function wrapped(
   colors: readonly string[],

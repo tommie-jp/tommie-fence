@@ -10,7 +10,7 @@ export type BodyPart = {
   readonly value?: string | null;
   /** 姿 (`capacitor/electrolytic` の `electrolytic`、LED の `3mm`)。 */
   readonly variant?: string | null;
-  /** 足。極性の印 (`+` `-` `A` `K`) を読む。 */
+  /** ピン。極性の印 (`+` `-` `A` `K`) を読む。 */
   readonly pins: readonly { readonly name: string }[];
 };
 

@@ -196,7 +196,7 @@ describe('renderBreadboard', () => {
   });
 
   test('puts the electrolytic band on the lead left unmarked', () => {
-    // `(+)` だけを書いても、2 本足なら反対側が - と決まる。
+    // `(+)` だけを書いても、2 ピンなら反対側が - と決まる。
     const left = renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/electrolytic b5 b8(+) 10u\n');
     const right = renderBreadboard('parts-list: none\nparts:\n  C1: capacitor/electrolytic b5(+) b8 10u\n');
 
@@ -206,7 +206,7 @@ describe('renderBreadboard', () => {
   });
 
   test('takes the anode mark as fixing the cathode on the other lead', () => {
-    // 2 本足なので、片方に印があれば反対側は決まる。片方だけ見て決めていると、
+    // 2 ピンなので、片方に印があれば反対側は決まる。片方だけ見て決めていると、
     // 反対側だけを書いた図 (`diode a5 a10(A)`) が逆向きに描かれる。
     const marked = renderBreadboard('parts-list: none\nparts:\n  D1: diode a5 a10(A) 1N4148\n');
     const both = renderBreadboard('parts-list: none\nparts:\n  D1: diode a5(K) a10(A) 1N4148\n');
@@ -345,15 +345,15 @@ describe('renderBreadboard', () => {
   });
 
   test('puts a source with no address in a band under the drawing', () => {
-    // 板の番地はどれも実在の穴に縛られているので、板の外を指す番地が存在しない。
-    // 板の上に重ねると穴と印字に重なるので、場所の語を書いたものは帯へ流す。
+    // 基板の番地はどれも実在の穴に縛られているので、基板の外を指す番地が存在しない。
+    // 基板の上に重ねると穴と印字に重なるので、場所の語を書いたものは帯へ流す。
     const outside = renderBreadboard('parts:\n  R1: resistor a5 a10 330\nnotes:\n  - source tiny\n');
     const bare = renderBreadboard('parts:\n  R1: resistor a5 a10 330\n');
     const heightOf = (svg: string) => Number(/viewBox="0 0 [\d.]+ ([\d.]+)"/.exec(svg)?.[1]);
 
     expect(outside.errors).toEqual([]);
     expect(outside.svg).toContain('```bread<');
-    // 帯のぶんだけ高くなり、板そのものの高さは変わらない。
+    // 帯のぶんだけ高くなり、基板そのものの高さは変わらない。
     expect(heightOf(outside.svg)).toBeGreaterThan(heightOf(bare.svg) ?? 0);
   });
 
@@ -395,7 +395,7 @@ describe('renderBreadboard', () => {
       'parts:\n  R1: resistor a5 a10 330\nnotes:\n  - circle R1\n  - text d20: ここ\n',
     );
 
-    // 注釈は印と字であって、板に挿すものではない。ネットにも部品リストにも入らない。
+    // 注釈は印と字であって、基板に挿すものではない。ネットにも部品リストにも入らない。
     expect(noted.netlist).toEqual(bare.netlist);
     expect(noted.svg).toContain('<ellipse');
   });
@@ -411,7 +411,7 @@ describe('renderBreadboard', () => {
   });
 
   test('reports a rail address used on a board that has no rails', () => {
-    // 列は板の中なので「ボードの外」では直す手がかりにならない。レールが無いことを言う。
+    // 列は基板の中なので「ボードの外」では直す手がかりにならない。レールが無いことを言う。
     const { errors } = renderBreadboard('board: mini\nwires:\n  - +t5 -- a5\n');
 
     expect(errors).toHaveLength(1);
@@ -491,7 +491,7 @@ describe('renderBreadboard', () => {
   });
 
   test('grows the sheet so a long source note is not cut off at the bottom', () => {
-    // 板の下の行に置いた source は、フェンス全体を書き出すので板からはみ出す。
+    // 基板の下の行に置いた source は、フェンス全体を書き出すので基板からはみ出す。
     // 切らずに画布のほうを伸ばす (切ると書き写せなくなり、この注釈の値打ちが消える)。
     const parts = Array.from({ length: 10 }, (_, index) => `  R${index}: resistor a${index + 1} c${index + 1} 330`);
     const long = ['parts:', ...parts, 'notes:', '  - source j3', ''].join('\n');
@@ -579,7 +579,7 @@ describe('renderBreadboard', () => {
   });
 
   test('says when a point name ate the word that was meant as the value', () => {
-    // `points: {2N3904: c1}` があると、3 本目の足が離れた c1 に生えて
+    // `points: {2N3904: c1}` があると、3 本目のピンが離れた c1 に生えて
     // **それ自体は正しく見える別の回路**になる。黙って通してはいけない場所。
     const { errors, notices } = renderBreadboard(
       'points:\n  "2N3904": c1\nparts:\n  Q1: transistor a5 a6 2N3904\n',
@@ -747,7 +747,7 @@ describe('renderBreadboard', () => {
 
     expect(text.endsWith('…')).toBe(true);
     expect(textWidth(text) * Number(size)).toBeLessThanOrEqual(room);
-    // 切っていることそのもの: 値の 60 文字がそのまま出ていたら板の 1.2 倍になる。
+    // 切っていることそのもの: 値の 60 文字がそのまま出ていたら基板の 1.2 倍になる。
     expect([...text].length).toBeLessThan([...value].length);
   });
 
@@ -793,7 +793,7 @@ describe('renderBreadboard', () => {
     expect(errorHtml).toContain('4 行目');
   });
 
-  // **読めない行があっても板は描く** (52 の docs/54)。掴んで直せる場所を
+  // **読めない行があっても基板は描く** (52 の docs/54)。掴んで直せる場所を
   // 残すのが目的で、読めなかった行は図の下の帯に出る。
   test('still draws the board when the fence cannot be read, and says so under it', () => {
     const { svg, errorHtml, errors } = renderBreadboard('parts:\n  R1: [unclosed\n');
@@ -943,7 +943,7 @@ describe('renderBreadboard', () => {
     );
 
     expect(errors).toEqual([]);
-    // 押していなくてもつながっている足なので、e5 と e7 は同じネットに落ちる。
+    // 押していなくてもつながっているピンなので、e5 と e7 は同じネットに落ちる。
     const net = netlist.find((item) => item.refs.includes('SW1.1a'));
     expect(net?.refs).toEqual(expect.arrayContaining(['SW1.1b', 'R1.1', 'R2.1']));
     // 溝の向こう側は別のまま (押したときだけつながるので、図には出さない)。
@@ -1120,7 +1120,7 @@ describe('wires that join two holes in the same row', () => {
   });
 
   test('goes around a part whose body lies over the holes in between', () => {
-    // 2 本足の部品の障害物はキャプションの帯だけなので、足の内側に収まる配線は
+    // 2 ピンの部品の障害物はキャプションの帯だけなので、ピンの内側に収まる配線は
     // 胴の上をまっすぐ通れてしまう。塞がった穴のほうで気づく。
     const { svg } = renderBreadboard('parts:\n  R1: resistor a5 a20\nwires:\n  - a9 -- a16\n');
 
@@ -1129,7 +1129,7 @@ describe('wires that join two holes in the same row', () => {
   });
 
   test('goes around a part standing upright in a hole it would cover', () => {
-    // a5–c5 の抵抗は b5 の上に胴を描く。足の並びを 1 行に限ると、そこを突き抜ける。
+    // a5–c5 の抵抗は b5 の上に胴を描く。ピンの並びを 1 行に限ると、そこを突き抜ける。
     const { svg } = renderBreadboard('parts:\n  R1: resistor a5 c5\nwires:\n  - b1 -- b10\n');
 
     expect(wireFrom(svg, '42 104')).toContain('Q');
@@ -1145,7 +1145,7 @@ describe('wires that join two holes in the same row', () => {
   });
 
   test('goes around a part whose legs both sit on the same rail', () => {
-    // レールは行の格子に乗らないので、足の間の穴を別に数えないと胴を突き抜ける。
+    // レールは行の格子に乗らないので、ピンの間の穴を別に数えないと胴を突き抜ける。
     const { svg } = renderBreadboard('parts:\n  R1: resistor +t5 +t20\nwires:\n  - +t8 -- +t15\n');
 
     expect(wireFrom(svg, '182 30')).toContain('Q');
@@ -1165,7 +1165,7 @@ describe('renderBreadboard の編集用の描き方', () => {
   /**
    * **掴んで動かすときは書き出しを出さない** (52 の docs/45)。あれは公開する
    * 図に「元の字」を添えるためのもので、editor では字は隣の欄に出ている。
-   * 二重になるうえ、板より高い帯が付いて図そのものが小さくなる。
+   * 二重になるうえ、基板より高い帯が付いて図そのものが小さくなる。
    */
   test('leaves out the source listing on the map, where the text is already beside it', () => {
     // Arrange
@@ -1226,7 +1226,7 @@ parts:
   });
 });
 
-describe('板の印字と名札', () => {
+describe('基板の印字と名札', () => {
   test('leaves out a printed column number where a caption covers it', () => {
     // 縁取りでは消しきれず、字の隙間から欠けた数字が覗いて汚れて見える
     // (実機で `TH1 10k` の間に `5` の欠片が出ていた)。番号は 5 列おきに
@@ -1234,7 +1234,7 @@ describe('板の印字と名札', () => {
     const bare = renderBreadboard('board: half\nparts:\n  R9: resistor a20 a24 100k\n').svg;
     const over = renderBreadboard('board: half\nparts:\n  TH1: thermistor-ntc j3 j7 10k\n').svg;
 
-    // 板の下の段の `5` が消える。上の段には残る (名札は下にしか出ない)。
+    // 基板の下の段の `5` が消える。上の段には残る (名札は下にしか出ない)。
     // 縁だけを描く写し (aria-hidden) は数えない。
     const fives = /<text(?![^>]*aria-hidden)[^>]*>5</g;
     expect((bare.match(fives) ?? []).length).toBe(2);

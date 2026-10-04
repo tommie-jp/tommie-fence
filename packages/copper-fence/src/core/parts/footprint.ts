@@ -6,17 +6,17 @@ import type { Board, MultiPartSpec, Mm, PartSpec, RectMm, Side, Turn } from '../
 import { multiPins, smdSpecOf } from './catalog.ts';
 
 /**
- * 部品の足が**銅のどこに乗るか** (mm)。描画・ネット・ERC が同じ点を読む。
+ * 部品のピンが**銅のどこに乗るか** (mm)。描画・ネット・ERC が同じ点を読む。
  *
- * 面実装の寸法は fence-kit の表 (52 の docs/64) をそのまま使う。この板は mm で
+ * 面実装の寸法は fence-kit の表 (52 の docs/64) をそのまま使う。この基板は mm で
  * 描くので、表の値がそのまま図の寸法になる。
  */
 
-/** 足 1 本。**点が 2 つ以上なら同じ金物** (SOT-89 の 2 番の足とタブ)。 */
+/** ピン 1 本。**点が 2 つ以上なら同じ金物** (SOT-89 の 2 番のピンとタブ)。 */
 export type PinPlace = {
   readonly name: string;
   readonly points: readonly Mm[];
-  /** 同軸の外皮。**板の地へ付く** (地の無い板では自分だけのネット)。 */
+  /** 同軸の外皮。**基板の地へ付く** (地の無い基板では自分だけのネット)。 */
   readonly shell?: boolean;
 };
 
@@ -29,9 +29,9 @@ export type Footprint = {
   readonly mirror: boolean;
   /** 胴の外形 (向きを掛けたあとの外接矩形)。画布の広さと名札の置き場に使う。 */
   readonly outline: RectMm;
-  /** 足のある部品の両端。 */
+  /** ピンのある部品の両端。 */
   readonly ends?: readonly [Mm, Mm];
-  /** 多足の部品の足。**胴から出る点と、その先の端** (足の順)。 */
+  /** 多ピンの部品のピン。**胴から出る点と、その先の端** (ピンの順)。 */
   readonly leads?: readonly (readonly [Mm, Mm])[];
 };
 
@@ -39,8 +39,8 @@ export type Footprint = {
 const SOT89_TAB_OUT = 0.6;
 
 /**
- * 端面 SMA の寸法 (mm)。**実物 (1.6mm 板用の端面ジャック) に寄せた値**。
- * 中心導体は縁から 4mm 板に載り、半田付けする点は縁から 1mm。
+ * 端面 SMA の寸法 (mm)。**実物 (1.6mm 基板用の端面ジャック) に寄せた値**。
+ * 中心導体は縁から 4mm 基板に載り、半田付けする点は縁から 1mm。
  * アースの腕は中心から ±2.2mm で、同じく 4mm 載る。
  */
 export const SMA = {
@@ -50,7 +50,7 @@ export const SMA = {
   legOffset: 2.2,
   legWidth: 1,
   legReach: 4,
-  /** 板の外。台座の厚みと、ねじ部の長さ。**胴は 6.35mm 角** (fence-kit の SMA_SIZE と同じ)。 */
+  /** 基板の外。台座の厚みと、ねじ部の長さ。**胴は 6.35mm 角** (fence-kit の SMA_SIZE と同じ)。 */
   base: 1.6,
   barrel: 6.5,
   size: 6.35,
@@ -76,17 +76,17 @@ function placeRect(center: Mm, angle: number, mirror: boolean, local: RectMm): R
   return { x: x0, y: y0, width: Math.max(...xs) - x0, height: Math.max(...ys) - y0 };
 }
 
-/** 辺から板の内へ向く角 (`place` の向き)。 */
+/** 辺から基板の内へ向く角 (`place` の向き)。 */
 export const SIDE_ANGLE: Readonly<Record<Side, number>> = { left: 0, top: 90, right: 180, bottom: 270 };
 
-/** 2 本足の面実装の寸法 (mm)。**切れ目は胴の長さの半分、足は長さの 0.4 倍の所**。 */
+/** 2 ピンの面実装の寸法 (mm)。**切れ目は胴の長さの半分、ピンは長さの 0.4 倍の所**。 */
 export function chipGeometry(spec: SmdSpec): { readonly gap: number; readonly reach: number; readonly length: number; readonly width: number } {
   if (spec.kind === 'chip') return { gap: spec.length * 0.5, reach: spec.length * 0.4, length: spec.length, width: spec.width };
   if (spec.kind === 'leaded') return { gap: spec.length * 0.5, reach: spec.span * 0.4, length: spec.span, width: spec.width };
   return { gap: 0, reach: 0, length: 0, width: 0 };
 }
 
-/** SOT の足の点 (局所)。1 番と 2 番が -v の側、3 番が +v の側。SOT-89 は 3 本とも -v、タブは +v。 */
+/** SOT のピンの点 (局所)。1 番と 2 番が -v の側、3 番が +v の側。SOT-89 は 3 本とも -v、タブは +v。 */
 function sotPins(spec: SmdSpec): PinPlace[] {
   if (spec.kind !== 'sot') return [];
   const { width, span, pitch } = spec;
@@ -118,7 +118,7 @@ function sotOutline(spec: SmdSpec): RectMm {
   return { x: -spec.length / 2, y: -spec.span / 2, width: spec.length, height: spec.span };
 }
 
-/** 箱の足。**左の辺を上から下へ、右の辺を下から上へ** (DIP と同じ反時計回り)。 */
+/** 箱のピン。**左の辺を上から下へ、右の辺を下から上へ** (DIP と同じ反時計回り)。 */
 export const BOX_PAD_OUT = 0.5;
 
 function boxPins(width: number, height: number, count: number): PinPlace[] {
@@ -138,14 +138,14 @@ function boxPins(width: number, height: number, count: number): PinPlace[] {
   return pins;
 }
 
-/** 足の間隔 (箱の辺の上)。描画が足の金物の幅に使う。 */
+/** ピンの間隔 (箱の辺の上)。描画がピンの金物の幅に使う。 */
 export const boxPitch = (height: number, count: number): number => height / Math.ceil(count / 2);
 
 /**
- * 多足の胴 (局所。足は -v の側から出る)。**TO-92・TO-220 の寸法は fence-kit の胴の表** —
+ * 多ピンの胴 (局所。ピンは -v の側から出る)。**TO-92・TO-220 の寸法は fence-kit の胴の表** —
  * ピッチ 2.54mm (= 穴 1 つ) に対する比で持っているので、その値を mm でそのまま引く。
- * TO-92 の足は 1.27mm 間隔、TO-220 は 2.54mm 間隔。
- * `mmic` の SOT-89 は面実装の表の寸法で、4 番の足はタブ (+v の側)。
+ * TO-92 のピンは 1.27mm 間隔、TO-220 は 2.54mm 間隔。
+ * `mmic` の SOT-89 は面実装の表の寸法で、4 番のピンはタブ (+v の側)。
  */
 const HOLE_MM = 2.54;
 /** 平らな面の位置 (半径に対する比)。fence-kit の TO-92 の絵 (`FLAT_AT`) と同じ値。 */
@@ -155,11 +155,11 @@ const TURNS: readonly Turn[] = [0, 90, 180, 270];
 export type MultiShape = {
   /** 胴の外形 (局所)。 */
   readonly box: RectMm;
-  /** 足が胴から出る点 (局所。足の順)。 */
+  /** ピンが胴から出る点 (局所。ピンの順)。 */
   readonly exits: readonly Mm[];
 };
 
-/** 多足の胴の寸法 (mm)。 */
+/** 多ピンの胴の寸法 (mm)。 */
 export function multiShape(type: string, variant: string | null): MultiShape {
   if (type === 'mmic') {
     const spec = smdSpecOf(variant ?? 'sot89');
@@ -203,7 +203,7 @@ function multiFootprint(part: MultiPartSpec, resolve: EndResolver): FootprintRes
   const shape = multiShape(part.type, part.variant);
   const exitsAt = (turn: number, mirror: boolean): Mm[] => shape.exits.map((exit) => place(center, turn, mirror, exit.x, exit.y));
   const cost = (turn: number): number => exitsAt(turn, false).reduce((sum, exit, index) => sum + distance(exit, ends[index] ?? exit), 0);
-  // 向きを書かなければ、足の総延長がいちばん短くなる向き (同点なら先に試した向き)。
+  // 向きを書かなければ、ピンの総延長がいちばん短くなる向き (同点なら先に試した向き)。
   const angle = part.orient?.turn ?? TURNS.reduce((best, turn) => (cost(turn) < cost(best) ? turn : best), 0);
   const mirror = part.orient?.mirror ?? false;
   return {
@@ -223,7 +223,7 @@ export type FootprintResult = { readonly ok: true; readonly value: Footprint } |
 
 /**
  * 部品を置く。`axes` はチップの向き (乗った線路で決まる)、`resolve` は
- * 足のある部品の端 (島の名前か点) を点に直す。
+ * ピンのある部品の端 (島の名前か点) を点に直す。
  */
 export function footprintOf(
   part: PartSpec,
@@ -235,7 +235,7 @@ export function footprintOf(
     case 'edge': {
       const length = edgeLength(board, part.side);
       if (part.offset < SMA.size / 2 || part.offset > length - SMA.size / 2) {
-        return { ok: false, reason: `${part.id} が板の角にかかります (${part.side} の辺は ${SMA.size / 2}〜${length - SMA.size / 2}mm)` };
+        return { ok: false, reason: `${part.id} が基板の角にかかります (${part.side} の辺は ${SMA.size / 2}〜${length - SMA.size / 2}mm)` };
       }
       const center = edgePoint(board, part.side, part.offset);
       const angle = SIDE_ANGLE[part.side];

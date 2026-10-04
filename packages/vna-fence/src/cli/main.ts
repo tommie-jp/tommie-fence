@@ -70,7 +70,7 @@ function main(argv: readonly string[]): number {
           writeFileSync(job.outPath, `${svg}\n`);
           console.log(`${job.label} → ${job.outPath}`);
         }
-        // 板のフェンスのネットリストの代わりに、マーカーの読み値を出す。
+        // 基板のフェンスのネットリストの代わりに、マーカーの読み値を出す。
         for (const line of readingLines) console.log(`  ${line}`);
         report([...errors, ...notices]);
         failed += errors.length;

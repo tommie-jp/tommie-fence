@@ -59,12 +59,12 @@ describe('moveNote', () => {
 
   test('lets a note leave the board, since it is a word on the drawing', () => {
     // 実機で「text はどこでも移動できるようにする。ボード外含む」。
-    // 半田付けする場所ではないので、板の脇や上下の余白にも置ける。
+    // 半田付けする場所ではないので、基板の脇や上下の余白にも置ける。
     expect(moveNote(BOARD, 'note:6', at('a0')).ok).toBe(true);
   });
 
   test('still refuses a move that takes the note out of reach', () => {
-    // 番地の届く範囲 (板の外は 4 つ先まで) が図の広がる限界。
+    // 番地の届く範囲 (基板の外は 4 つ先まで) が図の広がる限界。
     const result = moveNote(BOARD, 'note:6', at('a99'));
 
     expect(result.ok).toBe(false);

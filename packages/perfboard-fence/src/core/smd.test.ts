@@ -8,9 +8,9 @@ import { createLayout } from './model/layout.ts';
 import { splitPartType, variantTable } from './parts/types.ts';
 
 /**
- * 面実装 (52 の docs/64)。**変換基板に載せた姿 (`-dip`) と、この板に直付けする姿**
- * (`2012` `sot346`)。表は fence-kit にあり、ここで見るのは板の側の約束 —
- * 置き方のお知らせ、胴の重なり、パレットから置いたときの足の並び。
+ * 面実装 (52 の docs/64)。**変換基板に載せた姿 (`-dip`) と、この基板に直付けする姿**
+ * (`2012` `sot346`)。表は fence-kit にあり、ここで見るのは基板の側の約束 —
+ * 置き方のお知らせ、胴の重なり、パレットから置いたときのピンの並び。
  */
 
 const fence = (...lines: string[]): string => ['board: 16x8', ...lines, ''].join('\n');
@@ -101,7 +101,7 @@ describe('直付けの置き方', () => {
     // 3216 は 3.2mm で、隣の穴の間 (2.54mm) より長い。真下の行の抵抗とは重ならない。
     const apart = renderPerfboard(fence('parts:', '  R1: resistor/3216 b3 b4', '  R2: resistor/3216 c3 c4'));
     expect(said(apart)).not.toContain('重なって');
-    // 足の穴は別でも、行の間に載る胴どうしは重なる。
+    // ピンの穴は別でも、行の間に載る胴どうしは重なる。
     const stacked = renderPerfboard(fence('parts:', '  Q1: transistor/sot346 b3 b4 c3', '  Q2: transistor/sot346 c4 c5 b5'));
     expect(said(stacked)).toContain('Q1 と Q2 の胴が重なっています');
   });
@@ -143,7 +143,7 @@ describe('図', () => {
   });
 
   test('draws on the same pitch the table measures in', () => {
-    // 表の mm を px に換えるのは「2.54mm = 20px」。板のピッチが変わったら表も直す。
+    // 表の mm を px に換えるのは「2.54mm = 20px」。基板のピッチが変わったら表も直す。
     expect(createLayout(createBoard({ cols: 4, rows: 4 })).pitch).toBe(20);
   });
 });
@@ -179,6 +179,6 @@ describe('パレットから置く', () => {
 
   test('names both holes that fall off at the corner, so one press is enough to fix it', () => {
     const result = insertPart(BOARD, { id: 'X1', type: 'transistor/sot346', at: [at(6, 12)] });
-    expect(!result.ok && result.error.message).toContain('f13 と g12 が板の外です');
+    expect(!result.ok && result.error.message).toContain('f13 と g12 が基板の外です');
   });
 });

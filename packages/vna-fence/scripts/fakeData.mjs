@@ -35,10 +35,10 @@ function write(name, header, start, stop, points, zOf) {
   console.log(`${name} (${points} 点)`);
 }
 
-// 3-1: 100 Ω の抵抗 + リード 1 cm ぶんの直列 10 nH と、足の間の 0.3 pF。
+// 3-1: 100 Ω の抵抗 + リード 1 cm ぶんの直列 10 nH と、ピンの間の 0.3 pF。
 write('00-series-100.s2p', [
   'vna-fence の例のための**計算した値** (実測ではない)。scripts/fakeData.mjs が書く',
-  '100 Ω に、リードの直列 10 nH と足の間の 0.3 pF を足した模型',
+  '100 Ω に、リードの直列 10 nH とピンの間の 0.3 pF を足した模型',
 ], 1e6, 300e6, 101, (f) => {
   const w = 2 * Math.PI * f;
   // (100 + jωL) || (1 / jωC)

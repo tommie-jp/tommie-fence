@@ -1,7 +1,7 @@
 import { els } from './els.ts';
 
 /**
- * 頁の姿 — 畳むか、板を出すか、指の拡大を通すか。**文書のことは知らない。**
+ * 頁の姿 — 畳むか、基板を出すか、指の拡大を通すか。**文書のことは知らない。**
  */
 
 /**
@@ -51,13 +51,13 @@ export function startLayout(): void {
 const isFull = (): boolean => document.body.classList.contains('full');
 
 /**
- * `≡` の板。**たまにしか押さないものを畳む** (52 の docs/46)。
+ * `≡` の基板。**たまにしか押さないものを畳む** (52 の docs/46)。
  * 保存と Markdown は畳まない — 保存が 2 タップになるのが一番困る。
  */
 export function showSheet(open: boolean): void {
   document.body.classList.toggle('sheet', open);
   els.more.setAttribute('aria-expanded', String(open));
-  // 閉じたらログも畳む (次に開いたときに開きっぱなしだと板が長い)。
+  // 閉じたらログも畳む (次に開いたときに開きっぱなしだと基板が長い)。
   if (!open) els.log.open = false;
 }
 
@@ -67,8 +67,8 @@ const sheetOpen = (): boolean => document.body.classList.contains('sheet');
  * 文書の名前を押したら、文書の一覧を開く。**名前が「いま何を開いているか」**
  * なので、そこが入口として自然 (実機で頼まれた)。
  *
- * 畳んだ姿では欄が板の中に隠れているので、**先に板を開いてから**呼ぶ
- * (隠れた欄には一覧を出せない)。`showPicker` を持たない窓では、板が開いた
+ * 畳んだ姿では欄が基板の中に隠れているので、**先に基板を開いてから**呼ぶ
+ * (隠れた欄には一覧を出せない)。`showPicker` を持たない窓では、基板が開いた
  * ままになる — そこに欄があるので、もう 1 押しで開ける。
  */
 function openExamplePicker(): void {
@@ -76,20 +76,20 @@ function openExamplePicker(): void {
   const picker = els.example as HTMLSelectElement & { showPicker?: () => void };
   if (typeof picker.showPicker !== 'function') return;
   // **姿を確定させてから呼ぶ。** `showPicker` は「描かれている」ことを
-  // 求める (隠れたままだと NotSupportedError)。板を開いた印を付けた直後は
+  // 求める (隠れたままだと NotSupportedError)。基板を開いた印を付けた直後は
   // まだ組み直していないので、ここで一度読んで確定させる。
   void picker.offsetHeight;
   try {
     picker.showPicker();
   } catch {
-    // それでも出せない窓がある。板は開いたままにする — そこに欄がある。
+    // それでも出せない窓がある。基板は開いたままにする — そこに欄がある。
   }
 }
 
 export function listenSheet(): void {
   els.more.addEventListener('click', () => { showSheet(!sheetOpen()); });
   els.docName.addEventListener('click', openExamplePicker);
-  // **外を押したら閉じる。** 板の外の図を触ろうとしたときに、板が邪魔をしない。
+  // **外を押したら閉じる。** 基板の外の図を触ろうとしたときに、基板が邪魔をしない。
   document.addEventListener('pointerdown', (event) => {
     if (!sheetOpen()) return;
     if (event.target instanceof Node && els.more.closest('.bar')?.contains(event.target)) return;

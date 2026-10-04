@@ -36,7 +36,7 @@ describe('deletePart', () => {
   });
 
   test('leaves the wires alone, since they point at holes', () => {
-    // circuit は配線が足を指すので連れていくが、こちらの配線は穴を指す。
+    // circuit は配線がピンを指すので連れていくが、こちらの配線は穴を指す。
     const text = after(BOARD, deletePart(BOARD, 'R1'));
 
     expect(text).toContain('- a2 -- b2');

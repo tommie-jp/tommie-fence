@@ -3,7 +3,7 @@ import { REAL_INK, bodySize, crystalCan, drawBody, drawsOwnLeads, hasBody, smaBo
 import type { BodyPart } from './bodies.ts';
 
 /**
- * **2 本足の胴を、種類と姿と印で総なめする。**
+ * **2 ピンの胴を、種類と姿と印で総なめする。**
  *
  * 1 つ 1 つの形は「実物に似ているか」で決まるので図を見て確かめるしかないが、
  * **どの組み合わせでも描けて、組み合わせが違えば絵も違う**ことは数えられる。
@@ -139,9 +139,9 @@ describe('値で見た目が変わるもの', () => {
   });
 });
 
-describe('自分で足を描く胴', () => {
+describe('自分でピンを描く胴', () => {
   test('says which kinds draw their own leads, so the caller does not cross them', () => {
-    // 水晶は缶から足が出ている。穴を渡る線を引くと実物に無い線になる。
+    // 水晶は缶からピンが出ている。穴を渡る線を引くと実物に無い線になる。
     expect(drawsOwnLeads('crystal')).toBe(true);
     expect(drawsOwnLeads('resistor')).toBe(false);
   });

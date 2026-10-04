@@ -36,7 +36,7 @@ describe('breadboardPlugin', () => {
   test('applies the theme the fence asks for', () => {
     const html = md().render('```breadboard\nboard: half\nstyle: dark\n```');
 
-    // プレビューまで style が届いていること。ここが classic の板の色になるときは、
+    // プレビューまで style が届いていること。ここが classic の基板の色になるときは、
     // たいてい拡張が古い .vsix のままなので `npm run package` から入れ直す。
     expect(html).toContain(THEMES.dark?.palette.plate);
     expect(html).not.toContain('知らないキーです: style');
@@ -49,7 +49,7 @@ describe('breadboardPlugin', () => {
     expect(html).not.toContain('<svg');
   });
 
-  // **板は必ず描く** (52 の docs/54)。読めなかった行は図の下の帯に出る。
+  // **基板は必ず描く** (52 の docs/54)。読めなかった行は図の下の帯に出る。
   test('draws the board and puts the reason in the band when the fence cannot be read', () => {
     const html = md().render('```breadboard\nparts:\n  R1: [unclosed\n```');
 

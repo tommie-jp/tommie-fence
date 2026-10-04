@@ -46,7 +46,7 @@ export type RenderResult = {
   /**
    * それ自体で完結した SVG。外部リソースもスクリプトも参照しない。
    *
-   * **板は必ず描く。** 読めなかった行があっても、`board:` が書かれていなくても、
+   * **基板は必ず描く。** 読めなかった行があっても、`board:` が書かれていなくても、
    * 読めた所まで組んで返す (52 の docs/54)。読めなかった行は `errors` に出る。
    */
   readonly svg: string;
@@ -80,8 +80,8 @@ export type RenderResult = {
  * フェンスの中身 1 つを図に変換する。DOM も Node も使わない同期の純関数なので、
  * VS Code のプレビュー・CLI・サーバー側描画のどこからでも同じように呼べる。
  *
- * **Phase 6 まで。** 板・穴・2 本足の部品・配線を描き、ネットリストを導き、
- * ERC と当たり判定をかけ、題を付けて書き出す。3 本足・DIP、注釈は次 (52 の docs/05)。
+ * **Phase 6 まで。** 基板・穴・2 ピンの部品・配線を描き、ネットリストを導き、
+ * ERC と当たり判定をかけ、題を付けて書き出す。3 ピン・DIP、注釈は次 (52 の docs/05)。
  */
 /** 描き方の選び (既定は今までどおり)。 */
 export type RenderOptions = {
@@ -110,7 +110,7 @@ function editLayer(
   const used = new Set<string>();
   // **書かれた番地に節点を立てる。** 掴んで動かすのは書いてある綴りなので、
   // 描いた位置ではなく書いた位置に立てる (breadboard で実際に食い違った)。
-  // この板は足を寄せないので今は同じだが、揃えておく (52 の docs/13)。
+  // この基板はピンを寄せないので今は同じだが、揃えておく (52 の docs/13)。
   for (const part of parts) {
     for (const hole of part.holes) {
       const address = parseAddress(hole);
@@ -136,36 +136,36 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   const { board, title } = parsed.doc;
   const style = resolveStyle(parsed.doc.style);
   const THEME = style.theme;
-  // 板・ランド・スロットの色は**板の性質**。板の側を描くものにだけ渡す
-  // (題や書き出しは紙の上の字なので、板の色に引きずられない)。
+  // 基板・ランド・スロットの色は**基板の性質**。基板の側を描くものにだけ渡す
+  // (題や書き出しは紙の上の字なので、基板の色に引きずられない)。
   const PLATE = themeForBoard(parsed.doc.board, THEME);
   const { devices } = parsed.doc;
 
-  // 書き出し (`- source`) は板の上に置かないので、帯の分だけ画布を伸ばす。
-  // **図を組む前に測る** — 帯の大きさが決まらないと板の置き場所も決まらない。
+  // 書き出し (`- source`) は基板の上に置かないので、帯の分だけ画布を伸ばす。
+  // **図を組む前に測る** — 帯の大きさが決まらないと基板の置き場所も決まらない。
   // **掴んで動かすときは書き出しを出さない** (52 の docs/45)。あれは公開する
   // 図に「元の字」を添えるためのもので、editor では字は隣の欄に出ている。
-  // 二重になるうえ、板より高い帯が付いて図そのものが小さくなる。
+  // 二重になるうえ、基板より高い帯が付いて図そのものが小さくなる。
   const sourceNotes = options.edit === true
     ? []
     : parsed.doc.notes.filter((note) => note.kind === 'source');
   const listing = sourceNotes.length > 0 ? sourceListing(source) : [];
-  // 部品表も板の外に出すので、**図を組む前に測る** (書き出しと同じ理由)。
-  // 板に載せる前の部品から作る — 載せられなかった部品も、揃えるものには変わりない。
+  // 部品表も基板の外に出すので、**図を組む前に測る** (書き出しと同じ理由)。
+  // 基板に載せる前の部品から作る — 載せられなかった部品も、揃えるものには変わりない。
   const listNotes = parsed.doc.notes.filter((note) => note.kind === 'parts');
   const listed = listNotes.length > 0 ? partsListing(parsed.doc.parts, devices, boardRow(board, parsed.doc.boardName)) : [];
   // **白黒の図では色を網と線の型に移す** (`render/hatch.ts`)。移した先が何色かは
-  // 図の中では言えないので、使った色の凡例を板のすぐ下に出す。
+  // 図の中では言えないので、使った色の凡例を基板のすぐ下に出す。
   // 色つきのテーマでは見たままなので、帯そのものを出さない。
   const painted = THEME.hatch === true ? legendColors(paintedColors(parsed.doc)) : [];
-  // 部品を板に載せるのに画布は要らない (番地だけで決まる)。張り出しを測るので先に載せる。
+  // 部品を基板に載せるのに画布は要らない (番地だけで決まる)。張り出しを測るので先に載せる。
   const placement = placeParts(parsed.doc.parts, board);
   // 注釈は回路の一員ではないので、読めなくても図は出る。
-  // **寸法を組む前に解決する** — 板の外に書いた注釈のぶんも場所を空けるので。
+  // **寸法を組む前に解決する** — 基板の外に書いた注釈のぶんも場所を空けるので。
   const noteErrors: FenceError[] = [];
   const notes: ResolvedNote[] = [];
   for (const note of parsed.doc.notes) {
-    // 書き出しと部品表は板の外に出すので、指し先の番地を持たない。帯は別に描く。
+    // 書き出しと部品表は基板の外に出すので、指し先の番地を持たない。帯は別に描く。
     if (note.kind === 'source' || note.kind === 'parts') continue;
     const from = parseAddress(note.from ?? '');
     const to = note.to === null ? null : parseAddress(note.to);
@@ -174,7 +174,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
     const offBoard = written.some((address) => address === null || offBoardReason(board, address) !== null);
     if (from === null || offBoard) {
       noteErrors.push(fenceError(
-        `注釈の番地を板に置けません: ${safeToken(note.to === null ? note.from ?? '' : `${note.from} ${note.to}`)}`,
+        `注釈の番地を基板に置けません: ${safeToken(note.to === null ? note.from ?? '' : `${note.from} ${note.to}`)}`,
         note.line,
       ));
       continue;
@@ -182,12 +182,12 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
     notes.push({ kind: note.kind, turn: note.turn, from, to, color: note.color, text: note.text, line: note.line });
   }
 
-  // 番地で置いた機器と USB コネクタのはみ出しを**先に測る**。板の寸法だけで
+  // 番地で置いた機器と USB コネクタのはみ出しを**先に測る**。基板の寸法だけで
   // 組むと、上は題に、下は書き出しや半田面に重なる。
   const bare = createLayout(board, { title: title !== null });
   const devicesJut = deviceOverhang(devices, bare);
   const partsJut = connectorOverhang(placement.parts, bare);
-  // 注釈も同じ。**板の外の番地に書いた字は、測らないと題に重なるか画布の外で切れる。**
+  // 注釈も同じ。**基板の外の番地に書いた字は、測らないと題に重なるか画布の外で切れる。**
   const notesJut = noteOverhang(notes, bare, PLATE, style.labels.sides.includes('bottom'));
   const overhang = {
     above: Math.max(devicesJut.above, partsJut.above, notesJut.above),
@@ -255,7 +255,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   // 外したことをこちらから言い足さない (`debug: off` との違いは文法の説明に書く)。
   const checking = style.check && hardErrors.length === 0;
   /**
-   * ERC (つながっていない足・跨がれた部品・足を指さない配線)。
+   * ERC (つながっていないピン・跨がれた部品・ピンを指さない配線)。
    * **`notices` に混ぜず別に返す** — editor の帯はこれだけを「検査 N」の釦の
    * 向こうへ畳む (52 の docs/55)。図の下の帯と CLI は今までどおり両方を並べる。
    */
@@ -280,9 +280,9 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
     ? []
     : [notice('読めなかったところがあるので ERC と当たり判定は掛けていません (直すと掛かります)', null)];
 
-  // **画布からはみ出す部品ぶん、画布を広げる。** 端面実装のコネクタは板の外へ
-  // 張り出すので、板の寸法だけで画布を決めると図が黙って切れる。
-  // **半田付けする穴。** 足が入った穴と、配線が来た穴のどちらも埋まる。
+  // **画布からはみ出す部品ぶん、画布を広げる。** 端面実装のコネクタは基板の外へ
+  // 張り出すので、基板の寸法だけで画布を決めると図が黙って切れる。
+  // **半田付けする穴。** ピンが入った穴と、配線が来た穴のどちらも埋まる。
   // 埋めた穴と空いた穴が同じ形だと、どこを付けるのか図から読めない。
   const soldered = [
     ...placement.parts.flatMap((part) => part.pins.map((pin) => pin.address)),
@@ -290,14 +290,14 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
     ...wiring.deviceWires.map((wire) => wire.hole),
   ];
 
-  // 配線や注釈も板の外を指せるので、部品の胴と一緒に見る。
+  // 配線や注釈も基板の外を指せるので、部品の胴と一緒に見る。
   const pointsOn = (on: typeof layout) => [
     ...wiring.wires.flatMap((wire) => [on.point(wire.from), on.point(wire.to)]),
     ...notes.flatMap((note) => (note.to === null
       ? [on.point(note.from)]
       : [on.point(note.from), on.point(note.to)])),
   ];
-  // 機器の箱も数える。**番地で置いた機器は帯の外**へ出るので、板の寸法だけでは
+  // 機器の箱も数える。**番地で置いた機器は帯の外**へ出るので、基板の寸法だけでは
   // 画布が足りない (黙って切れる)。
   const deviceCorners = placedDevices.placed.flatMap(({ box }) => [
     { x: box.x, y: box.y },
@@ -313,7 +313,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
     ...pointsOn(layout), ...deviceCorners, ...shiftedLabelPoints(rowLabelShifts, layout, PLATE.metrics.textSize),
   ]);
   // **半田面も数える。** 裏返すと張り出す向きが逆になるので、表だけ見て決めると
-  // 裏の板でコネクタが切れる。
+  // 裏の基板でコネクタが切れる。
   const behind = back === null || layout.backTop === null
     ? null
     : drawnExtent(placement.parts, back, pointsOn(back));
@@ -339,8 +339,8 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   const spillBottom = extent === null ? 0 : Math.max(0, extent.maxY + OVERHANG_MARGIN - layout.height);
   const spilled = spillLeft > 0 || spillTop > 0 || spillRight > 0 || spillBottom > 0;
 
-  // **途中で交差する線は跨いで引く。** 板の上の線も、機器へ引いた線も同じ図の
-  // 中で交わるので、まとめて数える (前半が板の上、後半が機器)。
+  // **途中で交差する線は跨いで引く。** 基板の上の線も、機器へ引いた線も同じ図の
+  // 中で交わるので、まとめて数える (前半が基板の上、後半が機器)。
   const devicePin = new Map(placedDevices.placed.map((one) => [one.device.id, one.pins]));
   const hops = crossingPoints([
     ...wiring.wires.map((wire) => ({
@@ -353,48 +353,48 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
     })),
   ]);
 
-  // 配線は板の上、部品の下。線が部品の胴を隠すと、何が載っているか読めなくなる。
+  // 配線は基板の上、部品の下。線が部品の胴を隠すと、何が載っているか読めなくなる。
   const drawn = renderTitle(title, layout, THEME)
       + renderPlate(board, layout, PLATE)
-      // スロット用の銅箔は板の上、配線の下。**挿す穴ではない**ので、
+      // スロット用の銅箔は基板の上、配線の下。**挿す穴ではない**ので、
       // 部品や線に隠れても困らない。
       + renderSlots(board, layout, PLATE)
       // 半田付けした穴。**配線と部品の前に敷く** — 線の先が半田の玉に入って
       // 見えるほうが、実物の見た目に近い。
       + renderJoints(soldered, layout, PLATE)
       + renderWires(wiring.wires, layout, PLATE, hops.slice(0, wiring.wires.length), options.edit === true)
-      // 機器へつなぐ線も板の上まで引く。**どの穴へ行くのかが図に出ないと、
-      // 帯に浮いた箱と板が結び付かない。**
+      // 機器へつなぐ線も基板の上まで引く。**どの穴へ行くのかが図に出ないと、
+      // 帯に浮いた箱と基板が結び付かない。**
       + renderDeviceWires(
         wiring.deviceWires, placedDevices.placed, layout, THEME, hops.slice(wiring.wires.length),
       )
       + renderDevices(placedDevices.placed, THEME, options.edit === true)
-      // **名札は板に書いた字を避ける** (番地で置いたほうが強い)。
+      // **名札は基板に書いた字を避ける** (番地で置いたほうが強い)。
       + renderParts(placement.parts, layout, PLATE, options.edit === true, noteBands(notes, layout, PLATE), [
-        // **名札は線を避ける** (板の上の配線と、機器へ引いた線)。
+        // **名札は線を避ける** (基板の上の配線と、機器へ引いた線)。
         ...wiring.wires.map((wire) => wireObstacle(layout.point(wire.from), layout.point(wire.to))),
         ...wiring.deviceWires.flatMap((wire) => {
           const from = devicePin.get(wire.device)?.get(wire.pin);
           return from === undefined ? [] : [wireObstacle(from, layout.point(wire.hole))];
         }),
       ])
-      // 足へ来る線は胴の上にも重ね、足の真ん中まで線を見せる (USB-C のパッドも同じ)。
+      // ピンへ来る線は胴の上にも重ね、ピンの真ん中まで線を見せる (USB-C のパッドも同じ)。
       + renderLeadWires(placement.parts, wiring.wires, layout, PLATE, hops.slice(0, wiring.wires.length))
       // 半田付けした穴を部品と配線の上にもう一度。半田面と同じく、部品面の図でも
       // どこを付けるのかが読める。**胴に覆われた穴は透明度 50%** — 胴の下に穴があると
       // 分かり、しかも胴の形は読める。
       + jointsOnTop(soldered, placement.parts, layout, PLATE)
-      // **行と列の名前は機器とその配線より上、部品よりも上。** 板の上に置いた
-      // 機器の足と線は名前の帯を必ず横切るので、下に敷くと行く先の列の名前が隠れる。
+      // **行と列の名前は機器とその配線より上、部品よりも上。** 基板の上に置いた
+      // 機器のピンと線は名前の帯を必ず横切るので、下に敷くと行く先の列の名前が隠れる。
       // 縁から張り出す端面の SMA も同じで、部品の下に敷くと台座が `D`〜`F` を
-      // 隠していた (実機の NanoVNA の冊の治具の図すべて)。コネクタの足の番地
+      // 隠していた (実機の NanoVNA の冊の治具の図すべて)。コネクタのピンの番地
       // (`e1 d0 f0`) を読む手掛かりがちょうどその行なので、名前を上に出す。
       // 名前は地の色で縁取ってあるので、金物の上でも読め、コネクタの形も残る。
       // 注釈よりは下 (書いた人の印を隠さない)。
       + renderAxisLabels(board, layout, PLATE, style.labels, rowLabelShifts)
       // 注釈は一番上。**指したものが下に隠れると印の意味が無くなる。**
       + renderNotes(notes, layout, PLATE, options.edit === true)
-      // 凡例・部品表・書き出しは板の外の帯。図とは重ならないので、順番はどこでもよい。
+      // 凡例・部品表・書き出しは基板の外の帯。図とは重ならないので、順番はどこでもよい。
       + (layout.legendBand === null
         ? ''
         : renderLegend(painted, layout.legendBand, THEME, bare.board.width))
@@ -404,7 +404,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       + (layout.sourceBand === null
         ? ''
         : renderSourceListing(listing, layout.sourceBand, THEME, sourceNotes[0]?.color ?? null))
-      // 半田面は板のすぐ下。裏返すのは板 (列の並び) だけで、字はそのまま。
+      // 半田面は基板のすぐ下。裏返すのは基板 (列の並び) だけで、字はそのまま。
       + (back === null || layout.backTop === null
         ? ''
         : renderBackSide(
@@ -419,7 +419,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       + (options.edit === true
         ? renderHits(board, layout, ...(() => {
           const layer = editLayer(parsed.doc.parts, wiring.wires, parsed.doc.points);
-          // **編集のときは板のすぐ外にも升を立てる。** 板の外に置くもの
+          // **編集のときは基板のすぐ外にも升を立てる。** 基板の外に置くもの
           // (機器の箱、注釈) の動かし先になる。落とせない相手 (銅箔の無い所へ
           // 引く配線) は今までどおり断るので、升があっても嘘にはならない。
           return [layer.used, layer.names, true] as const;
@@ -435,7 +435,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       theme: THEME,
       width: style.width,
       stamp: style.stamp,
-      // 網は板の地の上に敷く (隙間から板が透けると、同じ網が違う濃さに見える)。
+      // 網は基板の地の上に敷く (隙間から基板が透けると、同じ網が違う濃さに見える)。
       defs: hatchDefs(painted, THEME.palette.caption, PLATE.palette.plate),
       canvas: spilled
         ? { width: layout.width + spillLeft + spillRight, height: layout.height + spillTop + spillBottom }
@@ -452,7 +452,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   const reported = attachSourceText(byLine(collected), source);
   const errors = reported.filter((error) => error.notice !== true);
   const notices = reported.filter((error) => error.notice === true);
-  // **帯は読めなかったものを先に。** ERC のお知らせは足 1 本につき 1 件出るので、
+  // **帯は読めなかったものを先に。** ERC のお知らせはピン 1 本につき 1 件出るので、
   // 行順のまま並べると打ち切りで**直さないと図が出ないほうが消える**。
   //
   // `style: debug: off` で伏せられるのは**お知らせだけ**。読めなかった行は

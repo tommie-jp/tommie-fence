@@ -5,10 +5,10 @@ import type { DeviceSpec, DeviceSide } from '../types.ts';
 import type { Parsed } from './parts.ts';
 
 /**
- * 板の外の機器 (電池・スピーカー・測定器)。**盤面には載らない**ので、
+ * 基板の外の機器 (電池・スピーカー・測定器)。**盤面には載らない**ので、
  * 部品ではなく別に持つ。配線からは `BAT.+` の形で指す。
  *
- * 書き方は入れ子 — 1 行に畳めない情報 (足の名前の並び) を持つため。
+ * 書き方は入れ子 — 1 行に畳めない情報 (ピンの名前の並び) を持つため。
  */
 
 const SIDES: readonly DeviceSide[] = ['top', 'bottom'];
@@ -29,17 +29,17 @@ export function parseDevice(id: string, entries: Record<string, unknown>): Parse
   }
 
   // **入れ子なら機器、にしない。** 部品を書き間違えて字下げした人が、
-  // 板の外に箱が出ているのを見て気づけないまま終わる。
+  // 基板の外に箱が出ているのを見て気づけないまま終わる。
   if (entries.type !== 'device') {
     const written = entries.type === undefined ? '(書かれていません)' : String(entries.type);
     return fail(
-      `入れ子で書けるのは板の外の機器だけです: ${safeToken(id)} の type に device と書きます (いまは ${safeToken(written)})`,
+      `入れ子で書けるのは基板の外の機器だけです: ${safeToken(id)} の type に device と書きます (いまは ${safeToken(written)})`,
       entries.type === undefined ? undefined : written,
     );
   }
 
-  // **`at:` は側か番地。** 番地で書けば、板の外の好きな場所に置ける
-  // (`-e1` のように板の上、`n5` のように板の下)。箱の左上がその番地に来る。
+  // **`at:` は側か番地。** 番地で書けば、基板の外の好きな場所に置ける
+  // (`-e1` のように基板の上、`n5` のように基板の下)。箱の左上がその番地に来る。
   const at = entries.at ?? 'top';
   if (typeof at !== 'string') {
     return fail(`機器を置ける側は ${SIDES.join(' / ')} か番地です: ${safeToken(String(at))}`, String(at));
@@ -63,21 +63,21 @@ export function parseDevice(id: string, entries: Record<string, unknown>): Parse
     ? entries.pins.trim().split(/\s+/).filter((name) => name !== '')
     : entries.pins;
   if (!Array.isArray(pins) || pins.length === 0) {
-    // **足が無い機器は配線の相手にならない。** 置いても図に箱が出るだけ。
-    return fail(`${safeToken(id)} には足の名前を pins: + - のように書きます`);
+    // **ピンが無い機器は配線の相手にならない。** 置いても図に箱が出るだけ。
+    return fail(`${safeToken(id)} にはピンの名前を pins: + - のように書きます`);
   }
   if (pins.length > LIMITS.devicePins) {
-    return fail(`${safeToken(id)} の足が多すぎます (${LIMITS.devicePins} 本まで)`);
+    return fail(`${safeToken(id)} のピンが多すぎます (${LIMITS.devicePins} 本まで)`);
   }
 
   const names: string[] = [];
   for (const pin of pins) {
     const name = typeof pin === 'number' ? String(pin) : pin;
     if (typeof name !== 'string' || !isPinName(name)) {
-      return fail(`${safeToken(id)} の足の名前に使えません: ${safeToken(String(pin))}`, String(pin));
+      return fail(`${safeToken(id)} のピンの名前に使えません: ${safeToken(String(pin))}`, String(pin));
     }
     // 同じ名前が 2 つあると、配線がどちらを指すのか決まらない。
-    if (names.includes(name)) return fail(`${safeToken(id)} の足の名前が重なっています: ${safeToken(name)}`, name);
+    if (names.includes(name)) return fail(`${safeToken(id)} のピンの名前が重なっています: ${safeToken(name)}`, name);
     names.push(name);
   }
 
@@ -85,7 +85,7 @@ export function parseDevice(id: string, entries: Record<string, unknown>): Parse
     ok: true,
     value: {
       id,
-      // 番地で置いたときの向きは、板のどちら側に来るかで決まる (図を組むときに見る)。
+      // 番地で置いたときの向きは、基板のどちら側に来るかで決まる (図を組むときに見る)。
       at: side ?? 'top',
       where,
       label: clampText(label, LIMITS.labelLength),

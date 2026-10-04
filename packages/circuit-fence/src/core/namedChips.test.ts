@@ -5,8 +5,8 @@ import { PART_NAMES, PART_PREFIXES, lookupPartType, lookupPin, partTypeOf } from
 import { parseFence } from './parser/parseFence.ts';
 
 /**
- * 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ。52 の docs/66 の段 4・5)。
- * **足の名前と番号は板の 2 つと同じ表** (fence-kit)。回路図では、リレーと
+ * ピンに名前のある DIP 型 (リレー・フォトカプラ・7 セグ。52 の docs/66 の段 4・5)。
+ * **ピンの名前と番号はブレッドボードとユニバーサル基板と同じ表** (fence-kit)。回路図では、リレーと
  * フォトカプラは記号で、7 セグは名前を刷った箱で描く。
  */
 
@@ -89,8 +89,8 @@ describe('升目と ERC', () => {
       'parts:', '  U1: photocoupler d5', '  R1: resistor a1 a3 1k', 'wires:', '  - a3 -| U1.A',
     ), { erc: true });
 
-    // 足は名前で言う (番号の鍵が先に並んでも `1` とは言わない)。
-    expect(result.erc.map((one) => one.message).join('\n')).toContain('U1 の足 K、C、E をどの配線も指していません');
+    // ピンは名前で言う (番号の鍵が先に並んでも `1` とは言わない)。
+    expect(result.erc.map((one) => one.message).join('\n')).toContain('U1 のピン K、C、E をどの配線も指していません');
   });
 });
 

@@ -34,7 +34,7 @@ export type RenderResult = {
   /**
    * それ自体で完結した SVG。外部リソースもスクリプトも参照しない。
    *
-   * **板は必ず描く。** 読めなかった行があっても、読めた所まで組んで返す
+   * **基板は必ず描く。** 読めなかった行があっても、読めた所まで組んで返す
    * (52 の docs/54)。読めなかった行は `errors` と `errorHtml` に出る。
    */
   readonly svg: string;
@@ -90,7 +90,7 @@ function editLayer(
   points: ReadonlyMap<string, string>,
 ): { readonly used: ReadonlySet<string>; readonly names: ReadonlyMap<string, string> } {
   const used = new Set<string>();
-  // **書かれた番地に節点を立てる。** 足と同じ穴へ配線が来ていると、部品のほうが
+  // **書かれた番地に節点を立てる。** ピンと同じ穴へ配線が来ていると、部品のほうが
   // 同じ列の空いた行へ寄って描かれる — けれど掴んで動かすのは**書いてある綴り**
   // なので、寄った先に立てると掴んだつもりと違うものが動く (52 の docs/13)。
   for (const part of parts) {
@@ -100,7 +100,7 @@ function editLayer(
     }
   }
   for (const wire of wires) {
-    // 機器の足は板の上に無いので、節点にはならない。
+    // 機器のピンは基板の上に無いので、節点にはならない。
     for (const end of [wire.from, wire.to]) {
       if (end.kind === 'hole') used.add(formatAddress(end.address));
     }
@@ -127,7 +127,7 @@ export type RenderOptions = {
   readonly offset?: number;
 };
 
-/** 板から張り出した部品と画布の縁の間に残す余白。縁に貼り付くと切れて見える。 */
+/** 基板から張り出した部品と画布の縁の間に残す余白。縁に貼り付くと切れて見える。 */
 const OVERHANG_MARGIN = 8;
 
 export function renderBreadboard(input: string, options: RenderOptions = {}): RenderResult {
@@ -149,7 +149,7 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
     deviceTop: devices.some((device) => device.at !== 'bottom'),
     deviceBottom: devices.some((device) => device.at === 'bottom'),
   };
-  // **板の縁から張り出す USB コネクタのぶん、画布を伸ばす。** 一度組んで測り、
+  // **基板の縁から張り出す USB コネクタのぶん、画布を伸ばす。** 一度組んで測り、
   // はみ出すときだけ組み直す (はみ出さない図は 1 バイトも変わらない)。
   const bare = createLayout(board, bands);
   const jut = connectorOverhang(placed, bare, OVERHANG_MARGIN);
@@ -159,7 +159,7 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
       ...bands, overhangTop: jut.top, overhangBottom: jut.bottom, overhangLeft: jut.left, overhangRight: jut.right,
     });
 
-  // 配線と足が同じ穴を取り合う部品を、同じ列の空いた行へ寄せる。
+  // 配線とピンが同じ穴を取り合う部品を、同じ列の空いた行へ寄せる。
   // resolveWire より前に済ませるので、ピン参照 (`Re.2`) の配線は寄せた後の穴に付く。
   // **名札の逃がしも配線よけに効かせる** — 逃がした先の帯を渡さないと、
   // 下げた名札の上を配線が走る (`render/captions.ts`)。
@@ -222,7 +222,7 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
     notes,
     // **掴んで動かすときは書き出しを出さない** (52 の docs/45)。あれは公開する
     // 図に「元の字」を添えるためのもので、editor では字は隣の欄に出ている。
-    // 二重になるうえ、板より高い帯が付いて図そのものが小さくなる。
+    // 二重になるうえ、基板より高い帯が付いて図そのものが小さくなる。
     sourceLines: options.edit !== true && notes.some((note) => note.spec.kind === 'source')
       ? sourceListing(source)
       : [],
@@ -404,7 +404,7 @@ function netMembers(parts: readonly PlacedPart[]): NetMember[] {
 }
 
 /**
- * 部品の中で常につながっている足 (タクトスイッチの同じ側どうしなど) を、
+ * 部品の中で常につながっているピン (タクトスイッチの同じ側どうしなど) を、
  * 配線と同じ結び目としてネットに効かせる。ここを黙っていると、
  * **押していないのにつながっている穴**が別のネットに見えてしまう。
  */
@@ -505,7 +505,7 @@ const SAME_POINT_TOLERANCE = 0.5;
 
 /**
  * 経路の縦の区間が**通り過ぎる**穴 (両端は含まない)。
- * 寄せた部品の足がここに入ると、線が足の上を走って挿さっているように見える。
+ * 寄せた部品のピンがここに入ると、線がピンの上を走って挿さっているように見える。
  */
 function pathCorridor(path: readonly Point[], board: Board, layout: Layout): Address[] {
   const rows = HOLE_ROWS.map((row) => ({ row, y: layout.rowY(row) }));
@@ -613,10 +613,10 @@ function nearbyPins(part: PlacedPart, wanted: string): string {
     .map((pin) => safeToken(pin.name));
 
   if (near.length > 0) return ` (${near.join(', ')} のことですか)`;
-  // 名前で呼ぶ DIP は、書き出しが合わなくても足の名前を並べる (8〜16 本なので読める)。
+  // 名前で呼ぶ DIP は、書き出しが合わなくてもピンの名前を並べる (8〜16 本なので読める)。
   const numbered = part.pins.filter((pin) => pin.number !== undefined);
   if (numbered.length === 0) return '';
-  return ` (足は ${numbered.map((pin) => safeToken(pin.name)).join(' / ')}。DIP の番号でも指せます)`;
+  return ` (ピンは ${numbered.map((pin) => safeToken(pin.name)).join(' / ')}。DIP の番号でも指せます)`;
 }
 
 const stripOfEndpoint = (endpoint: Endpoint): StripId =>

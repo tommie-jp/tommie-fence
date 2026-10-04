@@ -417,7 +417,7 @@ export function noteColorLines(
     && (stamped
       || circuit.title !== null
       || circuit.notes.some((note) => note.kind === 'text' || note.kind === 'source')
-      // 足の名前も目印で置く (マイコンボード)。
+      // ピンの名前も目印で置く (マイコンボード)。
       || circuit.parts.some((part) => partTypeOf(part)?.pinLabels !== undefined));
   return marked
     ? [...palette, `\\definecolor{${MARK_COLOR_NAME}}{HTML}{${hexDigits(NOTE_MARK_COLOR)}}`]
@@ -433,13 +433,13 @@ export function noteOverlays(
 ): NoteOverlay[] {
   if (target === 'latex') return [];
 
-  // **足の名前は注釈より先。** 部品は注釈より先に書かれるので、目印もそちらが
+  // **ピンの名前は注釈より先。** 部品は注釈より先に書かれるので、目印もそちらが
   // 先に出てくる (差し込みは出てくる順で当たる)。
   const pins = circuit.parts.flatMap((part): NoteOverlay[] => {
     const type = partTypeOf(part);
     if (type === null || type === undefined) return [];
     const turn = part.kind === 'multi-terminal' ? part.turn : NO_TURN;
-    // ゲートの足の番号は足の名前のあと (置く順は generate.ts の `drawMultiTerminal` と同じ)。
+    // ゲートのピンの番号はピンの名前のあと (置く順は generate.ts の `drawMultiTerminal` と同じ)。
     const gates = gateNumbersOf(part).numbers.flatMap(({ anchor }, index): NoteOverlay[] => {
       const side = pinPlaces(type, turn).find((place) => place.anchor === anchor)?.side;
       if (side === undefined) return [];
@@ -448,7 +448,7 @@ export function noteOverlays(
         color: NOTE_INK,
         mono: false,
         bold: false,
-        // 左の足の番号は足の先で終わり、それ以外は足の先から右へ。
+        // 左のピンの番号はピンの先で終わり、それ以外はピンの先から右へ。
         align: side === 'left' ? ('right' as const) : ('left' as const),
         rotate: 0 as const,
       }];
@@ -467,7 +467,7 @@ export function noteOverlays(
         bold: false,
         // 左の列は右へ、右の列は左へ伸ばす (TeX の `anchor` と揃える)。
         align: side === 'right' ? ('right' as const) : ('left' as const),
-        // 上下の辺に来た足は縦に読む。SVG の `rotate` は時計回りなので、
+        // 上下の辺に来たピンは縦に読む。SVG の `rotate` は時計回りなので、
         // 上の辺 (下へ読む) が 90、下の辺 (上へ読む) が 270。
         rotate: side === 'top' ? (90 as const) : side === 'bottom' ? (270 as const) : (0 as const),
         centered: side === 'top' || side === 'bottom',

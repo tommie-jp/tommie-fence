@@ -5,7 +5,7 @@ import { deflateSync } from 'node:zlib';
  * 「外部から取ってくるものは無い」を守っているので、絵札のためだけに
  * ラスタライザ (sharp など 30 MB の native) を足さない。
  *
- * 描くのは favicon と同じ図案 (穴の並んだ板に 1 本の配線)。zlib は Node に
+ * 描くのは favicon と同じ図案 (穴の並んだ基板に 1 本の配線)。zlib は Node に
  * 入っているので、RGBA を並べて PNG に詰めるだけで足りる。
  *
  * **`maskable` にも耐える形にする。** Android は絵札を丸や角丸に切り抜くので、
@@ -49,7 +49,7 @@ export function drawIcon(size) {
 
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {
-      // 上に載る順に数える (地 → 配線 → 穴)。**穴が配線より上** — 板の図では
+      // 上に載る順に数える (地 → 配線 → 穴)。**穴が配線より上** — 基板の図では
       // 穴が見えていないと、何の絵か分からない。
       let hole = 0;
       let wire = 0;

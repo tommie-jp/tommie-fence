@@ -48,7 +48,7 @@ const pinsOf = (part: { pins: readonly { address: unknown }[] }) =>
 
 describe('relocateParts', () => {
   test('moves a bottom-row part up when the wire leaves downward', () => {
-    // 図07 の形: Re の足と配線が j20 を取り合い、配線は下のレールへ出る。
+    // 図07 の形: Re のピンと配線が j20 を取り合い、配線は下のレールへ出る。
     const parts = place(spec({ id: 'Re', type: 'resistor', holes: holes('j17', 'j20') }));
 
     const { parts: moved, errors } = relocateParts(parts, [end('j20', 'down')]);
@@ -268,7 +268,7 @@ describe('relocateParts', () => {
   });
 
   test('gives up on a part straddling the ravine', () => {
-    // どちらへずらしても片方の足がブロックを越えてストリップが変わるので、動かせない。
+    // どちらへずらしても片方のピンがブロックを越えてストリップが変わるので、動かせない。
     const parts = place(spec({ id: 'C1', type: 'capacitor', holes: holes('e5', 'f5') }));
 
     const { parts: moved, errors } = relocateParts(parts, [end('e5', 'up')]);

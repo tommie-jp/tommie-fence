@@ -102,7 +102,7 @@ describe('renderPartsList', () => {
       expect(baseline).toBeGreaterThan(top);
       expect(baseline).toBeLessThan(bottom);
     }
-    // 板の下には、続く帯との間の余白だけが残る。
+    // 基板の下には、続く帯との間の余白だけが残る。
     expect(partsListHeight(parts, theme)).toBeGreaterThan(bottom - top);
   });
 
@@ -131,7 +131,7 @@ describe('renderPartsList', () => {
     const cells = bodyCells(svg).map((text) => /x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)</.exec(text) ?? []);
     const [, valueX = '', size = '', shown = ''] = cells[2] ?? [];
 
-    // 全角なので 1 文字ぶんの幅は字の大きさそのまま。板は x=14 から 636 幅。
+    // 全角なので 1 文字ぶんの幅は字の大きさそのまま。基板は x=14 から 636 幅。
     expect(Number(valueX) + [...shown].length * Number(size)).toBeLessThanOrEqual(14 + 636);
   });
 
@@ -165,7 +165,7 @@ describe('renderPartsList', () => {
     for (const id of ids) {
       expect(texts(svg)).toContain(id);
     }
-    // 値の列が残らないので値は諦める。板の外に字を置いてはいけない。
+    // 値の列が残らないので値は諦める。基板の外に字を置いてはいけない。
     for (const cellX of [...svg.matchAll(/<text(?![^>]*aria-hidden)[^>]*x="([\d.]+)"/g)].map((match) => Number(match[1]))) {
       expect(cellX).toBeLessThan(14 + 636);
     }
@@ -236,7 +236,7 @@ describe('renderPartsList', () => {
     const wide = part('SUPPLY_DECOUPLE_CAP_NEAR_U1', `dip${'0'.repeat(300)}8`, '100uF');
     const shown = texts(renderPartsList([wide], 14, 400, 636, big));
 
-    // ID は丸ごと残し、種類は板の端で切り、値は図のキャプションに任せて落とす。
+    // ID は丸ごと残し、種類は基板の端で切り、値は図のキャプションに任せて落とす。
     expect(shown[0]).toBe('SUPPLY_DECOUPLE_CAP_NEAR_U1');
     expect(shown[1]?.endsWith('…')).toBe(true);
     expect(shown).toHaveLength(2);

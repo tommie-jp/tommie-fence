@@ -19,38 +19,38 @@ import type { PlacedPart, Point } from '../types.ts';
 export const BODY_HEIGHT = 11;
 /** 胴が穴に掛からないよう、両端から詰める幅。 */
 export const BODY_INSET = 9;
-/** 玉の直径 (LED)。**足の間隔で変わらない。** */
+/** 玉の直径 (LED)。**ピンの間隔で変わらない。** */
 export const DOME_SIZE = BODY_HEIGHT + 2;
-/** 足が 3 本以上ある部品の胴を、足の囲みからどれだけ詰めるか。 */
+/** ピンが 3 本以上ある部品の胴を、ピンの囲みからどれだけ詰めるか。 */
 const BOX_INSET = 4;
 
 /**
  * 同軸コネクタ (SMA) の胴。**六角の胴が 6.35mm** なので、ピッチ 2.54mm の
- * 2.5 個ぶん。金物なので足を広げても縮まない。
+ * 2.5 個ぶん。金物なのでピンを広げても縮まない。
  */
 export const SMA_SIZE = 50;
 
 /**
- * 端面実装 (横置き) のコネクタの、板の外へ出る 3 段の長さ。
- * 左から**ねじ部・ねじなし・台座**で、台座の右端が板の縁に来る。
- * 実物は全長 13.5mm のうち 3.8mm が足の側なので、外へ出るのは 9.7mm ぶん。
+ * 端面実装 (横置き) のコネクタの、基板の外へ出る 3 段の長さ。
+ * 左から**ねじ部・ねじなし・台座**で、台座の右端が基板の縁に来る。
+ * 実物は全長 13.5mm のうち 3.8mm がピンの側なので、外へ出るのは 9.7mm ぶん。
  */
 export const SMA_THREAD = 34;
 export const SMA_PLAIN = 34;
-/** 台座の厚さは 1mm (2.54mm = 20px なので 8px)。板を挟む板金の厚みぶん。 */
+/** 台座の厚さは 1mm (2.54mm = 20px なので 8px)。基板を挟む板金の厚みぶん。 */
 export const SMA_BASE = 8;
 export const SMA_BARREL = SMA_THREAD + SMA_PLAIN + SMA_BASE;
 
 /**
  * 端面実装の胴の置き方。**描画も当たり判定もここから取る** — 別々に測ると、
- * 図では板の縁に載っているのに当たり判定は別の場所、ということが起きる。
+ * 図では基板の縁に載っているのに当たり判定は別の場所、ということが起きる。
  *
- * 足は 3 本 — **中心導体と、凹の両端の先端** (`parts/footprint.ts`)。
- * `edgeX` は**板の縁**、`legX` は**凹の先端**の、胴の中心から測った軸に沿う
+ * ピンは 3 本 — **中心導体と、凹の両端の先端** (`parts/footprint.ts`)。
+ * `edgeX` は**基板の縁**、`legX` は**凹の先端**の、胴の中心から測った軸に沿う
  * 位置 (局所座標。+x は先端から中心導体へ向かう向き)。`tips` は凹の 2 つの
  * 先端の、中心線からのずれ (局所座標の y。胴と一緒に回る)。
  *
- * **軸は板の縁に垂直。** 足どうしを結んだ線で向きを決めると、先端が中心線の
+ * **軸は基板の縁に垂直。** ピンどうしを結んだ線で向きを決めると、先端が中心線の
  * 上下にあるぶん胴が斜めになる。列が違えば横向き、同じなら縦向き。
  */
 export type EdgeMount = {
@@ -68,7 +68,7 @@ export function edgeMountOf(part: PlacedPart, layout: Layout): EdgeMount | null 
   const centre = layout.point(first.address);
   const ground = layout.point(tip.address);
 
-  // **2 つの先端が同じ列に並んでいれば横向き** (板の左右の縁)、同じ行なら縦向き。
+  // **2 つの先端が同じ列に並んでいれば横向き** (基板の左右の縁)、同じ行なら縦向き。
   // 先端が 1 つしか無いときは、中心導体と列が違えば横向きとみなす。
   const other = rest[1];
   const sideways = other === undefined
@@ -77,12 +77,12 @@ export function edgeMountOf(part: PlacedPart, layout: Layout): EdgeMount | null 
   const step = sideways ? centre.x - ground.x : centre.y - ground.y;
   if (step === 0) return null;
 
-  // +x は先端 → 中心導体の向き (板の内側)。
+  // +x は先端 → 中心導体の向き (基板の内側)。
   const ux = sideways ? Math.sign(step) : 0;
   const uy = sideways ? 0 : Math.sign(step);
 
-  // **中心導体を 0 として軸に沿って測る。** 板の角を全部見て一番外を取るので、
-  // 板のどの辺に載せても (図を裏返しても) 同じ辺が出る。
+  // **中心導体を 0 として軸に沿って測る。** 基板の角を全部見て一番外を取るので、
+  // 基板のどの辺に載せても (図を裏返しても) 同じ辺が出る。
   const along = (px: number, py: number): number => (px - centre.x) * ux + (py - centre.y) * uy;
   const across = (px: number, py: number): number => -(px - centre.x) * uy + (py - centre.y) * ux;
   const { x, y, width, height } = layout.board;
@@ -90,7 +90,7 @@ export function edgeMountOf(part: PlacedPart, layout: Layout): EdgeMount | null 
     [x, y], [x + width, y], [x, y + height], [x + width, y + height],
   ].map(([cx = 0, cy = 0]) => along(cx, cy)));
 
-  // 胴は「台座の右端 = 板の縁」から外へ 3 段。内側の端は中心導体の穴。
+  // 胴は「台座の右端 = 基板の縁」から外へ 3 段。内側の端は中心導体の穴。
   const outer = edge - SMA_BARREL;
   const middle = outer / 2;
 
@@ -113,7 +113,7 @@ export function edgeMountOf(part: PlacedPart, layout: Layout): EdgeMount | null 
 }
 
 /**
- * **胴が足の間を跨がない部品** — 足を遠くへ広げても本体の大きさが変わらない形。
+ * **胴がピンの間を跨がない部品** — ピンを遠くへ広げても本体の大きさが変わらない形。
  * 玉 (LED) と金物のコネクタがこれ。描画 (`render/parts.ts`) と当たり判定が
  * 同じ表を見る (別々に持つと、図と当たり判定が食い違う)。
  */
@@ -138,14 +138,14 @@ export type OrientedRect = {
   readonly cy: number;
   readonly width: number;
   readonly height: number;
-  /** ラジアン。x 軸が足の向き。 */
+  /** ラジアン。x 軸がピンの向き。 */
   readonly angle: number;
 };
 
 const midpoint = (a: Point, b: Point): Point => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
 
 /**
- * 足の間隔を穴の数で数える。**斜めは足から足への直線**で測る —
+ * ピンの間隔を穴の数で数える。**斜めはピンからピンへの直線**で測る —
  * 胴が跨ぐのはその直線であって、行や列の差ではない。
  */
 export function spanOf(part: PlacedPart): number | null {
@@ -158,8 +158,8 @@ export function spanOf(part: PlacedPart): number | null {
 }
 
 /**
- * 足が 3 本以上ある部品の胴。**足を囲む矩形**を軸に沿って取る。
- * 2 本足のように傾けないのは、パッケージが格子に沿って載るため。
+ * ピンが 3 本以上ある部品の胴。**ピンを囲む矩形**を軸に沿って取る。
+ * 2 ピンのように傾けないのは、パッケージが格子に沿って載るため。
  */
 function boxRect(part: PlacedPart, layout: Layout): OrientedRect | null {
   const points = part.pins.map((pin) => layout.point(pin.address));
@@ -191,7 +191,7 @@ function boxRect(part: PlacedPart, layout: Layout): OrientedRect | null {
   return {
     cx: (left + right) / 2,
     cy: (top + bottom) / 2,
-    // 足の穴に胴が掛からないよう、端から少し詰める。
+    // ピンの穴に胴が掛からないよう、端から少し詰める。
     width: Math.max(right - left + BODY_HEIGHT - BOX_INSET, BODY_HEIGHT),
     height: Math.max(bottom - top + BODY_HEIGHT - BOX_INSET, BODY_HEIGHT),
     angle: 0,
@@ -199,7 +199,7 @@ function boxRect(part: PlacedPart, layout: Layout): OrientedRect | null {
 }
 
 /**
- * 箱で囲む部品か。**足の数ではなく形で決める** — `sip2` は足が 2 本でも
+ * 箱で囲む部品か。**ピンの数ではなく形で決める** — `sip2` はピンが 2 本でも
  * パッケージ。描画 (`render/parts.ts`) と同じ判定を使う。
  */
 const isBoxed = (part: PlacedPart): boolean => {
@@ -209,7 +209,7 @@ const isBoxed = (part: PlacedPart): boolean => {
 };
 
 /**
- * USB コネクタの形。**差し込み口は板の中心から遠い側**を向く — ケーブルを板の
+ * USB コネクタの形。**差し込み口は基板の中心から遠い側**を向く — ケーブルを基板の
  * 外へ出す置き方が普通で、縁の近くに置けばそのまま縁を向く (52 の docs/58)。
  *
  * 向きは**図の上の点**で決める。半田面は列を反転して描くので、表で右の縁を
@@ -228,7 +228,7 @@ export function connectorShapeOf(part: PlacedPart, layout: Layout): ConnectorSha
 }
 
 /**
- * USB コネクタが板の上下へ張り出す分。**図を組む前に測って、板の上下に空ける** —
+ * USB コネクタが基板の上下へ張り出す分。**図を組む前に測って、基板の上下に空ける** —
  * 画布を広げるだけでは、上は題に、下は半田面や書き出しに重なる
  * (番地で置いた機器と同じ扱い。`render/devices.ts` の `deviceOverhang`)。
  * 左右へ張り出すぶんは画布を横に広げれば足りる (横には何も並べていない)。
@@ -250,15 +250,15 @@ export function connectorOverhang(
     );
 }
 
-/** 胴の長方形。足が 1 本も無ければ null。 */
+/** 胴の長方形。ピンが 1 本も無ければ null。 */
 export function bodyRect(part: PlacedPart, layout: Layout): OrientedRect | null {
   // **USB は変換基板ごとの外形** — 描くのも同じ `connectorBox` から (約束 9)。
-  // 足が 2 本でも 2 本足の胴ではない (傾けず、足の外へ張り出す)。
+  // ピンが 2 本でも 2 ピンの胴ではない (傾けず、ピンの外へ張り出す)。
   if (footprintOf(part.type)?.kind === 'connector' && part.pins.length > 0) {
     const box = connectorBox(connectorShapeOf(part, layout));
     return { cx: box.x + box.width / 2, cy: box.y + box.height / 2, width: box.width, height: box.height, angle: 0 };
   }
-  // **端面実装は足が 3 本でも箱ではない。** 置き方は `edgeMountOf` が決める。
+  // **端面実装はピンが 3 本でも箱ではない。** 置き方は `edgeMountOf` が決める。
   if (isEdgeMount(part.type, part.variant)) {
     const mount = edgeMountOf(part, layout);
     if (mount !== null) return mount.rect;
@@ -278,16 +278,16 @@ export function bodyRect(part: PlacedPart, layout: Layout): OrientedRect | null 
 
   const angle = Math.atan2(to.y - from.y, to.x - from.x);
 
-  // **水晶の缶は足を覆う。** 他の 2 本足と違って足の内側に収まらないので、
-  // 足の間隔から外形を出す (描画と同じ `crystalCan` を読む)。
+  // **水晶の缶はピンを覆う。** 他の 2 ピンと違ってピンの内側に収まらないので、
+  // ピンの間隔から外形を出す (描画と同じ `crystalCan` を読む)。
   if (part.type === 'crystal') {
     const can = crystalCan({ type: part.type, variant: part.variant, pins: [] }, length);
     return { cx: center.x, cy: center.y, width: can.width, height: can.height, angle };
   }
 
-  // **描かれている形をそのまま返す。** 玉やコネクタは足を広げても本体が伸びないので、
-  // 足の間隔から胴を作ると、離れた部品と重なっていると言い出す。
-  // **直付けの面実装も足の間隔で伸びない** (実物の寸法。描くのも同じ `smdBodySize`)。
+  // **描かれている形をそのまま返す。** 玉やコネクタはピンを広げても本体が伸びないので、
+  // ピンの間隔から胴を作ると、離れた部品と重なっていると言い出す。
+  // **直付けの面実装もピンの間隔で伸びない** (実物の寸法。描くのも同じ `smdBodySize`)。
   const fixed = smdBodySize({ type: part.type, variant: part.variant, value: null, pins: [] }) ?? fixedSizeOf(part.type);
   const width = fixed?.width ?? Math.max(length - BODY_INSET * 2, BODY_HEIGHT);
 
@@ -301,7 +301,7 @@ export function bodyRect(part: PlacedPart, layout: Layout): OrientedRect | null 
 }
 
 /**
- * 直付けの SOT の胴 (足先まで)。**描くのも同じ `sotMountOf`** — 胴の置き方を
+ * 直付けの SOT の胴 (ピン先まで)。**描くのも同じ `sotMountOf`** — 胴の置き方を
  * 2 か所に持つと、図と当たり判定が食い違う (約束 9)。直付けの SOT でなければ null。
  */
 function directSotRect(part: PlacedPart, layout: Layout): OrientedRect | null {
@@ -358,8 +358,8 @@ export function overlaps(a: OrientedRect, b: OrientedRect): boolean {
 
 /**
  * 図が広がっている範囲。**画布からはみ出すものがある**かを見るために使う。
- * 端面実装のコネクタは板の外へ張り出し、番地も板の外を指せる (縁の銅箔) ので、
- * 板の寸法だけで画布を決めると**はみ出したぶんが黙って切れる**。
+ * 端面実装のコネクタは基板の外へ張り出し、番地も基板の外を指せる (縁の銅箔) ので、
+ * 基板の寸法だけで画布を決めると**はみ出したぶんが黙って切れる**。
  * 呼ぶ側は画布のほうを広げる。何も無ければ null。
  */
 export function drawnExtent(

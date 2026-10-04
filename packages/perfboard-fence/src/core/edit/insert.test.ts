@@ -111,7 +111,7 @@ describe('nextPartId', () => {
   });
 
   test('has no name for a type it cannot place', () => {
-    // 板の外に並べる機器は入れ子で書くので、1 行では置けない。
+    // 基板の外に並べる機器は入れ子で書くので、1 行では置けない。
     expect(nextPartId(WITH_WIRES, 'device')).toBeNull();
     expect(nextPartId(WITH_WIRES, 'resistr')).toBeNull();
   });
@@ -216,7 +216,7 @@ describe('partCells', () => {
 });
 
 describe('配線の色 (色見本で選んだもの)', () => {
-  // breadboard と同じ約束 — 板の 2 つで被覆の色の表は 1 つ (`fence-kit` の colors.ts)。
+  // breadboard と同じ約束 — ブレッドボードとユニバーサル基板で被覆の色の表は 1 つ (`fence-kit` の colors.ts)。
   test('writes the colour on the new line when one was picked', () => {
     const result = insertWire(WITH_WIRES, at('b6'), at('b8'), 'red');
 
@@ -233,7 +233,7 @@ describe('配線の色 (色見本で選んだもの)', () => {
 /**
  * **`parts:` の最後が機器のブロックの図** (breadboard の 09-am-radio と同じ形。
  * 52 の docs/51)。perfboard は機器を部品と別の並びに持つので、新しい行は
- * もとから板の部品の後ろに入る。それを字にしておく。
+ * もとから基板の部品の後ろに入る。それを字にしておく。
  */
 describe('機器のブロックの後ろに足す', () => {
   const WITH_DEVICES = `board: 12x7

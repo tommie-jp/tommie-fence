@@ -6,8 +6,8 @@ import { parseFence } from './parser/parseFence.ts';
 import { deviceBox, deviceShapeTex } from './tex/shapes.ts';
 
 /**
- * 板の外の機器・モジュール (`device`。52 の docs/66 の段 1)。**実体配線図の 2 つと
- * 同じマップ形式**で書き、足の名前は書き手が並べる。記号は「箱の片側に足」で、
+ * 基板の外の機器・モジュール (`device`。52 の docs/66 の段 1)。**実体配線図の 2 つと
+ * 同じマップ形式**で書き、ピンの名前は書き手が並べる。記号は「箱の片側にピン」で、
  * 箱の中に名前を刷る。
  */
 
@@ -161,8 +161,8 @@ describe('図', () => {
   });
 });
 
-describe('ネットリストの足の名前', () => {
-  // 箱の足は**図に刷ってある名前**で出す。アンカー名 (`pin 1`) は TeX の都合で、
+describe('ネットリストのピンの名前', () => {
+  // 箱のピンは**図に刷ってある名前**で出す。アンカー名 (`pin 1`) は TeX の都合で、
   // 図にも実物にも無い名前だった (52 の docs/58 で持ち越した件)。
   test('lists a board pin by its printed name', () => {
     const result = compileCircuit(circuit(

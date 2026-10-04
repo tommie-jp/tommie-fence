@@ -139,7 +139,7 @@ function zoomAtCenter(factor: number): void {
 
 /**
  * 全体を出す。**中身の高さに合わせる** — 図は箱の幅に合わせて描かれるので、
- * 100 % でも縦がはみ出ることがある (細いパネル、縦長の板)。スクロールで
+ * 100 % でも縦がはみ出ることがある (細いパネル、縦長の基板)。スクロールで
  * 追えるようにはなったが、**一度に全部見たい**ときのための道は残す。
  */
 function fit(): void {
@@ -308,7 +308,7 @@ function underAt(x: number, y: number, grabbing = false): Under {
   };
   const cell = find('.cf-cell', 'address');
   const chip = find('.cf-chip', 'part');
-  // **注釈かどうかは絵が言う** (`data-note`)。端数が注釈にだけ効く板で要る。
+  // **注釈かどうかは絵が言う** (`data-note`)。端数が注釈にだけ効く基板で要る。
   const note = chip?.hit.dataset.note === '1';
   return {
     cell: cell?.value ?? null,
@@ -346,7 +346,7 @@ function fineIn(cell: Element, x: number, y: number, grabbing: { readonly note: 
   // 部品を掴む瞬間 (`grabbing`) だけ。それ以外で数えると、何も変わらない
   // 塗り直しが 1 升あたり 100 回になる。
   const wanted = state.carry !== null || state.wireFrom !== null || grabbing !== null;
-  // **端数が効く相手のときだけ数える。** 板の 2 つは足を穴に挿すので、
+  // **端数が効く相手のときだけ数える。** ブレッドボードとユニバーサル基板はピンを穴に挿すので、
   // 刻めるのは注釈だけ (`fineFor`)。刻めない物に小さい四角を出すと、
   // そこへ置けるように見えて置けない。掴む瞬間は、掴む部品が注釈かで見る。
   const takesFine = state.fineFor === 'all'
@@ -515,7 +515,7 @@ const cellBox = (address: string): DOMRect | null => {
 const middleOf = (box: DOMRect): { readonly x: number; readonly y: number } =>
   ({ x: box.x + box.width / 2, y: box.y + box.height / 2 });
 
-/** 端数の落ち先の四角。**1 つを使い回す** (塗り直しのたびに作らない。板では作られない)。 */
+/** 端数の落ち先の四角。**1 つを使い回す** (塗り直しのたびに作らない。基板では作られない)。 */
 let fineBox: SVGRectElement | null = null;
 
 /** 触れている穴の輪。**1 つを使い回す** (塗り直しのたびに作らない)。 */
@@ -606,7 +606,7 @@ function cellCentre(address: string): { readonly x: number; readonly y: number }
  * ずらしの基準にする穴。**先頭の穴 (アンカー)** — 置くのも動かすのもアンカーが
  * 押した穴に来る決まりなので、そこを合わせれば絵と穴が必ず揃う。
  *
- * **真ん中で合わせない。** 足の並べ方は板が決めるので、同じ部品でも板の端では
+ * **真ん中で合わせない。** ピンの並べ方は基板が決めるので、同じ部品でも基板の端では
  * 左へ伸びたり右へ伸びたりする。真ん中で合わせると、伸びる向きが変わった
  * ときに絵が穴からずれる。
  */
@@ -625,7 +625,7 @@ function anchorOf(cells: readonly string[]): { readonly x: number; readonly y: n
  * 出るので、1 回でも図を組み直すと重くなる)。
  */
 /**
- * 運ぶ絵をずらす量 (図の座標)。**穴の要素から測るのが先** — 板の当たり判定は
+ * 運ぶ絵をずらす量 (図の座標)。**穴の要素から測るのが先** — 基板の当たり判定は
  * ピッチの 0.9 倍なので、幅から数えると狂う。端数の升は DOM に無い (circuit だけ) ので、
  * そのときは拡張が添えた `shift` (升の数) を升の幅に掛ける (circuit の升はピッチちょうど)。
  */
@@ -649,7 +649,7 @@ function unitBox(): DOMRect | null {
   return box;
 }
 
-/** 升の中心から端数ぶんずらす (升の四角の幅で数える)。足には端数が無い。 */
+/** 升の中心から端数ぶんずらす (升の四角の幅で数える)。ピンには端数が無い。 */
 function offsetBy(
   centre: { readonly x: number; readonly y: number },
   box: DOMRect,
@@ -705,7 +705,7 @@ function ghostChipOf(held: SVGGraphicsElement): SVGGraphicsElement {
   return ghost;
 }
 
-/** 穴を持たないもの (帯に並べた板の外の機器) か。ずらす基準になる穴が無い。 */
+/** 穴を持たないもの (帯に並べた基板の外の機器) か。ずらす基準になる穴が無い。 */
 const holeless = (ghost: Ghost): boolean =>
   ghost.cells.length === 0 && (ghost.from ?? []).length === 0;
 
@@ -713,10 +713,10 @@ const holeless = (ghost: Ghost): boolean =>
  * 持ち物を掴んだときのカーソルの位置 (画面の座標)。
  * **穴を持たないものの影はここからの差で動かす。**
  *
- * 板の外の機器は帯に並ぶので指せる穴が無く (`cellsOf` が空)、拡張の答えには
+ * 基板の外の機器は帯に並ぶので指せる穴が無く (`cellsOf` が空)、拡張の答えには
  * ずらす基準が入ってこない — 影が出ないまま「動かせない」に見えていた
  * (実機で「基板外のデバイスをマウスで動かせるようにする」)。
- * **升では数えられない** (掴んだとき、カーソルは板の外に居る) ので、
+ * **升では数えられない** (掴んだとき、カーソルは基板の外に居る) ので、
  * 画面の座標で数えて図の座標へ落とす。
  */
 let carriedFrom: { readonly x: number; readonly y: number } | null = null;
@@ -845,7 +845,7 @@ function markInk(now: State): void {
 }
 
 /**
- * 配線の端 1 つの場所 (図の座標)。**穴でも足でもよい** — 綴りはフェンスのもの
+ * 配線の端 1 つの場所 (図の座標)。**穴でもピンでもよい** — 綴りはフェンスのもの
  * なので、両方の名札を当たってみる。どちらでもなければ null。
  */
 function endElement(spelling: string): SVGGraphicsElement | null {
@@ -856,7 +856,7 @@ function endElement(spelling: string): SVGGraphicsElement | null {
  * その要素の真ん中を、**図の座標**で返す。
  *
  * `getBBox` が返すのは**その要素自身の中の座標**なので、入れ子の `<g>` に
- * `translate` が掛かっているもの (足の丸は部品の中にいる) は原点の近くの値に
+ * `translate` が掛かっているもの (ピンの丸は部品の中にいる) は原点の近くの値に
  * なる。そのまま線を引くと、**図の左上から線が伸びる**
  * (実機で「配線しているとときどき左上にシャドウが伸びる」)。
  *
@@ -894,7 +894,7 @@ const GHOST_WIRE = 'cf-ghost-wire';
  * (実機で頼まれた)。折れる指定 (`Shift`) も同じ形で見せるので、
  * 押す前に「どちらに折れるか」が分かる。
  *
- * 線は**カーソルの下の穴・足まで**引く。生のカーソル位置まで引くと、
+ * 線は**カーソルの下の穴・ピンまで**引く。生のカーソル位置まで引くと、
  * 見えている線と実際に書かれる線が食い違う (書かれるのは穴と穴の間)。
  */
 /**
@@ -906,14 +906,14 @@ let wireGhost: SVGPathElement | null = null;
 type Point = { readonly x: number; readonly y: number };
 
 /**
- * 影を入れる層。**`.cf-wires` を持つのは circuit だけ** — 板の 2 つのマップは
+ * 影を入れる層。**`.cf-wires` を持つのは circuit だけ** — ブレッドボードとユニバーサル基板のマップは
  * 実物の図を掴ませているので、その名前の層が無い。無ければ図の根へ入れる。
  *
  * 座標はどちらでも同じ: `centreOf` が返すのは図の根の座標で、circuit の層は
  * 変形を持たない (`mapSvg.ts` の `layer`)。影は当たり判定を持たない
  * (`pointer-events: none`) ので、根に置いても掴む先は変わらない。
  *
- * これが無かったので、**板では引いている最中の線が出ていなかった** (52 の docs/27)。
+ * これが無かったので、**基板では引いている最中の線が出ていなかった** (52 の docs/27)。
  */
 const wireLayer = (): Element | null => query('.cf-wires') ?? query('.cf-body > svg');
 
@@ -967,8 +967,8 @@ const nodeEnds = new Map<string, readonly EndOf[]>();
  * (`.cf-wire-end`) の真ん中が、節点の升の真ん中に重なっているもの。
  *
  * 綴りで数えないのは、殻が配線の書き方を知らないため。場所で数えると、
- * 足で書いた端 (`Q1.b`) でも、その足が節点に載っていれば入る — 節点を
- * 動かすと足ごと動くので、引き直されるのはその線で合っている。
+ * ピンで書いた端 (`Q1.b`) でも、そのピンが節点に載っていれば入る — 節点を
+ * 動かすとピンごと動くので、引き直されるのはその線で合っている。
  */
 function endsAtNode(node: string): readonly EndOf[] {
   const known = nodeEnds.get(node);
@@ -1012,7 +1012,7 @@ function wireGhostStrokes(now: State): readonly (readonly Point[])[] {
   const line = wireGhostLine(now);
   if (line === null) return [];
   const { from, to } = line;
-  // 折れる指定は先に横 (`-|`)。折れない板では真っ直ぐのまま。
+  // 折れる指定は先に横 (`-|`)。折れない基板では真っ直ぐのまま。
   return [shiftHeld && now.foldsWire ? [from, { x: to.x, y: from.y }, to] : [from, to]];
 }
 

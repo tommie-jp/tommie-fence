@@ -45,7 +45,7 @@ describe('sma', () => {
 
   test('refuses a place where its flange would hang over a corner', () => {
     const found = at('sma left 2');
-    expect(!found.ok && found.reason).toMatch(/板の角にかかります/);
+    expect(!found.ok && found.reason).toMatch(/基板の角にかかります/);
   });
 });
 
@@ -67,13 +67,13 @@ describe('chips', () => {
 
 describe('sot', () => {
   test('puts pins 1 and 2 above and 3 below, the way fence-kit draws it', () => {
-    // 足先は胴 (幅 1.3) から (2.4 - 1.3) / 2 = 0.55 出る。点はその真ん中 (中心から 0.925)。
+    // ピン先は胴 (幅 1.3) から (2.4 - 1.3) / 2 = 0.55 出る。点はその真ん中 (中心から 0.925)。
     expect(pins('transistor/sot23 20,10')).toEqual([['1', [[19.05, 9.07]]], ['2', [[20.95, 9.07]]], ['3', [[20, 10.93]]]]);
   });
 
   test('ties the tab of a SOT-89 to its middle pin', () => {
     expect(pins('ic3/sot89 20,10')).toEqual([
-      // 足は胴 (幅 2.5) から 4.1 - 2.5 - 0.6 = 1.0 出る。タブは反対側に 0.6。
+      // ピンは胴 (幅 2.5) から 4.1 - 2.5 - 0.6 = 1.0 出る。タブは反対側に 0.6。
       ['1', [[18.5, 8.25]]], ['2', [[20, 8.25], [20, 11.55]]], ['3', [[21.5, 8.25]]],
     ]);
   });
@@ -122,7 +122,7 @@ describe('multi-lead parts', () => {
       const found = at('transistor/to92 10,9 12,9 14,9');
       return found.ok ? found.value.leads?.[index]?.[0] : undefined;
     });
-    // 3 本とも胴の下にあるので、足は胴の下側 (y が大きい側) から出る。
+    // 3 本とも胴の下にあるので、ピンは胴の下側 (y が大きい側) から出る。
     expect(below?.y).toBeGreaterThan(6);
     const turned = at('transistor/to92 10,9 12,9 14,9 r0');
     expect(turned.ok && turned.value.leads?.[1]?.[0].y).toBeLessThan(9);
@@ -135,7 +135,7 @@ describe('multi-lead parts', () => {
     ]);
     const found = at('mmic 10,5 12,8 14,5 12,11 r0');
     const [, , , tab] = found.ok ? found.value.leads ?? [] : [];
-    // 4 番の足は胴の反対側 (タブ) から出る。
+    // 4 番のピンは胴の反対側 (タブ) から出る。
     expect(tab?.[0].y).toBeGreaterThan(found.ok ? found.value.center.y : 99);
     expect(found.ok && found.value.leads).toHaveLength(4);
   });

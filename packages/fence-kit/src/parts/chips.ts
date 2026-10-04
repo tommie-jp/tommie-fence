@@ -8,12 +8,12 @@ import type { BoardPart } from './boards.ts';
  * breadboard と perfboard で同じ絵にする (実機で「pico など、全ての部品の
  * 見た目を breadboard と perfboard で共通にする。breadboard を基準にする」)。
  *
- * 板ごとに違うのは**足がどの座標に落ちるか**だけなので、受け取るのは穴の点と
+ * 基板ごとに違うのは**ピンがどの座標に落ちるか**だけなので、受け取るのは穴の点と
  * ピッチと色だけにする。`Layout` も `Theme` も知らない (盤面の話は呼ぶ側に残る)。
  *
- * **足の並びは 1 番から**。2 列のものは 1 番の列を先に並べ、折り返して
+ * **ピンの並びは 1 番から**。2 列のものは 1 番の列を先に並べ、折り返して
  * 反対の列を戻る (実物の DIP と同じ数え方)。だから `points[0]` と `points[1]` の
- * 差が**列の向き**になり、縦に置いた板でも同じ絵が描ける。
+ * 差が**列の向き**になり、縦に置いた基板でも同じ絵が描ける。
  */
 
 export type ChipPoint = { readonly x: number; readonly y: number };
@@ -28,13 +28,13 @@ export type ChipBox = {
 export type ChipInk = {
   /** 樹脂。 */
   readonly body: string;
-  /** 足の跡と、樹脂の上に書く足の番号。 */
+  /** ピンの跡と、樹脂の上に書くピンの番号。 */
   readonly pin: string;
   /** 樹脂の上に載る字 (キャプション・チップ名)。 */
   readonly chipText: string;
-  /** 切り欠きを抜く色。**板の地の色**を渡す (実物も樹脂に開いた窪み)。 */
+  /** 切り欠きを抜く色。**基板の地の色**を渡す (実物も樹脂に開いた窪み)。 */
   readonly plate: string;
-  /** 樹脂の外に置く字 (足の名前)。 */
+  /** 樹脂の外に置く字 (ピンの名前)。 */
   readonly outside: string;
   /** その字の縁取り (下の穴に食われないように)。 */
   readonly halo: string;
@@ -56,8 +56,8 @@ const fittedFontSize = (text: string, width: number, scale: number): number =>
   Math.min(scale * 9.5, (width - CHIP_LABEL_PAD) / textWidth(text));
 
 /**
- * 足の列が横に並んでいるか。**1 番と 2 番は同じ列の隣どうし**なので、
- * その 2 つの差が列の向きになる。板を回して縦に置いても付いてくる。
+ * ピンの列が横に並んでいるか。**1 番と 2 番は同じ列の隣どうし**なので、
+ * その 2 つの差が列の向きになる。基板を回して縦に置いても付いてくる。
  */
 export function chipAlongX(points: readonly ChipPoint[]): boolean {
   const [first, second] = points;
@@ -78,7 +78,7 @@ function boxOf(points: readonly ChipPoint[], padX: number, padY: number): ChipBo
 
 const centreOf = (box: ChipBox): ChipPoint => ({ x: box.x + box.width / 2, y: box.y + box.height / 2 });
 
-/** 足の並ぶ向きの余白 (ピッチ比) と、列と列の向きの余白 (px)。 */
+/** ピンの並ぶ向きの余白 (ピッチ比) と、列と列の向きの余白 (px)。 */
 const DIP_ALONG = 0.45;
 const DIP_ACROSS = 5;
 
@@ -88,10 +88,10 @@ export function dipBox(points: readonly ChipPoint[], pitch: number): ChipBox {
   return boxOf(points, alongX ? DIP_ALONG * pitch : DIP_ACROSS, alongX ? DIP_ACROSS : DIP_ALONG * pitch);
 }
 
-/** 足の跡 (6px 角) を、穴から樹脂の内側へ 2px 寄せて置く量。 */
+/** ピンの跡 (6px 角) を、穴から樹脂の内側へ 2px 寄せて置く量。 */
 const STUB_IN = 2;
 /**
- * 足の番号を穴から樹脂の内側へ置く距離と、字を下へずらす量。
+ * ピンの番号を穴から樹脂の内側へ置く距離と、字を下へずらす量。
  * **基準線は字の下端**なので、内側へ寄せるだけでは上の列と下の列で
  * 字の見える位置が揃わない (上の列は 12、下の列は 7 になるのがこの内訳)。
  */
@@ -104,19 +104,19 @@ const NOTCH = 4.5;
 export type DipOptions = {
   readonly points: readonly ChipPoint[];
   /**
-   * 足に刷る字 (`points` と同じ順)。番号だけの DIP は番号 (`1`〜)、名前のある DIP は
-   * 名前。`numbers` が無ければ胴の縁 (足のすぐ内側) に刷る。
+   * ピンに刷る字 (`points` と同じ順)。番号だけの DIP は番号 (`1`〜)、名前のある DIP は
+   * 名前。`numbers` が無ければ胴の縁 (ピンのすぐ内側) に刷る。
    */
   readonly names: readonly string[];
   /**
-   * 足の番号 (`points` と同じ順)。**渡すと 2 段になる** — 番号を胴の縁、`names` を
-   * 胴の外の足の向こう側に刷る (52 の docs/95 の決め 2 と判断の記録の代案。実物の胴に
+   * ピンの番号 (`points` と同じ順)。**渡すと 2 段になる** — 番号を胴の縁、`names` を
+   * 胴の外のピンの向こう側に刷る (52 の docs/95 の決め 2 と判断の記録の代案。実物の胴に
    * 名前は無いので、切り欠きから数えるための番号は消さない)。
    */
   readonly numbers?: readonly string[];
   /**
    * `numbers` と一緒に渡すと、名前を胴の外ではなく**胴の中、番号のすぐ内側**に刷る。
-   * 足の穴から線が出る板 (perfboard) で、線が名前を横切らないように。
+   * ピンの穴から線が出る基板 (perfboard) で、線が名前を横切らないように。
    */
   readonly namesInside?: boolean;
   /** 1 番ピンの添字。回すと名前のほうが巡るので、呼ぶ側が名前で引いて渡す。 */
@@ -139,7 +139,7 @@ export function dipChip(options: DipOptions): string {
   const box = dipBox(points, pitch);
   const centre = centreOf(box);
   const alongX = chipAlongX(points);
-  // 足から樹脂の中心へ向かう向き。**列ごとに向きが変わる**。
+  // ピンから樹脂の中心へ向かう向き。**列ごとに向きが変わる**。
   const inward = (point: ChipPoint): number =>
     (alongX ? Math.sign(centre.y - point.y) : Math.sign(centre.x - point.x)) || 1;
 
@@ -189,8 +189,8 @@ export function dipChip(options: DipOptions): string {
 }
 
 /**
- * 足の名前だけを、DIP と同じ**胴の外、足の向こう側**に刷る。変換基板 (`smdDraw.ts`) が、
- * 板の上に名前の入る場所が無いとき (ブレッドボードの溝をまたぐ 2 行) に使う。
+ * ピンの名前だけを、DIP と同じ**胴の外、ピンの向こう側**に刷る。変換基板 (`smdDraw.ts`) が、
+ * 基板の上に名前の入る場所が無いとき (ブレッドボードの溝をまたぐ 2 行) に使う。
  */
 export function dipOutsideNames(options: DipOptions): string {
   const { points, names, pitch, scale, ink } = options;
@@ -203,27 +203,27 @@ export function dipOutsideNames(options: DipOptions): string {
   return pinNames(points, names, inward, alongX, pitch, box, scale, ink, false).svg;
 }
 
-/** 板の上 (胴の外) に出す字の書式。縁取りつきで、下の穴に食われない。 */
+/** 基板の上 (胴の外) に出す字の書式。縁取りつきで、下の穴に食われない。 */
 export const outsideTextStyle = (size: number, ink: ChipInk): Record<string, string | number> => ({
   'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: NAME_HALO, haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
 });
 
 /**
- * 足の名前。**既定は胴の外、足の向こう側** (胴の縁と隣の穴の列のあいだ) に刷る。
+ * ピンの名前。**既定は胴の外、ピンの向こう側** (胴の縁と隣の穴の列のあいだ) に刷る。
  *
  * 計画 (52 の docs/95 の決め 2) は番号の 1 段内側だったが、ブレッドボードの胴は溝を
  * またぐ 2 行 (e・f) の間しか無く、番号とキャプションの間に名前の段が入らなかった
  * (焼いて確かめた。判断の記録の代案)。1 列ヘッダの名前と同じ置き場で、縁取りを付けて
  * 下の穴に食われないようにする。ブレッドボードの線は同じ 5 穴の組の別の穴に挿すので、
- * 足の向こう側の帯を通らない。
+ * ピンの向こう側の帯を通らない。
  *
- * **`namesInside` なら胴の中、番号のすぐ内側** (perfboard)。ユニバーサル基板の線は足の
- * 穴そのものから出るので、胴の外の帯に書くと、足から出る線が必ず名前を横切った
+ * **`namesInside` なら胴の中、番号のすぐ内側** (perfboard)。ユニバーサル基板の線はピンの
+ * 穴そのものから出るので、胴の外の帯に書くと、ピンから出る線が必ず名前を横切った
  * (リレーの NC1・COM1、DIP の GND。焼いて確かめた)。胴は 3 穴の奥行きがあり、番号と
  * 真ん中のキャプションの間に 1 段入る。**縦に立てた胴** (perfboard の `r90` / `r270`) は
  * どちらでも胴の中、番号の内側に書く — 横書きの字は外へ出すと隣の穴の列に乗る。
  *
- * **字の大きさは列 (胴の片側) ごとに 1 つ** (`sideFontSize`)。足ごとに縮めると、同じ胴の
+ * **字の大きさは列 (胴の片側) ごとに 1 つ** (`sideFontSize`)。ピンごとに縮めると、同じ胴の
  * 上で `V-` と `IN1+` の字の大きさが揃わなかった。
  */
 const NAME_FONT = 6;
@@ -235,14 +235,14 @@ const MIN_NAME_FONT = 4.5;
 /** 隣り合う名前の字と字の隙間。縁取りは半分透けるので、重なってよいのは縁だけ。 */
 const NAME_GAP = 1.5;
 /**
- * 足の名前は大文字ばかり (`RESET` `THRES`) で、`textWidth` の半角 0.55 より広い
+ * ピンの名前は大文字ばかり (`RESET` `THRES`) で、`textWidth` の半角 0.55 より広い
  * (焼いて測ると 1.25 倍ほど)。狭く見積もると隣の名前やキャプションに食い込む。
  */
 const NAME_CAPS = 1.25;
 const NAME_HALO = 2;
 const NAME_CLEAR = 0.5;
 const NAME_CAP = 0.72;
-/** 胴の中に書くとき、足の穴の中心から名前の字の真ん中まで (番号の真ん中は `NUMBER_IN`)。 */
+/** 胴の中に書くとき、ピンの穴の中心から名前の字の真ん中まで (番号の真ん中は `NUMBER_IN`)。 */
 const NAME_IN = 18;
 /** 立てた胴で、番号の中心から名前の書き出しまで。 */
 const NAME_BESIDE = 5;
@@ -250,13 +250,13 @@ const NAME_BESIDE = 5;
  * **列の字を縮めると読めなくなる名前だけ、決まった略で刷る** (印字は表のまま。
  * ネットリストと配線の名前は変わらない)。`GROUND` は L293D の 4 本で、同じ名前が 2 本
  * 以上あるので名前では指せず番号で呼ぶ — 絵の字を変えても書き方は変わらない。
- * `GND` は同じ働きの足の印字として NE555・74HC などの表にある綴り。
+ * `GND` は同じ働きのピンの印字として NE555・74HC などの表にある綴り。
  */
 const SHORT_NAMES: ReadonlyMap<string, string> = new Map([['GROUND', 'GND']]);
 
 type SideName = {
   readonly index: number;
-  /** 足の並ぶ向きの座標。 */
+  /** ピンの並ぶ向きの座標。 */
   readonly at: number;
   readonly name: string;
 };
@@ -267,7 +267,7 @@ const nameWidth = (name: string): number => textWidth(name) * NAME_CAPS;
 /**
  * 列 (胴の片側) の名前の字の大きさと、端の名前を内へ寄せる量。
  *
- * 名前は足の真上に中央揃え。**隣どうしの幅の和の半分 + 隙間が足の間隔に収まる**
+ * 名前はピンの真上に中央揃え。**隣どうしの幅の和の半分 + 隙間がピンの間隔に収まる**
  * 大きさにする (長い名前は、短い隣の名前が空けた所へはみ出してよい — NE555 の `RESET` は
  * 隣が `OUT` なので縮まない)。列の端の名前は、胴の端から `endRoom` まで出てよく、
  * それでも出るなら隣が空けた分だけ内へ寄せる。大きさは `[MIN_NAME_FONT, largest]`。
@@ -342,7 +342,7 @@ function pinNames(
   inside: boolean,
 ): { svg: string; band: 'below' | null } {
   const largest = scale * NAME_FONT;
-  // 列は足から胴の中心への向きで分ける (2 列の DIP の上下、立てた胴の左右)。
+  // 列はピンから胴の中心への向きで分ける (2 列の DIP の上下、立てた胴の左右)。
   const sides = [1, -1].map((sign) => points
     .map((point, index) => ({ index, point, name: names[index] ?? '' }))
     .filter((one) => one.name !== '' && inward(one.point) === sign)
@@ -366,7 +366,7 @@ function pinNames(
           const point = points[index]!;
           const x = point.x + (shift.get(index) ?? 0);
           if (inside) {
-            // 番号の内側。字の真ん中を足から `NAME_IN` の所に置く (基準線は字の下端)。
+            // 番号の内側。字の真ん中をピンから `NAME_IN` の所に置く (基準線は字の下端)。
             const y = point.y + inward(point) * NAME_IN + (size * NAME_CAP) / 2;
             return svgText(x, y, name, { 'font-size': num(size), fill: ink.chipText });
           }
@@ -457,7 +457,7 @@ const SIP_NAME_CAP = 0.72;
 
 /** 1 列ヘッダの樹脂。**当たり判定と描画で同じ形を使う**ので、外にも出す。 */
 export function sipBox(points: readonly ChipPoint[], pitch: number): ChipBox {
-  // **縦横で同じ余白。** 帯の長さは足の並びが決めるので、余白は半ピッチの正方。
+  // **縦横で同じ余白。** 帯の長さはピンの並びが決めるので、余白は半ピッチの正方。
   const half = SIP_HALF * pitch;
   return boxOf(points, half, half);
 }
@@ -478,14 +478,14 @@ export type SipOptions = {
   readonly pitch: number;
   readonly caption: string;
   readonly scale: number;
-  /** 足の名前を出す側 (+1 / -1)。横に寝た帯なら下が +1、縦なら右が +1。 */
+  /** ピンの名前を出す側 (+1 / -1)。横に寝た帯なら下が +1、縦なら右が +1。 */
   readonly nameSide: 1 | -1;
   readonly ink: ChipInk;
   readonly look?: SipLook;
 };
 
 /**
- * 1 列ヘッダの足の名前。**本体の外、`nameSide` の側**に縁取りつきで刷る。
+ * 1 列ヘッダのピンの名前。**本体の外、`nameSide` の側**に縁取りつきで刷る。
  * 1 列の変換基板 (`smdDraw.ts`) も同じ置き場に同じ字で出す。
  */
 export function sipLegends(options: SipOptions): string {
@@ -531,7 +531,7 @@ export function sipHeader(options: SipOptions): string {
     x: num(bar.x), y: num(bar.y), width: num(bar.width), height: num(bar.height), rx: 3,
     fill: look?.body ?? ink.body, stroke: look?.edge ?? CHIP_EDGE,
   });
-  // 足は本体の縁からピン名の側へ覗かせる。本体の真ん中に重ねるとキャプションと
+  // ピンは本体の縁からピン名の側へ覗かせる。本体の真ん中に重ねるとキャプションと
   // 食い合い、本体の下に隠すとどの穴に挿さっているのかが読めなくなる。
   const edge = (alongX ? first.y : first.x) + (nameSide * across) / 2;
   const stubs = points
@@ -570,7 +570,7 @@ const USB_HEIGHT = 2.6;
 const PIN_FONT = 6.8;
 const PIN_NAME_GAP = 8;
 const CHIP_SIDE = 2.2;
-/** 足の番号の桁 (`01` `40`)。揃えると名前の頭が縦に並ぶ。 */
+/** ピンの番号の桁 (`01` `40`)。揃えると名前の頭が縦に並ぶ。 */
 const PIN_NUMBER_DIGITS = 2;
 
 /** マイコンボードの外形。**当たり判定と描画で同じ形を使う**ので、外にも出す。 */
@@ -586,7 +586,7 @@ export function boardBox(points: readonly ChipPoint[], pitch: number, definition
 
 export type BoardChipOptions = {
   readonly points: readonly ChipPoint[];
-  /** 足の名前 (`GP0`)。無い足は番号だけ。 */
+  /** ピンの名前 (`GP0`)。無いピンは番号だけ。 */
   readonly names: readonly string[];
   readonly definition: BoardPart | null;
   /** 1 番ピンの添字。**USB の側**を決める (既定は書かれた 1 つ目の穴)。 */
@@ -601,9 +601,9 @@ export type BoardChipOptions = {
  * (実際に配線を挿すところ) を字が覆ってしまう。USB は必ずピン 1 の側の端に描く。
  * 実物のピンアウト図と同じ向きで読めるようにするため。
  *
- * **部品の名前 (`U1`) はここでは描かない。** 基板の中に置くと長い足の名前
+ * **部品の名前 (`U1`) はここでは描かない。** 基板の中に置くと長いピンの名前
  * (`ADC_VREF 35`) と食い合う。ほかの部品と同じで**胴の下**に出す — どこに
- * 出せるかは板の話なので、呼ぶ側が板の物差しで置く
+ * 出せるかは基板の話なので、呼ぶ側が基板の物差しで置く
  * (実機で「すべての部品名は部品の下側に表示する」)。
  */
 export function boardChip(options: BoardChipOptions): string {
@@ -660,8 +660,8 @@ export function boardChip(options: BoardChipOptions): string {
       // 片方だけ天地が逆になると読めない。
       const inward = (alongX ? Math.sign(centre.y - point.y) : Math.sign(centre.x - point.x)) || 1;
       // **ヘッダの番号を名前に添える** (`01 GP0`)。実物のピンアウト図と突き合わせる
-      // ときに、名前だけだと何番目の足かを数え直すことになる。
-      // **番号は足の側の端**へ — 字は足から内側へ伸びるので、伸びる向きで前後が入れ替わる。
+      // ときに、名前だけだと何番目のピンかを数え直すことになる。
+      // **番号はピンの側の端**へ — 字はピンから内側へ伸びるので、伸びる向きで前後が入れ替わる。
       const number = String(index + 1).padStart(PIN_NUMBER_DIGITS, '0');
       const text = inward > 0 ? `${name} ${number}` : `${number} ${name}`;
       const style = {
@@ -758,8 +758,8 @@ const SEGMENT_OFF = '#9aa0a8';
 
 /**
  * 7 セグの面 (「8.」)。樹脂の上に重ねて描く (52 の docs/66)。
- * **桁の上は `up` の向き** — 呼ぶ側が a の足 (上の辺) のある列の向きを渡す。
- * 足の無い向き (2 列の間) に桁を立てるので、回した部品でも桁が寝ない。
+ * **桁の上は `up` の向き** — 呼ぶ側が a のピン (上の辺) のある列の向きを渡す。
+ * ピンの無い向き (2 列の間) に桁を立てるので、回した部品でも桁が寝ない。
  */
 export function segmentFace(options: {
   readonly centre: ChipPoint;

@@ -4,7 +4,7 @@ import { renderPerfboard } from '../index.ts';
 
 /**
  * 部品の名札と行の名前が、線・胴に重ならないこと。教科書の図で
- * `R1 100` が真下の GND の線に取り消し線のように重なり、3 本足の真ん中の足から
+ * `R1 100` が真下の GND の線に取り消し線のように重なり、3 ピンの真ん中のピンから
  * 下ろした線が型番を縦に貫き、縁の SMA が行の名前 `H` `I` `J` を隠していた。
  */
 type Text = { readonly x: number; readonly y: number; readonly anchor: string; readonly size: number; readonly body: string; readonly middle: boolean };
@@ -20,7 +20,7 @@ const texts = (svg: string): Text[] =>
       body: match[5]!,
     }));
 
-/** 板の上の配線 (縁取りの線。太いほう)。 */
+/** 基板の上の配線 (縁取りの線。太いほう)。 */
 const wires = (svg: string): Line[] =>
   [...svg.matchAll(/<line x1="([\d.-]+)" y1="([\d.-]+)" x2="([\d.-]+)" y2="([\d.-]+)" class="cf-wire-outline"[^>]*stroke-width="([\d.]+)"/g)]
     .map((match) => ({
@@ -112,7 +112,7 @@ describe('row names beside an edge-mounted SMA', () => {
     const named = (name: string): Text => rows.find((text) => text.body === name)!;
     const plain = named('A').x;
     for (const name of ['H', 'I', 'J']) {
-      // 胴の先端 (板の縁から 3 段ぶん外) より外。
+      // 胴の先端 (基板の縁から 3 段ぶん外) より外。
       expect(named(name).x, name).toBeLessThan(plain - 40);
     }
     for (const name of ['G', 'K']) expect(named(name).x, name).toBe(plain);

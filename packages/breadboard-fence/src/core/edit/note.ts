@@ -20,7 +20,7 @@ import { diffAfter, diffAfterLines } from './diff.ts';
  *
  * **部品を指している注釈は動かさない。** `- circle R1` の指し先を番地に
  * 書き換えると名前が外れ、あとで部品を動かしても注釈が付いてこなくなる
- * (部品の回す軸を名前のある足に置いたのと同じ理由)。動かすなら部品のほうを動かす。
+ * (部品の回す軸を名前のあるピンに置いたのと同じ理由)。動かすなら部品のほうを動かす。
  */
 
 const HANDLE = 'note:';
@@ -140,7 +140,7 @@ export function moveNote(source: string, handle: string, to: Address, trial = fa
   for (const landing of landings) {
     if (landing === null) return fail(`${found.line} 行目の注釈の番地を読めません`, found.line);
     if (board !== null && !isOnBoard(board, landing)) {
-      return fail(`注釈を動かすと ${formatAddress(landing)} が板の外です`, found.line);
+      return fail(`注釈を動かすと ${formatAddress(landing)} が基板の外です`, found.line);
     }
   }
 
@@ -313,7 +313,7 @@ export function flipNote(source: string, handle: string): NoteResult {
   return rewriteTurn(found, { ...found.note.turn, mirror: !found.note.turn.mirror });
 }
 
-/** `board:` に書かれた指定から板を組む。書かれていなければ既定の板。 */
+/** `board:` に書かれた指定から基板を組む。書かれていなければ既定の基板。 */
 const boardOf = (spec: Parameters<typeof createBoard>[0] | null): ReturnType<typeof createBoard> | null =>
   (spec === null ? null : createBoard(spec));
 

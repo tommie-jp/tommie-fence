@@ -37,7 +37,7 @@ describe('offBoardReason', () => {
   test('isOnBoard is about the holes, not about what can be written', () => {
     expect(isOnBoard(board, at('r28'))).toBe(true);
     expect(isOnBoard(board, at('s29'))).toBe(false);
-    // 板の外は書けるが、穴の上ではない。
+    // 基板の外は書けるが、穴の上ではない。
     expect(isOnBoard(board, at('a0'))).toBe(false);
   });
 });
@@ -55,7 +55,7 @@ describe('holeStrip', () => {
 
 describe('resolveBoard', () => {
   test('reads 列x行, the order the board is sold in', () => {
-    // 秋月 C タイプは 72×47mm、つまり長辺 × 短辺。板の呼び方と同じ順にする。
+    // 秋月 C タイプは 72×47mm、つまり長辺 × 短辺。基板の呼び方と同じ順にする。
     const found = resolveBoard('28x18');
 
     expect(found.ok && found.board).toEqual({ cols: 28, rows: 18, slots: false, color: null, land: null, slotColor: null, h: 1.6, material: 'FR-4' });
@@ -111,12 +111,12 @@ describe('resolveBoard', () => {
 
   test('warns when a bare number is near the size of a board it knows (70x50 for 7x5cm)', () => {
     // 7×5cm の汎用基板のつもりの `70x50` は 70 列 × 50 行 (3,500 穴) として通る。
-    // 持っている板と寸分違わない時だけ言うと、実寸で書いた人の大半を黙って通す。
+    // 持っている基板と寸分違わない時だけ言うと、実寸で書いた人の大半を黙って通す。
     const found = resolveBoard('70x50');
 
     expect(found.ok && found.board).toMatchObject({ cols: 70, rows: 50 });
     expect(found.ok && found.notice).toContain('70x50 は穴数として読みました');
-    expect(found.ok && found.notice).toContain('70×50mm の板のことなら board: 7x5cm');
+    expect(found.ok && found.notice).toContain('70×50mm の基板のことなら board: 7x5cm');
   });
 
   test('says nothing extra about a hole count that is not a board size', () => {
@@ -143,8 +143,8 @@ describe('resolveBoard', () => {
   });
 
   test('offers the board a rounded size was probably meant for', () => {
-    // 71×49mm は汎用板にも秋月 C (72×47mm) にも当たらない。
-    // **当てはめずに教える** — 丸めて当てると違う板の穴数で図が出る。
+    // 71×49mm は汎用基板にも秋月 C (72×47mm) にも当たらない。
+    // **当てはめずに教える** — 丸めて当てると違う基板の穴数で図が出る。
     const found = resolveBoard('71x49mm');
 
     expect(found.ok).toBe(false);

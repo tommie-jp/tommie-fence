@@ -13,17 +13,17 @@ import type { Located, MoveResult } from './move.ts';
 import { locateTokens } from './shared.ts';
 
 /**
- * 足を書いて置く部品を回す・反転する。**フェンス本文 → 書き換えの並び**を返す純関数。
+ * ピンを書いて置く部品を回す・反転する。**フェンス本文 → 書き換えの並び**を返す純関数。
  *
- * **文法は変えない。** 足を並べて書く部品 (2 本足・3 本足) の向きは
- * **穴の順そのもの**なので、回すのは「先に書いた足のまわりに残りを 90 度動かす」、
+ * **文法は変えない。** ピンを並べて書く部品 (2 ピン・3 ピン) の向きは
+ * **穴の順そのもの**なので、回すのは「先に書いたピンのまわりに残りを 90 度動かす」、
  * 反転は「両端の入れ替え」で済む。
  *
- * **アンカー 1 つで置く形 (DIP / SIP / ボード) は別の道。** 足の位置を形が決めるので
+ * **アンカー 1 つで置く形 (DIP / SIP / ボード) は別の道。** ピンの位置を形が決めるので
  * 穴に向きが出ない (52 の docs/14)。使う人にとってはどちらも「回す」「裏返す」の
  * 1 つの操作なので、違いはここで吸収する。
  *
- * - **回す (`R`) は半周。** この板で書けるのは `r180` だけなので
+ * - **回す (`R`) は半周。** この基板で書けるのは `r180` だけなので
  *   (90 度は溝をまたぐ 2 列が同じ列に重なる)、`R` は語を出し入れする。
  * - **裏返す (`M`) はアンカーの行を移す。** 溝の向こう側へ渡った形は
  *   `@ f5` と書いたものそのもので、`mirror` の語は置いていない
@@ -33,7 +33,7 @@ import { locateTokens } from './shared.ts';
 const fail = (message: string, line: number | null): MoveResult =>
   ({ ok: false, error: fenceError(message, line) });
 
-/** 板は行が下へ、列が右へ増える。時計回りは (行, 列) → (列, -行)。 */
+/** 基板は行が下へ、列が右へ増える。時計回りは (行, 列) → (列, -行)。 */
 const quarter = (row: number, col: number): { readonly row: number; readonly col: number } =>
   ({ row: col, col: -row });
 
@@ -52,7 +52,7 @@ function spin(delta: { readonly row: number; readonly col: number }, quarters: n
  * レールは行が極性そのものなので数えていなかったが、そのせいで
  * **レールに挿した部品は回せなかった** (`Re: resistor -t20 e20` など)。
  * 実物の並びは上から `rails[0]` `rails[1]` a〜j `rails[2]` `rails[3]` なので、
- * そのまま並べれば穴と同じ勘定で回せる。レールの無い板 (mini) は穴だけ。
+ * そのまま並べれば穴と同じ勘定で回せる。レールの無い基板 (mini) は穴だけ。
  */
 type RowName = HoleRow | RailRow;
 
@@ -80,9 +80,9 @@ function addressAt(order: readonly RowName[], index: number, col: number): Addre
 }
 
 /**
- * 掴んだ部品と、その足。回すのも裏返すのもここを通る。
+ * 掴んだ部品と、そのピン。回すのも裏返すのもここを通る。
  *
- * **足を 2 つ以上書いている部品だけ**が通る。アンカー 1 つで置く形は
+ * **ピンを 2 つ以上書いている部品だけ**が通る。アンカー 1 つで置く形は
  * 穴に向きが出ないので、そう言って断る (`@ e5` の DIP など)。
  */
 function writtenLeadsAt(source: string, id: string, what: string) {
@@ -99,7 +99,7 @@ function writtenLeadsAt(source: string, id: string, what: string) {
         symmetric
           ? `${safeToken(id)} は${what}しても同じ穴どうしがつながります (対称な形です)`
           : `${safeToken(id)} は${what}せません`
-            + ` (足の位置を形が決める部品なので、穴の順に向きが出ません)`,
+            + ` (ピンの位置を形が決める部品なので、穴の順に向きが出ません)`,
         found.part.line,
       ),
     };
@@ -117,7 +117,7 @@ function writtenLeadsAt(source: string, id: string, what: string) {
 
 /**
  * 綴りを書き戻す編集。**書かれたままでよい端は触らない** (`null` を渡す) —
- * `points:` の名前で書かれた足を番地に直すと名前が外れ、あとで点を動かしても
+ * `points:` の名前で書かれたピンを番地に直すと名前が外れ、あとで点を動かしても
  * 部品が付いてこなくなる (ネットの差分は空なので、何も言わずに切れる)。
  */
 const editsFor = (
@@ -201,9 +201,9 @@ function flipByAnchor(found: Located, id: string): MoveResult {
 
 
 /**
- * 軸にする足の番号。**名前で書かれた足があればそこ** — `points:` の名前は場所を
+ * 軸にするピンの番号。**名前で書かれたピンがあればそこ** — `points:` の名前は場所を
  * 指す約束なので、動かすと名前が外れる (番地に直すしかなくなり、あとで点を
- * 動かしても部品が付いてこない)。無ければ足の真ん中。
+ * 動かしても部品が付いてこない)。無ければピンの真ん中。
  */
 function pivotIndex(
   lineText: string,
@@ -218,9 +218,9 @@ function pivotIndex(
 /**
  * 回す軸をどこに置くか。
  *
- * - `middle` (既定) — 足の真ん中。**掴んで回すとき**はこちら (KiCad と同じで、
+ * - `middle` (既定) — ピンの真ん中。**掴んで回すとき**はこちら (KiCad と同じで、
  *   胴がその場で回る)
- * - `anchor` — 先に書いた足。**置く前に回すとき**はこちら。押した穴に足が来る
+ * - `anchor` — 先に書いたピン。**置く前に回すとき**はこちら。押した穴にピンが来る
  *   のが置くときの約束なので、軸が動くと「押した穴に置けない」ことになる
  */
 export type TurnAround = 'middle' | 'anchor';
@@ -231,7 +231,7 @@ export function turnPart(
   quarters: number,
   around: TurnAround = 'middle',
 ): MoveResult {
-  // **この板で回せるのは半周だけ。** 4 分の 1 の要求は、奇数回なら半周に畳む
+  // **この基板で回せるのは半周だけ。** 4 分の 1 の要求は、奇数回なら半周に畳む
   // (2 回押せば元へ戻る)。90 度に相当する置き方がそもそも実物に無い。
   const anchored = anchoredTurn(source, id);
   if (anchored !== null) {
@@ -246,14 +246,14 @@ export function turnPart(
   const { found, tokens } = grabbed;
   const first = found.addresses[0];
   const last = found.addresses[found.addresses.length - 1];
-  if (first === undefined || last === undefined) return fail(`${safeToken(id)} の足がありません`, found.part.line);
+  if (first === undefined || last === undefined) return fail(`${safeToken(id)} のピンがありません`, found.part.line);
 
   // **レールも行の並びに入れて数える** (`rowOrder`)。挿さっていても回せる。
   const order = rowOrder(found.board);
   const firstRow = rowIndex(order, first);
   const lastRow = rowIndex(order, last);
   if (firstRow === null || lastRow === null || found.addresses.some((one) => rowIndex(order, one) === null)) {
-    return fail(`${safeToken(id)} の行がこの板にありません (レールを剥がした板かもしれません)`, found.part.line);
+    return fail(`${safeToken(id)} の行がこの基板にありません (レールを剥がした基板かもしれません)`, found.part.line);
   }
 
   // **もともとレールに居ない部品は、回してもレールへ移さない。** 電源に
@@ -265,7 +265,7 @@ export function turnPart(
     ? { least: 0, most: order.length - 1 }
     : { least: holesFrom, most: holesFrom + HOLE_ROWS.length - 1 };
 
-  // **軸は足の真ん中** (KiCad の `R` も選んだものの中心を軸にする)。先に書いた足を
+  // **軸はピンの真ん中** (KiCad の `R` も選んだものの中心を軸にする)。先に書いたピンを
   // 軸にしていたころは、回すと胴が大きく振られて「移動」に見えた。
   // 丸めは 0 に向ける — 符号と軸の入れ替えをすり抜けるので、軸が回っても同じ穴に
   // 留まる (2 回押せば元に戻る)。
@@ -285,20 +285,20 @@ export function turnPart(
     return { row: pivotRow + delta.row, col: pivotCol + delta.col };
   });
 
-  // **板から出たら寄せ直す。回転そのものは断らない。** 縁に置いた部品を回すと
-  // 足が外へ出るが、断ると「この部品は回らない」に見える (実機で
+  // **基板から出たら寄せ直す。回転そのものは断らない。** 縁に置いた部品を回すと
+  // ピンが外へ出るが、断ると「この部品は回らない」に見える (実機で
   // 「capacitor, inductor などほとんど回転できない」と言われたのがこれで、
   // 実は部品の種類ではなく**置いた行**で決まっていた)。足りない分だけ寄せる
-  // ので、板に載っている回し方は 1 穴も動かない。
+  // ので、基板に載っている回し方は 1 穴も動かない。
   //
-  // **置く前 (`anchor`) は寄せない。** 押した穴に足が来るのが置くときの約束で、
+  // **置く前 (`anchor`) は寄せない。** 押した穴にピンが来るのが置くときの約束で、
   // 寄せると「押した穴に置けない」ことになる。入らないときは断り、
   // ゴーストを赤で見せる側 (`session.ts`) に任せる。
   const slide = around === 'anchor'
     ? { row: 0, col: 0 }
     : slideInto(turned, range, { least: 1, most: found.board.columns });
   if (slide === null) {
-    return fail(`${safeToken(id)} は回しても板に収まりません`, found.part.line);
+    return fail(`${safeToken(id)} は回しても基板に収まりません`, found.part.line);
   }
 
   const landings: (Address | null)[] = slideBy(turned, slide)
@@ -306,19 +306,19 @@ export function turnPart(
 
   for (const landing of landings) {
     if (landing === null || !isOnBoard(found.board, landing)) {
-      return fail(`${safeToken(id)} を回すと板の外へ出ます`, found.part.line);
+      return fail(`${safeToken(id)} を回すと基板の外へ出ます`, found.part.line);
     }
     // **もともとレールに居ない部品をレールへ移さない。** 黙って電源に
     // つながると回路の意味が変わる (つなぐのは配線の仕事)。
     if (!onRail && landing.kind === 'rail') {
-      return fail(`${safeToken(id)} を回すと足がレールに入ります (穴の中で回せる向きにします)`, found.part.line);
+      return fail(`${safeToken(id)} を回すとピンがレールに入ります (穴の中で回せる向きにします)`, found.part.line);
     }
   }
   // **同じレール行に 2 本は挿さない。** その行は丸ごと 1 本の電位なので、
   // 回した先が短絡した図になる (置くときと同じ見方。`insert.ts` の `onOneRail`)。
   const rails = landings.filter((one) => one?.kind === 'rail').map((one) => formatAddress(one as Address).slice(0, 2));
   if (new Set(rails).size !== rails.length) {
-    return fail(`${safeToken(id)} を回すと足が 2 本とも同じレールに入ります (短絡になります)`, found.part.line);
+    return fail(`${safeToken(id)} を回すとピンが 2 本とも同じレールに入ります (短絡になります)`, found.part.line);
   }
 
   // **一周は何もしない。** 同じ字を書き戻すと「動かしました」と嘘を言うことになる。
@@ -343,19 +343,19 @@ export function flipPart(source: string, id: string): MoveResult {
   if (!grabbed.ok) return { ok: false, error: grabbed.error };
 
   const { found } = grabbed;
-  // 足の**並びを逆にする**。同じ穴を使うので、どの穴とどの穴がつながるかは
-  // 変わらない (変わるのは、どちらの足がどちらの穴に挿さるか)。
-  // 3 本足なら両端が入れ替わり、真ん中はその場に残る — 実物を裏返したときと同じ。
+  // ピンの**並びを逆にする**。同じ穴を使うので、どの穴とどの穴がつながるかは
+  // 変わらない (変わるのは、どちらのピンがどちらの穴に挿さるか)。
+  // 3 ピンなら両端が入れ替わり、真ん中はその場に残る — 実物を裏返したときと同じ。
   //
   // **入れ替えるのは番地だけ。印 (`b12(A)`) はその場に残す。**
   // 印まで一緒に動かすと `b13(K) b12(A)` になり、**書き方が変わるだけで
   // 意味は元のまま** — カソードは同じ穴に挿さったままなので、押しても図が
   // 変わらない (実機で「varicap が反転できない」と言われたのがこれ。
-  // 印を書いた部品ぜんぶ — ダイオードの仲間・LED・電解・3 本足 — が効かなかった)。
+  // 印を書いた部品ぜんぶ — ダイオードの仲間・LED・電解・3 ピン — が効かなかった)。
   // 印を置いていけば `b12(K) b13(A)`、つまりカソードが反対の穴へ移る。
   // これが実物を裏返したときに起きること。
   //
-  // 番地の綴りはそのまま持っていく — `points:` の名前で書かれた足を番地に
+  // 番地の綴りはそのまま持っていく — `points:` の名前で書かれたピンを番地に
   // 直すと名前が外れ、あとで点を動かしても部品が付いてこなくなる。
   const spans = grabbed.tokens;
   const spelling = (index: number): string => {

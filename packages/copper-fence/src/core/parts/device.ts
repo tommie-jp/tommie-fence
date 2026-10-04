@@ -3,15 +3,15 @@ import { PX } from '../model/layout.ts';
 import type { Board, DeviceSpec, Mm, RectMm, Side } from '../types.ts';
 
 /**
- * 板の外の機器の置き方。**箱の大きさ・足の位置は書いた内容 (名札・足の名前・板との位置)
+ * 基板の外の機器の置き方。**箱の大きさ・ピンの位置は書いた内容 (名札・ピンの名前・基板との位置)
  * だけから決まり**、描画と配線と ERC が同じ結果を読む — 図と導通が食い違わない。
  *
- * 足は箱の**板のいる側の辺**から出て、先 (tip) に配線がつながる。
+ * ピンは箱の**基板のいる側の辺**から出て、先 (tip) に配線がつながる。
  */
 
 /** 字の大きさ (mm)。図の名札と同じ 9px。 */
 export const DEVICE_TEXT_MM = 9 / PX;
-/** 足の長さ (mm)。 */
+/** ピンの長さ (mm)。 */
 export const STUB = 2.5;
 const PITCH = 4;
 const PAD = 1.5;
@@ -22,7 +22,7 @@ export type DevicePin = {
   readonly name: string;
   /** 箱の辺の上の付け根。 */
   readonly base: Mm;
-  /** 足の先。配線はここへつながる。 */
+  /** ピンの先。配線はここへつながる。 */
   readonly tip: Mm;
 };
 
@@ -31,11 +31,11 @@ export type PlacedDevice = {
   readonly box: RectMm;
   readonly face: Side;
   readonly pins: readonly DevicePin[];
-  /** 名札の中心。足の名前を書く帯を避けた所。 */
+  /** 名札の中心。ピンの名前を書く帯を避けた所。 */
   readonly label: Mm;
 };
 
-/** 箱の中心が板のどちら側にあるか。足はそちらから板へ向ける。 */
+/** 箱の中心が基板のどちら側にあるか。ピンはそちらから基板へ向ける。 */
 export function faceOf(at: Mm, board: Board): Side {
   const outX = Math.max(-at.x, at.x - board.width, 0);
   const outY = Math.max(-at.y, at.y - board.height, 0);
@@ -66,7 +66,7 @@ function boxSize(spec: DeviceSpec, face: Side): { readonly width: number; readon
   };
 }
 
-/** 足を辺の上に等間隔に置く。 */
+/** ピンを辺の上に等間隔に置く。 */
 function pinsOf(spec: DeviceSpec, box: RectMm, face: Side): readonly DevicePin[] {
   const count = spec.pins.length;
   return spec.pins.map((name, index) => {
@@ -92,7 +92,7 @@ function pinsOf(spec: DeviceSpec, box: RectMm, face: Side): readonly DevicePin[]
   });
 }
 
-/** 名札の中心。足の名前の帯を除いた残りの真ん中。 */
+/** 名札の中心。ピンの名前の帯を除いた残りの真ん中。 */
 function labelAt(box: RectMm, face: Side, strip: number): Mm {
   const cx = box.x + box.width / 2;
   const cy = box.y + box.height / 2;
@@ -116,11 +116,11 @@ export function placeDevice(spec: DeviceSpec, board: Board): PlacedDevice {
   return { spec, box, face, pins: pinsOf(spec, box, face), label: labelAt(box, face, size.nameStrip) };
 }
 
-/** 箱が板に重なっているか (機器は板の外に置く)。 */
+/** 箱が基板に重なっているか (機器は基板の外に置く)。 */
 export const overlapsBoard = (box: RectMm, board: Board): boolean =>
   box.x < board.width && box.x + box.width > 0 && box.y < board.height && box.y + box.height > 0;
 
-/** 箱と足の先を囲む点 (図の広がりの計算用)。 */
+/** 箱とピンの先を囲む点 (図の広がりの計算用)。 */
 export const deviceCorners = (device: PlacedDevice): readonly Mm[] => [
   { x: device.box.x, y: device.box.y },
   { x: device.box.x + device.box.width, y: device.box.y + device.box.height },

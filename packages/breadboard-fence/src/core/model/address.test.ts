@@ -68,11 +68,11 @@ describe('isTopBlock', () => {
 });
 
 /**
- * 交点の間と板の外 (52 の docs、実機で「text はどこでも移動できるようにする。
+ * 交点の間と基板の外 (52 の docs、実機で「text はどこでも移動できるようにする。
  * breadboard の穴のない領域含む。ボード外含む」)。
  *
  * **綴りは circuit と同じ**「行の英字 + 列の数字」の組で、1 組で小数第 1 位。
- * 穴と穴の間・溝の中・板の左右へは、この端数で届く。
+ * 穴と穴の間・溝の中・基板の左右へは、この端数で届く。
  */
 describe('交点の間 (端数の番地)', () => {
   test('reads a pair as tenths of a row and a column, as the schematic fence does', () => {

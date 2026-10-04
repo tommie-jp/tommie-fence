@@ -4,7 +4,7 @@ import { iconPng } from '../../playground/scripts/icon.mjs';
 /**
  * 拡張の絵札 (`icon.png`) を焼く。**手で回す** — `node scripts/icon.mjs`。
  *
- * 図案は playground の絵札と同じ (穴の並んだ板に 1 本の配線)。焼き方も向こうの
+ * 図案は playground の絵札と同じ (穴の並んだ基板に 1 本の配線)。焼き方も向こうの
  * もの (zlib で PNG に詰める。ラスタライザを足さない)。
  *
  * **焼いたものを git に入れる。** `.vsix` はパッケージ単体を作業場へ写して

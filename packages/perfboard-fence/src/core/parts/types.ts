@@ -4,7 +4,7 @@ import {
 } from 'fence-kit';
 import { safeToken } from '../errors.ts';
 /**
- * 置ける部品の語彙。**Phase 2 は 2 本足だけ。** 3 本足・DIP・SIP は次の Phase で、
+ * 置ける部品の語彙。**Phase 2 は 2 ピンだけ。** 3 ピン・DIP・SIP は次の Phase で、
  * 置けないものは「知らないふり」ではなく**置けないと言う**。
  *
  * 正式名は一般英語名で 1 つに保ち、略記は入口だけで畳む
@@ -13,58 +13,58 @@ import { safeToken } from '../errors.ts';
  * 同じノートで 2 つのフェンスを書くときに語彙が 1 つで済む。
  */
 
-/** 2 本足の部品。ここに無い種類は「置けません」と言う。 */
+/** 2 ピンの部品。ここに無い種類は「置けません」と言う。 */
 const TWO_LEAD = new Set([
   'resistor', 'capacitor', 'led', 'diode', 'inductor', 'crystal', 'buzzer',
   // 抵抗体を固めた部品。値は抵抗なのでキャプションの読み方も抵抗と同じ。
   'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc', 'varistor',
   // ダイオードの仲間。実物はどれも同じ形の胴で、カソード帯の位置が意味を持つ。
   'zener', 'schottky', 'photodiode', 'varicap', 'diac',
-  // 砲弾型の受光素子。2 本足 (C E) で、先に書いた穴が C (52 の docs/66)。
+  // 砲弾型の受光素子。2 ピン (C E) で、先に書いた穴が C (52 の docs/66)。
   'phototransistor',
   // ガラス管・玉に封じた部品。
   'reed', 'fuse', 'lamp',
-  // リード付きのフェライトビーズ。軸物で、足の間隔は抵抗と同じ規則。
+  // リード付きのフェライトビーズ。軸物で、ピンの間隔は抵抗と同じ規則。
   'ferrite-bead',
-  // 回路図にあって板に無かった実物 (52 の docs/21 の手順 7)。**電池は
-  // ホルダーで数える** — 板に載るのはホルダーで、電池は差し替えるもの。
+  // 回路図にあって基板に無かった実物 (52 の docs/21 の手順 7)。**電池は
+  // ホルダーで数える** — 基板に載るのはホルダーで、電池は差し替えるもの。
   // トグルスイッチは a 接点 (`switch`) と b 接点 (`switch-nc`) で別の品。
   'battery', 'solar', 'speaker', 'mic', 'switch', 'switch-nc',
-  // 同軸コネクタ。**足は中心導体と GND の 2 本**で書く (実物は GND が 4 本だが、
+  // 同軸コネクタ。**ピンは中心導体と GND の 2 本**で書く (実物は GND が 4 本だが、
   // 図とネットリストで意味を持つのは「どこが中心でどこが GND か」の 2 つ)。
   'sma',
 ]);
 
-/** 3 本足の部品。**足の位置は書かれたとおり** — 実物の足は曲げられる。 */
+/** 3 ピンの部品。**ピンの位置は書かれたとおり** — 実物のピンは曲げられる。 */
 const THREE_LEAD = new Set([
   'transistor', 'potentiometer', 'thyristor', 'triac', 'slide-switch', 'regulator',
-  // 3 本足の IC (ホール素子・LM35・UM66T など。52 の docs/66)。
+  // 3 ピンの IC (ホール素子・LM35・UM66T など。52 の docs/66)。
   'ic3',
 ]);
 
 /**
- * 4 本足の部品。**書かれた穴がそのまま足** — 2 本足・3 本足と同じ考え方で、
+ * 4 ピンの部品。**書かれた穴がそのままピン** — 2 ピン・3 ピンと同じ考え方で、
  * 巻線の端が 4 つ出ている変圧器を、どの穴に挿したかそのまま書く
- * (実物の足の並びは品によって違い、決め打てない)。
+ * (実物のピンの並びは品によって違い、決め打てない)。
  */
 const FOUR_LEAD = new Set(['transformer']);
 
 /**
- * タクトスイッチ。**足の位置はパッケージが決める**ので、書くのはアンカー 1 つ
+ * タクトスイッチ。**ピンの位置はパッケージが決める**ので、書くのはアンカー 1 つ
  * (DIP と同じ考え方)。a 接点 (`button`) と b 接点 (`button-nc`) は**同じ形** —
  * 実物も外から見て見分けが付かず、図で描き分けると実物に無い情報になる。
  */
 const SWITCH = new Set(['button', 'button-nc']);
 
 /**
- * 基板に載せるコネクタ (USB)。**書いた穴がそのまま足**で、足の名前は表の順
+ * 基板に載せるコネクタ (USB)。**書いた穴がそのままピン**で、ピンの名前は表の順
  * (`VBUS GND D+ D-`)。表は fence-kit にあり、3 つのフェンスが同じものを読む
  * (52 の docs/58)。書く穴の数は 2 から表の長さまで (`parts/footprint.ts`)。
  */
 export const isConnector = (type: string): boolean => lookupConnector(type) !== null;
 
 /**
- * 1 行では書けない種類。**板の外の機器は入れ子で書く** — 足の名前の並びを
+ * 1 行では書けない種類。**基板の外の機器は入れ子で書く** — ピンの名前の並びを
  * 持つので 1 行に畳めない。知らない種類として弾くと、書き方を探しに行かせる。
  */
 const NESTED = new Set(['device']);
@@ -94,7 +94,7 @@ const ALIASES: Record<string, string> = {
 
 /**
  * 差し込み型の姿。**面実装の姿は fence-kit の表から足す** (`VARIANTS`) —
- * 変換基板に載せた姿 (`sot346-dip`) と、この板に直付けする姿 (`sot346` `2012`)。
+ * 変換基板に載せた姿 (`sot346-dip`) と、この基板に直付けする姿 (`sot346` `2012`)。
  */
 const THROUGH_HOLE: Record<string, readonly string[]> = {
   capacitor: ['ceramic', 'film', 'electrolytic', 'tantalum'],
@@ -112,7 +112,7 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
   phototransistor: ['3mm', '5mm'],
   // 平たい缶 (HC-49) と円筒 (時計用の 32.768kHz などに多い)。輪郭がまるで違う。
   crystal: ['hc49', 'cylinder'],
-  // TO-92 は丸い小信号用、TO-220 は放熱タブつき。足の並びは書かれた穴で示す。
+  // TO-92 は丸い小信号用、TO-220 は放熱タブつき。ピンの並びは書かれた穴で示す。
   // 面実装 (`sot346-dip` `sot346` など) は下で表から足す。
   transistor: ['to92', 'to220'],
   thyristor: ['to92', 'to220'],
@@ -121,17 +121,17 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
   ic3: ['to92', 'to220'],
   // オスは中心にピンが立ち、メスは中心が穴。**姿で描き分ける** —
   // 図を見て挿す人が、合う相手を取り違えないように。
-  // `-edge` は端面実装 (横置き)。板の縁から**胴が外へ張り出す**。
+  // `-edge` は端面実装 (横置き)。基板の縁から**胴が外へ張り出す**。
   sma: ['male', 'female', 'male-edge', 'female-edge'],
   // USB は差し込み (オス) と受け口 (メス)。**書かなければ受け口**。
   ...Object.fromEntries(connectorNames().map((type) => [type, CONNECTOR_LOOKS])),
-  // 足に名前のある DIP 型は品名が姿 (`relay/g5v-2`)。**書かなければ表の最初**。
+  // ピンに名前のある DIP 型は品名が姿 (`relay/g5v-2`)。**書かなければ表の最初**。
   ...Object.fromEntries(namedChipTypes().map((type) => [type, namedChipLooks(type)])),
 };
 
 /**
  * 種類ごとに選べる姿。ここに無い種類には `/…` を書けない。**面実装は fence-kit の
- * 表から** — 変換基板 (`-dip`) は breadboard と同じ綴り、直付けはこの板だけ
+ * 表から** — 変換基板 (`-dip`) は breadboard と同じ綴り、直付けはこの基板だけ
  * (ブレッドボードには挿せない。52 の docs/64)。
  */
 const VARIANTS: Record<string, readonly string[]> = withSmdLooks(THROUGH_HOLE, 'perfboard');
@@ -141,9 +141,9 @@ const looksOf = (type: string): readonly string[] =>
   (own(VARIANTS, type) ? VARIANTS[type] ?? [] : smdLooksOf(type, 'perfboard'));
 
 /**
- * **軸物** — 胴の両端から足が出る形。足を曲げて挿すので、胴そのものより
- * 狭い間隔には入らない。ラジアル (足が同じ側から出る形。LED・コンデンサ・
- * サーミスタなど) は足の間隔が 2.54mm で作られているので、ここには入れない。
+ * **軸物** — 胴の両端からピンが出る形。ピンを曲げて挿すので、胴そのものより
+ * 狭い間隔には入らない。ラジアル (ピンが同じ側から出る形。LED・コンデンサ・
+ * サーミスタなど) はピンの間隔が 2.54mm で作られているので、ここには入れない。
  */
 const AXIAL = new Set([
   'resistor', 'diode', 'zener', 'schottky', 'inductor', 'fuse', 'ferrite-bead',
@@ -175,7 +175,7 @@ export const packageNames = (): readonly string[] => [
   ...SIP_SIZES.map((pins) => `sip${pins}`),
   // マイコンボード。**breadboard と同じ表**から出す (fence-kit)。
   ...boardPartNames(),
-  // 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。これも同じ表。
+  // ピンに名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。これも同じ表。
   ...namedChipTypes(),
 ];
 
@@ -236,7 +236,7 @@ export function splitPartType(written: string): PartType {
 }
 
 /**
- * 端面実装 (横置き) の姿か。**胴が足の外へ張り出す**ので、描画も当たり判定も
+ * 端面実装 (横置き) の姿か。**胴がピンの外へ張り出す**ので、描画も当たり判定も
  * 形が変わる。判定はここ 1 か所 — 別々に持つと、図と当たり判定が食い違う。
  */
 export const isEdgeMount = (type: string, variant: string | null): boolean =>

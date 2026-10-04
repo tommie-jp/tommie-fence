@@ -56,7 +56,7 @@ describe('置ける部品の表', () => {
   test('says how many holes each shape takes', () => {
     expect(holesOf('resistor')).toBe(2);
     expect(holesOf('transistor')).toBe(3);
-    // タクトスイッチはアンカー 1 つ (足の位置はパッケージが決める)。
+    // タクトスイッチはアンカー 1 つ (ピンの位置はパッケージが決める)。
     expect(holesOf('button')).toBe(1);
     expect(holesOf('resistr')).toBe(0);
   });

@@ -49,7 +49,7 @@ export type NewPart = {
 
 /**
  * 2 端子を 1 番地で置くときの、もう一方までの距離 (升の数)。examples では
- * 1 升と 2 升が拮抗している (61 件 / 55 件) が、1 升だと記号の胴が足に食われるので 2 にする。
+ * 1 升と 2 升が拮抗している (61 件 / 55 件) が、1 升だと記号の胴がピンに食われるので 2 にする。
  */
 const DEFAULT_SPAN = 2;
 
@@ -126,12 +126,12 @@ export function insertWire(
       if (!isOnGrid(end.address)) return fail(OFF_GRID, null);
       continue;
     }
-    // 足は書ける名前かどうかを**置く前に**見る (書いてから帯で気づくのでは遅い)。
+    // ピンは書ける名前かどうかを**置く前に**見る (書いてから帯で気づくのでは遅い)。
     const part = doc.parts.find((candidate) => candidate.id === end.part);
     if (!part) return fail(`部品が見つかりません: ${end.part}`, null);
     const type = partTypeOf(part);
     if (!type || lookupPin(type, end.pin) === null) {
-      return fail(`${end.part} に ${end.pin} という足はありません`, part.line);
+      return fail(`${end.part} に ${end.pin} というピンはありません`, part.line);
     }
   }
 

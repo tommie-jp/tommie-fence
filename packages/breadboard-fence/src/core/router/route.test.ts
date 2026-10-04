@@ -169,7 +169,7 @@ describe('routeWires keeping wires from crossing each other', () => {
   // 一方はレーンの上の穴から、もう一方は下の穴から来る。
   const fromAbove = request('-t3', '-t20');
   const fromBelow = request('a3', 'a20');
-  // どれも同じ行の 2 穴だが、**またぐ穴に足が挿さっている**ので
+  // どれも同じ行の 2 穴だが、**またぐ穴にピンが挿さっている**ので
   // まっすぐには結べず、レーンへ出る。ここで見たいのはレーンの使い方のほう。
   const plugged = { partHoles: [at('-t10'), at('a10'), at('b12'), at('f14')] };
 
@@ -297,8 +297,8 @@ describe('routeWires connecting two holes in the same row', () => {
   });
 
   test('climbs out to a lane when a part body lies over the holes between its legs', () => {
-    // 2 本足の部品の障害物はキャプションの帯だけで、胴は入っていない。
-    // 足と足の間に収まる配線は、塞がった穴のほうでしか気づけない。
+    // 2 ピンの部品の障害物はキャプションの帯だけで、胴は入っていない。
+    // ピンとピンの間に収まる配線は、塞がった穴のほうでしか気づけない。
     const across = [at('b9'), at('b10'), at('b11'), at('b12'), at('b13'), at('b14'), at('b15')];
 
     const [path] = routeWires([request('b10', 'b14')], layout, { partHoles: across });
@@ -313,7 +313,7 @@ describe('routeWires connecting two holes in the same row', () => {
   });
 
   test('climbs out to a lane even for a short hop once a hole it covers is taken', () => {
-    // 短いホップも同じ規則で見る。3 ピッチかどうかで、胴や足の上を
+    // 短いホップも同じ規則で見る。3 ピッチかどうかで、胴やピンの上を
     // 通ってよいかが変わる理由は無い。
     const [path] = routeWires([request('b10', 'b13')], layout, { partHoles: [at('b11')] });
 
@@ -342,7 +342,7 @@ describe('routeWires connecting two holes in the same row', () => {
   });
 
   test('does not lay a wire along the edge of a device band', () => {
-    // 板の外の機器のピンは行に乗っていない。高さが揃っていても「同じ行」ではないので、
+    // 基板の外の機器のピンは行に乗っていない。高さが揃っていても「同じ行」ではないので、
     // 帯の縁に線を這わせても、どの穴につながっているのかは読めない。
     const deviceLayout = createLayout(createBoard('half'), { deviceTop: true });
     const band = deviceLayout.deviceBands.top!;
@@ -456,7 +456,7 @@ describe('routeWires around parts standing in the way', () => {
   });
 
   test('climbs between hole columns even from a pin that is not on the hole grid', () => {
-    // 板の外の機器のピンは穴の格子に乗っていない。端点からずらすと列を踏む。
+    // 基板の外の機器のピンは穴の格子に乗っていない。端点からずらすと列を踏む。
     const deviceLayout = createLayout(createBoard('half'), { deviceTop: true });
     const band = deviceLayout.deviceBands.top!;
     const pin = { x: band.x + 118, y: band.y + band.height };
@@ -472,7 +472,7 @@ describe('routeWires around parts standing in the way', () => {
   });
 
   test('does not step around the part the wire is plugged into', () => {
-    // 真ん中の足から出る配線は、自分の胴の中から始まる。避けようがないので曲げない。
+    // 真ん中のピンから出る配線は、自分の胴の中から始まる。避けようがないので曲げない。
     const own = { x: at('a5').x - 20, y: layout.rowY('a') - 20, width: 40, height: 40 };
 
     const [path] = routeWires([request('a5', 'b20')], layout, { obstacles: [own] });
@@ -596,7 +596,7 @@ describe('wires do not run over holes they do not plug into', () => {
 
 describe('device leads in the same order as their holes do not cross', () => {
   // 教科書の図: AD の `2+` の線が `1+` の線の上を横切った (`wires:` を並べ替えても直らなかった)。
-  // 足の並び (左から) と行き先の列の並びが同じなら、交差させずに引ける。
+  // ピンの並び (左から) と行き先の列の並びが同じなら、交差させずに引ける。
   const deviceLayout = createLayout(createBoard('half'), { deviceTop: true, deviceBottom: true });
   const hole = (text: string) => deviceLayout.point(parseAddress(text)!);
   const pinAbove = (x: number): Point => ({ x, y: deviceLayout.deviceBands.top!.y + deviceLayout.deviceBands.top!.height });

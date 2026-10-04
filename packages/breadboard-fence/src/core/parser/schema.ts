@@ -88,14 +88,14 @@ export function validateExpandedPart(raw: unknown): Validation {
   //   value — 箱に出るのは `label ?? id` (`render/devices.ts` の captionOf)。
   //           部品リストの valueOf も、機器はラベルしか見ない。
   //   at    — 読むのは機器を上下の帯に振り分けるところだけ
-  //           (`render/devices.ts` と `index.ts`)。板に挿す部品の位置は holes で決まる。
+  //           (`render/devices.ts` と `index.ts`)。基板に挿す部品の位置は holes で決まる。
   const isDevice = type === 'device';
   const notes: string[] = [];
   if (isDevice && value !== null) {
     notes.push('機器 (device) に value は使いません。箱に出す名前は label に書きます');
   }
   if (!isDevice && at !== null) {
-    notes.push('at は機器 (device) にだけ使います。板に挿す部品の位置は holes で決まります');
+    notes.push('at は機器 (device) にだけ使います。基板に挿す部品の位置は holes で決まります');
   }
   // 図に出るキャプションは値を先に見るので、両方書くとラベルが消える
   // (部品リストの値は図と同じ字である約束なので、ラベルを勝たせるわけにいかない)。

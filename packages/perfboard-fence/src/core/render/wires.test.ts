@@ -29,7 +29,7 @@ describe('renderWires', () => {
   });
 
   test('uses the colour the board asks for when none was written', () => {
-    // 既定は板の色から決まる (fence-kit の一律の灰色ではない)。
+    // 既定は基板の色から決まる (fence-kit の一律の灰色ではない)。
     expect(renderWires([wire('b3', 'c5')], layout, THEME)).toContain(THEME.palette.wire);
   });
 
@@ -49,7 +49,7 @@ describe('renderWires', () => {
 });
 
 describe('色を書かなかった配線', () => {
-  // 板の色が変われば既定の線の色も変わる (`render/finish.ts` の `wireOn`)。
+  // 基板の色が変われば既定の線の色も変わる (`render/finish.ts` の `wireOn`)。
   const onBoard = { ...THEME, palette: { ...THEME.palette, wire: '#123456' } };
 
   test('takes the colour the board asks for, not a fixed grey', () => {

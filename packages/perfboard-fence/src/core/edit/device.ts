@@ -8,11 +8,11 @@ import type { MoveResult } from './move.ts';
 import type { Address, DeviceSpec } from '../types.ts';
 
 /**
- * 板の外の機器 (`device`) を升目から掴む。
+ * 基板の外の機器 (`device`) を升目から掴む。
  *
  * **機器は入れ子で書く**ので、1 行の綴りを書き換える部品の道 (`move.ts`)
  * には乗らない。動かすというのは `at:` を書き換えることで、行き先は
- * 板の外の番地 (`-a1` `n5`) か、上下の帯 (`top` / `bottom`)。
+ * 基板の外の番地 (`-a1` `n5`) か、上下の帯 (`top` / `bottom`)。
  *
  * 掴めないと、**図に出ているのに升目から触れないものが残る**
  * (実機で「基板外の部品もマウスコマンドの対象にする」)。
@@ -57,7 +57,7 @@ export function deviceBlock(lines: readonly string[], device: DeviceSpec): { fro
 const deviceOf = (source: string, id: string): DeviceSpec | null =>
   parseFence(normalizeNewlines(source)).doc.devices.find((one) => one.id === id) ?? null;
 
-/** その名前が板の外の機器か。**部品と機器で編集の道が違う**ので、入口で分ける。 */
+/** その名前が基板の外の機器か。**部品と機器で編集の道が違う**ので、入口で分ける。 */
 export const isDevice = (source: string, id: string): boolean => deviceOf(source, id) !== null;
 
 /** 升目で掴める機器の名前。読めた行のぶんだけ出る。 */
@@ -98,7 +98,7 @@ export function deviceSpans(source: string, id: string): readonly Span[] {
 
 /**
  * 機器を動かす。**書き換えるのは `at:` の 1 行**で、無ければ `type:` の次に足す。
- * 行き先は板の外の番地 — 板の上に落としたときは、呼ぶ側が帯へ寄せる綴り
+ * 行き先は基板の外の番地 — 基板の上に落としたときは、呼ぶ側が帯へ寄せる綴り
  * (`top` / `bottom`) を渡す。
  */
 export function moveDevice(source: string, id: string, to: string, trial = false): MoveResult {
@@ -129,12 +129,12 @@ export function moveDevice(source: string, id: string, to: string, trial = false
   return { ok: true, value: { edits, diff: trial ? { lost: [], gained: [] } : diffAfter(normalized, edits) } };
 }
 
-/** 落ちた穴を `at:` に書ける綴りへ。板の外の番地はそのまま使える。 */
+/** 落ちた穴を `at:` に書ける綴りへ。基板の外の番地はそのまま使える。 */
 export const deviceTarget = (at: Address): string => formatAddress(at);
 
 /**
  * その機器が載っている穴。**番地で置いたときだけ**返す — 帯に並べた機器は
- * 板の格子に載っていないので、指せる穴が無い (掴んで動かすには、まず番地で
+ * 基板の格子に載っていないので、指せる穴が無い (掴んで動かすには、まず番地で
  * 置いてもらう)。まとめて動かすときの起点にも使う (`session.cellsOf`)。
  */
 export function deviceCells(source: string, id: string): readonly string[] {

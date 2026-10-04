@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { renderBreadboard } from './index.ts';
 
 /**
- * 面実装 (52 の docs/64)。**この板が受け取るのは変換基板に載せた姿だけ**
+ * 面実装 (52 の docs/64)。**この基板が受け取るのは変換基板に載せた姿だけ**
  * (`transistor/sot346-dip`、`dip8/sop`)。直付けの姿はユニバーサル基板のもので、
  * 断るときは理由と書き直し先を言う。
  */

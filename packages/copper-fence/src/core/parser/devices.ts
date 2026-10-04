@@ -6,11 +6,11 @@ import { fail, ok } from './result.ts';
 import type { LineResult } from './result.ts';
 
 /**
- * 板の外の機器 (電源・測定器・マイク・アンテナ線)。**板には載らない**ので、
+ * 基板の外の機器 (電源・測定器・マイク・アンテナ線)。**基板には載らない**ので、
  * 部品ではなく別に持つ。配線からは `BAT.+` の形で指す (perfboard と同じ綴り)。
  *
- * 書き方は入れ子 — 足の名前の並びを持つので 1 行に畳めない。perfboard との違いは
- * 位置: 板に格子が無いので `at:` は **mm の点で、箱の中心**。
+ * 書き方は入れ子 — ピンの名前の並びを持つので 1 行に畳めない。perfboard との違いは
+ * 位置: 基板に格子が無いので `at:` は **mm の点で、箱の中心**。
  */
 const KEYS = ['type', 'at', 'label', 'pins', 'face'] as const;
 const FACES: readonly Side[] = ['left', 'right', 'top', 'bottom'];
@@ -24,18 +24,18 @@ function pinList(raw: unknown): readonly unknown[] | null {
 function readPins(id: string, raw: unknown): LineResult<readonly string[]> {
   const pins = pinList(raw);
   if (pins === null || pins.length === 0) {
-    return fail(`${safeToken(id)} には足の名前を pins: + - のように書きます`);
+    return fail(`${safeToken(id)} にはピンの名前を pins: + - のように書きます`);
   }
   if (pins.length > LIMITS.devicePins) {
-    return fail(`${safeToken(id)} の足が多すぎます (${LIMITS.devicePins} 本まで)`);
+    return fail(`${safeToken(id)} のピンが多すぎます (${LIMITS.devicePins} 本まで)`);
   }
   const names: string[] = [];
   for (const pin of pins) {
     const name = typeof pin === 'number' ? String(pin) : pin;
     if (typeof name !== 'string' || !isPinName(name)) {
-      return fail(`${safeToken(id)} の足の名前に使えません: ${safeToken(String(pin))}`, String(pin));
+      return fail(`${safeToken(id)} のピンの名前に使えません: ${safeToken(String(pin))}`, String(pin));
     }
-    if (names.includes(name)) return fail(`${safeToken(id)} の足の名前が重なっています: ${safeToken(name)}`, name);
+    if (names.includes(name)) return fail(`${safeToken(id)} のピンの名前が重なっています: ${safeToken(name)}`, name);
     names.push(name);
   }
   return ok(names);
@@ -47,12 +47,12 @@ export function parseDevice(id: string, entries: Record<string, unknown>): LineR
       return fail(`知らない機器の項目です: ${safeToken(key)} (${KEYS.join(' / ')})`, key);
     }
   }
-  // **入れ子なら機器、にしない。** 部品を書き間違えて字下げした人が、板の外に箱が出ているのを
+  // **入れ子なら機器、にしない。** 部品を書き間違えて字下げした人が、基板の外に箱が出ているのを
   // 見て気づけないまま終わる。
   if (entries.type !== 'device') {
     const written = entries.type === undefined ? '(書かれていません)' : String(entries.type);
     return fail(
-      `入れ子で書けるのは板の外の機器だけです: ${safeToken(id)} の type に device と書きます (いまは ${safeToken(written)})`,
+      `入れ子で書けるのは基板の外の機器だけです: ${safeToken(id)} の type に device と書きます (いまは ${safeToken(written)})`,
       entries.type === undefined ? undefined : written,
     );
   }

@@ -6,9 +6,9 @@ import { parseFence } from './parser/parseFence.ts';
 import { spellPartBlock } from './write/spellPart.ts';
 
 /**
- * 3 本足の IC (`ic3`。52 の docs/66 の段 7)。ホール素子・LM35・LMF501T・UM66T を
+ * 3 ピンの IC (`ic3`。52 の docs/66 の段 7)。ホール素子・LM35・LMF501T・UM66T を
  * 1 つで受ける。**箱は三端子レギュレータと同じ** (1 = 左、2 = 下、3 = 右) で、
- * 足の名前は書き手が `pins:` で与える (品ごとに違うため)。書かなければ番号。
+ * ピンの名前は書き手が `pins:` で与える (品ごとに違うため)。書かなければ番号。
  */
 
 const circuit = (...rows: string[]): string => [...rows, ''].join('\n');
@@ -76,14 +76,14 @@ describe('図', () => {
   });
 
   test('names the leg by its written name when a wire comes in slanted', () => {
-    // 足の名前は図に刷ってある字で言う (アンカー名 `pin 2` では図と突き合わせられない)。
+    // ピンの名前は図に刷ってある字で言う (アンカー名 `pin 2` では図と突き合わせられない)。
     const result = compileCircuit(circuit(...LM35, '  OUT: port c7', 'wires:', '  - U1.Vout -- c7'));
 
     expect(result.notices.map((one) => one.message).join('\n')).toContain('U1.Vout へ -- で引くと斜めに入ります');
   });
 
   test('names a transistor leg in the hint the same way the netlist does', () => {
-    // 箱でない記号の足はアンカー名のまま (ネットリストの `Q1.base` と同じ字)。
+    // 箱でない記号のピンはアンカー名のまま (ネットリストの `Q1.base` と同じ字)。
     const result = compileCircuit(circuit('parts:', '  Q1: npn c4', '  R1: resistor a1 a2 1k', 'wires:', '  - a2 -- Q1.B'));
 
     expect(result.notices.map((one) => one.message).join('\n')).toContain('Q1.base へ -- で引くと斜めに入ります');

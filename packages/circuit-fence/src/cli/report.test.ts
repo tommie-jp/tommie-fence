@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { compileCircuit } from '../core/index.ts';
 import { checkHeading, reportNotices } from './report.ts';
 
-/** R1 の片足 (a2) がどこにもつながっていない回路。お知らせが 1 件出る。 */
+/** R1 の片ピン (a2) がどこにもつながっていない回路。お知らせが 1 件出る。 */
 const LOOSE = 'parts:\n  R1: resistor a1 a2 10k\n  R2: resistor b1 b2 10k\nwires:\n  - a1 -- b1';
 
 afterEach(() => {

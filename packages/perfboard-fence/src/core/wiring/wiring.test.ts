@@ -95,14 +95,14 @@ describe('netlistOf', () => {
   });
 });
 
-describe('板の外の機器', () => {
+describe('基板の外の機器', () => {
   const devices = new Map([['BAT', new Set(['+', '-'])]]);
   const bat = {
     id: 'BAT', at: 'top' as const, where: null, label: 'BAT', pins: ['+', '-'], line: null,
   };
 
   test('joins a hole to a device pin without drawing a wire', () => {
-    // **機器は板の上に無い。** 線を引くと、挿す場所があるように見えてしまう。
+    // **機器は基板の上に無い。** 線を引くと、挿す場所があるように見えてしまう。
     const { wires, deviceLinks, errors } = resolveWires([wire('b3', 'BAT.+')], new Map(), board, devices);
 
     expect(errors).toEqual([]);
@@ -153,7 +153,7 @@ describe('板の外の機器', () => {
   test('names a pin the device has not got, and lists the ones it has', () => {
     const { errors } = resolveWires([wire('b3', 'BAT.gnd')], new Map(), board, devices);
 
-    expect(errors[0]?.message).toContain('という足はありません');
+    expect(errors[0]?.message).toContain('というピンはありません');
     expect(errors[0]?.message).toContain('+ / -');
   });
 

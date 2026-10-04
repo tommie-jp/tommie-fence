@@ -18,7 +18,7 @@ import { placeParts } from '../placement/place.ts';
 import { isLocated, locatePart, stepCell } from './move.ts';
 
 /**
- * 配線を 1 本足す。**行を 1 行足すだけ** — 1 配線 = 1 本の信号経路という
+ * 配線を 1 ピンす。**行を 1 行足すだけ** — 1 配線 = 1 本の信号経路という
  * 文法の読みと揃える (消すのも同じ単位)。
  *
  * 置き場は `wires:` の下の最後の行の次。**字下げは既にある行から写す**ので、
@@ -62,10 +62,10 @@ const hasBoardKey = (lines: readonly string[]): boolean => lines.some((text) => 
 /**
  * `board:` が書かれていなければ、**本文の頭に 1 行書き足す**。
  *
- * この板は穴の数が `board:` でしか決まらないので、書いていないフェンスは
- * 既定の板 (`DEFAULT_BOARD`) で読んでいる。そこへ部品だけ足すと、**図は出るのに
+ * この基板は穴の数が `board:` でしか決まらないので、書いていないフェンスは
+ * 既定の基板 (`DEFAULT_BOARD`) で読んでいる。そこへ部品だけ足すと、**図は出るのに
  * board: が要ると言われ続ける**フェンスが残る。最初に置いたときに書いてしまえば、
- * 読み直した板と書いてある板が一致する (52 の docs/54 の決め 6)。
+ * 読み直した基板と書いてある基板が一致する (52 の docs/54 の決め 6)。
  *
  * 先に返すので `applyLineEdits` が同じ行への差し込みを**この順で**並べる。
  */
@@ -85,7 +85,7 @@ export function insertWire(source: string, from: Address, to: Address, color?: s
   for (const end of [from, to]) {
     // **配線の端は半田付けできる所なら通す。** 穴のほかにスロットの銅箔がある
     // (実物のスロットは電源を引き回すために付いている)。置く先は穴だけ。
-    if (!isSolderable(board, end)) return fail(`${formatAddress(end)} は板の外です`, null);
+    if (!isSolderable(board, end)) return fail(`${formatAddress(end)} は基板の外です`, null);
   }
   // 長さ 0 の線は図に出ない (押し間違いでしか生まれない)。
   if (formatAddress(from) === formatAddress(to)) {
@@ -130,13 +130,13 @@ const diffFor = (part: NewPart, source: string, lines: readonly LineEdit[]): Net
   (part.preview === true ? NO_DIFF : diffAfterLines(source, lines));
 
 /**
- * 押した穴 1 つから、残りの足を**同じ行の右へ**並べる (直付けの SOT だけは
+ * 押した穴 1 つから、残りのピンを**同じ行の右へ**並べる (直付けの SOT だけは
  * 3 番を次の行へ)。押した穴がアンカー
- * (先に書く足)。並べ方 (間隔) は `leadOffsets` が持つ — breadboard と同じ表なので
- * fence-kit にある (書く人の手癖は板が変わっても同じ)。
+ * (先に書くピン)。並べ方 (間隔) は `leadOffsets` が持つ — breadboard と同じ表なので
+ * fence-kit にある (書く人の手癖は基板が変わっても同じ)。
  *
  * 右へ入らなければ断る (左へ折り返すと、押した場所で向きが変わる)。
- * この板はレールが無く全穴が独立なので、断るのは板の外だけ。
+ * この基板はレールが無く全穴が独立なので、断るのは基板の外だけ。
  */
 function spreadFrom(
   type: string,
@@ -159,7 +159,7 @@ function spreadFrom(
   // 押し直した人が今度は下で断られる (角の穴を押したとき)。
   if (offsets.some((step) => step.row !== 0)) {
     return `${formatAddress(anchor)} から右と下へ 1 穴ずつ要ります`
-      + ` (${outside.map(formatAddress).join(' と ')} が板の外です)。別の穴を押します`;
+      + ` (${outside.map(formatAddress).join(' と ')} が基板の外です)。別の穴を押します`;
   }
   const last = holes.reduce((far, hole) => (hole.col > far.col ? hole : far), anchor);
   return needsRoom(formatAddress(anchor), formatAddress(last), last.col - anchor.col);
@@ -172,7 +172,7 @@ function spreadFrom(
  */
 function oriented(source: string, part: NewPart, added: readonly LineEdit[]): AdditionResult {
   const result = orientInserted(source, added, part, {
-    // **置く前の回しは押した穴を軸に。** 軸が動くと、押した穴に足が来ない。
+    // **置く前の回しは押した穴を軸に。** 軸が動くと、押した穴にピンが来ない。
     turn: (placed, quarters) => turnPart(placed, part.id, quarters, 'anchor'),
     flip: (placed) => flipPart(placed, part.id),
     lineOf: (placed) => {
@@ -238,13 +238,13 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
   const normalized = normalizeNewlines(source);
   const { doc } = parseFence(normalized);
 
-  // **書かれた綴りはそのまま行に書き、足の数は種類から引く**。
+  // **書かれた綴りはそのまま行に書き、ピンの数は種類から引く**。
   const written = resolveTypeName(part.type);
   const { type, variant } = splitPartType(part.type);
   const wanted = holesOf(type);
   if (wanted === 0) return fail(`知らない部品の種類です: ${part.type}`, null);
   const anchor = part.at[0];
-  // **穴 1 つで来たら残りを並べる** (2 本足・3 本足)。並べ方は板が決める。
+  // **穴 1 つで来たら残りを並べる** (2 ピン・3 ピン)。並べ方は基板が決める。
   const at = part.at.length === 1 && anchor !== undefined && wanted > 1
     ? spreadFrom(type, variant, anchor, wanted, doc.board)
     : part.at;
@@ -257,12 +257,12 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
   }
 
   for (const hole of at) {
-    if (!isOnBoard(doc.board, hole)) return fail(`${formatAddress(hole)} は板の外です`, null);
+    if (!isOnBoard(doc.board, hole)) return fail(`${formatAddress(hole)} は基板の外です`, null);
   }
-  // 同じ穴に 2 本の足は挿せない。
+  // 同じ穴に 2 本のピンは挿せない。
   const spelled = at.map((hole) => formatAddress(hole));
   if (new Set(spelled).size !== spelled.length) {
-    return fail('同じ穴に 2 本の足は挿せません', null);
+    return fail('同じ穴に 2 本のピンは挿せません', null);
   }
 
   const lines = normalized.split('\n');
@@ -272,11 +272,11 @@ export function insertPart(source: string, part: NewPart): AdditionResult {
   const holes = spelled.join(' ');
   const added = [...boardLine(lines), ...appendUnderKey(lines, 'parts', last, `${part.id}: ${written} ${holes}`)];
 
-  // **穴 1 つで置く形 (DIP / SIP) は、足が書かれた穴より広がる。** 板に載るか
+  // **穴 1 つで置く形 (DIP / SIP) は、ピンが書かれた穴より広がる。** 基板に載るか
   // どうかは並べてみないと分からないので、置いた姿を読み直して確かめる
-  // (足を並べて書く部品は上の `isOnBoard` で済んでいる)。
+  // (ピンを並べて書く部品は上の `isOnBoard` で済んでいる)。
   if (wanted === 1 && partCells(applyLineEdits(normalized, added), part.id).length === 0) {
-    return fail(`${part.type} は ${spelled[0] ?? ''} には収まりません (板から出ます)`, null);
+    return fail(`${part.type} は ${spelled[0] ?? ''} には収まりません (基板から出ます)`, null);
   }
 
   if (part.preview !== true && !landed(normalized, added, part.id)) return fail(LANDED, null);
@@ -299,8 +299,8 @@ export function partCells(source: string, id: string): readonly string[] {
  * 部品をもう 1 つ。**行をそのまま写して、名前と穴だけ差し替える。**
  *
  * 種類・姿・値・書き方 (空白や `points:` の名前) がそのまま残るので、
- * 足の並びを組み直す必要が無い — 端面実装のコネクタや DIP のように
- * **足の並びが形で決まる部品**も、写せば正しい姿のままになる。
+ * ピンの並びを組み直す必要が無い — 端面実装のコネクタや DIP のように
+ * **ピンの並びが形で決まる部品**も、写せば正しい姿のままになる。
  * 置き直す形にすると、その並びを作り直せない部品ができる。
  *
  * ずらすのは**斜めに 1 穴**。重ねると、増えたことが図で分からない。

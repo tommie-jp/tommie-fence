@@ -11,7 +11,7 @@ export const LIMITS = {
   /** 識別子の長さ。報告に載せる綴りの切り詰めにも使う。 */
   idLength: 32,
   /**
-   * 板の辺の長さ (mm)。**200mm でも 1,575px** — 手で切る銅張り基板
+   * 基板の辺の長さ (mm)。**200mm でも 1,575px** — 手で切る銅張り基板
    * (サンハヤト 31R は 100×75mm) を十分に超える。下は SMA の台座が載る幅。
    */
   boardMin: 5,
@@ -21,7 +21,7 @@ export const LIMITS = {
   hMax: 10,
   erMin: 1,
   erMax: 20,
-  /** 板の外へ出してよい距離 (mm)。注釈と SMA の胴が書ければ足りる。 */
+  /** 基板の外へ出してよい距離 (mm)。注釈と SMA の胴が書ければ足りる。 */
   offBoard: 20,
   /** `copper:` に置ける形の数と、折れ線 1 本の点の数。 */
   copper: 200,
@@ -29,14 +29,14 @@ export const LIMITS = {
   /** 線路の幅・隙間・島の辺 (mm)。 */
   sizeMin: 0.05,
   sizeMax: 100,
-  /** 板に載せられる部品の数と、箱 1 つの足の数。 */
+  /** 基板に載せられる部品の数と、箱 1 つのピンの数。 */
   parts: 100,
   boxPins: 64,
-  /** 板の外の機器の数・足の数・足の名前の長さ。 */
+  /** 基板の外の機器の数・ピンの数・ピンの名前の長さ。 */
   devices: 30,
   devicePins: 32,
   pinNameLength: 12,
-  /** 機器の中心を置ける板からの距離 (mm)。注釈の 20mm より遠くへ置ける。 */
+  /** 機器の中心を置ける基板からの距離 (mm)。注釈の 20mm より遠くへ置ける。 */
   offDevice: 60,
   /** 引ける配線 (島どうしのジャンパ) の本数。 */
   wires: 200,
@@ -70,7 +70,7 @@ export const STYLE_RANGES = {
 export const isReferenceable = (name: string): boolean =>
   /^[\w-]+$/.test(name) && name.length > 0 && name.length <= LIMITS.idLength;
 
-/** 機器の足の名前 (`+` `-` `CH1` `OUT`)。空白と `,` は入れない (点の綴りと取り違える)。 */
+/** 機器のピンの名前 (`+` `-` `CH1` `OUT`)。空白と `,` は入れない (点の綴りと取り違える)。 */
 export const isPinName = (name: string): boolean =>
   name.length > 0 && name.length <= LIMITS.pinNameLength && !/[\s,]/.test(name);
 

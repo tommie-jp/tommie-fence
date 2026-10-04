@@ -16,12 +16,12 @@ describe('renderBoard', () => {
   });
 
   test('draws one hole for every hole on the board', () => {
-    // **全穴が独立している**のがこの板なので、穴は 1 つずつ描く。
+    // **全穴が独立している**のがこの基板なので、穴は 1 つずつ描く。
     expect(count(svg, /<circle /g)).toBe(6 * 4);
   });
 
   test('names every row down the left and every column across the top', () => {
-    // 英字は**大文字が既定**。板のシルク (秋月 C タイプの A・E・J・O) に合わせている。
+    // 英字は**大文字が既定**。基板のシルク (秋月 C タイプの A・E・J・O) に合わせている。
     for (const label of ['A', 'B', 'C', 'D']) {
       expect(svg).toContain(`>${label}</text>`);
     }
@@ -61,7 +61,7 @@ describe('renderBoard', () => {
   });
 
   test('takes the kind of name each axis was given, and the case of the letters', () => {
-    // 手元の板のシルクに寄せるためのもの。**番地は変わらない** (`b3` のまま)。
+    // 手元の基板のシルクに寄せるためのもの。**番地は変わらない** (`b3` のまま)。
     const drawn = renderBoard(board, layout, THEME, { row: 'numeric', col: 'alpha', case: 'lower', sides: ['left', 'top'] });
 
     expect(drawn).toContain('>2</text>');
@@ -110,7 +110,7 @@ describe('スロットの銅箔の番号', () => {
 
   test('numbers the copper outside the holes, so a wire can be written to it', () => {
     // 配線の端は銅箔にも付く (`isSolderable`)。**番号が出ていないと書けない**
-    // ので、`slots:` を書いた板では穴の並びの外側 1 本にも番号を出す。
+    // ので、`slots:` を書いた基板では穴の並びの外側 1 本にも番号を出す。
     const wide = numbered({ cols: 6, rows: 4 }, true);
 
     // 横長は左右が銅箔 (`slotEdges` が 'sides')。列は 0 から 7 まで。

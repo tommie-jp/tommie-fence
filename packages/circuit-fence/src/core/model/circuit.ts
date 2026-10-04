@@ -123,7 +123,7 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
   const parts = doc.parts.map((part) => checkPart(part, errors, target));
   const byId = new Map(parts.map((part) => [part.id, part]));
   // 指す先が無い配線は描けない。1 本落としても残りは描く。
-  // 足の名前は書き方が何通りかあるので、ここで 1 つに揃えてから先へ渡す。
+  // ピンの名前は書き方が何通りかあるので、ここで 1 つに揃えてから先へ渡す。
   const wires = doc.wires
     .map((wire) => resolvePins(wire, byId, errors))
     .filter((wire): wire is WireSpec => wire !== null);
@@ -144,20 +144,20 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
   return {
     circuit,
     errors,
-    // 足の名前を補えなかった DIP は `check: off` でも言う — 検査ではなく、
+    // ピンの名前を補えなかった DIP は `check: off` でも言う — 検査ではなく、
     // 何で描いたか (番号) の知らせ (文法の方針 2)。
     notices: [...parts.flatMap(unnamedDipNotice), ...parts.flatMap(gateNumberNotice), ...(checking ? ambiguousTouches(circuit, byId) : [])],
   };
 }
 
-/** ゲートに足の番号を添えられなかったときのお知らせ (`gateNumbers.ts`)。 */
+/** ゲートにピンの番号を添えられなかったときのお知らせ (`gateNumbers.ts`)。 */
 function gateNumberNotice(part: PartSpec): FenceError[] {
   const { problem } = gateNumbersOf(part);
   return problem === null ? [] : [fenceError(problem, part.line)];
 }
 
 /**
- * 型番が足の名前の表に無い DIP のお知らせ (52 の docs/95 の決め 3)。**エラーには
+ * 型番がピンの名前の表に無い DIP のお知らせ (52 の docs/95 の決め 3)。**エラーには
  * しない** — 表に無い IC も番号で描ければ試せる。直し方は 2 つ (表に足す・`device`)。
  */
 function unnamedDipNotice(part: PartSpec): FenceError[] {
@@ -167,7 +167,7 @@ function unnamedDipNotice(part: PartSpec): FenceError[] {
     ? `${part.type} の型番は表にありません`
     : `${part.type} で表にあるのは ${unnamed.known.join(' / ')}`;
   return [fenceError(
-    `${part.id} の型番 ${safeToken(unnamed.model)} の足の名前は表に無いので、番号で描きました (${known}。表に無い IC の足に名前を出すなら device で pins: を書きます)`,
+    `${part.id} の型番 ${safeToken(unnamed.model)} のピンの名前は表に無いので、番号で描きました (${known}。表に無い IC のピンに名前を出すなら device で pins: を書きます)`,
     part.line,
   )];
 }
@@ -319,14 +319,14 @@ function overlaps(parts: readonly PartSpec[]): FenceError[] {
 }
 
 /**
- * 足へ引いた線の上に、別の端が乗って**見える**ところ。
+ * ピンへ引いた線の上に、別の端が乗って**見える**ところ。
  *
- * 足 (`U1.out`) は記号ごとに決まった位置にあり、格子の上に無い。だから
+ * ピン (`U1.out`) は記号ごとに決まった位置にあり、格子の上に無い。だから
  * 線がどこを通るかがこちら側では分からず、T 字かどうかを決められない。
  * 黙って別のネットにすると、図では触れて見えるのにネットリストだけ割れる。
  * つながりは変えずに、書き方を分けるよう伝える。
  *
- * 足の位置は部品を置いた交点で代用して見当をつける。当て推量なので
+ * ピンの位置は部品を置いた交点で代用して見当をつける。当て推量なので
  * **つなぐ判断には使わない** (外したときに出るのは余計な 1 行だけ)。
  */
 function ambiguousTouches(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>): FenceError[] {
@@ -343,7 +343,7 @@ function ambiguousTouches(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>)
 
       errors.push(
         fenceError(
-          `${formatAddress(cell)} はこの線の上に見えますが、足のある線ではつながりを決められません` +
+          `${formatAddress(cell)} はこの線の上に見えますが、ピンのある線ではつながりを決められません` +
             ` (${formatAddress(cell)} を通る配線に分けてください)`,
           wire.line,
         ),
@@ -394,17 +394,17 @@ function ambiguousNoteTargets(circuit: Circuit, byId: ReadonlyMap<string, PartSp
 }
 
 /**
- * `--` で足へ引いていて、**斜めに入る**ところ。
+ * `--` でピンへ引いていて、**斜めに入る**ところ。
  *
- * 足は記号ごとに決まった位置にあり、格子の上に無い。`--` は 2 点を
- * まっすぐ結ぶので、中心線に乗っていない足へ引くと斜めに入る。
+ * ピンは記号ごとに決まった位置にあり、格子の上に無い。`--` は 2 点を
+ * まっすぐ結ぶので、中心線に乗っていないピンへ引くと斜めに入る。
  * 図は書いたとおりに描く (勝手に折らない) が、回路図としては直角に入るのが
  * 普通なので、`|-` / `-|` を添えて伝える。
  *
- * まっすぐ引けるのは、足が中心線に乗っていて、相手の番地がその軸に
+ * まっすぐ引けるのは、ピンが中心線に乗っていて、相手の番地がその軸に
  * 揃っているときだけ (`U1.out -- c7` のような書き方)。軸は表から引く
- * (parts.ts の pinAxis)。両端とも足のときと、両端を番地で置く 2 端子部品の
- * 足 (ワイパー・ゲート) は**見ない** — 中心線がどこかを決められないので、
+ * (parts.ts の pinAxis)。両端ともピンのときと、両端を番地で置く 2 端子部品の
+ * ピン (ワイパー・ゲート) は**見ない** — 中心線がどこかを決められないので、
  * 当て推量で口を出さない。
  */
 function slantedIntoPins(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>): FenceError[] {
@@ -421,7 +421,7 @@ function slantedIntoPins(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>):
     if (part === undefined || part.kind !== 'multi-terminal') continue;
 
     const type = partTypeOf(part);
-    // **向きを渡す。** 記号を回すと足の乗る中心線も回るので、渡さないと
+    // **向きを渡す。** 記号を回すとピンの乗る中心線も回るので、渡さないと
     // 回した部品では正しく引いた線に「斜めです」と言い、斜めの線を黙って通す。
     const axis = type === null ? null : pinAxis(type, pin.pin, part.turn);
     // 交点の間の番地は 1/100 刻みの小数なので、丸めの残りを 0 として見る
@@ -429,7 +429,7 @@ function slantedIntoPins(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>):
     if (axis === 'h' && isNearlyZero(cell.row - part.at.row)) continue;
     if (axis === 'v' && isNearlyZero(cell.col - part.at.col)) continue;
 
-    // 足はネットリストと同じ呼び名で言う (箱の足は図に刷ってある名前)。
+    // ピンはネットリストと同じ呼び名で言う (箱のピンは図に刷ってある名前)。
     errors.push(
       fenceError(
         `${safeToken(`${pin.part}.${pinRefName(type, pin.pin)}`)} へ -- で引くと斜めに入ります` +
@@ -445,7 +445,7 @@ function slantedIntoPins(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>):
 /**
  * 部品の**体の上**に別の端が乗っているところ。
  *
- * 部品は 2 点の間に記号を描くので、その途中に線を当てても足ではない。
+ * 部品は 2 点の間に記号を描くので、その途中に線を当ててもピンではない。
  * つないだことにはできないが、図では触れて見えるので黙っていない。
  */
 function touchesOnBodies(circuit: Circuit, ends: readonly Address[]): FenceError[] {
@@ -473,18 +473,18 @@ function touchesOnBodies(circuit: Circuit, ends: readonly Address[]): FenceError
 }
 
 /**
- * 足のある配線のうち、**交点を拾いうる一辺**。無ければ null。
+ * ピンのある配線のうち、**交点を拾いうる一辺**。無ければ null。
  *
- * 足の位置は置かれた交点で代用するしかないが、**代用が効くかどうかは
- * 足で決まる**:
+ * ピンの位置は置かれた交点で代用するしかないが、**代用が効くかどうかは
+ * ピンで決まる**:
  *
- * - **中心線に乗る足** (`out` など。`pinAxis` が答える) は、その線が交点の
+ * - **中心線に乗るピン** (`out` など。`pinAxis` が答える) は、その線が交点の
  *   並びに乗る。だから置かれた交点を通る線分でそのまま見てよい
- * - **中心線から外れた足** (ボードの `GP27`、オペアンプの `±`) は、記号の縁の
+ * - **中心線から外れたピン** (ボードの `GP27`、オペアンプの `±`) は、記号の縁の
  *   半端な高さに出る。そこから出る辺は**交点の並びに乗らない**ので、
  *   どの交点も通らない — 見なくてよい。折れた線なら、**交点の側の一辺だけ**が
  *   並びに乗るので、そちらを見る
- * - `--` で外れた足へ引くと斜めに入る。それは別のお知らせ
+ * - `--` で外れたピンへ引くと斜めに入る。それは別のお知らせ
  *   (`slantedIntoPins`) が言うので、ここでは重ねて言わない
  *
  * **見当で「つなぐ」判断はしない**のは今までどおり。見当が外れても、
@@ -502,9 +502,9 @@ function guessSegment(wire: WireSpec, byId: ReadonlyMap<string, PartSpec>): Segm
     && pinAxis(type, pin.pin, part.turn) !== null;
   if (centred) return { from, to };
 
-  // ここから下は、中心線から外れた足。
+  // ここから下は、中心線から外れたピン。
   if (wire.operator === '--') return null;
-  // 折れた線の**交点の側の一辺**。`-|` は先に横なので、角は足の行と交点の列。
+  // 折れた線の**交点の側の一辺**。`-|` は先に横なので、角はピンの行と交点の列。
   const cell = pin === wire.from ? to : from;
   const other = pin === wire.from ? from : to;
   const corner = wire.operator === '-|'
@@ -520,9 +520,9 @@ function endpointCell(endpoint: Endpoint, byId: ReadonlyMap<string, PartSpec>): 
 }
 
 /**
- * 配線の端が指す足を、circuitikz のアンカー名に揃える。
+ * 配線の端が指すピンを、circuitikz のアンカー名に揃える。
  *
- * `Q1.B` も `Q1.base` も `Q1.BASE` も同じ足なので、ここで 1 つの綴りにする。
+ * `Q1.B` も `Q1.base` も `Q1.BASE` も同じピンなので、ここで 1 つの綴りにする。
  * 揃えないと、書き方の違いだけでネットが割れ、TeX にも存在しない
  * アンカー名 (`Q1.b`) を渡してしまう。
  * 指す先が無ければ理由を積んで null (その配線は描かない)。
@@ -536,7 +536,7 @@ function resolvePins(
   const [from, to] = ends;
   if (from === null || to === null || from === undefined || to === undefined) return null;
 
-  // 揃えたあとで見ないと、`Q1.B -- Q1.base` のような同じ足どうしを見逃す。
+  // 揃えたあとで見ないと、`Q1.B -- Q1.base` のような同じピンどうしを見逃す。
   if (nameOfEndpoint(from) === nameOfEndpoint(to)) {
     errors.push(fenceError(`配線の両端が同じところです (${safeToken(nameOfEndpoint(from))})`, wire.line));
     return null;
@@ -545,7 +545,7 @@ function resolvePins(
   return { ...wire, from, to };
 }
 
-/** 端 1 つを解決する。番地はそのまま、足はアンカー名に揃える。 */
+/** 端 1 つを解決する。番地はそのまま、ピンはアンカー名に揃える。 */
 function resolveEndpoint(
   endpoint: Endpoint,
   line: number,
@@ -556,7 +556,7 @@ function resolveEndpoint(
 
   const part = byId.get(endpoint.part);
   if (part === undefined) {
-    // 番地を `_` で切らずに書くと足の形になる (`a1.5` は「a1 の 5 番ピン」)。
+    // 番地を `_` で切らずに書くとピンの形になる (`a1.5` は「a1 の 5 番ピン」)。
     // 部品が無いなら番地のつもりだった見込みが高いので、直せる形を添える。
     const near = addressHint(`${endpoint.part}.${endpoint.pin}`);
     const hint = near === null ? '' : ` (${near})`;
@@ -564,11 +564,11 @@ function resolveEndpoint(
     return null;
   }
 
-  // 足を指せるかは種類が多端子かどうかではなく、足の表を持っているかで決まる
-  // (ポテンショメータのように 2 端子でも足を 1 本持つ種類がある)。
+  // ピンを指せるかは種類が多端子かどうかではなく、ピンの表を持っているかで決まる
+  // (ポテンショメータのように 2 端子でもピンを 1 本持つ種類がある)。
   const type = partTypeOf(part);
   if (type === null || type.pins === undefined) {
-    errors.push(fenceError(`部品 ${safeToken(part.id)} (${safeToken(part.type)}) に足の名前はありません`, line));
+    errors.push(fenceError(`部品 ${safeToken(part.id)} (${safeToken(part.type)}) にピンの名前はありません`, line));
     return null;
   }
 
@@ -576,7 +576,7 @@ function resolveEndpoint(
   if (anchor === null) {
     errors.push(
       fenceError(
-        `${safeToken(part.id)} に足 ${safeToken(endpoint.pin)} はありません (${pinHint(type)})`,
+        `${safeToken(part.id)} にピン ${safeToken(endpoint.pin)} はありません (${pinHint(type)})`,
         line,
       ),
     );
@@ -590,8 +590,8 @@ function resolveEndpoint(
 type Segment = { readonly from: Address; readonly to: Address };
 
 /**
- * 配線が通る線分。足 (`U1.out`) は格子の上に無いので、位置が分からない。
- * 両端が番地のときだけ線分として扱える (足が絡む線は幾何を見ない)。
+ * 配線が通る線分。ピン (`U1.out`) は格子の上に無いので、位置が分からない。
+ * 両端が番地のときだけ線分として扱える (ピンが絡む線は幾何を見ない)。
  */
 function segmentsOf(wire: WireSpec): Segment[] {
   const from = cellOf(wire.from);
@@ -630,7 +630,7 @@ export type WireContact = { readonly cell: Address; readonly wire: WireSpec };
 /**
  * 部品の端と配線の端のうち、番地で表せるもの。別の配線の途中に乗ると T 字。
  *
- * 多端子部品を置いた交点は**端ではない** (記号の真ん中で、足はそこに無い)。
+ * 多端子部品を置いた交点は**端ではない** (記号の真ん中で、ピンはそこに無い)。
  * 端として数えると、記号の下を通った線に黒丸が乗ってしまう。
  */
 function endpointsOf(circuit: Circuit): Address[] {
@@ -735,7 +735,7 @@ function checkLabels(part: TwoTerminalPart, errors: FenceError[], target: TexTar
  * 書かれた向きが、その種類に書けるものか。**表引き** (`parts.ts` の `orient`)。
  *
  * **回転と反転は別々に見る。** 回せても反転すると字が鏡文字になる記号があり
- * (DIP の足番号と型番)、左右対称で反転しても図が変わらない記号もある
+ * (DIP のピン番号と型番)、左右対称で反転しても図が変わらない記号もある
  * (`ground`)。書けない向きは**落として**から先へ渡す — TeX には検証済みの形
  * しか渡さない (設計上の約束 5)。
  */

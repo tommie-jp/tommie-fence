@@ -9,7 +9,7 @@ export const refuse = (message: string, line: number | null = null): EditResult 
 const NO_DIFF: NetDiff = { lost: [], gained: [] };
 const SEPARATOR = ' ';
 
-/** 足どうしのつながり (ネットの中の 2 つずつ)。 */
+/** ピンどうしのつながり (ネットの中の 2 つずつ)。 */
 function connectionsOf(source: string): Set<string> {
   const pairs = new Set<string>();
   for (const net of renderCopper(source).netlist) {
@@ -24,7 +24,7 @@ function connectionsOf(source: string): Set<string> {
 const toPairs = (keys: readonly string[]): NetDiff['lost'] =>
   keys.map((key) => key.split(SEPARATOR) as unknown as NetDiff['lost'][number]);
 
-/** 書き換えで**離れた・つながった**足の組 (perfboard と同じ数え方)。 */
+/** 書き換えで**離れた・つながった**ピンの組 (perfboard と同じ数え方)。 */
 function diffOf(source: string, after: string): NetDiff {
   const was = connectionsOf(source);
   const now = connectionsOf(after);

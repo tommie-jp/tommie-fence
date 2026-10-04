@@ -6,7 +6,7 @@ import { createBreadboardEditor } from './fenceEditor.ts';
  * 殻がフェンスに求めることを、**3 つのフェンスで同じ手**で確かめる
  * (中身は `fence-kit/src/editor/contract.ts`)。とくに
  * **パレットに出る種類が全部 1 クリックで置ける**ことを見る — ここが破れていた
- * のに版をまたいで気づけなかった (3 本足 5 種が置けなかった)。
+ * のに版をまたいで気づけなかった (3 ピン 5 種が置けなかった)。
  */
 const SOURCE = [
   'title: 契約',

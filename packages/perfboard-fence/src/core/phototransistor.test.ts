@@ -4,7 +4,7 @@ import { holesOf, partName, partPrefix } from './parts/catalog.ts';
 import { isAxial, isKnownType, placeableNames, splitPartType } from './parts/types.ts';
 
 /**
- * フォトトランジスタ (52 の docs/66 の段 6)。**2 本足** (C E。B は無い) の
+ * フォトトランジスタ (52 の docs/66 の段 6)。**2 ピン** (C E。B は無い) の
  * 砲弾型で、LED と同じ姿 (`3mm` `5mm`) に黒い胴。先に書いた穴が C。
  */
 
@@ -15,7 +15,7 @@ describe('フォトトランジスタ', () => {
     expect(isKnownType('phototransistor')).toBe(true);
     expect(placeableNames()).toContain('phototransistor');
     expect(holesOf('phototransistor')).toBe(2);
-    // 砲弾型は足が同じ側から出る (軸物ではない)。隣の穴に挿せる。
+    // 砲弾型はピンが同じ側から出る (軸物ではない)。隣の穴に挿せる。
     expect(isAxial('phototransistor')).toBe(false);
     expect(partName('phototransistor')).toBe('フォトトランジスタ');
     expect(partPrefix('phototransistor')).toBe('Q');
@@ -33,7 +33,7 @@ describe('フォトトランジスタ', () => {
 
 describe('当たり判定', () => {
   test('uses the drawn dome, not a body stretched between the legs', () => {
-    // 足を a1 と a8 に広げても玉は真ん中に 1 つ。足の間の a2〜a3 に置いた抵抗とは
+    // ピンを a1 と a8 に広げても玉は真ん中に 1 つ。ピンの間の a2〜a3 に置いた抵抗とは
     // 重ならない (胴の形は描画と当たり判定で同じ。perfboard の約束 9)。
     const result = renderPerfboard(fence(
       'parts:', '  Q1: phototransistor a1 a8', '  R1: resistor a2 a3 1k',

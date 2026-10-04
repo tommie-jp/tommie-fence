@@ -4,7 +4,7 @@ import type { Point, Rect } from '../types.ts';
  * 2 点が張る矩形が、部品の矩形と重なるかどうか。
  *
  * **触れているだけでは重なったことにしない**: 端点が部品の縁にちょうど載る配線
- * (部品の足から出る配線がまさにそれ) まで避け始めると、どこにも引けなくなる。
+ * (部品のピンから出る配線がまさにそれ) まで避け始めると、どこにも引けなくなる。
  */
 export function boxHitsRect(a: Point, b: Point, rect: Rect, margin: number): boolean {
   return Math.min(a.x, b.x) < rect.x + rect.width + margin

@@ -16,18 +16,18 @@ const LABEL_WEIGHT = 700;
 const railColor = (rail: RailRow, palette: Palette): string =>
   rail.startsWith('+') ? palette.positive : palette.negative;
 
-/** ブレッドボード本体 (板・溝・電源レール・全部の穴・行番号) を描く。 */
+/** ブレッドボード本体 (基板・溝・電源レール・全部の穴・行番号) を描く。 */
 export function renderBoard(
   board: Board,
   layout: Layout,
   theme: RenderTheme,
-  // **名札が乗る所には印字しない** (`captions.ts` が数えた帯)。板の印字は
+  // **名札が乗る所には印字しない** (`captions.ts` が数えた帯)。基板の印字は
   // 縁取りで消しきれず、字の隙間から欠けた数字が覗いて汚れて見える
   // (実機で `TH1 10k` の間に `5` の欠片が出ていた)。番号は 5 列おきに
   // 何度も出るので、1 つ伏せても数えられなくならない。
   covered: readonly Rect[] = [],
   // **名札の字の下には穴を描かない。** 字の縁取りは字の形にしか穴を消せないので、
-  // 字の隙間と基準線の下から穴の欠片が覗き、足の目盛りのような印が字に付く
+  // 字の隙間と基準線の下から穴の欠片が覗き、ピンの目盛りのような印が字に付く
   // (実機で `R1 1k` の下に `ˌ ˌ` が出ていた)。穴を丸ごと描かなければ欠片は出ない。
   // 配線は穴の後に描くので、名札の下を通る線は隠れない。
   lettered: readonly Rect[] = [],
@@ -43,7 +43,7 @@ export function renderBoard(
     element('rect', { x: num(x), y: num(layout.ravineY - 6), width: num(width), height: 12, fill: palette.ravine }),
   ];
 
-  // レールを外した板では縞も ± の印字もレールの穴も無い。
+  // レールを外した基板では縞も ± の印字もレールの穴も無い。
   const rails = board.rails ?? [];
 
   rails.forEach((rail, index) => {
@@ -81,7 +81,7 @@ export function renderBoard(
           x: num(layout.colX(col) - metrics.holeSize / 2),
           y: num(layout.rowY(row) - metrics.holeSize / 2),
           width: num(metrics.holeSize), height: num(metrics.holeSize), rx: 1, fill: palette.hole,
-          // 暗い板では塗りだけでは穴が読めないので、明るい縁で立たせる。
+          // 暗い基板では塗りだけでは穴が読めないので、明るい縁で立たせる。
           stroke: palette.holeEdge ?? undefined,
         }),
       );
@@ -123,7 +123,7 @@ export function renderBoard(
   return parts.join('\n');
 }
 
-/** 2 つの矩形が重なっているか (板の印字を伏せるかどうかの判定)。 */
+/** 2 つの矩形が重なっているか (基板の印字を伏せるかどうかの判定)。 */
 const hides = (a: Rect, b: Rect): boolean =>
   Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 0
   && Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) > 0;

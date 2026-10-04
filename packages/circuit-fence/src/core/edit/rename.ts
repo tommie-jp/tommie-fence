@@ -12,7 +12,7 @@ import type { Edit, RewriteResult } from './shared.ts';
  * 部品の名前を変える。**フェンス本文 → 書き換えの並び**を返す純関数で、
  * vscode を知らない (設計上の約束 1)。
  *
- * 名前は 3 か所に書かれる — 鍵 (`R1:`)、配線の足 (`R1.b`)、注釈の指し先
+ * 名前は 3 か所に書かれる — 鍵 (`R1:`)、配線のピン (`R1.b`)、注釈の指し先
  * (`circle R1`)。**どれか 1 つでも見つからなければ断る。** 半分だけ書き換えると、
  * 図が壊れた状態で残る (残ったほうは「そんな部品はない」になる)。
  *
@@ -41,7 +41,7 @@ type Token = { readonly column: number; readonly text: string };
 
 /**
  * 行の中の綴り。**空白に加えてフロー形式の区切り (`[` `]` `{` `}` `,`) でも切る** —
- * `wires: [U1.out -- a1, …]` の `[U1.out` を 1 つの綴りと取ると、足の名前を見落として
+ * `wires: [U1.out -- a1, …]` の `[U1.out` を 1 つの綴りと取ると、ピンの名前を見落として
  * 改名したあとも古い名前を指したまま残る。
  */
 const tokensOf = (text: string): readonly Token[] =>
@@ -86,7 +86,7 @@ export function renamePart(source: string, handle: string, to: string): RewriteR
     return { ok: true, value: { edits, lines: [], diff: { lost: [], gained: [] } } };
   }
 
-  // 2. 配線の足 (`R1.b`)。綴りの頭だけを差し替える (足の名前は触らない)。
+  // 2. 配線のピン (`R1.b`)。綴りの頭だけを差し替える (ピンの名前は触らない)。
   for (const wire of doc.wires) {
     const ends = [wire.from, wire.to].filter((end) => end.kind === 'pin' && end.part === from);
     if (ends.length === 0) continue;
@@ -125,7 +125,7 @@ export function renamePart(source: string, handle: string, to: string): RewriteR
 }
 
 /**
- * 書いたあと読み直して、**古い名前を指すものが残っていないか** (配線の足と注釈)。
+ * 書いたあと読み直して、**古い名前を指すものが残っていないか** (配線のピンと注釈)。
  * 部品の数と YAML の構文エラーも動かないこと。取りこぼすと、配線が黙って切れる。
  */
 function renamedAll(source: string, edits: readonly Edit[], from: string): boolean {

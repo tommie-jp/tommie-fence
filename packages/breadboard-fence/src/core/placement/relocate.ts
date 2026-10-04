@@ -28,7 +28,7 @@ export type RelocateResult = {
   readonly moves: readonly FenceError[];
 };
 
-/** 胴が板から浮いていて、同じ列のまま行を変えても絵が成り立つ種類。 */
+/** 胴が基板から浮いていて、同じ列のまま行を変えても絵が成り立つ種類。 */
 const SLIDABLE_KINDS: ReadonlySet<string> = new Set(['two-lead', 'three-lead']);
 
 const BLOCK_ROWS = HOLE_ROWS.length / 2;
@@ -60,18 +60,18 @@ type Ledger = {
 };
 
 /**
- * 配線の端点と足が同じ穴を取り合う部品を、同じ列のまま空いている行へ寄せる。
- * 実物のボードでは同じ穴に足とジャンパは挿せないので、図もそう描かない。
+ * 配線の端点とピンが同じ穴を取り合う部品を、同じ列のまま空いている行へ寄せる。
+ * 実物のボードでは同じ穴にピンとジャンパは挿せないので、図もそう描かない。
  *
- * - 縦に走る配線の**通り道には寄せない** (穴は空いていても、線が足の上を通る)。
+ * - 縦に走る配線の**通り道には寄せない** (穴は空いていても、線がピンの上を通る)。
  * - 横へ逃げる配線しか無ければどちらへも寄れる。見た目に良い側 (`away`) から試す。
  * - 同じ列の中の移動なのでストリップが変わらず、**ネットリストは変わらない**。
- *   だからこの寄せはお知らせにしない (文書化された標準の描き方)。足と配線を
+ *   だからこの寄せはお知らせにしない (文書化された標準の描き方)。ピンと配線を
  *   同じ穴に書くのはこの文法のふつうの書き方で、例と文書の図のほとんどが寄せを
  *   使っている。言うと、ふつうに書いた図のすべてにお知らせが付く。
- * - **2 本足どうしの胴が同じ行で重なる**ときは、後に書いたほうを同じ手で寄せ、
+ * - **2 ピンどうしの胴が同じ行で重なる**ときは、後に書いたほうを同じ手で寄せ、
  *   **こちらはお知らせで言う** (`moves`)。重なった胴は 2 つの部品に見えず、
- *   どの足がどれか読めない。書いたとおりには組めないので、書き手に直してもらう。
+ *   どのピンがどれか読めない。書いたとおりには組めないので、書き手に直してもらう。
  * - 寄せられないときは書かれたまま描き、**お知らせで実物に挿せないことだけ言う**。
  *   黙って通すと、図を写した人がその穴の前で手が止まる。
  */
@@ -97,7 +97,7 @@ export function relocateParts(
   }
   const corridors = new Set(corridor.map(formatAddress));
 
-  // 部品が塞ぐ穴の台帳 (足 + 本体の下)。
+  // 部品が塞ぐ穴の台帳 (ピン + 本体の下)。
   const partHoles = new Set<string>();
   for (const part of parts) {
     for (const address of occupiedHoles(part)) partHoles.add(formatAddress(address));
@@ -138,7 +138,7 @@ export function relocateParts(
   return { parts: anyMoved ? result : parts, errors, moves };
 }
 
-/** 胴が 1 行に寝る 2 本足の、足と足の間を含めた穴。重なりを見るのに使う。 */
+/** 胴が 1 行に寝る 2 ピンの、ピンとピンの間を含めた穴。重なりを見るのに使う。 */
 function bodyHoles(part: PlacedPart): string[] {
   if (part.kind !== 'two-lead') return [];
   const holes = part.pins.map((pin) => pin.address);
@@ -174,7 +174,7 @@ function slideAside(
   part: PlacedPart,
   sharedEnds: readonly WireEnd[],
   ledger: Ledger,
-  // 胴どうしの重なりで寄せるときの、ほかの胴が寝ている穴 (足の間を含む)。
+  // 胴どうしの重なりで寄せるときの、ほかの胴が寝ている穴 (ピンの間を含む)。
   bodies: ReadonlySet<string> = new Set(),
 ): PlacedPart | null {
   if (sharedEnds.some((end) => end.exit === 'unknown')) return null;
@@ -194,11 +194,11 @@ function slideAside(
   for (const side of candidates) {
     for (let step = 1; step < BLOCK_ROWS; step += 1) {
       const targets = holes.map((address) => shifted(address, DELTA[side] * step));
-      // どれかの足がブロックを出たら、それより先も出たままなのでこの向きは打ち切る。
+      // どれかのピンがブロックを出たら、それより先も出たままなのでこの向きは打ち切る。
       if (!targets.every((target): target is HoleAddress => target !== null)) break;
 
-      // 足の穴に加えて、胴の下に隠れる穴 (足の間) も見る。そこに配線の点や
-      // 他の足があると、胴の絵の下に埋まって何が挿さっているのか読めなくなる。
+      // ピンの穴に加えて、胴の下に隠れる穴 (ピンの間) も見る。そこに配線の点や
+      // 他のピンがあると、胴の絵の下に埋まって何が挿さっているのか読めなくなる。
       const names = [...targets.map(formatAddress), ...betweenLeads(targets)];
       const blocked = names.some((name) =>
         ledger.wireHoles.has(name) || ledger.corridors.has(name)
@@ -218,7 +218,7 @@ function slideAside(
   return null;
 }
 
-/** 足が 1 行に並ぶ部品の、足と足の間の穴。胴がその上に描かれる。 */
+/** ピンが 1 行に並ぶ部品の、ピンとピンの間の穴。胴がその上に描かれる。 */
 function betweenLeads(targets: readonly HoleAddress[]): string[] {
   const rows = new Set(targets.map((target) => target.row));
   if (rows.size !== 1 || targets.length < 2) return [];
@@ -236,7 +236,7 @@ function betweenLeads(targets: readonly HoleAddress[]): string[] {
 const unbuildable = (part: PlacedPart, sharedEnds: readonly WireEnd[]): FenceError => {
   const holes = [...new Set(sharedEnds.map((end) => formatAddress(end.address)))];
   return notice(
-    `部品 ${safeToken(part.id)}: ${holes.join(', ')} に足と配線の両方がつながっています` +
+    `部品 ${safeToken(part.id)}: ${holes.join(', ')} にピンと配線の両方がつながっています` +
     ' (実物では同じ穴に挿せません)',
     part.line,
   );

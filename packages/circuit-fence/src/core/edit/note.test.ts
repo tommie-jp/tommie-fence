@@ -78,7 +78,7 @@ describe('turnNote / flipNote', () => {
   });
 
   test('says why a text note cannot be flipped here', () => {
-    // 字を指し先そのものに置くので、移す側がない (板の 2 つは上に置くので逃がせる)。
+    // 字を指し先そのものに置くので、移す側がない (ブレッドボードとユニバーサル基板は上に置くので逃がせる)。
     expect(refused(flipNote(RC, 'note:6'))).toContain('移す側がありません');
   });
 

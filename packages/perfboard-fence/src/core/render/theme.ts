@@ -2,7 +2,7 @@ import { LAND_COLORS, PLATE_COLORS, darken, landValue, plateValue, textOn, wireO
 import type { Board, LabelCase, LabelKind, LabelSide, StyleSpec, ThemeName } from '../types.ts';
 
 /**
- * 板と印字の配色と寸法。
+ * 基板と印字の配色と寸法。
  *
  * **配色だけがテーマで動く。** 寸法 (穴の大きさ・字の大きさ) は 3 つとも同じで、
  * 図の形はテーマで変わらない — 同じフェンスを別のテーマで出しても、
@@ -16,13 +16,13 @@ export type Palette = {
   /**
    * 図の地の色。**null なら塗らない** — 貼った先の背景が透ける。
    *
-   * 既定の light は透明のまま (プレビューの地に馴染ませる)。板の外に出る字
+   * 既定の light は透明のまま (プレビューの地に馴染ませる)。基板の外に出る字
    * (題・行と列の名前) は地の上に乗るので、**地を決めたテーマは必ず塗る** —
    * 塗らないと、暗い字を暗い背景に置いたときに黙って消える。
    * breadboard-fence の `canvas` と同じ考え方。
    */
   readonly canvas: string | null;
-  /** 板の地の色。生基板のガラスエポキシに寄せる。 */
+  /** 基板の地の色。生基板のガラスエポキシに寄せる。 */
   readonly plate: string;
   readonly plateEdge: string;
   /** 穴の内側 (抜けている所)。 */
@@ -31,7 +31,7 @@ export type Palette = {
   readonly land: string;
   /** 行と列の名前。 */
   readonly label: string;
-  /** 部品の足 (リード線)。 */
+  /** 部品のピン (リード線)。 */
   readonly lead: string;
   /** 部品の胴。**実物の色を持つ部品 (LED・カラーコード) はここを使わない** — 
    * あちらは fence-kit の色で、テーマから触らせない。 */
@@ -39,23 +39,23 @@ export type Palette = {
   readonly bodyEdge: string;
   /** 樹脂のパッケージ (TO-92 / TO-220) の胴。**テーマごとの黒**。 */
   readonly chipBody: string;
-  /** パッケージから覗く足の跡と、樹脂に刷った足の番号。 */
+  /** パッケージから覗くピンの跡と、樹脂に刷ったピンの番号。 */
   readonly chipPin: string;
   /** 樹脂の上に載る字 (部品名・チップ名)。**breadboard と同じ色**。 */
   readonly chipText: string;
-  /** 部品の名前と値。**板の外に出す字** (題・書き出し) もこれ。 */
+  /** 部品の名前と値。**基板の外に出す字** (題・書き出し) もこれ。 */
   readonly caption: string;
   /**
-   * **板の上に置く字** (部品の名前・注釈)。板の外の字 (`caption`) と分けてある —
-   * 板の色を選べるので、一緒にすると白い板に白い字か、緑の板に黒い字の
+   * **基板の上に置く字** (部品の名前・注釈)。基板の外の字 (`caption`) と分けてある —
+   * 基板の色を選べるので、一緒にすると白い基板に白い字か、緑の基板に黒い字の
    * どちらかが必ず読めなくなる。
    */
   readonly plateText: string;
   /** スロット用の銅箔。既定はランドと同じ (同じめっきなので)。 */
   readonly slot: string;
   /**
-   * **色を書かなかった配線の色。** 板の明るさから決める — 既定を 1 つの灰色に
-   * 固定すると、同じ濃さの板で線が沈む。書かれた色はこれに関わらずそのまま。
+   * **色を書かなかった配線の色。** 基板の明るさから決める — 既定を 1 つの灰色に
+   * 固定すると、同じ濃さの基板で線が沈む。書かれた色はこれに関わらずそのまま。
    */
   readonly wire: string;
 };
@@ -68,7 +68,7 @@ export type Metrics = {
   readonly textSize: number;
   /** 配線の濃さ。少し透かして、下の穴の位置が読めるようにする。 */
   readonly wireOpacity: number;
-  /** 箱で描く部品の胴の濃さ。**足の穴を隠しきらない**ように少し透かす。 */
+  /** 箱で描く部品の胴の濃さ。**ピンの穴を隠しきらない**ように少し透かす。 */
   readonly bodyOpacity: number;
 };
 
@@ -87,8 +87,8 @@ export type Theme = {
 
 const LIGHT: Palette = {
   canvas: null,
-  // **既定は緑にはんだメッキ** — いちばん多い板の見た目。手元の板が別の色なら
-  // `board:` の `color:` / `land:` で寄せられる (テーマではなく板の性質なので)。
+  // **既定は緑にはんだメッキ** — いちばん多い基板の見た目。手元の基板が別の色なら
+  // `board:` の `color:` / `land:` で寄せられる (テーマではなく基板の性質なので)。
   plate: PLATE_COLORS.green as string,
   plateEdge: darken(PLATE_COLORS.green as string),
   hole: '#14261c',
@@ -106,7 +106,7 @@ const LIGHT: Palette = {
   wire: wireOn(PLATE_COLORS.green as string),
 };
 
-/** 暗い背景のノート向け。**板は暗い緑**にする (緑のレジストを暗所で見た色)。 */
+/** 暗い背景のノート向け。**基板は暗い緑**にする (緑のレジストを暗所で見た色)。 */
 const DARK: Palette = {
   canvas: '#1b211d',
   plate: '#1c4a31',
@@ -179,7 +179,7 @@ export type ResolvedStyle = {
   readonly stamp: boolean;
   /** ERC と当たり判定を掛けるか (`style: check`)。 */
   readonly check: boolean;
-  /** 板の外に出す名前の付け方。 */
+  /** 基板の外に出す名前の付け方。 */
   readonly labels: ResolvedLabels;
   /** 半田面も描くか。 */
   readonly back: boolean;
@@ -202,16 +202,16 @@ export function resolveStyle(style: StyleSpec): ResolvedStyle {
     // **読めなかった行はこの切り替えの対象ではない** (約束 4)。
     debug: style.debug ?? true,
     stamp: style.stamp ?? true,
-    // **既定は掛ける。** 全穴独立の板では繋ぎ忘れが図の上で沈黙するので、
+    // **既定は掛ける。** 全穴独立の基板では繋ぎ忘れが図の上で沈黙するので、
     // 見張りを外すのは書いた人がそう言ったときだけにする。
     check: style.check ?? true,
     labels: {
       // 行が英字・列が数字は**今までの図と同じ**。英字を大文字にしたのは、
-      // 板のシルク (秋月 C タイプの A・E・J・O) が大文字だから。
+      // 基板のシルク (秋月 C タイプの A・E・J・O) が大文字だから。
       row: style.labels?.row ?? 'alpha',
       col: style.labels?.col ?? 'numeric',
       case: style.labels?.case ?? 'upper',
-      // **既定は左と上だけ。** 4 辺に出すと、小さい板では名前のほうが目立つ。
+      // **既定は左と上だけ。** 4 辺に出すと、小さい基板では名前のほうが目立つ。
       sides: style.labels?.sides ?? ['left', 'top'],
     },
     // **既定は描かない。** 要るのは実際に半田付けするときだけで、
@@ -221,12 +221,12 @@ export function resolveStyle(style: StyleSpec): ResolvedStyle {
 }
 
 /**
- * その板の仕上げを映したテーマ。**板の色もランドの色も板の性質**なので、
+ * その基板の仕上げを映したテーマ。**基板の色もランドの色も基板の性質**なので、
  * テーマ (図の配色) ではなく `board:` に書く。ここでは書かれた分だけを
- * 差し替えたテーマを作り、**板の側を描く呼び出しにだけ**渡す。
+ * 差し替えたテーマを作り、**基板の側を描く呼び出しにだけ**渡す。
  *
- * 板の外に出るもの (題・書き出し・行と列の名前・板の外の機器) には元のテーマを
- * 渡す — 板の色を変えても、紙の上の字の色まで動く筋合いはない。
+ * 基板の外に出るもの (題・書き出し・行と列の名前・基板の外の機器) には元のテーマを
+ * 渡す — 基板の色を変えても、紙の上の字の色まで動く筋合いはない。
  */
 export function themeForBoard(board: Board, theme: Theme): Theme {
   const plate = board.color === null ? null : plateValue(board.color);
@@ -241,10 +241,10 @@ export function themeForBoard(board: Board, theme: Theme): Theme {
       ...(plate === null ? {} : {
         plate,
         plateEdge: darken(plate),
-        // 穴は板に開いた影。板の色から作らないと、色を変えたとき穴だけ取り残される。
+        // 穴は基板に開いた影。基板の色から作らないと、色を変えたとき穴だけ取り残される。
         hole: darken(plate, 0.7),
         plateText: textOn(plate),
-        // 板が変われば、色を書かなかった線の色も変わる。
+        // 基板が変われば、色を書かなかった線の色も変わる。
         wire: wireOn(plate),
       }),
       // ランドを変えたらスロットも同じめっき。別に書かれていればそちらが勝つ。

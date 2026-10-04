@@ -56,13 +56,13 @@ const caption = (part: PlacedPart): string =>
   part.value === null ? part.id : `${part.id} ${clampText(part.value, LIMITS.labelLength)}`;
 
 /**
- * 板からはみ出す字を切る。使える幅は**中央から近いほうの板の端まで**の 2 倍。
+ * 基板からはみ出す字を切る。使える幅は**中央から近いほうの基板の端まで**の 2 倍。
  *
  * `limits.ts` が切っているのは**文字数** (60) で、幅ではない。切らずに置くと
  * viewBox の外へ出て**黙って消える**ので、読む側は切れたことにも気づけない
  * (breadboard が同じ穴を踏んでいる)。切った跡を `…` で残すのはそちらと同じ約束。
  *
- * 画布ではなく板を境にするのは、字が画布の縁に貼り付くと読みにくいため。
+ * 画布ではなく基板を境にするのは、字が画布の縁に貼り付くと読みにくいため。
  */
 function fitToBoard(text: string, x: number, fontSize: number, layout: Layout): string {
   const { board } = layout;
@@ -77,7 +77,7 @@ function fitToBoard(text: string, x: number, fontSize: number, layout: Layout): 
 const roomFor = (text: string, x: number, fontSize: number, layout: Layout): boolean =>
   fitToBoard(text, x, fontSize, layout) === text;
 
-/** 縦に置いた部品のキャプションが、板の上下に収まる幅。 */
+/** 縦に置いた部品のキャプションが、基板の上下に収まる幅。 */
 function fitDown(text: string, y: number, fontSize: number, layout: Layout): string {
   const { board } = layout;
   const room = Math.min(y - board.y, board.y + board.height - y) * 2;
@@ -98,7 +98,7 @@ function partLabel(
   theme: Theme,
   layout: Layout,
   room?: PartRoom,
-  /** 胴の下に別の字 (SIP の足の名前) があるとき、その下まで下げる距離。 */
+  /** 胴の下に別の字 (SIP のピンの名前) があるとき、その下まで下げる距離。 */
   belowExtra = 0,
 ): string {
   const size = theme.metrics.textSize;
@@ -115,7 +115,7 @@ function partLabel(
     const below = rect.cy + rect.height / 2 + belowExtra + CAPTION_GAP + size * CAPTION_CAP;
     const above = rect.cy - rect.height / 2 - CAPTION_GAP - size * CAPTION_DESCENT;
     // **線・ほかの胴・ほかの名札に当たったら避ける** (`captions.ts`)。真下に
-    // GND の線が通ると名札に取り消し線が引かれたように見え、3 本足の真ん中の足から
+    // GND の線が通ると名札に取り消し線が引かれたように見え、3 ピンの真ん中のピンから
     // 下ろした線は型番を縦に貫いた (教科書の図で)。名札どうしなら 1 行下げる
     // (実機で `Q1 2SC1815` と `D1 1N60` が重なった)。
     const shown = fitToBoard(text, pins.x, size, layout);
@@ -169,7 +169,7 @@ function turned(angle: number): number {
 
 /**
  * 字を置く向き (胴からどちらへ寄せるか)。字の下側にあたる向きで、
- * **真上に立った胴だけは右脇**にする (左に寄せると板の外へ出ていきやすい)。
+ * **真上に立った胴だけは右脇**にする (左に寄せると基板の外へ出ていきやすい)。
  */
 function beside(tilt: number): { readonly x: number; readonly y: number } {
   const perpendicular = { x: -Math.sin(tilt), y: Math.cos(tilt) };
@@ -184,9 +184,9 @@ const degrees = (radians: number): number => (radians * 180) / Math.PI;
 const SMA_METAL = '#b9bfc6';
 const SMA_METAL_EDGE = '#7f868d';
 const SMA_DIELECTRIC = '#f2f3f5';
-/** アースの足。胴と同じ銀だと 1 つの塊に見えるので、少し濃くして際を出す。 */
+/** アースのピン。胴と同じ銀だと 1 つの塊に見えるので、少し濃くして際を出す。 */
 const SMA_GROUND = '#9aa2ab';
-/** 腕を板に留めた半田。**ランドの銀と同じ**なので、接点として読める。 */
+/** 腕を基板に留めた半田。**ランドの銀と同じ**なので、接点として読める。 */
 const SMA_SOLDER = '#d7dce1';
 /** 接点の印の半径。腕の厚みに収まる大きさ。 */
 const CONTACT = 3.5;
@@ -203,8 +203,8 @@ const SMA_SOCKET = '#2b2f33';
 
 /**
  * SMA コネクタ (上向き)。**姿は fence-kit と共通** — breadboard にも同じ
- * コネクタを置けるようにするために引き上げた。板の縁に載せる横置き
- * (`smaEdgeBody`) だけはこちらに残る — 縁の無い板には置き場が無い。
+ * コネクタを置けるようにするために引き上げた。基板の縁に載せる横置き
+ * (`smaEdgeBody`) だけはこちらに残る — 縁の無い基板には置き場が無い。
  */
 // **姿は breadboard と同じ**にする (実機で「sma の実態図を breadboard と同じに」)。
 // 合わせ面の丸は四角の真ん中 — 姿の名前は胴に刷らず、胴の下へ出す (`smaBadge`)。
@@ -212,7 +212,7 @@ const smaBody = (part: PlacedPart): string =>
   drawSmaBody({ type: 'sma', variant: part.variant, pins: [] }, 0);
 
 /**
- * 端面実装 (横置き) の SMA。板の縁に載せて、**首から先を板の外へ出す**形。
+ * 端面実装 (横置き) の SMA。基板の縁に載せて、**首から先を基板の外へ出す**形。
  * 上から見た姿なので、ねじ山は胴の横筋として出し、合わせ面は先端に来る。
  *
  * 胴の形は当たり判定と同じ矩形に収める (`placement/geometry.ts`) — はみ出して
@@ -229,7 +229,7 @@ function smaEdgeBody(
   const half = SMA_SIZE / 2;
   const tip = -width / 2;
   // 左から**ねじ部・ねじなし・台座**。ねじ部とねじなしは同じ太さの筒で、
-  // 台座だけが太い。**台座の右端が板の縁**に来る (実物もそこで板を挟む)。
+  // 台座だけが太い。**台座の右端が基板の縁**に来る (実物もそこで基板を挟む)。
   const baseFrom = edgeX - SMA_BASE;
   const plainFrom = baseFrom - SMA_PLAIN;
   const barrelHalf = half * 0.62;
@@ -262,7 +262,7 @@ function smaEdgeBody(
     ? element('rect', { x: num(tip - 6), y: -2, width: 9, height: 4, rx: 1, fill: SMA_PIN })
     : element('rect', { x: num(tip + 3), y: -3, width: 3, height: 6, fill: SMA_SOCKET });
 
-  // 板に載る側は 2 つの足。**アースが凹、信号線が凸**で、形でも見分けが付く
+  // 基板に載る側は 2 つのピン。**アースが凹、信号線が凸**で、形でも見分けが付く
   // ようにする — どちらも金物なので、色だけでは区別できない。
   const armHalf = half * 0.62;
   const armThick = half * 0.34;
@@ -277,9 +277,9 @@ function smaEdgeBody(
     ].map(([x = 0, y = 0]) => `${num(x)},${num(y)}`).join(' '),
     fill: SMA_GROUND, stroke: SMA_METAL_EDGE, 'stroke-width': 1,
   });
-  // **アースの足は凹の両端の先端** (`parts/footprint.ts`)。そこが半田付けする
-  // ところなので、**足の番地の上に**足の印を出し、**その上に半田の玉を乗せる** —
-  // 足が半田の下に来るのが実物の重なり (ほかの部品の足も同じ)。配線が届く先と
+  // **アースのピンは凹の両端の先端** (`parts/footprint.ts`)。そこが半田付けする
+  // ところなので、**ピンの番地の上に**ピンの印を出し、**その上に半田の玉を乗せる** —
+  // ピンが半田の下に来るのが実物の重なり (ほかの部品のピンも同じ)。配線が届く先と
   // 印が別の場所にあると、どちらへ付けるのか読めない。腕の形はそのまま
   // (先端が上下の行の銅箔に触れる)。
   const contacts = tips
@@ -290,7 +290,7 @@ function smaEdgeBody(
     .join('');
 
   // 信号線は**凹の谷から出る凸**。アースの腕より先へ出ることが形の見分けだが、
-  // **書かれた穴までは伸ばさない** — 穴が板の奥にあるとき、そこまで伸ばした絵は
+  // **書かれた穴までは伸ばさない** — 穴が基板の奥にあるとき、そこまで伸ばした絵は
   // 「長い棒の付いた部品」になって実物と違う (実機で指摘された)。
   const centre = element('rect', {
     x: num(edgeX), y: -2.5,
@@ -305,7 +305,7 @@ function smaEdgeBody(
  * コネクタの胴に書く姿の名前。**オスとメスは形の細部でしか違わない**ので、
  * 字でも言う — 図を見て買う人・挿す人が、合う相手を取り違えないように。
  *
- * **胴と一緒に回さない。** 板の右の縁に載せたコネクタは胴が 180 度回るので、
+ * **胴と一緒に回さない。** 基板の右の縁に載せたコネクタは胴が 180 度回るので、
  * 一緒に回すと鏡文字になる。字はいつも水平に置く。
  */
 function smaBadge(
@@ -369,8 +369,8 @@ function isDark(color: string): boolean {
 
 /**
  * 胴の姿。**共有の形があればそれを使う** (`fence-kit/parts/bodies.ts`) —
- * 実物の部品の話で板に依らないので、breadboard と同じ絵になる (52 の docs/18)。
- * ここに残るのはこの板だけの姿 — 同軸コネクタと、姿を持たない種類の箱。
+ * 実物の部品の話で基板に依らないので、breadboard と同じ絵になる (52 の docs/18)。
+ * ここに残るのはこの基板だけの姿 — 同軸コネクタと、姿を持たない種類の箱。
  */
 const bodyOf = (
   part: PlacedPart,
@@ -389,7 +389,7 @@ const bodyOf = (
 };
 
 /**
- * 共有の形が読む姿。**この文法に極性の印は無い**ので、足の名前は空で渡す —
+ * 共有の形が読む姿。**この文法に極性の印は無い**ので、ピンの名前は空で渡す —
  * 共有の側は「印が無ければ先に書いた穴が + 側」の規則で描く
  * (breadboard で印を書かなかったときと同じ絵)。
  */
@@ -401,11 +401,11 @@ const asBody = (part: PlacedPart): BodyPart => ({
 });
 
 /**
- * 共有の形に渡す「足から足までの長さ」。**胴の幅から逆に引く** —
+ * 共有の形に渡す「ピンからピンまでの長さ」。**胴の幅から逆に引く** —
  * こちらは当たり判定と同じ胴の幅 (`bodyRect`) を持っていて、共有の形は
- * 足の間隔から胴を決めるので、同じ胴になる長さを渡す。
+ * ピンの間隔から胴を決めるので、同じ胴になる長さを渡す。
  *
- * **胴が足を覆う種類 (水晶) は逆に引けない**ので、本当の間隔をそのまま渡す。
+ * **胴がピンを覆う種類 (水晶) は逆に引けない**ので、本当の間隔をそのまま渡す。
  * あちらの当たり判定も同じ間隔から出している (`bodyRect`)。
  */
 const spanOf = (part: PlacedPart, from: Point, to: Point, width: number): number =>
@@ -414,7 +414,7 @@ const spanOf = (part: PlacedPart, from: Point, to: Point, width: number): number
     : width / (SPAN_RATIO[part.type] ?? 0.6));
 
 /**
- * 種類ごとの「胴の幅 ÷ 足の間隔」。**共有の形の数式と同じ値**
+ * 種類ごとの「胴の幅 ÷ ピンの間隔」。**共有の形の数式と同じ値**
  * (`fence-kit/parts/bodies.ts` の `bodySize`)。
  */
 const SPAN_RATIO: Record<string, number> = {
@@ -425,8 +425,8 @@ const SPAN_RATIO: Record<string, number> = {
 };
 
 /**
- * 2 本足の部品。**胴は 2 つの穴を結ぶ線の上に、その傾きのまま描く**ので、
- * 各部品の形は「原点が中央・x 軸が足の向き」の座標で書けばよい。
+ * 2 ピンの部品。**胴は 2 つの穴を結ぶ線の上に、その傾きのまま描く**ので、
+ * 各部品の形は「原点が中央・x 軸がピンの向き」の座標で書けばよい。
  */
 function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme, room?: PartRoom): string {
   const [first, second] = part.pins;
@@ -442,15 +442,15 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme, room?: Pa
   const width = rect.width;
 
   // 3 引数 rotate() を読まないレンダラがあるので translate と rotate に分ける。
-  // 端面実装は胴が板の縁から外へ張り出すので、**板の縁と足がどこに来るか**を
-  // 局所座標で渡す (胴の中心と足の中点がずれるのはこの姿だけ)。
+  // 端面実装は胴が基板の縁から外へ張り出すので、**基板の縁とピンがどこに来るか**を
+  // 局所座標で渡す (胴の中心とピンの中点がずれるのはこの姿だけ)。
   const mount = isEdgeMount(part.type, part.variant) ? edgeMountOf(part, layout) : null;
-  // **端面実装と、自分で足を描く胴 (水晶) には足の線を引かない。** 足を結ぶ線は
+  // **端面実装と、自分でピンを描く胴 (水晶) にはピンの線を引かない。** ピンを結ぶ線は
   // 「胴の両端から出たリード」の絵で、金物のコネクタでは中心導体と凹の先端を結ぶ線に
   // 見える (先端は中心線の上下にあるので、斜めに渡って余計にそう読める)。
-  // 水晶の足は缶の下から出るので、穴を渡る線は実物に無い。
-  // **足の線は配線と同じ太さで、白い縁** (`wires.ts`)。細い灰色の線は緑の板に沈み、
-  // 足がどの穴に入るのかが読みにくかった。白黒の図は配線と同じく縁取らない。
+  // 水晶のピンは缶の下から出るので、穴を渡る線は実物に無い。
+  // **ピンの線は配線と同じ太さで、白い縁** (`wires.ts`)。細い灰色の線は緑の基板に沈み、
+  // ピンがどの穴に入るのかが読みにくかった。白黒の図は配線と同じく縁取らない。
   const leadLine = (attributes: Record<string, string | number>): string => element('line', {
     x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y), 'stroke-linecap': 'round', ...attributes,
   });
@@ -462,14 +462,14 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme, room?: Pa
     { transform: `translate(${num(center.x)} ${num(center.y)}) rotate(${num(angle)})` },
     bodyOf(part, width, spanOf(part, from, to, width), theme, mount),
   );
-  // **キャプションは足の真ん中の下**。胴の中心に置くと、板の外へ張り出す部品
-  // (端面実装の SMA) で字が板から出て、地に紛れるか幅ゼロで `…` に切られる。
+  // **キャプションはピンの真ん中の下**。胴の中心に置くと、基板の外へ張り出す部品
+  // (端面実装の SMA) で字が基板から出て、地に紛れるか幅ゼロで `…` に切られる。
   // 縦は胴の下端から測る — 中心から一定の距離だと、胴の大きい部品で字が胴に載る。
-  // 端面実装は 2 本目の足が中心線の上下にあるので、**中心導体の行**で測る。
-  // **端面実装は字の入る場所まで引き戻す。** 凹は板の縁を挟むので、先端を板の外の
-  // 列にも書ける (`g0`)。そのとき足の中点は板の縁に寄りすぎて幅が取れず、
+  // 端面実装は 2 本目のピンが中心線の上下にあるので、**中心導体の行**で測る。
+  // **端面実装は字の入る場所まで引き戻す。** 凹は基板の縁を挟むので、先端を基板の外の
+  // 列にも書ける (`g0`)。そのときピンの中点は基板の縁に寄りすぎて幅が取れず、
   // **部品の名前が `…` になって図から消える** (実機で図16 で踏んだ)。
-  // 入らないときは中心導体の穴へ — そこは必ず板の内側にある。
+  // 入らないときは中心導体の穴へ — そこは必ず基板の内側にある。
   const middleX = (from.x + to.x) / 2;
   const pinMiddle = mount === null
     ? { x: middleX, y: (from.y + to.y) / 2 }
@@ -477,7 +477,7 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme, room?: Pa
       x: roomFor(caption(part), middleX, theme.metrics.textSize, layout) ? middleX : from.x,
       y: from.y,
     };
-  // **測るのは描かれている胴**。当たり判定の矩形 (`bodyRect`) は 2 本足をどれも
+  // **測るのは描かれている胴**。当たり判定の矩形 (`bodyRect`) は 2 ピンをどれも
   // 同じ高さで見るので、円板 (バリスタ・CdS) や玉のように背の高い胴では
   // 字が胴に食い込む (実機で「varistor、文字が被らないようにして」)。
   // 姿ごとの寸法は `bodySize` が持っていて、描く側もそこから引いている。
@@ -491,11 +491,11 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme, room?: Pa
     room,
   );
 
-  // 姿の名前は**板の外に出ている胴の真ん中**に置く。台座は 1mm しかないので
-  // そこに寄せると板に掛かり、足の側に寄せると配線に被る。
+  // 姿の名前は**基板の外に出ている胴の真ん中**に置く。台座は 1mm しかないので
+  // そこに寄せると基板に掛かり、ピンの側に寄せると配線に被る。
   //
-  // **左右の縁に載せたときは、字を胴の先端 (板から遠い端) に揃える。** 真ん中に
-  // 置くと字の板側の端が板の縁まで届き、行の名前 (`G`) に掛かる (実機の NanoVNA の
+  // **左右の縁に載せたときは、字を胴の先端 (基板から遠い端) に揃える。** 真ん中に
+  // 置くと字の基板側の端が基板の縁まで届き、行の名前 (`G`) に掛かる (実機の NanoVNA の
   // 冊の治具の図すべてで `SMA female` の `e` が `G` に重なっていた)。
   const blockX = mount === null ? 0 : (-width / 2 + mount.edgeX) / 2;
   const sideways = mount !== null && Math.abs(Math.cos(rect.angle)) > 0.9;
@@ -510,7 +510,7 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme, room?: Pa
 }
 
 /**
- * 箱で描く部品か。**足の数ではなく形で決める** — `sip2` は足が 2 本でも
+ * 箱で描く部品か。**ピンの数ではなく形で決める** — `sip2` はピンが 2 本でも
  * パッケージなので、軸物のように傾けて描いてはいけない。
  */
 const isBoxed = (part: PlacedPart): boolean => {
@@ -520,19 +520,19 @@ const isBoxed = (part: PlacedPart): boolean => {
 };
 
 /**
- * 3 本足の部品。**パッケージの姿は fence-kit にある** (`parts/packages.ts`) —
- * 実物の話で板に依らないので、breadboard と同じ絵になる (52 の docs/18 の手順 4)。
- * ここに残るのは板の話 — 足の点、キャプション、どちら側に寄せるか。
+ * 3 ピンの部品。**パッケージの姿は fence-kit にある** (`parts/packages.ts`) —
+ * 実物の話で基板に依らないので、breadboard と同じ絵になる (52 の docs/18 の手順 4)。
+ * ここに残るのは基板の話 — ピンの点、キャプション、どちら側に寄せるか。
  */
 /**
  * 胴を回す角度 (度。0 / 90 / 180 / 270)。**1 番ピンから最後のピンへ向く向き**を
- * 見る — 「回す」(`R`) は足の番地を書き換えるので、その並びの向きがそのまま
+ * 見る — 「回す」(`R`) はピンの番地を書き換えるので、その並びの向きがそのまま
  * パッケージの向きになる。
  *
  * **180 度も別の向きとして数える。** 軸の傾きだけを見ていたころは、回しても
  * TO-92 の平らな面が上を向いたままだった (実機で指摘された)。
  *
- * **画面の座標ではなく番地で数える。** 半田面 (裏返した板) は列を反転して
+ * **画面の座標ではなく番地で数える。** 半田面 (裏返した基板) は列を反転して
  * 描くので、点の差で数えると裏だけ 180 度回ってしまう。向きは書かれた番地の
  * ものであって、どちらから見るかで変わらない。
  */
@@ -553,14 +553,14 @@ function renderPackage(part: PlacedPart, layout: Layout, theme: Theme, room?: Pa
     cy: rect.cy,
     reach: packageReach(asBody(part), layout.pitch),
     halfWidth: packageHalfWidth(asBody(part), layout.pitch),
-    // **キャプションを置く側**。この板に溝は無いので、行の増える向きに揃える。
+    // **キャプションを置く側**。この基板に溝は無いので、行の増える向きに揃える。
     side: 1,
     plate: theme.palette.plate,
     chipBody: theme.palette.chipBody,
   }, inkOf(theme));
-  // **胴は足の並びに沿って回す。** 全穴が独立している板なので 3 本足をどの向きにも
-  // 挿せる。回さないと TO-92 の平らな面が足の 1 本を向いてしまい、実物ではありえない
-  // 向きになる (平らな面と足の並びは平行)。**キャプションは回さない** — 字は
+  // **胴はピンの並びに沿って回す。** 全穴が独立している基板なので 3 ピンをどの向きにも
+  // 挿せる。回さないと TO-92 の平らな面がピンの 1 本を向いてしまい、実物ではありえない
+  // 向きになる (平らな面とピンの並びは平行)。**キャプションは回さない** — 字は
   // いつも横で読めるほうがよく、向きは胴の形が示す。
   const angle = packageAngle(part);
   const shell = angle === 0
@@ -588,21 +588,21 @@ function renderPackage(part: PlacedPart, layout: Layout, theme: Theme, room?: Pa
 }
 
 /**
- * パッケージに渡す色。**板ではなく部品の色**。breadboard と同じものを渡すので、
+ * パッケージに渡す色。**基板ではなく部品の色**。breadboard と同じものを渡すので、
  * 同じ絵になる (実機で「全ての部品の見た目を breadboard と perfboard で
  * 共通にする。breadboard を基準にする」)。
  */
 const CHIP_SCALE = 1;
 
 /**
- * SIP の足の名前 (胴の外、行の増える側) が胴の縁から出る深さ。fence-kit の
+ * SIP のピンの名前 (胴の外、行の増える側) が胴の縁から出る深さ。fence-kit の
  * `sipLegends` と同じ寸法 (縁取りの半分 + 隙間 + 字の高さと深さ)。
  */
 const SIP_LEGEND_DEPTH = 1 + 0.5 + CHIP_SCALE * 6.5 * (0.72 + 0.2);
-/** 胴に刷る名前の字の高さの半分 (fence-kit の `sipHeader` は足の並びの 3.5 下が基準線)。 */
+/** 胴に刷る名前の字の高さの半分 (fence-kit の `sipHeader` はピンの並びの 3.5 下が基準線)。 */
 const SIP_CAPTION_HALF = 4;
 
-/** SIP の胴に刷った名前が占める帯。胴の長さいっぱい、足の並びの上下に字の高さ。 */
+/** SIP の胴に刷った名前が占める帯。胴の長さいっぱい、ピンの並びの上下に字の高さ。 */
 function sipCaptionBand(points: readonly Point[], pitch: number): Rect {
   const bar = sipBox(points, pitch);
   const first = points[0] ?? { x: 0, y: 0 };
@@ -623,15 +623,15 @@ const chipInk = (theme: Theme): ChipInk => ({
 
 /**
  * DIP・SIP・マイコンボード。**姿は fence-kit にある** (`parts/chips.ts`)。
- * 板の話として残るのは足の穴の座標だけで、絵は breadboard と 1 つの実装を
- * 分け合う — どちらも実体配線図なので、同じ部品が板によって違って見える
+ * 基板の話として残るのはピンの穴の座標だけで、絵は breadboard と 1 つの実装を
+ * 分け合う — どちらも実体配線図なので、同じ部品が基板によって違って見える
  * 理由が無い (実機で「sip*、dip* は breadboard と見た目を同じにする」)。
  *
- * **足の番号は書かれた順**。この板の足には名前が無く (穴がそのまま足)、
+ * **ピンの番号は書かれた順**。この基板のピンには名前が無く (穴がそのままピン)、
  * 1 番から数えた番号がそのまま実物のピン番号になる。
  *
  * **字の大きさは breadboard に合わせる** (`CHIP_SCALE`)。樹脂に刷る字は
- * 部品の姿の一部で、板に書く字 (`metrics.textSize`) とは別のもの。
+ * 部品の姿の一部で、基板に書く字 (`metrics.textSize`) とは別のもの。
  */
 function renderChip(
   part: PlacedPart,
@@ -649,13 +649,13 @@ function renderChip(
     caption: caption(part),
     scale: CHIP_SCALE,
     ink: chipInk(theme),
-    // **足の名前は胴の中** (番号のすぐ内側)。この板の線は足の穴から出るので、胴の外の
-    // 帯 (breadboard の置き場) に書くと、足から出る線が必ず名前を横切った。
+    // **ピンの名前は胴の中** (番号のすぐ内側)。この基板の線はピンの穴から出るので、胴の外の
+    // 帯 (breadboard の置き場) に書くと、ピンから出る線が必ず名前を横切った。
     namesInside: true,
   };
   const numbers = points.map((_, index) => String(index + 1));
 
-  // 足に名前のある DIP 型。足の名前と品名 (7 セグは面) を載せる (52 の docs/66)。
+  // ピンに名前のある DIP 型。ピンの名前と品名 (7 セグは面) を載せる (52 の docs/66)。
   const named = kind === 'named' ? lookupNamedChip(part.type, part.variant) : null;
   if (named !== null) {
     // 何も書かなければ品名を出す (breadboard と同じ)。
@@ -664,10 +664,10 @@ function renderChip(
   }
 
   if (kind === 'dip') {
-    // **1 番ピンは足の並びの先頭** (`parts/footprint.ts` の pinsOf が 1 番から返す)。
-    // 回しても足の並びのほうが回るので、切り欠きは常に 0 番の側。
+    // **1 番ピンはピンの並びの先頭** (`parts/footprint.ts` の pinsOf が 1 番から返す)。
+    // 回してもピンの並びのほうが回るので、切り欠きは常に 0 番の側。
     // 姿があれば DIP 化した変換基板 (`dip8/sop`)。外形は DIP と同じ。
-    // 型番が足の名前の表にあれば、番号 (縁) と名前 (胴の外) の 2 段 (52 の docs/95)。
+    // 型番がピンの名前の表にあれば、番号 (縁) と名前 (胴の外) の 2 段 (52 の docs/95)。
     const printed = dipPinout(part);
     // 面実装しか無い型番 (3SK291) は、変換基板に載せた実寸の胴で描く。
     const chip = printed === null ? undefined : lookupPinout(part.value, part.pins.length)?.chip;
@@ -680,17 +680,17 @@ function renderChip(
       : drawDipAdapter({ ...shared, names: numbers, pinOne: 0, variant: part.variant, paint: inkOf(theme) });
   }
   if (kind === 'sip') {
-    // **名前は行の増える側へ。** この板に溝は無いので、どちらでも読めるほうを
+    // **名前は行の増える側へ。** この基板に溝は無いので、どちらでも読めるほうを
     // 1 つに決める (breadboard は溝の側)。
-    // 型番が足の名前の表にあれば印字の名前 (1 列の変換基板の `3SK291`)。
+    // 型番がピンの名前の表にあれば印字の名前 (1 列の変換基板の `3SK291`)。
     const pinout = lookupPinout(part.value, part.pins.length);
     const look = pinout?.look;
     if (pinout?.chip !== undefined) {
       return drawSipAdapter({ ...shared, names: dipPinout(part) ?? numbers, nameSide: 1, chip: pinout.chip, label: part.id, paint: inkOf(theme) });
     }
     const options = { ...shared, names: dipPinout(part) ?? numbers, nameSide: 1 as const, ...(look === undefined ? {} : { look }) };
-    // **胴に刷った名前を線が貫くなら、名前を胴の外へ出す。** 足へ来る線は胴の上にも
-    // 重ねるので (`leadWires.ts`)、真ん中の足から下ろした線が型番を縦に貫いた
+    // **胴に刷った名前を線が貫くなら、名前を胴の外へ出す。** ピンへ来る線は胴の上にも
+    // 重ねるので (`leadWires.ts`)、真ん中のピンから下ろした線が型番を縦に貫いた
     // (教科書のセラミックフィルタの図)。外では線と字を避けて置く (`partLabel`)。
     if (room === undefined || !room.blocked(sipCaptionBand(points, layout.pitch))) return sipHeader(options);
     const bar = sipBox(points, layout.pitch);
@@ -710,7 +710,7 @@ function renderChip(
     );
   }
 
-  // **マイコンボードの名前は胴の下。** 基板の中に置くと長い足の名前
+  // **マイコンボードの名前は胴の下。** 基板の中に置くと長いピンの名前
   // (`ADC_VREF 35`) と食い合う。ほかの部品と側も揃う。
   const definition = lookupBoardPart(part.type);
   const box = boardBox(points, layout.pitch, definition);
@@ -734,7 +734,7 @@ function renderChip(
 }
 
 /**
- * 足が 3 本以上ある部品。**足を囲む箱**として描き、足は穴まで短い線で出す。
+ * ピンが 3 本以上ある部品。**ピンを囲む箱**として描き、ピンは穴まで短い線で出す。
  *
  * DIP は 1 番ピン側にノッチを描く。実物と同じ向きの目印が無いと、
  * **図を見ながら挿すときに 180 度回して挿せてしまう**。
@@ -759,7 +759,7 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme, room?: PartRo
     })
     .join('');
 
-  // **変圧器は箱の中身を fence-kit が描く** (実物の話で板に依らない)。
+  // **変圧器は箱の中身を fence-kit が描く** (実物の話で基板に依らない)。
   // 外の枠は要らないので、ここでは描かずに中身だけを置く。
   if (kind === 'four-lead') {
     const core = element(
@@ -799,15 +799,15 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme, room?: PartRo
 
 /**
  * USB コネクタ。**姿は fence-kit にある** (`parts/connectors.ts`) — 変換基板ごと描き、
- * 足の名前は基板に刷る。breadboard と同じ絵になる。
+ * ピンの名前は基板に刷る。breadboard と同じ絵になる。
  *
- * **名札は足の側** (板の内側)。差し込み口が下を向くとき、胴の下に書くと
- * 板の外へ張り出した金物のさらに先になり、画布から出て切れる。そのときだけ
- * 胴の上 (足の列の後ろ) に置く。
+ * **名札はピンの側** (基板の内側)。差し込み口が下を向くとき、胴の下に書くと
+ * 基板の外へ張り出した金物のさらに先になり、画布から出て切れる。そのときだけ
+ * 胴の上 (ピンの列の後ろ) に置く。
  *
- * **横は足の列の真ん中。** 胴の真ん中にすると、横の縁へ張り出したコネクタでは
- * 字の基準が板の外になり、板に収める切り詰め (`fitToBoard`) で `…` だけになる
- * (図を見て直した)。足は必ず板の穴にある。
+ * **横はピンの列の真ん中。** 胴の真ん中にすると、横の縁へ張り出したコネクタでは
+ * 字の基準が基板の外になり、基板に収める切り詰め (`fitToBoard`) で `…` だけになる
+ * (図を見て直した)。ピンは必ず基板の穴にある。
  */
 function renderConnector(part: PlacedPart, layout: Layout, theme: Theme, room?: PartRoom): string {
   if (part.pins.length === 0) return '';
@@ -855,7 +855,7 @@ function switchMarks(part: PlacedPart, rect: OrientedRect): string {
 
 /**
  * 直付けの SOT。**姿は fence-kit にある** (`drawDirectSot`) — 胴を 1 番・2 番の行と
- * 3 番の行の間に置き、足先から穴まで半田の線を引く。当たり判定と同じ置き方
+ * 3 番の行の間に置き、ピン先から穴まで半田の線を引く。当たり判定と同じ置き方
  * (`bodyRect` → `sotMountOf`)。名札は胴の下。
  */
 function renderDirectSot(part: PlacedPart, layout: Layout, theme: Theme, room?: PartRoom): string {
@@ -890,7 +890,7 @@ function renderOne(part: PlacedPart, layout: Layout, theme: Theme, room: PartRoo
 }
 
 /**
- * 板に載せた部品を全部。`edit` のときは**掴むための印**で 1 つずつ包む
+ * 基板に載せた部品を全部。`edit` のときは**掴むための印**で 1 つずつ包む
  * (図そのものをマップにするため。52 の docs/13)。既定では包まない —
  * 貼る図は 1 バイトも変わらない。
  */
@@ -899,9 +899,9 @@ export const renderParts = (
   layout: Layout,
   theme: Theme,
   edit = false,
-  // **先に場所を取っているもの** (板に書いた注釈)。名札はそこを避ける。
+  // **先に場所を取っているもの** (基板に書いた注釈)。名札はそこを避ける。
   taken: readonly Rect[] = [],
-  // **名札が避ける線** (板の上の配線)。胴はここで足す。
+  // **名札が避ける線** (基板の上の配線)。胴はここで足す。
   lines: readonly Obstacle[] = [],
 ): string => {
   // **名札の逃がしは書かれた順に決まる** (`captions.ts`)。

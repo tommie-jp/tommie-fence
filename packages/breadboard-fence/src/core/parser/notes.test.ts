@@ -64,7 +64,7 @@ describe('parseNoteLine', () => {
   });
 
   test('places text and source outside the board when no address is written', () => {
-    // 板の番地はどれも実在の穴に縛られていて、板の外を指す番地が存在しない。
+    // 基板の番地はどれも実在の穴に縛られていて、基板の外を指す番地が存在しない。
     expect(noteOf('source')).toMatchObject({ kind: 'source', place: 'below', targets: [] });
     expect(noteOf('text', 'ひとこと')).toMatchObject({ place: 'below', targets: [], text: 'ひとこと' });
   });

@@ -90,7 +90,7 @@ describe('renamePart', () => {
   });
 
   // フロー形式の注釈は綴りが括弧につながっている (`[circle R1]`)。前は取り出せずに
-  // 断っていたが、区切りでも切るようにしたので板の 2 つと同じく書き換える。
+  // 断っていたが、区切りでも切るようにしたのでブレッドボードとユニバーサル基板と同じく書き換える。
   test('renames a reference written in flow style, bracket and all', () => {
     const source = ['parts:', '  R1: resistor a1 a3', 'notes: [circle R1]', ''].join('\n');
     const result = renamePart(source, 'R1', 'R2');

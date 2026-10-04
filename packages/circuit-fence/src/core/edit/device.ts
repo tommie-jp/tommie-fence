@@ -16,7 +16,7 @@ import type { PartSpec } from '../types.ts';
  * 中の空行や浅いコメントで途切れ、消すと中身が宙に残った (コードレビューで出た)。
  */
 
-/** ブロックで書かれた部品 (機器と、足の名前を並べた `ic3`)。 */
+/** ブロックで書かれた部品 (機器と、ピンの名前を並べた `ic3`)。 */
 export const isDevicePart = isMapForm;
 
 /** 1 行に並べた形 (`M1: {type: device, …}`) は升目から書き換えない。 */

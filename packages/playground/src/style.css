@@ -103,7 +103,7 @@ main { display: flex; flex-direction: column; }
 
 .picks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 /* **たまに押すものの束。** 普段は `contents` なので、行に直に並んでいるのと
-   同じ (見た目は 1 行も変わらない)。畳んだ姿でだけ板に化ける。 */
+   同じ (見た目は 1 行も変わらない)。畳んだ姿でだけ基板に化ける。 */
 .more-items { display: contents; }
 
 /* ハンバーガーの釦。**畳んだ姿でだけ出す。**
@@ -264,7 +264,7 @@ td { font-family: var(--mono); font-size: 12px; }
  *    実際に見えている分より大きい。図と欄が画面からはみ出す
  * 4. **帯は `body.full` が 1 段に畳む** — 狭い画面はいつも畳んだ姿なので、
  *    頁の余白・見出し・帯の寸法はそちら (下) が決める。ここに書くのは
- *    窓と板の中の欄と釦だけ
+ *    窓と基板の中の欄と釦だけ
  *
  * **閾値はマップと揃えて 720px** (52 の docs/46)。かつては 560px だったが、
  * 560 と 720 のあいだ — **横向きの iPhone SE (667px) がちょうどここ** — では
@@ -335,7 +335,7 @@ body.full:has(.md-box[open]) { touch-action: auto; }
 
 /* **畳んだ姿の帯は 1 段** (52 の docs/46)。`[≡] 文書名 ● [保存][Markdown][ログ]`。
    2 段で 90px 取っていたのを 1 段にして、その分を図に渡す。
-   板の置き場所を測る基準は帯そのもの (道具の行だと右半分にしか出ない)。
+   基板の置き場所を測る基準は帯そのもの (道具の行だと右半分にしか出ない)。
    **帯は字 1 行ぶんの高さに** (実機で頼まれた)。畳んだ姿は図が主なので、
    帯は「そこに在る」ことが分かれば足りる。36px の釦と 8px の余白で 53px
    取っていたのを、28px と 3px で 34px にする。
@@ -359,13 +359,13 @@ body.full .doc {
   margin: 0; flex: 1; min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-/* **たまに押すものは板の中へ。** 一言は出ているときだけ場所を取る。 */
+/* **たまに押すものは基板の中へ。** 一言は出ているときだけ場所を取る。 */
 body.full .more-items { display: none; }
 /* **畳んだ姿では一言を出さない** (実機で踏んだ)。長い断りが入ると 1 行の帯が
    崩れて釦が押しのけられる。しくじりはログ (赤) とマップの帯へ回す。 */
 body.full .said { display: none; }
 
-/* `···` を押したとき。**帯の下から板が降りる** — 図は押し下げない
+/* `···` を押したとき。**帯の下から基板が降りる** — 図は押し下げない
    (重ねるだけなので、閉じれば元の見え方に戻る)。 */
 body.full.sheet .more-items {
   display: flex; flex-direction: column; align-items: stretch; gap: 8px;

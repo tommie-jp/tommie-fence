@@ -12,8 +12,8 @@ import type { Footprint } from '../parts/footprint.ts';
 import type { Board, CopperSpec, FenceError, Mm, PartSpec, RectMm, WireSpec } from '../types.ts';
 
 /**
- * 島・地・足からネットリストを組む。**導通グループ (strip) は 3 種類**:
- * 島 (`island:L1`)、地 (`gnd`)、どこにも乗っていない足 (`pin:C1.2`)。
+ * 島・地・ピンからネットリストを組む。**導通グループ (strip) は 3 種類**:
+ * 島 (`island:L1`)、地 (`gnd`)、どこにも乗っていないピン (`pin:C1.2`)。
  * 組み立ては fence-kit の `computeNets` (盤面に依らない union-find)。
  */
 
@@ -25,11 +25,11 @@ export type Jumper = {
   readonly line: number | null;
   readonly fromStrip: StripId | null;
   readonly toStrip: StripId | null;
-  /** 板の外の機器の足につながる配線 (足の先から板の上の銅へ渡る。銅は作らない)。 */
+  /** 基板の外の機器のピンにつながる配線 (ピンの先から基板の上の銅へ渡る。銅は作らない)。 */
   readonly device: boolean;
 };
 
-/** 足 1 本の行き先。**点ごと**に持つ (乗っていない点を ERC が名指すため)。 */
+/** ピン 1 本の行き先。**点ごと**に持つ (乗っていない点を ERC が名指すため)。 */
 export type PinLanding = {
   readonly ref: string;
   readonly part: string;
@@ -45,7 +45,7 @@ export type Wiring = {
   readonly jumpers: readonly Jumper[];
   readonly netlist: readonly Net[];
   readonly errors: readonly FenceError[];
-  /** 配線がつながっている機器の足 (`BAT.+`)。つながっていない足を ERC が言う。 */
+  /** 配線がつながっている機器のピン (`BAT.+`)。つながっていないピンを ERC が言う。 */
   readonly wiredPins: ReadonlySet<string>;
 };
 
@@ -55,7 +55,7 @@ export type Ground = {
   readonly slots: readonly { readonly rect: RectMm }[];
 };
 
-/** 点の導通グループ。**表が地の板では、島にも溝にも切り欠きにも無い所が地**。 */
+/** 点の導通グループ。**表が地の基板では、島にも溝にも切り欠きにも無い所が地**。 */
 export function stripAt(point: Mm, ground: Ground, zones: readonly RectMm[] = cutZones(ground.islands)): StripId | null {
   const island = islandAt(ground.islands, point);
   if (island !== null) return island.strip;
@@ -83,7 +83,7 @@ export function nearestOnPath(points: readonly Mm[], toward: Mm): Mm {
 
 /**
  * 端 (島の名前か点) を点に直す。直せなければそのわけ。
- * **機器の足につなぐ配線だけは線路の名前も端にできる** — `toward` (機器の足の先) にいちばん近い
+ * **機器のピンにつなぐ配線だけは線路の名前も端にできる** — `toward` (機器のピンの先) にいちばん近い
  * 線路の上の点へ渡る (線路には端が 2 つ以上あり、どこへ半田付けするかを名前だけでは決められない)。
  */
 export function endResolver(
@@ -108,7 +108,7 @@ export function endResolver(
   };
 }
 
-/** `BAT.+` の形か (機器の足のつもりの綴り)。点 `1.5,2` は `,` を含むので当たらない。 */
+/** `BAT.+` の形か (機器のピンのつもりの綴り)。点 `1.5,2` は `,` を含むので当たらない。 */
 const DEVICE_PIN = /^([\w-]+)\.([^\s,]+)$/;
 
 export const devicePinStrip = (ref: string): StripId => `pin:${ref}`;
@@ -134,7 +134,7 @@ export function wire(
     for (const pin of footprint.pins) {
       const ref = `${footprint.part.id}.${pin.name}`;
       if (pin.shell === true) {
-        // **同軸の外皮は板の地へ付く** — 腕が縁を挟んで地に半田付けされる。
+        // **同軸の外皮は基板の地へ付く** — 腕が縁を挟んで地に半田付けされる。
         const strip = ground.board.ground === 'none' ? `shell:${footprint.part.id}` : GND;
         members.push({ ref, strip });
         landings.push({ ref, part: footprint.part.id, pin: pin.name, points: [], shell: true, strip });
@@ -143,14 +143,14 @@ export function wire(
       const points = pin.points.map((point) => ({ at: point, strip: at(point) }));
       const landed = points.map((point) => point.strip).filter((strip): strip is StripId => strip !== null);
       const strip = landed[0] ?? `pin:${ref}`;
-      // 1 本の足の点どうし (SOT-89 の 2 番とタブ) は同じ金物なのでつなぐ。
+      // 1 本のピンの点どうし (SOT-89 の 2 番とタブ) は同じ金物なのでつなぐ。
       for (const other of landed.slice(1)) links.push([strip, other]);
       members.push({ ref, strip });
       landings.push({ ref, part: footprint.part.id, pin: pin.name, points, shell: false, strip });
     }
   }
 
-  // **via は島を裏の地へ落とす** (裏に地がある板だけ)。
+  // **via は島を裏の地へ落とす** (裏に地がある基板だけ)。
   if (hasBackGround(ground.board)) {
     for (const shape of shapes) {
       if (shape.kind !== 'via') continue;
@@ -159,7 +159,7 @@ export function wire(
     }
   }
 
-  // **機器の足は部品の足と同じくネットの一員**。配線が無ければ自分だけのネット。
+  // **機器のピンは部品のピンと同じくネットの一員**。配線が無ければ自分だけのネット。
   const pinTips = new Map<string, Mm>();
   for (const device of devices) {
     for (const pin of device.pins) {
@@ -170,7 +170,7 @@ export function wire(
   }
   const wired = new Set<string>();
 
-  /** 端が機器の足なら、足の先と導通グループ。足のつもりで引けなければそのわけ (string)。 */
+  /** 端が機器のピンなら、ピンの先と導通グループ。ピンのつもりで引けなければそのわけ (string)。 */
   const devicePin = (written: string): { at: Mm; strip: StripId } | string | null => {
     const found = DEVICE_PIN.exec(written);
     if (found === null) return null;
@@ -179,8 +179,8 @@ export function wire(
     const tip = pinTips.get(written);
     if (tip !== undefined) return { at: tip, strip: devicePinStrip(written) };
     const own = devices.find((device) => device.spec.id === id);
-    if (own === undefined) return `${safeToken(written)} を機器の足として読みました。そんな機器はありません: ${safeToken(id)}`;
-    return `${safeToken(id)} に ${safeToken(pin)} という足はありません (${own.pins.map((one) => safeToken(one.name)).join(' / ')})`;
+    if (own === undefined) return `${safeToken(written)} を機器のピンとして読みました。そんな機器はありません: ${safeToken(id)}`;
+    return `${safeToken(id)} に ${safeToken(pin)} というピンはありません (${own.pins.map((one) => safeToken(one.name)).join(' / ')})`;
   };
 
   const jumpers: Jumper[] = [];
@@ -193,7 +193,7 @@ export function wire(
       continue;
     }
     const device = pinA !== null || pinB !== null;
-    // 機器の足のもう一方の端は、足の先へ向けて解く (線路の名前なら足に近い点)。
+    // 機器のピンのもう一方の端は、ピンの先へ向けて解く (線路の名前ならピンに近い点)。
     const from = pinA?.at ?? resolve(spec.from, pinB?.at);
     const to = pinB?.at ?? resolve(spec.to, pinA?.at);
     if (typeof from === 'string' || typeof to === 'string') {

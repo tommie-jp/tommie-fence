@@ -14,7 +14,7 @@ describe('PART_TYPES', () => {
   });
 
   test('draws the electrolytic capacitor with the curved plate symbol', () => {
-    // eC はフォントが無くてプロセスごと落ちる。曲板の cC は実機で通る (実測)。
+    // eC はフォントが無くてプロセスごと落ちる。曲基板の cC は実機で通る (実測)。
     expect(lookupPartType('ecap')?.kind).toBe('two-terminal');
     expect(lookupPartType('ecap')?.symbol).toBe('cC');
     expect(lookupPartType('ecap')?.unitTex).toBe('\\mathrm{F}');
@@ -149,7 +149,7 @@ describe('closestPartType', () => {
 });
 
 describe('FET', () => {
-  /** 接合型・エンハンスメント型・デプレッション型。どれも足の名前は同じ。 */
+  /** 接合型・エンハンスメント型・デプレッション型。どれもピンの名前は同じ。 */
   const FETS = ['njfet', 'pjfet', 'nmos-e', 'pmos-e', 'nmos-d', 'pmos-d'];
 
   test('carries the junction and the insulated gate FETs', () => {
@@ -302,7 +302,7 @@ describe('記事によく出る部品', () => {
   });
 });
 
-describe('足のある 2 端子部品', () => {
+describe('ピンのある 2 端子部品', () => {
   test('carries the potentiometer with its wiper', () => {
     const type = lookupPartType('potentiometer');
 
@@ -368,7 +368,7 @@ describe('DIP の IC', () => {
   });
 
   test('shows the range instead of every pin number', () => {
-    // 40 本を並べると読めない。数字だけの足は範囲でまとめる。
+    // 40 本を並べると読めない。数字だけのピンは範囲でまとめる。
     expect(pinHint(lookupPartType('dip40')!)).toBe('1〜40');
     expect(pinHint(lookupPartType('npn')!)).toBe('b / base / c / collector / e / emitter');
   });
@@ -421,10 +421,10 @@ describe('フェンス向けと .tex 向けの違い', () => {
 });
 
 /**
- * 足が出ている辺と、そこから導く中心線。
+ * ピンが出ている辺と、そこから導く中心線。
  *
  * **持つのは辺のほうで、軸は辺から導く** (軸からは辺を復元できない)。
- * 回した記号の足がどちらを向くかは辺でしか言えず、マップの足の把手も辺が要る。
+ * 回した記号のピンがどちらを向くかは辺でしか言えず、マップのピンの把手も辺が要る。
  */
 describe('pinSideOf', () => {
   const npn = PART_TYPES.npn!;

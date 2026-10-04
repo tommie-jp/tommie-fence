@@ -13,18 +13,18 @@ import type {
 
 export type Wiring = {
   readonly wires: readonly RoutedWire[];
-  /** 板の外の機器につながる端。導通に効く。 */
+  /** 基板の外の機器につながる端。導通に効く。 */
   readonly deviceLinks: readonly (readonly [StripId, StripId])[];
   /**
-   * 機器の足と穴を結ぶ配線。**図に線を引くために持つ** — どの穴へ行くのかが
+   * 機器のピンと穴を結ぶ配線。**図に線を引くために持つ** — どの穴へ行くのかが
    * 図に出ないと、電池の線を挿す先が読む人に分からない (breadboard も引く)。
-   * 機器どうしを結んだ配線は板に触れないので、ここには入らない。
+   * 機器どうしを結んだ配線は基板に触れないので、ここには入らない。
    */
   readonly deviceWires: readonly DeviceWire[];
   readonly errors: readonly FenceError[];
 };
 
-/** 機器の足 1 つと、板の穴 1 つを結ぶ配線。 */
+/** 機器のピン 1 つと、基板の穴 1 つを結ぶ配線。 */
 export type DeviceWire = {
   readonly device: string;
   readonly pin: string;
@@ -33,7 +33,7 @@ export type DeviceWire = {
   readonly line: number | null;
 };
 
-/** 板の外の機器の足の導通グループ。**穴とは別の名前空間**にする。 */
+/** 基板の外の機器のピンの導通グループ。**穴とは別の名前空間**にする。 */
 export const devicePinStrip = (id: string, pin: string): StripId => `pin:${id}.${pin}`;
 
 // `BAT.+` の形。穴の番地に `.` は現れないので、綴りだけで分かれる。
@@ -57,14 +57,14 @@ export function resolveWires(
   const errors: FenceError[] = [];
 
   /**
-   * `BAT.+` を機器の足として読む。**機器の足でなければ undefined**、
-   * 機器の足のつもりだが引けなければ null (理由は帯に出す)。
+   * `BAT.+` を機器のピンとして読む。**機器のピンでなければ undefined**、
+   * 機器のピンのつもりだが引けなければ null (理由は帯に出す)。
    *
    * 点は番地にも `points:` の名前にも現れないので、`.` を含む綴りは
-   * 機器の足のつもりしかありえない。**番地として読めないと言って返さない** —
+   * 機器のピンのつもりしかありえない。**番地として読めないと言って返さない** —
    * 名前を間違えた人が、番地の話をされて次に何をすべきか分からなくなる。
    */
-  /** `BAT.+` の綴りを ID と足に割る。機器の足でなければ null。 */
+  /** `BAT.+` の綴りを ID とピンに割る。機器のピンでなければ null。 */
   const pinParts = (written: string): { readonly id: string; readonly pin: string } | null => {
     const found = PIN_REF.exec(written);
     if (!found) return null;
@@ -81,7 +81,7 @@ export function resolveWires(
       // **書かれた綴りごと名指す。** 点の前だけを返すと、`1.5` のような
       // 書き間違いに対して「そんな機器はありません: 1」と、書いていない語を指す。
       errors.push(fenceError(
-        `${safeToken(written)} を機器の足として読みました。そんな機器はありません: ${safeToken(id)}`,
+        `${safeToken(written)} を機器のピンとして読みました。そんな機器はありません: ${safeToken(id)}`,
         line,
         written,
       ));
@@ -89,7 +89,7 @@ export function resolveWires(
     }
     if (!pins.has(pin)) {
       errors.push(fenceError(
-        `${safeToken(id)} に ${safeToken(pin)} という足はありません (${[...pins].map(safeToken).join(' / ')})`,
+        `${safeToken(id)} に ${safeToken(pin)} というピンはありません (${[...pins].map(safeToken).join(' / ')})`,
         line,
         written,
       ));
@@ -122,7 +122,7 @@ export function resolveWires(
     return address;
   };
 
-  /** 板の上の端を導通グループに直す。読めなければ null。 */
+  /** 基板の上の端を導通グループに直す。読めなければ null。 */
   const holeStripOf = (written: string, line: number | null): StripId | null => {
     const address = resolve(written, line);
     return address === null ? null : holeStrip(address);
@@ -136,7 +136,7 @@ export function resolveWires(
       break;
     }
 
-    // **機器の足は板の上に無い。** それでも穴との間には線を引く — どの穴へ
+    // **機器のピンは基板の上に無い。** それでも穴との間には線を引く — どの穴へ
     // 行くのかが図に出ないと、電池の線を挿す先が読む人に分からない。
     // 端は 1 つずつ見る — 両端まとめて見ると、同じ報告が 1 行に 2 度出て、
     // 帯の打ち切り (8 件) で本物の報告を押し出す。
@@ -152,14 +152,14 @@ export function resolveWires(
       if (to === null) continue;
 
       if (from === to) {
-        // 板の上の配線と同じ。導通を何も足さず、図にも何も出ない。
+        // 基板の上の配線と同じ。導通を何も足さず、図にも何も出ない。
         errors.push(fenceError(`配線の両端が同じところです (${safeToken(spec.from)})`, spec.line));
         continue;
       }
       deviceLinks.push([from, to]);
 
-      // 片端だけが機器の足なら、その足と穴を結ぶ線を引く。
-      // **両端とも機器なら板に触れない**ので線は無く、書いた色も図に出ない。
+      // 片端だけが機器のピンなら、そのピンと穴を結ぶ線を引く。
+      // **両端とも機器なら基板に触れない**ので線は無く、書いた色も図に出ない。
       const fromParts = fromPin === undefined ? null : pinParts(spec.from);
       const toParts = toPin === undefined ? null : pinParts(spec.to);
       const pin = fromParts ?? toParts;
@@ -173,9 +173,9 @@ export function resolveWires(
         }
       } else if (spec.color !== null) {
         // **書いた色が黙って消えない**ようにする。機器どうしを結んだ配線は
-        // 板に触れないので図に線が無く、色の指定は効かない。
+        // 基板に触れないので図に線が無く、色の指定は効かない。
         errors.push(notice(
-          `機器どうしを結ぶ配線は板に触れないので、色 (${safeToken(spec.color)}) は図に出ません`,
+          `機器どうしを結ぶ配線は基板に触れないので、色 (${safeToken(spec.color)}) は図に出ません`,
           spec.line,
         ));
       }
@@ -198,7 +198,7 @@ export function resolveWires(
 }
 
 /**
- * 足の名前。2 本足は 1 / 2 の順で、書いた順そのまま。
+ * ピンの名前。2 ピンは 1 / 2 の順で、書いた順そのまま。
  *
  * **マイコンボードと USB は実物の印字** (`U1.GP0`、`J1.VBUS`)。40 本を番号で呼ぶと、
  * 手元のピンアウト図と突き合わせられない — breadboard が名前で呼んでいるのと
@@ -211,7 +211,7 @@ export function pinRef(part: PlacedPart, index: number): string {
   const printed = dipPinout(part);
   const named = lookupBoardPart(part.type)?.pins[index] ?? lookupConnector(part.type)?.pins[index]
     ?? lookupNamedChip(part.type, part.variant)?.pins[index]?.name
-    // 型番が足の名前の表にある DIP は印字の名前 (52 の docs/95)。
+    // 型番がピンの名前の表にある DIP は印字の名前 (52 の docs/95)。
     ?? (printed === null ? undefined : dipPinName(printed, index));
   return `${part.id}.${named ?? index + 1}`;
 }
@@ -220,7 +220,7 @@ const membersOf = (parts: readonly PlacedPart[]): NetMember[] =>
   parts.flatMap((part) => part.pins.map((pin, index) => ({ ref: pinRef(part, index), strip: pin.strip })));
 
 /**
- * 部品の中でつながっている足。2 つある:
+ * 部品の中でつながっているピン。2 つある:
  *
  * - **端面実装のコネクタの凹の両端**は 1 つの金物なので、片方に配線を付ければ
  *   もう片方も同じネットに乗る
@@ -228,7 +228,7 @@ const membersOf = (parts: readonly PlacedPart[]): NetMember[] =>
  *   その 2 組が渡る。押していないときも組の中は導通しているので、
  *   ネットリストでは 1 つの端子として数える
  *
- * ほかの部品にはこれが無い — 部品はネットとネットの間の枝で、足どうしは
+ * ほかの部品にはこれが無い — 部品はネットとネットの間の枝で、ピンどうしは
  * つながない。
  */
 const innerLinks = (parts: readonly PlacedPart[]): readonly (readonly [StripId, StripId])[] =>
@@ -250,7 +250,7 @@ const innerLinks = (parts: readonly PlacedPart[]): readonly (readonly [StripId, 
  * ブレッドボードは列の 5 穴が最初から導通していて、同じ列に挿すだけで
  * 1 つのネットになるが、ここでは配線を書かないと何もつながらない。
  *
- * 部品そのものはネットとネットの間の枝なので、足どうしはつながない
+ * 部品そのものはネットとネットの間の枝なので、ピンどうしはつながない
  * (例外は `innerLinks`)。
  */
 export const netlistOf = (
@@ -263,7 +263,7 @@ export const netlistOf = (
   computeNets({
     members: [
       ...membersOf(parts),
-      // 機器の足も回路の端子。板の上に無いだけで、ネットには乗る。
+      // 機器のピンも回路の端子。基板の上に無いだけで、ネットには乗る。
       ...devices.flatMap((device) => device.pins.map((pin) => ({
         ref: `${device.id}.${pin}`,
         strip: devicePinStrip(device.id, pin),

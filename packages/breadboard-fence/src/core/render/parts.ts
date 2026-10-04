@@ -13,7 +13,7 @@ import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
 
 /**
- * 配線に横切られたくない領域。2 本足の部品では本体そのものより、
+ * 配線に横切られたくない領域。2 ピンの部品では本体そのものより、
  * 溝側に置いたラベルがレーンと同じ高さに来るのが問題になる。
  * 大きな部品 (パッケージ・ボード) は本体の外形をそのまま渡す。
  */
@@ -59,7 +59,7 @@ export function partObstacles(
     const center = points[1] ?? points[0]!;
     // 本体に、上下へ出したピン名とラベルを足した高さ。字が伸びればここも伸びる。
     const reach = CAPTION_DROP * textScale(theme);
-    // 胴・キャプション・足の名前を**別々の矩形で渡す**。いちばん広いものに合わせて
+    // 胴・キャプション・ピンの名前を**別々の矩形で渡す**。いちばん広いものに合わせて
     // 1 つの箱にすると、何も描いていないところまで塞いで、
     // 空いているレーンを配線に諦めさせてしまう。
     return [
@@ -70,7 +70,7 @@ export function partObstacles(
         height: halfHeight * 2 + reach * 2,
       },
       ...bands,
-      // 足の名前は反対側に並ぶ。名前が長ければ胴からはみ出す。
+      // ピンの名前は反対側に並ぶ。名前が長ければ胴からはみ出す。
       ...legNameBands(part, layout, theme),
     ];
   }
@@ -79,7 +79,7 @@ export function partObstacles(
 }
 
 /**
- * 3 本足の足の名前が占める帯。**レーンにいちばん近い字**なので、
+ * 3 ピンのピンの名前が占める帯。**レーンにいちばん近い字**なので、
  * ここを見落とすと配線が名前の上を走る (`B` のような 1 字なら胴に隠れるが、
  * 長い名前を付けると横にはみ出す)。置き場は描く側と同じ `legNames`。
  * 樹脂の上に刷る名前 (TO-220) は胴の帯に入っているので数えない。
@@ -104,7 +104,7 @@ export function renderPart(
   if (part.kind === 'four-lead') return renderTransformer(part, layout, theme, drop);
   if (part.kind === 'connector') return renderConnector(part, layout, theme, drop);
   if (part.kind === 'board') return renderBoardPart(part, layout, theme, drop);
-  // 3 本足の名札は置き場の候補 (足の名前の横・1 行下) から選ぶので、段の番号をそのまま渡す。
+  // 3 ピンの名札は置き場の候補 (ピンの名前の横・1 行下) から選ぶので、段の番号をそのまま渡す。
   if (part.kind === 'three-lead') return renderThreeLead(part, layout, theme, drops?.get(part.id) ?? 0);
   // 機器 (device) は帯の中に別の描き方で置くので、ここには来ない。
   return renderTwoLead(part, layout, theme, drop);

@@ -5,9 +5,9 @@ import { describe, expect, test } from 'vitest';
 import { renderPerfboard } from './index.ts';
 
 /**
- * DIP の足の名前 (52 の docs/95 の段 3)。**型番が fence-kit の足の名前の表にあれば**、
+ * DIP のピンの名前 (52 の docs/95 の段 3)。**型番が fence-kit のピンの名前の表にあれば**、
  * 胴に番号と名前を 2 段で刷り、ネットリストは名前で出る (回路図・ブレッドボードと同じ)。
- * この板の配線は穴どうしを結ぶので、足を名前で指す書き方は無い。
+ * この基板の配線は穴どうしを結ぶので、ピンを名前で指す書き方は無い。
  */
 
 const fence = (...lines: string[]): string => ['board: 20x10', ...lines, ''].join('\n');
@@ -90,7 +90,7 @@ describe('絵', () => {
     const drawn = [...svg.matchAll(/<text x="([-\d.]+)" y="([-\d.]+)"(?![^>]*aria-hidden)[^>]*>([^<]*)<\/text>/g)]
       .map(([, x, y, text]) => ({ x: Number(x), y: Number(y), text }));
     const name = (text: string) => drawn.find((one) => one.text === text)!;
-    // 名前と同じ x の番号 (軸の番号は x が違うか、板の外)。
+    // 名前と同じ x の番号 (軸の番号は x が違うか、基板の外)。
     const number = (text: string, x: number) => drawn.filter((one) => one.text === text && one.x === x).at(-1)!;
     // 1 番 (h6) は下の列。名前は番号より上 (胴の中)。
     for (const [text, low] of [['GND', '1'], ['COM1', '4']] as const) {

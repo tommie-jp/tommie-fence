@@ -23,7 +23,7 @@ import type {
 const MAX_YAML_MESSAGE = 120;
 
 const BOARD_HINT = `board: は穴数を 列x行 で書くか (例: board: 25x15)、`
-  + `板の名前を書きます (${boardNames().join(' / ')})。`
+  + `基板の名前を書きます (${boardNames().join(' / ')})。`
   + `上限は ${LIMITS.cols}x${LIMITS.rows} です`;
 
 /** `board:` をマップで書いたときに置ける項目。 */
@@ -39,7 +39,7 @@ const FLAG_WORDS: Record<string, boolean> = { on: true, off: false };
  */
 export type ParseResult = { readonly doc: FenceDocument; readonly errors: readonly FenceError[] };
 
-/** 何も読めなかったときに返す中身。板だけは既定のものを持つ。 */
+/** 何も読めなかったときに返す中身。基板だけは既定のものを持つ。 */
 const emptyDocument = (): FenceDocument => ({
   board: DEFAULT_BOARD, boardName: null, title: null, parts: [], wires: [], points: [], style: EMPTY_STYLE, notes: [], devices: [],
 });
@@ -73,7 +73,7 @@ const writtenText = (node: unknown, source: string): string | null => {
  */
 function readFence(source: string): ParseResult {
   if (source.trim() === '') {
-    // **空でも板は返す。** ここで止めると、書き始める前からエディタが動かない。
+    // **空でも基板は返す。** ここで止めると、書き始める前からエディタが動かない。
     return { doc: emptyDocument(), errors: [fenceError('perfboard フェンスが空です (board: から書き始めます)', null)] };
   }
 
@@ -254,7 +254,7 @@ function readFence(source: string): ParseResult {
     }
     // **同じ名前は 1 つだけ。** YAML の重複キーは読み飛ばさせている
     // (`uniqueKeys: false`) ので、ここで見ないと部品と機器が同じ名前で並び、
-    // ネットリストに同じ足の名前が 2 つ載る — 突き合わせの相手が壊れる。
+    // ネットリストに同じピンの名前が 2 つ載る — 突き合わせの相手が壊れる。
     const ids = new Set<string>();
     for (const item of node.items) {
       const id = scalarText(item.key);
@@ -268,7 +268,7 @@ function readFence(source: string): ParseResult {
         continue;
       }
       ids.add(id);
-      // **入れ子なら板の外の機器**。1 行に畳めない情報 (足の名前の並び) を持つ。
+      // **入れ子なら基板の外の機器**。1 行に畳めない情報 (ピンの名前の並び) を持つ。
       if (isMap(item.value)) {
         const entries = (item.value as { toJSON?: () => unknown }).toJSON?.() as Record<string, unknown> | undefined;
         const device = parseDevice(id, entries ?? {});
@@ -314,7 +314,7 @@ function readFence(source: string): ParseResult {
         continue;
       }
       partsWritten = true;
-      // **板を読んでから読む** (番地らしさを板の大きさで見るため)。`parts:` が
+      // **基板を読んでから読む** (番地らしさを基板の大きさで見るため)。`parts:` が
       // `board:` より先に書かれていても同じに読む。報告は行番号で並べ直される。
       partsNode = { node: pair.value, keyLine };
       continue;
@@ -332,7 +332,7 @@ function readFence(source: string): ParseResult {
         continue;
       }
       // **空の題は無題**。`""` をそのまま通すと、題の帯だけ空けて何も書かれない
-      // 空白が板の上に残る。
+      // 空白が基板の上に残る。
       title = written.trim() === '' ? null : written;
       continue;
     }
@@ -395,14 +395,14 @@ function readFence(source: string): ParseResult {
 
     const at = lineOf((pair.value ?? pair.key) as Node);
     if (boardWritten) {
-      // 後勝ちで黙って上書きすると、**書いたはずの板と違う板の図が出る**。
-      errors.push(fenceError('board: が 2 つあります (板は 1 枚です)', at, key));
+      // 後勝ちで黙って上書きすると、**書いたはずの基板と違う基板の図が出る**。
+      errors.push(fenceError('board: が 2 つあります (基板は 1 枚です)', at, key));
       continue;
     }
     boardWritten = true;
 
-    // **板はスカラーでもマップでも書ける。** 大きさだけならスカラー、
-    // 銅箔のように板そのものの性質を足すときはマップ (`size:` に同じ綴りを書く)。
+    // **基板はスカラーでもマップでも書ける。** 大きさだけならスカラー、
+    // 銅箔のように基板そのものの性質を足すときはマップ (`size:` に同じ綴りを書く)。
     let sizeNode: unknown = pair.value;
     let slots = false;
     let color: string | null = null;
@@ -459,7 +459,7 @@ function readFence(source: string): ParseResult {
           continue;
         }
         if (name === 'grid') {
-          // 格子は大きさが決まってから当てる (名前の標準板でなければ断るため)。
+          // 格子は大きさが決まってから当てる (名前の標準基板でなければ断るため)。
           if (written === null) {
             errors.push(fenceError('grid: は穴数を 列x行 で書きます (例: grid: 43x58)', itemAt, name));
             bad = true;
@@ -469,8 +469,8 @@ function readFence(source: string): ParseResult {
           continue;
         }
         if (name === 'color' || name === 'land') {
-          // 板の色とランドの色。**表を分けてある** — 板に `gold`、ランドに `green` と
-          // 書けてしまうと、綴りは通るのに実物にない板が出る。
+          // 基板の色とランドの色。**表を分けてある** — 基板に `gold`、ランドに `green` と
+          // 書けてしまうと、綴りは通るのに実物にない基板が出る。
           const ok = name === 'color' ? isPlateColor(written ?? '') : isLandColor(written ?? '');
           if (!ok) {
             const names = name === 'color' ? plateNames() : landNames();
@@ -508,12 +508,12 @@ function readFence(source: string): ParseResult {
         slots = flag;
       }
       if (!sizeSeen) {
-        // 大きさを当てて描くと、**書いていない板の図が黙って出る**。
+        // 大きさを当てて描くと、**書いていない基板の図が黙って出る**。
         errors.push(fenceError(`board: をマップで書くときは size: に大きさを書きます。${BOARD_HINT}`, at));
         continue;
       }
       // **読めなかったのが飾り (色・スロット・知らない項目) だけなら、大きさは活かす。**
-      // ここで板ごと捨てると、書いてある 10x8 ではなく既定の板の図が黙って出る
+      // ここで基板ごと捨てると、書いてある 10x8 ではなく既定の基板の図が黙って出る
       // (色の指摘だけが付いた、別の大きさの図になる)。読めた所は返す。
       void bad;
     }
@@ -530,7 +530,7 @@ function readFence(source: string): ParseResult {
       errors.push(fenceError(`${safeToken(written)}: ${found.reason}`, at, written));
       continue;
     }
-    // **格子が読めなくても大きさは活かす** (飾りと同じ: 書いた板と違う板を出さない)。
+    // **格子が読めなくても大きさは活かす** (飾りと同じ: 書いた基板と違う基板を出さない)。
     let holes = found.board;
     if (grid !== null) {
       const gridFound = resolveGrid(found.named, grid.text);
@@ -552,14 +552,14 @@ function readFence(source: string): ParseResult {
 
   if (partsNode !== null) readParts(partsNode.node, partsNode.keyLine);
 
-  // **板が決まらなくても既定の板で返す** (52 の docs/54)。穴の数が決まらないと
+  // **基板が決まらなくても既定の基板で返す** (52 の docs/54)。穴の数が決まらないと
   // 番地も配置も読めないが、止めると書き始められない。
   if (board === null) {
-    // **何の板で描いたかは必ず言う。** 前は図が出なかったので誤った図は出なかった。
-    // 読めた所を返す形にした以上、黙って別の大きさの板を描くと読み手が図を信じる。
+    // **何の基板で描いたかは必ず言う。** 前は図が出なかったので誤った図は出なかった。
+    // 読めた所を返す形にした以上、黙って別の大きさの基板を描くと読み手が図を信じる。
     // 書いてあって読めなかったときに理由を繰り返さないのは、すぐ上で言っているため。
     errors.push(boardWritten
-      ? notice(`board: を読めないので、既定の板 (${DEFAULT_BOARD_SIZE}) で描いています`, contentLine)
+      ? notice(`board: を読めないので、既定の基板 (${DEFAULT_BOARD_SIZE}) で描いています`, contentLine)
       : fenceError(`board: が要ります。${BOARD_HINT}`, contentLine));
   }
 

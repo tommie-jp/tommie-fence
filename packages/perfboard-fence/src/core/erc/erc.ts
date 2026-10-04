@@ -17,7 +17,7 @@ import type { DeviceSpec, FenceError, PlacedPart, RoutedWire, StripId } from '..
  * 構造的に起きない**ので置き換えている (下の「短絡した部品」)。
  */
 
-/** 1 件の中に並べる足の数。多ピンの IC で行が伸びきらないように切る。 */
+/** 1 件の中に並べるピンの数。多ピンの IC で行が伸びきらないように切る。 */
 const MAX_SHOWN_PINS = 4;
 
 export type ErcInput = {
@@ -26,7 +26,7 @@ export type ErcInput = {
   readonly netlist: readonly Net[];
   /** `points:` で名前を付けた穴。**基板の外へ出る意思表示**として扱う。 */
   readonly namedStrips: ReadonlySet<StripId>;
-  /** 板の外の機器。足は盤面に無いが、つなぎ忘れは部品と同じように沈黙する。 */
+  /** 基板の外の機器。ピンは盤面に無いが、つなぎ忘れは部品と同じように沈黙する。 */
   readonly devices: readonly DeviceSpec[];
 };
 
@@ -34,14 +34,14 @@ export type ErcInput = {
 type Terminals = {
   readonly id: string;
   readonly line: number | null;
-  /** 端子の名前と、それがどこにあるか (穴の番地、または板の外)。 */
+  /** 端子の名前と、それがどこにあるか (穴の番地、または基板の外)。 */
   readonly pins: readonly (readonly [string, string])[];
   /** つながっていなかったときに添える一言。 */
   readonly hint: string;
 };
 
 /**
- * 未結線のピン。**ネットに自分しか乗っていない足**は、どこにもつながっていない。
+ * 未結線のピン。**ネットに自分しか乗っていないピン**は、どこにもつながっていない。
  *
  * `points:` で名前を付けた穴を含むネットは見逃す。名前を付けたのは
  * 「ここから電源や信号が出入りする」という意思表示なので、そこを
@@ -49,7 +49,7 @@ type Terminals = {
  * (boardwright の `external: true` にあたる)。
  */
 const PART_HINT = '全穴が独立しているので、配線を書くまで挿しただけではつながりません';
-const DEVICE_HINT = '板の外の機器なので、配線を書かないとどの穴にも届きません';
+const DEVICE_HINT = '基板の外の機器なので、配線を書かないとどの穴にも届きません';
 
 const terminalsOf = (input: ErcInput): Terminals[] => [
   ...input.parts.map((part) => ({
@@ -62,7 +62,7 @@ const terminalsOf = (input: ErcInput): Terminals[] => [
   ...input.devices.map((device) => ({
     id: device.id,
     line: device.line,
-    pins: device.pins.map((pin) => [`${device.id}.${pin}`, '板の外'] as const),
+    pins: device.pins.map((pin) => [`${device.id}.${pin}`, '基板の外'] as const),
     hint: DEVICE_HINT,
   })),
 ];
@@ -79,20 +79,20 @@ function unwiredPins(input: ErcInput): FenceError[] {
     for (const [ref, where] of pins) {
       const net = netOf.get(ref);
       // **自分の足しか乗っていないネットは、つながっていない。** 凹の両端のように
-      // 部品の中でつながった足どうしは 1 つのネットに並ぶが、それは相手ではない。
+      // 部品の中でつながったピンどうしは 1 つのネットに並ぶが、それは相手ではない。
       if (!net || net.refs.some((other) => !other.startsWith(`${id}.`))) continue;
       if (net.strips.some((strip) => input.namedStrips.has(strip))) continue;
       loose.push(`${safeToken(ref)} (${where})`);
     }
     if (loose.length === 0) continue;
 
-    // **部品ごとに 1 件。** DIP の余った足は普通のことなので、1 本ずつ言うと
+    // **部品ごとに 1 件。** DIP の余ったピンは普通のことなので、1 本ずつ言うと
     // 正しい図が毎回叱られ、帯の打ち切りで本物の指摘まで押し出す。
     const shown = loose.length > MAX_SHOWN_PINS
       ? `${loose.slice(0, MAX_SHOWN_PINS).join('、')} ほか ${loose.length - MAX_SHOWN_PINS} 本`
       : loose.join('、');
     found.push(notice(
-      `${safeToken(id)} の ${loose.length} 本の足がどこにもつながっていません (${shown})。${hint}`,
+      `${safeToken(id)} の ${loose.length} 本のピンがどこにもつながっていません (${shown})。${hint}`,
       line,
     ));
   }
@@ -100,7 +100,7 @@ function unwiredPins(input: ErcInput): FenceError[] {
 }
 
 /**
- * 短絡した部品。**両足が同じネットに来ている**部品は、配線で自分を跨がれている。
+ * 短絡した部品。**両ピンが同じネットに来ている**部品は、配線で自分を跨がれている。
  *
  * boardwright の「同じ穴が 2 つのネットに属していないか」は、ここでは
  * **構造的に起き得ない** — 穴 1 つがそのまま 1 つの導通グループなので、
@@ -121,7 +121,7 @@ function shortedParts(input: ErcInput): FenceError[] {
     if (first === undefined || !nets.every((net) => net === first)) continue;
 
     found.push(notice(
-      `${safeToken(part.id)} の足 ${part.pins.length} 本が全部同じネットに来ています`
+      `${safeToken(part.id)} のピン ${part.pins.length} 本が全部同じネットに来ています`
       + ' (配線で短絡しています)',
       part.line,
     ));
@@ -130,9 +130,9 @@ function shortedParts(input: ErcInput): FenceError[] {
 }
 
 /**
- * 空中配線。**部品の足に 1 本も届いていない配線**は、何もつないでいない。
+ * 空中配線。**部品のピンに 1 本も届いていない配線**は、何もつないでいない。
  *
- * ネットリストには出てこない (`computeNets` が足の乗らないネットを落とす) ので、
+ * ネットリストには出てこない (`computeNets` がピンの乗らないネットを落とす) ので、
  * ここで言わないと**黙って消える**。
  */
 function danglingWires(input: ErcInput): FenceError[] {
@@ -144,7 +144,7 @@ function danglingWires(input: ErcInput): FenceError[] {
   return input.wires
     .filter((wire) => !live.has(holeStrip(wire.from)) && !live.has(holeStrip(wire.to)))
     .map((wire) => notice(
-      `${formatAddress(wire.from)} -- ${formatAddress(wire.to)} は部品の足を 1 つもつないでいません`,
+      `${formatAddress(wire.from)} -- ${formatAddress(wire.to)} は部品のピンを 1 つもつないでいません`,
       wire.line,
     ));
 }

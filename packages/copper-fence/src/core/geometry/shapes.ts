@@ -14,11 +14,11 @@ import type { Board, CopperSpec, FenceError, Mm, RectMm } from '../types.ts';
 /** 向き。線路の区間は x (横) か y (縦)。島と via は向きを持たない。 */
 export type Axis = 'x' | 'y';
 
-/** 矩形 1 つ。線路の区間なら向きと、表が地の板で両脇に切る溝の幅を持つ。 */
+/** 矩形 1 つ。線路の区間なら向きと、表が地の基板で両脇に切る溝の幅を持つ。 */
 export type Piece = {
   readonly rect: RectMm;
   readonly axis: Axis | null;
-  /** 島のまわりの溝 (mm)。表が地の板でだけ描く。 */
+  /** 島のまわりの溝 (mm)。表が地の基板でだけ描く。 */
   readonly gap: number;
 };
 
@@ -57,7 +57,7 @@ function segmentRect(a: Mm, b: Mm, width: number, extendStart: boolean, extendEn
 export const centred = (at: Mm, width: number, height: number): RectMm =>
   ({ x: at.x - width / 2, y: at.y - height / 2, width, height });
 
-/** 矩形が板からはみ出しているか (縁は含む)。 */
+/** 矩形が基板からはみ出しているか (縁は含む)。 */
 const outside = (board: Board, rect: RectMm): boolean =>
   rect.x < -TOUCH || rect.y < -TOUCH
   || rect.x + rect.width > board.width + TOUCH || rect.y + rect.height > board.height + TOUCH;
@@ -77,7 +77,7 @@ export function shapesOf(copper: readonly CopperSpec[], board: Board): ShapesRes
   for (const spec of copper) {
     if (spec.kind === 'slot') {
       const rect = centred(spec.at, spec.width, spec.height);
-      if (outside(board, rect)) errors.push(fenceError(`${spec.id} が板からはみ出しています`, spec.line, spec.id));
+      if (outside(board, rect)) errors.push(fenceError(`${spec.id} が基板からはみ出しています`, spec.line, spec.id));
       slots.push({ id: spec.id, rect, line: spec.line });
       continue;
     }
@@ -107,10 +107,10 @@ export function shapesOf(copper: readonly CopperSpec[], board: Board): ShapesRes
       pieces.push({ rect: centred(spec.at, size, size), axis: null, gap: board.cut });
     }
     if (pieces.some((piece) => outside(board, piece.rect))) {
-      errors.push(fenceError(`${spec.id} が板からはみ出しています`, spec.line, spec.id));
+      errors.push(fenceError(`${spec.id} が基板からはみ出しています`, spec.line, spec.id));
     }
     if (spec.kind === 'via' && board.ground !== 'back' && board.ground !== 'both') {
-      errors.push(notice(`${spec.id}: 裏に地が無い板なので、via はどこへもつながりません (board の ground)`, spec.line, spec.id));
+      errors.push(notice(`${spec.id}: 裏に地が無い基板なので、via はどこへもつながりません (board の ground)`, spec.line, spec.id));
     }
     shapes.push({ id: spec.id, kind: spec.kind, pieces, line: spec.line });
   }

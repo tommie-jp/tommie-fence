@@ -107,7 +107,7 @@ describe('nextPartId', () => {
   });
 
   test('has no name for a type it cannot place', () => {
-    // 板の外に並べる機器は穴を持たないので、置く先が無い。
+    // 基板の外に並べる機器は穴を持たないので、置く先が無い。
     expect(nextPartId(WITH_WIRES, 'device')).toBeNull();
     expect(nextPartId(WITH_WIRES, 'resistr')).toBeNull();
   });
@@ -132,7 +132,7 @@ describe('insertPart', () => {
   });
 
   test('writes a part the package anchors with @', () => {
-    // タクトスイッチは足の位置をパッケージが決めるので、書くのはアンカー 1 つ。
+    // タクトスイッチはピンの位置をパッケージが決めるので、書くのはアンカー 1 つ。
     expect(placed(WITH_WIRES, { id: 'SW1', type: 'button', at: [at('e5')] }))
       .toContain('  SW1: button @ e5');
   });
@@ -252,7 +252,7 @@ describe('insertPart: 1 穴で置く (マップの 1 クリック)', () => {
   });
 
   test('reports a turn that does not fit instead of writing a broken line', () => {
-    // i5 から時計回りに回すと、3 本目の足が穴の並びの下 (レール) へ出る。
+    // i5 から時計回りに回すと、3 本目のピンが穴の並びの下 (レール) へ出る。
     // **回すだけで電源につながない**ので、そこは断る。
     const result = insertPart(WITH_WIRES, { id: 'Q1', type: 'transistor', at: [at('i5')], turn: 1 });
 

@@ -18,7 +18,7 @@ import type { Theme } from './theme.ts';
 
 /**
  * 図に添える字 — 線路の**幅と Z0** (と、`f:` があれば電気長)、結合線路の**隙間**、
- * 部品の**名札**、板の**説明の 1 行**。本の 3-12 の題「FR4 で 50Ω の幅を計算して
+ * 部品の**名札**、基板の**説明の 1 行**。本の 3-12 の題「FR4 で 50Ω の幅を計算して
  * 作る」がそのままキャプションになる (52 の docs/73 決め 7)。
  */
 
@@ -65,7 +65,7 @@ function widthFor(z0: number, board: Board): number | null {
   return (lo + hi) / 2;
 }
 
-/** 板の説明の 1 行。**50Ω の幅と、`f:` の λg/4** を添える — 切る前に要る 2 つの数。 */
+/** 基板の説明の 1 行。**50Ω の幅と、`f:` の λg/4** を添える — 切る前に要る 2 つの数。 */
 export function boardDescription(board: Board, f: number | null): string {
   const width = widthFor(50, board);
   const fifty = width === null ? '' : `   50Ω = ${width.toFixed(2)}mm`;
@@ -169,11 +169,11 @@ export function renderCouplings(couplings: readonly Coupling[], layout: Layout, 
 const labelOf = (footprint: Footprint): string =>
   clampText(footprint.part.value === null ? footprint.part.id : `${footprint.part.id} ${footprint.part.value}`, LIMITS.labelLength);
 
-/** 名札の候補。**胴の上、下、右、左**。足のある部品は胴の脇から。 */
+/** 名札の候補。**胴の上、下、右、左**。ピンのある部品は胴の脇から。 */
 function labelCandidates(footprint: Footprint, layout: Layout, size: number): Candidate[] {
   const part = footprint.part;
   if (part.kind === 'edge') {
-    // SMA は板の外の胴の脇 (左右の SMA は上、上下の SMA は右)。
+    // SMA は基板の外の胴の脇 (左右の SMA は上、上下の SMA は右)。
     const reach = SMA.base + SMA.barrel;
     if (part.side === 'left' || part.side === 'right') {
       const x = part.side === 'left' ? -reach / 2 : footprint.center.x + reach / 2;
@@ -210,7 +210,7 @@ function labelCandidates(footprint: Footprint, layout: Layout, size: number): Ca
   ];
 }
 
-/** 部品の名札。**SMA は板の外、他は板の中**に置く。 */
+/** 部品の名札。**SMA は基板の外、他は基板の中**に置く。 */
 export function renderPartLabels(footprints: readonly Footprint[], layout: Layout, theme: Theme, placer: Placer): string {
   const size = theme.metrics.textSize * 0.9;
   return footprints.map((footprint) => {
@@ -221,7 +221,7 @@ export function renderPartLabels(footprints: readonly Footprint[], layout: Layou
   }).join('');
 }
 
-/** 板の説明の 1 行。 */
+/** 基板の説明の 1 行。 */
 export function renderDescription(board: Board, f: number | null, layout: Layout, theme: Theme): string {
   return svgText(layout.board.x, layout.descriptionBaseline, boardDescription(board, f), {
     anchor: 'start', fill: theme.palette.caption, 'font-size': num(theme.metrics.textSize),

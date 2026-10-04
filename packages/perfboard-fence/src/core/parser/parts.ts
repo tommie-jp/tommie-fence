@@ -22,15 +22,15 @@ const fail = (message: string, token?: string): Parsed<never> =>
  */
 export type WrittenPart = Omit<PartSpec, 'line'>;
 
-/** 番地らしさを見る板の大きさ (穴の数)。 */
+/** 番地らしさを見る基板の大きさ (穴の数)。 */
 export type BoardExtent = { readonly cols: number; readonly rows: number };
 
-/** 板が決まっていないとき。**どんな板にも載りうる**かで見る (上限の板)。 */
+/** 基板が決まっていないとき。**どんな基板にも載りうる**かで見る (上限の基板)。 */
 const ANY_BOARD: BoardExtent = { cols: LIMITS.cols, rows: LIMITS.rows };
 
 /**
- * **この板に**載りうる番地か (板の外は `OFF_BOARD_REACH` まで)。載らないものは
- * 型番や値とみなす。上限の 120 列で見ていたころは、25 列の板の `C102` (容量の
+ * **この基板に**載りうる番地か (基板の外は `OFF_BOARD_REACH` まで)。載らないものは
+ * 型番や値とみなす。上限の 120 列で見ていたころは、25 列の基板の `C102` (容量の
  * コードのつもり) を c 行 102 列と読んで「余分な番地」と断っていた。
  */
 function plausibleHole(token: string, board: BoardExtent): boolean {
@@ -40,8 +40,8 @@ function plausibleHole(token: string, board: BoardExtent): boolean {
 }
 
 /**
- * 書かれた穴。**頭から続く番地だけ**を取る — 省いてよい足のある形 (端面実装・USB) では
- * 足のあとに値が来ることがあり、値の先にある番地まで穴として拾うと、
+ * 書かれた穴。**頭から続く番地だけ**を取る — 省いてよいピンのある形 (端面実装・USB) では
+ * ピンのあとに値が来ることがあり、値の先にある番地まで穴として拾うと、
  * 間の値が黙って消える。
  */
 function leadingHoles(tokens: readonly string[], wanted: number, most: number, board: BoardExtent): string[] {
@@ -76,7 +76,7 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
   const { type, variant, problem } = splitPartType(written);
   if (problem !== null) return fail(problem, written);
 
-  // 姿で足の数が変わる (端面実装の `sma` は 3 本)。
+  // 姿でピンの数が変わる (端面実装の `sma` は 3 本)。
   const footprint = footprintOf(type, variant);
   if (footprint === null) {
     // **知らないふりをしない。** 名前は知っているが置けないものと、
@@ -92,13 +92,13 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
     );
   }
 
-  // **番地に見える語だけを穴として取る。** 省いてよい足のある形 (端面実装・USB) では、
+  // **番地に見える語だけを穴として取る。** 省いてよいピンのある形 (端面実装・USB) では、
   // 最少の数より先は値のこともある。
   const wanted = footprint.minHoles ?? footprint.holes;
   const holes = leadingHoles(rest, wanted, footprint.holes, board);
   if (holes.length < wanted) {
     // **書く穴の数は形が決める。** DIP と SIP はアンカー 1 つだけ
-    // (足の位置はパッケージが決めていて、書く人が選べない)。
+    // (ピンの位置はパッケージが決めていて、書く人が選べない)。
     // 端面実装は中心導体と凹の先端 — 先端は片方だけでよい (もう片方は反対側に決まる)。
     if (footprint.kind === 'edge') {
       return fail(
@@ -106,7 +106,7 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
         written,
       );
     }
-    // USB は穴の順が足の名前の順。**順を言わないと、どの穴が VBUS か決められない。**
+    // USB は穴の順がピンの名前の順。**順を言わないと、どの穴が VBUS か決められない。**
     const connector = lookupConnector(type);
     if (connector !== null) {
       return fail(
@@ -148,21 +148,21 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
     tail.push(token);
   }
 
-  // **書けない形に向きを書いたら断る。** 足を並べて書く部品の向きは穴の順
+  // **書けない形に向きを書いたら断る。** ピンを並べて書く部品の向きは穴の順
   // そのものなので、語と食い違うと、どちらが本当か決められなくなる。
   if (isTurned(turn) && orientOf(type) === 'none') {
     return fail(
-      `${safeToken(written)} に向きは書けません (足を並べて書く部品の向きは穴の順そのものです)`,
+      `${safeToken(written)} に向きは書けません (ピンを並べて書く部品の向きは穴の順そのものです)`,
       written,
     );
   }
   if (turn.mirror && refusesMirror(type)) {
     return fail(`${safeToken(written)} に ${MIRROR_WORD} は書けません (${MIRROR_REFUSAL})`, MIRROR_WORD);
   }
-  // **番地に見えるものを黙って値にしない。** 足を 1 本多く書いたつもりの人が、
+  // **番地に見えるものを黙って値にしない。** ピンを 1 本多く書いたつもりの人が、
   // 「値 b9」の図を見て気づけないまま終わる。
   //
-  // ただし**この板に載らない番地は足の書き間違いではない**。型番や値は番地と
+  // ただし**この基板に載らない番地はピンの書き間違いではない**。型番や値は番地と
   // そっくりの綴りをしていて (`NE555` は ne 行 555 列、`C1815` は c 行 1815 列、
   // `C102` は c 行 102 列)、番地として弾くと正しい図が毎回叱られる。
   const stray = tail.find((token) => plausibleHole(token, board));

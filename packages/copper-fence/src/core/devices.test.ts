@@ -23,11 +23,11 @@ describe('device parser', () => {
   });
 
   test.each([
-    [['  X:', '    at: 1,1', '    pins: a'], /入れ子で書けるのは板の外の機器だけ/],
+    [['  X:', '    at: 1,1', '    pins: a'], /入れ子で書けるのは基板の外の機器だけ/],
     [['  X:', '    type: device', '    pins: a'], /at に箱の中心/],
     [['  X:', '    type: device', '    at: 1.234,1', '    pins: a'], /点として読めません/],
-    [['  X:', '    type: device', '    at: 1,1'], /足の名前を pins/],
-    [['  X:', '    type: device', '    at: 1,1', '    pins: a a'], /足の名前が重なっています/],
+    [['  X:', '    type: device', '    at: 1,1'], /ピンの名前を pins/],
+    [['  X:', '    type: device', '    at: 1,1', '    pins: a a'], /ピンの名前が重なっています/],
     [['  X:', '    type: device', '    at: 1,1', '    pins: a', '    face: up'], /face は/],
     [['  X:', '    type: device', '    at: 1,1', '    pins: a', '    size: 3'], /知らない機器の項目/],
   ])('refuses a malformed device %#', (device, message) => {
@@ -82,7 +82,7 @@ describe('device wiring', () => {
 
   test('says so when a pin is wired nowhere', () => {
     const result = renderCopper(withDevice(['wires:', '  - PWR.+ -- VCC']));
-    expect(result.erc.map((said) => said.message)).toEqual([expect.stringMatching(/PWR\.- の足がどこにもつながっていません/)]);
+    expect(result.erc.map((said) => said.message)).toEqual([expect.stringMatching(/PWR\.- のピンがどこにもつながっていません/)]);
   });
 
   test('names a wire that ends where there is no copper', () => {
@@ -94,18 +94,18 @@ describe('device wiring', () => {
     const missing = renderCopper(withDevice(['wires:', '  - NOPE.+ -- VCC']));
     expect(missing.errors[0]?.message).toMatch(/そんな機器はありません: NOPE/);
     const pin = renderCopper(withDevice(['wires:', '  - PWR.x -- VCC']));
-    expect(pin.errors[0]?.message).toMatch(/PWR に x という足はありません \(\+ \/ -\)/);
+    expect(pin.errors[0]?.message).toMatch(/PWR に x というピンはありません \(\+ \/ -\)/);
   });
 
   test('refuses a device too far from the board, and stays quiet about its wires', () => {
     const far = withDevice(['wires:', '  - PWR.+ -- VCC'], ['  PWR:', '    type: device', '    at: -100,10', '    pins: + -']);
     const result = renderCopper(far);
-    expect(result.errors.map((said) => said.message)).toEqual([expect.stringMatching(/PWR が板から離れすぎです/)]);
+    expect(result.errors.map((said) => said.message)).toEqual([expect.stringMatching(/PWR が基板から離れすぎです/)]);
   });
 
   test('warns when the box overlaps the board', () => {
     const result = renderCopper(withDevice([], ['  PWR:', '    type: device', '    at: 20,10', '    pins: +']));
-    expect(result.notices.map((said) => said.message)).toEqual([expect.stringMatching(/箱が板に重なっています/)]);
+    expect(result.notices.map((said) => said.message)).toEqual([expect.stringMatching(/箱が基板に重なっています/)]);
   });
 
   test('does not ask for copper under a device pin', () => {

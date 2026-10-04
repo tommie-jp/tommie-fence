@@ -5,8 +5,8 @@ import { lookupBoardPart } from './boards.ts';
 import { textWidth as textWidthOf } from '../textFit.ts';
 
 /**
- * パッケージの姿は 2 つの板が共有する (実機で「全ての部品の見た目を
- * breadboard と perfboard で共通にする」)。ここで見るのは**板に依らない
+ * パッケージの姿は 2 つの基板が共有する (実機で「全ての部品の見た目を
+ * breadboard と perfboard で共通にする」)。ここで見るのは**基板に依らない
  * 約束**だけ — 切り欠きが 1 番ピンの側に出ること、字が樹脂の外へ出ないこと、
  * **縦に置いても同じ絵になる**こと (breadboard は溝をまたぐので横だけだが、
  * perfboard は回して置ける)。
@@ -22,7 +22,7 @@ const INK: ChipInk = {
 };
 const PITCH = 20;
 
-/** 2 列パッケージの足。1 番から並べ、折り返して戻る (実物の DIP と同じ)。 */
+/** 2 列パッケージのピン。1 番から並べ、折り返して戻る (実物の DIP と同じ)。 */
 function twoRows(count: number, span: number, vertical = false): ChipPoint[] {
   const half = count / 2;
   const along = (index: number): number => index * PITCH;
@@ -297,8 +297,8 @@ describe('boardChip', () => {
   });
 
   test('numbers every header pin, so the drawing can be read against a pinout', () => {
-    // **番号は足の側の端**。字は足から内側へ伸びるので、向きで前後が入れ替わる。
-    // 1 番の列は樹脂の中心より上なので、番号は名前の後ろ (足の側の端)。
+    // **番号はピンの側の端**。字はピンから内側へ伸びるので、向きで前後が入れ替わる。
+    // 1 番の列は樹脂の中心より上なので、番号は名前の後ろ (ピンの側の端)。
     expect(drawn(0)).toContain('GP0 01');
     // 折り返した先の列は伸びる向きが逆になるので、番号が前に来る。
     expect(drawn(0)).toContain('40 VBUS');

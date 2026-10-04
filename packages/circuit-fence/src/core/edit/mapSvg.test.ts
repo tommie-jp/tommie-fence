@@ -26,7 +26,7 @@ describe('renderMapHtml が描くもの', () => {
   });
 
   test('dashes a wire whose end was only approximated', () => {
-    // ピンの足の位置は TeX しか知らない。実線で引くと嘘の精度になる。
+    // ピンのピンの位置は TeX しか知らない。実線で引くと嘘の精度になる。
     const svg = draw('parts:\n  Q1: npn b2\nwires:\n  - Q1.C -- a4\n');
 
     expect(svg).toContain('cf-approx');
@@ -144,7 +144,7 @@ describe('向き', () => {
 
 /**
  * 切り欠きの辺。**実物は回転だけで決まる** — 立てると上、時計回りに 90 度で右。
- * 反転は上下を変えないので、反転しても同じ辺。足の位置から導くとコードと同じ
+ * 反転は上下を変えないので、反転しても同じ辺。ピンの位置から導くとコードと同じ
  * 計算を写すことになるので、表で持つ。
  */
 const NOTCH_SIDE = { 0: 'top', 90: 'right', 180: 'bottom', 270: 'left' } as const;
@@ -255,12 +255,12 @@ describe('部品の名前の置き場', () => {
 
     expect(x).toBeGreaterThan(0);
     expect(anchor).toBe('start');
-    // 高さは記号の真ん中あたり。上 (足の名前 C) や下 (E) には出ない。
+    // 高さは記号の真ん中あたり。上 (ピンの名前 C) や下 (E) には出ない。
     expect(Math.abs(y)).toBeLessThan(10);
   });
 
   test('keeps the name off the sides that have legs, whichever way the part is turned', () => {
-    // 足は記号と一緒に回るので、名札の逃げ場も回る。図 (nameNode) と同じ順で探す。
+    // ピンは記号と一緒に回るので、名札の逃げ場も回る。図 (nameNode) と同じ順で探す。
     expect(nameAt('parts:\n  Q1: npn c3 r180\n', 'Q1').anchor).toBe('end');
     expect(nameAt('parts:\n  Q1: npn c3 mirror\n', 'Q1').anchor).toBe('end');
     // r90 はベースが上・コレクタが右・エミッタが左なので、空くのは下。
@@ -271,7 +271,7 @@ describe('部品の名前の置き場', () => {
   });
 
   test('puts the name above the parts whose top is free', () => {
-    // 足が左右にしかない種類 (オペアンプ・論理ゲート) は上。
+    // ピンが左右にしかない種類 (オペアンプ・論理ゲート) は上。
     for (const source of ['parts:\n  U1: opamp c3\n', 'parts:\n  U1: and c3\n']) {
       const { x, y, anchor } = nameAt(source, 'U1');
 
@@ -298,7 +298,7 @@ describe('部品の名前の置き場', () => {
   });
 
   test('clears the box, which grows with the number of legs', () => {
-    // **箱は足の本数で伸びる。** 決め打ちの距離だと、足の多い DIP で名前が
+    // **箱はピンの本数で伸びる。** 決め打ちの距離だと、ピンの多い DIP で名前が
     // 箱の中や切り欠きの上に乗る (実機で「切り欠きも表示する」と言われた回)。
     const small = nameAt('parts:\n  U1: dip4 c3\n', 'U1');
     const big = nameAt('parts:\n  U1: dip40 c3\n', 'U1');
@@ -353,7 +353,7 @@ describe('画布の広さ', () => {
     const [, top, , height] = boxOf('parts:\n  U1: pico b2\n');
     const dots = [...draw('parts:\n  U1: pico b2\n')
       .matchAll(/class="cf-pin-dot" cx="[-\d.]+" cy="([-\d.]+)"/g)].map((one) => Number(one[1]));
-    // 足は部品の中の座標。b 行 (y=66) に足して、画布の中に収まっていること。
+    // ピンは部品の中の座標。b 行 (y=66) に足して、画布の中に収まっていること。
     const legs = dots.map((cy) => 66 + cy);
 
     expect(Math.min(...legs)).toBeGreaterThan(top ?? 0);
@@ -391,9 +391,9 @@ describe('画布の広さ', () => {
   });
 });
 
-describe('多端子部品の足', () => {
+describe('多端子部品のピン', () => {
   test('puts a connection point on every leg, named as the fence spells it', () => {
-    // 実機で「足に接続点を表示し、配線で押して接続して」。綴りをそのまま
+    // 実機で「ピンに接続点を表示し、配線で押して接続して」。綴りをそのまま
     // 名札にしておくと、殻は綴りを知らないまま `addWire` へ返せる。
     const svg = draw('parts:\n  Q1: npn b2\n');
 
@@ -404,7 +404,7 @@ describe('多端子部品の足', () => {
   });
 
   test('puts the point where the symbol draws the leg, not at an even spacing', () => {
-    // 実機で「足の位置＝接続点にして」。オペアンプの ± は三角の背の
+    // 実機で「ピンの位置＝接続点にして」。オペアンプの ± は三角の背の
     // 上下 1/4、AND の入力も同じ高さ。等間隔の決め打ちだと記号からずれる。
     const dots = (source: string): number[] =>
       [...draw(source).matchAll(/class="cf-pin-dot" cx="[-\d.]+" cy="([-\d.]+)"/g)]
@@ -451,7 +451,7 @@ describe('多端子部品の足', () => {
   });
 
   /**
-   * 3 本足のトランジスタと、その足の名前の出る辺。**p 形は上下が入れ替わる**
+   * 3 ピンのトランジスタと、そのピンの名前の出る辺。**p 形は上下が入れ替わる**
    * (`BJT_SIDE_P` / `FET_SIDE_P`)。
    */
   const THREE_LEGGED = [
@@ -515,13 +515,13 @@ describe('多端子部品の足', () => {
   });
 
   /**
-   * 胴の中に足の名前を書いてよい記号。**中が空いているものだけ。**
+   * 胴の中にピンの名前を書いてよい記号。**中が空いているものだけ。**
    * 箱は名前を入れるための姿そのもので、オペアンプの ± は circuitikz が
    * 記号の一部として三角の中に描く (図と揃えるため中に置いている)。
    */
   const INSIDE_ON_PURPOSE: ReadonlySet<string> = new Set(['box', 'opamp']);
 
-  /** 描いた足の名前を、字の箱として読み直す (基準線は下端)。 */
+  /** 描いたピンの名前を、字の箱として読み直す (基準線は下端)。 */
   const nameBoxes = (svg: string): {
     readonly left: number; readonly right: number;
     readonly top: number; readonly bottom: number; readonly text: string;
@@ -558,7 +558,7 @@ describe('多端子部品の足', () => {
   });
 
   test('leaves the logic gate output unnamed, since the shape already says it', () => {
-    // 実機で「ロジックゲートの 2 本足の部品はピン名を表示しない。3 本足の
+    // 実機で「ロジックゲートの 2 ピンの部品はピン名を表示しない。3 ピンの
     // out は非表示に」。三角の向きが入口と出口を言っているので、字で繰り返さない。
     // **接続点は残る** — `G1.out -- a5` と書けなくなっては困る。
     for (const type of ['and', 'or', 'xor', 'nand', 'nor', 'xnor'] as const) {
@@ -573,7 +573,7 @@ describe('多端子部品の足', () => {
   });
 
   test('leaves both legs of a one-input gate unnamed', () => {
-    // 2 本足 (`not` / `buffer`) は入口と出口しか無い。どちらがどちらかは
+    // 2 ピン (`not` / `buffer`) は入口と出口しか無い。どちらがどちらかは
     // 三角の向きで読めるので、字は 1 つも出さない。
     for (const type of ['not', 'buffer'] as const) {
       const svg = draw(`parts:\n  G1: ${type} b3\n`);
@@ -586,7 +586,7 @@ describe('多端子部品の足', () => {
   });
 
   test('writes the board kind inside the box, where the real chip sits', () => {
-    // 実機で「マイコンの種類を内側に」。40 本の足の名前は縁に寄るので、
+    // 実機で「マイコンの種類を内側に」。40 本のピンの名前は縁に寄るので、
     // 真ん中が空いている。
     const svg = draw('parts:\n  U1: pico2 c3\n');
 
@@ -628,7 +628,7 @@ describe('多端子部品の足', () => {
 
   test('keeps a bent wire square even when one end sits on a leg', () => {
     // 実機で「斜め線を使わずに」。角を升の真ん中に置いたままだと、
-    // 足へずらした端との間だけ斜めになる。
+    // ピンへずらした端との間だけ斜めになる。
     const svg = draw('parts:\n  Q1: npn b2\nwires:\n  - Q1.C -| d6\n');
     const points = (/class="cf-wire cf-approx"[^>]*points="([-\d., ]+)"/.exec(svg)?.[1] ?? '')
       .split(' ').map((pair) => pair.split(',').map(Number));
@@ -652,8 +652,8 @@ describe('多端子部品の足', () => {
   });
 
   test('keeps a bent wire square when it turns in the cell of the leg', () => {
-    // 真下・真横の升へ引くと、角の升が足の升と重なる。升の番地だけでは
-    // 「先に横か縦か」が決まらず、角が足に重なって 1 本の斜めになっていた。
+    // 真下・真横の升へ引くと、角の升がピンの升と重なる。升の番地だけでは
+    // 「先に横か縦か」が決まらず、角がピンに重なって 1 本の斜めになっていた。
     const pointsOf = (wire: string): number[][] =>
       (/class="cf-wire cf-approx"[^>]*points="([-\d., ]+)"/.exec(
         draw(`parts:\n  U2: dip8 f7 r90\nwires:\n  - ${wire}\n`),
@@ -789,7 +789,7 @@ describe('図と同じ見え方にする細工', () => {
 
   test('keeps the haloed leg numbers off the box outline, so the edge stays whole', () => {
     // 実機で「DIP の上部が欠けている (直線が途切れている)」「SIP40 も同様」。
-    // 足の番号は地の色で縁を取ってあり (`halo`)、箱の縁に近すぎると線を消す。
+    // ピンの番号は地の色で縁を取ってあり (`halo`)、箱の縁に近すぎると線を消す。
     // 箱の中は既に地の色で塗ってあるので、中に書く字に縁取りは要らない。
     for (const type of ['dip40', 'sip40']) {
       const svg = draw(`parts:\n  U1: ${type} c3\n`);
@@ -802,7 +802,7 @@ describe('図と同じ見え方にする細工', () => {
 
   test('writes the transformer leg names over their leads, as the figure does', () => {
     // 実機で「transformer, ピン名の位置を変更する。図 1 に近づける」。
-    // 図 (KiCad の `Transformer_1P_1S`) は番号を**足の棒の上**に置く。
+    // 図 (KiCad の `Transformer_1P_1S`) は番号を**ピンの棒の上**に置く。
     // 棒の外 (丸の更に外側) に出すと、巻線から遠くてどちらの端か読みにくい。
     const svg = draw('parts:\n  T1: transformer c3\n');
     const named = [...svg.matchAll(
@@ -810,9 +810,9 @@ describe('図と同じ見え方にする細工', () => {
     )].map(([, x, y, rest, name]) => ({ x: Number(x), y: Number(y), rest: rest ?? '', name }));
 
     expect(named.map((one) => one.name)).toEqual(['a1', 'a2', 'b1', 'b2']);
-    // 足は y=∓9。字はその上 (棒に乗らない)。
+    // ピンは y=∓9。字はその上 (棒に乗らない)。
     expect(named.map((one) => one.y)).toEqual([-14.6, 3.4, -14.6, 3.4]);
-    // **外へ伸ばす。** 巻線の膨らみ (-11.5) の外から書き始めないと、下の足の
+    // **外へ伸ばす。** 巻線の膨らみ (-11.5) の外から書き始めないと、下のピンの
     // 名前が巻線に乗る。
     expect(named.map((one) => one.x)).toEqual([-13.4, -13.4, 13.4, 13.4]);
     expect(named.map((one) => /text-anchor="(\w+)"/.exec(one.rest)?.[1]))
@@ -895,7 +895,7 @@ describe('図と同じ見え方にする細工', () => {
 
   test('runs only the core lead to the centre of the coax, not the shield', () => {
     // 実機で「SMA の図が間違っている。アースは中心に接続しない」。図と同じで、
-    // 中心導体だけが中心の点まで届き、外皮の足は丸の縁で止まる。
+    // 中心導体だけが中心の点まで届き、外皮のピンは丸の縁で止まる。
     const svg = draw('parts:\n  J1: sma c3\n');
     const legs = [...svg.matchAll(/<line class="cf-pin" x1="([-\d.]+)" y1="([-\d.]+)"/g)]
       .map(([, px, py]) => ({ x: Number(px), y: Number(py) }));
@@ -907,7 +907,7 @@ describe('図と同じ見え方にする細工', () => {
 });
 
 /**
- * 箱の中に書く字どうしが重ならないこと。**足に番号を添えて名前が伸びた回**に
+ * 箱の中に書く字どうしが重ならないこと。**ピンに番号を添えて名前が伸びた回**に
  * 踏んだ (`pico` の種類名が `10 GP7` と `GP26 31` の上に乗っていた)。
  * 1 つずつ見て回るのではなく、字の占める幅を測って当てる。
  */
@@ -1002,7 +1002,7 @@ describe('箱の中の字は重ならない', () => {
   };
 
   test('keeps the names, the type name and the notch apart in every turn', () => {
-    // 実機で「回した pico2 の足の名前が真ん中で重なる」「回した DIP の切り欠きが番号に
+    // 実機で「回した pico2 のピンの名前が真ん中で重なる」「回した DIP の切り欠きが番号に
     // 触れる」。上下の辺の名前は同じ列で向かい合うので、片側の長さで高さを取ると出会う。
     // 箱に字を入れる全種類を回す (レギュレータの `IN` と `OUT` も向かい合う)。
     const boxed = partTypeNames().filter((type) => glyphOf(type).name === 'box');
@@ -1036,7 +1036,7 @@ describe('箱の中の字は重ならない', () => {
   });
 
   test('moves the row letters out from under a part that reaches left of the grid', () => {
-    // 1 列目に置いたマイコンボードは足の名前が升目の左へ出る。決め打ちの位置だと
+    // 1 列目に置いたマイコンボードはピンの名前が升目の左へ出る。決め打ちの位置だと
     // **行の字が箱の下に隠れて**、図の行を数えられなくなる。
     const svg = draw('parts:\n  PI1: pico a1\n');
     const at = Number(/<g transform="translate\((-?[\d.]+),/.exec(svg)?.[1] ?? NaN);

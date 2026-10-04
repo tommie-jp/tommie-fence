@@ -4,7 +4,7 @@ import { slideBy, slideInto } from './slide.ts';
 const ROWS = { least: 0, most: 9 };
 const COLS = { least: 1, most: 30 };
 
-describe('板の中へ寄せる量', () => {
+describe('基板の中へ寄せる量', () => {
   it('すでに載っていれば動かさない', () => {
     const slide = slideInto([{ row: 3, col: 5 }, { row: 6, col: 5 }], ROWS, COLS);
 
@@ -35,13 +35,13 @@ describe('板の中へ寄せる量', () => {
     expect(slide).toEqual({ row: 1, col: -3 });
   });
 
-  it('回しても板に入らない形は null', () => {
+  it('回しても基板に入らない形は null', () => {
     const slide = slideInto([{ row: 0, col: 5 }, { row: 11, col: 5 }], ROWS, COLS);
 
     expect(slide).toBeNull();
   });
 
-  it('足が無ければ寄せる量も無い', () => {
+  it('ピンが無ければ寄せる量も無い', () => {
     expect(slideInto([], ROWS, COLS)).toEqual({ row: 0, col: 0 });
   });
 });

@@ -10,7 +10,7 @@ import type { Board, CopperSpec, LineSpec, Mm, RectMm } from '../types.ts';
  * 殻 (fence-kit の webview) が読む約束は 3 つのフェンスと同じ:
  *
  * - `.cf-cell[data-address]` — 置き先の升。**1mm ごと** (端数は殻が `step` に渡す)
- * - `.cf-dot[data-node]` — 動かせる点 (線路の折れ目・端、ジャンパと足のある部品の端)
+ * - `.cf-dot[data-node]` — 動かせる点 (線路の折れ目・端、ジャンパとピンのある部品の端)
  * - `.cf-chip[data-part]` — 部品。島 (`pad` `via` `slot`) も部品として掴む
  * - `.cf-wire-hit[data-line]` と `.cf-wire-end` — 線路とジャンパ。端だけも掴める
  */

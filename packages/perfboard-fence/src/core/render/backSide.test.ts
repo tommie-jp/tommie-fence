@@ -40,21 +40,21 @@ describe('renderBackSide', () => {
   });
 });
 
-describe('裏返した板の縁の銅箔', () => {
+describe('裏返した基板の縁の銅箔', () => {
   const slotted = { ...createBoard({ cols: 16, rows: 8 }), slots: true };
 
   test('is drawn on the solder side too, since the copper is on the board itself', () => {
     const layout = backSideLayout(slotted, labels);
     const svg = renderBackSide(slotted, layout, { wires: [], parts: [], soldered: [] }, THEME, labels, 0);
 
-    // 銅箔は角丸の矩形。板 1 枚と、行ごとに左右 1 つずつ。
+    // 銅箔は角丸の矩形。基板 1 枚と、行ごとに左右 1 つずつ。
     expect((svg.match(/<rect /g) ?? []).length).toBe(1 + slotted.rows * 2);
   });
 });
 
 describe('半田面の重ね順', () => {
   test('draws the parts behind the wires and the joints, and dims them', () => {
-    // 半田面で見るのは半田付けする穴と、そこを渡るジャンパ。部品は板の向こう側。
+    // 半田面で見るのは半田付けする穴と、そこを渡るジャンパ。部品は基板の向こう側。
     const board = createBoard({ cols: 16, rows: 8 });
     const layout = backSideLayout(board, labels);
     const svg = renderBackSide(

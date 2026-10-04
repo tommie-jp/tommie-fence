@@ -77,7 +77,7 @@ function drawGrid(map: Shown): string {
  * 行と列の見出し (a・b … z・aa・ab … と 1〜99)。番地を目で数えられるように。
  *
  * **行の字は、左へ張り出した部品より外に出す。** 1 列目に置いたマイコンボードは
- * 足の名前が升目の左へ出るので、決め打ちの位置だと**行の字が箱の下に隠れる**
+ * ピンの名前が升目の左へ出るので、決め打ちの位置だと**行の字が箱の下に隠れる**
  * (図の行が数えられなくなる)。画布は描いたものに合わせて広がっているので、
  * その左端を基準にする。
  */
@@ -137,7 +137,7 @@ const WIRE_END_HIT = 7;
 
 /**
  * 引いた線。ピンで書いた端は近似なので破線にして、正確な位置を約束しない
- * (**図の足の位置は記号の形が決める**ので、升目のものとは限らない)。
+ * (**図のピンの位置は記号の形が決める**ので、升目のものとは限らない)。
  * 読めなかった行に書かれていれば印を足す (**帯と絵で同じものを指す**)。
  */
 const drawWire = (wire: WireLine, bad: Bad, dots: PinPoints): string =>
@@ -154,7 +154,7 @@ type Room = {
   readonly right: number; readonly bottom: number;
 };
 
-/** 足の名前 1 つが要る横幅。字の大きさは `.cf-pin-name` の 8px。 */
+/** ピンの名前 1 つが要る横幅。字の大きさは `.cf-pin-name` の 8px。 */
 const PIN_NAME_FONT = 8;
 /** 箱の中に書く字の大きさ (`.cf-mark` の font-size と同じ)。 */
 const MARK_FONT = 9;
@@ -167,7 +167,7 @@ const MARK_FONT = 9;
 const UPPER_WIDTH = 0.76;
 
 /**
- * 足の名前の長さを**大文字を広く数えて**見積もる。向かい合う名前 (回した箱の
+ * ピンの名前の長さを**大文字を広く数えて**見積もる。向かい合う名前 (回した箱の
  * 上下の辺) は、見積もりの足りないぶんがそのまま重なりになるので、こちらで測る。
  * 箱の幅はこれまでどおり `textWidth` で測る (広げると回していない箱まで変わる)。
  */
@@ -200,7 +200,7 @@ function roomFor(map: GridMap, nudges: ReadonlyMap<Chip, number>): Room {
     const rows = rowsOf(chip.pins, chip.turn);
     const { halfW, halfH } = reachOf(rows, glyph, chip.type);
     const at = { x: x(chip.col), y: y(chip.row) + (nudges.get(chip) ?? 0) };
-    // 足の棒と、その先の名前。**辺ごとに要る幅が違う** (名前の長さが違う)。
+    // ピンの棒と、その先の名前。**辺ごとに要る幅が違う** (名前の長さが違う)。
     const beside = (side: PinSide): number => {
       const row = rows.get(side);
       if (row === undefined) return 0;
@@ -209,7 +209,7 @@ function roomFor(map: GridMap, nudges: ReadonlyMap<Chip, number>): Room {
     };
     // 名札の出る辺。**箱は中に入れる**ので外へは広がらない。上に出る分は下の
     // `NAME_TOP_ROOM` でまとめて取ってあるので、横と下だけここで見る。
-    // 名札の出る辺には足が無いので、足の分と名札の分が両方効くことはない。
+    // 名札の出る辺にはピンが無いので、ピンの分と名札の分が両方効くことはない。
     // **箱も名前を外に出す**ので、余白を数える対象に入れる。
     const named = nameSideOf(chip.pins);
     const forName = (side: PinSide): number => (side === named
@@ -232,24 +232,24 @@ function roomFor(map: GridMap, nudges: ReadonlyMap<Chip, number>): Room {
 const middleWidth = (type: string): number =>
   (lookupBoardPart(type) === null ? 0 : textWidth(lookupBoardPart(type)?.mark ?? type) * MARK_FONT + NAME_INSIDE * 2);
 
-/** 升目に出ている足の接続点。部品の名前と足の名前で引く。 */
+/** 升目に出ているピンの接続点。部品の名前とピンの名前で引く。 */
 type PinPoints = ReadonlyMap<string, { readonly x: number; readonly y: number }>;
 
 const pinKey = (part: string, name: string): string => `${part}\u0000${name}`;
 
 /**
- * 線が通る点。**足を指した端は接続点まで伸ばす** — 升の真ん中で止めると、
+ * 線が通る点。**ピンを指した端は接続点まで伸ばす** — 升の真ん中で止めると、
  * 押した丸と線の先が食い違って見える (実機で指摘された)。
- * 足が升目に出ていなければ (種類が読めないなど) 升の真ん中のまま。
+ * ピンが升目に出ていなければ (種類が読めないなど) 升の真ん中のまま。
  *
  * **角は両端に合わせ直す。** `-|` と `|-` は直角に折れるという意味なので、
- * 足へずらした端に角が付いてこないと、そこだけ斜めの線になる
+ * ピンへずらした端に角が付いてこないと、そこだけ斜めの線になる
  * (実機で「斜め線を使わずに」と言われた)。
  *
  * **角の座標は折れの向きで決める。** `-|` は先に横なので、角は始まりの高さと
  * 終わりの列。`|-` はその逆。升の番地から「どちらの端と行・列を共にするか」を
- * 見る決め方では、真下・真横の升へ引いたときに角の升が足の升と重なり、
- * 角が両方の座標を足から貰って足に重なる (1 本の斜めになっていた)。
+ * 見る決め方では、真下・真横の升へ引いたときに角の升がピンの升と重なり、
+ * 角が両方の座標をピンから貰ってピンに重なる (1 本の斜めになっていた)。
  */
 function pathOf(wire: WireLine, dots: PinPoints): string {
   const ends = wire.points.map((cell, index) => {
@@ -382,7 +382,7 @@ const NAME_ASIDE = 14;
 const NAME_FONT = 10;
 
 /**
- * 縦置きの名前の置き場。図と同じ**左**に置くが、**板の縁で切れるなら右へ回す**
+ * 縦置きの名前の置き場。図と同じ**左**に置くが、**基板の縁で切れるなら右へ回す**
  * — 1 列目に立てた部品の名前は、左に置くと行の見出しに重なって読めない
  * (実機で図に合わせたときに出た)。
  */
@@ -414,7 +414,7 @@ function drawLead(
   // **前後で切る長さが違う。** 記号は線の向きに回してあるので、始点の側が
   // 記号の後ろ (-x)。1 つの数で切ると、短いほうの側に隙間が空く。
   const stubs = [length / 2 - glyphSpanBack(glyph), length / 2 - span];
-  // 交点が近すぎて足が残らないときは、隙間だけにする (短い線を潰さない)。
+  // 交点が近すぎてピンが残らないときは、隙間だけにする (短い線を潰さない)。
   if (Math.min(...stubs) <= 0) return '';
 
   const [ux, uy] = [(x2 - x1) / length, (y2 - y1) / length];
@@ -443,21 +443,21 @@ function turnOf(turn: Turn): string {
 
 /**
  * 胴の既定の大きさ (原点から縁まで)。箱は 26x16 なので x が ±13、y が ±8。
- * **足が増えたら伸びる** (`reachOf`)。
+ * **ピンが増えたら伸びる** (`reachOf`)。
  */
 const HALF_W = 13;
 const HALF_H = 8;
-/** 足の棒の長さ。間隔は記号が決める (`legGap`)。 */
+/** ピンの棒の長さ。間隔は記号が決める (`legGap`)。 */
 const PIN_STUB = 7;
-/** 端の足と胴の角の間。足が角にかからないだけの余白。 */
+/** 端のピンと胴の角の間。ピンが角にかからないだけの余白。 */
 const PIN_MARGIN = 6;
 
-/** 足の先の丸の大きさと、その当たり判定。**押せる大きさ**は見た目より大きく取る。 */
+/** ピンの先の丸の大きさと、その当たり判定。**押せる大きさ**は見た目より大きく取る。 */
 const PIN_DOT = 2.6;
 const PIN_HIT = 7;
 
 /**
- * 足の名前を丸から離す幅。**字が丸に重なると、どこが接続点なのか分からない**
+ * ピンの名前を丸から離す幅。**字が丸に重なると、どこが接続点なのか分からない**
  * (実機でオペアンプの `+` `-` が丸に載っていた)。
  */
 const NAME_CLEAR = 3;
@@ -465,7 +465,7 @@ const NAME_CLEAR = 3;
 /** 胴の中に書く字を、縁からどれだけ内側に入れるか。 */
 const NAME_INSIDE = 3;
 
-/** 辺ごとの足の並び。**書かれた順**で、上から下・左から右に置く。 */
+/** 辺ごとのピンの並び。**書かれた順**で、上から下・左から右に置く。 */
 type PinRows = ReadonlyMap<PinSide, readonly ChipPin[]>;
 
 const rowsOf = (pins: readonly ChipPin[], turn: Turn): PinRows => {
@@ -476,7 +476,7 @@ const rowsOf = (pins: readonly ChipPin[], turn: Turn): PinRows => {
     else row.push(pin);
   }
   // **辺の中の並びも回る。** 表は「上から下」「左から右」で書いてあるが、
-  // 90 度と 180 度はその向きが裏返る (左辺のいちばん上の足は、90 度回すと
+  // 90 度と 180 度はその向きが裏返る (左辺のいちばん上のピンは、90 度回すと
   // 上辺のいちばん右)。反転は上下の順を変えないので、ここでは見ない。
   if (turn.rotate !== 90 && turn.rotate !== 180) return rows;
   for (const row of rows.values()) row.reverse();
@@ -485,8 +485,8 @@ const rowsOf = (pins: readonly ChipPin[], turn: Turn): PinRows => {
 
 /**
  * その部品の胴の大きさ。**同じ辺に何本並ぶかで決まる** — DIP のように片側に
- * 何本も出る部品は、既定の箱では足が重なって 1 本ずつ押せない
- * (実機で「すべての部品の足に接続点があるか」と言われて広げた)。
+ * 何本も出る部品は、既定の箱ではピンが重なって 1 本ずつ押せない
+ * (実機で「すべての部品のピンに接続点があるか」と言われて広げた)。
  *
  * 種類を渡すのは、**箱の真ん中に置くもの** (ボードの種類名、DIP の切り欠き) の
  * 場所も空けるため。
@@ -520,7 +520,7 @@ function reachOf(rows: PinRows, glyph: GlyphName, type: string): {
   const longest = Math.max(inside('top'), inside('bottom'));
   const standing = longest === 0 ? 0 : PIN_NAME_FONT + NAME_INSIDE;
   // **箱の真ん中に書く字 (`pico2`) のぶんも空ける。** 左右の名前は縁から
-  // 内へ寄るので、真ん中の空きがその字より狭いと重なる (足に番号を添えて
+  // 内へ寄るので、真ん中の空きがその字より狭いと重なる (ピンに番号を添えて
   // 名前が伸びた回に踏んだ)。
   const forNames = (inside('left') + inside('right') + standing + middle) / 2 + NAME_INSIDE * 2 + 2;
   // **真ん中の縦の列に置くものは、長いほうの名前から測って空ける。** 列に入るのは
@@ -534,7 +534,7 @@ function reachOf(rows: PinRows, glyph: GlyphName, type: string): {
   //
   // **上と下の両方に名前があれば、向かい合う** (回した DIP・ボード・レギュレータ)。
   // 同じ列で真ん中へ伸びて出会うので、片側の長さで高さを取ると重なる (実機で
-  // 「pico2 を回すと足の名前が重なる」)。真ん中に帯を空け、長いほうから測る —
+  // 「pico2 を回すとピンの名前が重なる」)。真ん中に帯を空け、長いほうから測る —
   // 帯に入るもの (横に書く左右の名前、ボードの種類名、短い辺の切り欠き) は
   // どれも箱の真ん中の高さにある。名前の長さは大文字を広く数える (`nameReach`) —
   // 回したレギュレータで `OUT` の頭が `GND` に触れた。
@@ -551,13 +551,13 @@ function reachOf(rows: PinRows, glyph: GlyphName, type: string): {
     ? facingReach + NAME_INSIDE + band / 2
     : longest / 2 + NAME_INSIDE + PIN_NAME_FONT / 2;
   const wide = Math.max(edge, room(along('top', 'bottom')), forNames, forCentre);
-  // **足を出すのは記号の縁から。箱だけが「箱の縁」。** 中に字を置くための幅で
-  // 足まで押し出すと、三角の先と出口の丸が離れる (実機で「opamp, 出力を
+  // **ピンを出すのは記号の縁から。箱だけが「箱の縁」。** 中に字を置くための幅で
+  // ピンまで押し出すと、三角の先と出口の丸が離れる (実機で「opamp, 出力を
   // ピンと接続する」)。箱は矩形そのものが縁なので、広げた幅がそのまま縁。
   const halfFront = glyph === 'box' ? wide : edge;
   // **後ろ側は記号の縁そのもの。** 前と同じ下限 (8) を掛けると、反転の丸の
   // ぶんだけ後ろに隙間が残る (実機で「配線と部品の間を接続する」)。
-  // 上下の足が収まる幅だけは外せない。
+  // 上下のピンが収まる幅だけは外せない。
   // **前後が同じ形は今までどおり** — 下限を外すと 1 端子の記号の棒が伸びる。
   const halfBack = glyphSpanBack(glyph) === glyphSpan(glyph)
     ? halfFront
@@ -571,10 +571,10 @@ function reachOf(rows: PinRows, glyph: GlyphName, type: string): {
 }
 
 /**
- * 足 1 本の寸法。**辺の中の位置は真ん中から振り分ける** (n 本なら等間隔)。
+ * ピン 1 本の寸法。**辺の中の位置は真ん中から振り分ける** (n 本なら等間隔)。
  * 字は棒の先の外側に置く (棒に重ねると読めない)。
  *
- * 横向きの足の字は**棒の先**に置き、隣の升の点に少しはみ出すのを縁取りで
+ * 横向きのピンの字は**棒の先**に置き、隣の升の点に少しはみ出すのを縁取りで
  * 読ませる。棒の上へ寄せると、字が箱の角に重なって読めなくなった (実測)。
  */
 function pinAt(
@@ -592,8 +592,8 @@ function pinAt(
   // 字の基準線は下端なので、丸の下に置くときは字の高さぶん (8px) 余計に下げる。
   const below = clear + PIN_NAME_FONT;
   // **同じ辺に 2 本以上並ぶときは丸の外へ。** 脇 (丸の下・右) に置くと、
-  // 字が隣の足の丸に乗る (ロジックゲートの入力 2 本で見つけた)。
-  // 外なら足の並ぶ向きと直交するので、何本並んでもぶつからない。
+  // 字が隣のピンの丸に乗る (ロジックゲートの入力 2 本で見つけた)。
+  // 外ならピンの並ぶ向きと直交するので、何本並んでもぶつからない。
   const place = of > 1 && want === 'beside' ? 'outside' : want;
   if (side === 'left') {
     const x = -halfW - PIN_STUB;
@@ -642,10 +642,10 @@ function pinAt(
 }
 
 /**
- * 足 1 本。**字は回さない** (辺のほうが既に回してある)。
+ * ピン 1 本。**字は回さない** (辺のほうが既に回してある)。
  *
  * 先には**接続点**を出す。ここを配線の道具で押すと `Q1.C -- a4` と書ける —
- * 足を指す配線はこれまで手で書くしかなかった (実機で頼まれて足した)。
+ * ピンを指す配線はこれまで手で書くしかなかった (実機で頼まれて足した)。
  * 名札は**書かれる綴りそのもの** (`Q1.C`) にしておく。殻は綴りを知らないので、
  * 押されたものをそのまま `addWire` へ返せる形で持たせる。
  */
@@ -677,12 +677,12 @@ function drawPin(
 
 /**
  * 名札を出す辺を探す順。**図と同じ決め方**にする — `tex/generate.ts` の
- * `nameNode` も同じ順で空いている辺を探す。上が第一希望で、足のある辺は避ける。
+ * `nameNode` も同じ順で空いている辺を探す。上が第一希望で、ピンのある辺は避ける。
  *
- * これで 3 本足のトランジスタ (`npn` / `nmos` など) の名札は**右**へ出る。
+ * これで 3 ピンのトランジスタ (`npn` / `nmos` など) の名札は**右**へ出る。
  * 上がコレクタ・下がエミッタ・左がベースで、空いているのが右しかないため。
  * 実機で「`Q1` が記号の真上にある。回路図では記号の右」と指摘された。
- * **辺を種類で決め打ちしない** — 回した記号は足ごと辺が回るので、
+ * **辺を種類で決め打ちしない** — 回した記号はピンごと辺が回るので、
  * 空きを数えれば回転にもそのまま追従する (図と同じ辺に出続ける)。
  */
 const NAME_ORDER: readonly PinSide[] = ['top', 'bottom', 'left', 'right'];
@@ -694,8 +694,8 @@ const nameSideOf = (pins: readonly ChipPin[]): PinSide => {
 
 /**
  * 名札を升の真ん中から離す量。**辺ごとに 1 つの決め打ちで、記号の大きさでは変えない。**
- * 記号はどれも半径 14 くらいの中に描いてあり、足の届く長さ (`reachOf`) は
- * 足の本数で伸びる別の寸法なので、そちらに合わせると記号から離れて浮く
+ * 記号はどれも半径 14 くらいの中に描いてあり、ピンの届く長さ (`reachOf`) は
+ * ピンの本数で伸びる別の寸法なので、そちらに合わせると記号から離れて浮く
  * (トランスや切り替えスイッチで 10px 浮いた)。**升の半分 (17) より内側**に収まる。
  *
  * 横が縦より遠いのは、記号が縦より横に長いため (2 端子の `NAME_ASIDE` と同じ値)。
@@ -714,7 +714,7 @@ const STAND_BELOW = -STAND_ABOVE + NAME_FONT - 2;
 
 /**
  * 画布が升の上に取る余白。名札が上に出る種類ぶんを、**全部の部品に一律で**取る
- * (足の名前より更に上へ出る場合まで含めた昔からの値。ここを部品ごとに詰めると
+ * (ピンの名前より更に上へ出る場合まで含めた昔からの値。ここを部品ごとに詰めると
  * 図の縁が種類によって動く)。
  */
 const NAME_TOP_ROOM = 28;
@@ -722,7 +722,7 @@ const NAME_TOP_ROOM = 28;
 /**
  * 名札 1 つの置き場。**空いている辺の外側**に置く。
  *
- * `half` はその辺までの胴の半分。**箱は足の本数で伸びる**ので、決め打ちの
+ * `half` はその辺までの胴の半分。**箱はピンの本数で伸びる**ので、決め打ちの
  * 距離だと名前が箱の中や縁に乗る (実機で DIP の名前が切り欠きに重なった)。
  * 記号の胴は小さいので、決め打ちのほうが遠ければそちらを採る。
  */
@@ -764,10 +764,10 @@ const hasNotch = (type: string): boolean => DIP_TYPE.test(type) || lookupBoardPa
 
 /** 切り欠きの半径。箱の縁に半円で食い込む。 */
 const NOTCH = 3.5;
-/** 切り欠きと足の名前の間に残す隙間。これより近いと半円が字に触れて見える。 */
+/** 切り欠きとピンの名前の間に残す隙間。これより近いと半円が字に触れて見える。 */
 const NOTCH_CLEAR = 2;
 
-/** その足が箱のどこに出ているか。**足の棒の根元**を返す (`pinAt` と同じ数え方)。 */
+/** そのピンが箱のどこに出ているか。**ピンの棒の根元**を返す (`pinAt` と同じ数え方)。 */
 function pinPointOf(
   pin: ChipPin, rows: PinRows, halfW: number, halfH: number, gap: number,
 ): { readonly x: number; readonly y: number } | null {
@@ -817,7 +817,7 @@ function notchOf(chip: Chip, rows: PinRows, halfW: number, halfH: number, gap: n
 function drawStanding(chip: Chip, nudge: number): string {
   const glyph = glyphOf(chip.type);
   const inside = glyph.name === 'box';
-  // **名前は箱の中に入れない。** 図は箱の外 (足の無い辺) に出すので、
+  // **名前は箱の中に入れない。** 図は箱の外 (ピンの無い辺) に出すので、
   // 中に入れると同じ部品が図と升目で違う所に名前を持つ (実機で並べて見つけた)。
   // 箱の中は型番の場所で、そちらは図が書く。
   const rows = rowsOf(chip.pins, chip.turn);
@@ -826,11 +826,11 @@ function drawStanding(chip: Chip, nudge: number): string {
   // 辺そのものではなく、回す前のどの辺かで選ぶ。
   const backSide = turnSide('left', chip.turn);
   // **箱は回さない。** 矩形は回しても同じ意味しか持たず、縦横が入れ替わると
-  // 中に入れた名前がはみ出す。向きは足のほうが示す。
-  // 箱でない記号 (ground) は回して見せる — 足が無いので、回さないと
+  // 中に入れた名前がはみ出す。向きはピンのほうが示す。
+  // 箱でない記号 (ground) は回して見せる — ピンが無いので、回さないと
   // 向きを書いたことが figure に一切出ない。**字は回さない** (逆さまになる)。
   const spin = inside ? '' : turnOf(chip.turn);
-  // 箱だけは足の本数で伸ばす (DIP は片側に何本も出る)。
+  // 箱だけはピンの本数で伸ばす (DIP は片側に何本も出る)。
   const shape = inside
     ? drawBox(halfW, halfH) + notchOf(chip, rows, halfW, halfH, legGap(glyph.name))
     : drawGlyph(glyph.name);
@@ -861,14 +861,14 @@ function drawStanding(chip: Chip, nudge: number): string {
   const mark = glyph.mark === null
     ? ''
     : svgText(0, nudge + (glyph.mark.below === true ? MARK_BELOW : 4), glyph.mark.text, { class: 'cf-mark' });
-  // **マイコンボードは種類を箱の中に書く** (`pico2`)。40 本の足の名前は左右の
+  // **マイコンボードは種類を箱の中に書く** (`pico2`)。40 本のピンの名前は左右の
   // 縁に寄るので真ん中が空いていて、そこが実物のチップの場所でもある
   // (実機で頼まれた)。名前 (`U1`) は箱の外なので、2 つが重ならない。
   const board = lookupBoardPart(chip.type);
   const kind = board === null
     ? ''
     : svgText(0, nudge + 4, board.mark ?? chip.type, { class: 'cf-mark' });
-  // 名札は**足の無い辺**へ。足のある辺に出すと、棒と足の名前に重なる。
+  // 名札は**ピンの無い辺**へ。ピンのある辺に出すと、棒とピンの名前に重なる。
   const place = standingNameAt(nameSideOf(chip.pins), { w: halfW, h: halfH });
   const name = NAMELESS.has(chip.type)
     ? ''

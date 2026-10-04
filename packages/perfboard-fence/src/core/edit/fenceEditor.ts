@@ -38,7 +38,7 @@ const ercView = (source: string, fenceLine: number): { readonly count: number; r
 };
 
 /**
- * 穴の間へ置こうとしたときの断り。**足は穴に挿す**ので、交点の間に置けるのは
+ * 穴の間へ置こうとしたときの断り。**ピンは穴に挿す**ので、交点の間に置けるのは
  * 注釈だけ (breadboard と同じ約束)。
  */
 const betweenHoles = (written: string) => ({
@@ -75,7 +75,7 @@ export function createPerfboardEditor(): FenceEditor {
 
     spansOf: (source, what, id) => {
       if (isNoteHandle(id)) return noteSpans(source, id);
-      // **板の外の機器は入れ子で書く**ので、光らせるのは `at:` の値 (`device.ts`)。
+      // **基板の外の機器は入れ子で書く**ので、光らせるのは `at:` の値 (`device.ts`)。
       if (what !== 'node' && isDevice(source, id)) return deviceSpans(source, id);
       if (what !== 'node') return partSpans(source, id);
       const at = readAddress(id);
@@ -101,7 +101,7 @@ export function createPerfboardEditor(): FenceEditor {
     },
     // 配線は穴から穴へ 1 本 (折れの綴りが文法に無い)。
     foldsWire: false,
-    // **注釈だけが交点の間に置ける** (`b5c3`)。足は穴に挿すので、部品・配線・
+    // **注釈だけが交点の間に置ける** (`b5c3`)。ピンは穴に挿すので、部品・配線・
     // 節点は交点そのものを指す (breadboard と同じ約束)。
     // 既定が 1/10 升で、`Shift` を押している間だけ升ちょうど。
     fine: 10,
@@ -113,7 +113,7 @@ export function createPerfboardEditor(): FenceEditor {
     typeNames: renderTypeOptions,
     colorNames: renderColorOptions,
     // **固定の色見本を属性に出す** (実機で「ドロップダウンメニューではなく、
-    // 固定の色パレット」)。被覆の色は板の 2 つで同じ表 (`fence-kit` の colors.ts)。
+    // 固定の色パレット」)。被覆の色はブレッドボードとユニバーサル基板で同じ表 (`fence-kit` の colors.ts)。
     wireColors: wireColorNames,
     nextId: nextPartId,
 

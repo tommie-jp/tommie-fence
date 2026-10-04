@@ -34,7 +34,7 @@ const marks = (type: string): Record<string, string> => ({
   ...(twoEnds(type) ? { 'data-ends': '2' } : {}),
 });
 
-/** 2 端子の胴から出る足。似顔絵は胴だけなので、線を足して形を読みやすくする。 */
+/** 2 端子の胴から出るピン。似顔絵は胴だけなので、線を足して形を読みやすくする。 */
 const LEADS = element('path', { class: 'cf-glyph-line', d: 'M-13,0 L-9,0 M9,0 L13,0' });
 
 /** 短絡は線だけの「記号を持たない」種類。空の枠にせず、線を引く。 */

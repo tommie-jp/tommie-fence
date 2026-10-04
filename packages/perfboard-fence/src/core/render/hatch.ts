@@ -119,8 +119,8 @@ export function hatchDefs(colors: readonly string[], ink: string, plate: string)
         width: TILE, height: TILE,
         patternUnits: 'userSpaceOnUse',
       },
-      // **地を敷く。** 敷かないと網の隙間から下の板が透けて、同じ網でも
-      // 板の色ごとに違う濃さに見える。
+      // **地を敷く。** 敷かないと網の隙間から下の基板が透けて、同じ網でも
+      // 基板の色ごとに違う濃さに見える。
       element('rect', { x: 0, y: 0, width: TILE, height: TILE, fill: plate })
       + weave.lines
         .map(([x1, y1, x2, y2]) => element('line', {

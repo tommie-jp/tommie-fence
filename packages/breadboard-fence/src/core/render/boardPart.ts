@@ -16,10 +16,10 @@ export function boardBodyRect(part: PlacedPart, layout: Layout): Rect {
 
 /**
  * 溝をまたいで挿すマイコンボード。**姿は fence-kit にある**
- * (`parts/chips.ts`) — 実物の基板の話で板に依らないので、perfboard と
+ * (`parts/chips.ts`) — 実物の基板の話で基板に依らないので、perfboard と
  * 同じ絵になる (実機で「pico など、全ての部品の見た目を breadboard と
- * perfboard で共通にする」)。ここに残るのは板の話 — 足の点と、
- * 板からはみ出す字の切り方。
+ * perfboard で共通にする」)。ここに残るのは基板の話 — ピンの点と、
+ * 基板からはみ出す字の切り方。
  */
 export function renderBoardPart(part: PlacedPart, layout: Layout, theme: RenderTheme, drop = 0): string {
   const points = pinPoints(part, layout);
@@ -39,7 +39,7 @@ export function renderBoardPart(part: PlacedPart, layout: Layout, theme: RenderT
     ink: chipInk(theme),
   });
 
-  // **名前は胴の下。** 基板の中に置いていたころは、長い足の名前
+  // **名前は胴の下。** 基板の中に置いていたころは、長いピンの名前
   // (`ADC_VREF 35`) と食い合っていた (実機で「文字が図形に被らないようにする」)。
   // ほかの部品と側も揃う (実機で「すべての部品名は部品の下側に表示する」)。
   const body = boardBodyRect(part, layout);

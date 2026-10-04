@@ -643,15 +643,15 @@ const STYLE = `
   /* 節点を置けない所へ引きずっているとき。部品の影と同じく赤。 */
   .cf-ghost-wire.cf-ghost-wire-bad { stroke: var(--cf-bad); }
 
-  /* 多端子部品の足の先の接続点。**配線の道具のときだけ濃く出す** — いつも
-     目立たせると、足の丸が記号より先に目に入って図として読みにくい。
+  /* 多端子部品のピンの先の接続点。**配線の道具のときだけ濃く出す** — いつも
+     目立たせると、ピンの丸が記号より先に目に入って図として読みにくい。
      当たり判定は見た目より大きく取ってあり、そちらは常に透明。 */
   .cf-pin-dot { fill: var(--cf-paper); stroke: var(--cf-ink); stroke-width: 1.2; }
   .cf-pin-hit { fill: transparent; stroke: none; }
   body[data-tool="wire"] .cf-pin-dot { fill: var(--vscode-focusBorder); stroke: none; }
   body[data-tool="wire"] .cf-pin-hit:hover + .cf-pin-name,
   body[data-tool="wire"] .cf-pin-hit:hover { cursor: crosshair; }
-  /* 押した足。1 点目の印は穴と同じ色で出す。 */
+  /* 押したピン。1 点目の印は穴と同じ色で出す。 */
   .cf-pin-hit.cf-from { fill: var(--vscode-focusBorder); opacity: 0.45; }
 `;
 

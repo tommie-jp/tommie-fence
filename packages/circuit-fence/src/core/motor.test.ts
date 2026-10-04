@@ -5,7 +5,7 @@ import { PART_NAMES, PART_PREFIXES, lookupPartType } from './parts.ts';
 /**
  * モータ (52 の docs/66 の段 2)。**丸に M** の 2 端子。circuitikz 1.0 には
  * モータの記号 (`elmech`) が無く、書いても素の線だけを描く (実機で確かめた) ので、
- * 計器と同じ「丸に字」の記号で描く。板の 2 つは線でつなぐ物として `device` で書く。
+ * 計器と同じ「丸に字」の記号で描く。ブレッドボードとユニバーサル基板は線でつなぐ物として `device` で書く。
  */
 
 const circuit = (...rows: string[]): string => [...rows, ''].join('\n');

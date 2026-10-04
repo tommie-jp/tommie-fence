@@ -1,5 +1,5 @@
 /**
- * 幅広 DIP (600 mil)。足の列の間が 0.6 インチで、普通の 0.3 インチの DIP
+ * 幅広 DIP (600 mil)。ピンの列の間が 0.6 インチで、普通の 0.3 インチの DIP
  * (e・f 行) と違い、溝をまたぐ 2 列は **6 ピッチ離れた行の組** に挿さる。
  * 書き方は `dipN/wide @ 穴` (姿は `dip8/sop` と同じ位置に書く)。
  *
@@ -13,7 +13,7 @@ export const WIDE_VARIANT = 'wide';
 /** 600 mil で売られているピン数。 */
 export const WIDE_DIP_SIZES: readonly number[] = [24, 28, 32, 40];
 
-/** 足の列の間 (ピッチ)。0.6 インチ = 6 ピッチ。 */
+/** ピンの列の間 (ピッチ)。0.6 インチ = 6 ピッチ。 */
 export const WIDE_ROW_SPAN = 6;
 
 const DIP_SIZE = /^dip(\d+)$/;

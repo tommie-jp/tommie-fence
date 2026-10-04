@@ -13,7 +13,7 @@ const END_RADIUS_RATIO = 0.55;
 const HALO_MARGIN = 1.6;
 /**
  * 端で被覆を剥いた長さ。穴に挿す所は金属の線が穴の中央まで出ているように描く
- * (機器の足と同じ見え方。被覆の色が穴まで来ると、どこに挿さっているか読みにくかった)。
+ * (機器のピンと同じ見え方。被覆の色が穴まで来ると、どこに挿さっているか読みにくかった)。
  */
 const BARE_TIP = 9;
 /** 剥いた先の金属の太さ (被覆に対する比)。 */
@@ -29,19 +29,19 @@ export type WirePaint = { readonly halo: string; readonly line: string };
 const NOTHING: WirePaint = { halo: '', line: '' };
 
 /**
- * 板に沈む線の縁取り。**テーマが縁取りを持たないとき** (classic・presentation) に、
+ * 基板に沈む線の縁取り。**テーマが縁取りを持たないとき** (classic・presentation) に、
  * 線ごとに決める。
  *
- * - **板との差が小さい色** (`white`) は、板と同じ明るさで線そのものが見えない
+ * - **基板との差が小さい色** (`white`) は、基板と同じ明るさで線そのものが見えない
  *   (実機の AD の図で、2− の白線がどこへ行くのか読めなかった)。
- * - **既定の灰色** (色を書かなかった線) は、部品の足 (`lead`) とほぼ同じ色で、
- *   足と配線の区別が付かない。縁で「被覆のある線」の姿にして足と分ける。
+ * - **既定の灰色** (色を書かなかった線) は、部品のピン (`lead`) とほぼ同じ色で、
+ *   ピンと配線の区別が付かない。縁で「被覆のある線」の姿にしてピンと分ける。
  *
  * 色は変えない (被覆の色そのもので、テーマで変えると図が嘘になる)。縁は濃い灰色で、
  * 被覆の色より細く見えるだけの幅に留める。
  */
 export const WIRE_OUTLINE = '#5b636d';
-/** これより板との明るさの比が小さい色は縁取る。白 (1.05) は入り、黄 (1.7) は入らない。 */
+/** これより基板との明るさの比が小さい色は縁取る。白 (1.05) は入り、黄 (1.7) は入らない。 */
 const OUTLINE_CONTRAST = 1.5;
 /** 縁取りが線の両側に出る幅の合計。背景と同じ色の線でも輪郭が 2 本の細線として読める。 */
 const OUTLINE_MARGIN = 2.2;
@@ -74,7 +74,7 @@ export function renderWire(points: readonly Point[], color: string, theme: Rende
   const { wireHalo, plate, chipPin } = theme.palette;
 
   // 配線の色は被覆の色そのものなのでテーマでは変えない。
-  // 地に沈むテーマ (暗い板の黒線など) は、色を変えるかわりに縁取りを敷いて浮かせる。
+  // 地に沈むテーマ (暗い基板の黒線など) は、色を変えるかわりに縁取りを敷いて浮かせる。
   // テーマが縁取りを持たなければ、沈む線だけを縁取る (`wireOutline`)。
   const outline = wireHalo ? null : wireOutline(color, plate);
   const halo = wireHalo
@@ -109,7 +109,7 @@ export function renderWire(points: readonly Point[], color: string, theme: Rende
 }
 
 /**
- * 穴に挿した所の金属の粒。配線の端と部品の足の端で同じものを置き、
+ * 穴に挿した所の金属の粒。配線の端と部品のピンの端で同じものを置き、
  * どこに挿さっているかを同じ見え方で示す。
  */
 /** 挿した所の金属の粒の半径。 */

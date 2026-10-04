@@ -88,11 +88,11 @@ const CLASSIC: Palette = {
   ravine: '#e6e2d4',
   hole: '#30353d',
   holeEdge: null,
-  // 印字は薄いと穴に埋もれるので、板の色に対して十分暗くする。
+  // 印字は薄いと穴に埋もれるので、基板の色に対して十分暗くする。
   label: '#5f5748',
   positive: '#d33a2f',
   negative: '#2b6fd4',
-  // 足は配線と同じ太さで描くので、灰色の配線 (#8a929c) より暗い鋼の色にして見分ける。
+  // ピンは配線と同じ太さで描くので、灰色の配線 (#8a929c) より暗い鋼の色にして見分ける。
   lead: '#55606b',
   chipBody: '#2b2f36',
   chipPin: '#b9bec7',
@@ -109,7 +109,7 @@ const CLASSIC: Palette = {
 };
 
 /**
- * 暗い文書に貼るための配色。穴は塗りでは板と差が付かないので、明るい縁で立たせる。
+ * 暗い文書に貼るための配色。穴は塗りでは基板と差が付かないので、明るい縁で立たせる。
  * 配線は色を変えず (意味が変わる)、明るい縁取りを敷いて黒や紺を浮かせる。
  */
 const DARK: Palette = {
@@ -164,7 +164,7 @@ const HIGH_CONTRAST: Palette = {
 };
 
 /**
- * 白黒印刷・コピー向け。板と印字だけをグレーに落とす。
+ * 白黒印刷・コピー向け。基板と印字だけをグレーに落とす。
  * **配線の色と抵抗のカラーコードは残す** (色そのものが情報なので、落とすと読めなくなる)。
  * 明るい配線が地に沈まないよう、暗い縁取りを敷く。
  */
@@ -246,7 +246,7 @@ const channels = (hex: string): readonly [number, number, number] => {
   return [r, g, b];
 };
 
-/** 板の色を暗い側へ寄せる。地の色だけ変えたときに、縁と溝が元の板の色のまま浮くのを防ぐ。 */
+/** 基板の色を暗い側へ寄せる。地の色だけ変えたときに、縁と溝が元の基板の色のまま浮くのを防ぐ。 */
 function darken(hex: string, amount: number): string {
   const [r, g, b] = channels(hex);
   return toHex(r * (1 - amount), g * (1 - amount), b * (1 - amount));
@@ -259,8 +259,8 @@ export const isLight = (hex: string): boolean => {
 };
 
 /**
- * 板の色を指定されたとき、そこに載る印字を読める側へ寄せる。
- * 板だけ暗くして字が暗いまま残ると、テーマが守っているコントラストが崩れる。
+ * 基板の色を指定されたとき、そこに載る印字を読める側へ寄せる。
+ * 基板だけ暗くして字が暗いまま残ると、テーマが守っているコントラストが崩れる。
  * 細かく合わせたいときは、近いテーマを選んでから個別に上書きしてもらう。
  */
 const inkFor = (plate: string): { readonly partText: string; readonly label: string } =>
@@ -282,7 +282,7 @@ function withOverrides(theme: RenderTheme, spec: StyleSpec): RenderTheme {
       ...derived,
       hole: spec.holeColor ?? palette.hole,
       partText: spec.textColor ?? derived?.partText ?? palette.partText,
-      // 縁取りは板と同じ色でなければ意味が無いので、板を動かしたら黙って付いていく。
+      // 縁取りは基板と同じ色でなければ意味が無いので、基板を動かしたら黙って付いていく。
       textHalo: spec.textBackground ?? spec.boardColor ?? palette.textHalo,
     },
     metrics: {

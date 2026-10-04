@@ -4,25 +4,25 @@ import type { Address, Board, Point, Rect } from '../types.ts';
 /** 穴の間隔。2.54 mm を 20 px として描く (breadboard と同じ。並べたとき縮尺が揃う)。 */
 export const PITCH = 20;
 
-/** 画布の縁から板まで。行と列の名前がここに入る。 */
+/** 画布の縁から基板まで。行と列の名前がここに入る。 */
 const OUTER_MARGIN = 14;
-/** 行と列の名前の帯。**板の上には必ず空けてある** (板の外の注釈が使える余白)。 */
+/** 行と列の名前の帯。**基板の上には必ず空けてある** (基板の外の注釈が使える余白)。 */
 export const LABEL_GUTTER = 16;
-/** 板の縁から一番外の穴まで。実物にも縁の余白がある。 */
+/** 基板の縁から一番外の穴まで。実物にも縁の余白がある。 */
 const BOARD_PAD = 12;
 /** 題を置く帯の高さ。題が無ければ空けない。 */
 const TITLE_BAND = 26;
-/** 板の外の機器を置く帯の高さと、板との間。機器が無ければ空けない。 */
+/** 基板の外の機器を置く帯の高さと、基板との間。機器が無ければ空けない。 */
 const DEVICE_BAND = 56;
 const DEVICE_GAP = 26;
 /** 書き出し (`- source`) の帯と、その上にあるものとの間。書かれていなければ空けない。 */
 const SOURCE_GAP = 16;
-/** 半田面の板と、表の図との間。出さなければ空けない。 */
+/** 半田面の基板と、表の図との間。出さなければ空けない。 */
 const BACK_GAP = 8;
 
 export type LayoutOptions = {
   readonly title?: boolean;
-  /** 板の上に機器を置く帯を空けるか。 */
+  /** 基板の上に機器を置く帯を空けるか。 */
   readonly deviceTop?: boolean;
   readonly deviceBottom?: boolean;
   /**
@@ -31,58 +31,58 @@ export type LayoutOptions = {
    */
   readonly source?: { readonly width: number; readonly height: number } | null;
   /**
-   * 板を裏返して置くか (半田面)。**列だけが左右に入れ替わる** — 板を縦軸で
+   * 基板を裏返して置くか (半田面)。**列だけが左右に入れ替わる** — 基板を縦軸で
    * ひっくり返すので、行はそのまま。図の形は表と同じなので、寸法は動かない。
    */
   readonly mirror?: boolean;
   /**
-   * 半田面の板を置くぶんの高さ。**板の下、書き出しの上**に空ける
-   * (2 枚の板を並べてから、写しを最後に置く)。高さを測るのは呼ぶ側 —
+   * 半田面の基板を置くぶんの高さ。**基板の下、書き出しの上**に空ける
+   * (2 枚の基板を並べてから、写しを最後に置く)。高さを測るのは呼ぶ側 —
    * 半田面は自分の `Layout` を持つので、その `height` をそのまま渡す。
    */
   readonly back?: { readonly height: number } | null;
   /**
-   * 部品表 (`- parts`) が要る大きさ。書き出しと同じく板の下に自分の帯を持つ。
-   * 板より広くなることがあるので、幅も見て画布を広げる。
+   * 部品表 (`- parts`) が要る大きさ。書き出しと同じく基板の下に自分の帯を持つ。
+   * 基板より広くなることがあるので、幅も見て画布を広げる。
    */
   readonly list?: { readonly width: number; readonly height: number } | null;
-  /** 色の凡例が要る大きさ (白黒の図だけ)。板のすぐ下に置く。 */
+  /** 色の凡例が要る大きさ (白黒の図だけ)。基板のすぐ下に置く。 */
   readonly legend?: { readonly width: number; readonly height: number } | null;
   /**
-   * 穴の名前を右と下にも出すか。**出す辺には余白が要る** — 板の寸法だけで
+   * 穴の名前を右と下にも出すか。**出す辺には余白が要る** — 基板の寸法だけで
    * 画布を決めると、右と下の名前が画布の外へ出て黙って切れる。
    */
   readonly labelRight?: boolean;
   readonly labelBottom?: boolean;
   /**
-   * 番地で置いた機器と USB コネクタが、板の上と下へはみ出す高さ。**帯とは別に空ける** —
+   * 番地で置いた機器と USB コネクタが、基板の上と下へはみ出す高さ。**帯とは別に空ける** —
    * 空けないと、上は題に、下は書き出しや半田面に重なる。
-   * 板からの距離は番地で決まっていて、板がどこに来ても変わらないので、
+   * 基板からの距離は番地で決まっていて、基板がどこに来ても変わらないので、
    * 一度測った値をそのまま渡してよい。
    */
   readonly deviceAbove?: number;
   readonly deviceBelow?: number;
   /**
-   * そのうち USB コネクタが**板のすぐ外**に要る高さ。機器の帯はこの外側へ置く —
-   * 帯は板のすぐ上 (下) に置くので、そのままだと張り出したコネクタと重なる。
+   * そのうち USB コネクタが**基板のすぐ外**に要る高さ。機器の帯はこの外側へ置く —
+   * 帯は基板のすぐ上 (下) に置くので、そのままだと張り出したコネクタと重なる。
    * 空ける量そのものは `deviceAbove` / `deviceBelow` に含めて渡す (大きいほう)。
    */
   readonly partsAbove?: number;
   readonly partsBelow?: number;
 };
 
-/** 板の外の機器を並べる帯。 */
+/** 基板の外の機器を並べる帯。 */
 export type Band = { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
 
 export type Layout = {
   readonly pitch: number;
   readonly width: number;
   readonly height: number;
-  /** 板そのものの矩形。穴はこの内側に並ぶ。 */
+  /** 基板そのものの矩形。穴はこの内側に並ぶ。 */
   readonly board: Rect;
-  /** 題のベースライン。題が無ければ板の上端と同じで、誰も使わない。 */
+  /** 題のベースライン。題が無ければ基板の上端と同じで、誰も使わない。 */
   readonly titleBaseline: number;
-  /** 板の外の機器を置く帯。空けていなければ null。 */
+  /** 基板の外の機器を置く帯。空けていなければ null。 */
   readonly deviceBands: { readonly top: Band | null; readonly bottom: Band | null };
   /** 色の凡例を出す帯。凡例が無ければ null。 */
   readonly legendBand: Band | null;
@@ -90,7 +90,7 @@ export type Layout = {
   readonly listBand: Band | null;
   /** フェンスの中身を書き出す帯。書き出しが無ければ null。 */
   readonly sourceBand: Band | null;
-  /** 半田面の板を置く上端 (この分だけ下へずらして描く)。出さなければ null。 */
+  /** 半田面の基板を置く上端 (この分だけ下へずらして描く)。出さなければ null。 */
   readonly backTop: number | null;
   colX(col: number): number;
   rowY(row: number): number;
@@ -136,18 +136,18 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
     boardX + BOARD_PAD + slotX + (mirror ? board.cols - col : col - 1) * PITCH;
   const rowY = (row: number): number => boardY + BOARD_PAD + slotY + (row - 1) * PITCH;
 
-  // **書き出しは板より広くなることがある。** 板が細いフェンス (`4x30` など) で
-  // 板幅に切ると書き出しが `…` だらけになり、写して動かすという値打ちが消える。
+  // **書き出しは基板より広くなることがある。** 基板が細いフェンス (`4x30` など) で
+  // 基板幅に切ると書き出しが `…` だらけになり、写して動かすという値打ちが消える。
   // 切るのではなく画布のほうを広げる。
   const labelRight = options.labelRight === true ? LABEL_GUTTER : 0;
   const labelBottom = options.labelBottom === true ? LABEL_GUTTER : 0;
   const bandWidth = Math.max(
     boardWidth + labelRight, source?.width ?? 0, list?.width ?? 0, legend?.width ?? 0,
   );
-  // 縦の積み方: 題 → 上の機器 → 板 → 下の機器 → 半田面 → 凡例 → 部品表 → 書き出し。
+  // 縦の積み方: 題 → 上の機器 → 基板 → 下の機器 → 半田面 → 凡例 → 部品表 → 書き出し。
   // **凡例は図のすぐ下。** 線の型を引き当てるための表なので、図から目を離す
   // 距離が短いほどよい (部品表と書き出しは図を見終わってから読むもの)。
-  // **板 2 枚を続けて置く** — 間に写しが挟まると、表と裏が別の図に見える。
+  // **基板 2 枚を続けて置く** — 間に写しが挟まると、表と裏が別の図に見える。
   // **部品表は書き出しより上**。写しは「同じ図をもう一度出す」ためのもので
   // 図そのものの続きではないので、いちばん下に置く。
   const backTop = boardY + boardHeight + labelBottom + bottomBand + deviceBelow + BACK_GAP;
@@ -187,7 +187,7 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
     colX,
     rowY,
     // **交点の間も指せる** (`rows` / `cols` は 1 升に対する端数)。格子は一様なので
-    // ピッチを掛けるだけ。書けるのは注釈だけで、足は交点そのものを指す。
+    // ピッチを掛けるだけ。書けるのは注釈だけで、ピンは交点そのものを指す。
     point: (address) => ({
       x: colX(address.col) + (address.cols ?? 0) * PITCH,
       y: rowY(address.row) + (address.rows ?? 0) * PITCH,

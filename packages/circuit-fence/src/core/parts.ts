@@ -18,7 +18,7 @@ import { icSides } from './tex/icShape.ts';
  *
  * 落ちるもの (例外ではなく**プロセスごと落ちる**。フォントが無いため):
  *
- * - `eC` (電解コンデンサ) → 曲板の `cC` で描く (`ecap`)
+ * - `eC` (電解コンデンサ) → 曲基板の `cC` で描く (`ecap`)
  * - `ohmmeter` (抵抗計) → Ω が**太字の数式**で、その太字数式フォントが無い。
  *   丸に字を書くだけの `rmeter` に普通の太さの Ω を渡す
  *   (普通の太さの Ω は出る。値のラベルの Ω と同じもの)
@@ -45,7 +45,7 @@ import type { MultiTerminalPart, PartSpec, TexTarget } from './types.ts';
 
 /**
  * 2 端子は `\draw (…) to[symbol] (…)`、1 端子と多端子は `\node[symbol] at (…)`。
- * 足を持つのは多端子と、**一部の 2 端子** (ポテンショメータのワイパー、
+ * ピンを持つのは多端子と、**一部の 2 端子** (ポテンショメータのワイパー、
  * サイリスタのゲート)。どちらも配線から `U1.out` の形で指せる。
  */
 export type PartKind = 'two-terminal' | 'one-terminal' | 'multi-terminal';
@@ -54,20 +54,20 @@ export type PartKind = 'two-terminal' | 'one-terminal' | 'multi-terminal';
 export type SourceInner = 'dc' | 'sine' | 'square' | 'triangle';
 
 /**
- * 足が乗っている記号の中心線。`h` は横、`v` は縦。**辺から導く**もので、
+ * ピンが乗っている記号の中心線。`h` は横、`v` は縦。**辺から導く**もので、
  * 表が持つのは辺のほう (`PinSide`) — 軸からは辺を復元できない。
  *
- * ここに載っている足だけが、置いた交点と**同じ行 (h) か同じ列 (v)** の番地へ
- * `--` でまっすぐ引ける。載っていない足は記号の縁の途中に出るので、
+ * ここに載っているピンだけが、置いた交点と**同じ行 (h) か同じ列 (v)** の番地へ
+ * `--` でまっすぐ引ける。載っていないピンは記号の縁の途中に出るので、
  * まっすぐ引くと斜めに入る。
  */
 export type PinAxis = 'h' | 'v';
 
 /**
- * 足が出ている記号の辺。**向きに合わせて回る。**
+ * ピンが出ている記号の辺。**向きに合わせて回る。**
  *
- * 軸 (`h` / `v`) ではなく辺を持つ理由は 2 つ — 回した記号の足がどちらを
- * 向くかは辺でしか言えず、マップに描く足の把手にも辺が要る。
+ * 軸 (`h` / `v`) ではなく辺を持つ理由は 2 つ — 回した記号のピンがどちらを
+ * 向くかは辺でしか言えず、マップに描くピンの把手にも辺が要る。
  */
 export type PinSide = 'left' | 'right' | 'top' | 'bottom';
 
@@ -87,7 +87,7 @@ export const isTurned = (turn: Turn): boolean => turn.rotate !== 0 || turn.mirro
 
 /**
  * 向きを書ける範囲。**回転と反転は別の欄**で持つ — 実機では、回すのは
- * 大丈夫でも反転すると字が鏡文字になる記号があった (DIP の足番号と型番)。
+ * 大丈夫でも反転すると字が鏡文字になる記号があった (DIP のピン番号と型番)。
  * **落ちるからではなく読めなくなるから**外すので、種類ごとに分けて要る。
  */
 export type Orient = {
@@ -103,7 +103,7 @@ const NO_ORIENT: Orient = { rotate: false, mirror: false, signs: false };
 const TURNS: Orient = { rotate: true, mirror: true, signs: false };
 
 /**
- * 回せるが反転できない。DIP は足番号も型番も鏡文字になり、
+ * 回せるが反転できない。DIP はピン番号も型番も鏡文字になり、
  * `ground` は左右対称で図が変わらない (書けても効かない語を通さない)。
  */
 const TURN_ONLY: Orient = { rotate: true, mirror: false, signs: false };
@@ -118,7 +118,7 @@ const AMP_ORIENT: Orient = { rotate: true, mirror: true, signs: true };
  */
 const MIRROR_ONLY: Orient = { rotate: false, mirror: true, signs: false };
 
-/** 時計回りに 90 度。左の足は上へ回る。 */
+/** 時計回りに 90 度。左のピンは上へ回る。 */
 const CLOCKWISE: Readonly<Record<PinSide, PinSide>> = {
   left: 'top', top: 'right', right: 'bottom', bottom: 'left',
 };
@@ -152,13 +152,13 @@ export type PartType = {
   /**
    * 書ける名前 → circuitikz のアンカー名。
    * 回路図の慣習の短い名前 (`B` `C` `E`) も、アンカー名そのものも通す。
-   * **これを持つ部品だけが足を指される** (種類が多端子かどうかではない)。
+   * **これを持つ部品だけがピンを指される** (種類が多端子かどうかではない)。
    */
   readonly pins?: Readonly<Record<string, string>>;
   /**
-   * 中心線に乗っている足 (circuitikz のアンカー名 → 出ている辺)。
-   * 乗らない足は書かない。`--` でまっすぐ引ける足はここに載っているものだけ
-   * なので、載っていない足へまっすぐ引いた配線には「斜めに入る」と伝える
+   * 中心線に乗っているピン (circuitikz のアンカー名 → 出ている辺)。
+   * 乗らないピンは書かない。`--` でまっすぐ引けるピンはここに載っているものだけ
+   * なので、載っていないピンへまっすぐ引いた配線には「斜めに入る」と伝える
    * (model/circuit.ts)。**向きが付いたら辺は回る** (`pinSideOf`)。
    *
    * **記号と同じく実機の図で 1 つずつ確かめて載せる**。当てずっぽうを載せると、
@@ -168,8 +168,8 @@ export type PartType = {
    */
   readonly pinSide?: Readonly<Record<string, PinSide>>;
   /**
-   * **辺から出てはいるが、中心線には乗っていない足** (オペアンプの ±、
-   * ゲートの入力、DIP の全部)。掴む升目が足の接続点を置く場所に使う。
+   * **辺から出てはいるが、中心線には乗っていないピン** (オペアンプの ±、
+   * ゲートの入力、DIP の全部)。掴む升目がピンの接続点を置く場所に使う。
    *
    * `pinSide` と分けてあるのは、あちらが「まっすぐ引けるか」を答える表だから。
    * 混ぜると、斜めに入る配線を黙って通すようになる (実際に一度そうした)。
@@ -177,30 +177,30 @@ export type PartType = {
    */
   readonly pinRow?: Readonly<Record<string, PinSide>>;
   /**
-   * 足に書く名前 (1 番から順)。**書くのはマイコンボードだけ** — 40 本を番号で
+   * ピンに書く名前 (1 番から順)。**書くのはマイコンボードだけ** — 40 本を番号で
    * 呼ぶと実物のピンアウト図と突き合わせられないため。
    *
-   * フェンスでは**字を TeX に渡さない** (約束 7)。足の位置に目印を 1 文字置き、
+   * フェンスでは**字を TeX に渡さない** (約束 7)。ピンの位置に目印を 1 文字置き、
    * 描き上がった SVG に差し込む — TeX に描かせると字送りが狂う
    * (`AGND` が「A GND」になる。実機で確かめた)。
    */
   readonly pinLabels?: readonly string[];
   /**
-   * 足の名前の字の大きさ (TeX の命令)。既定は `\\tiny` — 40 本の DIP・ボードが
-   * 箱に収まる大きさ。足の少ない箱 (`ic`・`device`) は読める `\\scriptsize` にする。
+   * ピンの名前の字の大きさ (TeX の命令)。既定は `\\tiny` — 40 本の DIP・ボードが
+   * 箱に収まる大きさ。ピンの少ない箱 (`ic`・`device`) は読める `\\scriptsize` にする。
    */
   readonly pinFont?: string;
   /**
-   * 足に書く番号 (`pinLabels` と同じ並び)。**名前と一緒に 1 つの字**として出し、
+   * ピンに書く番号 (`pinLabels` と同じ並び)。**名前と一緒に 1 つの字**として出し、
    * 番号は箱の外側の端に置く (`pinLabelText`)。持たない種類は名前だけ。
    */
   readonly pinNumbers?: readonly string[];
   /**
-   * 値を**この足の反対側**に出す (アンカー名で指す)。
+   * 値を**このピンの反対側**に出す (アンカー名で指す)。
    *
-   * 値は既定では記号の下に出るが、**そこに足がある部品**では線と字に重なる
-   * (レギュレータの GND)。足の側は回すと変わるので、向きの表から数えるのでは
-   * なく**その足がいまどちらにあるか**で決める (実機で回して確かめた)。
+   * 値は既定では記号の下に出るが、**そこにピンがある部品**では線と字に重なる
+   * (レギュレータの GND)。ピンの側は回すと変わるので、向きの表から数えるのでは
+   * なく**そのピンがいまどちらにあるか**で決める (実機で回して確かめた)。
    */
   readonly valueAwayFrom?: string;
   /**
@@ -210,7 +210,7 @@ export type PartType = {
    */
   readonly orient?: Orient;
   /**
-   * 記号に必ず付ける circuitikz のオプション (DIP の足の本数、計器の中の字など)。
+   * 記号に必ず付ける circuitikz のオプション (DIP のピンの本数、計器の中の字など)。
    * 書き手が触れるものではないので、向き (`+up`) とは別に持つ。
    */
   readonly options?: readonly string[];
@@ -237,15 +237,15 @@ export type PartType = {
    */
   readonly valueInside?: boolean;
   /**
-   * ネットリストと升目に出す足の名前 (アンカー → 名前)。**名前でも DIP の番号でも
+   * ネットリストと升目に出すピンの名前 (アンカー → 名前)。**名前でも DIP の番号でも
    * 呼べて、図に名前を書かない**種類 (リレー・フォトカプラ) と、**同じ名前が 2 本以上に
    * 刷られた DIP** (TL071 の `NC` は番号で呼ぶ) が持つ。
    * `pins` から引くと、JS が数字めいた鍵を先に並べるので `K1.8` になる。
    */
   readonly pinNames?: Readonly<Record<string, string>>;
   /**
-   * 足ではないが記号の外へ出る飾りの辺 (フォトトランジスタの光の矢)。名札は
-   * 足の無い辺へ逃げるので、ここを言っておかないと矢に重なる。
+   * ピンではないが記号の外へ出る飾りの辺 (フォトトランジスタの光の矢)。名札は
+   * ピンの無い辺へ逃げるので、ここを言っておかないと矢に重なる。
    */
   readonly ornament?: PinSide;
   /**
@@ -257,9 +257,9 @@ export type PartType = {
   readonly lightArrows?: boolean;
   /**
    * 箱の中の字 (型番・機器の名前) を、**向きが付いたとき**に掛ける記号の
-   * アンカー。省くと `center`。片側に足が並ぶ箱 (ピンヘッダ・機器) は足の名前の
+   * アンカー。省くと `center`。片側にピンが並ぶ箱 (ピンヘッダ・機器) はピンの名前の
    * 列の反対側に字の場所があるので、そこを指す `value` を持つ — 中心に置くと
-   * 反転した箱で足の名前に重なる (実機で `turn: mirror` の機器を焼いて見つけた)。
+   * 反転した箱でピンの名前に重なる (実機で `turn: mirror` の機器を焼いて見つけた)。
    */
   readonly turnedValueAnchor?: string;
   /**
@@ -270,15 +270,15 @@ export type PartType = {
   readonly turnedValueSide?: PinSide;
   /**
    * 箱を**立てて置いたとき** (回さない・`r180`) に、中の型番を箱の**下の外**に
-   * 出す。DIP の箱は足の番号が左右の縁から中へ並び、真ん中に字の入る幅が
+   * 出す。DIP の箱はピンの番号が左右の縁から中へ並び、真ん中に字の入る幅が
    * 残らない (`NE555` も `CD74HC283` も番号に重なり、長い型番は縁からはみ出した)。
    * 寝かせた箱 (`r90` / `r270`) は長い辺が横になり、番号の列の間に 1 行ぶんの
    * 帯が空くので、今までどおり中に書く。
    */
   readonly valueBelowUpright?: boolean;
   /**
-   * 名札 (`U1`) を**箱の左上の角の上**に出す。4 辺とも足が出る箱 (`ic`) は
-   * 空いている辺が無く、辺の真ん中に出すと上の足の線に重なる。上の辺の足は
+   * 名札 (`U1`) を**箱の左上の角の上**に出す。4 辺ともピンが出る箱 (`ic`) は
+   * 空いている辺が無く、辺の真ん中に出すと上のピンの線に重なる。上の辺のピンは
    * 中心から右へ並ぶので、左上の角の上は空いている (`tex/icShape.ts`)。
    */
   readonly nameAtCorner?: boolean;
@@ -322,7 +322,7 @@ const FET_PINS = {
 } as const;
 
 /**
- * 3 本足の能動素子の中心線。制御端子は横、あとの 2 本は縦に出る。
+ * 3 ピンの能動素子の中心線。制御端子は横、あとの 2 本は縦に出る。
  * BJT・FET・IGBT で同じ形 (実機の図で確かめた)。
  */
 const BJT_SIDE = { base: 'left', collector: 'top', emitter: 'bottom' } as const;
@@ -421,16 +421,16 @@ const SI_HERTZ = '\\hertz';
 const NO_UNIT = { unitTex: null, unitSi: null } as const;
 
 /**
- * DIP の IC。足は本数ぶんの番号で呼ぶ (`U1.1`)。
+ * DIP の IC。ピンは本数ぶんの番号で呼ぶ (`U1.1`)。
  * 本数はパッケージごとに決まっているので、種類の名前に入れて表に並べる
  * (文法に本数の欄を足すより、`dip8` と書けるほうが短い)。
  */
 const dipchip = (count: number): PartType => ({
-  // 反転すると足番号も型番も鏡文字になる (実機で確認)。回転だけ許す。
+  // 反転するとピン番号も型番も鏡文字になる (実機で確認)。回転だけ許す。
   orient: TURN_ONLY,
   kind: 'multi-terminal',
   symbol: 'dipchip',
-  // 型番は箱の中に書くので、既定の大きさだと足の番号に重なる (実機で確認)。
+  // 型番は箱の中に書くので、既定の大きさだとピンの番号に重なる (実機で確認)。
   options: [`num pins=${count}`, 'font=\\scriptsize'],
   valueInside: true,
   // それでも立てた箱では番号の列の間に字の入る幅が無いので、下の外へ出す。
@@ -441,14 +441,14 @@ const dipchip = (count: number): PartType => ({
 });
 
 /**
- * 足の名前を刷る DIP (52 の docs/95)。**型番が fence-kit の足の名前の表にあれば**
+ * ピンの名前を刷る DIP (52 の docs/95)。**型番が fence-kit のピンの名前の表にあれば**
  * `partTypeOf` がこちらを返す。形はマイコンボードと同じ道 — circuitikz の番号を
  * 消し (`hide numbers`)、名前と番号を 1 つの字にして箱の中に差し込む
  * (`pinLabels` + `pinNumbers`。番号は箱の外側の端)。
  *
- * 足は**名前でも番号でも**指せる (`U1.TRIG` = `U1.2`)。**2 本以上に刷られた名前**
- * (TL071 の `NC`) は、どの足か決まらないので名前では指せない (番号で指す)。
- * 反転は今の `dipN` と同じく断る — 板が裏返しを断るので、回路図だけ許しても
+ * ピンは**名前でも番号でも**指せる (`U1.TRIG` = `U1.2`)。**2 本以上に刷られた名前**
+ * (TL071 の `NC`) は、どのピンか決まらないので名前では指せない (番号で指す)。
+ * 反転は今の `dipN` と同じく断る — 基板が裏返しを断るので、回路図だけ許しても
  * 実体配線図と突き合わせられない。
  */
 function namedDip(count: number, names: readonly string[], lying: boolean): PartType {
@@ -480,7 +480,7 @@ function namedDip(count: number, names: readonly string[], lying: boolean): Part
 
 /**
  * 名前を刷った DIP の箱の幅 (circuitikz の `dipchip/width`)。**左右の列に
- * 「番号 名前」が 1 つずつ入り、その間が少し空く**だけ取る。広げすぎると足の先が
+ * 「番号 名前」が 1 つずつ入り、その間が少し空く**だけ取る。広げすぎるとピンの先が
  * 隣の番地を越え、その番地から引いた線が箱の中を通る。
  *
  * 字の幅は `\tiny` の見積もり (機器の箱と同じ 0.1 cm / 字)。circuitikz は
@@ -508,7 +508,7 @@ const dipWidth = (names: readonly string[], digits: number, lying: boolean): num
 /** 小数を TeX に渡す字 (0.1 刻み)。 */
 const num = (value: number): string => String(Math.round(value * 10) / 10);
 
-/** 種類の名前から DIP の足の本数。DIP でなければ null。 */
+/** 種類の名前から DIP のピンの本数。DIP でなければ null。 */
 const DIP_TYPE = /^dip(\d+)$/;
 const dipCountOf = (type: string): number | null => {
   const match = DIP_TYPE.exec(type);
@@ -516,7 +516,7 @@ const dipCountOf = (type: string): number | null => {
 };
 
 /**
- * 型番で足の名前を引けなかった DIP か (お知らせを出す)。**型番を書いていない DIP は
+ * 型番でピンの名前を引けなかった DIP か (お知らせを出す)。**型番を書いていない DIP は
  * 入らない** — 名前を出す手がかりが無いだけで、補ったものが無い。
  * 返すのは型番と、その本数で表にある型番。
  */
@@ -528,7 +528,7 @@ export function unnamedDip(part: PartSpec): { readonly model: string; readonly k
 }
 
 /**
- * DIP の足が出る辺。**実物と同じ番号の回り方** — 1 番から半分までが左の辺を
+ * DIP のピンが出る辺。**実物と同じ番号の回り方** — 1 番から半分までが左の辺を
  * 上から下へ、残りが右の辺を下から上へ。
  *
  * 並びは**上から下**で書く (升目はその順に置く) ので、右の辺は番号の大きい
@@ -542,19 +542,19 @@ const dipSides = (count: number): Record<string, PinSide> => {
 };
 
 /**
- * マイコンボード。**箱に足の名前を書く IC** として描く。
+ * マイコンボード。**箱にピンの名前を書く IC** として描く。
  *
  * 表は fence-kit と共有 — 実体配線図の 2 つと**同じ綴り・同じピン名**で書ける
  * ようにするため (52 の docs/21)。番号は消して名前を出す
  * (`hide numbers`。実機の TeX で確かめた)。
  */
-/** 足の番号の桁 (`01` `40`)。揃えると名前の頭が縦に並ぶ。 */
+/** ピンの番号の桁 (`01` `40`)。揃えると名前の頭が縦に並ぶ。 */
 const PIN_NUMBER_DIGITS = 2;
 
 function boardchip(board: BoardPart): PartType {
   const anchors = board.pins.map((name, index) => [name, `pin ${index + 1}`] as const);
   return {
-    // **反転も許す。** DIP は足番号も型番も TeX が描くので鏡文字になるが、
+    // **反転も許す。** DIP はピン番号も型番も TeX が描くので鏡文字になるが、
     // ボードの名前は描き上がった SVG に差し込むので裏返らない。型番は
     // 向きが付くと箱の外の別ノードへ移る (`drawMultiTerminal`)。
     kind: 'multi-terminal',
@@ -590,17 +590,17 @@ function boardchip(board: BoardPart): PartType {
 
 /**
  * ピンヘッダ。**記号は自分で宣言する** (`tex/sipShape.ts`) — circuitikz 1.0 に
- * 片側だけ足が並ぶ形が無いため。足の番号は箱の中に書く (DIP と同じ)。
+ * 片側だけピンが並ぶ形が無いため。ピンの番号は箱の中に書く (DIP と同じ)。
  *
  * **反転も許す。** 番号は描き上がった SVG に差し込むので鏡文字にならない
  * (ボードと同じ理由)。
  */
 /**
- * 板の外の機器・モジュール (`device`)。**足の名前は書き手が並べる**ので、表を
- * 持たずに部品ごとに作る (`partTypeOf`)。形はピンヘッダと同じ「箱の片側に足」で、
- * 箱の中に足の名前を刷る。
+ * 基板の外の機器・モジュール (`device`)。**ピンの名前は書き手が並べる**ので、表を
+ * 持たずに部品ごとに作る (`partTypeOf`)。形はピンヘッダと同じ「箱の片側にピン」で、
+ * 箱の中にピンの名前を刷る。
  *
- * 足は**名前でも番号でも**指せる (`M1.TRIG` / `M1.2`)。名前は大文字小文字を
+ * ピンは**名前でも番号でも**指せる (`M1.TRIG` / `M1.2`)。名前は大文字小文字を
  * 問わない (ボードと同じ。書かれた綴りは小文字で引かれる)。
  */
 export function deviceChip(names: readonly string[], label: string | null = null): PartType {
@@ -611,7 +611,7 @@ export function deviceChip(names: readonly string[], label: string | null = null
     symbol: deviceShapeName(deviceBox(names, label)),
     options: ['draw', 'font=\\scriptsize'],
     valueInside: true,
-    // 回した・反転した箱の名前は、足の名前の列の反対側 (`headerShapeTex`)。
+    // 回した・反転した箱の名前は、ピンの名前の列の反対側 (`headerShapeTex`)。
     turnedValueAnchor: 'value',
     ...NO_UNIT,
     pins: Object.fromEntries([
@@ -634,9 +634,9 @@ const withLowerAlias = (name: string, anchor: string): (readonly [string, string
   name === name.toLowerCase() ? [[name, anchor]] : [[name, anchor], [name.toLowerCase(), anchor]];
 
 /**
- * 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ。52 の docs/66)。**足の名前と
- * DIP の番号は板の 2 つと同じ表** (fence-kit) から引く — 名前でも番号でも指せる
- * (`K1.COM1` = `K1.4`)。足は記号の中心線に乗らないので `pinRow` で辺だけを持つ。
+ * ピンに名前のある DIP 型 (リレー・フォトカプラ・7 セグ。52 の docs/66)。**ピンの名前と
+ * DIP の番号はブレッドボードとユニバーサル基板と同じ表** (fence-kit) から引く — 名前でも番号でも指せる
+ * (`K1.COM1` = `K1.4`)。ピンは記号の中心線に乗らないので `pinRow` で辺だけを持つ。
  */
 function namedSymbol(chip: NamedChip, symbol: string, sides: readonly (readonly [number, PinSide])[]): PartType {
   return {
@@ -648,7 +648,7 @@ function namedSymbol(chip: NamedChip, symbol: string, sides: readonly (readonly 
       ...withLowerAlias(name, `pin ${at}`),
       [`${at}`, `pin ${at}`],
     ])),
-    // **並びは記号の上の順** (辺の中の左から右・上から下)。升目がこの順で足を並べる。
+    // **並びは記号の上の順** (辺の中の左から右・上から下)。升目がこの順でピンを並べる。
     pinRow: Object.fromEntries(sides.map(([at, side]) => [`pin ${at}`, side])),
     pinNames: Object.fromEntries(chip.pins.map(({ at, name }) => [`pin ${at}`, name])),
   };
@@ -656,7 +656,7 @@ function namedSymbol(chip: NamedChip, symbol: string, sides: readonly (readonly 
 
 /**
  * DIP スイッチ。**開閉スイッチを連の数だけ並べた箱** (`tex/shapes.ts`)。左の辺に `A1`〜、
- * 右の辺に `B1`〜 を上から並べ、名前は箱の縁の内側に刷る。表は板の 2 つと同じ
+ * 右の辺に `B1`〜 を上から並べ、名前は箱の縁の内側に刷る。表はブレッドボードとユニバーサル基板と同じ
  * (fence-kit) なので、名前でも DIP の番号でも指せる (`SW1.B1` = `SW1.8`)。
  */
 function dipSwitchBox(chip: NamedChip): PartType {
@@ -667,7 +667,7 @@ function dipSwitchBox(chip: NamedChip): PartType {
       ...rows.map((row) => [row, 'left'] as const),
       ...rows.map((row) => [chip.positions + 1 - row, 'right'] as const),
     ]),
-    // 表は位置の順に全部の足を持つので、そのまま `pin 1`〜 の名前になる。
+    // 表は位置の順に全部のピンを持つので、そのまま `pin 1`〜 の名前になる。
     pinLabels: chip.pins.map((pin) => pin.name),
     pinFont: '\\scriptsize',
   };
@@ -687,7 +687,7 @@ const SEG7_ORDER = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'dp', 'COM1', 'COM2'];
 export const seg7DeviceBox = (label: string | null): DeviceBox =>
   deviceBox(SEG7_ORDER, label ?? namedChipOf('seg7').name);
 
-/** 7 セグは名前を刷った箱 (機器と同じ形)。KiCad の記号も箱に足の名前。 */
+/** 7 セグは名前を刷った箱 (機器と同じ形)。KiCad の記号も箱にピンの名前。 */
 function seg7Box(chip: NamedChip, label: string | null = null): PartType {
   const box = deviceChip(SEG7_ORDER, label ?? chip.name);
   const anchorOf = (name: string): string => `pin ${SEG7_ORDER.indexOf(name) + 1}`;
@@ -710,13 +710,13 @@ const SEG7 = 'seg7';
 export const DEVICE = 'device';
 
 /**
- * 3 本足の IC の種類名。1 行 (`U1: ic3 c4 UM66T`) でも、足の名前を並べる
+ * 3 ピンの IC の種類名。1 行 (`U1: ic3 c4 UM66T`) でも、ピンの名前を並べる
  * マップ形式 (`type: ic3` + `pins:`) でも書ける (52 の docs/66 の段 7)。
  */
 export const IC3 = 'ic3';
 
 /**
- * 回路図の IC の種類名。**足を働きで 4 辺に並べた箱** (52 の docs/100)。
+ * 回路図の IC の種類名。**ピンを働きで 4 辺に並べた箱** (52 の docs/100)。
  * 型番が要る (`U1: ic c4 TLC555`) — 並びは型番ごとの表 (`icLayouts.ts`) が持つ。
  */
 export const IC = 'ic';
@@ -727,8 +727,8 @@ const IC_PLACEHOLDER: PartType = {
 };
 
 /**
- * 働きで並べた IC。**足の名前と番号は名前付きの DIP と同じ** (`U1.TRIG` = `U1.2`、
- * ネットリストも同じ名前) で、違うのは箱の形と足の出る辺だけ。
+ * 働きで並べた IC。**ピンの名前と番号は名前付きの DIP と同じ** (`U1.TRIG` = `U1.2`、
+ * ネットリストも同じ名前) で、違うのは箱の形とピンの出る辺だけ。
  *
  * **向きは書けない** — 並びそのものが向き (電源が上・入力が左) を決めている。
  */
@@ -736,7 +736,7 @@ export function icChip(pinout: IcPinout): PartType {
   const named = namedDip(pinout.names.length, pinout.names, false);
   return {
     kind: 'multi-terminal',
-    // 形は足の間隔 (図の pitch) で変わるので、描く所 (`tex/generate.ts`) が決める。
+    // 形はピンの間隔 (図の pitch) で変わるので、描く所 (`tex/generate.ts`) が決める。
     symbol: IC,
     options: ['draw', 'font=\\scriptsize'],
     orient: NO_ORIENT,
@@ -748,13 +748,13 @@ export function icChip(pinout: IcPinout): PartType {
     pinFont: '\\scriptsize',
     pinNumbers: named.pinNumbers,
     pinNames: named.pinNames,
-    // 並びは箱の上の順 (上の辺・左の辺・右の辺・下の辺)。升目がこの順で足を並べる。
+    // 並びは箱の上の順 (上の辺・左の辺・右の辺・下の辺)。升目がこの順でピンを並べる。
     pinRow: Object.fromEntries(icSides(pinout).map((place) => [`pin ${place.pin}`, place.side])),
   };
 }
 
 /**
- * デュアルゲート MOSFET (N)。**足が 4 本の記号** (G1・G2・D・S)。circuitikz 1.0 に
+ * デュアルゲート MOSFET (N)。**ピンが 4 本の記号** (G1・G2・D・S)。circuitikz 1.0 に
  * 無いので自分で宣言した形 (`dualGateFetShapeTex`) で描く。D と S はほかの FET と同じく
  * 中心線に乗り、ゲート 2 本は左の辺に上から G2・G1 (G1 が S に近い)。
  * どちらのゲートかは形では読めないので、**ゲートにだけ名前を書く** (`pinLabels`)。
@@ -778,11 +778,11 @@ const DUAL_GATE_FET: PartType = {
   pinFont: '\\scriptsize',
 };
 
-/** マップ形式で書ける種類。足の名前を並べるので 1 行に畳めない形がある。 */
+/** マップ形式で書ける種類。ピンの名前を並べるので 1 行に畳めない形がある。 */
 export const MAP_TYPES: readonly string[] = [DEVICE, IC3];
 
 /**
- * ブロック (マップ形式) で書かれた部品か。**足の名前の並びを持つのはマップ形式
+ * ブロック (マップ形式) で書かれた部品か。**ピンの名前の並びを持つのはマップ形式
  * だけ**なので、それで見分ける (1 行の `ic3` は 1 行の部品のまま)。
  */
 export const isMapForm = (
@@ -791,8 +791,8 @@ export const isMapForm = (
   part.kind === 'multi-terminal' && part.pinNames !== undefined;
 
 /**
- * 3 本足の IC。**箱は三端子レギュレータと同じ** (1 = 左、2 = 下、3 = 右)。
- * ホール素子・LM35・LMF501T・UM66T は足の名前が品ごとに違うので、名前は
+ * 3 ピンの IC。**箱は三端子レギュレータと同じ** (1 = 左、2 = 下、3 = 右)。
+ * ホール素子・LM35・LMF501T・UM66T はピンの名前が品ごとに違うので、名前は
  * 書き手が与える。書かなければ番号を刷る。
  */
 export function ic3Chip(names: readonly string[] | null): PartType {
@@ -802,7 +802,7 @@ export function ic3Chip(names: readonly string[] | null): PartType {
     kind: 'multi-terminal',
     symbol: REGULATOR_SHAPE,
     options: ['draw', 'font=\\scriptsize'],
-    // 型番はレギュレータと同じく箱の外の上 (中は足の名前 3 つで埋まる)。
+    // 型番はレギュレータと同じく箱の外の上 (中はピンの名前 3 つで埋まる)。
     valueInside: false,
     valueAwayFrom: 'pin 2',
     ...NO_UNIT,
@@ -836,9 +836,9 @@ function sipchip(count: number): PartType {
 }
 
 /**
- * USB コネクタ。**記号は自分で宣言する** (`tex/shapes.ts`) — 箱の右に足、左に
- * 差し込み口の形。足は表の全部 (fence-kit — 実体配線図の 2 つと**同じ名前・同じ順**)
- * を出し、使わない足は ERC が言わない (`model/erc.ts`)。
+ * USB コネクタ。**記号は自分で宣言する** (`tex/shapes.ts`) — 箱の右にピン、左に
+ * 差し込み口の形。ピンは表の全部 (fence-kit — 実体配線図の 2 つと**同じ名前・同じ順**)
+ * を出し、使わないピンは ERC が言わない (`model/erc.ts`)。
  *
  * **名前でも番号でも**書ける (`J1.VBUS` `J1.1`)。書かれた綴りは小文字で引かれる
  * ので、印字の綴りと小文字の両方を入れる。先に書いたほうが代表の名前になる
@@ -887,7 +887,7 @@ export const PART_TYPES = {
   // 受動部品
   resistor: { kind: 'two-terminal', symbol: 'R', unitTex: OHM, unitSi: SI_OHM },
   /**
-   * 2 端子の可変抵抗。3 本目の足が要るなら potentiometer のほう。
+   * 2 端子の可変抵抗。3 本目のピンが要るなら potentiometer のほう。
    * 矢は回路図の慣習どおり、どう置いても右上を向かせる (tunable)。
    */
   'resistor-var': {
@@ -903,7 +903,7 @@ export const PART_TYPES = {
   capacitor: { kind: 'two-terminal', symbol: 'C', unitTex: FARAD, unitSi: SI_FARAD },
   /**
    * 電解コンデンサ (有極性)。`eC` はフォントが無くてプロセスごと落ちるので、
-   * 曲板の `cC` で描く。**先に書いた番地が平板 (+) 側**になる。
+   * 曲基板の `cC` で描く。**先に書いた番地が平板 (+) 側**になる。
    * 記号そのものが向きを表すので、+ の字は書き足さない
    * (斜めに置いたときに字を置く場所を決められず、値のラベルとも近すぎる)。
    */
@@ -946,7 +946,7 @@ export const PART_TYPES = {
   diac: { kind: 'two-terminal', symbol: 'biD', ...NO_UNIT },
   /**
    * サイリスタ (SCR) とトライアック。ゲートは `T1.g` で指す。
-   * 両端は番地で置くので、足として指せるのはゲートだけ。
+   * 両端は番地で置くので、ピンとして指せるのはゲートだけ。
    */
   thyristor: { kind: 'two-terminal', symbol: 'thyristor', ...NO_UNIT, pins: GATE_PINS },
   triac: { kind: 'two-terminal', symbol: 'triac', ...NO_UNIT, pins: GATE_PINS },
@@ -992,13 +992,13 @@ export const PART_TYPES = {
   /**
    * モータ。**丸に M**。circuitikz 1.0 のモータの記号 (`elmech`) は書いても素の線
    * しか描かない (実機で確かめた。52 の docs/66 の段 0) ので、計器と同じ丸に字で描く。
-   * 板の 2 つには無い — モータは板に挿さず線でつなぐので、板では `device` で書く。
+   * ブレッドボードとユニバーサル基板には無い — モータは基板に挿さず線でつなぐので、基板では `device` で書く。
    */
   motor: { kind: 'two-terminal', symbol: 'rmeter', options: [`t={$${MOTOR}$}`], ...NO_UNIT },
   /**
    * 伝送線路 (マイクロストリップ・同軸)。**値は特性インピーダンス** で、抵抗と同じく
    * Ω を補う (`TL1: tline a1 a5 50` → 50 Ω)。銅張り基板 (copper) の図の等価回路に使う。
-   * 板の 2 つには無い — 線路は銅の形で、部品ではない。
+   * ブレッドボードとユニバーサル基板には無い — 線路は銅の形で、部品ではない。
    */
   tline: { kind: 'two-terminal', symbol: 'TL', unitTex: OHM, unitSi: SI_OHM },
 
@@ -1048,7 +1048,7 @@ export const PART_TYPES = {
   npn: { kind: 'multi-terminal', symbol: 'npn', ...NO_UNIT, pins: BJT_PINS, pinSide: BJT_SIDE },
   pnp: { kind: 'multi-terminal', symbol: 'pnp', ...NO_UNIT, pins: BJT_PINS, pinSide: BJT_SIDE_P },
   /**
-   * フォトトランジスタ。**B を持たない 2 本足** (砲弾型の実物に合わせる。
+   * フォトトランジスタ。**B を持たない 2 ピン** (砲弾型の実物に合わせる。
    * 52 の docs/66)。circuitikz 1.0 の `photo` が光の矢を、`nobase` がベースの線を
    * 消す (フェンス側の TeX で確かめた)。矢は左から来る。
    */
@@ -1070,7 +1070,7 @@ export const PART_TYPES = {
    * これはこれで記事でよく使うので残してある。
    *
    * circuitikz 1.0 には**デプレッション型 + ボディ端子の記号が無い** (実測)。
-   * ボディ端子つきは載せていない (足がゲートと同じ側に出て図が読みにくい)。
+   * ボディ端子つきは載せていない (ピンがゲートと同じ側に出て図が読みにくい)。
    */
   njfet: { kind: 'multi-terminal', symbol: 'njfet', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE },
   pjfet: { kind: 'multi-terminal', symbol: 'pjfet', ...NO_UNIT, pins: FET_PINS, pinSide: FET_SIDE_P },
@@ -1092,7 +1092,7 @@ export const PART_TYPES = {
   /**
    * トランス。circuitikz の `transformer` は**空芯** (巻線 2 つだけ) で、
    * 記事によく出るのは鉄芯の 2 本が入るほう。アンカーは同じなので
-   * `transformer core` にしても足の指し方は変わらない。
+   * `transformer core` にしてもピンの指し方は変わらない。
    */
   transformer: {
     kind: 'multi-terminal', symbol: 'transformer core', ...NO_UNIT,
@@ -1123,7 +1123,7 @@ export const PART_TYPES = {
   not: { kind: 'multi-terminal', symbol: 'not port', ...NO_UNIT, pins: GATE1_PINS, pinSide: GATE1_SIDE },
   buffer: { kind: 'multi-terminal', symbol: 'buffer port', ...NO_UNIT, pins: GATE1_PINS, pinSide: GATE1_SIDE },
 
-  // DIP の IC。足の本数だけが違う。**数は板の 2 つと同じ表**にしてある
+  // DIP の IC。ピンの本数だけが違う。**数はブレッドボードとユニバーサル基板と同じ表**にしてある
   // (同じ回路を回路図でも実体配線図でも書けるように)。
   dip4: dipchip(4),
   dip6: dipchip(6),
@@ -1156,7 +1156,7 @@ export const PART_TYPES = {
    * circuitikz 1.0 に同軸コネクタの記号が無いため。丸の中に中心導体、
    * 外周が外皮という回路図の慣習どおりの形。
    *
-   * **足は 1 が中心導体、2 が外皮** (実体配線図の 2 つと同じ決め方)。
+   * **ピンは 1 が中心導体、2 が外皮** (実体配線図の 2 つと同じ決め方)。
    * 名前でも書ける。
    */
   sma: {
@@ -1167,7 +1167,7 @@ export const PART_TYPES = {
     pins: { '1': 'pin 1', core: 'pin 1', centre: 'pin 1', '2': 'pin 2', gnd: 'pin 2', shield: 'pin 2' },
     // どちらも中心線に乗る (中心導体は横、外皮は縦)。
     pinSide: { 'pin 1': 'left', 'pin 2': 'bottom' },
-    // 値は下が外皮の足で塞がっているので上へ。
+    // 値は下が外皮のピンで塞がっているので上へ。
     valueAwayFrom: 'pin 2',
   },
 
@@ -1180,11 +1180,11 @@ export const PART_TYPES = {
     kind: 'multi-terminal',
     symbol: REGULATOR_SHAPE,
     options: ['draw', 'font=\\scriptsize'],
-    // **型番は箱の外の上。** 中には足の名前 3 つが入るので、型番まで入れると
-    // `OUT` と重なる。下はグラウンドの足で塞がっているので上へ出す
+    // **型番は箱の外の上。** 中にはピンの名前 3 つが入るので、型番まで入れると
+    // `OUT` と重なる。下はグラウンドのピンで塞がっているので上へ出す
     // (どちらも実機で焼いて決めた)。
     valueInside: false,
-    // 下はグラウンドの足で塞がっているので、その反対側へ出す。
+    // 下はグラウンドのピンで塞がっているので、その反対側へ出す。
     valueAwayFrom: 'pin 2',
     ...NO_UNIT,
     pins: {
@@ -1196,13 +1196,13 @@ export const PART_TYPES = {
     pinSide: { 'pin 1': 'left', 'pin 2': 'bottom', 'pin 3': 'right' },
     pinLabels: ['IN', 'GND', 'OUT'],
   },
-  // 3 本足の IC。1 行で書くと足は番号。名前はマップ形式の `pins:` で与える。
+  // 3 ピンの IC。1 行で書くとピンは番号。名前はマップ形式の `pins:` で与える。
   ic3: ic3Chip(null),
   // セラミックフィルタ。箱は三端子レギュレータと同じ (1 = IN 左、2 = GND 下、3 = OUT 右)。
   'ceramic-filter': ic3Chip(['IN', 'GND', 'OUT']),
   // 働きで並べた IC。型番で並びを引く (`partTypeOf`)。
   ic: IC_PLACEHOLDER,
-  // デュアルゲート MOSFET (N)。足 4 本の記号 (`DUAL_GATE_FET`)。
+  // デュアルゲート MOSFET (N)。ピン 4 本の記号 (`DUAL_GATE_FET`)。
   'nmos-dg': DUAL_GATE_FET,
 
   // ピンヘッダ。**数は実体配線図の 2 つと同じ表**。
@@ -1216,8 +1216,8 @@ export const PART_TYPES = {
   sip20: sipchip(20),
   sip40: sipchip(40),
 
-  // 足に名前のある DIP 型。表は板の 2 つと同じ (fence-kit)。
-  // 型番は接点の右 (記号の `text` アンカー)。上下は足で塞がっている。
+  // ピンに名前のある DIP 型。表はブレッドボードとユニバーサル基板と同じ (fence-kit)。
+  // 型番は接点の右 (記号の `text` アンカー)。上下はピンで塞がっている。
   relay: {
     ...namedSymbol(namedChipOf('relay'), RELAY_SHAPE, [
       [1, 'top'], [6, 'top'], [8, 'top'], [11, 'top'], [9, 'top'],
@@ -1366,7 +1366,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   pico2: 'Pico 2',
   'pico2-w': 'Pico 2 W',
   'tang-nano-9k': 'Tang Nano 9K',
-  // 足に名前のある DIP 型も実体配線図の 2 つと同じ字 (fence-kit の表)。
+  // ピンに名前のある DIP 型も実体配線図の 2 つと同じ字 (fence-kit の表)。
   relay: namedChipOf('relay').kindName,
   photocoupler: namedChipOf('photocoupler').kindName,
   seg7: namedChipOf('seg7').kindName,
@@ -1560,8 +1560,8 @@ export const lookupPartType = (name: string): PartType | null =>
   Object.hasOwn(PART_TYPES, name) ? PART_TYPES[name as PartTypeName] : null;
 
 /**
- * 部品の足の表。**部品ごとに違う種類がある**ので、種類名では引けない —
- * 機器と 3 本足の IC は書き手が並べた足の名前 (`pins:`)、7 セグは刷る型番の
+ * 部品のピンの表。**部品ごとに違う種類がある**ので、種類名では引けない —
+ * 機器と 3 ピンの IC は書き手が並べたピンの名前 (`pins:`)、7 セグは刷る型番の
  * 長さで箱の幅が変わる。部品を手に持っている所はこちらを使う。
  */
 export function partTypeOf(part: PartSpec): PartType | null {
@@ -1574,7 +1574,7 @@ export function partTypeOf(part: PartSpec): PartType | null {
   }
   // 7 セグは箱に型番を刷るので、型番の長さで箱の幅が変わる (機器と同じ)。
   if (part.type === SEG7 && part.kind === 'multi-terminal') return seg7Box(namedChipOf(SEG7), part.value);
-  // DIP は型番が足の名前の表にあれば名前を刷る (52 の docs/95)。無ければ番号だけ。
+  // DIP は型番がピンの名前の表にあれば名前を刷る (52 の docs/95)。無ければ番号だけ。
   const count = dipCountOf(part.type);
   const pinout = count === null || part.kind !== 'multi-terminal' ? null : lookupPinout(part.value, count);
   if (count !== null && pinout !== null) {
@@ -1625,7 +1625,7 @@ export function tunableOptions(typeName: string, target: TexTarget, laid: Laid, 
 
 /**
  * 書かれたピン名を circuitikz のアンカー名にする。読めなければ null。
- * `Q1.B` も `Q1.base` も同じ足を指す。
+ * `Q1.B` も `Q1.base` も同じピンを指す。
  */
 export function lookupPin(type: PartType, pin: string): string | null {
   const pins = type.pins;
@@ -1658,9 +1658,9 @@ export const orientOf = (type: PartType): Orient =>
 export const pinNames = (type: PartType): readonly string[] => Object.keys(type.pins ?? {});
 
 /**
- * その足が出ている辺。中心線に乗っていなければ null。
+ * そのピンが出ている辺。中心線に乗っていなければ null。
  * 引くのは**アンカー名** (`base`) であって書かれた名前 (`B`) ではない
- * — 呼び名が何通りあっても足は 1 つなので、表も 1 つで足りる。
+ * — 呼び名が何通りあってもピンは 1 つなので、表も 1 つで足りる。
  *
  * 向きを渡すと**回した辺**を返す。順は「反転してから回す」(`Turn` の頭書き)。
  */
@@ -1671,7 +1671,7 @@ export function pinSideOf(type: PartType, anchor: string, turn: Turn = NO_TURN):
 /**
  * 辺を 1 つ、向きのぶんだけ回す。**順は「反転してから回す」** (`Turn` の頭書き)。
  *
- * 引いた辺ではなく辺そのものを回すので、**足を持たないものの置き場**にも使える
+ * 引いた辺ではなく辺そのものを回すので、**ピンを持たないものの置き場**にも使える
  * (名札を「記号の上」に出すとき、回した先で上に来る辺を知りたい)。
  */
 export function turnSide(side: PinSide, turn: Turn): PinSide {
@@ -1695,7 +1695,7 @@ function turnedSide(
 }
 
 /**
- * 足の置き場 (アンカー名 → 出ている辺)。**中心線に乗る足も乗らない足も**
+ * ピンの置き場 (アンカー名 → 出ている辺)。**中心線に乗るピンも乗らないピンも**
  * 出てくる — 掴む升目は「どこから出ているか」だけが要る。
  * 並びは表に書いた順 (辺の中の上から下・左から右)。
  */
@@ -1710,7 +1710,7 @@ export function pinPlaces(type: PartType, turn: Turn = NO_TURN): readonly {
 }
 
 /**
- * 足に書く字 (名前と、あれば番号)。**番号は必ず箱の外側の端**に置く —
+ * ピンに書く字 (名前と、あれば番号)。**番号は必ず箱の外側の端**に置く —
  * 実機で「ピン番号は常に外側に付ける」と決めた。
  *
  * 字は縁から箱の中へ伸びるので、外側の端は**右の辺だけが字の末尾**で、
@@ -1726,11 +1726,11 @@ export function pinLabelText(type: PartType, index: number, side: PinSide): stri
 }
 
 /**
- * その足が乗っている中心線。乗っていなければ null。**辺から導く** —
- * 左右の辺に出る足は横の中心線、上下の辺に出る足は縦の中心線に乗る。
+ * そのピンが乗っている中心線。乗っていなければ null。**辺から導く** —
+ * 左右の辺に出るピンは横の中心線、上下の辺に出るピンは縦の中心線に乗る。
  */
 /**
- * その足を指すときの**代表の綴り** (`base` なら `B`、`out` なら `out`)。
+ * そのピンを指すときの**代表の綴り** (`base` なら `B`、`out` なら `out`)。
  * マップの箱に添える字で、**書くときに使う名前と同じもの**にする。
  *
  * **表に先に書いてあるものを採る。** 短いほうを選ぶと `not` の入口が `a`、
@@ -1744,32 +1744,32 @@ export function mainPinName(type: PartType, anchor: string): string {
 }
 
 /**
- * 升目とネットリストに出す足の名前。**升目の接続点 (`pinsOf`)、足を指した線の端
- * (`pinRefOf`)、ネットリストの箱の足 (`model/nets.ts`) がここを通る** — 線は点を名前で引くので、2 か所で別々に決めると
+ * 升目とネットリストに出すピンの名前。**升目の接続点 (`pinsOf`)、ピンを指した線の端
+ * (`pinRefOf`)、ネットリストの箱のピン (`model/nets.ts`) がここを通る** — 線は点を名前で引くので、2 か所で別々に決めると
  * 片方だけが食い違う (レギュレータで点の側だけ直し、USB で線の側が外れた)。
  *
- * 名前は**図に出るものと同じ字**にする。図に足の名前を書く部品
+ * 名前は**図に出るものと同じ字**にする。図にピンの名前を書く部品
  * (`pinLabels`) はそちらから引く — `mainPinName` は書ける綴りのうち最初の
- * 1 つを返すので、数字と名前の両方で呼べる足 (レギュレータ・USB) では
+ * 1 つを返すので、数字と名前の両方で呼べるピン (レギュレータ・USB) では
  * 図と食い違う (JS は数字めいた鍵を先に並べるため。実機で気づいた)。
  */
 export function shownPinName(type: PartType, anchor: string): string {
   return type.pinNames?.[anchor] ?? printedPinLabel(type, anchor) ?? mainPinName(type, anchor);
 }
 
-/** 箱の足のアンカー (`pin 3`)。TeX の都合の名前で、図にも実物にも無い。 */
+/** 箱のピンのアンカー (`pin 3`)。TeX の都合の名前で、図にも実物にも無い。 */
 const BOX_ANCHOR = /^pin \d+$/;
 
 /**
- * ネットリストとお知らせに出す足の呼び名。**箱の足は図に刷ってある名前**
- * (`U1.GP0` `U1.Vout`。刷っていない箱は番号 `J1.2`)、**箱でない足はアンカー名の
- * まま** (`Q1.base` `U1.out`)。2 か所で別々に決めると、同じ足が出力の中で
+ * ネットリストとお知らせに出すピンの呼び名。**箱のピンは図に刷ってある名前**
+ * (`U1.GP0` `U1.Vout`。刷っていない箱は番号 `J1.2`)、**箱でないピンはアンカー名の
+ * まま** (`Q1.base` `U1.out`)。2 か所で別々に決めると、同じピンが出力の中で
  * 2 通りの名前になる (コードレビューで出た)。
  */
 export const pinRefName = (type: PartType | null, anchor: string): string =>
   type !== null && BOX_ANCHOR.test(anchor) ? shownPinName(type, anchor) : anchor;
 
-/** 図に書く足の名前 (`pinLabels`)。持たない種類は null。 */
+/** 図に書くピンの名前 (`pinLabels`)。持たない種類は null。 */
 function printedPinLabel(type: PartType, anchor: string): string | null {
   const labels = type.pinLabels;
   const at = /^pin (\d+)$/.exec(anchor);
@@ -1782,12 +1782,12 @@ export function pinAxis(type: PartType, anchor: string, turn: Turn = NO_TURN): P
   return side === null ? null : side === 'left' || side === 'right' ? 'h' : 'v';
 }
 
-/** 数字だけの足を範囲でまとめるかどうかの境目。これを超えると並べても読めない。 */
+/** 数字だけのピンを範囲でまとめるかどうかの境目。これを超えると並べても読めない。 */
 const LISTED_PINS = 4;
 
 /**
- * 「書ける足はこれです」と伝えるときの並べ方。
- * DIP のように数字だけの足は範囲にまとめる (40 本を並べても読めない)。
+ * 「書けるピンはこれです」と伝えるときの並べ方。
+ * DIP のように数字だけのピンは範囲にまとめる (40 本を並べても読めない)。
  */
 export function pinHint(type: PartType): string {
   const names = pinNames(type);

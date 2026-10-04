@@ -9,7 +9,7 @@ const pinout555 = () => {
 };
 
 describe('IC の箱 (ic)', () => {
-  it('足を働きの辺に、実物の番号のまま置く', () => {
+  it('ピンを働きの辺に、実物の番号のまま置く', () => {
     // Act
     const box = icBox(pinout555(), 0.5);
 
@@ -22,7 +22,7 @@ describe('IC の箱 (ic)', () => {
     expect(sideOf(1)).toBe('bottom');
   });
 
-  it('足は中心から間隔の刻み — 奇数本は中心に揃え、偶数本は 1 本目が中心', () => {
+  it('ピンは中心から間隔の刻み — 奇数本は中心に揃え、偶数本は 1 本目が中心', () => {
     // Act
     const box = icBox(pinout555(), 0.5);
 
@@ -33,7 +33,7 @@ describe('IC の箱 (ic)', () => {
     expect(alongOf(3)).toBe(0);
   });
 
-  it('箱は足の名前と型番が重ならない大きさ', () => {
+  it('箱はピンの名前と型番が重ならない大きさ', () => {
     // Act
     const box = icBox(pinout555(), 0.5);
 
@@ -43,11 +43,11 @@ describe('IC の箱 (ic)', () => {
     expect(box.halfHeight).toBeGreaterThanOrEqual(0.1 + 0.7 + 0.15 + 0.15);
   });
 
-  it.each([[1, 0.5], [1.2, 0.6], [2, 1], [0.6, 0.6], [3, 0.75]])('pitch %s の足の間隔は %s cm (番地の刻みに乗る)', (pitch, step) => {
+  it.each([[1, 0.5], [1.2, 0.6], [2, 1], [0.6, 0.6], [3, 0.75]])('pitch %s のピンの間隔は %s cm (番地の刻みに乗る)', (pitch, step) => {
     expect(icStepOf(pitch)).toBeCloseTo(step);
   });
 
-  it('宣言に 8 本ぶんの足の先と縁のアンカーを書く', () => {
+  it('宣言に 8 本ぶんのピンの先と縁のアンカーを書く', () => {
     // Act
     const tex = icShapeTex(icBox(pinout555(), 0.5)).join('\n');
 

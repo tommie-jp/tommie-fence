@@ -37,7 +37,7 @@ const isKeyLine = (lineText: string | undefined, key: string): boolean =>
 
 const FLOW = 'フロー形式 (1 行に書いた形) は行ごと消せません。手で消します';
 
-/** その配線が部品の足を指しているか。番地の端は部品と関わりが無い。 */
+/** その配線が部品のピンを指しているか。番地の端は部品と関わりが無い。 */
 const touches = (wire: WireSpec, partId: string): boolean =>
   [wire.from, wire.to].some((end) => end.kind === 'pin' && end.part === partId);
 
@@ -79,12 +79,12 @@ export function deletePart(source: string, handle: string): RemovalResult {
   // 図で片方を消しても、配線や注釈が指す `VCC` はもう 1 つのほうで生き続ける。
   const lastOfName = !isRepeatedName(doc.parts, part.id);
 
-  // 足を指す配線も一緒に消す。**残すと読めない行になるだけ** (部品はもう無い)。
+  // ピンを指す配線も一緒に消す。**残すと読めない行になるだけ** (部品はもう無い)。
   const wireLines = new Set(
     (lastOfName ? doc.wires.filter((wire) => touches(wire, part.id)) : []).map((wire) => wire.line),
   );
   for (const line of wireLines) {
-    if (isKeyLine(lines[line - 1], 'wires')) return fail(`${partId} の足を指す配線: ${FLOW}`, line);
+    if (isKeyLine(lines[line - 1], 'wires')) return fail(`${partId} のピンを指す配線: ${FLOW}`, line);
   }
 
   // **その部品を指す注釈も一緒に消す。** 残しても指し先が無いので何も描かれず、

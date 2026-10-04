@@ -29,11 +29,11 @@ import { addressTokensOn, addressesOf, locateTokens } from './shared.ts';
 export type Cell = { readonly row: number; readonly col: number };
 
 /**
- * 箱から出る足 1 本。**辺は向きに合わせて回したあとのもの** —
+ * 箱から出るピン 1 本。**辺は向きに合わせて回したあとのもの** —
  * 箱そのものは回しても同じ形なので、**回ったことが目で分かるのはここだけ**。
  */
 export type ChipPin = {
-  /** 配線に書く綴り (`U1.GP0`)。**掴んだ足を指すのもこれ。** */
+  /** 配線に書く綴り (`U1.GP0`)。**掴んだピンを指すのもこれ。** */
   readonly name: string;
   /**
    * 升目に**出す字**。番号を持つ種類 (マイコンボード) では名前と番号が並ぶ
@@ -58,7 +58,7 @@ export type Chip = {
   readonly line: number;
   /** 書かれた向き。2 端子は番地の順が向きなので、いつも立ったまま。 */
   readonly turn: Turn;
-  /** 箱から出る足 (多端子だけ)。向きを写したあとの辺を持つ。 */
+  /** 箱から出るピン (多端子だけ)。向きを写したあとの辺を持つ。 */
   readonly pins: readonly ChipPin[];
 };
 
@@ -70,18 +70,18 @@ export type WireLine = {
   /**
    * 通る点 (2 つか 3 つ)。**折れる配線は角を挟んで 3 つ** —
    * 1 本の折れ線として持つので、描く側が角を両端に合わせられる
-   * (別々の線にすると、足へずらした端のせいで角が外れて斜めになる)。
+   * (別々の線にすると、ピンへずらした端のせいで角が外れて斜めになる)。
    */
   readonly points: readonly Cell[];
   /** 書かれた行 (1 始まり)。エディタのカーソルと突き合わせるための目印。 */
   readonly line: number;
   /**
-   * ピンの端を部品の升で近似したか。**正しい足の位置は TeX しか知らない**
+   * ピンの端を部品の升で近似したか。**正しいピンの位置は TeX しか知らない**
    * (記号の形から決まる)。描く側はここを見て破線にする。
    */
   readonly approximate: boolean;
   /**
-   * その端が足なら、どの部品のどの足か (代表の綴り)。**升目の上では足の位置が
+   * その端がピンなら、どの部品のどのピンか (代表の綴り)。**升目の上ではピンの位置が
    * 分かる**ので、描く側はここまで線を伸ばす — 升の真ん中で止めると、
    * 押した接続点と線の先が食い違って見える (実機で指摘された)。
    */
@@ -90,8 +90,8 @@ export type WireLine = {
   /**
    * 折れる向き (`-|` は先に横、`|-` は先に縦)。まっすぐなら null。
    * **角の座標は升からは決まらない**ので持たせる — 真下・真横の升へ引くと
-   * 角の升が足の升と重なり、「先に横か縦か」が番地から消える
-   * (角が足に重なって 1 本の斜めになっていた)。
+   * 角の升がピンの升と重なり、「先に横か縦か」が番地から消える
+   * (角がピンに重なって 1 本の斜めになっていた)。
    */
   readonly bend: Bend | null;
 };
@@ -99,7 +99,7 @@ export type WireLine = {
 /** 折れる配線の向き。`--` は折れないので入らない。 */
 export type Bend = Exclude<WireOperator, '--'>;
 
-/** 配線の端が指している足。名前は升目に出るものと同じ代表の綴り。 */
+/** 配線の端が指しているピン。名前は升目に出るものと同じ代表の綴り。 */
 export type PinRef = { readonly part: string; readonly name: string };
 
 /** マップに置く節点 1 つ。**掴む物が部品とは違う**ので、チップとは別に持つ。 */
@@ -159,20 +159,20 @@ const cellAt = (address: Address): Cell => ({ row: address.row, col: address.col
 /**
  * 引く線。折れは角で 2 本に割る。
  *
- * **ピンの端は部品の升で近似する。** 足の正しい位置は記号の形から決まるので
+ * **ピンの端は部品の升で近似する。** ピンの正しい位置は記号の形から決まるので
  * TeX しか知らない (docs/03 に書いた既知の限界と同じ根)。描かないと配線が
  * 消えて見えるので、「だいたいここ」として引いて破線で断る。
  * 指す先の部品が無い配線は引かない — 書き間違いはエラーの帯の仕事で、
  * ここで当てずっぽうの線を足すと誤りが図らしく見えてしまう。
  */
 /**
- * 足に付く配線の曲がり角。
+ * ピンに付く配線の曲がり角。
  *
  * `cornerOf` は**升の番地**で見るので、角が端と同じ升に来ると「曲がっていない」
- * と答える。足は升の上に無い (箱の縁から出る) ので、同じ升でも図の上では
+ * と答える。ピンは升の上に無い (箱の縁から出る) ので、同じ升でも図の上では
  * 曲がる — 升目だけ斜めの線になっていた (実機で指摘された)。
  *
- * **端のどちらかが足のときだけ**足す。番地どうしなら `cornerOf` の答えが正しい。
+ * **端のどちらかがピンのときだけ**足す。番地どうしなら `cornerOf` の答えが正しい。
  */
 function pinCornerOf(
   from: { readonly cell: Address; readonly pin: PinRef | null },
@@ -197,7 +197,7 @@ function wireLinesOf(doc: Circuit): WireLine[] {
   for (const part of doc.parts) partById.set(part.id, part);
 
   /**
-   * 書かれた足の綴り (`vbus` `1`) を、升目に出る足の名前 (`VBUS`) に直す。
+   * 書かれたピンの綴り (`vbus` `1`) を、升目に出るピンの名前 (`VBUS`) に直す。
    * **接続点と同じ関数で決める** (`shownPinName`) — 線は点を名前で引くので、
    * 綴りが 1 字でも違うと引けず、端が箱の真ん中に落ちて斜めに見える
    * (実機で「USB のピンの配線が斜めになる」)。
@@ -239,16 +239,16 @@ function wireLinesOf(doc: Circuit): WireLine[] {
 }
 
 /**
- * 箱から出る足。**向きを写した辺**で返す (`pinSideOf` が回す)。
- * 中心線に乗らない足 (オペアンプの ± など) は持たない — 辺が決まらないので、
+ * 箱から出るピン。**向きを写した辺**で返す (`pinSideOf` が回す)。
+ * 中心線に乗らないピン (オペアンプの ± など) は持たない — 辺が決まらないので、
  * 描くと当てずっぽうの位置を約束することになる。
  */
 function pinsOf(type: PartType | null, turn: Turn): readonly ChipPin[] {
   if (type === null) return [];
-  // **中心線に乗る足も乗らない足も置く。** 升目は掴むための道具なので、
+  // **中心線に乗るピンも乗らないピンも置く。** 升目は掴むための道具なので、
   // 「まっすぐ引けるか」ではなく「どこから出ているか」で並べる。
   //
-  // **足の番号 (`pinNumbers`) はここでは付けない。** 升目の名前は配線に
+  // **ピンの番号 (`pinNumbers`) はここでは付けない。** 升目の名前は配線に
   // 書く綴りでもあるので (`U1.GP0`)、番号を混ぜると書けない字になる。
   // 番号を添えるのは図のほうだけ (`pinLabelText`)。
   return pinPlaces(type, turn).map(({ anchor, side }) => {
@@ -258,7 +258,7 @@ function pinsOf(type: PartType | null, turn: Turn): readonly ChipPin[] {
 }
 
 /**
- * 升目に出す字。**図と同じもの**にする (`pinLabelText`) — 足の番号を持つ種類
+ * 升目に出す字。**図と同じもの**にする (`pinLabelText`) — ピンの番号を持つ種類
  * では名前と番号が並ぶ (実機で「pico のピン番号が付いていない」)。
  * 番号は辺で決まる端に付くので、回した部品でも外側に来る。
  */
@@ -449,7 +449,7 @@ function noteSpanOf(note: { readonly kind: string } & Record<string, unknown>): 
   return null;
 }
 
-/** その部品が座っている升。2 端子は先に書いた足のほう (アンカー)。 */
+/** その部品が座っている升。2 端子は先に書いたピンのほう (アンカー)。 */
 function cellOfPart(doc: { readonly parts: readonly PartSpec[] }, id: string): Cell | null {
   const part = doc.parts.find((one) => one.id === id);
   if (part === undefined) return null;

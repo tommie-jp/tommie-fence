@@ -6,7 +6,7 @@ import type { Theme } from './theme.ts';
 
 /**
  * 注釈。**回路の一員ではない** (ネットにもネットリストにも出ない)。
- * `dim` は寸法線で、2 点の間の長さを測って出す — 手で切る板の寸法図のため。
+ * `dim` は寸法線で、2 点の間の長さを測って出す — 手で切る基板の寸法図のため。
  */
 
 const ARROW = 5;
@@ -83,7 +83,7 @@ export function renderNotes(
   }).join('');
 }
 
-/** 注釈が板の外へ出す広がり (mm)。**字の幅も見込む** — 見込まないと画布の外で切れる。 */
+/** 注釈が基板の外へ出す広がり (mm)。**字の幅も見込む** — 見込まないと画布の外で切れる。 */
 export function noteBounds(notes: readonly NoteSpec[], theme: Theme, pxPerMm: number): Mm[] {
   const size = theme.metrics.textSize;
   return notes.flatMap((note) => {

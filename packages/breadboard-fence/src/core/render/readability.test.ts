@@ -16,7 +16,7 @@ describe('wires stand out from the board and from the leads', () => {
   const plate = DEFAULT_THEME.palette.plate;
 
   test('a white wire gets an outline because it is the same brightness as the board', () => {
-    // AD の図の 2− の白線が板に溶けて、どこへ行くのか読めなかった。
+    // AD の図の 2− の白線が基板に溶けて、どこへ行くのか読めなかった。
     expect(wireOutline(WIRE_COLORS.white!, plate)).toBe(WIRE_OUTLINE);
   });
 
@@ -55,7 +55,7 @@ describe('part captions sit on a clean patch of board', () => {
     .map((match) => ({ x: Number(match[1]) + holeSize / 2, y: Number(match[2]) + holeSize / 2 }));
 
   test('no hole peeks out under the caption of a resistor', () => {
-    // 「R1 1k」の下に c 行の穴の欠片が `ˌ ˌ` と覗き、足の目盛りのように見えていた。
+    // 「R1 1k」の下に c 行の穴の欠片が `ˌ ˌ` と覗き、ピンの目盛りのように見えていた。
     const { svg } = fence('parts:', '  R1: resistor b5 b10 1k');
     const label = /<text x="([\d.]+)" y="([\d.]+)"[^>]*class="bf-caption"[^>]*>R1 1k</.exec(svg)!;
     const [x, y] = [Number(label[1]), Number(label[2])];

@@ -7,7 +7,7 @@ const line = (x1: number, y1: number, x2: number, y2: number) =>
 
 describe('crossingPoints', () => {
   test('finds where two wires meet away from their ends', () => {
-    // 縦と横が真ん中で出会う。**接点ではない** — この板は穴どうしがつながらない。
+    // 縦と横が真ん中で出会う。**接点ではない** — この基板は穴どうしがつながらない。
     const found = crossingPoints([line(0, 10, 20, 10), line(10, 0, 10, 20)]);
 
     expect(found[0]).toEqual([]);

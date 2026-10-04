@@ -23,7 +23,7 @@ describe('renderHits', () => {
   });
 
   test('lays cells one ring outside the board, so off-board things have a drop', () => {
-    // 実機で「外部デバイスを選択できるが、移動などができない」。板の外に置く
+    // 実機で「外部デバイスを選択できるが、移動などができない」。基板の外に置く
     // もの (機器の箱、端面実装のコネクタ) は、そこへ落とせないと動かせない。
     const svg = hits({ cols: 6, rows: 4 }, [], new Map(), true);
 

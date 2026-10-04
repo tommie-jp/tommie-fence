@@ -67,7 +67,7 @@ describe('computeNets', () => {
   });
 
   test('lets the board name a net, over any written name', () => {
-    // ブレッドボードの電源レールがこれ。板が持っている名前のほうが強い。
+    // ブレッドボードの電源レールがこれ。基板が持っている名前のほうが強い。
     const nets = computeNets({
       members: [member('R1.1', 'a')],
       links: [['a', 'rail:+t']],

@@ -3,7 +3,7 @@ import { deviceIds, deviceSpans, isDevice, moveDevice } from './device.ts';
 import { applyEdits } from './shared.ts';
 
 /**
- * 板の外の機器を升目から掴む (実機で「基板外の部品もマウスコマンドの対象にする」)。
+ * 基板の外の機器を升目から掴む (実機で「基板外の部品もマウスコマンドの対象にする」)。
  * 機器は入れ子で書くので、動かすというのは `at:` を書き換えること。
  */
 const WITH_AT = [
@@ -26,11 +26,11 @@ const after = (source: string, id: string, to: string): string => {
   return applyEdits(source, moved.value.edits);
 };
 
-describe('板の外の機器を掴む', () => {
+describe('基板の外の機器を掴む', () => {
   test('counts a device as something the map can grab', () => {
     expect(deviceIds(WITH_AT)).toEqual(['BAT']);
     expect(isDevice(WITH_AT, 'BAT')).toBe(true);
-    // 板に載る部品は今までどおり部品の道 (`move.ts`) で動く。
+    // 基板に載る部品は今までどおり部品の道 (`move.ts`) で動く。
     expect(isDevice(WITH_AT, 'R1')).toBe(false);
   });
 

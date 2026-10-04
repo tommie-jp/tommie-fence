@@ -10,11 +10,11 @@ export const PX = SMD_PX_PER_MM;
 
 /** 画布の縁の余白。 */
 const OUTER = 14;
-/** 目盛の帯 (板の上と左)。 */
+/** 目盛の帯 (基板の上と左)。 */
 export const RULER = 16;
 /** 題の帯。題が無ければ空けない。 */
 const TITLE_BAND = 26;
-/** 板の説明の 1 行。 */
+/** 基板の説明の 1 行。 */
 const DESCRIPTION_BAND = 20;
 /** 帯と帯の間。 */
 const BAND_GAP = 12;
@@ -23,24 +23,24 @@ const BACK_LABEL = 26;
 
 export type Band = { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
 
-/** 図に出る物の広がり (mm)。板の外へ張り出す SMA や注釈を含む。 */
+/** 図に出る物の広がり (mm)。基板の外へ張り出す SMA や注釈を含む。 */
 export type Bounds = { readonly minX: number; readonly minY: number; readonly maxX: number; readonly maxY: number };
 
 export type LayoutOptions = {
   readonly title?: boolean;
-  /** 板の外まで含めた広がり (mm)。書かなければ板そのもの。 */
+  /** 基板の外まで含めた広がり (mm)。書かなければ基板そのもの。 */
   readonly bounds?: Bounds;
   readonly list?: { readonly width: number; readonly height: number } | null;
   readonly source?: { readonly width: number; readonly height: number } | null;
-  /** 板の説明の 1 行の幅 (px)。**板より長いことがある**ので、画布の幅に入れる。 */
+  /** 基板の説明の 1 行の幅 (px)。**基板より長いことがある**ので、画布の幅に入れる。 */
   readonly descriptionWidth?: number;
-  /** 裏から見た図を板の説明の下に置くか。 */
+  /** 裏から見た図を基板の説明の下に置くか。 */
   readonly back?: boolean;
 };
 
 /**
- * 裏から見た図の置き場。**左右を裏返す** — 板を縦の軸でひっくり返して見るので、
- * x だけが入れ替わる (perfboard の半田面と同じ)。板は表の図の真下に揃える。
+ * 裏から見た図の置き場。**左右を裏返す** — 基板を縦の軸でひっくり返して見るので、
+ * x だけが入れ替わる (perfboard の半田面と同じ)。基板は表の図の真下に揃える。
  */
 export type BackLayout = {
   readonly labelBaseline: number;
@@ -51,10 +51,10 @@ export type BackLayout = {
 export type Layout = {
   readonly width: number;
   readonly height: number;
-  /** 板の矩形 (px)。 */
+  /** 基板の矩形 (px)。 */
   readonly board: Rect;
   readonly titleBaseline: number;
-  /** 板の説明の 1 行のベースライン。 */
+  /** 基板の説明の 1 行のベースライン。 */
   readonly descriptionBaseline: number;
   readonly listBand: Band | null;
   readonly sourceBand: Band | null;
@@ -67,7 +67,7 @@ export type Layout = {
 
 export function createLayout(board: Board, options: LayoutOptions = {}): Layout {
   const bounds = options.bounds ?? { minX: 0, minY: 0, maxX: board.width, maxY: board.height };
-  // 目盛の帯は板の上と左に必ず空ける (板の外へ張り出す物がそこへ来ても、帯はその内側)。
+  // 目盛の帯は基板の上と左に必ず空ける (基板の外へ張り出す物がそこへ来ても、帯はその内側)。
   // 裏の図は左右が入れ替わる (左の SMA が右に出る) ので、**両側の張り出しを空ける**。
   const mirroredMin = options.back === true ? Math.min(bounds.minX, board.width - bounds.maxX) : bounds.minX;
   const mirroredMax = options.back === true ? Math.max(bounds.maxX, board.width - bounds.minX) : bounds.maxX;

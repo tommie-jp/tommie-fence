@@ -30,7 +30,7 @@ describe('perfboardPlugin', () => {
     expect(html).not.toContain('perfboard-error-card');
   });
 
-  // **板は必ず描く** (52 の docs/54)。読めなかった行は図の下の帯に出る。
+  // **基板は必ず描く** (52 の docs/54)。読めなかった行は図の下の帯に出る。
   test('draws the board and puts the reason in the band when the fence cannot be read', () => {
     expect(() => md().render('```perfboard\nparts:\n  R1: [unclosed\n```')).not.toThrow();
     expect(md().render('```perfboard\nparts:\n  R1: [unclosed\n```')).toContain('perfboard-errors');

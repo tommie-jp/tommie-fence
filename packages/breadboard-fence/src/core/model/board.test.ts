@@ -45,7 +45,7 @@ describe('createBoard', () => {
   });
 
   test('keeps a board that has no power rails railless', () => {
-    // レールは実物でも両面テープ留めの独立ストリップで、剥がした板が実在する。
+    // レールは実物でも両面テープ留めの独立ストリップで、剥がした基板が実在する。
     expect(createBoard({ ...DEFAULT_BOARD, rails: null }).rails).toBeNull();
   });
 });
@@ -124,7 +124,7 @@ describe('offBoardReason', () => {
   });
 
   test('says the board has no rails rather than blaming the column', () => {
-    // 列は板の中なので「ボードの外」では直す手がかりにならない。
+    // 列は基板の中なので「ボードの外」では直す手がかりにならない。
     const reason = offBoardReason(createBoard({ ...DEFAULT_BOARD, rails: null }), at('+t5'));
 
     expect(reason).toContain('レール');

@@ -10,7 +10,7 @@ describe('footprintOf', () => {
   });
 
   test('knows a three-lead part is written with three', () => {
-    // **足の位置は書かれたとおり。** TO-92 は列に並べても三角に開いても挿さる。
+    // **ピンの位置は書かれたとおり。** TO-92 は列に並べても三角に開いても挿さる。
     expect(footprintOf('transistor')).toEqual({ kind: 'three-lead', pins: 3, holes: 3 });
   });
 
@@ -171,7 +171,7 @@ describe('回した DIP のピン', () => {
 
 describe('タクトスイッチ', () => {
   test('places four legs in a square from one anchor', () => {
-    // 6mm 角のタクトスイッチ。**足の位置はパッケージが決める**ので、
+    // 6mm 角のタクトスイッチ。**ピンの位置はパッケージが決める**ので、
     // 書くのはアンカー 1 つだけ (DIP と同じ考え方)。
     const footprint = footprintOf('button');
 

@@ -29,7 +29,7 @@ export const colorValue = (text: string): string | null => {
 
 /**
  * 配線の色。**書かれた色はそのまま**、書かれていない・読めないときは既定。
- * 既定は板の色から決まる (`render/finish.ts` の `wireOn`) ので、呼ぶ側が渡す。
+ * 既定は基板の色から決まる (`render/finish.ts` の `wireOn`) ので、呼ぶ側が渡す。
  */
 export const wireStroke = (color: string | null, fallback: string = DEFAULT_WIRE_COLOR): string =>
   (color === null ? null : colorValue(color)) ?? fallback;

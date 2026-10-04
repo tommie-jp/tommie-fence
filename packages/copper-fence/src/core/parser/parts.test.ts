@@ -64,8 +64,8 @@ describe('box', () => {
 
   test('says what is missing', () => {
     expect(reason('box 20,10')).toMatch(/箱の大きさ/);
-    expect(reason('box 20,10 5x5mm')).toMatch(/足の数/);
-    expect(reason('box 20,10 5x5mm 0')).toMatch(/足の数/);
+    expect(reason('box 20,10 5x5mm')).toMatch(/ピンの数/);
+    expect(reason('box 20,10 5x5mm 0')).toMatch(/ピンの数/);
     expect(reason('box/qfn 20,10 5x5 6')).toMatch(/box に姿はありません/);
   });
 });

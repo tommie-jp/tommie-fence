@@ -1,6 +1,6 @@
 /**
  * 部品の姿 (パッケージ)。**種類が電気的な役割、姿が実物のかたち**で、
- * 同じ `capacitor` でもセラミックと電解では板の上の姿が違う。
+ * 同じ `capacitor` でもセラミックと電解では基板の上の姿が違う。
  * フェンスには `capacitor/ceramic` のように種類に続けて書く。
  *
  * 色は種類のもの、形が姿のもの、と決めてある。図の中で
@@ -40,7 +40,7 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
   led: ['3mm', '5mm'],
   // フォトトランジスタも同じ砲弾型の 2 つ。
   phototransistor: ['3mm', '5mm'],
-  // TO-92 は丸い小信号用、TO-220 は放熱タブつき。足の並びはどちらもピン名で示す。
+  // TO-92 は丸い小信号用、TO-220 は放熱タブつき。ピンの並びはどちらもピン名で示す。
   // 面実装を載せた変換基板 (`sot346-dip` など) は下で表から足す。
   transistor: ['to92', 'to220'],
   // サイリスタとトライアックも同じ 2 つのパッケージで売られている。
@@ -50,13 +50,13 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
   regulator: ['to92', 'to220'],
   ic3: ['to92', 'to220'],
   // オスは中心にピンが立ち、メスは中心が穴。**合う相手を取り違えない**ために
-  // 描き分ける。板の縁に載せる横置き (`male-edge`) は perfboard だけ。
+  // 描き分ける。基板の縁に載せる横置き (`male-edge`) は perfboard だけ。
   sma: ['male', 'female'],
   // 平たい缶 (HC-49) と円筒 (時計用の 32.768kHz などに多い)。輪郭がまるで違う。
   crystal: ['hc49', 'cylinder'],
   // USB は差し込み (オス) と受け口 (メス)。**書かなければ受け口**。
   ...Object.fromEntries(connectorNames().map((type) => [type, CONNECTOR_LOOKS])),
-  // 足に名前のある DIP 型は品名が姿 (`relay/g5v-2`)。**書かなければ表の最初**。
+  // ピンに名前のある DIP 型は品名が姿 (`relay/g5v-2`)。**書かなければ表の最初**。
   ...Object.fromEntries(namedChipTypes().map((type) => [type, namedChipLooks(type)])),
 };
 
@@ -70,7 +70,7 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
 const VARIANTS: Record<string, readonly string[]> = withSmdLooks(THROUGH_HOLE, 'breadboard');
 
 /**
- * 向きのある姿。**どちらの足がどちらかを図に描く**ので、ピン名に極性が要る。
+ * 向きのある姿。**どちらのピンがどちらかを図に描く**ので、ピン名に極性が要る。
  * 印の付く側は姿ごとに違う (電解はマイナス側の帯、タンタルはプラス側の印) が、
  * 「向きが要る」という一点だけがここの意味。
  */

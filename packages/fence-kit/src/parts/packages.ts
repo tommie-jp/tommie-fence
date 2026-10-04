@@ -6,13 +6,13 @@ import { isSmdAdapter, smdLook } from './smd.ts';
 import { ADAPTER_BOARD, sotGlyph } from './smdDraw.ts';
 
 /**
- * **足が 3 本以上ある部品のパッケージの姿**。2 本足の胴 (`bodies.ts`) と同じ理由で
- * 板に依らないので、breadboard と perfboard が共有する (52 の docs/18 の手順 4)。
+ * **ピンが 3 本以上ある部品のパッケージの姿**。2 ピンの胴 (`bodies.ts`) と同じ理由で
+ * 基板に依らないので、breadboard と perfboard が共有する (52 の docs/18 の手順 4)。
  *
- * **座標は板の座標そのまま** — 2 本足と違って傾かない (パッケージは穴の並びに
+ * **座標は基板の座標そのまま** — 2 ピンと違って傾かない (パッケージは穴の並びに
  * 沿って置かれる) ので、中心と大きさを渡して描く。
  *
- * **どちら側に寄せるかだけは板が決める** (`side`)。breadboard は溝の側へ、
+ * **どちら側に寄せるかだけは基板が決める** (`side`)。breadboard は溝の側へ、
  * perfboard は行の増える向きへ。タブとキャプションがそちら、ピン名と平らな面が
  * その反対に来る。
  */
@@ -29,7 +29,7 @@ export type PackageShape = {
   /** 胴の幅の半分。 */
   readonly halfWidth: number;
   readonly side: 1 | -1;
-  /** ねじ穴を抜く色 (板の地)。**下の穴の並びと紛れないように**板の色で抜く。 */
+  /** ねじ穴を抜く色 (基板の地)。**下の穴の並びと紛れないように**基板の色で抜く。 */
   readonly plate: string;
   /** 胴の色 (テーマが決める黒)。 */
   readonly chipBody: string;
@@ -37,14 +37,14 @@ export type PackageShape = {
 
 /**
  * 胴の高さの半分。**穴のピッチで決める** — 実物の寸法をピッチに対する比で
- * 持っておくと、板が変わっても同じ大きさに見える。
+ * 持っておくと、基板が変わっても同じ大きさに見える。
  */
 export function packageReach(part: BodyPart, pitch: number): number {
   if (part.type === 'potentiometer') return 1.1 * pitch;
   if (part.type === 'slide-switch') return 0.8 * pitch;
   // TO-220 は放熱タブのぶん胴が高い。実物 (10mm 角ほど) に寄せて丸より大きく取る。
   if (part.variant === 'to220') return 1.4 * pitch;
-  // 変換基板は SOT の胴よりずっと大きい (ピンヘッダを載せる板そのもの)。
+  // 変換基板は SOT の胴よりずっと大きい (ピンヘッダを載せる基板そのもの)。
   if (isSmdAdapter(part.variant ?? null)) return 1.05 * pitch;
   // TO-92 は幅 4.5mm ほど。穴のピッチ 2.54mm に対して直径 2 ピッチ弱に収める。
   return 0.95 * pitch;
@@ -88,7 +88,7 @@ export function drawPackage(part: BodyPart, shape: PackageShape, ink: BodyInk = 
 }
 
 /**
- * TO-92。上から見ると**片側が平らな D 形**で、足はその平らな面の側に並ぶ。
+ * TO-92。上から見ると**片側が平らな D 形**で、ピンはその平らな面の側に並ぶ。
  * 丸だけで描くと**どちらが平らな面か分からず**、実物を差すときに裏返せてしまう
  * (ピン名は図には書いてあるが、実物の胴には書いていない — 見分けは平らな面が本体)。
  */
@@ -111,7 +111,7 @@ function to92Shell(shape: PackageShape, ink: BodyInk): string {
 
 /**
  * TO-220。放熱タブつきの角い胴で、TO-92 の丸とは大きさも形も違う。
- * **タブは足の反対側に描く**: 足の側にはピン名が並ぶため。
+ * **タブはピンの反対側に描く**: ピンの側にはピン名が並ぶため。
  */
 function to220Shell(shape: PackageShape, ink: BodyInk): string {
   const { cx, cy, reach, halfWidth, side } = shape;
@@ -126,7 +126,7 @@ function to220Shell(shape: PackageShape, ink: BodyInk): string {
     x: num(cx - halfWidth), y: num(tabY), width: num(halfWidth * 2), height: num(tabHeight), rx: 2,
     fill: ink.paint('#b9c0c9'), stroke: ink.paint('#7c848e'),
   });
-  // 取り付けねじの穴。板の色で抜くと、下の穴の並びと紛れない。
+  // 取り付けねじの穴。基板の色で抜くと、下の穴の並びと紛れない。
   const hole = element('circle', {
     cx: num(cx), cy: num(tabY + tabHeight / 2), r: num(reach * 0.2), fill: ink.paint(shape.plate),
   });
@@ -134,12 +134,12 @@ function to220Shell(shape: PackageShape, ink: BodyInk): string {
 }
 
 /**
- * 面実装の部品を載せた**変換基板**。実物の作り方そのもの — SOT の足の間隔は
+ * 面実装の部品を載せた**変換基板**。実物の作り方そのもの — SOT のピンの間隔は
  * 0.95mm で、2.54mm の穴には届かないので、変換基板に載せてから差す。
  *
- * **描くのは基板ごと 1 つの部品**。小さな板の上に面実装の胴が乗り、縁から
- * ピンヘッダが出る (足はそのピンヘッダの位置)。**載っている物は表の実寸で描く**
- * (`smd.ts`) — S-Mini (SOT-346) と SOT-23 は胴の幅が 0.3mm 違う。1 番と 2 番の足を
+ * **描くのは基板ごと 1 つの部品**。小さな基板の上に面実装の胴が乗り、縁から
+ * ピンヘッダが出る (ピンはそのピンヘッダの位置)。**載っている物は表の実寸で描く**
+ * (`smd.ts`) — S-Mini (SOT-346) と SOT-23 は胴の幅が 0.3mm 違う。1 番と 2 番のピンを
  * ピンヘッダの側に向け、3 番 (SOT-89 はタブ) を反対に向ける。
  */
 function adapterShell(part: BodyPart, shape: PackageShape, ink: BodyInk): string {
@@ -154,7 +154,7 @@ function adapterShell(part: BodyPart, shape: PackageShape, ink: BodyInk): string
     width: num(Math.max(halfWidth * 2 - 4, 1)), height: num(Math.max(reach * 2 - 4, 1)), rx: 1.5,
     fill: 'none', stroke: ink.paint(ADAPTER_BOARD.silk), 'stroke-width': 0.8,
   });
-  // ピンヘッダの列 (足の並ぶ側の縁)。
+  // ピンヘッダの列 (ピンの並ぶ側の縁)。
   const headerY = side > 0 ? cy - reach + 2.5 : cy + reach - 2.5;
   const header = element('rect', {
     x: num(cx - halfWidth + 1.5), y: num(headerY - 1.5),
@@ -163,7 +163,7 @@ function adapterShell(part: BodyPart, shape: PackageShape, ink: BodyInk): string
   });
   const look = smdLook(part.variant ?? null);
   if (look === null || look.spec.kind !== 'sot') return board + silk + header;
-  // 胴はピンヘッダから少し離す。1 番・2 番の足 (-y) がピンヘッダの側を向くように、
+  // 胴はピンヘッダから少し離す。1 番・2 番のピン (-y) がピンヘッダの側を向くように、
   // ピンヘッダが下にあるときは上下を裏返す。
   const chip = element(
     'g',

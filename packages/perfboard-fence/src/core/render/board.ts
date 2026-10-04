@@ -7,7 +7,7 @@ import type { Layout } from '../model/layout.ts';
 import type { Board } from '../types.ts';
 import type { ResolvedLabels, Theme } from './theme.ts';
 
-/** 名前の付け方を書かなかったとき (図を組まずに板だけ描くとき) の既定。 */
+/** 名前の付け方を書かなかったとき (図を組まずに基板だけ描くとき) の既定。 */
 const DEFAULT_LABELS: ResolvedLabels = {
   row: 'alpha', col: 'numeric', case: 'upper', sides: ['left', 'top'],
 };
@@ -19,8 +19,8 @@ const DEFAULT_LABELS: ResolvedLabels = {
 const LIGHT_PAGE = '#ffffff';
 
 /**
- * 板と穴と、行・列の名前を描く (続けて描いてよい図のため。半田面など)。
- * 板の外の機器がある表の図は、名前を**機器と配線のあと**に描く
+ * 基板と穴と、行・列の名前を描く (続けて描いてよい図のため。半田面など)。
+ * 基板の外の機器がある表の図は、名前を**機器と配線のあと**に描く
  * (`renderPlate` と `renderAxisLabels` を分けて呼ぶ)。
  */
 export const renderBoard = (
@@ -31,10 +31,10 @@ export const renderBoard = (
 ): string => renderPlate(board, layout, theme) + renderAxisLabels(board, layout, theme, labels);
 
 /**
- * 板と穴を描く。
+ * 基板と穴を描く。
  *
  * **穴は 1 つにつき 1 つの円**。ランドは同じ円の縁 (stroke) で描く。
- * 別の円を重ねると要素数が倍になり、大きい板 (120 × 120 = 14,400 穴) で
+ * 別の円を重ねると要素数が倍になり、大きい基板 (120 × 120 = 14,400 穴) で
  * SVG がそのぶん重くなる。
  */
 export function renderPlate(board: Board, layout: Layout, theme: Theme): string {
@@ -76,12 +76,12 @@ export function renderPlate(board: Board, layout: Layout, theme: Theme): string 
 }
 
 /**
- * 行と列の名前。**板の外の機器と、そこから板へ下りる配線より上に描く** —
- * 機器を板の上に置くと足と配線が名前の帯を必ず横切り、下に敷くと
+ * 行と列の名前。**基板の外の機器と、そこから基板へ下りる配線より上に描く** —
+ * 機器を基板の上に置くとピンと配線が名前の帯を必ず横切り、下に敷くと
  * その列の名前 (配線が行く先の穴を探す手掛かり) が線に隠れる。
  *
  * **名前は書かれた辺にだけ出す。** 既定は左と上だけで、4 辺に出すと
- * 小さい板では名前のほうが板より目立つ。
+ * 小さい基板では名前のほうが基板より目立つ。
  */
 export function renderAxisLabels(
   board: Board,
@@ -93,7 +93,7 @@ export function renderAxisLabels(
 ): string {
   const { palette, metrics } = theme;
   const { x, y, width, height } = layout.board;
-  // **地の色で縁取る。** 名前の上を機器の足や配線が通るので、上に描くだけでは
+  // **地の色で縁取る。** 名前の上を機器のピンや配線が通るので、上に描くだけでは
   // 黒い線の上の字が沈む。縁取りが線を字の形に抜いて、どの色の線でも読める。
   const halo = palette.canvas ?? LIGHT_PAGE;
   const drawn: string[] = [];
@@ -131,7 +131,7 @@ export function renderAxisLabels(
   }
   for (let col = colFrom; col <= colTo; col += 1) {
     if (labels.sides.includes('top')) drawn.push(colLabelAt(y - LABEL_OFFSET, col));
-    // 下の名前はベースラインが板から離れる向きに来るので、字の高さぶん下げる。
+    // 下の名前はベースラインが基板から離れる向きに来るので、字の高さぶん下げる。
     if (labels.sides.includes('bottom')) {
       drawn.push(colLabelAt(y + height + LABEL_OFFSET + metrics.textSize * 0.8, col));
     }

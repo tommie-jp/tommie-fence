@@ -13,13 +13,13 @@ import type { MoveResult } from './move.ts';
 import { locateTokens } from './shared.ts';
 
 /**
- * 足を書いて置く部品を回す・反転する。**フェンス本文 → 書き換えの並び**を返す純関数。
+ * ピンを書いて置く部品を回す・反転する。**フェンス本文 → 書き換えの並び**を返す純関数。
  *
- * **文法は変えない。** 足を並べて書く部品 (2 本足・3 本足) の向きは
- * **穴の順そのもの**なので、回すのは「先に書いた足のまわりに残りを 90 度動かす」、
+ * **文法は変えない。** ピンを並べて書く部品 (2 ピン・3 ピン) の向きは
+ * **穴の順そのもの**なので、回すのは「先に書いたピンのまわりに残りを 90 度動かす」、
  * 反転は「両端の入れ替え」で済む。
  *
- * **アンカー 1 つで置く形 (DIP / SIP) は語のほうを書き換える。** 足の位置を
+ * **アンカー 1 つで置く形 (DIP / SIP) は語のほうを書き換える。** ピンの位置を
  * 形が決めるので穴に向きが出ない (52 の docs/14)。使う人にとってはどちらも
  * 「回す」「裏返す」の 1 つの操作なので、違いはここで吸収する。
  */
@@ -27,7 +27,7 @@ import { locateTokens } from './shared.ts';
 const fail = (message: string, line: number | null): MoveResult =>
   ({ ok: false, error: fenceError(message, line) });
 
-/** 板は行が下へ、列が右へ増える。時計回りは (行, 列) → (列, -行)。 */
+/** 基板は行が下へ、列が右へ増える。時計回りは (行, 列) → (列, -行)。 */
 const quarter = (row: number, col: number): { readonly row: number; readonly col: number } =>
   ({ row: col, col: -row });
 
@@ -42,9 +42,9 @@ function spin(delta: { readonly row: number; readonly col: number }, quarters: n
 
 
 /**
- * 軸にする足の番号。**名前で書かれた足があればそこ** — `points:` の名前は場所を
+ * 軸にするピンの番号。**名前で書かれたピンがあればそこ** — `points:` の名前は場所を
  * 指す約束なので、動かすと名前が外れる (番地に直すしかなくなり、あとで点を
- * 動かしても部品が付いてこない)。無ければ足の真ん中。
+ * 動かしても部品が付いてこない)。無ければピンの真ん中。
  */
 function pivotIndex(
   lineText: string,
@@ -57,11 +57,11 @@ function pivotIndex(
 }
 
 /**
- * 回す軸。**足の真ん中** — KiCad の `R` も選んだものの中心を軸にする。
- * 先に書いた足を軸にしていたころは、回すと胴が大きく振られて「移動」に見えた
+ * 回す軸。**ピンの真ん中** — KiCad の `R` も選んだものの中心を軸にする。
+ * 先に書いたピンを軸にしていたころは、回すと胴が大きく振られて「移動」に見えた
  * (実機で指摘された)。
  *
- * **端から端への差を 0 に向けて丸める** (`trunc`)。番地は整数なので、足の間隔が
+ * **端から端への差を 0 に向けて丸める** (`trunc`)。番地は整数なので、ピンの間隔が
  * 奇数のときは真ん中が穴に来ない。0 に向けた丸めは符号の入れ替えと軸の入れ替えを
  * すり抜けるので、**軸が回っても同じ穴に留まる** — つまり 4 回回すと元に戻る
  * (真ん中に向かって丸めると、回すたびに軸が寄って戻らなくなる)。
@@ -95,9 +95,9 @@ function anchoredTurn(
 }
 
 /**
- * 掴んだ部品と、その足。回すのも裏返すのもここを通る。
+ * 掴んだ部品と、そのピン。回すのも裏返すのもここを通る。
  *
- * **足を 2 つ以上書いている部品だけ**が通る。アンカー 1 つで置く形は
+ * **ピンを 2 つ以上書いている部品だけ**が通る。アンカー 1 つで置く形は
  * 手前で語の道へ分かれているので、ここへ来るのは向きの語も書けない形だけ —
  * 穴に向きが出ないことを言って断る。
  */
@@ -110,7 +110,7 @@ function writtenLeadsAt(source: string, id: string, what: string) {
       ok: false as const,
       error: fenceError(
         `${safeToken(id)} は${what}せません`
-        + ` (足の位置を形が決める部品なので、穴の順に向きが出ません)`,
+        + ` (ピンの位置を形が決める部品なので、穴の順に向きが出ません)`,
         found.lineNumber,
       ),
     };
@@ -128,7 +128,7 @@ function writtenLeadsAt(source: string, id: string, what: string) {
 
 /**
  * 綴りを書き戻す編集。**書かれたままでよい端は触らない** (`null` を渡す) —
- * `points:` の名前で書かれた足を番地に直すと名前が外れ、あとで点を動かしても
+ * `points:` の名前で書かれたピンを番地に直すと名前が外れ、あとで点を動かしても
  * 部品が付いてこなくなる (ネットの差分は空なので、何も言わずに切れる)。
  */
 const editsFor = (
@@ -165,10 +165,10 @@ function turnByWord(source: string, id: string, next: Turn): MoveResult {
     return fail(`${safeToken(id)} の穴を行の中に見つけられませんでした`, found.lineNumber);
   }
 
-  // **回した先が板の穴に落ちることを見る。** 落ちなければ図は描けず、
+  // **回した先が基板の穴に落ちることを見る。** 落ちなければ図は描けず、
   // 掴んで回した人には帯だけが残る。
   //
-  // 出てしまうときは**足りない分だけ板の中へ寄せる** — 足を書いて置く部品と
+  // 出てしまうときは**足りない分だけ基板の中へ寄せる** — ピンを書いて置く部品と
   // 同じ手当て (52 の docs/28)。縁に置いた DIP が回せないと、使う人には
   // 「この部品は回らない」に見える。寄せるのはアンカーの穴 1 つなので、
   // 綴りもそこだけ直す。どこへ寄せても載らないときだけ断る。
@@ -183,12 +183,12 @@ function turnByWord(source: string, id: string, next: Turn): MoveResult {
     ? null
     : { row: anchor.row + slid.row, col: anchor.col + slid.col };
 
-  // **板から張り出す形だけが外に出られる** (`offBoardCheck`)。
+  // **基板から張り出す形だけが外に出られる** (`offBoardCheck`)。
   const outside = footprint === null || anchor === undefined
     ? null
     : offBoardCheck(found, pinsAt(moved ?? anchor));
   if (outside !== null) {
-    return fail(`${safeToken(id)} を回すと足が置けません (${outside})`, found.lineNumber);
+    return fail(`${safeToken(id)} を回すとピンが置けません (${outside})`, found.lineNumber);
   }
 
   const was = found.part.turn;
@@ -242,9 +242,9 @@ function wordEdit(
 /**
  * 回す軸をどこに置くか。
  *
- * - `middle` (既定) — 足の真ん中。**掴んで回すとき**はこちら (KiCad と同じで、
+ * - `middle` (既定) — ピンの真ん中。**掴んで回すとき**はこちら (KiCad と同じで、
  *   胴がその場で回る)
- * - `anchor` — 先に書いた足。**置く前に回すとき**はこちら。押した穴に足が来る
+ * - `anchor` — 先に書いたピン。**置く前に回すとき**はこちら。押した穴にピンが来る
  *   のが置くときの約束なので、軸が動くと「押した穴に置けない」ことになる
  *   (KiCad も、運んでいる部品はカーソルを軸に回る)
  */
@@ -271,7 +271,7 @@ export function turnPart(
   const pivot = around === 'anchor' || named !== null
     ? found.addresses[named ?? 0] ?? null
     : pivotOf(found.addresses);
-  if (pivot === null) return fail(`${safeToken(id)} の足がありません`, found.lineNumber);
+  if (pivot === null) return fail(`${safeToken(id)} のピンがありません`, found.lineNumber);
 
   // 格子が一様なので、回すのは軸からの行と列の差をそのまま回すだけ。
   const turned: Address[] = found.addresses.map((one) => {
@@ -279,12 +279,12 @@ export function turnPart(
     return { row: pivot.row + delta.row, col: pivot.col + delta.col };
   });
 
-  // **板から出たら寄せ直す。回転そのものは断らない。** 縁に置いた部品を回すと
-  // 足が外へ出るが、断ると「この部品は回らない」に見える (breadboard 側で
-  // 実機から言われた。板が違うだけで同じ作りなので、同じように直す)。
-  // 足りない分だけ寄せるので、板に載っている回し方は 1 穴も動かない。
+  // **基板から出たら寄せ直す。回転そのものは断らない。** 縁に置いた部品を回すと
+  // ピンが外へ出るが、断ると「この部品は回らない」に見える (breadboard 側で
+  // 実機から言われた。基板が違うだけで同じ作りなので、同じように直す)。
+  // 足りない分だけ寄せるので、基板に載っている回し方は 1 穴も動かない。
   //
-  // **置く前 (`anchor`) は寄せない。** 押した穴に足が来るのが置くときの約束で、
+  // **置く前 (`anchor`) は寄せない。** 押した穴にピンが来るのが置くときの約束で、
   // 寄せると「押した穴に置けない」ことになる。
   const landings = around === 'anchor' || offBoardCheck(found, turned) === null
     ? turned
@@ -295,7 +295,7 @@ export function turnPart(
     ));
 
   const why = offBoardCheck(found, landings);
-  if (why !== null) return fail(`${safeToken(id)} を回すと足が置けません (${why})`, found.lineNumber);
+  if (why !== null) return fail(`${safeToken(id)} を回すとピンが置けません (${why})`, found.lineNumber);
 
   // **一周は何もしない。** 同じ字を書き戻すと「動かしました」と嘘を言うことになる。
   const texts = landings.map((landing, index) => {
@@ -323,9 +323,9 @@ export function flipPart(source: string, id: string): MoveResult {
   if (!grabbed.ok) return { ok: false, error: grabbed.error };
 
   const { found } = grabbed;
-  // 足の**並びを逆にする**。同じ穴を使うので、どの穴とどの穴がつながるかは
-  // 変わらない (変わるのは、どちらの足がどちらの穴に挿さるか)。
-  // 3 本足なら両端が入れ替わり、真ん中はその場に残る — 実物を裏返したときと同じ。
+  // ピンの**並びを逆にする**。同じ穴を使うので、どの穴とどの穴がつながるかは
+  // 変わらない (変わるのは、どちらのピンがどちらの穴に挿さるか)。
+  // 3 ピンなら両端が入れ替わり、真ん中はその場に残る — 実物を裏返したときと同じ。
   //
   // **書かれた綴りをそのまま入れ替える** — 組み直すと、手で整えた並びが
   // 黙って揃えられる。

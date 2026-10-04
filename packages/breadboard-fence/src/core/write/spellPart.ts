@@ -12,14 +12,14 @@ import type { HoleRef, PartSpec } from '../types.ts';
  * `ID: 種類 穴… [向き] [値] [ラベル]`
  *
  * **書かれた綴りを使う** — 種類は `written` (略記のまま)、穴は `addr`
- * (`points:` の名前のまま)、足の名前は**書かれていたときだけ**添える
+ * (`points:` の名前のまま)、ピンの名前は**書かれていたときだけ**添える
  * (`tagged`)。読んだ値で書き戻すと、書いた人の綴りが化ける。
  *
  * **ブロックで書いた部品は組み直さない** (機器と、マップで書いた部品)。
  * 1 行に落ちないので `null` を返し、呼ぶ側が書かれた行をそのまま残す。
  */
 
-/** `b12(A)` の綴り。足の名前は書かれていたときだけ。 */
+/** `b12(A)` の綴り。ピンの名前は書かれていたときだけ。 */
 const hole = (one: HoleRef): string => (one.tagged ? `${one.written}(${one.tag})` : one.written);
 
 export function spellPart(part: PartSpec): string | null {

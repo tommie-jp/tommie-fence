@@ -4,8 +4,8 @@ import { PART_PREFIXES, lookupPin, lookupPartType } from './parts.ts';
 import { usbShapeTex } from './tex/shapes.ts';
 
 /**
- * USB コネクタ (52 の docs/58)。**実体配線図の 2 つと同じ綴り・同じ足の名前**で
- * 書ける (表は fence-kit)。回路図ではオス・メスを描き分けない — 足の意味は同じで、
+ * USB コネクタ (52 の docs/58)。**実体配線図の 2 つと同じ綴り・同じピンの名前**で
+ * 書ける (表は fence-kit)。回路図ではオス・メスを描き分けない — ピンの意味は同じで、
  * 回路図の慣習でも記号は 1 つ。
  */
 
@@ -32,7 +32,7 @@ describe('種類', () => {
 });
 
 describe('図', () => {
-  // ネットリストの箱の足は図に刷ってある名前で出る (52 の docs/66。以前は `J1.pin 1`)。
+  // ネットリストの箱のピンは図に刷ってある名前で出る (52 の docs/66。以前は `J1.pin 1`)。
   test('wires to a named pin and lists it by that name', () => {
     const result = compileCircuit(circuit(
       'parts:',

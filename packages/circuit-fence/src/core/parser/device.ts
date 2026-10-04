@@ -22,9 +22,9 @@ import type { Points } from './compact.ts';
  *   turn: mirror
  * ```
  *
- * 1 行形式は種類と番地と値を空白で並べるが、足の名前の並びは 1 行に畳めない。
+ * 1 行形式は種類と番地と値を空白で並べるが、ピンの名前の並びは 1 行に畳めない。
  *
- * **3 本足の IC (`type: ic3`) も同じ形で書く** — 足の名前が品ごとに違うので、
+ * **3 ピンの IC (`type: ic3`) も同じ形で書く** — ピンの名前が品ごとに違うので、
  * 書き手が並べる (`pins: [+Vs, Vout, GND]`)。本数は 3 本ちょうど。
  */
 
@@ -34,8 +34,8 @@ type LineOf = (node: Node | Pair | null | undefined) => number | null;
 const KEYS = ['type', 'at', 'label', 'pins', 'turn'] as const;
 
 /**
- * 足の名前に使える字。**配線の端 (`M1.TRIG`) に書ける綴り**に絞る — `.` は部品と
- * 足の区切り、空白は端点の区切りなので入れられない。`+` `-` は `V+` `1-` のために通す。
+ * ピンの名前に使える字。**配線の端 (`M1.TRIG`) に書ける綴り**に絞る — `.` は部品と
+ * ピンの区切り、空白は端点の区切りなので入れられない。`+` `-` は `V+` `1-` のために通す。
  */
 const PIN_NAME = /^[\w+-]+$/;
 
@@ -44,11 +44,11 @@ const DIGITS = /^\d+$/;
 
 const MIN_PINS = 2;
 
-/** 3 本足の IC の足の本数。 */
+/** 3 ピンの IC のピンの本数。 */
 const IC3_PINS = 3;
 
 /**
- * 3 本足の IC の足の名前の長さ。**箱はレギュレータと同じ大きさ**で、左右の名前と
+ * 3 ピンの IC のピンの名前の長さ。**箱はレギュレータと同じ大きさ**で、左右の名前と
  * 下の縦の名前が真ん中で出会う。4 文字 (`Vout` `GNDA`) までは離れて読め、
  * 5 文字から触れる (図で確かめた)。よく使う名前 (`+Vs` `VCC` `OUT` `ADJ`) は収まる。
  */
@@ -116,14 +116,14 @@ export function parseDevicePart(
 
 type Field = { readonly value: unknown; readonly line: number };
 
-/** 3 本足の IC の足: **ちょうど 3 本**で、どれも箱に収まる長さ。 */
+/** 3 ピンの IC のピン: **ちょうど 3 本**で、どれも箱に収まる長さ。 */
 function checkIc3Pins(names: readonly string[], line: number): Result<readonly string[]> {
   if (names.length !== IC3_PINS) {
-    return fail(`${IC3} の足は ${IC3_PINS} 本です (1 = 左、2 = 下、3 = 右の順に名前を並べます)`, line);
+    return fail(`${IC3} のピンは ${IC3_PINS} 本です (1 = 左、2 = 下、3 = 右の順に名前を並べます)`, line);
   }
   const tooLong = names.find((name) => [...name].length > IC3_NAME_LENGTH);
   if (tooLong !== undefined) {
-    return fail(`${IC3} の足の名前は ${IC3_NAME_LENGTH} 文字までです (${safeToken(tooLong)} は箱に収まりません)`, line, tooLong);
+    return fail(`${IC3} のピンの名前は ${IC3_NAME_LENGTH} 文字までです (${safeToken(tooLong)} は箱に収まりません)`, line, tooLong);
   }
   return ok(names);
 }
@@ -150,7 +150,7 @@ function readPins(
   field: Field | undefined,
   line: number,
 ): Result<readonly string[]> {
-  if (field === undefined) return fail(`部品 ${safeToken(id)} の足の名前 (pins: [名前, …]) を書きます`, line);
+  if (field === undefined) return fail(`部品 ${safeToken(id)} のピンの名前 (pins: [名前, …]) を書きます`, line);
   if (!isSeq(field.value)) return fail('pins は [VCC, GND] のように名前を並べて書きます', field.line);
 
   const names: string[] = [];
@@ -159,21 +159,21 @@ function readPins(
     const name = textOf(item);
     if (name === null || !PIN_NAME.test(name) || name.length > LIMITS.idLength) {
       return fail(
-        `足の名前 ${safeToken(name ?? '?')} は使えません (英数字と _ + - だけの ${LIMITS.idLength} 文字まで)`,
+        `ピンの名前 ${safeToken(name ?? '?')} は使えません (英数字と _ + - だけの ${LIMITS.idLength} 文字まで)`,
         field.line, name ?? undefined,
       );
     }
     if (DIGITS.test(name)) {
-      return fail(`足の名前 ${safeToken(name)} は数字だけなので使えません (番号は ${safeToken(id)}.${name} で指せます)`, field.line, name);
+      return fail(`ピンの名前 ${safeToken(name)} は数字だけなので使えません (番号は ${safeToken(id)}.${name} で指せます)`, field.line, name);
     }
     if (seen.has(name.toLowerCase())) {
-      return fail(`足の名前 ${safeToken(name)} が 2 回あります (大文字小文字は区別しません)`, field.line, name);
+      return fail(`ピンの名前 ${safeToken(name)} が 2 回あります (大文字小文字は区別しません)`, field.line, name);
     }
     seen.add(name.toLowerCase());
     names.push(name);
   }
 
-  if (names.length < MIN_PINS) return fail(`足は ${MIN_PINS} 本から書けます`, field.line);
-  if (names.length > LIMITS.devicePins) return fail(`足は ${LIMITS.devicePins} 本までです`, field.line);
+  if (names.length < MIN_PINS) return fail(`ピンは ${MIN_PINS} 本から書けます`, field.line);
+  if (names.length > LIMITS.devicePins) return fail(`ピンは ${LIMITS.devicePins} 本までです`, field.line);
   return ok(names);
 }

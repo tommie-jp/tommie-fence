@@ -6,10 +6,10 @@ import { parseFence } from './parser/parseFence.ts';
 import { placeParts } from './placement/place.ts';
 
 /**
- * 幅広 DIP (600 mil)。SRAM・EEPROM の 28 ピンや CPU の 40 ピンは、足の列の間が
+ * 幅広 DIP (600 mil)。SRAM・EEPROM の 28 ピンや CPU の 40 ピンは、ピンの列の間が
  * 0.6 インチ (6 ピッチ) で、普通のブレッドボードの溝をまたいで挿さる。
  * 書き方は `dipN/wide @ 穴` (姿の書き方は `dip8/sop` と同じ)。
- * 足の行は 6 ピッチ離れた組 (b↔f・c↔g・d↔h・e↔i)。7 セグの `seg7` と同じ勘定。
+ * ピンの行は 6 ピッチ離れた組 (b↔f・c↔g・d↔h・e↔i)。7 セグの `seg7` と同じ勘定。
  */
 
 const fence = (...lines: string[]): string => ['board: full', ...lines, ''].join('\n');
@@ -51,7 +51,7 @@ describe('読み方', () => {
   });
 });
 
-describe('置き方 (足の行は 6 ピッチ離れる)', () => {
+describe('置き方 (ピンの行は 6 ピッチ離れる)', () => {
   test('puts pin 1 at the lower left and counts round anticlockwise, d row above h row', () => {
     const pins = pinsOf('U1: dip28/wide @ d10');
     const hole = (number: number) => formatAddress(pins[number - 1]!.address!);
@@ -99,7 +99,7 @@ describe('置き方 (足の行は 6 ピッチ離れる)', () => {
   });
 });
 
-describe('足の名前と配線', () => {
+describe('ピンの名前と配線', () => {
   test('names the AS6C62256 pins from the 62256 table and keeps their numbers', () => {
     const pins = pinsOf(SRAM);
     expect(pins.map((pin) => pin.number)).toEqual(Array.from({ length: 28 }, (_, index) => String(index + 1)));
@@ -144,7 +144,7 @@ describe('足の名前と配線', () => {
   });
 
   test('tells that the pins of an unknown model are numbered, like the narrow DIP', () => {
-    expect(noticesOf('parts:', '  U1: dip28/wide @ d10 28C64')).toContain('28C64 の足の名前は表に無い');
+    expect(noticesOf('parts:', '  U1: dip28/wide @ d10 28C64')).toContain('28C64 のピンの名前は表に無い');
   });
 });
 
@@ -173,7 +173,7 @@ describe('描く', () => {
   test('draws one body, 28 pin stubs, and the pin-1 notch', () => {
     expect(svg.match(/rx="3"/g)?.length).toBeGreaterThanOrEqual(1);
     const stubs = (source: string): number => source.match(/width="6" height="6"/g)?.length ?? 0;
-    // 足の跡は狭い DIP と同じ数 (28 本ぶん) で、ボードの穴のぶんだけ共通。
+    // ピンの跡は狭い DIP と同じ数 (28 本ぶん) で、ボードの穴のぶんだけ共通。
     const narrow = renderBreadboard(fence('parts:', '  U1: dip28 @ e10 AS6C62256-55PCN')).svg;
     expect(stubs(svg)).toBe(stubs(narrow));
     expect(stubs(svg)).toBeGreaterThanOrEqual(28);

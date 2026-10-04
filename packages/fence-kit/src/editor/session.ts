@@ -777,7 +777,7 @@ export function createSession<D extends DocLike>(
 
   /**
    * その穴を、`start` から `to` への差だけずらした穴。**フェンスに数えさせる** —
-   * 番地の綴りは板ごとに違うので、殻は引き算を知らない。
+   * 番地の綴りは基板ごとに違うので、殻は引き算を知らない。
    */
   function shiftCell(cell: string, start: string, to: string): string | null {
     const step = editor.stepsTo(start, to);
@@ -852,7 +852,7 @@ export function createSession<D extends DocLike>(
   /**
    * (升, 端数) → 綴り。端数が無ければそのまま。**綴りを組むのはフェンス** (`step`) —
    * 殻は `_` も `.25` も知らない。刻みに合わない端数は断る (circuit の `round()` は
-   * `.125` を `.13` に黙って丸める)。穴の間が無い板では断る (webview は送らないが、境界で見る)。
+   * `.125` を `.13` に黙って丸める)。穴の間が無い基板では断る (webview は送らないが、境界で見る)。
    */
   function spellOf(cell: string, fine: GridStep | null): string | Refused {
     if (fine === null) return cell;
@@ -971,7 +971,7 @@ export function createSession<D extends DocLike>(
 
   /**
    * 欄の書き換え。**1 部品 = 1 行の文法なので、行の中のトークン差し替えに落ちる。**
-   * 名前だけは 3 か所 (鍵・配線の足・注釈) に散るので別の道を通る。
+   * 名前だけは 3 か所 (鍵・配線のピン・注釈) に散るので別の道を通る。
    */
   async function editField(message: Incoming): Promise<void> {
     // **名前の無いものは行で指す。** 配線には名前が無いので、名札を殻が組む
@@ -993,7 +993,7 @@ export function createSession<D extends DocLike>(
     });
   }
 
-  /** 名前を変える。鍵・配線の足・注釈の指し先を一緒に書き換える。 */
+  /** 名前を変える。鍵・配線のピン・注釈の指し先を一緒に書き換える。 */
   async function rename(message: Incoming): Promise<void> {
     // **節点の名前も同じ道**。書く先は `points:` の 1 行だが、押した所は同じ欄。
     const handle = handleOf(text(message.what), text(message.part));
@@ -1092,7 +1092,7 @@ export function createSession<D extends DocLike>(
     const after = applyRewrite(fence.source, plan.result.value);
     const cells = plan.cells(after);
     // **置く前の部品は図に無いので、写しの図から切り出して渡す。**
-    // 姿は種類と向きと足の数で決まり、場所では変わらないので**1 度描いて使い回す**
+    // 姿は種類と向きとピンの数で決まり、場所では変わらないので**1 度描いて使い回す**
     // (穴をまたぐたびに図を組み直すと、ゴーストの速さが元に戻ってしまう)。
     const drawn = plan.shape === undefined || plan.ghostId === undefined
       ? null
@@ -1126,7 +1126,7 @@ export function createSession<D extends DocLike>(
     if (message.what === 'place') {
       const type = text(message.type);
       if (type === null) return null;
-      // ドラッグで間隔を選んでいる最中は 1 本目の足も来る。**押したときと同じ穴を渡す**
+      // ドラッグで間隔を選んでいる最中は 1 本目のピンも来る。**押したときと同じ穴を渡す**
       // ので、ゴーストが見せる穴と書かれる穴が食い違わない。
       const from = text(message.from);
       const at = from === null ? [to] : [from, to];
@@ -1143,7 +1143,7 @@ export function createSession<D extends DocLike>(
         // 最中は穴が 2 つ来て、ずらすと間隔そのものが変わる (姿が別物になる)。
         ...(at.length === 1 ? { trial: (spot: string) => editor.addPart(source, { ...part, at: [spot] }) } : {}),
         cells: (after) => editor.cellsOf(after, id),
-        // 足の数まで鍵に入れる (2 端子はドラッグで間隔が変わり、姿も変わる)。
+        // ピンの数まで鍵に入れる (2 端子はドラッグで間隔が変わり、姿も変わる)。
         // 名前も入れる — 本文が変われば次の名前が変わり、名札も変わる。
         shape: [id, type, part.turn ?? 0, part.flip === true ? 1 : 0, at.length].join('\u0000'),
         ghostId: id,
@@ -1183,7 +1183,7 @@ export function createSession<D extends DocLike>(
   /**
    * 置けない所を指しているときの姿。**赤い影を出すための足場**を探して描く。
    *
-   * 姿は種類と向きと足の数で決まり、場所では変わらない。だから**どこか置ける穴**に
+   * 姿は種類と向きとピンの数で決まり、場所では変わらない。だから**どこか置ける穴**に
    * 試し当てて絵を切り出し、そこから指した穴までの差を添えれば、置けない場所にも
    * 同じ姿を出せる。置ける穴が見つからなければ諦める (影は出ない)。
    */
@@ -1457,7 +1457,7 @@ export function createSession<D extends DocLike>(
    *
    * 1. **下の行から消す。** 「書いた順」の数え方は前を数えるので、下から
    *    消せば動かない (`VCC#2` は最後まで 2 つ目のまま)。
-   * 2. **行で指すものは、当てる直前に数え直す。** 部品を消すと足を指す配線や
+   * 2. **行で指すものは、当てる直前に数え直す。** 部品を消すとピンを指す配線や
    *    指している注釈まで一緒に落ちるので、順だけでは足りない
    *    (`wires:` を `parts:` より前に書いた図で、選んでいない配線が消えた)。
    *
@@ -1502,7 +1502,7 @@ export function createSession<D extends DocLike>(
     });
   }
 
-  /** マップから来た「これを消す」。部品は足を指す配線も連れていく。 */
+  /** マップから来た「これを消す」。部品はピンを指す配線も連れていく。 */
   async function remove(message: Incoming): Promise<void> {
     const what = text(message.what);
     const picked = handles(message.ids);

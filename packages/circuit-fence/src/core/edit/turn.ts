@@ -208,7 +208,7 @@ export function turnPart(source: string, handle: string, quarters: number): Rewr
   const turned = { row: part.from.row + delta.row, col: part.from.col + delta.col };
 
   // **格子から出たら寄せ直す。回転そのものは断らない。** 縁に置いた記号を回すと
-  // 端が外へ出るが、断ると「この部品は回らない」に見える (板の 2 つと同じ手当て。
+  // 端が外へ出るが、断ると「この部品は回らない」に見える (ブレッドボードとユニバーサル基板と同じ手当て。
   // 52 の docs/28)。**寄せるときだけ**アンカーも動く — 足りない分ちょうどなので、
   // 格子に載っている回し方は 1 升も動かない。
   //

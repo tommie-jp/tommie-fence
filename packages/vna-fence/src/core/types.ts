@@ -5,7 +5,7 @@ import type { Param } from './model/sparams.ts';
 import type { Sweep } from './model/sweep.ts';
 
 /**
- * vna フェンスの型。**板の 3 つと分けてある理由**: 図の中に部品も板も無い。
+ * vna フェンスの型。**基板の 3 つと分けてある理由**: 図の中に部品も基板も無い。
  * 描くのは周波数の関数 (S パラメータ) で、ネットリストも ERC もマップも持たない
  * (52 の docs/75・76)。
  */

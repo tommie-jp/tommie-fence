@@ -7,8 +7,8 @@ import { generateTex } from './tex/generate.ts';
 import type { PartSpec } from './types.ts';
 
 /**
- * ゲートの記号に添える IC の足の番号 (`U1A: nand c3 74HC00`)。**回路は ID の末尾の大文字、
- * 番号は型番から足の名前の表で引く。** 型番が表に無い・回路の字が無いときは今までの図のまま。
+ * ゲートの記号に添える IC のピンの番号 (`U1A: nand c3 74HC00`)。**回路は ID の末尾の大文字、
+ * 番号は型番からピンの名前の表で引く。** 型番が表に無い・回路の字が無いときは今までの図のまま。
  */
 
 const partOf = (line: string): PartSpec => {

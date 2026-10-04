@@ -29,7 +29,7 @@ describe('deletePart', () => {
   });
 
   test('takes the wires that point at its pins with it', () => {
-    // 足を指す配線は、部品が消えると読めなくなる (残すとエラーの行が増えるだけ)。
+    // ピンを指す配線は、部品が消えると読めなくなる (残すとエラーの行が増えるだけ)。
     const { source, wires } = dropped(RC, 'Q1');
 
     expect(source).not.toContain('Q1.b');

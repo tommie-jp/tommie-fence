@@ -14,7 +14,7 @@ import { diffAfterLines } from './diff.ts';
  * 揃える (光る単位・帯が指す単位とも同じ)。行の中を削って詰めると、
  * 手書きのコメントや整形の残骸が行に残る。
  *
- * **配線は連れていかない。** circuit は配線が部品の足を指す (`Q1.b`) ので
+ * **配線は連れていかない。** circuit は配線が部品のピンを指す (`Q1.b`) ので
  * 一緒に消すが、こちらの配線は**穴を指す** — 部品が消えても行は読めるまま
  * (その穴へ行く線として意味が残る)。消すかどうかは書き手が決める。
  */
@@ -72,7 +72,7 @@ export function deletePart(source: string, id: string): RemovalResult {
   // **機器は入れ子で書くので、ブロックごと消す。** 鍵の行だけ消すと中身が
   // 宙に浮いて、フェンスそのものが読めなくなる (実機で踏んだ)。
   // ピンを指している配線も一緒に — 消えた機器を指す線は描きようがない
-  // (板に挿す部品の配線は穴を指すので、そちらは今までどおり残す)。
+  // (基板に挿す部品の配線は穴を指すので、そちらは今までどおり残す)。
   const body = isDevice(normalized, id) ? deviceBlock(normalized, id) : [];
   const pinWires = body.length === 0
     ? new Set<number>()

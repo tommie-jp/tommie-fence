@@ -30,11 +30,11 @@ describe('circuit の FenceEditor', () => {
   });
 });
 
-describe('足を指す配線 (升目の接続点から)', () => {
+describe('ピンを指す配線 (升目の接続点から)', () => {
   const WITH_Q = ['parts:', '  Q1: npn b2', '  R1: resistor a1 a3 10k', ''].join('\n');
 
   test('takes a pin as an end and writes it as the fence spells it', () => {
-    // 升目の足の丸を押すと `Q1.C` という綴りで返ってくる。番地ではないので、
+    // 升目のピンの丸を押すと `Q1.C` という綴りで返ってくる。番地ではないので、
     // 番地としてだけ読んでいると「読めません」で終わっていた。
     const result = createCircuitEditor().addWire(WITH_Q, 'Q1.C', 'a4', '--');
 

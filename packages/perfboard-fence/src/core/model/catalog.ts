@@ -1,22 +1,22 @@
 /**
- * 名前の付いた板。**穴数は写真から数えた実物の値だけ**を持つ。
+ * 名前の付いた基板。**穴数は写真から数えた実物の値だけ**を持つ。
  *
  * 秋月の商品ページは寸法・ピッチ・穴径・取付穴まで書いてあるのに、
  * **穴数だけどこにも無い**。検索に出る「28×18」は寸法をピッチで割った推計で、
  * 実測と合わない (C タイプは 25×15)。
  *
- * **実寸から穴数は割り算で出ない。** 縁の余白が板ごとにも辺ごとにも違い、
+ * **実寸から穴数は割り算で出ない。** 縁の余白が基板ごとにも辺ごとにも違い、
  * 取付穴がそこに入るため。boardwright の Elegoo 5×7cm テンプレートは
  * 50×70mm で 18×24 穴を名乗るが、これは辺ごとに縁が 3.4mm と 5.8mm という
  * ことで、1 つの式からは出ない (向こうの `_note` 自身が derived と書いている)。
  * だから寸法は**引くための鍵**であって、計算の入力ではない。
  *
- * 秋月は同じ板を複数の綴りで売っていることがあるので、寸法は 1 つの板につき
- * 複数持てるようにしてある。**ただし綴りが違えば別の板のこともある** —
+ * 秋月は同じ基板を複数の綴りで売っていることがあるので、寸法は 1 つの基板につき
+ * 複数持てるようにしてある。**ただし綴りが違えば別の基板のこともある** —
  * 「C タイプ」は 72×47mm と 72×47.5mm で穴数が違う (下の頭書き)。
  */
 
-/** 実寸 (mm)。**列 × 行と同じ順** — 板は長辺 × 短辺で売られている。 */
+/** 実寸 (mm)。**列 × 行と同じ順** — 基板は長辺 × 短辺で売られている。 */
 export type Millimetres = readonly [number, number];
 
 export type CatalogBoard = {
@@ -31,13 +31,13 @@ export type CatalogBoard = {
   /** 正式な名前の代わりに書ける綴り (店の呼ぶ型番の 1 文字など)。 */
   readonly aliases: readonly string[];
   /**
-   * 汎用の標準板 (縦長で数えた) かどうか。**横に置いた綴り (`7x5cm`) を同じ板の
-   * 向き違いとして読める**のはこの板だけ。秋月の板は綴りごとに別の板のことが
+   * 汎用の標準基板 (縦長で数えた) かどうか。**横に置いた綴り (`7x5cm`) を同じ基板の
+   * 向き違いとして読める**のはこの基板だけ。秋月の基板は綴りごとに別の基板のことが
    * あるので、向きを替えて当てはめない。
    */
   readonly turnable: boolean;
   /**
-   * 実物が揺れる板の、穴数の許す範囲 (この向きでの列と行)。無ければ数えた
+   * 実物が揺れる基板の、穴数の許す範囲 (この向きでの列と行)。無ければ数えた
    * 1 通りだけ。`grid:` がこの内側なら黙って受け、外なら「数えていない」と言う。
    */
   readonly gridRange?: { readonly cols: readonly [number, number]; readonly rows: readonly [number, number] };
@@ -50,13 +50,13 @@ export type CatalogBoard = {
  * 数えた値と一致した。B と D は 2026-09-01 に商品写真から数えた値
  * (数え方は 52 の `docs/07`)。
  *
- * **同じ「C タイプ」でも板が違えば穴数が違う。** 72×47mm (ガラスコンポジット・
+ * **同じ「C タイプ」でも基板が違えば穴数が違う。** 72×47mm (ガラスコンポジット・
  * 日本製) は 25 × 15 だが、72×47.5mm (片面ガラス・めっき仕上げ) の外形図は
  * 27 × 17 の格子で、四隅が取付穴に取られている。だから**実寸の綴りは、
- * その綴りで売られている板を数えたときだけ**別名にする。
+ * その綴りで売られている基板を数えたときだけ**別名にする。
  */
 /**
- * 汎用の標準板 5 種 (海外の量販品。縁のパッドと四隅の取付穴があり、
+ * 汎用の標準基板 5 種 (海外の量販品。縁のパッドと四隅の取付穴があり、
  * スルーホールの両面板)。穴数は**作者が数えた**値で、縦長 (列 < 行) で持つ。
  * **名前に `cm` が要る** — 単位の無い `5x7` は 5 列 × 7 行の穴数として読まれる。
  * 12x18cm だけは実物が揺れるので許す範囲を持つ (列 44〜46、行 60〜65)。
@@ -107,8 +107,8 @@ const BOARDS: readonly CatalogBoard[] = [
     turnable: false,
   },
   {
-    // 72×47.5mm と 72×48mm は**別の板**で、穴数も違う (頭書き)。
-    // 数えていない綴りを別名にすると、違う板の図が黙って出る。
+    // 72×47.5mm と 72×48mm は**別の基板**で、穴数も違う (頭書き)。
+    // 数えていない綴りを別名にすると、違う基板の図が黙って出る。
     key: 'akizuki-c',
     label: '秋月 C タイプ',
     mm: [[72, 47]],
@@ -132,12 +132,12 @@ const BOARDS: readonly CatalogBoard[] = [
 /** `72x47mm` `7.2x4.7cm`。**単位が要る** — 単位が無い数は穴数。 */
 const DIMENSIONS = /^([0-9]+(?:\.[0-9]+)?)\s*[x×]\s*([0-9]+(?:\.[0-9]+)?)\s*(mm|cm)$/;
 
-/** 同じ板を指す綴りかどうかを見るための丸め (0.1mm)。浮動小数の差で外さないため。 */
+/** 同じ基板を指す綴りかどうかを見るための丸め (0.1mm)。浮動小数の差で外さないため。 */
 const round = (mm: number): number => Math.round(mm * 10) / 10;
 
 /**
  * 実寸として書かれた綴りを mm にする。単位が無ければ `null` — そこが
- * **穴数と実寸の分かれ目**で、`25x15` を 25mm × 15mm と読むと板が消える。
+ * **穴数と実寸の分かれ目**で、`25x15` を 25mm × 15mm と読むと基板が消える。
  */
 export function parseMillimetres(text: string): Millimetres | null {
   // 名前も短い名前も大小を問わないので、単位だけ問うのは筋が通らない (`7X5CM`)。
@@ -157,7 +157,7 @@ const sameSize = (a: Millimetres, b: Millimetres): boolean =>
   round(a[0]) === round(b[0]) && round(a[1]) === round(b[1]);
 
 /**
- * 名前・短い名前・実寸のどれで書かれても同じ板を返す。
+ * 名前・短い名前・実寸のどれで書かれても同じ基板を返す。
  * **持ち物だけを引く** (素の添字だと `constructor` が Object.prototype から拾える)。
  */
 export function lookupBoard(text: string): CatalogBoard | null {
@@ -171,7 +171,7 @@ export function lookupBoard(text: string): CatalogBoard | null {
   if (!mm) return null;
   const sold = BOARDS.find((b) => b.mm.some((size) => sameSize(size, mm)));
   if (sold) return sold;
-  // 標準板を横に置いた綴り (`7x5cm` = 5x7cm を寝かせた板)。
+  // 標準基板を横に置いた綴り (`7x5cm` = 5x7cm を寝かせた基板)。
   const upright = BOARDS.find((b) => b.turnable && sameSize(b.mm[0]!, [mm[1], mm[0]]));
   return upright ? turned(upright) : null;
 }
@@ -180,7 +180,7 @@ export function lookupBoard(text: string): CatalogBoard | null {
 const turnedKey = (key: string): string => key.replace(/^([0-9.]+)x([0-9.]+)cm$/, '$2x$1cm');
 
 /**
- * 向きを替えた板。**列と行 (と許す範囲) を入れ替えるだけ**で、穴の数え直しは
+ * 向きを替えた基板。**列と行 (と許す範囲) を入れ替えるだけ**で、穴の数え直しは
  * しない。実寸の綴りも入れ替える (報告の呼び名が寝かせた向きで出る)。
  */
 function turned(board: CatalogBoard): CatalogBoard {
@@ -206,16 +206,16 @@ export const catalogBoards = (): readonly CatalogBoard[] => BOARDS;
 const NEAR = 0.12;
 
 /**
- * 書かれた実寸に近い板。**当てはめるためではなく、教えるため**にある。
- * 丸めて勝手に当てると違う板の穴数で図が出るので、返すのは報告の文面用。
- * 寝かせた板 (50×70mm) は近いと言わない — 書かれたとおりに読む。
- * 標準板 (`5x7cm` など) は名前と実寸で引けるので、ここでは挙げない。
+ * 書かれた実寸に近い基板。**当てはめるためではなく、教えるため**にある。
+ * 丸めて勝手に当てると違う基板の穴数で図が出るので、返すのは報告の文面用。
+ * 寝かせた基板 (50×70mm) は近いと言わない — 書かれたとおりに読む。
+ * 標準基板 (`5x7cm` など) は名前と実寸で引けるので、ここでは挙げない。
  */
 export function nearestBoard(mm: Millimetres): CatalogBoard | null {
   let best: CatalogBoard | null = null;
   let bestGap = NEAR;
   for (const board of BOARDS) {
-    // 標準板は向きも寸法も言い切っているので、近いとは言わない (秋月の板だけ)。
+    // 標準基板は向きも寸法も言い切っているので、近いとは言わない (秋月の基板だけ)。
     if (board.turnable) continue;
     for (const sold of board.mm) {
       const gap = Math.max(Math.abs(mm[0] - sold[0]) / sold[0], Math.abs(mm[1] - sold[1]) / sold[1]);

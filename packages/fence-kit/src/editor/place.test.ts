@@ -52,10 +52,10 @@ describe('orientInserted', () => {
 
   test('hands back the refusal instead of writing a line the fence would not accept', () => {
     expect(orientInserted(SOURCE, ADDED, { turn: 1 }, {
-      turn: () => refuse('板の外へ出ます'),
+      turn: () => refuse('基板の外へ出ます'),
       flip: () => rewriteTo('x'),
       lineOf,
-    })).toEqual({ ok: false, error: '板の外へ出ます' });
+    })).toEqual({ ok: false, error: '基板の外へ出ます' });
   });
 
   test('rewrites the last inserted line, since the key is added before the part', () => {

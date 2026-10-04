@@ -36,7 +36,7 @@ import type { Address } from '../types.ts';
  */
 
 /**
- * 穴の間へ置こうとしたときの断り。**足は穴に挿す**ので、交点の間に置けるのは
+ * 穴の間へ置こうとしたときの断り。**ピンは穴に挿す**ので、交点の間に置けるのは
  * 注釈だけ (52 の docs、実機で「text はどこでも移動できるように」)。
  */
 const betweenHoles = (written: string) => ({
@@ -72,7 +72,7 @@ export function createBreadboardEditor(): FenceEditor {
 
     spansOf: (source, what, id) => {
       if (isNoteHandle(id)) return noteSpans(source, id);
-      // **板の外の機器は入れ子で書く**ので、光らせるのは `at:` の値と、
+      // **基板の外の機器は入れ子で書く**ので、光らせるのは `at:` の値と、
       // その機器のピンを指している配線の名前 (`device.ts`)。
       if (what !== 'node' && isDevice(source, id)) return [...deviceSpans(source, id), ...devicePinSpans(source, id)];
       if (what !== 'node') return partSpans(source, id);
@@ -103,8 +103,8 @@ export function createBreadboardEditor(): FenceEditor {
 
     // 配線は穴から穴へ 1 本 (折れの綴りが文法に無い)。
     foldsWire: false,
-    // 穴の間は無い (足は穴に挿す)。Ctrl を押しても素のクリック。
-    // **注釈だけが交点の間に置ける** (`b5c3`)。足は穴に挿すので、部品と配線は
+    // 穴の間は無い (ピンは穴に挿す)。Ctrl を押しても素のクリック。
+    // **注釈だけが交点の間に置ける** (`b5c3`)。ピンは穴に挿すので、部品と配線は
     // 交点そのものを指す (52 の docs、実機で「text はどこでも移動できるように」)。
     fine: 10,
     fineFor: 'note' as const,
@@ -115,7 +115,7 @@ export function createBreadboardEditor(): FenceEditor {
     typeNames: renderTypeOptions,
     colorNames: renderColorOptions,
     // **固定の色見本を属性に出す** (実機で「ドロップダウンメニューではなく、
-    // 固定の色パレット」)。被覆の色は板の 2 つで同じ表 (`fence-kit` の colors.ts)。
+    // 固定の色パレット」)。被覆の色はブレッドボードとユニバーサル基板で同じ表 (`fence-kit` の colors.ts)。
     wireColors: wireColorNames,
     nextId: nextPartId,
 
@@ -123,7 +123,7 @@ export function createBreadboardEditor(): FenceEditor {
       const at = readAddress(to);
       if (at === null) return unreadable(to);
       if (isNoteHandle(handle)) return moveNote(source, handle, at, trial?.preview === true);
-      // 機器は `at:` を書き換えて動かす (この板で選べるのは上下の帯だけ)。
+      // 機器は `at:` を書き換えて動かす (この基板で選べるのは上下の帯だけ)。
       if (isDevice(source, handle)) return moveDevice(source, handle, at, trial?.preview === true);
       if (!movablePartIds(source).includes(handle)) {
         return { ok: false, error: { message: `動かせる部品ではありません: ${handle}`, line: null } };

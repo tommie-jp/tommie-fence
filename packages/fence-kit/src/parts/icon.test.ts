@@ -46,7 +46,7 @@ describe('パレットの絵', () => {
   });
 
   test('lets the palette hand it its own colours', () => {
-    // 胴の色はどのパッケージにも効く。板の色 (`plate`) を使うのはねじ穴を
+    // 胴の色はどのパッケージにも効く。基板の色 (`plate`) を使うのはねじ穴を
     // 抜く形だけなので、そちらは TO-220 で見る。
     expect(partIcon('transistor', { chip: '#654321' })).toContain('#654321');
     expect(partIcon('transistor', { variant: 'to220', plate: '#123456' })).toContain('#123456');

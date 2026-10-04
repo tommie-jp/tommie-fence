@@ -11,7 +11,7 @@ describe('スロットの銅箔', () => {
     expect(cells(SLOTS)).toContain('a0');
     expect(cells(SLOTS)).toContain('a13');
     expect(cells(SLOTS)).toContain('g0');
-    // **銅箔の無い板にも升は立つ** — 板の外に置くもの (機器・注釈) の
+    // **銅箔の無い基板にも升は立つ** — 基板の外に置くもの (機器・注釈) の
     // 動かし先になるため。銅箔の無い所へ配線を引くのは今までどおり断る
     // (次のテスト)。
     expect(cells(PLAIN)).toContain('a0');
@@ -20,9 +20,9 @@ describe('スロットの銅箔', () => {
   test('配線はスロットへ引ける', () => {
     const editor = createPerfboardEditor();
     expect(editor.addWire(SLOTS, 'c2', 'a0', '--').ok).toBe(true);
-    // 銅箔の無い板では今までどおり断る。
+    // 銅箔の無い基板では今までどおり断る。
     expect(editor.addWire(PLAIN, 'c2', 'a0', '--').ok).toBe(false);
-    // 板の外はどちらでも断る。
+    // 基板の外はどちらでも断る。
     expect(editor.addWire(SLOTS, 'c2', 'a99', '--').ok).toBe(false);
   });
 

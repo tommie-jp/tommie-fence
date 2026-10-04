@@ -6,7 +6,7 @@ import type { MeasureName } from './model/measure.ts';
 import type { TriggerEdge } from './model/screen.ts';
 
 /**
- * scope フェンスの型。**図の中に部品も板も無い** — 描くのは時間の関数 (電圧)。
+ * scope フェンスの型。**図の中に部品も基板も無い** — 描くのは時間の関数 (電圧)。
  * vna との違いは、枠を単位で分けず **1 つの格子に ch を重ねる**こと (52 の docs/81 決め 4)。
  */
 

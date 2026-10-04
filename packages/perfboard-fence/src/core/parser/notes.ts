@@ -35,7 +35,7 @@ export type WrittenNote = {
    * 字は `: ` の後ろなので、番地のあとに語を置いても字と紛れない (色も同じ場所に書ける)。
    */
   readonly turn: Turn;
-  /** 指し先の番地。**`source` と `parts` は板の外に出すので null**。 */
+  /** 指し先の番地。**`source` と `parts` は基板の外に出すので null**。 */
   readonly from: string | null;
   /** `box` と `arrow` の 2 つ目の番地。ほかは null。 */
   readonly to: string | null;
@@ -44,7 +44,7 @@ export type WrittenNote = {
   readonly text: string | null;
 };
 
-/** 印ごとに、番地をいくつ書くか。**書き出しと部品表は板の外なので 0**。 */
+/** 印ごとに、番地をいくつ書くか。**書き出しと部品表は基板の外なので 0**。 */
 const HOLES: Record<NoteKind, number> = { mark: 1, box: 2, arrow: 2, text: 1, source: 0, parts: 0 };
 
 const KINDS = Object.keys(HOLES) as readonly NoteKind[];

@@ -64,6 +64,6 @@ describe('docs/02-cheatsheet.md', () => {
   });
 
   test('names every model in the table of DIP pin names', () => {
-    pinoutModels().forEach((model) => listed('足の名前の表の型番')(`\`${model}\``));
+    pinoutModels().forEach((model) => listed('ピンの名前の表の型番')(`\`${model}\``));
   });
 });

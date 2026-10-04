@@ -10,7 +10,7 @@ import type { Endpoint, PartSpec } from '../types.ts';
 export type Net = { readonly name: string; readonly refs: readonly string[] };
 
 /**
- * 節点の名前。番地の綴り (`a3`) か、多端子部品の足 (`U1.out`) をそのまま使う。
+ * 節点の名前。番地の綴り (`a3`) か、多端子部品のピン (`U1.out`) をそのまま使う。
  * 図を直してもネットの名前が動かない (Lcapy のダミーノード方式との差はここ)。
  */
 type CellId = string;
@@ -24,7 +24,7 @@ const nodeOf = (endpoint: Endpoint): CellId => nameOfEndpoint(endpoint);
 
 /**
  * 部品の端子に名前を付ける。2 端子は `R1.1` `R1.2`、1 端子は ID そのまま。
- * 多端子は足ごとに節点を持つが、どの足が使われたかは配線を見るまで分からない。
+ * 多端子はピンごとに節点を持つが、どのピンが使われたかは配線を見るまで分からない。
  * 置かれた交点そのものは節点ではないので、ここでは何も出さない。
  */
 function membersOf(part: PartSpec): Member[] {
@@ -37,10 +37,10 @@ function membersOf(part: PartSpec): Member[] {
 }
 
 /**
- * ネットリストに出す足の呼び名。**箱の足は図に刷ってある名前**で出す (`U1.GP0`
+ * ネットリストに出すピンの呼び名。**箱のピンは図に刷ってある名前**で出す (`U1.GP0`
  * `J1.VBUS` `M1.TRIG`。刷っていない箱は番号 `J1.2`)。アンカー名 (`J1.pin 1`) は
  * 図とも実物とも突き合わせられなかった (52 の docs/58 で持ち越し、docs/66 で直した)。
- * 箱でない足 (`Q1.B` `U1.out`) は書かれたアンカー名のまま。
+ * 箱でないピン (`Q1.B` `U1.out`) は書かれたアンカー名のまま。
  *
  * **節点の鍵 (`cell`) はアンカー名のまま** — 綴りの違いでネットが割れないように。
  */
@@ -48,7 +48,7 @@ function refOfPin(part: PartSpec, endpoint: Endpoint & { readonly kind: 'pin' })
   return `${endpoint.part}.${pinRefName(partTypeOf(part), endpoint.pin)}`;
 }
 
-/** 配線から指された足。指された足だけがネットに現れる。 */
+/** 配線から指されたピン。指されたピンだけがネットに現れる。 */
 function pinMembersOf(circuit: Circuit): Member[] {
   const byId = new Map(circuit.parts.map((part) => [part.id, part]));
   const members: Member[] = [];
@@ -73,7 +73,7 @@ function pinMembersOf(circuit: Circuit): Member[] {
  * 同じ節点として扱う。**ネットリストの一歩手前**で、どの節点が同じまとまりに
  * 居るかだけを返す。
  *
- * ネットリスト (`computeNets`) は**部品の足が乗っているまとまりしか出さない**ので、
+ * ネットリスト (`computeNets`) は**部品のピンが乗っているまとまりしか出さない**ので、
  * 「部品に届いていない配線」を見るにはこちらが要る (`erc.ts`)。
  * 2 つが同じ union-find を使うことが大事で、別々に組むと片方だけ直したとき
  * 図とお知らせが黙って食い違う。
@@ -120,7 +120,7 @@ export function wiringOf(circuit: Circuit): Wiring {
     const from = addressOf(wire.from);
     const to = addressOf(wire.to);
     // 折れた線は曲がり角も通る。そこに乗っている端も同じ節点なので、
-    // 端どうしを直接つなぐだけでは足りない (足が絡む線は曲がり角を持たない)。
+    // 端どうしを直接つなぐだけでは足りない (ピンが絡む線は曲がり角を持たない)。
     const corner = from === null || to === null ? null : cornerOf(from, to, wire.operator);
     if (corner === null) {
       union(nodeOf(wire.from), nodeOf(wire.to));
@@ -156,7 +156,7 @@ export function wiringOf(circuit: Circuit): Wiring {
 }
 
 /**
- * 交点の導通からネットリストを組み立てる。**部品の足が乗っているまとまりだけ**が
+ * 交点の導通からネットリストを組み立てる。**部品のピンが乗っているまとまりだけ**が
  * ネットになる (どこにも部品の無い線のかたまりは、突き合わせるものが無い)。
  */
 export function computeNets(circuit: Circuit): Net[] {

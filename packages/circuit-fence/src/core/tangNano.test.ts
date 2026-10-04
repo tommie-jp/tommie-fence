@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { compileCircuit } from './index.ts';
 import { PART_NAMES, PART_PREFIXES, lookupPartType, lookupPin } from './parts.ts';
 
-/** Tang Nano 9K。足の名前は実体配線図の 2 つと同じ表 (fence-kit)。 */
+/** Tang Nano 9K。ピンの名前は実体配線図の 2 つと同じ表 (fence-kit)。 */
 describe('Tang Nano 9K', () => {
   test('is a 48-pin box named by the table of the boards', () => {
     const type = lookupPartType('tang-nano-9k')!;

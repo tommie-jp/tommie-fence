@@ -221,12 +221,12 @@ describe('動かす・置く・消す', () => {
   });
 
   /**
-   * 部品は足を指す配線も連れていく。**その配線が上の行にある**と、あとに残った
+   * 部品はピンを指す配線も連れていく。**その配線が上の行にある**と、あとに残った
    * 配線の行番号が繰り上がる — 数え直さないと、選んでいない配線を消してしまう。
    */
   test('counts the line of a wire again after a part has taken one with it', async () => {
     const calls: Call[] = [];
-    // Q1 (7 行目) は足を指す配線 (2 行目) も連れていく。
+    // Q1 (7 行目) はピンを指す配線 (2 行目) も連れていく。
     const { session } = open(dropping({ Q1: 7 }, { Q1: [2] }, (...one) => { calls.push(one); }));
 
     await session.handle({ kind: 'delete', what: 'part', id: 'Q1', ids: ['Q1'], wires: ['3'] });

@@ -1,7 +1,7 @@
 /**
- * **面実装のパッケージの表**。板の 2 つが同じ表を読む (52 の docs/64)。
- * `boards.ts` (マイコンボードの足) や `connectors.ts` (USB) と同じく、実物の話で
- * 板に依らないのでここに 1 つだけ置く。**表に 1 行足せば姿が 1 つ増える。**
+ * **面実装のパッケージの表**。ブレッドボードとユニバーサル基板が同じ表を読む (52 の docs/64)。
+ * `boards.ts` (マイコンボードのピン) や `connectors.ts` (USB) と同じく、実物の話で
+ * 基板に依らないのでここに 1 つだけ置く。**表に 1 行足せば姿が 1 つ増える。**
  *
  * 姿の綴りは 3 通り:
  *
@@ -12,13 +12,13 @@
  * - `dip8/sop` — 種類が DIP なので、姿は載っている物の名前だけ。変換基板に載っている
  *
  * **寸法は mm で持つ** (実物の資料から写せる)。px へは `SMD_PX_PER_MM` の 1 か所で
- * 換える — 板の 2 つはどちらも穴のピッチ 2.54mm を 20px で描く。
+ * 換える — ブレッドボードとユニバーサル基板はどちらも穴のピッチ 2.54mm を 20px で描く。
  *
  * 別名 (`aka`) は**綴りとしては受け取らない** (breadboard-fence/06 の「別名なし」)。
  * 知らない姿を書かれたときに「S-Mini は sot346 と書きます」と返すのに使う。
  */
 
-/** 板の 2 つの穴のピッチ (px) と、それが表す長さ (mm)。 */
+/** ブレッドボードとユニバーサル基板の穴のピッチ (px) と、それが表す長さ (mm)。 */
 const BOARD_PITCH_PX = 20;
 const BOARD_PITCH_MM = 2.54;
 
@@ -49,41 +49,41 @@ export type ChipSpec = Common & {
   readonly width: number;
 };
 
-/** 樹脂の胴の両端から平たい足が出るダイオード (SOD・DO-214)。 */
+/** 樹脂の胴の両端から平たいピンが出るダイオード (SOD・DO-214)。 */
 export type LeadedSpec = Common & {
   readonly kind: 'leaded';
   /** 樹脂の胴 (mm)。 */
   readonly length: number;
   readonly width: number;
-  /** 足先から足先 (mm)。 */
+  /** ピン先からピン先 (mm)。 */
   readonly span: number;
-  /** 足の幅 (mm)。 */
+  /** ピンの幅 (mm)。 */
   readonly lead: number;
 };
 
-/** 3 本足のトランジスタ型 (SOT)。 */
+/** 3 ピンのトランジスタ型 (SOT)。 */
 export type SotSpec = Common & {
   readonly kind: 'sot';
-  /** 胴の長さ (足の並ぶ向き) と幅 (mm)。 */
+  /** 胴の長さ (ピンの並ぶ向き) と幅 (mm)。 */
   readonly length: number;
   readonly width: number;
-  /** 足先から足先 (幅の向き。mm)。 */
+  /** ピン先からピン先 (幅の向き。mm)。 */
   readonly span: number;
-  /** 足の間隔 (mm)。 */
+  /** ピンの間隔 (mm)。 */
   readonly pitch: number;
-  /** 3 本の足が同じ側に並び、反対側に放熱タブが出る (SOT-89)。 */
+  /** 3 本のピンが同じ側に並び、反対側に放熱タブが出る (SOT-89)。 */
   readonly tab: boolean;
 };
 
-/** 2 列に足が並ぶ IC (SOP 系)。長さは足の数で決まる。 */
+/** 2 列にピンが並ぶ IC (SOP 系)。長さはピンの数で決まる。 */
 export type RowSpec = Common & {
   readonly kind: 'row';
-  /** 胴の幅と、足先から足先 (mm)。 */
+  /** 胴の幅と、ピン先からピン先 (mm)。 */
   readonly width: number;
   readonly span: number;
-  /** 足の間隔 (mm)。 */
+  /** ピンの間隔 (mm)。 */
   readonly pitch: number;
-  /** 胴の長さ = 片側の足の数 × 間隔 + これ (mm)。 */
+  /** 胴の長さ = 片側のピンの数 × 間隔 + これ (mm)。 */
   readonly ends: number;
 };
 
@@ -113,7 +113,7 @@ const SMD: readonly (readonly [string, SmdSpec])[] = [
     length: 2.9, width: 1.6, span: 2.8, pitch: 0.95, tab: false,
     adapter: true, mount: 'triangle', types: TRANSISTOR_LIKE,
   }],
-  // タブが板に半田付けされる前提の形で、直付けは置き方の約束が 1 つ増える (後回し)。
+  // タブが基板に半田付けされる前提の形で、直付けは置き方の約束が 1 つ増える (後回し)。
   ['sot89', {
     kind: 'sot', name: 'SOT-89', aka: ['SOT-89', 'SC-62', 'PW-Mini', 'MPT3'],
     length: 4.5, width: 2.5, span: 4.1, pitch: 1.5, tab: true,
@@ -191,7 +191,7 @@ export function smdLook(variant: string | null): SmdLook | null {
   return { key, spec, onAdapter };
 }
 
-/** 変換基板に載った 3 本足の姿か (`transistor/sot346-dip`)。 */
+/** 変換基板に載った 3 ピンの姿か (`transistor/sot346-dip`)。 */
 export const isSmdAdapter = (variant: string | null): boolean => {
   const look = smdLook(variant);
   return look !== null && look.onAdapter && look.spec.kind === 'sot';
@@ -203,7 +203,7 @@ export const isDirectSmd = (variant: string | null): boolean => {
   return look !== null && !look.onAdapter;
 };
 
-/** その板で選べる面実装の姿。**並びは表の順、変換基板が先**。 */
+/** その基板で選べる面実装の姿。**並びは表の順、変換基板が先**。 */
 export function smdLooksOf(type: string, board: 'breadboard' | 'perfboard'): readonly string[] {
   const wanted = tableType(type);
   const specs = SMD.filter(([, spec]) => spec.types.includes(wanted));
@@ -248,8 +248,8 @@ export function smdSpelling(written: string): string | null {
 
 /**
  * 知らない姿を書かれたときの書き直し先。**別名** (`s-mini` → `sot346`) と
- * **変換基板** (`sot89` → `sot89-dip`) を順に試し、その板で書ける綴りを返す。
- * 無ければ null。板の 2 つが同じ順で試すので、同じ書き間違いに同じ案内を返す。
+ * **変換基板** (`sot89` → `sot89-dip`) を順に試し、その基板で書ける綴りを返す。
+ * 無ければ null。ブレッドボードとユニバーサル基板が同じ順で試すので、同じ書き間違いに同じ案内を返す。
  */
 export function smdSuggestion(type: string, written: string, allowed: readonly string[]): string | null {
   const spelled = smdSpelling(written);
@@ -258,7 +258,7 @@ export function smdSuggestion(type: string, written: string, allowed: readonly s
 }
 
 /**
- * 差し込み型の姿の表に、面実装の姿を足す (種類ごと、表の順)。板の 2 つが
+ * 差し込み型の姿の表に、面実装の姿を足す (種類ごと、表の順)。ブレッドボードとユニバーサル基板が
  * 同じ手で足すので、変換基板の綴りが食い違わない。
  */
 export const withSmdLooks = (
@@ -274,7 +274,7 @@ export function directSotSpec(variant: string | null): SotSpec | null {
 }
 
 /**
- * パレットから 1 穴で置くときの足の並べ方 (アンカーからの行と列)。
+ * パレットから 1 穴で置くときのピンの並べ方 (アンカーからの行と列)。
  * 直付けの姿だけが持つ — 隣の穴・2 穴・三角。ほかは null (種類の既定で並べる)。
  */
 export function smdOffsets(variant: string | null): readonly { readonly row: number; readonly col: number }[] | null {

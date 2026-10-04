@@ -36,7 +36,7 @@ describe('parseCompactPart', () => {
   test('keeps a polarity tag written in parentheses as the pin name', () => {
     const result = parseCompactPart('D1', 'led b12(A) b13(K) red', 4);
 
-    // `tagged` は「足の名前を書いたか」。書き戻すときに、書いていない
+    // `tagged` は「ピンの名前を書いたか」。書き戻すときに、書いていない
     // `(1)` `(2)` を足さないために持つ (52 の docs/54 の段 1)。
     expect(result.ok && result.value.holes).toEqual([
       { addr: 'b12', tag: 'A', tagged: true, written: 'b12' },
@@ -254,7 +254,7 @@ describe('向きの語 (アンカー 1 つで置く形)', () => {
   test('refuses a word on an off board device, which is not in the board at all', () => {
     const result = parseCompactPart('X1', 'device @ top r180', 3);
 
-    expect(!result.ok && result.error.message).toContain('板に挿していない');
+    expect(!result.ok && result.error.message).toContain('基板に挿していない');
   });
 });
 

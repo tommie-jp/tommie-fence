@@ -13,7 +13,7 @@ import { lookupFootprint, placeableTypes } from '../placement/footprints.ts';
 import { lookupBoardPart, lookupNamedChip } from 'fence-kit';
 
 /**
- * 置ける種類の名前。**一覧そのものは `footprints.ts` が正** — 足の数を決めて
+ * 置ける種類の名前。**一覧そのものは `footprints.ts` が正** — ピンの数を決めて
  * いるのがあちらなので、こちらに写しを持つと種類を足したとき片方が古くなる。
  * ここに要るのは「その名前に和名と接頭辞があるか」だけ (テストが両方向を見張る)。
  */
@@ -32,7 +32,7 @@ const DIP_NAME = /^dip(\d+)$/;
 const SIP_NAME = /^sip(\d+)$/;
 
 /**
- * 人に見せる名前。**足を並べて書く部品は表から、パッケージ物は規則から**。
+ * 人に見せる名前。**ピンを並べて書く部品は表から、パッケージ物は規則から**。
  *
  * `dipN` / `sipN` はピン数がいくつでも読める文法なので、表に書き並べると
  * 「表に無い数」が名無しになる (パレットに出していない `dip22` を欄に打つ、など)。
@@ -155,9 +155,9 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
 /**
  * その種類に書く穴の数。**形が決める** (`footprints.ts`)。
  *
- * - 2 本足 → 2 つ (交点から交点へドラッグする)
- * - 3 本足 → 3 つ
- * - タクトスイッチ → **アンカー 1 つ** (`@ e5`。足の位置はパッケージが決める)
+ * - 2 ピン → 2 つ (交点から交点へドラッグする)
+ * - 3 ピン → 3 つ
+ * - タクトスイッチ → **アンカー 1 つ** (`@ e5`。ピンの位置はパッケージが決める)
  * - USB → 最少の 2 つ (電源だけの変換基板。穴は 2〜6 つ書ける)
  */
 export function holesOf(type: string): number {

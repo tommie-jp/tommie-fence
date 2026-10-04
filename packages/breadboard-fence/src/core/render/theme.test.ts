@@ -175,7 +175,7 @@ describe('resolveStyle', () => {
     const { style } = resolveStyle({ ...EMPTY_STYLE, boardColor: '#808080' });
     const { plate, plateEdge, ravine } = style.theme.palette;
 
-    // 地の色だけ変えて縁と溝が元の板の色のまま浮くのを防ぐ。どちらも板より暗い側へ寄せる。
+    // 地の色だけ変えて縁と溝が元の基板の色のまま浮くのを防ぐ。どちらも基板より暗い側へ寄せる。
     expect(plateEdge).not.toBe(themeNamed('classic').palette.plateEdge);
     expect(luminance(ravine)).toBeLessThan(luminance(plate));
     expect(luminance(plateEdge)).toBeLessThan(luminance(ravine));

@@ -96,7 +96,7 @@ describe('1 行に並べたものの改名', () => {
     expect(result.ok && applyRewrite(source, result.value)).toBe(`${HEAD.replace('R1:', 'R9:')}notes: [circle R9]\n`);
   });
 
-  test('並べた配線の足の名前も書き換える (括弧に付いた綴りも)', () => {
+  test('並べた配線のピンの名前も書き換える (括弧に付いた綴りも)', () => {
     const source = 'parts:\n  U1: opamp b5\nwires: [U1.out -- a1, U1.+ -- c1]\n';
     const result = editor.rename(source, 'U1', 'U9');
     expect(result.ok && applyRewrite(source, result.value)).toBe('parts:\n  U9: opamp b5\nwires: [U9.out -- a1, U9.+ -- c1]\n');

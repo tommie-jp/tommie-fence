@@ -269,7 +269,7 @@ function readNotes(value: unknown, keyLine: number | null, xUnit: string, lineOf
       else notes.push({ ...result.value, line } as NoteSpec);
       continue;
     }
-    // `- band 14k 18k: 字` は 1 項目のマップ。字は値の側に来る (板のフェンスと同じ形)。
+    // `- band 14k 18k: 字` は 1 項目のマップ。字は値の側に来る (基板のフェンスと同じ形)。
     if (isMap(item) && item.items.length === 1) {
       const pair = item.items[0];
       const head = scalarText(pair?.key);

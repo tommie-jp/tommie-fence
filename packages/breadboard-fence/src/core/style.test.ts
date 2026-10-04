@@ -121,7 +121,7 @@ describe('style', () => {
   test('moves the printing to a readable ink when the board colour alone is made dark', () => {
     const { svg } = renderBreadboard(led('style:\n  board-color: "#202020"'));
 
-    // 板だけ暗くして字が暗いまま残ると読めない。近いテーマの明るい印字へ寄せる。
+    // 基板だけ暗くして字が暗いまま残ると読めない。近いテーマの明るい印字へ寄せる。
     expect(svg).toContain(themed('dark').palette.partText);
     expect(svg).not.toContain(themed('classic').palette.partText);
   });
@@ -151,7 +151,7 @@ describe('style', () => {
     const { svg, errors } = renderBreadboard(led('style:\n  board-color: red";onload=alert(1)'));
 
     expect(errors).toHaveLength(1);
-    // 読めなかった値は属性にも、エラーの文面にも出さない。板は既定の色のまま。
+    // 読めなかった値は属性にも、エラーの文面にも出さない。基板は既定の色のまま。
     expect(svg).not.toContain('onload');
     expect(svg).toContain(themed('classic').palette.plate);
   });

@@ -5,8 +5,8 @@ import { parseAddress } from '../model/address.ts';
 import type { Address } from '../types.ts';
 
 /**
- * 板の外の機器を升目から掴む (実機で「ブレッドボード外にある部品も選択、
- * 動かす…の対象にする」)。この板で動かすというのは、上下どちらの帯にするか。
+ * 基板の外の機器を升目から掴む (実機で「ブレッドボード外にある部品も選択、
+ * 動かす…の対象にする」)。この基板で動かすというのは、上下どちらの帯にするか。
  */
 const WITH_AT = [
   'parts:',
@@ -28,7 +28,7 @@ const after = (source: string, to: string): string => {
   return applyEdits(source, moved.value.edits);
 };
 
-describe('板の外の機器を掴む', () => {
+describe('基板の外の機器を掴む', () => {
   test('counts a device as something the map can grab', () => {
     expect(deviceIds(WITH_AT)).toEqual(['AD2']);
     expect(isDevice(WITH_AT, 'AD2')).toBe(true);

@@ -39,7 +39,7 @@ describe('shapesOf', () => {
     ];
     const onBack = shapesOf(specs, BOARD);
     expect(onBack.errors.map((error) => error.message)).toEqual([
-      'P1 が板からはみ出しています', 'X1 が板からはみ出しています',
+      'P1 が基板からはみ出しています', 'X1 が基板からはみ出しています',
     ]);
     expect(onBack.slots).toHaveLength(1);
     const onFront = shapesOf(specs, createBoard(40, 20, { ground: 'front' }));

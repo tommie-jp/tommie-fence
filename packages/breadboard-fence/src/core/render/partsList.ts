@@ -9,15 +9,15 @@ import { isLight, textScale } from './theme.ts';
 
 /** 部品リストと、その下に続く帯との間に空ける高さ。 */
 const GAP = 12;
-/** 行の高さと板の内側の余白。字の大きさに対する比で持つ (テーマごとに字が違うため)。 */
+/** 行の高さと基板の内側の余白。字の大きさに対する比で持つ (テーマごとに字が違うため)。 */
 const LINE_RATIO = 1.5;
 const PAD_RATIO = 0.9;
-/** 字の上端からベースラインまで。板の中で行を上下に振り分けるのに使う。 */
+/** 字の上端からベースラインまで。基板の中で行を上下に振り分けるのに使う。 */
 const CAP_RATIO = 0.8;
 /** 列と列の間。字の大きさの何倍か。 */
 const COLUMN_GAP = 1.5;
 
-/** 板にこれだけの幅も残っていない列は、出さずに諦める (字の大きさに対する比)。 */
+/** 基板にこれだけの幅も残っていない列は、出さずに諦める (字の大きさに対する比)。 */
 const MIN_COLUMN_WIDTH = 4;
 
 /**
@@ -63,8 +63,8 @@ const typeOf = (part: PlacedPart): string =>
 const HOLES: Readonly<Record<BoardSize, number>> = { mini: 170, half: 400, full: 830 };
 
 /**
- * 板の行。**サイズと穴数**を書き、電源レールは既定 (mini は無し、half / full は有り)
- * と違うときだけ添える。印字 (`letters` `numbers`) は買う板を決めないので載せない。
+ * 基板の行。**サイズと穴数**を書き、電源レールは既定 (mini は無し、half / full は有り)
+ * と違うときだけ添える。印字 (`letters` `numbers`) は買う基板を決めないので載せない。
  */
 export function boardRow(board: Board): Row {
   const hasRails = board.rails !== null;
@@ -110,9 +110,9 @@ const plateHeight = (rows: number, theme: RenderTheme): number => {
   return textSize * PAD_RATIO * 2 + textSize + lineHeight(theme) * (rows - 1);
 };
 
-/** 部品リストが図の下に足す高さ (板 + 下の余白)。並べるものが無ければ 0。 */
+/** 部品リストが図の下に足す高さ (基板 + 下の余白)。並べるものが無ければ 0。 */
 export function partsListHeight(parts: readonly PlacedPart[], theme: RenderTheme, board: Board | null = null): number {
-  // 見出しの 1 行と、板の 1 行を足す。
+  // 見出しの 1 行と、基板の 1 行を足す。
   return parts.length === 0 ? 0 : plateHeight(rowCount(parts.length) + 1 + (board === null ? 0 : 1), theme) + GAP;
 }
 
@@ -135,28 +135,28 @@ export function renderPartsList(
   const sorted = [...parts].sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }));
   const listed = rowsOf(sorted.slice(0, LIMITS.listedParts));
   const hidden = parts.length - listed.length;
-  // 先頭は見出し。板は最初に用意する物なので、名前の順には入れず見出しのすぐ下に置く。上限の数にも数えない。
+  // 先頭は見出し。基板は最初に用意する物なので、名前の順には入れず見出しのすぐ下に置く。上限の数にも数えない。
   const rows = [HEADING_ROW, ...(board === null ? [] : [boardRow(board)]), ...listed];
   const { palette } = theme;
   const { textSize } = theme.metrics;
   const pad = textSize * PAD_RATIO;
   const line = lineHeight(theme);
 
-  // 板は基板と同じ色で塗る。`board-color` を変えたときに印字の色が追従する仕掛け
+  // 基板は基板と同じ色で塗る。`board-color` を変えたときに印字の色が追従する仕掛け
   // (theme.ts の inkFor) にそのまま相乗りできるため。字の縁取りは cell が敷く。
   const plate = element('rect', {
     x: num(x), y: num(y), width: num(width), height: num(plateHeight(rows.length + (hidden === 0 ? 0 : 1), theme)), rx: 6,
     fill: palette.plate, stroke: palette.plateEdge,
   });
 
-  // 列の幅は左から順に、板に残っている幅で頭打ちにして決める。こうしておくと
-  // どれか 1 つが長すぎても、右の列が板の外に押し出されることはない。
+  // 列の幅は左から順に、基板に残っている幅で頭打ちにして決める。こうしておくと
+  // どれか 1 つが長すぎても、右の列が基板の外に押し出されることはない。
   const inked = x + width - pad;
   const room = (columnX: number): number => Math.max(0, (inked - columnX) / textSize);
 
   const idX = x + pad;
   // ID は図の部品と突き合わせるための鍵なので切らない。フェンスから来る ID は
-  // 英数字 32 文字までで、いちばん狭い板でも収まる (room はコアの API を直に
+  // 英数字 32 文字までで、いちばん狭い基板でも収まる (room はコアの API を直に
   // 呼ばれたときの保険で、フェンス経由では効かない)。
   const idWidth = Math.min(widest(rows.map((row) => row.id)), room(idX));
 
@@ -172,9 +172,9 @@ export function renderPartsList(
   const markRoom = room(markX);
 
   const baselineOf = (index: number): number => y + pad + textSize * CAP_RATIO + line * index;
-  // 縁取りは図のキャプションと同じものを敷く。`style` の `text-color` は板ではなく
+  // 縁取りは図のキャプションと同じものを敷く。`style` の `text-color` は基板ではなく
   // この縁取りとの対比で読ませる指定なので、外すとリストだけが地に沈む。
-  // リストは板の上の字ではなく読む表なので、透かさず地に対して一番濃い色 (黒か白) で書く。
+  // リストは基板の上の字ではなく読む表なので、透かさず地に対して一番濃い色 (黒か白) で書く。
   const ink = isLight(palette.plate) ? '#000000' : '#ffffff';
   const cell = (cellX: number, baseline: number, text: string, fill: string): string =>
     svgText(cellX, baseline, text, {
@@ -190,7 +190,7 @@ export function renderPartsList(
     const baseline = baselineOf(index);
     return [
       cell(idX, baseline, fit(row.id, idWidth), ink),
-      // 板に幅が残っていない列は諦める。ID を切ると図の部品と突き合わせられなく
+      // 基板に幅が残っていない列は諦める。ID を切ると図の部品と突き合わせられなく
       // なるが、種類と値のほうは図 (部品の形とキャプション `R1 330`) にも出ている。
       ...(typeRoom < MIN_COLUMN_WIDTH ? [] : [cell(typeX, baseline, fit(row.type, typeWidth), ink)]),
       ...(row.value === '' || valueRoom < MIN_COLUMN_WIDTH

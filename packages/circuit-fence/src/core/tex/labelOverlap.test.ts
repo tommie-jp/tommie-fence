@@ -4,7 +4,7 @@ import { parseFence } from '../parser/parseFence.ts';
 import { generateTex } from './generate.ts';
 
 /**
- * 図の字が記号の飾り (光の矢・足の番号・足の名前) に重ならないこと。
+ * 図の字が記号の飾り (光の矢・ピンの番号・ピンの名前) に重ならないこと。
  *
  * TeX は走らせずに、**書いた TeX の座標とアンカーから字の占める箱を見積もり**、
  * 飾りの占める範囲と突き合わせる。飾りの寸法は circuitikz 1.0 を焼いた SVG で
@@ -127,7 +127,7 @@ describe('LED・フォトダイオードの値は光の矢に重ならない', (
   });
 });
 
-describe('DIP の型番は足の番号に重ならない', () => {
+describe('DIP の型番はピンの番号に重ならない', () => {
   /** アンカー名 → 箱の中の向き (中心から見た単位ベクトル)。 */
   const ANCHOR_DIRECTION: Readonly<Record<string, readonly [number, number]>> = {
     north: [0, 1], south: [0, -1], east: [1, 0], west: [-1, 0],
@@ -143,8 +143,8 @@ describe('DIP の型番は足の番号に重ならない', () => {
     ];
   }
 
-  // 立てた箱は足の番号が左右の縁から中へ並び、真ん中に字の入る幅が無い。
-  // 型番は足の名前の表に無いもの (表にあれば名前の箱になり、型番の置き方が違う)。
+  // 立てた箱はピンの番号が左右の縁から中へ並び、真ん中に字の入る幅が無い。
+  // 型番はピンの名前の表に無いもの (表にあれば名前の箱になり、型番の置き方が違う)。
   for (const [turn, rotate] of [['', 0], [' r180', 180]] as const) {
     test(`puts a long part number under the upright box${turn}`, () => {
       const tex = generate('parts:', `  U1: dip16 c3 CD74HC4094${turn}`);
@@ -170,11 +170,11 @@ describe('DIP の型番は足の番号に重ならない', () => {
   });
 });
 
-describe('機器の名前は反転しても足の名前に重ならない', () => {
+describe('機器の名前は反転してもピンの名前に重ならない', () => {
   /** 機器の名前の字の幅 (\scriptsize。`deviceBox` の見積もりと同じ)。 */
   const LABEL_CHAR = 0.15;
 
-  /** 形の名前 (`dev3w13n5`) から、半幅と足の名前の列の幅 (cm) を読む。 */
+  /** 形の名前 (`dev3w13n5`) から、半幅とピンの名前の列の幅 (cm) を読む。 */
   function boxOf(tex: string, id: string): { halfWidth: number; nameArea: number; shape: string } {
     const found = new RegExp(`\\\\node\\[(dev\\d+w(\\d+)n(\\d+))[^\\]]*\\] \\(part-${id}\\)`, 'u').exec(tex);
     if (found === null) throw new Error('機器の記号がありません');
@@ -199,7 +199,7 @@ describe('機器の名前は反転しても足の名前に重ならない', () =
     ...(turn === null ? [] : [`    turn: ${turn}`]),
   ];
 
-  // 反転 (と r180) は箱の左右を入れ替える。足の名前の列は右の縁に来る。
+  // 反転 (と r180) は箱の左右を入れ替える。ピンの名前の列は右の縁に来る。
   for (const turn of ['mirror', 'r180'] as const) {
     test(`places the label clear of the pin-name column (${turn})`, () => {
       const tex = generate(...DEVICE(turn));
@@ -221,7 +221,7 @@ describe('機器の名前は反転しても足の名前に重ならない', () =
     const tex = generate(...DEVICE(null));
     const { shape, halfWidth, nameArea } = boxOf(tex, 'PIR');
 
-    // 足の名前の列 [-hw, -hw + nameArea] の右に残る場所の真ん中。
+    // ピンの名前の列 [-hw, -hw + nameArea] の右に残る場所の真ん中。
     expect(anchorX(tex, shape, 'value')).toBeCloseTo((-halfWidth + nameArea + halfWidth) / 2, 5);
   });
 

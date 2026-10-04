@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { darken, isLandColor, isPlateColor, plateValue, wireOn } from './finish.ts';
 
-describe('板の仕上げの色', () => {
+describe('基板の仕上げの色', () => {
   test('reads the resist colours by name, green first among them', () => {
     expect(isPlateColor('green')).toBe(true);
     expect(plateValue('GREEN')).toBe(plateValue('green'));
@@ -25,7 +25,7 @@ describe('板の仕上げの色', () => {
   });
 
   test('does not take a plating name as a resist colour, or the other way round', () => {
-    // 表を分けてあるのは、板に `gold`、ランドに `green` と書けてしまわないため。
+    // 表を分けてあるのは、基板に `gold`、ランドに `green` と書けてしまわないため。
     expect(isPlateColor('gold')).toBe(false);
     expect(isLandColor('green')).toBe(false);
   });
@@ -44,7 +44,7 @@ describe('darken', () => {
 
 describe('配線の既定色', () => {
   test('is light on a dark board and dark on a light board', () => {
-    // 既定を 1 つの灰色に固定すると、同じ濃さの板で線が沈む。
+    // 既定を 1 つの灰色に固定すると、同じ濃さの基板で線が沈む。
     expect(wireOn('#2c7a4b')).not.toBe(wireOn('#e8eaec'));
   });
 

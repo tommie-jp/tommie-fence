@@ -208,11 +208,11 @@ describe('buildCircuit のピン参照', () => {
   });
 });
 
-describe('足のある配線の上に見える端', () => {
+describe('ピンのある配線の上に見える端', () => {
   const warn = (...rows: string[]) => build(...rows).notices.map((notice) => notice.message);
 
   test('says it cannot judge a touch on a wire that runs to a pin', () => {
-    // U1.out -- c9 は c7 の上を通って見えるが、足の位置は格子の上に無いので
+    // U1.out -- c9 は c7 の上を通って見えるが、ピンの位置は格子の上に無いので
     // つながっているかを決められない。黙って別のネットにしない。
     const messages = warn(
       'parts:',
@@ -315,7 +315,7 @@ describe('書ける向きかどうか', () => {
   });
 
   test('refuses to mirror a chip, naming the line', () => {
-    // 足番号も型番も鏡文字になる (実機で確認)。回転はできる。
+    // ピン番号も型番も鏡文字になる (実機で確認)。回転はできる。
     const { errors } = build('parts:', '  U1: dip8 c3 mirror');
 
     expect(errors[0]?.message).toContain('mirror');
@@ -342,7 +342,7 @@ describe('書ける向きかどうか', () => {
   });
 });
 
-describe('足へまっすぐ引いた配線', () => {
+describe('ピンへまっすぐ引いた配線', () => {
   const warn = (...rows: string[]) => build(...rows).notices.map((notice) => notice.message);
 
   test('says a -- into an off-centre pin comes in slanted', () => {
@@ -369,7 +369,7 @@ describe('足へまっすぐ引いた配線', () => {
 
   test('turns the centre line with the symbol, so a rotated pin reads straight', () => {
     // r90 で base は左から**上**へ回るので、同じ列の番地からはまっすぐ入る。
-    // 向きを見ずに足の名前だけで決めると、正しく引いた線に口を出す。
+    // 向きを見ずにピンの名前だけで決めると、正しく引いた線に口を出す。
     const { errors, notices } = build(
       'parts:', '  Q1: npn c5 r90', 'wires:', '  - Q1.B -- a5',
     );
@@ -394,7 +394,7 @@ describe('足へまっすぐ引いた配線', () => {
   });
 
   test('says a centre line pin still slants when the cell is off its axis', () => {
-    // out は横の中心線に出るが、行が違えば斜めになる。足の名前だけでは決まらない。
+    // out は横の中心線に出るが、行が違えば斜めになる。ピンの名前だけでは決まらない。
     const messages = warn('parts:', '  U1: opamp c5', 'wires:', '  - U1.out -- d7');
 
     expect(messages).toHaveLength(1);
@@ -550,7 +550,7 @@ describe('部品の体の上に乗った端', () => {
   });
 });
 
-describe('足のある線の上に見える交点', () => {
+describe('ピンのある線の上に見える交点', () => {
   const warn = (...rows: string[]) => build(...rows).notices.map((notice) => notice.message);
   const touched = (...rows: string[]) => warn(...rows).some((message) => message.includes('この線の上に見えます'));
 
@@ -564,7 +564,7 @@ describe('足のある線の上に見える交点', () => {
   });
 
   test('decides for itself when the leg is off the centre line', () => {
-    // 実機で「判断できないか」と訊かれた回。**中心線から外れた足**
+    // 実機で「判断できないか」と訊かれた回。**中心線から外れたピン**
     // (ボードの GP27) から出る辺は、記号の縁の半端な高さに出るので
     // 交点の並びに乗らない — どの交点も通らないと決められる。
     expect(touched(
@@ -582,7 +582,7 @@ describe('足のある線の上に見える交点', () => {
   });
 
   test('leaves the slanted case to the notice that already speaks', () => {
-    // `--` で外れた足へ引くと斜めに入る。重ねて言わない。
+    // `--` で外れたピンへ引くと斜めに入る。重ねて言わない。
     const said = warn(
       'parts:', '  U2: pico2-w j3', '  R2: resistor j7 l7', '  R1: resistor j9 l9',
       'wires:', '  - U2.GP27 -- j9',
@@ -593,7 +593,7 @@ describe('足のある線の上に見える交点', () => {
   });
 });
 
-describe('2 端子部品の足', () => {
+describe('2 端子部品のピン', () => {
   test('resolves the wiper of a potentiometer', () => {
     const { circuit, errors } = build(
       'parts:',
@@ -610,14 +610,14 @@ describe('2 端子部品の足', () => {
     const { errors } = build('parts:', '  R1: resistor a1 a3', 'wires:', '  - R1.w -- c2');
 
     expect(errors.map((error) => error.message)).toEqual([
-      '部品 R1 (resistor) に足の名前はありません',
+      '部品 R1 (resistor) にピンの名前はありません',
     ]);
   });
 
   test('lists the legs it does have when the name is wrong', () => {
     const { errors } = build('parts:', '  T1: triac a1 a3', 'wires:', '  - T1.k -- c2');
 
-    expect(errors[0]?.message).toBe('T1 に足 k はありません (g / gate)');
+    expect(errors[0]?.message).toBe('T1 にピン k はありません (g / gate)');
   });
 });
 
@@ -837,8 +837,8 @@ describe('番地の名前 (points)', () => {
   });
 });
 
-describe('交点の間の番地と足の読み分け', () => {
-  // 番地から `.` が消えたので、足 (`U1.5`) と番地が同じ綴りになる道はもう無い
+describe('交点の間の番地とピンの読み分け', () => {
+  // 番地から `.` が消えたので、ピン (`U1.5`) と番地が同じ綴りになる道はもう無い
   // (以前は `U_1.5` が番地 `u_1.5` としても読めたので、書き分けを頼んでいた)。
   test('points at the separator when a decimal is written without one in a wire', () => {
     const { errors } = build(

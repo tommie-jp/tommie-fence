@@ -21,7 +21,7 @@ import type { ChipSpec, LeadedSpec, RowSpec, SotSpec } from './smd.ts';
 const MM = SMD_PX_PER_MM;
 
 
-/** 電極と足の金物。 */
+/** 電極とピンの金物。 */
 const METAL = '#c9ced6';
 const METAL_EDGE = '#7c848e';
 /** 樹脂 (SOT・SOD)。差し込み型の TO-92 と同じ黒。 */
@@ -47,7 +47,7 @@ type Size = { readonly width: number; readonly height: number };
 const rect = (x: number, y: number, width: number, height: number, attrs: Record<string, string | number>): string =>
   element('rect', { x: num(x), y: num(y), width: num(width), height: num(height), ...attrs });
 
-/** 直付けの 2 本足 (チップ・SOD) の表。それ以外は null。 */
+/** 直付けの 2 ピン (チップ・SOD) の表。それ以外は null。 */
 function twoLeadSpec(part: BodyPart): ChipSpec | LeadedSpec | null {
   const look = smdLook(part.variant ?? null);
   if (look === null || look.onAdapter) return null;
@@ -55,7 +55,7 @@ function twoLeadSpec(part: BodyPart): ChipSpec | LeadedSpec | null {
 }
 
 /**
- * 直付けの 2 本足の外形 (px)。**足の間隔では伸び縮みしない** (実物の寸法)。
+ * 直付けの 2 ピンの外形 (px)。**ピンの間隔では伸び縮みしない** (実物の寸法)。
  * 面実装の姿でなければ null — 呼ぶ側 (`bodySize`) が差し込み型の数式に戻る。
  */
 export function smdBodySize(part: BodyPart): Size | null {
@@ -66,7 +66,7 @@ export function smdBodySize(part: BodyPart): Size | null {
 }
 
 /**
- * 直付けの 2 本足の胴。座標は `bodies.ts` と同じ「原点が中央・x 軸が足の向き」。
+ * 直付けの 2 ピンの胴。座標は `bodies.ts` と同じ「原点が中央・x 軸がピンの向き」。
  * 面実装の姿でなければ null。
  */
 export function drawSmdBody(part: BodyPart, ink: BodyInk = REAL_INK): string | null {
@@ -75,7 +75,7 @@ export function drawSmdBody(part: BodyPart, ink: BodyInk = REAL_INK): string | n
   return spec.kind === 'chip' ? chipBody(part, spec, ink) : leadedBody(part, spec, ink);
 }
 
-/** チップ。**両端の電極が金物**で、そこが板のランドに半田付けされる。 */
+/** チップ。**両端の電極が金物**で、そこが基板のランドに半田付けされる。 */
 function chipBody(part: BodyPart, spec: ChipSpec, ink: BodyInk): string {
   const length = spec.length * MM;
   const width = spec.width * MM;
@@ -108,8 +108,8 @@ function ledFace(part: BodyPart, length: number, width: number, cap: number, ink
 }
 
 /**
- * 樹脂の胴から平たい足が出るダイオード。**カソード帯は差し込み型と同じ側**
- * (印が無ければ後に書いた穴)。足は胴の下から出て、両端でランドに載る。
+ * 樹脂の胴から平たいピンが出るダイオード。**カソード帯は差し込み型と同じ側**
+ * (印が無ければ後に書いた穴)。ピンは胴の下から出て、両端でランドに載る。
  */
 function leadedBody(part: BodyPart, spec: LeadedSpec, ink: BodyInk): string {
   const length = spec.length * MM;
@@ -131,12 +131,12 @@ function leadedBody(part: BodyPart, spec: LeadedSpec, ink: BodyInk): string {
 /** SOT-89 の放熱タブが胴から出る長さと、タブの幅 (mm)。 */
 const TAB_OUT = 0.6;
 const TAB_WIDTH = 1.7;
-/** SOT の足の幅 (mm)。SOT-89 の真ん中の足だけ太い。 */
+/** SOT のピンの幅 (mm)。SOT-89 の真ん中のピンだけ太い。 */
 const SOT_LEAD = 0.4;
 const SOT89_MIDDLE = 0.53;
 
 /**
- * SOT の胴と足。**原点が胴の中心、1 番と 2 番の足が -y の側、3 番が +y の側**
+ * SOT の胴とピン。**原点が胴の中心、1 番と 2 番のピンが -y の側、3 番が +y の側**
  * (1 番が -x)。SOT-89 は 3 本とも -y に並び、+y にタブが出る。
  */
 export function sotGlyph(spec: SotSpec, ink: BodyInk = REAL_INK): string {
@@ -144,7 +144,7 @@ export function sotGlyph(spec: SotSpec, ink: BodyInk = REAL_INK): string {
   const width = spec.width * MM;
   const pitch = spec.pitch * MM;
   const metal = { fill: ink.paint(METAL), stroke: ink.paint(METAL_EDGE), 'stroke-width': 0.5 };
-  // 足は胴の縁の少し内側から出す (胴の下に隠れる根元)。
+  // ピンは胴の縁の少し内側から出す (胴の下に隠れる根元)。
   const tuck = 0.5;
   const out = spec.tab ? (spec.span - spec.width - TAB_OUT) * MM : ((spec.span - spec.width) / 2) * MM;
   const foot = (x: number, side: -1 | 1, thick: number): string => rect(
@@ -167,22 +167,22 @@ export function sotGlyph(spec: SotSpec, ink: BodyInk = REAL_INK): string {
 /**
  * 直付けの SOT の置き方。**描画も当たり判定もここから取る** (perfboard の約束 9)。
  *
- * 1 番と 2 番の足を結ぶ向きが胴の長さの向き (`along`)、3 番の足のある側が
+ * 1 番と 2 番のピンを結ぶ向きが胴の長さの向き (`along`)、3 番のピンのある側が
  * `toward`。胴は 1 番・2 番の行と 3 番の行の**真ん中**に置く — 三角 (1 番と 2 番を
- * 隣の穴、3 番を次の行) なら、足先がちょうど両方の行に届く。三角でなくても
- * 同じ規則で置き、足先から穴まで線を引く (届かない分が図に出る)。
+ * 隣の穴、3 番を次の行) なら、ピン先がちょうど両方の行に届く。三角でなくても
+ * 同じ規則で置き、ピン先から穴まで線を引く (届かない分が図に出る)。
  */
 export type SotMount = {
   readonly cx: number;
   readonly cy: number;
   /** 胴の長さの向き (ラジアン)。 */
   readonly angle: number;
-  /** 3 番の足の側が、胴を回した後の +y か。false なら上下を裏返して描く。 */
+  /** 3 番のピンの側が、胴を回した後の +y か。false なら上下を裏返して描く。 */
   readonly upright: boolean;
-  /** 外形 (足先まで)。幅が長さの向き。 */
+  /** 外形 (ピン先まで)。幅が長さの向き。 */
   readonly width: number;
   readonly height: number;
-  /** 3 本の足先 (図の座標)。書いた順。 */
+  /** 3 本のピン先 (図の座標)。書いた順。 */
   readonly tips: readonly ChipPoint[];
 };
 
@@ -195,7 +195,7 @@ export function sotMountOf(points: readonly ChipPoint[], spec: SotSpec): SotMoun
   const apart = Math.hypot(dx, dy);
   const along = apart === 0 ? { x: 1, y: 0 } : { x: dx / apart, y: dy / apart };
   const middle = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
-  // 3 番の足の側。1 番・2 番の線の上に乗っていたら、回した +y の側に置く。
+  // 3 番のピンの側。1 番・2 番の線の上に乗っていたら、回した +y の側に置く。
   const normal = { x: -along.y, y: along.x };
   const reach = (third.x - middle.x) * normal.x + (third.y - middle.y) * normal.y;
   const toward = reach < 0 ? { x: -normal.x, y: -normal.y } : normal;
@@ -222,12 +222,12 @@ export function sotMountOf(points: readonly ChipPoint[], spec: SotSpec): SotMoun
 export type DirectSotOptions = {
   readonly points: readonly ChipPoint[];
   readonly variant: string;
-  /** 足先から穴へ渡る半田の色 (板の足の線と同じ色)。 */
+  /** ピン先から穴へ渡る半田の色 (基板のピンの線と同じ色)。 */
   readonly lead: string;
   readonly ink?: BodyInk;
 };
 
-/** 直付けの SOT。足先から穴まで半田の線を引き、その上に胴を置く。 */
+/** 直付けの SOT。ピン先から穴まで半田の線を引き、その上に胴を置く。 */
 export function drawDirectSot(options: DirectSotOptions): string {
   const look = smdLook(options.variant);
   if (look === null || look.spec.kind !== 'sot') return '';
@@ -253,12 +253,12 @@ export function drawDirectSot(options: DirectSotOptions): string {
   return solder + glyph;
 }
 
-/** 変換基板の板・シルク・ピンヘッダの樹脂。3 本足の変換基板 (`packages.ts`) と同じ色。 */
+/** 変換基板の基板・シルク・ピンヘッダの樹脂。3 ピンの変換基板 (`packages.ts`) と同じ色。 */
 export const ADAPTER_BOARD = { fill: '#1f6b45', edge: '#124a2b', silk: '#dfe4ee', header: '#2b2f33' } as const;
 /** ピンヘッダを半田付けしたランド。半径はピッチに対する比。 */
 const PAD = '#c9a227';
 const PAD_RATIO = 0.26;
-/** IC の足先とランドの間に残す隙間 (px)。 */
+/** IC のピン先とランドの間に残す隙間 (px)。 */
 const PAD_CLEAR = 1.5;
 
 export type DipAdapterOptions = DipOptions & {
@@ -266,10 +266,10 @@ export type DipAdapterOptions = DipOptions & {
   readonly variant?: string;
   /**
    * 型番が決める面実装の胴 (3SK291 の SMQ)。**実寸で描き、胴には印字だけ**を刷る。
-   * 足の名前 (`names`) はランドの内側のシルク、部品の名前 (`label`) は板の脇に出す。
+   * ピンの名前 (`names`) はランドの内側のシルク、部品の名前 (`label`) は基板の脇に出す。
    */
   readonly chip?: AdapterChip;
-  /** 板の脇に出す部品の名前 (`Q1`)。`chip` のときだけ使う。 */
+  /** 基板の脇に出す部品の名前 (`Q1`)。`chip` のときだけ使う。 */
   readonly label?: string;
   /** 実物の色 (基板の緑・金物) の塗り。白黒の図で差し替える。 */
   readonly paint?: BodyInk;
@@ -278,7 +278,7 @@ export type DipAdapterOptions = DipOptions & {
 /** 2 列の IC の胴の長さ (mm)。 */
 const rowLength = (spec: RowSpec, perSide: number): number => perSide * spec.pitch + spec.ends;
 
-/** 胴と足の寸法 (mm)。表の姿 (`RowSpec`) も型番の胴 (`AdapterChip`) もこの形にして描く。 */
+/** 胴とピンの寸法 (mm)。表の姿 (`RowSpec`) も型番の胴 (`AdapterChip`) もこの形にして描く。 */
 type ChipDims = {
   readonly length: number; readonly width: number; readonly span: number;
   readonly pitch: number; readonly lead: number;
@@ -290,7 +290,7 @@ const rowDims = (spec: RowSpec, perSide: number): ChipDims => ({
 });
 
 /**
- * 変換基板の上の局所座標。**a = 足の列に沿う向き、c = 列をまたぐ向き**、原点は
+ * 変換基板の上の局所座標。**a = ピンの列に沿う向き、c = 列をまたぐ向き**、原点は
  * 渡した中心。縦に置いた DIP でも同じ式で描ける。
  */
 type Axes = {
@@ -325,7 +325,7 @@ function adapterFrame(points: readonly ChipPoint[], pitch: number): Frame {
   return { box, ...axesAt({ x: box.x + box.width / 2, y: box.y + box.height / 2 }, chipAlongX(points)) };
 }
 
-/** 変換基板の板とシルクの枠。 */
+/** 変換基板の基板とシルクの枠。 */
 function boardPlate(box: ChipBox, paint: BodyInk): string {
   const board = rect(box.x, box.y, box.width, box.height, {
     rx: 2, fill: paint.paint(ADAPTER_BOARD.fill), stroke: paint.paint(ADAPTER_BOARD.edge),
@@ -342,17 +342,17 @@ const headerPads = (points: readonly ChipPoint[], pitch: number, paint: BodyInk)
     + rect(point.x - 2, point.y - 2, 4, 4, { fill: paint.paint(ADAPTER_BOARD.header) }))
   .join('');
 
-/** 変換基板の板・シルク・ピンヘッダのランド。 */
+/** 変換基板の基板・シルク・ピンヘッダのランド。 */
 const adapterBoard = (frame: Frame, points: readonly ChipPoint[], pitch: number, paint: BodyInk): string =>
   boardPlate(frame.box, paint) + headerPads(points, pitch, paint);
 
 type RowChip = { readonly svg: string; readonly length: number; readonly width: number };
 
-/** 幅の違う 1 本の足。**胴のどの角か** (a・c の符号) で指す。 */
+/** 幅の違う 1 本のピン。**胴のどの角か** (a・c の符号) で指す。 */
 type WideLead = { readonly a: number; readonly c: number; readonly lead: number };
 
 /**
- * 2 列の胴と足を、渡した座標の原点に描く。`squeeze` は列をまたぐ向きだけの縮み
+ * 2 列の胴とピンを、渡した座標の原点に描く。`squeeze` は列をまたぐ向きだけの縮み
  * (長さは保つので、胴に刷る字の大きさは変わらない)。
  */
 function rowChip(axes: Axes, dims: ChipDims, perSide: number, squeeze: number, paint: BodyInk, body: string, wide: WideLead | null = null): RowChip {
@@ -376,9 +376,9 @@ function rowChip(axes: Axes, dims: ChipDims, perSide: number, squeeze: number, p
 }
 
 /**
- * DIP の変換基板で、実寸の胴が足の列に被るときの縮み。**足先は DIP の足のランドの
+ * DIP の変換基板で、実寸の胴がピンの列に被るときの縮み。**ピン先は DIP のピンのランドの
  * 手前で止める。** ブレッドボードは溝を詰めて描くので (e 行と f 行が 3 ピッチより
- * 近い)、実寸の IC は足の列に被る。そのときは**列をまたぐ向きだけ**縮める —
+ * 近い)、実寸の IC はピンの列に被る。そのときは**列をまたぐ向きだけ**縮める —
  * DIP の樹脂も同じ向きに詰めて描いている。
  */
 function squeezeOf(frame: Frame, span: number, points: readonly ChipPoint[], pitch: number): number {
@@ -405,7 +405,7 @@ function pinOneMarks(frame: Frame, first: ChipPoint, chip: RowChip, paint: BodyI
 
 /**
  * DIP 化した変換基板に載った 2 列の IC (`dip8/sop`)。**外形は DIP の樹脂と同じ**
- * (`dipBox`) — 当たり判定が DIP のまま使える。足の番号は刷らない (IC の足先が
+ * (`dipBox`) — 当たり判定が DIP のまま使える。ピンの番号は刷らない (IC のピン先が
  * 番号の置き場に来る)。向きは**1 番側の端の白い点**と、IC の 1 番の窪みで示す。
  * 載っている物が表に無ければ DIP の樹脂で描く。
  */
@@ -439,10 +439,10 @@ function chipLabel(text: string, centre: ChipPoint, length: number, alongX: bool
   );
 }
 
-/** 変換基板のシルクに刷る字 (足の名前と部品の名前) の大きさ。 */
+/** 変換基板のシルクに刷る字 (ピンの名前と部品の名前) の大きさ。 */
 const SILK_NAME_FONT = 5.5;
 const SILK_LABEL_FONT = 7;
-/** 足の名前を、ランドの中心から胴の側へ寄せる量 (px)。ランドの縁 (半径 5.2) のすぐ内側。 */
+/** ピンの名前を、ランドの中心から胴の側へ寄せる量 (px)。ランドの縁 (半径 5.2) のすぐ内側。 */
 const SILK_NAME_IN = 10.5;
 /** 字の基準線を字の真ん中から下げる比 (大文字の高さの半分)。 */
 const SILK_MIDDLE = 0.36;
@@ -460,8 +460,8 @@ function silkLabel(at: ChipPoint, text: string, room: number, scale: number, pai
 
 /**
  * 型番が胴を決める面実装 (3SK291 の SMQ) を DIP の変換基板に載せた姿。**胴は実寸**で、
- * 刷るのは実物の印字だけ。足の名前はランドのすぐ内側の白いシルク (入らなければ板の外)、
- * 部品の名前は板の外 (1 番の白い点の反対の端) に出す。向きは 1 番側の白い点と、幅の違う足で示す。
+ * 刷るのは実物の印字だけ。ピンの名前はランドのすぐ内側の白いシルク (入らなければ基板の外)、
+ * 部品の名前は基板の外 (1 番の白い点の反対の端) に出す。向きは 1 番側の白い点と、幅の違うピンで示す。
  */
 function drawDipModelChip(options: DipAdapterOptions, model: AdapterChip): string {
   const { points, names, pinOne, pitch, scale, ink } = options;
@@ -471,7 +471,7 @@ function drawDipModelChip(options: DipAdapterOptions, model: AdapterChip): strin
   const frame = adapterFrame(points, pitch);
   const perSide = Math.max(points.length / 2, 1);
 
-  // 幅の違う足は、その番号のランドと同じ角。番号は 1 番から足の並びを巡る。
+  // 幅の違うピンは、その番号のランドと同じ角。番号は 1 番からピンの並びを巡る。
   const widePoint = model.wide === undefined ? undefined : points[(pinOne + model.wide.pin - 1) % points.length];
   const wideAt = widePoint === undefined ? null : frame.local(widePoint);
   const wide = wideAt === null || model.wide === undefined
@@ -479,7 +479,7 @@ function drawDipModelChip(options: DipAdapterOptions, model: AdapterChip): strin
     : { a: Math.sign(wideAt.a), c: Math.sign(wideAt.c) || 1, lead: model.wide.lead };
   const chip = rowChip(frame, model, perSide, squeezeOf(frame, model.span, points, pitch), paint, ink.body, wide);
 
-  // 足の名前はランドのすぐ内側のシルク。**胴の足先との間に字が入らなければ板の外**
+  // ピンの名前はランドのすぐ内側のシルク。**胴のピン先との間に字が入らなければ基板の外**
   // (ブレッドボードの溝をまたぐ 2 行は近く、実寸の胴でほぼ埋まる)。
   const rowHalf = Math.max(...points.map((point) => Math.abs(frame.local(point).c)));
   const tipHalf = (model.span * MM) / 2;
@@ -497,9 +497,9 @@ function drawDipModelChip(options: DipAdapterOptions, model: AdapterChip): strin
   const endSign = frame.local(first).a < 0 ? -1 : 1;
   const half = (frame.alongX ? frame.box.width : frame.box.height) / 2;
   const dot = frame.at(endSign * (half - 4.5), 0);
-  // 部品の名前は**板の外、1 番の反対の端の脇** (横の板)。板は実寸の胴でほぼ埋まり、
-  // 中に字の入る場所が無い。足の 2 行の真ん中の高さなので、穴の行には乗らない。
-  // 立てた板では板の下に出す。
+  // 部品の名前は**基板の外、1 番の反対の端の脇** (横の基板)。基板は実寸の胴でほぼ埋まり、
+  // 中に字の入る場所が無い。ピンの 2 行の真ん中の高さなので、穴の行には乗らない。
+  // 立てた基板では基板の下に出す。
   const size = scale * SILK_LABEL_FONT;
   const { box } = frame;
   const label = options.label === undefined ? '' : frame.alongX
@@ -514,21 +514,21 @@ function drawDipModelChip(options: DipAdapterOptions, model: AdapterChip): strin
     + legends + label;
 }
 
-/** 1 列の変換基板が、足の列から胴の側へ張り出す量と、胴の中心までの距離 (ピッチに対する比)。 */
+/** 1 列の変換基板が、ピンの列から胴の側へ張り出す量と、胴の中心までの距離 (ピッチに対する比)。 */
 const SIP_BOARD_REACH = 2.2;
 const SIP_CHIP_AT = 0.95;
 
 export type SipAdapterOptions = SipOptions & {
   readonly chip: AdapterChip;
-  /** 板のシルクに刷る部品の名前 (`Q1`)。 */
+  /** 基板のシルクに刷る部品の名前 (`Q1`)。 */
   readonly label: string;
   readonly paint?: BodyInk;
 };
 
 /**
- * 型番が胴を決める面実装を **1 列の変換基板**に載せた姿 (`sip4` + `3SK291`)。板は足の列から
- * **足の名前と反対の側**へ張り出し、そこに実寸の胴を載せる。足の名前は 1 列ヘッダと同じ
- * 置き場 (板の外。`sipLegends`)。
+ * 型番が胴を決める面実装を **1 列の変換基板**に載せた姿 (`sip4` + `3SK291`)。基板はピンの列から
+ * **ピンの名前と反対の側**へ張り出し、そこに実寸の胴を載せる。ピンの名前は 1 列ヘッダと同じ
+ * 置き場 (基板の外。`sipLegends`)。
  */
 export function drawSipAdapter(options: SipAdapterOptions): string {
   const { points, pitch, scale, nameSide, ink, chip: model, label } = options;
@@ -537,14 +537,14 @@ export function drawSipAdapter(options: SipAdapterOptions): string {
   const bar = sipBox(points, pitch);
   const alongX = chipAlongX(points);
   const reach = SIP_BOARD_REACH * pitch;
-  // 板は帯の縁 (足の名前の側) から、反対側へ `reach` まで。
+  // 基板は帯の縁 (ピンの名前の側) から、反対側へ `reach` まで。
   const box: ChipBox = alongX
     ? { x: bar.x, y: nameSide > 0 ? bar.y + bar.height - reach : bar.y, width: bar.width, height: reach }
     : { x: nameSide > 0 ? bar.x + bar.width - reach : bar.x, y: bar.y, width: reach, height: bar.height };
   const row = { x: bar.x + bar.width / 2, y: bar.y + bar.height / 2 };
   const away = -nameSide * SIP_CHIP_AT * pitch;
   const axes = axesAt(alongX ? { x: row.x, y: row.y + away } : { x: row.x + away, y: row.y }, alongX);
-  // 幅の違う足は、足の列から遠い側の、並びの終わりの角 (1 番を並びの始めに向けた置き方)。
+  // 幅の違うピンは、ピンの列から遠い側の、並びの終わりの角 (1 番を並びの始めに向けた置き方)。
   const wide = model.wide === undefined ? null : { a: 1, c: -nameSide, lead: model.wide.lead };
   const drawn = rowChip(axes, model, 2, 1, paint, ink.body, wide);
   const half = (alongX ? box.width : box.height) / 2;

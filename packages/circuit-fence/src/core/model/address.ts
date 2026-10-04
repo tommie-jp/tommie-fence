@@ -62,7 +62,7 @@ const FRACTION_LETTERS = 'abcdefghij';
  *
  * **英字と数字が交互に並ぶので区切りが要らない。** 以前は `_` で行と列を切って
  * 小数を書いていたが (旧 `a.5_1.5`)、番地から `.` が消えたことで
- * **`.` を含む綴りは足 (`U1.5`)** と 1 行で分かれるようになった。
+ * **`.` を含む綴りはピン (`U1.5`)** と 1 行で分かれるようになった。
  */
 const ADDRESS = new RegExp(`^([a-z]+)([0-9]{1,3})((?:[a-j][0-9]){0,${LIMITS.addressDecimals}})$`);
 
@@ -154,7 +154,7 @@ function spellingAt(row: number, column: number): string | null {
 const OLD_BETWEEN = /^([a-z]+)(?:\.([0-9]+))?_([0-9]{1,3})(?:\.([0-9]+))?$/;
 /** その頃の書き間違い (`a1_5` = 列の小数を `_` で切った形)。 */
 const OLD_SLIP = /^([a-z]+)([0-9]{1,3})_([0-9]+)$/;
-/** 番地に小数を書いた綴り (`a1.5`)。いまの文法では足の綴り。 */
+/** 番地に小数を書いた綴り (`a1.5`)。いまの文法ではピンの綴り。 */
 const DECIMAL = /^([a-z]+)([0-9]{1,3})\.([0-9]+)$/;
 
 const fractionOf = (digits: string | undefined): number => (digits === undefined ? 0 : Number(`0.${digits}`));
@@ -228,7 +228,7 @@ export function addressHint(text: string): string | null {
     if (tooFine(step)) return decimalsLimit();
     return suggest(
       spellingAt(rowOfLetters(letters), Number(digits) + fractionOf(step)),
-      '番地に小数は書きません (`.` は足の区切り)',
+      '番地に小数は書きません (`.` はピンの区切り)',
       '交点の間は 英字+数字 の組',
     );
   }
@@ -268,7 +268,7 @@ function suggest(spelling: string | null, lead: string, fallback = lead): string
 
 /**
  * TikZ の座標に付ける名前。**綴りをそのまま使う**。
- * 番地は英字と数字だけなので、TikZ がノードの足 (`(U1.north)`) と読む `.` も、
+ * 番地は英字と数字だけなので、TikZ がノードのピン (`(U1.north)`) と読む `.` も、
  * 座標名に使えない `_` も出てこない。`a1` の形はそのまま通すので、
  * 交点だけで描いた図の TeX はこれまでと 1 バイトも変わらない。
  */

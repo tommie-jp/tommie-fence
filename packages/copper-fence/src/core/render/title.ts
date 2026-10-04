@@ -5,7 +5,7 @@ import type { Theme } from './theme.ts';
 
 const TITLE_SCALE = 1.5;
 
-/** 画布の左の余白 (layout の OUTER と同じ)。題は板ではなく画布の左に揃える (左の SMA に引きずられない)。 */
+/** 画布の左の余白 (layout の OUTER と同じ)。題は基板ではなく画布の左に揃える (左の SMA に引きずられない)。 */
 const LEFT = 14;
 
 /** 図の題。文章から「図02 を直して」と指せるように (3 つのフェンスと同じ作法)。 */

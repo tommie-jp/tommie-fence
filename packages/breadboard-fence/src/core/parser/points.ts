@@ -45,7 +45,7 @@ export function validatePointName(name: string, line: number): FenceError | null
     return fenceError(`点の名前にハイフンだけの語は使えません: ${safeToken(name)}`, line);
   }
   // 場所の語は注釈の位置指定そのもの。名前として通すと `- text below: 字` の
-  // `below` が「点を指している」のか「板の下」なのか決まらなくなる。
+  // `below` が「点を指している」のか「基板の下」なのか決まらなくなる。
   if ((NOTE_PLACES as readonly string[]).includes(name.toLowerCase())) {
     return fenceError(`点の名前に注釈の場所の語は使えません: ${safeToken(name)}`, line);
   }
@@ -62,7 +62,7 @@ export function validatePointName(name: string, line: number): FenceError | null
  * 点の値が穴番地の形をしているか。**ここで見ないと、置き換わったあとの番地で
  * エラーが出る**。報告に添える行には書いた名前 (`vin`) しか無いので、
  * 「hello はありません」と言われて行のどこにも `hello` が無い、という
- * 直す場所を探せない報告になる。板の中かどうかは、板が決まってから見る。
+ * 直す場所を探せない報告になる。基板の中かどうかは、基板が決まってから見る。
  */
 export function validatePointAddress(name: string, addr: string, line: number): FenceError | null {
   if (parseAddress(addr)) return null;

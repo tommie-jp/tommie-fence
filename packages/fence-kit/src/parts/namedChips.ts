@@ -4,14 +4,14 @@ import { dipChip, segmentFace } from './chips.ts';
 import type { ChipPoint, DipOptions } from './chips.ts';
 
 /**
- * 足に名前のある DIP 型の部品 (52 の docs/66 の段 3)。**DIP の足の位置のうち、
- * 足のある所に名前が付いた物**。リレー・フォトカプラ・7 セグがこの形で、
- * 違うのは列の間の穴数と、どの位置に足があるかだけ。
+ * ピンに名前のある DIP 型の部品 (52 の docs/66 の段 3)。**DIP のピンの位置のうち、
+ * ピンのある所に名前が付いた物**。リレー・フォトカプラ・7 セグがこの形で、
+ * 違うのは列の間の穴数と、どの位置にピンがあるかだけ。
  *
- * **表だけを共有する** (マイコンボードの `boards.ts` と同じ)。板の 2 つは DIP と
- * 同じ道で置いて描き、回路図は足の名前を記号の足に当てる。
+ * **表だけを共有する** (マイコンボードの `boards.ts` と同じ)。ブレッドボードとユニバーサル基板は DIP と
+ * 同じ道で置いて描き、回路図はピンの名前を記号のピンに当てる。
  *
- * **足の並びは実物のデータシートで確かめたもの** (段 0)。位置の番号は DIP と
+ * **ピンの並びは実物のデータシートで確かめたもの** (段 0)。位置の番号は DIP と
  * 同じ回り方 (上から見て 1 番が左下、反時計回り)。
  */
 
@@ -28,11 +28,11 @@ export type NamedChip = {
   readonly kindName: string;
   /** ID の接頭辞 (回路図の慣習)。 */
   readonly prefix: string;
-  /** DIP の足の位置の数 (2 列の合計)。 */
+  /** DIP のピンの位置の数 (2 列の合計)。 */
   readonly positions: number;
   /** 2 列の間の穴の数 (2.54mm 単位)。DIP は 3。 */
   readonly rowSpan: number;
-  /** 足のある位置と名前。**位置の順**。 */
+  /** ピンのある位置と名前。**位置の順**。 */
   readonly pins: readonly NamedChipPin[];
   /** 胴の見た目。`display` は 7 セグの面、`switch` は DIP スイッチのつまみを描く。 */
   readonly body: 'relay' | 'chip' | 'display' | 'switch';
@@ -66,10 +66,10 @@ const CHIPS: readonly NamedChip[] = [
 ];
 
 /**
- * DIP スイッチ (スライド型、`連` 個の開閉スイッチ)。**DIP と同じ足の並び**で、k 番の
- * スイッチは k 番の足 (`Ak`) と向かいの足 (`Bk` = 2n+1−k 番) の間の接点。
- * **足どうしは部品の中でつながない** (開いた接点。リレーの接点と同じ扱い)。
- * 連の数で足の数が変わるので、姿ではなく**種類を分ける** (`dip-switch4` / `dip-switch8`)。
+ * DIP スイッチ (スライド型、`連` 個の開閉スイッチ)。**DIP と同じピンの並び**で、k 番の
+ * スイッチは k 番のピン (`Ak`) と向かいのピン (`Bk` = 2n+1−k 番) の間の接点。
+ * **ピンどうしは部品の中でつながない** (開いた接点。リレーの接点と同じ扱い)。
+ * 連の数でピンの数が変わるので、姿ではなく**種類を分ける** (`dip-switch4` / `dip-switch8`)。
  */
 function dipSwitch(ways: number): NamedChip {
   const lower = Array.from({ length: ways }, (_, index) => [index + 1, `A${index + 1}`] as const);
@@ -95,10 +95,10 @@ export function lookupNamedChip(type: string, look: string | null): NamedChip | 
 }
 
 /**
- * 名前つきの DIP 型を描く。**DIP の絵 (`dipChip`) に、足の名前と品名を載せる**。
+ * 名前つきの DIP 型を描く。**DIP の絵 (`dipChip`) に、ピンの名前と品名を載せる**。
  * 7 セグは品名の代わりに面 (「8.」) を描く — 品名は部品リストに出る。
  *
- * `names` は `points` と同じ順の足の名前 (板が並べたもの)。回した部品では
+ * `names` は `points` と同じ順のピンの名前 (基板が並べたもの)。回した部品では
  * 並びが巡るので、1 番ピンは**表の 1 番の位置の名前**で探す。
  */
 export function drawNamedChip(options: Omit<DipOptions, 'pinOne'> & { readonly chip: NamedChip }): string {
@@ -127,7 +127,7 @@ export function drawNamedChip(options: Omit<DipOptions, 'pinOne'> & { readonly c
   return `${dipChip({ ...options, pinOne, caption: '' })}${face}`;
 }
 
-/** 桁の面 (「8.」)。上下どちらかの列が無ければ (足を寄せ切れない置き方) 何も描かない。 */
+/** 桁の面 (「8.」)。上下どちらかの列が無ければ (ピンを寄せ切れない置き方) 何も描かない。 */
 function digitFace(top: ChipPoint | null, bottom: ChipPoint | null): string {
   if (top === null || bottom === null) return '';
   const gap = Math.hypot(top.x - bottom.x, top.y - bottom.y) || 1;
@@ -140,8 +140,8 @@ function digitFace(top: ChipPoint | null, bottom: ChipPoint | null): string {
 
 /**
  * つまみの溝の長さ (2 列の間に対する比) と幅 (px)、つまみの長さ (溝に対する比)。
- * **溝は足の番号の内側に収める** — 列から `SLOT_CLEAR` までは番号と名前の段なので、
- * 列の間が狭い板 (ブレッドボードの溝をまたぐ 2 行) では溝のほうを短くする。
+ * **溝はピンの番号の内側に収める** — 列から `SLOT_CLEAR` までは番号と名前の段なので、
+ * 列の間が狭い基板 (ブレッドボードの溝をまたぐ 2 行) では溝のほうを短くする。
  */
 const SLOT_LENGTH = 0.3;
 const SLOT_CLEAR = 20;
@@ -154,7 +154,7 @@ const SLOT_INK = '#5b616b';
 const KNOB_INK = '#f4f5f7';
 
 /**
- * DIP スイッチのつまみ。**向かい合う足 (`Ak` と `Bk`) の間に溝 1 本**、つまみは A の側
+ * DIP スイッチのつまみ。**向かい合うピン (`Ak` と `Bk`) の間に溝 1 本**、つまみは A の側
  * (どちらが ON かは品ごとに違うので、字では刷らない)。
  */
 function sliders(points: readonly ChipPoint[], names: readonly string[]): string {

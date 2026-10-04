@@ -75,6 +75,6 @@ export function islandsOf(shapes: readonly Shape[]): readonly Island[] {
 export const islandAt = (islands: readonly Island[], point: Mm): Island | null =>
   islands.find((island) => island.pieces.some((piece) => contains(piece.rect, point))) ?? null;
 
-/** 島のまわりの溝 (表が地の板)。島の矩形を溝の幅だけ広げたもの。 */
+/** 島のまわりの溝 (表が地の基板)。島の矩形を溝の幅だけ広げたもの。 */
 export const cutZones = (islands: readonly Island[]): readonly RectMm[] =>
   islands.flatMap((island) => island.pieces.map((piece) => grow(piece.rect, piece.gap)));

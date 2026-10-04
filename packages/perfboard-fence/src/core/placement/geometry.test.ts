@@ -24,7 +24,7 @@ describe('spanOf', () => {
   });
 
   test('measures a diagonal as the straight line between the holes', () => {
-    // **胴が跨ぐのは足から足への直線**。行と列の大きいほうで数えると、
+    // **胴が跨ぐのはピンからピンへの直線**。行と列の大きいほうで数えると、
     // 斜めの間隔を実際より短く見積もる。
     expect(spanOf(part(['b3', 'd5']))).toBeCloseTo(Math.SQRT2 * 2);
     expect(spanOf(part(['b3', 'c4']))).toBeCloseTo(Math.SQRT2);
@@ -37,7 +37,7 @@ describe('spanOf', () => {
 
 describe('bodyRect', () => {
   test('gives a radial part the body it is drawn with, not the span of its leads', () => {
-    // LED は足の間を胴が跨がない (丸い玉から足が 2 本出る)。描画は玉を
+    // LED はピンの間を胴が跨がない (丸い玉からピンが 2 本出る)。描画は玉を
     // 決まった大きさで描くので、**当たり判定も同じ大きさで見る**。
     const stretched = bodyRect(part(['b1', 'b9'], 'led'), layout)!;
     const tight = bodyRect(part(['b1', 'b2'], 'led'), layout)!;
@@ -81,7 +81,7 @@ describe('overlaps', () => {
   });
 
   test('sees a part laid across another', () => {
-    // 足は別の穴でも**胴が交差する**。実物では両方は挿せない。
+    // ピンは別の穴でも**胴が交差する**。実物では両方は挿せない。
     expect(overlaps(rectOf(['b3', 'b7']), rectOf(['a5', 'c5']))).toBe(true);
   });
 
@@ -97,7 +97,7 @@ describe('overlaps', () => {
   });
 });
 
-describe('足が 3 本以上ある部品', () => {
+describe('ピンが 3 本以上ある部品', () => {
   const many = (holes: readonly string[], type: string): PlacedPart => ({
     id: 'U1',
     type,

@@ -6,23 +6,23 @@ import { lookupBoardPart, lookupConnector, lookupNamedChip } from 'fence-kit';
 import type { NamedChip } from 'fence-kit';
 
 /**
- * 部品の形。**何個の穴を書くか**と、**足がどこに来るか**の 2 つを決める。
+ * 部品の形。**何個の穴を書くか**と、**ピンがどこに来るか**の 2 つを決める。
  *
- * 2 本足と 3 本足は**書かれた穴がそのまま足**。実物の足は曲げられるので、
+ * 2 ピンと 3 ピンは**書かれた穴がそのままピン**。実物のピンは曲げられるので、
  * 列に並べても三角に開いても挿さり、どちらで書いたかは図に出したい。
  *
- * DIP と SIP は**アンカー 1 つだけ書く**。足の位置はパッケージが決めていて、
+ * DIP と SIP は**アンカー 1 つだけ書く**。ピンの位置はパッケージが決めていて、
  * 書く人が選べないため — 16 個の穴を書かせるのは、選べないものを書かせること。
  *
- * 端面実装のコネクタ (`sma/*-edge`) は **3 本足** — 中心導体と、凹の両端の先端。
- * 実物の凹は板の縁を上下から挟み、半田付けするのは腕の先端の 2 点で、
- * 中心導体の行ではなくその上下の行の銅箔に来る。2 本足のまま中心線に足を
+ * 端面実装のコネクタ (`sma/*-edge`) は **3 ピン** — 中心導体と、凹の両端の先端。
+ * 実物の凹は基板の縁を上下から挟み、半田付けするのは腕の先端の 2 点で、
+ * 中心導体の行ではなくその上下の行の銅箔に来る。2 ピンのまま中心線にピンを
  * 書かせると、アースの穴が中心導体の真下に埋まって信号線とつながって見えた。
  * **先端は片方だけ書けばよい** — 凹は 1 つの金物で、書かなかったほうは
  * 中心線を挟んで反対側に決まる (`pinsOf` が補う)。
  *
- * USB コネクタは**書いた穴がそのまま足**で、数は 2 から表の長さまで
- * (電源だけの変換基板は 2 本)。足の名前は書いた順に表から当てる。
+ * USB コネクタは**書いた穴がそのままピン**で、数は 2 から表の長さまで
+ * (電源だけの変換基板は 2 本)。ピンの名前は書いた順に表から当てる。
  */
 
 export type FootprintKind =
@@ -30,15 +30,15 @@ export type FootprintKind =
 
 export type Footprint = {
   readonly kind: FootprintKind;
-  /** 足の数。 */
+  /** ピンの数。 */
   readonly pins: number;
   /** フェンスに書く穴の数。 */
   readonly holes: number;
-  /** 省いてよい足があるとき、書く穴の最小の数。無ければ `holes` と同じ。 */
+  /** 省いてよいピンがあるとき、書く穴の最小の数。無ければ `holes` と同じ。 */
   readonly minHoles?: number;
   /**
-   * 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。**表は fence-kit** で、
-   * DIP の位置のうち足のある所と、列の間の穴数を持つ (52 の docs/66)。
+   * ピンに名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。**表は fence-kit** で、
+   * DIP の位置のうちピンのある所と、列の間の穴数を持つ (52 の docs/66)。
    */
   readonly chip?: NamedChip;
   /** マイコンボードの 2 列の間隔 (穴の数)。ボードごとに違う (`BOARD_ROW_SPAN` は Pico)。 */
@@ -55,8 +55,8 @@ export const DIP_ROW_SPAN = 3;
 export const BOARD_ROW_SPAN = 7;
 
 /**
- * タクトスイッチの足が作る四角 (穴の数)。6mm 角の実物は 5.08mm 角の格子に
- * 足が来るので、行も列も 2 穴。**breadboard と同じ数** (あちらは溝をまたぐので
+ * タクトスイッチのピンが作る四角 (穴の数)。6mm 角の実物は 5.08mm 角の格子に
+ * ピンが来るので、行も列も 2 穴。**breadboard と同じ数** (あちらは溝をまたぐので
  * 行の側が溝の幅になる)。
  */
 export const SWITCH_SPAN = 2;
@@ -70,20 +70,20 @@ const DIP_MAX_PINS = 40;
 const SIP_MIN_PINS = 2;
 const SIP_MAX_PINS = 40;
 
-/** 種類から形を引く。置けない種類は null。**姿で足の数が変わる**のは端面実装だけ。 */
+/** 種類から形を引く。置けない種類は null。**姿でピンの数が変わる**のは端面実装だけ。 */
 export function footprintOf(type: string, variant: string | null = null): Footprint | null {
   if (isEdgeMount(type, variant)) return { kind: 'edge', pins: 3, holes: 3, minHoles: 2 };
 
   // マイコンボード。**表は fence-kit と共有** (どのボードに何番のピンがあるかは
-  // 板に依らない)。並べ方は DIP と同じで、列の間隔だけが広い。
+  // 基板に依らない)。並べ方は DIP と同じで、列の間隔だけが広い。
   const board = lookupBoardPart(type);
   if (board !== null) return { kind: 'board', pins: board.pins.length, holes: 1, span: board.rowSpan };
 
-  // 足に名前のある DIP 型。**姿 (品名) で表の行が決まる**。書かなければ表の最初。
+  // ピンに名前のある DIP 型。**姿 (品名) で表の行が決まる**。書かなければ表の最初。
   const named = lookupNamedChip(type, variant) ?? lookupNamedChip(type, null);
   if (named !== null) return { kind: 'named', pins: named.pins.length, holes: 1, chip: named };
 
-  // USB。**書いた数だけ足がある** — 足の数の上限は表の長さ。
+  // USB。**書いた数だけピンがある** — ピンの数の上限は表の長さ。
   const connector = lookupConnector(type);
   if (connector !== null) {
     const most = connector.pins.length;
@@ -95,7 +95,7 @@ export function footprintOf(type: string, variant: string | null = null): Footpr
   if (isTwoLead(type)) return { kind: 'two-lead', pins: 2, holes: 2 };
   if (isThreeLead(type)) return { kind: 'three-lead', pins: 3, holes: 3 };
   if (isFourLead(type)) return { kind: 'four-lead', pins: 4, holes: 4 };
-  // タクトスイッチ。**足の位置はパッケージが決める**ので、書くのはアンカー 1 つ。
+  // タクトスイッチ。**ピンの位置はパッケージが決める**ので、書くのはアンカー 1 つ。
   if (isSwitch(type)) return { kind: 'switch', pins: 4, holes: 1 };
 
   const dip = DIP.exec(type);
@@ -117,7 +117,7 @@ export function footprintOf(type: string, variant: string | null = null): Footpr
 }
 
 /**
- * 書かれた穴から足の位置を出す。
+ * 書かれた穴からピンの位置を出す。
  *
  * DIP は**実物を上から見た並び**で反時計回り — アンカーは胴の左上の穴で、
  * 切り欠きを左にすると 1 番は**左下**。下の列を右へ数えて、折り返して上の列を
@@ -128,7 +128,7 @@ export function footprintOf(type: string, variant: string | null = null): Footpr
 /**
  * アンカーからの相対位置を、書かれた向きに回す。
  *
- * **反転してから回す** (circuit と同じ意味。52 の docs/11)。板は行が下へ、
+ * **反転してから回す** (circuit と同じ意味。52 の docs/11)。基板は行が下へ、
  * 列が右へ増えるので、時計回りは (行, 列) → (列, -行)。
  * 反転は**左右**なので、列の符号だけが変わる。
  */
@@ -185,8 +185,8 @@ export function pinsOf(
     ];
   }
 
-  // 足に名前のある DIP 型。**DIP と同じ回り方**で位置を数え、足のある位置だけ返す
-  // (表の位置の順。足の名前もこの順で当たる)。
+  // ピンに名前のある DIP 型。**DIP と同じ回り方**で位置を数え、ピンのある位置だけ返す
+  // (表の位置の順。ピンの名前もこの順で当たる)。
   if (footprint.kind === 'named' && footprint.chip !== undefined) {
     const { chip } = footprint;
     const perSide = chip.positions / 2;
@@ -207,10 +207,10 @@ export type EdgeSide = 'left' | 'right' | 'top' | 'bottom';
 
 /**
  * 端面実装のコネクタが**どの辺に載っているか**。中心導体から一番近い縁で決める —
- * ただし**先端が中心導体より外側にある辺だけ**を候補にする。板の角に近い
+ * ただし**先端が中心導体より外側にある辺だけ**を候補にする。基板の角に近い
  * コネクタで左右と上下が同じ距離になっても、先端の側で決まる。
  *
- * 足どうしを結んだ線で決めないのは、先端が中心線の上下 (左右) にあるので、
+ * ピンどうしを結んだ線で決めないのは、先端が中心線の上下 (左右) にあるので、
  * その線は必ず斜めになるため (`placement/geometry.ts` の `edgeMountOf` と同じ理由)。
  * 決められないときは null (先端が中心導体と同じ穴など)。
  */

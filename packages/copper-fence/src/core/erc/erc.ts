@@ -14,9 +14,9 @@ import type { Board, CopperSpec, FenceError, Mm } from '../types.ts';
 /**
  * ERC — **図のとおりに切って組んでも動かない所**。perfboard の 3 つと同じ型の 4 つ:
  *
- * 1. 銅に乗っていない足 (チップの端・SMA の芯・SOT の足)。**SMA の中心導体が
+ * 1. 銅に乗っていないピン (チップの端・SMA の芯・SOT のピン)。**SMA の中心導体が
  *    表の地に触れる**のもここ (縁まで島が伸びていないと、芯が地に載る)
- * 2. 同じ部品の 2 本の足が同じ銅に乗っている (切れ目が無い)
+ * 2. 同じ部品の 2 本のピンが同じ銅に乗っている (切れ目が無い)
  * 3. ジャンパの端が銅に乗っていない
  * 4. 手で切れない細さ (幅・溝・結合の隙間が 0.3mm 未満)
  *
@@ -31,7 +31,7 @@ export type ErcInput = {
   readonly jumpers: readonly Jumper[];
   readonly islands: readonly Island[];
   readonly couplings: readonly Coupling[];
-  /** 板の外の機器と、配線がつながっている足 (`BAT.+`)。 */
+  /** 基板の外の機器と、配線がつながっているピン (`BAT.+`)。 */
   readonly devices?: readonly PlacedDevice[];
   readonly wiredPins?: ReadonlySet<string>;
   /** 点の導通グループ (島・地・どこでもない)。 */
@@ -45,19 +45,19 @@ export function checkErc(input: ErcInput): FenceError[] {
   const said: FenceError[] = [];
   const lineOf = new Map(input.footprints.map((footprint) => [footprint.part.id, footprint.part.line]));
 
-  // 1. 銅に乗っていない足。
+  // 1. 銅に乗っていないピン。
   for (const landing of input.landings) {
     for (const point of landing.points) {
       if (point.strip !== null) continue;
       said.push(notice(
-        `${landing.part} の ${landing.pin} 番の足 (${formatPoint(point.at)}) の下に銅がありません`,
+        `${landing.part} の ${landing.pin} 番のピン (${formatPoint(point.at)}) の下に銅がありません`,
         lineOf.get(landing.part) ?? null,
         landing.part,
       ));
     }
   }
 
-  // 1 の続き — SMA の中心導体は縁から板に載る。**その下に表の地があれば短絡**。
+  // 1 の続き — SMA の中心導体は縁から基板に載る。**その下に表の地があれば短絡**。
   if (hasFrontGround(input.board)) {
     for (const footprint of input.footprints) {
       if (footprint.part.kind !== 'edge') continue;
@@ -73,7 +73,7 @@ export function checkErc(input: ErcInput): FenceError[] {
     }
   }
 
-  // 2. 同じ部品の足が同じ銅に乗っている。**箱は見ない** — モジュールの GND の足が
+  // 2. 同じ部品のピンが同じ銅に乗っている。**箱は見ない** — モジュールの GND のピンが
   //    同じ島に並ぶのは正しい図 (SAW の 2 本の GND など)。
   for (const footprint of input.footprints) {
     if (footprint.part.kind === 'box') continue;
@@ -105,13 +105,13 @@ export function checkErc(input: ErcInput): FenceError[] {
     }
   }
 
-  // 3 の続き — 機器の足がどこにもつながっていない。**板の外の機器は配線を書かないと銅に届かない**。
+  // 3 の続き — 機器のピンがどこにもつながっていない。**基板の外の機器は配線を書かないと銅に届かない**。
   for (const device of input.devices ?? []) {
     for (const pin of device.pins) {
       const ref = `${device.spec.id}.${pin.name}`;
       if (input.wiredPins?.has(ref) === true) continue;
       said.push(notice(
-        `${ref} の足がどこにもつながっていません (板の外の機器なので、配線を書かないと銅に届きません)`,
+        `${ref} のピンがどこにもつながっていません (基板の外の機器なので、配線を書かないと銅に届きません)`,
         device.spec.line,
         device.spec.id,
       ));

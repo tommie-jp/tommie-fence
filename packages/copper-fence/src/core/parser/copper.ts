@@ -30,7 +30,7 @@ const extra = (words: readonly string[]): string | null =>
   (words.length === 0 ? null : `読めない語です: ${safeToken(words.join(' '))}`);
 
 /**
- * `line 0,10 40,10 3mm [gap 0.3mm]` — 点を 2 つ以上、幅、表が地の板なら溝の幅。
+ * `line 0,10 40,10 3mm [gap 0.3mm]` — 点を 2 つ以上、幅、表が地の基板なら溝の幅。
  * **斜めの区間はここでは断らない** (形にするとき区間ごとに言い、残りは描く)。
  */
 function readLine(id: string, words: string[]): LineResult<CopperSpec> {

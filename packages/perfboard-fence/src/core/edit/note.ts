@@ -49,7 +49,7 @@ type NoteResult =
 const fail = (message: string, line: number | null): NoteResult =>
   ({ ok: false, error: fenceError(message, line) });
 
-/** 掴み手が指している注釈。板の上に出るものだけ (書き出しと部品表は掴めない)。 */
+/** 掴み手が指している注釈。基板の上に出るものだけ (書き出しと部品表は掴めない)。 */
 function locate(source: string, handle: string): Found | { readonly problem: string; readonly line: number | null } {
   const line = noteLineOf(handle);
   if (line === null) return { problem: `注釈の名札を読めません: ${safeToken(handle)}`, line: null };
@@ -63,7 +63,7 @@ function locate(source: string, handle: string): Found | { readonly problem: str
   if (doc.notes.filter((one) => one.line === line).length > 1) {
     return { problem: `${line} 行目: ${SHARED_LINE_REFUSAL}`, line };
   }
-  if (note.from === null) return { problem: `${line} 行目の注釈は板の外に出るので掴めません`, line };
+  if (note.from === null) return { problem: `${line} 行目の注釈は基板の外に出るので掴めません`, line };
 
   const lines = normalized.split('\n');
   const text = lines[line - 1] ?? '';
@@ -138,10 +138,10 @@ export function moveNote(source: string, handle: string, to: Address, trial = fa
     };
   });
   if (landings.some((one) => one === null)) return fail(`${found.line} 行目の注釈の番地を読めません`, found.line);
-  // **注釈は板の外へも出せる。** 半田付けする場所ではなく、図に添える字なので、
-  // 板の脇や上下の余白に置きたいことがある (実機で「text はどこでも移動できる
+  // **注釈は基板の外へも出せる。** 半田付けする場所ではなく、図に添える字なので、
+  // 基板の脇や上下の余白に置きたいことがある (実機で「text はどこでも移動できる
   // ようにする。ボード外含む」)。**離れすぎだけ断る** — 番地の届く範囲
-  // (`offBoardReason`、板の外は 4 つ先まで) が図の広がる限界でもある。
+  // (`offBoardReason`、基板の外は 4 つ先まで) が図の広がる限界でもある。
   for (const landing of landings) {
     const why = landing === null || board === null ? null : offBoardReason(board, landing);
     if (why !== null) return fail(`注釈を動かすと ${why}`, found.line);
@@ -159,7 +159,7 @@ export function moveNote(source: string, handle: string, to: Address, trial = fa
   return { ok: true, value: { edits, diff: trial ? { lost: [], gained: [] } : diffAfter(source, edits) } };
 }
 
-/** 板の大きさ。**`board:` が読めなくても既定の板が返る** (52 の docs/54)。 */
+/** 基板の大きさ。**`board:` が読めなくても既定の基板が返る** (52 の docs/54)。 */
 function boardOf(source: string): ReturnType<typeof createBoard> {
   return parseFence(normalizeNewlines(source)).doc.board;
 }

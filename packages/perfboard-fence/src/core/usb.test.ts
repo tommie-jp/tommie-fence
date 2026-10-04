@@ -7,7 +7,7 @@ import { isKnownType, placeableNames, splitPartType } from './parts/types.ts';
 import { orientOf } from './parts/orient.ts';
 
 /**
- * USB コネクタ (52 の docs/58)。**書いた穴がそのまま足**で、足の名前は表の順
+ * USB コネクタ (52 の docs/58)。**書いた穴がそのままピン**で、ピンの名前は表の順
  * (`VBUS GND D+ D-`、Type-C は `CC1 CC2` まで)。書いた数だけ使う。
  */
 
@@ -36,7 +36,7 @@ describe('種類と姿', () => {
     // パレットからは 2 つの穴を結んで置く (電源だけの変換基板)。
     expect(holesOf('usb-a')).toBe(2);
     expect(holesOf('usb-c')).toBe(4);
-    // 足の向きは穴の順そのものなので、向きの語は書けない。
+    // ピンの向きは穴の順そのものなので、向きの語は書けない。
     expect(orientOf('usb-c')).toBe('none');
   });
 
@@ -138,7 +138,7 @@ describe('図', () => {
     ));
     const metalTop = Math.min(...[...svg.matchAll(/<rect x="[-\d.]+" y="([-\d.]+)"[^>]*fill="#c3c8ce"/g)]
       .map((match) => Number(match[1])));
-    // 機器の箱は角丸 4 で、板の地の色ではない矩形 (`render/devices.ts`)。
+    // 機器の箱は角丸 4 で、基板の地の色ではない矩形 (`render/devices.ts`)。
     const box = /<rect x="[-\d.]+" y="([-\d.]+)" width="[-\d.]+" height="([-\d.]+)" rx="4" fill="#efe4cd"/.exec(svg);
 
     expect(box).not.toBeNull();

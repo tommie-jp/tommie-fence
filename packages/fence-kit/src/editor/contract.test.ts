@@ -172,7 +172,7 @@ describe('checkFenceEditor', () => {
   });
 
   test('catches a type that is offered but refuses one hole — the bug that lived through a release', () => {
-    // 3 本足が「穴を 3 つ書きます」と断っていたのがこれ (52 の docs/16)。
+    // 3 ピンが「穴を 3 つ書きます」と断っていたのがこれ (52 の docs/16)。
     const broken = fakeEditor({
       addPart: (_source, part) => (part.at.length === 1 && part.type === 'led'
         ? no('led は穴を 2 つ書きます')
@@ -270,7 +270,7 @@ describe('checkFenceEditor', () => {
   });
 
   test('catches a board that spells a fraction it has no grammar for', () => {
-    // 穴の間が無い板が端数の穴を返すと、読めない綴りが本文に書かれる。
+    // 穴の間が無い基板が端数の穴を返すと、読めない綴りが本文に書かれる。
     const whole = fakeEditor().step;
     const loose = fakeEditor({
       fine: null,

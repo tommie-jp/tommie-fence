@@ -11,7 +11,7 @@ import type { Outgoing } from './session.ts';
  * 「置けたときだけ」やっていたので、回して置けない向きにすると影ごと消えた
  * (実機で「回転して置けない場合でもシャドウを赤で表示して」)。
  *
- * 姿は種類と向きと足の数で決まり、**場所では変わらない**。だからどこか置ける穴に
+ * 姿は種類と向きとピンの数で決まり、**場所では変わらない**。だからどこか置ける穴に
  * 試し当てて絵を切り出し、指した穴までの差を添えれば、置けない場所にも出せる。
  */
 
@@ -70,7 +70,7 @@ const open = (over: Partial<FenceEditor> = {}) => {
     // **c 行より上には置けない** 盤。回すと縁を踏む部品と同じ断りになる。
     addPart: (_source, part) => {
       const at = readCell(part.at[0] ?? '');
-      return at !== null && at.rows >= 3 ? ok : no('回すと板の外へ出ます');
+      return at !== null && at.rows >= 3 ? ok : no('回すと基板の外へ出ます');
     },
     movePart: () => ok,
     movePoint: () => ok,
@@ -116,7 +116,7 @@ describe('置けない所のゴースト', () => {
 
     const answer = ghost();
     expect(answer?.ok).toBe(false);
-    expect(answer?.why).toContain('板の外');
+    expect(answer?.why).toContain('基板の外');
     expect(answer?.chip).toContain('data-part="X1"');
   });
 

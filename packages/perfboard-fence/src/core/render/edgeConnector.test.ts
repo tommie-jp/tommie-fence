@@ -3,9 +3,9 @@ import { textWidth } from 'fence-kit';
 import { renderPerfboard } from '../index.ts';
 
 /**
- * 板の左右の縁に載せた端面の SMA と、行の名前。NanoVNA の冊の治具の図すべてで、
+ * 基板の左右の縁に載せた端面の SMA と、行の名前。NanoVNA の冊の治具の図すべてで、
  * 台座が行の名前 `D`〜`F` を隠し、`SMA female` の字が `G` に掛かっていた。
- * コネクタの足の番地 (`e1 d0 f0`) を読む手掛かりがちょうどその行なので、座標で見張る。
+ * コネクタのピンの番地 (`e1 d0 f0`) を読む手掛かりがちょうどその行なので、座標で見張る。
  */
 const FIXTURE = [
   'board:',

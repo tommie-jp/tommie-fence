@@ -24,7 +24,7 @@ export const TOP_LEVEL_KEYS = ['board', 'f', 'title', 'copper', 'parts', 'wires'
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
 
-/** mm の点。**原点は板の左上**、x は右、y は下 (perfboard の `a1` と同じ向き)。 */
+/** mm の点。**原点は基板の左上**、x は右、y は下 (perfboard の `a1` と同じ向き)。 */
 export type Mm = { readonly x: number; readonly y: number };
 
 /** mm の矩形 (左上と大きさ)。 */
@@ -34,7 +34,7 @@ export type RectMm = { readonly x: number; readonly y: number; readonly width: n
 export type Point = { readonly x: number; readonly y: number };
 export type Rect = { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
 
-/** 板の辺。端面 SMA を載せる所。 */
+/** 基板の辺。端面 SMA を載せる所。 */
 export type Side = 'left' | 'right' | 'top' | 'bottom';
 
 /**
@@ -47,7 +47,7 @@ export type Side = 'left' | 'right' | 'top' | 'bottom';
  */
 export type Ground = 'back' | 'front' | 'both' | 'none';
 
-/** 板。**実寸と基材**で、Z0 の式の入力になる。 */
+/** 基板。**実寸と基材**で、Z0 の式の入力になる。 */
 export type Board = {
   /** 幅と高さ (mm)。 */
   readonly width: number;
@@ -57,7 +57,7 @@ export type Board = {
   /** 比誘電率。 */
   readonly er: number;
   readonly ground: Ground;
-  /** 表が地の板で、島のまわりに切る溝の幅 (mm)。線路ごとに `gap` で変えられる。 */
+  /** 表が地の基板で、島のまわりに切る溝の幅 (mm)。線路ごとに `gap` で変えられる。 */
   readonly cut: number;
 };
 
@@ -73,7 +73,7 @@ export type LineSpec = {
   readonly id: string;
   readonly points: readonly Mm[];
   readonly width: number;
-  /** 表が地の板で両脇に切る溝 (mm)。null は板の `cut`。 */
+  /** 表が地の基板で両脇に切る溝 (mm)。null は基板の `cut`。 */
   readonly gap: number | null;
   readonly line: number | null;
 };
@@ -127,7 +127,7 @@ export type EdgePartSpec = PartCommon & {
   readonly offset: number;
 };
 
-/** 2 本足の面実装 (チップ・SOD)。中心の点。**乗った線路を切る**。 */
+/** 2 ピンの面実装 (チップ・SOD)。中心の点。**乗った線路を切る**。 */
 export type ChipPartSpec = PartCommon & {
   readonly kind: 'chip';
   readonly at: Mm;
@@ -135,14 +135,14 @@ export type ChipPartSpec = PartCommon & {
   readonly orient: Orient | null;
 };
 
-/** 3 本足の面実装 (SOT)。中心の点。 */
+/** 3 ピンの面実装 (SOT)。中心の点。 */
 export type SotPartSpec = PartCommon & {
   readonly kind: 'sot';
   readonly at: Mm;
   readonly orient: Orient | null;
 };
 
-/** 箱 (SAW・缶・モジュール)。中心と大きさと足の数。足は左右の辺に並ぶ。 */
+/** 箱 (SAW・缶・モジュール)。中心と大きさとピンの数。ピンは左右の辺に並ぶ。 */
 export type BoxPartSpec = PartCommon & {
   readonly kind: 'box';
   readonly at: Mm;
@@ -152,40 +152,40 @@ export type BoxPartSpec = PartCommon & {
   readonly orient: Orient | null;
 };
 
-/** 足のある部品。**端は島の名前か点**。 */
+/** ピンのある部品。**端は島の名前か点**。 */
 export type LeadedPartSpec = PartCommon & {
   readonly kind: 'leaded';
   readonly ends: readonly [string, string];
 };
 
 /**
- * 足が 3〜4 本の部品 (TO-92・TO-220 のトランジスタ、4 本足の MMIC など)。
- * **端は足の並びの順**に足の数だけ、島の名前か点。姿を書かなければ種類ごとの既定。
+ * ピンが 3〜4 本の部品 (TO-92・TO-220 のトランジスタ、4 ピンの MMIC など)。
+ * **端はピンの並びの順**にピンの数だけ、島の名前か点。姿を書かなければ種類ごとの既定。
  */
 export type MultiPartSpec = PartCommon & {
   readonly kind: 'multi';
   readonly ends: readonly string[];
-  /** 書いていなければ null (足の総延長がいちばん短い向きを選ぶ)。 */
+  /** 書いていなければ null (ピンの総延長がいちばん短い向きを選ぶ)。 */
   readonly orient: Orient | null;
 };
 
 export type PartSpec = EdgePartSpec | ChipPartSpec | SotPartSpec | BoxPartSpec | LeadedPartSpec | MultiPartSpec;
 
 /**
- * 板の外の機器 (電源・測定器・マイク・アンテナ線)。**板には載らない**ので部品ではなく別に持つ。
- * 位置は箱の中心 (mm。板の外)。足は板の側の辺から出て、配線からは `名前.足` で指す。
+ * 基板の外の機器 (電源・測定器・マイク・アンテナ線)。**基板には載らない**ので部品ではなく別に持つ。
+ * 位置は箱の中心 (mm。基板の外)。ピンは基板の側の辺から出て、配線からは `名前.ピン` で指す。
  */
 export type DeviceSpec = {
   readonly id: string;
   readonly at: Mm;
   readonly label: string;
   readonly pins: readonly string[];
-  /** 足を出す辺。書かなければ null (板のいる側を向く)。 */
+  /** ピンを出す辺。書かなければ null (基板のいる側を向く)。 */
   readonly face: Side | null;
   readonly line: number | null;
 };
 
-/** 配線。端は島の名前・点・機器の足 (`名前.足`)。 */
+/** 配線。端は島の名前・点・機器のピン (`名前.ピン`)。 */
 export type WireSpec = {
   readonly from: string;
   readonly to: string;
@@ -230,7 +230,7 @@ export type FenceDocument = {
   readonly title: string | null;
   readonly copper: readonly CopperSpec[];
   readonly parts: readonly PartSpec[];
-  /** 板の外の機器。`parts:` の中に入れ子で書いたもの。 */
+  /** 基板の外の機器。`parts:` の中に入れ子で書いたもの。 */
   readonly devices: readonly DeviceSpec[];
   readonly wires: readonly WireSpec[];
   readonly notes: readonly NoteSpec[];

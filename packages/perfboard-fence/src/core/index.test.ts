@@ -5,7 +5,7 @@ import { renderPerfboard, STAMP_TEXT, VERSION } from './index.ts';
 import { THEME } from './render/theme.ts';
 
 describe('renderPerfboard', () => {
-  // **空でも既定の板を描く** (52 の docs/54)。図が出ないと、掴んで置く場所が
+  // **空でも既定の基板を描く** (52 の docs/54)。図が出ないと、掴んで置く場所が
   // 画面に無いまま「board: から書き始めます」とだけ言うことになる。
   test('draws the default board when the fence is empty, and says it is empty', () => {
     const result = renderPerfboard('');
@@ -75,7 +75,7 @@ describe('renderPerfboard', () => {
   test('keeps drawing the board when a part could not be read', () => {
     const result = renderPerfboard('board: 10x6\nparts:\n  R1: resistor b3 b99\n');
 
-    // 板は描けている。読めなかったのは部品 1 つなので、帯で言う。
+    // 基板は描けている。読めなかったのは部品 1 つなので、帯で言う。
     expect(result.svg).toContain('<svg');
     expect(result.errorHtml).toContain('perfboard-errors');
     expect(result.errorHtml).not.toContain('perfboard-error-card');
@@ -143,7 +143,7 @@ describe('renderPerfboard', () => {
     const result = renderPerfboard('board: 10x6\nparts:\n  R1: resistor b3 b7\n');
 
     expect(result.errors).toEqual([]);
-    // **部品ごとに 1 件**にまとめる (足 1 本ずつではない)。
+    // **部品ごとに 1 件**にまとめる (ピン 1 本ずつではない)。
     // ERC は `erc` に来る (52 の docs/55 — 帯の「検査 N」の釦で畳むため)。
     expect(result.erc).toHaveLength(1);
     expect(result.erc[0]?.line).toBe(3);
@@ -249,7 +249,7 @@ describe('renderPerfboard', () => {
 
     expect(withTitle.svg).toContain('>図01 ためし</text>');
     expect(withTitle.errors).toEqual([]);
-    // 題のぶんだけ画布が伸びる (板に重ねない)。
+    // 題のぶんだけ画布が伸びる (基板に重ねない)。
     expect(withTitle.svg.length).toBeGreaterThan(without.svg.length);
   });
 
@@ -274,16 +274,16 @@ describe('renderPerfboard', () => {
   });
 
   test('takes a part number that reads like an address on any part', () => {
-    // 型番は番地とそっくり (`C1815` は c 行 1815 列)。**板に載らない桁数**なので
-    // 足の書き間違いではありえない。
+    // 型番は番地とそっくり (`C1815` は c 行 1815 列)。**基板に載らない桁数**なので
+    // ピンの書き間違いではありえない。
     for (const line of ['  Q1: transistor b3 b4 b5 C1815', '  Q2: transistor c3 c4 c5 A1015']) {
       expect(renderPerfboard(`board: 12x8\nparts:\n${line}\n`).errors).toEqual([]);
     }
   });
 
   test('takes a value that reads like an address beyond this board, whatever order the keys come in', () => {
-    // `C102` (c 行 102 列) は上限 120 列の内側だが、この板 (25 列) には載らない —
-    // 値 (容量の 3 桁コード) であって、足の書き間違いではない。**板の実際の大きさで見る。**
+    // `C102` (c 行 102 列) は上限 120 列の内側だが、この基板 (25 列) には載らない —
+    // 値 (容量の 3 桁コード) であって、ピンの書き間違いではない。**基板の実際の大きさで見る。**
     for (const fence of [
       'board: 25x15\nparts:\n  R1: resistor b3 b7 C102\n',
       'parts:\n  R1: resistor b3 b7 C102\nboard: 25x15\n',
@@ -301,7 +301,7 @@ describe('renderPerfboard', () => {
   });
 
   test('says an ic has unwired pins once, not once per pin', () => {
-    // DIP の余った足は普通のこと。1 本ずつ言うと**正しい図が毎回叱られる**。
+    // DIP の余ったピンは普通のこと。1 本ずつ言うと**正しい図が毎回叱られる**。
     const result = renderPerfboard('board: 16x10\nparts:\n  U1: dip8 c4\n');
     const unwired = result.erc.filter((n) => n.message.includes('つながっていません'));
 
@@ -313,7 +313,7 @@ describe('renderPerfboard', () => {
   test('draws a sip2 as a package, not as an axial part', () => {
     const svg = renderPerfboard('board: 12x8\nparts:\n  J1: sip2 b3\n').svg;
 
-    // 箱で描く部品は胴の矩形が出る。2 本足の胴 (回転する g) にはならない。
+    // 箱で描く部品は胴の矩形が出る。2 ピンの胴 (回転する g) にはならない。
     expect(svg).not.toContain('rotate(');
   });
   test('paints the theme that was written', () => {
@@ -404,7 +404,7 @@ describe('renderPerfboard', () => {
   });
 });
 
-describe('板の外の機器', () => {
+describe('基板の外の機器', () => {
   const fence = [
     'board: 12x8',
     'parts:',
@@ -440,7 +440,7 @@ describe('板の外の機器', () => {
     const said = result.erc.map((one) => one.message).join('\n');
 
     expect(said).toContain('BAT.-');
-    expect(said).toContain('板の外');
+    expect(said).toContain('基板の外');
   });
 
   test('shows how to write a device when it is written on one line', () => {
@@ -620,8 +620,8 @@ describe('ERC の切り替え (style: check)', () => {
 describe('半田面 (style: back)', () => {
   const fence = 'board: 12x7\nparts:\n  R1: resistor b3 b6 1k\nwires:\n  - b3 -- b6\n';
 
-  // 板そのものは縁の色で数える (部品の胴も角丸の矩形なので、形では見分けられない)。
-  // 板そのものは縁の色で数える (部品の胴も角丸の矩形なので、形では見分けられない)。
+  // 基板そのものは縁の色で数える (部品の胴も角丸の矩形なので、形では見分けられない)。
+  // 基板そのものは縁の色で数える (部品の胴も角丸の矩形なので、形では見分けられない)。
   const plates = (svg: string): number => svg.match(new RegExp(`stroke="${THEME.palette.plateEdge}"`, 'g'))?.length ?? 0;
 
   test('is not drawn unless it was asked for', () => {
@@ -666,7 +666,7 @@ describe('半田面 (style: back)', () => {
   });
 });
 
-describe('板の外の番地', () => {
+describe('基板の外の番地', () => {
   test('wires to the slot copper, which sits one step outside the holes', () => {
     // 縁の銅箔は `0` 列。**電気的につながる**ので、ネットにもそう出る。
     const result = renderPerfboard(
@@ -714,7 +714,7 @@ wires:
   /**
    * **掴んで動かすときは書き出しを出さない** (52 の docs/45)。あれは公開する
    * 図に「元の字」を添えるためのもので、editor では字は隣の欄に出ている。
-   * 二重になるうえ、板より高い帯が付いて図そのものが小さくなる。
+   * 二重になるうえ、基板より高い帯が付いて図そのものが小さくなる。
    */
   test('leaves out the source listing on the map, where the text is already beside it', () => {
     // Arrange

@@ -188,7 +188,7 @@ export function nodeSpans(source: string, at: Address): readonly Span[] {
     .map((one) => ({ line: one.line, column: one.column, length: one.length }));
 }
 
-/** 動かした先。板から出るときは null。 */
+/** 動かした先。基板から出るときは null。 */
 function shifted(address: Address, to: Address, columns: number): Address | null {
   if (to.col < 1 || to.col > columns) return null;
   return address;
@@ -203,17 +203,17 @@ export function movePoint(source: string, at: Address, to: Address, trial = fals
   }
   if (sameAddress(at, to)) return { ok: true, value: { edits: [], diff: { lost: [], gained: [] } } };
   if (shifted(at, to, doc.columns) === null) {
-    return fail(`${formatAddress(to)} は板の外です (列は 1〜${doc.columns})`, null);
+    return fail(`${formatAddress(to)} は基板の外です (列は 1〜${doc.columns})`, null);
   }
 
-  // **縮退は断る。** 寄せた先に自分のもう一方の足がある部品は長さ 0 になり、
+  // **縮退は断る。** 寄せた先に自分のもう一方のピンがある部品は長さ 0 になり、
   // 図から消えてネットリストでは短絡になる。動かす前に名指して断る。
   for (const part of doc.parts) {
     const moves = part.holes.some((hole) => sameAddress(hole, at));
     const lands = part.holes.some((hole) => sameAddress(hole, to));
     if (moves && lands) {
       return fail(
-        `${safeToken(part.id)} の足が同じ穴に重なります (先に ${safeToken(part.id)} のほうを動かします)`,
+        `${safeToken(part.id)} のピンが同じ穴に重なります (先に ${safeToken(part.id)} のほうを動かします)`,
         part.line,
       );
     }

@@ -35,7 +35,7 @@ describe('the netlist', () => {
     expect(nets(source)).toEqual({ P1: ['R1.1', 'R2.1', 'R2.2'], GND: ['R1.2'] });
     // 溝 (島のまわり 0.5mm) の上は地ではない。
     expect(renderCopper(source.replace('20,10', '12.3,10')).erc.map((said) => said.message))
-      .toEqual(expect.arrayContaining([expect.stringMatching(/R1 の 2 番の足 \(12.3,10\) の下に銅がありません/)]));
+      .toEqual(expect.arrayContaining([expect.stringMatching(/R1 の 2 番のピン \(12.3,10\) の下に銅がありません/)]));
   });
 
   test('gives the shell of an SMA its own net when there is no ground', () => {

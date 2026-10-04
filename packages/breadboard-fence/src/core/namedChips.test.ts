@@ -9,9 +9,9 @@ import { variantsOf } from './parts/variants.ts';
 import { knownPartTypes, lookupFootprint, placeableTypes } from './placement/footprints.ts';
 
 /**
- * 足に名前のある DIP 型の部品 (リレー・フォトカプラ・7 セグ。52 の docs/66 の段 3)。
- * **表は fence-kit** — DIP の足の位置のうち、足のある所に名前が付いた物で、
- * 違うのは列の間の穴数と足のある位置だけ。置き方は DIP と同じ (1 番ピンの穴 1 つ)。
+ * ピンに名前のある DIP 型の部品 (リレー・フォトカプラ・7 セグ。52 の docs/66 の段 3)。
+ * **表は fence-kit** — DIP のピンの位置のうち、ピンのある所に名前が付いた物で、
+ * 違うのは列の間の穴数とピンのある位置だけ。置き方は DIP と同じ (1 番ピンの穴 1 つ)。
  */
 
 const fence = (...lines: string[]): string => ['board: half', ...lines, ''].join('\n');

@@ -81,7 +81,7 @@ describe('createLayout', () => {
 
 describe('createLayout without power rails', () => {
   const railless = createBoard({ ...DEFAULT_BOARD, rails: null });
-  // 列番号は a の上と j の下に出る。板の縁に食い込むと読めないので、この余白は要る。
+  // 列番号は a の上と j の下に出る。基板の縁に食い込むと読めないので、この余白は要る。
   const COLUMN_NUMBER_ROOM = 24;
 
   test('drops the height the four rail rows took', () => {

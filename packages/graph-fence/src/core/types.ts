@@ -2,7 +2,7 @@ import type { THEME_NAMES } from './limits.ts';
 import type { LineSpec } from './model/lines.ts';
 
 /**
- * graph フェンスの型。**図の中に部品も板も計器も無い** — 描くのは x の関数と点。
+ * graph フェンスの型。**図の中に部品も基板も計器も無い** — 描くのは x の関数と点。
  * 計器の画面 (scope・spectrum・vna) と違い、軸の名前と単位は書き手が決める
  * (52 の docs/92 の決め 3)。単位が違う線は縦に積んだ別の枠に置く (vna と同じ)。
  */

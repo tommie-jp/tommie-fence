@@ -14,7 +14,7 @@ export const CAPTION_HEIGHT = 14;
 // ラベルは穴 1 つぶんの隙間 (20) に置く。字を大きくしても**ベースラインは動かさない**:
 // 字は基準線から上へ伸びるので隙間を上に使い、下げると隣の穴の列に食い込む。
 export const CAPTION_DROP = 18;
-/** 胴と足の名前のあいだの隙間。字の高さは呼ぶ側が足す。 */
+/** 胴とピンの名前のあいだの隙間。字の高さは呼ぶ側が足す。 */
 export const LEG_NAME_CLEAR = 3;
 /** 字が基準線から上へ出る高さの、字の大きさに対する比。 */
 export const NAME_CAP = 0.72;
@@ -25,15 +25,15 @@ export const NAME_LINE = 1.15;
 export const caption = (part: PlacedPart): string => [part.id, part.value ?? part.label ?? ''].join(' ').trim();
 
 /**
- * 板からはみ出す字を切る。使える幅は**置き方 (anchor) と、そこから近いほうの板の端まで**で決まる。
+ * 基板からはみ出す字を切る。使える幅は**置き方 (anchor) と、そこから近いほうの基板の端まで**で決まる。
  *
  * `limits.ts` が切っているのは**文字数** (60) で、幅ではない。全角 60 文字は
  * 既定のテーマで 750px あり、half サイズの画布 (664px) には最初から入らない。
  * 切らずに置くと viewBox の外へ出て**黙って消える**ので、読む側は切れたことにも
  * 気づけない。切った跡を `…` で残すのは部品リストと同じ約束。
  *
- * 画布ではなく板を境にするのは、字が画布の縁に貼り付くと読みにくいため。
- * 板の外の余白 (OUTER_MARGIN) は、はみ出したときの逃げしろとして空けておく。
+ * 画布ではなく基板を境にするのは、字が画布の縁に貼り付くと読みにくいため。
+ * 基板の外の余白 (OUTER_MARGIN) は、はみ出したときの逃げしろとして空けておく。
  */
 export function fitToBoard(
   text: string,
@@ -70,13 +70,13 @@ export const haloWidth = (theme: RenderTheme): number =>
   TEXT_HALO_WIDTH * textScale(theme) + (theme.metrics.holeSize - BASE_HOLE_SIZE) * 1.25;
 
 /**
- * **胴が足の線に細く乗らない部品**。ほかの 2 本足は足の線の上に薄く乗るだけなので
- * 定数の距離で足りるが、水晶の缶は**足の穴を覆う** (平たい缶) か**片側に高く立つ**
+ * **胴がピンの線に細く乗らない部品**。ほかの 2 ピンはピンの線の上に薄く乗るだけなので
+ * 定数の距離で足りるが、水晶の缶は**ピンの穴を覆う** (平たい缶) か**片側に高く立つ**
  * (円筒) ので、既定の距離では字が胴に載る。ここだけ**胴の高さから測る**。
  */
 const OVER_AXIS_TYPES: ReadonlySet<string> = new Set(['crystal']);
 
-/** 胴の高さ (足の線からどれだけ張り出しうるか)。字を胴の外へ置くのに要る。 */
+/** 胴の高さ (ピンの線からどれだけ張り出しうるか)。字を胴の外へ置くのに要る。 */
 function bodyHeightOf(part: PlacedPart, layout: Layout): number {
   const [first, second] = part.pins;
   if (!first?.address || !second?.address) return 0;
@@ -86,8 +86,8 @@ function bodyHeightOf(part: PlacedPart, layout: Layout): number {
 }
 
 /**
- * 2 本足の胴が図の上で占める外枠 (傾いた胴を囲む縦横の矩形)。板の印字を伏せるのと、
- * 名札の高さを決めるのにも使う。2 本足でなければ `null`。
+ * 2 ピンの胴が図の上で占める外枠 (傾いた胴を囲む縦横の矩形)。基板の印字を伏せるのと、
+ * 名札の高さを決めるのにも使う。2 ピンでなければ `null`。
  */
 function twoLeadBodyRectOf(part: PlacedPart, layout: Layout): Rect | null {
   const [first, second] = part.pins;
@@ -106,7 +106,7 @@ function twoLeadBodyRectOf(part: PlacedPart, layout: Layout): Rect | null {
 }
 
 /**
- * 縦に立てた (横より縦に長く傾いた) 2 本足の胴の外枠。**列番号を伏せるのはこれだけ** —
+ * 縦に立てた (横より縦に長く傾いた) 2 ピンの胴の外枠。**列番号を伏せるのはこれだけ** —
  * 横に寝た胴は穴の行に乗るので番号の行に届かない。背の高い横の胴 (電解コンデンサ) は
  * 番号の判定枠 (字の下に少し余白を持つ) にわずかに触れるが、見た目は離れていて伏せる理由がない。
  */
@@ -153,7 +153,7 @@ export function labelYOf(part: PlacedPart, center: Point, layout: Layout, theme:
   return center.y + Math.max(CAPTION_DROP, bodyDropOf(part, layout) + CAPTION_CLEAR + capHeight(theme));
 }
 
-/** 板と穴の上に載る部品の字。縁取りを敷いて、下の穴に食われないようにする。 */
+/** 基板と穴の上に載る部品の字。縁取りを敷いて、下の穴に食われないようにする。 */
 export const partLabel = (
   x: number,
   y: number,

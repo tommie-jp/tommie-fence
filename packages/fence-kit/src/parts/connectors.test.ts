@@ -7,12 +7,12 @@ import type { ConnectorShape } from './connectors.ts';
 
 /**
  * 基板に載せるコネクタ (USB)。**表と姿を 3 つのフェンスで分け合う** (52 の docs/58)。
- * 足の名前は表の順 (`VBUS GND D+ D-`) で、書いた穴の数だけ使う。
+ * ピンの名前は表の順 (`VBUS GND D+ D-`) で、書いた穴の数だけ使う。
  */
 
 const PITCH = 20;
 
-/** 横一列に並んだ足。`y` を変えると板の上下どちらの縁に近いかが変わる。 */
+/** 横一列に並んだピン。`y` を変えると基板の上下どちらの縁に近いかが変わる。 */
 const row = (count: number, y = 100, x0 = 100): { x: number; y: number }[] =>
   Array.from({ length: count }, (_, index) => ({ x: x0 + index * PITCH, y }));
 
@@ -48,7 +48,7 @@ describe('コネクタの表', () => {
     expect(connectorPinNames('usb-a', 2)).toEqual(['VBUS', 'GND']);
     expect(connectorPinNames('usb-c', 4)).toEqual(['GND', 'D+', 'D-', 'VBUS']);
     expect(connectorPinNames('usb-a', 4)).toEqual(['VBUS', 'GND', 'D+', 'D-']);
-    // 表より多く書いた足には名前が無い (呼ぶ側が断る)。
+    // 表より多く書いたピンには名前が無い (呼ぶ側が断る)。
     expect(connectorPinNames('usb-a', 5)).toEqual(['VBUS', 'GND', 'D+', 'D-']);
     expect(connectorPinNames('dip8', 2)).toEqual([]);
   });
@@ -97,7 +97,7 @@ describe('外形', () => {
     const down = connectorBox(shape({ facing: 'down' }));
 
     expect(up.y).toBeLessThan(100 - PITCH);
-    // 実寸のある Type-C の基板は、足の列の後ろにパッドの帯を持つ (3 ピッチまで)。
+    // 実寸のある Type-C の基板は、ピンの列の後ろにパッドの帯を持つ (3 ピッチまで)。
     expect(up.y + up.height).toBeLessThan(100 + 3 * PITCH);
     expect(down.y + down.height).toBeGreaterThan(100 + PITCH);
     expect(down.y).toBeGreaterThan(100 - 3 * PITCH);
@@ -185,7 +185,7 @@ describe('姿', () => {
   });
 
   test('makes the pads of the type-c breakout its feet: a pad sits on every written hole, and no gold land', () => {
-    // 実物の変換基板は、後ろの縁の四角いパッドが足。配線はパッドへ届く。
+    // 実物の変換基板は、後ろの縁の四角いパッドがピン。配線はパッドへ届く。
     const points = row(4);
     const drawn = drawConnector(shape({ points }));
     const pad = (1.5 * PITCH) / 2.54;

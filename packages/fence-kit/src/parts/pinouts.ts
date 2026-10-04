@@ -1,9 +1,9 @@
 import type { SipLook } from './chips.ts';
 
 /**
- * DIP の IC の足の名前の表 (52 の docs/95)。**型番で引いて、3 つのフェンスが
+ * DIP の IC のピンの名前の表 (52 の docs/95)。**型番で引いて、3 つのフェンスが
  * 同じ名前を刷る** — 回路図は箱の中に名前と番号、実体配線図は胴に番号と名前。
- * 書き手が足の名前を並べるのではなく表から引くのは、綴りの誤りを黙って図に
+ * 書き手がピンの名前を並べるのではなく表から引くのは、綴りの誤りを黙って図に
  * 出さず「表に無い」というお知らせにするため (52 の docs/87 の #1)。
  *
  * **名前はメーカー (TI・Microchip) のデータシートの端子図 (TOP VIEW) の印字を 1 つだけ**
@@ -13,7 +13,7 @@ import type { SipLook } from './chips.ts';
  * | 行 | データシート |
  * | --- | --- |
  * | NE555 | SLFS022K (NE555 / SA555 / SE555)、Table 4-1 |
- * | TLC555 | SLFS043K (TLC555)、Table 4-1 — 電源の足は `VDD` |
+ * | TLC555 | SLFS043K (TLC555)、Table 4-1 — 電源のピンは `VDD` |
  * | LM358 | SLOS068AB (LM358 / LM2904 / LM258 / LM158)、Table 4-1 |
  * | TL071 / TL072 | SLOS080W、Table 4-1 (TL071x の D・P) / 4-3 (TL072x) |
  * | CD4017B | SCHS027C、端子図 (TERMINAL DIAGRAM) |
@@ -42,11 +42,11 @@ import type { SipLook } from './chips.ts';
  * | 74HC273 | SN74HC273 SCLS136F、Table 5-1 (N) |
  * | 3SK291 | 東芝 3SK291 (2014-03-01)、外形図の端子の番号 (SMQ。1 G1・2 G2・3 D・4 S)。変換基板が SMQ の番号をそのまま DIP / SIP の番号にしている前提 |
  *
- * **足の名前として書けない印字だけは直した** (`U1.TRIG` と書けて、番号と取り違えないため):
+ * **ピンの名前として書けない印字だけは直した** (`U1.TRIG` と書けて、番号と取り違えないため):
  *
  * - 印字の `–` (en dash) は ASCII の `-` (`IN-`)。キーボードで打てる字にする
  * - CD4017B の出力の印字は数字だけ (`0`〜`9`) なので `Q` を付ける (`Q0`〜`Q9`)。
- *   数字のままだと `U1.5` が 5 番の足か出力 5 かで割れる
+ *   数字のままだと `U1.5` が 5 番のピンか出力 5 かで割れる
  * - 空白を含む印字は略す: CD4017B の `CARRY OUT` → `CO`、`CLOCK INHIBIT` → `INH`
  * - CD4040B の 10 番の印字 `φ` は、同じ系列の CD4017B の印字に合わせて `CLOCK`
  * - 論理ゲートの出力 (`J=A+B` `G=A` のような式) は、式の左辺の文字 (`J`) だけ。
@@ -54,18 +54,18 @@ import type { SipLook } from './chips.ts';
  * - 上に線のある印字 (負論理) は、線を落としても 1 つに決まるならそのまま
  *   (NE555 の `RESET`、MCP3008 の `CS/SHDN`、74HC595 の `OE` `SRCLR`、CD4511B の `LT` `BL`
  *   `LE/STROBE` — `/` は印字のまま)。**線を落とすと
- *   別の足と同じ名前になるものだけ** `/` を前に付ける: CD4013B の Q の上に線 → `/Q1` `/Q2`
+ *   別のピンと同じ名前になるものだけ** `/` を前に付ける: CD4013B の Q の上に線 → `/Q1` `/Q2`
  * - 印字の `,` は落とす: L293D の `1,2EN` → `12EN`、`3,4EN` → `34EN`
  *   (YAML のフロー形式の区切りと取り違えないため)
  * - L293D の 4・5・12・13 番の印字 `HEAT SINK AND GROUND` は、Pin Functions の名前 `GROUND`。
  *   4 本に同じ名前なので、TL071 の `NC` と同じく名前では指せず番号で出る
  * - 74HC595 の 9 番の印字 `QH′` (プライム) は ASCII の `'` (`QH'`)。下付きの字 (`Q_A` `C_IN`) は並べて書く
  *   (`QA` `CIN` `COUT`)
- * - **大文字と小文字だけが違う印字は分ける** (回路図は足の名前を大文字小文字を問わず引くので、
- *   `A` と `a` は同じ足に読める): CD4511B の BCD 入力 `A`〜`D` は `INA`〜`IND`、
+ * - **大文字と小文字だけが違う印字は分ける** (回路図はピンの名前を大文字小文字を問わず引くので、
+ *   `A` と `a` は同じピンに読める): CD4511B の BCD 入力 `A`〜`D` は `INA`〜`IND`、
  *   セグメント出力 `a`〜`g` は `Oa`〜`Og`。**片方だけ変えると、もう片方の印字で書いた配線が
- *   黙って別の足に付く** (`U1.a` が入力 A に) ので両方を変え、印字のままの `A` `a` はどちらも
- *   「知らない足」として断らせる
+ *   黙って別のピンに付く** (`U1.a` が入力 A に) ので両方を変え、印字のままの `A` `a` はどちらも
+ *   「知らないピン」として断らせる
  * - 74HC の型番は TI の `SN` を付けない綴りが代表 (教科書の書き方)。`SN74HC04N` も書ける
  *
  * **鍵は型番の完全一致** (大文字小文字は問わない)。接尾辞を削らないのは、
@@ -77,11 +77,11 @@ import type { SipLook } from './chips.ts';
 export type PinoutRow = {
   /** 書ける型番。**先頭が代表の綴り** (お知らせと早見表に出す)。 */
   readonly models: readonly string[];
-  /** 足の名前 (1 番から順)。本数がパッケージの足の数。 */
+  /** ピンの名前 (1 番から順)。本数がパッケージのピンの数。 */
   readonly names: readonly string[];
   /** 働きの名前 (データシートの題の働き: `2 入力 AND ×4`)。部品表に型番と並べて出す。 */
   readonly role: string;
-  /** 文書の表に添える一言 (上に線の足など)。`scripts/pinout-rows.mjs` が行に書き出す。 */
+  /** 文書の表に添える一言 (上に線のピンなど)。`scripts/pinout-rows.mjs` が行に書き出す。 */
   readonly note?: string;
   /** 1 列の姿 (`sipN`) を樹脂の色と胴の字で描く部品。無ければ黒い 1 列ヘッダ。 */
   readonly look?: SipLook;
@@ -90,19 +90,19 @@ export type PinoutRow = {
 };
 
 /**
- * 変換基板に載せて描く面実装の胴 (mm。上から見た姿)。足は 2 辺に同じ数ずつ並ぶ。
+ * 変換基板に載せて描く面実装の胴 (mm。上から見た姿)。ピンは 2 辺に同じ数ずつ並ぶ。
  * 寸法は実物の外形図から写す。
  */
 export type AdapterChip = {
-  /** 胴の長さ (足の並ぶ向き) と幅。 */
+  /** 胴の長さ (ピンの並ぶ向き) と幅。 */
   readonly length: number;
   readonly width: number;
-  /** 足先から足先。 */
+  /** ピン先からピン先。 */
   readonly span: number;
-  /** 同じ辺の足の間隔と、足の幅。 */
+  /** 同じ辺のピンの間隔と、ピンの幅。 */
   readonly pitch: number;
   readonly lead: number;
-  /** 1 本だけ幅の違う足 (向きの目印)。足の番号と幅。 */
+  /** 1 本だけ幅の違うピン (向きの目印)。ピンの番号と幅。 */
   readonly wide?: { readonly pin: number; readonly lead: number };
   /** 胴の印字。 */
   readonly mark: string;
@@ -135,7 +135,7 @@ const ROWS: readonly PinoutRow[] = [
     names: ['OUT1', 'IN1-', 'IN1+', 'V-', 'IN2+', 'IN2-', 'OUT2', 'V+'],
   },
   {
-    // P (PDIP) の印字。1・5・8 番は NC (オフセット調整の足があるのは TL071C の PS だけ)。
+    // P (PDIP) の印字。1・5・8 番は NC (オフセット調整のピンがあるのは TL071C の PS だけ)。
     models: ['TL071', 'TL071CP', 'TL071ACP', 'TL071BCP', 'TL071H'], role: 'オペアンプ',
     names: ['NC', 'IN-', 'IN+', 'VCC-', 'NC', 'OUT', 'VCC+', 'NC'],
   },
@@ -217,7 +217,7 @@ const ROWS: readonly PinoutRow[] = [
     ],
   },
   {
-    // CE・OE・WE は上に線 (`#` 付きの印字)。データの足の名前は DQ。
+    // CE・OE・WE は上に線 (`#` 付きの印字)。データのピンの名前は DQ。
     models: ['62256', 'AS6C62256', 'AS6C62256-55PCN', 'AS6C62256-55PIN', 'HM62256', 'HM62256B', 'CY62256', 'CY62256N'], role: 'SRAM 32K×8',
     names: [
       'A14', 'A12', 'A7', 'A6', 'A5', 'A4', 'A3', 'A2', 'A1', 'A0', 'DQ0', 'DQ1', 'DQ2', 'VSS',
@@ -553,16 +553,16 @@ const ROWS: readonly PinoutRow[] = [
     note: '`COM` は負荷の電源側へつなぐ (誘導負荷のクランプ)。出力は吸い込み (シンク) だけ',
   },
   {
-    // 面実装 (SMQ) の 4 本足。変換基板に載せて `dip4` (2 列) か `sip4` (1 列) で置く。
+    // 面実装 (SMQ) の 4 ピン。変換基板に載せて `dip4` (2 列) か `sip4` (1 列) で置く。
     // 基板が SMQ の番号をそのまま使う前提 — 並びが違う基板は `pins:` で名前を書く。
     models: ['3SK291'], role: 'デュアルゲート MOSFET (N)',
     names: ['G1', 'G2', 'D', 'S'],
-    // 東芝の外形図 2-3J1A: 2.9 mm 角 (足先まで)、胴の幅 1.5 mm、同じ辺の足の間隔 1.9 mm。
-    // 足は 0.4 mm で、4 番 (S) だけ 0.6 mm。胴の印字は `U.F`。
+    // 東芝の外形図 2-3J1A: 2.9 mm 角 (ピン先まで)、胴の幅 1.5 mm、同じ辺のピンの間隔 1.9 mm。
+    // ピンは 0.4 mm で、4 番 (S) だけ 0.6 mm。胴の印字は `U.F`。
     chip: { length: 2.9, width: 1.5, span: 2.9, pitch: 1.9, lead: 0.4, wide: { pin: 4, lead: 0.6 }, mark: 'U.F' },
   },
   {
-    // 村田の 455 kHz。足は 1 列 3 本 (a 入力・b アース・c 出力)、間隔 2.5 mm。
+    // 村田の 455 kHz。ピンは 1 列 3 本 (a 入力・b アース・c 出力)、間隔 2.5 mm。
     // 橙の樹脂に `SFU` の字。左右対称なので向きの目印は無い。
     models: ['SFU455B', 'SFU455A', 'SFU455'], role: 'セラミックフィルタ 455 kHz',
     names: ['IN', 'GND', 'OUT'],
@@ -577,7 +577,7 @@ const BY_MODEL: ReadonlyMap<string, PinoutRow> = new Map(
 );
 
 /**
- * 型番と足の本数から足の名前を引く。**表に無い型番、本数がパッケージと合わない
+ * 型番とピンの本数からピンの名前を引く。**表に無い型番、本数がパッケージと合わない
  * 型番は null** (呼ぶ側は番号で描き、お知らせを出す)。
  */
 export function lookupPinout(model: string | null, pins: number): Pinout | null {
@@ -604,7 +604,7 @@ export const pinoutModels = (pins?: number): readonly string[] =>
 /** 表の全部 (早見表と文法リファレンスに並べる)。 */
 export const pinoutTable = (): readonly PinoutRow[] => ROWS;
 
-/** ゲート 1 回路の足の番号 (1 始まり)。入力は A・B・C … の順。 */
+/** ゲート 1 回路のピンの番号 (1 始まり)。入力は A・B・C … の順。 */
 export type GateUnit = {
   readonly inputs: readonly number[];
   readonly output: number;
@@ -614,8 +614,8 @@ export type GateUnit = {
 const GATE_ROLE = /\b(N?AND|N?OR|XN?OR|NOT)\b|インバータ|バッファ/;
 
 /**
- * 型番のゲートの回路ごとの足の番号 (`74HC00` → A: 1・2 → 3、B: 4・5 → 6 …)。
- * **足の名前の表から導く** (`1A` `1B` `1Y` の印字) ので、番号の表は別に持たない。
+ * 型番のゲートの回路ごとのピンの番号 (`74HC00` → A: 1・2 → 3、B: 4・5 → 6 …)。
+ * **ピンの名前の表から導く** (`1A` `1B` `1Y` の印字) ので、番号の表は別に持たない。
  * 表に無い型番・ゲートでない型番・出力の名前 (`Y`) が無い型番は null。
  * 74HC30 のように回路が 1 つだけの品は印字が `A`〜`H` と `Y`。
  */
@@ -651,7 +651,7 @@ export function lookupGateUnits(model: string | null): readonly GateUnit[] | nul
   return found.length === 0 ? lettersUnits(row) : found;
 }
 
-/** CD4011B などの回路ごとの足 (字の並びから)。読めなければ null。 */
+/** CD4011B などの回路ごとのピン (字の並びから)。読めなければ null。 */
 function lettersUnits(row: PinoutRow): readonly GateUnit[] | null {
   const arity = /(\d) 入力/.exec(row.role)?.[1] ?? (/\bNOT\b/.test(row.role) ? '1' : null);
   if (arity === null) return null;

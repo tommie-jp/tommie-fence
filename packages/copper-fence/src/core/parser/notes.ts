@@ -19,7 +19,7 @@ const TURNS: Readonly<Record<string, Turn>> = { r90: 90, r180: 180, r270: 270 };
  * `notes:` の 1 行。`text` だけは字を `:` の後ろに書く (`- text 20,18: 字`。
  * YAML では 1 項目のマップになり、字が `text` に来る)。**perfboard と同じ形**。
  *
- * `dim` は寸法線 — 2 点の間に矢と長さ (mm) を出す。**手で切る板の寸法図**の
+ * `dim` は寸法線 — 2 点の間に矢と長さ (mm) を出す。**手で切る基板の寸法図**の
  * ための印で、長さは点から測るので書かない (書いた長さと点が食い違わない)。
  */
 export function parseNoteLine(head: string, text: string | null): LineResult<Omit<NoteSpec, 'line'>> {

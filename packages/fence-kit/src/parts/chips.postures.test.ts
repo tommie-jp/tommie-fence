@@ -18,7 +18,7 @@ const INK: ChipInk = {
 
 const PITCH = 20;
 
-/** 横に寝た DIP の足 (上の列を左から、下の列を右から — 実物の番号の巡り)。 */
+/** 横に寝た DIP のピン (上の列を左から、下の列を右から — 実物の番号の巡り)。 */
 const dipPoints = (count: number): readonly ChipPoint[] => {
   const half = count / 2;
   const top = Array.from({ length: half }, (_, index) => ({ x: index * PITCH, y: 0 }));
@@ -39,7 +39,7 @@ const column = (count: number): readonly ChipPoint[] =>
 const names = (count: number): readonly string[] =>
   Array.from({ length: count }, (_, index) => String(index + 1));
 
-describe('足の列の向き', () => {
+describe('ピンの列の向き', () => {
   test('reads the row from the first two legs, which are always neighbours', () => {
     expect(chipAlongX(row(4))).toBe(true);
     expect(chipAlongX(column(4))).toBe(false);

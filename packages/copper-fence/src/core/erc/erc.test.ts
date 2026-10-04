@@ -11,8 +11,8 @@ describe('checkErc', () => {
 
   test('names a pin that sits on no copper', () => {
     expect(erc([...THROUGH, 'parts:', '  C1: capacitor/1608 20,3'])).toEqual([
-      'C1 の 1 番の足 (19.36,3) の下に銅がありません',
-      'C1 の 2 番の足 (20.64,3) の下に銅がありません',
+      'C1 の 1 番のピン (19.36,3) の下に銅がありません',
+      'C1 の 2 番のピン (20.64,3) の下に銅がありません',
     ]);
   });
 

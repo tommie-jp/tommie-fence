@@ -31,7 +31,7 @@ export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
 /** 穴の番地。行も列も 1 始まり。行の名前は `a` `b` … `aa` (address.ts)。 */
 /**
  * 穴の番地。**交点の間も指せる** (`rows` / `cols` は 1 升に対する端数)。
- * 端数を書けるのは注釈だけで、足は穴に挿すので交点そのものを指す
+ * 端数を書けるのは注釈だけで、ピンは穴に挿すので交点そのものを指す
  * (`isCrossing` が見張る)。**端数が無ければ鍵ごと持たない** — 交点の番地は
  * 今までと同じ形のままにする (`{ row, col }` を比べているところが多い)。
  */
@@ -42,11 +42,11 @@ export type Address = {
   readonly cols?: number;
 };
 
-/** 板の大きさ。列 × 行 (板の呼び方と同じ順)。 */
+/** 基板の大きさ。列 × 行 (基板の呼び方と同じ順)。 */
 export type BoardSize = { readonly cols: number; readonly rows: number };
 
 /**
- * 板。**導通を持たない**のが breadboard との違いで、あちらはストリップ
+ * 基板。**導通を持たない**のが breadboard との違いで、あちらはストリップ
  * (列の 5 穴の導通) と電源レールを持つ。ここにあるのは大きさと、
  * 図に描くだけのもの (スロット用の銅箔) だけ。
  */
@@ -57,8 +57,8 @@ export type Board = BoardSize & {
    */
   readonly slots: boolean;
   /**
-   * 板 (レジスト) の色。**既定は緑。** 書かれていなければテーマが決める。
-   * 板の色は実物の性質なので、テーマ (図の配色) ではなくここに持つ。
+   * 基板 (レジスト) の色。**既定は緑。** 書かれていなければテーマが決める。
+   * 基板の色は実物の性質なので、テーマ (図の配色) ではなくここに持つ。
    */
   readonly color: string | null;
   /** 穴の銅箔 (ランド) の色。**既定は銀** (はんだメッキ)。 */
@@ -68,7 +68,7 @@ export type Board = BoardSize & {
   /**
    * 基材の厚さ (mm)。**既定は 1.6** — 手に入るユニバーサル基板の厚み。
    * 綴りは copper フェンスの `h:` と同じ。断面を描くときの値で、
-   * **いまの図 (上から見た板) は変わらない**。
+   * **いまの図 (上から見た基板) は変わらない**。
    */
   readonly h: number;
   /** 基材 (`FR-4` など)。**既定は `FR-4`**。`h` と同じく断面を描くときの値。 */
@@ -98,7 +98,7 @@ export type PartSpec = {
   readonly variant: string | null;
   /** 書かれたままの種類の綴り (`r`)。報告で行の中を指すのに要る。 */
   readonly written: string;
-  /** 書かれたままの穴 (`b3`)。板に載るかは placement が見る。 */
+  /** 書かれたままの穴 (`b3`)。基板に載るかは placement が見る。 */
   readonly holes: readonly string[];
   readonly value: string | null;
   /** 書かれた向き。**アンカー 1 つで置く形だけが持つ** (parts/orient.ts)。 */
@@ -107,7 +107,7 @@ export type PartSpec = {
 };
 
 /**
- * 板に載せた部品。足は番地と導通グループの両方を持つ。
+ * 基板に載せた部品。ピンは番地と導通グループの両方を持つ。
  * **行番号を運ぶ** — ERC の報告が「どの行の部品か」を言えないと直せない。
  */
 export type PlacedPart = {
@@ -119,20 +119,20 @@ export type PlacedPart = {
   readonly pins: readonly { readonly address: Address; readonly strip: StripId }[];
 };
 
-/** 板の外の機器を置く側。 */
+/** 基板の外の機器を置く側。 */
 export type DeviceSide = 'top' | 'bottom';
 
 /**
- * 板の外の機器。**盤面には載らない**ので部品とは別に持つ。
+ * 基板の外の機器。**盤面には載らない**ので部品とは別に持つ。
  * 配線からは `BAT.+` の形で指す。
  */
 export type DeviceSpec = {
   readonly id: string;
-  /** 板のどちら側の帯に置くか。番地で置いたときは、そこから決まる向き。 */
+  /** 基板のどちら側の帯に置くか。番地で置いたときは、そこから決まる向き。 */
   readonly at: DeviceSide;
   /**
    * 番地で置いたときの、その番地 (書かれたまま)。帯に並べるなら null。
-   * **箱の左上がここに来る** — 足の位置は箱から決まる。
+   * **箱の左上がここに来る** — ピンの位置は箱から決まる。
    */
   readonly where: string | null;
   readonly label: string;
@@ -142,13 +142,13 @@ export type DeviceSpec = {
 };
 
 /**
- * 注釈の種類。**`source` と `parts` だけは板の上に置かない** — フェンスの中身
- * や部品表を丸ごと書き出すものなので、板に重ねると穴も部品も読めなくなる。
+ * 注釈の種類。**`source` と `parts` だけは基板の上に置かない** — フェンスの中身
+ * や部品表を丸ごと書き出すものなので、基板に重ねると穴も部品も読めなくなる。
  * どちらも図の下に自分の帯を持つ。
  */
 export type NoteKind = 'mark' | 'box' | 'arrow' | 'text' | 'source' | 'parts';
 
-/** 板の上に置く注釈の種類。指し先の番地を必ず持つ。 */
+/** 基板の上に置く注釈の種類。指し先の番地を必ず持つ。 */
 export type OnBoardNoteKind = Exclude<NoteKind, 'source' | 'parts'>;
 
 /** 書かれたままの注釈 1 つ。 */
@@ -156,7 +156,7 @@ export type NoteSpec = {
   readonly kind: NoteKind;
   /** 向き (`- text b3 r90: 字` の `r90`)。`text` 以外はいつも向き無し。 */
   readonly turn: Turn;
-  /** 指し先の番地。**`source` と `parts` は板の外に出すので null**。 */
+  /** 指し先の番地。**`source` と `parts` は基板の外に出すので null**。 */
   readonly from: string | null;
   readonly to: string | null;
   readonly color: string | null;
@@ -175,7 +175,7 @@ export type NoteSpec = {
   readonly bodyWritten: string | null;
 };
 
-/** 番地に直した注釈。板の上に置くものだけがここへ来る。 */
+/** 番地に直した注釈。基板の上に置くものだけがここへ来る。 */
 export type ResolvedNote = {
   readonly kind: OnBoardNoteKind;
   /** 向き (`- text b3 r90: 字` の `r90`)。`text` 以外はいつも向き無し。 */
@@ -207,9 +207,9 @@ export type StyleSpec = {
    * `debug: off` が「見つけたものを伏せる」のに対し、これは**そもそも見ない**。
    */
   readonly check: boolean | null;
-  /** 板の外に出す名前の付け方。書かれた項目だけを持つ。 */
+  /** 基板の外に出す名前の付け方。書かれた項目だけを持つ。 */
   readonly labels: LabelSpec | null;
-  /** 半田面 (裏返した板) も描くか。**既定は描かない。** */
+  /** 半田面 (裏返した基板) も描くか。**既定は描かない。** */
   readonly back: boolean | null;
 };
 
@@ -223,8 +223,8 @@ export type LabelCase = 'upper' | 'lower';
 export type LabelSide = 'left' | 'right' | 'top' | 'bottom';
 
 /**
- * 板の外の名前の付け方。**印字だけを変える** — 番地 (`b3`) は行が英字・
- * 列が数字のまま動かない。手元の板のシルクに寄せるためのもの。
+ * 基板の外の名前の付け方。**印字だけを変える** — 番地 (`b3`) は行が英字・
+ * 列が数字のまま動かない。手元の基板のシルクに寄せるためのもの。
  */
 export type LabelSpec = {
   readonly row: LabelKind | null;
@@ -258,12 +258,12 @@ export type RoutedWire = {
 };
 
 /**
- * 読めたフェンス。Phase 3 では板・部品・配線・点の名前まで。
+ * 読めたフェンス。Phase 3 では基板・部品・配線・点の名前まで。
  * 注釈と ERC は次の Phase でここに足す。
  */
 export type FenceDocument = {
   readonly board: Board;
-  /** `board:` に名前 (または実寸) で書かれた板の名前。穴数の直書きなら null。部品表に出す。 */
+  /** `board:` に名前 (または実寸) で書かれた基板の名前。穴数の直書きなら null。部品表に出す。 */
   readonly boardName: string | null;
   /** 図の上に出す題。書かれていなければ null。 */
   readonly title: string | null;

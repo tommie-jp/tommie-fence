@@ -23,7 +23,7 @@ describe('当たり判定', () => {
   });
 
   test('names both parts when one lies across the other', () => {
-    // 足は別の穴でも**胴が交差する**。47 の 06 で「Lcapy は並列部品を黙って
+    // ピンは別の穴でも**胴が交差する**。47 の 06 で「Lcapy は並列部品を黙って
     // 重ねる」を弱点として挙げた以上、同じことをしては筋が通らない。
     const found = checkFit([part('R1', ['b3', 'b7']), part('R2', ['a5', 'c5'], 'resistor', 4)], layout);
 
@@ -49,9 +49,9 @@ describe('当たり判定', () => {
   });
 });
 
-describe('実寸の足の間隔', () => {
+describe('実寸のピンの間隔', () => {
   test('says an axial part cannot go into two holes side by side', () => {
-    // 抵抗やダイオードは胴の両端から足が出るので、胴そのものが 2.54mm より長い。
+    // 抵抗やダイオードは胴の両端からピンが出るので、胴そのものが 2.54mm より長い。
     const found = checkFit([part('R1', ['b3', 'b4'])], layout);
 
     expect(found).toHaveLength(1);
@@ -79,7 +79,7 @@ describe('実寸の足の間隔', () => {
   });
 
   test('does not call a stretched led a collision with its neighbour', () => {
-    // 玉は足の間を跨がないので、遠くに足を置いても隣の部品とはぶつからない。
+    // 玉はピンの間を跨がないので、遠くにピンを置いても隣の部品とはぶつからない。
     expect(checkFit([part('D1', ['b1', 'b9'], 'led'), part('R1', ['a3', 'c3'])], layout)).toEqual([]);
   });
 

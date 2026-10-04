@@ -12,7 +12,7 @@ export type Palette = {
   readonly substrateEdge: string;
   /** 銅。 */
   readonly copper: string;
-  /** 表が地の板で、切った溝 (基材が見える所)。 */
+  /** 表が地の基板で、切った溝 (基材が見える所)。 */
   readonly groove: string;
   /** 裏の切り欠き (破線) と、裏の物の線。 */
   readonly hidden: string;
@@ -20,15 +20,15 @@ export type Palette = {
   readonly hole: string;
   /** 方眼。 */
   readonly grid: string;
-  /** 目盛と板の外の数字。 */
+  /** 目盛と基板の外の数字。 */
   readonly label: string;
-  /** 題・板の説明・部品の名札。 */
+  /** 題・基板の説明・部品の名札。 */
   readonly caption: string;
   /** 線路に添える字 (幅と Z0)。 */
   readonly lineText: string;
-  /** 板の上の字の縁取り。 */
+  /** 基板の上の字の縁取り。 */
   readonly halo: string;
-  /** 足・ジャンパの半田。 */
+  /** ピン・ジャンパの半田。 */
   readonly solder: string;
   readonly lead: string;
   /** 色を書かなかったジャンパ。 */
@@ -43,7 +43,7 @@ export type Palette = {
 
 export type Metrics = {
   readonly textSize: number;
-  /** 線路の字。板の上に載るので本文より一回り小さい。 */
+  /** 線路の字。基板の上に載るので本文より一回り小さい。 */
   readonly lineTextSize: number;
 };
 
@@ -142,7 +142,7 @@ export const resolveStyle = (style: StyleSpec): ResolvedStyle => ({
   width: style.width,
   debug: style.debug ?? true,
   stamp: style.stamp ?? true,
-  // **既定は掛ける** (乗っていない足は図の上で沈黙する)。
+  // **既定は掛ける** (乗っていないピンは図の上で沈黙する)。
   check: style.check ?? true,
   // **既定は敷く** — 図から寸法を読んで切るための定規の代わり。
   grid: style.grid ?? true,

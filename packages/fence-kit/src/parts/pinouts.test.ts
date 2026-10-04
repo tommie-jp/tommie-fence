@@ -2,11 +2,11 @@ import { describe, expect, test } from 'vitest';
 import { lookupGateUnits, lookupPinout, lookupRole, pinoutModels, pinoutTable } from './pinouts.ts';
 
 /**
- * DIP の足の名前の表 (52 の docs/95 の段 1)。**型番で引いて、3 つのフェンスが
+ * DIP のピンの名前の表 (52 の docs/95 の段 1)。**型番で引いて、3 つのフェンスが
  * 同じ名前を刷る**。名前は TI のデータシートの端子図の印字 (段 0 で確かめた)。
  */
 
-describe('足の名前の表', () => {
+describe('ピンの名前の表', () => {
   test('names the eight pins of the NE555 as printed on the TI data sheet', () => {
     expect(lookupPinout('NE555', 8)).toEqual({
       model: 'NE555',
@@ -248,7 +248,7 @@ describe('the counter, decoder, memory and bus chips of the CPU-like problem', (
   });
 });
 
-/** 表の行の足の本数 (8〜28 の DIP のどれか)。 */
+/** 表の行のピンの本数 (8〜28 の DIP のどれか)。 */
 function lookupCount(model: string): number {
   return [8, 14, 16, 20, 24, 28].find((count) => lookupPinout(model, count) !== null) ?? 0;
 }
@@ -270,7 +270,7 @@ describe('lookupRole', () => {
   });
 });
 
-describe('3SK291 (面実装の 4 本足)', () => {
+describe('3SK291 (面実装の 4 ピン)', () => {
   test('names the four pins in the numbering of the SMQ package', () => {
     expect(lookupPinout('3SK291', 4)?.names).toEqual(['G1', 'G2', 'D', 'S']);
   });
@@ -280,7 +280,7 @@ describe('3SK291 (面実装の 4 本足)', () => {
   });
 
   test('carries the real size of the SMQ body and its marking', () => {
-    // 東芝の外形図 2-3J1A: 2.9 mm 角、胴の幅 1.5 mm、足の間隔 1.9 mm、4 番だけ 0.6 mm。
+    // 東芝の外形図 2-3J1A: 2.9 mm 角、胴の幅 1.5 mm、ピンの間隔 1.9 mm、4 番だけ 0.6 mm。
     expect(lookupPinout('3SK291', 4)?.chip).toEqual({
       length: 2.9, width: 1.5, span: 2.9, pitch: 1.9, lead: 0.4, wide: { pin: 4, lead: 0.6 }, mark: 'U.F',
     });
@@ -292,7 +292,7 @@ describe('3SK291 (面実装の 4 本足)', () => {
 });
 
 
-describe('SFU455B (1 列 3 本足のセラミックフィルタ)', () => {
+describe('SFU455B (1 列 3 ピンのセラミックフィルタ)', () => {
   test('names the three pins in the order a (input), b (ground), c (output)', () => {
     expect(lookupPinout('SFU455B', 3)?.names).toEqual(['IN', 'GND', 'OUT']);
   });
@@ -309,7 +309,7 @@ describe('SFU455B (1 列 3 本足のセラミックフィルタ)', () => {
 });
 
 describe('表の全部の行', () => {
-  // 電源の足を持たない部品 (トランジスタ・フィルタを変換基板や 1 列で載せた物)。
+  // 電源のピンを持たない部品 (トランジスタ・フィルタを変換基板や 1 列で載せた物)。
   const NO_SUPPLY = ['3SK291', 'SFU455B'];
   // 姿 (`look`) を持つ行は 1 列の部品で、本数は 3 本でよい。
   const isEvenChip = (row: { look?: unknown }) => row.look === undefined;
@@ -343,7 +343,7 @@ describe('表の全部の行', () => {
   });
 });
 
-describe('ロジック IC の足の名前 (TI のデータシートから写したもの)', () => {
+describe('ロジック IC のピンの名前 (TI のデータシートから写したもの)', () => {
   test.each([
     ['74HC14', 14, ['1A', '1Y', '2A', '2Y', '3A', '3Y', 'GND', '4Y', '4A', '5Y', '5A', '6Y', '6A', 'VCC']],
     ['74HC20', 14, ['1A', '1B', 'NC', '1C', '1D', '1Y', 'GND', '2Y', '2A', '2B', 'NC', '2C', '2D', 'VCC']],
@@ -370,7 +370,7 @@ describe('ロジック IC の足の名前 (TI のデータシートから写し�
   });
 });
 
-describe('ゲートの回路ごとの足の番号', () => {
+describe('ゲートの回路ごとのピンの番号', () => {
   test('derives the units of a quad two-input gate from the printed names', () => {
     expect(lookupGateUnits('74HC00')).toEqual([
       { inputs: [1, 2], output: 3 },

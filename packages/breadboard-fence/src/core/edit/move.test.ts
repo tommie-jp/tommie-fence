@@ -60,17 +60,17 @@ describe('movePart', () => {
   });
 
   test('refuses to walk off the rows, naming the line', () => {
-    // 縦に寝た部品を下げると、後ろの足が j より下へ出る。
+    // 縦に寝た部品を下げると、後ろのピンが j より下へ出る。
     const across = 'board: half\nparts:\n  R2: resistor a1 e1 1k\n';
     const result = movePart(across, 'R2', at('g1'));
 
     expect(result.ok).toBe(false);
     expect(!result.ok && result.error.line).toBe(3);
-    expect(!result.ok && result.error.message).toContain('板の外');
+    expect(!result.ok && result.error.message).toContain('基板の外');
   });
 
   test('refuses to walk off the columns', () => {
-    // half は 30 列。a5 を a27 へ動かすと、もう一方の足が 32 列目になる。
+    // half は 30 列。a5 を a27 へ動かすと、もう一方のピンが 32 列目になる。
     expect(movePart(LED, 'R1', at('a27')).ok).toBe(false);
   });
 

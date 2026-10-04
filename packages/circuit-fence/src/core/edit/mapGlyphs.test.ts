@@ -9,7 +9,7 @@ import { partTypeNames } from '../parts.ts';
 /**
  * 矢の頭の座標。`arrow()` は `M軸元 L頭 M頭 L羽 M頭 L羽` の形で書き出すので、
  * **同じ点への `L` の直後に、その点からの `M` が続く**ところが頭。
- * 素の足の線は 1 本の `L` の連なりで書くので、この形にはならない。
+ * 素のピンの線は 1 本の `L` の連なりで書くので、この形にはならない。
  */
 const headsOf = (markup: string): { readonly x: number; readonly y: number }[] =>
   [...markup.matchAll(/L(-?[\d.]+),(-?[\d.]+) M\1,\2 L/g)]
@@ -83,7 +83,7 @@ describe('glyphOf', () => {
     for (const [type, bar] of [['pjfet', -4], ['pmos-e', -3.5], ['pmos-d', -3.5]] as const) {
       expect(heads(type), type).not.toContain(bar);
     }
-    // 簡易記号だけ逆。n はソースの足の外側 (x=3) に、p は棒の上に頭が来る。
+    // 簡易記号だけ逆。n はソースのピンの外側 (x=3) に、p は棒の上に頭が来る。
     expect(heads('nmos')).toEqual([3]);
     expect(heads('pmos')).toEqual([-3.5]);
   });
@@ -91,7 +91,7 @@ describe('glyphOf', () => {
   test('gives every FET an arrow, so n and p read apart at a glance', () => {
     // 実機で「FET の図形に必ず矢印を入れる」。簡易記号の nmos / pmos は
     // ゲートの丸 1 つしか違いが無く、升目の大きさでは n と p を読めなかった。
-    // 図 (circuitikz の arrowmos) と同じで、**矢はソースの足に付く**。
+    // 図 (circuitikz の arrowmos) と同じで、**矢はソースのピンに付く**。
     for (const type of ['nmos', 'pmos', 'njfet', 'pjfet',
       'nmos-e', 'pmos-e', 'nmos-d', 'pmos-d'] as const) {
       expect(hasArrow(drawGlyph(glyphOf(type).name)), type).toBe(true);
@@ -184,7 +184,7 @@ describe('glyphOf', () => {
   });
 
   test('keeps the box where the figure draws a box too', () => {
-    // レギュレータとピンヘッダは図でも箱。名前は足のほうが示す。
+    // レギュレータとピンヘッダは図でも箱。名前はピンのほうが示す。
     expect(glyphOf('regulator').name).toBe('box');
     expect(glyphOf('sip4').name).toBe('box');
   });
@@ -342,7 +342,7 @@ describe('図に寄せた形', () => {
   test('closes the button with a bar under its contacts, as the figure does', () => {
     // 実機で「button-nc, 回路図の形に近づける」、続けて「スイッチの下線が◯の下に
     // 接続するようにする」。図では閉じる棒が**接点の下の縁**を通り、軸はその
-    // 反対 (上) へ伸びる。棒を接点の上に置くと、a 接点の浮いた押し板に見える。
+    // 反対 (上) へ伸びる。棒を接点の上に置くと、a 接点の浮いた押し基板に見える。
     const nc = drawGlyph('button-nc');
     const open = drawGlyph('button');
     const plateY = (svg: string): number => Number(/M-6,(-?[\d.]+)/.exec(svg)?.[1] ?? NaN);

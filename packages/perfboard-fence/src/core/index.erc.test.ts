@@ -9,14 +9,14 @@ import { renderPerfboard } from './index.ts';
  * 両方を並べる。
  */
 
-/** つないでいない抵抗。板は全穴が独立なので、挿しただけでは何にもつながらない。 */
+/** つないでいない抵抗。基板は全穴が独立なので、挿しただけでは何にもつながらない。 */
 const LOOSE = ['board: 12x7', 'parts:', '  R1: resistor b2 b6 1k', ''].join('\n');
 
 /** 胴が重なる 2 つ。**置いたその場で直す種類**なので、釦の向こうへは隠さない。 */
 const OVERLAP = ['board: 12x7', 'parts:', '  R1: resistor b2 b6 1k', '  R2: resistor b3 b7 1k', ''].join('\n');
 
 describe('renderPerfboard の erc', () => {
-  test('つながっていない足は erc に来る', () => {
+  test('つながっていないピンは erc に来る', () => {
     const { erc } = renderPerfboard(LOOSE);
 
     expect(erc.some((one) => one.message.includes('つながっていません'))).toBe(true);

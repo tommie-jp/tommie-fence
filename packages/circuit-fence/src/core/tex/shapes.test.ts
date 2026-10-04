@@ -3,7 +3,7 @@ import { regulatorShapeTex, sipShapeName, sipShapeTex, smaShapeTex } from './sha
 
 /**
  * ピンヘッダの記号。**circuitikz に無いので自分で宣言する** — その宣言が
- * 足の数だけアンカーを持ち、輪郭と足の線を描くことを見る。
+ * ピンの数だけアンカーを持ち、輪郭とピンの線を描くことを見る。
  */
 describe('sipShapeTex', () => {
   test('declares a shape named after the pin count, matching the part symbol', () => {
@@ -80,7 +80,7 @@ describe('regulatorShapeTex / smaShapeTex', () => {
   });
 
   test('leaves the shield lead on the rim, so it never reaches the core', () => {
-    // 外皮の足は下の縁 (0, -0.3) 止まり。中心 (原点) まで引いてはいけない。
+    // 外皮のピンは下の縁 (0, -0.3) 止まり。中心 (原点) まで引いてはいけない。
     const tex = smaShapeTex().join('\n');
 
     expect(tex).toContain(

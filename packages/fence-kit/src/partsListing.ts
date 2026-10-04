@@ -3,7 +3,7 @@ import { capacitorCode, parsePicofarads, parseResistor, resistorBands } from './
 
 /**
  * 部品表の欄の中身。breadboard と perfboard の部品表が**同じ欄を同じ字で**出すための置き場。
- * 表の組み方 (板に載せるか、等幅の帯にするか) はフェンスごとに違うので、ここには置かない。
+ * 表の組み方 (基板に載せるか、等幅の帯にするか) はフェンスごとに違うので、ここには置かない。
  */
 
 /**
@@ -50,7 +50,7 @@ const CERAMIC_ROLE = 'セラミックフィルタ';
 
 /**
  * 種類の綴り。姿を書いてあれば添える (`capacitor/ceramic`)。セラミックフィルタの型番
- * (`sip3` + `SFU455B`) は、足の数の綴りでは何の部品か分からないので呼び名で出す。
+ * (`sip3` + `SFU455B`) は、ピンの数の綴りでは何の部品か分からないので呼び名で出す。
  */
 export function partKind(type: string, variant: string | null, value: string | null): string {
   const role = value === null || value === '' ? null : lookupRole(value);
@@ -60,7 +60,7 @@ export function partKind(type: string, variant: string | null, value: string | n
 
 /**
  * IC の型番に働きを添える (`CD4081 (2 入力 AND ×4)`)。型番だけだと、どの IC が何をするのか
- * 表から読めない。足の名前の表にある型番だけ。
+ * 表から読めない。ピンの名前の表にある型番だけ。
  */
 export function valueWithRole(value: string): string {
   const role = value === '' ? null : lookupRole(value);

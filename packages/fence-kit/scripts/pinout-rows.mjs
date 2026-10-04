@@ -1,4 +1,4 @@
-// 足の名前の表 (src/parts/pinouts.ts) から、早見表と文法リファレンスの表の行を書き出す。
+// ピンの名前の表 (src/parts/pinouts.ts) から、早見表と文法リファレンスの表の行を書き出す。
 // 使い方: node scripts/pinout-rows.mjs [型番 ...]   (型番を省くと全部)
 // 文書の表に行を手で写すと載せ漏れる (試験が落ちる) ので、行はここから貼る。
 import { build } from 'esbuild';

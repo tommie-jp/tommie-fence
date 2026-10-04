@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { renderPerfboard } from '../core/index.ts';
 import { saidOf } from './said.ts';
 
-/** R2 の片足 (e7) と R1 の片足 (c7) がどこにもつながっていない板。 */
+/** R2 の片ピン (e7) と R1 の片ピン (c7) がどこにもつながっていない基板。 */
 const LOOSE = [
   'board: 12x8',
   'parts:',
@@ -20,7 +20,7 @@ describe('saidOf', () => {
 
     expect(result.erc.length).toBeGreaterThan(0);
     expect(saidOf(result)).toEqual([...result.notices, ...result.erc]);
-    expect(messagesOf(LOOSE).join('\n')).toMatch(/R1 の 1 本の足がどこにもつながっていません/);
+    expect(messagesOf(LOOSE).join('\n')).toMatch(/R1 の 1 本のピンがどこにもつながっていません/);
   });
 
   test('puts what could not be read ahead of everything else', () => {

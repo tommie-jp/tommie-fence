@@ -6,7 +6,7 @@ import {
 
 /**
  * 面実装の表 (52 の docs/64)。**表に 1 行足せば姿が 1 つ増える**ので、見張るのは
- * 綴りの規則 (`-dip` は変換基板、裸は直付け) と、板ごとに受け取る姿の違い。
+ * 綴りの規則 (`-dip` は変換基板、裸は直付け) と、基板ごとに受け取る姿の違い。
  */
 describe('面実装の表', () => {
   test('knows S-Mini as sot346, on an adapter and soldered straight to the board', () => {
@@ -59,7 +59,7 @@ describe('面実装の表', () => {
     expect(isDirectSmd('sot346')).toBe(true);
     expect(isDirectSmd('sot346-dip')).toBe(false);
     expect(isDirectSmd('sop')).toBe(false);
-    expect(isSmdAdapter('sop')).toBe(false); // 3 本足の変換基板だけ
+    expect(isSmdAdapter('sop')).toBe(false); // 3 ピンの変換基板だけ
   });
 
   test('points a direct shape at its adapter, for the breadboard to suggest', () => {

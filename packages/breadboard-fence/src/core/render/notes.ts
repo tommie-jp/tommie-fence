@@ -52,7 +52,7 @@ const ANCHORS: Record<NoteAlign, 'start' | 'middle' | 'end'> = {
 };
 
 /**
- * 注釈を図の上に重ねる。**板・部品・配線を描き終えたあと**に呼ぶ。
+ * 注釈を図の上に重ねる。**基板・部品・配線を描き終えたあと**に呼ぶ。
  * 注釈は回路の一員ではないので、ネットにも部品リストにも入らない。
  */
 /**
@@ -77,7 +77,7 @@ export function renderNotes(
   }).join('');
 }
 
-/** 板の上に重ねる注釈と、図の外に置く注釈。場所の語を書いたものが後者。 */
+/** 基板の上に重ねる注釈と、図の外に置く注釈。場所の語を書いたものが後者。 */
 export const onBoard = (notes: readonly ResolvedNote[]): readonly ResolvedNote[] =>
   notes.filter((note) => note.spec.place === null);
 
@@ -85,9 +85,9 @@ export const placedOutside = (notes: readonly ResolvedNote[]): readonly Resolved
   notes.filter((note) => note.spec.place !== null);
 
 /**
- * 注釈が図の下へどこまで伸びるか。**字は板の外へはみ出しても切らずに、
+ * 注釈が図の下へどこまで伸びるか。**字は基板の外へはみ出しても切らずに、
  * 画布のほうを伸ばす** (`- source` はフェンス全体を書き出すので、
- * 板の高さに収まらないのが普通)。横は板の幅で `…` に切る。
+ * 基板の高さに収まらないのが普通)。横は基板の幅で `…` に切る。
  */
 export function notesBottom(
   notes: readonly ResolvedNote[],
@@ -119,7 +119,7 @@ const BAND_PAD = 10;
 const BAND_GAP = 8;
 
 /**
- * 板の外に置いた字が使う高さ。板の上に重ねるものと違って**画布を伸ばすのではなく、
+ * 基板の外に置いた字が使う高さ。基板の上に重ねるものと違って**画布を伸ばすのではなく、
  * 自分の帯を持つ** (部品リストと同じ立て付け)。
  */
 export function outsideNotesHeight(
@@ -141,10 +141,10 @@ const blockHeight = (spec: NoteSpec, theme: RenderTheme, sourceLines: readonly s
 };
 
 /**
- * 板の外に置いた字。板の下、部品リストの後ろに、書いた順に積む。
+ * 基板の外に置いた字。基板の下、部品リストの後ろに、書いた順に積む。
  *
- * 板の番地はどれも実在の穴に縛られているので、**板の外を指す番地が存在しない**。
- * 図の説明や書き写し用の写しを板の上に重ねると穴と印字に重なるので、
+ * 基板の番地はどれも実在の穴に縛られているので、**基板の外を指す番地が存在しない**。
+ * 図の説明や書き写し用の写しを基板の上に重ねると穴と印字に重なるので、
  * 場所の語を書いたものはここへ流す。
  */
 export function renderOutsideNotes(
@@ -274,7 +274,7 @@ function arrowHead(from: Point, to: Point, color: string): string {
 }
 
 /**
- * 図に重ねる字。**板からはみ出す幅は `…` で切る** (図のキャプションと同じ約束)。
+ * 図に重ねる字。**基板からはみ出す幅は `…` で切る** (図のキャプションと同じ約束)。
  * 縦は切らず、画布のほうを伸ばす (`notesBottom`)。
  */
 function renderText(
@@ -302,7 +302,7 @@ function renderText(
 }
 
 /**
- * 字を 1 行ずつ置く。板の上でも図の外でも同じ描き方で、違うのは
+ * 字を 1 行ずつ置く。基板の上でも図の外でも同じ描き方で、違うのは
  * 基準の座標と、`…` に切るときの残り幅だけ。
  */
 function textLines(
@@ -330,14 +330,14 @@ function textLines(
         ...(mono ? { 'font-family': MONO_FAMILY, 'xml:space': 'preserve' } : {}),
         fill: textColorOf(spec, theme),
         anchor: ANCHORS[align],
-        // 帯の中は下地が無地なので縁取りは要らない。板に重ねるときだけ敷く。
+        // 帯の中は下地が無地なので縁取りは要らない。基板に重ねるときだけ敷く。
         ...(halo ? { halo: theme.palette.textHalo, haloWidth: haloWidth(theme), haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY } : {}),
       }),
     )
     .join('');
 }
 
-/** その置き方で板の中に残っている幅。 */
+/** その置き方で基板の中に残っている幅。 */
 function roomFor(x: number, align: NoteAlign, layout: Layout): number {
   const left = x - layout.board.x;
   const right = layout.board.x + layout.board.width - x;
@@ -347,7 +347,7 @@ function roomFor(x: number, align: NoteAlign, layout: Layout): number {
 }
 
 /**
- * 板の上に置いた字が占める帯。**書いた人が番地で決めた場所**なので、
+ * 基板の上に置いた字が占める帯。**書いた人が番地で決めた場所**なので、
  * 自動で置く名札のほうが避ける (`captions.ts`)。1 行 1 つ。
  */
 export function noteBands(

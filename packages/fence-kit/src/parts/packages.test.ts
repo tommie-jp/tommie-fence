@@ -5,7 +5,7 @@ import type { BodyPart } from './bodies.ts';
 import type { PackageShape } from './packages.ts';
 
 /**
- * **足が 3 本以上ある部品のパッケージの姿**。板に依らないので breadboard と
+ * **ピンが 3 本以上ある部品のパッケージの姿**。基板に依らないので breadboard と
  * perfboard が共有する — だから**どちらのテストからも見えない場所**にあり、
  * ここで見張らないと誰も見ていないことになる。
  *
@@ -24,7 +24,7 @@ const PITCH = 18;
 
 describe('パッケージの大きさ', () => {
   test('grows the body for the packages that are bigger in real life', () => {
-    // ピッチに対する比で持つ。板が変わっても同じ大きさに見える。
+    // ピッチに対する比で持つ。基板が変わっても同じ大きさに見える。
     // TO-220 は放熱タブのぶん、半固定抵抗はつまみのぶん、TO-92 より大きい。
     expect(packageReach(part('transistor'), PITCH)).toBeLessThan(packageReach(part('transistor', 'to220'), PITCH));
     expect(packageReach(part('potentiometer'), PITCH)).toBeGreaterThan(packageReach(part('transistor'), PITCH));
@@ -87,7 +87,7 @@ describe('パッケージの姿', () => {
   test('draws the adapter as a board with a small chip on it, not as a TO-92', () => {
     const adapter = drawPackage(part('transistor', 'sot23-dip'), shape());
 
-    // 変換基板そのもの (緑の板) + 載っている SOT-23 の胴 + ピンヘッダ。
+    // 変換基板そのもの (緑の基板) + 載っている SOT-23 の胴 + ピンヘッダ。
     expect(adapter.match(/<rect/g)?.length).toBeGreaterThanOrEqual(3);
     expect(adapter).not.toBe(drawPackage(part('transistor'), shape()));
   });

@@ -2,10 +2,10 @@ import { lookupGateUnits } from 'fence-kit';
 import type { PartSpec } from './types.ts';
 
 /**
- * ゲートの記号に添える IC の足の番号 (`U1A: nand c3 74HC00` の 1・2 → 3)。
+ * ゲートの記号に添える IC のピンの番号 (`U1A: nand c3 74HC00` の 1・2 → 3)。
  *
  * **IC の 1 回路 = 記号 1 つ。** 回路は ID の末尾の大文字 (`U1A` の `A` = 1 つ目、`B` = 2 つ目 …) で
- * 選び、番号は**型番から足の名前の表で引く** (`pinouts.ts` の `1A` `1B` `1Y` の印字)。
+ * 選び、番号は**型番からピンの名前の表で引く** (`pinouts.ts` の `1A` `1B` `1Y` の印字)。
  * 型番が表に無い・ID に回路の字が無いときは何も添えない (今までの図のまま)。
  */
 
@@ -14,7 +14,7 @@ const ARITY: Readonly<Record<string, number>> = {
   and: 2, or: 2, nand: 2, nor: 2, xor: 2, xnor: 2, not: 1, buffer: 1,
 };
 
-/** 記号の足 (circuitikz のアンカー名)。入力は上から、出力は右。 */
+/** 記号のピン (circuitikz のアンカー名)。入力は上から、出力は右。 */
 const INPUT_ANCHORS: Readonly<Record<number, readonly string[]>> = {
   1: ['in'],
   2: ['in 1', 'in 2'],
@@ -51,7 +51,7 @@ export function gateNumbersOf(part: PartSpec): GateNumbers {
   if (unit.inputs.length !== arity) {
     return {
       numbers: [],
-      problem: `${part.id}: ${part.value} は ${unit.inputs.length} 入力なので、${arity} 入力の ${part.type} には足の番号を添えません`,
+      problem: `${part.id}: ${part.value} は ${unit.inputs.length} 入力なので、${arity} 入力の ${part.type} にはピンの番号を添えません`,
     };
   }
   const anchors = INPUT_ANCHORS[arity] ?? [];

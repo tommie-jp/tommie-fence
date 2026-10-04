@@ -3,8 +3,8 @@ import { compileCircuit } from './index.ts';
 import { PART_NAMES, PART_PREFIXES, lookupPartType, lookupPin } from './parts.ts';
 
 /**
- * フォトトランジスタ (52 の docs/66 の段 6)。**B を持たない 2 本足** —
- * 砲弾型の実物は 2 本足で、記号も光の矢を受けてベースの線が無い形
+ * フォトトランジスタ (52 の docs/66 の段 6)。**B を持たない 2 ピン** —
+ * 砲弾型の実物は 2 ピンで、記号も光の矢を受けてベースの線が無い形
  * (circuitikz 1.0 の `npn, photo, nobase`。フェンス側の TeX で確かめた)。
  */
 
@@ -29,12 +29,12 @@ describe('フォトトランジスタ', () => {
   });
 
   test('keeps the name off the side the light arrows come from', () => {
-    // 足の無い左の辺は空いて見えるが、光の矢が出ている。名札は右へ。
+    // ピンの無い左の辺は空いて見えるが、光の矢が出ている。名札は右へ。
     const upright = compileCircuit(circuit('parts:', '  Q1: phototransistor c3')).tex;
     const turned = compileCircuit(circuit('parts:', '  Q1: phototransistor c3 r90')).tex;
 
     expect(upright).toContain('\\node[anchor=west] at (part-Q1.east) {$Q_{1}$}');
-    // 回すと矢は上から来る (左 → 上)。足は左右なので、名札は下へ。
+    // 回すと矢は上から来る (左 → 上)。ピンは左右なので、名札は下へ。
     expect(turned).not.toMatch(/anchor=south\] at \(part-Q1\.[a-z]+\) \{\$Q_\{1\}\$\}/);
   });
 
@@ -43,6 +43,6 @@ describe('フォトトランジスタ', () => {
       'parts:', '  Q1: phototransistor c3', '  R1: resistor a1 a3 1k', 'wires:', '  - a1 -- a3',
     ), { erc: true });
 
-    expect(result.erc.map((one) => one.message).join('\n')).toContain('Q1 の足 C、E をどの配線も指していません');
+    expect(result.erc.map((one) => one.message).join('\n')).toContain('Q1 のピン C、E をどの配線も指していません');
   });
 });

@@ -3,7 +3,7 @@ import { fit, textWidth } from './textFit.ts';
 
 describe('textWidth', () => {
   test('counts a full-width character as twice a narrow one', () => {
-    // 全角を英数字と同じ幅で数えると、日本語のラベルが板からはみ出して読めなくなる。
+    // 全角を英数字と同じ幅で数えると、日本語のラベルが基板からはみ出して読めなくなる。
     expect(textWidth('あ')).toBeGreaterThan(textWidth('a'));
     expect(textWidth('あ')).toBe(1);
     expect(textWidth('ab')).toBeCloseTo(1.1);

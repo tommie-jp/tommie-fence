@@ -42,7 +42,7 @@ const SEVERITY: Readonly<Record<Problem['kind'], vscode.DiagnosticSeverity>> = {
 };
 
 /**
- * ERC も出すか。**既定は出さない** — perfboard は組んでいる途中、足 1 本ごとに
+ * ERC も出すか。**既定は出さない** — perfboard は組んでいる途中、ピン 1 本ごとに
  * 「つながっていません」が出る。Problems に常に並ぶと、直す場所のある報告が
  * 埋もれる (52 の docs/52 / 55 の「普段は OFF、最後に ON」)。
  */

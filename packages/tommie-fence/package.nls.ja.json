@@ -4,7 +4,7 @@
   "command.movePart": "circuit の部品を番地で動かす",
   "command.movePoint": "circuit の節点を番地で動かす",
   "config.noteFrame": "掴んで動かす升目で、notes: text を枠で囲む (既定は囲まない)。",
-  "config.problemsErc": "Problems パネルに ERC (そのとおりに組んでも動かないところ) も出す。既定は出さない — 組んでいる途中の板は、足 1 本ごとに「つながっていません」が出るため。",
+  "config.problemsErc": "Problems パネルに ERC (そのとおりに組んでも動かないところ) も出す。既定は出さない — 組んでいる途中の基板は、ピン 1 本ごとに「つながっていません」が出るため。",
   "config.oldNoteFrame": "旧い名前。tommieFence.map.noteFrame を使う。",
   "config.oldNoteFrame.deprecated": "tommieFence.map.noteFrame に改名しました (こちらも読み続けます)。",
   "config.imageAfterFence": "フェンスの直後に、画像 1 枚だけの段落があるときのプレビューでの出し方。フェンスを図にしない GitHub のために置いた、同じ図の写しであることがほとんど。",

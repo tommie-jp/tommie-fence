@@ -38,7 +38,7 @@ const cellAt = (layout: Layout, address: Address): string => {
   });
 };
 
-/** その板にある番地を、上のレールから下のレールまで順に。 */
+/** その基板にある番地を、上のレールから下のレールまで順に。 */
 function addressesOf(board: Board): readonly Address[] {
   const rails = board.rails ?? [];
   const columns = Array.from({ length: board.columns }, (_, index) => index + 1);

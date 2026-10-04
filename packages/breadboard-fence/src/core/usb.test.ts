@@ -5,8 +5,8 @@ import { variantsOf } from './parts/variants.ts';
 import { knownPartTypes, lookupFootprint, placeableTypes } from './placement/footprints.ts';
 
 /**
- * USB コネクタ (52 の docs/58)。**perfboard と同じ表**を読む — 書いた穴がそのまま足で、
- * 足の名前は表の順 (`VBUS GND D+ D-`、Type-C は `CC1 CC2` まで)。書いた数だけ使う。
+ * USB コネクタ (52 の docs/58)。**perfboard と同じ表**を読む — 書いた穴がそのままピンで、
+ * ピンの名前は表の順 (`VBUS GND D+ D-`、Type-C は `CC1 CC2` まで)。書いた数だけ使う。
  */
 
 const fence = (...lines: string[]): string => ['board: half', ...lines, ''].join('\n');
@@ -81,7 +81,7 @@ describe('図', () => {
     const yOf = (svg: string, row: string): number =>
       Number(new RegExp(`<text[^>]* y="([-\\d.]+)"[^>]*>${row}<`).exec(svg)?.[1]);
 
-    // 上の段では金物が足の上 (差し込み口は上)、下の段では足の下。
+    // 上の段では金物がピンの上 (差し込み口は上)、下の段ではピンの下。
     expect(nameY(top)).toBeLessThan(yOf(top, 'c'));
     expect(nameY(bottom)).toBeGreaterThan(yOf(bottom, 'h') - 10);
   });

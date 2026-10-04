@@ -18,7 +18,7 @@ export type DocumentOptions = {
   /** 図の右下に処理系の版を刻むか。 */
   readonly stamp?: boolean;
   /**
-   * 画布の大きさ。**書かなければ板の寸法なり**。半田面を足したときのように、
+   * 画布の大きさ。**書かなければ基板の寸法なり**。半田面を足したときのように、
    * 1 つの `layout` に収まらないものを並べるときだけ外から渡す。
    */
   readonly canvas?: { readonly width: number; readonly height: number } | null;
@@ -29,7 +29,7 @@ export type DocumentOptions = {
   readonly defs?: string;
 };
 
-/** 刻印を板の縁からどれだけ内へ置くか。 */
+/** 刻印を基板の縁からどれだけ内へ置くか。 */
 const STAMP_INSET = 4;
 
 export function renderDocument(layout: Layout, body: string, options: DocumentOptions): string {
@@ -41,7 +41,7 @@ export function renderDocument(layout: Layout, body: string, options: DocumentOp
   const scale = width === null ? 1 : width / size.width;
 
   // **地はいちばん下に敷く。** 地を決めたテーマ (dark / mono) は、貼った先の
-  // 背景に関わらず読めなければならない — 板の外の字は地の上に乗るため。
+  // 背景に関わらず読めなければならない — 基板の外の字は地の上に乗るため。
   const canvas = theme.palette.canvas === null
     ? ''
     : element('rect', {

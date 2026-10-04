@@ -65,7 +65,7 @@ describe('parseDevice', () => {
 describe('入れ子を機器と決めつけない', () => {
   test('refuses a nested entry that did not say it is a device', () => {
     // **入れ子なら機器、にしない。** 部品を書き間違えて字下げした人が、
-    // 板の外に箱が出ているのを見て気づけないまま終わる。
+    // 基板の外に箱が出ているのを見て気づけないまま終わる。
     expect(read({ pins: ['+', '-'] }).ok).toBe(false);
     expect(read({ type: 'resistor', pins: ['+', '-'] }).ok).toBe(false);
     expect(read({ type: 'devise', pins: ['+', '-'] }).ok).toBe(false);

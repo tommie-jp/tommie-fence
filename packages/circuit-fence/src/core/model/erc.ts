@@ -16,47 +16,47 @@ import type { FenceError, PartSpec } from '../types.ts';
  * 見るのは 4 つ。**どれも「書いた人が気づけない」種類の間違い**で、図としては
  * 成立してしまうものを選んである:
  *
- * - どこにも届いていない足 (2 端子・1 端子)
- * - 配線が 1 本も指していない足 (多端子)
+ * - どこにも届いていないピン (2 端子・1 端子)
+ * - 配線が 1 本も指していないピン (多端子)
  * - 両端が同じネットに来ている部品 (配線で跨がれている)
- * - 部品の足に届いていない配線
+ * - 部品のピンに届いていない配線
  *
  * **うるさくしない線引きが本体。** 正しい図が毎回叱られると、帯を読まなくなる。
  */
 
-/** 1 件に並べる足の数の上限。これを超えたら数で言う。 */
+/** 1 件に並べるピンの数の上限。これを超えたら数で言う。 */
 const MAX_SHOWN = 4;
 
 /**
- * 足の並びがパッケージで決まる種類。**余った足を言わない** — `dip8` に 8 本
+ * ピンの並びがパッケージで決まる種類。**余ったピンを言わない** — `dip8` に 8 本
  * つなげとは言えないし、どのピンを使うかは型番の話で種類名からは決まらない
- * (`pico` の 40 本なら、使わない足のほうが多い)。
+ * (`pico` の 40 本なら、使わないピンのほうが多い)。
  */
 const PACKAGED = /^(dip|sip)\d+$/;
 
 /**
- * **コネクタも余った足を言わない** — USB の D+ / D- は電源だけの回路では使わず、
- * 足は差し出しているだけで、全部つなげという部品ではない。Type-A は 4 本なので
+ * **コネクタも余ったピンを言わない** — USB の D+ / D- は電源だけの回路では使わず、
+ * ピンは差し出しているだけで、全部つなげという部品ではない。Type-A は 4 本なので
  * 上の「5 本以上」には掛からない (52 の docs/58)。
  */
 const isPackaged = (part: PartSpec): boolean =>
   PACKAGED.test(part.type) || lookupConnectorSymbol(part.type) !== null
-  // **機器も言わない** — モジュールの足は差し出しているだけで、使うのは一部
+  // **機器も言わない** — モジュールのピンは差し出しているだけで、使うのは一部
   // (超音波センサーの 4 本、Analog Discovery の 30 本)。
   || part.type === DEVICE
   // **リレーも言わない** — 2 回路 (G5V-2) のうち 1 つしか使わないのが普通で、
   // NC か NO の片方だけ使うことも多い (52 の docs/66)。フォトカプラの 4 本は
-  // 全部要るので言う。7 セグは足の名前を刷った箱 (5 本以上) なので下で外れる。
+  // 全部要るので言う。7 セグはピンの名前を刷った箱 (5 本以上) なので下で外れる。
   || part.type === 'relay'
   || (partTypeOf(part)?.pinLabels?.length ?? 0) > 4;
 
 /**
- * どこにも届いていない足。**自分しか乗っていないまとまり**にいて、しかも
+ * どこにも届いていないピン。**自分しか乗っていないまとまり**にいて、しかも
  * **配線が 1 本も来ていない**端子は、つなぐ相手が居ない。
  *
  * 見逃すものが 3 つある。どれも「正しい図が毎回叱られる」のを避けるため:
  *
- * - **配線が来ている端**。交点まで線を引いて終える書き方は、記号の足を見せる
+ * - **配線が来ている端**。交点まで線を引いて終える書き方は、記号のピンを見せる
  *   図 (文法リファレンスの記号表) がそうしている。線が引いてあるのは
  *   「ここまでは意図した」という印で、その先が空でも書いた人は見えている
  * - **`points:` で名前を付けた節点**。名前を付けたのは「ここから信号が
@@ -89,13 +89,13 @@ function looseTerminals(circuit: Circuit): FenceError[] {
 }
 
 /**
- * 配線が 1 本も指していない多端子の足。**多端子は指されて初めてネットに乗る**
- * ので、指されていない足はネットリストに現れず、上の検査では見えない。
+ * 配線が 1 本も指していない多端子のピン。**多端子は指されて初めてネットに乗る**
+ * ので、指されていないピンはネットリストに現れず、上の検査では見えない。
  */
 function unusedPins(circuit: Circuit): FenceError[] {
-  // **突き合わせるのはアンカー名。** 足は `B` でも `base` でも書けるが、
+  // **突き合わせるのはアンカー名。** ピンは `B` でも `base` でも書けるが、
   // 読んだ時点で 1 つに揃っている (`resolvePins`) ので、こちらもそちらで数える
-  // — 人に見せる綴りで比べると、`Q1.B` と書いた足を「指していない」と言う。
+  // — 人に見せる綴りで比べると、`Q1.B` と書いたピンを「指していない」と言う。
   const used = new Set<string>();
   for (const wire of circuit.wires) {
     for (const endpoint of [wire.from, wire.to]) {
@@ -118,7 +118,7 @@ function unusedPins(circuit: Circuit): FenceError[] {
       ? `${loose.slice(0, MAX_SHOWN).join('、')} ほか ${loose.length - MAX_SHOWN} 本`
       : loose.join('、');
     found.push(fenceError(
-      `${safeToken(part.id)} の足 ${shown} をどの配線も指していません`,
+      `${safeToken(part.id)} のピン ${shown} をどの配線も指していません`,
       part.line,
     ));
   }
@@ -146,8 +146,8 @@ function shorted(circuit: Circuit, netlist: readonly Net[]): FenceError[] {
 }
 
 /**
- * 部品の足に届いていない配線。**ネットリストには出てこない**
- * (`computeNets` は足の乗ったまとまりしか出さない) ので、ここで言わないと
+ * 部品のピンに届いていない配線。**ネットリストには出てこない**
+ * (`computeNets` はピンの乗ったまとまりしか出さない) ので、ここで言わないと
  * 黙って消える。
  */
 function looseWires(circuit: Circuit): FenceError[] {
@@ -163,7 +163,7 @@ function looseWires(circuit: Circuit): FenceError[] {
       return cell === null ? nameOfEndpoint(endpoint) : formatAddress(cell);
     };
     return [fenceError(
-      `${spell(wire.from)} ${wire.operator} ${spell(wire.to)} は部品の足を 1 つもつないでいません`,
+      `${spell(wire.from)} ${wire.operator} ${spell(wire.to)} は部品のピンを 1 つもつないでいません`,
       wire.line,
     )];
   });

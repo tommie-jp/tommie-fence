@@ -57,7 +57,7 @@ describe('gridMap', () => {
   });
 
   test('names a pin the way the reference does, not by the shortest alias', () => {
-    // `not` の足は `a` / `y` とも書けるが、代表の名前は `in` / `out`。
+    // `not` のピンは `a` / `y` とも書けるが、代表の名前は `in` / `out`。
     expect(gridMap('parts:\n  N1: not b2\n').chips[0]?.pins).toEqual([
       { name: 'in', label: 'in', side: 'left' },
       { name: 'out', label: 'out', side: 'right' },
@@ -66,7 +66,7 @@ describe('gridMap', () => {
 
   test('gives a DIP every leg, down the left and up the right as the real part is numbered', () => {
     // 中心線には 1 本も乗っていないが、**升目は掴むための道具**なので
-    // 出どころで並べる (実機で「すべての部品の足に接続点を」)。
+    // 出どころで並べる (実機で「すべての部品のピンに接続点を」)。
     const pins = gridMap('parts:\n  U1: dip8 b2\n').chips[0]?.pins ?? [];
 
     expect(pins.map((pin) => pin.name)).toEqual(['1', '2', '3', '4', '8', '7', '6', '5']);
@@ -115,8 +115,8 @@ describe('gridMap', () => {
 
   test('leaves no leg without a place — every pin of every part can be clicked', () => {
     // **実機で数えて 15 種が欠けていた** (オペアンプの ±、ゲートの入力、
-    // DIP の全部、トランス、spdt)。足を足したときに置き場を書き忘れると、
-    // その足だけ升目から配線できなくなるので、ここで数え続ける。
+    // DIP の全部、トランス、spdt)。ピンを足したときに置き場を書き忘れると、
+    // そのピンだけ升目から配線できなくなるので、ここで数え続ける。
     const missing = partTypeNames().flatMap((name) => {
       const type = lookupPartType(name);
       if (type === undefined || type === null || type.kind !== 'multi-terminal') return [];
@@ -193,7 +193,7 @@ describe('gridMap の配線', () => {
 
   test('carries a bent wire as one line through its corner', () => {
     // `-|` は先に横。角は from の行・to の列。**1 本で持つ** ので、
-    // 描く側が角を両端に合わせられる (足へずらした端でも直角のまま)。
+    // 描く側が角を両端に合わせられる (ピンへずらした端でも直角のまま)。
     expect(linesOf('wires:\n  - a1 -| c3\n')).toEqual([
       {
         points: [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 2 }],
@@ -212,7 +212,7 @@ describe('gridMap の配線', () => {
   });
 
   test('names the leg of a wire the way the point on the map is named', () => {
-    // 実機で「USB のピンの配線が斜めになる」。線は足の接続点を**名前で引く**ので、
+    // 実機で「USB のピンの配線が斜めになる」。線はピンの接続点を**名前で引く**ので、
     // 点と同じ綴りでないと引けず、線の端が箱の真ん中に落ちる。USB とレギュレータは
     // 番号でも呼べ、JS が数字めいた鍵を先に並べるせいで番号 (`1`) を返していた。
     const pinOf = (source: string): string | undefined => linesOf(source)[0]?.fromPin?.name;
@@ -227,7 +227,7 @@ describe('gridMap の配線', () => {
 
   test('finds a point on the map for every spelling of every leg', () => {
     // 種類を足すたびに同じ食い違いを踏んだ (レギュレータ、USB)。**全部の種類の
-    // 全部の綴り**で、線の端が升目に出ている足の名前のどれかであることを見る。
+    // 全部の綴り**で、線の端が升目に出ているピンの名前のどれかであることを見る。
     const astray: string[] = [];
     let seen = 0;
     for (const name of partTypeNames()) {
@@ -250,7 +250,7 @@ describe('gridMap の配線', () => {
 
   test('keeps the corner of a folded wire that ends on a leg', () => {
     // 実機で「pico のピンから出た配線が -| で曲がらない」。角が端と同じ升に
-    // 来ると `cornerOf` は「曲がっていない」と答えるが、足は升の上に無いので
+    // 来ると `cornerOf` は「曲がっていない」と答えるが、ピンは升の上に無いので
     // 図の上では曲がる。
     const lines = linesOf('parts:\n  U1: pico f6\nwires:\n  - U1.GND8 -| f3\n');
 

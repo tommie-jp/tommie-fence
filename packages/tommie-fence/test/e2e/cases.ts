@@ -14,7 +14,7 @@ const EXTENSION_ID = 'tommie.tommie-fence';
  * 読めない行を 1 つ持つ perf (中の 3 行目 = Markdown の 4 行目)。**短い綴りで書く** —
  * 長い綴りは下の TWO_FENCES が通る (どちらも読む。52 の docs/08)。
  */
-const BROKEN = ['# 壊れた板', '```perf', 'board: 12x7', 'parts:', '  R1: resistr b2 b6', '```', ''].join('\n');
+const BROKEN = ['# 壊れた基板', '```perf', 'board: 12x7', 'parts:', '  R1: resistr b2 b6', '```', ''].join('\n');
 
 /** フェンスが 2 つあり、カーソルを置く 1 行目はどちらの外でもある文書。 */
 const TWO_FENCES = [
@@ -109,7 +109,7 @@ const opensPanelFromOutside: Case = {
 };
 
 /**
- * プレビューの markdown-it に載っている (板と画面は SVG を自分で組むので待たずに出る)。
+ * プレビューの markdown-it に載っている (基板と画面は SVG を自分で組むので待たずに出る)。
  * circuit は TeX を回すので待たない。計器の画面は vna・scope・spectrum の 3 つとも見る。グラフ (graph) とロジックアナライザの画面 (logic) も見る。
  */
 const rendersPreview: Case = {
@@ -136,7 +136,7 @@ export const DESKTOP_CASES: readonly Case[] = [
 
 /**
  * web 版で回すもの。**プレビューは見ない** (web の Markdown 拡張は
- * `markdown.api.render` を持たない版がある。図は TeX が要らない板の 2 つなら
+ * `markdown.api.render` を持たない版がある。図は TeX が要らないブレッドボードとユニバーサル基板なら
  * 出るが、確かめ方が無い)。
  */
 export const WEB_CASES: readonly Case[] = [wakesOnMarkdown, listsProblems, opensCustomEditor, opensPanelFromOutside];

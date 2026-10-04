@@ -7,7 +7,7 @@ import type { SweepText } from './model/sweep.ts';
 import type { Level } from './parser/values.ts';
 
 /**
- * spectrum フェンスの型。**図の中に部品も板も無い** — 描くのはスペクトル (周波数ごとの
+ * spectrum フェンスの型。**図の中に部品も基板も無い** — 描くのはスペクトル (周波数ごとの
  * レベル)。計器の型 (FFT 型か掃引型か) は `device:` が決め、キーの意味は型で変わらない
  * (片方の型にしか無いキーは、もう片方では断る。52 の docs/88)。
  */

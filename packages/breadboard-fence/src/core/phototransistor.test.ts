@@ -5,7 +5,7 @@ import { variantsOf } from './parts/variants.ts';
 import { knownPartTypes, placeableTypes } from './placement/footprints.ts';
 
 /**
- * フォトトランジスタ (52 の docs/66 の段 6)。**2 本足** (C E。B は無い) の
+ * フォトトランジスタ (52 の docs/66 の段 6)。**2 ピン** (C E。B は無い) の
  * 砲弾型で、LED と同じ姿 (`3mm` `5mm`) に黒い胴。先に書いた穴が C。
  */
 

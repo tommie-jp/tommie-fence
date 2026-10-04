@@ -9,7 +9,7 @@ import { smdSpecOf } from '../parts/catalog.ts';
 import type { Theme } from './theme.ts';
 
 /**
- * 部品の絵。**置き方 (中心・向き・足の点) は `footprint.ts` が決め**、ここは
+ * 部品の絵。**置き方 (中心・向き・ピンの点) は `footprint.ts` が決め**、ここは
  * その上に絵を載せるだけ — 図と導通が食い違わない。
  *
  * 面実装の胴は fence-kit (mm の表から描く。perfboard の直付けと同じ絵)。
@@ -38,7 +38,7 @@ export const bodyPart = (footprint: Footprint): BodyPart => ({
   pins: footprint.pins.map((pin) => ({ name: pin.name })),
 });
 
-/** 端面 SMA。局所の座標は **u が板の内へ、v が辺に沿う** (px)。 */
+/** 端面 SMA。局所の座標は **u が基板の内へ、v が辺に沿う** (px)。 */
 export function smaEdge(layout: Pick<Layout, 'len'>, male: boolean, pinColor: string, pin = true): string {
   const mm = (value: number): number => layout.len(value);
   const box = (u: number, v: number, du: number, dv: number, fill: string, round = 0.6): string => element('rect', {
@@ -60,14 +60,14 @@ export function smaEdge(layout: Pick<Layout, 'len'>, male: boolean, pinColor: st
   const legs = [-1, 1]
     .map((side) => box(0, side * SMA.legOffset - SMA.legWidth / 2, SMA.legReach, SMA.legWidth, SMA_METAL, 0.3))
     .join('');
-  // 中心導体は表の銅に載る。**裏から見た図では描かない** (板に隠れる)。
+  // 中心導体は表の銅に載る。**裏から見た図では描かない** (基板に隠れる)。
   const centre = pin ? box(0, -SMA.pinWidth / 2, SMA.pinReach, SMA.pinWidth, pinColor, 0.3) : '';
   return box(tip, -barrel, SMA.barrel, barrel * 2, SMA_METAL) + threads
     + box(tip + 0.3, -barrel * 0.5, 0.3, barrel, SMA_DIELECTRIC, 0.1) + face
     + box(-SMA.base, -half, SMA.base, SMA.size, SMA_METAL) + legs + centre;
 }
 
-/** 箱。黒い胴と、左右の辺の足の金物。1 番の足の側に丸の印。 */
+/** 箱。黒い胴と、左右の辺のピンの金物。1 番のピンの側に丸の印。 */
 function boxBody(layout: Layout, footprint: Footprint, theme: Theme): string {
   const part = footprint.part;
   if (part.kind !== 'box') return '';
@@ -77,7 +77,7 @@ function boxBody(layout: Layout, footprint: Footprint, theme: Theme): string {
   const padH = Math.min(pitch * 0.6, 1);
   const pads = footprint.pins.map((_pin, index) => {
     const left = index < Math.ceil(part.pins / 2);
-    // 足の点は置いたあとの座標なので、局所の並びは足の番号から組み直す。
+    // ピンの点は置いたあとの座標なので、局所の並びはピンの番号から組み直す。
     const row = left ? index : index - Math.ceil(part.pins / 2);
     const count = left ? Math.ceil(part.pins / 2) : part.pins - Math.ceil(part.pins / 2);
     const v = left ? -h / 2 + (h / count) * (row + 0.5) : h / 2 - (h / count) * (row + 0.5);
@@ -98,7 +98,7 @@ function boxBody(layout: Layout, footprint: Footprint, theme: Theme): string {
   return pads + body + dot;
 }
 
-/** 足のある部品。**足の線を端から端まで引き、胴を真ん中に載せる**。 */
+/** ピンのある部品。**ピンの線を端から端まで引き、胴を真ん中に載せる**。 */
 function leadedBody(layout: Layout, footprint: Footprint, theme: Theme): string {
   const [a, b] = footprint.ends ?? [footprint.center, footprint.center];
   const span = layout.len(Math.hypot(b.x - a.x, b.y - a.y));
@@ -115,13 +115,13 @@ function leadedBody(layout: Layout, footprint: Footprint, theme: Theme): string 
   return lead + solder + drawBody(part, span, REAL_INK);
 }
 
-/** 足の名前の字の大きさ (字の高さの比。名札より小さい)。 */
+/** ピンの名前の字の大きさ (字の高さの比。名札より小さい)。 */
 const PIN_NAME_SCALE = 0.8;
-/** 足の名前を足から横へ離す量 (px)。 */
+/** ピンの名前をピンから横へ離す量 (px)。 */
 const PIN_NAME_SIDE = 6;
 
 /**
- * 3 本足の足の名前。**足の途中に、足の並びの外側へ** 置く (端の 2 本は外へ、
+ * 3 ピンのピンの名前。**ピンの途中に、ピンの並びの外側へ** 置く (端の 2 本は外へ、
  * 真ん中は先に書いた側の反対へ)。字は回さない — 読めなくなる。
  */
 function pinNames(layout: Layout, footprint: Footprint, theme: Theme): string {
@@ -129,7 +129,7 @@ function pinNames(layout: Layout, footprint: Footprint, theme: Theme): string {
   return leads.map(([from, to], index) => {
     const [a, b] = [layout.toPx(from), layout.toPx(to)];
     const length = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-    // 足に直角な向き。並びの左端は負、右端と真ん中は正の側へ逃がす。
+    // ピンに直角な向き。並びの左端は負、右端と真ん中は正の側へ逃がす。
     const [nx, ny] = [-(b.y - a.y) / length, (b.x - a.x) / length];
     const side = index === 0 ? -1 : 1;
     const along = index === 1 ? 0.7 : 0.45;
@@ -143,7 +143,7 @@ function pinNames(layout: Layout, footprint: Footprint, theme: Theme): string {
   }).join('');
 }
 
-/** 多足の胴。`mmic` は面実装の SOT-89、他は fence-kit のパッケージ (TO-92・TO-220)。 */
+/** 多ピンの胴。`mmic` は面実装の SOT-89、他は fence-kit のパッケージ (TO-92・TO-220)。 */
 function multiGlyph(layout: Layout, footprint: Footprint, theme: Theme): string {
   const part = footprint.part;
   if (part.type === 'mmic') {
@@ -158,8 +158,8 @@ function multiGlyph(layout: Layout, footprint: Footprint, theme: Theme): string 
 }
 
 /**
- * 多足 (3〜4 本足)。**足は胴から端までの直線**で、端に半田の玉。胴は fence-kit の
- * パッケージ (TO-92 の D 形は平らな面が足の側)。`mmic` は SOT-89 の絵。
+ * 多ピン (3〜4 ピン)。**ピンは胴から端までの直線**で、端に半田の玉。胴は fence-kit の
+ * パッケージ (TO-92 の D 形は平らな面がピンの側)。`mmic` は SOT-89 の絵。
  */
 function multiBody(layout: Layout, footprint: Footprint, theme: Theme, attrs: Record<string, string>): string {
   const leads = (footprint.leads ?? []).map(([from, to]) => {

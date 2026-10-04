@@ -19,7 +19,7 @@ const STROKE = 2;
 const TEXT_RISE = 12;
 /** 指し棒の先の印の長さ。 */
 const ARROW_HEAD = 7;
-/** 板の上の注釈と題の間に残す隙間。 */
+/** 基板の上の注釈と題の間に残す隙間。 */
 const TITLE_CLEARANCE = 4;
 /** 字の上端と下端 (ベースラインからの比)。字幅の見積もりと同じ粗さでよい。 */
 const ASCENT = 0.72;
@@ -54,8 +54,8 @@ function renderNote(note: ResolvedNote, layout: Layout, theme: Theme): string {
 
   if (note.kind === 'text') {
     // 画布からはみ出した字は**黙って消える**ので、必ず幅で切る。
-    // 測る相手は板ではなく画布 — 板の外にも余白があり、そこは使える。
-    // **縦に回した字は高さで測る** (横幅で切ると板の広い側で無駄に切れる)。
+    // 測る相手は基板ではなく画布 — 基板の外にも余白があり、そこは使える。
+    // **縦に回した字は高さで測る** (横幅で切ると基板の広い側で無駄に切れる)。
     const sideways = note.turn.rotate === 90 || note.turn.rotate === 270;
     const { anchor, room } = sideways
       ? { anchor: 'middle' as const, room: layout.height }
@@ -128,7 +128,7 @@ export const renderNotes = (
   }).join('');
 
 /**
- * 板に書いた字が占める帯。**書いた人が番地で決めた場所**なので、自動で置く
+ * 基板に書いた字が占める帯。**書いた人が番地で決めた場所**なので、自動で置く
  * 名札のほうが避ける (`captions.ts`)。回した字は帯で囲めないので数えない。
  */
 export function noteBands(
@@ -150,7 +150,7 @@ export function noteBands(
   });
 }
 
-/** 注釈 1 つが縦に占める幅 (上端と下端)。書き出しと部品表は板の外の帯なので数えない。 */
+/** 注釈 1 つが縦に占める幅 (上端と下端)。書き出しと部品表は基板の外の帯なので数えない。 */
 function noteSpan(note: ResolvedNote, layout: Layout, theme: Theme): { top: number; bottom: number } {
   const from = layout.point(note.from);
   const to = note.to === null ? from : layout.point(note.to);
@@ -182,12 +182,12 @@ function noteSpan(note: ResolvedNote, layout: Layout, theme: Theme): { top: numb
 }
 
 /**
- * 板の外に書いた注釈のために、板の上と下へ空ける量。
+ * 基板の外に書いた注釈のために、基板の上と下へ空ける量。
  *
  * **書いた人が番地で決めた場所なので、図のほうが場所を空ける。** 空けないと、
  * 上は題に重なり、離れた番地の字は画布の外で黙って切れる。
- * 板の上の名前の帯 (`LABEL_GUTTER`) はいつも空いているので、そこに収まる注釈は
- * 何も動かさない — 板に書いた注釈のために図の寸法を変えない。
+ * 基板の上の名前の帯 (`LABEL_GUTTER`) はいつも空いているので、そこに収まる注釈は
+ * 何も動かさない — 基板に書いた注釈のために図の寸法を変えない。
  */
 export function noteOverhang(
   notes: readonly ResolvedNote[],

@@ -12,7 +12,7 @@ describe('実体配線図と同じ綴りで書けること', () => {
   const known = new Set(partTypeNames());
 
   test('has every part the boards can place, so the same circuit can be drawn either way', () => {
-    // **板の 2 つが置ける物**。片方に足したらこちらが落ちる。
+    // **ブレッドボードとユニバーサル基板が置ける物**。片方に足したらこちらが落ちる。
     const onBoards = [
       'resistor', 'capacitor', 'led', 'diode', 'inductor', 'crystal', 'buzzer',
       'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc', 'varistor',
@@ -28,8 +28,8 @@ describe('実体配線図と同じ綴りで書けること', () => {
   });
 
   test('names the schematic-only parts, so the list stays a decision and not an oversight', () => {
-    // **回路図にあって板に無い種類。** どれも回路図の記法であって実物ではない
-    // — 置き場が無いので板には足さない (52 の docs/21 の決め 1)。
+    // **回路図にあって基板に無い種類。** どれも回路図の記法であって実物ではない
+    // — 置き場が無いので基板には足さない (52 の docs/21 の決め 1)。
     // 種類を足したらここが落ちる。落ちたら**物か記法か**を決めてから直す。
     const onBoards = new Set([
       'resistor', 'capacitor', 'led', 'diode', 'inductor', 'crystal', 'buzzer',
@@ -45,13 +45,13 @@ describe('実体配線図と同じ綴りで書けること', () => {
     // **並びは表のまま** (`parts.ts` に書いた順)。並べ替えて読みやすくすると、
     // 表のどこを見ればよいかが分からなくなる。
     expect(partTypeNames().filter((type) => !onBoards.has(type))).toEqual([
-      // 可変抵抗はポテンショメータを 2 本足で使う書き方。物としては同じ。
+      // 可変抵抗はポテンショメータを 2 ピンで使う書き方。物としては同じ。
       'resistor-var',
-      // 可変コンデンサ (ポリバリコン) は板に挿さず線でつなぐ。板では `device` で書く。
+      // 可変コンデンサ (ポリバリコン) は基板に挿さず線でつなぐ。基板では `device` で書く。
       'capacitor-var',
       // 電源。実物は電池か機器 (`device`) で、記号のほうは「そこに何かが要る」印。
       'vsource', 'sine', 'square', 'triangle', 'isource',
-      // モータは板に挿さず線でつなぐ。板では `device` で書く (52 の docs/66)。
+      // モータは基板に挿さず線でつなぐ。基板では `device` で書く (52 の docs/66)。
       'motor',
       // 伝送線路は銅の形で、部品ではない。銅張り基板 (copper) の図の等価回路に使う (52 の docs/74)。
       'tline',
@@ -59,32 +59,32 @@ describe('実体配線図と同じ綴りで書けること', () => {
       'ammeter', 'voltmeter', 'ohmmeter', 'wattmeter', 'galvanometer', 'detector',
       // 記法。図の上の印であって、挿す物が無い。
       'short', 'port',
-      // アンテナは線を垂らすだけで板に挿さない。板では `device` で書く。
+      // アンテナは線を垂らすだけで基板に挿さない。基板では `device` で書く。
       'antenna',
       'ground', 'vcc', 'vee',
-      // 個別半導体。板は総称の `transistor` 1 つで持ち、姿 (TO-92 / TO-220) で分ける。
+      // 個別半導体。基板は総称の `transistor` 1 つで持ち、姿 (TO-92 / TO-220) で分ける。
       'npn', 'pnp', 'nmos', 'pmos', 'njfet', 'pjfet',
       'nmos-e', 'pmos-e', 'nmos-d', 'pmos-d',
-      // 中身が IC のもの。板では `dipN` に化ける。
+      // 中身が IC のもの。基板では `dipN` に化ける。
       'opamp',
       'nigbt', 'pigbt',
       // 切り替えスイッチ。物としてはスライドスイッチと同じ。
       'spdt',
       'and', 'or', 'nand', 'nor', 'xor', 'xnor', 'not', 'buffer',
-      // イヤホンはプラグかリード線で、板に挿さない。板では `device` で書く。
+      // イヤホンはプラグかリード線で、基板に挿さない。基板では `device` で書く。
       'earphone',
-      // セラミックフィルタも専用の種類を持たず、`sip3` に型番 `SFU455B` を添えて書く (足の名前の表)。
+      // セラミックフィルタも専用の種類を持たず、`sip3` に型番 `SFU455B` を添えて書く (ピンの名前の表)。
       'ceramic-filter',
-      // 働きで並べた IC は回路図だけの描き方。板の上の IC は実物の並びの `dipN` で書く。
+      // 働きで並べた IC は回路図だけの描き方。基板の上の IC は実物の並びの `dipN` で書く。
       'ic',
-      // デュアルゲート MOSFET は板では専用の種類を持たず、変換基板に載せた形を `dip4` / `sip4` に型番
-      // `3SK291` を添えて書く (足の名前の表)。
+      // デュアルゲート MOSFET は基板では専用の種類を持たず、変換基板に載せた形を `dip4` / `sip4` に型番
+      // `3SK291` を添えて書く (ピンの名前の表)。
       'nmos-dg',
     ]);
   });
 
   test('leaves out the one the boards call by a name the schematic cannot choose', () => {
-    // 板の `transistor` は総称。回路図は npn / pnp / FET を選ぶもので、
+    // 基板の `transistor` は総称。回路図は npn / pnp / FET を選ぶもので、
     // 総称の記号が無い — 別名にすると「置いたら勝手に npn になった」ことになる。
     expect(known.has('transistor')).toBe(false);
     expect(known.has('npn')).toBe(true);

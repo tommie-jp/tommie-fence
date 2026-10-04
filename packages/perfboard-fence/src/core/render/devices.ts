@@ -6,67 +6,67 @@ import type { DeviceSpec, FenceError, Point } from '../types.ts';
 import type { Theme } from './theme.ts';
 
 /**
- * 板の外の機器。**帯の中に箱として並べ、足を板の側へ出す。**
+ * 基板の外の機器。**帯の中に箱として並べ、ピンを基板の側へ出す。**
  *
- * 盤面に載らないものを板の上に描くと、挿す場所があるように見えてしまう。
+ * 盤面に載らないものを基板の上に描くと、挿す場所があるように見えてしまう。
  * 帯を分けておけば「これは外の物」が形で分かる。
  */
 
 /** 箱どうしの間。 */
 const GAP = 12;
-/** 箱の外へ出る足の長さ。 */
+/** 箱の外へ出るピンの長さ。 */
 const LEG = 10;
-/** 足の名前を書く高さ。足の先の外側に書く。 */
+/** ピンの名前を書く高さ。ピンの先の外側に書く。 */
 const PIN_LABEL = 15;
 
 /**
- * 足の名前の大きさ。**機器の名前より大きく書く。**
+ * ピンの名前の大きさ。**機器の名前より大きく書く。**
  * 配線をどの端子へ引くかを読むのはこの字で、`+` `-` `1` `2` のように短いので、
- * 板の字と同じ大きさだと線と穴に埋もれる。
+ * 基板の字と同じ大きさだと線と穴に埋もれる。
  */
 const PIN_NAME_SCALE = 1.35;
 /**
- * 足の名前を書くときの字の大きさ。**箱の幅を決めるのに要る**ので、
+ * ピンの名前を書くときの字の大きさ。**箱の幅を決めるのに要る**ので、
  * テーマを渡されない置き場所の計算でも同じ値を使えるように定数で持つ。
  */
 const PIN_NAME_SIZE = 9 * PIN_NAME_SCALE;
 /**
- * 足の名前をこれより小さくしない。足が穴の格子に載る (番地で置いた) 機器で、
+ * ピンの名前をこれより小さくしない。ピンが穴の格子に載る (番地で置いた) 機器で、
  * これでも隣の名前と触れるなら 2 段に互い違いに置く。
  */
 const MIN_PIN_NAME = 6.5;
 /** 2 段に置くときの段の間 (字の大きさに対する比)。 */
 const STAGGER_LINE = 1.2;
-/** 足の名前を箱の縁からこれだけ内に収める。 */
+/** ピンの名前を箱の縁からこれだけ内に収める。 */
 const NAME_INSET = 3;
-/** 足 1 本ぶんの幅。名前が並ぶので穴のピッチより広く取る。 */
+/** ピン 1 本ぶんの幅。名前が並ぶので穴のピッチより広く取る。 */
 const PIN_GAP = 22;
-/** 箱の最小の幅。足が 1〜2 本でも名前が入るように。 */
+/** 箱の最小の幅。ピンが 1〜2 本でも名前が入るように。 */
 const MIN_WIDTH = 80;
 /** 番地で置いた機器の箱の高さ。帯に並べたものと同じ背丈にする。 */
 const DEVICE_BOX_HEIGHT = 34;
-/** 足 1 本ぶんがこれより狭くなったら、名前は読めない。 */
+/** ピン 1 本ぶんがこれより狭くなったら、名前は読めない。 */
 const CRAMPED = PIN_GAP / 2;
 
 /**
- * 箱の幅。**足の名前が並ぶ幅から決める。**
+ * 箱の幅。**ピンの名前が並ぶ幅から決める。**
  *
- * 足の数だけで決めていたころは `sig gnd` のような名前が隣とくっついて
+ * ピンの数だけで決めていたころは `sig gnd` のような名前が隣とくっついて
  * 1 つの綴りに読めた。どの端子へ引く線なのかを読むのはこの名前なので、
  * 名前が入る幅を先に取る。
  */
 const boxWidth = (device: DeviceSpec, inBand = false): number => {
   const widest = device.pins.reduce((most, name) => Math.max(most, pinNameWidth(name)), 0);
   const pitch = Math.max(PIN_GAP, widest * PIN_NAME_SIZE + PIN_NAME_GAP);
-  // 帯に並べた足は箱の幅を (本数 + 1) で割った所に来るので、その間で名前が入るように。
-  // 番地で置いた足は穴の格子に載るので、箱を広げても足の間は変わらない。
+  // 帯に並べたピンは箱の幅を (本数 + 1) で割った所に来るので、その間で名前が入るように。
+  // 番地で置いたピンは穴の格子に載るので、箱を広げてもピンの間は変わらない。
   return Math.max(pitch * (device.pins.length + (inBand ? 1 : 0)), MIN_WIDTH);
 };
 
 export type PlacedDevice = {
   readonly device: DeviceSpec;
   readonly box: Band;
-  /** 足の名前 → 板の側の端。配線はここへつながる。 */
+  /** ピンの名前 → 基板の側の端。配線はここへつながる。 */
   readonly pins: ReadonlyMap<string, Point>;
 };
 
@@ -77,8 +77,8 @@ export type DeviceLayout = {
 };
 
 /**
- * 番地で置いた機器の箱が、板にどれだけ食い込むか (縦の量。食い込まなければ 0)。
- * 板の上に置いた箱は下端を、下に置いた箱は上端を見る。
+ * 番地で置いた機器の箱が、基板にどれだけ食い込むか (縦の量。食い込まなければ 0)。
+ * 基板の上に置いた箱は下端を、下に置いた箱は上端を見る。
  */
 function coverOf(box: Band, layout: Layout, above: boolean): number {
   const plate = layout.board;
@@ -88,15 +88,15 @@ function coverOf(box: Band, layout: Layout, above: boolean): number {
 }
 
 /**
- * 帯の中に機器を横へ並べる。**幅は足の数で決まる** — 足を等間隔に置ける
- * 幅が要るので、足の多い機器ほど広くなる。
+ * 帯の中に機器を横へ並べる。**幅はピンの数で決まる** — ピンを等間隔に置ける
+ * 幅が要るので、ピンの多い機器ほど広くなる。
  */
 export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout): DeviceLayout {
   const placed: PlacedDevice[] = [];
   const notices: FenceError[] = [];
 
   // **番地で置いた機器は帯に並べない。** 書いた場所へそのまま置く
-  // (箱の左上がその番地。足の位置は箱から決まる)。
+  // (箱の左上がその番地。ピンの位置は箱から決まる)。
   for (const device of devices) {
     if (device.where === null) continue;
     const address = parseAddress(device.where);
@@ -105,11 +105,11 @@ export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout): D
     const at = layout.point(address);
     const width = boxWidth(device);
     const height = DEVICE_BOX_HEIGHT;
-    // 板より上にあるなら足は下へ、下にあるなら足は上へ (板の側へ出す)。
+    // 基板より上にあるならピンは下へ、下にあるならピンは上へ (基板の側へ出す)。
     const above = at.y < layout.board.y + layout.board.height / 2;
 
-    // **足は穴の格子に載せる。** 1 本目が書いた番地の列に来て、そこから 1 穴ずつ。
-    // こうすると「その足のいちばん近い穴」が迷いなく決まり、配線を穴の番地で
+    // **ピンは穴の格子に載せる。** 1 本目が書いた番地の列に来て、そこから 1 穴ずつ。
+    // こうすると「そのピンのいちばん近い穴」が迷いなく決まり、配線を穴の番地で
     // 書ける (帯に並べたときは箱の幅で割るので、穴とは揃わない)。
     const columns = device.pins.map((_, pin) => layout.colX(address.col + pin));
     const first = columns[0] ?? at.x;
@@ -118,13 +118,13 @@ export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout): D
     const tip = above ? box.y + box.height + LEG : box.y - LEG;
     const cover = coverOf(box, layout, above);
     if (cover > 0) {
-      // **箱の左上がその番地**なので、板の上に置いた箱は下へ伸びる。`-a` や `0` に
-      // 置くと板の縁と列の名前に被るが、書いた場所なので動かさずに言う。
+      // **箱の左上がその番地**なので、基板の上に置いた箱は下へ伸びる。`-a` や `0` に
+      // 置くと基板の縁と列の名前に被るが、書いた場所なので動かさずに言う。
       const rows = Math.ceil(cover / layout.pitch);
       const clear = formatAddress({ row: address.row + (above ? -rows : rows), col: address.col });
       notices.push(notice(
-        `${safeToken(device.id)} の箱が板に重なっています (${safeToken(device.where)})。`
-        + `${clear} から${above ? '上' : '下'}に置くと板を避けられます`,
+        `${safeToken(device.id)} の箱が基板に重なっています (${safeToken(device.where)})。`
+        + `${clear} から${above ? '上' : '下'}に置くと基板を避けられます`,
         device.line,
       ));
     }
@@ -144,29 +144,29 @@ export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout): D
     const asked = wanted.reduce((sum, width) => sum + width, 0) + GAP * (here.length - 1);
 
     // **帯からはみ出させない。** viewBox の外に描いた箱は黙って切れるので、
-    // 入る幅まで一様に詰める (板の穴数と機器の数は釣り合っていないことがある)。
+    // 入る幅まで一様に詰める (基板の穴数と機器の数は釣り合っていないことがある)。
     const room = Math.max(0, band.width - GAP * (here.length - 1));
     const squeeze = asked > band.width ? room / (asked - GAP * (here.length - 1)) : 1;
     const widths = wanted.map((width) => width * squeeze);
     const total = widths.reduce((sum, width) => sum + width, 0) + GAP * (here.length - 1);
     let x = band.x + Math.max(0, (band.width - total) / 2);
 
-    // 詰めた結果、足の名前が読めない幅になったら言う。読めない図を黙って出さない。
+    // 詰めた結果、ピンの名前が読めない幅になったら言う。読めない図を黙って出さない。
     for (const [index, device] of here.entries()) {
       if ((widths[index] as number) / device.pins.length >= CRAMPED) continue;
       notices.push(notice(
-        `${safeToken(device.id)} の足が板の幅に収まりません`
-        + ` (${device.pins.length} 本。板を広げるか、機器を上下に分けます)`,
+        `${safeToken(device.id)} のピンが基板の幅に収まりません`
+        + ` (${device.pins.length} 本。基板を広げるか、機器を上下に分けます)`,
         device.line,
       ));
     }
 
-    // 帯の高さは箱と、板の側へ出る足と、その名前で分け合う。
+    // 帯の高さは箱と、基板の側へ出るピンと、その名前で分け合う。
     const height = band.height - LEG - PIN_LABEL;
 
     for (const [index, device] of here.entries()) {
       const width = widths[index] as number;
-      // 足は板の側へ出す (上の帯なら下、下の帯なら上)。
+      // ピンは基板の側へ出す (上の帯なら下、下の帯なら上)。
       const box: Band = {
         x, y: side === 'top' ? band.y : band.y + LEG + PIN_LABEL, width, height,
       };
@@ -191,19 +191,19 @@ function renderDevice(placed: PlacedDevice, theme: Theme): string {
     fill: theme.palette.body, stroke: theme.palette.bodyEdge, 'stroke-width': 1,
   });
 
-  // 足は箱の縁から出る。**名前は箱の内側、足の付け根**に書く — 外側に書くと
-  // 板の列番号や配線に重なり、どの足の名前なのかも遠くなる。
+  // ピンは箱の縁から出る。**名前は箱の内側、ピンの付け根**に書く — 外側に書くと
+  // 基板の列番号や配線に重なり、どのピンの名前なのかも遠くなる。
   const edge = top ? box.y + box.height : box.y;
   const size = theme.metrics.textSize;
   // **隣の名前と触れない大きさまで**縮め、それでも触れるなら 2 段に互い違いに置く。
-  // 足が穴の格子に載る (番地で置いた) 機器では間隔が板のピッチで決まるので、
+  // ピンが穴の格子に載る (番地で置いた) 機器では間隔が基板のピッチで決まるので、
   // 箱を広げても名前の場所は増えない (PIR の `GND VCC OUT` が `GNDVCCOUT` と読めた)。
   const entries = [...placed.pins.entries()];
   const xs = entries.map(([, point]) => point.x);
   const names = entries.map(([name]) => name);
   const within = { left: box.x + NAME_INSET, right: box.x + box.width - NAME_INSET };
   const oneRow = pinNameRow(xs, names, { largest: size * PIN_NAME_SCALE, smallest: Math.min(size, MIN_PIN_NAME), within });
-  // 2 段にするときは板の字の大きさまで (箱の背丈に 2 段と機器の名前を収める)。
+  // 2 段にするときは基板の字の大きさまで (箱の背丈に 2 段と機器の名前を収める)。
   const nameRow = oneRow.staggered ? pinNameRow(xs, names, {
     largest: size,
     smallest: Math.min(size, MIN_PIN_NAME),
@@ -222,7 +222,7 @@ function renderDevice(placed: PlacedDevice, theme: Theme): string {
     }))
     .join('');
 
-  // 機器の名前は足の名前とぶつからない側へ寄せる (上の機器なら箱の上寄り)。
+  // 機器の名前はピンの名前とぶつからない側へ寄せる (上の機器なら箱の上寄り)。
   const label = fit(device.label, box.width / size);
   // 名前が 2 段なら、機器の名前は箱の奥の縁まで下げる (真ん中だと奥の段に重なる)。
   const captionY = nameRow.staggered
@@ -238,7 +238,7 @@ function renderDevice(placed: PlacedDevice, theme: Theme): string {
 }
 
 /**
- * 板の外の機器を全部。`edit` のときは**掴むための印**で 1 つずつ包む
+ * 基板の外の機器を全部。`edit` のときは**掴むための印**で 1 つずつ包む
  * (部品と同じ `data-part`。実機で「基板外の部品もマウスコマンドの対象にする」)。
  * 既定では包まない — 貼る図は 1 バイトも変わらない。
  */
@@ -251,9 +251,9 @@ export const renderDevices = (placed: readonly PlacedDevice[], theme: Theme, edi
     .join('');
 
 /**
- * 番地で置いた機器が、板の上と下へどれだけはみ出すか。
+ * 番地で置いた機器が、基板の上と下へどれだけはみ出すか。
  *
- * **板からの距離は番地で決まっていて、板がどこに来ても変わらない**ので、
+ * **基板からの距離は番地で決まっていて、基板がどこに来ても変わらない**ので、
  * 仮に組んだ寸法で一度測れば、その値をそのまま `createLayout` へ渡せる
  * (測る → 空ける → 測り直す、の堂々巡りにならない)。
  */
@@ -270,7 +270,7 @@ export function deviceOverhang(
     if (address === null) continue;
 
     const at = layout.point(address);
-    // 足と足の名前のぶんも数える (箱だけ空けると名前が板に重なる)。
+    // ピンとピンの名前のぶんも数える (箱だけ空けると名前が基板に重なる)。
     above = Math.max(above, layout.board.y - at.y);
     below = Math.max(below, at.y + DEVICE_BOX_HEIGHT + LEG + PIN_LABEL - (layout.board.y + layout.board.height));
   }

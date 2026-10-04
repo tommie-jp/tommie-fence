@@ -61,16 +61,16 @@ d↔h なら e・f・g 行が胴の下。空くのは d の上の a〜c と h �
 ### 種類
 
 ```text
-2 本足   resistor capacitor led diode buzzer crystal inductor
+2 ピン   resistor capacitor led diode buzzer crystal inductor
          photoresistor thermistor thermistor-ntc thermistor-ptc varistor
          zener schottky photodiode phototransistor varicap diac reed fuse lamp ferrite-bead sma
          speaker mic battery solar switch switch-nc
-3 本足   transistor potentiometer slide-switch thyristor triac regulator ic3
-4 本足   transformer
+3 ピン   transistor potentiometer slide-switch thyristor triac regulator ic3
+4 ピン   transformer
 USB      usb-a (穴は VBUS GND D+ D- の順に 2 つから) usb-c (穴は GND D+ D- VBUS の順に 4 つ)
 まとまり  button button-nc dipN (4〜40 の偶数) sipN (2〜40)
 ボード    pico pico-w pico2 pico2-w tang-nano-9k (FPGA。列の間が 9 ピッチ: a↔h b↔i c↔j)
-名前つき  relay photocoupler seg7 dip-switch4 dip-switch8 (DIP 型。足は名前でも番号でも。K1.COM1 = K1.4)
+名前つき  relay photocoupler seg7 dip-switch4 dip-switch8 (DIP 型。ピンは名前でも番号でも。K1.COM1 = K1.4)
 ボード外  device
 ```
 
@@ -82,7 +82,7 @@ led/3mm  led/5mm  phototransistor/3mm  phototransistor/5mm
 transistor/to92  transistor/to220  thyristor/…  triac/…  regulator/…  ic3/…
 transistor/sot23-dip  transistor/sot346-dip (S-Mini)  transistor/sot89-dip  (regulator/…)
 dip8/sop  dip8/tssop  (dipN の姿。DIP 化した変換基板)
-dip24/wide  dip28/wide  dip32/wide  dip40/wide  (600 mil 幅。足の行は d↔h など 6 ピッチ離れた組。下記)
+dip24/wide  dip28/wide  dip32/wide  dip40/wide  (600 mil 幅。ピンの行は d↔h など 6 ピッチ離れた組。下記)
 relay/g5v-2  photocoupler/pc817  seg7/5161as  (品名。書かなければこれ)
 sma/male  sma/female  usb-a/male  usb-a/female  usb-c/male  usb-c/female
 crystal/hc49  crystal/cylinder

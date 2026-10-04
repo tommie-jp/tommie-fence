@@ -8,7 +8,7 @@ describe('parseMillimetres', () => {
   });
 
   test('reads centimetres as ten millimetres', () => {
-    // 板は cm でも mm でも呼ばれる。呼び名が違うだけで同じ板。
+    // 基板は cm でも mm でも呼ばれる。呼び名が違うだけで同じ基板。
     expect(parseMillimetres('7.2x4.7cm')).toEqual([72, 47]);
   });
 
@@ -17,7 +17,7 @@ describe('parseMillimetres', () => {
   });
 
   test('refuses a size with no unit, because that is the hole count', () => {
-    // **単位が無ければ穴数**。ここで実寸として読むと、25x15 の板が
+    // **単位が無ければ穴数**。ここで実寸として読むと、25x15 の基板が
     // 25mm × 15mm になる。
     expect(parseMillimetres('25x15')).toBeNull();
   });
@@ -55,7 +55,7 @@ describe('lookupBoard', () => {
   });
 
   test('does not take a near spelling for the board it counted', () => {
-    // 「C タイプ」でも 72×47.5mm は**別の板**で、外形図の格子は 27 × 17。
+    // 「C タイプ」でも 72×47.5mm は**別の基板**で、外形図の格子は 27 × 17。
     // 同じ呼び名に寄せると、違う穴数の図が黙って出る。
     expect(lookupBoard('72x47.5mm')).toBeNull();
     expect(lookupBoard('72x48mm')).toBeNull();
@@ -63,7 +63,7 @@ describe('lookupBoard', () => {
 
   test('does not know a size it has never counted', () => {
     // 71×49mm は 70×50mm (汎用 7x5cm) にも 72×47mm (秋月 C) にも当てない。
-    // 丸めて当てると**違う板の穴数で図が出る**。
+    // 丸めて当てると**違う基板の穴数で図が出る**。
     expect(lookupBoard('71x49mm')).toBeNull();
   });
 
@@ -122,7 +122,7 @@ describe('lookupBoard', () => {
   });
 
   test('every board it knows has a plausible grid for its size', () => {
-    // 穴は 2.54mm 間隔なので、穴の広がりは板より小さく、縁は板の端まで届かない。
+    // 穴は 2.54mm 間隔なので、穴の広がりは基板より小さく、縁は基板の端まで届かない。
     // 上限は 10mm — A タイプの外形図で左右の余白が 8.9mm あり、6mm では狭すぎた。
     for (const board of catalogBoards()) {
       const [mmWide, mmTall] = board.mm[0]!;
@@ -131,7 +131,7 @@ describe('lookupBoard', () => {
       expect(marginX).toBeGreaterThan(0);
       expect(marginY).toBeGreaterThan(0);
       expect(marginX).toBeLessThan(10);
-      // 12x18cm の縦は 60 穴 (数えた値) で余白 15mm — 大判の板は縁が広い。
+      // 12x18cm の縦は 60 穴 (数えた値) で余白 15mm — 大判の基板は縁が広い。
       expect(marginY).toBeLessThan(board.turnable ? 16 : 10);
     }
   });
@@ -146,7 +146,7 @@ describe('boardNames', () => {
 
 describe('nearestBoard', () => {
   test('offers the board a rounded size was probably meant for', () => {
-    // 70×50mm は汎用 7x5cm があるが、近い秋月の板は C タイプだと教える。
+    // 70×50mm は汎用 7x5cm があるが、近い秋月の基板は C タイプだと教える。
     expect(nearestBoard([70, 50])).toBe(lookupBoard('akizuki-c'));
   });
 
@@ -155,7 +155,7 @@ describe('nearestBoard', () => {
   });
 
   test('offers nothing for a size turned on its side', () => {
-    // 5x7cm (50×70mm) は縦長の板。**書かれたとおりに読む**ので、
+    // 5x7cm (50×70mm) は縦長の基板。**書かれたとおりに読む**ので、
     // 横長の C タイプを勝手に寝かせて当てはめない。
     expect(nearestBoard([50, 70])).toBeNull();
   });

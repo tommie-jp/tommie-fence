@@ -3,7 +3,7 @@
  * 同じノートで両方を書くときに、印の付け方まで覚え直さずに済むようにするため。
  *
  * 注釈は**回路の一員ではない**。ネットにもネットリストにも部品リストにも数えない。
- * 図の上に重ねる印と字であって、板に挿すものではない。
+ * 図の上に重ねる印と字であって、基板に挿すものではない。
  */
 
 export const NOTE_KINDS = ['circle', 'box', 'arrow', 'line', 'text', 'source'] as const;
@@ -21,17 +21,17 @@ export type NoteAlign = (typeof NOTE_ALIGNS)[number];
 /**
  * 字を図の外に置く場所。**番地を書かなかったときの既定**でもある。
  *
- * 板の番地はどれも実在の穴に縛られているので、**板の外を指す番地が存在しない**。
- * 図の説明や書き写し用の写しを板の上に重ねると、穴と印字に重なって読みにくい。
- * 場所の語を 1 つ置いて、板の下の帯に流せるようにする。
+ * 基板の番地はどれも実在の穴に縛られているので、**基板の外を指す番地が存在しない**。
+ * 図の説明や書き写し用の写しを基板の上に重ねると、穴と印字に重なって読みにくい。
+ * 場所の語を 1 つ置いて、基板の下の帯に流せるようにする。
  */
 export const NOTE_PLACES = ['below'] as const;
 export type NotePlace = (typeof NOTE_PLACES)[number];
 
-/** 場所を書かなかったときはここ。板の下、部品リストの後ろ。 */
+/** 場所を書かなかったときはここ。基板の下、部品リストの後ろ。 */
 export const DEFAULT_PLACE: NotePlace = 'below';
 
-/** 字を図の外に置ける種類。印や枠は指し先があってこそなので、板の上にしか置けない。 */
+/** 字を図の外に置ける種類。印や枠は指し先があってこそなので、基板の上にしか置けない。 */
 export const PLACEABLE_KINDS: ReadonlySet<NoteKind> = new Set<NoteKind>(['text', 'source']);
 
 /** 行送り。`source` にだけ書ける (1 行の `text` では意味を持たないため)。 */
@@ -41,7 +41,7 @@ export type NoteLeading = (typeof NOTE_LEADINGS)[number];
 /**
  * 印の色。**配線色 (`render/palette.ts`) とは別の表**にしてある。
  * 配線の色は「何色の線を挿すか」という実物の情報だが、注釈の色は読み手への合図で、
- * 板の上には存在しない。同じ `red` でも意味が違うので混ぜない。
+ * 基板の上には存在しない。同じ `red` でも意味が違うので混ぜない。
  */
 const COLOR_VALUES: Record<Exclude<NoteColor, 'ink'>, string> = {
   red: '#e5534b',
@@ -90,7 +90,7 @@ export const noteTargetCount = (kind: NoteKind): number =>
   kind === 'box' || kind === 'arrow' || kind === 'line' ? 2 : 1;
 
 /**
- * 字の向き。**部品と違って 4 方向とも回る** — 板の溝は部品の置き方を縛るが、
+ * 字の向き。**部品と違って 4 方向とも回る** — 基板の溝は部品の置き方を縛るが、
  * 字は縛らない (`parts/orient.ts` の `Turn` は半周だけなので借りない)。
  *
  * 語は部品と同じ綴り (`r90` / `r180` / `r270` / `mirror`)。3 つのフェンスを

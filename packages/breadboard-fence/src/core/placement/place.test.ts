@@ -319,7 +319,7 @@ describe('placeParts', () => {
     const { parts, errors } = placeParts(
       [
         spec({ id: 'SW1', type: 'button', holes: holes('e5') }),
-        // e6 は足の穴ではないが、本体の下なので何も挿せない。
+        // e6 はピンの穴ではないが、本体の下なので何も挿せない。
         spec({ id: 'R1', type: 'resistor', holes: holes('e6', 'e10'), line: 3 }),
       ],
       board,
@@ -360,7 +360,7 @@ describe('placeParts', () => {
   });
 
   test('does not claim the holes a two lead part straddles', () => {
-    // 抵抗の胴は板から浮いているので、またいだ穴はそのまま使える。
+    // 抵抗の胴は基板から浮いているので、またいだ穴はそのまま使える。
     const { errors } = placeParts(
       [
         spec({ id: 'R1', type: 'resistor', holes: holes('a5', 'a10') }),
@@ -466,7 +466,7 @@ describe('placeParts', () => {
 
 
   test('takes a polar look that marks only one of the two leads', () => {
-    // 2 本足なので、片方に印があれば反対側は決まる。
+    // 2 ピンなので、片方に印があれば反対側は決まる。
     const { parts, errors } = placeParts(
       [spec({
         id: 'C1',

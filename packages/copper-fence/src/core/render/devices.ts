@@ -6,15 +6,15 @@ import type { Mm } from '../types.ts';
 import type { Theme } from './theme.ts';
 
 /**
- * 板の外の機器の絵。**箱 (名札) と、板の側へ出る足 (名前つき)**。置き方は
+ * 基板の外の機器の絵。**箱 (名札) と、基板の側へ出るピン (名前つき)**。置き方は
  * `parts/device.ts` が決め、ここはその上に絵を載せるだけ。機器へ引く配線は
- * 銅を作らない線なので `renderJumpers` が描く (足の先から銅の上まで)。
- * 裏から見た図には描かない — 機器は板の外の物で、裏の面に置く物ではない。
+ * 銅を作らない線なので `renderJumpers` が描く (ピンの先から銅の上まで)。
+ * 裏から見た図には描かない — 機器は基板の外の物で、裏の面に置く物ではない。
  */
 
 const NAME_INSET_PX = 3;
 
-/** 足の名前の置き場 (px)。足の付け根の内側、辺に沿って足の真横。 */
+/** ピンの名前の置き場 (px)。ピンの付け根の内側、辺に沿ってピンの真横。 */
 function nameAt(layout: Layout, device: PlacedDevice, base: Mm, size: number): { x: number; y: number; anchor: 'start' | 'middle' | 'end' } {
   const at = layout.toPx(base);
   switch (device.face) {

@@ -22,7 +22,7 @@ export type Row = readonly [string, string, string];
 const HEADINGS: Row = ['部品', '種類', '値'];
 
 /**
- * 板の行。**買うときに要る値** (実寸・基材の厚さ・比誘電率・片面か両面か) だけ。
+ * 基板の行。**買うときに要る値** (実寸・基材の厚さ・比誘電率・片面か両面か) だけ。
  * 書かなかった値も既定のまま出す。地の在りか (表か裏か) は加工の話で、図の下の 1 行が言っている。
  */
 export function boardRow(board: Board): Row {
@@ -30,7 +30,7 @@ export function boardRow(board: Board): Row {
   return ['基板', 'copper-clad', `${board.width}×${board.height}mm ${board.h}mm εr ${board.er} ${sides}`];
 }
 
-/** 部品表。**書いた順**に並べる (図を追いながら読む人が行を見失わない)。板は見出しのすぐ下。 */
+/** 部品表。**書いた順**に並べる (図を追いながら読む人が行を見失わない)。基板は見出しのすぐ下。 */
 export function partsListing(parts: readonly PartSpec[], board: Board | null = null): readonly Row[] {
   if (parts.length === 0) return [];
   return [HEADINGS, ...(board === null ? [] : [boardRow(board)]), ...parts.map((part): Row => [

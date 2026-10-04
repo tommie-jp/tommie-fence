@@ -104,10 +104,10 @@ describe('番地で置いた機器', () => {
 
     expect(placed).toHaveLength(1);
     expect(placed[0]?.box.y).toBe(at.y);
-    // **足は穴の格子に載る。** 1 本目が書いた番地の列、次は 1 穴どなり。
+    // **ピンは穴の格子に載る。** 1 本目が書いた番地の列、次は 1 穴どなり。
     expect(placed[0]?.pins.get('sig')?.x).toBe(layout.colX(2));
     expect(placed[0]?.pins.get('gnd')?.x).toBe(layout.colX(3));
-    // 箱はその足の上に centered で載る。
+    // 箱はそのピンの上に centered で載る。
     expect(placed[0]!.box.x).toBeLessThan(layout.colX(2));
     expect(placed[0]!.box.x + placed[0]!.box.width).toBeGreaterThan(layout.colX(3));
   });
@@ -118,7 +118,7 @@ describe('番地で置いた機器', () => {
     const above = layoutDevices([device('IN', ['sig'], 'top', '-c2')], layout).placed[0]!;
     const below = layoutDevices([device('SPK', ['1'], 'top', 'm2')], layout).placed[0]!;
 
-    // 上に置いた機器の足は箱の下、下に置いた機器の足は箱の上へ出る。
+    // 上に置いた機器のピンは箱の下、下に置いた機器のピンは箱の上へ出る。
     expect(above.pins.get('sig')!.y).toBeGreaterThan(above.box.y);
     expect(below.pins.get('1')!.y).toBeLessThan(below.box.y);
   });
@@ -136,7 +136,7 @@ describe('番地で置いた機器', () => {
   });
 });
 
-describe('番地で置いた機器の箱が板に被る', () => {
+describe('番地で置いた機器の箱が基板に被る', () => {
   const board = createBoard({ cols: 20, rows: 4 });
   const layout = createLayout(board, { deviceTop: false, deviceBottom: false });
   const said = (where: string): string =>
@@ -144,13 +144,13 @@ describe('番地で置いた機器の箱が板に被る', () => {
       .map((one) => one.message).join('\n');
 
   test('names the row above that clears the board, for a box written just above it', () => {
-    // 箱の左上がその番地なので、`-a` に置いた箱は板の縁まで垂れる。
-    expect(said('-a10')).toMatch(/-b10 から上に置くと板を避けられます/);
+    // 箱の左上がその番地なので、`-a` に置いた箱は基板の縁まで垂れる。
+    expect(said('-a10')).toMatch(/-b10 から上に置くと基板を避けられます/);
     expect(said('010')).toMatch(/-b10 から上/);
   });
 
   test('names the row below for a box that sits on the lower half', () => {
-    expect(said('c10')).toMatch(/から下に置くと板を避けられます/);
+    expect(said('c10')).toMatch(/から下に置くと基板を避けられます/);
   });
 
   test('says nothing about a box beside the board, which covers no hole', () => {
@@ -158,7 +158,7 @@ describe('番地で置いた機器の箱が板に被る', () => {
   });
 });
 
-describe('足の名前が隣と触れない', () => {
+describe('ピンの名前が隣と触れない', () => {
   type Drawn = { readonly x: number; readonly y: number; readonly size: number; readonly text: string };
   const drawnTexts = (svg: string): Drawn[] =>
     [...svg.matchAll(/<text x="([\d.-]+)" y="([\d.-]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)]
@@ -177,8 +177,8 @@ describe('足の名前が隣と触れない', () => {
   };
 
   test.each([
-    ['隣り合う穴に足を落とした PIR (番地で置いた)', ['GND', 'VCC', 'OUT'], '-c3'],
-    ['隣り合う穴に足を落とした長い名前 (互い違いにする)', ['SIGNAL', 'ENABLE', 'SIGNAL2', 'ENABLE2'], '-c3'],
+    ['隣り合う穴にピンを落とした PIR (番地で置いた)', ['GND', 'VCC', 'OUT'], '-c3'],
+    ['隣り合う穴にピンを落とした長い名前 (互い違いにする)', ['SIGNAL', 'ENABLE', 'SIGNAL2', 'ENABLE2'], '-c3'],
     ['帯に並べた機器', ['GND', 'VCC', 'OUT'], null],
   ] as const)('%s', (_, pins, where) => {
     const devices = [device('PIR', pins, 'top', where)];

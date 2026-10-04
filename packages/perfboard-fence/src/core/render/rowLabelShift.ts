@@ -5,7 +5,7 @@ import { isEdgeMount } from '../parts/types.ts';
 import type { PlacedPart, Point } from '../types.ts';
 import type { ResolvedLabels } from './theme.ts';
 
-/** 行の名前を、胴の先端からどれだけ離して置くか (板の縁から離す距離と同じ)。 */
+/** 行の名前を、胴の先端からどれだけ離して置くか (基板の縁から離す距離と同じ)。 */
 export const LABEL_OFFSET = 8;
 
 /** 行ごとの、名前を置き直す横の位置。左の名前と右の名前を別に持つ。 */
@@ -17,7 +17,7 @@ export type RowLabelShifts = {
 export const NO_SHIFTS: RowLabelShifts = { left: new Map(), right: new Map() };
 
 /**
- * 板の左右の縁に載せた端面の SMA が覆う行の名前を、**胴の先端より外**へ出す。
+ * 基板の左右の縁に載せた端面の SMA が覆う行の名前を、**胴の先端より外**へ出す。
  *
  * 名前は縁取りして部品より上に描いているが、金物の胴と凹の腕 (`h0` `j0`) が
  * 名前の位置にちょうど重なり、`H` `I` `J` が読めなかった (教科書の治具の図)。

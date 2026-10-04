@@ -8,7 +8,7 @@ export type NetLine = { readonly name: string; readonly refs: readonly string[] 
 
 /**
  * ネットリストを標準出力へ。**名前を揃えて並べる** — 幅が揃っていないと、
- * どの足がどのネットに乗っているかを目で追えない。
+ * どのピンがどのネットに乗っているかを目で追えない。
  */
 export function reportNetlist(netlist: readonly NetLine[]): void {
   if (netlist.length === 0) return;

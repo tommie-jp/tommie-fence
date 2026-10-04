@@ -7,10 +7,10 @@ import type { Address } from '../types.ts';
 import { renderPerfboard } from '../index.ts';
 
 /**
- * **読めない行があっても、板が書いていなくても止めない** (52 の docs/54)。
+ * **読めない行があっても、基板が書いていなくても止めない** (52 の docs/54)。
  *
- * この板だけは `board:` が無いと穴の数が決まらないので `doc: null` を返して
- * いた。**書き始める前から止まる**ということなので、既定の板を持たせて、
+ * この基板だけは `board:` が無いと穴の数が決まらないので `doc: null` を返して
+ * いた。**書き始める前から止まる**ということなので、既定の基板を持たせて、
  * 最初に置いたときに `board:` が書かれる形にする。
  */
 
@@ -32,14 +32,14 @@ const BROKEN_BLOCK = [
   '',
 ].join('\n');
 
-describe('空でも板が書いていなくても doc は返る', () => {
+describe('空でも基板が書いていなくても doc は返る', () => {
   test('空のフェンスでも、中身は空で形が揃う', () => {
     const { doc } = parseFence('');
 
     expect([doc.parts.length, doc.wires.length, doc.devices.length]).toEqual([0, 0, 0]);
   });
 
-  test('空のフェンスには既定の板が入る', () => {
+  test('空のフェンスには既定の基板が入る', () => {
     expect(parseFence('').doc.board.cols).toBeGreaterThan(0);
   });
 
@@ -92,7 +92,7 @@ describe('読めない行があっても編集できる', () => {
 });
 
 describe('図は読めた所まで描く', () => {
-  test('転んだ行があっても、読めた部品で板が描ける', () => {
+  test('転んだ行があっても、読めた部品で基板が描ける', () => {
     const { svg, errors } = renderPerfboard(BROKEN_BLOCK);
     expect(svg).not.toBe('');
     expect(errors.length).toBeGreaterThan(0);
@@ -170,20 +170,20 @@ describe('board: を書き足す', () => {
 });
 
 describe('board: が読めないとき', () => {
-  // **書いた板と描いた板が食い違ったまま黙らない。** 前は `doc: null` で図が
+  // **書いた基板と描いた基板が食い違ったまま黙らない。** 前は `doc: null` で図が
   // 出なかったので誤った図は出なかった。読めた所を返す形にした以上、
-  // 何の板で描いているかは言わないと、読み手が図を信じてしまう。
-  test('読めない board: では、既定の板で描いていることを言う', () => {
+  // 何の基板で描いているかは言わないと、読み手が図を信じてしまう。
+  test('読めない board: では、既定の基板で描いていることを言う', () => {
     const { doc, errors } = parseFence('board: elegoo-5x7\nparts:\n  R1: resistor b2 b6\n');
 
     expect(doc.board.cols).toBe(25);
-    expect(errors.some((one) => one.message.includes('既定の板'))).toBe(true);
+    expect(errors.some((one) => one.message.includes('既定の基板'))).toBe(true);
   });
 
-  test('大きすぎる板でも、描いた板を言う', () => {
+  test('大きすぎる基板でも、描いた基板を言う', () => {
     const { errors } = parseFence('board: 1000x1000\n');
 
-    expect(errors.some((one) => one.message.includes('既定の板'))).toBe(true);
+    expect(errors.some((one) => one.message.includes('既定の基板'))).toBe(true);
   });
 
   // **読めた所は捨てない。** 色が読めないだけで大きさまで捨てると、
@@ -193,7 +193,7 @@ describe('board: が読めないとき', () => {
 
     expect([doc.board.cols, doc.board.rows]).toEqual([10, 8]);
     expect(errors.some((one) => one.message.includes('gold'))).toBe(true);
-    expect(errors.some((one) => one.message.includes('既定の板'))).toBe(false);
+    expect(errors.some((one) => one.message.includes('既定の基板'))).toBe(false);
   });
 
   test('board: が書いてあれば「board: が要ります」は言わない', () => {

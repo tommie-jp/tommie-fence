@@ -6,16 +6,16 @@ import type { Edit, LineEdit } from './edits.ts';
  *
  * マップは押した穴を 1 つ送るだけで、残りの穴と向きはフェンスが決める
  * (52 の docs/17)。そのうち**盤面の綴りを知らなくても書ける 2 つ**をここに置く —
- * 足の間隔の表と、置いた行を回す・反転する段取り。穴の並べ方そのもの
- * (レールを断る、板の外を断る) は板を知っている側の仕事。
+ * ピンの間隔の表と、置いた行を回す・反転する段取り。穴の並べ方そのもの
+ * (レールを断る、基板の外を断る) は基板を知っている側の仕事。
  */
 
 /**
- * 2 本足を 1 穴で置くときの、足から足までの穴の数。**examples の最頻値**から —
+ * 2 ピンを 1 穴で置くときの、ピンからピンまでの穴の数。**examples の最頻値**から —
  * 種類ごとの実寸 (1/4W か 1/6W か) は知らないので、書かれてきた図の手癖に合わせる
  * (resistor は 55 件中 42 件が 5、led は 34 件中 19 件が 1)。
  *
- * **穴の並んだ板 (breadboard / perfboard) が使う。** circuit の升目は実寸ではなく
+ * **穴の並んだ基板 (breadboard / perfboard) が使う。** circuit の升目は実寸ではなく
  * 記号の置き場なので、別の既定 (2 升) を持つ。
  */
 const LEAD_SPANS: Readonly<Record<string, number>> = { resistor: 5, led: 1 };
@@ -24,14 +24,14 @@ const FALLBACK_SPAN = 3;
 export const leadSpan = (type: string): number => (Object.hasOwn(LEAD_SPANS, type) ? LEAD_SPANS[type] : undefined) ?? FALLBACK_SPAN;
 
 /**
- * 押した穴をアンカーに、足を並べる位置 (アンカーからいくつ先か)。
- * 2 本足は間隔を空け、3 本足は隣どうし。
+ * 押した穴をアンカーに、ピンを並べる位置 (アンカーからいくつ先か)。
+ * 2 ピンは間隔を空け、3 ピンは隣どうし。
  */
 export const leadOffsets = (type: string, holes: number): readonly number[] =>
   (holes === 2 ? [0, leadSpan(type)] : Array.from({ length: holes }, (_, index) => index));
 
 /**
- * 右へ入りきらなかったときの断り。**綴りは呼ぶ側が作る** (板ごとに違う) が、
+ * 右へ入りきらなかったときの断り。**綴りは呼ぶ側が作る** (基板ごとに違う) が、
  * 文面は 1 つ — breadboard と perfboard で同じことを別の字で断らない。
  */
 export const needsRoom = (anchor: string, last: string, holes: number): string =>

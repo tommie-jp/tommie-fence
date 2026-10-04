@@ -26,7 +26,7 @@ describe('renderJoints', () => {
   });
 
   test('draws one blob per hole, however many things meet there', () => {
-    // 同じ穴に足と配線が来るのは普通のこと。2 つ描くと縁が濃くなって浮く。
+    // 同じ穴にピンと配線が来るのは普通のこと。2 つ描くと縁が濃くなって浮く。
     expect(renderJoints([at('b3'), at('b3')], layout, THEME).match(/<circle/g)?.length).toBe(1);
   });
 

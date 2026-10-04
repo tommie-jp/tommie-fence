@@ -11,7 +11,7 @@ describe('IC の働きの並び', () => {
     expect(pinout?.layout.top).toEqual(['VCC', 'RESET']);
   });
 
-  it('TLC555 は電源の足が VDD', () => {
+  it('TLC555 は電源のピンが VDD', () => {
     expect(lookupIcPinout('TLC555')?.layout.top).toEqual(['VDD', 'RESET']);
   });
 
@@ -20,7 +20,7 @@ describe('IC の働きの並び', () => {
     expect(lookupIcPinout(null)).toBeNull();
   });
 
-  it.each(icLayoutModels())('%s は全部の足を 1 度ずつ 4 辺に置く', (model) => {
+  it.each(icLayoutModels())('%s は全部のピンを 1 度ずつ 4 辺に置く', (model) => {
     // Arrange
     const pinout = lookupIcPinout(model);
     if (pinout === null) throw new Error(model);

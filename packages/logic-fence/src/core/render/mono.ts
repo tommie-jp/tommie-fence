@@ -8,7 +8,7 @@ import type { Theme } from './theme.ts';
 
 /**
  * 図の下の帯 — 読み値の表と書き出し (`- source`)。**組み方は fence-kit の `mono.ts`**
- * (vna と同じ行送り 1.35・余白 6。表を読む帯なので板の 2 つより広い)。
+ * (vna と同じ行送り 1.35・余白 6。表を読む帯なのでブレッドボードとユニバーサル基板より広い)。
  */
 const SPACING: MonoSpacing = { leading: 1.35, pad: 6 };
 

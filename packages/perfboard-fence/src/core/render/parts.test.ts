@@ -102,7 +102,7 @@ describe('renderParts', () => {
   });
   test('keeps the colour bands inside the body on a short part', () => {
     // 隣り合う穴に挿した抵抗は胴が短い。帯の間隔を決め打つと、
-    // **帯が板の地の上や隣の穴の上に乗る**。
+    // **帯が基板の地の上や隣の穴の上に乗る**。
     const svg = draw(part({ holes: ['b3', 'b4'], value: '10k' }));
     // `[^>]*width=` は stroke-width も拾うので、空白付きで見る。
     const boxes = [...svg.matchAll(/<rect x="(-?[0-9.]+)"[^>]*?\swidth="([0-9.]+)"/g)]
@@ -134,7 +134,7 @@ describe('SMA コネクタ', () => {
   });
 
   test('keeps the body the same size however far apart the legs are', () => {
-    // 金物なので、足を広げても胴は伸びない (玉の部品と同じ扱い)。
+    // 金物なので、ピンを広げても胴は伸びない (玉の部品と同じ扱い)。
     const near = renderParts(sma('female'), layout, THEME);
     const far = renderParts(
       placeParts(
@@ -182,8 +182,8 @@ describe('SMA の横置き (端面実装)', () => {
   });
 
   test('keeps the name on the board when the clip straddles the very edge', () => {
-    // 凹は板の縁を挟むので、**先端は板の外の列**にも書ける (`g0` / `i0`)。
-    // 足の中点で字を置くと板から出て、幅ゼロで `…` に切られ、**部品の名前が
+    // 凹は基板の縁を挟むので、**先端は基板の外の列**にも書ける (`g0` / `i0`)。
+    // ピンの中点で字を置くと基板から出て、幅ゼロで `…` に切られ、**部品の名前が
     // 図から消える** (実機で 12-all-perfboard.md の図16 で踏んだ)。
     const straddling = placeParts(
       [{
@@ -208,7 +208,7 @@ describe('SMA の横置き (端面実装)', () => {
   });
 });
 
-describe('SMA 横置きの足の形', () => {
+describe('SMA 横置きのピンの形', () => {
   const edge = placeParts(
     [{ id: 'J1', type: 'sma', variant: 'female-edge', holes: ['c4', 'b2', 'd2'], value: null, written: 'sma/female-edge c4 b2 d2', turn: NO_TURN, line: 1 }],
     board,
@@ -236,7 +236,7 @@ describe('SMA 横置きの足の形', () => {
   });
 
   test('lands the base on the edge of the board, not over the holes', () => {
-    // 台座の右端が板の縁。実物もそこで板を挟む。
+    // 台座の右端が基板の縁。実物もそこで基板を挟む。
     const mount = edgeMountOf(edge[0]!, layout)!;
 
     expect(mount.edgeX).toBeLessThan(mount.legX);
@@ -244,7 +244,7 @@ describe('SMA 横置きの足の形', () => {
   });
 });
 
-describe('SMA 横置きの 3 本足 (凹の両端)', () => {
+describe('SMA 横置きの 3 ピン (凹の両端)', () => {
   const edge = placeParts(
     [{ id: 'J1', type: 'sma', variant: 'female-edge', holes: ['c4', 'b2', 'd2'], value: null, written: 'sma/female-edge c4 b2 d2', turn: NO_TURN, line: 1 }],
     board,
@@ -276,7 +276,7 @@ describe('SMA 横置きの 3 本足 (凹の両端)', () => {
     const solder = svg.indexOf(`fill="${THEME.palette.land}"`, pin);
 
     expect(pin).toBeGreaterThan(-1);
-    // 足の印のあとに半田の玉が来る (あとに描いたものが上に乗る)。
+    // ピンの印のあとに半田の玉が来る (あとに描いたものが上に乗る)。
     expect(solder).toBeGreaterThan(pin);
   });
 
@@ -328,7 +328,7 @@ describe('縦に置いた部品のキャプション', () => {
     const hole = layout.point(parseAddress('b3')!);
 
     expect(Number(at?.[1])).toBeGreaterThan(hole.x);
-    // 足の真ん中の高さに来る (胴の中心ではなく、部品そのものの位置)。
+    // ピンの真ん中の高さに来る (胴の中心ではなく、部品そのものの位置)。
     expect(Number(at?.[2])).toBeCloseTo((hole.y + layout.point(parseAddress('e3')!).y) / 2, 5);
   });
 });

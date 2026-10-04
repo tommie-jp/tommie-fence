@@ -328,7 +328,7 @@ describe('置く', () => {
   test('Insert puts the last placed type back on the cursor, arity and all', () => {
     const placed = after(PANEL, place('resistor', true), hover(AT_B3), press(AT_B3), release(AT_B3, false), key('Escape'));
 
-    // 足の数まで覚えないと、2 端子なのにドラッグで間隔を選べなくなる。
+    // ピンの数まで覚えないと、2 端子なのにドラッグで間隔を選べなくなる。
     expect(step(placed, key('Insert')).state.carry).toEqual(
       { kind: 'place', type: 'resistor', turn: 0, flip: false, twoEnds: true },
     );
@@ -386,7 +386,7 @@ describe('続けて置く・1 穴ずつ', () => {
   });
 
   test('leaves the arrows on a whole hole on a board, which has no step between holes', () => {
-    // 端数を受けないフェンス (板) は Shift の有無にかかわらず 1 穴。
+    // 端数を受けないフェンス (基板) は Shift の有無にかかわらず 1 穴。
     const hovering = after(PANEL, hover(ON_R1));
 
     expect(step(hovering, key('ArrowRight')).send).toEqual([{ kind: 'nudge', part: 'R1', rows: 0, cols: 1 }]);
@@ -527,7 +527,7 @@ describe('配線', () => {
   });
 
   test('takes a leg as an end, so a wire can start or finish on a pin', () => {
-    // 足の丸は部品の升の上に重なるので、穴を先に採ると足を押しても穴につながる。
+    // ピンの丸は部品の升の上に重なるので、穴を先に採るとピンを押しても穴につながる。
     const onPin = over({ cell: 'b2', part: 'Q1', pin: 'Q1.C' });
     const wiring = after(PANEL, key('w'), press(onPin));
 
@@ -766,7 +766,7 @@ describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
   });
 
   test('ignores the quarter on a fence that has no place between the holes', () => {
-    // 板の 2 つ。Ctrl を押していても素のクリック (案内にも出ない)。
+    // ブレッドボードとユニバーサル基板。Ctrl を押していても素のクリック (案内にも出ない)。
     expect(step(after(PANEL, place('transistor'), hover(AT_Q), press(AT_Q)), release(AT_Q, false)).send)
       .toEqual([{ kind: 'addPart', type: 'transistor', at: ['b3'], turn: 0, flip: false }]);
     expect(step(after(PANEL, place('transistor'), hover(AT_B3)), hover(AT_Q)).send).toEqual([]);
@@ -821,7 +821,7 @@ describe('Ctrl で 1/4 升 (52 の docs/23)', () => {
   });
 
   test('says the step only where the fence can take a quarter, and says where the quarter went', () => {
-    // 刻みの案内は**能力表から組む**。板 (端数を受けない) では言わない。
+    // 刻みの案内は**能力表から組む**。基板 (端数を受けない) では言わない。
     // 既定が 1/4 升で、Shift が升ちょうど (実機で入れ替えを頼まれた)。
     expect(hint(after(FINE, place('transistor'), hover(AT_B3)))).toContain('1/4 升 (Shift で升ちょうど)');
     expect(hint(after(FINE, hover(ON_R1), key('m')))).toContain('1/4 升 (Shift で升ちょうど)');

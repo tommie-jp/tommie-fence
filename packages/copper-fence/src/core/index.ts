@@ -41,9 +41,9 @@ const byLine = (errors: readonly FenceError[]): FenceError[] =>
   [...errors].sort((a, b) => (a.line ?? 0) - (b.line ?? 0));
 
 export type RenderResult = {
-  /** それ自体で完結した SVG。**板は必ず描く** (読めなかった行があっても、読めた所まで)。 */
+  /** それ自体で完結した SVG。**基板は必ず描く** (読めなかった行があっても、読めた所まで)。 */
   readonly svg: string;
-  /** 島・地・足から導いたネットリスト。**エスケープしていない生のデータ**。 */
+  /** 島・地・ピンから導いたネットリスト。**エスケープしていない生のデータ**。 */
   readonly netlist: readonly Net[];
   /** 読めなかったところ。行番号と、行の中身と、綴りを指す印を持つ。 */
   readonly errors: readonly FenceError[];
@@ -64,7 +64,7 @@ export type RenderOptions = {
 
 const colorOf = (name: string): string | null => wireColor(name);
 
-/** 図に出る物の広がり (mm)。**板の外へ張り出す SMA と、その名札を含める**。 */
+/** 図に出る物の広がり (mm)。**基板の外へ張り出す SMA と、その名札を含める**。 */
 function boundsOf(footprints: readonly Footprint[], extra: readonly Mm[], labelMm: number, width: number, height: number): Bounds {
   let [minX, minY, maxX, maxY] = [0, 0, width, height];
   const take = (point: Mm): void => {
@@ -93,7 +93,7 @@ function boundsOf(footprints: readonly Footprint[], extra: readonly Mm[], labelM
 }
 
 /**
- * 動かせる点 (マップの節点)。**線路の点、ジャンパの端、足のある部品の点で書いた端**。
+ * 動かせる点 (マップの節点)。**線路の点、ジャンパの端、ピンのある部品の点で書いた端**。
  * そこを掴むと、同じ点を書いた物がまとめて動く (`movePoint`)。
  */
 function editNodes(copper: readonly CopperSpec[], parts: readonly PartSpec[], wires: readonly WireSpec[]): Mm[] {
@@ -133,7 +133,7 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
     return [{ part: part.id, at: part.at, axis, gap: chipGeometry(spec).gap }];
   });
   const cut = cutUnderChips(made.shapes, chips);
-  // **表が地の板で、どの銅にも触れない via は地の一部** (via の列で表と裏の地を留める)。
+  // **表が地の基板で、どの銅にも触れない via は地の一部** (via の列で表と裏の地を留める)。
   // 島にすると、地の中に溝で囲んだ輪を掘ることになる。
   const viaIds = new Set(doc.copper.filter((spec) => spec.kind === 'via').map((spec) => spec.id));
   const all = islandsOf(cut.shapes);
@@ -152,26 +152,26 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
     }
     const off = found.value.pins.flatMap((pin) => pin.points).find((point) => farFromBoard(board, point) !== null);
     if (off !== undefined) {
-      placeErrors.push(fenceError(`${safeToken(part.id)} が板から離れすぎです`, part.line, part.id));
+      placeErrors.push(fenceError(`${safeToken(part.id)} が基板から離れすぎです`, part.line, part.id));
       continue;
     }
     footprints.push(found.value);
   }
 
-  // 板の外の機器。**遠すぎるものは描かない** (図の広がりが際限なく伸びる)。
+  // 基板の外の機器。**遠すぎるものは描かない** (図の広がりが際限なく伸びる)。
   const devices: PlacedDevice[] = [];
   const skippedDevices = new Set<string>();
   for (const spec of doc.devices) {
     if (farFromDevice(board, spec.at)) {
       placeErrors.push(fenceError(
-        `機器 ${safeToken(spec.id)} が板から離れすぎです (機器の中心は板の外 ${LIMITS.offDevice}mm まで)`, spec.line, spec.id,
+        `機器 ${safeToken(spec.id)} が基板から離れすぎです (機器の中心は基板の外 ${LIMITS.offDevice}mm まで)`, spec.line, spec.id,
       ));
       skippedDevices.add(spec.id);
       continue;
     }
     const placed = placeDevice(spec, board);
     if (overlapsBoard(placed.box, board)) {
-      placeErrors.push(notice(`機器 ${safeToken(spec.id)} の箱が板に重なっています (機器は板の外に置きます)`, spec.line, spec.id));
+      placeErrors.push(notice(`機器 ${safeToken(spec.id)} の箱が基板に重なっています (機器は基板の外に置きます)`, spec.line, spec.id));
     }
     devices.push(placed);
   }
@@ -185,7 +185,7 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
   const notes = doc.notes.filter((note) => {
     const far = [note.from, note.to].find((point) => point !== null && farFromBoard(board, point) !== null);
     if (far === undefined) return true;
-    noteErrors.push(fenceError('注釈の点が板から離れすぎです (板の外は 20mm まで)', note.line));
+    noteErrors.push(fenceError('注釈の点が基板から離れすぎです (基板の外は 20mm まで)', note.line));
     return false;
   });
   const sourceNotes = options.edit === true ? [] : notes.filter((note) => note.kind === 'source');
@@ -232,7 +232,7 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
     back: style.back && options.edit !== true,
   });
 
-  // SMA が板の辺を覆う範囲 (目盛の数字を描かない所)。
+  // SMA が基板の辺を覆う範囲 (目盛の数字を描かない所)。
   const covered = (side: 'top' | 'left'): (readonly [number, number])[] => footprints
     .flatMap((footprint) => (footprint.part.kind === 'edge' && footprint.part.side === side
       ? [[footprint.part.offset - SMA.size / 2 - 1, footprint.part.offset + SMA.size / 2 + 1] as const]
@@ -247,7 +247,7 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
   const captions = renderLineCaptions(lines, cut.shapes, board, doc.f, layout, theme, placer)
     + renderCouplings(couplings, layout, theme, placer);
 
-  // 板 → 銅 → 方眼 → 穴 → ジャンパ → 部品 → 字 → 注釈 → 目盛。**注釈は一番上**
+  // 基板 → 銅 → 方眼 → 穴 → ジャンパ → 部品 → 字 → 注釈 → 目盛。**注釈は一番上**
   // (指したものが下に隠れると印の意味が無くなる)。
   const body = renderTitle(doc.title, layout, theme)
     + renderPlate(board, layout, theme, islands, made.slots)
@@ -259,8 +259,8 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
     + footprints.map((footprint) => renderPart(layout, footprint, theme, edit)).join('')
     + captions
     + labels
-    // 機器の配線は銅にも部品にも重ねて**いちばん上**に (板の縁をまたいで銅へ届く線)。
-    // マップでは掴ませない (足の書き換えは editor の対象外)。
+    // 機器の配線は銅にも部品にも重ねて**いちばん上**に (基板の縁をまたいで銅へ届く線)。
+    // マップでは掴ませない (ピンの書き換えは editor の対象外)。
     + renderJumpers(wiring.jumpers.filter((jumper) => jumper.device), layout, theme, colorOf)
     + renderDevices(devices, layout, theme)
     + renderNotes(notes, layout, theme, colorOf)

@@ -11,13 +11,13 @@ export const LIMITS = {
   /** 識別子の長さ。報告に載せる綴りの切り詰めにも使う。 */
   idLength: 32,
   /**
-   * 板の大きさの上限。実在する一番大きい板 (秋月 A タイプ 155×114mm) でも
+   * 基板の大きさの上限。実在する一番大きい基板 (秋月 A タイプ 155×114mm) でも
    * 55 × 40 穴 (外形図に 2200 穴と書いてある) なので十分な余裕がある。
    * 上限が無いと、フェンス 1 つで巨大な SVG を作らせられる。
    */
   cols: 120,
   rows: 120,
-  /** 板に載せられる部品の数。実在の基板を大きく超えているが、必ず頭を打たせる。 */
+  /** 基板に載せられる部品の数。実在の基板を大きく超えているが、必ず頭を打たせる。 */
   parts: 200,
   /** 図に出る値・ラベルの長さ。 */
   labelLength: 60,
@@ -27,7 +27,7 @@ export const LIMITS = {
   points: 100,
   /** 図の題の長さ。 */
   titleLength: 60,
-  /** 板の外の機器 1 つが持てる足の数と、足の名前の長さ。 */
+  /** 基板の外の機器 1 つが持てるピンの数と、ピンの名前の長さ。 */
   devicePins: 64,
   pinNameLength: 24,
   /** 注釈の数と、1 つの字数。 */
@@ -55,12 +55,12 @@ export const THEME_NAMES = ['light', 'dark', 'mono'] as const;
 /** 軸の名前の振り方。**既定は行が alpha・列が numeric** (今までの図と同じ)。 */
 export const LABEL_KINDS = ['alpha', 'numeric'] as const;
 
-/** 英字の大小。**既定は upper** (板のシルクが大文字なので、そちらに合わせる)。 */
+/** 英字の大小。**既定は upper** (基板のシルクが大文字なので、そちらに合わせる)。 */
 export const LABEL_CASES = ['upper', 'lower'] as const;
 
 /**
- * 穴の名前を出す辺。**既定は左と上だけ** — 4 辺に出すと、小さい板では
- * 名前のほうが板より目立つ。大きい板で端から数え直したいときに増やす。
+ * 穴の名前を出す辺。**既定は左と上だけ** — 4 辺に出すと、小さい基板では
+ * 名前のほうが基板より目立つ。大きい基板で端から数え直したいときに増やす。
  */
 export const LABEL_SIDES = ['left', 'right', 'top', 'bottom'] as const;
 
@@ -74,7 +74,7 @@ export const STYLE_RANGES = {
 export const isReferenceable = (name: string): boolean =>
   /^[\w-]+$/.test(name) && name.length > 0 && name.length <= LIMITS.idLength;
 
-/** 足の名前は空白を含まない短い名前 (`V+` `1-` `GND` など)。 */
+/** ピンの名前は空白を含まない短い名前 (`V+` `1-` `GND` など)。 */
 export const isPinName = (name: string): boolean =>
   name.length > 0 && name.length <= LIMITS.pinNameLength && !/\s/.test(name);
 

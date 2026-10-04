@@ -11,13 +11,13 @@ import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, element, num, svgText } from './
 import type { RenderTheme } from './theme.ts';
 
 /**
- * 3 本足の部品。**足の並びは真ん中の足を中心に描く**。
+ * 3 ピンの部品。**ピンの並びは真ん中のピンを中心に描く**。
  *
- * **パッケージの姿は fence-kit にある** (`parts/packages.ts`)。実物の話で板に
- * 依らないので、perfboard と同じ絵になる (52 の docs/18)。ここに残るのは板の
- * 話 — 足の点、ピン名、キャプション、どちら側に寄せるか。
+ * **パッケージの姿は fence-kit にある** (`parts/packages.ts`)。実物の話で基板に
+ * 依らないので、perfboard と同じ絵になる (52 の docs/18)。ここに残るのは基板の
+ * 話 — ピンの点、ピン名、キャプション、どちら側に寄せるか。
  * パッケージの向き (TO-92 の平らな面、スイッチの倒れている側) は図では主張しない。
- * 品種や状態で変わるものを図に描くと嘘になるので、どの穴がどの足かをピン名で示す。
+ * 品種や状態で変わるものを図に描くと嘘になるので、どの穴がどのピンかをピン名で示す。
  */
 export const bodyHalfHeight = (part: PlacedPart, layout: Layout): number =>
   packageReach(part, layout.pitch);
@@ -33,7 +33,7 @@ export const bodyHalfWidth = (part: PlacedPart, layout: Layout): number =>
   packageHalfWidth(part, layout.pitch);
 
 /**
- * 隣り合う足の名前の間に空ける幅 (字の大きさを 1 とする)。くっつくと `in gndout` と
+ * 隣り合うピンの名前の間に空ける幅 (字の大きさを 1 とする)。くっつくと `in gndout` と
  * 1 語に読めた (教科書の三端子レギュレータの図)。
  */
 const LEG_NAME_SPACE = 0.4;
@@ -66,13 +66,13 @@ const boldCharWidth = (char: string): number => {
 const boldWidth = (text: string): number => [...text].reduce((sum, char) => sum + boldCharWidth(char), 0);
 
 /**
- * 足の名前の字の大きさ。**隣の足の名前とぶつかるときだけ縮める** — 3 本足の IC
+ * ピンの名前の字の大きさ。**隣のピンの名前とぶつかるときだけ縮める** — 3 ピンの IC
  * (`ic3`) や TO-220 は `Vout` `gnd` のような名前を隣り合う穴に書くので、既定の大きさでは
- * 重なる (DIP の足の名前と同じくらいまで縮む)。1 文字の名前 (`B` `C` `E`) は収まるので
- * 既定のまま。縦に並んだ足は名前が横にずれないので縮めない。
+ * 重なる (DIP のピンの名前と同じくらいまで縮む)。1 文字の名前 (`B` `C` `E`) は収まるので
+ * 既定のまま。縦に並んだピンは名前が横にずれないので縮めない。
  */
 function legNameSize(names: readonly string[], xs: readonly number[], size: number): number {
-  // **並べ替えてから差を取る** — 足は書いた順に並ぶとは限らない (`h9 h12 h10`)。
+  // **並べ替えてから差を取る** — ピンは書いた順に並ぶとは限らない (`h9 h12 h10`)。
   const sorted = [...xs].sort((a, b) => a - b);
   const gaps = sorted.slice(1).map((x, index) => x - (sorted[index] ?? x)).filter((gap) => gap > 0);
   if (gaps.length === 0) return size;
@@ -81,7 +81,7 @@ function legNameSize(names: readonly string[], xs: readonly number[], size: numb
   return widest * size <= room ? size : room / widest;
 }
 
-/** 足が横 1 列に並んでいるか (縦に並んだ足は名前が横にずれないので、名札は従来どおり下)。 */
+/** ピンが横 1 列に並んでいるか (縦に並んだピンは名前が横にずれないので、名札は従来どおり下)。 */
 const inOneRow = (points: readonly Point[]): boolean =>
   points.every((point) => Math.abs(point.y - (points[0]?.y ?? point.y)) < 0.5);
 
@@ -91,15 +91,15 @@ const BLOCKS: readonly (readonly HoleRow[])[] = [HOLE_ROWS.slice(0, 5), HOLE_ROW
 type RowGap = { readonly above: number; readonly below: number };
 
 /**
- * 足の名前を置いてよい行間。**足と同じブロックの中の、隣り合う 2 行の間だけ** —
- * 外したのは 3 つで、どれも書き手の線がよく通るか、足から遠い:
+ * ピンの名前を置いてよい行間。**ピンと同じブロックの中の、隣り合う 2 行の間だけ** —
+ * 外したのは 3 つで、どれも書き手の線がよく通るか、ピンから遠い:
  *
- * - 端の行 (a・j) とレールの間。列番号の帯で、足の列をレールへ降ろす電源と GND の線が
+ * - 端の行 (a・j) とレールの間。列番号の帯で、ピンの列をレールへ降ろす電源と GND の線が
  *   ここを縦に通る (`j4 -- -b4`。i 行の TO-92 の `E` が列番号と GND の線に重なった)
- * - 溝。足の列を溝の向こうへ渡す線 (`e8 -- f8`) がここを縦に通る
- * - 溝の向こうのブロック。どの部品の足の名前か読めない
+ * - 溝。ピンの列を溝の向こうへ渡す線 (`e8 -- f8`) がここを縦に通る
+ * - 溝の向こうのブロック。どの部品のピンの名前か読めない
  *
- * `ravine` を真にすると溝も入れる (TO-220 の名札。足の列から横へずらして置くので、
+ * `ravine` を真にすると溝も入れる (TO-220 の名札。ピンの列から横へずらして置くので、
  * 列を渡る線とは重ならない)。
  */
 function rowGaps(layout: Layout, legY: number, ravine: boolean): RowGap[] {
@@ -120,9 +120,9 @@ export type LegNameLine = {
 };
 
 /**
- * 足の名前の基準線。**穴の行と行の間**に字を収める — まず胴の下で最初に収まる行間
+ * ピンの名前の基準線。**穴の行と行の間**に字を収める — まず胴の下で最初に収まる行間
  * (`rowGaps`)、無ければ胴の上で最初に収まる行間。行間の真ん中に字の中心を置く。
- * 穴の行に掛けて書いていたので、足のすぐ下の行 (h 行の足なら i 行) の穴が名前の字と
+ * 穴の行に掛けて書いていたので、ピンのすぐ下の行 (h 行のピンなら i 行) の穴が名前の字と
  * 縁取りの下に消えた。上にも下にも収まる行間が無ければ胴のすぐ下 (`betweenRows` は偽)。
  *
  * **胴の下を先に試す**のは、図の中で名前の出る側を揃えるため (実機で「すべての部品名は
@@ -162,13 +162,13 @@ export const legNameBaseline = (part: PlacedPart, legY: number, layout: Layout, 
   legNameLine(part, legY, layout, theme).y;
 
 /**
- * 足の名前を**胴の樹脂の上に刷る**か。TO-220 だけ — 胴が足の行の上下 1.4 ピッチまで
+ * ピンの名前を**胴の樹脂の上に刷る**か。TO-220 だけ — 胴がピンの行の上下 1.4 ピッチまで
  * 広がるので、胴の下の行間は胴で塞がり、名前が溝やその先の行間に落ちた (溝を渡る線の上)。
- * 樹脂は広く、線も通らない (DIP の足の番号と同じ置き方)。
+ * 樹脂は広く、線も通らない (DIP のピンの番号と同じ置き方)。
  */
 const namesOnBody = (part: PlacedPart): boolean => part.variant === 'to220';
 
-/** 足の名前 1 つの置き場。 */
+/** ピンの名前 1 つの置き場。 */
 export type LegName = {
   readonly name: string;
   readonly x: number;
@@ -177,12 +177,12 @@ export type LegName = {
   readonly onBody: boolean;
 };
 
-/** 樹脂の上の字を、足の点から離す量 (px)。 */
+/** 樹脂の上の字を、ピンの点から離す量 (px)。 */
 const ON_BODY_CLEAR = 2;
 
 /**
- * 足の名前の置き場。**描く側・配線よけ (`parts.ts`)・名札の逃がし (`captions.ts`) で同じ答え**。
- * TO-220 は樹脂の側 (タブの反対。溝から遠い側) の足の点のすぐ脇、ほかは `legNameLine`。
+ * ピンの名前の置き場。**描く側・配線よけ (`parts.ts`)・名札の逃がし (`captions.ts`) で同じ答え**。
+ * TO-220 は樹脂の側 (タブの反対。溝から遠い側) のピンの点のすぐ脇、ほかは `legNameLine`。
  */
 export function legNames(part: PlacedPart, layout: Layout, theme: RenderTheme): LegName[] {
   const points = pinPoints(part, layout);
@@ -202,7 +202,7 @@ export function legNames(part: PlacedPart, layout: Layout, theme: RenderTheme): 
 }
 
 /**
- * 足の名前の字が占める所 (縁取りまで)。ほかの部品の名札がここに来たら逃がす
+ * ピンの名前の字が占める所 (縁取りまで)。ほかの部品の名札がここに来たら逃がす
  * (`captions.ts` の `captionDrops`)。行間に置いた名前の横に、隣の部品の名札が
  * 並ぶと `E D1 1N60` と続けて読めた。**樹脂の上の名前は数えない** (胴そのものが場所を取る)。
  */
@@ -228,22 +228,22 @@ export type ThreeLeadCaption = {
   readonly width: number;
   /** 穴の行と行の間に置いた (字の下の穴を伏せなくてよい)。 */
   readonly betweenRows?: boolean;
-  /** 足の名前が胴の上にある。名札を積むときは上へ積む (下へ積むと胴に掛かる)。 */
+  /** ピンの名前が胴の上にある。名札を積むときは上へ積む (下へ積むと胴に掛かる)。 */
   readonly above?: boolean;
 };
 
 /**
- * 3 本足の名札の置き場の候補 (試す順)。**描く側と配線よけ (`captions.ts`) で同じ答え**を使う。
+ * 3 ピンの名札の置き場の候補 (試す順)。**描く側と配線よけ (`captions.ts`) で同じ答え**を使う。
  *
- * 足が横 1 列なら、まず**足の名前と同じ行間の横** (右、次に左) に 1 行で置く。名前の
- * 1 行下に積んでいたので、足の列の穴 (h 行の足なら i と j) が字の下に消え、E の足の列を
- * 下のレールへ降ろす線 (`j13 -- -b13`) が名札の下から出ていた。2 本足の名札が胴の下の
- * 1 行だけを使うのと揃う。横が板の端で切れるか、ほかの部品に掛かる (`captions.ts` の
- * `captionDrops` が決める) なら、従来どおり名前の 1 行下。縦に並んだ足は 1 行下だけ。
+ * ピンが横 1 列なら、まず**ピンの名前と同じ行間の横** (右、次に左) に 1 行で置く。名前の
+ * 1 行下に積んでいたので、ピンの列の穴 (h 行のピンなら i と j) が字の下に消え、E のピンの列を
+ * 下のレールへ降ろす線 (`j13 -- -b13`) が名札の下から出ていた。2 ピンの名札が胴の下の
+ * 1 行だけを使うのと揃う。横が基板の端で切れるか、ほかの部品に掛かる (`captions.ts` の
+ * `captionDrops` が決める) なら、従来どおり名前の 1 行下。縦に並んだピンは 1 行下だけ。
  * 名前を胴の上に置いた (`legNameLine` の `above`) ときは、下ではなく 1 行上。
  *
  * TO-220 は名前を樹脂に刷るので、名札の行は名前とは別に選ぶ。溝も使ってよい
- * (名札は足の列から横へずらして置くので、溝を渡る線とは重ならない)。
+ * (名札はピンの列から横へずらして置くので、溝を渡る線とは重ならない)。
  */
 export function threeLeadCaptionSpots(
   part: PlacedPart,
@@ -264,7 +264,7 @@ export function threeLeadCaptionSpots(
     x: points[index]?.x ?? centre.x,
     half: (boldWidth(pin.name) * nameSize) / 2,
   }));
-  // 足の名前と名札の間は 2 字ぶん (1 字だと `E Q1` が 1 つの並びに読めた)。
+  // ピンの名前と名札の間は 2 字ぶん (1 字だと `E Q1` が 1 つの並びに読めた)。
   const gap = charWidth(theme) * 2;
   const right = Math.max(...halves.map(({ x, half }) => x + half)) + gap;
   const left = Math.min(...halves.map(({ x, half }) => x - half)) - gap;
@@ -305,8 +305,8 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
   const reach = bodyHalfHeight(part, layout);
   const towardRavine = center.y < layout.ravineY ? 1 : -1;
 
-  // **胴から離れた足は線で胴へつなぐ** (`j14 j18 j22` のように広げて挿したとき)。
-  // 足の四角だけでは、どの穴が胴の足か読めなかった。隣の穴 (1 ピッチ) の足は今までどおり四角だけ。
+  // **胴から離れたピンは線で胴へつなぐ** (`j14 j18 j22` のように広げて挿したとき)。
+  // ピンの四角だけでは、どの穴が胴のピンか読めなかった。隣の穴 (1 ピッチ) のピンは今までどおり四角だけ。
   const halfWidth = bodyHalfWidth(part, layout);
   const leads = points
     .filter((point) => Math.hypot(point.x - center.x, point.y - center.y) > layout.pitch * 1.5)
@@ -321,12 +321,12 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
       });
     })
     .join('');
-  // 足先は配線の端・2 本足の端と同じ金属の粒にする (挿した所の見え方を揃える)。
+  // ピン先は配線の端・2 ピンの端と同じ金属の粒にする (挿した所の見え方を揃える)。
   const legs = points.map((point) => insertionDot(point, theme)).join('');
-  // **足の名前もキャプションも胴の下へ。** 図の中で名前の出る側が揃う
+  // **ピンの名前もキャプションも胴の下へ。** 図の中で名前の出る側が揃う
   // (実機で「すべての部品名は部品の下側に表示する」)。溝の側へ振り分けて
   // いたが、上下のブロックで側が変わって揃わなかった。
-  // TO-220 は樹脂の上に明るい字で刷る (DIP の足の番号と同じ)。ほかは板の上に縁取りで。
+  // TO-220 は樹脂の上に明るい字で刷る (DIP のピンの番号と同じ)。ほかは基板の上に縁取りで。
   const names = legNames(part, layout, theme)
     .map((name) => svgText(name.x, name.y, name.name, {
       'font-size': num(name.size),
@@ -341,7 +341,7 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
           }),
     }))
     .join('');
-  // キャプションは足の名前の横 (入らなければ名前の 1 行下)。置き場は `threeLeadCaptionAt`。
+  // キャプションはピンの名前の横 (入らなければ名前の 1 行下)。置き場は `threeLeadCaptionAt`。
   const at = threeLeadCaptionAt(part, layout, theme, captionTextWidth(part, theme), slot)
     ?? { x: center.x, y: legNameBaseline(part, center.y, layout, theme) };
   const text = fitToBoard(caption(part), at.x, theme.metrics.textSize, layout);

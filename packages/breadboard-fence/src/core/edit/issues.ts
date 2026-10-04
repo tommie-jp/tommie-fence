@@ -77,7 +77,7 @@ const problemOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => (
 
 /**
  * Problems パネルの行 (52 の docs/57)。帯と同じもの (`renderBreadboard` の
- * errors と notices) を Markdown の行で。**この板は ERC を持たない**ので、
+ * errors と notices) を Markdown の行で。**この基板は ERC を持たない**ので、
  * 頼まれても足すものが無い (列が最初から導通していて、繋ぎ忘れが目に留まる)。
  */
 export function problemsOf(source: string, fenceLine: number): readonly IssueRow[] {

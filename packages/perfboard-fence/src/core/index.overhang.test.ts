@@ -3,8 +3,8 @@ import { renderPerfboard } from './index.ts';
 import { THEME } from './render/theme.ts';
 
 /**
- * 板の外に置いたものが、題・画布の縁・列の名前とぶつからないこと。
- * 実物の図 (USB 電源スイッチ。板の上に注釈 3 つと、`-a10` に置いた機器) で
+ * 基板の外に置いたものが、題・画布の縁・列の名前とぶつからないこと。
+ * 実物の図 (USB 電源スイッチ。基板の上に注釈 3 つと、`-a10` に置いた機器) で
  * 題に字が食い込み、機器の箱と配線が列の名前を隠していた。
  */
 
@@ -33,7 +33,7 @@ const SIZE = THEME.metrics.textSize;
 const topOf = (text: Text): number => text.y - SIZE * 0.72 - 1.5;
 const bottomOf = (text: Text): number => text.y + SIZE * 0.2 + 1.5;
 
-describe('板の外に置いた注釈', () => {
+describe('基板の外に置いた注釈', () => {
   test('keeps a note written above the board clear of the title', () => {
     const { svg } = renderPerfboard('board: 20x4\ntitle: 図01 題\nnotes:\n  - text -a1: 上のレールへ');
     const title = textNamed(svg, '図01 題');
@@ -42,7 +42,7 @@ describe('板の外に置いた注釈', () => {
   });
 
   test('keeps a note written as far above the board as allowed inside the canvas', () => {
-    // 板の外へ出られるのは 4 つ先まで (`-c` は 0・-a・-b の次)。
+    // 基板の外へ出られるのは 4 つ先まで (`-c` は 0・-a・-b の次)。
     const { svg } = renderPerfboard('board: 20x4\nnotes:\n  - text -c1: 上');
 
     expect(topOf(textNamed(svg, '上'))).toBeGreaterThanOrEqual(0);
@@ -100,7 +100,7 @@ describe('番地で置いた機器の箱', () => {
   test('says so when the box comes down over the board, and where it would clear it', () => {
     const said = renderPerfboard(device('-a10')).notices.map((one) => one.message).join('\n');
 
-    expect(said).toMatch(/USB の箱が板に重なっています/);
+    expect(said).toMatch(/USB の箱が基板に重なっています/);
     expect(said).toMatch(/-b10/);
   });
 

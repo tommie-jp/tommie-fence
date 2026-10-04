@@ -9,8 +9,8 @@ import { knownPartTypes, lookupFootprint, placeableTypes } from './placement/foo
 
 /**
  * DIP スイッチ (`dip-switch4` / `dip-switch8`)。**表は fence-kit の名前つきの DIP 型** —
- * 溝をまたぐ DIP の姿で、k 番のスイッチは向かい合う足 `Ak` と `Bk` の間の接点。
- * **足どうしは図の上ではつながない** (開いた接点。タクトスイッチの bridges にあたる物は無い)。
+ * 溝をまたぐ DIP の姿で、k 番のスイッチは向かい合うピン `Ak` と `Bk` の間の接点。
+ * **ピンどうしは図の上ではつながない** (開いた接点。タクトスイッチの bridges にあたる物は無い)。
  */
 
 const fence = (...lines: string[]): string => ['board: half', ...lines, ''].join('\n');

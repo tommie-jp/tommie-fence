@@ -16,14 +16,14 @@ export const pxRect = (layout: Layout, box: RectMm): Rect => {
 };
 
 /**
- * 板の地。**地の在りかで描き分ける** (52 の docs/73 決め 6):
+ * 基板の地。**地の在りかで描き分ける** (52 の docs/73 決め 6):
  *
  * - 裏ベタ・地なし — 銅を剥がした基材の上に、残した銅 (島) を描く
- * - 表が地 — 銅の板に、島のまわりの溝 (基材の色) を描く
+ * - 表が地 — 銅の基板に、島のまわりの溝 (基材の色) を描く
  *
  * 描き方を分けるのは作り方 (剥がす / 切る) が違うからで、図を見れば
- * どちらの板か分かる。切り欠き (`slot`) は表が地の板では溝、
- * 裏ベタの板では裏の物なので破線。
+ * どちらの基板か分かる。切り欠き (`slot`) は表が地の基板では溝、
+ * 裏ベタの基板では裏の物なので破線。
  */
 export function renderPlate(
   board: Board,
@@ -73,8 +73,8 @@ export function renderGrid(board: Board, layout: Layout, theme: Theme): string {
 }
 
 /**
- * 目盛 — 板の上 (x) と左 (y)。1mm の短い刻み、5mm の長い刻み、10mm ごとの数字。
- * **SMA の胴に隠れる所は描かない** (`hidden` は板の辺に沿って隠れる範囲、mm)。
+ * 目盛 — 基板の上 (x) と左 (y)。1mm の短い刻み、5mm の長い刻み、10mm ごとの数字。
+ * **SMA の胴に隠れる所は描かない** (`hidden` は基板の辺に沿って隠れる範囲、mm)。
  */
 export function renderRulers(
   board: Board,

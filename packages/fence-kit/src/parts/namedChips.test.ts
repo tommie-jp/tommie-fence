@@ -2,9 +2,9 @@ import { describe, expect, test } from 'vitest';
 import { drawNamedChip, lookupNamedChip, namedChipLooks, namedChipTypes } from './namedChips.ts';
 
 /**
- * 足に名前のある DIP 型の部品 (52 の docs/66 の段 3)。**DIP の足の位置のうち、
- * 足のある所に名前が付いた物**として 3 つのフェンスが同じ表を読む。
- * 足の並びは実物のデータシート (段 0 で確かめた)。
+ * ピンに名前のある DIP 型の部品 (52 の docs/66 の段 3)。**DIP のピンの位置のうち、
+ * ピンのある所に名前が付いた物**として 3 つのフェンスが同じ表を読む。
+ * ピンの並びは実物のデータシート (段 0 で確かめた)。
  */
 
 describe('名前つきの DIP 型の表', () => {
@@ -33,7 +33,7 @@ describe('名前つきの DIP 型の表', () => {
   test('puts a DIP switch on every place of a DIP, one switch between the facing legs', () => {
     const four = lookupNamedChip('dip-switch4', null);
     expect(four).toMatchObject({ kindName: 'DIP スイッチ', prefix: 'SW', positions: 8, rowSpan: 3, body: 'switch' });
-    // k 番のスイッチは k 番の足 (Ak) と、向かいの足 (Bk) の間。
+    // k 番のスイッチは k 番のピン (Ak) と、向かいのピン (Bk) の間。
     expect(four?.pins.map((pin) => pin.name)).toEqual(['A1', 'A2', 'A3', 'A4', 'B4', 'B3', 'B2', 'B1']);
 
     const eight = lookupNamedChip('dip-switch8', null);

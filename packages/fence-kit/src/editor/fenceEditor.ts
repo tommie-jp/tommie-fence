@@ -90,9 +90,9 @@ export type PartFields = {
 /**
  * 置く部品。番地は**書かれた綴り**で渡す。
  *
- * **番地が 1 つなら、残りはフェンスが決める** (2 本足は既定の間隔で右へ、
- * 3 本足は右へ 2 穴、アンカー 1 つの形はそのまま)。マップは押した穴を
- * 1 つ送るだけでよく、穴の並べ方は板を知っている側が持つ。
+ * **番地が 1 つなら、残りはフェンスが決める** (2 ピンは既定の間隔で右へ、
+ * 3 ピンは右へ 2 穴、アンカー 1 つの形はそのまま)。マップは押した穴を
+ * 1 つ送るだけでよく、穴の並べ方は基板を知っている側が持つ。
  * `turn` / `flip` は**置く前に**回す・反転する (ゴーストの向きのまま書く)。
  */
 export type NewPart = {
@@ -174,7 +174,7 @@ export type FenceEditor = {
   readonly fieldsOf: (source: string, handle: string) => PartFields | null;
   /**
    * 色の候補 (`datalist`)。**書ける色はフェンスが決める** — 配線の色の並びは
-   * 板ごとに違う (circuit は線の色、板の 2 つは被覆の色)。
+   * 基板ごとに違う (circuit は線の色、ブレッドボードとユニバーサル基板は被覆の色)。
    */
   readonly colorNames: (listId: string) => string;
   /**
@@ -197,7 +197,7 @@ export type FenceEditor = {
    */
   readonly textOf?: (source: string, handle: string) => string | null;
   /**
-   * 端数 (`fine`) が効く相手。**`note` なら注釈だけ** — 板の 2 つは足を穴に
+   * 端数 (`fine`) が効く相手。**`note` なら注釈だけ** — ブレッドボードとユニバーサル基板はピンを穴に
    * 挿すので、部品と配線は交点そのものを指す (書けるのは注釈だけ)。
    * 書かなければ全部に効く (circuit)。
    */
@@ -221,18 +221,18 @@ export type FenceEditor = {
   readonly cellsOf: (source: string, handle: string) => readonly string[];
   /**
    * 配線を `Shift` で折れるか (`-|`)。**殻の案内文はここから組む** —
-   * 決め打ちにすると、折れない板で「押しても何も起きない鍵」を案内することになる。
+   * 決め打ちにすると、折れない基板で「押しても何も起きない鍵」を案内することになる。
    */
   readonly foldsWire: boolean;
   /**
    * 何分の 1 升まで刻めるか (`10` なら 1/10。circuit がそれ)。**穴の間が文法に無い
    * フェンスは null。** Ctrl を押しながらのクリックはこれで効き方が決まり、殻の案内文も
-   * ここから組む (null の板で「Ctrl で 1/10 升」と案内すると、押しても何も起きない鍵になる)。
+   * ここから組む (null の基板で「Ctrl で 1/10 升」と案内すると、押しても何も起きない鍵になる)。
    * 殻は端数 (`{ rows: 0.3, cols: -0.3 }`) を `step` に渡すだけで、綴りは知らない。
    */
   readonly fine: number | null;
   /**
-   * その穴から `rows` 行・`cols` 列だけ離れた穴 (書かれた綴り)。板の外や、
+   * その穴から `rows` 行・`cols` 列だけ離れた穴 (書かれた綴り)。基板の外や、
    * 数に落ちない綴り (レールの行) は null。
    *
    * **矢印で 1 穴動かす・複製を隣に置く**ために要る。殻は番地の綴りを知らないので、
@@ -255,7 +255,7 @@ export type FenceEditor = {
   readonly movePoint: (source: string, from: string, to: string, trial?: Trial) => EditResult;
   readonly addPart: (source: string, part: NewPart) => EditResult;
   /**
-   * 部品をもう 1 つ。**行を写して名前と穴だけ差し替える** — 足の並びが形で
+   * 部品をもう 1 つ。**行を写して名前と穴だけ差し替える** — ピンの並びが形で
    * 決まる部品 (DIP・端面実装のコネクタ) は、置き直すとその並びを作り直せない。
    */
   readonly duplicate: (source: string, handle: string, id: string) => EditResult;

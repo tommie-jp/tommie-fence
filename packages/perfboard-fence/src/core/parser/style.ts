@@ -31,7 +31,7 @@ const EMPTY_LABELS: LabelSpec = { row: null, col: null, case: null, sides: null 
 /**
  * `sides:` に書ける言葉。**空白区切りで並べる** (`left top`)。`all` は 4 辺、
  * `none` は出さない。書き方を 1 つに保つため、YAML の並び (`[left, top]`) は
- * 受けない — 機器の足 (`pins`) と同じ理由で、`-` に続く空白が箱の始まりに読まれる。
+ * 受けない — 機器のピン (`pins`) と同じ理由で、`-` に続く空白が箱の始まりに読まれる。
  */
 function readSides(written: unknown): readonly LabelSide[] | string {
   if (typeof written !== 'string') return `labels の sides は ${LABEL_SIDES.join(' / ')} を空白で並べます`;
@@ -83,7 +83,7 @@ const asFlag = (key: string): Reader => (value) => {
 
 /**
  * `labels:` を読む。**印字だけの話で、番地は変わらない** — 行が英字・列が数字と
- * いう番地の形は動かないので、ここで書けるのは板の外に出す名前の付け方だけ。
+ * いう番地の形は動かないので、ここで書けるのは基板の外に出す名前の付け方だけ。
  */
 const asLabels: Reader = (value) => {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {

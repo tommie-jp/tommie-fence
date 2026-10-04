@@ -175,18 +175,18 @@ export function movePoint(source: string, at: Address, to: Address, trial = fals
   const here = doc.written.filter((one) => same(one.address, at));
   if (here.length === 0) return fail(`${formatAddress(at)} には何も書かれていません`, null);
   if (same(at, to)) return { ok: true, value: { edits: [], diff: { lost: [], gained: [] } } };
-  // **半田付けできる所なら通す** — 穴と、`slots:` を書いた板の縁の銅箔。
+  // **半田付けできる所なら通す** — 穴と、`slots:` を書いた基板の縁の銅箔。
   // 節点は配線の端でもあるので、穴だけに限ると銅箔へ寄せられない。
-  if (!isSolderable(doc.board, to)) return fail(`${formatAddress(to)} は板の外です`, null);
+  if (!isSolderable(doc.board, to)) return fail(`${formatAddress(to)} は基板の外です`, null);
 
-  // **縮退は断る。** 寄せた先に自分のもう一方の足がある部品は長さ 0 になり、
+  // **縮退は断る。** 寄せた先に自分のもう一方のピンがある部品は長さ 0 になり、
   // 図から消えてネットリストでは短絡になる。動かす前に名指して断る。
   for (const part of doc.parts) {
     const moves = part.holes.some((hole) => same(hole, at));
     const lands = part.holes.some((hole) => same(hole, to));
     if (moves && lands) {
       return fail(
-        `${safeToken(part.id)} の足が同じ穴に重なります (先に ${safeToken(part.id)} のほうを動かします)`,
+        `${safeToken(part.id)} のピンが同じ穴に重なります (先に ${safeToken(part.id)} のほうを動かします)`,
         part.line,
       );
     }

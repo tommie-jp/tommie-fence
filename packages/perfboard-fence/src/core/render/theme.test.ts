@@ -20,7 +20,7 @@ describe('THEMES', () => {
   });
 
   test('gives a theme that darkens the page a ground to stand on', () => {
-    // **板の外の字は地の上に乗る。** 明るい字を透かした地に置くと、白い紙に
+    // **基板の外の字は地の上に乗る。** 明るい字を透かした地に置くと、白い紙に
     // 貼ったときに黙って消える。地を変えるテーマは必ず自分で塗る。
     expect(THEMES.dark?.palette.canvas).not.toBeNull();
     expect(THEMES.mono?.palette.canvas).not.toBeNull();

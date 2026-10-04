@@ -46,7 +46,7 @@ function stepOf(from: Address, to: Address): Step {
     : { rows: 0, cols };
 }
 
-/** 動かした先。板から出るときは null (呼ぶ側が断る)。 */
+/** 動かした先。基板から出るときは null (呼ぶ側が断る)。 */
 function shifted(address: Address, step: Step, columns: number): Address | null {
   const col = address.col + step.cols;
   if (col < 1 || col > columns) return null;
@@ -70,7 +70,7 @@ export type Located = {
   readonly addresses: readonly Address[];
   readonly points: ReadonlyMap<string, Address>;
   readonly columns: number;
-  /** 板そのもの (回す側が「板の外か」を見るのに使う)。 */
+  /** 基板そのもの (回す側が「基板の外か」を見るのに使う)。 */
   readonly board: Board;
 };
 
@@ -136,7 +136,7 @@ export function partSpans(source: string, id: string): readonly Span[] {
 export function movePart(source: string, id: string, to: Address, trial = false): MoveResult {
   const found = locatePart(source, id);
   if (!isLocated(found)) return { ok: false, error: found.error };
-  // **足は穴に挿す。** 交点の間へ落とされたら、書き込む前に断る (置く側と同じ
+  // **ピンは穴に挿す。** 交点の間へ落とされたら、書き込む前に断る (置く側と同じ
   // 規則。書いてしまうと、読み直したときにエラーになる図が残る)。
   if (!isCrossing(to)) {
     return fail(`${safeToken(id)} は穴の間には置けません (間に置けるのは注釈だけです)`, found.part.line);
@@ -151,7 +151,7 @@ export function movePart(source: string, id: string, to: Address, trial = false)
     const next = shifted(address, step, found.columns);
     if (next === null) {
       return fail(
-        `${safeToken(id)} を ${formatAddress(to)} へは動かせません (板の外に出ます)`,
+        `${safeToken(id)} を ${formatAddress(to)} へは動かせません (基板の外に出ます)`,
         found.part.line,
       );
     }
@@ -178,12 +178,12 @@ export function movePart(source: string, id: string, to: Address, trial = false)
 }
 
 /**
- * その穴から `rows` 行・`cols` 列だけ離れた穴。板の外は null。
+ * その穴から `rows` 行・`cols` 列だけ離れた穴。基板の外は null。
  *
  * **レールは行が極性そのもの**なので数に落ちない — 行を動かす指示は断り、
  * 列だけなら同じレールの上を動く (`+t5` の隣は `+t6`)。
- * 板の穴数は書いてある本文が決めるので、いちばん広い板 (`full`) で数える
- * (狭い板へ置いたときは、当てる側の `movePart` が改めて断る)。
+ * 基板の穴数は書いてある本文が決めるので、いちばん広い基板 (`full`) で数える
+ * (狭い基板へ置いたときは、当てる側の `movePart` が改めて断る)。
  */
 export function stepCell(written: string, rows: number, cols: number): string | null {
   const from = parseAddress(written);

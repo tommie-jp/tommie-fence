@@ -5,7 +5,7 @@ import { lookupPin, partTypeOf, pinHint } from './parts.ts';
 import { parseFence } from './parser/parseFence.ts';
 
 /**
- * DIP の足の名前 (52 の docs/95 の段 2)。**型番が fence-kit の足の名前の表にあれば**、
+ * DIP のピンの名前 (52 の docs/95 の段 2)。**型番が fence-kit のピンの名前の表にあれば**、
  * 箱の中に名前と番号を刷り (Pico と同じ道)、名前でも番号でも指せる。
  * 表に無い型番は今までどおり番号だけで、お知らせを出す。
  */
@@ -35,7 +35,7 @@ describe('種類', () => {
   test('keeps a number a number even when a name could be read as one', () => {
     const counter = typeOf('U1: dip16 c2 CD4017B')!;
 
-    // 5 番の足は Q6。出力 Q5 は 1 番。
+    // 5 番のピンは Q6。出力 Q5 は 1 番。
     expect(lookupPin(counter, '5')).toBe('pin 5');
     expect(lookupPin(counter, 'Q5')).toBe('pin 1');
   });
@@ -66,7 +66,7 @@ describe('種類', () => {
     expect(named.options).toContain('hide numbers');
     expect(named.options?.some((option) => option.includes('dipchip/width='))).toBe(true);
     expect(plain.options).not.toContain('hide numbers');
-    // 反転は今の dipN と同じく断る (板が裏返しを断るので、突き合わせられない)。
+    // 反転は今の dipN と同じく断る (基板が裏返しを断るので、突き合わせられない)。
     expect(named.orient).toEqual(plain.orient);
   });
 });
@@ -202,7 +202,7 @@ describe('図とネットリスト', () => {
   });
 });
 
-describe('3SK291 (面実装の 4 本足を変換基板に載せた形)', () => {
+describe('3SK291 (面実装の 4 ピンを変換基板に載せた形)', () => {
   test('names the four pins of a dip4 whose model is 3SK291', () => {
     const fet = typeOf('Q1: dip4 c2 3SK291')!;
 

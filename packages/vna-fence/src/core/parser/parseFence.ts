@@ -213,7 +213,7 @@ function readFence(source: string): ParseResult {
         else notes.push({ ...result.value, line } as NoteSpec);
         continue;
       }
-      // `- text 100M -20dB: 字` は 1 項目のマップ。字は値の側に来る (板のフェンスと同じ形)。
+      // `- text 100M -20dB: 字` は 1 項目のマップ。字は値の側に来る (基板のフェンスと同じ形)。
       if (isMap(item) && item.items.length === 1) {
         const pair = item.items[0];
         const head = scalarText(pair?.key);

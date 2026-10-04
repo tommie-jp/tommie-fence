@@ -172,10 +172,10 @@ SOT と箱は切らない (ピンの落とし先は基板ごとに違うので�
 チップ     resistor capacitor inductor bead led     /1608 /2012 /3216
 ダイオード  diode zener schottky varicap             /sod123 /sod323 /do214ac
 SOT       transistor ic3 regulator                 /sot23 /sot346 /sot89
-多足       transistor mosfet regulator  /to92 (既定) /to220     3 本足
-          mmic  /sot89                                         4 本足
+多ピン       transistor mosfet regulator  /to92 (既定) /to220     3 ピン
+          mmic  /sot89                                         4 ピン
 箱         box
-足のある   resistor capacitor inductor led diode crystal zener schottky varicap …
+ピンのある   resistor capacitor inductor led diode crystal zener schottky varicap …
 ```
 
 - 別名 (`0603` `s-mini`) は綴りとしては受けず、「`0603` は `1608` と書きます」と言う

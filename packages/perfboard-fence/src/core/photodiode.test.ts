@@ -5,14 +5,14 @@ import { isAxial } from './parts/types.ts';
 /**
  * フォトダイオードの胴。**砲弾型の玉で描く** (fence-kit の `domeBody`。LED と同じ形)
  * ので、当たり判定も玉にする (perfboard の約束 9: 胴の形は描画と当たり判定で同じ)。
- * 以前は足の間に伸びる箱で当てていて、足を広げると間の部品と重なると言っていた。
+ * 以前はピンの間に伸びる箱で当てていて、ピンを広げると間の部品と重なると言っていた。
  */
 
 const fence = (...lines: string[]): string => ['board: 20x10', ...lines, ''].join('\n');
 
 describe('フォトダイオード', () => {
   test('is radial like the LED, so it fits in neighbouring holes', () => {
-    // 軸物 (胴の両端から足が出る) ではない。隣の穴に挿せる。
+    // 軸物 (胴の両端からピンが出る) ではない。隣の穴に挿せる。
     expect(isAxial('photodiode')).toBe(false);
     const result = renderPerfboard(fence('parts:', '  D1: photodiode b2 b3', 'wires:', '  - b2 -- a2', '  - b3 -- c3'));
 

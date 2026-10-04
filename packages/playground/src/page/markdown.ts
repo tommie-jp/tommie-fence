@@ -96,7 +96,7 @@ function listenSource(): void {
 
 export function listenMarkdown(): void {
   els.md.addEventListener('click', () => {
-    // 畳んだ姿の板が開いたままだと、窓を閉じたときに残っている。
+    // 畳んだ姿の基板が開いたままだと、窓を閉じたときに残っている。
     showSheet(false);
     showMarkdown();
   });

@@ -8,7 +8,7 @@ describe('rowLabel', () => {
   });
 
   test('carries into two letters past z, the way a spreadsheet does', () => {
-    // ユニバーサル基板は 26 行を超える板がある (A タイプで 44 行)。
+    // ユニバーサル基板は 26 行を超える基板がある (A タイプで 44 行)。
     // 表計算と同じ数え方にしてあるので、`aa` が 27 行目だと説明せずに読める。
     expect(rowLabel(27)).toBe('aa');
     expect(rowLabel(28)).toBe('ab');
@@ -42,12 +42,12 @@ describe('parseAddress', () => {
   });
 
   test('takes upper case and normalises it', () => {
-    // 板の印字が大文字のことがあるので、どちらでも受ける。
+    // 基板の印字が大文字のことがあるので、どちらでも受ける。
     expect(parseAddress('B3')).toEqual({ row: 2, col: 3 });
   });
 
   test('refuses what is not an address', () => {
-    // `b0` `b-1` は**板の外の番地**として読めるようになった (下の describe を見る)。
+    // `b0` `b-1` は**基板の外の番地**として読めるようになった (下の describe を見る)。
     for (const text of ['3b', 'b', '3', 'b 3', '', 'b3c', '+t5', '-3b']) {
       expect(parseAddress(text)).toBeNull();
     }
@@ -75,7 +75,7 @@ describe('bounds', () => {
   });
 
   test('still takes the labels a real board uses', () => {
-    // 実在する一番大きい板 (秋月 A タイプ) でも 44 行 = `ar`。
+    // 実在する一番大きい基板 (秋月 A タイプ) でも 44 行 = `ar`。
     expect(parseAddress('ar1')).not.toBeNull();
     expect(parseAddress('zzzz1')).not.toBeNull();
   });
@@ -85,7 +85,7 @@ describe('bounds', () => {
   });
 
   test('formats a row label in bounded time, whatever it is given', () => {
-    // 桁あふれで `while` が終わらなくなった件の見張り。0 と負は板の外の行として読む。
+    // 桁あふれで `while` が終わらなくなった件の見張り。0 と負は基板の外の行として読む。
     expect(rowLabel(Number.POSITIVE_INFINITY)).toBe('');
     expect(rowLabel(Number.NEGATIVE_INFINITY)).toBe('');
     expect(rowLabel(Number.NaN)).toBe('');
@@ -94,9 +94,9 @@ describe('bounds', () => {
   });
 });
 
-describe('板の外の番地', () => {
+describe('基板の外の番地', () => {
   test('reads a column at or left of the first one', () => {
-    // 板の外を指せないと、縁の銅箔やコネクタの張り出す先を書けない。
+    // 基板の外を指せないと、縁の銅箔やコネクタの張り出す先を書けない。
     expect(parseAddress('a0')).toEqual({ row: 1, col: 0 });
     expect(parseAddress('a-1')).toEqual({ row: 1, col: -1 });
     expect(parseAddress('b-12')).toEqual({ row: 2, col: -12 });
@@ -139,7 +139,7 @@ describe('板の外の番地', () => {
 });
 
 /**
- * 交点の間 (端数の番地)。**書けるのは注釈だけ** — 足は穴に挿すので、部品も
+ * 交点の間 (端数の番地)。**書けるのは注釈だけ** — ピンは穴に挿すので、部品も
  * 配線も節点も交点そのものを指す (実機で「フェンス editor すべてで 1/10 単位を
  * デフォルトにする」。breadboard と同じ綴り)。
  */

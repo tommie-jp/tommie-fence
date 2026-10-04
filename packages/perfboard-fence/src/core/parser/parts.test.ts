@@ -45,7 +45,7 @@ describe('parsePartLine', () => {
   });
 
   test('places a tact switch from one anchor', () => {
-    // **足の位置はパッケージが決める**ので、書くのはアンカー 1 つ (DIP と同じ)。
+    // **ピンの位置はパッケージが決める**ので、書くのはアンカー 1 つ (DIP と同じ)。
     const result = parsePartLine('SW1', 'button b3');
 
     expect(result.ok && result.value.holes).toEqual(['b3']);
@@ -74,7 +74,7 @@ describe('parsePartLine', () => {
 
   test('takes a part number that reads like an address, on a one-anchor part', () => {
     // **型番は番地とそっくり** (`NE555` は ne 行 555 列としても読める)。
-    // 穴を 1 つしか書かない形では足を増やしようが無いので、番地として弾かない。
+    // 穴を 1 つしか書かない形ではピンを増やしようが無いので、番地として弾かない。
     expect(parsePartLine('U1', 'dip8 b3 NE555').ok).toBe(true);
     expect(parsePartLine('U1', 'sip3 b3 LM358').ok).toBe(true);
   });
@@ -102,7 +102,7 @@ describe('parsePartLine', () => {
     expect(!result.ok && result.error.token).toBe('3b');
   });
   test('refuses a third hole instead of swallowing it as the value', () => {
-    // `resistor b3 b7 b9` を黙って「値 b9」にすると、書いた人は 3 本目の足が
+    // `resistor b3 b7 b9` を黙って「値 b9」にすると、書いた人は 3 本目のピンが
     // 置かれたつもりのまま、図には出ない。
     const result = parsePartLine('X1', 'resistor b3 b7 b9');
 
@@ -116,7 +116,7 @@ describe('parsePartLine', () => {
   });
 });
 
-describe('端面実装の sma は 3 本足', () => {
+describe('端面実装の sma は 3 ピン', () => {
   test('takes the centre conductor and the two tips of the notch', () => {
     const result = parsePartLine('J1', 'sma/female-edge c1 b0 d0');
 
@@ -152,7 +152,7 @@ describe('端面実装の sma は 3 本足', () => {
 
 
 /**
- * 向きの語。**アンカー 1 つで置く形にだけ書ける** — 足を並べて書く部品の
+ * 向きの語。**アンカー 1 つで置く形にだけ書ける** — ピンを並べて書く部品の
  * 向きは穴の順そのものなので、語と食い違うと決められなくなる (52 の docs/14)。
  */
 describe('向きの語', () => {

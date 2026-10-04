@@ -2,15 +2,15 @@ import { smdSpelling, smdTable } from 'fence-kit';
 import type { SmdSpec } from 'fence-kit';
 
 /**
- * copper の部品の種類と姿。**綴りは perfboard と同じ** — 同じ部品を 2 つの板で
- * 同じ字で書ける。違うのは置き方だけで、面実装は点 1 つ、足のある部品は端 2 つ、
- * 同軸は板の辺。
+ * copper の部品の種類と姿。**綴りは perfboard と同じ** — 同じ部品を 2 つの基板で
+ * 同じ字で書ける。違うのは置き方だけで、面実装は点 1 つ、ピンのある部品は端 2 つ、
+ * 同軸は基板の辺。
  *
  * **面実装の寸法は fence-kit の表 (mm) をそのまま引く** (52 の docs/64)。
- * この板は mm で描くので、換算すら要らない。
+ * この基板は mm で描くので、換算すら要らない。
  */
 
-/** 足のある 2 本足 (島から島へ渡す)。perfboard の 2 本足から、板の縁に付く物を除いた。 */
+/** ピンのある 2 ピン (島から島へ渡す)。perfboard の 2 ピンから、基板の縁に付く物を除いた。 */
 const LEADED = new Set([
   'resistor', 'capacitor', 'led', 'diode', 'inductor', 'crystal', 'buzzer',
   'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc', 'varistor',
@@ -18,7 +18,7 @@ const LEADED = new Set([
   'reed', 'fuse', 'lamp',
 ]);
 
-/** 足のある部品の姿。**perfboard と同じ表** (描き分けは fence-kit の胴が持つ)。 */
+/** ピンのある部品の姿。**perfboard と同じ表** (描き分けは fence-kit の胴が持つ)。 */
 const LEADED_LOOKS: Readonly<Record<string, readonly string[]>> = {
   capacitor: ['ceramic', 'film', 'electrolytic', 'tantalum'],
   resistor: ['quarter', 'half'],
@@ -32,7 +32,7 @@ const LEADED_LOOKS: Readonly<Record<string, readonly string[]>> = {
 };
 
 /**
- * 面実装の種類。**表の種類の欄より広い** — RF の板ではチップのコイルとフェライト
+ * 面実装の種類。**表の種類の欄より広い** — RF の基板ではチップのコイルとフェライト
  * ビーズ (`bead`) を普通に使い、SOT-89 には MMIC (`ic3`) が載る (本の 4-18・8-6)。
  */
 const SMD_TYPES: Readonly<Record<'chip' | 'leaded' | 'sot', readonly string[]>> = {
@@ -42,12 +42,12 @@ const SMD_TYPES: Readonly<Record<'chip' | 'leaded' | 'sot', readonly string[]>> 
 };
 
 /**
- * 足が 3〜4 本の部品 (島から島へ足を渡す)。**足の名前は並びの順** — 端を書く順でもある。
+ * ピンが 3〜4 本の部品 (島から島へピンを渡す)。**ピンの名前は並びの順** — 端を書く順でもある。
  * `transistor` と `regulator` は面実装 (SOT) も持つので、姿が下の表にあるときだけここへ来る。
  * 書かなければ表の最初の姿。
  *
- * `mmic` は 4 本足の MMIC アンプ (SOT-89: 1 番 IN、2 番 GND、3 番 OUT、タブの 4 番も GND)。
- * 足の名前は本の 8-6 (MMIC LNA) の表記に揃え、2 本目の GND は `GND2`。
+ * `mmic` は 4 ピンの MMIC アンプ (SOT-89: 1 番 IN、2 番 GND、3 番 OUT、タブの 4 番も GND)。
+ * ピンの名前は本の 8-6 (MMIC LNA) の表記に揃え、2 本目の GND は `GND2`。
  */
 type MultiDef = { readonly pins: readonly string[]; readonly looks: readonly string[] };
 
@@ -58,13 +58,13 @@ const MULTI: Readonly<Record<string, MultiDef>> = {
   mmic: { pins: ['IN', 'GND', 'OUT', 'GND2'], looks: ['sot89'] },
 };
 
-/** 多足の部品か。 */
+/** 多ピンの部品か。 */
 export const isMulti = (type: string): boolean => Object.hasOwn(MULTI, type);
 
-/** 多足の足の名前 (端を書く順)。 */
+/** 多ピンのピンの名前 (端を書く順)。 */
 export const multiPins = (type: string): readonly string[] => MULTI[type]?.pins ?? [];
 
-/** 多足の姿 (先頭が既定)。 */
+/** 多ピンの姿 (先頭が既定)。 */
 export const multiLooks = (type: string): readonly string[] => MULTI[type]?.looks ?? [];
 
 /** 略記。**perfboard と同じ** (畳んだ先の正式名しか出口には出ない)。 */
@@ -81,7 +81,7 @@ const ALIASES: Readonly<Record<string, string>> = {
   ecap: 'capacitor/electrolytic',
 };
 
-/** 端面の同軸。**書かなければメス** (板に付くのはたいていメス)。 */
+/** 端面の同軸。**書かなければメス** (基板に付くのはたいていメス)。 */
 export const SMA_LOOKS = ['female-edge', 'male-edge'] as const;
 
 /** 箱 (SAW・缶・モジュール)。 */
@@ -155,7 +155,7 @@ export function resolveKind(written: string): KindResult {
         : { ok: true, value: { kind: 'chip', type, variant, spec } };
     }
     // 別名 (`0603` `s-mini`) と変換基板 (`sot346-dip`) は**綴りとしては受けず**、
-    // 書き直し先を言う (perfboard と同じ流儀)。この板に変換基板は無いので `-dip` は落とす。
+    // 書き直し先を言う (perfboard と同じ流儀)。この基板に変換基板は無いので `-dip` は落とす。
     const spelled = smdSpelling(variant)?.replace(/-dip$/, '') ?? null;
     if (spelled !== null && spelled !== variant && smdSpecOf(spelled) !== null) {
       return { ok: false, reason: `${variant} は ${spelled} と書きます (${type}/${spelled})` };
@@ -185,6 +185,6 @@ export function resolveKind(written: string): KindResult {
   return { ok: true, value: { kind: 'leaded', type, variant } };
 }
 
-/** 極性のある 2 本足か (先に書いた端がアノード)。 */
+/** 極性のある 2 ピンか (先に書いた端がアノード)。 */
 export const isPolar = (type: string): boolean =>
   ['led', 'diode', 'zener', 'schottky', 'varicap', 'photodiode'].includes(type);

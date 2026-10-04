@@ -5,7 +5,7 @@ import { parseFence } from './parser/parseFence.ts';
 import { placeParts } from './placement/place.ts';
 
 /**
- * DIP の足の名前 (52 の docs/95 の段 3)。**型番が fence-kit の足の名前の表にあれば**、
+ * DIP のピンの名前 (52 の docs/95 の段 3)。**型番が fence-kit のピンの名前の表にあれば**、
  * 胴に番号と名前を 2 段で刷り、配線は名前でも番号でも指せ、ネットリストは名前で出る
  * (回路図と同じ)。表に無い型番は今までどおり番号だけ。
  */

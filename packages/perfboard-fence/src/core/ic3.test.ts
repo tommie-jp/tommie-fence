@@ -4,7 +4,7 @@ import { holesOf, partName, partPrefix } from './parts/catalog.ts';
 import { isKnownType, placeableNames, splitPartType } from './parts/types.ts';
 
 /**
- * 3 本足の IC (`ic3`。52 の docs/66 の段 7)。置き方はトランジスタと同じ 3 つの穴で、
+ * 3 ピンの IC (`ic3`。52 の docs/66 の段 7)。置き方はトランジスタと同じ 3 つの穴で、
  * 姿は `to92` (既定) と `to220`。
  */
 

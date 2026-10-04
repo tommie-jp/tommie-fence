@@ -31,13 +31,13 @@ const SAME_AXIS_TOLERANCE = 0.5;
 const SHORT_HOP_PITCHES = 3;
 const SLOT_SPACING = 4;
 /**
- * 板の外のレーン (機器の帯と板の間) の段の間隔。**線の太さより広く取る。**
- * 板の中のレーンは行と行の間に収めるので 4px しか取れないが、ここは広い帯が
+ * 基板の外のレーン (機器の帯と基板の間) の段の間隔。**線の太さより広く取る。**
+ * 基板の中のレーンは行と行の間に収めるので 4px しか取れないが、ここは広い帯が
  * 空いている。機器の線は何本も並んで走るので、4px では隣の段と太さが重なって
  * 2 本が 1 本の太い線に見える。
  */
 const WIDE_SLOT_SPACING = 8;
-/** この厚みがあれば広い段を使う (板の中のレーンはどれも 12px 以下)。 */
+/** この厚みがあれば広い段を使う (基板の中のレーンはどれも 12px 以下)。 */
 const WIDE_LANE = 16;
 
 const slotSpacing = (lane: Lane): number => (lane.halfHeight >= WIDE_LANE ? WIDE_SLOT_SPACING : SLOT_SPACING);
@@ -82,9 +82,9 @@ export function routeWire(from: Point, to: Point, layout: Layout, options: Route
 }
 
 /**
- * 板の行 1 本と、その行が属する導通のまとまり (上のブロック・下のブロック・レール 1 本)。
- * **縦の線がどの穴の上を通るか**を読むのに使う。レールの無い板では、レールの行は
- * 座標が 0 に落ちて板の外になるので、ここで落ちる。
+ * 基板の行 1 本と、その行が属する導通のまとまり (上のブロック・下のブロック・レール 1 本)。
+ * **縦の線がどの穴の上を通るか**を読むのに使う。レールの無い基板では、レールの行は
+ * 座標が 0 に落ちて基板の外になるので、ここで落ちる。
  */
 type BoardRow = { readonly y: number; readonly group: string };
 
@@ -118,8 +118,8 @@ function crossesForeignHoles(x: number, y1: number, y2: number, own: ReadonlySet
 /**
  * 同じ列の 2 穴を結ぶ縦の線を、**列の上ではなく列と列の間に通す**か。
  *
- * 上下のレールを渡す線 (`-b20 -- -t20`) をまっすぐ引くと、板の 20 列の 10 穴の上を
- * 縦に走る。そこに挿さった部品の足や配線の端も線に隠れ、**その列につながって
+ * 上下のレールを渡す線 (`-b20 -- -t20`) をまっすぐ引くと、基板の 20 列の 10 穴の上を
+ * 縦に走る。そこに挿さった部品のピンや配線の端も線に隠れ、**その列につながって
  * 見える** (実機の電験 1-3 で、20 列の部品が上下のレールにつながって読めた)。
  * 1 列目で上下のレールを 2 本渡すと、赤と黒が同じ列に重なって片方が消える。
  *
@@ -165,12 +165,12 @@ function sidestepOf(from: Point, to: Point, layout: Layout, obstacles: readonly 
 }
 
 /**
- * 板の外の機器と板の穴を結ぶ配線が使うレーン。**機器の帯と板の間の、穴の無い帯**。
+ * 基板の外の機器と基板の穴を結ぶ配線が使うレーン。**機器の帯と基板の間の、穴の無い帯**。
  *
- * 機器から来た線を板の中のレーン (レールの外の縁や、レールとブロックの間) で
+ * 機器から来た線を基板の中のレーン (レールの外の縁や、レールとブロックの間) で
  * 横に走らせると、レールの縞や穴の行の上に寝て、**レールにつながって見える**
  * (実機の AD の図で、GND の黒がレール + の穴の上を横切っていた)。
- * 横の区間はすべて板の外で済ませ、板へは列ごとに縦に降りる。
+ * 横の区間はすべて基板の外で済ませ、基板へは列ごとに縦に降りる。
  */
 function deviceLaneOf(from: Point, to: Point, layout: Layout): Lane | null {
   const [fromOn, toOn] = [onBoardArea(from, layout), onBoardArea(to, layout)];
@@ -189,7 +189,7 @@ const onBoardArea = (point: Point, layout: Layout): boolean =>
 type Descent = { readonly escape: Escape; readonly column: Claim | null };
 
 /**
- * 板の外のレーンから穴 `end` へ降りる道。
+ * 基板の外のレーンから穴 `end` へ降りる道。
  *
  * **まっすぐ降りると別のまとまりの穴 (レール) の上を通るときは、列と列の間を降りて、
  * 穴の 1 つ手前の行間で横に入る。** 穴の列の上を降りると、通り過ぎるレールの穴が
@@ -229,7 +229,7 @@ function descentOf(end: Point, lane: Lane, layout: Layout, obstacles: readonly R
 /**
  * レーンへ回らずに 2 点を直に結べるか。
  *
- * **同じ行の 2 穴は行に沿って 1 本引く。** 実物のジャンパは板の上に寝るので、
+ * **同じ行の 2 穴は行に沿って 1 本引く。** 実物のジャンパは基板の上に寝るので、
  * それがいちばん近い姿になる。長く伸びるぶんだけ胴を避けるが、
  * **短いジャンパでは胴を見ない**: 穴 1 つぶんの線をレーンまで回すと、
  * よけた胴より figure を汚す大回りになる。突き抜けさせて部品を上に描くほうが読める。
@@ -247,7 +247,7 @@ const isShortHop = (from: Point, to: Point, layout: Layout): boolean =>
   Math.hypot(to.x - from.x, to.y - from.y) <= SHORT_HOP_PITCHES * layout.pitch;
 
 /**
- * 板の外の機器から来た線は、**真下の穴でもまっすぐ引かない** — 板の外のレーンを
+ * 基板の外の機器から来た線は、**真下の穴でもまっすぐ引かない** — 基板の外のレーンを
  * 通って降りる (`deviceLaneOf`)。まっすぐ引くと、通り過ぎるレールの穴に
  * 挿さっているように見えるうえ、仮の経路 (部品の寄せが読む) と本番の経路が食い違う。
  */
@@ -256,7 +256,7 @@ const isDirect = (from: Point, to: Point, layout: Layout): boolean =>
   || (Math.abs(from.x - to.x) < SAME_AXIS_TOLERANCE && deviceLaneOf(from, to, layout) === null);
 
 /**
- * 板の同じ行の穴どうしか。**板の外の機器のピンは行に乗っていない**ので、
+ * 基板の同じ行の穴どうしか。**基板の外の機器のピンは行に乗っていない**ので、
  * 高さが揃っていても同じ行ではない。帯の縁に線を這わせても、
  * どの穴につながっているのかは読めない。
  */
@@ -271,7 +271,7 @@ const onBoardRow = (point: Point, layout: Layout): boolean =>
  * 部品のラベルは行と行の隙間に置くので、縁が隣の行まで届く。そこで断ると、
  * ラベルのある部品の隣の行はどこもまっすぐ通れなくなる。
  *
- * 隠れたラベルは読めなくならない。**描く順が板 → 配線 → 部品**なので、
+ * 隠れたラベルは読めなくならない。**描く順が基板 → 配線 → 部品**なので、
  * 掛かったぶんは縁取りごと配線の上に乗る。
  */
 const ROW_GRAZE = 5;
@@ -289,7 +289,7 @@ const crossesBody = (from: Point, to: Point, obstacles: readonly Rect[]): boolea
     && boxHitsRect(from, to, { ...rect, y: rect.y + ROW_GRAZE, height: rect.height - ROW_GRAZE * 2 }, 0));
 
 /**
- * またぐ穴が空いているか。**線は下を通る穴を隠す**ので、そこに部品の足や
+ * またぐ穴が空いているか。**線は下を通る穴を隠す**ので、そこに部品のピンや
  * 別の配線の端が来ていると、そこにもつながっているように見えてしまう。
  *
  * 端点そのものは数えない。同じ穴で出会う 2 本 (`b10 -- b14 -- b21` の b14) は
@@ -370,8 +370,8 @@ const commit = (held: Reservations, escape: Escape): Reservations =>
  * ずれ先を**穴の列の間に限る**のは、列の真上を横切ると、通り道の穴に挿さっているように
  * 見えるため。どの穴に入っているかを読ませるのがこの図の役目なので、
  * 穴の中心を通る線は引かない。**列は端点からではなく穴の格子から数える**
- * (板の外の機器のピンは格子に乗っていないので、端点からずらすと列を踏む)。
- * 同じ理由で、寄り道は板の中だけを使う。
+ * (基板の外の機器のピンは格子に乗っていないので、端点からずらすと列を踏む)。
+ * 同じ理由で、寄り道は基板の中だけを使う。
  *
  * **押さえた道すじは返り値に入れて返す** (`held` は読むだけ)。
  * 呼ぶ側が控えるので、entry と exit のどちらが先かが呼ぶ側のコードに見える。
@@ -501,8 +501,8 @@ export function routeWires(
     const lane = lanes[index];
     if (!lane) return { entry: null, exit: null };
 
-    // 機器の線は板の外のレーンから列ごとに降りる (`descentOf`)。部品よけの寄り道
-    // (`escapeOf`) は板の中のレーンのためのもので、ここでは降りる道が兼ねる。
+    // 機器の線は基板の外のレーンから列ごとに降りる (`descentOf`)。部品よけの寄り道
+    // (`escapeOf`) は基板の中のレーンのためのもので、ここでは降りる道が兼ねる。
     if (deviceLaneOf(request.from, request.to, layout) === lane) {
       const descend = (end: Point): Escape => {
         const { escape, column } = descentOf(end, lane, layout, obstacles, held);
@@ -624,7 +624,7 @@ type DeviceRun = {
   readonly left: number;
   readonly right: number;
   readonly pin: number;
-  /** 行き先の穴が機器の足より右にあるか。 */
+  /** 行き先の穴が機器のピンより右にあるか。 */
   readonly rightward: boolean;
 };
 
@@ -632,16 +632,16 @@ const overlaps = (a: DeviceRun, b: DeviceRun): boolean =>
   a.left < b.right + SLOT_GAP && b.left < a.right + SLOT_GAP;
 
 /**
- * 機器のレーン (板の外) の段。**足の並びと行き先の列の並びが同じ配線どうしを交差させない。**
+ * 機器のレーン (基板の外) の段。**ピンの並びと行き先の列の並びが同じ配線どうしを交差させない。**
  *
- * 機器の線は、機器の足から段まで縦に降り、段を横に走り、行き先の列で板へ縦に降りる。
- * 横の区間が重なる 2 本は、**曲がり角が内側にあるほうを板の側の段に**置くと交わらない:
- * 左へ行く線どうしなら足が右にあるほう、右へ行く線どうしなら足が左にあるほう。
- * 逆に置くと、板の側の線の横の区間を、機器の側の線が板へ降りる縦の区間が切る
+ * 機器の線は、機器のピンから段まで縦に降り、段を横に走り、行き先の列で基板へ縦に降りる。
+ * 横の区間が重なる 2 本は、**曲がり角が内側にあるほうを基板の側の段に**置くと交わらない:
+ * 左へ行く線どうしならピンが右にあるほう、右へ行く線どうしならピンが左にあるほう。
+ * 逆に置くと、基板の側の線の横の区間を、機器の側の線が基板へ降りる縦の区間が切る
  * (教科書の図で AD の `2+` が `1+` の上を横切った)。左端の順に中央から配っていた
- * ころは、どちらに転ぶかが足の位置まかせだった。
+ * ころは、どちらに転ぶかがピンの位置まかせだった。
  *
- * 左へ行く線と右へ行く線の横の区間が重なるのは、足の並びと行き先の並びが入れ替わって
+ * 左へ行く線と右へ行く線の横の区間が重なるのは、ピンの並びと行き先の並びが入れ替わって
  * いるときだけで、そのときはどう置いても 1 回は交わる。
  *
  * 段は、先に置いた重なる線より 1 つ機器の側 (最長路の層分け)。重なる線の塊ごとに
@@ -660,7 +660,7 @@ function deviceLaneSlots(
     const lane = lanes[index];
     if (!lane || !onDeviceLane[index]) return;
     const run = laneRun(request, escapes[index]!);
-    // 機器の足は、板から見てレーンの向こう側の端。
+    // 機器のピンは、基板から見てレーンの向こう側の端。
     const fromIsPin = Math.sign(request.from.y - lane.y) === -boardSideOf(lane, layout);
     const pinX = fromIsPin ? (escapes[index]!.entry?.x ?? request.from.x) : (escapes[index]!.exit?.x ?? request.to.x);
     const holeX = fromIsPin ? (escapes[index]!.exit?.x ?? request.to.x) : (escapes[index]!.entry?.x ?? request.from.x);
@@ -670,7 +670,7 @@ function deviceLaneSlots(
   });
 
   for (const [lane, runs] of byLane) {
-    // 板の側に置くものから順に: 右へ行く線は足の左から、左へ行く線は足の右から。
+    // 基板の側に置くものから順に: 右へ行く線はピンの左から、左へ行く線はピンの右から。
     const order = [
       ...runs.filter((run) => run.rightward).sort((a, b) => a.pin - b.pin || a.index - b.index),
       ...runs.filter((run) => !run.rightward).sort((a, b) => b.pin - a.pin || a.index - b.index),
@@ -694,7 +694,7 @@ function deviceLaneSlots(
   return result;
 }
 
-/** レーンから見て板のある向き (y の符号)。 */
+/** レーンから見て基板のある向き (y の符号)。 */
 const boardSideOf = (lane: Lane, layout: Layout): number => (lane.y < layout.board.y ? 1 : -1);
 
 /** 横の区間が (間接にでも) 重なる線の塊。 */

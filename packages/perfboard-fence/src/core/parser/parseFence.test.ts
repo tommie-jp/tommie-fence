@@ -5,7 +5,7 @@ describe('parseFence', () => {
   test('says the fence is empty instead of drawing nothing in silence', () => {
     const parsed = parseFence('   \n\n');
 
-    // **空でも既定の板は返す** (52 の docs/54)。ここで止めると書き始められない。
+    // **空でも既定の基板は返す** (52 の docs/54)。ここで止めると書き始められない。
     expect(parsed.doc.board.cols).toBeGreaterThan(0);
     expect(parsed.errors[0]?.message).toContain('空');
   });
@@ -54,10 +54,10 @@ describe('parseFence', () => {
   test('says once that board: has no value, not twice that it is missing', () => {
     const parsed = parseFence('board:\n');
 
-    // 書き方は 1 度だけ言う。もう 1 件は「何の板で描いたか」で、別のことを言っている。
+    // 書き方は 1 度だけ言う。もう 1 件は「何の基板で描いたか」で、別のことを言っている。
     expect(parsed.errors.filter((one) => one.message.includes('列x行'))).toHaveLength(1);
     expect(parsed.errors.some((one) => one.message.includes('board: が要ります'))).toBe(false);
-    expect(parsed.errors.some((one) => one.message.includes('既定の板'))).toBe(true);
+    expect(parsed.errors.some((one) => one.message.includes('既定の基板'))).toBe(true);
   });
 
   test('names a board it cannot read, and shows how to write one', () => {
@@ -75,7 +75,7 @@ describe('parseFence', () => {
   });
 
   test('reads a board written as the size it is sold at', () => {
-    // **数えた綴りだけ**が別名。72×47.5mm は「C タイプ」でも別の板 (27 × 17)。
+    // **数えた綴りだけ**が別名。72×47.5mm は「C タイプ」でも別の基板 (27 × 17)。
     for (const spelling of ['72x47mm', '7.2x4.7cm', 'c']) {
       const parsed = parseFence(`board: ${spelling}\n`);
 
@@ -85,7 +85,7 @@ describe('parseFence', () => {
   });
 
   test('offers the nearest board when a rounded size is not one it has', () => {
-    // 71×49mm は汎用板でも秋月 C でもない。**丸めて当てない** — 別の板で穴数も違う。
+    // 71×49mm は汎用基板でも秋月 C でもない。**丸めて当てない** — 別の基板で穴数も違う。
     const parsed = parseFence('board: 71x49mm\n');
 
     expect(parsed.errors[0]?.message).toContain('akizuki-c');
@@ -201,7 +201,7 @@ describe('parseFence', () => {
 describe('parts: の名前の重なり', () => {
   test('refuses a name written twice, whether or not the two are the same shape', () => {
     // YAML の重複キーは読み飛ばさせている (`uniqueKeys: false`) ので、
-    // ここで見ないとネットリストに同じ足の名前が 2 つ載る。
+    // ここで見ないとネットリストに同じピンの名前が 2 つ載る。
     const both = parseFence('board: 10x6\nparts:\n  R1: resistor b3 b7\n  R1:\n    type: device\n    pins: 1 2\n');
 
     expect(both.errors.some((one) => one.message.includes('名前が重なっています'))).toBe(true);
@@ -254,7 +254,7 @@ describe('board: のマップ形式 (スロット用の銅箔)', () => {
   });
 });
 
-describe('board: の標準板と grid:', () => {
+describe('board: の標準基板と grid:', () => {
   const board = (grid: string, size = '12x18cm') => parseFence(`board:\n  size: ${size}\n  grid: ${grid}\n`);
 
   test('reads each standard board with its counted grid', () => {
@@ -284,7 +284,7 @@ describe('board: の標準板と grid:', () => {
     const parsed = parseFence('board: 70x50\n');
 
     expect(parsed.errors[0]?.notice).toBe(true);
-    expect(parsed.errors[0]?.message).toContain('70×50mm の板のことなら board: 7x5cm');
+    expect(parsed.errors[0]?.message).toContain('70×50mm の基板のことなら board: 7x5cm');
   });
 
   test('takes a grid inside the range of 12x18cm silently', () => {
@@ -329,7 +329,7 @@ describe('board: の標準板と grid:', () => {
 
       expect(parsed.errors).toHaveLength(1);
       expect(parsed.errors[0]?.notice).toBeUndefined();
-      expect(parsed.errors[0]?.message).toContain('名前の板の格子を替える項目です');
+      expect(parsed.errors[0]?.message).toContain('名前の基板の格子を替える項目です');
       expect(parsed.doc?.board.cols).not.toBe(20);
     }
   });
@@ -362,7 +362,7 @@ describe('board: の色', () => {
   });
 
   test('does not take a plating name as a resist colour', () => {
-    // 表を分けてある。通してしまうと、綴りは読めるのに実物にない板が出る。
+    // 表を分けてある。通してしまうと、綴りは読めるのに実物にない基板が出る。
     expect(parseFence('board:\n  size: 12x7\n  color: gold\n').errors[0]?.message).toContain('color');
   });
 

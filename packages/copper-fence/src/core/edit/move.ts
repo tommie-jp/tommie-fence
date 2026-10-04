@@ -50,7 +50,7 @@ export function movePart(source: string, handle: string, to: string, preview = f
   const words = item.words.map((word) => word.text);
 
   if (found.kind === 'part' && found.part.kind === 'edge') {
-    // **SMA は板の辺に載る。** 押した点から一番近い辺へ寄せる。
+    // **SMA は基板の辺に載る。** 押した点から一番近い辺へ寄せる。
     const edge = nearestEdge(state.doc.board, target);
     words[1] = edge.side;
     words[2] = formatMm(edge.offset);
@@ -77,7 +77,7 @@ export function movePart(source: string, handle: string, to: string, preview = f
 
 /**
  * 点を動かす (マップの節点)。**同じ点を書いた物がまとめて動く** — 線路の点、
- * 足のある部品の点で書いた端、ジャンパの端。線路は縦横に直す。
+ * ピンのある部品の点で書いた端、ジャンパの端。線路は縦横に直す。
  */
 export function movePoint(source: string, from: string, to: string, preview = false): EditResult {
   const [was, now] = [parsePoint(from), parsePoint(to)];

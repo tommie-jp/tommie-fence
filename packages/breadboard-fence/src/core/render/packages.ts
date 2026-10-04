@@ -12,7 +12,7 @@ import type { ChipInk, SipLook } from 'fence-kit';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
 
-/** fence-kit のパッケージに渡す色。**板ではなく部品の色**を集めたもの。 */
+/** fence-kit のパッケージに渡す色。**基板ではなく部品の色**を集めたもの。 */
 export function chipInk(theme: RenderTheme): ChipInk {
   return {
     body: theme.palette.chipBody,
@@ -25,15 +25,15 @@ export function chipInk(theme: RenderTheme): ChipInk {
   };
 }
 
-/** ピンの上に置く足の跡。 */
+/** ピンの上に置くピンの跡。 */
 const stub = (point: Point, fill: string, dy = -3): string =>
   element('rect', { x: num(point.x - 3), y: num(point.y + dy), width: 6, height: 6, fill });
 
 /**
  * DIP パッケージ。**姿は fence-kit にある** (`parts/chips.ts`) — 実物の
- * パッケージの話で板に依らないので、perfboard と同じ絵になる
+ * パッケージの話で基板に依らないので、perfboard と同じ絵になる
  * (実機で「全ての部品の見た目を breadboard と perfboard で共通にする」)。
- * ここに残るのは板の話 — 足の点と、切り欠きを向ける先。
+ * ここに残るのは基板の話 — ピンの点と、切り欠きを向ける先。
  */
 export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
   const points = pinPoints(part, layout);
@@ -44,7 +44,7 @@ export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme):
   const pinOne = part.pins.findIndex((pin) => (pin.number ?? pin.name) === '1');
   // **名前で呼ぶ DIP は番号と名前の 2 段** (52 の docs/95)。刷る名前は表の印字
   // (呼び名が番号になった `NC` も `NC` と刷る)。
-  // 名前で呼ぶかは置いたとき (`placeDip`) に決まっている — 足が番号を持つか。
+  // 名前で呼ぶかは置いたとき (`placeDip`) に決まっている — ピンが番号を持つか。
   const printed = part.pins.some((pin) => pin.number !== undefined) && lookupNamedChip(part.type, part.variant) === null
     ? lookupPinout(part.value ?? part.label, part.pins.length)
     : null;
@@ -59,10 +59,10 @@ export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme):
     caption: caption(part),
     scale: textScale(theme),
     ink: chipInk(theme),
-    // 幅広 (600 mil) は胴が 6 ピッチ奥行きなので、名前は胴の中に刷る (足の外は配線の通り道)。
+    // 幅広 (600 mil) は胴が 6 ピッチ奥行きなので、名前は胴の中に刷る (ピンの外は配線の通り道)。
     ...(isWideDip(part.variant) ? { namesInside: true } : {}),
   };
-  // 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。姿は品名なので、
+  // ピンに名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。姿は品名なので、
   // 変換基板の道へは行かせない (52 の docs/66)。
   const named = lookupNamedChip(part.type, part.variant);
   if (named !== null) return drawNamedChip({ ...options, chip: named });
@@ -80,7 +80,7 @@ export function sipBarRect(part: PlacedPart, layout: Layout): Rect {
 
 /**
  * 1 列に並んだヘッダ。**姿は fence-kit にある** (`parts/chips.ts`)。
- * 板の話として残るのは**ピン名をどちら側に出すか**だけ — 出す先は溝の側:
+ * 基板の話として残るのは**ピン名をどちら側に出すか**だけ — 出す先は溝の側:
  * 盤の端には列番号が印字されていて、そこに重ねると両方読めなくなる。
  */
 /** 型番が姿を持つ部品 (SFU455) なら、その樹脂の色と胴の字。 */
@@ -127,7 +127,7 @@ export function switchBodyRect(part: PlacedPart, layout: Layout): Rect {
 }
 
 /**
- * 溝をまたぐ 4 本足のタクトスイッチ。**押していなくてもつながっている足の組を線で描く**。
+ * 溝をまたぐ 4 ピンのタクトスイッチ。**押していなくてもつながっているピンの組を線で描く**。
  * 実物では見えない結線だが、ここを知らずに同じ側の 2 本を使うと回路が最初から短絡する
  * (この図がいちばん防ぎたい間違い)。
  */
@@ -174,10 +174,10 @@ export function renderPushbutton(part: PlacedPart, layout: Layout, theme: Render
 
 /**
  * 変圧器。**書かれた 4 つの穴を囲む箱**として描き、中身 (積層鉄心と巻線) は
- * fence-kit が描く — 実物の話で板に依らないので、perfboard と同じ絵になる。
+ * fence-kit が描く — 実物の話で基板に依らないので、perfboard と同じ絵になる。
  *
- * 足の並びを決め打たないのは、実物の足の並びが品によって違うため。
- * どの穴に挿したかをそのまま図にする (2 本足・3 本足と同じ考え方)。
+ * ピンの並びを決め打たないのは、実物のピンの並びが品によって違うため。
+ * どの穴に挿したかをそのまま図にする (2 ピン・3 ピンと同じ考え方)。
  */
 export function renderTransformer(part: PlacedPart, layout: Layout, theme: RenderTheme, drop = 0): string {
   const rect = fourLeadBodyRect(part, layout);
@@ -200,7 +200,7 @@ export function renderTransformer(part: PlacedPart, layout: Layout, theme: Rende
   return `${core}${stubs}${label}`;
 }
 
-/** 4 本足を囲む箱。**配線をよける領域**と描画で同じ数字を使う。 */
+/** 4 ピンを囲む箱。**配線をよける領域**と描画で同じ数字を使う。 */
 export function fourLeadBodyRect(part: PlacedPart, layout: Layout): Rect {
   const points = pinPoints(part, layout);
   if (!points || points.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
@@ -214,5 +214,5 @@ export function fourLeadBodyRect(part: PlacedPart, layout: Layout): Rect {
   return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
 }
 
-/** 足の穴から胴の縁までの余白。実物も足の外側に樹脂が回る。 */
+/** ピンの穴から胴の縁までの余白。実物もピンの外側に樹脂が回る。 */
 const FOUR_LEAD_PAD = 6;

@@ -28,7 +28,7 @@ describe('issuesOf', () => {
   });
 
   test('reports notices as well, marked apart from errors', () => {
-    // `--` で足へ引くと斜めに入る (base は部品と同じ行に乗っている)。
+    // `--` でピンへ引くと斜めに入る (base は部品と同じ行に乗っている)。
     const source = fence('parts:', '  Q1: npn b2', 'wires:', '  - a1 -- Q1.b');
 
     expect(issuesOf(source)).toEqual([

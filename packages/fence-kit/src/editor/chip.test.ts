@@ -9,8 +9,8 @@ describe('chipOf', () => {
   });
 
   test('counts the nested groups, so a posture group does not end the part', () => {
-    // perfboard の 3 本足は姿勢の `g` を内側に持つ。最初の `</g>` で切ると
-    // 胴だけが出て足とキャプションが落ちる。
+    // perfboard の 3 ピンは姿勢の `g` を内側に持つ。最初の `</g>` で切ると
+    // 胴だけが出てピンとキャプションが落ちる。
     const map = '<svg><g class="cf-chip" data-part="Q1"><g transform="rotate(90)"><circle/></g><text/></g>後ろ</svg>';
 
     expect(chipOf(map, 'Q1')).toBe('<g class="cf-chip" data-part="Q1"><g transform="rotate(90)"><circle/></g><text/></g>');

@@ -6,7 +6,7 @@ import type { FenceEditor } from './fenceEditor.ts';
  *
  * `FenceEditor` は文字列で話す約束なので、殻の側からは「置ける種類だと言ったのに
  * 置けない」「置いたのに穴を返さない」といった食い違いが**型では見えない**。
- * 実際、パレットに出ている 3 本足 5 種がどれも置けない状態が版をまたいで残った
+ * 実際、パレットに出ている 3 ピン 5 種がどれも置けない状態が版をまたいで残った
  * (52 の docs/16)。そこで**パレットが出す種類を数えて、全部を通す**。
  *
  * vitest は使わない — 見つけたことを字にして返すだけの純関数にして、
@@ -22,7 +22,7 @@ export type ContractFixture = {
   readonly room: string;
   /** `source` にある部品の名札。 */
   readonly part: string;
-  /** その部品を動かす先 (板の上で、`room` とは別の穴)。 */
+  /** その部品を動かす先 (基板の上で、`room` とは別の穴)。 */
   readonly moveTo: string;
   /** 読めない行を 1 つだけ持つ本文と、その行 (フェンスの中の行、1 始まり)。 */
   readonly broken: { readonly source: string; readonly line: number };
@@ -122,7 +122,7 @@ export function checkFenceEditor(editor: FenceEditor, fixture: ContractFixture):
       say(`${type}: パレットに出ているのに名前を付けられません`);
       continue;
     }
-    // **マップは押した穴を 1 つ送るだけ。** 足の並べ方はフェンスが決める。
+    // **マップは押した穴を 1 つ送るだけ。** ピンの並べ方はフェンスが決める。
     const placed = editor.addPart(source, { id, type, at: [room] });
     if (!placed.ok) {
       say(`${type}: 穴 1 つで置けません (${failed(placed)})`);
@@ -163,7 +163,7 @@ export function checkFenceEditor(editor: FenceEditor, fixture: ContractFixture):
 
   // --- 穴の間 (既定で 1/4 升、Shift で升ちょうど。52 の docs/23) ---
   // **名乗った刻みで綴れて、戻れること。** 名乗らないなら端数の穴を返さないこと
-  // (板の `step` が `a5.25` という読めない綴りを黙って返していた)。
+  // (基板の `step` が `a5.25` という読めない綴りを黙って返していた)。
   if (typeof editor.fine !== 'number' && editor.fine !== null) {
     say('fine が数でも null でもありません');
   } else if (editor.fine !== null) {
@@ -187,7 +187,7 @@ export function checkFenceEditor(editor: FenceEditor, fixture: ContractFixture):
     say(`${part} を動かしたのに ${moveTo} を返しません`);
   }
 
-  // **複製は行を写す。** 足の並びが形で決まる部品も、写せば正しい姿のまま。
+  // **複製は行を写す。** ピンの並びが形で決まる部品も、写せば正しい姿のまま。
   const copyId = `${part}COPY`;
   const copied = editor.duplicate(source, part, copyId);
   if (!copied.ok) {

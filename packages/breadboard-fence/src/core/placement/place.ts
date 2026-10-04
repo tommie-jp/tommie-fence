@@ -63,7 +63,7 @@ export function placeParts(specs: readonly PartSpec[], board: Board): PlaceResul
   return { parts, errors };
 }
 
-/** その穴を押さえている部品。body なら足ではなく本体の下という意味。 */
+/** その穴を押さえている部品。body ならピンではなく本体の下という意味。 */
 type Claim = { readonly id: string; readonly body: boolean };
 
 /** ピン名に書く極性の印。 */
@@ -99,7 +99,7 @@ function variantError(part: PlacedPart): FenceError | null {
   }
   if (!allowed.includes(variant)) {
     // 別名 (`s-mini`) は綴りとしては受け取らず、表の綴りを返す。
-    // この板は変換基板に載せた姿だけなので、`s-mini` は `sot346-dip` へ案内する。
+    // この基板は変換基板に載せた姿だけなので、`s-mini` は `sot346-dip` へ案内する。
     const target = smdSuggestion(part.type, variant, allowed);
     const hint = target !== null
       ? `${safeToken(variant)} は ${target} と書きます`
@@ -124,7 +124,7 @@ function variantError(part: PlacedPart): FenceError | null {
 
 /**
  * 直付けの面実装 (`resistor/2012` `transistor/sot346`)。**ユニバーサル基板の姿**で、
- * 足がブレッドボードの穴に届かない。知らない姿として断ると「書けるのに表に無い」と
+ * ピンがブレッドボードの穴に届かない。知らない姿として断ると「書けるのに表に無い」と
  * 読めるので、**なぜ挿せないかと、書き直し先**を言う (52 の docs/64)。
  */
 function directSmdError(part: PlacedPart, variant: string, allowed: readonly string[]): FenceError | null {
@@ -144,14 +144,14 @@ function directSmdError(part: PlacedPart, variant: string, allowed: readonly str
 }
 
 /**
- * 本体が板に載る部品 (パッケージ) の、**ピンで囲まれた内側の穴**。
+ * 本体が基板に載る部品 (パッケージ) の、**ピンで囲まれた内側の穴**。
  * タクトスイッチの真ん中の列や、マイコンボードの下に隠れる行がこれで、
- * 実物では何も挿せない。抵抗のように胴が板から浮く部品は対象にしない
+ * 実物では何も挿せない。抵抗のように胴が基板から浮く部品は対象にしない
  * (またいだ穴はそのまま使えるため)。
  */
 const COVERING_KINDS: ReadonlySet<PartKind> = new Set<PartKind>(['switch', 'dip', 'sip', 'board']);
 
-/** 部品が塞いでいる穴ぜんぶ (足の穴 + 本体の下)。寄せ (relocate.ts) の台帳がこれを数える。 */
+/** 部品が塞いでいる穴ぜんぶ (ピンの穴 + 本体の下)。寄せ (relocate.ts) の台帳がこれを数える。 */
 export function occupiedHoles(part: PlacedPart): Address[] {
   return [
     ...part.pins.flatMap((pin) => (pin.address ? [pin.address] : [])),
@@ -160,15 +160,15 @@ export function occupiedHoles(part: PlacedPart): Address[] {
 }
 
 /**
- * 部品の絵が載っている穴。足の穴と、足が張る矩形の中の穴。
+ * 部品の絵が載っている穴。ピンの穴と、ピンが張る矩形の中の穴。
  *
  * `occupiedHoles` と分けてあるのは、見ているものが違うから。あちらは
- * 「実物で足を挿せない穴」なので、胴が板から浮く 2 本足の下は数えない。
+ * 「実物でピンを挿せない穴」なので、胴が基板から浮く 2 ピンの下は数えない。
  * こちらは「図の上で絵に埋まっている穴」で、浮いていようと絵が載っていれば数える。
  * 行に沿ってまっすぐ引く配線が、ここを通ると部品につながって見えてしまう。
  *
  * **縦や斜めに挿した部品も数える。** `resistor a5 c5` の胴は b5 の上に描かれるので、
- * 足の並びを 1 行に限ると、その胴を配線がまっすぐ突き抜ける。
+ * ピンの並びを 1 行に限ると、その胴を配線がまっすぐ突き抜ける。
  */
 export function drawnOverHoles(part: PlacedPart): Address[] {
   return [
@@ -181,11 +181,11 @@ export function coveredHoles(part: PlacedPart): Address[] {
   return COVERING_KINDS.has(part.kind) ? spannedHoles(part) : [];
 }
 
-/** 足が張る矩形の中の穴 (足の穴そのものは除く)。 */
+/** ピンが張る矩形の中の穴 (ピンの穴そのものは除く)。 */
 function spannedHoles(part: PlacedPart): Address[] {
   const pins = part.pins.flatMap((pin) => (pin.address ? [pin.address] : []));
   const rails = pins.filter((address): address is RailAddress => address.kind === 'rail');
-  // 足が全部レールに並ぶ部品。レールは行の格子に乗らないので別に数える。
+  // ピンが全部レールに並ぶ部品。レールは行の格子に乗らないので別に数える。
   if (rails.length >= 2 && rails.length === pins.length) return spannedOnRail(rails);
 
   const holes = pins.filter((address): address is HoleAddress => address.kind === 'hole');
@@ -207,7 +207,7 @@ function spannedHoles(part: PlacedPart): Address[] {
   return covered;
 }
 
-/** 同じレールに並ぶ足の間。足が別々のレールに散っていれば、間に穴は無い。 */
+/** 同じレールに並ぶピンの間。ピンが別々のレールに散っていれば、間に穴は無い。 */
 function spannedOnRail(rails: readonly RailAddress[]): Address[] {
   const [{ polarity, side }] = rails as [RailAddress];
   if (rails.some((rail) => rail.polarity !== polarity || rail.side !== side)) return [];
@@ -242,9 +242,9 @@ function findConflict(
         : `${name} は部品 ${safeToken(claim.id)} が使っています`;
       return { message, line: part.line };
     }
-    // 同じ部品の 2 本の足が同じ穴に入る = 部品を短絡させている。
+    // 同じ部品の 2 本のピンが同じ穴に入る = 部品を短絡させている。
     if (!body && own.has(name)) {
-      return { message: `部品 ${safeToken(part.id)} の足が 2 本とも ${name} に入っています`, line: part.line };
+      return { message: `部品 ${safeToken(part.id)} のピンが 2 本とも ${name} に入っています`, line: part.line };
     }
     own.add(name);
   }
@@ -301,7 +301,7 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
   return placeDip(spec, board, base, footprint.pins);
 }
 
-/** 足の数だけ穴番地を並べて書く部品 (抵抗・トランジスタなど)。 */
+/** ピンの数だけ穴番地を並べて書く部品 (抵抗・トランジスタなど)。 */
 function placeLegs(
   spec: PartSpec,
   board: Board,
@@ -327,10 +327,10 @@ function placeLegs(
 }
 
 /**
- * USB コネクタ。**書いた穴がそのまま足**で、名前は書いた順に表から当てる
- * (`VBUS GND D+ D-`)。実物の変換基板は足の並びが製品ごとに違うので、並びは
+ * USB コネクタ。**書いた穴がそのままピン**で、名前は書いた順に表から当てる
+ * (`VBUS GND D+ D-`)。実物の変換基板はピンの並びが製品ごとに違うので、並びは
  * 決め打たない (変圧器と同じ)。**穴に名前 `(GND)` は書かせない** — 名前は表が
- * 決めるので、書けると同じ足が 2 つの名前を持つ。
+ * 決めるので、書けると同じピンが 2 つの名前を持つ。
  */
 function placeConnector(spec: PartSpec, board: Board, base: PartBase, connector: Connector): Result<PlacedPart> {
   const order = connector.pins.join(' ');
@@ -345,7 +345,7 @@ function placeConnector(spec: PartSpec, board: Board, base: PartBase, connector:
   const tagged = spec.holes.find((hole) => hole.tagged);
   if (tagged) {
     return fail(
-      `部品 ${safeToken(spec.id)}: 足の名前は表の順で決まるので、穴に (${safeToken(tagged.tag)}) は書けません`
+      `部品 ${safeToken(spec.id)}: ピンの名前は表の順で決まるので、穴に (${safeToken(tagged.tag)}) は書けません`
       + ` (${order} の順に穴を書きます)`,
       spec.line,
     );
@@ -384,7 +384,7 @@ const rightEdge = (spec: PartSpec, board: Board, lastCol: number): FenceError | 
     : null;
 
 /**
- * 穴の行の、板の上での位置 (ピッチ単位)。**溝は 3 ピッチぶん** — e と f の間が
+ * 穴の行の、基板の上での位置 (ピッチ単位)。**溝は 3 ピッチぶん** — e と f の間が
  * 0.3 インチで、DIP がちょうどまたぐ。
  */
 const ROW_POSITION: Readonly<Record<HoleRow, number>> = {
@@ -447,7 +447,7 @@ function placeDip(spec: PartSpec, board: Board, base: PartBase, pinCount: number
   const anchor = anchorHole(spec, board, wide ? `${spec.type}/wide @ d5` : 'dip8 @ e5');
   if (!anchor.ok) return anchor;
 
-  // 幅広は足の列が 6 ピッチ離れる (b↔f・c↔g・d↔h・e↔i)。並べ方は 7 セグと同じ勘定。
+  // 幅広はピンの列が 6 ピッチ離れる (b↔f・c↔g・d↔h・e↔i)。並べ方は 7 セグと同じ勘定。
   const oppositeRow: HoleRow | null = wide
     ? acrossGap(anchor.value.row, WIDE_ROW_SPAN)
     : anchor.value.row === 'e' ? 'f' : anchor.value.row === 'f' ? 'e' : null;
@@ -455,7 +455,7 @@ function placeDip(spec: PartSpec, board: Board, base: PartBase, pinCount: number
     return fail(
       wide
         ? `部品 ${safeToken(spec.id)}: ${spec.type}/wide は溝をまたぐので ${rowsAcross(true)} 行か ${rowsAcross(false)} 行に置きます`
-          + ' (足の行は 0.6 インチ = 6 ピッチ離れる。d 行と h 行がおすすめ)'
+          + ' (ピンの行は 0.6 インチ = 6 ピッチ離れる。d 行と h 行がおすすめ)'
         : `部品 ${safeToken(spec.id)}: dip は溝をまたぐので e 行か f 行に置きます`,
       spec.line,
     );
@@ -466,7 +466,7 @@ function placeDip(spec: PartSpec, board: Board, base: PartBase, pinCount: number
 
   const names = Array.from({ length: pinCount }, (_, index) => String(index + 1));
   const pins = dualRowPins(anchor.value, oppositeRow, spun(names, spec.turn));
-  // **型番が足の名前の表にあれば名前で呼ぶ** (52 の docs/95)。番号は `number` に残す。
+  // **型番がピンの名前の表にあれば名前で呼ぶ** (52 の docs/95)。番号は `number` に残す。
   // 変換基板 (`dip8/sop`) は中身の IC が違うので引かない。
   const pinout = spec.variant === null || wide ? lookupPinout(modelOf(spec), pinCount) : null;
   return ok({
@@ -484,7 +484,7 @@ function placeDip(spec: PartSpec, board: Board, base: PartBase, pinCount: number
 const modelOf = (spec: PartSpec): string | null => spec.value ?? (spec.labelTagged ? null : spec.label);
 
 /**
- * 型番が足の名前の表に無い DIP のお知らせ (52 の docs/95 の決め 3。回路図と同じ文面)。
+ * 型番がピンの名前の表に無い DIP のお知らせ (52 の docs/95 の決め 3。回路図と同じ文面)。
  * **エラーにはしない** — 表に無い IC も番号で描ければ試せる。型番を書かない DIP と
  * 変換基板 (`dip8/sop`) は言わない。
  */
@@ -497,21 +497,21 @@ function unnamedDipNotice(spec: PartSpec, part: PlacedPart): FenceError[] {
     ? `${spec.type} の型番は表にありません`
     : `${spec.type} で表にあるのは ${known.join(' / ')}`;
   return [notice(
-    `${safeToken(spec.id)} の型番 ${safeToken(model)} の足の名前は表に無いので、番号で描きました (${listed})`,
+    `${safeToken(spec.id)} の型番 ${safeToken(model)} のピンの名前は表に無いので、番号で描きました (${listed})`,
     spec.line,
   )];
 }
 
 /**
- * 番号 (`'2'`) の足を表の名前で呼ぶ。**2 本以上に刷られた名前** (TL071 の `NC`) は
- * どの足か決まらないので番号のまま (回路図と同じ)。
+ * 番号 (`'2'`) のピンを表の名前で呼ぶ。**2 本以上に刷られた名前** (TL071 の `NC`) は
+ * どのピンか決まらないので番号のまま (回路図と同じ)。
  */
 function printedName(names: readonly string[], number: string): string {
   const name = names[Number(number) - 1] ?? number;
   return names.filter((other) => other === name).length === 1 ? name : number;
 }
 
-/** 幅広 DIP の足の行として書ける行 (溝の上か下か)。 */
+/** 幅広 DIP のピンの行として書ける行 (溝の上か下か)。 */
 const rowsAcross = (upper: boolean): string =>
   HOLE_ROWS.filter((row) => (ROW_POSITION[row] < ROW_POSITION.f) === upper && acrossGap(row, WIDE_ROW_SPAN) !== null).join('・');
 
@@ -524,8 +524,8 @@ export function acrossGap(row: HoleRow, span: number): HoleRow | null {
 }
 
 /**
- * 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。**DIP と同じ並べ方**で、
- * 列の間は表の穴数、足があるのは表の位置だけ。アンカーの行から、向かいの列は
+ * ピンに名前のある DIP 型 (リレー・フォトカプラ・7 セグ)。**DIP と同じ並べ方**で、
+ * 列の間は表の穴数、ピンがあるのは表の位置だけ。アンカーの行から、向かいの列は
  * 溝の向こうの `rowSpan` ピッチ先 (G5V-2 は e↔f、7 セグは b↔f 〜 e↔i)。
  */
 function placeNamed(spec: PartSpec, board: Board, base: PartBase, chip: NamedChip): Result<PlacedPart> {
@@ -546,8 +546,8 @@ function placeNamed(spec: PartSpec, board: Board, base: PartBase, chip: NamedChi
   const overflow = rightEdge(spec, board, anchor.value.col + perRow - 1);
   if (overflow) return { ok: false, error: overflow };
 
-  // **足の無い位置は空の名前で持って回し、並べてから落とす** — 回すと位置が
-  // 巡るので、先に落とすと向かいの列へ行く足を数え違える。
+  // **ピンの無い位置は空の名前で持って回し、並べてから落とす** — 回すと位置が
+  // 巡るので、先に落とすと向かいの列へ行くピンを数え違える。
   const names = Array.from({ length: chip.positions }, (_, index) =>
     chip.pins.find((pin) => pin.at === index + 1)?.name ?? '');
   return ok({
@@ -610,7 +610,7 @@ function placeSip(spec: PartSpec, board: Board, base: PartBase, pinCount: number
   const anchor = anchorHole(spec, board, 'sip4 @ a20');
   if (!anchor.ok) return anchor;
 
-  // `pins:` で書いた名前が先。無ければ**型番が足の名前の表にあれば印字の名前**
+  // `pins:` で書いた名前が先。無ければ**型番がピンの名前の表にあれば印字の名前**
   // (`Q1: sip4 @ b3 3SK291` の `Q1.G1`)、それも無ければ番号。
   const printed = spec.pins === null ? lookupPinout(modelOf(spec), pinCount) : null;
   const names = spec.pins ?? printed?.names ?? Array.from({ length: pinCount }, (_, index) => String(index + 1));
@@ -639,7 +639,7 @@ function placeSip(spec: PartSpec, board: Board, base: PartBase, pinCount: number
 }
 
 /**
- * 溝をまたぐ 4 本足のタクトスイッチ。**同じ側の 2 本は押していなくてもつながっている**ので、
+ * 溝をまたぐ 4 ピンのタクトスイッチ。**同じ側の 2 本は押していなくてもつながっている**ので、
  * その組を bridges で申告する。ここを黙っていると、図から導いたネットリストが実物と食い違う。
  */
 function placeSwitch(spec: PartSpec, board: Board, base: PartBase): Result<PlacedPart> {
@@ -675,7 +675,7 @@ function placeSwitch(spec: PartSpec, board: Board, base: PartBase): Result<Place
 function resolveHole(text: string, board: Board, line: number): Result<Address> {
   const address = parseAddress(text);
   if (!address) return fail(`穴番地として読めません: ${safeToken(text)} (a5 や +t5 のように書きます)`, line, text);
-  // **足は穴に挿す。** 交点の間 (`b5c3`) を書けるのは注釈だけで、部品と配線は
+  // **ピンは穴に挿す。** 交点の間 (`b5c3`) を書けるのは注釈だけで、部品と配線は
   // 交点そのものを指す — 間に挿せる穴は実物に無い。
   if (!isCrossing(address)) {
     return fail(`穴の間には挿せません: ${safeToken(text)} (交点の間を書けるのは注釈だけです)`, line, text);

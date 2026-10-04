@@ -14,7 +14,7 @@ import { changed, refuse } from './result.ts';
 
 /**
  * パレットに出す物。**本の治具で使う物を、使う順に**並べる — 端面 SMA、
- * 直列・シャントのチップ、MMIC、箱、足のある部品、島・via・切り欠き。
+ * 直列・シャントのチップ、MMIC、箱、ピンのある部品、島・via・切り欠き。
  */
 const PALETTE: readonly (readonly [type: string, name: string])[] = [
   ['sma', '端面 SMA'],
@@ -27,8 +27,8 @@ const PALETTE: readonly (readonly [type: string, name: string])[] = [
   ['transistor/sot23', 'トランジスタ (SOT-23)'],
   ['ic3/sot89', 'MMIC (SOT-89)'],
   ['box', '箱 (SAW・缶)'],
-  ['resistor', '抵抗 (足)'],
-  ['capacitor', 'コンデンサ (足)'],
+  ['resistor', '抵抗 (ピン)'],
+  ['capacitor', 'コンデンサ (ピン)'],
   ['pad', '島'],
   ['via', 'via'],
   ['slot', '切り欠き'],
@@ -44,7 +44,7 @@ const PREFIX: Readonly<Record<string, string>> = {
   pad: 'P', via: 'V', slot: 'X', line: 'TL',
 };
 
-/** 足のある部品を 1 点で置いたときの長さ (mm)。1/4W 抵抗が収まる 10mm。 */
+/** ピンのある部品を 1 点で置いたときの長さ (mm)。1/4W 抵抗が収まる 10mm。 */
 const LEAD_SPAN = 10;
 
 const baseOf = (type: string): string => type.split('/')[0] ?? type;
@@ -62,7 +62,7 @@ export function nextId(source: string, type: string): string | null {
   return `${prefix}${number}`;
 }
 
-/** その板で 50Ω になる線路の幅 (mm)。地の無い板は 1mm。 */
+/** その基板で 50Ω になる線路の幅 (mm)。地の無い基板は 1mm。 */
 export function fiftyOhmWidth(board: Board): number {
   if (board.ground === 'none') return 1;
   let [lo, hi] = [0.05, 50];
@@ -88,7 +88,7 @@ const turnWord = (quarters: number): string | null => {
   return turn === 0 ? null : `r${turn}`;
 };
 
-/** 部品・島を置く。**押した点 1 つで置ける** (足のある部品は右へ 10mm、2 点ならその 2 点)。 */
+/** 部品・島を置く。**押した点 1 つで置ける** (ピンのある部品は右へ 10mm、2 点ならその 2 点)。 */
 export function addPart(source: string, part: NewPart): EditResult {
   const state = read(source);
   const points = part.at.map((written) => parsePoint(written));
@@ -119,7 +119,7 @@ export function addPart(source: string, part: NewPart): EditResult {
     case 'sot':
       return appended(state, 'parts', [`${part.id}: ${part.type} ${formatPoint(first)}`, ...orient].join(' '), preview);
     case 'multi':
-      return refuse('3 本足の部品は行に書いて置きます (端を 3 つ。例: transistor/to92 P1 P2 P3)');
+      return refuse('3 ピンの部品は行に書いて置きます (端を 3 つ。例: transistor/to92 P1 P2 P3)');
     case 'leaded': {
       const along = (part.turn ?? 0) % 2 === 0 ? { x: LEAD_SPAN, y: 0 } : { x: 0, y: LEAD_SPAN };
       const end = second ?? { x: round2(first.x + along.x), y: round2(first.y + along.y) };
@@ -129,7 +129,7 @@ export function addPart(source: string, part: NewPart): EditResult {
 }
 
 /**
- * 線路を引く (マップで 2 点を結ぶ)。**幅はその板で 50Ω になる幅** — 引いた
+ * 線路を引く (マップで 2 点を結ぶ)。**幅はその基板で 50Ω になる幅** — 引いた
  * 線路がそのまま治具の線路になる。斜めに結んだときは横→縦に折る。
  */
 export function addWire(source: string, from: string, to: string): EditResult {

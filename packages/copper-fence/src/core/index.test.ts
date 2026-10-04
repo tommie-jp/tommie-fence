@@ -104,7 +104,7 @@ describe('renderCopper', () => {
     ].join('\n'));
     expect(result.errors).toEqual([]);
     expect(result.notices.map((said) => said.message)).toEqual([
-      'V1: 裏に地が無い板なので、via はどこへもつながりません (board の ground)',
+      'V1: 裏に地が無い基板なので、via はどこへもつながりません (board の ground)',
       '書き出し (source) は 1 つだけ描きます (後のものは描いていません)',
     ]);
     for (const piece of ['data-part="R1"', 'data-part="Q1"', 'data-part="U1"', 'data-part="J2"', '50mm', '```copper', 'resistor', 'SAW']) {
@@ -115,11 +115,11 @@ describe('renderCopper', () => {
   test('refuses a note or a part that reaches too far off the board', () => {
     const said = renderCopper(['board: 40x20mm', 'parts:', '  R1: resistor 1,1 90,1', 'notes:', '  - mark 90,90'].join('\n'))
       .errors.map((error) => error.message);
-    expect(said).toEqual(['R1 が板から離れすぎです', '注釈の点が板から離れすぎです (板の外は 20mm まで)']);
+    expect(said).toEqual(['R1 が基板から離れすぎです', '注釈の点が基板から離れすぎです (基板の外は 20mm まで)']);
   });
 
   test('says why a part could not be placed', () => {
-    expect(renderCopper('board: 40x20mm\nparts:\n  J1: sma left 1').errors[0]?.message).toMatch(/板の角にかかります/);
+    expect(renderCopper('board: 40x20mm\nparts:\n  J1: sma left 1').errors[0]?.message).toMatch(/基板の角にかかります/);
   });
 });
 
@@ -167,7 +167,7 @@ describe('the back view', () => {
     const { svg } = renderCopper(VIA);
     expect(svg).toContain('裏から見た図 (左右反転) — 裏は銅のベタ (GND)');
     expect(svg).toContain('scale(-1 1)');
-    // via は x=30 に。裏から見ると板の左から 10mm の所。
+    // via は x=30 に。裏から見ると基板の左から 10mm の所。
     const holes = [...svg.matchAll(/<circle cx="([\d.]+)"[^>]*fill="#2a2620"/g)].map((found) => Number(found[1]));
     expect(holes).toHaveLength(2);
     expect(Math.round((holes[0] ?? 0) + (holes[1] ?? 0))).toBeGreaterThan(0);
@@ -219,7 +219,7 @@ describe('three-lead parts', () => {
 
   test('says when the third lead lands on no copper', () => {
     const { erc, netlist } = renderCopper(AMP.replace('Q1: transistor/to92 PB PC PE', 'Q1: transistor/to92 PB PC 30,4'));
-    expect(erc.map((notice) => notice.message)).toEqual(['Q1 の E 番の足 (30,4) の下に銅がありません']);
+    expect(erc.map((notice) => notice.message)).toEqual(['Q1 の E 番のピン (30,4) の下に銅がありません']);
     expect(netlist.some((net) => net.refs.includes('Q1.E') && net.refs.length === 1)).toBe(true);
   });
 

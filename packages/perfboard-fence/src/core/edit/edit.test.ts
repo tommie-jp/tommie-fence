@@ -59,11 +59,11 @@ describe('movePart', () => {
   });
 
   test('refuses to walk off the board, naming the hole that fell off', () => {
-    // 12x7 の板。b6 が b13 になる移動は板の外。
+    // 12x7 の基板。b6 が b13 になる移動は基板の外。
     const result = movePart(BOARD, 'R1', at('b9'));
 
     expect(result.ok).toBe(false);
-    expect(!result.ok && result.error.message).toContain('板の外');
+    expect(!result.ok && result.error.message).toContain('基板の外');
   });
 
   test('refuses a part it cannot find', () => {
@@ -144,7 +144,7 @@ describe('movableNodes / nodeSpans', () => {
   });
 
   test('counts how many places write the hole', () => {
-    // b2 は R1 の足と配線の端の 2 か所。
+    // b2 は R1 のピンと配線の端の 2 か所。
     expect(movableNodes(BOARD).find((node) => node.address.row === 2 && node.address.col === 2)?.uses).toBe(2);
   });
 

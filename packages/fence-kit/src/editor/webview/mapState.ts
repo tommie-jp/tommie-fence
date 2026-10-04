@@ -19,7 +19,7 @@ import type { GridStep } from '../fenceEditor.ts';
  * **ゴーストは拡張に訊く。** 持ち物があるとき、カーソルの下の穴が変わるたびに
  * `preview` を送り、拡張が「どの穴を使うか・置けるか」を `ghost` で返す。
  * 押したときと同じ関数を試し当てて答えるので、見せた物と書かれる物が
- * 食い違わない。穴の並べ方 (2 本足の間隔、3 本足の広がり) はこちらは知らない。
+ * 食い違わない。穴の並べ方 (2 ピンの間隔、3 ピンの広がり) はこちらは知らない。
  */
 
 export type Kind = 'part' | 'node' | 'wire';
@@ -79,12 +79,12 @@ export type Under = {
   /** 配線の端 (行と、どちらの端か)。**端だけを付け替える**ために線とは別に持つ。 */
   readonly wireEnd: { readonly line: string; readonly end: 'from' | 'to' } | null;
   /**
-   * 多端子部品の足 (`Q1.C`)。**穴とは別に持つ** — 足は穴の上に無いので、
+   * 多端子部品のピン (`Q1.C`)。**穴とは別に持つ** — ピンは穴の上に無いので、
    * 穴として渡すと「その番地へ動かす」になってしまう。使うのは配線だけ。
    * 綴りはフェンスが決める (殻は字として運ぶ)。
    */
   readonly pin: string | null;
-  /** その部品が注釈か。**端数が注釈にだけ効く板**で見る (`fineFor`)。 */
+  /** その部品が注釈か。**端数が注釈にだけ効く基板**で見る (`fineFor`)。 */
   readonly note?: boolean;
   /** 升の中の端数。交点ちょうど・Shift 中・刻めない相手は null。 */
   readonly fine: Fine | null;
@@ -95,8 +95,8 @@ export const NOTHING: Under = {
 };
 
 /**
- * 配線の端にできるもの。**足が穴より先**— 足の丸は部品の升の上に重なるので、
- * 穴を先に採ると足を押しても穴につながる。
+ * 配線の端にできるもの。**ピンが穴より先**— ピンの丸は部品の升の上に重なるので、
+ * 穴を先に採るとピンを押しても穴につながる。
  */
 export const endOf = (under: Under): string | null => under.pin ?? under.cell;
 
@@ -149,7 +149,7 @@ export type Carry =
   }
   | {
     readonly kind: 'move'; readonly part: string; readonly byPointer: boolean;
-    /** 掴んだのが注釈か。**端数が注釈にだけ効く板**で見る (`fineFor`)。 */
+    /** 掴んだのが注釈か。**端数が注釈にだけ効く基板**で見る (`fineFor`)。 */
     readonly note?: boolean;
   }
   | { readonly kind: 'drag'; readonly node: string; readonly byPointer: boolean }
@@ -205,7 +205,7 @@ export type State = {
    * あるので、その差だけ `map.ts` が絵をずらす (往復を待たずに追従させる)。
    */
   readonly ghostAt: Spot | null;
-  /** 直前に置いたもの (`Insert` でもう 1 つ)。足の数まで覚える。 */
+  /** 直前に置いたもの (`Insert` でもう 1 つ)。ピンの数まで覚える。 */
   readonly lastPlaced: { readonly type: string; readonly twoEnds: boolean } | null;
   /** 戻す・やり直すを自分で持つか (パネル)。タブそのものがマップなら VS Code に任せる。 */
   readonly ownUndo: boolean;
@@ -214,7 +214,7 @@ export type State = {
   /** 何分の 1 升まで刻めるか (`FenceEditor.fine`)。null なら Ctrl を押しても素のクリック。 */
   readonly fine: number | null;
   /**
-   * 端数が効く相手。**`note` なら注釈だけ** — 板の 2 つは足を穴に挿すので、
+   * 端数が効く相手。**`note` なら注釈だけ** — ブレッドボードとユニバーサル基板はピンを穴に挿すので、
    * 部品と配線は交点そのものを指す (実機で「text はどこでも移動できるように」)。
    */
   readonly fineFor: FineFor;
@@ -365,8 +365,8 @@ export function hint(state: State): string {
     const fine = fineHintOf(state, state.foldsWire);
     const fold = state.fine === null && state.foldsWire ? ' (Shift で先に横へ折る)' : '';
     return state.wireFrom === null
-      ? `配線: 始まりの穴か足をクリック${fine} / Esc でやめる`
-      : `${state.wireFrom.cell} から: 終わりの穴か足をクリック${fold}${fine} / Esc でやめる`;
+      ? `配線: 始まりの穴かピンをクリック${fine} / Esc でやめる`
+      : `${state.wireFrom.cell} から: 終わりの穴かピンをクリック${fold}${fine} / Esc でやめる`;
   }
   if (under.part !== null) {
     const step = state.fine === null ? '矢印で 1 穴' : `矢印で 1/${state.fine} 升 (Shift で 1 穴)`;
@@ -382,7 +382,7 @@ export function hint(state: State): string {
 }
 
 /**
- * 案内文に添える刻みの説明。**能力表から組む** — 端数を受けない板で言うと、
+ * 案内文に添える刻みの説明。**能力表から組む** — 端数を受けない基板で言うと、
  * 押しても何も起きない鍵を案内することになる (`foldsWire` と同じ)。
  *
  * **既定が 1/`fine` 升で、`Shift` が升ちょうど。** 逆 (Ctrl で細かく) だった
@@ -406,7 +406,7 @@ const outcome = (
 /** 穴のある場所 (押した穴・置く穴・配線の端)。`Spot` の穴が空でない形。 */
 type Held = Spot & { readonly cell: string };
 
-/** 端数を、このフェンスが受けるときだけ通す (板の 2 つは null のまま素のクリック)。 */
+/** 端数を、このフェンスが受けるときだけ通す (ブレッドボードとユニバーサル基板は null のまま素のクリック)。 */
 const fineFor = (state: State, under: Under): Fine | null => (state.fine === null ? null : under.fine);
 
 /** カーソルの下の場所 (端数はフェンスが受けるときだけ)。 */
@@ -419,8 +419,8 @@ const heldOf = (state: State, under: Under): Held | null => {
 };
 
 /**
- * 配線の端になる場所。**足が穴より先**で、**足は升ではない**ので端数を持たない
- * (穴として渡すと「その番地へ動かす」になり、端数を付けると足の上の 1/4 になる)。
+ * 配線の端になる場所。**ピンが穴より先**で、**ピンは升ではない**ので端数を持たない
+ * (穴として渡すと「その番地へ動かす」になり、端数を付けるとピンの上の 1/4 になる)。
  */
 export const endSpotOf = (state: State, under: Under): Held | null => {
   if (under.pin !== null) return { cell: under.pin, fine: null };
@@ -441,7 +441,7 @@ const withFines = (fines: readonly (Fine | null)[]): { readonly fine?: readonly 
   (fines.some((one) => one !== null) ? { fine: fines } : {});
 
 /**
- * 間隔を選んでいる最中の 1 本目の足。2 端子を押したまま別の穴へ動かしている
+ * 間隔を選んでいる最中の 1 本目のピン。2 端子を押したまま別の穴へ動かしている
  * ときだけ立つ。**ゴーストと確定に同じ値を渡す**ための 1 か所。
  * 同じ升でも端数が違えば別の場所 (升の中で間隔を選べる)。
  */
@@ -622,7 +622,7 @@ function onRelease(state: State, event: Extract<Event, { kind: 'release' }>): Ou
     if (to === null) return outcome(clear);
     const from = spanFrom(state, carry, to);
     const traveled = from !== null && Math.abs(event.x - (pressed?.x ?? 0)) + Math.abs(event.y - (pressed?.y ?? 0)) > DRAG;
-    // 2 端子はドラッグで間隔を選べる。ほかは押した穴 1 つ (並べ方は板が決める)。
+    // 2 端子はドラッグで間隔を選べる。ほかは押した穴 1 つ (並べ方は基板が決める)。
     const spots = traveled && from !== null ? [from, to] : [to];
     const at = spots.map((spot) => spot.cell);
     // **道具は置いたあとも続く** (何本も置くのが普通)。抜けるのは Esc。
@@ -758,7 +758,7 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
   if (key === 'Insert') {
     const again = state.lastPlaced;
     if (again === null) return outcome(state);
-    // **足の数まで覚える。** 種類だけ覚えると、2 端子なのにドラッグで間隔を選べなくなる。
+    // **ピンの数まで覚える。** 種類だけ覚えると、2 端子なのにドラッグで間隔を選べなくなる。
     return { ...step(state, { kind: 'place', ...again }), handled: true };
   }
 
@@ -799,7 +799,7 @@ function onKey(state: State, event: Extract<Event, { kind: 'key' }>): Outcome {
   //
   // **既定は 1/`fine` 段、`Shift` で 1 穴。** 図を詰める作業は端数のほうなので、
   // 細かいほうを素の矢印にした (実機で「Ctrl なしでも 1/10 単位で移動する」
-  // 「SHIFT を押しているときには枡単位で動く」)。端数を受けないフェンス (板)
+  // 「SHIFT を押しているときには枡単位で動く」)。端数を受けないフェンス (基板)
   // は穴の間が無いので、Shift の有無にかかわらず 1 穴。
   const arrow = ARROWS[key];
   if (arrow !== undefined) {
@@ -985,7 +985,7 @@ export function step(state: State, event: Event): Outcome {
       // **持ち物は続ける** (組み直しは書き換えのたびに起きる)。押しかけは捨てる。
       return outcome({ ...state, selected: null, pressed: null });
     case 'chrome':
-      // 言語が変わると能力も変わる。端数を受けない板に移ったら、持っていた端数は捨てる。
+      // 言語が変わると能力も変わる。端数を受けない基板に移ったら、持っていた端数は捨てる。
       return outcome({
         ...state,
         foldsWire: event.foldsWire,

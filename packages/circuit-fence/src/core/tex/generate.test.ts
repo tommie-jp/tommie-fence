@@ -291,7 +291,7 @@ describe('generateTex', () => {
     expect(generate('parts:', '  M1: nmos a1').tex).toContain('\\ctikzset{tripoles/mos style/arrows}');
     expect(generate('parts:', '  M1: pmos a1').tex).toContain('\\ctikzset{tripoles/mos style/arrows}');
     expect(generate('parts:', '  R1: resistor a1 a3').tex).not.toContain('mos style');
-    // 接合形と、基板の足を出す形 (`-e` / `-d`) は既定で矢が付いている。
+    // 接合形と、基板のピンを出す形 (`-e` / `-d`) は既定で矢が付いている。
     // この指定も効かない (実測) ので、書き足す理由が無い。
     expect(generate('parts:', '  J1: njfet a1').tex).not.toContain('mos style');
     expect(generate('parts:', '  M1: nmos-e a1').tex).not.toContain('mos style');
@@ -602,7 +602,7 @@ describe('多端子部品', () => {
   test('draws a wire to the anchor the pin names', () => {
     const { tex } = generate('parts:', '  Q1: npn c3', '  R1: resistor a1 a3', 'wires:', '  - Q1.B -- a3');
 
-    // 足の綴りは circuitikz のアンカー名に揃える。
+    // ピンの綴りは circuitikz のアンカー名に揃える。
     expect(tex).toContain('\\draw (part-Q1.base) -- (a3);');
   });
 
@@ -628,9 +628,9 @@ describe('多端子部品', () => {
   test('sets the plus and the minus in from their pins, toward each other', () => {
     const { tex } = generate('parts:', '  U1: opamp c5');
 
-    // ± は足のアンカーから**もう一方の足のほうへ**寄せて置く。外へ寄せると
-    // 三角形の縁と足の線に挟まれて、どちらの足の印か読めなくなる。
-    // 向き (`+up`) で足が入れ替わっても、寄せる先が足そのものなので付いていく。
+    // ± はピンのアンカーから**もう一方のピンのほうへ**寄せて置く。外へ寄せると
+    // 三角形の縁とピンの線に挟まれて、どちらのピンの印か読めなくなる。
+    // 向き (`+up`) でピンが入れ替わっても、寄せる先が足そのものなので付いていく。
     expect(tex).toContain('($(part-U1.+)!');
     expect(tex).toContain('!(part-U1.-)$)');
     expect(tex).toContain('($(part-U1.-)!');
@@ -775,7 +775,7 @@ describe('電源レールの記号', () => {
   });
 });
 
-describe('足のある 2 端子部品', () => {
+describe('ピンのある 2 端子部品', () => {
   test('names the bipole so a wire can reach its leg', () => {
     const { tex } = generate('parts:', '  P1: potentiometer a1 a3 10k', 'wires:', '  - P1.w -- c2');
 
@@ -786,7 +786,7 @@ describe('足のある 2 端子部品', () => {
   });
 
   test('leaves the bipoles without legs unnamed', () => {
-    // 名前を付けるのは足を指せる種類だけ。ほかは TeX を増やさない。
+    // 名前を付けるのはピンを指せる種類だけ。ほかは TeX を増やさない。
     const { tex } = generate('parts:', '  R1: resistor a1 a3');
 
     expect(tex).toContain('\\draw (a1) to[R, l_=$R_{1}$] (a3); % line 2');
@@ -795,10 +795,10 @@ describe('足のある 2 端子部品', () => {
 
 describe('DIP の IC', () => {
   test('writes the pin count into the symbol and the part number under it', () => {
-    // 足の名前の表に無い型番 (表にある型番は dipPinNames.test.ts)。
+    // ピンの名前の表に無い型番 (表にある型番は dipPinNames.test.ts)。
     const { tex } = generate('parts:', '  U1: dip8 c2 LM386', 'wires:', '  - U1.1 |- a1');
 
-    // 立てた箱の中は足の番号で埋まるので、型番は下の外 (labelOverlap.test.ts)。
+    // 立てた箱の中はピンの番号で埋まるので、型番は下の外 (labelOverlap.test.ts)。
     expect(tex).toContain('\\node[dipchip, num pins=8, font=\\scriptsize] (part-U1) at (c2) {}; % line 2');
     expect(tex).toContain('\\node[font=\\scriptsize, anchor=north] at (part-U1.south) {$\\mathrm{LM386}$}; % line 2');
     expect(tex).toContain('\\draw (part-U1.pin 1) |- (a1); % line 4');
@@ -1390,7 +1390,7 @@ describe('マイコンボード', () => {
   });
 });
 
-describe('回したマイコンボードの足の名前', () => {
+describe('回したマイコンボードのピンの名前', () => {
   const board = (...rows: string[]) => {
     const { doc } = parseFence(`${rows.join('\n')}\n`);
     if (doc === null) throw new Error('YAML を読めませんでした');
@@ -1416,7 +1416,7 @@ describe('回したマイコンボードの足の名前', () => {
 
   test('turns the names only once, in the SVG, so they do not come out upside down', () => {
     // TeX にも回させると二重になる (実機で焼いて見つけた)。**箱そのものは
-    // 回る** ので、見るのは足の名前を置く行だけ。
+    // 回る** ので、見るのはピンの名前を置く行だけ。
     const { tex } = board('parts:', '  U1: pico b2 r90');
     const legs = tex.split('\n').filter((line) => line.includes('bpin'));
 
@@ -1436,7 +1436,7 @@ describe('回したマイコンボードの足の名前', () => {
   });
 
   test('lets a board be mirrored, since its names are put in afterwards', () => {
-    // DIP が反転できないのは足番号も型番も TeX が描いて鏡文字になるため。
+    // DIP が反転できないのはピン番号も型番も TeX が描いて鏡文字になるため。
     const { circuit } = buildCircuit(parseFence('parts:\n  U1: pico b2 mirror\n').doc!);
 
     expect(circuit.parts[0]).toMatchObject({ turn: { mirror: true } });
@@ -1446,9 +1446,9 @@ describe('回したマイコンボードの足の名前', () => {
 describe('字が出る部品を全部当たる', () => {
   test('turns the leg names of every part that has them, not just the one we found it on', () => {
     // 実機で「回転でピン名が見えにくくなる不具合が他の部品に無いか」。
-    // **足の名前を書くのは表に `pinLabels` を持つ種類だけ**なので、
+    // **ピンの名前を書くのは表に `pinLabels` を持つ種類だけ**なので、
     // その全部が回した辺で置き方を決めていることを見る。
-    // デュアルゲート MOSFET (`nmos-dg`) は名前がゲートの 2 本だけで、足の置き場の並び
+    // デュアルゲート MOSFET (`nmos-dg`) は名前がゲートの 2 本だけで、ピンの置き場の並び
     // (中心線に乗る D・S が先) と名前の並びが揃わない。下の「デュアルゲート MOSFET」で見る。
     const named = partTypeNames()
       .filter((type) => lookupPartType(type)?.pinLabels !== undefined && type !== 'nmos-dg');
@@ -1463,8 +1463,8 @@ describe('字が出る部品を全部当たる', () => {
       if (part === undefined || part.kind !== 'multi-terminal') throw new Error(`${type} を置けませんでした`);
       const places = pinPlaces(lookupPartType(type)!, part.turn);
 
-      // **上下の辺に来た足だけ縦に読む。** 横のままだと隣と重なる。
-      // 左右の辺の足は横のまま (回すとかえって読めない)。
+      // **上下の辺に来たピンだけ縦に読む。** 横のままだと隣と重なる。
+      // 左右の辺のピンは横のまま (回すとかえって読めない)。
       notes.forEach((one, index) => {
         const side = places[index]?.side;
         const upright = one.rotate === 0;
@@ -1482,14 +1482,14 @@ describe('字が出る部品を全部当たる', () => {
   });
 
   test('puts the name on a side that has no leg', () => {
-    // トランジスタは上 (C)・下 (E)・左 (B) が足で塞がっている。残るのは右。
+    // トランジスタは上 (C)・下 (E)・左 (B) がピンで塞がっている。残るのは右。
     const { tex } = generate('parts:', '  Q1: npn c3');
 
     expect(tex).toContain('at (part-Q1.east) {$Q_{1}$};');
   });
 
   test('turns the name with the symbol', () => {
-    // 90 度回すとゲートの足も回る (左右 → 上下)。名札は空いた辺へ移る。
+    // 90 度回すとゲートのピンも回る (左右 → 上下)。名札は空いた辺へ移る。
     // **アンカーは節点ごと回る**ので、画面の左に来るのは記号の中の `south`。
     const { tex } = generate('parts:', '  U2: or c3 r90');
 
@@ -1497,7 +1497,7 @@ describe('字が出る部品を全部当たる', () => {
   });
 
   test('stacks the name beyond the value when every side has a leg', () => {
-    // レギュレータは左右と下が足で、値は上へ逃がしてある。名札はその外側。
+    // レギュレータは左右と下がピンで、値は上へ逃がしてある。名札はその外側。
     const { tex } = generate('parts:', '  VR1: regulator c3 7805');
 
     expect(tex).toContain('anchor=south, yshift=9pt] at (part-VR1.north) {$V_{R1}$};');
@@ -1532,7 +1532,7 @@ describe('字が出る部品を全部当たる', () => {
   test('leaves the parts whose letters circuitikz draws itself alone', () => {
     // 計器の A・V・Ω や電源の記号は circuitikz が描く。縦に置いても字は
     // 立ったままで、こちらが手を出すところが無い (図で 13 種を確かめた)。
-    // **こちらが字を置くのは、自分で足の名前を書く種類だけ。**
+    // **こちらが字を置くのは、自分でピンの名前を書く種類だけ。**
     const drawn = partTypeNames().filter((type) => lookupPartType(type)?.pinLabels !== undefined);
 
     expect(drawn).toEqual([
@@ -1554,7 +1554,7 @@ describe('デュアルゲート MOSFET', () => {
     expect(tex).toContain('\\pgfdeclareshape{dgfetn}');
     expect(tex).toContain('\\node[dgfetn, draw] (part-Q1)');
     expect(tex).toContain('3SK291');
-    // 足の名前は差し込みの場所 (`bpin K`) だけ作り、字は注釈の差し込みが埋める。
+    // ピンの名前は差し込みの場所 (`bpin K`) だけ作り、字は注釈の差し込みが埋める。
     for (const pin of [1, 2]) expect(tex).toContain(`(part-Q1.bpin ${pin})`);
     expect(tex).not.toContain('(part-Q1.bpin 3)');
     expect(notes.map((one) => one.text)).toEqual(['G1', 'G2']);

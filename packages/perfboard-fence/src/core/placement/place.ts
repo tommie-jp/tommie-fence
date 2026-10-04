@@ -9,13 +9,13 @@ import type { Address, Board, FenceError, PartSpec, PlacedPart, StripId } from '
 export type Placement = { readonly parts: readonly PlacedPart[]; readonly errors: readonly FenceError[] };
 
 /**
- * 書かれた穴を番地に直し、板に載るかを見る。
+ * 書かれた穴を番地に直し、基板に載るかを見る。
  *
  * **読めた部品は捨てない。** 1 つ落ちたら図全体が消えるより、描ける分を描いて
  * 「ここが読めなかった」と言うほうが直しやすい (48 / 49 と同じ作法)。
  *
  * **同じ穴に 2 つは置けない。** ユニバーサル基板は穴が 1 つずつ独立していて、
- * 1 つの穴に挿せる足は 1 本。ブレッドボードは同じ列の別の行へ寄せられたが
+ * 1 つの穴に挿せるピンは 1 本。ブレッドボードは同じ列の別の行へ寄せられたが
  * (48 の docs/13)、ここには寄せる先の「同じ列」が無い — 隣の穴は別のネットになる。
  */
 export function placeParts(specs: readonly PartSpec[], board: Board): Placement {
@@ -39,8 +39,8 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     let rejected = false;
     for (const hole of spec.holes) {
       const address = parseAddress(hole);
-      // 番地として読めることは parser が見ているので、ここで見るのは板に載るかと、
-      // **交点そのものを指しているか**。足は穴に挿すので、交点の間 (`b5c3`) を
+      // 番地として読めることは parser が見ているので、ここで見るのは基板に載るかと、
+      // **交点そのものを指しているか**。ピンは穴に挿すので、交点の間 (`b5c3`) を
       // 書けるのは注釈だけ — 間に挿せる穴は実物に無い。
       const reason = address === null
         ? `穴の番地として読めません: ${safeToken(hole)}`
@@ -56,7 +56,7 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     }
     if (rejected) continue;
 
-    // **足の位置は形が決める。** DIP と SIP は書かれたアンカーから広げる。
+    // **ピンの位置は形が決める。** DIP と SIP は書かれたアンカーから広げる。
     // 端面実装は書かなかった凹の先端を、中心線を挟んで反対側に補う。
     const footprint = footprintOf(spec.type, spec.variant);
     const pins = footprint === null ? addresses : pinsOf(footprint, addresses, board, spec.turn);
@@ -73,26 +73,26 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     const offPin = pins.find((address) => offBoardReason(board, address) !== null);
     if (offPin) {
       errors.push(fenceError(
-        `${safeToken(spec.id)} の足が板からはみ出します (${offBoardReason(board, offPin)})`,
+        `${safeToken(spec.id)} のピンが基板からはみ出します (${offBoardReason(board, offPin)})`,
         spec.line,
       ));
       continue;
     }
 
-    // **アンカー 1 つで置く形の足は、板の穴に落ちること。**
-    // 板の外の番地は穴ではない (縁の銅箔や、板から張り出す先) ので、そこへ
-    // 足が来る図は実物では組めない。**回すと縁で踏みやすい**ので必ず見る
-    // (端面実装は先端が板の外に出るのが正しいので、この検査から外す)。
+    // **アンカー 1 つで置く形のピンは、基板の穴に落ちること。**
+    // 基板の外の番地は穴ではない (縁の銅箔や、基板から張り出す先) ので、そこへ
+    // ピンが来る図は実物では組めない。**回すと縁で踏みやすい**ので必ず見る
+    // (端面実装は先端が基板の外に出るのが正しいので、この検査から外す)。
     const anchored = footprint !== null
       && (footprint.kind === 'dip' || footprint.kind === 'sip' || footprint.kind === 'switch'
-        // 足に名前のある DIP 型 (リレー・フォトカプラ・7 セグ) も DIP と同じ置き方。
+        // ピンに名前のある DIP 型 (リレー・フォトカプラ・7 セグ) も DIP と同じ置き方。
         || footprint.kind === 'named');
     if (anchored) {
       const outside = pins.find((address) => !isOnBoard(board, address));
       if (outside !== undefined) {
         errors.push(fenceError(
-          `${safeToken(spec.id)} の足 ${formatAddress(outside)} が板の穴ではありません`
-          + `${isTurned(spec.turn) ? ' (回した先が板から出ています)' : ''}`,
+          `${safeToken(spec.id)} のピン ${formatAddress(outside)} が基板の穴ではありません`
+          + `${isTurned(spec.turn) ? ' (回した先が基板から出ています)' : ''}`,
           spec.line,
         ));
         continue;
@@ -102,7 +102,7 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     const strips = pins.map(holeStrip);
     if (new Set(strips).size !== strips.length) {
       errors.push(fenceError(
-        `${safeToken(spec.id)} の足が同じ穴に来ています (${spec.holes.map(safeToken).join(' ')})`,
+        `${safeToken(spec.id)} のピンが同じ穴に来ています (${spec.holes.map(safeToken).join(' ')})`,
         spec.line,
       ));
       continue;
@@ -111,11 +111,11 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
     const clash = strips.findIndex((strip) => takenBy.has(strip));
     if (clash !== -1) {
       const strip = strips[clash] as StripId;
-      // **索引は展開後の足に当てる。** 書かれた穴は DIP / SIP では 1 つしか
+      // **索引は展開後のピンに当てる。** 書かれた穴は DIP / SIP では 1 つしか
       // 無いので、そちらを引くと範囲外になって投げる (プレビューが真っ白になる)。
       const address = pins[clash] as Address;
       errors.push(fenceError(
-        `${formatAddress(address)} には ${takenBy.get(strip)} の足が入っています (1 つの穴に挿せる足は 1 本)`,
+        `${formatAddress(address)} には ${takenBy.get(strip)} のピンが入っています (1 つの穴に挿せるピンは 1 本)`,
         spec.line,
       ));
       continue;

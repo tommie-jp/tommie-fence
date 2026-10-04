@@ -70,7 +70,7 @@ describe('registerProblems', () => {
   });
 
   test('puts notices as warnings and ERC as information', () => {
-    // Arrange — 読めない行のある板は「ERC を掛けていません」とお知らせも言う。
+    // Arrange — 読めない行のある基板は「ERC を掛けていません」とお知らせも言う。
     configuration['tommieFence.problems'] = { erc: true };
     state.textDocuments = [documentOf(BROKEN, 'broken.md'), documentOf(LOOSE, 'loose.md')];
 

@@ -6,8 +6,8 @@ import { isKnownType, placeableNames } from './parts/types.ts';
 
 /**
  * DIP スイッチ (`dip-switch4` / `dip-switch8`)。**表は fence-kit で breadboard と同じ** —
- * DIP の姿で、k 番のスイッチは向かい合う足 `Ak` と `Bk` の間の接点。
- * **足どうしは図の上ではつながない** (開いた接点)。
+ * DIP の姿で、k 番のスイッチは向かい合うピン `Ak` と `Bk` の間の接点。
+ * **ピンどうしは図の上ではつながない** (開いた接点)。
  */
 
 const fence = (...lines: string[]): string => ['board: 20x10', ...lines, ''].join('\n');

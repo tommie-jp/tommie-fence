@@ -134,8 +134,8 @@ export type OneTerminalPart = {
 };
 
 /**
- * トランジスタやオペアンプのように、1 つの交点に置いて足を何本も持つ部品。
- * 足の位置は記号ごとに決まっているので、配線からは `U1.out` の形で指す。
+ * トランジスタやオペアンプのように、1 つの交点に置いてピンを何本も持つ部品。
+ * ピンの位置は記号ごとに決まっているので、配線からは `U1.out` の形で指す。
  */
 export type MultiTerminalPart = {
   readonly kind: 'multi-terminal';
@@ -168,8 +168,8 @@ export type MultiTerminalPart = {
   readonly written: string;
   readonly line: number;
   /**
-   * 機器 (`device`) の足の名前。書かれた順が箱の上からの順。**機器だけが持つ** —
-   * ほかの多端子部品の足は種類で決まる (parts.ts の表)。
+   * 機器 (`device`) のピンの名前。書かれた順が箱の上からの順。**機器だけが持つ** —
+   * ほかの多端子部品のピンは種類で決まる (parts.ts の表)。
    */
   readonly pinNames?: readonly string[];
 };
@@ -177,8 +177,8 @@ export type MultiTerminalPart = {
 export type PartSpec = TwoTerminalPart | OneTerminalPart | MultiTerminalPart;
 
 /**
- * 配線の端。番地そのものか、多端子部品の足。
- * 足は格子の上に無いので、番地としては扱えない (TikZ のアンカーに任せる)。
+ * 配線の端。番地そのものか、多端子部品のピン。
+ * ピンは格子の上に無いので、番地としては扱えない (TikZ のアンカーに任せる)。
  */
 export type Endpoint =
   | { readonly kind: 'cell'; readonly address: Address }
@@ -447,8 +447,8 @@ export type NoteOverlay = {
   /** 字を回す角度 (**時計回り**)。0 は回さない。 */
   readonly rotate: 0 | 90 | 180 | 270;
   /**
-   * 回した字を、指し先の線が字の真ん中を通るようにずらすか (IC の上下の辺の足の名前)。
-   * ずらさないと字の胴が線の片側に寄り、隣の足の名前とくっつく。
+   * 回した字を、指し先の線が字の真ん中を通るようにずらすか (IC の上下の辺のピンの名前)。
+   * ずらさないと字の胴が線の片側に寄り、隣のピンの名前とくっつく。
    */
   readonly centered?: boolean;
 };
