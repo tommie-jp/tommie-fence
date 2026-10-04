@@ -69,6 +69,25 @@ describe('migrateSilk', () => {
     expect(result.problems[0]).toContain('廃止');
   });
 
+  test('respells the wires written as a quoted string with a # colour', () => {
+    // `#` は YAML では行末コメントの始まりだが、引用の中なので色の語。
+    const quoted = FENCE.replace('  - a3 -- c3', '  - "a3 -- c3 #00aaaa"');
+    const { source, problems } = migrateSilk(quoted);
+
+    expect(problems).toEqual([]);
+    expect(source).toContain('  - "o3 -- m3 #00aaaa"');
+  });
+
+  test('keeps the leading zero of an address made of digits only, written alone as a value', () => {
+    // 0 行 (基板の外) を指す点は、英字が 0 になって `0` と数字だけで綴る。
+    const outside = 'board: akizuki-c\npoints:\n  TOP: a0\n  OUT: p1\nparts:\n  R1: resistor b3 b7 10k\n';
+    const { source, problems } = migrateSilk(outside);
+
+    expect(problems).toEqual([]);
+    expect(source).toContain('  TOP: o0');
+    expect(source).toContain('  OUT: 01');
+  });
+
   test('keeps the words that are not addresses, and the layout of the lines', () => {
     const { source } = migrateSilk(FENCE);
 

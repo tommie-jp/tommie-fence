@@ -32,7 +32,7 @@ const unchanged = (source: string, problems: readonly string[] = []): SilkMigrat
 
 /** 行の中で、境界 (空白・区切り) に挟まれた綴りの位置。無ければ -1。 */
 function findWord(line: string, word: string, from: number): number {
-  const boundary = /[\s,[\]{}:]/;
+  const boundary = /[\s,[\]{}:"']/;
   for (let at = line.indexOf(word, from); at >= 0; at = line.indexOf(word, at + 1)) {
     const before = line[at - 1];
     const after = line[at + word.length];
@@ -58,8 +58,26 @@ function editsFor(source: string): readonly Edit[] {
     if (text !== null) edits.set(`${line}:${column}`, { line, column, length, text });
   };
 
+  // 部品と点の綴りは `scan` が位置を知っている。**配線は仕様から探す** — `"o11 -- p11 #00aaaa"` の
+  // ように引用して色を `#` で書いた行は、`scan` が行末コメントと見て取りこぼす。
   for (const token of scanned.written) {
-    if (!token.byName) put(token.line, token.column, token.length);
+    if (!token.byName && token.from !== 'wire') put(token.line, token.column, token.length);
+  }
+
+  const cursors = new Map<number, number>();
+  for (const wire of doc.wires) {
+    const text = wire.line === null ? undefined : lines[wire.line - 1];
+    if (wire.line === null || text === undefined) continue;
+    // 数珠つなぎ (`a -- b -- c`) は前の線の終点が次の線の始点なので、終点の頭から探し直す。
+    let cursor = cursors.get(wire.line) ?? 0;
+    for (const word of [wire.from, wire.to]) {
+      if (!isAddressSpelling(word)) continue;
+      const at = findWord(text, word, cursor);
+      if (at < 0) continue;
+      put(wire.line, at, word.length);
+      cursor = at;
+    }
+    cursors.set(wire.line, cursor);
   }
 
   for (const note of doc.notes) {
@@ -124,21 +142,24 @@ function applyEdits(source: string, edits: readonly Edit[]): string {
   return lines.join('\n');
 }
 
+type Position = { readonly where: string; readonly written: string | null; readonly address: Address | null };
+
 /** 部品の穴・配線の両端・点・注釈・機器の位置を、読んだ番地として並べる。 */
-function positionsOf(source: string, spelling: (board: Spelling) => Spelling): readonly (Address | null)[] {
+function positionsOf(source: string, spelling: (board: Spelling) => Spelling): readonly Position[] {
   const { doc } = parseFence(source);
   const board = spelling(doc.board);
   const names = new Map(doc.points.map((point) => [point.name, point.written]));
-  const read = (written: string | null): Address | null => {
-    if (written === null) return null;
-    return parseAddress(names.get(written) ?? written, board);
-  };
+  const at = (where: string, written: string | null): Position => ({
+    where,
+    written,
+    address: written === null ? null : parseAddress(names.get(written) ?? written, board),
+  });
   return [
-    ...doc.points.map((point) => read(point.written)),
-    ...doc.parts.flatMap((part) => part.holes.map(read)),
-    ...doc.wires.flatMap((wire) => [read(wire.from), read(wire.to)]),
-    ...doc.notes.flatMap((note) => [read(note.from), read(note.to)]),
-    ...doc.devices.map((device) => read(device.where)),
+    ...doc.points.map((point) => at(`点 ${point.name}`, point.written)),
+    ...doc.parts.flatMap((part) => part.holes.map((hole) => at(`部品 ${part.id}`, hole))),
+    ...doc.wires.flatMap((wire) => [at('配線', wire.from), at('配線', wire.to)]),
+    ...doc.notes.flatMap((note) => [at(`注釈 ${note.kind}`, note.from), at(`注釈 ${note.kind}`, note.to)]),
+    ...doc.devices.map((device) => at(`機器 ${device.id}`, device.where)),
   ];
 }
 
@@ -167,8 +188,12 @@ export function migrateSilk(source: string): SilkMigration {
   // 全部の番地が同じ場所を指していること。
   const before = positionsOf(source, () => FENCE_SPELLING);
   const after = positionsOf(migrated, (board) => board);
-  const problems = before.flatMap((address, index) =>
-    sameAddress(address, after[index] ?? null) ? [] : [`${index + 1} 番目の番地が移行で別の場所になります`]);
+  const problems = before.flatMap((position, index) => {
+    const now = after[index];
+    return sameAddress(position.address, now?.address ?? null)
+      ? []
+      : [`${position.where} の ${position.written ?? '?'} が移行で別の場所になります (移行後 ${now?.written ?? '?'})`];
+  });
   if (before.length !== after.length) problems.push('読めた番地の数が移行で変わります');
   return problems.length > 0 ? unchanged(source, problems) : { source: migrated, changed: true, problems: [] };
 }

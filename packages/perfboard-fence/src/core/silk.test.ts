@@ -76,6 +76,16 @@ describe('board: silk:', () => {
   });
 });
 
+describe('an address made of digits only', () => {
+  // 縁のパッドの列 (0 列) は、横置きの 5x7cm では英字が 0 になり `09` のように数字だけで綴る。
+  test('keeps its leading zero when it is written alone as a value', () => {
+    const { doc, errors } = parseFence('board:\n  size: 7x5cm\n  slots: on\npoints:\n  GND: 09\n');
+
+    expect(errors).toEqual([]);
+    expect(doc.points[0]?.written).toBe('09');
+  });
+});
+
 describe('a value that looks like an address stays a value on a bottom-up silk', () => {
   test('C102 after the holes of a capacitor is not read as a hole on a turned 5x7cm', () => {
     // 数字が行 (下から) なので、102 行目は行の負のほうへ落ちる。上限だけ見ていると穴に化ける。

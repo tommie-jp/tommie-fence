@@ -47,7 +47,9 @@ const emptyDocument = (): FenceDocument => ({
 const scalarText = (node: unknown): string | null => {
   if (!isScalar(node)) return null;
   if (typeof node.value === 'string') return node.value;
-  if (typeof node.value === 'number') return String(node.value);
+  // **数に読まれた綴りは元の字面で返す。** 英字が 0 の番地 (`09` `01`。縁のパッドの列や、
+  // 下から数える基板の外の行) は数字だけなので、YAML が 9 や 1 に読んで先頭の 0 が落ちる。
+  if (typeof node.value === 'number') return node.source ?? String(node.value);
   return null;
 };
 
