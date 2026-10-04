@@ -350,3 +350,94 @@ describe('3 本足を広げて挿すと、胴から足へ線を引く', () => {
     expect(lines('Q1: transistor j14(B) j18(C) j22(E)')).toBe(2);
   });
 });
+
+/**
+ * 足の名前の字を、**列番号の帯と溝に置かない**。どちらも書き手の線がよく通る所で、
+ * 教科書の図 (01-circuits 第 5〜8 章) で字が埋もれた:
+ *
+ * - i 行の TO-92 (`i4(E) i5(C) i6(B)`) は、胴の下の行間が胴で塞がり、名前が j 行と
+ *   下のレールの間 (列番号の帯) に落ちた。`E` が列番号 `5` と、E の列を下のレールへ
+ *   降ろす GND の線 (`j4 -- -b4`) に重なった
+ * - TO-220 は胴が大きく、名前が溝に落ちた。足の列を溝の向こうへ渡す線
+ *   (`e8 -- f8`) の上に字が乗り、`in` `gnd` `out` どうしもくっついた
+ *
+ * 胴の下に行間が無ければ**胴の上の行間**へ置く。TO-220 は胴の樹脂の上に刷る
+ * (DIP の足の番号と同じ。胴の上は線が通らない)。
+ */
+describe('3 本足の足の名前は列番号の帯と溝に置かない', () => {
+  const HOLE = 3;
+  const nameTexts = (svg: string) => [...svg.matchAll(
+    /<text x="([\d.]+)" y="([\d.]+)"(?![^>]*aria-hidden)[^>]*font-size="([\d.]+)" font-weight="700" fill="([^"]+)"[^>]*>([^<]+)<\/text>/g,
+  )].map((match) => ({ x: Number(match[1]), y: Number(match[2]), size: Number(match[3]), fill: match[4]!, text: match[5]! }));
+  const rowY = (row: string) => layout.point(parseAddress(`${row}1`)!).y;
+
+  /** 足の名前の字が縦に占める範囲 (縁取りまで)。 */
+  const spanOf = (name: { y: number; size: number }) => ({
+    top: name.y - name.size * NAME_CAP - haloWidth(theme) / 2,
+    bottom: name.y + haloWidth(theme) / 2,
+  });
+
+  test.each([
+    // 胴の下が塞がった i 行 → 胴の上の g と h の間。
+    ['Q1: transistor i4(E) i5(C) i6(B) 2SC1815', 'g', 'h'],
+    // 胴の下が溝になる e 行 → 胴の上の c と d の間。
+    ['Q1: transistor e11(E) e12(B) e13(C) 2SC1815', 'c', 'd'],
+    // 胴の下に行間がある h 行は今までどおり i と j の間。
+    ['Q1: transistor h7(B) h8(C) h9(E) 2SC1815', 'i', 'j'],
+  ] as const)('%s → %s と %s の間', (line, above, below) => {
+    const part = place(line);
+    const names = nameTexts(renderPart(part, layout, theme));
+    expect(names.map((name) => name.text)).toEqual(part.pins.map((pin) => pin.name));
+    for (const name of names) {
+      const { top, bottom } = spanOf(name);
+      expect(top, name.text).toBeGreaterThanOrEqual(rowY(above) + HOLE);
+      expect(bottom, name.text).toBeLessThanOrEqual(rowY(below) - HOLE);
+    }
+  });
+
+  test('keeps the caption of a TO-92 on the i row out of the column numbers under the j row', () => {
+    const part = place('Q1: transistor i4(E) i5(C) i6(B) 2SC1815');
+    const band = captionTextBandOf(part, layout, theme)!;
+    // 列番号は j 行と下のレールの間に刷ってある。
+    expect(band.y + band.height).toBeLessThanOrEqual(rowY('j'));
+  });
+
+  /** DejaVu Sans Bold (PNG を焼く sharp と Linux の既定の太字) の字の幅。 */
+  const DEJAVU_BOLD: Readonly<Record<string, number>> = {
+    i: 0.34, n: 0.71, g: 0.72, d: 0.72, o: 0.69, u: 0.71, t: 0.48, V: 0.77, s: 0.6, G: 0.82, N: 0.84, D: 0.83, '+': 0.84,
+  };
+  const dejavuWidth = (text: string) => [...text].reduce((sum, char) => sum + (DEJAVU_BOLD[char] ?? 1), 0);
+
+  test.each([
+    'U1: regulator/to220 c8(in) c9(gnd) c10(out) 7805',
+    'U1: regulator/to220 h8(in) h9(gnd) h10(out) 7805',
+    'U1: ic3 h9(+Vs) h10(Vout) h11(GND) LM35',
+  ])('%s: neighbouring names leave a gap even in the widest bold font', (line) => {
+    const names = nameTexts(renderPart(place(line), layout, theme)).sort((a, b) => a.x - b.x);
+    expect(names).toHaveLength(3);
+    for (let index = 1; index < names.length; index += 1) {
+      const [left, right] = [names[index - 1]!, names[index]!];
+      const ink = (dejavuWidth(left.text) * left.size + dejavuWidth(right.text) * right.size) / 2;
+      // 字と字の間は字の大きさの 0.3 以上 (くっつくと `in gndout` と読めた)。
+      expect(right.x - left.x - ink, `${left.text} ${right.text}`).toBeGreaterThanOrEqual(0.3 * left.size);
+    }
+  });
+
+  test.each([
+    ['U1: regulator/to220 c8(in) c9(gnd) c10(out) 7805'],
+    ['U1: regulator/to220 h8(in) h9(gnd) h10(out) 7805'],
+  ])('%s: the TO-220 names are printed on the plastic body', (line) => {
+    const part = place(line);
+    const names = nameTexts(renderPart(part, layout, theme));
+    const cx = centerX(part);
+    const cy = layout.point(part.pins[1]!.address!).y;
+    for (const name of names) {
+      // 胴の中 (字の上端も胴の中)。
+      expect(Math.abs(name.x - cx)).toBeLessThan(bodyHalfWidth(part, layout));
+      expect(name.y - name.size * NAME_CAP).toBeGreaterThan(cy - bodyHalfHeight(part, layout));
+      expect(name.y).toBeLessThan(cy + bodyHalfHeight(part, layout));
+      // 黒い樹脂の上なので、明るい字。
+      expect(name.fill).toBe(theme.palette.chipText);
+    }
+  });
+});

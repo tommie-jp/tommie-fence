@@ -112,9 +112,12 @@ export function renderWire(points: readonly Point[], color: string, theme: Rende
  * 穴に挿した所の金属の粒。配線の端と部品の足の端で同じものを置き、
  * どこに挿さっているかを同じ見え方で示す。
  */
+/** 挿した所の金属の粒の半径。 */
+export const insertionDotRadius = (theme: RenderTheme): number => theme.metrics.wireWidth * END_RADIUS_RATIO;
+
 export function insertionDot(point: Point, theme: RenderTheme): string {
   return element('circle', {
-    cx: num(point.x), cy: num(point.y), r: num(theme.metrics.wireWidth * END_RADIUS_RATIO), fill: theme.palette.chipPin,
+    cx: num(point.x), cy: num(point.y), r: num(insertionDotRadius(theme)), fill: theme.palette.chipPin,
   });
 }
 

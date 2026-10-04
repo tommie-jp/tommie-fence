@@ -7,7 +7,7 @@ import {
 } from './packages.ts';
 import { CAPTION_DROP, charWidth } from './partCommon.ts';
 import { band, captionBandOf, captionDropOf } from './captions.ts';
-import { bodyHalfHeight, bodyHalfWidth, legNameBaseline, renderThreeLead } from './threeLead.ts';
+import { bodyHalfHeight, bodyHalfWidth, legNames, renderThreeLead } from './threeLead.ts';
 import { renderTwoLead } from './twoLead.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
@@ -71,7 +71,7 @@ export function partObstacles(
       },
       ...bands,
       // 足の名前は反対側に並ぶ。名前が長ければ胴からはみ出す。
-      ...legNameBands(part, points, center, layout, theme),
+      ...legNameBands(part, layout, theme),
     ];
   }
 
@@ -81,22 +81,13 @@ export function partObstacles(
 /**
  * 3 本足の足の名前が占める帯。**レーンにいちばん近い字**なので、
  * ここを見落とすと配線が名前の上を走る (`B` のような 1 字なら胴に隠れるが、
- * 長い名前を付けると横にはみ出す)。
+ * 長い名前を付けると横にはみ出す)。置き場は描く側と同じ `legNames`。
+ * 樹脂の上に刷る名前 (TO-220) は胴の帯に入っているので数えない。
  */
-function legNameBands(
-  part: PlacedPart,
-  points: readonly Point[],
-  center: Point,
-  layout: Layout,
-  theme: RenderTheme,
-): Rect[] {
-  // **名前は胴の下の行間** (`threeLead.ts` と同じ勘定)。
-  const baseline = legNameBaseline(part, center.y, layout, theme);
-  return part.pins.flatMap((pin, index) => {
-    const point = points[index];
-    if (!point) return [];
-    return [band(point.x, baseline, [...pin.name].length * charWidth(theme), theme)];
-  });
+function legNameBands(part: PlacedPart, layout: Layout, theme: RenderTheme): Rect[] {
+  return legNames(part, layout, theme)
+    .filter((name) => !name.onBody)
+    .map((name) => band(name.x, name.y, [...name.name].length * charWidth(theme), theme));
 }
 
 export function renderPart(
