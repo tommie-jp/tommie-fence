@@ -435,6 +435,59 @@ export function relayShapeTex(): string[] {
 }
 
 /**
+ * DIP スイッチ (`dip-switch4` / `dip-switch8`)。**開閉スイッチを連の数だけ縦に並べた箱**。
+ * 左の足が `Ak`、右の足が `Bk` で、同じ高さの 2 本の間が k 番のスイッチ (開いた形)。
+ * アンカーの番号は DIP の位置 (左が 1〜n を上から、右が 2n〜n+1 を上から)。
+ * 足の名前は箱の縁の内側に刷る (`pinLabels`) ので、接点は箱の真ん中に寄せる。
+ * 足の間隔はピンヘッダと同じ。
+ */
+export const dipSwitchShapeName = (ways: number): string => `dipsw${ways}`;
+
+const DIPSW = { halfWidth: 0.95, lead: 0.4, contact: 0.22, dot: 0.035, lift: 0.17 } as const;
+
+export function dipSwitchShapeTex(ways: number): string[] {
+  const { halfWidth: w, lead, contact, dot, lift } = DIPSW;
+  const half = halfHeightOf(ways);
+  const rows = Array.from({ length: ways }, (_, index) => index + 1);
+  return [
+    '\\makeatletter',
+    `\\pgfdeclareshape{${dipSwitchShapeName(ways)}}{`,
+    '  \\anchor{center}{\\pgfpointorigin}',
+    // 型番は箱の下 (箱の中はスイッチで塞がっている)。
+    `  \\anchor{text}{\\pgfpoint{-.5\\wd\\pgfnodeparttextbox}{${num(-half - 0.15)}cm-\\ht\\pgfnodeparttextbox}}`,
+    ...edgeAnchors(w, half),
+    ...rows.flatMap((row) => {
+      const y = pinYOf(ways, row);
+      return [
+        `  \\anchor{pin ${row}}{${point(-w - lead, y)}}`,
+        `  \\anchor{bpin ${row}}{${point(-w, y)}}`,
+        `  \\anchor{pin ${ways * 2 + 1 - row}}{${point(w + lead, y)}}`,
+        `  \\anchor{bpin ${ways * 2 + 1 - row}}{${point(w, y)}}`,
+      ];
+    }),
+    '  \\backgroundpath{',
+    `    ${rectangle(-w, -half, w, half)}`,
+    ...rows.flatMap((row) => {
+      const y = pinYOf(ways, row);
+      return [
+        segment(-w - lead, y, -w, y),
+        segment(w, y, w + lead, y),
+        // 可動片は左の接点から右上へ開く。
+        segment(-contact, y, contact - 0.04, y + lift),
+      ];
+    }),
+    '  }',
+    '  \\foregroundpath{',
+    ...rows.flatMap((row) => [-contact, contact].map((x) =>
+      `    \\pgfpathcircle{${point(x, pinYOf(ways, row))}}{${num(dot)}cm}`)),
+    '    \\pgfusepath{fill}',
+    '  }',
+    '}',
+    '\\makeatother',
+  ];
+}
+
+/**
  * フォトカプラ (`photocoupler`)。**左に LED、右にフォトトランジスタ**、間に光の
  * 矢 2 本。外枠は 1 つの部品であることの印。circuitikz 1.0 には無い
  * (`optocoupler` は落ちる) ので宣言する。足は左に A (上)・K (下)、右に C (上)・E (下)。

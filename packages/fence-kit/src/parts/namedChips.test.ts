@@ -9,7 +9,7 @@ import { drawNamedChip, lookupNamedChip, namedChipLooks, namedChipTypes } from '
 
 describe('名前つきの DIP 型の表', () => {
   test('knows the relay, the photocoupler and the seven-segment display', () => {
-    expect(namedChipTypes()).toEqual(['relay', 'photocoupler', 'seg7']);
+    expect(namedChipTypes()).toEqual(['relay', 'photocoupler', 'seg7', 'dip-switch4', 'dip-switch8']);
     expect(namedChipLooks('relay')).toEqual(['g5v-2']);
   });
 
@@ -28,6 +28,19 @@ describe('名前つきの DIP 型の表', () => {
     const display = lookupNamedChip('seg7', null);
     expect(display).toMatchObject({ positions: 10, rowSpan: 6 });
     expect(display?.pins.map((pin) => pin.name)).toEqual(['e', 'd', 'COM1', 'c', 'dp', 'b', 'a', 'COM2', 'f', 'g']);
+  });
+
+  test('puts a DIP switch on every place of a DIP, one switch between the facing legs', () => {
+    const four = lookupNamedChip('dip-switch4', null);
+    expect(four).toMatchObject({ kindName: 'DIP スイッチ', prefix: 'SW', positions: 8, rowSpan: 3, body: 'switch' });
+    // k 番のスイッチは k 番の足 (Ak) と、向かいの足 (Bk) の間。
+    expect(four?.pins.map((pin) => pin.name)).toEqual(['A1', 'A2', 'A3', 'A4', 'B4', 'B3', 'B2', 'B1']);
+
+    const eight = lookupNamedChip('dip-switch8', null);
+    expect(eight).toMatchObject({ positions: 16, rowSpan: 3 });
+    expect(eight?.pins[0]).toEqual({ at: 1, name: 'A1' });
+    expect(eight?.pins[15]).toEqual({ at: 16, name: 'B1' });
+    expect(eight?.pins[8]).toEqual({ at: 9, name: 'B8' });
   });
 
   test('answers null for a kind or a look it does not know, and for inherited names', () => {
@@ -71,6 +84,21 @@ describe('名前つきの DIP 型の絵', () => {
       pitch: 20, caption: '5161AS', scale: 1, ink: INK,
     });
     expect(display).not.toMatch(/>3<\/text>/);
+  });
+
+  test('draws one slider per switch on a DIP switch, with the numbers and the names of the legs', () => {
+    const chip = lookupNamedChip('dip-switch4', null)!;
+    const svg = drawNamedChip({
+      chip, points: [...row(160, 4), ...row(100, 4).reverse()], names: chip.pins.map((pin) => pin.name),
+      pitch: 20, caption: 'DIP SW', scale: 1, ink: INK,
+    });
+
+    expect(svg.match(/class="dip-switch-slot"/g)).toHaveLength(4);
+    expect(svg.match(/class="dip-switch-knob"/g)).toHaveLength(4);
+    // 品名は胴に刷らない (つまみの置き場)。部品リストとキャプションに出る。
+    expect(svg).not.toContain('DIP SW');
+    expect(svg).toMatch(/>A1<\/text>/);
+    expect(svg).toMatch(/>8<\/text>/);
   });
 
   test('draws the face of the display instead of its name', () => {

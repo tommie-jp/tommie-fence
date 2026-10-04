@@ -4,10 +4,10 @@ import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
 import {
-  DEVICE, IC3, isTurned, laidOf, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, seg7DeviceBox, symbolFor, symbolOf, tunableOptions, turnSide,
+  DEVICE, DIP_SWITCHES, IC3, isTurned, laidOf, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, seg7DeviceBox, symbolFor, symbolOf, tunableOptions, turnSide,
 } from '../parts.ts';
 import type { PartType, PinSide, SourceInner, Turn } from '../parts.ts';
-import { lookupBoardPart } from 'fence-kit';
+import { lookupBoardPart, lookupNamedChip } from 'fence-kit';
 import { EMPTY_STYLE } from '../parser/style.ts';
 import { STANDARD_TEX, VOLTAGE_STYLE } from '../standard.ts';
 import type { Standard } from '../standard.ts';
@@ -25,7 +25,7 @@ import { num } from './num.ts';
 import { readScaled } from '../values.ts';
 import type { ScaledValue } from '../values.ts';
 import {
-  deviceBox, deviceShapeName, deviceShapeTex, dualGateFetShapeTex, optoShapeTex, regulatorShapeTex, relayShapeTex,
+  deviceBox, deviceShapeName, deviceShapeTex, dipSwitchShapeTex, dualGateFetShapeTex, optoShapeTex, regulatorShapeTex, relayShapeTex,
   sipShapeTex, smaShapeTex, usbShapeName, usbShapeTex,
 } from './shapes.ts';
 import type { DeviceBox } from './shapes.ts';
@@ -244,6 +244,8 @@ function sipShapesFor(circuit: Circuit, pitch: number): string[] {
     ...(uses('relay') ? relayShapeTex() : []),
     ...(uses('photocoupler') ? optoShapeTex() : []),
     ...(uses('nmos-dg') ? dualGateFetShapeTex() : []),
+    // DIP スイッチは連の数ごとの箱。使う数だけ宣言する。
+    ...DIP_SWITCHES.filter(uses).flatMap((type) => dipSwitchShapeTex((lookupNamedChip(type, null)?.positions ?? 0) / 2)),
   ];
   // 機器も自分で宣言した形。**使う寸法 (本数・幅) だけ、1 回ずつ** (ピンヘッダと同じ)。
   const boxes = new Map<string, DeviceBox>();

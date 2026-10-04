@@ -1,3 +1,5 @@
+import { element } from '../markup.ts';
+import { num } from '../svg.ts';
 import { dipChip, segmentFace } from './chips.ts';
 import type { ChipPoint, DipOptions } from './chips.ts';
 
@@ -32,8 +34,8 @@ export type NamedChip = {
   readonly rowSpan: number;
   /** 足のある位置と名前。**位置の順**。 */
   readonly pins: readonly NamedChipPin[];
-  /** 胴の見た目。`display` は 7 セグの面を描く。 */
-  readonly body: 'relay' | 'chip' | 'display';
+  /** 胴の見た目。`display` は 7 セグの面、`switch` は DIP スイッチのつまみを描く。 */
+  readonly body: 'relay' | 'chip' | 'display' | 'switch';
 };
 
 const pins = (entries: Readonly<Record<number, string>>): readonly NamedChipPin[] =>
@@ -59,7 +61,25 @@ const CHIPS: readonly NamedChip[] = [
     type: 'seg7', look: '5161as', name: '5161AS', kindName: '7 セグメント LED', prefix: 'DS', positions: 10, rowSpan: 6, body: 'display',
     pins: pins({ 1: 'e', 2: 'd', 3: 'COM1', 4: 'c', 5: 'dp', 6: 'b', 7: 'a', 8: 'COM2', 9: 'f', 10: 'g' }),
   },
+  dipSwitch(4),
+  dipSwitch(8),
 ];
+
+/**
+ * DIP スイッチ (スライド型、`連` 個の開閉スイッチ)。**DIP と同じ足の並び**で、k 番の
+ * スイッチは k 番の足 (`Ak`) と向かいの足 (`Bk` = 2n+1−k 番) の間の接点。
+ * **足どうしは部品の中でつながない** (開いた接点。リレーの接点と同じ扱い)。
+ * 連の数で足の数が変わるので、姿ではなく**種類を分ける** (`dip-switch4` / `dip-switch8`)。
+ */
+function dipSwitch(ways: number): NamedChip {
+  const lower = Array.from({ length: ways }, (_, index) => [index + 1, `A${index + 1}`] as const);
+  const upper = Array.from({ length: ways }, (_, index) => [ways * 2 - index, `B${index + 1}`] as const);
+  return {
+    type: `dip-switch${ways}`, look: 'slide', name: `DIP SW ${ways}P`, kindName: 'DIP スイッチ', prefix: 'SW',
+    positions: ways * 2, rowSpan: 3, body: 'switch',
+    pins: pins(Object.fromEntries([...lower, ...upper])),
+  };
+}
 
 /** 種類の名前。表に出てくる順 (1 回ずつ)。 */
 export const namedChipTypes = (): readonly string[] => [...new Set(CHIPS.map((chip) => chip.type))];
@@ -88,6 +108,8 @@ export function drawNamedChip(options: Omit<DipOptions, 'pinOne'> & { readonly c
   // **リレーとフォトカプラは番号も刷る** (名前の外側。52 の docs/95 の決め 2)。
   // 7 セグは面を描くので今のまま (名前だけ)。
   const numbers = names.map((name) => String(chip.pins.find((pin) => pin.name === name)?.at ?? ''));
+  // DIP スイッチは品名の代わりにつまみを描く (品名は部品リストとキャプションに出る)。
+  if (chip.body === 'switch') return `${dipChip({ ...options, numbers, pinOne, caption: '' })}${sliders(points, names)}`;
   if (chip.body !== 'display') return dipChip({ ...options, numbers, pinOne });
 
   // 桁の上は 6〜10 番の列 (データシートの上から見た図で a が上)。
@@ -114,4 +136,46 @@ function digitFace(top: ChipPoint | null, bottom: ChipPoint | null): string {
     rowGap: gap,
     up: { x: (top.x - bottom.x) / gap, y: (top.y - bottom.y) / gap },
   });
+}
+
+/**
+ * つまみの溝の長さ (2 列の間に対する比) と幅 (px)、つまみの長さ (溝に対する比)。
+ * **溝は足の番号の内側に収める** — 列から `SLOT_CLEAR` までは番号と名前の段なので、
+ * 列の間が狭い板 (ブレッドボードの溝をまたぐ 2 行) では溝のほうを短くする。
+ */
+const SLOT_LENGTH = 0.3;
+const SLOT_CLEAR = 20;
+/** 立てた胴は名前が番号の横に並ぶ (横書き) ので、そのぶん深い。 */
+const SLOT_CLEAR_UPRIGHT = 25;
+const SLOT_MIN = 8;
+const SLOT_WIDTH = 6;
+const KNOB_LENGTH = 0.5;
+const SLOT_INK = '#5b616b';
+const KNOB_INK = '#f4f5f7';
+
+/**
+ * DIP スイッチのつまみ。**向かい合う足 (`Ak` と `Bk`) の間に溝 1 本**、つまみは A の側
+ * (どちらが ON かは品ごとに違うので、字では刷らない)。
+ */
+function sliders(points: readonly ChipPoint[], names: readonly string[]): string {
+  const at = (name: string): ChipPoint | undefined => points[names.indexOf(name)];
+  return names
+    .filter((name) => name.startsWith('A'))
+    .map((name) => {
+      const from = at(name);
+      const to = at(`B${name.slice(1)}`);
+      if (from === undefined || to === undefined) return '';
+      const along = (ratio: number): ChipPoint => ({ x: from.x + (to.x - from.x) * ratio, y: from.y + (to.y - from.y) * ratio });
+      const bar = (start: ChipPoint, end: ChipPoint, ink: string, name: string): string => element('line', {
+        class: name, x1: num(start.x), y1: num(start.y), x2: num(end.x), y2: num(end.y),
+        stroke: ink, 'stroke-width': SLOT_WIDTH,
+      });
+      const gap = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+      const clear = Math.abs(to.x - from.x) > Math.abs(to.y - from.y) ? SLOT_CLEAR_UPRIGHT : SLOT_CLEAR;
+      const length = Math.max(SLOT_MIN, Math.min(SLOT_LENGTH * gap, gap - clear * 2)) / gap;
+      const [start, end] = [(1 - length) / 2, (1 + length) / 2];
+      return bar(along(start), along(end), SLOT_INK, 'dip-switch-slot')
+        + bar(along(start), along(start + length * KNOB_LENGTH), KNOB_INK, 'dip-switch-knob');
+    })
+    .join('');
 }

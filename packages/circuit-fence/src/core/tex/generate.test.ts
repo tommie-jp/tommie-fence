@@ -1538,7 +1538,7 @@ describe('字が出る部品を全部当たる', () => {
     expect(drawn).toEqual([
       'regulator', 'ic3', 'ceramic-filter', 'nmos-dg',
       'sip2', 'sip3', 'sip4', 'sip5', 'sip6', 'sip8', 'sip10', 'sip20', 'sip40',
-      'seg7',
+      'seg7', 'dip-switch4', 'dip-switch8',
       'usb-a', 'usb-c',
       'pico', 'pico-w', 'pico2', 'pico2-w',
     ]);

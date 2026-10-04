@@ -1,5 +1,5 @@
 import { lookupBoardPart, lookupConnectorSymbol, lookupNamedChip, lookupPinout, pinoutModels } from 'fence-kit';
-import { DGFET_SHAPE, OPTO_SHAPE, RELAY_SHAPE, REGULATOR_SHAPE, SMA_SHAPE, deviceBox, deviceShapeName, usbShapeName } from './tex/shapes.ts';
+import { DGFET_SHAPE, dipSwitchShapeName, OPTO_SHAPE, RELAY_SHAPE, REGULATOR_SHAPE, SMA_SHAPE, deviceBox, deviceShapeName, usbShapeName } from './tex/shapes.ts';
 import type { BoardPart, NamedChip } from 'fence-kit';
 import { BOXED_RESISTORS } from './standard.ts';
 import type { Standard } from './standard.ts';
@@ -654,6 +654,28 @@ function namedSymbol(chip: NamedChip, symbol: string, sides: readonly (readonly 
   };
 }
 
+/**
+ * DIP スイッチ。**開閉スイッチを連の数だけ並べた箱** (`tex/shapes.ts`)。左の辺に `A1`〜、
+ * 右の辺に `B1`〜 を上から並べ、名前は箱の縁の内側に刷る。表は板の 2 つと同じ
+ * (fence-kit) なので、名前でも DIP の番号でも指せる (`SW1.B1` = `SW1.8`)。
+ */
+function dipSwitchBox(chip: NamedChip): PartType {
+  const ways = chip.positions / 2;
+  const rows = Array.from({ length: ways }, (_, index) => index + 1);
+  return {
+    ...namedSymbol(chip, dipSwitchShapeName(ways), [
+      ...rows.map((row) => [row, 'left'] as const),
+      ...rows.map((row) => [chip.positions + 1 - row, 'right'] as const),
+    ]),
+    // 表は位置の順に全部の足を持つので、そのまま `pin 1`〜 の名前になる。
+    pinLabels: chip.pins.map((pin) => pin.name),
+    pinFont: '\\scriptsize',
+  };
+}
+
+/** DIP スイッチの種類名。記号は連の数ごとに宣言する (`generate.ts`)。 */
+export const DIP_SWITCHES: readonly string[] = ['dip-switch4', 'dip-switch8'];
+
 /** 7 セグの箱に並べる順 (セグメント、点、共通)。**番号は表の DIP の位置**のまま。 */
 const SEG7_ORDER = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'dp', 'COM1', 'COM2'];
 
@@ -1207,6 +1229,8 @@ export const PART_TYPES = {
   },
   photocoupler: namedSymbol(namedChipOf('photocoupler'), OPTO_SHAPE, [[1, 'left'], [2, 'left'], [4, 'right'], [3, 'right']]),
   seg7: seg7Box(namedChipOf(SEG7)),
+  'dip-switch4': dipSwitchBox(namedChipOf('dip-switch4')),
+  'dip-switch8': dipSwitchBox(namedChipOf('dip-switch8')),
 
   // USB コネクタ。**表は実体配線図の 2 つと共通** (fence-kit)。
   'usb-a': usbchip('usb-a'),
@@ -1344,6 +1368,8 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   relay: namedChipOf('relay').kindName,
   photocoupler: namedChipOf('photocoupler').kindName,
   seg7: namedChipOf('seg7').kindName,
+  'dip-switch4': namedChipOf('dip-switch4').kindName,
+  'dip-switch8': namedChipOf('dip-switch8').kindName,
 };
 
 /**
@@ -1469,6 +1495,8 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   relay: namedChipOf('relay').prefix,
   photocoupler: namedChipOf('photocoupler').prefix,
   seg7: namedChipOf('seg7').prefix,
+  'dip-switch4': namedChipOf('dip-switch4').prefix,
+  'dip-switch8': namedChipOf('dip-switch8').prefix,
 };
 
 /**
