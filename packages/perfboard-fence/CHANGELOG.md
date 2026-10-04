@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-10-05
+
 ### Added
 
 - 注釈 `text` に見た目の語 `large` (字を 1.4 倍に) と `bold` (太字) (`- text p2 red large bold: IN 5V`)。
