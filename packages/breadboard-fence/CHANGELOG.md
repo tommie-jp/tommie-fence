@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- フェライトビーズ `ferrite-bead` を置ける (perfboard と同じ綴り・同じ胴)
+
 ## [0.29.0] - 2026-10-04
 
 ### Changed

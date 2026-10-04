@@ -73,6 +73,7 @@ wires:
   - 2 本足 (ダイオードの仲間) — `zener` / `schottky` / `photodiode` / `varicap` / `diac`
   - 2 本足 (受光) — `phototransistor` (先に書いた穴が C、次が E。B は無い)
   - 2 本足 (ガラス封止) — `reed` / `fuse` / `lamp`
+  - 2 本足 (フェライトビーズ) — `ferrite-bead` (帯の無い濃い灰色の円筒。値は `600R@100M` のように書く)
   - 2 本足 (音と光と電源) — `speaker` / `mic` / `battery` / `solar`
   - 2 本足 (スイッチ) — `switch` (a 接点) / `switch-nc` (b 接点)
   - 2 本足 (コネクタ) — `sma`

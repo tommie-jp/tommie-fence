@@ -961,6 +961,9 @@ export const PART_TYPES = {
   'button-nc': { kind: 'two-terminal', symbol: 'ncpb', ...NO_UNIT },
   reed: { kind: 'two-terminal', symbol: 'reed', ...NO_UNIT },
   fuse: { kind: 'two-terminal', symbol: 'fuse', ...NO_UNIT },
+  // フェライトビーズ。**塗りつぶした細長い箱** (CircuiTikZ の `fullgeneric`)。
+  // 値は型番や `600R@100M` の書き方をそのまま字で出す (単位を付けない)。
+  'ferrite-bead': { kind: 'two-terminal', symbol: 'fullgeneric', ...NO_UNIT },
   lamp: { kind: 'two-terminal', symbol: 'lamp', ...NO_UNIT },
   speaker: { kind: 'two-terminal', symbol: 'loudspeaker', ...NO_UNIT },
   mic: { kind: 'two-terminal', symbol: 'mic', ...NO_UNIT },
@@ -1259,6 +1262,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   'button-nc': '押しボタン (b 接点)',
   reed: 'リードスイッチ',
   fuse: 'ヒューズ',
+  'ferrite-bead': 'フェライトビーズ',
   lamp: 'ランプ',
   speaker: 'スピーカー',
   mic: 'マイク',
@@ -1386,6 +1390,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   'button-nc': 'S',
   reed: 'S',
   fuse: 'F',
+  'ferrite-bead': 'FB',
   lamp: 'P',
   speaker: 'LS',
   mic: 'MK',

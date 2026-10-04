@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- フェライトビーズ `ferrite-bead` の記号 (塗りつぶした箱、CircuiTikZ の `fullgeneric`)
+
 ## [0.27.0] - 2026-10-04
 
 ### Changed

@@ -82,7 +82,7 @@ parts:
 - ダイオード系 `diode` `led` `zener` `schottky` `photodiode` `diac`
   `thyristor` `triac`
 - 電源 `vsource` `sine` `square` `triangle` `isource` `battery` `solar`
-- 開閉・出力・計器 `switch` `switch-nc` `button` `button-nc` `reed` `fuse` `motor` `tline` (伝送線路。値は Z0)
+- 開閉・出力・計器 `switch` `switch-nc` `button` `button-nc` `reed` `fuse` `ferrite-bead` (フェライトビーズ。塗りつぶした箱) `motor` `tline` (伝送線路。値は Z0)
   `lamp` `speaker` `mic` `short` `ammeter` `voltmeter` `ohmmeter` `wattmeter`
   `galvanometer` `detector`
 - 1 端子 `port` `antenna` `ground` `vcc` `vee`

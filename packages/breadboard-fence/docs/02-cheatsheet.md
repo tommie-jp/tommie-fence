@@ -63,7 +63,7 @@ d↔h なら e・f・g 行が胴の下。空くのは d の上の a〜c と h �
 ```text
 2 本足   resistor capacitor led diode buzzer crystal inductor
          photoresistor thermistor thermistor-ntc thermistor-ptc varistor
-         zener schottky photodiode phototransistor varicap diac reed fuse lamp sma
+         zener schottky photodiode phototransistor varicap diac reed fuse lamp ferrite-bead sma
          speaker mic battery solar switch switch-nc
 3 本足   transistor potentiometer slide-switch thyristor triac regulator ic3
 4 本足   transformer

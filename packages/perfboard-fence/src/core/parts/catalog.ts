@@ -16,7 +16,7 @@ export type PlaceableName =
   | 'resistor' | 'capacitor' | 'led' | 'diode' | 'inductor' | 'crystal' | 'buzzer'
   | 'photoresistor' | 'thermistor' | 'thermistor-ntc' | 'thermistor-ptc' | 'varistor'
   | 'zener' | 'schottky' | 'photodiode' | 'phototransistor' | 'varicap' | 'diac'
-  | 'reed' | 'fuse' | 'lamp' | 'sma' | 'usb-a' | 'usb-c'
+  | 'reed' | 'fuse' | 'lamp' | 'ferrite-bead' | 'sma' | 'usb-a' | 'usb-c'
   | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
   | 'button' | 'button-nc' | 'transformer'
   | 'transistor' | 'potentiometer' | 'thyristor' | 'triac' | 'slide-switch' | 'regulator' | 'ic3';
@@ -43,6 +43,7 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   diac: 'ダイアック',
   reed: 'リードスイッチ',
   fuse: 'ヒューズ',
+  'ferrite-bead': 'フェライトビーズ',
   lamp: 'ランプ',
   sma: 'SMA コネクタ',
   'usb-a': 'USB Type-A コネクタ',
@@ -90,6 +91,7 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   diac: 'D',
   reed: 'SW',
   fuse: 'F',
+  'ferrite-bead': 'FB',
   lamp: 'LP',
   sma: 'J',
   'usb-a': 'J',

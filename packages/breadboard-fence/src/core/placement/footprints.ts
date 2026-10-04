@@ -40,6 +40,8 @@ const TWO_LEAD_TYPES = new Set([
   'phototransistor',
   // ガラス管・玉に封じた部品。
   'reed', 'fuse', 'lamp',
+  // リード付きのフェライトビーズ (perfboard と同じ綴り)。
+  'ferrite-bead',
   // 回路図にあって板に無かった実物 (52 の docs/21 の手順 7)。**電池は
   // ホルダーで数える** — 板に載るのはホルダーで、電池は差し替えるもの。
   // トグルスイッチは a 接点 (`switch`) と b 接点 (`switch-nc`) で別の品。

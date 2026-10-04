@@ -21,7 +21,7 @@ const KINDS = [
   'sma', 'resistor', 'capacitor', 'crystal', 'inductor', 'buzzer', 'led', 'photodiode', 'phototransistor',
   'diode', 'zener', 'schottky', 'varicap', 'diac', 'photoresistor',
   'thermistor', 'thermistor-ntc', 'thermistor-ptc', 'varistor',
-  'reed', 'fuse', 'lamp', 'battery', 'solar', 'speaker', 'mic', 'switch', 'switch-nc',
+  'reed', 'fuse', 'lamp', 'ferrite-bead', 'battery', 'solar', 'speaker', 'mic', 'switch', 'switch-nc',
 ] as const;
 
 describe('胴の総なめ', () => {

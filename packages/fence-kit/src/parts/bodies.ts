@@ -565,6 +565,29 @@ function axialCoil(span: number, ink: BodyInk): string {
   return core + coils;
 }
 
+/**
+ * リード付きのフェライトビーズ。**濃い灰色の円筒で、帯も筋も無い**。
+ * 実物はフェライトの焼き物の筒に足を通しただけで、印が何も無い。帯を描くと
+ * 抵抗に、筋を描くとコイルに見える。値 (`600R@100M` など) は字で書く。
+ */
+function ferriteBeadBody(span: number, ink: BodyInk): string {
+  const { width, height } = beadSize(span);
+  const shell = element('rect', {
+    x: num(-width / 2), y: num(-height / 2), width: num(width), height: num(height),
+    rx: num(height * 0.25), fill: ink.paint('#3b3e44'), stroke: ink.paint('#16181b'),
+  });
+  // 円筒の艶。上寄りに 1 本、明るい線を引くと平たい箱ではなく筒に見える。
+  const shine = element('line', {
+    x1: num(-width / 2 + 2.5), y1: num(-height * 0.22), x2: num(width / 2 - 2.5), y2: num(-height * 0.22),
+    stroke: ink.paint('#7d838c'), 'stroke-width': 1.2, 'stroke-linecap': 'round',
+  });
+  return shell + shine;
+}
+
+/** フェライトビーズの胴。実物は径 3.5mm・長さ 6mm ほどで、抵抗より太く短い。 */
+const beadSize = (span: number): { readonly width: number; readonly height: number } =>
+  ({ width: Math.min(span * 0.5, 26), height: 14 });
+
 /** 圧電・電磁ブザー。上から見た丸い缶と、音の出る穴。 */
 function buzzerBody(part: BodyPart, span: number, ink: BodyInk): string {
   const radius = Math.min(span * 0.5, 15);
@@ -806,6 +829,7 @@ const BODIES: Record<string, (part: BodyPart, span: number, ink: BodyInk) => str
   capacitor: capacitorBody,
   crystal: crystalBody,
   inductor: inductorBody,
+  'ferrite-bead': (_part, span, ink) => ferriteBeadBody(span, ink),
   buzzer: buzzerBody,
   led: (part, _span, ink) => domeBody(part, ledLook(part).color, ink, '#7a2018', ledLook(part).name),
   // フォトダイオードは砲弾型で売られている。受光面が見えるように淡く塗り、
@@ -923,6 +947,8 @@ export function bodySize(part: BodyPart, span: number): { readonly width: number
       return part.variant === 'radial'
         ? twice(Math.min(span * 0.42, 13))
         : { width: Math.min(span * 0.6, 34), height: TURN_HALF * 2 };
+    case 'ferrite-bead':
+      return beadSize(span);
     case 'buzzer':
     case 'speaker':
       return twice(Math.min(span * 0.5, 15));

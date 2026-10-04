@@ -30,7 +30,7 @@ describe('drawBody', () => {
     const types = [
       'resistor', 'capacitor', 'led', 'diode', 'zener', 'schottky', 'photodiode', 'phototransistor', 'varicap', 'diac',
       'crystal', 'inductor', 'buzzer', 'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc',
-      'varistor', 'reed', 'fuse', 'lamp',
+      'varistor', 'reed', 'fuse', 'lamp', 'ferrite-bead',
       // 回路図にあって板に無かった実物 (52 の docs/21 の手順 7)。
       'battery', 'solar', 'speaker', 'mic', 'switch', 'switch-nc',
     ];

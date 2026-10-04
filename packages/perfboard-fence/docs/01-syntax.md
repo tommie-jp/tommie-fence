@@ -281,12 +281,12 @@ wires:
 **名前**は英数字と `_` `-` で 32 字まで。配線から指せる形にする。
 **同じ名前は 1 つだけ** — 2 つあると、配線がどちらを指すのか決まらない。
 
-**種類**は 2 本足が 28、3 本足が 7、それに USB コネクタ、`dipN` / `sipN` とマイコンボード。
+**種類**は 2 本足が 29、3 本足が 7、それに USB コネクタ、`dipN` / `sipN` とマイコンボード。
 
 ```text
 2 本足  resistor  capacitor  led  diode  inductor  crystal  buzzer
         photoresistor  thermistor  thermistor-ntc  thermistor-ptc  varistor
-        zener  schottky  photodiode  phototransistor  varicap  diac  reed  fuse  lamp  sma
+        zener  schottky  photodiode  phototransistor  varicap  diac  reed  fuse  lamp  ferrite-bead  sma
         speaker  mic  battery  solar  switch (a 接点)  switch-nc (b 接点)
 3 本足  transistor  potentiometer  thyristor  triac  slide-switch  regulator  ic3 (3 本足の IC)
 4 本足  transformer
@@ -294,6 +294,10 @@ USB     usb-a (穴は VBUS GND D+ D- の順に 2 つから)  usb-c (穴は GND D
 パッケージ  button (a 接点)  button-nc (b 接点)  dip4〜dip40 (偶数)  sip2〜sip40
 ボード      pico  pico-w  pico2  pico2-w
 ```
+
+`ferrite-bead` はリード付きのフェライトビーズ。帯の無い濃い灰色の円筒で描く。
+値は型番やインピーダンスをそのまま書く (`FB1: ferrite-bead i6 i11 600R@100M`)。
+抵抗と同じ軸物なので、隣の穴には挿せない (番地の差 3 = 4 穴分が目安)。
 
 マイコンボードは **breadboard と同じ綴り・同じピン名**で書ける (`U1.GP0`)。
 表を 2 つのフェンスで共有しているので、同じ回路をどちらでも書ける。

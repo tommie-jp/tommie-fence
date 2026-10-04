@@ -280,6 +280,7 @@ style:
 | 107 | `tline` | 伝送線路 | 特性インピーダンス (Ω) | `TL1: tline a1 a5 50` |
 | 108 | `capacitor-var` | 可変コンデンサ (バリコン) | F | `VC1: capacitor-var a3 c3` |
 | 110 | `earphone` | イヤホン (クリスタルイヤホン) | (なし) | `EAR: earphone a9 c9 l=$\mathrm{EAR}$` |
+| 114 | `ferrite-bead` | フェライトビーズ | (型番) | `FB1: ferrite-bead a1 a3 BL02RN2` |
 
 ```circuit
 title: 図04 2 端子部品

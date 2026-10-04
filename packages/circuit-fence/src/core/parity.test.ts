@@ -16,7 +16,7 @@ describe('実体配線図と同じ綴りで書けること', () => {
     const onBoards = [
       'resistor', 'capacitor', 'led', 'diode', 'inductor', 'crystal', 'buzzer',
       'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc', 'varistor',
-      'zener', 'schottky', 'photodiode', 'varicap', 'diac', 'reed', 'fuse', 'lamp', 'sma',
+      'zener', 'schottky', 'photodiode', 'varicap', 'diac', 'reed', 'fuse', 'lamp', 'sma', 'ferrite-bead',
       'battery', 'solar', 'speaker', 'mic', 'switch', 'switch-nc', 'button', 'button-nc',
       'potentiometer', 'thyristor', 'triac', 'slide-switch', 'regulator', 'transformer', 'phototransistor', 'ic3',
       'dip4', 'dip6', 'dip8', 'dip14', 'dip16', 'dip18', 'dip20', 'dip24', 'dip28', 'dip40',
@@ -34,7 +34,7 @@ describe('実体配線図と同じ綴りで書けること', () => {
     const onBoards = new Set([
       'resistor', 'capacitor', 'led', 'diode', 'inductor', 'crystal', 'buzzer',
       'photoresistor', 'thermistor', 'thermistor-ntc', 'thermistor-ptc', 'varistor',
-      'zener', 'schottky', 'photodiode', 'varicap', 'diac', 'reed', 'fuse', 'lamp', 'sma',
+      'zener', 'schottky', 'photodiode', 'varicap', 'diac', 'reed', 'fuse', 'lamp', 'sma', 'ferrite-bead',
       'battery', 'solar', 'speaker', 'mic', 'switch', 'switch-nc', 'button', 'button-nc',
       'potentiometer', 'thyristor', 'triac', 'slide-switch', 'regulator', 'transformer', 'phototransistor', 'ic3',
       'ecap', 'dip4', 'dip6', 'dip8', 'dip14', 'dip16', 'dip18', 'dip20', 'dip24', 'dip28', 'dip40',

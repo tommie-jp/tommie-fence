@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- フェライトビーズ `ferrite-bead` の胴 (帯の無い濃い灰色の円筒)
+
 ## [0.10.0] - 2026-10-04
 
 ### Changed

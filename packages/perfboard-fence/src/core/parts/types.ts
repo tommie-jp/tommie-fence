@@ -24,6 +24,8 @@ const TWO_LEAD = new Set([
   'phototransistor',
   // ガラス管・玉に封じた部品。
   'reed', 'fuse', 'lamp',
+  // リード付きのフェライトビーズ。軸物で、足の間隔は抵抗と同じ規則。
+  'ferrite-bead',
   // 回路図にあって板に無かった実物 (52 の docs/21 の手順 7)。**電池は
   // ホルダーで数える** — 板に載るのはホルダーで、電池は差し替えるもの。
   // トグルスイッチは a 接点 (`switch`) と b 接点 (`switch-nc`) で別の品。
@@ -144,7 +146,7 @@ const looksOf = (type: string): readonly string[] =>
  * サーミスタなど) は足の間隔が 2.54mm で作られているので、ここには入れない。
  */
 const AXIAL = new Set([
-  'resistor', 'diode', 'zener', 'schottky', 'inductor', 'fuse',
+  'resistor', 'diode', 'zener', 'schottky', 'inductor', 'fuse', 'ferrite-bead',
   // フォトダイオードは入れない — 砲弾型 (LED と同じ玉) で描くラジアル部品。
 ]);
 

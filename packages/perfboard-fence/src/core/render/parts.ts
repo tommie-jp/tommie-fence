@@ -388,7 +388,7 @@ const SPAN_RATIO: Record<string, number> = {
   resistor: 0.6, capacitor: 0.55, crystal: 0.6, inductor: 0.6, buzzer: 0.5,
   diode: 0.55, zener: 0.55, schottky: 0.55, diac: 0.55, varicap: 0.4,
   photoresistor: 0.45, thermistor: 0.45, 'thermistor-ntc': 0.45, 'thermistor-ptc': 0.45,
-  varistor: 0.45, reed: 0.6, fuse: 0.6, lamp: 0.42,
+  varistor: 0.45, reed: 0.6, fuse: 0.6, lamp: 0.42, 'ferrite-bead': 0.5,
 };
 
 /**
