@@ -20,7 +20,7 @@ import type { PlacedPart, Point, Rect } from '../types.ts';
 import { captionRoom, captionWidth } from './captions.ts';
 import type { CaptionRoom } from './captions.ts';
 import { jointMark } from './joints.ts';
-import { outlineOn } from './finish.ts';
+import { WHITE_OUTLINE } from './finish.ts';
 import { OUTLINE_MARGIN, WIRE_WIDTH } from './wires.ts';
 import type { Theme } from './theme.ts';
 
@@ -416,13 +416,13 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme, room?: Ca
   // 「胴の両端から出たリード」の絵で、金物のコネクタでは中心導体と凹の先端を結ぶ線に
   // 見える (先端は中心線の上下にあるので、斜めに渡って余計にそう読める)。
   // 水晶の足は缶の下から出るので、穴を渡る線は実物に無い。
-  // **足の線は配線と同じ太さと縁取り** (`wires.ts`)。細い灰色の線は緑の板に沈み、
+  // **足の線は配線と同じ太さで、白い縁** (`wires.ts`)。細い灰色の線は緑の板に沈み、
   // 足がどの穴に入るのかが読みにくかった。白黒の図は配線と同じく縁取らない。
   const leadLine = (attributes: Record<string, string | number>): string => element('line', {
     x1: num(from.x), y1: num(from.y), x2: num(to.x), y2: num(to.y), 'stroke-linecap': 'round', ...attributes,
   });
   const lead = mount !== null || drawsOwnLeads(part.type) ? '' : (theme.hatch === true ? '' : leadLine({
-    stroke: outlineOn(theme.palette.plate), 'stroke-width': WIRE_WIDTH + OUTLINE_MARGIN,
+    stroke: WHITE_OUTLINE, 'stroke-width': WIRE_WIDTH + OUTLINE_MARGIN,
   })) + leadLine({ stroke: theme.palette.lead, 'stroke-width': WIRE_WIDTH });
   const body = element(
     'g',

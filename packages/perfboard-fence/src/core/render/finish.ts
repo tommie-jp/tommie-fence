@@ -97,11 +97,28 @@ export function textOn(plate: string): string {
  * 縁は暗いほうが線の色を立てる (52 の docs/110 の試し描き)。
  */
 export function outlineOn(plate: string): string {
-  const hex = plate.replace('#', '');
+  return lumaOf(plate) < OUTLINE_DARK_PLATE ? '#e6ebef' : '#1b1d21';
+}
+
+const lumaOf = (color: string): number => {
+  const hex = color.replace('#', '');
   const full = hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex;
   const at = (i: number): number => Number.parseInt(full.slice(i, i + 2), 16) / 255;
-  const luma = 0.299 * at(0) + 0.587 * at(2) + 0.114 * at(4);
-  return luma < OUTLINE_DARK_PLATE ? '#e6ebef' : '#1b1d21';
+  return 0.299 * at(0) + 0.587 * at(2) + 0.114 * at(4);
+};
+
+/** 白い縁。白以外の線と部品の足に付ける (52 の docs/110 の続き)。 */
+export const WHITE_OUTLINE = '#ffffff';
+
+/** これより明るい線 (白・ごく淡い色) は白い縁では消えるので、板に合わせた縁にする。 */
+const LIGHT_WIRE = 0.8;
+
+/**
+ * 線の縁の色。**白以外の線は白い縁** — 緑の板では暗い縁より白い縁のほうが線の形が立つ
+ * (図を見て決めた)。白い線は白い縁では太さが変わって見えるだけなので、板に合わせた縁のまま。
+ */
+export function wireOutline(stroke: string, plate: string): string {
+  return stroke.startsWith('#') && lumaOf(stroke) >= LIGHT_WIRE ? outlineOn(plate) : WHITE_OUTLINE;
 }
 
 /** これより暗い板には明るい縁。黒 (0.16) と暗いテーマの緑 (0.22) が入り、緑 (0.36) は入らない。 */

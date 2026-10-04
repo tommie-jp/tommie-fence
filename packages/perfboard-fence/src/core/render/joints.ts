@@ -45,3 +45,26 @@ export function renderJoints(holes: readonly Address[], layout: Layout, theme: T
 
   return drawn.join('');
 }
+
+/**
+ * 胴に覆われていない半田の穴だけ。**部品面の図でも半田付けした穴を見せる**ために、
+ * 部品と配線の上へもう一度重ねる — 足の線や配線の端に隠れて、部品面からは
+ * どこを半田付けするのか読めなかった。胴の下の穴 (変換基板・USB-C の基板・
+ * 電解コンデンサなど) は実物でも上から見えないので重ねない。
+ */
+export function exposedHoles(
+  holes: readonly Address[],
+  bodies: readonly { readonly cx: number; readonly cy: number; readonly width: number; readonly height: number; readonly angle: number }[],
+  layout: Layout,
+): Address[] {
+  return holes.filter((hole) => {
+    const { x, y } = layout.point(hole);
+    return !bodies.some((body) => {
+      const dx = x - body.cx;
+      const dy = y - body.cy;
+      const along = dx * Math.cos(body.angle) + dy * Math.sin(body.angle);
+      const across = -dx * Math.sin(body.angle) + dy * Math.cos(body.angle);
+      return Math.abs(along) < body.width / 2 && Math.abs(across) < body.height / 2;
+    });
+  });
+}

@@ -102,9 +102,10 @@ describe('wire outline (52 の docs/110)', () => {
     expect(Math.max(...outlines)).toBeLessThan(firstLine);
   });
 
-  test('draws the wire 4 wide over a 6-wide dark outline on the green board', () => {
+  test('draws a coloured wire 4 wide over a 6-wide white outline, and a white wire over a dark one', () => {
     const svg = renderWires([wire('b3', 'c5', 'blue')], layout, THEME);
-    expect(svg).toContain('stroke="#1b1d21" stroke-width="6"');
+    expect(svg).toContain('stroke="#ffffff" stroke-width="6"');
+    expect(renderWires([wire('b3', 'c5', 'white')], layout, THEME)).toContain('stroke="#1b1d21" stroke-width="6"');
     expect(svg).toMatch(/stroke="#2b6fd4" stroke-width="4"/);
     expect(svg).toContain('stroke-opacity="1"');
   });
