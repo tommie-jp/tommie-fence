@@ -1,7 +1,8 @@
 import { element, num } from 'fence-kit';
 import { darken } from './finish.ts';
 import type { Layout } from '../model/layout.ts';
-import type { Address } from '../types.ts';
+import type { Address, PlacedPart } from '../types.ts';
+import { bodyRect } from '../placement/geometry.ts';
 import type { Theme } from './theme.ts';
 
 /**
@@ -46,12 +47,27 @@ export function renderJoints(holes: readonly Address[], layout: Layout, theme: T
   return drawn.join('');
 }
 
+/** 胴に覆われた半田の穴を重ねるときの不透明度。 */
+const COVERED_OPACITY = 0.5;
+
 /**
- * 胴に覆われていない半田の穴だけ。**部品面の図でも半田付けした穴を見せる**ために、
- * 部品と配線の上へもう一度重ねる — 足の線や配線の端に隠れて、部品面からは
- * どこを半田付けするのか読めなかった。胴の下の穴 (変換基板・USB-C の基板・
- * 電解コンデンサなど) は実物でも上から見えないので重ねない。
+ * **部品面の図でも半田付けした穴を見せる**ために、部品と配線の上へもう一度重ねる —
+ * 足の線や配線の端に隠れて、部品面からはどこを半田付けするのか読めなかった。
+ * 胴の下の穴 (変換基板・USB-C の基板・電解コンデンサなど) は半分透かして重ねる。
  */
+export function jointsOnTop(holes: readonly Address[], parts: readonly PlacedPart[], layout: Layout, theme: Theme): string {
+  const bodies = parts.flatMap((part) => {
+    const body = bodyRect(part, layout);
+    return body === null ? [] : [body];
+  });
+  const exposed = exposedHoles(holes, bodies, layout);
+  const open = new Set(exposed.map((hole) => `${hole.row},${hole.col}`));
+  const covered = holes.filter((hole) => !open.has(`${hole.row},${hole.col}`));
+  const faint = covered.length === 0 ? '' : element('g', { opacity: COVERED_OPACITY }, renderJoints(covered, layout, theme));
+  return faint + renderJoints(exposed, layout, theme);
+}
+
+/** 胴に覆われていない半田の穴だけ。 */
 export function exposedHoles(
   holes: readonly Address[],
   bodies: readonly { readonly cx: number; readonly cy: number; readonly width: number; readonly height: number; readonly angle: number }[],

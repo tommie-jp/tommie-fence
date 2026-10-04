@@ -5,7 +5,7 @@ import { parseFence } from './parser/parseFence.ts';
 import { placeParts } from './placement/place.ts';
 import { renderAxisLabels, renderPlate } from './render/board.ts';
 import { renderSlots } from './render/slots.ts';
-import { exposedHoles, renderJoints } from './render/joints.ts';
+import { jointsOnTop, renderJoints } from './render/joints.ts';
 import { renderHits } from './render/hits.ts';
 import { renderParts } from './render/parts.ts';
 import { renderLeadWires } from './render/leadWires.ts';
@@ -23,7 +23,7 @@ import { netlistOf, resolveWires } from './wiring/wiring.ts';
 import { unnamedDipNotices } from './parts/pinout.ts';
 import { checkErc } from './erc/erc.ts';
 import { checkFit } from './placement/collide.ts';
-import { bodyRect, connectorOverhang, drawnExtent } from './placement/geometry.ts';
+import { connectorOverhang, drawnExtent } from './placement/geometry.ts';
 import { holeStrip } from './model/board.ts';
 import { formatAddress, isCrossing, parseAddress } from './model/address.ts';
 import { offBoardReason } from './model/board.ts';
@@ -363,12 +363,10 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       + renderParts(placement.parts, layout, PLATE, options.edit === true, noteBands(notes, layout, PLATE))
       // 足へ来る線は胴の上にも重ね、足の真ん中まで線を見せる (USB-C のパッドも同じ)。
       + renderLeadWires(placement.parts, wiring.wires, layout, PLATE, hops.slice(0, wiring.wires.length))
-      // 半田付けした穴を部品と配線の上にもう一度 (胴に覆われた穴は除く)。半田面と同じく、
-      // 部品面の図でもどこを付けるのかが読める。
-      + renderJoints(exposedHoles(soldered, placement.parts.flatMap((part) => {
-        const body = bodyRect(part, layout);
-        return body === null ? [] : [body];
-      }), layout), layout, PLATE)
+      // 半田付けした穴を部品と配線の上にもう一度。半田面と同じく、部品面の図でも
+      // どこを付けるのかが読める。**胴に覆われた穴は透明度 50%** — 胴の下に穴があると
+      // 分かり、しかも胴の形は読める。
+      + jointsOnTop(soldered, placement.parts, layout, PLATE)
       // **行と列の名前は機器とその配線より上、部品よりも上。** 板の上に置いた
       // 機器の足と線は名前の帯を必ず横切るので、下に敷くと行く先の列の名前が隠れる。
       // 縁から張り出す端面の SMA も同じで、部品の下に敷くと台座が `D`〜`F` を
