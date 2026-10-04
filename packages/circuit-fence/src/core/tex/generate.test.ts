@@ -96,7 +96,7 @@ describe('generateTex', () => {
     // \\mu は数式のフォント (cmmi10) にあるので斜体の µ で出る (実機で確かめた)。
     const tex = generate('parts:', '  C1: capacitor a1 a3 1.5u').tex;
 
-    expect(tex).toContain('a^=$1.5\\,\\mu\\mathrm{F}$');
+    expect(tex).toContain('a^=$1\\mbox{.}5\\,\\mu\\mathrm{F}$');
     expect(tex).not.toContain('\\mathrm{u}');
   });
 
@@ -304,7 +304,7 @@ describe('generateTex', () => {
   });
 
   test('writes a value that carries its own unit as it was written', () => {
-    expect(generate('parts:', '  R1: resistor a1 a3 1/2W').tex).toContain('a^=$\\mathrm{1/2W}$');
+    expect(generate('parts:', '  R1: resistor a1 a3 1/2W').tex).toContain('a^=$\\mathrm{1\\mbox{/}2W}$');
   });
 
   // グリッドの行英字と列数字は読んで数えるもの。図に合わせて選べる。

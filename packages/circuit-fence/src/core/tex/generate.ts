@@ -335,6 +335,20 @@ const texPrefix = (prefix: string): string => {
   return prefix === 'u' ? '\\mu' : `\\mathrm{${prefix}}`;
 };
 
+/**
+ * 数式の中で、数式のフォントの別の番号に組まれてしまう記号を、文字の組 (`\mbox{…}`) に入れる。
+ *
+ * - `-` は数式では引き算の − (cmsy の 0 番) になって前後が空く (`HC − SR04`)。
+ *   型番の `-` はハイフン
+ * - `.` と `/` は数式では cmmi (斜体) の 0x3A 番・0x3D 番で組まれる。描き上がった SVG には
+ *   番号がそのまま `:` `=` の字で入るので、TeX のフォントを読まない描き手 (librsvg で焼いた
+ *   PNG、フォントを埋めない SVG、字の検索) では `3.3` が `3:3`、`6V/12V` が `6V=12V` に見えた
+ *
+ * 文字の組に入れると cmr の字になり、番号が ASCII と同じになる。`+` `(` `)` `\%` は数式でも
+ * cmr の ASCII と同じ番号に組まれるので触らない (図の見た目を動かさない)。
+ */
+const asTextGlyphs = (tex: string): string => tex.replace(/[-./]/g, (char) => `\\mbox{${char}}`);
+
 /** 部品の種類から来る単位。書き出す `.tex` は siunitx に組ませる。 */
 type Unit = { readonly tex: string | null; readonly si: string | null };
 
@@ -372,10 +386,8 @@ function annotationOf(
 
   const matched = unit.tex === null ? null : unit.scaled ?? null;
   // 数式の中では空白が捨てられる (`Analog Discovery` が詰まった)。空白は `\ ` にする。
-  // `-` は数式では引き算の − になって前後が空く (`HC − SR04`)。型番の `-` は
-  // ハイフンなので字として組む (`\mbox{-}`)。
   if (!matched) {
-    return `$\\mathrm{${escapeTex(value).replaceAll(' ', '\\ ').replaceAll('-', '\\mbox{-}')}}$`;
+    return `$\\mathrm{${asTextGlyphs(escapeTex(value).replaceAll(' ', '\\ '))}}$`;
   }
 
   const { digits, prefix } = matched;
@@ -385,7 +397,7 @@ function annotationOf(
   }
 
   const scale = texPrefix(prefix);
-  return `$${digits}\\,${scale}${unit.tex ?? ''}$`;
+  return `$${asTextGlyphs(digits)}\\,${scale}${unit.tex ?? ''}$`;
 }
 
 /** 図に出てくる交点それぞれに、そこへ集まっている端の数。使われた順に並ぶ。 */
