@@ -24,6 +24,7 @@ const run = (
   parts: readonly PlacedPart[],
   pairs: readonly (readonly [string, string])[] = [],
   named: readonly (readonly [string, string])[] = [],
+  unused: readonly string[] = [],
 ) => {
   const { wires } = resolveWires(wireSpecs(pairs), new Map(), board);
   const namedPairs = named.map(([hole, name]) => [at(hole), name] as const);
@@ -34,6 +35,7 @@ const run = (
     netlist,
     namedStrips: new Set(namedPairs.map(([address]) => holeStrip(address))),
     devices: [],
+    unused: unused.map((ref, index) => ({ ref, line: index + 20 })),
     spelling: board,
   });
 };
@@ -137,5 +139,36 @@ describe('the findings themselves', () => {
 
   test('say nothing about an empty board', () => {
     expect(run([])).toEqual([]);
+  });
+});
+
+describe('使わないと書いたピン (unused:)', () => {
+  test('does not name a pin that is written as unused, but still names the others', () => {
+    const found = run([part('R1', ['b3', 'b7'])], [], [], ['R1.2']);
+    const text = found.map((e) => e.message).join(' ');
+
+    expect(text).toContain('R1.1');
+    expect(text).not.toContain('R1.2');
+  });
+
+  test('says nothing at all when every loose pin is written as unused', () => {
+    expect(run([part('R1', ['b3', 'b7'])], [], [], ['R1.1', 'R1.2'])).toEqual([]);
+  });
+
+  test('refuses a pin the part does not have, on the line of the unused entry', () => {
+    const found = run([part('R1', ['b3', 'b7'])], [], [], ['R1.9']);
+    const error = found.find((e) => e.message.includes('R1.9'));
+
+    expect(error?.message).toContain('ありません');
+    expect(error?.notice).toBeUndefined();
+    expect(error?.line).toBe(20);
+  });
+
+  test('warns when a pin written as unused is wired after all', () => {
+    const found = run([part('R1', ['b3', 'b7']), part('R2', ['c3', 'c7'])], [['b3', 'c3']], [], ['R1.1']);
+    const warning = found.find((e) => e.message.includes('つながっています'));
+
+    expect(warning?.message).toContain('R1.1');
+    expect(warning?.notice).toBe(true);
   });
 });

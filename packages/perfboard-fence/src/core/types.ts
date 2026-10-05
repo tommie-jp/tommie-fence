@@ -24,7 +24,7 @@ export type FenceError = {
  * フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。
  * **Phase 0 では語彙を決めるだけ**で、中身の検証は Phase 1 以降。
  */
-export const TOP_LEVEL_KEYS = ['title', 'points', 'board', 'style', 'parts', 'wires', 'notes'] as const;
+export const TOP_LEVEL_KEYS = ['title', 'points', 'unused', 'board', 'style', 'parts', 'wires', 'notes'] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
 
@@ -298,6 +298,12 @@ export type RoutedWire = {
  * 読めたフェンス。Phase 3 では基板・部品・配線・点の名前まで。
  * 注釈と ERC は次の Phase でここに足す。
  */
+/** `unused:` の 1 項目。ピンの名前 (`ID.ピン名`) と、書かれた行。 */
+export type UnusedSpec = {
+  readonly ref: string;
+  readonly line: number | null;
+};
+
 export type FenceDocument = {
   readonly board: Board;
   /** `board:` に名前 (または実寸) で書かれた基板の名前。穴数の直書きなら null。部品表に出す。 */
@@ -308,6 +314,8 @@ export type FenceDocument = {
   readonly wires: readonly WireSpec[];
   /** `points:` で名前を付けた穴。**定義順**で持つ (ネット名の当て方が定義順)。 */
   readonly points: readonly PointSpec[];
+  /** `unused:` に書いた、**意図して使わないピン** (`J1.D+`)。ERC の「どこにもつながっていない」から外す。 */
+  readonly unused: readonly UnusedSpec[];
   readonly style: StyleSpec;
   readonly notes: readonly NoteSpec[];
   readonly devices: readonly DeviceSpec[];

@@ -25,6 +25,8 @@ export const LIMITS = {
   wires: 500,
   /** `points:` に置ける名前の数。 */
   points: 100,
+  /** `unused:` に並べられるピンの数。 */
+  unused: 200,
   /** 図の題の長さ。 */
   titleLength: 60,
   /** 基板の外の機器 1 つが持てるピンの数と、ピンの名前の長さ。 */

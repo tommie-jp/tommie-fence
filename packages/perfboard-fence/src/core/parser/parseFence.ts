@@ -16,7 +16,7 @@ import { isAddressSpelling } from '../model/address.ts';
 import { isSeq } from 'yaml';
 import { TOP_LEVEL_KEYS } from '../types.ts';
 import type {
-  BoardMaterial, Board, DeviceSpec, FenceDocument, FenceError, NoteSpec, PartSpec, PointSpec, StyleSpec, WireSpec,
+  BoardMaterial, Board, DeviceSpec, FenceDocument, FenceError, NoteSpec, PartSpec, PointSpec, StyleSpec, UnusedSpec, WireSpec,
 } from '../types.ts';
 
 /** yaml のメッセージはライブラリ側の文言なので、載せる長さを切る。 */
@@ -41,7 +41,7 @@ export type ParseResult = { readonly doc: FenceDocument; readonly errors: readon
 
 /** 何も読めなかったときに返す中身。基板だけは既定のものを持つ。 */
 const emptyDocument = (): FenceDocument => ({
-  board: DEFAULT_BOARD, boardName: null, title: null, parts: [], wires: [], points: [], style: EMPTY_STYLE, notes: [], devices: [],
+  board: DEFAULT_BOARD, boardName: null, title: null, parts: [], wires: [], points: [], unused: [], style: EMPTY_STYLE, notes: [], devices: [],
 });
 
 const scalarText = (node: unknown): string | null => {
@@ -123,6 +123,7 @@ function readFence(source: string): ParseResult {
   const devices: DeviceSpec[] = [];
   const wires: WireSpec[] = [];
   const points: PointSpec[] = [];
+  const unused: UnusedSpec[] = [];
   let board: Board | null = null;
   let boardName: string | null = null;
   let title: string | null = null;
@@ -136,6 +137,7 @@ function readFence(source: string): ParseResult {
   let partsNode: { readonly node: unknown; readonly keyLine: number | null } | null = null;
   let wiresWritten = false;
   let pointsWritten = false;
+  let unusedWritten = false;
 
   /** `wires:` は 1 行 1 本の並び。読めた配線は捨てない。 */
   const readWires = (node: unknown, keyLine: number | null): void => {
@@ -242,6 +244,31 @@ function readFence(source: string): ParseResult {
         continue;
       }
       points.push({ name, written, line });
+    }
+  };
+
+  /**
+   * `unused:` は**意図して使わないピン**の並び (`[J1.D+, J1.D-]`)。ERC の「どこにもつながっていない」から
+   * 外すだけで、図には出ない。ピンが部品にあるかは ERC が見る (綴りの誤りを黙って通さない)。
+   */
+  const readUnused = (node: unknown, keyLine: number | null): void => {
+    if (!isSeq(node)) {
+      errors.push(fenceError('unused: は `[J1.D+, J1.D-]` か `- J1.D+` の並びにします', keyLine));
+      return;
+    }
+    for (const item of node.items) {
+      const line = lineOf(item as Node) ?? keyLine;
+      const ref = scalarText(item);
+      if (ref === null || !/^[^.\s]+\..+$/.test(ref)) {
+        errors.push(fenceError('unused: は `部品の名前.ピンの名前` で書きます (例: J1.D+)', line, ref ?? undefined));
+        continue;
+      }
+      if (unused.length >= LIMITS.unused) {
+        errors.push(fenceError(`unused: が多すぎます (${LIMITS.unused} 個まで)`, line));
+        break;
+      }
+      if (unused.some((entry) => entry.ref === ref)) continue;
+      unused.push({ ref, line });
     }
   };
 
@@ -381,6 +408,16 @@ function readFence(source: string): ParseResult {
       }
       notesWritten = true;
       readNotes(pair.value, keyLine);
+      continue;
+    }
+    if (key === 'unused') {
+      const keyLine = lineOf(pair.key as Node);
+      if (unusedWritten) {
+        errors.push(fenceError('unused: が 2 つあります (1 つにまとめます)', keyLine, key));
+        continue;
+      }
+      unusedWritten = true;
+      readUnused(pair.value, keyLine);
       continue;
     }
     if (key === 'points') {
@@ -582,7 +619,7 @@ function readFence(source: string): ParseResult {
   }
 
   return {
-    doc: { board: board ?? DEFAULT_BOARD, boardName, title, style, parts, devices, wires, points, notes },
+    doc: { board: board ?? DEFAULT_BOARD, boardName, title, style, parts, devices, wires, points, unused, notes },
     errors,
   };
 }

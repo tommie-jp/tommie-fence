@@ -209,6 +209,10 @@ logic (ロジックアナライザの画面) も**基板も部品も無い**。s
   番号は `0` と `列数 + 1` (5×7 cm 横使いなら 0 列と 25 列)。部品は挿せず、配線の端だけ半田付けできる。
   `slots:` を書かない図は、パッドの無い基板 (秋月の基板など) を名指しした題だけ。手本: `05-etc/03-mixer-dual-gate-fet/01-mixer.md` の図03 と
   `01-circuits/05-power-supplies/04-ldo-usb.md` の図3
+- **挿したまま使わないピン (電源だけを取り出す USB-C 基板の `D+` `D-` など) は、最上位の `unused:` に `ID.ピン名` で並べる**
+  (`unused: [J1.D+, J1.D-, J2.D+, J2.D-]`)。ERC の「どこにもつながっていない」から外れ、図は変わらない。
+  `points:` で名前を付けて黙らせない (名前の意味が違い、読む人が取り違える)。`check: off` も使わない (本物の繋ぎ忘れまで見えなくなる)。
+  部品に無いピンは断られ、実際は配線されているとお知らせが出る。perfboard-fence の次の版から
 - **取り違えると壊れる所の字 (`IN 5V` `OUT 3.3V` など) は、`text` に `red large bold` を付けて USB-C 基板の上 (受け口の上の行) に書く**
   (`- text b3 red large bold: IN 5V`・`- text w3 red large bold: OUT 3.3V`。5×7 cm 横使いの 3 行目)。
   `large` と `bold` は perfboard-fence 0.31.0 から (breadboard・circuit は前から)。受け口の金物には `USB-C` と自動で刻まれる

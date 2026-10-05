@@ -267,6 +267,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
       netlist,
       namedStrips: new Set(named.map(([address]) => holeStrip(address))),
       devices,
+      unused: parsed.doc.unused,
       spelling: board,
     })
     : [];

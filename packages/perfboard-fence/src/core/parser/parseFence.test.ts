@@ -456,3 +456,17 @@ describe('parseFence — board の slots の語', () => {
     },
   );
 });
+
+describe('unused:', () => {
+  const parse = (text: string) => parseFence(`board: 10x10\n${text}\n`);
+
+  test('reads a flow list and a block list of pin names', () => {
+    expect(parse('unused: [J1.D+, J1.D-]').doc.unused.map((entry) => entry.ref)).toEqual(['J1.D+', 'J1.D-']);
+    expect(parse('unused:\n  - J1.D+').doc.unused.map((entry) => entry.ref)).toEqual(['J1.D+']);
+  });
+
+  test('refuses a name without a pin, and a second unused:', () => {
+    expect(parse('unused: [J1]').errors.map((e) => e.message).join(' ')).toContain('部品の名前.ピンの名前');
+    expect(parse('unused: [J1.D+]\nunused: [J1.D-]').errors.map((e) => e.message).join(' ')).toContain('2 つあります');
+  });
+});

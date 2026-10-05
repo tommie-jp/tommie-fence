@@ -1,9 +1,9 @@
 import type { Net } from 'fence-kit';
-import { notice, safeToken } from '../errors.ts';
+import { fenceError, notice, safeToken } from '../errors.ts';
 import { formatAddress } from '../model/address.ts';
 import { holeStrip } from '../model/board.ts';
 import { pinRef } from '../wiring/wiring.ts';
-import type { DeviceSpec, FenceError, PlacedPart, RoutedWire, Spelling, StripId } from '../types.ts';
+import type { DeviceSpec, FenceError, PlacedPart, RoutedWire, Spelling, StripId, UnusedSpec } from '../types.ts';
 
 /**
  * ERC — 図のとおりに組んだら動かない、という指摘。
@@ -28,6 +28,8 @@ export type ErcInput = {
   readonly namedStrips: ReadonlySet<StripId>;
   /** 基板の外の機器。ピンは盤面に無いが、つなぎ忘れは部品と同じように沈黙する。 */
   readonly devices: readonly DeviceSpec[];
+  /** `unused:` に書いた、意図して使わないピン。「どこにもつながっていない」から外す。 */
+  readonly unused: readonly UnusedSpec[];
   /** 番地を綴るときの基板のシルク (お知らせの穴の名前が図の端の名前と同じになる)。 */
   readonly spelling: Spelling;
 };
@@ -76,9 +78,28 @@ function unwiredPins(input: ErcInput): FenceError[] {
   }
 
   const found: FenceError[] = [];
-  for (const { id, line, pins, hint } of terminalsOf(input)) {
+  const terminals = terminalsOf(input);
+  const known = new Set(terminals.flatMap(({ pins }) => pins.map(([ref]) => ref)));
+  const skipped = new Set(input.unused.map(({ ref }) => ref));
+
+  // **使わないと書いたピンの矛盾を黙らせない。** 綴りの誤りは断り、実際につながっていたら言う
+  // (後から配線を足したとき、古い印が嘘にならないように)。
+  for (const { ref, line } of input.unused) {
+    if (!known.has(ref)) {
+      found.push(fenceError(`unused: に書いたピンがありません: ${safeToken(ref)}`, line, ref));
+      continue;
+    }
+    const net = netOf.get(ref);
+    const owner = ref.slice(0, ref.indexOf('.'));
+    if (net && net.refs.some((other) => !other.startsWith(`${owner}.`))) {
+      found.push(notice(`unused: に書いたピンがつながっています: ${safeToken(ref)}`, line, ref));
+    }
+  }
+
+  for (const { id, line, pins, hint } of terminals) {
     const loose: string[] = [];
     for (const [ref, where] of pins) {
+      if (skipped.has(ref)) continue;
       const net = netOf.get(ref);
       // **自分の足しか乗っていないネットは、つながっていない。** 凹の両端のように
       // 部品の中でつながったピンどうしは 1 つのネットに並ぶが、それは相手ではない。
