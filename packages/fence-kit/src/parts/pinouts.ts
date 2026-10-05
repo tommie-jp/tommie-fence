@@ -16,6 +16,7 @@ import type { SipLook } from './chips.ts';
  * | TLC555 | SLFS043K (TLC555)、Table 4-1 — 電源のピンは `VDD` |
  * | LM358 | SLOS068AB (LM358 / LM2904 / LM258 / LM158)、Table 4-1 |
  * | TL071 / TL072 | SLOS080W、Table 4-1 (TL071x の D・P) / 4-3 (TL072x) |
+ * | LM393 | SLCS005AH (LM393 / LM2903 / LM193 / LM293)、4 Pin Configuration (D・P の 8 ピン)。2026-10-05 に確かめた |
  * | CD4017B | SCHS027C、端子図 (TERMINAL DIAGRAM) |
  * | CD4040B | SCHS030D、端子図 |
  * | CD4069UB | SCHS054E、Pin Functions |
@@ -142,6 +143,10 @@ const ROWS: readonly PinoutRow[] = [
   {
     models: ['TL072', 'TL072CP', 'TL072ACP', 'TL072BCP', 'TL072H'], role: 'オペアンプ ×2',
     names: ['1OUT', '1IN-', '1IN+', 'VCC-', '2IN+', '2IN-', '2OUT', 'VCC+'],
+  },
+  {
+    models: ['LM393', 'LM393P', 'LM393N', 'LM393A', 'LM393AP', 'LM393B', 'LM393BP', 'LM2903', 'LM2903P', 'LM293', 'LM193'], role: 'コンパレータ ×2',
+    names: ['1OUT', '1IN-', '1IN+', 'GND', '2IN+', '2IN-', '2OUT', 'VCC'],
   },
   {
     models: ['CD4017B', 'CD4017', 'CD4017BE'], role: '10 進カウンタ',

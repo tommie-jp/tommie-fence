@@ -23,6 +23,8 @@ describe('ピンの名前の表', () => {
     expect(lookupPinout('TL071', 8)?.names).toEqual(['NC', 'IN-', 'IN+', 'VCC-', 'NC', 'OUT', 'VCC+', 'NC']);
     expect(lookupPinout('TL072', 8)?.names).toEqual(['1OUT', '1IN-', '1IN+', 'VCC-', '2IN+', '2IN-', '2OUT', 'VCC+']);
     expect(lookupPinout('LM358', 8)?.names).toEqual(['OUT1', 'IN1-', 'IN1+', 'V-', 'IN2+', 'IN2-', 'OUT2', 'V+']);
+    // 2 回路のコンパレータ。電源のピンは `VCC` と `GND` (オペアンプ LM358 の `V+` `V-` ではない)。
+    expect(lookupPinout('LM393', 8)?.names).toEqual(['1OUT', '1IN-', '1IN+', 'GND', '2IN+', '2IN-', '2OUT', 'VCC']);
   });
 
   test('names the CMOS counters and gates', () => {
@@ -139,9 +141,9 @@ describe('ピンの名前の表', () => {
   test('lists the models it knows, one spelling per row, optionally for one package', () => {
     const all = pinoutModels();
 
-    // 先頭の 31 行は 74HC273 まで (既存の並び)、そのあとにロジック IC、そのあとに 3SK291、最後が SFU455B。
-    expect(all.slice(0, 5)).toEqual(['NE555', 'TLC555', 'LM358', 'TL071', 'TL072']);
-    expect(all.slice(28, 35)).toEqual(['62256', '6116', '74HC245', '74HC273', '74HC14', '74HC00', '74HC161']);
+    // 先頭の 32 行は 74HC273 まで (既存の並び。LM393 は 6 行目)、そのあとにロジック IC、そのあとに 3SK291、最後が SFU455B。
+    expect(all.slice(0, 6)).toEqual(['NE555', 'TLC555', 'LM358', 'TL071', 'TL072', 'LM393']);
+    expect(all.slice(29, 36)).toEqual(['62256', '6116', '74HC245', '74HC273', '74HC14', '74HC00', '74HC161']);
     expect(all.at(-2)).toBe('3SK291');
     expect(all.at(-1)).toBe('SFU455B');
     expect(new Set(all).size).toBe(all.length);

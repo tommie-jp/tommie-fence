@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- 足の名前の表に LM393 (`LM393` `LM393P` `LM393N` `LM393A` `LM2903` `LM293` ほか、`dip8`)。ピンは `1OUT` `1IN-` `1IN+` `GND` `2IN+` `2IN-` `2OUT` `VCC`
+  (TI SLCS005AH の端子図。表は fence-kit にあり、この版に束ねられる)
+
 ## [0.31.0] - 2026-10-05
 
 ### Added
