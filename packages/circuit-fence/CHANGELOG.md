@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-10-05
+
 ### Added
 
 - 足の名前の表に LM393 (`LM393` `LM393P` `LM393N` `LM393A` `LM2903` `LM293` ほか、`dip8`)。ピンは `1OUT` `1IN-` `1IN+` `GND` `2IN+` `2IN-` `2OUT` `VCC`
