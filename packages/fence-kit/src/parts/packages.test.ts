@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { drawPackage, packageHalfWidth, packageReach } from './packages.ts';
+import { drawPackage, packageExtent, packageHalfWidth, packageReach } from './packages.ts';
 import { REAL_INK } from './bodies.ts';
 import type { BodyPart } from './bodies.ts';
 import type { PackageShape } from './packages.ts';
@@ -77,11 +77,19 @@ describe('パッケージの姿', () => {
     expect(drawn).toContain('<circle');
   });
 
-  test('puts the tab on the side away from the pin names', () => {
+  test('stands the TO-220 on its pins, tab up, whichever side the caption takes', () => {
     const down = drawPackage(part('transistor', 'to220'), shape({ side: 1 }));
     const up = drawPackage(part('transistor', 'to220'), shape({ side: -1 }));
+    const ys = [...down.matchAll(/<rect[^>]* y="([\d.-]+)"[^>]* height="([\d.-]+)"/g)].map((m) => [Number(m[1]), Number(m[2])]);
 
-    expect(down).not.toBe(up);
+    // 胴は向きに依らず、ピンの点 (cy = 50) から上へだけ伸びる。
+    expect(up).toBe(down);
+    for (const [y, height] of ys) expect(y! + height!).toBeLessThanOrEqual(50);
+    // 放熱タブは胴の一番上。
+    expect(Math.min(...ys.map(([y]) => y!))).toBe(ys[1]![0]);
+    expect(packageExtent(part('transistor', 'to220'), PITCH).down).toBe(0);
+    expect(packageExtent(part('transistor', 'to220'), PITCH).up).toBeGreaterThan(2 * packageReach(part('transistor', 'to220'), PITCH));
+    expect(packageExtent(part('transistor'), PITCH)).toEqual({ up: packageReach(part('transistor'), PITCH), down: packageReach(part('transistor'), PITCH) });
   });
 
   test('draws the adapter as a board with a small chip on it, not as a TO-92', () => {
@@ -125,5 +133,40 @@ describe('パッケージの姿', () => {
 
     expect(painted).toContain('#ff00ff');
     expect(painted).not.toBe(plain);
+  });
+});
+
+describe('型番の刻み', () => {
+  const named = (type: string, variant: string | null, value: string | null): BodyPart =>
+    ({ type, variant, value, pins: [{ name: 'in' }, { name: 'gnd' }, { name: 'out' }] });
+  const engraved = (drawn: string): { text: string; size: number } | null => {
+    const match = /font-size="([\d.]+)"[^>]*>([^<]+)<\/text>/.exec(drawn);
+    return match === null ? null : { text: match[2]!, size: Number(match[1]) };
+  };
+
+  test('engraves the value of a regulator and an ic3 in the TO-220 plastic', () => {
+    expect(engraved(drawPackage(named('regulator', 'to220', '7805'), shape()))?.text).toBe('7805');
+    expect(engraved(drawPackage(named('ic3', 'to220', 'LM317'), shape()))?.text).toBe('LM317');
+  });
+
+  test('engraves it in the TO-92 as well', () => {
+    expect(engraved(drawPackage(named('regulator', null, '78L05'), shape()))?.text).toBe('78L05');
+  });
+
+  test('engraves nothing without a value, and nothing on a transistor', () => {
+    expect(engraved(drawPackage(named('regulator', 'to220', null), shape()))).toBeNull();
+    expect(engraved(drawPackage(named('regulator', 'to220', '  '), shape()))).toBeNull();
+    expect(engraved(drawPackage(named('transistor', 'to220', 'TIP31'), shape()))).toBeNull();
+  });
+
+  test('shrinks a long value so it stays inside the plastic', () => {
+    const short = engraved(drawPackage(named('regulator', 'to220', '7805'), shape()))!;
+    const long = engraved(drawPackage(named('regulator', 'to220', 'AMS1117-3.3-ADJ'), shape()))!;
+
+    expect(long.size).toBeLessThan(short.size);
+  });
+
+  test('uses the ink it is given', () => {
+    expect(drawPackage(named('regulator', 'to220', '7805'), shape({ chipText: '#abcdef' }))).toContain('#abcdef');
   });
 });

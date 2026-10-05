@@ -1,5 +1,6 @@
 import { element } from '../markup.ts';
-import { num } from '../svg.ts';
+import { num, svgText } from '../svg.ts';
+import { textWidth } from '../textFit.ts';
 import type { BodyInk, BodyPart } from './bodies.ts';
 import { REAL_INK } from './bodies.ts';
 import { isSmdAdapter, smdLook } from './smd.ts';
@@ -33,7 +34,12 @@ export type PackageShape = {
   readonly plate: string;
   /** 胴の色 (テーマが決める黒)。 */
   readonly chipBody: string;
+  /** 樹脂に刻む字の色 (型番)。無ければ明るい灰。 */
+  readonly chipText?: string;
 };
+
+/** 樹脂に刻む字の既定の色。 */
+const ENGRAVE_INK = '#e8ebf0';
 
 /**
  * 胴の高さの半分。**穴のピッチで決める** — 実物の寸法をピッチに対する比で
@@ -49,6 +55,28 @@ export function packageReach(part: BodyPart, pitch: number): number {
   // TO-92 は幅 4.5mm ほど。穴のピッチ 2.54mm に対して直径 2 ピッチ弱に収める。
   return 0.95 * pitch;
 }
+
+/**
+ * TO-220 の胴の下の縁を、ピンの点から上へ離す量 (`reach` に対する比)。
+ * ピンの点が胴の縁に重なると、金属の粒が胴を食って見えるので少し空ける。
+ */
+const TO220_PIN_GAP = 0.2;
+
+/**
+ * 胴がピンの中心から**上へ・下へ**伸びる量 (`drawPackage` の向きのまま。回さない)。
+ * 多くの胴はピンの点を中心に上下対称だが、**TO-220 は実物の姿のとおり、ピンが下・
+ * 胴と放熱タブが上** — 胴は穴の行から上へだけ伸びる (写真は型番の面を手前に、ピンを
+ * 下に立てた姿)。配線よけ・名札の置き場は、この量から取る。
+ */
+export function packageExtent(part: BodyPart, pitch: number): { readonly up: number; readonly down: number } {
+  const reach = packageReach(part, pitch);
+  if (part.variant === 'to220' && isThreeLeadPackage(part)) return { up: reach * (2 + TO220_PIN_GAP), down: 0 };
+  return { up: reach, down: reach };
+}
+
+/** `drawPackage` が TO-220 の胴で描く部品か (半固定抵抗などの `to220` は無いが、型で絞っておく)。 */
+const isThreeLeadPackage = (part: BodyPart): boolean =>
+  part.type !== 'potentiometer' && part.type !== 'slide-switch';
 
 /**
  * 胴の横幅の半分。**丸い TO-92 以外は縦より横に広い**。
@@ -82,9 +110,34 @@ export function drawPackage(part: BodyPart, shape: PackageShape, ink: BodyInk = 
     return part.variant === 'knob' ? knobShell(shape, ink) : potentiometerShell(shape, ink);
   }
   if (part.type === 'slide-switch') return slideSwitchShell(shape, ink);
-  if (part.variant === 'to220') return to220Shell(shape, ink);
+  if (part.variant === 'to220') return to220Shell(part, shape, ink);
   if (isSmdAdapter(part.variant ?? null)) return adapterShell(part, shape, ink);
-  return to92Shell(shape, ink);
+  return to92Shell(part, shape, ink);
+}
+
+/**
+ * 型番を胴に刻むか。**3 端子レギュレータと 3 ピンの IC だけ** — 型番が部品の正体で、
+ * 実物の胴にも刻んである。トランジスタなどは今までどおり刻まない。
+ */
+const engravesValue = (part: BodyPart): boolean => part.type === 'regulator' || part.type === 'ic3';
+
+/** 刻む字の大きさの上限 (`reach` に対する比)。 */
+const ENGRAVE_SIZE = 0.4;
+
+/** 字の送り幅の見積もりに足す余裕 (太字は `textFit` の見積もりより広い)。 */
+const ENGRAVE_BOLD = 1.2;
+
+/**
+ * 胴に刻む型番。`centre` の真ん中に置き、`room` (幅) に収まらないなら字を縮める。
+ * 値が無い (空) なら何も刻まない。
+ */
+function engrave(part: BodyPart, shape: PackageShape, centre: { readonly x: number; readonly y: number }, room: number): string {
+  const text = part.value?.trim() ?? '';
+  if (!engravesValue(part) || text === '') return '';
+  const size = Math.min(shape.reach * ENGRAVE_SIZE, room / (textWidth(text) * ENGRAVE_BOLD));
+  return svgText(centre.x, centre.y + size * 0.35, text, {
+    'font-size': num(size), 'font-weight': 700, fill: shape.chipText ?? ENGRAVE_INK,
+  });
 }
 
 /**
@@ -92,7 +145,7 @@ export function drawPackage(part: BodyPart, shape: PackageShape, ink: BodyInk = 
  * 丸だけで描くと**どちらが平らな面か分からず**、実物を差すときに裏返せてしまう
  * (ピン名は図には書いてあるが、実物の胴には書いていない — 見分けは平らな面が本体)。
  */
-function to92Shell(shape: PackageShape, ink: BodyInk): string {
+function to92Shell(part: BodyPart, shape: PackageShape, ink: BodyInk): string {
   const { cx, cy, reach, side } = shape;
   // 平らな面はピン名の側 (キャプションの反対)。
   const flatY = cy - side * reach * FLAT_AT;
@@ -104,33 +157,48 @@ function to92Shell(shape: PackageShape, ink: BodyInk): string {
   const sweep = side > 0 ? 0 : 1;
   const outline = `M ${num(cx - half)} ${num(flatY)}`
     + ` A ${num(reach)} ${num(reach)} 0 1 ${sweep} ${num(cx + half)} ${num(flatY)} Z`;
-  return element('path', {
+  const body = element('path', {
     d: outline, fill: ink.paint(shape.chipBody), stroke: ink.paint('#14171c'), 'stroke-width': 1.2,
   });
+  // 型番は丸い側へ寄せる。真ん中のピンの点 (弦の上、中心) に字が掛からない深さまで下げ、
+  // 幅は平らな面の弦 (2 * half) に合わせる。
+  const middle = { x: cx, y: cy + side * reach * TO92_ENGRAVE_AT };
+  return body + engrave(part, shape, middle, half * 2 * ENGRAVE_ROOM);
 }
+
+/** TO-92 に型番を刻む深さ (中心から丸い側へ。`reach` に対する比)。 */
+const TO92_ENGRAVE_AT = 0.45;
+
+/** 型番を収める幅の、胴の幅に対する比 (縁に触れない余白)。 */
+const ENGRAVE_ROOM = 0.9;
 
 /**
  * TO-220。放熱タブつきの角い胴で、TO-92 の丸とは大きさも形も違う。
- * **タブはピンの反対側に描く**: ピンの側にはピン名が並ぶため。
+ * **実物の写真と同じ向き — ピンが下、放熱タブ (ねじ穴つき) が上** で、その間に黒い樹脂の胴。
+ * 胴は穴の行から上へ伸び (`packageExtent`)、`side` には従わない。ピン名は胴の下 (ピンの手前)。
+ * regulator・ic3 は型番を樹脂の面の真ん中に刻む。
  */
-function to220Shell(shape: PackageShape, ink: BodyInk): string {
-  const { cx, cy, reach, halfWidth, side } = shape;
+function to220Shell(part: BodyPart, shape: PackageShape, ink: BodyInk): string {
+  const { cx, cy, reach, halfWidth } = shape;
+  const bottom = cy - reach * TO220_PIN_GAP;
+  const top = bottom - reach * 2;
   const tabHeight = reach * 0.8;
-  const tabY = side > 0 ? cy + reach - tabHeight : cy - reach;
 
   const plastic = element('rect', {
-    x: num(cx - halfWidth), y: num(cy - reach), width: num(halfWidth * 2), height: num(reach * 2), rx: 3,
+    x: num(cx - halfWidth), y: num(top), width: num(halfWidth * 2), height: num(reach * 2), rx: 3,
     fill: ink.paint('#23272e'), stroke: ink.paint('#12151a'),
   });
   const tab = element('rect', {
-    x: num(cx - halfWidth), y: num(tabY), width: num(halfWidth * 2), height: num(tabHeight), rx: 2,
+    x: num(cx - halfWidth), y: num(top), width: num(halfWidth * 2), height: num(tabHeight), rx: 2,
     fill: ink.paint('#b9c0c9'), stroke: ink.paint('#7c848e'),
   });
   // 取り付けねじの穴。基板の色で抜くと、下の穴の並びと紛れない。
   const hole = element('circle', {
-    cx: num(cx), cy: num(tabY + tabHeight / 2), r: num(reach * 0.2), fill: ink.paint(shape.plate),
+    cx: num(cx), cy: num(top + tabHeight / 2), r: num(reach * 0.2), fill: ink.paint(shape.plate),
   });
-  return plastic + tab + hole;
+  // 型番は樹脂の面 (タブの下から胴の下の縁まで) の真ん中。
+  const face = { x: cx, y: (top + tabHeight + bottom) / 2 };
+  return plastic + tab + hole + engrave(part, shape, face, halfWidth * 2 * ENGRAVE_ROOM);
 }
 
 /**

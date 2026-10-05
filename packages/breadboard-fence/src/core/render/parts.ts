@@ -7,7 +7,7 @@ import {
 } from './packages.ts';
 import { CAPTION_DROP, charWidth } from './partCommon.ts';
 import { band, captionBandOf, captionDropOf } from './captions.ts';
-import { bodyHalfHeight, bodyHalfWidth, legNames, renderThreeLead } from './threeLead.ts';
+import { bodyDown, bodyHalfWidth, bodyUp, legNames, renderThreeLead } from './threeLead.ts';
 import { renderTwoLead } from './twoLead.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
@@ -52,7 +52,10 @@ export function partObstacles(
   }
 
   if (part.kind === 'three-lead') {
-    const halfHeight = bodyHalfHeight(part, layout);
+    // 胴の上下の伸び。TO-220 は上へだけ (ピンが下)。上へ出す字は無いので帯も足さない。
+    const up = bodyUp(part, layout);
+    const down = bodyDown(part, layout);
+    const upOnly = down < up;
     // 胴は姿によって縦より横に広い (TO-220・半固定抵抗・スライドスイッチ)。
     // 丸の半径で作っていたころは、その差のぶんだけ配線が本体の上を通っていた。
     const halfWidth = bodyHalfWidth(part, layout);
@@ -65,12 +68,12 @@ export function partObstacles(
     return [
       {
         x: center.x - halfWidth,
-        y: center.y - halfHeight - reach,
+        y: center.y - up - (upOnly ? 0 : reach),
         width: halfWidth * 2,
-        height: halfHeight * 2 + reach * 2,
+        height: up + down + (upOnly ? 0 : reach) + reach,
       },
       ...bands,
-      // ピンの名前は反対側に並ぶ。名前が長ければ胴からはみ出す。
+      // ピンの名前は胴の外に並ぶ。名前が長ければ胴からはみ出す。
       ...legNameBands(part, layout, theme),
     ];
   }
@@ -82,11 +85,9 @@ export function partObstacles(
  * 3 ピンのピンの名前が占める帯。**レーンにいちばん近い字**なので、
  * ここを見落とすと配線が名前の上を走る (`B` のような 1 字なら胴に隠れるが、
  * 長い名前を付けると横にはみ出す)。置き場は描く側と同じ `legNames`。
- * 樹脂の上に刷る名前 (TO-220) は胴の帯に入っているので数えない。
  */
 function legNameBands(part: PlacedPart, layout: Layout, theme: RenderTheme): Rect[] {
   return legNames(part, layout, theme)
-    .filter((name) => !name.onBody)
     .map((name) => band(name.x, name.y, [...name.name].length * charWidth(theme), theme));
 }
 

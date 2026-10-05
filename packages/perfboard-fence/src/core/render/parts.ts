@@ -2,7 +2,7 @@ import {
   BOARD_HALO_OPACITY, BOARD_INK_OPACITY, REAL_INK, boardBox, boardChip, connectorBox, dipChip, directSotSpec, drawBody, drawConnector, drawDipAdapter, drawSipAdapter,
   drawDirectSot, drawPackage, drawsOwnLeads,
   element, fit, hasBody,
-  drawNamedChip, lookupBoardPart, lookupNamedChip, lookupPinout, num, bodySize, packageHalfWidth, packageReach, sipHeader,
+  drawNamedChip, lookupBoardPart, lookupNamedChip, lookupPinout, num, bodySize, packageExtent, packageHalfWidth, packageReach, sipHeader,
   smaBody as drawSmaBody, svgText, chipAlongX, sipBox, transformerCore, TEXT_HALO_WIDTH,
 } from 'fence-kit';
 import type { BodyInk, BodyPart, ChipInk } from 'fence-kit';
@@ -544,6 +544,20 @@ function packageAngle(part: PlacedPart): number {
   return ((step % 4) + 4) % 4 * 90;
 }
 
+/**
+ * 胴がピンの中心から下へ伸びる量 (名札を胴の下に置くために測る)。多くの胴は回しても同じ
+ * `packageReach` だが、**TO-220 は上へだけ伸びる** (ピンが下・タブが上) ので、
+ * 回した向きで下への伸びが変わる (0 度は 0、180 度は胴の長さ、横向きは胴の幅の半分)。
+ */
+function captionReach(part: PlacedPart, layout: Layout, angle: number): number {
+  const body = asBody(part);
+  const { up, down } = packageExtent(body, layout.pitch);
+  if (down === up) return packageReach(body, layout.pitch);
+  if (angle === 0) return down;
+  if (angle === 180) return up;
+  return packageHalfWidth(body, layout.pitch);
+}
+
 function renderPackage(part: PlacedPart, layout: Layout, theme: Theme, room?: PartRoom): string {
   const rect = bodyRect(part, layout);
   if (!rect) return '';
@@ -557,6 +571,7 @@ function renderPackage(part: PlacedPart, layout: Layout, theme: Theme, room?: Pa
     side: 1,
     plate: theme.palette.plate,
     chipBody: theme.palette.chipBody,
+    chipText: theme.palette.chipText,
   }, inkOf(theme));
   // **胴はピンの並びに沿って回す。** 全穴が独立している基板なので 3 ピンをどの向きにも
   // 挿せる。回さないと TO-92 の平らな面がピンの 1 本を向いてしまい、実物ではありえない
@@ -578,7 +593,7 @@ function renderPackage(part: PlacedPart, layout: Layout, theme: Theme, room?: Pa
 
   const label = partLabel(
     caption(part),
-    { cx: rect.cx, cy: rect.cy, height: packageReach(asBody(part), layout.pitch) * 2, angle: 0 },
+    { cx: rect.cx, cy: rect.cy, height: captionReach(part, layout, angle) * 2, angle: 0 },
     { x: rect.cx, y: rect.cy },
     theme,
     layout,

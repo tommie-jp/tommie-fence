@@ -5,8 +5,8 @@ import {
 } from './partCommon.ts';
 import { HOLE_ROWS } from '../types.ts';
 import type { HoleRow, Point, Rect } from '../types.ts';
-import { drawPackage, packageHalfWidth, packageReach } from 'fence-kit';
-import { insertionDot, insertionDotRadius } from './wires.ts';
+import { drawPackage, packageExtent, packageHalfWidth, packageReach } from 'fence-kit';
+import { insertionDot } from './wires.ts';
 import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
 
@@ -21,6 +21,14 @@ import type { RenderTheme } from './theme.ts';
  */
 export const bodyHalfHeight = (part: PlacedPart, layout: Layout): number =>
   packageReach(part, layout.pitch);
+
+/**
+ * 胴がピンの点から**上へ・下へ**伸びる量。多くの胴は上下対称だが、**TO-220 は写真と同じ向き
+ * (ピンが下、放熱タブと樹脂が上)** で、胴は穴の行から上へだけ伸びる (`fence-kit` の
+ * `packageExtent`)。配線よけ・名前・名札の置き場はここから取る。
+ */
+export const bodyUp = (part: PlacedPart, layout: Layout): number => packageExtent(part, layout.pitch).up;
+export const bodyDown = (part: PlacedPart, layout: Layout): number => packageExtent(part, layout.pitch).down;
 
 /**
  * 胴の横幅の半分。**丸い TO-92 以外は縦より横に広い**。
@@ -98,15 +106,11 @@ type RowGap = { readonly above: number; readonly below: number };
  *   ここを縦に通る (`j4 -- -b4`。i 行の TO-92 の `E` が列番号と GND の線に重なった)
  * - 溝。ピンの列を溝の向こうへ渡す線 (`e8 -- f8`) がここを縦に通る
  * - 溝の向こうのブロック。どの部品のピンの名前か読めない
- *
- * `ravine` を真にすると溝も入れる (TO-220 の名札。ピンの列から横へずらして置くので、
- * 列を渡る線とは重ならない)。
  */
-function rowGaps(layout: Layout, legY: number, ravine: boolean): RowGap[] {
+function rowGaps(layout: Layout, legY: number): RowGap[] {
   const rows = BLOCKS[legY < layout.ravineY ? 0 : 1] ?? [];
   const inBlock = rows.slice(1).map((row, index) => ({ above: layout.rowY(rows[index] ?? row), below: layout.rowY(row) }));
-  const ravineGap = { above: layout.rowY('e'), below: layout.rowY('f') };
-  return [...inBlock, ...(ravine ? [ravineGap] : [])]
+  return inBlock
     .filter((gap) => gap.above > 0 && gap.below > gap.above)
     .sort((a, b) => a.above - b.above);
 }
@@ -134,24 +138,24 @@ export function legNameLine(
   legY: number,
   layout: Layout,
   theme: RenderTheme,
-  ravine = false,
 ): LegNameLine {
   const cap = theme.metrics.textSize * NAME_CAP;
   const edge = haloWidth(theme) / 2;
   const hole = theme.metrics.holeSize / 2;
-  const reach = bodyHalfHeight(part, layout);
   // 胴の下の縁から離す最小 (今までと同じ)。これより上へは寄せない。
-  const highest = legY + reach + LEG_NAME_CLEAR + cap;
+  const highest = legY + bodyDown(part, layout) + LEG_NAME_CLEAR + cap;
   // 胴の上の縁から離す最小。基準線がこれより下だと字が胴に掛かる。
-  const lowest = legY - reach - LEG_NAME_CLEAR;
+  const lowest = legY - bodyUp(part, layout) - LEG_NAME_CLEAR;
+  // **胴が上だけに伸びる TO-220 は、名前をいつもピンの下へ** (上へ回すと胴の上のタブの向こうに落ちる)。
+  const belowOnly = bodyDown(part, layout) < bodyUp(part, layout);
   const fits = (y: number, gap: RowGap): boolean => y + edge <= gap.below - hole && y - cap - edge >= gap.above + hole;
-  const gaps = rowGaps(layout, legY, ravine);
+  const gaps = rowGaps(layout, legY);
 
   for (const gap of gaps.filter((candidate) => candidate.above >= legY - 0.5)) {
     const y = Math.max((gap.above + gap.below) / 2 + cap / 2, highest);
     if (fits(y, gap)) return { y, betweenRows: true, above: false };
   }
-  for (const gap of gaps.filter((candidate) => candidate.below <= legY + 0.5).reverse()) {
+  for (const gap of belowOnly ? [] : gaps.filter((candidate) => candidate.below <= legY + 0.5).reverse()) {
     const y = Math.min((gap.above + gap.below) / 2 + cap / 2, lowest);
     if (fits(y, gap)) return { y, betweenRows: true, above: true };
   }
@@ -161,50 +165,33 @@ export function legNameLine(
 export const legNameBaseline = (part: PlacedPart, legY: number, layout: Layout, theme: RenderTheme): number =>
   legNameLine(part, legY, layout, theme).y;
 
-/**
- * ピンの名前を**胴の樹脂の上に刷る**か。TO-220 だけ — 胴がピンの行の上下 1.4 ピッチまで
- * 広がるので、胴の下の行間は胴で塞がり、名前が溝やその先の行間に落ちた (溝を渡る線の上)。
- * 樹脂は広く、線も通らない (DIP のピンの番号と同じ置き方)。
- */
-const namesOnBody = (part: PlacedPart): boolean => part.variant === 'to220';
-
 /** ピンの名前 1 つの置き場。 */
 export type LegName = {
   readonly name: string;
   readonly x: number;
   readonly y: number;
   readonly size: number;
-  readonly onBody: boolean;
 };
-
-/** 樹脂の上の字を、ピンの点から離す量 (px)。 */
-const ON_BODY_CLEAR = 2;
 
 /**
  * ピンの名前の置き場。**描く側・配線よけ (`parts.ts`)・名札の逃がし (`captions.ts`) で同じ答え**。
- * TO-220 は樹脂の側 (タブの反対。溝から遠い側) のピンの点のすぐ脇、ほかは `legNameLine`。
+ * 胴の下 (TO-220 はピンのすぐ下) の行間。置き方は `legNameLine`。
  */
 export function legNames(part: PlacedPart, layout: Layout, theme: RenderTheme): LegName[] {
   const points = pinPoints(part, layout);
   if (!points) return [];
   const size = legNameSize(part.pins.map((pin) => pin.name), points.map((point) => point.x), theme.metrics.textSize);
-  const onBody = namesOnBody(part);
-  const dot = insertionDotRadius(theme) + ON_BODY_CLEAR;
   return part.pins.flatMap((pin, index): LegName[] => {
     const point = points[index];
     if (!point) return [];
-    if (!onBody) return [{ name: pin.name, x: point.x, y: legNameBaseline(part, point.y, layout, theme), size, onBody }];
-    // 樹脂はタブの反対。タブは溝の側 (`renderThreeLead` の `side`)。
-    const plasticUp = point.y < layout.ravineY;
-    const y = plasticUp ? point.y - dot : point.y + dot + size * NAME_CAP;
-    return [{ name: pin.name, x: point.x, y, size, onBody }];
+    return [{ name: pin.name, x: point.x, y: legNameBaseline(part, point.y, layout, theme), size }];
   });
 }
 
 /**
  * ピンの名前の字が占める所 (縁取りまで)。ほかの部品の名札がここに来たら逃がす
  * (`captions.ts` の `captionDrops`)。行間に置いた名前の横に、隣の部品の名札が
- * 並ぶと `E D1 1N60` と続けて読めた。**樹脂の上の名前は数えない** (胴そのものが場所を取る)。
+ * 並ぶと `E D1 1N60` と続けて読めた。
  */
 export function legNameBoxes(part: PlacedPart, layout: Layout, theme: RenderTheme, margin: number): Rect[] {
   // `margin` は横に空ける字数 (`captions.ts` の `captionDrops` が決める)。**縦は縁取りだけ** —
@@ -214,7 +201,6 @@ export function legNameBoxes(part: PlacedPart, layout: Layout, theme: RenderThem
   const halo = haloWidth(theme) / 2;
   const edge = halo + charWidth(theme) * margin;
   return legNames(part, layout, theme)
-    .filter((name) => !name.onBody)
     .map((name) => {
       const cap = name.size * NAME_CAP;
       const half = (boldWidth(name.name) * name.size) / 2 + edge;
@@ -242,8 +228,7 @@ export type ThreeLeadCaption = {
  * `captionDrops` が決める) なら、従来どおり名前の 1 行下。縦に並んだピンは 1 行下だけ。
  * 名前を胴の上に置いた (`legNameLine` の `above`) ときは、下ではなく 1 行上。
  *
- * TO-220 は名前を樹脂に刷るので、名札の行は名前とは別に選ぶ。溝も使ってよい
- * (名札はピンの列から横へずらして置くので、溝を渡る線とは重ならない)。
+ * TO-220 は胴が上へ伸びるので、名前も名札もピンの下の行間に出る (胴の外)。
  */
 export function threeLeadCaptionSpots(
   part: PlacedPart,
@@ -255,7 +240,7 @@ export function threeLeadCaptionSpots(
   const centre = points?.[1] ?? points?.[0];
   if (!points || !centre) return [];
 
-  const { y: names, betweenRows, above } = legNameLine(part, centre.y, layout, theme, namesOnBody(part));
+  const { y: names, betweenRows, above } = legNameLine(part, centre.y, layout, theme);
   const stacked = { x: centre.x, y: names + (above ? -1 : 1) * theme.metrics.textSize * NAME_LINE, width, above };
   if (!inOneRow(points)) return [stacked];
 
@@ -326,19 +311,14 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
   // **ピンの名前もキャプションも胴の下へ。** 図の中で名前の出る側が揃う
   // (実機で「すべての部品名は部品の下側に表示する」)。溝の側へ振り分けて
   // いたが、上下のブロックで側が変わって揃わなかった。
-  // TO-220 は樹脂の上に明るい字で刷る (DIP のピンの番号と同じ)。ほかは基板の上に縁取りで。
   const names = legNames(part, layout, theme)
     .map((name) => svgText(name.x, name.y, name.name, {
       'font-size': num(name.size),
       'font-weight': 700,
-      ...(name.onBody
-        ? { fill: palette.chipText }
-        : {
-            fill: palette.partText,
-            halo: palette.textHalo,
-            haloWidth: haloWidth(theme),
-            haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
-          }),
+      fill: palette.partText,
+      halo: palette.textHalo,
+      haloWidth: haloWidth(theme),
+      haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
     }))
     .join('');
   // キャプションはピンの名前の横 (入らなければ名前の 1 行下)。置き場は `threeLeadCaptionAt`。
@@ -352,10 +332,11 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
     cy: center.y,
     reach,
     halfWidth: bodyHalfWidth(part, layout),
-    // **キャプションとタブを置く側** = 溝の側。ピン名は反対に並ぶ。
+    // **キャプションを置く側** = 溝の側 (TO-92 の平らな面は反対)。TO-220 は側に依らず、タブが上。
     side: towardRavine > 0 ? 1 : -1,
     plate: theme.palette.plate,
     chipBody: theme.palette.chipBody,
+    chipText: theme.palette.chipText,
   });
   return `${leads}${shell}${legs}${names}${label}`;
 }

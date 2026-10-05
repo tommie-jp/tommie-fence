@@ -66,7 +66,7 @@ export type {
 export type { BoardPart } from './parts/boards.ts';
 export { PIN_NAME_GAP, pinNameInner, pinNameRow, pinNameWidth } from './parts/pinNameRow.ts';
 export type { PinNameRow, PinNameRowOptions } from './parts/pinNameRow.ts';
-export { drawPackage, packageHalfWidth, packageReach } from './parts/packages.ts';
+export { drawPackage, packageExtent, packageHalfWidth, packageReach } from './parts/packages.ts';
 export {
   SMD_PX_PER_MM, adapterFor, directSotSpec, isDirectSmd, isSmdAdapter, smdLook, smdLooksOf, smdMount, smdOffsets,
   smdSpelling, smdSuggestion, smdTable, withSmdLooks,

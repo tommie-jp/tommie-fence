@@ -86,7 +86,8 @@ describe('part captions keep clear of the wires', () => {
       'wires:',
       '  - i8 -- l8 black',
     ].join('\n'));
-    const caption = boxOf(find(svg, /SFELF10M7/));
+    // 胴に刻んだ型番ではなく、名札 (`FL1 SFELF10M7`) を見る。
+    const caption = boxOf(find(svg, /^FL1 SFELF10M7$/));
     for (const line of wires(svg)) expect(crosses(line, caption), JSON.stringify(line)).toBe(false);
   });
 

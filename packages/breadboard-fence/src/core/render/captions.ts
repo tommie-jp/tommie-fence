@@ -7,7 +7,7 @@ import {
   CAPTION_CLEAR, CAPTION_HEIGHT, NAME_CAP, NAME_LINE,
   captionTextWidth, haloWidth, labelYOf, pinPoints,
 } from './partCommon.ts';
-import { bodyHalfHeight, bodyHalfWidth, legNameBoxes, threeLeadCaptionAt, threeLeadCaptionSpots } from './threeLead.ts';
+import { bodyDown, bodyHalfWidth, bodyUp, legNameBoxes, threeLeadCaptionAt, threeLeadCaptionSpots } from './threeLead.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
 
@@ -181,12 +181,12 @@ function footprintOf(part: PlacedPart, layout: Layout): Rect[] {
   if (!points || points.length === 0) return [];
   const xs = points.map((point) => point.x);
   const ys = points.map((point) => point.y);
-  const [padX, padY] = part.kind === 'three-lead'
-    ? [bodyHalfWidth(part, layout), bodyHalfHeight(part, layout)]
-    : [layout.pitch * 0.4, layout.pitch * 0.4];
+  const [padX, padUp, padDown] = part.kind === 'three-lead'
+    ? [bodyHalfWidth(part, layout), bodyUp(part, layout), bodyDown(part, layout)]
+    : [layout.pitch * 0.4, layout.pitch * 0.4, layout.pitch * 0.4];
   const left = Math.min(...xs) - padX;
-  const top = Math.min(...ys) - padY;
-  return [{ x: left, y: top, width: Math.max(...xs) + padX - left, height: Math.max(...ys) + padY - top }];
+  const top = Math.min(...ys) - padUp;
+  return [{ x: left, y: top, width: Math.max(...xs) + padX - left, height: Math.max(...ys) + padDown - top }];
 }
 
 /** 名札が下がる距離 (px)。描く側はこれを基準線に足すだけ。 */

@@ -1,7 +1,7 @@
 import { bodySize, drawBody, hasBody } from './bodies.ts';
 import type { BodyInk, BodyPart } from './bodies.ts';
 import { connectorBox, drawConnector, lookupConnector } from './connectors.ts';
-import { drawPackage, packageHalfWidth, packageReach } from './packages.ts';
+import { drawPackage, packageExtent, packageHalfWidth, packageReach } from './packages.ts';
 import { element } from '../markup.ts';
 import { num } from '../svg.ts';
 
@@ -50,11 +50,13 @@ export function partIcon(
 
   const reach = packageReach(part, 18);
   const halfWidth = packageHalfWidth(part, 18);
+  // TO-220 は胴がピンの点から上へだけ伸びる。枠の真ん中に収まるよう下げて描く。
+  const extent = packageExtent(part, 18);
   if (!isPackage(type)) return null;
   return frame(
     Math.max(halfWidth * 2 + 8, 28),
     drawPackage(part, {
-      cx: 0, cy: 0, reach, halfWidth, side: 1,
+      cx: 0, cy: (extent.up - extent.down) / 2, reach, halfWidth, side: 1,
       plate: options.plate ?? '#2c7a4b', chipBody: options.chip ?? '#2b2f36',
     }, ink),
   );

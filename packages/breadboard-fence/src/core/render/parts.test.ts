@@ -9,7 +9,7 @@ import { boardBodyRect } from './boardPart.ts';
 import { captionDrops, captionTextBandOf } from './captions.ts';
 import { NAME_CAP, haloWidth } from './partCommon.ts';
 import { parseAddress } from '../model/address.ts';
-import { bodyHalfHeight, bodyHalfWidth } from './threeLead.ts';
+import { bodyDown, bodyHalfHeight, bodyHalfWidth, bodyUp } from './threeLead.ts';
 import { num } from './svg.ts';
 import { resolveStyle } from './theme.ts';
 import { bodySize } from 'fence-kit';
@@ -368,7 +368,9 @@ describe('3 ピンのピンの名前は列番号の帯と溝に置かない', ()
   const HOLE = 3;
   const nameTexts = (svg: string) => [...svg.matchAll(
     /<text x="([\d.]+)" y="([\d.]+)"(?![^>]*aria-hidden)[^>]*font-size="([\d.]+)" font-weight="700" fill="([^"]+)"[^>]*>([^<]+)<\/text>/g,
-  )].map((match) => ({ x: Number(match[1]), y: Number(match[2]), size: Number(match[3]), fill: match[4]!, text: match[5]! }));
+  )].map((match) => ({ x: Number(match[1]), y: Number(match[2]), size: Number(match[3]), fill: match[4]!, text: match[5]! }))
+    // 胴に刻んだ型番 (明るい字) はピンの名前ではない。
+    .filter((name) => name.fill !== theme.palette.chipText);
   const rowY = (row: string) => layout.point(parseAddress(`${row}1`)!).y;
 
   /** ピンの名前の字が縦に占める範囲 (縁取りまで)。 */
@@ -423,21 +425,56 @@ describe('3 ピンのピンの名前は列番号の帯と溝に置かない', ()
     }
   });
 
+  /** 胴の矩形 (最初の `<rect>`) の縦の範囲。 */
+  const shellSpan = (svg: string) => {
+    const match = /<rect x="[\d.-]+" y="([\d.-]+)" width="[\d.-]+" height="([\d.-]+)" rx="3"/.exec(svg)!;
+    return { top: Number(match[1]), bottom: Number(match[1]) + Number(match[2]) };
+  };
+
   test.each([
-    ['U1: regulator/to220 c8(in) c9(gnd) c10(out) 7805'],
-    ['U1: regulator/to220 h8(in) h9(gnd) h10(out) 7805'],
-  ])('%s: the TO-220 names are printed on the plastic body', (line) => {
+    'U1: regulator/to220 c8(in) c9(gnd) c10(out) 7805',
+    'U1: regulator/to220 h8(in) h9(gnd) h10(out) 7805',
+  ])('%s: the TO-220 stands on its pins, tab up, and the names sit below the pins', (line) => {
     const part = place(line);
-    const names = nameTexts(renderPart(part, layout, theme));
-    const cx = centerX(part);
+    const svg = renderPart(part, layout, theme);
     const cy = layout.point(part.pins[1]!.address!).y;
-    for (const name of names) {
-      // 胴の中 (字の上端も胴の中)。
-      expect(Math.abs(name.x - cx)).toBeLessThan(bodyHalfWidth(part, layout));
-      expect(name.y - name.size * NAME_CAP).toBeGreaterThan(cy - bodyHalfHeight(part, layout));
-      expect(name.y).toBeLessThan(cy + bodyHalfHeight(part, layout));
-      // 黒い樹脂の上なので、明るい字。
-      expect(name.fill).toBe(theme.palette.chipText);
+    // 胴は穴の行から上へだけ伸びる (ピンが下の縁、放熱タブが上)。
+    const shell = shellSpan(svg);
+    expect(shell.bottom).toBeLessThanOrEqual(cy);
+    expect(cy - shell.top).toBeGreaterThanOrEqual(bodyHalfHeight(part, layout) * 2);
+    // ピンの名前は胴の外、ピンの下。
+    for (const name of nameTexts(svg)) {
+      expect(name.y - name.size * NAME_CAP, name.text).toBeGreaterThan(cy);
+      expect(Math.abs(name.x - centerX(part))).toBeLessThan(bodyHalfWidth(part, layout));
     }
+  });
+
+  test('keeps the pin holes where they were, whichever way the TO-220 body points', () => {
+    const part = place('U1: regulator/to220 c8(in) c9(gnd) c10(out) 7805');
+
+    expect(part.pins.map((pin) => pin.address)).toEqual(['c8', 'c9', 'c10'].map((text) => parseAddress(text)));
+    expect(bodyDown(part, layout)).toBe(0);
+    expect(bodyUp(part, layout)).toBeGreaterThan(bodyHalfHeight(part, layout) * 2);
+  });
+
+  test('engraves the part number of a regulator in the plastic, and nothing without a value', () => {
+    const engraved = (line: string) => [...renderPart(place(line), layout, theme)
+      .matchAll(/fill="([^"]+)"[^>]*>([^<]+)<\/text>/g)]
+      .filter((match) => match[1] === theme.palette.chipText).map((match) => match[2]);
+
+    expect(engraved('U1: regulator/to220 c8(in) c9(gnd) c10(out) 7805')).toEqual(['7805']);
+    expect(engraved('U1: ic3 c8 c9 c10 LM35')).toEqual(['LM35']);
+    expect(engraved('U1: regulator/to220 c8(in) c9(gnd) c10(out)')).toEqual([]);
+    // トランジスタは今までどおり刻まない。
+    expect(engraved('Q1: transistor/to220 c8 c9 c10 TIP31')).toEqual([]);
+  });
+
+  test('shrinks a long part number to fit the plastic', () => {
+    const sizeOf = (value: string) => Number(/font-size="([\d.]+)"[^>]*fill="[^"]+"[^>]*>[^<]*<\/text>/.exec(
+      [...renderPart(place(`U1: regulator/to220 c8(in) c9(gnd) c10(out) ${value}`), layout, theme)
+        .matchAll(/<text[^>]*>[^<]*<\/text>/g)].map((match) => match[0]).find((text) => text.includes(theme.palette.chipText))!,
+    )?.[1]);
+
+    expect(sizeOf('AMS1117-3.3-LONGER')).toBeLessThan(sizeOf('7805'));
   });
 });
