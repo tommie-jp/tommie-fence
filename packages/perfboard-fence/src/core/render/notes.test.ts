@@ -153,3 +153,12 @@ describe('text の置き場 (left / right)', () => {
     expect(Math.abs(yOf(side('right')) - holeY)).toBeLessThan(yOf(side(null)) < holeY ? holeY - yOf(side(null)) : 99);
   });
 });
+
+describe('text の置き場 (center)', () => {
+  const centered = draw(note({ kind: 'text', from: at('e6'), text: 'AD3 1-', look: { ...PLAIN_LOOK, side: 'center' } }));
+
+  test('centres the text on the hole, at the height of the hole', () => {
+    expect(centered).toContain('text-anchor="middle"');
+    expect(Number(/<text x="([-\d.]+)"/.exec(centered)?.[1])).toBeCloseTo(layout.point(at('e6')).x, 1);
+  });
+});

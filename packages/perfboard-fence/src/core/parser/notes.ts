@@ -57,7 +57,7 @@ const fail = (message: string, token?: string): Parsed<never> =>
 const isKind = (word: string): word is NoteKind => (KINDS as readonly string[]).includes(word);
 
 /** 字を穴のどちら側へ置くかの語。 */
-const SIDE_WORDS = ['left', 'right'] as const;
+const SIDE_WORDS = ['left', 'right', 'center'] as const;
 type SideWord = (typeof SIDE_WORDS)[number];
 const isSideWord = (word: string): word is SideWord => (SIDE_WORDS as readonly string[]).includes(word);
 
@@ -81,7 +81,7 @@ function readWords(
     if (isRotationWord(word)) turn = { ...turn, rotate: rotationOf(word) ?? turn.rotate };
     else if (word === MIRROR_WORD) turn = { ...turn, mirror: true };
     else if (isSideWord(word)) {
-      if (look.side !== null) return fail(`注釈の left / right は 1 つだけ書けます: ${safeToken(token)}`, token);
+      if (look.side !== null) return fail(`注釈の left / right / center は 1 つだけ書けます: ${safeToken(token)}`, token);
       look = { ...look, side: word };
     } else if (isLookWord(word)) {
       if (look[word]) return fail(`注釈の ${word} が 2 回書かれています`, token);

@@ -214,9 +214,9 @@ logic (ロジックアナライザの画面) も**基板も部品も無い**。s
   `large` と `bold` は perfboard-fence 0.31.0 から (breadboard・circuit は前から)。受け口の金物には `USB-C` と自動で刻まれる
 - **Analog Discovery を測るときだけ挟む点は、AD3 の箱と線を描かず、挟むパッドを黄色の丸 (`mark 番地 yellow`) で囲み、
   `text 番地 red large bold: AD3 1+` のように赤の大きな太字で名前を書く。** 半田付けする線と見分けがつき、
-  「常には配線しない」が図で読める。出力の確認なら 1+ は出力の USB-C の VBUS (5×7 cm 横使いなら W5)、1− は GND (T5)。
-  字は丸の外側の脇に置く (`- text w5 red large bold right: AD3 1+`・`- text t5 red large bold left: AD3 1-`。
-  `left` / `right` は perfboard-fence 0.32.0 から)。部品と重ならないか PNG で確かめる
+  「常には配線しない」が図で読める。出力の確認なら 1+ は出力の USB-C の VBUS につながる線 (5×7 cm 横使いなら W6、パッドの 1 行上)、1− は GND の筋 (T6)。
+  字は丸の外側の脇に置く (`- text w6 red large bold right: AD3 1+`・`- text t7 red large bold center: AD3 1-` (6 行目は GND の筋が通るので 1 行上の T7 の真上に中心)。
+  `left` / `right` は 0.32.0 から、`center` は次の版から)。部品と重ならないか PNG で確かめる
 - **電源入力の USB-C 基板 (`usb-c/female`) は、ユニバーサル基板の左下端に置く。** 5×7 cm を横に使う基板 (24 列 × 18 行) なら
   **`J1: usb-c/female b5 c5 d5 e5`** (下から 5 行目の B〜E 列。GND D+ D- VBUS の順。番地は基板の刷りどおり)。
   受け口は下の縁を向き、基板の中に収まる。ほかの大きさの基板も同じ相対位置 (**下から 5 行目の行・左から 2 列目から 4 穴**) を基準にする。

@@ -214,3 +214,11 @@ describe('text の置き場 (left / right)', () => {
     expect(parseNoteLine('text n23 right r90', 'x').ok).toBe(false);
   });
 });
+
+describe('text の置き場 (center)', () => {
+  test('reads center, and refuses it together with left / right', () => {
+    const result = parseNoteLine('text t7 center red', 'AD3 1-');
+    expect(result.ok && result.value).toMatchObject({ look: { side: 'center' }, color: 'red' });
+    expect(parseNoteLine('text t7 center left', 'x').ok).toBe(false);
+  });
+});

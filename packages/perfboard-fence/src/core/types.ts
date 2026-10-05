@@ -176,10 +176,11 @@ export type TextLook = {
   /** 字を太く。 */
   readonly bold: boolean;
   /**
-   * 字を穴のどちら側へ置くか。`left` は穴の左 (字の右端が穴のそば)、`right` は穴の右。
+   * 字を穴のどの脇へ置くか。`left` は穴の左 (字の右端が穴のそば)、`right` は穴の右、
+   * `center` は穴の真ん中 (字の中心が穴の真上、穴と同じ高さ)。
    * 書かなければ null で、穴の上に置く。丸 (`mark`) のすぐ脇に名前を書くときに使う。
    */
-  readonly side: 'left' | 'right' | null;
+  readonly side: 'left' | 'right' | 'center' | null;
 };
 
 /** 見た目の語を書かなかった字。 */

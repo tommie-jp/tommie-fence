@@ -51,7 +51,7 @@ const colorOf = (note: ResolvedNote, theme: Theme): string =>
 const SIDE_GAP = 5;
 
 /**
- * 字を置く場所。**`left` / `right` を書いた字は穴の脇** (丸 `mark` のすぐ外) に、穴と同じ高さで置く。
+ * 字を置く場所。**`left` / `right` を書いた字は穴の脇** (丸 `mark` のすぐ外) に、`center` は穴の真ん中に、穴と同じ高さで置く。
  * 書かなければ穴の上 (`rise` だけ上) に、近いほうの縁から離れる向きへ伸ばす。
  */
 function placeOf(
@@ -59,9 +59,14 @@ function placeOf(
 ): { x: number; baseline: number; anchor: 'start' | 'middle' | 'end'; room: number } {
   const { side } = note.look;
   if (side !== null) {
+    const baseline = from.y + size * (ASCENT - DESCENT) / 2;
+    // 真ん中は穴の真上に字の中心を置く。幅は近いほうの縁までの 2 倍まで。
+    if (side === 'center') {
+      return { x: from.x, baseline, anchor: 'middle', room: Math.min(from.x, layout.width - from.x) * 2 };
+    }
     const x = from.x + (side === 'right' ? 1 : -1) * (MARK_RADIUS + SIDE_GAP);
     return {
-      x, baseline: from.y + size * (ASCENT - DESCENT) / 2,
+      x, baseline,
       anchor: side === 'right' ? 'start' : 'end', room: side === 'right' ? layout.width - x : x,
     };
   }
