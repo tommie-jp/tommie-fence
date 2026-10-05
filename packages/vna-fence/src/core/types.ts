@@ -48,6 +48,8 @@ export type TraceSpec = {
    * 書かなければ null で、枠の既定の尺度。
    */
   readonly scale: number | null;
+  /** phase の尺度の中心の値 (度。`S21 phase 1deg at 90deg`)。書かなければ null で 0° が中央。 */
+  readonly center: number | null;
   readonly line: number | null;
 };
 

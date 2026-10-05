@@ -36,10 +36,32 @@ function parseScale(format: TraceFormat, rest: readonly string[]): LineResult<nu
   return ok(value);
 }
 
+/** phase の中心の書き方 (`at 90deg`)。度は全角の − も受ける。 */
+const CENTER_EXAMPLE = 'S21 phase 1deg at 90deg';
+const CENTER_PATTERN = /^([+\-−]?(?:\d+(?:\.\d+)?|\.\d+))(?:deg|°)$/i;
+/** 中心に書ける範囲 (度)。位相は ±180° で折り返す。 */
+const CENTER_LIMIT = 180;
+
+/** `at` の後ろの中心を読む。`at` は phase の尺度の後ろだけ。 */
+function parseCenter(format: TraceFormat, before: readonly string[], after: readonly string[]): LineResult<number> {
+  if (format !== 'phase') {
+    return fail(`at を書けるのは phase の尺度の後ろだけです (例: ${CENTER_EXAMPLE})`, 'at');
+  }
+  if (before.length === 0) return fail(`at の前に尺度を書きます (例: ${CENTER_EXAMPLE})`, 'at');
+  const word = after[0] ?? '';
+  if (after.length !== 1) return fail(`at の後ろに中心の角度を単位つきで 1 語書きます (例: ${CENTER_EXAMPLE})`, after[1] ?? 'at');
+  const found = CENTER_PATTERN.exec(word);
+  if (found === null) return fail(`中心が読めません: ${safeToken(word)} (単位つきの角度で書きます。例: ${CENTER_EXAMPLE})`, word);
+  const value = Number((found[1] ?? '').replace('−', '-'));
+  if (Math.abs(value) > CENTER_LIMIT) return fail(`中心は −180°〜180° で書きます (例: ${CENTER_EXAMPLE})`, word);
+  return ok(value);
+}
+
 /** `S21 logmag` / `S11 smith` / `S11 tdr vf 0.66`。 */
 export function parseTraceLine(text: string): LineResult<Omit<TraceSpec, 'line'>> {
   const words = wordsOf(text);
-  const [paramWord, formatWord, ...rest] = words;
+  const [paramWord, formatWord, ...tail] = words;
+  let rest = tail;
   const param = (paramWord ?? '').toUpperCase();
   if (param === 'S22' || param === 'S12') {
     return fail(`${param} は実機では測りません (治具を裏返して S11 / S21 で測ります)`, paramWord);
@@ -56,6 +78,14 @@ export function parseTraceLine(text: string): LineResult<Omit<TraceSpec, 'line'>
   }
   let vf: number | null = format === 'tdr' ? DEFAULT_VF : null;
   let scale: number | null = null;
+  let center: number | null = null;
+  const atIndex = rest.findIndex((word) => word.toLowerCase() === 'at');
+  if (atIndex !== -1) {
+    const read = parseCenter(format as TraceFormat, rest.slice(0, atIndex), rest.slice(atIndex + 1));
+    if (!read.ok) return read;
+    center = read.value;
+    rest = rest.slice(0, atIndex);
+  }
   if (rest[0] === 'vf' && format !== 'tdr') {
     return fail(`${safeToken(rest.join(' '))} が読めません (vf を書けるのは tdr だけ。tdr の vf 0.66)`, rest[0]);
   }
@@ -71,5 +101,5 @@ export function parseTraceLine(text: string): LineResult<Omit<TraceSpec, 'line'>
     if (read === null || read < 0.1 || read > 1) return fail('vf (速度係数) は 0.1〜1 で書きます', rest[1]);
     vf = read;
   }
-  return ok({ param, format: format as TraceFormat, vf, scale });
+  return ok({ param, format: format as TraceFormat, vf, scale, center });
 }

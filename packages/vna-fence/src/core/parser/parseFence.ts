@@ -25,9 +25,9 @@ const MAX_YAML_MESSAGE = 120;
  * LOGMAG と、CH0 の Smith)。52 の docs/75 の 3-1 と同じ並び。
  */
 export const DEFAULT_TRACES: readonly TraceSpec[] = [
-  { param: 'S21', format: 'logmag', vf: null, scale: null, line: null },
-  { param: 'S11', format: 'logmag', vf: null, scale: null, line: null },
-  { param: 'S11', format: 'smith', vf: null, scale: null, line: null },
+  { param: 'S21', format: 'logmag', vf: null, scale: null, center: null, line: null },
+  { param: 'S11', format: 'logmag', vf: null, scale: null, center: null, line: null },
+  { param: 'S11', format: 'smith', vf: null, scale: null, center: null, line: null },
 ];
 
 /** 読んだ結果。**`doc` は必ずある** (52 の docs/54「エディターを YAML の都合で止めない」)。 */
@@ -169,6 +169,12 @@ function readFence(source: string): ParseResult {
       }
       const clash = traces.find((trace) => PANEL_OF[trace.format] === PANEL_OF[result.value.format]
         && trace.scale !== null && result.value.scale !== null && trace.scale !== result.value.scale);
+      const centerClash = traces.find((trace) => PANEL_OF[trace.format] === PANEL_OF[result.value.format]
+        && trace.center !== null && result.value.center !== null && trace.center !== result.value.center);
+      if (centerClash !== undefined) {
+        errors.push(fenceError(`${result.value.param} ${result.value.format} は ${centerClash.param} ${centerClash.format} と同じ枠です (枠の中心は 1 つ。同じ中心で書きます)`, line));
+        continue;
+      }
       if (clash !== undefined) {
         errors.push(fenceError(`${result.value.param} ${result.value.format} は ${clash.param} ${clash.format} と同じ枠です (枠の尺度は 1 つ。同じ尺度で書きます)`, line));
         continue;

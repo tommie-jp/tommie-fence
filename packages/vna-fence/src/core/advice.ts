@@ -2,7 +2,7 @@ import { formatHertz, formatHertzShort } from 'fence-kit';
 import { notice } from './errors.ts';
 import { isRound } from './layout/panels.ts';
 import type { PanelKind } from './layout/panels.ts';
-import { DIVISIONS, fraction } from './layout/scales.ts';
+import { DIVISIONS, fraction, placedValue } from './layout/scales.ts';
 import { traceLabel } from './model/readings.ts';
 import type { RectSeries } from './model/series.ts';
 import type { Sweep } from './model/sweep.ts';
@@ -163,6 +163,21 @@ function stillNotices(input: AdviceInput): readonly FenceError[] {
 /** 負号は − (U+2212)。読み値と同じ字にする。 */
 const signed = (kind: PanelKind, value: number): string => amountText(kind, Number(value.toPrecision(3))).replace(/^-/, '−');
 
+/** 位相の 2 つの値の隔たり (度)。±180° の折り返しをまたぐ近いほうで測る。 */
+const phaseDistance = (value: number, center: number): number => Math.abs(((((value - center) % 360) + 540) % 360) - 180);
+
+/** 位相の範囲が ±180° をまたぐ枠。折り返して描くので、読み違えないように言う。 */
+function wrapNotices(input: AdviceInput): readonly FenceError[] {
+  return input.panels.flatMap(({ kind, series }) => {
+    const axis = kind === 'deg' && writtenScale(series) !== null ? axisOf(kind, series) : null;
+    if (axis === null || axis.wrapsPhase !== true) return [];
+    return [notice(
+      `PHASE の範囲が ±180° をまたぎます (${signed(kind, axis.min)}〜${signed(kind, axis.max)}。またいだ所は反対側に折り返して描きます)`,
+      series[0]?.trace.spec.line ?? null,
+    )];
+  });
+}
+
 /** 尺度を書いた枠で、値が目盛の外に出るトレース。**収まる 1-2-5 の尺度を 1 つ言う**。 */
 function outOfScaleNotices(input: AdviceInput): readonly FenceError[] {
   return input.panels.flatMap(({ kind, series }) => {
@@ -170,8 +185,10 @@ function outOfScaleNotices(input: AdviceInput): readonly FenceError[] {
     const axis = axisOf(kind, series);
     const written = axis.max - axis.min;
     return shown(series).flatMap((one) => {
-      const values = one.points.map((point) => point.value).filter(Number.isFinite);
-      if (values.length === 0) return [];
+      const raw = one.points.map((point) => point.value).filter(Number.isFinite);
+      if (raw.length === 0) return [];
+      // 折り返す位相の軸は、描かれる側 (軸の範囲に入る側) の値で見る。
+      const values = raw.map((value) => placedValue(axis, value));
       const low = Math.min(...values);
       const high = Math.max(...values);
       const tolerance = written * 1e-9;
@@ -182,7 +199,7 @@ function outOfScaleNotices(input: AdviceInput): readonly FenceError[] {
       if (outs.length === 0) return [];
       // 基準 (上端・中央・下端) は動かせないので、基準から値までの距離で必要な 1 目盛を出す。
       const need = kind === 'db' ? -low / DIVISIONS
-        : kind === 'deg' ? Math.max(Math.abs(low), Math.abs(high)) / (DIVISIONS / 2)
+        : kind === 'deg' ? Math.max(...raw.map((value) => phaseDistance(value, axis.center ?? 0))) / (DIVISIONS / 2)
           : kind === 'swr' ? (high - 1) / DIVISIONS : high / DIVISIONS;
       const fixable = kind === 'db' ? high <= 0 : kind === 'deg' || (low >= (kind === 'swr' ? 1 : 0));
       const advice = fixable && need > 0 ? `。${amountText(kind, step125(need))}/目盛 なら収まります` : '';
@@ -198,5 +215,5 @@ function outOfScaleNotices(input: AdviceInput): readonly FenceError[] {
 export function sweepAdvice(input: AdviceInput): readonly FenceError[] {
   const panels = input.panels.filter((panel) => !isRound(panel.kind) && panel.kind !== 'tdr');
   const judged = { ...input, panels };
-  return [...crowdedNotices(judged), ...stillNotices(judged), ...outOfScaleNotices(judged)];
+  return [...crowdedNotices(judged), ...stillNotices(judged), ...outOfScaleNotices(judged), ...wrapNotices(judged)];
 }

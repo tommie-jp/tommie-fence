@@ -39,7 +39,7 @@ describe('the change is crowded into a narrow part of the sweep', () => {
   test('traces that ask for the same sweep are said once, by name', () => {
     const dip = Array.from({ length: 101 }, (_, index) => ({ f: 1e6 + index * 1e6, value: index === 50 ? 0.5 : 0 }));
     const series = (param: 'S11' | 'S21', index: number, format: 'logmag' | 'linear'): RectSeries => ({
-      kind: 'rect', basis: 'model', points: dip, trace: { index, spec: { param, format, vf: null, scale: null, line: index + 1 } },
+      kind: 'rect', basis: 'model', points: dip, trace: { index, spec: { param, format, vf: null, scale: null, center: null, line: index + 1 } },
     });
     const said = sweepAdvice({
       panels: [{ kind: 'lin', series: [series('S11', 0, 'linear'), series('S21', 1, 'linear')] }],
@@ -80,7 +80,7 @@ describe('the trace hardly moves on its panel', () => {
 
   test('the ripple of a measurement is not said when the model is flat', () => {
     const along = (value: (index: number) => number) => Array.from({ length: 11 }, (_, index) => ({ f: 1e6 * (index + 1), value: value(index) }));
-    const trace = { index: 0, spec: { param: 'S21' as const, format: 'logmag' as const, vf: null, scale: null, line: 3 } };
+    const trace = { index: 0, spec: { param: 'S21' as const, format: 'logmag' as const, vf: null, scale: null, center: null, line: 3 } };
     const judge = (model: (index: number) => number) => sweepAdvice({
       panels: [{ kind: 'db', series: [
         { kind: 'rect', basis: 'model', trace, points: along(model) },

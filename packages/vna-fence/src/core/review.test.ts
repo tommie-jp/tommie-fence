@@ -55,7 +55,7 @@ describe('review findings', () => {
 
   test('visibleRange falls back to the whole range when nothing stands out', () => {
     const flat: TdrSeries = {
-      kind: 'tdr', basis: 'model', trace: { index: 0, spec: { param: 'S11', format: 'tdr', vf: 0.66, scale: null, line: null } },
+      kind: 'tdr', basis: 'model', trace: { index: 0, spec: { param: 'S11', format: 'tdr', vf: 0.66, scale: null, center: null, line: null } },
       tdr: { points: [{ t: 0, distance: 0, value: 0 }], range: 10, peak: { t: 0, distance: 0, value: 0 } },
     };
     expect(visibleRange([flat])).toBe(10);

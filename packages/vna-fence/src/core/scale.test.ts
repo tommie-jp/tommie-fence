@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { renderVna } from './index.ts';
-import { scaledAxis, tickLabel } from './layout/scales.ts';
+import { fraction, scaledAxis, tickLabel } from './layout/scales.ts';
 import { parseTraceLine } from './parser/traces.ts';
 
 const fence = (lines: readonly string[]): string => lines.join('\n');
@@ -137,5 +137,126 @@ describe('notices with a written scale', () => {
   test('a rise above 0 dB cannot be fixed by the scale, so no scale is advised', () => {
     const result = renderVna(fence(['sweep: 1M-30M 101', 'dut: series R 0', 'traces:', '  - S21 logmag 1dB']));
     expect(said(result.notices)).toEqual([]);
+  });
+});
+
+describe('the centre of a phase scale (at)', () => {
+  const centerOf = (text: string): number | null | undefined => {
+    const read = parseTraceLine(text);
+    return read.ok ? read.value.center : undefined;
+  };
+  const said = (messages: readonly { readonly message: string }[]): string[] => messages.map((one) => one.message);
+  const SERIES_C = ['dut: - series C 0.5p'];
+  const seriesC = (traces: readonly string[], sweep = '1M-300M 101') =>
+    renderVna(fence([`sweep: ${sweep}`, 'dut:', '  - series C 0.5p', 'traces:', ...traces.map((trace) => `  - ${trace}`)]));
+
+  test.each([
+    ['S21 phase 1deg at 90deg', 90],
+    ['S21 phase 1deg at -90deg', -90],
+    ['S21 phase 1deg at −90deg', -90],
+    ['S21 phase 1deg at 90°', 90],
+    ['S21 phase 5deg at 0deg', 0],
+  ])('reads %s', (text, center) => {
+    expect(centerOf(text)).toBe(center);
+    expect(scaleOf(text)).not.toBeNull();
+  });
+
+  test('a trace without at keeps the default (null)', () => {
+    expect(centerOf('S21 phase 5deg')).toBeNull();
+  });
+
+  test.each([
+    ['S21 phase at 90deg', 'at の前に尺度'],
+    ['S21 logmag 1dB at 90deg', 'phase の尺度の後ろだけ'],
+    ['S21 delay 1ns at 90deg', 'S21 phase 1deg at 90deg'],
+    ['S11 swr 0.5 at 2', 'phase の尺度の後ろだけ'],
+    ['S11 smith at 90deg', 'phase の尺度の後ろだけ'],
+    ['S21 phase 1deg at 90', '単位つき'],
+    ['S21 phase 1deg at', '単位つき'],
+    ['S21 phase 1deg at 90 deg', '1 語'],
+    ['S21 phase 1deg at 181deg', '−180°〜180°'],
+    ['S21 phase 1deg at -200deg', '−180°〜180°'],
+  ])('refuses %s', (text, said) => {
+    const read = parseTraceLine(text);
+    expect(!read.ok && read.error.message).toContain(said);
+  });
+
+  test('the axis is centred and the labels are the real values', () => {
+    const axis = scaledAxis('deg', 1, 90);
+    expect([axis.min, axis.max]).toEqual([86, 94]);
+    const svg = seriesC(['S21 phase 1deg at 90deg']).svg;
+    expect(labelsOf(svg)).toEqual(expect.arrayContaining(['86', '90', '94']));
+    expect(svg).toContain('1°/目盛 (中心 90°)');
+  });
+
+  test('a negative centre uses the minus sign', () => {
+    const svg = seriesC(['S21 phase 5deg at -90deg']).svg;
+    expect(svg).toContain('5°/目盛 (中心 −90°)');
+    expect(labelsOf(svg)).toContain('−110');
+  });
+
+  test('without at the axis is drawn as before', () => {
+    const svg = seriesC(['S21 phase 5deg']).svg;
+    expect(svg).toContain('5°/目盛');
+    expect(svg).not.toContain('中心');
+    expect(labelsOf(svg)).toContain('−20');
+  });
+
+  test('a series C fits when the centre follows it', () => {
+    const result = seriesC(['S21 phase 5deg at 90deg']);
+    expect(said(result.notices).filter((text) => text.includes('範囲'))).toEqual([]);
+    expect(result.errors).toEqual([]);
+  });
+
+  test('out-of-range is judged around the centre and keeps it', () => {
+    const result = seriesC(['S21 phase 1deg at 0deg']);
+    const out = said(result.notices).filter((text) => text.includes('範囲の外'));
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatch(/中心 0°\) の尺度では範囲の外です \(最大 \d+(\.\d+)?° は上端 4° \(8 目盛\) の外。\d+(\.\d+)?°\/目盛 なら収まります\)$/);
+  });
+
+  test('a centre far from the values says a scale that reaches them', () => {
+    const result = seriesC(['S21 phase 1deg at 45deg']);
+    const out = said(result.notices).filter((text) => text.includes('範囲の外'));
+    expect(out).toHaveLength(1);
+    expect(out[0]).toContain('中心 45°');
+    expect(out[0]).toMatch(/\d+°\/目盛 なら収まります/);
+  });
+
+  test('a range across 180 degrees says so and wraps the labels', () => {
+    const result = seriesC(['S21 phase 5deg at 170deg']);
+    expect(said(result.notices).some((text) => text.includes('±180° をまたぎます'))).toBe(true);
+    expect(labelsOf(result.svg)).toEqual(expect.arrayContaining(['150', '170', '−170']));
+  });
+
+  test('a range inside ±180 degrees says nothing about wrapping', () => {
+    const result = seriesC(['S21 phase 5deg at 90deg']);
+    expect(said(result.notices).some((text) => text.includes('をまたぎます'))).toBe(false);
+  });
+
+  test('a value past 180 degrees is folded to the other end', () => {
+    const axis = scaledAxis('deg', 5, 170);
+    expect(fraction(axis, -175)).toBeCloseTo(0.875);
+    expect(fraction(axis, 170)).toBeCloseTo(0.5);
+  });
+
+  test('two traces in one panel with different centres are refused', () => {
+    const result = seriesC(['S21 phase 5deg at 90deg', 'S11 phase 5deg at 0deg']);
+    expect(said(result.errors).join('\n')).toContain('同じ枠');
+  });
+
+  test('one centre is used for the whole panel', () => {
+    const result = seriesC(['S11 phase 5deg', 'S21 phase 5deg at 90deg']);
+    expect(result.errors).toEqual([]);
+    expect(result.svg).toContain('中心 90°');
+  });
+
+  test('a measured overlay uses the same centre', () => {
+    const touchstone = ['# MHz S RI R 50', '1 0.0 0.0 0.0 1.0 0.0 1.0 0.0 0.0', '30 0.0 0.0 0.0 1.0 0.0 1.0 0.0 0.0'].join('\n');
+    const svg = renderVna(
+      fence(['sweep: 1M-30M 101', ...SERIES_C, 'data: a.s2p', 'traces:', '  - S21 phase 5deg at 90deg']),
+      { data: (name) => (name === 'a.s2p' ? touchstone : null) },
+    ).svg;
+    expect(svg).toContain('中心 90°');
   });
 });

@@ -60,10 +60,14 @@ const SCALED_KINDS: readonly PanelKind[] = ['db', 'deg', 'ns', 'swr', 'lin'];
 export const writtenScale = (series: readonly Series[]): number | null =>
   series.map((one) => one.trace.spec.scale).find((scale) => scale !== null && scale !== undefined) ?? null;
 
+/** その枠で書き手が決めた位相の中心 (度)。無ければ null。 */
+export const writtenCenter = (series: readonly Series[]): number | null =>
+  series.map((one) => one.trace.spec.center).find((center) => center !== null && center !== undefined) ?? null;
+
 export function axisOf(kind: PanelKind, series: readonly Series[]): Axis {
   const values = rectValues(series);
   const written = writtenScale(series);
-  if (written !== null && SCALED_KINDS.includes(kind)) return scaledAxis(kind as ScaledKind, written);
+  if (written !== null && SCALED_KINDS.includes(kind)) return scaledAxis(kind as ScaledKind, written, kind === 'deg' ? writtenCenter(series) : null);
   switch (kind) {
     case 'db': return dbAxis(values);
     case 'deg': return degAxis();
@@ -88,7 +92,8 @@ export const amountText = (kind: PanelKind, value: number): string => {
 export const perDivision = (kind: PanelKind, axis: Axis): string => {
   if (axis.log) return '10 倍/目盛 (対数)';
   const step = (axis.max - axis.min) / DIVISIONS;
-  return `${amountText(kind, Math.round(step * 1000) / 1000)}/目盛`;
+  const centered = axis.center === undefined ? '' : ` (中心 ${amountText(kind, axis.center).replace(/^-/, '−')})`;
+  return `${amountText(kind, Math.round(step * 1000) / 1000)}/目盛${centered}`;
 };
 
 function heading(input: PanelInput, axis: Axis | null): string {

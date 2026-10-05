@@ -17,6 +17,10 @@ export type Axis = {
   readonly log: boolean;
   /** 目盛の値 (下から上へ、両端を含む)。 */
   readonly ticks: readonly number[];
+  /** 書き手が決めた中心の値 (phase の `at 90deg`)。無ければ未定義。 */
+  readonly center?: number;
+  /** 範囲が ±180° をまたぐ位相の軸か。値は 360° ずらして範囲に折り返す。 */
+  readonly wrapsPhase?: boolean;
 };
 
 const linear = (min: number, max: number): Axis => ({
@@ -110,19 +114,30 @@ export function logOhmAxis(values: readonly number[]): Axis {
  */
 export type ScaledKind = 'db' | 'deg' | 'ns' | 'swr' | 'lin';
 
-export function scaledAxis(kind: ScaledKind, step: number): Axis {
+export function scaledAxis(kind: ScaledKind, step: number, center: number | null = null): Axis {
   const span = step * DIVISIONS;
   switch (kind) {
     case 'db': return linear(-span, 0);
-    case 'deg': return linear(-span / 2, span / 2);
+    case 'deg': {
+      if (center === null) return linear(-span / 2, span / 2);
+      const low = center - span / 2;
+      const high = center + span / 2;
+      return { ...linear(low, high), center, wrapsPhase: low < -180 || high > 180 };
+    }
     case 'swr': return linear(1, 1 + span);
     default: return linear(0, span);
   }
 }
 
+/** ±180° をまたぐ位相の軸で、値を軸の範囲に入る側へ 360° ずらす (入る側が無ければそのまま)。 */
+export function placedValue(axis: Axis, value: number): number {
+  if (axis.wrapsPhase !== true) return value;
+  return [value, value - 360, value + 360].find((shifted) => shifted >= axis.min && shifted <= axis.max) ?? value;
+}
+
 /** 軸の上の位置 (0 = 下、1 = 上)。**枠の外は縁に寄せる** (実機も縁に張り付く)。 */
 export function fraction(axis: Axis, value: number): number {
-  const placed = axis.log ? Math.log10(Math.max(value, 1e-12)) : value;
+  const placed = axis.log ? Math.log10(Math.max(value, 1e-12)) : placedValue(axis, value);
   const raw = (placed - axis.min) / (axis.max - axis.min);
   return Math.max(0, Math.min(1, raw));
 }
@@ -132,9 +147,12 @@ export function tickLabel(value: number, axis: Axis, unit: string): string {
   if (axis.log) return siLabel(10 ** value, unit);
   const step = (axis.max - axis.min) / DIVISIONS;
   // 刻みを割り切れる桁 (0.125 は 3 桁、45 は 0 桁)。3 桁で頭を打つ。
-  const digits = [0, 1, 2, 3].find((places) => Math.abs(step * 10 ** places - Math.round(step * 10 ** places)) < 1e-6) ?? 3;
+  const whole = (amount: number, places: number): boolean => Math.abs(amount * 10 ** places - Math.round(amount * 10 ** places)) < 1e-6;
+  const digits = [0, 1, 2, 3].find((places) => whole(step, places) && whole(axis.min, places)) ?? 3;
+  // 折り返す位相の軸は、190° を −170° と読ませる。
+  const shown = axis.wrapsPhase === true ? (value > 180 ? value - 360 : value < -180 ? value + 360 : value) : value;
   // 負号は − (U+2212)。読み値と同じ字にする (ハイフンは細くて読み落とす)。
-  const text = (Math.abs(value) < step / 1e6 ? 0 : value).toFixed(digits).replace(/^-/, '−');
+  const text = (Math.abs(shown) < step / 1e6 ? 0 : shown).toFixed(digits).replace(/^-/, '−');
   return unit === '' ? text : `${text}${unit}`;
 }
 
