@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-05
+
 ### Changed
 
 - `FenceEditor` の `step` / `stepsTo` に本文 (`source`) を渡す。番地の英字と数字のどちらが行かが基板のシルクで変わる
