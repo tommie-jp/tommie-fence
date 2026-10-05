@@ -421,14 +421,16 @@ export function drawConnector(shape: ConnectorShape & { readonly ink?: BodyInk }
 function stampOf(frame: Frame, ink: BodyInk): string {
   const { metal, mm, spec } = frame;
   if (frame.male || spec.stamp === undefined) return '';
-  // 窓 (金物の後ろから 2.6mm まで) と口の暗がり (前の縁から 1.3mm) の間の真ん中。
-  const middle = (metal.b0 + 2.6 * mm + metal.b1 - 1.3 * mm) / 2;
-  const point = frame.at(0, middle);
-  const size = frame.font * STAMP_SCALE;
+  // 窓 (金物の後ろから 2.6mm まで) と口の暗がり (前の縁から 1.3mm) の間。
+  const from = metal.b0 + 2.6 * mm;
+  const to = metal.b1 - 1.3 * mm;
+  const point = frame.at(0, (from + to) / 2);
+  // **入る限り大きく** — 金物の幅と、窓と口の間の高さ (字の高さの 9 割) の小さいほうで決める。
+  // `textWidth` は細字の見積もりで、太字は 2 割半ほど広いので、幅は 7 割 2 分 (= 9 割 ÷ 1.25) を使う。
+  const byWidth = (0.72 * (metal.a1 - metal.a0)) / textWidth(spec.stamp);
+  const byHeight = (0.9 * Math.abs(to - from)) / NAME_CAP;
+  const size = Math.min(byWidth, byHeight);
   return svgText(point.x, point.y + size * NAME_CAP / 2, spec.stamp, {
     'font-size': num(size), 'font-weight': 'bold', fill: ink.paint(MOUTH),
   });
 }
-
-/** 金物に刻む名前の大きさ (ピンの名前の何倍か)。窓と口の間の 3.4mm に収まる高さ。 */
-const STAMP_SCALE = 1.1;
