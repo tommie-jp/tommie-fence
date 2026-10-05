@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.54.0] - 2026-10-05
+
+### Changed
+
+- **束ねるフェンスを上げた** (perfboard-fence 0.37.0 / scope-fence 0.7.0 / vna-fence 0.7.0)。詳しくは各パッケージの CHANGELOG。
+
 ## [0.53.0] - 2026-10-05
 
 ### Changed
