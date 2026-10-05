@@ -210,23 +210,23 @@ logic (ロジックアナライザの画面) も**基板も部品も無い**。s
   `slots:` を書かない図は、パッドの無い基板 (秋月の基板など) を名指しした題だけ。手本: `05-etc/03-mixer-dual-gate-fet/01-mixer.md` の図03 と
   `01-circuits/05-power-supplies/04-ldo-usb.md` の図3
 - **取り違えると壊れる所の字 (`IN 5V` `OUT 3.3V` など) は、`text` に `red large bold` を付けて USB-C 基板の上 (受け口の上の行) に書く**
-  (`- text p2 red large bold: IN 5V`・`- text p23 red large bold: OUT 3.3V`。5×7 cm 横使いの p 行)。`large` と `bold` は
-  perfboard-fence の次の版から (breadboard・circuit は前から)。受け口の金物には `USB-C` と自動で刻まれる
+  (`- text b3 red large bold: IN 5V`・`- text w3 red large bold: OUT 3.3V`。5×7 cm 横使いの 3 行目)。
+  `large` と `bold` は perfboard-fence 0.31.0 から (breadboard・circuit は前から)。受け口の金物には `USB-C` と自動で刻まれる
 - **Analog Discovery を測るときだけ挟む点は、AD3 の箱と線を描かず、挟むパッドを黄色の丸 (`mark 番地 yellow`) で囲み、
   `text 番地 red large bold: AD3 1+` のように赤の大きな太字で名前を書く。** 半田付けする線と見分けがつき、
-  「常には配線しない」が図で読める。出力の確認なら 1+ は出力の USB-C の VBUS (5×7 cm 横使いなら n23)、1− は GND (n20)。
-  字は丸の外側の脇に置く (`- text n23 red large bold right: AD3 1+`・`- text n20 red large bold left: AD3 1-`。
-  `left` / `right` は perfboard-fence の次の版から)。部品と重ならないか PNG で確かめる
+  「常には配線しない」が図で読める。出力の確認なら 1+ は出力の USB-C の VBUS (5×7 cm 横使いなら W5)、1− は GND (T5)。
+  字は丸の外側の脇に置く (`- text w5 red large bold right: AD3 1+`・`- text t5 red large bold left: AD3 1-`。
+  `left` / `right` は perfboard-fence 0.32.0 から)。部品と重ならないか PNG で確かめる
 - **電源入力の USB-C 基板 (`usb-c/female`) は、ユニバーサル基板の左下端に置く。** 5×7 cm を横に使う基板 (24 列 × 18 行) なら
-  **`J1: usb-c/female n2 n3 n4 n5`** (n 行の左から 2〜5 列。GND D+ D- VBUS の順)。受け口は下の縁を向き、基板の中に収まる。
-  ほかの大きさの基板も同じ相対位置 (**下から 5 行目の行・左から 2 列目から 4 穴**) を基準にする。
-  線はパッドから**上へ**出す (VBUS は + の筋へ、GND は 1 行上の m 行へ)。パッドの刷り字は下の縁側にあるので、上へ出せば隠れない。
+  **`J1: usb-c/female b5 c5 d5 e5`** (下から 5 行目の B〜E 列。GND D+ D- VBUS の順。番地は基板の刷りどおり)。
+  受け口は下の縁を向き、基板の中に収まる。ほかの大きさの基板も同じ相対位置 (**下から 5 行目の行・左から 2 列目から 4 穴**) を基準にする。
+  線はパッドから**上へ**出す (VBUS は + の筋へ、GND は 1 行上の 6 行目へ)。パッドの刷り字は下の縁側にあるので、上へ出せば隠れない。
   手本: `05-etc/03-mixer-dual-gate-fet/01-mixer.md` の図03 と `01-circuits/05-power-supplies/04-ldo-usb.md` の図3。
-  GND が左・VBUS が右に並ぶので、VBUS の線が GND の筋を 1 か所跨ぐ (5 列の弧)。許してよい
+  GND が左・VBUS が右に並ぶので、VBUS の線が GND の筋を 1 か所跨ぐ (E 列の弧)。許してよい
 - **電源出力の USB-C 基板は、ユニバーサル基板の右下端に置く** (入力用を左右に写した位置)。5×7 cm 横使いなら
-  **`J2: usb-c/female n20 n21 n22 n23`** (n 行の右から 2〜5 列)。ほかの大きさの基板は**下から 5 行目の行・右から 2 列目から 4 穴**。
+  **`J2: usb-c/female t5 u5 v5 w5`** (下から 5 行目の T〜W 列)。ほかの大きさの基板は**下から 5 行目の行・右から 2 列目から 4 穴**。
   受け口は下の縁を向き、基板の中に収まる (出っ張らず、ケースに入れやすい。ケーブルは入力と同じ下の縁から出る)。
-  **パッドの並びは入力用と同じ** (左から GND D+ D- VBUS)。VBUS は右端の列を上って出力の筋へ、GND は 1 行上の m 行で GND の筋に入る。
+  **パッドの並びは入力用と同じ** (左から GND D+ D- VBUS)。VBUS は右端の列を上って出力の筋へ、GND は 1 行上の 6 行目で GND の筋に入る。
   GND の筋が GND のパッドの列で止まるので、出力側は交差しない (VBUS を左にすると交差が 1 つ増える)。
   手本: `01-circuits/05-power-supplies/04-ldo-usb.md` の図3
 - **入力と出力の USB-C が下の縁に並ぶときは、`notes:` の `text` で `IN 5V` と `OUT 3.3V` (電圧は回路に合わせる) を受け口の上に書く**
