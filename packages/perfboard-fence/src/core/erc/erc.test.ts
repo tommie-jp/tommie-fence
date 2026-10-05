@@ -25,6 +25,7 @@ const run = (
   pairs: readonly (readonly [string, string])[] = [],
   named: readonly (readonly [string, string])[] = [],
   unused: readonly string[] = [],
+  shorted: readonly string[] = [],
 ) => {
   const { wires } = resolveWires(wireSpecs(pairs), new Map(), board);
   const namedPairs = named.map(([hole, name]) => [at(hole), name] as const);
@@ -36,6 +37,7 @@ const run = (
     namedStrips: new Set(namedPairs.map(([address]) => holeStrip(address))),
     devices: [],
     unused: unused.map((ref, index) => ({ ref, line: index + 20 })),
+    shorted: shorted.map((ref, index) => ({ ref, line: index + 30 })),
     spelling: board,
   });
 };
@@ -170,5 +172,27 @@ describe('使わないと書いたピン (unused:)', () => {
 
     expect(warning?.message).toContain('R1.1');
     expect(warning?.notice).toBe(true);
+  });
+});
+
+describe('意図して短絡した部品 (shorted:)', () => {
+  const shortedPart = () => [part('R1', ['b3', 'b7'])];
+  const strapped = [['b3', 'b7']] as const;
+
+  test('says a part whose pins are all on one net', () => {
+    expect(run(shortedPart(), strapped).map((e) => e.message).join(' ')).toContain('全部同じネット');
+  });
+
+  test('says nothing about a part written as shorted', () => {
+    const text = run(shortedPart(), strapped, [], [], ['R1']).map((e) => e.message).join(' ');
+    expect(text).not.toContain('全部同じネット');
+    expect(text).not.toContain('短絡していません');
+  });
+
+  test('warns when a part written as shorted is not shorted, and refuses an unknown part', () => {
+    const notShorted = run(shortedPart(), [], [], ['R1.1', 'R1.2'], ['R1']);
+    expect(notShorted.find((e) => e.message.includes('短絡していません'))?.notice).toBe(true);
+    const unknown = run(shortedPart(), strapped, [], [], ['R9']);
+    expect(unknown.find((e) => e.message.includes('R9'))?.notice).toBeUndefined();
   });
 });

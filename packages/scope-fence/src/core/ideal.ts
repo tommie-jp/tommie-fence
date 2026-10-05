@@ -128,6 +128,8 @@ function triggerOf(sampled: Sampled, screen: Screen, trigger: TriggerSpec): { re
   }
   const level = trigger.level ?? (max + min) / 2;
   if (found !== null) return { shift: found, level, said: [] };
+  // **平らな波 (直流だけ) には掛けるトリガが無い** — 実機は Auto で掃引が走る。言うまでもないので黙る。
+  if (max === min) return { shift: 0, level, said: [] };
   const written = trigger.level === null ? '中央' : formatVolts(trigger.level);
   return { shift: 0, level, said: [notice(`トリガ水準 (${written}) が ${trigger.source} の波形の外なので、t = 0 に合わせていません`, trigger.line)] };
 }

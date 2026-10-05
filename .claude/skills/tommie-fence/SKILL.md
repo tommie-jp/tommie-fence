@@ -213,6 +213,10 @@ logic (ロジックアナライザの画面) も**基板も部品も無い**。s
   (`unused: [J1.D+, J1.D-, J2.D+, J2.D-]`)。ERC の「どこにもつながっていない」から外れ、図は変わらない。
   `points:` で名前を付けて黙らせない (名前の意味が違い、読む人が取り違える)。`check: off` も使わない (本物の繋ぎ忘れまで見えなくなる)。
   部品に無いピンは断られ、実際は配線されているとお知らせが出る。perfboard-fence の次の版から
+- **意図して短絡した部品 (中心導体とシェルを線でつないだ SMA の Short など) は、最上位の `shorted:` に部品の名前で並べる** (`shorted: [J2]`)。
+  ERC の「ピンが全部同じネットに来ています」から外れる。書いた部品が短絡していないとお知らせが出る。perfboard-fence の次の版から
+- **縦の尺度を決めたい vna の図は、`traces:` の行の末尾に 1 目盛あたりの量を書く** (`S21 logmag 1dB`・`S21 phase 5deg`・`S21 delay 1ns`・`S11 linear 0.1`・`S11 swr 0.5`)。
+  スルーのほぼ平らな S21 や、わずかに傾く位相が「動きが 1 目盛に満たない」お知らせになるときに使う。書かなければ今までどおり (10 dB・45°)。vna-fence の次の版から
 - **取り違えると壊れる所の字 (`IN 5V` `OUT 3.3V` など) は、`text` に `red large bold` を付けて USB-C 基板の上 (受け口の上の行) に書く**
   (`- text b3 red large bold: IN 5V`・`- text w3 red large bold: OUT 3.3V`。5×7 cm 横使いの 3 行目)。
   `large` と `bold` は perfboard-fence 0.31.0 から (breadboard・circuit は前から)。受け口の金物には `USB-C` と自動で刻まれる

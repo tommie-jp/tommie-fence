@@ -24,7 +24,7 @@ export type FenceError = {
  * フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。
  * **Phase 0 では語彙を決めるだけ**で、中身の検証は Phase 1 以降。
  */
-export const TOP_LEVEL_KEYS = ['title', 'points', 'unused', 'board', 'style', 'parts', 'wires', 'notes'] as const;
+export const TOP_LEVEL_KEYS = ['title', 'points', 'unused', 'shorted', 'board', 'style', 'parts', 'wires', 'notes'] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
 
@@ -316,6 +316,8 @@ export type FenceDocument = {
   readonly points: readonly PointSpec[];
   /** `unused:` に書いた、**意図して使わないピン** (`J1.D+`)。ERC の「どこにもつながっていない」から外す。 */
   readonly unused: readonly UnusedSpec[];
+  /** `shorted:` に書いた、**意図して短絡した部品** (`J2`)。ERC の「ピンが全部同じネット」から外す。 */
+  readonly shorted: readonly UnusedSpec[];
   readonly style: StyleSpec;
   readonly notes: readonly NoteSpec[];
   readonly devices: readonly DeviceSpec[];

@@ -27,6 +27,8 @@ export const LIMITS = {
   points: 100,
   /** `unused:` に並べられるピンの数。 */
   unused: 200,
+  /** `shorted:` に並べられる部品の数。 */
+  shorted: 50,
   /** 図の題の長さ。 */
   titleLength: 60,
   /** 基板の外の機器 1 つが持てるピンの数と、ピンの名前の長さ。 */

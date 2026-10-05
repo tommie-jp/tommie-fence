@@ -30,6 +30,8 @@ export type ErcInput = {
   readonly devices: readonly DeviceSpec[];
   /** `unused:` に書いた、意図して使わないピン。「どこにもつながっていない」から外す。 */
   readonly unused: readonly UnusedSpec[];
+  /** `shorted:` に書いた、意図して短絡した部品。短絡のお知らせから外す。 */
+  readonly shorted: readonly UnusedSpec[];
   /** 番地を綴るときの基板のシルク (お知らせの穴の名前が図の端の名前と同じになる)。 */
   readonly spelling: Spelling;
 };
@@ -131,17 +133,35 @@ function unwiredPins(input: ErcInput): FenceError[] {
  * こちらで、抵抗を入れたつもりが線で跨いでいた、という取り違えを拾う。
  */
 function shortedParts(input: ErcInput): FenceError[] {
+  const allowed = new Set(input.shorted.map(({ ref }) => ref));
   const rootOf = new Map<string, number>();
   for (const [index, net] of input.netlist.entries()) {
     for (const ref of net.refs) rootOf.set(ref, index);
   }
 
   const found: FenceError[] = [];
+  // **短絡と書いた部品が短絡していなければ言う** (綴りの誤りは断る。後から線を外したとき、古い印が嘘にならない)。
+  const byId = new Map(input.parts.map((part) => [part.id, part]));
+  for (const { ref, line } of input.shorted) {
+    const part = byId.get(ref);
+    if (part === undefined) {
+      found.push(fenceError(`shorted: に書いた部品がありません: ${safeToken(ref)}`, line, ref));
+      continue;
+    }
+    const nets = part.pins.map((_, index) => rootOf.get(pinRef(part, index)));
+    const first = nets[0];
+    if (part.pins.length < 2 || first === undefined || !nets.every((net) => net === first)) {
+      found.push(notice(`shorted: に書いた部品が短絡していません: ${safeToken(ref)}`, line, ref));
+    }
+  }
   for (const part of input.parts) {
     if (part.pins.length < 2) continue;
     const nets = part.pins.map((_, index) => rootOf.get(pinRef(part, index)));
     const first = nets[0];
-    if (first === undefined || !nets.every((net) => net === first)) continue;
+    const isShorted = first !== undefined && nets.every((net) => net === first);
+    // **意図して短絡と書いた部品は、短絡のお知らせから外す。**
+    if (allowed.has(part.id)) continue;
+    if (!isShorted) continue;
 
     found.push(notice(
       `${safeToken(part.id)} のピン ${part.pins.length} 本が全部同じネットに来ています`

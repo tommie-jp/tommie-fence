@@ -470,3 +470,13 @@ describe('unused:', () => {
     expect(parse('unused: [J1.D+]\nunused: [J1.D-]').errors.map((e) => e.message).join(' ')).toContain('2 つあります');
   });
 });
+
+describe('shorted:', () => {
+  const parse = (text: string) => parseFence(`board: 10x10\n${text}\n`);
+
+  test('reads part names, and refuses a second shorted: or a name with a dot', () => {
+    expect(parse('shorted: [J2, J3]').doc.shorted.map((entry) => entry.ref)).toEqual(['J2', 'J3']);
+    expect(parse('shorted: [J2]\nshorted: [J3]').errors.map((e) => e.message).join(' ')).toContain('2 つあります');
+    expect(parse('shorted: [J2.1]').errors.map((e) => e.message).join(' ')).toContain('部品の名前');
+  });
+});

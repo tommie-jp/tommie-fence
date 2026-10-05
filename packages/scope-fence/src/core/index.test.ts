@@ -103,9 +103,9 @@ describe('renderScope — 段 1', () => {
     expect(said('time: 1ms/div\ntrigger: ch1 rising 5V\nch1: sine 1kHz 1V')).toEqual([
       'トリガ水準 (5.00 V) が ch1 の波形の外なので、t = 0 に合わせていません',
     ]);
-    expect(said('time: 1ms/div\ntrigger: ch1 rising\nch1: dc 1V')).toEqual([
-      'トリガ水準 (中央) が ch1 の波形の外なので、t = 0 に合わせていません',
-    ]);
+    // 平らな波 (直流) は掛けるトリガが無く、実機は Auto で走るので黙る。
+    expect(said('time: 1ms/div\ntrigger: ch1 rising\nch1: dc 1V')).toEqual([]);
+    expect(said('time: 1ms/div\ntrigger: ch1 rising 1V\nch1: dc 1V')).toEqual([]);
   });
 
   test('says a cursor outside the screen and does not draw it', () => {

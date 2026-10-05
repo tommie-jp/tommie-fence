@@ -41,7 +41,7 @@ export type ParseResult = { readonly doc: FenceDocument; readonly errors: readon
 
 /** 何も読めなかったときに返す中身。基板だけは既定のものを持つ。 */
 const emptyDocument = (): FenceDocument => ({
-  board: DEFAULT_BOARD, boardName: null, title: null, parts: [], wires: [], points: [], unused: [], style: EMPTY_STYLE, notes: [], devices: [],
+  board: DEFAULT_BOARD, boardName: null, title: null, parts: [], wires: [], points: [], unused: [], shorted: [], style: EMPTY_STYLE, notes: [], devices: [],
 });
 
 const scalarText = (node: unknown): string | null => {
@@ -124,6 +124,7 @@ function readFence(source: string): ParseResult {
   const wires: WireSpec[] = [];
   const points: PointSpec[] = [];
   const unused: UnusedSpec[] = [];
+  const shorted: UnusedSpec[] = [];
   let board: Board | null = null;
   let boardName: string | null = null;
   let title: string | null = null;
@@ -138,6 +139,7 @@ function readFence(source: string): ParseResult {
   let wiresWritten = false;
   let pointsWritten = false;
   let unusedWritten = false;
+  let shortedWritten = false;
 
   /** `wires:` は 1 行 1 本の並び。読めた配線は捨てない。 */
   const readWires = (node: unknown, keyLine: number | null): void => {
@@ -269,6 +271,31 @@ function readFence(source: string): ParseResult {
       }
       if (unused.some((entry) => entry.ref === ref)) continue;
       unused.push({ ref, line });
+    }
+  };
+
+  /**
+   * `shorted:` は**意図して短絡した部品**の並び (`[J2]`)。ピンが全部同じネットに来る部品 (中心導体と
+   * シェルを線でつないだ SMA の Short など) を、ERC の短絡のお知らせから外す。図には出ない。
+   */
+  const readShorted = (node: unknown, keyLine: number | null): void => {
+    if (!isSeq(node)) {
+      errors.push(fenceError('shorted: は `[J2]` か `- J2` の並びにします', keyLine));
+      return;
+    }
+    for (const item of node.items) {
+      const line = lineOf(item as Node) ?? keyLine;
+      const id = scalarText(item);
+      if (id === null || !isReferenceable(id)) {
+        errors.push(fenceError('shorted: は部品の名前で書きます (例: J2)', line, id ?? undefined));
+        continue;
+      }
+      if (shorted.length >= LIMITS.shorted) {
+        errors.push(fenceError(`shorted: が多すぎます (${LIMITS.shorted} 個まで)`, line));
+        break;
+      }
+      if (shorted.some((entry) => entry.ref === id)) continue;
+      shorted.push({ ref: id, line });
     }
   };
 
@@ -408,6 +435,16 @@ function readFence(source: string): ParseResult {
       }
       notesWritten = true;
       readNotes(pair.value, keyLine);
+      continue;
+    }
+    if (key === 'shorted') {
+      const keyLine = lineOf(pair.key as Node);
+      if (shortedWritten) {
+        errors.push(fenceError('shorted: が 2 つあります (1 つにまとめます)', keyLine, key));
+        continue;
+      }
+      shortedWritten = true;
+      readShorted(pair.value, keyLine);
       continue;
     }
     if (key === 'unused') {
@@ -619,7 +656,7 @@ function readFence(source: string): ParseResult {
   }
 
   return {
-    doc: { board: board ?? DEFAULT_BOARD, boardName, title, style, parts, devices, wires, points, unused, notes },
+    doc: { board: board ?? DEFAULT_BOARD, boardName, title, style, parts, devices, wires, points, unused, shorted, notes },
     errors,
   };
 }
