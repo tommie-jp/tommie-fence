@@ -1,9 +1,9 @@
 import { BOLD_FAMILY, element, num, svgText, textWidth } from 'fence-kit';
 import type { Panel, PanelKind, Rect } from '../layout/panels.ts';
 import {
-  DIVISIONS, dbAxis, degAxis, fraction, linAxis, logOhmAxis, niceAxis, ohmAxis, swrAxis, tickLabel,
+  DIVISIONS, dbAxis, degAxis, fraction, linAxis, logOhmAxis, niceAxis, ohmAxis, scaledAxis, swrAxis, tickLabel,
 } from '../layout/scales.ts';
-import type { Axis } from '../layout/scales.ts';
+import type { Axis, ScaledKind } from '../layout/scales.ts';
 import type { Complex } from '../model/complex.ts';
 import { formatHertzShort } from 'fence-kit';
 import type { RectSeries, RoundSeries, Series, TdrSeries } from '../model/series.ts';
@@ -54,8 +54,16 @@ const rectValues = (series: readonly Series[]): number[] =>
   series.flatMap((one) => (one.kind === 'rect' ? one.points.map((point) => point.value) : []));
 
 /** その枠の縦軸。**描く値から決める** (dB の上端・Ω の幅)。 */
+const SCALED_KINDS: readonly PanelKind[] = ['db', 'deg', 'ns', 'swr', 'lin'];
+
+/** その枠で書き手が決めた尺度 (1 目盛あたりの量)。無ければ null。 */
+export const writtenScale = (series: readonly Series[]): number | null =>
+  series.map((one) => one.trace.spec.scale).find((scale) => scale !== null && scale !== undefined) ?? null;
+
 export function axisOf(kind: PanelKind, series: readonly Series[]): Axis {
   const values = rectValues(series);
+  const written = writtenScale(series);
+  if (written !== null && SCALED_KINDS.includes(kind)) return scaledAxis(kind as ScaledKind, written);
   switch (kind) {
     case 'db': return dbAxis(values);
     case 'deg': return degAxis();

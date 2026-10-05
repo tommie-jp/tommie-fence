@@ -104,6 +104,22 @@ export function logOhmAxis(values: readonly number[]): Axis {
   };
 }
 
+/**
+ * 書き手が決めた尺度の軸 (`1dB` など。**1 目盛あたりの量**)。基準は形式ごとに固定:
+ * dB は上が 0 dB・phase は 0° が中央・delay と linear は 0 が下端・swr は 1 が下端。
+ */
+export type ScaledKind = 'db' | 'deg' | 'ns' | 'swr' | 'lin';
+
+export function scaledAxis(kind: ScaledKind, step: number): Axis {
+  const span = step * DIVISIONS;
+  switch (kind) {
+    case 'db': return linear(-span, 0);
+    case 'deg': return linear(-span / 2, span / 2);
+    case 'swr': return linear(1, 1 + span);
+    default: return linear(0, span);
+  }
+}
+
 /** 軸の上の位置 (0 = 下、1 = 上)。**枠の外は縁に寄せる** (実機も縁に張り付く)。 */
 export function fraction(axis: Axis, value: number): number {
   const placed = axis.log ? Math.log10(Math.max(value, 1e-12)) : value;

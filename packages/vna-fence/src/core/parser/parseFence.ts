@@ -14,6 +14,7 @@ import type { FenceDocument, FenceError, MarkerSpec, NoteSpec, StyleSpec, TraceS
 import { parseDutLine } from './dut.ts';
 import { parseNoteLine } from './notes.ts';
 import { EMPTY_STYLE, parseStyle } from './style.ts';
+import { PANEL_OF } from '../layout/panels.ts';
 import { parseTraceLine } from './traces.ts';
 
 /** yaml のメッセージはライブラリ側の文言なので、載せる長さを切る。 */
@@ -24,9 +25,9 @@ const MAX_YAML_MESSAGE = 120;
  * LOGMAG と、CH0 の Smith)。52 の docs/75 の 3-1 と同じ並び。
  */
 export const DEFAULT_TRACES: readonly TraceSpec[] = [
-  { param: 'S21', format: 'logmag', vf: null, line: null },
-  { param: 'S11', format: 'logmag', vf: null, line: null },
-  { param: 'S11', format: 'smith', vf: null, line: null },
+  { param: 'S21', format: 'logmag', vf: null, scale: null, line: null },
+  { param: 'S11', format: 'logmag', vf: null, scale: null, line: null },
+  { param: 'S11', format: 'smith', vf: null, scale: null, line: null },
 ];
 
 /** 読んだ結果。**`doc` は必ずある** (52 の docs/54「エディターを YAML の都合で止めない」)。 */
@@ -164,6 +165,12 @@ function readFence(source: string): ParseResult {
       }
       if (traces.some((trace) => trace.param === result.value.param && trace.format === result.value.format)) {
         errors.push(notice(`${result.value.param} ${result.value.format} が 2 つあります (1 本だけ描きます)`, line));
+        continue;
+      }
+      const clash = traces.find((trace) => PANEL_OF[trace.format] === PANEL_OF[result.value.format]
+        && trace.scale !== null && result.value.scale !== null && trace.scale !== result.value.scale);
+      if (clash !== undefined) {
+        errors.push(fenceError(`${result.value.param} ${result.value.format} は ${clash.param} ${clash.format} と同じ枠です (枠の尺度は 1 つ。同じ尺度で書きます)`, line));
         continue;
       }
       traces.push({ ...result.value, line });

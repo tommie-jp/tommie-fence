@@ -30,7 +30,7 @@ describe('parseFence', () => {
     expect(doc.dut).toHaveLength(2);
     expect(doc.dut[1]?.line).toBe(6);
     expect(doc.data).toEqual({ name: '3-1.s2p', label: '実測', line: 7 });
-    expect(doc.traces).toEqual([{ param: 'S21', format: 'logmag', vf: null, line: 9 }]);
+    expect(doc.traces).toEqual([{ param: 'S21', format: 'logmag', vf: null, scale: null, line: 9 }]);
     expect(doc.markers).toEqual([{ f: 10e6, line: 11 }]);
     expect(doc.notes.map((note) => note.kind)).toEqual(['mark', 'text']);
     expect(doc.style.theme).toBe('dark');

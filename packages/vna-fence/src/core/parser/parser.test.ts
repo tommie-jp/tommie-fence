@@ -79,7 +79,7 @@ describe('parseDutLine', () => {
 
 describe('parseTraceLine', () => {
   test('reads a parameter and a format', () => {
-    expect(parseTraceLine('S21 logmag')).toEqual({ ok: true, value: { param: 'S21', format: 'logmag', vf: null } });
+    expect(parseTraceLine('S21 logmag')).toEqual({ ok: true, value: { param: 'S21', format: 'logmag', vf: null, scale: null } });
     expect(parseTraceLine('s11 SMITH')).toMatchObject({ ok: true, value: { param: 'S11', format: 'smith' } });
   });
 

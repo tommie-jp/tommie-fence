@@ -4,7 +4,7 @@ import type { TraceSpec } from '../types.ts';
 import { SIZE, groupPanels, placePanels } from './panels.ts';
 import { dbAxis, degAxis, fraction, linAxis, logOhmAxis, niceAxis, ohmAxis, siLabel, swrAxis, tickLabel } from './scales.ts';
 
-const trace = (param: 'S11' | 'S21', format: TraceSpec['format']): TraceSpec => ({ param, format, vf: null, line: null });
+const trace = (param: 'S11' | 'S21', format: TraceSpec['format']): TraceSpec => ({ param, format, vf: null, scale: null, line: null });
 
 describe('groupPanels', () => {
   test('puts traces of the same unit in one panel, in the order written', () => {

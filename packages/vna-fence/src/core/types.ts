@@ -43,6 +43,11 @@ export type TraceSpec = {
   readonly format: TraceFormat;
   /** TDR の速度係数。tdr 以外は null。 */
   readonly vf: number | null;
+  /**
+   * 縦の尺度 (1 目盛あたりの量。dB・度・ns・linear・swr の単位のまま)。
+   * 書かなければ null で、枠の既定の尺度。
+   */
+  readonly scale: number | null;
   readonly line: number | null;
 };
 

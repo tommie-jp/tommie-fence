@@ -6,7 +6,7 @@ import { DIVISIONS, fraction } from './layout/scales.ts';
 import { traceLabel } from './model/readings.ts';
 import type { RectSeries } from './model/series.ts';
 import type { Sweep } from './model/sweep.ts';
-import { amountText, axisOf, perDivision } from './render/panel.ts';
+import { amountText, axisOf, perDivision, writtenScale } from './render/panel.ts';
 import type { FenceError } from './types.ts';
 
 /**
@@ -140,6 +140,8 @@ const heightOf = (series: RectSeries): number => {
  */
 function stillNotices(input: AdviceInput): readonly FenceError[] {
   return input.panels.flatMap(({ kind, series }) => {
+    // **書き手が尺度を決めた枠では言わない** (平らに見えるのも承知の上)。
+    if (writtenScale(series) !== null) return [];
     const axis = axisOf(kind, series);
     if (axis.log) return [];
     const division = (axis.max - axis.min) / DIVISIONS;
@@ -158,9 +160,43 @@ function stillNotices(input: AdviceInput): readonly FenceError[] {
   });
 }
 
+/** 負号は − (U+2212)。読み値と同じ字にする。 */
+const signed = (kind: PanelKind, value: number): string => amountText(kind, Number(value.toPrecision(3))).replace(/^-/, '−');
+
+/** 尺度を書いた枠で、値が目盛の外に出るトレース。**収まる 1-2-5 の尺度を 1 つ言う**。 */
+function outOfScaleNotices(input: AdviceInput): readonly FenceError[] {
+  return input.panels.flatMap(({ kind, series }) => {
+    if (writtenScale(series) === null) return [];
+    const axis = axisOf(kind, series);
+    const written = axis.max - axis.min;
+    return shown(series).flatMap((one) => {
+      const values = one.points.map((point) => point.value).filter(Number.isFinite);
+      if (values.length === 0) return [];
+      const low = Math.min(...values);
+      const high = Math.max(...values);
+      const tolerance = written * 1e-9;
+      const outs = [
+        ...(low < axis.min - tolerance ? [`最小 ${signed(kind, low)} は下端 ${signed(kind, axis.min)} (${DIVISIONS} 目盛) の外`] : []),
+        ...(high > axis.max + tolerance ? [`最大 ${signed(kind, high)} は上端 ${signed(kind, axis.max)} (${DIVISIONS} 目盛) の外`] : []),
+      ];
+      if (outs.length === 0) return [];
+      // 基準 (上端・中央・下端) は動かせないので、基準から値までの距離で必要な 1 目盛を出す。
+      const need = kind === 'db' ? -low / DIVISIONS
+        : kind === 'deg' ? Math.max(Math.abs(low), Math.abs(high)) / (DIVISIONS / 2)
+          : kind === 'swr' ? (high - 1) / DIVISIONS : high / DIVISIONS;
+      const fixable = kind === 'db' ? high <= 0 : kind === 'deg' || (low >= (kind === 'swr' ? 1 : 0));
+      const advice = fixable && need > 0 ? `。${amountText(kind, step125(need))}/目盛 なら収まります` : '';
+      return [notice(
+        `${traceLabel(one.trace)} は ${perDivision(kind, axis)} の尺度では範囲の外です (${outs.join('、')}${advice})`,
+        one.trace.spec.line,
+      )];
+    });
+  });
+}
+
 /** 読みにくい掃引と枠のお知らせ。**終了コードは変えない** (お知らせ)。 */
 export function sweepAdvice(input: AdviceInput): readonly FenceError[] {
   const panels = input.panels.filter((panel) => !isRound(panel.kind) && panel.kind !== 'tdr');
   const judged = { ...input, panels };
-  return [...crowdedNotices(judged), ...stillNotices(judged)];
+  return [...crowdedNotices(judged), ...stillNotices(judged), ...outOfScaleNotices(judged)];
 }

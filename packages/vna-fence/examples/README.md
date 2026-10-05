@@ -12,6 +12,7 @@
 | [02-parts.md](02-parts.md) | 寄生分のある部品 — コンデンサの SRF、コイルの並列共振、水晶 |
 | [03-lines.md](03-lines.md) | 伝送線路とスタブ、TDR |
 | [04-notes.md](04-notes.md) | 注釈 (`notes:`) と見た目 (`style:`) |
+| [05-scale.md](05-scale.md) | 縦の尺度 — トレースの末尾に 1 目盛あたりの量 (`1dB` `1ns`) |
 
 `dut:` の**等価回路** (` ```circuit ` の回路図) を vna の図の前に添えてある
 (何も入れない治具と、DUT の形がほかの例と同じ 04-notes は除く)。線路は伝送線路 (`tline`、値は Z0) で描く。
