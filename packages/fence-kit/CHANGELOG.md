@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Changed
+
+- `FenceEditor` の `step` / `stepsTo` に本文 (`source`) を渡す。番地の英字と数字のどちらが行かが基板のシルクで変わる
+  (perfboard の `board: silk:`) ので、隣の穴の綴りを数えるのに本文の基板が要る。実装は引数を無視してよい
+
 ## [0.14.0] - 2026-10-05
 
 ### Added
