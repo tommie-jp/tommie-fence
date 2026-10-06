@@ -24,6 +24,7 @@
 | [14-named-chips.md](14-named-chips.md) | リレー・フォトカプラ・7 セグ (ピンに名前のある DIP 型) |
 | [15-wide-dip.md](15-wide-dip.md) | 幅広 DIP (600 mil。AS6C62256 などの 28 ピン SRAM、`dip28/wide`) |
 | [16-sheets.md](16-sheets.md) | 複数のブレッドボード (`sheets:` と `links:`) |
+| [17-soft-fpga-td4.md](17-soft-fpga-td4.md) | Soft-FPGA TD4 (Pico 2 + DIP スイッチ + LED。GitHub のブレッドボード図を描き直したもの) |
 
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではなく、
