@@ -249,8 +249,10 @@ function readTitle(node: ParsedNode | null, line: number | null, errors: FenceEr
 /**
  * `points:` を読む。名前 → 番地の表にする。
  *
- * 名前に**番地の形は許さない** (`a1: c5`)。許すと `a1` と書いたときに
+ * 名前に**番地の形は許さない** (`"1,1": 5,3`)。許すと `1,1` と書いたときに
  * どちらの意味なのかを解決の順で決めることになり、書いた人には見えない。
+ * 番地は数字で始まり `,` を含むので、`A1` `P1` `C1` は名前に使える
+ * (旧い綴りでは番地と読めたので断っていた。52 の docs/126)。
  */
 function collectPoints(
   contents: ParsedNode | null,

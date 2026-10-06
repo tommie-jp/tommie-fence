@@ -75,6 +75,19 @@ describe('節点の名札', () => {
     expect(nameNode(RC, nodeHandleOf('3,1'), 'あ').ok).toBe(false);
   });
 
+  test('takes a name the old spelling read as an address (A1, P1, C1)', () => {
+    // 旧い綴りでは `A1` は行 a の 1 列目で、名前に使えなかった (52 の docs/126)。
+    for (const name of ['A1', 'P1', 'c1']) {
+      expect(after(RC, nodeHandleOf('3,1'), name), name).toContain(`points:\n  ${name}: 3,1`);
+    }
+  });
+
+  test('says an address-shaped name is the address itself', () => {
+    const result = nameNode(RC, nodeHandleOf('3,1'), '7,2');
+
+    expect(!result.ok && result.error.message).toContain('番地そのもの');
+  });
+
   test('refuses a name another point already has', () => {
     const named = after(RC, nodeHandleOf('3,1'), 'vout');
 

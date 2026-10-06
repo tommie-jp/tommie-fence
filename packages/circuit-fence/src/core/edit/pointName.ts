@@ -116,10 +116,12 @@ function pointLineOf(source: string, name: string): number {
 
 /** 書ける名前か。読めなくなる綴りは**書く前に**断る (帯で気づくのでは遅い)。 */
 function nameProblem(doc: Circuit, name: string, was: string | null): string | null {
+  // 番地の形 (`x,y`) だけは名前にならない。**`A1` `P1` `C1` は名前に使える**
+  // (旧い綴りでは番地と読めたので断っていた。52 の docs/126)。
+  if (parseAddress(name) !== null) return `${safeToken(name)} は番地そのものです (番地と読み分けられません)`;
   if (!isReferenceable(name)) {
     return `${safeToken(name)} は名前に使えません (英数字と _ - だけの ${LIMITS.idLength} 文字まで)`;
   }
-  if (parseAddress(name) !== null) return `${safeToken(name)} は番地そのものです (番地と読み分けられません)`;
   if (doc.parts.some((part) => part.id === name)) {
     return `${safeToken(name)} は部品の名前です (注釈の指し先でどちらか決められません)`;
   }
