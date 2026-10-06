@@ -7,7 +7,7 @@ import { collectExamples } from '../scripts/examples.mjs';
 
 /**
  * 例の隣のデータ (`data:` が指す CSV・Touchstone) を、`.md` と同じ場所へ写す
- * (52 の docs/118)。頁は例を開くとき、本文が指す名前だけを取りに行く。
+ * (52 の docs/120)。頁は例を開くとき、本文が指す名前だけを取りに行く。
  */
 const out = mkdtempSync(join(tmpdir(), 'pg-examples-'));
 afterAll(() => rmSync(out, { recursive: true, force: true }));

@@ -520,7 +520,7 @@ const STYLE = `
 
   .cf-wire, .cf-lead { stroke: var(--cf-ink); stroke-width: 1.5; fill: none; }
   /* ピンの端は近似 (正しい位置は記号の形が決める)。**実線で引く** — 破線だと配線が切れて見え、
-     欠けた図に読める (52 の docs/118)。近似であることは、少し薄くして言う。 */
+     欠けた図に読める (52 の docs/120)。近似であることは、少し薄くして言う。 */
   .cf-wire.cf-approx { opacity: 0.8; }
 
   .cf-glyph { fill: var(--cf-paper); stroke: var(--cf-ink); stroke-width: 1.5; }

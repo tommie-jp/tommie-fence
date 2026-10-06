@@ -79,7 +79,7 @@ function fromDirectory(directory, kind, broken, repoPath, prefix) {
 
 /**
  * 例の隣のデータ (`data:` が指す CSV と Touchstone)。**`.md` と同じ場所に置く** —
- * 頁は例を開くとき、本文の `data:` が指す名前だけを取りに行く (52 の docs/118)。
+ * 頁は例を開くとき、本文の `data:` が指す名前だけを取りに行く (52 の docs/120)。
  */
 const DATA_FILE = /\.(csv|s1p|s2p)$/i;
 

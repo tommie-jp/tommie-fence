@@ -1050,7 +1050,7 @@ function paint(now: State): void {
   const spelled = now.under.fine !== null && now.ghost !== null && now.ghost.ok ? now.ghost.cells[0] : undefined;
   // 端数を受けるフェンス (circuit) は**数の座標を主**にして、綴りを括弧に回す (`7.3,2.7 (b2d7)`)。
   // 綴りだけでは何段ずれているかが読みにくい。受けないフェンス (ブレッドボード・基板) は穴を指すので
-  // 番地のまま (52 の docs/118)。
+  // 番地のまま (52 の docs/120)。
   const cell = spelled ?? now.under.cell ?? '';
   const coords = now.under.cell !== null && state.fine !== null && state.fineFor === 'all'
     ? coordsOf(now.under.cell, now.under.fine)

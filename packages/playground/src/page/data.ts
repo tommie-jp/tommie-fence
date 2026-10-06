@@ -5,7 +5,7 @@ import { reason, say, warn } from './log.ts';
 import { changed } from './workspace.ts';
 
 /**
- * `data:` に重ねる実測のファイル (52 の docs/118)。**頁の中の表だけで持つ** —
+ * `data:` に重ねる実測のファイル (52 の docs/120)。**頁の中の表だけで持つ** —
  * どこにも送らず、保存にも共有リンクにも載せない。文書を開き直したら捨てる
  * (前の文書の同じ名前のデータが、別の文書の図に黙って重なるのを避ける)。
  */
@@ -59,7 +59,7 @@ export const isDataFile = (file: File): boolean => /\.(csv|s1p|s2p|txt)$/i.test(
 /**
  * 文書の隣のデータを取りに行く。**本文の `data:` が指す名前だけ** (同じ場所のほかの
  * ファイルは取らない)。**頁と同じ出所の文書だけ** — 外の URL の隣へは取りに行かない
- * (外部参照をしない。52 の docs/118)。見つからなくても文書は開く (添付で補える)。
+ * (外部参照をしない。52 の docs/120)。見つからなくても文書は開く (添付で補える)。
  * 取れたものがあれば図を描き直す。
  */
 export async function attachSiblings(documentUrl: string, sources: readonly string[]): Promise<void> {

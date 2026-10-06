@@ -108,7 +108,7 @@
             <input type="file" id="file" accept=".md,.markdown,text/markdown" hidden />
             <button type="button" id="open">開く</button>
             <!-- perf のフェンスを見ているときだけ出す (`page/silk.ts`)。基板に刷ってある
-                 英字と数字の振り方を、フェンスの `board:` の `silk:` に書く (52 の docs/108・118)。 -->
+                 英字と数字の振り方を、フェンスの `board:` の `silk:` に書く (52 の docs/108・120)。 -->
             <label class="pick" id="silk-pick" hidden>
               シルク
               <select id="silk"></select>
@@ -165,7 +165,7 @@
               <select id="fence"></select>
             </label>
             <!-- `data:` に重ねる実測のファイル (CSV・Touchstone) を、頁の中だけで持つ
-                 (`page/data.ts`。52 の docs/118)。どこにも送らず、保存もしない。 -->
+                 (`page/data.ts`。52 の docs/120)。どこにも送らず、保存もしない。 -->
             <input type="file" id="attach-file" accept=".csv,.s1p,.s2p,.txt" multiple hidden />
             <button type="button" id="attach" title="data: が指す CSV・Touchstone を選ぶ (頁の中だけで持ち、どこにも送らない)">データを添える</button>
             <!-- 添えられなかった理由。**窓の中に出す** (帯の一言は窓の後ろに隠れる)。 -->

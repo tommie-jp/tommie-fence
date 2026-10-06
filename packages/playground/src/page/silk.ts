@@ -6,7 +6,7 @@ import { say, warn } from './log.ts';
 import { changed, ws } from './workspace.ts';
 
 /**
- * perf の `silk:` の選び手 (52 の docs/108・118)。**perf のフェンスを見ているときだけ出す。**
+ * perf の `silk:` の選び手 (52 の docs/108・120)。**perf のフェンスを見ているときだけ出す。**
  * 選ぶと、そのフェンスの `board:` の `silk:` の行を書き換える。マップへは文書の変化として流れる。
  */
 
