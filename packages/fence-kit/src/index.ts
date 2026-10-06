@@ -100,6 +100,7 @@ export type {
  * DOM を触る webview は `fence-kit/webview` から取る (ここには出さない)。
  */
 export { createSession } from './editor/session.ts';
+export { SHEET_LINE_REFUSAL, withSheets } from './editor/sheetsEditor.ts';
 export type {
   Incoming, LitRange, MapView, Outgoing, Session, SessionHost, SessionOptions,
 } from './editor/session.ts';

@@ -1,4 +1,4 @@
-import { renderIssues, wireColorNames } from 'fence-kit';
+import { renderIssues, wireColorNames, withSheets } from 'fence-kit';
 import type { EditResult, FenceEditor } from 'fence-kit';
 import { normalizeNewlines } from 'fence-kit';
 import { renderPalette, renderTypeOptions } from './palette.ts';
@@ -57,6 +57,12 @@ const spellingOf = (source: string): Spelling => parseFence(normalizeNewlines(so
 const readAddress = (source: string, written: string) => parseAddress(written, spellingOf(source));
 
 export function createPerfboardEditor(): FenceEditor {
+  // `sheets:` の図は枚を 1 枚ずつ仮のフェンスとして掴む (52 の docs/118)。
+  return withSheets(oneSheetEditor());
+}
+
+/** 1 枚の図のエディタ。`sheets:` の図では `withSheets` が枚の本文を渡す。 */
+function oneSheetEditor(): FenceEditor {
   return {
     language: 'perf',
 

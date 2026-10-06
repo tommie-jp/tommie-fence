@@ -210,7 +210,16 @@ const willCreateNote = (language: string): string =>
   `<p class="cf-issue cf-notice">この文書に ${language} フェンスがありません。`
   + '置くと、文書の終わりに 1 本作ります。</p>';
 
-type FenceNow<D> = { readonly document: D; readonly source: string; readonly line: number };
+type FenceNow<D> = {
+  readonly document: D;
+  readonly source: string;
+  readonly line: number;
+  /** 一覧で選ばれている項目の行 (`FenceBlock.entry`)。`sheets:` の図では枚の頭の行。 */
+  readonly entry?: number;
+};
+
+/** 一覧で選ばれている項目の行。ふつうのフェンスは開き記号の行。 */
+const entryOf = (fence: { readonly line: number; readonly entry?: number }): number => fence.entry ?? fence.line;
 
 /** 書き換えの中身。行の出し入れを持たない `Move` も、ここでは同じ形で扱う。 */
 type Changes = {
@@ -432,7 +441,13 @@ export function createSession<D extends DocLike>(
     lit = target;
   }
 
-  function rebind(document: D, line: number): void {
+  /**
+   * 覚えるフェンスを替える。**覚えるのは一覧の項目の行** (`entryOf`)。`sheets:` の図は
+   * 1 つのフェンスに枚の数だけ項目があり、開き記号の行で覚えると、どの枚を見ているかを
+   * 引き直すたびに見失う。宿主へ知らせるのは開き記号の行 (宿主はフェンスで数える)。
+   */
+  function rebind(document: D, fence: { readonly line: number; readonly entry?: number }): void {
+    const line = entryOf(fence);
     const uri = uriOf(document);
     // 別の文書へ移ったら履歴は捨てる (覚えている桁が別の文書を指す)。光も消す。
     if (bound !== null && bound.uri !== uri) {
@@ -441,7 +456,7 @@ export function createSession<D extends DocLike>(
     }
     const moved = bound === null || bound.uri !== uri || bound.line !== line;
     bound = { uri, line };
-    if (moved) host.onBind?.(uri, line);
+    if (moved) host.onBind?.(uri, fence.line);
   }
 
   /** カーソルのあるフェンス。文書を固定していれば、その文書の中に限る。 */
@@ -450,7 +465,7 @@ export function createSession<D extends DocLike>(
     if (active === null) return null;
     if (pinned !== null && uriOf(active.document) !== uriOf(pinned)) return null;
     const fence = lookUp(active.document.getText(), active.selection.active.line + 1);
-    return fence === null ? null : { document: active.document, source: fence.source, line: fence.line };
+    return fence === null ? null : { document: active.document, source: fence.source, line: fence.line, entry: entryOf(fence) };
   }
 
   /**
@@ -462,11 +477,12 @@ export function createSession<D extends DocLike>(
     if (followCursor) {
       const under = fenceUnderCursor();
       if (under !== null) {
-        const at = { uri: uriOf(under.document), line: under.line };
+        // **枚をまたいだのも「入った」と数える** (`sheets:` の図は枚ごとに項目が立つ)。
+        const at = { uri: uriOf(under.document), line: entryOf(under) };
         const entered = seen === null || seen.uri !== at.uri || seen.line !== at.line;
         seen = at;
         if (entered) {
-          rebind(under.document, under.line);
+          rebind(under.document, under);
           return under;
         }
       }
@@ -478,16 +494,16 @@ export function createSession<D extends DocLike>(
       // 上に行が足されてずれたら見失う (そのときは掴み直してもらう)。
       const fence = document === null ? null : lookUp(document.getText(), bound.line);
       if (document !== null && fence !== null) {
-        bound = { uri: bound.uri, line: fence.line };
-        return { document, source: fence.source, line: fence.line };
+        bound = { uri: bound.uri, line: entryOf(fence) };
+        return { document, source: fence.source, line: fence.line, entry: entryOf(fence) };
       }
     }
 
     if (pinned !== null) {
       const first = firstOf(pinned.getText());
       if (first !== null) {
-        rebind(pinned, first.line);
-        return { document: pinned, source: first.source, line: first.line };
+        rebind(pinned, first);
+        return { document: pinned, source: first.source, line: first.line, entry: entryOf(first) };
       }
     }
     return null;
@@ -532,13 +548,14 @@ export function createSession<D extends DocLike>(
     // 一覧は文書全体から組むので、本文だけでなく文書も鍵に入れる。
     const markdown = fence.document.getText();
     // **開閉も鍵に入れる。** 本文が同じでも、広げた姿と畳んだ姿は別物。
-    const key = `${uriOf(fence.document)}\u0000${fence.line}\u0000${ercOpen ? '1' : '0'}\u0000${markdown}`;
+    // **選んでいる項目も鍵に入れる** (`sheets:` の図は同じフェンスの中で枚を選び直す)。
+    const key = `${uriOf(fence.document)}\u0000${fence.line}\u0000${entryOf(fence)}\u0000${ercOpen ? '1' : '0'}\u0000${markdown}`;
     if (lastView !== null && lastView.key === key) return lastView.view;
 
     const view = editor.view(fence.source, fence.line);
     const now: MapView = {
       html: view.map,
-      picker: renderFencePicker(allFences(markdown), fence.line),
+      picker: renderFencePicker(allFences(markdown), entryOf(fence)),
       issues: view.issues,
       // **件数は常に、中身は広げているときだけ。** 畳んだまま運んでも出さない。
       ...(view.erc === undefined
@@ -591,7 +608,7 @@ export function createSession<D extends DocLike>(
     const fence = active === null || bound === null || uriOf(active.document) !== bound.uri
       ? null
       : lookUp(active.document.getText(), active.selection.active.line + 1);
-    if (active === null || fence === null || bound === null || fence.line !== bound.line) {
+    if (active === null || fence === null || bound === null || entryOf(fence) !== bound.line) {
       host.post({ kind: 'aim' });
       return;
     }
@@ -671,7 +688,7 @@ export function createSession<D extends DocLike>(
       say(`${editor.language} フェンスを作れませんでした`);
       return null;
     }
-    rebind(document, made.line);
+    rebind(document, made);
     return { document, source: made.source, line: made.line };
   }
 
@@ -1681,7 +1698,7 @@ export function createSession<D extends DocLike>(
       say(`${line} 行目に ${languages()} フェンスがありません`);
       return;
     }
-    rebind(document, fence.line);
+    rebind(document, fence);
     refreshWith(false);
   }
 

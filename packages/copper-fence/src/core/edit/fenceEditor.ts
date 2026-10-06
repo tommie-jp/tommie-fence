@@ -1,4 +1,4 @@
-import { normalizeNewlines, renderIssues, wireColorNames } from 'fence-kit';
+import { normalizeNewlines, renderIssues, wireColorNames, withSheets } from 'fence-kit';
 import type { FenceEditor } from 'fence-kit';
 import { extractCopperFences } from '../fences.ts';
 import { renderCopper } from '../index.ts';
@@ -20,6 +20,12 @@ import { deletePart, deleteWire } from './remove.ts';
  * - 島・via・切り欠きは**部品**として掴む
  */
 export function createCopperEditor(): FenceEditor {
+  // `sheets:` の図は枚を 1 枚ずつ仮のフェンスとして掴む (52 の docs/118)。
+  return withSheets(oneSheetEditor(), { shared: ['f'] });
+}
+
+/** 1 枚の図のエディタ。`sheets:` の図では `withSheets` が枚の本文を渡す。 */
+function oneSheetEditor(): FenceEditor {
   return {
     language: 'copper',
 

@@ -6,6 +6,11 @@ export type FenceBlock = {
   readonly source: string;
   /** 開き記号が書かれた行 (1 始まり)。 */
   readonly line: number;
+  /**
+   * フェンスの一覧 (`FenceEntry`) で選ばれている項目の行。書かなければ `line`。
+   * **1 つのフェンスを何項目かに分けて見せる** `sheets:` の図 (`withSheets`) だけが使う。
+   */
+  readonly entry?: number;
 };
 
 const FENCE_LINE = /^(\s{0,3})(`{3,}|~{3,})\s*(.*)$/;
