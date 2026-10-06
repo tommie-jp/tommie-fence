@@ -71,7 +71,7 @@ export const BASE_HOLE_SIZE = 5.2;
 const DEFAULT_METRICS: Metrics = {
   textSize: BASE_TEXT_SIZE,
   boardTextScale: 1,
-  wireWidth: 3.4,
+  wireWidth: 4,
   holeSize: BASE_HOLE_SIZE,
 };
 
@@ -207,14 +207,14 @@ export const THEMES: Record<string, RenderTheme> = {
   'high-contrast': {
     name: 'high-contrast',
     // 穴は真っ黒な時点で十分読めるので大きくしない。広げるとラベルと重なる場所が増える。
-    metrics: metrics({ textSize: 12, boardTextScale: 1.1, wireWidth: 4.2 }),
+    metrics: metrics({ textSize: 12, boardTextScale: 1.1, wireWidth: 4.8 }),
     palette: HIGH_CONTRAST,
   },
   mono: { name: 'mono', palette: MONO, metrics: metrics() },
   presentation: {
     name: 'presentation',
     palette: PRESENTATION,
-    metrics: metrics({ textSize: 12.5, boardTextScale: 1.15, wireWidth: 4.2, holeSize: 6 }),
+    metrics: metrics({ textSize: 12.5, boardTextScale: 1.15, wireWidth: 4.8, holeSize: 6 }),
   },
 };
 

@@ -15,6 +15,7 @@ import type { RenderStyle } from './theme.ts';
 import { renderTitle, titleHeight } from './title.ts';
 import { STAMP_TEXT, VERSION } from '../version.ts';
 import { renderWire } from './wires.ts';
+import { crossingPoints } from './crossings.ts';
 
 export type RenderedWire = {
   readonly points: readonly Point[];
@@ -81,7 +82,9 @@ export function renderDocument(input: DocumentInput): string {
   // 縁取りは全部先に敷いてから線を重ねる。1 本ずつ「縁取り→線」で描くと、
   // 交差したところで後の配線の縁取りが先の配線を塗り潰してしまう。
   const edit = input.edit ?? null;
-  const wires = input.wires.map((wire) => renderWire(wire.points, wire.color, theme));
+  // 交差した所は**あとに書いた線が跨ぐ** (`crossings.ts`)。
+  const hops = crossingPoints(input.wires.map((wire) => wire.points));
+  const wires = input.wires.map((wire, index) => renderWire(wire.points, wire.color, theme, hops[index]));
 
   /** 掴む印を付ける包み。編集でなければ**そのまま返す** (図を変えない)。 */
   const marked = (svg: string, attributes: Record<string, string>): string =>

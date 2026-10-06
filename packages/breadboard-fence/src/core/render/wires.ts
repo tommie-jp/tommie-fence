@@ -1,5 +1,4 @@
 import type { Point } from '../types.ts';
-import { DEFAULT_WIRE_COLOR } from './palette.ts';
 import type { RenderTheme } from './theme.ts';
 import { element, num, roundedPath } from './svg.ts';
 
@@ -29,54 +28,38 @@ export type WirePaint = { readonly halo: string; readonly line: string };
 const NOTHING: WirePaint = { halo: '', line: '' };
 
 /**
- * 基板に沈む線の縁取り。**テーマが縁取りを持たないとき** (classic・presentation) に、
- * 線ごとに決める。
+ * 配線の縁取り。**テーマが縁取りを持たないとき** (classic・presentation) は、
+ * **全部の線を同じ縁で縁取る** (perfboard-fence と同じ)。
  *
- * - **基板との差が小さい色** (`white`) は、基板と同じ明るさで線そのものが見えない
- *   (実機の AD の図で、2− の白線がどこへ行くのか読めなかった)。
- * - **既定の灰色** (色を書かなかった線) は、部品のピン (`lead`) とほぼ同じ色で、
- *   ピンと配線の区別が付かない。縁で「被覆のある線」の姿にしてピンと分ける。
- *
- * 色は変えない (被覆の色そのもので、テーマで変えると図が嘘になる)。縁は濃い灰色で、
- * 被覆の色より細く見えるだけの幅に留める。
+ * 沈む色 (白・既定の灰色) だけ縁取っていたころは、太さが 2 通りに見えて意味の違いに
+ * 読まれ、交差した 2 本の境目も見えなかった。縁は濃い灰色で、明るい基板の上で
+ * 線の形を立てる (perf の緑の基板は白い縁だが、この基板の明るさでは白は消える)。
+ * 色は変えない (被覆の色そのもので、テーマで変えると図が嘘になる)。
  */
 export const WIRE_OUTLINE = '#5b636d';
-/** これより基板との明るさの比が小さい色は縁取る。白 (1.05) は入り、黄 (1.7) は入らない。 */
-const OUTLINE_CONTRAST = 1.5;
-/** 縁取りが線の両側に出る幅の合計。背景と同じ色の線でも輪郭が 2 本の細線として読める。 */
-const OUTLINE_MARGIN = 2.2;
+/** 縁取りが線の両側に出る幅の合計 (片側 1。perfboard-fence の `OUTLINE_MARGIN` と同じ)。 */
+const OUTLINE_MARGIN = 2;
 
-export function wireOutline(color: string, plate: string): string | null {
-  if (color.toLowerCase() === DEFAULT_WIRE_COLOR.toLowerCase()) return WIRE_OUTLINE;
-  const [a, b] = [luminance(color), luminance(plate)];
-  if (a === null || b === null) return null;
-  const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-  return ratio < OUTLINE_CONTRAST ? WIRE_OUTLINE : null;
-}
-
-/** 相対輝度 (WCAG)。`#rrggbb` だけを読む。 */
-function luminance(hex: string): number | null {
-  const match = /^#([0-9a-f]{6})$/i.exec(hex);
-  if (!match) return null;
-  const value = Number.parseInt(match[1]!, 16);
-  const [r, g, b] = [(value >> 16) & 255, (value >> 8) & 255, value & 255].map((channel) => {
-    const c = channel / 255;
-    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  }) as [number, number, number];
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-export function renderWire(points: readonly Point[], color: string, theme: RenderTheme): WirePaint {
-  const path = roundedPath(points, CORNER_RADIUS);
+/**
+ * 1 本の配線。`hops` は**この線が跨ぐ交差の点** (`crossings.ts`)。
+ * 交差があればそこだけ半円で渡る (perfboard-fence と同じ描き方)。
+ */
+export function renderWire(
+  points: readonly Point[],
+  color: string,
+  theme: RenderTheme,
+  hops: readonly Point[] = [],
+): WirePaint {
+  const path = wirePath(points, hops);
   if (!path) return NOTHING;
 
   const { wireWidth } = theme.metrics;
-  const { wireHalo, plate, chipPin } = theme.palette;
+  const { wireHalo, chipPin } = theme.palette;
 
   // 配線の色は被覆の色そのものなのでテーマでは変えない。
   // 地に沈むテーマ (暗い基板の黒線など) は、色を変えるかわりに縁取りを敷いて浮かせる。
-  // テーマが縁取りを持たなければ、沈む線だけを縁取る (`wireOutline`)。
-  const outline = wireHalo ? null : wireOutline(color, plate);
+  // テーマが縁取りを持たなければ、全部の線を同じ縁で縁取る (`WIRE_OUTLINE`)。
+  const outline = wireHalo ? null : WIRE_OUTLINE;
   const halo = wireHalo
     ? element('path', {
         d: path, fill: 'none', stroke: wireHalo, 'stroke-width': num(wireWidth + HALO_MARGIN),
@@ -93,9 +76,9 @@ export function renderWire(points: readonly Point[], color: string, theme: Rende
     d: path, fill: 'none', stroke: chipPin, 'stroke-width': num(wireWidth * BARE_WIDTH_RATIO),
     'stroke-linecap': 'round', 'stroke-linejoin': 'round',
   });
-  const covered = roundedPath(stripEnds(points), CORNER_RADIUS) ?? path;
+  const covered = wirePath(stripEnds(points), hops) || path;
   const line = element('path', {
-    d: covered, fill: 'none', stroke: color, 'stroke-width': num(wireWidth), 'stroke-linecap': 'round', opacity: 0.92,
+    d: covered, fill: 'none', stroke: color, 'stroke-width': num(wireWidth), 'stroke-linecap': 'round',
   });
   const ends = [points[0], points[points.length - 1]]
     .map((point) =>
@@ -138,3 +121,84 @@ function stripEnds(points: readonly Point[]): readonly Point[] {
   const last = stepToward(points[points.length - 1]!, points[points.length - 2]!, BARE_TIP);
   return [first, ...points.slice(1, -1), last];
 }
+
+/**
+ * 跨ぎの半径。**穴の間隔 (20) の 3/10。** 縁込みの線の太さ (約 6) より十分大きくないと
+ * 半円が線に埋もれ、大きいと隣の穴まで届いて、跨いだ先の穴が塞がって見える。
+ */
+const HOP = 6;
+
+/** 座標の比べ方の許し。 */
+const EPSILON = 1e-6;
+
+/**
+ * 角を丸め、交差の所だけ半円で跨ぐ道筋。跨ぎが無ければ `roundedPath` のまま
+ * (図の大半は交差しないので、書き出した SVG を変えない)。
+ *
+ * 跨ぎは区間ごとに入れ、**角の丸めにかかる所には入れない** (弧が角の曲がりと
+ * 重なると結び目に見える)。**近すぎる跨ぎは 1 つにまとめる**。膨らむ向きは
+ * 線の向きによらず揃える — 横寄りの区間は上へ、縦寄りの区間は右へ。
+ */
+function wirePath(points: readonly Point[], hops: readonly Point[]): string {
+  if (hops.length === 0) return roundedPath(points, CORNER_RADIUS);
+  const path = points.filter((current, index) => {
+    const previous = points[index - 1];
+    return !previous || previous.x !== current.x || previous.y !== current.y;
+  });
+  if (path.length < 2) return '';
+
+  const last = path.length - 1;
+  // 角ごとの丸め始めと丸め終わり (`roundedPath` と同じ取り方)。
+  const corners = path.map((corner, index) => {
+    if (index === 0 || index === last) return null;
+    const before = path[index - 1]!;
+    const after = path[index + 1]!;
+    return {
+      corner,
+      entry: stepToward(corner, before, CORNER_RADIUS),
+      exit: stepToward(corner, after, CORNER_RADIUS),
+    };
+  });
+
+  const commands = [`M ${xy(path[0]!)}`];
+  for (let index = 1; index <= last; index += 1) {
+    const start = corners[index - 1]?.exit ?? path[index - 1]!;
+    const end = corners[index]?.entry ?? path[index]!;
+    commands.push(...hopsAlong(start, end, hops));
+    const bend = corners[index];
+    commands.push(bend ? `L ${xy(bend.entry)} Q ${xy(bend.corner)} ${xy(bend.exit)}` : `L ${xy(end)}`);
+  }
+  return commands.join(' ');
+}
+
+/** `start`→`end` の区間に乗る跨ぎを、端の手前で収まるものだけ半円にする。 */
+function hopsAlong(start: Point, end: Point, hops: readonly Point[]): readonly string[] {
+  const length = distanceOf(start, end);
+  if (length === 0) return [];
+  const unit = { x: (end.x - start.x) / length, y: (end.y - start.y) / length };
+  const at = (along: number): Point => ({ x: start.x + unit.x * along, y: start.y + unit.y * along });
+  // 弧の向き (sweep=1 は進行方向の左、画面では横へ進むと上へ膨らむ)。
+  const sweep = (Math.abs(unit.x) >= Math.abs(unit.y) ? unit.x > 0 : unit.y > 0) ? 1 : 0;
+
+  const spans = hops
+    .filter((hop) => Math.abs((hop.x - start.x) * unit.y - (hop.y - start.y) * unit.x) < EPSILON)
+    .map((hop) => (hop.x - start.x) * unit.x + (hop.y - start.y) * unit.y)
+    .filter((along) => along - HOP > 0 && along + HOP < length)
+    .sort((one, other) => one - other)
+    .reduce<readonly { readonly start: number; readonly end: number }[]>((kept, along) => {
+      const span = { start: along - HOP, end: along + HOP };
+      const previous = kept[kept.length - 1];
+      return previous !== undefined && span.start <= previous.end
+        ? [...kept.slice(0, -1), { start: previous.start, end: span.end }]
+        : [...kept, span];
+    }, []);
+
+  return spans.map((span) => {
+    const radius = num((span.end - span.start) / 2);
+    return `L ${xy(at(span.start))} A ${radius} ${radius} 0 0 ${sweep} ${xy(at(span.end))}`;
+  });
+}
+
+const xy = (point: Point): string => `${num(point.x)} ${num(point.y)}`;
+
+const distanceOf = (one: Point, other: Point): number => Math.hypot(other.x - one.x, other.y - one.y);

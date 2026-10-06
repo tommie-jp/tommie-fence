@@ -91,7 +91,7 @@ describe('THEMES', () => {
   test('leaves classic exactly as the drawing has always been', () => {
     const classic = themeNamed('classic');
 
-    expect(classic.metrics).toEqual({ textSize: 10, boardTextScale: 1, wireWidth: 3.4, holeSize: 5.2 });
+    expect(classic.metrics).toEqual({ textSize: 10, boardTextScale: 1, wireWidth: 4, holeSize: 5.2 });
     // 透明のまま = 貼り先の地の色が透ける。既存の図の見え方を変えないための約束。
     expect(classic.palette.canvas).toBeNull();
     expect(classic.palette.holeEdge).toBeNull();

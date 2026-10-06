@@ -4,7 +4,7 @@ import { createBoard } from '../model/board.ts';
 import { createLayout } from '../model/layout.ts';
 import { DEFAULT_THEME } from './theme.ts';
 import { DEFAULT_WIRE_COLOR, WIRE_COLORS } from './palette.ts';
-import { WIRE_OUTLINE, renderWire, wireOutline } from './wires.ts';
+import { WIRE_OUTLINE, renderWire } from './wires.ts';
 
 /**
  * 実体配線図の読みやすさ。教科書の図を 1 枚ずつ見て分けた症状を、
@@ -13,21 +13,12 @@ import { WIRE_OUTLINE, renderWire, wireOutline } from './wires.ts';
 const fence = (...lines: string[]) => renderBreadboard(lines.join('\n'));
 
 describe('wires stand out from the board and from the leads', () => {
-  const plate = DEFAULT_THEME.palette.plate;
-
-  test('a white wire gets an outline because it is the same brightness as the board', () => {
-    // AD の図の 2− の白線が基板に溶けて、どこへ行くのか読めなかった。
-    expect(wireOutline(WIRE_COLORS.white!, plate)).toBe(WIRE_OUTLINE);
-  });
-
-  test('the default gray wire gets an outline so it does not read as a lead', () => {
+  test('every wire gets the same outline, as on the perfboard', () => {
+    // 沈む色だけ縁取ると太さが 2 通りに見え、交差した 2 本の境目も見えなかった。
     expect(DEFAULT_WIRE_COLOR).not.toBe(DEFAULT_THEME.palette.lead);
-    expect(wireOutline(DEFAULT_WIRE_COLOR, plate)).toBe(WIRE_OUTLINE);
-  });
-
-  test('colours that already stand out are left as they are', () => {
-    for (const name of ['red', 'black', 'blue', 'green', 'yellow', 'orange']) {
-      expect(wireOutline(WIRE_COLORS[name]!, plate), name).toBeNull();
+    for (const name of ['white', 'red', 'black', 'blue', 'green', 'yellow', 'orange']) {
+      const paint = renderWire([{ x: 0, y: 0 }, { x: 100, y: 0 }], WIRE_COLORS[name]!, DEFAULT_THEME);
+      expect(paint.halo, name).toContain(`stroke="${WIRE_OUTLINE}"`);
     }
   });
 
