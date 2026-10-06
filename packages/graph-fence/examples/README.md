@@ -21,6 +21,13 @@
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではない。
 
+## 回路図
+
+**測る回路が決まっている例 (00 共振・01 ボード線図) は、図の前に回路図を置いてある**
+([circuit-fence](../../circuit-fence/) の ` ```circuit ` フェンス。部品は E24 の 10 mH・10 nF・100 Ω・1 kΩ・100 nF)。
+作り直しは `npm run schematics --workspace=graph-fence`。ほかの例 (ダイオード・リアクタンス・太陽電池) は
+式や実測の曲線を見せるもので、回路図は付けていない。
+
 ## 図の付け方
 
 作り直しは `npm run examples --workspace=graph-fence`

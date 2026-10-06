@@ -5,6 +5,27 @@
 隣の `00-resonance.csv` は**実測ではない** — 50 Ω の値に ±4 % の揺れを足して計算で作った。
 実測は ○ で打ち、線で結ばない。
 
+回路は 10 mH と 10 nF (f<sub>0</sub> = 15.9 kHz) と電流を測る 100 Ω の直列で、CH2 は 100 Ω の電圧 (電流 = 電圧 / 100 Ω)。
+
+```circuit
+title: 回路図01 LC 直列共振
+parts:
+  W1: sine b1 e1 l=$\mathrm{W1}$
+  G1: ground e1
+  L1: inductor b3 b5 10m
+  C1: capacitor b5 b7 10n
+  R1: resistor b7 b9 100
+  M2: voltmeter a7 a9 l=$\mathrm{CH2}$
+wires:
+  - b1 -- b3
+  - a7 -- b7
+  - a9 -- b9
+  - b9 -- e9
+  - e9 -- e1
+```
+
+<img src="out/schematic/00-resonance.png" alt="回路図01 LC 直列共振" width="649">
+
 ```graph
 title: 図01 周波数と電流 — 15.9 kHz で山になり、輪の抵抗が小さいほど高い
 x: 周波数 Hz log 2k..32k

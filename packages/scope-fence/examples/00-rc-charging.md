@@ -5,6 +5,27 @@ C の電圧を見る。**計器の設定の表と同じ語**で書くと、フ�
 
 入力だけ。0〜2 V の方形波が 500 mV/div で 4 目盛の高さに出る (0 V の基準 ▶1 は中央から −2 目盛)。
 
+回路は 1 kΩ と 1 µF の RC (τ = 1 ms) で、方形波は Analog Discovery の Wavegen (W1) から入れる。CH1 は入力、CH2 は C の電圧に当てる。
+
+```circuit
+title: 回路図01 RC の充電
+parts:
+  W1: square b1 e1 l=$\mathrm{W1}$
+  G1: ground e1
+  CH1: port a2
+  R1: resistor b4 b7 1k
+  C1: capacitor b7 e7 1u
+  G2: ground e7
+  CH2: port a7
+wires:
+  - b1 -- b2
+  - b2 -- b4
+  - a2 -- b2
+  - a7 -- b7
+```
+
+<img src="out/schematic/00-rc-charging.png" alt="回路図01 RC の充電" width="540">
+
 ```scope
 title: 図01 入力 — 100 Hz の方形波
 time: 1ms/div

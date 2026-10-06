@@ -5,6 +5,27 @@
 本文の表と数で突き合わせる。隣の `01-bode.csv` は**実測ではない** — 理想に揺れを足して計算で作り、
 見出しを WaveForms の Network の Export の形に似せた (列は単位で線に当たる)。
 
+回路は 1 kΩ と 100 nF の RC ローパス (f<sub>c</sub> = 1.59 kHz)。
+
+```circuit
+title: 回路図01 RC ローパス
+parts:
+  W1: sine b1 e1 l=$\mathrm{W1}$
+  G1: ground e1
+  IN: port a2
+  R1: resistor b4 b7 1k
+  C1: capacitor b7 e7 100n
+  G2: ground e7
+  OUT: port a7
+wires:
+  - b1 -- b2
+  - b2 -- b4
+  - a2 -- b2
+  - a7 -- b7
+```
+
+<img src="out/schematic/01-bode.png" alt="回路図01 RC ローパス" width="553">
+
 ```graph
 title: 図01 RC ローパスのボード線図 — −3 dB の所が −45°
 x: 周波数 Hz log 100..100k

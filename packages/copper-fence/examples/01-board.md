@@ -8,7 +8,7 @@ board:
   size: 30x15mm
   h: 0.8mm
   er: 4.2
-title: 図01 0.8mm の薄い板
+title: 図01 0.8mm の薄い基板
 copper:
   L1: line 0,7.5 30,7.5 1.58mm
 parts:
@@ -16,7 +16,7 @@ parts:
   J2: sma right 7.5
 ```
 
-![図01 0.8mm の薄い板](out/01-board-1.svg)
+![図01 0.8mm の薄い基板](out/01-board-1.svg)
 
 基板が薄いと 50Ω の線路は細くなる (0.8mm・εr 4.2 で 1.58mm)。
 

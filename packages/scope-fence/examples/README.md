@@ -26,6 +26,13 @@
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではない。
 
+## 回路図
+
+**回路が決まっている例 (00〜03) は、画面の前に測る回路の回路図を置いてある**
+([circuit-fence](../../circuit-fence/) の ` ```circuit ` フェンス)。電源・信号は Wavegen (W1) の 5 V 以下で、
+部品の値は E24 (1 kΩ・1 µF・100 nF・1.5 kΩ・100 µF)。作り直しは `npm run schematics --workspace=scope-fence`。
+画面だけを見せる例 (04 以降) は回路を持たないので回路図は付けていない。
+
 ## 図の付け方
 
 作り直しは `npm run examples --workspace=scope-fence`
