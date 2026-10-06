@@ -8,7 +8,7 @@ board:
   h: 1.6mm
   material: FR-4
   slots: on
-title: 図01 2 本足の部品
+title: 図01 2 ピンの部品
 points:
   IN: a1
   OUT: a12
@@ -33,7 +33,7 @@ notes:
   - source blue
 ```
 
-![図01 2 本足の部品](out/02-parts-1.svg)
+![図01 2 ピンの部品](out/02-parts-1.svg)
 
 抵抗は**値が抵抗として読めればカラーコードを塗る**。`10k` は茶・黒・橙に、
 許容差の茶 (±1%) が付いた 4 帯。**帯の本数は値の桁数で決まる** — 3 桁要る値
@@ -174,7 +174,7 @@ board:
   slots: on
 style:
   back: on
-title: 図05 SMA を板の縁に載せる (10 dB アッテネータ)
+title: 図05 SMA を基板の縁に載せる (10 dB アッテネータ)
 points:
   GND: h2
 parts:
@@ -198,7 +198,7 @@ notes:
   - source blue
 ```
 
-![図05 SMA を板の縁に載せる (10 dB アッテネータ)](out/02-parts-5.svg)
+![図05 SMA を基板の縁に載せる (10 dB アッテネータ)](out/02-parts-5.svg)
 
 **張り出すのは GND の側。** 実物は凹の腕が基板の縁を挟み、中心導体がその内側まで
 伸びるので、**中心導体を先に、凹の両端の先端をあとに**書く。

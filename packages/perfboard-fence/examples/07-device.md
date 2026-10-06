@@ -1,7 +1,20 @@
 # 基板の外の機器
 
-電池・スピーカー・測定器のように**盤面に載らないもの**は `device` で書く。
+電源・スピーカー・測定器のように**盤面に載らないもの**は `device` で書く。
 `parts:` の中に**入れ子で**書く — ピンの名前の並びを持つので 1 行に畳めない。
+
+```circuit
+title: 回路図01 電源で LED を点ける
+parts:
+  V1: vsource a1 c1 5
+  R1: resistor a1 a3 470
+  D1: led a3 c3 red
+  G1: ground c1
+wires:
+  - c1 -- c3
+```
+
+<img src="out/schematic/07-device-1.png" alt="回路図01 電源で LED を点ける" width="419">
 
 ```perf
 board:
@@ -9,47 +22,47 @@ board:
   h: 1.6mm
   material: FR-4
   slots: on
-title: 図01 電池でLEDを点ける
+title: 図01 電源で LED を点ける
 parts:
   R1: resistor c4 c8 470
   D1: led c10 c12 red
-  BAT:
+  V1:
     type: device
     at: -c4
-    label: 電池 3V
+    label: 電源 5V
     pins: + -
 wires:
-  - BAT.+ -- a4 red
+  - V1.+ -- a4 red
   - a4 -- c4 red
   - c8 -- c10
-  - BAT.- -- a5 black
+  - V1.- -- a5 black
   - a5 -- a12 black
   - a12 -- c12 black
 notes:
   - source blue
 ```
 
-![図01 電池でLEDを点ける](out/07-device-1.svg)
+![図01 電源で LED を点ける](out/07-device-1.svg)
 
 `type: device` は必ず書く。**入れ子なら機器、とは決めない** — 部品を書き
 間違えて字下げした人が、基板の外に箱が出ているのを見て気づけないまま終わる。
 
-配線からは `BAT.+` のように `名前.足` で指す。番地にも `points:` の名前にも
+配線からは `V1.+` のように `名前.ピン名` で指す。番地にも `points:` の名前にも
 `.` は現れないので、綴りだけで機器のピンだと分かる。
 
 **ピンは `+ -` と空白で区切って書く。** YAML の並び (`[+, -]`) に書くと `-` に続く空白が
-箱の始まりに読まれて `["+", "-"]` と括らされる。電池の端子を書くたびに
+箱の始まりに読まれて `["+", "-"]` と括らされる。電源の端子を書くたびに
 引っかかるので、1 行の書き方を正にしている。
 
-**機器へつなぐ配線も基板の上まで線を引く。** 電池の線も実物では基板の穴に半田付け
+**機器へつなぐ配線も基板の上まで線を引く。** 電源の線も実物では基板の穴に半田付け
 するので、どの穴へ行くのかが図に出ないと、帯に浮いた箱と基板が結び付かない。
 色を書けばその色で引く。**機器どうしを結んだ配線だけは基板に触れない**ので線が無く、
 色を書いたときはその旨のお知らせが出る。
 
 ```text
-N1 : R1.1, BAT.+
+N1 : R1.1, V1.+
 N2 : R1.2, D1.1
-N3 : D1.2, BAT.-
+N3 : D1.2, V1.-
 ```
 
 ## 上と下に分ける
@@ -65,6 +78,45 @@ N3 : D1.2, BAT.-
 基板の上を配線できる (`IN.SIG -- a6`、`a6 -- a8`…)。斜めに 1 本で引くより、
 どの穴を通っているかが読みやすい。
 
+```circuit
+title: 回路図02 信号源で開け閉めする NE555 の発振器
+parts:
+  V1: vsource c3 i3 5
+  VCC: vcc c3 5V
+  G1: ground i3
+  VCC: vcc b7 5V
+  R1: resistor b7 d7f0 10k
+  R2: resistor d7f0 f7f0 68k
+  C1: capacitor f8f0 i8 10u
+  G3: ground i8
+  U1: ic e10 NE555
+  VCC: vcc b10 5V
+  C2: capacitor g12 i12 10n
+  G2: ground i10
+  G5: ground i12
+  IN: square b14 d14 l=$\mathrm{IN}$
+  G6: ground d14
+  R3: resistor e13 e16 100
+  SPK: speaker e16 g16 8 l=$\mathrm{SPK}$
+  G4: ground i16
+wires:
+  - U1.8 |- b10
+  - U1.4 |- b10a5
+  - b10a5 -- b14
+  - U1.7 -| d7f0
+  - U1.6 -| e8
+  - U1.2 -| e8f0
+  - e8 -- f8f0
+  - f7f0 -- f8f0
+  - U1.1 |- i10
+  - U1.5 |- g10a5
+  - g10a5 -- g12
+  - U1.3 -| e13
+  - g16 -- i16
+```
+
+<img src="out/schematic/07-device-2.png" alt="回路図02 信号源で開け閉めする NE555 の発振器" width="1050">
+
 ```perf
 board:
   size: 18x12
@@ -79,10 +131,10 @@ parts:
   C1: capacitor/ceramic j6 l6 10n
   C2: capacitor/ceramic j1 l1 10n
   R3: resistor c3 f3 100
-  BAT:
+  V1:
     type: device
     at: -b17
-    label: 電池 5V
+    label: 電源 5V
     pins: "- +"
   IN:
     type: device
@@ -95,12 +147,12 @@ parts:
     label: スピーカー 8Ω
     pins: "- +"
 wires:
-  - BAT.+ -- a18 red
+  - V1.+ -- a18 red
   - a18 -- h18 red
   - h18 -- h11 red
   - h18 -- j18 red
   - j18 -- j16 red
-  - BAT.- -- a17 black
+  - V1.- -- a17 black
   - a17 -- e17 black
   - e17 -- l17 black
   - e11 -- e12 black
@@ -146,7 +198,7 @@ notes:
 ピンの名前は空白を含まなければ何でもよい (`+` `-` `SIG` `GND` など)。
 `-` で始まる並び (`- +`) は YAML の箇条書きと読まれるので引用符で囲む。
 
-NE555 は `r180` で切り欠きを右に向けて挿している (`dip8 h11 r180`)。電池を右上に、
+NE555 は `r180` で切り欠きを右に向けて挿している (`dip8 h11 r180`)。電源を右上に、
 信号源を左上に置いたので、4 番ピン (RESET) が信号源の側に来る向きにした。
 実物の端子に書いてある綴りをそのまま使うと、組むときに読み替えずに済む。
 

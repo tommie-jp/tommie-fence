@@ -1,0 +1,61 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\makeatletter
+\pgfdeclareshape{reg3}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{0.62cm}}
+  \anchor{south}{\pgfpoint{0cm}{-0.62cm}}
+  \anchor{east}{\pgfpoint{0.95cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{-1.35cm}{0cm}}
+  \anchor{bpin 1}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 2}{\pgfpoint{0cm}{-1.02cm}}
+  \anchor{bpin 2}{\pgfpoint{0cm}{-0.62cm}}
+  \anchor{pin 3}{\pgfpoint{1.35cm}{0cm}}
+  \anchor{bpin 3}{\pgfpoint{0.95cm}{0cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-0.95cm}{-0.62cm}}{\pgfpoint{0.95cm}{0.62cm}}
+    \pgfpathmoveto{\pgfpoint{-1.35cm}{0cm}}\pgfpathlineto{\pgfpoint{-0.95cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-1.02cm}}\pgfpathlineto{\pgfpoint{0cm}{-0.62cm}}
+    \pgfpathmoveto{\pgfpoint{1.35cm}{0cm}}\pgfpathlineto{\pgfpoint{0.95cm}{0cm}}
+  }
+}
+\makeatother
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{grounds/scale=1.36}
+\coordinate (b2) at (2,-2);
+\coordinate (e2) at (2,-8);
+\coordinate (c6) at (10,-4);
+\coordinate (e6) at (10,-8);
+\coordinate (c8) at (14,-4);
+\coordinate (b4) at (6,-2);
+\draw (b2) to[esource, l_=$V_{1}$, a^=$5\,\mathrm{V}$] (e2); % line 3
+\draw (1.919,-4.865) -- ++(0.162,0); % line 3
+\draw (2,-4.946) -- ++(0,0.162); % line 3
+\draw (1.919,-5.135) -- ++(0.162,0); % line 3
+\node[vcc] at (b2) {+5V}; % line 4
+\node[ground] at (e2) {}; % line 5
+\node[reg3, draw, font=\scriptsize] (part-U1) at (c6) {}; % line 6
+\node[font=\scriptsize, anchor=south] at (part-U1.north) {$\mathrm{LM35}$}; % line 6
+\node[anchor=south, yshift=9pt] at (part-U1.north) {$U_{1}$}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, yshift=4pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 3) {X}; % line 6
+\draw (e6) node[ocirc]{} node[above left]{OUT}; % line 11
+\node[ground] at (c8) {}; % line 12
+\draw (b2) -- (b4); % line 14
+\draw (part-U1.pin 1) -| (b4); % line 15
+\draw (part-U1.pin 2) -- (e6); % line 16
+\draw (part-U1.pin 3) -| (c8); % line 17
+\node[circ] at (b2) {};
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(11.552,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
+\end{circuitikz}
+\end{document}

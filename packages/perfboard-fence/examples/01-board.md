@@ -5,24 +5,24 @@
 
 ```perf
 board: 12x7
-title: 図01 12 列 7 行の板
+title: 図01 12 列 7 行の基板
 notes:
   - source blue
 ```
 
-![図01 12 列 7 行の板](out/01-board-1.svg)
+![図01 12 列 7 行の基板](out/01-board-1.svg)
 
 番地は**行の名前 + 列の番号**で `b3`。行の名前は表計算と同じ数え方で伸びるので、
 26 行を超える基板でも `aa` `ab` と続けて読める。
 
 ```perf
 board: 4x30
-title: 図02 26 行を超える板
+title: 図02 26 行を超える基板
 notes:
   - source blue
 ```
 
-![図02 26 行を超える板](out/01-board-2.svg)
+![図02 26 行を超える基板](out/01-board-2.svg)
 
 穴数を数えてある基板は、名前でも書ける。`akizuki-a` (55 列 40 行) /
 `akizuki-b` (36 列 27 行) / `akizuki-c` (25 列 15 行) / `akizuki-d` (17 列 14 行)

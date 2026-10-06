@@ -8,7 +8,7 @@
 ## S-Mini のトランジスタで LED を点ける
 
 東芝の S-Mini (SC-59 / SOT-346) のトランジスタ 2SC2712 を、チップ抵抗と
-チップ LED と一緒に基板へ直付けした。`IN` に 5V を入れると LED が点く。
+チップ LED と一緒に基板へ直付けした。電源 (5V) をつなぎ、`IN` に 5V を入れると LED が点く。
 
 - `Q1` は**三角に置く** — 1 番 (ベース) と 2 番 (エミッタ) を隣の穴 (`d5 d6`)、
   3 番 (コレクタ) を上の行の 2 番の隣 (`c6`)。SOT の 1 番と 2 番のピンの間は 1.9mm で、
@@ -16,6 +16,27 @@
 - チップ (`2012`) は**隣の穴に跨いで**付ける。縦にも横にも置ける
 - ピンの並びは品種ごとに違う (2SC2712 は 1 = B、2 = E、3 = C)。図は主張しないので、
   どの穴がどのピンかはデータシートで確かめる
+
+```circuit
+title: 回路図01 S-Mini で LED を点ける
+parts:
+  V1: vsource b1 e1 5
+  VCC: vcc b1 5V
+  G1: ground e1
+  R2: resistor b4 d4 330
+  D1: led d4 f4 red
+  Q1: npn g4 2SC2712
+  G2: ground i4
+  R1: resistor g1 g3 10k
+  IN: port g1
+wires:
+  - b1 -- b4
+  - Q1.C |- f4
+  - Q1.B |- g3
+  - Q1.E |- i4
+```
+
+<img src="out/schematic/10-smd.png" alt="回路図01 S-Mini で LED を点ける" width="524">
 
 ```perf
 board:
@@ -33,7 +54,16 @@ parts:
   D1: led/2012 a6 b6 red
   Q1: transistor/sot346 d5 d6 c6 2SC2712
   R1: resistor/2012 d2 d3 10k
+  V1:
+    type: device
+    at: b-5
+    label: 電源 5V
+    pins: "- +"
 wires:
+  - V1.+ -- a0 red
+  - a0 -- VCC red
+  - V1.- -- f0 black
+  - f0 -- GND black
   - a1 -- a3 red
   - a4 -- a6
   - b6 -- c6
