@@ -223,7 +223,14 @@ for tag in "${tags[@]}"; do
   if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
     echo "    既に push 済み"
   else
-    git rev-parse -q --verify "refs/tags/$tag" >/dev/null || git tag "$tag"
+    if ! git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+      # **打つ前に版を照らす。** 前回止まった回の続きでタグがローカルに無いと、今の HEAD
+      # (次の版上げのあと) に打ってしまい、release.yml が版の食い違いで落ちる (52 の docs/118 の 4.8)。
+      pkg="${tag%-v*}" ver="${tag##*-v}"
+      have="$(node -p "require('./packages/$pkg/package.json').version")"
+      [ "$have" = "$ver" ] || die "$tag を HEAD に打てません (packages/$pkg は $have)。版上げのコミットで git tag $tag <コミット> を打ってから ./doRelease.sh --push-only"
+      git tag "$tag"
+    fi
     git push -q origin "refs/tags/$tag"   # 1 本ずつ (4 本以上まとめると release.yml が動かない)
   fi
   wait_release "$tag"
