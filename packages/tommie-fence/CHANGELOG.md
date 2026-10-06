@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.56.0] - 2026-10-06
+
+### Changed
+
+- **束ねるフェンスを上げた** (breadboard-fence 0.38.0 / circuit-fence 0.33.0 / copper-fence 0.8.0 / fence-kit 0.16.0 / perfboard-fence 0.38.0)。詳しくは各パッケージの CHANGELOG。
+
 ## [0.55.0] - 2026-10-05
 
 ### Changed
