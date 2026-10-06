@@ -79,7 +79,8 @@ describe('釦とデモの例', () => {
   /** **頁と同じ数え方で取り出す** (`fencesIn`)。別々に数えると食い違う。 */
   const fenceOf = (kind: DemoKind): string => {
     const body = readFileSync(join(import.meta.dirname, '../..', EXAMPLES[kind]), 'utf8');
-    const found = fencesIn(body)[0];
+    // 実体配線図の例は、先に回路図 (circuit) を置いているので、同じ種類の最初のフェンスを取る
+    const found = fencesIn(body).find((fence) => fence.kind === kind);
     if (found === undefined) throw new Error(`${EXAMPLES[kind]} にフェンスがありません`);
     return found.source;
   };

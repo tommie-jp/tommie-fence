@@ -6,6 +6,31 @@ CdS セル・サーミスタ・ダイオードの仲間・ガラス封止の部�
 
 ## 明るさと温度を分圧で取り出す
 
+**先に回路図を見てから、ブレッドボードに落とす。** 電源は 5 V (USB 充電器など) で、ブレッドボードの外の機器として描く。
+
+```circuit
+title: 回路図01 明るさと温度を分圧で取り出す
+parts:
+  V1: vsource b1 e1 5
+  VCC: vcc b1 5V
+  G0: ground e1
+  VCC: vcc b4 5V
+  CDS1: photoresistor b4 d4 GL5528
+  R1: resistor d4 f4 10k
+  G1: ground f4
+  OUT1: port d6
+  VCC: vcc b9 5V
+  TH1: thermistor-ntc b9 d9 10k
+  R2: resistor d9 f9 10k
+  G2: ground f9
+  OUT2: port d11
+wires:
+  - d4 -- d6
+  - d9 -- d11
+```
+
+<img src="out/schematic/11-sensors.png" alt="回路図01 明るさと温度を分圧で取り出す" width="794">
+
 ```bread
 title: 図01 明るさと温度を分圧で取り出す
 board: half
@@ -14,7 +39,16 @@ parts:
   R1: resistor a10 a14 10k
   TH1: thermistor-ntc j3 j7 10k
   R2: resistor j10 j14 10k
+  V1:
+    type: device
+    at: top
+    label: 電源 5V
+    pins: ["+", "-"]
 wires:
+  - V1.+ -- +t1 red
+  - V1.- -- -t1 black
+  - +t2 -- +b2 red
+  - -t2 -- -b2 black
   - +t3 -- b3 red
   - b7 -- b10 orange
   - b14 -- -t14 black
@@ -107,7 +141,7 @@ notes:
 ## 3 ピンの IC
 
 ```bread
-title: 図05 3 本足の IC (温度センサーとホール素子)
+title: 図05 3 ピンの IC (温度センサーとホール素子)
 board: half
 parts:
   U1: ic3 f4(+Vs) f5(Vout) f6(GND) LM35
@@ -120,7 +154,7 @@ notes:
   - source blue
 ```
 
-![図05 3 本足の IC (温度センサーとホール素子)](out/11-sensors-5.svg)
+![図05 3 ピンの IC (温度センサーとホール素子)](out/11-sensors-5.svg)
 
 - `ic3` は**ピンの名前が品ごとに違う** 3 ピンの IC をまとめて受ける (LM35 は
   `+Vs Vout GND`、ホール素子の A1324 は `VCC GND OUT`)。名前は穴に書き、

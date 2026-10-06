@@ -1,0 +1,103 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{grounds/scale=1.36}
+\coordinate (b1) at (0,-2);
+\coordinate (e1) at (0,-8);
+\coordinate (b4) at (6,-2);
+\coordinate (g4) at (6,-12);
+\coordinate (b6) at (10,-2);
+\coordinate (b8) at (14,-2);
+\coordinate (g6) at (10,-12);
+\coordinate (g8) at (14,-12);
+\coordinate (e12) at (22,-8);
+\coordinate (g10) at (18,-12);
+\coordinate (j10) at (18,-18);
+\coordinate (g9) at (16,-12);
+\coordinate (j9) at (16,-18);
+\coordinate (e15) at (28,-8);
+\coordinate (e17) at (32,-8);
+\coordinate (f17) at (32,-10);
+\coordinate (h17) at (32,-14);
+\coordinate (h14) at (26,-14);
+\coordinate (f19) at (36,-10);
+\coordinate (h19) at (36,-14);
+\coordinate (b2) at (2,-2);
+\coordinate (g2) at (2,-12);
+\coordinate (c3) at (4,-4);
+\coordinate (c5) at (8,-4);
+\coordinate (b5) at (8,-2);
+\coordinate (h3) at (4,-14);
+\coordinate (h5) at (8,-14);
+\coordinate (g5) at (8,-12);
+\coordinate (e8) at (14,-8);
+\draw (b1) to[esource, l_=$\mathrm{W1}$] (e1); % line 3
+\draw (-0.18,-5) sin ++(0.09,0.09) cos ++(0.09,-0.09) sin ++(0.09,-0.09) cos ++(0.09,0.09); % line 3
+\node[ground] at (e1) {}; % line 4
+\node[plain amp, noinv input up] (part-U1A) at (b4) {}; % line 5
+\node[font=\scriptsize, anchor=north] at (part-U1A.south) {$\mathrm{NJM4556A}$}; % line 5
+\node[anchor=south] at (part-U1A.north) {$U_{1A}$}; % line 5
+\draw ($($(part-U1A.+)!0.22!(part-U1A.-)$)+(0.44,0)$) -- ++(0.28,0); % line 5
+\draw ($($(part-U1A.+)!0.22!(part-U1A.-)$)+(0.58,-0.14)$) -- ++(0,0.28); % line 5
+\draw ($($(part-U1A.-)!0.22!(part-U1A.+)$)+(0.44,0)$) -- ++(0.28,0); % line 5
+\node[plain amp, noinv input up] (part-U1B) at (g4) {}; % line 6
+\node[font=\scriptsize, anchor=north] at (part-U1B.south) {$\mathrm{NJM4556A}$}; % line 6
+\node[anchor=south] at (part-U1B.north) {$U_{1B}$}; % line 6
+\draw ($($(part-U1B.+)!0.22!(part-U1B.-)$)+(0.44,0)$) -- ++(0.28,0); % line 6
+\draw ($($(part-U1B.+)!0.22!(part-U1B.-)$)+(0.58,-0.14)$) -- ++(0,0.28); % line 6
+\draw ($($(part-U1B.-)!0.22!(part-U1B.+)$)+(0.44,0)$) -- ++(0.28,0); % line 6
+\draw (b6) to[R, l_=$R_{1}$, a^=$1\,\Omega$] (b8); % line 7
+\draw (g6) to[R, l_=$R_{2}$, a^=$1\,\Omega$] (g8); % line 8
+\node[transformer core] (part-T1) at (e12) {}; % line 9
+\node[anchor=south] at (part-T1.north) {$T_{1}$}; % line 9
+\draw (g10) to[R, l_=$R_{s}$, a^=$10\,\Omega$] (j10); % line 10
+\node[ground] at (j10) {}; % line 11
+\draw (g9) to[rmeter, t={$\mathrm{V}$}, l_=$\mathrm{CH1}$] (j9); % line 12
+\draw (e15) to[R, l_=$R_{3}$, a^=$10\,\mathrm{k}\Omega$] (e17); % line 13
+\draw (f17) to[C, l_=$C_{1}$, a^=$1\,\mu\mathrm{F}$] (h17); % line 14
+\node[ground] at (h17) {}; % line 15
+\node[ground] at (h14) {}; % line 16
+\draw (f19) to[rmeter, t={$\mathrm{V}$}, l_=$\mathrm{CH2}$] (h19); % line 17
+\draw (b1) -- (b2); % line 19
+\draw (b2) -- (g2); % line 20
+\draw (b2) |- (part-U1A.+); % line 21
+\draw (g2) |- (part-U1B.+); % line 22
+\draw (c3) |- (part-U1A.-); % line 23
+\draw (c3) -- (c5); % line 24
+\draw (part-U1A.out) -- (b5); % line 25
+\draw (c5) -- (b5); % line 26
+\draw (b5) -- (b6); % line 27
+\draw (h3) |- (part-U1B.-); % line 28
+\draw (h3) -- (h5); % line 29
+\draw (part-U1B.out) -- (g5); % line 30
+\draw (h5) -- (g5); % line 31
+\draw (g5) -- (g6); % line 32
+\draw (b8) -- (e8); % line 33
+\draw (e8) -- (g8); % line 34
+\draw (e8) |- (part-T1.A1); % line 35
+\draw (part-T1.A2) -| (g10); % line 36
+\draw (g9) -- (g10); % line 37
+\draw (j9) -- (j10); % line 38
+\draw (part-T1.B1) -| (e15); % line 39
+\draw (e17) -- (f17); % line 40
+\draw (f17) -- (f19); % line 41
+\draw (h17) -- (h19); % line 42
+\draw (part-T1.B2) -| (h14); % line 43
+\node[circ] at (g10) {};
+\node[circ] at (j10) {};
+\node[circ] at (f17) {};
+\node[circ] at (h17) {};
+\node[circ] at (b2) {};
+\node[circ] at (b5) {};
+\node[circ] at (g5) {};
+\node[circ] at (e8) {};
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(10.455,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
+\end{circuitikz}
+\end{document}

@@ -9,8 +9,8 @@
 title: 図01 コンデンサの 4 つの姿
 board: half
 parts:
-  C1: capacitor/ceramic a5 a8 0.1u
-  C2: capacitor/film a12 a15 0.47u
+  C1: capacitor/ceramic a5 a8 100n
+  C2: capacitor/film a12 a15 470n
   C3: capacitor/electrolytic a19(+) a22(-) 100u
   C4: capacitor/tantalum a26(+) a29(-) 10u
 notes:
@@ -23,7 +23,7 @@ notes:
 - **電解の帯はマイナス側、タンタルの印はプラス側**で、同じコンデンサでも印の意味が逆。
   取り違えると壊れるので、形から先に見分けられるようにしてある。
 - 図の下の部品リストには `capacitor/ceramic` と種類ごと並ぶ。
-  同じ `0.1u` でもどれを買うかはここで決まる。
+  同じ `100n` でもどれを買うかはここで決まる。
 - 電解とタンタルは向きがあるので、**極性を穴に書く**。2 ピンなので
   `a19(+) a22(-)` でも `a19(+) a22` でもよく、片方書けば反対側は決まる。
   どちらも書かないと「向きが決まらない」と行番号つきで報告して描かない。
@@ -38,7 +38,7 @@ title: 図02 姿を書かなかったとき
 board: half
 parts-list: none
 parts:
-  C1: capacitor a5 a8 0.1u
+  C1: capacitor a5 a8 100n
   C2: capacitor a12(+) a15(-) 100u
 notes:
   - source blue

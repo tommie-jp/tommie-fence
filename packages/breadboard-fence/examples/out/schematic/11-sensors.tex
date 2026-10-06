@@ -1,0 +1,44 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{grounds/scale=1.36}
+\coordinate (b1) at (0,-2);
+\coordinate (e1) at (0,-8);
+\coordinate (b4) at (6,-2);
+\coordinate (d4) at (6,-6);
+\coordinate (f4) at (6,-10);
+\coordinate (d6) at (10,-6);
+\coordinate (b9) at (16,-2);
+\coordinate (d9) at (16,-6);
+\coordinate (f9) at (16,-10);
+\coordinate (d11) at (20,-6);
+\draw (b1) to[esource, l_=$V_{1}$, a^=$5\,\mathrm{V}$] (e1); % line 3
+\draw (-0.081,-4.865) -- ++(0.162,0); % line 3
+\draw (0,-4.946) -- ++(0,0.162); % line 3
+\draw (-0.081,-5.135) -- ++(0.162,0); % line 3
+\node[vcc] at (b1) {+5V}; % line 4
+\node[ground] at (e1) {}; % line 5
+\node[vcc] at (b4) {+5V}; % line 6
+\draw (b4) to[phR, l_=$C_{DS1}$, a^=$\mathrm{GL5528}$] (d4); % line 7
+\draw (d4) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (f4); % line 8
+\node[ground] at (f4) {}; % line 9
+\draw (d6) node[ocirc]{} node[above left]{OUT1}; % line 10
+\node[vcc] at (b9) {+5V}; % line 11
+\draw (b9) to[thR, l2_=$T_{H1}$ and NTC, a^=$10\,\mathrm{k}\Omega$] (d9); % line 12
+\draw (d9) to[R, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (f9); % line 13
+\node[ground] at (f9) {}; % line 14
+\draw (d11) node[ocirc]{} node[above left]{OUT2}; % line 15
+\draw (d4) -- (d6); % line 17
+\draw (d9) -- (d11); % line 18
+\node[circ] at (d4) {};
+\node[circ] at (d9) {};
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(12.619,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
+\end{circuitikz}
+\end{document}

@@ -32,7 +32,7 @@ wires:
   - j19 -- +b19 red
   - i28 -- -b28 black
 notes:
-  - text: 足の行は d と h (0.6 インチ)。上は a〜c、下は i・j が空いている
+  - text: ピンの行は d と h (0.6 インチ)。上は a〜c、下は i・j が空いている
 ```
 
 ![図01 AS6C62256 (幅広 DIP) を読み出し専用で使う](out/15-wide-dip.svg)

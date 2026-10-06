@@ -15,7 +15,7 @@ GitHub のようにフェンスが描画されない場所で、書き方と出�
 | [04-points.md](04-points.md) | 穴に名前を付ける (`points:`) |
 | [05-check.md](05-check.md) | 図のとおりに組むと動かないところ (ERC と当たり判定) |
 | [06-ic.md](06-ic.md) | DIP・SIP・3 ピンの部品 |
-| [07-device.md](07-device.md) | 基板の外の機器 (`device`。電池・スピーカーなど) |
+| [07-device.md](07-device.md) | 基板の外の機器 (`device`。電源・スピーカーなど) |
 | [08-notes.md](08-notes.md) | 注釈 (`notes:`) と、テーマ・幅 (`style:`) |
 | [09-usb.md](09-usb.md) | USB コネクタ (`usb-a` / `usb-c`)。Type-C の 4 ピンの変換基板と、種類と姿 |
 | [10-smd.md](10-smd.md) | 面実装 — S-Mini (`sot346`) やチップを直付けする、変換基板に載せる (`-dip`、`dip8/sop`) |
@@ -24,6 +24,17 @@ GitHub のようにフェンスが描画されない場所で、書き方と出�
 
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではない。
+
+## 基板・回路図・電源
+
+**基板は縁にパッドのある標準 (`slots: on`、1.6 mm の FR-4) にそろえてある。** 例外は [01-board.md](01-board.md)
+(基板の種類そのものを見せる文法の見本。秋月の基板など、パッドの無い基板もここに残す)。
+
+**回路の例 (00・06・07・10) は、基板の図の前に同じ回路の回路図を置いてある**
+([circuit-fence](../../circuit-fence/) の ` ```circuit ` フェンス)。2 つの図のネットリストは同じ。
+回路図は TeX で描くので別の工程になる (作り直しは `npm run schematics --workspace=perfboard-fence`)。
+**電源が要る回路は、電源を基板の外の機器 (`device`) として描き、基板の左の外から線でつなぐ。**
+電圧は 5 V が基本で、部品の値は E24 に寄せてある。
 
 ## 図の付け方
 

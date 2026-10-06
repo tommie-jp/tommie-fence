@@ -4,21 +4,67 @@
 から 1N60 で検波、クリスタルイヤホンで聞く。ゲルマラジオに 1 石足しただけの回路だが、
 増幅を検波の前に置くところが「1 石低周波増幅」の定番と違う。
 
+**先に回路図を見てから、ブレッドボードに落とす。** 2 つの図のネットリストは同じ。
+
+```circuit
+title: 回路図01 1 石中波ラジオ
+parts:
+  V1: vsource a1 g1 3
+  VCC: vcc a1 3V
+  G1: ground g1
+  L1: transformer d6
+  VC: capacitor-var c4 e4 l=$\mathrm{VC}$
+  G2: ground e4
+  G7: ground f8
+  C1: capacitor e9 e11 10n
+  VCC: vcc a14 3V
+  Rc: resistor c14 a14 1.5k
+  Rb: resistor e12 c12 180k
+  Q1: npn e14 2SC1815
+  G3: ground g14
+  VCC: vcc a16 3V
+  C4: capacitor a16 b16 100n
+  G8: ground b16
+  D1: diode c16 c19 1N60
+  C3: capacitor c20 e20 1n
+  G4: ground e20
+  R3: resistor c22 e22 100k
+  G5: ground e22
+  EAR: earphone c24 e24 l=$\mathrm{EAR}$
+  G6: ground e24
+wires:
+  - L1.A1 -| c4
+  - L1.A2 -| e4
+  - L1.B1 -| e9
+  - L1.B2 -| f8
+  - e11 -- e12
+  - e12 -- Q1.B
+  - c12 -- c14
+  - c14 -- Q1.C
+  - Q1.E -- g14
+  - c14 -- c16
+  - c19 -- c20
+  - c20 -- c22
+  - c22 -- c24
+```
+
+<img src="out/schematic/09-am-radio.png" alt="回路図01 1 石中波ラジオ" width="1797">
+
 ```bread
 title: 図01 1 石中波ラジオ
 # 電源: 上下の赤レール = +3V (単3 2 本)、青レール = GND (右端で上下を渡している)
 board: half
 parts:
   # 同調 → ベース (アンテナの 2 次巻線から結合)
-  C1: capacitor/ceramic b6 b11 0.01u
+  C1: capacitor/ceramic b6 b11 10n
   # 高周波増幅 (コレクタ帰還バイアス)
   Q1: transistor h11(B) h12(C) h13(E) 2SC1815
   Rb: resistor d11 d16 180k
   Rc: resistor c16 c21 1.5k
-  C4: capacitor/ceramic a21 a25 0.1u
+  C4: capacitor/ceramic a21 a25 100n
   # 検波 → イヤホン
   D1: diode i12(A) i17(K) 1N60
-  C3: capacitor/ceramic g17 g22 0.001u
+  C3: capacitor/ceramic g17 g22 1n
   R3: resistor j17 j22 100k
   # ボード外
   ANT:
@@ -102,7 +148,7 @@ notes:
   立ち上がりが 0.6V あるので、この振幅ではほとんど鳴らない。
 - **イヤホンはクリスタル (圧電) のもの**。数十 kΩ の高インピーダンスで受ける前提の
   回路なので、8Ω や 32Ω のイヤホンをつないでも音にならない。
-- `C4` (0.1µF) は `Q1` のすぐそばに置く。ここが抜けると `Rc` の上端が高周波的に
+- `C4` (100 nF) は `Q1` のすぐそばに置く。ここが抜けると `Rc` の上端が高周波的に
   浮いて、利得が落ちるか発振する。
 
 ## 動かしてみると

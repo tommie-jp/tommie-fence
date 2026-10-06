@@ -6,6 +6,56 @@ NJM4556A の 2 回路をボルテージフォロワにして 1Ω 2 本で並列�
 
 DIP 部品・ボード外の機器・ピン参照・電源レールを全部使う、文法のストレステスト。
 
+**先に回路図を見てから、ブレッドボードに落とす。** 回路図は測定器の機器 (波形発生器 W1 と電圧計 CH1・CH2) として描き、オペアンプ U1 の電源 (±5V) は省いてある。ブレッドボードの図では AD3 の V+ / V- をつないでいる。
+
+```circuit
+title: 回路図01 B-H カーブ測定回路
+parts:
+  WG: sine b1 e1 l=$\mathrm{W1}$
+  G1: ground e1
+  U1A: opamp b4 +up NJM4556A
+  U1B: opamp g4 +up NJM4556A
+  R1: resistor b6 b8 1
+  R2: resistor g6 g8 1
+  T1: transformer e12
+  Rs: resistor g10 j10 10
+  G2: ground j10
+  M1: voltmeter g9 j9 l=$\mathrm{CH1}$
+  R3: resistor e15 e17 10k
+  C1: capacitor f17 h17 1u
+  G3: ground h17
+  G4: ground h14
+  M2: voltmeter f19 h19 l=$\mathrm{CH2}$
+wires:
+  - b1 -- b2
+  - b2 -- g2
+  - b2 |- U1A.+
+  - g2 |- U1B.+
+  - c3 |- U1A.-
+  - c3 -- c5
+  - U1A.out -- b5
+  - c5 -- b5
+  - b5 -- b6
+  - h3 |- U1B.-
+  - h3 -- h5
+  - U1B.out -- g5
+  - h5 -- g5
+  - g5 -- g6
+  - b8 -- e8
+  - e8 -- g8
+  - e8 |- T1.A1
+  - T1.A2 -| g10
+  - g9 -- g10
+  - j9 -- j10
+  - T1.B1 -| e15
+  - e17 -- f17
+  - f17 -- f19
+  - h17 -- h19
+  - T1.B2 -| h14
+```
+
+<img src="out/schematic/10-bh-ad3.png" alt="回路図01 B-H カーブ測定回路" width="1420">
+
 ```bread
 title: 図01 B-H カーブ測定回路 (AD3)
 # レール割当: 上+ = +5V / 下+ = -5V (各電源ピンに近い側)。青レールは両方 GND。
@@ -56,6 +106,8 @@ wires:
 notes:
   - source blue
 ```
+
+<img src="out/schematic/10-bh-ad3.png" alt="図01 B-H カーブ測定回路 (AD3)" width="1420">
 
 ![図01 B-H カーブ測定回路 (AD3)](out/10-bh-ad3.svg)
 

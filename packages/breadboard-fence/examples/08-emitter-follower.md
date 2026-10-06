@@ -3,6 +3,37 @@
 コレクタ接地、いわゆるエミッタフォロワ。電源 5V、入力は 50Ω の音声、
 出力は 8Ω の小型スピーカー。**電圧は増やさず、電流だけを増やす**段の実験回路。
 
+**先に回路図を見てから、ブレッドボードに落とす。** 2 つの図のネットリストは同じ。
+
+```circuit
+title: 回路図01 エミッタフォロワ
+parts:
+  V1: vsource c2 i2 5
+  VCC: vcc c2 5V
+  G1: ground i2
+  IN: sine e5 h5 l=$\mathrm{IN}$
+  G2: ground h5
+  VCC: vcc b10 5V
+  R1: resistor e10 b10 10k
+  R2: resistor e10 h10 10k
+  G3: ground h10
+  C1: ecap e8 e5 10u
+  Q1: npn e12 2SC1815
+  Re: resistor h12 k12 47
+  G4: ground k12
+  C2: ecap h12 h15 470u
+  SPK: speaker h15 k15 8 l=$\mathrm{SPK}$
+  G5: ground k15
+wires:
+  - e8 -- e10
+  - e10 -- Q1.B
+  - b10 -- b12
+  - b12 -- Q1.C
+  - Q1.E -- h12
+```
+
+<img src="out/schematic/08-emitter-follower.png" alt="回路図01 エミッタフォロワ" width="1050">
+
 ```bread
 title: 図01 エミッタフォロワ
 # 電源: 上下の赤レール = +5V、青レール = GND (左端で上下を渡している)
@@ -28,7 +59,15 @@ parts:
     at: top
     label: スピーカー 8Ω
     pins: ["+", "-"]
+  V1:
+    type: device
+    at: top
+    label: 電源 5V
+    pins: ["+", "-"]
 wires:
+  # 電源
+  - V1.+ -- +t4 red
+  - V1.- -- -t5 black
   # 電源レールの渡し
   - +t2 -- +b2 red
   - -t3 -- -b3 black
