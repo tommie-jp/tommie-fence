@@ -20,23 +20,23 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
-\coordinate (b3) at (4,-2);
-\coordinate (b8) at (14,-2);
-\coordinate (f3) at (4,-10);
-\coordinate (f8) at (14,-10);
-\node[plain amp] (part-U1) at (b3) {}; % line 3
+\coordinate (x3y2) at (4,-2);
+\coordinate (x8y2) at (14,-2);
+\coordinate (x3y6) at (4,-10);
+\coordinate (x8y6) at (14,-10);
+\node[plain amp] (part-U1) at (x3y2) {}; % line 3
 \node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 3
 \draw ($($(part-U1.+)!0.22!(part-U1.-)$)+(0.44,0)$) -- ++(0.28,0); % line 3
 \draw ($($(part-U1.+)!0.22!(part-U1.-)$)+(0.58,-0.14)$) -- ++(0,0.28); % line 3
 \draw ($($(part-U1.-)!0.22!(part-U1.+)$)+(0.44,0)$) -- ++(0.28,0); % line 3
-\node[plain amp, xscale=-1] (part-U2) at (b8) {}; % line 4
+\node[plain amp, xscale=-1] (part-U2) at (x8y2) {}; % line 4
 \node[anchor=south] at (part-U2.north) {$U_{2}$}; % line 4
 \draw ($($($(part-U2.+)!0.22!(part-U2.-)$)!0.44cm!90:(part-U2.-)$)+(-0.14,0)$) -- ++(0.28,0); % line 4
 \draw ($($($(part-U2.+)!0.22!(part-U2.-)$)!0.44cm!90:(part-U2.-)$)+(0,-0.14)$) -- ++(0,0.28); % line 4
 \draw ($($($(part-U2.-)!0.22!(part-U2.+)$)!0.44cm!-90:(part-U2.+)$)+(-0.14,0)$) -- ++(0.28,0); % line 4
-\node[npn] (part-Q1) at (f3) {}; % line 5
+\node[npn] (part-Q1) at (x3y6) {}; % line 5
 \node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 5
-\node[npn, rotate=-180, xscale=-1] (part-Q2) at (f8) {}; % line 6
+\node[npn, rotate=-180, xscale=-1] (part-Q2) at (x8y6) {}; % line 6
 \node[anchor=west] at (part-Q2.east) {$Q_{2}$}; % line 6
 \path (2.984,-6.593) rectangle (5.016,-5.407); % line 8
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4,-6) {X}; % line 8
@@ -46,7 +46,7 @@
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4,-14) {X}; % line 10
 \path (11.714,-14.593) rectangle (16.286,-13.407); % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-14) {X}; % line 11
-\path (20,-7.895) rectangle (31.811,0.593); % line 12
+\path (20,-7.895) rectangle (32.073,0.593); % line 12
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (20,0) {X}; % line 12
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (20,-0.487) {X}; % line 12
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (20,-0.974) {X}; % line 12

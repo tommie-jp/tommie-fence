@@ -6,12 +6,12 @@
 ```circuit
 title: 図01 LED と抵抗
 parts:
-  B1: battery a1 c1 3
-  R1: resistor a1 a3 330
-  D1: led a3 c3
-  G1: ground c1
+  B1: battery 1,1 1,3 3
+  R1: resistor 1,1 3,1 330
+  D1: led 3,1 3,3
+  G1: ground 1,3
 wires:
-  - c1 -- c3
+  - 1,3 -- 3,3
 ```
 
 ![図01 LED と抵抗](out/00-led.png)

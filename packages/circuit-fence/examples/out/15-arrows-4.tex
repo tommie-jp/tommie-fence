@@ -16,16 +16,16 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
-\coordinate (b1) at (0,-2);
-\coordinate (d1) at (0,-6);
-\coordinate (b2) at (2,-2);
-\coordinate (b3) at (4,-2);
-\coordinate (d3) at (4,-6);
-\draw (b1) to[battery1, l_=$E$] (d1); % line 3
-\draw (b1) to[nos, l_=$S$] (b2); % line 4
-\draw (b2) to[R, l_=$R$, i>^=$i$, current arrow scale=8] (b3); % line 5
-\draw (b3) to[C, l_=$C$, v^<=$v_{C}$, current arrow scale=8] (d3); % line 6
-\draw (d1) -- (d3); % line 8
+\coordinate (x1y2) at (0,-2);
+\coordinate (x1y4) at (0,-6);
+\coordinate (x2y2) at (2,-2);
+\coordinate (x3y2) at (4,-2);
+\coordinate (x3y4) at (4,-6);
+\draw (x1y2) to[battery1, l_=$E$] (x1y4); % line 3
+\draw (x1y2) to[nos, l_=$S$] (x2y2); % line 4
+\draw (x2y2) to[R, l_=$R$, i>^=$i$, current arrow scale=8] (x3y2); % line 5
+\draw (x3y2) to[C, l_=$C$, v^<=$v_{C}$, current arrow scale=8] (x3y4); % line 6
+\draw (x1y4) -- (x3y4); % line 8
 \path (8,-7.408) rectangle (16.12,0.593); % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,0) {X}; % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,-0.487) {X}; % line 10

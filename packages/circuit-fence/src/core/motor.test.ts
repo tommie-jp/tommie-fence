@@ -20,11 +20,11 @@ describe('モータ', () => {
   test('draws a circle with M in it and connects both ends', () => {
     const result = compileCircuit(circuit(
       'parts:',
-      '  M1: motor a3 c3',
-      '  B1: battery a1 c1 3',
+      '  M1: motor 3,1 3,3',
+      '  B1: battery 1,1 1,3 3',
       'wires:',
-      '  - a1 -- a3',
-      '  - c1 -- c3',
+      '  - 1,1 -- 3,1',
+      '  - 1,3 -- 3,3',
     ));
 
     expect(result.errors).toEqual([]);

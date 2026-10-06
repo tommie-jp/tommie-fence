@@ -30,22 +30,22 @@ const RC = [
   '```circuit',
   'title: RC',
   'parts:',
-  '  R1:  resistor a1 a3 10k',
-  '  C1:  capacitor a3 c3 100n',
+  '  R1:  resistor 1,1 3,1 10k',
+  '  C1:  capacitor 3,1 3,3 100n',
   '```',
   '',
 ].join('\n');
 
-const BAD = ['# ノート', '', '```circuit', 'parts:', '  R1: resistr a1 a3', '```', ''].join('\n');
+const BAD = ['# ノート', '', '```circuit', 'parts:', '  R1: resistr 1,1 3,1', '```', ''].join('\n');
 
-const NPN = ['# ノート', '', '```circuit', 'parts:', '  Q1: npn b5', '  R1: resistor a1 a3',
-  'wires:', '  - a1 -- Q1.b', '```', ''].join('\n');
+const NPN = ['# ノート', '', '```circuit', 'parts:', '  Q1: npn 5,2', '  R1: resistor 1,1 3,1',
+  'wires:', '  - 1,1 -- Q1.b', '```', ''].join('\n');
 
 /** 向きを書けない記号 (上下がその記号の意味そのもの)。 */
-const VCC = ['# ノート', '', '```circuit', 'parts:', '  VCC: vcc b5', '```', ''].join('\n');
+const VCC = ['# ノート', '', '```circuit', 'parts:', '  VCC: vcc 5,2', '```', ''].join('\n');
 
-const SECOND = ['', '```circuit', 'parts:', '  L1: inductor b1 b3 1m', '```', ''].join('\n');
-const THIRD = ['', '```circuit', 'parts:', '  D1: diode c1 c3', '```', ''].join('\n');
+const SECOND = ['', '```circuit', 'parts:', '  L1: inductor 1,2 3,2 1m', '```', ''].join('\n');
+const THIRD = ['', '```circuit', 'parts:', '  D1: diode 1,3 3,3', '```', ''].join('\n');
 const TWO = RC + SECOND;
 const THREE = TWO + THIRD;
 
@@ -192,10 +192,10 @@ describe('動かす', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'move', part: 'R1', to: 'b1' });
+    await session.handle({ kind: 'move', part: 'R1', to: '1,2' });
 
-    expect(doc.getText()).toContain('R1:  resistor b1 b3 10k');
-    expect(last(host, 'status')?.text).toContain('R1 を b1 へ動かしました');
+    expect(doc.getText()).toContain('R1:  resistor 1,2 3,2 10k');
+    expect(last(host, 'status')?.text).toContain('R1 を 1,2 へ動かしました');
     expect(last(host, 'status')?.text).toContain('離れた接続');
   });
 
@@ -205,11 +205,11 @@ describe('動かす', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'moveNode', from: 'a3', to: 'a4' });
+    await session.handle({ kind: 'moveNode', from: '3,1', to: '4,1' });
 
-    expect(doc.getText()).toContain('resistor a1 a4 10k');
-    expect(doc.getText()).toContain('capacitor a4 c3 100n');
-    expect(last(host, 'status')?.text).toContain('a3 の節点を a4 へ動かしました');
+    expect(doc.getText()).toContain('resistor 1,1 4,1 10k');
+    expect(doc.getText()).toContain('capacitor 4,1 3,3 100n');
+    expect(last(host, 'status')?.text).toContain('3,1 の節点を 4,1 へ動かしました');
   });
 
   test('refuses an address it cannot read, in words', async () => {
@@ -232,9 +232,9 @@ describe('動かす', () => {
     session.view();
     host.editor = null;
 
-    await session.handle({ kind: 'move', part: 'C1', to: 'b3' });
+    await session.handle({ kind: 'move', part: 'C1', to: '3,2' });
 
-    expect(doc.getText()).toContain('C1:  capacitor b3 d3 100n');
+    expect(doc.getText()).toContain('C1:  capacitor 3,2 3,4 100n');
   });
 });
 
@@ -282,7 +282,7 @@ describe('戻す・やり直す (自前の履歴)', () => {
     const host = hostOf([doc], at(doc, 5));
     const session = sessionOf(host);
     session.view();
-    await session.handle({ kind: 'move', part: 'R1', to: 'b1' });
+    await session.handle({ kind: 'move', part: 'R1', to: '1,2' });
     expect(last(host, 'history')).toEqual({ kind: 'history', canUndo: true, canRedo: false });
 
     await session.handle({ kind: 'undo' });
@@ -297,12 +297,12 @@ describe('戻す・やり直す (自前の履歴)', () => {
     const host = hostOf([doc], at(doc, 5));
     const session = sessionOf(host);
     session.view();
-    await session.handle({ kind: 'move', part: 'R1', to: 'b1' });
-    doc.set(doc.getText().replace('b1 b3', 'b1 b5'));
+    await session.handle({ kind: 'move', part: 'R1', to: '1,2' });
+    doc.set(doc.getText().replace('1,2 3,2', '1,2 5,2'));
 
     await session.handle({ kind: 'undo' });
 
-    expect(doc.getText()).toContain('b1 b5');
+    expect(doc.getText()).toContain('1,2 5,2');
     expect(last(host, 'status')?.text).toContain('戻せません');
   });
 
@@ -313,26 +313,26 @@ describe('戻す・やり直す (自前の履歴)', () => {
     const host = hostOf([doc], at(doc, 5));
     const session = sessionOf(host);
     session.view();
-    await session.handle({ kind: 'move', part: 'R1', to: 'b1' });
+    await session.handle({ kind: 'move', part: 'R1', to: '1,2' });
     doc.set(doc.getText().replace('title: RC', 'title: RC 回路'));
 
     await session.handle({ kind: 'undo' });
 
     expect(doc.getText()).toContain('title: RC 回路');
-    expect(doc.getText()).toContain('b1 b3');
+    expect(doc.getText()).toContain('1,2 3,2');
     expect(last(host, 'status')?.text).toContain('戻せません');
   });
 
   test('puts an indented fence back exactly as it was written', async () => {
     // 控えは文書から読んだ生の行。字下げを組み直さないので、そのまま戻る。
     const indented = ['- item', '', '  ```circuit', '  parts:',
-      '    R1: resistor a1 a3 10k', '  ```', ''].join('\n');
+      '    R1: resistor 1,1 3,1 10k', '  ```', ''].join('\n');
     const doc = docOf(A, indented);
     const host = hostOf([doc], at(doc, 4));
     const session = sessionOf(host);
     session.view();
-    await session.handle({ kind: 'move', part: 'R1', to: 'b1' });
-    expect(doc.getText()).toContain('    R1: resistor b1 b3 10k');
+    await session.handle({ kind: 'move', part: 'R1', to: '1,2' });
+    expect(doc.getText()).toContain('    R1: resistor 1,2 3,2 10k');
 
     await session.handle({ kind: 'undo' });
 
@@ -358,7 +358,7 @@ describe('戻す・やり直す (VS Code に頼む)', () => {
     const host = hostOf([doc], at(doc, 5), { nativeUndo });
     const session = sessionOf(host);
     session.view();
-    await session.handle({ kind: 'move', part: 'R1', to: 'b1' });
+    await session.handle({ kind: 'move', part: 'R1', to: '1,2' });
 
     await session.handle({ kind: 'undo' });
 
@@ -431,7 +431,7 @@ describe('文書を固定する (カスタムエディタ)', () => {
 
   test('does not follow the cursor into another document', () => {
     const doc = docOf(A, RC);
-    const other = docOf('file:///b.md', '```circuit\nparts:\n  L1: inductor b1 b3 1m\n```\n');
+    const other = docOf('file:///b.md', '```circuit\nparts:\n  L1: inductor 1,2 3,2 1m\n```\n');
     const session = sessionOf(hostOf([doc, other], at(other, 2)), { pinned: doc });
 
     const view = session.view();
@@ -484,7 +484,7 @@ describe('光らせる', () => {
     const lines = RC.split('\n');
     expect(lit?.uri).toBe(A);
     expect(lit?.ranges.every((range) => range.line === 5)).toBe(true);
-    expect(lit?.ranges.map((range) => lines[range.line]?.slice(range.start, range.end))).toEqual(expect.arrayContaining(['a1', 'a3']));
+    expect(lit?.ranges.map((range) => lines[range.line]?.slice(range.start, range.end))).toEqual(expect.arrayContaining(['1,1', '3,1']));
   });
 
   test('lights up a node by its address', async () => {
@@ -493,7 +493,7 @@ describe('光らせる', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'select', what: 'node', id: 'a3' });
+    await session.handle({ kind: 'select', what: 'node', id: '3,1' });
 
     expect(host.lit.at(-1)?.ranges.map((range) => range.line).sort()).toEqual([5, 6]);
   });
@@ -557,8 +557,8 @@ describe('読めなかったところを帯に出す', () => {
   });
 
   test('marks the offending part on the map as well as in the band', () => {
-    const doc = docOf(A, ['# x', '', '```circuit', 'parts:', '  R1: resistor a1 a3',
-      'wires:', '  - a1 -- zz9', '```', ''].join('\n'));
+    const doc = docOf(A, ['# x', '', '```circuit', 'parts:', '  R1: resistor 1,1 3,1',
+      'wires:', '  - 1,1 -- zz9', '```', ''].join('\n'));
     const session = sessionOf(hostOf([doc], at(doc, 4)));
 
     expect(session.view().html).toContain('data-part="R1"');
@@ -583,7 +583,7 @@ describe('読めなかったところを帯に出す', () => {
 
     await session.handle({ kind: 'goto', line: 5 });
 
-    expect(host.lit.at(-1)).toEqual({ uri: A, ranges: [{ line: 4, start: 0, end: '  R1: resistr a1 a3'.length }] });
+    expect(host.lit.at(-1)).toEqual({ uri: A, ranges: [{ line: 4, start: 0, end: '  R1: resistr 1,1 3,1'.length }] });
   });
 
   test('survives a row that points past the end of the document', async () => {
@@ -627,7 +627,7 @@ describe('帯の行を押したら、その行を見せる', () => {
 
     return session.handle({ kind: 'goto', line: 5 }).then(() => {
       expect(shown).toEqual([{ uri: A, line: 4 }]);
-      expect(host.lit.at(-1)).toEqual({ uri: A, ranges: [{ line: 4, start: 0, end: '  R1: resistr a1 a3'.length }] });
+      expect(host.lit.at(-1)).toEqual({ uri: A, ranges: [{ line: 4, start: 0, end: '  R1: resistr 1,1 3,1'.length }] });
     });
   });
 
@@ -662,7 +662,7 @@ describe('読めない知らせ', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'moveNode', to: 'b1' });
+    await session.handle({ kind: 'moveNode', to: '1,2' });
 
     expect(last(host, 'status')?.text).toContain('読めません');
   });
@@ -703,8 +703,8 @@ describe('消す・回す', () => {
     // 帯もマップも、配線はフェンスの中の行で指す (5 行目 = wires: の次)。
     await session.handle({ kind: 'delete', what: 'wire', id: '5' });
 
-    expect(doc.getText()).not.toContain('a1 -- Q1.b');
-    expect(doc.getText()).toContain('Q1: npn b5');
+    expect(doc.getText()).not.toContain('1,1 -- Q1.b');
+    expect(doc.getText()).toContain('Q1: npn 5,2');
   });
 
   /**
@@ -712,9 +712,9 @@ describe('消す・回す', () => {
    * 残すと、部品を全部消したあとに `# 出力段` だけが宙に残る。
    */
   const HEADED = ['# ノート', '', '```circuit', 'parts:',
-    '  # 入力段', '  R1: resistor a1 a3 10k', '  C1: capacitor a3 c3 100n',
-    '  # 出力段', '  R2: resistor c1 c3 1k',
-    'wires:', '  # 戻り', '  - c1 -- a1', '```', ''].join('\n');
+    '  # 入力段', '  R1: resistor 1,1 3,1 10k', '  C1: capacitor 3,1 3,3 100n',
+    '  # 出力段', '  R2: resistor 1,3 3,3 1k',
+    'wires:', '  # 戻り', '  - 1,3 -- 1,1', '```', ''].join('\n');
 
   test('takes the heading over the last part under it, and says so', async () => {
     const doc = docOf(A, HEADED);
@@ -766,12 +766,12 @@ describe('消す・回す', () => {
 
     await session.handle({ kind: 'delete', what: 'part', id: 'R1', ids: ['R1', 'C1'], wires: [] });
 
-    expect(doc.getText()).toContain('  - c1 -- a1\n```');
+    expect(doc.getText()).toContain('  - 1,3 -- 1,1\n```');
   });
 
   test('keeps the indent of a fence inside a list item after deleting several at once', async () => {
-    const listed = ['- 項目', '', '  ```circuit', '  parts:', '    R1: resistor a1 a3 10k',
-      '    C1: capacitor a3 c3 100n', '    R2: resistor c1 c3 1k', '  ```', ''].join('\n');
+    const listed = ['- 項目', '', '  ```circuit', '  parts:', '    R1: resistor 1,1 3,1 10k',
+      '    C1: capacitor 3,1 3,3 100n', '    R2: resistor 1,3 3,3 1k', '  ```', ''].join('\n');
     const doc = docOf(A, listed);
     const host = hostOf([doc], at(doc, 4));
     const session = sessionOf(host);
@@ -779,7 +779,7 @@ describe('消す・回す', () => {
 
     await session.handle({ kind: 'delete', what: 'part', id: 'R1', ids: ['R1', 'C1'], wires: [] });
 
-    expect(doc.getText()).toContain('  ```circuit\n  parts:\n    R2: resistor c1 c3 1k\n  ```');
+    expect(doc.getText()).toContain('  ```circuit\n  parts:\n    R2: resistor 1,3 3,3 1k\n  ```');
   });
 
   /**
@@ -787,7 +787,7 @@ describe('消す・回す', () => {
    * 範囲が無く、戻すことも置くこともできなくなる (playground で。VS Code は
    * 1 行残していたので見えていなかった)。
    */
-  const BARE = ['# ノート', '', '```circuit', 'parts:', '  R1: resistor a1 a3 10k', '  C1: capacitor a3 c3 100n', '```', ''].join('\n');
+  const BARE = ['# ノート', '', '```circuit', 'parts:', '  R1: resistor 1,1 3,1 10k', '  C1: capacitor 3,1 3,3 100n', '```', ''].join('\n');
 
   test('undoes deleting everything in a fence at once', async () => {
     const doc = docOf(A, BARE);
@@ -802,7 +802,7 @@ describe('消す・回す', () => {
   });
 
   test('undoes deleting the last part in a fence', async () => {
-    const doc = docOf(A, ['# ノート', '', '```circuit', 'parts:', '  R1: resistor a1 a3 10k', '```', ''].join('\n'));
+    const doc = docOf(A, ['# ノート', '', '```circuit', 'parts:', '  R1: resistor 1,1 3,1 10k', '```', ''].join('\n'));
     const before = doc.getText();
     const host = hostOf([doc], at(doc, 4));
     const session = sessionOf(host);
@@ -848,7 +848,7 @@ describe('消す・回す', () => {
 
     await session.handle({ kind: 'turn', part: 'R1', quarters: 1 });
 
-    expect(doc.getText()).toContain('R1:  resistor a1 c1 10k');
+    expect(doc.getText()).toContain('R1:  resistor 1,1 1,3 10k');
   });
 
   test('flips the two ends round', async () => {
@@ -859,7 +859,7 @@ describe('消す・回す', () => {
 
     await session.handle({ kind: 'flip', part: 'R1' });
 
-    expect(doc.getText()).toContain('R1:  resistor a3 a1 10k');
+    expect(doc.getText()).toContain('R1:  resistor 3,1 1,1 10k');
   });
 
   test('turns a multi-terminal part by writing the orientation word', async () => {
@@ -870,7 +870,7 @@ describe('消す・回す', () => {
 
     await session.handle({ kind: 'turn', part: 'Q1', quarters: 1 });
 
-    expect(doc.getText()).toContain('  Q1: npn b5 r90');
+    expect(doc.getText()).toContain('  Q1: npn 5,2 r90');
   });
 
   test('says why a symbol that cannot be turned was left alone', async () => {
@@ -904,10 +904,10 @@ describe('配線を引く', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'addWire', from: 'a1', to: 'c1' });
+    await session.handle({ kind: 'addWire', from: '1,1', to: '1,3' });
 
     expect(doc.getText()).toContain('wires:');
-    expect(doc.getText()).toContain('- a1 -- c1');
+    expect(doc.getText()).toContain('- 1,1 -- 1,3');
     expect(last(host, 'status')?.text).toContain('引きました');
   });
 
@@ -917,9 +917,9 @@ describe('配線を引く', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'addWire', from: 'a1', to: 'c5', operator: '-|' });
+    await session.handle({ kind: 'addWire', from: '1,1', to: '5,3', operator: '-|' });
 
-    expect(doc.getText()).toContain('- a1 -| c5');
+    expect(doc.getText()).toContain('- 1,1 -| 5,3');
   });
 
   test('undoes a drawn wire, taking the line back out', async () => {
@@ -927,7 +927,7 @@ describe('配線を引く', () => {
     const host = hostOf([doc], at(doc, 5));
     const session = sessionOf(host);
     session.view();
-    await session.handle({ kind: 'addWire', from: 'a1', to: 'c1' });
+    await session.handle({ kind: 'addWire', from: '1,1', to: '1,3' });
 
     await session.handle({ kind: 'undo' });
 
@@ -940,7 +940,7 @@ describe('配線を引く', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'addWire', from: 'a1', to: 'zz9' });
+    await session.handle({ kind: 'addWire', from: '1,1', to: 'zz9' });
 
     expect(last(host, 'status')?.text).toContain('番地として読めません');
   });
@@ -972,7 +972,7 @@ describe('組み直し', () => {
     session.refresh();
     const before = host.sent.filter((message) => message.kind === 'map').length;
 
-    await session.handle({ kind: 'addPart', type: 'ground', at: ['c5'] });
+    await session.handle({ kind: 'addPart', type: 'ground', at: ['5,3'] });
 
     expect(host.sent.filter((message) => message.kind === 'map').length).toBe(before + 1);
   });
@@ -985,8 +985,8 @@ describe('部品を置く', () => {
     const session = sessionOf(host);
     session.view();
 
-    return session.handle({ kind: 'addPart', type: 'ground', at: ['c5'] }).then(() => {
-      expect(doc.getText()).toContain('G1: ground c5');
+    return session.handle({ kind: 'addPart', type: 'ground', at: ['5,3'] }).then(() => {
+      expect(doc.getText()).toContain('G1: ground 5,3');
       expect(last(host, 'status')?.text).toContain('置きました');
     });
   });
@@ -997,9 +997,9 @@ describe('部品を置く', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'addPart', type: 'inductor', at: ['c1', 'c3'] });
+    await session.handle({ kind: 'addPart', type: 'inductor', at: ['1,3', '3,3'] });
 
-    expect(doc.getText()).toContain('L1: inductor c1 c3');
+    expect(doc.getText()).toContain('L1: inductor 1,3 3,3');
   });
 
   test('names a part whose id is drawn as a net name by its default, without asking', async () => {
@@ -1009,11 +1009,11 @@ describe('部品を置く', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'addPart', type: 'port', at: ['c5'] });
-    await session.handle({ kind: 'addPart', type: 'vcc', at: ['c1'] });
+    await session.handle({ kind: 'addPart', type: 'port', at: ['5,3'] });
+    await session.handle({ kind: 'addPart', type: 'vcc', at: ['1,3'] });
 
-    expect(doc.getText()).toContain('IN: port c5');
-    expect(doc.getText()).toContain('VCC: vcc c1');
+    expect(doc.getText()).toContain('IN: port 5,3');
+    expect(doc.getText()).toContain('VCC: vcc 1,3');
   });
 
   test('writes the part turned and flipped as the ghost showed it', async () => {
@@ -1022,9 +1022,9 @@ describe('部品を置く', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'addPart', type: 'inductor', at: ['c1'], turn: 1, flip: false });
+    await session.handle({ kind: 'addPart', type: 'inductor', at: ['1,3'], turn: 1, flip: false });
 
-    expect(doc.getText()).toContain('L1: inductor c1 e1');
+    expect(doc.getText()).toContain('L1: inductor 1,3 1,5');
   });
 
   test('answers a preview with the crossings the part would take, without touching the document', async () => {
@@ -1033,14 +1033,14 @@ describe('部品を置く', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'preview', key: 'k1', what: 'place', type: 'inductor', to: 'c1', turn: 0, flip: false });
+    await session.handle({ kind: 'preview', key: '1,11', what: 'place', type: 'inductor', to: '1,3', turn: 0, flip: false });
 
     const ghost = host.sent.find((message) => message.kind === 'ghost');
-    expect(ghost).toMatchObject({ kind: 'ghost', key: 'k1', cells: ['c1', 'c3'], ok: true, why: '' });
+    expect(ghost).toMatchObject({ kind: 'ghost', key: '1,11', cells: ['1,3', '3,3'], ok: true, why: '' });
     // **置く前の部品の絵も返す。** 図にまだ無い部品なので、写しの図から切り出す。
     // 名前は置いたときに付くもの (`GHOST` ではない)。
     expect(ghost?.chip).toContain('data-part="L1"');
-    expect(ghost?.from).toEqual(['c1', 'c3']);
+    expect(ghost?.from).toEqual(['1,3', '3,3']);
     expect(doc.getText()).toBe(RC);
   });
 
@@ -1050,7 +1050,7 @@ describe('部品を置く', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'preview', key: 'k2', what: 'place', type: 'inductor', to: 'c99', turn: 0, flip: false });
+    await session.handle({ kind: 'preview', key: '2,11', what: 'place', type: 'inductor', to: '99,3', turn: 0, flip: false });
 
     const ghost = host.sent.find((message) => message.kind === 'ghost');
     expect(ghost && 'ok' in ghost && ghost.ok).toBe(false);
@@ -1063,13 +1063,13 @@ describe('部品を置く', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'preview', key: 'k3', what: 'move', part: 'R1', to: 'b1' });
+    await session.handle({ kind: 'preview', key: '3,11', what: 'move', part: 'R1', to: '1,2' });
 
     const ghost = host.sent.find((message) => message.kind === 'ghost');
     // `from` は動かす前の穴。**殻はこれで運んでいる部品の絵を行き先へずらす**。
     // `shift` はその差 (端数の升は DOM に無いので、数でも渡す。52 の docs/23)。
     expect(ghost).toEqual({
-      kind: 'ghost', key: 'k3', cells: ['b1', 'b3'], ok: true, why: '', from: ['a1', 'a3'], shift: { rows: 1, cols: 0 },
+      kind: 'ghost', key: '3,11', cells: ['1,2', '3,2'], ok: true, why: '', from: ['1,1', '3,1'], shift: { rows: 1, cols: 0 },
     });
   });
 
@@ -1089,7 +1089,7 @@ describe('部品を置く', () => {
     const host = hostOf([doc], at(doc, 5));
     const session = sessionOf(host);
     session.view();
-    await session.handle({ kind: 'addPart', type: 'ground', at: ['c5'] });
+    await session.handle({ kind: 'addPart', type: 'ground', at: ['5,3'] });
 
     await session.handle({ kind: 'undo' });
 
@@ -1119,9 +1119,9 @@ describe('欄 (インスペクタ)', () => {
     const { host, session } = opened();
     await session.handle({ kind: 'select', what: 'part', id: 'R1' });
 
-    await session.handle({ kind: 'select', what: 'node', id: 'a1' });
+    await session.handle({ kind: 'select', what: 'node', id: '1,1' });
 
-    expect(last(host, 'fields')?.part).toMatchObject({ type: 'a1', can: ['id'] });
+    expect(last(host, 'fields')?.part).toMatchObject({ type: '1,1', can: ['id'] });
   });
 
   test('closes the form when something that has no fields is picked', async () => {
@@ -1136,10 +1136,10 @@ describe('欄 (インスペクタ)', () => {
   test('names a node from the field, writing the points line and the places that used it', async () => {
     const { doc, session } = opened();
 
-    await session.handle({ kind: 'rename', what: 'node', part: 'a1', text: 'vin' });
+    await session.handle({ kind: 'rename', what: 'node', part: '1,1', text: 'vin' });
 
-    expect(doc.getText()).toContain('vin: a1');
-    expect(doc.getText()).toContain('resistor vin a3');
+    expect(doc.getText()).toContain('vin: 1,1');
+    expect(doc.getText()).toContain('resistor vin 3,1');
   });
 
   test('writes a field the form changed', async () => {
@@ -1147,7 +1147,7 @@ describe('欄 (インスペクタ)', () => {
 
     await session.handle({ kind: 'setField', part: 'R1', field: 'value', text: '4k7' });
 
-    expect(doc.getText()).toContain('R1:  resistor a1 a3 4k7');
+    expect(doc.getText()).toContain('R1:  resistor 1,1 3,1 4k7');
     expect(last(host, 'status')?.text).toContain('値を 4k7 に');
   });
 
@@ -1156,7 +1156,7 @@ describe('欄 (インスペクタ)', () => {
 
     await session.handle({ kind: 'setField', part: 'R1', field: 'value', text: '' });
 
-    expect(doc.getText()).toContain('R1:  resistor a1 a3\n');
+    expect(doc.getText()).toContain('R1:  resistor 1,1 3,1\n');
   });
 
   test('renames a part, carrying what points at it', async () => {
@@ -1167,8 +1167,8 @@ describe('欄 (インスペクタ)', () => {
 
     await session.handle({ kind: 'rename', part: 'Q1', text: 'T1' });
 
-    expect(doc.getText()).toContain('T1: npn b5');
-    expect(doc.getText()).toContain('a1 -- T1.b');
+    expect(doc.getText()).toContain('T1: npn 5,2');
+    expect(doc.getText()).toContain('1,1 -- T1.b');
     expect(last(host, 'status')?.text).toContain('改名しました');
   });
 
@@ -1197,9 +1197,9 @@ describe('Ctrl で 1/10 升 (52 の docs/23)', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'addPart', type: 'ground', at: ['b3'], fine: [{ rows: 0.3, cols: -0.3 }] });
+    await session.handle({ kind: 'addPart', type: 'ground', at: ['3,2'], fine: [{ rows: 0.3, cols: -0.3 }] });
 
-    expect(doc.getText()).toContain('G1: ground b2d7');
+    expect(doc.getText()).toContain('G1: ground 2.7,2.3');
   });
 
   test('answers a fine preview with the spelled crossing', async () => {
@@ -1209,11 +1209,11 @@ describe('Ctrl で 1/10 升 (52 の docs/23)', () => {
     session.view();
 
     await session.handle({
-      kind: 'preview', key: 'k1', what: 'place', type: 'ground', to: 'b3', turn: 0, flip: false, fine: { rows: 0.3, cols: -0.3 },
+      kind: 'preview', key: '1,11', what: 'place', type: 'ground', to: '3,2', turn: 0, flip: false, fine: { rows: 0.3, cols: -0.3 },
     });
 
     const ghost = host.sent.find((message) => message.kind === 'ghost');
-    expect(ghost).toMatchObject({ cells: ['b2d7'], ok: true });
+    expect(ghost).toMatchObject({ cells: ['2.7,2.3'], ok: true });
   });
 
   test('writes a whole address when the fine step lands on the crossing', async () => {
@@ -1223,9 +1223,9 @@ describe('Ctrl で 1/10 升 (52 の docs/23)', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'addPart', type: 'ground', at: ['b3'], fine: [{ rows: 0, cols: 0 }] });
+    await session.handle({ kind: 'addPart', type: 'ground', at: ['3,2'], fine: [{ rows: 0, cols: 0 }] });
 
-    expect(doc.getText()).toContain('G1: ground b3');
+    expect(doc.getText()).toContain('G1: ground 3,2');
   });
 
   test('moves a part between crossings, carrying its other end by the same step', async () => {
@@ -1234,8 +1234,8 @@ describe('Ctrl で 1/10 升 (52 の docs/23)', () => {
     const session = sessionOf(host);
     session.view();
 
-    await session.handle({ kind: 'move', part: 'R1', to: 'b1', fine: { rows: 0, cols: 0.5 } });
+    await session.handle({ kind: 'move', part: 'R1', to: '1,2', fine: { rows: 0, cols: 0.5 } });
 
-    expect(doc.getText()).toContain('resistor b1a5 b3a5 10k');
+    expect(doc.getText()).toContain('resistor 1.5,2 3.5,2 10k');
   });
 });

@@ -13,12 +13,12 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
-\coordinate (a1) at (0,0);
-\coordinate (a3) at (4,0);
-\coordinate (c3) at (4,-4);
-\coordinate (c1) at (0,-4);
-\draw (a1) to[R, l_=$R_{1}$, i>^=$i_{1}$, current arrow scale=8] (a3); % line 3
-\draw (c3) to[R, l_=$R_{2}$, i>^=$i_{2}$, current arrow scale=8] (c1); % line 4
+\coordinate (x1y1) at (0,0);
+\coordinate (x3y1) at (4,0);
+\coordinate (x3y3) at (4,-4);
+\coordinate (x1y3) at (0,-4);
+\draw (x1y1) to[R, l_=$R_{1}$, i>^=$i_{1}$, current arrow scale=8] (x3y1); % line 3
+\draw (x3y3) to[R, l_=$R_{2}$, i>^=$i_{2}$, current arrow scale=8] (x1y3); % line 4
 \path (8,-4.974) rectangle (16.403,0.593); % line 6
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,0) {X}; % line 6
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,-0.487) {X}; % line 6

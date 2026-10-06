@@ -10,18 +10,18 @@
 ```circuit
 title: 回路図01 LC 直列共振
 parts:
-  W1: sine b1 e1 l=$\mathrm{W1}$
-  G1: ground e1
-  L1: inductor b3 b5 10m
-  C1: capacitor b5 b7 10n
-  R1: resistor b7 b9 100
-  M2: voltmeter a7 a9 l=$\mathrm{CH2}$
+  W1: sine 1,2 1,5 l=$\mathrm{W1}$
+  G1: ground 1,5
+  L1: inductor 3,2 5,2 10m
+  C1: capacitor 5,2 7,2 10n
+  R1: resistor 7,2 9,2 100
+  M2: voltmeter 7,1 9,1 l=$\mathrm{CH2}$
 wires:
-  - b1 -- b3
-  - a7 -- b7
-  - a9 -- b9
-  - b9 -- e9
-  - e9 -- e1
+  - 1,2 -- 3,2
+  - 7,1 -- 7,2
+  - 9,1 -- 9,2
+  - 9,2 -- 9,5
+  - 9,5 -- 1,5
 ```
 
 <img src="out/schematic/00-resonance.png" alt="回路図01 LC 直列共振" width="649">

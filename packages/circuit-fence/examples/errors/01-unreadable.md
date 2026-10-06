@@ -13,14 +13,14 @@
 ```circuit
 title: 図01 読めなかったとき
 parts:
-  IN: port a1
-  R1: resistr a1 a3 10k
-  C1: capacitor z0 z2 100n
-  L1: inductor a5 a5
-  V1: vsource c1 c3 五ボルト
-  E1: sine c5 c7 l=$\frac{1}{2}$
+  IN: port 1,1
+  R1: resistr 1,1 3,1 10k
+  C1: capacitor 0,26 2,26 100n
+  L1: inductor 5,1 5,1
+  V1: vsource 1,3 3,3 五ボルト
+  E1: sine 5,3 7,3 l=$\frac{1}{2}$
 wires:
-  - a3 -- a4
+  - 3,1 -- 4,1
 ```
 
 書いたのはこれ。
@@ -28,22 +28,22 @@ wires:
 ```text
 14 title: 図01 読めなかったとき
 15 parts:
-16   IN: port a1
-17   R1: resistr a1 a3 10k
-18   C1: capacitor z0 z2 100n
-19   L1: inductor a5 a5
-20   V1: vsource c1 c3 五ボルト
-21   E1: sine c5 c7 l=$\frac{1}{2}$
+16   IN: port 1,1
+17   R1: resistr 1,1 3,1 10k
+18   C1: capacitor 0,26 2,26 100n
+19   L1: inductor 5,1 5,1
+20   V1: vsource 1,3 3,3 五ボルト
+21   E1: sine 5,3 7,3 l=$\frac{1}{2}$
 22 wires:
-23   - a3 -- a4
+23   - 3,1 -- 4,1
 ```
 
 帯にはこう出る。
 
 ```text
 circuit: 17 行目: 種類 resistr は知りません (resistor のことですか?)
-circuit: 18 行目: z0 は番地の形ではありません (行 a〜cu + 列 1〜99。交点の間は組を足す (a1a5 / a1f5))
-circuit: 19 行目: inductor の両端が同じ番地です (a5)
+circuit: 18 行目: 0,26 は番地の形ではありません (番地は 1,1 から 99,99 まで。x が列、y が行)
+circuit: 19 行目: inductor の両端が同じ番地です (5,1)
 circuit: 20 行目: 部品 V1: 値はプレビューの TeX にフォントがありません (circuit-fence render --emit-tex で .tex に書き出すと LaTeX で組めます)
 circuit: 21 行目: 部品 E1 の l= : \frac は書けません (使えるのは 英数字 と \dot{…} \mathrm{…} と 添字 _ です)
 ```

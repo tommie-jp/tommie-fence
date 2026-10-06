@@ -13,18 +13,18 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
-\coordinate (b2) at (2,-2);
-\coordinate (b1) at (0,-2);
-\coordinate (a4) at (6,0);
-\coordinate (c4) at (6,-4);
-\node[spdt] (part-S1) at (b2) {}; % line 3
+\coordinate (x2y2) at (2,-2);
+\coordinate (x1y2) at (0,-2);
+\coordinate (x4y1) at (6,0);
+\coordinate (x4y3) at (6,-4);
+\node[spdt] (part-S1) at (x2y2) {}; % line 3
 \node[anchor=south] at (part-S1.north) {$S_{1}$}; % line 3
-\draw (b1) |- (part-S1.in); % line 5
-\draw (part-S1.out 1) -| (a4); % line 6
-\draw (part-S1.out 2) -| (c4); % line 7
+\draw (x1y2) |- (part-S1.in); % line 5
+\draw (part-S1.out 1) -| (x4y1); % line 6
+\draw (part-S1.out 2) -| (x4y3); % line 7
 \path (0,-6.593) rectangle (2.794,-5.407); % line 9
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-6) {X}; % line 9
-\path (10,-6.921) rectangle (18.136,0.593); % line 10
+\path (10,-6.921) rectangle (18.399,0.593); % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,0) {X}; % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-0.487) {X}; % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-0.974) {X}; % line 10

@@ -197,7 +197,7 @@ function withKey(
       const address = named ?? (typeof raw === 'string' ? parseAddress(raw) : null);
       if (address === undefined || address === null) {
         messages.push({
-          message: `style の ${key} は番地で書きます (グリッドの右下、たとえば e12)`,
+          message: `style の ${key} は番地で書きます (グリッドの右下、たとえば 12,5)`,
           key,
           token: tokenOf(raw),
         });

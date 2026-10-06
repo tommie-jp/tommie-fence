@@ -80,7 +80,7 @@ describe('render', () => {
   });
 
   test('circuit は図の代わりに TeX を返す (ブラウザでは描けない)', () => {
-    const output = render('circuit', 'parts:\n  R1: resistor a1 a2 10k\n');
+    const output = render('circuit', 'parts:\n  R1: resistor 1,1 2,1 10k\n');
 
     expect(output.svg).toBe('');
     expect(output.tex).toContain('circuitikz');
@@ -97,11 +97,11 @@ describe('render', () => {
   });
 
   test('circuit の報告も行の中身まで付く', () => {
-    const output = render('circuit', 'parts:\n  R1: resistr a1 a2\n');
+    const output = render('circuit', 'parts:\n  R1: resistr 1,1 2,1\n');
 
     expect(output.broken).toBe(true);
     expect(output.messages[0]).toContain('2 行目');
-    expect(output.messages[0]).toContain('R1: resistr a1 a2');
+    expect(output.messages[0]).toContain('R1: resistr 1,1 2,1');
   });
 });
 

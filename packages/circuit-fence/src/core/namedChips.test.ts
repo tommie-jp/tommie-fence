@@ -46,10 +46,10 @@ describe('図', () => {
   test('draws a relay, wires to its contacts by name and lists them by name', () => {
     const result = compileCircuit(circuit(
       'parts:',
-      '  K1: relay d5',
-      '  R1: resistor a9 a11 1k',
+      '  K1: relay 5,4',
+      '  R1: resistor 9,1 11,1 1k',
       'wires:',
-      '  - K1.NO1 |- a9',
+      '  - K1.NO1 |- 9,1',
     ), { erc: true });
 
     expect(result.errors).toEqual([]);
@@ -62,8 +62,8 @@ describe('図', () => {
   test('draws a photocoupler and a display', () => {
     const result = compileCircuit(circuit(
       'parts:',
-      '  U1: photocoupler d5 PC817',
-      '  DS1: seg7 d12',
+      '  U1: photocoupler 5,4 PC817',
+      '  DS1: seg7 12,4',
     ));
 
     expect(result.errors).toEqual([]);
@@ -75,19 +75,19 @@ describe('図', () => {
 describe('7 セグの箱の幅', () => {
   test('widens the box for a longer part number, as a device does', () => {
     // 箱の中に型番を刷るので、表の 5161AS より長い型番なら箱も広げる。
-    const [short, long] = parseFence(circuit('parts:', '  DS1: seg7 c4 5161AS', '  DS2: seg7 c10 LTS-547AHR')).doc.parts;
+    const [short, long] = parseFence(circuit('parts:', '  DS1: seg7 4,3 5161AS', '  DS2: seg7 10,3 LTS-547AHR')).doc.parts;
     const shortSymbol = partTypeOf(short!)?.symbol;
     const longSymbol = partTypeOf(long!)?.symbol;
 
     expect(longSymbol).not.toBe(shortSymbol);
     expect(shortSymbol).toBe(lookupPartType('seg7')?.symbol);
-    expect(compileCircuit(circuit('parts:', '  DS2: seg7 c10 LTS-547AHR')).tex).toContain(`pgfdeclareshape{${longSymbol}}`);
+    expect(compileCircuit(circuit('parts:', '  DS2: seg7 10,3 LTS-547AHR')).tex).toContain(`pgfdeclareshape{${longSymbol}}`);
   });
 });
 
 describe('升目と ERC', () => {
   test('lays the relay legs out on the map in the order the symbol draws them', () => {
-    const map = gridMap(circuit('parts:', '  K1: relay d5'));
+    const map = gridMap(circuit('parts:', '  K1: relay 5,4'));
     const pins = map.chips[0]?.pins ?? [];
 
     // 上はコイルの A1、接点 1 の NC・NO、接点 2 の NC・NO。下は A2 と共通 2 つ。
@@ -97,7 +97,7 @@ describe('升目と ERC', () => {
 
   test('still asks for every photocoupler leg, since all four are needed', () => {
     const result = compileCircuit(circuit(
-      'parts:', '  U1: photocoupler d5', '  R1: resistor a1 a3 1k', 'wires:', '  - a3 -| U1.A',
+      'parts:', '  U1: photocoupler 5,4', '  R1: resistor 1,1 3,1 1k', 'wires:', '  - 3,1 -| U1.A',
     ), { erc: true });
 
     // ピンは名前で言う (番号の鍵が先に並んでも `1` とは言わない)。
@@ -114,20 +114,20 @@ describe('リレーの型番', () => {
     ['r270', 'south'],
     ['mirror', 'east'],
   ] as const)('keeps the part number off the dashed link when turned %s', (turn, anchor) => {
-    const { tex } = compileCircuit(circuit('parts:', `  K1: relay d5 ${turn} G5V-2`));
+    const { tex } = compileCircuit(circuit('parts:', `  K1: relay 5,4 ${turn} G5V-2`));
 
     expect(tex).not.toMatch(/at \(part-K1\.center\) \{\$\\mathrm\{G5V/);
     expect(tex).toContain(`\\node[font=\\scriptsize, anchor=${anchor}] at (part-K1.value) {$\\mathrm{G5V\\mbox{-}2}$};`);
   });
 
   test('puts the name on another side than the part number', () => {
-    const { tex } = compileCircuit(circuit('parts:', '  K1: relay d5 r180 G5V-2'));
+    const { tex } = compileCircuit(circuit('parts:', '  K1: relay 5,4 r180 G5V-2'));
 
     expect(tex).not.toMatch(/at \(part-K1\.east\) \{\$K_\{1\}\$\}/);
   });
 
   test('declares the value anchor beyond the end of the dashed link', () => {
-    const tex = compileCircuit(circuit('parts:', '  K1: relay d5 r90 G5V-2')).tex ?? '';
+    const tex = compileCircuit(circuit('parts:', '  K1: relay 5,4 r90 G5V-2')).tex ?? '';
     const value = Number(/\\anchor\{value\}\{\\pgfpoint\{([-\d.]+)cm\}/.exec(tex)?.[1]);
     const dash = tex.slice(tex.indexOf('pgfsetdash{{'));
     const dashEnd = Number(/pgfpathlineto\{\\pgfpoint\{([-\d.]+)cm\}/.exec(dash)?.[1]);

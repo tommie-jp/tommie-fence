@@ -22,22 +22,22 @@ parts:
 ```circuit
 title: 回路図01 スタブの等価回路
 parts:
-  J1: sma b2 mirror
-  T1: tline b4 b7 50 l=$\mathrm{L1}$
-  T2: tline b9 b12 50 l=$\mathrm{L1}$
-  S1: tline d8 g8 50 l=$\mathrm{S1}$
-  J2: sma b14
-  G1: ground c2
-  G2: ground c14
+  J1: sma 2,2 mirror
+  T1: tline 4,2 7,2 50 l=$\mathrm{L1}$
+  T2: tline 9,2 12,2 50 l=$\mathrm{L1}$
+  S1: tline 8,4 8,7 50 l=$\mathrm{S1}$
+  J2: sma 14,2
+  G1: ground 2,3
+  G2: ground 14,3
 wires:
-  - J1.1 -- b4
-  - b7 -- b9
-  - b8 -- d8
-  - b12 -- J2.1
-  - J1.2 -- c2
-  - J2.2 -- c14
+  - J1.1 -- 4,2
+  - 7,2 -- 9,2
+  - 8,2 -- 8,4
+  - 12,2 -- J2.1
+  - J1.2 -- 2,3
+  - J2.2 -- 14,3
 notes:
-  - text g9: 開放
+  - text 9,7: 開放
 ```
 
 ![回路図01 スタブの等価回路](out/schematic/02-lines-1.png)
@@ -73,22 +73,22 @@ parts:
 ```circuit
 title: 回路図02 ステップインピーダンス LPF の等価回路
 parts:
-  J1: sma b2 mirror
-  T1: tline b3 b5 50 l=$\mathrm{L1}$
-  T2: tline b5 b7 112 l=$\mathrm{L2}$
-  T3: tline b7 b9 26 l=$\mathrm{L3}$
-  T4: tline b9 b11 112 l=$\mathrm{L4}$
-  T5: tline b11 b13 26 l=$\mathrm{L5}$
-  T6: tline b13 b15 112 l=$\mathrm{L6}$
-  T7: tline b15 b17 50 l=$\mathrm{L7}$
-  J2: sma b18
-  G1: ground c2
-  G2: ground c18
+  J1: sma 2,2 mirror
+  T1: tline 3,2 5,2 50 l=$\mathrm{L1}$
+  T2: tline 5,2 7,2 112 l=$\mathrm{L2}$
+  T3: tline 7,2 9,2 26 l=$\mathrm{L3}$
+  T4: tline 9,2 11,2 112 l=$\mathrm{L4}$
+  T5: tline 11,2 13,2 26 l=$\mathrm{L5}$
+  T6: tline 13,2 15,2 112 l=$\mathrm{L6}$
+  T7: tline 15,2 17,2 50 l=$\mathrm{L7}$
+  J2: sma 18,2
+  G1: ground 2,3
+  G2: ground 18,3
 wires:
-  - J1.1 -- b3
-  - b17 -- J2.1
-  - J1.2 -- c2
-  - J2.2 -- c18
+  - J1.1 -- 3,2
+  - 17,2 -- J2.1
+  - J1.2 -- 2,3
+  - J2.2 -- 18,3
 ```
 
 ![回路図02 ステップインピーダンス LPF の等価回路](out/schematic/02-lines-2.png)

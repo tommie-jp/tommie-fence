@@ -48,7 +48,7 @@ describe('validateStyle', () => {
   });
 
   test('reads how far the grid should reach', () => {
-    expect(valueOf({ 'grid-to': 'e12' })).toMatchObject({ gridTo: { row: 4, col: 11 } });
+    expect(valueOf({ 'grid-to': '12,5' })).toMatchObject({ gridTo: { row: 4, col: 11 } });
   });
 
   test('names the grid-to it could not read as an address', () => {

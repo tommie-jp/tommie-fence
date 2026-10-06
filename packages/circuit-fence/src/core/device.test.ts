@@ -17,7 +17,7 @@ const SENSOR = [
   'parts:',
   '  M1:',
   '    type: device',
-  '    at: d5',
+  '    at: 5,4',
   '    label: HC-SR04',
   '    pins: [VCC, TRIG, ECHO, GND]',
 ];
@@ -48,7 +48,7 @@ describe('読む', () => {
   test('takes the place from a named point and the turn from the same words as one line', () => {
     const { doc, errors } = parseFence(circuit(
       'points:',
-      '  here: c3',
+      '  here: 3,3',
       'parts:',
       '  M1:',
       '    type: device',
@@ -58,18 +58,18 @@ describe('読む', () => {
     ));
 
     expect(errors).toEqual([]);
-    expect(doc.parts[0]).toMatchObject({ at: parseAddress('c3'), turn: { rotate: 90, mirror: true }, spelling: ['here'] });
+    expect(doc.parts[0]).toMatchObject({ at: parseAddress('3,3'), turn: { rotate: 90, mirror: true }, spelling: ['here'] });
   });
 
   test('asks for the map form when a device is written on one line', () => {
-    const { errors } = parseFence(circuit('parts:', '  M1: device d5'));
+    const { errors } = parseFence(circuit('parts:', '  M1: device 5,4'));
 
     expect(errors[0]?.line).toBe(2);
     expect(errors[0]?.message).toContain('type: device');
   });
 
   test('keeps the map form for devices only', () => {
-    const { errors } = parseFence(circuit('parts:', '  R1:', '    type: resistor', '    at: a1'));
+    const { errors } = parseFence(circuit('parts:', '  R1:', '    type: resistor', '    at: 1,1'));
 
     // 指すのは部品の ID の行 (1 行に書き直す所)。
     expect(errors[0]?.line).toBe(2);
@@ -78,13 +78,13 @@ describe('読む', () => {
 
   test.each([
     ['no place', ['    pins: [A, B]'], 'at'],
-    ['no pins', ['    at: a1'], 'pins'],
-    ['one pin', ['    at: a1', '    pins: [A]'], '2'],
-    ['a pin name with a space', ['    at: a1', '    pins: [A B, C]'], 'A B'],
-    ['a pin name with a dot', ['    at: a1', '    pins: [A.1, C]'], 'A.1'],
-    ['the same pin twice', ['    at: a1', '    pins: [GND, gnd]'], 'gnd'],
-    ['an unknown key', ['    at: a1', '    pins: [A, B]', '    colour: red'], 'colour'],
-    ['a turn it cannot read', ['    at: a1', '    pins: [A, B]', '    turn: r45'], 'r45'],
+    ['no pins', ['    at: 1,1'], 'pins'],
+    ['one pin', ['    at: 1,1', '    pins: [A]'], '2'],
+    ['a pin name with a space', ['    at: 1,1', '    pins: [A B, C]'], 'A B'],
+    ['a pin name with a dot', ['    at: 1,1', '    pins: [A.1, C]'], 'A.1'],
+    ['the same pin twice', ['    at: 1,1', '    pins: [GND, gnd]'], 'gnd'],
+    ['an unknown key', ['    at: 1,1', '    pins: [A, B]', '    colour: red'], 'colour'],
+    ['a turn it cannot read', ['    at: 1,1', '    pins: [A, B]', '    turn: r45'], 'r45'],
   ])('reports %s on its line', (_name, rows, word) => {
     const { doc, errors } = parseFence(circuit('parts:', '  M1:', '    type: device', ...rows));
 
@@ -96,7 +96,7 @@ describe('読む', () => {
 
   test('stops at the pin limit', () => {
     const pins = Array.from({ length: 41 }, (_, index) => `P${index + 1}`).join(', ');
-    const { errors } = parseFence(circuit('parts:', '  M1:', '    type: device', '    at: a1', `    pins: [${pins}]`));
+    const { errors } = parseFence(circuit('parts:', '  M1:', '    type: device', '    at: 1,1', `    pins: [${pins}]`));
 
     expect(errors[0]?.message).toContain('40');
   });
@@ -106,9 +106,9 @@ describe('図', () => {
   test('wires to a pin by its name and lists it by that name', () => {
     const result = compileCircuit(circuit(
       ...SENSOR,
-      '  R1: resistor a8 a10 1k',
+      '  R1: resistor 8,1 10,1 1k',
       'wires:',
-      '  - M1.TRIG -| a8',
+      '  - M1.TRIG -| 8,1',
     ));
 
     expect(result.errors).toEqual([]);
@@ -117,7 +117,7 @@ describe('図', () => {
   });
 
   test('says which names the box has when a wire asks for another', () => {
-    const result = compileCircuit(circuit(...SENSOR, 'wires:', '  - M1.OUT -- a8'));
+    const result = compileCircuit(circuit(...SENSOR, 'wires:', '  - M1.OUT -- 8,1'));
 
     expect(result.errors[0]?.message).toContain('OUT');
     expect(result.errors[0]?.message).toContain('TRIG');
@@ -128,7 +128,7 @@ describe('図', () => {
       ...SENSOR,
       '  M2:',
       '    type: device',
-      '    at: d12',
+      '    at: 12,4',
       '    label: HC-SR04',
       '    pins: [VCC, TRIG, ECHO, GND]',
     )).tex ?? '';
@@ -145,16 +145,16 @@ describe('図', () => {
 
     expect(long.halfWidth).toBeGreaterThan(short.halfWidth);
     expect(long.nameArea).toBeGreaterThan(short.nameArea);
-    expect(compileCircuit(circuit('parts:', '  M1:', '    type: device', '    at: d5', '    label: Analog Discovery', '    pins: [A, B]')).tex)
+    expect(compileCircuit(circuit('parts:', '  M1:', '    type: device', '    at: 5,4', '    label: Analog Discovery', '    pins: [A, B]')).tex)
       .toContain('Analog\\ Discovery');
   });
 
   test('does not nag about pins the circuit leaves alone', () => {
     const { erc } = compileCircuit(circuit(
       ...SENSOR,
-      '  R1: resistor a8 a10 1k',
+      '  R1: resistor 8,1 10,1 1k',
       'wires:',
-      '  - M1.TRIG -| a8',
+      '  - M1.TRIG -| 8,1',
     ), { erc: true });
 
     expect(erc.map((one) => one.message).join('\n')).not.toContain('M1');
@@ -167,10 +167,10 @@ describe('ネットリストのピンの名前', () => {
   test('lists a board pin by its printed name', () => {
     const result = compileCircuit(circuit(
       'parts:',
-      '  U1: pico b2',
-      '  R1: resistor a30 a32 330',
+      '  U1: pico 2,2',
+      '  R1: resistor 30,1 32,1 330',
       'wires:',
-      '  - U1.GP0 -| a30',
+      '  - U1.GP0 -| 30,1',
     ));
 
     expect(result.netlist.find((one) => one.refs.includes('R1.1'))?.refs).toContain('U1.GP0');
@@ -179,10 +179,10 @@ describe('ネットリストのピンの名前', () => {
   test('lists a header pin by its number', () => {
     const result = compileCircuit(circuit(
       'parts:',
-      '  J1: sip3 b2',
-      '  R1: resistor a8 a10 1k',
+      '  J1: sip3 2,2',
+      '  R1: resistor 8,1 10,1 1k',
       'wires:',
-      '  - J1.2 -| a8',
+      '  - J1.2 -| 8,1',
     ));
 
     expect(result.netlist.find((one) => one.refs.includes('R1.1'))?.refs).toContain('J1.2');

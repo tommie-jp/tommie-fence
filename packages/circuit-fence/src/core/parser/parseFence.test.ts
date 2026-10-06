@@ -15,7 +15,7 @@ describe('parseFence', () => {
   // **転んでも読めた所は返す** (52 の docs/54)。行が 1 つ読めないだけで
   // 図も編集も止まると、エディタが使い物にならない。
   test('reports a YAML syntax error on the line it was written, keeping what it could read', () => {
-    const result = parseFence(lines('parts:', '  R1: resistor a1 a3', ' bad: indent'));
+    const result = parseFence(lines('parts:', '  R1: resistor 1,1 3,1', ' bad: indent'));
 
     expect(result.doc.parts.map((one) => one.id)).toEqual(['R1']);
     expect(result.errors[0]?.line).toBe(3);
@@ -23,7 +23,7 @@ describe('parseFence', () => {
   });
 
   test('asks for a map when the fence holds something else, and still returns an empty one', () => {
-    const result = parseFence(lines('- a1 -- a3'));
+    const result = parseFence(lines('- 1,1 -- 3,1'));
 
     // 空の中身を返す — ここで止めると、打ちかけのフェンスに最初の 1 つを置けない。
     expect(result.doc.parts).toEqual([]);
@@ -31,7 +31,7 @@ describe('parseFence', () => {
   });
 
   test('names the key it could not use and lists the ones that work', () => {
-    const result = parseFence(lines('parts:', '  R1: resistor a1 a3 10k', 'wire:', '  - a1 -- a3'));
+    const result = parseFence(lines('parts:', '  R1: resistor 1,1 3,1 10k', 'wire:', '  - 1,1 -- 3,1'));
 
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]?.line).toBe(3);
@@ -40,7 +40,7 @@ describe('parseFence', () => {
   });
 
   test('keeps each part with the line it was written on', () => {
-    const result = parseFence(lines('parts:', '  IN: port a1', '  R1: resistor a1 a3 10k'));
+    const result = parseFence(lines('parts:', '  IN: port 1,1', '  R1: resistor 1,1 3,1 10k'));
 
     expect(result.doc?.parts).toMatchObject([
       { id: 'IN', type: 'port', line: 2 },
@@ -49,33 +49,33 @@ describe('parseFence', () => {
   });
 
   test('keeps each wire with the line it was written on', () => {
-    const result = parseFence(lines('wires:', '  - a3 -- a4', '  - b1 -- b2'));
+    const result = parseFence(lines('wires:', '  - 3,1 -- 4,1', '  - 1,2 -- 2,2'));
 
     expect(result.doc?.wires).toMatchObject([{ line: 2 }, { line: 3 }]);
   });
 
   test('reports a part whose one line could not be read, with its line', () => {
-    const result = parseFence(lines('parts:', '  R1: resistr a1 a3'));
+    const result = parseFence(lines('parts:', '  R1: resistr 1,1 3,1'));
 
     expect(result.doc?.parts).toEqual([]);
     expect(result.errors[0]?.line).toBe(2);
   });
 
   test('asks for a map when parts is written as a list', () => {
-    const result = parseFence(lines('parts:', '  - resistor a1 a3'));
+    const result = parseFence(lines('parts:', '  - resistor 1,1 3,1'));
 
     expect(result.errors[0]?.message).toContain('ID: 内容');
     expect(result.errors[0]?.line).toBe(2);
   });
 
   test('asks for a list when wires is written as a map', () => {
-    const result = parseFence(lines('wires:', '  a3: a4'));
+    const result = parseFence(lines('wires:', '  3,1: 4,1'));
 
     expect(result.errors[0]?.message).toContain('リスト');
   });
 
   test('rejects a part id a wire could never point at', () => {
-    const result = parseFence(lines('parts:', '  "R 1": resistor a1 a3'));
+    const result = parseFence(lines('parts:', '  "R 1": resistor 1,1 3,1'));
 
     expect(result.doc?.parts).toEqual([]);
     expect(result.errors[0]?.line).toBe(2);
@@ -83,7 +83,7 @@ describe('parseFence', () => {
   });
 
   test('reports a part id that was defined twice', () => {
-    const result = parseFence(lines('parts:', '  R1: resistor a1 a3', '  R1: resistor b1 b3'));
+    const result = parseFence(lines('parts:', '  R1: resistor 1,1 3,1', '  R1: resistor 1,2 3,2'));
 
     expect(result.doc?.parts).toHaveLength(1);
     expect(result.errors[0]?.line).toBe(3);
@@ -92,7 +92,7 @@ describe('parseFence', () => {
 
   test('takes the same name twice for a symbol whose id is the drawn name', () => {
     // 電源やグラウンドを同じ名前で何か所にも描くのは回路図の書き方そのもの。
-    const result = parseFence(lines('parts:', '  VCC: vcc a1', '  VCC: vcc c1'));
+    const result = parseFence(lines('parts:', '  VCC: vcc 1,1', '  VCC: vcc 1,3'));
 
     expect(result.errors).toEqual([]);
     expect(result.doc?.parts).toHaveLength(2);
@@ -100,14 +100,14 @@ describe('parseFence', () => {
 
   test('still refuses the same name when the id is what a wire points at', () => {
     // 抵抗の ID は配線から指すための名前なので、重なると指せなくなる。
-    const result = parseFence(lines('parts:', '  R1: resistor a1 a3', '  R1: vcc c1'));
+    const result = parseFence(lines('parts:', '  R1: resistor 1,1 3,1', '  R1: vcc 1,3'));
 
     expect(result.errors[0]?.message).toContain('二重');
   });
 
   test('refuses a repeat whose first use was not a symbol of that kind', () => {
     // `VCC: resistor` のあとの `VCC: vcc` は、書いた人が名前を取り違えている。
-    const result = parseFence(lines('parts:', '  VCC: resistor a1 a3', '  VCC: vcc c1'));
+    const result = parseFence(lines('parts:', '  VCC: resistor 1,1 3,1', '  VCC: vcc 1,3'));
 
     expect(result.errors[0]?.message).toContain('二重');
   });
@@ -121,7 +121,7 @@ describe('parseFence', () => {
 
   test('stops reading parts once the limit is reached and says so', () => {
     const rows = ['parts:'];
-    for (let index = 0; index <= LIMITS.parts; index += 1) rows.push(`  R${index}: resistor a1 a3`);
+    for (let index = 0; index <= LIMITS.parts; index += 1) rows.push(`  R${index}: resistor 1,1 3,1`);
 
     const result = parseFence(lines(...rows));
 
@@ -131,7 +131,7 @@ describe('parseFence', () => {
 
   test('stops reading wires once the limit is reached and says so', () => {
     const rows = ['wires:'];
-    for (let index = 0; index <= LIMITS.wires; index += 1) rows.push('  - a1 -- a3');
+    for (let index = 0; index <= LIMITS.wires; index += 1) rows.push('  - 1,1 -- 3,1');
 
     const result = parseFence(lines(...rows));
 
@@ -141,15 +141,15 @@ describe('parseFence', () => {
 
   test('counts a chain as the segments it draws, not as one line', () => {
     // 1 行に何点でも書けるので、行数で数えると上限をすり抜けられる。
-    const result = parseFence(lines('wires:', '  - a1 -- a3 -- a5 -- a7'));
+    const result = parseFence(lines('wires:', '  - 1,1 -- 3,1 -- 5,1 -- 7,1'));
 
     expect(result.doc?.wires).toHaveLength(3);
   });
 
   test('stops before a chain that would go past the limit', () => {
     const rows = ['wires:'];
-    for (let index = 0; index < LIMITS.wires - 1; index += 1) rows.push('  - a1 -- a3');
-    rows.push('  - a1 -- a3 -- a5');
+    for (let index = 0; index < LIMITS.wires - 1; index += 1) rows.push('  - 1,1 -- 3,1');
+    rows.push('  - 1,1 -- 3,1 -- 5,1');
 
     const result = parseFence(lines(...rows));
 
@@ -158,7 +158,7 @@ describe('parseFence', () => {
   });
 
   test('reads the parts that were written even when one of them is broken', () => {
-    const result = parseFence(lines('parts:', '  R1:', '    type: resistor', '  C1: capacitor a3 c3 100n'));
+    const result = parseFence(lines('parts:', '  R1:', '    type: resistor', '  C1: capacitor 3,1 3,3 100n'));
 
     expect(result.doc?.parts).toMatchObject([{ id: 'C1', type: 'capacitor', line: 4 }]);
     expect(result.errors).toHaveLength(1);
@@ -167,7 +167,7 @@ describe('parseFence', () => {
 
 describe('parseFence の style', () => {
   test('reads the style that was written', () => {
-    const result = parseFence(lines('parts:', '  R1: resistor a1 a3', 'style:', '  theme: dark', '  grid: on'));
+    const result = parseFence(lines('parts:', '  R1: resistor 1,1 3,1', 'style:', '  theme: dark', '  grid: on'));
 
     expect(result.errors).toEqual([]);
     expect(result.doc?.style).toMatchObject({ theme: 'dark', grid: true });
@@ -185,13 +185,13 @@ describe('parseFence の style', () => {
   });
 
   test('falls back to the style line when the item has no line of its own', () => {
-    const result = parseFence(lines('parts:', '  R1: resistor a1 a3', 'style: 5'));
+    const result = parseFence(lines('parts:', '  R1: resistor 1,1 3,1', 'style: 5'));
 
     expect(result.errors[0]?.line).toBe(3);
   });
 
   test('keeps reading the circuit when the style is broken', () => {
-    const result = parseFence(lines('parts:', '  R1: resistor a1 a3', 'style:', '  theme: nope'));
+    const result = parseFence(lines('parts:', '  R1: resistor 1,1 3,1', 'style:', '  theme: nope'));
 
     expect(result.doc?.parts).toHaveLength(1);
     expect(result.errors[0]?.line).toBe(4);
@@ -200,14 +200,14 @@ describe('parseFence の style', () => {
 
 describe('parseFence の notes', () => {
   test('reads a mark written as a plain line', () => {
-    const result = parseFence(lines('parts:', '  R1: resistor a1 a3', 'notes:', '  - circle R1'));
+    const result = parseFence(lines('parts:', '  R1: resistor 1,1 3,1', 'notes:', '  - circle R1'));
 
     expect(result.errors).toEqual([]);
     expect(result.doc?.notes).toEqual([{ kind: 'circle', target: 'R1', color: 'red', line: 4, written: ['R1'] }]);
   });
 
   test('reads text written as a value of a one entry map', () => {
-    const result = parseFence(lines('parts:', '  R1: resistor a1 a3', 'notes:', '  - text b1: ここ'));
+    const result = parseFence(lines('parts:', '  R1: resistor 1,1 3,1', 'notes:', '  - text 1,2: ここ'));
 
     expect(result.errors).toEqual([]);
     expect(result.doc?.notes).toMatchObject([{ kind: 'text', text: 'ここ', line: 4 }]);
@@ -216,7 +216,7 @@ describe('parseFence の notes', () => {
   // 図の値と同じで、読めた注釈は捨てない。
   test('keeps the notes it could read when one of them is broken', () => {
     const result = parseFence(
-      lines('parts:', '  R1: resistor a1 a3', 'notes:', '  - circle R1', '  - wobble b3'),
+      lines('parts:', '  R1: resistor 1,1 3,1', 'notes:', '  - circle R1', '  - wobble 3,2'),
     );
 
     expect(result.doc?.notes).toHaveLength(1);
@@ -230,14 +230,14 @@ describe('parseFence の notes', () => {
   });
 
   test('asks for a string when the text is written as a number', () => {
-    const result = parseFence(lines('notes:', '  - text b1: 100'));
+    const result = parseFence(lines('notes:', '  - text 1,2: 100'));
 
     expect(result.errors[0]?.message).toContain('文字列で書きます');
     expect(result.errors[0]?.line).toBe(2);
   });
 
   test('stops at the limit and says so on the line it stopped', () => {
-    const many = Array.from({ length: LIMITS.notes + 1 }, () => '  - circle a1');
+    const many = Array.from({ length: LIMITS.notes + 1 }, () => '  - circle 1,1');
     const result = parseFence(lines('notes:', ...many));
 
     expect(result.doc?.notes).toHaveLength(LIMITS.notes);
@@ -247,7 +247,7 @@ describe('parseFence の notes', () => {
   // yaml の言い分は英語で「Nested mappings are not allowed」だけ。
   // 注釈には部品の書き方をそのまま写したくなるので、この形は必ず踏む。
   test('adds how to fix a colon written without quotes', () => {
-    const result = parseFence(lines('notes:', '  - text b1: R1: resistor a1 a3 10k'));
+    const result = parseFence(lines('notes:', '  - text 1,2: R1: resistor 1,1 3,1 10k'));
 
     expect(result.errors[0]?.message).toContain('"…" で囲みます');
     expect(result.errors[0]?.line).toBe(2);
@@ -256,7 +256,7 @@ describe('parseFence の notes', () => {
   // yaml は理由の末尾に自分の行番号を書く。フェンスの中の数え方なので、
   // 帯に出る Markdown の行と食い違って見える。行はこちらのものだけを出す。
   test('drops the line yaml writes into the reason itself', () => {
-    const result = parseFence(lines('notes:', '  - text b1: R1: resistor'));
+    const result = parseFence(lines('notes:', '  - text 1,2: R1: resistor'));
 
     expect(result.errors[0]?.message).not.toContain('at line');
   });
@@ -265,7 +265,7 @@ describe('parseFence の notes', () => {
 describe('parseFence の points', () => {
   test('reads a name for an address and uses it where an address goes', () => {
     const result = parseFence(lines(
-      'points:', '  vin: a1', 'parts:', '  R1: resistor vin a3',
+      'points:', '  vin: 1,1', 'parts:', '  R1: resistor vin 3,1',
     ));
 
     expect(result.errors).toEqual([]);
@@ -275,7 +275,7 @@ describe('parseFence の points', () => {
   test('reads a name written after it was used', () => {
     // YAML のマップに順はないので、points: を下に書いても通す。
     const result = parseFence(lines(
-      'parts:', '  R1: resistor vin a3', 'points:', '  vin: a1',
+      'parts:', '  R1: resistor vin 3,1', 'points:', '  vin: 1,1',
     ));
 
     expect(result.errors).toEqual([]);
@@ -284,9 +284,9 @@ describe('parseFence の points', () => {
 
   test('uses names in wires, notes and grid-to as well', () => {
     const result = parseFence(lines(
-      'points:', '  fb: d4',
-      'parts:', '  R1: resistor a1 a3',
-      'wires:', '  - a3 -- fb',
+      'points:', '  fb: 4,4',
+      'parts:', '  R1: resistor 1,1 3,1',
+      'wires:', '  - 3,1 -- fb',
       'notes:', '  - box fb fb', '  - text fb: ここ',
       'style:', '  grid-to: fb',
     ));
@@ -297,7 +297,7 @@ describe('parseFence の points', () => {
   });
 
   test('reports a name it does not know on the line that used it', () => {
-    const result = parseFence(lines('parts:', '  R1: resistor vin a3'));
+    const result = parseFence(lines('parts:', '  R1: resistor vin 3,1'));
 
     expect(result.errors[0]?.line).toBe(2);
     expect(result.errors[0]?.message).toContain('vin');
@@ -305,21 +305,21 @@ describe('parseFence の points', () => {
 
   test('refuses a name that is already an address', () => {
     // a1 という名前を許すと、どちらの意味で書いたのか読めなくなる。
-    const result = parseFence(lines('points:', '  a1: c5'));
+    const result = parseFence(lines('points:', '  1,1: 5,3'));
 
     expect(result.errors[0]?.line).toBe(2);
-    expect(result.errors[0]?.message).toContain('a1');
+    expect(result.errors[0]?.message).toContain('1,1');
   });
 
   test('refuses a point written twice', () => {
-    const result = parseFence(lines('points:', '  vin: a1', '  vin: a3'));
+    const result = parseFence(lines('points:', '  vin: 1,1', '  vin: 3,1'));
 
     expect(result.errors[0]?.line).toBe(3);
   });
 
   test('refuses a point that shares its name with a part', () => {
     const result = parseFence(lines(
-      'points:', '  R1: c5', 'parts:', '  R1: resistor a1 a3',
+      'points:', '  R1: 5,3', 'parts:', '  R1: resistor 1,1 3,1',
     ));
 
     expect(result.errors.some((error) => error.message.includes('R1'))).toBe(true);
@@ -334,7 +334,7 @@ describe('parseFence の points', () => {
   test('stops reading points once the limit is reached', () => {
     const rows = ['points:'];
     // p1 などは番地の形なので名前に使えない (行 p の 1 列目)。
-    for (let index = 0; index <= LIMITS.points; index += 1) rows.push(`  vin${index}: a1`);
+    for (let index = 0; index <= LIMITS.points; index += 1) rows.push(`  vin${index}: 1,1`);
 
     const result = parseFence(lines(...rows));
 
@@ -344,24 +344,24 @@ describe('parseFence の points', () => {
 
 describe('parseFence の title', () => {
   test('reads the title written at the top level', () => {
-    const result = parseFence(lines('title: 回路図01 circuit フェンスの書き方', 'parts:', '  R1: resistor a1 a3'));
+    const result = parseFence(lines('title: 回路図01 circuit フェンスの書き方', 'parts:', '  R1: resistor 1,1 3,1'));
 
     expect(result.errors).toEqual([]);
     expect(result.doc?.title).toBe('回路図01 circuit フェンスの書き方');
   });
 
   test('leaves the title unwritten when the fence has none', () => {
-    expect(parseFence(lines('parts:', '  R1: resistor a1 a3')).doc?.title).toBeNull();
+    expect(parseFence(lines('parts:', '  R1: resistor 1,1 3,1')).doc?.title).toBeNull();
   });
 
   test('takes a title holding a colon, which YAML needs quoted', () => {
-    const result = parseFence(lines('title: "回路図02 R1: resistor の書き方"', 'parts:', '  R1: resistor a1 a3'));
+    const result = parseFence(lines('title: "回路図02 R1: resistor の書き方"', 'parts:', '  R1: resistor 1,1 3,1'));
 
     expect(result.doc?.title).toBe('回路図02 R1: resistor の書き方');
   });
 
   test('asks for a line of text when the title is written as something else', () => {
-    const result = parseFence(lines('title:', '  - 回路図01', 'parts:', '  R1: resistor a1 a3'));
+    const result = parseFence(lines('title:', '  - 回路図01', 'parts:', '  R1: resistor 1,1 3,1'));
 
     expect(result.doc?.title).toBeNull();
     expect(result.errors[0]?.line).toBe(1);
@@ -369,7 +369,7 @@ describe('parseFence の title', () => {
   });
 
   test('refuses a title longer than the limit rather than letting it widen the figure', () => {
-    const result = parseFence(lines(`title: ${'あ'.repeat(LIMITS.titleLength + 1)}`, 'parts:', '  R1: resistor a1 a3'));
+    const result = parseFence(lines(`title: ${'あ'.repeat(LIMITS.titleLength + 1)}`, 'parts:', '  R1: resistor 1,1 3,1'));
 
     expect(result.doc?.title).toBeNull();
     expect(result.errors[0]?.message).toContain(`${LIMITS.titleLength}`);
@@ -377,7 +377,7 @@ describe('parseFence の title', () => {
 
   test('refuses a character the figure cannot draw, naming the line', () => {
     // 注釈と同じ関門を通す。TeX が記法として読む字は題にも通さない (約束 3)。
-    const result = parseFence(lines('title: 回路図01 \\draw', 'parts:', '  R1: resistor a1 a3'));
+    const result = parseFence(lines('title: 回路図01 \\draw', 'parts:', '  R1: resistor 1,1 3,1'));
 
     expect(result.doc?.title).toBeNull();
     expect(result.errors[0]?.line).toBe(1);
@@ -385,7 +385,7 @@ describe('parseFence の title', () => {
 
   test('refuses a title with nothing in it, which would only add blank space', () => {
     // 空の題でも節点は置かれるので、図の上に見えない余白だけが増える。
-    const result = parseFence(lines('title: "   "', 'parts:', '  R1: resistor a1 a3'));
+    const result = parseFence(lines('title: "   "', 'parts:', '  R1: resistor 1,1 3,1'));
 
     expect(result.doc?.title).toBeNull();
     expect(result.errors[0]?.message).toContain('title');
@@ -394,14 +394,14 @@ describe('parseFence の title', () => {
   test('counts the length in characters, not in UTF-16 units', () => {
     // 絵文字は 1 文字で 2 単位を食う。単位で数えると、上限の半分の長さで
     // 「60 文字までです」と返り、**本当の理由 (描けない字) が隠れる**。
-    const result = parseFence(lines(`title: ${'\u{1F600}'.repeat(31)}`, 'parts:', '  R1: resistor a1 a3'));
+    const result = parseFence(lines(`title: ${'\u{1F600}'.repeat(31)}`, 'parts:', '  R1: resistor 1,1 3,1'));
 
     expect(result.doc?.title).toBeNull();
     expect(result.errors[0]?.message).toContain('描けない字');
   });
 
   test('does not call title an unknown key any more', () => {
-    const result = parseFence(lines('title: 回路図01', 'parts:', '  R1: resistor a1 a3'));
+    const result = parseFence(lines('title: 回路図01', 'parts:', '  R1: resistor 1,1 3,1'));
 
     expect(result.errors.map((error) => error.message).join('')).not.toContain('知らないキー');
   });
@@ -412,7 +412,7 @@ describe('parseFence が覚えておくもの', () => {
     // Arrange — マップの試し当ては 1 回のうちに同じ本文を何度も読む (52 の docs/27)。
     const source = `title: RC
 parts:
-  R1: resistor a1 a3 10k
+  R1: resistor 1,1 3,1 10k
 `;
 
     // Act
@@ -421,5 +421,86 @@ parts:
 
     // Assert — **答えは共有される。** 受け取った側は書き換えない (読み取り専用の型)。
     expect(again).toBe(first);
+  });
+});
+
+/**
+ * 番地の `,` は YAML のフロー形式 (`{ }` `[ ]`) では区切りになる。引用符で囲まずに
+ * 書くと、部品の行が黙って割れる (`{ R1: resistor 1,1 3,1 }` は `R1: resistor 1` と
+ * `1 3` と `1` の 3 つになる)。割れた形を見つけて、囲み方を返す (52 の docs/126)。
+ */
+describe('parseFence — フロー形式で割れた番地', () => {
+  const FLOW_HINT = '引用符で囲みます';
+
+  test.each([
+    ['parts', 'parts: { R1: resistor 1,1 3,1 10k }'],
+    ['parts (2 つ)', 'parts: {R1: resistor 1,1 3,1, R2: resistor 1,3 3,3}'],
+    ['wires', 'wires: [1,1 -- 3,1]'],
+    ['wires (小数)', 'wires: [2.5,1 -- 3,1]'],
+    ['points', 'points: { vin: 1,1 }'],
+    ['notes', 'notes: [circle 1,1]'],
+    ['a note map', 'notes:\n  - { text 1,2: ここ }'],
+    ['style', 'style: { grid: on, grid-to: 12,5 }'],
+  ])('says how to quote %s, once, instead of reading the pieces', (_, written) => {
+    const { errors } = parseFence(lines(written));
+    const flow = errors.filter((error) => error.message.includes(FLOW_HINT));
+
+    expect(flow).toHaveLength(1);
+    expect(flow[0]?.message).toContain('フロー形式');
+    expect(flow[0]?.message).toContain('"resistor 1,1 3,1"');
+    // 割れたかけら (`1 3` という部品 ID など) の理由は重ねて出さない。
+    expect(errors).toHaveLength(1);
+  });
+
+  test('reads the flow form when the addresses are quoted', () => {
+    const { doc, errors } = parseFence(lines(
+      'points: { vin: "1,1" }',
+      'parts: { R1: "resistor vin 3,1 10k", R2: "resistor 1,3 3,3" }',
+      'wires: ["3,1 -- 3,3"]',
+      'style: { grid-to: "12,5" }',
+    ));
+
+    expect(errors).toEqual([]);
+    expect(doc.parts.map((part) => part.id)).toEqual(['R1', 'R2']);
+    expect(doc.wires).toHaveLength(1);
+  });
+
+  test('leaves the block form alone, where the comma is only a letter', () => {
+    const { errors } = parseFence(lines('points:', '  vin: 1,1', 'parts:', '  R1: resistor vin 3,1', 'wires:', '  - 3,1 -- 3,3'));
+
+    expect(errors).toEqual([]);
+  });
+});
+
+describe('parseFence — 旧い番地の綴り', () => {
+  test('refuses the old spelling and hands back the one to write', () => {
+    const { errors } = parseFence(lines('parts:', '  R1: resistor a1 a1f5 10k'));
+
+    expect(errors[0]?.message).toBe('a1 は旧い綴りです。1,1 と書きます');
+    expect(errors[0]?.line).toBe(2);
+  });
+
+  test('says so for a wire end and for where a name points', () => {
+    const wire = parseFence(lines('wires:', '  - a1f5 -- c5'));
+    const point = parseFence(lines('points:', '  vin: c5'));
+
+    expect(wire.errors[0]?.message).toBe('a1f5 は旧い綴りです。1.5,1.5 と書きます');
+    expect(point.errors[0]?.message).toContain('5,3');
+  });
+});
+
+describe('parseFence — points の名前', () => {
+  // 旧い綴りでは `A1` `P1` `C1` が番地の形で、名前に使えなかった。
+  test.each(['A1', 'P1', 'C1', 'a1', 'vin'])('takes %s as a name now that it is no address', (name) => {
+    const { doc, errors } = parseFence(lines('points:', `  ${name}: 3,2`, 'parts:', `  R9: resistor ${name} 5,2`));
+
+    expect(errors).toEqual([]);
+    expect(doc.points.get(name)).toEqual({ row: 1, col: 2 });
+  });
+
+  test('still refuses a name shaped like an address', () => {
+    const { errors } = parseFence(lines('points:', '  "1,1": 3,2'));
+
+    expect(errors[0]?.message).toContain('番地そのもの');
   });
 });

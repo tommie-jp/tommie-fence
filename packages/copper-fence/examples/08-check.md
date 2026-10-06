@@ -27,15 +27,15 @@ wires:
 ```circuit
 title: 回路図01 図のとおりに作ったときの回路
 parts:
-  T1: tline b3 b7 50 l=$\mathrm{L1}$
-  C1: capacitor d7 d9 100p
-  C2: capacitor h3 h5 l=$C_2$
-  T2: tline j3 j7 146 l=$\mathrm{L2}$
+  T1: tline 3,2 7,2 50 l=$\mathrm{L1}$
+  C1: capacitor 7,4 9,4 100p
+  C2: capacitor 3,8 5,8 l=$C_2$
+  T2: tline 3,10 7,10 146 l=$\mathrm{L2}$
 wires:
-  - b7 -- d7
-  - d7 -- f7
-  - f7 -- f9
-  - f9 -- d9
+  - 7,2 -- 7,4
+  - 7,4 -- 7,6
+  - 7,6 -- 9,6
+  - 9,6 -- 9,4
 ```
 
 ![回路図01 図のとおりに作ったときの回路](out/schematic/08-check.png)

@@ -1,6 +1,8 @@
 import { fail, fenceError, ok, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
-import { addressHint, formatAddress, isSameAddress, parseAddress, rowLetters } from '../model/address.ts';
+import {
+  ADDRESS_RANGE, addressHint, formatAddress, isSameAddress, oldSpellingHint, parseAddress,
+} from '../model/address.ts';
 import type { Address, WireOperator } from '../model/address.ts';
 import {
   DEFAULT_NOTE_ALIGN, DEFAULT_NOTE_SIZE, NOTE_ALIGNS, NOTE_BOX_SOLID, NOTE_COLOR_NAMES,
@@ -119,19 +121,37 @@ export const readAddress = (token: string, line: number, points: Points = NO_POI
 };
 
 /**
- * 番地として読めなかった綴りへの返事。**近い書き間違いには直せる形を先に返す**
- * (`a1.5` → `a1a5`)。番地の形ですらないなら、書ける範囲を添える。
+ * 番地の書き方。案内の末尾に添える。**数で書く** (`x,y` = 列, 行、1 始まり)。
+ * 値の欄と違って `,` を含むので、YAML のフロー形式では引用符で囲む。
  */
-function addressProblem(token: string, points: Points): string {
+export const ADDRESS_FORM = `x,y = 列,行 で ${ADDRESS_RANGE}。交点の間は小数 2 桁まで (2.5,1.25)`;
+
+/**
+ * 番地として読めなかった綴りへの返事。**近い書き間違いには直せる形を先に返す**
+ * (`2.50,1` → `2.5,1`)。**旧い綴り (`a1f5`) は読まずに、直した綴りを返す**
+ * (`a1f5 は旧い綴りです。1.5,1.5 と書きます`)。番地の形ですらないなら、書ける範囲を添える。
+ */
+export function addressProblem(token: string, points: Points): string {
+  // 旧綴りの案内は書かれた綴りで始まる 1 文 (綴りは英数字と `._` だけなので、そのまま帯に出せる)。
+  const old = oldSpellingHint(token);
+  if (old !== null) return old.startsWith(token) ? old : `${safeToken(token)} は番地の形ではありません (${old})`;
+
   const near = addressHint(token);
   if (near !== null) return `${safeToken(token)} は番地の形ではありません (${near})`;
 
   // 名前のつもりで書かれた可能性がある。名前を 1 つでも書いてある図では、
   // そちらの案内も添える。
-  const form = `行 a〜${rowLetters(LIMITS.rows - 1)} + 列 1〜${LIMITS.columns}。交点の間は組を足す (a1a5 / a1f5)`;
-  const hint = points.size === 0 ? form : `${form}。points: に書いた名前でもありません`;
+  const hint = points.size === 0 ? ADDRESS_FORM : `${ADDRESS_FORM}。points: に書いた名前でもありません`;
   return `${safeToken(token)} は番地の形ではありません (${hint})`;
 }
+
+/**
+ * 番地のつもりで書かれた語か。**数字で始まり `,` を含む語は番地**
+ * (ピン `U1.5` は英字で始まり、値 `4.7k` は `,` を含まない)。
+ * 番地として読めなくても、ピンと読み違えずに番地の案内を返すために使う
+ * (`2.555,1` を「部品 2 の 555,1 番ピン」と読まない)。
+ */
+export const looksLikeAddress = (token: string): boolean => /^[0-9]/.test(token) && token.includes(',');
 
 /**
  * 読み取り中の 1 行の頭。種類は正式名に畳んであり、`written` だけが
@@ -209,6 +229,7 @@ function readMultiTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
       continue;
     }
     if (value !== null) return fail(shape, line);
+    if (token.includes(',')) return fail(commaInValue(token), line, token);
     if ([...token].length > LIMITS.valueLength) {
       return fail(`値が長すぎます (${LIMITS.valueLength} 文字まで)`, line);
     }
@@ -280,6 +301,7 @@ function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
       if (value !== null) {
         return fail(`${safeToken(written)} は「種類 番地 番地 [値] [l=字] [i=字] [v=字]」で書きます`, line);
       }
+      if (token.includes(',')) return fail(commaInValue(token), line, token);
       const checked = checkLabelLength(token, '値', line);
       if (checked !== null) return checked;
       value = token;
@@ -329,6 +351,13 @@ function readTwoTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
     written,
   });
 }
+
+/**
+ * 値の欄の `,`。**値に `,` は書かない** (`1,000` は `1k`)。`,` を含む語は番地の形なので、
+ * 番地が 1 つ多い (書き忘れた部品の種類の番地がずれた) ときもここで止まる。
+ */
+const commaInValue = (token: string): string =>
+  `値 ${safeToken(token)} に , は書けません (, は番地の字です。1,000 は 1k と書きます)`;
 
 /** 図に出る字の長さは値と同じ上限で見る (組み方が同じなので、はみ出し方も同じ)。 */
 function checkLabelLength(text: string, subject: string, line: number): Result<PartSpec> | null {
@@ -447,10 +476,10 @@ export function parseWireLine(
 }
 
 /**
- * 配線の端。`a3` のような番地か、`U1.out` のようなピン。
+ * 配線の端。`3,1` のような番地か、`U1.out` のようなピン。
  *
- * **番地に `.` は出てこない** (交点の間も `a1a5` と組で書く)。だから
- * `.` を含む綴りはピン、と 1 行で分かれる (`U1.5` は DIP の 5 番ピン)。
+ * **番地は数字で始まり `,` を含み、ピンは英字で始まる** (`U1.5` は DIP の 5 番ピン)。
+ * 番地の形で読めなかった語 (`2.555,1`) はピンとして読まずに番地の案内を返す。
  */
 function readEndpoint(token: string, line: number, points: Points): Result<Endpoint> {
   const named = points.get(token);
@@ -458,6 +487,7 @@ function readEndpoint(token: string, line: number, points: Points): Result<Endpo
 
   const address = parseAddress(token);
   if (address !== null) return ok({ kind: 'cell', address });
+  if (looksLikeAddress(token)) return fail(addressProblem(token, points), line, token);
 
   const pin = PIN_REFERENCE.exec(token);
   if (pin) {
@@ -724,7 +754,7 @@ const isNoteTarget = (token: string): boolean => isReferenceable(token) || parse
 
 const notReferenceable = (token: string): string =>
   `${safeToken(token)} は部品 ID にも番地にもなりません`
-  + ` (部品 ID は英数字と _ - だけの ${LIMITS.idLength} 文字まで、番地は a1 / a1a5)`;
+  + ` (部品 ID は英数字と _ - だけの ${LIMITS.idLength} 文字まで、番地は 1,1 / 2.5,1)`;
 
 /**
  * `source a6 blue tiny` を読む。中身はフェンス自身から作るので、

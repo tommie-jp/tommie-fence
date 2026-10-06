@@ -32,24 +32,24 @@ wires:
 ```circuit
 title: 回路図01 パイ型アッテネータの等価回路
 parts:
-  J1: sma b2 mirror
-  R1: resistor b5 b9 18
-  R2: resistor d5 f5 300
-  R3: resistor d9 f9 300
-  J2: sma b12
-  G1: ground c2
-  G2: ground c12
-  G3: ground g5
-  G4: ground g9
+  J1: sma 2,2 mirror
+  R1: resistor 5,2 9,2 18
+  R2: resistor 5,4 5,6 300
+  R3: resistor 9,4 9,6 300
+  J2: sma 12,2
+  G1: ground 2,3
+  G2: ground 12,3
+  G3: ground 5,7
+  G4: ground 9,7
 wires:
-  - J1.1 -- b5
-  - b5 -- d5
-  - b9 -- J2.1
-  - b9 -- d9
-  - f5 -- g5
-  - f9 -- g9
-  - J1.2 -- c2
-  - J2.2 -- c12
+  - J1.1 -- 5,2
+  - 5,2 -- 5,4
+  - 9,2 -- J2.1
+  - 9,2 -- 9,4
+  - 5,6 -- 5,7
+  - 9,6 -- 9,7
+  - J1.2 -- 2,3
+  - J2.2 -- 12,3
 ```
 
 ![回路図01 パイ型アッテネータの等価回路](out/schematic/04-manhattan.png)

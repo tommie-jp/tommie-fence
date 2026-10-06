@@ -11,14 +11,14 @@
 ```circuit
 title: 図01 電流の矢と電圧の符号
 parts:
-  E: battery b1 d1
-  S: switch b1 b2
-  R: resistor b2 b3 i=i
-  C: capacitor b3 d3 v=vC
+  E: battery 1,2 1,4
+  S: switch 1,2 2,2
+  R: resistor 2,2 3,2 i=i
+  C: capacitor 3,2 3,4 v=vC
 wires:
-  - d1 -- d3
+  - 1,4 -- 3,4
 notes:
-  - source a5 blue
+  - source 5,1 blue
 style:
   grid: on
 ```
@@ -33,10 +33,10 @@ style:
 ```circuit
 title: 図02 番地を入れ替えて矢を返す
 parts:
-  R1: resistor a1 a3 i=i1
-  R2: resistor c3 c1 i=i2
+  R1: resistor 1,1 3,1 i=i1
+  R2: resistor 3,3 1,3 i=i2
 notes:
-  - source a5 blue
+  - source 5,1 blue
 style:
   grid: on
 ```
@@ -57,10 +57,10 @@ style:
 ```circuit
 title: 図03 値と電流の矢は並べて書ける
 parts:
-  R1: resistor a1 a3 10k i=i1
-  L1: inductor c1 c3 10m i=i2
+  R1: resistor 1,1 3,1 10k i=i1
+  L1: inductor 1,3 3,3 10m i=i2
 notes:
-  - source a5 blue
+  - source 5,1 blue
 style:
   grid: on
 ```
@@ -76,14 +76,14 @@ style:
 ```circuit
 title: 図04 jis では電圧も矢になる
 parts:
-  E: battery b1 d1
-  S: switch b1 b2
-  R: resistor b2 b3 i=i
-  C: capacitor b3 d3 v=vC
+  E: battery 1,2 1,4
+  S: switch 1,2 2,2
+  R: resistor 2,2 3,2 i=i
+  C: capacitor 3,2 3,4 v=vC
 wires:
-  - d1 -- d3
+  - 1,4 -- 3,4
 notes:
-  - source a5 blue
+  - source 5,1 blue
 style:
   grid: on
   standard: jis

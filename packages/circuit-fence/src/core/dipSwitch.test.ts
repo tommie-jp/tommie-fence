@@ -30,10 +30,10 @@ describe('図とネットリスト', () => {
   test('declares a box of open switches and keeps the two legs of a switch apart', () => {
     const result = compileCircuit(circuit(
       'parts:',
-      '  SW1: dip-switch4 d5',
-      '  R1: resistor a9 a11 10k',
+      '  SW1: dip-switch4 5,4',
+      '  R1: resistor 9,1 11,1 10k',
       'wires:',
-      '  - SW1.B1 -| a9',
+      '  - SW1.B1 -| 9,1',
     ), { erc: true });
 
     expect(result.errors).toEqual([]);
@@ -46,7 +46,7 @@ describe('図とネットリスト', () => {
   });
 
   test('declares one shape per count, only for the counts in the figure', () => {
-    const tex = compileCircuit(circuit('parts:', '  SW1: dip-switch8 d5')).tex ?? '';
+    const tex = compileCircuit(circuit('parts:', '  SW1: dip-switch8 5,4')).tex ?? '';
 
     expect(tex).toContain('pgfdeclareshape{dipsw8}');
     expect(tex).not.toContain('pgfdeclareshape{dipsw4}');
@@ -54,7 +54,7 @@ describe('図とネットリスト', () => {
   });
 
   test('lays A1〜A4 down the left side and B1〜B4 down the right on the map', () => {
-    const pins = gridMap(circuit('parts:', '  SW1: dip-switch4 d5')).chips[0]?.pins ?? [];
+    const pins = gridMap(circuit('parts:', '  SW1: dip-switch4 5,4')).chips[0]?.pins ?? [];
 
     expect(pins.filter((pin) => pin.side === 'left').map((pin) => pin.name)).toEqual(['A1', 'A2', 'A3', 'A4']);
     expect(pins.filter((pin) => pin.side === 'right').map((pin) => pin.name)).toEqual(['B1', 'B2', 'B3', 'B4']);

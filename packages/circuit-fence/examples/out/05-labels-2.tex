@@ -20,37 +20,37 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
-\coordinate (a1) at (0,0);
-\coordinate (a2) at (2,0);
-\coordinate (a4) at (6,0);
-\coordinate (a5) at (8,0);
-\coordinate (a7) at (12,0);
-\coordinate (a8) at (14,0);
-\coordinate (a10) at (18,0);
-\coordinate (a11) at (20,0);
-\coordinate (c1) at (0,-4);
-\coordinate (c2) at (2,-4);
-\coordinate (c4) at (6,-4);
-\coordinate (c5) at (8,-4);
-\coordinate (c7) at (12,-4);
-\coordinate (c8) at (14,-4);
-\coordinate (c10) at (18,-4);
-\coordinate (c11) at (20,-4);
-\draw (a1) to[esource, l_=$E$] (a2); % line 3
+\coordinate (x1y1) at (0,0);
+\coordinate (x2y1) at (2,0);
+\coordinate (x4y1) at (6,0);
+\coordinate (x5y1) at (8,0);
+\coordinate (x7y1) at (12,0);
+\coordinate (x8y1) at (14,0);
+\coordinate (x10y1) at (18,0);
+\coordinate (x11y1) at (20,0);
+\coordinate (x1y3) at (0,-4);
+\coordinate (x2y3) at (2,-4);
+\coordinate (x4y3) at (6,-4);
+\coordinate (x5y3) at (8,-4);
+\coordinate (x7y3) at (12,-4);
+\coordinate (x8y3) at (14,-4);
+\coordinate (x10y3) at (18,-4);
+\coordinate (x11y3) at (20,-4);
+\draw (x1y1) to[esource, l_=$E$] (x2y1); % line 3
 \draw (0.82,0) sin ++(0.09,0.09) cos ++(0.09,-0.09) sin ++(0.09,-0.09) cos ++(0.09,0.09); % line 3
-\draw (a4) to[nos, l_=$S_{W}$] (a5); % line 4
-\draw (a7) to[R, l_=$Z$] (a8); % line 5
-\draw (a10) to[R, l_=$R$] (a11); % line 6
-\draw (c1) to[esource, l_=$\dot{E}$] (c2); % line 7
+\draw (x4y1) to[nos, l_=$S_{W}$] (x5y1); % line 4
+\draw (x7y1) to[R, l_=$Z$] (x8y1); % line 5
+\draw (x10y1) to[R, l_=$R$] (x11y1); % line 6
+\draw (x1y3) to[esource, l_=$\dot{E}$] (x2y3); % line 7
 \draw (0.82,-4) sin ++(0.09,0.09) cos ++(0.09,-0.09) sin ++(0.09,-0.09) cos ++(0.09,0.09); % line 7
-\draw (c4) to[nos, l_=$\mathrm{SW}$] (c5); % line 8
-\draw (c7) to[R, l_=$\dot{Z}_{L}$] (c8); % line 9
-\draw (c10) to[R, l_=$R_{L}$] (c11); % line 10
+\draw (x4y3) to[nos, l_=$\mathrm{SW}$] (x5y3); % line 8
+\draw (x7y3) to[R, l_=$\dot{Z}_{L}$] (x8y3); % line 9
+\draw (x10y3) to[R, l_=$R_{L}$] (x11y3); % line 10
 \path (0,-1.993) rectangle (6.858,-0.807); % line 12
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-1.4) {X}; % line 12
 \path (0,-5.993) rectangle (7.874,-4.807); % line 13
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-5.4) {X}; % line 13
-\path (24,-8.869) rectangle (38.461,0.593); % line 14
+\path (24,-8.869) rectangle (38.724,0.593); % line 14
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (24,0) {X}; % line 14
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (24,-0.487) {X}; % line 14
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (24,-0.974) {X}; % line 14

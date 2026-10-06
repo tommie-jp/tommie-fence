@@ -12,13 +12,13 @@
 \node[gray, font=\scriptsize] at (6,0.84) {4};
 \node[gray, font=\scriptsize] at (8,0.84) {5};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
-\coordinate (a1) at (0,0);
-\coordinate (a2) at (2,0);
-\coordinate (a4) at (6,0);
-\coordinate (a5) at (8,0);
-\draw (a1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (a2); % line 3
-\draw (a4) to[L, l_=$L_{1}$, a^=$10\,\mathrm{m}\mathrm{H}$] (a5); % line 4
-\path (10,-5.461) rectangle (16.342,0.593); % line 6
+\coordinate (x1y1) at (0,0);
+\coordinate (x2y1) at (2,0);
+\coordinate (x4y1) at (6,0);
+\coordinate (x5y1) at (8,0);
+\draw (x1y1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x2y1); % line 3
+\draw (x4y1) to[L, l_=$L_{1}$, a^=$10\,\mathrm{m}\mathrm{H}$] (x5y1); % line 4
+\path (10,-5.461) rectangle (16.824,0.593); % line 6
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,0) {X}; % line 6
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-0.487) {X}; % line 6
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-0.974) {X}; % line 6

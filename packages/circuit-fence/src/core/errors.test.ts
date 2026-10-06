@@ -47,11 +47,11 @@ describe('fenceError', () => {
 
 describe('snippetOf', () => {
   test('keeps the line as written, indentation included, so the column stays honest', () => {
-    expect(snippetOf('  R1: resistor a1 a3')).toBe('  R1: resistor a1 a3');
+    expect(snippetOf('  R1: resistor 1,1 3,1')).toBe('  R1: resistor 1,1 3,1');
   });
 
   test('drops trailing whitespace, which no reader can see anyway', () => {
-    expect(snippetOf('  R1: r a1 a3   \r')).toBe('  R1: r a1 a3');
+    expect(snippetOf('  R1: r 1,1 3,1   \r')).toBe('  R1: r 1,1 3,1');
   });
 
   test('turns a control character into a space so one character stays one column', () => {
@@ -97,17 +97,17 @@ describe('snippetOf', () => {
 });
 
 describe('attachSourceText', () => {
-  const source = ['parts:', '  R1: resistr a1 a3', ''].join('\n');
+  const source = ['parts:', '  R1: resistr 1,1 3,1', ''].join('\n');
 
   test('adds the line the reader has to go and look at', () => {
     expect(attachSourceText([fenceError('種類 resistr は知りません', 2)], source)).toEqual([
-      { message: '種類 resistr は知りません', line: 2, text: '  R1: resistr a1 a3' },
+      { message: '種類 resistr は知りません', line: 2, text: '  R1: resistr 1,1 3,1' },
     ]);
   });
 
   test('folds the spelling into a column and drops it, so no raw input reaches the output', () => {
     expect(attachSourceText([fenceError('種類 resistr は知りません', 2, null, 'resistr')], source)).toEqual([
-      { message: '種類 resistr は知りません', line: 2, text: '  R1: resistr a1 a3', column: 7, span: 7 },
+      { message: '種類 resistr は知りません', line: 2, text: '  R1: resistr 1,1 3,1', column: 7, span: 7 },
     ]);
   });
 
@@ -123,20 +123,20 @@ describe('attachSourceText', () => {
 
   test('points at nothing when the spelling is only part of a longer word', () => {
     // `a1` を `a10` の中に見つけて指すと、書いていないところにキャレットが立つ。
-    const written = ['parts:', '  R1: r a10 a3', ''].join('\n');
+    const written = ['parts:', '  R1: r 10,1 3,1', ''].join('\n');
 
-    expect(attachSourceText([fenceError('読めません', 2, null, 'a1')], written)).toEqual([
-      { message: '読めません', line: 2, text: '  R1: r a10 a3' },
+    expect(attachSourceText([fenceError('読めません', 2, null, '1,1')], written)).toEqual([
+      { message: '読めません', line: 2, text: '  R1: r 10,1 3,1' },
     ]);
   });
 
   test('points at nothing when the same spelling is written more than once on the line', () => {
     // `resistr: resistr a1 a3` の 1 つめは読めている部品 ID。先頭を選ぶと、
     // 読めているほうにキャレットが立つ。どれか分からないなら指さない。
-    const written = ['parts:', '  resistr: resistr a1 a3', ''].join('\n');
+    const written = ['parts:', '  resistr: resistr 1,1 3,1', ''].join('\n');
     const [error] = attachSourceText([fenceError('種類 resistr は知りません', 2, null, 'resistr')], written);
 
-    expect(error?.text).toBe('  resistr: resistr a1 a3');
+    expect(error?.text).toBe('  resistr: resistr 1,1 3,1');
     expect(error?.column).toBeUndefined();
   });
 
@@ -179,8 +179,8 @@ describe('shiftErrors', () => {
 
   test('carries the line content and the column along, which belong to the fence, not the document', () => {
     // 行番号だけがずれる。中身と桁はフェンスの行から取ったものなので動かさない。
-    expect(shiftErrors([{ message: '読めません', line: 3, text: '  R1: r a1', column: 7, span: 1 }], 10)).toEqual([
-      { message: '読めません', line: 13, text: '  R1: r a1', column: 7, span: 1 },
+    expect(shiftErrors([{ message: '読めません', line: 3, text: '  R1: r 1,1', column: 7, span: 1 }], 10)).toEqual([
+      { message: '読めません', line: 13, text: '  R1: r 1,1', column: 7, span: 1 },
     ]);
   });
 });

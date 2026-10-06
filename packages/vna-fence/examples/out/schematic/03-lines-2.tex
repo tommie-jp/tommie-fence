@@ -30,16 +30,16 @@
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
 \ctikzset{grounds/scale=1.36}
-\coordinate (b2) at (2,-2);
-\coordinate (b3) at (4,-2);
-\coordinate (b6) at (10,-2);
-\coordinate (c2) at (2,-4);
-\node[smacoax, draw, xscale=-1] (part-J1) at (b2) {}; % line 3
+\coordinate (x2y2) at (2,-2);
+\coordinate (x3y2) at (4,-2);
+\coordinate (x6y2) at (10,-2);
+\coordinate (x2y3) at (2,-4);
+\node[smacoax, draw, xscale=-1] (part-J1) at (x2y2) {}; % line 3
 \node[anchor=south] at (part-J1.north) {$J_{1}$}; % line 3
-\draw (b3) to[TL, l_=$T_{1}$, a^=$50\,\Omega$] (b6); % line 4
-\node[ground] at (c2) {}; % line 5
-\draw (part-J1.pin 1) -- (b3); % line 7
-\draw (part-J1.pin 2) -- (c2); % line 8
+\draw (x3y2) to[TL, l_=$T_{1}$, a^=$50\,\Omega$] (x6y2); % line 4
+\node[ground] at (x2y3) {}; % line 5
+\draw (part-J1.pin 1) -- (x3y2); % line 7
+\draw (part-J1.pin 2) -- (x2y3); % line 8
 \path (1.619,-0.593) rectangle (2.381,0.593); % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,0) {X}; % line 10
 \path (10.4,-2.593) rectangle (11.289,-1.407); % line 11

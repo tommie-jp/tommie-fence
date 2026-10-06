@@ -9,20 +9,20 @@ ID は先頭 1 文字が本体、残りが添字になる (回路図の慣習ど
 ```circuit
 title: 図01 ID と値の出方
 parts:
-  R1:    resistor a1 a2 10k
-  Rload: resistor a5 a6 4.7
-  R:     resistor a9 a10 1M
-  L1:    inductor c1 c2 10m
-  C1:    capacitor c5 c6 2.2u
-  D1:    diode c9 c10 1N4148
+  R1:    resistor 1,1 2,1 10k
+  Rload: resistor 5,1 6,1 4.7
+  R:     resistor 9,1 10,1 1M
+  L1:    inductor 1,3 2,3 10m
+  C1:    capacitor 5,3 6,3 2.2u
+  D1:    diode 9,3 10,3 1N4148
 notes:
-  - text b1 blue: "R1: resistor a1 a2 10k"
-  - text b5 blue: "Rload: resistor a5 a6 4.7"
-  - text b9 blue: "R: resistor a9 a10 1M"
-  - text d1 blue: "L1: inductor c1 c2 10m"
-  - text d5 blue: "C1: capacitor c5 c6 2.2u"
-  - text d9 blue: "D1: diode c9 c10 1N4148"
-  - source a13 blue
+  - text 1,2 blue: "R1: resistor a1 a2 10k"
+  - text 5,2 blue: "Rload: resistor a5 a6 4.7"
+  - text 9,2 blue: "R: resistor a9 a10 1M"
+  - text 1,4 blue: "L1: inductor c1 c2 10m"
+  - text 5,4 blue: "C1: capacitor c5 c6 2.2u"
+  - text 9,4 blue: "D1: diode c9 c10 1N4148"
+  - source 13,1 blue
 style:
   grid: on
 ```
@@ -56,18 +56,18 @@ ID は記号の下 (縦置きなら左)、値は反対側に出る。
 ```circuit
 title: 図02 ラベルを ID と別に書く
 parts:
-  E:   sine a1 a2
-  SW:  switch a4 a5
-  Z:   resistor a7 a8
-  R:   resistor a10 a11
-  E1:  sine c1 c2 l=$\dot{E}$
-  SW1: switch c4 c5 l=$\mathrm{SW}$
-  Z1:  resistor c7 c8 l=$\dot{Z}_L$
-  R1:  resistor c10 c11 l=RL
+  E:   sine 1,1 2,1
+  SW:  switch 4,1 5,1
+  Z:   resistor 7,1 8,1
+  R:   resistor 10,1 11,1
+  E1:  sine 1,3 2,3 l=$\dot{E}$
+  SW1: switch 4,3 5,3 l=$\mathrm{SW}$
+  Z1:  resistor 7,3 8,3 l=$\dot{Z}_L$
+  R1:  resistor 10,3 11,3 l=RL
 notes:
-  - text a1h0 blue left: ラベル無し (ID がそのまま出る)
-  - text c1h0 blue left: ラベル有り (図に出る字だけが変わる)
-  - source a13 blue
+  - text 1,1.7 blue left: ラベル無し (ID がそのまま出る)
+  - text 1,3.7 blue left: ラベル有り (図に出る字だけが変わる)
+  - source 13,1 blue
 style:
   grid: on
 ```

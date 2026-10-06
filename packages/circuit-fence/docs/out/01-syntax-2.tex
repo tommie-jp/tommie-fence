@@ -11,13 +11,13 @@
 \node[gray, font=\scriptsize] at (2,0.84) {2};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
-\coordinate (a1) at (0,0);
-\coordinate (a2) at (2,0);
-\coordinate (b2) at (2,-2);
-\draw (a1) node[ocirc]{} node[above left]{IN}; % line 6
-\draw (a1) to[R, l_=$R_{1}$] (a2); % line 7
-\draw (a2) to[C, l_=$C_{1}$] (b2); % line 8
-\node[ground] at (b2) {}; % line 9
+\coordinate (x1y1) at (0,0);
+\coordinate (x2y1) at (2,0);
+\coordinate (x2y2) at (2,-2);
+\draw (x1y1) node[ocirc]{} node[above left]{IN}; % line 6
+\draw (x1y1) to[R, l_=$R_{1}$] (x2y1); % line 7
+\draw (x2y1) to[C, l_=$C_{1}$] (x2y2); % line 8
+\node[ground] at (x2y2) {}; % line 9
 \path (4,-7.408) rectangle (11.07,0.593); % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4,0) {X}; % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4,-0.487) {X}; % line 11

@@ -4,12 +4,12 @@ import { applyRewrite } from './shared.ts';
 
 const RC = [
   'parts:',
-  '  R1: resistor a1 a3 10k',
-  '  Q1: npn b5',
+  '  R1: resistor 1,1 3,1 10k',
+  '  Q1: npn 5,2',
   'wires:',
-  '  - a3 -- Q1.b',
+  '  - 3,1 -- Q1.b',
   '  - Q1.c -- Q1.e',
-  '  - a1 -- b1',
+  '  - 1,1 -- 1,2',
   'notes:',
   '  - circle Q1 red',
   '  - arrow R1 Q1 blue',
@@ -24,13 +24,13 @@ const renamed = (source: string, from: string, to: string) => {
 
 describe('renamePart', () => {
   test('writes the new name where the part is defined', () => {
-    expect(renamed(RC, 'Q1', 'T1').source).toContain('  T1: npn b5');
+    expect(renamed(RC, 'Q1', 'T1').source).toContain('  T1: npn 5,2');
   });
 
   test('carries the wires that point at its pins', () => {
     const { source } = renamed(RC, 'Q1', 'T1');
 
-    expect(source).toContain('  - a3 -- T1.b');
+    expect(source).toContain('  - 3,1 -- T1.b');
     expect(source).toContain('  - T1.c -- T1.e');
   });
 
@@ -44,13 +44,13 @@ describe('renamePart', () => {
   test('leaves the type, the value and the colour alone', () => {
     const { source } = renamed(RC, 'R1', 'R9');
 
-    expect(source).toContain('  R9: resistor a1 a3 10k');
+    expect(source).toContain('  R9: resistor 1,1 3,1 10k');
     expect(source).toContain('  - arrow R9 Q1 blue');
   });
 
   test('does not mistake a colour for the part it happens to be named after', () => {
     // 部品を `red` と名付けることはできる。色の綴りまで書き換えたら図が変わる。
-    const source = ['parts:', '  red: resistor a1 a3', 'notes:', '  - circle red red', ''].join('\n');
+    const source = ['parts:', '  red: resistor 1,1 3,1', 'notes:', '  - circle red red', ''].join('\n');
 
     expect(renamed(source, 'red', 'R1').source).toContain('  - circle R1 red');
   });
@@ -76,7 +76,7 @@ describe('renamePart', () => {
   });
 
   test('refuses a name that a point already carries', () => {
-    const source = ['points:', '  mid: b2', 'parts:', '  R1: resistor a1 a3', ''].join('\n');
+    const source = ['points:', '  mid: 2,2', 'parts:', '  R1: resistor 1,1 3,1', ''].join('\n');
 
     expect(renamePart(source, 'R1', 'mid').ok).toBe(false);
   });
@@ -92,9 +92,9 @@ describe('renamePart', () => {
   // フロー形式の注釈は綴りが括弧につながっている (`[circle R1]`)。前は取り出せずに
   // 断っていたが、区切りでも切るようにしたのでブレッドボードとユニバーサル基板と同じく書き換える。
   test('renames a reference written in flow style, bracket and all', () => {
-    const source = ['parts:', '  R1: resistor a1 a3', 'notes: [circle R1]', ''].join('\n');
+    const source = ['parts:', '  R1: resistor 1,1 3,1', 'notes: [circle R1]', ''].join('\n');
     const result = renamePart(source, 'R1', 'R2');
 
-    expect(result.ok && applyRewrite(source, result.value)).toBe(['parts:', '  R2: resistor a1 a3', 'notes: [circle R2]', ''].join('\n'));
+    expect(result.ok && applyRewrite(source, result.value)).toBe(['parts:', '  R2: resistor 1,1 3,1', 'notes: [circle R2]', ''].join('\n'));
   });
 });

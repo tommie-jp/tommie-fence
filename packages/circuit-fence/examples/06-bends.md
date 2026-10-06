@@ -6,15 +6,15 @@
 ```circuit
 title: 図01 折れた配線
 parts:
-  R1: resistor a1 a2
-  R2: resistor c5 c6
-  R3: resistor d1 d2
-  R4: resistor b5 b6
+  R1: resistor 1,1 2,1
+  R2: resistor 5,3 6,3
+  R3: resistor 1,4 2,4
+  R4: resistor 5,2 6,2
 wires:
-  - a2 -| c5
-  - d2 |- b5
+  - 2,1 -| 5,3
+  - 2,4 |- 5,2
 notes:
-  - source a7 blue
+  - source 7,1 blue
 style:
   grid: on
 ```
@@ -36,16 +36,16 @@ style:
 ```circuit
 title: 図02 1 行につないで書く
 parts:
-  IN:  port a1
-  R1:  resistor a1 a2
-  C1:  capacitor a3 b3
-  G1:  ground b3
-  R2:  resistor a4 a5
-  OUT: port a5
+  IN:  port 1,1
+  R1:  resistor 1,1 2,1
+  C1:  capacitor 3,1 3,2
+  G1:  ground 3,2
+  R2:  resistor 4,1 5,1
+  OUT: port 5,1
 wires:
-  - a2 -- a3 -- a4
+  - 2,1 -- 3,1 -- 4,1
 notes:
-  - source a6 blue
+  - source 6,1 blue
 style:
   grid: on
 ```

@@ -12,7 +12,7 @@ const log = (...rows: string[]): string => rows.join('\n');
 describe('texErrors', () => {
   test('brings a TeX line number back to the line of YAML it came from', () => {
     const errors = texErrors(
-      log('! Undefined control sequence.', 'l.10 \\draw (a1) to[R] (a3);', '?'),
+      log('! Undefined control sequence.', 'l.10 \\draw (x1y1) to[R] (x3y1);', '?'),
       lineMap,
       0,
     );
@@ -23,7 +23,7 @@ describe('texErrors', () => {
   });
 
   test('subtracts the preamble the engine puts in front of the fence', () => {
-    const errors = texErrors(log('! Missing $ inserted.', 'l.19 \\draw (a1);'), lineMap, 9);
+    const errors = texErrors(log('! Missing $ inserted.', 'l.19 \\draw (x1y1);'), lineMap, 9);
 
     expect(errors[0]?.line).toBe(3);
   });

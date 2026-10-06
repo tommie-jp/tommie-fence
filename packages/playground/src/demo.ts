@@ -47,14 +47,14 @@ const NUDGES: Record<Kind, readonly Nudge[]> = {
   circuit: [
     {
       label: '抵抗を 1k に',
-      find: 'resistor a1 a3 330',
-      replace: 'resistor a1 a3 1k',
+      find: 'resistor 1,1 3,1 330',
+      replace: 'resistor 1,1 3,1 1k',
       said: '抵抗を 330 Ω から 1 kΩ にした',
     },
     {
       label: '電池を 9V に',
-      find: 'battery a1 c1 3',
-      replace: 'battery a1 c1 9',
+      find: 'battery 1,1 1,3 3',
+      replace: 'battery 1,1 1,3 9',
       said: '電池を 3 V から 9 V にした',
     },
   ],

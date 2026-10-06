@@ -12,9 +12,9 @@
 ```circuit
 title: 図01 日本語の値
 parts:
-  V1: vsource a1 a3 電池9V
-  R1: resistor a1 c1 10k
-  G1: ground c1
+  V1: vsource 1,1 3,1 電池9V
+  R1: resistor 1,1 1,3 10k
+  G1: ground 1,3
 ```
 
 書いたのはこれ。
@@ -22,9 +22,9 @@ parts:
 ```text
 13 title: 図01 日本語の値
 14 parts:
-15   V1: vsource a1 a3 電池9V
-16   R1: resistor a1 c1 10k
-17   G1: ground c1
+15   V1: vsource 1,1 3,1 電池9V
+16   R1: resistor 1,1 1,3 10k
+17   G1: ground 1,3
 ```
 
 帯にはこう出る。

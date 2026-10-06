@@ -5,14 +5,14 @@
 ```circuit
 title: 図01 斜めに置く
 parts:
-  IN:  port a1
-  R1:  resistor a1 b3
-  R2:  resistor b3 a5
-  OUT: port a5
+  IN:  port 1,1
+  R1:  resistor 1,1 3,2
+  R2:  resistor 3,2 5,1
+  OUT: port 5,1
 wires:
-  - a1 -- a5
+  - 1,1 -- 5,1
 notes:
-  - source a6 blue
+  - source 6,1 blue
 style:
   grid: on
 ```

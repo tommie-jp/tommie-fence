@@ -9,8 +9,8 @@ const MARKDOWN = [
   '',
   '```circuit',
   'parts:',
-  '  R1:  resistor a1 a3 10k',
-  '  C1:  capacitor a3 c3 100n',
+  '  R1:  resistor 1,1 3,1 10k',
+  '  C1:  capacitor 3,1 3,3 100n',
   '```',
   '',
 ].join('\n');
@@ -18,7 +18,7 @@ const MARKDOWN = [
 const portOf = (over: Partial<EditorPort> = {}): EditorPort => ({
   document: () => ({ text: MARKDOWN, line: 5 }),
   pick: async (items) => items[0] ?? null,
-  prompt: async () => 'b1',
+  prompt: async () => '1,2',
   apply: async () => true,
   info: () => {},
   warn: () => {},
@@ -48,14 +48,14 @@ describe('runMovePart', () => {
     expect(apply).toHaveBeenCalledOnce();
     const [fenceLine, edits] = apply.mock.calls[0] as unknown as [number, { text: string }[]];
     expect(fenceLine).toBe(3);
-    expect(edits.map((edit) => edit.text)).toEqual(['b1', 'b3']);
+    expect(edits.map((edit) => edit.text)).toEqual(['1,2', '3,2']);
   });
 
   test('offers the address the part is at now, so a nudge is one keystroke', async () => {
     const prompt = vi.fn(async () => null);
     await runMovePart(portOf({ prompt }));
 
-    expect(prompt).toHaveBeenCalledWith(expect.any(String), 'a1');
+    expect(prompt).toHaveBeenCalledWith(expect.any(String), '1,1');
   });
 
   test('moves without stopping and reports what changed', async () => {
@@ -72,9 +72,9 @@ describe('runMovePart', () => {
   test('keeps the report plain when the move changes no connection', async () => {
     const info = vi.fn();
     const apply = vi.fn(async () => true);
-    const document = () => ({ text: '```circuit\nparts:\n  R1: resistor a1 a3\n```\n', line: 3 });
+    const document = () => ({ text: '```circuit\nparts:\n  R1: resistor 1,1 3,1\n```\n', line: 3 });
 
-    await runMovePart(portOf({ document, info, apply, prompt: async () => 'c1' }));
+    await runMovePart(portOf({ document, info, apply, prompt: async () => '1,3' }));
 
     expect(apply).toHaveBeenCalledOnce();
     expect(info).toHaveBeenCalledWith(expect.not.stringContaining('接続'));
@@ -98,7 +98,7 @@ describe('runMovePart', () => {
     const warn = vi.fn();
     const apply = vi.fn(async () => true);
 
-    await runMovePart(portOf({ prompt: async () => 'a99', warn, apply }));
+    await runMovePart(portOf({ prompt: async () => '99,1', warn, apply }));
 
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('外へ出ます'));
     expect(apply).not.toHaveBeenCalled();
@@ -124,7 +124,7 @@ describe('runMovePart', () => {
     const info = vi.fn();
     const apply = vi.fn(async () => true);
 
-    await runMovePart(portOf({ prompt: async () => 'a1', info, apply }));
+    await runMovePart(portOf({ prompt: async () => '1,1', info, apply }));
 
     expect(info).toHaveBeenCalledWith(expect.stringContaining('すでに'));
     expect(apply).not.toHaveBeenCalled();

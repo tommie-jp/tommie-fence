@@ -19,26 +19,26 @@ const applied = (source: string, result: ReturnType<typeof editor.deleteWire>): 
 
 describe('読めない行が残る鍵', () => {
   test('配線', () => {
-    const source = `${HEAD}parts:\n  R2: resistor a1 a3\nwires:\n  - a1 --\n  - c1 -- c5\n`;
+    const source = `${HEAD}parts:\n  R2: resistor 1,1 3,1\nwires:\n  - 1,1 --\n  - 1,3 -- 5,3\n`;
     expect(parseFence(source).doc.wires.length).toBe(1);
-    expect(applied(source, editor.deleteWire(source, at(source, '  - c1 -- c5')))).toBe(`${HEAD}parts:\n  R2: resistor a1 a3\nwires:\n  - a1 --\n`);
+    expect(applied(source, editor.deleteWire(source, at(source, '  - 1,3 -- 5,3')))).toBe(`${HEAD}parts:\n  R2: resistor 1,1 3,1\nwires:\n  - 1,1 --\n`);
   });
 
   test('部品', () => {
-    const source = `${HEAD}parts:\n  R1: resistr a1 a3\n  R2: resistor a1 a3\n`;
+    const source = `${HEAD}parts:\n  R1: resistr 1,1 3,1\n  R2: resistor 1,1 3,1\n`;
     expect(parseFence(source).doc.parts.length).toBe(1);
-    expect(applied(source, editor.deletePart(source, 'R2'))).toBe(`${HEAD}parts:\n  R1: resistr a1 a3\n`);
+    expect(applied(source, editor.deletePart(source, 'R2'))).toBe(`${HEAD}parts:\n  R1: resistr 1,1 3,1\n`);
   });
 
   test('注釈', () => {
-    const source = `${HEAD}parts:\n  R2: resistor a1 a3\nnotes:\n  - circle\n  - circle R2\n`;
+    const source = `${HEAD}parts:\n  R2: resistor 1,1 3,1\nnotes:\n  - circle\n  - circle R2\n`;
     expect(parseFence(source).doc.notes.length).toBe(1);
     const line = at(source, '  - circle R2');
-    expect(applied(source, editor.deletePart(source, `note:${line}`))).toBe(`${HEAD}parts:\n  R2: resistor a1 a3\nnotes:\n  - circle\n`);
+    expect(applied(source, editor.deletePart(source, `note:${line}`))).toBe(`${HEAD}parts:\n  R2: resistor 1,1 3,1\nnotes:\n  - circle\n`);
   });
 
   test('読めない行が無ければ、今までどおり鍵ごと消す', () => {
-    const source = `${HEAD}parts:\n  R2: resistor a1 a3\nwires:\n  - c1 -- c5\n`;
-    expect(applied(source, editor.deleteWire(source, at(source, '  - c1 -- c5')))).toBe(`${HEAD}parts:\n  R2: resistor a1 a3\n`);
+    const source = `${HEAD}parts:\n  R2: resistor 1,1 3,1\nwires:\n  - 1,3 -- 5,3\n`;
+    expect(applied(source, editor.deleteWire(source, at(source, '  - 1,3 -- 5,3')))).toBe(`${HEAD}parts:\n  R2: resistor 1,1 3,1\n`);
   });
 });

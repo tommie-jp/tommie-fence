@@ -7,13 +7,13 @@
 ```circuit
 title: 回路図01 半波整流
 parts:
-  W1: sine b1 e1 l=$\mathrm{W1}$
-  G1: ground e1
-  D1: diode b3 b6
-  RL: resistor b6 e6 1.5k
-  G2: ground e6
+  W1: sine 1,2 1,5 l=$\mathrm{W1}$
+  G1: ground 1,5
+  D1: diode 3,2 6,2
+  RL: resistor 6,2 6,5 1.5k
+  G2: ground 6,5
 wires:
-  - b1 -- b3
+  - 1,2 -- 3,2
 ```
 
 <img src="out/schematic/03-rectifier-1.png" alt="回路図01 半波整流" width="467">
@@ -36,20 +36,20 @@ measure: [vmax, avg, rms]
 ```circuit
 title: 回路図02 全波整流 (ブリッジ)
 parts:
-  W1: sine e4 e6 l=$\mathrm{W1}$
-  D1: diode e3 b3
-  D2: diode e7 b7
-  D3: diode h3 e3
-  D4: diode h7 e7
-  RL: resistor b9 h9 1.5k
-  G1: ground h9
+  W1: sine 4,5 6,5 l=$\mathrm{W1}$
+  D1: diode 3,5 3,2
+  D2: diode 7,5 7,2
+  D3: diode 3,8 3,5
+  D4: diode 7,8 7,5
+  RL: resistor 9,2 9,8 1.5k
+  G1: ground 9,8
 wires:
-  - e3 -- e4
-  - e6 -- e7
-  - b3 -- b7
-  - b7 -- b9
-  - h3 -- h7
-  - h7 -- h9
+  - 3,5 -- 4,5
+  - 6,5 -- 7,5
+  - 3,2 -- 7,2
+  - 7,2 -- 9,2
+  - 3,8 -- 7,8
+  - 7,8 -- 9,8
 ```
 
 <img src="out/schematic/03-rectifier-2.png" alt="回路図02 全波整流 (ブリッジ)" width="515">
@@ -90,23 +90,23 @@ measure: [vmax, vmin, avg]
 ```circuit
 title: 回路図03 コンデンサ入力の平滑
 parts:
-  W1: sine e4 e6 l=$\mathrm{W1}$
-  D1: diode e3 b3
-  D2: diode e7 b7
-  D3: diode h3 e3
-  D4: diode h7 e7
-  C1: ecap b9 h9 100u
-  RL: resistor b11 h11 1.5k
-  G1: ground h9
+  W1: sine 4,5 6,5 l=$\mathrm{W1}$
+  D1: diode 3,5 3,2
+  D2: diode 7,5 7,2
+  D3: diode 3,8 3,5
+  D4: diode 7,8 7,5
+  C1: ecap 9,2 9,8 100u
+  RL: resistor 11,2 11,8 1.5k
+  G1: ground 9,8
 wires:
-  - e3 -- e4
-  - e6 -- e7
-  - b3 -- b7
-  - b7 -- b9
-  - b9 -- b11
-  - h3 -- h7
-  - h7 -- h9
-  - h9 -- h11
+  - 3,5 -- 4,5
+  - 6,5 -- 7,5
+  - 3,2 -- 7,2
+  - 7,2 -- 9,2
+  - 9,2 -- 11,2
+  - 3,8 -- 7,8
+  - 7,8 -- 9,8
+  - 9,8 -- 11,8
 ```
 
 <img src="out/schematic/03-rectifier-3.png" alt="回路図03 コンデンサ入力の平滑" width="667">

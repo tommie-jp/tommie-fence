@@ -9,32 +9,32 @@ Pico をブレッドボードにまたがせて、LED とタクトスイッチ�
 ```circuit
 title: 回路図01 Pico に LED とボタンをつなぐ
 parts:
-  V1: vsource b1 e1 4.5
-  G1: ground e1
-  D2: schottky b1 b4 1N5817
-  VSYS: port b5
-  GP15: port g1
-  R1: resistor g1 g3 330
-  D1: led g3 g5 red
-  G2: ground g5
-  GP14: port j1
-  SW1: button j1 j4
-  G3: ground j4
+  V1: vsource 1,2 1,5 4.5
+  G1: ground 1,5
+  D2: schottky 1,2 4,2 1N5817
+  VSYS: port 5,2
+  GP15: port 1,7
+  R1: resistor 1,7 3,7 330
+  D1: led 3,7 5,7 red
+  G2: ground 5,7
+  GP14: port 1,10
+  SW1: button 1,10 4,10
+  G3: ground 4,10
   U1:
     type: device
-    at: c10
+    at: 10,3
     label: Pico 2
     pins: [VSYS, GP15, GP14, GND3]
-  VSYS: port d5
-  GP15: port h6
-  GP14: port f7
-  G4: ground g8
+  VSYS: port 5,4
+  GP15: port 6,8
+  GP14: port 7,6
+  G4: ground 8,7
 wires:
-  - b4 -- b5
-  - U1.VSYS -| d5
-  - U1.GP15 -| h6
-  - U1.GP14 -| f7
-  - U1.GND3 -| g8
+  - 4,2 -- 5,2
+  - U1.VSYS -| 5,4
+  - U1.GP15 -| 6,8
+  - U1.GP14 -| 7,6
+  - U1.GND3 -| 8,7
 ```
 
 <img src="out/schematic/07-pico.png" alt="回路図01 Pico に LED とボタンをつなぐ" width="767">

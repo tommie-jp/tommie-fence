@@ -23,22 +23,22 @@ notes:
 ```circuit
 title: 回路図01 パッチアンテナの等価回路
 parts:
-  J1: sma b2 mirror
-  T1: tline b4 b8 50 l=$\mathrm{FEED}$
-  RR: resistor d8 f8 l=$R_\mathrm{r}$
-  LP: inductor d10 f10 l=$L_\mathrm{p}$
-  CP: capacitor d12 f12 l=$C_\mathrm{p}$
-  G1: ground c2
-  G2: ground g10
+  J1: sma 2,2 mirror
+  T1: tline 4,2 8,2 50 l=$\mathrm{FEED}$
+  RR: resistor 8,4 8,6 l=$R_\mathrm{r}$
+  LP: inductor 10,4 10,6 l=$L_\mathrm{p}$
+  CP: capacitor 12,4 12,6 l=$C_\mathrm{p}$
+  G1: ground 2,3
+  G2: ground 10,7
 wires:
-  - J1.1 -- b4
-  - b8 -- b12
-  - b8 -- d8
-  - b10 -- d10
-  - b12 -- d12
-  - f8 -- f12
-  - f10 -- g10
-  - J1.2 -- c2
+  - J1.1 -- 4,2
+  - 8,2 -- 12,2
+  - 8,2 -- 8,4
+  - 10,2 -- 10,4
+  - 12,2 -- 12,4
+  - 8,6 -- 12,6
+  - 10,6 -- 10,7
+  - J1.2 -- 2,3
 ```
 
 ![回路図01 パッチアンテナの等価回路](out/schematic/06-ground-1.png)
@@ -77,16 +77,16 @@ notes:
 ```circuit
 title: 回路図02 CPWG の等価回路
 parts:
-  J1: sma b2 mirror
-  TL1: tline b4 b8 51 l=$\mathrm{L1}$
-  J2: sma b10
-  G1: ground c2
-  G2: ground c10
+  J1: sma 2,2 mirror
+  TL1: tline 4,2 8,2 51 l=$\mathrm{L1}$
+  J2: sma 10,2
+  G1: ground 2,3
+  G2: ground 10,3
 wires:
-  - J1.1 -- b4
-  - b8 -- J2.1
-  - J1.2 -- c2
-  - J2.2 -- c10
+  - J1.1 -- 4,2
+  - 8,2 -- J2.1
+  - J1.2 -- 2,3
+  - J2.2 -- 10,3
 ```
 
 ![回路図02 CPWG の等価回路](out/schematic/06-ground-2.png)

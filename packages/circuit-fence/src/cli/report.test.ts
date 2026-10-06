@@ -3,7 +3,7 @@ import { compileCircuit } from '../core/index.ts';
 import { checkHeading, reportNotices } from './report.ts';
 
 /** R1 の片ピン (a2) がどこにもつながっていない回路。お知らせが 1 件出る。 */
-const LOOSE = 'parts:\n  R1: resistor a1 a2 10k\n  R2: resistor b1 b2 10k\nwires:\n  - a1 -- b1';
+const LOOSE = 'parts:\n  R1: resistor 1,1 2,1 10k\n  R2: resistor 1,2 2,2 10k\nwires:\n  - 1,1 -- 1,2';
 
 afterEach(() => {
   vi.restoreAllMocks();

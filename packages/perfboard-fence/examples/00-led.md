@@ -9,12 +9,12 @@
 ```circuit
 title: 回路図01 LED と抵抗
 parts:
-  V1: vsource a1 c1 5
-  R1: resistor a1 a3 330
-  D1: led a3 c3 red
-  G1: ground c1
+  V1: vsource 1,1 1,3 5
+  R1: resistor 1,1 3,1 330
+  D1: led 3,1 3,3 red
+  G1: ground 1,3
 wires:
-  - c1 -- c3
+  - 1,3 -- 3,3
 ```
 
 <img src="out/schematic/00-led.png" alt="回路図01 LED と抵抗" width="299">

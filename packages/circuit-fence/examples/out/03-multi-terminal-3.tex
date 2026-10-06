@@ -22,60 +22,60 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.504,-9.6) {i};
 \node[gray, font=\scriptsize, anchor=east] at (-0.504,-10.8) {j};
 \node[gray, font=\scriptsize, anchor=east] at (-0.504,-12) {k};
-\coordinate (b2) at (1.2,-1.2);
-\coordinate (b5) at (4.8,-1.2);
-\coordinate (f2) at (1.2,-6);
-\coordinate (f5) at (4.8,-6);
-\coordinate (j2) at (1.2,-10.8);
-\coordinate (j5) at (4.8,-10.8);
-\coordinate (a2) at (1.2,0);
-\coordinate (c2) at (1.2,-2.4);
-\coordinate (b1) at (0,-1.2);
-\coordinate (a5) at (4.8,0);
-\coordinate (c5) at (4.8,-2.4);
-\coordinate (b4) at (3.6,-1.2);
-\coordinate (e2) at (1.2,-4.8);
-\coordinate (g2) at (1.2,-7.2);
-\coordinate (f1) at (0,-6);
-\coordinate (e5) at (4.8,-4.8);
-\coordinate (g5) at (4.8,-7.2);
-\coordinate (f4) at (3.6,-6);
-\coordinate (i2) at (1.2,-9.6);
-\coordinate (k2) at (1.2,-12);
-\coordinate (j1) at (0,-10.8);
-\coordinate (i5) at (4.8,-9.6);
-\coordinate (k5) at (4.8,-12);
-\coordinate (j4) at (3.6,-10.8);
-\node[njfet] (part-J1) at (b2) {}; % line 3
+\coordinate (x2y2) at (1.2,-1.2);
+\coordinate (x5y2) at (4.8,-1.2);
+\coordinate (x2y6) at (1.2,-6);
+\coordinate (x5y6) at (4.8,-6);
+\coordinate (x2y10) at (1.2,-10.8);
+\coordinate (x5y10) at (4.8,-10.8);
+\coordinate (x2y1) at (1.2,0);
+\coordinate (x2y3) at (1.2,-2.4);
+\coordinate (x1y2) at (0,-1.2);
+\coordinate (x5y1) at (4.8,0);
+\coordinate (x5y3) at (4.8,-2.4);
+\coordinate (x4y2) at (3.6,-1.2);
+\coordinate (x2y5) at (1.2,-4.8);
+\coordinate (x2y7) at (1.2,-7.2);
+\coordinate (x1y6) at (0,-6);
+\coordinate (x5y5) at (4.8,-4.8);
+\coordinate (x5y7) at (4.8,-7.2);
+\coordinate (x4y6) at (3.6,-6);
+\coordinate (x2y9) at (1.2,-9.6);
+\coordinate (x2y11) at (1.2,-12);
+\coordinate (x1y10) at (0,-10.8);
+\coordinate (x5y9) at (4.8,-9.6);
+\coordinate (x5y11) at (4.8,-12);
+\coordinate (x4y10) at (3.6,-10.8);
+\node[njfet] (part-J1) at (x2y2) {}; % line 3
 \node[anchor=west] at (part-J1.east) {$J_{1}$}; % line 3
-\node[pjfet] (part-J2) at (b5) {}; % line 4
+\node[pjfet] (part-J2) at (x5y2) {}; % line 4
 \node[anchor=west] at (part-J2.east) {$J_{2}$}; % line 4
-\node[nigfete] (part-M1) at (f2) {}; % line 5
+\node[nigfete] (part-M1) at (x2y6) {}; % line 5
 \node[anchor=west] at (part-M1.east) {$M_{1}$}; % line 5
-\node[pigfete] (part-M2) at (f5) {}; % line 6
+\node[pigfete] (part-M2) at (x5y6) {}; % line 6
 \node[anchor=west] at (part-M2.east) {$M_{2}$}; % line 6
-\node[nigfetd] (part-M3) at (j2) {}; % line 7
+\node[nigfetd] (part-M3) at (x2y10) {}; % line 7
 \node[anchor=west] at (part-M3.east) {$M_{3}$}; % line 7
-\node[pigfetd] (part-M4) at (j5) {}; % line 8
+\node[pigfetd] (part-M4) at (x5y10) {}; % line 8
 \node[anchor=west] at (part-M4.east) {$M_{4}$}; % line 8
-\draw (a2) -| (part-J1.drain); % line 10
-\draw (c2) -| (part-J1.source); % line 11
-\draw (b1) -| (part-J1.gate); % line 12
-\draw (a5) -| (part-J2.drain); % line 13
-\draw (c5) -| (part-J2.source); % line 14
-\draw (b4) -| (part-J2.gate); % line 15
-\draw (e2) -| (part-M1.drain); % line 16
-\draw (g2) -| (part-M1.source); % line 17
-\draw (f1) -| (part-M1.gate); % line 18
-\draw (e5) -| (part-M2.drain); % line 19
-\draw (g5) -| (part-M2.source); % line 20
-\draw (f4) -| (part-M2.gate); % line 21
-\draw (i2) -| (part-M3.drain); % line 22
-\draw (k2) -| (part-M3.source); % line 23
-\draw (j1) -| (part-M3.gate); % line 24
-\draw (i5) -| (part-M4.drain); % line 25
-\draw (k5) -| (part-M4.source); % line 26
-\draw (j4) -| (part-M4.gate); % line 27
+\draw (x2y1) -| (part-J1.drain); % line 10
+\draw (x2y3) -| (part-J1.source); % line 11
+\draw (x1y2) -| (part-J1.gate); % line 12
+\draw (x5y1) -| (part-J2.drain); % line 13
+\draw (x5y3) -| (part-J2.source); % line 14
+\draw (x4y2) -| (part-J2.gate); % line 15
+\draw (x2y5) -| (part-M1.drain); % line 16
+\draw (x2y7) -| (part-M1.source); % line 17
+\draw (x1y6) -| (part-M1.gate); % line 18
+\draw (x5y5) -| (part-M2.drain); % line 19
+\draw (x5y7) -| (part-M2.source); % line 20
+\draw (x4y6) -| (part-M2.gate); % line 21
+\draw (x2y9) -| (part-M3.drain); % line 22
+\draw (x2y11) -| (part-M3.source); % line 23
+\draw (x1y10) -| (part-M3.gate); % line 24
+\draw (x5y9) -| (part-M4.drain); % line 25
+\draw (x5y11) -| (part-M4.source); % line 26
+\draw (x4y10) -| (part-M4.gate); % line 27
 \path (-0.324,-3.593) rectangle (2.724,-2.407); % line 29
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1.2,-3) {X}; % line 29
 \path (3.276,-3.593) rectangle (6.324,-2.407); % line 30

@@ -25,37 +25,37 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
-\coordinate (a1) at (0,0);
-\coordinate (a3) at (4,0);
-\coordinate (c3) at (4,-4);
-\coordinate (a5) at (8,0);
-\coordinate (c5) at (8,-4);
-\coordinate (a7) at (12,0);
-\coordinate (a9) at (16,0);
-\coordinate (a11) at (20,0);
-\coordinate (c11) at (20,-4);
-\coordinate (a13) at (24,0);
-\coordinate (c13) at (24,-4);
-\coordinate (a15) at (28,0);
-\coordinate (c15) at (28,-4);
-\draw (a1) node[antenna]{} node[above left]{ANT}; % line 3
-\draw (a3) to[L, l_=$L_{1}$, a^=$330\,\mu\mathrm{H}$] (c3); % line 4
-\draw (a5) to[vC, mirror, invert, l_=$\mathrm{VC}_{1}$] (c5); % line 5
-\draw (a7) to[D, l_=$D_{1}$, a^=$\mathrm{1N60}$] (a9); % line 6
-\draw (a11) to[C, l_=$C_{1}$, a^=$1\,\mathrm{n}\mathrm{F}$] (c11); % line 7
-\draw (a13) to[R, l_=$R_{1}$, a^=$100\,\mathrm{k}\Omega$] (c13); % line 8
-\draw (a15) to[loudspeaker, l_=$\mathrm{EAR}$] (c15); % line 9
-\node[ground] at (c3) {}; % line 10
-\node[ground] at (c5) {}; % line 11
-\node[ground] at (c11) {}; % line 12
-\node[ground] at (c13) {}; % line 13
-\node[ground] at (c15) {}; % line 14
-\draw (a1) -- (a7); % line 16
-\draw (a9) -- (a15); % line 17
-\node[circ] at (a3) {};
-\node[circ] at (a5) {};
-\node[circ] at (a11) {};
-\node[circ] at (a13) {};
+\coordinate (x1y1) at (0,0);
+\coordinate (x3y1) at (4,0);
+\coordinate (x3y3) at (4,-4);
+\coordinate (x5y1) at (8,0);
+\coordinate (x5y3) at (8,-4);
+\coordinate (x7y1) at (12,0);
+\coordinate (x9y1) at (16,0);
+\coordinate (x11y1) at (20,0);
+\coordinate (x11y3) at (20,-4);
+\coordinate (x13y1) at (24,0);
+\coordinate (x13y3) at (24,-4);
+\coordinate (x15y1) at (28,0);
+\coordinate (x15y3) at (28,-4);
+\draw (x1y1) node[antenna]{} node[above left]{ANT}; % line 3
+\draw (x3y1) to[L, l_=$L_{1}$, a^=$330\,\mu\mathrm{H}$] (x3y3); % line 4
+\draw (x5y1) to[vC, mirror, invert, l_=$\mathrm{VC}_{1}$] (x5y3); % line 5
+\draw (x7y1) to[D, l_=$D_{1}$, a^=$\mathrm{1N60}$] (x9y1); % line 6
+\draw (x11y1) to[C, l_=$C_{1}$, a^=$1\,\mathrm{n}\mathrm{F}$] (x11y3); % line 7
+\draw (x13y1) to[R, l_=$R_{1}$, a^=$100\,\mathrm{k}\Omega$] (x13y3); % line 8
+\draw (x15y1) to[loudspeaker, l_=$\mathrm{EAR}$] (x15y3); % line 9
+\node[ground] at (x3y3) {}; % line 10
+\node[ground] at (x5y3) {}; % line 11
+\node[ground] at (x11y3) {}; % line 12
+\node[ground] at (x13y3) {}; % line 13
+\node[ground] at (x15y3) {}; % line 14
+\draw (x1y1) -- (x7y1); % line 16
+\draw (x9y1) -- (x15y1); % line 17
+\node[circ] at (x3y1) {};
+\node[circ] at (x5y1) {};
+\node[circ] at (x11y1) {};
+\node[circ] at (x13y1) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(14.539,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

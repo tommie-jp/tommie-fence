@@ -16,7 +16,7 @@ describe('Tang Nano 9K', () => {
 
   test('writes the chip name in the box and wires a leg by its name', () => {
     const result = compileCircuit([
-      'parts:', '  U1: tang-nano-9k d5', '  R1: resistor a9 a11 330', 'wires:', '  - U1.IO25 -| a9', '',
+      'parts:', '  U1: tang-nano-9k 5,4', '  R1: resistor 9,1 11,1 330', 'wires:', '  - U1.IO25 -| 9,1', '',
     ].join('\n'));
 
     expect(result.errors).toEqual([]);

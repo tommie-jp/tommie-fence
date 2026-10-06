@@ -15,63 +15,63 @@ const NAME_GAP = 3;
 
 describe('renderMapHtml が描くもの', () => {
   test('draws one svg that scales to the panel', () => {
-    const svg = draw('parts:\n  R1: resistor a1 a3\n');
+    const svg = draw('parts:\n  R1: resistor 1,1 3,1\n');
 
     expect(svg).toContain('<svg');
     expect(svg).toContain('viewBox="0 0 ');
   });
 
   test('draws a line for every wire', () => {
-    expect(draw('wires:\n  - a1 -- a3\n')).toContain('class="cf-wire"');
+    expect(draw('wires:\n  - 1,1 -- 3,1\n')).toContain('class="cf-wire"');
   });
 
   test('marks a wire whose end was only approximated', () => {
     // ピンのピンの位置は TeX しか知らない。印を付けて、正確な位置を約束しない。
-    const svg = draw('parts:\n  Q1: npn b2\nwires:\n  - Q1.C -- a4\n');
+    const svg = draw('parts:\n  Q1: npn 2,2\nwires:\n  - Q1.C -- 4,1\n');
 
     expect(svg).toContain('cf-approx');
   });
 
   test('draws the part between its two ends, not in one cell', () => {
     // 2 端子は両端の間に胴を置いて回す。片方の升に押し込めない。
-    const svg = draw('parts:\n  R1: resistor a1 a3\n');
+    const svg = draw('parts:\n  R1: resistor 1,1 3,1\n');
 
     expect(svg).toContain('class="cf-lead"');
     expect(svg).toMatch(/rotate\(/);
   });
 
   test('names every part next to its shape', () => {
-    expect(draw('parts:\n  R1: resistor a1 a3\n')).toContain('>R1</text>');
+    expect(draw('parts:\n  R1: resistor 1,1 3,1\n')).toContain('>R1</text>');
   });
 
   test('marks the crossings, so the grid reads as places to drop on', () => {
-    expect(draw('parts:\n  R1: resistor a1 a3\n')).toContain('cf-grid-dot');
+    expect(draw('parts:\n  R1: resistor 1,1 3,1\n')).toContain('cf-grid-dot');
   });
 
   test('labels the rows and columns, so an address can be counted off', () => {
-    const svg = draw('parts:\n  R1: resistor a1 a3\n');
+    const svg = draw('parts:\n  R1: resistor 1,1 3,1\n');
 
     expect(svg).toContain('class="cf-axis"');
     expect(svg).toContain('>a</text>');
   });
 
   test('lays a drop target over every crossing', () => {
-    const svg = draw('parts:\n  R1: resistor a1 a3\n');
+    const svg = draw('parts:\n  R1: resistor 1,1 3,1\n');
 
-    expect(svg).toContain('class="cf-cell" data-address="a1"');
-    expect(svg).toContain('data-address="b2"');
+    expect(svg).toContain('class="cf-cell" data-address="1,1"');
+    expect(svg).toContain('data-address="2,2"');
   });
 
   test('lays the drop targets edge to edge, one pitch square, since the shell divides the pointer offset by this width', () => {
     // Ctrl で 1/4 升 (52 の docs/23): 殻は升の四角の中の位置を幅で割って端数を出す。
     // 隙間を空けたり縦横を変えたりすると、1/4 の刻みがずれる。
-    const svg = draw('parts:\n  R1: resistor a1 a3\n');
+    const svg = draw('parts:\n  R1: resistor 1,1 3,1\n');
     const cellOf = (address: string) => {
       const found = new RegExp(`<rect class="cf-cell" data-address="${address}"([^>]*)>`).exec(svg);
       const attr = (name: string): number => Number(new RegExp(` ${name}="([-\\d.]+)"`).exec(found?.[1] ?? '')?.[1]);
       return { x: attr('x'), y: attr('y'), width: attr('width'), height: attr('height') };
     };
-    const [a1, a2, b1] = [cellOf('a1'), cellOf('a2'), cellOf('b1')];
+    const [a1, a2, b1] = [cellOf('1,1'), cellOf('2,1'), cellOf('1,2')];
 
     expect(a1.width).toBeGreaterThan(0);
     expect(a1.width).toBe(a1.height);
@@ -81,7 +81,7 @@ describe('renderMapHtml が描くもの', () => {
 
   test('offsets two parts spanning the same pair, so neither hides the other', () => {
     // 並列の RC は普通に書く。ぴったり重ねると後ろの 1 つを掴めない。
-    const svg = draw('parts:\n  R1: resistor a1 c1\n  C1: capacitor a1 c1\n');
+    const svg = draw('parts:\n  R1: resistor 1,1 1,3\n  C1: capacitor 1,1 1,3\n');
     const bodies = svg.match(/translate\([-\d.]+,[-\d.]+\) rotate\(/g) ?? [];
 
     expect(bodies).toHaveLength(2);
@@ -90,14 +90,14 @@ describe('renderMapHtml が描くもの', () => {
 
   test('offsets a pair written end-for-end, which is the same two crossings', () => {
     // `a1 a3` と `a3 a1` は同じ 2 交点。並びで鍵を作ると別物になり、重なる。
-    const svg = draw('parts:\n  R1: resistor a1 c1\n  C1: capacitor c1 a1\n');
+    const svg = draw('parts:\n  R1: resistor 1,1 1,3\n  C1: capacitor 1,3 1,1\n');
     const bodies = svg.match(/translate\([-\d.]+,[-\d.]+\) rotate\(/g) ?? [];
 
     expect(new Set(bodies).size).toBe(2);
   });
 
   test('offsets two standing parts on one crossing, so neither hides the other', () => {
-    const svg = draw('parts:\n  IN: port a1\n  G1: ground a1\n');
+    const svg = draw('parts:\n  IN: port 1,1\n  G1: ground 1,1\n');
 
     expect(svg).toContain('data-part="IN"');
     expect(svg).toContain('data-part="G1"');
@@ -105,7 +105,7 @@ describe('renderMapHtml が描くもの', () => {
   });
 
   test('escapes what came from the fence, in text and in attributes', () => {
-    const svg = draw('parts:\n  R1: resistor a1 a3 "<img src=x>"\n');
+    const svg = draw('parts:\n  R1: resistor 1,1 3,1 "<img src=x>"\n');
 
     expect(svg).not.toContain('<img');
   });
@@ -117,7 +117,7 @@ describe('renderMapHtml が描くもの', () => {
 
 describe('向き', () => {
   test('draws a stub with its name for each pin of a multi-terminal part', () => {
-    const svg = draw('parts:\n  Q1: npn b2\n');
+    const svg = draw('parts:\n  Q1: npn 2,2\n');
 
     expect(svg).toContain('class="cf-pin"');
     expect(svg).toContain('>B</text>');
@@ -125,18 +125,18 @@ describe('向き', () => {
 
   test('moves the stub to the side the pin turned to', () => {
     // 立っているとベースは左 (x が負) へ、r90 では上 (y が負) へ出る。
-    expect(draw('parts:\n  Q1: npn b2\n')).toContain('x2="-20"');
-    expect(draw('parts:\n  Q1: npn b2 r90\n')).toContain('y2="-15"');
+    expect(draw('parts:\n  Q1: npn 2,2\n')).toContain('x2="-20"');
+    expect(draw('parts:\n  Q1: npn 2,2 r90\n')).toContain('y2="-15"');
   });
 
   test('turns a standing glyph that has no pins, so ground shows its direction', () => {
-    expect(draw('parts:\n  G1: ground b2 r90\n')).toContain('rotate(90)');
+    expect(draw('parts:\n  G1: ground 2,2 r90\n')).toContain('rotate(90)');
   });
 
   test('leaves the box unturned, since its shape says nothing (the pins do)', () => {
     // **箱に落ちる種類で見る。** 記号を持つ種類 (npn) は回して見せる —
     // 形に向きの意味があるので、回さないと書いた向きが図に出ない。
-    const svg = draw('parts:\n  U1: dip8 b2 r90\n');
+    const svg = draw('parts:\n  U1: dip8 2,2 r90\n');
 
     expect(svg).not.toContain('rotate(90)');
   });
@@ -167,7 +167,7 @@ describe('DIP の切り欠き', () => {
   test('keeps the notch next to pin 1 when the DIP is turned', () => {
     // 実機で「DIP のピン番号の配置が正しくない」。番号は図と合っていて、
     // 切り欠きだけが r90 と r180 で反対の端に出ていた (1 番の隣に無い)。
-    const sides = ROTATIONS.map((rotate) => notchSide(draw(`parts:\n  U1: dip8 f8${turnWords(rotate, false)}\n`)));
+    const sides = ROTATIONS.map((rotate) => notchSide(draw(`parts:\n  U1: dip8 8,6${turnWords(rotate, false)}\n`)));
 
     expect(sides).toEqual(ROTATIONS.map((rotate) => NOTCH_SIDE[rotate]));
   });
@@ -181,7 +181,7 @@ describe('DIP の切り欠き', () => {
       const flips = partType !== null && orientOf(partType).mirror ? [false, true] : [false];
       return ROTATIONS.flatMap((rotate) => flips.flatMap((mirror) => {
         const words = turnWords(rotate, mirror);
-        const side = notchSide(draw(`parts:\n  U1: ${type} f8${words}\n`));
+        const side = notchSide(draw(`parts:\n  U1: ${type} 8,6${words}\n`));
         return side === NOTCH_SIDE[rotate] ? [] : [`${type}${words}: ${side ?? 'none'}`];
       }));
     });
@@ -197,24 +197,24 @@ describe('読めなかった行の印', () => {
     renderMapHtml(gridMap(source), new Set(bad));
 
   test('carries the line a part was written on, so the band can point at it', () => {
-    expect(draw('parts:\n  R1: resistor a1 a3\n')).toContain('data-line="2"');
+    expect(draw('parts:\n  R1: resistor 1,1 3,1\n')).toContain('data-line="2"');
   });
 
   test('marks the part written on a line the band complained about', () => {
-    const svg = badly('parts:\n  R1: resistor a1 a3\n  C1: capacitor a3 c3\n', [2]);
+    const svg = badly('parts:\n  R1: resistor 1,1 3,1\n  C1: capacitor 3,1 3,3\n', [2]);
 
     expect(svg).toContain('class="cf-chip cf-bad" data-part="R1"');
     expect(svg).toContain('class="cf-chip" data-part="C1"');
   });
 
   test('marks the wire written on a line the band complained about', () => {
-    const svg = badly('wires:\n  - a1 -- a3\n', [2]);
+    const svg = badly('wires:\n  - 1,1 -- 3,1\n', [2]);
 
     expect(svg).toContain('cf-wire cf-bad');
   });
 
   test('marks nothing when the fence reads cleanly', () => {
-    expect(draw('parts:\n  R1: resistor a1 a3\n')).not.toContain('cf-bad');
+    expect(draw('parts:\n  R1: resistor 1,1 3,1\n')).not.toContain('cf-bad');
   });
 });
 
@@ -228,22 +228,22 @@ describe('部品の名前の置き場', () => {
   test('puts the name below a part laid across, the side the figure uses', () => {
     // 実機で「部品の文字列の位置が回路図と違う」。図は横置きなら記号の下
     // (上は値の場所)。
-    const { y } = nameAt('parts:\n  R1: resistor c1 c3\n', 'R1');
+    const { y } = nameAt('parts:\n  R1: resistor 1,3 3,3\n', 'R1');
 
     expect(y).toBeGreaterThan(0);
     // 記号の真ん中 (c 行) より下。
-    expect(y).toBeGreaterThan(Number(/cy="([\d.]+)"/.exec(draw('parts:\n  R1: resistor c1 c3\n'))?.[1] ?? 0));
+    expect(y).toBeGreaterThan(Number(/cy="([\d.]+)"/.exec(draw('parts:\n  R1: resistor 1,3 3,3\n'))?.[1] ?? 0));
   });
 
   test('puts the name to the left of a part stood up, again as the figure does', () => {
-    const { anchor } = nameAt('parts:\n  R1: resistor c3 e3\n', 'R1');
+    const { anchor } = nameAt('parts:\n  R1: resistor 3,3 3,5\n', 'R1');
 
     expect(anchor).toBe('end');
   });
 
   test('turns it to the right at the left edge, where the row labels are', () => {
     // 1 列目に立てた部品の名前は、左に置くと行の見出しに重なって読めない。
-    const { anchor } = nameAt('parts:\n  R1: resistor c1 e1\n', 'R1');
+    const { anchor } = nameAt('parts:\n  R1: resistor 1,3 1,5\n', 'R1');
 
     expect(anchor).toBe('start');
   });
@@ -251,7 +251,7 @@ describe('部品の名前の置き場', () => {
   test('puts the name of a transistor to its right, the side the figure uses', () => {
     // 実機で「Q1 が記号の真上にある。回路図では記号の右」。上がコレクタ・
     // 下がエミッタ・左がベースなので、空いているのは右しかない。
-    const { x, y, anchor } = nameAt('parts:\n  Q1: npn c3\n', 'Q1');
+    const { x, y, anchor } = nameAt('parts:\n  Q1: npn 3,3\n', 'Q1');
 
     expect(x).toBeGreaterThan(0);
     expect(anchor).toBe('start');
@@ -261,10 +261,10 @@ describe('部品の名前の置き場', () => {
 
   test('keeps the name off the sides that have legs, whichever way the part is turned', () => {
     // ピンは記号と一緒に回るので、名札の逃げ場も回る。図 (nameNode) と同じ順で探す。
-    expect(nameAt('parts:\n  Q1: npn c3 r180\n', 'Q1').anchor).toBe('end');
-    expect(nameAt('parts:\n  Q1: npn c3 mirror\n', 'Q1').anchor).toBe('end');
+    expect(nameAt('parts:\n  Q1: npn 3,3 r180\n', 'Q1').anchor).toBe('end');
+    expect(nameAt('parts:\n  Q1: npn 3,3 mirror\n', 'Q1').anchor).toBe('end');
     // r90 はベースが上・コレクタが右・エミッタが左なので、空くのは下。
-    const turned = nameAt('parts:\n  Q1: npn c3 r90\n', 'Q1');
+    const turned = nameAt('parts:\n  Q1: npn 3,3 r90\n', 'Q1');
 
     expect(turned.x).toBe(0);
     expect(turned.y).toBeGreaterThan(10);
@@ -272,7 +272,7 @@ describe('部品の名前の置き場', () => {
 
   test('puts the name above the parts whose top is free', () => {
     // ピンが左右にしかない種類 (オペアンプ・論理ゲート) は上。
-    for (const source of ['parts:\n  U1: opamp c3\n', 'parts:\n  U1: and c3\n']) {
+    for (const source of ['parts:\n  U1: opamp 3,3\n', 'parts:\n  U1: and 3,3\n']) {
       const { x, y, anchor } = nameAt(source, 'U1');
 
       expect([x, anchor]).toEqual([0, 'middle']);
@@ -287,7 +287,7 @@ describe('部品の名前の置き場', () => {
     for (const type of ['diac', 'diode', 'zener', 'varicap', 'triac', 'vsource', 'sine',
       'square', 'isource', 'battery', 'solar', 'triangle', 'lamp', 'ammeter', 'voltmeter',
       'ohmmeter', 'wattmeter', 'galvanometer', 'detector']) {
-      const source = `parts:\n  X1: ${type} c1 c3\n`;
+      const source = `parts:\n  X1: ${type} 1,3 3,3\n`;
       // 記号を置いた点 (`translate`) が記号の中心。名前の y はそこからの隔たり。
       const centre = Number(/translate\(\d+,(\d+)\) rotate/.exec(draw(source))?.[1] ?? 0);
       const top = nameAt(source, 'X1').y - centre - NAME_CAP;
@@ -300,8 +300,8 @@ describe('部品の名前の置き場', () => {
   test('clears the box, which grows with the number of legs', () => {
     // **箱はピンの本数で伸びる。** 決め打ちの距離だと、ピンの多い DIP で名前が
     // 箱の中や切り欠きの上に乗る (実機で「切り欠きも表示する」と言われた回)。
-    const small = nameAt('parts:\n  U1: dip4 c3\n', 'U1');
-    const big = nameAt('parts:\n  U1: dip40 c3\n', 'U1');
+    const small = nameAt('parts:\n  U1: dip4 3,3\n', 'U1');
+    const big = nameAt('parts:\n  U1: dip40 3,3\n', 'U1');
 
     expect(small.y).toBeLessThan(-12);
     expect(big.y).toBeLessThan(small.y);
@@ -314,19 +314,19 @@ describe('2 交点をつなぐ線', () => {
   test('stops the line at the symbol, so no centre line crosses it', () => {
     // 実機で「R, C, L の中心線を非表示に」。コンデンサは「切れている」ことが
     // 記号の意味なので、線を通すと嘘の図になる。
-    const svg = draw('parts:\n  C1: capacitor a1 a3\n');
+    const svg = draw('parts:\n  C1: capacitor 1,1 3,1\n');
 
     expect(leads(svg)).toBe(2);
   });
 
   test('leaves a short whole, since the line is the whole of it', () => {
-    expect(leads(draw('parts:\n  S1: short a1 a3\n'))).toBe(1);
+    expect(leads(draw('parts:\n  S1: short 1,1 3,1\n'))).toBe(1);
   });
 
   test('leaves the line whole under a part nudged off it', () => {
     // 同じ 2 交点に並べた部品 (並列の RC) は胴が線から外れている。
     // 切ると誰も居ないところに隙間が空く。
-    const svg = draw('parts:\n  R1: resistor a1 a3\n  C1: capacitor a1 a3\n');
+    const svg = draw('parts:\n  R1: resistor 1,1 3,1\n  C1: capacitor 1,1 3,1\n');
 
     expect(leads(svg)).toBe(3);
   });
@@ -339,7 +339,7 @@ describe('2 交点をつなぐ線', () => {
       return ends.length < 2 ? 0 : Math.abs((ends[1]?.[0] ?? 0) - (ends[0]?.[1] ?? 0));
     };
 
-    expect(gapOf('parts:\n  L1: inductor a1 a3\n')).toBeGreaterThan(gapOf('parts:\n  C1: capacitor a1 a3\n'));
+    expect(gapOf('parts:\n  L1: inductor 1,1 3,1\n')).toBeGreaterThan(gapOf('parts:\n  C1: capacitor 1,1 3,1\n'));
   });
 });
 
@@ -350,8 +350,8 @@ describe('画布の広さ', () => {
   test('grows to hold a part that is bigger than the cells it sits on', () => {
     // 実機で「pico を置いても回路図が広がらない」。40 本のボードは升 1 つに
     // 置くが、箱は 20 行ぶんある。升目の大きさで切ると図が丸ごと外へ出る。
-    const [, top, , height] = boxOf('parts:\n  U1: pico b2\n');
-    const dots = [...draw('parts:\n  U1: pico b2\n')
+    const [, top, , height] = boxOf('parts:\n  U1: pico 2,2\n');
+    const dots = [...draw('parts:\n  U1: pico 2,2\n')
       .matchAll(/class="cf-pin-dot" cx="[-\d.]+" cy="([-\d.]+)"/g)].map((one) => Number(one[1]));
     // ピンは部品の中の座標。b 行 (y=66) に足して、画布の中に収まっていること。
     const legs = dots.map((cy) => 66 + cy);
@@ -362,7 +362,7 @@ describe('画布の広さ', () => {
 
   test('opens the canvas above the origin, since a tall part reaches up', () => {
     // 部品は升の中心を軸に上下へ伸びる。画布の原点は 0 とは限らない。
-    expect(boxOf('parts:\n  U1: pico b2\n')[1]).toBeLessThan(0);
+    expect(boxOf('parts:\n  U1: pico 2,2\n')[1]).toBeLessThan(0);
   });
 
   test('runs the row letters down beside a part that is taller than the cells', () => {
@@ -371,20 +371,20 @@ describe('画布の広さ', () => {
     const letters = (source: string): number =>
       (draw(source).match(/class="cf-axis"/g) ?? []).length;
 
-    expect(letters('parts:\n  U1: pico b2\n')).toBeGreaterThan(letters('parts:\n  R1: resistor a1 a3\n'));
+    expect(letters('parts:\n  U1: pico 2,2\n')).toBeGreaterThan(letters('parts:\n  R1: resistor 1,1 3,1\n'));
   });
 
   test('puts a hole to grab under the part it grew for', () => {
     // 見出しだけ伸ばしても、そこへ置けなければ意味が無い。
-    const svg = draw('parts:\n  U1: pico b2\n');
+    const svg = draw('parts:\n  U1: pico 2,2\n');
 
-    // b2 に置いた 40 本の箱は f 行まで届く (升目そのものは 4 行しか無い)。
-    expect(svg).toContain('data-address="f1"');
-    expect(draw('parts:\n  R1: resistor a1 a3\n')).not.toContain('data-address="f1"');
+    // 2,2 に置いた 40 本の箱は 6 行まで届く (升目そのものは 4 行しか無い)。
+    expect(svg).toContain('data-address="1,6"');
+    expect(draw('parts:\n  R1: resistor 1,1 3,1\n')).not.toContain('data-address="1,6"');
   });
 
   test('stays on the cells when nothing sticks out', () => {
-    const [left, top] = boxOf('parts:\n  R1: resistor a1 a3\n');
+    const [left, top] = boxOf('parts:\n  R1: resistor 1,1 3,1\n');
 
     expect(left).toBe(0);
     expect(top).toBe(0);
@@ -395,7 +395,7 @@ describe('多端子部品のピン', () => {
   test('puts a connection point on every leg, named as the fence spells it', () => {
     // 実機で「ピンに接続点を表示し、配線で押して接続して」。綴りをそのまま
     // 名札にしておくと、殻は綴りを知らないまま `addWire` へ返せる。
-    const svg = draw('parts:\n  Q1: npn b2\n');
+    const svg = draw('parts:\n  Q1: npn 2,2\n');
 
     expect(svg).toContain('class="cf-pin-dot"');
     expect(svg).toContain('data-pin="Q1.B"');
@@ -411,15 +411,15 @@ describe('多端子部品のピン', () => {
         .map((one) => Number(one[1]))
         .sort((a, b) => a - b);
 
-    expect(dots('parts:\n  U1: opamp b2\n')).toEqual([-4.5, 0, 4.5]);
-    expect(dots('parts:\n  G1: and b2\n')).toEqual([-4.5, 0, 4.5]);
+    expect(dots('parts:\n  U1: opamp 2,2\n')).toEqual([-4.5, 0, 4.5]);
+    expect(dots('parts:\n  G1: and 2,2\n')).toEqual([-4.5, 0, 4.5]);
     // トランスは巻線の両端 (±9)、切り替えは接点の高さ (±6)。
-    expect(dots('parts:\n  T1: transformer b2\n')).toEqual([-9, -9, 9, 9]);
-    expect(dots('parts:\n  S1: spdt b2\n')).toEqual([-6, 0, 6]);
+    expect(dots('parts:\n  T1: transformer 2,2\n')).toEqual([-9, -9, 9, 9]);
+    expect(dots('parts:\n  S1: spdt 2,2\n')).toEqual([-6, 0, 6]);
   });
 
   test('spreads a DIP evenly, since its box grows to hold them', () => {
-    const dots = [...draw('parts:\n  U1: dip8 b2\n')
+    const dots = [...draw('parts:\n  U1: dip8 2,2\n')
       .matchAll(/class="cf-pin-dot" cx="[-\d.]+" cy="([-\d.]+)"/g)]
       .map((one) => Number(one[1]));
 
@@ -428,7 +428,7 @@ describe('多端子部品のピン', () => {
 
   test('writes the opamp signs inside the triangle, as the figure draws them', () => {
     // 実機で「回路図ではオペアンプの中に ＋・− があるのに editor では外にある」。
-    const svg = draw('parts:\n  U1: opamp b2\n');
+    const svg = draw('parts:\n  U1: opamp 2,2\n');
     const nameAt = (name: string): number =>
       Number(new RegExp(`<text x="([-\\d.]+)"[^>]*class="cf-pin-name"[^>]*>\\${name}<`).exec(svg)?.[1] ?? NaN);
     const dotAt = (cy: string): number =>
@@ -443,7 +443,7 @@ describe('多端子部品のピン', () => {
     // 実機で「すべての部品でピン名は内側に」。外に出すと隣の升へはみ出し、
     // 部品を並べたときに名前どうしがぶつかる。**これが既定** — 胴が棒だけで
     // 中の空いていないトランジスタ族だけが例外 (下の 2 つ)。
-    const svg = draw('parts:\n  VR1: regulator b2\n');
+    const svg = draw('parts:\n  VR1: regulator 2,2\n');
     const name = Number(/<text x="([-\d.]+)"[^>]*class="cf-pin-name"[^>]*>IN</.exec(svg)?.[1] ?? NaN);
     const dot = Number(/class="cf-pin-dot" cx="([-\d.]+)" cy="0"/.exec(svg)?.[1] ?? NaN);
 
@@ -482,7 +482,7 @@ describe('多端子部品のピン', () => {
     // 接合形では**矢の上に**乗って、n 形と p 形を分ける印が読めなかった。
     // 置き場所は言われたとおり — 左ピンの下、上ピンの右、下ピンの右。
     for (const part of THREE_LEGGED) {
-      const svg = draw(`parts:\n  X1: ${part.type} b2\n`);
+      const svg = draw(`parts:\n  X1: ${part.type} 2,2\n`);
       const dots = dotsOf(svg);
       const left = dots.find((dot) => dot.x < 0) ?? { x: NaN, y: NaN };
       const top = dots.find((dot) => dot.y < 0) ?? { x: NaN, y: NaN };
@@ -503,7 +503,7 @@ describe('多端子部品のピン', () => {
     // 重ならないことが頼まれたことなので、図形の張り出しと比べて確かめる。
     // どの胴も原点から 13 まで (glyphSpan)、高さは 9 まで (glyphTall)。
     for (const part of THREE_LEGGED) {
-      const svg = draw(`parts:\n  X1: ${part.type} b2\n`);
+      const svg = draw(`parts:\n  X1: ${part.type} 2,2\n`);
       const names = [...svg.matchAll(/<text x="([-\d.]+)" y="([-\d.]+)"[^>]*class="cf-pin-name"/g)]
         .map((found) => ({ x: Number(found[1]), y: Number(found[2]) }));
 
@@ -546,7 +546,7 @@ describe('多端子部品のピン', () => {
       if (INSIDE_ON_PURPOSE.has(glyph)) continue;
       seen.push(type);
 
-      const svg = draw(`parts:\n  X1: ${type} b3\n`);
+      const svg = draw(`parts:\n  X1: ${type} 3,2\n`);
       const [span, tall] = [glyphSpan(glyph), glyphTall(glyph)];
       for (const box of nameBoxes(svg)) {
         const over = box.right > -span && box.left < span && box.bottom > -tall && box.top < tall;
@@ -560,9 +560,9 @@ describe('多端子部品のピン', () => {
   test('leaves the logic gate output unnamed, since the shape already says it', () => {
     // 実機で「ロジックゲートの 2 ピンの部品はピン名を表示しない。3 ピンの
     // out は非表示に」。三角の向きが入口と出口を言っているので、字で繰り返さない。
-    // **接続点は残る** — `G1.out -- a5` と書けなくなっては困る。
+    // **接続点は残る** — `G1.out -- 5,1` と書けなくなっては困る。
     for (const type of ['and', 'or', 'xor', 'nand', 'nor', 'xnor'] as const) {
-      const svg = draw(`parts:\n  G1: ${type} b3\n`);
+      const svg = draw(`parts:\n  G1: ${type} 3,2\n`);
       const names = [...svg.matchAll(/class="cf-pin-name"[^>]*>([^<]*)</g)].map((found) => found[1]);
 
       expect(names.sort(), type).toEqual(['1', '2']);
@@ -576,7 +576,7 @@ describe('多端子部品のピン', () => {
     // 2 ピン (`not` / `buffer`) は入口と出口しか無い。どちらがどちらかは
     // 三角の向きで読めるので、字は 1 つも出さない。
     for (const type of ['not', 'buffer'] as const) {
-      const svg = draw(`parts:\n  G1: ${type} b3\n`);
+      const svg = draw(`parts:\n  G1: ${type} 3,2\n`);
 
       expect(svg, type).not.toContain('cf-pin-name');
       expect([...svg.matchAll(/class="cf-pin-dot"/g)], type).toHaveLength(2);
@@ -588,7 +588,7 @@ describe('多端子部品のピン', () => {
   test('writes the board kind inside the box, where the real chip sits', () => {
     // 実機で「マイコンの種類を内側に」。40 本のピンの名前は縁に寄るので、
     // 真ん中が空いている。
-    const svg = draw('parts:\n  U1: pico2 c3\n');
+    const svg = draw('parts:\n  U1: pico2 3,3\n');
 
     expect(svg).toContain('>pico2<');
     // 名前は箱の外なので、2 つが重ならない。
@@ -597,7 +597,7 @@ describe('多端子部品のピン', () => {
 
   test('widens the box so two names facing each other do not touch', () => {
     // レギュレータの `IN` と `OUT` は狭い箱だとくっついて 1 語に読める。
-    const svg = draw('parts:\n  VR1: regulator b2\n');
+    const svg = draw('parts:\n  VR1: regulator 2,2\n');
     const names = [...svg.matchAll(/<text x="([-\d.]+)"[^>]*class="cf-pin-name"/g)]
       .map((one) => Number(one[1]));
 
@@ -606,7 +606,7 @@ describe('多端子部品のピン', () => {
   });
 
   test('makes the target bigger than the dot, since 2.6px is too small to hit', () => {
-    const svg = draw('parts:\n  Q1: npn b2\n');
+    const svg = draw('parts:\n  Q1: npn 2,2\n');
     const dot = /class="cf-pin-dot"[^/]*r="([\d.]+)"/.exec(svg);
     const hit = /class="cf-pin-hit"[^/]*r="([\d.]+)"/.exec(svg);
 
@@ -615,7 +615,7 @@ describe('多端子部品のピン', () => {
 
   test('runs the wire to the point, not to the middle of the cell', () => {
     // 実機で「接続点から配線するように表示すること」。
-    const svg = draw('parts:\n  Q1: npn b2\nwires:\n  - Q1.C -- a5\n');
+    const svg = draw('parts:\n  Q1: npn 2,2\nwires:\n  - Q1.C -- 5,1\n');
     const wire = /class="cf-wire cf-approx"[^>]*points="([-\d., ]+)"/.exec(svg);
     const first = (wire?.[1] ?? '').split(' ')[0] ?? '';
     // 記号の中の座標に、部品の升の座標を足したものが接続点。
@@ -629,7 +629,7 @@ describe('多端子部品のピン', () => {
   test('keeps a bent wire square even when one end sits on a leg', () => {
     // 実機で「斜め線を使わずに」。角を升の真ん中に置いたままだと、
     // ピンへずらした端との間だけ斜めになる。
-    const svg = draw('parts:\n  Q1: npn b2\nwires:\n  - Q1.C -| d6\n');
+    const svg = draw('parts:\n  Q1: npn 2,2\nwires:\n  - Q1.C -| 6,4\n');
     const points = (/class="cf-wire cf-approx"[^>]*points="([-\d., ]+)"/.exec(svg)?.[1] ?? '')
       .split(' ').map((pair) => pair.split(',').map(Number));
 
@@ -642,7 +642,7 @@ describe('多端子部品のピン', () => {
   test('runs a wire to a USB leg named as it is printed', () => {
     // 実機で「USB のピンの配線が斜めになる。DIP は正しい」。線の端が
     // 接続点を引けず、箱の真ん中から斜めに出ていた。
-    const svg = draw('parts:\n  J1: usb-c b2\nwires:\n  - J1.CC2 -| d6\n');
+    const svg = draw('parts:\n  J1: usb-c 2,2\nwires:\n  - J1.CC2 -| 6,4\n');
     const first = (/class="cf-wire cf-approx"[^>]*points="([-\d., ]+)"/.exec(svg)?.[1] ?? '').split(' ')[0];
     const cell = { x: 20 + 34, y: 32 + 34 };
     const legs = [...svg.matchAll(/class="cf-pin-dot" cx="([-\d.]+)" cy="([-\d.]+)"/g)]
@@ -656,28 +656,28 @@ describe('多端子部品のピン', () => {
     // 「先に横か縦か」が決まらず、角がピンに重なって 1 本の斜めになっていた。
     const pointsOf = (wire: string): number[][] =>
       (/class="cf-wire cf-approx"[^>]*points="([-\d., ]+)"/.exec(
-        draw(`parts:\n  U2: dip8 f7 r90\nwires:\n  - ${wire}\n`),
+        draw(`parts:\n  U2: dip8 7,6 r90\nwires:\n  - ${wire}\n`),
       )?.[1] ?? '').split(' ').map((pair) => pair.split(',').map(Number));
 
     // `-|` は先に横 — 1 本目は水平、2 本目は垂直。
-    const across = pointsOf('U2.8 -| h7');
+    const across = pointsOf('U2.8 -| 7,8');
     expect(across).toHaveLength(3);
     expect(across[0]?.[1]).toBe(across[1]?.[1]);
     expect(across[1]?.[0]).toBe(across[2]?.[0]);
     // `|-` は先に縦 — 1 本目は垂直、2 本目は水平。
-    const down = pointsOf('U2.5 |- f4');
+    const down = pointsOf('U2.5 |- 4,6');
     expect(down).toHaveLength(3);
     expect(down[0]?.[0]).toBe(down[1]?.[0]);
     expect(down[1]?.[1]).toBe(down[2]?.[1]);
   });
 
   test('leaves a two-lead part alone, since its ends are the holes themselves', () => {
-    expect(draw('parts:\n  R1: resistor a1 a3\n')).not.toContain('cf-pin-dot');
+    expect(draw('parts:\n  R1: resistor 1,1 3,1\n')).not.toContain('cf-pin-dot');
   });
 });
 
 describe('注釈', () => {
-  const NOTE = 'parts:\n  R1: resistor a1 a3\nnotes:\n  - text b1: ここ\n';
+  const NOTE = 'parts:\n  R1: resistor 1,1 3,1\nnotes:\n  - text 1,2: ここ\n';
 
   test('shows a text note as the words alone, with no frame around them', () => {
     // 実機で「text に枠は要らない」。字がそのまま読めるものに枠を足すと、
@@ -697,7 +697,7 @@ describe('注釈', () => {
 
   test('keeps the frame on notes that have no words of their own', () => {
     // `circle` などは種類の名を出すだけなので、枠が「これは札だ」と言う。
-    const svg = draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - circle R1\n');
+    const svg = draw('parts:\n  R1: resistor 1,1 3,1\nnotes:\n  - circle R1\n');
 
     expect(svg).toContain('cf-note-tag');
   });
@@ -705,29 +705,29 @@ describe('注釈', () => {
   test('draws a line note as a line, not as a tag that says "line"', () => {
     // 罫線を 24 本引いた図では「line」という箱が 24 個並び、**図と似ても
     // 似つかないマップ**になっていた (実機で「line が正しく表示されてない」)。
-    const svg = draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - line b1 b5\n');
+    const svg = draw('parts:\n  R1: resistor 1,1 3,1\nnotes:\n  - line 1,2 5,2\n');
 
     expect(svg).toContain('cf-note-line');
     expect(svg).not.toContain('cf-note-tag');
   });
 
   test('gives the drawn note a fat clear line to grab, since the thin one cannot be pressed', () => {
-    const svg = draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - line b1 b5\n');
+    const svg = draw('parts:\n  R1: resistor 1,1 3,1\nnotes:\n  - line 1,2 5,2\n');
 
     expect(svg).toContain('cf-note-hit');
     expect(svg).toContain('data-part="note:4"');
   });
 
   test('points the arrow, which is the one thing that tells it from a line', () => {
-    const arrow = draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - arrow b1 b5\n');
-    const line = draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - line b1 b5\n');
+    const arrow = draw('parts:\n  R1: resistor 1,1 3,1\nnotes:\n  - arrow 1,2 5,2\n');
+    const line = draw('parts:\n  R1: resistor 1,1 3,1\nnotes:\n  - line 1,2 5,2\n');
 
     expect(arrow).toContain('<polyline');
     expect(arrow).not.toBe(line);
   });
 
   test('draws a box note as a box around its two corners', () => {
-    const svg = draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - box b1 d5\n');
+    const svg = draw('parts:\n  R1: resistor 1,1 3,1\nnotes:\n  - box 1,2 5,4\n');
 
     expect(svg).toContain('cf-note-line');
     expect(svg).toContain('<rect');
@@ -735,19 +735,19 @@ describe('注釈', () => {
 
   test('keeps the grid wide enough for the far end of a drawn note', () => {
     // 覆わないと線の先が升の外へ落ちて、図と食い違う。
-    const near = gridMap('parts:\n  R1: resistor a1 a3\nnotes:\n  - line b1 b2\n');
-    const far = gridMap('parts:\n  R1: resistor a1 a3\nnotes:\n  - line b1 b20\n');
+    const near = gridMap('parts:\n  R1: resistor 1,1 3,1\nnotes:\n  - line 1,2 2,2\n');
+    const far = gridMap('parts:\n  R1: resistor 1,1 3,1\nnotes:\n  - line 1,2 20,2\n');
 
     expect(far.cols).toBeGreaterThan(near.cols);
   });
 
   test('still tags the notes that have no far end', () => {
     // `circle` は部品を指すだけで、線の引きようが無い。
-    expect(draw('parts:\n  R1: resistor a1 a3\nnotes:\n  - circle R1\n')).toContain('cf-note-tag');
+    expect(draw('parts:\n  R1: resistor 1,1 3,1\nnotes:\n  - circle R1\n')).toContain('cf-note-tag');
   });
 
   test('keeps the whole note on the tag, since the drawn words are cut', () => {
-    const long = `parts:\n  R1: resistor a1 a3\nnotes:\n  - text b1: ${'あ'.repeat(30)}\n`;
+    const long = `parts:\n  R1: resistor 1,1 3,1\nnotes:\n  - text 1,2: ${'あ'.repeat(30)}\n`;
     const svg = draw(long);
 
     expect(svg).toContain('…');
@@ -757,7 +757,7 @@ describe('注釈', () => {
 
 describe('配線を掴む', () => {
   test('lays a fat invisible line over each wire, since 1.5px is too thin to hit', () => {
-    const svg = draw('wires:\n  - a1 -- a3\n');
+    const svg = draw('wires:\n  - 1,1 -- 3,1\n');
 
     expect(svg).toContain('cf-wire-hits');
     expect(svg).toContain('class="cf-wire-hit" data-line="2"');
@@ -767,7 +767,7 @@ describe('配線を掴む', () => {
   });
 
   test('puts the grab layer under the parts, so a part still takes the click', () => {
-    const svg = draw('parts:\n  R1: resistor a1 a3\nwires:\n  - a1 -- c1\n');
+    const svg = draw('parts:\n  R1: resistor 1,1 3,1\nwires:\n  - 1,1 -- 1,3\n');
 
     expect(svg.indexOf('cf-wire-hits')).toBeLessThan(svg.indexOf('cf-parts'));
   });
@@ -779,7 +779,7 @@ describe('図と同じ見え方にする細工', () => {
     // 実機で「ammeter, \"A\" を円の中心に表示する (現在は微妙に下にずれている)。
     // meter 類は全て同様に直す」。9px の字は、基準線を大文字の高さの半分だけ
     // 下げたところで丸の中心に来る。
-    const svg = draw('parts:\n  A1: ammeter c1 c3\n');
+    const svg = draw('parts:\n  A1: ammeter 1,3 3,3\n');
     const centre = Number(/translate\(\d+,(\d+)\) rotate/.exec(svg)?.[1] ?? 0);
     const mark = /<text x="[-\d.]+" y="([-\d.]+)"[^>]*class="cf-mark"[^>]*>A</.exec(svg);
 
@@ -792,7 +792,7 @@ describe('図と同じ見え方にする細工', () => {
     // ピンの番号は地の色で縁を取ってあり (`halo`)、箱の縁に近すぎると線を消す。
     // 箱の中は既に地の色で塗ってあるので、中に書く字に縁取りは要らない。
     for (const type of ['dip40', 'sip40']) {
-      const svg = draw(`parts:\n  U1: ${type} c3\n`);
+      const svg = draw(`parts:\n  U1: ${type} 3,3\n`);
       const legs = [...svg.matchAll(/<text[^>]*class="cf-pin-name"[^>]*>/g)].map((one) => one[0]);
 
       expect(legs.length).toBeGreaterThan(0);
@@ -804,7 +804,7 @@ describe('図と同じ見え方にする細工', () => {
     // 実機で「transformer, ピン名の位置を変更する。図 1 に近づける」。
     // 図 (KiCad の `Transformer_1P_1S`) は番号を**ピンの棒の上**に置く。
     // 棒の外 (丸の更に外側) に出すと、巻線から遠くてどちらの端か読みにくい。
-    const svg = draw('parts:\n  T1: transformer c3\n');
+    const svg = draw('parts:\n  T1: transformer 3,3\n');
     const named = [...svg.matchAll(
       /<text x="(-?[\d.]+)" y="(-?[\d.]+)"([^>]*)class="cf-pin-name"[^>]*>(\w+)</g,
     )].map(([, x, y, rest, name]) => ({ x: Number(x), y: Number(y), rest: rest ?? '', name }));
@@ -823,7 +823,7 @@ describe('図と同じ見え方にする細工', () => {
     // 実機で「regulator, GND を箱の中に表示する。図 1 に近づける」。
     // 図 (circuitikz) も KiCad も箱の中に立てて書く。横に寝かせると IN・OUT と
     // ぶつかるので、**縦に回して**下の縁の内側へ入れる。
-    const svg = draw('parts:\n  U1: regulator c3\n');
+    const svg = draw('parts:\n  U1: regulator 3,3\n');
     const gnd = /<text x="(-?[\d.]+)" y="(-?[\d.]+)"[^>]*transform="rotate\((-?\d+)[^)]*\)"[^>]*>GND</
       .exec(svg);
     const halfH = Number(/<rect class="cf-glyph" x="-?[\d.]+" y="(-[\d.]+)"/.exec(svg)?.[1] ?? 0);
@@ -837,9 +837,9 @@ describe('図と同じ見え方にする細工', () => {
   });
 
   test('runs the lead up to the body on both sides of a lopsided part', () => {
-    // 実機で「配線と部品の間を接続する」。c1 と c3 は 68px 離れていて中心は 54。
+    // 実機で「配線と部品の間を接続する」。1,3 と 3,3 は 68px 離れていて中心は 54。
     // 電解コンデンサは左が真っ直ぐな極板 (3)、右が曲がった極板 (5)。
-    const svg = draw('parts:\n  EC1: ecap c1 c3\n');
+    const svg = draw('parts:\n  EC1: ecap 1,3 3,3\n');
     const leads = [...svg.matchAll(/<line class="cf-lead" x1="([\d.]+)" y1="[\d.]+" x2="([\d.]+)"/g)]
       .map(([, from, to]) => [Number(from), Number(to)]);
 
@@ -850,7 +850,7 @@ describe('図と同じ見え方にする細工', () => {
     // 実機で「opamp, 出力をピンと接続する」。三角の中に ± を書くぶん幅を
     // 取っていたので、**出口の側**に隙間が空いていた。箱でない記号の縁は
     // 記号そのものが持っている (三角の先は 8)。
-    const svg = draw('parts:\n  U1: opamp c3\n');
+    const svg = draw('parts:\n  U1: opamp 3,3\n');
     const right = [...svg.matchAll(/<line class="cf-pin" x1="([\d.]+)"/g)].map(([, x]) => Number(x));
 
     expect(Math.min(...right)).toBe(8);
@@ -860,7 +860,7 @@ describe('図と同じ見え方にする細工', () => {
     // 実機で「配線と部品の間を接続する」。`nor` は前に反転の丸が付くぶん幅を
     // 取るので、1 つの数で両側を出すと**入口の側に大きな隙間**が空いていた。
     const stubIn = (type: string): number => {
-      const svg = draw(`parts:\n  G1: ${type} c3\n`);
+      const svg = draw(`parts:\n  G1: ${type} 3,3\n`);
       const left = [...svg.matchAll(/<line class="cf-pin" x1="(-[\d.]+)"/g)].map(([, x]) => Number(x));
       return Math.max(...left);
     };
@@ -875,7 +875,7 @@ describe('図と同じ見え方にする細工', () => {
   test('writes the header number beside each board leg, as the figure does', () => {
     // 実機で「pico のピン番号が付いていない」(升目)。図と同じ字を出す —
     // 左の列は番号が先、右の列は名前が先 (番号は常に箱の外側の端)。
-    const svg = draw('parts:\n  PI1: pico c3\n');
+    const svg = draw('parts:\n  PI1: pico 3,3\n');
 
     expect(svg).toContain('>01 GP0<');
     expect(svg).toContain('>VBUS 40<');
@@ -887,7 +887,7 @@ describe('図と同じ見え方にする細工', () => {
   test('widens the board box for the numbered legs, so the two columns stay apart', () => {
     // 番号のぶん字が伸びるので、箱もそのぶん広げないと左右の列がぶつかる。
     // いちばん長い組は 6 行目の `06 GP4` と `ADC_VREF 35`。
-    const halfW = -Number(/<rect class="cf-glyph" x="(-[\d.]+)"/.exec(draw('parts:\n  PI1: pico c3\n'))?.[1] ?? 0);
+    const halfW = -Number(/<rect class="cf-glyph" x="(-[\d.]+)"/.exec(draw('parts:\n  PI1: pico 3,3\n'))?.[1] ?? 0);
     const both = (textWidth('06 GP4') + textWidth('ADC_VREF 35')) * 8;
 
     expect(halfW * 2).toBeGreaterThan(both);
@@ -896,7 +896,7 @@ describe('図と同じ見え方にする細工', () => {
   test('runs only the core lead to the centre of the coax, not the shield', () => {
     // 実機で「SMA の図が間違っている。アースは中心に接続しない」。図と同じで、
     // 中心導体だけが中心の点まで届き、外皮のピンは丸の縁で止まる。
-    const svg = draw('parts:\n  J1: sma c3\n');
+    const svg = draw('parts:\n  J1: sma 3,3\n');
     const legs = [...svg.matchAll(/<line class="cf-pin" x1="([-\d.]+)" y1="([-\d.]+)"/g)]
       .map(([, px, py]) => ({ x: Number(px), y: Number(py) }));
 
@@ -923,7 +923,7 @@ describe('箱の中の字は重ならない', () => {
   };
 
   test('keeps the type name clear of the pin names written inside the box', () => {
-    const svg = draw('parts:\n  PI1: pico a1\n');
+    const svg = draw('parts:\n  PI1: pico 1,1\n');
     // 立てて書く名前 (`GND`) は横幅を持たないので、横に伸びるものだけ見る。
     const names = [...svg.matchAll(/<text [^>]*class="cf-pin-name"[^>]*>[^<]*<\/text>/g)]
       .map((found) => found[0])
@@ -1011,7 +1011,7 @@ describe('箱の中の字は重ならない', () => {
       const turns = partType !== null && orientOf(partType).rotate ? ROTATIONS : [0];
       return turns.flatMap((rotate) => {
         const words = turnWords(rotate, false);
-        const svg = draw(`parts:\n  U1: ${type} f8${words}\n`);
+        const svg = draw(`parts:\n  U1: ${type} 8,6${words}\n`);
         const rects = [
           // 箱の中の字は縁取りを持たない (`drawPin`)。外の字は升目の上なので見ない。
           ...[...svg.matchAll(/<text [^>]*class="cf-pin-name"[^>]*>[^<]*<\/text>/g)]
@@ -1038,7 +1038,7 @@ describe('箱の中の字は重ならない', () => {
   test('moves the row letters out from under a part that reaches left of the grid', () => {
     // 1 列目に置いたマイコンボードはピンの名前が升目の左へ出る。決め打ちの位置だと
     // **行の字が箱の下に隠れて**、図の行を数えられなくなる。
-    const svg = draw('parts:\n  PI1: pico a1\n');
+    const svg = draw('parts:\n  PI1: pico 1,1\n');
     const at = Number(/<g transform="translate\((-?[\d.]+),/.exec(svg)?.[1] ?? NaN);
     const letters = [...svg.matchAll(/<text x="([-\d.]+)"[^>]*class="cf-axis">[a-z]+<\/text>/g)]
       .map((found) => Number(found[1]));

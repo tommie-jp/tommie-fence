@@ -14,17 +14,17 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.504,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.504,-1.2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.504,-2.4) {c};
-\coordinate (a1) at (0,0);
-\coordinate (a3) at (2.4,0);
-\coordinate (c3) at (2.4,-2.4);
-\coordinate (a4) at (3.6,0);
-\draw (a1) node[ocirc]{} node[above left]{IN}; % line 3
-\draw (a1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (a3); % line 4
-\draw (a3) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (c3); % line 5
-\draw (a4) node[ocirc]{} node[above left]{OUT}; % line 6
-\node[ground] at (c3) {}; % line 7
-\draw (a3) -- (a4); % line 9
-\node[circ] at (a3) {};
+\coordinate (x1y1) at (0,0);
+\coordinate (x3y1) at (2.4,0);
+\coordinate (x3y3) at (2.4,-2.4);
+\coordinate (x4y1) at (3.6,0);
+\draw (x1y1) node[ocirc]{} node[above left]{IN}; % line 3
+\draw (x1y1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x3y1); % line 4
+\draw (x3y1) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (x3y3); % line 5
+\draw (x4y1) node[ocirc]{} node[above left]{OUT}; % line 6
+\node[ground] at (x3y3) {}; % line 7
+\draw (x3y1) -- (x4y1); % line 9
+\node[circ] at (x3y1) {};
 \path (4.8,-8.382) rectangle (12.776,0.593); % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,0) {X}; % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,-0.487) {X}; % line 11

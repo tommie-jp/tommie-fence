@@ -10,7 +10,7 @@ import { compileCircuit } from './index.ts';
  */
 
 /** 片方しかつないでいない抵抗。図は描けるが、組んでも回路にならない。 */
-const LOOSE = ['parts:', '  IN: port a1', '  R1: resistor a1 a3 1k', 'wires:', '  - a1 -- a3', ''].join('\n');
+const LOOSE = ['parts:', '  IN: port 1,1', '  R1: resistor 1,1 3,1 1k', 'wires:', '  - 1,1 -- 3,1', ''].join('\n');
 
 describe('compileCircuit の erc', () => {
   test('頼まれたら ERC を erc で返す', () => {

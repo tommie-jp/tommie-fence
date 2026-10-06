@@ -7,10 +7,10 @@ import { WIRE_KINDS, setWireField, wireFields } from './wireField.ts';
  */
 const SOURCE = [
   'parts:',
-  '  R1: resistor a1 a3',
+  '  R1: resistor 1,1 3,1',
   'wires:',
-  '  - a3 -| c5',
-  '  - c5 -- e5',
+  '  - 3,1 -| 5,3',
+  '  - 5,3 -- 5,5',
   '',
 ].join('\n');
 
@@ -38,7 +38,7 @@ describe('setWireField', () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.value.edits).toEqual([{ line: 4, column: 7, length: 2, text: '|-' }]);
+    expect(result.value.edits).toEqual([{ line: 4, column: 8, length: 2, text: '|-' }]);
   });
 
   test('changes nothing when the fold is already the one asked for', () => {

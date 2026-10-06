@@ -64,7 +64,7 @@ export async function runMovePart(port: EditorPort): Promise<void> {
   if (partId === null) return;
 
   const anchor = anchorOf(fence.source, partId);
-  const written = await port.prompt(port.t('Address to move to (e.g. b3)'), anchor === null ? '' : formatAddress(anchor));
+  const written = await port.prompt(port.t('Address to move to (e.g. 3,2)'), anchor === null ? '' : formatAddress(anchor));
   if (written === null) return;
 
   const to = parseAddress(written.trim());

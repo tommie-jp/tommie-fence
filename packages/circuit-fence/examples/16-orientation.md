@@ -6,16 +6,16 @@
 ```circuit
 title: 図01 記号を回す
 parts:
-  Q1: npn b2
-  Q2: npn b5 r90
-  Q3: npn b8 r180
-  Q4: npn b11 r270
+  Q1: npn 2,2
+  Q2: npn 5,2 r90
+  Q3: npn 8,2 r180
+  Q4: npn 11,2 r270
 notes:
-  - text d2 blue center: "npn b2"
-  - text d5 blue center: "npn b5 r90"
-  - text d8 blue center: "npn b8 r180"
-  - text d11 blue center: "npn b11 r270"
-  - source a13 blue
+  - text 2,4 blue center: "npn b2"
+  - text 5,4 blue center: "npn b5 r90"
+  - text 8,4 blue center: "npn b8 r180"
+  - text 11,4 blue center: "npn b11 r270"
+  - source 13,1 blue
 style:
   grid: on
 ```
@@ -32,16 +32,16 @@ style:
 ```circuit
 title: 図02 裏返す
 parts:
-  U1: opamp b3
-  U2: opamp b8 mirror
-  Q1: npn f3
-  Q2: npn f8 r180 mirror
+  U1: opamp 3,2
+  U2: opamp 8,2 mirror
+  Q1: npn 3,6
+  Q2: npn 8,6 r180 mirror
 notes:
-  - text d3 blue center: "opamp b3"
-  - text d8 blue center: "opamp b8 mirror"
-  - text h3 blue center: "npn f3"
-  - text h8 blue center: "npn f8 r180 mirror"
-  - source a11 blue
+  - text 3,4 blue center: "opamp b3"
+  - text 8,4 blue center: "opamp b8 mirror"
+  - text 3,8 blue center: "npn f3"
+  - text 8,8 blue center: "npn f8 r180 mirror"
+  - source 11,1 blue
 style:
   grid: on
 ```
@@ -59,18 +59,18 @@ style:
 ```circuit
 title: 図03 回した記号に配線を引く
 parts:
-  IN:  port a5
-  R1:  resistor a5 b5 10k
-  Q1:  npn c5 r90
-  RC:  resistor c7 c9 1k
-  VCC: vcc c9
-  G1:  ground c3 r90
+  IN:  port 5,1
+  R1:  resistor 5,1 5,2 10k
+  Q1:  npn 5,3 r90
+  RC:  resistor 7,3 9,3 1k
+  VCC: vcc 9,3
+  G1:  ground 3,3 r90
 wires:
-  - b5 -- Q1.b
-  - Q1.c -- c7
-  - Q1.e -- c3
+  - 5,2 -- Q1.b
+  - Q1.c -- 7,3
+  - Q1.e -- 3,3
 notes:
-  - source a11 blue
+  - source 11,1 blue
 style:
   grid: on
 ```

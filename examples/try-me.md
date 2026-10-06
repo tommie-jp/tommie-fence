@@ -59,15 +59,15 @@ That is the whole difference from the breadboard above.
 ```circuit
 title: RC low-pass
 parts:
-  IN:  port a1
-  R1:  resistor a1 a2 10k
-  C1:  capacitor a2 b2 100n
-  OUT: port a3
-  G1:  ground b2
+  IN:  port 1,1
+  R1:  resistor 1,1 2,1 10k
+  C1:  capacitor 2,1 2,2 100n
+  OUT: port 3,1
+  G1:  ground 2,2
 wires:
-  - a2 -- a3
+  - 2,1 -- 3,1
 notes:
-  - source a4 blue
+  - source 4,1 blue
 style:
   grid: on
 ```

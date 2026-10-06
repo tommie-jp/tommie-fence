@@ -19,18 +19,18 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
-\coordinate (a1) at (0,0);
-\coordinate (a3) at (4,0);
-\coordinate (a4) at (6,0);
-\coordinate (a6) at (10,0);
-\coordinate (c1) at (0,-4);
-\coordinate (c3) at (4,-4);
-\coordinate (c4) at (6,-4);
-\coordinate (c6) at (10,-4);
-\draw (a1) to[R, l_=$R_{1}$] (a3); % line 3
-\draw (a4) to[R, l_=$R_{2}$] (a6); % line 4
-\draw (c1) to[R, l_=$R_{3}$] (c3); % line 5
-\draw (c4) to[R, l_=$R_{4}$] (c6); % line 6
+\coordinate (x1y1) at (0,0);
+\coordinate (x3y1) at (4,0);
+\coordinate (x4y1) at (6,0);
+\coordinate (x6y1) at (10,0);
+\coordinate (x1y3) at (0,-4);
+\coordinate (x3y3) at (4,-4);
+\coordinate (x4y3) at (6,-4);
+\coordinate (x6y3) at (10,-4);
+\draw (x1y1) to[R, l_=$R_{1}$] (x3y1); % line 3
+\draw (x4y1) to[R, l_=$R_{2}$] (x6y1); % line 4
+\draw (x1y3) to[R, l_=$R_{3}$] (x3y3); % line 5
+\draw (x4y3) to[R, l_=$R_{4}$] (x6y3); % line 6
 \draw[circuitnotered] (2,0) circle (0.9); % line 8
 \draw[circuitnoteblue] (8,0) circle (0.9); % line 9
 \draw[circuitnotegreen] (2,-4) circle (0.9); % line 10

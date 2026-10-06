@@ -19,7 +19,7 @@ const typeOf = (line: string) => {
 
 describe('種類', () => {
   test('names the pins of a DIP whose model is in the table, and still takes the numbers', () => {
-    const timer = typeOf('U1: dip8 c2 NE555')!;
+    const timer = typeOf('U1: dip8 2,3 NE555')!;
 
     expect(timer.pinLabels).toEqual(['GND', 'TRIG', 'OUT', 'RESET', 'CONT', 'THRES', 'DISCH', 'VCC']);
     expect(timer.pinNumbers).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
@@ -29,11 +29,11 @@ describe('種類', () => {
   });
 
   test('pads the numbers to the width of the largest one, as the Pico does', () => {
-    expect(typeOf('U1: dip16 c2 CD4017B')?.pinNumbers?.slice(0, 2)).toEqual(['01', '02']);
+    expect(typeOf('U1: dip16 2,3 CD4017B')?.pinNumbers?.slice(0, 2)).toEqual(['01', '02']);
   });
 
   test('keeps a number a number even when a name could be read as one', () => {
-    const counter = typeOf('U1: dip16 c2 CD4017B')!;
+    const counter = typeOf('U1: dip16 2,3 CD4017B')!;
 
     // 5 番のピンは Q6。出力 Q5 は 1 番。
     expect(lookupPin(counter, '5')).toBe('pin 5');
@@ -41,7 +41,7 @@ describe('種類', () => {
   });
 
   test('does not take a name printed on more than one pin (TL071 NC)', () => {
-    const amp = typeOf('U1: dip8 c2 TL071')!;
+    const amp = typeOf('U1: dip8 2,3 TL071')!;
 
     expect(lookupPin(amp, 'NC')).toBeNull();
     expect(lookupPin(amp, '1')).toBe('pin 1');
@@ -52,7 +52,7 @@ describe('種類', () => {
   });
 
   test('draws only numbers for a model not in the table, for a count that does not match and for no model', () => {
-    for (const line of ['U1: dip8 c2 LM9999', 'U1: dip14 c2 NE555', 'U1: dip8 c2']) {
+    for (const line of ['U1: dip8 2,3 LM9999', 'U1: dip14 2,3 NE555', 'U1: dip8 2,3']) {
       const type = typeOf(line)!;
       expect(type.pinLabels).toBeUndefined();
       expect(type.options).not.toContain('hide numbers');
@@ -60,8 +60,8 @@ describe('種類', () => {
   });
 
   test('hides the numbers circuitikz would print and widens the box for the names', () => {
-    const named = typeOf('U1: dip8 c2 NE555')!;
-    const plain = typeOf('U1: dip8 c2')!;
+    const named = typeOf('U1: dip8 2,3 NE555')!;
+    const plain = typeOf('U1: dip8 2,3')!;
 
     expect(named.options).toContain('hide numbers');
     expect(named.options?.some((option) => option.includes('dipchip/width='))).toBe(true);
@@ -76,22 +76,22 @@ describe('箱の幅', () => {
     Number(/dipchip\/width=([\d.]+)/.exec(typeOf(line)?.options?.join(' ') ?? '')?.[1] ?? 0);
 
   test('grows with the longest name and leaves room for the part number when lying down', () => {
-    expect(widthOf('U1: dip16 c2 CD4017B')).toBeGreaterThan(widthOf('U1: dip14 c2 CD4071B'));
-    expect(widthOf('U1: dip8 c2 NE555 r90')).toBeGreaterThan(widthOf('U1: dip8 c2 NE555'));
-    expect(widthOf('U1: dip8 c2 NE555 r270')).toBe(widthOf('U1: dip8 c2 NE555 r90'));
-    expect(widthOf('U1: dip8 c2 NE555 r180')).toBe(widthOf('U1: dip8 c2 NE555'));
+    expect(widthOf('U1: dip16 2,3 CD4017B')).toBeGreaterThan(widthOf('U1: dip14 2,3 CD4071B'));
+    expect(widthOf('U1: dip8 2,3 NE555 r90')).toBeGreaterThan(widthOf('U1: dip8 2,3 NE555'));
+    expect(widthOf('U1: dip8 2,3 NE555 r270')).toBe(widthOf('U1: dip8 2,3 NE555 r90'));
+    expect(widthOf('U1: dip8 2,3 NE555 r180')).toBe(widthOf('U1: dip8 2,3 NE555'));
   });
 });
 
 describe('図とネットリスト', () => {
   const timer = circuit(
     'parts:',
-    '  U1: dip8 c4 NE555',
-    '  R1: resistor a1 a3 10k',
-    '  C1: capacitor e1 e3 10n',
+    '  U1: dip8 4,3 NE555',
+    '  R1: resistor 1,1 3,1 10k',
+    '  C1: capacitor 1,5 3,5 10n',
     'wires:',
-    '  - a3 |- U1.TRIG',
-    '  - e3 |- U1.4',
+    '  - 3,1 |- U1.TRIG',
+    '  - 3,5 |- U1.4',
   );
 
   test('wires to a pin by its name and lists it by its name', () => {
@@ -122,18 +122,18 @@ describe('図とネットリスト', () => {
 
   test('keeps the names upright on all four turns', () => {
     for (const turn of ['', ' r90', ' r180', ' r270']) {
-      const result = compileCircuit(circuit('parts:', `  U1: dip8 c4 NE555${turn}`));
+      const result = compileCircuit(circuit('parts:', `  U1: dip8 4,3 NE555${turn}`));
       expect(result.errors).toEqual([]);
       expect(result.notes.filter((note) => /GND|VCC/.test(note.text))).toHaveLength(2);
     }
   });
 
   test('refuses to mirror a named DIP, as it refuses a plain one', () => {
-    expect(compileCircuit(circuit('parts:', '  U1: dip8 c4 NE555 mirror')).errors).not.toEqual([]);
+    expect(compileCircuit(circuit('parts:', '  U1: dip8 4,3 NE555 mirror')).errors).not.toEqual([]);
   });
 
   test('tells which model was not in the table and draws numbers, without calling it an error', () => {
-    const result = compileCircuit(circuit('parts:', '  U1: dip8 c4 LM9999'));
+    const result = compileCircuit(circuit('parts:', '  U1: dip8 4,3 LM9999'));
 
     expect(result.errors).toEqual([]);
     const notice = result.notices.map((one) => one.message).join('\n');
@@ -144,7 +144,7 @@ describe('図とネットリスト', () => {
   });
 
   test('says nothing when no model is written', () => {
-    expect(compileCircuit(circuit('parts:', '  U1: dip8 c4')).notices).toEqual([]);
+    expect(compileCircuit(circuit('parts:', '  U1: dip8 4,3')).notices).toEqual([]);
   });
 
   test('does not report the pins left unused', () => {
@@ -155,12 +155,12 @@ describe('図とネットリスト', () => {
   test('calls a pin printed with a shared name (NC) by its number, in the netlist and on the map', () => {
     const source = circuit(
       'parts:',
-      '  U1: dip8 c4 TL071',
+      '  U1: dip8 4,3 TL071',
       'wires:',
-      '  - a1 |- U1.1',
-      '  - e1 |- U1.5',
-      '  - a7 -| U1.8',
-      '  - e7 -| U1.OUT',
+      '  - 1,1 |- U1.1',
+      '  - 1,5 |- U1.5',
+      '  - 7,1 -| U1.8',
+      '  - 7,5 -| U1.OUT',
     );
     const refs = compileCircuit(source).netlist.flatMap((net) => net.refs);
 
@@ -171,16 +171,16 @@ describe('図とネットリスト', () => {
   });
 
   test('wires to a name with a slash in it (CD4013B /Q1, MCP3008 CS/SHDN)', () => {
-    for (const [chip, pin] of [['dip14 c4 CD4013B', '/Q1'], ['dip16 c4 MCP3008', 'CS/SHDN']] as const) {
-      const result = compileCircuit(circuit('parts:', `  U1: ${chip}`, 'wires:', `  - a1 |- U1.${pin}`));
+    for (const [chip, pin] of [['dip14 4,3 CD4013B', '/Q1'], ['dip16 4,3 MCP3008', 'CS/SHDN']] as const) {
+      const result = compileCircuit(circuit('parts:', `  U1: ${chip}`, 'wires:', `  - 1,1 |- U1.${pin}`));
       expect(result.errors, chip).toEqual([]);
       expect(result.netlist.flatMap((net) => net.refs), chip).toContain(`U1.${pin}`);
     }
   });
 
   test("wires to a name with a prime or mixed case in it (74HC595 QH', CD4511B Oa)", () => {
-    for (const [chip, pin] of [['dip16 c4 74HC595', "QH'"], ['dip16 c4 CD4511B', 'Oa'], ['dip16 c4 CD74HC283', 'COUT']] as const) {
-      const result = compileCircuit(circuit('parts:', `  U1: ${chip}`, 'wires:', `  - a1 |- U1.${pin}`));
+    for (const [chip, pin] of [['dip16 4,3 74HC595', "QH'"], ['dip16 4,3 CD4511B', 'Oa'], ['dip16 4,3 CD74HC283', 'COUT']] as const) {
+      const result = compileCircuit(circuit('parts:', `  U1: ${chip}`, 'wires:', `  - 1,1 |- U1.${pin}`));
       expect(result.errors, chip).toEqual([]);
       expect(result.netlist.flatMap((net) => net.refs), chip).toContain(`U1.${pin}`);
     }
@@ -188,13 +188,13 @@ describe('図とネットリスト', () => {
 
   test('refuses the bare letters of the CD4511B, which would name an input or an output depending on case', () => {
     for (const pin of ['A', 'a']) {
-      const result = compileCircuit(circuit('parts:', '  U1: dip16 c4 CD4511B', 'wires:', `  - a1 |- U1.${pin}`));
+      const result = compileCircuit(circuit('parts:', '  U1: dip16 4,3 CD4511B', 'wires:', `  - 1,1 |- U1.${pin}`));
       expect(result.errors.length, pin).toBeGreaterThan(0);
     }
   });
 
   test('offers the pins on the map by the printed names', () => {
-    const map = gridMap(circuit('parts:', '  U1: dip8 c4 NE555'));
+    const map = gridMap(circuit('parts:', '  U1: dip8 4,3 NE555'));
     const names = (map.chips[0]?.pins ?? []).map((pin) => pin.name);
 
     expect(names).toContain('TRIG');
@@ -204,7 +204,7 @@ describe('図とネットリスト', () => {
 
 describe('3SK291 (面実装の 4 ピンを変換基板に載せた形)', () => {
   test('names the four pins of a dip4 whose model is 3SK291', () => {
-    const fet = typeOf('Q1: dip4 c2 3SK291')!;
+    const fet = typeOf('Q1: dip4 2,3 3SK291')!;
 
     expect(fet.pinLabels).toEqual(['G1', 'G2', 'D', 'S']);
     expect(lookupPin(fet, 'G2')).toBe('pin 2');

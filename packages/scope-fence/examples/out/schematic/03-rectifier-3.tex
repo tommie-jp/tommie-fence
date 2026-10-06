@@ -6,41 +6,41 @@
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
 \ctikzset{grounds/scale=1.36}
-\coordinate (e4) at (6,-8);
-\coordinate (e6) at (10,-8);
-\coordinate (e3) at (4,-8);
-\coordinate (b3) at (4,-2);
-\coordinate (e7) at (12,-8);
-\coordinate (b7) at (12,-2);
-\coordinate (h3) at (4,-14);
-\coordinate (h7) at (12,-14);
-\coordinate (b9) at (16,-2);
-\coordinate (h9) at (16,-14);
-\coordinate (b11) at (20,-2);
-\coordinate (h11) at (20,-14);
-\draw (e4) to[esource, l_=$\mathrm{W1}$] (e6); % line 3
+\coordinate (x4y5) at (6,-8);
+\coordinate (x6y5) at (10,-8);
+\coordinate (x3y5) at (4,-8);
+\coordinate (x3y2) at (4,-2);
+\coordinate (x7y5) at (12,-8);
+\coordinate (x7y2) at (12,-2);
+\coordinate (x3y8) at (4,-14);
+\coordinate (x7y8) at (12,-14);
+\coordinate (x9y2) at (16,-2);
+\coordinate (x9y8) at (16,-14);
+\coordinate (x11y2) at (20,-2);
+\coordinate (x11y8) at (20,-14);
+\draw (x4y5) to[esource, l_=$\mathrm{W1}$] (x6y5); % line 3
 \draw (7.82,-8) sin ++(0.09,0.09) cos ++(0.09,-0.09) sin ++(0.09,-0.09) cos ++(0.09,0.09); % line 3
-\draw (e3) to[D, l_=$D_{1}$] (b3); % line 4
-\draw (e7) to[D, l_=$D_{2}$] (b7); % line 5
-\draw (h3) to[D, l_=$D_{3}$] (e3); % line 6
-\draw (h7) to[D, l_=$D_{4}$] (e7); % line 7
-\draw (b9) to[cC, l_=$C_{1}$, a^=$100\,\mu\mathrm{F}$] (h9); % line 8
-\draw (b11) to[R, l_=$R_{L}$, a^=$1\mbox{.}5\,\mathrm{k}\Omega$] (h11); % line 9
-\node[ground] at (h9) {}; % line 10
-\draw (e3) -- (e4); % line 12
-\draw (e6) -- (e7); % line 13
-\draw (b3) -- (b7); % line 14
-\draw (b7) -- (b9); % line 15
-\draw (b9) -- (b11); % line 16
-\draw (h3) -- (h7); % line 17
-\draw (h7) -- (h9); % line 18
-\draw (h9) -- (h11); % line 19
-\node[circ] at (e3) {};
-\node[circ] at (e7) {};
-\node[circ] at (b7) {};
-\node[circ] at (h7) {};
-\node[circ] at (b9) {};
-\node[circ] at (h9) {};
+\draw (x3y5) to[D, l_=$D_{1}$] (x3y2); % line 4
+\draw (x7y5) to[D, l_=$D_{2}$] (x7y2); % line 5
+\draw (x3y8) to[D, l_=$D_{3}$] (x3y5); % line 6
+\draw (x7y8) to[D, l_=$D_{4}$] (x7y5); % line 7
+\draw (x9y2) to[cC, l_=$C_{1}$, a^=$100\,\mu\mathrm{F}$] (x9y8); % line 8
+\draw (x11y2) to[R, l_=$R_{L}$, a^=$1\mbox{.}5\,\mathrm{k}\Omega$] (x11y8); % line 9
+\node[ground] at (x9y8) {}; % line 10
+\draw (x3y5) -- (x4y5); % line 12
+\draw (x6y5) -- (x7y5); % line 13
+\draw (x3y2) -- (x7y2); % line 14
+\draw (x7y2) -- (x9y2); % line 15
+\draw (x9y2) -- (x11y2); % line 16
+\draw (x3y8) -- (x7y8); % line 17
+\draw (x7y8) -- (x9y8); % line 18
+\draw (x9y8) -- (x11y8); % line 19
+\node[circ] at (x3y5) {};
+\node[circ] at (x7y5) {};
+\node[circ] at (x7y2) {};
+\node[circ] at (x7y8) {};
+\node[circ] at (x9y2) {};
+\node[circ] at (x9y8) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(10.058,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

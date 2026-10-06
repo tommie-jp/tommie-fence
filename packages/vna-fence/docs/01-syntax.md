@@ -43,16 +43,16 @@ traces:
 ```circuit
 title: 回路図01 図01 の等価回路 (0 Ω のスルー)
 parts:
-  J1: sma c2 mirror CH0
-  R1: resistor c4 c6 0
-  J2: sma c8 CH1
-  G1: ground d2
-  G2: ground d8
+  J1: sma 2,3 mirror CH0
+  R1: resistor 4,3 6,3 0
+  J2: sma 8,3 CH1
+  G1: ground 2,4
+  G2: ground 8,4
 wires:
-  - J1.1 -- c4
-  - c6 -- J2.1
-  - J1.2 -- d2
-  - J2.2 -- d8
+  - J1.1 -- 4,3
+  - 6,3 -- J2.1
+  - J1.2 -- 2,4
+  - J2.2 -- 8,4
 ```
 
 ![回路図01 図01 の等価回路 (0 Ω のスルー)](out/schematic/01-syntax-1.png)
@@ -109,20 +109,20 @@ markers:
 ```circuit
 title: 回路図02 図02 の等価回路 (パイ型ローパス)
 parts:
-  J1: sma c2 mirror CH0
-  C1: capacitor c4 e4 47p
-  L1: inductor c5 c7 235n
-  C2: capacitor c8 e8 47p
-  J2: sma c10 CH1
-  G1: ground d2
-  G2: ground d10
-  G3: ground e4
-  G4: ground e8
+  J1: sma 2,3 mirror CH0
+  C1: capacitor 4,3 4,5 47p
+  L1: inductor 5,3 7,3 235n
+  C2: capacitor 8,3 8,5 47p
+  J2: sma 10,3 CH1
+  G1: ground 2,4
+  G2: ground 10,4
+  G3: ground 4,5
+  G4: ground 8,5
 wires:
-  - J1.1 -- c4 -- c5
-  - c7 -- c8 -- J2.1
-  - J1.2 -- d2
-  - J2.2 -- d10
+  - J1.1 -- 4,3 -- 5,3
+  - 7,3 -- 8,3 -- J2.1
+  - J1.2 -- 2,4
+  - J2.2 -- 10,4
 ```
 
 ![回路図02 図02 の等価回路 (パイ型ローパス)](out/schematic/01-syntax-2.png)
@@ -173,18 +173,18 @@ markers:
 ```circuit
 title: 回路図03 図03 の等価回路 (1000 pF、先を短絡)
 parts:
-  J1: sma c2 mirror CH0
-  C1: capacitor c4 c6 1000p
-  R1: resistor c6 c8 0.1 l=$\mathrm{ESR}$
-  L1: inductor c8 c10 1.2n l=$\mathrm{ESL}$
-  G1: ground d2
-  G2: ground d11
+  J1: sma 2,3 mirror CH0
+  C1: capacitor 4,3 6,3 1000p
+  R1: resistor 6,3 8,3 0.1 l=$\mathrm{ESR}$
+  L1: inductor 8,3 10,3 1.2n l=$\mathrm{ESL}$
+  G1: ground 2,4
+  G2: ground 11,4
 wires:
-  - J1.1 -- c4
-  - c10 -- c11 -- d11
-  - J1.2 -- d2
+  - J1.1 -- 4,3
+  - 10,3 -- 11,3 -- 11,4
+  - J1.2 -- 2,4
 notes:
-  - text c11f1 left small: 短絡
+  - text 11.1,3.5 left small: 短絡
 ```
 
 ![回路図03 図03 の等価回路 (1000 pF、先を短絡)](out/schematic/01-syntax-3.png)
@@ -299,15 +299,15 @@ traces:
 ```circuit
 title: 回路図05 図05 の等価回路 (2 m のケーブル、先を開放)
 parts:
-  J1: sma c2 mirror CH0
-  T1: tline c4 c7 50 l=$\mathrm{2m}$
-  G1: ground d2
+  J1: sma 2,3 mirror CH0
+  T1: tline 4,3 7,3 50 l=$\mathrm{2m}$
+  G1: ground 2,4
 wires:
-  - J1.1 -- c4
-  - c7 -- c8
-  - J1.2 -- d2
+  - J1.1 -- 4,3
+  - 7,3 -- 8,3
+  - J1.2 -- 2,4
 notes:
-  - text c8a2 left small: 開放
+  - text 8.2,3 left small: 開放
 ```
 
 ![回路図05 図05 の等価回路 (2 m のケーブル、先を開放)](out/schematic/01-syntax-4.png)
@@ -445,18 +445,18 @@ notes:
 ```circuit
 title: 回路図06 図06 の等価回路 (直列 RLC、先を短絡)
 parts:
-  J1: sma c2 mirror CH0
-  R1: resistor c4 c6 38
-  L1: inductor c6 c8 180n
-  C1: capacitor c8 c10 0.77p
-  G1: ground d2
-  G2: ground d11
+  J1: sma 2,3 mirror CH0
+  R1: resistor 4,3 6,3 38
+  L1: inductor 6,3 8,3 180n
+  C1: capacitor 8,3 10,3 0.77p
+  G1: ground 2,4
+  G2: ground 11,4
 wires:
-  - J1.1 -- c4
-  - c10 -- c11 -- d11
-  - J1.2 -- d2
+  - J1.1 -- 4,3
+  - 10,3 -- 11,3 -- 11,4
+  - J1.2 -- 2,4
 notes:
-  - text c11f1 left small: 短絡
+  - text 11.1,3.5 left small: 短絡
 ```
 
 ![回路図06 図06 の等価回路 (直列 RLC、先を短絡)](out/schematic/01-syntax-5.png)

@@ -1,15 +1,15 @@
 import { lineEdits } from 'fence-kit';
 import type { GridStep } from 'fence-kit';
-import { formatAddress, parseAddress, rowLetters } from '../model/address.ts';
+import { ADDRESS_RANGE, formatAddress, parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { handleAt, nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import { LIMITS } from '../limits.ts';
 import type { PartSpec } from '../types.ts';
 import { writeFence } from '../write/writeFence.ts';
 import {
-  addressesOf, applyEdits, diffOf, entryOfPart, fail, isOnGrid, keySpanOf, locatePart,
+  FLOW_ADDRESS_REFUSAL, addressesOf, applyEdits, diffOf, entryOfPart, fail, isOnGrid, keySpanOf, locatePart,
+  writesAddressIntoFlow,
 } from './shared.ts';
 import type { Edit, MoveResult, Span } from './shared.ts';
 import { FLOW_DEVICE, isDevicePart, setDeviceField } from './device.ts';
@@ -64,7 +64,7 @@ export function movePart(source: string, handle: string, to: Address, trial = fa
   const off = next.find((address) => !isOnGrid(address));
   if (off) {
     return fail(
-      `${partId} を ${formatAddress(to)} へ動かすと格子の外へ出ます` + ` (a〜${rowLetters(LIMITS.rows - 1)} の ${LIMITS.rows} 行、1〜${LIMITS.columns} 列)`,
+      `${partId} を ${formatAddress(to)} へ動かすと格子の外へ出ます` + ` (番地は ${ADDRESS_RANGE})`,
       part.line,
     );
   }
@@ -91,6 +91,7 @@ export function movePart(source: string, handle: string, to: Address, trial = fa
     ? tokenEdits(doc, lines, handle, part, next)
     : rebuiltEdits(normalized, doc, part, next, lineText);
   if (edits === null) return fail(`${partId} の行から番地を見つけられませんでした`, part.line);
+  if (writesAddressIntoFlow(normalized, edits)) return fail(`${partId}: ${FLOW_ADDRESS_REFUSAL}`, part.line);
 
   return {
     ok: true,

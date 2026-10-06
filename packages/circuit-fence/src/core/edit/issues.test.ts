@@ -5,13 +5,13 @@ const fence = (...lines: readonly string[]): string => lines.join('\n');
 
 describe('issuesOf', () => {
   test('returns nothing for a fence that reads cleanly', () => {
-    const source = fence('parts:', '  R1: resistor a1 a3 10k');
+    const source = fence('parts:', '  R1: resistor 1,1 3,1 10k');
 
     expect(issuesOf(source)).toEqual([]);
   });
 
   test('reports an unreadable line with its number', () => {
-    const source = fence('parts:', '  R1: resistr a1 a3');
+    const source = fence('parts:', '  R1: resistr 1,1 3,1');
 
     const issues = issuesOf(source);
 
@@ -22,14 +22,14 @@ describe('issuesOf', () => {
   });
 
   test('keeps the content of the offending line so the band can show it', () => {
-    const source = fence('parts:', '  R1: resistor z0 a3');
+    const source = fence('parts:', '  R1: resistor z0 3,1');
 
-    expect(issuesOf(source)[0]?.error.text).toBe('  R1: resistor z0 a3');
+    expect(issuesOf(source)[0]?.error.text).toBe('  R1: resistor z0 3,1');
   });
 
   test('reports notices as well, marked apart from errors', () => {
     // `--` でピンへ引くと斜めに入る (base は部品と同じ行に乗っている)。
-    const source = fence('parts:', '  Q1: npn b2', 'wires:', '  - a1 -- Q1.b');
+    const source = fence('parts:', '  Q1: npn 2,2', 'wires:', '  - 1,1 -- Q1.b');
 
     expect(issuesOf(source)).toEqual([
       { kind: 'notice', error: expect.objectContaining({ line: 4 }) },
@@ -39,10 +39,10 @@ describe('issuesOf', () => {
   test('silences notices when the fence asked for it, but never errors', () => {
     const source = fence(
       'parts:',
-      '  Q1: npn b2',
-      '  R1: resistr a1 a3',
+      '  Q1: npn 2,2',
+      '  R1: resistr 1,1 3,1',
       'wires:',
-      '  - a1 -- Q1.b',
+      '  - 1,1 -- Q1.b',
       'style:',
       '  debug: off',
     );
@@ -60,13 +60,13 @@ describe('issuesOf', () => {
 
 describe('shiftIssues', () => {
   test('moves fence lines onto the Markdown lines they came from', () => {
-    const issues = issuesOf(fence('parts:', '  R1: resistr a1 a3'));
+    const issues = issuesOf(fence('parts:', '  R1: resistr 1,1 3,1'));
 
     expect(shiftIssues(issues, 10)[0]?.error.line).toBe(12);
   });
 
   test('moves the related line too, so it points at the Markdown line', () => {
-    const issues = issuesOf(fence('parts:', '  R1: resistor a1 a3', '  R2: resistor a1 a3'));
+    const issues = issuesOf(fence('parts:', '  R1: resistor 1,1 3,1', '  R2: resistor 1,1 3,1'));
 
     const shifted = shiftIssues(issues, 10);
 
@@ -87,7 +87,7 @@ describe('renderIssues', () => {
   });
 
   test('carries the line as a handle so the row can be clicked', () => {
-    const issues = shiftIssues(issuesOf(fence('parts:', '  R1: resistr a1 a3')), 10);
+    const issues = shiftIssues(issuesOf(fence('parts:', '  R1: resistr 1,1 3,1')), 10);
 
     const html = renderIssues(issues);
 
@@ -96,7 +96,7 @@ describe('renderIssues', () => {
   });
 
   test('tells errors and notices apart by class', () => {
-    const source = fence('parts:', '  Q1: npn b2', '  R1: resistr a1 a3', 'wires:', '  - a1 -- Q1.b');
+    const source = fence('parts:', '  Q1: npn 2,2', '  R1: resistr 1,1 3,1', 'wires:', '  - 1,1 -- Q1.b');
 
     const html = renderIssues(issuesOf(source));
 
@@ -119,7 +119,7 @@ describe('renderIssues', () => {
   test('marks the offending spelling inside the line', () => {
     const issues = [{
       kind: 'error' as const,
-      error: { message: '読めません', line: 1, text: 'R1: resistr a1', column: 5, span: 7 },
+      error: { message: '読めません', line: 1, text: 'R1: resistr 1,1', column: 5, span: 7 },
     }];
 
     expect(renderIssues(issues)).toContain('<mark>resistr</mark>');
@@ -150,11 +150,11 @@ describe('renderIssues', () => {
  */
 describe('problemsOf', () => {
   /** 片方しかつないでいない抵抗。図は描けるが、組んでも回路にならない。 */
-  const LOOSE = fence('parts:', '  IN: port a1', '  R1: resistor a1 a3 1k', 'wires:', '  - a1 -- a3', '');
+  const LOOSE = fence('parts:', '  IN: port 1,1', '  R1: resistor 1,1 3,1 1k', 'wires:', '  - 1,1 -- 3,1', '');
 
   test('puts an unreadable line on its Markdown line, without the number in the text', () => {
     // Arrange — 開き記号が 10 行目、読めない行は中の 2 行目 (Markdown の 12 行目)。
-    const source = fence('parts:', '  R1: resistr a1 a3', '');
+    const source = fence('parts:', '  R1: resistr 1,1 3,1', '');
 
     // Act
     const rows = problemsOf(source, 10, { erc: false });
@@ -171,7 +171,7 @@ describe('problemsOf', () => {
 
   test('counts as many rows as the band under the map shows', () => {
     // 帯と Problems は同じものの写し。数が食い違うと、どちらかが黙って落としている。
-    const source = fence('parts:', '  R1: resistr a1 a3', '  R2: capacitr a4 a5', '');
+    const source = fence('parts:', '  R1: resistr 1,1 3,1', '  R2: capacitr 4,1 5,1', '');
     const band = renderIssues(shiftIssues(issuesOf(source), 10));
 
     expect(problemsOf(source, 10, { erc: false })).toHaveLength(band.split('<li').length - 1);

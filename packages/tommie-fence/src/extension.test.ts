@@ -38,7 +38,7 @@ describe('畳んだ拡張の入口', () => {
     // VS Code は拡張ごとに 1 回しか呼ばない。
     const md = activate(context as never).extendMarkdownIt(new MarkdownIt());
     const out = md.render([
-      '```circuit', 'parts:', '  R1: resistor a1 a3 1k', '```', '',
+      '```circuit', 'parts:', '  R1: resistor 1,1 3,1 1k', '```', '',
       '```breadboard', 'board: half', 'parts:', '  R1: resistor a5 a10 330', '```', '',
       '```perfboard', 'board: 20x10', 'parts:', '  R1: resistor b3 b6 1k', '```', '',
     ].join('\n'));

@@ -6,7 +6,7 @@ import { hashOf } from './host/hash.ts';
 import { circuitPlugin } from './markdownItPlugin.ts';
 import type { FigureSource } from './markdownItPlugin.ts';
 
-const RC = '```circuit\nparts:\n  R1: resistor a1 a3 10k\n```';
+const RC = '```circuit\nparts:\n  R1: resistor 1,1 3,1 10k\n```';
 
 /** 何も描けていない図の置き場。 */
 const emptySource = (): FigureSource => ({ lookup: () => undefined, enqueue: () => {} });
@@ -42,7 +42,7 @@ describe('circuitPlugin', () => {
   });
 
   test('shows the reason on the line it was written rather than throwing', () => {
-    const html = md().render('```circuit\nparts:\n  R1: resistor a1 a3\n bad: indent\n```');
+    const html = md().render('```circuit\nparts:\n  R1: resistor 1,1 3,1\n bad: indent\n```');
 
     // 読めた部品があるので図の側へ進み、読めなかった行は帯に出る (52 の docs/54)。
     expect(html).toContain('行目');
@@ -61,7 +61,7 @@ describe('circuitPlugin', () => {
 
   test('counts the line in the markdown file, not inside the fence', () => {
     // 書き手が直しに行くのは Markdown の行。フェンスが下にあるほどずれる。
-    const html = md().render(['# title', '', 'text', '', '```circuit', 'parts:', '  R1: resistr a1 a3', '```'].join('\n'));
+    const html = md().render(['# title', '', 'text', '', '```circuit', 'parts:', '  R1: resistr 1,1 3,1', '```'].join('\n'));
 
     expect(html).toContain('7 行目');
   });
@@ -124,7 +124,7 @@ describe('circuitPlugin', () => {
 
   test('shows the netlist next to the drawing', () => {
     const figures: FigureSource = { lookup: () => ({ svg: '<svg/>' }), enqueue: () => {} };
-    const html = md(figures).render('```circuit\nparts:\n  IN: port a1\n  R1: resistor a1 a3\n```');
+    const html = md(figures).render('```circuit\nparts:\n  IN: port 1,1\n  R1: resistor 1,1 3,1\n```');
 
     expect(html).toContain('ネットリスト');
     expect(html).toContain('IN');
@@ -133,7 +133,7 @@ describe('circuitPlugin', () => {
   test('keeps the drawing and reports the lines it could not read', () => {
     const figures: FigureSource = { lookup: () => ({ svg: '<svg/>' }), enqueue: () => {} };
     const html = md(figures).render(
-      '```circuit\nparts:\n  R1: resistor a1 a3\n  R2: resistr b1 b3\n```',
+      '```circuit\nparts:\n  R1: resistor 1,1 3,1\n  R2: resistr 1,2 3,2\n```',
     );
 
     expect(html).toContain('<svg');
@@ -142,7 +142,7 @@ describe('circuitPlugin', () => {
 
   test('paints the drawing with the ink of the theme the fence chose', () => {
     const figures: FigureSource = { lookup: () => ({ svg: '<svg><path stroke="#000"/></svg>' }), enqueue: () => {} };
-    const html = md(figures).render('```circuit\nparts:\n  R1: resistor a1 a3\nstyle: dark\n```');
+    const html = md(figures).render('```circuit\nparts:\n  R1: resistor 1,1 3,1\nstyle: dark\n```');
 
     expect(html).not.toContain('stroke="#000"');
     expect(html).toContain('stroke="#e6edf3"');
@@ -176,7 +176,7 @@ describe('circuitPlugin', () => {
       lookup: () => ({ svg: '<svg viewBox="0 0 80 40" width="106.667" height="53.333"></svg>' }),
       enqueue: () => {},
     };
-    const html = md(figures).render('```circuit\nparts:\n  R1: resistor a1 a3\nstyle:\n  width: 200\n```');
+    const html = md(figures).render('```circuit\nparts:\n  R1: resistor 1,1 3,1\nstyle:\n  width: 200\n```');
 
     expect(html).toContain('width="200"');
     expect(html).not.toContain('em"');
@@ -187,7 +187,7 @@ describe('circuitPlugin', () => {
       lookup: () => ({ svg: '<svg viewBox="0 0 10 8" width="100" height="80"></svg>' }),
       enqueue: () => {},
     };
-    const html = md(figures).render('```circuit\nparts:\n  R1: resistor a1 a3\nstyle:\n  width: 200\n```');
+    const html = md(figures).render('```circuit\nparts:\n  R1: resistor 1,1 3,1\nstyle:\n  width: 200\n```');
 
     expect(html).toContain('width="200"');
     expect(html).toContain('viewBox="0 0 10 8"');
@@ -196,14 +196,14 @@ describe('circuitPlugin', () => {
   // お知らせは図の下の帯に errors と一緒に出る。`debug: off` はその帯から
   // お知らせだけを外す — 読めなかった行は黙らせない。
   test('shows a notice under the drawing', () => {
-    const html = md().render('```circuit\nparts:\n  R1: resistor a1 a3\nstyle:\n  grid-to: e5\n```');
+    const html = md().render('```circuit\nparts:\n  R1: resistor 1,1 3,1\nstyle:\n  grid-to: 5,5\n```');
 
     expect(html).toContain('grid-to');
   });
 
   test('hides the notices when the fence says debug: off, and keeps the errors', () => {
     const html = md().render(
-      '```circuit\nparts:\n  R1: resistor a1 a3\n  R2: resistr a2 a4\nstyle:\n  grid-to: e5\n  debug: off\n```',
+      '```circuit\nparts:\n  R1: resistor 1,1 3,1\n  R2: resistr 2,1 4,1\nstyle:\n  grid-to: 5,5\n  debug: off\n```',
     );
 
     expect(html).not.toContain('grid-to');
@@ -213,7 +213,7 @@ describe('circuitPlugin', () => {
   // 読めなかった行は**中身ごと**帯に出す (行番号だけでは照らす先がないため)。
   // 出るのは他人の書いた字なので、markup として読まれないことがここの見どころ。
   test('shows the fence content only as escaped text, never as markup', () => {
-    const html = md().render('```circuit\n"</div><img src=x onerror=alert(1)>": resistor a1 a3\n```');
+    const html = md().render('```circuit\n"</div><img src=x onerror=alert(1)>": resistor 1,1 3,1\n```');
 
     expect(html).toContain('&lt;/div&gt;&lt;img src=x onerror=alert(1)&gt;');
     expect(html).not.toContain('<img');

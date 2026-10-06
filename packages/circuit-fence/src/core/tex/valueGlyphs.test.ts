@@ -28,37 +28,37 @@ const MATH_FONT_PUNCTUATION = /[./-]/;
 
 describe('値の記号は書いたとおりの字で組む', () => {
   test('sets the dot of a part number as text, not as the math italic period (AMS1117-3.3)', () => {
-    expect(texOf('U1: regulator b6 AMS1117-3.3')).toContain('{$\\mathrm{AMS1117\\mbox{-}3\\mbox{.}3}$}');
+    expect(texOf('U1: regulator 6,2 AMS1117-3.3')).toContain('{$\\mathrm{AMS1117\\mbox{-}3\\mbox{.}3}$}');
   });
 
   test('sets a slash as text, not as the math italic slash (6V/12V)', () => {
-    expect(texOf('T1: transformer c5 6V/12V')).toContain('{$\\mathrm{6V\\mbox{/}12V}$}');
+    expect(texOf('T1: transformer 5,3 6V/12V')).toContain('{$\\mathrm{6V\\mbox{/}12V}$}');
   });
 
   test('sets the decimal point of a value with a unit as text (8.5 V, 4.7 kΩ, 1.5 µF)', () => {
-    expect(texOf('V1: sine b2 d2 8.5')).toContain('a^=$8\\mbox{.}5\\,\\mathrm{V}$');
-    expect(texOf('R1: resistor a1 a3 4.7k')).toContain('a^=$4\\mbox{.}7\\,\\mathrm{k}\\Omega$');
-    expect(texOf('C1: capacitor a1 a3 1.5u')).toContain('a^=$1\\mbox{.}5\\,\\mu\\mathrm{F}$');
+    expect(texOf('V1: sine 2,2 2,4 8.5')).toContain('a^=$8\\mbox{.}5\\,\\mathrm{V}$');
+    expect(texOf('R1: resistor 1,1 3,1 4.7k')).toContain('a^=$4\\mbox{.}7\\,\\mathrm{k}\\Omega$');
+    expect(texOf('C1: capacitor 1,1 3,1 1.5u')).toContain('a^=$1\\mbox{.}5\\,\\mu\\mathrm{F}$');
   });
 
   test('leaves the decimal point to siunitx in the written .tex', () => {
-    expect(texOf('V1: sine b2 d2 8.5', 'latex')).toContain('\\qty{8.5}{\\volt}');
+    expect(texOf('V1: sine 2,2 2,4 8.5', 'latex')).toContain('\\qty{8.5}{\\volt}');
   });
 
   test('never leaves . / - bare in math, whatever value carries them', () => {
     const parts = [
-      'U1: regulator b6 AMS1117-3.3',
-      'U1: regulator b6 LM2596S-ADJ',
-      'T1: transformer c5 6V/12V',
-      'T1: transformer c5 100V/6.3V',
-      'D1: diode a1 a3 1N4148',
-      'F1: fuse a1 a3 0.5A',
-      'R1: resistor a1 a3 1.2k',
-      'C1: capacitor a1 a3 0.1u',
-      'X1: crystal a1 a3 7.3728M',
-      'V1: vsource a1 a3 3.3',
-      'F1: fuse a1 a3 1A/250V',
-      'D1: diode a1 a3 HZ5.1-B',
+      'U1: regulator 6,2 AMS1117-3.3',
+      'U1: regulator 6,2 LM2596S-ADJ',
+      'T1: transformer 5,3 6V/12V',
+      'T1: transformer 5,3 100V/6.3V',
+      'D1: diode 1,1 3,1 1N4148',
+      'F1: fuse 1,1 3,1 0.5A',
+      'R1: resistor 1,1 3,1 1.2k',
+      'C1: capacitor 1,1 3,1 0.1u',
+      'X1: crystal 1,1 3,1 7.3728M',
+      'V1: vsource 1,1 3,1 3.3',
+      'F1: fuse 1,1 3,1 1A/250V',
+      'D1: diode 1,1 3,1 HZ5.1-B',
     ];
     for (const part of parts) {
       for (const target of ['fence', 'latex'] as const) {
@@ -74,9 +74,9 @@ describe('値の記号は書いたとおりの字で組む', () => {
   test('keeps + % ( ) _ in math, whose glyphs sit at their ASCII numbers in cmr', () => {
     // + は cmr の 0x2B、( ) は 0x28・0x29、\% は cmr の 0x25、\_ は罫線で字ではない。
     // どれも番号が ASCII と同じなので、組み方を変えない (図の見た目を動かさない)。
-    expect(texOf('D1: diode a1 a3 BAT54(SOD)')).toContain('$\\mathrm{BAT54(SOD)}$');
-    expect(texOf('F1: fuse a1 a3 +5V')).toContain('$\\mathrm{+5V}$');
-    expect(texOf('R1: resistor a1 a3 1%')).toContain('$\\mathrm{1\\%}$');
-    expect(texOf('D1: diode a1 a3 BZX_5V1')).toContain('$\\mathrm{BZX\\_5V1}$');
+    expect(texOf('D1: diode 1,1 3,1 BAT54(SOD)')).toContain('$\\mathrm{BAT54(SOD)}$');
+    expect(texOf('F1: fuse 1,1 3,1 +5V')).toContain('$\\mathrm{+5V}$');
+    expect(texOf('R1: resistor 1,1 3,1 1%')).toContain('$\\mathrm{1\\%}$');
+    expect(texOf('D1: diode 1,1 3,1 BZX_5V1')).toContain('$\\mathrm{BZX\\_5V1}$');
   });
 });

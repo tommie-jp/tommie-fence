@@ -88,18 +88,18 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-14) {h};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-16) {i};
-\coordinate (c1) at (0,-4);
-\coordinate (e1) at (0,-8);
-\coordinate (g1) at (0,-12);
-\coordinate (e6) at (10,-8);
-\coordinate (c10) at (18,-4);
-\coordinate (d9) at (16,-6);
-\coordinate (a6) at (10,0);
-\coordinate (i6) at (10,-16);
-\draw (c1) node[ocirc]{} node[above left]{SER}; % line 3
-\draw (e1) node[ocirc]{} node[above left]{SRCLK}; % line 4
-\draw (g1) node[ocirc]{} node[above left]{RCLK}; % line 5
-\node[ic74HC595s1000, draw, font=\scriptsize] (part-U1) at (e6) {$\mathrm{74HC595}$}; % line 6
+\coordinate (x1y3) at (0,-4);
+\coordinate (x1y5) at (0,-8);
+\coordinate (x1y7) at (0,-12);
+\coordinate (x6y5) at (10,-8);
+\coordinate (x10y3) at (18,-4);
+\coordinate (x9y4) at (16,-6);
+\coordinate (x6y1) at (10,0);
+\coordinate (x6y9) at (10,-16);
+\draw (x1y3) node[ocirc]{} node[above left]{SER}; % line 3
+\draw (x1y5) node[ocirc]{} node[above left]{SRCLK}; % line 4
+\draw (x1y7) node[ocirc]{} node[above left]{RCLK}; % line 5
+\node[ic74HC595s1000, draw, font=\scriptsize] (part-U1) at (x6y5) {$\mathrm{74HC595}$}; % line 6
 \node[anchor=south west] at (part-U1.north west) {$U_{1}$}; % line 6
 \node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 6
 \node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 6
@@ -117,17 +117,17 @@
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 14) {X}; % line 6
 \node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 15) {X}; % line 6
 \node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U1.bpin 16) {X}; % line 6
-\draw (c10) node[ocirc]{} node[above left]{QA}; % line 7
-\draw (d9) node[ocirc]{} node[above left]{QB}; % line 8
-\node[vcc] at (a6) {VCC}; % line 9
-\node[ground] at (i6) {}; % line 10
-\draw (c1) |- (part-U1.pin 14); % line 12
-\draw (e1) |- (part-U1.pin 11); % line 13
-\draw (g1) |- (part-U1.pin 12); % line 14
-\draw (part-U1.pin 15) -| (c10); % line 15
-\draw (part-U1.pin 1) -| (d9); % line 16
-\draw (a6) |- (part-U1.pin 16); % line 17
-\draw (part-U1.pin 8) |- (i6); % line 18
+\draw (x10y3) node[ocirc]{} node[above left]{QA}; % line 7
+\draw (x9y4) node[ocirc]{} node[above left]{QB}; % line 8
+\node[vcc] at (x6y1) {VCC}; % line 9
+\node[ground] at (x6y9) {}; % line 10
+\draw (x1y3) |- (part-U1.pin 14); % line 12
+\draw (x1y5) |- (part-U1.pin 11); % line 13
+\draw (x1y7) |- (part-U1.pin 12); % line 14
+\draw (part-U1.pin 15) -| (x10y3); % line 15
+\draw (part-U1.pin 1) -| (x9y4); % line 16
+\draw (x6y1) |- (part-U1.pin 16); % line 17
+\draw (part-U1.pin 8) |- (x6y9); % line 18
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(8.291,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

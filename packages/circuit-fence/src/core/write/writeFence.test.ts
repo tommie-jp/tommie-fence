@@ -39,10 +39,10 @@ describe('書き換えた行だけ組み直す', () => {
   const SOURCE = [
     'title: 図01',
     'parts:',
-    '  IN:  port a1',            // 桁揃えの空白つき
-    '  R1:  resistor a1 a3 10k', // これを書き換える
+    '  IN:  port 1,1',            // 桁揃えの空白つき
+    '  R1:  resistor 1,1 3,1 10k', // これを書き換える
     'wires:',
-    '  - a3 -- b1',
+    '  - 3,1 -- 1,2',
     '',
   ].join('\n');
 
@@ -51,7 +51,7 @@ describe('書き換えた行だけ組み直す', () => {
     const written = writeFence(SOURCE, doc, new Set([4]));
 
     // 揃えて書いた IN の行は動かない。
-    expect(written[2]).toBe('  IN:  port a1');
+    expect(written[2]).toBe('  IN:  port 1,1');
     expect(written[4]).toBe('wires:');
   });
 
@@ -60,30 +60,30 @@ describe('書き換えた行だけ組み直す', () => {
   test('組み直した行にも、字下げと語の間の空白を付ける', () => {
     const { doc } = parseFence(SOURCE);
 
-    expect(writeFence(SOURCE, doc, new Set([4]))[3]).toBe('  R1:  resistor a1 a3 10k');
+    expect(writeFence(SOURCE, doc, new Set([4]))[3]).toBe('  R1:  resistor 1,1 3,1 10k');
   });
 
   // **行末のコメントは残す。** 読んだ中身には入っていないので、書かれた行から写す。
   test('行末のコメントを残す', () => {
-    const withNote = SOURCE.replace('  R1:  resistor a1 a3 10k', '  R1:  resistor a1 a3 10k  # 分圧の上側');
+    const withNote = SOURCE.replace('  R1:  resistor 1,1 3,1 10k', '  R1:  resistor 1,1 3,1 10k  # 分圧の上側');
     const { doc } = parseFence(withNote);
 
-    expect(writeFence(withNote, doc, new Set([4]))[3]).toBe('  R1:  resistor a1 a3 10k  # 分圧の上側');
+    expect(writeFence(withNote, doc, new Set([4]))[3]).toBe('  R1:  resistor 1,1 3,1 10k  # 分圧の上側');
   });
 
   // 引用の中の `#` はコメントではない。
   test('引用の中の # をコメントと間違えない', () => {
-    const source = 'parts:\n  R1: resistor a1 a3\nnotes:\n  - text b1: "R1: #1"\n';
+    const source = 'parts:\n  R1: resistor 1,1 3,1\nnotes:\n  - text 1,2: "R1: #1"\n';
     const { doc } = parseFence(source);
 
-    expect(writeFence(source, doc, new Set([4]))[3]).toBe('  - text b1: "R1: #1"');
+    expect(writeFence(source, doc, new Set([4]))[3]).toBe('  - text 1,2: "R1: #1"');
   });
 
   test('配線は 1 行にまとめて組み直す', () => {
-    const source = 'parts:\n  R1: resistor a1 a3\nwires:\n  - a1 -- b1 -- c1\n';
+    const source = 'parts:\n  R1: resistor 1,1 3,1\nwires:\n  - 1,1 -- 1,2 -- 1,3\n';
     const { doc } = parseFence(source);
 
-    expect(writeFence(source, doc, new Set([4]))[3]).toBe('  - a1 -- b1 -- c1');
+    expect(writeFence(source, doc, new Set([4]))[3]).toBe('  - 1,1 -- 1,2 -- 1,3');
   });
 
   test('組み直した本文は読み直せる', () => {

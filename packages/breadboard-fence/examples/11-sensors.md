@@ -11,22 +11,22 @@ CdS セル・サーミスタ・ダイオードの仲間・ガラス封止の部�
 ```circuit
 title: 回路図01 明るさと温度を分圧で取り出す
 parts:
-  V1: vsource b1 e1 5
-  VCC: vcc b1 5V
-  G0: ground e1
-  VCC: vcc b4 5V
-  CDS1: photoresistor b4 d4 GL5528
-  R1: resistor d4 f4 10k
-  G1: ground f4
-  OUT1: port d6
-  VCC: vcc b9 5V
-  TH1: thermistor-ntc b9 d9 10k
-  R2: resistor d9 f9 10k
-  G2: ground f9
-  OUT2: port d11
+  V1: vsource 1,2 1,5 5
+  VCC: vcc 1,2 5V
+  G0: ground 1,5
+  VCC: vcc 4,2 5V
+  CDS1: photoresistor 4,2 4,4 GL5528
+  R1: resistor 4,4 4,6 10k
+  G1: ground 4,6
+  OUT1: port 6,4
+  VCC: vcc 9,2 5V
+  TH1: thermistor-ntc 9,2 9,4 10k
+  R2: resistor 9,4 9,6 10k
+  G2: ground 9,6
+  OUT2: port 11,4
 wires:
-  - d4 -- d6
-  - d9 -- d11
+  - 4,4 -- 6,4
+  - 9,4 -- 11,4
 ```
 
 <img src="out/schematic/11-sensors.png" alt="回路図01 明るさと温度を分圧で取り出す" width="794">

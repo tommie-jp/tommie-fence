@@ -9,19 +9,19 @@
 ```circuit
 title: 回路図01 クリッパ
 parts:
-  W1: square b1 e1 l=$\mathrm{W1}$
-  G1: ground e1
-  R1: resistor b3 b6 1k
-  D1: diode b7 e7
-  D2: diode e8 b8
-  G2: ground e8
-  OUT: port b10
+  W1: square 1,2 1,5 l=$\mathrm{W1}$
+  G1: ground 1,5
+  R1: resistor 3,2 6,2 1k
+  D1: diode 7,2 7,5
+  D2: diode 8,5 8,2
+  G2: ground 8,5
+  OUT: port 10,2
 wires:
-  - b1 -- b3
-  - b6 -- b7
-  - b7 -- b8
-  - e7 -- e8
-  - b8 -- b10
+  - 1,2 -- 3,2
+  - 6,2 -- 7,2
+  - 7,2 -- 8,2
+  - 7,5 -- 8,5
+  - 8,2 -- 10,2
 ```
 
 <img src="out/schematic/02-clipper-1.png" alt="回路図01 クリッパ" width="725">
@@ -45,16 +45,16 @@ CH2 は −0.7〜9.3 V。0 V の基準が違うので、ch ごとの V/div と �
 ```circuit
 title: 回路図02 クランパ
 parts:
-  W1: square b1 e1 l=$\mathrm{W1}$
-  G1: ground e1
-  C1: capacitor b3 b6 1u
-  D1: diode e7 b7
-  G2: ground e7
-  OUT: port b9
+  W1: square 1,2 1,5 l=$\mathrm{W1}$
+  G1: ground 1,5
+  C1: capacitor 3,2 6,2 1u
+  D1: diode 7,5 7,2
+  G2: ground 7,5
+  OUT: port 9,2
 wires:
-  - b1 -- b3
-  - b6 -- b7
-  - b7 -- b9
+  - 1,2 -- 3,2
+  - 6,2 -- 7,2
+  - 7,2 -- 9,2
 ```
 
 <img src="out/schematic/02-clipper-2.png" alt="回路図02 クランパ" width="649">

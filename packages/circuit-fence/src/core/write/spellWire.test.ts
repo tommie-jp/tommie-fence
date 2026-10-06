@@ -39,10 +39,10 @@ describe('spellWires', () => {
 
   // 1 行が 2 本以上になる形 (`a1 -- b1 -- c1`) を鎖に戻せること。
   test('同じ行の 2 本を 1 本の鎖に戻す', () => {
-    const { doc } = parseFence('parts:\n  R1: resistor a1 a3\nwires:\n  - a1 -- b1 -| c1\n');
+    const { doc } = parseFence('parts:\n  R1: resistor 1,1 3,1\nwires:\n  - 1,1 -- 1,2 -| 1,3\n');
     const wires = [...wiresByLine(doc.wires).values()][0] ?? [];
 
     expect(wires).toHaveLength(2);
-    expect(spellWires(wires)).toBe('a1 -- b1 -| c1');
+    expect(spellWires(wires)).toBe('1,1 -- 1,2 -| 1,3');
   });
 });

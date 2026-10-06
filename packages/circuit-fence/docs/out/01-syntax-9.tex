@@ -21,37 +21,37 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
-\coordinate (b1) at (0,-2);
-\coordinate (b3) at (4,-2);
-\coordinate (e3) at (4,-8);
-\coordinate (c5) at (8,-4);
-\coordinate (d4) at (6,-6);
-\coordinate (e4) at (6,-8);
-\coordinate (d7) at (12,-6);
-\coordinate (c9) at (16,-4);
-\coordinate (c7) at (12,-4);
-\draw (b1) node[ocirc]{} node[above left]{IN}; % line 3
-\draw (b3) to[R, l_=$R_{b}$, a^=$100\,\mathrm{k}\Omega$] (e3); % line 4
-\node[ground] at (e3) {}; % line 5
-\node[plain amp, noinv input up] (part-U1) at (c5) {}; % line 6
+\coordinate (x1y2) at (0,-2);
+\coordinate (x3y2) at (4,-2);
+\coordinate (x3y5) at (4,-8);
+\coordinate (x5y3) at (8,-4);
+\coordinate (x4y4) at (6,-6);
+\coordinate (x4y5) at (6,-8);
+\coordinate (x7y4) at (12,-6);
+\coordinate (x9y3) at (16,-4);
+\coordinate (x7y3) at (12,-4);
+\draw (x1y2) node[ocirc]{} node[above left]{IN}; % line 3
+\draw (x3y2) to[R, l_=$R_{b}$, a^=$100\,\mathrm{k}\Omega$] (x3y5); % line 4
+\node[ground] at (x3y5) {}; % line 5
+\node[plain amp, noinv input up] (part-U1) at (x5y3) {}; % line 6
 \node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 6
 \draw ($($(part-U1.+)!0.22!(part-U1.-)$)+(0.44,0)$) -- ++(0.28,0); % line 6
 \draw ($($(part-U1.+)!0.22!(part-U1.-)$)+(0.58,-0.14)$) -- ++(0,0.28); % line 6
 \draw ($($(part-U1.-)!0.22!(part-U1.+)$)+(0.44,0)$) -- ++(0.28,0); % line 6
-\draw (d4) to[R, l_=$R_{2}$, a^=$1\,\mathrm{k}\Omega$] (e4); % line 7
-\node[ground] at (e4) {}; % line 8
-\draw (d4) to[R, l_=$R_{3}$, a^=$10\,\mathrm{k}\Omega$] (d7); % line 9
-\draw (c9) node[ocirc]{} node[above left]{OUT}; % line 10
-\draw (b1) -- (b3); % line 12
-\draw (b3) |- (part-U1.+); % line 12
-\draw (d4) |- (part-U1.-); % line 13
-\draw (part-U1.out) -- (c7); % line 14
-\draw (c7) -- (c9); % line 14
-\draw (d7) -- (c7); % line 15
-\node[circ] at (b3) {};
-\node[circ] at (d4) {};
-\node[circ] at (c7) {};
-\path (18,-10.329) rectangle (24.824,0.593); % line 17
+\draw (x4y4) to[R, l_=$R_{2}$, a^=$1\,\mathrm{k}\Omega$] (x4y5); % line 7
+\node[ground] at (x4y5) {}; % line 8
+\draw (x4y4) to[R, l_=$R_{3}$, a^=$10\,\mathrm{k}\Omega$] (x7y4); % line 9
+\draw (x9y3) node[ocirc]{} node[above left]{OUT}; % line 10
+\draw (x1y2) -- (x3y2); % line 12
+\draw (x3y2) |- (part-U1.+); % line 12
+\draw (x4y4) |- (part-U1.-); % line 13
+\draw (part-U1.out) -- (x7y3); % line 14
+\draw (x7y3) -- (x9y3); % line 14
+\draw (x7y4) -- (x7y3); % line 15
+\node[circ] at (x3y2) {};
+\node[circ] at (x4y4) {};
+\node[circ] at (x7y3) {};
+\path (18,-10.329) rectangle (25.349,0.593); % line 17
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (18,0) {X}; % line 17
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (18,-0.487) {X}; % line 17
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (18,-0.974) {X}; % line 17

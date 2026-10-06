@@ -32,50 +32,50 @@
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
 \ctikzset{grounds/scale=1.36}
-\coordinate (b1) at (0,-2);
-\coordinate (e1) at (0,-8);
-\coordinate (b4) at (6,-2);
-\coordinate (b5) at (8,-2);
-\coordinate (g1) at (0,-12);
-\coordinate (g3) at (4,-12);
-\coordinate (g5) at (8,-12);
-\coordinate (j1) at (0,-18);
-\coordinate (j4) at (6,-18);
-\coordinate (c10) at (18,-4);
-\coordinate (d5) at (8,-6);
-\coordinate (h6) at (10,-14);
-\coordinate (f7) at (12,-10);
-\coordinate (g8) at (14,-12);
-\draw (b1) to[esource, l_=$V_{1}$, a^=$4\mbox{.}5\,\mathrm{V}$] (e1); % line 3
+\coordinate (x1y2) at (0,-2);
+\coordinate (x1y5) at (0,-8);
+\coordinate (x4y2) at (6,-2);
+\coordinate (x5y2) at (8,-2);
+\coordinate (x1y7) at (0,-12);
+\coordinate (x3y7) at (4,-12);
+\coordinate (x5y7) at (8,-12);
+\coordinate (x1y10) at (0,-18);
+\coordinate (x4y10) at (6,-18);
+\coordinate (x10y3) at (18,-4);
+\coordinate (x5y4) at (8,-6);
+\coordinate (x6y8) at (10,-14);
+\coordinate (x7y6) at (12,-10);
+\coordinate (x8y7) at (14,-12);
+\draw (x1y2) to[esource, l_=$V_{1}$, a^=$4\mbox{.}5\,\mathrm{V}$] (x1y5); % line 3
 \draw (-0.081,-4.865) -- ++(0.162,0); % line 3
 \draw (0,-4.946) -- ++(0,0.162); % line 3
 \draw (-0.081,-5.135) -- ++(0.162,0); % line 3
-\node[ground] at (e1) {}; % line 4
-\draw (b1) to[sD, l_=$D_{2}$, a^=$\mathrm{1N5817}$] (b4); % line 5
-\draw (b5) node[ocirc]{} node[above left]{VSYS}; % line 6
-\draw (g1) node[ocirc]{} node[above left]{GP15}; % line 7
-\draw (g1) to[R, l_=$R_{1}$, a^=$330\,\Omega$] (g3); % line 8
-\draw (g3) to[leD, l_=$D_{1}$] (g5); % line 9
+\node[ground] at (x1y5) {}; % line 4
+\draw (x1y2) to[sD, l_=$D_{2}$, a^=$\mathrm{1N5817}$] (x4y2); % line 5
+\draw (x5y2) node[ocirc]{} node[above left]{VSYS}; % line 6
+\draw (x1y7) node[ocirc]{} node[above left]{GP15}; % line 7
+\draw (x1y7) to[R, l_=$R_{1}$, a^=$330\,\Omega$] (x3y7); % line 8
+\draw (x3y7) to[leD, l_=$D_{1}$] (x5y7); % line 9
 \node[anchor=south] at (6,-11.2) {$\mathrm{red}$}; % line 9
-\node[ground] at (g5) {}; % line 10
-\draw (j1) node[ocirc]{} node[above left]{GP14}; % line 11
-\draw (j1) to[nopb, l_=$S_{W1}$] (j4); % line 12
-\node[ground] at (j4) {}; % line 13
-\node[dev4w11n8, draw, font=\scriptsize] (part-U1) at (c10) {$\mathrm{Pico\ 2}$}; % line 14
+\node[ground] at (x5y7) {}; % line 10
+\draw (x1y10) node[ocirc]{} node[above left]{GP14}; % line 11
+\draw (x1y10) to[nopb, l_=$S_{W1}$] (x4y10); % line 12
+\node[ground] at (x4y10) {}; % line 13
+\node[dev4w11n8, draw, font=\scriptsize] (part-U1) at (x10y3) {$\mathrm{Pico\ 2}$}; % line 14
 \node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 14
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 14
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 14
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 3) {X}; % line 14
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 4) {X}; % line 14
-\draw (d5) node[ocirc]{} node[above left]{VSYS}; % line 19
-\draw (h6) node[ocirc]{} node[above left]{GP15}; % line 20
-\draw (f7) node[ocirc]{} node[above left]{GP14}; % line 21
-\node[ground] at (g8) {}; % line 22
-\draw (b4) -- (b5); % line 24
-\draw (part-U1.pin 1) -| (d5); % line 25
-\draw (part-U1.pin 2) -| (h6); % line 26
-\draw (part-U1.pin 3) -| (f7); % line 27
-\draw (part-U1.pin 4) -| (g8); % line 28
+\draw (x5y4) node[ocirc]{} node[above left]{VSYS}; % line 19
+\draw (x6y8) node[ocirc]{} node[above left]{GP15}; % line 20
+\draw (x7y6) node[ocirc]{} node[above left]{GP14}; % line 21
+\node[ground] at (x8y7) {}; % line 22
+\draw (x4y2) -- (x5y2); % line 24
+\draw (part-U1.pin 1) -| (x5y4); % line 25
+\draw (part-U1.pin 2) -| (x6y8); % line 26
+\draw (part-U1.pin 3) -| (x7y6); % line 27
+\draw (part-U1.pin 4) -| (x8y7); % line 28
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(15.21,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

@@ -15,7 +15,7 @@ const MIXED = doc(
   '',
   '```circuit',
   'parts:',
-  '  R1: resistor a1 a3 10k',
+  '  R1: resistor 1,1 3,1 10k',
   '```',
   '',
   '文の段落。',

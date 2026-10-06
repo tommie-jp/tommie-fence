@@ -10,12 +10,12 @@ const at = (written: string): Address => parseAddress(written) as Address;
 
 const SOURCE = [
   'points:',            // 1
-  '  fb: c3',           // 2
+  '  fb: 3,3',           // 2
   'parts:',             // 3
-  '  R1: resistor a1 a3 10k', // 4
-  '  C1: capacitor a3 fb',    // 5
+  '  R1: resistor 1,1 3,1 10k', // 4
+  '  C1: capacitor 3,1 fb',    // 5
   'wires:',             // 6
-  '  - a1 -- b1',       // 7
+  '  - 1,1 -- 1,2',       // 7
   '',
 ].join('\n');
 
@@ -31,17 +31,17 @@ describe('partSpans', () => {
   });
 
   test('points at every terminal the part was written with', () => {
-    expect(partSpans(SOURCE, 'R1').map((span) => textAt(SOURCE, span))).toEqual(['R1', 'a1', 'a3']);
+    expect(partSpans(SOURCE, 'R1').map((span) => textAt(SOURCE, span))).toEqual(['R1', '1,1', '3,1']);
   });
 
   test('follows a terminal written as a points: name', () => {
-    expect(partSpans(SOURCE, 'C1').map((span) => textAt(SOURCE, span))).toEqual(['C1', 'a3', 'fb']);
+    expect(partSpans(SOURCE, 'C1').map((span) => textAt(SOURCE, span))).toEqual(['C1', '3,1', 'fb']);
   });
 
   test('finds each part written on one flow-style line', () => {
-    const flow = 'parts: {R1: resistor a1 b1, R2: resistor a1 c1}\n';
+    const flow = 'parts: {R1: "resistor 1,1 1,2", R2: "resistor 1,1 1,3"}\n';
 
-    expect(partSpans(flow, 'R2').map((span) => textAt(flow, span))).toEqual(['R2', 'a1', 'c1']);
+    expect(partSpans(flow, 'R2').map((span) => textAt(flow, span))).toEqual(['R2', '1,1', '1,3']);
   });
 
   test('gives nothing for a part that is not there', () => {
@@ -55,28 +55,28 @@ describe('partSpans', () => {
 
 describe('nodeSpans', () => {
   test('points at every place the address is written', () => {
-    const spans = nodeSpans(SOURCE, at('a1'));
+    const spans = nodeSpans(SOURCE, at('1,1'));
 
     expect(spans.map((span) => span.line).sort()).toEqual([4, 7]);
-    expect(spans.every((span) => textAt(SOURCE, span) === 'a1')).toBe(true);
+    expect(spans.every((span) => textAt(SOURCE, span) === '1,1')).toBe(true);
   });
 
   test('points at the points: line for a named node, and at bare spellings too', () => {
-    const spans = nodeSpans(SOURCE, at('c3'));
+    const spans = nodeSpans(SOURCE, at('3,3'));
 
     // `fb: c3` の行き先と、`R1` の a3… ではなく c3 を書いた場所だけ。
     expect(spans.map((span) => span.line)).toContain(2);
-    expect(spans.every((span) => textAt(SOURCE, span) === 'c3')).toBe(true);
+    expect(spans.every((span) => textAt(SOURCE, span) === '3,3')).toBe(true);
   });
 
   test('does not point at a part name that is spelled like the address', () => {
-    const written = 'parts:\n  C1: capacitor c1 d3\n';
+    const written = 'parts:\n  C1: capacitor 1,3 3,4\n';
 
-    expect(nodeSpans(written, at('c1')).map((span) => textAt(written, span))).toEqual(['c1']);
+    expect(nodeSpans(written, at('1,3')).map((span) => textAt(written, span))).toEqual(['1,3']);
   });
 
   test('gives nothing for a crossing nothing is written at', () => {
-    expect(nodeSpans(SOURCE, at('z9'))).toEqual([]);
+    expect(nodeSpans(SOURCE, at('9,26'))).toEqual([]);
   });
 });
 
@@ -89,23 +89,23 @@ describe('aimAt', () => {
 
   test('names the part when the cursor is anywhere else on its line', () => {
     // 値の上でも「その部品」。行の上のどこでも同じ答えになるほうが読みやすい。
-    expect(aim(4, 21)).toEqual({ kind: 'part', id: 'R1' });
+    expect(aim(4, 23)).toEqual({ kind: 'part', id: 'R1' });
   });
 
   test('names the node when the cursor is on a terminal', () => {
-    expect(aim(4, 15)).toEqual({ kind: 'node', address: at('a1') });
+    expect(aim(4, 15)).toEqual({ kind: 'node', address: at('1,1') });
   });
 
   test('names the node when the cursor is on a wire end', () => {
-    expect(aim(7, 4)).toEqual({ kind: 'node', address: at('a1') });
+    expect(aim(7, 4)).toEqual({ kind: 'node', address: at('1,1') });
   });
 
   test('names the wire line when the cursor is between its ends', () => {
-    expect(aim(7, 7)).toEqual({ kind: 'wire', line: 7 });
+    expect(aim(7, 8)).toEqual({ kind: 'wire', line: 7 });
   });
 
   test('names the node a points: line sends a name to', () => {
-    expect(aim(2, 7)).toEqual({ kind: 'node', address: at('c3') });
+    expect(aim(2, 7)).toEqual({ kind: 'node', address: at('3,3') });
   });
 
   test('aims at nothing on a line that holds neither', () => {
@@ -122,14 +122,14 @@ describe('aimAt が見ない行', () => {
   // `title:` `notes:` `style:` は番地に見える字を持てるが、指してはいない。
   // (point.ts が「実際に踏んだ」と書いている罠と同じ根。)
   const NOTED = [
-    'title: a1 から見る',                 // 1
+    'title: 1,1 から見る',                 // 1
     'parts:',                             // 2
-    '  C1: capacitor c1 d3',              // 3
+    '  C1: capacitor 1,3 3,4',              // 3
     'notes:',                             // 4
     '  - circle C1 red',                  // 5
-    '  - text b3 hello',                  // 6
+    '  - text 3,2 hello',                  // 6
     'style:',                             // 7
-    '  grid-to: e5',                      // 8
+    '  grid-to: 5,5',                      // 8
     '',
   ].join('\n');
 
@@ -157,7 +157,7 @@ describe('aimAt が見ない行', () => {
 describe('strippedIndent', () => {
   test('gives back what the fence extractor took off that line', () => {
     // 開き記号が 2 字下がっていても、剥がすのは**その行にある空白まで**。
-    expect(strippedIndent('  ```circuit', '  R1: resistor a1 a3')).toBe(2);
+    expect(strippedIndent('  ```circuit', '  R1: resistor 1,1 3,1')).toBe(2);
   });
 
   test('takes less from a line shallower than the opening marker', () => {

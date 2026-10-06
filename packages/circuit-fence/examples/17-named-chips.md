@@ -7,26 +7,26 @@
 ```circuit
 title: 図01 トランジスタでリレーを駆動する
 parts:
-  VCC: vcc a3
-  D1:  diode d2 b2 1N4148
-  K1:  relay c4 G5V-2
-  Q1:  npn f3
-  R1:  resistor f1 f2 1k
-  IN:  port f1
-  G1:  ground h3
-  R2:  resistor a7 b7 330
-  D2:  led b7 b6
-  G2:  ground e5
+  VCC: vcc 3,1
+  D1:  diode 2,4 2,2 1N4148
+  K1:  relay 4,3 G5V-2
+  Q1:  npn 3,6
+  R1:  resistor 1,6 2,6 1k
+  IN:  port 1,6
+  G1:  ground 3,8
+  R2:  resistor 7,1 7,2 330
+  D2:  led 7,2 6,2
+  G2:  ground 5,5
 wires:
-  - a3 -- b3 -- b2
-  - a3 -- a7
-  - K1.A1 |- b3
-  - K1.A2 |- d3
-  - d2 -- d3 -- Q1.C
-  - f2 -- Q1.B
-  - Q1.E -- h3
-  - K1.NO1 |- b6
-  - K1.COM1 |- e5
+  - 3,1 -- 3,2 -- 2,2
+  - 3,1 -- 7,1
+  - K1.A1 |- 3,2
+  - K1.A2 |- 3,4
+  - 2,4 -- 3,4 -- Q1.C
+  - 2,6 -- Q1.B
+  - Q1.E -- 3,8
+  - K1.NO1 |- 6,2
+  - K1.COM1 |- 5,5
 style:
   grid: on
 ```
@@ -43,20 +43,20 @@ style:
 ```circuit
 title: 図02 フォトカプラで絶縁する
 parts:
-  IN:   port b1
-  R1:   resistor b1 b3 1k
-  U1:   photocoupler c5 PC817
-  G1:   ground e3
-  VDD:  vcc a8
-  R2:   resistor a8 b8 10k
-  OUT:  port b10
-  GND2: port e8
+  IN:   port 1,2
+  R1:   resistor 1,2 3,2 1k
+  U1:   photocoupler 5,3 PC817
+  G1:   ground 3,5
+  VDD:  vcc 8,1
+  R2:   resistor 8,1 8,2 10k
+  OUT:  port 10,2
+  GND2: port 8,5
 wires:
-  - b3 -| U1.A
-  - U1.K |- e3
-  - U1.C |- b8
-  - b8 -- b10
-  - U1.E |- e8
+  - 3,2 -| U1.A
+  - U1.K |- 3,5
+  - U1.C |- 8,2
+  - 8,2 -- 10,2
+  - U1.E |- 8,5
 style:
   grid: on
 ```
@@ -72,13 +72,13 @@ style:
 ```circuit
 title: 図03 7 セグメント LED
 parts:
-  GP0: port a1
-  R1:  resistor a1 a3 330
-  DS1: seg7 c5 5161AS
-  G1:  ground e3
+  GP0: port 1,1
+  R1:  resistor 1,1 3,1 330
+  DS1: seg7 5,3 5161AS
+  G1:  ground 3,5
 wires:
-  - a3 -| DS1.a
-  - DS1.COM1 -| e3
+  - 3,1 -| DS1.a
+  - DS1.COM1 -| 3,5
 style:
   grid: on
 ```

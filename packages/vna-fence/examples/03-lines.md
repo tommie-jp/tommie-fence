@@ -8,20 +8,20 @@ DUT の等価回路 — 線路は伝送線路 (`tline`、値は Z0)。CH0 と CH
 ```circuit
 title: 回路図01 144 MHz の開放スタブ
 parts:
-  J1: sma b2 mirror
-  S1: tline c5 e5 50
-  J2: sma b8
-  G1: ground c2
-  G2: ground c8
+  J1: sma 2,2 mirror
+  S1: tline 5,3 5,5 50
+  J2: sma 8,2
+  G1: ground 2,3
+  G2: ground 8,3
 wires:
-  - J1.1 -- b5 -- J2.1
-  - b5 -- c5
-  - J1.2 -- c2
-  - J2.2 -- c8
+  - J1.1 -- 5,2 -- J2.1
+  - 5,2 -- 5,3
+  - J1.2 -- 2,3
+  - J2.2 -- 8,3
 notes:
-  - text a2 center: CH0
-  - text a8 center: CH1
-  - text e5d0 center: 開放
+  - text 2,1 center: CH0
+  - text 8,1 center: CH1
+  - text 5,5.3 center: 開放
 ```
 
 <img src="out/schematic/03-lines-1.png" alt="回路図01 144 MHz の開放スタブ" width="484">
@@ -52,15 +52,15 @@ DUT の等価回路 — 2 m の線路の先を開放したまま。CH1 には繋
 ```circuit
 title: 回路図02 先を開放した 2 m のケーブル
 parts:
-  J1: sma b2 mirror
-  T1: tline b3 b6 50
-  G1: ground c2
+  J1: sma 2,2 mirror
+  T1: tline 3,2 6,2 50
+  G1: ground 2,3
 wires:
-  - J1.1 -- b3
-  - J1.2 -- c2
+  - J1.1 -- 3,2
+  - J1.2 -- 2,3
 notes:
-  - text a2 center: CH0
-  - text b6a2: 開放
+  - text 2,1 center: CH0
+  - text 6.2,2: 開放
 ```
 
 <img src="out/schematic/03-lines-2.png" alt="回路図02 先を開放した 2 m のケーブル" width="516">

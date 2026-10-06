@@ -4,12 +4,19 @@ import { parseFence } from '../parser/parseFence.ts';
 import { createCircuitEditor } from './fenceEditor.ts';
 
 /**
+ * フロー形式の行に書く番地の名前 (`a1`〜`e9`)。番地 (`1,1`) は `,` を含み、フロー形式では
+ * 区切りになるので、フロー形式の試験は名前で書く (旧い綴りの `a1` は、いまは名前に使える)。
+ * 本文の**後ろ**に足すので、試験の行番号は変わらない。
+ */
+const P = `points: {${[...'abcde'].flatMap((row, y) => Array.from({ length: 9 }, (_, x) => `${row}${x + 1}: "${x + 1},${y + 1}"`)).join(', ')}}\n`;
+
+/**
  * **1 行に並べた注釈と配線 (フロー形式)。** 名札は行番号なので、行を項目 1 つと
  * 見て書き換える操作は並べた形を壊していた (`] red`、`notes:` の鍵ごと複製など)。
  * 壊すくらいなら断る。綴りを差し替えるだけの操作は今までどおり通す。
  */
 const editor = createCircuitEditor();
-const HEAD = 'parts:\n  R1: resistor a1 a3\n  C1: capacitor c1 c3\n';
+const HEAD = 'parts:\n  R1: resistor 1,1 3,1\n  C1: capacitor 1,3 3,3\n';
 const L = 4;
 
 /** 通ったなら、読み直して注釈と配線の数が変わらず YAML も転ばないこと。 */
@@ -24,8 +31,8 @@ const keepsShape = (source: string, result: ReturnType<typeof editor.setField>):
 };
 
 describe('1 行に並べた注釈', () => {
-  const ONE = `${HEAD}notes: [{text b5: hi}]\n`;
-  const TWO = `${HEAD}notes: [circle R1, {text b5: hi}]\n`;
+  const ONE = `${HEAD}notes: [{text b5: hi}]\n${P}`;
+  const TWO = `${HEAD}notes: [circle R1, {text b5: hi}]\n${P}`;
 
   test('字・向きを書き換える操作は断る (行を注釈 1 つと見ると鍵の : を字の区切りと取る)', () => {
     for (const result of [
@@ -45,19 +52,19 @@ describe('1 行に並べた注釈', () => {
 
   // **名札は行番号**なので、2 つ目を掴んでも 1 つ目を書き換えてしまう。
   test('2 つ以上並んでいれば、どれを掴んだか分からないので断る', () => {
-    expect(editor.movePart(TWO, `note:${L}`, 'e5').ok).toBe(false);
+    expect(editor.movePart(TWO, `note:${L}`, '5,5').ok).toBe(false);
     expect(editor.setField(TWO, `note:${L}`, 'value', 'bye').ok).toBe(false);
   });
 
   test('折り返した続きの行も同じ', () => {
-    const source = `${HEAD}notes: [\n  {text b5: hi}\n]\n`;
+    const source = `${HEAD}notes: [\n  {text b5: hi}\n]\n${P}`;
     const result = editor.setField(source, `note:${L + 1}`, 'value', 'bye');
     keepsShape(source, result);
     expect(result.ok).toBe(false);
   });
 
   test('ブロック形式の項目の中身をフロー形式で書いた形は、今までどおり直せる', () => {
-    const source = `${HEAD}notes:\n  - {text b5: hi}\n`;
+    const source = `${HEAD}notes:\n  - {text b5: hi}\n${P}`;
     const result = editor.setField(source, `note:${L + 1}`, 'value', 'bye');
     expect(result.ok).toBe(true);
   });
@@ -66,9 +73,9 @@ describe('1 行に並べた注釈', () => {
 describe('1 行に並べた配線の端', () => {
   // 端の綴りを語で切り出すので、`[a1` や `a3,` の括弧と区切りまで差し替えていた。
   test('端を付け替える操作は断る (括弧と区切りを語の一部として差し替える)', () => {
-    const source = `${HEAD}wires: [a3 -- c1, a1 -| c3]\n`;
+    const source = `${HEAD}wires: [a3 -- c1, a1 -| c3]\n${P}`;
     for (const end of ['from', 'to'] as const) {
-      const result = editor.moveWireEnd?.(source, `wire:${L}`, end, 'e5');
+      const result = editor.moveWireEnd?.(source, `wire:${L}`, end, '5,5');
       if (result === undefined) continue;
       keepsShape(source, result);
       expect(result.ok).toBe(false);
@@ -76,8 +83,8 @@ describe('1 行に並べた配線の端', () => {
   });
 
   test('ブロック形式の配線は今までどおり端を付け替えられる', () => {
-    const source = `${HEAD}wires:\n  - a3 -- c1\n`;
-    expect(editor.moveWireEnd?.(source, `wire:${L + 1}`, 'to', 'e5').ok).toBe(true);
+    const source = `${HEAD}wires:\n  - 3,1 -- 1,3\n`;
+    expect(editor.moveWireEnd?.(source, `wire:${L + 1}`, 'to', '5,5').ok).toBe(true);
   });
 });
 
@@ -97,8 +104,8 @@ describe('1 行に並べたものの改名', () => {
   });
 
   test('並べた配線のピンの名前も書き換える (括弧に付いた綴りも)', () => {
-    const source = 'parts:\n  U1: opamp b5\nwires: [U1.out -- a1, U1.+ -- c1]\n';
+    const source = 'parts:\n  U1: opamp 5,2\nwires: [U1.out -- a1, U1.+ -- c1]\n' + P;
     const result = editor.rename(source, 'U1', 'U9');
-    expect(result.ok && applyRewrite(source, result.value)).toBe('parts:\n  U9: opamp b5\nwires: [U9.out -- a1, U9.+ -- c1]\n');
+    expect(result.ok && applyRewrite(source, result.value)).toBe('parts:\n  U9: opamp 5,2\nwires: [U9.out -- a1, U9.+ -- c1]\n' + P);
   });
 });

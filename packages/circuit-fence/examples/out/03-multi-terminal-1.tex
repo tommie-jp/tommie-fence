@@ -22,60 +22,60 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.504,-4.8) {e};
 \node[gray, font=\scriptsize, anchor=east] at (-0.504,-6) {f};
 \node[gray, font=\scriptsize, anchor=east] at (-0.504,-7.2) {g};
-\coordinate (b2) at (1.2,-1.2);
-\coordinate (b5) at (4.8,-1.2);
-\coordinate (b8) at (8.4,-1.2);
-\coordinate (f2) at (1.2,-6);
-\coordinate (f5) at (4.8,-6);
-\coordinate (f8) at (8.4,-6);
-\coordinate (a2) at (1.2,0);
-\coordinate (c2) at (1.2,-2.4);
-\coordinate (b1) at (0,-1.2);
-\coordinate (a5) at (4.8,0);
-\coordinate (c5) at (4.8,-2.4);
-\coordinate (b4) at (3.6,-1.2);
-\coordinate (a8) at (8.4,0);
-\coordinate (c8) at (8.4,-2.4);
-\coordinate (b7) at (7.2,-1.2);
-\coordinate (e2) at (1.2,-4.8);
-\coordinate (g2) at (1.2,-7.2);
-\coordinate (f1) at (0,-6);
-\coordinate (e5) at (4.8,-4.8);
-\coordinate (g5) at (4.8,-7.2);
-\coordinate (f4) at (3.6,-6);
-\coordinate (e8) at (8.4,-4.8);
-\coordinate (g8) at (8.4,-7.2);
-\coordinate (f7) at (7.2,-6);
-\node[npn] (part-Q1) at (b2) {}; % line 3
+\coordinate (x2y2) at (1.2,-1.2);
+\coordinate (x5y2) at (4.8,-1.2);
+\coordinate (x8y2) at (8.4,-1.2);
+\coordinate (x2y6) at (1.2,-6);
+\coordinate (x5y6) at (4.8,-6);
+\coordinate (x8y6) at (8.4,-6);
+\coordinate (x2y1) at (1.2,0);
+\coordinate (x2y3) at (1.2,-2.4);
+\coordinate (x1y2) at (0,-1.2);
+\coordinate (x5y1) at (4.8,0);
+\coordinate (x5y3) at (4.8,-2.4);
+\coordinate (x4y2) at (3.6,-1.2);
+\coordinate (x8y1) at (8.4,0);
+\coordinate (x8y3) at (8.4,-2.4);
+\coordinate (x7y2) at (7.2,-1.2);
+\coordinate (x2y5) at (1.2,-4.8);
+\coordinate (x2y7) at (1.2,-7.2);
+\coordinate (x1y6) at (0,-6);
+\coordinate (x5y5) at (4.8,-4.8);
+\coordinate (x5y7) at (4.8,-7.2);
+\coordinate (x4y6) at (3.6,-6);
+\coordinate (x8y5) at (8.4,-4.8);
+\coordinate (x8y7) at (8.4,-7.2);
+\coordinate (x7y6) at (7.2,-6);
+\node[npn] (part-Q1) at (x2y2) {}; % line 3
 \node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 3
-\node[pnp] (part-Q2) at (b5) {}; % line 4
+\node[pnp] (part-Q2) at (x5y2) {}; % line 4
 \node[anchor=west] at (part-Q2.east) {$Q_{2}$}; % line 4
-\node[nigbt] (part-Q3) at (b8) {}; % line 5
+\node[nigbt] (part-Q3) at (x8y2) {}; % line 5
 \node[anchor=west] at (part-Q3.east) {$Q_{3}$}; % line 5
-\node[nmos] (part-M1) at (f2) {}; % line 6
+\node[nmos] (part-M1) at (x2y6) {}; % line 6
 \node[anchor=west] at (part-M1.east) {$M_{1}$}; % line 6
-\node[pmos] (part-M2) at (f5) {}; % line 7
+\node[pmos] (part-M2) at (x5y6) {}; % line 7
 \node[anchor=west] at (part-M2.east) {$M_{2}$}; % line 7
-\node[pigbt] (part-Q4) at (f8) {}; % line 8
+\node[pigbt] (part-Q4) at (x8y6) {}; % line 8
 \node[anchor=west] at (part-Q4.east) {$Q_{4}$}; % line 8
-\draw (a2) -| (part-Q1.collector); % line 10
-\draw (c2) -| (part-Q1.emitter); % line 11
-\draw (b1) -| (part-Q1.base); % line 12
-\draw (a5) -| (part-Q2.collector); % line 13
-\draw (c5) -| (part-Q2.emitter); % line 14
-\draw (b4) -| (part-Q2.base); % line 15
-\draw (a8) -| (part-Q3.collector); % line 16
-\draw (c8) -| (part-Q3.emitter); % line 17
-\draw (b7) -| (part-Q3.gate); % line 18
-\draw (e2) -| (part-M1.drain); % line 19
-\draw (g2) -| (part-M1.source); % line 20
-\draw (f1) -| (part-M1.gate); % line 21
-\draw (e5) -| (part-M2.drain); % line 22
-\draw (g5) -| (part-M2.source); % line 23
-\draw (f4) -| (part-M2.gate); % line 24
-\draw (e8) -| (part-Q4.collector); % line 25
-\draw (g8) -| (part-Q4.emitter); % line 26
-\draw (f7) -| (part-Q4.gate); % line 27
+\draw (x2y1) -| (part-Q1.collector); % line 10
+\draw (x2y3) -| (part-Q1.emitter); % line 11
+\draw (x1y2) -| (part-Q1.base); % line 12
+\draw (x5y1) -| (part-Q2.collector); % line 13
+\draw (x5y3) -| (part-Q2.emitter); % line 14
+\draw (x4y2) -| (part-Q2.base); % line 15
+\draw (x8y1) -| (part-Q3.collector); % line 16
+\draw (x8y3) -| (part-Q3.emitter); % line 17
+\draw (x7y2) -| (part-Q3.gate); % line 18
+\draw (x2y5) -| (part-M1.drain); % line 19
+\draw (x2y7) -| (part-M1.source); % line 20
+\draw (x1y6) -| (part-M1.gate); % line 21
+\draw (x5y5) -| (part-M2.drain); % line 22
+\draw (x5y7) -| (part-M2.source); % line 23
+\draw (x4y6) -| (part-M2.gate); % line 24
+\draw (x8y5) -| (part-Q4.collector); % line 25
+\draw (x8y7) -| (part-Q4.emitter); % line 26
+\draw (x7y6) -| (part-Q4.gate); % line 27
 \path (-0.07,-3.593) rectangle (2.47,-2.407); % line 29
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1.2,-3) {X}; % line 29
 \path (3.53,-3.593) rectangle (6.07,-2.407); % line 30
@@ -88,7 +88,7 @@
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (4.8,-7.8) {X}; % line 33
 \path (6.876,-8.393) rectangle (9.924,-7.207); % line 34
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8.4,-7.8) {X}; % line 34
-\path (10.8,-19.579) rectangle (21.561,0.593); % line 35
+\path (10.8,-19.579) rectangle (21.824,0.593); % line 35
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10.8,0) {X}; % line 35
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10.8,-0.487) {X}; % line 35
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10.8,-0.974) {X}; % line 35

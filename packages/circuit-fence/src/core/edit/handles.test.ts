@@ -8,7 +8,7 @@ const partsOf = (...rows: string[]) => {
   return doc.parts;
 };
 
-const RAILS = partsOf('parts:', '  VCC: vcc a1', '  R1: resistor a1 a3', '  VCC: vcc e1', '  VCC: vcc g1');
+const RAILS = partsOf('parts:', '  VCC: vcc 1,1', '  R1: resistor 1,1 3,1', '  VCC: vcc 1,5', '  VCC: vcc 1,7');
 
 describe('handleAt', () => {
   test('leaves a name that stands alone as it is, so nothing else has to change', () => {

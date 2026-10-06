@@ -14,9 +14,9 @@ yaml 自身の言い分は英語で「Nested mappings are not allowed」だけ�
 ```circuit
 title: 図01 注釈の直し方
 parts:
-  R1: resistor a1 a3 10k
+  R1: resistor 1,1 3,1 10k
 notes:
-  - text b1: R1: resistor a1 a3 10k
+  - text 1,2: R1: resistor 10k
 ```
 
 書いたのはこれ。
@@ -24,9 +24,9 @@ notes:
 ```text
 15 title: 図01 注釈の直し方
 16 parts:
-17   R1: resistor a1 a3 10k
+17   R1: resistor 1,1 3,1 10k
 18 notes:
-19   - text b1: R1: resistor a1 a3 10k
+19   - text 1,2: R1: resistor 10k
 ```
 
 帯にはこう出る。
@@ -39,7 +39,7 @@ circuit: 19 行目: 注釈の文字は文字列で書きます (数だけのと�
 **図は出る。** 読めなかったのは 19 行目だけなので、`title:` と `R1` は読めていて、
 図はその 2 つで組み上がる。読めなかった行は帯に出る。
 
-字は YAML の値なので、`"R1: resistor a1 a3 10k"` と囲めば通る。
+字は YAML の値なので、`"R1: resistor 10k"` と囲めば通る。
 
 ## 指し先と色と字
 
@@ -49,11 +49,11 @@ circuit: 19 行目: 注釈の文字は文字列で書きます (数だけのと�
 ```circuit
 title: 図02 指し先と色と字
 parts:
-  R1: resistor a1 a3 10k
+  R1: resistor 1,1 3,1 10k
 notes:
   - circle Rload
   - circle R1 rainbow
-  - text b1: gain = 10
+  - text 1,2: gain = 10
 ```
 
 書いたのはこれ。
@@ -61,11 +61,11 @@ notes:
 ```text
 50 title: 図02 指し先と色と字
 51 parts:
-52   R1: resistor a1 a3 10k
+52   R1: resistor 1,1 3,1 10k
 53 notes:
 54   - circle Rload
 55   - circle R1 rainbow
-56   - text b1: gain = 10
+56   - text 1,2: gain = 10
 ```
 
 帯にはこう出る。
@@ -91,10 +91,10 @@ circuit: 54 行目: 注釈の指す先 Rload がありません (部品 ID か�
 ```circuit
 title: 図03 字の見た目と印に書けない言葉
 parts:
-  R1: resistor a1 a3 10k
+  R1: resistor 1,1 3,1 10k
 notes:
-  - text b1 enormous: ここ
-  - text b2 tiny huge: ここ
+  - text 1,2 enormous: ここ
+  - text 2,2 tiny huge: ここ
   - circle R1 huge
   - arrow R1 R1
 ```
@@ -104,10 +104,10 @@ notes:
 ```text
 92 title: 図03 字の見た目と印に書けない言葉
 93 parts:
-94   R1: resistor a1 a3 10k
+94   R1: resistor 1,1 3,1 10k
 95 notes:
-96   - text b1 enormous: ここ
-97   - text b2 tiny huge: ここ
+96   - text 1,2 enormous: ここ
+97   - text 2,2 tiny huge: ここ
 98   - circle R1 huge
 99   - arrow R1 R1
 ```

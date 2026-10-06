@@ -11,10 +11,10 @@
 ```circuit
 title: 図01 重なりの検出
 parts:
-  R1: resistor a1 a3 10k
-  R2: resistor a1 a3 4k7
-  C1: capacitor c1 c3 100n
-  C2: capacitor c1 c3 100n
+  R1: resistor 1,1 3,1 10k
+  R2: resistor 1,1 3,1 4k7
+  C1: capacitor 1,3 3,3 100n
+  C2: capacitor 1,3 3,3 100n
 ```
 
 書いたのはこれ。
@@ -22,10 +22,10 @@ parts:
 ```text
 12 title: 図01 重なりの検出
 13 parts:
-14   R1: resistor a1 a3 10k
-15   R2: resistor a1 a3 4k7
-16   C1: capacitor c1 c3 100n
-17   C2: capacitor c1 c3 100n
+14   R1: resistor 1,1 3,1 10k
+15   R2: resistor 1,1 3,1 4k7
+16   C1: capacitor 1,3 3,3 100n
+17   C2: capacitor 1,3 3,3 100n
 ```
 
 帯にはこう出る。

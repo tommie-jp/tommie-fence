@@ -43,28 +43,28 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
-\coordinate (a2) at (2,0);
-\coordinate (c4) at (6,-4);
-\coordinate (c7) at (12,-4);
-\coordinate (e7) at (12,-8);
-\coordinate (e4) at (6,-8);
-\coordinate (g4) at (6,-12);
-\node[vcc] at (a2) {VCC}; % line 3
-\node[reg3, draw, font=\scriptsize] (part-U1) at (c4) {}; % line 4
+\coordinate (x2y1) at (2,0);
+\coordinate (x4y3) at (6,-4);
+\coordinate (x7y3) at (12,-4);
+\coordinate (x7y5) at (12,-8);
+\coordinate (x4y5) at (6,-8);
+\coordinate (x4y7) at (6,-12);
+\node[vcc] at (x2y1) {VCC}; % line 3
+\node[reg3, draw, font=\scriptsize] (part-U1) at (x4y3) {}; % line 4
 \node[font=\scriptsize, anchor=south] at (part-U1.north) {$\mathrm{LM35}$}; % line 4
 \node[anchor=south, yshift=9pt] at (part-U1.north) {$U_{1}$}; % line 4
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 4
 \node[circuitnotemark, font=\tiny, anchor=west, yshift=4pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 4
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 3) {X}; % line 4
-\node[ground] at (c7) {}; % line 9
-\draw (e7) node[ocirc]{} node[above left]{OUT}; % line 10
-\draw (e4) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (g4); % line 11
-\node[ground] at (g4) {}; % line 12
-\draw (a2) |- (part-U1.pin 1); % line 14
-\draw (part-U1.pin 3) -| (c7); % line 15
-\draw (part-U1.pin 2) -- (e4); % line 16
-\draw (e4) -- (e7); % line 16
-\node[circ] at (e4) {};
+\node[ground] at (x7y3) {}; % line 9
+\draw (x7y5) node[ocirc]{} node[above left]{OUT}; % line 10
+\draw (x4y5) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (x4y7); % line 11
+\node[ground] at (x4y7) {}; % line 12
+\draw (x2y1) |- (part-U1.pin 1); % line 14
+\draw (part-U1.pin 3) -| (x7y3); % line 15
+\draw (part-U1.pin 2) -- (x4y5); % line 16
+\draw (x4y5) -- (x7y5); % line 16
+\node[circ] at (x4y5) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(15.972,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

@@ -17,19 +17,19 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
-\coordinate (a1) at (0,0);
-\coordinate (a2) at (2,0);
-\coordinate (a4) at (6,0);
-\coordinate (b4) at (6,-2);
-\draw (a1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (a2); % line 3
-\draw (a4) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (b4); % line 4
+\coordinate (x1y1) at (0,0);
+\coordinate (x2y1) at (2,0);
+\coordinate (x4y1) at (6,0);
+\coordinate (x4y2) at (6,-2);
+\draw (x1y1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x2y1); % line 3
+\draw (x4y1) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (x4y2); % line 4
 \draw[circuitnotered, -{Stealth[length=3mm, width=3mm]}] (0,-2) -- (0.598,-0.805); % line 6
 \path (-1.365,-2.593) rectangle (1.365,-1.407); % line 7
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-2) {X}; % line 7
 \draw[circuitnoteblue, -{Stealth[length=3mm, width=3mm]}] (6,-4) -- (6,-1.9); % line 8
 \path (5.524,-4.593) rectangle (6.476,-3.407); % line 9
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-4) {X}; % line 9
-\path (10,-7.408) rectangle (19.047,0.593); % line 10
+\path (10,-7.408) rectangle (19.309,0.593); % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,0) {X}; % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-0.487) {X}; % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10,-0.974) {X}; % line 10

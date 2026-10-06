@@ -22,12 +22,12 @@ const SOURCE = lines(
   'parts:',
   '  M1:',
   '    type: device',
-  '    at: d5',
+  '    at: 5,4',
   '    label: S',
   '    pins: [A, B]',
-  '  R1: resistor a1 a3',
+  '  R1: resistor 1,1 3,1',
   'wires:',
-  '  - M1.A -| a3',
+  '  - M1.A -| 3,1',
 );
 
 /** 書き換えを当てて、読めることを確かめてから返す。 */
@@ -41,9 +41,9 @@ function applied(result: { ok: boolean; value?: unknown; error?: { message: stri
 
 describe('機器を升目から触る', () => {
   test('moves by rewriting the at: line and nothing else', () => {
-    const text = applied(movePart(SOURCE, 'M1', parseAddress('f8')!));
+    const text = applied(movePart(SOURCE, 'M1', parseAddress('8,6')!));
 
-    expect(text).toBe(SOURCE.replace('    at: d5', '    at: f8'));
+    expect(text).toBe(SOURCE.replace('    at: 5,4', '    at: 8,6'));
   });
 
   test('turns by adding a turn: line, and drops it when the box comes back round', () => {
@@ -68,7 +68,7 @@ describe('機器を升目から触る', () => {
 
     expect(removed.ok).toBe(true);
     const text = applyRewrite(SOURCE, removed.ok ? removed.value : {});
-    expect(text).toBe(lines('parts:', '  R1: resistor a1 a3'));
+    expect(text).toBe(lines('parts:', '  R1: resistor 1,1 3,1'));
   });
 
   test('writes the value into label:, adding the line when there is none', () => {
@@ -102,10 +102,10 @@ describe('機器のブロックの書き方の幅 (コードレビューで出�
   };
 
   test('refuses to edit a device written as a flow map on one line', () => {
-    const flow = lines('parts:', '  M1: {type: device, at: d5, pins: [A, B]}');
+    const flow = lines('parts:', '  M1: {type: device, at: "5,4", pins: [A, B]}');
 
     for (const result of [
-      movePart(flow, 'M1', parseAddress('f8')!),
+      movePart(flow, 'M1', parseAddress('8,6')!),
       turnPart(flow, 'M1', 1),
       setField(flow, 'M1', 'value', 'T'),
     ]) {
@@ -127,30 +127,30 @@ describe('機器のブロックの書き方の幅 (コードレビューで出�
       '    type: device',
       '',
       '# the place',
-      '    at: d5',
+      '    at: 5,4',
       '    pins: [A, B]',
-      '  R1: resistor a1 a3',
+      '  R1: resistor 1,1 3,1',
     );
 
-    expect(rewrite(spaced, movePart(spaced, 'M1', parseAddress('f8')!))).toContain('    at: f8');
+    expect(rewrite(spaced, movePart(spaced, 'M1', parseAddress('8,6')!))).toContain('    at: 8,6');
     const removed = deletePart(spaced, 'M1');
     expect(removed.ok).toBe(true);
-    expect(applyRewrite(spaced, removed.ok ? removed.value : {})).toBe(lines('parts:', '  R1: resistor a1 a3'));
+    expect(applyRewrite(spaced, removed.ok ? removed.value : {})).toBe(lines('parts:', '  R1: resistor 1,1 3,1'));
   });
 
   test('keeps the comment at the end of a line it rewrites', () => {
-    const commented = SOURCE.replace('    at: d5', '    at: d5  # 右の端');
+    const commented = SOURCE.replace('    at: 5,4', '    at: 5,4  # 右の端');
 
-    expect(rewrite(commented, movePart(commented, 'M1', parseAddress('f8')!))).toContain('    at: f8  # 右の端');
+    expect(rewrite(commented, movePart(commented, 'M1', parseAddress('8,6')!))).toContain('    at: 8,6  # 右の端');
   });
 
   test('moves a device together with a point dragged under it', () => {
-    const shared = SOURCE.replace('  R1: resistor a1 a3', '  R1: resistor d5 d7');
-    const moved = movePoint(shared, parseAddress('d5')!, parseAddress('e5')!);
+    const shared = SOURCE.replace('  R1: resistor 1,1 3,1', '  R1: resistor 5,4 7,4');
+    const moved = movePoint(shared, parseAddress('5,4')!, parseAddress('5,5')!);
 
     expect(moved.ok).toBe(true);
     const text = applyRewrite(shared, moved.ok ? moved.value : {});
-    expect(text).toContain('    at: e5');
-    expect(text).toContain('R1: resistor e5 d7');
+    expect(text).toContain('    at: 5,5');
+    expect(text).toContain('R1: resistor 5,5 7,4');
   });
 });

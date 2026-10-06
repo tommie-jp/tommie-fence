@@ -19,34 +19,34 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
-\coordinate (a1) at (0,0);
-\coordinate (e1) at (0,-8);
-\coordinate (a5) at (8,0);
-\coordinate (c5) at (8,-4);
-\coordinate (c7) at (12,-4);
-\coordinate (a7) at (12,0);
-\coordinate (d5) at (8,-6);
-\coordinate (d2) at (2,-6);
-\coordinate (d4) at (6,-6);
-\coordinate (e5) at (8,-8);
-\draw (a1) to[battery1, l_=$B_{1}$, a^=$5\,\mathrm{V}$] (e1); % line 3
-\draw (a5) to[rmeter, t={$\mathrm{M}$}, l_=$M_{1}$] (c5); % line 4
-\draw (c7) to[D, l_=$D_{1}$, a^=$\mathrm{1N4001}$] (a7); % line 5
-\node[nigfete] (part-Q1) at (d5) {}; % line 6
+\coordinate (x1y1) at (0,0);
+\coordinate (x1y5) at (0,-8);
+\coordinate (x5y1) at (8,0);
+\coordinate (x5y3) at (8,-4);
+\coordinate (x7y3) at (12,-4);
+\coordinate (x7y1) at (12,0);
+\coordinate (x5y4) at (8,-6);
+\coordinate (x2y4) at (2,-6);
+\coordinate (x4y4) at (6,-6);
+\coordinate (x5y5) at (8,-8);
+\draw (x1y1) to[battery1, l_=$B_{1}$, a^=$5\,\mathrm{V}$] (x1y5); % line 3
+\draw (x5y1) to[rmeter, t={$\mathrm{M}$}, l_=$M_{1}$] (x5y3); % line 4
+\draw (x7y3) to[D, l_=$D_{1}$, a^=$\mathrm{1N4001}$] (x7y1); % line 5
+\node[nigfete] (part-Q1) at (x5y4) {}; % line 6
 \node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 6
-\draw (d2) to[R, l_=$R_{1}$, a^=$100\,\Omega$] (d4); % line 7
-\draw (d2) node[ocirc]{} node[above left]{PWM}; % line 8
-\node[ground] at (e5) {}; % line 9
-\draw (a1) -- (a5); % line 11
-\draw (a5) -- (a7); % line 11
-\draw (c5) -- (c7); % line 12
-\draw (c5) -- (part-Q1.drain); % line 13
-\draw (part-Q1.source) -- (e5); % line 14
-\draw (d4) |- (part-Q1.gate); % line 15
-\draw (e1) -- (e5); % line 16
-\node[circ] at (a5) {};
-\node[circ] at (c5) {};
-\node[circ] at (e5) {};
+\draw (x2y4) to[R, l_=$R_{1}$, a^=$100\,\Omega$] (x4y4); % line 7
+\draw (x2y4) node[ocirc]{} node[above left]{PWM}; % line 8
+\node[ground] at (x5y5) {}; % line 9
+\draw (x1y1) -- (x5y1); % line 11
+\draw (x5y1) -- (x7y1); % line 11
+\draw (x5y3) -- (x7y3); % line 12
+\draw (x5y3) -- (part-Q1.drain); % line 13
+\draw (part-Q1.source) -- (x5y5); % line 14
+\draw (x4y4) |- (part-Q1.gate); % line 15
+\draw (x1y5) -- (x5y5); % line 16
+\node[circ] at (x5y1) {};
+\node[circ] at (x5y3) {};
+\node[circ] at (x5y5) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(11.491,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

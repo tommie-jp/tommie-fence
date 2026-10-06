@@ -17,21 +17,21 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-14) {h};
-\coordinate (b1) at (0,-2);
-\coordinate (b3) at (4,-2);
-\coordinate (e1) at (0,-8);
-\coordinate (e3) at (4,-8);
-\coordinate (h1) at (0,-14);
-\coordinate (h3) at (4,-14);
-\coordinate (a2) at (2,0);
-\coordinate (d2) at (2,-6);
-\coordinate (g2) at (2,-12);
-\draw (b1) to[potentiometer, n=part-P1, l_=$P_{1}$, a^=$10\,\mathrm{k}\Omega$] (b3); % line 3
-\draw (e1) to[thyristor, n=part-T1, l_=$T_{1}$] (e3); % line 4
-\draw (h1) to[triac, n=part-T2, l_=$T_{2}$] (h3); % line 5
-\draw (part-P1.wiper) -- (a2); % line 7
-\draw (part-T1.gate) |- (d2); % line 8
-\draw (part-T2.gate) |- (g2); % line 9
+\coordinate (x1y2) at (0,-2);
+\coordinate (x3y2) at (4,-2);
+\coordinate (x1y5) at (0,-8);
+\coordinate (x3y5) at (4,-8);
+\coordinate (x1y8) at (0,-14);
+\coordinate (x3y8) at (4,-14);
+\coordinate (x2y1) at (2,0);
+\coordinate (x2y4) at (2,-6);
+\coordinate (x2y7) at (2,-12);
+\draw (x1y2) to[potentiometer, n=part-P1, l_=$P_{1}$, a^=$10\,\mathrm{k}\Omega$] (x3y2); % line 3
+\draw (x1y5) to[thyristor, n=part-T1, l_=$T_{1}$] (x3y5); % line 4
+\draw (x1y8) to[triac, n=part-T2, l_=$T_{2}$] (x3y8); % line 5
+\draw (part-P1.wiper) -- (x2y1); % line 7
+\draw (part-T1.gate) |- (x2y4); % line 8
+\draw (part-T2.gate) |- (x2y7); % line 9
 \path (0,-4.593) rectangle (6.858,-3.407); % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-4) {X}; % line 11
 \path (0,-10.593) rectangle (4.826,-9.407); % line 12

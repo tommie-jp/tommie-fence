@@ -6,39 +6,39 @@
 ```circuit
 title: 図01 多端子の記号
 parts:
-  Q1: npn b2
-  Q2: pnp b5
-  Q3: nigbt b8
-  M1: nmos f2
-  M2: pmos f5
-  Q4: pigbt f8
+  Q1: npn 2,2
+  Q2: pnp 5,2
+  Q3: nigbt 8,2
+  M1: nmos 2,6
+  M2: pmos 5,6
+  Q4: pigbt 8,6
 wires:
-  - a2 -| Q1.C
-  - c2 -| Q1.E
-  - b1 -| Q1.B
-  - a5 -| Q2.C
-  - c5 -| Q2.E
-  - b4 -| Q2.B
-  - a8 -| Q3.C
-  - c8 -| Q3.E
-  - b7 -| Q3.G
-  - e2 -| M1.D
-  - g2 -| M1.S
-  - f1 -| M1.G
-  - e5 -| M2.D
-  - g5 -| M2.S
-  - f4 -| M2.G
-  - e8 -| Q4.C
-  - g8 -| Q4.E
-  - f7 -| Q4.G
+  - 2,1 -| Q1.C
+  - 2,3 -| Q1.E
+  - 1,2 -| Q1.B
+  - 5,1 -| Q2.C
+  - 5,3 -| Q2.E
+  - 4,2 -| Q2.B
+  - 8,1 -| Q3.C
+  - 8,3 -| Q3.E
+  - 7,2 -| Q3.G
+  - 2,5 -| M1.D
+  - 2,7 -| M1.S
+  - 1,6 -| M1.G
+  - 5,5 -| M2.D
+  - 5,7 -| M2.S
+  - 4,6 -| M2.G
+  - 8,5 -| Q4.C
+  - 8,7 -| Q4.E
+  - 7,6 -| Q4.G
 notes:
-  - text c2f0 blue center: "Q1: npn b2"
-  - text c5f0 blue center: "Q2: pnp b5"
-  - text c8f0 blue center: "Q3: nigbt b8"
-  - text g2f0 blue center: "M1: nmos f2"
-  - text g5f0 blue center: "M2: pmos f5"
-  - text g8f0 blue center: "Q4: pigbt f8"
-  - source a10 blue
+  - text 2,3.5 blue center: "Q1: npn b2"
+  - text 5,3.5 blue center: "Q2: pnp b5"
+  - text 8,3.5 blue center: "Q3: nigbt b8"
+  - text 2,7.5 blue center: "M1: nmos f2"
+  - text 5,7.5 blue center: "M2: pmos f5"
+  - text 8,7.5 blue center: "Q4: pigbt f8"
+  - source 10,1 blue
 style:
   grid: on
   pitch: 1.2
@@ -67,20 +67,20 @@ style:
 ```circuit
 title: 図02 オペアンプとトランス
 parts:
-  U1: opamp b2 LM358
-  T1: transformer b7 1to1
+  U1: opamp 2,2 LM358
+  T1: transformer 7,2 1to1
 wires:
-  - a1 |- U1.-
-  - c1 |- U1.+
-  - U1.out -| b4
-  - a6 |- T1.A1
-  - c6 |- T1.A2
-  - a9 |- T1.B1
-  - c9 |- T1.B2
+  - 1,1 |- U1.-
+  - 1,3 |- U1.+
+  - U1.out -| 4,2
+  - 6,1 |- T1.A1
+  - 6,3 |- T1.A2
+  - 9,1 |- T1.B1
+  - 9,3 |- T1.B2
 notes:
-  - text d1 blue: "U1: opamp b2 LM358"
-  - text d6 blue: "T1: transformer b7 1to1"
-  - source a11 blue
+  - text 1,4 blue: "U1: opamp b2 LM358"
+  - text 6,4 blue: "T1: transformer b7 1to1"
+  - source 11,1 blue
 style:
   grid: on
   pitch: 1.2
@@ -100,38 +100,38 @@ style:
 ```circuit
 title: 図03 FET の種類
 parts:
-  J1: njfet b2
-  J2: pjfet b5
-  M1: nmos-e f2
-  M2: pmos-e f5
-  M3: nmos-d j2
-  M4: pmos-d j5
+  J1: njfet 2,2
+  J2: pjfet 5,2
+  M1: nmos-e 2,6
+  M2: pmos-e 5,6
+  M3: nmos-d 2,10
+  M4: pmos-d 5,10
 wires:
-  - a2 -| J1.D
-  - c2 -| J1.S
-  - b1 -| J1.G
-  - a5 -| J2.D
-  - c5 -| J2.S
-  - b4 -| J2.G
-  - e2 -| M1.D
-  - g2 -| M1.S
-  - f1 -| M1.G
-  - e5 -| M2.D
-  - g5 -| M2.S
-  - f4 -| M2.G
-  - i2 -| M3.D
-  - k2 -| M3.S
-  - j1 -| M3.G
-  - i5 -| M4.D
-  - k5 -| M4.S
-  - j4 -| M4.G
+  - 2,1 -| J1.D
+  - 2,3 -| J1.S
+  - 1,2 -| J1.G
+  - 5,1 -| J2.D
+  - 5,3 -| J2.S
+  - 4,2 -| J2.G
+  - 2,5 -| M1.D
+  - 2,7 -| M1.S
+  - 1,6 -| M1.G
+  - 5,5 -| M2.D
+  - 5,7 -| M2.S
+  - 4,6 -| M2.G
+  - 2,9 -| M3.D
+  - 2,11 -| M3.S
+  - 1,10 -| M3.G
+  - 5,9 -| M4.D
+  - 5,11 -| M4.S
+  - 4,10 -| M4.G
 notes:
-  - text c2f0 blue center: "J1: njfet b2"
-  - text c5f0 blue center: "J2: pjfet b5"
-  - text g2f0 blue center: "M1: nmos-e f2"
-  - text g5f0 blue center: "M2: pmos-e f5"
-  - text k2f0 blue center: "M3: nmos-d j2"
-  - text k5f0 blue center: "M4: pmos-d j5"
+  - text 2,3.5 blue center: "J1: njfet b2"
+  - text 5,3.5 blue center: "J2: pjfet b5"
+  - text 2,7.5 blue center: "M1: nmos-e f2"
+  - text 5,7.5 blue center: "M2: pmos-e f5"
+  - text 2,11.5 blue center: "M3: nmos-d j2"
+  - text 5,11.5 blue center: "M4: pmos-d j5"
 style:
   grid: on
   pitch: 1.2
@@ -153,17 +153,17 @@ style:
 ```circuit
 title: 図04 2 端子でも足を持つもの
 parts:
-  P1: potentiometer b1 b3 10k
-  T1: thyristor e1 e3
-  T2: triac h1 h3
+  P1: potentiometer 1,2 3,2 10k
+  T1: thyristor 1,5 3,5
+  T2: triac 1,8 3,8
 wires:
-  - P1.w -- a2
-  - T1.g |- d2
-  - T2.g |- g2
+  - P1.w -- 2,1
+  - T1.g |- 2,4
+  - T2.g |- 2,7
 notes:
-  - text c1 blue: "P1: potentiometer b1 b3 10k"
-  - text f1 blue: "T1: thyristor e1 e3"
-  - text i1 blue: "T2: triac h1 h3"
+  - text 1,3 blue: "P1: potentiometer b1 b3 10k"
+  - text 1,6 blue: "T1: thyristor e1 e3"
+  - text 1,9 blue: "T2: triac h1 h3"
 style:
   grid: on
 ```
@@ -191,19 +191,19 @@ Type-C の受け口から 5V をもらうには、**CC1 と CC2 を 5.1kΩ で�
 ```circuit
 title: 図05 USB-C から 5V をもらう
 parts:
-  J1: usb-c d2
-  R1: resistor b4 b6 330
-  D1: led b6 b8
-  R2: resistor e5 g5 5.1k
-  R3: resistor e4 g4 5.1k
-  G1: ground g8
+  J1: usb-c 2,4
+  R1: resistor 4,2 6,2 330
+  D1: led 6,2 8,2
+  R2: resistor 5,5 5,7 5.1k
+  R3: resistor 4,5 4,7 5.1k
+  G1: ground 8,7
 wires:
-  - J1.VBUS -| b4
-  - b8 -- g8
-  - J1.GND -| g6
-  - J1.CC1 -| e5
-  - J1.CC2 -| e4
-  - g4 -- g8
+  - J1.VBUS -| 4,2
+  - 8,2 -- 8,7
+  - J1.GND -| 6,7
+  - J1.CC1 -| 5,5
+  - J1.CC2 -| 4,5
+  - 4,7 -- 8,7
 style:
   grid: on
 ```
@@ -227,22 +227,22 @@ title: 図06 超音波センサーの ECHO を 3.3V に落とす
 parts:
   M1:
     type: device
-    at: c2
+    at: 2,3
     label: HC-SR04
     pins: [VCC, TRIG, ECHO, GND]
     turn: mirror
-  VBUS: port a7
-  GP14: port b8
-  GP15: port d8
-  R1: resistor c6 d6 1k
-  R2: resistor d6 f6 2k
-  G1: ground f6
+  VBUS: port 7,1
+  GP14: port 8,2
+  GP15: port 8,4
+  R1: resistor 6,3 6,4 1k
+  R2: resistor 6,4 6,6 2k
+  G1: ground 6,6
 wires:
-  - M1.VCC -| a7
-  - M1.TRIG -| b8
-  - M1.ECHO -| c6
-  - d6 -- d8
-  - M1.GND -| f4 -- f6
+  - M1.VCC -| 7,1
+  - M1.TRIG -| 8,2
+  - M1.ECHO -| 6,3
+  - 6,4 -- 8,4
+  - M1.GND -| 4,6 -- 6,6
 style:
   grid: on
 ```
@@ -272,15 +272,15 @@ style:
 ```circuit
 title: 図07 光が当たると出力が下がる
 parts:
-  VCC: vcc a3
-  R1:  resistor a3 c3 10k
-  Q1:  phototransistor e3
-  G1:  ground g3
-  OUT: port c6
+  VCC: vcc 3,1
+  R1:  resistor 3,1 3,3 10k
+  Q1:  phototransistor 3,5
+  G1:  ground 3,7
+  OUT: port 6,3
 wires:
-  - c3 -- Q1.C
-  - Q1.E -- g3
-  - c3 -- c6
+  - 3,3 -- Q1.C
+  - Q1.E -- 3,7
+  - 3,3 -- 6,3
 style:
   grid: on
 ```
@@ -298,20 +298,20 @@ style:
 ```circuit
 title: 図08 温度センサー (LM35) の出力を取り出す
 parts:
-  VCC: vcc a2
+  VCC: vcc 2,1
   U1:
     type: ic3
-    at: c4
+    at: 4,3
     label: LM35
     pins: [+Vs, Vout, GND]
-  G1: ground c7
-  OUT: port e7
-  C1: capacitor e4 g4 100n
-  G2: ground g4
+  G1: ground 7,3
+  OUT: port 7,5
+  C1: capacitor 4,5 4,7 100n
+  G2: ground 4,7
 wires:
-  - a2 |- U1.+Vs
-  - U1.GND -| c7
-  - U1.Vout -- e4 -- e7
+  - 2,1 |- U1.+Vs
+  - U1.GND -| 7,3
+  - U1.Vout -- 4,5 -- 7,5
 style:
   grid: on
 ```

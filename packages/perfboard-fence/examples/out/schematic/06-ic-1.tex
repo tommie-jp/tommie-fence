@@ -27,25 +27,25 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-14) {h};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-16) {i};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-18) {j};
-\coordinate (b1) at (0,-2);
-\coordinate (e5) at (8,-8);
-\coordinate (g3) at (4,-12);
-\coordinate (f2) at (2,-10);
-\coordinate (h2) at (2,-14);
-\coordinate (j2) at (2,-18);
-\coordinate (h6) at (10,-14);
-\coordinate (j6) at (10,-18);
-\coordinate (b10) at (18,-2);
-\coordinate (d10) at (18,-6);
-\coordinate (f10) at (18,-10);
-\coordinate (h10) at (18,-14);
-\coordinate (g4) at (6,-12);
-\coordinate (g9) at (16,-12);
-\coordinate (f9) at (16,-10);
-\coordinate (b7) at (12,-2);
-\coordinate (d8) at (14,-6);
-\draw (b1) node[ocirc]{} node[above left]{VCC}; % line 3
-\node[dipchip, num pins=8, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5] (part-U1) at (e5) {}; % line 4
+\coordinate (x1y2) at (0,-2);
+\coordinate (x5y5) at (8,-8);
+\coordinate (x3y7) at (4,-12);
+\coordinate (x2y6) at (2,-10);
+\coordinate (x2y8) at (2,-14);
+\coordinate (x2y10) at (2,-18);
+\coordinate (x6y8) at (10,-14);
+\coordinate (x6y10) at (10,-18);
+\coordinate (x10y2) at (18,-2);
+\coordinate (x10y4) at (18,-6);
+\coordinate (x10y6) at (18,-10);
+\coordinate (x10y8) at (18,-14);
+\coordinate (x4y7) at (6,-12);
+\coordinate (x9y7) at (16,-12);
+\coordinate (x9y6) at (16,-10);
+\coordinate (x7y2) at (12,-2);
+\coordinate (x8y4) at (14,-6);
+\draw (x1y2) node[ocirc]{} node[above left]{VCC}; % line 3
+\node[dipchip, num pins=8, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5] (part-U1) at (x5y5) {}; % line 4
 \node[font=\scriptsize, anchor=north] at (part-U1.south) {$\mathrm{NE555}$}; % line 4
 \node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 4
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 4
@@ -56,35 +56,35 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 6) {X}; % line 4
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 7) {X}; % line 4
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 8) {X}; % line 4
-\node[ground] at (g3) {}; % line 5
-\draw (f2) to[R, l_=$R_{3}$, a^=$330\,\Omega$] (h2); % line 6
-\draw (h2) to[leD, l_=$D_{1}$] (j2); % line 7
+\node[ground] at (x3y7) {}; % line 5
+\draw (x2y6) to[R, l_=$R_{3}$, a^=$330\,\Omega$] (x2y8); % line 6
+\draw (x2y8) to[leD, l_=$D_{1}$] (x2y10); % line 7
 \node[anchor=west] at (2.8,-16) {$\mathrm{red}$}; % line 7
-\node[ground] at (j2) {}; % line 8
-\draw (h6) to[C, l_=$C_{2}$, a^=$10\,\mathrm{n}\mathrm{F}$] (j6); % line 9
-\node[ground] at (j6) {}; % line 10
-\draw (b10) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (d10); % line 11
-\draw (d10) to[R, l_=$R_{2}$, a^=$47\,\mathrm{k}\Omega$] (f10); % line 12
-\draw (f10) to[C, l_=$C_{1}$, a^=$10\,\mu\mathrm{F}$] (h10); % line 13
-\node[ground] at (h10) {}; % line 14
-\draw (b1) -- (b10); % line 16
-\draw (part-U1.pin 4) -| (b1); % line 17
-\draw (part-U1.pin 1) -| (g3); % line 18
-\draw (part-U1.pin 3) -| (f2); % line 19
-\draw (part-U1.pin 2) -| (g4); % line 20
-\draw (g4) -- (g9); % line 21
-\draw (g9) -- (f9); % line 22
-\draw (part-U1.pin 8) -| (b7); % line 23
-\draw (part-U1.pin 7) -| (d8); % line 24
-\draw (d8) -- (d10); % line 25
-\draw (part-U1.pin 6) -| (f9); % line 26
-\draw (f9) -- (f10); % line 27
-\draw (part-U1.pin 5) -| (h6); % line 28
-\node[circ] at (b1) {};
-\node[circ] at (d10) {};
-\node[circ] at (f10) {};
-\node[circ] at (f9) {};
-\node[circ] at (b7) {};
+\node[ground] at (x2y10) {}; % line 8
+\draw (x6y8) to[C, l_=$C_{2}$, a^=$10\,\mathrm{n}\mathrm{F}$] (x6y10); % line 9
+\node[ground] at (x6y10) {}; % line 10
+\draw (x10y2) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x10y4); % line 11
+\draw (x10y4) to[R, l_=$R_{2}$, a^=$47\,\mathrm{k}\Omega$] (x10y6); % line 12
+\draw (x10y6) to[C, l_=$C_{1}$, a^=$10\,\mu\mathrm{F}$] (x10y8); % line 13
+\node[ground] at (x10y8) {}; % line 14
+\draw (x1y2) -- (x10y2); % line 16
+\draw (part-U1.pin 4) -| (x1y2); % line 17
+\draw (part-U1.pin 1) -| (x3y7); % line 18
+\draw (part-U1.pin 3) -| (x2y6); % line 19
+\draw (part-U1.pin 2) -| (x4y7); % line 20
+\draw (x4y7) -- (x9y7); % line 21
+\draw (x9y7) -- (x9y6); % line 22
+\draw (part-U1.pin 8) -| (x7y2); % line 23
+\draw (part-U1.pin 7) -| (x8y4); % line 24
+\draw (x8y4) -- (x10y4); % line 25
+\draw (part-U1.pin 6) -| (x9y6); % line 26
+\draw (x9y6) -- (x10y6); % line 27
+\draw (part-U1.pin 5) -| (x6y8); % line 28
+\node[circ] at (x1y2) {};
+\node[circ] at (x10y4) {};
+\node[circ] at (x10y6) {};
+\node[circ] at (x9y6) {};
+\node[circ] at (x7y2) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(15.453,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

@@ -6,60 +6,60 @@
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\coordinate (c3) at (4,-4);
-\coordinate (c6) at (10,-4);
-\coordinate (c9) at (16,-4);
-\coordinate (g3) at (4,-12);
-\coordinate (g6) at (10,-12);
-\coordinate (g9) at (16,-12);
-\coordinate (b3) at (4,-2);
-\coordinate (d3) at (4,-6);
-\coordinate (c2) at (2,-4);
-\coordinate (b6) at (10,-2);
-\coordinate (d6) at (10,-6);
-\coordinate (c5) at (8,-4);
-\coordinate (b9) at (16,-2);
-\coordinate (d9) at (16,-6);
-\coordinate (c8) at (14,-4);
-\coordinate (f3) at (4,-10);
-\coordinate (h3) at (4,-14);
-\coordinate (g2) at (2,-12);
-\coordinate (f6) at (10,-10);
-\coordinate (h6) at (10,-14);
-\coordinate (g5) at (8,-12);
-\coordinate (f9) at (16,-10);
-\coordinate (h9) at (16,-14);
-\coordinate (g8) at (14,-12);
-\node[njfet] (part-J1) at (c3) {}; % line 3
+\coordinate (x3y3) at (4,-4);
+\coordinate (x6y3) at (10,-4);
+\coordinate (x9y3) at (16,-4);
+\coordinate (x3y7) at (4,-12);
+\coordinate (x6y7) at (10,-12);
+\coordinate (x9y7) at (16,-12);
+\coordinate (x3y2) at (4,-2);
+\coordinate (x3y4) at (4,-6);
+\coordinate (x2y3) at (2,-4);
+\coordinate (x6y2) at (10,-2);
+\coordinate (x6y4) at (10,-6);
+\coordinate (x5y3) at (8,-4);
+\coordinate (x9y2) at (16,-2);
+\coordinate (x9y4) at (16,-6);
+\coordinate (x8y3) at (14,-4);
+\coordinate (x3y6) at (4,-10);
+\coordinate (x3y8) at (4,-14);
+\coordinate (x2y7) at (2,-12);
+\coordinate (x6y6) at (10,-10);
+\coordinate (x6y8) at (10,-14);
+\coordinate (x5y7) at (8,-12);
+\coordinate (x9y6) at (16,-10);
+\coordinate (x9y8) at (16,-14);
+\coordinate (x8y7) at (14,-12);
+\node[njfet] (part-J1) at (x3y3) {}; % line 3
 \node[anchor=west] at (part-J1.east) {$J_{1}$}; % line 3
-\node[pjfet] (part-J2) at (c6) {}; % line 4
+\node[pjfet] (part-J2) at (x6y3) {}; % line 4
 \node[anchor=west] at (part-J2.east) {$J_{2}$}; % line 4
-\node[nigfete] (part-M1) at (c9) {}; % line 5
+\node[nigfete] (part-M1) at (x9y3) {}; % line 5
 \node[anchor=west] at (part-M1.east) {$M_{1}$}; % line 5
-\node[pigfete] (part-M2) at (g3) {}; % line 6
+\node[pigfete] (part-M2) at (x3y7) {}; % line 6
 \node[anchor=west] at (part-M2.east) {$M_{2}$}; % line 6
-\node[nigfetd] (part-M3) at (g6) {}; % line 7
+\node[nigfetd] (part-M3) at (x6y7) {}; % line 7
 \node[anchor=west] at (part-M3.east) {$M_{3}$}; % line 7
-\node[pigfetd] (part-M4) at (g9) {}; % line 8
+\node[pigfetd] (part-M4) at (x9y7) {}; % line 8
 \node[anchor=west] at (part-M4.east) {$M_{4}$}; % line 8
-\draw (b3) -| (part-J1.drain); % line 10
-\draw (d3) -| (part-J1.source); % line 11
-\draw (c2) -| (part-J1.gate); % line 12
-\draw (b6) -| (part-J2.drain); % line 13
-\draw (d6) -| (part-J2.source); % line 14
-\draw (c5) -| (part-J2.gate); % line 15
-\draw (b9) -| (part-M1.drain); % line 16
-\draw (d9) -| (part-M1.source); % line 17
-\draw (c8) -| (part-M1.gate); % line 18
-\draw (f3) -| (part-M2.drain); % line 19
-\draw (h3) -| (part-M2.source); % line 20
-\draw (g2) -| (part-M2.gate); % line 21
-\draw (f6) -| (part-M3.drain); % line 22
-\draw (h6) -| (part-M3.source); % line 23
-\draw (g5) -| (part-M3.gate); % line 24
-\draw (f9) -| (part-M4.drain); % line 25
-\draw (h9) -| (part-M4.source); % line 26
-\draw (g8) -| (part-M4.gate); % line 27
+\draw (x3y2) -| (part-J1.drain); % line 10
+\draw (x3y4) -| (part-J1.source); % line 11
+\draw (x2y3) -| (part-J1.gate); % line 12
+\draw (x6y2) -| (part-J2.drain); % line 13
+\draw (x6y4) -| (part-J2.source); % line 14
+\draw (x5y3) -| (part-J2.gate); % line 15
+\draw (x9y2) -| (part-M1.drain); % line 16
+\draw (x9y4) -| (part-M1.source); % line 17
+\draw (x8y3) -| (part-M1.gate); % line 18
+\draw (x3y6) -| (part-M2.drain); % line 19
+\draw (x3y8) -| (part-M2.source); % line 20
+\draw (x2y7) -| (part-M2.gate); % line 21
+\draw (x6y6) -| (part-M3.drain); % line 22
+\draw (x6y8) -| (part-M3.source); % line 23
+\draw (x5y7) -| (part-M3.gate); % line 24
+\draw (x9y6) -| (part-M4.drain); % line 25
+\draw (x9y8) -| (part-M4.source); % line 26
+\draw (x8y7) -| (part-M4.gate); % line 27
 \draw[circuitnoteink] (1,-0.2) -- (19,-0.2); % line 29
 \draw[circuitnoteink] (1,-8.2) -- (19,-8.2); % line 30
 \draw[circuitnoteink] (1,-16.2) -- (19,-16.2); % line 31

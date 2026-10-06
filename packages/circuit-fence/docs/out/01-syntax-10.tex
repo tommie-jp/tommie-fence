@@ -14,21 +14,21 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
-\coordinate (b1) at (0,-2);
-\coordinate (d1) at (0,-6);
-\coordinate (b2) at (2,-2);
-\coordinate (b3) at (4,-2);
-\coordinate (d3) at (4,-6);
-\draw (b1) to[esource, l_=$V_{1}$, a^=$9\,\mathrm{V}$] (d1); % line 3
+\coordinate (x1y2) at (0,-2);
+\coordinate (x1y4) at (0,-6);
+\coordinate (x2y2) at (2,-2);
+\coordinate (x3y2) at (4,-2);
+\coordinate (x3y4) at (4,-6);
+\draw (x1y2) to[esource, l_=$V_{1}$, a^=$9\,\mathrm{V}$] (x1y4); % line 3
 \draw (-0.081,-3.865) -- ++(0.162,0); % line 3
 \draw (0,-3.946) -- ++(0,0.162); % line 3
 \draw (-0.081,-4.135) -- ++(0.162,0); % line 3
-\draw (b1) to[nos, l_=$S_{1}$] (b2); % line 4
-\draw (b2) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (b3); % line 5
-\draw (b3) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (d3); % line 6
-\node[ground] at (d3) {}; % line 7
-\draw (d1) -- (d3); % line 9
-\node[circ] at (d3) {};
+\draw (x1y2) to[nos, l_=$S_{1}$] (x2y2); % line 4
+\draw (x2y2) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x3y2); % line 5
+\draw (x3y2) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (x3y4); % line 6
+\node[ground] at (x3y4) {}; % line 7
+\draw (x1y4) -- (x3y4); % line 9
+\node[circ] at (x3y4) {};
 \path (8,-7.408) rectangle (14.181,0.593); % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,0) {X}; % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,-0.487) {X}; % line 11

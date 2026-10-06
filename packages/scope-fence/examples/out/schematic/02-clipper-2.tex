@@ -6,24 +6,24 @@
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
 \ctikzset{grounds/scale=1.36}
-\coordinate (b1) at (0,-2);
-\coordinate (e1) at (0,-8);
-\coordinate (b3) at (4,-2);
-\coordinate (b6) at (10,-2);
-\coordinate (e7) at (12,-8);
-\coordinate (b7) at (12,-2);
-\coordinate (b9) at (16,-2);
-\draw (b1) to[esource, l_=$\mathrm{W1}$] (e1); % line 3
+\coordinate (x1y2) at (0,-2);
+\coordinate (x1y5) at (0,-8);
+\coordinate (x3y2) at (4,-2);
+\coordinate (x6y2) at (10,-2);
+\coordinate (x7y5) at (12,-8);
+\coordinate (x7y2) at (12,-2);
+\coordinate (x9y2) at (16,-2);
+\draw (x1y2) to[esource, l_=$\mathrm{W1}$] (x1y5); % line 3
 \draw (-0.18,-5) -- ++(0,0.18) -- ++(0.18,0) -- ++(0,-0.36) -- ++(0.18,0) -- ++(0,0.18); % line 3
-\node[ground] at (e1) {}; % line 4
-\draw (b3) to[C, l_=$C_{1}$, a^=$1\,\mu\mathrm{F}$] (b6); % line 5
-\draw (e7) to[D, l_=$D_{1}$] (b7); % line 6
-\node[ground] at (e7) {}; % line 7
-\draw (b9) node[ocirc]{} node[above left]{OUT}; % line 8
-\draw (b1) -- (b3); % line 10
-\draw (b6) -- (b7); % line 11
-\draw (b7) -- (b9); % line 12
-\node[circ] at (b7) {};
+\node[ground] at (x1y5) {}; % line 4
+\draw (x3y2) to[C, l_=$C_{1}$, a^=$1\,\mu\mathrm{F}$] (x6y2); % line 5
+\draw (x7y5) to[D, l_=$D_{1}$] (x7y2); % line 6
+\node[ground] at (x7y5) {}; % line 7
+\draw (x9y2) node[ocirc]{} node[above left]{OUT}; % line 8
+\draw (x1y2) -- (x3y2); % line 10
+\draw (x6y2) -- (x7y2); % line 11
+\draw (x7y2) -- (x9y2); % line 12
+\node[circ] at (x7y2) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(6.218,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

@@ -157,6 +157,11 @@ export type { FenceBlock } from './fences.ts';
 export type { Net } from './model/nets.ts';
 export type { FenceError, NoteOverlay, TexTarget } from './types.ts';
 export { standaloneTex } from './tex/generate.ts';
+// 旧い番地の綴り (`a1f5`) を `x,y` に書き直す口 (52 の docs/126)。教科書の一括変換・
+// 拡張のクイックフィックス・playground の「書き換える」釦が同じ物を使う。
+export { legacyParseAddress, oldSpellingHint } from './model/address.ts';
+export { migrateAddresses, migrateCircuitFences } from './migrate.ts';
+export type { MigrateResult } from './migrate.ts';
 
 // **殻へ渡す口。** 掴んで動かす editor はこの 1 つを受け取って動く
 // (52 の docs/19 — 拡張は 1 つ、コアは 3 つのまま)。

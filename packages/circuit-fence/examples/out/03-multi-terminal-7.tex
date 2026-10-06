@@ -20,21 +20,21 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
-\coordinate (a3) at (4,0);
-\coordinate (c3) at (4,-4);
-\coordinate (e3) at (4,-8);
-\coordinate (g3) at (4,-12);
-\coordinate (c6) at (10,-4);
-\node[vcc] at (a3) {VCC}; % line 3
-\draw (a3) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (c3); % line 4
-\node[npn, photo, nobase] (part-Q1) at (e3) {}; % line 5
+\coordinate (x3y1) at (4,0);
+\coordinate (x3y3) at (4,-4);
+\coordinate (x3y5) at (4,-8);
+\coordinate (x3y7) at (4,-12);
+\coordinate (x6y3) at (10,-4);
+\node[vcc] at (x3y1) {VCC}; % line 3
+\draw (x3y1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x3y3); % line 4
+\node[npn, photo, nobase] (part-Q1) at (x3y5) {}; % line 5
 \node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 5
-\node[ground] at (g3) {}; % line 6
-\draw (c6) node[ocirc]{} node[above left]{OUT}; % line 7
-\draw (c3) -- (part-Q1.collector); % line 9
-\draw (part-Q1.emitter) -- (g3); % line 10
-\draw (c3) -- (c6); % line 11
-\node[circ] at (c3) {};
+\node[ground] at (x3y7) {}; % line 6
+\draw (x6y3) node[ocirc]{} node[above left]{OUT}; % line 7
+\draw (x3y3) -- (part-Q1.collector); % line 9
+\draw (part-Q1.emitter) -- (x3y7); % line 10
+\draw (x3y3) -- (x6y3); % line 11
+\node[circ] at (x3y3) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(10.058,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

@@ -51,14 +51,14 @@ describe('renderErrorBanner', () => {
 
   test('shows the line the reader has to go and fix, not just its number', () => {
     // プレビューではフェンスが図に差し替わるので、行番号だけでは照らす先がない。
-    const html = renderErrorBanner([{ message: '種類 resistr は知りません', line: 2, text: '  R1: resistr a1 a3' }]);
+    const html = renderErrorBanner([{ message: '種類 resistr は知りません', line: 2, text: '  R1: resistr 1,1 3,1' }]);
 
-    expect(html).toContain('R1: resistr a1 a3');
+    expect(html).toContain('R1: resistr 1,1 3,1');
   });
 
   test('marks the spelling that could not be read', () => {
     const html = renderErrorBanner([
-      { message: '種類 resistr は知りません', line: 2, text: '  R1: resistr a1 a3', column: 7, span: 7 },
+      { message: '種類 resistr は知りません', line: 2, text: '  R1: resistr 1,1 3,1', column: 7, span: 7 },
     ]);
 
     expect(html).toContain('<mark>resistr</mark>');

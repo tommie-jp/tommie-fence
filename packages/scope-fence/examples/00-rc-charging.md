@@ -10,18 +10,18 @@ C の電圧を見る。**計器の設定の表と同じ語**で書くと、フ�
 ```circuit
 title: 回路図01 RC の充電
 parts:
-  W1: square b1 e1 l=$\mathrm{W1}$
-  G1: ground e1
-  CH1: port a2
-  R1: resistor b4 b7 1k
-  C1: capacitor b7 e7 1u
-  G2: ground e7
-  CH2: port a7
+  W1: square 1,2 1,5 l=$\mathrm{W1}$
+  G1: ground 1,5
+  CH1: port 2,1
+  R1: resistor 4,2 7,2 1k
+  C1: capacitor 7,2 7,5 1u
+  G2: ground 7,5
+  CH2: port 7,1
 wires:
-  - b1 -- b2
-  - b2 -- b4
-  - a2 -- b2
-  - a7 -- b7
+  - 1,2 -- 2,2
+  - 2,2 -- 4,2
+  - 2,1 -- 2,2
+  - 7,1 -- 7,2
 ```
 
 <img src="out/schematic/00-rc-charging.png" alt="回路図01 RC の充電" width="540">

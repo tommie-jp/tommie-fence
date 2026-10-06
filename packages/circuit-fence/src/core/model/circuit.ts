@@ -1,7 +1,7 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { gateNumbersOf } from '../gateNumbers.ts';
-import { addressHint, cornerOf, formatAddress, isNearlyZero, isSameAddress, parseAddress } from './address.ts';
+import { cornerOf, formatAddress, isNearlyZero, isSameAddress, oldSpellingHint, parseAddress } from './address.ts';
 import { partTypeOf, lookupPin, mismatchedDiscrete, orientOf, pinAxis, pinHint, pinRefName, unnamedDip } from '../parts.ts';
 import type { Address } from './address.ts';
 import { NO_POINTS } from '../parser/compact.ts';
@@ -44,11 +44,10 @@ export type NoteAnchor =
   | { readonly kind: 'cell'; readonly address: Address };
 
 /**
- * 注釈の指し先を決める。**部品 ID を先に探し**、無ければ番地として読む。
+ * 注釈の指し先を決める。**部品 ID を先に探し**、無ければ名前、番地の順に読む。
  *
- * 番地は大小どちらで書いてもよいので、`C1` のような ID は番地 c1 とぶつかる。
- * 印を付けたくなるのはたいてい部品のほうなので、部品を先に見る
- * (裏を返すと、`C1` という部品がある図では番地 c1 を指せない)。
+ * 番地は数字で始まり `,` を含む (`1,3`) ので、部品 ID (`C1`) と取り違えることはない
+ * (旧い綴りでは `C1` が番地 c1 とぶつかり、部品のほうを取ったと知らせていた)。
  */
 export function resolveNoteTarget(
   target: string,
@@ -365,41 +364,6 @@ function ambiguousTouches(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>)
 
   errors.push(...touchesOnBodies(circuit, ends));
   errors.push(...slantedIntoPins(circuit, byId));
-  errors.push(...ambiguousNoteTargets(circuit, byId));
-
-  return errors;
-}
-
-/**
- * 部品 ID にも番地にも読める指し先。
- *
- * 指し先は**部品を先に探す**ので、`C1` という部品がある図では番地 c1 を
- * 指せない。図には部品を囲んだ丸が出るだけで、番地を指したつもりの人には
- * 何も返らない。どちらを取ったかを伝える (図は変えない)。
- *
- * 言うのは**その番地にも何か置いてあるとき**だけ。行は何行もあるので
- * ID はたいてい番地の形にもなり (`R1` は行 r の 1 列目)、空の番地まで
- * 言い出すと正しく書いた印のほとんどに口を出すことになる。
- */
-function ambiguousNoteTargets(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>): FenceError[] {
-  const errors: FenceError[] = [];
-  const used = endpointsOf(circuit);
-
-  for (const note of circuit.notes) {
-    for (const target of noteTargetsOf(note)) {
-      const address = parseAddress(target);
-      if (address === null || !byId.has(target)) continue;
-      if (!used.some((cell) => isSameAddress(cell, address))) continue;
-
-      errors.push(
-        fenceError(
-          `注釈の指す先 ${safeToken(target)} は部品を指しています` +
-            ` (番地 ${formatAddress(address)} のつもりなら、部品 ID と重ならない名前にします)`,
-          note.line,
-        ),
-      );
-    }
-  }
 
   return errors;
 }
@@ -567,9 +531,9 @@ function resolveEndpoint(
 
   const part = byId.get(endpoint.part);
   if (part === undefined) {
-    // 番地を `_` で切らずに書くとピンの形になる (`a1.5` は「a1 の 5 番ピン」)。
+    // 旧い番地に小数を書くとピンの形になる (`a1.5` は「a1 の 5 番ピン」)。
     // 部品が無いなら番地のつもりだった見込みが高いので、直せる形を添える。
-    const near = addressHint(`${endpoint.part}.${endpoint.pin}`);
+    const near = oldSpellingHint(`${endpoint.part}.${endpoint.pin}`);
     const hint = near === null ? '' : ` (${near})`;
     errors.push(fenceError(`部品 ${safeToken(endpoint.part)} がありません${hint}`, line));
     return null;

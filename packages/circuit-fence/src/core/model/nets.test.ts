@@ -13,13 +13,13 @@ describe('computeNets', () => {
   test('derives the three nets of an RC low pass', () => {
     const nets = netsOf(
       'parts:',
-      '  IN:  port a1',
-      '  R1:  resistor a1 a3 10k',
-      '  C1:  capacitor a3 c3 100n',
-      '  OUT: port a4',
-      '  G1:  ground c3',
+      '  IN:  port 1,1',
+      '  R1:  resistor 1,1 3,1 10k',
+      '  C1:  capacitor 3,1 3,3 100n',
+      '  OUT: port 4,1',
+      '  G1:  ground 3,3',
       'wires:',
-      '  - a3 -- a4',
+      '  - 3,1 -- 4,1',
     );
 
     expect(nets).toEqual([
@@ -30,13 +30,13 @@ describe('computeNets', () => {
   });
 
   test('names a net after the port that hangs off it', () => {
-    const nets = netsOf('parts:', '  VIN: port a1', '  R1: resistor a1 a3');
+    const nets = netsOf('parts:', '  VIN: port 1,1', '  R1: resistor 1,1 3,1');
 
     expect(nets[0]).toMatchObject({ name: 'VIN' });
   });
 
   test('numbers a net that no port names', () => {
-    const nets = netsOf('parts:', '  R1: resistor a1 a3', '  R2: resistor a3 a5');
+    const nets = netsOf('parts:', '  R1: resistor 1,1 3,1', '  R2: resistor 3,1 5,1');
 
     expect(nets.map((net) => net.name)).toEqual(['N1', 'N2', 'N3']);
   });
@@ -44,20 +44,20 @@ describe('computeNets', () => {
   test('never gives two nets the same name', () => {
     // ポートを N1 と名付けても、別のネットに N1 を振らない
     // (同じ名前が 2 つあるとテキストで突き合わせられない)。
-    const nets = netsOf('parts:', '  R1: resistor a1 a3', '  R2: resistor b1 b3', '  N1: port b1');
+    const nets = netsOf('parts:', '  R1: resistor 1,1 3,1', '  R2: resistor 1,2 3,2', '  N1: port 1,2');
 
     expect(new Set(nets.map((net) => net.name)).size).toBe(nets.length);
     expect(nets.some((net) => net.refs.includes('N1'))).toBe(true);
   });
 
   test('leaves GND to the ground even when a port is called that', () => {
-    const nets = netsOf('parts:', '  R1: resistor a1 a3', '  R2: resistor b1 b3', '  GND: port b1', '  G1: ground a3');
+    const nets = netsOf('parts:', '  R1: resistor 1,1 3,1', '  R2: resistor 1,2 3,2', '  GND: port 1,2', '  G1: ground 3,1');
 
     expect(new Set(nets.map((net) => net.name)).size).toBe(nets.length);
   });
 
   test('joins two cells that a wire connects', () => {
-    const nets = netsOf('parts:', '  R1: resistor a1 a3', '  R2: resistor a5 a7', 'wires:', '  - a3 -- a5');
+    const nets = netsOf('parts:', '  R1: resistor 1,1 3,1', '  R2: resistor 5,1 7,1', 'wires:', '  - 3,1 -- 5,1');
 
     expect(nets.map((net) => net.refs)).toEqual([['R1.1'], ['R1.2', 'R2.1'], ['R2.2']]);
   });
@@ -65,10 +65,10 @@ describe('computeNets', () => {
   test('treats every ground symbol as the same node, the way a schematic does', () => {
     const nets = netsOf(
       'parts:',
-      '  R1: resistor a1 a3',
-      '  R2: resistor b1 b3',
-      '  G1: ground a3',
-      '  G2: ground b3',
+      '  R1: resistor 1,1 3,1',
+      '  R2: resistor 1,2 3,2',
+      '  G1: ground 3,1',
+      '  G2: ground 3,2',
     );
 
     // 並びは部品を書いた順。
@@ -78,7 +78,7 @@ describe('computeNets', () => {
   });
 
   test('calls a grounded net GND even when a port also names it', () => {
-    const nets = netsOf('parts:', '  VSS: port c3', '  G1: ground c3', '  R1: resistor a3 c3');
+    const nets = netsOf('parts:', '  VSS: port 3,3', '  G1: ground 3,3', '  R1: resistor 3,1 3,3');
 
     expect(nets.find((net) => net.refs.includes('G1'))?.name).toBe('GND');
   });
@@ -86,30 +86,30 @@ describe('computeNets', () => {
   test('follows a chain of wires through several cells', () => {
     const nets = netsOf(
       'parts:',
-      '  R1: resistor a1 a3',
-      '  R2: resistor a7 a9',
+      '  R1: resistor 1,1 3,1',
+      '  R2: resistor 7,1 9,1',
       'wires:',
-      '  - a3 -- a5',
-      '  - a5 -- a7',
+      '  - 3,1 -- 5,1',
+      '  - 5,1 -- 7,1',
     );
 
     expect(nets.map((net) => net.refs)).toEqual([['R1.1'], ['R1.2', 'R2.1'], ['R2.2']]);
   });
 
   test('joins the cells a slanted wire connects', () => {
-    const nets = netsOf('parts:', '  R1: resistor a1 a3', '  R2: resistor c5 c7', 'wires:', '  - a3 -- c5');
+    const nets = netsOf('parts:', '  R1: resistor 1,1 3,1', '  R2: resistor 5,3 7,3', 'wires:', '  - 3,1 -- 5,3');
 
     expect(nets[1]?.refs).toEqual(['R1.2', 'R2.1']);
   });
 
   test('returns nothing for a circuit with no parts', () => {
-    expect(netsOf('wires:', '  - a1 -- a3')).toEqual([]);
+    expect(netsOf('wires:', '  - 1,1 -- 3,1')).toEqual([]);
   });
 });
 
 describe('computeNets の折れた配線', () => {
   test('joins the two ends of a bent wire', () => {
-    const nets = netsOf('parts:', '  R1: resistor a1 a3', '  R2: resistor c5 c7', 'wires:', '  - a3 -| c5');
+    const nets = netsOf('parts:', '  R1: resistor 1,1 3,1', '  R2: resistor 5,3 7,3', 'wires:', '  - 3,1 -| 5,3');
 
     expect(nets[1]?.refs).toEqual(['R1.2', 'R2.1']);
   });
@@ -118,11 +118,11 @@ describe('computeNets の折れた配線', () => {
     // 曲がり角 a5 に乗っている端も同じネット。
     const nets = netsOf(
       'parts:',
-      '  R1: resistor a1 a3',
-      '  R2: resistor a5 a7',
-      '  R3: resistor c5 c7',
+      '  R1: resistor 1,1 3,1',
+      '  R2: resistor 5,1 7,1',
+      '  R3: resistor 5,3 7,3',
       'wires:',
-      '  - a3 -| c5',
+      '  - 3,1 -| 5,3',
     );
 
     const net = nets.find((candidate) => candidate.refs.includes('R1.2'));
@@ -135,10 +135,10 @@ describe('computeNets の T 字', () => {
     // R2 の上端 b3 が、配線 b1 -- b5 の途中に乗る。
     const nets = netsOf(
       'parts:',
-      '  R1: resistor b1 d1',
-      '  R2: resistor b3 d3',
+      '  R1: resistor 1,2 1,4',
+      '  R2: resistor 3,2 3,4',
       'wires:',
-      '  - b1 -- b5',
+      '  - 1,2 -- 5,2',
     );
 
     const net = nets.find((candidate) => candidate.refs.includes('R1.1'));
@@ -149,8 +149,8 @@ describe('computeNets の T 字', () => {
     // 縦と横が交わるだけで、どちらの端でもない。
     const nets = netsOf(
       'parts:',
-      '  R1: resistor a3 c3',
-      '  R2: resistor b1 b5',
+      '  R1: resistor 3,1 3,3',
+      '  R2: resistor 1,2 5,2',
     );
 
     expect(nets.every((net) => net.refs.length === 1)).toBe(true);
@@ -160,7 +160,7 @@ describe('computeNets の T 字', () => {
 describe('電源レールの名前', () => {
   test('names a net after the power rail that hangs off it', () => {
     // レールは端子と同じで、乗っているネットに名前を与える。
-    const nets = netsOf('parts:', '  V5: vcc a1', '  R1: resistor a1 a3');
+    const nets = netsOf('parts:', '  V5: vcc 1,1', '  R1: resistor 1,1 3,1');
 
     expect(nets[0]).toMatchObject({ name: 'V5', refs: ['V5', 'R1.1'] });
   });
@@ -169,15 +169,15 @@ describe('電源レールの名前', () => {
     // `VCC` を何か所にも描くのは回路図の書き方そのもの。離して描いても
     // 指しているネットは 1 つで、端子は 1 回だけ並ぶ。
     const nets = netsOf(
-      'parts:', '  VCC: vcc a1', '  VCC: vcc c1',
-      '  R1: resistor a1 a3', '  R2: resistor c1 c3',
+      'parts:', '  VCC: vcc 1,1', '  VCC: vcc 1,3',
+      '  R1: resistor 1,1 3,1', '  R2: resistor 1,3 3,3',
     );
 
     expect(nets[0]).toMatchObject({ name: 'VCC', refs: ['VCC', 'R1.1', 'R2.1'] });
   });
 
   test('joins ports of the same name too — the id is the net name for those as well', () => {
-    const nets = netsOf('parts:', '  IN: port a1', '  IN: port c1', '  R1: resistor a1 a3');
+    const nets = netsOf('parts:', '  IN: port 1,1', '  IN: port 1,3', '  R1: resistor 1,1 3,1');
 
     expect(nets[0]).toMatchObject({ name: 'IN' });
     expect(nets.filter((net) => net.name === 'IN')).toHaveLength(1);
@@ -186,7 +186,7 @@ describe('電源レールの名前', () => {
   test('keeps two rails apart until they are wired', () => {
     // グラウンドだけが「離して描いても同じ節点」。レールは自動でつながない
     // (5V と 3V3 を同じネットにしてしまうため)。
-    const nets = netsOf('parts:', '  V5: vcc a1', '  V3: vcc c1', '  R1: resistor a1 a3');
+    const nets = netsOf('parts:', '  V5: vcc 1,1', '  V3: vcc 1,3', '  R1: resistor 1,1 3,1');
 
     expect(nets.map((net) => net.name)).toEqual(['V5', 'V3', 'N1']);
   });
@@ -195,8 +195,8 @@ describe('電源レールの名前', () => {
 describe('computeNets の番地の名前', () => {
   test('names a net after the point sitting on it', () => {
     const nets = netsOf(
-      'points:', '  fb: a3',
-      'parts:', '  R1: resistor a1 a3', '  R2: resistor a3 a5',
+      'points:', '  fb: 3,1',
+      'parts:', '  R1: resistor 1,1 3,1', '  R2: resistor 3,1 5,1',
     );
 
     expect(nets.some((net) => net.name === 'fb')).toBe(true);
@@ -206,8 +206,8 @@ describe('computeNets の番地の名前', () => {
     // 名前は図に出ないが、ポートの名前は図に出る。図と突き合わせるための
     // 出力なので、図に見えているほうを優先する。
     const nets = netsOf(
-      'points:', '  fb: a1',
-      'parts:', '  IN: port a1', '  R1: resistor a1 a3',
+      'points:', '  fb: 1,1',
+      'parts:', '  IN: port 1,1', '  R1: resistor 1,1 3,1',
     );
 
     expect(nets.some((net) => net.name === 'IN')).toBe(true);
@@ -215,7 +215,7 @@ describe('computeNets の番地の名前', () => {
   });
 
   test('leaves unnamed nets on the numbered names', () => {
-    const nets = netsOf('parts:', '  R1: resistor a1 a3', '  R2: resistor a3 a5');
+    const nets = netsOf('parts:', '  R1: resistor 1,1 3,1', '  R2: resistor 3,1 5,1');
 
     expect(nets.some((net) => net.name.startsWith('N'))).toBe(true);
   });
@@ -228,10 +228,10 @@ describe('computeNets の T 字 (交点の間)', () => {
     // 図では触れて見えるのにネットリストだけが割れる。
     const nets = netsOf(
       'parts:',
-      '  IN: port v80j4e1',
-      '  R1: resistor x83a3i0 a1',
+      '  IN: port 80.41,22.94',
+      '  R1: resistor 83.3,24.08 1,1',
       'wires:',
-      '  - v80j4e1 -- y86c1c9',
+      '  - 80.41,22.94 -- 86.19,25.22',
     );
 
     expect(nets[0]).toMatchObject({ name: 'IN', refs: ['IN', 'R1.1'] });

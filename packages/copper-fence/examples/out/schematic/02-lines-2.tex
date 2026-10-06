@@ -30,35 +30,35 @@
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
 \ctikzset{grounds/scale=1.36}
-\coordinate (b2) at (2,-2);
-\coordinate (b3) at (4,-2);
-\coordinate (b5) at (8,-2);
-\coordinate (b7) at (12,-2);
-\coordinate (b9) at (16,-2);
-\coordinate (b11) at (20,-2);
-\coordinate (b13) at (24,-2);
-\coordinate (b15) at (28,-2);
-\coordinate (b17) at (32,-2);
-\coordinate (b18) at (34,-2);
-\coordinate (c2) at (2,-4);
-\coordinate (c18) at (34,-4);
-\node[smacoax, draw, xscale=-1] (part-J1) at (b2) {}; % line 3
+\coordinate (x2y2) at (2,-2);
+\coordinate (x3y2) at (4,-2);
+\coordinate (x5y2) at (8,-2);
+\coordinate (x7y2) at (12,-2);
+\coordinate (x9y2) at (16,-2);
+\coordinate (x11y2) at (20,-2);
+\coordinate (x13y2) at (24,-2);
+\coordinate (x15y2) at (28,-2);
+\coordinate (x17y2) at (32,-2);
+\coordinate (x18y2) at (34,-2);
+\coordinate (x2y3) at (2,-4);
+\coordinate (x18y3) at (34,-4);
+\node[smacoax, draw, xscale=-1] (part-J1) at (x2y2) {}; % line 3
 \node[anchor=south] at (part-J1.north) {$J_{1}$}; % line 3
-\draw (b3) to[TL, l_=$\mathrm{L1}$, a^=$50\,\Omega$] (b5); % line 4
-\draw (b5) to[TL, l_=$\mathrm{L2}$, a^=$112\,\Omega$] (b7); % line 5
-\draw (b7) to[TL, l_=$\mathrm{L3}$, a^=$26\,\Omega$] (b9); % line 6
-\draw (b9) to[TL, l_=$\mathrm{L4}$, a^=$112\,\Omega$] (b11); % line 7
-\draw (b11) to[TL, l_=$\mathrm{L5}$, a^=$26\,\Omega$] (b13); % line 8
-\draw (b13) to[TL, l_=$\mathrm{L6}$, a^=$112\,\Omega$] (b15); % line 9
-\draw (b15) to[TL, l_=$\mathrm{L7}$, a^=$50\,\Omega$] (b17); % line 10
-\node[smacoax, draw] (part-J2) at (b18) {}; % line 11
+\draw (x3y2) to[TL, l_=$\mathrm{L1}$, a^=$50\,\Omega$] (x5y2); % line 4
+\draw (x5y2) to[TL, l_=$\mathrm{L2}$, a^=$112\,\Omega$] (x7y2); % line 5
+\draw (x7y2) to[TL, l_=$\mathrm{L3}$, a^=$26\,\Omega$] (x9y2); % line 6
+\draw (x9y2) to[TL, l_=$\mathrm{L4}$, a^=$112\,\Omega$] (x11y2); % line 7
+\draw (x11y2) to[TL, l_=$\mathrm{L5}$, a^=$26\,\Omega$] (x13y2); % line 8
+\draw (x13y2) to[TL, l_=$\mathrm{L6}$, a^=$112\,\Omega$] (x15y2); % line 9
+\draw (x15y2) to[TL, l_=$\mathrm{L7}$, a^=$50\,\Omega$] (x17y2); % line 10
+\node[smacoax, draw] (part-J2) at (x18y2) {}; % line 11
 \node[anchor=south] at (part-J2.north) {$J_{2}$}; % line 11
-\node[ground] at (c2) {}; % line 12
-\node[ground] at (c18) {}; % line 13
-\draw (part-J1.pin 1) -- (b3); % line 15
-\draw (b17) -- (part-J2.pin 1); % line 16
-\draw (part-J1.pin 2) -- (c2); % line 17
-\draw (part-J2.pin 2) -- (c18); % line 18
+\node[ground] at (x2y3) {}; % line 12
+\node[ground] at (x18y3) {}; % line 13
+\draw (part-J1.pin 1) -- (x3y2); % line 15
+\draw (x17y2) -- (part-J2.pin 1); % line 16
+\draw (part-J1.pin 2) -- (x2y3); % line 17
+\draw (part-J2.pin 2) -- (x18y3); % line 18
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(16.794,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

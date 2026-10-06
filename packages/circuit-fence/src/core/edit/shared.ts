@@ -1,3 +1,4 @@
+import { isMap, isScalar, isSeq, parseDocument, visit } from 'yaml';
 import { compileCircuit } from '../index.ts';
 import type { Circuit } from '../model/circuit.ts';
 import { fenceError } from '../errors.ts';
@@ -39,6 +40,44 @@ export type RewriteResult =
 
 /** 格子の一番下の行。**綴りを決めている所と同じ 1 か所** (`model/address.ts`) から引く。 */
 export { LAST_ROW };
+
+/**
+ * フロー形式に番地を書けないときの文面。番地の `,` はフロー形式では区切りになるので、
+ * 素の字の中に書くと項目が割れて図が変わる。書く前に断る。
+ */
+export const FLOW_ADDRESS_REFUSAL =
+  'フロー形式 ({ } や [ ]) の素の字には番地 (x,y) を書き込めません (`,` が区切りになります)。ブロック形式に直すか、"…" で囲んで手で書きます';
+
+/**
+ * その書き換えが**フロー形式の素の字の中に番地を書くか**。書くと `,` で項目が割れる。
+ * 引用符で囲んだ字 (`{R1: "resistor 1,1 3,1"}`) の中は `,` を書いてもよいので数えない。
+ * 番地を書かない書き換え (`,` を含まない) は見ない。
+ */
+export function writesAddressIntoFlow(source: string, edits: readonly Edit[]): boolean {
+  const writing = edits.filter((edit) => edit.text.includes(','));
+  if (writing.length === 0) return false;
+
+  const flows: (readonly [number, number])[] = [];
+  const quoted: (readonly [number, number])[] = [];
+  visit(parseDocument(source, { uniqueKeys: false }), {
+    Node(_, node) {
+      const range = node.range;
+      if (range === undefined || range === null) return;
+      if ((isMap(node) || isSeq(node)) && node.flow === true) flows.push([range[0], range[1]]);
+      if (isScalar(node) && (node.type === 'QUOTE_DOUBLE' || node.type === 'QUOTE_SINGLE')) quoted.push([range[0], range[1]]);
+    },
+  });
+  if (flows.length === 0) return false;
+
+  const starts = [0];
+  for (const line of source.split('\n')) starts.push((starts.at(-1) ?? 0) + line.length + 1);
+  const inside = (ranges: readonly (readonly [number, number])[], at: number): boolean =>
+    ranges.some(([start, end]) => start <= at && at < end);
+  return writing.some((edit) => {
+    const at = (starts[edit.line - 1] ?? 0) + edit.column;
+    return inside(flows, at) && !inside(quoted, at);
+  });
+}
 
 /** 断る 1 件。**`MoveResult` にも `RewriteResult` にもそのまま返せる形**にしておく。 */
 export const fail = (message: string, line: number | null): { readonly ok: false; readonly error: FenceError } =>
@@ -93,11 +132,15 @@ const COMMENT = /(^|\s)#/;
 type Candidate = { readonly column: number; readonly length: number; readonly text: string };
 
 /**
- * 空白で切った綴り 1 つを候補にする。空白を省いた配線 (`a1--a3|-c5`) と
+ * 空白で切った綴り 1 つを候補にする。空白を省いた配線 (`1,1--3,1|-5,3`) と
  * フロー形式 (`[a1 -- a3, b1 -- b5]`) は 1 綴りの中に端子が埋まるので、
  * **綴りのままで読めないときだけ**演算子と区切りでさらに割る
  * (先に割ると、`-` を含む `points:` の名前を壊しかねない)。
  * 区切りが無ければ割っても丸ごと 1 つに戻るだけなので、場合分けは要らない。
+ *
+ * **`,` は番地の中の字でもある** (`1,1`)。演算子と括弧と引用符で割ったかけらが読めれば
+ * そのまま採り、読めないかけらだけをフロー形式の区切りとして `,` で割る。フロー形式では
+ * 番地を引用符で囲む (`["1,1 -- 3,1"]`) ので、引用符も区切りとして外す。
  */
 function candidatesOf(
   column: number,
@@ -105,13 +148,17 @@ function candidatesOf(
   resolves: (text: string) => boolean,
 ): readonly Candidate[] {
   if (resolves(token)) return [{ column, length: token.length, text: token }];
+  // stateful な `g` 付き正規表現を使い回さない (lastIndex が持ち越されて取りこぼす) ため、
+  // ここで作る。
+  return splitBy(column, token, /--|-\||\|-|[[\]{}"']/g).flatMap((piece) =>
+    resolves(piece.text) ? [piece] : splitBy(piece.column, piece.text, /,/g));
+}
 
+/** 区切りの字で割ったかけら (区切りそのものは落とす)。 */
+function splitBy(column: number, token: string, separator: RegExp): Candidate[] {
   const pieces: Candidate[] = [];
   let last = 0;
-  // 配線の演算子とフロー形式の区切り (`[` `]` `{` `}` `,`)。stateful な
-  // `g` 付き正規表現を使い回さない (lastIndex が持ち越されて取りこぼす) ため、
-  // ここで作る。
-  for (const match of token.matchAll(/--|-\||\|-|[[\]{},]/g)) {
+  for (const match of token.matchAll(separator)) {
     const index = match.index ?? 0;
     if (index > last) pieces.push({ column: column + last, length: index - last, text: token.slice(last, index) });
     last = index + match[0].length;
@@ -157,7 +204,7 @@ export function wordEdit(line: number, found: Token | null, text: string, append
 export type AddressToken = { readonly column: number; readonly length: number; readonly address: Address };
 
 /**
- * 鍵 (`R1:` の `R1`) は端子ではない。**`C1` は番地 `c1` としても読める**ので、
+ * 鍵 (`R1:` の `R1`) は端子ではない。番地の名前 (`points:`) と同じ綴りの鍵もあるので、
  * 見分けないと部品の名前のほうを書き換えてしまう。
  * 綴りの直後が `:` かどうかで決める — フロー形式 (`{R1: …, R2: …}`) でも
  * 行の頭でも同じ規則で効く (「行の最初のコロンより後ろ」では効かなかった)。

@@ -30,9 +30,9 @@ const CASES: readonly { kind: Kind; make: () => FenceEditor; body: string; part:
   {
     kind: 'circuit',
     make: createCircuitEditor,
-    body: 'parts:\n  R1: resistor a1 a2 10k\n',
+    body: 'parts:\n  R1: resistor 1,1 2,1 10k\n',
     part: 'R1',
-    to: 'b1',
+    to: '1,2',
   },
 ];
 

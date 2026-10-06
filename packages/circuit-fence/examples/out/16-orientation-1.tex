@@ -19,17 +19,17 @@
 \node[gray, font=\scriptsize] at (20,0.84) {11};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
-\coordinate (b2) at (2,-2);
-\coordinate (b5) at (8,-2);
-\coordinate (b8) at (14,-2);
-\coordinate (b11) at (20,-2);
-\node[npn] (part-Q1) at (b2) {}; % line 3
+\coordinate (x2y2) at (2,-2);
+\coordinate (x5y2) at (8,-2);
+\coordinate (x8y2) at (14,-2);
+\coordinate (x11y2) at (20,-2);
+\node[npn] (part-Q1) at (x2y2) {}; % line 3
 \node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 3
-\node[npn, rotate=-90] (part-Q2) at (b5) {}; % line 4
+\node[npn, rotate=-90] (part-Q2) at (x5y2) {}; % line 4
 \node[anchor=north] at (part-Q2.east) {$Q_{2}$}; % line 4
-\node[npn, rotate=-180] (part-Q3) at (b8) {}; % line 5
+\node[npn, rotate=-180] (part-Q3) at (x8y2) {}; % line 5
 \node[anchor=east] at (part-Q3.east) {$Q_{3}$}; % line 5
-\node[npn, rotate=-270] (part-Q4) at (b11) {}; % line 6
+\node[npn, rotate=-270] (part-Q4) at (x11y2) {}; % line 6
 \node[anchor=south] at (part-Q4.east) {$Q_{4}$}; % line 6
 \path (1.238,-6.593) rectangle (2.762,-5.407); % line 8
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,-6) {X}; % line 8
@@ -39,7 +39,7 @@
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (14,-6) {X}; % line 10
 \path (18.476,-6.593) rectangle (21.524,-5.407); % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (20,-6) {X}; % line 11
-\path (24,-7.895) rectangle (34.499,0.593); % line 12
+\path (24,-7.895) rectangle (34.761,0.593); % line 12
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (24,0) {X}; % line 12
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (24,-0.487) {X}; % line 12
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (24,-0.974) {X}; % line 12

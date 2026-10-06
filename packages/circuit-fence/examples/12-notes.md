@@ -6,17 +6,17 @@
 ```circuit
 title: 図01 注釈
 parts:
-  IN:  port a1
-  R1:  resistor a1 a2 10k
-  C1:  capacitor a2 b2 100n
-  OUT: port a3
-  G1:  ground b2
+  IN:  port 1,1
+  R1:  resistor 1,1 2,1 10k
+  C1:  capacitor 2,1 2,2 100n
+  OUT: port 3,1
+  G1:  ground 2,2
 wires:
-  - a2 -- a3
+  - 2,1 -- 3,1
 notes:
-  - source a4 blue
+  - source 4,1 blue
   - circle R1
-  - text c1: ここでカットオフ 159 Hz
+  - text 1,3: ここでカットオフ 159 Hz
 style:
   grid: on
 ```
@@ -45,23 +45,23 @@ style:
 ```circuit
 title: 図02 注釈の色
 parts:
-  R1: resistor a1 a3
-  R2: resistor a4 a6
-  R3: resistor c1 c3
-  R4: resistor c4 c6
+  R1: resistor 1,1 3,1
+  R2: resistor 4,1 6,1
+  R3: resistor 1,3 3,3
+  R4: resistor 4,3 6,3
 notes:
   - circle R1 red
   - circle R2 blue
   - circle R3 green
   - circle R4 orange
-  - text a2h0 red center: red
-  - text a5h0 blue center: blue
-  - text b1 blue: "R1: resistor a1 a3"
-  - text b4 blue: "R2: resistor a4 a6"
-  - text c2h0 green center: green
-  - text c5h0 orange center: orange
-  - text d1 blue: "R3: resistor c1 c3"
-  - text d4 blue: "R4: resistor c4 c6"
+  - text 2,1.7 red center: red
+  - text 5,1.7 blue center: blue
+  - text 1,2 blue: "R1: resistor a1 a3"
+  - text 4,2 blue: "R2: resistor a4 a6"
+  - text 2,3.7 green center: green
+  - text 5,3.7 orange center: orange
+  - text 1,4 blue: "R3: resistor c1 c3"
+  - text 4,4 blue: "R4: resistor c4 c6"
 style:
   grid: on
 ```
@@ -76,17 +76,17 @@ TeX には字を渡さず、描き上がった図に差し込んでいるため�
 ```circuit
 title: 図03 日本語
 parts:
-  V1: battery a1 b1 9
-  R1: resistor a1 a3 470
-  D1: led a3 b3
-  G1: ground b1
+  V1: battery 1,1 1,2 9
+  R1: resistor 1,1 3,1 470
+  D1: led 3,1 3,2
+  G1: ground 1,2
 wires:
-  - b1 -- b3
+  - 1,2 -- 3,2
 notes:
-  - source a5 blue
+  - source 5,1 blue
   - circle D1 orange
-  - text c1: LED の順方向電圧は 2 V ぐらい
-  - text d1: 電流は (9 - 2) / 470 で 15 mA
+  - text 1,3: LED の順方向電圧は 2 V ぐらい
+  - text 1,4: 電流は (9 - 2) / 470 で 15 mA
 style:
   grid: on
 ```
@@ -101,17 +101,17 @@ style:
 ```circuit
 title: 図04 字の大きさ
 parts:
-  R1: resistor a1 a2 10k
+  R1: resistor 1,1 2,1 10k
 notes:
-  - text b1 tiny: tiny (極小)
-  - text c1 small: small (小)
-  - text d1: 書かなければ普通
-  - text e1 large: large (大)
-  - text f1 huge: huge (極大)
-  - source a3 blue
+  - text 1,2 tiny: tiny (極小)
+  - text 1,3 small: small (小)
+  - text 1,4: 書かなければ普通
+  - text 1,5 large: large (大)
+  - text 1,6 huge: huge (極大)
+  - source 3,1 blue
 style:
   grid: on
-  grid-to: f2
+  grid-to: 2,6
 ```
 
 ![図04 字の大きさ](out/12-notes-4.png)
@@ -127,19 +127,19 @@ pt の直接指定は書けない。色と同じで、**実機に通した指定
 ```circuit
 title: 図05 寄せと太字
 parts:
-  R1: resistor a1 a2 10k
+  R1: resistor 1,1 2,1 10k
 notes:
-  - circle b2
-  - text b2 left: left (番地が左端)
-  - circle c2
-  - text c2 center: center (番地が真ん中)
-  - circle d2
-  - text d2 right: right (番地が右端)
-  - text e2 bold: bold で太字になる
-  - source a5 blue
+  - circle 2,2
+  - text 2,2 left: left (番地が左端)
+  - circle 2,3
+  - text 2,3 center: center (番地が真ん中)
+  - circle 2,4
+  - text 2,4 right: right (番地が右端)
+  - text 2,5 bold: bold で太字になる
+  - source 5,1 blue
 style:
   grid: on
-  grid-to: e3
+  grid-to: 3,5
 ```
 
 ![図05 寄せと太字](out/12-notes-5.png)
@@ -155,22 +155,22 @@ style:
 ```circuit
 title: 図06 枠と指し棒
 parts:
-  IN:  port a1
-  R1:  resistor a1 a2 10k
-  C1:  capacitor a2 b2 100n
-  OUT: port a3
-  G1:  ground b2
+  IN:  port 1,1
+  R1:  resistor 1,1 2,1 10k
+  C1:  capacitor 2,1 2,2 100n
+  OUT: port 3,1
+  G1:  ground 2,2
 wires:
-  - a2 -- a3
+  - 2,1 -- 3,1
 notes:
-  - box a1 c3 blue
-  - text d2 blue center: box a1 c3 blue
-  - arrow b4 R1
-  - text b4 red: R1のコメント
-  - source a7 blue
+  - box 1,1 3,3 blue
+  - text 2,4 blue center: box a1 c3 blue
+  - arrow 4,2 R1
+  - text 4,2 red: R1のコメント
+  - source 7,1 blue
 style:
   grid: on
-  grid-to: c6
+  grid-to: 6,3
 ```
 
 ![図06 枠と指し棒](out/12-notes-6.png)
@@ -187,16 +187,16 @@ style:
 ```circuit
 title: 図07 直線と実線の枠
 parts:
-  R1: resistor b2 b4 10k
-  R2: resistor d2 d4 4.7k
+  R1: resistor 2,2 4,2 10k
+  R2: resistor 2,4 4,4 4.7k
 notes:
-  - box a1 e5 ink solid
-  - line a1 a5 ink
-  - line c1 c5 ink
-  - line e1 e5 ink
-  - text b1f0 blue left: line で仕切る
-  - text f1 blue: box a1 e5 ink solid
-  - source a8 blue
+  - box 1,1 5,5 ink solid
+  - line 1,1 5,1 ink
+  - line 1,3 5,3 ink
+  - line 1,5 5,5 ink
+  - text 1,2.5 blue left: line で仕切る
+  - text 1,6 blue: box a1 e5 ink solid
+  - source 8,1 blue
 style:
   grid: on
 ```
@@ -216,12 +216,12 @@ style:
 ```circuit
 title: 図08 行送り
 parts:
-  R1: resistor a1 a2 10k
+  R1: resistor 1,1 2,1 10k
 notes:
-  - text a3 blue bold: tight
-  - source b3 tight
-  - text a10 blue bold: loose
-  - source b10 loose
+  - text 3,1 blue bold: tight
+  - source 3,2 tight
+  - text 10,1 blue bold: loose
+  - source 10,2 loose
 style:
   pitch: 1
 ```

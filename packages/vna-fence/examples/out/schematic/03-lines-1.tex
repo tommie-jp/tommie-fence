@@ -30,26 +30,26 @@
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
 \ctikzset{grounds/scale=1.36}
-\coordinate (b2) at (2,-2);
-\coordinate (c5) at (8,-4);
-\coordinate (e5) at (8,-8);
-\coordinate (b8) at (14,-2);
-\coordinate (c2) at (2,-4);
-\coordinate (c8) at (14,-4);
-\coordinate (b5) at (8,-2);
-\node[smacoax, draw, xscale=-1] (part-J1) at (b2) {}; % line 3
+\coordinate (x2y2) at (2,-2);
+\coordinate (x5y3) at (8,-4);
+\coordinate (x5y5) at (8,-8);
+\coordinate (x8y2) at (14,-2);
+\coordinate (x2y3) at (2,-4);
+\coordinate (x8y3) at (14,-4);
+\coordinate (x5y2) at (8,-2);
+\node[smacoax, draw, xscale=-1] (part-J1) at (x2y2) {}; % line 3
 \node[anchor=south] at (part-J1.north) {$J_{1}$}; % line 3
-\draw (c5) to[TL, l_=$S_{1}$, a^=$50\,\Omega$] (e5); % line 4
-\node[smacoax, draw] (part-J2) at (b8) {}; % line 5
+\draw (x5y3) to[TL, l_=$S_{1}$, a^=$50\,\Omega$] (x5y5); % line 4
+\node[smacoax, draw] (part-J2) at (x8y2) {}; % line 5
 \node[anchor=south] at (part-J2.north) {$J_{2}$}; % line 5
-\node[ground] at (c2) {}; % line 6
-\node[ground] at (c8) {}; % line 7
-\draw (part-J1.pin 1) -- (b5); % line 9
-\draw (b5) -- (part-J2.pin 1); % line 9
-\draw (b5) -- (c5); % line 10
-\draw (part-J1.pin 2) -- (c2); % line 11
-\draw (part-J2.pin 2) -- (c8); % line 12
-\node[circ] at (b5) {};
+\node[ground] at (x2y3) {}; % line 6
+\node[ground] at (x8y3) {}; % line 7
+\draw (part-J1.pin 1) -- (x5y2); % line 9
+\draw (x5y2) -- (part-J2.pin 1); % line 9
+\draw (x5y2) -- (x5y3); % line 10
+\draw (part-J1.pin 2) -- (x2y3); % line 11
+\draw (part-J2.pin 2) -- (x8y3); % line 12
+\node[circ] at (x5y2) {};
 \path (1.619,-0.593) rectangle (2.381,0.593); % line 14
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,0) {X}; % line 14
 \path (13.619,-0.593) rectangle (14.381,0.593); % line 15

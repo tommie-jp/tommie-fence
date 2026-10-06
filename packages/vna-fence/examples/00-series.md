@@ -9,19 +9,19 @@ DUT の等価回路 — CH0 (J1) と CH1 (J2) の間に 100 Ω が 1 本入る�
 ```circuit
 title: 回路図01 100 Ω を直列に入れた治具
 parts:
-  J1: sma b2 mirror
-  R1: resistor b4 b6 100
-  J2: sma b8
-  G1: ground c2
-  G2: ground c8
+  J1: sma 2,2 mirror
+  R1: resistor 4,2 6,2 100
+  J2: sma 8,2
+  G1: ground 2,3
+  G2: ground 8,3
 wires:
-  - J1.1 -- b4
-  - b6 -- J2.1
-  - J1.2 -- c2
-  - J2.2 -- c8
+  - J1.1 -- 4,2
+  - 6,2 -- J2.1
+  - J1.2 -- 2,3
+  - J2.2 -- 8,3
 notes:
-  - text a2 center: CH0
-  - text a8 center: CH1
+  - text 2,1 center: CH0
+  - text 8,1 center: CH1
 ```
 
 <img src="out/schematic/00-series.png" alt="回路図01 100 Ω を直列に入れた治具" width="492">

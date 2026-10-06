@@ -9,43 +9,43 @@
 ```circuit
 title: 回路図01 1 石中波ラジオ
 parts:
-  V1: vsource a1 g1 3
-  VCC: vcc a1 3V
-  G1: ground g1
-  L1: transformer d6
-  VC: capacitor-var c4 e4 l=$\mathrm{VC}$
-  G2: ground e4
-  G7: ground f8
-  C1: capacitor e9 e11 10n
-  VCC: vcc a14 3V
-  Rc: resistor c14 a14 1.5k
-  Rb: resistor e12 c12 180k
-  Q1: npn e14 2SC1815
-  G3: ground g14
-  VCC: vcc a16 3V
-  C4: capacitor a16 b16 100n
-  G8: ground b16
-  D1: diode c16 c19 1N60
-  C3: capacitor c20 e20 1n
-  G4: ground e20
-  R3: resistor c22 e22 100k
-  G5: ground e22
-  EAR: earphone c24 e24 l=$\mathrm{EAR}$
-  G6: ground e24
+  V1: vsource 1,1 1,7 3
+  VCC: vcc 1,1 3V
+  G1: ground 1,7
+  L1: transformer 6,4
+  VC: capacitor-var 4,3 4,5 l=$\mathrm{VC}$
+  G2: ground 4,5
+  G7: ground 8,6
+  C1: capacitor 9,5 11,5 10n
+  VCC: vcc 14,1 3V
+  Rc: resistor 14,3 14,1 1.5k
+  Rb: resistor 12,5 12,3 180k
+  Q1: npn 14,5 2SC1815
+  G3: ground 14,7
+  VCC: vcc 16,1 3V
+  C4: capacitor 16,1 16,2 100n
+  G8: ground 16,2
+  D1: diode 16,3 19,3 1N60
+  C3: capacitor 20,3 20,5 1n
+  G4: ground 20,5
+  R3: resistor 22,3 22,5 100k
+  G5: ground 22,5
+  EAR: earphone 24,3 24,5 l=$\mathrm{EAR}$
+  G6: ground 24,5
 wires:
-  - L1.A1 -| c4
-  - L1.A2 -| e4
-  - L1.B1 -| e9
-  - L1.B2 -| f8
-  - e11 -- e12
-  - e12 -- Q1.B
-  - c12 -- c14
-  - c14 -- Q1.C
-  - Q1.E -- g14
-  - c14 -- c16
-  - c19 -- c20
-  - c20 -- c22
-  - c22 -- c24
+  - L1.A1 -| 4,3
+  - L1.A2 -| 4,5
+  - L1.B1 -| 9,5
+  - L1.B2 -| 8,6
+  - 11,5 -- 12,5
+  - 12,5 -- Q1.B
+  - 12,3 -- 14,3
+  - 14,3 -- Q1.C
+  - Q1.E -- 14,7
+  - 14,3 -- 16,3
+  - 19,3 -- 20,3
+  - 20,3 -- 22,3
+  - 22,3 -- 24,3
 ```
 
 <img src="out/schematic/09-am-radio.png" alt="回路図01 1 石中波ラジオ" width="1797">

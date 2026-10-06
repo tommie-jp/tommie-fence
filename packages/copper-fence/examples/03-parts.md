@@ -34,23 +34,23 @@ parts:
 ```circuit
 title: 回路図01 直列とシャントの等価回路
 parts:
-  J1: sma b2 mirror
-  T1: tline b3 b6 50 l=$\mathrm{L1}$
-  C1: capacitor b6 b8 10p
-  T2: tline b8 b11 50 l=$\mathrm{L1}$
-  T3: tline b11 b14 50 l=$\mathrm{L1}$
-  C2: capacitor d11 f11 1p
-  G3: ground g11
-  J2: sma b15
-  G1: ground c2
-  G2: ground c15
+  J1: sma 2,2 mirror
+  T1: tline 3,2 6,2 50 l=$\mathrm{L1}$
+  C1: capacitor 6,2 8,2 10p
+  T2: tline 8,2 11,2 50 l=$\mathrm{L1}$
+  T3: tline 11,2 14,2 50 l=$\mathrm{L1}$
+  C2: capacitor 11,4 11,6 1p
+  G3: ground 11,7
+  J2: sma 15,2
+  G1: ground 2,3
+  G2: ground 15,3
 wires:
-  - J1.1 -- b3
-  - b11 -- d11
-  - f11 -- g11
-  - b14 -- J2.1
-  - J1.2 -- c2
-  - J2.2 -- c15
+  - J1.1 -- 3,2
+  - 11,2 -- 11,4
+  - 11,6 -- 11,7
+  - 14,2 -- J2.1
+  - J1.2 -- 2,3
+  - J2.2 -- 15,3
 ```
 
 ![回路図01 直列とシャントの等価回路](out/schematic/03-parts-1.png)
@@ -88,24 +88,24 @@ notes:
 ```circuit
 title: 回路図02 MMIC の等価回路
 parts:
-  J1: sma b2 mirror
-  T1: tline b3 b5 50 l=$\mathrm{L1}$
-  T2: tline b5 b7 96 l=$\mathrm{N1}$
-  U1: ic3 b9 SPF5189Z
-  T3: tline b11 b13 96 l=$\mathrm{N2}$
-  T4: tline b13 b15 50 l=$\mathrm{L2}$
-  J2: sma b16
-  G1: ground c2
-  G2: ground c16
-  G3: ground d9
+  J1: sma 2,2 mirror
+  T1: tline 3,2 5,2 50 l=$\mathrm{L1}$
+  T2: tline 5,2 7,2 96 l=$\mathrm{N1}$
+  U1: ic3 9,2 SPF5189Z
+  T3: tline 11,2 13,2 96 l=$\mathrm{N2}$
+  T4: tline 13,2 15,2 50 l=$\mathrm{L2}$
+  J2: sma 16,2
+  G1: ground 2,3
+  G2: ground 16,3
+  G3: ground 9,4
 wires:
-  - J1.1 -- b3
-  - b7 -- U1.1
-  - U1.3 -- b11
-  - U1.2 -- d9
-  - b15 -- J2.1
-  - J1.2 -- c2
-  - J2.2 -- c16
+  - J1.1 -- 3,2
+  - 7,2 -- U1.1
+  - U1.3 -- 11,2
+  - U1.2 -- 9,4
+  - 15,2 -- J2.1
+  - J1.2 -- 2,3
+  - J2.2 -- 16,3
 ```
 
 ![回路図02 MMIC の等価回路](out/schematic/03-parts-2.png)

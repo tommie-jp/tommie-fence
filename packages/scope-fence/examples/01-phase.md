@@ -8,19 +8,19 @@
 ```circuit
 title: 回路図01 R と C の直列
 parts:
-  W1: sine b1 e1 l=$\mathrm{W1}$
-  G1: ground e1
-  R1: resistor b3 b5 1k
-  C1: capacitor b5 b7 100n
-  M1: voltmeter a3 a5 l=$\mathrm{CH1}$
-  M2: voltmeter a5 a7 l=$\mathrm{CH2}$
+  W1: sine 1,2 1,5 l=$\mathrm{W1}$
+  G1: ground 1,5
+  R1: resistor 3,2 5,2 1k
+  C1: capacitor 5,2 7,2 100n
+  M1: voltmeter 3,1 5,1 l=$\mathrm{CH1}$
+  M2: voltmeter 5,1 7,1 l=$\mathrm{CH2}$
 wires:
-  - b1 -- b3
-  - a3 -- b3
-  - a5 -- b5
-  - a7 -- b7
-  - b7 -- e7
-  - e7 -- e1
+  - 1,2 -- 3,2
+  - 3,1 -- 3,2
+  - 5,1 -- 5,2
+  - 7,1 -- 7,2
+  - 7,2 -- 7,5
+  - 7,5 -- 1,5
 ```
 
 <img src="out/schematic/01-phase.png" alt="回路図01 R と C の直列" width="497">

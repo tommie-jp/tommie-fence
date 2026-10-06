@@ -8,11 +8,11 @@ const MARKDOWN = [
   '',
   '```circuit',
   'points:',
-  '  fb: c3',
+  '  fb: 3,3',
   'parts:',
-  '  R1: resistor fb d3 10k',
-  '  R2: resistor fb c5 1k',
-  '  R3: resistor e1 e2 2k',
+  '  R1: resistor fb 3,4 10k',
+  '  R2: resistor fb 5,3 1k',
+  '  R3: resistor 1,5 2,5 2k',
   '```',
   '',
 ].join('\n');
@@ -21,7 +21,7 @@ const portOf = (over: Partial<EditorPort> = {}): EditorPort => ({
   document: () => ({ text: MARKDOWN, line: 5 }),
   // 一覧の並びは番地順。`c3` の節点が先に来る。
   pick: async (items) => items[0] ?? null,
-  prompt: async () => 'c4',
+  prompt: async () => '4,3',
   apply: async () => true,
   info: () => {},
   warn: () => {},
@@ -34,7 +34,7 @@ describe('labelOf', () => {
   test('shows the name, since a named node is a one-line rewrite', () => {
     const label = labelOf({ address: { row: 2, col: 2 }, name: 'fb', uses: 2 }, tJa);
 
-    expect(label).toContain('c3');
+    expect(label).toContain('3,3');
     expect(label).toContain('fb');
     expect(label).toContain('2 か所');
   });
@@ -53,14 +53,14 @@ describe('runMovePoint', () => {
     const [fenceLine, edits] = apply.mock.calls[0] as unknown as [number, { line: number; text: string }[]];
     expect(fenceLine).toBe(3);
     expect(edits).toHaveLength(1);
-    expect(edits[0]?.text).toBe('c4');
+    expect(edits[0]?.text).toBe('4,3');
   });
 
   test('offers the address the node is at now, so a nudge is one keystroke', async () => {
     const prompt = vi.fn(async () => null);
     await runMovePoint(portOf({ prompt }));
 
-    expect(prompt).toHaveBeenCalledWith(expect.any(String), 'c3');
+    expect(prompt).toHaveBeenCalledWith(expect.any(String), '3,3');
   });
 
   test('keeps the report plain when the move keeps every connection as it was', async () => {
@@ -75,7 +75,7 @@ describe('runMovePoint', () => {
     const info = vi.fn();
     const apply = vi.fn(async () => true);
     // e1 には R3 の端が来ている。同じ交点 = 接続なので、寄せるとつながる。
-    await runMovePoint(portOf({ info, apply, prompt: async () => 'e1' }));
+    await runMovePoint(portOf({ info, apply, prompt: async () => '1,5' }));
 
     expect(apply).toHaveBeenCalledOnce();
     expect(info).toHaveBeenCalledWith(expect.stringContaining('つながった接続'));
@@ -108,7 +108,7 @@ describe('runMovePoint', () => {
   test('does nothing when the node is already where it was asked to go', async () => {
     const apply = vi.fn(async () => true);
     const info = vi.fn();
-    await runMovePoint(portOf({ apply, info, prompt: async () => 'c3' }));
+    await runMovePoint(portOf({ apply, info, prompt: async () => '3,3' }));
 
     expect(apply).not.toHaveBeenCalled();
     expect(info).toHaveBeenCalledOnce();
@@ -119,10 +119,10 @@ describe('runMovePoint', () => {
     const mixed = [
       '```circuit',
       'points:',
-      '  fb: c3',
+      '  fb: 3,3',
       'parts:',
-      '  R1: resistor fb d3',
-      '  R2: resistor c3 e3',
+      '  R1: resistor fb 3,4',
+      '  R2: resistor 3,3 3,5',
       '```',
       '',
     ].join('\n');

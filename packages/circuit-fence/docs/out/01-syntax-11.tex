@@ -17,18 +17,18 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
-\coordinate (a1) at (0,0);
-\coordinate (a2) at (2,0);
-\coordinate (a4) at (6,0);
-\coordinate (a5) at (8,0);
-\coordinate (a7) at (12,0);
-\coordinate (a8) at (14,0);
-\coordinate (c1) at (0,-4);
-\coordinate (c2) at (2,-4);
-\draw (a1) to[R, l_=$R_{1}$] (a2); % line 3
-\draw (a4) to[R, l_=$R_{load}$] (a5); % line 4
-\draw (a7) to[R, l_=$R$] (a8); % line 5
-\draw (c1) to[esource, l_=$V_{cc2}$] (c2); % line 6
+\coordinate (x1y1) at (0,0);
+\coordinate (x2y1) at (2,0);
+\coordinate (x4y1) at (6,0);
+\coordinate (x5y1) at (8,0);
+\coordinate (x7y1) at (12,0);
+\coordinate (x8y1) at (14,0);
+\coordinate (x1y3) at (0,-4);
+\coordinate (x2y3) at (2,-4);
+\draw (x1y1) to[R, l_=$R_{1}$] (x2y1); % line 3
+\draw (x4y1) to[R, l_=$R_{load}$] (x5y1); % line 4
+\draw (x7y1) to[R, l_=$R$] (x8y1); % line 5
+\draw (x1y3) to[esource, l_=$V_{cc2}$] (x2y3); % line 6
 \draw (0.784,-4) -- ++(0.162,0); % line 6
 \draw (0.865,-4.081) -- ++(0,0.162); % line 6
 \draw (1.054,-4) -- ++(0.162,0); % line 6
@@ -40,7 +40,7 @@
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (13,-1.4) {X}; % line 10
 \path (-1.413,-5.993) rectangle (3.413,-4.807); % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (1,-5.4) {X}; % line 11
-\path (18,-7.895) rectangle (31.123,0.593); % line 12
+\path (18,-7.895) rectangle (31.911,0.593); % line 12
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (18,0) {X}; % line 12
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (18,-0.487) {X}; % line 12
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (18,-0.974) {X}; % line 12

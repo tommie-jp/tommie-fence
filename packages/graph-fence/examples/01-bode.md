@@ -10,18 +10,18 @@
 ```circuit
 title: 回路図01 RC ローパス
 parts:
-  W1: sine b1 e1 l=$\mathrm{W1}$
-  G1: ground e1
-  IN: port a2
-  R1: resistor b4 b7 1k
-  C1: capacitor b7 e7 100n
-  G2: ground e7
-  OUT: port a7
+  W1: sine 1,2 1,5 l=$\mathrm{W1}$
+  G1: ground 1,5
+  IN: port 2,1
+  R1: resistor 4,2 7,2 1k
+  C1: capacitor 7,2 7,5 100n
+  G2: ground 7,5
+  OUT: port 7,1
 wires:
-  - b1 -- b2
-  - b2 -- b4
-  - a2 -- b2
-  - a7 -- b7
+  - 1,2 -- 2,2
+  - 2,2 -- 4,2
+  - 2,1 -- 2,2
+  - 7,1 -- 7,2
 ```
 
 <img src="out/schematic/01-bode.png" alt="回路図01 RC ローパス" width="553">

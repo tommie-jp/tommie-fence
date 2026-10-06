@@ -6,21 +6,21 @@
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\coordinate (c2) at (2,-4);
-\coordinate (c4) at (6,-4);
-\coordinate (c5) at (8,-4);
-\coordinate (c7) at (12,-4);
-\coordinate (c8) at (14,-4);
-\coordinate (c10) at (18,-4);
-\coordinate (b3) at (4,-2);
-\coordinate (b6) at (10,-2);
-\coordinate (b9) at (16,-2);
-\draw (c2) to[potentiometer, n=part-P1, l_=$P_{1}$, a^=$10\,\mathrm{k}\Omega$] (c4); % line 3
-\draw (c5) to[thyristor, n=part-T1, l_=$T_{1}$] (c7); % line 4
-\draw (c8) to[triac, n=part-T2, l_=$T_{2}$] (c10); % line 5
-\draw (part-P1.wiper) -- (b3); % line 7
-\draw (part-T1.gate) |- (b6); % line 8
-\draw (part-T2.gate) |- (b9); % line 9
+\coordinate (x2y3) at (2,-4);
+\coordinate (x4y3) at (6,-4);
+\coordinate (x5y3) at (8,-4);
+\coordinate (x7y3) at (12,-4);
+\coordinate (x8y3) at (14,-4);
+\coordinate (x10y3) at (18,-4);
+\coordinate (x3y2) at (4,-2);
+\coordinate (x6y2) at (10,-2);
+\coordinate (x9y2) at (16,-2);
+\draw (x2y3) to[potentiometer, n=part-P1, l_=$P_{1}$, a^=$10\,\mathrm{k}\Omega$] (x4y3); % line 3
+\draw (x5y3) to[thyristor, n=part-T1, l_=$T_{1}$] (x7y3); % line 4
+\draw (x8y3) to[triac, n=part-T2, l_=$T_{2}$] (x10y3); % line 5
+\draw (part-P1.wiper) -- (x3y2); % line 7
+\draw (part-T1.gate) |- (x6y2); % line 8
+\draw (part-T2.gate) |- (x9y2); % line 9
 \draw[circuitnoteink] (1,-0.2) -- (19,-0.2); % line 11
 \draw[circuitnoteink] (1,-8.2) -- (19,-8.2); % line 12
 \draw[circuitnoteink] (1,-0.2) -- (1,-8.2); % line 13

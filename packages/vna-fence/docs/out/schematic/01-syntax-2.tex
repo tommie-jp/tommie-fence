@@ -30,37 +30,37 @@
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
 \ctikzset{grounds/scale=1.36}
-\coordinate (c2) at (2,-4);
-\coordinate (c4) at (6,-4);
-\coordinate (e4) at (6,-8);
-\coordinate (c5) at (8,-4);
-\coordinate (c7) at (12,-4);
-\coordinate (c8) at (14,-4);
-\coordinate (e8) at (14,-8);
-\coordinate (c10) at (18,-4);
-\coordinate (d2) at (2,-6);
-\coordinate (d10) at (18,-6);
-\node[smacoax, draw, xscale=-1] (part-J1) at (c2) {}; % line 3
+\coordinate (x2y3) at (2,-4);
+\coordinate (x4y3) at (6,-4);
+\coordinate (x4y5) at (6,-8);
+\coordinate (x5y3) at (8,-4);
+\coordinate (x7y3) at (12,-4);
+\coordinate (x8y3) at (14,-4);
+\coordinate (x8y5) at (14,-8);
+\coordinate (x10y3) at (18,-4);
+\coordinate (x2y4) at (2,-6);
+\coordinate (x10y4) at (18,-6);
+\node[smacoax, draw, xscale=-1] (part-J1) at (x2y3) {}; % line 3
 \node[font=\scriptsize, anchor=south] at (part-J1.north) {$\mathrm{CH0}$}; % line 3
 \node[anchor=east] at (part-J1.east) {$J_{1}$}; % line 3
-\draw (c4) to[C, l_=$C_{1}$, a^=$47\,\mathrm{p}\mathrm{F}$] (e4); % line 4
-\draw (c5) to[L, l_=$L_{1}$, a^=$235\,\mathrm{n}\mathrm{H}$] (c7); % line 5
-\draw (c8) to[C, l_=$C_{2}$, a^=$47\,\mathrm{p}\mathrm{F}$] (e8); % line 6
-\node[smacoax, draw] (part-J2) at (c10) {}; % line 7
+\draw (x4y3) to[C, l_=$C_{1}$, a^=$47\,\mathrm{p}\mathrm{F}$] (x4y5); % line 4
+\draw (x5y3) to[L, l_=$L_{1}$, a^=$235\,\mathrm{n}\mathrm{H}$] (x7y3); % line 5
+\draw (x8y3) to[C, l_=$C_{2}$, a^=$47\,\mathrm{p}\mathrm{F}$] (x8y5); % line 6
+\node[smacoax, draw] (part-J2) at (x10y3) {}; % line 7
 \node[font=\scriptsize, anchor=south] at (part-J2.north) {$\mathrm{CH1}$}; % line 7
 \node[anchor=west] at (part-J2.east) {$J_{2}$}; % line 7
-\node[ground] at (d2) {}; % line 8
-\node[ground] at (d10) {}; % line 9
-\node[ground] at (e4) {}; % line 10
-\node[ground] at (e8) {}; % line 11
-\draw (part-J1.pin 1) -- (c4); % line 13
-\draw (c4) -- (c5); % line 13
-\draw (c7) -- (c8); % line 14
-\draw (c8) -- (part-J2.pin 1); % line 14
-\draw (part-J1.pin 2) -- (d2); % line 15
-\draw (part-J2.pin 2) -- (d10); % line 16
-\node[circ] at (c4) {};
-\node[circ] at (c8) {};
+\node[ground] at (x2y4) {}; % line 8
+\node[ground] at (x10y4) {}; % line 9
+\node[ground] at (x4y5) {}; % line 10
+\node[ground] at (x8y5) {}; % line 11
+\draw (part-J1.pin 1) -- (x4y3); % line 13
+\draw (x4y3) -- (x5y3); % line 13
+\draw (x7y3) -- (x8y3); % line 14
+\draw (x8y3) -- (part-J2.pin 1); % line 14
+\draw (part-J1.pin 2) -- (x2y4); % line 15
+\draw (part-J2.pin 2) -- (x10y4); % line 16
+\node[circ] at (x4y3) {};
+\node[circ] at (x8y3) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(15.453,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

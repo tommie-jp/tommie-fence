@@ -11,47 +11,47 @@ DIP 部品・ボード外の機器・ピン参照・電源レールを全部使�
 ```circuit
 title: 回路図01 B-H カーブ測定回路
 parts:
-  WG: sine b1 e1 l=$\mathrm{W1}$
-  G1: ground e1
-  U1A: opamp b4 +up NJM4556A
-  U1B: opamp g4 +up NJM4556A
-  R1: resistor b6 b8 1
-  R2: resistor g6 g8 1
-  T1: transformer e12
-  Rs: resistor g10 j10 10
-  G2: ground j10
-  M1: voltmeter g9 j9 l=$\mathrm{CH1}$
-  R3: resistor e15 e17 10k
-  C1: capacitor f17 h17 1u
-  G3: ground h17
-  G4: ground h14
-  M2: voltmeter f19 h19 l=$\mathrm{CH2}$
+  WG: sine 1,2 1,5 l=$\mathrm{W1}$
+  G1: ground 1,5
+  U1A: opamp 4,2 +up NJM4556A
+  U1B: opamp 4,7 +up NJM4556A
+  R1: resistor 6,2 8,2 1
+  R2: resistor 6,7 8,7 1
+  T1: transformer 12,5
+  Rs: resistor 10,7 10,10 10
+  G2: ground 10,10
+  M1: voltmeter 9,7 9,10 l=$\mathrm{CH1}$
+  R3: resistor 15,5 17,5 10k
+  C1: capacitor 17,6 17,8 1u
+  G3: ground 17,8
+  G4: ground 14,8
+  M2: voltmeter 19,6 19,8 l=$\mathrm{CH2}$
 wires:
-  - b1 -- b2
-  - b2 -- g2
-  - b2 |- U1A.+
-  - g2 |- U1B.+
-  - c3 |- U1A.-
-  - c3 -- c5
-  - U1A.out -- b5
-  - c5 -- b5
-  - b5 -- b6
-  - h3 |- U1B.-
-  - h3 -- h5
-  - U1B.out -- g5
-  - h5 -- g5
-  - g5 -- g6
-  - b8 -- e8
-  - e8 -- g8
-  - e8 |- T1.A1
-  - T1.A2 -| g10
-  - g9 -- g10
-  - j9 -- j10
-  - T1.B1 -| e15
-  - e17 -- f17
-  - f17 -- f19
-  - h17 -- h19
-  - T1.B2 -| h14
+  - 1,2 -- 2,2
+  - 2,2 -- 2,7
+  - 2,2 |- U1A.+
+  - 2,7 |- U1B.+
+  - 3,3 |- U1A.-
+  - 3,3 -- 5,3
+  - U1A.out -- 5,2
+  - 5,3 -- 5,2
+  - 5,2 -- 6,2
+  - 3,8 |- U1B.-
+  - 3,8 -- 5,8
+  - U1B.out -- 5,7
+  - 5,8 -- 5,7
+  - 5,7 -- 6,7
+  - 8,2 -- 8,5
+  - 8,5 -- 8,7
+  - 8,5 |- T1.A1
+  - T1.A2 -| 10,7
+  - 9,7 -- 10,7
+  - 9,10 -- 10,10
+  - T1.B1 -| 15,5
+  - 17,5 -- 17,6
+  - 17,6 -- 19,6
+  - 17,8 -- 19,8
+  - T1.B2 -| 14,8
 ```
 
 <img src="out/schematic/10-bh-ad3.png" alt="回路図01 B-H カーブ測定回路" width="1420">

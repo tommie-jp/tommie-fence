@@ -3,15 +3,15 @@ import { hashOf } from './hash.ts';
 
 describe('hashOf', () => {
   test('gives the same key for the same TeX', () => {
-    expect(hashOf('\\draw (a1);')).toBe(hashOf('\\draw (a1);'));
+    expect(hashOf('\\draw (x1y1);')).toBe(hashOf('\\draw (x1y1);'));
   });
 
   test('gives a different key when the drawing changes', () => {
-    expect(hashOf('\\draw (a1);')).not.toBe(hashOf('\\draw (a2);'));
+    expect(hashOf('\\draw (x1y1);')).not.toBe(hashOf('\\draw (x2y1);'));
   });
 
   test('gives a key that is safe to put in an attribute', () => {
-    expect(hashOf('\\draw (a1);')).toMatch(/^[0-9a-z]+$/);
+    expect(hashOf('\\draw (x1y1);')).toMatch(/^[0-9a-z]+$/);
   });
 
   test('handles an empty string', () => {

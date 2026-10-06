@@ -66,7 +66,7 @@ style:             # 任意。見た目
 parts:
   M1:
     type: device
-    at: c2
+    at: 2,3
     label: HC-SR04              # 任意。箱の中の名前
     pins: [VCC, TRIG, ECHO, GND]
     turn: mirror                # 任意。1 行形式と同じ語

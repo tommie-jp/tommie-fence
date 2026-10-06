@@ -26,27 +26,27 @@ parts:
 ```circuit
 title: 回路図01 ヘアピン BPF の等価回路
 parts:
-  J1: sma b2 mirror
-  T1: tline b3 b5 50 l=$\mathrm{IN}$
-  H1: tline d6 g6 73 l=$\mathrm{H1}$
-  CC: capacitor b6 b9 l=$C_\mathrm{c}$
-  H2: tline d9 g9 73 l=$\mathrm{H2}$
-  T2: tline b10 b12 50 l=$\mathrm{OUT}$
-  J2: sma b13
-  G1: ground c2
-  G2: ground c13
+  J1: sma 2,2 mirror
+  T1: tline 3,2 5,2 50 l=$\mathrm{IN}$
+  H1: tline 6,4 6,7 73 l=$\mathrm{H1}$
+  CC: capacitor 6,2 9,2 l=$C_\mathrm{c}$
+  H2: tline 9,4 9,7 73 l=$\mathrm{H2}$
+  T2: tline 10,2 12,2 50 l=$\mathrm{OUT}$
+  J2: sma 13,2
+  G1: ground 2,3
+  G2: ground 13,3
 wires:
-  - J1.1 -- b3
-  - b5 -- b6
-  - b6 -- d6
-  - b9 -- b10
-  - b9 -- d9
-  - b12 -- J2.1
-  - J1.2 -- c2
-  - J2.2 -- c13
+  - J1.1 -- 3,2
+  - 5,2 -- 6,2
+  - 6,2 -- 6,4
+  - 9,2 -- 10,2
+  - 9,2 -- 9,4
+  - 12,2 -- J2.1
+  - J1.2 -- 2,3
+  - J2.2 -- 13,3
 notes:
-  - text g7: 開放
-  - text g10: 開放
+  - text 7,7: 開放
+  - text 10,7: 開放
 ```
 
 ![回路図01 ヘアピン BPF の等価回路](out/schematic/05-coupled.png)

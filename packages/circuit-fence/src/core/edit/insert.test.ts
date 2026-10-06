@@ -10,10 +10,10 @@ const cell = (text: string) => parseAddress(text)!;
 const RC = [
   'title: RC',
   'parts:',
-  '  R1: resistor a1 a3 10k',
-  '  Q1: npn b5',
+  '  R1: resistor 1,1 3,1 10k',
+  '  Q1: npn 5,2',
   'wires:',
-  '  - a3 -- b1',
+  '  - 3,1 -- 1,2',
   '',
 ].join('\n');
 
@@ -24,69 +24,69 @@ const added = (source: string, result: ReturnType<typeof insertWire>) => {
 
 describe('insertWire', () => {
   test('adds a line after the wires already written, in the same shape', () => {
-    const { source } = added(RC, insertWire(RC, at('a1'), at('c1')));
+    const { source } = added(RC, insertWire(RC, at('1,1'), at('1,3')));
 
     expect(source).toBe([
-      'title: RC', 'parts:', '  R1: resistor a1 a3 10k', '  Q1: npn b5',
-      'wires:', '  - a3 -- b1', '  - a1 -- c1', '',
+      'title: RC', 'parts:', '  R1: resistor 1,1 3,1 10k', '  Q1: npn 5,2',
+      'wires:', '  - 3,1 -- 1,2', '  - 1,1 -- 1,3', '',
     ].join('\n'));
   });
 
   test('writes the operator it was given', () => {
-    expect(added(RC, insertWire(RC, at('a1'), at('c5'), '-|')).source).toContain('  - a1 -| c5');
+    expect(added(RC, insertWire(RC, at('1,1'), at('5,3'), '-|')).source).toContain('  - 1,1 -| 5,3');
   });
 
   test('can hang a wire on a pin of a part', () => {
-    const wire = insertWire(RC, at('a1'), { kind: 'pin', part: 'Q1', pin: 'b' });
+    const wire = insertWire(RC, at('1,1'), { kind: 'pin', part: 'Q1', pin: 'b' });
 
-    expect(added(RC, wire).source).toContain('  - a1 -- Q1.b');
+    expect(added(RC, wire).source).toContain('  - 1,1 -- Q1.b');
   });
 
   test('makes the key when the fence has no wires yet', () => {
-    const source = ['parts:', '  R1: resistor a1 a3', ''].join('\n');
+    const source = ['parts:', '  R1: resistor 1,1 3,1', ''].join('\n');
 
-    expect(added(source, insertWire(source, at('a3'), at('c3'))).source).toBe(
-      ['parts:', '  R1: resistor a1 a3', 'wires:', '  - a3 -- c3', ''].join('\n'),
+    expect(added(source, insertWire(source, at('3,1'), at('3,3'))).source).toBe(
+      ['parts:', '  R1: resistor 1,1 3,1', 'wires:', '  - 3,1 -- 3,3', ''].join('\n'),
     );
   });
 
   test('says which connections the new wire made', () => {
-    expect(added(RC, insertWire(RC, at('a1'), at('c1'))).diff.gained.length).toBeGreaterThan(0);
+    expect(added(RC, insertWire(RC, at('1,1'), at('1,3'))).diff.gained.length).toBeGreaterThan(0);
   });
 
   test('refuses an address off the grid', () => {
-    expect(insertWire(RC, at('a1'), { kind: 'cell', address: { row: 0, col: 200 } }).ok).toBe(false);
+    expect(insertWire(RC, at('1,1'), { kind: 'cell', address: { row: 0, col: 200 } }).ok).toBe(false);
   });
 
   test('refuses a wire whose two ends are the same crossing', () => {
     // 長さ 0 の線は図に出ず、押し間違いでしか生まれない。
-    const result = insertWire(RC, at('a1'), at('a1'));
+    const result = insertWire(RC, at('1,1'), at('1,1'));
 
     expect(result.ok === false && result.error.message).toContain('同じ');
   });
 
   test('refuses a pin on a part that is not there', () => {
-    const result = insertWire(RC, at('a1'), { kind: 'pin', part: 'Q9', pin: 'b' });
+    const result = insertWire(RC, at('1,1'), { kind: 'pin', part: 'Q9', pin: 'b' });
 
     expect(result.ok === false && result.error.message).toContain('Q9');
   });
 
   test('refuses a pin the part does not have', () => {
-    const result = insertWire(RC, at('a1'), { kind: 'pin', part: 'Q1', pin: 'zz' });
+    const result = insertWire(RC, at('1,1'), { kind: 'pin', part: 'Q1', pin: 'zz' });
 
     expect(result.ok).toBe(false);
   });
 
   test('refuses wires written in flow style, which have no line of their own', () => {
-    const source = ['parts:', '  R1: resistor a1 a3', 'wires: [a1 -- a3]', ''].join('\n');
+    const source = ['parts:', '  R1: resistor 1,1 3,1', 'wires: [1,1 -- 3,1]', ''].join('\n');
 
-    expect(insertWire(source, at('a1'), at('c1')).ok === false).toBe(true);
+    expect(insertWire(source, at('1,1'), at('1,3')).ok === false).toBe(true);
   });
 
   // **読めない行があっても足す** (52 の docs/54)。直すのは書いた人で、
   // エディタは邪魔をしない。読めなかった行はそのまま残る。
   test('still adds the line when part of the fence cannot be read', () => {
-    expect(insertWire('parts:\n  R1: [unclosed\n', at('a1'), at('a3')).ok).toBe(true);
+    expect(insertWire('parts:\n  R1: [unclosed\n', at('1,1'), at('3,1')).ok).toBe(true);
   });
 });
 
@@ -94,63 +94,63 @@ describe('insertPart', () => {
   const part = (source: string, spec: Parameters<typeof insertPart>[1]) => added(source, insertPart(source, spec));
 
   test('adds a line after the parts already written', () => {
-    const { source } = part(RC, { id: 'C1', type: 'capacitor', at: [cell('c1'), cell('c3')] });
+    const { source } = part(RC, { id: 'C1', type: 'capacitor', at: [cell('1,3'), cell('3,3')] });
 
     expect(source).toBe([
-      'title: RC', 'parts:', '  R1: resistor a1 a3 10k', '  Q1: npn b5', '  C1: capacitor c1 c3',
-      'wires:', '  - a3 -- b1', '',
+      'title: RC', 'parts:', '  R1: resistor 1,1 3,1 10k', '  Q1: npn 5,2', '  C1: capacitor 1,3 3,3',
+      'wires:', '  - 3,1 -- 1,2', '',
     ].join('\n'));
   });
 
   test('writes the value when it is given', () => {
-    expect(part(RC, { id: 'C1', type: 'capacitor', at: [cell('c1'), cell('c3')], value: '100n' }).source)
-      .toContain('  C1: capacitor c1 c3 100n');
+    expect(part(RC, { id: 'C1', type: 'capacitor', at: [cell('1,3'), cell('3,3')], value: '100n' }).source)
+      .toContain('  C1: capacitor 1,3 3,3 100n');
   });
 
   test('makes the key before the wires when the fence has no parts yet', () => {
-    const source = ['wires:', '  - a1 -- a3', ''].join('\n');
+    const source = ['wires:', '  - 1,1 -- 3,1', ''].join('\n');
 
-    expect(part(source, { id: 'G1', type: 'ground', at: [cell('a3')] }).source).toBe(
-      ['parts:', '  G1: ground a3', 'wires:', '  - a1 -- a3', ''].join('\n'),
+    expect(part(source, { id: 'G1', type: 'ground', at: [cell('3,1')] }).source).toBe(
+      ['parts:', '  G1: ground 3,1', 'wires:', '  - 1,1 -- 3,1', ''].join('\n'),
     );
   });
 
   test('refuses an id that is already taken', () => {
-    const result = insertPart(RC, { id: 'R1', type: 'capacitor', at: [cell('c1'), cell('c3')] });
+    const result = insertPart(RC, { id: 'R1', type: 'capacitor', at: [cell('1,3'), cell('3,3')] });
 
     expect(result.ok === false && result.error.message).toContain('R1');
   });
 
   test('refuses an id the grammar does not allow', () => {
-    expect(insertPart(RC, { id: 'a b', type: 'ground', at: [cell('c1')] }).ok).toBe(false);
+    expect(insertPart(RC, { id: 'a b', type: 'ground', at: [cell('1,3')] }).ok).toBe(false);
   });
 
   test('refuses a type it does not know', () => {
-    expect(insertPart(RC, { id: 'Z1', type: 'flux-capacitor', at: [cell('c1')] }).ok).toBe(false);
+    expect(insertPart(RC, { id: 'Z1', type: 'flux-capacitor', at: [cell('1,3')] }).ok).toBe(false);
   });
 
   test('refuses the wrong number of addresses for the type', () => {
-    expect(insertPart(RC, { id: 'C2', type: 'capacitor', at: [cell('c1'), cell('c2'), cell('c3')] }).ok).toBe(false);
-    expect(insertPart(RC, { id: 'G2', type: 'ground', at: [cell('c1'), cell('c3')] }).ok).toBe(false);
+    expect(insertPart(RC, { id: 'C2', type: 'capacitor', at: [cell('1,3'), cell('2,3'), cell('3,3')] }).ok).toBe(false);
+    expect(insertPart(RC, { id: 'G2', type: 'ground', at: [cell('1,3'), cell('3,3')] }).ok).toBe(false);
   });
 
   test('spreads a two-terminal part to the right when only one crossing came (the map\'s one click)', () => {
-    const result = insertPart(RC, { id: 'C2', type: 'capacitor', at: [cell('c1')] });
+    const result = insertPart(RC, { id: 'C2', type: 'capacitor', at: [cell('1,3')] });
 
     expect(result.ok && result.value.lines.map((one) => (one.kind === 'insert' ? one.text : '')).join())
-      .toContain('C2: capacitor c1 c3');
+      .toContain('C2: capacitor 1,3 3,3');
   });
 
   test('turns and flips before writing, so the line matches the ghost', () => {
-    const turned = insertPart(RC, { id: 'C2', type: 'capacitor', at: [cell('c1')], turn: 1 });
-    const flipped = insertPart(RC, { id: 'C2', type: 'capacitor', at: [cell('c1')], flip: true });
-    const standing = insertPart(RC, { id: 'G1', type: 'ground', at: [cell('c1')], turn: 1 });
+    const turned = insertPart(RC, { id: 'C2', type: 'capacitor', at: [cell('1,3')], turn: 1 });
+    const flipped = insertPart(RC, { id: 'C2', type: 'capacitor', at: [cell('1,3')], flip: true });
+    const standing = insertPart(RC, { id: 'G1', type: 'ground', at: [cell('1,3')], turn: 1 });
 
     const text = (result: typeof turned): string =>
       (result.ok ? result.value.lines.map((one) => (one.kind === 'insert' ? one.text : '')).join() : '');
-    expect(text(turned)).toContain('C2: capacitor c1 e1');
-    expect(text(flipped)).toContain('C2: capacitor c3 c1');
-    expect(text(standing)).toContain('G1: ground c1 r90');
+    expect(text(turned)).toContain('C2: capacitor 1,3 1,5');
+    expect(text(flipped)).toContain('C2: capacitor 3,3 1,3');
+    expect(text(standing)).toContain('G1: ground 1,3 r90');
   });
 
   test('refuses an address off the grid', () => {
@@ -158,9 +158,9 @@ describe('insertPart', () => {
   });
 
   test('refuses parts written in flow style', () => {
-    const source = ['parts: {R1: resistor a1 a3}', ''].join('\n');
+    const source = ['parts: {R1: resistor 1,1 3,1}', ''].join('\n');
 
-    expect(insertPart(source, { id: 'C1', type: 'capacitor', at: [cell('c1'), cell('c3')] }).ok).toBe(false);
+    expect(insertPart(source, { id: 'C1', type: 'capacitor', at: [cell('1,3'), cell('3,3')] }).ok).toBe(false);
   });
 });
 
@@ -176,13 +176,13 @@ describe('nextPartId', () => {
 
   test('counts by prefix, not by type, the way the docs examples do', () => {
     // P1 が lamp なら、ポテンショメータは P2 (同じ接頭辞を分け合う)。
-    const source = ['parts:', '  P1: lamp a1 a3', ''].join('\n');
+    const source = ['parts:', '  P1: lamp 1,1 3,1', ''].join('\n');
 
     expect(nextPartId(source, 'potentiometer')).toBe('P2');
   });
 
   test('fills a gap, since the number is only there to be unique', () => {
-    const source = ['parts:', '  R2: resistor a1 a3', ''].join('\n');
+    const source = ['parts:', '  R2: resistor 1,1 3,1', ''].join('\n');
 
     expect(nextPartId(source, 'resistor')).toBe('R1');
   });
@@ -192,12 +192,12 @@ describe('nextPartId', () => {
     expect(nextPartId(RC, 'port')).toBe('IN');
     expect(nextPartId(RC, 'vcc')).toBe('VCC');
     expect(nextPartId(RC, 'vee')).toBe('VEE');
-    expect(nextPartId(RC.replace('parts:', 'parts:\n  IN: port a1'), 'port')).toBe('IN2');
+    expect(nextPartId(RC.replace('parts:', 'parts:\n  IN: port 1,1'), 'port')).toBe('IN2');
     // アンテナも別々の信号なので、port と同じく番号を足す。
     expect(nextPartId(RC, 'antenna')).toBe('ANT');
-    expect(nextPartId(RC.replace('parts:', 'parts:\n  ANT: antenna a1'), 'antenna')).toBe('ANT2');
+    expect(nextPartId(RC.replace('parts:', 'parts:\n  ANT: antenna 1,1'), 'antenna')).toBe('ANT2');
     // VCC はどこにあっても同じ節点なので、2 つ目も VCC。
-    expect(nextPartId(RC.replace('parts:', 'parts:\n  VCC: vcc a1'), 'vcc')).toBe('VCC');
+    expect(nextPartId(RC.replace('parts:', 'parts:\n  VCC: vcc 1,1'), 'vcc')).toBe('VCC');
   });
 
   /**
@@ -205,7 +205,7 @@ describe('nextPartId', () => {
    * ので、名前が空いていることになり、同じ名前の行を足していた (52 の docs/53)。
    */
   test('counts a name written on a line it could not read', () => {
-    const typo = ['parts:', '  R1: resistr a1 a3 10k', ''].join('\n');
+    const typo = ['parts:', '  R1: resistr 1,1 3,1 10k', ''].join('\n');
 
     expect(nextPartId(typo, 'resistor')).toBe('R2');
   });
@@ -223,45 +223,45 @@ describe('レビューで出た穴', () => {
   test('adds a wire to a sequence written at column 0, which is valid YAML', () => {
     // 字下げ 0 桁を「無い」と読んで 2 つ空けると、足した行が前の値に畳み込まれ、
     // フェンスが読めなくなる (図がまるごと消える)。
-    const source = 'parts:\n  R1: resistor a1 a3 10k\nwires:\n- a1 -- a3\n';
-    const result = insertWire(source, at('a1'), at('d1'));
+    const source = 'parts:\n  R1: resistor 1,1 3,1 10k\nwires:\n- 1,1 -- 3,1\n';
+    const result = insertWire(source, at('1,1'), at('1,4'));
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const written = applyRewrite(source, result.value);
 
-    expect(written).toContain('\n- a1 -- d1');
+    expect(written).toContain('\n- 1,1 -- 1,4');
     expect(compileCircuit(written).errors).toEqual([]);
   });
 
   test('refuses a value that YAML would eat, the way setField does', () => {
-    const source = 'parts:\n  R1: resistor a1 a3 10k\n';
+    const source = 'parts:\n  R1: resistor 1,1 3,1 10k\n';
 
     // `#hi` はコメントとして飲まれ、`10 k` は行を壊し、`l=x` は札になる。
     for (const value of ['#hi', '10 k', 'l=x']) {
-      expect(insertPart(source, { id: 'R2', type: 'resistor', at: [cell('c1'), cell('c3')], value }).ok).toBe(false);
+      expect(insertPart(source, { id: 'R2', type: 'resistor', at: [cell('1,3'), cell('3,3')], value }).ok).toBe(false);
     }
   });
 
   test('still takes an ordinary value', () => {
-    const source = 'parts:\n  R1: resistor a1 a3 10k\n';
-    const result = insertPart(source, { id: 'R2', type: 'resistor', at: [cell('c1'), cell('c3')], value: '4k7' });
+    const source = 'parts:\n  R1: resistor 1,1 3,1 10k\n';
+    const result = insertPart(source, { id: 'R2', type: 'resistor', at: [cell('1,3'), cell('3,3')], value: '4k7' });
 
     expect(result.ok).toBe(true);
   });
 });
 
 describe('同じ名前をもう一度置く', () => {
-  const RAIL = 'parts:\n  VCC: vcc a1\n  R1: resistor a1 a3\n';
+  const RAIL = 'parts:\n  VCC: vcc 1,1\n  R1: resistor 1,1 3,1\n';
 
   test('takes a second rail of the same name — that is how a schematic is drawn', () => {
-    const result = insertPart(RAIL, { id: 'VCC', type: 'vcc', at: [cell('e1')] });
+    const result = insertPart(RAIL, { id: 'VCC', type: 'vcc', at: [cell('1,5')] });
 
     expect(result.ok).toBe(true);
   });
 
   test('still refuses a name that a wire points at', () => {
-    const result = insertPart(RAIL, { id: 'R1', type: 'resistor', at: [cell('e1'), cell('e3')] });
+    const result = insertPart(RAIL, { id: 'R1', type: 'resistor', at: [cell('1,5'), cell('3,5')] });
 
     expect(result.ok).toBe(false);
     expect(result.ok === false && result.error.message).toContain('もう使われています');

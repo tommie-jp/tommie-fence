@@ -13,11 +13,11 @@
 \node[circuitnotered, font=\LARGE, anchor=east] at (-0.84,0) {a};
 \node[circuitnotered, font=\LARGE, anchor=east] at (-0.84,-2) {b};
 \node[circuitnotered, font=\LARGE, anchor=east] at (-0.84,-4) {c};
-\coordinate (a1) at (0,0);
-\coordinate (a3) at (4,0);
-\coordinate (c3) at (4,-4);
-\draw (a1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (a3); % line 3
-\draw (a3) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (c3); % line 4
+\coordinate (x1y1) at (0,0);
+\coordinate (x3y1) at (4,0);
+\coordinate (x3y3) at (4,-4);
+\draw (x1y1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x3y1); % line 3
+\draw (x3y1) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (x3y3); % line 4
 \path (8,-4.974) rectangle (16.403,0.593); % line 6
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,0) {X}; % line 6
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (8,-0.487) {X}; % line 6

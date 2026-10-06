@@ -38,7 +38,7 @@ const byDocument = (source: string, id: string, change: (part: PartSpec) => Part
 };
 
 /** 桁を揃えて書いた見本 (例 01-rc-lowpass と同じ書き方)。 */
-const ALIGNED = ['parts:', '  IN:  port a1', '  R1:  resistor a1 a2 10k', ''].join('\n');
+const ALIGNED = ['parts:', '  IN:  port 1,1', '  R1:  resistor 1,1 2,1 10k', ''].join('\n');
 
 describe('中身から組み直しても、いまの当て方と同じ字', () => {
   test('値を直す', () => {
@@ -52,7 +52,7 @@ describe('中身から組み直しても、いまの当て方と同じ字', () =
   });
 
   test('値を足す', () => {
-    const bare = ['parts:', '  IN:  port a1', '  R1:  resistor a1 a2', ''].join('\n');
+    const bare = ['parts:', '  IN:  port 1,1', '  R1:  resistor 1,1 2,1', ''].join('\n');
 
     expect(byDocument(bare, 'R1', (part) => ({ ...part, value: '10k' } as PartSpec)))
       .toBe(byTokens(bare, 'R1', 'value', '10k'));
@@ -70,7 +70,7 @@ describe('中身から組み直しても、いまの当て方と同じ字', () =
 
   // 行末のコメントも、書かれた空白ごと残ること。
   test('コメントの付いた行でも同じ', () => {
-    const noted = ['parts:', '  R1:  resistor a1 a2 10k  # 分圧の上側', ''].join('\n');
+    const noted = ['parts:', '  R1:  resistor 1,1 2,1 10k  # 分圧の上側', ''].join('\n');
 
     expect(byDocument(noted, 'R1', (part) => ({ ...part, value: '22k' } as PartSpec)))
       .toBe(byTokens(noted, 'R1', 'value', '22k'));
@@ -102,22 +102,22 @@ const moveByDocument = (source: string, id: string, to: string): string =>
 
 describe('動かしても、いまの当て方と同じ字', () => {
   test('2 端子を動かす (揃えあり)', () => {
-    expect(moveByDocument(ALIGNED, 'R1', 'c1')).toBe(moveByTokens(ALIGNED, 'R1', 'c1'));
+    expect(moveByDocument(ALIGNED, 'R1', '1,3')).toBe(moveByTokens(ALIGNED, 'R1', '1,3'));
   });
 
   test('1 端子を動かす', () => {
-    expect(moveByDocument(ALIGNED, 'IN', 'b3')).toBe(moveByTokens(ALIGNED, 'IN', 'b3'));
+    expect(moveByDocument(ALIGNED, 'IN', '3,2')).toBe(moveByTokens(ALIGNED, 'IN', '3,2'));
   });
 
   test('多端子を動かす (向きの語つき)', () => {
-    const turned = ['parts:', '  Q1:  npn b5 r90 2SC1815', ''].join('\n');
+    const turned = ['parts:', '  Q1:  npn 5,2 r90 2SC1815', ''].join('\n');
 
-    expect(moveByDocument(turned, 'Q1', 'd8')).toBe(moveByTokens(turned, 'Q1', 'd8'));
+    expect(moveByDocument(turned, 'Q1', '8,4')).toBe(moveByTokens(turned, 'Q1', '8,4'));
   });
 
   test('コメントの付いた行を動かす', () => {
-    const noted = ['parts:', '  R1:  resistor a1 a2 10k  # 分圧の上側', ''].join('\n');
+    const noted = ['parts:', '  R1:  resistor 1,1 2,1 10k  # 分圧の上側', ''].join('\n');
 
-    expect(moveByDocument(noted, 'R1', 'e4')).toBe(moveByTokens(noted, 'R1', 'e4'));
+    expect(moveByDocument(noted, 'R1', '4,5')).toBe(moveByTokens(noted, 'R1', '4,5'));
   });
 });

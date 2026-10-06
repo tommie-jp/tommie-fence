@@ -51,7 +51,7 @@ export async function runMovePoint(port: EditorPort): Promise<void> {
   }
 
   const here = formatAddress(node.address);
-  const written = await port.prompt(port.t('Address to move to (e.g. b3)'), here);
+  const written = await port.prompt(port.t('Address to move to (e.g. 3,2)'), here);
   if (written === null) return;
 
   const to = parseAddress(written.trim());

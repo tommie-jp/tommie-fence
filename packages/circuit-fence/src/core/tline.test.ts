@@ -14,7 +14,7 @@ describe('伝送線路', () => {
   });
 
   test('draws the TL symbol with its impedance in ohms', () => {
-    const result = compileCircuit(['parts:', '  TL1: tline a1 a5 50', '  R1: resistor c1 c5 50', 'wires:', '  - a5 -- c5', ''].join('\n'));
+    const result = compileCircuit(['parts:', '  TL1: tline 1,1 5,1 50', '  R1: resistor 1,3 5,3 50', 'wires:', '  - 5,1 -- 5,3', ''].join('\n'));
 
     expect(result.errors).toEqual([]);
     expect(result.tex).toMatch(/to\[TL[,\]]/);

@@ -8,15 +8,15 @@ describe('snippetLines', () => {
   });
 
   test('shows the line on its own when the column is not known', () => {
-    expect(snippetLines({ message: '読めません', line: 2, text: '  R1: resistr a1 a3' })).toEqual([
-      '      R1: resistr a1 a3',
+    expect(snippetLines({ message: '読めません', line: 2, text: '  R1: resistr 1,1 3,1' })).toEqual([
+      '      R1: resistr 1,1 3,1',
     ]);
   });
 
   test('underlines the spelling that could not be read', () => {
     expect(
-      snippetLines({ message: '読めません', line: 2, text: '  R1: resistr a1 a3', column: 7, span: 7 }),
-    ).toEqual(['      R1: resistr a1 a3', '          ^^^^^^^']);
+      snippetLines({ message: '読めません', line: 2, text: '  R1: resistr 1,1 3,1', column: 7, span: 7 }),
+    ).toEqual(['      R1: resistr 1,1 3,1', '          ^^^^^^^']);
   });
 
   test('counts a full-width character as the two columns a terminal gives it', () => {

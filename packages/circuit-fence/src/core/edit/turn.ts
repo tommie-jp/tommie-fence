@@ -1,5 +1,5 @@
 import { slideBy, slideInto } from 'fence-kit';
-import { formatAddress, rowLetters } from '../model/address.ts';
+import { ADDRESS_RANGE, formatAddress } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { nameOfHandle, partOfHandle } from './handles.ts';
 import { parseFence } from '../parser/parseFence.ts';
@@ -227,7 +227,7 @@ export function turnPart(source: string, handle: string, quarters: number): Rewr
   const [from, to] = slideBy([part.from, turned], slide);
   if (from === undefined || to === undefined || !isOnGrid(from) || !isOnGrid(to)) {
     return fail(
-      `${partId} を回すと格子の外へ出ます (a〜${rowLetters(LIMITS.rows - 1)} の ${LIMITS.rows} 行、1〜${LIMITS.columns} 列)`,
+      `${partId} を回すと格子の外へ出ます (番地は ${ADDRESS_RANGE})`,
       part.line,
     );
   }

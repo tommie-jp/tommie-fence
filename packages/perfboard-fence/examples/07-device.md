@@ -6,12 +6,12 @@
 ```circuit
 title: 回路図01 電源で LED を点ける
 parts:
-  V1: vsource a1 c1 5
-  R1: resistor a1 a3 470
-  D1: led a3 c3 red
-  G1: ground c1
+  V1: vsource 1,1 1,3 5
+  R1: resistor 1,1 3,1 470
+  D1: led 3,1 3,3 red
+  G1: ground 1,3
 wires:
-  - c1 -- c3
+  - 1,3 -- 3,3
 ```
 
 <img src="out/schematic/07-device-1.png" alt="回路図01 電源で LED を点ける" width="419">
@@ -81,38 +81,38 @@ N3 : D1.2, V1.-
 ```circuit
 title: 回路図02 信号源で開け閉めする NE555 の発振器
 parts:
-  V1: vsource c3 i3 5
-  VCC: vcc c3 5V
-  G1: ground i3
-  VCC: vcc b7 5V
-  R1: resistor b7 d7f0 10k
-  R2: resistor d7f0 f7f0 68k
-  C1: capacitor f8f0 i8 10u
-  G3: ground i8
-  U1: ic e10 NE555
-  VCC: vcc b10 5V
-  C2: capacitor g12 i12 10n
-  G2: ground i10
-  G5: ground i12
-  IN: square b14 d14 l=$\mathrm{IN}$
-  G6: ground d14
-  R3: resistor e13 e16 100
-  SPK: speaker e16 g16 8 l=$\mathrm{SPK}$
-  G4: ground i16
+  V1: vsource 3,3 3,9 5
+  VCC: vcc 3,3 5V
+  G1: ground 3,9
+  VCC: vcc 7,2 5V
+  R1: resistor 7,2 7,4.5 10k
+  R2: resistor 7,4.5 7,6.5 68k
+  C1: capacitor 8,6.5 8,9 10u
+  G3: ground 8,9
+  U1: ic 10,5 NE555
+  VCC: vcc 10,2 5V
+  C2: capacitor 12,7 12,9 10n
+  G2: ground 10,9
+  G5: ground 12,9
+  IN: square 14,2 14,4 l=$\mathrm{IN}$
+  G6: ground 14,4
+  R3: resistor 13,5 16,5 100
+  SPK: speaker 16,5 16,7 8 l=$\mathrm{SPK}$
+  G4: ground 16,9
 wires:
-  - U1.8 |- b10
-  - U1.4 |- b10a5
-  - b10a5 -- b14
-  - U1.7 -| d7f0
-  - U1.6 -| e8
-  - U1.2 -| e8f0
-  - e8 -- f8f0
-  - f7f0 -- f8f0
-  - U1.1 |- i10
-  - U1.5 |- g10a5
-  - g10a5 -- g12
-  - U1.3 -| e13
-  - g16 -- i16
+  - U1.8 |- 10,2
+  - U1.4 |- 10.5,2
+  - 10.5,2 -- 14,2
+  - U1.7 -| 7,4.5
+  - U1.6 -| 8,5
+  - U1.2 -| 8,5.5
+  - 8,5 -- 8,6.5
+  - 7,6.5 -- 8,6.5
+  - U1.1 |- 10,9
+  - U1.5 |- 10.5,7
+  - 10.5,7 -- 12,7
+  - U1.3 -| 13,5
+  - 16,7 -- 16,9
 ```
 
 <img src="out/schematic/07-device-2.png" alt="回路図02 信号源で開け閉めする NE555 の発振器" width="1050">

@@ -10,23 +10,23 @@ DUT の等価回路 — `dut:` の 3 行を CH0 (J1) から CH1 (J2) へ並べ�
 ```circuit
 title: 回路図01 3 次のローパス (C-L-C)
 parts:
-  J1: sma b2 mirror
-  C1: capacitor b4 d4 47p
-  L1: inductor b5 b7 235n
-  C2: capacitor b8 d8 47p
-  J2: sma b10
-  G1: ground c2
-  G2: ground d4
-  G3: ground d8
-  G4: ground c10
+  J1: sma 2,2 mirror
+  C1: capacitor 4,2 4,4 47p
+  L1: inductor 5,2 7,2 235n
+  C2: capacitor 8,2 8,4 47p
+  J2: sma 10,2
+  G1: ground 2,3
+  G2: ground 4,4
+  G3: ground 8,4
+  G4: ground 10,3
 wires:
-  - J1.1 -- b4 -- b5
-  - b7 -- b8 -- J2.1
-  - J1.2 -- c2
-  - J2.2 -- c10
+  - J1.1 -- 4,2 -- 5,2
+  - 7,2 -- 8,2 -- J2.1
+  - J1.2 -- 2,3
+  - J2.2 -- 10,3
 notes:
-  - text a2 center: CH0
-  - text a10 center: CH1
+  - text 2,1 center: CH0
+  - text 10,1 center: CH1
 ```
 
 <img src="out/schematic/01-traces-1.png" alt="回路図01 3 次のローパス (C-L-C)" width="636">
@@ -62,18 +62,18 @@ DUT の等価回路 — R・L・C を直列に並べ、最後の `short` で地�
 ```circuit
 title: 回路図02 直列 RLC のアンテナ
 parts:
-  J1: sma b2 mirror
-  R1: resistor b3 b5 40
-  L1: inductor b5 b7 250n
-  C1: capacitor b7 b9 5.6p
-  G1: ground c2
-  G2: ground c9
+  J1: sma 2,2 mirror
+  R1: resistor 3,2 5,2 40
+  L1: inductor 5,2 7,2 250n
+  C1: capacitor 7,2 9,2 5.6p
+  G1: ground 2,3
+  G2: ground 9,3
 wires:
-  - J1.1 -- b3
-  - b9 -- c9
-  - J1.2 -- c2
+  - J1.1 -- 3,2
+  - 9,2 -- 9,3
+  - J1.2 -- 2,3
 notes:
-  - text a2 center: CH0
+  - text 2,1 center: CH0
 ```
 
 <img src="out/schematic/01-traces-2.png" alt="回路図02 直列 RLC のアンテナ" width="556">

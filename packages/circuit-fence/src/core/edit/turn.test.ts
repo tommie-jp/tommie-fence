@@ -2,26 +2,33 @@ import { describe, expect, test } from 'vitest';
 import { flipPart, turnPart } from './turn.ts';
 import { applyRewrite } from './shared.ts';
 
+/**
+ * フロー形式の行に書く番地の名前 (`a1`〜`e9`)。番地 (`1,1`) は `,` を含み、フロー形式では
+ * 区切りになるので、フロー形式の試験は名前で書く (旧い綴りの `a1` は、いまは名前に使える)。
+ * 本文の**後ろ**に足すので、試験の行番号は変わらない。
+ */
+const P = `points: {${[...'abcde'].flatMap((row, y) => Array.from({ length: 9 }, (_, x) => `${row}${x + 1}: "${x + 1},${y + 1}"`)).join(', ')}}\n`;
+
 const RC = [
   'parts:',
-  '  R1: resistor a1 a3 10k',
-  '  C1: capacitor c3 c5',
-  '  Q1: npn b5',
-  '  G1: ground e3',
+  '  R1: resistor 1,1 3,1 10k',
+  '  C1: capacitor 3,3 5,3',
+  '  Q1: npn 5,2',
+  '  G1: ground 3,5',
   'wires:',
-  '  - a3 -- c3',
+  '  - 3,1 -- 3,3',
   '',
 ].join('\n');
 
 /** 向きの語で回す種類を集めたもの (2 端子は番地の順で回るので別)。 */
 const TURNABLE = [
   'parts:',
-  '  Q1: npn b2 2SC1815',
-  '  U1: opamp b5 +up',
-  '  G1: ground b8',
-  '  T1: transformer b11',
-  '  U2: dip8 e2',
-  '  VCC: vcc e5',
+  '  Q1: npn 2,2 2SC1815',
+  '  U1: opamp 5,2 +up',
+  '  G1: ground 8,2',
+  '  T1: transformer 11,2',
+  '  U2: dip8 2,5',
+  '  VCC: vcc 5,5',
   '',
 ].join('\n');
 
@@ -34,11 +41,11 @@ const turned = (source: string, id: string, quarters: number) => {
 describe('turnPart', () => {
   test('turns a two-terminal part clockwise about the end it is anchored by', () => {
     // a1 -> a3 は右向き。時計回りで下向き (a1 -> c1) になる。
-    expect(turned(RC, 'R1', 1).source).toContain('  R1: resistor a1 c1 10k');
+    expect(turned(RC, 'R1', 1).source).toContain('  R1: resistor 1,1 1,3 10k');
   });
 
   test('turns it the other way when asked', () => {
-    expect(turned(RC, 'C1', -1).source).toContain('  C1: capacitor c3 a3');
+    expect(turned(RC, 'C1', -1).source).toContain('  C1: capacitor 3,3 3,1');
   });
 
   test('comes back to where it started after four quarters', () => {
@@ -52,7 +59,7 @@ describe('turnPart', () => {
 
   test('leaves the value and everything else on the line alone', () => {
     expect(turned(RC, 'R1', 1).source).toContain('10k');
-    expect(turned(RC, 'R1', 1).source).toContain('  Q1: npn b5');
+    expect(turned(RC, 'R1', 1).source).toContain('  Q1: npn 5,2');
   });
 
   test('says which connections the turn broke', () => {
@@ -64,19 +71,19 @@ describe('turnPart', () => {
     // **縁に置いた記号も回せる。** 断ると「この部品は回らない」に見える
     // (ブレッドボードとユニバーサル基板と同じ手当て)。足りない分だけ寄せるので、載っている回し方は
     // 1 升も動かない。a1 → a3 を反時計回りに回すと上へ 2 出るので、2 下げる。
-    expect(turned(RC, 'R1', -1).source).toContain('  R1: resistor c1 a1 10k');
+    expect(turned(RC, 'R1', -1).source).toContain('  R1: resistor 1,3 1,1 10k');
   });
 
   test('leaves the anchor alone when nothing had to be slid', () => {
     // 寄せないときはアンカーの綴りを書き換えない (名前で書かれていれば名前のまま)。
-    const middle = 'parts:\n  R1: resistor c3 c5 10k\n';
+    const middle = 'parts:\n  R1: resistor 3,3 5,3 10k\n';
 
-    expect(turned(middle, 'R1', 1).source).toContain('  R1: resistor c3 e3 10k');
+    expect(turned(middle, 'R1', 1).source).toContain('  R1: resistor 3,3 3,5 10k');
   });
 
   test('keeps a name written by points:, rather than sliding it into an address', () => {
     // 名前は場所を指す約束。番地に直すと名前が外れ、点を動かしても付いてこない。
-    const named = 'points:\n  IN: a1\nparts:\n  R1: resistor IN a3 10k\n';
+    const named = 'points:\n  IN: 1,1\nparts:\n  R1: resistor IN 3,1 10k\n';
     const result = turnPart(named, 'R1', -1);
 
     expect(result.ok).toBe(false);
@@ -85,13 +92,13 @@ describe('turnPart', () => {
 
   test('writes the word on a multi-terminal part that had no orientation', () => {
     // 番地の順では回せないので、文法の語のほうを書く。型番はそのまま。
-    expect(turned(TURNABLE, 'Q1', 1).source).toContain('  Q1: npn b2 r90 2SC1815');
+    expect(turned(TURNABLE, 'Q1', 1).source).toContain('  Q1: npn 2,2 r90 2SC1815');
   });
 
   test('advances the word that is already there', () => {
     const once = turned(TURNABLE, 'Q1', 1).source;
 
-    expect(turned(once, 'Q1', 1).source).toContain('  Q1: npn b2 r180 2SC1815');
+    expect(turned(once, 'Q1', 1).source).toContain('  Q1: npn 2,2 r180 2SC1815');
   });
 
   test('takes the word away again when the symbol comes back upright', () => {
@@ -101,15 +108,15 @@ describe('turnPart', () => {
   });
 
   test('turns a multi-terminal part the other way', () => {
-    expect(turned(TURNABLE, 'Q1', -1).source).toContain('  Q1: npn b2 r270 2SC1815');
+    expect(turned(TURNABLE, 'Q1', -1).source).toContain('  Q1: npn 2,2 r270 2SC1815');
   });
 
   test('leaves the sign word alone, which is a different key', () => {
-    expect(turned(TURNABLE, 'U1', 1).source).toContain('  U1: opamp b5 r90 +up');
+    expect(turned(TURNABLE, 'U1', 1).source).toContain('  U1: opamp 5,2 r90 +up');
   });
 
   test('turns ground, the one one-terminal symbol that can be turned', () => {
-    expect(turned(TURNABLE, 'G1', 1).source).toContain('  G1: ground b8 r90');
+    expect(turned(TURNABLE, 'G1', 1).source).toContain('  G1: ground 8,2 r90');
   });
 
   test('refuses a symbol the table says cannot be turned', () => {
@@ -147,7 +154,7 @@ describe('flipPart', () => {
   };
 
   test('swaps the two ends, which is what polarity is written as', () => {
-    expect(flipped(RC, 'R1').source).toContain('  R1: resistor a3 a1 10k');
+    expect(flipped(RC, 'R1').source).toContain('  R1: resistor 3,1 1,1 10k');
   });
 
   test('joins the same two cells, and only says which end is which changed', () => {
@@ -163,7 +170,7 @@ describe('flipPart', () => {
   });
 
   test('writes mirror on a multi-terminal part, keeping the model number', () => {
-    expect(flipped(TURNABLE, 'Q1').source).toContain('  Q1: npn b2 mirror 2SC1815');
+    expect(flipped(TURNABLE, 'Q1').source).toContain('  Q1: npn 2,2 mirror 2SC1815');
   });
 
   test('takes mirror away again on the second flip', () => {
@@ -185,8 +192,8 @@ describe('flipPart', () => {
 describe('名前で書かれた端 (レビューで出た穴)', () => {
   const named = [
     'points:',
-    '  vin: a1',
-    '  vout: a3',
+    '  vin: 1,1',
+    '  vout: 3,1',
     'parts:',
     '  R1: resistor vin vout 10k',
   ].join('\n');
@@ -209,7 +216,7 @@ describe('名前で書かれた端 (レビューで出た穴)', () => {
     const written = applyRewrite(named, result.value);
 
     expect(written).toContain('R1: resistor vin ');
-    expect(written).not.toContain('resistor a1 ');
+    expect(written).not.toContain('resistor 1,1 ');
   });
 
   test('does nothing at all when asked to turn by a whole circle', () => {
@@ -226,7 +233,7 @@ describe('名前で書かれた端 (レビューで出た穴)', () => {
 // **1 行に並べた部品 (フロー形式) も、その部品の範囲に語を書く。**
 // 前は語を足す場所が決まらないとして断っていた。ブレッドボードとユニバーサル基板は書けていたので揃える。
 describe('向きの語を 1 行に並べた部品に書く', () => {
-  const FLOW = 'parts: {Q1: npn b2 r90 2SC1815, G1: ground b8, U1: opamp b5}\n';
+  const FLOW = 'parts: {Q1: npn b2 r90 2SC1815, G1: ground b8, U1: opamp b5}\n' + P;
   const flipped = (source: string, id: string) => {
     const result = flipPart(source, id);
     if (!result.ok) throw new Error(result.error.message);
@@ -234,32 +241,32 @@ describe('向きの語を 1 行に並べた部品に書く', () => {
   };
 
   test('足す語はその部品の範囲に入り、隣の部品の語を見ない', () => {
-    expect(turned(FLOW, 'G1', 1).source).toBe('parts: {Q1: npn b2 r90 2SC1815, G1: ground b8 r90, U1: opamp b5}\n');
+    expect(turned(FLOW, 'G1', 1).source).toBe('parts: {Q1: npn b2 r90 2SC1815, G1: ground b8 r90, U1: opamp b5}\n' + P);
   });
 
   test('最後の部品は } の手前に書く', () => {
-    expect(turned(FLOW, 'U1', 1).source).toBe('parts: {Q1: npn b2 r90 2SC1815, G1: ground b8, U1: opamp b5 r90}\n');
-    expect(flipped(FLOW, 'U1').source).toBe('parts: {Q1: npn b2 r90 2SC1815, G1: ground b8, U1: opamp b5 mirror}\n');
+    expect(turned(FLOW, 'U1', 1).source).toBe('parts: {Q1: npn b2 r90 2SC1815, G1: ground b8, U1: opamp b5 r90}\n' + P);
+    expect(flipped(FLOW, 'U1').source).toBe('parts: {Q1: npn b2 r90 2SC1815, G1: ground b8, U1: opamp b5 mirror}\n' + P);
   });
 
   test('書いてある語はその場で差し替える', () => {
-    expect(turned(FLOW, 'Q1', 1).source).toBe('parts: {Q1: npn b2 r180 2SC1815, G1: ground b8, U1: opamp b5}\n');
+    expect(turned(FLOW, 'Q1', 1).source).toBe('parts: {Q1: npn b2 r180 2SC1815, G1: ground b8, U1: opamp b5}\n' + P);
   });
 
   // **区切りに付いた語** (`r90,`) も語として読む。読めないと 2 つ目を足してしまう。
   test('区切りの , や } に付いた語も差し替える', () => {
-    const source = 'parts: {G1: ground b8 r90, U1: opamp b5 r90}\n';
-    expect(turned(source, 'G1', 1).source).toBe('parts: {G1: ground b8 r180, U1: opamp b5 r90}\n');
-    expect(turned(source, 'U1', -1).source).toBe('parts: {G1: ground b8 r90, U1: opamp b5}\n');
+    const source = 'parts: {G1: ground b8 r90, U1: opamp b5 r90}\n' + P;
+    expect(turned(source, 'G1', 1).source).toBe('parts: {G1: ground b8 r180, U1: opamp b5 r90}\n' + P);
+    expect(turned(source, 'U1', -1).source).toBe('parts: {G1: ground b8 r90, U1: opamp b5}\n' + P);
   });
 });
 
 describe('向きの語を 1 行に並べた部品に書くとき、崩す形は断る', () => {
   test('鍵に空白を置いた形も、閉じ括弧の手前の語を差し替える', () => {
-    expect(turned('parts: {G1 : ground b8 r90}\n', 'G1', 1).source).toBe('parts: {G1 : ground b8 r180}\n');
+    expect(turned('parts: {G1 : ground b8 r90}\n' + P, 'G1', 1).source).toBe('parts: {G1 : ground b8 r180}\n' + P);
   });
 
   test('次の行へ続く項目は断る', () => {
-    expect(turnPart('parts: {U1: opamp b5\n  r90, G1: ground b8}\n', 'U1', 1).ok).toBe(false);
+    expect(turnPart('parts: {U1: opamp b5\n  r90, G1: ground b8}\n' + P, 'U1', 1).ok).toBe(false);
   });
 });

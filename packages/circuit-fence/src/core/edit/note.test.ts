@@ -7,12 +7,12 @@ import {
 import { parseAddress } from '../model/address.ts';
 
 const RC = `parts:
-  R1: resistor a1 a3 10k
-  G1: ground b3
+  R1: resistor 1,1 3,1 10k
+  G1: ground 3,2
 notes:
   - circle R1 blue
-  - text b1 blue: ここで分圧する
-  - box a1 c3 blue
+  - text 1,2 blue: ここで分圧する
+  - box 1,1 3,3 blue
 `;
 
 const at = (cell: string) => parseAddress(cell)!;
@@ -42,7 +42,7 @@ describe('注釈の掴み手', () => {
   test('lists the cells it points at, and nothing for a note that points at a part', () => {
     // **`R1` は番地としても読める** (行 r・列 1)。綴りだけで見分けると、
     // 部品を指した注釈を番地に書き換えてしまう。文書の部品名で決める。
-    expect(noteCells(RC, 'note:6')).toEqual(['b1']);
+    expect(noteCells(RC, 'note:6')).toEqual(['1,2']);
     expect(noteCells(RC, 'note:5')).toEqual([]);
   });
 
@@ -53,21 +53,21 @@ describe('注釈の掴み手', () => {
 
 describe('moveNote', () => {
   test('moves the note to the cell that was clicked', () => {
-    expect(after(RC, moveNote(RC, 'note:6', at('c4')))).toContain('- text c4 blue: ここで分圧する');
+    expect(after(RC, moveNote(RC, 'note:6', at('4,3')))).toContain('- text 4,3 blue: ここで分圧する');
   });
 
   test('carries the second cell along, so the shape does not change', () => {
-    expect(after(RC, moveNote(RC, 'note:7', at('b2')))).toContain('- box b2 d4 blue');
+    expect(after(RC, moveNote(RC, 'note:7', at('2,2')))).toContain('- box 2,2 4,4 blue');
   });
 
   test('refuses to move a note that points at a part, rather than losing the name', () => {
-    expect(refused(moveNote(RC, 'note:5', at('c4')))).toContain('R1 のほうを動かします');
+    expect(refused(moveNote(RC, 'note:5', at('4,3')))).toContain('R1 のほうを動かします');
   });
 });
 
 describe('turnNote / flipNote', () => {
   test('writes the turn in the words, before the colon', () => {
-    expect(after(RC, turnNote(RC, 'note:6', 1))).toContain('- text b1 blue r90: ここで分圧する');
+    expect(after(RC, turnNote(RC, 'note:6', 1))).toContain('- text 1,2 blue r90: ここで分圧する');
   });
 
   test('comes back to where it started after four turns', () => {
@@ -89,7 +89,7 @@ describe('turnNote / flipNote', () => {
 
 describe('duplicateNote / deleteNote / noteFields', () => {
   test('writes the copy one row down, keeping a part name as a name', () => {
-    expect(after(RC, duplicateNote(RC, 'note:6'))).toContain('- text c1 blue: ここで分圧する');
+    expect(after(RC, duplicateNote(RC, 'note:6'))).toContain('- text 1,3 blue: ここで分圧する');
     expect(after(RC, duplicateNote(RC, 'note:5'))).toContain('- circle R1 blue\n  - circle R1 blue');
   });
 
@@ -104,6 +104,6 @@ describe('duplicateNote / deleteNote / noteFields', () => {
 
   test('rewrites the words after the colon', () => {
     expect(after(RC, setNoteField(RC, 'note:6', 'value', 'ここは GND')))
-      .toContain('- text b1 blue: ここは GND');
+      .toContain('- text 1,2 blue: ここは GND');
   });
 });

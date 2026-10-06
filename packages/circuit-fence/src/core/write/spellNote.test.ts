@@ -39,15 +39,15 @@ describe('spellNote', () => {
 
   // **書いていない色を足さない。** 読んだ値には既定の色が入っている。
   test('色を書かない印に色を足さない', () => {
-    const { doc } = parseFence('parts:\n  R1: resistor a1 a3\nnotes:\n  - circle R1\n');
+    const { doc } = parseFence('parts:\n  R1: resistor 1,1 3,1\nnotes:\n  - circle R1\n');
 
     expect(spellNote(doc.notes[0]!)).toBe('circle R1');
   });
 
   // **引用はそのまま。** 規則で付け直すと、要らない引用を外す行がある。
   test('本文の引用はそのまま戻す', () => {
-    const { doc } = parseFence('parts:\n  R1: resistor a1 a3\nnotes:\n  - text b1: "R1: 10k"\n');
+    const { doc } = parseFence('parts:\n  R1: resistor 1,1 3,1\nnotes:\n  - text 1,2: "R1: 10k"\n');
 
-    expect(spellNote(doc.notes[0]!)).toBe('text b1: "R1: 10k"');
+    expect(spellNote(doc.notes[0]!)).toBe('text 1,2: "R1: 10k"');
   });
 });

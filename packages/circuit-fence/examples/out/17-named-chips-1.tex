@@ -78,46 +78,46 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-14) {h};
-\coordinate (a3) at (4,0);
-\coordinate (d2) at (2,-6);
-\coordinate (b2) at (2,-2);
-\coordinate (c4) at (6,-4);
-\coordinate (f3) at (4,-10);
-\coordinate (f1) at (0,-10);
-\coordinate (f2) at (2,-10);
-\coordinate (h3) at (4,-14);
-\coordinate (a7) at (12,0);
-\coordinate (b7) at (12,-2);
-\coordinate (b6) at (10,-2);
-\coordinate (e5) at (8,-8);
-\coordinate (b3) at (4,-2);
-\coordinate (d3) at (4,-6);
-\node[vcc] at (a3) {VCC}; % line 3
-\draw (d2) to[D, l_=$D_{1}$, a^=$\mathrm{1N4148}$] (b2); % line 4
-\node[relay2c, draw] (part-K1) at (c4) {$\mathrm{G5V\mbox{-}2}$}; % line 5
+\coordinate (x3y1) at (4,0);
+\coordinate (x2y4) at (2,-6);
+\coordinate (x2y2) at (2,-2);
+\coordinate (x4y3) at (6,-4);
+\coordinate (x3y6) at (4,-10);
+\coordinate (x1y6) at (0,-10);
+\coordinate (x2y6) at (2,-10);
+\coordinate (x3y8) at (4,-14);
+\coordinate (x7y1) at (12,0);
+\coordinate (x7y2) at (12,-2);
+\coordinate (x6y2) at (10,-2);
+\coordinate (x5y5) at (8,-8);
+\coordinate (x3y2) at (4,-2);
+\coordinate (x3y4) at (4,-6);
+\node[vcc] at (x3y1) {VCC}; % line 3
+\draw (x2y4) to[D, l_=$D_{1}$, a^=$\mathrm{1N4148}$] (x2y2); % line 4
+\node[relay2c, draw] (part-K1) at (x4y3) {$\mathrm{G5V\mbox{-}2}$}; % line 5
 \node[anchor=east] at (part-K1.west) {$K_{1}$}; % line 5
-\node[npn] (part-Q1) at (f3) {}; % line 6
+\node[npn] (part-Q1) at (x3y6) {}; % line 6
 \node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 6
-\draw (f1) to[R, l_=$R_{1}$, a^=$1\,\mathrm{k}\Omega$] (f2); % line 7
-\draw (f1) node[ocirc]{} node[above left]{IN}; % line 8
-\node[ground] at (h3) {}; % line 9
-\draw (a7) to[R, l_=$R_{2}$, a^=$330\,\Omega$] (b7); % line 10
-\draw (b7) to[leD, l_=$D_{2}$] (b6); % line 11
-\node[ground] at (e5) {}; % line 12
-\draw (a3) -- (b3); % line 14
-\draw (b3) -- (b2); % line 14
-\draw (a3) -- (a7); % line 15
-\draw (part-K1.pin 1) |- (b3); % line 16
-\draw (part-K1.pin 16) |- (d3); % line 17
-\draw (d2) -- (d3); % line 18
-\draw (d3) -- (part-Q1.collector); % line 18
-\draw (f2) -- (part-Q1.base); % line 19
-\draw (part-Q1.emitter) -- (h3); % line 20
-\draw (part-K1.pin 8) |- (b6); % line 21
-\draw (part-K1.pin 4) |- (e5); % line 22
-\node[circ] at (a3) {};
-\node[circ] at (b3) {};
-\node[circ] at (d3) {};
+\draw (x1y6) to[R, l_=$R_{1}$, a^=$1\,\mathrm{k}\Omega$] (x2y6); % line 7
+\draw (x1y6) node[ocirc]{} node[above left]{IN}; % line 8
+\node[ground] at (x3y8) {}; % line 9
+\draw (x7y1) to[R, l_=$R_{2}$, a^=$330\,\Omega$] (x7y2); % line 10
+\draw (x7y2) to[leD, l_=$D_{2}$] (x6y2); % line 11
+\node[ground] at (x5y5) {}; % line 12
+\draw (x3y1) -- (x3y2); % line 14
+\draw (x3y2) -- (x2y2); % line 14
+\draw (x3y1) -- (x7y1); % line 15
+\draw (part-K1.pin 1) |- (x3y2); % line 16
+\draw (part-K1.pin 16) |- (x3y4); % line 17
+\draw (x2y4) -- (x3y4); % line 18
+\draw (x3y4) -- (part-Q1.collector); % line 18
+\draw (x2y6) -- (part-Q1.base); % line 19
+\draw (part-Q1.emitter) -- (x3y8); % line 20
+\draw (part-K1.pin 8) |- (x6y2); % line 21
+\draw (part-K1.pin 4) |- (x5y5); % line 22
+\node[circ] at (x3y1) {};
+\node[circ] at (x3y2) {};
+\node[circ] at (x3y4) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(11.979,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

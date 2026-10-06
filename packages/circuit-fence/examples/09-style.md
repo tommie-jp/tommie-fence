@@ -9,15 +9,15 @@
 ```circuit
 title: 図01 色の上書き
 parts:
-  IN:  port a1
-  R1:  resistor a1 a2 10k
-  C1:  capacitor a2 b2 100n
-  OUT: port a3
-  G1:  ground b2
+  IN:  port 1,1
+  R1:  resistor 1,1 2,1 10k
+  C1:  capacitor 2,1 2,2 100n
+  OUT: port 3,1
+  G1:  ground 2,2
 wires:
-  - a2 -- a3
+  - 2,1 -- 3,1
 notes:
-  - source a4 blue
+  - source 4,1 blue
 style:
   ink-color: '#14532d'
   paper-color: '#f0fdf4'
@@ -33,15 +33,15 @@ style:
 ```circuit
 title: 図02 pitch と wire-width
 parts:
-  IN:  port a1
-  R1:  resistor a1 a3 10k
-  C1:  capacitor a3 c3 100n
-  OUT: port a4
-  G1:  ground c3
+  IN:  port 1,1
+  R1:  resistor 1,1 3,1 10k
+  C1:  capacitor 3,1 3,3 100n
+  OUT: port 4,1
+  G1:  ground 3,3
 wires:
-  - a3 -- a4
+  - 3,1 -- 4,1
 notes:
-  - source a5 blue
+  - source 5,1 blue
 style:
   grid: on
   pitch: 1.2
@@ -55,10 +55,10 @@ style:
 ```circuit
 title: 図03 記号の流儀 american
 parts:
-  R1: resistor a1 a2 10k
-  L1: inductor a4 a5 10m
+  R1: resistor 1,1 2,1 10k
+  L1: inductor 4,1 5,1 10m
 notes:
-  - source a6 blue
+  - source 6,1 blue
 style:
   grid: on
   standard: american
@@ -71,10 +71,10 @@ style:
 ```circuit
 title: 図04 記号の流儀 european
 parts:
-  R1: resistor a1 a2 10k
-  L1: inductor a4 a5 10m
+  R1: resistor 1,1 2,1 10k
+  L1: inductor 4,1 5,1 10m
 notes:
-  - source a6 blue
+  - source 6,1 blue
 style:
   grid: on
   standard: european
@@ -90,10 +90,10 @@ style:
 ```circuit
 title: 図05 記号の流儀 jis
 parts:
-  R1: resistor a1 a2 10k
-  L1: inductor a4 a5 10m
+  R1: resistor 1,1 2,1 10k
+  L1: inductor 4,1 5,1 10m
 notes:
-  - source a6 blue
+  - source 6,1 blue
 style:
   grid: on
   standard: jis
@@ -107,15 +107,15 @@ style:
 ```circuit
 title: 図06 出力の横幅
 parts:
-  IN:  port a1
-  R1:  resistor a1 a2 10k
-  C1:  capacitor a2 b2 100n
-  OUT: port a3
-  G1:  ground b2
+  IN:  port 1,1
+  R1:  resistor 1,1 2,1 10k
+  C1:  capacitor 2,1 2,2 100n
+  OUT: port 3,1
+  G1:  ground 2,2
 wires:
-  - a2 -- a3
+  - 2,1 -- 3,1
 notes:
-  - source a4 blue
+  - source 4,1 blue
 style:
   grid: on
   width: 320
@@ -130,15 +130,15 @@ style:
 ```circuit
 title: 図07 版の刻印
 parts:
-  IN:  port a1
-  R1:  resistor a1 a2 10k
-  C1:  capacitor a2 b2 100n
-  OUT: port a3
-  G1:  ground b2
+  IN:  port 1,1
+  R1:  resistor 1,1 2,1 10k
+  C1:  capacitor 2,1 2,2 100n
+  OUT: port 3,1
+  G1:  ground 2,2
 wires:
-  - a2 -- a3
+  - 2,1 -- 3,1
 notes:
-  - source a4 blue
+  - source 4,1 blue
 style:
   grid: on
 ```

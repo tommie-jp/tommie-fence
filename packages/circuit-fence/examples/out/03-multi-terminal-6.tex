@@ -47,35 +47,35 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
-\coordinate (c2) at (2,-4);
-\coordinate (a7) at (12,0);
-\coordinate (b8) at (14,-2);
-\coordinate (d8) at (14,-6);
-\coordinate (c6) at (10,-4);
-\coordinate (d6) at (10,-6);
-\coordinate (f6) at (10,-10);
-\coordinate (f4) at (6,-10);
-\node[dev4w12n8, draw, font=\scriptsize, xscale=-1] (part-M1) at (c2) {}; % line 3
+\coordinate (x2y3) at (2,-4);
+\coordinate (x7y1) at (12,0);
+\coordinate (x8y2) at (14,-2);
+\coordinate (x8y4) at (14,-6);
+\coordinate (x6y3) at (10,-4);
+\coordinate (x6y4) at (10,-6);
+\coordinate (x6y6) at (10,-10);
+\coordinate (x4y6) at (6,-10);
+\node[dev4w12n8, draw, font=\scriptsize, xscale=-1] (part-M1) at (x2y3) {}; % line 3
 \node[font=\scriptsize] at (part-M1.value) {$\mathrm{HC\mbox{-}SR04}$}; % line 3
 \node[anchor=south] at (part-M1.north) {$M_{1}$}; % line 3
 \node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-M1.bpin 1) {X}; % line 3
 \node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-M1.bpin 2) {X}; % line 3
 \node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-M1.bpin 3) {X}; % line 3
 \node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-M1.bpin 4) {X}; % line 3
-\draw (a7) node[ocirc]{} node[above left]{VBUS}; % line 9
-\draw (b8) node[ocirc]{} node[above left]{GP14}; % line 10
-\draw (d8) node[ocirc]{} node[above left]{GP15}; % line 11
-\draw (c6) to[R, l_=$R_{1}$, a^=$1\,\mathrm{k}\Omega$] (d6); % line 12
-\draw (d6) to[R, l_=$R_{2}$, a^=$2\,\mathrm{k}\Omega$] (f6); % line 13
-\node[ground] at (f6) {}; % line 14
-\draw (part-M1.pin 1) -| (a7); % line 16
-\draw (part-M1.pin 2) -| (b8); % line 17
-\draw (part-M1.pin 3) -| (c6); % line 18
-\draw (d6) -- (d8); % line 19
-\draw (part-M1.pin 4) -| (f4); % line 20
-\draw (f4) -- (f6); % line 20
-\node[circ] at (d6) {};
-\node[circ] at (f6) {};
+\draw (x7y1) node[ocirc]{} node[above left]{VBUS}; % line 9
+\draw (x8y2) node[ocirc]{} node[above left]{GP14}; % line 10
+\draw (x8y4) node[ocirc]{} node[above left]{GP15}; % line 11
+\draw (x6y3) to[R, l_=$R_{1}$, a^=$1\,\mathrm{k}\Omega$] (x6y4); % line 12
+\draw (x6y4) to[R, l_=$R_{2}$, a^=$2\,\mathrm{k}\Omega$] (x6y6); % line 13
+\node[ground] at (x6y6) {}; % line 14
+\draw (part-M1.pin 1) -| (x7y1); % line 16
+\draw (part-M1.pin 2) -| (x8y2); % line 17
+\draw (part-M1.pin 3) -| (x6y3); % line 18
+\draw (x6y4) -- (x8y4); % line 19
+\draw (part-M1.pin 4) -| (x4y6); % line 20
+\draw (x4y6) -- (x6y6); % line 20
+\node[circ] at (x6y4) {};
+\node[circ] at (x6y6) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(17.648,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

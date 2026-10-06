@@ -8,28 +8,28 @@
 ```circuit
 title: 回路図01 エミッタフォロワ
 parts:
-  V1: vsource c2 i2 5
-  VCC: vcc c2 5V
-  G1: ground i2
-  IN: sine e5 h5 l=$\mathrm{IN}$
-  G2: ground h5
-  VCC: vcc b10 5V
-  R1: resistor e10 b10 10k
-  R2: resistor e10 h10 10k
-  G3: ground h10
-  C1: ecap e8 e5 10u
-  Q1: npn e12 2SC1815
-  Re: resistor h12 k12 47
-  G4: ground k12
-  C2: ecap h12 h15 470u
-  SPK: speaker h15 k15 8 l=$\mathrm{SPK}$
-  G5: ground k15
+  V1: vsource 2,3 2,9 5
+  VCC: vcc 2,3 5V
+  G1: ground 2,9
+  IN: sine 5,5 5,8 l=$\mathrm{IN}$
+  G2: ground 5,8
+  VCC: vcc 10,2 5V
+  R1: resistor 10,5 10,2 10k
+  R2: resistor 10,5 10,8 10k
+  G3: ground 10,8
+  C1: ecap 8,5 5,5 10u
+  Q1: npn 12,5 2SC1815
+  Re: resistor 12,8 12,11 47
+  G4: ground 12,11
+  C2: ecap 12,8 15,8 470u
+  SPK: speaker 15,8 15,11 8 l=$\mathrm{SPK}$
+  G5: ground 15,11
 wires:
-  - e8 -- e10
-  - e10 -- Q1.B
-  - b10 -- b12
-  - b12 -- Q1.C
-  - Q1.E -- h12
+  - 8,5 -- 10,5
+  - 10,5 -- Q1.B
+  - 10,2 -- 12,2
+  - 12,2 -- Q1.C
+  - Q1.E -- 12,8
 ```
 
 <img src="out/schematic/08-emitter-follower.png" alt="回路図01 エミッタフォロワ" width="1050">

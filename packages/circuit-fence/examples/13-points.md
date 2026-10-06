@@ -7,25 +7,25 @@
 ```circuit
 title: 図01 名前で組んだ非反転アンプ
 points:
-  vin: b1
-  fb:  c3
+  vin: 1,2
+  fb:  3,3
 parts:
   IN:  port vin
-  C1:  capacitor vin b2 1u
-  Rb:  resistor b2 d2 100k
-  G1:  ground d2
-  U1:  opamp b4 +up
-  R2:  resistor fb d3 1k
-  G2:  ground d3
-  R3:  resistor fb c5 10k
-  OUT: port b6
+  C1:  capacitor vin 2,2 1u
+  Rb:  resistor 2,2 2,4 100k
+  G1:  ground 2,4
+  U1:  opamp 4,2 +up
+  R2:  resistor fb 3,4 1k
+  G2:  ground 3,4
+  R3:  resistor fb 5,3 10k
+  OUT: port 6,2
 wires:
-  - b2 -| U1.+
+  - 2,2 -| U1.+
   - fb |- U1.-
-  - U1.out -- b5 -- b6
-  - c5 -- b5
+  - U1.out -- 5,2 -- 6,2
+  - 5,3 -- 5,2
 notes:
-  - source a7 blue
+  - source 7,1 blue
 style:
   grid: on
 ```

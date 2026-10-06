@@ -6,46 +6,46 @@
 ```circuit
 title: 図01 ロジックゲート
 parts:
-  U1: and b2 7408
-  U2: or b5 7432
-  U3: nand b8 7400
-  U4: nor b11 7402
-  U5: xor e2 7486
-  U6: xnor e5 74266
-  U7: not e8 7404
-  U8: buffer e11 7407
+  U1: and 2,2 7408
+  U2: or 5,2 7432
+  U3: nand 8,2 7400
+  U4: nor 11,2 7402
+  U5: xor 2,5 7486
+  U6: xnor 5,5 74266
+  U7: not 8,5 7404
+  U8: buffer 11,5 7407
 wires:
-  - a1 |- U1.a
-  - c1 |- U1.b
-  - U1.out -| b3
-  - a4 |- U2.a
-  - c4 |- U2.b
-  - U2.out -| b6
-  - a7 |- U3.a
-  - c7 |- U3.b
-  - U3.out -| b9
-  - a10 |- U4.a
-  - c10 |- U4.b
-  - U4.out -| b12
-  - d1 |- U5.a
-  - f1 |- U5.b
-  - U5.out -| e3
-  - d4 |- U6.a
-  - f4 |- U6.b
-  - U6.out -| e6
-  - d7 |- U7.in
-  - U7.out -| e9
-  - d10 |- U8.in
-  - U8.out -| e12
+  - 1,1 |- U1.a
+  - 1,3 |- U1.b
+  - U1.out -| 3,2
+  - 4,1 |- U2.a
+  - 4,3 |- U2.b
+  - U2.out -| 6,2
+  - 7,1 |- U3.a
+  - 7,3 |- U3.b
+  - U3.out -| 9,2
+  - 10,1 |- U4.a
+  - 10,3 |- U4.b
+  - U4.out -| 12,2
+  - 1,4 |- U5.a
+  - 1,6 |- U5.b
+  - U5.out -| 3,5
+  - 4,4 |- U6.a
+  - 4,6 |- U6.b
+  - U6.out -| 6,5
+  - 7,4 |- U7.in
+  - U7.out -| 9,5
+  - 10,4 |- U8.in
+  - U8.out -| 12,5
 notes:
-  - text c2 blue center: "U1: and b2 7408"
-  - text c5 blue center: "U2: or b5 7432"
-  - text c8 blue center: "U3: nand b8 7400"
-  - text c11 blue center: "U4: nor b11 7402"
-  - text f2 blue center: "U5: xor e2 7486"
-  - text f5 blue center: "U6: xnor e5 74266"
-  - text f8 blue center: "U7: not e8 7404"
-  - text f11 blue center: "U8: buffer e11 7407"
+  - text 2,3 blue center: "U1: and b2 7408"
+  - text 5,3 blue center: "U2: or b5 7432"
+  - text 8,3 blue center: "U3: nand b8 7400"
+  - text 11,3 blue center: "U4: nor b11 7402"
+  - text 2,6 blue center: "U5: xor e2 7486"
+  - text 5,6 blue center: "U6: xnor e5 74266"
+  - text 8,6 blue center: "U7: not e8 7404"
+  - text 11,6 blue center: "U8: buffer e11 7407"
 style:
   grid: on
 ```
@@ -66,15 +66,15 @@ style:
 ```circuit
 title: 図02 DIP の IC
 parts:
-  U1: dip8 c3 NE555
+  U1: dip8 3,3 NE555
 wires:
-  - a1 |- U1.GND
-  - e1 |- U1.RESET
-  - U1.CONT -| e5
-  - U1.VCC -| a5
+  - 1,1 |- U1.GND
+  - 1,5 |- U1.RESET
+  - U1.CONT -| 5,5
+  - U1.VCC -| 5,1
 notes:
-  - text f1 blue: "U1: dip8 c3 NE555"
-  - source a7 blue
+  - text 1,6 blue: "U1: dip8 c3 NE555"
+  - source 7,1 blue
 style:
   grid: on
   pitch: 1
@@ -92,14 +92,14 @@ style:
 ```circuit
 title: 図03 切り替えスイッチ
 parts:
-  S1: spdt b2
+  S1: spdt 2,2
 wires:
-  - b1 |- S1.in
-  - S1.1 -| a4
-  - S1.2 -| c4
+  - 1,2 |- S1.in
+  - S1.1 -| 4,1
+  - S1.2 -| 4,3
 notes:
-  - text d1 blue: "S1: spdt b2"
-  - source a6 blue
+  - text 1,4 blue: "S1: spdt b2"
+  - source 6,1 blue
 style:
   grid: on
 ```
@@ -116,21 +116,21 @@ IC の 1 回路を記号 1 つで描くとき、**ID の末尾の大文字が IC
 ```circuit
 title: 図04 ゲートの足の番号
 parts:
-  IN1: port b1
-  U1A: not b4 74HC14
-  U1B: not b8 74HC14
-  OUT1: port b12
-  IN2: port c1
-  IN3: port e1
-  U2A: nand d6 74HC00
-  OUT2: port d11
+  IN1: port 1,2
+  U1A: not 4,2 74HC14
+  U1B: not 8,2 74HC14
+  OUT1: port 12,2
+  IN2: port 1,3
+  IN3: port 1,5
+  U2A: nand 6,4 74HC00
+  OUT2: port 11,4
 wires:
-  - b1 -- U1A.in
+  - 1,2 -- U1A.in
   - U1A.out -- U1B.in
-  - U1B.out -- b12
-  - c1 |- U2A.in1
-  - e1 |- U2A.in2
-  - U2A.out -- d11
+  - U1B.out -- 12,2
+  - 1,3 |- U2A.in1
+  - 1,5 |- U2A.in2
+  - U2A.out -- 11,4
 style:
   grid: on
 ```
@@ -150,22 +150,22 @@ style:
 ```circuit
 title: 図05 74HC595 の箱
 parts:
-  SER: port c1
-  SRCLK: port e1
-  RCLK: port g1
-  U1: ic e6 74HC595
-  QA: port c10
-  QB: port d9
-  VCC: vcc a6
-  G1: ground i6
+  SER: port 1,3
+  SRCLK: port 1,5
+  RCLK: port 1,7
+  U1: ic 6,5 74HC595
+  QA: port 10,3
+  QB: port 9,4
+  VCC: vcc 6,1
+  G1: ground 6,9
 wires:
-  - c1 |- U1.SER
-  - e1 |- U1.SRCLK
-  - g1 |- U1.RCLK
-  - U1.QA -| c10
-  - U1.QB -| d9
-  - a6 |- U1.VCC
-  - U1.GND |- i6
+  - 1,3 |- U1.SER
+  - 1,5 |- U1.SRCLK
+  - 1,7 |- U1.RCLK
+  - U1.QA -| 10,3
+  - U1.QB -| 9,4
+  - 6,1 |- U1.VCC
+  - U1.GND |- 6,9
 style:
   grid: on
 ```
@@ -183,24 +183,24 @@ style:
 ```circuit
 title: 図06 CD4013B で 2 分周
 parts:
-  CLK: port d1
-  U1: ic e6 CD4013B
-  OUT: port e11
-  VDD: vcc a6
-  G1: ground i6
+  CLK: port 1,4
+  U1: ic 6,5 CD4013B
+  OUT: port 11,5
+  VDD: vcc 6,1
+  G1: ground 6,9
 wires:
-  - d1 -| U1.CLOCK1
-  - U1./Q1 -| e9
-  - e9 -- e11
-  - e9 -- b9
-  - b9 -- b3
-  - b3 |- U1.D1
-  - U1.SET1 -| f4
-  - U1.RESET1 -| f4
-  - f4 -- h4
-  - h4 -- h6
-  - a6 |- U1.VDD
-  - U1.VSS |- i6
+  - 1,4 -| U1.CLOCK1
+  - U1./Q1 -| 9,5
+  - 9,5 -- 11,5
+  - 9,5 -- 9,2
+  - 9,2 -- 3,2
+  - 3,2 |- U1.D1
+  - U1.SET1 -| 4,6
+  - U1.RESET1 -| 4,6
+  - 4,6 -- 4,8
+  - 4,8 -- 6,8
+  - 6,1 |- U1.VDD
+  - U1.VSS |- 6,9
 style:
   grid: on
 ```
@@ -213,22 +213,22 @@ CD4040B はクロック `CLOCK` を左から入れ、`Q1` (2 分周) から `Q12
 ```circuit
 title: 図07 CD4040B のリプルカウンタ
 parts:
-  CLK: port c1
-  U1: ic e6 CD4040B
-  Q1: port c11
-  Q4: port e11
-  Q12: port i11
-  VDD: vcc a6
-  G1: ground k6
-  G2: ground k3
+  CLK: port 1,3
+  U1: ic 6,5 CD4040B
+  Q1: port 11,3
+  Q4: port 11,5
+  Q12: port 11,9
+  VDD: vcc 6,1
+  G1: ground 6,11
+  G2: ground 3,11
 wires:
-  - c1 -| U1.CLOCK
-  - U1.R -| k3
-  - U1.Q1 -| c11
-  - U1.Q4 -| e11
-  - U1.Q12 -| i11
-  - a6 |- U1.VDD
-  - U1.VSS |- k6
+  - 1,3 -| U1.CLOCK
+  - U1.R -| 3,11
+  - U1.Q1 -| 11,3
+  - U1.Q4 -| 11,5
+  - U1.Q12 -| 11,9
+  - 6,1 |- U1.VDD
+  - U1.VSS |- 6,11
 style:
   grid: on
 ```

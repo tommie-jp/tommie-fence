@@ -95,11 +95,11 @@ describe('LED・フォトダイオードの値は光の矢に重ならない', (
 
   // [書き方, from (列, 行), to (列, 行)]。列・行は 0 始まり (a1 = (0, 0))。
   const PLACES: readonly (readonly [string, readonly [number, number], readonly [number, number]])[] = [
-    ['c3 e3', [2, 2], [2, 4]], // 下向き
-    ['e3 c3', [2, 4], [2, 2]], // 上向き
-    ['c3 c5', [2, 2], [4, 2]], // 右向き
-    ['c5 c3', [4, 2], [2, 2]], // 左向き
-    ['c3 e5', [2, 2], [4, 4]], // 斜め
+    ['3,3 3,5', [2, 2], [2, 4]], // 下向き
+    ['3,5 3,3', [2, 4], [2, 2]], // 上向き
+    ['3,3 5,3', [2, 2], [4, 2]], // 右向き
+    ['5,3 3,3', [4, 2], [2, 2]], // 左向き
+    ['3,3 5,5', [2, 2], [4, 4]], // 斜め
   ];
 
   for (const type of ['led', 'photodiode'] as const) {
@@ -116,13 +116,13 @@ describe('LED・フォトダイオードの値は光の矢に重ならない', (
 
   test('leaves the value to circuitikz for symbols without light arrows', () => {
     // 矢の無い記号まで別ノードにすると、図が変わる (`a^` で重ならない)。
-    expect(generate('parts:', '  D1: diode c3 c5 1N4148')).toContain('a^=$\\mathrm{1N4148}$');
+    expect(generate('parts:', '  D1: diode 3,3 5,3 1N4148')).toContain('a^=$\\mathrm{1N4148}$');
   });
 
   test('keeps the name on the side away from the arrows', () => {
-    const tex = generate('parts:', '  D1: led c3 e3 red');
+    const tex = generate('parts:', '  D1: led 3,3 3,5 red');
 
-    expect(tex).toContain('\\draw (c3) to[leD, l_=$D_{1}$] (e3);');
+    expect(tex).toContain('\\draw (x3y3) to[leD, l_=$D_{1}$] (x3y5);');
     expect(tex).not.toContain('a^=');
   });
 });
@@ -147,10 +147,10 @@ describe('DIP の型番はピンの番号に重ならない', () => {
   // 型番はピンの名前の表に無いもの (表にあれば名前の箱になり、型番の置き方が違う)。
   for (const [turn, rotate] of [['', 0], [' r180', 180]] as const) {
     test(`puts a long part number under the upright box${turn}`, () => {
-      const tex = generate('parts:', `  U1: dip16 c3 CD74HC4094${turn}`);
+      const tex = generate('parts:', `  U1: dip16 3,3 CD74HC4094${turn}`);
 
       // 箱の中には何も書かない (番号の列の間に置くと掛かる)。
-      expect(tex).toMatch(/\\node\[dipchip, num pins=16, font=\\scriptsize[^\]]*\] \(part-U1\) at \(c3\) \{\};/u);
+      expect(tex).toMatch(/\\node\[dipchip, num pins=16, font=\\scriptsize[^\]]*\] \(part-U1\) at \(x3y3\) \{\};/u);
       const found = /\\node\[font=\\scriptsize, anchor=(\w+)\] at \(part-U1\.(\w+)\) \{\$\\mathrm\{CD74HC4094\}\$\}/u.exec(tex);
       expect(found).not.toBeNull();
       // 掛けたアンカーは画面の下の縁 (番号は縁より内側にしか無い)。
@@ -164,7 +164,7 @@ describe('DIP の型番はピンの番号に重ならない', () => {
 
   test('keeps the part number inside a box laid on its side', () => {
     // 寝かせた箱は長い辺が横になり、番号の列の間に 1 行ぶんの帯が空く。
-    const tex = generate('parts:', '  U1: dip16 c3 CD74HC4094 r90');
+    const tex = generate('parts:', '  U1: dip16 3,3 CD74HC4094 r90');
 
     expect(tex).toContain('\\node[font=\\scriptsize] at (part-U1.center) {$\\mathrm{CD74HC4094}$};');
   });
@@ -193,7 +193,7 @@ describe('機器の名前は反転してもピンの名前に重ならない', (
     'parts:',
     '  PIR:',
     '    type: device',
-    '    at: d5',
+    '    at: 5,4',
     '    label: PIR module',
     '    pins: [VCC, OUT, GND]',
     ...(turn === null ? [] : [`    turn: ${turn}`]),
@@ -226,7 +226,7 @@ describe('機器の名前は反転してもピンの名前に重ならない', (
   });
 
   test('uses the same place for a pin header turned over', () => {
-    const tex = generate('parts:', '  J1: sip4 c3 UART mirror');
+    const tex = generate('parts:', '  J1: sip4 3,3 UART mirror');
 
     expect(tex).toContain('at (part-J1.value) {$\\mathrm{UART}$};');
   });

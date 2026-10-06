@@ -20,20 +20,20 @@
 ```circuit
 title: 回路図01 S-Mini で LED を点ける
 parts:
-  V1: vsource b1 e1 5
-  VCC: vcc b1 5V
-  G1: ground e1
-  R2: resistor b4 d4 330
-  D1: led d4 f4 red
-  Q1: npn g4 2SC2712
-  G2: ground i4
-  R1: resistor g1 g3 10k
-  IN: port g1
+  V1: vsource 1,2 1,5 5
+  VCC: vcc 1,2 5V
+  G1: ground 1,5
+  R2: resistor 4,2 4,4 330
+  D1: led 4,4 4,6 red
+  Q1: npn 4,7 2SC2712
+  G2: ground 4,9
+  R1: resistor 1,7 3,7 10k
+  IN: port 1,7
 wires:
-  - b1 -- b4
-  - Q1.C |- f4
-  - Q1.B |- g3
-  - Q1.E |- i4
+  - 1,2 -- 4,2
+  - Q1.C |- 4,6
+  - Q1.B |- 3,7
+  - Q1.E |- 4,9
 ```
 
 <img src="out/schematic/10-smd.png" alt="回路図01 S-Mini で LED を点ける" width="524">

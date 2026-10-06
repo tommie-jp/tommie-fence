@@ -36,11 +36,11 @@ describe('図', () => {
   test('wires to a named pin and lists it by that name', () => {
     const result = compileCircuit(circuit(
       'parts:',
-      '  J1: usb-c b2',
-      '  R1: resistor d6 f6 5.1k',
+      '  J1: usb-c 2,2',
+      '  R1: resistor 6,4 6,6 5.1k',
       'wires:',
-      '  - J1.VBUS -- d6',
-      '  - J1.GND -- f6',
+      '  - J1.VBUS -- 6,4',
+      '  - J1.GND -- 6,6',
     ));
 
     expect(result.errors).toEqual([]);
@@ -50,8 +50,8 @@ describe('図', () => {
   });
 
   test('declares the symbol only when it is used', () => {
-    const used = compileCircuit(circuit('parts:', '  J1: usb-a b2')).tex ?? '';
-    const unused = compileCircuit(circuit('parts:', '  R1: resistor b2 b4')).tex ?? '';
+    const used = compileCircuit(circuit('parts:', '  J1: usb-a 2,2')).tex ?? '';
+    const unused = compileCircuit(circuit('parts:', '  R1: resistor 2,2 4,2')).tex ?? '';
 
     expect(used).toContain(usbShapeTex('usb-a')[1]);
     expect(unused).not.toContain('pgfdeclareshape');
@@ -64,11 +64,11 @@ describe('図', () => {
   test('does not nag about pins a power-only circuit leaves alone', () => {
     const { erc } = compileCircuit(circuit(
       'parts:',
-      '  J1: usb-a b2',
-      '  R1: resistor d6 f6 1k',
+      '  J1: usb-a 2,2',
+      '  R1: resistor 6,4 6,6 1k',
       'wires:',
-      '  - J1.VBUS -- d6',
-      '  - J1.GND -- f6',
+      '  - J1.VBUS -- 6,4',
+      '  - J1.GND -- 6,6',
     ), { erc: true });
 
     expect(erc.map((one) => one.message).join('\n')).not.toContain('J1');

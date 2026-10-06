@@ -63,17 +63,17 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-10) {f};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-12) {g};
-\coordinate (d2) at (2,-6);
-\coordinate (b4) at (6,-2);
-\coordinate (b6) at (10,-2);
-\coordinate (b8) at (14,-2);
-\coordinate (e5) at (8,-8);
-\coordinate (g5) at (8,-12);
-\coordinate (e4) at (6,-8);
-\coordinate (g4) at (6,-12);
-\coordinate (g8) at (14,-12);
-\coordinate (g6) at (10,-12);
-\node[usbccon, draw, font=\scriptsize] (part-J1) at (d2) {}; % line 3
+\coordinate (x2y4) at (2,-6);
+\coordinate (x4y2) at (6,-2);
+\coordinate (x6y2) at (10,-2);
+\coordinate (x8y2) at (14,-2);
+\coordinate (x5y5) at (8,-8);
+\coordinate (x5y7) at (8,-12);
+\coordinate (x4y5) at (6,-8);
+\coordinate (x4y7) at (6,-12);
+\coordinate (x8y7) at (14,-12);
+\coordinate (x6y7) at (10,-12);
+\node[usbccon, draw, font=\scriptsize] (part-J1) at (x2y4) {}; % line 3
 \node[anchor=south] at (part-J1.north) {$J_{1}$}; % line 3
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J1.bpin 1) {X}; % line 3
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J1.bpin 2) {X}; % line 3
@@ -81,20 +81,20 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J1.bpin 4) {X}; % line 3
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J1.bpin 5) {X}; % line 3
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J1.bpin 6) {X}; % line 3
-\draw (b4) to[R, l_=$R_{1}$, a^=$330\,\Omega$] (b6); % line 4
-\draw (b6) to[leD, l_=$D_{1}$] (b8); % line 5
-\draw (e5) to[R, l_=$R_{2}$, a^=$5\mbox{.}1\,\mathrm{k}\Omega$] (g5); % line 6
-\draw (e4) to[R, l_=$R_{3}$, a^=$5\mbox{.}1\,\mathrm{k}\Omega$] (g4); % line 7
-\node[ground] at (g8) {}; % line 8
-\draw (part-J1.pin 1) -| (b4); % line 10
-\draw (b8) -- (g8); % line 11
-\draw (part-J1.pin 2) -| (g6); % line 12
-\draw (part-J1.pin 5) -| (e5); % line 13
-\draw (part-J1.pin 6) -| (e4); % line 14
-\draw (g4) -- (g8); % line 15
-\node[circ] at (g5) {};
-\node[circ] at (g8) {};
-\node[circ] at (g6) {};
+\draw (x4y2) to[R, l_=$R_{1}$, a^=$330\,\Omega$] (x6y2); % line 4
+\draw (x6y2) to[leD, l_=$D_{1}$] (x8y2); % line 5
+\draw (x5y5) to[R, l_=$R_{2}$, a^=$5\mbox{.}1\,\mathrm{k}\Omega$] (x5y7); % line 6
+\draw (x4y5) to[R, l_=$R_{3}$, a^=$5\mbox{.}1\,\mathrm{k}\Omega$] (x4y7); % line 7
+\node[ground] at (x8y7) {}; % line 8
+\draw (part-J1.pin 1) -| (x4y2); % line 10
+\draw (x8y2) -- (x8y7); % line 11
+\draw (part-J1.pin 2) -| (x6y7); % line 12
+\draw (part-J1.pin 5) -| (x5y5); % line 13
+\draw (part-J1.pin 6) -| (x4y5); % line 14
+\draw (x4y7) -- (x8y7); % line 15
+\node[circ] at (x5y7) {};
+\node[circ] at (x8y7) {};
+\node[circ] at (x6y7) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(12.009,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

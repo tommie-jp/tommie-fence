@@ -18,36 +18,36 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.504,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.504,-1.2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.504,-2.4) {c};
-\coordinate (b2) at (1.2,-1.2);
-\coordinate (b7) at (7.2,-1.2);
-\coordinate (a1) at (0,0);
-\coordinate (c1) at (0,-2.4);
-\coordinate (b4) at (3.6,-1.2);
-\coordinate (a6) at (6,0);
-\coordinate (c6) at (6,-2.4);
-\coordinate (a9) at (9.6,0);
-\coordinate (c9) at (9.6,-2.4);
-\node[plain amp] (part-U1) at (b2) {}; % line 3
+\coordinate (x2y2) at (1.2,-1.2);
+\coordinate (x7y2) at (7.2,-1.2);
+\coordinate (x1y1) at (0,0);
+\coordinate (x1y3) at (0,-2.4);
+\coordinate (x4y2) at (3.6,-1.2);
+\coordinate (x6y1) at (6,0);
+\coordinate (x6y3) at (6,-2.4);
+\coordinate (x9y1) at (9.6,0);
+\coordinate (x9y3) at (9.6,-2.4);
+\node[plain amp] (part-U1) at (x2y2) {}; % line 3
 \node[font=\scriptsize, anchor=north] at (part-U1.south) {$\mathrm{LM358}$}; % line 3
 \node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 3
 \draw ($($(part-U1.+)!0.22!(part-U1.-)$)+(0.44,0)$) -- ++(0.28,0); % line 3
 \draw ($($(part-U1.+)!0.22!(part-U1.-)$)+(0.58,-0.14)$) -- ++(0,0.28); % line 3
 \draw ($($(part-U1.-)!0.22!(part-U1.+)$)+(0.44,0)$) -- ++(0.28,0); % line 3
-\node[transformer core] (part-T1) at (b7) {}; % line 4
+\node[transformer core] (part-T1) at (x7y2) {}; % line 4
 \node[font=\scriptsize, anchor=north] at (part-T1.south) {$\mathrm{1to1}$}; % line 4
 \node[anchor=south] at (part-T1.north) {$T_{1}$}; % line 4
-\draw (a1) |- (part-U1.-); % line 6
-\draw (c1) |- (part-U1.+); % line 7
-\draw (part-U1.out) -| (b4); % line 8
-\draw (a6) |- (part-T1.A1); % line 9
-\draw (c6) |- (part-T1.A2); % line 10
-\draw (a9) |- (part-T1.B1); % line 11
-\draw (c9) |- (part-T1.B2); % line 12
+\draw (x1y1) |- (part-U1.-); % line 6
+\draw (x1y3) |- (part-U1.+); % line 7
+\draw (part-U1.out) -| (x4y2); % line 8
+\draw (x6y1) |- (part-T1.A1); % line 9
+\draw (x6y3) |- (part-T1.A2); % line 10
+\draw (x9y1) |- (part-T1.B1); % line 11
+\draw (x9y3) |- (part-T1.B2); % line 12
 \path (0,-4.193) rectangle (4.572,-3.007); % line 14
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-3.6) {X}; % line 14
 \path (6,-4.193) rectangle (11.842,-3.007); % line 15
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-3.6) {X}; % line 15
-\path (12,-10.329) rectangle (23.286,0.593); % line 16
+\path (12,-10.329) rectangle (23.549,0.593); % line 16
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,0) {X}; % line 16
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-0.487) {X}; % line 16
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (12,-0.974) {X}; % line 16

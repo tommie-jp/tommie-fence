@@ -4,7 +4,10 @@ import { formatAddress, parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
-import { addressTokensOn, addressesOf, applyEdits, diffOf, fail, isOnGrid, locateTokens } from './shared.ts';
+import {
+  FLOW_ADDRESS_REFUSAL, addressTokensOn, addressesOf, applyEdits, diffOf, fail, isOnGrid, locateTokens,
+  writesAddressIntoFlow,
+} from './shared.ts';
 import type { Edit, MoveResult, Span } from './shared.ts';
 import { cellOf } from '../types.ts';
 import type { Circuit } from '../model/circuit.ts';
@@ -301,6 +304,7 @@ export function movePoint(source: string, at: Address, to: Address, trial = fals
 
   const text = formatAddress(to);
   const edits: Edit[] = tokens.map((token) => ({ ...token, text }));
+  if (writesAddressIntoFlow(normalized, edits)) return fail(`${formatAddress(at)}: ${FLOW_ADDRESS_REFUSAL}`, null);
   const after = applyEdits(normalized, edits);
   const applied = parseFence(after);
 

@@ -6,50 +6,50 @@
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
 \ctikzset{grounds/scale=1.36}
-\coordinate (c2) at (2,-4);
-\coordinate (i2) at (2,-16);
-\coordinate (e5) at (8,-8);
-\coordinate (h5) at (8,-14);
-\coordinate (b10) at (18,-2);
-\coordinate (e10) at (18,-8);
-\coordinate (h10) at (18,-14);
-\coordinate (e8) at (14,-8);
-\coordinate (e12) at (22,-8);
-\coordinate (h12) at (22,-14);
-\coordinate (k12) at (22,-20);
-\coordinate (h15) at (28,-14);
-\coordinate (k15) at (28,-20);
-\coordinate (b12) at (22,-2);
-\draw (c2) to[esource, l_=$V_{1}$, a^=$5\,\mathrm{V}$] (i2); % line 3
+\coordinate (x2y3) at (2,-4);
+\coordinate (x2y9) at (2,-16);
+\coordinate (x5y5) at (8,-8);
+\coordinate (x5y8) at (8,-14);
+\coordinate (x10y2) at (18,-2);
+\coordinate (x10y5) at (18,-8);
+\coordinate (x10y8) at (18,-14);
+\coordinate (x8y5) at (14,-8);
+\coordinate (x12y5) at (22,-8);
+\coordinate (x12y8) at (22,-14);
+\coordinate (x12y11) at (22,-20);
+\coordinate (x15y8) at (28,-14);
+\coordinate (x15y11) at (28,-20);
+\coordinate (x12y2) at (22,-2);
+\draw (x2y3) to[esource, l_=$V_{1}$, a^=$5\,\mathrm{V}$] (x2y9); % line 3
 \draw (1.919,-9.865) -- ++(0.162,0); % line 3
 \draw (2,-9.946) -- ++(0,0.162); % line 3
 \draw (1.919,-10.135) -- ++(0.162,0); % line 3
-\node[vcc] at (c2) {+5V}; % line 4
-\node[ground] at (i2) {}; % line 5
-\draw (e5) to[esource, l_=$\mathrm{IN}$] (h5); % line 6
+\node[vcc] at (x2y3) {+5V}; % line 4
+\node[ground] at (x2y9) {}; % line 5
+\draw (x5y5) to[esource, l_=$\mathrm{IN}$] (x5y8); % line 6
 \draw (7.82,-11) sin ++(0.09,0.09) cos ++(0.09,-0.09) sin ++(0.09,-0.09) cos ++(0.09,0.09); % line 6
-\node[ground] at (h5) {}; % line 7
-\node[vcc] at (b10) {+5V}; % line 8
-\draw (e10) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (b10); % line 9
-\draw (e10) to[R, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (h10); % line 10
-\node[ground] at (h10) {}; % line 11
-\draw (e8) to[cC, l_=$C_{1}$, a^=$10\,\mu\mathrm{F}$] (e5); % line 12
-\node[npn] (part-Q1) at (e12) {}; % line 13
+\node[ground] at (x5y8) {}; % line 7
+\node[vcc] at (x10y2) {+5V}; % line 8
+\draw (x10y5) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x10y2); % line 9
+\draw (x10y5) to[R, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (x10y8); % line 10
+\node[ground] at (x10y8) {}; % line 11
+\draw (x8y5) to[cC, l_=$C_{1}$, a^=$10\,\mu\mathrm{F}$] (x5y5); % line 12
+\node[npn] (part-Q1) at (x12y5) {}; % line 13
 \node[font=\scriptsize, anchor=north] at (part-Q1.south) {$\mathrm{2SC1815}$}; % line 13
 \node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 13
-\draw (h12) to[R, l_=$R_{e}$, a^=$47\,\Omega$] (k12); % line 14
-\node[ground] at (k12) {}; % line 15
-\draw (h12) to[cC, l_=$C_{2}$, a^=$470\,\mu\mathrm{F}$] (h15); % line 16
-\draw (h15) to[loudspeaker, l_=$\mathrm{SPK}$, a^=$\mathrm{8}$] (k15); % line 17
-\node[ground] at (k15) {}; % line 18
-\draw (e8) -- (e10); % line 20
-\draw (e10) -- (part-Q1.base); % line 21
-\draw (b10) -- (b12); % line 22
-\draw (b12) -- (part-Q1.collector); % line 23
-\draw (part-Q1.emitter) -- (h12); % line 24
-\node[circ] at (b10) {};
-\node[circ] at (e10) {};
-\node[circ] at (h12) {};
+\draw (x12y8) to[R, l_=$R_{e}$, a^=$47\,\Omega$] (x12y11); % line 14
+\node[ground] at (x12y11) {}; % line 15
+\draw (x12y8) to[cC, l_=$C_{2}$, a^=$470\,\mu\mathrm{F}$] (x15y8); % line 16
+\draw (x15y8) to[loudspeaker, l_=$\mathrm{SPK}$, a^=$\mathrm{8}$] (x15y11); % line 17
+\node[ground] at (x15y11) {}; % line 18
+\draw (x8y5) -- (x10y5); % line 20
+\draw (x10y5) -- (part-Q1.base); % line 21
+\draw (x10y2) -- (x12y2); % line 22
+\draw (x12y2) -- (part-Q1.collector); % line 23
+\draw (part-Q1.emitter) -- (x12y8); % line 24
+\node[circ] at (x10y2) {};
+\node[circ] at (x10y5) {};
+\node[circ] at (x12y8) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(8.778,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

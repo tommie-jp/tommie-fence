@@ -103,7 +103,7 @@ describe('escapeTexListing', () => {
   });
 
   test('leaves the characters a listing needs alone', () => {
-    expect(escapeTexListing('- a3 -| a4 "x" [1]')).toContain('-|');
+    expect(escapeTexListing('- 3,1 -| 4,1 "x" [1]')).toContain('-|');
   });
 
   // ラベルの数式 (`l=$\dot{E}$`) を書いたフェンスも、そのまま図に書き出したい。

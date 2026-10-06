@@ -6,141 +6,141 @@
 \begin{document}
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
-\coordinate (b2) at (2,-2);
-\coordinate (b4) at (6,-2);
-\coordinate (b5) at (8,-2);
-\coordinate (b7) at (12,-2);
-\coordinate (b8) at (14,-2);
-\coordinate (b10) at (18,-2);
-\coordinate (b11) at (20,-2);
-\coordinate (b13) at (24,-2);
-\coordinate (d2) at (2,-6);
-\coordinate (d4) at (6,-6);
-\coordinate (d5) at (8,-6);
-\coordinate (d7) at (12,-6);
-\coordinate (d8) at (14,-6);
-\coordinate (d10) at (18,-6);
-\coordinate (d11) at (20,-6);
-\coordinate (d13) at (24,-6);
-\coordinate (f2) at (2,-10);
-\coordinate (f4) at (6,-10);
-\coordinate (f5) at (8,-10);
-\coordinate (f7) at (12,-10);
-\coordinate (f8) at (14,-10);
-\coordinate (f10) at (18,-10);
-\coordinate (f11) at (20,-10);
-\coordinate (f13) at (24,-10);
-\coordinate (h2) at (2,-14);
-\coordinate (h4) at (6,-14);
-\coordinate (h5) at (8,-14);
-\coordinate (h7) at (12,-14);
-\coordinate (h8) at (14,-14);
-\coordinate (h10) at (18,-14);
-\coordinate (h11) at (20,-14);
-\coordinate (h13) at (24,-14);
-\coordinate (j2) at (2,-18);
-\coordinate (j4) at (6,-18);
-\coordinate (j5) at (8,-18);
-\coordinate (j7) at (12,-18);
-\coordinate (j8) at (14,-18);
-\coordinate (j10) at (18,-18);
-\coordinate (j11) at (20,-18);
-\coordinate (j13) at (24,-18);
-\coordinate (l2) at (2,-22);
-\coordinate (l4) at (6,-22);
-\coordinate (l5) at (8,-22);
-\coordinate (l7) at (12,-22);
-\coordinate (l8) at (14,-22);
-\coordinate (l10) at (18,-22);
-\coordinate (l11) at (20,-22);
-\coordinate (l13) at (24,-22);
-\coordinate (n2) at (2,-26);
-\coordinate (n4) at (6,-26);
-\coordinate (n5) at (8,-26);
-\coordinate (n7) at (12,-26);
-\coordinate (n8) at (14,-26);
-\coordinate (n10) at (18,-26);
-\coordinate (n11) at (20,-26);
-\coordinate (n13) at (24,-26);
-\coordinate (p2) at (2,-30);
-\coordinate (p4) at (6,-30);
-\coordinate (p5) at (8,-30);
-\coordinate (p7) at (12,-30);
-\coordinate (p8) at (14,-30);
-\coordinate (p10) at (18,-30);
-\coordinate (p11) at (20,-30);
-\coordinate (p13) at (24,-30);
-\coordinate (r2) at (2,-34);
-\coordinate (r4) at (6,-34);
-\coordinate (r5) at (8,-34);
-\coordinate (r7) at (12,-34);
-\coordinate (r8) at (14,-34);
-\coordinate (r10) at (18,-34);
-\coordinate (r11) at (20,-34);
-\coordinate (r13) at (24,-34);
-\coordinate (t2) at (2,-38);
-\coordinate (t4) at (6,-38);
-\coordinate (t5) at (8,-38);
-\coordinate (t7) at (12,-38);
-\coordinate (t8) at (14,-38);
-\coordinate (t10) at (18,-38);
-\coordinate (t11) at (20,-38);
-\coordinate (t13) at (24,-38);
-\coordinate (v2) at (2,-42);
-\coordinate (v4) at (6,-42);
-\coordinate (v5) at (8,-42);
-\coordinate (v7) at (12,-42);
-\coordinate (v8) at (14,-42);
-\coordinate (v10) at (18,-42);
-\draw (b2) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (b4); % line 3
-\draw (b5) to[vR, mirror, invert, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (b7); % line 4
-\draw (b8) to[potentiometer, n=part-P2, l_=$P_{2}$, a^=$10\,\mathrm{k}\Omega$] (b10); % line 5
-\draw (b11) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (b13); % line 6
-\draw (d2) to[cC, l_=$C_{2}$, a^=$100\,\mu\mathrm{F}$] (d4); % line 7
-\draw (d5) to[varcap, l_=$D_{4}$, a^=$33\,\mathrm{p}\mathrm{F}$] (d7); % line 8
-\draw (d8) to[L, l_=$L_{1}$, a^=$10\,\mathrm{m}\mathrm{H}$] (d10); % line 9
-\draw (d11) to[phR, l_=$R_{3}$] (d13); % line 10
-\draw (f2) to[thR, l_=$R_{4}$, a^=$10\,\mathrm{k}\Omega$] (f4); % line 11
-\draw (f5) to[thR, l2_=$R_{5}$ and NTC, a^=$10\,\mathrm{k}\Omega$] (f7); % line 12
-\draw (f8) to[thR, l2_=$R_{6}$ and PTC] (f10); % line 13
-\draw (f11) to[varistor, l_=$R_{7}$, a^=$\mathrm{470V}$] (f13); % line 14
-\draw (h2) to[piezoelectric, l_=$X_{1}$, a^=$16\,\mathrm{M}\mathrm{Hz}$] (h4); % line 15
-\draw (h5) to[D, l_=$D_{1}$, a^=$\mathrm{1N4148}$] (h7); % line 16
-\draw (h8) to[leD, l_=$D_{2}$] (h10); % line 17
-\draw (h11) to[zD, l_=$D_{3}$, a^=$\mathrm{5V1}$] (h13); % line 18
-\draw (j2) to[sD, l_=$D_{5}$, a^=$\mathrm{1N5819}$] (j4); % line 19
-\draw (j5) to[pD, l_=$D_{6}$] (j7); % line 20
-\draw (j8) to[biD, l_=$D_{7}$] (j10); % line 21
-\draw (j11) to[thyristor, n=part-T1, l_=$T_{1}$] (j13); % line 22
-\draw (l2) to[triac, n=part-T2, l_=$T_{2}$] (l4); % line 23
-\draw (l5) to[esource, l_=$V_{1}$, a^=$5\,\mathrm{V}$] (l7); % line 24
+\coordinate (x2y2) at (2,-2);
+\coordinate (x4y2) at (6,-2);
+\coordinate (x5y2) at (8,-2);
+\coordinate (x7y2) at (12,-2);
+\coordinate (x8y2) at (14,-2);
+\coordinate (x10y2) at (18,-2);
+\coordinate (x11y2) at (20,-2);
+\coordinate (x13y2) at (24,-2);
+\coordinate (x2y4) at (2,-6);
+\coordinate (x4y4) at (6,-6);
+\coordinate (x5y4) at (8,-6);
+\coordinate (x7y4) at (12,-6);
+\coordinate (x8y4) at (14,-6);
+\coordinate (x10y4) at (18,-6);
+\coordinate (x11y4) at (20,-6);
+\coordinate (x13y4) at (24,-6);
+\coordinate (x2y6) at (2,-10);
+\coordinate (x4y6) at (6,-10);
+\coordinate (x5y6) at (8,-10);
+\coordinate (x7y6) at (12,-10);
+\coordinate (x8y6) at (14,-10);
+\coordinate (x10y6) at (18,-10);
+\coordinate (x11y6) at (20,-10);
+\coordinate (x13y6) at (24,-10);
+\coordinate (x2y8) at (2,-14);
+\coordinate (x4y8) at (6,-14);
+\coordinate (x5y8) at (8,-14);
+\coordinate (x7y8) at (12,-14);
+\coordinate (x8y8) at (14,-14);
+\coordinate (x10y8) at (18,-14);
+\coordinate (x11y8) at (20,-14);
+\coordinate (x13y8) at (24,-14);
+\coordinate (x2y10) at (2,-18);
+\coordinate (x4y10) at (6,-18);
+\coordinate (x5y10) at (8,-18);
+\coordinate (x7y10) at (12,-18);
+\coordinate (x8y10) at (14,-18);
+\coordinate (x10y10) at (18,-18);
+\coordinate (x11y10) at (20,-18);
+\coordinate (x13y10) at (24,-18);
+\coordinate (x2y12) at (2,-22);
+\coordinate (x4y12) at (6,-22);
+\coordinate (x5y12) at (8,-22);
+\coordinate (x7y12) at (12,-22);
+\coordinate (x8y12) at (14,-22);
+\coordinate (x10y12) at (18,-22);
+\coordinate (x11y12) at (20,-22);
+\coordinate (x13y12) at (24,-22);
+\coordinate (x2y14) at (2,-26);
+\coordinate (x4y14) at (6,-26);
+\coordinate (x5y14) at (8,-26);
+\coordinate (x7y14) at (12,-26);
+\coordinate (x8y14) at (14,-26);
+\coordinate (x10y14) at (18,-26);
+\coordinate (x11y14) at (20,-26);
+\coordinate (x13y14) at (24,-26);
+\coordinate (x2y16) at (2,-30);
+\coordinate (x4y16) at (6,-30);
+\coordinate (x5y16) at (8,-30);
+\coordinate (x7y16) at (12,-30);
+\coordinate (x8y16) at (14,-30);
+\coordinate (x10y16) at (18,-30);
+\coordinate (x11y16) at (20,-30);
+\coordinate (x13y16) at (24,-30);
+\coordinate (x2y18) at (2,-34);
+\coordinate (x4y18) at (6,-34);
+\coordinate (x5y18) at (8,-34);
+\coordinate (x7y18) at (12,-34);
+\coordinate (x8y18) at (14,-34);
+\coordinate (x10y18) at (18,-34);
+\coordinate (x11y18) at (20,-34);
+\coordinate (x13y18) at (24,-34);
+\coordinate (x2y20) at (2,-38);
+\coordinate (x4y20) at (6,-38);
+\coordinate (x5y20) at (8,-38);
+\coordinate (x7y20) at (12,-38);
+\coordinate (x8y20) at (14,-38);
+\coordinate (x10y20) at (18,-38);
+\coordinate (x11y20) at (20,-38);
+\coordinate (x13y20) at (24,-38);
+\coordinate (x2y22) at (2,-42);
+\coordinate (x4y22) at (6,-42);
+\coordinate (x5y22) at (8,-42);
+\coordinate (x7y22) at (12,-42);
+\coordinate (x8y22) at (14,-42);
+\coordinate (x10y22) at (18,-42);
+\draw (x2y2) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x4y2); % line 3
+\draw (x5y2) to[vR, mirror, invert, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (x7y2); % line 4
+\draw (x8y2) to[potentiometer, n=part-P2, l_=$P_{2}$, a^=$10\,\mathrm{k}\Omega$] (x10y2); % line 5
+\draw (x11y2) to[C, l_=$C_{1}$, a^=$100\,\mathrm{n}\mathrm{F}$] (x13y2); % line 6
+\draw (x2y4) to[cC, l_=$C_{2}$, a^=$100\,\mu\mathrm{F}$] (x4y4); % line 7
+\draw (x5y4) to[varcap, l_=$D_{4}$, a^=$33\,\mathrm{p}\mathrm{F}$] (x7y4); % line 8
+\draw (x8y4) to[L, l_=$L_{1}$, a^=$10\,\mathrm{m}\mathrm{H}$] (x10y4); % line 9
+\draw (x11y4) to[phR, l_=$R_{3}$] (x13y4); % line 10
+\draw (x2y6) to[thR, l_=$R_{4}$, a^=$10\,\mathrm{k}\Omega$] (x4y6); % line 11
+\draw (x5y6) to[thR, l2_=$R_{5}$ and NTC, a^=$10\,\mathrm{k}\Omega$] (x7y6); % line 12
+\draw (x8y6) to[thR, l2_=$R_{6}$ and PTC] (x10y6); % line 13
+\draw (x11y6) to[varistor, l_=$R_{7}$, a^=$\mathrm{470V}$] (x13y6); % line 14
+\draw (x2y8) to[piezoelectric, l_=$X_{1}$, a^=$16\,\mathrm{M}\mathrm{Hz}$] (x4y8); % line 15
+\draw (x5y8) to[D, l_=$D_{1}$, a^=$\mathrm{1N4148}$] (x7y8); % line 16
+\draw (x8y8) to[leD, l_=$D_{2}$] (x10y8); % line 17
+\draw (x11y8) to[zD, l_=$D_{3}$, a^=$\mathrm{5V1}$] (x13y8); % line 18
+\draw (x2y10) to[sD, l_=$D_{5}$, a^=$\mathrm{1N5819}$] (x4y10); % line 19
+\draw (x5y10) to[pD, l_=$D_{6}$] (x7y10); % line 20
+\draw (x8y10) to[biD, l_=$D_{7}$] (x10y10); % line 21
+\draw (x11y10) to[thyristor, n=part-T1, l_=$T_{1}$] (x13y10); % line 22
+\draw (x2y12) to[triac, n=part-T2, l_=$T_{2}$] (x4y12); % line 23
+\draw (x5y12) to[esource, l_=$V_{1}$, a^=$5\,\mathrm{V}$] (x7y12); % line 24
 \draw (9.784,-22) -- ++(0.162,0); % line 24
 \draw (9.865,-22.081) -- ++(0,0.162); % line 24
 \draw (10.054,-22) -- ++(0.162,0); % line 24
-\draw (l8) to[esource, l_=$V_{2}$, a^=$1\,\mathrm{V}$] (l10); % line 25
+\draw (x8y12) to[esource, l_=$V_{2}$, a^=$1\,\mathrm{V}$] (x10y12); % line 25
 \draw (15.82,-22) sin ++(0.09,0.09) cos ++(0.09,-0.09) sin ++(0.09,-0.09) cos ++(0.09,0.09); % line 25
-\draw (l11) to[esource, l_=$V_{3}$, a^=$5\,\mathrm{V}$] (l13); % line 26
+\draw (x11y12) to[esource, l_=$V_{3}$, a^=$5\,\mathrm{V}$] (x13y12); % line 26
 \draw (21.82,-22) -- ++(0,0.18) -- ++(0.18,0) -- ++(0,-0.36) -- ++(0.18,0) -- ++(0,0.18); % line 26
-\draw (n2) to[esource, l_=$V_{4}$, a^=$1\,\mathrm{V}$] (n4); % line 27
+\draw (x2y14) to[esource, l_=$V_{4}$, a^=$1\,\mathrm{V}$] (x4y14); % line 27
 \draw (3.82,-26) -- ++(0.09,0.135) -- ++(0.18,-0.27) -- ++(0.09,0.135); % line 27
-\draw (n5) to[I, l_=$I_{1}$, a^=$20\,\mathrm{m}\mathrm{A}$] (n7); % line 28
-\draw (n8) to[battery1, l_=$B_{1}$, a^=$9\,\mathrm{V}$] (n10); % line 29
-\draw (n11) to[pvsource, invert, l_=$P_{V1}$, a^=$0\mbox{.}6\,\mathrm{V}$] (n13); % line 30
-\draw (p2) to[nos, l_=$S_{1}$] (p4); % line 31
-\draw (p5) to[ncs, l_=$S_{2}$] (p7); % line 32
-\draw (p8) to[nopb, l_=$S_{3}$] (p10); % line 33
-\draw (p11) to[ncpb, l_=$S_{4}$] (p13); % line 34
-\draw (r2) to[reed, l_=$S_{5}$] (r4); % line 35
-\draw (r5) to[fuse, l_=$F_{1}$, a^=$\mathrm{3A}$] (r7); % line 36
-\draw (r8) to[lamp, l_=$P_{1}$] (r10); % line 37
-\draw (r11) to[loudspeaker, l_=$L_{S1}$] (r13); % line 38
-\draw (t2) to[mic, l_=$M_{K1}$] (t4); % line 39
-\draw (t5) to[rmeter, t={$\mathrm{A}$}, l_=$A_{1}$] (t7); % line 40
-\draw (t8) to[rmeter, t={$\mathrm{V}$}, l_=$V_{5}$] (t10); % line 41
-\draw (t11) to[rmeter, t={$\Omega$}, l_=$M_{1}$] (t13); % line 42
-\draw (v2) to[rmeter, t={$\mathrm{W}$}, l_=$W_{1}$] (v4); % line 43
-\draw (v5) to[rmeter, t={$\mathrm{G}$}, l_=$G_{1}$] (v7); % line 44
-\draw (v8) to[rmeter, t={$\mathrm{D}$}, l_=$D_{8}$] (v10); % line 45
+\draw (x5y14) to[I, l_=$I_{1}$, a^=$20\,\mathrm{m}\mathrm{A}$] (x7y14); % line 28
+\draw (x8y14) to[battery1, l_=$B_{1}$, a^=$9\,\mathrm{V}$] (x10y14); % line 29
+\draw (x11y14) to[pvsource, invert, l_=$P_{V1}$, a^=$0\mbox{.}6\,\mathrm{V}$] (x13y14); % line 30
+\draw (x2y16) to[nos, l_=$S_{1}$] (x4y16); % line 31
+\draw (x5y16) to[ncs, l_=$S_{2}$] (x7y16); % line 32
+\draw (x8y16) to[nopb, l_=$S_{3}$] (x10y16); % line 33
+\draw (x11y16) to[ncpb, l_=$S_{4}$] (x13y16); % line 34
+\draw (x2y18) to[reed, l_=$S_{5}$] (x4y18); % line 35
+\draw (x5y18) to[fuse, l_=$F_{1}$, a^=$\mathrm{3A}$] (x7y18); % line 36
+\draw (x8y18) to[lamp, l_=$P_{1}$] (x10y18); % line 37
+\draw (x11y18) to[loudspeaker, l_=$L_{S1}$] (x13y18); % line 38
+\draw (x2y20) to[mic, l_=$M_{K1}$] (x4y20); % line 39
+\draw (x5y20) to[rmeter, t={$\mathrm{A}$}, l_=$A_{1}$] (x7y20); % line 40
+\draw (x8y20) to[rmeter, t={$\mathrm{V}$}, l_=$V_{5}$] (x10y20); % line 41
+\draw (x11y20) to[rmeter, t={$\Omega$}, l_=$M_{1}$] (x13y20); % line 42
+\draw (x2y22) to[rmeter, t={$\mathrm{W}$}, l_=$W_{1}$] (x4y22); % line 43
+\draw (x5y22) to[rmeter, t={$\mathrm{G}$}, l_=$G_{1}$] (x7y22); % line 44
+\draw (x8y22) to[rmeter, t={$\mathrm{D}$}, l_=$D_{8}$] (x10y22); % line 45
 \draw[circuitnoteink] (1,-0.2) -- (25,-0.2); % line 47
 \draw[circuitnoteink] (1,-4.2) -- (25,-4.2); % line 48
 \draw[circuitnoteink] (1,-8.2) -- (25,-8.2); % line 49

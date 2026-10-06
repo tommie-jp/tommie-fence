@@ -8,18 +8,18 @@ DUT の等価回路 — `series C 1000p esr 0.1 esl 1.2n` を開いたもの。E
 ```circuit
 title: 回路図01 1000 pF と寄生分 (ESL・ESR)
 parts:
-  J1: sma b2 mirror
-  C1: capacitor b3 b5 1000p
-  LS: inductor b5 b7 1.2n l=$\mathrm{ESL}$
-  RS: resistor b7 b9 0.1 l=$\mathrm{ESR}$
-  G1: ground c2
-  G2: ground c10
+  J1: sma 2,2 mirror
+  C1: capacitor 3,2 5,2 1000p
+  LS: inductor 5,2 7,2 1.2n l=$\mathrm{ESL}$
+  RS: resistor 7,2 9,2 0.1 l=$\mathrm{ESR}$
+  G1: ground 2,3
+  G2: ground 10,3
 wires:
-  - J1.1 -- b3
-  - b9 -- b10 -- c10
-  - J1.2 -- c2
+  - J1.1 -- 3,2
+  - 9,2 -- 10,2 -- 10,3
+  - J1.2 -- 2,3
 notes:
-  - text a2 center: CH0
+  - text 2,1 center: CH0
 ```
 
 <img src="out/schematic/02-parts-1.png" alt="回路図01 1000 pF と寄生分 (ESL・ESR)" width="634">
@@ -54,21 +54,21 @@ DUT の等価回路 — `cp` は L と ESR を合わせた全体に並列に付�
 ```circuit
 title: 回路図02 1 uH と巻線の容量
 parts:
-  J1: sma b2 mirror
-  L1: inductor b4 b6 1u
-  RS: resistor b6 b8 0.5 l=$\mathrm{ESR}$
-  CP: capacitor d5 d7 1.5p l=$C_\mathrm{p}$
-  G1: ground c2
-  G2: ground c10
+  J1: sma 2,2 mirror
+  L1: inductor 4,2 6,2 1u
+  RS: resistor 6,2 8,2 0.5 l=$\mathrm{ESR}$
+  CP: capacitor 5,4 7,4 1.5p l=$C_\mathrm{p}$
+  G1: ground 2,3
+  G2: ground 10,3
 wires:
-  - J1.1 -- b3 -- b4
-  - b8 -- b9 -- b10
-  - b3 |- d5
-  - d7 -| b9
-  - b10 -- c10
-  - J1.2 -- c2
+  - J1.1 -- 3,2 -- 4,2
+  - 8,2 -- 9,2 -- 10,2
+  - 3,2 |- 5,4
+  - 7,4 -| 9,2
+  - 10,2 -- 10,3
+  - J1.2 -- 2,3
 notes:
-  - text a2 center: CH0
+  - text 2,1 center: CH0
 ```
 
 <img src="out/schematic/02-parts-2.png" alt="回路図02 1 uH と巻線の容量" width="632">
@@ -96,24 +96,24 @@ DUT の等価回路 — `series C 20f esl 12.665m esr 20 cp 5p` を開いたも�
 ```circuit
 title: 回路図03 水晶の等価回路
 parts:
-  J1: sma b2 mirror
-  C1: capacitor b4 b6 20fF
-  L1: inductor b6 b8 12.665m
-  R1: resistor b8 b10 20
-  CP: capacitor d6 d8 5p l=$C_\mathrm{p}$
-  J2: sma b12
-  G1: ground c2
-  G2: ground c12
+  J1: sma 2,2 mirror
+  C1: capacitor 4,2 6,2 20fF
+  L1: inductor 6,2 8,2 12.665m
+  R1: resistor 8,2 10,2 20
+  CP: capacitor 6,4 8,4 5p l=$C_\mathrm{p}$
+  J2: sma 12,2
+  G1: ground 2,3
+  G2: ground 12,3
 wires:
-  - J1.1 -- b3 -- b4
-  - b10 -- b11 -- J2.1
-  - b3 |- d6
-  - d8 -| b11
-  - J1.2 -- c2
-  - J2.2 -- c12
+  - J1.1 -- 3,2 -- 4,2
+  - 10,2 -- 11,2 -- J2.1
+  - 3,2 |- 6,4
+  - 8,4 -| 11,2
+  - J1.2 -- 2,3
+  - J2.2 -- 12,3
 notes:
-  - text a2 center: CH0
-  - text a12 center: CH1
+  - text 2,1 center: CH0
+  - text 12,1 center: CH1
 ```
 
 <img src="out/schematic/02-parts-3.png" alt="回路図03 水晶の等価回路" width="788">

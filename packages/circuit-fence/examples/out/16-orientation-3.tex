@@ -19,22 +19,22 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,0) {a};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-2) {b};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
-\coordinate (a5) at (8,0);
-\coordinate (b5) at (8,-2);
-\coordinate (c5) at (8,-4);
-\coordinate (c7) at (12,-4);
-\coordinate (c9) at (16,-4);
-\coordinate (c3) at (4,-4);
-\draw (a5) node[ocirc]{} node[above left]{IN}; % line 3
-\draw (a5) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (b5); % line 4
-\node[npn, rotate=-90] (part-Q1) at (c5) {}; % line 5
+\coordinate (x5y1) at (8,0);
+\coordinate (x5y2) at (8,-2);
+\coordinate (x5y3) at (8,-4);
+\coordinate (x7y3) at (12,-4);
+\coordinate (x9y3) at (16,-4);
+\coordinate (x3y3) at (4,-4);
+\draw (x5y1) node[ocirc]{} node[above left]{IN}; % line 3
+\draw (x5y1) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x5y2); % line 4
+\node[npn, rotate=-90] (part-Q1) at (x5y3) {}; % line 5
 \node[anchor=north] at (part-Q1.east) {$Q_{1}$}; % line 5
-\draw (c7) to[R, l_=$R_{C}$, a^=$1\,\mathrm{k}\Omega$] (c9); % line 6
-\node[vcc] at (c9) {VCC}; % line 7
-\node[ground, rotate=-90] at (c3) {}; % line 8
-\draw (b5) -- (part-Q1.base); % line 10
-\draw (part-Q1.collector) -- (c7); % line 11
-\draw (part-Q1.emitter) -- (c3); % line 12
+\draw (x7y3) to[R, l_=$R_{C}$, a^=$1\,\mathrm{k}\Omega$] (x9y3); % line 6
+\node[vcc] at (x9y3) {VCC}; % line 7
+\node[ground, rotate=-90] at (x3y3) {}; % line 8
+\draw (x5y2) -- (part-Q1.base); % line 10
+\draw (part-Q1.collector) -- (x7y3); % line 11
+\draw (part-Q1.emitter) -- (x3y3); % line 12
 \path (20,-8.869) rectangle (27.959,0.593); % line 14
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (20,0) {X}; % line 14
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (20,-0.487) {X}; % line 14

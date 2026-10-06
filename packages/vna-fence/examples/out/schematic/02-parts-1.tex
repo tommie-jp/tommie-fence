@@ -30,25 +30,25 @@
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
 \ctikzset{grounds/scale=1.36}
-\coordinate (b2) at (2,-2);
-\coordinate (b3) at (4,-2);
-\coordinate (b5) at (8,-2);
-\coordinate (b7) at (12,-2);
-\coordinate (b9) at (16,-2);
-\coordinate (c2) at (2,-4);
-\coordinate (c10) at (18,-4);
-\coordinate (b10) at (18,-2);
-\node[smacoax, draw, xscale=-1] (part-J1) at (b2) {}; % line 3
+\coordinate (x2y2) at (2,-2);
+\coordinate (x3y2) at (4,-2);
+\coordinate (x5y2) at (8,-2);
+\coordinate (x7y2) at (12,-2);
+\coordinate (x9y2) at (16,-2);
+\coordinate (x2y3) at (2,-4);
+\coordinate (x10y3) at (18,-4);
+\coordinate (x10y2) at (18,-2);
+\node[smacoax, draw, xscale=-1] (part-J1) at (x2y2) {}; % line 3
 \node[anchor=south] at (part-J1.north) {$J_{1}$}; % line 3
-\draw (b3) to[C, l_=$C_{1}$, a^=$1000\,\mathrm{p}\mathrm{F}$] (b5); % line 4
-\draw (b5) to[L, l_=$\mathrm{ESL}$, a^=$1\mbox{.}2\,\mathrm{n}\mathrm{H}$] (b7); % line 5
-\draw (b7) to[R, l_=$\mathrm{ESR}$, a^=$0\mbox{.}1\,\Omega$] (b9); % line 6
-\node[ground] at (c2) {}; % line 7
-\node[ground] at (c10) {}; % line 8
-\draw (part-J1.pin 1) -- (b3); % line 10
-\draw (b9) -- (b10); % line 11
-\draw (b10) -- (c10); % line 11
-\draw (part-J1.pin 2) -- (c2); % line 12
+\draw (x3y2) to[C, l_=$C_{1}$, a^=$1000\,\mathrm{p}\mathrm{F}$] (x5y2); % line 4
+\draw (x5y2) to[L, l_=$\mathrm{ESL}$, a^=$1\mbox{.}2\,\mathrm{n}\mathrm{H}$] (x7y2); % line 5
+\draw (x7y2) to[R, l_=$\mathrm{ESR}$, a^=$0\mbox{.}1\,\Omega$] (x9y2); % line 6
+\node[ground] at (x2y3) {}; % line 7
+\node[ground] at (x10y3) {}; % line 8
+\draw (part-J1.pin 1) -- (x3y2); % line 10
+\draw (x9y2) -- (x10y2); % line 11
+\draw (x10y2) -- (x10y3); % line 11
+\draw (part-J1.pin 2) -- (x2y3); % line 12
 \path (1.619,-0.593) rectangle (2.381,0.593); % line 14
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,0) {X}; % line 14
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};

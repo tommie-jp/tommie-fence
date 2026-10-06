@@ -2,7 +2,7 @@ import { LineCounter, isAlias, isMap, isScalar, isSeq, parseDocument } from 'yam
 import type { Document, Node, Pair, ParsedNode } from 'yaml';
 import { fail, fenceError, fenceErrorAt, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
-import { parseAddress } from '../model/address.ts';
+import { oldSpellingHint, parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import type { FenceError, NoteSpec, PartSpec, Result, StyleSpec, WireSpec } from '../types.ts';
 import { isNoteDrawable } from '../tex/escape.ts';
@@ -68,6 +68,35 @@ export type FenceDocument = {
 export type ParseResult = { readonly doc: FenceDocument; readonly errors: readonly FenceError[] };
 
 type LineOf = (node: Node | Pair | null | undefined) => number | null;
+
+/**
+ * 番地の `,` がフロー形式で区切りとして読まれたときの返事 (52 の docs/126)。
+ * `{ R1: resistor 1,1 3,1 }` は YAML が `R1: resistor 1` と `1 3` と `1` に割るので、
+ * かけらを 1 つずつ断っても直し方が分からない。囲み方を 1 度だけ返す。
+ */
+export const FLOW_SPLIT =
+  '`,` はフロー形式 ({ } や [ ]) では区切りになります。番地を書いた字は引用符で囲みます (例 `{ R1: "resistor 1,1 3,1" }`)';
+
+const isNumber = (node: unknown): boolean => isScalar(node) && typeof node.value === 'number';
+
+/**
+ * フロー形式の並びが番地の `,` で割れた形か。割れたかけらは**数** (`[1,1 -- 3,1]` の `1`) か、
+ * **数字で始まって値の無い鍵** (`{R1: resistor 1,1 3,1}` の `1 3`)。名前も部品 ID も
+ * 配線の項目も数そのものにはならないので、ほかの書き方と取り違えない。
+ */
+function isCommaSplit(node: unknown): boolean {
+  if (isSeq(node) && node.flow === true) return node.items.some(isNumber);
+  if (!isMap(node) || node.flow !== true) return false;
+  return node.items.some((pair) =>
+    isNumber(pair.key) || (/^[0-9]/.test(scalarText(pair.key) ?? '') && pair.value === null));
+}
+
+/** 割れていれば帯に 1 件だけ積んで true (呼ぶ側はその並びを読まない)。 */
+function reportCommaSplit(node: unknown, errors: FenceError[], lineOf: LineOf, fallback: number | null): boolean {
+  if (!isCommaSplit(node)) return false;
+  errors.push(fenceError(FLOW_SPLIT, lineOf(node as Node) ?? fallback));
+  return true;
+}
 
 const scalarText = (node: unknown): string | null =>
   isScalar(node) && typeof node.value === 'string' ? node.value : null;
@@ -138,6 +167,9 @@ function readFence(source: string): ParseResult {
 
     if (key === 'points') {
       // 上で読んである。ここで 2 度読むと理由も 2 度出る。
+      continue;
+    } else if (['parts', 'wires', 'notes', 'style'].includes(key) && reportCommaSplit(pair.value, errors, lineOf, line)) {
+      // 番地の `,` で割れたフロー形式。かけらを 1 つずつ断らず、囲み方だけを返した。
       continue;
     } else if (key === 'parts') {
       collectParts(pair.value as ParsedNode | null, { parts, errors, lineOf, points });
@@ -232,6 +264,7 @@ function collectPoints(
     if (scalarText(pair.key) !== 'points') continue;
 
     const node = pair.value as ParsedNode | null;
+    if (reportCommaSplit(node, errors, lineOf, lineOf(pair.key))) continue;
     if (!isMap(node)) {
       errors.push(fenceError('points は「名前: 番地」のマップで書きます', lineOf(node) ?? lineOf(pair.key)));
       continue;
@@ -245,6 +278,12 @@ function collectPoints(
         errors.push(fenceError(`番地の名前は ${LIMITS.points} 個までです。ここから先は読んでいません`, line));
         return points;
       }
+      if (name !== null && parseAddress(name) !== null) {
+        errors.push(
+          fenceError(`番地の名前 ${safeToken(name)} は番地そのものです (番地と読み分けられません)`, line, null, name),
+        );
+        continue;
+      }
       if (name === null || !isReferenceable(name)) {
         errors.push(
           fenceError(
@@ -253,12 +292,6 @@ function collectPoints(
             null,
             name ?? undefined,
           ),
-        );
-        continue;
-      }
-      if (parseAddress(name) !== null) {
-        errors.push(
-          fenceError(`番地の名前 ${safeToken(name)} は番地そのものです (番地と読み分けられません)`, line, null, name),
         );
         continue;
       }
@@ -273,7 +306,7 @@ function collectPoints(
         errors.push(
           fenceError(
             `番地の名前 ${safeToken(name)} の行き先は番地で書きます` +
-              ` (${safeToken(written ?? '')} は番地の形ではありません)`,
+              ` (${oldSpellingHint(written ?? '') ?? `${safeToken(written ?? '')} は番地の形ではありません`})`,
             line,
             null,
             written ?? undefined,
@@ -389,6 +422,7 @@ function collectParts(
       );
       continue;
     }
+    if (reportCommaSplit(pair.value, errors, lineOf, line)) continue;
     const text = scalarText(pair.value);
     // **中身まで読んでから二重定義を見る。** 同じ名前を 2 度書けるかどうかは
     // 種類で決まるので、種類が読めるまでは決められない。
@@ -495,6 +529,7 @@ function collectNotes(
       return;
     }
 
+    if (reportCommaSplit(item, errors, lineOf, line)) continue;
     const note = readNote(item as ParsedNode | null, line, lineOf, points, source);
     if (note.ok) notes.push(note.value);
     else errors.push(note.error);

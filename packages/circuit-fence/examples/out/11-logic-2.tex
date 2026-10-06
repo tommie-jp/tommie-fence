@@ -16,12 +16,12 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.42,-2) {c};
 \node[gray, font=\scriptsize, anchor=east] at (-0.42,-3) {d};
 \node[gray, font=\scriptsize, anchor=east] at (-0.42,-4) {e};
-\coordinate (c3) at (2,-2);
-\coordinate (a1) at (0,0);
-\coordinate (e1) at (0,-4);
-\coordinate (e5) at (4,-4);
-\coordinate (a5) at (4,0);
-\node[dipchip, num pins=8, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5] (part-U1) at (c3) {}; % line 3
+\coordinate (x3y3) at (2,-2);
+\coordinate (x1y1) at (0,0);
+\coordinate (x1y5) at (0,-4);
+\coordinate (x5y5) at (4,-4);
+\coordinate (x5y1) at (4,0);
+\node[dipchip, num pins=8, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5] (part-U1) at (x3y3) {}; % line 3
 \node[font=\scriptsize, anchor=north] at (part-U1.south) {$\mathrm{NE555}$}; % line 3
 \node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 3
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 3
@@ -32,13 +32,13 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 6) {X}; % line 3
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 7) {X}; % line 3
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 8) {X}; % line 3
-\draw (a1) |- (part-U1.pin 1); % line 5
-\draw (e1) |- (part-U1.pin 4); % line 6
-\draw (part-U1.pin 5) -| (e5); % line 7
-\draw (part-U1.pin 8) -| (a5); % line 8
+\draw (x1y1) |- (part-U1.pin 1); % line 5
+\draw (x1y5) |- (part-U1.pin 4); % line 6
+\draw (part-U1.pin 5) -| (x5y5); % line 7
+\draw (part-U1.pin 8) -| (x5y1); % line 8
 \path (0,-5.593) rectangle (4.318,-4.407); % line 10
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (0,-5) {X}; % line 10
-\path (6,-7.895) rectangle (15.711,0.593); % line 11
+\path (6,-7.895) rectangle (15.974,0.593); % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,0) {X}; % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-0.487) {X}; % line 11
 \node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (6,-0.974) {X}; % line 11

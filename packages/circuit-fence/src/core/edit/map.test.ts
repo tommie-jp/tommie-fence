@@ -6,11 +6,11 @@ import { stepCell, stepsTo } from './move.ts';
 
 const RC = [
   'parts:',
-  '  IN:  port a1',
-  '  R1:  resistor a1 a3 10k',
-  '  C1:  capacitor a3 c3 100n',
+  '  IN:  port 1,1',
+  '  R1:  resistor 1,1 3,1 10k',
+  '  C1:  capacitor 3,1 3,3 100n',
   'wires:',
-  '  - a3 -- a4',
+  '  - 3,1 -- 4,1',
   '',
 ].join('\n');
 
@@ -37,7 +37,7 @@ describe('gridMap', () => {
   });
 
   test('carries the pins of a multi-terminal part, on the sides they leave by', () => {
-    const map = gridMap('parts:\n  Q1: npn b2\n');
+    const map = gridMap('parts:\n  Q1: npn 2,2\n');
 
     expect(map.chips[0]?.pins).toEqual([
       { name: 'B', label: 'B', side: 'left' },
@@ -47,7 +47,7 @@ describe('gridMap', () => {
   });
 
   test('turns the pins with the symbol, so the map shows which way it faces', () => {
-    const map = gridMap('parts:\n  Q1: npn b2 r90\n');
+    const map = gridMap('parts:\n  Q1: npn 2,2 r90\n');
 
     expect(map.chips[0]?.pins).toEqual([
       { name: 'B', label: 'B', side: 'top' },
@@ -58,7 +58,7 @@ describe('gridMap', () => {
 
   test('names a pin the way the reference does, not by the shortest alias', () => {
     // `not` のピンは `a` / `y` とも書けるが、代表の名前は `in` / `out`。
-    expect(gridMap('parts:\n  N1: not b2\n').chips[0]?.pins).toEqual([
+    expect(gridMap('parts:\n  N1: not 2,2\n').chips[0]?.pins).toEqual([
       { name: 'in', label: 'in', side: 'left' },
       { name: 'out', label: 'out', side: 'right' },
     ]);
@@ -67,7 +67,7 @@ describe('gridMap', () => {
   test('gives a DIP every leg, down the left and up the right as the real part is numbered', () => {
     // 中心線には 1 本も乗っていないが、**升目は掴むための道具**なので
     // 出どころで並べる (実機で「すべての部品のピンに接続点を」)。
-    const pins = gridMap('parts:\n  U1: dip8 b2\n').chips[0]?.pins ?? [];
+    const pins = gridMap('parts:\n  U1: dip8 2,2\n').chips[0]?.pins ?? [];
 
     expect(pins.map((pin) => pin.name)).toEqual(['1', '2', '3', '4', '8', '7', '6', '5']);
     expect(pins.slice(0, 4).every((pin) => pin.side === 'left')).toBe(true);
@@ -75,7 +75,7 @@ describe('gridMap', () => {
   });
 
   test('turns a DIP legs with the part', () => {
-    const pins = gridMap('parts:\n  U1: dip8 b2 r90\n').chips[0]?.pins ?? [];
+    const pins = gridMap('parts:\n  U1: dip8 2,2 r90\n').chips[0]?.pins ?? [];
 
     expect(pins.slice(0, 4).every((pin) => pin.side === 'top')).toBe(true);
     expect(pins.slice(4).every((pin) => pin.side === 'bottom')).toBe(true);
@@ -88,27 +88,27 @@ describe('gridMap', () => {
     const sideOf = (source: string, name: string): string | undefined =>
       gridMap(source).chips[0]?.pins.find((pin) => pin.name === name)?.side;
 
-    expect(sideOf('parts:\n  Q1: npn b2\n', 'C')).toBe('top');
-    expect(sideOf('parts:\n  Q1: pnp b2\n', 'C')).toBe('bottom');
-    expect(sideOf('parts:\n  Q1: pnp b2\n', 'E')).toBe('top');
-    expect(sideOf('parts:\n  J1: njfet b2\n', 'S')).toBe('bottom');
-    expect(sideOf('parts:\n  J1: pjfet b2\n', 'S')).toBe('top');
-    expect(sideOf('parts:\n  M1: pmos-d b2\n', 'D')).toBe('bottom');
-    expect(sideOf('parts:\n  M1: pigbt b2\n', 'E')).toBe('top');
+    expect(sideOf('parts:\n  Q1: npn 2,2\n', 'C')).toBe('top');
+    expect(sideOf('parts:\n  Q1: pnp 2,2\n', 'C')).toBe('bottom');
+    expect(sideOf('parts:\n  Q1: pnp 2,2\n', 'E')).toBe('top');
+    expect(sideOf('parts:\n  J1: njfet 2,2\n', 'S')).toBe('bottom');
+    expect(sideOf('parts:\n  J1: pjfet 2,2\n', 'S')).toBe('top');
+    expect(sideOf('parts:\n  M1: pmos-d 2,2\n', 'D')).toBe('bottom');
+    expect(sideOf('parts:\n  M1: pigbt 2,2\n', 'E')).toBe('top');
   });
 
   test('names the legs the way the figure does, not by the first spelling that fits', () => {
     // レギュレータは名前でも番号でも書けるが、**図には IN / GND / OUT と出る**。
     // `mainPinName` は書ける綴りの先頭を返すので、数字めいた鍵が先に並ぶ
     // JS の決まりのせいで升目だけ番号になっていた (実機で気づいた)。
-    const names = gridMap('parts:\n  U1: regulator b2\n').chips[0]?.pins.map((pin) => pin.name);
+    const names = gridMap('parts:\n  U1: regulator 2,2\n').chips[0]?.pins.map((pin) => pin.name);
 
     expect(names).toEqual(['IN', 'GND', 'OUT']);
   });
 
   test('gives the opamp inputs a place too, though they sit off the centre line', () => {
     // `pinSide` は「まっすぐ引けるか」の表。置き場は別の表 (`pinRow`) で持つ。
-    const pins = gridMap('parts:\n  U1: opamp b2\n').chips[0]?.pins ?? [];
+    const pins = gridMap('parts:\n  U1: opamp 2,2\n').chips[0]?.pins ?? [];
 
     expect(pins.map((pin) => pin.name).sort()).toEqual(['+', '-', 'out']);
   });
@@ -129,11 +129,11 @@ describe('gridMap', () => {
   });
 
   test('gives a two-terminal part no pins, since its body already spans two cells', () => {
-    expect(gridMap('parts:\n  R1: resistor a1 a3\n').chips[0]?.pins).toEqual([]);
+    expect(gridMap('parts:\n  R1: resistor 1,1 3,1\n').chips[0]?.pins).toEqual([]);
   });
 
   test('carries the turn itself, so a symbol with no pins can still show it', () => {
-    expect(gridMap('parts:\n  G1: ground b2 r90\n').chips[0]?.turn).toEqual({ rotate: 90, mirror: false });
+    expect(gridMap('parts:\n  G1: ground 2,2 r90\n').chips[0]?.turn).toEqual({ rotate: 90, mirror: false });
   });
 
   test('sizes the grid to hold every part, with room to move into', () => {
@@ -150,7 +150,7 @@ describe('gridMap', () => {
   test('shows a part on a half-step address where it is written, not on a neighbouring cell', () => {
     // 交点の間 (`a1a5`) も**書かれたところ**に出す。升へ寄せると、掴んで
     // 動かしたとき書いた場所と違うところへ行く — 端数のまま置けば嘘がない。
-    const map = gridMap('parts:\n  R1: resistor a1a5 a3a5 1k\n');
+    const map = gridMap('parts:\n  R1: resistor 1.5,1 3.5,1 1k\n');
 
     expect(map.chips).toHaveLength(1);
     expect(map.chips[0]?.col).toBe(0.5);
@@ -159,21 +159,21 @@ describe('gridMap', () => {
 
   test('lets an arrow key move a half-step part without losing the half', () => {
     // 端数のまま 1 升ずらす。整数へ丸めると、押した覚えのない場所へ動く。
-    expect(stepCell('a1a5', 0, 1)).toBe('a2a5');
-    expect(stepsTo('a1a5', 'a3')).toEqual({ rows: 0, cols: 1.5 });
+    expect(stepCell('1.5,1', 0, 1)).toBe('2.5,1');
+    expect(stepsTo('1.5,1', '3,1')).toEqual({ rows: 0, cols: 1.5 });
   });
 
   test('spells a quarter step from a whole crossing, and comes back to the same crossing', () => {
     // Ctrl+クリックの端数 (52 の docs/23)。殻は端数だけ渡し、綴りはここが組む。
     // 交点ちょうどに戻れば素の番地 (`b3`) — 1 つの場所に綴りは 1 つ。
-    expect(stepCell('b3', 0.25, -0.25)).toBe('b2c7f5');
-    expect(stepCell('b2c7f5', -0.25, 0.25)).toBe('b3');
-    expect(stepCell('b3', 0, 0)).toBe('b3');
+    expect(stepCell('3,2', 0.25, -0.25)).toBe('2.75,2.25');
+    expect(stepCell('2.75,2.25', -0.25, 0.25)).toBe('3,2');
+    expect(stepCell('3,2', 0, 0)).toBe('3,2');
   });
 
   test('makes room for the cell a half-step part reaches into', () => {
     // 端数は切り上げて数える (`a9a5` は 10 列目まで要る)。
-    const map = gridMap('parts:\n  R1: resistor a9a5 a11a5 1k\n');
+    const map = gridMap('parts:\n  R1: resistor 9.5,1 11.5,1 1k\n');
 
     expect(map.cols).toBeGreaterThanOrEqual(12);
   });
@@ -183,7 +183,7 @@ describe('gridMap の配線', () => {
   const linesOf = (source: string) => gridMap(source).wires;
 
   test('draws a straight wire between the crossings it joins', () => {
-    expect(linesOf('wires:\n  - a1 -- a3\n')).toEqual([
+    expect(linesOf('wires:\n  - 1,1 -- 3,1\n')).toEqual([
       {
         points: [{ row: 0, col: 0 }, { row: 0, col: 2 }],
         approximate: false, line: 2, fromPin: null, toPin: null, bend: null,
@@ -194,7 +194,7 @@ describe('gridMap の配線', () => {
   test('carries a bent wire as one line through its corner', () => {
     // `-|` は先に横。角は from の行・to の列。**1 本で持つ** ので、
     // 描く側が角を両端に合わせられる (ピンへずらした端でも直角のまま)。
-    expect(linesOf('wires:\n  - a1 -| c3\n')).toEqual([
+    expect(linesOf('wires:\n  - 1,1 -| 3,3\n')).toEqual([
       {
         points: [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 2 }],
         approximate: false, line: 2, fromPin: null, toPin: null, bend: '-|',
@@ -205,7 +205,7 @@ describe('gridMap の配線', () => {
   test('remembers which leg a wire ends on, so the line can reach the point', () => {
     // 実機で「接続点から配線するように表示すること」。升の真ん中で止めると、
     // 押した丸と線の先が食い違って見える。
-    const lines = linesOf('parts:\n  Q1: npn b2\nwires:\n  - Q1.C -- a5\n');
+    const lines = linesOf('parts:\n  Q1: npn 2,2\nwires:\n  - Q1.C -- 5,1\n');
 
     expect(lines[0]?.fromPin).toEqual({ part: 'Q1', name: 'C' });
     expect(lines[0]?.toPin).toBeNull();
@@ -218,11 +218,11 @@ describe('gridMap の配線', () => {
     const pinOf = (source: string): string | undefined => linesOf(source)[0]?.fromPin?.name;
 
     for (const spelling of ['VBUS', 'vbus', '1']) {
-      expect(pinOf(`parts:\n  J1: usb-c b2\nwires:\n  - J1.${spelling} -| d6\n`), spelling).toBe('VBUS');
+      expect(pinOf(`parts:\n  J1: usb-c 2,2\nwires:\n  - J1.${spelling} -| 6,4\n`), spelling).toBe('VBUS');
     }
-    expect(pinOf('parts:\n  J1: usb-a b2\nwires:\n  - J1.4 -| d6\n')).toBe('D-');
-    expect(pinOf('parts:\n  U1: regulator b2\nwires:\n  - U1.1 -| d6\n')).toBe('IN');
-    expect(pinOf('parts:\n  U1: regulator b2\nwires:\n  - U1.gnd -| d6\n')).toBe('GND');
+    expect(pinOf('parts:\n  J1: usb-a 2,2\nwires:\n  - J1.4 -| 6,4\n')).toBe('D-');
+    expect(pinOf('parts:\n  U1: regulator 2,2\nwires:\n  - U1.1 -| 6,4\n')).toBe('IN');
+    expect(pinOf('parts:\n  U1: regulator 2,2\nwires:\n  - U1.gnd -| 6,4\n')).toBe('GND');
   });
 
   test('finds a point on the map for every spelling of every leg', () => {
@@ -234,7 +234,7 @@ describe('gridMap の配線', () => {
       const type = lookupPartType(name);
       if (type === undefined || type === null || type.kind !== 'multi-terminal') continue;
       for (const spelling of pinNames(type)) {
-        const map = gridMap(`parts:\n  X1: ${name} c5\nwires:\n  - X1.${spelling} -| a1\n`);
+        const map = gridMap(`parts:\n  X1: ${name} 5,3\nwires:\n  - X1.${spelling} -| 1,1\n`);
         const pin = map.wires[0]?.fromPin;
         if (pin === undefined || pin === null) continue;
         seen += 1;
@@ -252,26 +252,26 @@ describe('gridMap の配線', () => {
     // 実機で「pico のピンから出た配線が -| で曲がらない」。角が端と同じ升に
     // 来ると `cornerOf` は「曲がっていない」と答えるが、ピンは升の上に無いので
     // 図の上では曲がる。
-    const lines = linesOf('parts:\n  U1: pico f6\nwires:\n  - U1.GND8 -| f3\n');
+    const lines = linesOf('parts:\n  U1: pico 6,6\nwires:\n  - U1.GND8 -| 3,6\n');
 
     expect(lines[0]?.points).toHaveLength(3);
   });
 
   test('leaves a wire between two crossings alone, where the addresses decide', () => {
     // 番地どうしなら `cornerOf` の答えが正しい (端に乗る角は角ではない)。
-    expect(linesOf('wires:\n  - a1 -| a3\n')[0]?.points).toHaveLength(2);
+    expect(linesOf('wires:\n  - 1,1 -| 3,1\n')[0]?.points).toHaveLength(2);
   });
 
   test('draws each leg of a chained wire', () => {
-    expect(linesOf('wires:\n  - a1 -- a3 -- c3\n')).toHaveLength(2);
+    expect(linesOf('wires:\n  - 1,1 -- 3,1 -- 3,3\n')).toHaveLength(2);
   });
 
   test('keeps a half-step endpoint where it was written', () => {
-    expect(linesOf('wires:\n  - a1a5 -- a3\n')[0]?.points[0]).toEqual({ row: 0, col: 0.5 });
+    expect(linesOf('wires:\n  - 1.5,1 -- 3,1\n')[0]?.points[0]).toEqual({ row: 0, col: 0.5 });
   });
 
   test('approximates a pin end at the part, since only TeX knows where the leg is', () => {
-    const lines = linesOf('parts:\n  Q1: npn b2\nwires:\n  - Q1.C -- a4\n');
+    const lines = linesOf('parts:\n  Q1: npn 2,2\nwires:\n  - Q1.C -- 4,1\n');
 
     expect(lines).toHaveLength(1);
     expect(lines[0]?.points[0]).toEqual({ row: 1, col: 1 });
@@ -280,7 +280,7 @@ describe('gridMap の配線', () => {
 
   test('leaves out a wire to a part that is not there', () => {
     // 書き間違いはエラーの帯の仕事。ここで当てずっぽうの線を引かない。
-    expect(linesOf('wires:\n  - Q9.C -- a4\n')).toEqual([]);
+    expect(linesOf('wires:\n  - Q9.C -- 4,1\n')).toEqual([]);
   });
 
   test('has no wires at all when the fence cannot be read', () => {
@@ -288,7 +288,7 @@ describe('gridMap の配線', () => {
   });
 
   test('sizes the grid to hold a wire that reaches past every part', () => {
-    const map = gridMap('parts:\n  R1: resistor a1 b1\nwires:\n  - b1 -- b9\n');
+    const map = gridMap('parts:\n  R1: resistor 1,1 1,2\nwires:\n  - 1,2 -- 9,2\n');
 
     expect(map.cols).toBeGreaterThan(8);
   });
@@ -298,8 +298,8 @@ describe('renderMapHtml', () => {
   const html = renderMapHtml(gridMap(RC));
 
   test('draws a cell for every crossing, addressed', () => {
-    expect(html).toContain('data-address="a1"');
-    expect(html).toContain('data-address="c4"');
+    expect(html).toContain('data-address="1,1"');
+    expect(html).toContain('data-address="4,3"');
   });
 
   test('draws a chip for every part, named', () => {
@@ -308,7 +308,7 @@ describe('renderMapHtml', () => {
   });
 
   test('escapes what came from the fence', () => {
-    const map = gridMap('parts:\n  R1: resistor a1 a3 "<img src=x>"\n');
+    const map = gridMap('parts:\n  R1: resistor 1,1 3,1 "<img src=x>"\n');
 
     expect(renderMapHtml(map)).not.toContain('<img');
   });
@@ -329,12 +329,12 @@ describe('fenceAt', () => {
     '',                    // 2
     '```circuit',          // 3
     'parts:',              // 4
-    '  R1: resistor a1 a3',// 5
+    '  R1: resistor 1,1 3,1',// 5
     '```',                 // 6
     '',                    // 7
     '```circuit',          // 8
     'parts:',              // 9
-    '  C1: capacitor a1 a3',
+    '  C1: capacitor 1,1 3,1',
     '```',
     '',
   ].join('\n');
@@ -354,12 +354,12 @@ describe('fenceAt', () => {
   });
 
   test('gives back the body, so the caller can compile it', () => {
-    expect(fenceAt(markdown, 5)?.source).toContain('R1: resistor a1 a3');
+    expect(fenceAt(markdown, 5)?.source).toContain('R1: resistor 1,1 3,1');
   });
 });
 
 describe('同じ交点に 2 つ', () => {
-  const source = ['parts:', '  IN: port a1', '  R1: resistor a1 a3', ''].join('\n');
+  const source = ['parts:', '  IN: port 1,1', '  R1: resistor 1,1 3,1', ''].join('\n');
 
   test('keeps both chips, so neither disappears from the map', () => {
     // 同じ番地に 2 部品は**この文法では接続**。片方を隠すと、掴んで
@@ -372,7 +372,7 @@ describe('同じ交点に 2 つ', () => {
 });
 
 describe('節点の点', () => {
-  const source = 'points:\n  fb: c3\nparts:\n  R1: resistor a1 b1\n  R2: resistor fb d3\n';
+  const source = 'points:\n  fb: 3,3\nparts:\n  R1: resistor 1,1 1,2\n  R2: resistor fb 3,4\n';
 
   test('marks every crossing something is written at', () => {
     const dots = gridMap(source).dots.map((dot) => `${dot.row},${dot.col}`);
@@ -393,7 +393,7 @@ describe('節点の点', () => {
 
     // 同じ升にチップと点の両方が出る。隠すと名前の付いた節点だけ掴めなくなる。
     expect(html).toContain('cf-dot');
-    expect(html).toContain('data-node="c3"');
+    expect(html).toContain('data-node="3,3"');
     expect(html).toContain('cf-chip');
   });
 
@@ -404,16 +404,16 @@ describe('節点の点', () => {
   test('covers a crossing only a wire reaches, so its dot is on the map', () => {
     // 部品は a1〜b1 に収まるが、配線が j9 まで届く。升目が部品だけを見て
     // 決まると、j9 の点が升の外に落ちて掴めなくなる。
-    const map = gridMap('parts:\n  R1: resistor a1 b1\nwires:\n  - b1 -- j9\n');
+    const map = gridMap('parts:\n  R1: resistor 1,1 1,2\nwires:\n  - 1,2 -- 9,10\n');
 
     expect(map.rows).toBeGreaterThan(9);
     expect(map.cols).toBeGreaterThan(8);
-    expect(renderMapHtml(map)).toContain('data-node="j9"');
+    expect(renderMapHtml(map)).toContain('data-node="9,10"');
   });
 });
 
 describe('同じ名前の記号', () => {
-  const TWO_RAILS = 'parts:\n  VCC: vcc a1\n  VCC: vcc e1\n  R1: resistor a1 a3\n';
+  const TWO_RAILS = 'parts:\n  VCC: vcc 1,1\n  VCC: vcc 1,5\n  R1: resistor 1,1 3,1\n';
 
   test('gives each chip a handle of its own, while showing the same name', () => {
     const map = gridMap(TWO_RAILS);
@@ -432,25 +432,25 @@ describe('同じ名前の記号', () => {
 
 describe('partCells', () => {
   test('lists the crossings a part is written on, in the order they are written', () => {
-    const rc = 'parts:\n  R1: resistor a1 a3 10k\n  G1: ground c5\n';
+    const rc = 'parts:\n  R1: resistor 1,1 3,1 10k\n  G1: ground 5,3\n';
 
-    expect(partCells(rc, 'R1')).toEqual(['a1', 'a3']);
-    expect(partCells(rc, 'G1')).toEqual(['c5']);
+    expect(partCells(rc, 'R1')).toEqual(['1,1', '3,1']);
+    expect(partCells(rc, 'G1')).toEqual(['5,3']);
   });
 
   test('reads a part the grid map leaves out, since a ghost must light where it lands', () => {
     // 交点の間の番地は升目に載らない (掴めない) が、**置いた先としては正しい**。
-    expect(partCells('parts:\n  R1: resistor a1a5 a3\n', 'R1')).toEqual(['a1a5', 'a3']);
+    expect(partCells('parts:\n  R1: resistor 1.5,1 3,1\n', 'R1')).toEqual(['1.5,1', '3,1']);
   });
 
   test('tells the repeated names apart by their handle', () => {
-    const twice = 'parts:\n  VCC: vcc a1\n  VCC: vcc b1\n';
+    const twice = 'parts:\n  VCC: vcc 1,1\n  VCC: vcc 1,2\n';
 
-    expect(partCells(twice, 'VCC')).toEqual(['a1']);
-    expect(partCells(twice, 'VCC#2')).toEqual(['b1']);
+    expect(partCells(twice, 'VCC')).toEqual(['1,1']);
+    expect(partCells(twice, 'VCC#2')).toEqual(['1,2']);
   });
 
   test('is empty for a part that is not there', () => {
-    expect(partCells('parts:\n  R1: resistor a1 a3\n', 'R9')).toEqual([]);
+    expect(partCells('parts:\n  R1: resistor 1,1 3,1\n', 'R9')).toEqual([]);
   });
 });

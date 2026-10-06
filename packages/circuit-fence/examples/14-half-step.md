@@ -10,15 +10,15 @@
 ```circuit
 title: 図01 交点の間に節点を置く
 parts:
-  IN:  port a1
-  R1:  resistor a1 a2a5 10k
-  C1:  capacitor a2a5 c2a5 100n
-  G1:  ground c2a5
-  OUT: port a4
+  IN:  port 1,1
+  R1:  resistor 1,1 2.5,1 10k
+  C1:  capacitor 2.5,1 2.5,3 100n
+  G1:  ground 2.5,3
+  OUT: port 4,1
 wires:
-  - a2a5 -- a4
+  - 2.5,1 -- 4,1
 notes:
-  - source a5 blue
+  - source 5,1 blue
 style:
   grid: on
 ```
@@ -32,17 +32,17 @@ style:
 ```circuit
 title: 図02 並んだ枝の間に 1 本足す
 parts:
-  IN:  port a1
-  R1:  resistor a1 a5 1k
-  R2:  resistor b1 b5 2k
-  R3:  resistor b1f0 b5f0 3k
-  R4:  resistor c1 c5 4.7k
-  OUT: port a5
+  IN:  port 1,1
+  R1:  resistor 1,1 5,1 1k
+  R2:  resistor 1,2 5,2 2k
+  R3:  resistor 1,2.5 5,2.5 3k
+  R4:  resistor 1,3 5,3 4.7k
+  OUT: port 5,1
 wires:
-  - a1 -- b1 -- c1
-  - a5 -- b5 -- c5
+  - 1,1 -- 1,2 -- 1,3
+  - 5,1 -- 5,2 -- 5,3
 notes:
-  - source a6 blue
+  - source 6,1 blue
 style:
   grid: on
   pitch: 3
@@ -65,16 +65,16 @@ style:
 ```circuit
 title: 図03 英字は下へ、数字は右へ
 parts:
-  P1: port a1
-  P2: port a3a5
-  P3: port a6f0
-  P4: port a9f5
+  P1: port 1,1
+  P2: port 3.5,1
+  P3: port 6,1.5
+  P4: port 9.5,1.5
 notes:
-  - text b1 blue center: a1
-  - text b3 blue center: a3a5 (右へ .5)
-  - text b6 blue center: a6f0 (下へ .5)
-  - text b9 blue center: a9f5 (両方 .5)
-  - source a11 blue
+  - text 1,2 blue center: a1
+  - text 3,2 blue center: a3a5 (右へ .5)
+  - text 6,2 blue center: a6f0 (下へ .5)
+  - text 9,2 blue center: a9f5 (両方 .5)
+  - source 11,1 blue
 style:
   grid: on
   pitch: 3

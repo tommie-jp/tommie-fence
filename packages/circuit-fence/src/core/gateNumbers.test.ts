@@ -21,32 +21,32 @@ const numbers = (line: string) => gateNumbersOf(partOf(line)).numbers.map(({ anc
 
 describe('番号の引き方', () => {
   test('numbers the inputs and the output of the unit named by the last letter of the id', () => {
-    expect(numbers('U1A: nand c3 74HC00')).toEqual(['in 1=1', 'in 2=2', 'out=3']);
-    expect(numbers('U1B: nand c3 74HC00')).toEqual(['in 1=4', 'in 2=5', 'out=6']);
-    expect(numbers('U1D: nand c3 74HC00')).toEqual(['in 1=12', 'in 2=13', 'out=11']);
+    expect(numbers('U1A: nand 3,3 74HC00')).toEqual(['in 1=1', 'in 2=2', 'out=3']);
+    expect(numbers('U1B: nand 3,3 74HC00')).toEqual(['in 1=4', 'in 2=5', 'out=6']);
+    expect(numbers('U1D: nand 3,3 74HC00')).toEqual(['in 1=12', 'in 2=13', 'out=11']);
   });
 
   test('reads a NOR whose output comes first on the package', () => {
-    expect(numbers('U2A: nor c3 74HC02')).toEqual(['in 1=2', 'in 2=3', 'out=1']);
+    expect(numbers('U2A: nor 3,3 74HC02')).toEqual(['in 1=2', 'in 2=3', 'out=1']);
   });
 
   test('numbers an inverter and a buffer with one input', () => {
-    expect(numbers('U3C: not c3 74HC14')).toEqual(['in=5', 'out=6']);
-    expect(numbers('U4B: buffer c3 74HC125')).toEqual(['in=5', 'out=6']);
+    expect(numbers('U3C: not 3,3 74HC14')).toEqual(['in=5', 'out=6']);
+    expect(numbers('U4B: buffer 3,3 74HC125')).toEqual(['in=5', 'out=6']);
   });
 
   test('says nothing without a unit letter, without a model, or for a model that is not a gate', () => {
-    for (const line of ['U1: nand c3 74HC00', 'U1A: nand c3', 'U1A: nand c3 LM9999', 'U1A: nand c3 74HC74', 'GATEA: nand c3 74HC00']) {
+    for (const line of ['U1: nand 3,3 74HC00', 'U1A: nand 3,3', 'U1A: nand 3,3 LM9999', 'U1A: nand 3,3 74HC74', 'GATEA: nand 3,3 74HC00']) {
       expect(gateNumbersOf(partOf(line)), line).toEqual({ numbers: [], problem: null });
     }
   });
 
   test('says which units exist when the letter is past the last one', () => {
-    expect(gateNumbersOf(partOf('U1E: nand c3 74HC00')).problem).toBe('U1E: 74HC00 の回路は A・B・C・D までです');
+    expect(gateNumbersOf(partOf('U1E: nand 3,3 74HC00')).problem).toBe('U1E: 74HC00 の回路は A・B・C・D までです');
   });
 
   test('keeps the numbers off a symbol with a different number of inputs', () => {
-    const result = gateNumbersOf(partOf('U1A: nand c3 74HC10'));
+    const result = gateNumbersOf(partOf('U1A: nand 3,3 74HC10'));
 
     expect(result.numbers).toEqual([]);
     expect(result.problem).toContain('3 入力');
@@ -60,7 +60,7 @@ describe('図', () => {
   };
 
   test('puts one marker at each pin, in the order the overlays come', () => {
-    const tex = texOf('U1A: nand c3 74HC00');
+    const tex = texOf('U1A: nand 3,3 74HC00');
 
     expect(tex).toContain('(part-U1A.in 1)');
     expect(tex).toContain('(part-U1A.in 2)');
@@ -68,11 +68,11 @@ describe('図', () => {
   });
 
   test('puts no marker on a gate without numbers', () => {
-    expect(texOf('U1: nand c3 74HC00')).not.toContain('(part-U1.in 1)');
+    expect(texOf('U1: nand 3,3 74HC00')).not.toContain('(part-U1.in 1)');
   });
 
   test('writes the real digits into the exported .tex', () => {
-    const { doc } = parseFence('parts:\n  U1B: nand c3 74HC00\n');
+    const { doc } = parseFence('parts:\n  U1B: nand 3,3 74HC00\n');
     const { tex } = generateTex(buildCircuit(doc, { target: 'latex' }).circuit, {
       style: { ...doc.style, stamp: false }, target: 'latex',
     });
@@ -82,7 +82,7 @@ describe('図', () => {
   });
 
   test('hands the digits to the svg overlay: ends of the input side on the left, starts on the right', () => {
-    const { doc } = parseFence('parts:\n  U1B: nand c3 74HC00\n');
+    const { doc } = parseFence('parts:\n  U1B: nand 3,3 74HC00\n');
     const { notes } = generateTex(buildCircuit(doc).circuit, { style: { ...doc.style, stamp: false } });
 
     expect(notes.map((note) => [note.text, note.align])).toEqual([['4', 'right'], ['5', 'right'], ['6', 'left']]);
@@ -91,7 +91,7 @@ describe('図', () => {
 
 describe('お知らせ', () => {
   test('tells a unit that does not exist, and a gate with the wrong number of inputs', async () => {
-    const result = await compileCircuit('parts:\n  U1E: nand c3 74HC00\n  U2A: nand c6 74HC10\n');
+    const result = await compileCircuit('parts:\n  U1E: nand 3,3 74HC00\n  U2A: nand 6,3 74HC10\n');
     const said = result.notices.map((one) => one.message).join('\n');
 
     expect(said).toContain('U1E: 74HC00 の回路は A・B・C・D までです');

@@ -69,30 +69,30 @@
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-4) {c};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-6) {d};
 \node[gray, font=\scriptsize, anchor=east] at (-0.84,-8) {e};
-\coordinate (b1) at (0,-2);
-\coordinate (b3) at (4,-2);
-\coordinate (c5) at (8,-4);
-\coordinate (e3) at (4,-8);
-\coordinate (a8) at (14,0);
-\coordinate (b8) at (14,-2);
-\coordinate (b10) at (18,-2);
-\coordinate (e8) at (14,-8);
-\draw (b1) node[ocirc]{} node[above left]{IN}; % line 3
-\draw (b1) to[R, l_=$R_{1}$, a^=$1\,\mathrm{k}\Omega$] (b3); % line 4
-\node[opto4, draw] (part-U1) at (c5) {}; % line 5
+\coordinate (x1y2) at (0,-2);
+\coordinate (x3y2) at (4,-2);
+\coordinate (x5y3) at (8,-4);
+\coordinate (x3y5) at (4,-8);
+\coordinate (x8y1) at (14,0);
+\coordinate (x8y2) at (14,-2);
+\coordinate (x10y2) at (18,-2);
+\coordinate (x8y5) at (14,-8);
+\draw (x1y2) node[ocirc]{} node[above left]{IN}; % line 3
+\draw (x1y2) to[R, l_=$R_{1}$, a^=$1\,\mathrm{k}\Omega$] (x3y2); % line 4
+\node[opto4, draw] (part-U1) at (x5y3) {}; % line 5
 \node[font=\scriptsize, anchor=north] at (part-U1.south) {$\mathrm{PC817}$}; % line 5
 \node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 5
-\node[ground] at (e3) {}; % line 6
-\node[vcc] at (a8) {VDD}; % line 7
-\draw (a8) to[R, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (b8); % line 8
-\draw (b10) node[ocirc]{} node[above left]{OUT}; % line 9
-\draw (e8) node[ocirc]{} node[above left]{GND2}; % line 10
-\draw (b3) -| (part-U1.pin 1); % line 12
-\draw (part-U1.pin 2) |- (e3); % line 13
-\draw (part-U1.pin 4) |- (b8); % line 14
-\draw (b8) -- (b10); % line 15
-\draw (part-U1.pin 3) |- (e8); % line 16
-\node[circ] at (b8) {};
+\node[ground] at (x3y5) {}; % line 6
+\node[vcc] at (x8y1) {VDD}; % line 7
+\draw (x8y1) to[R, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (x8y2); % line 8
+\draw (x10y2) node[ocirc]{} node[above left]{OUT}; % line 9
+\draw (x8y5) node[ocirc]{} node[above left]{GND2}; % line 10
+\draw (x3y2) -| (part-U1.pin 1); % line 12
+\draw (part-U1.pin 2) |- (x3y5); % line 13
+\draw (part-U1.pin 4) |- (x8y2); % line 14
+\draw (x8y2) -- (x10y2); % line 15
+\draw (part-U1.pin 3) |- (x8y5); % line 16
+\node[circ] at (x8y2) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(9.418,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};
