@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- `sheets.ts` — `sheets:` の切り分け (`splitSheets`)・枚ごとの SVG を縦に積む (`stackSheets`)・`links:` でネットリストを併せる (`mergeNetlists`)・全体 (`renderSheets`)。perf・bread・copper が使う (52 の docs/117)
+
 ## [0.15.0] - 2026-10-05
 
 ### Changed

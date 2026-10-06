@@ -1,4 +1,4 @@
-import { keptSourceLines } from 'fence-kit';
+import { hasSheets, keptSourceLines, renderSheets } from 'fence-kit';
 import { attachSourceText, fail, fenceError, notice, ok, safeToken, shiftErrors } from './errors.ts';
 import { normalizeNewlines } from './newlines.ts';
 import { LIMITS } from './limits.ts';
@@ -130,7 +130,27 @@ export type RenderOptions = {
 /** 基板から張り出した部品と画布の縁の間に残す余白。縁に貼り付くと切れて見える。 */
 const OVERHANG_MARGIN = 8;
 
+/**
+ * フェンスの中身を図に変換する。**`sheets:` を書いたフェンスは枚ごとに描いて縦に積む**
+ * (52 の docs/117。`sheets:` を書かない図は今までの 1 枚の描き方のまま)。
+ */
 export function renderBreadboard(input: string, options: RenderOptions = {}): RenderResult {
+  const source = normalizeNewlines(input);
+  if (!hasSheets(source)) return renderOneSheet(input, options);
+  return renderSheets(
+    source,
+    options,
+    (text, inner) => renderOneSheet(text, { offset: inner.offset }),
+    {
+      makeError: (message, line, isNotice) => attachSourceText(
+        [isNotice ? notice(message, line) : fenceError(message, line)], source,
+      )[0] ?? fenceError(message, line),
+      banner: (errors) => renderErrorBanner(errors),
+    },
+  );
+}
+
+function renderOneSheet(input: string, options: RenderOptions): RenderResult {
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
   const source = normalizeNewlines(input);
   const parsed = parseFence(source);

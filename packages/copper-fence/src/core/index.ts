@@ -1,4 +1,4 @@
-import { normalizeNewlines, textWidth, wireColor } from 'fence-kit';
+import { normalizeNewlines, textWidth, wireColor, hasSheets, renderSheets } from 'fence-kit';
 import type { Net } from 'fence-kit';
 import { attachSourceText, fenceError, notice, safeToken, shiftErrors } from './errors.ts';
 import { checkErc } from './erc/erc.ts';
@@ -115,7 +115,29 @@ function editNodes(copper: readonly CopperSpec[], parts: readonly PartSpec[], wi
  * フェンスの中身 1 つを図に変換する。DOM も Node も使わない同期の純関数なので、
  * VS Code のプレビュー・CLI・ブラウザのどこからでも同じように呼べる。
  */
+/**
+ * フェンスの中身を図に変換する。**`sheets:` を書いたフェンスは枚ごとに描いて縦に積む**
+ * (52 の docs/117。`sheets:` を書かない図は今までの 1 枚の描き方のまま)。
+ */
 export function renderCopper(input: string, options: RenderOptions = {}): RenderResult {
+  const source = normalizeNewlines(input);
+  if (!hasSheets(source)) return renderOneSheet(input, options);
+  return renderSheets(
+    source,
+    options,
+    (text, inner) => renderOneSheet(text, { offset: inner.offset }),
+    {
+      makeError: (message, line, isNotice) => attachSourceText(
+        [isNotice ? notice(message, line) : fenceError(message, line)], source,
+      )[0] ?? fenceError(message, line),
+      banner: (errors) => renderErrorBanner(errors),
+    },
+    // `f:` (周波数) は枚が書かなかったときの既定にできる。
+    { shared: ['f'] },
+  );
+}
+
+function renderOneSheet(input: string, options: RenderOptions): RenderResult {
   const source = normalizeNewlines(input);
   const parsed = parseFence(source);
   const { doc } = parsed;

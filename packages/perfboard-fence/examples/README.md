@@ -20,6 +20,7 @@ GitHub のようにフェンスが描画されない場所で、書き方と出�
 | [09-usb.md](09-usb.md) | USB コネクタ (`usb-a` / `usb-c`)。Type-C の 4 ピンの変換基板と、種類と姿 |
 | [10-smd.md](10-smd.md) | 面実装 — S-Mini (`sot346`) やチップを直付けする、変換基板に載せる (`-dip`、`dip8/sop`) |
 | [11-named-chips.md](11-named-chips.md) | リレー・フォトカプラ・7 セグ (ピンに名前のある DIP 型) |
+| [12-sheets.md](12-sheets.md) | 複数の基板 (`sheets:` と `links:`) |
 
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではない。
