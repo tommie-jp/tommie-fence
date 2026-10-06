@@ -6,7 +6,8 @@ import { listenExamples, loadExamples, openFirstExample, unpickExample } from '.
 import { listenFiles, openShared, openUrl } from './page/files.ts';
 import { applyLanguage, showDocName, showFrom, syncLead } from './page/labels.ts';
 import { keepOffline, listenGestures, listenSheet, startLayout } from './page/layout.ts';
-import { note, renderLog, warn } from './page/log.ts';
+import { note, renderLog, say, warn } from './page/log.ts';
+import { migrateOffer } from './migrate.ts';
 import { refreshMap, showMap } from './page/map.ts';
 import { fillFences, isMarkdownOpen, listenMarkdown, pickFence, showMarkdown } from './page/markdown.ts';
 import { hasMap } from './kinds.ts';
@@ -94,6 +95,8 @@ function sync(kind: Change): void {
   if (ws.doc.from === null) unpickExample();
   // **開いたことは 1 か所で記録する。** 呼び手ごとに書くと二重に並ぶ。
   note(`${ws.doc.name} を開きました`);
+  // 旧い番地の綴りの回路図は読めない。直す釦は図の窓の「試す」の帯にある (52 の docs/126)。
+  if (migrateOffer(ws.text()) !== null) say('この文書の回路図は旧い番地の綴り (a1) です。図の窓の「番地を x,y に書き換える」で直せます');
 }
 
 /**

@@ -7,6 +7,7 @@ import { imageAfterFenceOptions } from './previewSettings.ts';
 import { registerEditorCommands } from './editor/commands.ts';
 import { fenceEditors } from './editor/fences.ts';
 import { registerProblems } from './problems/diagnostics.ts';
+import { registerMigrateFix } from './problems/migrateFix.ts';
 import { graphProblems, logicProblems, scopeProblems, spectrumProblems, vnaProblems } from './mapless.ts';
 import { NEIGHBOR_READERS, dataForUri, graphDataFrom, scopeDataFrom, spectrumDataFrom, vnaDataFrom } from './neighborData.ts';
 
@@ -31,6 +32,8 @@ export function activate(context: vscode.ExtensionContext) {
     graphProblems(dataForUri(document.uri, graphDataFrom)),
     logicProblems(),
   ]);
+  // 旧い番地の綴り (`a1f5`) をまとめて x,y に書き換えるクイックフィックス (52 の docs/126)。
+  registerMigrateFix(context);
 
   const refresh = (): void => {
     void vscode.commands.executeCommand('markdown.preview.refresh');

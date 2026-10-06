@@ -9,6 +9,7 @@
   "Part to move": "動かす部品",
   "Node to move": "動かす節点",
   "Address to move to (e.g. 3,2)": "移動先の番地 (例: 3,2)",
+  "Rewrite the circuit addresses as x,y ({0} places)": "回路図の番地を x,y に書き換える ({0} か所)",
   "Not an address: {0}": "番地として読めません: {0}",
   "Unknown node: {0}": "選ばれた節点が分かりません: {0}",
   "{0} is already at {1}": "{0} はすでに {1} にあります",

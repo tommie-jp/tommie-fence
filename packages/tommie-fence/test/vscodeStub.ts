@@ -114,7 +114,14 @@ export const workspace = {
 /** 日本語の画面を真似る (`test/l10nJa.ts`)。表に無い文は投げる。 */
 export const l10n = { t: tJa };
 
+/** 受け止めたクイックフィックスの口。テストが呼んで答えを見る。 */
+export const codeActionProviders: unknown[] = [];
+
 export const languages = {
+  registerCodeActionsProvider(_selector: unknown, provider: unknown) {
+    codeActionProviders.push(provider);
+    return { dispose() {} };
+  },
   createDiagnosticCollection(_name: string) {
     return {
       set(uri: unknown, diagnostics: unknown[]) { diagnosticLog.push(['set', String(uri), diagnostics]); },
@@ -140,8 +147,18 @@ export class EventEmitter {
   dispose() {}
 }
 export class WorkspaceEdit {
-  replace() {}
+  readonly replaced: (readonly [unknown, unknown, string])[] = [];
+  replace(uri: unknown, range: unknown, text: string) { this.replaced.push([uri, range, text]); }
 }
-export class Range {}
+export class Range {
+  constructor(public start?: unknown, public end?: unknown) {}
+}
+export const CodeActionKind = { QuickFix: 'quickfix' };
+export class CodeAction {
+  diagnostics?: unknown[];
+  isPreferred?: boolean;
+  edit?: WorkspaceEdit;
+  constructor(public title: string, public kind: string) {}
+}
 export class Position {}
 export class Selection {}

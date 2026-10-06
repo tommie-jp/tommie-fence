@@ -5,6 +5,7 @@ import { imageAfterFenceOptions } from './previewSettings.ts';
 import { registerEditorCommands } from './editor/commands.ts';
 import { fenceEditors } from './editor/fences.ts';
 import { registerProblems } from './problems/diagnostics.ts';
+import { registerMigrateFix } from './problems/migrateFix.ts';
 import { graphProblems, logicProblems, scopeProblems, spectrumProblems, vnaProblems } from './mapless.ts';
 
 /**
@@ -21,6 +22,8 @@ export function activate(context: vscode.ExtensionContext) {
   // 読めなかった行を Problems パネルにも出す。TeX を通らないので web 版でも動く。
   // vna・scope・spectrum・graph の `data:` は読めない (fs が無い)。フェンスがそう言う。
   registerProblems(context, [...fenceEditors(), vnaProblems(), scopeProblems(), spectrumProblems(), graphProblems(), logicProblems()]);
+  // 旧い番地の綴り (`a1f5`) をまとめて x,y に書き換えるクイックフィックス (52 の docs/126)。
+  registerMigrateFix(context);
 
   const refresh = (): void => {
     void vscode.commands.executeCommand('markdown.preview.refresh');

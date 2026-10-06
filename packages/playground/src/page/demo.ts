@@ -1,4 +1,5 @@
 import { nudge, nudgesFor } from '../demo.ts';
+import { migrateOffer } from '../migrate.ts';
 import { changedSpan, replaceFence } from '../document.ts';
 import { els } from './els.ts';
 import { say } from './log.ts';
@@ -41,10 +42,20 @@ export function renderTry(): void {
     ? []
     : nudgesFor(fence.kind, fence.title ?? '').filter((one) => nudge(fence.source, one) !== null);
   const back = ws.pristine !== '' && ws.dirty();
+  // 旧い番地の綴り (`a1f5`) の回路図は読めないので、文書ごと書き換える釦を先に出す (52 の docs/126)。
+  const migrate = migrateOffer(ws.text());
 
   els.try.replaceChildren();
-  els.try.hidden = rows.length === 0 && !back;
+  els.try.hidden = rows.length === 0 && !back && migrate === null;
   if (els.try.hidden) return;
+
+  if (migrate !== null) {
+    els.try.append(button(migrate.label, () => {
+      apply(migrate.next, true);
+      say(`回路図の番地を x,y に書き換えた (${migrate.changed} か所)`);
+    }));
+  }
+  if (rows.length === 0 && !back) return;
 
   const lead = document.createElement('span');
   lead.textContent = '試す:';
