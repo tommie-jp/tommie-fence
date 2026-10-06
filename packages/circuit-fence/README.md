@@ -27,7 +27,7 @@ Drawing circuits from text is a solved problem
 (CircuiTikZ / Schemdraw / Lcapy). This extension competes on two points only.
 
 1. **Positions are written directly as addresses** — write
-   `R1: resistor a1 a3 10k` and that is where it goes. No constraint graph,
+   `R1: resistor 1,1 3,1 10k` and that is where it goes. No constraint graph,
    no dummy nodes for layout. Fixing the diagram doesn't move the node names
    in the netlist.
 2. **Mistakes come back as line numbers and line content** — the parts that
@@ -39,7 +39,7 @@ Drawing circuits from text is a solved problem
 
    ```text
      circuit: 4 行目: 種類 resistr は知りません (resistor のことですか?)
-         R1: resistr a1 a3 10k
+         R1: resistr 1,1 3,1 10k
              ^^^^^^^
    ```
 
@@ -54,8 +54,8 @@ one-screen cheatsheet in [docs/02-cheatsheet.md](docs/02-cheatsheet.md)
 (Japanese) — hand that single page to an LLM when you have it write the fence.
 
 While you are laying things out, `style: grid: on` marks every address a part
-can sit on with a dot. Rows are letters down the left, columns are numbers
-across the top: the same way you read a breadboard.
+can sit on with a dot. Rows are numbered down the left and columns across the
+top, the same numbers as an address `x,y` (column,row).
 
 ![Grid](examples/out/10-grid.png)
 
@@ -78,7 +78,7 @@ screen; this puts it back, side by side with the result.
 A textbook schematic settles less about symbols than about which current is
 called i and which end counts as +. Append `i=<label>` or `v=<label>` to a
 two-terminal part's line to get the current arrow and the voltage signs
-(`R: resistor b2 b3 i=i`). **The direction is measured from the address
+(`R: resistor 2,2 3,2 i=i`). **The direction is measured from the address
 written first**; to reverse it, swap the addresses or write `i<=`. To give a
 part a drawn label separate from its ID, write `l=<label>`
 (`l=$\dot{E}$` puts the phasor dot on).
@@ -86,7 +86,7 @@ part a drawn label separate from its ID, write `l=<label>`
 ![Current arrows and voltage signs](examples/out/15-arrows-1.png)
 
 Multi-terminal parts and `ground` can be turned: write `r90`, `r180` or `r270`
-(clockwise) and `mirror` (left to right) after the address (`Q1: npn c5 r90`).
+(clockwise) and `mirror` (left to right) after the address (`Q1: npn 5,3 r90`).
 There is no word for a vertical flip — write `mirror` and `r180` together.
 **Pins turn with the symbol**, so a wire that names one (`Q1.B`) needs no
 edit. Two-terminal parts carry no such word: **the order of their two
@@ -95,10 +95,9 @@ addresses is the direction**.
 ![Turning a symbol](examples/out/16-orientation-1.png)
 
 When several places point at the same node, naming the address under `points:`
-makes moving it a one-line edit (write `vin: a1` and `vin` works anywhere an
-address does). To sit between two grid points, add a pair after the address:
-the letter steps the row, the digit steps the column (`a1a5` sits half a cell
-to the right of `a1`, `a1f0` half a cell below it).
+makes moving it a one-line edit (write `vin: 1,1` and `vin` works anywhere an
+address does). To sit between two grid points, write a decimal (`1.5,1` sits
+half a cell to the right of `1,1`, `1,1.5` half a cell below it).
 
 Diagrams are drawn by TeX (WASM), so there is no LaTeX to install. Each takes
 about a second, and a "drawing the diagram…" placeholder stands in until it
@@ -265,7 +264,7 @@ Phase 3. 112 parts in all (5 one-terminal symbols, 48 two-terminal parts,
 59 multi-terminal parts, USB connectors among them), plus off-board devices
 (the `type: device` map form). Done so far: `--` / `-|` / `|-` wires, pin
 references (`U1.out`), junction dots, T connections, overlap detection,
-`points:` (names for addresses), addresses between grid points (`a1a5`),
+`points:` (names for addresses), addresses between grid points (`1.5,1`),
 orientation for multi-terminal parts and `ground` (`r90` / `r180` / `r270` /
 `mirror`), `l=` (the drawn label) and `i=` / `v=` (current arrows and voltage signs) on
 two-terminal parts, `title:` (a title above the diagram), `style:` (grid

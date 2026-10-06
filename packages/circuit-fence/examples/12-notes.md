@@ -145,7 +145,7 @@ style:
 ![図05 寄せと太字](out/12-notes-5.png)
 
 色・大きさ・寄せ・太字は**どの順に書いてもよい**。
-`- text b1 bold blue huge: …` も `- text b1 huge bold blue: …` も同じ。
+`- text 1,2 bold blue huge: …` も `- text 1,2 huge bold blue: …` も同じ。
 
 ## 枠 (`box`) と指し棒 (`arrow`)
 
