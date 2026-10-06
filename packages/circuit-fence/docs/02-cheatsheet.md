@@ -106,7 +106,7 @@ parts:
 - マイコンボード (ピンは実物の印字で `U1.GP0`。図には `01 GP0` と番号も出る)
   `pico` `pico-w` `pico2` `pico2-w` `tang-nano-9k` (FPGA。ピンは `IO38` など)
 - ピンに名前のある部品 (名前でも実物のピンの番号でも可。下の表)
-  `relay` `photocoupler` `seg7` `dip-switch4` `dip-switch8`
+  `relay` `photocoupler` `photocoupler6` `seg7` `dip-switch4` `dip-switch8`
 
 略記: `r` `c` `l` `d` `i` `v` `dc` `ac` `gnd` `op` `ec` `pot` `ldr` `ntc`
 `ptc` `xtal` `cfilter` `scr` `bat` `sw` `btn`
@@ -131,6 +131,7 @@ parts:
 | `device` | `pins:` に書いた名前 (`1` 〜 本数でも可) |
 | `relay` | `A1` `A2` / `COM1` `NC1` `NO1` / `COM2` `NC2` `NO2` |
 | `photocoupler` | `A` `K` / `C` `E` |
+| `photocoupler6` | `A` `K` / `C` `E` (4N35。DIP の番号は `1` `2` / `5` `4`。NC とベースは描かない) |
 | `seg7` | `a` 〜 `g` `dp` `COM1` `COM2` |
 | `dip-switch4` / `dip-switch8` | `A1` 〜 / `B1` 〜 (k 番のスイッチは `Ak`–`Bk`。DIP の番号でも可) |
 | `potentiometer` | `w` |
@@ -250,15 +251,18 @@ parts:
 | `2SK170` (`2SK170-BL` `2SK170-GR` `2SK170-V` …) | `transistor` | `D` `G` `S` | TO-92。2SK30A は S G D で S と D が逆 |
 | `2SK117` (`2SK117-BL` `2SK117-GR` `2SK117-Y`) | `transistor` | `D` `G` `S` | TO-92 |
 | `2SJ74` (`2SJ74-BL` `2SJ74-GR` `2SJ74-V` …) | `transistor` | `D` `G` `S` | TO-92。2SK170 の相補品。並びも同じ |
-| `2N7000` | `transistor` | `S` `G` `D` | TO-92。**BS170 は D G S で逆**。onsemi の 2022 年版は本文の表が D G S と読める (誤記説あり・未確認)。買った品の資料かテスタで確かめる |
+| `2N7000` | `transistor` | `S` `G` `D` | TO-92。**BS170 は D G S で逆**。**実物で確かめる: onsemi の 2007 年版の図は S G D、2022 年版の表は D G S で食い違い、表は 2007 年版 (S G D) に従う。実物はテスタで確かめる** |
 | `BS170` | `transistor` | `D` `G` `S` | TO-92。**2N7000 は S G D で逆** |
 | `IRF520` (`IRF520N` `IRF540` `IRF540N` …) | `transistor` | `G` `D` `S` | TO-220。タブは D。IRLZ44N は Vgs 最大 ±16 V |
 | `IRF9540` (`IRF9540N` `IRF9Z34N`) | `transistor` | `G` `D` `S` | TO-220。並びは N チャネルと同じ G D S。タブは D |
 | `2SK2231` | `transistor` | `G` `D` `S` | PW-Mold (面実装)。**TO-220 ではなく面実装 (DPAK 相当)**。タブは D。基板に挿すには変換基板が要る |
-| `2SD882` | `transistor` | `E` `C` `B` | TO-126。**ST の資料だけ図が B C E で食い違う**。実物をテスタで確かめる |
+| `2N7002` (`2N7002K` `2N7002A`) | `transistor` | `G` `S` `D` | SOT-23 (面実装)。穴の順は端子の番号 1 G・2 S・3 D とみなす (変換基板の穴の並びは基板ごとに違うので、買った基板で確かめる)。ブレッドボードには `transistor/sot23-dip` |
+| `2SD882` | `transistor` | `E` `C` `B` | TO-126。**実物で確かめる: ST の資料だけ図が B C E で、他は E C B。表は E C B。実物はテスタで確かめる** |
 | `2SB772` | `transistor` | `E` `C` `B` | TO-126 |
 | `7805` (`L7805` `L7805CV` `LM7805` …) | `regulator` | `IN` `GND` `OUT` | TO-220。78L05 (TO-92) は逆の並び |
 | `78L05` (`L78L05` `UA78L05` `MC78L05` …) | `regulator` | `OUT` `GND` `IN` | TO-92。7805 (TO-220) は逆の並び |
+| `7905` (`L7905` `L7905CV` `LM7905` …) | `regulator` | `GND` `IN` `OUT` | TO-220 (負電圧)。**7805 と並びが違う** (1 番が GND、2 番が IN)。**タブは IN** |
+| `79L05` (`L79L05` `LM79L05` `MC79L05` …) | `regulator` | `GND` `IN` `OUT` | TO-92 (負電圧)。**78L05 (OUT GND IN) と並びが違う** |
 | `LM317` (`LM317T` `LM317MP`) | `regulator` | `ADJ` `OUT` `IN` | TO-220。`GND` ではなく `ADJ`。タブは OUT |
 
 ## 配線 (`wires:`)

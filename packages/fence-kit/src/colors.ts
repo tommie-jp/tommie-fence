@@ -59,6 +59,8 @@ export const LED_COLORS: Record<string, string> = {
   yellow: '#f2c200',
   white: '#eef1f5',
   orange: '#f07c1e',
+  // 赤外 LED。樹脂は水色がかった透明 (可視光の LED の色と取り違えない色)。
+  ir: '#b7c4d9',
 };
 
 export const DEFAULT_LED_COLOR = LED_COLORS.red as string;

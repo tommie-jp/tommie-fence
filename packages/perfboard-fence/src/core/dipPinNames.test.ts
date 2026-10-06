@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { discreteModels, pinoutModels } from 'fence-kit';
+import { VERIFY_NOTES, discreteModels, pinoutModels } from 'fence-kit';
 import { describe, expect, test } from 'vitest';
 import { renderPerfboard } from './index.ts';
 
@@ -121,5 +121,10 @@ describe('docs/01-syntax.md', () => {
   test('names every model in the table of 3 pin transistors and regulators', () => {
     const syntax = readFileSync(fileURLToPath(new URL('../../docs/01-syntax.md', import.meta.url)), 'utf8');
     expect(discreteModels().filter((model) => !syntax.includes(`\`${model}\``))).toEqual([]);
+  });
+
+  test('asks to check the real part wherever the datasheets disagree (2N7000, 2SD882)', () => {
+    const syntax = readFileSync(fileURLToPath(new URL('../../docs/01-syntax.md', import.meta.url)), 'utf8');
+    expect(Object.values(VERIFY_NOTES).filter((sentence) => !syntax.includes(sentence))).toEqual([]);
   });
 });

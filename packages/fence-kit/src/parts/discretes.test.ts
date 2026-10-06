@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { discreteModels, discreteTable, lookupDiscrete } from './discretes.ts';
+import { VERIFY_NOTES, discreteModels, discreteTable, lookupDiscrete } from './discretes.ts';
 
 /**
  * 3 ピンのディスクリートの表 (52 の docs/119)。並びは「印字面を手前、ピンを下にして左から右」で、
@@ -22,6 +22,7 @@ describe('ディスクリートのピンの名前の表', () => {
     ['2SJ74', 'pch-jfet', ['D', 'G', 'S']],
     ['2N7000', 'nch-mos', ['S', 'G', 'D']],
     ['BS170', 'nch-mos', ['D', 'G', 'S']],
+    ['2N7002', 'nch-mos', ['G', 'S', 'D']],
     ['IRF540N', 'nch-mos', ['G', 'D', 'S']],
     ['IRF9540', 'pch-mos', ['G', 'D', 'S']],
   ])('names the pins of the transistor %s (%s)', (model, kind, names) => {
@@ -41,6 +42,25 @@ describe('ディスクリートのピンの名前の表', () => {
     expect(lookupDiscrete('regulator', '78L05')?.names).toEqual(['OUT', 'GND', 'IN']);
     expect(lookupDiscrete('regulator', '7805')?.names).toEqual(['IN', 'GND', 'OUT']);
     expect(lookupDiscrete('regulator', 'LM317T')?.names).toEqual(['ADJ', 'OUT', 'IN']);
+  });
+
+  test('puts the negative regulators 7905 and 79L05 in GND IN OUT, unlike the positive 7805 / 78L05', () => {
+    for (const model of ['7905', 'L7905CV', '79M05', '79L05', 'MC79L05']) {
+      expect(lookupDiscrete('regulator', model), model).toMatchObject({ kind: 'regulator', names: ['GND', 'IN', 'OUT'] });
+    }
+    expect(lookupDiscrete('regulator', '7905')?.names).not.toEqual(lookupDiscrete('regulator', '7805')?.names);
+    expect(lookupDiscrete('regulator', '79L05')?.names).not.toEqual(lookupDiscrete('regulator', '78L05')?.names);
+  });
+
+  test('asks the reader to check the real part for the two models whose datasheets disagree', () => {
+    expect(Object.keys(VERIFY_NOTES)).toEqual(['2N7000', '2SD882']);
+    expect(VERIFY_NOTES['2N7000']).toContain('2007 年版の図は S G D、2022 年版の表は D G S');
+    expect(VERIFY_NOTES['2SD882']).toContain('ST の資料だけ図が B C E で、他は E C B');
+    for (const [model, sentence] of Object.entries(VERIFY_NOTES)) {
+      const row = discreteTable().find((one) => one.models.includes(model));
+      expect(row?.note, model).toContain(sentence);
+      expect(sentence, model).toContain('テスタで確かめる');
+    }
   });
 
   test('reads a model in any case and with a grade suffix, and answers null for the unknown', () => {

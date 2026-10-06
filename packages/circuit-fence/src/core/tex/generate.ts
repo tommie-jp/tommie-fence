@@ -242,7 +242,7 @@ function sipShapesFor(circuit: Circuit, pitch: number): string[] {
   const uses = (type: string): boolean => circuit.parts.some((part) => part.type === type);
   const named = [
     ...(uses('relay') ? relayShapeTex() : []),
-    ...(uses('photocoupler') ? optoShapeTex() : []),
+    ...(uses('photocoupler') || uses('photocoupler6') ? optoShapeTex() : []),
     ...(uses('nmos-dg') ? dualGateFetShapeTex() : []),
     // DIP スイッチは連の数ごとの箱。使う数だけ宣言する。
     ...DIP_SWITCHES.filter(uses).flatMap((type) => dipSwitchShapeTex((lookupNamedChip(type, null)?.positions ?? 0) / 2)),

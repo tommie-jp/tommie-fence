@@ -30,6 +30,14 @@ describe('bandColor', () => {
   });
 });
 
+describe('the infrared LED', () => {
+  test('reads `ir` as a pale, water-clear body, apart from the visible colours', () => {
+    expect(ledColor('IR')).toBe(LED_COLORS.ir);
+    expect(LED_COLORS.ir).not.toBe(LED_COLORS.white);
+    expect(Object.values(LED_COLORS).filter((value) => value === LED_COLORS.ir)).toHaveLength(1);
+  });
+});
+
 describe('the tables themselves', () => {
   test('are every one a plain hex colour, so nothing else reaches an attribute', () => {
     for (const table of [BAND_COLORS, LED_COLORS]) {

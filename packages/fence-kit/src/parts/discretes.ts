@@ -39,6 +39,16 @@ export type Discrete = {
   readonly names: readonly [string, string, string];
 };
 
+/**
+ * **データシートどうしが食い違い、表が一方に従った型番**の注意書き。**実物で確かめる**ことを、
+ * この型番が出てくる全部の文書 (3 つの文法リファレンス・早見表・教科書の部品表) に同じ文面で書く。
+ * 試験が文書に載っているかを見張る。
+ */
+export const VERIFY_NOTES: Readonly<Record<string, string>> = {
+  '2N7000': '実物で確かめる: onsemi の 2007 年版の図は S G D、2022 年版の表は D G S で食い違い、表は 2007 年版 (S G D) に従う。実物はテスタで確かめる',
+  '2SD882': '実物で確かめる: ST の資料だけ図が B C E で、他は E C B。表は E C B。実物はテスタで確かめる',
+};
+
 const ECB = ['E', 'C', 'B'] as const;
 const EBC = ['E', 'B', 'C'] as const;
 const SGD = ['S', 'G', 'D'] as const;
@@ -118,13 +128,19 @@ const ROWS: readonly DiscreteRow[] = [
   {
     models: ['2N7000'], type: 'transistor', kind: 'nch-mos', names: SGD,
     pkg: 'TO-92', role: 'N チャネル MOSFET 60 V 200 mA',
-    note: '**BS170 は D G S で逆**。onsemi の 2022 年版は本文の表が D G S と読める (誤記説あり・未確認)。買った品の資料かテスタで確かめる',
+    note: `**BS170 は D G S で逆**。**${VERIFY_NOTES['2N7000']}**`,
     source: 'ON Semi 2N7000/D Rev. 7 (2007-10)、印字面の図 (CASE 29 STYLE 22: 1 S・2 G・3 D)',
   },
   {
     models: ['BS170'], type: 'transistor', kind: 'nch-mos', names: DGS,
     pkg: 'TO-92', role: 'N チャネル MOSFET 60 V 500 mA', note: '**2N7000 は S G D で逆**',
     source: 'ON Semi BS170/D Rev. 5 (2005-08)、印字面の図 (CASE 29 STYLE 30: 1 D・2 G・3 S)',
+  },
+  {
+    models: ['2N7002', '2N7002K', '2N7002A'], type: 'transistor', kind: 'nch-mos', names: ['G', 'S', 'D'],
+    pkg: 'SOT-23', role: 'N チャネル MOSFET 60 V 300 mA (面実装)',
+    note: '**面実装 (SOT-23)**。穴の順は端子の番号 1 G・2 S・3 D とみなす (SOT-23 を挿せる変換基板の穴の並びは基板ごとに違うので、買った基板で確かめる)。ブレッドボードには `transistor/sot23-dip`',
+    source: 'Nexperia 2N7002 Rev. 7 (2011-09)、Table 2 Pinning (SOT23: 1 G・2 S・3 D)。Diodes 2N7002 DS11303 Rev. 33-2 (2013-07) の Top View も同じ (D が頂点、G が左下、S が右下)',
   },
   {
     models: ['IRF520', 'IRF520N', 'IRF540', 'IRF540N', 'IRLZ44N', 'IRLZ44', 'IRL540N', 'IRF3205'], type: 'transistor', kind: 'nch-mos', names: GDS,
@@ -144,7 +160,7 @@ const ROWS: readonly DiscreteRow[] = [
   // --- TO-126 ---
   {
     models: ['2SD882'], type: 'transistor', kind: 'npn', names: ECB,
-    pkg: 'TO-126', role: 'NPN 30 V 3 A', note: '**ST の資料だけ図が B C E で食い違う**。実物をテスタで確かめる',
+    pkg: 'TO-126', role: 'NPN 30 V 3 A', note: `**${VERIFY_NOTES['2SD882']}**`,
     source: 'Inchange 2SD882 の 1 E・2 C・3 B (文字のみ)。ST 2SD882 Rev 3 の内部図は B C E',
   },
   {
@@ -161,6 +177,18 @@ const ROWS: readonly DiscreteRow[] = [
     models: ['78L05', 'L78L05', 'UA78L05', 'MC78L05', '78L33', '78L09', '78L12'], type: 'regulator', kind: 'regulator',
     names: ['OUT', 'GND', 'IN'], pkg: 'TO-92', role: '三端子レギュレータ (正電圧、100 mA)', note: '7805 (TO-220) は逆の並び',
     source: 'TI uA78L SLVS010X (2023-06)、Figure 5-2 (LP) の 1 OUTPUT・2 COMMON・3 INPUT',
+  },
+  {
+    models: ['7905', 'L7905', 'L7905CV', 'LM7905', 'MC7905', 'UA7905', 'UA79M05', '79M05', '7912', '7915', 'L7912', 'L7915', 'MC7912'], type: 'regulator', kind: 'regulator',
+    names: ['GND', 'IN', 'OUT'], pkg: 'TO-220', role: '三端子レギュレータ (負電圧)',
+    note: '**7805 と並びが違う** (1 番が GND、2 番が IN)。**タブは IN (7805 の GND ではない)**。入力・出力とも負の電圧',
+    source: 'TI uA79M00 SLVS060K (2005-04)、KC/KCS の TOP VIEW (タブが INPUT、ピンは上から OUTPUT・INPUT・COMMON。タブを上・ピンを下に回すと左から COMMON・INPUT・OUTPUT)',
+  },
+  {
+    models: ['79L05', 'L79L05', 'LM79L05', 'MC79L05', 'MC79L05A', 'UA79L05', '79L12', '79L15', 'LM79L12', 'LM79L15'], type: 'regulator', kind: 'regulator',
+    names: ['GND', 'IN', 'OUT'], pkg: 'TO-92', role: '三端子レギュレータ (負電圧、100 mA)',
+    note: '**78L05 (OUT GND IN) と並びが違う**。TI の図は底面 (Bottom View、平らな面が上) で、左から GND・-VIN・-VOUT。平らな面を手前にしても左右は同じ',
+    source: 'TI LM79L05 SNOSBR8K (2013-04)、Figure 4 (LP、Bottom View)',
   },
   {
     models: ['LM317', 'LM317T', 'LM317MP'], type: 'regulator', kind: 'regulator',

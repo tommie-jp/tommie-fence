@@ -9,7 +9,7 @@ import { drawNamedChip, lookupNamedChip, namedChipLooks, namedChipTypes } from '
 
 describe('名前つきの DIP 型の表', () => {
   test('knows the relay, the photocoupler and the seven-segment display', () => {
-    expect(namedChipTypes()).toEqual(['relay', 'photocoupler', 'seg7', 'dip-switch4', 'dip-switch8']);
+    expect(namedChipTypes()).toEqual(['relay', 'photocoupler', 'photocoupler6', 'seg7', 'dip-switch4', 'dip-switch8']);
     expect(namedChipLooks('relay')).toEqual(['g5v-2']);
   });
 
@@ -28,6 +28,12 @@ describe('名前つきの DIP 型の表', () => {
     const display = lookupNamedChip('seg7', null);
     expect(display).toMatchObject({ positions: 10, rowSpan: 6 });
     expect(display?.pins.map((pin) => pin.name)).toEqual(['e', 'd', 'COM1', 'c', 'dp', 'b', 'a', 'COM2', 'f', 'g']);
+  });
+
+  test('puts the 4N35 on a DIP6: anode, cathode, NC, emitter, collector, base', () => {
+    const opto = lookupNamedChip('photocoupler6', null);
+    expect(opto).toMatchObject({ name: '4N35', kindName: 'フォトカプラ', prefix: 'U', positions: 6, rowSpan: 3 });
+    expect(opto?.pins.map((pin) => `${pin.at}${pin.name}`)).toEqual(['1A', '2K', '3NC', '4E', '5C', '6B']);
   });
 
   test('puts a DIP switch on every place of a DIP, one switch between the facing legs', () => {

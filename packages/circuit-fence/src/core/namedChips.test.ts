@@ -24,6 +24,17 @@ describe('種類', () => {
     expect(PART_PREFIXES.relay).toBe('K');
   });
 
+  test('knows the 4N35 by the same names and DIP numbers as the boards, and leaves NC and the base undrawn', () => {
+    const opto = lookupPartType('photocoupler6')!;
+    expect(lookupPin(opto, 'E')).toBe(lookupPin(opto, '4'));
+    expect(lookupPin(opto, 'C')).toBe(lookupPin(opto, '5'));
+    expect(lookupPin(opto, 'K')).toBe(lookupPin(opto, '2'));
+    expect(lookupPin(opto, 'A')).toBe(lookupPin(opto, '1'));
+    expect(lookupPin(opto, 'NC')).toBeNull();
+    expect(PART_NAMES.photocoupler6).toBe('フォトカプラ');
+    expect(PART_PREFIXES.photocoupler6).toBe('U');
+  });
+
   test('knows the photocoupler and the display by the same names as the boards', () => {
     expect(lookupPin(lookupPartType('photocoupler')!, 'C')).toBe(lookupPin(lookupPartType('photocoupler')!, '4'));
     expect(lookupPin(lookupPartType('seg7')!, 'dp')).toBe(lookupPin(lookupPartType('seg7')!, '5'));

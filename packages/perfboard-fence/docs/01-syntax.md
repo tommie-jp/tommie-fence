@@ -422,7 +422,7 @@ pF とも F とも読めるので断る。頭が数でない語 (`電解`) は�
 標準で、いま手に入る抵抗のほとんどがこれ。温度係数を足すと 6 帯になる
 (`10k 1% 50ppm`)。**色を持っていない許容差・温度係数 (`10k 3%`) は断る** —
 近い値へ丸めると、実物と違う帯が出て図を信じた人を間違えさせる。
-LED は値を色として読む (`red` `green` `blue` `yellow` `white` `orange`)。
+LED は値を色として読む (`red` `green` `blue` `yellow` `white` `orange`、赤外 LED は `ir` (透明な胴))。
 
 **書く穴の数を超えた番地は、黙って値にせずエラーにする。** ピンを 1 本多く書いた
 つもりの人が、「値 b9」と書かれた図を見て気づけないまま終わるため。
@@ -628,15 +628,18 @@ Type-C の変換基板は 4 本のピンヘッダなので、**4 本とも書く
 | `2SK170` (`2SK170-BL` `2SK170-GR` `2SK170-V` …) | `transistor` | `D` `G` `S` | TO-92。2SK30A は S G D で S と D が逆 |
 | `2SK117` (`2SK117-BL` `2SK117-GR` `2SK117-Y`) | `transistor` | `D` `G` `S` | TO-92 |
 | `2SJ74` (`2SJ74-BL` `2SJ74-GR` `2SJ74-V` …) | `transistor` | `D` `G` `S` | TO-92。2SK170 の相補品。並びも同じ |
-| `2N7000` | `transistor` | `S` `G` `D` | TO-92。**BS170 は D G S で逆**。onsemi の 2022 年版は本文の表が D G S と読める (誤記説あり・未確認)。買った品の資料かテスタで確かめる |
+| `2N7000` | `transistor` | `S` `G` `D` | TO-92。**BS170 は D G S で逆**。**実物で確かめる: onsemi の 2007 年版の図は S G D、2022 年版の表は D G S で食い違い、表は 2007 年版 (S G D) に従う。実物はテスタで確かめる** |
 | `BS170` | `transistor` | `D` `G` `S` | TO-92。**2N7000 は S G D で逆** |
 | `IRF520` (`IRF520N` `IRF540` `IRF540N` …) | `transistor` | `G` `D` `S` | TO-220。タブは D。IRLZ44N は Vgs 最大 ±16 V |
 | `IRF9540` (`IRF9540N` `IRF9Z34N`) | `transistor` | `G` `D` `S` | TO-220。並びは N チャネルと同じ G D S。タブは D |
 | `2SK2231` | `transistor` | `G` `D` `S` | PW-Mold (面実装)。**TO-220 ではなく面実装 (DPAK 相当)**。タブは D。基板に挿すには変換基板が要る |
-| `2SD882` | `transistor` | `E` `C` `B` | TO-126。**ST の資料だけ図が B C E で食い違う**。実物をテスタで確かめる |
+| `2N7002` (`2N7002K` `2N7002A`) | `transistor` | `G` `S` `D` | SOT-23 (面実装)。穴の順は端子の番号 1 G・2 S・3 D とみなす (変換基板の穴の並びは基板ごとに違うので、買った基板で確かめる)。ブレッドボードには `transistor/sot23-dip` |
+| `2SD882` | `transistor` | `E` `C` `B` | TO-126。**実物で確かめる: ST の資料だけ図が B C E で、他は E C B。表は E C B。実物はテスタで確かめる** |
 | `2SB772` | `transistor` | `E` `C` `B` | TO-126 |
 | `7805` (`L7805` `L7805CV` `LM7805` …) | `regulator` | `IN` `GND` `OUT` | TO-220。78L05 (TO-92) は逆の並び |
 | `78L05` (`L78L05` `UA78L05` `MC78L05` …) | `regulator` | `OUT` `GND` `IN` | TO-92。7805 (TO-220) は逆の並び |
+| `7905` (`L7905` `L7905CV` `LM7905` …) | `regulator` | `GND` `IN` `OUT` | TO-220 (負電圧)。**7805 と並びが違う** (1 番が GND、2 番が IN)。**タブは IN** |
+| `79L05` (`L79L05` `LM79L05` `MC79L05` …) | `regulator` | `GND` `IN` `OUT` | TO-92 (負電圧)。**78L05 (OUT GND IN) と並びが違う** |
 | `LM317` (`LM317T` `LM317MP`) | `regulator` | `ADJ` `OUT` `IN` | TO-220。`GND` ではなく `ADJ`。タブは OUT |
 
 ### ピンに名前のある DIP 型 (`relay` / `photocoupler` / `seg7` / `dip-switch4` / `dip-switch8`)
@@ -658,6 +661,7 @@ parts:
 | --- | --- | --- | --- |
 | `relay` | `g5v-2` (Omron G5V-2、2 回路) | 3 穴 | `A1` (1) `COM1` (4) `NC1` (6) `NO1` (8) `NO2` (9) `NC2` (11) `COM2` (13) `A2` (16)。1 と 16 がコイル |
 | `photocoupler` | `pc817` (シャープ PC817) | 3 穴 | `A` (1) `K` (2) `E` (3) `C` (4) |
+| `photocoupler6` | `4n35` (Vishay 4N35、DIP6) | 3 穴 | `A` (1) `K` (2) `NC` (3) `E` (4) `C` (5) `B` (6)。**ピンの数が違うので種類を分けた** (PC817 は 4 ピン) |
 | `seg7` | `5161as` (0.56 インチ 1 桁、カソード共通) | 6 穴 | `e` (1) `d` (2) `COM1` (3) `c` (4) `dp` (5) `b` (6) `a` (7) `COM2` (8) `f` (9) `g` (10) |
 | `dip-switch4` / `dip-switch8` | `slide` (スライド型、4 連・8 連) | 3 穴 | `A1`〜`A4` (1〜4) `B4`〜`B1` (5〜8)。8 連は `A1`〜`A8` (1〜8) `B8`〜`B1` (9〜16)。**k 番のスイッチは `Ak` と `Bk` の間の接点** |
 

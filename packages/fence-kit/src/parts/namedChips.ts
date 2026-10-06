@@ -56,6 +56,12 @@ const CHIPS: readonly NamedChip[] = [
     pins: pins({ 1: 'A', 2: 'K', 3: 'E', 4: 'C' }),
   },
   {
+    // Vishay 4N35 (DIP6、Document Number 81181 Rev. 1.2、07-Jan-10)。1 アノード、2 カソード、3 NC、4 エミッタ、5 コレクタ、6 ベース。
+    // **ピンの数が違うので PC817 の姿ではなく種類を分ける** (DIP スイッチと同じ)。
+    type: 'photocoupler6', look: '4n35', name: '4N35', kindName: 'フォトカプラ', prefix: 'U', positions: 6, rowSpan: 3, body: 'chip',
+    pins: pins({ 1: 'A', 2: 'K', 3: 'NC', 4: 'E', 5: 'C', 6: 'B' }),
+  },
+  {
     // 5161AS (0.56 インチ 1 桁、カソード共通)。1 列 5 本、列の間 15.24mm。
     // E=1 D=2 共通=3 C=4 DP=5 B=6 A=7 共通=8 F=9 G=10。
     type: 'seg7', look: '5161as', name: '5161AS', kindName: '7 セグメント LED', prefix: 'DS', positions: 10, rowSpan: 6, body: 'display',

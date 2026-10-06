@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
 import { NOTE_ALIGNS, NOTE_COLORS, NOTE_KINDS, NOTE_LEADINGS, NOTE_SIZES } from './notes.ts';
 import { aliasNames } from './parts/aliases.ts';
-import { boardPartNames, discreteModels, pinoutModels } from 'fence-kit';
+import { VERIFY_NOTES, boardPartNames, discreteModels, pinoutModels } from 'fence-kit';
 import { typesWithVariants, variantsOf } from './parts/variants.ts';
 import { knownPartTypes } from './placement/footprints.ts';
 import { STYLE_KEYS } from './parser/style.ts';
@@ -69,5 +69,9 @@ describe('docs/02-cheatsheet.md', () => {
 
   test('names every model in the table of 3 pin transistors and regulators', () => {
     discreteModels().forEach((model) => listed('ディスクリートの表の型番')(`\`${model}\``));
+  });
+
+  test('asks to check the real part wherever the datasheets disagree (2N7000, 2SD882)', () => {
+    Object.values(VERIFY_NOTES).forEach(listed('実物で確かめる注意書き'));
   });
 });

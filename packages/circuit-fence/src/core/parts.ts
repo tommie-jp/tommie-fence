@@ -729,6 +729,28 @@ function seg7Box(chip: NamedChip, label: string | null = null): PartType {
   };
 }
 
+/**
+ * 4N35 (DIP6)。**記号はフォトカプラの 4 ピンと同じ** (LED とフォトトランジスタ)。
+ * 描くのは A・K・E・C の 4 本で、**NC (3 番) とベース (6 番) は描かない** (ベースは開けて使うのが普通)。
+ * 番号は 4N35 の DIP の番号 (4 E・5 C) で、記号のアンカーの番号 (3 E・4 C) とは違うので結び直す。
+ */
+function photocoupler6(chip: NamedChip): PartType {
+  const anchorOf: Readonly<Record<string, string>> = { A: 'pin 1', K: 'pin 2', E: 'pin 3', C: 'pin 4' };
+  const drawn = chip.pins.filter(({ name }) => anchorOf[name] !== undefined);
+  return {
+    kind: 'multi-terminal',
+    symbol: OPTO_SHAPE,
+    options: ['draw'],
+    ...NO_UNIT,
+    pins: Object.fromEntries(drawn.flatMap(({ at, name }) => [
+      ...withLowerAlias(name, anchorOf[name] as string),
+      [`${at}`, anchorOf[name] as string],
+    ])),
+    pinRow: { 'pin 1': 'left', 'pin 2': 'left', 'pin 4': 'right', 'pin 3': 'right' },
+    pinNames: Object.fromEntries(drawn.map(({ name }) => [anchorOf[name] as string, name])),
+  };
+}
+
 const namedChipOf = (type: string): NamedChip => lookupNamedChip(type, null) as NamedChip;
 
 const SEG7 = 'seg7';
@@ -1255,6 +1277,7 @@ export const PART_TYPES = {
     turnedValueSide: 'right',
   },
   photocoupler: namedSymbol(namedChipOf('photocoupler'), OPTO_SHAPE, [[1, 'left'], [2, 'left'], [4, 'right'], [3, 'right']]),
+  photocoupler6: photocoupler6(namedChipOf('photocoupler6')),
   seg7: seg7Box(namedChipOf(SEG7)),
   'dip-switch4': dipSwitchBox(namedChipOf('dip-switch4')),
   'dip-switch8': dipSwitchBox(namedChipOf('dip-switch8')),
@@ -1396,6 +1419,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   // ピンに名前のある DIP 型も実体配線図の 2 つと同じ字 (fence-kit の表)。
   relay: namedChipOf('relay').kindName,
   photocoupler: namedChipOf('photocoupler').kindName,
+  photocoupler6: namedChipOf('photocoupler6').kindName,
   seg7: namedChipOf('seg7').kindName,
   'dip-switch4': namedChipOf('dip-switch4').kindName,
   'dip-switch8': namedChipOf('dip-switch8').kindName,
@@ -1524,6 +1548,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   'tang-nano-9k': 'U',
   relay: namedChipOf('relay').prefix,
   photocoupler: namedChipOf('photocoupler').prefix,
+  photocoupler6: namedChipOf('photocoupler6').prefix,
   seg7: namedChipOf('seg7').prefix,
   'dip-switch4': namedChipOf('dip-switch4').prefix,
   'dip-switch8': namedChipOf('dip-switch8').prefix,
