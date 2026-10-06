@@ -43,6 +43,18 @@ describe('IC の箱 (ic)', () => {
     expect(box.halfHeight).toBeGreaterThanOrEqual(0.1 + 0.7 + 0.15 + 0.15);
   });
 
+  it('`_` を含む名前は 2 字に数え、型番の横の `OUT_A 4` が型番に食い込まない (SA612)', () => {
+    // Arrange
+    const pinout = lookupIcPinout('SA612');
+    if (pinout === null) throw new Error('SA612');
+
+    // Act
+    const box = icBox(pinout, 0.5);
+
+    // Assert — `4 OUT_A` は 7 字だが `_` を 2 字に数えて 8 字 (1.12 cm)、型番 `SA612` の半分は 0.375 cm
+    expect(box.halfWidth).toBeGreaterThanOrEqual(0.1 + 8 * 0.14 + 0.15 + 0.375);
+  });
+
   it.each([[1, 0.5], [1.2, 0.6], [2, 1], [0.6, 0.6], [3, 0.75]])('pitch %s のピンの間隔は %s cm (番地の刻みに乗る)', (pitch, step) => {
     expect(icStepOf(pitch)).toBeCloseTo(step);
   });

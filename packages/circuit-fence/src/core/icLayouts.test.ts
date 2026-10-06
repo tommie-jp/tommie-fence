@@ -17,6 +17,7 @@ describe('IC の働きの並び', () => {
 
   it('並びを持たない型番は null', () => {
     expect(lookupIcPinout('LM358')).toBeNull();
+    expect(lookupIcPinout('MCP6002')).toBeNull();
     expect(lookupIcPinout(null)).toBeNull();
   });
 
@@ -93,5 +94,34 @@ describe('CMOS 4000 系のカウンタ・フリップフロップの働きの並
     expect(layout?.right).toEqual(['Q1', '/Q1', 'Q2', '/Q2']);
     expect(layout?.top).toEqual(['VDD']);
     expect(layout?.bottom).toEqual(['VSS']);
+  });
+});
+
+describe('IQ の学習回路の IC の働きの並び', () => {
+  it('SA612 は RF の入力と局部発振が左、ミキサの出力が右、別の綴りでも引ける', () => {
+    for (const model of ['SA612A', 'NE612AN', 'NE602']) {
+      const pinout = lookupIcPinout(model);
+      expect(pinout?.model, model).toBe('SA612');
+      expect(pinout?.layout.left, model).toEqual(['IN_A', 'IN_B', 'OSC_B', 'OSC_E']);
+      expect(pinout?.layout.right, model).toEqual(['OUT_A', 'OUT_B']);
+      expect(pinout?.layout.top, model).toEqual(['VCC']);
+      expect(pinout?.layout.bottom, model).toEqual(['GND']);
+    }
+  });
+
+  it('74HC4052 はチャネルが左、共通 AN・BN が右、選択と E・VEE は GND の側', () => {
+    const layout = lookupIcPinout('CD74HC4052E')?.layout;
+    expect(layout?.left).toEqual(['A0', 'A1', 'A2', 'A3', 'B0', 'B1', 'B2', 'B3']);
+    expect(layout?.right).toEqual(['AN', 'BN']);
+    expect(layout?.top).toEqual(['VCC']);
+    expect(layout?.bottom).toEqual(['GND', 'VEE', 'E', 'S0', 'S1']);
+  });
+
+  it('LM386 は利得の 2 本が上に隣どうし、入力が左、出力が右、BYPASS は GND の隣', () => {
+    const layout = lookupIcPinout('LM386N-1')?.layout;
+    expect(layout?.top).toEqual(['VS', 'GAIN1', 'GAIN8']);
+    expect(layout?.left).toEqual(['+INPUT', '-INPUT']);
+    expect(layout?.right).toEqual(['VOUT']);
+    expect(layout?.bottom).toEqual(['GND', 'BYPASS']);
   });
 });

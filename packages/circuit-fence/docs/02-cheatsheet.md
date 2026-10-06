@@ -95,7 +95,7 @@ parts:
 - ブザー・イヤホン `buzzer` `earphone` (スピーカーの記号で描く)
 - SMA コネクタ `sma` (ピンは `1` 中心導体 / `2` 外皮)
 - 三端子レギュレータ `regulator` (ピンは `in` `gnd` `out`。番号でも可)
-- ピンを働きで並べた IC `ic` (型番が要る: `NE555` `TLC555` `CD4511B` `74HC163` `74HC154` `62256` と 74HC の `74HC161` `74HC595` `74HC164` `74HC165` `74HC194` `74HC138` `74HC139` `74HC157` `74HC153` `74HC151` `74HC573` `74HC574` `74HC273` `74HC245` `74HC283` `74HC85` `74HC393` `74HC4040` `74HC4060` `74HC74` `74HC174` `74HC193` `74HC4051`、4000 系の `CD4040B` `CD4013B`。電源が上・GND が下・入力が左・出力が右。
+- ピンを働きで並べた IC `ic` (型番が要る: `NE555` `TLC555` `CD4511B` `74HC163` `74HC154` `62256` と 74HC の `74HC161` `74HC595` `74HC164` `74HC165` `74HC194` `74HC138` `74HC139` `74HC157` `74HC153` `74HC151` `74HC573` `74HC574` `74HC273` `74HC245` `74HC283` `74HC85` `74HC393` `74HC4040` `74HC4060` `74HC74` `74HC174` `74HC193` `74HC4051` `74HC4052`、4000 系の `CD4040B` `CD4013B`、アナログの `SA612` (ミキサ) `LM386` (パワーアンプ)。電源が上・GND が下・入力が左・出力が右。
   ピンは箱の中心から半マス刻み。向きは書けない。基板には無い)
 - 3 ピンの IC `ic3` (同じ箱。ピンは `1` `2` `3`、マップ形式の `pins:` で名前を付けられる)
 - セラミックフィルタ `ceramic-filter` (同じ箱。ピンは `in` `gnd` `out`。番号でも可。基板では `sip3` + `SFU455B`)
@@ -151,9 +151,11 @@ parts:
 | `NE5532` (`NE5532P` `NE5532AP` `SA5532` …) | `dip8` | `1OUT` `1IN-` `1IN+` `VCC-` `2IN+` `2IN-` `2OUT` `VCC+` |
 | `LM324` (`LM324N` `LM324AN` `LM2902` …) | `dip14` | `1OUT` `1IN-` `1IN+` `VCC+` `2IN+` `2IN-` `2OUT` `3OUT` `3IN-` `3IN+` `VCC-` `4IN+` `4IN-` `4OUT` |
 | `LM741` (`LM741CN` `LM741N` `UA741` …) | `dip8` | `OFFSET1` `IN-` `IN+` `V-` `OFFSET2` `OUT` `V+` `NC` (1・5 番はオフセット調整。8 番は NC) |
-| `LM386` (`LM386N` `LM386N-1` `LM386N-3` …) | `dip8` | `GAIN` `IN-` `IN+` `GND` `VOUT` `VS` `BYPASS` `GAIN` (1 番と 8 番は同じ印字 `GAIN` なので番号で指す。両ピンの間にコンデンサで利得 20→200) |
 | `ATtiny85` (`ATtiny85-20PU` `ATtiny45` `ATtiny25`) | `dip8` | `PB5` `PB3` `PB4` `GND` `PB0` `PB1` `PB2` `VCC` (1 番 `PB5` は RESET 兼用。PB0=MOSI/SDA、PB1=MISO、PB2=SCK/SCL、PB3=XTAL1、PB4=XTAL2) |
 | `ATmega328P` (`ATmega328P-PU` `ATmega328` `ATmega168` …) | `dip28` | `PC6` `PD0` `PD1` `PD2` `PD3` `PD4` `VCC` `GND` `PB6` `PB7` `PD5` `PD6` `PD7` `PB0` `PB1` `PB2` `PB3` `PB4` `PB5` `AVCC` `AREF` `GND` `PC0` `PC1` `PC2` `PC3` `PC4` `PC5` (1 番 `PC6` は RESET 兼用。8 番と 22 番は GND (番号で指す)。PB6・PB7 は水晶 (XTAL1・XTAL2)) |
+| `SA612` (`SA612A` `NE612` `NE602` …) | `dip8` | `IN_A` `IN_B` `GND` `OUT_A` `OUT_B` `OSC_B` `OSC_E` `VCC` (`IN_A` `IN_B` が RF の入力、`OSC_B` が発振のベース (外の LO の入口)、`OSC_E` が発振のエミッタ) |
+| `MCP6002` (`MCP6002-I/P` `MCP6002-E/P` `MCP6002-I/SN` …) | `dip8` | `VOUTA` `VINA-` `VINA+` `VSS` `VINB+` `VINB-` `VOUTB` `VDD` |
+| `LM386` (`LM386N-1` `LM386N-3` `LM386N-4` …) | `dip8` | `GAIN1` `-INPUT` `+INPUT` `GND` `VOUT` `VS` `BYPASS` `GAIN8` (印字は 1・8 番とも `GAIN` (番号を付けて分けた)。`BYPASS` は C で GND へ) |
 | `CD4017B` (`CD4017` `CD4017BE`) | `dip16` | `Q5` `Q1` `Q0` `Q2` `Q6` `Q7` `Q3` `VSS` `Q8` `Q4` `Q9` `CO` `INH` `CLOCK` `RESET` `VDD` |
 | `CD4040B` (`CD4040` `CD4040BE`) | `dip16` | `Q12` `Q6` `Q5` `Q7` `Q4` `Q3` `Q2` `VSS` `Q1` `CLOCK` `R` `Q9` `Q8` `Q10` `Q11` `VDD` |
 | `CD4069UB` (`CD4069` `CD4069UBE`) `CD40106B` (`CD40106` `CD40106BE`) | `dip14` | `A` `G` `B` `H` `C` `I` `VSS` `J` `D` `K` `E` `L` `F` `VDD` |

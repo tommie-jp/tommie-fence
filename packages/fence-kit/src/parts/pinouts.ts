@@ -17,6 +17,9 @@ import type { SipLook } from './chips.ts';
  * | LM358 | SLOS068AB (LM358 / LM2904 / LM258 / LM158)、Table 4-1 |
  * | TL071 / TL072 | SLOS080W、Table 4-1 (TL071x の D・P) / 4-3 (TL072x) |
  * | LM393 | SLCS005AH (LM393 / LM2903 / LM193 / LM293)、4 Pin Configuration (D・P の 8 ピン)。2026-10-05 に確かめた |
+ * | SA612A | NXP SA612A Rev. 3 (2014-06-04)、6.1 Pinning と Table 3 Pin description (SO8)。2026-10-06 に確かめた。NXP の頁は機械の取得を断るので Internet Archive の写しで読んだ。NE612・SA602・NE602 (DIP8 の `AN` も) は同じ並びの旧品で、その版のデータシートは確かめていない |
+ * | MCP6002 | Microchip DS20001733L (MCP6001/1R/1U/2/4)、Table 3-1 (PDIP・SOIC・MSOP)。2026-10-06 に確かめた |
+ * | LM386 | TI SNAS545D (2023-08)、Figure 5-1 と Table 5-1。2026-10-06 に確かめた。1 番と 8 番の印字はどちらも `GAIN` |
  * | CD4017B | SCHS027C、端子図 (TERMINAL DIAGRAM) |
  * | CD4040B | SCHS030D、端子図 |
  * | CD4069UB | SCHS054E、Pin Functions |
@@ -45,7 +48,6 @@ import type { SipLook } from './chips.ts';
  * | NE5532 | TI SLOS075K (2025-12)、Figure 4-1 (P の 8 ピン PDIP) |
  * | LM324 | TI SLOS066AE (2025-09)、Figure 5-1 (N の PDIP) と Table 5-1 |
  * | LM741 | TI SNOSC25D (NAB の 8 ピン CDIP/PDIP)。印字は OFFSET NULL を `OFFSET1` `OFFSET2` に、INVERTING INPUT を `IN-` などに略した |
- * | LM386 | TI SNAS545D (2023-08)、Figure 5-1 と Table 5-1 (資料の図は D パッケージ。N (DIP) も同じ番号は**記憶による**) |
  * | ATtiny85 | Atmel 2586Q (2013-08)、Figure 1-1 (PDIP)。名前は IO ポートの印字 (`PB0`〜`PB5`) だけ |
  * | ATmega328P | Microchip DS40002061B、Figure 1-1 (28 PDIP)。名前は IO ポートの印字だけ |
  * | 3SK291 | 東芝 3SK291 (2014-03-01)、外形図の端子の番号 (SMQ。1 G1・2 G2・3 D・4 S)。変換基板が SMQ の番号をそのまま DIP / SIP の番号にしている前提 |
@@ -74,6 +76,10 @@ import type { SipLook } from './chips.ts';
  *   セグメント出力 `a`〜`g` は `Oa`〜`Og`。**片方だけ変えると、もう片方の印字で書いた配線が
  *   黙って別のピンに付く** (`U1.a` が入力 A に) ので両方を変え、印字のままの `A` `a` はどちらも
  *   「知らないピン」として断らせる
+ * - **同じ印字が 2 本にあり、2 本を別々に結ぶピンは番号を後ろに付けて分ける**: LM386 の 1・8 番の
+ *   `GAIN` → `GAIN1` `GAIN8` (利得を決める C をこの 2 本の間に付ける。同じ名前のままだと
+ *   名前では指せず、働きで並べる回路図の箱 `ic` にも置けない)。TL071 の `NC` のように
+ *   どこにも結ばないピンは同じ名前のまま
  * - 74HC の型番は TI の `SN` を付けない綴りが代表 (教科書の書き方)。`SN74HC04N` も書ける
  *
  * **鍵は型番の完全一致** (大文字小文字は問わない)。接尾辞を削らないのは、
@@ -154,6 +160,26 @@ const ROWS: readonly PinoutRow[] = [
   {
     models: ['LM393', 'LM393P', 'LM393N', 'LM393A', 'LM393AP', 'LM393B', 'LM393BP', 'LM2903', 'LM2903P', 'LM293', 'LM193'], role: 'コンパレータ ×2',
     names: ['1OUT', '1IN-', '1IN+', 'GND', '2IN+', '2IN-', '2OUT', 'VCC'],
+  },
+  {
+    // 1・2 番が RF の入力 (差動)、6・7 番が局部発振 (6 番がベース。外の LO を入れるのもここ)、4・5 番がミキサの出力。
+    models: [
+      'SA612', 'SA612A', 'SA612AD', 'NE612', 'NE612A', 'NE612AN', 'NE612AD',
+      'SA602', 'SA602A', 'NE602', 'NE602A', 'NE602AN', 'NE602AD',
+    ],
+    role: 'ミキサ + 発振器 (ダブルバランスド)',
+    names: ['IN_A', 'IN_B', 'GND', 'OUT_A', 'OUT_B', 'OSC_B', 'OSC_E', 'VCC'],
+    note: '`IN_A` `IN_B` が RF の入力、`OSC_B` が発振のベース (外の LO の入口)、`OSC_E` が発振のエミッタ',
+  },
+  {
+    models: ['MCP6002', 'MCP6002-I/P', 'MCP6002-E/P', 'MCP6002-I/SN', 'MCP6002-E/SN', 'MCP6002-I/MS'], role: 'オペアンプ ×2 (CMOS・レール ツー レール)',
+    names: ['VOUTA', 'VINA-', 'VINA+', 'VSS', 'VINB+', 'VINB-', 'VOUTB', 'VDD'],
+  },
+  {
+    // 印字は 1・8 番とも `GAIN` (利得を決める C をこの 2 本の間に付ける)。番号を付けて分けた。
+    models: ['LM386', 'LM386N', 'LM386N-1', 'LM386N-3', 'LM386N-4', 'LM386M-1', 'LM386MX-1'], role: '低電圧のオーディオ パワー アンプ',
+    names: ['GAIN1', '-INPUT', '+INPUT', 'GND', 'VOUT', 'VS', 'BYPASS', 'GAIN8'],
+    note: '印字は 1・8 番とも `GAIN` (番号を付けて分けた)。`BYPASS` は C で GND へ',
   },
   {
     models: ['CD4017B', 'CD4017', 'CD4017BE'], role: '10 進カウンタ',
@@ -577,12 +603,6 @@ const ROWS: readonly PinoutRow[] = [
     models: ['LM741', 'LM741CN', 'LM741N', 'UA741', 'UA741CP'], role: 'オペアンプ',
     names: ['OFFSET1', 'IN-', 'IN+', 'V-', 'OFFSET2', 'OUT', 'V+', 'NC'],
     note: '1・5 番はオフセット調整。8 番は NC',
-  },
-  {
-    // 1 番と 8 番は同じ印字 (GAIN)。名前では指せず番号で出る。
-    models: ['LM386', 'LM386N', 'LM386N-1', 'LM386N-3', 'LM386N-4'], role: 'オーディオパワーアンプ',
-    names: ['GAIN', 'IN-', 'IN+', 'GND', 'VOUT', 'VS', 'BYPASS', 'GAIN'],
-    note: '1 番と 8 番は同じ印字 `GAIN` なので番号で指す。両ピンの間にコンデンサで利得 20→200',
   },
   {
     // PB5 は RESET と兼用 (印字は PB5 (… RESET …))。

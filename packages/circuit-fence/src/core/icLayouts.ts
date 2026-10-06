@@ -242,6 +242,39 @@ const HC4051_LAYOUT: IcLayout = {
 };
 
 /**
+ * 74HC4052 (4 チャネル アナログ マルチプレクサ ×2)。74HC4051 と同じ考え方で、チャネル A0〜A3・B0〜B3 は左、
+ * 共通 AN・BN は右、選択 S0・S1 と E・VEE は GND の側。
+ */
+const HC4052_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['A0', 'A1', 'A2', 'A3', 'B0', 'B1', 'B2', 'B3'],
+  right: ['AN', 'BN'],
+  bottom: ['GND', 'VEE', 'E', 'S0', 'S1'],
+};
+
+/**
+ * SA612 (ダブルバランスド ミキサ + 発振器)。**RF の入力 IN_A・IN_B と局部発振の OSC_B・OSC_E は
+ * どちらも左** (RF も外の LO も左から入る)、ミキサの出力 OUT_A・OUT_B は右。
+ */
+const SA612_LAYOUT: IcLayout = {
+  top: ['VCC'],
+  left: ['IN_A', 'IN_B', 'OSC_B', 'OSC_E'],
+  right: ['OUT_A', 'OUT_B'],
+  bottom: ['GND'],
+};
+
+/**
+ * LM386 (オーディオ パワー アンプ)。**利得の C を付ける GAIN1・GAIN8 は上に隣どうし** (電源 VS の隣)、
+ * 入力は左に +INPUT が上、出力 VOUT は右。BYPASS は C で GND へ落とすので GND の隣 (下)。
+ */
+const LM386_LAYOUT: IcLayout = {
+  top: ['VS', 'GAIN1', 'GAIN8'],
+  left: ['+INPUT', '-INPUT'],
+  right: ['VOUT'],
+  bottom: ['GND', 'BYPASS'],
+};
+
+/**
  * CD4040B (12 段リプルカウンタ。74HC4040 と同じピンの並び)。クロック CLOCK とリセット R は左、
  * Q1〜Q12 は右に下の桁から。CMOS 4000 系なので電源は VDD (上)・VSS (下)。
  */
@@ -298,6 +331,9 @@ const LAYOUTS: readonly { readonly pins: number; readonly model: string; readonl
   { pins: 16, model: '74HC4051', layout: HC4051_LAYOUT },
   { pins: 16, model: 'CD4040B', layout: CD4040_LAYOUT },
   { pins: 14, model: 'CD4013B', layout: CD4013_LAYOUT },
+  { pins: 16, model: '74HC4052', layout: HC4052_LAYOUT },
+  { pins: 8, model: 'SA612', layout: SA612_LAYOUT },
+  { pins: 8, model: 'LM386', layout: LM386_LAYOUT },
 ];
 
 /** 型番からピンの名前と働きの並びを引く。並びを持たない型番は null。 */

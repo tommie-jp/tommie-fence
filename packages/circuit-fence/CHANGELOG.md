@@ -8,7 +8,17 @@
 ### Added
 
 - 型番がディスクリートの表 (fence-kit) にあるトランジスタ・FET で、記号と極性が食い違うときのお知らせ (`Q1: npn … 2SA1015` は PNP)。図は書かれた記号のまま
-- DIP のピンの名前の表に NE5532・LM324・LM741・LM386・ATtiny85・ATmega328P を足した (fence-kit)
+- DIP のピンの名前の表に NE5532・LM324・LM741・ATtiny85・ATmega328P を足した (fence-kit)
+- ピンの名前の表に SA612 (`SA612` `SA612A` `NE612` `NE612AN` `SA602` `NE602` ほか、`dip8`)。ピンは `IN_A` `IN_B` `GND` `OUT_A` `OUT_B` `OSC_B` `OSC_E` `VCC`
+  (NXP SA612A Rev. 3 の Pinning。NE602 などは同じ並びの旧品)
+- ピンの名前の表に MCP6002 (`MCP6002` `MCP6002-I/P` `MCP6002-E/P` ほか、`dip8`)。ピンは `VOUTA` `VINA-` `VINA+` `VSS` `VINB+` `VINB-` `VOUTB` `VDD`
+  (Microchip DS20001733L の Table 3-1)
+- ピンの名前の表に LM386 (`LM386` `LM386N-1` `LM386N-3` `LM386N-4` ほか、`dip8`)。ピンは `GAIN1` `-INPUT` `+INPUT` `GND` `VOUT` `VS` `BYPASS` `GAIN8`
+  (TI SNAS545D の Pin Functions。印字は 1・8 番とも `GAIN` なので、名前で指せるように番号を付けて分けた)。
+  表は fence-kit にあり、この版に束ねられる
+- `ic` の働きの並びに `74HC4052` (チャネルは左、共通 `AN` `BN` は右、選択と `E` `VEE` は GND の側)、
+  `SA612` (RF の入力と局部発振は左、ミキサの出力は右)、`LM386` (利得の `GAIN1` `GAIN8` は上に隣どうし、`BYPASS` は GND の隣)。
+  箱の幅の見積もりでピンの名前の `_` を 2 字に数える (SA612 の `OUT_A 4` が真ん中の型番に食い込んだ。`_` の無い箱は変わらない)
 
 ## [0.32.0] - 2026-10-05
 

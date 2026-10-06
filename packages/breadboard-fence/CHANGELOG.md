@@ -10,7 +10,14 @@
 - 最上位の `sheets:` で 1 つのフェンスにブレッドボードを何枚でも並べられる。枚の中は 1 枚の図と同じ書き方で、枚をまたぐ導通は `links:` (`- 電源.+t LED.+t`)。`sheets:` を書かない図は何も変わらない (52 の docs/118)
 - `transistor` / `regulator` の穴にピンの名前を書かず、型番が fence-kit のディスクリートの表にあれば、書いた穴の順 (印字面を手前に左から) に表の名前で呼ぶ
   (`Q1: transistor … 2SC1815` → `Q1.E` `Q1.C` `Q1.B`)。書いた名前が先。面実装の変換基板 (`sot23-dip` など) は引かない
-- DIP のピンの名前の表に NE5532・LM324・LM741・LM386・ATtiny85・ATmega328P を足した (fence-kit)
+- DIP のピンの名前の表に NE5532・LM324・LM741・ATtiny85・ATmega328P を足した (fence-kit)
+- ピンの名前の表に SA612 (`SA612` `SA612A` `NE612` `NE612AN` `SA602` `NE602` ほか、`dip8`)。ピンは `IN_A` `IN_B` `GND` `OUT_A` `OUT_B` `OSC_B` `OSC_E` `VCC`
+  (NXP SA612A Rev. 3 の Pinning。NE602 などは同じ並びの旧品)
+- ピンの名前の表に MCP6002 (`MCP6002` `MCP6002-I/P` `MCP6002-E/P` ほか、`dip8`)。ピンは `VOUTA` `VINA-` `VINA+` `VSS` `VINB+` `VINB-` `VOUTB` `VDD`
+  (Microchip DS20001733L の Table 3-1)
+- ピンの名前の表に LM386 (`LM386` `LM386N-1` `LM386N-3` `LM386N-4` ほか、`dip8`)。ピンは `GAIN1` `-INPUT` `+INPUT` `GND` `VOUT` `VS` `BYPASS` `GAIN8`
+  (TI SNAS545D の Pin Functions。印字は 1・8 番とも `GAIN` なので、名前で指せるように番号を付けて分けた)。
+  表は fence-kit にあり、この版に束ねられる
 
 ## [0.37.0] - 2026-10-05
 

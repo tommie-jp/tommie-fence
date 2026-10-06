@@ -64,8 +64,13 @@ function alongOf(side: IcSide, count: number, index: number, step: number): numb
 /** 0.1 cm に切り上げる (形の寸法を細かく揺らさない)。 */
 const tenthsUp = (length: number): number => Math.ceil(length * 10 - 1e-9) / 10;
 
-/** ピンに刷る字 (`7 DISCH`) の長さ。番号は桁を揃える (名前付きの DIP と同じ)。 */
-const labelLength = (name: string, digits: number): number => digits + 1 + [...name].length;
+/**
+ * ピンに刷る字 (`7 DISCH`) の長さ。番号は桁を揃える (名前付きの DIP と同じ)。
+ * **`_` は 2 字に数える** — 大文字に挟まれた `_` のぶん見積もりより広く、SA612 の `OUT_A 4` が
+ * 真ん中の型番に食い込んだ (実機で焼いて確かめた)。`_` の無い名前の箱の大きさは変わらない。
+ */
+const labelLength = (name: string, digits: number): number =>
+  digits + 1 + [...name].reduce((length, char) => length + (char === '_' ? 2 : 1), 0);
 
 export function icBox(pinout: IcPinout, step: number): IcBox {
   const digits = String(pinout.names.length).length;

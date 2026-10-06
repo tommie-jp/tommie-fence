@@ -25,6 +25,23 @@ describe('ピンの名前の表', () => {
     expect(lookupPinout('LM358', 8)?.names).toEqual(['OUT1', 'IN1-', 'IN1+', 'V-', 'IN2+', 'IN2-', 'OUT2', 'V+']);
     // 2 回路のコンパレータ。電源のピンは `VCC` と `GND` (オペアンプ LM358 の `V+` `V-` ではない)。
     expect(lookupPinout('LM393', 8)?.names).toEqual(['1OUT', '1IN-', '1IN+', 'GND', '2IN+', '2IN-', '2OUT', 'VCC']);
+    // CMOS のオペアンプ ×2。電源のピンは `VDD` と `VSS`、入力の印字に回路の字 (A・B) が入る。
+    expect(lookupPinout('MCP6002-I/P', 8)?.names).toEqual(['VOUTA', 'VINA-', 'VINA+', 'VSS', 'VINB+', 'VINB-', 'VOUTB', 'VDD']);
+  });
+
+  test('names the SA612 mixer and its older spellings as printed on the NXP data sheet', () => {
+    for (const model of ['SA612A', 'SA612AD', 'NE612AN', 'NE602', 'sa602a']) {
+      const pinout = lookupPinout(model, 8);
+      expect(pinout?.model, model).toBe('SA612');
+      expect(pinout?.names, model).toEqual(['IN_A', 'IN_B', 'GND', 'OUT_A', 'OUT_B', 'OSC_B', 'OSC_E', 'VCC']);
+    }
+  });
+
+  test('splits the two GAIN pins of the LM386 by their numbers so that each can be named', () => {
+    // 印字は 1・8 番とも `GAIN`。利得の C をこの 2 本の間に付けるので、名前で指せるように分ける。
+    for (const model of ['LM386', 'LM386N-1', 'LM386N-4']) {
+      expect(lookupPinout(model, 8)?.names, model).toEqual(['GAIN1', '-INPUT', '+INPUT', 'GND', 'VOUT', 'VS', 'BYPASS', 'GAIN8']);
+    }
   });
 
   test('names the CMOS counters and gates', () => {
@@ -141,9 +158,10 @@ describe('ピンの名前の表', () => {
   test('lists the models it knows, one spelling per row, optionally for one package', () => {
     const all = pinoutModels();
 
-    // 先頭の 32 行は 74HC273 まで (既存の並び。LM393 は 6 行目)、そのあとにロジック IC、そのあとに 3SK291、最後が SFU455B。
-    expect(all.slice(0, 6)).toEqual(['NE555', 'TLC555', 'LM358', 'TL071', 'TL072', 'LM393']);
-    expect(all.slice(29, 36)).toEqual(['62256', '6116', '74HC245', '74HC273', '74HC14', '74HC00', '74HC161']);
+    // 先頭の 35 行は 74HC273 まで (既存の並び。LM393 は 6 行目、そのあとに SA612・MCP6002・LM386)、
+    // そのあとにロジック IC、そのあとに 3SK291、最後が SFU455B。
+    expect(all.slice(0, 9)).toEqual(['NE555', 'TLC555', 'LM358', 'TL071', 'TL072', 'LM393', 'SA612', 'MCP6002', 'LM386']);
+    expect(all.slice(32, 39)).toEqual(['62256', '6116', '74HC245', '74HC273', '74HC14', '74HC00', '74HC161']);
     expect(all.at(-2)).toBe('3SK291');
     expect(all.at(-1)).toBe('SFU455B');
     expect(new Set(all).size).toBe(all.length);
