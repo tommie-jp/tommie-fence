@@ -1,4 +1,4 @@
-import { lookupPinout, pinoutModels } from 'fence-kit';
+import { lookupDiscrete, lookupPinout, pinoutModels } from 'fence-kit';
 import { notice, safeToken } from '../errors.ts';
 import type { FenceError, PlacedPart } from '../types.ts';
 import { footprintOf } from './footprint.ts';
@@ -43,4 +43,14 @@ export function unnamedDipNotices(parts: readonly PlacedPart[]): FenceError[] {
       part.line,
     )];
   });
+}
+
+/**
+ * 3 ピンのトランジスタ・レギュレータのピンの名前 (52 の docs/117)。**型番が fence-kit の
+ * ディスクリートの表にあれば**、書いた穴の順 (印字面を手前に、左から) に表の名前で呼ぶ。
+ * 面実装の変換基板・直付け (`sot23-dip` `sot346` など) は番号の付き方が違うので引かない。
+ */
+export function discretePins(part: PlacedPart): readonly string[] | null {
+  if (footprintOf(part.type, null)?.kind !== 'three-lead' || (part.variant ?? '').startsWith('sot')) return null;
+  return lookupDiscrete(part.type, part.value)?.names ?? null;
 }

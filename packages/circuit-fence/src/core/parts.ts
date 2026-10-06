@@ -1,4 +1,5 @@
-import { lookupBoardPart, lookupConnectorSymbol, lookupNamedChip, lookupPinout, pinoutModels } from 'fence-kit';
+import { lookupBoardPart, lookupConnectorSymbol, lookupDiscrete, lookupNamedChip, lookupPinout, pinoutModels } from 'fence-kit';
+import type { DiscreteKind } from 'fence-kit';
 import { DGFET_SHAPE, dipSwitchShapeName, OPTO_SHAPE, RELAY_SHAPE, REGULATOR_SHAPE, SMA_SHAPE, deviceBox, deviceShapeName, usbShapeName } from './tex/shapes.ts';
 import type { BoardPart, NamedChip } from 'fence-kit';
 import { BOXED_RESISTORS } from './standard.ts';
@@ -525,6 +526,32 @@ export function unnamedDip(part: PartSpec): { readonly model: string; readonly k
   if (count === null || part.kind !== 'multi-terminal' || part.value === null) return null;
   if (lookupPinout(part.value, count) !== null) return null;
   return { model: part.value, known: pinoutModels(count) };
+}
+
+/** 回路図の能動素子の種類 → 系統 (ディスクリートの表と突き合わせる)。 */
+const SYMBOL_KIND: Readonly<Record<string, DiscreteKind>> = {
+  npn: 'npn', pnp: 'pnp',
+  nmos: 'nch-mos', 'nmos-e': 'nch-mos', 'nmos-d': 'nch-mos', pmos: 'pch-mos', 'pmos-e': 'pch-mos', 'pmos-d': 'pch-mos',
+  njfet: 'nch-jfet', pjfet: 'pch-jfet',
+};
+
+/** 系統の呼び名 (お知らせの文面)。 */
+const KIND_NAME: Readonly<Record<DiscreteKind, string>> = {
+  npn: 'NPN トランジスタ', pnp: 'PNP トランジスタ', 'nch-mos': 'N チャネル MOSFET', 'pch-mos': 'P チャネル MOSFET',
+  'nch-jfet': 'N チャネル JFET', 'pch-jfet': 'P チャネル JFET', regulator: '三端子レギュレータ',
+};
+
+/**
+ * 記号と型番の系統が食い違うトランジスタ・FET (`Q1: npn a1 2SA1015` の 2SA1015 は PNP)。
+ * **エラーにはしない** — 型番は値の字で、記号が書き手の意図。**表に無い型番と、系統が合う型番は null。**
+ */
+export function mismatchedDiscrete(part: PartSpec): { readonly model: string; readonly actual: string; readonly drawn: string } | null {
+  const drawn = SYMBOL_KIND[part.type];
+  const model = 'value' in part ? part.value : null;
+  if (drawn === undefined || model === null) return null;
+  const found = lookupDiscrete('transistor', model);
+  if (found === null || found.kind === drawn) return null;
+  return { model, actual: KIND_NAME[found.kind], drawn: KIND_NAME[drawn] };
 }
 
 /**

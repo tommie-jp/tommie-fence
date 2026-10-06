@@ -133,7 +133,7 @@ describe('ピンの名前の表', () => {
   test('answers null for no model, an unknown one and inherited names', () => {
     expect(lookupPinout(null, 8)).toBeNull();
     expect(lookupPinout('', 8)).toBeNull();
-    expect(lookupPinout('LM741', 8)).toBeNull();
+    expect(lookupPinout('LM9999', 8)).toBeNull();
     expect(lookupPinout('constructor', 8)).toBeNull();
     expect(lookupPinout('__proto__', 8)).toBeNull();
   });
@@ -153,7 +153,7 @@ describe('ピンの名前の表', () => {
       '74HC245', '74HC273', '74HC244', '74HC541', '74HC240', '74HC573', '74HC574',
     ]);
     expect(pinoutModels(24)).toEqual(['74HC154', '6116']);
-    expect(pinoutModels(28)).toEqual(['62256']);
+    expect(pinoutModels(28)).toEqual(['62256', 'ATmega328P']);
     for (const model of ['74HC14', '74HC00', '74HC10', '74HC20', '74HC125', '74HC393', '74HC164', '74HC4066']) {
       expect(pinoutModels(14), model).toContain(model);
     }
@@ -415,7 +415,7 @@ describe('ゲートの回路ごとのピンの番号', () => {
   });
 
   test('is null for a part that is not a gate, an unknown model and none', () => {
-    for (const model of ['74HC74', '74HC595', '74HC163', '74HC244', 'NE555', 'LM741', null]) {
+    for (const model of ['74HC74', '74HC595', '74HC163', '74HC244', 'NE555', 'LM9999', null]) {
       expect(lookupGateUnits(model), String(model)).toBeNull();
     }
   });

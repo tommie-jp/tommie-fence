@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
 import { NOTE_ALIGNS, NOTE_COLORS, NOTE_KINDS, NOTE_LEADINGS, NOTE_SIZES } from './notes.ts';
 import { aliasNames } from './parts/aliases.ts';
-import { boardPartNames, pinoutModels } from 'fence-kit';
+import { boardPartNames, discreteModels, pinoutModels } from 'fence-kit';
 import { typesWithVariants, variantsOf } from './parts/variants.ts';
 import { knownPartTypes } from './placement/footprints.ts';
 import { STYLE_KEYS } from './parser/style.ts';
@@ -65,5 +65,9 @@ describe('docs/02-cheatsheet.md', () => {
 
   test('names every model in the table of DIP pin names', () => {
     pinoutModels().forEach((model) => listed('ピンの名前の表の型番')(`\`${model}\``));
+  });
+
+  test('names every model in the table of 3 pin transistors and regulators', () => {
+    discreteModels().forEach((model) => listed('ディスクリートの表の型番')(`\`${model}\``));
   });
 });

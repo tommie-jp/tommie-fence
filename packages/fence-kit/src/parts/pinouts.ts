@@ -41,6 +41,13 @@ import type { SipLook } from './chips.ts';
  * | 6116 | Renesas (IDT) IDT6116SA/LA DSC-3089/03、Pin Configurations (DIP) — I/O 0〜7 は `IO0`〜`IO7` |
  * | 74HC245 | SN74HC245 SCLS131F、Table 5-1 (N) |
  * | 74HC273 | SN74HC273 SCLS136F、Table 5-1 (N) |
+ * | TL082 | TI SLOS081O (2025-09)、Table 4-3 (P の PDIP)。TL072 と同じ並び |
+ * | NE5532 | TI SLOS075K (2025-12)、Figure 4-1 (P の 8 ピン PDIP) |
+ * | LM324 | TI SLOS066AE (2025-09)、Figure 5-1 (N の PDIP) と Table 5-1 |
+ * | LM741 | TI SNOSC25D (NAB の 8 ピン CDIP/PDIP)。印字は OFFSET NULL を `OFFSET1` `OFFSET2` に、INVERTING INPUT を `IN-` などに略した |
+ * | LM386 | TI SNAS545D (2023-08)、Figure 5-1 と Table 5-1 (資料の図は D パッケージ。N (DIP) も同じ番号は**記憶による**) |
+ * | ATtiny85 | Atmel 2586Q (2013-08)、Figure 1-1 (PDIP)。名前は IO ポートの印字 (`PB0`〜`PB5`) だけ |
+ * | ATmega328P | Microchip DS40002061B、Figure 1-1 (28 PDIP)。名前は IO ポートの印字だけ |
  * | 3SK291 | 東芝 3SK291 (2014-03-01)、外形図の端子の番号 (SMQ。1 G1・2 G2・3 D・4 S)。変換基板が SMQ の番号をそのまま DIP / SIP の番号にしている前提 |
  *
  * **ピンの名前として書けない印字だけは直した** (`U1.TRIG` と書けて、番号と取り違えないため):
@@ -141,7 +148,7 @@ const ROWS: readonly PinoutRow[] = [
     names: ['NC', 'IN-', 'IN+', 'VCC-', 'NC', 'OUT', 'VCC+', 'NC'],
   },
   {
-    models: ['TL072', 'TL072CP', 'TL072ACP', 'TL072BCP', 'TL072H'], role: 'オペアンプ ×2',
+    models: ['TL072', 'TL072CP', 'TL072ACP', 'TL072BCP', 'TL072H', 'TL082', 'TL082CP', 'TL082ACP', 'TL082BCP'], role: 'オペアンプ ×2',
     names: ['1OUT', '1IN-', '1IN+', 'VCC-', '2IN+', '2IN-', '2OUT', 'VCC+'],
   },
   {
@@ -556,6 +563,37 @@ const ROWS: readonly PinoutRow[] = [
     models: ['ULN2003A', 'ULN2003', 'ULN2003APG', 'ULN2003AN'], role: '7 回路のダーリントン (シンクドライバ)',
     names: ['1B', '2B', '3B', '4B', '5B', '6B', '7B', 'GND', 'COM', '7C', '6C', '5C', '4C', '3C', '2C', '1C'],
     note: '`COM` は負荷の電源側へつなぐ (誘導負荷のクランプ)。出力は吸い込み (シンク) だけ',
+  },
+  {
+    models: ['NE5532', 'NE5532P', 'NE5532AP', 'SA5532', 'SA5532P'], role: 'オペアンプ ×2 (低雑音・オーディオ)',
+    names: ['1OUT', '1IN-', '1IN+', 'VCC-', '2IN+', '2IN-', '2OUT', 'VCC+'],
+  },
+  {
+    models: ['LM324', 'LM324N', 'LM324AN', 'LM2902', 'LM2902N', 'LM224', 'LM124'], role: 'オペアンプ ×4',
+    names: ['1OUT', '1IN-', '1IN+', 'VCC+', '2IN+', '2IN-', '2OUT', '3OUT', '3IN-', '3IN+', 'VCC-', '4IN+', '4IN-', '4OUT'],
+  },
+  {
+    // 1・5 番はオフセット調整、8 番は NC。
+    models: ['LM741', 'LM741CN', 'LM741N', 'UA741', 'UA741CP'], role: 'オペアンプ',
+    names: ['OFFSET1', 'IN-', 'IN+', 'V-', 'OFFSET2', 'OUT', 'V+', 'NC'],
+    note: '1・5 番はオフセット調整。8 番は NC',
+  },
+  {
+    // 1 番と 8 番は同じ印字 (GAIN)。名前では指せず番号で出る。
+    models: ['LM386', 'LM386N', 'LM386N-1', 'LM386N-3', 'LM386N-4'], role: 'オーディオパワーアンプ',
+    names: ['GAIN', 'IN-', 'IN+', 'GND', 'VOUT', 'VS', 'BYPASS', 'GAIN'],
+    note: '1 番と 8 番は同じ印字 `GAIN` なので番号で指す。両ピンの間にコンデンサで利得 20→200',
+  },
+  {
+    // PB5 は RESET と兼用 (印字は PB5 (… RESET …))。
+    models: ['ATtiny85', 'ATtiny85-20PU', 'ATtiny45', 'ATtiny25'], role: 'AVR マイコン (8 ピン)',
+    names: ['PB5', 'PB3', 'PB4', 'GND', 'PB0', 'PB1', 'PB2', 'VCC'],
+    note: '1 番 `PB5` は RESET 兼用。PB0=MOSI/SDA、PB1=MISO、PB2=SCK/SCL、PB3=XTAL1、PB4=XTAL2',
+  },
+  {
+    models: ['ATmega328P', 'ATmega328P-PU', 'ATmega328', 'ATmega168', 'ATmega88'], role: 'AVR マイコン (28 ピン)',
+    names: ['PC6', 'PD0', 'PD1', 'PD2', 'PD3', 'PD4', 'VCC', 'GND', 'PB6', 'PB7', 'PD5', 'PD6', 'PD7', 'PB0', 'PB1', 'PB2', 'PB3', 'PB4', 'PB5', 'AVCC', 'AREF', 'GND', 'PC0', 'PC1', 'PC2', 'PC3', 'PC4', 'PC5'],
+    note: '1 番 `PC6` は RESET 兼用。8 番と 22 番は GND (番号で指す)。PB6・PB7 は水晶 (XTAL1・XTAL2)',
   },
   {
     // 面実装 (SMQ) の 4 ピン。変換基板に載せて `dip4` (2 列) か `sip4` (1 列) で置く。

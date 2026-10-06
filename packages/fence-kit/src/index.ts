@@ -53,6 +53,8 @@ export { boardPartNames, lookupBoardPart } from './parts/boards.ts';
 export { drawNamedChip, lookupNamedChip, namedChipLooks, namedChipTypes } from './parts/namedChips.ts';
 export { lookupGateUnits, lookupPinout, lookupRole, pinoutModels, pinoutTable } from './parts/pinouts.ts';
 export type { AdapterChip, GateUnit, Pinout, PinoutRow } from './parts/pinouts.ts';
+export { discreteModels, discreteTable, lookupDiscrete } from './parts/discretes.ts';
+export type { Discrete, DiscreteKind, DiscreteRow, DiscreteType } from './parts/discretes.ts';
 export type { NamedChip, NamedChipPin } from './parts/namedChips.ts';
 export {
   CONNECTOR_LOOKS, MIN_CONNECTOR_PINS, connectorBox, connectorFacing, connectorNames, connectorPinNames,

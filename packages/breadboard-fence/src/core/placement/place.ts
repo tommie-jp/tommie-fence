@@ -8,7 +8,7 @@ import type {
 } from '../types.ts';
 import type { BoardPart, Connector, NamedChip } from 'fence-kit';
 import {
-  adapterFor, isDirectSmd, lookupNamedChip, lookupPinout, pinoutModels, smdLooksOf, smdSuggestion,
+  adapterFor, isDirectSmd, lookupDiscrete, lookupNamedChip, lookupPinout, pinoutModels, smdLooksOf, smdSuggestion,
 } from 'fence-kit';
 import type { Turn } from '../parts/orient.ts';
 import { isPolarVariant, typesWithVariants, variantsOf } from '../parts/variants.ts';
@@ -313,15 +313,23 @@ function placeLegs(
     return fail(`部品 ${safeToken(spec.id)}: 穴番地を ${legs} つ書きます (今は ${spec.holes.length} つ)`, spec.line);
   }
 
+  // **型番がディスクリートの表にあり、穴にピンの名前を書いていなければ、表の名前で呼ぶ**
+  // (52 の docs/117。`Q1: transistor f5 f6 f7 2SC1815` の穴は左から E C B)。
+  // 書かれた名前は表より先 (裏向きに挿すなど、書き手が決めた並びを壊さない)。
+  // 面実装の変換基板 (`sot23-dip` など) は番号の付き方が違うので引かない。
+  const printed = kind === 'three-lead' && !spec.holes.some((hole) => hole.tagged) && !(spec.variant ?? '').startsWith('sot')
+    ? lookupDiscrete(spec.type, modelOf(spec))
+    : null;
   const pins: PlacedPin[] = [];
-  for (const hole of spec.holes) {
+  for (const [index, hole] of spec.holes.entries()) {
     const address = resolveHole(hole.addr, board, spec.line);
     if (!address.ok) return address;
+    const name = printed?.names[index] ?? hole.tag;
     // 同じ名前が 2 本あると `D1.A` がどちらを指すか決まらない。
-    if (pins.some((pin) => pin.name === hole.tag)) {
-      return fail(`部品 ${safeToken(spec.id)}: ピン名 ${safeToken(hole.tag)} が 2 回出てきます`, spec.line);
+    if (pins.some((pin) => pin.name === name)) {
+      return fail(`部品 ${safeToken(spec.id)}: ピン名 ${safeToken(name)} が 2 回出てきます`, spec.line);
     }
-    pins.push({ name: hole.tag, address: address.value });
+    pins.push(printed === null ? { name, address: address.value } : { name, address: address.value, number: String(index + 1) });
   }
   return ok({ ...base, kind, bridges: [], pins });
 }

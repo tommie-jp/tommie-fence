@@ -8,6 +8,12 @@
 ### Added
 
 - `sheets.ts` — `sheets:` の切り分け (`splitSheets`)・枚ごとの SVG を縦に積む (`stackSheets`)・`links:` でネットリストを併せる (`mergeNetlists`)・全体 (`renderSheets`)。perf・bread・copper が使う (52 の docs/118)
+- 3 ピンのディスクリート (トランジスタ・FET・三端子レギュレータ) のピンの名前の表 `discretes.ts` (`lookupDiscrete` `discreteTable` `discreteModels`)。
+  2SC1815・2SA1015・2SC2120・2SA950・2SC2655・2SA1020 (E C B)、2N3904・2N3906・PN2222A・2SC1008 (E B C)、P2N2222A (C B E)、
+  2SD882・2SB772 (TO-126、E C B)、2SK30A (S G D)・2SK170・2SK117・2SJ74 (D G S)、2N7000 (S G D)・BS170 (D G S)、
+  IRF520/540・IRLZ44N・IRF9540・2SK2231 (G D S)、7805 (IN GND OUT)・78L05 (OUT GND IN)・LM317 (ADJ OUT IN)。
+  並びは「印字面を手前、ピンを下にして左から右」で、データシートの図で確かめた (出典は各行の `source`)。`scripts/discrete-rows.mjs` が文書の表を書き出す
+- DIP のピンの名前の表に TL082 (TL072 と同じ並び)・NE5532・LM324・LM741・LM386・ATtiny85・ATmega328P を足した (TI・Atmel・Microchip のデータシートで確かめた)
 
 ## [0.15.0] - 2026-10-05
 

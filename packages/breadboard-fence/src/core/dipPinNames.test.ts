@@ -30,7 +30,7 @@ describe('置き方', () => {
   });
 
   test('leaves the numbers alone for an unknown model or none', () => {
-    for (const line of ['U1: dip8 @ e10 LM741', 'U1: dip8 @ e10', 'U1: dip14 @ e10 NE555']) {
+    for (const line of ['U1: dip8 @ e10 LM9999', 'U1: dip8 @ e10', 'U1: dip14 @ e10 NE555']) {
       expect(pinsOf(line).map((pin) => pin.name).slice(0, 2)).toEqual(['1', '2']);
     }
   });
@@ -162,11 +162,11 @@ describe('絵', () => {
   });
 
   test('prints only the numbers for a model not in the table, and says so', () => {
-    const result = renderBreadboard(fence('parts:', '  U1: dip8 @ e10 LM741'));
+    const result = renderBreadboard(fence('parts:', '  U1: dip8 @ e10 LM9999'));
     const shown = texts(result.svg);
     const said = result.notices.map((one) => one.message).join('\n');
 
-    expect(said).toContain('LM741');
+    expect(said).toContain('LM9999');
     expect(said).toContain('NE555');
     expect(renderBreadboard(fence('parts:', '  U1: dip8 @ e10')).notices).toEqual([]);
 

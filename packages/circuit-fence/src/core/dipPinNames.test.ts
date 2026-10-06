@@ -52,7 +52,7 @@ describe('種類', () => {
   });
 
   test('draws only numbers for a model not in the table, for a count that does not match and for no model', () => {
-    for (const line of ['U1: dip8 c2 LM741', 'U1: dip14 c2 NE555', 'U1: dip8 c2']) {
+    for (const line of ['U1: dip8 c2 LM9999', 'U1: dip14 c2 NE555', 'U1: dip8 c2']) {
       const type = typeOf(line)!;
       expect(type.pinLabels).toBeUndefined();
       expect(type.options).not.toContain('hide numbers');
@@ -133,11 +133,11 @@ describe('図とネットリスト', () => {
   });
 
   test('tells which model was not in the table and draws numbers, without calling it an error', () => {
-    const result = compileCircuit(circuit('parts:', '  U1: dip8 c4 LM741'));
+    const result = compileCircuit(circuit('parts:', '  U1: dip8 c4 LM9999'));
 
     expect(result.errors).toEqual([]);
     const notice = result.notices.map((one) => one.message).join('\n');
-    expect(notice).toContain('LM741');
+    expect(notice).toContain('LM9999');
     expect(notice).toContain('番号');
     expect(notice).toContain('NE555');
     expect(result.tex).not.toContain('hide numbers');

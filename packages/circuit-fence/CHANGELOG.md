@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- 型番がディスクリートの表 (fence-kit) にあるトランジスタ・FET で、記号と極性が食い違うときのお知らせ (`Q1: npn … 2SA1015` は PNP)。図は書かれた記号のまま
+- DIP のピンの名前の表に NE5532・LM324・LM741・LM386・ATtiny85・ATmega328P を足した (fence-kit)
+
 ## [0.32.0] - 2026-10-05
 
 ### Added

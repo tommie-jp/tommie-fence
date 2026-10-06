@@ -126,8 +126,14 @@ parts:
 | `TLC555` (`TLC555CP` `TLC555IP`) | `dip8` | `GND` `TRIG` `OUT` `RESET` `CONT` `THRES` `DISCH` `VDD` |
 | `LM358` (`LM358P` `LM358N` `LM2904` `LM258` …) | `dip8` | `OUT1` `IN1-` `IN1+` `V-` `IN2+` `IN2-` `OUT2` `V+` |
 | `TL071` (`TL071CP` …) | `dip8` | `NC` `IN-` `IN+` `VCC-` `NC` `OUT` `VCC+` `NC` |
-| `TL072` (`TL072CP` …) | `dip8` | `1OUT` `1IN-` `1IN+` `VCC-` `2IN+` `2IN-` `2OUT` `VCC+` |
+| `TL072` (`TL072CP` `TL082` …) | `dip8` | `1OUT` `1IN-` `1IN+` `VCC-` `2IN+` `2IN-` `2OUT` `VCC+` |
 | `LM393` (`LM393P` `LM393N` `LM393A` `LM2903` `LM293` …) | `dip8` | `1OUT` `1IN-` `1IN+` `GND` `2IN+` `2IN-` `2OUT` `VCC` |
+| `NE5532` (`NE5532P` `NE5532AP` `SA5532` …) | `dip8` | `1OUT` `1IN-` `1IN+` `VCC-` `2IN+` `2IN-` `2OUT` `VCC+` |
+| `LM324` (`LM324N` `LM324AN` `LM2902` …) | `dip14` | `1OUT` `1IN-` `1IN+` `VCC+` `2IN+` `2IN-` `2OUT` `3OUT` `3IN-` `3IN+` `VCC-` `4IN+` `4IN-` `4OUT` |
+| `LM741` (`LM741CN` `LM741N` `UA741` …) | `dip8` | `OFFSET1` `IN-` `IN+` `V-` `OFFSET2` `OUT` `V+` `NC` (1・5 番はオフセット調整。8 番は NC) |
+| `LM386` (`LM386N` `LM386N-1` `LM386N-3` …) | `dip8` | `GAIN` `IN-` `IN+` `GND` `VOUT` `VS` `BYPASS` `GAIN` (1 番と 8 番は同じ印字 `GAIN` なので番号で指す。両ピンの間にコンデンサで利得 20→200) |
+| `ATtiny85` (`ATtiny85-20PU` `ATtiny45` `ATtiny25`) | `dip8` | `PB5` `PB3` `PB4` `GND` `PB0` `PB1` `PB2` `VCC` (1 番 `PB5` は RESET 兼用。PB0=MOSI/SDA、PB1=MISO、PB2=SCK/SCL、PB3=XTAL1、PB4=XTAL2) |
+| `ATmega328P` (`ATmega328P-PU` `ATmega328` `ATmega168` …) | `dip28` | `PC6` `PD0` `PD1` `PD2` `PD3` `PD4` `VCC` `GND` `PB6` `PB7` `PD5` `PD6` `PD7` `PB0` `PB1` `PB2` `PB3` `PB4` `PB5` `AVCC` `AREF` `GND` `PC0` `PC1` `PC2` `PC3` `PC4` `PC5` (1 番 `PC6` は RESET 兼用。8 番と 22 番は GND (番号で指す)。PB6・PB7 は水晶 (XTAL1・XTAL2)) |
 | `CD4017B` (`CD4017` `CD4017BE`) | `dip16` | `Q5` `Q1` `Q0` `Q2` `Q6` `Q7` `Q3` `VSS` `Q8` `Q4` `Q9` `CO` `INH` `CLOCK` `RESET` `VDD` |
 | `CD4040B` (`CD4040` `CD4040BE`) | `dip16` | `Q12` `Q6` `Q5` `Q7` `Q4` `Q3` `Q2` `VSS` `Q1` `CLOCK` `R` `Q9` `Q8` `Q10` `Q11` `VDD` |
 | `CD4069UB` (`CD4069` `CD4069UBE`) `CD40106B` (`CD40106` `CD40106BE`) | `dip14` | `A` `G` `B` `H` `C` `I` `VSS` `J` `D` `K` `E` `L` `F` `VDD` |
@@ -189,6 +195,45 @@ parts:
 | `ULN2003A` (`ULN2003` `ULN2003APG` `ULN2003AN`) | `dip16` | `1B` `2B` `3B` `4B` `5B` `6B` `7B` `GND` `COM` `7C` `6C` `5C` `4C` `3C` `2C` `1C` (7 回路のダーリントン (シンクドライバ)。B が入力、C が出力、`GND` はデータシートの `E`。`COM` は負荷の電源側へ) |
 | `3SK291` | `dip4` (2 列の変換基板) / `sip4` (1 列の変換基板) | `G1` `G2` `D` `S` (SMQ の 1〜4 番。基板が番号を変えていれば `pins:` で名前を書く)。面実装しか無いので、緑の変換基板に実寸の胴 (2.9 mm 角、印字 `U.F`) を載せた姿で描く |
 | `SFU455B` (`SFU455A` `SFU455`) | `sip3` | `IN` `GND` `OUT` (村田の 455 kHz セラミックフィルタ。橙の胴で描く) |
+
+### 3 ピンのトランジスタ・FET・レギュレータの穴の順
+
+`Q1: transistor f5 f6 f7 2SC1815` のように**穴の名前を書かず、型番が下の表にあれば、書いた穴の順に表の名前で呼ぶ**
+(ネットリストは `Q1.E` `Q1.C` `Q1.B`)。順は**印字面 (平らな面) を手前、ピンを下にして左から右**。
+同じ TO-92 でも型番で並びが違う (2SC1815 は E C B、2N3904 は E B C、2N7000 は S G D、BS170 は D G S) ので、
+**型番を書けば取り違えない**。ピンの名前を穴に書いたとき (`f5(B)`) は書いたとおりで、表は引かない
+(裏向きに挿すなど、書き手が決めた並びを壊さない)。面実装の変換基板 (`sot23-dip` など) も引かない。
+`regulator` も同じ (`U1: regulator f5 f6 f7 7805`)。回路図は記号 (`npn` `pnp` `njfet` …) でピンの名前が決まっており、
+**型番の極性が記号と食い違うとお知らせ**が出る (`Q1: npn … 2SA1015` は PNP)。
+
+
+| 型番 | 種類 | 穴の順 (印字面を手前、ピンを下にして左から) | パッケージ |
+| --- | --- | --- | --- |
+| `2SC1815` (`2SC1815Y` `2SC1815GR` `2SC1815BL` …) | `transistor` | `E` `C` `B` | TO-92 |
+| `2SA1015` (`2SA1015Y` `2SA1015GR` `2SA1015-Y` …) | `transistor` | `E` `C` `B` | TO-92 |
+| `2SC2120` (`2SC2120Y` `2SC2120O` `2SC2120-Y` …) | `transistor` | `E` `C` `B` | TO-92 |
+| `2SA950` (`2SA950Y` `2SA950O` `2SA950-Y` …) | `transistor` | `E` `C` `B` | TO-92 |
+| `2SC2655` (`2SC2655Y` `2SC2655O` `2SC2655-Y` …) | `transistor` | `E` `C` `B` | TO-92MOD。太い TO-92 (2-5J1A) |
+| `2SA1020` (`2SA1020Y` `2SA1020O` `2SA1020-Y` …) | `transistor` | `E` `C` `B` | TO-92MOD。太い TO-92 (2-5J1A) |
+| `2N3904` | `transistor` | `E` `B` `C` | TO-92 |
+| `2N3906` | `transistor` | `E` `B` `C` | TO-92 |
+| `2N2222A` (`2N2222` `PN2222A` `PN2222`) | `transistor` | `E` `B` `C` | TO-92 / TO-18。**onsemi の `P2N2222A` は C B E (STYLE 17) で逆**。金属缶 TO-18 は番号 (1=E 2=B 3=C) を穴の順に書く |
+| `P2N2222A` | `transistor` | `C` `B` `E` | TO-92。onsemi の STYLE 17。`PN2222A` (E B C) と C と E が逆 |
+| `2SC1008` | `transistor` | `E` `B` `C` | TO-92。同世代の 2SC1815 (E C B) と違い E B C。**原典の資料は見つからず JCET 製の資料による** |
+| `2SK30A` (`2SK30ATM` `2SK30A-Y` `2SK30A-GR` …) | `transistor` | `S` `G` `D` | TO-92。2SK170・2SK117 は D G S で S と D が逆 |
+| `2SK170` (`2SK170-BL` `2SK170-GR` `2SK170-V` …) | `transistor` | `D` `G` `S` | TO-92。2SK30A は S G D で S と D が逆 |
+| `2SK117` (`2SK117-BL` `2SK117-GR` `2SK117-Y`) | `transistor` | `D` `G` `S` | TO-92 |
+| `2SJ74` (`2SJ74-BL` `2SJ74-GR` `2SJ74-V` …) | `transistor` | `D` `G` `S` | TO-92。2SK170 の相補品。並びも同じ |
+| `2N7000` | `transistor` | `S` `G` `D` | TO-92。**BS170 は D G S で逆**。onsemi の 2022 年版は本文の表が D G S と読める (誤記説あり・未確認)。買った品の資料かテスタで確かめる |
+| `BS170` | `transistor` | `D` `G` `S` | TO-92。**2N7000 は S G D で逆** |
+| `IRF520` (`IRF520N` `IRF540` `IRF540N` …) | `transistor` | `G` `D` `S` | TO-220。タブは D。IRLZ44N は Vgs 最大 ±16 V |
+| `IRF9540` (`IRF9540N` `IRF9Z34N`) | `transistor` | `G` `D` `S` | TO-220。並びは N チャネルと同じ G D S。タブは D |
+| `2SK2231` | `transistor` | `G` `D` `S` | PW-Mold (面実装)。**TO-220 ではなく面実装 (DPAK 相当)**。タブは D。基板に挿すには変換基板が要る |
+| `2SD882` | `transistor` | `E` `C` `B` | TO-126。**ST の資料だけ図が B C E で食い違う**。実物をテスタで確かめる |
+| `2SB772` | `transistor` | `E` `C` `B` | TO-126 |
+| `7805` (`L7805` `L7805CV` `LM7805` …) | `regulator` | `IN` `GND` `OUT` | TO-220。78L05 (TO-92) は逆の並び |
+| `78L05` (`L78L05` `UA78L05` `MC78L05` …) | `regulator` | `OUT` `GND` `IN` | TO-92。7805 (TO-220) は逆の並び |
+| `LM317` (`LM317T` `LM317MP`) | `regulator` | `ADJ` `OUT` `IN` | TO-220。`GND` ではなく `ADJ`。タブは OUT |
 
 ## 配線
 

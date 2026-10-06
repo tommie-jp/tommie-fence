@@ -36,7 +36,7 @@ describe('番号の引き方', () => {
   });
 
   test('says nothing without a unit letter, without a model, or for a model that is not a gate', () => {
-    for (const line of ['U1: nand c3 74HC00', 'U1A: nand c3', 'U1A: nand c3 LM741', 'U1A: nand c3 74HC74', 'GATEA: nand c3 74HC00']) {
+    for (const line of ['U1: nand c3 74HC00', 'U1A: nand c3', 'U1A: nand c3 LM9999', 'U1A: nand c3 74HC74', 'GATEA: nand c3 74HC00']) {
       expect(gateNumbersOf(partOf(line)), line).toEqual({ numbers: [], problem: null });
     }
   });

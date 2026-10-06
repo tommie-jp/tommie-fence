@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { pinoutModels } from 'fence-kit';
+import { discreteModels, pinoutModels } from 'fence-kit';
 import { describe, expect, test } from 'vitest';
 import { renderPerfboard } from './index.ts';
 
@@ -67,11 +67,11 @@ describe('ネットリスト', () => {
   });
 
   test('keeps the numbers for an unknown model, says so, and says nothing when no model is written', () => {
-    const unknown = renderPerfboard(fence('parts:', '  U1: dip8 c3 LM741'));
+    const unknown = renderPerfboard(fence('parts:', '  U1: dip8 c3 LM9999'));
 
     expect(unknown.netlist.flatMap((net) => net.refs)).toContain('U1.2');
     const said = unknown.notices.map((one) => one.message).join('\n');
-    expect(said).toContain('LM741');
+    expect(said).toContain('LM9999');
     expect(said).toContain('NE555');
     expect(renderPerfboard(fence('parts:', '  U1: dip8 c3')).notices).toEqual([]);
   });
@@ -102,7 +102,7 @@ describe('絵', () => {
   });
 
   test('prints only the numbers for a model not in the table', () => {
-    const shown = texts(renderPerfboard(fence('parts:', '  U1: dip8 c3 LM741')).svg);
+    const shown = texts(renderPerfboard(fence('parts:', '  U1: dip8 c3 LM9999')).svg);
     expect(shown).not.toContain('GND');
   });
 
@@ -116,5 +116,10 @@ describe('docs/01-syntax.md', () => {
   test('names every model in the table of DIP pin names', () => {
     const syntax = readFileSync(fileURLToPath(new URL('../../docs/01-syntax.md', import.meta.url)), 'utf8');
     expect(pinoutModels().filter((model) => !syntax.includes(`\`${model}\``))).toEqual([]);
+  });
+
+  test('names every model in the table of 3 pin transistors and regulators', () => {
+    const syntax = readFileSync(fileURLToPath(new URL('../../docs/01-syntax.md', import.meta.url)), 'utf8');
+    expect(discreteModels().filter((model) => !syntax.includes(`\`${model}\``))).toEqual([]);
   });
 });

@@ -2,7 +2,7 @@ import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { gateNumbersOf } from '../gateNumbers.ts';
 import { addressHint, cornerOf, formatAddress, isNearlyZero, isSameAddress, parseAddress } from './address.ts';
-import { partTypeOf, lookupPin, orientOf, pinAxis, pinHint, pinRefName, unnamedDip } from '../parts.ts';
+import { partTypeOf, lookupPin, mismatchedDiscrete, orientOf, pinAxis, pinHint, pinRefName, unnamedDip } from '../parts.ts';
 import type { Address } from './address.ts';
 import { NO_POINTS } from '../parser/compact.ts';
 import type { Points } from '../parser/compact.ts';
@@ -146,8 +146,19 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
     errors,
     // ピンの名前を補えなかった DIP は `check: off` でも言う — 検査ではなく、
     // 何で描いたか (番号) の知らせ (文法の方針 2)。
-    notices: [...parts.flatMap(unnamedDipNotice), ...parts.flatMap(gateNumberNotice), ...(checking ? ambiguousTouches(circuit, byId) : [])],
+    notices: [...parts.flatMap(unnamedDipNotice), ...parts.flatMap(mismatchedDiscreteNotice), ...parts.flatMap(gateNumberNotice), ...(checking ? ambiguousTouches(circuit, byId) : [])],
   };
+}
+
+/** 記号と型番の極性が食い違うときのお知らせ (52 の docs/117)。図は書かれた記号のまま描く。 */
+function mismatchedDiscreteNotice(part: PartSpec): FenceError[] {
+  const mismatch = mismatchedDiscrete(part);
+  if (mismatch === null) return [];
+  return [fenceError(
+    `${part.id} の型番 ${safeToken(mismatch.model)} は ${mismatch.actual}ですが、${part.type} (${mismatch.drawn}) の記号で描きました`
+    + ' (記号の種類を型番に合わせます)',
+    part.line,
+  )];
 }
 
 /** ゲートにピンの番号を添えられなかったときのお知らせ (`gateNumbers.ts`)。 */
