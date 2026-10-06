@@ -76,7 +76,7 @@ export function renderWire(
     d: path, fill: 'none', stroke: chipPin, 'stroke-width': num(wireWidth * BARE_WIDTH_RATIO),
     'stroke-linecap': 'round', 'stroke-linejoin': 'round',
   });
-  const covered = wirePath(stripEnds(points), hops) || path;
+  const covered = wirePath(stripEnds(points, hops), hops) || path;
   const line = element('path', {
     d: covered, fill: 'none', stroke: color, 'stroke-width': num(wireWidth), 'stroke-linecap': 'round',
   });
@@ -115,12 +115,38 @@ function stepToward(end: Point, next: Point, length: number): Point {
 }
 
 /** 両端を剥いた長さだけ縮めた点の並び (元の並びは変えない)。 */
-function stripEnds(points: readonly Point[]): readonly Point[] {
+function stripEnds(points: readonly Point[], hops: readonly Point[] = []): readonly Point[] {
   if (points.length < 2) return points;
-  const first = stepToward(points[0]!, points[1]!, BARE_TIP);
-  const last = stepToward(points[points.length - 1]!, points[points.length - 2]!, BARE_TIP);
+  const head = points[0]!;
+  const tail = points[points.length - 1]!;
+  // 隣が角なら、跨ぎを描ける区間は角の丸めの手前まで (`wirePath` と同じ取り方)。
+  const bend = points.length > 2 ? CORNER_RADIUS : 0;
+  const first = stepToward(head, points[1]!, bareLength(head, points[1]!, bend, hops));
+  const last = stepToward(tail, points[points.length - 2]!, bareLength(tail, points[points.length - 2]!, bend, hops));
   return [first, ...points.slice(1, -1), last];
 }
+
+/**
+ * 端で剥く長さ。**跨ぎが端に近いと、剥いた所に弧の始まりが掛かる** — 被覆の線から弧が
+ * 落ちて、芯線と縁取りの弧だけが残り、被覆はまっすぐ下の線に潜って見えた
+ * (溝をまたぐ 2 穴の短い線 `e13 -- f13` が、溝の脇を走る線を跨いだ所)。
+ * そのときは弧の手前まで剥く長さを縮める。
+ */
+function bareLength(end: Point, next: Point, bend: number, hops: readonly Point[]): number {
+  const length = distanceOf(end, next);
+  if (length === 0) return BARE_TIP;
+  // 弧が描かれる跨ぎだけを数える (区間の端の手前で収まるもの。`hopsAlong` と同じ条件)。
+  const room = length - bend;
+  const unit = { x: (next.x - end.x) / length, y: (next.y - end.y) / length };
+  const near = hops
+    .filter((hop) => Math.abs((hop.x - end.x) * unit.y - (hop.y - end.y) * unit.x) < EPSILON)
+    .map((hop) => (hop.x - end.x) * unit.x + (hop.y - end.y) * unit.y)
+    .filter((along) => along - HOP > 0 && along + HOP < room && along - HOP < BARE_TIP);
+  return near.length === 0 ? BARE_TIP : Math.max(0, Math.min(...near) - HOP - HOP_CLEARANCE);
+}
+
+/** 剥いた所と弧の始まりの間。0 だと弧の付け根で被覆の丸い端が弧に重なる。 */
+const HOP_CLEARANCE = 0.5;
 
 /**
  * 跨ぎの半径。**穴の間隔 (20) の 3/10。** 縁込みの線の太さ (約 6) より十分大きくないと

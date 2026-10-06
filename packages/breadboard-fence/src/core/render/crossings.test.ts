@@ -57,3 +57,19 @@ describe('wires that cross', () => {
     expect(svg).not.toMatch(/<path d="[^"]* A [^"]*"/);
   });
 });
+
+describe('短い線の跨ぎ', () => {
+  test('draws the hop in the coloured cover too, when it sits next to the stripped end', () => {
+    // 溝をまたぐ 2 穴の緑の線が、溝の脇を走る橙の線を跨ぐ。跨ぎは端から 10 px で、
+    // 剥いた所 (9 px) に弧の始まりが掛かる。被覆にも弧が無いと、芯線の弧だけが浮いて見えた。
+    const { svg } = renderBreadboard([
+      'board: half',
+      'wires:',
+      '  - e9 -- e19 orange [v10]',
+      '  - e13 -- f13 green',
+    ].join('\n'));
+    const green = [...svg.matchAll(/<path d="([^"]*)" fill="none" stroke="#2a9d4b"/g)].map((match) => match[1]);
+    expect(green).toHaveLength(1);
+    expect(green[0]).toContain(' A ');
+  });
+});
