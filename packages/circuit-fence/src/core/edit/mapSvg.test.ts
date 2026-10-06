@@ -52,7 +52,8 @@ describe('renderMapHtml が描くもの', () => {
     const svg = draw('parts:\n  R1: resistor 1,1 3,1\n');
 
     expect(svg).toContain('class="cf-axis"');
-    expect(svg).toContain('>a</text>');
+    // 列の 1 と行の 1 (行も数で数える)。
+    expect(svg.match(/class="cf-axis">1<\/text>/g)).toHaveLength(2);
   });
 
   test('lays a drop target over every crossing', () => {
@@ -1035,13 +1036,24 @@ describe('箱の中の字は重ならない', () => {
     expect(clashes).toEqual([]);
   });
 
+  test('numbers the rows as it numbers the columns, as the address does', () => {
+    // 番地は `x,y` (列,行) の数なので、行の見出しも数 (52 の docs/126)。
+    const rows = [...draw('parts:\n  R1: resistor 1,1 1,3\n').matchAll(/<text x="([-\d.]+)" y="([-\d.]+)"[^>]*class="cf-axis">([^<]+)<\/text>/g)]
+      .filter((found, _, all) => found[2] !== all[0]?.[2])
+      .map((found) => found[3]);
+
+    expect(rows.slice(0, 3)).toEqual(['1', '2', '3']);
+  });
+
   test('moves the row letters out from under a part that reaches left of the grid', () => {
     // 1 列目に置いたマイコンボードはピンの名前が升目の左へ出る。決め打ちの位置だと
     // **行の字が箱の下に隠れて**、図の行を数えられなくなる。
     const svg = draw('parts:\n  PI1: pico 1,1\n');
     const at = Number(/<g transform="translate\((-?[\d.]+),/.exec(svg)?.[1] ?? NaN);
-    const letters = [...svg.matchAll(/<text x="([-\d.]+)"[^>]*class="cf-axis">[a-z]+<\/text>/g)]
-      .map((found) => Number(found[1]));
+    const axes = [...svg.matchAll(/<text x="([-\d.]+)" y="([-\d.]+)"[^>]*class="cf-axis">[^<]+<\/text>/g)];
+    // 行の見出しは左の縦一列 (列の見出しは上の横一列で、どれも同じ y)。
+    const columnY = Number(axes[0]?.[2]);
+    const letters = axes.filter((found) => Number(found[2]) !== columnY).map((found) => Number(found[1]));
     const leftmost = Math.min(...[...svg.matchAll(/<text [^>]*class="cf-pin-name"[^>]*>[^<]*<\/text>/g)]
       .map((found) => at + spanOf(found[0], 8).left));
 

@@ -1,6 +1,6 @@
 import { element, escapeMarkup, fit, lookupBoardPart, num, svgText, textWidth } from 'fence-kit';
 import { LIMITS } from '../limits.ts';
-import { formatAddress, rowLetters } from '../model/address.ts';
+import { formatAddress } from '../model/address.ts';
 import {
   drawBox, drawGlyph, glyphOf, glyphSpan, glyphSpanBack, glyphTall, leadsFromCentre, legGap,
   namePlace,
@@ -74,7 +74,7 @@ function drawGrid(map: Shown): string {
 }
 
 /**
- * 行と列の見出し (a・b … z・aa・ab … と 1〜99)。番地を目で数えられるように。
+ * 行と列の見出し (どちらも 1〜99 の数。番地 `x,y` と同じ数)。番地を目で数えられるように。
  *
  * **行の字は、左へ張り出した部品より外に出す。** 1 列目に置いたマイコンボードは
  * ピンの名前が升目の左へ出るので、決め打ちの位置だと**行の字が箱の下に隠れる**
@@ -86,11 +86,11 @@ function drawLabels(map: Shown, left: number): string {
     svgText(x(col), AXIS_Y, String(col + 1), { class: 'cf-axis' }));
   const axisX = Math.min(PAD_X - 12, left + AXIS_PAD);
   const rows = Array.from({ length: map.rows }, (_, row) =>
-    svgText(axisX, y(row) + 4, rowLetters(row), { class: 'cf-axis' }));
+    svgText(axisX, y(row) + 4, String(row + 1), { class: 'cf-axis' }));
   return layer('cf-axes', [...cols, ...rows].join(''));
 }
 
-/** 画布の左端から行の字までの余白。2 文字の行 (`aa`) が画布に収まる幅。 */
+/** 画布の左端から行の字までの余白。2 桁の行 (`99`) が画布に収まる幅。 */
 const AXIS_PAD = 10;
 
 /**

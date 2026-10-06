@@ -1,5 +1,5 @@
 import { LIMITS } from '../limits.ts';
-import { DEFAULT_PITCH, cornerOf, formatAddress, rowLetters, texNameOfAddress, toPoint } from '../model/address.ts';
+import { DEFAULT_PITCH, cornerOf, formatAddress, texNameOfAddress, toPoint } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
@@ -622,7 +622,7 @@ function sourceInner(inner: SourceInner, from: Point, to: Point): string[] {
 }
 
 /**
- * グリッドの点の濃さ。行英字・列数字は同じ色をそのまま (濃く) 使うので、
+ * グリッドの点の濃さ。行と列の番号は同じ色をそのまま (濃く) 使うので、
  * 点だけをこのぶん薄める。図の主役は回路で、点は位置の目安でしかない。
  */
 const GRID_DOT_OPACITY = 0.35;
@@ -710,7 +710,7 @@ function awayFrom(type: PartType, anchor: string, turn: Turn): {
  * 目印でもある。render/theme.ts が gray をグリッドの色に塗り替える)。
  *
  * **点と字は同じ色を濃さで分ける**。点は位置を示すだけなので薄く、
- * 行英字と列数字は読むものなので濃く出す。色を 2 つ持たずに不透明度で分けると、
+ * 行と列の番号は読むものなので濃く出す。色を 2 つ持たずに不透明度で分けると、
  * `grid-color` の 1 つの指定でどちらも決まる。
  */
 function drawGrid(
@@ -747,7 +747,8 @@ function drawGrid(
   const dotSize = num(Math.max(0.4, pitch * 0.55));
   const margin = num(pitch * 0.42);
 
-  // 行英字と列数字は読んで数えるものなので、大きさと色を選べる。
+  // 行と列の番号は読んで数えるものなので、大きさと色を選べる。
+  // **行も数** (番地 `x,y` の y と同じ 1 始まりの数。前は行を英字で書いていた。52 の docs/126)。
   // 書かなければ既定 (点と同じ色・点より 1 段小さい字) のまま。
   const labelColor = style.gridLabelColor === null ? 'gray' : texColorOf(style.gridLabelColor);
   const labelFont = style.gridLabelSize === null ? '\\scriptsize' : noteFontTex(style.gridLabelSize, false);
@@ -758,7 +759,7 @@ function drawGrid(
   );
   const rowLabels = ys.map(
     (y, row) =>
-      `\\node[${labelStyle}, anchor=east] at (-${margin},${num(y)}) {${rowLetters(row)}};`,
+      `\\node[${labelStyle}, anchor=east] at (-${margin},${num(y)}) {${row + 1}};`,
   );
 
   return [

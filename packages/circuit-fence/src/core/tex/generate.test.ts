@@ -449,19 +449,22 @@ describe('generateTex for latex', () => {
 describe('style', () => {
   const withStyle = (style: string[], parts: string[] = ['parts:', '  R1: resistor 1,1 3,1']) =>
     generate(...parts, 'style:', ...style).tex;
+  /** 左に並ぶ行の番号 (列の番号は上なので anchor=east を持たない)。 */
+  const rowLabel = (row: number): RegExp => new RegExp(`anchor=east\\] at \\([^)]*\\) \\{${row}\\};`);
 
   test('draws no grid unless it is asked for', () => {
     expect(generate('parts:', '  R1: resistor 1,1 3,1').tex).not.toContain('\\fill[gray, ');
   });
 
-  test('shows where parts can go, with breadboard row letters and column numbers', () => {
+  test('shows where parts can go, numbering the rows as well as the columns', () => {
     const tex = withStyle(['  grid: on']);
 
     // 置ける位置の点
     expect(tex).toContain('\\fill[gray, ');
-    // 列番号は上、行文字は左
+    // 列番号は上、行番号は左。**行も数** (番地の `x,y` の y と同じ数。52 の docs/126)
     expect(tex).toContain('{1};');
-    expect(tex).toContain('{a};');
+    expect(tex).toMatch(/anchor=east\] at \(-[\d.]+,0\) \{1\};/);
+    expect(tex).not.toContain('{a};');
   });
 
   // 点は位置の目安なので薄く、行英字と列数字は読むものなので濃く出す。
@@ -476,15 +479,15 @@ describe('style', () => {
   test('covers the cells the drawing uses', () => {
     const tex = withStyle(['  grid: on'], ['parts:', '  R1: resistor 1,1 3,3']);
 
-    expect(tex).toContain('{c};');
+    expect(tex).toMatch(rowLabel(3));
     expect(tex).toContain('{3};');
-    expect(tex).not.toContain('{d};');
+    expect(tex).not.toMatch(rowLabel(4));
   });
 
   test('reaches as far as grid-to asks, so there is room to move parts into', () => {
     const tex = withStyle(['  grid: on', '  grid-to: 5,5']);
 
-    expect(tex).toContain('{e};');
+    expect(tex).toMatch(rowLabel(5));
     expect(tex).toContain('{5};');
   });
 
