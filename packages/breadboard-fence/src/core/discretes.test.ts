@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { renderBreadboard } from './index.ts';
 
 /**
- * 3 ピンのディスクリート (52 の docs/117)。穴にピンの名前を書かず、型番が fence-kit の表にあれば、
+ * 3 ピンのディスクリート (52 の docs/119)。穴にピンの名前を書かず、型番が fence-kit の表にあれば、
  * 書いた穴の順 (印字面を手前に、左から) に表の名前で呼ぶ。書いた名前が先。
  */
 

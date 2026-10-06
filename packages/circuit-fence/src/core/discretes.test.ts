@@ -3,7 +3,7 @@ import { buildCircuit } from './model/circuit.ts';
 import { parseFence } from './parser/parseFence.ts';
 
 /**
- * 3 ピンのディスクリートの型番 (52 の docs/117)。回路図の記号はピンの名前を決めているので、
+ * 3 ピンのディスクリートの型番 (52 の docs/119)。回路図の記号はピンの名前を決めているので、
  * 型番の極性が記号と食い違うときだけお知らせを出す。図は書かれた記号のまま。
  */
 

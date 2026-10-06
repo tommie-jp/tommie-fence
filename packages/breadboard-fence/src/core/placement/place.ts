@@ -314,7 +314,7 @@ function placeLegs(
   }
 
   // **型番がディスクリートの表にあり、穴にピンの名前を書いていなければ、表の名前で呼ぶ**
-  // (52 の docs/117。`Q1: transistor f5 f6 f7 2SC1815` の穴は左から E C B)。
+  // (52 の docs/119。`Q1: transistor f5 f6 f7 2SC1815` の穴は左から E C B)。
   // 書かれた名前は表より先 (裏向きに挿すなど、書き手が決めた並びを壊さない)。
   // 面実装の変換基板 (`sot23-dip` など) は番号の付き方が違うので引かない。
   const printed = kind === 'three-lead' && !spec.holes.some((hole) => hole.tagged) && !(spec.variant ?? '').startsWith('sot')

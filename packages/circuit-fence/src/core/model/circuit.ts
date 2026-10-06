@@ -150,7 +150,7 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
   };
 }
 
-/** 記号と型番の極性が食い違うときのお知らせ (52 の docs/117)。図は書かれた記号のまま描く。 */
+/** 記号と型番の極性が食い違うときのお知らせ (52 の docs/119)。図は書かれた記号のまま描く。 */
 function mismatchedDiscreteNotice(part: PartSpec): FenceError[] {
   const mismatch = mismatchedDiscrete(part);
   if (mismatch === null) return [];

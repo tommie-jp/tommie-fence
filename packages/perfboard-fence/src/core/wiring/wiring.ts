@@ -213,7 +213,7 @@ export function pinRef(part: PlacedPart, index: number): string {
     ?? lookupNamedChip(part.type, part.variant)?.pins[index]?.name
     // 型番がピンの名前の表にある DIP は印字の名前 (52 の docs/95)。
     ?? (printed === null ? undefined : dipPinName(printed, index))
-    // 型番がディスクリートの表にあれば、穴の順 (左から) に印字の名前 (52 の docs/117)。
+    // 型番がディスクリートの表にあれば、穴の順 (左から) に印字の名前 (52 の docs/119)。
     ?? discretePins(part)?.[index];
   return `${part.id}.${named ?? index + 1}`;
 }

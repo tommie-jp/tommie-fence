@@ -46,7 +46,7 @@ export function unnamedDipNotices(parts: readonly PlacedPart[]): FenceError[] {
 }
 
 /**
- * 3 ピンのトランジスタ・レギュレータのピンの名前 (52 の docs/117)。**型番が fence-kit の
+ * 3 ピンのトランジスタ・レギュレータのピンの名前 (52 の docs/119)。**型番が fence-kit の
  * ディスクリートの表にあれば**、書いた穴の順 (印字面を手前に、左から) に表の名前で呼ぶ。
  * 面実装の変換基板・直付け (`sot23-dip` `sot346` など) は番号の付き方が違うので引かない。
  */
