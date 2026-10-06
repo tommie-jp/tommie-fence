@@ -33,7 +33,7 @@ describe('splitSheets', () => {
     expect(split.problems).toEqual([]);
     expect(split.sheets.map((sheet) => sheet.name)).toEqual(['電源', 'アンプ']);
     const [power, amp] = split.sheets;
-    expect(power?.text.split('\n').slice(0, 3)).toEqual(['title: "電源"', 'parts:', '  - R1: resistor a1 a3']);
+    expect(power?.text.split('\n').slice(0, 3)).toEqual(['title: "電源 (1枚め)"', 'parts:', '  - R1: resistor a1 a3']);
     expect(power?.firstLine).toBe(3);
     // 3 行目 (元の 5 行目) の R1 は枚の 3 行目
     expect(sourceLineOf(power!, 3)).toBe(5);
@@ -58,21 +58,21 @@ describe('splitSheets', () => {
 
   test('keeps a sheet title: over the sheet name', () => {
     const split = splitSheets('sheets:\n  - name: a\n    title: 題');
-    expect(split.sheets[0]?.text).not.toContain('title: "a"');
-    expect(split.sheets[0]?.text).toContain('title: 題');
+    expect(split.sheets[0]?.text).not.toContain('title: "a');
+    expect(split.sheets[0]?.text).toContain('title: "題 (1枚め)"');
   });
 
   test('puts the top-level title in front of each sheet title', () => {
     const split = splitSheets('title: 図01 アンプ\nsheets:\n  - name: 電源\n  - parts:\n      - R1: x');
     expect(split.problems).toEqual([]);
-    expect(split.sheets[0]?.text).toContain('title: "図01 アンプ・電源"');
-    expect(split.sheets[1]?.text).toContain('title: "図01 アンプ・2枚目"');
+    expect(split.sheets[0]?.text).toContain('title: "図01 アンプ・電源 (1枚め)"');
+    expect(split.sheets[1]?.text).toContain('title: "図01 アンプ (2枚め)"');
   });
 
-  test('names unnamed sheets 1枚目, 2枚目 and titles them so even without a figure title', () => {
+  test('names unnamed sheets 1枚め, 2枚め and titles them so even without a figure title', () => {
     const split = splitSheets('sheets:\n  - parts:\n      - R1: resistor a1 a3\n  - board: 5x5');
-    expect(split.sheets.map((sheet) => sheet.name)).toEqual(['1枚目', '2枚目']);
-    expect(split.sheets[0]?.text).toContain('title: "1枚目"');
+    expect(split.sheets.map((sheet) => sheet.name)).toEqual(['1枚め', '2枚め']);
+    expect(split.sheets[0]?.text).toContain('title: "1枚め"');
     expect(split.sheetsLine).toBe(1);
   });
 

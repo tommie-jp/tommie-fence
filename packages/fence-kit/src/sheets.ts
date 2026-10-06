@@ -182,8 +182,15 @@ export function splitSheets(source: string, extra: SheetOptions = {}): SheetSpli
   }
 
   const taken = new Set<string>();
-  /** 枚の名前は図の題にもなる。外の `title:` があれば頭に付ける。 */
-  const titleOf = (name: string): string => `title: ${JSON.stringify(figureTitle === null ? name : `${figureTitle}・${name}`)}`;
+  /**
+   * 枚の題。**末尾に必ず `(N枚め)` を付ける** — 本文から「図01 (2枚め)」と指せ、
+   * 名前を書いた枚と書かなかった枚で題の形が変わらない。枚の名前があれば外の
+   * `title:` に `・名前` で続ける。枚が自分で `title:` を書けば、その題に付ける。
+   */
+  const titleLine = (base: string | null, index: number): string => {
+    const nth = `(${index + 1}枚め)`;
+    return `title: ${JSON.stringify(base === null || base === '' ? `${index + 1}枚め` : `${base} ${nth}`)}`;
+  };
   const sheets = raw.map((one, index): SheetSource => {
     const body = [...one.lines];
     let name: string | null = null;
@@ -193,12 +200,17 @@ export function splitSheets(source: string, extra: SheetOptions = {}): SheetSpli
       if (match === null) continue;
       name = unquote((match[1] ?? '').replace(/\s+#.*$/, ''));
       // 枚が `title:` を持つならそちらを使う。
-      body[at] = titled || name === '' ? '' : titleOf(name);
+      body[at] = titled || name === '' ? '' : titleLine(figureTitle === null ? name : `${figureTitle}・${name}`, index);
       break;
     }
-    // **名前を書かなかった枚は `1枚目` `2枚目`。** 題にも links にもこの名前で出る。
+    if (titled) {
+      // 枚が書いた題にも `(N枚め)` を付ける。行の数は変えない (行番号を元のフェンスへ戻すため)。
+      const at = body.findIndex((text) => /^title:/.test(text));
+      body[at] = titleLine(unquote((body[at] ?? '').slice('title:'.length).replace(/\s+#.*$/, '')), index);
+    }
+    // **名前を書かなかった枚は `1枚め` `2枚め`。** links でもこの名前で指す。
     const unnamed = name === null || name === '';
-    const sheetName = unnamed ? `${index + 1}枚目` : name ?? '';
+    const sheetName = unnamed ? `${index + 1}枚め` : name ?? '';
     if (BAD_NAME.test(sheetName)) {
       problems.push({ message: `枚の名前に空白と . は使えません (links で枚と節点を区切るため): ${sheetName}`, line: one.firstLine });
     }
@@ -209,7 +221,7 @@ export function splitSheets(source: string, extra: SheetOptions = {}): SheetSpli
 
     const ownLines = body.length;
     const extra: string[] = [];
-    if (unnamed && !titled) extra.push(titleOf(sheetName));
+    if (unnamed && !titled) extra.push(titleLine(figureTitle, index));
     let sharedLine: number | null = null;
     for (const key of sharedKeys) {
       const block = shared.get(key);
