@@ -632,6 +632,36 @@ const ROWS: readonly PinoutRow[] = [
     look: { body: '#e8842a', edge: '#a85a12', text: '#7a3a08', mark: 'SFU' },
     note: '`sip3` を橙の胴で描く',
   },
+  {
+    // ロータリーエンコーダ単体 (EC11 など) は 5 mm ピッチのピンで穴に挿せない。ブレッドボードに挿すのは
+    // 5 ピンのモジュール (KY-040)。印字は左から CLK DT SW + GND。`+` は `VCC` と書く。
+    // 描くのは基板のピンヘッダだけ (緑の帯)。
+    models: ['KY-040', 'KY040'], role: 'ロータリーエンコーダのモジュール',
+    names: ['CLK', 'DT', 'SW', 'VCC', 'GND'],
+    look: { body: '#2f7d4f', edge: '#1d5434', text: '#e8f3ec', mark: 'ENC' },
+    note: '`sip5` を緑の帯で描く (基板のピンヘッダだけ)。印字の `+` は `VCC`。CLK=A 相、DT=B 相、SW=押しボタン',
+  },
+  {
+    // 超音波距離センサのモジュール。ピンは 1 列 4 本 (VCC Trig Echo GND)。
+    models: ['HC-SR04', 'HCSR04'], role: '超音波距離センサのモジュール',
+    names: ['VCC', 'TRIG', 'ECHO', 'GND'],
+    look: { body: '#2b6cb0', edge: '#1c4a7d', text: '#e6eef8', mark: 'SR04' },
+    note: '`sip4` を青の帯で描く (基板のピンヘッダだけ)。Echo は 5 V 出力',
+  },
+  {
+    // 模型用サーボ。コネクタは茶 (GND)・赤 (電源 5 V)・橙 (信号) の順。
+    models: ['SG90', 'SG92R', 'MG90S'], role: 'RC サーボ',
+    names: ['GND', 'VCC', 'SIG'],
+    look: { body: '#3a6ea5', edge: '#254a73', text: '#e6eef8', mark: 'SG90' },
+    note: '`sip3` を青の胴で描く。コネクタの線は茶 (GND)・赤 (VCC)・橙 (SIG)',
+  },
+  {
+    // 温湿度センサ。青い樹脂の胴にピン 4 本 (正面から見て左から VCC DATA NC GND)。3 番は NC。
+    models: ['DHT11'], role: '温湿度センサ',
+    names: ['VCC', 'DATA', 'NC', 'GND'],
+    look: { body: '#2f7fc1', edge: '#1d5a8f', text: '#e6f1fa', mark: 'DHT' },
+    note: '`sip4` を青の胴で描く。3 番は NC (番号で呼ぶ)。DATA は 4.7 kΩ〜10 kΩ で VCC へ',
+  },
 ];
 
 /** 型番 (大文字) → 行。`Map` にするのは `constructor` のような継ぎ物の名前を拾わないため。 */

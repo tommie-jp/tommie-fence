@@ -159,14 +159,14 @@ describe('ピンの名前の表', () => {
     const all = pinoutModels();
 
     // 先頭の 35 行は 74HC273 まで (既存の並び。LM393 は 6 行目、そのあとに SA612・MCP6002・LM386)、
-    // そのあとにロジック IC、そのあとに 3SK291、最後が SFU455B。
+    // そのあとにロジック IC、そのあとに 3SK291、SFU455B、1 列のモジュール (KY-040・HC-SR04・SG90・DHT11)。
     expect(all.slice(0, 9)).toEqual(['NE555', 'TLC555', 'LM358', 'TL071', 'TL072', 'LM393', 'SA612', 'MCP6002', 'LM386']);
     expect(all.slice(32, 39)).toEqual(['62256', '6116', '74HC245', '74HC273', '74HC14', '74HC00', '74HC161']);
-    expect(all.at(-2)).toBe('3SK291');
-    expect(all.at(-1)).toBe('SFU455B');
+    expect(all.slice(-6)).toEqual(['3SK291', 'SFU455B', 'KY-040', 'HC-SR04', 'SG90', 'DHT11']);
     expect(new Set(all).size).toBe(all.length);
-    expect(pinoutModels(3)).toEqual(['SFU455B']);
-    expect(pinoutModels(4)).toEqual(['3SK291']);
+    expect(pinoutModels(3)).toEqual(['SFU455B', 'SG90']);
+    expect(pinoutModels(4)).toEqual(['3SK291', 'HC-SR04', 'DHT11']);
+    expect(pinoutModels(5)).toEqual(['KY-040']);
     expect(pinoutModels(20)).toEqual([
       '74HC245', '74HC273', '74HC244', '74HC541', '74HC240', '74HC573', '74HC574',
     ]);
@@ -184,7 +184,7 @@ describe('ピンの名前の表', () => {
     const table = pinoutTable();
     expect(table.map((row) => row.models[0])).toEqual(pinoutModels());
     expect(table[0]?.models).toContain('NE555P');
-    expect(table.every((row) => [3, 4, 8, 14, 16, 20, 24, 28].includes(row.names.length))).toBe(true);
+    expect(table.every((row) => [3, 4, 5, 8, 14, 16, 20, 24, 28].includes(row.names.length))).toBe(true);
   });
 
   test('gives every pin a name that cannot be mistaken for a pin number or split by a space', () => {
@@ -331,14 +331,14 @@ describe('SFU455B (1 列 3 ピンのセラミックフィルタ)', () => {
 describe('表の全部の行', () => {
   // 電源のピンを持たない部品 (トランジスタ・フィルタを変換基板や 1 列で載せた物)。
   const NO_SUPPLY = ['3SK291', 'SFU455B'];
-  // 姿 (`look`) を持つ行は 1 列の部品で、本数は 3 本でよい。
+  // 姿 (`look`) を持つ行は 1 列の部品 (フィルタ・モジュール・センサ) で、本数は偶数でなくてよい。
   const isEvenChip = (row: { look?: unknown }) => row.look === undefined;
   const SUPPLY = /^(V|GND|AGND|DGND|GROUND)/;
 
   test('has an even number of pins between 4 and 40, and no empty or spaced name', () => {
     for (const row of pinoutTable()) {
       const model = row.models[0];
-      expect(row.names.length % 2, model).toBe(isEvenChip(row) ? 0 : 1);
+      if (isEvenChip(row)) expect(row.names.length % 2, model).toBe(0);
       expect(row.names.length, model).toBeGreaterThanOrEqual(3);
       expect(row.names.length, model).toBeLessThanOrEqual(40);
       expect(row.names.every((name) => name.trim() !== '' && !/\s/.test(name)), model).toBe(true);
@@ -436,5 +436,25 @@ describe('ゲートの回路ごとのピンの番号', () => {
     for (const model of ['74HC74', '74HC595', '74HC163', '74HC244', 'NE555', 'LM9999', null]) {
       expect(lookupGateUnits(model), String(model)).toBeNull();
     }
+  });
+});
+
+describe('1 列のモジュール・センサ (KY-040・HC-SR04・SG90・DHT11)', () => {
+  test.each([
+    ['KY-040', 5, ['CLK', 'DT', 'SW', 'VCC', 'GND']],
+    ['HC-SR04', 4, ['VCC', 'TRIG', 'ECHO', 'GND']],
+    ['SG90', 3, ['GND', 'VCC', 'SIG']],
+    ['DHT11', 4, ['VCC', 'DATA', 'NC', 'GND']],
+  ] as const)('%s is %i pins in a row with a look', (model, count, names) => {
+    const found = lookupPinout(model, count);
+    expect(found?.names).toEqual(names);
+    expect(found?.look?.mark).toBeTruthy();
+    expect(lookupPinout(model, count + 1)).toBeNull();
+  });
+
+  test('accepts the spellings people actually type', () => {
+    expect(lookupPinout('ky040', 5)?.model).toBe('KY-040');
+    expect(lookupPinout('hcsr04', 4)?.model).toBe('HC-SR04');
+    expect(lookupPinout('MG90S', 3)?.model).toBe('SG90');
   });
 });
