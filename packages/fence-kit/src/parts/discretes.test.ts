@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { discreteModels, discreteTable, lookupDiscrete } from './discretes.ts';
 
 /**
- * 3 本足のディスクリートの表 (52 の docs/119)。並びは「印字面を手前、ピンを下にして左から右」で、
+ * 3 ピンのディスクリートの表 (52 の docs/119)。並びは「印字面を手前、ピンを下にして左から右」で、
  * データシートの図で確かめたもの。
  */
 describe('ディスクリートのピンの名前の表', () => {
