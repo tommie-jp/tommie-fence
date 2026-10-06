@@ -131,7 +131,7 @@ function editLayer(
 
 /**
  * フェンスの中身を図に変換する。**`sheets:` を書いたフェンスは枚ごとに描いて縦に積む**
- * (52 の docs/117。`sheets:` を書かない図は今までの 1 枚の描き方のまま)。
+ * (52 の docs/118。`sheets:` を書かない図は今までの 1 枚の描き方のまま)。
  */
 export function renderPerfboard(input: string, options: RenderOptions = {}): RenderResult {
   const source = normalizeNewlines(input);
