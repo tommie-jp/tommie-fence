@@ -5,6 +5,7 @@ import type { Kind } from '../kinds.ts';
 import { decodeShare } from '../share.ts';
 import type { Shared } from '../share.ts';
 import type { Doc } from '../workspace.ts';
+import { attachFiles, attachSiblings, clearAttached, isDataFile } from './data.ts';
 import { els } from './els.ts';
 import { reason, say, warn } from './log.ts';
 import { changed, ws } from './workspace.ts';
@@ -36,6 +37,8 @@ export async function fetchOk(url: string): Promise<Response> {
 function openDoc(doc: Doc, text: string): void {
   // **前の文書の掴み手は捨てる。** 残すと、別のファイルを上書きしてしまう。
   held = null;
+  // **添付も前の文書のものは捨てる** (同じ名前のデータが別の文書の図に黙って重なるのを避ける)。
+  clearAttached();
   ws.open(doc, text);
   changed('open');
 }
@@ -125,6 +128,7 @@ async function pickFile(): Promise<void> {
 export async function openUrl(url: string): Promise<boolean> {
   try {
     openText(nameOf(url), await (await fetchOk(url)).text(), { url });
+    await attachSiblings(url, ws.fences.map((fence) => fence.source));
     return true;
   } catch (error) {
     warn(`${url} を開けませんでした: ${reason(error)}`);
@@ -236,6 +240,13 @@ function listenDrop(): void {
     const item = event.dataTransfer?.items[0];
     const file = event.dataTransfer?.files[0];
     if (file === undefined) return;
+
+    // **データ (CSV・Touchstone) を落としたら、開かず添える** (`data:` に重なる)。
+    const dropped = [...(event.dataTransfer?.files ?? [])];
+    if (dropped.every(isDataFile)) {
+      void attachFiles(dropped);
+      return;
+    }
 
     // **落としたものからも掴み手を取れる** (Chromium)。取れれば、そのまま
     // その場に書き戻せる。取れなければダウンロードに落ちるだけ。

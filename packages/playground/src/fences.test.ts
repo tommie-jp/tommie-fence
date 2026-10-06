@@ -1,4 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { extractFences } from 'fence-kit';
 import { describe, expect, test } from 'vitest';
+import { KINDS } from './kinds.ts';
 import { render } from './fences.ts';
 
 /**
@@ -99,5 +102,52 @@ describe('render', () => {
     expect(output.broken).toBe(true);
     expect(output.messages[0]).toContain('2 行目');
     expect(output.messages[0]).toContain('R1: resistr a1 a2');
+  });
+});
+
+/** 各パッケージの例から、フェンス 1 本と隣のデータを取り出す (本物の `data:` を通す)。 */
+const exampleOf = (pkg: string, name: string, kind: string): string => {
+  const markdown = readFileSync(new URL(`../../${pkg}/examples/${name}`, import.meta.url), 'utf8');
+  return extractFences(markdown, kind)
+    .map((fence) => fence.source)
+    .find((source) => /^data:/m.test(source)) ?? '';
+};
+
+const sideOf = (pkg: string, name: string): string =>
+  readFileSync(new URL(`../../${pkg}/examples/${name}`, import.meta.url), 'utf8');
+
+describe('data: の添付', () => {
+  test('読み口を渡さなければ「この宿主では読めません」と言う', () => {
+    const source = exampleOf('graph-fence', '00-resonance.md', 'graph');
+
+    expect(render('graph', source).messages.join('\n')).toContain('この宿主では 00-resonance.csv を読めません');
+  });
+
+  test('読み口で名前から中身を返すと、実測が重なる', () => {
+    const source = exampleOf('graph-fence', '00-resonance.md', 'graph');
+    const csv = sideOf('graph-fence', '00-resonance.csv');
+
+    const output = render('graph', source, (name) => (name === '00-resonance.csv' ? csv : null));
+
+    expect(output.messages.join('\n')).not.toContain('この宿主では');
+    expect(output.readings.join('\n')).toContain('実測 (00-resonance.csv)');
+  });
+
+  test.each([
+    ['scope-fence', '00-rc-charging.md', 'scope', '00-rc-charging-ch.csv'],
+    ['spectrum-fence', '05-antenna.md', 'spectrum', '05-antenna-fm.csv'],
+    ['vna-fence', '00-series.md', 'vna', '00-series-100.s2p'],
+  ] as const)('%s にも読み口が届く', (pkg, doc, kind, wanted) => {
+    const asked: string[] = [];
+
+    render(kind, exampleOf(pkg, doc, kind), (name) => { asked.push(name); return null; });
+
+    expect(asked).toContain(wanted);
+  });
+
+  test('全部の種類が render を通る', () => {
+    for (const kind of KINDS) {
+      expect(() => render(kind, '')).not.toThrow();
+    }
   });
 });

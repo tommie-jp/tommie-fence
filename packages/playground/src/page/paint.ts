@@ -1,6 +1,8 @@
+import { missingNote, sourceOf } from '../data.ts';
 import { render } from '../fences.ts';
 import type { NetRow, Output } from '../fences.ts';
 import type { DocFence } from '../document.ts';
+import { attached } from './data.ts';
 import { els } from './els.ts';
 import { reason } from './log.ts';
 
@@ -139,7 +141,10 @@ export function paintFence(fence: DocFence | null, { open, hasDoc }: PaintOption
     return;
   }
 
-  const output = render(fence.kind, fence.source);
+  const files = attached();
+  const output = render(fence.kind, fence.source, sourceOf(files));
+  // `data:` の名前を添えていなければ、頁の釦を案内する (コアの断りは頁の釦を知らない)。
+  const missing = missingNote(fence.source, files);
 
   // SVG は各コアが**それ自体で完結した形**で返し、フェンスから来た字は
   // 組む前にエスケープしてある (拡張のプレビューも同じものを貼っている)。
@@ -158,6 +163,7 @@ export function paintFence(fence: DocFence | null, { open, hasDoc }: PaintOption
   els.texBody.textContent = output.tex ?? '';
   paintNetlist(output.netlist);
   paintReadings(output.readings);
-  els.messages.hidden = output.messages.length === 0;
-  els.messages.textContent = output.messages.join('\n\n');
+  const messages = missing === null ? output.messages : [...output.messages, missing];
+  els.messages.hidden = messages.length === 0;
+  els.messages.textContent = messages.join('\n\n');
 }

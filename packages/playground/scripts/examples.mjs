@@ -77,6 +77,21 @@ function fromDirectory(directory, kind, broken, repoPath, prefix) {
   return found;
 }
 
+/**
+ * 例の隣のデータ (`data:` が指す CSV と Touchstone)。**`.md` と同じ場所に置く** —
+ * 頁は例を開くとき、本文の `data:` が指す名前だけを取りに行く (52 の docs/118)。
+ */
+const DATA_FILE = /\.(csv|s1p|s2p)$/i;
+
+async function copyData(from, to) {
+  if (!existsSync(from)) return;
+  for (const name of readdirSync(from)) {
+    if (!DATA_FILE.test(name)) continue;
+    await mkdir(to, { recursive: true });
+    await cp(join(from, name), join(to, name));
+  }
+}
+
 /** 3 つのパッケージの examples/ から `.md` を集めて写す。 */
 export async function collectExamples(packagesDir = '..', outDir = 'dist/examples') {
   const all = [];
@@ -97,6 +112,8 @@ export async function collectExamples(packagesDir = '..', outDir = 'dist/example
       await mkdir(join(to, '..'), { recursive: true });
       await cp(join(packagesDir, pkg, 'examples', one.broken ? 'errors' : '', one.name), to);
     }
+    await copyData(base, join(outDir, kind));
+    await copyData(join(base, 'errors'), join(outDir, kind, 'errors'));
     all.push(...ok, ...broken);
   }
   return all;

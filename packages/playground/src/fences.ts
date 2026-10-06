@@ -11,6 +11,9 @@ import type { FenceError } from 'circuit-fence/src/core';
 import type { Kind } from './kinds.ts';
 import type { Finishing } from './tex/index.ts';
 
+/** `data:` のファイルを名前で引く口。**頁が持つ添付から引く** (`data.ts`)。無ければ null。 */
+export type DataSource = (name: string) => string | null;
+
 /**
  * 3 つのコアを 1 つの入口にまとめる。**ここが唯一 3 つを知っている場所**で、
  * 画面 (`main.ts`) は種類を渡すだけ。
@@ -72,11 +75,11 @@ function renderCircuit(source: string): Output {
 }
 
 /**
- * vna。**`data:` (Touchstone) は読めない** — 頁は文書の隣のファイルに手が届かない。
- * コアが「この宿主では読めません」と言い、理想の模型だけを描く。
+ * vna。**`data:` (Touchstone) は頁の添付から読む** (`data.ts`)。添付が無い名前は、
+ * コアが「この宿主では読めません」と言い、理想の線だけを描く。
  */
-function renderVnaOutput(source: string): Output {
-  const { svg, readingLines, errors, notices } = renderVna(source);
+function renderVnaOutput(source: string, data?: DataSource): Output {
+  const { svg, readingLines, errors, notices } = renderVna(source, data === undefined ? {} : { data });
   return {
     svg,
     tex: null,
@@ -89,11 +92,11 @@ function renderVnaOutput(source: string): Output {
 }
 
 /**
- * scope。**`data:` (WaveForms の CSV) は読めない** — vna と同じく頁は隣のファイルに
- * 手が届かない。コアが「この宿主では読めません」と言い、理想の波だけを描く。
+ * scope。**`data:` (WaveForms の CSV) は頁の添付から読む** (`data.ts`)。添付が無い名前は、
+ * コアが「この宿主では読めません」と言い、理想の線だけを描く。
  */
-function renderScopeOutput(source: string): Output {
-  const { svg, readingLines, errors, notices } = renderScope(source);
+function renderScopeOutput(source: string, data?: DataSource): Output {
+  const { svg, readingLines, errors, notices } = renderScope(source, data === undefined ? {} : { data });
   return {
     svg,
     tex: null,
@@ -106,11 +109,11 @@ function renderScopeOutput(source: string): Output {
 }
 
 /**
- * spectrum。**`data:` (tinySA・WaveForms の CSV) は読めない** — vna・scope と同じく、
+ * spectrum。**`data:` (tinySA・WaveForms の CSV) は頁の添付から読む** (`data.ts`)。添付が無い名前は、
  * コアが「この宿主では読めません」と言い、理想の線だけを描く。
  */
-function renderSpectrumOutput(source: string): Output {
-  const { svg, readingLines, errors, notices } = renderSpectrum(source);
+function renderSpectrumOutput(source: string, data?: DataSource): Output {
+  const { svg, readingLines, errors, notices } = renderSpectrum(source, data === undefined ? {} : { data });
   return {
     svg,
     tex: null,
@@ -123,11 +126,11 @@ function renderSpectrumOutput(source: string): Output {
 }
 
 /**
- * graph。**`data:` (測った値の CSV) は読めない** — 計器の画面と同じく、コアが
- * 「この宿主では読めません」と言い、理想の線だけを描く。
+ * graph。**`data:` (測った値の CSV) は頁の添付から読む** (`data.ts`)。添付が無い名前は、
+ * コアが「この宿主では読めません」と言い、理想の線だけを描く。
  */
-function renderGraphOutput(source: string): Output {
-  const { svg, readingLines, errors, notices } = renderGraph(source);
+function renderGraphOutput(source: string, data?: DataSource): Output {
+  const { svg, readingLines, errors, notices } = renderGraph(source, data === undefined ? {} : { data });
   return {
     svg,
     tex: null,
@@ -153,12 +156,12 @@ function renderLogicOutput(source: string): Output {
   };
 }
 
-export function render(kind: Kind, source: string): Output {
+export function render(kind: Kind, source: string, data?: DataSource): Output {
   if (kind === 'circuit') return renderCircuit(source);
-  if (kind === 'vna') return renderVnaOutput(source);
-  if (kind === 'scope') return renderScopeOutput(source);
-  if (kind === 'spectrum') return renderSpectrumOutput(source);
-  if (kind === 'graph') return renderGraphOutput(source);
+  if (kind === 'vna') return renderVnaOutput(source, data);
+  if (kind === 'scope') return renderScopeOutput(source, data);
+  if (kind === 'spectrum') return renderSpectrumOutput(source, data);
+  if (kind === 'graph') return renderGraphOutput(source, data);
   if (kind === 'logic') return renderLogicOutput(source);
 
   const { svg, netlist, errors, notices } =

@@ -3,8 +3,10 @@ import type { Example } from '../examples.ts';
 import { els } from './els.ts';
 import { showSheet } from './layout.ts';
 import { reason, warn } from './log.ts';
+import { attachSiblings } from './data.ts';
 import { fetchOk, openText } from './files.ts';
 import { DEV, pageUrl } from './where.ts';
+import { ws } from './workspace.ts';
 
 /**
  * 開ける `.md` の一覧。**例も「外にある `.md`」の 1 つ** (52 の docs/43) —
@@ -70,6 +72,9 @@ async function openExample(index: number): Promise<void> {
     });
     // 開けてから指す (開く途中で例ではない文書の印が付くのを避ける)。
     els.example.value = String(index);
+    // **例の隣のデータ** (本文の `data:` が指す名前だけ) を取りに行き、添えたら図を描き直す。
+    // 例そのものが開けた後なので、データが取れなくても例は開いたまま (添付で補える)。
+    await attachSiblings(new URL(example.path, pageUrl()).href, ws.fences.map((fence) => fence.source));
   } catch (error) {
     warn(`${example.name} を開けませんでした: ${reason(error)}`);
   }

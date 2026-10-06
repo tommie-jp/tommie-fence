@@ -216,3 +216,51 @@ describe('dialog', () => {
     expect(button.getAttribute('aria-expanded')).toBe('false');
   });
 });
+
+describe('paint: data: を添えていないとき', () => {
+  test('名前を並べて、データを添える釦を案内する', async () => {
+    const { paintFence } = await import('./paint.ts');
+    const [fence] = fencesIn('```graph\nx: f Hz log 1k..10k\ny: v V\nlines:\n  a V:\n    - 1k 1\n    - 10k 2\ndata: none.csv\n```\n');
+
+    paintFence(fence ?? null, { open: true, hasDoc: true });
+
+    const text = document.getElementById('messages')?.textContent ?? '';
+    expect(text).toContain('添えていないデータ: none.csv');
+    expect(text).toContain('データを添える');
+  });
+});
+
+describe('silk', () => {
+  const perf = '# t\n\n```perf\nboard: 5x7cm\nparts:\n  R1: resistor c3 c7 10k\n```\n';
+
+  test('perf のフェンスを見ているときだけ選び手が出て、選ぶと silk: が書かれる', async () => {
+    const { onChange, ws } = await import('./workspace.ts');
+    const { buildSilk, listenSilk, syncSilk } = await import('./silk.ts');
+    const { els } = await import('./els.ts');
+    onChange(() => syncSilk());
+    buildSilk();
+    listenSilk();
+
+    ws.open({ name: 't.md', title: 't', from: null, url: null, fromLink: false, crlf: false }, perf);
+    syncSilk();
+    expect(els.silkPick.hidden).toBe(false);
+    expect(els.silk.value).toBe('board');
+
+    els.silk.value = 'alpha-rows';
+    els.silk.dispatchEvent(new Event('change'));
+
+    expect(ws.text()).toContain('board:\n  size: 5x7cm\n  silk: alpha-rows\nparts:');
+    expect(els.silk.value).toBe('alpha-rows');
+  });
+
+  test('perf 以外のフェンスでは隠れる', async () => {
+    const { ws } = await import('./workspace.ts');
+    const { syncSilk } = await import('./silk.ts');
+    const { els } = await import('./els.ts');
+
+    ws.open({ name: 't.md', title: 't', from: null, url: null, fromLink: false, crlf: false }, '```scope\ntime: 1ms/div\n```\n');
+    syncSilk();
+
+    expect(els.silkPick.hidden).toBe(true);
+  });
+});

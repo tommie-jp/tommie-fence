@@ -29,6 +29,7 @@ export default defineConfig({
         'src/page/files.ts',
         'src/page/qr.ts',
         'src/page/map.ts',
+        'src/page/data.ts',
         'src/tex/assets.ts',
         'src/tex/engine.ts',
         'src/tex/svg.ts',

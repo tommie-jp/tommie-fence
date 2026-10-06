@@ -177,6 +177,8 @@ select, .bar button {
 .md-head h2 { margin: 0; font-size: 0.9rem; color: var(--ink); }
 /* フェンスの選び手は余った幅を取り、長い題は欄の中で切れる。 */
 .md-head .picks { flex: 1; min-width: 0; }
+.attach-said { color: var(--bad, #b3261e); font-size: 0.85rem; }
+.attach-said:empty { display: none; }
 .md-head .pick select { min-width: 0; max-width: 100%; }
 .md-head form { margin: 0; }
 /* **巻き取りは窓の中で止める** — 端まで行っても、後ろの頁を流さない。 */

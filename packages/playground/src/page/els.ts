@@ -17,6 +17,8 @@ export const els = {
   example: need<HTMLSelectElement>('example'),
   file: need<HTMLInputElement>('file'),
   open: need<HTMLButtonElement>('open'),
+  silkPick: need<HTMLLabelElement>('silk-pick'),
+  silk: need<HTMLSelectElement>('silk'),
   qr: need<HTMLButtonElement>('qr'),
   save: need<HTMLButtonElement>('save'),
   md: need<HTMLButtonElement>('md'),
@@ -33,6 +35,9 @@ export const els = {
   // Markdown の窓
   mdBox: need<HTMLDialogElement>('md-box'),
   fence: need<HTMLSelectElement>('fence'),
+  attach: need<HTMLButtonElement>('attach'),
+  attachFile: need<HTMLInputElement>('attach-file'),
+  attachSaid: need('attach-said'),
   source: need<HTMLTextAreaElement>('source'),
   figure: need('figure'),
   try: need('try'),

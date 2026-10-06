@@ -1,4 +1,5 @@
 import { docFrom } from './files.ts';
+import { listenAttach } from './page/data.ts';
 import { renderTry } from './page/demo.ts';
 import { els } from './page/els.ts';
 import { listenExamples, loadExamples, openFirstExample, unpickExample } from './page/examples.ts';
@@ -11,6 +12,7 @@ import { fillFences, isMarkdownOpen, listenMarkdown, pickFence, showMarkdown } f
 import { hasMap } from './kinds.ts';
 import { paintFence } from './page/paint.ts';
 import { listenQr } from './page/qr.ts';
+import { buildSilk, listenSilk, syncSilk } from './page/silk.ts';
 import { showWhere } from './page/where.ts';
 import { onChange, ws } from './page/workspace.ts';
 import type { Change } from './page/workspace.ts';
@@ -80,6 +82,7 @@ function sync(kind: Change): void {
   if (plan.figure) paintFence(ws.current(), { open, hasDoc: ws.doc.name !== '' });
   if (open) renderTry();
   showDocName(ws.doc, ws.dirty());
+  syncSilk();
   if (plan.map) refreshMap();
   openFigureForMapless(kind);
 
@@ -147,6 +150,9 @@ async function start(): Promise<void> {
   listenExamples();
   listenFiles();
   listenQr();
+  buildSilk();
+  listenSilk();
+  listenAttach();
   listenSheet();
   listenGestures();
   listenHash();
