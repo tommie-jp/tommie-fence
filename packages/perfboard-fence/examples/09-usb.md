@@ -20,7 +20,11 @@ Type-A は書いた数だけピンがあり、Type-C は 4 本とも書く。
 - 受け口は基板の上の縁から外へ出る。**題と基板の間を空けて描く**
 
 ```perf
-board: 20x4
+board:
+  size: 20x4
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図01 USB 電源スイッチ (ブレッドボードのレールに挿す)
 points:
   VBUS: a11
@@ -69,7 +73,11 @@ style:
 縦に並べて右の縁に近ければ右。
 
 ```perf
-board: 24x14
+board:
+  size: 24x14
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図02 USB の種類と姿
 parts:
   J1: usb-c/female a3 a4 a5 a6

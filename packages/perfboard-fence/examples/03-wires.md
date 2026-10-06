@@ -5,7 +5,11 @@
 上にあり、実物のジャンパも 2 点を最短で結ぶ。
 
 ```perf
-board: 12x7
+board:
+  size: 12x7
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図01 配線
 points:
   VCC: a1
@@ -53,7 +57,11 @@ GND : D1.2
 斜めにも引ける。
 
 ```perf
-board: 10x8
+board:
+  size: 10x8
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図02 斜めの配線
 points:
   VCC: a1

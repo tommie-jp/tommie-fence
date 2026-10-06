@@ -4,7 +4,11 @@
 **ネットの名前にもなる**ので、意図した回路と突き合わせやすくなる。
 
 ```perf
-board: 12x7
+board:
+  size: 12x7
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図01 points で名前を付ける
 points:
   VCC: a1

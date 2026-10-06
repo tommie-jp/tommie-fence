@@ -3,7 +3,11 @@
 `parts:` に `名前: 種類 穴 穴 値` と書く。部品は**2 つの穴を結ぶ線の上に寝る**。
 
 ```perf
-board: 12x7
+board:
+  size: 12x7
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図01 2 本足の部品
 points:
   IN: a1
@@ -47,7 +51,11 @@ LED は書かれた色で光る (図01 の `green`)。知らない色でも既�
 `27` は赤・紫・黒に、許容差の茶が付く。
 
 ```perf
-board: 14x6
+board:
+  size: 14x6
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図02 抵抗の値 (10 dB アッテネータ)
 points:
   IN: a1
@@ -79,7 +87,11 @@ notes:
 斜めにも置ける。胴は 2 穴を結ぶ線の傾きのまま寝る。
 
 ```perf
-board: 8x8
+board:
+  size: 8x8
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図03 斜めに置く
 points:
   IN: a1
@@ -108,7 +120,11 @@ notes:
 並びも動かしていない。アースは基板の縁を回して両方のコネクタと分岐をまとめる。
 
 ```perf
-board: 14x8
+board:
+  size: 14x8
+  h: 1.6mm
+  material: FR-4
+  slots: on
 style:
   back: on
   labels:
@@ -222,7 +238,11 @@ N3  : R1.2, R2.1, R3.1
 ## フォトトランジスタ
 
 ```perf
-board: 12x4
+board:
+  size: 12x4
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図06 フォトトランジスタ
 points:
   VCC: a1

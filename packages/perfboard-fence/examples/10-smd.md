@@ -18,7 +18,11 @@
   どの穴がどのピンかはデータシートで確かめる
 
 ```perf
-board: 10x6
+board:
+  size: 10x6
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図01 S-Mini で LED を点ける
 points:
   VCC: a1
@@ -51,7 +55,11 @@ notes:
 SOT-23 (`sot23`) より胴が 0.3mm 広い。
 
 ```perf
-board: 24x9
+board:
+  size: 24x9
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図02 変換基板に載せた姿
 parts:
   Q1: transistor/sot23-dip b3 b4 b5 2SC1815
@@ -79,7 +87,11 @@ style:
 書いても胴は伸びない。
 
 ```perf
-board: 20x9
+board:
+  size: 20x9
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図03 直付けの姿
 parts:
   Q1: transistor/sot23 b2 b3 c2

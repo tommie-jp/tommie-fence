@@ -4,7 +4,11 @@
 `parts:` の中に**入れ子で**書く — ピンの名前の並びを持つので 1 行に畳めない。
 
 ```perf
-board: 14x8
+board:
+  size: 14x8
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図01 電池でLEDを点ける
 parts:
   R1: resistor c4 c8 470
@@ -62,7 +66,11 @@ N3 : D1.2, BAT.-
 どの穴を通っているかが読みやすい。
 
 ```perf
-board: 18x12
+board:
+  size: 18x12
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図02 入りと出を上下に分ける
 parts:
   U1: dip8 h11 r180 NE555

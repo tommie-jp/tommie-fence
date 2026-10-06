@@ -4,7 +4,11 @@
 **同じ回路を circuit / breadboard でも描いてある** (どれも「図01 LED と抵抗」)。
 
 ```perf
-board: 12x6
+board:
+  size: 12x6
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図01 LED と抵抗
 parts:
   R1: resistor c3 c7 330

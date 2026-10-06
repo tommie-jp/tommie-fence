@@ -11,7 +11,11 @@
 
 ```perf
 title: 図01 リレー・フォトカプラ・7 セグ
-board: 24x12
+board:
+  size: 24x12
+  h: 1.6mm
+  material: FR-4
+  slots: on
 parts:
   K1: relay b2
   D1: diode a4 a2 1N4148

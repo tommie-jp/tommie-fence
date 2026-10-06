@@ -6,7 +6,11 @@
 ネットにもネットリストにも出ないので、印を足しても配線は変わらない。
 
 ```perf
-board: 14x8
+board:
+  size: 14x8
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図01 印を付ける
 points:
   IN: a1
@@ -54,7 +58,11 @@ notes:
 テーマの名前 1 つだけなら、そのまま書ける。
 
 ```perf
-board: 14x8
+board:
+  size: 14x8
+  h: 1.6mm
+  material: FR-4
+  slots: on
 style: dark
 title: 図02 暗いテーマ
 points:
@@ -85,7 +93,11 @@ notes:
 凡例に並ぶのは**その図が使った色だけ**で、色を書かなければ凡例も出ない。
 
 ```perf
-board: 14x8
+board:
+  size: 14x8
+  h: 1.6mm
+  material: FR-4
+  slots: on
 style:
   theme: mono
   width: 640
@@ -121,6 +133,9 @@ notes:
 board:
   size: 12x7
   silk: alpha-cols
+  h: 1.6mm
+  material: FR-4
+  slots: on
 style:
   check: off
   labels:
@@ -156,7 +171,11 @@ notes:
 半田付けするので、手を動かすときに見るのはそちら側になる。
 
 ```perf
-board: 12x7
+board:
+  size: 12x7
+  h: 1.6mm
+  material: FR-4
+  slots: on
 style:
   back: on
 title: 図05 半田面も出す
@@ -200,7 +219,11 @@ notes:
 実物と違う帯を書くと、図を信じた人が違う抵抗を挿す。
 
 ```perf
-board: 12x7
+board:
+  size: 12x7
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図06 部品表を出す
 parts:
   R1: resistor c3 c6 470

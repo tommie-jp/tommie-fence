@@ -7,7 +7,11 @@
 動かない」ことなので、お知らせとして出る。
 
 ```perf
-board: 12x8
+board:
+  size: 12x8
+  h: 1.6mm
+  material: FR-4
+  slots: on
 title: 図01 わざと壊した配置
 points:
   VCC: a1
