@@ -55,11 +55,34 @@ export type Fine = GridStep;
  * 数のほうが「どこにいるか」が読める。
  */
 export function coordsOf(cell: string, fine: Fine | null): string | null {
+  const shown = (value: number): string => String(Math.round(value * 100) / 100);
+  const at = (col: number, row: number): string => `${shown(col + (fine?.cols ?? 0))},${shown(row + (fine?.rows ?? 0))}`;
+  // 回路図の番地は初めから数の座標 (`x,y`)。端数だけを足す (52 の docs/126)。
+  const numeric = NUMERIC_CELL.exec(cell);
+  if (numeric !== null) return at(Number(numeric[1]), Number(numeric[2]));
   const found = /^([a-z]+)(\d+)$/.exec(cell);
   if (found === null) return null;
   const row = [...(found[1] ?? '')].reduce((sum, letter) => sum * 26 + letter.charCodeAt(0) - 96, 0);
-  const shown = (value: number): string => String(Math.round(value * 100) / 100);
-  return `${shown(Number(found[2]) + (fine?.cols ?? 0))},${shown(row + (fine?.rows ?? 0))}`;
+  return at(Number(found[2]), row);
+}
+
+/** 数の座標で書いた番地 (回路図の `3,2` `2.5,1.25`)。 */
+const NUMERIC_CELL = /^(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)$/;
+
+/**
+ * 状態欄に出す番地の字。`spelled` は端数の上でフェンスが綴った番地 (ゴーストの答え)、
+ * `takesFine` はそのフェンスが端数を受けるか。
+ *
+ * - **数の座標の番地** (回路図の `x,y`) は**数だけ**。括弧に同じ数を並べても読む物が増えるだけ
+ * - 端数を受ける英字の番地は、数を主にして綴りを括弧に回す (`1.5,2.1 (b1b5)`。52 の docs/120)
+ * - 端数を受けない基板 (ブレッドボード・ユニバーサル基板) は穴を指すので、番地のまま
+ */
+export function statusCellText(cell: string | null, fine: Fine | null, spelled: string | undefined, takesFine: boolean): string {
+  if (cell === null) return spelled ?? '';
+  if (NUMERIC_CELL.test(cell)) return spelled ?? coordsOf(cell, fine) ?? cell;
+  const written = spelled ?? cell;
+  const coords = takesFine ? coordsOf(cell, fine) : null;
+  return coords === null ? written : `${coords} (${written})`;
 }
 
 /** 升と、その中の端数。**同じ場所か**はこの組で比べる。 */

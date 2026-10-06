@@ -1,4 +1,4 @@
-import { DRAG, NOTHING, coordsOf, endSpotOf, fineOf, sameFine, sameSpot, spotOf, start, step, topOf } from './mapState.ts';
+import { DRAG, NOTHING, endSpotOf, fineOf, sameFine, sameSpot, spotOf, start, statusCellText, step, topOf } from './mapState.ts';
 import { createPreviewGate } from './previewGate.ts';
 import type { Event, Fine, Focus, Ghost, Picked, Spot, State, Under } from './mapState.ts';
 import type { PanelChrome } from '../panelHtml.ts';
@@ -1048,14 +1048,9 @@ function paint(now: State): void {
   document.body.classList.toggle('cf-carrying', now.carry !== null);
   // 端数の上では拡張が綴った番地 (`b2c7f5`) を出す。殻は綴りを組めないので、ゴーストの答えから取る。
   const spelled = now.under.fine !== null && now.ghost !== null && now.ghost.ok ? now.ghost.cells[0] : undefined;
-  // 端数を受けるフェンス (circuit) は**数の座標を主**にして、綴りを括弧に回す (`7.3,2.7 (b2d7)`)。
-  // 綴りだけでは何段ずれているかが読みにくい。受けないフェンス (ブレッドボード・基板) は穴を指すので
-  // 番地のまま (52 の docs/120)。
-  const cell = spelled ?? now.under.cell ?? '';
-  const coords = now.under.cell !== null && state.fine !== null && state.fineFor === 'all'
-    ? coordsOf(now.under.cell, now.under.fine)
-    : null;
-  setText('.kc-cell', coords === null ? cell : `${coords} (${cell})`);
+  // 回路図の番地は数の座標 (`x,y`) なので数だけ。受けないフェンス (ブレッドボード・基板) は
+  // 穴を指すので番地のまま (52 の docs/120・docs/126)。決め事は mapState.ts の statusCellText。
+  setText('.kc-cell', statusCellText(now.under.cell, now.under.fine, spelled, state.fine !== null && state.fineFor === 'all'));
 }
 
 /**

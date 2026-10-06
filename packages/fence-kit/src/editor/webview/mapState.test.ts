@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { NOTHING, coordsOf, fineOf, hint, start, step } from './mapState.ts';
+import { NOTHING, coordsOf, fineOf, hint, start, statusCellText, step } from './mapState.ts';
 import type { Event, State, Under } from './mapState.ts';
 
 const PANEL = start(true);
@@ -954,5 +954,37 @@ describe('coordsOf', () => {
     expect(coordsOf('', null)).toBeNull();
     expect(coordsOf('3b', null)).toBeNull();
     expect(coordsOf('b', null)).toBeNull();
+  });
+
+  test('数の座標で書く番地 (circuit の x,y) にも端数を足す', () => {
+    expect(coordsOf('3,2', null)).toBe('3,2');
+    expect(coordsOf('3,2', { rows: 0.1, cols: 0.25 })).toBe('3.25,2.1');
+    expect(coordsOf('2.5,1', { rows: 0, cols: 0.25 })).toBe('2.75,1');
+  });
+});
+
+/**
+ * 状態欄の字。**番地が数の座標 (circuit の `x,y`) なら数だけ**を出す — 括弧に同じ数を
+ * 並べても読む物が増えるだけ。穴の番地 (ブレッドボード・ユニバーサル基板の `b3`) は
+ * 穴を指すので番地のまま。端数を受ける英字の番地だけが「数 (番地)」になる (52 の docs/120)。
+ */
+describe('statusCellText', () => {
+  test('circuit は数の座標だけ', () => {
+    expect(statusCellText('3,2', null, undefined, true)).toBe('3,2');
+    expect(statusCellText('3,2', { rows: 0.25, cols: 0.5 }, '3.5,2.25', true)).toBe('3.5,2.25');
+    expect(statusCellText('3,2', { rows: 0.25, cols: 0.5 }, undefined, true)).toBe('3.5,2.25');
+  });
+
+  test('穴の番地は番地のまま (端数を受けない基板)', () => {
+    expect(statusCellText('b3', null, undefined, false)).toBe('b3');
+    expect(statusCellText('b3', { rows: 0.1, cols: 0 }, 'b3', false)).toBe('b3');
+  });
+
+  test('端数を受ける英字の番地は、数を主にして綴りを括弧に回す', () => {
+    expect(statusCellText('b1', { rows: 0.1, cols: 0.5 }, 'b1b5', true)).toBe('1.5,2.1 (b1b5)');
+  });
+
+  test('升の外では空', () => {
+    expect(statusCellText(null, null, undefined, true)).toBe('');
   });
 });
