@@ -6,7 +6,7 @@ import {
   fourLeadBodyRect, renderDip, renderPushbutton, renderSip, renderTransformer, sipBarRect, switchBodyRect,
 } from './packages.ts';
 import { CAPTION_DROP, charWidth } from './partCommon.ts';
-import { band, captionBandOf, captionDropOf } from './captions.ts';
+import { band, captionBandOf, captionDropOf, explicitCaptionSpot } from './captions.ts';
 import { bodyDown, bodyHalfWidth, bodyUp, legNames, renderThreeLead } from './threeLead.ts';
 import { renderTwoLead } from './twoLead.ts';
 import type { RenderTheme } from './theme.ts';
@@ -106,7 +106,9 @@ export function renderPart(
   if (part.kind === 'connector') return renderConnector(part, layout, theme, drop);
   if (part.kind === 'board') return renderBoardPart(part, layout, theme, drop);
   // 3 ピンの名札は置き場の候補 (ピンの名前の横・1 行下) から選ぶので、段の番号をそのまま渡す。
-  if (part.kind === 'three-lead') return renderThreeLead(part, layout, theme, drops?.get(part.id) ?? 0);
+  // 書いて決めた名札 (`cap=`) は、配線よけと同じ答え (`explicitCaptionSpot`) の所へ置く。
+  const spot = explicitCaptionSpot(part, layout, theme);
+  if (part.kind === 'three-lead') return renderThreeLead(part, layout, theme, drops?.get(part.id) ?? 0, spot);
   // 機器 (device) は帯の中に別の描き方で置くので、ここには来ない。
-  return renderTwoLead(part, layout, theme, drop);
+  return renderTwoLead(part, layout, theme, drop, spot);
 }

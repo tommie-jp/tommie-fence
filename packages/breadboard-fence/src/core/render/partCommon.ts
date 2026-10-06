@@ -89,7 +89,8 @@ function bodyHeightOf(part: PlacedPart, layout: Layout): number {
  * 2 ピンの胴が図の上で占める外枠 (傾いた胴を囲む縦横の矩形)。基板の印字を伏せるのと、
  * 名札の高さを決めるのにも使う。2 ピンでなければ `null`。
  */
-function twoLeadBodyRectOf(part: PlacedPart, layout: Layout): Rect | null {
+/** 2 ピンの胴の外形 (ずらした先)。 */
+export function twoLeadBodyRectOf(part: PlacedPart, layout: Layout): Rect | null {
   const [first, second] = part.pins;
   if (part.kind !== 'two-lead' || !first?.address || !second?.address) return null;
   const from = layout.point(first.address);
@@ -101,8 +102,59 @@ function twoLeadBodyRectOf(part: PlacedPart, layout: Layout): Rect | null {
   const cos = Math.abs(to.x - from.x) / span;
   const width = size.width * cos + size.height * sin;
   const height = size.width * sin + size.height * cos;
+  const offset = shiftOffsetOf(part, layout);
   const centre = midpoint(from, to);
-  return { x: centre.x - width / 2, y: centre.y - height / 2, width, height };
+  return { x: centre.x + offset.x - width / 2, y: centre.y + offset.y - height / 2, width, height };
+}
+
+/**
+ * 胴を半穴ずらす量 (`shift=down`)。**胴とリードの直線だけが動き、ピンの穴は動かない** —
+ * リードを穴から曲げて胴へ渡す実物の挿し方。ずらした胴は穴の行と行の間に乗るので、
+ * ピンの間の穴 (`b5`) が空いて、そこに挿した線が胴に隠れない。
+ */
+export function shiftOffsetOf(part: PlacedPart, layout: Layout): Point {
+  const half = layout.pitch / 2;
+  switch (part.shift) {
+    case 'up': return { x: 0, y: -half };
+    case 'down': return { x: 0, y: half };
+    case 'left': return { x: -half, y: 0 };
+    case 'right': return { x: half, y: 0 };
+    default: return { x: 0, y: 0 };
+  }
+}
+
+/** ピンの真ん中に、胴をずらした量 (`shift=`) を足した点。胴・名札・配線よけで同じ点を使う。 */
+export function shiftedCentreOf(part: PlacedPart, points: readonly Point[], layout: Layout): Point {
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+  const offset = shiftOffsetOf(part, layout);
+  return {
+    x: (Math.min(...xs) + Math.max(...xs)) / 2 + offset.x,
+    y: (Math.min(...ys) + Math.max(...ys)) / 2 + offset.y,
+  };
+}
+
+/**
+ * 名札を置く所。`vertical` でなければ `x` が字の中心、`y` が基準線 (今までの名札と同じ)。
+ * `vertical` なら `x` `y` は字の箱の中心で、字は下から上へ読む向きに 90° 回す。
+ */
+export type CaptionSpot = {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly vertical?: boolean;
+};
+
+/**
+ * 名札を描く。縦書きは**字を 90° 回す** (下から上へ読む、図面の縦の寸法と同じ向き)。
+ * 回しても `<text>` 1 つのままなので、名札を上の層へ移す処理 (`liftCaptions`) がそのまま効く。
+ * 3 引数の rotate() を読まないレンダラがあるので translate と rotate に分ける。
+ */
+export function captionAt(spot: CaptionSpot, text: string, theme: RenderTheme): string {
+  if (spot.vertical !== true) return partLabel(spot.x, spot.y, text, theme);
+  return partLabel(0, capHeight(theme) / 2, text, theme, {
+    transform: `translate(${num(spot.x)} ${num(spot.y)}) rotate(-90)`,
+  });
 }
 
 /**

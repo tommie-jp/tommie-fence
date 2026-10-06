@@ -5,7 +5,9 @@ import { parseAddress } from '../model/address.ts';
 import { NO_TURN, TURN_WORD, isOrientationWord, isTurned, refusalFor } from '../parts/orient.ts';
 import type { Turn } from '../parts/orient.ts';
 import { splitPartType } from '../parts/variants.ts';
-import type { HoleRef, PartSpec, Result, WireHint, WireSpec } from '../types.ts';
+import type {
+  BodyShift, CaptionSide, CaptionSpec, HoleRef, PartSpec, Result, WireHint, WireSpec,
+} from '../types.ts';
 
 // `b12(A)` `f11(+)` — ピン名には極性の記号も使う。
 const TAGGED_HOLE = /^([+\-\w]+)\(([+\-\w]+)\)$/;
@@ -16,6 +18,34 @@ const TAGGED_HOLE = /^([+\-\w]+)\(([+\-\w]+)\)$/;
  * 1 行の記法は空白で語を割っており、ここだけ別の割り方をすると読み方が 2 つになる。
  */
 const LABEL_TAG = /^l=(.+)$/;
+
+/**
+ * `cap=left` `cap=below:0.5,0` — 名札の置き場所。側 (above / below / left / right) と、
+ * そこからずらす量 (穴の数。右・下が正)。側を省くと下 (`cap=0.5,0`)。
+ * `shift=down` — 2 ピンの胴を半穴ずらす向き。
+ */
+const CAPTION_TAG = /^cap=(.*)$/;
+const CAPTION_NUMBER = '(-?\\d+(?:\\.\\d+)?)';
+// 側だけ (`above`)、側とずらす量 (`above:1,0`、コロンは要る)、ずらす量だけ (`1,0` = 下)。
+const CAPTION_VALUE = new RegExp(`^(?:(above|below|left|right)(?::${CAPTION_NUMBER},${CAPTION_NUMBER})?|${CAPTION_NUMBER},${CAPTION_NUMBER})$`);
+const SHIFT_TAG = /^shift=(.*)$/;
+const SHIFT_WORDS: readonly BodyShift[] = ['up', 'down', 'left', 'right'];
+/** ずらせる量の上限 (穴の数)。これより遠いと、どの部品の名札か分からなくなる。 */
+const CAPTION_REACH = 10;
+
+/** `cap=` の中身を読む。読めなければ理由を返す。 */
+export function parseCaption(written: string): Result<CaptionSpec> {
+  const match = CAPTION_VALUE.exec(written);
+  if (written === '' || !match) {
+    return fail(`cap= は above / below / left / right と、ずらす穴の数 (例: cap=below:0.5,0) で書きます (今は ${safeToken(written)})`, 0);
+  }
+  const dx = Number(match[2] ?? match[4] ?? 0);
+  const dy = Number(match[3] ?? match[5] ?? 0);
+  if (Math.abs(dx) > CAPTION_REACH || Math.abs(dy) > CAPTION_REACH) {
+    return fail(`cap= でずらせるのは ${CAPTION_REACH} 穴までです (今は ${safeToken(written)})`, 0);
+  }
+  return ok({ side: (match[1] ?? 'below') as CaptionSide, dx, dy, written });
+}
 
 /**
  * その語を穴として読むか。番地の形か、`points:` で名前を付けた点なら穴。
@@ -74,6 +104,11 @@ export function parseCompactPart(
     const turn = takeTurn(id, type, rest.slice(2), line);
     if (!turn.ok) return turn;
 
+    // 名札と胴の置き場所は、@ で置く部品 (DIP・ボードなど) には効かない。ラベルに飲み込まない。
+    const misplaced = turn.value.rest.find((token) => CAPTION_TAG.test(token) || SHIFT_TAG.test(token));
+    if (misplaced !== undefined) {
+      return fail(`部品 ${safeToken(id)}: ${safeToken(misplaced.split('=')[0] ?? '')}= は @ で置く部品には書けません`, line, misplaced);
+    }
     const joined = turn.value.rest.join(' ');
     // `@` の後ろの残りはそのままラベルだが、`l=` と書いても同じ意味に読む
     // (1 行の記法の中で、ラベルの書き方が 2 通りに見えないようにする)。
@@ -96,8 +131,28 @@ export function parseCompactPart(
   const sources: { token: string; byName: boolean }[] = [];
 
   let labelTagged = false;
+  let caption: CaptionSpec | null = null;
+  let shift: BodyShift | null = null;
 
   for (const token of rest) {
+    const captionTag = CAPTION_TAG.exec(token);
+    if (captionTag) {
+      if (caption !== null) return fail(`部品 ${safeToken(id)}: cap= が 2 回書かれています`, line, token);
+      const read = parseCaption(captionTag[1] ?? '');
+      if (!read.ok) return fail(`部品 ${safeToken(id)}: ${read.error.message}`, line, token);
+      caption = read.value;
+      continue;
+    }
+    const shiftTag = SHIFT_TAG.exec(token);
+    if (shiftTag) {
+      if (shift !== null) return fail(`部品 ${safeToken(id)}: shift= が 2 回書かれています`, line, token);
+      const word = shiftTag[1] ?? '';
+      if (!SHIFT_WORDS.includes(word as BodyShift)) {
+        return fail(`部品 ${safeToken(id)}: shift= は up / down / left / right です (今は ${safeToken(word)})`, line, token);
+      }
+      shift = word as BodyShift;
+      continue;
+    }
     const tagged = LABEL_TAG.exec(token);
     if (tagged) {
       if (label !== null) return fail(`部品 ${safeToken(id)}: l= が 2 回書かれています`, line);
@@ -137,6 +192,8 @@ export function parseCompactPart(
     turn,
     label,
     labelTagged,
+    ...(caption === null ? {} : { caption }),
+    ...(shift === null ? {} : { shift }),
     value: value ? clampText(value, LIMITS.labelLength) : null,
     notes: unusedNotes(value, label, sources),
   });

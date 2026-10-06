@@ -9,7 +9,7 @@ import type { HoleRef, PartSpec } from '../types.ts';
  * (揃えて書くのは書いた人の手癖で、真似ると触っていない行まで揃え直す)。
  *
  * 読む側 (`parser/compact.ts`) と**同じ並び**で書く:
- * `ID: 種類 穴… [向き] [値] [ラベル]`
+ * `ID: 種類 穴… [向き] [値] [ラベル] [cap=…] [shift=…]`
  *
  * **書かれた綴りを使う** — 種類は `written` (略記のまま)、穴は `addr`
  * (`points:` の名前のまま)、ピンの名前は**書かれていたときだけ**添える
@@ -43,5 +43,8 @@ export function spellPart(part: PartSpec): string | null {
     ...(isTurned(part.turn) ? [turnWord(part.turn.rotate)] : []),
     ...(part.value === null ? [] : [part.value]),
     ...(part.label === null ? [] : [part.labelTagged ? `l=${part.label}` : part.label]),
+    // 名札と胴の置き場所は書かれた綴りのまま残す (書き戻しで落とさない)。
+    ...(part.caption ? [`cap=${part.caption.written}`] : []),
+    ...(part.shift ? [`shift=${part.shift}`] : []),
   ].join(' ');
 }

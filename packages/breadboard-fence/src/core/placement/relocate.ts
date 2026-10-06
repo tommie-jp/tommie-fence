@@ -143,7 +143,8 @@ function bodyHoles(part: PlacedPart): string[] {
   if (part.kind !== 'two-lead') return [];
   const holes = part.pins.map((pin) => pin.address);
   if (!holes.every((address): address is HoleAddress => address?.kind === 'hole')) return [];
-  const between = betweenLeads(holes);
+  // 胴を半穴ずらした部品 (`shift=`) は、ピンの間の穴に乗らない。
+  const between = part.shift ? [] : betweenLeads(holes);
   if (between.length === 0 && holes[0]?.row !== holes[1]?.row) return [];
   return [...holes.map(formatAddress), ...between];
 }
@@ -199,7 +200,7 @@ function slideAside(
 
       // ピンの穴に加えて、胴の下に隠れる穴 (ピンの間) も見る。そこに配線の点や
       // 他のピンがあると、胴の絵の下に埋まって何が挿さっているのか読めなくなる。
-      const names = [...targets.map(formatAddress), ...betweenLeads(targets)];
+      const names = [...targets.map(formatAddress), ...(part.shift ? [] : betweenLeads(targets))];
       const blocked = names.some((name) =>
         ledger.wireHoles.has(name) || ledger.corridors.has(name)
         || (ledger.partHoles.has(name) && !own.has(name))

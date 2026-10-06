@@ -1,12 +1,13 @@
 import type { Layout } from '../model/layout.ts';
-import type { PlacedPart, Point, Rect } from '../types.ts';
+import type { PlacedPart, Rect } from '../types.ts';
 import { boardBodyRect } from './boardPart.ts';
 import { connectorCaptionAt } from './connector.ts';
 import { fourLeadBodyRect, switchBodyRect } from './packages.ts';
 import {
   CAPTION_CLEAR, CAPTION_HEIGHT, NAME_CAP, NAME_LINE,
-  captionTextWidth, haloWidth, labelYOf, pinPoints,
+  captionTextWidth, haloWidth, labelYOf, pinPoints, shiftOffsetOf, shiftedCentreOf, twoLeadBodyRectOf,
 } from './partCommon.ts';
+import type { CaptionSpot } from './partCommon.ts';
 import { bodyDown, bodyHalfWidth, bodyUp, legNameBoxes, threeLeadCaptionAt, threeLeadCaptionSpots } from './threeLead.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
@@ -37,6 +38,8 @@ export function captionBandOf(
   theme: RenderTheme,
   drop = 0,
 ): Rect | null {
+  const chosen = explicitCaptionSpot(part, layout, theme);
+  if (chosen !== null) return spotBand(chosen, theme);
   const spot = captionSpotOf(part, layout, theme, drop);
   return spot === null ? null : band(spot.x, spot.y, spot.width, theme);
 }
@@ -62,6 +65,8 @@ export function captionTextBandOf(
   theme: RenderTheme,
   drop = 0,
 ): Rect | null {
+  const chosen = explicitCaptionSpot(part, layout, theme);
+  if (chosen !== null) return padHalo(spotBand(chosen, theme), theme);
   const baseline = captionSpotOf(part, layout, theme, drop);
   if (baseline === null) return null;
   const { y } = baseline;
@@ -73,9 +78,14 @@ export function captionTextBandOf(
     const edge = haloWidth(theme) / 2;
     return { x: baseline.x - width / 2 - edge, y: y - cap - edge, width: width + edge * 2, height: cap + edge * 2 };
   }
-  const letters = band(baseline.x, y, width, theme);
-  // **縁取りのぶん広げる。** 縁取りは字の外へはみ出して穴の端を削るので、
-  // 字の幅だけで穴を選ぶと、縁取りに削られた穴の欠片が字の脇に残る。
+  return padHalo(band(baseline.x, y, width, theme), theme);
+}
+
+/**
+ * **縁取りのぶん広げる。** 縁取りは字の外へはみ出して穴の端を削るので、
+ * 字の幅だけで穴を選ぶと、縁取りに削られた穴の欠片が字の脇に残る。
+ */
+function padHalo(letters: Rect, theme: RenderTheme): Rect {
   const pad = haloWidth(theme) / 2 + 1;
   return { x: letters.x - pad, y: letters.y - pad, width: letters.width + pad * 2, height: letters.height + pad * 2 };
 }
@@ -121,7 +131,8 @@ export function captionBaselineOf(
 
   if (part.kind === 'three-lead') return threeLeadCaptionAt(part, layout, theme, width, 0);
 
-  const centre = middleOf(points);
+  // 胴を半穴ずらした (`shift=`) ら、名札も胴と一緒に動く。
+  const centre = shiftedCentreOf(part, points, layout);
   return {
     x: centre.x,
     y: labelYOf(part, centre, layout, theme),
@@ -150,6 +161,13 @@ export function captionDrops(
   const legNamesOf = (margin: number): Rect[][] =>
     parts.map((part) => (part.kind === 'three-lead' ? legNameBoxes(part, layout, theme, margin) : []));
   const legNames = { near: legNamesOf(1), far: legNamesOf(3) };
+  // **書いて決めた名札 (`cap=`) は先に場所を取る。** 書いた順に関係なく、自動の名札のほうが避ける
+  // (後に書いた部品の名札だけが場所を取ると、先に書いた部品の名札が重なったまま残る)。
+  for (const part of parts) {
+    if (!part.caption) continue;
+    const chosen = captionBandOf(part, layout, theme);
+    if (chosen !== null) placed.push(chosen);
+  }
   for (const [index, part] of parts.entries()) {
     const others = legNames[part.kind === 'three-lead' ? 'far' : 'near'].filter((_, at) => at !== index).flat();
     // 3 ピンはピンの名前の横を先に試す。**ほかの部品の胴にも掛けない** — 横に置くと、
@@ -158,6 +176,8 @@ export function captionDrops(
     const bodies = spots > 1 ? parts.filter((other) => other !== part).flatMap((other) => footprintOf(other, layout)) : [];
     const limit = spots - 1 + DROP_LIMIT;
     const blocked = (box: Rect): boolean => [...placed, ...others, ...bodies].some((one) => overlaps(one, box));
+    // 書いて決めた名札は動かさない (場所は上で取ってある)。
+    if (part.caption) continue;
     let drop = 0;
     let box = captionBandOf(part, layout, theme, drop);
     if (box === null) continue;
@@ -186,7 +206,86 @@ function footprintOf(part: PlacedPart, layout: Layout): Rect[] {
     : [layout.pitch * 0.4, layout.pitch * 0.4, layout.pitch * 0.4];
   const left = Math.min(...xs) - padX;
   const top = Math.min(...ys) - padUp;
-  return [{ x: left, y: top, width: Math.max(...xs) + padX - left, height: Math.max(...ys) + padDown - top }];
+  const pins = { x: left, y: top, width: Math.max(...xs) + padX - left, height: Math.max(...ys) + padDown - top };
+  // 半穴ずらした胴 (`shift=`) は、ずらした先も占める。
+  const body = part.shift ? twoLeadBodyRectOf(part, layout) : null;
+  return body === null ? [pins] : [pins, body];
+}
+
+/**
+ * 書いて決めた名札の置き場所 (`cap=left`、`cap=below:0.5,0`)。書いていなければ null。
+ *
+ * **胴とリード (3 ピンはピンの名前も) の外形の外**に、決めた側へ置き、書いた穴の数だけずらす。
+ * 左右に置くとき、**縦に立てた部品なら縦書き** (字が胴に沿い、隣の列へはみ出さない)、
+ * 寝かせた部品なら横書き (胴の行に続けて読める)。上下はいつも横書き。
+ * 描く側 (`parts.ts`) と配線よけ・穴の伏せ (`captionBandOf`) で同じ答えを使う。
+ */
+export function explicitCaptionSpot(part: PlacedPart, layout: Layout, theme: RenderTheme): CaptionSpot | null {
+  const chosen = part.caption;
+  if (!chosen) return null;
+  const extent = extentOf(part, layout, theme);
+  if (extent === null) return null;
+  const width = captionWidth(part, theme);
+  const cap = theme.metrics.textSize * NAME_CAP;
+  const tall = textScale(theme) * CAPTION_HEIGHT;
+  const gap = CAPTION_CLEAR + haloWidth(theme) / 2;
+  const centreX = extent.x + extent.width / 2;
+  const centreY = extent.y + extent.height / 2;
+  // ピンが同じ列に並べば立てた部品 (3 ピンの縦並びも)。ほかは外形の縦横で決める。
+  const points = pinPoints(part, layout) ?? [];
+  const sameColumn = points.length >= 2 && points.every((point) => point.x === points[0]!.x);
+  const sameRow = points.length >= 2 && points.every((point) => point.y === points[0]!.y);
+  const upright = sameColumn || (!sameRow && extent.height > extent.width);
+  const shiftX = chosen.dx * layout.pitch;
+  const shiftY = chosen.dy * layout.pitch;
+  const at = (spot: CaptionSpot): CaptionSpot => ({ ...spot, x: spot.x + shiftX, y: spot.y + shiftY });
+  switch (chosen.side) {
+    // 2 ピンの下は自動で置くときと同じ高さ (`labelYOf`)。`cap=below:1,0` が横へずらすだけに読める。
+    case 'below': return at(part.kind === 'two-lead' && points.length >= 2
+      ? { x: centreX, y: labelYOf(part, shiftedCentreOf(part, points, layout), layout, theme), width }
+      : { x: centreX, y: extent.y + extent.height + gap + cap, width });
+    case 'above': return at({ x: centreX, y: extent.y - gap - (tall - cap) / 2, width });
+    case 'left': return at(upright
+      ? { x: extent.x - gap - tall / 2, y: centreY, width, vertical: true }
+      : { x: extent.x - gap - width / 2, y: centreY + cap / 2, width });
+    case 'right': return at(upright
+      ? { x: extent.x + extent.width + gap + tall / 2, y: centreY, width, vertical: true }
+      : { x: extent.x + extent.width + gap + width / 2, y: centreY + cap / 2, width });
+  }
+}
+
+/** 名札の字の帯。縦書きは帯を 90° 回した形。 */
+function spotBand(spot: CaptionSpot, theme: RenderTheme): Rect {
+  if (spot.vertical !== true) return band(spot.x, spot.y, spot.width, theme);
+  const tall = textScale(theme) * CAPTION_HEIGHT;
+  return { x: spot.x - tall / 2, y: spot.y - spot.width / 2, width: tall, height: spot.width };
+}
+
+/** 部品の絵 (胴・リード・ピンの穴、3 ピンはピンの名前も) が占める外形。 */
+function extentOf(part: PlacedPart, layout: Layout, theme: RenderTheme): Rect | null {
+  const points = pinPoints(part, layout);
+  if (!points || points.length === 0) return null;
+  const offset = shiftOffsetOf(part, layout);
+  const boxes: Rect[] = [
+    ...points.map((point) => ({ x: point.x, y: point.y, width: 0, height: 0 })),
+    ...points.map((point) => ({ x: point.x + offset.x, y: point.y + offset.y, width: 0, height: 0 })),
+  ];
+  if (part.kind === 'two-lead') {
+    const body = twoLeadBodyRectOf(part, layout);
+    if (body !== null) boxes.push(body);
+  }
+  if (part.kind === 'three-lead') {
+    const centre = points[1] ?? points[0]!;
+    const half = bodyHalfWidth(part, layout);
+    const up = bodyUp(part, layout);
+    boxes.push({ x: centre.x - half, y: centre.y - up, width: half * 2, height: up + bodyDown(part, layout) });
+    boxes.push(...legNameBoxes(part, layout, theme, 0));
+  }
+  const left = Math.min(...boxes.map((box) => box.x));
+  const top = Math.min(...boxes.map((box) => box.y));
+  const right = Math.max(...boxes.map((box) => box.x + box.width));
+  const bottom = Math.max(...boxes.map((box) => box.y + box.height));
+  return { x: left, y: top, width: right - left, height: bottom - top };
 }
 
 /** 名札が下がる距離 (px)。描く側はこれを基準線に足すだけ。 */
@@ -196,10 +295,6 @@ export const captionDropOf = (
   theme: RenderTheme,
 ): number => (drops?.get(part.id) ?? 0) * theme.metrics.textSize * DROP_LINE;
 
-const middleOf = (points: readonly Point[]): Point => ({
-  x: (Math.min(...points.map((point) => point.x)) + Math.max(...points.map((point) => point.x))) / 2,
-  y: (Math.min(...points.map((point) => point.y)) + Math.max(...points.map((point) => point.y))) / 2,
-});
 
 /** 字 1 行が占める帯。`baseline` は字の基準線で、字はそこから上へ伸びる。 */
 export function band(centerX: number, baseline: number, width: number, theme: RenderTheme): Rect {

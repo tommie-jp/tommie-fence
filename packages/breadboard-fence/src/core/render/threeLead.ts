@@ -1,8 +1,9 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart } from '../types.ts';
 import {
-  LEG_NAME_CLEAR, NAME_CAP, NAME_LINE, caption, captionTextWidth, charWidth, fitToBoard, haloWidth, partLabel, pinPoints,
+  LEG_NAME_CLEAR, NAME_CAP, NAME_LINE, caption, captionAt, captionTextWidth, charWidth, fitToBoard, haloWidth, partLabel, pinPoints,
 } from './partCommon.ts';
+import type { CaptionSpot } from './partCommon.ts';
 import { HOLE_ROWS } from '../types.ts';
 import type { HoleRow, Point, Rect } from '../types.ts';
 import { drawPackage, packageExtent, packageHalfWidth, packageReach } from 'fence-kit';
@@ -281,7 +282,14 @@ export function threeLeadCaptionAt(
   return { ...last, y: last.y + (slot - spots.length + 1) * step };
 }
 
-export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderTheme, slot = 0): string {
+export function renderThreeLead(
+  part: PlacedPart,
+  layout: Layout,
+  theme: RenderTheme,
+  slot = 0,
+  // 書いて決めた名札の置き場所 (`cap=`)。あれば候補から選ぶ代わりにここへ。
+  spot: CaptionSpot | null = null,
+): string {
   const points = pinPoints(part, layout);
   const center = points?.[1];
   if (!points || !center) return '';
@@ -324,8 +332,9 @@ export function renderThreeLead(part: PlacedPart, layout: Layout, theme: RenderT
   // キャプションはピンの名前の横 (入らなければ名前の 1 行下)。置き場は `threeLeadCaptionAt`。
   const at = threeLeadCaptionAt(part, layout, theme, captionTextWidth(part, theme), slot)
     ?? { x: center.x, y: legNameBaseline(part, center.y, layout, theme) };
-  const text = fitToBoard(caption(part), at.x, theme.metrics.textSize, layout);
-  const label = partLabel(at.x, at.y, text, theme);
+  // 書いて決めた置き場所 (`cap=`) の字は切り詰めない (`twoLead.ts` と同じ理由)。
+  const text = spot === null ? fitToBoard(caption(part), at.x, theme.metrics.textSize, layout) : caption(part);
+  const label = spot === null ? partLabel(at.x, at.y, text, theme) : captionAt(spot, text, theme);
 
   const shell = drawPackage(part, {
     cx: center.x,

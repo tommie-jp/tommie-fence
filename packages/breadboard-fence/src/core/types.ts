@@ -145,6 +145,10 @@ export type PartSpec = {
   readonly label: string | null;
   readonly at: 'top' | 'bottom' | null;
   readonly pins: readonly string[] | null;
+  /** 名札の置き場所 (`cap=above`)。書かなければ null で、今までどおり自動で胴の下に置く。 */
+  readonly caption?: CaptionSpec | null;
+  /** 胴を半穴ずらす向き (`shift=down`)。2 ピンの部品だけ。 */
+  readonly shift?: BodyShift | null;
   /**
    * `@` で書いた形か (`SW1: button @ e5`)。**書き戻すときに `@` を落とさない**
    * ために持つ (52 の docs/54 の段 1)。読んだ中身からは見分けられない —
@@ -169,6 +173,23 @@ export type PartSpec = {
   readonly notes?: readonly string[];
   readonly line: number;
 };
+
+/** 名札を置く側。 */
+export type CaptionSide = 'above' | 'below' | 'left' | 'right';
+
+/**
+ * 書いて決めた名札の置き場所 (`cap=left`、`cap=below:0.5,0`)。**ずらす量は穴の数** (右・下が正)。
+ * `written` は書かれた綴り (書き戻しで使う)。
+ */
+export type CaptionSpec = {
+  readonly side: CaptionSide;
+  readonly dx: number;
+  readonly dy: number;
+  readonly written: string;
+};
+
+/** 2 ピンの胴を半穴ずらす向き。リードは穴から曲げて描く。 */
+export type BodyShift = 'up' | 'down' | 'left' | 'right';
 
 /** 配線の迂回ヒント。`v-20` で上へ 20 (= 穴 1 つぶん)、`h30` で右へ 30。 */
 export type WireHint = { readonly axis: 'v' | 'h'; readonly delta: number };
@@ -315,5 +336,9 @@ export type PlacedPart = {
   readonly value: string | null;
   readonly label: string | null;
   readonly at: 'top' | 'bottom' | null;
+  /** 書いて決めた名札の置き場所。無ければ自動 (`render/captions.ts`)。 */
+  readonly caption?: CaptionSpec | null;
+  /** 胴を半穴ずらす向き (2 ピンだけ)。 */
+  readonly shift?: BodyShift | null;
   readonly line: number;
 };

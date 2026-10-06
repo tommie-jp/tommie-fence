@@ -3,12 +3,13 @@ import { formatAddress, isCrossing, parseAddress } from '../model/address.ts';
 import { offBoardReason } from '../model/board.ts';
 import { HOLE_ROWS } from '../types.ts';
 import type {
+  BodyShift,
   Address, Board, FenceError, HoleAddress, HoleRow, PartKind, PartSpec, PlacedPart, PlacedPin,
   RailAddress, Result,
 } from '../types.ts';
 import type { BoardPart, Connector, NamedChip } from 'fence-kit';
 import {
-  adapterFor, isDirectSmd, lookupDiscrete, lookupNamedChip, lookupPinout, pinoutModels, smdLooksOf, smdSuggestion,
+  adapterFor, drawsOwnLeads, isDirectSmd, lookupDiscrete, lookupNamedChip, lookupPinout, pinoutModels, smdLooksOf, smdSuggestion,
 } from 'fence-kit';
 import type { Turn } from '../parts/orient.ts';
 import { isPolarVariant, typesWithVariants, variantsOf } from '../parts/variants.ts';
@@ -183,6 +184,8 @@ export function coveredHoles(part: PlacedPart): Address[] {
 
 /** ピンが張る矩形の中の穴 (ピンの穴そのものは除く)。 */
 function spannedHoles(part: PlacedPart): Address[] {
+  // **胴を半穴ずらした部品は、ピンの間の穴に乗らない** (胴は行と行の間)。そこへ挿す線を通す。
+  if (part.shift) return [];
   const pins = part.pins.flatMap((pin) => (pin.address ? [pin.address] : []));
   const rails = pins.filter((address): address is RailAddress => address.kind === 'rail');
   // ピンが全部レールに並ぶ部品。レールは行の格子に乗らないので別に数える。
@@ -270,8 +273,22 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
     value: spec.value,
     label: spec.label,
     at: spec.at,
+    caption: spec.caption ?? null,
+    shift: spec.shift ?? null,
     line: spec.line,
   };
+  // **名札の置き場所は 2 ピンと 3 ピンだけ。** ほかの部品は胴の中か決まった所に字を置くので、
+  // 書いても効かない (黙って読み飛ばすと、書いた人に効かなかったことが伝わらない)。
+  if (base.caption && footprint.kind !== 'two-lead' && footprint.kind !== 'three-lead') {
+    return fail(`部品 ${safeToken(spec.id)}: cap= は 2 ピンと 3 ピンの部品だけに書けます`, spec.line, `cap=${base.caption.written}`);
+  }
+  if (base.shift && footprint.kind !== 'two-lead') {
+    return fail(`部品 ${safeToken(spec.id)}: shift= は 2 ピンの部品だけに書けます`, spec.line, `shift=${base.shift}`);
+  }
+  // 自分でリードを描く胴 (水晶の缶) は、曲げたリードを描けない。ずらすと缶が穴から浮く。
+  if (base.shift && drawsOwnLeads(spec.type)) {
+    return fail(`部品 ${safeToken(spec.id)}: ${safeToken(spec.type)} は胴がリードを持つので shift= は書けません`, spec.line, `shift=${base.shift}`);
+  }
 
   if (footprint.kind === 'device') {
     if (!spec.pins || spec.pins.length === 0) {
@@ -331,7 +348,33 @@ function placeLegs(
     }
     pins.push(printed === null ? { name, address: address.value } : { name, address: address.value, number: String(index + 1) });
   }
+  const refused = shiftProblem(base.shift ?? null, pins);
+  if (refused !== null) return fail(`部品 ${safeToken(spec.id)}: ${refused}`, spec.line, `shift=${base.shift}`);
   return ok({ ...base, kind, bridges: [], pins });
+}
+
+/**
+ * 胴を半穴ずらせる向きか。**ピンを結ぶ線に直角の向きだけ** — 寝かせた部品 (同じ行) は上下、
+ * 立てた部品 (同じ列) は左右。線に沿ってずらすと胴がピンの穴に乗り、斜めの部品は
+ * 直角の向きが穴の格子に乗らない。
+ */
+function shiftProblem(shift: BodyShift | null, pins: readonly PlacedPin[]): string | null {
+  if (shift === null) return null;
+  const [first, second] = pins.map((pin) => pin.address);
+  if (!first || !second) return null;
+  // 穴と穴の間の番地 (`b5c3`) は、ずれの分まで同じときだけ同じ列・同じ行と数える。
+  const upright = first.col === second.col && (first.cols ?? 0) === (second.cols ?? 0);
+  const lying = sameRow(first, second) && (first.rows ?? 0) === (second.rows ?? 0);
+  if (upright) return shift === 'left' || shift === 'right' ? null : `縦に立てた部品の shift= は left か right です (今は ${shift})`;
+  if (lying) return shift === 'up' || shift === 'down' ? null : `寝かせた部品の shift= は up か down です (今は ${shift})`;
+  return 'shift= は同じ行か同じ列に挿した部品だけに書けます (斜めの部品には書けません)';
+}
+
+/** 同じ行か。レールは同じレール (極性と上下) なら同じ行。 */
+function sameRow(first: Address, second: Address): boolean {
+  if (first.kind === 'hole' && second.kind === 'hole') return first.row === second.row;
+  if (first.kind === 'rail' && second.kind === 'rail') return first.polarity === second.polarity && first.side === second.side;
+  return false;
 }
 
 /**
