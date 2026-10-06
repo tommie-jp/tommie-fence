@@ -33,6 +33,15 @@ describe('breadboard sheets:', () => {
     expect([...(joined?.refs ?? [])].sort()).toEqual(['R1.2', 'R2.1']);
   });
 
+  test('draws the links, from a named hole or the left end of a rail, with tags', () => {
+    const result = renderBreadboard(`${TWO}\n  - 左.+t 右.-t`);
+    expect(result.errors).toEqual([]);
+    expect(result.svg).toContain('data-sheet-links="2"');
+    expect(result.svg).toContain('→ 右.IN');
+    expect(result.svg).toContain('→ 左.+t');
+    expect(result.svg.match(/breadboard-fence \d/g)).toHaveLength(1);
+  });
+
   test('gives each sheet the shared board: unless it writes its own', () => {
     const result = renderBreadboard(TWO.replace('  - name: 右', '  - name: 右\n    board: mini'));
     // mini にはレールが無いので、右の枚だけ -t10 を断られる (行は元のフェンスの行)

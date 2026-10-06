@@ -12,6 +12,11 @@
 - ディスクリートの表に `2N7002` (SOT-23、`G` `S` `D`。Nexperia Rev. 7 と Diodes DS11303 で確かめた)、負電圧レギュレータ `7905` (TO-220、`GND` `IN` `OUT`。TI uA79M00 SLVS060K の TOP VIEW から換算) と `79L05` (TO-92、`GND` `IN` `OUT`。TI LM79L05 SNOSBR8K の Bottom View から換算。**78L05 とは並びが違う**)
 - 赤外 LED: LED の値 `ir` (水色がかった透明の胴)
 - **データシートが食い違う 2 型番 (`2N7000` `2SD882`) の表の行に、「実物で確かめる」注意書きを同じ文面で置いた** (`VERIFY_NOTES`)。2N7000 は onsemi の 2007 年版の図が S G D、2022 年版の表が D G S で、表は 2007 年版に従う。2SD882 は ST の資料だけ図が B C E で、他は E C B、表は E C B。文書が文面を載せているかは試験が見張る
+- `sheetLinks.ts`: `sheets:` の `links:` の線と行き先の札を積んだ図の左右の通り道に描く。`renderSheets` は枚の結果の `anchors` (節点の名前 → 座標) と `look` から描き、外へは返さない。`stackSheets` は `{ links, look }` を受け取れる。`linkColorOf` (+ は赤・GND は黒) と `SHEETS_ADVISED` (3) を出す (52 の docs/118)
+
+### Changed
+
+- `renderSheets`: 枚の間を 32 に、名前の無い枚を `1枚目` に、部品の名前の重なりをエラーに。版の印は最後の枚にだけ (`renderOne` に `stamp` を渡す)。4 枚以上はお知らせ
 
 ## [0.16.0] - 2026-10-06
 

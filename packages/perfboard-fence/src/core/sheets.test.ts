@@ -84,9 +84,24 @@ describe('perfboard sheets:', () => {
     expect(result.errorHtml).toContain('NOPE');
   });
 
-  test('reports the same part name on two sheets as a notice', () => {
+  test('reports the same part name on two sheets as an error', () => {
     const result = renderPerfboard(TWO.replace('R2:', 'R1:'));
-    expect(result.notices.some((one) => one.message.includes('R1'))).toBe(true);
+    expect(result.errors.some((one) => one.message.includes('R1'))).toBe(true);
+  });
+
+  test('draws the links between sheets with a tag naming the far end, and stamps once', () => {
+    const result = renderPerfboard(TWO);
+    expect(result.svg).toContain('data-sheet-links="2"');
+    expect(result.svg).toContain('→ 負荷側.GND');
+    expect(result.svg).toContain('→ 電源側.MID');
+    expect(result.svg.match(/perfboard-fence \d/g)).toHaveLength(1);
+    expect('anchors' in result).toBe(false);
+  });
+
+  test('keeps the sheet-only fields out of a figure without sheets:', () => {
+    const result = renderPerfboard(ONE);
+    expect('anchors' in result).toBe(false);
+    expect('look' in result).toBe(false);
   });
 
   test('reports a top-level key that belongs inside a sheet', () => {

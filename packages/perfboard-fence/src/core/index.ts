@@ -11,7 +11,7 @@ import { jointsOnTop, renderJoints } from './render/joints.ts';
 import { renderHits } from './render/hits.ts';
 import { renderParts } from './render/parts.ts';
 import { renderLeadWires } from './render/leadWires.ts';
-import { renderDeviceWires, renderWires } from './render/wires.ts';
+import { WIRE_WIDTH, renderDeviceWires, renderWires } from './render/wires.ts';
 import { crossingPoints } from './render/crossings.ts';
 import { renderTitle } from './render/title.ts';
 import { noteBands, noteOverhang, renderNotes } from './render/notes.ts';
@@ -36,7 +36,7 @@ import { resolveStyle, themeForBoard } from './render/theme.ts';
 import type {
   Address, Board, FenceError, PartSpec, PointSpec, ResolvedNote, RoutedWire,
 } from './types.ts';
-import type { Net } from 'fence-kit';
+import type { Net, SheetExtras } from 'fence-kit';
 
 /** 行の無いものを先に、あとは行の順に。同じ行なら見つけた順を保つ。 */
 const byLine = (errors: readonly FenceError[]): FenceError[] =>
@@ -96,6 +96,11 @@ export type RenderOptions = {
    * `.yaml` を丸ごと 1 枚として描くときは 0 (ずらさない)。
    */
   readonly offset?: number;
+  /**
+   * 版の印を出すか。**`sheets:` の図の中でだけ使う** (印は最後の枚にだけ出す)。
+   * 書かなければ `style: stamp:` のとおり。
+   */
+  readonly stamp?: boolean;
 };
 
 /**
@@ -135,11 +140,15 @@ function editLayer(
  */
 export function renderPerfboard(input: string, options: RenderOptions = {}): RenderResult {
   const source = normalizeNewlines(input);
-  if (!hasSheets(source)) return renderOneSheet(input, options);
+  if (!hasSheets(source)) {
+    // 枚の中でだけ使うもの (節点の座標) は外へ返さない。
+    const { anchors: _anchors, look: _look, ...one } = renderOneSheet(input, options);
+    return one;
+  }
   return renderSheets(
     source,
     options,
-    (text, inner) => renderOneSheet(text, { offset: inner.offset }),
+    (text, inner) => renderOneSheet(text, inner),
     {
       makeError: (message, line, isNotice) => attachSourceText(
         [isNotice ? notice(message, line) : fenceError(message, line)], source,
@@ -149,7 +158,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   );
 }
 
-function renderOneSheet(input: string, options: RenderOptions): RenderResult {
+function renderOneSheet(input: string, options: RenderOptions): RenderResult & SheetExtras {
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
   const source = normalizeNewlines(input);
   const parsed = parseFence(source);
@@ -458,7 +467,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult {
     {
       theme: THEME,
       width: style.width,
-      stamp: style.stamp,
+      stamp: style.stamp && options.stamp !== false,
       // 網は基板の地の上に敷く (隙間から基板が透けると、同じ網が違う濃さに見える)。
       defs: hatchDefs(painted, THEME.palette.caption, PLATE.palette.plate),
       canvas: spilled
@@ -488,10 +497,24 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult {
   // editor の帯で畳むためで、読み手への見え方を変える理由は無い。
   const ercAt = attachSourceText(byLine(erc), source);
   const shown = style.debug ? [...at(errors), ...at(notices), ...at(ercAt)] : at(errors);
+  // **`points:` で名前を付けた穴**は、枚をまたぐ線 (links) の出る所 (52 の docs/118)。
+  const anchors = Object.fromEntries([...points].map(([name, address]) => {
+    const at = layout.point(address);
+    return [name, { x: at.x + spillLeft, y: at.y + spillTop }];
+  }));
   return {
     svg, netlist,
     errors: at(errors), notices: at(notices), erc: at(ercAt),
     errorHtml: renderErrorBanner(shown),
+    anchors,
+    look: {
+      wire: WIRE_WIDTH,
+      outline: THEME.palette.canvas ?? '#ffffff',
+      ink: THEME.palette.caption,
+      paper: THEME.palette.canvas ?? '#ffffff',
+      textSize: THEME.metrics.textSize,
+      mono: THEME.hatch === true,
+    },
   };
 }
 

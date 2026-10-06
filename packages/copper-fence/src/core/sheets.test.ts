@@ -22,6 +22,31 @@ describe('copper sheets:', () => {
     expect(result.svg).toContain('data-copper-fence');
   });
 
+  test('draws a link from a named line toward the left edge of the board', () => {
+    const jig = [
+      'sheets:',
+      '  - name: a',
+      '    board: 50x20mm',
+      '    copper:',
+      '      L1: line 0,10 50,10 3mm',
+      '    parts:',
+      '      J1: sma left 10 CH0',
+      '  - name: b',
+      '    board: 25x20mm',
+      '    copper:',
+      '      L2: line 0,10 25,10 3mm',
+      '    parts:',
+      '      J2: sma left 10 CH1',
+      'links:',
+      '  - a.L1 b.L2',
+    ].join('\n');
+    const result = renderCopper(jig);
+    expect(result.errors).toEqual([]);
+    expect(result.svg).toContain('data-sheet-links="1"');
+    expect(result.svg).toContain('→ b.L2');
+    expect(result.svg.match(/copper-fence \d/g)).toHaveLength(1);
+  });
+
   test('reports an error inside a sheet on its fence line', () => {
     const broken = TWO.replace('line 0,15 50,15 3mm\n', 'nonsense\n');
     const result = renderCopper(broken.replace('OUT: line 0,15 50,15 3mm', 'OUT: nonsense 1'), { offset: 2 });

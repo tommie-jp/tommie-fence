@@ -10,6 +10,9 @@
  * 枚の中の行番号は元のフェンスの行へ戻せる。
  */
 import type { Net } from './nets.ts';
+import { wireColor } from './colors.ts';
+import { linkColorOf, planLinks } from './sheetLinks.ts';
+import type { LinkLook, SheetPoint, StackLink } from './sheetLinks.ts';
 
 /** 枚の外 (一番外側) に書けるキー。`board` と `style` は枚が書かなかったときの既定になる。 */
 export const SHEET_TOP_KEYS = ['title', 'sheets', 'links', 'board', 'style'] as const;
@@ -18,8 +21,11 @@ const SHARED_KEYS = ['board', 'style'] as const;
 /** フェンスごとに足せる、枚が書かなかったときの既定になるキー (copper の `f:` など)。 */
 export type SheetOptions = { readonly shared?: readonly string[] };
 
-/** 枚どうしの間の隙間 (SVG の単位)。 */
-const SHEET_GAP = 16;
+/** 枚どうしの間の隙間 (SVG の単位)。**どこまでが 1 枚か**が一目で分かる幅。 */
+const SHEET_GAP = 32;
+
+/** これより多い枚はお知らせする。縦に積むと画面何個ぶんにもなり、「図NN」で指しにくい。 */
+export const SHEETS_ADVISED = 3;
 
 type TopBlock = { readonly key: string; readonly rest: string; readonly start: number; readonly end: number };
 
@@ -35,13 +41,16 @@ export type SheetSource = {
   readonly sharedLine: number | null;
 };
 
-export type SheetLink = { readonly tokens: readonly string[]; readonly line: number };
+/** 枚をまたぐ線。`color` は書いた色の名前 (書かなければ節点の名前で決める)。 */
+export type SheetLink = { readonly tokens: readonly string[]; readonly line: number; readonly color?: string | null };
 export type SheetProblem = { readonly message: string; readonly line: number | null };
 
 export type SheetSplit = {
   readonly sheets: readonly SheetSource[];
   readonly links: readonly SheetLink[];
   readonly problems: readonly SheetProblem[];
+  /** `sheets:` の行 (1 始まり)。 */
+  readonly sheetsLine: number | null;
 };
 
 const KEY_LINE = /^([A-Za-z_][\w-]*):(.*)$/;
@@ -115,11 +124,13 @@ export function splitSheets(source: string, extra: SheetOptions = {}): SheetSpli
   const shared = new Map<string, { readonly lines: readonly string[]; readonly line: number }>();
   const links: SheetLink[] = [];
   let figureTitle: string | null = null;
+  let sheetsLine: number | null = null;
   const raw: { readonly name: string | null; readonly lines: string[]; readonly firstLine: number }[] = [];
 
   for (const block of blocks) {
     const line = block.start + 1;
     if (block.key === 'sheets') {
+      sheetsLine ??= line;
       if (block.rest !== '') {
         problems.push({ message: 'sheets: は次の行から `- ` で枚を並べて書きます (1 行に並べる書き方は使えません)', line });
         continue;
@@ -146,7 +157,11 @@ export function splitSheets(source: string, extra: SheetOptions = {}): SheetSpli
       if (stray !== null) problems.push({ message: 'links: の下は `- ` で始まる並びにします', line: stray + 1 });
       for (const item of items) {
         const text = (lines[item.from] ?? '').replace(ITEM_LINE, '').replace(/\s+#.*$/, '');
-        links.push({ tokens: unquote(text).split(/\s+/).filter((t) => t !== ''), line: item.from + 1 });
+        const tokens = unquote(text).split(/\s+/).filter((t) => t !== '');
+        // 末尾の色の名前 (`red`) は線の色。`.` を含まない語で、色の名前として読めるものだけ。
+        const last = tokens[tokens.length - 1] ?? '';
+        const color = !last.includes('.') && wireColor(last) !== null ? last : null;
+        links.push({ tokens: color === null ? tokens : tokens.slice(0, -1), line: item.from + 1, color });
       }
     } else if (block.key === 'title') {
       figureTitle = unquote(block.rest.replace(/\s+#.*$/, ''));
@@ -167,6 +182,8 @@ export function splitSheets(source: string, extra: SheetOptions = {}): SheetSpli
   }
 
   const taken = new Set<string>();
+  /** 枚の名前は図の題にもなる。外の `title:` があれば頭に付ける。 */
+  const titleOf = (name: string): string => `title: ${JSON.stringify(figureTitle === null ? name : `${figureTitle}・${name}`)}`;
   const sheets = raw.map((one, index): SheetSource => {
     const body = [...one.lines];
     let name: string | null = null;
@@ -175,11 +192,13 @@ export function splitSheets(source: string, extra: SheetOptions = {}): SheetSpli
       const match = /^name:(.*)$/.exec(body[at] ?? '');
       if (match === null) continue;
       name = unquote((match[1] ?? '').replace(/\s+#.*$/, ''));
-      // 枚の名前は図の題にもなる。外の `title:` があれば頭に付ける (枚が `title:` を持つならそちらを使う)。
-      body[at] = titled || name === '' ? '' : `title: ${JSON.stringify(figureTitle === null ? name : `${figureTitle}・${name}`)}`;
+      // 枚が `title:` を持つならそちらを使う。
+      body[at] = titled || name === '' ? '' : titleOf(name);
       break;
     }
-    const sheetName = name === null || name === '' ? `sheet${index + 1}` : name;
+    // **名前を書かなかった枚は `1枚目` `2枚目`。** 題にも links にもこの名前で出る。
+    const unnamed = name === null || name === '';
+    const sheetName = unnamed ? `${index + 1}枚目` : name ?? '';
     if (BAD_NAME.test(sheetName)) {
       problems.push({ message: `枚の名前に空白と . は使えません (links で枚と節点を区切るため): ${sheetName}`, line: one.firstLine });
     }
@@ -190,9 +209,7 @@ export function splitSheets(source: string, extra: SheetOptions = {}): SheetSpli
 
     const ownLines = body.length;
     const extra: string[] = [];
-    if (name === null && figureTitle !== null && !titled) {
-      extra.push(`title: ${JSON.stringify(`${figureTitle} (${index + 1}/${raw.length})`)}`);
-    }
+    if (unnamed && !titled) extra.push(titleOf(sheetName));
     let sharedLine: number | null = null;
     for (const key of sharedKeys) {
       const block = shared.get(key);
@@ -208,7 +225,7 @@ export function splitSheets(source: string, extra: SheetOptions = {}): SheetSpli
       sharedLine,
     };
   });
-  return { sheets, links, problems };
+  return { sheets, links, problems, sheetsLine };
 }
 
 /** 枚の中の行 (1 始まり) を元のフェンスの行へ戻す。 */
@@ -327,27 +344,60 @@ function prefixIds(inner: string, index: number): string {
 
 const roundNum = (value: number): string => String(Math.round(value * 100) / 100);
 
-/** 枚ごとの SVG を左を揃えて縦に積む。**1 枚も描けなかったときは空文字列。** */
-export function stackSheets(svgs: readonly string[]): string {
+/** 枚をまたぐ線を描くのに要るもの。`links` の `sheet` は `svgs` の添字。 */
+export type StackOptions = { readonly links: readonly StackLink[]; readonly look: LinkLook };
+
+/**
+ * 枚ごとの SVG を左を揃えて縦に積む。**1 枚も描けなかったときは空文字列。**
+ * `options` を渡すと、枚をまたぐ線と札を左右の通り道に描く (`sheetLinks.ts`)。
+ */
+export function stackSheets(svgs: readonly string[], options: StackOptions | null = null): string {
   const frames = svgs.map(frameOf).map((frame, index) => ({ frame, index })).filter(
     (one): one is { frame: Frame; index: number } => one.frame !== null,
   );
   if (frames.length === 0) return '';
   const width = Math.max(...frames.map(({ frame }) => frame.width));
   let top = 0;
-  const placed = frames.map(({ frame, index }) => {
-    const box = attrOf(frame.attrs, 'viewBox') ?? `0 0 ${roundNum(frame.width)} ${roundNum(frame.height)}`;
-    const body = `<svg x="0" y="${roundNum(top)}" width="${roundNum(frame.width)}" height="${roundNum(frame.height)}" viewBox="${box}">${prefixIds(frame.inner, index)}</svg>`;
+  const tops = frames.map(({ frame }) => {
+    const at = top;
     top += frame.height + SHEET_GAP;
-    return body;
+    return at;
   });
   const height = top - SHEET_GAP;
+  // 線の端は枚の viewBox の単位で来る。積んだ図の単位へ直す倍率 (`style: width:` で縮めた枚)。
+  const placedFrames = svgs.map((_, index) => {
+    const at = frames.findIndex((one) => one.index === index);
+    const frame = frames[at]?.frame;
+    if (frame === undefined) return undefined;
+    const box = (attrOf(frame.attrs, 'viewBox') ?? '').split(/\s+/).map(Number);
+    const scale = (size: number, boxSize: number | undefined): number =>
+      boxSize !== undefined && Number.isFinite(boxSize) && boxSize > 0 ? size / boxSize : 1;
+    return { top: tops[at] ?? 0, width: frame.width, scaleX: scale(frame.width, box[2]), scaleY: scale(frame.height, box[3]) };
+  });
+  const plan = options === null || options.links.length === 0
+    ? null
+    : planLinks(
+      options.links.filter((link) => link.ends.every((end) => placedFrames[end.sheet] !== undefined)),
+      placedFrames.map((one) => one ?? { top: 0, width: 0, scaleX: 1, scaleY: 1 }),
+      scaledLook(options.look, placedFrames.find((one) => one !== undefined)?.scaleX ?? 1),
+    );
+  const shift = plan?.left ?? 0;
+  const placed = frames.map(({ frame, index }, at) => {
+    const box = attrOf(frame.attrs, 'viewBox') ?? `0 0 ${roundNum(frame.width)} ${roundNum(frame.height)}`;
+    return `<svg x="${roundNum(shift)}" y="${roundNum(tops[at] ?? 0)}" width="${roundNum(frame.width)}" height="${roundNum(frame.height)}" viewBox="${box}">${prefixIds(frame.inner, index)}</svg>`;
+  });
+  const total = shift + width + (plan?.right ?? 0);
   // 根の属性 (xmlns・版の印・role) は先頭の枚のものをそのまま使う。
   const keep = (frames[0]?.frame.attrs ?? '')
     .replace(/(?:^|\s)(?:viewBox|width|height)="[^"]*"/g, '')
     .trim();
-  return `<svg ${keep} viewBox="0 0 ${roundNum(width)} ${roundNum(height)}" width="${roundNum(width)}" height="${roundNum(height)}">${placed.join('')}</svg>`;
+  return `<svg ${keep} viewBox="0 0 ${roundNum(total)} ${roundNum(height)}" width="${roundNum(total)}" height="${roundNum(height)}">${placed.join('')}${plan?.draw(width) ?? ''}</svg>`;
 }
+
+/** 線の太さと字の大きさを、積んだ図の単位へ。 */
+const scaledLook = (look: LinkLook, scale: number): LinkLook => ({
+  ...look, wire: look.wire * scale, textSize: look.textSize * scale,
+});
 
 // ---- 全体 ----
 
@@ -360,6 +410,20 @@ type SheetResult<E extends SheetError> = {
   readonly notices: readonly E[];
   readonly errorHtml: string;
 };
+
+/**
+ * 枚 1 つを描いた結果に、枚をまたぐ線のために足すもの。**`sheets:` の図の中でだけ使い、
+ * 外へは返さない** (`renderSheets` が落とす)。
+ */
+export type SheetExtras = {
+  /** 節点の名前 → 枚の中の座標 (その枚の viewBox の単位)。links の線と札はここから出る。 */
+  readonly anchors?: Readonly<Record<string, SheetPoint>>;
+  /** 線と札の描き方 (先頭の枚のものを使う)。 */
+  readonly look?: LinkLook;
+};
+
+/** 枚を描くときに渡すもの。`stamp: false` の枚は版の印を出さない (印は最後の枚にだけ)。 */
+export type SheetRenderOptions = { readonly offset: number; readonly stamp: boolean };
 
 export type SheetKit<E extends SheetError> = {
   /** 元のフェンスの行 (オフセットを足す前) で、言うことを 1 件つくる。 */
@@ -375,7 +439,7 @@ export type SheetKit<E extends SheetError> = {
 export function renderSheets<E extends SheetError, R extends SheetResult<E>>(
   source: string,
   options: { readonly offset?: number },
-  renderOne: (text: string, options: { readonly offset: number }) => R,
+  renderOne: (text: string, options: SheetRenderOptions) => R & SheetExtras,
   kit: SheetKit<E>,
   sheetOptions: SheetOptions = {},
 ): R {
@@ -383,9 +447,18 @@ export function renderSheets<E extends SheetError, R extends SheetResult<E>>(
   const split = splitSheets(source, sheetOptions);
   const own: E[] = split.problems.map((problem) => kit.makeError(problem.message, problem.line, false));
 
-  const results = split.sheets.map((sheet) => {
+  if (split.sheets.length > SHEETS_ADVISED) {
+    own.push(kit.makeError(
+      `基板が ${split.sheets.length} 枚あります。1 つの図は ${SHEETS_ADVISED} 枚までを勧めます (縦に長くなり、図の番号で指しにくい。図を分けます)`,
+      split.sheetsLine,
+      true,
+    ));
+  }
+
+  const results = split.sheets.map((sheet, index) => {
     // 枚の中の行 k は元の行 firstLine + k - 1。足した既定の行の誤りは、あとで共通のキーの行へ寄せる。
-    const result = renderOne(sheet.text, { offset: offset + sheet.firstLine - 1 });
+    // **版の印は最後の枚 (積んだ図の右下) にだけ** 出す。枚ごとに出すと同じ印が並ぶ。
+    const result = renderOne(sheet.text, { offset: offset + sheet.firstLine - 1, stamp: index === split.sheets.length - 1 });
     const fix = (list: readonly E[]): E[] => list.map((error) => {
       const local = error.line === null ? null : error.line - offset - sheet.firstLine + 1;
       return local !== null && local > sheet.ownLines && sheet.sharedLine !== null
@@ -407,31 +480,85 @@ export function renderSheets<E extends SheetError, R extends SheetResult<E>>(
     // ネットリストの `refs` は `R1.2` のようにピンまで書く。部品の名前はその前。
     for (const ref of new Set(result.netlist.flatMap((net) => net.refs.map((pin) => pin.split('.')[0] ?? pin)))) {
       const before = seen.get(ref);
+      // **誤りとして数える。** links で 1 つにした回路では、どちらの R1 か読めない。
       if (before !== undefined && before !== sheet.name) {
-        own.push(kit.makeError(`部品の名前が 2 枚にあります: ${ref} (${before} と ${sheet.name}。図全体で 1 つにします)`, sheet.firstLine, true));
+        own.push(kit.makeError(`部品の名前が 2 枚にあります: ${ref} (${before} と ${sheet.name}。図全体で 1 つにします)`, sheet.firstLine, false));
       }
       seen.set(ref, sheet.name);
     }
   }
+
+  const drawn = linksToDraw(split, results.map(({ result }) => ({
+    anchors: result.anchors,
+    nets: new Set(result.netlist.map((one) => one.name)),
+  })));
+  own.push(...drawn.problems.map((problem) => kit.makeError(problem.message, problem.line, true)));
+  const look = results.find(({ result }) => result.look !== undefined)?.result.look;
 
   const shift = (list: readonly E[]): E[] => list.map((error) => (error.line === null ? error : { ...error, line: error.line + offset }));
   const ownErrors = shift(own.filter((error) => error.notice !== true));
   const ownNotices = shift(own.filter((error) => error.notice === true));
 
   const first = results[0]?.result;
-  const empty = first === undefined ? renderOne('', { offset }) : null;
+  const empty = first === undefined ? renderOne('', { offset, stamp: true }) : null;
   const base = (first ?? empty) as R;
   const extra = [...ownErrors, ...ownNotices];
+  const svgs = results.map(({ result }) => result.svg);
   const combined: Record<string, unknown> = {
     ...base,
-    svg: results.length === 0 ? base.svg : stackSheets(results.map(({ result }) => result.svg)) || base.svg,
+    svg: results.length === 0
+      ? base.svg
+      : stackSheets(svgs, look === undefined ? null : { links: drawn.links, look }) || base.svg,
     netlist: merged.netlist,
     errors: [...results.flatMap(({ result }) => result.errors), ...ownErrors],
     notices: [...results.flatMap(({ result }) => result.notices), ...ownNotices],
     errorHtml: [...results.map(({ result }) => result.errorHtml), extra.length > 0 ? kit.banner(extra) : ''].join(''),
   };
+  // 枚の中でだけ使うもの。外へは返さない。
+  delete combined.anchors;
+  delete combined.look;
   if ('erc' in base) {
     combined.erc = results.flatMap(({ result }) => (result as unknown as { erc: readonly E[] }).erc);
   }
   return combined as R;
+}
+
+/**
+ * `links:` を描く線に直す。**名前は合っているのに座標が無い節点** (`points:` で
+ * 名前を付けていないネット) は線を引けないので、そう言う。名前の誤りは
+ * `mergeNetlists` が言うので、ここでは黙って飛ばす。
+ */
+function linksToDraw(
+  split: SheetSplit,
+  // 座標を返さない盤面 (`anchors` が無い) の枚は線を引かず、黙っている。
+  sheets: readonly { readonly anchors: Readonly<Record<string, SheetPoint>> | undefined; readonly nets: ReadonlySet<string> }[],
+): { readonly links: readonly StackLink[]; readonly problems: readonly SheetProblem[] } {
+  const problems: SheetProblem[] = [];
+  const links = split.links.flatMap((link): StackLink[] => {
+    const ends = link.tokens.flatMap((token) => {
+      const dot = token.indexOf('.');
+      const sheet = split.sheets.findIndex((one) => one.name === token.slice(0, dot));
+      const name = token.slice(dot + 1);
+      const own = sheets[sheet];
+      if (dot < 0 || own?.anchors === undefined || !own.nets.has(name)) return [];
+      const point = Object.hasOwn(own.anchors, name) ? own.anchors[name] : undefined;
+      if (point === undefined) {
+        // ネットリストに無い名前は mergeNetlists が言う。ここで言うのは「ネットはあるが穴が決まらない」だけ。
+        problems.push({ message: `links の ${token} は穴が決まらないので線を引いていません (points: で穴に名前を付けると引けます)`, line: link.line });
+        return [];
+      }
+      return [{ sheet, point, token }];
+    });
+    if (ends.length < 2) return [];
+    const color = link.color === undefined || link.color === null ? null : wireColor(link.color);
+    return [{
+      color: color ?? linkColorOf(ends.map((end) => end.token.slice(end.token.indexOf('.') + 1))),
+      ends: ends.map((end) => ({
+        sheet: end.sheet,
+        point: end.point,
+        tag: `→ ${ends.filter((other) => other !== end).map((other) => other.token).join('、')}`,
+      })),
+    }];
+  });
+  return { links, problems };
 }

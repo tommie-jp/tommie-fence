@@ -1,4 +1,5 @@
 import { hasSheets, keptSourceLines, renderSheets } from 'fence-kit';
+import type { SheetExtras, SheetPoint } from 'fence-kit';
 import { attachSourceText, fail, fenceError, notice, ok, safeToken, shiftErrors } from './errors.ts';
 import { normalizeNewlines } from './newlines.ts';
 import { LIMITS } from './limits.ts';
@@ -24,7 +25,8 @@ import { partObstacles } from './render/parts.ts';
 import { renderErrorBanner } from './render/errorHtml.ts';
 import { DEFAULT_WIRE_COLOR, wireColor as lookupWireColor, wireColorNames } from './render/palette.ts';
 import { resolveStyle } from './render/theme.ts';
-import { HOLE_ROWS } from './types.ts';
+import { titleHeight } from './render/title.ts';
+import { HOLE_ROWS, RAIL_ROWS } from './types.ts';
 import type {
   Address, Board, FenceError, Net, NoteSpec, PartSpec, PlacedPart, Point, Rect, Result, StripId, WireHint,
   WireSpec,
@@ -125,6 +127,11 @@ export type RenderOptions = {
    * `.yaml` を丸ごと 1 枚として描くときは 0 (ずらさない)。
    */
   readonly offset?: number;
+  /**
+   * 版の印を出すか。**`sheets:` の図の中でだけ使う** (印は最後の枚にだけ出す)。
+   * 書かなければ `style: stamp:` のとおり。
+   */
+  readonly stamp?: boolean;
 };
 
 /** 基板から張り出した部品と画布の縁の間に残す余白。縁に貼り付くと切れて見える。 */
@@ -136,11 +143,15 @@ const OVERHANG_MARGIN = 8;
  */
 export function renderBreadboard(input: string, options: RenderOptions = {}): RenderResult {
   const source = normalizeNewlines(input);
-  if (!hasSheets(source)) return renderOneSheet(input, options);
+  if (!hasSheets(source)) {
+    // 枚の中でだけ使うもの (節点の座標) は外へ返さない。
+    const { anchors: _anchors, look: _look, ...one } = renderOneSheet(input, options);
+    return one;
+  }
   return renderSheets(
     source,
     options,
-    (text, inner) => renderOneSheet(text, { offset: inner.offset }),
+    (text, inner) => renderOneSheet(text, inner),
     {
       makeError: (message, line, isNotice) => attachSourceText(
         [isNotice ? notice(message, line) : fenceError(message, line)], source,
@@ -150,7 +161,7 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
   );
 }
 
-function renderOneSheet(input: string, options: RenderOptions): RenderResult {
+function renderOneSheet(input: string, options: RenderOptions): RenderResult & SheetExtras {
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
   const source = normalizeNewlines(input);
   const parsed = parseFence(source);
@@ -235,7 +246,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult {
     title: parsed.doc.title,
     board,
     layout,
-    style,
+    style: options.stamp === false ? { ...style, stamp: false } : style,
     parts,
     devices: placements,
     wires: rendered,
@@ -249,7 +260,48 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult {
     partsList: parsed.doc.partsList,
   });
 
-  return { svg, netlist, ...report(errors, source, style.debug, options.offset ?? 0) };
+  return {
+    svg,
+    netlist,
+    ...report(errors, source, style.debug, options.offset ?? 0),
+    anchors: sheetAnchors(parsed.doc.points, board, layout, titleHeight(parsed.doc.title, style.theme)),
+    look: {
+      wire: style.theme.metrics.wireWidth,
+      outline: style.theme.palette.canvas ?? '#ffffff',
+      ink: style.theme.palette.label,
+      paper: style.theme.palette.canvas ?? '#ffffff',
+      textSize: style.theme.metrics.textSize,
+      mono: style.theme.name === 'mono',
+    },
+  };
+}
+
+/**
+ * 枚をまたぐ線 (links) の出る所 (52 の docs/118)。**`points:` で名前を付けた穴**と、
+ * 電源レール (`+t` など。ネットリストにこの名前で出る) の左端の穴。
+ * 図の本体は題の高さ `head` だけ下にずらして描くので、そのぶんを足す。
+ */
+function sheetAnchors(
+  points: ReadonlyMap<string, string>,
+  board: Board,
+  layout: Layout,
+  head: number,
+): Record<string, SheetPoint> {
+  const at = (written: string): SheetPoint | null => {
+    const address = parseAddress(written);
+    if (address === null || !isOnBoard(board, address)) return null;
+    const point = layout.point(address);
+    return { x: point.x, y: point.y + head };
+  };
+  const rails = RAIL_ROWS.flatMap((rail) => {
+    const point = at(`${rail}1`);
+    return point === null ? [] : [[rail, point] as const];
+  });
+  const named = [...points].flatMap(([name, written]) => {
+    const point = at(written);
+    return point === null ? [] : [[name, point] as const];
+  });
+  return Object.fromEntries([...rails, ...named]);
 }
 
 /**

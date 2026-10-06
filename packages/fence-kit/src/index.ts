@@ -12,8 +12,10 @@
  * 配る 2 つ (`fence-kit/shell` と `fence-kit/map.web.js`) だけ (52 の docs/59)。
  */
 export { normalizeNewlines } from './newlines.ts';
-export { SHEET_TOP_KEYS, hasSheets, mergeNetlists, renderSheets, splitSheets, stackSheets } from './sheets.ts';
-export type { SheetKit, SheetOptions, SheetSource, SheetSplit } from './sheets.ts';
+export { SHEETS_ADVISED, SHEET_TOP_KEYS, hasSheets, mergeNetlists, renderSheets, splitSheets, stackSheets } from './sheets.ts';
+export { linkColorOf } from './sheetLinks.ts';
+export type { LinkLook, SheetPoint } from './sheetLinks.ts';
+export type { SheetExtras, SheetKit, SheetOptions, SheetRenderOptions, SheetSource, SheetSplit, StackOptions } from './sheets.ts';
 export { rememberRecent } from './rememberRecent.ts';
 export { extractFences, outputStem } from './fences.ts';
 export { fenceNames, isFenceOf } from './fenceNames.ts';

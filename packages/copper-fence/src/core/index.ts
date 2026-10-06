@@ -1,4 +1,5 @@
 import { normalizeNewlines, textWidth, wireColor, hasSheets, renderSheets } from 'fence-kit';
+import type { SheetExtras, SheetPoint } from 'fence-kit';
 import type { Net } from 'fence-kit';
 import { attachSourceText, fenceError, notice, safeToken, shiftErrors } from './errors.ts';
 import { checkErc } from './erc/erc.ts';
@@ -30,7 +31,7 @@ import { listSize, partsListing, renderList, renderSource, sourceListing, source
 import { noteBounds, noteColor, renderNotes } from './render/notes.ts';
 import { renderHits, renderLineHits, renderShapeHits } from './render/hits.ts';
 import { renderJumpers, renderPart } from './render/parts.ts';
-import { resolveStyle } from './render/theme.ts';
+import { THEMES, resolveStyle } from './render/theme.ts';
 import { renderTitle } from './render/title.ts';
 import { endResolver, stripAt, wire } from './wiring/wiring.ts';
 import type { CopperSpec, FenceError, LineSpec, Mm, PartSpec, ViaSpec, WireSpec } from './types.ts';
@@ -60,6 +61,11 @@ export type RenderOptions = {
   readonly edit?: boolean;
   /** フェンスが始まる行 (Markdown の中での 1 始まり)。言うことの行番号を Markdown の行に直す。 */
   readonly offset?: number;
+  /**
+   * 版の印を出すか。**`sheets:` の図の中でだけ使う** (印は最後の枚にだけ出す)。
+   * 書かなければ `style: stamp:` のとおり。
+   */
+  readonly stamp?: boolean;
 };
 
 const colorOf = (name: string): string | null => wireColor(name);
@@ -121,11 +127,15 @@ function editNodes(copper: readonly CopperSpec[], parts: readonly PartSpec[], wi
  */
 export function renderCopper(input: string, options: RenderOptions = {}): RenderResult {
   const source = normalizeNewlines(input);
-  if (!hasSheets(source)) return renderOneSheet(input, options);
+  if (!hasSheets(source)) {
+    // 枚の中でだけ使うもの (節点の座標) は外へ返さない。
+    const { anchors: _anchors, look: _look, ...one } = renderOneSheet(input, options);
+    return one;
+  }
   return renderSheets(
     source,
     options,
-    (text, inner) => renderOneSheet(text, { offset: inner.offset }),
+    (text, inner) => renderOneSheet(text, inner),
     {
       makeError: (message, line, isNotice) => attachSourceText(
         [isNotice ? notice(message, line) : fenceError(message, line)], source,
@@ -137,7 +147,7 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
   );
 }
 
-function renderOneSheet(input: string, options: RenderOptions): RenderResult {
+function renderOneSheet(input: string, options: RenderOptions): RenderResult & SheetExtras {
   const source = normalizeNewlines(input);
   const parsed = parseFence(source);
   const { doc } = parsed;
@@ -294,7 +304,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult {
     // 掴む層は**いちばん上** (升と節点)。
     + (edit ? renderHits(board, layout, editNodes(doc.copper, doc.parts, doc.wires)) : '');
 
-  const svg = renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
+  const svg = renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp && options.stamp !== false });
 
   const collected = [...parsed.errors, ...made.errors, ...placeErrors, ...wiring.errors, ...noteErrors, ...notChecked];
   const reported = attachSourceText(byLine(collected), source);
@@ -310,7 +320,32 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult {
     notices: at(notices),
     erc: at(ercAt),
     errorHtml: renderErrorBanner(shown),
+    anchors: islandAnchors(islands, resolve, layout, board),
+    look: {
+      wire: 3,
+      outline: theme.palette.canvas ?? '#ffffff',
+      ink: theme.palette.caption,
+      paper: theme.palette.canvas ?? '#ffffff',
+      textSize: theme.metrics.textSize,
+      mono: theme === THEMES.mono,
+    },
   };
+}
+
+/**
+ * 枚をまたぐ線 (links) の出る所 (52 の docs/118)。**島の名前** (ネットの名前になる) の点。
+ * 線路は基板の左の縁に近い点 (線は図の脇の通り道へ出る)。地 (`GND`) は点が決まらない。
+ */
+function islandAnchors(
+  islands: readonly { readonly name: string }[],
+  resolve: (written: string, toward?: { x: number; y: number }) => { x: number; y: number } | string,
+  layout: { toPx(point: { x: number; y: number }): { x: number; y: number } },
+  board: { readonly height: number },
+): Record<string, SheetPoint> {
+  return Object.fromEntries(islands.flatMap((island) => {
+    const at = resolve(island.name, { x: 0, y: board.height / 2 });
+    return typeof at === 'string' ? [] : [[island.name, layout.toPx(at)] as const];
+  }));
 }
 
 export { extractCopperFences } from './fences.ts';
