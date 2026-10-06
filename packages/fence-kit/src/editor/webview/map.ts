@@ -1,4 +1,4 @@
-import { DRAG, NOTHING, endSpotOf, fineOf, sameFine, sameSpot, spotOf, start, step, topOf } from './mapState.ts';
+import { DRAG, NOTHING, coordsOf, endSpotOf, fineOf, sameFine, sameSpot, spotOf, start, step, topOf } from './mapState.ts';
 import { createPreviewGate } from './previewGate.ts';
 import type { Event, Fine, Focus, Ghost, Picked, Spot, State, Under } from './mapState.ts';
 import type { PanelChrome } from '../panelHtml.ts';
@@ -54,10 +54,6 @@ let state: State = start(
 let pointer: { x: number; y: number } | null = null;
 
 const query = <T extends Element>(selector: string): T | null => document.querySelector<T>(selector);
-
-/** 端数を符号つきの短い数に (`0.3` → `+.3`、`0` → `0`)。 */
-const signed = (value: number): string =>
-  (value === 0 ? '0' : `${value < 0 ? '-' : '+'}${String(Math.abs(value)).replace(/^0/, '')}`);
 
 const setText = (selector: string, text: string): void => {
   const target = query(selector);
@@ -1052,9 +1048,14 @@ function paint(now: State): void {
   document.body.classList.toggle('cf-carrying', now.carry !== null);
   // 端数の上では拡張が綴った番地 (`b2c7f5`) を出す。殻は綴りを組めないので、ゴーストの答えから取る。
   const spelled = now.under.fine !== null && now.ghost !== null && now.ghost.ok ? now.ghost.cells[0] : undefined;
-  // 綴りだけでは何段ずれているかが読みにくいので、数でも添える (`b2d7 (+.3, +.7)`)。
-  const offset = now.under.fine === null ? '' : ` (${signed(now.under.fine.rows)}, ${signed(now.under.fine.cols)})`;
-  setText('.kc-cell', `${spelled ?? now.under.cell ?? ''}${now.under.cell === null ? '' : offset}`);
+  // 端数を受けるフェンス (circuit) は**数の座標を主**にして、綴りを括弧に回す (`7.3,2.7 (b2d7)`)。
+  // 綴りだけでは何段ずれているかが読みにくい。受けないフェンス (ブレッドボード・基板) は穴を指すので
+  // 番地のまま (52 の docs/118)。
+  const cell = spelled ?? now.under.cell ?? '';
+  const coords = now.under.cell !== null && state.fine !== null && state.fineFor === 'all'
+    ? coordsOf(now.under.cell, now.under.fine)
+    : null;
+  setText('.kc-cell', coords === null ? cell : `${coords} (${cell})`);
 }
 
 /**

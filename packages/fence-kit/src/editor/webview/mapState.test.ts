@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { NOTHING, fineOf, hint, start, step } from './mapState.ts';
+import { NOTHING, coordsOf, fineOf, hint, start, step } from './mapState.ts';
 import type { Event, State, Under } from './mapState.ts';
 
 const PANEL = start(true);
@@ -922,5 +922,37 @@ describe('残りの道', () => {
     const dragged = after(PANEL, press(ON_R1), drag(AT_B3));
 
     expect(step(dragged, release(AT_B3)).send[0]).toMatchObject({ kind: 'move', part: 'R1', from: 'a1' });
+  });
+});
+
+/**
+ * 状態欄の座標 (52 の docs/118)。**数の座標 (x=列, y=行、1 始まり) を主にして、番地は従に回す。**
+ * 端数は数のほうが読める (`b2d7` より `7.3,2.7`)。
+ */
+describe('coordsOf', () => {
+  test('端数が無ければ、升の中心の列と行', () => {
+    expect(coordsOf('b3', null)).toBe('3,2');
+    expect(coordsOf('a1', null)).toBe('1,1');
+  });
+
+  test('端数は列と行にそのまま足す', () => {
+    expect(coordsOf('b1', { rows: 0.1, cols: 0.5 })).toBe('1.5,2.1');
+    expect(coordsOf('d4', { rows: -0.25, cols: 0.25 })).toBe('4.25,3.75');
+  });
+
+  test('行が 26 を超えた番地 (aa) も数える', () => {
+    expect(coordsOf('aa2', null)).toBe('2,27');
+    expect(coordsOf('az1', null)).toBe('1,52');
+  });
+
+  test('浮動小数の誤差を出さない', () => {
+    expect(coordsOf('b1', { rows: 0.1, cols: 0.2 })).toBe('1.2,2.1');
+    expect(coordsOf('d7', { rows: 0.3, cols: 0.7 })).toBe('7.7,4.3');
+  });
+
+  test('番地として読めなければ null', () => {
+    expect(coordsOf('', null)).toBeNull();
+    expect(coordsOf('3b', null)).toBeNull();
+    expect(coordsOf('b', null)).toBeNull();
   });
 });

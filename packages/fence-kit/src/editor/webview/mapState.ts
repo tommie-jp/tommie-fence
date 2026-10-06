@@ -46,6 +46,22 @@ export type Tool = 'select' | 'wire';
  */
 export type Fine = GridStep;
 
+/**
+ * 升の番地 (`b3`) と端数を、**数の座標** (x = 列、y = 行。どちらも 1 始まりの升の中心) にする。
+ * 例: `b1` の +.5 列・+.1 行 → `1.5,2.1`。行の英字は表計算と同じ数え方 (`z` の次が `aa`)。
+ * 番地として読めなければ null (呼ぶ側は番地のまま出す)。
+ *
+ * 状態欄は**数の座標を主**にして番地を括弧に回す (52 の docs/118)。端数の綴り (`b2d7`) より、
+ * 数のほうが「どこにいるか」が読める。
+ */
+export function coordsOf(cell: string, fine: Fine | null): string | null {
+  const found = /^([a-z]+)(\d+)$/.exec(cell);
+  if (found === null) return null;
+  const row = [...(found[1] ?? '')].reduce((sum, letter) => sum * 26 + letter.charCodeAt(0) - 96, 0);
+  const shown = (value: number): string => String(Math.round(value * 100) / 100);
+  return `${shown(Number(found[2]) + (fine?.cols ?? 0))},${shown(row + (fine?.rows ?? 0))}`;
+}
+
 /** 升と、その中の端数。**同じ場所か**はこの組で比べる。 */
 export type Spot = { readonly cell: string | null; readonly fine: Fine | null };
 

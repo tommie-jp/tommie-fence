@@ -115,6 +115,13 @@ describe('KiCad の配置', () => {
     expect(html).toContain('<span class="kc-zoom">100 %</span>');
   });
 
+  test('draws a wire whose end was only approximated as a solid line, a little lighter', () => {
+    const rule = /\.cf-wire\.cf-approx \{([^}]*)\}/.exec(html)?.[1] ?? '';
+
+    expect(rule).toContain('opacity');
+    expect(rule).not.toContain('stroke-dasharray');
+  });
+
   test('offers zoom in, zoom out and fit at the top', () => {
     expect(html).toContain('class="kc-zoom-in"');
     expect(html).toContain('class="kc-zoom-out"');

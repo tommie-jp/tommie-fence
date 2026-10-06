@@ -25,8 +25,8 @@ describe('renderMapHtml が描くもの', () => {
     expect(draw('wires:\n  - a1 -- a3\n')).toContain('class="cf-wire"');
   });
 
-  test('dashes a wire whose end was only approximated', () => {
-    // ピンのピンの位置は TeX しか知らない。実線で引くと嘘の精度になる。
+  test('marks a wire whose end was only approximated', () => {
+    // ピンのピンの位置は TeX しか知らない。印を付けて、正確な位置を約束しない。
     const svg = draw('parts:\n  Q1: npn b2\nwires:\n  - Q1.C -- a4\n');
 
     expect(svg).toContain('cf-approx');

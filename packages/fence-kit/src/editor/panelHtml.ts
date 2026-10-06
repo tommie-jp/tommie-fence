@@ -504,7 +504,7 @@ const STYLE = `
     color: var(--vscode-statusBar-foreground, inherit);
   }
   .cf-status { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .kc-cell { min-width: 3em; font-family: var(--vscode-editor-font-family, monospace); }
+  .kc-cell { min-width: 9em; font-family: var(--vscode-editor-font-family, monospace); }
   .kc-zoom { min-width: 3.5em; text-align: right; }
 
   /* ---- 図の中の層 ---- */
@@ -519,8 +519,9 @@ const STYLE = `
   .cf-axis { fill: var(--vscode-descriptionForeground); font-size: 9px; }
 
   .cf-wire, .cf-lead { stroke: var(--cf-ink); stroke-width: 1.5; fill: none; }
-  /* ピンの端は近似。実線で引くと持っていない精度を約束することになる。 */
-  .cf-wire.cf-approx { stroke-dasharray: 3 3; opacity: 0.6; }
+  /* ピンの端は近似 (正しい位置は記号の形が決める)。**実線で引く** — 破線だと配線が切れて見え、
+     欠けた図に読める (52 の docs/118)。近似であることは、少し薄くして言う。 */
+  .cf-wire.cf-approx { opacity: 0.8; }
 
   .cf-glyph { fill: var(--cf-paper); stroke: var(--cf-ink); stroke-width: 1.5; }
   .cf-glyph-line { fill: none; stroke: var(--cf-ink); stroke-width: 1.5; }
