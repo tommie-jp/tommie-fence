@@ -839,3 +839,14 @@ describe('ic や DIP の箱のピンの線', () => {
     )).toBe(true);
   });
 });
+
+describe('7 セグなどの名前つきの箱のピンの線', () => {
+  test('does not guess where the leg is from the anchor for a seven-segment box', () => {
+    const notices = build(
+      'parts:', '  DS1: seg7 12,8', '  P0: port 8,7', '  P1: port 8,8',
+      'wires:', '  - DS1.a -| 8,7', '  - DS1.b -| 8,8',
+    ).notices.map((notice) => notice.message);
+
+    expect(notices.some((message) => message.includes('この線の上に見えます'))).toBe(false);
+  });
+});
