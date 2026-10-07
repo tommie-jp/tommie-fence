@@ -12,7 +12,7 @@ import type { NoteAlign, NoteLeading, NoteSize } from '../notes.ts';
 import { icLayoutModels, lookupIcPinout } from '../icLayouts.ts';
 import { DEVICE, IC, NO_TURN, closestPartType, lookupPartType, partTypeNames, resolvePartTypeName } from '../parts.ts';
 import type { PartTypeName, Turn } from '../parts.ts';
-import { isNoteDrawable } from '../tex/escape.ts';
+import { NOTE_CHARSET, describeChars, isNoteDrawable, unusableChars } from '../tex/escape.ts';
 import type { Endpoint, FenceError, NoteSpec, NoteTextStyle, PartSpec, Result, WireSpec } from '../types.ts';
 import { NOTE_MIRROR_WORD, isNoteRotation, noteRotationOf } from '../notes.ts';
 
@@ -507,7 +507,6 @@ const DEFAULT_MARK_COLOR = 'red';
 const BOLD_WORD = 'bold';
 
 /** 注釈の字に使える字。escape.ts の関門と対にして書く (片方だけ増やさない)。 */
-const NOTE_CHARSET = '英数字と . + - / ( ) _ % : 、日本語、µ Ω °';
 
 /**
  * 字は YAML の値として書く。**フェンスの側で引用符を決めない**のは、
@@ -807,7 +806,7 @@ export function parseNoteText(
     return fail(`注釈の文字が長すぎます (${LIMITS.noteLength} 文字まで)`, line);
   }
   if (!isNoteDrawable(body)) {
-    return fail(`注釈の文字に使えない文字があります (${NOTE_CHARSET} が使えます)`, line);
+    return fail(`注釈の文字に使えない文字があります: ${describeChars(unusableChars(body, 'note'))} (${NOTE_CHARSET} が使えます)`, line);
   }
 
   const looks = readNoteWords(words, line, false);

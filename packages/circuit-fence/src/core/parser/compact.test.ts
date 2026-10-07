@@ -615,6 +615,19 @@ describe('parseNoteText', () => {
     expect(textNoteProblem('text 1,2', 'gain = 10').message).toContain('使えない文字');
   });
 
+  test('says which characters it turned down', () => {
+    const message = textNoteProblem('text 1,2', 'a = $x$').message;
+
+    expect(message).toContain('「=」');
+    expect(message).toContain('「$」');
+    expect(message).not.toContain('「a」');
+  });
+
+  test('takes a comma in the text (it sits inside the node braces, not in an option list)', () => {
+    expect(textNoteOf('text 1,2', 'R1, R2 の点')).toMatchObject({ text: 'R1, R2 の点' });
+    expect(textNoteOf('text 1,2', '1,1 の点')).toMatchObject({ text: '1,1 の点' });
+  });
+
   test('turns down text longer than the limit', () => {
     expect(textNoteProblem('text 1,2', 'あ'.repeat(LIMITS.noteLength + 1)).message).toContain('長すぎます');
   });

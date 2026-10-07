@@ -5,7 +5,7 @@ import { LIMITS, isReferenceable } from '../limits.ts';
 import { oldSpellingHint, parseAddress } from '../model/address.ts';
 import type { Address } from '../model/address.ts';
 import type { FenceError, NoteSpec, PartSpec, Result, StyleSpec, WireSpec } from '../types.ts';
-import { isNoteDrawable } from '../tex/escape.ts';
+import { NOTE_CHARSET, describeChars, isNoteDrawable, unusableChars } from '../tex/escape.ts';
 import { rememberRecent } from 'fence-kit';
 import { NO_POINTS, parseCompactPart, parseNoteLine, parseNoteText, parseWireLine } from './compact.ts';
 import type { Points } from './compact.ts';
@@ -240,7 +240,7 @@ function readTitle(node: ParsedNode | null, line: number | null, errors: FenceEr
     return null;
   }
   if (!isNoteDrawable(written)) {
-    errors.push(fenceError(`title に図へ描けない字があります: ${safeToken(written)}`, line, null, written));
+    errors.push(fenceError(`title に図へ描けない字があります: ${describeChars(unusableChars(written, 'note'))} (${NOTE_CHARSET} が使えます)`, line, null, written));
     return null;
   }
   return written;

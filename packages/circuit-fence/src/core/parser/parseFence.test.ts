@@ -503,4 +503,21 @@ describe('parseFence — points の名前', () => {
 
     expect(errors[0]?.message).toContain('番地そのもの');
   });
+
+  describe('title characters', () => {
+    test('takes a comma in the title', () => {
+      const result = parseFence(lines('title: 図1 R1, R2 の直列', 'parts:', '  R1: resistor 1,1 3,1 10k'));
+
+      expect(result.errors).toEqual([]);
+      expect(result.doc.title).toBe('図1 R1, R2 の直列');
+    });
+
+    test('says which characters it turned down', () => {
+      const result = parseFence(lines('title: 図1 R1 = $5', 'parts:', '  R1: resistor 1,1 3,1 10k'));
+
+      expect(result.errors[0]?.message).toContain('「=」');
+      expect(result.errors[0]?.message).toContain('「$」');
+      expect(result.errors[0]?.message).not.toContain('「R」');
+    });
+  });
 });

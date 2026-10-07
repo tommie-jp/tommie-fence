@@ -7,7 +7,7 @@ import type { Address } from './address.ts';
 import { NO_POINTS } from '../parser/compact.ts';
 import type { Points } from '../parser/compact.ts';
 import type { FenceDocument } from '../parser/parseFence.ts';
-import { isDrawable, isSourceDrawable } from '../tex/escape.ts';
+import { describeChars, isDrawable, isSourceDrawable, unusableChars } from '../tex/escape.ts';
 import { unitValueProblem } from '../values.ts';
 import { isMathLabel, mathInnerOf, mathLabelTex } from '../tex/mathLabel.ts';
 import { cellOf, nameOfEndpoint } from '../types.ts';
@@ -97,14 +97,15 @@ const valueProblem = (value: string, target: TexTarget): string => {
   const token = safeToken(value);
   const subject = token === '' ? '値' : `値 ${token} `;
 
-  if (target === 'latex') return `${subject}に使えない文字があります (${LATEX_CHARSET} が使えます)`;
+  const bad = describeChars(unusableChars(value, 'latex'));
+  if (target === 'latex') return `${subject}に使えない文字があります: ${bad} (${LATEX_CHARSET} が使えます)`;
 
   // 書き出す .tex でなら通る字のときだけ、そちらへ誘導する。
   // どちらでも通らない字を .tex に送っても直らないので、使える字を伝える。
   if (isDrawable(value, 'latex')) {
     return `${subject}はプレビューの TeX にフォントがありません (circuit-fence render --emit-tex で .tex に書き出すと LaTeX で組めます)`;
   }
-  return `${subject}に使えない文字があります (${ASCII_CHARSET} が使えます)`;
+  return `${subject}に使えない文字があります: ${bad} (${ASCII_CHARSET} が使えます)`;
 };
 
 export type BuildOptions = {

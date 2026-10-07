@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { escapeTex, escapeTexListing, hasUnicode, isAscii, isDrawable } from './escape.ts';
+import { describeChars, escapeTex, escapeTexListing, hasUnicode, isAscii, isDrawable, isNoteDrawable, unusableChars } from './escape.ts';
 
 describe('isDrawable', () => {
   test('accepts the values a schematic is written with', () => {
@@ -114,5 +114,37 @@ describe('escapeTexListing', () => {
 
   test('spells out the hat too', () => {
     expect(escapeTexListing('a^b')).toBe('a\\textasciicircum{}b');
+  });
+});
+
+describe('a comma', () => {
+  test('is allowed in a note and a title, not in a value', () => {
+    expect(isNoteDrawable('R1, R2')).toBe(true);
+    expect(isDrawable('1,5k', 'fence')).toBe(false);
+    expect(isDrawable('1,5k', 'latex')).toBe(false);
+  });
+});
+
+describe('unusableChars / describeChars', () => {
+  test('lists each character that is turned down once, in the order it appears', () => {
+    expect(unusableChars('a = $x$ =', 'note')).toEqual(['=', '$']);
+    expect(unusableChars('10k', 'fence')).toEqual([]);
+  });
+
+  test('judges a value by its own kind (a comma is turned down, Japanese only for latex)', () => {
+    expect(unusableChars('1,5k', 'fence')).toEqual([',']);
+    expect(unusableChars('あ', 'fence')).toEqual(['あ']);
+    expect(unusableChars('あ', 'latex')).toEqual([]);
+  });
+
+  test('writes the characters in quotes and names the ones you cannot see', () => {
+    expect(describeChars(['=', '$'])).toBe('「=」「$」');
+    expect(describeChars(['\t', '\u3000'])).toBe('(タブ)(全角の空白)');
+  });
+
+  test('stops after a few characters and says how many were left out', () => {
+    const many = [...'=$\\^{}#&~'];
+
+    expect(describeChars(many)).toMatch(/ほか 1 字$/);
   });
 });

@@ -40,9 +40,13 @@ const UNICODE_DRAWABLE =
  * 値では通さない `:` をここだけ足してある。`to[..., l=...]` のオプションに
  * 渡らないので区切りとして読まれることがなく、部品の書き方
  * (`R1: resistor a1 a3 10k`) をそのまま注釈に書き写せる。
- * 記法として読まれる字 (`\\` `$` `,` `=`) は注釈でも通さない (約束 3)。
+ * **`,` も通す。** 注釈と題の字は `\node[…] {字}` の波括弧の中に置かれ、オプションの
+ * 並び (`[…]`) には入らないので、`,` が区切りとして読まれることがない。値とラベルの
+ * 関門 (`ASCII_DRAWABLE`) は `to[..., l=...]` のオプションに入るので、そちらは通さない。
+ * 記法として読まれる字 (`\\` `$` `=`) は注釈でも通さない (約束 3)。
  */
-const NOTE_DRAWABLE = new RegExp(`^[${ASCII_DRAWABLE}${UNICODE_DRAWABLE}:]*$`, 'u');
+const NOTE_CLASS = `${ASCII_DRAWABLE}${UNICODE_DRAWABLE}:,`;
+const NOTE_DRAWABLE = new RegExp(`^[${NOTE_CLASS}]*$`, 'u');
 
 /**
  * 元のフェンスをそのまま図に書き出す注釈 (`- source`) に通す字。
@@ -60,6 +64,9 @@ const NOTE_DRAWABLE = new RegExp(`^[${ASCII_DRAWABLE}${UNICODE_DRAWABLE}:]*$`, '
  */
 const SOURCE_EXTRA = ':`|"\'#,=\\[\\]!?;<>*@&~\\\\$${}^';
 const SOURCE_DRAWABLE = new RegExp(`^[${ASCII_DRAWABLE}${UNICODE_DRAWABLE}${SOURCE_EXTRA}]*$`, 'u');
+
+/** 注釈と題で使える字の説明 (お知らせに出す)。 */
+export const NOTE_CHARSET = '英数字と . , + - / ( ) _ % : 、日本語、µ Ω °';
 
 const DRAWABLE: Readonly<Record<TexTarget, RegExp>> = {
   fence: new RegExp(`^[${ASCII_DRAWABLE}]*$`, 'u'),
@@ -109,3 +116,36 @@ const LISTING_ESCAPES: Record<string, string> = {
 
 export const escapeTexListing = (text: string): string =>
   text.replace(/[_%&#~ \\$${}^]/g, (char) => LISTING_ESCAPES[char] ?? char);
+
+const CLASS_OF = {
+  fence: ASCII_DRAWABLE,
+  latex: `${ASCII_DRAWABLE}${UNICODE_DRAWABLE}`,
+  note: NOTE_CLASS,
+} as const;
+
+/** 「どの字がだめか」を言う字の名前。見えない字や紛らわしい字は名前で言う。 */
+const SPECIAL_NAMES: Readonly<Record<string, string>> = {
+  '\t': 'タブ', '\n': '改行', '\r': '復帰', '\u3000': '全角の空白', '\u00A0': '改行しない空白',
+};
+
+/** お知らせに出す字の数の上限。長い文字列を丸ごと貼ると読めなくなる。 */
+const SHOWN_CHARS = 8;
+
+/**
+ * `text` のうち、その種類で通らない字 (重複なし、出てきた順)。
+ * 「使えない文字があります」とだけ言うと、どれを直すのか探すことになる。
+ */
+export function unusableChars(text: string, kind: keyof typeof CLASS_OF): readonly string[] {
+  const allowed = new RegExp(`^[${CLASS_OF[kind]}]$`, 'u');
+  return [...new Set([...text].filter((char) => !allowed.test(char)))];
+}
+
+/** `unusableChars` をお知らせに書く形にする (`「,」「$」`)。 */
+export function describeChars(chars: readonly string[]): string {
+  const shown = chars.slice(0, SHOWN_CHARS).map((char) => {
+    const name = SPECIAL_NAMES[char];
+    return name === undefined ? `「${char}」` : `(${name})`;
+  });
+  const rest = chars.length - shown.length;
+  return rest > 0 ? `${shown.join('')} ほか ${rest} 字` : shown.join('');
+}
