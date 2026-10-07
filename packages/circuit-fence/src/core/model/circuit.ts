@@ -329,6 +329,9 @@ function overlaps(parts: readonly PartSpec[]): FenceError[] {
   return errors;
 }
 
+/** ピンを辺に何本も並べる箱の種類 (`ic` `dip16` `sip3`)。 */
+const BOX_TYPE = /^(ic|dip\d+|sip\d+)$/;
+
 /**
  * ピンへ引いた線の上に、別の端が乗って**見える**ところ。
  *
@@ -477,6 +480,11 @@ function guessSegment(wire: WireSpec, byId: ReadonlyMap<string, PartSpec>): Segm
   const centred = part !== undefined && part.kind === 'multi-terminal' && type != null
     && pinAxis(type, pin.pin, part.turn) !== null;
   if (centred) return { from, to };
+
+  // **ic と DIP・SIP の箱**は、ピンが辺に何本も並び、高さが置いた交点 (アンカー) と合わない。
+  // アンカーで代用すると、無関係な端を「線の上に見える」と言ってしまう (交点の側の一辺も、
+  // 始まりの行がピンの高さで決まるので当たらない)。ピンの高さを知らないので判断しない。
+  if (part !== undefined && BOX_TYPE.test(part.type)) return null;
 
   // ここから下は、中心線から外れたピン。
   if (wire.operator === '--') return null;

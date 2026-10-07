@@ -819,3 +819,23 @@ describe('交点の間の番地とピンの読み分け', () => {
     expect(errors[0]?.message).toContain('1.5,1');
   });
 });
+
+describe('ic や DIP の箱のピンの線', () => {
+  const said = (...rows: string[]) => build(...rows).notices.some((notice) => notice.message.includes('この線の上に見えます'));
+
+  test('does not guess where the leg is from the anchor, because the box has many legs at other heights', () => {
+    // ic のピン A0・A1 は箱の辺に並び、置いた交点 (アンカー) の行にはない。
+    // アンカーで代用すると、別のピンの端子 (7,7) を「線の上に見える」と誤って言っていた。
+    expect(said(
+      'parts:', '  U1: ic 10,8 CD74HC283', '  A0: port 6,6', '  A1: port 6,7',
+      'wires:', '  - U1.A0 -| 6,6', '  - U1.A1 -| 6,7',
+    )).toBe(false);
+  });
+
+  test('still says it for a symbol with a few legs whose leg sits on the centre line', () => {
+    expect(said(
+      'parts:', '  U1: opamp 3,3', '  G1: ground 5,3', '  R1: resistor 7,3 7,5',
+      'wires:', '  - U1.out -- 7,3',
+    )).toBe(true);
+  });
+});
