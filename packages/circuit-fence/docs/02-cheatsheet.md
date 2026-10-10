@@ -107,7 +107,7 @@ parts:
 - マイコンボード (ピンは実物の印字で `U1.GP0`。図には `01 GP0` と番号も出る)
   `pico` `pico-w` `pico2` `pico2-w` `tang-nano-9k` (FPGA。ピンは `IO38` など)
 - ピンに名前のある部品 (名前でも実物のピンの番号でも可。下の表)
-  `relay` `photocoupler` `photocoupler6` `seg7` `dip-switch4` `dip-switch8`
+  `relay` `photocoupler` `photocoupler6` `seg7` `seg7x4` `dip-switch4` `dip-switch8`
 
 略記: `r` `c` `l` `d` `i` `v` `dc` `ac` `gnd` `op` `ec` `pot` `ldr` `ntc`
 `ptc` `xtal` `cfilter` `scr` `bat` `sw` `btn`
@@ -134,6 +134,7 @@ parts:
 | `photocoupler` | `A` `K` / `C` `E` |
 | `photocoupler6` | `A` `K` / `C` `E` (4N35。DIP の番号は `1` `2` / `5` `4`。NC とベースは描かない) |
 | `seg7` | `a` 〜 `g` `dp` `COM1` `COM2` |
+| `seg7x4` | `a` 〜 `g` `dp` `DIG1` 〜 `DIG4` (OSL40562-LR。DIP の番号でも可、`DIG1` = `12`) |
 | `dip-switch4` / `dip-switch8` | `A1` 〜 / `B1` 〜 (k 番のスイッチは `Ak`–`Bk`。DIP の番号でも可) |
 | `potentiometer` | `w` |
 | `thyristor` / `triac` | `g` |

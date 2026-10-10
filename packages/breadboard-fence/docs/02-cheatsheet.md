@@ -70,7 +70,7 @@ d↔h なら e・f・g 行が胴の下。空くのは d の上の a〜c と h �
 USB      usb-a (穴は VBUS GND D+ D- の順に 2 つから) usb-c (穴は GND D+ D- VBUS の順に 4 つ)
 まとまり  button button-nc dipN (4〜40 の偶数) sipN (2〜40)
 ボード    pico pico-w pico2 pico2-w tang-nano-9k (FPGA。列の間が 9 ピッチ: a↔h b↔i c↔j)
-名前つき  relay photocoupler photocoupler6 seg7 dip-switch4 dip-switch8 (DIP 型。ピンは名前でも番号でも。K1.COM1 = K1.4)
+名前つき  relay photocoupler photocoupler6 seg7 seg7x4 dip-switch4 dip-switch8 (DIP 型。ピンは名前でも番号でも。K1.COM1 = K1.4)
 ボード外  device
 ```
 
@@ -83,7 +83,7 @@ transistor/to92  transistor/to220  thyristor/…  triac/…  regulator/…  ic3/
 transistor/sot23-dip  transistor/sot346-dip (S-Mini)  transistor/sot89-dip  (regulator/…)
 dip8/sop  dip8/tssop  (dipN の姿。DIP 化した変換基板)
 dip24/wide  dip28/wide  dip32/wide  dip40/wide  (600 mil 幅。ピンの行は d↔h など 6 ピッチ離れた組。下記)
-relay/g5v-2  photocoupler/pc817  photocoupler6/4n35  seg7/5161as  (品名。書かなければこれ)
+relay/g5v-2  photocoupler/pc817  photocoupler6/4n35  seg7/5161as  seg7x4/osl40562  (品名。書かなければこれ)
 sma/male  sma/female  usb-a/male  usb-a/female  usb-c/male  usb-c/female
 crystal/hc49  crystal/cylinder
 resistor/quarter  resistor/half        diode/do35  diode/do41  (zener/…  schottky/…)
