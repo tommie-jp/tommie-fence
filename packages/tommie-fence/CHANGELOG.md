@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **4 桁の 7 セグメント LED (`seg7x4`、OSL40562-LR) を回路図・ブレッドボード・ユニバーサル基板で描ける。** 束ねるフェンスを上げた (circuit-fence 0.37.0・breadboard-fence 0.42.0・perfboard-fence 0.41.0)。詳しくは各パッケージの CHANGELOG。
+
 ## [0.61.2] - 2026-10-07
 
 ### Changed
