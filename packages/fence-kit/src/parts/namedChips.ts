@@ -1,11 +1,11 @@
 import { element } from '../markup.ts';
 import { num } from '../svg.ts';
-import { dipChip, segmentFace } from './chips.ts';
-import type { ChipPoint, DipOptions } from './chips.ts';
+import { chipAlongX, dipBox, dipChip, segmentFace } from './chips.ts';
+import type { ChipBox, ChipPoint, DipOptions } from './chips.ts';
 
 /**
  * ピンに名前のある DIP 型の部品 (52 の docs/66 の段 3)。**DIP のピンの位置のうち、
- * ピンのある所に名前が付いた物**。リレー・フォトカプラ・7 セグがこの形で、
+ * ピンのある所に名前が付いた物**。リレー・フォトカプラ・7 セグ (1 桁と 4 桁) がこの形で、
  * 違うのは列の間の穴数と、どの位置にピンがあるかだけ。
  *
  * **表だけを共有する** (マイコンボードの `boards.ts` と同じ)。ブレッドボードとユニバーサル基板は DIP と
@@ -36,6 +36,16 @@ export type NamedChip = {
   readonly pins: readonly NamedChipPin[];
   /** 胴の見た目。`display` は 7 セグの面、`switch` は DIP スイッチのつまみを描く。 */
   readonly body: 'relay' | 'chip' | 'display' | 'switch';
+  /**
+   * 7 セグの桁の数。書かなければ 1。**桁の間は 1 番と `positions / 2` 番の列の間**
+   * (4 桁の OSL40562 は 12.70 mm = 5 ピッチで、ピンの列の端から端と同じ)。
+   */
+  readonly digits?: number;
+  /**
+   * 胴の長さ (列に沿う向き、2.54mm 単位)。書かなければ DIP と同じ (ピンの並び + 縁)。
+   * **ピンの並びより胴が長い部品**だけが書く。胴はピンの並びの真ん中に置く。
+   */
+  readonly bodyAlong?: number;
 };
 
 const pins = (entries: Readonly<Record<number, string>>): readonly NamedChipPin[] =>
@@ -66,6 +76,18 @@ const CHIPS: readonly NamedChip[] = [
     // E=1 D=2 共通=3 C=4 DP=5 B=6 A=7 共通=8 F=9 G=10。
     type: 'seg7', look: '5161as', name: '5161AS', kindName: '7 セグメント LED', prefix: 'DS', positions: 10, rowSpan: 6, body: 'display',
     pins: pins({ 1: 'e', 2: 'd', 3: 'COM1', 4: 'c', 5: 'dp', 6: 'b', 7: 'a', 8: 'COM2', 9: 'f', 10: 'g' }),
+  },
+  {
+    // OptoSupply OSL40562-LR (0.56 インチ 4 桁、カソード共通、ダイナミック点灯)。
+    // 秋月の資料 https://akizukidenshi.com/goodsaffix/OSL40562-LR.pdf の 2 ページめ
+    // (Package dimensions and pin function) で確かめた。外形 50.30 × 19.0 mm、桁の間 12.70 mm、
+    // 1 列 6 本 (2.54 mm)、列の間 15.24 mm。上から見て 1 番が左下、12 番が左上、DIG1 が左端の桁。
+    // e=1 d=2 dp=3 c=4 g=5 DIG4=6 b=7 DIG3=8 DIG2=9 f=10 a=11 DIG1=12。
+    // DIGk は k 桁めのカソードの共通、a〜g・dp は 4 桁で共通につながったアノード。
+    // **ピンの数が違うので 5161AS の姿ではなく種類を分ける** (DIP スイッチと同じ)。
+    type: 'seg7x4', look: 'osl40562', name: 'OSL40562-LR', kindName: '4 桁 7 セグメント LED', prefix: 'DS',
+    positions: 12, rowSpan: 6, body: 'display', digits: 4, bodyAlong: 50.3 / 2.54,
+    pins: pins({ 1: 'e', 2: 'd', 3: 'dp', 4: 'c', 5: 'g', 6: 'DIG4', 7: 'b', 8: 'DIG3', 9: 'DIG2', 10: 'f', 11: 'a', 12: 'DIG1' }),
   },
   dipSwitch(4),
   dipSwitch(8),
@@ -101,8 +123,22 @@ export function lookupNamedChip(type: string, look: string | null): NamedChip | 
 }
 
 /**
+ * 名前つきの DIP 型の胴の外形。**描くのも当たり判定もこれを使う** (perfboard の約束)。
+ * ふつうは DIP と同じで、胴の長さ (`bodyAlong`) のある部品だけ列に沿って伸ばす
+ * (伸ばすのはピンの並びの真ん中から両側へ同じだけ)。
+ */
+export function namedChipBox(chip: NamedChip, points: readonly ChipPoint[], pitch: number): ChipBox {
+  const box = dipBox(points, pitch);
+  if (chip.bodyAlong === undefined || points.length === 0) return box;
+  const length = chip.bodyAlong * pitch;
+  if (chipAlongX(points)) return { ...box, x: box.x + box.width / 2 - length / 2, width: length };
+  return { ...box, y: box.y + box.height / 2 - length / 2, height: length };
+}
+
+/**
  * 名前つきの DIP 型を描く。**DIP の絵 (`dipChip`) に、ピンの名前と品名を載せる**。
- * 7 セグは品名の代わりに面 (「8.」) を描く — 品名は部品リストに出る。
+ * 7 セグは品名の代わりに面 (「8.」) を描く — 品名は部品リストに出る。4 桁の 7 セグは
+ * 面を桁の数だけ、横長の胴 (`namedChipBox`) の中に並べる。
  *
  * `names` は `points` と同じ順のピンの名前 (基板が並べたもの)。回した部品では
  * 並びが巡るので、1 番ピンは**表の 1 番の位置の名前**で探す。
@@ -129,9 +165,33 @@ export function drawNamedChip(options: Omit<DipOptions, 'pinOne'> & { readonly c
       y: picked.reduce((sum, point) => sum + point.y, 0) / picked.length,
     };
   };
-  const face = digitFace(mean(true), mean(false));
-  return `${dipChip({ ...options, pinOne, caption: '' })}${face}`;
+  const top = mean(true);
+  const bottom = mean(false);
+  // 桁の並ぶ向きと間隔は 1 番から `half` 番の列へ (DIG1 が 1 番の側)。
+  const pointOf = (at: number): ChipPoint | undefined =>
+    points[names.indexOf(chip.pins.find((pin) => pin.at === at)?.name ?? '')];
+  const faces = digitCentres(chip.digits ?? 1, pointOf(1), pointOf(half))
+    .map((offset) => digitFace(shifted(top, offset), shifted(bottom, offset)))
+    .join('');
+  const box = namedChipBox(chip, points, options.pitch);
+  return `${dipChip({ ...options, pinOne, caption: '', box, staggerLabels: true })}${faces}`;
 }
+
+/**
+ * 桁ごとの中心のずれ。**1 桁なら 0 だけ**。複数の桁は 1 番と `half` 番の列の間を
+ * 1 桁の間隔とし、真ん中から両側へ並べる (4 桁なら −1.5・−0.5・0.5・1.5 倍)。
+ */
+function digitCentres(digits: number, first: ChipPoint | undefined, last: ChipPoint | undefined): ChipPoint[] {
+  if (digits <= 1 || first === undefined || last === undefined) return [{ x: 0, y: 0 }];
+  const step = { x: last.x - first.x, y: last.y - first.y };
+  return Array.from({ length: digits }, (_, index) => {
+    const k = index - (digits - 1) / 2;
+    return { x: step.x * k, y: step.y * k };
+  });
+}
+
+const shifted = (point: ChipPoint | null, offset: ChipPoint): ChipPoint | null =>
+  point === null ? null : { x: point.x + offset.x, y: point.y + offset.y };
 
 /** 桁の面 (「8.」)。上下どちらかの列が無ければ (ピンを寄せ切れない置き方) 何も描かない。 */
 function digitFace(top: ChipPoint | null, bottom: ChipPoint | null): string {

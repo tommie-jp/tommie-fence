@@ -329,8 +329,8 @@ function overlaps(parts: readonly PartSpec[]): FenceError[] {
   return errors;
 }
 
-/** ピンを辺に何本も並べる箱の種類 (`ic` `dip16` `sip3` `seg7` `relay` `photocoupler` `dip-switch4`)。 */
-const BOX_TYPE = /^(ic|dip\d+|sip\d+|seg7|relay|photocoupler6?|dip-switch\d+)$/;
+/** ピンを辺に何本も並べる箱の種類 (`ic` `dip16` `sip3` `seg7` `seg7x4` `relay` `photocoupler` `dip-switch4`)。 */
+const BOX_TYPE = /^(ic|dip\d+|sip\d+|seg7(?:x4)?|relay|photocoupler6?|dip-switch\d+)$/;
 
 /**
  * ピンへ引いた線の上に、別の端が乗って**見える**ところ。

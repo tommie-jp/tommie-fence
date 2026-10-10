@@ -1,5 +1,5 @@
 import {
-  boardBox, connectorBox, connectorFacing, crystalCan, dipBox, directSotSpec, lookupBoardPart, sipBox, smdBodySize, sotMountOf,
+  boardBox, connectorBox, connectorFacing, crystalCan, dipBox, directSotSpec, lookupBoardPart, lookupNamedChip, namedChipBox, sipBox, smdBodySize, sotMountOf,
 } from 'fence-kit';
 import type { ConnectorShape } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
@@ -167,8 +167,12 @@ function boxRect(part: PlacedPart, layout: Layout): OrientedRect | null {
 
   // **パッケージの外形は fence-kit が持つ。** 描くのも同じ関数なので、
   // 「図では重なって見えるのに何も言わない」が起きない (この約束のためにここにいる)。
-  const kind = footprintOf(part.type)?.kind;
-  const box = kind === 'dip' || kind === 'named' ? dipBox(points, layout.pitch)
+  const footprint = footprintOf(part.type, part.variant);
+  const kind = footprint?.kind;
+  // 名前つきの DIP 型は胴の長さが部品ごとに違う (4 桁の 7 セグは横長)。描く側と同じ外形。
+  const named = kind === 'named' ? footprint?.chip ?? lookupNamedChip(part.type, part.variant) : null;
+  const box = named !== null && named !== undefined ? namedChipBox(named, points, layout.pitch)
+    : kind === 'dip' ? dipBox(points, layout.pitch)
     : kind === 'sip' ? sipBox(points, layout.pitch)
       : kind === 'board' ? boardBox(points, layout.pitch, lookupBoardPart(part.type)) : null;
   if (box !== null) {

@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- 名前つきの DIP 型に `seg7x4` (OptoSupply OSL40562-LR、0.56 インチ 4 桁、カソード共通): `e` (1) `d` (2) `dp` (3) `c` (4) `g` (5) `DIG4` (6) `b` (7) `DIG3` (8) `DIG2` (9) `f` (10) `a` (11) `DIG1` (12)、列の間 6 ピッチ。秋月の資料 (OSL40562-LR.pdf の 2 ページめ) で確かめた。1 桁の 5161AS とはピンの数が違うので姿ではなく種類を分けた
+- `NamedChip` に `digits` (7 セグの桁の数) と `bodyAlong` (列に沿う胴の長さ)。`namedChipBox` は名前つきの DIP 型の胴の外形 (描画と当たり判定で同じもの)。`dipChip` は `box` (胴の外形) と `staggerLabels` (隣り合う長い縁の字を 1 段ずらす) を受け取る
+
 ## [0.19.0] - 2026-10-07
 
 ### Changed

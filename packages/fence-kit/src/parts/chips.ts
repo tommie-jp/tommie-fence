@@ -126,7 +126,41 @@ export type DipOptions = {
   /** 字の倍率 (テーマの字の大きさ / 既定)。 */
   readonly scale: number;
   readonly ink: ChipInk;
+  /**
+   * 胴の外形。書かなければ DIP の外形 (`dipBox`)。**ピンの並びより胴が長い部品**
+   * (4 桁の 7 セグ) が渡す — 当たり判定も同じ外形を使う (`namedChipBox`)。
+   */
+  readonly box?: ChipBox;
+  /**
+   * 縁の字 (`numbers` が無いときの名前) が**隣どうしで長い**とき、片方を 1 段内側へずらす。
+   * 4 桁の 7 セグの `DIG2` `DIG3` のように 3 字以上の名前が隣り合うと、ブレッドボードの
+   * ピッチでは字がつながって 1 語に読めた。列に沿って並ぶ胴 (横置き) だけに効く。
+   */
+  readonly staggerLabels?: boolean;
 };
+
+/** 縁の字を内側へずらす段の数 (字の高さに足す余白、px) と、長いと見なす字数。 */
+const STAGGER_GAP = 1;
+const STAGGER_LENGTH = 3;
+
+/**
+ * 縁の字の段 (0 か 1)。**同じ列で隣の字も長く、しかも隣が 0 段なら 1 段**にする。
+ * 隣は列に沿う向きで 1 ピッチ以内の点。
+ */
+function labelTiers(points: readonly ChipPoint[], labels: readonly string[], pitch: number): number[] {
+  const tiers = points.map(() => 0);
+  const order = points.map((_, index) => index).sort((a, b) => (points[a]!.y - points[b]!.y) || (points[a]!.x - points[b]!.x));
+  const isLong = (index: number): boolean => (labels[index] ?? '').length >= STAGGER_LENGTH;
+  order.forEach((index, position) => {
+    const previous = order[position - 1];
+    if (previous === undefined || !isLong(index) || !isLong(previous)) return;
+    const here = points[index]!;
+    const there = points[previous]!;
+    const neighbours = Math.abs(here.y - there.y) < pitch / 2 && Math.abs(here.x - there.x) <= pitch * 1.01;
+    if (neighbours && tiers[previous] === 0) tiers[index] = 1;
+  });
+  return tiers;
+}
 
 /**
  * DIP パッケージ。**切り欠きは 1 番ピンの側の端**に描く。実物と同じ向きの
@@ -136,7 +170,7 @@ export function dipChip(options: DipOptions): string {
   const { points, names, pinOne, pitch, caption, scale, ink } = options;
   if (points.length === 0) return '';
 
-  const box = dipBox(points, pitch);
+  const box = options.box ?? dipBox(points, pitch);
   const centre = centreOf(box);
   const alongX = chipAlongX(points);
   // ピンから樹脂の中心へ向かう向き。**列ごとに向きが変わる**。
@@ -155,9 +189,12 @@ export function dipChip(options: DipOptions): string {
     .join('');
 
   const edgeLabels = options.numbers ?? names;
+  const tiers = options.staggerLabels === true && alongX && options.numbers === undefined
+    ? labelTiers(points, edgeLabels, pitch)
+    : points.map(() => 0);
   const numbers = points
     .map((point, index) => {
-      const step = inward(point) * NUMBER_IN;
+      const step = inward(point) * (NUMBER_IN + (tiers[index] ?? 0) * (scale * NUMBER_FONT + STAGGER_GAP));
       return svgText(
         point.x + (alongX ? 0 : step),
         point.y + (alongX ? step + NUMBER_MIDDLE : NUMBER_MIDDLE),

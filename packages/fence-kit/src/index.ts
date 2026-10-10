@@ -52,7 +52,7 @@ export {
   REAL_INK, SMA_SIZE, bodySize, crystalCan, drawBody, drawsOwnLeads, hasBody, smaBody, transformerCore,
 } from './parts/bodies.ts';
 export { boardPartNames, lookupBoardPart } from './parts/boards.ts';
-export { drawNamedChip, lookupNamedChip, namedChipLooks, namedChipTypes } from './parts/namedChips.ts';
+export { drawNamedChip, lookupNamedChip, namedChipBox, namedChipLooks, namedChipTypes } from './parts/namedChips.ts';
 export { lookupGateUnits, lookupPinout, lookupRole, pinoutModels, pinoutTable } from './parts/pinouts.ts';
 export type { AdapterChip, GateUnit, Pinout, PinoutRow } from './parts/pinouts.ts';
 export { VERIFY_NOTES, discreteModels, discreteTable, lookupDiscrete } from './parts/discretes.ts';

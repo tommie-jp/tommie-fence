@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { drawNamedChip, lookupNamedChip, namedChipLooks, namedChipTypes } from './namedChips.ts';
+import { drawNamedChip, lookupNamedChip, namedChipBox, namedChipLooks, namedChipTypes } from './namedChips.ts';
 
 /**
  * ピンに名前のある DIP 型の部品 (52 の docs/66 の段 3)。**DIP のピンの位置のうち、
@@ -9,7 +9,7 @@ import { drawNamedChip, lookupNamedChip, namedChipLooks, namedChipTypes } from '
 
 describe('名前つきの DIP 型の表', () => {
   test('knows the relay, the photocoupler and the seven-segment display', () => {
-    expect(namedChipTypes()).toEqual(['relay', 'photocoupler', 'photocoupler6', 'seg7', 'dip-switch4', 'dip-switch8']);
+    expect(namedChipTypes()).toEqual(['relay', 'photocoupler', 'photocoupler6', 'seg7', 'seg7x4', 'dip-switch4', 'dip-switch8']);
     expect(namedChipLooks('relay')).toEqual(['g5v-2']);
   });
 
@@ -47,6 +47,21 @@ describe('名前つきの DIP 型の表', () => {
     expect(eight?.pins[0]).toEqual({ at: 1, name: 'A1' });
     expect(eight?.pins[15]).toEqual({ at: 16, name: 'B1' });
     expect(eight?.pins[8]).toEqual({ at: 9, name: 'B8' });
+  });
+
+  test('puts the OSL40562-LR on two rows of six, six holes apart, with the digits common to each digit', () => {
+    const display = lookupNamedChip('seg7x4', null);
+    expect(display).toMatchObject({
+      look: 'osl40562', name: 'OSL40562-LR', kindName: '4 桁 7 セグメント LED', prefix: 'DS',
+      positions: 12, rowSpan: 6, body: 'display', digits: 4,
+    });
+    // OptoSupply のデータシート 2 ページめの図。1 番が左下、12 番が左上。
+    expect(display?.pins.map((pin) => `${pin.at}${pin.name}`)).toEqual([
+      '1e', '2d', '3dp', '4c', '5g', '6DIG4', '7b', '8DIG3', '9DIG2', '10f', '11a', '12DIG1',
+    ]);
+    expect(lookupNamedChip('seg7x4', 'osl40562')).toBe(display);
+    // 1 桁の 5161AS は 1 桁のまま (書かなければ 1)。
+    expect(lookupNamedChip('seg7', null)?.digits).toBeUndefined();
   });
 
   test('answers null for a kind or a look it does not know, and for inherited names', () => {
@@ -105,6 +120,41 @@ describe('名前つきの DIP 型の絵', () => {
     expect(svg).not.toContain('DIP SW');
     expect(svg).toMatch(/>A1<\/text>/);
     expect(svg).toMatch(/>8<\/text>/);
+  });
+
+  test('draws four faces inside the long body of a four-digit display, one per five pitches', () => {
+    const chip = lookupNamedChip('seg7x4', null)!;
+    // 1〜6 番が下の列 (y = 220) を左から、7〜12 番が上の列 (y = 100) を右から。
+    const points = [...row(220, 6), ...row(100, 6).reverse()];
+    const svg = drawNamedChip({
+      chip, points, names: chip.pins.map((pin) => pin.name), pitch: 20, caption: 'OSL40562-LR', scale: 1, ink: INK,
+    });
+
+    const faces = [...svg.matchAll(/translate\(([\d.-]+) ([\d.-]+)\) rotate\(([\d.-]+)\)/g)];
+    expect(faces).toHaveLength(4);
+    // 桁の中心は 1 番と 6 番の列の間の 5 ピッチおき。DIG1 が左 (1 番の側)。
+    expect(faces.map((face) => Number(face[1]))).toEqual([0, 100, 200, 300]);
+    expect(faces.every((face) => Number(face[2]) === 160 && face[3] === '0')).toBe(true);
+    expect(svg).not.toContain('OSL40562-LR');
+    expect(svg).toMatch(/>DIG1<\/text>/);
+    // 隣り合う DIG2 (9 番) と DIG3 (8 番) は字がつながらないよう 1 段ずらす。
+    const yOf = (name: string): number => Number(new RegExp(`y="([\\d.]+)"[^>]*>${name}<`).exec(svg)?.[1]);
+    expect(yOf('DIG2')).not.toBe(yOf('DIG3'));
+    expect(Number.isFinite(yOf('DIG1'))).toBe(true);
+    expect(yOf('DIG1')).toBe(yOf('a'));
+
+    // 胴は外形どおり 50.30 mm (19.8 ピッチ) の横長で、4 つの桁を収める。
+    const box = namedChipBox(chip, points, 20);
+    expect(box.width).toBeCloseTo((50.3 / 2.54) * 20, 5);
+    expect(box.x + box.width / 2).toBeCloseTo(150, 5);
+    expect(box.x).toBeLessThan(0 - 30);
+    expect(box.x + box.width).toBeGreaterThan(300 + 30);
+  });
+
+  test('keeps the box of a one-digit display and of the other chips the same as a DIP', () => {
+    const points = [...row(220, 5), ...row(100, 5).reverse()];
+    const box = namedChipBox(lookupNamedChip('seg7', null)!, points, 20);
+    expect(box).toEqual({ x: 91, y: 95, width: 98, height: 130 });
   });
 
   test('draws the face of the display instead of its name', () => {

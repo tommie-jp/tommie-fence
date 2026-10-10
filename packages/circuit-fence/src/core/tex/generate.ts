@@ -4,7 +4,7 @@ import type { Address } from '../model/address.ts';
 import { wireContacts } from '../model/circuit.ts';
 import type { Circuit } from '../model/circuit.ts';
 import {
-  DEVICE, DIP_SWITCHES, IC3, isTurned, laidOf, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, seg7DeviceBox, symbolFor, symbolOf, tunableOptions, turnSide,
+  DEVICE, DIP_SWITCHES, IC3, isTurned, laidOf, lookupPartType, optionsFor, optionsOf, partTypeOf, pinLabelText, pinPlaces, pinSideOf, SEG7_TYPES, seg7DeviceBox, symbolFor, symbolOf, tunableOptions, turnSide,
 } from '../parts.ts';
 import type { PartType, PinSide, SourceInner, Turn } from '../parts.ts';
 import { lookupBoardPart, lookupNamedChip } from 'fence-kit';
@@ -254,10 +254,10 @@ function sipShapesFor(circuit: Circuit, pitch: number): string[] {
     const box = deviceBox(part.pinNames, part.value);
     boxes.set(deviceShapeName(box), box);
   }
-  // 7 セグは機器と同じ箱。幅は刷る型番から (同じ寸法の箱があれば 1 回で済む)。
+  // 7 セグ (1 桁・4 桁) は機器と同じ箱。幅は刷る型番から (同じ寸法の箱があれば 1 回で済む)。
   for (const part of circuit.parts) {
-    if (part.type !== 'seg7' || part.kind !== 'multi-terminal') continue;
-    const box = seg7DeviceBox(part.value);
+    if (!SEG7_TYPES.includes(part.type) || part.kind !== 'multi-terminal') continue;
+    const box = seg7DeviceBox(part.type, part.value);
     boxes.set(deviceShapeName(box), box);
   }
   // 働きで並べた IC も自分で宣言した形。**使う型番だけ、1 回ずつ**。

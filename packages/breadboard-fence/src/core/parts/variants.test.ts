@@ -105,7 +105,7 @@ describe('typesWithVariants', () => {
       'capacitor', 'resistor', 'diode', 'zener', 'schottky', 'inductor', 'potentiometer',
       'led', 'phototransistor', 'transistor', 'thyristor', 'triac', 'regulator', 'ic3', 'sma', 'crystal', 'usb-a', 'usb-c',
       // ピンに名前のある DIP 型。姿は品名 (52 の docs/66)。
-      'relay', 'photocoupler', 'photocoupler6', 'seg7', 'dip-switch4', 'dip-switch8',
+      'relay', 'photocoupler', 'photocoupler6', 'seg7', 'seg7x4', 'dip-switch4', 'dip-switch8',
       // DIP 化した変換基板 (`dip8/sop`)。種類は正規表現で読むので、書き方の名前で挙げる。
       'dipN',
     ]);

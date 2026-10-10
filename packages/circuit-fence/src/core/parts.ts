@@ -703,27 +703,40 @@ function dipSwitchBox(chip: NamedChip): PartType {
 /** DIP スイッチの種類名。記号は連の数ごとに宣言する (`generate.ts`)。 */
 export const DIP_SWITCHES: readonly string[] = ['dip-switch4', 'dip-switch8'];
 
-/** 7 セグの箱に並べる順 (セグメント、点、共通)。**番号は表の DIP の位置**のまま。 */
-const SEG7_ORDER = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'dp', 'COM1', 'COM2'];
+/**
+ * 7 セグの箱に並べる順 (セグメント、点、共通)。**番号は表の DIP の位置**のまま。
+ * 4 桁 (`seg7x4`) は共通が桁ごと (DIG1〜DIG4、左の桁から)。
+ */
+const SEG7_ORDERS: Readonly<Record<string, readonly string[]>> = {
+  seg7: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'dp', 'COM1', 'COM2'],
+  seg7x4: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'dp', 'DIG1', 'DIG2', 'DIG3', 'DIG4'],
+};
+
+/** 7 セグの種類名 (1 桁と 4 桁)。どちらもピンの名前を刷った箱。 */
+export const SEG7_TYPES: readonly string[] = Object.keys(SEG7_ORDERS);
+
+const isSeg7 = (type: string): boolean => Object.hasOwn(SEG7_ORDERS, type);
 
 /**
- * 7 セグの箱の寸法。幅は**箱に刷る型番**が入るだけ取る (書かなければ表の 5161AS)。
+ * 7 セグの箱の寸法。幅は**箱に刷る型番**が入るだけ取る (書かなければ表の品名)。
  * **TeX の宣言もこれから**書く (`generate.ts`)。機器 (`device`) と同じく、
  * 型番が長ければ箱も広がる。
  */
-export const seg7DeviceBox = (label: string | null): DeviceBox =>
-  deviceBox(SEG7_ORDER, label ?? namedChipOf('seg7').name);
+export const seg7DeviceBox = (type: string, label: string | null): DeviceBox =>
+  deviceBox(SEG7_ORDERS[type] ?? [], label ?? namedChipOf(type).name);
 
 /** 7 セグは名前を刷った箱 (機器と同じ形)。KiCad の記号も箱にピンの名前。 */
-function seg7Box(chip: NamedChip, label: string | null = null): PartType {
-  const box = deviceChip(SEG7_ORDER, label ?? chip.name);
-  const anchorOf = (name: string): string => `pin ${SEG7_ORDER.indexOf(name) + 1}`;
+function seg7Box(type: string, label: string | null = null): PartType {
+  const chip = namedChipOf(type);
+  const order = SEG7_ORDERS[type] ?? [];
+  const box = deviceChip(order, label ?? chip.name);
+  const anchorOf = (name: string): string => `pin ${order.indexOf(name) + 1}`;
   return {
     ...box,
     pins: {
       ...box.pins,
       // DIP の番号 (`DS1.3` = COM1) は表の位置から。箱の並びの番号では呼ばない
-      // (位置は 1〜10 が全部あるので、箱の並びの番号は全部上書きされる)。
+      // (位置は全部あるので、箱の並びの番号は全部上書きされる)。
       ...Object.fromEntries(chip.pins.map(({ at, name }) => [`${at}`, anchorOf(name)])),
     },
   };
@@ -752,8 +765,6 @@ function photocoupler6(chip: NamedChip): PartType {
 }
 
 const namedChipOf = (type: string): NamedChip => lookupNamedChip(type, null) as NamedChip;
-
-const SEG7 = 'seg7';
 
 /** `device` の種類名。1 行では書けず、マップ形式 (`type: device`) だけで書く。 */
 export const DEVICE = 'device';
@@ -1278,7 +1289,8 @@ export const PART_TYPES = {
   },
   photocoupler: namedSymbol(namedChipOf('photocoupler'), OPTO_SHAPE, [[1, 'left'], [2, 'left'], [4, 'right'], [3, 'right']]),
   photocoupler6: photocoupler6(namedChipOf('photocoupler6')),
-  seg7: seg7Box(namedChipOf(SEG7)),
+  seg7: seg7Box('seg7'),
+  seg7x4: seg7Box('seg7x4'),
   'dip-switch4': dipSwitchBox(namedChipOf('dip-switch4')),
   'dip-switch8': dipSwitchBox(namedChipOf('dip-switch8')),
 
@@ -1421,6 +1433,7 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   photocoupler: namedChipOf('photocoupler').kindName,
   photocoupler6: namedChipOf('photocoupler6').kindName,
   seg7: namedChipOf('seg7').kindName,
+  seg7x4: namedChipOf('seg7x4').kindName,
   'dip-switch4': namedChipOf('dip-switch4').kindName,
   'dip-switch8': namedChipOf('dip-switch8').kindName,
 };
@@ -1550,6 +1563,7 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   photocoupler: namedChipOf('photocoupler').prefix,
   photocoupler6: namedChipOf('photocoupler6').prefix,
   seg7: namedChipOf('seg7').prefix,
+  seg7x4: namedChipOf('seg7x4').prefix,
   'dip-switch4': namedChipOf('dip-switch4').prefix,
   'dip-switch8': namedChipOf('dip-switch8').prefix,
 };
@@ -1625,7 +1639,7 @@ export function partTypeOf(part: PartSpec): PartType | null {
     return pinout === null ? IC_PLACEHOLDER : icChip(pinout);
   }
   // 7 セグは箱に型番を刷るので、型番の長さで箱の幅が変わる (機器と同じ)。
-  if (part.type === SEG7 && part.kind === 'multi-terminal') return seg7Box(namedChipOf(SEG7), part.value);
+  if (isSeg7(part.type) && part.kind === 'multi-terminal') return seg7Box(part.type, part.value);
   // DIP は型番がピンの名前の表にあれば名前を刷る (52 の docs/95)。無ければ番号だけ。
   const count = dipCountOf(part.type);
   const pinout = count === null || part.kind !== 'multi-terminal' ? null : lookupPinout(part.value, count);

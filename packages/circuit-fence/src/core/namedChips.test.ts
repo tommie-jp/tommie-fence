@@ -42,6 +42,53 @@ describe('種類', () => {
   });
 });
 
+describe('4 桁の 7 セグ (seg7x4)', () => {
+  test('takes a pin by its name or by the DIP number of the OSL40562-LR', () => {
+    const display = lookupPartType('seg7x4')!;
+    const pairs = [
+      ['e', '1'], ['d', '2'], ['dp', '3'], ['c', '4'], ['g', '5'], ['DIG4', '6'],
+      ['b', '7'], ['DIG3', '8'], ['DIG2', '9'], ['f', '10'], ['a', '11'], ['DIG1', '12'],
+    ];
+    for (const [name, number] of pairs) expect(lookupPin(display, name!)).toBe(lookupPin(display, number!));
+    expect(lookupPin(display, 'dig1')).toBe(lookupPin(display, '12'));
+    expect(lookupPin(display, '13')).toBeNull();
+    expect(lookupPin(display, 'COM1')).toBeNull();
+    expect(PART_NAMES.seg7x4).toBe('4 桁 7 セグメント LED');
+    expect(PART_PREFIXES.seg7x4).toBe('DS');
+  });
+
+  test('draws a box of the pin names with the part name, and lists the nets by name', () => {
+    const result = compileCircuit(circuit(
+      'parts:',
+      '  DS1: seg7x4 12,4 OSL40562-LR',
+      '  R1: resistor 4,2 8,2 330',
+      '  R2: resistor 4,8 8,8 1k',
+      'wires:',
+      '  - 8,2 -| DS1.a',
+      '  - 8,8 -| DS1.12',
+    ), { erc: true });
+
+    expect(result.errors).toEqual([]);
+    // 型番は箱に刷る (seg7 と同じく、書いたときだけ。箱の幅は書かなくても品名が入るだけ取る)。
+    expect(result.tex).toContain('OSL40562\\mbox{-}LR');
+    expect(compileCircuit(circuit('parts:', '  DS1: seg7x4 12,4')).tex).toContain('pgfdeclareshape{dev12w15n8}');
+    expect(result.netlist.find((net) => net.refs.includes('R1.2'))?.refs).toContain('DS1.a');
+    // 番号で書いても、ネットリストは名前で言う。
+    expect(result.netlist.find((net) => net.refs.includes('R2.2'))?.refs).toContain('DS1.DIG1');
+    // 使わないピンは言わない (箱にピンの名前を刷る部品)。
+    expect(result.erc.map((one) => one.message).join('\n')).not.toContain('DS1');
+  });
+
+  test('does not guess where the pin is from the anchor of its box', () => {
+    const notices = compileCircuit(circuit(
+      'parts:', '  DS1: seg7x4 12,8', '  P0: port 8,7', '  P1: port 8,8',
+      'wires:', '  - DS1.a -| 8,7', '  - DS1.b -| 8,8',
+    )).notices.map((notice) => notice.message);
+
+    expect(notices.some((message) => message.includes('この線の上に見えます'))).toBe(false);
+  });
+});
+
 describe('図', () => {
   test('draws a relay, wires to its contacts by name and lists them by name', () => {
     const result = compileCircuit(circuit(
