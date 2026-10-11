@@ -1061,3 +1061,44 @@ describe('箱の中の字は重ならない', () => {
     for (const letter of letters) expect(letter).toBeLessThan(leftmost);
   });
 });
+
+describe('縦置きの名前どうしの重なり', () => {
+  /** 名前の字 → [左端, 右端, 基準線]。字幅は 10px の 1 字 6px の見積もり。 */
+  const namesOf = (svg: string): Map<string, readonly [number, number, number]> => {
+    const found = new Map<string, readonly [number, number, number]>();
+    for (const m of svg.matchAll(/<text x="([\d.-]+)" y="([\d.-]+)" text-anchor="(\w+)"[^>]*class="cf-name">([^<]+)</g)) {
+      const [px, py, anchor, id] = [Number(m[1]), Number(m[2]), m[3]!, m[4]!];
+      const width = id.length * 6;
+      found.set(id, anchor === 'end' ? [px - width, px, py] : [px, px + width, py]);
+    }
+    return found;
+  };
+
+  test('keeps the names of two upright parts apart when they face the same gap', () => {
+    // 00-led の B1 (1 列目、縁なので右へ) と D1 (3 列目、既定は左) が同じ隙間に
+    // 向かい合い、「B1D1」と続いて見えた。
+    const names = namesOf(draw(
+      'parts:\n  B1: battery 1,1 1,3 3\n  R1: resistor 1,1 3,1 330\n  D1: led 3,1 3,3\n  G1: ground 1,3\n'
+      + 'wires:\n  - 1,3 -- 3,3\n',
+    ));
+    const [b1, d1] = [names.get('B1')!, names.get('D1')!];
+
+    const gap = Math.max(b1[0], d1[0]) - Math.min(b1[1], d1[1]);
+    expect(b1[2]).toBe(d1[2]);
+    expect(gap).toBeGreaterThanOrEqual(8);
+  });
+
+  test('does not turn a name to the right when it would leave the canvas', () => {
+    // 右の縁の部品は、左の名前とぶつかっても右へは回さない (縁で切れる)。
+    const svg = draw('parts:\n  C1: capacitor 1,1 1,3\n  D1: led 2,1 2,3\n');
+    const right = Number(/viewBox="[-\d.]+ [-\d.]+ ([\d.]+) /.exec(svg)?.[1]) - 2;
+
+    for (const [, [, to]] of namesOf(svg)) expect(to).toBeLessThanOrEqual(right);
+  });
+
+  test('leaves a lone upright part on its usual side', () => {
+    const names = namesOf(draw('parts:\n  D1: led 3,1 3,3\n'));
+
+    expect(names.get('D1')![1]).toBeLessThan(88);
+  });
+});

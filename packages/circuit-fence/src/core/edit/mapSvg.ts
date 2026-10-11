@@ -304,7 +304,7 @@ function drawDot(dot: Dot): string {
 }
 
 /** 2 端子は線の向きに合わせて回す。**字は回さない** (逆さまになるので)。 */
-function drawSpan(chip: Chip, far: Cell, nudge: number): string {
+function drawSpan(chip: Chip, far: Cell, nudge: number, flip = false): string {
   const [x1, y1, x2, y2] = [x(chip.col), y(chip.row), x(far.col), y(far.row)];
   // 同じ 2 交点に並べた部品 (並列の RC) は線に直交する向きへ逃がす。
   // 重ねると後ろの 1 つを掴めない。
@@ -331,7 +331,7 @@ function drawSpan(chip: Chip, far: Cell, nudge: number): string {
   // **名前を置く側は図と揃える** — 横置きは記号の下、縦置きは記号の左
   // (図では反対側が値の場所。実機で「文字列の位置が回路図と違う」)。
   const upright = Math.abs(y2 - y1) > Math.abs(x2 - x1);
-  const aside = asideOf(mx, chip.id, clear);
+  const aside = asideOf(mx, chip.id, clear, flip);
   const name = upright
     ? svgText(aside.x, my + 4, chip.id, { class: 'cf-name', anchor: aside.anchor, halo: 'var(--cf-paper)' })
     : svgText(mx, my + clear, chip.id, { class: 'cf-name', halo: 'var(--cf-paper)' });
@@ -386,9 +386,63 @@ const NAME_FONT = 10;
  * — 1 列目に立てた部品の名前は、左に置くと行の見出しに重なって読めない
  * (実機で図に合わせたときに出た)。
  */
-function asideOf(mx: number, id: string, aside: number): { readonly x: number; readonly anchor: 'start' | 'end' } {
+function asideOf(
+  mx: number,
+  id: string,
+  aside: number,
+  flip = false,
+): { readonly x: number; readonly anchor: 'start' | 'end' } {
   const left = mx - aside - textWidth(id) * NAME_FONT;
-  return left < EDGE ? { x: mx + aside, anchor: 'start' } : { x: mx - aside, anchor: 'end' };
+  const toRight = (left < EDGE) !== flip;
+  return toRight ? { x: mx + aside, anchor: 'start' } : { x: mx - aside, anchor: 'end' };
+}
+
+/** 縦置きの名前どうしの間に最低限空ける幅。**「B1D1」と続いて読めない**だけ取る。 */
+const NAME_GAP_MIN = 8;
+
+/**
+ * 縦置きの名前が占める横の幅と基準線。向かい合う 2 つが同じ隙間に入ると
+ * 続けて読めるので、**後から置くほうを反対側へ回す**ための物差し。
+ */
+function uprightNameSpan(chip: Chip, far: Cell, nudge: number, flip: boolean) {
+  const [x1, y1, x2, y2] = [x(chip.col), y(chip.row), x(far.col), y(far.row)];
+  const length = Math.hypot(x2 - x1, y2 - y1) || 1;
+  const mx = (x1 + x2) / 2 + (-(y2 - y1) / length) * nudge;
+  const my = (y1 + y2) / 2 + ((x2 - x1) / length) * nudge;
+  const side = asideOf(mx, chip.id, nameClearOf(glyphOf(chip.type).name), flip);
+  const width = textWidth(chip.id) * NAME_FONT;
+  const [from, to] = side.anchor === 'end' ? [side.x - width, side.x] : [side.x, side.x + width];
+  return { from, to, y: my + 4 };
+}
+
+/**
+ * 名前を反対側へ回す部品。**順に置いて、先に置いた名前とぶつかるものだけ**回す
+ * (1 列目の `B1` は右へ、3 列目の `D1` は既定で左 — 同じ隙間で向かい合う)。
+ * 回しても別の名前に当たるなら元のままにする (回す意味が無い)。
+ */
+function flippedNames(
+  chips: readonly Chip[],
+  nudges: ReadonlyMap<Chip, number>,
+  rightEdge: number,
+): ReadonlySet<Chip> {
+  const placed: { from: number; to: number; y: number }[] = [];
+  const flipped = new Set<Chip>();
+  const clashes = (box: { from: number; to: number; y: number }): boolean =>
+    placed.some((other) => Math.abs(other.y - box.y) < NAME_FONT
+      && Math.max(other.from, box.from) - Math.min(other.to, box.to) < NAME_GAP_MIN);
+  for (const chip of chips) {
+    const far = chip.to;
+    const upright = far !== null && Math.abs(y(far.row) - y(chip.row)) > Math.abs(x(far.col) - x(chip.col));
+    if (!upright) continue;
+    const nudge = nudges.get(chip) ?? 0;
+    const usual = uprightNameSpan(chip, far, nudge, false);
+    const other = uprightNameSpan(chip, far, nudge, true);
+    // 画布の右の縁を越えるところへは回さない (切れて読めなくなる)。
+    const useOther = clashes(usual) && !clashes(other) && other.to <= rightEdge;
+    if (useOther) flipped.add(chip);
+    placed.push(useOther ? other : usual);
+  }
+  return flipped;
 }
 
 /**
@@ -884,9 +938,9 @@ function drawStanding(chip: Chip, nudge: number): string {
  * 掴める部品 1 つ。同じ升に何本も立つときは少しずらす — **同じ番地に 2 つは
  * この文法では接続**なので普通に起きるし、重ねると片方を掴めなくなる。
  */
-function drawChip(chip: Chip, nudge: number, bad: Bad): string {
+function drawChip(chip: Chip, nudge: number, bad: Bad, flip = false): string {
   const title = `${chip.id} (${chip.type}) ${formatAddress({ row: chip.row, col: chip.col })}`;
-  const inner = chip.to === null ? drawStanding(chip, nudge) : drawSpan(chip, chip.to, nudge);
+  const inner = chip.to === null ? drawStanding(chip, nudge) : drawSpan(chip, chip.to, nudge, flip);
   const marked = element('title', {}, escapeMarkup(title))
     + (chip.to === null ? at(chip, inner) : inner);
   return element(
@@ -1089,6 +1143,7 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {})
   const shown = shownOf(map, room);
   // 接続点は線より先に数える (線の先をそこへ合わせるため)。
   const dots = pinPointsOf(map.chips, nudges);
+  const flipped = flippedNames(map.chips, nudges, room.right);
 
   return element(
     'svg',
@@ -1107,7 +1162,7 @@ export function renderMapHtml(map: GridMap, bad: Bad = NONE, look: MapLook = {})
       // 部品と節点が先に取り、配線はその隙間で取る。
       + layer('cf-wire-hits', map.wires.map((wire) => grabWire(wire, dots)).join(''))
       + layer('cf-marks', map.dots.map(drawDot).join(''))
-      + layer('cf-parts', map.chips.map((chip) => drawChip(chip, nudges.get(chip) ?? 0, bad)).join(''))
+      + layer('cf-parts', map.chips.map((chip) => drawChip(chip, nudges.get(chip) ?? 0, bad, flipped.has(chip))).join(''))
       // 注釈は部品の上。指したものが下に隠れると印の意味が無い (図と同じ順)。
       + layer('cf-notes', map.notes.map((note) => drawNote(note, look.noteFrame === true, bad)).join(''))
       + drawHits(shown),
