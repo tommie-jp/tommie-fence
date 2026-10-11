@@ -234,13 +234,13 @@ parts:
   VBUS: port 7,1
   GP14: port 8,2
   GP15: port 8,4
-  R1: resistor 6,3 6,4 1k
+  R1: resistor 6,3.25 6,4 1k
   R2: resistor 6,4 6,6 2k
   G1: ground 6,6
 wires:
   - M1.VCC -| 7,1
   - M1.TRIG -| 8,2
-  - M1.ECHO -| 6,3
+  - M1.ECHO -- 6,3.25
   - 6,4 -- 8,4
   - M1.GND -| 4,6 -- 6,6
 style:

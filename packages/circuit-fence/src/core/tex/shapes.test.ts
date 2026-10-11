@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { regulatorShapeTex, sipShapeName, sipShapeTex, smaShapeTex } from './shapes.ts';
+import { deviceBox, deviceShapeTex, regulatorShapeTex, sipShapeName, sipShapeTex, smaShapeTex } from './shapes.ts';
 
 /**
  * ピンヘッダの記号。**circuitikz に無いので自分で宣言する** — その宣言が
@@ -96,5 +96,35 @@ describe('regulatorShapeTex / smaShapeTex', () => {
         expect(tex).toContain(`\\anchor{${edge}}`);
       }
     }
+  });
+});
+
+/**
+ * 機器とピンヘッダのピンは**番地の刻みに乗る** (52 の docs/128)。奇数本なら真ん中のピンが、
+ * 偶数本なら上から `floor((n−1)/2)` 本目 (0 始まり) が箱の中心の高さに来て、残りは刻みごとに並ぶ。
+ */
+describe('header pins on the address grid', () => {
+  const yOf = (lines: readonly string[], name: string): number =>
+    Number(/\{(-?[\d.]+)cm\}\}$/.exec(lines.find((line) => line.includes(`{${name}}`)) ?? '')?.[1] ?? NaN);
+
+  test('puts the middle pin of an odd row on the centre line', () => {
+    const lines = sipShapeTex(3, 0.48);
+    expect(yOf(lines, 'pin 1')).toBeCloseTo(0.48, 3);
+    expect(yOf(lines, 'pin 2')).toBeCloseTo(0, 3);
+    expect(yOf(lines, 'pin 3')).toBeCloseTo(-0.48, 3);
+  });
+
+  test('puts an even row half a step low, so a pin still sits on the centre line', () => {
+    const lines = sipShapeTex(4, 0.5);
+    expect(yOf(lines, 'pin 1')).toBeCloseTo(0.5, 3);
+    expect(yOf(lines, 'pin 2')).toBeCloseTo(0, 3);
+    expect(yOf(lines, 'pin 4')).toBeCloseTo(-1, 3);
+  });
+
+  test('gives a device the same steps', () => {
+    const box = deviceBox(['VCC', 'TRIG', 'ECHO', 'GND'], 'HC-SR04');
+    const lines = deviceShapeTex(box, 0.5);
+    expect(yOf(lines, 'pin 2')).toBeCloseTo(0, 3);
+    expect(yOf(lines, 'pin 3')).toBeCloseTo(-0.5, 3);
   });
 });

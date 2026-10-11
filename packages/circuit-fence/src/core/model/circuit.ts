@@ -1,7 +1,8 @@
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { gateNumbersOf } from '../gateNumbers.ts';
-import { cornerOf, formatAddress, isNearlyZero, isSameAddress, oldSpellingHint, parseAddress } from './address.ts';
+import { DEFAULT_PITCH, cornerOf, formatAddress, isNearlyZero, isSameAddress, oldSpellingHint, parseAddress } from './address.ts';
+import { gridPinLine } from '../pinGrid.ts';
 import { partTypeOf, lookupPin, mismatchedDiscrete, orientOf, pinAxis, pinHint, pinRefName, unnamedDip } from '../parts.ts';
 import type { Address } from './address.ts';
 import { NO_POINTS } from '../parser/compact.ts';
@@ -146,7 +147,7 @@ export function buildCircuit(doc: FenceDocument, options: BuildOptions = {}): Bu
     errors,
     // ピンの名前を補えなかった DIP は `check: off` でも言う — 検査ではなく、
     // 何で描いたか (番号) の知らせ (文法の方針 2)。
-    notices: [...parts.flatMap(unnamedDipNotice), ...parts.flatMap(mismatchedDiscreteNotice), ...parts.flatMap(gateNumberNotice), ...(checking ? ambiguousTouches(circuit, byId) : [])],
+    notices: [...parts.flatMap(unnamedDipNotice), ...parts.flatMap(mismatchedDiscreteNotice), ...parts.flatMap(gateNumberNotice), ...(checking ? ambiguousTouches(circuit, byId, doc.style.pitch ?? DEFAULT_PITCH) : [])],
   };
 }
 
@@ -343,17 +344,18 @@ const BOX_TYPE = /^(ic|dip\d+|sip\d+|seg7(?:x4)?|relay|photocoupler6?|dip-switch
  * ピンの位置は部品を置いた交点で代用して見当をつける。当て推量なので
  * **つなぐ判断には使わない** (外したときに出るのは余計な 1 行だけ)。
  */
-function ambiguousTouches(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>): FenceError[] {
+function ambiguousTouches(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>, pitch: number): FenceError[] {
   const ends = endpointsOf(circuit);
   const errors: FenceError[] = [];
 
   for (const wire of circuit.wires) {
-    const guess = guessSegment(wire, byId);
-    if (guess === null) continue;
+    const grid = gridSegments(wire, byId, pitch);
+    const guess = grid === null ? guessSegment(wire, byId) : null;
+    const guesses = grid ?? (guess === null ? [] : [guess]);
 
     for (const cell of ends) {
-      if (isSameAddress(cell, guess.from) || isSameAddress(cell, guess.to)) continue;
-      if (!liesOn(cell, guess)) continue;
+      const on = guesses.find((one) => !isSameAddress(cell, one.from) && !isSameAddress(cell, one.to) && liesOn(cell, one));
+      if (on === undefined) continue;
 
       errors.push(
         fenceError(
@@ -367,7 +369,7 @@ function ambiguousTouches(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>)
   }
 
   errors.push(...touchesOnBodies(circuit, ends));
-  errors.push(...slantedIntoPins(circuit, byId));
+  errors.push(...slantedIntoPins(circuit, byId, pitch));
 
   return errors;
 }
@@ -386,7 +388,7 @@ function ambiguousTouches(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>)
  * ピン (ワイパー・ゲート) は**見ない** — 中心線がどこかを決められないので、
  * 当て推量で口を出さない。
  */
-function slantedIntoPins(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>): FenceError[] {
+function slantedIntoPins(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>, pitch: number): FenceError[] {
   const errors: FenceError[] = [];
 
   for (const wire of circuit.wires) {
@@ -407,6 +409,11 @@ function slantedIntoPins(circuit: Circuit, byId: ReadonlyMap<string, PartSpec>):
     // (`===` だと、揃っている線に「斜めです」と言ってしまう)。
     if (axis === 'h' && isNearlyZero(cell.row - part.at.row)) continue;
     if (axis === 'v' && isNearlyZero(cell.col - part.at.col)) continue;
+    // **番地の刻みに乗った箱** (DIP・ボード・機器・ピンヘッダ) はピンの行 (列) を数えて見る
+    // (52 の docs/128)。中心線に乗らないピンでも、その行の番地へはまっすぐ届く。
+    const line = type === null ? null : gridPinLine(type, pin.pin, part.turn, part.at, pitch);
+    if (line?.axis === 'h' && isNearlyZero(cell.row - line.value)) continue;
+    if (line?.axis === 'v' && isNearlyZero(cell.col - line.value)) continue;
 
     // ピンはネットリストと同じ呼び名で言う (箱のピンは図に刷ってある名前)。
     errors.push(
@@ -449,6 +456,38 @@ function touchesOnBodies(circuit: Circuit, ends: readonly Address[]): FenceError
   }
 
   return errors;
+}
+
+/**
+ * **番地に乗った箱** (`pinGrid`) のピンから出る線が通る線分 (52 の docs/128)。箱でなければ null
+ * (`guessSegment` の見当に回す)。
+ *
+ * ピンの行 (寝かせた箱では列) は分かるが、ピンの先がどこまで出ているか (箱の幅) は
+ * 字の長さで決まるので分からない。そこで**ピンの側の一辺は箱の置き場から引く** —
+ * 箱の中に別の端を置く図は無いので、伸ばしたぶんで外すことはない。
+ * ピンの向きと直交して入る一辺 (横に出るピンへ縦から入る) はピンの先の位置が要るので見ない。
+ */
+function gridSegments(wire: WireSpec, byId: ReadonlyMap<string, PartSpec>, pitch: number): Segment[] | null {
+  const pin = wire.from.kind === 'pin' ? wire.from : wire.to.kind === 'pin' ? wire.to : null;
+  if (pin === null) return null;
+  const part = byId.get(pin.part);
+  if (part === undefined || part.kind !== 'multi-terminal') return null;
+  const type = partTypeOf(part);
+  const line = type === null ? null : gridPinLine(type, pin.pin, part.turn, part.at, pitch);
+  if (line === null) return null;
+  const cell = cellOf(pin === wire.from ? wire.to : wire.from);
+  // 両端ともピンの線は、もう片方のピンの位置が分からない。
+  if (cell === null) return [];
+
+  const start = line.axis === 'h' ? { row: line.value, col: part.at.col } : { row: part.at.row, col: line.value };
+  const onLine = (at: Address): boolean => isNearlyZero(line.axis === 'h' ? at.row - start.row : at.col - start.col);
+  if (wire.operator === '--') return onLine(cell) ? [{ from: start, to: cell }] : [];
+  // 折れた線は、ピンから出る一辺がピンの向きに沿うときだけ見る。`-|` は先に横。
+  const firstAcross = wire.operator === '-|';
+  const pinLegAcross = pin === wire.from ? firstAcross : !firstAcross;
+  if (pinLegAcross !== (line.axis === 'h')) return [];
+  const corner = line.axis === 'h' ? { row: start.row, col: cell.col } : { row: cell.row, col: start.col };
+  return [{ from: start, to: corner }, { from: corner, to: cell }].filter((leg) => !isSameAddress(leg.from, leg.to));
 }
 
 /**

@@ -1,5 +1,6 @@
 import { lookupConnectorSymbol } from 'fence-kit';
 import { num } from './num.ts';
+import { evenShiftOf } from '../pinGrid.ts';
 
 /**
  * circuitikz に無くて、**この拡張が自分で宣言する記号**の置き場。
@@ -27,22 +28,22 @@ const HALF_WIDTH = 0.55;
 const LEAD = 0.4;
 
 /** その本数のピンの高さ (箱の中心から測る)。 */
-const halfHeightOf = (pins: number): number => (pins * STEP) / 2;
+const halfHeightOf = (pins: number, step = STEP): number => (pins * step) / 2;
 
 /** ピン K (1 始まり) の高さ。1 番が上で、下へ数える (DIP と同じ回り方)。 */
-const pinYOf = (pins: number, at: number): number =>
-  halfHeightOf(pins) - STEP / 2 - STEP * (at - 1);
+const pinYOf = (pins: number, at: number, step = STEP): number =>
+  halfHeightOf(pins, step) - step / 2 - step * (at - 1);
 
 /**
  * 箱の四辺のアンカー。**宣言しないと `\node ... at (U.south)` が中心に落ちる**
  * (実機で、型番が箱の真ん中に重なって気づいた)。値を記号の下に出す道
  * (`underAnchor`) が回した向きに応じて 4 つとも使う。
  */
-const edgeAnchors = (halfWidth: number, halfHeight: number): string[] => [
-  `  \\anchor{north}{\\pgfpoint{0cm}{${num(halfHeight)}cm}}`,
-  `  \\anchor{south}{\\pgfpoint{0cm}{${num(-halfHeight)}cm}}`,
-  `  \\anchor{east}{\\pgfpoint{${num(halfWidth)}cm}{0cm}}`,
-  `  \\anchor{west}{\\pgfpoint{${num(-halfWidth)}cm}{0cm}}`,
+const edgeAnchors = (halfWidth: number, halfHeight: number, dy = 0): string[] => [
+  `  \\anchor{north}{\\pgfpoint{0cm}{${num(halfHeight + dy)}cm}}`,
+  `  \\anchor{south}{\\pgfpoint{0cm}{${num(-halfHeight + dy)}cm}}`,
+  `  \\anchor{east}{\\pgfpoint{${num(halfWidth)}cm}{${num(dy)}cm}}`,
+  `  \\anchor{west}{\\pgfpoint{${num(-halfWidth)}cm}{${num(dy)}cm}}`,
 ];
 
 /** その本数の記号の名前。**部品の `symbol` と同じ字**にする。 */
@@ -52,8 +53,8 @@ export const sipShapeName = (pins: number): string => `sip${pins}`;
  * 記号 1 つぶんの宣言。**使う本数のぶんだけ**前口上に書く
  * (読める数だけ書く。約束 6 と同じ考え方)。
  */
-export const sipShapeTex = (pins: number): string[] =>
-  headerShapeTex(sipShapeName(pins), pins, HALF_WIDTH, SIP_NUMBER_AREA);
+export const sipShapeTex = (pins: number, step = STEP): string[] =>
+  headerShapeTex(sipShapeName(pins), pins, HALF_WIDTH, SIP_NUMBER_AREA, step);
 
 /** ピンヘッダのピンの番号 (2 桁まで) が占める幅。中の値はその右の真ん中に置く。 */
 const SIP_NUMBER_AREA = 0.3;
@@ -89,30 +90,28 @@ export function deviceBox(names: readonly string[], label: string | null): Devic
 export const deviceShapeName = (box: DeviceBox): string =>
   `dev${box.pins}w${Math.round(box.halfWidth * 10)}n${Math.round(box.nameArea * 10)}`;
 
-export const deviceShapeTex = (box: DeviceBox): string[] =>
-  headerShapeTex(deviceShapeName(box), box.pins, box.halfWidth, box.nameArea);
+export const deviceShapeTex = (box: DeviceBox, step = STEP): string[] =>
+  headerShapeTex(deviceShapeName(box), box.pins, box.halfWidth, box.nameArea, step);
 
 /**
  * 片側にピンが並ぶ箱。ピンヘッダと機器が幅だけ違えて使う。`nameArea` は左の縁で
  * ピンの名前 (番号) が占める幅で、中の字 (値) はその右の残りの真ん中に置く。
  */
-function headerShapeTex(name: string, pins: number, halfWidth: number, nameArea: number): string[] {
-  const half = halfHeightOf(pins);
+function headerShapeTex(name: string, pins: number, halfWidth: number, nameArea: number, step: number): string[] {
+  // **ピンは番地の刻みに乗せる** (52 の docs/128)。偶数本の箱は箱ごと半刻み下へずらし、
+  // 上から `floor((n−1)/2)` 本目 (0 始まり) を中心の高さに置く (`pinGrid.ts`)。
+  const dy = evenShiftOf(pins) * step;
+  const half = halfHeightOf(pins, step);
   const legs = Array.from({ length: pins }, (_, index) => index + 1);
+  const yOf = (at: number): number => pinYOf(pins, at, step) + dy;
 
-  const anchors = legs.flatMap((at) => {
-    const y = pinYOf(pins, at);
-    return [
-      `  \\anchor{pin ${at}}{\\pgfpoint{${num(-halfWidth - LEAD)}cm}{${num(y)}cm}}`,
-      `  \\anchor{bpin ${at}}{\\pgfpoint{${num(-halfWidth)}cm}{${num(y)}cm}}`,
-    ];
-  });
+  const anchors = legs.flatMap((at) => [
+    `  \\anchor{pin ${at}}{\\pgfpoint{${num(-halfWidth - LEAD)}cm}{${num(yOf(at))}cm}}`,
+    `  \\anchor{bpin ${at}}{\\pgfpoint{${num(-halfWidth)}cm}{${num(yOf(at))}cm}}`,
+  ]);
 
-  const leads = legs.map((at) => {
-    const y = pinYOf(pins, at);
-    return `    \\pgfpathmoveto{\\pgfpoint{${num(-halfWidth - LEAD)}cm}{${num(y)}cm}}`
-      + `\\pgfpathlineto{\\pgfpoint{${num(-halfWidth)}cm}{${num(y)}cm}}`;
-  });
+  const leads = legs.map((at) => `    \\pgfpathmoveto{\\pgfpoint{${num(-halfWidth - LEAD)}cm}{${num(yOf(at))}cm}}`
+    + `\\pgfpathlineto{\\pgfpoint{${num(-halfWidth)}cm}{${num(yOf(at))}cm}}`);
 
   return [
     '\\makeatletter',
@@ -121,17 +120,18 @@ function headerShapeTex(name: string, pins: number, halfWidth: number, nameArea:
     // **中の字は、ピンの名前の列の右に残る場所の真ん中に置く。** `text` は字の左下を
     // 置く点なので、原点のままだと字が右上へずれて縁からはみ出し、箱の真ん中に
     // 置くとピンの名前に掛かった (実機で `HC-SR04` と `UART` を焼いて確かめた)。
-    `  \\anchor{text}{\\pgfpoint{${num(nameArea / 2)}cm-.5\\wd\\pgfnodeparttextbox}{-.5\\ht\\pgfnodeparttextbox}}`,
+    // 偶数本の箱は箱の真ん中が `dy` だけ下にある。
+    `  \\anchor{text}{\\pgfpoint{${num(nameArea / 2)}cm-.5\\wd\\pgfnodeparttextbox}{${dy === 0 ? '' : `${num(dy)}cm`}-.5\\ht\\pgfnodeparttextbox}}`,
     // **その場所の真ん中そのもの。** 回した・反転した箱では字を別ノードに移すので
     // (箱の中の字は一緒に回る)、掛け先がここになる。アンカーは節点ごと裏返るので、
     // 反転した箱でもピンの名前の反対側を指す。`center` に掛けると、反転した
     // 機器の名前がピンの名前に重なった (実機で焼いて見つけた)。
-    `  \\anchor{value}{\\pgfpoint{${num(nameArea / 2)}cm}{0cm}}`,
-    ...edgeAnchors(halfWidth, half),
+    `  \\anchor{value}{\\pgfpoint{${num(nameArea / 2)}cm}{${num(dy)}cm}}`,
+    ...edgeAnchors(halfWidth, half, dy),
     ...anchors,
     '  \\backgroundpath{',
-    `    \\pgfpathrectanglecorners{\\pgfpoint{${num(-halfWidth)}cm}{${num(-half)}cm}}`
-      + `{\\pgfpoint{${num(halfWidth)}cm}{${num(half)}cm}}`,
+    `    \\pgfpathrectanglecorners{\\pgfpoint{${num(-halfWidth)}cm}{${num(-half + dy)}cm}}`
+      + `{\\pgfpoint{${num(halfWidth)}cm}{${num(half + dy)}cm}}`,
     ...leads,
     '  }',
     '}',

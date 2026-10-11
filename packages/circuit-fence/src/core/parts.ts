@@ -178,6 +178,12 @@ export type PartType = {
    */
   readonly pinRow?: Readonly<Record<string, PinSide>>;
   /**
+   * **`pinRow` のピンが番地の刻みに乗る箱** (DIP・ボード・機器・ピンヘッダ・7 セグ。52 の docs/128)。
+   * 刻みは pitch から (`pinGrid.ts`) で、ピンの行 (寝かせた箱では列) を数えられるので、
+   * `--` が斜めに入るかどうかを決められる。
+   */
+  readonly pinGrid?: true;
+  /**
    * ピンに書く名前 (1 番から順)。**書くのはマイコンボードだけ** — 40 本を番号で
    * 呼ぶと実物のピンアウト図と突き合わせられないため。
    *
@@ -439,6 +445,7 @@ const dipchip = (count: number): PartType => ({
   ...NO_UNIT,
   pins: Object.fromEntries(Array.from({ length: count }, (_, index) => [`${index + 1}`, `pin ${index + 1}`])),
   pinRow: dipSides(count),
+  pinGrid: true,
 });
 
 /**
@@ -607,6 +614,7 @@ function boardchip(board: BoardPart): PartType {
       ...anchors.slice(0, anchors.length / 2).map(([, anchor]) => [anchor, 'left' as const]),
       ...anchors.slice(anchors.length / 2).reverse().map(([, anchor]) => [anchor, 'right' as const]),
     ]),
+    pinGrid: true,
     pinLabels: board.pins,
     // **実物の印字と突き合わせるための番号。** 名前だけだと、40 本のうちどれが
     // ヘッダの何番目かをボードの絵に戻らないと確かめられない (実機で頼まれた)。
@@ -648,6 +656,7 @@ export function deviceChip(names: readonly string[], label: string | null = null
       ...anchors.map(([, anchor], index) => [`${index + 1}`, anchor]),
     ]),
     pinRow: Object.fromEntries(anchors.map(([, anchor]) => [anchor, 'left' as const])),
+    pinGrid: true,
     pinLabels: names,
     pinFont: '\\scriptsize',
   };
@@ -891,6 +900,7 @@ function sipchip(count: number): PartType {
     pins: Object.fromEntries(legs.map((at) => [`${at}`, `pin ${at}`])),
     // 全部が左の辺に上から並ぶ。**中心線には乗らない** (だから `pinRow`)。
     pinRow: Object.fromEntries(legs.map((at) => [`pin ${at}`, 'left' as const])),
+    pinGrid: true,
     pinLabels: legs.map((at) => `${at}`),
   };
 }

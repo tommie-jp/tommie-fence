@@ -5,26 +5,26 @@
 \makeatletter
 \pgfdeclareshape{dev4w12n8}{
   \anchor{center}{\pgfpointorigin}
-  \anchor{text}{\pgfpoint{0.4cm-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
-  \anchor{value}{\pgfpoint{0.4cm}{0cm}}
-  \anchor{north}{\pgfpoint{0cm}{1cm}}
-  \anchor{south}{\pgfpoint{0cm}{-1cm}}
-  \anchor{east}{\pgfpoint{1.2cm}{0cm}}
-  \anchor{west}{\pgfpoint{-1.2cm}{0cm}}
-  \anchor{pin 1}{\pgfpoint{-1.6cm}{0.75cm}}
-  \anchor{bpin 1}{\pgfpoint{-1.2cm}{0.75cm}}
-  \anchor{pin 2}{\pgfpoint{-1.6cm}{0.25cm}}
-  \anchor{bpin 2}{\pgfpoint{-1.2cm}{0.25cm}}
-  \anchor{pin 3}{\pgfpoint{-1.6cm}{-0.25cm}}
-  \anchor{bpin 3}{\pgfpoint{-1.2cm}{-0.25cm}}
-  \anchor{pin 4}{\pgfpoint{-1.6cm}{-0.75cm}}
-  \anchor{bpin 4}{\pgfpoint{-1.2cm}{-0.75cm}}
+  \anchor{text}{\pgfpoint{0.4cm-.5\wd\pgfnodeparttextbox}{-0.25cm-.5\ht\pgfnodeparttextbox}}
+  \anchor{value}{\pgfpoint{0.4cm}{-0.25cm}}
+  \anchor{north}{\pgfpoint{0cm}{0.75cm}}
+  \anchor{south}{\pgfpoint{0cm}{-1.25cm}}
+  \anchor{east}{\pgfpoint{1.2cm}{-0.25cm}}
+  \anchor{west}{\pgfpoint{-1.2cm}{-0.25cm}}
+  \anchor{pin 1}{\pgfpoint{-1.6cm}{0.5cm}}
+  \anchor{bpin 1}{\pgfpoint{-1.2cm}{0.5cm}}
+  \anchor{pin 2}{\pgfpoint{-1.6cm}{0cm}}
+  \anchor{bpin 2}{\pgfpoint{-1.2cm}{0cm}}
+  \anchor{pin 3}{\pgfpoint{-1.6cm}{-0.5cm}}
+  \anchor{bpin 3}{\pgfpoint{-1.2cm}{-0.5cm}}
+  \anchor{pin 4}{\pgfpoint{-1.6cm}{-1cm}}
+  \anchor{bpin 4}{\pgfpoint{-1.2cm}{-1cm}}
   \backgroundpath{
-    \pgfpathrectanglecorners{\pgfpoint{-1.2cm}{-1cm}}{\pgfpoint{1.2cm}{1cm}}
-    \pgfpathmoveto{\pgfpoint{-1.6cm}{0.75cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{0.75cm}}
-    \pgfpathmoveto{\pgfpoint{-1.6cm}{0.25cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{0.25cm}}
-    \pgfpathmoveto{\pgfpoint{-1.6cm}{-0.25cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{-0.25cm}}
-    \pgfpathmoveto{\pgfpoint{-1.6cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{-0.75cm}}
+    \pgfpathrectanglecorners{\pgfpoint{-1.2cm}{-1.25cm}}{\pgfpoint{1.2cm}{0.75cm}}
+    \pgfpathmoveto{\pgfpoint{-1.6cm}{0.5cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{0.5cm}}
+    \pgfpathmoveto{\pgfpoint{-1.6cm}{0cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-1.6cm}{-0.5cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{-0.5cm}}
+    \pgfpathmoveto{\pgfpoint{-1.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{-1.2cm}{-1cm}}
   }
 }
 \makeatother
@@ -51,7 +51,7 @@
 \coordinate (x7y1) at (12,0);
 \coordinate (x8y2) at (14,-2);
 \coordinate (x8y4) at (14,-6);
-\coordinate (x6y3) at (10,-4);
+\coordinate (x6y3p25) at (10,-4.5);
 \coordinate (x6y4) at (10,-6);
 \coordinate (x6y6) at (10,-10);
 \coordinate (x4y6) at (6,-10);
@@ -65,12 +65,12 @@
 \draw (x7y1) node[ocirc]{} node[above left]{VBUS}; % line 9
 \draw (x8y2) node[ocirc]{} node[above left]{GP14}; % line 10
 \draw (x8y4) node[ocirc]{} node[above left]{GP15}; % line 11
-\draw (x6y3) to[R, l_=$R_{1}$, a^=$1\,\mathrm{k}\Omega$] (x6y4); % line 12
+\draw (x6y3p25) to[R, l_=$R_{1}$, a^=$1\,\mathrm{k}\Omega$] (x6y4); % line 12
 \draw (x6y4) to[R, l_=$R_{2}$, a^=$2\,\mathrm{k}\Omega$] (x6y6); % line 13
 \node[ground] at (x6y6) {}; % line 14
 \draw (part-M1.pin 1) -| (x7y1); % line 16
 \draw (part-M1.pin 2) -| (x8y2); % line 17
-\draw (part-M1.pin 3) -| (x6y3); % line 18
+\draw (part-M1.pin 3) -- (x6y3p25); % line 18
 \draw (x6y4) -- (x8y4); % line 19
 \draw (part-M1.pin 4) -| (x4y6); % line 20
 \draw (x4y6) -- (x6y6); % line 20

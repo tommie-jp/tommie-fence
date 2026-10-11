@@ -802,7 +802,7 @@ describe('DIP の IC', () => {
     const { tex } = generate('parts:', '  U1: dip8 2,3 LM1875', 'wires:', '  - U1.1 |- 1,1');
 
     // 立てた箱の中はピンの番号で埋まるので、型番は下の外 (labelOverlap.test.ts)。
-    expect(tex).toContain('\\node[dipchip, num pins=8, font=\\scriptsize] (part-U1) at (x2y3) {}; % line 2');
+    expect(tex).toContain('\\node[dipchip, num pins=8, font=\\scriptsize, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U1) at (x2y3) {}; % line 2');
     expect(tex).toContain('\\node[font=\\scriptsize, anchor=north] at (part-U1.south) {$\\mathrm{LM1875}$}; % line 2');
     expect(tex).toContain('\\draw (part-U1.pin 1) |- (x1y1); % line 4');
   });
@@ -810,7 +810,7 @@ describe('DIP の IC', () => {
   test('keeps the box empty when no part number is written', () => {
     const { tex } = generate('parts:', '  U1: dip8 2,3');
 
-    expect(tex).toContain('\\node[dipchip, num pins=8, font=\\scriptsize] (part-U1) at (x2y3) {}; % line 2');
+    expect(tex).toContain('\\node[dipchip, num pins=8, font=\\scriptsize, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U1) at (x2y3) {}; % line 2');
   });
 });
 
@@ -1288,7 +1288,7 @@ describe('向き', () => {
     test('lifts it out to an upright node once the box is turned', () => {
       const { tex } = generate('parts:', '  U1: dip8 3,3 r90 LM1875');
 
-      expect(tex).toContain('\\node[dipchip, num pins=8, font=\\scriptsize, rotate=-90] (part-U1) at (x3y3) {};');
+      expect(tex).toContain('\\node[dipchip, num pins=8, font=\\scriptsize, rotate=-90, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U1) at (x3y3) {};');
       expect(tex).toContain('at (part-U1.center) {$\\mathrm{LM1875}$};');
     });
   });
@@ -1579,5 +1579,41 @@ describe('デュアルゲート MOSFET', () => {
     const { notes } = generate('parts:', '  Q1: nmos-dg 5,4 r90');
 
     expect(notes.map((one) => one.rotate !== 0)).toEqual([true, true]);
+  });
+});
+
+/**
+ * DIP とボードのピンは**番地の刻みに乗る** (52 の docs/128)。circuitikz の `dipchip` の刻みを
+ * `pitch` から決めた値に上書きし、片側の本数が偶数なら半刻み下へずらす。
+ */
+describe('DIP とボードのピンを番地に乗せる', () => {
+  const nodeOf = (tex: string, id: string): string =>
+    tex.split('\n').find((line) => line.includes(`(part-${id}) at`)) ?? '';
+
+  test('sets the pin spacing from the pitch, as a ratio to the bipole length with six digits', () => {
+    expect(nodeOf(generate('parts:', '  U1: pico2 6,3').tex, 'U1')).toContain('dipchip/pin spacing=0.416667');
+    expect(nodeOf(generate('style:', '  pitch: 1.2', 'parts:', '  U1: dip8 3,3').tex, 'U1'))
+      .toContain('dipchip/pin spacing=0.4');
+  });
+
+  test('moves a box with an even count per side half a step down', () => {
+    // pico2 は片側 20 本、dip8 は 4 本。
+    expect(nodeOf(generate('parts:', '  U1: pico2 6,3').tex, 'U1')).toContain('yshift=-0.25cm');
+    expect(nodeOf(generate('parts:', '  U1: dip8 3,3').tex, 'U1')).toContain('yshift=-0.25cm');
+  });
+
+  test('leaves a box with an odd count per side on its address', () => {
+    // dip14 は片側 7 本で、真ん中の 4 番 (と 11 番) が中心の高さ。
+    expect(nodeOf(generate('parts:', '  U1: dip14 3,3').tex, 'U1')).not.toContain('yshift');
+  });
+
+  test('shifts after the turn, so the shift follows the pin column when the box lies down', () => {
+    const node = nodeOf(generate('parts:', '  U1: dip8 3,3 r90').tex, 'U1');
+    expect(node.indexOf('rotate=-90')).toBeLessThan(node.indexOf('yshift=-0.25cm'));
+  });
+
+  test('declares the device and the header with the same step', () => {
+    const { tex } = generate('style:', '  pitch: 1.2', 'parts:', '  J1: sip3 3,3');
+    expect(tex).toContain('\\anchor{pin 1}{\\pgfpoint{-0.95cm}{0.48cm}}');
   });
 });

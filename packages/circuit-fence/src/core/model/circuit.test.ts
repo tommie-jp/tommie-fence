@@ -850,3 +850,71 @@ describe('7 セグなどの名前つきの箱のピンの線', () => {
     expect(notices.some((message) => message.includes('この線の上に見えます'))).toBe(false);
   });
 });
+
+/**
+ * DIP・ボード・機器・ピンヘッダのピンは**番地の刻みに乗る** (52 の docs/128) ので、
+ * `--` が斜めに入るかどうかを、ピンの行 (寝かせた箱では列) を数えて決められる。
+ */
+describe('番地に乗った箱のピンへ -- で引く', () => {
+  const slanted = (...rows: string[]): string[] => {
+    const { doc } = parseFence(`${rows.join('\n')}\n`);
+    if (doc === null) throw new Error('YAML を読めませんでした');
+    return buildCircuit(doc).notices.map((one) => one.message).filter((message) => message.includes('斜めに入ります'));
+  };
+
+  test('stays quiet when the wire meets the pin row of an upright board', () => {
+    // pico2 6,3 の 18〜20 番は 5・5.25・5.5 の行 (片側 20 本なので半刻み下)。
+    expect(slanted('parts:', '  U1: pico2 6,3', 'wires:', '  - U1.GND18 -- 1,5', '  - U1.GP15 -- 1,5.5')).toEqual([]);
+  });
+
+  test('still speaks when the wire misses the pin row', () => {
+    expect(slanted('parts:', '  U1: pico2 6,3', 'wires:', '  - U1.GP14 -- 1,5')).toHaveLength(1);
+  });
+
+  test('follows the pin column of a box laid down', () => {
+    // dip8 4,4 r90 の 1 番と 8 番は 4.25 列、4 番と 5 番は 3.5 列。
+    expect(slanted('parts:', '  U1: dip8 4,4 r90', 'wires:', '  - U1.1 -- 4.25,2', '  - U1.5 -- 3.5,6')).toEqual([]);
+    expect(slanted('parts:', '  U1: dip8 4,4 r90', 'wires:', '  - U1.1 -- 4,2')).toHaveLength(1);
+  });
+
+  test('counts the steps from the pitch', () => {
+    // pitch 1.2 の刻みは 0.48 cm = 0.4 マス。dip14 は片側 7 本で 4 番が中心の行。
+    expect(slanted('style:', '  pitch: 1.2', 'parts:', '  U1: dip14 4,4', 'wires:', '  - U1.4 -- 1,4', '  - U1.1 -- 1,2.8'))
+      .toEqual([]);
+  });
+
+  test('knows the rows of a device', () => {
+    expect(slanted(
+      'parts:', '  M1:', '    type: device', '    at: 2,3', '    pins: [VCC, TRIG, ECHO, GND]',
+      'wires:', '  - M1.TRIG -- 6,3', '  - M1.GND -- 6,3.5',
+    )).toEqual([]);
+  });
+});
+
+/**
+ * 番地に乗った箱のピンから出る線は**行 (列) が分かる**ので、その上に別の端が乗れば言う
+ * (52 の docs/128)。刻みに乗る前は、ピンが番地の間にあったので線は端の脇を抜けていた。
+ */
+describe('番地に乗った箱のピンから出る線の上の端', () => {
+  const touches = (...rows: string[]): string[] => {
+    const { doc } = parseFence(`${rows.join('\n')}\n`);
+    if (doc === null) throw new Error('YAML を読めませんでした');
+    return buildCircuit(doc).notices.map((one) => one.message).filter((message) => message.includes('この線の上に見えます'));
+  };
+  const sensor = ['parts:', '  M1:', '    type: device', '    at: 2,3', '    pins: [VCC, TRIG, ECHO, GND]', '    turn: mirror'];
+
+  test('speaks when the pin row runs over the end of a resistor', () => {
+    // TRIG は 3 の行。-| の横の一辺が R1 の上の端 (6,3) を通る。
+    expect(touches(...sensor, '  R1: resistor 6,3 6,4', 'wires:', '  - M1.TRIG -| 8,2')).toHaveLength(1);
+  });
+
+  test('stays quiet when the row passes nothing', () => {
+    expect(touches(...sensor, '  R1: resistor 6,3.25 6,4', 'wires:', '  - M1.TRIG -| 8,2', '  - M1.ECHO -- 6,3.25'))
+      .toEqual([]);
+  });
+
+  test('looks at the corner leg as well', () => {
+    // -| の縦の一辺 (8 の列、3 → 1) が 8,2 の端を通る。
+    expect(touches(...sensor, '  P1: port 8,2', 'wires:', '  - M1.TRIG -| 8,1')).toHaveLength(1);
+  });
+});

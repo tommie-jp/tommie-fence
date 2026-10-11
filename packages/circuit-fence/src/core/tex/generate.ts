@@ -22,6 +22,7 @@ import { NOTE_MARK_TEXT, noteFontTex, texColorOf } from '../notes.ts';
 import { escapeTex, hasUnicode } from './escape.ts';
 import { isMathLabel, mathInnerOf, mathLabelTex } from './mathLabel.ts';
 import { num } from './num.ts';
+import { evenShiftOf, headerStepOf } from '../pinGrid.ts';
 import { readScaled } from '../values.ts';
 import type { ScaledValue } from '../values.ts';
 import {
@@ -229,7 +230,9 @@ function sipShapesFor(circuit: Circuit, pitch: number): string[] {
     const found = /^sip(\d+)$/.exec(part.type);
     if (found !== null) sizes.add(Number(found[1]));
   }
-  const declared = [...sizes].sort((a, b) => a - b).flatMap((pins) => sipShapeTex(pins));
+  // ピンの刻みは pitch から (52 の docs/128)。1 つの図の pitch は 1 つなので、形の名前は変えない。
+  const step = headerStepOf(pitch);
+  const declared = [...sizes].sort((a, b) => a - b).flatMap((pins) => sipShapeTex(pins, step));
   // 三端子レギュレータも自分で宣言した形。**使うときだけ**書く。
   // 3 ピンの IC (`ic3`) も同じ箱。
   const withReg = circuit.parts.some((part) => part.type === 'regulator' || part.type === IC3 || part.type === 'ceramic-filter')
@@ -269,7 +272,7 @@ function sipShapesFor(circuit: Circuit, pitch: number): string[] {
     ics.set(box.name, box);
   }
   const icShapes = [...ics.keys()].sort().flatMap((name) => icShapeTex(ics.get(name) as IcBox));
-  const devices = [...boxes.keys()].sort().flatMap((name) => deviceShapeTex(boxes.get(name) as DeviceBox));
+  const devices = [...boxes.keys()].sort().flatMap((name) => deviceShapeTex(boxes.get(name) as DeviceBox, step));
   // USB も自分で宣言した形。**使う種類だけ、1 回ずつ**。
   const usb = [...new Set(circuit.parts.map((part) => part.type))]
     .filter((type) => usbShapeName(type) !== null)
@@ -929,6 +932,8 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget, pitch: nu
   const turned = part.orientation === null ? null : ORIENTATION_TEX[part.orientation];
   if (turned !== undefined && turned !== null) options.push(turned);
   options.push(...turnOptions(part.turn));
+  // **向きの後ろに置く** — ずらしが回った箱のピンの列に沿う (TikZ は後の変換を回った座標で読む)。
+  options.push(...dipGridOptions(type, pitch));
   const at = texNameOfAddress(part.at);
   const name = nodeNameOf(part.id);
   const annotation = part.value === null ? null : annotationOf(part.value, NO_UNIT, target);
@@ -992,6 +997,27 @@ function drawMultiTerminal(part: MultiTerminalPart, target: TexTarget, pitch: nu
   if (symbol === 'plain amp') return [node, ...number, named, ...amplifierSigns(name, part.turn)];
 
   return [node, ...number, named, ...pinNameNodes(part, name, type, target), ...gateNumberNodes(part, name, type, target)];
+}
+
+/**
+ * DIP とマイコンボード (circuitikz の `dipchip`) のピンを**番地の刻みに乗せる** (52 の docs/128)。
+ * 既定の刻みは `bipoles/length` の 0.4 倍 (0.48 cm) で、番地の間に落ちる。刻みは
+ * `bipoles/length` との比で渡すので、**6 桁まで書く** (`0.416667`) — `num` の 3 桁に丸めると
+ * 40 本の端で 0.2 pt ずれる。式 (`0.5/1.2`) はフェンスの circuitikz 1.0 が読めず、
+ * TeX が `Illegal unit of measure` で止まった (実機で確かめた)。片側の本数が偶数なら箱を半刻み下へずらす
+ * (機器の箱と同じ決め。`pinGrid.ts`)。
+ */
+const ratioText = (value: number): string => String(Number(value.toFixed(6)));
+
+function dipGridOptions(type: PartType | null, pitch: number): string[] {
+  if (type?.symbol !== 'dipchip') return [];
+  const step = headerStepOf(pitch);
+  const perSide = Object.keys(type.pinRow ?? {}).length / 2;
+  const shift = evenShiftOf(perSide) * step;
+  return [
+    `/tikz/circuitikz/multipoles/dipchip/pin spacing=${ratioText(step / BIPOLE_LENGTH)}`,
+    ...(shift === 0 ? [] : [`yshift=${num(shift)}cm`]),
+  ];
 }
 
 /**
