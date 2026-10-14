@@ -54,7 +54,21 @@ describe('cap= を読む', () => {
 
   test('refuses it on parts whose words sit on the package', () => {
     expect(errorsOf('parts:', '  U1: dip8 @ e10 NE555 cap=above')).toContain('@ で置く部品には書けません');
-    expect(errorsOf('parts:', '  J1: usb-c/female a10 a11 a12 a13 cap=above')).toContain('2 ピンと 3 ピンの部品だけ');
+    expect(errorsOf('parts:', '  J1: usb-c/female a10 a11 a12 a13 cap=above')).toContain('2 ピン・3 ピン・1 列 (sipN) の部品だけ');
+    expect(errorsOf('parts:', '  FL1: sip3 @ f15 SFU455B shift=up')).toContain('@ で置く部品には書けません');
+    // 変換基板に載せた部品は名札を基板のシルクに刷るので、書いても効かない。
+    expect(errorsOf('parts:', '  Q1: sip4 @ b3 3SK291 cap=right')).toContain('変換基板');
+  });
+
+  test('takes it on a single-row part, whose name sits outside the body', () => {
+    // 1 列の部品は胴に字を刷らないので、名札が線や隣の部品に重なれば書き手がずらせる。
+    const auto = captionOf(render('parts:', '  FL1: sip3 @ f15 SFU455B').svg, 'FL1 SFU455B');
+    const above = render('parts:', '  FL1: sip3 @ f15 SFU455B cap=above');
+
+    expect(above.errors).toEqual([]);
+    expect(numberOf(captionOf(above.svg, 'FL1 SFU455B'), 'y')).toBeLessThan(numberOf(auto, 'y'));
+    // 名札の語はラベルに飲み込まない。
+    expect(above.svg).not.toContain('cap=above');
   });
 });
 
@@ -152,6 +166,8 @@ describe('書き戻し', () => {
       'R1: resistor b3 b9 68k shift=down',
       'D1: diode i17(A) i14(K) 1N4148 cap=below:1,0',
       'R2: resistor a12 e12 47k cap=left shift=right',
+      'FL1: sip3 @ f35 SFU455B cap=right',
+      'RN1: sip9 @ b1 r180 l=10k-8 cap=above:1,0',
     ]) {
       const [id, spec] = [line.slice(0, line.indexOf(':')), line.slice(line.indexOf(':') + 1)];
       const parsed = parseCompactPart(id, spec, 1);

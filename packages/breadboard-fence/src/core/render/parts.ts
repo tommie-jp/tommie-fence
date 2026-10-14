@@ -30,7 +30,7 @@ export function partObstacles(
   const bands = label === null ? [] : [label];
 
   if (part.kind === 'board') return [boardBodyRect(part, layout), ...bands];
-  if (part.kind === 'sip') return [sipBarRect(part, layout)];
+  if (part.kind === 'sip') return [sipBarRect(part, layout), ...bands];
   if (part.kind === 'switch') return [switchBodyRect(part, layout), ...bands];
   if (part.kind === 'four-lead') return [fourLeadBodyRect(part, layout), ...bands];
   if (part.kind === 'connector') return [connectorBodyRect(part, layout), ...bands];
@@ -100,7 +100,6 @@ export function renderPart(
   // **名札がぶつかったら 1 行下げる** (`captions.ts`)。逃がす量は配線よけと同じ。
   const drop = captionDropOf(drops, part, theme);
   if (part.kind === 'dip') return renderDip(part, layout, theme);
-  if (part.kind === 'sip') return renderSip(part, layout, theme);
   if (part.kind === 'switch') return renderPushbutton(part, layout, theme, drop);
   if (part.kind === 'four-lead') return renderTransformer(part, layout, theme, drop);
   if (part.kind === 'connector') return renderConnector(part, layout, theme, drop);
@@ -108,6 +107,7 @@ export function renderPart(
   // 3 ピンの名札は置き場の候補 (ピンの名前の横・1 行下) から選ぶので、段の番号をそのまま渡す。
   // 書いて決めた名札 (`cap=`) は、配線よけと同じ答え (`explicitCaptionSpot`) の所へ置く。
   const spot = explicitCaptionSpot(part, layout, theme);
+  if (part.kind === 'sip') return renderSip(part, layout, theme, drops?.get(part.id) ?? 0, spot);
   if (part.kind === 'three-lead') return renderThreeLead(part, layout, theme, drops?.get(part.id) ?? 0, spot);
   // 機器 (device) は帯の中に別の描き方で置くので、ここには来ない。
   return renderTwoLead(part, layout, theme, drop, spot);

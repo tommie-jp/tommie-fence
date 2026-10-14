@@ -2,7 +2,7 @@ import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Rect } from '../types.ts';
 import { boardBodyRect } from './boardPart.ts';
 import { connectorCaptionAt } from './connector.ts';
-import { fourLeadBodyRect, switchBodyRect } from './packages.ts';
+import { fourLeadBodyRect, sipCaptionAt, sipCaptionSpots, sipExtent, switchBodyRect } from './packages.ts';
 import {
   CAPTION_CLEAR, CAPTION_HEIGHT, NAME_CAP, NAME_LINE,
   captionTextWidth, haloWidth, labelYOf, pinPoints, shiftOffsetOf, shiftedCentreOf, twoLeadBodyRectOf,
@@ -29,7 +29,7 @@ const DROP_LINE = NAME_LINE;
 const DROP_LIMIT = 2;
 
 /**
- * 名札 1 つが占める帯。**中に刷る種類 (DIP・SIP) は `null`** — 樹脂の上に
+ * 名札 1 つが占める帯。**中に刷る種類 (DIP) は `null`** — 樹脂の上に
  * 書くので、基板の上の字とはぶつからない。
  */
 export function captionBandOf(
@@ -50,6 +50,7 @@ export function captionBandOf(
  */
 function captionSpotOf(part: PlacedPart, layout: Layout, theme: RenderTheme, drop: number): CaptionBaseline | null {
   if (part.kind === 'three-lead') return threeLeadCaptionAt(part, layout, theme, captionWidth(part, theme), drop);
+  if (part.kind === 'sip') return sipCaptionAt(part, layout, theme, captionWidth(part, theme), drop);
   const baseline = captionBaselineOf(part, layout, theme);
   return baseline === null ? null : { ...baseline, y: baseline.y + drop * theme.metrics.textSize * DROP_LINE };
 }
@@ -123,8 +124,10 @@ export function captionBaselineOf(
     const at = connectorCaptionAt(part, layout, theme);
     return at === null ? null : { ...at, width };
   }
-  // DIP と SIP は樹脂の上に刷る (基板の字と食い合わない)。機器は帯の中で別に置く。
-  if (part.kind === 'dip' || part.kind === 'sip' || part.kind === 'device') return null;
+  // 1 列の部品は胴の外 (胴に刷ると真ん中のピンの ○ と食い合う)。
+  if (part.kind === 'sip') return sipCaptionAt(part, layout, theme, width);
+  // DIP は樹脂の上に刷る (基板の字と食い合わない)。機器は帯の中で別に置く。
+  if (part.kind === 'dip' || part.kind === 'device') return null;
 
   const points = pinPoints(part, layout);
   if (!points || points.length === 0) return null;
@@ -171,8 +174,11 @@ export function captionDrops(
   for (const [index, part] of parts.entries()) {
     const others = legNames[part.kind === 'three-lead' ? 'far' : 'near'].filter((_, at) => at !== index).flat();
     // 3 ピンはピンの名前の横を先に試す。**ほかの部品の胴にも掛けない** — 横に置くと、
-    // 隣の行に寝かせた部品 (09-am-radio の D1) の上に名札が乗る。
-    const spots = part.kind === 'three-lead' ? threeLeadCaptionSpots(part, layout, theme, captionWidth(part, theme)).length : 1;
+    // 隣の行に寝かせた部品 (09-am-radio の D1) の上に名札が乗る。1 列の部品も候補を持つ
+    // (胴の下・右・左)。
+    const spots = part.kind === 'three-lead'
+      ? threeLeadCaptionSpots(part, layout, theme, captionWidth(part, theme)).length
+      : part.kind === 'sip' ? sipCaptionSpots(part, layout, theme, captionWidth(part, theme)).length : 1;
     const bodies = spots > 1 ? parts.filter((other) => other !== part).flatMap((other) => footprintOf(other, layout)) : [];
     const limit = spots - 1 + DROP_LIMIT;
     const blocked = (box: Rect): boolean => [...placed, ...others, ...bodies].some((one) => overlaps(one, box));
@@ -270,6 +276,7 @@ function extentOf(part: PlacedPart, layout: Layout, theme: RenderTheme): Rect | 
     ...points.map((point) => ({ x: point.x, y: point.y, width: 0, height: 0 })),
     ...points.map((point) => ({ x: point.x + offset.x, y: point.y + offset.y, width: 0, height: 0 })),
   ];
+  if (part.kind === 'sip') boxes.push(sipExtent(part, layout, theme));
   if (part.kind === 'two-lead') {
     const body = twoLeadBodyRectOf(part, layout);
     if (body !== null) boxes.push(body);

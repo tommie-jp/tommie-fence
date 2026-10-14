@@ -614,18 +614,6 @@ const CHIP_SCALE = 1;
  * `sipLegends` と同じ寸法 (縁取りの半分 + 隙間 + 字の高さと深さ)。
  */
 const SIP_LEGEND_DEPTH = 1 + 0.5 + CHIP_SCALE * 6.5 * (0.72 + 0.2);
-/** 胴に刷る名前の字の高さの半分 (fence-kit の `sipHeader` はピンの並びの 3.5 下が基準線)。 */
-const SIP_CAPTION_HALF = 4;
-
-/** SIP の胴に刷った名前が占める帯。胴の長さいっぱい、ピンの並びの上下に字の高さ。 */
-function sipCaptionBand(points: readonly Point[], pitch: number): Rect {
-  const bar = sipBox(points, pitch);
-  const first = points[0] ?? { x: 0, y: 0 };
-  return chipAlongX(points)
-    ? { x: bar.x, y: first.y - SIP_CAPTION_HALF + 1, width: bar.width, height: SIP_CAPTION_HALF * 2 }
-    : { x: first.x - SIP_CAPTION_HALF + 1, y: bar.y, width: SIP_CAPTION_HALF * 2, height: bar.height };
-}
-
 const chipInk = (theme: Theme): ChipInk => ({
   body: theme.palette.chipBody,
   pin: theme.palette.chipPin,
@@ -704,17 +692,12 @@ function renderChip(
       return drawSipAdapter({ ...shared, names: dipPinout(part) ?? numbers, nameSide: 1, chip: pinout.chip, label: part.id, paint: inkOf(theme) });
     }
     const options = { ...shared, names: dipPinout(part) ?? numbers, nameSide: 1 as const, ...(look === undefined ? {} : { look }) };
-    // **胴に刷った名前を線が貫くなら、名前を胴の外へ出す。** ピンへ来る線は胴の上にも
-    // 重ねるので (`leadWires.ts`)、真ん中のピンから下ろした線が型番を縦に貫いた
-    // (教科書のセラミックフィルタの図)。外では線と字を避けて置く (`partLabel`)。
-    if (room === undefined || !room.blocked(sipCaptionBand(points, layout.pitch))) return sipHeader(options);
+    // **名前は胴の外。** 上から見た図なのでピンは胴の中心線に ○ で描き、胴に刷ると
+    // 真ん中のピンの ○ と食い合う。外では線と字を避けて置く (`partLabel`)。
     const bar = sipBox(points, layout.pitch);
     const alongX = chipAlongX(points);
-    const bare = sipHeader({
-      ...options, caption: '', ...(look === undefined ? {} : { look: { ...look, mark: '' } }),
-    });
     const centre = { x: bar.x + bar.width / 2, y: bar.y + bar.height / 2 };
-    return bare + partLabel(
+    return sipHeader(options) + partLabel(
       caption(part),
       { cx: centre.x, cy: centre.y, height: alongX ? bar.height : bar.width, angle: alongX ? 0 : Math.PI / 2 },
       centre,

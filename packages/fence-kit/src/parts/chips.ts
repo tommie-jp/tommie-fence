@@ -491,6 +491,8 @@ const SIP_NAME_HALO = 2;
  */
 const SIP_NAME_CLEAR = 0.5;
 const SIP_NAME_CAP = 0.72;
+/** ピンの ○ の半径の既定。breadboard は配線の端の粒と同じ半径を渡す。 */
+const SIP_PIN_RADIUS = 2.6;
 
 /** 1 列ヘッダの樹脂。**当たり判定と描画で同じ形を使う**ので、外にも出す。 */
 export function sipBox(points: readonly ChipPoint[], pitch: number): ChipBox {
@@ -499,26 +501,23 @@ export function sipBox(points: readonly ChipPoint[], pitch: number): ChipBox {
   return boxOf(points, half, half);
 }
 
-/** 樹脂の色と胴の字を持つ 1 列の部品 (セラミックフィルタ)。黒い樹脂の代わりに使う。 */
+/** 樹脂の色を持つ 1 列の部品 (セラミックフィルタ)。黒い樹脂の代わりに使う。 */
 export type SipLook = {
   readonly body: string;
   readonly edge: string;
-  /** 胴の字の色。 */
-  readonly text: string;
-  /** 胴に刷る字。キャプションの代わり (型番の全文は部品表に出る)。 */
-  readonly mark: string;
 };
 
 export type SipOptions = {
   readonly points: readonly ChipPoint[];
   readonly names: readonly string[];
   readonly pitch: number;
-  readonly caption: string;
   readonly scale: number;
   /** ピンの名前を出す側 (+1 / -1)。横に寝た帯なら下が +1、縦なら右が +1。 */
   readonly nameSide: 1 | -1;
   readonly ink: ChipInk;
   readonly look?: SipLook;
+  /** ピンの ○ の半径。既定は `SIP_PIN_RADIUS`。 */
+  readonly pinRadius?: number;
 };
 
 /**
@@ -553,50 +552,27 @@ export function sipLegends(options: SipOptions): string {
 /**
  * 1 列に並んだヘッダ。ヘッダ 1 列のモジュール (OLED や測距センサ) をこれで賄うので、
  * **ピン名は本体の外**に出す。どの穴が何なのかが、図の中だけで分かる必要がある。
+ *
+ * **上から見た図なので、ピンは挿した穴の真上 (胴の中心線) に ○ で描く。** 縁から小片を
+ * 出すと正面から見た図になり、名前を上に出す行では脚が上を向いた逆さの部品に見えた。
+ * ○ は胴の上に重ねる (胴に隠すと、どの穴に挿さっているかが読めない)。
+ * **胴には字を刷らない** — 真ん中のピンの ○ と食い合う。部品の名前は使う側が胴の外に置く。
  */
 export function sipHeader(options: SipOptions): string {
-  const { points, pitch, scale, nameSide, ink, look } = options;
-  const caption = look?.mark ?? options.caption;
-  const first = points[0];
-  if (!first) return '';
+  const { points, pitch, ink, look } = options;
+  if (points.length === 0) return '';
 
   const bar = sipBox(points, pitch);
-  const alongX = chipAlongX(points);
-  const across = alongX ? bar.height : bar.width;
-
   const shell = element('rect', {
     x: num(bar.x), y: num(bar.y), width: num(bar.width), height: num(bar.height), rx: 3,
     fill: look?.body ?? ink.body, stroke: look?.edge ?? CHIP_EDGE,
   });
-  // ピンは本体の縁から覗かせる。本体の真ん中に重ねるとキャプションと
-  // 食い合い、本体の下に隠すとどの穴に挿さっているのかが読めなくなる。
-  // **横に寝た帯は名前の側によらず下の縁から出す** — 上の縁から出すと、脚が上を
-  // 向いた逆さの部品に見える (溝より下の行に挿した SFU455B)。縦の帯は名前の側。
-  const pinSide = alongX ? 1 : nameSide;
-  const edge = (alongX ? first.y : first.x) + (pinSide * across) / 2;
-  const stubs = points
-    .map((point) => element('rect', {
-      x: num(alongX ? point.x - 3 : edge - 2.5),
-      y: num(alongX ? edge - 2.5 : point.y - 3),
-      width: alongX ? 6 : 5,
-      height: alongX ? 5 : 6,
-      fill: ink.pin,
-    }))
+  const radius = num(options.pinRadius ?? SIP_PIN_RADIUS);
+  const pins = points
+    .map((point) => element('circle', { cx: num(point.x), cy: num(point.y), r: radius, fill: ink.pin }))
     .join('');
 
-  const legends = sipLegends(options);
-
-  const centre = centreOf(bar);
-  const size = fittedFontSize(caption, alongX ? bar.width : bar.height, scale);
-  const label = alongX
-    ? svgText(centre.x, first.y + 3.5, caption, { 'font-size': num(size), fill: look?.text ?? ink.chipText })
-    : element(
-      'g',
-      { transform: `translate(${num(first.x)} ${num(centre.y)}) rotate(-90)` },
-      svgText(0, 3.5, caption, { 'font-size': num(size), fill: look?.text ?? ink.chipText }),
-    );
-
-  return `${shell}${stubs}${legends}${label}`;
+  return `${shell}${pins}${sipLegends(options)}`;
 }
 
 /** 基板の縁がピン列の外へ出る量 (ピッチに対する比)。Pico は 21mm 幅 / ピン間隔 0.7 インチ。 */

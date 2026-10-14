@@ -25,6 +25,8 @@ const LABEL_TAG = /^l=(.+)$/;
  * `shift=down` — 2 ピンの胴を半穴ずらす向き。
  */
 const CAPTION_TAG = /^cap=(.*)$/;
+/** 1 列の部品の種類 (`sip3`)。@ で置く部品のうち、名札を書けるのはこれだけ。 */
+const SINGLE_ROW = /^sip\d+$/;
 const CAPTION_NUMBER = '(-?\\d+(?:\\.\\d+)?)';
 // 側だけ (`above`)、側とずらす量 (`above:1,0`、コロンは要る)、ずらす量だけ (`1,0` = 下)。
 const CAPTION_VALUE = new RegExp(`^(?:(above|below|left|right)(?::${CAPTION_NUMBER},${CAPTION_NUMBER})?|${CAPTION_NUMBER},${CAPTION_NUMBER})$`);
@@ -105,21 +107,32 @@ export function parseCompactPart(
     if (!turn.ok) return turn;
 
     // 名札と胴の置き場所は、@ で置く部品 (DIP・ボードなど) には効かない。ラベルに飲み込まない。
-    const misplaced = turn.value.rest.find((token) => CAPTION_TAG.test(token) || SHIFT_TAG.test(token));
+    // **1 列の部品 (`sipN`) だけは名札を書ける** — 胴に字を刷らず、名札を胴の外に置くので。
+    const takesCaption = SINGLE_ROW.test(type);
+    const misplaced = turn.value.rest.find((token) => (!takesCaption && CAPTION_TAG.test(token)) || SHIFT_TAG.test(token));
     if (misplaced !== undefined) {
       return fail(`部品 ${safeToken(id)}: ${safeToken(misplaced.split('=')[0] ?? '')}= は @ で置く部品には書けません`, line, misplaced);
     }
-    const joined = turn.value.rest.join(' ');
+    const captionTags = turn.value.rest.filter((token) => CAPTION_TAG.test(token));
+    if (captionTags.length > 1) return fail(`部品 ${safeToken(id)}: cap= が 2 回書かれています`, line, captionTags[1]);
+    let caption: CaptionSpec | null = null;
+    if (captionTags[0] !== undefined) {
+      const read = parseCaption(CAPTION_TAG.exec(captionTags[0])?.[1] ?? '');
+      if (!read.ok) return fail(read.error.message, line, captionTags[0]);
+      caption = read.value;
+    }
+    const captionOf = caption === null ? {} : { caption };
+    const joined = turn.value.rest.filter((token) => !CAPTION_TAG.test(token)).join(' ');
     // `@` の後ろの残りはそのままラベルだが、`l=` と書いても同じ意味に読む
     // (1 行の記法の中で、ラベルの書き方が 2 通りに見えないようにする)。
     const tag = LABEL_TAG.exec(joined);
     const written = tag?.[1] ?? joined;
     const label = written ? clampText(written, LIMITS.labelLength) : null;
     const labelTagged = tag !== null;
-    if (target === 'top' || target === 'bottom') return ok({ ...base, at: target, label, anchored: true, labelTagged });
+    if (target === 'top' || target === 'bottom') return ok({ ...base, at: target, label, anchored: true, labelTagged, ...captionOf });
     return ok({
       ...base, holes: [{ addr: target, tag: '1', tagged: false, written: target }],
-      turn: turn.value.turn, label, anchored: true, labelTagged,
+      turn: turn.value.turn, label, anchored: true, labelTagged, ...captionOf,
     });
   }
 

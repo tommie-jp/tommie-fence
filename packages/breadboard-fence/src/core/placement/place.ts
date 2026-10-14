@@ -277,10 +277,10 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
     shift: spec.shift ?? null,
     line: spec.line,
   };
-  // **名札の置き場所は 2 ピンと 3 ピンだけ。** ほかの部品は胴の中か決まった所に字を置くので、
+  // **名札の置き場所は 2 ピン・3 ピン・1 列の部品だけ。** ほかの部品は胴の中か決まった所に字を置くので、
   // 書いても効かない (黙って読み飛ばすと、書いた人に効かなかったことが伝わらない)。
-  if (base.caption && footprint.kind !== 'two-lead' && footprint.kind !== 'three-lead') {
-    return fail(`部品 ${safeToken(spec.id)}: cap= は 2 ピンと 3 ピンの部品だけに書けます`, spec.line, `cap=${base.caption.written}`);
+  if (base.caption && footprint.kind !== 'two-lead' && footprint.kind !== 'three-lead' && footprint.kind !== 'sip') {
+    return fail(`部品 ${safeToken(spec.id)}: cap= は 2 ピン・3 ピン・1 列 (sipN) の部品だけに書けます`, spec.line, `cap=${base.caption.written}`);
   }
   if (base.shift && footprint.kind !== 'two-lead') {
     return fail(`部品 ${safeToken(spec.id)}: shift= は 2 ピンの部品だけに書けます`, spec.line, `shift=${base.shift}`);
@@ -660,6 +660,10 @@ function placeBoard(spec: PartSpec, board: Board, base: PartBase, part: BoardPar
 function placeSip(spec: PartSpec, board: Board, base: PartBase, pinCount: number): Result<PlacedPart> {
   const anchor = anchorHole(spec, board, 'sip4 @ a20');
   if (!anchor.ok) return anchor;
+  // 変換基板に載せた部品 (`sip4` + `3SK291`) は名札を基板のシルクに刷るので、書いても効かない。
+  if (base.caption && lookupPinout(modelOf(spec), pinCount)?.chip !== undefined) {
+    return fail(`部品 ${safeToken(spec.id)}: 変換基板に載せた部品は名札を基板に刷るので cap= は書けません`, spec.line, `cap=${base.caption.written}`);
+  }
 
   // `pins:` で書いた名前が先。無ければ**型番がピンの名前の表にあれば印字の名前**
   // (`Q1: sip4 @ b3 3SK291` の `Q1.G1`)、それも無ければ番号。

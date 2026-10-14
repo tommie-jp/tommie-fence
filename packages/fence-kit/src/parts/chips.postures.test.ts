@@ -117,7 +117,7 @@ describe('DIP', () => {
 
 describe('SIP', () => {
   test('draws nothing when it has no legs', () => {
-    expect(sipHeader({ points: [], names: [], pitch: PITCH, caption: '', scale: 1, nameSide: 1, ink: INK })).toBe('');
+    expect(sipHeader({ points: [], names: [], pitch: PITCH, scale: 1, nameSide: 1, ink: INK })).toBe('');
   });
 
   test('keeps the same margin either way round, since the bar is square in section', () => {
@@ -125,15 +125,15 @@ describe('SIP', () => {
   });
 
   test('puts the names outside the bar, on the side it was told', () => {
-    const below = sipHeader({ points: row(4), names: names(4), pitch: PITCH, caption: '', scale: 1, nameSide: 1, ink: INK });
-    const above = sipHeader({ points: row(4), names: names(4), pitch: PITCH, caption: '', scale: 1, nameSide: -1, ink: INK });
+    const below = sipHeader({ points: row(4), names: names(4), pitch: PITCH, scale: 1, nameSide: 1, ink: INK });
+    const above = sipHeader({ points: row(4), names: names(4), pitch: PITCH, scale: 1, nameSide: -1, ink: INK });
 
     expect(below).not.toBe(above);
   });
 
   test('draws the standing bar differently from the lying one', () => {
-    const lying = sipHeader({ points: row(4), names: names(4), pitch: PITCH, caption: '', scale: 1, nameSide: 1, ink: INK });
-    const standing = sipHeader({ points: column(4), names: names(4), pitch: PITCH, caption: '', scale: 1, nameSide: 1, ink: INK });
+    const lying = sipHeader({ points: row(4), names: names(4), pitch: PITCH, scale: 1, nameSide: 1, ink: INK });
+    const standing = sipHeader({ points: column(4), names: names(4), pitch: PITCH, scale: 1, nameSide: 1, ink: INK });
 
     expect(lying).not.toBe(standing);
   });
@@ -141,7 +141,7 @@ describe('SIP', () => {
   test('draws every size the palette offers', () => {
     for (const pins of [2, 3, 4, 5, 6, 8, 10, 20, 40]) {
       const drawn = sipHeader({
-        points: row(pins), names: names(pins), pitch: PITCH, caption: '', scale: 1, nameSide: 1, ink: INK,
+        points: row(pins), names: names(pins), pitch: PITCH, scale: 1, nameSide: 1, ink: INK,
       });
       expect(drawn, `sip${pins}`).not.toBe('');
     }

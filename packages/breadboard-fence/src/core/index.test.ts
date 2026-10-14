@@ -794,7 +794,6 @@ describe('renderBreadboard', () => {
     for (const [source, needle] of [
       ['parts:\n  U1: dip8 @ e5 NJM4556A\n', 'NJM'],
       ['parts:\n  U1: dip8 @ e5 日本語のラベル\n', '日本語'],
-      ['parts:\n  M1: sip4 @ a20 l=有機ELディスプレイ\n', '有機'],
     ] as const) {
       const { svg } = renderBreadboard(source);
       const [, size = '', text = ''] =
@@ -804,6 +803,31 @@ describe('renderBreadboard', () => {
       // 全角を半角の幅で数えると、字が本体の枠から飛び出す。
       expect(textWidth(text) * Number(size), text).toBeLessThanOrEqual(bodyWidth(svg));
     }
+  });
+
+  test('puts the name of a single-row part outside its body, below it, on either half of the board', () => {
+    // 胴に刷ると真ん中のピンの ○ と食い合う。上の行ではピンの名前の下、下の行では胴の下。
+    for (const at of ['b20', 'g20']) {
+      const { svg } = renderBreadboard(`parts:\n  FL1: sip3 @ ${at} SFU455B\n`);
+      const body = /<rect x="[\d.]+" y="([\d.]+)" width="[\d.]+" height="([\d.]+)" rx="3" fill="#e8842a"/.exec(svg);
+      const label = /<text[^>]* y="([\d.]+)"[^>]*>FL1 SFU455B<\/text>/.exec(svg);
+
+      expect(body, at).not.toBeNull();
+      expect(Number(label?.[1]), at).toBeGreaterThan(Number(body![1]) + Number(body![2]));
+      expect(svg, at).not.toContain('>SFU<');
+    }
+  });
+
+  test('moves the name of a single-row part beside its body when a part sits right under it', () => {
+    // 教科書のミキサー: FL1 (f35) の真下の g 行に R7 があり、名札が R7 の胴に重なった。
+    const { svg } = renderBreadboard('parts:\n  FL1: sip3 @ f15 SFU455B\n  R7: resistor g15 g18 2k\n');
+    const body = /<rect x="([\d.]+)" y="[\d.]+" width="([\d.]+)" height="[\d.]+" rx="3" fill="#e8842a"/.exec(svg);
+    const label = /<text x="([\d.]+)"[^>]*>FL1 SFU455B<\/text>/.exec(svg);
+    const left = Number(body![1]);
+    const right = left + Number(body![2]);
+    const x = Number(label![1]);
+
+    expect(x < left || x > right).toBe(true);
   });
 
   test('keeps what it could not read out of the drawing itself', () => {

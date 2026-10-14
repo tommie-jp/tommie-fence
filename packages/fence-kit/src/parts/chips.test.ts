@@ -250,8 +250,8 @@ describe('sipHeader', () => {
 
   test('writes the pin names outside the bar, on the side it is asked for', () => {
     const bar = sipBox(points, PITCH);
-    const below = sipHeader({ points, names, pitch: PITCH, caption: 'J1', scale: 1, nameSide: 1, ink: INK });
-    const above = sipHeader({ points, names, pitch: PITCH, caption: 'J1', scale: 1, nameSide: -1, ink: INK });
+    const below = sipHeader({ points, names, pitch: PITCH, scale: 1, nameSide: 1, ink: INK });
+    const above = sipHeader({ points, names, pitch: PITCH, scale: 1, nameSide: -1, ink: INK });
 
     const firstName = (svg: string): number =>
       Number(/<text x="0" y="(-?[\d.]+)"[^>]*>1</.exec(svg)?.[1]);
@@ -260,28 +260,27 @@ describe('sipHeader', () => {
     expect(firstName(above)).toBeLessThan(bar.y);
   });
 
-  test('pokes the pins out of the lower edge of a lying bar even when the names are above it', () => {
-    // 名前の側に出すと、溝より下の行では脚が上を向いた逆さの部品に見えた (教科書のミキサーの SFU)。
-    const above = sipHeader({ points, names, pitch: PITCH, caption: 'J1', scale: 1, nameSide: -1, ink: INK });
-    const stubTops = [...above.matchAll(/<rect x="[^"]+" y="(-?[\d.]+)" width="6" height="5" fill="([^"]+)"/g)]
-      .filter((match) => match[2] === INK.pin)
-      .map((match) => Number(match[1]));
+  test('draws each pin as a dot over its hole, on the centre line of the bar', () => {
+    // 上から見た図。縁から小片を出すと、名前を上に出す行で脚が上を向いた逆さの部品に見えた
+    // (教科書のミキサーの SFU)。
+    const above = sipHeader({ points, names, pitch: PITCH, scale: 1, nameSide: -1, ink: INK, pinRadius: 2.5 });
+    const dots = [...above.matchAll(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="2.5" fill="([^"]+)"/g)]
+      .map((match) => ({ x: Number(match[1]), y: Number(match[2]), fill: match[3] }));
 
-    expect(stubTops).toHaveLength(points.length);
-    for (const top of stubTops) expect(top).toBeGreaterThan(0);
+    expect(dots).toEqual(points.map((point) => ({ ...point, fill: INK.pin })));
+    expect(above).not.toMatch(/<rect[^>]*fill="#b9bec7"/);
   });
 
-  test('paints the body in the colour of a part that has a look, and prints its mark instead of the caption', () => {
-    const look = { body: '#e8842a', edge: '#a85a12', text: '#7a3a08', mark: 'SFU' };
-    const plain = sipHeader({ points, names, pitch: PITCH, caption: 'CF1 SFU455B', scale: 1, nameSide: 1, ink: INK });
-    const looked = sipHeader({ points, names, pitch: PITCH, caption: 'CF1 SFU455B', scale: 1, nameSide: 1, ink: INK, look });
+  test('paints the body in the colour of a part that has a look, and prints nothing on it', () => {
+    const look = { body: '#e8842a', edge: '#a85a12' };
+    const plain = sipHeader({ points, names, pitch: PITCH, scale: 1, nameSide: 1, ink: INK });
+    const looked = sipHeader({ points, names, pitch: PITCH, scale: 1, nameSide: 1, ink: INK, look });
 
     expect(plain).not.toContain('#e8842a');
-    expect(plain).toContain('CF1 SFU455B');
     expect(looked).toContain('#e8842a');
     expect(looked).toContain('#a85a12');
-    expect(looked).toContain('>SFU<');
-    expect(looked).not.toContain('CF1 SFU455B');
+    // 胴の字は真ん中のピンの ○ と食い合うので刷らない。字はピンの名前の 3 つだけ。
+    expect(looked.match(/<text /g)?.length ?? 0).toBe(names.length * 2);
   });
 
   test('lays the bar along the pins when the header stands upright', () => {

@@ -1,8 +1,11 @@
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
 import {
-  CAPTION_CLEAR, NAME_CAP, caption, fitToBoard, haloWidth, partLabel, pinPoints, pointOfPin,
+  CAPTION_CLEAR, NAME_CAP, NAME_LINE, caption, captionAt, captionTextWidth, charWidth, fitToBoard, haloWidth, partLabel, pinPoints,
+  pointOfPin,
 } from './partCommon.ts';
+import type { CaptionSpot } from './partCommon.ts';
+import { insertionDotRadius } from './wires.ts';
 import { isWideDip } from '../parts/wide.ts';
 import { element, num } from './svg.ts';
 import {
@@ -80,16 +83,85 @@ export function sipBarRect(part: PlacedPart, layout: Layout): Rect {
 
 /**
  * 1 列に並んだヘッダ。**姿は fence-kit にある** (`parts/chips.ts`)。
- * 基板の話として残るのは**ピン名をどちら側に出すか**だけ — 出す先は溝の側:
- * 盤の端には列番号が印字されていて、そこに重ねると両方読めなくなる。
+ * 基板の話として残るのは**ピン名をどちら側に出すか**と**名札の置き場**。
+ * ピン名を出す先は溝の側: 盤の端には列番号が印字されていて、そこに重ねると両方読めなくなる。
  */
-/** 型番が姿を持つ部品 (SFU455) なら、その樹脂の色と胴の字。 */
+/** 型番が姿を持つ部品 (SFU455) なら、その樹脂の色。 */
 const lookOf = (part: PlacedPart): { look?: SipLook } => {
   const look = lookupPinout(part.value ?? part.label, part.pins.length)?.look;
   return look === undefined ? {} : { look };
 };
 
-export function renderSip(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
+/** 面実装しか無い型番 (3SK291) は、1 列の変換基板に載せた実寸の胴で描く。名札は基板のシルクに刷る。 */
+const adapterChipOf = (part: PlacedPart) => lookupPinout(part.value ?? part.label, part.pins.length)?.chip;
+
+const sipNameSide = (first: Point, layout: Layout): 1 | -1 => (first.y < layout.ravineY ? 1 : -1);
+
+/**
+ * ピンの名前が胴の縁から出る深さ。fence-kit の `sipLegends` と同じ寸法
+ * (縁取りの半分 + 隙間 + 字の高さと深さ)。perfboard の `SIP_LEGEND_DEPTH` と同じ式。
+ */
+const sipLegendDepth = (theme: RenderTheme): number => 1 + 0.5 + textScale(theme) * 6.5 * (0.72 + 0.2);
+
+/**
+ * 1 列の部品の名札の置き場の候補。**胴には字を刷らない** (真ん中のピンの ○ と食い合う) ので
+ * 胴の外に置く。先に試すのは 2 ピン・3 ピンと同じ胴の下 (ピンの名前が下にあれば、その下)。
+ * 胴は 1 ピッチの幅があるので、下の行の部品に名札が乗りやすい — そのときは**胴の横**
+ * (同じ行の右、次に左) へ逃がす (教科書のミキサーの FL1 が真下の R7 に重なった)。
+ * 変換基板に載せた部品はシルクに刷るので候補なし。
+ */
+export function sipCaptionSpots(part: PlacedPart, layout: Layout, theme: RenderTheme, width: number): CaptionSpot[] {
+  if (adapterChipOf(part) !== undefined) return [];
+  const points = pinPoints(part, layout);
+  const first = points?.[0];
+  if (!points || !first) return [];
+  const bar = sipBox(points, layout.pitch);
+  const cap = theme.metrics.textSize * NAME_CAP;
+  const lying = points.every((point) => point.y === first.y);
+  const namesBelow = lying && sipNameSide(first, layout) > 0;
+  const top = bar.y + bar.height + (namesBelow ? sipLegendDepth(theme) : 0);
+  const below = { x: bar.x + bar.width / 2, y: top + CAPTION_CLEAR + cap, width };
+  if (!lying) return [below];
+  const gap = CAPTION_CLEAR + haloWidth(theme) / 2;
+  const middle = bar.y + bar.height / 2 + cap / 2;
+  return [
+    below,
+    { x: bar.x + bar.width + gap + width / 2, y: middle, width },
+    { x: bar.x - gap - width / 2, y: middle, width },
+  ];
+}
+
+/** 候補の `slot` 番め。候補が尽きたら胴の下から 1 行ずつ下げる (`captionDrops` の段)。 */
+export function sipCaptionAt(
+  part: PlacedPart,
+  layout: Layout,
+  theme: RenderTheme,
+  width: number,
+  slot = 0,
+): CaptionSpot | null {
+  const spots = sipCaptionSpots(part, layout, theme, width);
+  const below = spots[0];
+  if (!below) return null;
+  if (slot < spots.length) return spots[slot] ?? below;
+  return { ...below, y: below.y + (slot - spots.length + 1) * theme.metrics.textSize * NAME_LINE };
+}
+
+/** 胴とピンの名前が占める外形 (書いて決めた名札 `cap=` はこの外に置く)。 */
+export function sipExtent(part: PlacedPart, layout: Layout, theme: RenderTheme): Rect {
+  const points = pinPoints(part, layout);
+  const first = points?.[0];
+  if (!points || !first) return { x: 0, y: 0, width: 0, height: 0 };
+  const bar = sipBox(points, layout.pitch);
+  const side = sipNameSide(first, layout);
+  if (points.every((point) => point.y === first.y)) {
+    const depth = sipLegendDepth(theme);
+    return { ...bar, y: side > 0 ? bar.y : bar.y - depth, height: bar.height + depth };
+  }
+  const longest = Math.max(0, ...part.pins.map((pin) => [...pin.name].length)) * charWidth(theme) + sipLegendDepth(theme);
+  return { ...bar, x: side > 0 ? bar.x : bar.x - longest, width: bar.width + longest };
+}
+
+export function renderSip(part: PlacedPart, layout: Layout, theme: RenderTheme, slot = 0, spot: CaptionSpot | null = null): string {
   const points = pinPoints(part, layout);
   const first = points?.[0];
   if (!points || !first) return '';
@@ -98,15 +170,21 @@ export function renderSip(part: PlacedPart, layout: Layout, theme: RenderTheme):
     points,
     names: part.pins.map((pin) => pin.name),
     pitch: layout.pitch,
-    caption: caption(part),
     scale: textScale(theme),
-    nameSide: first.y < layout.ravineY ? 1 as const : -1 as const,
+    nameSide: sipNameSide(first, layout),
     ink: chipInk(theme),
   };
-  // 面実装しか無い型番 (3SK291) は、1 列の変換基板に載せた実寸の胴で描く。
-  const chip = lookupPinout(part.value ?? part.label, part.pins.length)?.chip;
+  const chip = adapterChipOf(part);
   if (chip !== undefined) return drawSipAdapter({ ...options, chip, label: part.id });
-  return sipHeader({ ...options, ...lookOf(part) });
+  // ピンの ○ は配線の端の粒と同じ大きさ (挿した所が同じ見え方になる)。
+  const body = sipHeader({ ...options, ...lookOf(part), pinRadius: insertionDotRadius(theme) });
+  // 書いて決めた名札 (`cap=`) は、配線よけと同じ答え (`explicitCaptionSpot`) の所へ置く。
+  if (spot !== null) return body + captionAt(spot, caption(part), theme);
+  // 名札は候補から選ぶ (段の番号は配線よけと同じ `captionDrops` の答え)。
+  const at = sipCaptionAt(part, layout, theme, captionTextWidth(part, theme), slot);
+  if (at === null) return body;
+  const text = slot === 0 ? fitToBoard(caption(part), at.x, theme.metrics.textSize, layout) : caption(part);
+  return body + partLabel(at.x, at.y, text, theme);
 }
 
 /** タクトスイッチの本体が覆う範囲 (ピッチに対する比)。6mm 角なので 2 列 + 溝ぶん。 */

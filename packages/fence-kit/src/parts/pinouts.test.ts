@@ -319,7 +319,7 @@ describe('SFU455B (1 列 3 ピンのセラミックフィルタ)', () => {
 
   test('answers to the other spellings and carries the orange look', () => {
     for (const model of ['SFU455A', 'sfu455']) expect(lookupPinout(model, 3)?.model, model).toBe('SFU455B');
-    expect(lookupPinout('SFU455B', 3)?.look).toMatchObject({ mark: 'SFU' });
+    expect(lookupPinout('SFU455B', 3)?.look).toMatchObject({ body: '#e8842a' });
   });
 
   test('is not a 4 pin chip, and a plain chip has no look', () => {
@@ -448,7 +448,7 @@ describe('1 列のモジュール・センサ (KY-040・HC-SR04・SG90・DHT11)'
   ] as const)('%s is %i pins in a row with a look', (model, count, names) => {
     const found = lookupPinout(model, count);
     expect(found?.names).toEqual(names);
-    expect(found?.look?.mark).toBeTruthy();
+    expect(found?.look?.body).toBeTruthy();
     expect(lookupPinout(model, count + 1)).toBeNull();
   });
 
