@@ -235,7 +235,7 @@ A 100 MHz square wave (−10 dBm) on a tinySA Ultra. M1 to M3 read −7.90 / −
 ### More
 
 - [01-rbw-floor.md](../packages/spectrum-fence/examples/01-rbw-floor.md) — RBW and the noise floor, the attenuator
-- [02-ad-harmonics.md](../packages/spectrum-fence/examples/02-ad-harmonics.md) — harmonics of a square wave (AD, dBV)
+- [02-ad-harmonics.md](../packages/spectrum-fence/examples/02-ad-harmonics.md) — harmonics of a square wave (AD, dBm)
 - [03-windows.md](../packages/spectrum-fence/examples/03-windows.md) — windows (rect / hann / flattop)
 - [04-two-paths.md](../packages/spectrum-fence/examples/04-two-paths.md) — FFT and swept read the same dBm
 - [05-antenna.md](../packages/spectrum-fence/examples/05-antenna.md) — the FM band from an antenna (`data:` overlays a measurement)

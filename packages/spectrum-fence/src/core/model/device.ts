@@ -38,7 +38,12 @@ export type Device = {
   readonly attenMax?: number;
   /** 入力の上限。掃引型は dBm (線の電力の和)、FFT 型は V (波の peak の和)。 */
   readonly maxInput?: { readonly dbm?: number; readonly volts?: number };
-  /** 表示の既定の単位と、上端 (ref) の既定 (その単位で)。 */
+  /**
+   * 表示の既定の単位と、上端 (ref) の既定 (その単位で)。
+   * **どの機種も dBm** (50 Ω の電力。tinySA・教科書のほかの計器と並べて読める)。FFT 型の
+   * ref の既定 15 dBm は、旧い既定 0 dBV (= +13.01 dBm) とほぼ同じ高さ (下端 −85 dBm)。
+   * dBV は `unit: dBV` で選ぶ。
+   */
   readonly defaultUnit: LevelUnit;
   readonly defaultRef: number;
 };
@@ -55,7 +60,7 @@ export const DEVICES = {
   // (Digilent の AD2 製品仕様。ヘッダーに直付けの帯域は未確認)。samples の既定 8192 (要確認)。
   ad2: {
     kind: 'fft', label: 'AD2', range: { min: 0, max: 30e6 }, samples: { default: 8192 },
-    maxInput: { volts: 25 }, defaultUnit: 'dBV', defaultRef: 0,
+    maxInput: { volts: 25 }, defaultUnit: 'dBm', defaultRef: 15,
   },
   // AD3: 14 bit・125 MS/s・±25 V・1 MΩ ‖ 24 pF。範囲は **BNC アダプター使用時の −3 dB 帯域 30 MHz+**
   // (−0.5 dB は 15 MHz、−0.1 dB は 6 MHz)。**BNC 無しの 2×15 ヘッダーは −3 dB で 9 MHz** (−0.5 dB は 2.9 MHz)。
@@ -63,7 +68,7 @@ export const DEVICES = {
   // 出典: Digilent AD3 Specifications / Reference Manual (Rev. 11/2023)。
   ad3: {
     kind: 'fft', label: 'AD3', range: { min: 0, max: 30e6 }, samples: { default: 8192 },
-    maxInput: { volts: 25 }, defaultUnit: 'dBV', defaultRef: 0,
+    maxInput: { volts: 25 }, defaultUnit: 'dBm', defaultRef: 15,
   },
   // Basic の DANL は Ultra と同じ仮の値 (要確認)。REF LEVEL の既定 −10 dBm も要確認。
   // START は 0 Hz から書ける (実機も 0 Hz から掃引できる。仕様の下限 100 kHz より下は校正の外 — 要確認)。

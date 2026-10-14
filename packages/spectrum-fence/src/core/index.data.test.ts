@@ -46,9 +46,16 @@ describe('renderSpectrum — data:', () => {
 
   test('reads a WaveForms export in dBV on an FFT instrument without a signal', () => {
     const text = 'Frequency (Hz),Trace 1 (dBV)\n0,-120\n1000,-3.01\n2000,-120';
-    const result = renderSpectrum('device: ad2\nsweep: 0-2kHz\ndata: w.csv\nmarkers: [peak]', { data: () => text });
+    const result = renderSpectrum('device: ad2\nsweep: 0-2kHz\nunit: dBV\ndata: w.csv\nmarkers: [peak]', { data: () => text });
     expect(result.notices).toEqual([]);
     expect(result.readingLines[2]).toBe('1  1.000 kHz  −3.01 dBV');
+  });
+
+  test('shows a dBV export in dBm by default on an FFT instrument (+13.01 dB)', () => {
+    const text = 'Frequency (Hz),Trace 1 (dBV)\n0,-120\n1000,-3.01\n2000,-120';
+    const result = renderSpectrum('device: ad2\nsweep: 0-2kHz\ndata: w.csv\nmarkers: [peak]', { data: () => text });
+    expect(result.notices).toEqual([]);
+    expect(result.readingLines[2]).toBe('1  1.000 kHz  10.00 dBm');
   });
 
   test('reads a headerless file in MHz, and says so', () => {

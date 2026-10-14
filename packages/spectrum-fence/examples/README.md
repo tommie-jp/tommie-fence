@@ -11,7 +11,7 @@
 | --- | --- |
 | [00-harmonics.md](00-harmonics.md) | NanoVNA の出力の高調波 (本の 11-4) — tinySA Ultra、0〜960 MHz |
 | [01-rbw-floor.md](01-rbw-floor.md) | RBW とノイズフロア、アッテネータ (11-2・11-3) |
-| [02-ad-harmonics.md](02-ad-harmonics.md) | 方形波の高調波 (AD の 4-2) — FFT 型、dBV |
+| [02-ad-harmonics.md](02-ad-harmonics.md) | 方形波の高調波 (AD の 4-2) — FFT 型、dBm |
 | [03-windows.md](03-windows.md) | 窓関数 (AD の 4-3) — bin の間の正弦を 3 つの窓で |
 | [04-two-paths.md](04-two-paths.md) | FFT 型と掃引型 (11-5) — 同じ方形波が同じ dBm になる |
 | [05-antenna.md](05-antenna.md) | アンテナで受けた FM 放送帯 (11-12) — `data:` で実測を重ねる |

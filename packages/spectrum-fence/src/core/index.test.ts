@@ -87,10 +87,19 @@ describe('renderSpectrum — 段 1', () => {
     expect(renderSpectrum(ELEVEN_TWO('')).svg).toContain('CENTER 30 MHz');
   });
 
-  test('reads AD 4-2 in dBV, and thins 3200 bins to the width of the grid', () => {
-    const result = renderSpectrum('device: ad2\nsweep: 0-20kHz\nsamples: 8192\nwindow: hann\nsignal: square 1kHz 1V\nmarkers: [1kHz, 3kHz]');
+  test('reads AD 4-2 in dBV when unit: dBV is written', () => {
+    const result = renderSpectrum('device: ad2\nsweep: 0-20kHz\nsamples: 8192\nwindow: hann\nunit: dBV\nsignal: square 1kHz 1V\nmarkers: [1kHz, 3kHz]');
     expect(result.notices).toEqual([]);
     expect(result.readingLines.slice(2)).toEqual(['1  1.000 kHz  −0.91 dBV', '2  3.000 kHz  −10.45 dBV']);
+    // dBV を選んだときの上端は、昔からの 0 dBV (15 dBm を換算した 1.99 dBV にしない)
+    expect(result.svg).toContain('REF 0 dBV');
+  });
+
+  test('reads AD 4-2 in dBm by default, and thins 3200 bins to the width of the grid', () => {
+    const result = renderSpectrum('device: ad2\nsweep: 0-20kHz\nsamples: 8192\nwindow: hann\nsignal: square 1kHz 1V\nmarkers: [1kHz, 3kHz]');
+    expect(result.notices).toEqual([]);
+    expect(result.readingLines.slice(2)).toEqual(['1  1.000 kHz  12.10 dBm', '2  3.000 kHz  2.56 dBm']);
+    expect(result.svg).toContain('REF 15 dBm');
     const points = /<polyline points="([^"]*)"/.exec(result.svg)?.[1]?.split(' ') ?? [];
     expect(points.length).toBeLessThanOrEqual(800);
     expect(result.svg).toContain('分解能 6.250 Hz');
@@ -103,7 +112,7 @@ describe('renderSpectrum — 段 1', () => {
       'samples: が無いので 8192 で描いています',
       'window: が無いので flattop で描いています',
       // 1 kHz は分解能 (7.813 kHz) より細かく、理想の山が REF の上に出る (計算はそのまま)。
-      '一番高い山 (2.20 dBV、9.375 kHz) は REF (0 dBV) より上で切れています (ref: 10dBV なら入ります)',
+      '一番高い山 (15.21 dBm、9.375 kHz) は REF (15 dBm) より上で切れています (ref: 20dBm なら入ります)',
     ]);
     expect(said('device: generic\nsweep: 0-1M 101\nrbw: 10kHz')).toEqual(['Generic のフロアは floor: で書きます (いまは −100 dBm で描いています)']);
   });
@@ -132,10 +141,18 @@ describe('renderSpectrum — 段 1', () => {
     expect(said('device: tinysa-ultra\nsweep: 0-1M 401\nrbw: 30kHz')[0]).toContain('から選びます (450 点で描いています)');
   });
 
-  test('shows the display in dBm when unit: dBm is written on an FFT instrument', () => {
-    const result = renderSpectrum('device: ad3\nsweep: 0-20MHz\nsamples: 8192\nwindow: hann\nunit: dBm\nsignal: square 1MHz -10dBm\nmarkers: [1M]');
-    expect(result.readingLines[2]).toBe('1  1.000 MHz  −7.90 dBm');
-    expect(result.svg).toContain('REF 13.01 dBm');
+  test('shows the display in dBm on an FFT instrument, with or without unit: dBm', () => {
+    const body = 'device: ad3\nsweep: 0-20MHz\nsamples: 8192\nwindow: hann\n';
+    for (const unit of ['unit: dBm\n', '']) {
+      const result = renderSpectrum(`${body}${unit}signal: square 1MHz -10dBm\nmarkers: [1M]`);
+      expect(result.readingLines[2]).toBe('1  1.000 MHz  −7.90 dBm');
+      expect(result.svg).toContain('REF 15 dBm');
+    }
+  });
+
+  test('converts the written ref to the chosen unit on an FFT instrument', () => {
+    const result = renderSpectrum('device: ad3\nsweep: 0-20MHz\nsamples: 8192\nwindow: hann\nunit: dBV\nref: 10dBm\nsignal: sine 1MHz 1V');
+    expect(result.svg).toContain('REF −3.01 dBV');
   });
 
   test('marks a marker near the top edge below the point', () => {
@@ -234,8 +251,13 @@ describe('renderSpectrum — 山と REF', () => {
     expect(cut(source)).toEqual(['一番高い山 (−5.00 dBm、10.000 MHz) は REF (−10 dBm) より上で切れています (ref: 0dBm なら入ります)']);
   });
 
-  test('says the same on an FFT instrument, in dBV', () => {
+  test('says the same on an FFT instrument, in dBm by default', () => {
     const source = 'device: ad2\nsweep: 0-20kHz\nsamples: 8192\nwindow: hann\nsignal: sine 1kHz 10V';
+    expect(cut(source)).toEqual(['一番高い山 (30.00 dBm、1.000 kHz) は REF (15 dBm) より上で切れています (ref: 40dBm なら入ります)']);
+  });
+
+  test('says the same on an FFT instrument, in dBV when unit: dBV is written', () => {
+    const source = 'device: ad2\nsweep: 0-20kHz\nsamples: 8192\nwindow: hann\nunit: dBV\nsignal: sine 1kHz 10V';
     expect(cut(source)).toEqual(['一番高い山 (16.99 dBV、1.000 kHz) は REF (0 dBV) より上で切れています (ref: 20dBV なら入ります)']);
   });
 

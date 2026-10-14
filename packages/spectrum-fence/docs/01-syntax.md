@@ -34,8 +34,8 @@ MAX HOLD の画面は掃引を並べた `hold:` で描く。
 
 | `device:` | 型 | 機種 | 範囲 | 縦軸の既定 |
 | --- | --- | --- | --- | --- |
-| `ad2` | FFT | Analog Discovery 2 | 0〜30 MHz | dBV、REF 0 dBV |
-| `ad3` | FFT | Analog Discovery 3 | 0〜30 MHz | dBV、REF 0 dBV |
+| `ad2` | FFT | Analog Discovery 2 | 0〜30 MHz | dBm、REF 15 dBm |
+| `ad3` | FFT | Analog Discovery 3 | 0〜30 MHz | dBm、REF 15 dBm |
 | `tinysa` | 掃引 | tinySA (Basic) | 0〜960 MHz | dBm、REF −10 dBm |
 | `tinysa-ultra` | 掃引 | tinySA Ultra | 0〜6 GHz | dBm、REF −10 dBm |
 | `generic` | 掃引 | ほかのスペアナ・SDR | 0〜10 GHz | dBm、REF −10 dBm |
@@ -175,7 +175,7 @@ device: ad2
 sweep: 0-10kHz
 samples: 8192
 window: flattop
-ref: 10dBV
+ref: 25dBm
 signal: square 1kHz 1V offset 0.5V
 markers:
   - 0
@@ -185,7 +185,7 @@ markers:
 
 ![図04 Analog Discovery 2 — 1 kHz の方形波 (FFT 型)](out/01-syntax-4.svg)
 
-M1 は offset の 0.5 V (−6.02 dBV)、M2 は基本波 (4/π V peak = −0.91 dBV)、M3 は 3 次 (−10.45 dBV)。
+M1 は offset の 0.5 V (+6.99 dBm)、M2 は基本波 (4/π V peak = +12.10 dBm)、M3 は 3 次 (+2.56 dBm)。
 
 ## 掃引型の設定 (`points:` `rbw:` `atten:` `lna:`)
 
@@ -237,7 +237,7 @@ duty 25 % の方形波は 4 次ごとに線が消える (2 GHz)。フロアは `
 | --- | --- | --- |
 | `ref` | 格子の上端 (`-10dBm` `0dBV`) | 機種の既定 (上の表) |
 | `scale` | 1 目盛の幅 (`10dB`。0.1〜50) | 10 dB |
-| `unit` | 縦軸の単位 `dBm` (50 Ω の電力) / `dBV` (電圧の rms) | FFT 型は dBV、掃引型は dBm |
+| `unit` | 縦軸の単位 `dBm` (50 Ω の電力) / `dBV` (電圧の rms) | **どの型も dBm** (FFT 型の REF は 15 dBm)。dBV は `unit: dBV` で選ぶ (上端の既定は 0 dBV) |
 | `floor` | 理想のノイズフロア (`-100dBV`)。FFT 型と `generic` だけ | 無し (FFT 型) / −100 dBm (generic) |
 
 - **単位を付ける** (`ref: -10` は断る)。dBm と dBV は **+13.01 dB** 違う (50 Ω で 1 V rms = +13.01 dBm)。

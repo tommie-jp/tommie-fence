@@ -25,7 +25,7 @@ signal: square 100MHz -10dBm
 markers: [100M, 300M, 500M]
 ```
 
-- **`device:` は必須** — `ad2` `ad3` (FFT 型: 標本化 → 窓 → FFT、dBV) と `tinysa` `tinysa-ultra`
+- **`device:` は必須** — `ad2` `ad3` (FFT 型: 標本化 → 窓 → FFT、既定は dBm) と `tinysa` `tinysa-ultra`
   `generic` (掃引型: 線を RBW の山でなぞり、DANL・ATT・LNA からフロアを足す、dBm)。
   **同じ波は 2 つの型で同じ dBm になる**。片方の型にしか無いキーはもう片方で断る
 - **信号**は scope と同じ波の綴り (`sine` `square` `triangle` `sawtooth` `pulse` `dc`、振幅は peak。

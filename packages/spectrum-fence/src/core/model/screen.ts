@@ -69,8 +69,13 @@ function common(doc: FenceDocument, device: Device, said: FenceError[]): Common 
   const outside = rangeNotice(device, sweep.start, sweep.stop);
   if (outside !== null) said.push(notice(outside, doc.sweep?.line ?? null));
   const unit = doc.unit?.value ?? device.defaultUnit;
+  // 上端を書かなければ機種の既定 (dBm)。**FFT 型で dBV を選んだときは昔からの 0 dBV** にする —
+  // 既定の 15 dBm を換算すると 1.99 dBV の半端な値になり、WaveForms の画面の感覚とずれる
+  const defaultRef = device.kind === 'fft' && unit === 'dBV'
+    ? 0
+    : toUnit(fromUnit(device.defaultRef, device.defaultUnit), unit);
   const ref = doc.ref === null
-    ? toUnit(fromUnit(device.defaultRef, device.defaultUnit), unit)
+    ? defaultRef
     : toUnit(fromUnit(doc.ref.value.value, doc.ref.value.unit), unit);
   return { sweep, centered: doc.sweep?.value.centered ?? false, unit, ref: Math.round(ref * 100) / 100, scale: doc.scale?.value ?? DEFAULT_SCALE };
 }

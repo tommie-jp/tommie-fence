@@ -28,7 +28,7 @@ signal: square 100MHz -10dBm
 markers: [100M, 300M, 500M]
 ```
 
-- **`device:` is required** — `ad2` `ad3` (FFT: sample → window → FFT, in dBV)
+- **`device:` is required** — `ad2` `ad3` (FFT: sample → window → FFT, in dBm by default)
   and `tinysa` `tinysa-ultra` `generic` (swept: the lines traced with the RBW
   filter, plus a floor from the DANL, attenuator and LNA, in dBm). **The same
   wave reads the same dBm on both kinds.** A key that only one kind has is
