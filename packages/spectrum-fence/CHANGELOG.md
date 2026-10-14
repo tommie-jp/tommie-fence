@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-14
+
 ### Changed (互換が変わる)
 
 - **FFT 型 (`ad2` `ad3`) の縦軸の既定を dBV から dBm にした** (REF の既定は 0 dBV から 15 dBm へ)。
