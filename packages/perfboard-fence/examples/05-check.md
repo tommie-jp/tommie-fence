@@ -7,6 +7,7 @@
 動かない」ことなので、お知らせとして出る。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 12x8
   h: 1.6mm

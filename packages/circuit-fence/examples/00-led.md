@@ -4,6 +4,7 @@
 **同じ回路を breadboard / perfboard でも描いてある** (どれも「図01 LED と抵抗」)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 LED と抵抗
 parts:
   B1: battery 1,1 1,3 3

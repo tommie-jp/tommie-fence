@@ -4,6 +4,7 @@
 出力は `out`。入力は番号でも呼べる (`U1.1` `U1.2`)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 ロジックゲート
 parts:
   U1: and 2,2 7408
@@ -64,6 +65,7 @@ style:
 箱の中に名前と番号が出て、名前でも指せる (`U1.GND` = `U1.1`)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図02 DIP の IC
 parts:
   U1: dip8 3,3 NE555
@@ -90,6 +92,7 @@ style:
 `spdt` は共通が `in`、行き先が `1` と `2`。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図03 切り替えスイッチ
 parts:
   S1: spdt 2,2
@@ -114,6 +117,7 @@ IC の 1 回路を記号 1 つで描くとき、**ID の末尾の大文字が IC
 型番が表に無い・ID に回路の字が無いときは、今までどおり番号は出ない。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図04 ゲートの足の番号
 parts:
   IN1: port 1,2
@@ -148,6 +152,7 @@ style:
 下は 74HC595 に直列データ・クロック・ラッチを入れて、並列の出力 2 本を取り出す。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図05 74HC595 の箱
 parts:
   SER: port 1,3
@@ -181,6 +186,7 @@ style:
 (SET・RESET は H で効くので、使わないピンは GND に結ぶ)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図06 CD4013B で 2 分周
 parts:
   CLK: port 1,4
@@ -211,6 +217,7 @@ CD4040B はクロック `CLOCK` を左から入れ、`Q1` (2 分周) から `Q12
 `R` は H でクリアなので、普段は GND に結ぶ。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図07 CD4040B のリプルカウンタ
 parts:
   CLK: port 1,3

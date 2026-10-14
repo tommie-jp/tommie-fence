@@ -9,6 +9,7 @@
 電圧は先に書いた番地が + になる。逆にしたいときは番地を入れ替える。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 電流の矢と電圧の符号
 parts:
   E: battery 1,2 1,4
@@ -31,6 +32,7 @@ style:
 矢を逆に向けたいだけなら、番地を入れ替えて書く。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図02 番地を入れ替えて矢を返す
 parts:
   R1: resistor 1,1 3,1 i=i1
@@ -55,6 +57,7 @@ style:
 値は問題文や表に書き、図には記号だけを置くのが元々の書き方に近い。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図03 値と電流の矢は並べて書ける
 parts:
   R1: resistor 1,1 3,1 10k i=i1
@@ -74,6 +77,7 @@ style:
 問題用紙と同じ書き方。`european` は − 側を指す弧 (ドイツ式)。どちらも電流の矢と同じ大きさ。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図04 jis では電圧も矢になる
 parts:
   E: battery 1,2 1,4

@@ -7,6 +7,7 @@ Pico をブレッドボードにまたがせて、LED とタクトスイッチ�
 **先に回路図を見てから、ブレッドボードに落とす。** 回路図の同じ名前の端子 (`VSYS` `GP14` `GP15`) は同じ線につながっている。電池は 4.5 V (単 3 3 本) で、VSYS に入れる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 Pico に LED とボタンをつなぐ
 parts:
   V1: vsource 1,2 1,5 4.5
@@ -40,6 +41,7 @@ wires:
 <img src="out/schematic/07-pico.png" alt="回路図01 Pico に LED とボタンをつなぐ" width="767">
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 Pico に LED とボタンをつなぐ
 board: full
 parts:

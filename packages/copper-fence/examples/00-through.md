@@ -6,6 +6,7 @@ CH0 と CH1 へ。**線路の字に出る Z0 がこの幅で 50Ω になる**こ
 1 行 (`50Ω = 3.06mm`) と見比べる。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 40x20mm
 title: 図01 50Ω のスルー線路
 f: 2.4G
@@ -21,6 +22,7 @@ parts:
 等価回路 (スルー線路の等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 スルー線路の等価回路
 parts:
   J1: sma 2,2 mirror CH0

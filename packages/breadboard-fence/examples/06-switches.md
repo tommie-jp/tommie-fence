@@ -5,6 +5,7 @@
 ## タクトスイッチで LED を点ける
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 タクトスイッチで LED を点ける
 board: half
 parts:
@@ -40,6 +41,7 @@ N2 : R1.2, D1.A
 ## 半固定抵抗とスライドスイッチ
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図02 半固定抵抗とスライドスイッチ
 board: half
 parts:

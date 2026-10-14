@@ -21,6 +21,8 @@
     "coverage": "npm run coverage --workspaces",
     "examples": "npm run examples --workspaces --if-present",
     "docs": "npm run docs --workspaces --if-present",
-    "check": "npm run typecheck && npm run test"
+    "labels": "node scripts/fence-labels.mjs",
+    "labels:check": "node --test scripts/fence-labels.test.mjs && node scripts/fence-labels.mjs --check",
+    "check": "npm run labels:check && npm run typecheck && npm run test"
   }
 }

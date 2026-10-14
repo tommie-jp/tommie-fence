@@ -7,6 +7,7 @@ ID は先頭 1 文字が本体、残りが添字になる (回路図の慣習ど
 組でないときは、書いたとおりに出る。単位を勝手に足さない。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 ID と値の出方
 parts:
   R1:    resistor 1,1 2,1 10k
@@ -54,6 +55,7 @@ ID は記号の下 (縦置きなら左)、値は反対側に出る。
 添字にしたくない 2 字の本体 (`\mathrm{}`) はこれで書く。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図02 ラベルを ID と別に書く
 parts:
   E:   sine 1,1 2,1

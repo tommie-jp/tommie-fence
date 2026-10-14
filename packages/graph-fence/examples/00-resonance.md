@@ -8,6 +8,7 @@
 回路は 10 mH と 10 nF (f<sub>0</sub> = 15.9 kHz) と電流を測る 100 Ω の直列で、CH2 は 100 Ω の電圧 (電流 = 電圧 / 100 Ω)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 LC 直列共振
 parts:
   W1: sine 1,2 1,5 l=$\mathrm{W1}$
@@ -27,6 +28,7 @@ wires:
 <img src="out/schematic/00-resonance.png" alt="回路図01 LC 直列共振" width="649">
 
 ```graph
+# グラフ (tommie-fence の graph フェンス)
 title: 図01 周波数と電流 — 15.9 kHz で山になり、輪の抵抗が小さいほど高い
 x: 周波数 Hz log 2k..32k
 y: 電流 mA

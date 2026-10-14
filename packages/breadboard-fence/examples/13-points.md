@@ -6,6 +6,7 @@
 ## points で節点に名前を付ける
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 分圧の出力に名前を付ける
 board: half
 points:
@@ -45,6 +46,7 @@ fb : R1.2, R2.1
 ## 配線を 1 行につないで書く
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図02 配線を 1 行につないで書く
 board: half
 parts:
@@ -73,6 +75,7 @@ notes:
 ## ラベルだけを差し替える (`l=`)
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図03 ラベルだけを差し替える
 board: half
 parts-list: none

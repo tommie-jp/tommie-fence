@@ -6,6 +6,7 @@ C の電圧は立ち上がりから 1 τ (1 ms) で 2 V の 63 % (1.26 V) に届
 `ch2` と書く。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図01 RC の充電 — 1 τ で 63 %
 time: 1ms/div
 trigger: ch1 rising 1V
@@ -30,6 +31,7 @@ Rise (10〜90 %) は 2.14 ms — 2.2 τ に近い
 `rc` と `hp` の和はいつも入力 (V_R + V_C = V_in)。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図02 微分回路 — R の電圧
 time: 1ms/div
 trigger: ch1 rising 1V
@@ -47,6 +49,7 @@ measure: [vpp, vmax, vmin]
 V·T/(2τ) = 1 V × 1 ms / 2 ms = 0.5 V。直流分の無い入力なので三角波は 0 V を中心に振れる。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図03 積分 — 方形波から三角波
 time: 200us/div
 trigger: ch1 rising 0V
@@ -63,6 +66,7 @@ CH2 の Vpp は 500 mV、Avg はほぼ 0 V (−18 µV)。
 phase −90°、`invert` で 180°。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図04 遅らせる・反転する
 time: 200us/div
 trigger: ch1 rising 0V

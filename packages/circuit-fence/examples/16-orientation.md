@@ -4,6 +4,7 @@
 回転は `r90` / `r180` / `r270` で**時計回り**、左右反転は `mirror`。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 記号を回す
 parts:
   Q1: npn 2,2
@@ -30,6 +31,7 @@ style:
 `mirror` は左右反転。上下反転の語は無く、`mirror` と `r180` を並べて書く。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図02 裏返す
 parts:
   U1: opamp 3,2
@@ -57,6 +59,7 @@ style:
 まっすぐ引ける向きも一緒に回る。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図03 回した記号に配線を引く
 parts:
   IN:  port 5,1

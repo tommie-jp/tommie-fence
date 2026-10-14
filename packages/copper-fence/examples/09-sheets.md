@@ -7,6 +7,7 @@
 外側に書いた `board:` `f:` `style:` は、枚が書かなかったときの既定になる。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 title: 図01 治具と校正用スルー
 f: 2.4G
 sheets:

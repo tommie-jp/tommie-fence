@@ -4,6 +4,7 @@
 **`dim` は寸法線** — 2 点の間の長さを測って出す。手で切る基板の寸法図に使う。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 40x20mm
 title: 図01 注釈
 copper:
@@ -35,6 +36,7 @@ notes:
 ERC (`check`) を選ぶ。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 40x20mm
 title: 図02 白黒で刷る
 style:
@@ -55,6 +57,7 @@ notes:
 等価回路 (図01・図02 の等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 図01・図02 の等価回路
 parts:
   J1: sma 2,2 mirror

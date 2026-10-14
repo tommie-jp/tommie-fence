@@ -8,6 +8,7 @@
 画面の幅の半分ずらすのと同じ)。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図01 正の半周期 — トリガを左端に
 time: 50us/div
 trigger: ch1 rising 0V at -5div
@@ -28,6 +29,7 @@ Avg は 637 mV — 正の半周期の平均 2/π × 1 V。上の縁の ▼ (t = 
 `lc f0 Q` の f0 = 1/(2π√(LC)) = 1.59 kHz、Q = R·√(C/L) = 10。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図02 チョッパの出力 — LC で均す
 time: 20us/div
 trigger: ch1 rising 2.5V

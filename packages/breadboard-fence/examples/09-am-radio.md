@@ -7,6 +7,7 @@
 **先に回路図を見てから、ブレッドボードに落とす。** 2 つの図のネットリストは同じ。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 1 石中波ラジオ
 parts:
   V1: vsource 1,1 1,7 3
@@ -51,6 +52,7 @@ wires:
 <img src="out/schematic/09-am-radio.png" alt="回路図01 1 石中波ラジオ" width="1797">
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 1 石中波ラジオ
 # 電源: 上下の赤レール = +3V (単3 2 本)、青レール = GND (右端で上下を渡している)
 board: half

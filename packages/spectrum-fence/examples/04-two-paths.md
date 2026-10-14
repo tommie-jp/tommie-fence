@@ -5,6 +5,7 @@
 山の形 (窓の裾か RBW の山か) とフロア (受信機の DANL) だけ。
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図01 Analog Discovery 3 — FFT 型 (Hann)
 device: ad3
 sweep: 0-20MHz
@@ -22,6 +23,7 @@ markers:
 ![図01 Analog Discovery 3 — FFT 型 (Hann)](out/04-two-paths-1.svg)
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図02 tinySA — 掃引型 (RBW 300 kHz)
 device: tinysa
 sweep: 0-20M 290

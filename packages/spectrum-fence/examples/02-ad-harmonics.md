@@ -4,6 +4,7 @@ Wavegen の 1 kHz・1 V の方形波を Scope の CH1 に繋ぎ、Spectrum で 0
 (AD の 4-2)。FFT 型でも縦軸は既定で dBm (50 Ω の電力。dBV にするなら `unit: dBV`)、分解能は 20 kHz × 2.56 ÷ 8192 = 6.25 Hz。
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図01 1 kHz の方形波 — 奇数次の高調波
 device: ad2
 sweep: 0-20kHz

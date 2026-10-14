@@ -9,6 +9,7 @@
 貼り先の背景がそのまま透ける。既定ではないので、使うときは名前で選ぶ。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 classic
 board: half
 style: classic
@@ -32,6 +33,7 @@ notes:
 黒や紺の線が基板に沈まないようにしている。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図02 dark
 board: half
 style: dark
@@ -55,6 +57,7 @@ notes:
 白や黄色の線も白い基板の上で追える。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図03 high-contrast
 board: half
 style: high-contrast
@@ -78,6 +81,7 @@ notes:
 グレーにすると「何色の線を挿すか」「何オームか」が読めなくなるため。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図04 mono
 board: half
 style: mono
@@ -102,6 +106,7 @@ notes:
 classic と違って**地は白で塗る** — 暗いスライドに貼ったときに余白だけ透けないようにするため。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図05 presentation
 board: half
 style: presentation
@@ -123,6 +128,7 @@ notes:
 テーマを土台にして、気になるところだけ上書きできる。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図06 テーマを個別に変える
 board: half
 style:

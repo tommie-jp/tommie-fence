@@ -4,6 +4,7 @@
 `parts:` の中に**入れ子で**書く — ピンの名前の並びを持つので 1 行に畳めない。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 電源で LED を点ける
 parts:
   V1: vsource 1,1 1,3 5
@@ -17,6 +18,7 @@ wires:
 <img src="out/schematic/07-device-1.png" alt="回路図01 電源で LED を点ける" width="419">
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 14x8
   h: 1.6mm
@@ -79,6 +81,7 @@ N3 : D1.2, V1.-
 どの穴を通っているかが読みやすい。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図02 信号源で開け閉めする NE555 の発振器
 parts:
   V1: vsource 3,3 3,9 5
@@ -118,6 +121,7 @@ wires:
 <img src="out/schematic/07-device-2.png" alt="回路図02 信号源で開け閉めする NE555 の発振器" width="1050">
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 18x12
   h: 1.6mm

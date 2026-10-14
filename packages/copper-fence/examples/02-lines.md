@@ -4,6 +4,7 @@
 1 つの島 (ネット) になる。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 40x25mm
 title: 図01 折れ線とスタブ
 f: 2.4G
@@ -20,6 +21,7 @@ parts:
 等価回路 (スタブの等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 スタブの等価回路
 parts:
   J1: sma 2,2 mirror
@@ -50,6 +52,7 @@ S1 は L1 に T 字に触れているので同じ島。先が開いたスタブ 
 幅の Z0 を出す — 本の 6-14 のステップインピーダンス LPF。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 50x20mm
 title: 図02 ステップインピーダンス LPF (1GHz)
 f: 1G
@@ -71,6 +74,7 @@ parts:
 等価回路 (ステップインピーダンス LPF の等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図02 ステップインピーダンス LPF の等価回路
 parts:
   J1: sma 2,2 mirror

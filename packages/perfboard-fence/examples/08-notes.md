@@ -6,6 +6,7 @@
 ネットにもネットリストにも出ないので、印を足しても配線は変わらない。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 14x8
   h: 1.6mm
@@ -58,6 +59,7 @@ notes:
 テーマの名前 1 つだけなら、そのまま書ける。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 14x8
   h: 1.6mm
@@ -93,6 +95,7 @@ notes:
 凡例に並ぶのは**その図が使った色だけ**で、色を書かなければ凡例も出ない。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 14x8
   h: 1.6mm
@@ -130,6 +133,7 @@ notes:
 (`board:` の `silk:`) が決める。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 12x7
   silk: alpha-cols
@@ -171,6 +175,7 @@ notes:
 半田付けするので、手を動かすときに見るのはそちら側になる。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 12x7
   h: 1.6mm
@@ -219,6 +224,7 @@ notes:
 実物と違う帯を書くと、図を信じた人が違う抵抗を挿す。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 12x7
   h: 1.6mm

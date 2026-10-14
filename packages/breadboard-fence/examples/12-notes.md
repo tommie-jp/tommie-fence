@@ -6,6 +6,7 @@
 ## 印・枠・指し棒・字
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 LED を点ける
 board: half
 parts:
@@ -36,6 +37,7 @@ notes:
 ## 色・大きさ・寄せ
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図02 色と大きさと寄せ
 board: half
 parts-list: none
@@ -69,6 +71,7 @@ notes:
 ## フェンスそのものを図に書き込む
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図03 フェンスそのものを書き込む
 board: half
 parts-list: none

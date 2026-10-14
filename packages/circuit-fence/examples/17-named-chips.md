@@ -5,6 +5,7 @@
 番号でも指せる (`K1.COM1` も `K1.4` も同じ)。ネットリストには名前で出る。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 トランジスタでリレーを駆動する
 parts:
   VCC: vcc 3,1
@@ -41,6 +42,7 @@ style:
 ピンは格子の上に無いので、`|-` か `-|` で引く (上の図の `K1.NO1 |- 6,2`)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図02 フォトカプラで絶縁する
 parts:
   IN:   port 1,2
@@ -70,6 +72,7 @@ style:
 1 つのネット (`GND`) になる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図03 7 セグメント LED
 parts:
   GP0: port 1,1

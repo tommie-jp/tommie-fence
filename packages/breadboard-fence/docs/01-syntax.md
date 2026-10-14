@@ -27,6 +27,7 @@ wires:
 書き方と出力を対で読むためのもの。作り直しは `npm run docs`。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 最小の例
 board: half
 parts:
@@ -156,6 +157,7 @@ wires:
 | `full` | 63 | 830 穴 | 有り |
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図02 ボードの印字を手元の実物に寄せる
 board:
   size: half        # mini / half (既定) / full
@@ -198,6 +200,7 @@ wires:
 並べた図は [examples/02-themes.md](../examples/02-themes.md)。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図03 テーマを選ぶ
 style: dark
 parts:
@@ -226,6 +229,7 @@ wires:
 テーマを土台にして、気になるところだけ上書きできる。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図04 テーマを上書きする
 style:
   theme: dark        # 省略すると presentation
@@ -292,6 +296,7 @@ IC の型番には働きを値の欄に添える (`CD4081 (2 入力 AND ×4)`)�
 部品の件数の上限には数えない。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図05 部品リスト (既定)
 parts:
   R1: resistor a5 a10 330
@@ -302,6 +307,7 @@ parts:
 ![図05 部品リスト (既定)](out/01-syntax-5.svg)
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図06 部品リストを消す
 parts-list: none    # below (既定) / none
 parts:
@@ -335,6 +341,7 @@ parts:
 ## 配線 (wires)
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図07 配線の書き方
 parts:
   R1: resistor a5 a10 330
@@ -378,6 +385,7 @@ wires:
 図の左上に 1 行だけ載る題。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図08 題は図の左上に載る
 parts:
   R1: resistor a5 a10 330
@@ -399,6 +407,7 @@ wires:
 並べた図は [examples/13-points.md](../examples/13-points.md)。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図09 番地に名前を付ける
 points:
   vin: a3
@@ -445,6 +454,7 @@ notes:
 図の上に印と字を重ねる。並べた図は [examples/12-notes.md](../examples/12-notes.md)。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図10 印・枠・指し棒・字
 parts:
   R1: resistor a5 a10 330
@@ -527,6 +537,7 @@ notes:
   注釈を足しても、図から導いたネットリストは 1 行も変わらない。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図11 色と大きさと寄せ
 parts-list: none
 parts:
@@ -569,6 +580,7 @@ notes:
   挿す部品としては存在しないため。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図12 略記で書いても図は同じ
 parts:
   R1: r a5 a10 10k
@@ -585,6 +597,7 @@ parts:
 これがフェンス全体にかかる 1 つの規則で、ピン名を書かなかったときの向きを決める。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図13 極性は先に書いた穴が + 側
 parts:
   D1: diode a3 a6 1N4148          # a3 がアノード、a6 がカソード
@@ -612,6 +625,7 @@ parts:
 探すときに効く。並べた図は [examples/05-capacitors.md](../examples/05-capacitors.md)。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図14 コンデンサの 4 つの姿
 parts:
   C1: capacitor/ceramic a5 a8 0.1u
@@ -687,6 +701,7 @@ parts:
   刻まない。変換基板の姿 (`sot23-dip` など) は今までどおり。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図15 姿を選べる部品
 parts:
   D1: led/5mm a5(A) a7(K) red
@@ -718,6 +733,7 @@ SOT-23 (`sot23-dip`) より胴が 0.3mm 広い。`dipN/sop` と `dipN/tssop` は
 並べた図は [examples/06-switches.md](../examples/06-switches.md)。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図16 タクトスイッチ
 parts:
   SW1: button @ e5                        # 溝をまたぐ 4 本足
@@ -763,6 +779,7 @@ N1 : SW1.2a, SW1.2b, R1.1
 TO-220 (`/to220`) は胴が穴の行から上へ伸びるので、名前はほかの部品と同じようにピンの下に出る。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図17 半固定抵抗とスライドスイッチ
 parts:
   SW2: slide-switch e3(1) e4(C) e5(2)
@@ -799,6 +816,7 @@ wires:
 4 番のピンだけ太い) を載せた姿で描く。1 列の基板はピンの名前と反対の側へ 2 行ぶん張り出す。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図18 1 列ヘッダのモジュール
 parts:
   M1:
@@ -835,6 +853,7 @@ parts:
 書き方は種類名を替えるだけ。ソース: [examples/07-pico.md](../examples/07-pico.md)
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図19 Pico を挿す
 board: full
 parts:
@@ -931,6 +950,7 @@ wires:
 書けるのは `r180` の 1 つ。**1 番ピンが反対の端へ移る**。部品が覆う穴は変わらない。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図20 同じ穴に、向きだけ変えて挿す
 parts:
   U1: dip8 @ e5 NE555
@@ -968,6 +988,7 @@ U1:
 マップ形式で書き、`pins:` に並べた名前が箱の下に出て `AD2.W1` として配線から指せる。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図21 ボード外の機器をつなぐ
 parts:
   AD2:
@@ -1012,6 +1033,7 @@ Type-A は `VBUS GND D+ D-`、Type-C の変換基板は `GND D+ D- VBUS`。Type-
 (`J1: usb-a c3 c6 c5 c4` なら c3 が VBUS、c6 が GND)。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図22 USB の受け口から LED を点ける
 parts:
   J1: usb-c/female a10 a11 a12 a13
@@ -1066,6 +1088,7 @@ U1: dip28/wide @ d10 AS6C62256-55PCN
   配線の通り道を字でふさがない。表に無い型番は番号だけで、お知らせで言う (狭い DIP と同じ)
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図23 幅広 DIP (AS6C62256)
 board: full
 parts:
@@ -1133,6 +1156,7 @@ links:
 そのときは名札の置き場所を書いて決める。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図24 名札の置き場所と、半穴ずらした胴
 parts:
   R1: resistor b3 b9 68k shift=down

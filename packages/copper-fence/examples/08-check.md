@@ -8,6 +8,7 @@
 4. 手で切れない細さ (幅・溝・結合の隙間が 0.3mm 未満)
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 40x20mm
 title: 図01 ERC が言うこと
 copper:
@@ -25,6 +26,7 @@ wires:
 等価回路 (図のとおりに作ったときの回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 図のとおりに作ったときの回路
 parts:
   T1: tline 3,2 7,2 50 l=$\mathrm{L1}$

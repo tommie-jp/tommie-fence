@@ -29,6 +29,7 @@ Markdown の ` ```vna ` フェンスに YAML を書くと、Markdown プレビ�
 `sweep:` は**開始-終了 点数**。点は**実機と同じく線形**に並ぶ。点数を省くと 101。
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-300M 101
 title: 図01 1〜300 MHz を 101 点で (0 Ω のスルー)
 dut: series R 0
@@ -41,6 +42,7 @@ traces:
 等価回路:
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 図01 の等価回路 (0 Ω のスルー)
 parts:
   J1: sma 2,3 mirror CH0
@@ -89,6 +91,7 @@ LiteVNA64 は ミキサー 1 つと内蔵の RF スイッチで **S11 と S21 �
 梯子なら並びで書く。
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-200M 201
 title: 図02 π 型ローパス (47p / 235n / 47p)
 dut:
@@ -107,6 +110,7 @@ markers:
 等価回路:
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図02 図02 の等価回路 (パイ型ローパス)
 parts:
   J1: sma 2,3 mirror CH0
@@ -155,6 +159,7 @@ C1・L1・C2 は `dut:` に書いた順に、CH0 から CH1 へ並ぶ。
 直列に見える。
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-1G 401
 title: 図03 1000 pF の SRF (1 端子にして |Z|)
 dut:
@@ -171,6 +176,7 @@ markers:
 等価回路:
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図03 図03 の等価回路 (1000 pF、先を短絡)
 parts:
   J1: sma 2,3 mirror CH0
@@ -197,6 +203,7 @@ notes:
 `esr` (Rdc) が `rp` よりずっと小さければ、この付け方との違いは見えない。
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-1G 401
 title: 図04 フェライトビーズ (L 100n ∥ 300 Ω ∥ 2 pF、Rdc 0.3 Ω)
 dut:
@@ -282,6 +289,7 @@ TDR は S11 に Kaiser 窓 (β = 6) を掛けて逆 FFT した**帯域通過の�
 横軸は一番遠い反射の 2 倍まで (見える範囲は図の下の 1 行)。
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-900M 401
 title: 図05 先を開放した 2 m のケーブルの TDR
 dut:
@@ -297,6 +305,7 @@ traces:
 等価回路:
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図05 図05 の等価回路 (2 m のケーブル、先を開放)
 parts:
   J1: sma 2,3 mirror CH0
@@ -345,6 +354,7 @@ traces:
   代わりに**値が 8 目盛の外に出るとき**、`S21 LOGMAG は 1 dB/目盛 の尺度では範囲の外です (最小 −10.6 dB は下端 −8 dB (8 目盛) の外。2 dB/目盛 なら収まります)` のように、収まる尺度を 1 つ添えて言う
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-80M 100
 title: 図06 通過域から遮断の手前までを 1 dB/目盛・1 ns/目盛で見る
 dut:
@@ -384,6 +394,7 @@ traces:
 - **同じ枠のトレースは中心も共有する**。食い違えば断り、片方だけに書けばそれを枠全体に使う。`data:` の実測も同じ中心で重なる
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-300M 101
 title: 図07 直列 0.5 pF の位相を 2°/目盛・中心 90° で見る
 dut: series C 0.5p
@@ -423,6 +434,7 @@ markers:
 | 単位なし (`2`) | SWR、無ければ linear |
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 400M-470M 141
 title: 図08 帯と字と丸
 dut:
@@ -443,6 +455,7 @@ notes:
 等価回路:
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図06 図06 の等価回路 (直列 RLC、先を短絡)
 parts:
   J1: sma 2,3 mirror CH0

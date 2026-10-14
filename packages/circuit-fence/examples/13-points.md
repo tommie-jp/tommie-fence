@@ -5,6 +5,7 @@
 その名前で出る。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 名前で組んだ非反転アンプ
 points:
   vin: 1,2

@@ -10,6 +10,7 @@
 `device` のように値の代わりにラベルを持つものはラベルが並ぶ。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 部品リスト (既定)
 parts:
   R1: resistor a5 a10 330
@@ -37,6 +38,7 @@ notes:
 図の高さもリストのぶんだけ縮む。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図02 部品リストを消す
 parts-list: none
 parts:

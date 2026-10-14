@@ -4,6 +4,7 @@
 ネットリストにも分岐の黒丸にも数えない。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 注釈
 parts:
   IN:  port 1,1
@@ -43,6 +44,7 @@ style:
 印は書かなければ赤、字は書かなければ図のほかの文字と同じ色。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図02 注釈の色
 parts:
   R1: resistor 1,1 3,1
@@ -74,6 +76,7 @@ style:
 TeX には字を渡さず、描き上がった図に差し込んでいるため。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図03 日本語
 parts:
   V1: battery 1,1 1,2 9
@@ -99,6 +102,7 @@ style:
 書かなければ普通の大きさ。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図04 字の大きさ
 parts:
   R1: resistor 1,1 2,1 10k
@@ -125,6 +129,7 @@ pt の直接指定は書けない。色と同じで、**実機に通した指定
 書かなければ `left` で、番地が字の左端になる。`bold` は太字。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図05 寄せと太字
 parts:
   R1: resistor 1,1 2,1 10k
@@ -153,6 +158,7 @@ style:
 `- arrow 起点 終点 [色]` は指し棒で、両端とも**部品 ID か番地**。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図06 枠と指し棒
 parts:
   IN:  port 1,1
@@ -185,6 +191,7 @@ style:
 枠は `solid` を書くと破線ではなく実線になる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図07 直線と実線の枠
 parts:
   R1: resistor 2,2 4,2 10k
@@ -214,6 +221,7 @@ style:
 1 行ずつ指しながら説明したいときは `loose`。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図08 行送り
 parts:
   R1: resistor 1,1 2,1 10k

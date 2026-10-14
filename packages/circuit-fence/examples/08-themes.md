@@ -7,6 +7,7 @@
 暗いテーマでも読める。1 枚描いた図をどちらでも使い回せる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 テーマ auto
 parts:
   IN:  port 1,1
@@ -28,6 +29,7 @@ style:
 `light` / `dark` は明暗を決め打ちする。ノートの見た目を固定したいとき。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図02 テーマ light
 parts:
   IN:  port 1,1
@@ -47,6 +49,7 @@ style:
 ![図02 テーマ light](out/08-themes-2.png)
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図03 テーマ dark
 parts:
   IN:  port 1,1
@@ -68,6 +71,7 @@ style:
 `mono` は黒一色。資料に貼るときや印刷するとき。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図04 テーマ mono
 parts:
   IN:  port 1,1

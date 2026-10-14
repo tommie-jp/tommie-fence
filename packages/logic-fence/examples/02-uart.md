@@ -5,6 +5,7 @@ TXD に 9600 baud・8N1 で `H` (0x48) と `i` (0x69) を流したところ。
 `decode:` の `uart` がフレームを箱にして、中に値を書く。
 
 ```logic
+# ロジックアナライザの画面 (tommie-fence の logic フェンス)
 title: 図01 9600 baud の "Hi" — 0x48 と 0x69
 device: ad3
 time: 250us/div

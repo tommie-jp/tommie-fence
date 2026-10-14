@@ -4,6 +4,7 @@
 `slot` は地の切り欠き。**裏ベタの基板では裏の物なので破線**で描く。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 50x50mm
 title: 図01 2.4GHz のパッチアンテナ
 f: 2.4G
@@ -21,6 +22,7 @@ notes:
 等価回路 (パッチアンテナの等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 パッチアンテナの等価回路
 parts:
   J1: sma 2,2 mirror
@@ -49,6 +51,7 @@ wires:
 溝を掘らず、表の地と裏の地をつなぐ (via の列で線路の両脇の地を留める)。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board:
   size: 40x20mm
   ground: both
@@ -75,6 +78,7 @@ notes:
 等価回路 (CPWG の等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図02 CPWG の等価回路
 parts:
   J1: sma 2,2 mirror

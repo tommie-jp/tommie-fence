@@ -12,6 +12,7 @@
 ## breadboard — LED と抵抗
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: LED と抵抗
 board: half
 parts:
@@ -31,6 +32,7 @@ notes:
 ## perfboard — 同じ回路を、穴ごとに
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: 16x8
 title: LED と抵抗
 points:
@@ -55,6 +57,7 @@ notes:
 ## circuit — 回路図
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: RC ローパス
 parts:
   IN:  port 1,1
@@ -76,6 +79,7 @@ style:
 ## copper — 銅張り基板を切って作る治具
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 40x20mm
 title: 50Ω のスルー線路
 f: 2.4G
@@ -93,6 +97,7 @@ parts:
 ## vna — その治具を測った NanoVNA の画面
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 device: h4
 sweep: 1M-300M 101
 title: 100 Ω を直列に
@@ -112,6 +117,7 @@ markers:
 ## scope — 上の RC ローパスに方形波を入れたオシロの画面
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: RC の充電 (τ = 1 ms)
 time: 1ms/div
 trigger: ch1 rising 1V
@@ -129,6 +135,7 @@ measure: [vpp, freq]
 ## spectrum — NanoVNA の出力を tinySA Ultra で見る
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 100 MHz の方形波の高調波
 device: tinysa-ultra
 sweep: 0-960M 450
@@ -145,6 +152,7 @@ markers: [100M, 300M, 500M]
 ## graph — ボード線図
 
 ```graph
+# グラフ (tommie-fence の graph フェンス)
 title: RC ローパス — −3 dB の所が −45°
 x: 周波数 Hz log 100..100k
 y:
@@ -165,6 +173,7 @@ notes:
 ## logic — 74HC163 のアドレス
 
 ```logic
+# ロジックアナライザの画面 (tommie-fence の logic フェンス)
 title: 74HC163 のアドレス — 1 s ごとに 0 1 2 3 4 5 3 4 5 3
 device: ad3
 time: 1s/div

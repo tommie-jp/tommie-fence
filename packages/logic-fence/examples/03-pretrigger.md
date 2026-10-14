@@ -4,6 +4,7 @@
 トリガ (T) は 0 s に立ち、その左に「トリガ前」が出る。
 
 ```logic
+# ロジックアナライザの画面 (tommie-fence の logic フェンス)
 title: 図01 ストローブの 2 ms のパルスと、その 1 ms 前に立ち上がるデータ
 device: ad3
 time: 1ms/div

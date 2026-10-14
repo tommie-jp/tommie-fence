@@ -8,6 +8,7 @@
 線は図の脇を通して描き、基板を出た所に行き先の札 (`→ LED.VCC`) を付ける。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 title: 図01 LED 回路
 board: 12x6
 sheets:

@@ -4,6 +4,7 @@
 `45deg` は位相、`1.2ns` は群遅延、`50Ω` は R・X・|Z|、単位の無い数は SWR か linear)。
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 400M-470M 141
 title: 図01 430 MHz のホイップの SWR
 dut:
@@ -38,6 +39,7 @@ style:
 (`stamp`)、お知らせを帯に出すか (`debug`)。白黒で刷るなら `mono`。
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-300M
 title: 図02 白黒で刷る
 dut: series R 100

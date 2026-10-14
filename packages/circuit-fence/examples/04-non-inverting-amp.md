@@ -3,6 +3,7 @@
 多端子部品は 1 つの番地に置き、ピンは `U1.out` `Q1.B` のように名前で指す。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 非反転アンプ
 parts:
   IN:  port 1,2

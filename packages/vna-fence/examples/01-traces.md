@@ -8,6 +8,7 @@ DUT の等価回路 — `dut:` の 3 行を CH0 (J1) から CH1 (J2) へ並べ�
 `shunt` は地へ落とす枝、`series` は信号の通り道に入る。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 3 次のローパス (C-L-C)
 parts:
   J1: sma 2,2 mirror
@@ -32,6 +33,7 @@ notes:
 <img src="out/schematic/01-traces-1.png" alt="回路図01 3 次のローパス (C-L-C)" width="636">
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-200M 201
 title: 図01 π 型ローパス — 振幅・位相・群遅延
 dut:
@@ -60,6 +62,7 @@ markers:
 DUT の等価回路 — R・L・C を直列に並べ、最後の `short` で地へ落とす。CH1 には繋がない。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図02 直列 RLC のアンテナ
 parts:
   J1: sma 2,2 mirror
@@ -79,6 +82,7 @@ notes:
 <img src="out/schematic/01-traces-2.png" alt="回路図02 直列 RLC のアンテナ" width="556">
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 100M-200M 201
 title: 図02 同調のずれたアンテナ (直列 RLC) の反射
 dut:

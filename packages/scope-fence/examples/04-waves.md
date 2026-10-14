@@ -6,6 +6,7 @@ t = 0 の形は発生器に揃えてある: sine は 0 から上る、square と
 triangle と sawtooth は t = 0 で底。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図01 sine・square・triangle・sawtooth
 time: 200us/div
 trigger: ch2 rising
@@ -22,6 +23,7 @@ pulse は duty を書く (書かなければ 25 %)。dc は値だけ。V/div と
 並びで書く (`range:` と `position:`)。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図02 pulse と dc
 time: 200us/div
 trigger: ch1 rising

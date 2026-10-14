@@ -7,6 +7,7 @@ MOSI は SCLK の立ち下がりで変わり、次の立ち上がりで読まれ
 (プロトコルの読み下しは `decode:` の `uart` だけ)。
 
 ```logic
+# ロジックアナライザの画面 (tommie-fence の logic フェンス)
 title: 図01 SPI モード 0 で 0xA5 を送る — SCLK の立ち上がりで MOSI を読む
 device: ad3
 time: 10us/div

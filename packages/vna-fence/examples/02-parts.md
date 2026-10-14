@@ -6,6 +6,7 @@
 DUT の等価回路 — `series C 1000p esr 0.1 esl 1.2n` を開いたもの。ESL と ESR は C に直列に付き、最後の `short` で地へ落とす。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 1000 pF と寄生分 (ESL・ESR)
 parts:
   J1: sma 2,2 mirror
@@ -25,6 +26,7 @@ notes:
 <img src="out/schematic/02-parts-1.png" alt="回路図01 1000 pF と寄生分 (ESL・ESR)" width="634">
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-1G 401
 title: 図01 セラミックコンデンサ 1000 pF の SRF
 dut:
@@ -52,6 +54,7 @@ notes:
 DUT の等価回路 — `cp` は L と ESR を合わせた全体に並列に付く。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図02 1 uH と巻線の容量
 parts:
   J1: sma 2,2 mirror
@@ -74,6 +77,7 @@ notes:
 <img src="out/schematic/02-parts-2.png" alt="回路図02 1 uH と巻線の容量" width="632">
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 129M-131M 301
 title: 図02 1 µH のコイルと巻線の容量 1.5 pF
 dut:
@@ -94,6 +98,7 @@ markers:
 DUT の等価回路 — `series C 20f esl 12.665m esr 20 cp 5p` を開いたもの。直列の C・L・R に電極の容量 Cp が並列に付き、CH0 と CH1 の間に入る。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図03 水晶の等価回路
 parts:
   J1: sma 2,2 mirror
@@ -119,6 +124,7 @@ notes:
 <img src="out/schematic/02-parts-3.png" alt="回路図03 水晶の等価回路" width="788">
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 9.99M-10.03M 401
 title: 図03 10 MHz の水晶 — 直列共振と並列共振
 dut:

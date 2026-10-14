@@ -6,6 +6,7 @@
 ## 4 種類を並べる
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 コンデンサの 4 つの姿
 board: half
 parts:
@@ -34,6 +35,7 @@ notes:
 `/…` を省くと、ピン名で選び分ける。今までどおりの書き方がそのまま通る。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図02 姿を書かなかったとき
 board: half
 parts-list: none
@@ -54,6 +56,7 @@ notes:
 コンデンサ以外でも、実物の大きさやパッケージが違うものは姿を選べる。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図03 LED とトランジスタの姿
 board: half
 parts:
@@ -79,6 +82,7 @@ notes:
 SOP・TSSOP の IC を DIP 化した変換基板は `dipN/sop` `dipN/tssop` で、置き方は DIP と同じ。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図04 面実装を載せた変換基板
 board: half
 parts:

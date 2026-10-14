@@ -7,6 +7,7 @@
 字の形で分かれる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 交点の間に節点を置く
 parts:
   IN:  port 1,1
@@ -29,6 +30,7 @@ style:
 間に置いた部品は点と点の間に乗る。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図02 並んだ枝の間に 1 本足す
 parts:
   IN:  port 1,1
@@ -62,6 +64,7 @@ style:
 **x (前の数) の小数が右へ、y (後ろの数) の小数が下へ**動かす。同じ `.5` でも、書く場所で向きが変わる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図03 x は右へ、y は下へ
 parts:
   P1: port 1,1

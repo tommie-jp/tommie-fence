@@ -9,6 +9,7 @@ CdS セル・サーミスタ・ダイオードの仲間・ガラス封止の部�
 **先に回路図を見てから、ブレッドボードに落とす。** 電源は 5 V (USB 充電器など) で、ブレッドボードの外の機器として描く。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 明るさと温度を分圧で取り出す
 parts:
   V1: vsource 1,2 1,5 5
@@ -32,6 +33,7 @@ wires:
 <img src="out/schematic/11-sensors.png" alt="回路図01 明るさと温度を分圧で取り出す" width="794">
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 明るさと温度を分圧で取り出す
 board: half
 parts:
@@ -72,6 +74,7 @@ CdS は明るいほど抵抗が下がり、NTC サーミスタは温かいほど
 ## ダイオードの仲間
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図02 ダイオードの仲間
 board: half
 parts:
@@ -98,6 +101,7 @@ notes:
 ## ガラス管・玉・円板
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図03 ガラス管・玉・円板
 board: half
 parts:
@@ -122,6 +126,7 @@ notes:
 ## フォトトランジスタ
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図04 フォトトランジスタ
 board: half
 parts:
@@ -141,6 +146,7 @@ notes:
 ## 3 ピンの IC
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図05 3 ピンの IC (温度センサーとホール素子)
 board: half
 parts:

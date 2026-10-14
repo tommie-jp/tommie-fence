@@ -4,6 +4,7 @@
 売られているのと同じ順。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: 12x7
 title: 図01 12 列 7 行の基板
 notes:
@@ -16,6 +17,7 @@ notes:
 26 行を超える基板でも `aa` `ab` と続けて読める。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: 4x30
 title: 図02 26 行を超える基板
 notes:
@@ -29,6 +31,7 @@ notes:
 の 4 つ。短い名前 (`a` `b` `c` `d`) でも同じ基板が出る。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: akizuki-a
 title: 図03 秋月 A タイプ (155×114mm、55 列 40 行)
 notes:
@@ -38,6 +41,7 @@ notes:
 ![図03 秋月 A タイプ (155×114mm、55 列 40 行)](out/01-board-3.svg)
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: akizuki-b
 title: 図04 秋月 B タイプ (95×72mm、36 列 27 行)
 notes:
@@ -47,6 +51,7 @@ notes:
 ![図04 秋月 B タイプ (95×72mm、36 列 27 行)](out/01-board-4.svg)
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: akizuki-c
 title: 図05 秋月 C タイプ (72×47mm、25 列 15 行)
 notes:
@@ -56,6 +61,7 @@ notes:
 ![図05 秋月 C タイプ (72×47mm、25 列 15 行)](out/01-board-5.svg)
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: akizuki-d
 title: 図06 秋月 D タイプ (47×36mm、17 列 14 行)
 notes:
@@ -72,6 +78,7 @@ notes:
 `slots: on` と足すと、その銅箔が出る。大きさは今までどおり `size:` に書く。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 20x14
   slots: on
@@ -98,6 +105,7 @@ notes:
 で寄せられる。`slots:` に色を書けば、スロットの銅箔だけ別のめっきにもできる。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 20x14
   color: blue

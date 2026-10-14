@@ -7,6 +7,7 @@
 (検証済みの値しか図に入れないため)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 色の上書き
 parts:
   IN:  port 1,1
@@ -31,6 +32,7 @@ style:
 詰めて太くすると、小さく貼っても読める。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図02 pitch と wire-width
 parts:
   IN:  port 1,1
@@ -53,6 +55,7 @@ style:
 `standard` は記号の流儀。既定の `american` は抵抗がギザギザ。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図03 記号の流儀 american
 parts:
   R1: resistor 1,1 2,1 10k
@@ -69,6 +72,7 @@ style:
 `european` にすると抵抗が箱になる (IEC の流儀)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図04 記号の流儀 european
 parts:
   R1: resistor 1,1 2,1 10k
@@ -88,6 +92,7 @@ style:
 論理ゲートは `american` と同じ MIL 記号のまま。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図05 記号の流儀 jis
 parts:
   R1: resistor 1,1 2,1 10k
@@ -105,6 +110,7 @@ style:
 資料の段幅に合わせたいときに使う。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図06 出力の横幅
 parts:
   IN:  port 1,1
@@ -128,6 +134,7 @@ style:
 資料に貼った図が、どの版で描いたものかを後から辿れる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図07 版の刻印
 parts:
   IN:  port 1,1

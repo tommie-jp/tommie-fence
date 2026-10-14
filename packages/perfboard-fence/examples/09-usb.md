@@ -20,6 +20,7 @@ Type-A は書いた数だけピンがあり、Type-C は 4 本とも書く。
 - 受け口は基板の上の縁から外へ出る。**題と基板の間を空けて描く**
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 20x4
   h: 1.6mm
@@ -73,6 +74,7 @@ style:
 縦に並べて右の縁に近ければ右。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 24x14
   h: 1.6mm

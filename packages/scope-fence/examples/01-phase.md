@@ -6,6 +6,7 @@
 回路は 1 kΩ と 100 nF の直列 (1 kHz で R の電圧 : C の電圧 = 1 : 1.6)。CH1 は R、CH2 は C の電圧に当てる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 R と C の直列
 parts:
   W1: sine 1,2 1,5 l=$\mathrm{W1}$
@@ -26,6 +27,7 @@ wires:
 <img src="out/schematic/01-phase.png" alt="回路図01 R と C の直列" width="497">
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図01 R と C の電圧 — CH2 は 58° 遅れる
 time: 200us/div
 trigger: ch1 rising
@@ -40,6 +42,7 @@ measure: [vpp, rms, phase]
 利得 0.157、位相 −81°。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図02 τ = 1 ms の RC に 1 kHz を通す
 time: 200us/div
 trigger: ch1 rising

@@ -8,6 +8,7 @@ tinySA Ultra にアンテナを繋ぎ、FM 放送帯 (76〜95 MHz) を掃引し�
 フロアに ±2 dB の揺れと 3 つの局)。
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図01 FM 放送帯 — アンテナで受けた実測
 device: tinysa-ultra
 sweep: 76M-95M 450

@@ -9,6 +9,7 @@ DIP 部品・ボード外の機器・ピン参照・電源レールを全部使�
 **先に回路図を見てから、ブレッドボードに落とす。** 回路図は測定器の機器 (波形発生器 W1 と電圧計 CH1・CH2) として描き、オペアンプ U1 の電源 (±5V) は省いてある。ブレッドボードの図では AD3 の V+ / V- をつないでいる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 B-H カーブ測定回路
 parts:
   WG: sine 1,2 1,5 l=$\mathrm{W1}$
@@ -57,6 +58,7 @@ wires:
 <img src="out/schematic/10-bh-ad3.png" alt="回路図01 B-H カーブ測定回路" width="1420">
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 B-H カーブ測定回路 (AD3)
 # レール割当: 上+ = +5V / 下+ = -5V (各電源ピンに近い側)。青レールは両方 GND。
 board: half

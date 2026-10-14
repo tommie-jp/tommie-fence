@@ -5,6 +5,7 @@
 **同じ回路を circuit / perfboard でも描いてある** (どれも「図01 LED と抵抗」)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 LED と抵抗
 parts:
   V1: vsource 1,1 1,3 5
@@ -18,6 +19,7 @@ wires:
 <img src="out/schematic/01-led.png" alt="回路図01 LED と抵抗" width="299">
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 LED と抵抗
 board: half
 parts:

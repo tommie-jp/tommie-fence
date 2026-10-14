@@ -5,6 +5,7 @@ NanoVNA の CH0 は 50 MHz を超えると**方形波**を出す (高調波で�
 1/n ずつ下がって並ぶ (本の 11-4)。
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図01 NanoVNA の出力 — 100 MHz の方形波の高調波
 device: tinysa-ultra
 sweep: 0-960M 450

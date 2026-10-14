@@ -5,6 +5,7 @@
 上にあり、実物のジャンパも 2 点を最短で結ぶ。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 12x7
   h: 1.6mm
@@ -57,6 +58,7 @@ GND : D1.2
 斜めにも引ける。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 10x8
   h: 1.6mm

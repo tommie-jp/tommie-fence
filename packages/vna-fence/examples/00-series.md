@@ -7,6 +7,7 @@
 DUT の等価回路 — CH0 (J1) と CH1 (J2) の間に 100 Ω が 1 本入るだけ。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 100 Ω を直列に入れた治具
 parts:
   J1: sma 2,2 mirror
@@ -27,6 +28,7 @@ notes:
 <img src="out/schematic/00-series.png" alt="回路図01 100 Ω を直列に入れた治具" width="492">
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 device: litevna64
 sweep: 1M-300M 101
 title: 図01 100 Ω を直列に入れたときの画面
@@ -57,6 +59,7 @@ markers:
 何も入れない (開放) ときは、SMA どうしの漏れが見える。S21 は小さいほど良い。
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-300M 101
 title: 図02 何も入れない治具の漏れ
 data: 00-series-open.s2p

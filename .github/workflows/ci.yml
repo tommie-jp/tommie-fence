@@ -12,6 +12,17 @@ permissions:
   contents: read
 
 jobs:
+  # 例の `.md` の各フェンスの 1 行目の名札 (GitHub は言語名を出さない)。node だけで足りる。
+  labels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: node --test scripts/fence-labels.test.mjs
+      - run: node scripts/fence-labels.mjs --check
+
   check:
     runs-on: ubuntu-latest
     strategy:

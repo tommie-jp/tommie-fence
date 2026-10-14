@@ -6,6 +6,7 @@
 **先に回路図を見てから、ブレッドボードに落とす。** 2 つの図のネットリストは同じ。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 エミッタフォロワ
 parts:
   V1: vsource 2,3 2,9 5
@@ -35,6 +36,7 @@ wires:
 <img src="out/schematic/08-emitter-follower.png" alt="回路図01 エミッタフォロワ" width="1050">
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 エミッタフォロワ
 # 電源: 上下の赤レール = +5V、青レール = GND (左端で上下を渡している)
 board: half

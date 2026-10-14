@@ -5,6 +5,7 @@
 正しい値は 1 V peak = +10.00 dBm (−3.01 dBV)。
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図01 Rectangular — 山が 3.9 dB 低く、裾が遠くまで広がる
 device: ad2
 center: 1kHz
@@ -19,6 +20,7 @@ markers:
 ![図01 Rectangular — 山が 3.9 dB 低く、裾が遠くまで広がる](out/03-windows-1.svg)
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図02 Hann — 山は 1.4 dB 低く、裾は速く落ちる
 device: ad2
 center: 1kHz
@@ -33,6 +35,7 @@ markers:
 ![図02 Hann — 山は 1.4 dB 低く、裾は速く落ちる](out/03-windows-2.svg)
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図03 Flat Top — 山の高さが正しく、山が太い
 device: ad2
 center: 1kHz

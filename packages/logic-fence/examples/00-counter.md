@@ -6,6 +6,7 @@
 DIO1〜DIO4 を束ねたバス `Address` は 16 進で読む。
 
 ```logic
+# ロジックアナライザの画面 (tommie-fence の logic フェンス)
 title: 図01 74HC163 のアドレス — 1 s ごとに 0 1 2 3 4 5 3 4 5 3
 device: ad3
 time: 1s/div

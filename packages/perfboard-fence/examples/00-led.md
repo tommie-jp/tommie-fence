@@ -7,6 +7,7 @@
 先に回路図を見てから、基板に落とす。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 LED と抵抗
 parts:
   V1: vsource 1,1 1,3 5
@@ -19,8 +20,8 @@ wires:
 
 <img src="out/schematic/00-led.png" alt="回路図01 LED と抵抗" width="299">
 
-
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 12x6
   h: 1.6mm

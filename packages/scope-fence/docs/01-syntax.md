@@ -33,6 +33,7 @@ Markdown の ` ```scope ` フェンスに YAML を書くと、Markdown プレビ
 t = 0 (トリガの点) が画面の真ん中に来る。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図01 1 kHz の正弦 — 200 µs/div で 2 周期
 time: 200us/div
 trigger: ch1 rising 0V
@@ -84,6 +85,7 @@ ch2: ch1 | rc 1ms                           # 前の ch を操作に通す
 - 参照できるのは**自分より前の ch だけ** (`ch2: ch1 | …` は書けて、`ch1: ch2 | …` は書けない)
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図02 振幅の書き方 — 1V・2Vpp・0.707Vrms は同じ高さ
 time: 200us/div
 trigger: ch1 rising 0V
@@ -117,6 +119,7 @@ measure: [vpp, rms, phase]
 | `lc` | `lc 1.59kHz 0.7` | 2 次の低域 (共振周波数 f0 と Q)。**LC のフィルタ** (L と C、負荷 R なら f0 = 1/(2π√(LC))、Q = R·√(C/L))。Q は単位の無い数 (0.1〜100) |
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図03 操作 — 頭打ち・絶対値・RC
 time: 2ms/div
 trigger: ch1 rising 0V
@@ -174,6 +177,7 @@ ch1: {wave: square 500Hz 2.5V offset 2.5V, range: 2V/div, position: -3div}
 | `position` | `-3div` | 0 V の基準の高さ (中央が 0、上が正) |
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図04 V/div と基準を手で決める
 time: 500us/div
 trigger: ch1 rising 2.5V
@@ -206,6 +210,7 @@ measure: [vmax, vmin, duty]
 `at` は t = 0 (トリガの点) を置く横の位置 — 格子の目盛で `-5div` (左端) 〜 `5div` (右端)、省けば `0` (中央)。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図05 トリガ — 立ち下がりの 1 V で合わせる
 time: 1ms/div
 trigger: ch1 falling 1V
@@ -280,6 +285,7 @@ measure: [vpp, freq]       # 書かなければ vpp と freq
 ヒステリシスを付ける。**理想も実測も同じ算法**で測る。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図06 カーソルで 1 τ を読む
 time: 1ms/div
 trigger: ch1 rising 1V
@@ -300,6 +306,7 @@ ch の行を **`=` で始めると式**になる。波形発生器の波で書�
 そのまま書く。式の後ろにも `|` で操作を繋げる。並びの形なら `wave: = …`。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図07 式 — RC の充電 (τ = 1 ms)
 time: 1ms/div
 trigger: ch1 rising 1mV
@@ -339,6 +346,7 @@ X2 (1 τ) で 1.26 V (2 V の 63 %)。トリガを段の直後 (1 mV) で合わ�
 並びなら `{expr: …, unit: …, range: …, position: …}`。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図08 Math — 瞬時電力 (v × i)
 time: 200us/div
 trigger: ch1 rising 0V
@@ -364,6 +372,7 @@ MATH の Avg 250 mW = (1 × 1 / 2) × cos 60°。
 軸は `xy: 横 縦` (ch1〜ch4 か math)。書かなければ横 ch1・縦 ch2 (お知らせで言う)。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図09 XY — リサージュ 1:2
 view: xy
 ch1: sine 2kHz 1V
@@ -400,6 +409,7 @@ xy: ch1 ch2
 - **`view: xy` では書けない** (断る。番地の「時刻」が無い)
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図10 注釈 — 1 τ で 63 %
 time: 1ms/div
 trigger: ch1 rising 1V

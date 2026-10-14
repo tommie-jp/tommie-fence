@@ -4,6 +4,7 @@
 **書かなければ 40×20mm・h 1.6・εr 4.4・裏ベタ** (本の治具の大きさと FR4)。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board:
   size: 30x15mm
   h: 0.8mm
@@ -25,6 +26,7 @@ parts:
 つまり「剥がす」か「切る」かが図で分かる。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board:
   size: 30x15mm
   ground: both
@@ -42,6 +44,7 @@ parts:
 等価回路 (図01・図02 の等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 図01・図02 の等価回路
 parts:
   J1: sma 2,2 mirror

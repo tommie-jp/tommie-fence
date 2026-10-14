@@ -8,6 +8,7 @@
 回路は 1 kΩ と 100 nF の RC ローパス (f<sub>c</sub> = 1.59 kHz)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 RC ローパス
 parts:
   W1: sine 1,2 1,5 l=$\mathrm{W1}$
@@ -27,6 +28,7 @@ wires:
 <img src="out/schematic/01-bode.png" alt="回路図01 RC ローパス" width="553">
 
 ```graph
+# グラフ (tommie-fence の graph フェンス)
 title: 図01 RC ローパスのボード線図 — −3 dB の所が −45°
 x: 周波数 Hz log 100..100k
 y:

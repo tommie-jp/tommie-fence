@@ -7,6 +7,7 @@ I = Is (e^(V / nVT) − 1) を **ch の行の式** (`= …`) で書く — 100 �
 縦の 1 V は電流 10 mA (100 Ω)。0 V を左下の角に置く (`position: -4div` — 8 目盛の画面の端)。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図01 ダイオードの V–I (縦は 100 Ω の電圧)
 view: xy
 ch1: {wave: triangle 50Hz 0.35V offset 0.35V, range: 100mV/div, position: -4div}

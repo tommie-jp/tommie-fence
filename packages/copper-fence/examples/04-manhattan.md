@@ -5,6 +5,7 @@
 — 図にあるのは出来上がりの銅。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board:
   size: 40x30mm
   ground: front
@@ -30,6 +31,7 @@ wires:
 等価回路 (π 型アッテネータの等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 パイ型アッテネータの等価回路
 parts:
   J1: sma 2,2 mirror

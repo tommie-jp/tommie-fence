@@ -28,6 +28,7 @@ Markdown の ` ```copper ` フェンスに YAML を書くと、Markdown プレ�
 いちばん多い値) で描き、そう描いたことをお知らせで言う。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 30x12mm
 title: 図01 大きさだけの板
 copper:
@@ -63,6 +64,7 @@ copper:
 | `none` | 無い | 基材の上に銅 | 出さない |
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board:
   size: 30x12mm
   ground: both
@@ -106,6 +108,7 @@ copper:
 | `slot` | `slot 中心 幅x高さ` | 地の切り欠き (`12x1mm`。銅ではない) |
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 40x20mm
 title: 図03 線路・島・via・切り欠き
 f: 2.4G
@@ -143,6 +146,7 @@ copper:
 | 多ピン (3〜4 本) | `種類[/姿] 端 端 端 [端] [r90] [値]` | 種類ごとの名前 (下の表)。端はピンの並びの順 |
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 40x20mm
 title: 図04 部品
 copper:
@@ -207,6 +211,7 @@ SOT       transistor ic3 regulator                 /sot23 /sot346 /sot89
 - 面実装の `transistor/sot23` などは今までどおり中心の点で置く (SOT 参照)
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 60x24mm
 title: 図05 多足の部品
 copper:
@@ -245,6 +250,7 @@ parts:
 | `face` | ピンを出す辺 (`left` `right` `top` `bottom`) | 基板のいる側 |
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 40x20mm
 title: 図06 板の外の機器
 copper:
@@ -307,6 +313,7 @@ wires:
 それ以外は両面。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 40x20mm
 title: 図07 寸法線と字
 copper:

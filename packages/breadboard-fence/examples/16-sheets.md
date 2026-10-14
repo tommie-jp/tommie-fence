@@ -8,6 +8,7 @@
 線は図の脇を通して描き、基板を出た所に行き先の札 (`→ LED.+t`) を付ける。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 LED 回路
 board: half
 sheets:

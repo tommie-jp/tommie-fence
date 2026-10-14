@@ -7,6 +7,7 @@
 クリッパは 1 kΩ の後ろにダイオードを逆向きに 2 本並べて地へ落とす。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 クリッパ
 parts:
   W1: square 1,2 1,5 l=$\mathrm{W1}$
@@ -27,6 +28,7 @@ wires:
 <img src="out/schematic/02-clipper-1.png" alt="回路図01 クリッパ" width="725">
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図01 クリッパの入出力
 time: 200us/div
 trigger: ch1 rising
@@ -43,6 +45,7 @@ CH2 は −0.7〜9.3 V。0 V の基準が違うので、ch ごとの V/div と �
 クランパはコンデンサを直列に入れ、出力と地の間にダイオードを 1 本つなぐ。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図02 クランパ
 parts:
   W1: square 1,2 1,5 l=$\mathrm{W1}$
@@ -60,6 +63,7 @@ wires:
 <img src="out/schematic/02-clipper-2.png" alt="回路図02 クランパ" width="649">
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図02 クランパの入出力
 time: 200us/div
 trigger: ch1 rising

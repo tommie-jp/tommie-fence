@@ -8,6 +8,7 @@ C の電圧を見る。**計器の設定の表と同じ語**で書くと、フ�
 回路は 1 kΩ と 1 µF の RC (τ = 1 ms) で、方形波は Analog Discovery の Wavegen (W1) から入れる。CH1 は入力、CH2 は C の電圧に当てる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 RC の充電
 parts:
   W1: square 1,2 1,5 l=$\mathrm{W1}$
@@ -27,6 +28,7 @@ wires:
 <img src="out/schematic/00-rc-charging.png" alt="回路図01 RC の充電" width="540">
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図01 入力 — 100 Hz の方形波
 time: 1ms/div
 trigger: ch1 rising 1V
@@ -40,6 +42,7 @@ measure: [vpp, freq, duty]
 ほぼ 0 V まで戻るので、Vpp は 2 V に少し届かない (1.97 V)。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図02 入力と C の電圧
 time: 1ms/div
 trigger: ch1 rising 1V
@@ -54,6 +57,7 @@ measure: [vpp, vmin, vmax, rise]
 0.014 V から 1.27 V まで上がる (差 1.26 V = 2 V の 63 %)。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図03 カーソルで 1 τ を読む
 time: 1ms/div
 trigger: ch1 rising 1V
@@ -71,6 +75,7 @@ measure: [vpp, freq]
 `scripts/fakeData.mjs`) で、実測ではない。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図04 測った波を重ねる (計算で作った CSV)
 time: 1ms/div
 trigger: ch1 rising 1V

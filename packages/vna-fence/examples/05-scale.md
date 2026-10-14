@@ -4,6 +4,7 @@
 (実機の SCALE と同じ)。動きの小さい特性を平らな線にしないための書き方。
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-80M 100
 title: 図01 通過域から遮断の手前までを 1 dB/目盛・1 ns/目盛で見る
 dut:
@@ -30,6 +31,7 @@ markers:
 尺度の後ろに `at` と中心の角度を書いて、見たい値を画面の中央に置く (実機の REFERENCE POSITION)。
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-300M 101
 title: 図02 直列 0.5 pF の位相を 2°/目盛・中心 90° で見る
 dut: series C 0.5p

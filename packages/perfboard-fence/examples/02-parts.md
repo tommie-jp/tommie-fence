@@ -3,6 +3,7 @@
 `parts:` に `名前: 種類 穴 穴 値` と書く。部品は**2 つの穴を結ぶ線の上に寝る**。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 12x7
   h: 1.6mm
@@ -51,6 +52,7 @@ LED は書かれた色で光る (図01 の `green`)。知らない色でも既�
 `27` は赤・紫・黒に、許容差の茶が付く。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 14x6
   h: 1.6mm
@@ -87,6 +89,7 @@ notes:
 斜めにも置ける。胴は 2 穴を結ぶ線の傾きのまま寝る。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 8x8
   h: 1.6mm
@@ -120,6 +123,7 @@ notes:
 並びも動かしていない。アースは基板の縁を回して両方のコネクタと分岐をまとめる。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 14x8
   h: 1.6mm
@@ -169,6 +173,7 @@ notes:
 上下の行の縁の銅箔に来て、そこに白い接点が出る。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 16x8
   slots: on
@@ -238,6 +243,7 @@ N3  : R1.2, R2.1, R3.1
 ## フォトトランジスタ
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 12x4
   h: 1.6mm

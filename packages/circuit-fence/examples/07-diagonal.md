@@ -3,6 +3,7 @@
 部品も配線も**斜めに置いてよい**。行も列も揃っていない 2 点の間に、そのまま引く。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 斜めに置く
 parts:
   IN:  port 1,1

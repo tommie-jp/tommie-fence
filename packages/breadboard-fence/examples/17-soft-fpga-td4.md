@@ -12,6 +12,7 @@ TD4 を Pico 2 の中で動かす) のブレッドボードを、このフェン
 ピンの割り当ては Soft-FPGA-TD4 の `verilator-TD4/main.cpp` のとおり。
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図01 Soft-FPGA TD4 の配線
 board: full
 parts:

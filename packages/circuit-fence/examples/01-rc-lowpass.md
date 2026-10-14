@@ -4,6 +4,7 @@
 座標も `\coordinate` も書かない。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 RC ローパス
 parts:
   IN:  port 1,1

@@ -38,6 +38,7 @@ Markdown の ` ```perf ` フェンスに YAML を書くと、Markdown プレビ�
 **列 × 行**で書く。基板が「72×47mm」と長辺 × 短辺で売られているのと同じ順。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: 12x7
 title: 図01 12 列 7 行の板
 ```
@@ -68,6 +69,7 @@ title: 図01 12 列 7 行の板
 向きで、列と行が入れ替わる (24 列 18 行)。秋月の基板は寝かせない。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: akizuki-d
 title: 図02 名前で書いた板 (秋月 D タイプ)
 ```
@@ -214,6 +216,7 @@ board:
 ユニバーサル基板は基板ごとに行数が違い、大きい基板は 26 行を超えるため。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: 4x30
 title: 図03 26 行を超える板
 ```
@@ -304,6 +307,7 @@ title: 図01 RC ローパス
 `名前: 種類 穴 穴 値` を 1 行ずつ。部品は**2 つの穴を結ぶ線の上に寝る**。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: 12x6
 title: 図04 部品の置き方
 points:
@@ -693,6 +697,7 @@ parts:
 フェンスと同じ**なので、同じノートで書くときに覚え直さなくてよい。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 title: 図05 向きを書いた DIP
 board: 16x16
 style:
@@ -760,6 +765,7 @@ red  black  white  gray  grey  orange  yellow  green  blue  purple  brown  pink
 **ネットの名前にもなる**。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: 12x6
 title: 図06 points で名前を付ける
 points:
@@ -820,6 +826,7 @@ shorted: [J2]
 **入れ子で**書く — ピンの名前の並びを持つので 1 行に畳めない。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: 12x8
 title: 図07 板の外の機器
 parts:
@@ -884,6 +891,7 @@ wires:
 (ネットにもネットリストにも出ない)。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: 12x8
 title: 図08 注釈
 points:

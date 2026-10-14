@@ -57,6 +57,7 @@ MAX HOLD の画面は掃引を並べた `hold:` で描く。
   実機でまだ確かめていない
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図01 tinySA Ultra で 10 MHz の正弦を 0〜50 MHz
 device: tinysa-ultra
 sweep: 0-50M 450
@@ -82,6 +83,7 @@ FFT 型は点数を書かない (bin の数は `samples:` と掃引の幅で決�
 開始-終了を書きたいときは `sweep:`。
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図02 center と span — 100 MHz のまわり 2 MHz
 device: tinysa-ultra
 center: 100MHz
@@ -130,6 +132,7 @@ markers:
 - 同じ周波数の線は電力で足す (波どうしの位相は決まっていないので)
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図03 2 つの信号の和 — 大きい信号の横の小さい信号
 device: tinysa-ultra
 center: 10MHz
@@ -170,6 +173,7 @@ M1 −20.00 dBm、M2 −70.00 dBm。フロアは RBW 10 kHz の −106.8 dBm。R
 - bin が 20 個に届かない狭い掃引は言う
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図04 Analog Discovery 2 — 1 kHz の方形波 (FFT 型)
 device: ad2
 sweep: 0-10kHz
@@ -213,6 +217,7 @@ M1 は offset の 0.5 V (+6.99 dBm)、M2 は基本波 (4/π V peak = +12.10 dBm)
   最大を取るので消えない
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図05 generic — 他社のスペアナはフロアを書く
 device: generic
 sweep: 0-3G 401
@@ -249,6 +254,7 @@ duty 25 % の方形波は 4 次ごとに線が消える (2 GHz)。フロアは `
   山は `data:` があれば実測、無ければ理想。目盛は `scale:` で数える
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図06 FFT 型を dBm で — 50 Ω に揃えて tinySA と比べる
 device: ad2
 sweep: 0-10kHz
@@ -336,6 +342,7 @@ hold:
 - `data:` とは一緒に書けない (測った CSV はすでに保持したトレース)。言って `hold:` を外す
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図07 VC1 を回したときの発振の範囲 (MAX HOLD)
 device: tinysa-ultra
 sweep: 70M-110M 450
@@ -354,6 +361,7 @@ M1〜M3 はどれも保持したトレースの値。
 チャンネルが離れているときは 1 行ずつ書く。
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図08 nRF24 の 4 チャンネルのパケットを MAX HOLD で重ねる
 device: tinysa-ultra
 sweep: 2400M-2484M 450

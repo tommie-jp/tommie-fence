@@ -6,6 +6,7 @@
 DUT の等価回路 — 線路は伝送線路 (`tline`、値は Z0)。CH0 と CH1 を結ぶ所から 34.4 cm のスタブが分かれ、先は開放。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 144 MHz の開放スタブ
 parts:
   J1: sma 2,2 mirror
@@ -27,6 +28,7 @@ notes:
 <img src="out/schematic/03-lines-1.png" alt="回路図01 144 MHz の開放スタブ" width="484">
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-300M 301
 title: 図01 144 MHz の λ/4 開放スタブ (ノッチ)
 dut:
@@ -50,6 +52,7 @@ notes:
 DUT の等価回路 — 2 m の線路の先を開放したまま。CH1 には繋がない。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図02 先を開放した 2 m のケーブル
 parts:
   J1: sma 2,2 mirror
@@ -66,6 +69,7 @@ notes:
 <img src="out/schematic/03-lines-2.png" alt="回路図02 先を開放した 2 m のケーブル" width="516">
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 sweep: 1M-900M 401
 title: 図02 先を開放した 2 m のケーブル
 dut:

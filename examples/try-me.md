@@ -13,6 +13,7 @@ by the line number, the line itself, and a caret under the spelling at fault.
 ## breadboard — an LED and a resistor
 
 ```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: An LED and a resistor
 board: half
 parts:
@@ -33,6 +34,7 @@ needed between the resistor and the LED.
 ## perfboard — the same circuit, hole by hole
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board: 16x8
 title: An LED and a resistor
 points:
@@ -57,6 +59,7 @@ That is the whole difference from the breadboard above.
 ## circuit — a schematic
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: RC low-pass
 parts:
   IN:  port 1,1
@@ -78,6 +81,7 @@ derived, so `IN`, `OUT` and `GND` come out without being written down.
 ## copper — the same kind of fixture, cut from a copper-clad board
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 40x20mm
 title: A 50-ohm through line
 f: 2.4G
@@ -95,6 +99,7 @@ its width, **Z0** and electrical length; the chip placed on the line **cuts it**
 ## vna — the NanoVNA screen for that fixture
 
 ```vna
+# NanoVNA の画面 (tommie-fence の vna フェンス)
 device: h4
 sweep: 1M-300M 101
 title: 100 ohms in series
@@ -114,6 +119,7 @@ the Smith chart. Save the measurement next to this file as Touchstone and add
 ## scope — the RC low-pass above, driven by a square wave
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: RC charging (tau = 1 ms)
 time: 1ms/div
 trigger: ch1 rising 1V
@@ -132,6 +138,7 @@ to draw it solid. This fence has no map.
 ## spectrum — the NanoVNA output on a tinySA Ultra
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: Harmonics of a 100 MHz square wave
 device: tinysa-ultra
 sweep: 0-960M 450
@@ -149,6 +156,7 @@ fall as 1/n. This fence has no map.
 ## graph — a Bode plot
 
 ```graph
+# グラフ (tommie-fence の graph フェンス)
 title: RC low-pass — −45° where the gain is −3 dB
 x: 周波数 Hz log 100..100k
 y:
@@ -169,6 +177,7 @@ readings under the graph give −3.01 dB and −45.0° at 1.59 kHz. This fence h
 ## logic — the address of a 74HC163
 
 ```logic
+# ロジックアナライザの画面 (tommie-fence の logic フェンス)
 title: 74HC163 address — 0 1 2 3 4 5 3 4 5 3, once a second
 device: ad3
 time: 1s/div

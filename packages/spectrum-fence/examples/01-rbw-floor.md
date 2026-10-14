@@ -5,6 +5,7 @@
 山の高さ (M1) は 3 枚とも −40 dBm のまま。
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図01 RBW 30 kHz — 30 MHz の正弦波とノイズフロア
 device: tinysa-ultra
 center: 30MHz
@@ -21,6 +22,7 @@ markers:
 ![図01 RBW 30 kHz — 30 MHz の正弦波とノイズフロア](out/01-rbw-floor-1.svg)
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図02 RBW 3 kHz — フロアが 10 dB 下がる
 device: tinysa-ultra
 center: 30MHz
@@ -37,6 +39,7 @@ markers:
 ![図02 RBW 3 kHz — フロアが 10 dB 下がる](out/01-rbw-floor-2.svg)
 
 ```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
 title: 図03 ATT 20 dB — フロアだけが 20 dB 上がる
 device: tinysa-ultra
 center: 30MHz

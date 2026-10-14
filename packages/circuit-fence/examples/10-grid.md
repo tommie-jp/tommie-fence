@@ -4,6 +4,7 @@
 行の番号は左、列の番号は上に出て、番地 `x,y` (列,行) と同じ数で読める。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 グリッド
 parts:
   IN:  port 1,1

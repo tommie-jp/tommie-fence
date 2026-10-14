@@ -4,6 +4,7 @@
 `|-` は先に縦に折れる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 折れた配線
 parts:
   R1: resistor 1,1 2,1
@@ -34,6 +35,7 @@ style:
 **1 行が 1 本の信号経路**として読める。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図02 1 行につないで書く
 parts:
   IN:  port 1,1

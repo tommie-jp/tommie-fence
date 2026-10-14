@@ -4,6 +4,7 @@
 `counter` は `start` から数え、`wrap` (書かなければ 16) で 0 に戻る。
 
 ```logic
+# ロジックアナライザの画面 (tommie-fence の logic フェンス)
 title: 図01 4 ビットのカウンタ — Q0〜Q3 は CLK の 1/2・1/4・1/8・1/16
 device: ad3
 time: 2ms/div

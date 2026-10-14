@@ -14,6 +14,7 @@
 地へ落とすシャントの置き方になる。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 40x25mm
 title: 図01 直列の 0603 とシャントの 0603
 copper:
@@ -32,6 +33,7 @@ parts:
 等価回路 (直列とシャントの等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 直列とシャントの等価回路
 parts:
   J1: sma 2,2 mirror
@@ -64,6 +66,7 @@ SOT-89 の MMIC (本の 8-6)。ピンは 1・2・3 が同じ辺に並び、2 番
 線路はピンの手前で細くし (N1・N2)、2 番とタブは via で裏の地へ落とした島 G1 に載せる。
 
 ```copper
+# 銅張り基板の寸法図 (tommie-fence の copper フェンス)
 board: 40x20mm
 title: 図02 SOT-89 の MMIC
 copper:
@@ -86,6 +89,7 @@ notes:
 等価回路 (MMIC の等価回路) — 線路は伝送線路 (`tline`、値は Z0)、SMA の外皮は地。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図02 MMIC の等価回路
 parts:
   J1: sma 2,2 mirror

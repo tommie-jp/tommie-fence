@@ -5,6 +5,7 @@
 半波整流: 負の側を切る (`clip 0V` は下だけを切る)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 半波整流
 parts:
   W1: sine 1,2 1,5 l=$\mathrm{W1}$
@@ -19,6 +20,7 @@ wires:
 <img src="out/schematic/03-rectifier-1.png" alt="回路図01 半波整流" width="467">
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図01 半波整流
 time: 5ms/div
 trigger: ch1 rising
@@ -34,6 +36,7 @@ measure: [vmax, avg, rms]
 ブリッジはダイオード 4 本で、交流の両方の向きを同じ向きの電流にそろえる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図02 全波整流 (ブリッジ)
 parts:
   W1: sine 4,5 6,5 l=$\mathrm{W1}$
@@ -55,6 +58,7 @@ wires:
 <img src="out/schematic/03-rectifier-2.png" alt="回路図02 全波整流 (ブリッジ)" width="515">
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図02 全波整流
 time: 5ms/div
 trigger: ch1 rising
@@ -70,6 +74,7 @@ measure: [vmax, avg, rms]
 揃えて重ねる (Auto のままだと CH3 はリプルだけを拡大して 0 V が画面の外に出る)。
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図03 全波整流の後ろに RC
 time: 5ms/div
 trigger: ch1 rising
@@ -88,6 +93,7 @@ measure: [vmax, vmin, avg]
 次の図 04 の回路は、ブリッジの後ろに 100 µF と 1.5 kΩ を並べたもの。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図03 コンデンサ入力の平滑
 parts:
   W1: sine 4,5 6,5 l=$\mathrm{W1}$
@@ -112,6 +118,7 @@ wires:
 <img src="out/schematic/03-rectifier-3.png" alt="回路図03 コンデンサ入力の平滑" width="667">
 
 ```scope
+# オシロスコープの画面 (tommie-fence の scope フェンス)
 title: 図04 コンデンサ入力の平滑 (100 µF・1.5 kΩ)
 time: 5ms/div
 trigger: ch1 rising

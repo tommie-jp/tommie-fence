@@ -18,6 +18,7 @@
   どの穴がどのピンかはデータシートで確かめる
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 回路図01 S-Mini で LED を点ける
 parts:
   V1: vsource 1,2 1,5 5
@@ -39,6 +40,7 @@ wires:
 <img src="out/schematic/10-smd.png" alt="回路図01 S-Mini で LED を点ける" width="524">
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 10x6
   h: 1.6mm
@@ -85,6 +87,7 @@ notes:
 SOT-23 (`sot23`) より胴が 0.3mm 広い。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 24x9
   h: 1.6mm
@@ -117,6 +120,7 @@ style:
 書いても胴は伸びない。
 
 ```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
 board:
   size: 20x9
   h: 1.6mm

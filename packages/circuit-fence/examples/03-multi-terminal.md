@@ -4,6 +4,7 @@
 ピンは番地ではなく名前で指す (`Q1.B` `M1.gate` `U1.out` `T1.A1`)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 多端子の記号
 parts:
   Q1: npn 2,2
@@ -65,6 +66,7 @@ style:
 2 次側が `B`。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図02 オペアンプとトランス
 parts:
   U1: opamp 2,2 LM358
@@ -98,6 +100,7 @@ style:
 書き分けたいときは次の名前で書く。**ピンの名前はどれも同じ**。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図03 FET の種類
 parts:
   J1: njfet 2,2
@@ -151,6 +154,7 @@ style:
 ピンだけ `P1.w` `T1.g` のように呼ぶ。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図04 2 端子でも足を持つもの
 parts:
   P1: potentiometer 1,2 3,2 10k
@@ -189,6 +193,7 @@ Type-C の受け口から 5V をもらうには、**CC1 と CC2 を 5.1kΩ で�
 使わない `D+` `D-` は空けたままでよく、ERC も言わない。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図05 USB-C から 5V をもらう
 parts:
   J1: usb-c 2,4
@@ -223,6 +228,7 @@ style:
 ピンの名前は `pins:` に書いた順に**箱の上から**並び、配線からは名前で指す (`M1.ECHO`)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図06 超音波センサーの ECHO を 3.3V に落とす
 parts:
   M1:
@@ -270,6 +276,7 @@ style:
 実体配線図の 2 つでも同じ名前の 2 ピン (先に書いた穴が C) で書ける。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図07 光が当たると出力が下がる
 parts:
   VCC: vcc 3,1
@@ -296,6 +303,7 @@ style:
 3 = 右)。ピンの名前は機器と同じマップ形式の `pins:` で与え、1 行で書くと番号になる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図08 温度センサー (LM35) の出力を取り出す
 parts:
   VCC: vcc 2,1

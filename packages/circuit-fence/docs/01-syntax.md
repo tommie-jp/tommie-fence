@@ -12,6 +12,7 @@ GitHub のようにフェンスが描画されない場所で、ソースと図�
 作り直しは `npm run docs`。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 circuit フェンスの書き方
 parts:
   IN:  port 1,1
@@ -85,6 +86,7 @@ style:
 書かなくてもよい (番地をそのまま書けば今までどおり)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図02 番地に名前を付ける
 points:
   vin: 1,1
@@ -191,6 +193,7 @@ parts:
 ```
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図03 1 端子の記号
 parts:
   IN:  port 3,2
@@ -274,6 +277,7 @@ style:
 | 114 | `ferrite-bead` | フェライトビーズ | (型番) | `FB1: ferrite-bead 1,1 3,1 BL02RN2` |
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図04 2 端子部品
 parts:
   R1:  resistor 2,2 4,2 10k
@@ -494,6 +498,7 @@ circuitikz の記号をそのまま使わず、**回路図の慣習の形に寄�
 | `thyristor` / `triac` | `g` (`gate`) |
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図05 3 本目の足を持つ 2 端子部品
 parts:
   P1: potentiometer 2,3 4,3 10k
@@ -609,6 +614,7 @@ FET は**ピンの名前がどれも同じ**なので、記号だけ後から差
 同じ読み方) なので n が外を向く。簡易記号は p にゲートの丸も付く。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図06 FET の記号
 parts:
   J1: njfet 3,3
@@ -666,6 +672,7 @@ style:
 `not` と `buffer` は入力が 1 本なので `in`。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図07 ロジックゲートの記号
 parts:
   U1: and 3,2 7408
@@ -857,6 +864,7 @@ wires:
 ピンへの配線は [../examples/11-logic.md](../examples/11-logic.md) で見せている。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図08 DIP の IC の記号
 parts:
   U1: dip8 3,6
@@ -900,6 +908,7 @@ style:
 線が交差しにくい。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図09 オペアンプの向き
 parts:
   IN:  port 1,2
@@ -1077,6 +1086,7 @@ parts:
 略記を持たない。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図10 略記で書いた図
 parts:
   V1: dc 1,2 1,4 9
@@ -1103,6 +1113,7 @@ style:
 `R1` は R の添字 1、`Rload` は R の添字 load、`R` はそのまま。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図11 ID の出方
 parts:
   R1:    resistor 1,1 2,1
@@ -1134,6 +1145,7 @@ style:
 `$…$` で囲むと**数式の部分集合**が使える。教科書と同じ綴りで書ける。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図12 ラベルを ID と別に書く
 parts:
   E:   sine 1,1 2,1
@@ -1212,6 +1224,7 @@ LED とフォトダイオード (`led` / `photodiode`) は値の側に光の矢�
 「どちらを + と数えるか」を図で決める。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図13 電流の矢と電圧の符号
 parts:
   E: battery 1,2 1,4
@@ -1269,6 +1282,7 @@ style:
 | `\|-` | 先に縦、それから横 |
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図14 配線でつなぐ
 parts:
   R1: resistor 1,1 3,1
@@ -1305,6 +1319,7 @@ wires:
 そのまま引く。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図15 斜めに置く
 parts:
   IN:  port 1,1
@@ -1340,6 +1355,7 @@ style:
 | 書き出し | `- source 番地 [色や大きさ]` | フェンスの中身そのもの |
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図16 注釈
 parts:
   IN:  port 1,1
@@ -1369,6 +1385,7 @@ style:
 `,` を含むので、部品 ID と取り違えることはない。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図17 印
 parts:
   R1: resistor 1,1 2,1 10k
@@ -1405,6 +1422,7 @@ style:
 同じ番地を 2 回書くと、その 1 マスだけを囲む。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図18 枠
 parts:
   IN:  port 1,1
@@ -1436,6 +1454,7 @@ style:
 起点と終点が同じところだと向きが決まらないので、行番号つきで返る。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図19 指し棒
 parts:
   R1: resistor 1,1 2,1 10k
@@ -1462,6 +1481,7 @@ style:
 部品を指した端は記号の縁で止まり、番地を指した端はその交点まで伸びる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図20 直線
 parts:
   R1: resistor 2,2 4,2 10k
@@ -1524,6 +1544,7 @@ circuit は**指し先そのもの**に置くので移す側が無い。
 1 行しかない `text` に書いても効かないので、書いたら行番号つきで返る。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図21 字の大きさ
 parts:
   R1: resistor 1,1 2,1 10k
@@ -1549,6 +1570,7 @@ style:
 **回した字は、伸びる向きも一緒に回る** — `r90` は下へ、`r270` は上へ伸びる。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図22 寄せ・太字・向き
 parts:
   R1: resistor 1,1 2,1 10k
@@ -1594,6 +1616,7 @@ style:
 | `loose` | 字の注釈と同じ | 1 行ずつ指しながら説明する |
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図23 行送り
 parts:
   R1: resistor 1,1 2,1 10k
@@ -1636,6 +1659,7 @@ style:
 指し棒で描くとき — に使う。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図24 注釈の色
 parts:
   R1: resistor 1,1 3,1
@@ -1848,6 +1872,7 @@ style:
 (色は 1 つで、点だけを薄めて描いている)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図25 グリッド
 parts:
   IN:  port 1,1
@@ -1883,6 +1908,7 @@ style:
 番地を読みながら説明するときに字を大きくする。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図26 グリッドの字の大きさと色
 parts:
   R1: resistor 1,1 3,1 10k
@@ -1916,6 +1942,7 @@ style:
 消すときは `stamp: off` を書く。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図27 版の刻印
 parts:
   IN:  port 1,1

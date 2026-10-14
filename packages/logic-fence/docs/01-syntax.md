@@ -33,6 +33,7 @@ Markdown の ` ```logic ` フェンスに YAML を書くと、Markdown プレビ
 **1 s ごとに `0 1 2 3 4 5 3 4 5 3`**。
 
 ```logic
+# ロジックアナライザの画面 (tommie-fence の logic フェンス)
 title: 図01 74HC163 のアドレス — 1 s ごとに 0 1 2 3 4 5 3 4 5 3
 device: ad3
 time: 1s/div
@@ -109,6 +110,7 @@ trigger: CLK rising at 0s
 | `counter` | 下の節 | クロックの edge を数える束 |
 
 ```logic
+# ロジックアナライザの画面 (tommie-fence の logic フェンス)
 title: 図02 信号の種類 — clock・duty・pulse・pattern・edges
 device: generic
 time: 500us/div
@@ -142,6 +144,7 @@ signals:
 - 値が幅に入らない・元のレーンが無い・幅が決まらないは断る
 
 ```logic
+# ロジックアナライザの画面 (tommie-fence の logic フェンス)
 title: 図03 3 ビットのカウンタ — start 2、wrap 6
 device: generic
 time: 1s/div
@@ -201,6 +204,7 @@ buses:
   お知らせを言う
 
 ```logic
+# ロジックアナライザの画面 (tommie-fence の logic フェンス)
 title: 図04 9600 baud の "H" — 0x48
 device: ad3
 time: 200us/div
@@ -231,6 +235,7 @@ decode:
 | `debug` | `on` (既定) `off` | 図の下にお知らせを出すか (エラーは常に出す) |
 
 ```logic
+# ロジックアナライザの画面 (tommie-fence の logic フェンス)
 title: 図05 dark と mono
 device: generic
 time: 1ms/div
@@ -291,6 +296,7 @@ Address (hex): 0x0@0 s 0x1@1 s 0x2@2 s … 0x3@9 s
 | 3 px より短い値の区間があります | バスの箱に字が入らない |
 
 ```logic
+# ロジックアナライザの画面 (tommie-fence の logic フェンス)
 title: 図06 お知らせの例 — 1 kHz のクロックを 1 s/div で見る (線では読めず塗りになる)
 device: ad3
 time: 1s/div

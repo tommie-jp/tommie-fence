@@ -3,6 +3,7 @@
 2 端子部品は `ID: 種類 番地 番地 [値]` の 1 行で書く。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図01 2 端子部品
 parts:
   R1:  resistor 2,2 4,2 10k
@@ -177,6 +178,7 @@ circuitikz の NTC / PTC の記号は中に θ を持っていて、フェンス
 `ground` 以外は **ID がそのまま図に出て、乗っているネットの名前にもなる**。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図02 1 端子の記号
 parts:
   IN:  port 3,2
@@ -215,6 +217,7 @@ style:
 **還流ダイオード** (D1) を逆向きに入れて、切った瞬間の逆起電力を逃がす。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図03 モータを MOSFET で回す
 parts:
   B1: battery 1,1 1,5 5
@@ -248,6 +251,7 @@ style:
 バリキャップ (`varicap`) は可変容量ダイオードで、記号も物も別。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図04 コイルと可変コンデンサの同調回路
 parts:
   ANT: port 1,1
@@ -280,6 +284,7 @@ style:
 L1 と VC1 の同調回路で選び、D1 で検波してイヤホンで聞く。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図05 アンテナからイヤホンまでのゲルマラジオ
 parts:
   ANT: antenna 1,1
@@ -321,6 +326,7 @@ style:
 分けた固定の電圧をかける。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図06 デュアルゲート MOSFET の高周波 1 段増幅
 parts:
   ANT: antenna 1,5
@@ -366,6 +372,7 @@ style:
 基板に載せるときは `sip3` に型番 `SFU455B` を添える (橙の胴で描かれ、ピンは `IN` `GND` `OUT`)。
 
 ```circuit
+# 回路図 (tommie-fence の circuit フェンス)
 title: 図07 セラミックフィルタの測定回路
 parts:
   IN: port 1,5
