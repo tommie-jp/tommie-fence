@@ -568,9 +568,12 @@ export function sipHeader(options: SipOptions): string {
     x: num(bar.x), y: num(bar.y), width: num(bar.width), height: num(bar.height), rx: 3,
     fill: look?.body ?? ink.body, stroke: look?.edge ?? CHIP_EDGE,
   });
-  // ピンは本体の縁からピン名の側へ覗かせる。本体の真ん中に重ねるとキャプションと
+  // ピンは本体の縁から覗かせる。本体の真ん中に重ねるとキャプションと
   // 食い合い、本体の下に隠すとどの穴に挿さっているのかが読めなくなる。
-  const edge = (alongX ? first.y : first.x) + (nameSide * across) / 2;
+  // **横に寝た帯は名前の側によらず下の縁から出す** — 上の縁から出すと、脚が上を
+  // 向いた逆さの部品に見える (溝より下の行に挿した SFU455B)。縦の帯は名前の側。
+  const pinSide = alongX ? 1 : nameSide;
+  const edge = (alongX ? first.y : first.x) + (pinSide * across) / 2;
   const stubs = points
     .map((point) => element('rect', {
       x: num(alongX ? point.x - 3 : edge - 2.5),

@@ -260,6 +260,17 @@ describe('sipHeader', () => {
     expect(firstName(above)).toBeLessThan(bar.y);
   });
 
+  test('pokes the pins out of the lower edge of a lying bar even when the names are above it', () => {
+    // 名前の側に出すと、溝より下の行では脚が上を向いた逆さの部品に見えた (教科書のミキサーの SFU)。
+    const above = sipHeader({ points, names, pitch: PITCH, caption: 'J1', scale: 1, nameSide: -1, ink: INK });
+    const stubTops = [...above.matchAll(/<rect x="[^"]+" y="(-?[\d.]+)" width="6" height="5" fill="([^"]+)"/g)]
+      .filter((match) => match[2] === INK.pin)
+      .map((match) => Number(match[1]));
+
+    expect(stubTops).toHaveLength(points.length);
+    for (const top of stubTops) expect(top).toBeGreaterThan(0);
+  });
+
   test('paints the body in the colour of a part that has a look, and prints its mark instead of the caption', () => {
     const look = { body: '#e8842a', edge: '#a85a12', text: '#7a3a08', mark: 'SFU' };
     const plain = sipHeader({ points, names, pitch: PITCH, caption: 'CF1 SFU455B', scale: 1, nameSide: 1, ink: INK });
