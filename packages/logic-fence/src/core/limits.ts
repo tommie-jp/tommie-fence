@@ -20,8 +20,8 @@ export const LIMITS = {
   /** `buses:` と `decode:` の行の数。 */
   buses: 16,
   decodes: 8,
-  /** カーソルの数 (X1・X2)。 */
-  cursors: 2,
+  /** カーソルの数 (X1〜X8)。WaveForms の Logic のカーソルは数に決まりが無い。読み値の表が横に伸びるので 8 まで。 */
+  cursors: 8,
   /** `pattern` の bit の数と `edges` の組の数、counter の `sequence` の長さ。 */
   patternBits: 4096,
   edgePairs: 4096,

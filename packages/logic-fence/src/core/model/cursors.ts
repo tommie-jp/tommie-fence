@@ -46,7 +46,14 @@ export function readCursors(cursors: readonly Cursor[], rows: readonly Row[]): R
   const head = ['信号', ...cursors.map((cursor) => `${cursor.name} ${secondsText(cursor.time)}`)];
   const body = rows.map((row) => [row.name, ...cursors.map((cursor) => valueText(row, cursor.time))]);
   const [first, second] = cursors;
-  const delta = first === undefined || second === undefined ? [] : [deltaRow(second.time - first.time)];
+  if (first === undefined || second === undefined) return { cursors, rows: [head, ...body] };
+  // 2 本ちょうどは今までの ΔX の 1 行。3 本以上は **X1 を基準に**、X2 以降の列にそれぞれの差と周波数を添える。
+  if (cursors.length === 2) return { cursors, rows: [head, ...body, deltaRow(second.time - first.time)] };
+  const rest = cursors.slice(1).map((cursor) => cursor.time - first.time);
+  const delta = [
+    ['ΔX (X1 から)', '', ...rest.map(secondsText)],
+    ['1/ΔX', '', ...rest.map((seconds) => (seconds === 0 ? '' : hertzText(1 / Math.abs(seconds))))],
+  ];
   return { cursors, rows: [head, ...body, ...delta] };
 }
 

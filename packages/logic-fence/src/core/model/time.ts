@@ -33,6 +33,13 @@ export function axisUnit(perDiv: number): readonly [string, number] {
   return UNITS.find(([, scale]) => perDiv >= scale * (1 - 1e-9)) ?? UNITS[3] ?? ['ns', 1e-9];
 }
 
+/** `axis:` の単位。`s` `ms` `us` (`µs` `μs` も) `ns` の 1 語。それ以外 (数付きなど) は null。 */
+export function parseAxisUnit(text: string): readonly [string, number] | null {
+  const word = text.trim().replace(/^["']|["']$/g, '').toLowerCase();
+  if (word === 'us' || word === 'µs' || word === 'μs') return UNITS[2] ?? null;
+  return UNITS.find(([label]) => label === word) ?? null;
+}
+
 /** 軸の目盛の字 (`0` `1 s` `500 ms`)。単位は 1 つの図で揃える (`axisUnit`)。 */
 export function axisLabel(seconds: number, unit: readonly [string, number]): string {
   const value = Math.round((seconds / unit[1]) * 1e6) / 1e6;

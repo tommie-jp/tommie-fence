@@ -70,7 +70,7 @@ export function renderLogic(input: string, options: RenderOptions = {}): RenderR
 
   const body = renderTitle(doc.title, layout, theme)
     + renderGrid(layout, theme)
-    + (screen.defaultedWindow ? '' : renderAxis(layout, window, theme))
+    + (screen.defaultedWindow ? '' : renderAxis(layout, window, theme, screen.axis))
     // 印の縦線は行の下に敷く (バスの値の字に線が重ならないよう、字には縁取りを付けてある)。
     + renderTrigger(screen.trigger, window, layout, theme)
     + renderCursors(screen.cursors, window, layout, theme)

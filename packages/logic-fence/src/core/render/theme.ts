@@ -26,7 +26,8 @@ export type Palette = {
   /** 読み下しの箱。 */
   readonly decode: string;
   /** カーソル X1・X2。 */
-  readonly cursors: readonly [string, string];
+  /** カーソルの色。3 本目からは 1 本目から順に使い回す (線の種類でも分ける)。 */
+  readonly cursors: readonly [string, string, string, string];
   /** トリガの印。誤りのあるフレームにも使う。 */
   readonly trigger: string;
   /** 線の上の字の縁取り。 */
@@ -50,7 +51,7 @@ const LIGHT: Palette = {
   lane: '#2e8b3e',
   bus: '#1f6fb5',
   decode: '#0e7c86',
-  cursors: ['#b07d00', '#7a4bb0'],
+  cursors: ['#b07d00', '#7a4bb0', '#0e7490', '#be185d'],
   trigger: '#c0392b',
   halo: '#ffffff',
 };
@@ -64,12 +65,12 @@ const DARK: Palette = {
   lane: '#5bd46b',
   bus: '#4cc3ff',
   decode: '#4fd1c5',
-  cursors: ['#f2d21b', '#c792ea'],
+  cursors: ['#f2d21b', '#c792ea', '#7dcfff', '#ff9e64'],
   trigger: '#ff7b6b',
   halo: '#1b1d21',
 };
 
-/** 白黒で刷る資料向け。**色で意味を持たせない** (X2 は破線で分ける)。 */
+/** 白黒で刷る資料向け。**色で意味を持たせない** (X2 以降は線の種類で分ける)。 */
 const MONO: Palette = {
   canvas: '#ffffff',
   frame: '#000000',
@@ -79,7 +80,7 @@ const MONO: Palette = {
   lane: '#000000',
   bus: '#000000',
   decode: '#333333',
-  cursors: ['#000000', '#555555'],
+  cursors: ['#000000', '#555555', '#000000', '#555555'],
   trigger: '#000000',
   halo: '#ffffff',
 };

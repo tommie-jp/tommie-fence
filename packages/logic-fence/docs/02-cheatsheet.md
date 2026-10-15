@@ -11,13 +11,14 @@ title: 図01 74HC163 のアドレス   # 任意。図の左上に載る 1 行 ("
 device: ad3                      # 必須。ad3 (DIO 16 本・125 MS/s) / generic
 time: 1s/div                     # 1 目盛 (/div が要る)。か window: 10s (窓の全部)。目盛は 10 で固定
 start: 0s                        # 任意。窓の左端 (既定 0。負ならトリガ前が見える)
+axis: ms                         # 任意。軸の字の単位 s / ms / us / ns (既定は 1 目盛が 1 以上になる一番大きい単位)
 sample: 1kHz                     # 任意。書けば機種の上限・バッファ・2 標本を確かめる
 signals:                         # 名前: [dioN] 種類 引数…。行の順が図の順
   CLK: dio0 clock 1Hz
   A:   dio1..dio4 counter on CLK rising sequence 0 1 2 3 4 5 3 4 5 3   # レーン A0〜A3 ができる
 buses:                           # 名前: レーン… 基数 (MSB が先、基数は最後)
   Address: A3..A0 hex
-cursors: [4.5s, 5.5s]            # 任意。X1 X2 (2 つまで)。表に行ごとの値
+cursors: [4.5s, 5.5s]            # 任意。X1〜X8 (8 つまで)。表に行ごとの値。3 つ以上は X1 からの差
                                  # decode: (uart) は下の「カーソル・トリガ・読み下し」
 trigger: CLK rising at 0s        # 任意。レーン rising|falling [at 時刻]
 style: dark                      # 任意
@@ -88,7 +89,7 @@ signals:
   TXD: pattern 10000100101010010110111 bit 104.17us
 decode:
   Serial: uart TXD baud 9600 8N1 ascii   # ascii は 'H'、hex は 0x48。窓に全部入るフレームだけ
-cursors: [500us, 1.5ms]                  # X1 X2。変わり目ちょうどは新しい値
+cursors: [500us, 1.5ms]                  # X1 X2 …。変わり目ちょうどは新しい値
 trigger: CLK falling at 125us            # 書いた edge が本当にあるか確かめる。at 無しは最初の該当 edge
 ```
 
@@ -97,7 +98,7 @@ trigger: CLK falling at 125us            # 書いた edge が本当にあるか�
 
 ## 読み値 (CLI の `check`)
 
-カーソルの表 (`信号 / X1 / X2`、2 つなら `ΔX` と `1/ΔX`) の後に、**レーンの変わり目の数**、
+カーソルの表 (`信号 / X1 / X2 …`、2 つなら `ΔX` と `1/ΔX`、3 つ以上なら `ΔX (X1 から)` と `1/ΔX`) の後に、**レーンの変わり目の数**、
 **バスの値と始まりの時刻の並び** (`Address (hex): 0x0@0 s 0x1@1 s …`)、読み下しのフレームが出る。
 本文の表と数で突き合わせてから、図を見る。
 
@@ -115,3 +116,5 @@ trigger: CLK falling at 125us            # 書いた edge が本当にあるか�
 | (お知らせ) 標本化は N までです / バッファに入りません | `sample:` |
 | (お知らせ) 立ち上がりは 0.3 s にありません | `trigger:` の `at` を edge に合わせる |
 | (お知らせ) カーソル・トリガの時刻が窓の外です | 時刻を窓の中に |
+| (お知らせ) axis: s では…読みにくくなります | `axis:` を細かい単位に (1 目盛が 0.1 未満になる単位は断る寸前) |
+| axis: は時間軸の字の単位です | `s` `ms` `us` `ns` の 1 語 |

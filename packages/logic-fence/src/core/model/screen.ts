@@ -1,6 +1,6 @@
 import { fenceError, notice, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
-import type { FenceDocument, FenceError } from '../types.ts';
+import type { AxisUnit, FenceDocument, FenceError } from '../types.ts';
 import { buildBus } from './bus.ts';
 import { readCursors, cursorsInside } from './cursors.ts';
 import type { Cursor, Readings } from './cursors.ts';
@@ -26,6 +26,8 @@ export type Screen = {
   readonly defaultedWindow: boolean;
   readonly rows: readonly Row[];
   readonly cursors: readonly Cursor[];
+  /** `axis:` で選んだ軸の単位 (書かなければ null = 自動)。 */
+  readonly axis: AxisUnit | null;
   readonly trigger: TriggerMark | null;
   readonly readings: Readings;
   readonly sample: number | null;
@@ -120,8 +122,12 @@ export function screenOf(doc: FenceDocument): Screen {
   const triggered = resolveTrigger(doc.trigger, lanes.rows, window);
   said.push(...triggered.said);
   const cursors = cursorsInside(doc.cursors, window, said);
+  const axis = doc.axis?.value ?? null;
+  if (axis !== null && window.perDiv / axis[1] < 0.1 - 1e-9) {
+    said.push(notice(`axis: ${axis[0]} では 1 目盛が ${secondsText(window.perDiv)} で、軸の字が ${window.perDiv / axis[1]} ${axis[0]} きざみになり読みにくくなります (軸の単位を細かくします)`, doc.axis?.line ?? null));
+  }
   return {
-    device, window, defaultedWindow: doc.time === null || !timeOk, rows, cursors, trigger: triggered.mark,
+    device, window, defaultedWindow: doc.time === null || !timeOk, rows, cursors, axis, trigger: triggered.mark,
     readings: readCursors(cursors, rows), sample: doc.sample?.value ?? null, said,
   };
 }

@@ -65,8 +65,9 @@ style: dark
     expect(messages(`${HEAD}cursors: [1, 2s]`).join()).toContain('カーソル');
   });
 
-  test('allows two cursors at most', () => {
-    expect(messages(`${HEAD}cursors: [1s, 2s, 3s]`).join()).toContain('2 つまで');
+  test('allows eight cursors at most', () => {
+    expect(messages(`${HEAD}cursors: [1s, 2s, 3s, 4s, 5s, 6s, 7s, 8s]`)).toEqual([]);
+    expect(messages(`${HEAD}cursors: [1s, 2s, 3s, 4s, 5s, 6s, 7s, 8s, 9s]`).join()).toContain('8 つまで');
   });
 
   test('says where a signal line is wrong, with the accepted kinds', () => {

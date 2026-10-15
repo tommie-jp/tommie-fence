@@ -25,7 +25,7 @@ export type FenceError = {
 
 /** フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。 */
 export const TOP_LEVEL_KEYS = [
-  'device', 'title', 'time', 'window', 'start', 'sample', 'signals', 'buses', 'decode', 'cursors', 'trigger', 'style',
+  'device', 'title', 'time', 'window', 'start', 'axis', 'sample', 'signals', 'buses', 'decode', 'cursors', 'trigger', 'style',
 ] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
@@ -38,6 +38,9 @@ export type StyleSpec = {
   readonly debug: boolean | null;
   readonly stamp: boolean | null;
 };
+
+/** 軸の単位 (字と、秒に対する倍率)。 */
+export type AxisUnit = readonly [string, number];
 
 /** 読んだ値と、書いてあった行 (お知らせとエラーの行番号に使う)。 */
 export type Located<T> = { readonly value: T; readonly line: number | null };
@@ -83,6 +86,8 @@ export type FenceDocument = {
   readonly time: Located<TimeSpec> | null;
   /** 窓の左端の時刻 (s)。書かなければ 0。 */
   readonly start: Located<number> | null;
+  /** 時間軸の字の単位 (`axis: ms`)。書かなければ null (1 目盛が 1 以上になる一番大きい単位)。 */
+  readonly axis: Located<AxisUnit> | null;
   /** 標本化 (Hz)。書かなければ null (標本化の検査をしない)。 */
   readonly sample: Located<number> | null;
   readonly signals: readonly SignalEntry[];

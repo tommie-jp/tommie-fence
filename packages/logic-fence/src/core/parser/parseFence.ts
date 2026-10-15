@@ -9,9 +9,9 @@ import { fail, ok, wordsOf } from '../model/read.ts';
 import type { Read } from '../model/read.ts';
 import { RADIXES, isRadix } from '../model/radix.ts';
 import { parseSignal } from '../model/signalSpec.ts';
-import { FREQUENCY_HINT, TIME_HINT, parseFrequency, parseTime } from '../model/time.ts';
+import { FREQUENCY_HINT, TIME_HINT, parseAxisUnit, parseFrequency, parseTime } from '../model/time.ts';
 import { TOP_LEVEL_KEYS } from '../types.ts';
-import type { BusEntry, CursorSpec, DecodeEntry, FenceDocument, FenceError, Located, SignalEntry, TimeSpec, TopLevelKey, TriggerSpec } from '../types.ts';
+import type { AxisUnit, BusEntry, CursorSpec, DecodeEntry, FenceDocument, FenceError, Located, SignalEntry, TimeSpec, TopLevelKey, TriggerSpec } from '../types.ts';
 import { EMPTY_STYLE, parseStyle } from './style.ts';
 
 /** yaml のメッセージはライブラリ側の文言なので、載せる長さを切る。 */
@@ -21,7 +21,7 @@ const MAX_YAML_MESSAGE = 120;
 export type ParseResult = { readonly doc: FenceDocument; readonly errors: readonly FenceError[] };
 
 const emptyDocument = (): FenceDocument => ({
-  device: null, title: null, time: null, start: null, sample: null, signals: [], buses: [], decode: [], cursors: [], trigger: null,
+  device: null, title: null, time: null, start: null, axis: null, sample: null, signals: [], buses: [], decode: [], cursors: [], trigger: null,
   style: EMPTY_STYLE, keys: [],
 });
 
@@ -247,7 +247,7 @@ function readCursors(context: Context): readonly CursorSpec[] {
   const cursors: CursorSpec[] = [];
   for (const { node, line } of items) {
     if (cursors.length >= LIMITS.cursors) {
-      context.errors.push(fenceError('カーソルは X1 と X2 の 2 つまでです', line));
+      context.errors.push(fenceError(`カーソルは X1〜X${LIMITS.cursors} の ${LIMITS.cursors} つまでです`, line));
       break;
     }
     const text = writtenText(node, context.source) ?? scalarText(node) ?? '';
@@ -334,6 +334,10 @@ function readFence(source: string): ParseResult {
     start: one(context, 'start', (text) => {
       const seconds = parseTime(text);
       return seconds === null ? fail<number>(`start: は窓の左端の時刻です (例: start: 0s、-2ms)。${TIME_HINT}`) : ok(seconds);
+    }),
+    axis: one(context, 'axis', (text) => {
+      const unit = parseAxisUnit(text);
+      return unit === null ? fail<AxisUnit>(`axis: は時間軸の字の単位です (s / ms / us / ns のどれか 1 語。例: axis: ms)`) : ok(unit);
     }),
     sample: one(context, 'sample', (text) => {
       const hertz = parseFrequency(text);

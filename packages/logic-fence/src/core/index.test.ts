@@ -363,3 +363,67 @@ describe('lane names', () => {
     expect(right - name.length * BOLD_CAPITAL * TEXT_SIZE).toBeGreaterThanOrEqual(OUTER);
   });
 });
+
+describe('more than two cursors', () => {
+  const FIVE = `${HEAD}sample: 1kHz
+signals:
+  CLK: dio0 clock 1Hz
+  A: dio1 pattern 0110 bit 1s
+cursors: [1s, 3s, 5s, 7s, 9s]
+`;
+  const result = renderLogic(FIVE);
+
+  test('says nothing', () => {
+    expect(result.errors).toEqual([]);
+    expect(result.notices).toEqual([]);
+  });
+
+  test('names them X1..X5 in the readings header', () => {
+    expect(result.readings.rows[0]).toEqual(['信号', 'X1 1.000 s', 'X2 3.000 s', 'X3 5.000 s', 'X4 7.000 s', 'X5 9.000 s']);
+  });
+
+  test('gives each delta from X1 and its frequency (X1 is the reference)', () => {
+    const rows = result.readings.rows.slice(-2);
+    expect(rows[0]).toEqual(['ΔX (X1 から)', '', '2.000 s', '4.000 s', '6.000 s', '8.000 s']);
+    expect(rows[1]).toEqual(['1/ΔX', '', '0.5000 Hz', '0.2500 Hz', '0.1667 Hz', '0.1250 Hz']);
+  });
+
+  test('draws five cursor lines', () => {
+    const labels = [...result.svg.matchAll(/>(X[1-9])<\/text>/g)].map((m) => m[1]);
+    expect(labels).toEqual(['X1', 'X2', 'X3', 'X4', 'X5']);
+  });
+
+  test('two cursors still end with the one ΔX row', () => {
+    const two = renderLogic(`${HEAD}signals:\n  CLK: dio0 clock 1Hz\ncursors: [1s, 3s]\n`);
+    expect(two.readings.rows.at(-1)).toEqual(['ΔX', '2.000 s', '1/ΔX 0.5000 Hz']);
+  });
+});
+
+describe('axis:', () => {
+  const BASE = 'device: ad3\ntime: 100us/div\nstart: 12.6ms\nsignals:\n  CLK: dio0 clock 1kHz\n';
+  const axisLabels = (svg: string): string[] => [...svg.matchAll(/>([0-9.]+ (?:s|ms|µs|ns))<\/text>/g)].map((m) => m[1] ?? '');
+
+  test('without it, the axis uses the largest unit where one division is 1 or more', () => {
+    expect(axisLabels(renderLogic(BASE).svg).slice(0, 3)).toEqual(['12600 µs', '12700 µs', '12800 µs']);
+  });
+
+  test('axis: ms writes the axis in ms', () => {
+    const result = renderLogic(`${BASE}axis: ms\n`);
+    expect(result.errors).toEqual([]);
+    expect(axisLabels(result.svg).slice(0, 3)).toEqual(['12.6 ms', '12.7 ms', '12.8 ms']);
+  });
+
+  test('axis: us and axis: µs are the same', () => {
+    expect(axisLabels(renderLogic(`${BASE}axis: us\n`).svg)).toEqual(axisLabels(renderLogic(`${BASE}axis: µs\n`).svg));
+  });
+
+  test('refuses a unit it does not know', () => {
+    const { errors } = renderLogic(`${BASE}axis: 1ms\n`);
+    expect(errors.map((error) => error.message).join()).toContain('axis:');
+  });
+
+  test('says when one division is too small to read in the chosen unit', () => {
+    const { notices } = renderLogic(`${BASE}axis: s\n`);
+    expect(notices.map((notice) => notice.message).join()).toContain('axis');
+  });
+});

@@ -29,8 +29,8 @@ export function renderGrid(layout: Layout, theme: Theme): string {
 }
 
 /** 時間軸の字 (格子の下、目盛ごと)。 */
-export function renderAxis(layout: Layout, window: Window, theme: Theme): string {
-  const unit = axisUnit(window.perDiv);
+export function renderAxis(layout: Layout, window: Window, theme: Theme, chosen: readonly [string, number] | null = null): string {
+  const unit = chosen ?? axisUnit(window.perDiv);
   const labels: string[] = [];
   for (let index = 0; index <= LIMITS.divisions; index += 1) {
     labels.push(svgText(layout.plot.x + index * PLOT.divPx, layout.axisBaseline, axisLabel(window.t0 + index * window.perDiv, unit), {
