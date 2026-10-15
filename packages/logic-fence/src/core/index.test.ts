@@ -348,3 +348,18 @@ describe('reporting', () => {
     expect(svg).not.toContain('sqare');
   });
 });
+
+describe('lane names', () => {
+  // 名前は太字 (font-weight 600) の大文字が多い。1 字 0.55 字分の見積りでは足りず、頭が図の左へはみ出していた
+  const BOLD_CAPITAL = 0.68;
+  const OUTER = 14;
+  const TEXT_SIZE = 12;
+
+  test.each(['D2-WHITE-GP17', 'COPY-GP4', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ012345'])('leaves room for the bold name %s', (name) => {
+    const { svg } = renderLogic(`${HEAD}signals:\n  ${name}: dio0 clock 1Hz\n`);
+    const label = new RegExp(`<text x="([0-9.]+)"[^>]*>${name}</text>`).exec(svg);
+    expect(label).not.toBeNull();
+    const right = Number(label?.[1]);
+    expect(right - name.length * BOLD_CAPITAL * TEXT_SIZE).toBeGreaterThanOrEqual(OUTER);
+  });
+});

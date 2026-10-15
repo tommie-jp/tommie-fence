@@ -11,6 +11,13 @@ import type { Theme } from '../render/theme.ts';
  */
 export const SIZE = { pitch: 34, laneInset: 8, marginRight: 24, labelGap: 10, labelMin: 40 } as const;
 
+/**
+ * レーンの名前の幅の見積りに掛ける倍率。名前は太字 (font-weight 600) で大文字が多く、
+ * fence-kit の `textWidth` (英数字 1 字 0.55 字分) では足りずに頭が図の左へはみ出していた。
+ * 広く見積もるほうが安全 (名前の欄が少し広がるだけ)。
+ */
+export const LABEL_WIDEN = 1.25;
+
 export const OUTER = 14;
 const TITLE_BAND = 28;
 /** 印の帯の 1 段 (px)。トリガの三角が 1 段、カーソルの名札が 1 段。 */
@@ -63,7 +70,7 @@ export function createLayout(options: LayoutOptions): Layout {
   const cursorBaseline = options.hasCursors ? y + MARK_ROW - 3 : null;
   if (options.hasCursors) y += MARK_ROW;
   y += 4;
-  const labelWidth = Math.max(SIZE.labelMin, ...options.labels.map((label) => textWidth(label) * size)) + SIZE.labelGap;
+  const labelWidth = Math.max(SIZE.labelMin, ...options.labels.map((label) => textWidth(label) * size * LABEL_WIDEN)) + SIZE.labelGap;
   const rowCount = options.rows === 0 ? EMPTY_ROWS : options.rows;
   const plot: Rect = { x: OUTER + labelWidth, y, width: PLOT.divPx * LIMITS.divisions, height: SIZE.pitch * rowCount };
   y += plot.height;

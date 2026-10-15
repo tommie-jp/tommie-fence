@@ -1,6 +1,6 @@
 import { element, fit, num, svgText, textWidth } from 'fence-kit';
 import type { Layout, Rect } from '../layout/screen.ts';
-import { SIZE } from '../layout/screen.ts';
+import { LABEL_WIDEN, SIZE } from '../layout/screen.ts';
 import { formatBusValue } from '../model/radix.ts';
 import type { BitRow, BusRow, DecodeRow, Row } from '../model/rows.ts';
 import { xOf } from '../model/window.ts';
@@ -105,7 +105,7 @@ function labelOf(row: Row, layout: Layout, frame: Frame, theme: Theme): string {
   const color = row.kind === 'bit' ? theme.palette.lane : row.kind === 'bus' ? theme.palette.bus : theme.palette.decode;
   const size = theme.metrics.textSize;
   const room = layout.plot.x - 14 - SIZE.labelGap / 2;
-  return svgText(layout.plot.x - SIZE.labelGap / 2, frame.mid + size * 0.35, fit(row.name, room / size), {
+  return svgText(layout.plot.x - SIZE.labelGap / 2, frame.mid + size * 0.35, fit(row.name, room / (size * LABEL_WIDEN)), {
     anchor: 'end', fill: color, 'font-size': num(size), 'font-weight': 600,
   });
 }
