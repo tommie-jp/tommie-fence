@@ -30,48 +30,48 @@
 \coordinate (x22y5) at (42,-8);
 \coordinate (x24y3) at (46,-4);
 \coordinate (x24y5) at (46,-8);
-\draw (x1y1) to[esource, l_=$V_{1}$, a^=$3\,\mathrm{V}$] (x1y7); % line 3
-\draw (-0.081,-5.865) -- ++(0.162,0); % line 3
-\draw (0,-5.946) -- ++(0,0.162); % line 3
-\draw (-0.081,-6.135) -- ++(0.162,0); % line 3
-\node[vcc] at (x1y1) {+3V}; % line 4
-\node[ground] at (x1y7) {}; % line 5
-\node[transformer core] (part-L1) at (x6y4) {}; % line 6
-\node[anchor=south] at (part-L1.north) {$L_{1}$}; % line 6
-\draw (x4y3) to[vC, mirror, invert, l_=$\mathrm{VC}$] (x4y5); % line 7
-\node[ground] at (x4y5) {}; % line 8
-\node[ground] at (x8y6) {}; % line 9
-\draw (x9y5) to[C, l_=$C_{1}$, a^=$10\,\mathrm{n}\mathrm{F}$] (x11y5); % line 10
-\node[vcc] at (x14y1) {+3V}; % line 11
-\draw (x14y3) to[R, l_=$R_{c}$, a^=$1\mbox{.}5\,\mathrm{k}\Omega$] (x14y1); % line 12
-\draw (x12y5) to[R, l_=$R_{b}$, a^=$180\,\mathrm{k}\Omega$] (x12y3); % line 13
-\node[npn] (part-Q1) at (x14y5) {}; % line 14
-\node[font=\scriptsize, anchor=north] at (part-Q1.south) {$\mathrm{2SC1815}$}; % line 14
-\node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 14
-\node[ground] at (x14y7) {}; % line 15
-\node[vcc] at (x16y1) {+3V}; % line 16
-\draw (x16y1) to[C, l_=$C_{4}$, a^=$100\,\mathrm{n}\mathrm{F}$] (x16y2); % line 17
-\node[ground] at (x16y2) {}; % line 18
-\draw (x16y3) to[D, l_=$D_{1}$, a^=$\mathrm{1N60}$] (x19y3); % line 19
-\draw (x20y3) to[C, l_=$C_{3}$, a^=$1\,\mathrm{n}\mathrm{F}$] (x20y5); % line 20
-\node[ground] at (x20y5) {}; % line 21
-\draw (x22y3) to[R, l_=$R_{3}$, a^=$100\,\mathrm{k}\Omega$] (x22y5); % line 22
-\node[ground] at (x22y5) {}; % line 23
-\draw (x24y3) to[loudspeaker, l_=$\mathrm{EAR}$] (x24y5); % line 24
-\node[ground] at (x24y5) {}; % line 25
-\draw (part-L1.A1) -| (x4y3); % line 27
-\draw (part-L1.A2) -| (x4y5); % line 28
-\draw (part-L1.B1) -| (x9y5); % line 29
-\draw (part-L1.B2) -| (x8y6); % line 30
-\draw (x11y5) -- (x12y5); % line 31
-\draw (x12y5) -- (part-Q1.base); % line 32
-\draw (x12y3) -- (x14y3); % line 33
-\draw (x14y3) -- (part-Q1.collector); % line 34
-\draw (part-Q1.emitter) -- (x14y7); % line 35
-\draw (x14y3) -- (x16y3); % line 36
-\draw (x19y3) -- (x20y3); % line 37
-\draw (x20y3) -- (x22y3); % line 38
-\draw (x22y3) -- (x24y3); % line 39
+\draw (x1y1) to[esource, l_=$V_{1}$, a^=$3\,\mathrm{V}$] (x1y7); % line 4
+\draw (-0.081,-5.865) -- ++(0.162,0); % line 4
+\draw (0,-5.946) -- ++(0,0.162); % line 4
+\draw (-0.081,-6.135) -- ++(0.162,0); % line 4
+\node[vcc] at (x1y1) {+3V}; % line 5
+\node[ground] at (x1y7) {}; % line 6
+\node[transformer core] (part-L1) at (x6y4) {}; % line 7
+\node[anchor=south] at (part-L1.north) {$L_{1}$}; % line 7
+\draw (x4y3) to[vC, mirror, invert, l_=$\mathrm{VC}$] (x4y5); % line 8
+\node[ground] at (x4y5) {}; % line 9
+\node[ground] at (x8y6) {}; % line 10
+\draw (x9y5) to[C, l_=$C_{1}$, a^=$10\,\mathrm{n}\mathrm{F}$] (x11y5); % line 11
+\node[vcc] at (x14y1) {+3V}; % line 12
+\draw (x14y3) to[R, l_=$R_{c}$, a^=$1\mbox{.}5\,\mathrm{k}\Omega$] (x14y1); % line 13
+\draw (x12y5) to[R, l_=$R_{b}$, a^=$180\,\mathrm{k}\Omega$] (x12y3); % line 14
+\node[npn] (part-Q1) at (x14y5) {}; % line 15
+\node[font=\scriptsize, anchor=north] at (part-Q1.south) {$\mathrm{2SC1815}$}; % line 15
+\node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 15
+\node[ground] at (x14y7) {}; % line 16
+\node[vcc] at (x16y1) {+3V}; % line 17
+\draw (x16y1) to[C, l_=$C_{4}$, a^=$100\,\mathrm{n}\mathrm{F}$] (x16y2); % line 18
+\node[ground] at (x16y2) {}; % line 19
+\draw (x16y3) to[D, l_=$D_{1}$, a^=$\mathrm{1N60}$] (x19y3); % line 20
+\draw (x20y3) to[C, l_=$C_{3}$, a^=$1\,\mathrm{n}\mathrm{F}$] (x20y5); % line 21
+\node[ground] at (x20y5) {}; % line 22
+\draw (x22y3) to[R, l_=$R_{3}$, a^=$100\,\mathrm{k}\Omega$] (x22y5); % line 23
+\node[ground] at (x22y5) {}; % line 24
+\draw (x24y3) to[loudspeaker, l_=$\mathrm{EAR}$] (x24y5); % line 25
+\node[ground] at (x24y5) {}; % line 26
+\draw (part-L1.A1) -| (x4y3); % line 28
+\draw (part-L1.A2) -| (x4y5); % line 29
+\draw (part-L1.B1) -| (x9y5); % line 30
+\draw (part-L1.B2) -| (x8y6); % line 31
+\draw (x11y5) -- (x12y5); % line 32
+\draw (x12y5) -- (part-Q1.base); % line 33
+\draw (x12y3) -- (x14y3); % line 34
+\draw (x14y3) -- (part-Q1.collector); % line 35
+\draw (part-Q1.emitter) -- (x14y7); % line 36
+\draw (x14y3) -- (x16y3); % line 37
+\draw (x19y3) -- (x20y3); % line 38
+\draw (x20y3) -- (x22y3); % line 39
+\draw (x22y3) -- (x24y3); % line 40
 \node[circ] at (x4y5) {};
 \node[circ] at (x14y3) {};
 \node[circ] at (x12y5) {};

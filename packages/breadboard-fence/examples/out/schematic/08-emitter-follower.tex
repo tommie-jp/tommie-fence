@@ -20,33 +20,33 @@
 \coordinate (x15y8) at (28,-14);
 \coordinate (x15y11) at (28,-20);
 \coordinate (x12y2) at (22,-2);
-\draw (x2y3) to[esource, l_=$V_{1}$, a^=$5\,\mathrm{V}$] (x2y9); % line 3
-\draw (1.919,-9.865) -- ++(0.162,0); % line 3
-\draw (2,-9.946) -- ++(0,0.162); % line 3
-\draw (1.919,-10.135) -- ++(0.162,0); % line 3
-\node[vcc] at (x2y3) {+5V}; % line 4
-\node[ground] at (x2y9) {}; % line 5
-\draw (x5y5) to[esource, l_=$\mathrm{IN}$] (x5y8); % line 6
-\draw (7.82,-11) sin ++(0.09,0.09) cos ++(0.09,-0.09) sin ++(0.09,-0.09) cos ++(0.09,0.09); % line 6
-\node[ground] at (x5y8) {}; % line 7
-\node[vcc] at (x10y2) {+5V}; % line 8
-\draw (x10y5) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x10y2); % line 9
-\draw (x10y5) to[R, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (x10y8); % line 10
-\node[ground] at (x10y8) {}; % line 11
-\draw (x8y5) to[cC, l_=$C_{1}$, a^=$10\,\mu\mathrm{F}$] (x5y5); % line 12
-\node[npn] (part-Q1) at (x12y5) {}; % line 13
-\node[font=\scriptsize, anchor=north] at (part-Q1.south) {$\mathrm{2SC1815}$}; % line 13
-\node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 13
-\draw (x12y8) to[R, l_=$R_{e}$, a^=$47\,\Omega$] (x12y11); % line 14
-\node[ground] at (x12y11) {}; % line 15
-\draw (x12y8) to[cC, l_=$C_{2}$, a^=$470\,\mu\mathrm{F}$] (x15y8); % line 16
-\draw (x15y8) to[loudspeaker, l_=$\mathrm{SPK}$, a^=$\mathrm{8}$] (x15y11); % line 17
-\node[ground] at (x15y11) {}; % line 18
-\draw (x8y5) -- (x10y5); % line 20
-\draw (x10y5) -- (part-Q1.base); % line 21
-\draw (x10y2) -- (x12y2); % line 22
-\draw (x12y2) -- (part-Q1.collector); % line 23
-\draw (part-Q1.emitter) -- (x12y8); % line 24
+\draw (x2y3) to[esource, l_=$V_{1}$, a^=$5\,\mathrm{V}$] (x2y9); % line 4
+\draw (1.919,-9.865) -- ++(0.162,0); % line 4
+\draw (2,-9.946) -- ++(0,0.162); % line 4
+\draw (1.919,-10.135) -- ++(0.162,0); % line 4
+\node[vcc] at (x2y3) {+5V}; % line 5
+\node[ground] at (x2y9) {}; % line 6
+\draw (x5y5) to[esource, l_=$\mathrm{IN}$] (x5y8); % line 7
+\draw (7.82,-11) sin ++(0.09,0.09) cos ++(0.09,-0.09) sin ++(0.09,-0.09) cos ++(0.09,0.09); % line 7
+\node[ground] at (x5y8) {}; % line 8
+\node[vcc] at (x10y2) {+5V}; % line 9
+\draw (x10y5) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x10y2); % line 10
+\draw (x10y5) to[R, l_=$R_{2}$, a^=$10\,\mathrm{k}\Omega$] (x10y8); % line 11
+\node[ground] at (x10y8) {}; % line 12
+\draw (x8y5) to[cC, l_=$C_{1}$, a^=$10\,\mu\mathrm{F}$] (x5y5); % line 13
+\node[npn] (part-Q1) at (x12y5) {}; % line 14
+\node[font=\scriptsize, anchor=north] at (part-Q1.south) {$\mathrm{2SC1815}$}; % line 14
+\node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 14
+\draw (x12y8) to[R, l_=$R_{e}$, a^=$47\,\Omega$] (x12y11); % line 15
+\node[ground] at (x12y11) {}; % line 16
+\draw (x12y8) to[cC, l_=$C_{2}$, a^=$470\,\mu\mathrm{F}$] (x15y8); % line 17
+\draw (x15y8) to[loudspeaker, l_=$\mathrm{SPK}$, a^=$\mathrm{8}$] (x15y11); % line 18
+\node[ground] at (x15y11) {}; % line 19
+\draw (x8y5) -- (x10y5); % line 21
+\draw (x10y5) -- (part-Q1.base); % line 22
+\draw (x10y2) -- (x12y2); % line 23
+\draw (x12y2) -- (part-Q1.collector); % line 24
+\draw (part-Q1.emitter) -- (x12y8); % line 25
 \node[circ] at (x10y2) {};
 \node[circ] at (x10y5) {};
 \node[circ] at (x12y8) {};
