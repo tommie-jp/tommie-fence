@@ -678,7 +678,9 @@ export function boardChip(options: BoardChipOptions): string {
       // **ヘッダの番号を名前に添える** (`01 GP0`)。実物のピンアウト図と突き合わせる
       // ときに、名前だけだと何番目のピンかを数え直すことになる。
       // **番号はピンの側の端**へ — 字はピンから内側へ伸びるので、伸びる向きで前後が入れ替わる。
-      const number = String(index + 1).padStart(PIN_NUMBER_DIGITS, '0');
+      // **番号は 1 番の点 (pinOne) から数える。** 回すと名前が半周巡るので (breadboard-fence の
+      // spun)、点の添字のままだと「GP15 40」のように名前と番号が食い違う。
+      const number = String(((index - pinOne + points.length) % points.length) + 1).padStart(PIN_NUMBER_DIGITS, '0');
       const text = inward > 0 ? `${name} ${number}` : `${number} ${name}`;
       const style = {
         'font-size': num(fontSize),

@@ -143,6 +143,17 @@ describe('1 番ピンの印は向きに付いてくる', () => {
     expect(usbX('M1: pico @ h5')).toBeLessThan(edges('M1: pico @ h5').left);
     expect(usbX('M1: pico @ h5 r180')).toBeGreaterThan(edges('M1: pico @ h5').left);
   });
+
+  test('keeps each header number with its pin name when the board is turned round', () => {
+    // 回すと名前が半周巡る。番号が点の添字のままだと「GP15 40」と刷られ、実物の 20 番と食い違った。
+    const svg = renderPart(place('M1: pico2 @ h5 r180'), layout, theme);
+    const paired = (name: string, number: string): boolean =>
+      svg.includes(`${name} ${number}<`) || svg.includes(`>${number} ${name}`);
+
+    expect(paired('GP15', '20')).toBe(true);
+    expect(paired('VBUS', '40')).toBe(true);
+    expect(paired('GP15', '40')).toBe(false);
+  });
 });
 
 

@@ -314,6 +314,21 @@ describe('boardChip', () => {
     expect(drawn(0)).toContain('40 VBUS');
   });
 
+  test('keeps each number with its name when the board is turned round (r180)', () => {
+    // **回すと名前が半周巡る** (breadboard-fence の spun)。番号も名前と一緒に巡らないと、
+    // 「GP15 40」のように名前と番号が食い違う。1 番の点の添字 (pinOne) から数える。
+    const pins = definition?.pins ?? [];
+    const turned = [...pins.slice(20), ...pins.slice(0, 20)];
+    const svg = boardChip({ points, names: turned, definition, pinOne: 20, pitch: PITCH, scale: 1, ink: INK });
+    const paired = (name: string, number: string): boolean =>
+      svg.includes(`${name} ${number}<`) || svg.includes(`>${number} ${name}`);
+
+    expect(paired('GP0', '01')).toBe(true);
+    expect(paired('GP15', '20')).toBe(true);
+    expect(paired('VBUS', '40')).toBe(true);
+    expect(paired('GP15', '40')).toBe(false);
+  });
+
   test('moves the usb connector to the end pin 1 is at, since the cable goes in there', () => {
     const usbX = (svg: string): number => Number(/<rect x="(-?[\d.]+)"[^>]*fill="#c9cfd8"/.exec(svg)?.[1]);
     const box = boardBox(points, PITCH);
