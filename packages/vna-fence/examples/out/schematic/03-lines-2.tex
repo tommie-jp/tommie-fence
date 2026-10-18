@@ -34,16 +34,16 @@
 \coordinate (x3y2) at (4,-2);
 \coordinate (x6y2) at (10,-2);
 \coordinate (x2y3) at (2,-4);
-\node[smacoax, draw, xscale=-1] (part-J1) at (x2y2) {}; % line 3
-\node[anchor=south] at (part-J1.north) {$J_{1}$}; % line 3
-\draw (x3y2) to[TL, l_=$T_{1}$, a^=$50\,\Omega$] (x6y2); % line 4
-\node[ground] at (x2y3) {}; % line 5
-\draw (part-J1.pin 1) -- (x3y2); % line 7
-\draw (part-J1.pin 2) -- (x2y3); % line 8
-\path (1.619,-0.593) rectangle (2.381,0.593); % line 10
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,0) {X}; % line 10
-\path (10.4,-2.593) rectangle (11.289,-1.407); % line 11
-\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10.4,-2) {X}; % line 11
+\node[smacoax, draw, xscale=-1] (part-J1) at (x2y2) {}; % line 4
+\node[anchor=south] at (part-J1.north) {$J_{1}$}; % line 4
+\draw (x3y2) to[TL, l_=$T_{1}$, a^=$50\,\Omega$] (x6y2); % line 5
+\node[ground] at (x2y3) {}; % line 6
+\draw (part-J1.pin 1) -- (x3y2); % line 8
+\draw (part-J1.pin 2) -- (x2y3); % line 9
+\path (1.619,-0.593) rectangle (2.381,0.593); % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (2,0) {X}; % line 11
+\path (10.4,-2.593) rectangle (11.289,-1.407); % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\large] at (10.4,-2) {X}; % line 12
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(13.594,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

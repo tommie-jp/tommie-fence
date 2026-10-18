@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.66.0] - 2026-10-18
+
+### Changed
+
+- **束ねるフェンスを上げた** (breadboard-fence 0.44.0 / copper-fence 0.11.0 / fence-kit 0.22.0 / graph-fence 0.4.0 / logic-fence 0.4.0 / perfboard-fence 0.43.0 / scope-fence 0.8.0 / spectrum-fence 0.6.0 / vna-fence 0.9.0)。詳しくは各パッケージの CHANGELOG。
+
 ## [0.65.1] - 2026-10-17
 
 ### Changed

@@ -44,42 +44,42 @@
 \coordinate (x9y6) at (16,-10);
 \coordinate (x7y2) at (12,-2);
 \coordinate (x8y4) at (14,-6);
-\draw (x1y2) node[ocirc]{} node[above left]{VCC}; % line 3
-\node[dipchip, num pins=8, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U1) at (x5y5) {}; % line 4
-\node[font=\scriptsize, anchor=north] at (part-U1.south) {$\mathrm{NE555}$}; % line 4
-\node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 4
-\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 4
-\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 4
-\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 3) {X}; % line 4
-\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 4) {X}; % line 4
-\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 5) {X}; % line 4
-\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 6) {X}; % line 4
-\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 7) {X}; % line 4
-\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 8) {X}; % line 4
-\node[ground] at (x3y7) {}; % line 5
-\draw (x2y6) to[R, l_=$R_{3}$, a^=$330\,\Omega$] (x2y8); % line 6
-\draw (x2y8) to[leD, l_=$D_{1}$] (x2y10); % line 7
-\node[anchor=west] at (2.8,-16) {$\mathrm{red}$}; % line 7
-\node[ground] at (x2y10) {}; % line 8
-\draw (x6y8) to[C, l_=$C_{2}$, a^=$10\,\mathrm{n}\mathrm{F}$] (x6y10); % line 9
-\node[ground] at (x6y10) {}; % line 10
-\draw (x10y2) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x10y4); % line 11
-\draw (x10y4) to[R, l_=$R_{2}$, a^=$47\,\mathrm{k}\Omega$] (x10y6); % line 12
-\draw (x10y6) to[C, l_=$C_{1}$, a^=$10\,\mu\mathrm{F}$] (x10y8); % line 13
-\node[ground] at (x10y8) {}; % line 14
-\draw (x1y2) -- (x10y2); % line 16
-\draw (part-U1.pin 4) -| (x1y2); % line 17
-\draw (part-U1.pin 1) -| (x3y7); % line 18
-\draw (part-U1.pin 3) -| (x2y6); % line 19
-\draw (part-U1.pin 2) -| (x4y7); % line 20
-\draw (x4y7) -- (x9y7); % line 21
-\draw (x9y7) -- (x9y6); % line 22
-\draw (part-U1.pin 8) -| (x7y2); % line 23
-\draw (part-U1.pin 7) -| (x8y4); % line 24
-\draw (x8y4) -- (x10y4); % line 25
-\draw (part-U1.pin 6) -| (x9y6); % line 26
-\draw (x9y6) -- (x10y6); % line 27
-\draw (part-U1.pin 5) -| (x6y8); % line 28
+\draw (x1y2) node[ocirc]{} node[above left]{VCC}; % line 4
+\node[dipchip, num pins=8, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U1) at (x5y5) {}; % line 5
+\node[font=\scriptsize, anchor=north] at (part-U1.south) {$\mathrm{NE555}$}; % line 5
+\node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 3) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 4) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 5) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 6) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 7) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 8) {X}; % line 5
+\node[ground] at (x3y7) {}; % line 6
+\draw (x2y6) to[R, l_=$R_{3}$, a^=$330\,\Omega$] (x2y8); % line 7
+\draw (x2y8) to[leD, l_=$D_{1}$] (x2y10); % line 8
+\node[anchor=west] at (2.8,-16) {$\mathrm{red}$}; % line 8
+\node[ground] at (x2y10) {}; % line 9
+\draw (x6y8) to[C, l_=$C_{2}$, a^=$10\,\mathrm{n}\mathrm{F}$] (x6y10); % line 10
+\node[ground] at (x6y10) {}; % line 11
+\draw (x10y2) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x10y4); % line 12
+\draw (x10y4) to[R, l_=$R_{2}$, a^=$47\,\mathrm{k}\Omega$] (x10y6); % line 13
+\draw (x10y6) to[C, l_=$C_{1}$, a^=$10\,\mu\mathrm{F}$] (x10y8); % line 14
+\node[ground] at (x10y8) {}; % line 15
+\draw (x1y2) -- (x10y2); % line 17
+\draw (part-U1.pin 4) -| (x1y2); % line 18
+\draw (part-U1.pin 1) -| (x3y7); % line 19
+\draw (part-U1.pin 3) -| (x2y6); % line 20
+\draw (part-U1.pin 2) -| (x4y7); % line 21
+\draw (x4y7) -- (x9y7); % line 22
+\draw (x9y7) -- (x9y6); % line 23
+\draw (part-U1.pin 8) -| (x7y2); % line 24
+\draw (part-U1.pin 7) -| (x8y4); % line 25
+\draw (x8y4) -- (x10y4); % line 26
+\draw (part-U1.pin 6) -| (x9y6); % line 27
+\draw (x9y6) -- (x10y6); % line 28
+\draw (part-U1.pin 5) -| (x6y8); % line 29
 \node[circ] at (x1y2) {};
 \node[circ] at (x10y4) {};
 \node[circ] at (x10y6) {};

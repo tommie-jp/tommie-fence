@@ -15,18 +15,18 @@
 \coordinate (x7y1) at (12,0);
 \coordinate (x9y1) at (16,0);
 \coordinate (x9y5) at (16,-8);
-\draw (x1y2) to[esource, l_=$\mathrm{W1}$] (x1y5); % line 3
-\draw (-0.18,-5) sin ++(0.09,0.09) cos ++(0.09,-0.09) sin ++(0.09,-0.09) cos ++(0.09,0.09); % line 3
-\node[ground] at (x1y5) {}; % line 4
-\draw (x3y2) to[L, l_=$L_{1}$, a^=$10\,\mathrm{m}\mathrm{H}$] (x5y2); % line 5
-\draw (x5y2) to[C, l_=$C_{1}$, a^=$10\,\mathrm{n}\mathrm{F}$] (x7y2); % line 6
-\draw (x7y2) to[R, l_=$R_{1}$, a^=$100\,\Omega$] (x9y2); % line 7
-\draw (x7y1) to[rmeter, t={$\mathrm{V}$}, l_=$\mathrm{CH2}$] (x9y1); % line 8
-\draw (x1y2) -- (x3y2); % line 10
-\draw (x7y1) -- (x7y2); % line 11
-\draw (x9y1) -- (x9y2); % line 12
-\draw (x9y2) -- (x9y5); % line 13
-\draw (x9y5) -- (x1y5); % line 14
+\draw (x1y2) to[esource, l_=$\mathrm{W1}$] (x1y5); % line 4
+\draw (-0.18,-5) sin ++(0.09,0.09) cos ++(0.09,-0.09) sin ++(0.09,-0.09) cos ++(0.09,0.09); % line 4
+\node[ground] at (x1y5) {}; % line 5
+\draw (x3y2) to[L, l_=$L_{1}$, a^=$10\,\mathrm{m}\mathrm{H}$] (x5y2); % line 6
+\draw (x5y2) to[C, l_=$C_{1}$, a^=$10\,\mathrm{n}\mathrm{F}$] (x7y2); % line 7
+\draw (x7y2) to[R, l_=$R_{1}$, a^=$100\,\Omega$] (x9y2); % line 8
+\draw (x7y1) to[rmeter, t={$\mathrm{V}$}, l_=$\mathrm{CH2}$] (x9y1); % line 9
+\draw (x1y2) -- (x3y2); % line 11
+\draw (x7y1) -- (x7y2); % line 12
+\draw (x9y1) -- (x9y2); % line 13
+\draw (x9y2) -- (x9y5); % line 14
+\draw (x9y5) -- (x1y5); % line 15
 \node[circ] at (x1y5) {};
 \node[circ] at (x7y2) {};
 \node[circ] at (x9y2) {};

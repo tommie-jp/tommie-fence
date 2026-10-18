@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-10-18
+
 ### Added
 
 - **部品表を英語でも出せる。** `lookupRole(model, lang)` と `valueWithRole(value, lang)` が IC の働きを英語で返す (`CD4081 (2-input AND ×4)`)。表は `parts/pinoutRolesEn.ts`。型番を足したら英語の働きも足す (`pinouts.test.ts` ではなく `partsListing.lang.test.ts` が落とす)

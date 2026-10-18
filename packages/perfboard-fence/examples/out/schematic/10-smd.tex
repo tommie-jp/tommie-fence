@@ -15,25 +15,25 @@
 \coordinate (x4y9) at (6,-16);
 \coordinate (x1y7) at (0,-12);
 \coordinate (x3y7) at (4,-12);
-\draw (x1y2) to[esource, l_=$V_{1}$, a^=$5\,\mathrm{V}$] (x1y5); % line 3
-\draw (-0.081,-4.865) -- ++(0.162,0); % line 3
-\draw (0,-4.946) -- ++(0,0.162); % line 3
-\draw (-0.081,-5.135) -- ++(0.162,0); % line 3
-\node[vcc] at (x1y2) {+5V}; % line 4
-\node[ground] at (x1y5) {}; % line 5
-\draw (x4y2) to[R, l_=$R_{2}$, a^=$330\,\Omega$] (x4y4); % line 6
-\draw (x4y4) to[leD, l_=$D_{1}$] (x4y6); % line 7
-\node[anchor=west] at (6.8,-8) {$\mathrm{red}$}; % line 7
-\node[npn] (part-Q1) at (x4y7) {}; % line 8
-\node[font=\scriptsize, anchor=north] at (part-Q1.south) {$\mathrm{2SC2712}$}; % line 8
-\node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 8
-\node[ground] at (x4y9) {}; % line 9
-\draw (x1y7) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x3y7); % line 10
-\draw (x1y7) node[ocirc]{} node[above left]{IN}; % line 11
-\draw (x1y2) -- (x4y2); % line 13
-\draw (part-Q1.collector) |- (x4y6); % line 14
-\draw (part-Q1.base) |- (x3y7); % line 15
-\draw (part-Q1.emitter) |- (x4y9); % line 16
+\draw (x1y2) to[esource, l_=$V_{1}$, a^=$5\,\mathrm{V}$] (x1y5); % line 4
+\draw (-0.081,-4.865) -- ++(0.162,0); % line 4
+\draw (0,-4.946) -- ++(0,0.162); % line 4
+\draw (-0.081,-5.135) -- ++(0.162,0); % line 4
+\node[vcc] at (x1y2) {+5V}; % line 5
+\node[ground] at (x1y5) {}; % line 6
+\draw (x4y2) to[R, l_=$R_{2}$, a^=$330\,\Omega$] (x4y4); % line 7
+\draw (x4y4) to[leD, l_=$D_{1}$] (x4y6); % line 8
+\node[anchor=west] at (6.8,-8) {$\mathrm{red}$}; % line 8
+\node[npn] (part-Q1) at (x4y7) {}; % line 9
+\node[font=\scriptsize, anchor=north] at (part-Q1.south) {$\mathrm{2SC2712}$}; % line 9
+\node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 9
+\node[ground] at (x4y9) {}; % line 10
+\draw (x1y7) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x3y7); % line 11
+\draw (x1y7) node[ocirc]{} node[above left]{IN}; % line 12
+\draw (x1y2) -- (x4y2); % line 14
+\draw (part-Q1.collector) |- (x4y6); % line 15
+\draw (part-Q1.base) |- (x3y7); % line 16
+\draw (part-Q1.emitter) |- (x4y9); % line 17
 \node[circ] at (x1y2) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(13.807,0.853);

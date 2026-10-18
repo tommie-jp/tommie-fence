@@ -38,20 +38,20 @@
 \coordinate (x2y4) at (2,-6);
 \coordinate (x11y4) at (20,-6);
 \coordinate (x11y3) at (20,-4);
-\node[smacoax, draw, xscale=-1] (part-J1) at (x2y3) {}; % line 3
-\node[font=\scriptsize, anchor=south] at (part-J1.north) {$\mathrm{CH0}$}; % line 3
-\node[anchor=east] at (part-J1.east) {$J_{1}$}; % line 3
-\draw (x4y3) to[R, l_=$R_{1}$, a^=$38\,\Omega$] (x6y3); % line 4
-\draw (x6y3) to[L, l_=$L_{1}$, a^=$180\,\mathrm{n}\mathrm{H}$] (x8y3); % line 5
-\draw (x8y3) to[C, l_=$C_{1}$, a^=$0\mbox{.}77\,\mathrm{p}\mathrm{F}$] (x10y3); % line 6
-\node[ground] at (x2y4) {}; % line 7
-\node[ground] at (x11y4) {}; % line 8
-\draw (part-J1.pin 1) -- (x4y3); % line 10
-\draw (x10y3) -- (x11y3); % line 11
-\draw (x11y3) -- (x11y4); % line 11
-\draw (part-J1.pin 2) -- (x2y4); % line 12
-\path (20.2,-5.494) rectangle (20.941,-4.506); % line 14
-\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (20.2,-5) {X}; % line 14
+\node[smacoax, draw, xscale=-1] (part-J1) at (x2y3) {}; % line 4
+\node[font=\scriptsize, anchor=south] at (part-J1.north) {$\mathrm{CH0}$}; % line 4
+\node[anchor=east] at (part-J1.east) {$J_{1}$}; % line 4
+\draw (x4y3) to[R, l_=$R_{1}$, a^=$38\,\Omega$] (x6y3); % line 5
+\draw (x6y3) to[L, l_=$L_{1}$, a^=$180\,\mathrm{n}\mathrm{H}$] (x8y3); % line 6
+\draw (x8y3) to[C, l_=$C_{1}$, a^=$0\mbox{.}77\,\mathrm{p}\mathrm{F}$] (x10y3); % line 7
+\node[ground] at (x2y4) {}; % line 8
+\node[ground] at (x11y4) {}; % line 9
+\draw (part-J1.pin 1) -- (x4y3); % line 11
+\draw (x10y3) -- (x11y3); % line 12
+\draw (x11y3) -- (x11y4); % line 12
+\draw (part-J1.pin 2) -- (x2y4); % line 13
+\path (20.2,-5.494) rectangle (20.941,-4.506); % line 15
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (20.2,-5) {X}; % line 15
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(17.77,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

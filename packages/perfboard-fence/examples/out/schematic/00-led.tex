@@ -10,15 +10,15 @@
 \coordinate (x1y3) at (0,-4);
 \coordinate (x3y1) at (4,0);
 \coordinate (x3y3) at (4,-4);
-\draw (x1y1) to[esource, l_=$V_{1}$, a^=$5\,\mathrm{V}$] (x1y3); % line 3
-\draw (-0.081,-1.865) -- ++(0.162,0); % line 3
-\draw (0,-1.946) -- ++(0,0.162); % line 3
-\draw (-0.081,-2.135) -- ++(0.162,0); % line 3
-\draw (x1y1) to[R, l_=$R_{1}$, a^=$330\,\Omega$] (x3y1); % line 4
-\draw (x3y1) to[leD, l_=$D_{1}$] (x3y3); % line 5
-\node[anchor=west] at (4.8,-2) {$\mathrm{red}$}; % line 5
-\node[ground] at (x1y3) {}; % line 6
-\draw (x1y3) -- (x3y3); % line 8
+\draw (x1y1) to[esource, l_=$V_{1}$, a^=$5\,\mathrm{V}$] (x1y3); % line 4
+\draw (-0.081,-1.865) -- ++(0.162,0); % line 4
+\draw (0,-1.946) -- ++(0,0.162); % line 4
+\draw (-0.081,-2.135) -- ++(0.162,0); % line 4
+\draw (x1y1) to[R, l_=$R_{1}$, a^=$330\,\Omega$] (x3y1); % line 5
+\draw (x3y1) to[leD, l_=$D_{1}$] (x3y3); % line 6
+\node[anchor=west] at (4.8,-2) {$\mathrm{red}$}; % line 6
+\node[ground] at (x1y3) {}; % line 7
+\draw (x1y3) -- (x3y3); % line 9
 \node[circ] at (x1y3) {};
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(7.894,0.853);

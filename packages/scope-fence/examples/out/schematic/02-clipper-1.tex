@@ -15,19 +15,19 @@
 \coordinate (x8y5) at (14,-8);
 \coordinate (x8y2) at (14,-2);
 \coordinate (x10y2) at (18,-2);
-\draw (x1y2) to[esource, l_=$\mathrm{W1}$] (x1y5); % line 3
-\draw (-0.18,-5) -- ++(0,0.18) -- ++(0.18,0) -- ++(0,-0.36) -- ++(0.18,0) -- ++(0,0.18); % line 3
-\node[ground] at (x1y5) {}; % line 4
-\draw (x3y2) to[R, l_=$R_{1}$, a^=$1\,\mathrm{k}\Omega$] (x6y2); % line 5
-\draw (x7y2) to[D, l_=$D_{1}$] (x7y5); % line 6
-\draw (x8y5) to[D, l_=$D_{2}$] (x8y2); % line 7
-\node[ground] at (x8y5) {}; % line 8
-\draw (x10y2) node[ocirc]{} node[above left]{OUT}; % line 9
-\draw (x1y2) -- (x3y2); % line 11
-\draw (x6y2) -- (x7y2); % line 12
-\draw (x7y2) -- (x8y2); % line 13
-\draw (x7y5) -- (x8y5); % line 14
-\draw (x8y2) -- (x10y2); % line 15
+\draw (x1y2) to[esource, l_=$\mathrm{W1}$] (x1y5); % line 4
+\draw (-0.18,-5) -- ++(0,0.18) -- ++(0.18,0) -- ++(0,-0.36) -- ++(0.18,0) -- ++(0,0.18); % line 4
+\node[ground] at (x1y5) {}; % line 5
+\draw (x3y2) to[R, l_=$R_{1}$, a^=$1\,\mathrm{k}\Omega$] (x6y2); % line 6
+\draw (x7y2) to[D, l_=$D_{1}$] (x7y5); % line 7
+\draw (x8y5) to[D, l_=$D_{2}$] (x8y2); % line 8
+\node[ground] at (x8y5) {}; % line 9
+\draw (x10y2) node[ocirc]{} node[above left]{OUT}; % line 10
+\draw (x1y2) -- (x3y2); % line 12
+\draw (x6y2) -- (x7y2); % line 13
+\draw (x7y2) -- (x8y2); % line 14
+\draw (x7y5) -- (x8y5); % line 15
+\draw (x8y2) -- (x10y2); % line 16
 \node[circ] at (x7y2) {};
 \node[circ] at (x8y5) {};
 \node[circ] at (x8y2) {};
