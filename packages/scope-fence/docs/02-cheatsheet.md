@@ -20,10 +20,13 @@ measure: [vpp, freq]       # 任意。無ければ vpp と freq
 notes:                     # 任意。注釈 (時刻 電圧)
   - text 1ms 1.26V: 1 τ で 63 %
 style: dark                # 任意
+lang: en                   # 任意。図の中の固定の字の言語。ja (既定) か en
 ```
 ````
 
 画面は横 10 目盛・縦 8 目盛、t = 0 (トリガ) が真ん中 (`at -5div` で左端へ)。理想だけなら**実線**。`data:` を重ねると理想は**破線**、`data:` は**実線**。
+
+`lang:` は読み値の見出し・凡例などフェンスが出す字を切り替える (`title` や注釈は書いたまま)。
 
 `style:` は 1 語 (`light` `dark` `mono`) か並び (`theme` `width` (120〜4000) `stamp` `debug` (`on` / `off`))。
 

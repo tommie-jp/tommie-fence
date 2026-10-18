@@ -84,6 +84,7 @@ and the content of the offending line.
 | **Theme and width** (`style:`: `light` / `dark` / `mono`) | works |
 | **Turning the ERC off** (`style: check: off`; on by default) | works |
 | **The solder side** (`style: back: on`; off by default) | works |
+| **Language of the figure's own text** (`lang: en`: parts-list headings and so on in English; `ja` by default) | works |
 | **Axis labels** (`style: labels:`: letters/digits, upper/lower) | works |
 | **Substrate thickness and material** (`board: h: 1.6mm` / `material: FR-4`; kept for cross-sections, the top view does not change) | read |
 | **Board and pad colours** (`board: color:` / `land:`; green and silver) | works |

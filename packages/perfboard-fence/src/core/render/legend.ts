@@ -1,7 +1,9 @@
 import { element, num, parseResistor, resistorBands } from 'fence-kit';
 import type { Band } from '../model/layout.ts';
+import type { Lang } from 'fence-kit';
 import { colorName, hasHatch, hatchDash, hatchFill } from './hatch.ts';
 import { monoBandHeight, monoBaseline, monoText, monoWidth } from './monoBand.ts';
+import { textLabels } from './textLabels.ts';
 import type { Theme } from './theme.ts';
 
 /**
@@ -21,12 +23,13 @@ const SWATCH_HEIGHT = 9;
 /** 見本と名前の間、項目と項目の間。 */
 const INNER = 5;
 const BETWEEN = 16;
-/** 帯の頭に置く見出し。**線にも面にも掛かる**ので「線の色」とは書かない。 */
-const HEADING = '色';
 
 /** 1 項目の幅。見本 2 つと名前。 */
-const entryWidth = (color: string, size: number): number =>
-  LINE + INNER + SWATCH_WIDTH + INNER + monoWidth(colorName(color), size);
+const entryWidth = (color: string, size: number, lang: Lang): number =>
+  LINE + INNER + SWATCH_WIDTH + INNER + monoWidth(colorName(color, lang), size);
+
+/** 帯の頭に置く見出し。**線にも面にも掛かる**ので「線の色」とは書かない。 */
+const headingOf = (lang: Lang): string => textLabels(lang).legend;
 
 /**
  * 図の中で色として出るもの。**配線の色・LED の色・抵抗のカラーコード**の 3 つ。
@@ -71,14 +74,15 @@ function wrapped(
   colors: readonly string[],
   size: number,
   room: number,
+  lang: Lang,
 ): readonly (readonly { readonly color: string; readonly x: number }[])[] {
-  const head = monoWidth(HEADING, size) + BETWEEN;
+  const head = monoWidth(headingOf(lang), size) + BETWEEN;
   const rows: { color: string; x: number }[][] = [];
   let row: { color: string; x: number }[] = [];
   let x = head;
 
   for (const color of colors) {
-    const width = entryWidth(color, size);
+    const width = entryWidth(color, size, lang);
     // 1 項目も入らない幅でも、必ず 1 つは置く (置かないと凡例が消える)。
     if (row.length > 0 && x + width > room) {
       rows.push(row);
@@ -96,14 +100,15 @@ export function legendSize(
   colors: readonly string[],
   theme: Theme,
   room: number,
+  lang: Lang = 'ja',
 ): { readonly width: number; readonly height: number } {
   if (colors.length === 0) return { width: 0, height: 0 };
 
   const size = theme.metrics.textSize;
-  const rows = wrapped(colors, size, room);
+  const rows = wrapped(colors, size, room, lang);
   const width = Math.max(...rows.map((cells) => {
     const last = cells[cells.length - 1];
-    return last === undefined ? 0 : last.x + entryWidth(last.color, size);
+    return last === undefined ? 0 : last.x + entryWidth(last.color, size, lang);
   }));
   return { width: Math.ceil(width), height: monoBandHeight(rows.length, size) };
 }
@@ -117,13 +122,14 @@ export function renderLegend(
   band: Band,
   theme: Theme,
   room: number,
+  lang: Lang = 'ja',
 ): string {
   if (colors.length === 0) return '';
 
   const size = theme.metrics.textSize;
   const ink = theme.palette.caption;
 
-  const drawn = wrapped(colors, size, room)
+  const drawn = wrapped(colors, size, room, lang)
     .map((cells, line) => {
       const y = monoBaseline(band, size, line);
       // 見本は字のベースラインではなく、字の高さの真ん中に置く。
@@ -144,11 +150,11 @@ export function renderLegend(
             fill: hatchFill(color, ink), stroke: ink, 'stroke-width': 0.6,
           });
           return sample + swatch
-            + monoText(swatchX + SWATCH_WIDTH + INNER, y, colorName(color), { fill: ink, size });
+            + monoText(swatchX + SWATCH_WIDTH + INNER, y, colorName(color, lang), { fill: ink, size });
         })
         .join('');
     })
     .join('');
 
-  return monoText(band.x, monoBaseline(band, size, 0), HEADING, { fill: ink, size }) + drawn;
+  return monoText(band.x, monoBaseline(band, size, 0), headingOf(lang), { fill: ink, size }) + drawn;
 }

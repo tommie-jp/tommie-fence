@@ -66,6 +66,7 @@ wires:
 | 名札の置き場所 | 2 ピン・3 ピンの行の末尾に `cap=側[:横,縦]` → [名札と胴をずらす](#名札と胴をずらす-cap-shift) | `D1: diode i17 i14 1N4148 cap=below:1,0` |
 | 胴を半穴ずらす | 2 ピンの行の末尾に `shift=向き` → [名札と胴をずらす](#名札と胴をずらす-cap-shift) | `R1: resistor b3 b9 68k shift=down` |
 | 部品リスト | `parts-list: none` で図の下のリストを消す → [部品リスト](#部品リスト-parts-list) | `parts-list: none` |
+| 図の字の言語 | `lang: en` で部品リストの見出しなど、フェンスが出す固定の字を英語にする (書いた字は変えない) → [図の字の言語](#図の字の言語-lang) | `lang: en` |
 | 注釈 | `notes:` に印と字を並べる → [注釈](#注釈-notes) | `- circle R1` |
 | コメント | 行内の `#` 以降 | `# 電源まわり` |
 
@@ -317,6 +318,21 @@ parts:
 ```
 
 ![図06 部品リストを消す](out/01-syntax-6.svg)
+
+## 図の字の言語 (lang)
+
+`lang: en` を最上位に書くと、フェンスが**自分で出す**固定の字を英語にする。
+対象は部品リストの見出し (`Part` `Type` `Value` `Color / mark`)、基板の行
+(`Board` / `half (400 holes)` / `with rails` `no rails`)、「`N more`」の行、IC の型番に添える働き
+(`CD4081 (2-input AND ×4)`)、セラミックフィルターの種類 (`ceramic filter`)。
+題・注釈・ラベルなど**書いた字は変えない**。エラーとお知らせの文は日本語のまま。
+書かなければ `ja` で、今までの図と 1 バイトも変わらない。
+API では `renderBreadboard(source, { lang: 'en' })` でも指せて、こちらが YAML より先。
+`sheets:` を書いたフェンスでは、一番外側に書けば全部の枚に効く。
+
+```yaml
+lang: en    # ja (既定) / en
+```
 
 | 値 | 意味 |
 | --- | --- |

@@ -1,4 +1,4 @@
-import { element, normalizeNewlines, num, hasSheets, renderSheets } from 'fence-kit';
+import { element, normalizeNewlines, num, hasSheets, renderSheets, resolveLang } from 'fence-kit';
 import { attachSourceText } from './errors.ts';
 import { createLayout } from './model/layout.ts';
 import { parseFence } from './parser/parseFence.ts';
@@ -36,7 +36,7 @@ import { resolveStyle, themeForBoard } from './render/theme.ts';
 import type {
   Address, Board, FenceError, PartSpec, PointSpec, ResolvedNote, RoutedWire,
 } from './types.ts';
-import type { Net, SheetExtras } from 'fence-kit';
+import type { Lang, Net, SheetExtras } from 'fence-kit';
 
 /** 行の無いものを先に、あとは行の順に。同じ行なら見つけた順を保つ。 */
 const byLine = (errors: readonly FenceError[]): FenceError[] =>
@@ -101,6 +101,11 @@ export type RenderOptions = {
    * 書かなければ `style: stamp:` のとおり。
    */
   readonly stamp?: boolean;
+  /**
+   * 図の中の固定の字 (部品表の見出し・色の凡例・半田面の見出し) の言語。YAML の `lang:` より先。
+   * 書かなければ ja。エラーとお知らせの文は言語によらず日本語。
+   */
+  readonly lang?: Lang;
 };
 
 /**
@@ -148,13 +153,15 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   return renderSheets(
     source,
     options,
-    (text, inner) => renderOneSheet(text, inner),
+    (text, inner) => renderOneSheet(text, { ...inner, ...(options.lang === undefined ? {} : { lang: options.lang }) }),
     {
       makeError: (message, line, isNotice) => attachSourceText(
         [isNotice ? notice(message, line) : fenceError(message, line)], source,
       )[0] ?? fenceError(message, line),
       banner: (errors) => renderErrorBanner(errors),
     },
+    // `lang:` は枚が書かなかったときの既定として、全部の枚に渡す。
+    { shared: ['lang'] },
   );
 }
 
@@ -164,6 +171,9 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   const parsed = parseFence(source);
 
   const { board, title } = parsed.doc;
+  // YAML の `lang:` の誤りは読むときに言ってあるので、ここで言うのは `options.lang` の誤りだけ。
+  const language = resolveLang(options.lang, parsed.doc.lang);
+  const { lang } = language;
   const style = resolveStyle(parsed.doc.style);
   const THEME = style.theme;
   // 基板・ランド・スロットの色は**基板の性質**。基板の側を描くものにだけ渡す
@@ -183,7 +193,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   // 部品表も基板の外に出すので、**図を組む前に測る** (書き出しと同じ理由)。
   // 基板に載せる前の部品から作る — 載せられなかった部品も、揃えるものには変わりない。
   const listNotes = parsed.doc.notes.filter((note) => note.kind === 'parts');
-  const listed = listNotes.length > 0 ? partsListing(parsed.doc.parts, devices, boardRow(board, parsed.doc.boardName)) : [];
+  const listed = listNotes.length > 0 ? partsListing(parsed.doc.parts, devices, boardRow(board, parsed.doc.boardName, lang), lang) : [];
   // **白黒の図では色を網と線の型に移す** (`render/hatch.ts`)。移した先が何色かは
   // 図の中では言えないので、使った色の凡例を基板のすぐ下に出す。
   // 色つきのテーマでは見たままなので、帯そのものを出さない。
@@ -233,7 +243,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     deviceBottom: devices.some((device) => device.where === null && device.at === 'bottom'),
     source: listing.length > 0 ? sourceBandSize(listing, THEME) : null,
     list: listed.length > 0 ? partsListSize(listed, THEME) : null,
-    legend: painted.length > 0 ? legendSize(painted, THEME, bare.board.width) : null,
+    legend: painted.length > 0 ? legendSize(painted, THEME, bare.board.width, lang) : null,
     back: back === null ? null : { height: back.height },
     labelRight: style.labels.sides.includes('right'),
     labelBottom: style.labels.sides.includes('bottom'),
@@ -430,7 +440,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
       // 凡例・部品表・書き出しは基板の外の帯。図とは重ならないので、順番はどこでもよい。
       + (layout.legendBand === null
         ? ''
-        : renderLegend(painted, layout.legendBand, THEME, bare.board.width))
+        : renderLegend(painted, layout.legendBand, THEME, bare.board.width, lang))
       + (layout.listBand === null
         ? ''
         : renderPartsList(listed, layout.listBand, THEME, listNotes[0]?.color ?? null))
@@ -447,6 +457,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
           PLATE,
           style.labels,
           layout.backTop,
+          lang,
         ))
       // 掴む層は**いちばん上**。下に敷くと、部品や配線が押しを先に取ってしまう。
       + (options.edit === true
@@ -481,6 +492,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   const collected = [
     ...parsed.errors, ...pointErrors, ...placement.errors, ...unnamedDipNotices(placement.parts), ...wiring.errors, ...noteErrors,
     ...placedDevices.notices, ...fit, ...notChecked,
+    ...(language.error === null ? [] : [fenceError(language.error, null)]),
   ];
   const reported = attachSourceText(byLine(collected), source);
   const errors = reported.filter((error) => error.notice !== true);

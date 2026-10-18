@@ -1,3 +1,4 @@
+import type { Lang } from 'fence-kit';
 import type { THEME_NAMES } from './limits.ts';
 import type { DecodeSpec } from './model/decode.ts';
 import type { DeviceName } from './model/device.ts';
@@ -25,7 +26,7 @@ export type FenceError = {
 
 /** フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。 */
 export const TOP_LEVEL_KEYS = [
-  'device', 'title', 'time', 'window', 'start', 'axis', 'sample', 'signals', 'buses', 'decode', 'cursors', 'trigger', 'style',
+  'device', 'title', 'time', 'window', 'start', 'axis', 'sample', 'signals', 'buses', 'decode', 'cursors', 'trigger', 'style', 'lang',
 ] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
@@ -96,6 +97,8 @@ export type FenceDocument = {
   readonly cursors: readonly CursorSpec[];
   readonly trigger: TriggerSpec | null;
   readonly style: StyleSpec;
+  /** `lang:` に書いた言語。書かなければ null (既定は ja)。 */
+  readonly lang: Lang | null;
   /** 書いてあった一番外側のキー (読めなかったものも)。 */
   readonly keys: readonly string[];
 };

@@ -1,10 +1,12 @@
 import { element, num, svgText } from 'fence-kit';
+import type { Lang } from 'fence-kit';
 import { hasBackGround } from '../model/board.ts';
 import type { BackLayout, Layout } from '../model/layout.ts';
 import type { Island } from '../geometry/islands.ts';
 import { SMA } from '../parts/footprint.ts';
 import type { Footprint } from '../parts/footprint.ts';
 import type { Board, Mm, Rect, RectMm, ViaSpec } from '../types.ts';
+import { labelsOf } from './labels.ts';
 import { smaEdge } from './parts.ts';
 import type { Theme } from './theme.ts';
 
@@ -62,15 +64,17 @@ export type BackInput = {
   readonly slots: readonly { readonly rect: RectMm }[];
   readonly vias: readonly ViaSpec[];
   readonly footprints: readonly Footprint[];
+  readonly lang?: Lang;
 };
 
 export function renderBack(input: BackInput): string {
-  const { board, layout, theme, islands, slots, vias, footprints } = input;
+  const { board, layout, theme, islands, slots, vias, footprints, lang = 'ja' } = input;
+  const words = labelsOf(lang);
   const back = layout.back;
   if (back === null) return '';
   const { palette } = theme;
   const ground = hasBackGround(board);
-  const label = svgText(back.board.x, back.labelBaseline, `裏から見た図 (左右反転) — ${ground ? '裏は銅のベタ (GND)' : '裏に銅は無い'}`, {
+  const label = svgText(back.board.x, back.labelBaseline, `${words.backView} — ${ground ? words.backSolid : words.backBare}`, {
     anchor: 'start', fill: palette.caption, 'font-size': num(theme.metrics.textSize),
   });
   const plate = rect(back.board, { fill: ground ? palette.copper : palette.substrate, stroke: palette.substrateEdge, 'stroke-width': 1 });

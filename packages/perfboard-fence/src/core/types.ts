@@ -1,3 +1,4 @@
+import type { Lang } from 'fence-kit';
 import { THEME_NAMES } from './limits.ts';
 /**
  * perfboard フェンスの型。**ブレッドボードと分けてある理由は物理**で、
@@ -24,7 +25,7 @@ export type FenceError = {
  * フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。
  * **Phase 0 では語彙を決めるだけ**で、中身の検証は Phase 1 以降。
  */
-export const TOP_LEVEL_KEYS = ['title', 'points', 'unused', 'shorted', 'board', 'style', 'parts', 'wires', 'notes'] as const;
+export const TOP_LEVEL_KEYS = ['title', 'points', 'unused', 'shorted', 'board', 'style', 'lang', 'parts', 'wires', 'notes'] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
 
@@ -310,6 +311,8 @@ export type FenceDocument = {
   readonly boardName: string | null;
   /** 図の上に出す題。書かれていなければ null。 */
   readonly title: string | null;
+  /** 図の中の固定の字の言語。YAML の `lang:`。書かなければ null (呼び出し側の指定か既定の ja)。 */
+  readonly lang: Lang | null;
   readonly parts: readonly PartSpec[];
   readonly wires: readonly WireSpec[];
   /** `points:` で名前を付けた穴。**定義順**で持つ (ネット名の当て方が定義順)。 */

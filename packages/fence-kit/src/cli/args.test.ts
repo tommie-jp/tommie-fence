@@ -12,7 +12,7 @@ describe('parseCliArgs', () => {
     const result = parsed(['render', 'docs', 'a.md', '--out', 'out']);
 
     expect(result.ok && result.value).toEqual({
-      command: 'render', targets: ['docs', 'a.md'], outDir: 'out', flags: new Set(),
+      command: 'render', targets: ['docs', 'a.md'], outDir: 'out', flags: new Set(), lang: null,
     });
   });
 

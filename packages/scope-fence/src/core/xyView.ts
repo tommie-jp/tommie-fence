@@ -1,3 +1,4 @@
+import type { Lang } from 'fence-kit';
 import { samplingNotices, tooHeavy, tracesOf } from './ideal.ts';
 import { fractionY } from './layout/scales.ts';
 import { SIZE, createLayout } from './layout/screen.ts';
@@ -68,7 +69,7 @@ function axesOf(doc: FenceDocument, traces: readonly Trace[]): Axes | null {
 const statusText = (axis: 'X' | 'Y', trace: Trace, scale: Scale): string =>
   `${axis} ${trace.name.toUpperCase()} ${formatQuantityPerDiv(scale.perDiv, trace.unit)}`;
 
-function drawXy(doc: FenceDocument, axes: Axes | null, readings: ReturnType<typeof readingsOf>, style: ReturnType<typeof resolveStyle>): string {
+function drawXy(doc: FenceDocument, axes: Axes | null, readings: ReturnType<typeof readingsOf>, style: ReturnType<typeof resolveStyle>, lang: Lang): string {
   const { theme } = style;
   const items = axes === null ? [{ text: 'XY', fill: theme.palette.caption }] : [
     { text: statusText('X', axes.x, axes.xScale), fill: traceColor(theme, axes.x.name) },
@@ -78,8 +79,8 @@ function drawXy(doc: FenceDocument, axes: Axes | null, readings: ReturnType<type
   const layout = createLayout({
     statusRows: status.length,
     title: doc.title,
-    key: axes === null ? null : keyText(true, null),
-    readings: readingsSize(readings, null, theme),
+    key: axes === null ? null : keyText(true, null, lang),
+    readings: readingsSize(readings, null, theme, lang),
     source: null,
     divisions: XY_DIVISIONS,
     theme,
@@ -90,17 +91,17 @@ function drawXy(doc: FenceDocument, axes: Axes | null, readings: ReturnType<type
     fractionY(0, axes.yScale.perDiv, axes.yScale.position), layout, theme,
   ) + renderXMark(axes.x.name === 'math' ? 'M' : axes.x.name.slice(2), fractionY(0, axes.xScale.perDiv, axes.xScale.position), layout, theme, traceColor(theme, axes.x.name));
   const body = renderTitle(doc.title, layout, theme)
-    + renderKey(axes !== null, null, layout, theme)
+    + renderKey(axes !== null, null, layout, theme, lang)
     + renderGrid(layout, theme, XY_DIVISIONS)
     + curve
     + marks
     + renderStatus(status, layout, theme)
-    + (layout.readingsBand === null ? '' : renderReadings(readings, null, layout.readingsBand, theme));
+    + (layout.readingsBand === null ? '' : renderReadings(readings, null, layout.readingsBand, theme, lang));
   return renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
 }
 
 /** XY の画面を描く。時刻のずれ (トリガ) は無い。 */
-export function renderXyView(doc: FenceDocument, source: string, options: RenderOptions, said: FenceError[]): RenderResult {
+export function renderXyView(doc: FenceDocument, source: string, options: RenderOptions, said: FenceError[], lang: Lang = 'ja'): RenderResult {
   const style = resolveStyle(doc.style);
   const screen = screenOf(xyWindow(doc.channels) / DIVISIONS.x, LIMITS.samples);
   const math = doc.math?.expr ?? null;
@@ -112,8 +113,8 @@ export function renderXyView(doc: FenceDocument, source: string, options: Render
   const traces = sampled === null ? [] : tracesOf(doc, sampled, screen);
   const axes = axesOf(doc, traces);
   const readings = readingsOf({ traces: axes === null ? [] : [axes.x, axes.y], cursors: [], measures: XY_MEASURES });
-  const svg = drawXy(doc, axes, readings, style);
+  const svg = drawXy(doc, axes, readings, style, lang);
   return finishResult({
-    source, said, svg, readings, readingLines: readingLinesOf(readings, null), debug: style.debug, offset: options.offset ?? 0,
+    source, said, svg, readings, readingLines: readingLinesOf(readings, null, lang), debug: style.debug, offset: options.offset ?? 0,
   });
 }

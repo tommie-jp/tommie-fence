@@ -1,3 +1,4 @@
+import type { Lang } from 'fence-kit';
 import { fenceError, notice, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import type { AxisUnit, FenceDocument, FenceError } from '../types.ts';
@@ -84,7 +85,7 @@ function decodeRows(doc: FenceDocument, lanes: readonly BitRow[], window: Window
   return rows;
 }
 
-export function screenOf(doc: FenceDocument): Screen {
+export function screenOf(doc: FenceDocument, lang: Lang = 'ja'): Screen {
   const device = doc.device === null ? null : deviceOf(doc.device);
   const said: FenceError[] = [];
   // **範囲の外の窓は仮の窓に戻す** — 桁あふれで座標が NaN や Infinity になる (格子は必ず描く)。
@@ -128,6 +129,6 @@ export function screenOf(doc: FenceDocument): Screen {
   }
   return {
     device, window, defaultedWindow: doc.time === null || !timeOk, rows, cursors, axis, trigger: triggered.mark,
-    readings: readCursors(cursors, rows), sample: doc.sample?.value ?? null, said,
+    readings: readCursors(cursors, rows, lang), sample: doc.sample?.value ?? null, said,
   };
 }

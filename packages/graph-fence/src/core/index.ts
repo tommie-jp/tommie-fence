@@ -1,8 +1,10 @@
-import { normalizeNewlines, textWidth } from 'fence-kit';
+import { normalizeNewlines, resolveLang, textWidth } from 'fence-kit';
+import type { Lang } from 'fence-kit';
 import { attachSourceText, fenceError, notice, shiftErrors } from './errors.ts';
 import { linearAxis, logAxis, startsAtZero } from './layout/axis.ts';
 import type { Axis } from './layout/axis.ts';
 import { SIZE, createLayout } from './layout/page.ts';
+import { labelsOf } from './labels.ts';
 import { LIMITS, MEASURED_LABEL } from './limits.ts';
 import { parseCsv } from './model/csv.ts';
 import { matchColumns } from './model/data.ts';
@@ -54,6 +56,8 @@ export type RenderOptions = {
   readonly offset?: number;
   /** `data:` のファイルを読む口。渡さなければ「この宿主では読めません」と言って理想だけ描く。 */
   readonly data?: DataSource;
+  /** 図の中の固定の字の言語 (ja か en)。YAML の `lang:` より先。既定は ja。 */
+  readonly lang?: Lang;
 };
 
 type Measured = { readonly lines: readonly LineSpec[]; readonly said: readonly FenceError[] };
@@ -185,6 +189,12 @@ export function renderGraph(input: string, options: RenderOptions = {}): RenderR
   const style = resolveStyle(doc.style);
   const { theme } = style;
   const said: FenceError[] = [];
+  const language = resolveLang(options.lang, doc.lang);
+  if (language.error !== null) said.push(fenceError(language.error, null));
+  const { lang } = language;
+  const labels = labelsOf(lang);
+  // `data:` に名前を書かなかったときの既定の名前だけ言語に合わせる (書いた名前はそのまま)。
+  const dataLabel = doc.data === null || doc.data.label === MEASURED_LABEL ? labels.measured : doc.data.label;
 
   const xSpec = doc.x ?? DEFAULT_X;
   if (!doc.keys.includes('x') && source.trim() !== '') {
@@ -214,14 +224,14 @@ export function renderGraph(input: string, options: RenderOptions = {}): RenderR
   const marks = doc.notes.flatMap((note) => (note.kind === 'mark' ? [note.x] : [])).slice(0, LIMITS.marks);
   const readings = readingsOf({
     lines: drawn, sampled, marks, peak: doc.notes.some((note) => note.kind === 'peak'),
-    xName: xSpec.name ?? 'x', xUnit: xSpec.unit, xLog: xAxis.log, dataLabel: doc.data?.label ?? MEASURED_LABEL,
+    xName: xSpec.name ?? 'x', xUnit: xSpec.unit, xLog: xAxis.log, dataLabel, valueHeading: labels.value,
   });
   // 読み値の見出しに出す名前 (`実測 (a.csv)` `計算 (a.csv)`)。
-  const dataName = doc.data === null ? null : `${doc.data.label} (${doc.data.name})`;
+  const dataName = doc.data === null ? null : `${dataLabel} (${doc.data.name})`;
 
   // 凡例: 線の名前と見本 (理想は実線、実測は ○)。
   const legendItems: LegendItem[] = drawn.map((line) => ({
-    name: isMeasured(line) && drawn.some((other) => !isMeasured(other) && other.index === line.index) ? `${line.name} (${doc.data?.label ?? MEASURED_LABEL})` : line.name,
+    name: isMeasured(line) && drawn.some((other) => !isMeasured(other) && other.index === line.index) ? `${line.name} (${dataLabel})` : line.name,
     color: lineColor(theme, line.index),
     measured: isMeasured(line),
   }));
@@ -231,7 +241,7 @@ export function renderGraph(input: string, options: RenderOptions = {}): RenderR
     title: doc.title,
     legendRows: rows.length,
     panels: panels.length,
-    readings: readingsSize(readings, dataName, theme),
+    readings: readingsSize(readings, dataName, theme, lang),
     source: listing === null ? null : linesSize(listing, theme),
     theme,
   });
@@ -244,7 +254,7 @@ export function renderGraph(input: string, options: RenderOptions = {}): RenderR
     const rect = box.plot;
     const top = index === 0;
     const bottomPanel = index === panels.length - 1;
-    const name = axisLabel(panel.spec?.name ?? null, panel.unit, yAxis.log);
+    const name = axisLabel(panel.spec?.name ?? null, panel.unit, yAxis.log, labels.log);
     const nameLeft = rect.x - SIZE.marginLeft + 4;
     const heading = renderAxisName(name, nameLeft, box.headingBaseline, 'start', theme);
     const markLabels = top
@@ -283,13 +293,13 @@ export function renderGraph(input: string, options: RenderOptions = {}): RenderR
   const xLabels = bottom === undefined
     ? ''
     : renderXTicks(xAxis, xSpec.unit, bottom, layout.xTickBaseline, theme)
-      + renderAxisName(axisLabel(xSpec.name, xSpec.unit, xAxis.log), bottom.x + bottom.width / 2, layout.xLabelBaseline, 'middle', theme);
+      + renderAxisName(axisLabel(xSpec.name, xSpec.unit, xAxis.log, labels.log), bottom.x + bottom.width / 2, layout.xLabelBaseline, 'middle', theme);
 
   const body = renderTitle(doc.title, layout, theme)
     + renderLegend(rows, layout.legendRows, (bottom?.x ?? 0), theme)
     + panelSvg
     + xLabels
-    + (layout.readingsBand === null ? '' : renderReadings(readings, dataName, layout.readingsBand, theme))
+    + (layout.readingsBand === null ? '' : renderReadings(readings, dataName, layout.readingsBand, theme, lang))
     + (layout.sourceBand === null || listing === null ? '' : renderLines(listing, layout.sourceBand, theme, theme.palette.label));
   const svg = renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
 
@@ -300,7 +310,7 @@ export function renderGraph(input: string, options: RenderOptions = {}): RenderR
   return {
     svg,
     readings,
-    readingLines: readingLinesOf(readings, dataName),
+    readingLines: readingLinesOf(readings, dataName, lang),
     errors,
     notices,
     errorHtml: renderErrorBanner(style.debug ? [...errors, ...notices] : errors),

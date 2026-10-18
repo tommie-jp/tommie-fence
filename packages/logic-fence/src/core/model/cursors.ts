@@ -1,4 +1,6 @@
+import type { Lang } from 'fence-kit';
 import { notice } from '../errors.ts';
+import { labelsOf } from '../labels.ts';
 import type { CursorSpec, FenceError } from '../types.ts';
 import { formatBusValue } from './radix.ts';
 import type { Row } from './rows.ts';
@@ -41,9 +43,10 @@ export function cursorsInside(specs: readonly CursorSpec[], window: Window, said
   return kept;
 }
 
-export function readCursors(cursors: readonly Cursor[], rows: readonly Row[]): Readings {
+export function readCursors(cursors: readonly Cursor[], rows: readonly Row[], lang: Lang = 'ja'): Readings {
+  const labels = labelsOf(lang);
   if (cursors.length === 0 || rows.length === 0) return EMPTY_READINGS;
-  const head = ['信号', ...cursors.map((cursor) => `${cursor.name} ${secondsText(cursor.time)}`)];
+  const head = [labels.signal, ...cursors.map((cursor) => `${cursor.name} ${secondsText(cursor.time)}`)];
   const body = rows.map((row) => [row.name, ...cursors.map((cursor) => valueText(row, cursor.time))]);
   const [first, second] = cursors;
   if (first === undefined || second === undefined) return { cursors, rows: [head, ...body] };
@@ -51,7 +54,7 @@ export function readCursors(cursors: readonly Cursor[], rows: readonly Row[]): R
   if (cursors.length === 2) return { cursors, rows: [head, ...body, deltaRow(second.time - first.time)] };
   const rest = cursors.slice(1).map((cursor) => cursor.time - first.time);
   const delta = [
-    ['ΔX (X1 から)', '', ...rest.map(secondsText)],
+    [labels.deltaFromFirst, '', ...rest.map(secondsText)],
     ['1/ΔX', '', ...rest.map((seconds) => (seconds === 0 ? '' : hertzText(1 / Math.abs(seconds))))],
   ];
   return { cursors, rows: [head, ...body, ...delta] };

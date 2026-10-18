@@ -1,6 +1,7 @@
 import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
-import { formatPerDiv, parsePerDiv, rememberRecent } from 'fence-kit';
+import { formatPerDiv, parsePerDiv, rememberRecent, resolveLang } from 'fence-kit';
+import type { Lang } from 'fence-kit';
 import { fenceError, notice, safeToken } from '../errors.ts';
 import { DATA_NAME, LIMITS, MEASURED_LABEL } from '../limits.ts';
 import { CHANNEL_NAMES } from '../model/channel.ts';
@@ -34,6 +35,7 @@ const emptyDocument = (): FenceDocument => ({
   measures: null,
   notes: [],
   style: EMPTY_STYLE,
+  lang: null,
   keys: [],
 });
 
@@ -88,6 +90,7 @@ function readFence(source: string): ParseResult {
   let measures: readonly MeasureName[] | null = null;
   let notes: readonly NoteSpec[] = [];
   let style: StyleSpec = EMPTY_STYLE;
+  let lang: Lang | null = null;
   let view: FenceDocument['view'] = 'time';
   let mathPair: Pair | null = null;
   let xyText: { readonly text: string; readonly line: number | null } | null = null;
@@ -192,6 +195,13 @@ function readFence(source: string): ParseResult {
         errors.push(...read.errors);
         break;
       }
+      case 'lang': {
+        const text = (scalarText(pair.value) ?? '').trim();
+        const read = resolveLang(text === '' ? null : text, null);
+        if (read.error !== null) errors.push(fenceError(read.error, at, text || undefined));
+        else if (text !== '') lang = read.lang;
+        break;
+      }
       case 'trigger': {
         const read = parseTriggerLine(scalarText(pair.value) ?? '');
         if (!read.ok) errors.push({ ...read.error, line: at });
@@ -258,7 +268,7 @@ function readFence(source: string): ParseResult {
   }
 
   return {
-    doc: { view, title, time, trigger, channels, math, xy: xyRead.xy, data, cursors, measures, notes, style, keys: [...written] },
+    doc: { view, title, time, trigger, channels, math, xy: xyRead.xy, data, cursors, measures, notes, style, lang, keys: [...written] },
     errors,
   };
 }

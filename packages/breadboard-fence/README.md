@@ -190,6 +190,7 @@ npm pack   # builds, emits the type definitions, and makes breadboard-fence-<ver
 | Wire into a lead's hole | The part slides to a free row in the same columns (same nets) | `- j20 -- -b20 black` |
 | Routing hint | A detour in brackets (20 = one hole) | `- j20 -- -b20 black [v-20]` |
 | Parts list | Printed under the drawing by default; write this to drop it | `parts-list: none` |
+| Language of the figure's own text | `lang: en` prints the parts-list headings and other fixed text in English (your own text is untouched) | `lang: en` |
 | Pushbutton | Four legs across the ravine; write pin 1a's hole | `SW1: button @ e5` |
 | Microcontroller board | Write the hole of the board's leftmost column; pin names match the silkscreen | `MCU: pico2 @ h5` |
 | Shorthand | Common types have a short spelling | `R1: r a5 a10 10k` |

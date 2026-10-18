@@ -1,6 +1,7 @@
 import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
-import { rememberRecent } from 'fence-kit';
+import { rememberRecent, resolveLang } from 'fence-kit';
+import type { Lang } from 'fence-kit';
 import { fenceError, notice, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
 import {
@@ -34,7 +35,7 @@ const BOARD_KEYS = ['size', 'h', 'er', 'ground', 'cut'] as const;
 export type ParseResult = { readonly doc: FenceDocument; readonly errors: readonly FenceError[] };
 
 const emptyDocument = (): FenceDocument => ({
-  board: DEFAULT_BOARD, f: null, title: null, copper: [], parts: [], devices: [], wires: [], notes: [], style: EMPTY_STYLE,
+  board: DEFAULT_BOARD, f: null, lang: null, title: null, copper: [], parts: [], devices: [], wires: [], notes: [], style: EMPTY_STYLE,
 });
 
 const scalarText = (node: unknown): string | null => {
@@ -91,6 +92,7 @@ function readFence(source: string): ParseResult {
   let board: Board | null = null;
   let boardWritten = false;
   let f: number | null = null;
+  let lang: Lang | null = null;
   let title: string | null = null;
   let style: StyleSpec = EMPTY_STYLE;
   const written = new Set<string>();
@@ -314,6 +316,12 @@ function readFence(source: string): ParseResult {
         boardWritten = true;
         readBoard(pair.value, at);
         break;
+      case 'lang': {
+        const resolved = resolveLang(undefined, scalarText(pair.value));
+        if (resolved.error !== null) errors.push(fenceError(resolved.error, at, 'lang'));
+        else lang = resolved.lang;
+        break;
+      }
       case 'f': {
         const text = scalarText(pair.value);
         // **素の数は断る** (`2400000000` は桁を数え違えると別の周波数。接頭辞か Hz が要る)。
@@ -389,7 +397,7 @@ function readFence(source: string): ParseResult {
   }
 
   return {
-    doc: { board: board ?? DEFAULT_BOARD, f, title, copper, parts, devices, wires, notes, style },
+    doc: { board: board ?? DEFAULT_BOARD, f, lang, title, copper, parts, devices, wires, notes, style },
     errors,
   };
 }

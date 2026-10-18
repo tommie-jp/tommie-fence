@@ -1,6 +1,7 @@
 import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Pair } from 'yaml';
-import { parsePerDiv, rememberRecent } from 'fence-kit';
+import { parsePerDiv, rememberRecent, resolveLang } from 'fence-kit';
+import type { Lang } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { parseDecode } from '../model/decode.ts';
@@ -22,7 +23,7 @@ export type ParseResult = { readonly doc: FenceDocument; readonly errors: readon
 
 const emptyDocument = (): FenceDocument => ({
   device: null, title: null, time: null, start: null, axis: null, sample: null, signals: [], buses: [], decode: [], cursors: [], trigger: null,
-  style: EMPTY_STYLE, keys: [],
+  style: EMPTY_STYLE, lang: null, keys: [],
 });
 
 export const scalarText = (node: unknown): string | null => {
@@ -109,6 +110,19 @@ function one<T>(context: Context, key: TopLevelKey, read: (text: string) => Read
     return null;
   }
   return { value: result.value, line: entry.at };
+}
+
+/** `lang:` — ja か en。読めなければ言って既定に戻す。 */
+function readLang(context: Context): Lang | null {
+  const entry = context.entries.get('lang');
+  if (entry === undefined) return null;
+  const text = scalarText(entry.pair.value) ?? '';
+  const read = resolveLang(text, undefined);
+  if (read.error !== null) {
+    context.errors.push(fenceError(read.error, entry.at, text.trim() || undefined));
+    return null;
+  }
+  return read.lang;
 }
 
 const NAME = /^[A-Za-z_][A-Za-z0-9_.-]{0,31}$/;
@@ -349,6 +363,7 @@ function readFence(source: string): ParseResult {
     cursors: readCursors(context),
     trigger: readTrigger(context),
     style: readStyle(context),
+    lang: readLang(context),
     keys: collected.keys,
   };
   return { doc, errors: context.errors };

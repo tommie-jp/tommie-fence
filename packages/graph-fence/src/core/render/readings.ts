@@ -1,4 +1,6 @@
 import { element, num, svgText, textWidth } from 'fence-kit';
+import type { Lang } from 'fence-kit';
+import { labelsOf } from '../labels.ts';
 import type { Readings } from '../model/readings.ts';
 import { linesSize, renderLines, renderTable, tableLines, tableSize } from './mono.ts';
 import type { Band, Size } from './mono.ts';
@@ -8,11 +10,13 @@ import type { Theme } from './theme.ts';
  * 読み値の帯と凡例。帯は **見出し 1 行 → mark の表 → peak の表**。見出しで、値が
  * **測った値か理想の値か**を言う (取り違えると本文の数字が嘘になる。scope・vna と同じ)。
  */
-export function readingsHeading(readings: Readings, dataName: string | null): string {
-  const data = dataName ?? '実測 (data)';
-  if (readings.basis === 'data') return `読み値 — ${data}`;
-  if (readings.basis === 'mixed') return `読み値 — 理想 (計算) と ${data}`;
-  return '読み値 — 理想 (計算)';
+export function readingsHeading(readings: Readings, dataName: string | null, lang: Lang): string {
+  const labels = labelsOf(lang);
+  const data = dataName ?? `${labels.measured} (data)`;
+  const head = `${labels.readings} — `;
+  if (readings.basis === 'data') return `${head}${data}`;
+  if (readings.basis === 'mixed') return `${head}${labels.ideal} ${labels.and} ${data}`;
+  return `${head}${labels.ideal}`;
 }
 
 type Parts = {
@@ -21,21 +25,21 @@ type Parts = {
   readonly peaks: readonly (readonly string[])[];
 };
 
-const partsOf = (readings: Readings, dataName: string | null): Parts => {
+const partsOf = (readings: Readings, dataName: string | null, lang: Lang): Parts => {
   const empty = readings.markRows.length === 0 && readings.peakRows.length === 0;
-  return { heading: empty ? [] : [readingsHeading(readings, dataName)], marks: readings.markRows, peaks: readings.peakRows };
+  return { heading: empty ? [] : [readingsHeading(readings, dataName, lang)], marks: readings.markRows, peaks: readings.peakRows };
 };
 
-export function readingsSize(readings: Readings, dataName: string | null, theme: Theme): Size | null {
-  const parts = partsOf(readings, dataName);
+export function readingsSize(readings: Readings, dataName: string | null, theme: Theme, lang: Lang): Size | null {
+  const parts = partsOf(readings, dataName, lang);
   const sizes = [linesSize(parts.heading, theme), tableSize(parts.marks, theme), tableSize(parts.peaks, theme)];
   const height = sizes.reduce((sum, size) => sum + size.height, 0);
   if (height === 0) return null;
   return { width: Math.max(...sizes.map((size) => size.width)), height };
 }
 
-export function renderReadings(readings: Readings, dataName: string | null, band: Band, theme: Theme): string {
-  const parts = partsOf(readings, dataName);
+export function renderReadings(readings: Readings, dataName: string | null, band: Band, theme: Theme, lang: Lang): string {
+  const parts = partsOf(readings, dataName, lang);
   let y = band.y;
   const next = (size: Size): Band => {
     const here = { x: band.x, y, width: band.width, height: size.height };
@@ -51,8 +55,8 @@ export function renderReadings(readings: Readings, dataName: string | null, band
 }
 
 /** 読み値を字の行に (CLI・playground)。**図の帯と同じ見出しと並び**。 */
-export function readingLinesOf(readings: Readings, dataName: string | null): readonly string[] {
-  const parts = partsOf(readings, dataName);
+export function readingLinesOf(readings: Readings, dataName: string | null, lang: Lang): readonly string[] {
+  const parts = partsOf(readings, dataName, lang);
   return [...parts.heading, ...tableLines(parts.marks), ...tableLines(parts.peaks)];
 }
 

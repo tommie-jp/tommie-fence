@@ -1,9 +1,10 @@
-import { PARTS_HEADINGS, bandColor, lookupNamedChip, partKind, partsMark, valueWithRole } from 'fence-kit';
-import type { PartsMark } from 'fence-kit';
+import { bandColor, lookupNamedChip, partKind, partsMark, valueWithRole } from 'fence-kit';
+import type { Lang, PartsMark } from 'fence-kit';
 import { colorValue } from '../color.ts';
 import type { Band } from '../model/layout.ts';
 import type { Board, DeviceSpec } from '../types.ts';
 import { monoBandHeight, monoBaseline, monoText, monoWidth } from './monoBand.ts';
+import { textLabels } from './textLabels.ts';
 import type { Theme } from './theme.ts';
 
 /** 欄の中身 (種類・値・色・記号) は fence-kit に置き、breadboard の部品表と同じ字で出す。 */
@@ -42,7 +43,6 @@ export type ListedPart = {
 /** 部品表の 1 行ぶん。列に分けて持ち、幅を測ってから置き場所を決める。 */
 export type PartsRow = readonly [id: string, kind: string, value: string, mark: PartsMark];
 
-const HEADINGS: PartsRow = PARTS_HEADINGS;
 
 /**
  * 部品表の行。**書いた順に並べる** — 番号で並べ直すと、図を追いながら表を
@@ -54,28 +54,30 @@ const HEADINGS: PartsRow = PARTS_HEADINGS;
  * 書かなかった厚さと基材も既定のまま出す — 表は買う物の一覧で、既定の基板も買う基板。
  * 色は手元の基板に図を寄せる設定なので載せない。
  */
-export function boardRow(board: Board, name: string | null): PartsRow {
-  const holes = `${board.cols}×${board.rows} 穴`;
+export function boardRow(board: Board, name: string | null, lang: Lang = 'ja'): PartsRow {
+  const labels = textLabels(lang);
+  const holes = labels.holes(board.cols, board.rows);
   const size = name === null ? holes : `${name} (${holes})`;
-  return ['基板', 'perfboard', `${size} ${board.h}mm ${board.material}`, ''];
+  return [labels.board, 'perfboard', `${size} ${board.h}mm ${board.material}`, ''];
 }
 
 export function partsListing(
   parts: readonly ListedPart[],
   devices: readonly DeviceSpec[],
   board: PartsRow | null = null,
+  lang: Lang = 'ja',
 ): readonly PartsRow[] {
   const rows: PartsRow[] = [
     ...parts.map((part): PartsRow =>
-      [part.id, partKind(part.type, part.variant, part.value),
-        valueWithRole(part.value ?? lookupNamedChip(part.type, part.variant)?.name ?? ''), partsMark(part.type, part.variant, part.value)]),
+      [part.id, partKind(part.type, part.variant, part.value, lang),
+        valueWithRole(part.value ?? lookupNamedChip(part.type, part.variant)?.name ?? '', lang), partsMark(part.type, part.variant, part.value)]),
     // 機器は種類が 1 つしかないので、名札を値の欄に出す (`電池 3V`)。
     ...devices.map((device): PartsRow => [device.id, 'device', device.label, '']),
   ];
   // 表から部品を探すので名前の順に並べる (数字は数として: R2 の次は R10。機器も同じ並びに入る)。
   const sorted = [...rows].sort((a, b) => a[0].localeCompare(b[0], 'en', { numeric: true }));
   // 基板は最初に用意する物なので、名前の順には入れず見出しのすぐ下に置く。部品が無ければ表ごと出さない。
-  return sorted.length === 0 ? [] : [HEADINGS, ...(board === null ? [] : [board]), ...sorted];
+  return sorted.length === 0 ? [] : [textLabels(lang).headings, ...(board === null ? [] : [board]), ...sorted];
 }
 
 /** 列の間。1 桁だと隣の欄と地続きに見えるので 2 桁ぶん空ける。 */

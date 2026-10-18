@@ -1,4 +1,6 @@
+import type { Lang } from 'fence-kit';
 import { LIMITS } from '../limits.ts';
+import { labelsOf } from '../render/labels.ts';
 import type { Board, Ground, Mm, Side } from '../types.ts';
 import { formatMm } from './point.ts';
 
@@ -113,14 +115,6 @@ export function inward(side: Side): Mm {
   }
 }
 
-/** 地の在りかの読み (図の下の 1 行に出す)。 */
-const GROUND_WORDS: Readonly<Record<Ground, string>> = {
-  back: '裏: ベタ GND',
-  front: '表: GND (溝で切る)',
-  both: '表・裏: GND',
-  none: '地なし',
-};
-
 /** 図の下に出す基板の 1 行 (`40×20 mm  h 1.6  εr 4.4  裏: ベタ GND`)。 */
-export const describeBoard = (board: Board): string =>
-  `${formatMm(board.width)}×${formatMm(board.height)} mm  h ${formatMm(board.h)}  εr ${formatMm(board.er)}  ${GROUND_WORDS[board.ground]}`;
+export const describeBoard = (board: Board, lang: Lang = 'ja'): string =>
+  `${formatMm(board.width)}×${formatMm(board.height)} mm  h ${formatMm(board.h)}  εr ${formatMm(board.er)}  ${labelsOf(lang).ground[board.ground]}`;

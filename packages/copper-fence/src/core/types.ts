@@ -1,3 +1,4 @@
+import type { Lang } from 'fence-kit';
 import type { THEME_NAMES } from './limits.ts';
 
 /**
@@ -20,7 +21,7 @@ export type FenceError = {
 };
 
 /** フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。 */
-export const TOP_LEVEL_KEYS = ['board', 'f', 'title', 'copper', 'parts', 'wires', 'notes', 'style'] as const;
+export const TOP_LEVEL_KEYS = ['board', 'f', 'lang', 'title', 'copper', 'parts', 'wires', 'notes', 'style'] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
 
@@ -227,6 +228,8 @@ export type FenceDocument = {
   readonly board: Board;
   /** 設計の周波数 (Hz)。書くと線路の電気長を出す。 */
   readonly f: number | null;
+  /** 図の中の固定の字の言語。書かなければ null (呼び出し側の指定か既定の ja)。 */
+  readonly lang: Lang | null;
   readonly title: string | null;
   readonly copper: readonly CopperSpec[];
   readonly parts: readonly PartSpec[];

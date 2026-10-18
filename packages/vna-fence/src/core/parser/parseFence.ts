@@ -44,6 +44,7 @@ const emptyDocument = (): FenceDocument => ({
   markers: [],
   notes: [],
   style: EMPTY_STYLE,
+  lang: null,
 });
 
 const scalarText = (node: unknown): string | null => {
@@ -103,6 +104,7 @@ function readFence(source: string): ParseResult {
   const markers: MarkerSpec[] = [];
   const notes: NoteSpec[] = [];
   let style: StyleSpec = EMPTY_STYLE;
+  let lang: FenceDocument['lang'] = null;
   const written = new Set<string>();
 
   /** 並び (`- 1 行`) の項目を 1 つずつ読む。**1 行だけのスカラーも 1 項目として受ける**。 */
@@ -326,6 +328,15 @@ function readFence(source: string): ParseResult {
       case 'notes':
         readNotes(pair.value, keyLine);
         break;
+      case 'lang': {
+        const text = scalarText(pair.value);
+        if (text === null || text.trim() === '') {
+          errors.push(fenceError('lang: には ja か en を書きます', at));
+          break;
+        }
+        lang = { value: text.trim(), line: at };
+        break;
+      }
       case 'style': {
         const lines = new Map<string, number | null>();
         if (isMap(pair.value)) {
@@ -363,6 +374,7 @@ function readFence(source: string): ParseResult {
       markers,
       notes,
       style,
+      lang,
     },
     errors,
   };

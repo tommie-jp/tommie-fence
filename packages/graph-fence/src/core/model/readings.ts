@@ -32,6 +32,8 @@ export function readingsOf(input: {
   readonly xLog: boolean;
   /** `data:` の凡例の名前 (既定は実測)。 */
   readonly dataLabel: string;
+  /** peak の表の見出し「値」。 */
+  readonly valueHeading: string;
 }): Readings {
   const { lines, marks, xUnit, xLog } = input;
   const measured = lines.some(isMeasured);
@@ -52,7 +54,7 @@ export function readingsOf(input: {
   const peakRows = !input.peak || lines.length === 0
     ? []
     : [
-      ['peak', input.xName, '値'],
+      ['peak', input.xName, input.valueHeading],
       ...lines.map((line) => {
         const top = peakOf(input.sampled.get(line) ?? []);
         return [columnName(line, input.dataLabel), top === null ? DASH : formatReading(top.x, xUnit), top === null ? DASH : formatReading(top.y, line.unit)];

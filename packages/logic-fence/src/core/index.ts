@@ -1,5 +1,7 @@
-import { formatSeconds, normalizeNewlines } from 'fence-kit';
-import { attachSourceText, shiftErrors } from './errors.ts';
+import { formatSeconds, normalizeNewlines, resolveLang } from 'fence-kit';
+import type { Lang } from 'fence-kit';
+import { attachSourceText, fenceError, shiftErrors } from './errors.ts';
+import { labelsOf } from './labels.ts';
 import { createLayout } from './layout/screen.ts';
 import type { Readings } from './model/cursors.ts';
 import { screenOf } from './model/screen.ts';
@@ -37,6 +39,8 @@ export type RenderResult = {
 export type RenderOptions = {
   /** フェンスが始まる行 (Markdown の中での 1 始まり)。言うことの行番号を Markdown の行に直す。 */
   readonly offset?: number;
+  /** 図の中の固定の字の言語 (ja か en)。YAML の `lang:` より先。既定は ja。 */
+  readonly lang?: Lang;
 };
 
 /**
@@ -49,13 +53,15 @@ export function renderLogic(input: string, options: RenderOptions = {}): RenderR
   const { doc } = parsed;
   const style = resolveStyle(doc.style);
   const { theme } = style;
-  const screen = screenOf(doc);
+  const language = resolveLang(options.lang, doc.lang);
+  const { lang } = language;
+  const screen = screenOf(doc, lang);
   const { window } = screen;
 
   const trigger = screen.trigger === null ? null : `${screen.trigger.lane} ${screen.trigger.edge === 'rising' ? '↑' : '↓'} ${formatSeconds(screen.trigger.time)}`;
   const status = screen.defaultedWindow
     ? ''
-    : statusText({ device: screen.device?.label ?? null, window, sample: screen.sample, trigger });
+    : statusText({ device: screen.device?.label ?? null, window, sample: screen.sample, trigger, windowWord: labelsOf(lang).window });
   const layout = createLayout({
     rows: screen.rows.length,
     labels: screen.rows.map((row) => row.name),
@@ -63,7 +69,7 @@ export function renderLogic(input: string, options: RenderOptions = {}): RenderR
     hasTrigger: screen.trigger !== null,
     hasCursors: screen.cursors.length > 0,
     status,
-    readings: readingsSize(screen.readings, theme),
+    readings: readingsSize(screen.readings, theme, lang),
     source: null,
     theme,
   });
@@ -76,17 +82,17 @@ export function renderLogic(input: string, options: RenderOptions = {}): RenderR
     + renderCursors(screen.cursors, window, layout, theme)
     + renderRows(screen.rows, window, layout, theme)
     + (status === '' ? '' : renderStatus(status, layout, theme))
-    + (layout.readingsBand === null ? '' : renderReadings(screen.readings, layout.readingsBand, theme));
+    + (layout.readingsBand === null ? '' : renderReadings(screen.readings, layout.readingsBand, theme, lang));
   const svg = renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
 
-  const reported = attachSourceText(byLine([...parsed.errors, ...screen.said]), source);
+  const reported = attachSourceText(byLine([...parsed.errors, ...(language.error === null ? [] : [fenceError(language.error, null)]), ...screen.said]), source);
   const at = (list: readonly FenceError[]): readonly FenceError[] => shiftErrors(list, options.offset ?? 0);
   const errors = at(reported.filter((error) => error.notice !== true));
   const notices = at(reported.filter((error) => error.notice === true));
   return {
     svg,
     readings: screen.readings,
-    readingLines: [...readingLinesOf(screen.readings), ...summaryLines(screen.rows, window)],
+    readingLines: [...readingLinesOf(screen.readings, lang), ...summaryLines(screen.rows, window)],
     errors,
     notices,
     errorHtml: renderErrorBanner(style.debug ? [...errors, ...notices] : errors),

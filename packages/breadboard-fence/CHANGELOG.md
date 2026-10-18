@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **`lang: en` で、図の中の固定の字を英語にする。** 部品リストの見出しと基板の行 (`half (400 holes)`)・「`N more`」の行・IC の働き。書いた字 (題・注釈・ラベル) は変えない。API は `renderBreadboard(source, { lang })` (`lang:` より先)。既定の `ja` の図は 1 バイトも変わらない
+
 ## [0.43.1] - 2026-10-17
 
 ### Fixed

@@ -1,3 +1,4 @@
+import type { Lang } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import type { Board, PartsListMode, PlacedPart, Point, Rect } from '../types.ts';
 import { captionBandOf, captionDrops, captionTextBandOf } from './captions.ts';
@@ -50,6 +51,8 @@ export type DocumentInput = {
   /** `- source` が図に書き出すフェンスの中身 (囲みつき)。 */
   readonly sourceLines: readonly string[];
   readonly partsList: PartsListMode;
+  /** 図の中の固定の字の言語。書かなければ ja。 */
+  readonly lang?: Lang;
   /** 掴むための層。**null なら今までどおりの図**。 */
   readonly edit?: EditLayer | null;
 };
@@ -137,7 +140,7 @@ export function renderDocument(input: DocumentInput): string {
       }),
     // 注釈は基板・部品・配線の上に重ねる。回路の一員ではないので最後に置く。
     renderNotes(input.notes, layout, theme, input.sourceLines, edit !== null),
-    renderPartsList(listed, layout.board.x, figure, layout.board.width, theme, input.board),
+    renderPartsList(listed, layout.board.x, figure, layout.board.width, theme, input.board, input.lang ?? 'ja'),
     renderOutsideNotes(input.notes, layout.board.x, figure + list, layout.board.width, theme, input.sourceLines),
     // 掴む層は**いちばん上**。下に敷くと、部品や配線が押しを先に取ってしまう。
     edit === null ? '' : renderHits(input.board, layout, edit.used, edit.names),

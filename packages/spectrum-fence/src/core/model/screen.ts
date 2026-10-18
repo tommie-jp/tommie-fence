@@ -1,7 +1,8 @@
 import { formatHertzReading, formatHertzShort } from 'fence-kit';
-import type { SpectralLine } from 'fence-kit';
+import type { Lang, SpectralLine } from 'fence-kit';
 import { notice } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
+import { labelsOf } from '../render/labels.ts';
 import type { FenceDocument, FenceError } from '../types.ts';
 import type { Device, LevelUnit } from './device.ts';
 import { SYNTH_BUDGET, fftTrace, resolutionOf } from './fftTrace.ts';
@@ -101,7 +102,7 @@ function holdOf(
 
 const withHold = (words: readonly string[], sweeps: number): readonly string[] => (sweeps > 0 ? ['MAX HOLD', ...words] : words);
 
-function fftScreen(doc: FenceDocument, device: Device, c: Common, said: FenceError[]): Screen {
+function fftScreen(doc: FenceDocument, device: Device, c: Common, said: FenceError[], lang: Lang): Screen {
   // samples: と window: の既定は、計算する物 (signal: か floor:) があるときだけ言う (図の中身を決めないので)。
   const computes = doc.signal.length > 0 || doc.floor !== null;
   const samples = doc.samples?.value ?? device.samples?.default ?? 8192;
@@ -127,7 +128,7 @@ function fftScreen(doc: FenceDocument, device: Device, c: Common, said: FenceErr
   const grid = { grid: [], rbw: null, cap: LIMITS.holdSweepsFft };
   const hold = holdOf(doc, grid, live, (waves) => convert(fftTrace({ signal: waves, start, stop, samples, window, floor }).points), said);
   const points = doc.hold.length > 0 && doc.signal.length === 0 ? [] : live;
-  const first = [device.label, `${hz(start)}〜${hz(stop)}`, `${samples} pt`, `分解能 ${formatHertzReading(df)}`, WINDOW_LABEL[window]];
+  const first = [device.label, `${hz(start)}${labelsOf(lang).through}${hz(stop)}`, `${samples} pt`, `${labelsOf(lang).resolution} ${formatHertzReading(df)}`, WINDOW_LABEL[window]];
   return {
     start, stop, centered: c.centered, unit: c.unit, ref: c.ref, scale: c.scale, points, held: hold.held, holdSweeps: hold.sweeps,
     status: [first, withHold(display(c), hold.sweeps)], said, errors: [],
@@ -174,8 +175,8 @@ function sweptScreen(doc: FenceDocument, device: Device, c: Common, said: FenceE
   };
 }
 
-export function screenOf(doc: FenceDocument, device: Device): Screen {
+export function screenOf(doc: FenceDocument, device: Device, lang: Lang = 'ja'): Screen {
   const said: FenceError[] = [];
   const c = common(doc, device, said);
-  return device.kind === 'fft' ? fftScreen(doc, device, c, said) : sweptScreen(doc, device, c, said);
+  return device.kind === 'fft' ? fftScreen(doc, device, c, said, lang) : sweptScreen(doc, device, c, said);
 }

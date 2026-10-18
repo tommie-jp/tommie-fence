@@ -18,10 +18,10 @@ export const xAt = (axis: Axis, rect: Rect, value: number): number => rect.x + f
 export const yAt = (axis: Axis, rect: Rect, value: number): number => rect.y + rect.height - fraction(axis, value) * rect.height;
 
 /** 軸の名札 (量/単位の形。52 の docs/98 §5.1)。対数ならそう書く (readable-graph #4)。 */
-export function axisLabel(name: string | null, unit: string, log: boolean): string {
+export function axisLabel(name: string | null, unit: string, log: boolean, logWord: string): string {
   const shown = unit === 'deg' ? '°' : unit;
   const body = name === null ? shown : `${name}/${shown}`;
-  return log ? `${body} (対数)` : body;
+  return log ? `${body} (${logWord})` : body;
 }
 
 type Candidate = { readonly value: number; readonly text: string; readonly rank: number };

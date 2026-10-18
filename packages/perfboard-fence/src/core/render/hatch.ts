@@ -1,4 +1,5 @@
 import { element, num } from 'fence-kit';
+import type { Lang } from 'fence-kit';
 
 /**
  * 白黒で刷る図 (`theme: mono`) のための、**色の代わりの網と線の型**。
@@ -34,8 +35,9 @@ const NAMES: Record<string, string> = {
   silver: '銀',
 };
 
-export const colorName = (color: string): string =>
-  Object.hasOwn(NAMES, color) ? NAMES[color] ?? color : color;
+/** 英語では色の綴りがそのまま名前 (`red`)。凡例に並ぶ色は `NAMES` の鍵と同じ綴り。 */
+export const colorName = (color: string, lang: Lang = 'ja'): string =>
+  lang === 'en' ? color : Object.hasOwn(NAMES, color) ? NAMES[color] ?? color : color;
 
 /**
  * 網の描き方。`lines` は 1 タイルに引く線 (タイルの中の座標)、`dots` は丸。

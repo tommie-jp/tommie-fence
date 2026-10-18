@@ -6,7 +6,8 @@ import { isLandColor, isPlateColor, landNames, plateNames } from '../render/fini
 import { boardNames } from '../model/catalog.ts';
 import { LIMITS } from '../limits.ts';
 import { parsePartLine } from './parts.ts';
-import { rememberRecent } from 'fence-kit';
+import { rememberRecent, resolveLang } from 'fence-kit';
+import type { Lang } from 'fence-kit';
 import { parseWireLine } from './wires.ts';
 import { EMPTY_STYLE, parseStyle } from './style.ts';
 import { parseNoteLine } from './notes.ts';
@@ -41,7 +42,7 @@ export type ParseResult = { readonly doc: FenceDocument; readonly errors: readon
 
 /** 何も読めなかったときに返す中身。基板だけは既定のものを持つ。 */
 const emptyDocument = (): FenceDocument => ({
-  board: DEFAULT_BOARD, boardName: null, title: null, parts: [], wires: [], points: [], unused: [], shorted: [], style: EMPTY_STYLE, notes: [], devices: [],
+  board: DEFAULT_BOARD, boardName: null, title: null, lang: null, parts: [], wires: [], points: [], unused: [], shorted: [], style: EMPTY_STYLE, notes: [], devices: [],
 });
 
 const scalarText = (node: unknown): string | null => {
@@ -128,6 +129,7 @@ function readFence(source: string): ParseResult {
   let board: Board | null = null;
   let boardName: string | null = null;
   let title: string | null = null;
+  let lang: Lang | null = null;
   let style: StyleSpec = EMPTY_STYLE;
   let styleWritten = false;
   const notes: NoteSpec[] = [];
@@ -390,6 +392,12 @@ function readFence(source: string): ParseResult {
       // **空の題は無題**。`""` をそのまま通すと、題の帯だけ空けて何も書かれない
       // 空白が基板の上に残る。
       title = written.trim() === '' ? null : written;
+      continue;
+    }
+    if (key === 'lang') {
+      const resolved = resolveLang(undefined, scalarText(pair.value));
+      if (resolved.error !== null) errors.push(fenceError(resolved.error, lineOf((pair.value ?? pair.key) as Node)));
+      else lang = resolved.lang;
       continue;
     }
     if (key === 'style') {
@@ -656,7 +664,7 @@ function readFence(source: string): ParseResult {
   }
 
   return {
-    doc: { board: board ?? DEFAULT_BOARD, boardName, title, style, parts, devices, wires, points, unused, shorted, notes },
+    doc: { board: board ?? DEFAULT_BOARD, boardName, title, lang, style, parts, devices, wires, points, unused, shorted, notes },
     errors,
   };
 }

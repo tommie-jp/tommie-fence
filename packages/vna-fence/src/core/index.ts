@@ -1,6 +1,8 @@
-import { normalizeNewlines } from 'fence-kit';
+import { normalizeNewlines, resolveLang } from 'fence-kit';
+import type { Lang } from 'fence-kit';
+import { LABELS } from './render/labels.ts';
 import { sweepAdvice } from './advice.ts';
-import { attachSourceText, notice, shiftErrors } from './errors.ts';
+import { attachSourceText, fenceError, notice, shiftErrors } from './errors.ts';
 import { createLayout } from './layout/figure.ts';
 import { groupPanels, isRound } from './layout/panels.ts';
 import type { Panel, PanelTrace } from './layout/panels.ts';
@@ -58,6 +60,8 @@ export type RenderOptions = {
   readonly offset?: number;
   /** `data:` のファイルを読む口。渡さなければ「この宿主では読めません」と言って理想だけ描く。 */
   readonly data?: DataSource;
+  /** 図の中の字の言語 (`ja` か `en`)。YAML の `lang:` より先。書かなければ ja。 */
+  readonly lang?: Lang;
 };
 
 type Measured = { readonly points: readonly SPoint[] | null; readonly said: readonly FenceError[] };
@@ -139,6 +143,10 @@ export function renderVna(input: string, options: RenderOptions = {}): RenderRes
   const style = resolveStyle(doc.style);
   const { theme } = style;
   const said: FenceError[] = [];
+  const langRead = resolveLang(options.lang, doc.lang?.value);
+  if (langRead.error !== null) said.push(fenceError(langRead.error, doc.lang?.line ?? null, doc.lang?.value));
+  const { lang } = langRead;
+  const labels = LABELS[lang];
 
   const range = rangeNotice(doc.device, doc.sweep.start, doc.sweep.stop);
   if (range !== null) said.push(notice(range, null));
@@ -169,20 +177,21 @@ export function renderVna(input: string, options: RenderOptions = {}): RenderRes
 
   const tdr = allSeries.filter((one): one is TdrSeries => one.kind === 'tdr');
   const step = (doc.sweep.stop - doc.sweep.start) / (doc.sweep.points - 1);
-  const readings = readingsOf({ traces, markers, dut: doc.dut, step, data, tdr, dataLabel: doc.data?.label ?? MEASURED_LABEL });
+  const dataLabelOf = doc.data === null || doc.data.label === MEASURED_LABEL ? labels.measured : doc.data.label;
+  const readings = readingsOf({ traces, markers, dut: doc.dut, step, data, tdr, dataLabel: dataLabelOf, lang });
   // 凡例と読み値の見出しに出す、重ねた線の名前 (`実測 (m.s2p)` `計算 (m.s2p)`)。
-  const dataName = data === null || doc.data === null ? null : `${doc.data.label} (${doc.data.name})`;
+  const dataName = data === null || doc.data === null ? null : `${dataLabelOf} (${doc.data.name})`;
 
   const sourceNotes = doc.notes.filter((note) => note.kind === 'source');
   for (const extra of sourceNotes.slice(1)) said.push(notice('書き出し (source) は 1 つだけ描きます (後のものは描いていません)', extra.line));
   const listing = sourceNotes.length > 0 ? sourceListing(source) : [];
 
-  const key = keyLines(allSeries, model !== null, dataName, theme);
+  const key = keyLines(allSeries, model !== null, dataName, theme, lang);
   const layout = createLayout({
     title: doc.title,
     key: keyText(key),
     groups,
-    readings: readingsSize(readings, dataName, theme),
+    readings: readingsSize(readings, dataName, theme, lang),
     source: listing.length > 0 ? linesSize(listing, theme) : null,
     theme,
   });
@@ -206,8 +215,9 @@ export function renderVna(input: string, options: RenderOptions = {}): RenderRes
       markers,
       notes: placed.byPanel.get(panel) ?? [],
       theme,
+      lang,
     })).join('')
-    + (layout.readingsBand === null ? '' : renderReadings(readings, dataName, layout.readingsBand, theme))
+    + (layout.readingsBand === null ? '' : renderReadings(readings, dataName, layout.readingsBand, theme, lang))
     + (layout.sourceBand === null ? '' : renderLines(listing, layout.sourceBand, theme, theme.palette.caption));
 
   const svg = renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
@@ -219,7 +229,7 @@ export function renderVna(input: string, options: RenderOptions = {}): RenderRes
   return {
     svg,
     readings,
-    readingLines: readingLinesOf(readings, dataName),
+    readingLines: readingLinesOf(readings, dataName, lang),
     errors,
     notices,
     errorHtml: renderErrorBanner(style.debug ? [...errors, ...notices] : errors),
@@ -229,20 +239,20 @@ export function renderVna(input: string, options: RenderOptions = {}): RenderRes
 
 /** 読み値を字の行に (CLI・playground)。**図の帯と同じ見出し**。 */
 /** 凡例の項。見本の色は、**その線 (理想か実測か) を実際に引いたトレース**の色。 */
-function keyLines(series: readonly Series[], hasModel: boolean, dataName: string | null, theme: Theme): readonly KeyLine[] {
+function keyLines(series: readonly Series[], hasModel: boolean, dataName: string | null, theme: Theme, lang: Lang): readonly KeyLine[] {
   const colorsOf = (basis: Series['basis']): readonly string[] => [
     ...new Set(series.filter((one) => one.basis === basis).map((one) => traceColor(theme, one.trace.index))),
   ];
   return [
-    ...(hasModel ? [{ text: '理想 (dut:)', dashed: dataName !== null, colors: colorsOf('model') }] : []),
+    ...(hasModel ? [{ text: LABELS[lang].keyIdeal, dashed: dataName !== null, colors: colorsOf('model') }] : []),
     ...(dataName === null ? [] : [{ text: dataName, dashed: false, colors: colorsOf('data') }]),
   ];
 }
 
-function readingLinesOf(readings: Readings, dataName: string | null): readonly string[] {
+function readingLinesOf(readings: Readings, dataName: string | null, lang: Lang): readonly string[] {
   if (readings.rows.length === 0 && readings.extra.length === 0) return [];
   return [
-    ...(readings.rows.length > 0 ? [readingsHeading(readings, dataName), ...tableLines([readings.columns, ...readings.rows])] : []),
+    ...(readings.rows.length > 0 ? [readingsHeading(readings, dataName, lang), ...tableLines([readings.columns, ...readings.rows])] : []),
     ...readings.extra,
   ];
 }

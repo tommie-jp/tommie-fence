@@ -22,6 +22,7 @@ cursors: [4.5s, 5.5s]            # 任意。X1〜X8 (8 つまで)。表に行ご
                                  # decode: (uart) は下の「カーソル・トリガ・読み下し」
 trigger: CLK rising at 0s        # 任意。レーン rising|falling [at 時刻]
 style: dark                      # 任意
+lang: en                         # 任意。図の中の固定の字 (読み値の見出しなど) の言語。ja (既定) か en
 ```
 ````
 

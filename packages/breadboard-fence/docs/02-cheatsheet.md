@@ -13,6 +13,7 @@ points:                # 任意。番地に名前を付ける
 board: half            # mini (17 列) / half (30 列、既定) / full (63 列)
 style: dark            # テーマ名か、下の表のマップ
 parts-list: below      # below (既定) / none
+lang: ja               # 図の中の固定の字 (部品リストの見出しなど)。ja (既定) / en
 parts:                 # ID: 種類 番地 … [値 か l=ラベル] [cap=側[:横,縦]] [shift=向き]
   R1: resistor a5 a10 10k
 wires:                 # - 端点 -- 端点 [-- 端点 …] [色] [迂回ヒント]

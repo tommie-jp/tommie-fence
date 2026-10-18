@@ -1,3 +1,4 @@
+import type { Lang } from 'fence-kit';
 import type { Turn } from './parts/orient.ts';
 // フェンス構文からレンダリングまでで共有する型。DOM にも Node にも依存しない。
 
@@ -296,6 +297,8 @@ export type FenceDocument = {
   readonly board: BoardSpec;
   readonly style: StyleSpec;
   readonly partsList: PartsListMode;
+  /** 図の中の固定の字の言語。YAML の `lang:`。書かなければ null (呼び出し側の指定か既定の ja)。 */
+  readonly lang: Lang | null;
   /** `points:` の名前 → 穴番地。番地はもう部品や配線に埋め込んであり、ネット名に使う。 */
   readonly points: ReadonlyMap<string, string>;
   readonly parts: readonly PartSpec[];

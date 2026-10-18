@@ -1,6 +1,7 @@
 import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Node, Pair } from 'yaml';
-import { rememberRecent } from 'fence-kit';
+import { rememberRecent, resolveLang } from 'fence-kit';
+import type { Lang } from 'fence-kit';
 import { dropInvisible, fenceError, notice, safeToken } from '../errors.ts';
 import { DATA_NAME, LIMITS, MEASURED_LABEL } from '../limits.ts';
 import type { LineSpec, Point } from '../model/lines.ts';
@@ -21,7 +22,7 @@ export type ParseResult = { readonly doc: FenceDocument; readonly errors: readon
 export const DEFAULT_X: AxisSpec = { name: null, unit: 'x', log: false, range: [0, 1], line: null };
 
 const emptyDocument = (): FenceDocument => ({
-  title: null, x: null, y: [], lines: [], data: null, notes: [], style: EMPTY_STYLE, keys: [],
+  title: null, x: null, y: [], lines: [], data: null, notes: [], style: EMPTY_STYLE, lang: null, keys: [],
 });
 
 export const scalarText = (node: unknown): string | null => {
@@ -106,7 +107,20 @@ function readFence(source: string): ParseResult {
   const notes = pairs.has('notes') ? readNotes(valueOf('notes'), lineOf(pairs.get('notes')?.key as Node), xUnit, lineOf, errors) : [];
   const style = pairs.has('style') ? readStyle(valueOf('style'), at('style'), lineOf, errors) : EMPTY_STYLE;
 
-  return { doc: { title, x, y, lines, data, notes, style, keys: [...pairs.keys()] }, errors };
+  const lang = pairs.has('lang') ? readLang(valueOf('lang'), at('lang'), errors) : null;
+
+  return { doc: { title, x, y, lines, data, notes, style, lang, keys: [...pairs.keys()] }, errors };
+}
+
+/** `lang:` — ja か en。読めなければ言って既定に戻す。 */
+function readLang(value: unknown, at: number | null, errors: FenceError[]): Lang | null {
+  const text = scalarText(value) ?? '';
+  const read = resolveLang(text, undefined);
+  if (read.error !== null) {
+    errors.push(fenceError(read.error, at, text.trim() || undefined));
+    return null;
+  }
+  return read.lang;
 }
 
 function readTitle(value: unknown, at: number | null, written: boolean, errors: FenceError[]): string | null {

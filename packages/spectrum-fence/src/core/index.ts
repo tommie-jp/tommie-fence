@@ -1,5 +1,6 @@
-import { formatHertzShort, normalizeNewlines } from 'fence-kit';
-import { attachSourceText, notice, shiftErrors } from './errors.ts';
+import { formatHertzShort, normalizeNewlines, resolveLang } from 'fence-kit';
+import type { Lang } from 'fence-kit';
+import { attachSourceText, fenceError, notice, shiftErrors } from './errors.ts';
 import { frequencyTicks, levelTicks } from './layout/scales.ts';
 import type { Axes } from './layout/scales.ts';
 import { DIVISIONS, SIZE, createLayout } from './layout/screen.ts';
@@ -55,6 +56,8 @@ export type RenderOptions = {
   readonly offset?: number;
   /** `data:` のファイルを読む口。渡さなければ「この宿主では読めません」と言って理想だけ描く。 */
   readonly data?: DataSource;
+  /** 図の中の固定の字の言語 (`ja` か `en`)。YAML の `lang:` より先。既定は `ja`。 */
+  readonly lang?: Lang;
 };
 
 /** device: が無いときの画面 (0〜−100、10 dB/div、横の字無し)。**空でも格子と目盛は描く** (54)。 */
@@ -84,14 +87,14 @@ function markersInside(markers: readonly MarkerSpec[], screen: Screen, said: Fen
   });
 }
 
-function drawnOf(doc: FenceDocument, source: DataSource | undefined): Drawn {
+function drawnOf(doc: FenceDocument, source: DataSource | undefined, lang: Lang): Drawn {
   if (doc.device === null) {
     return {
       axes: EMPTY_AXES, points: [], held: [], holdSweeps: 0, measured: [], dataName: null, markers: [], status: null, readings: { rows: [], basis: null }, said: [],
     };
   }
-  const screen = screenOf(doc, deviceOf(doc.device));
-  const measured = readData(doc, screen, source);
+  const screen = screenOf(doc, deviceOf(doc.device), lang);
+  const measured = readData(doc, screen, source, lang);
   // **山は実測があれば実測**、無ければ理想。信号が無い (フロアだけの) 画面では言わない。
   const traced = measured.points.length > 0 ? measured.points : screen.held.length > 0 ? screen.held : doc.signal.length > 0 ? screen.points : [];
   const headroom = headroomNotice({ peak: peakPoint(traced), ref: screen.ref, scale: screen.scale, unit: screen.unit, line: doc.ref?.line ?? null });
@@ -100,10 +103,10 @@ function drawnOf(doc: FenceDocument, source: DataSource | undefined): Drawn {
   const axes: Axes = { start: screen.start, stop: screen.stop, ref: screen.ref, scale: screen.scale, unit: screen.unit };
   // **読み値は実測があれば実測** (実機のマーカーは測った点を読む)、次に MAX HOLD (保持したトレースを読む)、無ければ理想。
   const readings = measured.points.length > 0
-    ? readMarkers(markers, measured.points, screen.unit, 'data')
+    ? readMarkers(markers, measured.points, screen.unit, 'data', lang)
     : screen.held.length > 0
-      ? readMarkers(markers, screen.held, screen.unit, 'hold')
-      : readMarkers(markers, screen.points, screen.unit, screen.points.length === 0 ? null : 'model');
+      ? readMarkers(markers, screen.held, screen.unit, 'hold', lang)
+      : readMarkers(markers, screen.points, screen.unit, screen.points.length === 0 ? null : 'model', lang);
   return {
     axes, points: screen.points, held: screen.held, holdSweeps: screen.holdSweeps, measured: measured.points, dataName: measured.points.length > 0 ? measured.name : null,
     markers, status: screen.status, readings, said,
@@ -120,7 +123,9 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
   const { doc } = parsed;
   const style = resolveStyle(doc.style);
   const { theme } = style;
-  const drawn = drawnOf(doc, options.data);
+  const chosen = resolveLang(options.lang, doc.lang);
+  const lang = chosen.lang;
+  const drawn = drawnOf(doc, options.data, lang);
   const isHeld = drawn.held.length > 0;
   // MAX HOLD があれば 1 本目の色は保持した線、今の掃引は 2 本目の色 (実機のトレース 1・2 の順)。
   const color = traceColor(theme, 0);
@@ -134,8 +139,8 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
   const layout = createLayout({
     statusRows: Math.max(1, status.length),
     title: doc.title,
-    key: keyText(hasModel, drawn.dataName, drawn.holdSweeps),
-    readings: readingsSize(drawn.readings, drawn.dataName, theme),
+    key: keyText(hasModel, drawn.dataName, drawn.holdSweeps, lang),
+    readings: readingsSize(drawn.readings, drawn.dataName, theme, lang),
     source: null,
     theme,
   });
@@ -145,7 +150,7 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
   }).join('');
 
   const body = renderTitle(doc.title, layout, theme)
-    + renderKey(hasModel, drawn.dataName, layout, theme, drawn.holdSweeps)
+    + renderKey(hasModel, drawn.dataName, layout, theme, drawn.holdSweeps, lang)
     + renderGrid(layout, theme)
     + renderLevelLabels(levelTicks(drawn.axes), layout, theme)
     + renderFrequencyLabels(drawn.status === null ? null : frequencyTicks(drawn.axes), layout, theme)
@@ -154,17 +159,17 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
     + renderTrace(drawn.measured, 'data', drawn.axes, layout.grid, color)
     + markerSvg
     + renderStatus(status, layout, theme)
-    + (layout.readingsBand === null ? '' : renderReadings(drawn.readings, drawn.dataName, layout.readingsBand, theme));
+    + (layout.readingsBand === null ? '' : renderReadings(drawn.readings, drawn.dataName, layout.readingsBand, theme, lang));
   const svg = renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
 
-  const reported = attachSourceText(byLine([...parsed.errors, ...drawn.said]), source);
+  const reported = attachSourceText(byLine([...parsed.errors, ...(chosen.error === null ? [] : [fenceError(chosen.error, null)]), ...drawn.said]), source);
   const at = (list: readonly FenceError[]): readonly FenceError[] => shiftErrors(list, options.offset ?? 0);
   const errors = at(reported.filter((error) => error.notice !== true));
   const notices = at(reported.filter((error) => error.notice === true));
   return {
     svg,
     readings: drawn.readings,
-    readingLines: readingLinesOf(drawn.readings, drawn.dataName),
+    readingLines: readingLinesOf(drawn.readings, drawn.dataName, lang),
     errors,
     notices,
     errorHtml: renderErrorBanner(style.debug ? [...errors, ...notices] : errors),

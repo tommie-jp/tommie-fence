@@ -1,5 +1,5 @@
-import { hasSheets, keptSourceLines, renderSheets } from 'fence-kit';
-import type { SheetExtras, SheetPoint } from 'fence-kit';
+import { hasSheets, keptSourceLines, renderSheets, resolveLang } from 'fence-kit';
+import type { Lang, SheetExtras, SheetPoint } from 'fence-kit';
 import { attachSourceText, fail, fenceError, notice, ok, safeToken, shiftErrors } from './errors.ts';
 import { normalizeNewlines } from './newlines.ts';
 import { LIMITS } from './limits.ts';
@@ -132,6 +132,11 @@ export type RenderOptions = {
    * 書かなければ `style: stamp:` のとおり。
    */
   readonly stamp?: boolean;
+  /**
+   * 図の中の固定の字 (部品表の見出しなど) の言語。YAML の `lang:` より先。
+   * 書かなければ ja。エラーとお知らせの文は言語によらず日本語。
+   */
+  readonly lang?: Lang;
 };
 
 /** 基板から張り出した部品と画布の縁の間に残す余白。縁に貼り付くと切れて見える。 */
@@ -151,13 +156,15 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
   return renderSheets(
     source,
     options,
-    (text, inner) => renderOneSheet(text, inner),
+    (text, inner) => renderOneSheet(text, { ...inner, ...(options.lang === undefined ? {} : { lang: options.lang }) }),
     {
       makeError: (message, line, isNotice) => attachSourceText(
         [isNotice ? notice(message, line) : fenceError(message, line)], source,
       )[0] ?? fenceError(message, line),
       banner: (errors) => renderErrorBanner(errors),
     },
+    // `lang:` は枚が書かなかったときの既定として、全部の枚に渡す。
+    { shared: ['lang'] },
   );
 }
 
@@ -173,6 +180,9 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   const resolved = resolveStyle(parsed.doc.style);
   const style = resolved.style;
   errors.push(...resolved.messages.map((message) => fenceError(message, parsed.doc.style.line)));
+  // YAML の `lang:` の誤りは読むときに言ってあるので、ここで言うのは `options.lang` の誤りだけ。
+  const language = resolveLang(options.lang, parsed.doc.lang);
+  if (language.error !== null) errors.push(fenceError(language.error, null));
 
   const placed = placement.parts;
   const devices = placed.filter((part) => part.kind === 'device');
@@ -258,6 +268,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
       ? sourceListing(source)
       : [],
     partsList: parsed.doc.partsList,
+    lang: language.lang,
   });
 
   return {

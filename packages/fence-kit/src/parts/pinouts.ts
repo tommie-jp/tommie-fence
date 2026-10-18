@@ -1,4 +1,6 @@
+import type { Lang } from '../lang.ts';
 import type { SipLook } from './chips.ts';
+import { ROLES_EN } from './pinoutRolesEn.ts';
 
 /**
  * DIP の IC のピンの名前の表 (52 の docs/95)。**型番で引いて、3 つのフェンスが
@@ -686,9 +688,11 @@ export function lookupPinout(model: string | null, pins: number): Pinout | null 
 }
 
 /** 型番から働きの名前を引く (本数は問わない)。表に無い型番は null。 */
-export function lookupRole(model: string | null): string | null {
+export function lookupRole(model: string | null, lang: Lang = 'ja'): string | null {
   if (model === null) return null;
-  return BY_MODEL.get(model.trim().toUpperCase())?.role ?? null;
+  const role = BY_MODEL.get(model.trim().toUpperCase())?.role ?? null;
+  if (role === null || lang === 'ja') return role;
+  return ROLES_EN[role] ?? role;
 }
 
 /** 表にある型番 (行ごとに代表の綴り 1 つ)。本数を渡すとそのパッケージの行だけ。 */

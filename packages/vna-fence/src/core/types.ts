@@ -24,7 +24,7 @@ export type FenceError = {
 };
 
 /** フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。 */
-export const TOP_LEVEL_KEYS = ['device', 'sweep', 'title', 'dut', 'data', 'traces', 'markers', 'notes', 'style'] as const;
+export const TOP_LEVEL_KEYS = ['device', 'sweep', 'title', 'dut', 'data', 'traces', 'markers', 'notes', 'style', 'lang'] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
 
@@ -89,4 +89,6 @@ export type FenceDocument = {
   readonly markers: readonly MarkerSpec[];
   readonly notes: readonly NoteSpec[];
   readonly style: StyleSpec;
+  /** `lang:` に書かれた値 (検査は描くとき)。書かなければ null。 */
+  readonly lang: { readonly value: string; readonly line: number | null } | null;
 };

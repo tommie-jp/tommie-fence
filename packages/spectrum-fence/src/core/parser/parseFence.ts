@@ -1,7 +1,7 @@
 import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Pair } from 'yaml';
-import { formatHertzReading, rememberRecent } from 'fence-kit';
-import type { WaveSpec } from 'fence-kit';
+import { formatHertzReading, rememberRecent, resolveLang } from 'fence-kit';
+import type { Lang, WaveSpec } from 'fence-kit';
 import { fenceError, notice, safeToken } from '../errors.ts';
 import { DATA_NAME, LIMITS, MEASURED_LABEL } from '../limits.ts';
 import { DEVICE_HINT, deviceOf, isDeviceName } from '../model/device.ts';
@@ -26,7 +26,7 @@ export type ParseResult = { readonly doc: FenceDocument; readonly errors: readon
 
 const emptyDocument = (): FenceDocument => ({
   device: null, title: null, sweep: null, points: null, samples: null, window: null, rbw: null, atten: null, lna: null,
-  ref: null, scale: null, unit: null, floor: null, signal: [], hold: [], markers: [], data: null, style: EMPTY_STYLE, keys: [],
+  ref: null, scale: null, unit: null, floor: null, signal: [], hold: [], markers: [], data: null, style: EMPTY_STYLE, lang: null, keys: [],
 });
 
 export const scalarText = (node: unknown): string | null => {
@@ -307,6 +307,16 @@ function readTitle(context: Context): string | null {
   return text.trim() === '' ? null : text;
 }
 
+function readLang(context: Context): Lang | null {
+  const entry = context.entries.get('lang');
+  if (entry === undefined) return null;
+  const text = (scalarText(entry.pair.value) ?? '').trim();
+  const { lang, error } = resolveLang(text, undefined);
+  if (error === null) return lang;
+  context.errors.push(fenceError(error, entry.at, text || undefined));
+  return null;
+}
+
 function readData(context: Context): FenceDocument['data'] {
   const entry = context.entries.get('data');
   if (entry === undefined) return null;
@@ -387,6 +397,7 @@ function readFence(source: string): ParseResult {
     markers: readMarkers(context),
     data,
     style: readStyle(context),
+    lang: readLang(context),
     keys: collected.keys,
   };
   return { doc, errors: context.errors };

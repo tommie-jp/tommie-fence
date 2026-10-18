@@ -43,12 +43,13 @@ export function renderAxis(layout: Layout, window: Window, theme: Theme, chosen:
 /** 状態の行の字。**書き手が読む設定を 1 行に** (機種・1 目盛・窓・標本化・トリガ)。 */
 export function statusText(options: {
   readonly device: string | null; readonly window: Window; readonly sample: number | null; readonly trigger: string | null;
+  readonly windowWord?: string;
 }): string {
-  const { device, window, sample, trigger } = options;
+  const { device, window, sample, trigger, windowWord = '窓' } = options;
   const items = [
     ...(device === null ? [] : [device]),
     formatPerDiv(window.perDiv, 's'),
-    `窓 ${axisLabel(window.t1 - window.t0, axisUnit(window.t1 - window.t0))}`,
+    `${windowWord} ${axisLabel(window.t1 - window.t0, axisUnit(window.t1 - window.t0))}`,
     ...(sample === null ? [] : [`sample ${hertzText(sample)}`]),
     ...(trigger === null ? [] : [`trigger ${trigger}`]),
   ];

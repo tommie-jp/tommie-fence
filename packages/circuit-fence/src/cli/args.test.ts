@@ -15,7 +15,7 @@ describe('parseArgs', () => {
   test('reads the files to draw', () => {
     expect(parse('render', 'examples')).toEqual({
       ok: true,
-      value: { command: 'render', targets: ['examples'], outDir: null, flags: new Set() },
+      value: { command: 'render', targets: ['examples'], outDir: null, flags: new Set(), lang: null },
     });
   });
 
@@ -73,7 +73,7 @@ describe('parseArgs の check', () => {
   test('reads the command that only validates', () => {
     expect(parse('check', 'examples')).toEqual({
       ok: true,
-      value: { command: 'check', targets: ['examples'], outDir: null, flags: new Set() },
+      value: { command: 'check', targets: ['examples'], outDir: null, flags: new Set(), lang: null },
     });
   });
 
@@ -91,15 +91,15 @@ describe('parseArgs の check', () => {
   test('still reads render as before', () => {
     expect(parse('render', 'examples')).toEqual({
       ok: true,
-      value: { command: 'render', targets: ['examples'], outDir: null, flags: new Set() },
+      value: { command: 'render', targets: ['examples'], outDir: null, flags: new Set(), lang: null },
     });
   });
 });
 
 describe('parseArgs の --version', () => {
   test('reads the switch that only prints the version', () => {
-    expect(parse('--version')).toEqual({ ok: true, value: { command: 'version', targets: [], outDir: null, flags: new Set() } });
-    expect(parse('-v')).toEqual({ ok: true, value: { command: 'version', targets: [], outDir: null, flags: new Set() } });
+    expect(parse('--version')).toEqual({ ok: true, value: { command: 'version', targets: [], outDir: null, flags: new Set(), lang: null } });
+    expect(parse('-v')).toEqual({ ok: true, value: { command: 'version', targets: [], outDir: null, flags: new Set(), lang: null } });
   });
 
   test('takes it as a command only when it comes first', () => {

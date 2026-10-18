@@ -1,4 +1,6 @@
 import { element, num, svgText, textWidth } from 'fence-kit';
+import type { Lang } from 'fence-kit';
+import { LABELS } from './labels.ts';
 import type { Layout } from '../layout/figure.ts';
 import type { Readings } from '../model/readings.ts';
 import { linesSize, renderLines, renderTable, tableSize } from './mono.ts';
@@ -9,29 +11,31 @@ import type { Theme } from './theme.ts';
  * 読み値の帯。**見出し 1 行 → マーカーの表 → TDR の山**の順。
  * 見出しで、表の値が**測った値か模型の値か**を言う (取り違えると本文の数字が嘘になる)。
  */
-export const readingsHeading = (readings: Readings, dataName: string | null): string =>
-  (readings.basis === 'data'
-    ? `読み値 — ${dataName ?? '実測 (data)'}`
-    : '読み値 — 理想 (dut: の模型)');
+export const readingsHeading = (readings: Readings, dataName: string | null, lang: Lang = 'ja'): string => {
+  const labels = LABELS[lang];
+  return readings.basis === 'data'
+    ? `${labels.readings} — ${dataName ?? labels.readingsMeasured}`
+    : `${labels.readings} — ${labels.readingsIdeal}`;
+};
 
 type Parts = { readonly heading: readonly string[]; readonly table: readonly (readonly string[])[]; readonly extra: readonly string[] };
 
-const partsOf = (readings: Readings, dataName: string | null): Parts => ({
-  heading: readings.rows.length > 0 ? [readingsHeading(readings, dataName)] : [],
+const partsOf = (readings: Readings, dataName: string | null, lang: Lang): Parts => ({
+  heading: readings.rows.length > 0 ? [readingsHeading(readings, dataName, lang)] : [],
   table: readings.rows.length > 0 ? [readings.columns, ...readings.rows] : [],
   extra: readings.extra,
 });
 
-export function readingsSize(readings: Readings, dataName: string | null, theme: Theme): Size | null {
-  const parts = partsOf(readings, dataName);
+export function readingsSize(readings: Readings, dataName: string | null, theme: Theme, lang: Lang = 'ja'): Size | null {
+  const parts = partsOf(readings, dataName, lang);
   const sizes = [linesSize(parts.heading, theme), tableSize(parts.table, theme), linesSize(parts.extra, theme)];
   const height = sizes.reduce((sum, size) => sum + size.height, 0);
   if (height === 0) return null;
   return { width: Math.max(...sizes.map((size) => size.width)), height };
 }
 
-export function renderReadings(readings: Readings, dataName: string | null, band: Band, theme: Theme): string {
-  const parts = partsOf(readings, dataName);
+export function renderReadings(readings: Readings, dataName: string | null, band: Band, theme: Theme, lang: Lang = 'ja'): string {
+  const parts = partsOf(readings, dataName, lang);
   let y = band.y;
   const next = (size: Size): Band => {
     const here = { x: band.x, y, width: band.width, height: size.height };

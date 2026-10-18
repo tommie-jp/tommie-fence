@@ -1,5 +1,6 @@
 import { normalizeNewlines, textWidth, wireColor, hasSheets, renderSheets } from 'fence-kit';
-import type { SheetExtras, SheetPoint } from 'fence-kit';
+import { resolveLang } from 'fence-kit';
+import type { Lang, SheetExtras, SheetPoint } from 'fence-kit';
 import type { Net } from 'fence-kit';
 import { attachSourceText, fenceError, notice, safeToken, shiftErrors } from './errors.ts';
 import { checkErc } from './erc/erc.ts';
@@ -66,6 +67,8 @@ export type RenderOptions = {
    * 書かなければ `style: stamp:` のとおり。
    */
   readonly stamp?: boolean;
+  /** 図の中の固定の字の言語 (`ja` か `en`)。YAML の `lang:` より先に効く。既定は `ja`。 */
+  readonly lang?: Lang;
 };
 
 const colorOf = (name: string): string | null => wireColor(name);
@@ -135,7 +138,7 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
   return renderSheets(
     source,
     options,
-    (text, inner) => renderOneSheet(text, inner),
+    (text, inner) => renderOneSheet(text, { ...inner, lang: options.lang }),
     {
       makeError: (message, line, isNotice) => attachSourceText(
         [isNotice ? notice(message, line) : fenceError(message, line)], source,
@@ -143,7 +146,7 @@ export function renderCopper(input: string, options: RenderOptions = {}): Render
       banner: (errors) => renderErrorBanner(errors),
     },
     // `f:` (周波数) は枚が書かなかったときの既定にできる。
-    { shared: ['f'] },
+    { shared: ['f', 'lang'] },
   );
 }
 
@@ -153,6 +156,9 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   const { doc } = parsed;
   const { board } = doc;
   const style = resolveStyle(doc.style);
+  const resolvedLang = resolveLang(options.lang, doc.lang);
+  const { lang } = resolvedLang;
+  const langErrors = resolvedLang.error === null || options.lang === undefined ? [] : [fenceError(resolvedLang.error, null)];
   const { theme } = style;
 
   // 形 → チップの切れ目 → 島。**切ってから島を数える** (切れた線路は 2 つの島)。
@@ -227,7 +233,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   }
 
   // **読めなかったところがあるうちは ERC を掛けない** (書いた物について書き忘れを言うことになる)。
-  const hardErrors = [...parsed.errors, ...made.errors, ...placeErrors, ...wiring.errors, ...noteErrors]
+  const hardErrors = [...parsed.errors, ...made.errors, ...placeErrors, ...wiring.errors, ...noteErrors, ...langErrors]
     .filter((error) => error.notice !== true);
   const checking = style.check && hardErrors.length === 0;
   const erc = checking
@@ -242,7 +248,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     : [];
 
   const listing = sourceNotes.length > 0 ? sourceListing(source) : [];
-  const rows = listNotes.length > 0 ? partsListing(doc.parts, board) : [];
+  const rows = listNotes.length > 0 ? partsListing(doc.parts, board, lang) : [];
   const labelMm = (theme.metrics.textSize * 0.9) / PX;
   const layout = createLayout(board, {
     title: doc.title !== null,
@@ -259,7 +265,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     ),
     list: rows.length > 0 ? listSize(rows, theme) : null,
     source: listing.length > 0 ? sourceSize(listing, theme) : null,
-    descriptionWidth: textWidth(boardDescription(board, doc.f)) * theme.metrics.textSize,
+    descriptionWidth: textWidth(boardDescription(board, doc.f, lang)) * theme.metrics.textSize,
     // マップ (掴む図) には出さない — 掴むのは表だけ。
     back: style.back && options.edit !== true,
   });
@@ -297,8 +303,8 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     + renderDevices(devices, layout, theme)
     + renderNotes(notes, layout, theme, colorOf)
     + renderRulers(board, layout, theme, { top: covered('top'), left: covered('left') })
-    + renderDescription(board, doc.f, layout, theme)
-    + renderBack({ board, layout, theme, islands, slots: made.slots, vias, footprints })
+    + renderDescription(board, doc.f, layout, theme, lang)
+    + renderBack({ board, layout, theme, islands, slots: made.slots, vias, footprints, lang })
     + (layout.listBand === null ? '' : renderList(rows, layout.listBand, theme, noteColor(listNotes[0]!, theme, colorOf)))
     + (layout.sourceBand === null ? '' : renderSource(listing, layout.sourceBand, theme, noteColor(sourceNotes[0]!, theme, colorOf)))
     // 掴む層は**いちばん上** (升と節点)。
@@ -306,7 +312,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
 
   const svg = renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp && options.stamp !== false });
 
-  const collected = [...parsed.errors, ...made.errors, ...placeErrors, ...wiring.errors, ...noteErrors, ...notChecked];
+  const collected = [...parsed.errors, ...made.errors, ...placeErrors, ...wiring.errors, ...noteErrors, ...langErrors, ...notChecked];
   const reported = attachSourceText(byLine(collected), source);
   const errors = reported.filter((error) => error.notice !== true);
   const notices = reported.filter((error) => error.notice === true);

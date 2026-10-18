@@ -1,5 +1,6 @@
 import { bodySize, num, svgText } from 'fence-kit';
 import { clampText, LIMITS } from '../limits.ts';
+import type { Lang } from 'fence-kit';
 import { describeBoard } from '../model/board.ts';
 import type { Layout } from '../model/layout.ts';
 import {
@@ -66,14 +67,14 @@ function widthFor(z0: number, board: Board): number | null {
 }
 
 /** 基板の説明の 1 行。**50Ω の幅と、`f:` の λg/4** を添える — 切る前に要る 2 つの数。 */
-export function boardDescription(board: Board, f: number | null): string {
+export function boardDescription(board: Board, f: number | null, lang: Lang = 'ja'): string {
   const width = widthFor(50, board);
   const fifty = width === null ? '' : `   50Ω = ${width.toFixed(2)}mm`;
   const model = width === null ? null : lineModel(width, board.cut, board);
   const quarter = f === null || model === null
     ? ''
     : `   λg/4 @${formatHertz(f)} = ${(guidedWavelength(f, model.epsEff) / 4).toFixed(1)}mm`;
-  return `${describeBoard(board)}${fifty}${quarter}`;
+  return `${describeBoard(board, lang)}${fifty}${quarter}`;
 }
 
 const text = (at: Candidate, content: string, theme: Theme, size: number, fill = theme.palette.lineText): string =>
@@ -222,8 +223,8 @@ export function renderPartLabels(footprints: readonly Footprint[], layout: Layou
 }
 
 /** 基板の説明の 1 行。 */
-export function renderDescription(board: Board, f: number | null, layout: Layout, theme: Theme): string {
-  return svgText(layout.board.x, layout.descriptionBaseline, boardDescription(board, f), {
+export function renderDescription(board: Board, f: number | null, layout: Layout, theme: Theme, lang: Lang = 'ja'): string {
+  return svgText(layout.board.x, layout.descriptionBaseline, boardDescription(board, f, lang), {
     anchor: 'start', fill: theme.palette.caption, 'font-size': num(theme.metrics.textSize),
   });
 }

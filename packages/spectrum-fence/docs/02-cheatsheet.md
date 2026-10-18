@@ -16,6 +16,7 @@ signal: square 100MHz -10dBm         # 波 (scope と同じ綴り)。並べれ�
 markers: [100M, 300M, 500M]          # 周波数か peak。4 つまで
 data: 11-4-harmonics.csv             # 任意。.md の隣の 2 列の CSV → 実線。後ろに凡例の名前 (既定は実測、20 字まで)
 style: dark                          # 任意
+lang: en                             # 任意。図の中の固定の字 (読み値の見出し・凡例など) の言語。ja (既定) か en
 ```
 ````
 

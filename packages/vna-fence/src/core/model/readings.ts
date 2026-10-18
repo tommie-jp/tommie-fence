@@ -5,6 +5,8 @@ import type { Complex } from './complex.ts';
 import { sparamAt } from './dut.ts';
 import type { DutElement } from './dut.ts';
 import { formatHertz } from 'fence-kit';
+import type { Lang } from 'fence-kit';
+import { LABELS } from '../render/labels.ts';
 import { gammaEdge, scalarOf } from './series.ts';
 import type { Basis, TdrSeries } from './series.ts';
 import { groupDelay, impedanceFrom, phaseDeg, valueOf } from './sparams.ts';
@@ -41,10 +43,10 @@ export function formatOhm(value: number): string {
 /** 負の数の頭を − (U+2212) にする。**実機の画面と同じ字**で、ハイフンより読みやすい。 */
 const minus = (text: string): string => text.replace(/^-(?=0(?:\.0+)?(?:\s|$|°))/, '').replace(/^-/, '−');
 
-function impedanceText(gamma: Complex): string {
+function impedanceText(gamma: Complex, lang: Lang): string {
   const edge = gammaEdge(gamma);
-  if (edge === 'open') return '開放';
-  if (edge === 'short') return '短絡';
+  if (edge === 'open') return LABELS[lang].open;
+  if (edge === 'short') return LABELS[lang].short;
   const z = impedanceFrom(gamma);
   // **丸めて 0 になる負の虚部は + で書く** (`− j0.0 Ω` を出さない)。
   const sign = z.im < 0 && formatOhm(-z.im) !== formatOhm(0) ? '−' : '+';
@@ -52,7 +54,7 @@ function impedanceText(gamma: Complex): string {
 }
 
 /** 1 つの形式の 1 点の読み。群遅延は `delay` (秒) を別に渡す。 */
-export function formatReading(trace: PanelTrace, value: Complex, delay: number | null): string {
+export function formatReading(trace: PanelTrace, value: Complex, delay: number | null, lang: Lang = 'ja'): string {
   const { format } = trace.spec;
   switch (format) {
     case 'logmag': return `${minus((scalarOf(format, value) ?? 0).toFixed(2))} dB`;
@@ -61,7 +63,7 @@ export function formatReading(trace: PanelTrace, value: Complex, delay: number |
     case 'swr': return (scalarOf(format, value) ?? 0).toFixed(2);
     case 'linear': return abs(value).toFixed(3);
     case 'r': case 'x': case 'z': return minus(formatOhm(scalarOf(format, value) ?? 0));
-    case 'smith': return impedanceText(value);
+    case 'smith': return impedanceText(value, lang);
     case 'polar': return `${abs(value).toFixed(3)} ∠ ${minus(phaseDeg(value).toFixed(1))}°`;
     default: return '—';
   }
@@ -86,12 +88,16 @@ export type ReadingInput = {
   readonly tdr: readonly TdrSeries[];
   /** 重ねた値の名前 (`data:` のファイル名の後。既定は実測)。TDR の山の行に添える。 */
   readonly dataLabel: string;
+  /** 図の字の言語 (既定は ja)。 */
+  readonly lang?: Lang;
 };
 
 export function readingsOf(input: ReadingInput): Readings {
   const { traces, markers, dut, step, data, tdr, dataLabel } = input;
+  const lang = input.lang ?? 'ja';
+  const labels = LABELS[lang];
   const basis: Basis | null = data !== null && data.length > 0 ? 'data' : dut.length > 0 ? 'model' : null;
-  const columns = ['M', '周波数', ...traces.map(traceLabel)];
+  const columns = ['M', labels.frequency, ...traces.map(traceLabel)];
 
   const rows = basis === null ? [] : markers.map((marker, index) => {
     let f = marker.f;
@@ -112,7 +118,7 @@ export function readingsOf(input: ReadingInput): Readings {
     }
     const cells = traces.map((trace, column) => {
       const value = valueOf(point, trace.spec.param);
-      return value === null ? '—' : formatReading(trace, value, delays[column] ?? null);
+      return value === null ? '—' : formatReading(trace, value, delays[column] ?? null, lang);
     });
     return [`${index + 1}`, formatHertz(f), ...cells];
   });
@@ -120,8 +126,8 @@ export function readingsOf(input: ReadingInput): Readings {
   const extra = tdr.flatMap((series) => {
     const { peak, range } = series.tdr;
     if (peak === null) return [];
-    const where = series.basis === 'data' ? dataLabel : '理想';
-    return [`${traceLabel(series.trace)} (${where}) の一番高い山: ${peak.distance.toFixed(3)} m (${(peak.t * 1e9).toFixed(2)} ns)。見える範囲 ${range.toFixed(1)} m`];
+    const where = series.basis === 'data' ? dataLabel : labels.ideal;
+    return [labels.peakLine(traceLabel(series.trace), where, peak.distance.toFixed(3), (peak.t * 1e9).toFixed(2), range.toFixed(1))];
   });
 
   return { basis, columns, rows, extra };

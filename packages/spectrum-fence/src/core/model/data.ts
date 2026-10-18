@@ -1,4 +1,7 @@
 import { formatHertzShort } from 'fence-kit';
+import type { Lang } from 'fence-kit';
+import { MEASURED_LABEL } from '../limits.ts';
+import { labelsOf } from '../render/labels.ts';
 import { notice } from '../errors.ts';
 import type { FenceDocument, FenceError } from '../types.ts';
 import { looksLikeMegahertz, parseSpectrumCsv } from './csv.ts';
@@ -26,6 +29,7 @@ export function readData(
   doc: FenceDocument,
   screen: { readonly start: number; readonly stop: number; readonly unit: LevelUnit },
   source: DataSource | undefined,
+  lang: Lang = 'ja',
 ): Measured {
   if (doc.data === null) return NOTHING;
   const { value: name, label, line } = doc.data;
@@ -56,5 +60,7 @@ export function readData(
     said.push(notice(`${name} には掃引 (${formatHertzShort(screen.start)}〜${formatHertzShort(screen.stop)}) の中の点がありません`, line, name));
   }
   // 凡例と読み値の見出しに出す名前 (`実測 (a.csv)` `計算 (a.csv)`)。
-  return { points, name: `${label} (${name})`, said };
+  // 書かなかった凡例の名前 (`実測`) だけ言語に合わせる。利用者が書いた名前はそのまま。
+  const shown = label === MEASURED_LABEL ? labelsOf(lang).measured : label;
+  return { points, name: `${shown} (${name})`, said };
 }

@@ -10,7 +10,8 @@ import type {
   BoardSpec, FenceDocument, FenceError, NoteSpec, PartSpec, PartsListMode, Result, StyleSpec, WireSpec,
 } from '../types.ts';
 import { splitPartType } from '../parts/variants.ts';
-import { partValueProblem, rememberRecent } from 'fence-kit';
+import { partValueProblem, rememberRecent, resolveLang } from 'fence-kit';
+import type { Lang } from 'fence-kit';
 import { parseCompactPart, parseHoleToken, parseWireSpec } from './compact.ts';
 import { parseNoteLine } from './notes.ts';
 import {
@@ -26,7 +27,7 @@ const pick = <T extends string>(allowed: readonly T[], value: string | null): T 
 const MAX_YAML_MESSAGE = 120;
 
 /** フェンスの一番外側に書けるキー。読めなかったときの案内はここから作る。 */
-export const TOP_LEVEL_KEYS = ['title', 'points', 'board', 'style', 'parts', 'parts-list', 'wires', 'notes'] as const;
+export const TOP_LEVEL_KEYS = ['title', 'points', 'board', 'style', 'parts', 'parts-list', 'lang', 'wires', 'notes'] as const;
 
 /**
  * 読んだ結果。**`doc` は必ずある** — YAML が転んでも、読めた所は返す
@@ -84,6 +85,7 @@ function readFence(source: string): ParseResult {
   let style: StyleSpec = EMPTY_STYLE;
   let partsList: PartsListMode = DEFAULT_PARTS_LIST;
   let title: string | null = null;
+  let lang: Lang | null = null;
 
   const points = new Map<string, PointDef>();
 
@@ -98,6 +100,7 @@ function readFence(source: string): ParseResult {
       board,
       style,
       partsList,
+      lang,
       points: new Map([...points].map(([name, def]) => [name, def.addr])),
       parts: resolveParts(parts, points),
       wires: resolveWires(wires, points),
@@ -161,6 +164,10 @@ function readFence(source: string): ParseResult {
       // 読めなかったときは直前の値のまま (board と同じ、後勝ちだが不正値では上書きしない)。
       if (mode) partsList = mode;
       else errors.push(fenceError('parts-list は below か none です', lineOf(pair.value as Node) ?? line));
+    } else if (key === 'lang') {
+      const resolved = resolveLang(undefined, scalarText(pair.value));
+      if (resolved.error !== null) errors.push(fenceError(resolved.error, line));
+      else lang = resolved.lang;
     } else if (key === 'parts') {
       collectParts(pair.value as ParsedNode | null, { parts, errors, lineOf, isPoint });
     } else if (key === 'wires') {

@@ -176,6 +176,13 @@ data: 9-1.csv
 1 語 (`light` `dark` `mono`) か並び: `theme`、`width` (120〜4000)、`stamp` (`on` / `off`。既定は右下に処理系の版)、
 `debug` (`on` / `off`。お知らせを帯に出すか)。
 
+## 言語 (`lang:`)
+
+`lang: en` (または `ja`、既定は `ja`) で、フェンスが自分で出す字 (読み値の見出し `読み値 — 理想 (計算)` → `Readings — Ideal (calculated)`、
+`peak` の表の `値` → `Value`、対数軸の `(対数)` → `(log)`、`data:` の既定の凡例名 `実測` → `Measured`) を英語にする。
+書き手が書いた字 (title・軸と線の名前・注釈、`data:` に書いた凡例名) はそのまま。エラーとお知らせの文は日本語のまま。
+呼び出し側は `renderGraph(source, { lang: 'en' })` でも指せて、こちらが `lang:` より先。
+
 ## 読み値
 
 `graph-fence check` は図を描かず、読み値と言うことだけを出す。**本文の「見るべき値」の表と数で突き合わせる**。

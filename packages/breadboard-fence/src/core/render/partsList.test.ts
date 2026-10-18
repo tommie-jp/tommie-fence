@@ -28,6 +28,12 @@ const render = (parts: readonly PlacedPart[]): string => renderPartsList(parts, 
 const boardOf = (size: Board['size'], rails: Board['rails'] = DEFAULT_BOARD.rails): Board => ({ ...DEFAULT_BOARD, size, rails, columns: 30 });
 
 describe('boardRow', () => {
+  test('writes the size, hole count and rails in English for lang en', () => {
+    expect(boardRow(boardOf('half'), 'en')).toMatchObject({ id: 'Board', value: 'half (400 holes)' });
+    expect(boardRow(boardOf('half', null), 'en').value).toBe('half (400 holes) no rails');
+    expect(boardRow(boardOf('mini'), 'en').value).toBe('mini (170 holes) with rails');
+  });
+
   test('names the size with its hole count', () => {
     expect(boardRow(boardOf('half')).value).toBe('half (400 穴)');
     expect(boardRow(boardOf('full')).value).toBe('full (830 穴)');
@@ -257,6 +263,7 @@ describe('renderPartsList', () => {
 
     expect(shown.filter((text) => text === 'resistor')).toHaveLength(LIMITS.listedParts);
     expect(shown).toContain('ほかに 7 件');
+    expect(texts(renderPartsList(many, 14, 400, 636, theme, null, 'en'))).toContain('7 more');
     // 部品が増えても高さは頭打ちになる。
     expect(partsListHeight([...many, part('X1', 'led')], theme)).toBe(partsListHeight(many, theme));
   });

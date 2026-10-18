@@ -1,5 +1,5 @@
 import type { THEME_NAMES } from './limits.ts';
-import type { WaveSpec, WindowName } from 'fence-kit';
+import type { Lang, WaveSpec, WindowName } from 'fence-kit';
 import type { DeviceKind, DeviceName, LevelUnit } from './model/device.ts';
 import type { HoldEntry } from './model/hold.ts';
 import type { MarkerSpec } from './model/markers.ts';
@@ -28,7 +28,7 @@ export type FenceError = {
 /** フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。 */
 export const TOP_LEVEL_KEYS = [
   'device', 'title', 'sweep', 'center', 'span', 'points', 'samples', 'window', 'rbw', 'atten', 'lna',
-  'ref', 'scale', 'unit', 'floor', 'signal', 'hold', 'data', 'markers', 'notes', 'style',
+  'ref', 'scale', 'unit', 'floor', 'signal', 'hold', 'data', 'markers', 'notes', 'style', 'lang',
 ] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
@@ -60,6 +60,7 @@ export const KEY_KINDS: Readonly<Record<TopLevelKey, readonly DeviceKind[]>> = {
   markers: ['fft', 'swept'],
   notes: ['fft', 'swept'],
   style: ['fft', 'swept'],
+  lang: ['fft', 'swept'],
 };
 
 export type ThemeName = (typeof THEME_NAMES)[number];
@@ -99,6 +100,8 @@ export type FenceDocument = {
   /** 重ねる値のファイル名 (`.md` の隣) と、凡例・読み値の見出しに出す名前 (書かなければ `実測`)。 */
   readonly data: { readonly value: string; readonly label: string; readonly line: number | null } | null;
   readonly style: StyleSpec;
+  /** `lang:` (図の中の固定の字の言語)。書かなければ null (既定は ja)。 */
+  readonly lang: Lang | null;
   /** 書いてあった一番外側のキー (読めなかったものも)。「無いので既定で」と言うかを決める。 */
   readonly keys: readonly string[];
 };

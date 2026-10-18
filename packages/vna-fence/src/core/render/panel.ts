@@ -9,7 +9,9 @@ import { formatHertzShort } from 'fence-kit';
 import type { RectSeries, RoundSeries, Series, TdrSeries } from '../model/series.ts';
 import type { Sweep } from '../model/sweep.ts';
 import type { MarkerSpec, NoteSpec, NoteUnit } from '../types.ts';
+import { LABELS } from './labels.ts';
 import { traceColor } from './theme.ts';
+import type { Lang } from 'fence-kit';
 import type { Theme } from './theme.ts';
 
 /**
@@ -28,6 +30,8 @@ export type PanelInput = {
   readonly markers: readonly MarkerSpec[];
   readonly notes: readonly NoteSpec[];
   readonly theme: Theme;
+  /** 図の字の言語 (既定は ja)。 */
+  readonly lang?: Lang;
 };
 
 /** 注釈の単位 → 置く枠。単位の無い数は SWR か linear。 */
@@ -89,15 +93,17 @@ export const amountText = (kind: PanelKind, value: number): string => {
 };
 
 /** 1 目盛の幅 (`10 dB/目盛`)。見出しとお知らせが同じ綴りを使う。 */
-export const perDivision = (kind: PanelKind, axis: Axis): string => {
-  if (axis.log) return '10 倍/目盛 (対数)';
+export const perDivision = (kind: PanelKind, axis: Axis, lang: Lang = 'ja'): string => {
+  const labels = LABELS[lang];
+  if (axis.log) return labels.logScale;
   const step = (axis.max - axis.min) / DIVISIONS;
-  const centered = axis.center === undefined ? '' : ` (中心 ${amountText(kind, axis.center).replace(/^-/, '−')})`;
-  return `${amountText(kind, Math.round(step * 1000) / 1000)}/目盛${centered}`;
+  const centered = axis.center === undefined ? '' : ` (${labels.center} ${amountText(kind, axis.center).replace(/^-/, '−')})`;
+  return `${amountText(kind, Math.round(step * 1000) / 1000)}${labels.perDivision}${centered}`;
 };
 
 function heading(input: PanelInput, axis: Axis | null): string {
   const { panel, theme } = input;
+  const lang = input.lang ?? 'ja';
   const size = theme.metrics.textSize;
   const y = panel.box.y + size;
   const tdrVf = panel.traces[0]?.spec.vf;
@@ -106,8 +112,8 @@ function heading(input: PanelInput, axis: Axis | null): string {
     ? [...new Set(panel.traces.map((trace) => FORMAT_NAME[trace.spec.format] ?? ''))].join(' · ')
     : HEADING[panel.kind];
   const title = panel.kind === 'tdr'
-    ? `TDR  帯域通過 · vf ${tdrVf ?? 0.66}`
-    : axis === null ? name : `${name}  ${perDivision(panel.kind, axis)}`;
+    ? `TDR  ${LABELS[lang].bandPass} · vf ${tdrVf ?? 0.66}`
+    : axis === null ? name : `${name}  ${perDivision(panel.kind, axis, lang)}`;
   const left = svgText(panel.plot.x, y, title, { anchor: 'start', fill: theme.palette.caption, 'font-size': num(size), 'font-weight': 600, 'font-family': BOLD_FAMILY });
   // **形式が混ざる枠では形式も添える** (R・X・|Z| を重ねた枠が「S11 S11 S11」にならない)。
   const mixed = new Set(panel.traces.map((trace) => trace.spec.format)).size > 1;
@@ -335,7 +341,7 @@ function renderTdr(input: PanelInput): string {
   ));
   const peaks = shownSeries(series).flatMap((one) => (one.tdr.peak === null
     ? []
-    : [markerGlyph(xOf(one.tdr.peak.distance), yOf(one.tdr.peak.value), '山', traceColor(theme, one.trace.index), theme, plot)]));
+    : [markerGlyph(xOf(one.tdr.peak.distance), yOf(one.tdr.peak.value), LABELS[input.lang ?? 'ja'].peakMark, traceColor(theme, one.trace.index), theme, plot)]));
   const xLabels = [0, HORIZONTAL / 2, HORIZONTAL].map((division) => {
     const anchor = division === 0 ? 'start' : division === HORIZONTAL ? 'end' : 'middle';
     const meters = (range * division) / HORIZONTAL;

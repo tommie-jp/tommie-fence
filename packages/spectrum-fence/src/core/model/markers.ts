@@ -1,4 +1,6 @@
 import { formatHertz } from 'fence-kit';
+import type { Lang } from 'fence-kit';
+import { labelsOf } from '../render/labels.ts';
 import type { LevelUnit } from './device.ts';
 import { formatLevel } from './level.ts';
 import type { Point } from './trace.ts';
@@ -48,6 +50,7 @@ export function readMarkers(
   points: readonly Point[],
   unit: LevelUnit,
   basis: Readings['basis'],
+  lang: Lang = 'ja',
 ): Readings {
   if (markers.length === 0) return { rows: [], basis };
   const rows = markers.map((marker, index) => {
@@ -56,5 +59,5 @@ export function readMarkers(
       ? [`${index + 1}`, DASH, DASH]
       : [`${index + 1}`, formatHertz(point.at), formatLevel(point.level, unit)];
   });
-  return { rows: [['M', '周波数', 'レベル'], ...rows], basis };
+  return { rows: [['M', labelsOf(lang).frequency, labelsOf(lang).level], ...rows], basis };
 }

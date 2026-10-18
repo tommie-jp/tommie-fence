@@ -1,3 +1,4 @@
+import type { Lang } from 'fence-kit';
 import { attachSourceText, shiftErrors } from './errors.ts';
 import type { Readings } from './model/readings.ts';
 import { renderErrorBanner } from './render/errorHtml.ts';
@@ -30,6 +31,8 @@ export type RenderOptions = {
   readonly offset?: number;
   /** `data:` のファイルを読む口。渡さなければ「この宿主では読めません」と言って理想だけ描く。 */
   readonly data?: DataSource;
+  /** 図の中の固定の字の言語 (`ja` か `en`。既定は `ja`)。YAML の `lang:` より先。エラーと注釈の文は日本語のまま。 */
+  readonly lang?: Lang;
 };
 
 /** 行の無いものを先に、あとは行の順に。同じ行なら見つけた順を保つ。 */

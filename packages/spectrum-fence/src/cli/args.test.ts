@@ -12,7 +12,7 @@ describe('parseArgs', () => {
     const checked = parseArgs(['check', 'docs']);
 
     expect(rendered.ok && rendered.value).toEqual({
-      command: 'render', targets: ['docs'], outDir: 'out', flags: new Set(),
+      command: 'render', targets: ['docs'], outDir: 'out', flags: new Set(), lang: null,
     });
     expect(checked.ok && checked.value.command).toBe('check');
   });

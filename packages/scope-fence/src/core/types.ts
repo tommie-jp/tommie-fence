@@ -1,3 +1,4 @@
+import type { Lang } from 'fence-kit';
 import type { THEME_NAMES } from './limits.ts';
 import type { ChannelName, ChannelSpec, TraceName } from './model/channel.ts';
 import type { Expr } from './model/expr.ts';
@@ -25,7 +26,7 @@ export type FenceError = {
 
 /** フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。 */
 export const TOP_LEVEL_KEYS = [
-  'view', 'title', 'time', 'trigger', 'ch1', 'ch2', 'ch3', 'ch4', 'math', 'xy', 'data', 'cursors', 'measure', 'notes', 'style',
+  'view', 'title', 'time', 'trigger', 'ch1', 'ch2', 'ch3', 'ch4', 'math', 'xy', 'data', 'cursors', 'measure', 'notes', 'style', 'lang',
 ] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
@@ -103,6 +104,8 @@ export type FenceDocument = {
   /** 注釈 (時間の画面だけ。XY では断って空)。 */
   readonly notes: readonly NoteSpec[];
   readonly style: StyleSpec;
+  /** `lang:` に書いた図の字の言語 (書かなければ null)。 */
+  readonly lang: Lang | null;
   /** 書いてあった一番外側のキー (読めなかったものも)。「無いので既定で」と言うかを決める。 */
   readonly keys: readonly string[];
 };

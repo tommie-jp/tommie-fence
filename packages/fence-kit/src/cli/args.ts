@@ -10,6 +10,8 @@
  * 1 本にすると却って読みにくい。ここが持つのは読み取りの規則だけ。
  */
 
+import { isLang, type Lang } from '../lang.ts';
+
 /** `render` は書き出す。`check` は**書かずに検証だけ**。`version` は版を答えるだけ。 */
 export type CliVerb = 'render' | 'check' | 'version';
 
@@ -20,6 +22,8 @@ export type CliCommand = {
   readonly outDir: string | null;
   /** 立っている真偽のオプション (`--emit-tex` など)。知らない綴りは弾く。 */
   readonly flags: ReadonlySet<string>;
+  /** `--lang ja|en`。図の字の言語 (YAML の `lang:` より先)。書かなければ null。 */
+  readonly lang: Lang | null;
 };
 
 export type ArgsResult =
@@ -42,7 +46,7 @@ export function parseCliArgs(argv: readonly string[], flags: readonly string[] =
   // `check docs -v` が何も調べずに 0 で終わり、CI の関門が黙って通る
   // (`-v` を verbose のつもりで書くのはありがちな取り違え)。
   if (written !== undefined && VERSION_FLAGS.includes(written)) {
-    return { ok: true, value: { command: 'version', targets: [], outDir: null, flags: new Set() } };
+    return { ok: true, value: { command: 'version', targets: [], outDir: null, flags: new Set(), lang: null } };
   }
   if (written !== 'render' && written !== 'check') return invalid('render か check を指定します');
   const command = written;
@@ -50,6 +54,7 @@ export function parseCliArgs(argv: readonly string[], flags: readonly string[] =
   const targets: string[] = [];
   const raised = new Set<string>();
   let outDir: string | null = null;
+  let lang: Lang | null = null;
 
   for (let index = 0; index < rest.length; index += 1) {
     const argument = rest[index] ?? '';
@@ -60,6 +65,11 @@ export function parseCliArgs(argv: readonly string[], flags: readonly string[] =
         return invalid('--out の後ろに出力先を書きます');
       }
       outDir = value;
+      index += 1;
+    } else if (argument === '--lang') {
+      const value = rest[index + 1];
+      if (!isLang(value)) return invalid('--lang の後ろに ja か en を書きます');
+      lang = value;
       index += 1;
     } else if (flags.includes(argument)) {
       raised.add(argument);
@@ -72,5 +82,5 @@ export function parseCliArgs(argv: readonly string[], flags: readonly string[] =
 
   if (targets.length === 0) return invalid('描画するファイルかディレクトリを指定します');
 
-  return { ok: true, value: { command, targets, outDir, flags: raised } };
+  return { ok: true, value: { command, targets, outDir, flags: raised, lang } };
 }

@@ -1,9 +1,11 @@
 import { element, num } from 'fence-kit';
+import type { Lang } from 'fence-kit';
 import { createLayout } from '../model/layout.ts';
 import { renderBoard } from './board.ts';
 import { renderParts } from './parts.ts';
 import { renderSlots } from './slots.ts';
 import { renderJoints } from './joints.ts';
+import { textLabels } from './textLabels.ts';
 import { renderTitle } from './title.ts';
 import { renderWires, wireObstacle } from './wires.ts';
 import { crossingPoints } from './crossings.ts';
@@ -33,7 +35,7 @@ import type { ResolvedLabels, Theme } from './theme.ts';
  */
 const GHOST = 0.35;
 
-/** 見出し。表の図と取り違えると、部品の左右が入れ替わったまま組むことになる。 */
+/** 見出し (日本語)。表の図と取り違えると、部品の左右が入れ替わったまま組むことになる。言語ごとの綴りは `textLabels`。 */
 export const BACK_CAPTION = '半田面 (裏返した基板)';
 
 /**
@@ -66,11 +68,12 @@ export function renderBackSide(
   theme: Theme,
   labels: ResolvedLabels,
   top: number,
+  lang: Lang = 'ja',
 ): string {
   // **重ね順は手前から、半田点 → 配線 → 部品。** 半田面で手を動かすときに見るのは
   // 半田付けする穴と、そこを渡るジャンパで、部品は基板の向こう側にある。
   // 部品は薄く敷いて「どのランドがどの部品のピンか」だけを伝える。
-  const body = renderTitle(BACK_CAPTION, layout, theme)
+  const body = renderTitle(textLabels(lang).backCaption, layout, theme)
     + renderBoard(board, layout, theme, labels)
     // 縁の銅箔は基板そのものの持ち物なので、**裏返しても同じ場所にある**。
     + renderSlots(board, layout, theme)

@@ -69,10 +69,13 @@ export function partKind(type: string, variant: string | null, value: string | n
  * IC の型番に働きを添える (`CD4081 (2 入力 AND ×4)`)。型番だけだと、どの IC が何をするのか
  * 表から読めない。ピンの名前の表にある型番だけ。
  */
-export function valueWithRole(value: string): string {
-  const role = value === '' ? null : lookupRole(value);
-  if (role === null) return value;
+export function valueWithRole(value: string, lang: Lang = 'ja'): string {
+  const jaRole = value === '' ? null : lookupRole(value);
+  if (jaRole === null) return value;
   // セラミックフィルタは種類の欄に呼び名を出すので、値の欄には周波数だけ残す (`SFU455B (455 kHz)`)。
-  const rest = role.startsWith(CERAMIC_ROLE) ? role.slice(CERAMIC_ROLE.length).trim() : role;
+  // 周波数は言語によらず同じなので、日本語の書き出しから切り出す。
+  const rest = jaRole.startsWith(CERAMIC_ROLE)
+    ? jaRole.slice(CERAMIC_ROLE.length).trim()
+    : lookupRole(value, lang) ?? jaRole;
   return rest === '' ? value : `${value} (${rest})`;
 }

@@ -1,4 +1,5 @@
 import type { THEME_NAMES } from './limits.ts';
+import type { Lang } from 'fence-kit';
 import type { LineSpec } from './model/lines.ts';
 
 /**
@@ -21,7 +22,7 @@ export type FenceError = {
 };
 
 /** フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。 */
-export const TOP_LEVEL_KEYS = ['title', 'x', 'y', 'lines', 'data', 'notes', 'style'] as const;
+export const TOP_LEVEL_KEYS = ['title', 'x', 'y', 'lines', 'data', 'notes', 'style', 'lang'] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
 
@@ -67,6 +68,8 @@ export type FenceDocument = {
   readonly data: { readonly name: string; readonly label: string; readonly line: number | null } | null;
   readonly notes: readonly NoteSpec[];
   readonly style: StyleSpec;
+  /** `lang:` に書いた言語。書かなければ null (既定は ja)。 */
+  readonly lang: Lang | null;
   /** 書いてあった一番外側のキー (読めなかったものも)。「無いので既定で」と言うかを決める。 */
   readonly keys: readonly string[];
 };

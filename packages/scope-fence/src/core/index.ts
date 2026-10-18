@@ -1,12 +1,14 @@
-import { formatPerDiv, formatSeconds, formatVolts, normalizeNewlines } from 'fence-kit';
-import { notice } from './errors.ts';
+import { formatPerDiv, formatSeconds, formatVolts, normalizeNewlines, resolveLang } from 'fence-kit';
+import type { Lang } from 'fence-kit';
+import { fenceError, notice } from './errors.ts';
 import { idealOf } from './ideal.ts';
 import { fitNotice, screenExtent } from './layout/fit.ts';
 import { autoTimePerDiv, fractionY, niceStep125 } from './layout/scales.ts';
 import { SIZE, createLayout } from './layout/screen.ts';
 import { scaleOf, scaleSpecsOf } from './layout/traceScales.ts';
 import type { ScaleSpec } from './layout/traceScales.ts';
-import { LIMITS } from './limits.ts';
+import { LIMITS, MEASURED_LABEL } from './limits.ts';
+import { labelsOf } from './render/labels.ts';
 import type { ChannelSpec, TraceName } from './model/channel.ts';
 import { CHANNEL_NAMES, TRACE_NAMES } from './model/channel.ts';
 import type { MeasureName } from './model/measure.ts';
@@ -54,7 +56,7 @@ const NOTHING: Omit<Measured, 'said'> = { traces: [], name: null, extent: null }
  * 描くのは画面の中だけ、読み値は記録全体から (実機のバッファと同じ)。
  * **トリガの探索は掛けない** (WaveForms の CSV の t = 0 がトリガ)。
  */
-function readData(doc: FenceDocument, source: DataSource | undefined): Measured {
+function readData(doc: FenceDocument, source: DataSource | undefined, lang: Lang): Measured {
   if (doc.data === null) return { ...NOTHING, said: [] };
   const { name, label, line } = doc.data;
   if (source === undefined) {
@@ -74,7 +76,8 @@ function readData(doc: FenceDocument, source: DataSource | undefined): Measured 
   return {
     traces,
     // 凡例と読み値の見出しに出す名前 (`実測 (a.csv)` `計算 (a.csv)`)。
-    name: `${label} (${name})`,
+    // 凡例の名前を書かなかったときの既定 (実測) だけが言語で変わる。書いた名前はそのまま。
+    name: `${label === MEASURED_LABEL ? labelsOf(lang).measured : label} (${name})`,
     extent: [t0, read.time[read.time.length - 1] ?? t0],
     said: read.notes.map((one) => notice(`${name}: ${one}`, line, name)),
   };
@@ -182,7 +185,7 @@ function sourceOf(doc: FenceDocument, source: string, said: FenceError[]): reado
 }
 
 /** 時間の画面を SVG に。注釈で言うことは `said` に足す。 */
-function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>, said: FenceError[]): string {
+function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>, said: FenceError[], lang: Lang): string {
   const { doc, screen, trigger, measured, scales } = scene;
   const { theme } = style;
   const drawn = [...scene.idealTraces, ...measured.traces];
@@ -193,8 +196,8 @@ function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>, said
   const layout = createLayout({
     statusRows: status.length,
     title: doc.title,
-    key: drawn.length === 0 ? null : keyText(scene.idealTraces.length > 0, measured.name),
-    readings: readingsSize(scene.readings, measured.name, theme),
+    key: drawn.length === 0 ? null : keyText(scene.idealTraces.length > 0, measured.name, lang),
+    readings: readingsSize(scene.readings, measured.name, theme, lang),
     source: scene.listing.length > 0 ? linesSize(scene.listing, theme) : null,
     markSlots: Math.max(1, ...groups.map((group) => group.labels.length)),
     theme,
@@ -212,7 +215,7 @@ function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>, said
   const notes = placeNotes({ notes: doc.notes, grid: layout.grid, screen, scales, theme });
   said.push(...notes.said);
   const body = renderTitle(doc.title, layout, theme)
-    + renderKey(scene.idealTraces.length > 0, measured.name, layout, theme)
+    + renderKey(scene.idealTraces.length > 0, measured.name, layout, theme, lang)
     + renderGrid(layout, theme)
     + notes.under
     + traceSvg
@@ -221,20 +224,20 @@ function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>, said
     + groups.map((group) => renderChannelMark(group.labels, group.fraction, layout, theme)).join('')
     + triggerMarks
     + renderStatus(status, layout, theme)
-    + (layout.readingsBand === null ? '' : renderReadings(scene.readings, measured.name, layout.readingsBand, theme))
+    + (layout.readingsBand === null ? '' : renderReadings(scene.readings, measured.name, layout.readingsBand, theme, lang))
     + (layout.sourceBand === null ? '' : renderLines(scene.listing, layout.sourceBand, theme, theme.palette.caption));
   return renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
 }
 
 /** 時間の画面 (view: time)。 */
-function renderTime(doc: FenceDocument, source: string, options: RenderOptions, said: FenceError[]): RenderResult {
+function renderTime(doc: FenceDocument, source: string, options: RenderOptions, said: FenceError[], lang: Lang): RenderResult {
   const style = resolveStyle(doc.style);
   const { channels } = doc;
   const wrote = (key: string): boolean => doc.keys.includes(key);
   if (!doc.keys.some((key) => /^ch\d$/.test(key) || key === 'math') && doc.data === null && source.trim() !== '') {
     said.push(notice('ch1: が無いので格子だけ描いています (ch1: sine 1kHz 1V のように書きます)', null));
   }
-  const measured = readData(doc, options.data);
+  const measured = readData(doc, options.data, lang);
   const time = timeOf(doc, measured);
   said.push(...time.said);
   const trigger = doc.trigger ?? defaultTrigger(channels);
@@ -264,9 +267,9 @@ function renderTime(doc: FenceDocument, source: string, options: RenderOptions, 
   const listing = sourceOf(doc, source, said);
   const svg = drawTime({
     doc, screen, trigger, triggerLevel: ideal.triggerLevel, idealTraces: ideal.traces, measured, cursors, readings, specs, scales, listing,
-  }, style, said);
+  }, style, said, lang);
   return finishResult({
-    source, said, svg, readings, readingLines: readingLinesOf(readings, measured.name), debug: style.debug, offset: options.offset ?? 0,
+    source, said, svg, readings, readingLines: readingLinesOf(readings, measured.name, lang), debug: style.debug, offset: options.offset ?? 0,
   });
 }
 
@@ -278,7 +281,11 @@ export function renderScope(input: string, options: RenderOptions = {}): RenderR
   const source = normalizeNewlines(input);
   const { doc, errors } = parseFence(source);
   const said: FenceError[] = [...errors];
-  return doc.view === 'xy' ? renderXyView(doc, source, options, said) : renderTime(doc, source, options, said);
+  // `options.lang` が先。YAML の `lang:` は読みのほうで検査済み。
+  const resolved = resolveLang(options.lang, doc.lang);
+  if (resolved.error !== null) said.push(fenceError(resolved.error, null));
+  const { lang } = resolved;
+  return doc.view === 'xy' ? renderXyView(doc, source, options, said, lang) : renderTime(doc, source, options, said, lang);
 }
 
 export { extractScopeFences } from './fences.ts';

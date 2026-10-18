@@ -1,5 +1,6 @@
-import { PARTS_HEADINGS, bandColor, partKind, partsMark, valueWithRole } from 'fence-kit';
-import type { PartsMark } from 'fence-kit';
+import { bandColor, partKind, partsMark, valueWithRole } from 'fence-kit';
+import type { Lang, PartsMark } from 'fence-kit';
+import { partsLabels } from './labels.ts';
 import { LIMITS } from '../limits.ts';
 import { fit, textWidth } from './textFit.ts';
 import type { Board, BoardSize, PlacedPart } from '../types.ts';
@@ -37,8 +38,9 @@ const SWATCH = { width: 0.9, gap: 0.25, height: 0.8 } as const;
 type Row = { readonly id: string; readonly type: string; readonly value: string; readonly mark: PartsMark };
 
 /** 見出しの行。番号と型番だけが並ぶと、どの欄が値なのかが読めない。 */
-const HEADING_ROW: Row = {
-  id: PARTS_HEADINGS[0], type: PARTS_HEADINGS[1], value: PARTS_HEADINGS[2], mark: PARTS_HEADINGS[3],
+const headingRow = (lang: Lang): Row => {
+  const [id, type, value, mark] = partsLabels(lang).headings;
+  return { id, type, value, mark };
 };
 
 /**
@@ -56,8 +58,8 @@ const valueOf = (part: PlacedPart): string =>
  * 種類の列には姿も添える (`capacitor/ceramic`)。同じ `0.1u` でもセラミックか
  * フィルムかは買うときに効く違いで、図だけを渡された人はここでしか読めない。
  */
-const typeOf = (part: PlacedPart): string =>
-  part.kind === 'device' ? part.type : partKind(part.type, part.variant, valueOf(part));
+const typeOf = (part: PlacedPart, lang: Lang): string =>
+  part.kind === 'device' ? part.type : partKind(part.type, part.variant, valueOf(part), lang);
 
 /** 実物の穴数。`board:` のサイズ名では買えないので、売り場の呼び名に添える。 */
 const HOLES: Readonly<Record<BoardSize, number>> = { mini: 170, half: 400, full: 830 };
@@ -66,20 +68,21 @@ const HOLES: Readonly<Record<BoardSize, number>> = { mini: 170, half: 400, full:
  * 基板の行。**サイズと穴数**を書き、電源レールは既定 (mini は無し、half / full は有り)
  * と違うときだけ添える。印字 (`letters` `numbers`) は買う基板を決めないので載せない。
  */
-export function boardRow(board: Board): Row {
+export function boardRow(board: Board, lang: Lang = 'ja'): Row {
+  const labels = partsLabels(lang);
   const hasRails = board.rails !== null;
-  const rails = hasRails === (board.size !== 'mini') ? '' : hasRails ? ' レール有り' : ' レール無し';
-  return { id: '基板', type: 'breadboard', value: `${board.size} (${HOLES[board.size]} 穴)${rails}`, mark: '' };
+  const rails = hasRails === (board.size !== 'mini') ? '' : hasRails ? labels.railsOn : labels.railsOff;
+  return { id: labels.board, type: 'breadboard', value: `${labels.boardSize(board.size, HOLES[board.size])}${rails}`, mark: '' };
 }
 
 /**
  * IC には働きを添える (`CD4081 (2 入力 AND ×4)`)。型番だけだと、どの IC が何をするのか
  * 表から読めない。機器の名札には添えない。
  */
-const rowsOf = (parts: readonly PlacedPart[]): readonly Row[] =>
+const rowsOf = (parts: readonly PlacedPart[], lang: Lang): readonly Row[] =>
   parts.map((part) => part.kind === 'device'
-    ? { id: part.id, type: typeOf(part), value: valueOf(part), mark: '' }
-    : { id: part.id, type: typeOf(part), value: valueWithRole(valueOf(part)), mark: partsMark(part.type, part.variant, part.value) });
+    ? { id: part.id, type: typeOf(part, lang), value: valueOf(part), mark: '' }
+    : { id: part.id, type: typeOf(part, lang), value: valueWithRole(valueOf(part), lang), mark: partsMark(part.type, part.variant, part.value) });
 
 const markWidth = (mark: PartsMark): number =>
   typeof mark === 'string'
@@ -128,15 +131,16 @@ export function renderPartsList(
   width: number,
   theme: RenderTheme,
   board: Board | null = null,
+  lang: Lang = 'ja',
 ): string {
   if (parts.length === 0) return '';
 
   // 表から部品を探すので名前の順に並べる (数字は数として: R2 の次は R10)。上限で切る前に並べる。
   const sorted = [...parts].sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }));
-  const listed = rowsOf(sorted.slice(0, LIMITS.listedParts));
+  const listed = rowsOf(sorted.slice(0, LIMITS.listedParts), lang);
   const hidden = parts.length - listed.length;
   // 先頭は見出し。基板は最初に用意する物なので、名前の順には入れず見出しのすぐ下に置く。上限の数にも数えない。
-  const rows = [HEADING_ROW, ...(board === null ? [] : [boardRow(board)]), ...listed];
+  const rows = [headingRow(lang), ...(board === null ? [] : [boardRow(board, lang)]), ...listed];
   const { palette } = theme;
   const { textSize } = theme.metrics;
   const pad = textSize * PAD_RATIO;
@@ -205,7 +209,7 @@ export function renderPartsList(
   });
 
   // 収まらなかったぶんは黙って落とさず、件数を最後の行に出す。
-  const more = hidden === 0 ? '' : cell(idX, baselineOf(rows.length), `ほかに ${hidden} 件`, ink);
+  const more = hidden === 0 ? '' : cell(idX, baselineOf(rows.length), partsLabels(lang).more(hidden), ink);
 
   return plate + cells.join('') + more;
 }
