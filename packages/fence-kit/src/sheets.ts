@@ -11,6 +11,7 @@
  */
 import type { Net } from './nets.ts';
 import { wireColor } from './colors.ts';
+import { isLang, type Lang } from './lang.ts';
 import { linkColorOf, planLinks } from './sheetLinks.ts';
 import type { LinkLook, SheetPoint, StackLink } from './sheetLinks.ts';
 
@@ -19,7 +20,28 @@ export const SHEET_TOP_KEYS = ['title', 'sheets', 'links', 'board', 'style'] as 
 const SHARED_KEYS = ['board', 'style'] as const;
 
 /** フェンスごとに足せる、枚が書かなかったときの既定になるキー (copper の `f:` など)。 */
-export type SheetOptions = { readonly shared?: readonly string[] };
+export type SheetOptions = {
+  readonly shared?: readonly string[];
+  /** 図の字の言語 (`options.lang`)。枚の題の `(N枚め)` / `(sheet N)` を決める。YAML の `lang:` より先。 */
+  readonly lang?: Lang;
+};
+
+/** 枚の題と名前に使う字。ja は `N枚め`、en は題が `sheet N`、links で指す名前が空白なしの `sheetN`。 */
+const ordinalOf = (lang: Lang, n: number): { readonly paren: string; readonly bare: string; readonly name: string } =>
+  lang === 'en'
+    ? { paren: `(sheet ${n})`, bare: `sheet ${n}`, name: `sheet${n}` }
+    : { paren: `(${n}枚め)`, bare: `${n}枚め`, name: `${n}枚め` };
+
+/** YAML の `lang: en` の行から言語を読む (読めなければ null)。 */
+const langOfLines = (lines: readonly string[]): Lang | null => {
+  for (const line of lines) {
+    const match = /^lang:\s*(.*)$/.exec(line);
+    if (match === null) continue;
+    const value = unquote((match[1] ?? '').replace(/\s+#.*$/, ''));
+    return isLang(value) ? value : null;
+  }
+  return null;
+};
 
 /** 枚どうしの間の隙間 (SVG の単位)。**どこまでが 1 枚か**が一目で分かる幅。 */
 const SHEET_GAP = 32;
@@ -187,12 +209,14 @@ export function splitSheets(source: string, extra: SheetOptions = {}): SheetSpli
    * 名前を書いた枚と書かなかった枚で題の形が変わらない。枚の名前があれば外の
    * `title:` に `・名前` で続ける。枚が自分で `title:` を書けば、その題に付ける。
    */
-  const titleLine = (base: string | null, index: number): string => {
-    const nth = `(${index + 1}枚め)`;
-    return `title: ${JSON.stringify(base === null || base === '' ? `${index + 1}枚め` : `${base} ${nth}`)}`;
+  const titleLine = (base: string | null, index: number, lang: Lang): string => {
+    const nth = ordinalOf(lang, index + 1);
+    return `title: ${JSON.stringify(base === null || base === '' ? nth.bare : `${base} ${nth.paren}`)}`;
   };
+  const sharedLang = extra.lang ?? langOfLines(shared.get('lang')?.lines ?? []) ?? 'ja';
   const sheets = raw.map((one, index): SheetSource => {
     const body = [...one.lines];
+    const lang = extra.lang ?? langOfLines(body) ?? sharedLang;
     let name: string | null = null;
     const titled = hasTopKey(body, 'title');
     for (let at = 0; at < body.length; at += 1) {
@@ -200,17 +224,17 @@ export function splitSheets(source: string, extra: SheetOptions = {}): SheetSpli
       if (match === null) continue;
       name = unquote((match[1] ?? '').replace(/\s+#.*$/, ''));
       // 枚が `title:` を持つならそちらを使う。
-      body[at] = titled || name === '' ? '' : titleLine(figureTitle === null ? name : `${figureTitle}・${name}`, index);
+      body[at] = titled || name === '' ? '' : titleLine(figureTitle === null ? name : `${figureTitle}・${name}`, index, lang);
       break;
     }
     if (titled) {
       // 枚が書いた題にも `(N枚め)` を付ける。行の数は変えない (行番号を元のフェンスへ戻すため)。
       const at = body.findIndex((text) => /^title:/.test(text));
-      body[at] = titleLine(unquote((body[at] ?? '').slice('title:'.length).replace(/\s+#.*$/, '')), index);
+      body[at] = titleLine(unquote((body[at] ?? '').slice('title:'.length).replace(/\s+#.*$/, '')), index, lang);
     }
     // **名前を書かなかった枚は `1枚め` `2枚め`。** links でもこの名前で指す。
     const unnamed = name === null || name === '';
-    const sheetName = unnamed ? `${index + 1}枚め` : name ?? '';
+    const sheetName = unnamed ? ordinalOf(lang, index + 1).name : name ?? '';
     if (BAD_NAME.test(sheetName)) {
       problems.push({ message: `枚の名前に空白と . は使えません (links で枚と節点を区切るため): ${sheetName}`, line: one.firstLine });
     }
@@ -220,18 +244,18 @@ export function splitSheets(source: string, extra: SheetOptions = {}): SheetSpli
     taken.add(sheetName);
 
     const ownLines = body.length;
-    const extra: string[] = [];
-    if (unnamed && !titled) extra.push(titleLine(figureTitle, index));
+    const added: string[] = [];
+    if (unnamed && !titled) added.push(titleLine(figureTitle, index, lang));
     let sharedLine: number | null = null;
     for (const key of sharedKeys) {
       const block = shared.get(key);
       if (block === undefined || hasTopKey(body, key)) continue;
-      extra.push(...block.lines);
+      added.push(...block.lines);
       sharedLine ??= block.line;
     }
     return {
       name: sheetName,
-      text: [...body, ...extra].join('\n'),
+      text: [...body, ...added].join('\n'),
       firstLine: one.firstLine,
       ownLines,
       sharedLine,
@@ -450,13 +474,13 @@ export type SheetKit<E extends SheetError> = {
  */
 export function renderSheets<E extends SheetError, R extends SheetResult<E>>(
   source: string,
-  options: { readonly offset?: number },
+  options: { readonly offset?: number; readonly lang?: Lang },
   renderOne: (text: string, options: SheetRenderOptions) => R & SheetExtras,
   kit: SheetKit<E>,
   sheetOptions: SheetOptions = {},
 ): R {
   const offset = options.offset ?? 0;
-  const split = splitSheets(source, sheetOptions);
+  const split = splitSheets(source, options.lang === undefined ? sheetOptions : { ...sheetOptions, lang: options.lang });
   const own: E[] = split.problems.map((problem) => kit.makeError(problem.message, problem.line, false));
 
   if (split.sheets.length > SHEETS_ADVISED) {

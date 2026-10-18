@@ -275,3 +275,18 @@ describe('linkColorOf', () => {
     expect(linkColorOf(['VCC', 'GND'])).toBe('#8a929c');
   });
 });
+
+describe('lang en', () => {
+  const src = 'title: Fig\nsheets:\n  - name: A\n    parts: []\n  - parts: []\n';
+  test('titles sheets (sheet N) with no Japanese when lang is en', () => {
+    const split = splitSheets(src, { lang: 'en' });
+    expect(split.sheets[0]?.text).toContain('title: "Fig・A (sheet 1)"');
+    expect(split.sheets[1]?.text).toContain('title: "Fig (sheet 2)"');
+    expect(split.sheets[1]?.name).toBe('sheet2');
+    expect(split.sheets.map((one) => one.text).join('')).not.toMatch(/[ぁ-んァ-ヶ一-龠]/);
+  });
+  test('reads the top-level lang: when the option is absent, and ja stays as is', () => {
+    expect(splitSheets(`lang: en\n${src}`, { shared: ['lang'] }).sheets[1]?.name).toBe('sheet2');
+    expect(splitSheets(src).sheets[1]?.name).toBe('2枚め');
+  });
+});

@@ -55,7 +55,8 @@ function main(argv: readonly string[]): number {
     return 0;
   }
 
-  const { command, targets, outDir } = parsed.value;
+  const { command, targets, outDir, lang } = parsed.value;
+  const langOption = lang === null ? {} : { lang };
   const writing = command === 'render';
   let failed = 0;
 
@@ -64,7 +65,7 @@ function main(argv: readonly string[]): number {
 
     for (const target of targets.flatMap(collectFiles)) {
       for (const job of jobsFor(target, outDir)) {
-        const result = renderCopper(job.source, { offset: job.offset });
+        const result = renderCopper(job.source, { offset: job.offset, ...langOption });
         const { svg, netlist, errors } = result;
         if (!writing) {
           console.log(job.label);

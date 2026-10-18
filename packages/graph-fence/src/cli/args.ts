@@ -15,6 +15,7 @@ export const USAGE = `使い方:
 
   .md からは \`\`\`graph フェンスを取り出し、.yaml はそのまま 1 枚の図として描きます。
   render は --out を省くと入力と同じ場所に .svg を書き出します。
+  --lang ja|en は図の字の言語です (書かなければ ja。YAML の lang: より先)。
   check は何も書かず、読み値 (mark と peak) と言うことだけを出します
   (読めない行が 1 つでもあれば終了コードは 1)。
   data: に書いた CSV (.csv / .txt) は、入力の .md と同じ場所から読みます。

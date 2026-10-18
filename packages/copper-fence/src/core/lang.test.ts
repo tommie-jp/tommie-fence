@@ -100,8 +100,7 @@ describe('lang: en leaves no Japanese in the fixed texts', () => {
   test('every figure renders its own fixed texts in English', () => {
     const bad = cases.flatMap(({ name, source }) => {
       const { svg } = renderCopper(source, { lang: 'en' });
-      // 枚の題の「(N枚め)」は fence-kit の sheets.ts が付ける字 (copper-fence の外)。ここでは外して調べる。
-      const written = (text: string): boolean => text.replace(/\s*\(\d+枚め\)$/, '').split('・').every((part) => source.includes(part.trim()));
+      const written = (text: string): boolean => text.replace(/\s*\(sheet \d+\)$/, '').split('・').every((part) => source.includes(part.trim()));
       return textsOf(svg).filter((text) => FIXED_JA.test(text) && !written(text)).map((text) => `${name}: ${text}`);
     });
     expect(bad).toEqual([]);

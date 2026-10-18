@@ -1,4 +1,5 @@
 import type { MarkdownIt, RendererRule } from 'markdown-it';
+import { langFromEnv } from 'fence-kit';
 import { renderCopper } from './core/index.ts';
 
 const LANGUAGE = 'copper';
@@ -25,7 +26,9 @@ export function copperPlugin(md: MarkdownIt): MarkdownIt {
     // **行番号は Markdown の行で出す。** core が読むのはフェンスの中の
     // 数え方だが、書き手が直しに行くのは Markdown の行。
     const offset = token.map === null ? 0 : token.map[0] + 1;
-    const { svg, errorHtml } = renderCopper(token.content, { offset });
+    // 言語は host が `md.render(text, { fenceLang: 'en' })` で渡す。書かなければ YAML の `lang:` か ja。
+    const lang = langFromEnv(env);
+    const { svg, errorHtml } = renderCopper(token.content, { offset, ...(lang === undefined ? {} : { lang }) });
 
     return `<div${self.renderAttrs(token)}>${svg}${errorHtml}</div>\n`;
   };

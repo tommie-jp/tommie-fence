@@ -1,4 +1,5 @@
 import type { MarkdownIt, RendererRule } from 'markdown-it';
+import { langFromEnv } from 'fence-kit';
 import { renderVna } from './core/index.ts';
 import type { DataSource } from './core/index.ts';
 
@@ -32,7 +33,9 @@ export const vnaPlugin = (reader?: DataReader) => (md: MarkdownIt): MarkdownIt =
     // **行番号は Markdown の行で出す。** core が読むのはフェンスの中の数え方。
     const offset = token.map === null ? 0 : token.map[0] + 1;
     const data = reader?.(env);
-    const { svg, errorHtml } = renderVna(token.content, { offset, ...(data === undefined ? {} : { data }) });
+    // 言語は host が `md.render(text, { fenceLang: 'en' })` で渡す。書かなければ YAML の `lang:` か ja。
+    const lang = langFromEnv(env);
+    const { svg, errorHtml } = renderVna(token.content, { offset, ...(data === undefined ? {} : { data }), ...(lang === undefined ? {} : { lang }) });
 
     return `<div${self.renderAttrs(token)}>${svg}${errorHtml}</div>\n`;
   };

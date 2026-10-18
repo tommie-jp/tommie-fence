@@ -20,7 +20,7 @@ export { rememberRecent } from './rememberRecent.ts';
 export { extractFences, outputStem } from './fences.ts';
 export { fenceNames, isFenceOf } from './fenceNames.ts';
 export { stampText } from './stamp.ts';
-export { DEFAULT_LANG, LANGS, isLang, pickLang, resolveLang } from './lang.ts';
+export { DEFAULT_LANG, LANGS, isLang, langFromEnv, pickLang, resolveLang } from './lang.ts';
 export type { Lang } from './lang.ts';
 export { keptSourceLines } from './sourceListing.ts';
 export type { FenceBlock } from './fences.ts';

@@ -23,3 +23,12 @@ export function resolveLang(option: unknown, yaml: unknown): { lang: Lang; error
   }
   return { lang: DEFAULT_LANG, error: null };
 }
+
+/**
+ * markdown-it の `env` から図の字の言語を読む (`md.render(text, { fenceLang: 'en' })`)。
+ * 書かれていない・ja/en 以外なら undefined (YAML の `lang:` か既定に任せる)。
+ */
+export const langFromEnv = (env: unknown): Lang | undefined => {
+  const value = typeof env === 'object' && env !== null ? (env as { fenceLang?: unknown }).fenceLang : undefined;
+  return isLang(value) ? value : undefined;
+};

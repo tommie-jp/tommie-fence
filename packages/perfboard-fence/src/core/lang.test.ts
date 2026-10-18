@@ -81,8 +81,6 @@ describe('lang: en', () => {
       const { svg } = renderPerfboard(fence.source, { lang: 'en' });
       const own = textsOf(svg)
         .filter((text) => JAPANESE.test(text))
-        // `sheets:` の枚の題の `(N枚め)` は fence-kit の sheets.ts が足す字で、まだ英語にしていない。
-        .map((text) => text.replace(/\s*\(\d+枚め\)/, ''))
         // 書いた字は、長いと `…` で切られ、名札では ID や値と空白で並ぶ。
         // 日本語を含む語がどれも書いた字の中にあれば書き手の字。
         .filter((text) => text.split(/[\s・]+/).some((word) => JAPANESE.test(word) && !fence.source.includes(word.replace(/…$/, ''))));
