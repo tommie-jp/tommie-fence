@@ -1,4 +1,5 @@
 import { lookupRole } from './parts/pinouts.ts';
+import type { Lang } from './lang.ts';
 import { capacitorCode, parsePicofarads, parseResistor, resistorBands } from './values.ts';
 
 /**
@@ -42,8 +43,14 @@ export const partsMark = (type: string, variant: string | null, value: string | 
 /** 部品表の見出し。番号と型番だけが並ぶと、どの欄が値なのかが読めない。 */
 export const PARTS_HEADINGS = ['部品', '種類', '値', '色・記号'] as const;
 
+/** 言語ごとの見出し。`ja` は `PARTS_HEADINGS` と同じ。 */
+export const PARTS_HEADINGS_BY_LANG: Readonly<Record<Lang, readonly [string, string, string, string]>> = {
+  ja: PARTS_HEADINGS,
+  en: ['Part', 'Type', 'Value', 'Color / mark'],
+};
+
 /** 種類の欄に、綴り (`sip3`) の代わりに出す呼び名。 */
-const CERAMIC_FILTER = 'セラミックフィルター';
+const CERAMIC_FILTER: Readonly<Record<Lang, string>> = { ja: 'セラミックフィルター', en: 'ceramic filter' };
 
 /** 型番の働きの表 (pinouts) での書き出し。 */
 const CERAMIC_ROLE = 'セラミックフィルタ';
@@ -52,9 +59,9 @@ const CERAMIC_ROLE = 'セラミックフィルタ';
  * 種類の綴り。姿を書いてあれば添える (`capacitor/ceramic`)。セラミックフィルタの型番
  * (`sip3` + `SFU455B`) は、ピンの数の綴りでは何の部品か分からないので呼び名で出す。
  */
-export function partKind(type: string, variant: string | null, value: string | null): string {
+export function partKind(type: string, variant: string | null, value: string | null, lang: Lang = 'ja'): string {
   const role = value === null || value === '' ? null : lookupRole(value);
-  if (role?.startsWith(CERAMIC_ROLE) === true) return CERAMIC_FILTER;
+  if (role?.startsWith(CERAMIC_ROLE) === true) return CERAMIC_FILTER[lang];
   return variant === null ? type : `${type}/${variant}`;
 }
 

@@ -20,6 +20,8 @@ export { rememberRecent } from './rememberRecent.ts';
 export { extractFences, outputStem } from './fences.ts';
 export { fenceNames, isFenceOf } from './fenceNames.ts';
 export { stampText } from './stamp.ts';
+export { DEFAULT_LANG, LANGS, isLang, pickLang, resolveLang } from './lang.ts';
+export type { Lang } from './lang.ts';
 export { keptSourceLines } from './sourceListing.ts';
 export type { FenceBlock } from './fences.ts';
 export { escapeMarkup, element } from './markup.ts';
@@ -131,6 +133,6 @@ export type { IssueRow } from './editor/issues.ts';
 export { COLOR_LIST_ID, TYPE_LIST_ID, makeNonce, panelHtml, renderFencePicker } from './editor/panelHtml.ts';
 export type { MapViewHtml, PanelChrome, PanelHtmlOptions } from './editor/panelHtml.ts';
 export {
-  PARTS_HEADINGS, bandColors, capacitorMark, partKind, partsMark, valueWithRole,
+  PARTS_HEADINGS, PARTS_HEADINGS_BY_LANG, bandColors, capacitorMark, partKind, partsMark, valueWithRole,
 } from './partsListing.ts';
 export type { PartsMark } from './partsListing.ts';
