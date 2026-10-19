@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **束ねるフェンスを上げた** (breadboard-fence 0.45.0 / circuit-fence 0.39.0 / fence-kit 0.23.0 / perfboard-fence 0.44.0)。秋月の LAN コネクターDIP化キット (`105404`) をピンの名前の表に足した。詳しくは各パッケージの CHANGELOG。
+
 ## [0.66.0] - 2026-10-18
 
 ### Changed
