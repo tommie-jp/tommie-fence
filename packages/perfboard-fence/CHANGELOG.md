@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.47.0] - 2026-10-20
+
 ### Added
 
 - **中点タップ付きの変圧器** `transformer-ct` (5 ピン。2 次に中点) と `transformer-ct2` (6 ピン。両側に中点)。書かれた穴がそのままピンで、穴を書く順が `A1 A2 B1 CT B2` / `A1 ACT A2 B1 BCT B2` (circuit と同じ綴り)。ダイオードリングのミキサー (DBM) のトランスはこれ

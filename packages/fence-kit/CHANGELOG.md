@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-10-20
+
 ### Added
 
 - **トロイダルコアの表と姿** (`parts/toroids.ts`)。`TOROID_CORES` (`FT37-43` `FT37-61` `T37-2` `T50-2`。外径・穴の径・材質) と `lookupToroid`、上から見たドーナツと巻線を描く `toroidBody` (穴は抜く。フェライトは灰、鉄粉の 2 は赤)、型番と穴の間隔から外径を出す `toroidDiameter`。AL 値は持たない。`inductor` の姿 `toroid` と、`transformerCore` の第 4 引数 (`variant: 'toroid'` と型番 `model`・穴の間隔 `pitch`) で使う
