@@ -21,6 +21,7 @@ describe('validateExpandedPart', () => {
       pins: ['W1', 'GND'],
       turn: NO_TURN,
       holes: [],
+      color: null,
     });
   });
 

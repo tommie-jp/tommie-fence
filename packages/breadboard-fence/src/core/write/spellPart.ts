@@ -9,7 +9,7 @@ import type { HoleRef, PartSpec } from '../types.ts';
  * (揃えて書くのは書いた人の手癖で、真似ると触っていない行まで揃え直す)。
  *
  * 読む側 (`parser/compact.ts`) と**同じ並び**で書く:
- * `ID: 種類 穴… [向き] [値] [ラベル] [cap=…] [shift=…]`
+ * `ID: 種類 穴… [向き] [値] [色] [ラベル] [cap=…] [shift=…]`
  *
  * **書かれた綴りを使う** — 種類は `written` (略記のまま)、穴は `addr`
  * (`points:` の名前のまま)、ピンの名前は**書かれていたときだけ**添える
@@ -33,6 +33,7 @@ export function spellPart(part: PartSpec): string | null {
       `${part.id}:`, part.written, '@', target,
       ...(isTurned(part.turn) ? [turnWord(part.turn.rotate)] : []),
       ...(part.label === null ? [] : [part.labelTagged ? `l=${part.label}` : part.label]),
+      ...(part.color == null ? [] : [part.color]),
       // 1 列の部品は名札の置き場所を書ける (書き戻しで落とさない)。
       ...(part.caption ? [`cap=${part.caption.written}`] : []),
     ].join(' ');
@@ -44,6 +45,7 @@ export function spellPart(part: PartSpec): string | null {
     ...part.holes.map(hole),
     ...(isTurned(part.turn) ? [turnWord(part.turn.rotate)] : []),
     ...(part.value === null ? [] : [part.value]),
+    ...(part.color == null ? [] : [part.color]),
     ...(part.label === null ? [] : [part.labelTagged ? `l=${part.label}` : part.label]),
     // 名札と胴の置き場所は書かれた綴りのまま残す (書き戻しで落とさない)。
     ...(part.caption ? [`cap=${part.caption.written}`] : []),

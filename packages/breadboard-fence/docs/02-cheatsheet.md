@@ -49,6 +49,10 @@ notes:                 # 任意。図に重ねる印と字
 
 穴にピン名を付けるときは `a5(A)`。付けなければ左から `1` `2` `3`。
 
+**基板のある部品 (キット・モジュール・変換基板・USB) は末尾に基板の色**を書ける
+(`J1: sip8 @ a10 105404 blue`)。語彙は `board: color:` と同じ (`green` `blue` `red` `black` `white` `yellow` `purple`、`#RRGGBB` は引用で)。
+基板の無い部品に書いたら断る。詳しくは 01-syntax の「部品の基板の色」。
+
 **向きの語 `r180` はアンカー 1 つで置く形だけ**に書ける (1 番ピンが反対の端へ移る)。
 ピンを並べて書く部品の向きは穴の順そのもの。`r90` / `r270` は溝をまたぐので書けず、
 DIP・マイコンボードは実物を上から見た並び (切り欠きを左にして 1 番が左下)。
@@ -113,7 +117,7 @@ parts:
 `label` は機種名 (`Analog Discovery 2` / `Analog Discovery 3` など)。AD3 の例は
 `examples/10-bh-ad3.md` (`pins: [V+, V-, GND, W1, 1+, 1-, 2+, 2-]`、AD2 の `10-bh-ad2.md` と同じ回路)。
 
-マップ形式で書けるキーは `type` `at` `label` `value` `pins` `holes` の 6 つ。
+マップ形式で書けるキーは `type` `at` `label` `value` `pins` `holes` `turn` `color` の 8 つ。
 
 ### DIP のピンの名前
 

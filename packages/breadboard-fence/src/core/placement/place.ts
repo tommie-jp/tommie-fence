@@ -273,6 +273,7 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
     value: spec.value,
     label: spec.label,
     at: spec.at,
+    color: spec.color ?? null,
     caption: spec.caption ?? null,
     shift: spec.shift ?? null,
     line: spec.line,

@@ -1,4 +1,4 @@
-import { partValueProblem } from 'fence-kit';
+import { partValueProblem, readPlateColor } from 'fence-kit';
 import { fail, ok, safeToken } from '../errors.ts';
 import { LIMITS, clampText } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
@@ -122,17 +122,21 @@ export function parseCompactPart(
       caption = read.value;
     }
     const captionOf = caption === null ? {} : { caption };
-    const joined = turn.value.rest.filter((token) => !CAPTION_TAG.test(token)).join(' ');
+    // **末尾の色は部品の基板の色** (`J1: sip8 @ e5 105404 blue`)。読み方は perfboard と同じ (`readPlateColor`)。
+    const plate = readPlateColor(safeToken(id), type, variant, turn.value.rest.filter((token) => !CAPTION_TAG.test(token)));
+    if (plate.refusal !== null) return fail(`部品 ${safeToken(id)}: ${plate.refusal}`, line, plate.color ?? undefined);
+    const colorOf = plate.color === null ? {} : { color: plate.color };
+    const joined = plate.rest.join(' ');
     // `@` の後ろの残りはそのままラベルだが、`l=` と書いても同じ意味に読む
     // (1 行の記法の中で、ラベルの書き方が 2 通りに見えないようにする)。
     const tag = LABEL_TAG.exec(joined);
     const written = tag?.[1] ?? joined;
     const label = written ? clampText(written, LIMITS.labelLength) : null;
     const labelTagged = tag !== null;
-    if (target === 'top' || target === 'bottom') return ok({ ...base, at: target, label, anchored: true, labelTagged, ...captionOf });
+    if (target === 'top' || target === 'bottom') return ok({ ...base, at: target, label, anchored: true, labelTagged, ...captionOf, ...colorOf });
     return ok({
       ...base, holes: [{ addr: target, tag: '1', tagged: false, written: target }],
-      turn: turn.value.turn, label, anchored: true, labelTagged, ...captionOf,
+      turn: turn.value.turn, label, anchored: true, labelTagged, ...captionOf, ...colorOf,
     });
   }
 
@@ -194,10 +198,13 @@ export function parseCompactPart(
     }
   }
 
-  const value = words.join(' ');
+  // **末尾の色は部品の基板の色** (`U1: usb-c a1 a2 a3 a4 red`)。
+  const plate = readPlateColor(safeToken(id), type, variant, words);
+  if (plate.refusal !== null) return fail(`部品 ${safeToken(id)}: ${plate.refusal}`, line, plate.color ?? undefined);
+  const value = plate.rest.join(' ');
   // **読めない値を既定で埋めない** (直下の CLAUDE.md の文法の方針 1)。
   const refused = partValueProblem(type, value);
-  if (refused !== null) return fail(`部品 ${safeToken(id)}: ${refused}`, line, words[0]);
+  if (refused !== null) return fail(`部品 ${safeToken(id)}: ${refused}`, line, plate.rest[0]);
 
   return ok({
     ...base,
@@ -208,6 +215,7 @@ export function parseCompactPart(
     ...(caption === null ? {} : { caption }),
     ...(shift === null ? {} : { shift }),
     value: value ? clampText(value, LIMITS.labelLength) : null,
+    ...(plate.color === null ? {} : { color: plate.color }),
     notes: unusedNotes(value, label, sources),
   });
 }

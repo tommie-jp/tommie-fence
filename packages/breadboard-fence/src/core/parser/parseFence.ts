@@ -10,7 +10,7 @@ import type {
   BoardSpec, FenceDocument, FenceError, NoteSpec, PartSpec, PartsListMode, Result, StyleSpec, WireSpec,
 } from '../types.ts';
 import { splitPartType } from '../parts/variants.ts';
-import { partValueProblem, rememberRecent, resolveLang } from 'fence-kit';
+import { partValueProblem, readPlateColor, rememberRecent, resolveLang } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import { parseCompactPart, parseHoleToken, parseWireSpec } from './compact.ts';
 import { parseNoteLine } from './notes.ts';
@@ -479,9 +479,18 @@ function expandPart(id: string, raw: unknown, line: number) {
     return { ok: false as const, error: fenceError(`部品 ${safeToken(id)}: ${validated.message}`, line) };
   }
 
-  const { at, label, value, pins, holes, turn } = validated.value;
+  const { at, label, value, pins, holes, turn, color } = validated.value;
   const { type, variant, problem } = splitPartType(validated.value.type);
   if (problem) return { ok: false as const, error: fenceError(`部品 ${safeToken(id)}: ${problem}`, line) };
+  // 基板の色は 1 行の記法と同じ読み方 (`readPlateColor`)。型番は値かラベルに書かれている。
+  if (color !== null) {
+    const model = (value ?? label ?? '').split(/\s+/).filter(Boolean);
+    const plate = readPlateColor(safeToken(id), type, variant, [...model, color]);
+    if (plate.color === null) {
+      return { ok: false as const, error: fenceError(`部品 ${safeToken(id)}: color は色の名前か #RRGGBB です (今は ${safeToken(color)})`, line, color) };
+    }
+    if (plate.refusal !== null) return { ok: false as const, error: fenceError(`部品 ${safeToken(id)}: ${plate.refusal}`, line, color) };
+  }
   // **読めない値を既定で埋めない** (1 行の記法と同じ所で断る)。
   const refused = partValueProblem(type, value);
   if (refused !== null) {
@@ -492,7 +501,7 @@ function expandPart(id: string, raw: unknown, line: number) {
     value: {
       id, type, written: validated.value.type, variant,
       // マップ形式は `@` を書かない (項目で書く形なので)。
-      holes: holes.map(parseHoleToken), turn, value, label, at, pins,
+      holes: holes.map(parseHoleToken), turn, value, label, at, pins, color,
       anchored: false, labelTagged: false, block: true, line,
     } satisfies PartSpec,
     // 「描けたが使われなかった指定」はお知らせ。部品そのものは今までどおり描く。

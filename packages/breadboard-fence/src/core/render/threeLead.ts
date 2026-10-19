@@ -7,6 +7,7 @@ import type { CaptionSpot } from './partCommon.ts';
 import { HOLE_ROWS } from '../types.ts';
 import type { HoleRow, Point, Rect } from '../types.ts';
 import { drawPackage, packageExtent, packageHalfWidth, packageReach } from 'fence-kit';
+import { plateInkOf } from './plate.ts';
 import { insertionDot } from './wires.ts';
 import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
@@ -346,7 +347,7 @@ export function renderThreeLead(
     plate: theme.palette.plate,
     chipBody: theme.palette.chipBody,
     chipText: theme.palette.chipText,
-  });
+  }, plateInkOf(part) ?? undefined);
   return `${leads}${shell}${legs}${names}${label}`;
 }
 

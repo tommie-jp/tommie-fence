@@ -146,6 +146,8 @@ export type PartSpec = {
   readonly label: string | null;
   readonly at: 'top' | 'bottom' | null;
   readonly pins: readonly string[] | null;
+  /** 部品の基板の色 (書かれたままの綴り。`blue`)。基板のある部品だけが持つ。 */
+  readonly color?: string | null;
   /** 名札の置き場所 (`cap=above`)。書かなければ null で、今までどおり自動で胴の下に置く。 */
   readonly caption?: CaptionSpec | null;
   /** 胴を半穴ずらす向き (`shift=down`)。2 ピンの部品だけ。 */
@@ -339,6 +341,8 @@ export type PlacedPart = {
   readonly value: string | null;
   readonly label: string | null;
   readonly at: 'top' | 'bottom' | null;
+  /** 部品の基板の色 (書かれたままの綴り)。描くときに `partPlateColor` で色に直す。 */
+  readonly color?: string | null;
   /** 書いて決めた名札の置き場所。無ければ自動 (`render/captions.ts`)。 */
   readonly caption?: CaptionSpec | null;
   /** 胴を半穴ずらす向き (2 ピンだけ)。 */

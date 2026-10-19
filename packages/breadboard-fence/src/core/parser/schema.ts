@@ -16,6 +16,8 @@ export type ExpandedPart = {
   readonly pins: readonly string[] | null;
   readonly holes: readonly string[];
   readonly turn: Turn;
+  /** 部品の基板の色 (書かれたままの綴り)。 */
+  readonly color: string | null;
 };
 
 /**
@@ -26,7 +28,7 @@ export type Validation =
   | { readonly ok: true; readonly value: ExpandedPart; readonly notes: readonly string[] }
   | { readonly ok: false; readonly message: string };
 
-const KNOWN_KEYS = ['type', 'at', 'label', 'value', 'pins', 'holes', 'turn'] as const;
+const KNOWN_KEYS = ['type', 'at', 'label', 'value', 'pins', 'holes', 'turn', 'color'] as const;
 
 const invalid = (message: string): Validation => ({ ok: false, message });
 
@@ -67,6 +69,10 @@ export function validateExpandedPart(raw: unknown): Validation {
 
   const value = raw.value === undefined ? null : asText(raw.value);
   if (raw.value !== undefined && value === null) return invalid('value は文字列です');
+
+  // 部品の基板の色。書ける部品かは種類と型番で決まるので、読む側 (`expandPart`) が確かめる。
+  const color = raw.color === undefined ? null : asText(raw.color);
+  if (raw.color !== undefined && color === null) return invalid('color は色の名前か #RRGGBB です');
 
   const pins = raw.pins === undefined ? null : asTextList(raw.pins);
   if (raw.pins !== undefined && pins === null) return invalid('pins はピン名の配列です');
@@ -125,6 +131,7 @@ export function validateExpandedPart(raw: unknown): Validation {
       pins,
       holes,
       turn,
+      color,
     },
   };
 }

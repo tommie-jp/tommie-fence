@@ -1,4 +1,5 @@
 import { connectorBox, connectorFacing, drawConnector } from 'fence-kit';
+import { plateInkOf } from './plate.ts';
 import type { ConnectorShape } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Rect } from '../types.ts';
@@ -58,7 +59,8 @@ export function renderConnector(part: PlacedPart, layout: Layout, theme: RenderT
   if (shape === null || at === null) return '';
 
   const text = fitToBoard(caption(part), at.x, theme.metrics.textSize, layout);
-  return drawConnector(shape) + partLabel(at.x, at.y + drop, text, theme);
+  const ink = plateInkOf(part);
+  return drawConnector(ink === null ? shape : { ...shape, ink }) + partLabel(at.x, at.y + drop, text, theme);
 }
 
 export type Overhang = {

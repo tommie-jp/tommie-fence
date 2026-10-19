@@ -9,8 +9,10 @@ import { insertionDotRadius } from './wires.ts';
 import { isWideDip } from '../parts/wide.ts';
 import { element, num } from './svg.ts';
 import {
-  REAL_INK, dipChip, drawDipAdapter, drawModuleOutline, drawNamedChip, drawSipAdapter, lookupNamedChip, lookupPinout, sipBox, sipHeader, transformerCore,
+  REAL_INK, dipChip, drawDipAdapter, drawModuleOutline, drawNamedChip, drawSipAdapter, lookupNamedChip, lookupPinout, plateLook, sipBox, sipHeader,
+  transformerCore,
 } from 'fence-kit';
+import { plateInkOf, plateOf } from './plate.ts';
 import type { ChipInk, SipLook } from 'fence-kit';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
@@ -70,9 +72,11 @@ export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme):
   const named = lookupNamedChip(part.type, part.variant);
   if (named !== null) return drawNamedChip({ ...options, chip: named });
   // 面実装しか無い型番 (3SK291) は、変換基板に載せた実寸の胴で描く。
-  if (printed?.chip !== undefined) return drawDipAdapter({ ...options, chip: printed.chip, label: part.id });
+  const paint = plateInkOf(part);
+  const painted = paint === null ? {} : { paint };
+  if (printed?.chip !== undefined) return drawDipAdapter({ ...options, chip: printed.chip, label: part.id, ...painted });
   // 姿があれば DIP 化した変換基板 (`dip8/sop`)。外形は DIP と同じ。
-  return part.variant === null || isWideDip(part.variant) ? dipChip(options) : drawDipAdapter({ ...options, variant: part.variant });
+  return part.variant === null || isWideDip(part.variant) ? dipChip(options) : drawDipAdapter({ ...options, variant: part.variant, ...painted });
 }
 
 export function sipBarRect(part: PlacedPart, layout: Layout): Rect {
@@ -88,12 +92,21 @@ export function sipBarRect(part: PlacedPart, layout: Layout): Rect {
  */
 /** 型番が姿を持つ部品 (SFU455) なら、その樹脂の色。 */
 const lookOf = (part: PlacedPart): { look?: SipLook } => {
-  const look = lookupPinout(part.value ?? part.label, part.pins.length)?.look;
+  const pinout = lookupPinout(part.value ?? part.label, part.pins.length);
+  // **色はモジュールなら基板に、1 列のモジュール (KY-040 など) なら胴に**。キットのヘッダ (銀の帯) は替えない。
+  const plate = plateOf(part);
+  const look = plate !== null && pinout?.module === undefined ? plateLook(plate) : pinout?.look;
   return look === undefined ? {} : { look };
 };
 
 /** 面実装しか無い型番 (3SK291) は、1 列の変換基板に載せた実寸の胴で描く。名札は基板のシルクに刷る。 */
 const adapterChipOf = (part: PlacedPart) => lookupPinout(part.value ?? part.label, part.pins.length)?.chip;
+
+/** キットの基板に渡す色 (書いていなければ渡さず、実物の緑)。 */
+const plateOption = (part: PlacedPart): { plate?: string } => {
+  const plate = plateOf(part);
+  return plate === null ? {} : { plate };
+};
 
 const sipNameSide = (first: Point, layout: Layout): 1 | -1 => (first.y < layout.ravineY ? 1 : -1);
 
@@ -175,11 +188,12 @@ export function renderSip(part: PlacedPart, layout: Layout, theme: RenderTheme, 
     ink: chipInk(theme),
   };
   const chip = adapterChipOf(part);
-  if (chip !== undefined) return drawSipAdapter({ ...options, chip, label: part.id });
+  const paint = plateInkOf(part);
+  if (chip !== undefined) return drawSipAdapter({ ...options, chip, label: part.id, ...(paint === null ? {} : { paint }) });
   // **モジュール (キットの基板とジャック) は溝の側へ描く** — 実物もブレッドボードの穴の上に載り、
   // 盤の外へは出ない。ピンの名前は半透明の外形の上に縁取りつきで載る。ヘッダより先に描く。
   const outline = lookupPinout(part.value ?? part.label, part.pins.length)?.module;
-  const module = outline === undefined ? '' : drawModuleOutline({ points, pitch: layout.pitch, side: options.nameSide, outline });
+  const module = outline === undefined ? '' : drawModuleOutline({ points, pitch: layout.pitch, side: options.nameSide, outline, ...plateOption(part) });
   // ピンの ○ は配線の端の粒と同じ大きさ (挿した所が同じ見え方になる)。
   const body = module + sipHeader({ ...options, ...lookOf(part), pinRadius: insertionDotRadius(theme) });
   // 書いて決めた名札 (`cap=`) は、配線よけと同じ答え (`explicitCaptionSpot`) の所へ置く。
