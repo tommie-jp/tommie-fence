@@ -474,6 +474,12 @@ describe('RJ45 の DIP 化キット (秋月 105404、AE-RJ-45-LAN-DIP-A)', () =>
     expect(lookupRole('105404')).toContain('RJ45');
   });
 
+  test('carries the outline of the kit board and the jack', () => {
+    const module = lookupPinout('105404', 8)?.module;
+    expect(module).toMatchObject({ along: 25.36, across: 15, mark: 'RJ45' });
+    expect(lookupPinout('HC-SR04', 4)?.module).toBeUndefined();
+  });
+
   test('is listed with the other 8-pin rows', () => {
     expect(pinoutModels(8)).toContain('AE-RJ-45-LAN-DIP-A');
   });

@@ -3,7 +3,7 @@ import {
   drawDirectSot, drawPackage, drawsOwnLeads,
   element, fit, hasBody,
   drawNamedChip, lookupBoardPart, lookupNamedChip, lookupPinout, num, bodySize, packageExtent, packageHalfWidth, packageReach, sipHeader,
-  smaBody as drawSmaBody, svgText, chipAlongX, sipBox, transformerCore, TEXT_HALO_WIDTH,
+  smaBody as drawSmaBody, svgText, chipAlongX, sipBox, transformerCore, TEXT_HALO_WIDTH, drawModuleOutline, moduleSide,
 } from 'fence-kit';
 import type { BodyInk, BodyPart, ChipInk } from 'fence-kit';
 import { dipPinout } from '../parts/pinout.ts';
@@ -98,8 +98,13 @@ function partLabel(
   theme: Theme,
   layout: Layout,
   room?: PartRoom,
-  /** 胴の下に別の字 (SIP のピンの名前) があるとき、その下まで下げる距離。 */
+  /** 胴の脇に別の字 (SIP のピンの名前) があるとき、その外まで逃がす距離。 */
   belowExtra = 0,
+  /**
+   * その字のある側。横に寝た胴なら +1 が下、縦に立った胴なら +1 が右 (SIP のピンの名前と同じ約束)。
+   * **名札はこの側を先に試し、字の外へ置く** — 反対の脇は、モジュールの胴が張り出していることがある。
+   */
+  extraSide: 1 | -1 = 1,
 ): string {
   const size = theme.metrics.textSize;
   const style = {
@@ -112,14 +117,15 @@ function partLabel(
   // 巻き込まないでおく (`sin` の丸めで字が 0.01 度ずれるようなことも起きない)。
   const tilt = turned(rect.angle);
   if (Math.abs(tilt) < UPRIGHT) {
-    const below = rect.cy + rect.height / 2 + belowExtra + CAPTION_GAP + size * CAPTION_CAP;
-    const above = rect.cy - rect.height / 2 - CAPTION_GAP - size * CAPTION_DESCENT;
+    const below = rect.cy + rect.height / 2 + (extraSide === 1 ? belowExtra : 0) + CAPTION_GAP + size * CAPTION_CAP;
+    const above = rect.cy - rect.height / 2 - (extraSide === -1 ? belowExtra : 0) - CAPTION_GAP - size * CAPTION_DESCENT;
     // **線・ほかの胴・ほかの名札に当たったら避ける** (`captions.ts`)。真下に
     // GND の線が通ると名札に取り消し線が引かれたように見え、3 ピンの真ん中のピンから
     // 下ろした線は型番を縦に貫いた (教科書の図で)。名札どうしなら 1 行下げる
     // (実機で `Q1 2SC1815` と `D1 1N60` が重なった)。
     const shown = fitToBoard(text, pins.x, size, layout);
-    const baseline = room?.place(pins.x, below, above, captionWidth(shown, theme)) ?? below;
+    const [first, second] = extraSide === 1 ? [below, above] : [above, below];
+    const baseline = room?.place(pins.x, first, second, captionWidth(shown, theme)) ?? first;
     return svgText(pins.x, baseline, shown, style);
   }
 
@@ -130,13 +136,21 @@ function partLabel(
   // 回した字は真ん中で置くので、**字の厚みの半分だけ余分に**逃がす
   // (横向きの字は下端で置くため、その半分が要らない)。
   const gap = rect.height / 2 + CAPTION_GAP + size / 2;
-  const sideOf = (sign: number): Point => ({ x: pins.x + sign * away.x * gap, y: pins.y + sign * away.y * gap });
   const upright = Math.abs(Math.sin(tilt)) > Math.abs(Math.cos(tilt));
+  // **縦に立った胴では、ピンの名前のある脇 (右が +1) を名前の外まで逃がす。** 足さないと、
+  // 名札が名前の列に重なった (52 の 05-etc 5-3 の RJ45 のヘッダ)。
+  const namesOn = (sign: number): boolean => upright && sign * away.x * extraSide > 0.5;
+  const sideOf = (sign: number): Point => {
+    const reach = gap + (namesOn(sign) ? belowExtra : 0);
+    return { x: pins.x + sign * away.x * reach, y: pins.y + sign * away.y * reach };
+  };
   const fittedAt = (point: Point): string => (upright
     ? fitDown(text, point.y, size, layout)
     : fitToBoard(text, point.x, size, layout));
   // **縦に立った胴は、塞がっていれば反対の脇へ。** 斜めの胴は動かさない。
-  const sides = upright && Math.abs(Math.cos(tilt)) < 1e-9 && room !== undefined ? [1, -1] : [1];
+  // 先に試すのはピンの名前のある脇 (反対の脇はモジュールの胴が張り出していることがある)。
+  const first = upright && belowExtra > 0 && !namesOn(1) && namesOn(-1) ? -1 : 1;
+  const sides = upright && Math.abs(Math.cos(tilt)) < 1e-9 && room !== undefined ? [first, -first] : [first];
   const chosen = sides.length === 1 ? 0 : room!.pick(sides.map((sign) => {
     const point = sideOf(sign);
     const length = captionWidth(fittedAt(point), theme);
@@ -691,13 +705,19 @@ function renderChip(
     if (pinout?.chip !== undefined) {
       return drawSipAdapter({ ...shared, names: dipPinout(part) ?? numbers, nameSide: 1, chip: pinout.chip, label: part.id, paint: inkOf(theme) });
     }
-    const options = { ...shared, names: dipPinout(part) ?? numbers, nameSide: 1 as const, ...(look === undefined ? {} : { look }) };
+    // **モジュール (キットの基板とジャック) は、基板の縁に近い脇へ張り出す。** ピンの名前は
+    // 反対の脇 (基板の側) に出す — 同じ脇だと胴の上に字が載る。外形は `moduleOf` と同じ判定。
+    const module = pinout?.module;
+    const side = module === undefined ? null : moduleSide(points, layout.board);
+    const nameSide: 1 | -1 = side === null ? 1 : side === 1 ? -1 : 1;
+    const outline = module === undefined || side === null ? '' : drawModuleOutline({ points, pitch: layout.pitch, side, outline: module });
+    const options = { ...shared, names: dipPinout(part) ?? numbers, nameSide, ...(look === undefined ? {} : { look }) };
     // **名前は胴の外。** 上から見た図なのでピンは胴の中心線に ○ で描き、胴に刷ると
     // 真ん中のピンの ○ と食い合う。外では線と字を避けて置く (`partLabel`)。
     const bar = sipBox(points, layout.pitch);
     const alongX = chipAlongX(points);
     const centre = { x: bar.x + bar.width / 2, y: bar.y + bar.height / 2 };
-    return sipHeader(options) + partLabel(
+    return outline + sipHeader(options) + partLabel(
       caption(part),
       { cx: centre.x, cy: centre.y, height: alongX ? bar.height : bar.width, angle: alongX ? 0 : Math.PI / 2 },
       centre,
@@ -705,6 +725,7 @@ function renderChip(
       layout,
       room,
       SIP_LEGEND_DEPTH,
+      nameSide,
     );
   }
 

@@ -9,7 +9,7 @@ import { insertionDotRadius } from './wires.ts';
 import { isWideDip } from '../parts/wide.ts';
 import { element, num } from './svg.ts';
 import {
-  REAL_INK, dipChip, drawDipAdapter, drawNamedChip, drawSipAdapter, lookupNamedChip, lookupPinout, sipBox, sipHeader, transformerCore,
+  REAL_INK, dipChip, drawDipAdapter, drawModuleOutline, drawNamedChip, drawSipAdapter, lookupNamedChip, lookupPinout, sipBox, sipHeader, transformerCore,
 } from 'fence-kit';
 import type { ChipInk, SipLook } from 'fence-kit';
 import type { RenderTheme } from './theme.ts';
@@ -176,8 +176,12 @@ export function renderSip(part: PlacedPart, layout: Layout, theme: RenderTheme, 
   };
   const chip = adapterChipOf(part);
   if (chip !== undefined) return drawSipAdapter({ ...options, chip, label: part.id });
+  // **モジュール (キットの基板とジャック) は溝の側へ描く** — 実物もブレッドボードの穴の上に載り、
+  // 盤の外へは出ない。ピンの名前は半透明の外形の上に縁取りつきで載る。ヘッダより先に描く。
+  const outline = lookupPinout(part.value ?? part.label, part.pins.length)?.module;
+  const module = outline === undefined ? '' : drawModuleOutline({ points, pitch: layout.pitch, side: options.nameSide, outline });
   // ピンの ○ は配線の端の粒と同じ大きさ (挿した所が同じ見え方になる)。
-  const body = sipHeader({ ...options, ...lookOf(part), pinRadius: insertionDotRadius(theme) });
+  const body = module + sipHeader({ ...options, ...lookOf(part), pinRadius: insertionDotRadius(theme) });
   // 書いて決めた名札 (`cap=`) は、配線よけと同じ答え (`explicitCaptionSpot`) の所へ置く。
   if (spot !== null) return body + captionAt(spot, caption(part), theme);
   // 名札は候補から選ぶ (段の番号は配線よけと同じ `captionDrops` の答え)。

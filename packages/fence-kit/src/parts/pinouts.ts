@@ -1,5 +1,6 @@
 import type { Lang } from '../lang.ts';
 import type { SipLook } from './chips.ts';
+import type { ModuleOutline } from './moduleOutline.ts';
 import { ROLES_EN } from './pinoutRolesEn.ts';
 
 /**
@@ -103,6 +104,8 @@ export type PinoutRow = {
   readonly look?: SipLook;
   /** 面実装しか無い型番の胴。`dipN` / `sipN` を**変換基板に載せた実寸の胴**で描く。 */
   readonly chip?: AdapterChip;
+  /** 1 列のヘッダに載ったモジュールの外形 (基板と胴)。`sipN` の帯の脇に描く。 */
+  readonly module?: ModuleOutline;
 };
 
 /**
@@ -130,6 +133,7 @@ export type Pinout = {
   readonly names: readonly string[];
   readonly look?: SipLook;
   readonly chip?: AdapterChip;
+  readonly module?: ModuleOutline;
 };
 
 /** 4 回路の 2 入力ゲート (CD4071B・CD4081B・CD4011B・CD4001B) は同じ並び。 */
@@ -672,11 +676,14 @@ const ROWS: readonly PinoutRow[] = [
     // 秋月の資料 https://akizukidenshi.com/goodsaffix/AE-RJ-45-LAN-DIP-A.pdf は基板の図だけで、
     // ピンの番号は書かれていない。**ヘッダの 1〜8 番がジャックの 1〜8 番に一対一で並ぶ前提**
     // (2026-10-19。実物は導通で確かめる)。名前は数字だけだと番号と割れるので `P1`〜`P8`。
-    // 描くのはヘッダだけ (銀の帯)。ジャックの胴は基板の縁から外へ張り出す。
+    // ヘッダは銀の帯。基板 (25.36 × 15 mm、資料の外形図) とジャックの胴を、帯の脇の基板の縁に近い側へ描く。
+    // ヘッダの列は基板の手前の縁から 1.27 mm (資料の穴の位置からの目安)。胴は写真から取った目安で、
+    // 幅 16 mm、列から 2.5〜15 mm (基板の奥の縁を 1.27 mm 越えて口が出る)。
     models: ['AE-RJ-45-LAN-DIP-A', 'AE-RJ-45-LAN-DIP-A-KIT', '105404'], role: 'RJ45 モジュラージャックの DIP 化キット',
     names: ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8'],
     look: { body: '#b9bec5', edge: '#7a8089' },
-    note: '`sip8` を銀の帯で描く (ヘッダだけ。ジャックは基板の外へ張り出す)。`Pn` は RJ45 の n 番。10BASE-T の端末 (MDI) は P1・P2 で送り P3・P6 で受ける。ヘッダとジャックの対応は導通で確かめる',
+    module: { along: 25.36, across: 15, inset: 1.27, jack: { along: 16, from: 2.5, to: 15 }, mark: 'RJ45' },
+    note: '`sip8` を銀の帯で描き、キットの基板とジャックを帯の脇の基板の縁に近い側へ描く (胴の寸法は目安)。`Pn` は RJ45 の n 番。10BASE-T の端末 (MDI) は P1・P2 で送り P3・P6 で受ける。ヘッダとジャックの対応は導通で確かめる',
   },
 ];
 
@@ -697,6 +704,7 @@ export function lookupPinout(model: string | null, pins: number): Pinout | null 
     model: row.models[0] ?? '', names: row.names,
     ...(row.look === undefined ? {} : { look: row.look }),
     ...(row.chip === undefined ? {} : { chip: row.chip }),
+    ...(row.module === undefined ? {} : { module: row.module }),
   };
 }
 

@@ -1,6 +1,8 @@
 import {
-  boardBox, connectorBox, connectorFacing, crystalCan, dipBox, directSotSpec, lookupBoardPart, lookupNamedChip, namedChipBox, sipBox, smdBodySize, sotMountOf,
+  boardBox, connectorBox, connectorFacing, crystalCan, dipBox, directSotSpec, lookupBoardPart, lookupNamedChip, lookupPinout, moduleBox,
+  moduleSide, namedChipBox, sipBox, smdBodySize, sotMountOf,
 } from 'fence-kit';
+import type { ChipBox } from 'fence-kit';
 import type { ConnectorShape } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import { footprintOf } from '../parts/footprint.ts';
@@ -251,6 +253,42 @@ export function connectorOverhang(
         below: Math.max(most.below, box.y + box.height - (y + height)),
       }),
       { above: 0, below: 0 },
+    );
+}
+
+/**
+ * 1 列のヘッダに載ったモジュール (キットの基板とジャック) の外形と、張り出す向き。
+ * **描くのも画布の広さもこれで測る** (`render/parts.ts` と同じ判定)。モジュールでなければ null。
+ *
+ * 当たり判定には入れない: 胴はヘッダの上の高い所にあり、その下の穴にも線は通せる
+ * (図では半透明にして下の穴と線を見せる)。
+ */
+export function moduleOf(part: PlacedPart, layout: Layout): { readonly box: ChipBox; readonly side: 1 | -1 } | null {
+  if (footprintOf(part.type)?.kind !== 'sip' || part.pins.length === 0) return null;
+  const outline = lookupPinout(part.value, part.pins.length)?.module;
+  if (outline === undefined) return null;
+  const points = part.pins.map((pin) => layout.point(pin.address));
+  const side = moduleSide(points, layout.board);
+  return { box: moduleBox(points, layout.pitch, side, outline), side };
+}
+
+/** モジュールが基板の上下左右の縁から張り出す量。画布をそのぶん広げる。 */
+export function moduleOverhang(
+  parts: readonly PlacedPart[],
+  layout: Layout,
+): { readonly above: number; readonly below: number; readonly left: number; readonly right: number } {
+  const { x, y, width, height } = layout.board;
+  return parts
+    .map((part) => moduleOf(part, layout)?.box ?? null)
+    .filter((box): box is ChipBox => box !== null)
+    .reduce(
+      (most, box) => ({
+        above: Math.max(most.above, y - box.y),
+        below: Math.max(most.below, box.y + box.height - (y + height)),
+        left: Math.max(most.left, x - box.x),
+        right: Math.max(most.right, box.x + box.width - (x + width)),
+      }),
+      { above: 0, below: 0, left: 0, right: 0 },
     );
 }
 

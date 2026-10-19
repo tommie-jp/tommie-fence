@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **束ねるフェンスを上げた** (breadboard-fence・fence-kit・perfboard-fence)。秋月の LAN コネクターDIP化キット (`105404`) のキットの基板とジャックを描き、縦に立てた 1 列の部品の名札がピンの名前に重なるのを直した。詳しくは各パッケージの CHANGELOG。
+
 ## [0.67.0] - 2026-10-19
 
 ### Changed

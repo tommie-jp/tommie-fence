@@ -69,6 +69,12 @@ export type LayoutOptions = {
    */
   readonly partsAbove?: number;
   readonly partsBelow?: number;
+  /**
+   * 部品が基板の**左右の縁**から張り出す幅 (1 列のヘッダに載ったモジュールの胴)。
+   * 左は基板をそのぶん右へずらし、右は画布をそのぶん広げる (上下の `partsAbove` と同じ考え)。
+   */
+  readonly partsLeft?: number;
+  readonly partsRight?: number;
 };
 
 /** 基板の外の機器を並べる帯。 */
@@ -118,7 +124,9 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   const deviceBelow = Math.max(0, options.deviceBelow ?? 0);
   const partsAbove = Math.min(deviceAbove, Math.max(0, options.partsAbove ?? 0));
   const partsBelow = Math.min(deviceBelow, Math.max(0, options.partsBelow ?? 0));
-  const boardX = OUTER_MARGIN + LABEL_GUTTER;
+  const partsLeft = Math.max(0, options.partsLeft ?? 0);
+  const partsRight = Math.max(0, options.partsRight ?? 0);
+  const boardX = OUTER_MARGIN + LABEL_GUTTER + partsLeft;
   const boardY = OUTER_MARGIN + LABEL_GUTTER + titleBand + topBand + deviceAbove;
 
   // **銅箔を並べる辺は、縁を 1 ピッチぶん広げる。** 銅箔は穴ではないので、
@@ -142,7 +150,7 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   const labelRight = options.labelRight === true ? LABEL_GUTTER : 0;
   const labelBottom = options.labelBottom === true ? LABEL_GUTTER : 0;
   const bandWidth = Math.max(
-    boardWidth + labelRight, source?.width ?? 0, list?.width ?? 0, legend?.width ?? 0,
+    boardWidth + Math.max(labelRight, partsRight), source?.width ?? 0, list?.width ?? 0, legend?.width ?? 0,
   );
   // 縦の積み方: 題 → 上の機器 → 基板 → 下の機器 → 半田面 → 凡例 → 部品表 → 書き出し。
   // **凡例は図のすぐ下。** 線の型を引き当てるための表なので、図から目を離す

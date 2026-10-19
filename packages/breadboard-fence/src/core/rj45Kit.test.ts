@@ -24,3 +24,19 @@ describe('RJ45 の DIP 化キット (sip8 + 105404)', () => {
     expect(texts(svg)).toEqual(expect.arrayContaining(['P1', 'P3', 'P6', 'P8']));
   });
 });
+
+describe('キットの基板とジャックの外形', () => {
+  test('draws the kit board and the jack on the ravine side, over the holes, inside the picture', () => {
+    for (const at of ['a10', 'j10']) {
+      const { svg } = renderBreadboard(`parts:\n  J1: sip8 @ ${at} 105404\n`);
+      const jack = /<rect class="module-jack" x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"/.exec(svg);
+      const view = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(svg);
+      const row = /<text[^>]*>P3<\/text>/.exec(svg);
+
+      expect(jack, at).not.toBeNull();
+      expect(row, at).not.toBeNull();
+      expect(Number(jack![2]), at).toBeGreaterThanOrEqual(0);
+      expect(Number(jack![2]) + Number(jack![4]), at).toBeLessThanOrEqual(Number(view![2]));
+    }
+  });
+});

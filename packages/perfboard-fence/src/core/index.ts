@@ -25,7 +25,7 @@ import { netlistOf, resolveWires } from './wiring/wiring.ts';
 import { unnamedDipNotices } from './parts/pinout.ts';
 import { checkErc } from './erc/erc.ts';
 import { checkFit } from './placement/collide.ts';
-import { connectorOverhang, drawnExtent } from './placement/geometry.ts';
+import { connectorOverhang, drawnExtent, moduleOverhang } from './placement/geometry.ts';
 import { holeStrip, slotEdges } from './model/board.ts';
 import { formatAddress, isCrossing, parseAddress } from './model/address.ts';
 import { offBoardReason } from './model/board.ts';
@@ -226,7 +226,13 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   // 組むと、上は題に、下は書き出しや半田面に重なる。
   const bare = createLayout(board, { title: title !== null });
   const devicesJut = deviceOverhang(devices, bare, board);
-  const partsJut = connectorOverhang(placement.parts, bare);
+  // 1 列のヘッダに載ったモジュール (キットの基板とジャック) は左右にも張り出す。
+  const connectorsJut = connectorOverhang(placement.parts, bare);
+  const modulesJut = moduleOverhang(placement.parts, bare);
+  const partsJut = {
+    above: Math.max(connectorsJut.above, modulesJut.above),
+    below: Math.max(connectorsJut.below, modulesJut.below),
+  };
   // 注釈も同じ。**基板の外の番地に書いた字は、測らないと題に重なるか画布の外で切れる。**
   const notesJut = noteOverhang(notes, bare, PLATE, style.labels.sides.includes('bottom'));
   const overhang = {
@@ -251,6 +257,8 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     deviceBelow: overhang.below,
     partsAbove: partsJut.above,
     partsBelow: partsJut.below,
+    partsLeft: modulesJut.left,
+    partsRight: modulesJut.right,
   });
   const placedDevices = layoutDevices(devices, layout, board);
   const devicePins = new Map(devices.map((device) => [device.id, new Set(device.pins)]));
