@@ -159,10 +159,10 @@ describe('ピンの名前の表', () => {
     const all = pinoutModels();
 
     // 先頭の 35 行は 74HC273 まで (既存の並び。LM393 は 6 行目、そのあとに SA612・MCP6002・LM386)、
-    // そのあとにロジック IC、そのあとに 3SK291、SFU455B、1 列のモジュール (KY-040・HC-SR04・SG90・DHT11)。
+    // そのあとにロジック IC、そのあとに 3SK291、SFU455B、1 列のモジュール (KY-040・HC-SR04・SG90・DHT11・RJ45 の DIP 化キット)。
     expect(all.slice(0, 9)).toEqual(['NE555', 'TLC555', 'LM358', 'TL071', 'TL072', 'LM393', 'SA612', 'MCP6002', 'LM386']);
     expect(all.slice(32, 39)).toEqual(['62256', '6116', '74HC245', '74HC273', '74HC14', '74HC00', '74HC161']);
-    expect(all.slice(-6)).toEqual(['3SK291', 'SFU455B', 'KY-040', 'HC-SR04', 'SG90', 'DHT11']);
+    expect(all.slice(-7)).toEqual(['3SK291', 'SFU455B', 'KY-040', 'HC-SR04', 'SG90', 'DHT11', 'AE-RJ-45-LAN-DIP-A']);
     expect(new Set(all).size).toBe(all.length);
     expect(pinoutModels(3)).toEqual(['SFU455B', 'SG90']);
     expect(pinoutModels(4)).toEqual(['3SK291', 'HC-SR04', 'DHT11']);
@@ -329,8 +329,8 @@ describe('SFU455B (1 列 3 ピンのセラミックフィルタ)', () => {
 });
 
 describe('表の全部の行', () => {
-  // 電源のピンを持たない部品 (トランジスタ・フィルタを変換基板や 1 列で載せた物)。
-  const NO_SUPPLY = ['3SK291', 'SFU455B'];
+  // 電源のピンを持たない部品 (トランジスタ・フィルタを変換基板や 1 列で載せた物、コネクタ)。
+  const NO_SUPPLY = ['3SK291', 'SFU455B', 'AE-RJ-45-LAN-DIP-A'];
   // 姿 (`look`) を持つ行は 1 列の部品 (フィルタ・モジュール・センサ) で、本数は偶数でなくてよい。
   const isEvenChip = (row: { look?: unknown }) => row.look === undefined;
   const SUPPLY = /^(V|GND|AGND|DGND|GROUND)/;
@@ -456,5 +456,25 @@ describe('1 列のモジュール・センサ (KY-040・HC-SR04・SG90・DHT11)'
     expect(lookupPinout('ky040', 5)?.model).toBe('KY-040');
     expect(lookupPinout('hcsr04', 4)?.model).toBe('HC-SR04');
     expect(lookupPinout('MG90S', 3)?.model).toBe('SG90');
+  });
+});
+
+describe('RJ45 の DIP 化キット (秋月 105404、AE-RJ-45-LAN-DIP-A)', () => {
+  test('is 8 pins in a row named after the jack pins, with a look', () => {
+    const found = lookupPinout('AE-RJ-45-LAN-DIP-A', 8);
+    expect(found?.names).toEqual(['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8']);
+    expect(found?.look?.body).toBeTruthy();
+    expect(lookupPinout('AE-RJ-45-LAN-DIP-A', 10)).toBeNull();
+  });
+
+  test('accepts the kit name and the shop code', () => {
+    for (const model of ['AE-RJ-45-LAN-DIP-A-KIT', '105404', 'ae-rj-45-lan-dip-a']) {
+      expect(lookupPinout(model, 8)?.model, model).toBe('AE-RJ-45-LAN-DIP-A');
+    }
+    expect(lookupRole('105404')).toContain('RJ45');
+  });
+
+  test('is listed with the other 8-pin rows', () => {
+    expect(pinoutModels(8)).toContain('AE-RJ-45-LAN-DIP-A');
   });
 });

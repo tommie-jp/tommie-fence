@@ -57,6 +57,7 @@ export const ROLES_EN: Readonly<Record<string, string>> = {
   'JK フリップフロップ ×2 (プリセット・クリア付き)': 'JK flip-flop ×2 (with preset and clear)',
   'NOT ×6': 'NOT ×6',
   'RC サーボ': 'RC servo',
+  'RJ45 モジュラージャックの DIP 化キット': 'RJ45 modular jack DIP breakout kit',
   'SRAM 2K×8': 'SRAM 2K×8',
   'SRAM 32K×8': 'SRAM 32K×8',
   'アナログ スイッチ ×4': 'analog switch ×4',
