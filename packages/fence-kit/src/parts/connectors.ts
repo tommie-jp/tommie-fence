@@ -299,10 +299,11 @@ export function connectorBox(shape: ConnectorShape): ChipBox {
   };
 }
 
-/** 変換基板 (濃い青のガラエポ) と、白い字。 */
-const PLATE = '#123f86';
-const PLATE_EDGE = '#0a2552';
-const SILK = '#eef2f8';
+/** 変換基板 (濃い青のガラエポ) と、白い字。**色を書いた部品は `plateInk` がここを差し替える**。 */
+export const CONNECTOR_PLATE = { fill: '#123f86', edge: '#0a2552', silk: '#eef2f8' } as const;
+const PLATE = CONNECTOR_PLATE.fill;
+const PLATE_EDGE = CONNECTOR_PLATE.edge;
+const SILK = CONNECTOR_PLATE.silk;
 /** ランド (金めっき) と、挿したピンヘッダの頭。 */
 const LAND = '#d4ae4c';
 const HEADER = '#4b5058';

@@ -82,6 +82,11 @@ export {
   smdSpelling, smdSuggestion, smdTable, withSmdLooks,
 } from './parts/smd.ts';
 export type { SmdLook, SmdMount, SmdSpec } from './parts/smd.ts';
+export {
+  PART_PLATE_COLORS, darkenColor, isLightColor, partPlateColor, partPlateNames, plateColorRefusal, plateInk, plateLook,
+  readPlateColor, splitPlateColor, takesPlateColor,
+} from './parts/plateColor.ts';
+export type { PlateColorRead, PlatePart } from './parts/plateColor.ts';
 export { drawDipAdapter, drawDirectSot, drawSipAdapter, smdBodySize, sotGlyph, sotMountOf } from './parts/smdDraw.ts';
 export type { DipAdapterOptions, DirectSotOptions, SipAdapterOptions, SotMount } from './parts/smdDraw.ts';
 export { partIcon } from './parts/icon.ts';

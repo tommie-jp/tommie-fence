@@ -2,6 +2,7 @@ import { element } from '../markup.ts';
 import { num } from '../svg.ts';
 import { chipAlongX } from './chips.ts';
 import type { ChipBox, ChipPoint } from './chips.ts';
+import { darkenColor } from './plateColor.ts';
 
 /**
  * 1 列のヘッダに載った**モジュールの外形** (秋月の LAN コネクターDIP化キットのように、
@@ -107,14 +108,16 @@ export type ModuleOutlineOptions = {
   readonly pitch: number;
   readonly side: 1 | -1;
   readonly outline: ModuleOutline;
+  /** キットの基板の色 (部品の行の末尾に書いた色)。書かなければ実物の緑。縁は塗りから作る。 */
+  readonly plate?: string;
 };
 
 /**
- * モジュールの基板 (緑) と胴 (銀、口の端を濃く)。**ヘッダより先に描く** — ヘッダのピンと
+ * モジュールの基板 (既定は緑、`plate` を書けばその色) と胴 (銀、口の端を濃く)。**ヘッダより先に描く** — ヘッダのピンと
  * 名前が上に載り、どの穴に挿したかが読める。半透明なのは同じ理由。
  */
 export function drawModuleOutline(options: ModuleOutlineOptions): string {
-  const { points, pitch, side, outline } = options;
+  const { points, pitch, side, outline, plate } = options;
   if (points.length === 0) return '';
   const frame = frameOf(points, pitch);
   const rect = (box: ChipBox, name: string, fill: string, stroke: string | null): string => element('rect', {
@@ -131,7 +134,7 @@ export function drawModuleOutline(options: ModuleOutlineOptions): string {
     'font-size': num(size), 'text-anchor': 'middle', 'dominant-baseline': 'middle', fill: MARK_INK,
     ...(frame.alongX ? {} : { transform: `rotate(-90 ${num(jack.x + jack.width / 2)} ${num(jack.y + jack.height / 2)})` }),
   }, outline.mark);
-  return rect(board, 'module-board', BOARD_FILL, BOARD_EDGE)
+  return rect(board, 'module-board', plate ?? BOARD_FILL, plate === undefined ? BOARD_EDGE : darkenColor(plate))
     + rect(jack, 'module-jack', JACK_FILL, JACK_EDGE)
     + rect(mouth, 'module-mouth', MOUTH_FILL, null)
     + mark;
