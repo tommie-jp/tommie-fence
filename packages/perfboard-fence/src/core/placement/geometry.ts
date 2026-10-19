@@ -211,7 +211,7 @@ function boxRect(part: PlacedPart, layout: Layout): OrientedRect | null {
 const isBoxed = (part: PlacedPart): boolean => {
   const kind = footprintOf(part.type)?.kind;
   return kind === 'dip' || kind === 'switch' || kind === 'sip' || kind === 'board' || kind === 'named'
-    || kind === 'three-lead' || kind === 'four-lead';
+    || kind === 'three-lead' || kind === 'wound';
 };
 
 /**

@@ -1,0 +1,89 @@
+import { describe, expect, test } from 'vitest';
+import { renderPerfboard } from './index.ts';
+import { PART_NAMES, PART_PREFIXES } from './parts/catalog.ts';
+import { footprintOf } from './parts/footprint.ts';
+
+/**
+ * 巻き物 (変圧器) の足の数と、トロイダルの姿 (`/toroid`)。足の数は種類で決まり、
+ * 中点タップ付きは**穴を書く順がピンの名前の順** (回路図の `transformer-ct` と同じ綴り)。
+ */
+const fence = (...lines: string[]): string => ['board: 20x10', ...lines, ''].join('\n');
+const messages = (result: { readonly errors: readonly { message: string }[]; readonly notices: readonly { message: string }[] }): string =>
+  [...result.errors, ...result.notices].map((one) => one.message).join('\n');
+
+describe('巻き物の足の数', () => {
+  test('gives each type its lead count: 4, 5 and 6', () => {
+    expect(footprintOf('transformer')).toMatchObject({ kind: 'wound', pins: 4, holes: 4 });
+    expect(footprintOf('transformer-ct')).toMatchObject({ kind: 'wound', pins: 5, holes: 5 });
+    expect(footprintOf('transformer-ct2')).toMatchObject({ kind: 'wound', pins: 6, holes: 6 });
+  });
+
+  test('has a name and a prefix for the tapped types', () => {
+    expect(PART_NAMES['transformer-ct']).toContain('中点');
+    expect(PART_NAMES['transformer-ct2']).toContain('中点');
+    expect(PART_PREFIXES['transformer-ct']).toBe('T');
+    expect(PART_PREFIXES['transformer-ct2']).toBe('T');
+  });
+
+  test('names the pins of a centre-tapped transformer in the order the holes are written', () => {
+    const result = renderPerfboard(fence(
+      'parts:', '  T1: transformer-ct2 b2 b4 b6 f2 f4 f6',
+      'wires:', '  - b2 -- a2', '  - b4 -- a4', '  - b6 -- a6', '  - f2 -- g2', '  - f4 -- g4', '  - f6 -- g6',
+    ));
+
+    expect(result.errors).toEqual([]);
+    expect(result.netlist.flatMap((net) => net.refs)).toEqual(
+      expect.arrayContaining(['T1.A1', 'T1.ACT', 'T1.A2', 'T1.B1', 'T1.BCT', 'T1.B2']),
+    );
+  });
+
+  const refsOf = (...lines: string[]): string[] =>
+    renderPerfboard(fence(...lines)).netlist.flatMap((net) => net.refs);
+
+  test('names a five-lead one with the tap on the secondary only', () => {
+    const refs = refsOf(
+      'parts:', '  T1: transformer-ct b2 b4 f2 f4 f6',
+      'wires:', '  - b2 -- a2', '  - b4 -- a4', '  - f2 -- g2', '  - f4 -- g4', '  - f6 -- g6',
+    );
+
+    expect(refs).toEqual(expect.arrayContaining(['T1.A1', 'T1.A2', 'T1.B1', 'T1.CT', 'T1.B2']));
+    expect(refs).not.toContain('T1.ACT');
+  });
+
+  test('keeps the numbered pins of the plain four-lead transformer', () => {
+    const refs = refsOf(
+      'parts:', '  T1: transformer b2 b4 f2 f4',
+      'wires:', '  - b2 -- a2', '  - b4 -- a4', '  - f2 -- g2', '  - f4 -- g4',
+    );
+
+    expect(refs).toEqual(expect.arrayContaining(['T1.1', 'T1.2', 'T1.3', 'T1.4']));
+  });
+
+  test('refuses the wrong number of holes and says how many to write', () => {
+    expect(messages(renderPerfboard(fence('parts:', '  T1: transformer-ct2 b2 b4 f2 f4')))).toContain('穴を 6 つ書きます');
+    expect(messages(renderPerfboard(fence('parts:', '  T1: transformer-ct b2 b4 f2 f4')))).toContain('穴を 5 つ書きます');
+  });
+});
+
+describe('トロイダルの姿', () => {
+  const body = (line: string): string => renderPerfboard(fence('parts:', line)).svg;
+
+  test('draws a ring with a hole instead of the laminated block', () => {
+    expect(body('  T1: transformer/toroid b2 b4 f2 f4 FT37-43')).toContain('fill-rule="evenodd"');
+    expect(body('  T1: transformer b2 b4 f2 f4')).not.toContain('fill-rule="evenodd"');
+  });
+
+  test('colours the ring by the model: iron powder red, ferrite grey', () => {
+    expect(body('  T1: transformer/toroid b2 b4 f2 f4 T50-2')).toContain('#b8382c');
+    expect(body('  T1: transformer/toroid b2 b4 f2 f4 FT37-61')).toContain('#5d5a52');
+  });
+
+  test('takes the toroid look on a coil and on a tapped transformer too', () => {
+    expect(body('  L1: inductor/toroid b2 b8 4u7')).toContain('fill-rule="evenodd"');
+    expect(body('  T1: transformer-ct/toroid b2 b4 f2 f4 f6 FT37-43')).toContain('fill-rule="evenodd"');
+  });
+
+  test('refuses a look the part does not have', () => {
+    expect(messages(renderPerfboard(fence('parts:', '  T1: transformer/ring b2 b4 f2 f4')))).toContain('toroid');
+  });
+});

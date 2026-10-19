@@ -45,7 +45,7 @@ style:             # 任意。見た目
   併記できる (`Q1: npn 1,1 r90 mirror`)。順は問わない。2 端子は番地の順が
   向きなので書かない。回せるのは多端子と `ground`、反転できるのは多端子。
   例外は 3 つ — `dip4`〜`dip40` と `ground` は反転できず (字が鏡文字・左右対称)、
-  `transformer` は反転だけ (回すと巻線と鉄心がばらける)
+  `transformer` `transformer-ct` `transformer-ct2` は反転だけ (回すと巻線と鉄心がばらける)
 - オペアンプだけ ± の上下 `+up` / `+down` を持つ。回転とは別の鍵なので併記できる
 - `i=字` は電流の矢 (先に書いた番地 → 後の番地の向き)、`v=字` は電圧の符号
   (先に書いた番地が +)。字は ID と同じで先頭 1 文字が本体・残りが添字。
@@ -89,7 +89,7 @@ parts:
 - 1 端子 `port` `antenna` `ground` `vcc` `vee`
   (`vcc` / `vee` は電圧を書ける: `VCC: vcc 1,1 5V` で図に `+5V`、ネットは `VCC`)
 - 能動 `npn` `pnp` `nigbt` `pigbt` `nmos` `pmos` `njfet` `pjfet`
-  `nmos-e` `pmos-e` `nmos-d` `pmos-d` `nmos-dg` (デュアルゲート。ピン 4 本: `G1` `G2` `D` `S`) `opamp` `transformer` `phototransistor`
+  `nmos-e` `pmos-e` `nmos-d` `pmos-d` `nmos-dg` (デュアルゲート。ピン 4 本: `G1` `G2` `D` `S`) `opamp` `transformer` `transformer-ct` (2 次に中点 `CT`) `transformer-ct2` (両側に中点 `ACT` `BCT`) `phototransistor`
 - 論理 `and` `or` `nand` `nor` `xor` `xnor` `not` `buffer` `spdt` `slide-switch`
   (IC のゲートは ID の末尾の大文字が回路 + 型番: `U1A: nand 3,3 74HC00` でピンの番号 1・2 → 3 が添わる。`U1B` は 4・5 → 6)
   `dip4` `dip6` `dip8` `dip14` `dip16` `dip18` `dip20` `dip24` `dip28` `dip40`
@@ -122,6 +122,8 @@ parts:
 | FET 各種 | `G` `D` `S` |
 | `opamp` | `+` `-` `out` |
 | `transformer` | `A1` `A2` `B1` `B2` |
+| `transformer-ct` | `A1` `A2` `B1` `CT` `B2` |
+| `transformer-ct2` | `A1` `ACT` `A2` `B1` `BCT` `B2` |
 | 2 入力ゲート | `a` `b` (`1` `2`) / `out` |
 | `not` / `buffer` | `in` / `out` |
 | `spdt` | `in` (`c`) / `1` `2` |

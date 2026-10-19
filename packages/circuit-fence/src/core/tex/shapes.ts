@@ -542,6 +542,67 @@ export function optoShapeTex(): string[] {
 }
 
 /**
+ * 中点タップ付きのトランス (`transformer-ct` = 2 次だけ、`transformer-ct2` = 両側)。
+ * circuitikz 1.0 の `transformer core` にはタップが無い (`tapped transformer` は 1.1 以降) ので宣言する。
+ *
+ * **鉄芯の 2 本線を挟んで、左に 1 次・右に 2 次**。巻線は外へ張り出す 4 つの山で、
+ * 山と山の継ぎ目 (巻線の真ん中) からタップの線が外へ出る。アンカーは circuitikz の
+ * `transformer` と同じ `A1` `A2` `B1` `B2` に、中点 (2 次だけなら `CT`、両側なら `ACT` `BCT`) を足したもの。
+ */
+export const TAPPED_TRANSFORMER_SHAPES = { secondary: 'xfmrct', both: 'xfmrct2' } as const;
+
+export function tappedTransformerShapeTex(primaryTap: boolean): string[] {
+  const name = primaryTap ? TAPPED_TRANSFORMER_SHAPES.both : TAPPED_TRANSFORMER_SHAPES.secondary;
+  const pinX = 0.9;
+  const pinY = 0.75;
+  const coilX = 0.32;
+  const bump = 0.15;
+  const bumps = 4;
+  const reach = bump * bumps;
+  const core = 0.1;
+  // 山 1 つ (下から上へ)。外側 (side = -1 が左、+1 が右) へ張り出す半円。
+  const arc = (side: number, y0: number): string =>
+    `\\pgfpathmoveto{\\pgfpoint{${num(side * coilX)}cm}{${num(y0)}cm}}`
+    + `\\pgfpatharc{-90}{${side < 0 ? -270 : 90}}{${num(bump)}cm}`;
+  const winding = (side: number): string[] =>
+    Array.from({ length: bumps }, (_, index) => `    ${arc(side, -reach + index * 2 * bump)}`);
+  const lead = (side: number, y: number, to: number): string => segment(side * pinX, y, side * coilX, y)
+    + segment(side * coilX, y, side * coilX, to);
+  // 巻線と鉄芯は太く、巻線の端とタップの線は細く (circuitikz の `transformer core` と同じ)。
+  const thick = [
+    ...winding(-1), ...winding(1),
+    segment(-core, -reach, -core, reach), segment(core, -reach, core, reach),
+  ];
+  const thin = [
+    lead(-1, pinY, reach), lead(-1, -pinY, -reach), lead(1, pinY, reach), lead(1, -pinY, -reach),
+    // タップ (巻線の真ん中)。2 次は必ず、1 次は両側のとき。
+    segment(coilX, 0, pinX, 0),
+    ...(primaryTap ? [segment(-coilX, 0, -pinX, 0)] : []),
+  ];
+  return [
+    '\\makeatletter',
+    `\\pgfdeclareshape{${name}}{`,
+    '  \\anchor{center}{\\pgfpointorigin}',
+    '  \\anchor{text}{\\pgfpointorigin}',
+    ...edgeAnchors(pinX, pinY),
+    `  \\anchor{A1}{\\pgfpoint{${num(-pinX)}cm}{${num(pinY)}cm}}`,
+    `  \\anchor{A2}{\\pgfpoint{${num(-pinX)}cm}{${num(-pinY)}cm}}`,
+    ...(primaryTap ? [`  \\anchor{ACT}{\\pgfpoint{${num(-pinX)}cm}{0cm}}`] : []),
+    `  \\anchor{B1}{\\pgfpoint{${num(pinX)}cm}{${num(pinY)}cm}}`,
+    `  \\anchor{B2}{\\pgfpoint{${num(pinX)}cm}{${num(-pinY)}cm}}`,
+    `  \\anchor{${primaryTap ? 'BCT' : 'CT'}}{\\pgfpoint{${num(pinX)}cm}{0cm}}`,
+    '  \\backgroundpath{',
+    '    \\pgfscope\\pgfsetlinewidth{1.8\\pgflinewidth}',
+    ...thick,
+    '    \\pgfusepath{stroke}\\endpgfscope',
+    ...thin,
+    '  }',
+    '}',
+    '\\makeatother',
+  ];
+}
+
+/**
  * デュアルゲート MOSFET (N。`nmos-dg`)。**丸の中にチャネルの棒 1 本とゲートの基板 2 枚**、
  * 基板の矢はチャネルへ向く (N チャネル)。circuitikz 1.0 にピンが 4 本の FET の記号が
  * 無いので宣言する。

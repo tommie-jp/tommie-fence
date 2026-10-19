@@ -102,7 +102,10 @@ describe('isPolarVariant', () => {
 describe('typesWithVariants', () => {
   test('names the types whose look can be chosen', () => {
     expect(typesWithVariants()).toEqual([
-      'capacitor', 'resistor', 'diode', 'zener', 'schottky', 'inductor', 'potentiometer',
+      'capacitor', 'resistor', 'diode', 'zener', 'schottky', 'inductor',
+      // トロイダルコアに巻いた物 (`transformer/toroid`)。
+      'transformer', 'transformer-ct', 'transformer-ct2',
+      'potentiometer',
       'led', 'phototransistor', 'transistor', 'thyristor', 'triac', 'regulator', 'ic3', 'sma', 'crystal', 'usb-a', 'usb-c',
       // ピンに名前のある DIP 型。姿は品名 (52 の docs/66)。
       'relay', 'photocoupler', 'photocoupler6', 'seg7', 'seg7x4', 'dip-switch4', 'dip-switch8',

@@ -26,7 +26,7 @@ import { evenShiftOf, headerStepOf } from '../pinGrid.ts';
 import { readScaled } from '../values.ts';
 import type { ScaledValue } from '../values.ts';
 import {
-  deviceBox, deviceShapeName, deviceShapeTex, dipSwitchShapeTex, dualGateFetShapeTex, optoShapeTex, regulatorShapeTex, relayShapeTex,
+  deviceBox, deviceShapeName, deviceShapeTex, dipSwitchShapeTex, dualGateFetShapeTex, optoShapeTex, regulatorShapeTex, relayShapeTex, tappedTransformerShapeTex,
   sipShapeTex, smaShapeTex, usbShapeName, usbShapeTex,
 } from './shapes.ts';
 import type { DeviceBox } from './shapes.ts';
@@ -247,6 +247,8 @@ function sipShapesFor(circuit: Circuit, pitch: number): string[] {
     ...(uses('relay') ? relayShapeTex() : []),
     ...(uses('photocoupler') || uses('photocoupler6') ? optoShapeTex() : []),
     ...(uses('nmos-dg') ? dualGateFetShapeTex() : []),
+    ...(uses('transformer-ct') ? tappedTransformerShapeTex(false) : []),
+    ...(uses('transformer-ct2') ? tappedTransformerShapeTex(true) : []),
     // DIP スイッチは連の数ごとの箱。使う数だけ宣言する。
     ...DIP_SWITCHES.filter(uses).flatMap((type) => dipSwitchShapeTex((lookupNamedChip(type, null)?.positions ?? 0) / 2)),
   ];

@@ -10,6 +10,7 @@ import type {
 import type { BoardPart, Connector, NamedChip } from 'fence-kit';
 import {
   adapterFor, drawsOwnLeads, isDirectSmd, lookupDiscrete, lookupNamedChip, lookupPinout, pinoutModels, smdLooksOf, smdSuggestion,
+  tappedTransformerPins,
 } from 'fence-kit';
 import type { Turn } from '../parts/orient.ts';
 import { isPolarVariant, typesWithVariants, variantsOf } from '../parts/variants.ts';
@@ -304,8 +305,8 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
     });
   }
 
-  if (footprint.kind === 'two-lead' || footprint.kind === 'three-lead' || footprint.kind === 'four-lead') {
-    const legs = footprint.kind === 'two-lead' ? 2 : footprint.kind === 'three-lead' ? 3 : 4;
+  if (footprint.kind === 'two-lead' || footprint.kind === 'three-lead' || footprint.kind === 'wound') {
+    const legs = footprint.kind === 'two-lead' ? 2 : footprint.kind === 'three-lead' ? 3 : footprint.leads;
     return placeLegs(spec, board, base, legs, footprint.kind);
   }
 
@@ -325,7 +326,7 @@ function placeLegs(
   board: Board,
   base: PartBase,
   legs: number,
-  kind: 'two-lead' | 'three-lead' | 'four-lead',
+  kind: 'two-lead' | 'three-lead' | 'wound',
 ): Result<PlacedPart> {
   if (spec.holes.length !== legs) {
     return fail(`部品 ${safeToken(spec.id)}: 穴番地を ${legs} つ書きます (今は ${spec.holes.length} つ)`, spec.line);
@@ -342,7 +343,9 @@ function placeLegs(
   for (const [index, hole] of spec.holes.entries()) {
     const address = resolveHole(hole.addr, board, spec.line);
     if (!address.ok) return address;
-    const name = printed?.names[index] ?? hole.tag;
+    // 中点タップ付きの変圧器は、穴に名前を書かなければ `A1 A2 B1 CT B2` などの名前で呼ぶ。
+    const tapped = kind === 'wound' && !hole.tagged ? tappedTransformerPins(spec.type)?.[index] : undefined;
+    const name = printed?.names[index] ?? tapped ?? hole.tag;
     // 同じ名前が 2 本あると `D1.A` がどちらを指すか決まらない。
     if (pins.some((pin) => pin.name === name)) {
       return fail(`部品 ${safeToken(spec.id)}: ピン名 ${safeToken(name)} が 2 回出てきます`, spec.line);

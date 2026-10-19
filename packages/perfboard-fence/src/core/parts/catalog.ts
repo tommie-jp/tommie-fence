@@ -18,7 +18,7 @@ export type PlaceableName =
   | 'zener' | 'schottky' | 'photodiode' | 'phototransistor' | 'varicap' | 'diac'
   | 'reed' | 'fuse' | 'lamp' | 'ferrite-bead' | 'sma' | 'usb-a' | 'usb-c'
   | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
-  | 'button' | 'button-nc' | 'transformer'
+  | 'button' | 'button-nc' | 'transformer' | 'transformer-ct' | 'transformer-ct2'
   | 'transistor' | 'potentiometer' | 'thyristor' | 'triac' | 'slide-switch' | 'regulator' | 'ic3';
 
 /** 和名。**種類を足したら型エラーでここも要求される。** */
@@ -64,6 +64,8 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   button: 'タクトスイッチ (a 接点)',
   'button-nc': 'タクトスイッチ (b 接点)',
   transformer: '変圧器',
+  'transformer-ct': '中点タップ付き変圧器 (2 次)',
+  'transformer-ct2': '中点タップ付き変圧器 (両側)',
 };
 
 /**
@@ -112,6 +114,8 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   button: 'SW',
   'button-nc': 'SW',
   transformer: 'T',
+  'transformer-ct': 'T',
+  'transformer-ct2': 'T',
 };
 
 export const PLACEABLE = placeableNames;

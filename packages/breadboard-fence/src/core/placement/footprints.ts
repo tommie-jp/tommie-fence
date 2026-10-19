@@ -7,8 +7,11 @@ import { safeToken } from '../errors.ts';
 export type Footprint =
   | { readonly kind: 'two-lead' }
   | { readonly kind: 'three-lead' }
-  /** 巻線の端が 4 つ出ている部品 (変圧器)。**書かれた穴がそのままピン**。 */
-  | { readonly kind: 'four-lead' }
+  /**
+   * 巻線の端が出ている部品 (変圧器)。**書かれた穴がそのままピン**。足の数は種類で決まる
+   * (`transformer` 4・`transformer-ct` 5・`transformer-ct2` 6)。
+   */
+  | { readonly kind: 'wound'; readonly leads: number }
   /** 溝をまたぐ 4 ピンのスイッチ (6mm 角のタクトスイッチ)。 */
   | { readonly kind: 'switch' }
   | { readonly kind: 'dip'; readonly pins: number }
@@ -61,11 +64,16 @@ const THREE_LEAD_TYPES = new Set([
   'ic3',
 ]);
 /**
- * 4 ピンの部品。**書かれた穴がそのままピン** — 2 ピン・3 ピンと同じ考え方で、
- * 巻線の端が 4 つ出ている変圧器を、どの穴に挿したかそのまま書く
+ * 巻き物 (変圧器)。**書かれた穴がそのままピン** — 2 ピン・3 ピンと同じ考え方で、
+ * 巻線の端が出ている変圧器を、どの穴に挿したかそのまま書く
  * (実物のピンの並びは品によって違い、決め打てない)。
+ *
+ * 足の数は種類で決まる: `transformer` は 4 本 (1 次 2・2 次 2)、`transformer-ct` は 5 本
+ * (2 次に中点)、`transformer-ct2` は 6 本 (両側に中点)。中点タップ付きは**穴を書く順が
+ * ピンの名前の順** (`A1 A2 B1 CT B2` / `A1 ACT A2 B1 BCT B2`。回路図と同じ綴り)。
  */
-const FOUR_LEAD_TYPES = new Set(['transformer']);
+const WOUND_LEADS: Readonly<Record<string, number>> = { transformer: 4, 'transformer-ct': 5, 'transformer-ct2': 6 };
+const FOUR_LEAD_TYPES = new Set(Object.keys(WOUND_LEADS));
 
 /**
  * タクトスイッチ。v0.2.0 の `pushbutton` は略記として `button` に畳んでから来る。
@@ -87,7 +95,7 @@ const SIP_MAX_PINS = 40;
 export function lookupFootprint(type: string): Footprint | null {
   if (TWO_LEAD_TYPES.has(type)) return { kind: 'two-lead' };
   if (THREE_LEAD_TYPES.has(type)) return { kind: 'three-lead' };
-  if (FOUR_LEAD_TYPES.has(type)) return { kind: 'four-lead' };
+  if (FOUR_LEAD_TYPES.has(type)) return { kind: 'wound', leads: WOUND_LEADS[type] ?? 4 };
   if (SWITCH_TYPES.has(type)) return { kind: 'switch' };
   if (type === 'device') return { kind: 'device' };
 

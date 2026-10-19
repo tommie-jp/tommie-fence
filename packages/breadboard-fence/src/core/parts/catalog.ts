@@ -24,7 +24,8 @@ export type PlaceableName =
   | 'reed' | 'fuse' | 'lamp' | 'ferrite-bead' | 'sma' | 'usb-a' | 'usb-c'
   | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
   | 'transistor' | 'potentiometer' | 'slide-switch' | 'thyristor' | 'triac'
-  | 'regulator' | 'ic3' | 'button' | 'button-nc' | 'transformer';
+  | 'regulator' | 'ic3' | 'button' | 'button-nc' | 'transformer'
+  | 'transformer-ct' | 'transformer-ct2';
 
 export const PLACEABLE = placeableTypes;
 
@@ -95,6 +96,8 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   button: 'タクトスイッチ (a 接点)',
   'button-nc': 'タクトスイッチ (b 接点)',
   transformer: '変圧器',
+  'transformer-ct': '中点タップ付き変圧器 (2 次)',
+  'transformer-ct2': '中点タップ付き変圧器 (両側)',
   battery: '電池',
   solar: '太陽電池',
   speaker: 'スピーカー',
@@ -144,6 +147,8 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   button: 'SW',
   'button-nc': 'SW',
   transformer: 'T',
+  'transformer-ct': 'T',
+  'transformer-ct2': 'T',
   battery: 'B',
   solar: 'PV',
   speaker: 'LS',
@@ -166,7 +171,7 @@ export function holesOf(type: string): number {
   if (footprint.kind === 'two-lead') return 2;
   if (footprint.kind === 'three-lead') return 3;
   if (footprint.kind === 'connector') return footprint.connector.minPins;
-  return footprint.kind === 'four-lead' ? 4 : 1;
+  return footprint.kind === 'wound' ? footprint.leads : 1;
 }
 
 /** 2 端子か (交点から交点へドラッグする。ほかは 1 回の押しで置く)。 */

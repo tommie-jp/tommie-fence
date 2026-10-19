@@ -71,7 +71,7 @@ d↔h なら e・f・g 行が胴の下。空くのは d の上の a〜c と h �
          zener schottky photodiode phototransistor varicap diac reed fuse lamp ferrite-bead sma
          speaker mic battery solar switch switch-nc
 3 ピン   transistor potentiometer slide-switch thyristor triac regulator ic3
-4 ピン   transformer
+巻き物   transformer (4 ピン) transformer-ct (5 ピン。A1 A2 B1 CT B2 の順に穴を書く) transformer-ct2 (6 ピン。A1 ACT A2 B1 BCT B2)
 USB      usb-a (穴は VBUS GND D+ D- の順に 2 つから) usb-c (穴は GND D+ D- VBUS の順に 4 つ)
 まとまり  button button-nc dipN (4〜40 の偶数) sipN (2〜40)
 ボード    pico pico-w pico2 pico2-w tang-nano-9k (FPGA。列の間が 9 ピッチ: a↔h b↔i c↔j)
@@ -92,7 +92,8 @@ relay/g5v-2  photocoupler/pc817  photocoupler6/4n35  seg7/5161as  seg7x4/osl4056
 sma/male  sma/female  usb-a/male  usb-a/female  usb-c/male  usb-c/female
 crystal/hc49  crystal/cylinder
 resistor/quarter  resistor/half        diode/do35  diode/do41  (zener/…  schottky/…)
-inductor/axial  inductor/radial        potentiometer/trimmer  potentiometer/knob
+inductor/axial  inductor/radial  inductor/toroid        potentiometer/trimmer  potentiometer/knob
+transformer/toroid  transformer-ct/toroid  transformer-ct2/toroid  (トロイダルコア。型番 FT37-43 FT37-61 T37-2 T50-2 を値に書く)
 ```
 
 ### 略記 (読んだ直後に正式名へ畳む)

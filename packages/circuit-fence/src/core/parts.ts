@@ -1,6 +1,6 @@
 import { lookupBoardPart, lookupConnectorSymbol, lookupDiscrete, lookupNamedChip, lookupPinout, pinoutModels } from 'fence-kit';
 import type { DiscreteKind } from 'fence-kit';
-import { DGFET_SHAPE, dipSwitchShapeName, OPTO_SHAPE, RELAY_SHAPE, REGULATOR_SHAPE, SMA_SHAPE, deviceBox, deviceShapeName, usbShapeName } from './tex/shapes.ts';
+import { DGFET_SHAPE, dipSwitchShapeName, OPTO_SHAPE, RELAY_SHAPE, REGULATOR_SHAPE, SMA_SHAPE, TAPPED_TRANSFORMER_SHAPES, deviceBox, deviceShapeName, usbShapeName } from './tex/shapes.ts';
 import type { BoardPart, NamedChip } from 'fence-kit';
 import { BOXED_RESISTORS } from './standard.ts';
 import type { Standard } from './standard.ts';
@@ -405,6 +405,17 @@ const TRANSFORMER_PINS = { a1: 'A1', a2: 'A2', b1: 'B1', b2: 'B2' } as const;
 
 /** 巻線の端の出どころ。1 次が左の辺、2 次が右の辺。どちらも上から 1・2 の順。 */
 const TRANSFORMER_ROW = { A1: 'left', A2: 'left', B1: 'right', B2: 'right' } as const;
+
+/**
+ * 中点タップ付きのトランス。ピンは巻線の端 1・(中点)・端 2 の順で、1 次が左の辺、2 次が右の辺。
+ * `transformer-ct` は 2 次だけ、`transformer-ct2` は両側に中点がある。
+ */
+const TAPPED_PINS_SECONDARY = { a1: 'A1', a2: 'A2', b1: 'B1', ct: 'CT', b2: 'B2' } as const;
+const TAPPED_ROW_SECONDARY = { A1: 'left', A2: 'left', B1: 'right', CT: 'right', B2: 'right' } as const;
+const TAPPED_PINS_BOTH = { a1: 'A1', act: 'ACT', a2: 'A2', b1: 'B1', bct: 'BCT', b2: 'B2' } as const;
+const TAPPED_ROW_BOTH = {
+  A1: 'left', ACT: 'left', A2: 'left', B1: 'right', BCT: 'right', B2: 'right',
+} as const;
 
 const OHM = '\\Omega';
 const FARAD = '\\mathrm{F}';
@@ -1168,6 +1179,15 @@ export const PART_TYPES = {
     kind: 'multi-terminal', symbol: 'transformer core', ...NO_UNIT,
     pins: TRANSFORMER_PINS, pinRow: TRANSFORMER_ROW, orient: MIRROR_ONLY,
   },
+  /** 中点タップ付きのトランス。circuitikz 1.0 に無いので自前の形 (`tex/shapes.ts`)。 */
+  'transformer-ct': {
+    kind: 'multi-terminal', symbol: TAPPED_TRANSFORMER_SHAPES.secondary, options: ['draw'], ...NO_UNIT,
+    pins: TAPPED_PINS_SECONDARY, pinRow: TAPPED_ROW_SECONDARY, orient: MIRROR_ONLY,
+  },
+  'transformer-ct2': {
+    kind: 'multi-terminal', symbol: TAPPED_TRANSFORMER_SHAPES.both, options: ['draw'], ...NO_UNIT,
+    pins: TAPPED_PINS_BOTH, pinRow: TAPPED_ROW_BOTH, orient: MIRROR_ONLY,
+  },
   nigbt: { kind: 'multi-terminal', symbol: 'nigbt', ...NO_UNIT, pins: IGBT_PINS, pinSide: IGBT_SIDE },
   pigbt: { kind: 'multi-terminal', symbol: 'pigbt', ...NO_UNIT, pins: IGBT_PINS, pinSide: IGBT_SIDE_P },
   /** 切り替えスイッチ (c 接点)。 */
@@ -1388,6 +1408,8 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   'pmos-e': 'MOSFET (P・エンハンスメント型)',
   'nmos-d': 'MOSFET (N・デプレッション型)',
   'nmos-dg': 'デュアルゲート MOSFET (N)',
+  'transformer-ct': '中点タップ付きトランス (2 次)',
+  'transformer-ct2': '中点タップ付きトランス (両側)',
   'pmos-d': 'MOSFET (P・デプレッション型)',
   opamp: 'オペアンプ',
   transformer: 'トランス',
@@ -1521,6 +1543,8 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   'pmos-e': 'M',
   'nmos-d': 'M',
   'nmos-dg': 'M',
+  'transformer-ct': 'T',
+  'transformer-ct2': 'T',
   'pmos-d': 'M',
   opamp: 'U',
   transformer: 'T',

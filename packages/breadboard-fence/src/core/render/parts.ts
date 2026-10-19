@@ -32,7 +32,7 @@ export function partObstacles(
   if (part.kind === 'board') return [boardBodyRect(part, layout), ...bands];
   if (part.kind === 'sip') return [sipBarRect(part, layout), ...bands];
   if (part.kind === 'switch') return [switchBodyRect(part, layout), ...bands];
-  if (part.kind === 'four-lead') return [fourLeadBodyRect(part, layout), ...bands];
+  if (part.kind === 'wound') return [fourLeadBodyRect(part, layout), ...bands];
   if (part.kind === 'connector') return [connectorBodyRect(part, layout), ...bands];
 
   const points = part.pins
@@ -101,7 +101,7 @@ export function renderPart(
   const drop = captionDropOf(drops, part, theme);
   if (part.kind === 'dip') return renderDip(part, layout, theme);
   if (part.kind === 'switch') return renderPushbutton(part, layout, theme, drop);
-  if (part.kind === 'four-lead') return renderTransformer(part, layout, theme, drop);
+  if (part.kind === 'wound') return renderTransformer(part, layout, theme, drop);
   if (part.kind === 'connector') return renderConnector(part, layout, theme, drop);
   if (part.kind === 'board') return renderBoardPart(part, layout, theme, drop);
   // 3 ピンの名札は置き場の候補 (ピンの名前の横・1 行下) から選ぶので、段の番号をそのまま渡す。

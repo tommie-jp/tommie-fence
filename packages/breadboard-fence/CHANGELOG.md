@@ -5,6 +5,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- **中点タップ付きの変圧器** `transformer-ct` (5 ピン。2 次に中点) と `transformer-ct2` (6 ピン。両側に中点)。書かれた穴がそのままピンで、穴を書く順が `A1 A2 B1 CT B2` / `A1 ACT A2 B1 BCT B2` (circuit と同じ綴り)。ダイオードリングのミキサー (DBM) のトランスはこれ
+- **トロイダルの姿 `/toroid`** (`inductor` `transformer` `transformer-ct` `transformer-ct2`)。ドーナツと巻線を描き、変圧器は値の型番 (`FT37-43` `FT37-61` `T37-2` `T50-2`) で大きさ (外径 9.5 / 12.7 mm) と色 (フェライトは灰、鉄粉の 2 は赤) が決まる
+
+### Changed
+
+- 内部: 配置の形 `four-lead` を、足の数を持つ `wound` に改めた (書き出す図は変わらない)
+
 ## [0.47.0] - 2026-10-20
 
 ### Added

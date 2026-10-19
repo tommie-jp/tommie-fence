@@ -336,7 +336,7 @@ wires:
         zener  schottky  photodiode  phototransistor  varicap  diac  reed  fuse  lamp  ferrite-bead  sma
         speaker  mic  battery  solar  switch (a 接点)  switch-nc (b 接点)
 3 ピン  transistor  potentiometer  thyristor  triac  slide-switch  regulator  ic3 (3 ピンの IC)
-4 ピン  transformer
+巻き物  transformer (4 ピン)  transformer-ct (5 ピン。A1 A2 B1 CT B2 の順に穴を書く)  transformer-ct2 (6 ピン。A1 ACT A2 B1 BCT B2)
 USB     usb-a (穴は VBUS GND D+ D- の順に 2 つから)  usb-c (穴は GND D+ D- VBUS の順に 4 つ)
 パッケージ  button (a 接点)  button-nc (b 接点)  dip4〜dip40 (偶数)  sip2〜sip40
 ボード      pico  pico-w  pico2  pico2-w  tang-nano-9k
@@ -379,7 +379,8 @@ DIP の番号は**実物を上から見た付き方** — 切り欠きを左に�
 `usb-a` と `usb-c` が `male` `female` (差し込み・受け口。書かなければ受け口)、
 `resistor` が `quarter` `half` (1/4W・1/2W)、
 ダイオードの仲間が `do35` `do41` (ガラス管・黒いプラスチック)、
-`inductor` が `axial` `radial` (軸物・立てた缶)、
+`inductor` が `axial` `radial` `toroid` (軸物・立てた缶・トロイダルコアに巻いた物)、
+`transformer` `transformer-ct` `transformer-ct2` が `toroid` (トロイダルコアに巻いた物。**型番を値に書く** — `FT37-43` `FT37-61` `T37-2` `T50-2`。型番で大きさ (外径 9.5 / 12.7 mm) と色 (フェライトは灰色、鉄粉の 2 は赤) が決まり、書かなければ FT37 の大きさの灰色)、
 `potentiometer` が `trimmer` `knob` (半固定・ボリューム)。
 面実装の姿 (`transistor/sot346-dip` `transistor/sot346` `resistor/2012` `dip8/sop` など) は
 [面実装](#面実装-sot346-dip--sot346--2012) の節にまとめた。

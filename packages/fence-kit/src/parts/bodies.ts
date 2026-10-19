@@ -6,6 +6,7 @@ import { REAL_INK } from './ink.ts';
 import type { BodyInk, BodyPart } from './ink.ts';
 import { cathodeIndex, ledLook, markedIndex } from './marks.ts';
 import { drawSmdBody, smdBodySize } from './smdDraw.ts';
+import { lookupToroid, toroidBody, toroidDiameter } from './toroids.ts';
 
 /**
  * 2 ピンの部品の**胴の姿**。基板に依らないので、breadboard と perfboard が共有する
@@ -526,8 +527,16 @@ const canOf = (part: BodyPart, span: number): { readonly width: number; readonly
  * 分かれる — 小さいものは芯に巻いた軸物、電源用は樹脂で固めた背の高い缶。
  */
 function inductorBody(part: BodyPart, span: number, ink: BodyInk): string {
+  if (part.variant === 'toroid') return toroidBody(toroidSpan(span), null, ink);
   return part.variant === 'radial' ? drumBody(span, ink) : axialCoil(span, ink);
 }
+
+/**
+ * トロイダルコアに巻いたコイル (`inductor/toroid`) の直径。2 つの穴の間に収まる大きさで、
+ * 型番は書けない (値の欄はインダクタンス) ので灰色のフェライトで描く。型番どおりの大きさと色は
+ * `transformer/toroid` のほう (`transformerCore`)。
+ */
+const toroidSpan = (span: number): number => Math.min(Math.max(span * 0.55, 16), 34);
 
 /** 立てた缶。上から見ると丸く、巻線は見えない (樹脂で固めてある)。 */
 function drumBody(span: number, ink: BodyInk): string {
@@ -788,13 +797,31 @@ function switchBody(span: number, ink: BodyInk, closed: boolean): string {
   return shell + bush + lever;
 }
 
+/** 変圧器の姿の指定。`pitch` は穴の間隔 (px)。トロイダルの大きさを型番の mm から出すのに使う。 */
+export type TransformerLook = {
+  readonly variant?: string | null;
+  readonly model?: string | null;
+  readonly pitch?: number;
+};
+
+const DEFAULT_PITCH = 10;
+/** 型番を知らないトロイダルの外径 (穴の間隔の何個ぶんか)。FT37 の 9.5 mm ≒ 3.7 個。 */
+const TOROID_DEFAULT_HOLES = 3.7;
+
 /**
  * 小型の変圧器。**四角い外形の中に、積んだ鉄心の縞と巻線の胴**が見える。
  *
  * 中身は基板に依らないので、外形 (ピンをどこに書いたか) だけを受け取って中を描く。
  * ピンの並べ方は基板ごとに違うが、**載っている物は同じ**なので姿は 1 つで済む。
  */
-export function transformerCore(width: number, height: number, ink: BodyInk): string {
+export function transformerCore(width: number, height: number, ink: BodyInk, look: TransformerLook = {}): string {
+  // トロイダルの姿 (`transformer/toroid`)。**型番 (`FT37-61`) が大きさと色を決める**。
+  // 知らない型番や型番の無い行は FT37 の大きさ (穴の間隔の 3.7 個ぶん) の灰色。
+  if (look.variant === 'toroid') {
+    const core = lookupToroid(look.model);
+    const pitch = look.pitch ?? DEFAULT_PITCH;
+    return toroidBody(toroidDiameter(core, pitch) ?? TOROID_DEFAULT_HOLES * pitch, core, ink);
+  }
   const shell = element('rect', {
     x: num(-width / 2), y: num(-height / 2), width: num(width), height: num(height), rx: 2,
     fill: ink.paint('#3a4049'), stroke: ink.paint('#1c2026'), 'stroke-width': 1,
@@ -944,6 +971,7 @@ export function bodySize(part: BodyPart, span: number): { readonly width: number
       return crystalCan(part, span);
     // 巻線が芯より高いので、高さは巻線のぶん。立てた缶は丸いので直径。
     case 'inductor':
+      if (part.variant === 'toroid') return { width: toroidSpan(span), height: toroidSpan(span) };
       return part.variant === 'radial'
         ? twice(Math.min(span * 0.42, 13))
         : { width: Math.min(span * 0.6, 34), height: TURN_HALF * 2 };

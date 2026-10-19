@@ -309,7 +309,7 @@ export type FenceDocument = {
 };
 
 export type PartKind =
-  | 'two-lead' | 'three-lead' | 'four-lead' | 'switch' | 'connector' | 'dip' | 'sip' | 'board' | 'device';
+  | 'two-lead' | 'three-lead' | 'wound' | 'switch' | 'connector' | 'dip' | 'sip' | 'board' | 'device';
 
 export type PlacedPin = {
   readonly name: string;

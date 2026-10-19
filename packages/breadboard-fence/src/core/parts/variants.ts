@@ -33,7 +33,11 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
   zener: ['do35', 'do41'],
   schottky: ['do35', 'do41'],
   // 芯に巻いた軸物と、樹脂で固めた立てた缶 (電源用)。
-  inductor: ['axial', 'radial'],
+  // `toroid` はトロイダルコアに巻いた物 (ドーナツ形)。巻き物 (`transformer` など) も同じ姿が選べる。
+  inductor: ['axial', 'radial', 'toroid'],
+  transformer: ['toroid'],
+  'transformer-ct': ['toroid'],
+  'transformer-ct2': ['toroid'],
   // ねじで回す半固定と、軸の立つボリューム。
   potentiometer: ['trimmer', 'knob'],
   // 実物の玉の大きさ。挿す穴は同じなので、変わるのは丸の大きさだけ。

@@ -1,4 +1,4 @@
-import { computeNets, lookupBoardPart, lookupConnector, lookupNamedChip } from 'fence-kit';
+import { computeNets, lookupBoardPart, lookupConnector, lookupNamedChip, tappedTransformerPins } from 'fence-kit';
 import { footprintOf } from '../parts/footprint.ts';
 import type { Net, NetMember } from 'fence-kit';
 import { fenceError, notice, safeToken } from '../errors.ts';
@@ -211,6 +211,8 @@ export function pinRef(part: PlacedPart, index: number): string {
   const printed = dipPinout(part);
   const named = lookupBoardPart(part.type)?.pins[index] ?? lookupConnector(part.type)?.pins[index]
     ?? lookupNamedChip(part.type, part.variant)?.pins[index]?.name
+    // 中点タップ付きの変圧器は穴を書く順が `A1 A2 B1 CT B2` / `A1 ACT A2 B1 BCT B2` (回路図と同じ綴り)。
+    ?? tappedTransformerPins(part.type)?.[index]
     // 型番がピンの名前の表にある DIP は印字の名前 (52 の docs/95)。
     ?? (printed === null ? undefined : dipPinName(printed, index))
     // 型番がディスクリートの表にあれば、穴の順 (左から) に印字の名前 (52 の docs/119)。

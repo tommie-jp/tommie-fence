@@ -43,11 +43,16 @@ const THREE_LEAD = new Set([
 ]);
 
 /**
- * 4 ピンの部品。**書かれた穴がそのままピン** — 2 ピン・3 ピンと同じ考え方で、
- * 巻線の端が 4 つ出ている変圧器を、どの穴に挿したかそのまま書く
+ * 巻き物 (変圧器)。**書かれた穴がそのままピン** — 2 ピン・3 ピンと同じ考え方で、
+ * 巻線の端が出ている変圧器を、どの穴に挿したかそのまま書く
  * (実物のピンの並びは品によって違い、決め打てない)。
+ *
+ * 足の数は種類で決まる: `transformer` は 4 本 (1 次 2・2 次 2)、`transformer-ct` は 5 本
+ * (2 次に中点)、`transformer-ct2` は 6 本 (両側に中点)。中点タップ付きは**穴を書く順が
+ * ピンの名前の順** (`A1 A2 B1 CT B2` / `A1 ACT A2 B1 BCT B2`。回路図と同じ綴り)。
  */
-const FOUR_LEAD = new Set(['transformer']);
+const WOUND_LEADS: Readonly<Record<string, number>> = { transformer: 4, 'transformer-ct': 5, 'transformer-ct2': 6 };
+const WOUND = new Set(Object.keys(WOUND_LEADS));
 
 /**
  * タクトスイッチ。**ピンの位置はパッケージが決める**ので、書くのはアンカー 1 つ
@@ -105,7 +110,11 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
   zener: ['do35', 'do41'],
   schottky: ['do35', 'do41'],
   // 芯に巻いた軸物と、樹脂で固めた立てた缶 (電源用)。
-  inductor: ['axial', 'radial'],
+  // `toroid` はトロイダルコアに巻いた物 (ドーナツ形)。巻き物 (`transformer` など) も同じ姿が選べる。
+  inductor: ['axial', 'radial', 'toroid'],
+  transformer: ['toroid'],
+  'transformer-ct': ['toroid'],
+  'transformer-ct2': ['toroid'],
   // ねじで回す半固定と、軸の立つボリューム。
   potentiometer: ['trimmer', 'knob'],
   led: ['3mm', '5mm'],
@@ -156,10 +165,12 @@ const own = (table: Record<string, unknown>, key: string): boolean => Object.has
 
 export const isTwoLead = (type: string): boolean => TWO_LEAD.has(type);
 export const isThreeLead = (type: string): boolean => THREE_LEAD.has(type);
-export const isFourLead = (type: string): boolean => FOUR_LEAD.has(type);
+export const isWound = (type: string): boolean => WOUND.has(type);
+/** 巻き物の足の数。巻き物でなければ 0。 */
+export const woundLeads = (type: string): number => WOUND_LEADS[type] ?? 0;
 export const isSwitch = (type: string): boolean => SWITCH.has(type);
 export const isKnownType = (type: string): boolean =>
-  TWO_LEAD.has(type) || THREE_LEAD.has(type) || FOUR_LEAD.has(type) || SWITCH.has(type) || NESTED.has(type)
+  TWO_LEAD.has(type) || THREE_LEAD.has(type) || WOUND.has(type) || SWITCH.has(type) || NESTED.has(type)
   || lookupBoardPart(type) !== null || isConnector(type) || lookupNamedChip(type, null) !== null;
 /**
  * パレットに出す**パッケージ物**。`dipN` / `sipN` は数を選べるが、一覧に全部
@@ -180,7 +191,7 @@ export const packageNames = (): readonly string[] => [
 ];
 
 export const placeableNames = (): readonly string[] =>
-  [...TWO_LEAD, ...THREE_LEAD, ...FOUR_LEAD, ...SWITCH, ...connectorNames(), ...packageNames()];
+  [...TWO_LEAD, ...THREE_LEAD, ...WOUND, ...SWITCH, ...connectorNames(), ...packageNames()];
 
 /** その種類を指せる略記 (`r` → resistor)。パレットの検索が引く。 */
 export const aliasesFor = (type: string): readonly string[] =>
@@ -189,7 +200,7 @@ export const aliasesFor = (type: string): readonly string[] =>
 /** 略記を正式名に畳む。知らない綴りはそのまま返す (呼ぶ側が断る)。 */
 export const resolveTypeName = (type: string): string => (own(ALIASES, type) ? ALIASES[type] ?? type : type);
 export const knownNames = (): readonly string[] => [
-  ...TWO_LEAD, ...THREE_LEAD, ...FOUR_LEAD, ...SWITCH, ...connectorNames(), ...NESTED, ...boardPartNames(),
+  ...TWO_LEAD, ...THREE_LEAD, ...WOUND, ...SWITCH, ...connectorNames(), ...NESTED, ...boardPartNames(),
   ...namedChipTypes(), ...Object.keys(ALIASES),
 ];
 

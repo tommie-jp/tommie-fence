@@ -116,7 +116,7 @@ export function captionBaselineOf(
     const body = switchBodyRect(part, layout);
     return { x: body.x + body.width / 2, y: body.y + body.height + CAPTION_CLEAR + cap, width };
   }
-  if (part.kind === 'four-lead') {
+  if (part.kind === 'wound') {
     const body = fourLeadBodyRect(part, layout);
     return { x: body.x + body.width / 2, y: body.y + body.height + CAPTION_CLEAR + cap, width };
   }

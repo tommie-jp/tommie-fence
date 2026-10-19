@@ -283,7 +283,7 @@ export function renderTransformer(part: PlacedPart, layout: Layout, theme: Rende
   const core = element(
     'g',
     { transform: `translate(${num(centre.x)} ${num(centre.y)})` },
-    transformerCore(rect.width, rect.height, REAL_INK),
+    transformerCore(rect.width, rect.height, REAL_INK, { variant: part.variant, model: part.value, pitch: layout.pitch }),
   );
   const stubs = (pinPoints(part, layout) ?? []).map((point) => stub(point, theme.palette.chipPin)).join('');
   // **字は胴の下。** ほかの部品と側を揃える (実機で「名前を部品の下にする」)。

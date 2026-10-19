@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **中点タップ付きのトランス** `transformer-ct` (2 次に中点 `CT`) と `transformer-ct2` (両側に中点 `ACT` `BCT`)。circuitikz 1.0 にタップ付きの記号が無いので、自前の形 (`xfmrct` `xfmrct2`) で描く。左が 1 次、右が 2 次で、巻線と鉄芯は `transformer core` と同じ太さ。実体配線図 (breadboard・perfboard) も同じ綴り。ダイオードリングのミキサー (DBM) のトランスはこれ
+
 ## [0.39.0] - 2026-10-19
 
 ### Added

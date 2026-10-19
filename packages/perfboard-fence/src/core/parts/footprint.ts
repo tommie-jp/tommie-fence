@@ -1,7 +1,7 @@
 import { NO_TURN } from './orient.ts';
 import type { Turn } from './orient.ts';
 import type { Address, Board } from '../types.ts';
-import { isEdgeMount, isFourLead, isSwitch, isThreeLead, isTwoLead } from './types.ts';
+import { isEdgeMount, isSwitch, isThreeLead, isTwoLead, isWound, woundLeads } from './types.ts';
 import { lookupBoardPart, lookupConnector, lookupNamedChip } from 'fence-kit';
 import type { NamedChip } from 'fence-kit';
 
@@ -26,7 +26,7 @@ import type { NamedChip } from 'fence-kit';
  */
 
 export type FootprintKind =
-  | 'two-lead' | 'three-lead' | 'four-lead' | 'switch' | 'edge' | 'connector' | 'dip' | 'sip' | 'board' | 'named';
+  | 'two-lead' | 'three-lead' | 'wound' | 'switch' | 'edge' | 'connector' | 'dip' | 'sip' | 'board' | 'named';
 
 export type Footprint = {
   readonly kind: FootprintKind;
@@ -94,7 +94,7 @@ export function footprintOf(type: string, variant: string | null = null): Footpr
 
   if (isTwoLead(type)) return { kind: 'two-lead', pins: 2, holes: 2 };
   if (isThreeLead(type)) return { kind: 'three-lead', pins: 3, holes: 3 };
-  if (isFourLead(type)) return { kind: 'four-lead', pins: 4, holes: 4 };
+  if (isWound(type)) return { kind: 'wound', pins: woundLeads(type), holes: woundLeads(type) };
   // タクトスイッチ。**ピンの位置はパッケージが決める**ので、書くのはアンカー 1 つ。
   if (isSwitch(type)) return { kind: 'switch', pins: 4, holes: 1 };
 
@@ -151,7 +151,7 @@ export function pinsOf(
   if (!anchor) return [];
 
   if (
-    footprint.kind === 'two-lead' || footprint.kind === 'three-lead' || footprint.kind === 'four-lead'
+    footprint.kind === 'two-lead' || footprint.kind === 'three-lead' || footprint.kind === 'wound'
     || footprint.kind === 'connector'
   ) {
     return holes.slice(0, footprint.pins);

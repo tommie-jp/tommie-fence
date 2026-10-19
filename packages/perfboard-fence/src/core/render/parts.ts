@@ -540,7 +540,7 @@ function renderTwoLead(part: PlacedPart, layout: Layout, theme: Theme, room?: Pa
 const isBoxed = (part: PlacedPart): boolean => {
   const kind = footprintOf(part.type)?.kind;
   // マイコンボードも箱。**列の間隔が広い DIP** として同じ道を通る。
-  return kind === 'dip' || kind === 'switch' || kind === 'sip' || kind === 'board' || kind === 'named' || kind === 'four-lead';
+  return kind === 'dip' || kind === 'switch' || kind === 'sip' || kind === 'board' || kind === 'named' || kind === 'wound';
 };
 
 /**
@@ -792,11 +792,11 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme, room?: PartRo
 
   // **変圧器は箱の中身を fence-kit が描く** (実物の話で基板に依らない)。
   // 外の枠は要らないので、ここでは描かずに中身だけを置く。
-  if (kind === 'four-lead') {
+  if (kind === 'wound') {
     const core = element(
       'g',
       { transform: `translate(${num(rect.cx)} ${num(rect.cy)})` },
-      transformerCore(rect.width, rect.height, REAL_INK),
+      transformerCore(rect.width, rect.height, REAL_INK, { variant: part.variant, model: part.value, pitch: layout.pitch }),
     );
     return `${core}${leads}${partLabel(
       caption(part),
