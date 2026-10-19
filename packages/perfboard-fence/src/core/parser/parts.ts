@@ -6,7 +6,7 @@ import { footprintOf } from '../parts/footprint.ts';
 import { MIRROR_REFUSAL, MIRROR_WORD, NO_TURN, isTurned, orientOf, refusesMirror, rotationOf } from '../parts/orient.ts';
 import type { Turn } from '../parts/orient.ts';
 import { isNestedType, placeableNames, splitPartType } from '../parts/types.ts';
-import { lookupConnector, partValueProblem } from 'fence-kit';
+import { lookupConnector, partValueProblem, readPlateColor } from 'fence-kit';
 import type { FenceError, PartSpec, Spelling } from '../types.ts';
 
 export type Parsed<T> =
@@ -173,12 +173,17 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
     const count = footprint.minHoles === undefined ? `${footprint.holes} つです` : `${footprint.holes} つまでです`;
     return fail(`${safeToken(written)} が書く穴は ${count}。余分な番地: ${safeToken(stray)}`, stray);
   }
-  const value = tail.join(' ');
+  // **末尾の色は部品の基板の色** (`J1: sip8 f16 r90 105404 blue`)。基板のある部品にだけ書ける。
+  // 読み方 (断る場合と値に残す場合) は breadboard と同じ (`fence-kit` の readPlateColor)。
+  const { rest: values, color, refusal } = readPlateColor(safeToken(id), type, variant, tail);
+  if (refusal !== null) return fail(refusal, color ?? undefined);
+  const value = values.join(' ');
   // **読めない値を既定で埋めない** (直下の CLAUDE.md の文法の方針 1)。
   const refused = partValueProblem(type, value);
-  if (refused !== null) return fail(refused, tail[0]);
+  if (refused !== null) return fail(refused, values[0]);
   return {
     ok: true,
-    value: { id, type, variant, written, holes, value: value === '' ? null : value, turn },
+    value: { id, type, variant, written, holes, value: value === '' ? null : value, turn, color },
   };
 }
+

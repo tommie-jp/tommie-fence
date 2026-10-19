@@ -4,6 +4,7 @@ import {
   element, fit, hasBody,
   drawNamedChip, lookupBoardPart, lookupNamedChip, lookupPinout, num, bodySize, packageExtent, packageHalfWidth, packageReach, sipHeader,
   smaBody as drawSmaBody, svgText, chipAlongX, sipBox, transformerCore, TEXT_HALO_WIDTH, drawModuleOutline, moduleSide,
+  partPlateColor, plateInk, plateLook,
 } from 'fence-kit';
 import type { BodyInk, BodyPart, ChipInk } from 'fence-kit';
 import { dipPinout } from '../parts/pinout.ts';
@@ -365,6 +366,15 @@ const inkOf = (theme: Theme): BodyInk => (theme.hatch === true
   }
   : REAL_INK);
 
+/** 部品の基板の色 (部品の行の末尾に書いた色)。書いていなければ null (実物の色で描く)。 */
+const plateOf = (part: PlacedPart): string | null => (part.color == null ? null : partPlateColor(part.color));
+
+/** 基板のある部品の塗り。**色を書いた部品だけ**、変換基板の塗りを書いた色に替える。 */
+const partInk = (theme: Theme, part: PlacedPart): BodyInk => {
+  const plate = plateOf(part);
+  return plate === null ? inkOf(theme) : plateInk(inkOf(theme), plate);
+};
+
 /**
  * 白黒のときの、名前を持たない色の落とし先。**塗りか縁かを明るさで見分ける** —
  * 濃い色は縁として引かれているので、地に落とすと形が消える。
@@ -586,7 +596,7 @@ function renderPackage(part: PlacedPart, layout: Layout, theme: Theme, room?: Pa
     plate: theme.palette.plate,
     chipBody: theme.palette.chipBody,
     chipText: theme.palette.chipText,
-  }, inkOf(theme));
+  }, partInk(theme, part));
   // **胴はピンの並びに沿って回す。** 全穴が独立している基板なので 3 ピンをどの向きにも
   // 挿せる。回さないと TO-92 の平らな面がピンの 1 本を向いてしまい、実物ではありえない
   // 向きになる (平らな面とピンの並びは平行)。**キャプションは回さない** — 字は
@@ -689,28 +699,30 @@ function renderChip(
     // 面実装しか無い型番 (3SK291) は、変換基板に載せた実寸の胴で描く。
     const chip = printed === null ? undefined : lookupPinout(part.value, part.pins.length)?.chip;
     if (printed !== null && chip !== undefined) {
-      return drawDipAdapter({ ...shared, names: printed, pinOne: 0, chip, label: part.id, paint: inkOf(theme) });
+      return drawDipAdapter({ ...shared, names: printed, pinOne: 0, chip, label: part.id, paint: partInk(theme, part) });
     }
     if (printed !== null) return dipChip({ ...shared, names: printed, numbers, pinOne: 0 });
     return part.variant === null
       ? dipChip({ ...shared, names: numbers, pinOne: 0 })
-      : drawDipAdapter({ ...shared, names: numbers, pinOne: 0, variant: part.variant, paint: inkOf(theme) });
+      : drawDipAdapter({ ...shared, names: numbers, pinOne: 0, variant: part.variant, paint: partInk(theme, part) });
   }
   if (kind === 'sip') {
     // **名前は行の増える側へ。** この基板に溝は無いので、どちらでも読めるほうを
     // 1 つに決める (breadboard は溝の側)。
     // 型番がピンの名前の表にあれば印字の名前 (1 列の変換基板の `3SK291`)。
     const pinout = lookupPinout(part.value, part.pins.length);
-    const look = pinout?.look;
+    const plate = plateOf(part);
+    // **色はモジュールなら基板に、1 列のモジュール (KY-040 など) なら胴に**。キットのヘッダ (銀の帯) は替えない。
+    const look = plate !== null && pinout?.module === undefined ? plateLook(plate) : pinout?.look;
     if (pinout?.chip !== undefined) {
-      return drawSipAdapter({ ...shared, names: dipPinout(part) ?? numbers, nameSide: 1, chip: pinout.chip, label: part.id, paint: inkOf(theme) });
+      return drawSipAdapter({ ...shared, names: dipPinout(part) ?? numbers, nameSide: 1, chip: pinout.chip, label: part.id, paint: partInk(theme, part) });
     }
     // **モジュール (キットの基板とジャック) は、基板の縁に近い脇へ張り出す。** ピンの名前は
     // 反対の脇 (基板の側) に出す — 同じ脇だと胴の上に字が載る。外形は `moduleOf` と同じ判定。
     const module = pinout?.module;
     const side = module === undefined ? null : moduleSide(points, layout.board);
     const nameSide: 1 | -1 = side === null ? 1 : side === 1 ? -1 : 1;
-    const outline = module === undefined || side === null ? '' : drawModuleOutline({ points, pitch: layout.pitch, side, outline: module });
+    const outline = module === undefined || side === null ? '' : drawModuleOutline({ points, pitch: layout.pitch, side, outline: module, ...(plate === null ? {} : { plate }) });
     const options = { ...shared, names: dipPinout(part) ?? numbers, nameSide, ...(look === undefined ? {} : { look }) };
     // **名前は胴の外。** 上から見た図なのでピンは胴の中心線に ○ で描き、胴に刷ると
     // 真ん中のピンの ○ と食い合う。外では線と字を避けて置く (`partLabel`)。
@@ -832,7 +844,7 @@ function renderConnector(part: PlacedPart, layout: Layout, theme: Theme, room?: 
   if (part.pins.length === 0) return '';
   const shape = connectorShapeOf(part, layout);
   const box = connectorBox(shape);
-  const drawn = drawConnector({ ...shape, ink: inkOf(theme) });
+  const drawn = drawConnector({ ...shape, ink: partInk(theme, part) });
   const xs = shape.points.map((point) => point.x);
   const centre = { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: box.y + box.height / 2 };
 

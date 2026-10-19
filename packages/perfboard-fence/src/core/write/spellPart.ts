@@ -9,7 +9,7 @@ import type { PartSpec } from '../types.ts';
  * 通し、触っていない行は書かれた字のまま残す。だから**桁揃えの空白は作らない**。
  *
  * 読む側 (`parser/parts.ts`) と**同じ並び**で書く:
- * `ID: 種類 穴… [向き] [値]`
+ * `ID: 種類 穴… [向き] [値] [色]`
  *
  * **この基板は仕様がもう書かれた綴りを持っている** — 種類は `written`
  * (略記のまま)、穴は `holes` (`points:` の名前のまま)。ほかの 2 つで
@@ -31,5 +31,6 @@ export function spellPart(part: PartSpec): string {
     ...part.holes,
     ...turnWords(part.turn),
     ...(part.value === null ? [] : [part.value]),
+    ...(part.color == null ? [] : [part.color]),
   ].join(' ');
 }

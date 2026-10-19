@@ -1,3 +1,4 @@
+import { PART_PLATE_COLORS } from 'fence-kit';
 import { colorValue, isColor } from '../color.ts';
 
 /**
@@ -11,15 +12,12 @@ import { colorValue, isColor } from '../color.ts';
  * (色は SVG の属性へそのまま流れるので、通す綴りは 2 通りに限る)。
  */
 
-/** レジスト (基板) の色。**既定は緑** — いちばん多い。 */
+/**
+ * レジスト (基板) の色。**既定は緑** — いちばん多い。部品の基板の色 (`J1: … 105404 blue`) と
+ * 同じ表を使う (`fence-kit` の PART_PLATE_COLORS)。生基板 (`bare`) だけはユニバーサル基板にしか無い。
+ */
 export const PLATE_COLORS: Record<string, string> = {
-  green: '#2c7a4b',
-  blue: '#1f5c9e',
-  red: '#9e2b2b',
-  black: '#26292c',
-  white: '#e8eaec',
-  yellow: '#c9a227',
-  purple: '#5b3a86',
+  ...PART_PLATE_COLORS,
   bare: '#c8a05a',
 };
 

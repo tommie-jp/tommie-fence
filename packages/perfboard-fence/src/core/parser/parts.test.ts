@@ -14,6 +14,7 @@ describe('parsePartLine', () => {
         holes: ['b3', 'b7'],
         value: '10k',
         turn: NO_TURN,
+        color: null,
       },
     });
   });

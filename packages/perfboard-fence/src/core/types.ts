@@ -122,6 +122,8 @@ export type PartSpec = {
   readonly value: string | null;
   /** 書かれた向き。**アンカー 1 つで置く形だけが持つ** (parts/orient.ts)。 */
   readonly turn: Turn;
+  /** 部品の基板の色 (書かれたままの綴り。`blue`)。基板のある部品だけが持つ。 */
+  readonly color?: string | null;
   readonly line: number | null;
 };
 
@@ -134,6 +136,8 @@ export type PlacedPart = {
   readonly type: string;
   readonly variant: string | null;
   readonly value: string | null;
+  /** 部品の基板の色 (書かれたままの綴り)。描くときに `partPlateColor` で色に直す。 */
+  readonly color?: string | null;
   readonly line: number | null;
   readonly pins: readonly { readonly address: Address; readonly strip: StripId }[];
 };
