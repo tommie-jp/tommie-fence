@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-10-19
+
 ### Added
 
 - **1 列のヘッダに載ったモジュールの外形** (`parts/moduleOutline.ts`)。ピンの名前の表の行に `module` (基板とジャックの寸法、mm) を持たせ、`moduleBox`・`moduleSide`・`drawModuleOutline` で帯の脇に描く。`105404` (秋月の LAN コネクターDIP化キット) に基板 25.36 × 15 mm とジャックの目安を入れた
