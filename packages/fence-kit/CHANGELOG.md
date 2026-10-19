@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-10-20
+
 ### Added
 
 - **トロイダルの L の目安** (`parts/toroids.ts`)。`TOROID_CORES` に AL (nH/回²。Amidon の資料の値) と許容差 (フェライトは ±25 %、鉄粉は資料に無いので null) を足し、値 `FT37-43 10t` / `FT37-43 10t:20t` を読む `parseToroidValue`、L = AL × 巻数² の `toroidInductanceNh`、読みやすい単位の `formatInductance`、お知らせの一文を作る `toroidWindingNotes` を足した。T50-2 の穴の径を 7.6 mm に直した
