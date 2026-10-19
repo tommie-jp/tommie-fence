@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-10-20
+
 ### Added
 
 - **部品の基板の色** (`parts/plateColor.ts`)。`readPlateColor` が部品の行の末尾の色を読み (基板のある部品だけ。無い部品の `sipN` `dipN` USB には断る理由を返し、LED の色は値に残す)、`plateInk` が変換基板 (`ADAPTER_BOARD`・`CONNECTOR_PLATE`) の塗りを差し替え、`plateLook` が 1 列のモジュールの胴を作る。語彙はユニバーサル基板の `board: color:` と同じ (`PART_PLATE_COLORS`、`bare` を除く)。縁は塗りから暗くして作り (`darkenColor`)、明るい基板では白いシルクを濃い色に替える (`isLightColor`)
