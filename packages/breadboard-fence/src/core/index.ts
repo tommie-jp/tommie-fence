@@ -1,5 +1,6 @@
 import { hasSheets, keptSourceLines, renderSheets, resolveLang } from 'fence-kit';
 import type { Lang, SheetExtras, SheetPoint } from 'fence-kit';
+import { toroidNotices } from './parts/toroidNotices.ts';
 import { attachSourceText, fail, fenceError, notice, ok, safeToken, shiftErrors } from './errors.ts';
 import { normalizeNewlines } from './newlines.ts';
 import { LIMITS } from './limits.ts';
@@ -176,6 +177,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   const board = createBoard(parsed.doc.board);
   const placement = placeParts(parsed.doc.parts, board);
   errors.push(...placement.errors);
+  errors.push(...toroidNotices(placement.parts));
 
   const resolved = resolveStyle(parsed.doc.style);
   const style = resolved.style;

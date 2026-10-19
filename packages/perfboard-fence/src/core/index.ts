@@ -23,6 +23,7 @@ import { backSideLayout, renderBackSide } from './render/backSide.ts';
 import { deviceOverhang, layoutDevices, renderDevices } from './render/devices.ts';
 import { netlistOf, resolveWires } from './wiring/wiring.ts';
 import { unnamedDipNotices } from './parts/pinout.ts';
+import { toroidNotices } from './parts/toroidNotices.ts';
 import { checkErc } from './erc/erc.ts';
 import { checkFit } from './placement/collide.ts';
 import { connectorOverhang, drawnExtent, moduleOverhang } from './placement/geometry.ts';
@@ -498,7 +499,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   // **行順に並べる。** 段ごとに集めた順のままだと、帯の打ち切り (8 件) で
   // 後ろの段の報告から先に消え、行を追って直せなくなる。
   const collected = [
-    ...parsed.errors, ...pointErrors, ...placement.errors, ...unnamedDipNotices(placement.parts), ...wiring.errors, ...noteErrors,
+    ...parsed.errors, ...pointErrors, ...placement.errors, ...unnamedDipNotices(placement.parts), ...toroidNotices(placement.parts), ...wiring.errors, ...noteErrors,
     ...placedDevices.notices, ...fit, ...notChecked,
     ...(language.error === null ? [] : [fenceError(language.error, null)]),
   ];

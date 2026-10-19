@@ -85,7 +85,7 @@ wires:
   - 3 ピン — `transistor` / `potentiometer` / `slide-switch` / `thyristor` / `triac` /
     `regulator` / `ic3` (3 ピンの IC。ピンの名前は穴に書く — `h9(Vout)`)
   - 巻き物 (変圧器) — `transformer` (4 ピン) / `transformer-ct` (5 ピン。2 次に中点) / `transformer-ct2` (6 ピン。両側に中点)。
-    書かれた穴がそのままピンで、中点タップ付きは**穴を書く順がピンの名前の順** (`A1 A2 B1 CT B2` / `A1 ACT A2 B1 BCT B2`。circuit と同じ綴り)。`/toroid` の姿でトロイダルコアに巻いた形になる → [姿](#姿)
+    書かれた穴がそのままピンで、中点タップ付きは**穴を書く順がピンの名前の順** (`A1 A2 B1 CT B2` / `A1 ACT A2 B1 BCT B2`。circuit と同じ綴り)。`/toroid` の姿でトロイダルコアに巻いた形になる → [部品の姿](#部品の姿-variant)
   - まとまったピン — `button` (a 接点) / `button-nc` (b 接点) / `dipN` / `sipN`
   - マイコンボード — `pico` / `pico-w` / `pico2` / `pico2-w` / `tang-nano-9k` (FPGA)
   - ボード外の機器 — `device`
@@ -674,8 +674,8 @@ parts:
 | `diode` | `do35` / `do41` | 小信号のガラス管 / 1A クラスの黒いプラスチック |
 | `zener` | `do35` / `do41` | 同上 |
 | `schottky` | `do35` / `do41` | 同上 |
-| `inductor` | `axial` / `radial` / `toroid` | 芯に巻いた軸物 (既定) / 樹脂で固めた立てた缶 / トロイダルコアに巻いた物 (ドーナツ形。灰色のフェライト) |
-| `transformer` `transformer-ct` `transformer-ct2` | `toroid` | トロイダルコアに巻いた物。**型番を値に書く** (`FT37-43` `FT37-61` `T37-2` `T50-2`)。大きさ (外径 9.5 / 12.7 mm) と色 (フェライトは灰色、鉄粉の 2 は赤) が型番で決まる。型番を書かなければ FT37 の大きさの灰色。書かなければ積層鉄心の箱 |
+| `inductor` | `axial` / `radial` / `toroid` | 芯に巻いた軸物 (既定) / 樹脂で固めた立てた缶 / トロイダルコアに巻いた物 (ドーナツ形。値に型番 + 巻数を書けば型番の色と大きさ、`FT37-43 10t` なら L の目安も出る。インダクタンス (`4u7`) を書けば灰色のフェライト) |
+| `transformer` `transformer-ct` `transformer-ct2` | `toroid` | トロイダルコアに巻いた物。**型番を値に書く** (`FT37-43` `FT37-61` `T37-2` `T50-2`)。大きさ (外径 9.5 / 12.7 mm) と色 (フェライトは灰色、鉄粉の 2 は赤) が型番で決まる。型番を書かなければ FT37 の大きさの灰色。書かなければ積層鉄心の箱。 **値は型番 + 巻数** (`FT37-43 10t` = どの巻線も 10 回、`FT37-43 10t:20t` = 1 次 10 回・2 次 20 回)。巻数を書くと、`check` が **L の目安をお知らせで言う** (L = AL × 巻数²。AL は Amidon の表の値で、フェライトは ±25 %。実物はずれる)。中点タップ付きは書いた巻数が巻線の全体で、中点から片端までの L は 1/4。巻数が読めなければ直し方を言う。型番だけ・インダクタンスだけ (`4u7`) の値には何も言わない |
 | `potentiometer` | `trimmer` / `knob` | ねじで回す半固定 (既定) / 軸の立つボリューム |
 | `dipN` | `sop` / `tssop` | SOP・TSSOP の IC を DIP 化した変換基板。書き方は DIP と同じ |
 | `dip24` `dip28` `dip32` `dip40` | `wide` | 0.6 インチ (600 mil) 幅の DIP。ピンの行は 6 ピッチ離れる → [幅広 DIP](#幅広-dip-dipnwide) |

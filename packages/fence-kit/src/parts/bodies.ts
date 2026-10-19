@@ -6,7 +6,7 @@ import { REAL_INK } from './ink.ts';
 import type { BodyInk, BodyPart } from './ink.ts';
 import { cathodeIndex, ledLook, markedIndex } from './marks.ts';
 import { drawSmdBody, smdBodySize } from './smdDraw.ts';
-import { lookupToroid, toroidBody, toroidDiameter } from './toroids.ts';
+import { parseToroidValue, toroidBody, toroidDiameter } from './toroids.ts';
 
 /**
  * 2 ピンの部品の**胴の姿**。基板に依らないので、breadboard と perfboard が共有する
@@ -818,7 +818,7 @@ export function transformerCore(width: number, height: number, ink: BodyInk, loo
   // トロイダルの姿 (`transformer/toroid`)。**型番 (`FT37-61`) が大きさと色を決める**。
   // 知らない型番や型番の無い行は FT37 の大きさ (穴の間隔の 3.7 個ぶん) の灰色。
   if (look.variant === 'toroid') {
-    const core = lookupToroid(look.model);
+    const core = parseToroidValue(look.model)?.core ?? null;
     const pitch = look.pitch ?? DEFAULT_PITCH;
     return toroidBody(toroidDiameter(core, pitch) ?? TOROID_DEFAULT_HOLES * pitch, core, ink);
   }

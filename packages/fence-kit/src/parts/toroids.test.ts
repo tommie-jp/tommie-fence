@@ -1,7 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import { REAL_INK } from './ink.ts';
 import { bodySize, drawBody, transformerCore } from './bodies.ts';
-import { TOROID_CORES, lookupToroid, tappedTransformerPins, toroidBody, toroidDiameter } from './toroids.ts';
+import {
+  TOROID_CORES, formatInductance, lookupToroid, parseToroidValue, tappedTransformerPins, toroidBody, toroidDiameter,
+  toroidInductanceNh, toroidWindingNotes,
+} from './toroids.ts';
 
 describe('トロイダルコアの表', () => {
   test('finds a core by its model, ignoring case', () => {
@@ -103,5 +106,93 @@ describe('トロイダルの姿を胴の描画に通す', () => {
 
     expect(svg).not.toContain('evenodd');
     expect(svg).toContain('<rect');
+  });
+});
+
+describe('AL の表 (Amidon の資料の値)', () => {
+  test('holds the datasheet AL of each core', () => {
+    const al = Object.fromEntries(TOROID_CORES.map((entry) => [entry.model, entry.alNh]));
+
+    expect(al).toEqual({ 'FT37-43': 350, 'FT37-61': 55, 'T37-2': 4.0, 'T50-2': 4.9 });
+  });
+
+  test('carries the ferrite tolerance the datasheet states, and none for iron powder, where it states none', () => {
+    expect(lookupToroid('FT37-43')?.tolerancePercent).toBe(25);
+    expect(lookupToroid('T37-2')?.tolerancePercent).toBeNull();
+  });
+});
+
+describe('値の読み取り (型番 + 巻数)', () => {
+  test('reads a model alone, with one turns word, and with primary:secondary', () => {
+    expect(parseToroidValue('FT37-43')).toMatchObject({ turns: null, problem: null });
+    expect(parseToroidValue('FT37-43 10t')?.turns).toEqual([10]);
+    expect(parseToroidValue('ft37-43 10T:20t')?.turns).toEqual([10, 20]);
+  });
+
+  test('is silent about a value that is not a toroid model, such as an inductance', () => {
+    expect(parseToroidValue('4u7')).toBeNull();
+    expect(parseToroidValue('巻線10回')).toBeNull();
+    expect(parseToroidValue(null)).toBeNull();
+  });
+
+  test('refuses turns it cannot read and says how to write them', () => {
+    for (const bad of ['FT37-43 10', 'FT37-43 ten', 'FT37-43 0t', 'FT37-43 1t:2t:3t', 'FT37-43 10t 20t']) {
+      expect(parseToroidValue(bad)?.problem, bad).toContain('10t');
+    }
+  });
+});
+
+describe('L = AL × 巻数²', () => {
+  test('matches the numbers the workbook computes by hand', () => {
+    // 4-14: 10 回巻き。教科書の表は 35 µH・5.5 µH・0.40 µH。8-8 (バラン) は FT37-61 を 6 回で 2.0 µH。
+    expect(toroidInductanceNh(lookupToroid('FT37-43')!, 10)).toBe(35000);
+    expect(toroidInductanceNh(lookupToroid('FT37-61')!, 10)).toBe(5500);
+    expect(toroidInductanceNh(lookupToroid('T37-2')!, 10)).toBe(400);
+    expect(toroidInductanceNh(lookupToroid('FT37-61')!, 6)).toBe(1980);
+  });
+
+  test('formats to three significant digits in µH, and mH from 1000 µH', () => {
+    expect(formatInductance(35000)).toBe('35 µH');
+    expect(formatInductance(400)).toBe('0.4 µH');
+    expect(formatInductance(1980)).toBe('1.98 µH');
+    expect(formatInductance(35_000_000)).toBe('35 mH');
+  });
+});
+
+describe('L の目安の一文', () => {
+  test('says the inductance of a coil with the AL, the tolerance and that it is a rough figure', () => {
+    const note = toroidWindingNotes('inductor', 'FT37-43 10t');
+
+    expect(note).toContain('10 回で約 35 µH');
+    expect(note).toContain('AL 350');
+    expect(note).toContain('±25 %');
+    expect(note).toContain('目安');
+  });
+
+  test('says primary and secondary separately for a transformer, one turns word serving both', () => {
+    expect(toroidWindingNotes('transformer', 'FT37-43 10t')).toContain('1 次 10 回で約 35 µH、2 次 10 回で約 35 µH');
+    expect(toroidWindingNotes('transformer', 'FT37-43 10t:20t')).toContain('2 次 20 回で約 140 µH');
+  });
+
+  test('says a centre tap halves the turns, so a quarter of the inductance', () => {
+    expect(toroidWindingNotes('transformer-ct2', 'FT37-43 10t')).toContain('L は 1/4');
+    expect(toroidWindingNotes('transformer', 'FT37-43 10t')).not.toContain('1/4');
+  });
+
+  test('does not claim a tolerance for iron powder, where the datasheet gives none', () => {
+    const note = toroidWindingNotes('inductor', 'T37-2 10t');
+
+    expect(note).toContain('実物はずれる');
+    expect(note).not.toContain('±');
+  });
+
+  test('says nothing for a model alone or a non-toroid value, and reports unreadable turns', () => {
+    expect(toroidWindingNotes('transformer', 'FT37-43')).toBeNull();
+    expect(toroidWindingNotes('inductor', '4u7')).toBeNull();
+    expect(toroidWindingNotes('transformer', 'FT37-43 10')).toContain('10t');
+  });
+
+  test('refuses more turns than the part has windings', () => {
+    expect(toroidWindingNotes('inductor', 'FT37-43 10t:20t')).toContain('巻線は 1 つ');
   });
 });

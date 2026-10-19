@@ -11,6 +11,7 @@
 
 - **トロイダルコアの表と姿** (`parts/toroids.ts`)。`TOROID_CORES` (`FT37-43` `FT37-61` `T37-2` `T50-2`。外径・穴の径・材質) と `lookupToroid`、上から見たドーナツと巻線を描く `toroidBody` (穴は抜く。フェライトは灰、鉄粉の 2 は赤)、型番と穴の間隔から外径を出す `toroidDiameter`。AL 値は持たない。`inductor` の姿 `toroid` と、`transformerCore` の第 4 引数 (`variant: 'toroid'` と型番 `model`・穴の間隔 `pitch`) で使う
 - **中点タップ付きトランスのピンの名前** `TAPPED_TRANSFORMER_PINS` / `tappedTransformerPins` — `transformer-ct` は `A1 A2 B1 CT B2`、`transformer-ct2` は `A1 ACT A2 B1 BCT B2` (穴を書く順)。回路図と実体配線図の 2 つが同じ綴りで読む
+- **トロイダルの L の目安** (`parts/toroids.ts`)。`TOROID_CORES` に AL (nH/回²。Amidon の資料の値) と許容差 (フェライトは ±25 %、鉄粉は資料に無いので null) を足し、値 `FT37-43 10t` / `FT37-43 10t:20t` を読む `parseToroidValue`、L = AL × 巻数² の `toroidInductanceNh`、読みやすい単位の `formatInductance`、お知らせの一文を作る `toroidWindingNotes` を足した。T50-2 の穴の径を 7.6 mm に直した
 
 ## [0.25.0] - 2026-10-20
 

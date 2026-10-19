@@ -93,7 +93,7 @@ sma/male  sma/female  usb-a/male  usb-a/female  usb-c/male  usb-c/female
 crystal/hc49  crystal/cylinder
 resistor/quarter  resistor/half        diode/do35  diode/do41  (zener/…  schottky/…)
 inductor/axial  inductor/radial  inductor/toroid        potentiometer/trimmer  potentiometer/knob
-transformer/toroid  transformer-ct/toroid  transformer-ct2/toroid  (トロイダルコア。型番 FT37-43 FT37-61 T37-2 T50-2 を値に書く)
+transformer/toroid  transformer-ct/toroid  transformer-ct2/toroid  (トロイダルコア。値は型番 FT37-43 FT37-61 T37-2 T50-2 + 巻数: `FT37-43 10t` `FT37-43 10t:20t`。L の目安がお知らせで出る)
 ```
 
 ### 略記 (読んだ直後に正式名へ畳む)

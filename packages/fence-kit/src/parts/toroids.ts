@@ -11,7 +11,10 @@ import type { BodyInk } from './ink.ts';
  * 61 は 10〜200 MHz、鉄粉の 2 は 1〜30 MHz の同調用)。
  *
  * 外径は Amidon の寸法 (FT37・T37 は 0.375 インチ、FT50・T50 は 0.5 インチ) の丸めで、図の大きさを決める。
- * **AL 値は持たない** — 載せるなら資料で確かめてから (段 3、52 の docs/136)。
+ *
+ * **AL (nH/回²) は Amidon の表の値** (2026-10-20 に amidoncorp.com の 43 材・61 材・鉄粉 2 のページで確かめた)。
+ * フェライトは「AL はすべて ±25 %」と書いてある。鉄粉のページには許容差の記載が無いので、持たない (null)。
+ * 実物はこの表の値からずれるので、L は**目安**として出す (`toroidWindingNotes`)。
  */
 export type ToroidMaterial = 'ferrite' | 'iron-powder';
 
@@ -25,17 +28,23 @@ export type ToroidCore = {
   readonly outerMm: number;
   /** 穴の径 (mm)。 */
   readonly innerMm: number;
+  /** インダクタンス係数 AL (nH/回²)。L = AL × 巻数² (nH)。 */
+  readonly alNh: number;
+  /** 資料に書かれた AL の許容差 (±%)。書かれていなければ null。 */
+  readonly tolerancePercent: number | null;
 };
 
-const core = (model: string, material: ToroidMaterial, mix: string, outerMm: number, innerMm: number): ToroidCore =>
-  ({ model, material, mix, outerMm, innerMm });
+const core = (
+  model: string, material: ToroidMaterial, mix: string, outerMm: number, innerMm: number,
+  alNh: number, tolerancePercent: number | null,
+): ToroidCore => ({ model, material, mix, outerMm, innerMm, alNh, tolerancePercent });
 
 /** 並びは表のまま。型番を足したら試験が落ちて、色の表も要求する。 */
 export const TOROID_CORES: readonly ToroidCore[] = [
-  core('FT37-43', 'ferrite', '43', 9.5, 4.8),
-  core('FT37-61', 'ferrite', '61', 9.5, 4.8),
-  core('T37-2', 'iron-powder', '2', 9.5, 5.2),
-  core('T50-2', 'iron-powder', '2', 12.7, 7.7),
+  core('FT37-43', 'ferrite', '43', 9.5, 4.8, 350, 25),
+  core('FT37-61', 'ferrite', '61', 9.5, 4.8, 55, 25),
+  core('T37-2', 'iron-powder', '2', 9.5, 5.2, 4.0, null),
+  core('T50-2', 'iron-powder', '2', 12.7, 7.6, 4.9, null),
 ];
 
 /** 表から型番を引く。**大文字小文字は問わない**。知らない型番は null。 */
@@ -116,3 +125,79 @@ export const TAPPED_TRANSFORMER_PINS: Readonly<Record<string, readonly string[]>
 
 export const tappedTransformerPins = (type: string): readonly string[] | null =>
   TAPPED_TRANSFORMER_PINS[type] ?? null;
+
+/**
+ * 部品の値の書き方: **型番 + 巻数**。`FT37-43 10t` (どの巻線も 10 回)、`FT37-43 10t:20t` (1 次 10 回・2 次 20 回)。
+ * 型番だけでもよい (L は出さない)。型番で始まらない値 (`4u7` `巻線10回`) はトロイダルの指定ではないので null。
+ *
+ * **黙って別の意味に読まない** — 型番は読めたのに巻数が読めないときは `problem` に直し方を入れて返す。
+ */
+export type ToroidValue = {
+  readonly core: ToroidCore;
+  /** 巻線ごとの巻数 (1 次・2 次の順)。書かなければ null。 */
+  readonly turns: readonly number[] | null;
+  readonly problem: string | null;
+};
+
+const TURNS_WORD = /^(\d{1,4})t$/i;
+/** 巻線は 1 次と 2 次の 2 つまで。 */
+const MAX_WINDINGS = 2;
+
+export function parseToroidValue(value: string | null | undefined): ToroidValue | null {
+  if (value === null || value === undefined) return null;
+  const words = value.trim().split(/\s+/);
+  const core = lookupToroid(words[0]);
+  if (core === null) return null;
+  if (words.length === 1) return { core, turns: null, problem: null };
+  const bad = (problem: string): ToroidValue => ({ core, turns: null, problem });
+  if (words.length > 2) return bad(`巻数は 1 語で書きます (例: ${core.model} 10t / ${core.model} 10t:20t)`);
+  const turns = (words[1] ?? '').split(':').map((word) => TURNS_WORD.exec(word)?.[1]).map((one) => (one === undefined ? Number.NaN : Number(one)));
+  if (turns.length > MAX_WINDINGS || turns.some((count) => !(count >= 1))) {
+    return bad(`巻数は 10t (どの巻線も) か 10t:20t (1 次:2 次) の形で書きます (今は ${words[1]})`);
+  }
+  return { core, turns, problem: null };
+}
+
+/** L = AL × 巻数² (nH)。 */
+export const toroidInductanceNh = (core: ToroidCore, turns: number): number => core.alNh * turns * turns;
+
+/** nH を読みやすい単位にする (3 桁)。 */
+export function formatInductance(nanohenry: number): string {
+  const microhenry = nanohenry / 1000;
+  if (microhenry >= 1000) return `${Number((microhenry / 1000).toPrecision(3))} mH`;
+  return `${Number(microhenry.toPrecision(3))} µH`;
+}
+
+/** 巻線の呼び名。1 つなら無し、2 つなら 1 次・2 次。 */
+const windingName = (index: number, count: number): string => (count === 1 ? '' : index === 0 ? '1 次' : '2 次');
+
+/**
+ * 型番と巻数から出す、L の目安の 1 行。**値がトロイダルの指定でなければ null、巻数が無ければ null**
+ * (型番だけの行に言うことは無い)。巻数が読めなければ、直し方を言う。
+ *
+ * 巻線の数は種類が決める: `inductor` は 1 つ、変圧器は 2 つ。巻数が 1 つだけなら全部の巻線に使う。
+ * 中点タップ付き (`transformer-ct` `transformer-ct2`) は、書いた巻数が**巻線の全体**で、中点から片端までは
+ * 巻数が半分なので L は 1/4。
+ */
+export function toroidWindingNotes(type: string, value: string | null | undefined): string | null {
+  const read = parseToroidValue(value);
+  if (read === null) return null;
+  if (read.problem !== null) return read.problem;
+  if (read.turns === null) return null;
+  const windings = type === 'inductor' ? 1 : 2;
+  const given = read.turns;
+  if (given.length > windings) return `${type} の巻線は ${windings} つです (巻数が ${given.length} つ書かれています)`;
+  const each = Array.from({ length: windings }, (_, index) => given[index] ?? given[0] ?? 0);
+  const parts = each.map((count, index) => {
+    const name = windingName(index, windings);
+    const henry = formatInductance(toroidInductanceNh(read.core, count));
+    return `${name === '' ? '' : `${name} `}${count} 回で約 ${henry}`;
+  });
+  const tapped = type === 'transformer-ct' || type === 'transformer-ct2'
+    ? ' (中点から片端までは巻数が半分で、L は 1/4)'
+    : '';
+  const tolerance = read.core.tolerancePercent === null
+    ? '実物はずれる'
+    : `資料の許容差 ±${read.core.tolerancePercent} %`;
+  return `${parts.join('、')}${tapped} (${read.core.model} の AL ${read.core.alNh} nH/回² × 巻数²。${tolerance}。目安)`;
+}

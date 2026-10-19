@@ -8,6 +8,8 @@ import { lookupFootprint } from './placement/footprints.ts';
  * 中点タップ付きは**穴を書く順がピンの名前の順** (回路図の `transformer-ct` と同じ綴り)。
  */
 const fence = (...lines: string[]): string => ['title: t', ...lines, ''].join('\n');
+const messages = (result: { readonly errors: readonly { message: string }[]; readonly notices: readonly { message: string }[] }): string =>
+  [...result.errors, ...result.notices].map((one) => one.message).join('\n');
 const refsOf = (...lines: string[]): string[] =>
   renderBreadboard(fence(...lines)).netlist.flatMap((net) => net.refs);
 
@@ -83,5 +85,37 @@ describe('トロイダルの姿', () => {
     const result = renderBreadboard(fence('parts:', '  T1: transformer/ring d10 d12 h10 h12'));
 
     expect(result.errors.map((one) => one.message).join('\n')).toContain('toroid');
+  });
+});
+
+describe('トロイダルの L の目安 (お知らせ)', () => {
+  const said = (...lines: string[]): string => messages(renderBreadboard(fence('parts:', ...lines)));
+
+  test('says the inductance of a coil written as model + turns', () => {
+    const text = said('  L1: inductor/toroid b3 b8 FT37-43 10t');
+
+    expect(text).toContain('L1:');
+    expect(text).toContain('10 回で約 35 µH');
+    expect(text).toContain('AL 350');
+  });
+
+  test('says primary and secondary for a transformer written as primary:secondary', () => {
+    const text = said('  T1: transformer/toroid d2 d4 h2 h4 FT37-43 10t:20t');
+
+    expect(text).toContain('1 次 10 回で約 35 µH');
+    expect(text).toContain('2 次 20 回で約 140 µH');
+  });
+
+  test('says nothing when only the model is written, or the value is an inductance', () => {
+    expect(said('  T1: transformer/toroid d2 d4 h2 h4 FT37-43')).not.toContain('µH');
+    expect(said('  L1: inductor/toroid b3 b8 4u7')).not.toContain('AL');
+  });
+
+  test('reports turns it cannot read and says how to write them', () => {
+    expect(said('  L1: inductor/toroid b3 b8 FT37-43 10')).toContain('10t');
+  });
+
+  test('says nothing for the plain look, even with a model and turns written', () => {
+    expect(said('  T1: transformer d2 d4 h2 h4 FT37-43 10t')).not.toContain('µH');
   });
 });

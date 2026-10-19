@@ -54,9 +54,10 @@ export {
   REAL_INK, SMA_SIZE, bodySize, crystalCan, drawBody, drawsOwnLeads, hasBody, smaBody, transformerCore,
 } from './parts/bodies.ts';
 export {
-  TAPPED_TRANSFORMER_PINS, TOROID_CORES, lookupToroid, tappedTransformerPins, toroidBody, toroidDiameter,
+  TAPPED_TRANSFORMER_PINS, TOROID_CORES, formatInductance, lookupToroid, parseToroidValue, tappedTransformerPins,
+  toroidBody, toroidDiameter, toroidInductanceNh, toroidWindingNotes,
 } from './parts/toroids.ts';
-export type { ToroidCore, ToroidMaterial } from './parts/toroids.ts';
+export type { ToroidCore, ToroidMaterial, ToroidValue } from './parts/toroids.ts';
 export type { TransformerLook } from './parts/bodies.ts';
 export { boardPartNames, lookupBoardPart } from './parts/boards.ts';
 export { drawNamedChip, lookupNamedChip, namedChipBox, namedChipLooks, namedChipTypes } from './parts/namedChips.ts';
