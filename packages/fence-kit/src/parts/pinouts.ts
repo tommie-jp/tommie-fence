@@ -678,13 +678,16 @@ const ROWS: readonly PinoutRow[] = [
     note: '`sip3` を緑の帯で描く (基板のピンヘッダだけ)。電源は 4.5〜20 V、OUT は 3.3 V の H。見る向きで左右が逆になるので、基板の印字で確かめる',
   },
   {
-    // AD9833 の DDS モジュール (GY-9833 / CJMCU-9833 系、1 列 7 本)。製造元の図は無く、独立した 2 つの個人の
-    // KiCad データ (jonsag/myCAD の GY-9833_AD9833 と daumemo/DIY-Signal-Generator の AD9833module) の並びが一致した。
-    // REF・VCC・GND・DAT・CLK・FNC・OUT の別の品 (protosupplies) は並びが違う。
-    models: ['GY-9833', 'CJMCU-9833', 'AD9833-MODULE'], role: 'DDS の信号発生モジュール (AD9833)',
+    // AD9833 の DDS モジュール (GY-9833、1 列 7 本。印字に DGND と AGND がある版)。製造元の図は無く、独立した
+    // 5 つの個人の KiCad データ (daumemo/DIY-Signal-Generator・Sonicators/UltrasonicSystem・
+    // ostojaatanasijevic/analog_solder_station・LTVA1/STM32CrapSynth・jonsag/myCAD) と hirakuni45/R8C の
+    // GY-9833 の結線のコメントで並びが一致した (2026-10-22)。
+    // **`CJMCU-9833` の名で売られる基板は REF・VCC・GND・DAT・CLK・FNC・OUT の別の並びが多い**ので別名に入れない
+    // (protosupplies・s59mz/kicad-clocks-pmod・lpires211002/CHIDORI)。
+    models: ['GY-9833', 'GY9833'], role: 'DDS の信号発生モジュール (AD9833)',
     names: ['VCC', 'DGND', 'SDATA', 'SCLK', 'FSYNC', 'AGND', 'OUT'],
     look: { body: '#6b3fa0', edge: '#47296b' },
-    note: '`sip7` を紫の帯で描く (基板のピンヘッダだけ)。SPI (SDATA・SCLK・FSYNC)。**製造元の図は無く、個人の KiCad データ 2 つの一致による**。REF・VCC・GND… の別の品は並びが違う',
+    note: '`sip7` を紫の帯で描く (基板のピンヘッダだけ)。SPI (SDATA・SCLK・FSYNC)。印字に `DGND` と `AGND` がある版。**`CJMCU-9833` の名の基板は REF VCC GND DAT CLK FNC OUT の別の並びが多い**ので、実物の印字で選ぶ。製造元の図は無く、個人の KiCad データ 5 つの一致による',
   },
   {
     // Adafruit 1782 (MCP9808 のブレークアウト、0.8 × 0.5 インチ)。Adafruit の GitHub の基板データ

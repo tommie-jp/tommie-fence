@@ -509,7 +509,9 @@ describe('教科書で使う 3 本足の IC・センサ・フィルタと 8 ピ�
   test('keeps the MCP9808 chip and its breakout apart', () => {
     expect(lookupPinout('MCP9808', 8)?.names[0]).toBe('SDA');
     expect(lookupPinout('MCP9808-BREAKOUT', 8)?.names[0]).toBe('VDD');
-    expect(lookupPinout('CJMCU-9833', 7)?.model).toBe('GY-9833');
+    expect(lookupPinout('gy9833', 7)?.model).toBe('GY-9833');
+    // CJMCU-9833 の名の基板は並びが違う品が多いので、別名にしない。
+    expect(lookupPinout('CJMCU-9833', 7)).toBeNull();
   });
 
   test('names the role in English too', () => {

@@ -50,12 +50,12 @@ const ROWS: readonly ModuleRow[] = [
   },
   {
     models: ['ULN2003-BOARD', 'ULN2003-STEPPER', 'ULN2003-DRIVER'],
-    names: ['IN1', 'IN2', 'IN3', 'IN4', 'GND', 'VCC', 'A', 'B', 'C', 'D', 'V+'],
+    names: ['IN1', 'IN2', 'IN3', 'IN4', 'VCC', 'GND', 'A', 'B', 'C', 'D', 'V+'],
     role: 'ステッピングモータの駆動基板 (ULN2003)', roleEn: 'stepper motor driver board (ULN2003)',
     product: '28BYJ-48 と組で売られる緑の基板 (ULN2003AN・XH 5P・表示 LED 4 個・ON/OFF ジャンパ)',
-    view: '入力のヘッダ (下の辺、左から IN1〜IN4)・電源のヘッダ (右の辺、印字 - + を GND VCC と呼ぶ)・モータのコネクタ (上の辺、左から A B C D V+)',
-    note: 'モータのコネクタは 28BYJ-48 のコネクタがそのまま挿さる (A=BLUE・B=PINK・C=YELLOW・D=ORANGE・V+=RED)。電源のヘッダの印字 `-` `+` は `GND` `VCC` と呼ぶ (配線の `--` と紛れないため)。電源は 5〜12 V、1 出力 500 mA まで。**電源のヘッダの + と - の上下は資料で確かめられていない** (基板の印字で確かめる)',
-    source: 'Makerguides の資料 ULN2003-Stepper-Motor-Driver-PCB.pdf (2019-04、https://www.makerguides.com/wp-content/uploads/2019/04/ULN2003-Stepper-Motor-Driver-PCB.pdf)、p1 の基板の写真と Typical Connections の表',
+    view: '入力のヘッダを下の辺に置いて: 入力 (左から IN1〜IN4)・電源のヘッダ (右の辺に縦、上が + = VCC、下が - = GND)・モータのコネクタ (上の辺、左から A B C D V+)',
+    note: 'モータのコネクタは 28BYJ-48 のコネクタがそのまま挿さる (A=BLUE・B=PINK・C=YELLOW・D=ORANGE・V+=RED)。電源のヘッダの印字 `-` `+` は `GND` `VCC` と呼ぶ (配線の `--` と紛れないため)。電源は 5〜12 V、1 出力 500 mA まで。入力のヘッダは版により 4 本の物と、7 位置のうち 4 本だけピンの物がある。電源のヘッダの隣に ON/OFF のジャンパがある版もある',
+    source: 'Makerguides の資料 ULN2003-Stepper-Motor-Driver-PCB.pdf (2019-04、https://www.makerguides.com/wp-content/uploads/2019/04/ULN2003-Stepper-Motor-Driver-PCB.pdf)、p1 の基板の写真と Typical Connections の表。電源のヘッダの向きは Fritzing の部品 2 つ (mgesteiro/fritzing-parts の 28BYJ-48 Driver Module、Elegoo の X113647 Stepper Driver Board) で一致 (2026-10-22)',
   },
   {
     models: ['TP4056-MODULE', '03962A', 'TP4056-PROTECT'],
@@ -63,8 +63,8 @@ const ROWS: readonly ModuleRow[] = [
     role: 'Li-ion の充電モジュール (TP4056、保護つき)', roleEn: 'Li-ion charger module (TP4056, with protection)',
     product: '03962A 系の保護つき基板 (TP4056 + DW01A + FS8205A。27.9 × 17.2 mm)',
     view: 'USB を左にして上から見て: 左上 IN+・左下 IN-、右の辺を上から OUT+・B+・B-・OUT-',
-    note: '`B+` `B-` に電池、`OUT+` `OUT-` に負荷 (**OUT- は保護の FET を通る**ので B- と直結でない)。`IN+` `IN-` は USB の 5 V と並ぶ。**製造元の図は無く、個人のプロジェクトの KiCad データによる** (実物の印字で確かめる)',
-    source: 'lilka-dev/lilka の hardware/v1/footprints/Connectors.pretty/Charge_Controller_TP4056.kicad_mod のパッドの座標と、connector.kicad_sym のピンの名前',
+    note: '`B+` `B-` に電池、`OUT+` `OUT-` に負荷 (**OUT- は保護の FET を通る**ので B- と直結でない)。`IN+` `IN-` は USB の 5 V と並ぶ。**製造元の図は無く、独立した 3 つの個人のデータの一致による** (実物の印字で確かめる)',
+    source: 'lilka-dev/lilka の Charge_Controller_TP4056.kicad_mod と connector.kicad_sym、ccadic/TP4056-18650 の TP4056-18650.kicad_mod (シルクに名前)、saivittalb/sunrise-simulation-alarm の Fritzing の TP4056_Module (2026-10-22) のパッドの位置と名前が一致',
   },
   {
     models: ['NRF24L01+', 'NRF24L01', 'NRF24L01P'],
@@ -90,8 +90,8 @@ const ROWS: readonly ModuleRow[] = [
     role: 'モータドライバ (DRV8833、2 回路の H ブリッジ)', roleEn: 'motor driver (DRV8833, dual H-bridge)',
     product: 'Pololu 2130 (DRV8833 Dual Motor Driver Carrier、0.5 × 0.8 インチ)',
     view: '部品面を上にして、左の列を上から (GND〜FLT)、続けて右の列を上から (GND2〜BISEN)',
-    note: '2 列 × 8 本、列の間は 0.4 インチ (ブレッドボードの溝 0.3 インチより広い)。右の列の GND は `GND2` (基板の中で GND とつながる)。`SLP` (nSLEEP) は H で動く。`VIN` が電源の入力で、`VMM` は逆接保護を通した後',
-    source: 'Pololu 2130 の製品ページ (https://www.pololu.com/product/2130)、上面のピン配置の図 0J3866 と寸法つきの下面の写真 0J3865',
+    note: '2 列 × 8 本、列の間は 0.4 インチ = 10.16 mm (ブレッドボードの溝 0.3 インチより広い)。右の列の GND は `GND2` (基板の中で GND とつながる)。`SLP` (nSLEEP) は H で動く。`VIN` が電源の入力で、`VMM` は逆接保護を通した後',
+    source: 'Pololu 2130 の製品ページ (https://www.pololu.com/product/2130) の上面のピン配置の図 0J3866。列の間は Pololu の寸法図 drv8833-dual-motor-driver-carrier-dimensions.pdf (https://www.pololu.com/file/0J1615/、2018-10-26) の Connector callouts',
   },
 ];
 
