@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { compileCircuit } from './index.ts';
 import { PART_PREFIXES, lookupPin, lookupPartType } from './parts.ts';
-import { usbShapeTex } from './tex/shapes.ts';
+import { connectorShapeTex } from './tex/shapes.ts';
 
 /**
  * USB コネクタ (52 の docs/58)。**実体配線図の 2 つと同じ綴り・同じピンの名前**で
@@ -53,12 +53,12 @@ describe('図', () => {
     const used = compileCircuit(circuit('parts:', '  J1: usb-a 2,2')).tex ?? '';
     const unused = compileCircuit(circuit('parts:', '  R1: resistor 2,2 4,2')).tex ?? '';
 
-    expect(used).toContain(usbShapeTex('usb-a')[1]);
+    expect(used).toContain(connectorShapeTex('usb-a')[1]);
     expect(unused).not.toContain('pgfdeclareshape');
   });
 
   test('keeps the two kinds apart in the drawing', () => {
-    expect(usbShapeTex('usb-a').join('\n')).not.toBe(usbShapeTex('usb-c').join('\n'));
+    expect(connectorShapeTex('usb-a').join('\n')).not.toBe(connectorShapeTex('usb-c').join('\n'));
   });
 
   test('does not nag about pins a power-only circuit leaves alone', () => {
@@ -72,5 +72,34 @@ describe('図', () => {
     ), { erc: true });
 
     expect(erc.map((one) => one.message).join('\n')).not.toContain('J1');
+  });
+});
+
+describe('ターミナルブロック (52 の docs/140)', () => {
+  test('is a box with a numbered pin per pole', () => {
+    expect(lookupPartType('terminal3')?.pinLabels).toEqual(['1', '2', '3']);
+    expect(lookupPin(lookupPartType('terminal2')!, '2')).toBe('pin 2');
+    expect(PART_PREFIXES.terminal2).toBe('J');
+  });
+
+  test('draws a screw head per pole instead of a mouth, under a name without digits', () => {
+    const tex = connectorShapeTex('terminal2').join('\n');
+    expect(tex).toContain('\\pgfdeclareshape{terminaltwocon}');
+    expect(tex.match(/\\pgfpathcircle/g)).toHaveLength(2);
+    expect(connectorShapeTex('terminal3').join('\n').match(/\\pgfpathcircle/g)).toHaveLength(3);
+  });
+
+  test('wires to its poles by number', () => {
+    const result = compileCircuit(circuit(
+      'parts:',
+      '  J1: terminal2 2,2',
+      '  R1: resistor 6,4 6,6 1k',
+      'wires:',
+      '  - J1.1 -- 6,4',
+      '  - J1.2 -- 6,6',
+    ));
+
+    expect(result.errors).toEqual([]);
+    expect(result.netlist.find((net) => net.refs.includes('J1.1'))?.refs).toContain('R1.1');
   });
 });

@@ -5,7 +5,7 @@ import { OFF_BOARD_REACH } from '../model/board.ts';
 import { footprintOf } from '../parts/footprint.ts';
 import { MIRROR_REFUSAL, MIRROR_WORD, NO_TURN, isTurned, orientOf, refusesMirror, rotationOf } from '../parts/orient.ts';
 import type { Turn } from '../parts/orient.ts';
-import { isNestedType, placeableNames, splitPartType } from '../parts/types.ts';
+import { SOCKET_LOOK, isNestedType, placeableNames, splitPartType } from '../parts/types.ts';
 import { lookupConnector, partValueProblem, readPlateColor } from 'fence-kit';
 import type { FenceError, PartSpec, Spelling } from '../types.ts';
 
@@ -181,9 +181,14 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
   // **読めない値を既定で埋めない** (直下の CLAUDE.md の文法の方針 1)。
   const refused = partValueProblem(type, value);
   if (refused !== null) return fail(refused, values[0]);
+  // IC ソケットは中身の IC と同じ部品として読む (姿は外し、`socket` に移す)。
+  const socket = variant === SOCKET_LOOK;
   return {
     ok: true,
-    value: { id, type, variant, written, holes, value: value === '' ? null : value, turn, color },
+    value: {
+      id, type, variant: socket ? null : variant, written, holes, value: value === '' ? null : value, turn, color,
+      ...(socket ? { socket: true } : {}),
+    },
   };
 }
 

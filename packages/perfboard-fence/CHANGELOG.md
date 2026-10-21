@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- ターミナルブロック `terminal2` `terminal3` `terminal4` (穴は 1 つ飛ばしに極の数だけ)
+- **IC ソケット** `dipN/socket` (`U1: dip8/socket e8 NE555`)。中身の IC は同じで、胴の下に枠を描き、当たり判定も枠で見る。部品表の種類は `dip8/socket`。この基板だけの姿
+- 文法リファレンスと早見表のピンの名前の表に PIC マイコン・DC / オーディオジャックの DIP 化キット・フルカラー LED を足し、`KY-040` `HC-SR04` `DHT11` の注に向きと別の並びの品を書いた (fence-kit)
+
 ## [0.52.0] - 2026-11-01
 
 ### Added

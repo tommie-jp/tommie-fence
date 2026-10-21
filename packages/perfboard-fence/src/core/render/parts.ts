@@ -679,6 +679,8 @@ function renderChip(
     // **ピンの名前は胴の中** (番号のすぐ内側)。この基板の線はピンの穴から出るので、胴の外の
     // 帯 (breadboard の置き場) に書くと、ピンから出る線が必ず名前を横切った。
     namesInside: true,
+    // IC ソケットの枠 (DIP だけ。`dipChip` が読む)。
+    socket: part.socket === true,
   };
   const numbers = points.map((_, index) => String(index + 1));
 

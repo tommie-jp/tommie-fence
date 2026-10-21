@@ -70,7 +70,7 @@ describe('ディスクリートのピンの名前の表', () => {
   });
 
   test('asks the reader to check the real part for the two models whose datasheets disagree', () => {
-    expect(Object.keys(VERIFY_NOTES)).toEqual(['2N7000', '2SD882', 'GY-9833', 'TP4056-MODULE']);
+    expect(Object.keys(VERIFY_NOTES)).toEqual(['2N7000', '2SD882', 'GY-9833', 'TP4056-MODULE', 'AE-DC-POWER-JACK-DIP']);
     expect(VERIFY_NOTES['2N7000']).toContain('2007 年版の図は S G D、2022 年版の表は D G S');
     expect(VERIFY_NOTES['2SD882']).toContain('ST の資料だけ図が B C E で、他は E C B');
     for (const model of ['2N7000', '2SD882']) {

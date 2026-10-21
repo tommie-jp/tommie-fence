@@ -5,6 +5,18 @@
 
 ## [Unreleased]
 
+### Added
+
+- **ピンの名前の表に PIC マイコン** (Microchip の公式データシートの PDIP の端子図で確かめた): `PIC12F683` (`PIC12F675` `PIC12F629`)・`PIC12F1822`・`PIC16F84A`・`PIC16F628A` (`PIC16F88` `PIC16F1827` など同じ並び)・`PIC16F886` (`PIC16F1938` `PIC16F18857` など同じ並び)・`PIC16F57`。名前は IO ポートの印字 (`RA0` `GP3`)、電源は `VDD` `VSS`
+- **秋月の DIP 化キット 2 つ** (`sip4` + 型番、キットの基板とジャックを帯の脇に描く): `AE-DC-POWER-JACK-DIP` (2.1 mm DC ジャック。`GND` `NC` `NC` `VIN`。2・3 番のつながりは資料から読めないので `VERIFY_NOTES` に注意書き) と `AE-PHONE-JACK-DIP` (3.5 mm ステレオミニジャック。`R` `GND` `GND` `L`)
+- **フルカラー LED** `OSTA5131A` (カソードコモン、`G` `B` `K` `R`) と `OSTAMA5B31A` (アノードコモン、`G` `B` `A` `R`)。OptoSupply の図の並び。乳白の胴の `sip4`
+- **コネクタの表にターミナルブロック** `terminal2` `terminal3` `terminal4` (5.08 mm ピッチ、秋月の TB111 の寸法で青い胴・ねじの頭・線の差し口を描く)。種類ごとの姿 `connectorLooks` (ターミナルブロックはオス・メスが無い) と描き分け `connectorStyle`
+- **IC ソケットの枠** (`dipChip` の `socket`、外形 `dipSocketBox`)。端のピンから四方へ半ピッチ出る (Neltron 2227MC・2227 の図)
+
+### Changed
+
+- `KY-040` の注の向きを直した: 部品面を上にしてピンを手前に向けると左から `GND` `VCC` `SW` `DT` `CLK` (前の注は左右が逆)。並び (1 番 = `CLK`) は変わらない。`HC-SR04`・`SG90`・`DHT11` は秋月の付属資料と製造元の資料で並びを確かめ直し、出典を行に書いた (並びは変わらない)
+
 ## [0.31.0] - 2026-11-01
 
 ### Added

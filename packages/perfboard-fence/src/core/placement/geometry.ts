@@ -1,5 +1,5 @@
 import {
-  boardBox, connectorBox, connectorFacing, crystalCan, dipBox, directSotSpec, lookupBoardPart, lookupNamedChip, lookupPinout, moduleBox,
+  boardBox, connectorBox, connectorFacing, crystalCan, dipBox, dipSocketBox, directSotSpec, lookupBoardPart, lookupNamedChip, lookupPinout, moduleBox,
   moduleSide, namedChipBox, sipBox, smdBodySize, sotMountOf,
 } from 'fence-kit';
 import type { ChipBox } from 'fence-kit';
@@ -174,7 +174,7 @@ function boxRect(part: PlacedPart, layout: Layout): OrientedRect | null {
   // 名前つきの DIP 型は胴の長さが部品ごとに違う (4 桁の 7 セグは横長)。描く側と同じ外形。
   const named = kind === 'named' ? footprint?.chip ?? lookupNamedChip(part.type, part.variant) : null;
   const box = named !== null && named !== undefined ? namedChipBox(named, points, layout.pitch)
-    : kind === 'dip' ? dipBox(points, layout.pitch)
+    : kind === 'dip' ? (part.socket === true ? dipSocketBox : dipBox)(points, layout.pitch)
     : kind === 'sip' ? sipBox(points, layout.pitch)
       : kind === 'board' ? boardBox(points, layout.pitch, lookupBoardPart(part.type)) : null;
   if (box !== null) {

@@ -1,6 +1,7 @@
 import { bandColor, lookupNamedChip, partKind, partsMark, valueWithRole } from 'fence-kit';
 import type { Lang, PartsMark } from 'fence-kit';
 import { colorValue } from '../color.ts';
+import { SOCKET_LOOK } from '../parts/types.ts';
 import type { Band } from '../model/layout.ts';
 import type { Board, DeviceSpec } from '../types.ts';
 import { monoBandHeight, monoBaseline, monoText, monoWidth } from './monoBand.ts';
@@ -38,6 +39,8 @@ export type ListedPart = {
   readonly type: string;
   readonly variant: string | null;
   readonly value: string | null;
+  /** IC ソケットに挿した DIP。種類の欄に `/socket` を添える。 */
+  readonly socket?: boolean;
 };
 
 /** 部品表の 1 行ぶん。列に分けて持ち、幅を測ってから置き場所を決める。 */
@@ -69,7 +72,7 @@ export function partsListing(
 ): readonly PartsRow[] {
   const rows: PartsRow[] = [
     ...parts.map((part): PartsRow =>
-      [part.id, partKind(part.type, part.variant, part.value, lang),
+      [part.id, partKind(part.type, part.socket === true ? SOCKET_LOOK : part.variant, part.value, lang),
         valueWithRole(part.value ?? lookupNamedChip(part.type, part.variant)?.name ?? '', lang), partsMark(part.type, part.variant, part.value)]),
     // 機器は種類が 1 つしかないので、名札を値の欄に出す (`電池 3V`)。
     ...devices.map((device): PartsRow => [device.id, 'device', device.label, '']),

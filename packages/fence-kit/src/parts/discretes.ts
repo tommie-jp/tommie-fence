@@ -50,6 +50,7 @@ export const VERIFY_NOTES: Readonly<Record<string, string>> = {
   '2SD882': '実物で確かめる: ST の資料だけ図が B C E で、他は E C B。表は E C B。実物はテスタで確かめる',
   'GY-9833': '実物で確かめる: 製造元の図が無く、並びは個人の KiCad データ 5 つの一致による。CJMCU-9833 の名の基板は REF VCC GND DAT CLK FNC OUT の別の並びが多い。実物は基板の印字で確かめる',
   'TP4056-MODULE': '実物で確かめる: 製造元の図が無く、パッドの位置は個人のデータ 3 つの一致による。実物は基板の印字で確かめる',
+  'AE-DC-POWER-JACK-DIP': '実物で確かめる: 秋月の図は線画だけで、2・3 番がどちらにつながるかは読み取れない。シルクのある 1 番 (−) と 4 番 (+) だけを使い、実物はテスタで確かめる',
 };
 
 const ECB = ['E', 'C', 'B'] as const;

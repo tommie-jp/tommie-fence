@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
-  CONNECTOR_LOOKS, MIN_CONNECTOR_PINS, connectorBox, connectorFacing, connectorNames, connectorPinNames,
-  drawConnector, lookupConnector,
+  CONNECTOR_LOOKS, MIN_CONNECTOR_PINS, connectorBox, connectorFacing, connectorLooks, connectorNames, connectorPinNames,
+  connectorStyle, drawConnector, lookupConnector,
 } from './connectors.ts';
 import type { ConnectorShape } from './connectors.ts';
 
@@ -27,8 +27,8 @@ const rectsOf = (svg: string): { x: number; y: number; width: number; height: nu
       ({ x: Number(x), y: Number(y), width: Number(width), height: Number(height) }));
 
 describe('コネクタの表', () => {
-  test('knows the two usb kinds, and nothing it has not been told about', () => {
-    expect(connectorNames()).toEqual(['usb-a', 'usb-c']);
+  test('knows the two usb kinds and the terminal blocks, and nothing it has not been told about', () => {
+    expect(connectorNames()).toEqual(['usb-a', 'usb-c', 'terminal2', 'terminal3', 'terminal4']);
     expect(lookupConnector('usb-c')?.name).toBe('USB Type-C');
     // 種類名は入力から来るので、自分の持ち物だけを引く (`boards.ts` と同じ理由)。
     expect(lookupConnector('constructor')).toBeNull();
@@ -148,8 +148,12 @@ describe('外形', () => {
 
 describe('姿', () => {
   test('draws a different picture for every kind and look', () => {
-    const drawn = connectorNames().flatMap((type) =>
-      CONNECTOR_LOOKS.map((variant) => drawConnector(shape({ type, variant }))));
+    const drawn = connectorNames().flatMap((type) => {
+      const looks = connectorLooks(type);
+      // ターミナルブロックは極の数だけ書く (極の数で絵が違う)。
+      const points = looks.length === 0 ? row(lookupConnector(type)?.pins.length ?? 4) : row(4);
+      return (looks.length === 0 ? [null] : looks).map((variant) => drawConnector(shape({ type, variant, points })));
+    });
     expect(new Set(drawn).size).toBe(drawn.length);
   });
 
@@ -167,8 +171,11 @@ describe('姿', () => {
   });
 
   test('keeps every shape it draws inside the outline it reports', () => {
-    const cases: ConnectorShape[] = connectorNames().flatMap((type) => CONNECTOR_LOOKS.flatMap((variant) =>
-      (['up', 'down'] as const).map((facing) => shape({ type, variant, facing, points: row(4) }))));
+    const cases: ConnectorShape[] = connectorNames().flatMap((type) => {
+      const looks = connectorLooks(type);
+      return (looks.length === 0 ? [null] : looks).flatMap((variant) =>
+        (['up', 'down'] as const).map((facing) => shape({ type, variant, facing, points: row(4) })));
+    });
     const column = [{ x: 100, y: 100 }, { x: 100, y: 120 }, { x: 100, y: 140 }];
     const sideways = (['left', 'right'] as const).map((facing) => shape({ facing, points: column }));
 
@@ -251,6 +258,59 @@ describe('受け口の金物の刻み', () => {
       expect(Number(x)).toBeLessThan(box.x + box.width);
       expect(Number(y)).toBeGreaterThan(box.y);
       expect(Number(y)).toBeLessThan(box.y + box.height);
+    }
+  });
+});
+
+describe('ターミナルブロック (52 の docs/140)', () => {
+  /** 5.08 mm ピッチ — 1 穴おきの穴。 */
+  const poles = (count: number): { x: number; y: number }[] =>
+    Array.from({ length: count }, (_, index) => ({ x: 100 + index * 2 * PITCH, y: 100 }));
+  const block = (count: number, facing: ConnectorShape['facing'] = 'up'): ConnectorShape =>
+    shape({ type: `terminal${count}`, points: poles(count), facing });
+
+  test('numbers its poles, wants every one written, and has no plug or receptacle', () => {
+    expect(lookupConnector('terminal3')?.pins).toEqual(['1', '2', '3']);
+    expect(lookupConnector('terminal3')?.minPins).toBe(3);
+    expect(connectorLooks('terminal2')).toEqual([]);
+    expect(connectorLooks('usb-c')).toEqual(CONNECTOR_LOOKS);
+    expect(connectorStyle('terminal2')).toBe('terminal');
+    expect(connectorStyle('usb-a')).toBe('usb');
+    expect(connectorStyle('nonsense')).toBeNull();
+  });
+
+  test('is as long as its poles (5.08 mm each) and 7.6 mm deep, the pins 3.4 mm from the wire side', () => {
+    const mm = PITCH / 2.54;
+    const box = connectorBox(block(2));
+    expect(box.width).toBeCloseTo(10.16 * mm, 1);
+    expect(box.height).toBeCloseTo(7.6 * mm, 1);
+    // 上向き (差し口が上): 前の縁はピンの列から 3.4 mm 上。
+    expect(box.y).toBeCloseTo(100 - 3.4 * mm, 1);
+  });
+
+  test('puts a screw head on every pole, over its pin', () => {
+    const svg = drawConnector(block(3));
+    const heads = [...svg.matchAll(/<circle cx="([-\d.]+)" cy="([-\d.]+)"/g)].map(([, x, y]) => ({ x: Number(x), y: Number(y) }));
+    expect(heads).toHaveLength(3);
+    poles(3).forEach((pin, index) => {
+      expect(heads[index]?.x).toBeCloseTo(pin.x, 1);
+      expect(heads[index]?.y).toBeCloseTo(pin.y, 1);
+    });
+  });
+
+  test('keeps every shape inside its outline, whichever way it faces', () => {
+    for (const facing of ['up', 'down', 'left', 'right'] as const) {
+      const points = facing === 'left' || facing === 'right'
+        ? poles(2).map((point) => ({ x: point.y, y: point.x }))
+        : poles(2);
+      const one = shape({ type: 'terminal2', points, facing });
+      const box = connectorBox(one);
+      for (const rect of rectsOf(drawConnector(one))) {
+        expect(rect.x, facing).toBeGreaterThanOrEqual(box.x - 0.01);
+        expect(rect.y, facing).toBeGreaterThanOrEqual(box.y - 0.01);
+        expect(rect.x + rect.width, facing).toBeLessThanOrEqual(box.x + box.width + 0.01);
+        expect(rect.y + rect.height, facing).toBeLessThanOrEqual(box.y + box.height + 0.01);
+      }
     }
   });
 });

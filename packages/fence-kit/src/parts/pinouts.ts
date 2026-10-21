@@ -54,6 +54,12 @@ import { ROLES_EN } from './pinoutRolesEn.ts';
  * | LM741 | TI SNOSC25D (NAB の 8 ピン CDIP/PDIP)。印字は OFFSET NULL を `OFFSET1` `OFFSET2` に、INVERTING INPUT を `IN-` などに略した |
  * | ATtiny85 | Atmel 2586Q (2013-08)、Figure 1-1 (PDIP)。名前は IO ポートの印字 (`PB0`〜`PB5`) だけ |
  * | ATmega328P | Microchip DS40002061B、Figure 1-1 (28 PDIP)。名前は IO ポートの印字だけ |
+ * | PIC12F683・12F675 | Microchip DS41211D (12F683) と DS41190G (12F629/675) の 8-Pin Diagram (PDIP)。TABLE 1 / 1-1 と突き合わせた (2026-10-22)。名前は IO ポートの印字だけ (`GP0`〜`GP5`) |
+ * | PIC12F1822 | Microchip DS40001413E、FIGURE 1 と TABLE 2 (8-PIN ALLOCATION) |
+ * | PIC16F84A | Microchip DS35007C、Pin Diagrams (PDIP) と TABLE 1-1 の PDIP の列。4 番 `MCLR`・15 番 `OSC2`・16 番 `OSC1` は専用ピン |
+ * | PIC16F628A・16F88・16F1827 | Microchip DS40044G (627A/628A/648A)、DS30487D (87/88) の TABLE 1-2、DS41391D (1826/1827) の TABLE 1 と端子図 (PDIP)。3 つは同じ並び |
+ * | PIC16F886・16F1938・16F18857 | Microchip DS40001291H (882/883/886)、DS40001574D (1938)、DS40001825B (18857) と DS40001824B (18856) の 28 ピン SPDIP の端子図と 28-PIN SUMMARY / ALLOCATION TABLE。並びは同じ |
+ * | PIC16F57 | Microchip DS41213D (PIC16F5X) の PIC16F57 の端子図 (PDIP)。印字の `N/C` は `NC` |
  * | 3SK291 | 東芝 3SK291 (2014-03-01)、外形図の端子の番号 (SMQ。1 G1・2 G2・3 D・4 S)。変換基板が SMQ の番号をそのまま DIP / SIP の番号にしている前提 |
  *
  * **ピンの名前として書けない印字だけは直した** (`U1.TRIG` と書けて、番号と取り違えないため):
@@ -623,6 +629,56 @@ const ROWS: readonly PinoutRow[] = [
     note: '1 番 `PC6` は RESET 兼用。8 番と 22 番は GND (番号で指す)。PB6・PB7 は水晶 (XTAL1・XTAL2)',
   },
   {
+    // PIC の 8 ピン (52 の docs/140)。GP3 は MCLR と兼用の入力専用。12F629 は AN と VREF が無いだけで印字は同じ。
+    models: ['PIC12F683', 'PIC12F683-I/P', 'PIC12F675', 'PIC12F675-I/P', 'PIC12F629'], role: 'PIC マイコン (8 ピン)',
+    names: ['VDD', 'GP5', 'GP4', 'GP3', 'GP2', 'GP1', 'GP0', 'VSS'],
+    note: '4 番 `GP3` は MCLR 兼用の入力専用。GP5=OSC1、GP4=OSC2、GP0=ICSPDAT、GP1=ICSPCLK',
+  },
+  {
+    models: ['PIC12F1822', 'PIC12F1822-I/P', 'PIC12LF1822'], role: 'PIC マイコン (8 ピン)',
+    names: ['VDD', 'RA5', 'RA4', 'RA3', 'RA2', 'RA1', 'RA0', 'VSS'],
+    note: '4 番 `RA3` は MCLR 兼用の入力専用。RA5=OSC1、RA4=OSC2、RA0=ICSPDAT、RA1=ICSPCLK',
+  },
+  {
+    // 4・15・16 番はポートと兼用しない専用ピン。RA4 は T0CKI 兼用のオープンドレイン。
+    models: ['PIC16F84A', 'PIC16F84A-04/P', 'PIC16F84A-20/P'], role: 'PIC マイコン (18 ピン)',
+    names: ['RA2', 'RA3', 'RA4', 'MCLR', 'VSS', 'RB0', 'RB1', 'RB2', 'RB3', 'RB4', 'RB5', 'RB6', 'RB7', 'VDD', 'OSC2', 'OSC1', 'RA0', 'RA1'],
+    note: '4 番 `MCLR`、15 番 `OSC2`・16 番 `OSC1` は専用ピン。RB6=書き込みのクロック、RB7=データ。`RA4` はオープンドレイン',
+  },
+  {
+    // 628A・88・1827 は同じ並び。低電圧書き込みの PGM は 628A が RB4、88 が RB3 (1827 は無い)。
+    models: [
+      'PIC16F628A', 'PIC16F628A-I/P', 'PIC16F627A', 'PIC16F648A', 'PIC16F88', 'PIC16F88-I/P', 'PIC16F87',
+      'PIC16F1827', 'PIC16F1827-I/P', 'PIC16F1826', 'PIC16LF1827', 'PIC16LF1826',
+    ],
+    role: 'PIC マイコン (18 ピン)',
+    names: ['RA2', 'RA3', 'RA4', 'RA5', 'VSS', 'RB0', 'RB1', 'RB2', 'RB3', 'RB4', 'RB5', 'RB6', 'RB7', 'VDD', 'RA6', 'RA7', 'RA0', 'RA1'],
+    note: '4 番 `RA5` は MCLR 兼用。RA7=OSC1、RA6=OSC2、RB6=ICSPCLK (PGC)、RB7=ICSPDAT (PGD)',
+  },
+  {
+    // 886・1938・18857 は同じ並び。1938 の F 版は VCAP を RA0・RA5・RA6 のどれかに出す。
+    models: [
+      'PIC16F886', 'PIC16F886-I/SP', 'PIC16F883', 'PIC16F882',
+      'PIC16F1938', 'PIC16F1938-I/SP', 'PIC16LF1938',
+      'PIC16F18857', 'PIC16F18857-I/SP', 'PIC16LF18857', 'PIC16F18856', 'PIC16LF18856',
+    ],
+    role: 'PIC マイコン (28 ピン)',
+    names: [
+      'RE3', 'RA0', 'RA1', 'RA2', 'RA3', 'RA4', 'RA5', 'VSS', 'RA7', 'RA6', 'RC0', 'RC1', 'RC2', 'RC3',
+      'RC4', 'RC5', 'RC6', 'RC7', 'VSS', 'VDD', 'RB0', 'RB1', 'RB2', 'RB3', 'RB4', 'RB5', 'RB6', 'RB7',
+    ],
+    note: '1 番 `RE3` は MCLR 兼用の入力専用。8 番と 19 番は VSS (番号で指す)。RA7=OSC1、RA6=OSC2、RB6=ICSPCLK、RB7=ICSPDAT',
+  },
+  {
+    // 電源が 2 番 VDD・4 番 VSS で、ほかの 28 ピンと位置が違う。600 mil (-I/P) と 300 mil (-I/SP) がある。
+    models: ['PIC16F57', 'PIC16F57-I/P', 'PIC16F57-I/SP'], role: 'PIC マイコン (28 ピン)',
+    names: [
+      'T0CKI', 'VDD', 'NC', 'VSS', 'NC', 'RA0', 'RA1', 'RA2', 'RA3', 'RB0', 'RB1', 'RB2', 'RB3', 'RB4',
+      'RB5', 'RB6', 'RB7', 'RC0', 'RC1', 'RC2', 'RC3', 'RC4', 'RC5', 'RC6', 'RC7', 'OSC2', 'OSC1', 'MCLR',
+    ],
+    note: '電源は 2 番 `VDD`・4 番 `VSS` (ほかの 28 ピンと違う)。3・5 番は NC (番号で呼ぶ)。`T0CKI` は使わなくても VSS か VDD へ。28 番 `MCLR` は専用。600 mil (-I/P) と 300 mil (-I/SP) がある',
+  },
+  {
     // 面実装 (SMQ) の 4 ピン。変換基板に載せて `dip4` (2 列) か `sip4` (1 列) で置く。
     // 基板が SMQ の番号をそのまま使う前提 — 並びが違う基板は `pins:` で名前を書く。
     models: ['3SK291'], role: 'デュアルゲート MOSFET (N)',
@@ -641,23 +697,27 @@ const ROWS: readonly PinoutRow[] = [
   },
   {
     // ロータリーエンコーダ単体 (EC11 など) は 5 mm ピッチのピンで穴に挿せない。ブレッドボードに挿すのは
-    // 5 ピンのモジュール (KY-040)。印字は、部品面を上から見て (軸が上、ピンが手前) 左から CLK DT SW + GND。
-    // ピン側から見ると左右が逆。`+` は `VCC` と書く (2026-10-07 に販売元の資料で確かめた)。
+    // 5 ピンのモジュール (KY-040)。ヘッダは基板の右の辺にあり、印字の読める向きで奥から CLK DT SW + GND
+    // (GND が取付穴の側の角)。部品面を上にしてピンを手前に向けると、左から GND + SW DT CLK。
+    // `+` は `VCC` と書く (2026-10-22 に Joy-IT の SensorKit の写真と接続表で確かめた。2026-10-07 の
+    // 「ピンを手前にして左から CLK…」は左右が逆だった)。
     // 描くのは基板のピンヘッダだけ (緑の帯)。
     models: ['KY-040', 'KY040'], role: 'ロータリーエンコーダのモジュール',
     names: ['CLK', 'DT', 'SW', 'VCC', 'GND'],
     look: { body: '#2f7d4f', edge: '#1d5434' },
-    note: '`sip5` を緑の帯で描く (基板のピンヘッダだけ)。印字の `+` は `VCC`。CLK=A 相、DT=B 相、SW=押しボタン',
+    note: '`sip5` を緑の帯で描く (基板のピンヘッダだけ)。印字の `+` は `VCC`。CLK=A 相、DT=B 相、SW=押しボタン。部品面を上にしてピンを手前に向けると、左から GND + SW DT CLK (1 番の CLK が右端)',
   },
   {
-    // 超音波距離センサのモジュール。ピンは 1 列 4 本 (VCC Trig Echo GND)。
+    // 超音波距離センサのモジュール。ピンは 1 列 4 本 (VCC Trig Echo GND)。2026-10-22 に秋月 111009 の付属資料
+    // (HC-SR04 用户手册 V-2020: 1 Vcc 2 Trig 3 Echo 4 Gnd、外形図は裏から見て逆)・ElecFreaks・Cytron V1.0 で確かめた。
     models: ['HC-SR04', 'HCSR04'], role: '超音波距離センサのモジュール',
     names: ['VCC', 'TRIG', 'ECHO', 'GND'],
     look: { body: '#2b6cb0', edge: '#1c4a7d' },
-    note: '`sip4` を青の帯で描く (基板のピンヘッダだけ)。Echo は 5 V 出力',
+    note: '`sip4` を青の帯で描く (基板のピンヘッダだけ)。センサの筒の面から見て左から VCC TRIG ECHO GND (裏から見ると逆)。Echo は 5 V 出力',
   },
   {
-    // 模型用サーボ。コネクタは茶 (GND)・赤 (電源 5 V)・橙 (信号) の順。
+    // 模型用サーボ。コネクタは茶 (GND)・赤 (電源 5 V)・橙 (信号) の順 (JR 形)。2026-10-22 に秋月 108761 の付属資料
+    // (SG90_a.pdf: Orange PWM・Red Vcc・Brown Ground) と秋月 113227 (MG90S) の本文で確かめた。SG92R は販売店の記述だけ。
     models: ['SG90', 'SG92R', 'MG90S'], role: 'RC サーボ',
     names: ['GND', 'VCC', 'SIG'],
     look: { body: '#3a6ea5', edge: '#254a73' },
@@ -665,10 +725,11 @@ const ROWS: readonly PinoutRow[] = [
   },
   {
     // 温湿度センサ。青い樹脂の胴にピン 4 本 (正面から見て左から VCC DATA NC GND)。3 番は NC。
+    // 製造元 Aosong のデータシート V1.3 (2017-03-31、秋月 107003 の付属資料) の外形図と Pin description で確かめた。
     models: ['DHT11'], role: '温湿度センサ',
     names: ['VCC', 'DATA', 'NC', 'GND'],
     look: { body: '#2f7fc1', edge: '#1d5a8f' },
-    note: '`sip4` を青の胴で描く。3 番は NC (番号で呼ぶ)。DATA は 4.7 kΩ〜10 kΩ で VCC へ',
+    note: '`sip4` を青の胴で描く。3 番は NC (番号で呼ぶ)。DATA は 4.7 kΩ〜10 kΩ で VCC へ。4 本足の単体の並び (3 本足の基板 (秋月 AE-DHT11-BO など) は並びが違う)',
   },
   {
     // 人感センサのモジュール。ピンは 1 列 3 本。HK Shan Hai の資料の写真 (レンズを外した部品面、ヘッダが上) は
@@ -771,6 +832,48 @@ const ROWS: readonly PinoutRow[] = [
     look: { body: '#b9bec5', edge: '#7a8089' },
     module: { along: 25.36, across: 15, inset: 1.27, jack: { along: 16, from: 2.5, to: 15 }, mark: 'RJ45' },
     note: '`sip8` を銀の帯で描き、キットの基板とジャックを帯の脇の基板の縁に近い側へ描く (胴の寸法は目安)。`Pn` は RJ45 の n 番。10BASE-T の端末 (MDI) は P1・P2 で送り P3・P6 で受ける。ヘッダとジャックの対応は導通で確かめる',
+  },
+  {
+    // 秋月のブレッドボード用 2.1 mm 標準 DC ジャック DIP 化キット (キット 105148、完成品 114610、AE-DC-POWER-JACK-DIP)。
+    // 基板は 15.24 mm 角で、4 穴の列が 2 本 (間隔 12.7 mm)。列は基板の縁から 1.27 mm。**1 列だけにヘッダを立てて使う**
+    // (キットに 1×4 の細ピンヘッダ。通常のピンヘッダは穴に入らない)。シルクは列の端に − (1 番) と + (4 番)。
+    // ジャックは中心ピンが + (シンガトロン 2DC-0005X100 Rev T1 の #1 PIN の長穴が + の島)。秋月の基板図
+    // (ae-dc-power-jack-dip.pdf、2019-04-15) は線画だけで、2・3 番のつながりは読み取れない (52 の docs/140)。
+    // ジャックの胴は写真から取った目安で、幅 9 mm、列から 3〜16 mm (口が奥の縁を越える)。
+    models: ['AE-DC-POWER-JACK-DIP', 'AE-DC-POWER-JACK-DIP-KIT', '105148', '114610'], role: '2.1 mm DC ジャックの DIP 化キット',
+    names: ['GND', 'NC', 'NC', 'VIN'],
+    look: { body: '#b9bec5', edge: '#7a8089' },
+    module: { along: 15.24, across: 15.24, inset: 1.27, jack: { along: 9, from: 3, to: 16 }, mark: 'DC' },
+    note: `\`sip4\` を銀の帯で描き、キットの基板とジャックを帯の脇へ描く (胴の寸法は目安)。1 番 \`GND\` (シルク −)・4 番 \`VIN\` (シルク +、中心ピン)。2・3 番は使わない (番号で呼ぶ)。**${VERIFY_NOTES['AE-DC-POWER-JACK-DIP']}**`,
+  },
+  {
+    // 秋月の 3.5 mm ステレオミニジャック DIP 化キット (キット 105363、基板 105707、AE-PHONE-JACK-DIP)。
+    // 秋月の基板図 (AE-PHONE-JACK-DIP.pdf、2016-03-01): 18 mm 角、ピンは縁から 1.34 mm に縦 1 列 4 本で、シルクは
+    // 上から R G G L (G はスリーブ = GND)。切替の端子はピンに出ていない。ジャックの口はピンと反対の縁から出る。
+    // ジャックの胴は写真から取った目安で、幅 6 mm、列から 4〜18 mm。
+    models: ['AE-PHONE-JACK-DIP', 'AE-PHONE-JACK-DIP-KIT', '105363', '105707'], role: '3.5 mm ステレオミニジャックの DIP 化キット',
+    names: ['R', 'GND', 'GND', 'L'],
+    look: { body: '#b9bec5', edge: '#7a8089' },
+    module: { along: 18, across: 18, inset: 1.34, jack: { along: 6, from: 4, to: 18 }, mark: '3.5' },
+    note: '`sip4` を銀の帯で描き、キットの基板とジャックを帯の脇へ描く (胴の寸法は目安)。シルクの `G` (スリーブ) は `GND` で、2 本あるので番号で呼ぶ。`R` は右・`L` は左。切替の端子は出ていない',
+  },
+  {
+    // 5 mm のフルカラー LED (カソードコモン)。秋月 102476。OptoSupply の図 (OSTA5131A-R/PG/B VER D.1.0) の
+    // 正面図で左から 1 緑のアノード・2 青のアノード・3 共通カソード・4 赤のアノード。足は 0.5 mm 角で間隔約 1.25 mm
+    // (格子に乗らない) なので、広げて隣り合う 4 穴に挿す (秋月の写真と同じ)。**向きは長い足で見る** — 長い順に
+    // 3 > 2 > 4 > 1 (共通がいちばん長い)。平らな面がどの足の側かは図から決められない (52 の docs/140)。
+    models: ['OSTA5131A', 'OSTA5131A-R/PG/B', '102476'], role: 'フルカラー LED 5 mm (カソードコモン)',
+    names: ['G', 'B', 'K', 'R'],
+    look: { body: '#eef0f2', edge: '#a9adb3' },
+    note: '`sip4` を乳白の胴で描く。`G` `B` `R` が各色のアノード、3 番 `K` が共通カソード (いちばん長い足)。足を広げて隣の 4 穴に挿す。色ごとに抵抗を入れる (Vf は赤 2.0 V、緑・青 3.6 V)',
+  },
+  {
+    // 5 mm のフルカラー LED (アノードコモン)。秋月 112167。OptoSupply の図 (OSTAMA5B31A Ver a1.3) で並びは
+    // OSTA5131A と同じ (1 緑・2 青・3 共通・4 赤) で、極性だけが逆 (3 番が共通アノード)。
+    models: ['OSTAMA5B31A', '112167'], role: 'フルカラー LED 5 mm (アノードコモン)',
+    names: ['G', 'B', 'A', 'R'],
+    look: { body: '#eef0f2', edge: '#a9adb3' },
+    note: '`sip4` を乳白の胴で描く。`G` `B` `R` が各色のカソード、3 番 `A` が共通アノード (いちばん長い足)。足を広げて隣の 4 穴に挿す。色ごとに抵抗を入れる (Vf は赤 2.1 V、緑・青 3.1 V)',
   },
 ];
 

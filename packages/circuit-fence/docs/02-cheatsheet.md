@@ -106,6 +106,8 @@ parts:
   `sip2` `sip3` `sip4` `sip5` `sip6` `sip8` `sip10` `sip20` `sip40`
 - USB コネクタ (ピンは `VBUS` `GND` `D+` `D-`、Type-C は `CC1` `CC2` も。番号でも可)
   `usb-a` `usb-c`
+- ターミナルブロック (ピンは番号 `1` `2` …。ねじの頭を描いた箱)
+  `terminal2` `terminal3` `terminal4`
 - マイコンボード (ピンは実物の印字で `U1.GP0`。図には `01 GP0` と番号も出る)
   `pico` `pico-w` `pico2` `pico2-w` `tang-nano-9k` (FPGA。ピンは `IO38` など)
 - ピンに名前のある部品 (名前でも実物のピンの番号でも可。下の表)
@@ -160,6 +162,12 @@ parts:
 | `LM741` (`LM741CN` `LM741N` `UA741` …) | `dip8` | `OFFSET1` `IN-` `IN+` `V-` `OFFSET2` `OUT` `V+` `NC` (1・5 番はオフセット調整。8 番は NC) |
 | `ATtiny85` (`ATtiny85-20PU` `ATtiny45` `ATtiny25`) | `dip8` | `PB5` `PB3` `PB4` `GND` `PB0` `PB1` `PB2` `VCC` (1 番 `PB5` は RESET 兼用。PB0=MOSI/SDA、PB1=MISO、PB2=SCK/SCL、PB3=XTAL1、PB4=XTAL2) |
 | `ATmega328P` (`ATmega328P-PU` `ATmega328` `ATmega168` …) | `dip28` | `PC6` `PD0` `PD1` `PD2` `PD3` `PD4` `VCC` `GND` `PB6` `PB7` `PD5` `PD6` `PD7` `PB0` `PB1` `PB2` `PB3` `PB4` `PB5` `AVCC` `AREF` `GND` `PC0` `PC1` `PC2` `PC3` `PC4` `PC5` (1 番 `PC6` は RESET 兼用。8 番と 22 番は GND (番号で指す)。PB6・PB7 は水晶 (XTAL1・XTAL2)) |
+| `PIC12F683` (`PIC12F675` `PIC12F629` `PIC12F683-I/P` …) | `dip8` | `VDD` `GP5` `GP4` `GP3` `GP2` `GP1` `GP0` `VSS` (PIC マイコン。4 番 `GP3` は MCLR 兼用の入力専用。GP5=OSC1、GP4=OSC2、GP0=ICSPDAT、GP1=ICSPCLK) |
+| `PIC12F1822` (`PIC12F1822-I/P` `PIC12LF1822`) | `dip8` | `VDD` `RA5` `RA4` `RA3` `RA2` `RA1` `RA0` `VSS` (PIC マイコン。4 番 `RA3` は MCLR 兼用の入力専用。RA5=OSC1、RA4=OSC2、RA0=ICSPDAT、RA1=ICSPCLK) |
+| `PIC16F84A` (`PIC16F84A-04/P` `PIC16F84A-20/P`) | `dip18` | `RA2` `RA3` `RA4` `MCLR` `VSS` `RB0` `RB1` `RB2` `RB3` `RB4` `RB5` `RB6` `RB7` `VDD` `OSC2` `OSC1` `RA0` `RA1` (PIC マイコン。4 番 `MCLR`、15 番 `OSC2`・16 番 `OSC1` は専用ピン。`RA4` はオープンドレイン) |
+| `PIC16F628A` (`PIC16F627A` `PIC16F648A` `PIC16F88` `PIC16F87` `PIC16F1827` `PIC16F1826` …) | `dip18` | `RA2` `RA3` `RA4` `RA5` `VSS` `RB0` `RB1` `RB2` `RB3` `RB4` `RB5` `RB6` `RB7` `VDD` `RA6` `RA7` `RA0` `RA1` (PIC マイコン。628A・88・1827 は同じ並び。4 番 `RA5` は MCLR 兼用。RA7=OSC1、RA6=OSC2、RB6=ICSPCLK、RB7=ICSPDAT) |
+| `PIC16F886` (`PIC16F883` `PIC16F882` `PIC16F1938` `PIC16F18857` `PIC16F18856` …) | `dip28` | `RE3` `RA0` `RA1` `RA2` `RA3` `RA4` `RA5` `VSS` `RA7` `RA6` `RC0`〜`RC7` `VSS` `VDD` `RB0`〜`RB7` (PIC マイコン。886・1938・18857 は同じ並び。1 番 `RE3` は MCLR 兼用の入力専用。8 番と 19 番は `VSS` (番号で指す)。RA7=OSC1、RA6=OSC2、RB6=ICSPCLK、RB7=ICSPDAT) |
+| `PIC16F57` (`PIC16F57-I/P` `PIC16F57-I/SP`) | `dip28` | `T0CKI` `VDD` `NC` `VSS` `NC` `RA0`〜`RA3` `RB0`〜`RB7` `RC0`〜`RC7` `OSC2` `OSC1` `MCLR` (PIC マイコン。**電源は 2 番 `VDD`・4 番 `VSS`** (ほかの 28 ピンと違う)。3・5 番は `NC`。`T0CKI` は使わなくても `VSS` か `VDD` へ。600 mil (-I/P) と 300 mil (-I/SP) がある) |
 | `SA612` (`SA612A` `NE612` `NE602` …) | `dip8` | `IN_A` `IN_B` `GND` `OUT_A` `OUT_B` `OSC_B` `OSC_E` `VCC` (`IN_A` `IN_B` が RF の入力、`OSC_B` が発振のベース (外の LO の入口)、`OSC_E` が発振のエミッタ) |
 | `MCP6002` (`MCP6002-I/P` `MCP6002-E/P` `MCP6002-I/SN` …) | `dip8` | `VOUTA` `VINA-` `VINA+` `VSS` `VINB+` `VINB-` `VOUTB` `VDD` |
 | `LM386` (`LM386N-1` `LM386N-3` `LM386N-4` …) | `dip8` | `GAIN1` `-INPUT` `+INPUT` `GND` `VOUT` `VS` `BYPASS` `GAIN8` (印字は 1・8 番とも `GAIN` (番号を付けて分けた)。`BYPASS` は C で GND へ) |
@@ -224,10 +232,10 @@ parts:
 | `ULN2003A` (`ULN2003` `ULN2003APG` `ULN2003AN`) | `dip16` | `1B` `2B` `3B` `4B` `5B` `6B` `7B` `GND` `COM` `7C` `6C` `5C` `4C` `3C` `2C` `1C` (7 回路のダーリントン (シンクドライバ)。B が入力、C が出力、`GND` はデータシートの `E`。`COM` は負荷の電源側へ) |
 | `3SK291` | `dip4` | `G1` `G2` `D` `S` (面実装 SMQ の 4 ピンを変換基板に載せた形。回路図の記号は `nmos-dg` で、`dip4` には書かない) |
 | `SFU455B` (`SFU455A` `SFU455`) | `sip3` | `IN` `GND` `OUT` (セラミックフィルタ。橙の胴で描く。回路図の記号は `ceramic-filter`) |
-| `KY-040` (`KY040`) | `sip5` | `CLK` `DT` `SW` `VCC` `GND` (ロータリーエンコーダのモジュール。基板のピンヘッダだけを緑の帯で描く。印字の `+` は `VCC`。CLK=A 相、DT=B 相、SW=押しボタン) |
-| `HC-SR04` (`HCSR04`) | `sip4` | `VCC` `TRIG` `ECHO` `GND` (超音波距離センサのモジュール。青の帯で描く。`ECHO` は 5 V 出力) |
+| `KY-040` (`KY040`) | `sip5` | `CLK` `DT` `SW` `VCC` `GND` (ロータリーエンコーダのモジュール。基板のピンヘッダだけを緑の帯で描く。印字の `+` は `VCC`。CLK=A 相、DT=B 相、SW=押しボタン。部品面を上にしてピンを手前に向けると、左から `GND` `VCC` `SW` `DT` `CLK`) |
+| `HC-SR04` (`HCSR04`) | `sip4` | `VCC` `TRIG` `ECHO` `GND` (超音波距離センサのモジュール。青の帯で描く。センサの筒の面から見て左から並ぶ (裏から見ると逆)。`ECHO` は 5 V 出力) |
 | `SG90` (`SG92R` `MG90S`) | `sip3` | `GND` `VCC` `SIG` (RC サーボ。青の胴で描く。コネクタの線は茶 (GND)・赤 (VCC)・橙 (SIG)) |
-| `DHT11` | `sip4` | `VCC` `DATA` `NC` `GND` (温湿度センサ。青の胴で描く。3 番は `NC` で、番号で呼ぶ。`DATA` は 4.7 kΩ〜10 kΩ で `VCC` へ) |
+| `DHT11` | `sip4` | `VCC` `DATA` `NC` `GND` (温湿度センサ。青の胴で描く。3 番は `NC` で、番号で呼ぶ。`DATA` は 4.7 kΩ〜10 kΩ で `VCC` へ。4 本足の単体の並びで、3 本足の基板 (秋月 AE-DHT11-BO など) は並びが違う) |
 | `HC-SR501` (`HCSR501`) | `sip3` | `VCC` `OUT` `GND` (人感 (焦電) センサのモジュール。緑の帯で描く (基板のピンヘッダだけ)。電源は 4.5〜20 V、`OUT` は 3.3 V の H。見る向きで左右が逆になるので、基板の印字で確かめる) |
 | `GY-9833` (`GY9833`) | `sip7` | `VCC` `DGND` `SDATA` `SCLK` `FSYNC` `AGND` `OUT` (AD9833 の DDS モジュール。紫の帯で描く。印字に `DGND` `AGND` がある版。**実物で確かめる: 製造元の図が無く、並びは個人の KiCad データ 5 つの一致による。CJMCU-9833 の名の基板は REF VCC GND DAT CLK FNC OUT の別の並びが多い。実物は基板の印字で確かめる**) |
 | `ADAFRUIT-1782` (`MCP9808-BREAKOUT`) | `sip8` | `VDD` `GND` `SCL` `SDA` `ALERT` `A0` `A1` `A2` (Adafruit の MCP9808 ブレークアウト。濃い青の帯で描く。SCL・SDA は基板に 10 kΩ のプルアップ。既定のアドレスは 0x18) |
@@ -240,6 +248,10 @@ parts:
 | `SFELF10M7` (`SFELF10M7FA00` …) | `sip3` | `IN` `GND` `OUT` (村田のセラミックフィルタ 10.7 MHz。足は一直線に 2.5 mm 間隔。入出力 330 Ω) |
 | `CFULA455` (`CFULA455KE4A` `CFULA455KE4A-B0`) | `sip3` | `IN` `GND` `OUT` (村田のセラミックフィルタ 455 kHz。**実物の足は三角の配置で、一直線の図は目安**。入出力 1.5 kΩ) |
 | `AE-RJ-45-LAN-DIP-A` (`AE-RJ-45-LAN-DIP-A-KIT` `105404`) | `sip8` | `P1` 〜 `P8` (秋月の LAN コネクターDIP化キット。`Pn` は RJ45 の n 番。回路図では `dip8` の箱に名前を刷る。実体配線図はヘッダを銀の帯で描き、キットの基板とジャックの外形を添える。パルストランスは無い。10BASE-T の端末 (MDI) は `P1` `P2` で送り `P3` `P6` で受ける。ヘッダとジャックの対応は資料に無いので導通で確かめる) |
+| `AE-DC-POWER-JACK-DIP` (`AE-DC-POWER-JACK-DIP-KIT` `105148` `114610`) | `sip4` | `GND` `NC` `NC` `VIN` (秋月の 2.1 mm DC ジャック DIP 化キット。1 列だけにヘッダを立てる。1 番 `GND` (シルク −)・4 番 `VIN` (シルク +、中心ピン)。2・3 番は使わない (番号で呼ぶ)。銀の帯で描き、キットの基板とジャックを帯の脇へ描く (胴の寸法は目安)。**実物で確かめる: 秋月の図は線画だけで、2・3 番がどちらにつながるかは読み取れない。シルクのある 1 番 (−) と 4 番 (+) だけを使い、実物はテスタで確かめる**) |
+| `AE-PHONE-JACK-DIP` (`AE-PHONE-JACK-DIP-KIT` `105363` `105707`) | `sip4` | `R` `GND` `GND` `L` (秋月の 3.5 mm ステレオミニジャック DIP 化キット。シルクの `G` (スリーブ) は `GND` で、2 本あるので番号で呼ぶ。切替の端子は出ていない。銀の帯で描き、キットの基板とジャックを帯の脇へ描く (胴の寸法は目安)) |
+| `OSTA5131A` (`OSTA5131A-R/PG/B` `102476`) | `sip4` | `G` `B` `K` `R` (フルカラー LED 5 mm、カソードコモン。`G` `B` `R` が各色のアノード、3 番 `K` が共通カソード (いちばん長い足)。足は格子に乗らないので広げて隣の 4 穴に挿す。乳白の胴で描く) |
+| `OSTAMA5B31A` (`112167`) | `sip4` | `G` `B` `A` `R` (フルカラー LED 5 mm、アノードコモン。並びは `OSTA5131A` と同じで極性が逆。3 番 `A` が共通アノード (いちばん長い足)。乳白の胴で描く) |
 
 ### 3 ピンのトランジスタ・FET・レギュレータの穴の順
 

@@ -1,5 +1,5 @@
 import {
-  CONNECTOR_LOOKS, boardPartNames, connectorNames, lookupBoardPart, lookupConnector, lookupNamedChip, namedChipLooks,
+  connectorLooks, boardPartNames, connectorNames, lookupBoardPart, lookupConnector, lookupNamedChip, namedChipLooks,
   namedChipTypes, smdLooksOf, smdSuggestion, withSmdLooks,
 } from 'fence-kit';
 import { safeToken } from '../errors.ts';
@@ -133,7 +133,7 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
   // `-edge` は端面実装 (横置き)。基板の縁から**胴が外へ張り出す**。
   sma: ['male', 'female', 'male-edge', 'female-edge'],
   // USB は差し込み (オス) と受け口 (メス)。**書かなければ受け口**。
-  ...Object.fromEntries(connectorNames().map((type) => [type, CONNECTOR_LOOKS])),
+  ...Object.fromEntries(connectorNames().filter((type) => connectorLooks(type).length > 0).map((type) => [type, connectorLooks(type)])),
   // ピンに名前のある DIP 型は品名が姿 (`relay/g5v-2`)。**書かなければ表の最初**。
   ...Object.fromEntries(namedChipTypes().map((type) => [type, namedChipLooks(type)])),
 };
@@ -145,9 +145,19 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
  */
 const VARIANTS: Record<string, readonly string[]> = withSmdLooks(THROUGH_HOLE, 'perfboard');
 
+/**
+ * IC ソケットに挿した DIP (`dip8/socket`。52 の docs/140)。**中身の IC は同じ**なので、読んだところで
+ * 姿から外して `socket` に移す (`parser/parts.ts`) — 姿を見て「変換基板」と読む所 (ピンの名前の表を
+ * 引かない、など) に紛れ込ませない。ブレッドボードには挿さないので、この基板だけの姿。
+ */
+export const SOCKET_LOOK = 'socket';
+
+const DIP_TYPE = /^dip\d+$/;
+
 /** その種類に書ける姿。`dipN` は正規表現で読む種類なので、表の外で引く (`dip8/sop`)。 */
 const looksOf = (type: string): readonly string[] =>
-  (own(VARIANTS, type) ? VARIANTS[type] ?? [] : smdLooksOf(type, 'perfboard'));
+  (own(VARIANTS, type) ? VARIANTS[type] ?? []
+    : [...smdLooksOf(type, 'perfboard'), ...(DIP_TYPE.test(type) ? [SOCKET_LOOK] : [])]);
 
 /**
  * **軸物** — 胴の両端からピンが出る形。ピンを曲げて挿すので、胴そのものより

@@ -129,6 +129,7 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
       variant: spec.variant,
       value: spec.value,
       color: spec.color,
+      ...(spec.socket === true ? { socket: true } : {}),
       line: spec.line,
       pins: pins.map((address) => ({ address, strip: holeStrip(address) })),
     });

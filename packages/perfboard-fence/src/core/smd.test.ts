@@ -28,7 +28,8 @@ describe('姿', () => {
     const looks = new Map(variantTable());
     expect(looks.get('transistor')?.slice(0, 3)).toEqual(['to92', 'to220', 'sot23-dip']);
     expect(looks.get('resistor')).toEqual(['quarter', 'half', '1608', '2012', '3216']);
-    expect(looks.get('dip8')).toEqual(['sop', 'tssop']);
+    // IC ソケット (`socket`) はこの基板だけの姿で、面実装の後ろ。
+    expect(looks.get('dip8')).toEqual(['sop', 'tssop', 'socket']);
   });
 
   test('points the other names at the spelling it takes', () => {

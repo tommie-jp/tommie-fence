@@ -71,11 +71,11 @@ export { VERIFY_NOTES, discreteModels, discreteTable, lookupDiscrete } from './p
 export type { Discrete, DiscreteKind, DiscreteRow, DiscreteType } from './parts/discretes.ts';
 export type { NamedChip, NamedChipPin } from './parts/namedChips.ts';
 export {
-  CONNECTOR_LOOKS, MIN_CONNECTOR_PINS, connectorBox, connectorFacing, connectorNames, connectorPinNames,
+  CONNECTOR_LOOKS, MIN_CONNECTOR_PINS, connectorBox, connectorFacing, connectorLooks, connectorNames, connectorPinNames, connectorStyle,
   drawConnector, hasPadFeet, lookupConnector, lookupConnectorSymbol,
 } from './parts/connectors.ts';
 export type { Connector, ConnectorFacing, ConnectorShape } from './parts/connectors.ts';
-export { boardBox, boardChip, chipAlongX, dipBox, dipChip, segmentFace, sipBox, sipHeader, sipLegendDepth, sipLegends } from './parts/chips.ts';
+export { boardBox, boardChip, chipAlongX, dipBox, dipChip, dipSocketBox, segmentFace, sipBox, sipHeader, sipLegendDepth, sipLegends } from './parts/chips.ts';
 export type {
   BoardChipOptions, ChipBox, ChipInk, ChipPoint, DipOptions, SipLook, SipOptions,
 } from './parts/chips.ts';

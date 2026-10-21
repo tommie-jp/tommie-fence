@@ -124,6 +124,8 @@ export type PartSpec = {
   readonly turn: Turn;
   /** 部品の基板の色 (書かれたままの綴り。`blue`)。基板のある部品だけが持つ。 */
   readonly color?: string | null;
+  /** IC ソケットに挿した DIP (`dip8/socket`)。姿 (`variant`) には残さない。 */
+  readonly socket?: boolean;
   readonly line: number | null;
 };
 
@@ -138,6 +140,8 @@ export type PlacedPart = {
   readonly value: string | null;
   /** 部品の基板の色 (書かれたままの綴り)。描くときに `partPlateColor` で色に直す。 */
   readonly color?: string | null;
+  /** IC ソケットに挿した DIP。枠を描き、当たり判定も枠の外形で見る。 */
+  readonly socket?: boolean;
   readonly line: number | null;
   readonly pins: readonly { readonly address: Address; readonly strip: StripId }[];
 };

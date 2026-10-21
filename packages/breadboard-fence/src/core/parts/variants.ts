@@ -7,7 +7,7 @@
  * 「コンデンサだ」と分かるのは色、「どのコンデンサか」は形で読ませる。
  */
 
-import { CONNECTOR_LOOKS, connectorNames, namedChipLooks, namedChipTypes, smdLooksOf, withSmdLooks } from 'fence-kit';
+import { connectorLooks, connectorNames, namedChipLooks, namedChipTypes, smdLooksOf, withSmdLooks } from 'fence-kit';
 import { resolveAlias } from './aliases.ts';
 import { WIDE_VARIANT, hasWideLook } from './wide.ts';
 
@@ -59,7 +59,7 @@ const THROUGH_HOLE: Record<string, readonly string[]> = {
   // 平たい缶 (HC-49) と円筒 (時計用の 32.768kHz などに多い)。輪郭がまるで違う。
   crystal: ['hc49', 'cylinder'],
   // USB は差し込み (オス) と受け口 (メス)。**書かなければ受け口**。
-  ...Object.fromEntries(connectorNames().map((type) => [type, CONNECTOR_LOOKS])),
+  ...Object.fromEntries(connectorNames().filter((type) => connectorLooks(type).length > 0).map((type) => [type, connectorLooks(type)])),
   // ピンに名前のある DIP 型は品名が姿 (`relay/g5v-2`)。**書かなければ表の最初**。
   ...Object.fromEntries(namedChipTypes().map((type) => [type, namedChipLooks(type)])),
 };

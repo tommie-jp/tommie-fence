@@ -22,6 +22,7 @@ export type PlaceableName =
   | 'photoresistor' | 'thermistor' | 'thermistor-ntc' | 'thermistor-ptc' | 'varistor'
   | 'zener' | 'schottky' | 'photodiode' | 'phototransistor' | 'varicap' | 'diac'
   | 'reed' | 'fuse' | 'lamp' | 'ferrite-bead' | 'sma' | 'usb-a' | 'usb-c'
+  | 'terminal2' | 'terminal3' | 'terminal4'
   | 'battery' | 'solar' | 'speaker' | 'mic' | 'switch' | 'switch-nc'
   | 'transistor' | 'potentiometer' | 'slide-switch' | 'thyristor' | 'triac'
   | 'regulator' | 'ic3' | 'button' | 'button-nc' | 'transformer'
@@ -91,6 +92,9 @@ export const PART_NAMES: Readonly<Record<PlaceableName, string>> = {
   sma: 'SMA コネクタ',
   'usb-a': 'USB Type-A コネクタ',
   'usb-c': 'USB Type-C コネクタ',
+  terminal2: 'ターミナルブロック 2P',
+  terminal3: 'ターミナルブロック 3P',
+  terminal4: 'ターミナルブロック 4P',
   regulator: '三端子レギュレータ',
   ic3: '3 ピンの IC',
   button: 'タクトスイッチ (a 接点)',
@@ -142,6 +146,9 @@ export const PART_PREFIXES: Readonly<Record<PlaceableName, string>> = {
   sma: 'J',
   'usb-a': 'J',
   'usb-c': 'J',
+  terminal2: 'J',
+  terminal3: 'J',
+  terminal4: 'J',
   regulator: 'U',
   ic3: 'U',
   button: 'SW',

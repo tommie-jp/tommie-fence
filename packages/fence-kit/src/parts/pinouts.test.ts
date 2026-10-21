@@ -160,22 +160,23 @@ describe('ピンの名前の表', () => {
 
     // 先頭の 35 行は 74HC273 まで (既存の並び。LM393 は 6 行目、そのあとに SA612・MCP6002・LM386)、
     // そのあとにロジック IC、そのあとに 3SK291、SFU455B、1 列のモジュール (KY-040・HC-SR04・SG90・DHT11・HC-SR501)、
-    // 3 本足の IC・センサ、8 ピンの温度センサ、村田のフィルタ 2 つ、RJ45 の DIP 化キット。
+    // 3 本足の IC・センサ、8 ピンの温度センサ、村田のフィルタ 2 つ、RJ45・DC・オーディオの DIP 化キット、フルカラー LED。
     expect(all.slice(0, 9)).toEqual(['NE555', 'TLC555', 'LM358', 'TL071', 'TL072', 'LM393', 'SA612', 'MCP6002', 'LM386']);
     expect(all.slice(32, 39)).toEqual(['62256', '6116', '74HC245', '74HC273', '74HC14', '74HC00', '74HC161']);
-    expect(all.slice(-18)).toEqual([
+    expect(all.slice(-22)).toEqual([
       '3SK291', 'SFU455B', 'KY-040', 'HC-SR04', 'SG90', 'DHT11', 'HC-SR501', 'GY-9833', 'ADAFRUIT-1782',
       'TA7642', 'A3144', 'A1324', 'LM35', 'LM75', 'MCP9808', 'SFELF10M7', 'CFULA455', 'AE-RJ-45-LAN-DIP-A',
+      'AE-DC-POWER-JACK-DIP', 'AE-PHONE-JACK-DIP', 'OSTA5131A', 'OSTAMA5B31A',
     ]);
     expect(new Set(all).size).toBe(all.length);
     expect(pinoutModels(3)).toEqual(['SFU455B', 'SG90', 'HC-SR501', 'TA7642', 'A3144', 'A1324', 'LM35', 'SFELF10M7', 'CFULA455']);
-    expect(pinoutModels(4)).toEqual(['3SK291', 'HC-SR04', 'DHT11']);
+    expect(pinoutModels(4)).toEqual(['3SK291', 'HC-SR04', 'DHT11', 'AE-DC-POWER-JACK-DIP', 'AE-PHONE-JACK-DIP', 'OSTA5131A', 'OSTAMA5B31A']);
     expect(pinoutModels(5)).toEqual(['KY-040']);
     expect(pinoutModels(20)).toEqual([
       '74HC245', '74HC273', '74HC244', '74HC541', '74HC240', '74HC573', '74HC574',
     ]);
     expect(pinoutModels(24)).toEqual(['74HC154', '6116']);
-    expect(pinoutModels(28)).toEqual(['62256', 'ATmega328P']);
+    expect(pinoutModels(28)).toEqual(['62256', 'ATmega328P', 'PIC16F886', 'PIC16F57']);
     for (const model of ['74HC14', '74HC00', '74HC10', '74HC20', '74HC125', '74HC393', '74HC164', '74HC4066']) {
       expect(pinoutModels(14), model).toContain(model);
     }
@@ -188,7 +189,7 @@ describe('ピンの名前の表', () => {
     const table = pinoutTable();
     expect(table.map((row) => row.models[0])).toEqual(pinoutModels());
     expect(table[0]?.models).toContain('NE555P');
-    expect(table.every((row) => [3, 4, 5, 7, 8, 14, 16, 20, 24, 28].includes(row.names.length))).toBe(true);
+    expect(table.every((row) => [3, 4, 5, 7, 8, 14, 16, 18, 20, 24, 28].includes(row.names.length))).toBe(true);
   });
 
   test('gives every pin a name that cannot be mistaken for a pin number or split by a space', () => {
@@ -334,7 +335,8 @@ describe('SFU455B (1 列 3 ピンのセラミックフィルタ)', () => {
 
 describe('表の全部の行', () => {
   // 電源のピンを持たない部品 (トランジスタ・フィルタを変換基板や 1 列で載せた物、コネクタ)。
-  const NO_SUPPLY = ['3SK291', 'SFU455B', 'AE-RJ-45-LAN-DIP-A'];
+  // 電源の無い 1 列の部品 (オーディオジャックのキット・フルカラー LED) も外す。
+  const NO_SUPPLY = ['3SK291', 'SFU455B', 'AE-RJ-45-LAN-DIP-A', 'AE-PHONE-JACK-DIP', 'OSTA5131A', 'OSTAMA5B31A'];
   // 姿 (`look`) を持つ行は 1 列の部品 (フィルタ・モジュール・センサ) で、本数は偶数でなくてよい。
   const isEvenChip = (row: { look?: unknown }) => row.look === undefined;
   const SUPPLY = /^(V|GND|AGND|DGND|GROUND)/;
@@ -543,5 +545,38 @@ describe('RJ45 の DIP 化キット (秋月 105404、AE-RJ-45-LAN-DIP-A)', () =>
 
   test('is listed with the other 8-pin rows', () => {
     expect(pinoutModels(8)).toContain('AE-RJ-45-LAN-DIP-A');
+  });
+});
+
+describe('秋月の定番から足した行 (52 の docs/140)', () => {
+  test('names the PIC pins by their ports, with VDD and VSS where the datasheet prints them', () => {
+    expect(lookupPinout('PIC12F683', 8)?.names).toEqual(['VDD', 'GP5', 'GP4', 'GP3', 'GP2', 'GP1', 'GP0', 'VSS']);
+    expect(lookupPinout('PIC12F1822', 8)?.names[3]).toBe('RA3');
+    expect(lookupPinout('PIC16F84A', 18)?.names[3]).toBe('MCLR');
+    for (const model of ['PIC16F628A', 'PIC16F88', 'PIC16F1827']) {
+      expect(lookupPinout(model, 18)?.names.slice(0, 5), model).toEqual(['RA2', 'RA3', 'RA4', 'RA5', 'VSS']);
+    }
+    for (const model of ['PIC16F886', 'PIC16F1938', 'PIC16F18857']) {
+      const names = lookupPinout(model, 28)?.names ?? [];
+      expect(names[0], model).toBe('RE3');
+      expect([names[7], names[18], names[19]], model).toEqual(['VSS', 'VSS', 'VDD']);
+    }
+    // 16F57 は電源の位置がほかの 28 ピンと違う。
+    expect(lookupPinout('PIC16F57', 28)?.names.slice(0, 5)).toEqual(['T0CKI', 'VDD', 'NC', 'VSS', 'NC']);
+  });
+
+  test('gives the jack kits the pins of their single header, and draws their board and jack', () => {
+    const dc = lookupPinout('AE-DC-POWER-JACK-DIP', 4);
+    expect(dc?.names).toEqual(['GND', 'NC', 'NC', 'VIN']);
+    expect(dc?.module?.mark).toBe('DC');
+    expect(lookupPinout('105148', 4)?.names).toEqual(dc?.names);
+    const phone = lookupPinout('AE-PHONE-JACK-DIP', 4);
+    expect(phone?.names).toEqual(['R', 'GND', 'GND', 'L']);
+    expect(phone?.module?.across).toBe(18);
+  });
+
+  test('puts the common lead third on both RGB LEDs, only the polarity differing', () => {
+    expect(lookupPinout('OSTA5131A', 4)?.names).toEqual(['G', 'B', 'K', 'R']);
+    expect(lookupPinout('OSTAMA5B31A', 4)?.names).toEqual(['G', 'B', 'A', 'R']);
   });
 });

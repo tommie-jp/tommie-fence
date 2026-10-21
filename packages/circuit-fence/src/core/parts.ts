@@ -1,6 +1,6 @@
 import { lookupBoardPart, lookupConnectorSymbol, lookupDiscrete, lookupNamedChip, lookupPinout, pinoutModels } from 'fence-kit';
 import type { DiscreteKind } from 'fence-kit';
-import { DGFET_SHAPE, dipSwitchShapeName, OPTO_SHAPE, RELAY_SHAPE, REGULATOR_SHAPE, SMA_SHAPE, TAPPED_TRANSFORMER_SHAPES, deviceBox, deviceShapeName, usbShapeName } from './tex/shapes.ts';
+import { DGFET_SHAPE, dipSwitchShapeName, OPTO_SHAPE, RELAY_SHAPE, REGULATOR_SHAPE, SMA_SHAPE, TAPPED_TRANSFORMER_SHAPES, deviceBox, deviceShapeName, connectorShapeName } from './tex/shapes.ts';
 import type { BoardPart, NamedChip } from 'fence-kit';
 import { BOXED_RESISTORS } from './standard.ts';
 import type { Standard } from './standard.ts';
@@ -917,7 +917,7 @@ function sipchip(count: number): PartType {
 }
 
 /**
- * USB コネクタ。**記号は自分で宣言する** (`tex/shapes.ts`) — 箱の右にピン、左に
+ * コネクタ (USB・ターミナルブロック)。**記号は自分で宣言する** (`tex/shapes.ts`) — 箱の右にピン、左に
  * 差し込み口の形。ピンは表の全部 (fence-kit — 実体配線図の 2 つと**同じ名前・同じ順**)
  * を出し、使わないピンは ERC が言わない (`model/erc.ts`)。
  *
@@ -927,12 +927,12 @@ function sipchip(count: number): PartType {
  *
  * 反転も許す。名前は描き上がった SVG に差し込むので裏返らない (ボードと同じ)。
  */
-function usbchip(type: 'usb-a' | 'usb-c'): PartType {
+function connectorchip(type: string): PartType {
   const names = lookupConnectorSymbol(type)?.pins ?? [];
   const anchors = names.map((name, index) => [name, `pin ${index + 1}`] as const);
   return {
     kind: 'multi-terminal',
-    symbol: usbShapeName(type) ?? type,
+    symbol: connectorShapeName(type) ?? type,
     // `draw` が要る (宣言した形の輪郭は `\backgroundpath` にある。sip と同じ)。
     options: ['draw', 'font=\\scriptsize'],
     ...NO_UNIT,
@@ -1325,8 +1325,12 @@ export const PART_TYPES = {
   'dip-switch8': dipSwitchBox(namedChipOf('dip-switch8')),
 
   // USB コネクタ。**表は実体配線図の 2 つと共通** (fence-kit)。
-  'usb-a': usbchip('usb-a'),
-  'usb-c': usbchip('usb-c'),
+  'usb-a': connectorchip('usb-a'),
+  'usb-c': connectorchip('usb-c'),
+  // ターミナルブロック (52 の docs/140)。記号は USB と同じ箱で、口の代わりにねじの頭。
+  terminal2: connectorchip('terminal2'),
+  terminal3: connectorchip('terminal3'),
+  terminal4: connectorchip('terminal4'),
 
   // マイコンボード。**表は実体配線図の 2 つと共通** (fence-kit)。
   pico: boardchip(lookupBoardPart('pico') as BoardPart),
@@ -1454,6 +1458,9 @@ export const PART_NAMES: Readonly<Record<PartTypeName, string>> = {
   // 実体配線図の 2 つと同じ字。
   'usb-a': 'USB Type-A コネクタ',
   'usb-c': 'USB Type-C コネクタ',
+  terminal2: 'ターミナルブロック 2P',
+  terminal3: 'ターミナルブロック 3P',
+  terminal4: 'ターミナルブロック 4P',
   // 製品名は実体配線図の 2 つと同じ字 (fence-kit の表)。
   pico: 'Pico',
   'pico-w': 'Pico W',
@@ -1588,6 +1595,9 @@ export const PART_PREFIXES: Readonly<Record<PartTypeName, string | null>> = {
   sma: 'J',
   'usb-a': 'J',
   'usb-c': 'J',
+  terminal2: 'J',
+  terminal3: 'J',
+  terminal4: 'J',
   pico: 'U',
   'pico-w': 'U',
   pico2: 'U',

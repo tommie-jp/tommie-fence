@@ -41,7 +41,43 @@ type ConnectorSpec = {
   readonly board?: { readonly width: number; readonly length: number };
   /** 受け口の金物に刻む種類の名前 (`USB-C`)。**同じ形の変換基板が並んでも、種類が図で読める**。 */
   readonly stamp?: string;
+  /**
+   * 姿の描き分け。**書かなければ USB** (金物の受け口と差し込み)。`terminal` は基板に直に挿す
+   * ねじ止めのターミナルブロック (変換基板は無い。52 の docs/140)。DC・オーディオのジャックは
+   * 秋月の DIP 化キットが 1 列のヘッダなので、ここではなくピンの名前の表 (`sip4` + 型番) に置く。
+   */
+  readonly style?: 'usb' | 'terminal';
+  /** 胴の色 (樹脂)。書かなければ金物の色。 */
+  readonly housing?: { readonly fill: string; readonly edge: string };
+  /** 書ける姿 (`male` / `female`)。書かなければ USB と同じ 2 つ。オス・メスの無い物は空。 */
+  readonly looks?: readonly string[];
+  /** 書く穴の最少。書かなければ変換基板のピンは全部、それ以外は 2。 */
+  readonly minPins?: number;
 };
+
+/**
+ * ターミナルブロックの胴 (mm)。**ピッチ 5.08 mm** (2.54 mm の 2 穴ぶん) の基板用。標準は秋月の
+ * TB111-2-x-U-1-1 (2P 101306・3P 101307、青、ねじが上・線は前から水平)。製造元 Alphaplus の図
+ * (TB111-2-x-x-x-x Rev D、2019-08-21) で奥行き 7.6 mm、ピンの列は後ろの縁から 4.2 mm・前 (線の差し口) から 3.4 mm、
+ * 端のピンから胴の端まで 2.54 mm (極の幅の半分)。極ごとの幅は書いた穴の間隔から取る (52 の docs/140)。
+ * **5.0 mm ピッチの品 (WJ300 など) は格子に乗らない**ので、この形では描かない。
+ */
+const TERMINAL = { back: 4.2, front: 3.4 } as const;
+/** ターミナルブロックの樹脂 (秋月の定番は青)。 */
+const TERMINAL_HOUSING = { fill: '#2f6fb3', edge: '#1d4a7a' } as const;
+
+/** ターミナルブロックの極の数ごとの表。ピンに名前は無いので番号で呼ぶ。 */
+const terminalBlock = (poles: number): ConnectorSpec => ({
+  name: `ターミナルブロック ${poles}P`,
+  pins: Array.from({ length: poles }, (_, index) => `${index + 1}`),
+  receptacle: { width: 0, depth: TERMINAL.back + TERMINAL.front },
+  plug: { width: 0, reach: 0, root: 0 },
+  round: false,
+  style: 'terminal',
+  housing: TERMINAL_HOUSING,
+  looks: [],
+  minPins: poles,
+});
 
 const CONNECTORS: Record<string, ConnectorSpec> = {
   // 受け口 13.1 × 14mm (USB 2.0 の縦型でない標準品)、差し込みは 12mm 幅で 12mm 出る。
@@ -68,6 +104,10 @@ const CONNECTORS: Record<string, ConnectorSpec> = {
     board: { width: 9.2, length: 12.7 },
     stamp: 'USB-C',
   },
+  // ねじ止めのターミナルブロック。**穴は 1 つ飛ばしに書く** (ピッチ 5.08 mm)。
+  terminal2: terminalBlock(2),
+  terminal3: terminalBlock(3),
+  terminal4: terminalBlock(4),
 };
 
 /** 書ける姿。**書かなければ受け口** (基板に載るのはたいていメス)。 */
@@ -93,8 +133,17 @@ export function lookupConnector(type: string): Connector | null {
   const spec = specOf(type);
   if (spec === null) return null;
   const pins = spec.breakout ?? spec.pins;
-  return { name: spec.name, pins, minPins: spec.breakout === undefined ? MIN_CONNECTOR_PINS : pins.length };
+  return { name: spec.name, pins, minPins: spec.minPins ?? (spec.breakout === undefined ? MIN_CONNECTOR_PINS : pins.length) };
 }
+
+/** 姿の描き分け (`usb` `terminal`)。回路図の記号の口の形もこれで決める。知らない種類は null。 */
+export const connectorStyle = (type: string): 'usb' | 'terminal' | null => {
+  const spec = specOf(type);
+  return spec === null ? null : spec.style ?? 'usb';
+};
+
+/** その種類に書ける姿。USB はオス・メス、ターミナルブロックは無い。 */
+export const connectorLooks = (type: string): readonly string[] => specOf(type)?.looks ?? CONNECTOR_LOOKS;
 
 /** 回路図の記号が読む。コネクタそのもののピン (Type-C は CC1・CC2 まで)。 */
 export function lookupConnectorSymbol(type: string): Connector | null {
@@ -275,7 +324,7 @@ export function hasPadFeet(type: string, variant: string | null): boolean {
 }
 
 /** 局所座標の長方形を図の上の長方形に。軸が 90 度単位なので、角 2 つで決まる。 */
-function boxOf(frame: Frame, span: Span): ChipBox {
+function boxOf(frame: Pick<Frame, 'at'>, span: Span): ChipBox {
   const p = frame.at(span.a0, span.b0);
   const q = frame.at(span.a1, span.b1);
   const x = Math.min(p.x, q.x);
@@ -283,8 +332,85 @@ function boxOf(frame: Frame, span: Span): ChipBox {
   return { x, y, width: Math.abs(q.x - p.x), height: Math.abs(q.y - p.y) };
 }
 
+/**
+ * ターミナルブロックの形 (局所座標)。**胴がピンを覆い**、極ごとの幅は書いた穴の間隔。
+ * 線の差し口は胴の前 (差し込み口の向き) の縁に、ねじの頭は極ごとにピンの真上に来る。
+ */
+type TerminalFrame = {
+  readonly spec: ConnectorSpec;
+  readonly mm: number;
+  readonly poles: readonly number[];
+  readonly pole: number;
+  readonly body: Span;
+  readonly at: (a: number, b: number) => ChipPoint;
+};
+
+function terminalFrameOf(shape: ConnectorShape): TerminalFrame | null {
+  const spec = specOf(shape.type);
+  const origin = shape.points[0];
+  if (spec === null || spec.style !== 'terminal' || origin === undefined) return null;
+  const { u, v } = AXES[shape.facing];
+  const mm = shape.pitch / 2.54;
+  const along = shape.points.map((point) => (point.x - origin.x) * u.x + (point.y - origin.y) * u.y);
+  const across = shape.points.map((point) => (point.x - origin.x) * v.x + (point.y - origin.y) * v.y);
+  const centre = middle(along);
+  const row = middle(across);
+  const sorted = [...along].sort((x, y) => x - y);
+  const gaps = sorted.slice(1).map((value, index) => value - (sorted[index] ?? value)).filter((gap) => gap > 0);
+  // 極の幅は書いた穴の間隔 (5.08 mm なら 2 穴)。1 本しか無ければ 2 穴ぶん。
+  const pole = gaps.length === 0 ? 2 * shape.pitch : Math.min(...gaps);
+  const poles = along.map((a) => a - centre);
+  const half = Math.max(...poles.map(Math.abs)) + pole / 2;
+  return {
+    spec,
+    mm,
+    poles,
+    pole,
+    body: { a0: -half, a1: half, b0: -TERMINAL.back * mm, b1: TERMINAL.front * mm },
+    at: (a, b) => ({
+      x: origin.x + (centre + a) * u.x + (row + b) * v.x,
+      y: origin.y + (centre + a) * u.y + (row + b) * v.y,
+    }),
+  };
+}
+
+/** ターミナルブロックの胴 (青い樹脂)、極ごとのねじの頭 (十字) と前の縁の線の差し口。 */
+function drawTerminal(frame: TerminalFrame, ink: BodyInk): string {
+  const housing = frame.spec.housing ?? TERMINAL_HOUSING;
+  const corner = boxOf(frame, frame.body);
+  const body = element('rect', {
+    x: num(corner.x), y: num(corner.y), width: num(corner.width), height: num(corner.height), rx: 1.5,
+    fill: ink.paint(housing.fill), stroke: ink.paint(housing.edge), 'stroke-width': 1,
+  });
+  const radius = Math.min(frame.pole * 0.32, 1.6 * frame.mm);
+  const marks = frame.poles.map((a) => {
+    const head = frame.at(a, 0);
+    const slot = radius * 0.7;
+    const screw = element('circle', {
+      cx: num(head.x), cy: num(head.y), r: num(radius),
+      fill: ink.paint(METAL), stroke: ink.paint(METAL_EDGE), 'stroke-width': 0.8,
+    });
+    const cross = [
+      element('line', { x1: num(head.x - slot), y1: num(head.y), x2: num(head.x + slot), y2: num(head.y), stroke: ink.paint(METAL_EDGE), 'stroke-width': 1 }),
+      element('line', { x1: num(head.x), y1: num(head.y - slot), x2: num(head.x), y2: num(head.y + slot), stroke: ink.paint(METAL_EDGE), 'stroke-width': 1 }),
+    ].join('');
+    // 線の差し口 (前の縁の四角い穴)。
+    const mouth = boxOf(frame, {
+      a0: a - frame.pole * 0.3, a1: a + frame.pole * 0.3,
+      b0: frame.body.b1 - 1.6 * frame.mm, b1: frame.body.b1 - 0.4 * frame.mm,
+    });
+    const opening = element('rect', {
+      x: num(mouth.x), y: num(mouth.y), width: num(mouth.width), height: num(mouth.height), fill: ink.paint(MOUTH),
+    });
+    return screw + cross + opening;
+  }).join('');
+  return body + marks;
+}
+
 /** 基板と金物を合わせた外形。**当たり判定と画布の広げ方はこれを読む**。 */
 export function connectorBox(shape: ConnectorShape): ChipBox {
+  const terminal = terminalFrameOf(shape);
+  if (terminal !== null) return boxOf(terminal, terminal.body);
   const frame = frameOf(shape);
   if (frame === null) return { x: 0, y: 0, width: 0, height: 0 };
   const plate = boxOf(frame, frame.plate);
@@ -385,6 +511,8 @@ function pinNames(frame: Frame, facing: ConnectorFacing, ink: BodyInk): string {
  * 知らない種類は何も描かない (呼ぶ側が種類を確かめている)。
  */
 export function drawConnector(shape: ConnectorShape & { readonly ink?: BodyInk }): string {
+  const terminal = terminalFrameOf(shape);
+  if (terminal !== null) return drawTerminal(terminal, shape.ink ?? REAL_INK);
   const frame = frameOf(shape);
   if (frame === null) return '';
   const ink = shape.ink ?? REAL_INK;

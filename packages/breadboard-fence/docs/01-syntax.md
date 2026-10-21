@@ -82,6 +82,7 @@ wires:
   - 2 ピン (スイッチ) — `switch` (a 接点) / `switch-nc` (b 接点)
   - 2 ピン (コネクタ) — `sma`
   - USB コネクタ — `usb-a` / `usb-c` (穴は Type-A が `VBUS GND D+ D-` の順に 2 つから、Type-C が `GND D+ D- VBUS` の順に 4 つ)
+  - ターミナルブロック — `terminal2` / `terminal3` / `terminal4` (5.08 mm ピッチ。穴は 1 つ飛ばしに極の数だけ → [ターミナルブロック](#ターミナルブロック-terminal2--terminal3--terminal4))
   - 3 ピン — `transistor` / `potentiometer` / `slide-switch` / `thyristor` / `triac` /
     `regulator` / `ic3` (3 ピンの IC。ピンの名前は穴に書く — `h9(Vout)`)
   - 巻き物 (変圧器) — `transformer` (4 ピン) / `transformer-ct` (5 ピン。2 次に中点) / `transformer-ct2` (6 ピン。両側に中点)。
@@ -1096,6 +1097,15 @@ parts:
 | `NRF24L01+` (`NRF24L01` `NRF24L01P`) | `GND` `VCC` `CE` `CSN` `SCK` `MOSI` `MISO` `IRQ` | 2.4 GHz の無線モジュール (nRF24L01+、SPI)。PCB アンテナの小型品 (2 × 4 のピンヘッダ)。並びはピンの番号順 (1 番 GND は角パッド。奇数 1・3・5・7 と偶数 2・4・6・8 が 2 列に分かれ、列の間も 2.54 mm)。**2 列が 2.54 mm で隣り合うので、ブレッドボードに挿すと向かいのピンがつながる**。線でつなぐ。電源は 3.3 V (5 V は不可)。`CSN` は L で選ぶ |
 | `EC11` (`EC11E` `EC11E15244G1`) | `A` `C` `B` `D` `E` | ロータリーエンコーダ (押しスイッチつき)。Alps Alpine EC11E15244G1 (縦型、軸 20 mm、30 クリック 15 パルス、押しスイッチつき)。並びは取付面から見て: 一列に A・C・B (2.5 mm 間隔)、14.5 mm 離れた列に D・E (5 mm 間隔、D が A の側)。`A` `B` が 2 相の出力、`C` が共通。`D` `E` が押しスイッチ。**列の間 14.5 mm は 2.54 mm の格子に乗らない**ので、穴に挿す形は無い (挿せるのはモジュールの `KY-040`) |
 | `DRV8833-POLOLU` (`POLOLU-2130` `POLOLU2130`) | `GND` `VMM` `BIN1` `BIN2` `AIN2` `AIN1` `SLP` `FLT` `GND2` `VIN` `BOUT1` `BOUT2` `AOUT2` `AOUT1` `AISEN` `BISEN` | モータドライバ (DRV8833、2 回路の H ブリッジ)。Pololu 2130 (DRV8833 Dual Motor Driver Carrier、0.5 × 0.8 インチ)。並びは部品面を上にして、左の列を上から (GND〜FLT)、続けて右の列を上から (GND2〜BISEN)。2 列 × 8 本、列の間は 0.4 インチ = 10.16 mm (ブレッドボードの溝 0.3 インチより広い)。右の列の GND は `GND2` (基板の中で GND とつながる)。`SLP` (nSLEEP) は H で動く。`VIN` が電源の入力で、`VMM` は逆接保護を通した後 |
+
+## ターミナルブロック (terminal2 / terminal3 / terminal4)
+
+ねじ止めのターミナルブロック (`J1: terminal2 a10 a12`)。**穴は 1 つ飛ばしに書く** — ピッチが 5.08 mm (2 穴) の基板用で、標準は秋月の TB111-2-x-U-1-1
+(2P 101306・3P 101307、青。製造元の図で奥行き 7.6 mm、ピンの列は後ろの縁から 4.2 mm)。極の数だけ書き、
+ピンは番号 (`J1.1` `J1.2`) で呼ぶ。線の差し口は、USB の差し込み口と同じく**基板の中心から遠い側**を向き、
+胴の上には極ごとにねじの頭を描く。**5.0 mm ピッチの品 (WJ300 など) は格子に 0.08 mm ずつずれて
+たまるので、この形では描かない**。
+**ブレッドボードには挿しにくい** (ピンが 0.95 mm と太い)。電源の線を受けるならユニバーサル基板で使う。
 
 ## USB コネクタ (usb-a / usb-c)
 

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { boardBox, boardChip, dipBox, dipChip, segmentFace, sipBox, sipHeader, sipLegendDepth, sipLegends } from './chips.ts';
+import { boardBox, boardChip, dipBox, dipChip, dipSocketBox, segmentFace, sipBox, sipHeader, sipLegendDepth, sipLegends } from './chips.ts';
 import type { ChipInk, ChipPoint } from './chips.ts';
 import { lookupBoardPart } from './boards.ts';
 import { textWidth as textWidthOf } from '../textFit.ts';
@@ -383,5 +383,41 @@ describe('寝た 1 列の帯のピンの名前', () => {
     const svg = sipLegends({ ...base, points: narrow, pitch: 10, names });
     expect(svg.match(/rotate\(-90\)/g)).toHaveLength(7);
     expect(sipLegendDepth(names, 10, 1)).toBeGreaterThan(sipLegendDepth(['VCC'], 20, 1));
+  });
+});
+
+describe('dipChip on an IC socket', () => {
+  const names = (count: number): string[] => Array.from({ length: count }, (_, index) => String(index + 1));
+  const rects = (svg: string): { x: number; y: number; width: number; height: number }[] =>
+    [...svg.matchAll(/<rect x="(-?[\d.]+)" y="(-?[\d.]+)" width="([\d.]+)" height="([\d.]+)"/g)]
+      .map(([, x, y, width, height]) => ({ x: Number(x), y: Number(y), width: Number(width), height: Number(height) }));
+
+  test('the socket box wraps the chip on every side, lying down or standing up', () => {
+    for (const vertical of [false, true]) {
+      const points = twoRows(8, 3, vertical);
+      const chip = dipBox(points, PITCH);
+      const socket = dipSocketBox(points, PITCH);
+
+      expect(socket.x).toBeLessThan(chip.x);
+      expect(socket.y).toBeLessThan(chip.y);
+      expect(socket.x + socket.width).toBeGreaterThan(chip.x + chip.width);
+      expect(socket.y + socket.height).toBeGreaterThan(chip.y + chip.height);
+    }
+  });
+
+  test('draws the socket frame under the chip only when asked', () => {
+    const points = twoRows(8, 3);
+    const socket = dipSocketBox(points, PITCH);
+    const options = { points, names: names(8), pinOne: 0, pitch: PITCH, caption: 'U1', scale: 1, ink: INK };
+
+    const plain = rects(dipChip(options));
+    const seated = rects(dipChip({ ...options, socket: true }));
+
+    expect(plain.some((rect) => rect.width === socket.width)).toBe(false);
+    const frame = seated.findIndex((rect) => Math.abs(rect.width - socket.width) < 0.01 && Math.abs(rect.height - socket.height) < 0.01);
+    expect(frame).toBeGreaterThanOrEqual(0);
+    // 枠は樹脂より先 (下) に描く。
+    const shell = seated.findIndex((rect) => Math.abs(rect.width - dipBox(points, PITCH).width) < 0.01);
+    expect(frame).toBeLessThan(shell);
   });
 });

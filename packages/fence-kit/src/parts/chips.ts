@@ -88,6 +88,30 @@ export function dipBox(points: readonly ChipPoint[], pitch: number): ChipBox {
   return boxOf(points, alongX ? DIP_ALONG * pitch : DIP_ACROSS, alongX ? DIP_ACROSS : DIP_ALONG * pitch);
 }
 
+/**
+ * IC ソケットの枠が端のピンの中心から出る量 (ピッチ比)。秋月の定番 (Neltron 2227MC・2227) の
+ * 製造元の図 (2227MC-XX-XX Rev B・2227series Rev A) で、胴は (極数/2) × 2.54 mm × 10.16 mm (300 mil)。
+ * **端のピンから四方へ 1.27 mm (半ピッチ)** 出る。樹脂 (`dipBox`) は列の外へ 5px しか出ないので、
+ * 枠はその外に縁が見える。
+ */
+const SOCKET_ALONG = 0.5;
+const SOCKET_ACROSS = 0.5;
+
+/**
+ * IC ソケットの枠 (52 の docs/140)。**樹脂を四方から囲む**。当たり判定も同じ外形を使う
+ * (perfboard の約束 9)。
+ */
+export function dipSocketBox(points: readonly ChipPoint[], pitch: number): ChipBox {
+  const alongX = chipAlongX(points);
+  const along = SOCKET_ALONG * pitch;
+  const across = Math.max(SOCKET_ACROSS * pitch, DIP_ACROSS + 2);
+  return boxOf(points, alongX ? along : across, alongX ? across : along);
+}
+
+/** ソケットの樹脂。IC (黒) と見分けるために少し明るい灰。 */
+const SOCKET_BODY = '#4a4f57';
+const SOCKET_EDGE = '#14171c';
+
 /** ピンの跡 (6px 角) を、穴から樹脂の内側へ 2px 寄せて置く量。 */
 const STUB_IN = 2;
 /**
@@ -137,6 +161,8 @@ export type DipOptions = {
    * ピッチでは字がつながって 1 語に読めた。列に沿って並ぶ胴 (横置き) だけに効く。
    */
   readonly staggerLabels?: boolean;
+  /** IC ソケットに挿した姿。**樹脂の下に枠** (`dipSocketBox`) を描く。 */
+  readonly socket?: boolean;
 };
 
 /** 縁の字を内側へずらす段の数 (字の高さに足す余白、px) と、長いと見なす字数。 */
@@ -222,7 +248,17 @@ export function dipChip(options: DipOptions): string {
   const label = outer.band === null
     ? chipCaption(caption, box, alongX, scale, ink)
     : bandCaption(caption, box, scale, ink);
-  return `${stubs}${shell}${notch}${numbers}${outer.svg}${label}`;
+  const socket = options.socket === true ? socketFrame(points, pitch) : '';
+  return `${socket}${stubs}${shell}${notch}${numbers}${outer.svg}${label}`;
+}
+
+/** ソケットの枠。ピンの跡と樹脂はこの上に描く。 */
+function socketFrame(points: readonly ChipPoint[], pitch: number): string {
+  const box = dipSocketBox(points, pitch);
+  return element('rect', {
+    x: num(box.x), y: num(box.y), width: num(box.width), height: num(box.height), rx: 2,
+    fill: SOCKET_BODY, stroke: SOCKET_EDGE,
+  });
 }
 
 /**

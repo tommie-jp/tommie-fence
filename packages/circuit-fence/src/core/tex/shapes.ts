@@ -1,4 +1,4 @@
-import { lookupConnectorSymbol } from 'fence-kit';
+import { connectorStyle, lookupConnectorSymbol } from 'fence-kit';
 import { num } from './num.ts';
 import { evenShiftOf } from '../pinGrid.ts';
 
@@ -265,9 +265,18 @@ const USB_MOUTH_X = -0.5;
 
 const USB_SHAPES: Readonly<Record<string, string>> = { 'usb-a': 'usbacon', 'usb-c': 'usbccon' };
 
-/** その種類の記号の名前。USB でなければ null。 */
-export const usbShapeName = (type: string): string | null =>
-  (Object.hasOwn(USB_SHAPES, type) ? USB_SHAPES[type] ?? null : null);
+/** TeX の形の名前に数字は使わない (`terminal2` → `terminaltwocon`)。 */
+const DIGIT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+
+/**
+ * その種類の記号の名前。コネクタの表 (fence-kit) に無ければ null。USB は前からの名前、
+ * ほか (ターミナルブロック。52 の docs/140) は綴りから作る。
+ */
+export const connectorShapeName = (type: string): string | null => {
+  if (Object.hasOwn(USB_SHAPES, type)) return USB_SHAPES[type] ?? null;
+  if (connectorStyle(type) === null) return null;
+  return `${type.replace(/[0-9]/g, (digit) => DIGIT_WORDS[Number(digit)] ?? '').replace(/[^a-z]/g, '')}con`;
+};
 
 const point = (x: number, y: number): string => `\\pgfpoint{${num(x)}cm}{${num(y)}cm}`;
 const rectangle = (x0: number, y0: number, x1: number, y1: number): string =>
@@ -300,15 +309,32 @@ function usbMouth(round: boolean): { readonly outline: string[]; readonly tongue
   };
 }
 
-export function usbShapeTex(type: string): string[] {
-  const name = usbShapeName(type);
+/**
+ * ターミナルブロックの印。**ピンごとにねじの頭** (丸に斜めの溝) を箱の左寄りに並べる。
+ * 口の形は無い。
+ */
+function terminalScrews(pins: number): { readonly outline: string[]; readonly tongue: string } {
+  const cx = USB_MOUTH_X;
+  const r = 0.11;
+  return {
+    outline: Array.from({ length: pins }, (_, index) => {
+      const y = pinYOf(pins, index + 1);
+      return `    \\pgfpathcircle{${point(cx, y)}}{${num(r)}cm}`
+        + `\\pgfpathmoveto{${point(cx - r * 0.7, y - r * 0.7)}}\\pgfpathlineto{${point(cx + r * 0.7, y + r * 0.7)}}`;
+    }),
+    tongue: '',
+  };
+}
+
+export function connectorShapeTex(type: string): string[] {
+  const name = connectorShapeName(type);
   const pins = lookupConnectorSymbol(type)?.pins.length ?? 0;
   if (name === null || pins === 0) return [];
 
   const [w, lead] = [USB_HALF_WIDTH, USB_LEAD];
   const half = halfHeightOf(pins);
   const legs = Array.from({ length: pins }, (_, index) => index + 1);
-  const mouth = usbMouth(type === 'usb-c');
+  const mouth = connectorStyle(type) === 'terminal' ? terminalScrews(pins) : usbMouth(type === 'usb-c');
 
   return [
     '\\makeatletter',

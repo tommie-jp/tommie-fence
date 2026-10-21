@@ -28,7 +28,7 @@ import { readScaled } from '../values.ts';
 import type { ScaledValue } from '../values.ts';
 import {
   deviceBox, deviceShapeName, deviceShapeTex, dipSwitchShapeTex, dualGateFetShapeTex, optoShapeTex, regulatorShapeTex, relayShapeTex, tappedTransformerShapeTex,
-  sipShapeTex, smaShapeTex, usbShapeName, usbShapeTex,
+  sipShapeTex, smaShapeTex, connectorShapeName, connectorShapeTex,
 } from './shapes.ts';
 import type { DeviceBox } from './shapes.ts';
 import { icBox, icShapeTex, icStepOf } from './icShape.ts';
@@ -281,9 +281,9 @@ function sipShapesFor(circuit: Circuit, pitch: number): string[] {
   const devices = [...boxes.keys()].sort().flatMap((name) => deviceShapeTex(boxes.get(name) as DeviceBox, step));
   // USB も自分で宣言した形。**使う種類だけ、1 回ずつ**。
   const usb = [...new Set(circuit.parts.map((part) => part.type))]
-    .filter((type) => usbShapeName(type) !== null)
+    .filter((type) => connectorShapeName(type) !== null)
     .sort();
-  return [...withSma, ...named, ...devices, ...icShapes, ...usb.flatMap((type) => usbShapeTex(type))];
+  return [...withSma, ...named, ...devices, ...icShapes, ...usb.flatMap((type) => connectorShapeTex(type))];
 }
 
 const FOOTER = ['\\end{circuitikz}', '\\end{document}'];
