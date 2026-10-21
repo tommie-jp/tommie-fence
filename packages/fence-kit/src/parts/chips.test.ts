@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { boardBox, boardChip, dipBox, dipChip, segmentFace, sipBox, sipHeader } from './chips.ts';
+import { boardBox, boardChip, dipBox, dipChip, segmentFace, sipBox, sipHeader, sipLegendDepth, sipLegends } from './chips.ts';
 import type { ChipInk, ChipPoint } from './chips.ts';
 import { lookupBoardPart } from './boards.ts';
 import { textWidth as textWidthOf } from '../textFit.ts';
@@ -362,5 +362,26 @@ describe('7 セグの面', () => {
     expect(upright).toContain('<circle');
     expect(upright).toContain('rotate(0)');
     expect(sideways).toContain('rotate(90)');
+  });
+});
+
+describe('寝た 1 列の帯のピンの名前', () => {
+  // ピッチはブレッドボードの穴の間隔 (20)。
+  const points = [0, 1, 2, 3, 4, 5, 6].map((index) => ({ x: index * 20, y: 0 }));
+  const base = { points, pitch: 20, scale: 1, nameSide: 1 as const, ink: INK };
+
+  test('writes short names across, at the full size', () => {
+    const svg = sipLegends({ ...base, names: ['VCC', 'GND', 'A', 'B', 'C', 'D', 'E'] });
+    expect(svg).not.toContain('rotate(-90)');
+    expect(sipLegendDepth(['VCC', 'GND'], 20, 1)).toBeCloseTo(1 + 0.5 + 6.5 * (0.72 + 0.2));
+  });
+
+  test('stands the names up when they cannot fit beside each other, and reports the deeper extent', () => {
+    // 狭いピッチ (10) では 5 文字の名前は下限の字でも隣と重なる。
+    const names = ['VCC', 'DGND', 'SDATA', 'SCLK', 'FSYNC', 'AGND', 'OUT'];
+    const narrow = [0, 1, 2, 3, 4, 5, 6].map((index) => ({ x: index * 10, y: 0 }));
+    const svg = sipLegends({ ...base, points: narrow, pitch: 10, names });
+    expect(svg.match(/rotate\(-90\)/g)).toHaveLength(7);
+    expect(sipLegendDepth(names, 10, 1)).toBeGreaterThan(sipLegendDepth(['VCC'], 20, 1));
   });
 });

@@ -1,3 +1,4 @@
+import { resolveDeviceModel } from 'fence-kit';
 import { isMap, isScalar, isSeq } from 'yaml';
 import type { Node, Pair } from 'yaml';
 import { fail, ok, safeToken } from '../errors.ts';
@@ -31,7 +32,7 @@ import type { Points } from './compact.ts';
 type LineOf = (node: Node | Pair | null | undefined) => number | null;
 
 /** マップ形式で書ける鍵。 */
-const KEYS = ['type', 'at', 'label', 'pins', 'turn'] as const;
+const KEYS = ['type', 'at', 'label', 'model', 'pins', 'turn'] as const;
 
 /**
  * ピンの名前に使える字。**配線の端 (`M1.TRIG`) に書ける綴り**に絞る — `.` は部品と
@@ -95,26 +96,47 @@ export function parseDevicePart(
   if (!at.ok) return at;
 
   const pinsField = fields.get('pins');
-  const pins = readPins(id, pinsField, line);
+  const modelField = fields.get('model');
+  const pins = modelField === undefined
+    ? readPins(id, pinsField, line)
+    : readModelPins(id, modelField, pinsField, line);
   if (!pins.ok) return pins;
   if (type === IC3) {
     const checked = checkIc3Pins(pins.value, pinsField?.line ?? line);
     if (!checked.ok) return checked;
   }
 
-  const label = readLabel(id, fields.get('label'));
-  if (!label.ok) return label;
+  const written = readLabel(id, fields.get('label'));
+  if (!written.ok) return written;
+  // 型番を書いて label を書かなければ、箱の名前は型番。
+  const label = written.value === null && modelField !== undefined
+    ? textOf(modelField.value)?.trim() ?? null
+    : written.value;
   const turn = readTurn(id, type, fields.get('turn'));
   if (!turn.ok) return turn;
 
   return ok({
-    kind: 'multi-terminal', id, type, at: at.value, value: label.value,
+    kind: 'multi-terminal', id, type, at: at.value, value: label,
     orientation: null, turn: turn.value, line, pinNames: pins.value,
     spelling: [atToken], written: type,
   });
 }
 
 type Field = { readonly value: unknown; readonly line: number };
+
+/**
+ * 型番 (`model:`) からピンを決める。`pins:` が無ければ表の全部、あれば書いた名前だけ
+ * (表に無い名前は断る。fence-kit の `resolveDeviceModel`。実体配線図の 2 つと同じ決まり)。
+ */
+function readModelPins(id: string, modelField: Field, pinsField: Field | undefined, line: number): Result<readonly string[]> {
+  const model = textOf(modelField.value);
+  if (model === null || model.trim() === '') return fail(`部品 ${safeToken(id)} の model は型番の字で書きます`, modelField.line);
+  const written = pinsField === undefined ? null : readPins(id, pinsField, line);
+  if (written !== null && !written.ok) return written;
+  const resolved = resolveDeviceModel(model, written === null ? null : written.value);
+  if (!resolved.ok) return fail(resolved.message, resolved.token === model ? modelField.line : pinsField?.line ?? line, resolved.token);
+  return ok(resolved.names);
+}
 
 /** 3 ピンの IC のピン: **ちょうど 3 本**で、どれも箱に収まる長さ。 */
 function checkIc3Pins(names: readonly string[], line: number): Result<readonly string[]> {

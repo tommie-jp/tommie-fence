@@ -25,6 +25,26 @@ describe('validateExpandedPart', () => {
     });
   });
 
+  test('takes the pins and the label of a device from model:', () => {
+    const result = validateExpandedPart({ type: 'device', at: 'bottom', model: '28byj-48' });
+
+    expect(result.ok && result.value).toMatchObject({ label: '28BYJ-48', pins: ['BLUE', 'PINK', 'YELLOW', 'ORANGE', 'RED'] });
+  });
+
+  test('keeps the written pins of a model and refuses a stranger', () => {
+    const kept = validateExpandedPart({ type: 'device', model: 'EC11', label: 'エンコーダ', pins: ['A', 'B', 'C'] });
+    expect(kept.ok && kept.value).toMatchObject({ label: 'エンコーダ', pins: ['A', 'B', 'C'] });
+
+    const wrong = validateExpandedPart({ type: 'device', model: 'EC11', pins: ['A', 'SW'] });
+    expect(wrong.ok).toBe(false);
+    expect(!wrong.ok && wrong.message).toContain('EC11 に SW というピンはありません');
+  });
+
+  test('refuses model: on a part that goes into the holes', () => {
+    const result = validateExpandedPart({ type: 'resistor', model: 'EC11', holes: ['a1', 'a5'] });
+    expect(!result.ok && result.message).toContain('model は機器 (device) にだけ');
+  });
+
   test('requires the type of the part', () => {
     expect(validateExpandedPart({ at: 'top' }).ok).toBe(false);
   });

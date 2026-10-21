@@ -677,6 +677,23 @@ const ROWS: readonly PinoutRow[] = [
     look: { body: '#2f7d4f', edge: '#1d5434' },
     note: '`sip3` を緑の帯で描く (基板のピンヘッダだけ)。電源は 4.5〜20 V、OUT は 3.3 V の H。見る向きで左右が逆になるので、基板の印字で確かめる',
   },
+  {
+    // AD9833 の DDS モジュール (GY-9833 / CJMCU-9833 系、1 列 7 本)。製造元の図は無く、独立した 2 つの個人の
+    // KiCad データ (jonsag/myCAD の GY-9833_AD9833 と daumemo/DIY-Signal-Generator の AD9833module) の並びが一致した。
+    // REF・VCC・GND・DAT・CLK・FNC・OUT の別の品 (protosupplies) は並びが違う。
+    models: ['GY-9833', 'CJMCU-9833', 'AD9833-MODULE'], role: 'DDS の信号発生モジュール (AD9833)',
+    names: ['VCC', 'DGND', 'SDATA', 'SCLK', 'FSYNC', 'AGND', 'OUT'],
+    look: { body: '#6b3fa0', edge: '#47296b' },
+    note: '`sip7` を紫の帯で描く (基板のピンヘッダだけ)。SPI (SDATA・SCLK・FSYNC)。**製造元の図は無く、個人の KiCad データ 2 つの一致による**。REF・VCC・GND… の別の品は並びが違う',
+  },
+  {
+    // Adafruit 1782 (MCP9808 のブレークアウト、0.8 × 0.5 インチ)。Adafruit の GitHub の基板データ
+    // (Adafruit-MCP9808-Breakout-PCB の Breakout.brd、JP2 と部品面のシルク) で、左から並ぶ。
+    models: ['ADAFRUIT-1782', 'MCP9808-BREAKOUT'], role: 'I2C 温度センサのブレークアウト (MCP9808)',
+    names: ['VDD', 'GND', 'SCL', 'SDA', 'ALERT', 'A0', 'A1', 'A2'],
+    look: { body: '#1f2a44', edge: '#111827' },
+    note: '`sip8` を濃い青の帯で描く (基板のピンヘッダだけ)。SCL・SDA は基板に 10 kΩ のプルアップがある。アドレスは既定 0x18 (A0〜A2 で 0x18〜0x1F)',
+  },
   // --- 3 本足の IC・センサ (TO-92 と Allegro の UA)。並びは印字面を手前、足を下にして左から 1・2・3 ---
   {
     // 東芝の原本は見つからず、互換の UTC 7642 (TO-92) と Wiltronics の資料による。UTC の SOT-23 は並びが違う。
@@ -772,6 +789,15 @@ export function lookupPinout(model: string | null, pins: number): Pinout | null 
     ...(row.chip === undefined ? {} : { chip: row.chip }),
     ...(row.module === undefined ? {} : { module: row.module }),
   };
+}
+
+/**
+ * 型番からピンの名前を引く (**本数は問わない**)。基板の外の機器 (`device`) の `model:` が使う —
+ * 機器は穴に挿さないので、パッケージの本数と突き合わせる必要が無い。表に無い型番は null。
+ */
+export function lookupPinoutNames(model: string): { readonly model: string; readonly names: readonly string[] } | null {
+  const row = BY_MODEL.get(model.trim().toUpperCase());
+  return row === undefined ? null : { model: row.models[0] ?? '', names: row.names };
 }
 
 /** 型番から働きの名前を引く (本数は問わない)。表に無い型番は null。 */

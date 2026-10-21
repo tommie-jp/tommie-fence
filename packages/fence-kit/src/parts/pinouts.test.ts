@@ -163,8 +163,8 @@ describe('ピンの名前の表', () => {
     // 3 本足の IC・センサ、8 ピンの温度センサ、村田のフィルタ 2 つ、RJ45 の DIP 化キット。
     expect(all.slice(0, 9)).toEqual(['NE555', 'TLC555', 'LM358', 'TL071', 'TL072', 'LM393', 'SA612', 'MCP6002', 'LM386']);
     expect(all.slice(32, 39)).toEqual(['62256', '6116', '74HC245', '74HC273', '74HC14', '74HC00', '74HC161']);
-    expect(all.slice(-16)).toEqual([
-      '3SK291', 'SFU455B', 'KY-040', 'HC-SR04', 'SG90', 'DHT11', 'HC-SR501',
+    expect(all.slice(-18)).toEqual([
+      '3SK291', 'SFU455B', 'KY-040', 'HC-SR04', 'SG90', 'DHT11', 'HC-SR501', 'GY-9833', 'ADAFRUIT-1782',
       'TA7642', 'A3144', 'A1324', 'LM35', 'LM75', 'MCP9808', 'SFELF10M7', 'CFULA455', 'AE-RJ-45-LAN-DIP-A',
     ]);
     expect(new Set(all).size).toBe(all.length);
@@ -188,7 +188,7 @@ describe('ピンの名前の表', () => {
     const table = pinoutTable();
     expect(table.map((row) => row.models[0])).toEqual(pinoutModels());
     expect(table[0]?.models).toContain('NE555P');
-    expect(table.every((row) => [3, 4, 5, 8, 14, 16, 20, 24, 28].includes(row.names.length))).toBe(true);
+    expect(table.every((row) => [3, 4, 5, 7, 8, 14, 16, 20, 24, 28].includes(row.names.length))).toBe(true);
   });
 
   test('gives every pin a name that cannot be mistaken for a pin number or split by a space', () => {
@@ -495,6 +495,21 @@ describe('教科書で使う 3 本足の IC・センサ・フィルタと 8 ピ�
     expect(lookupPinout('SFELF10M7FA00-B0', 3)?.model).toBe('SFELF10M7');
     expect(lookupPinout('CFULA455KE4A', 3)?.model).toBe('CFULA455');
     expect(lookupPinout('hcsr501', 3)?.model).toBe('HC-SR501');
+  });
+
+  test.each([
+    ['GY-9833', 7, ['VCC', 'DGND', 'SDATA', 'SCLK', 'FSYNC', 'AGND', 'OUT']],
+    ['ADAFRUIT-1782', 8, ['VDD', 'GND', 'SCL', 'SDA', 'ALERT', 'A0', 'A1', 'A2']],
+  ] as const)('the module %s is %i pins in a row with a look', (model, count, names) => {
+    const found = lookupPinout(model, count);
+    expect(found?.names).toEqual(names);
+    expect(found?.look?.body).toBeTruthy();
+  });
+
+  test('keeps the MCP9808 chip and its breakout apart', () => {
+    expect(lookupPinout('MCP9808', 8)?.names[0]).toBe('SDA');
+    expect(lookupPinout('MCP9808-BREAKOUT', 8)?.names[0]).toBe('VDD');
+    expect(lookupPinout('CJMCU-9833', 7)?.model).toBe('GY-9833');
   });
 
   test('names the role in English too', () => {

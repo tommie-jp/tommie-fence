@@ -61,7 +61,9 @@ export type { ToroidCore, ToroidMaterial, ToroidValue } from './parts/toroids.ts
 export type { TransformerLook } from './parts/bodies.ts';
 export { boardPartNames, lookupBoardPart } from './parts/boards.ts';
 export { drawNamedChip, lookupNamedChip, namedChipBox, namedChipLooks, namedChipTypes } from './parts/namedChips.ts';
-export { lookupGateUnits, lookupPinout, lookupRole, pinoutModels, pinoutTable } from './parts/pinouts.ts';
+export { lookupGateUnits, lookupPinout, lookupPinoutNames, lookupRole, pinoutModels, pinoutTable } from './parts/pinouts.ts';
+export { deviceRole, lookupModule, moduleModels, moduleTable, resolveDeviceModel } from './parts/modules.ts';
+export type { DeviceModelPins, ModuleRow } from './parts/modules.ts';
 export type { AdapterChip, GateUnit, Pinout, PinoutRow } from './parts/pinouts.ts';
 export { drawModuleOutline, moduleBox, moduleSide } from './parts/moduleOutline.ts';
 export type { ModuleOutline, ModuleOutlineOptions } from './parts/moduleOutline.ts';
@@ -73,9 +75,7 @@ export {
   drawConnector, hasPadFeet, lookupConnector, lookupConnectorSymbol,
 } from './parts/connectors.ts';
 export type { Connector, ConnectorFacing, ConnectorShape } from './parts/connectors.ts';
-export {
-  boardBox, boardChip, chipAlongX, dipBox, dipChip, segmentFace, sipBox, sipHeader, sipLegends,
-} from './parts/chips.ts';
+export { boardBox, boardChip, chipAlongX, dipBox, dipChip, segmentFace, sipBox, sipHeader, sipLegendDepth, sipLegends } from './parts/chips.ts';
 export type {
   BoardChipOptions, ChipBox, ChipInk, ChipPoint, DipOptions, SipLook, SipOptions,
 } from './parts/chips.ts';

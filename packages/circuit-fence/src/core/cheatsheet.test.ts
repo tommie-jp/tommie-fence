@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { VERIFY_NOTES, discreteModels, pinoutModels } from 'fence-kit';
+import { VERIFY_NOTES, discreteModels, moduleModels, pinoutModels } from 'fence-kit';
 import { describe, expect, test } from 'vitest';
 import { NOTE_ALIGNS, NOTE_COLOR_NAMES, NOTE_LEADINGS, NOTE_SIZE_NAMES } from './notes.ts';
 import { PART_ALIASES, partTypeNames } from './parts.ts';
@@ -62,5 +62,12 @@ describe('docs/02-cheatsheet.md', () => {
 
   test('asks to check the real part wherever the datasheets disagree (2N7000, 2SD882)', () => {
     expect(Object.values(VERIFY_NOTES).filter((sentence) => !CHEATSHEET.includes(sentence))).toEqual([]);
+  });
+});
+
+describe('docs/01-syntax.md のモジュールの表', () => {
+  test('names every model in the table of off board modules', () => {
+    const syntax = readFileSync(fileURLToPath(new URL('../../docs/01-syntax.md', import.meta.url)), 'utf8');
+    expect(moduleModels().filter((model) => !syntax.includes(`\`${model}\``))).toEqual([]);
   });
 });

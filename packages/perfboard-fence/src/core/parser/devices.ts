@@ -1,3 +1,4 @@
+import { resolveDeviceModel } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, clampText, isPinName, isReferenceable } from '../limits.ts';
 import { isAddressSpelling } from '../model/address.ts';
@@ -12,7 +13,7 @@ import type { Parsed } from './parts.ts';
  */
 
 const SIDES: readonly DeviceSide[] = ['top', 'bottom'];
-const KEYS = ['type', 'at', 'label', 'pins'] as const;
+const KEYS = ['type', 'at', 'label', 'model', 'pins'] as const;
 
 const fail = (message: string, token?: string): Parsed<never> =>
   ({ ok: false, error: fenceError(message, null, token) });
@@ -53,15 +54,23 @@ export function parseDevice(id: string, entries: Record<string, unknown>): Parse
     );
   }
 
-  const label = entries.label === undefined ? id : entries.label;
+  // **機器の型番 (`model:`)。** 表からピンの名前を引く。label を書かなければ箱の名前は型番。
+  const model = entries.model === undefined ? null : typeof entries.model === 'number' ? String(entries.model) : entries.model;
+  if (model !== null && (typeof model !== 'string' || model.trim() === '')) {
+    return fail(`${safeToken(id)} の model は型番の字で書きます`);
+  }
+  const label = entries.label === undefined ? (model ?? id) : entries.label;
   if (typeof label !== 'string') return fail(`${safeToken(id)} の label は文字で書きます`);
 
   // **`pins: + -` と書ける。** YAML の並びに書くと `-` が箱の始まりに読まれて
   // `pins: ["+", "-"]` と括らされる — 電池の端子を書くたびに引っかかる罠なので、
   // 空白で区切った 1 行も受ける。
-  const pins = typeof entries.pins === 'string'
+  const writtenPins = typeof entries.pins === 'string'
     ? entries.pins.trim().split(/\s+/).filter((name) => name !== '')
     : entries.pins;
+  const fromModel = model === null ? null : modelPins(model, writtenPins);
+  if (fromModel !== null && !fromModel.ok) return fail(fromModel.message, fromModel.token);
+  const pins = fromModel === null ? writtenPins : fromModel.names;
   if (!Array.isArray(pins) || pins.length === 0) {
     // **ピンが無い機器は配線の相手にならない。** 置いても図に箱が出るだけ。
     return fail(`${safeToken(id)} にはピンの名前を pins: + - のように書きます`);
@@ -93,4 +102,14 @@ export function parseDevice(id: string, entries: Record<string, unknown>): Parse
       line: null,
     },
   };
+}
+
+/**
+ * 型番からピンを決める。`pins:` が無ければ表の全部、あれば書いた名前だけ (表に無い名前は断る。
+ * fence-kit の `resolveDeviceModel`。ほかの 2 つのフェンスと同じ決まり)。
+ */
+function modelPins(model: string, written: unknown) {
+  if (written === undefined) return resolveDeviceModel(model, null);
+  if (!Array.isArray(written)) return { ok: false as const, message: 'pins はピンの名前を並べて書きます', token: String(written) };
+  return resolveDeviceModel(model, written.map((pin) => String(pin)));
 }

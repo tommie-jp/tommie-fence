@@ -3,7 +3,7 @@ import {
   drawDirectSot, drawPackage, drawsOwnLeads,
   element, fit, hasBody,
   drawNamedChip, lookupBoardPart, lookupNamedChip, lookupPinout, num, bodySize, packageExtent, packageHalfWidth, packageReach, sipHeader,
-  smaBody as drawSmaBody, svgText, chipAlongX, sipBox, transformerCore, TEXT_HALO_WIDTH, drawModuleOutline, moduleSide,
+  smaBody as drawSmaBody, svgText, chipAlongX, sipBox, sipLegendDepth, transformerCore, TEXT_HALO_WIDTH, drawModuleOutline, moduleSide,
   partPlateColor, plateInk, plateLook,
 } from 'fence-kit';
 import type { BodyInk, BodyPart, ChipInk } from 'fence-kit';
@@ -736,7 +736,7 @@ function renderChip(
       theme,
       layout,
       room,
-      SIP_LEGEND_DEPTH,
+      alongX ? sipLegendDepth(options.names, layout.pitch, CHIP_SCALE) : SIP_LEGEND_DEPTH,
       nameSide,
     );
   }

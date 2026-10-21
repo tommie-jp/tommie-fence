@@ -1,3 +1,4 @@
+import { resolveDeviceModel } from 'fence-kit';
 import { safeToken } from '../errors.ts';
 import { LIMITS, clampText, isPinName } from '../limits.ts';
 import { NO_TURN, TURN_WORD, refusalFor } from '../parts/orient.ts';
@@ -28,7 +29,7 @@ export type Validation =
   | { readonly ok: true; readonly value: ExpandedPart; readonly notes: readonly string[] }
   | { readonly ok: false; readonly message: string };
 
-const KNOWN_KEYS = ['type', 'at', 'label', 'value', 'pins', 'holes', 'turn', 'color'] as const;
+const KNOWN_KEYS = ['type', 'at', 'label', 'value', 'model', 'pins', 'holes', 'turn', 'color'] as const;
 
 const invalid = (message: string): Validation => ({ ok: false, message });
 
@@ -86,6 +87,16 @@ export function validateExpandedPart(raw: unknown): Validation {
     );
   }
 
+  // **機器の型番 (`model:`)。** 表からピンの名前を引く。`pins:` を書けば使うピンだけを書いた順で出し、
+  // 表に無い名前は断る (fence-kit の `resolveDeviceModel`。3 つのフェンスで同じ決まり)。
+  const model = raw.model === undefined ? null : asText(raw.model);
+  if (raw.model !== undefined && model === null) return invalid('model は型番の字で書きます');
+  if (model !== null && type !== 'device') return invalid('model は機器 (device) にだけ書けます。基板に挿す部品の型番は値に書きます');
+  const resolved = model === null ? null : resolveDeviceModel(model, pins);
+  if (resolved !== null && !resolved.ok) return invalid(resolved.message);
+  const devicePins = resolved === null ? pins : resolved.names;
+  const deviceLabel = label ?? (resolved === null ? null : resolved.model);
+
   const holes = raw.holes === undefined ? [] : asTextList(raw.holes);
   if (holes === null) return invalid('holes は穴番地の配列です');
 
@@ -126,9 +137,9 @@ export function validateExpandedPart(raw: unknown): Validation {
     value: {
       type,
       at: isDevice ? at : null,
-      label: label === null ? null : clampText(label, LIMITS.labelLength),
+      label: deviceLabel === null ? null : clampText(deviceLabel, LIMITS.labelLength),
       value: keptValue === null ? null : clampText(keptValue, LIMITS.labelLength),
-      pins,
+      pins: devicePins,
       holes,
       turn,
       color,

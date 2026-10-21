@@ -491,6 +491,13 @@ const SIP_NAME_HALO = 2;
  */
 const SIP_NAME_CLEAR = 0.5;
 const SIP_NAME_CAP = 0.72;
+/**
+ * 寝た帯の名前の字の下限と、隣の名前との間 (ピッチに対する比)。**名前がピッチに収まらなければ
+ * 字を小さくし、下限でも収まらなければ縦に刷る** (5 文字の `SDATA` `FSYNC` が並ぶ AD9833 のモジュールで、
+ * 横に並べると隣どうしが重なった)。
+ */
+const SIP_NAME_MIN_FONT = 4.5;
+const SIP_NAME_ROOM = 0.9;
 /** ピンの ○ の半径の既定。breadboard は配線の端の粒と同じ半径を渡す。 */
 const SIP_PIN_RADIUS = 2.6;
 
@@ -537,6 +544,16 @@ export function sipLegends(options: SipOptions): string {
     haloWidth: SIP_NAME_HALO,
     haloOpacity: BOARD_HALO_OPACITY, inkOpacity: BOARD_INK_OPACITY,
   };
+  if (alongX) {
+    const size = lyingNameSize(names, pitch, scale);
+    if (size === null) {
+      return sipLegendsUpright(points, names, nameSide, across, { ...nameStyle, 'font-size': num(scale * SIP_NAME_MIN_FONT) });
+    }
+    const near = across / 2 + SIP_NAME_HALO / 2 + SIP_NAME_CLEAR + size * SIP_NAME_CAP;
+    return points
+      .map((point, index) => svgText(point.x, point.y + nameSide * near, names[index] ?? '', { ...nameStyle, 'font-size': num(size) }))
+      .join('');
+  }
   return points
     .map((point, index) => (alongX
       ? svgText(point.x, point.y + nameSide * gap, names[index] ?? '', nameStyle)
@@ -546,6 +563,43 @@ export function sipLegends(options: SipOptions): string {
         names[index] ?? '',
         { ...nameStyle, anchor: nameSide > 0 ? 'start' : 'end' },
       )))
+    .join('');
+}
+
+/** 寝た帯の名前の字の大きさ。ピッチに収まる大きさで、下限を割れば null (縦に刷る)。 */
+function lyingNameSize(names: readonly string[], pitch: number, scale: number): number | null {
+  const widest = Math.max(1e-9, ...names.map((name) => textWidth(name) * NAME_CAPS));
+  const fitted = Math.min(scale * SIP_NAME_FONT, (pitch * SIP_NAME_ROOM) / widest);
+  return fitted < scale * SIP_NAME_MIN_FONT ? null : fitted;
+}
+
+/**
+ * 寝た帯のピンの名前が、胴の縁から外へ出る深さ。**名札を置く側 (実体配線図の 2 つ) が
+ * 名前を避けるのに使う** — 縦に刷る名前は長いぶん深くなる。`sipLegends` と同じ寸法。
+ */
+export function sipLegendDepth(names: readonly string[], pitch: number, scale: number): number {
+  const size = lyingNameSize(names, pitch, scale);
+  if (size === null) {
+    const widest = Math.max(0, ...names.map((name) => textWidth(name) * NAME_CAPS));
+    return SIP_NAME_HALO / 2 + SIP_NAME_CLEAR + widest * scale * SIP_NAME_MIN_FONT + SIP_NAME_HALO;
+  }
+  return SIP_NAME_HALO / 2 + SIP_NAME_CLEAR + size * (SIP_NAME_CAP + 0.2);
+}
+
+/**
+ * 寝た帯の名前を**縦に**刷る (帯の縁から外へ向かって読む)。横に並べると隣と重なる長い名前に使う。
+ * 3 引数の rotate() を読まないレンダラがあるので translate と rotate に分ける。
+ */
+function sipLegendsUpright(
+  points: readonly ChipPoint[], names: readonly string[], nameSide: 1 | -1, across: number,
+  style: Record<string, string | number>,
+): string {
+  const start = across / 2 + SIP_NAME_HALO / 2 + SIP_NAME_CLEAR;
+  const size = Number(style['font-size']);
+  return points
+    .map((point, index) => element('g', {
+      transform: `translate(${num(point.x + size * 0.35)} ${num(point.y + nameSide * start)}) rotate(-90)`,
+    }, svgText(0, 0, names[index] ?? '', { ...style, anchor: nameSide > 0 ? 'end' : 'start' })))
     .join('');
 }
 

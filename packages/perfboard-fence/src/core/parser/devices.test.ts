@@ -12,6 +12,18 @@ describe('parseDevice', () => {
     });
   });
 
+  test('takes the pins and the label from model:', () => {
+    expect(read({ type: 'device', model: 'drv8833-pololu', pins: ['AIN1', 'AOUT1', 'GND'] })).toMatchObject({
+      ok: true, value: { label: 'drv8833-pololu', pins: ['AIN1', 'AOUT1', 'GND'] },
+    });
+    expect(read({ type: 'device', model: 'MBC2596-01' })).toMatchObject({ ok: true, value: { pins: ['IN+', 'IN-', 'OUT+', 'OUT-'] } });
+  });
+
+  test('refuses a pin that the model does not have', () => {
+    const result = read({ type: 'device', model: 'MBC2596-01', pins: 'VIN GND' });
+    expect(!result.ok && result.error.message).toContain('MBC2596-01 に VIN というピンはありません');
+  });
+
   test('puts a device above the board unless told otherwise', () => {
     expect(read({ type: 'device', pins: ['1', '2'] }).ok && read({ type: 'device', pins: ['1', '2'] }))
       .toMatchObject({ value: { at: 'top' } });

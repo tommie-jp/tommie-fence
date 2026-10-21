@@ -9,7 +9,7 @@ import { insertionDotRadius } from './wires.ts';
 import { isWideDip } from '../parts/wide.ts';
 import { element, num } from './svg.ts';
 import {
-  REAL_INK, dipChip, drawDipAdapter, drawModuleOutline, drawNamedChip, drawSipAdapter, lookupNamedChip, lookupPinout, plateLook, sipBox, sipHeader,
+  REAL_INK, dipChip, drawDipAdapter, drawModuleOutline, drawNamedChip, drawSipAdapter, lookupNamedChip, lookupPinout, plateLook, sipBox, sipLegendDepth, sipHeader,
   transformerCore,
 } from 'fence-kit';
 import { plateInkOf, plateOf } from './plate.ts';
@@ -114,7 +114,9 @@ const sipNameSide = (first: Point, layout: Layout): 1 | -1 => (first.y < layout.
  * ピンの名前が胴の縁から出る深さ。fence-kit の `sipLegends` と同じ寸法
  * (縁取りの半分 + 隙間 + 字の高さと深さ)。perfboard の `SIP_LEGEND_DEPTH` と同じ式。
  */
-const sipLegendDepth = (theme: RenderTheme): number => 1 + 0.5 + textScale(theme) * 6.5 * (0.72 + 0.2);
+/** 寝た帯のピンの名前が胴の縁から出る深さ (長い名前は縦に刷るので深くなる。fence-kit の `sipLegendDepth`)。 */
+const legendDepth = (part: PlacedPart, layout: Layout, theme: RenderTheme): number =>
+  sipLegendDepth(part.pins.map((pin) => pin.name), layout.pitch, textScale(theme));
 
 /**
  * 1 列の部品の名札の置き場の候補。**胴には字を刷らない** (真ん中のピンの ○ と食い合う) ので
@@ -132,7 +134,7 @@ export function sipCaptionSpots(part: PlacedPart, layout: Layout, theme: RenderT
   const cap = theme.metrics.textSize * NAME_CAP;
   const lying = points.every((point) => point.y === first.y);
   const namesBelow = lying && sipNameSide(first, layout) > 0;
-  const top = bar.y + bar.height + (namesBelow ? sipLegendDepth(theme) : 0);
+  const top = bar.y + bar.height + (namesBelow ? legendDepth(part, layout, theme) : 0);
   const below = { x: bar.x + bar.width / 2, y: top + CAPTION_CLEAR + cap, width };
   if (!lying) return [below];
   const gap = CAPTION_CLEAR + haloWidth(theme) / 2;
@@ -167,10 +169,10 @@ export function sipExtent(part: PlacedPart, layout: Layout, theme: RenderTheme):
   const bar = sipBox(points, layout.pitch);
   const side = sipNameSide(first, layout);
   if (points.every((point) => point.y === first.y)) {
-    const depth = sipLegendDepth(theme);
+    const depth = legendDepth(part, layout, theme);
     return { ...bar, y: side > 0 ? bar.y : bar.y - depth, height: bar.height + depth };
   }
-  const longest = Math.max(0, ...part.pins.map((pin) => [...pin.name].length)) * charWidth(theme) + sipLegendDepth(theme);
+  const longest = Math.max(0, ...part.pins.map((pin) => [...pin.name].length)) * charWidth(theme) + legendDepth(part, layout, theme);
   return { ...bar, x: side > 0 ? bar.x : bar.x - longest, width: bar.width + longest };
 }
 

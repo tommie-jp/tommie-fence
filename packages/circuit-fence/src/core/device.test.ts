@@ -61,6 +61,29 @@ describe('読む', () => {
     expect(doc.parts[0]).toMatchObject({ at: parseAddress('3,3'), turn: { rotate: 90, mirror: true }, spelling: ['here'] });
   });
 
+  test('takes the pins and the label from the model when only model: is written', () => {
+    const { doc, errors } = parseFence(circuit('parts:', '  M1:', '    type: device', '    at: 5,4', '    model: nrf24l01'));
+
+    expect(errors).toEqual([]);
+    expect(doc.parts[0]).toMatchObject({ value: 'nrf24l01', pinNames: ['GND', 'VCC', 'CE', 'CSN', 'SCK', 'MOSI', 'MISO', 'IRQ'] });
+  });
+
+  test('keeps the written pins of a model, and refuses one that is not in the table', () => {
+    const written = parseFence(circuit('parts:', '  M1:', '    type: device', '    at: 5,4', '    model: MBC2596-01', '    label: 降圧', '    pins: [IN+, OUT+]'));
+    expect(written.errors).toEqual([]);
+    expect(written.doc.parts[0]).toMatchObject({ value: '降圧', pinNames: ['IN+', 'OUT+'] });
+
+    const wrong = parseFence(circuit('parts:', '  M1:', '    type: device', '    at: 5,4', '    model: MBC2596-01', '    pins: [VIN, GND]'));
+    expect(wrong.errors[0]?.message).toContain('MBC2596-01 に VIN というピンはありません');
+  });
+
+  test('gives a 3 pin IC its pins from the model', () => {
+    const { doc, errors } = parseFence(circuit('parts:', '  U1:', '    type: ic3', '    at: 4,4', '    model: A3144'));
+
+    expect(errors).toEqual([]);
+    expect(doc.parts[0]).toMatchObject({ value: 'A3144', pinNames: ['VCC', 'GND', 'OUT'] });
+  });
+
   test('asks for the map form when a device is written on one line', () => {
     const { errors } = parseFence(circuit('parts:', '  M1: device 5,4'));
 
