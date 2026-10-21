@@ -1,0 +1,139 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\usetikzlibrary{decorations.markings}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\makeatletter
+\pgfdeclareshape{ic74HC245s500}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{2.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-2.4cm}}
+  \anchor{east}{\pgfpoint{1.6cm}{0cm}}
+  \anchor{west}{\pgfpoint{-1.6cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-1.6cm}{2.4cm}}
+  \anchor{pin 20}{\pgfpoint{0cm}{2.8cm}}
+  \anchor{bpin 20}{\pgfpoint{0cm}{2.4cm}}
+  \anchor{pin 1}{\pgfpoint{0.5cm}{2.8cm}}
+  \anchor{bpin 1}{\pgfpoint{0.5cm}{2.4cm}}
+  \anchor{pin 2}{\pgfpoint{-2cm}{1.5cm}}
+  \anchor{bpin 2}{\pgfpoint{-1.6cm}{1.5cm}}
+  \anchor{pin 3}{\pgfpoint{-2cm}{1cm}}
+  \anchor{bpin 3}{\pgfpoint{-1.6cm}{1cm}}
+  \anchor{pin 4}{\pgfpoint{-2cm}{0.5cm}}
+  \anchor{bpin 4}{\pgfpoint{-1.6cm}{0.5cm}}
+  \anchor{pin 5}{\pgfpoint{-2cm}{0cm}}
+  \anchor{bpin 5}{\pgfpoint{-1.6cm}{0cm}}
+  \anchor{pin 6}{\pgfpoint{-2cm}{-0.5cm}}
+  \anchor{bpin 6}{\pgfpoint{-1.6cm}{-0.5cm}}
+  \anchor{pin 7}{\pgfpoint{-2cm}{-1cm}}
+  \anchor{bpin 7}{\pgfpoint{-1.6cm}{-1cm}}
+  \anchor{pin 8}{\pgfpoint{-2cm}{-1.5cm}}
+  \anchor{bpin 8}{\pgfpoint{-1.6cm}{-1.5cm}}
+  \anchor{pin 9}{\pgfpoint{-2cm}{-2cm}}
+  \anchor{bpin 9}{\pgfpoint{-1.6cm}{-2cm}}
+  \anchor{pin 18}{\pgfpoint{2cm}{1.5cm}}
+  \anchor{bpin 18}{\pgfpoint{1.6cm}{1.5cm}}
+  \anchor{pin 17}{\pgfpoint{2cm}{1cm}}
+  \anchor{bpin 17}{\pgfpoint{1.6cm}{1cm}}
+  \anchor{pin 16}{\pgfpoint{2cm}{0.5cm}}
+  \anchor{bpin 16}{\pgfpoint{1.6cm}{0.5cm}}
+  \anchor{pin 15}{\pgfpoint{2cm}{0cm}}
+  \anchor{bpin 15}{\pgfpoint{1.6cm}{0cm}}
+  \anchor{pin 14}{\pgfpoint{2cm}{-0.5cm}}
+  \anchor{bpin 14}{\pgfpoint{1.6cm}{-0.5cm}}
+  \anchor{pin 13}{\pgfpoint{2cm}{-1cm}}
+  \anchor{bpin 13}{\pgfpoint{1.6cm}{-1cm}}
+  \anchor{pin 12}{\pgfpoint{2cm}{-1.5cm}}
+  \anchor{bpin 12}{\pgfpoint{1.6cm}{-1.5cm}}
+  \anchor{pin 11}{\pgfpoint{2cm}{-2cm}}
+  \anchor{bpin 11}{\pgfpoint{1.6cm}{-2cm}}
+  \anchor{pin 10}{\pgfpoint{0cm}{-2.8cm}}
+  \anchor{bpin 10}{\pgfpoint{0cm}{-2.4cm}}
+  \anchor{pin 19}{\pgfpoint{0.5cm}{-2.8cm}}
+  \anchor{bpin 19}{\pgfpoint{0.5cm}{-2.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-1.6cm}{-2.4cm}}{\pgfpoint{1.6cm}{2.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{2.8cm}}\pgfpathlineto{\pgfpoint{0cm}{2.4cm}}
+    \pgfpathmoveto{\pgfpoint{0.5cm}{2.8cm}}\pgfpathlineto{\pgfpoint{0.5cm}{2.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2cm}{1.5cm}}\pgfpathlineto{\pgfpoint{-1.6cm}{1.5cm}}
+    \pgfpathmoveto{\pgfpoint{-2cm}{1cm}}\pgfpathlineto{\pgfpoint{-1.6cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2cm}{0.5cm}}\pgfpathlineto{\pgfpoint{-1.6cm}{0.5cm}}
+    \pgfpathmoveto{\pgfpoint{-2cm}{0cm}}\pgfpathlineto{\pgfpoint{-1.6cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2cm}{-0.5cm}}\pgfpathlineto{\pgfpoint{-1.6cm}{-0.5cm}}
+    \pgfpathmoveto{\pgfpoint{-2cm}{-1cm}}\pgfpathlineto{\pgfpoint{-1.6cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{-2cm}{-1.5cm}}\pgfpathlineto{\pgfpoint{-1.6cm}{-1.5cm}}
+    \pgfpathmoveto{\pgfpoint{-2cm}{-2cm}}\pgfpathlineto{\pgfpoint{-1.6cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{2cm}{1.5cm}}\pgfpathlineto{\pgfpoint{1.6cm}{1.5cm}}
+    \pgfpathmoveto{\pgfpoint{2cm}{1cm}}\pgfpathlineto{\pgfpoint{1.6cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{2cm}{0.5cm}}\pgfpathlineto{\pgfpoint{1.6cm}{0.5cm}}
+    \pgfpathmoveto{\pgfpoint{2cm}{0cm}}\pgfpathlineto{\pgfpoint{1.6cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{2cm}{-0.5cm}}\pgfpathlineto{\pgfpoint{1.6cm}{-0.5cm}}
+    \pgfpathmoveto{\pgfpoint{2cm}{-1cm}}\pgfpathlineto{\pgfpoint{1.6cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2cm}{-1.5cm}}\pgfpathlineto{\pgfpoint{1.6cm}{-1.5cm}}
+    \pgfpathmoveto{\pgfpoint{2cm}{-2cm}}\pgfpathlineto{\pgfpoint{1.6cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-2.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-2.4cm}}
+    \pgfpathmoveto{\pgfpoint{0.5cm}{-2.8cm}}\pgfpathlineto{\pgfpoint{0.5cm}{-2.4cm}}
+  }
+}
+\makeatother
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\coordinate (x1y2) at (0,-1);
+\coordinate (x1y4) at (0,-3);
+\coordinate (x5y3p24) at (4,-2.24);
+\coordinate (x9y3p24) at (8,-2.24);
+\coordinate (x1y6) at (0,-5);
+\coordinate (x8y8) at (7,-7);
+\coordinate (x12y6p5) at (11,-5.5);
+\coordinate (x1y9p5) at (0,-8.5);
+\coordinate (x3y9p5) at (2,-8.5);
+\coordinate (x5y9p5) at (4,-8.5);
+\draw (x1y2) node[ocirc]{} node[above left]{CLK}; % line 4
+\draw (x1y4) node[ocirc]{} node[above left]{EN}; % line 5
+\node[and port] (part-U1A) at (x5y3p24) {}; % line 6
+\node[font=\scriptsize, anchor=north] at (part-U1A.south) {$\mathrm{74HC08}$}; % line 6
+\node[anchor=south] at (part-U1A.north) {$U_{1A}$}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=south west, xshift=-1pt, yshift=1pt, inner sep=0] at (part-U1A.in 1) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=south west, xshift=-1pt, yshift=1pt, inner sep=0] at (part-U1A.in 2) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=south west, xshift=1pt, yshift=1pt, inner sep=0] at (part-U1A.out) {X}; % line 6
+\draw (x9y3p24) node[ocirc]{} node[above left]{Y}; % line 7
+\draw (x1y6) node[ocirc]{} node[above left]{D0}; % line 8
+\node[ic74HC245s500, draw, font=\scriptsize] (part-U2) at (x8y8) {$\mathrm{74HC245}$}; % line 9
+\node[anchor=south west] at (part-U2.north west) {$U_{2}$}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U2.bpin 1) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 2) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 3) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 4) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 5) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 6) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 7) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 8) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 9) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U2.bpin 10) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 11) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 12) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 13) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 14) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 15) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 16) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 17) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 18) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U2.bpin 19) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U2.bpin 20) {X}; % line 9
+\draw (x12y6p5) node[ocirc]{} node[above left]{B1}; % line 10
+\draw (x1y9p5) node[ocirc]{} node[above left]{VM}; % line 11
+\draw (x3y9p5) to[R, l_=$R_{1}$, a^=$10\,\mathrm{k}\Omega$] (x5y9p5); % line 12
+\draw[postaction={decorate}, decoration={markings, mark=at position 0.45cm with {\arrow[scale=1.5]{latex}}}] (x1y2) |- (part-U1A.in 1); % line 14
+\draw[postaction={decorate}, decoration={markings, mark=at position 0.45cm with {\arrow[scale=1.5]{latex}}}] (x1y4) |- (part-U1A.in 2); % line 15
+\draw[postaction={decorate}, decoration={markings, mark=at position -0.45cm with {\arrow[scale=1.5]{latex}}}] (part-U1A.out) -- (x9y3p24); % line 16
+\draw[postaction={decorate}, decoration={markings, mark=at position 0.2cm with {\arrowreversed[scale=1.5]{latex}}, mark=at position 0.9cm with {\arrow[scale=1.5]{latex}}}] (x1y6) -| (part-U2.pin 2); % line 17
+\draw[postaction={decorate}, decoration={markings, mark=at position -0.2cm with {\arrow[scale=1.5]{latex}}, mark=at position -0.9cm with {\arrowreversed[scale=1.5]{latex}}}] (part-U2.pin 18) -| (x12y6p5); % line 18
+\draw (x1y9p5) -- (x3y9p5); % line 19
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(10.058,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
+\end{circuitikz}
+\end{document}

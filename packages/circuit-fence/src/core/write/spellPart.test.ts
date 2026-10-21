@@ -81,3 +81,11 @@ describe('組み直した行は読み直せる', () => {
     }
   });
 });
+
+describe('spellPart の端子の向き', () => {
+  test('writes the direction back after the address', () => {
+    const { doc } = parseFence('parts:\n  CLK: port 1,1 in\n  Q: port 3,1 out\n  D: port 5,1\n');
+    if (doc === null) throw new Error('YAML を読めませんでした');
+    expect(doc.parts.map((part) => spellPart(part))).toEqual(['CLK: port 1,1 in', 'Q: port 3,1 out', 'D: port 5,1']);
+  });
+});

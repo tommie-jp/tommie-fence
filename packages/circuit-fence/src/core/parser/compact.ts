@@ -13,7 +13,7 @@ import { icLayoutModels, lookupIcPinout } from '../icLayouts.ts';
 import { DEVICE, IC, NO_TURN, closestPartType, lookupPartType, partTypeNames, resolvePartTypeName } from '../parts.ts';
 import type { PartTypeName, Turn } from '../parts.ts';
 import { NOTE_CHARSET, describeChars, isNoteDrawable, unusableChars } from '../tex/escape.ts';
-import type { Endpoint, FenceError, NoteSpec, NoteTextStyle, PartSpec, Result, WireSpec } from '../types.ts';
+import type { Endpoint, FenceError, NoteSpec, NoteTextStyle, PartSpec, PortDirection, Result, WireSpec } from '../types.ts';
 import { NOTE_MIRROR_WORD, isNoteRotation, noteRotationOf } from '../notes.ts';
 
 /** 配線の演算子。TikZ と同じ 3 つだけ (学習コストを増やさない)。 */
@@ -377,7 +377,18 @@ function readOneTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
   const rail = type === 'vcc' || type === 'vee';
   const volts = rail ? readRailVolts(afterAt[0]) : null;
   if (volts !== null && !volts.ok) return fail(volts.message(written), line);
-  const extra = volts === null ? afterAt : afterAt.slice(1);
+  const afterVolts = volts === null ? afterAt : afterAt.slice(1);
+
+  // 端子だけ、番地のあとに向きを 1 つ書ける (`CLK: port d3 in`)。図では線に矢を描く。
+  const directions = afterVolts.filter(isPortDirection);
+  if (directions.length > 0 && type !== 'port') {
+    return fail(`${safeToken(written)} には向き (in / out / inout) を書けません。書けるのは port だけです`, line);
+  }
+  if (directions.length > 1) return fail(`port の向きは 1 つだけ書けます (${directions.join(' ')})`, line);
+  if (type === 'port' && afterVolts.some((token) => !isPortDirection(token))) {
+    return fail(`port は「種類 番地 [in / out / inout]」で書きます`, line);
+  }
+  const extra = afterVolts.filter((token) => !isPortDirection(token));
 
   // 番地のあとに書けるのは向きの語だけ (書けるのは `ground`。種類ごとの
   // 可否は表引きで見るので、ここでは形だけを見る)。± は多端子の鍵なので通さない。
@@ -395,10 +406,15 @@ function readOneTerminal(head: PartHead, rest: string[]): Result<PartSpec> {
   return ok({
     kind: 'one-terminal', id, type, at: at.value, turn: turned.turn, line,
     ...(volts === null ? {} : { supply: `${type === 'vee' ? '-' : '+'}${volts.value}V` }),
+    ...(directions[0] === undefined ? {} : { direction: directions[0] }),
     // 書かれた綴りをそのまま持つ (番地の名前・種類の別名のため)。
     spelling: [atToken], written,
   });
 }
+
+/** 端子の向きの語。別名 (`input` `io` など) は通さない — 綴りが増えると読む側が迷う。 */
+const PORT_DIRECTIONS: readonly PortDirection[] = ['in', 'out', 'inout'];
+const isPortDirection = (token: string): token is PortDirection => (PORT_DIRECTIONS as readonly string[]).includes(token);
 
 /**
  * 電源レールの電圧の字。`5V` `3.3V` を読む。単位の無い数 (`5`) は、書き手が

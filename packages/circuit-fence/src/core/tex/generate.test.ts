@@ -1617,3 +1617,44 @@ describe('DIP とボードのピンを番地に乗せる', () => {
     expect(tex).toContain('\\anchor{pin 1}{\\pgfpoint{-0.95cm}{0.48cm}}');
   });
 });
+
+describe('端子の向き', () => {
+  const portRows = (word: string, wire: string) => ['parts:', `  P: port 1,1 ${word}`, '  R1: resistor 3,1 5,1 1k', 'wires:', `  - ${wire}`];
+
+  test('draws an input arrow on the wire that touches the port, pointing away from the port', () => {
+    const { tex } = generate(...portRows('in', '1,1 -- 3,1'));
+    expect(tex).toContain('\\usetikzlibrary{decorations.markings}');
+    expect(tex).toMatch(/mark=at position 0\.45cm with \{\\arrow\[scale=1\.5\]\{latex\}\}.*\(x1y1\) -- \(x3y1\)/);
+  });
+
+  test('turns the arrow for an output, so that it points at the port', () => {
+    const { tex } = generate(...portRows('out', '1,1 -- 3,1'));
+    expect(tex).toMatch(/mark=at position 0\.45cm with \{\\arrowreversed\[scale=1\.5\]\{latex\}\}.*\(x1y1\) -- \(x3y1\)/);
+  });
+
+  test('measures from the end when the port is the far end of the wire', () => {
+    const inTex = generate(...portRows('in', '3,1 -- 1,1')).tex;
+    expect(inTex).toMatch(/mark=at position -0\.45cm with \{\\arrowreversed\[scale=1\.5\]\{latex\}\}.*\(x3y1\) -- \(x1y1\)/);
+    const outTex = generate(...portRows('out', '3,1 -- 1,1')).tex;
+    expect(outTex).toMatch(/mark=at position -0\.45cm with \{\\arrow\[scale=1\.5\]\{latex\}\}.*\(x3y1\) -- \(x1y1\)/);
+  });
+
+  test('draws two heads for inout', () => {
+    const { tex } = generate(...portRows('inout', '1,1 -- 3,1'));
+    expect(tex).toContain('\\arrow[scale=1.5]{latex}');
+    expect(tex).toContain('\\arrowreversed[scale=1.5]{latex}');
+  });
+
+  test('marks only the first wire that touches the port', () => {
+    const { tex } = generate('parts:', '  P: port 1,1 in', '  R1: resistor 3,1 5,1 1k', '  R2: resistor 1,3 3,3 1k',
+      'wires:', '  - 1,1 -- 3,1', '  - 1,1 -- 1,3');
+    expect(tex.match(/decorations\.markings\}/g)).toHaveLength(1);
+    expect(tex.match(/mark=at position/g)).toHaveLength(1);
+  });
+
+  test('leaves a port without a direction, and the header, as they were', () => {
+    const { tex } = generate(...portRows('', '1,1 -- 3,1'));
+    expect(tex).not.toContain('decorations.markings');
+    expect(tex).not.toContain('mark=at position');
+  });
+});

@@ -13,7 +13,8 @@ import { STANDARD_TEX, VOLTAGE_STYLE } from '../standard.ts';
 import type { Standard } from '../standard.ts';
 import { cellOf as addressOf, nodeNameOf, texNameOfEndpoint } from '../types.ts';
 import type {
-  MultiTerminalPart, NoteOverlay, PartSpec, StyleSpec, TexTarget, TwoTerminalPart, OneTerminalPart,
+  Endpoint, MultiTerminalPart, NoteOverlay, PartSpec, PortDirection, StyleSpec, TexTarget, TwoTerminalPart, OneTerminalPart,
+  WireSpec,
 } from '../types.ts';
 import {
   MARK_COLOR_NAME, drawNote, drawStamp, drawTitle, listingOf, noteColorLines, noteNeeds, noteOverlays,
@@ -183,10 +184,13 @@ const headerOf = (
   hasCurrent: boolean,
   hasMos: boolean,
   shapes: readonly string[],
+  needsMarkings: boolean,
 ): string[] => [
   '\\usepackage{circuitikz}',
   // オペアンプの ± をアンカーからずらして置くのに要る。
   '\\usetikzlibrary{calc}',
+  // 端子の向きの矢 (線の途中に矢を描く)。**向きを書いた端子があるときだけ**。
+  ...(needsMarkings ? ['\\usetikzlibrary{decorations.markings}'] : []),
   // 指し棒の先端の形。**要るときだけ**書く (図に入る書き方を増やさない。約束 6)。
   ...(needsArrows ? ['\\usetikzlibrary{arrows.meta}'] : []),
   // フェンスの TeX には siunitx が無い (実測)。書き出すほうでだけ使う。
@@ -908,6 +912,50 @@ function drawOneTerminal(part: OneTerminalPart, target: TexTarget): string {
   }
 }
 
+/**
+ * 端子の向きの矢を置く位置 (端子から線に沿って測る、cm)。白丸と名前の字を避けて少し離す。
+ * 双方向は 2 つの矢を少しずらして並べる。
+ */
+const PORT_ARROW_AT = 0.45;
+const PORT_INOUT_AT = [0.2, 0.9] as const;
+/** 矢じりの大きさ。線の太さのままだと小さく、向きが読みにくかった (実測)。 */
+const PORT_TIP = '[scale=1.5]{latex}';
+
+const touches = (end: Endpoint, at: { readonly row: number; readonly col: number }): boolean =>
+  end.kind === 'cell' && end.address.row === at.row && end.address.col === at.col;
+
+/**
+ * 向きを書いた端子ごとに、**端子に触れた最初の線**へ矢を付ける (線ごとの markings)。
+ *
+ * 矢を線の上に描くのは、線の向きを TikZ に任せるため。ピンの座標は TikZ が決めるので
+ * こちらでは分からず、`|-` の折れ方や長さ 0 の区間も、線に沿って測れば正しく向く。
+ * 端子が線の終わりの端なら、終わりから測る (markings の負の位置)。
+ */
+function portMarks(circuit: Circuit): Map<WireSpec, string[]> {
+  const marks = new Map<WireSpec, string[]>();
+  for (const part of circuit.parts) {
+    if (part.kind !== 'one-terminal' || part.direction === undefined) continue;
+    const wire = circuit.wires.find((candidate) => touches(candidate.from, part.at) || touches(candidate.to, part.at));
+    if (wire === undefined) continue;
+    marks.set(wire, [...(marks.get(wire) ?? []), ...markingsOf(part.direction, touches(wire.from, part.at))]);
+  }
+  return marks;
+}
+
+/** 1 つの端子の矢。`away` は端子から離れる向き、`toward` は端子へ向かう向き。 */
+function markingsOf(direction: PortDirection, atStart: boolean): string[] {
+  const sign = atStart ? '' : '-';
+  const away = atStart ? `\\arrow${PORT_TIP}` : `\\arrowreversed${PORT_TIP}`;
+  const toward = atStart ? `\\arrowreversed${PORT_TIP}` : `\\arrow${PORT_TIP}`;
+  const mark = (at: number, tip: string) => `mark=at position ${sign}${num(at)}cm with {${tip}}`;
+  if (direction === 'in') return [mark(PORT_ARROW_AT, away)];
+  if (direction === 'out') return [mark(PORT_ARROW_AT, toward)];
+  return [mark(PORT_INOUT_AT[0], toward), mark(PORT_INOUT_AT[1], away)];
+}
+
+const markingsOption = (marks: readonly string[] | undefined): string =>
+  marks === undefined ? '' : `[postaction={decorate}, decoration={markings, ${marks.join(', ')}}]`;
+
 /** 電源レールの電圧の字 (`+5V` / `-5V`)。マイナスは数式にして、ハイフンに見えないようにする。 */
 function supplyTex(supply: string): string {
   return supply.startsWith('-') ? `$-$${escapeTex(supply.slice(1))}` : escapeTex(supply);
@@ -1211,6 +1259,7 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
     circuit.parts.some((part) => part.kind === 'two-terminal' && part.current !== null),
     circuit.parts.some((part) => MOS_ARROW_TYPES.has(part.type)),
     sipShapesFor(circuit, pitch),
+    circuit.parts.some((part) => part.kind === 'one-terminal' && part.direction !== undefined),
   );
   const cells = cellsOf(circuit);
   const byId = new Map(circuit.parts.map((part) => [part.id, part]));
@@ -1227,12 +1276,13 @@ export function generateTex(circuit: Circuit, options: GenerateOptions = {}): Te
     lines.push(`\\coordinate (${texNameOfAddress(cell.address)}) at (${num(x)},${num(y)});`);
   }
 
+  const marks = portMarks(circuit);
   const drawings: { readonly tex: string; readonly line: number }[] = [
     ...circuit.parts.flatMap((part) =>
       drawPart(part, target, pitch, style.standard ?? DEFAULT_STANDARD).map((tex) => ({ tex, line: part.line })),
     ),
     ...circuit.wires.map((wire) => ({
-      tex: `\\draw (${texNameOfEndpoint(wire.from)}) ${wire.operator} (${texNameOfEndpoint(wire.to)});`,
+      tex: `\\draw${markingsOption(marks.get(wire))} (${texNameOfEndpoint(wire.from)}) ${wire.operator} (${texNameOfEndpoint(wire.to)});`,
       line: wire.line,
     })),
   ];

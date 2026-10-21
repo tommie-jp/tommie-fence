@@ -55,7 +55,9 @@ export function spellPart(part: PartSpec): string {
     ].join(' ');
   }
 
-  if (part.kind === 'one-terminal') return [...head, ...turnWords(part.turn)].join(' ');
+  if (part.kind === 'one-terminal') {
+    return [...head, ...(part.direction === undefined ? [] : [part.direction]), ...turnWords(part.turn)].join(' ');
+  }
 
   // 多端子の `orientation` (± の並び) は向きの語と同じ場所に書く。
   return [

@@ -103,6 +103,12 @@ export type TwoTerminalPart = {
   readonly line: number;
 };
 
+/**
+ * 端子 (`port`) の向き。信号が回路へ入るか (`in`)、出るか (`out`)、両方か (`inout`)。
+ * 図では端子に触れた線に矢を描く。書かなければ今までどおりの白丸だけ。
+ */
+export type PortDirection = 'in' | 'out' | 'inout';
+
 /** 端子やグラウンドのように 1 つの交点に置く記号。 */
 export type OneTerminalPart = {
   readonly kind: 'one-terminal';
@@ -116,6 +122,8 @@ export type OneTerminalPart = {
    * 図には ID の代わりにこれを出し、ネットの名前は ID のまま。
    */
   readonly supply?: string;
+  /** 端子の向き。書けるのは `port` だけで、書いたときだけある。 */
+  readonly direction?: PortDirection;
   /**
    * 書かれた番地の綴り。`addressesOf` と同じ順 (2 端子は from・to、ほかは at 1 つ)。
    *

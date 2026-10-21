@@ -45,6 +45,7 @@ GitHub のようにフェンスが描画されない場所で、ソースと図�
 | [15-arrows.md](15-arrows.md) | 電流の矢と電圧の符号 (`i=` `v=`) |
 | [16-orientation.md](16-orientation.md) | 記号の向き (`r90` / `r180` / `r270` / `mirror`) |
 | [17-named-chips.md](17-named-chips.md) | ピンに名前のある部品 (リレー・フォトカプラ・7 セグ) |
+| [18-port-direction.md](18-port-direction.md) | 端子の向き (`in` / `out` / `inout`) |
 
 ## わざと壊してある例
 

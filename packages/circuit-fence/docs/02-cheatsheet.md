@@ -88,7 +88,8 @@ parts:
   `lamp` `speaker` `mic` `short` `ammeter` `voltmeter` `ohmmeter` `wattmeter`
   `galvanometer` `detector`
 - 1 端子 `port` `antenna` `ground` `vcc` `vee`
-  (`vcc` / `vee` は電圧を書ける: `VCC: vcc 1,1 5V` で図に `+5V`、ネットは `VCC`)
+  (`vcc` / `vee` は電圧を書ける: `VCC: vcc 1,1 5V` で図に `+5V`、ネットは `VCC`。
+  `port` は向きを書ける: `CLK: port 1,1 in` / `Q: port 9,1 out` / `D0: port 1,5 inout` で、端子に触れた線に矢)
 - 能動 `npn` `pnp` `nigbt` `pigbt` `nmos` `pmos` `njfet` `pjfet`
   `nmos-e` `pmos-e` `nmos-d` `pmos-d` `nmos-dg` (デュアルゲート。ピン 4 本: `G1` `G2` `D` `S`) `opamp` `transformer` `transformer-ct` (2 次に中点 `CT`) `transformer-ct2` (両側に中点 `ACT` `BCT`) `phototransistor`
 - 論理 `and` `or` `nand` `nor` `xor` `xnor` `not` `buffer` `spdt` `slide-switch`

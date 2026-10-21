@@ -907,3 +907,30 @@ describe('x,y の番地と、取り違えやすい語', () => {
     expect(messageOf('npn 3,3 2,2', 'Q1').message).toContain(',');
   });
 });
+
+describe('端子の向き', () => {
+  test('reads in, out and inout after the address of a port', () => {
+    expect(partOf('port 1,1 in', 'CLK')).toMatchObject({ kind: 'one-terminal', type: 'port', direction: 'in' });
+    expect(partOf('port 1,1 out', 'Q')).toMatchObject({ direction: 'out' });
+    expect(partOf('port 1,1 inout', 'D0')).toMatchObject({ direction: 'inout' });
+  });
+
+  test('leaves a port without a word as it was (no direction)', () => {
+    expect(partOf('port 1,1', 'IN')).not.toHaveProperty('direction');
+  });
+
+  test('refuses a word that is not one of the three, and names the three', () => {
+    const message = messageOf('port 1,1 input', 'IN').message;
+    expect(message).toContain('in');
+    expect(message).toContain('inout');
+  });
+
+  test('refuses a direction on a symbol that is not a port', () => {
+    expect(messageOf('vcc 3,4 in', 'VCC').message).toContain('port');
+    expect(messageOf('ground 3,4 out', 'G1').message).toContain('port');
+  });
+
+  test('refuses two directions', () => {
+    expect(messageOf('port 1,1 in out', 'IN').message).toContain('1 つ');
+  });
+});
