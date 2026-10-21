@@ -50,11 +50,11 @@ const ROWS: readonly ModuleRow[] = [
   },
   {
     models: ['ULN2003-BOARD', 'ULN2003-STEPPER', 'ULN2003-DRIVER'],
-    names: ['IN1', 'IN2', 'IN3', 'IN4', '-', '+', 'A', 'B', 'C', 'D', 'V+'],
+    names: ['IN1', 'IN2', 'IN3', 'IN4', 'GND', 'VCC', 'A', 'B', 'C', 'D', 'V+'],
     role: 'ステッピングモータの駆動基板 (ULN2003)', roleEn: 'stepper motor driver board (ULN2003)',
     product: '28BYJ-48 と組で売られる緑の基板 (ULN2003AN・XH 5P・表示 LED 4 個・ON/OFF ジャンパ)',
-    view: '入力のヘッダ (下の辺、左から IN1〜IN4)・電源のヘッダ (右の辺、- +)・モータのコネクタ (上の辺、左から A B C D V+)',
-    note: 'モータのコネクタは 28BYJ-48 のコネクタがそのまま挿さる (A=BLUE・B=PINK・C=YELLOW・D=ORANGE・V+=RED)。電源は 5〜12 V、1 出力 500 mA まで。**電源のヘッダの + と - の上下は資料で確かめられていない** (基板の印字で確かめる)',
+    view: '入力のヘッダ (下の辺、左から IN1〜IN4)・電源のヘッダ (右の辺、印字 - + を GND VCC と呼ぶ)・モータのコネクタ (上の辺、左から A B C D V+)',
+    note: 'モータのコネクタは 28BYJ-48 のコネクタがそのまま挿さる (A=BLUE・B=PINK・C=YELLOW・D=ORANGE・V+=RED)。電源のヘッダの印字 `-` `+` は `GND` `VCC` と呼ぶ (配線の `--` と紛れないため)。電源は 5〜12 V、1 出力 500 mA まで。**電源のヘッダの + と - の上下は資料で確かめられていない** (基板の印字で確かめる)',
     source: 'Makerguides の資料 ULN2003-Stepper-Motor-Driver-PCB.pdf (2019-04、https://www.makerguides.com/wp-content/uploads/2019/04/ULN2003-Stepper-Motor-Driver-PCB.pdf)、p1 の基板の写真と Typical Connections の表',
   },
   {
