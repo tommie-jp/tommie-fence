@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.28.0] - 2026-10-21
+
 ### Added
 
 - **教科書で使う部品を型番の表に足した** (`parts/pinouts.ts`・`parts/discretes.ts`)。3 本足の IC・センサ `TA7642` (`GND IN OUT`)・`A3144` (`VCC GND OUT`)・`A1324` (`VCC GND VOUT`)・`LM35` (`VS VOUT GND`)、人感センサのモジュール `HC-SR501` (`VCC OUT GND`)、村田のセラミックフィルタ `SFELF10M7`・`CFULA455` (`IN GND OUT`。CFULA の実物の足は三角の配置) を 1 列の姿 (`look`) つきで、8 ピンの I2C 温度センサ `LM75`・`MCP9808` (チップの並び) を足した。ディスクリートの表に `2SC3355` (TO-92、B E C)・`J310` (TO-92、D S G。onsemi の並び)・`BSS84` (SOT-23 の P チャネル、G S D)。並びはメーカーの資料で確かめた (TA7642 だけは互換品 UTC 7642 の資料)。働きの英語 (`ROLES_EN`) も足した
