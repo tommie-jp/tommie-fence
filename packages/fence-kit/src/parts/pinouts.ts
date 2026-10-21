@@ -670,6 +670,72 @@ const ROWS: readonly PinoutRow[] = [
     note: '`sip4` を青の胴で描く。3 番は NC (番号で呼ぶ)。DATA は 4.7 kΩ〜10 kΩ で VCC へ',
   },
   {
+    // 人感センサのモジュール。ピンは 1 列 3 本。HK Shan Hai の資料の写真 (レンズを外した部品面、ヘッダが上) は
+    // 左から GND・OUT・+Power で、ヘッダを手前にすると逆 (VCC OUT GND)。番号は Components101 の 1 Vcc・2 Dout・3 GND。
+    models: ['HC-SR501', 'HCSR501'], role: '人感 (焦電) センサのモジュール',
+    names: ['VCC', 'OUT', 'GND'],
+    look: { body: '#2f7d4f', edge: '#1d5434' },
+    note: '`sip3` を緑の帯で描く (基板のピンヘッダだけ)。電源は 4.5〜20 V、OUT は 3.3 V の H。見る向きで左右が逆になるので、基板の印字で確かめる',
+  },
+  // --- 3 本足の IC・センサ (TO-92 と Allegro の UA)。並びは印字面を手前、足を下にして左から 1・2・3 ---
+  {
+    // 東芝の原本は見つからず、互換の UTC 7642 (TO-92) と Wiltronics の資料による。UTC の SOT-23 は並びが違う。
+    models: ['TA7642', '7642', 'UTC7642'], role: 'AM ラジオ IC (ストレート)',
+    names: ['GND', 'IN', 'OUT'],
+    look: { body: '#2b2b2b', edge: '#111111' },
+    note: '`sip3` (`ic3`) を黒い TO-92 の胴で描く。OUT は抵抗を通して電源へ (電源のピンは無い)。**東芝の原本の資料は無く、互換品 (UTC 7642) の資料による**',
+  },
+  {
+    // Allegro の資料は「印字面から見た図」(Dwg. PH-003A)。A3144 は生産終了で、OH3144 などの互換品が出回る。
+    models: ['A3144', 'A3144E', 'A3144EUA', 'OH3144'], role: 'ホールスイッチ (開放コレクタ)',
+    names: ['VCC', 'GND', 'OUT'],
+    look: { body: '#2b2b2b', edge: '#111111' },
+    note: '`sip3` (`ic3`) を黒い胴で描く (実物は TO-92 より小さい UA)。OUT は開放コレクタで、プルアップが要る',
+  },
+  {
+    // Allegro A1324-DS Rev. 9 の Pinout Diagrams (UA、足を下にした正面図)。A1325・A1326 は感度だけ違う。
+    models: ['A1324', 'A1324LUA-T', 'A1325', 'A1326'], role: 'リニアホールセンサ (アナログ出力)',
+    names: ['VCC', 'GND', 'VOUT'],
+    look: { body: '#2b2b2b', edge: '#111111' },
+    note: '`sip3` (`ic3`) を黒い胴で描く。**出力は 3 番** (2 番は GND)。磁界が無いと VCC の半分を出す',
+  },
+  {
+    // TI SNIS159H の LP (TO-92) の底面図。印字は `+VS` だが、電源のピンを `V…` で始める決まりで `VS` にした。
+    models: ['LM35', 'LM35DZ', 'LM35CZ', 'LM35CAZ'], role: '温度センサ (10 mV/℃)',
+    names: ['VS', 'VOUT', 'GND'],
+    look: { body: '#2b2b2b', edge: '#111111' },
+    note: '`sip3` (`ic3`) を黒い TO-92 の胴で描く。印字の `+VS` は `VS`。TO-92 の並び (TO-220 と SO8 は違う)',
+  },
+  // --- 8 ピンの I2C 温度センサ (面実装。変換基板に載せて `dip8/sop` で置く) ---
+  {
+    // TI SNIS153D の Pin Functions (D・DGK)。印字の `+VS` は `VS`、`O.S.` は `.` が書けないので `OS`。
+    models: ['LM75', 'LM75B', 'LM75C', 'LM75A'], role: 'I2C 温度センサ',
+    names: ['SDA', 'SCL', 'OS', 'GND', 'A2', 'A1', 'A0', 'VS'],
+    note: '印字の `+VS` は `VS`、`O.S.` は `OS`。A2〜A0 でアドレスを決める',
+  },
+  {
+    // Microchip DS20005095B の Table 3-1 (MSOP・DFN。DFN の 9 番 EP は GND)。
+    // ブレークアウト基板 (Adafruit 1782 など) のヘッダの並びは基板ごとに違うので、この行はチップだけ。
+    models: ['MCP9808'], role: 'I2C 温度センサ (±0.5 ℃)',
+    names: ['SDA', 'SCL', 'ALERT', 'GND', 'A2', 'A1', 'A0', 'VDD'],
+    note: 'チップの並び。ブレークアウト基板のヘッダは基板ごとに違うので `pins:` で書く。アドレスは 0x18〜0x1F',
+  },
+  // --- 村田のセラミックフィルタ (3 本足) ---
+  {
+    // 村田 P50E-6 の SFELF の外形図。足は一直線に 2.5 mm 間隔。
+    models: ['SFELF10M7', 'SFELF10M7FA00', 'SFELF10M7GA00', 'SFELF10M7HA00', 'SFELF10M7FA00-B0'], role: 'セラミックフィルタ 10.7 MHz',
+    names: ['IN', 'GND', 'OUT'],
+    look: { body: '#3a3a3a', edge: '#1c1c1c' },
+    note: '`sip3` を暗い色の胴で描く。入出力 330 Ω',
+  },
+  {
+    // 村田 P05E-16 の CFULA の外形図。**足は一直線でなく三角** ((1)(2) が 2.7 mm の列、(3) が 4.2 mm 離れた列)。
+    models: ['CFULA455', 'CFULA455KE4A', 'CFULA455KE4A-B0'], role: 'セラミックフィルタ 455 kHz (4 素子)',
+    names: ['IN', 'GND', 'OUT'],
+    look: { body: '#3a3a3a', edge: '#1c1c1c' },
+    note: '`sip3` を暗い色の胴で描く。**実物の足は三角の配置で、一直線の図は目安** (ブレッドボードには挿しにくい)。入出力 1.5 kΩ',
+  },
+  {
     // 秋月の LAN コネクターDIP化キット (販売コード 105404、キットの型番 AE-RJ-45-LAN-DIP-A-KIT)。
     // 変換基板 (AE-RJ-45-LAN-DIP-A、25.36 × 15 mm) に RJ45 のジャックが載り、2.54 mm の 1 列 8 本 (CN2) が
     // 基板の一辺の縁に出る。パルストランスは無い (素の信号が出る)。

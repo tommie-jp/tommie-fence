@@ -159,12 +159,16 @@ describe('ピンの名前の表', () => {
     const all = pinoutModels();
 
     // 先頭の 35 行は 74HC273 まで (既存の並び。LM393 は 6 行目、そのあとに SA612・MCP6002・LM386)、
-    // そのあとにロジック IC、そのあとに 3SK291、SFU455B、1 列のモジュール (KY-040・HC-SR04・SG90・DHT11・RJ45 の DIP 化キット)。
+    // そのあとにロジック IC、そのあとに 3SK291、SFU455B、1 列のモジュール (KY-040・HC-SR04・SG90・DHT11・HC-SR501)、
+    // 3 本足の IC・センサ、8 ピンの温度センサ、村田のフィルタ 2 つ、RJ45 の DIP 化キット。
     expect(all.slice(0, 9)).toEqual(['NE555', 'TLC555', 'LM358', 'TL071', 'TL072', 'LM393', 'SA612', 'MCP6002', 'LM386']);
     expect(all.slice(32, 39)).toEqual(['62256', '6116', '74HC245', '74HC273', '74HC14', '74HC00', '74HC161']);
-    expect(all.slice(-7)).toEqual(['3SK291', 'SFU455B', 'KY-040', 'HC-SR04', 'SG90', 'DHT11', 'AE-RJ-45-LAN-DIP-A']);
+    expect(all.slice(-16)).toEqual([
+      '3SK291', 'SFU455B', 'KY-040', 'HC-SR04', 'SG90', 'DHT11', 'HC-SR501',
+      'TA7642', 'A3144', 'A1324', 'LM35', 'LM75', 'MCP9808', 'SFELF10M7', 'CFULA455', 'AE-RJ-45-LAN-DIP-A',
+    ]);
     expect(new Set(all).size).toBe(all.length);
-    expect(pinoutModels(3)).toEqual(['SFU455B', 'SG90']);
+    expect(pinoutModels(3)).toEqual(['SFU455B', 'SG90', 'HC-SR501', 'TA7642', 'A3144', 'A1324', 'LM35', 'SFELF10M7', 'CFULA455']);
     expect(pinoutModels(4)).toEqual(['3SK291', 'HC-SR04', 'DHT11']);
     expect(pinoutModels(5)).toEqual(['KY-040']);
     expect(pinoutModels(20)).toEqual([
@@ -456,6 +460,46 @@ describe('1 列のモジュール・センサ (KY-040・HC-SR04・SG90・DHT11)'
     expect(lookupPinout('ky040', 5)?.model).toBe('KY-040');
     expect(lookupPinout('hcsr04', 4)?.model).toBe('HC-SR04');
     expect(lookupPinout('MG90S', 3)?.model).toBe('SG90');
+  });
+});
+
+describe('教科書で使う 3 本足の IC・センサ・フィルタと 8 ピンの温度センサ', () => {
+  test.each([
+    ['HC-SR501', 3, ['VCC', 'OUT', 'GND']],
+    ['TA7642', 3, ['GND', 'IN', 'OUT']],
+    ['A3144', 3, ['VCC', 'GND', 'OUT']],
+    ['A1324', 3, ['VCC', 'GND', 'VOUT']],
+    ['LM35', 3, ['VS', 'VOUT', 'GND']],
+    ['SFELF10M7', 3, ['IN', 'GND', 'OUT']],
+    ['CFULA455', 3, ['IN', 'GND', 'OUT']],
+  ] as const)('%s is %i pins in a row with a look', (model, count, names) => {
+    const found = lookupPinout(model, count);
+    expect(found?.names).toEqual(names);
+    expect(found?.look?.body).toBeTruthy();
+    expect(lookupPinout(model, count + 1)).toBeNull();
+  });
+
+  test.each([
+    ['LM75', ['SDA', 'SCL', 'OS', 'GND', 'A2', 'A1', 'A0', 'VS']],
+    ['MCP9808', ['SDA', 'SCL', 'ALERT', 'GND', 'A2', 'A1', 'A0', 'VDD']],
+  ] as const)('%s is an 8 pin chip without a look', (model, names) => {
+    const found = lookupPinout(model, 8);
+    expect(found?.names).toEqual(names);
+    expect(found?.look).toBeUndefined();
+  });
+
+  test('accepts the suffixed spellings on the parts lists of the workbook', () => {
+    expect(lookupPinout('LM35DZ', 3)?.model).toBe('LM35');
+    expect(lookupPinout('A1324LUA-T', 3)?.model).toBe('A1324');
+    expect(lookupPinout('OH3144', 3)?.model).toBe('A3144');
+    expect(lookupPinout('SFELF10M7FA00-B0', 3)?.model).toBe('SFELF10M7');
+    expect(lookupPinout('CFULA455KE4A', 3)?.model).toBe('CFULA455');
+    expect(lookupPinout('hcsr501', 3)?.model).toBe('HC-SR501');
+  });
+
+  test('names the role in English too', () => {
+    expect(lookupRole('A3144', 'en')).toBe('Hall-effect switch (open collector)');
+    expect(lookupRole('LM75', 'en')).toBe('I2C temperature sensor');
   });
 });
 

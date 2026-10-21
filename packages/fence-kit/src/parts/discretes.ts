@@ -83,6 +83,11 @@ const ROWS: readonly DiscreteRow[] = [
   },
   // --- 海外・その他の TO-92 ---
   {
+    models: ['2SC3355', '2SC3355L', '2SC3355G', '2SC3355L-T92', '2SC3355G-T92'], type: 'transistor', kind: 'npn', names: ['B', 'E', 'C'],
+    pkg: 'TO-92', role: 'NPN 高周波 低雑音 (fT 6.5 GHz)', note: '**B E C** (ベースが左)。2SC1815 (E C B) とも 2N3904 (E B C) とも違う',
+    source: 'NEC 2SC3355 P10355EJ3V1DS00 (1997-03)、PACKAGE DIMENSIONS (底面図。1 Base・2 Emitter・3 Collector)。UTC 2SC3355 QW-R201-036.G (2017) の TO-92 も 1 B・2 E・3 C',
+  },
+  {
     models: ['2N3904'], type: 'transistor', kind: 'npn', names: EBC,
     pkg: 'TO-92', role: 'NPN 汎用 40 V 200 mA', source: 'onsemi 2N3903/D Rev. 9 (2021-08)、CASE 29-11 STYLE 1 (1 E・2 B・3 C)',
   },
@@ -113,6 +118,12 @@ const ROWS: readonly DiscreteRow[] = [
     source: '東芝 2SK30ATM (1997-04-10)、外形 2-5F1C の 1 S・2 G・3 D',
   },
   {
+    models: ['J310', 'J309'], type: 'transistor', kind: 'nch-jfet', names: ['D', 'S', 'G'],
+    pkg: 'TO-92', role: 'N チャネル JFET (VHF・UHF の増幅)',
+    note: '**ゲートは端 (3 番)**。InterFET 品は S D G で D と S が逆 (D と S は入れ替えて使える)。Fairchild 品は図に番号が無い',
+    source: 'onsemi J309/D Rev. 1 (2006-03)、TO-92 CASE 29-11 STYLE 5 (1 DRAIN・2 SOURCE・3 GATE)',
+  },
+  {
     models: ['2SK170', '2SK170-BL', '2SK170-GR', '2SK170-V', '2SK170BL', '2SK170GR', '2SK170V'], type: 'transistor', kind: 'nch-jfet', names: DGS,
     pkg: 'TO-92', role: 'N チャネル JFET (低雑音)', note: '2SK30A は S G D で S と D が逆',
     source: '東芝 2SK170 (2003-03-25)、外形 2-5F1D の 1 D・2 G・3 S (底面から見た図の番号。印字面を手前にしても左右は同じ)',
@@ -141,6 +152,12 @@ const ROWS: readonly DiscreteRow[] = [
     pkg: 'SOT-23', role: 'N チャネル MOSFET 60 V 300 mA (面実装)',
     note: '**面実装 (SOT-23)**。穴の順は端子の番号 1 G・2 S・3 D とみなす (SOT-23 を挿せる変換基板の穴の並びは基板ごとに違うので、買った基板で確かめる)。ブレッドボードには `transistor/sot23-dip`',
     source: 'Nexperia 2N7002 Rev. 7 (2011-09)、Table 2 Pinning (SOT23: 1 G・2 S・3 D)。Diodes 2N7002 DS11303 Rev. 33-2 (2013-07) の Top View も同じ (D が頂点、G が左下、S が右下)',
+  },
+  {
+    models: ['BSS84', 'BSS84-7-F', 'BSS84-13-F'], type: 'transistor', kind: 'pch-mos', names: ['G', 'S', 'D'],
+    pkg: 'SOT-23', role: 'P チャネル MOSFET -50 V 130 mA (面実装)',
+    note: '**面実装 (SOT-23)**。並びは 2N7002 と同じ 1 G・2 S・3 D とみなす (SOT-23 を挿せる変換基板の穴の並びは基板ごとに違うので、買った基板で確かめる)。ブレッドボードには `transistor/sot23-dip`',
+    source: 'Diodes BSS84 DS30149 Rev. 27-2 (2026-05)、SOT23 の Top View (D が頂点、G が左下、S が右下。番号は SOT-23 の標準の 1 左下・2 右下・3 頂点に当てた)',
   },
   {
     models: ['IRF520', 'IRF520N', 'IRF540', 'IRF540N', 'IRLZ44N', 'IRLZ44', 'IRL540N', 'IRF3205'], type: 'transistor', kind: 'nch-mos', names: GDS,

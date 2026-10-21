@@ -23,6 +23,10 @@ describe('ディスクリートのピンの名前の表', () => {
     ['2N7000', 'nch-mos', ['S', 'G', 'D']],
     ['BS170', 'nch-mos', ['D', 'G', 'S']],
     ['2N7002', 'nch-mos', ['G', 'S', 'D']],
+    ['BSS84', 'pch-mos', ['G', 'S', 'D']],
+    ['2SC3355', 'npn', ['B', 'E', 'C']],
+    ['2SC3355L-T92', 'npn', ['B', 'E', 'C']],
+    ['J310', 'nch-jfet', ['D', 'S', 'G']],
     ['IRF540N', 'nch-mos', ['G', 'D', 'S']],
     ['IRF9540', 'pch-mos', ['G', 'D', 'S']],
   ])('names the pins of the transistor %s (%s)', (model, kind, names) => {
