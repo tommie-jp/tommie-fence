@@ -1,4 +1,5 @@
 import type { Lang } from '../lang.ts';
+import { VERIFY_NOTES } from './discretes.ts';
 import { lookupPinoutNames, lookupRole } from './pinouts.ts';
 
 /**
@@ -63,7 +64,7 @@ const ROWS: readonly ModuleRow[] = [
     role: 'Li-ion の充電モジュール (TP4056、保護つき)', roleEn: 'Li-ion charger module (TP4056, with protection)',
     product: '03962A 系の保護つき基板 (TP4056 + DW01A + FS8205A。27.9 × 17.2 mm)',
     view: 'USB を左にして上から見て: 左上 IN+・左下 IN-、右の辺を上から OUT+・B+・B-・OUT-',
-    note: '`B+` `B-` に電池、`OUT+` `OUT-` に負荷 (**OUT- は保護の FET を通る**ので B- と直結でない)。`IN+` `IN-` は USB の 5 V と並ぶ。**製造元の図は無く、独立した 3 つの個人のデータの一致による** (実物の印字で確かめる)',
+    note: `\`B+\` \`B-\` に電池、\`OUT+\` \`OUT-\` に負荷 (**OUT- は保護の FET を通る**ので B- と直結でない)。\`IN+\` \`IN-\` は USB の 5 V と並ぶ。**${VERIFY_NOTES['TP4056-MODULE']}**`,
     source: 'lilka-dev/lilka の Charge_Controller_TP4056.kicad_mod と connector.kicad_sym、ccadic/TP4056-18650 の TP4056-18650.kicad_mod (シルクに名前)、saivittalb/sunrise-simulation-alarm の Fritzing の TP4056_Module (2026-10-22) のパッドの位置と名前が一致',
   },
   {

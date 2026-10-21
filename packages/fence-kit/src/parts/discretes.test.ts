@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { VERIFY_NOTES, discreteModels, discreteTable, lookupDiscrete } from './discretes.ts';
+import { lookupModule } from './modules.ts';
+import { pinoutTable } from './pinouts.ts';
 
 /**
  * 3 ピンのディスクリートの表 (52 の docs/119)。並びは「印字面を手前、ピンを下にして左から右」で、
@@ -57,14 +59,21 @@ describe('ディスクリートのピンの名前の表', () => {
   });
 
   test('asks the reader to check the real part for the two models whose datasheets disagree', () => {
-    expect(Object.keys(VERIFY_NOTES)).toEqual(['2N7000', '2SD882']);
+    expect(Object.keys(VERIFY_NOTES)).toEqual(['2N7000', '2SD882', 'GY-9833', 'TP4056-MODULE']);
     expect(VERIFY_NOTES['2N7000']).toContain('2007 年版の図は S G D、2022 年版の表は D G S');
     expect(VERIFY_NOTES['2SD882']).toContain('ST の資料だけ図が B C E で、他は E C B');
-    for (const [model, sentence] of Object.entries(VERIFY_NOTES)) {
+    for (const model of ['2N7000', '2SD882']) {
       const row = discreteTable().find((one) => one.models.includes(model));
+      const sentence = VERIFY_NOTES[model] ?? '';
       expect(row?.note, model).toContain(sentence);
       expect(sentence, model).toContain('テスタで確かめる');
     }
+  });
+
+  test('asks to check the modules whose pin order rests on personal data, on the board print', () => {
+    expect(pinoutTable().find((row) => row.models[0] === 'GY-9833')?.note).toContain(VERIFY_NOTES['GY-9833']);
+    expect(lookupModule('TP4056-MODULE')?.note).toContain(VERIFY_NOTES['TP4056-MODULE']);
+    for (const model of ['GY-9833', 'TP4056-MODULE']) expect(VERIFY_NOTES[model], model).toContain('基板の印字で確かめる');
   });
 
   test('reads a model in any case and with a grade suffix, and answers null for the unknown', () => {

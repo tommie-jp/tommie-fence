@@ -228,7 +228,7 @@ parts:
 | `SG90` (`SG92R` `MG90S`) | `sip3` | `GND` `VCC` `SIG` (RC サーボ。青の胴で描く。コネクタの線は茶 (GND)・赤 (VCC)・橙 (SIG)) |
 | `DHT11` | `sip4` | `VCC` `DATA` `NC` `GND` (温湿度センサ。青の胴で描く。3 番は `NC` で、番号で呼ぶ。`DATA` は 4.7 kΩ〜10 kΩ で `VCC` へ) |
 | `HC-SR501` (`HCSR501`) | `sip3` | `VCC` `OUT` `GND` (人感 (焦電) センサのモジュール。緑の帯で描く (基板のピンヘッダだけ)。電源は 4.5〜20 V、`OUT` は 3.3 V の H。見る向きで左右が逆になるので、基板の印字で確かめる) |
-| `GY-9833` (`GY9833`) | `sip7` | `VCC` `DGND` `SDATA` `SCLK` `FSYNC` `AGND` `OUT` (AD9833 の DDS モジュール。紫の帯で描く。印字に `DGND` `AGND` がある版。**`CJMCU-9833` の名の基板は REF VCC GND DAT CLK FNC OUT の別の並びが多い**ので実物の印字で選ぶ。製造元の図は無く、個人の KiCad データ 5 つの一致による) |
+| `GY-9833` (`GY9833`) | `sip7` | `VCC` `DGND` `SDATA` `SCLK` `FSYNC` `AGND` `OUT` (AD9833 の DDS モジュール。紫の帯で描く。印字に `DGND` `AGND` がある版。**実物で確かめる: 製造元の図が無く、並びは個人の KiCad データ 5 つの一致による。CJMCU-9833 の名の基板は REF VCC GND DAT CLK FNC OUT の別の並びが多い。実物は基板の印字で確かめる**) |
 | `ADAFRUIT-1782` (`MCP9808-BREAKOUT`) | `sip8` | `VDD` `GND` `SCL` `SDA` `ALERT` `A0` `A1` `A2` (Adafruit の MCP9808 ブレークアウト。濃い青の帯で描く。SCL・SDA は基板に 10 kΩ のプルアップ。既定のアドレスは 0x18) |
 | `TA7642` (`7642` `UTC7642`) | `sip3` / `ic3` | `GND` `IN` `OUT` (AM ラジオ IC。黒い TO-92 の胴。`OUT` は抵抗を通して電源へ。東芝の原本の資料は無く、互換品 (UTC 7642) の資料による) |
 | `A3144` (`A3144E` `A3144EUA` `OH3144`) | `sip3` / `ic3` | `VCC` `GND` `OUT` (ホールスイッチ。黒い胴 (実物は TO-92 より小さい UA)。`OUT` は開放コレクタで、プルアップが要る) |

@@ -123,7 +123,7 @@ describe('docs/01-syntax.md', () => {
     expect(discreteModels().filter((model) => !syntax.includes(`\`${model}\``))).toEqual([]);
   });
 
-  test('asks to check the real part wherever the datasheets disagree (2N7000, 2SD882)', () => {
+  test('asks to check the real part wherever the sources disagree or are only personal data', () => {
     const syntax = readFileSync(fileURLToPath(new URL('../../docs/01-syntax.md', import.meta.url)), 'utf8');
     expect(Object.values(VERIFY_NOTES).filter((sentence) => !syntax.includes(sentence))).toEqual([]);
   });

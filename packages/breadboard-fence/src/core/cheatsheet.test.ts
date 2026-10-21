@@ -71,8 +71,11 @@ describe('docs/02-cheatsheet.md', () => {
     discreteModels().forEach((model) => listed('ディスクリートの表の型番')(`\`${model}\``));
   });
 
-  test('asks to check the real part wherever the datasheets disagree (2N7000, 2SD882)', () => {
-    Object.values(VERIFY_NOTES).forEach(listed('実物で確かめる注意書き'));
+  test('asks to check the real part wherever the sources disagree or are only personal data', () => {
+    // モジュールの表 (TP4056 など) は文法リファレンスにだけあるので、2 つを合わせて見る。
+    const syntax = readFileSync(fileURLToPath(new URL('../../docs/01-syntax.md', import.meta.url)), 'utf8');
+    const both = `${CHEATSHEET}\n${syntax}`;
+    Object.values(VERIFY_NOTES).forEach((text) => expect(both, `実物で確かめる注意書き: ${text}`).toContain(text));
   });
 });
 

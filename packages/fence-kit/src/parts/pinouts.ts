@@ -1,6 +1,7 @@
 import type { Lang } from '../lang.ts';
 import type { SipLook } from './chips.ts';
 import type { ModuleOutline } from './moduleOutline.ts';
+import { VERIFY_NOTES } from './discretes.ts';
 import { ROLES_EN } from './pinoutRolesEn.ts';
 
 /**
@@ -687,7 +688,7 @@ const ROWS: readonly PinoutRow[] = [
     models: ['GY-9833', 'GY9833'], role: 'DDS の信号発生モジュール (AD9833)',
     names: ['VCC', 'DGND', 'SDATA', 'SCLK', 'FSYNC', 'AGND', 'OUT'],
     look: { body: '#6b3fa0', edge: '#47296b' },
-    note: '`sip7` を紫の帯で描く (基板のピンヘッダだけ)。SPI (SDATA・SCLK・FSYNC)。印字に `DGND` と `AGND` がある版。**`CJMCU-9833` の名の基板は REF VCC GND DAT CLK FNC OUT の別の並びが多い**ので、実物の印字で選ぶ。製造元の図は無く、個人の KiCad データ 5 つの一致による',
+    note: `\`sip7\` を紫の帯で描く (基板のピンヘッダだけ)。SPI (SDATA・SCLK・FSYNC)。印字に \`DGND\` と \`AGND\` がある版。**${VERIFY_NOTES['GY-9833']}**`,
   },
   {
     // Adafruit 1782 (MCP9808 のブレークアウト、0.8 × 0.5 インチ)。Adafruit の GitHub の基板データ
