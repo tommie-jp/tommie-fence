@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.29.0] - 2026-10-21
+
 ### Added
 
 - **基板の外のモジュールの表** (`parts/modules.ts`)。`moduleTable` / `lookupModule` / `moduleModels` / `deviceRole`。標準の品を 1 つに決め、ヘッダ・端子の物理の並びを資料で確かめて載せた: 降圧の `MBC2596-01` (秋月 131750)、`28BYJ-48` (秋月 113256。ピンは線の色)、`ULN2003-BOARD` (28BYJ-48 と組の駆動基板)、`TP4056-MODULE` (03962A 系の保護つき充電)、`NRF24L01+` (2 × 4)、`EC11` (Alps EC11E15244G1)、`DRV8833-POLOLU` (Pololu 2130)
