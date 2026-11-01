@@ -641,6 +641,8 @@ Type-C の変換基板は 4 本のピンヘッダなので、**4 本とも書く
 | `2N2222A` (`2N2222` `PN2222A` `PN2222`) | `transistor` | `E` `B` `C` | TO-92 / TO-18。**onsemi の `P2N2222A` は C B E (STYLE 17) で逆**。金属缶 TO-18 は番号 (1=E 2=B 3=C) を穴の順に書く |
 | `P2N2222A` | `transistor` | `C` `B` `E` | TO-92。onsemi の STYLE 17。`PN2222A` (E B C) と C と E が逆 |
 | `2SC1008` | `transistor` | `E` `B` `C` | TO-92。同世代の 2SC1815 (E C B) と違い E B C。**原典の資料は見つからず JCET 製の資料による** |
+| `2N5109` | `transistor` | `E` `B` `C` | TO-39。金属缶。番号 (1=E 2=B 3=C、出っ張りの隣が 1) を穴の順に書く。**缶がどの足とつながるかは資料に書かれていないので、テスタで確かめる** |
+| `2N3866` (`2N3866A`) | `transistor` | `E` `B` `C` | TO-39。金属缶。番号 (1=E 2=B 3=C、出っ張りの隣が 1) を穴の順に書く。**缶がどの足とつながるかは資料に書かれていないので、テスタで確かめる**。2N3866A は fT 800 MHz |
 | `2SK30A` (`2SK30ATM` `2SK30A-Y` `2SK30A-GR` …) | `transistor` | `S` `G` `D` | TO-92。2SK170・2SK117 は D G S で S と D が逆 |
 | `2SK170` (`2SK170-BL` `2SK170-GR` `2SK170-V` …) | `transistor` | `D` `G` `S` | TO-92。2SK30A は S G D で S と D が逆 |
 | `2SK117` (`2SK117-BL` `2SK117-GR` `2SK117-Y`) | `transistor` | `D` `G` `S` | TO-92 |

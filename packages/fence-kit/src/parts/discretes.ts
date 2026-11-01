@@ -114,6 +114,19 @@ const ROWS: readonly DiscreteRow[] = [
     note: '同世代の 2SC1815 (E C B) と違い E B C。**原典の資料は見つからず JCET 製の資料による**',
     source: 'JCET 2SC1008 (E 版、2017-08)、印字面の E B C',
   },
+  // --- 金属缶 TO-39 (高周波。無線の自作の定番) ---
+  {
+    models: ['2N5109'], type: 'transistor', kind: 'npn', names: EBC,
+    pkg: 'TO-39', role: 'NPN 高周波 広帯域増幅 20 V 400 mA (fT 1.2 GHz)',
+    note: '金属缶。番号 (1=E 2=B 3=C、出っ張りの隣が 1) を穴の順に書く。**缶がどの足とつながるかは資料に書かれていないので、テスタで確かめる**',
+    source: 'Advanced Power Technology 2N5109 Rev. - (2004-06)、1 Emitter・2 Base・3 Collector (TO-39)',
+  },
+  {
+    models: ['2N3866', '2N3866A'], type: 'transistor', kind: 'npn', names: EBC,
+    pkg: 'TO-39', role: 'NPN 高周波 小電力の送信 30 V 400 mA (fT 500 MHz)',
+    note: '金属缶。番号 (1=E 2=B 3=C、出っ張りの隣が 1) を穴の順に書く。**缶がどの足とつながるかは資料に書かれていないので、テスタで確かめる**。2N3866A は fT 800 MHz',
+    source: 'Central Semiconductor 2N3866 series R2 (2010-09-15)、TO-39 の外形図 (出っ張りの隣が LEAD #1) と LEAD CODE 1) Emitter 2) Base 3) Collector。Advanced Power Technology 2N3866/2N3866A (2003-04) も同じ',
+  },
   // --- FET ---
   {
     models: ['2SK30A', '2SK30ATM', '2SK30A-Y', '2SK30A-GR', '2SK30ATM-Y', '2SK30ATM-GR'], type: 'transistor', kind: 'nch-jfet', names: SGD,

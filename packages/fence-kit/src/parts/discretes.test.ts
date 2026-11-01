@@ -18,6 +18,9 @@ describe('ディスクリートのピンの名前の表', () => {
     ['PN2222A', 'npn', ['E', 'B', 'C']],
     ['P2N2222A', 'npn', ['C', 'B', 'E']],
     ['2SC1008', 'npn', ['E', 'B', 'C']],
+    ['2N5109', 'npn', ['E', 'B', 'C']],
+    ['2N3866', 'npn', ['E', 'B', 'C']],
+    ['2N3866A', 'npn', ['E', 'B', 'C']],
     ['2SD882', 'npn', ['E', 'C', 'B']],
     ['2SK30A', 'nch-jfet', ['S', 'G', 'D']],
     ['2SK170', 'nch-jfet', ['D', 'G', 'S']],
@@ -42,6 +45,14 @@ describe('ディスクリートのピンの名前の表', () => {
   test('keeps the same-package pairs that differ (2SK30A / 2SK170, 2N7000 / BS170) apart', () => {
     expect(lookupDiscrete('transistor', '2SK30A')?.names).not.toEqual(lookupDiscrete('transistor', '2SK170')?.names);
     expect(lookupDiscrete('transistor', '2N7000')?.names).not.toEqual(lookupDiscrete('transistor', 'BS170')?.names);
+  });
+
+  test('asks to check the can of the TO-39 RF transistors with a tester', () => {
+    for (const model of ['2N5109', '2N3866']) {
+      const row = discreteTable().find((one) => one.models.includes(model));
+      expect(row?.pkg, model).toBe('TO-39');
+      expect(row?.note, model).toContain('テスタで確かめる');
+    }
   });
 
   test('keeps the TO-92 78L05 and the TO-220 7805 in opposite order', () => {
