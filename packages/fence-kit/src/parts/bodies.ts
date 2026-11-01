@@ -809,6 +809,18 @@ const DEFAULT_PITCH = 10;
 const TOROID_DEFAULT_HOLES = 3.7;
 
 /**
+ * `transformerCore` が実際に描く胴の大きさ (px)。**名札は外形 (ピンを囲む箱) ではなくこの大きさの外に置く** —
+ * トロイダルの輪はピンの箱より大きく描くので、箱の下に置くと輪の下半分に字が重なった (ピンが 1 行の図で輪の真ん中)。
+ * 四角い変圧器は外形そのもの。
+ */
+export function transformerExtent(width: number, height: number, look: TransformerLook = {}): { width: number; height: number } {
+  if (look.variant !== 'toroid') return { width, height };
+  const core = parseToroidValue(look.model)?.core ?? null;
+  const diameter = toroidDiameter(core, look.pitch ?? DEFAULT_PITCH) ?? TOROID_DEFAULT_HOLES * (look.pitch ?? DEFAULT_PITCH);
+  return { width: Math.max(width, diameter), height: Math.max(height, diameter) };
+}
+
+/**
  * 小型の変圧器。**四角い外形の中に、積んだ鉄心の縞と巻線の胴**が見える。
  *
  * 中身は基板に依らないので、外形 (ピンをどこに書いたか) だけを受け取って中を描く。

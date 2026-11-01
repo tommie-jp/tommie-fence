@@ -11,6 +11,7 @@ import { element, num } from './svg.ts';
 import {
   REAL_INK, dipChip, drawDipAdapter, drawModuleOutline, drawNamedChip, drawSipAdapter, lookupNamedChip, lookupPinout, plateLook, sipBox, sipLegendDepth, sipHeader,
   transformerCore,
+  transformerExtent,
 } from 'fence-kit';
 import { plateInkOf, plateOf } from './plate.ts';
 import type { ChipInk, SipLook } from 'fence-kit';
@@ -282,16 +283,19 @@ export function renderTransformer(part: PlacedPart, layout: Layout, theme: Rende
   if (rect.width === 0) return '';
 
   const centre = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+  const look = { variant: part.variant, model: part.value, pitch: layout.pitch };
   const core = element(
     'g',
     { transform: `translate(${num(centre.x)} ${num(centre.y)})` },
-    transformerCore(rect.width, rect.height, REAL_INK, { variant: part.variant, model: part.value, pitch: layout.pitch }),
+    transformerCore(rect.width, rect.height, REAL_INK, look),
   );
   const stubs = (pinPoints(part, layout) ?? []).map((point) => stub(point, theme.palette.chipPin)).join('');
   // **字は胴の下。** ほかの部品と側を揃える (実機で「名前を部品の下にする」)。
+  // 胴はピンの箱ではなく描いた大きさ — トロイダルの輪は箱より大きく、箱の下では輪に重なった。
+  const drawn = transformerExtent(rect.width, rect.height, look);
   const label = partLabel(
     centre.x,
-    centre.y + rect.height / 2 + CAPTION_CLEAR + theme.metrics.textSize * NAME_CAP + drop,
+    centre.y + drawn.height / 2 + CAPTION_CLEAR + theme.metrics.textSize * NAME_CAP + drop,
     fitToBoard(caption(part), centre.x, theme.metrics.textSize, layout),
     theme,
   );

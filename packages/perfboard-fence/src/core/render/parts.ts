@@ -3,7 +3,7 @@ import {
   drawDirectSot, drawPackage, drawsOwnLeads,
   element, fit, hasBody,
   drawNamedChip, lookupBoardPart, lookupNamedChip, lookupPinout, num, bodySize, packageExtent, packageHalfWidth, packageReach, sipHeader,
-  smaBody as drawSmaBody, svgText, chipAlongX, sipBox, sipLegendDepth, transformerCore, TEXT_HALO_WIDTH, drawModuleOutline, moduleSide,
+  smaBody as drawSmaBody, svgText, chipAlongX, sipBox, sipLegendDepth, transformerCore, transformerExtent, TEXT_HALO_WIDTH, drawModuleOutline, moduleSide,
   partPlateColor, plateInk, plateLook,
 } from 'fence-kit';
 import type { BodyInk, BodyPart, ChipInk } from 'fence-kit';
@@ -795,14 +795,18 @@ function renderBox(part: PlacedPart, layout: Layout, theme: Theme, room?: PartRo
   // **変圧器は箱の中身を fence-kit が描く** (実物の話で基板に依らない)。
   // 外の枠は要らないので、ここでは描かずに中身だけを置く。
   if (kind === 'wound') {
+    const look = { variant: part.variant, model: part.value, pitch: layout.pitch };
     const core = element(
       'g',
       { transform: `translate(${num(rect.cx)} ${num(rect.cy)})` },
-      transformerCore(rect.width, rect.height, REAL_INK, { variant: part.variant, model: part.value, pitch: layout.pitch }),
+      transformerCore(rect.width, rect.height, REAL_INK, look),
     );
+    // 名札は描いた胴の外へ — トロイダルの輪はピンの箱より大きく、箱の高さで置くと輪の真ん中に字が乗った。
+    const drawn = transformerExtent(rect.width, rect.height, look);
+    const shortSide = look.variant === 'toroid' ? drawn.height : Math.min(rect.width, rect.height);
     return `${core}${leads}${partLabel(
       caption(part),
-      { cx: rect.cx, cy: rect.cy, height: rect.height > rect.width ? rect.width : rect.height, angle: 0 },
+      { cx: rect.cx, cy: rect.cy, height: shortSide, angle: 0 },
       { x: rect.cx, y: rect.cy },
       theme,
       layout,

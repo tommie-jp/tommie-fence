@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { REAL_INK, bodySize, drawBody, hasBody } from './bodies.ts';
+import { REAL_INK, bodySize, drawBody, hasBody, transformerExtent } from './bodies.ts';
 import type { BodyInk, BodyPart } from './bodies.ts';
 
 /**
@@ -138,5 +138,22 @@ describe('フォトトランジスタの胴', () => {
     expect(led).toContain('<line');
     expect(bodySize(part({ type: 'phototransistor', variant: '3mm' }), 60).width)
       .toBeLessThan(bodySize(part({ type: 'phototransistor' }), 60).width);
+  });
+});
+
+describe('transformerExtent', () => {
+  test('トロイダルは輪の外径まで広がる (ピンが 1 行でも名札を輪の外に置ける)', () => {
+    // FT37 の外径 9.5 mm = 穴 3.74 個ぶん。ピンの箱 (高さ 12 px) より大きい
+    const drawn = transformerExtent(102, 12, { variant: 'toroid', model: 'FT37-61 14t:3t', pitch: 10 });
+    expect(drawn.height).toBeCloseTo(37.4, 1);
+    expect(drawn.width).toBe(102);
+  });
+
+  test('型番を知らないトロイダルは FT37 の大きさ', () => {
+    expect(transformerExtent(20, 12, { variant: 'toroid', pitch: 10 }).height).toBeCloseTo(37, 0);
+  });
+
+  test('四角い変圧器はピンの箱のまま', () => {
+    expect(transformerExtent(40, 30, {})).toEqual({ width: 40, height: 30 });
   });
 });
