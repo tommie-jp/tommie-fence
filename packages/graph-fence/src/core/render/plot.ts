@@ -70,16 +70,35 @@ export function renderBand(from: number, to: number, text: string | null, xAxis:
   return fill + (labelled && text !== null ? noteText((left + right) / 2, rect.y + rect.height - 5, text, theme, 'middle') : '');
 }
 
-/** 横の水準 (−3 dB・0.707)。字は右端の上。 */
-export function renderLevel(value: number, text: string, yAxis: Axis, rect: Rect, theme: Theme): string {
+/**
+ * 横の水準 (−3 dB・0.707)。字は右端の上。**mark の縦の破線に字が掛かるなら、その線の左へ寄せる**
+ * (破線が字を横切ると読めない)。寄せきれなければ右端のまま。`markXs` は mark の x の値。
+ */
+export function renderLevel(
+  value: number, text: string, yAxis: Axis, rect: Rect, theme: Theme, xAxis?: Axis, markXs: readonly number[] = [],
+): string {
   if (!inside(yAxis, value)) return '';
   const y = yAt(yAxis, rect, value);
   // 字は線の上。枠の上端に近ければ線の下 (枠の外へはみ出さない)。
   const size = theme.metrics.smallSize;
   const above = y - rect.y > size + 4;
+  const lines = xAxis === undefined ? [] : markXs.filter((x) => inside(xAxis, x)).map((x) => xAt(xAxis, rect, x));
   return element('line', {
     x1: num(rect.x), y1: num(y), x2: num(rect.x + rect.width), y2: num(y), stroke: theme.palette.note, 'stroke-width': 1, 'stroke-dasharray': '3 3',
-  }) + noteText(rect.x + rect.width - 3, above ? y - 3 : y + size + 2, text, theme, 'end');
+  }) + noteText(levelLabelEnd(rect, textWidth(text) * size, lines), above ? y - 3 : y + size + 2, text, theme, 'end');
+}
+
+/** 水準の字の右端。右端から始め、縦の破線が字に掛かる間はその線の左へ寄せる。 */
+export function levelLabelEnd(rect: Rect, width: number, lines: readonly number[]): number {
+  const GAP = 3;
+  const start = rect.x + rect.width - GAP;
+  let end = start;
+  for (;;) {
+    const crossing = lines.filter((x) => x > end - width - GAP && x < end + GAP);
+    if (crossing.length === 0) return end;
+    end = Math.min(...crossing) - GAP;
+    if (end - width < rect.x) return start;
+  }
 }
 
 /** x の印 (縦の破線)。字は {@link renderMarkLabels} が枠の上に置く。 */

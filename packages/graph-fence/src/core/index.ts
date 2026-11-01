@@ -267,7 +267,7 @@ export function renderGraph(input: string, options: RenderOptions = {}): RenderR
       return isMeasured(line) ? renderMeasured(points, xAxis, yAxis, rect, color) : renderIdeal(points, xAxis, yAxis, rect, color);
     }).join('');
     const levels = panel.notes.map((note) => (note.kind === 'level'
-      ? renderLevel(note.y, formatReading(note.y, panel.unit), yAxis, rect, theme)
+      ? renderLevel(note.y, formatReading(note.y, panel.unit), yAxis, rect, theme, xAxis, marks)
       : '')).join('');
     const texts = panel.notes.map((note) => (note.kind === 'text'
       ? renderNoteText(note.x, note.y, note.text, xAxis, yAxis, rect, theme)
