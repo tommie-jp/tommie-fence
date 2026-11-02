@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.46.1] - 2026-11-02
+
 ### Fixed
 
 - CLI を束ねるたびに出ていた esbuild の警告 (`import.meta` が CommonJS で空になる) を消した。動きは変わらない
