@@ -208,9 +208,12 @@ echo "==> main へ push"
 git push -q origin HEAD:main
 
 wait_release() {  # タグの release.yml が終わるまで待つ
-  local tag="$1" id=""
+  local tag="$1" id="" sha
+  # **タグのコミットで絞る。** 同じタグを打ち直すと、名前だけでは前の回 (落ちた回) の記録を拾う
+  # (2026-11-02 に踏んだ。52 の docs/145)
+  sha="$(git rev-parse "refs/tags/$tag^{commit}")"
   for _ in $(seq 1 30); do
-    id="$(gh run list --workflow release.yml --branch "$tag" --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null || true)"
+    id="$(gh run list --workflow release.yml --branch "$tag" --commit "$sha" --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null || true)"
     [ -n "$id" ] && break
     sleep 5
   done
