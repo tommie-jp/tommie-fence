@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.53.0] - 2026-11-02
+
 ### Added
 
 - ターミナルブロック `terminal2` `terminal3` `terminal4` (穴は 1 つ飛ばしに極の数だけ)

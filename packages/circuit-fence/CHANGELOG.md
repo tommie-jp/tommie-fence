@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.46.0] - 2026-11-02
+
 ### Added
 
 - ターミナルブロック `terminal2` `terminal3` `terminal4`。USB と同じ箱で、口の代わりにピンごとにねじの頭を描く。ピンは番号
