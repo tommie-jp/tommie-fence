@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.34.0] - 2026-11-02
+
 ### Added
 
 - `applyExpectations` `readExpectations` `markExpected` `markInfo` — 想定どおりのお知らせ (`expect:`) を読んでお知らせに当て、
