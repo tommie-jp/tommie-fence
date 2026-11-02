@@ -50,6 +50,7 @@ import { ROLES_EN } from './pinoutRolesEn.ts';
  * | 74HC273 | SN74HC273 SCLS136F、Table 5-1 (N) |
  * | TL082 | TI SLOS081O (2025-09)、Table 4-3 (P の PDIP)。TL072 と同じ並び |
  * | NE5532 | TI SLOS075K (2025-12)、Figure 4-1 (P の 8 ピン PDIP) |
+ * | NJM4556A | 日清紡マイクロデバイス NJM4556A (20250306)、PIN CONFIGURATION / PIN FUNCTION。印字の `A OUTPUT` は `AOUT`、`A –INPUT` は `AIN-` に略した (LM741 と同じ決まり) |
  * | LM324 | TI SLOS066AE (2025-09)、Figure 5-1 (N の PDIP) と Table 5-1 |
  * | LM741 | TI SNOSC25D (NAB の 8 ピン CDIP/PDIP)。印字は OFFSET NULL を `OFFSET1` `OFFSET2` に、INVERTING INPUT を `IN-` などに略した |
  * | ATtiny85 | Atmel 2586Q (2013-08)、Figure 1-1 (PDIP)。名前は IO ポートの印字 (`PB0`〜`PB5`) だけ |
@@ -606,6 +607,10 @@ const ROWS: readonly PinoutRow[] = [
   {
     models: ['NE5532', 'NE5532P', 'NE5532AP', 'SA5532', 'SA5532P'], role: 'オペアンプ ×2 (低雑音・オーディオ)',
     names: ['1OUT', '1IN-', '1IN+', 'VCC-', '2IN+', '2IN-', '2OUT', 'VCC+'],
+  },
+  {
+    models: ['NJM4556A', 'NJM4556AD'], role: 'オペアンプ ×2 (大出力電流)',
+    names: ['AOUT', 'AIN-', 'AIN+', 'V-', 'BIN+', 'BIN-', 'BOUT', 'V+'],
   },
   {
     models: ['LM324', 'LM324N', 'LM324AN', 'LM2902', 'LM2902N', 'LM224', 'LM124'], role: 'オペアンプ ×4',

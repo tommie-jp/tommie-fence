@@ -70,6 +70,7 @@ export const ROLES_EN: Readonly<Record<string, string>> = {
   'アナログ スイッチ ×4': 'analog switch ×4',
   'オペアンプ': 'op-amp',
   'オペアンプ ×2': 'op-amp ×2',
+  'オペアンプ ×2 (大出力電流)': 'op-amp ×2 (high output current)',
   'オペアンプ ×2 (CMOS・レール ツー レール)': 'op-amp ×2 (CMOS, rail-to-rail)',
   'オペアンプ ×2 (低雑音・オーディオ)': 'op-amp ×2 (low noise, audio)',
   'オペアンプ ×4': 'op-amp ×4',

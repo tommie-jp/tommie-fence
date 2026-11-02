@@ -25,6 +25,10 @@ const targets = [
     format: 'cjs',
     platform: 'node',
     external: [TEX_ENGINE],
+    // CommonJS には import.meta が無い。src/host/texFonts.ts は require があればそちらを使うので
+    // import.meta.url の枝は CLI では通らない。esbuild が束ねるたびに出す警告を、今と同じ値 (undefined) を
+    // 明示して消す。
+    define: { 'import.meta.url': 'undefined' },
   },
   // ここから 2 つはライブラリの出口 (`circuit-fence/core`)。サーバー側描画の
   // ように、YAML → TeX の変換だけを外から呼ぶためのもの。core は DOM にも

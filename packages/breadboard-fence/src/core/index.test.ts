@@ -47,7 +47,8 @@ describe('renderBreadboard', () => {
       ['parts:', '  U1: dip8 @ e5 NJM4556A', '  R1: resistor a1 a2', 'wires:', '  - U1.1 -- a1'].join('\n'),
     );
 
-    const joined = netlist.find((net) => net.refs.includes('U1.1'));
+    // NJM4556A はピンの名前の表にあるので、1 番は名前 (AOUT) でネットリストに出る
+    const joined = netlist.find((net) => net.refs.includes('U1.AOUT'));
     expect(joined?.refs).toContain('R1.1');
   });
 
