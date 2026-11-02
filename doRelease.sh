@@ -203,6 +203,7 @@ fi
 [ -s "$tags_file" ] || die "出すタグの一覧 ($tags_file) がありません。先にローカルの段を"
 mapfile -t tags < "$tags_file"
 
+[ -z "$(git status --porcelain)" ] || die "作業ツリーに未コミットの変更があります (版上げの段が途中で止まったなら、check を通してからコミットして --push-only)"
 echo "==> main へ push"
 git push -q origin HEAD:main
 
@@ -227,7 +228,10 @@ for tag in "${tags[@]}"; do
       # **打つ前に版を照らす。** 前回止まった回の続きでタグがローカルに無いと、今の HEAD
       # (次の版上げのあと) に打ってしまい、release.yml が版の食い違いで落ちる (52 の docs/118 の 4.8)。
       pkg="${tag%-v*}" ver="${tag##*-v}"
-      have="$(node -p "require('./packages/$pkg/package.json').version")"
+      # **照らすのはコミットした版** (作業ツリーの package.json ではない)。版上げの段が check で落ちて
+      # コミットされずに残っていると、作業ツリーだけ新しい版になり、版上げ前の HEAD にタグを打ってしまう
+      # (2026-11-02 に踏んだ。52 の docs/145)。
+      have="$(git show "HEAD:packages/$pkg/package.json" | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")"
       [ "$have" = "$ver" ] || die "$tag を HEAD に打てません (packages/$pkg は $have)。版上げのコミットで git tag $tag <コミット> を打ってから ./doRelease.sh --push-only"
       git tag "$tag"
     fi
