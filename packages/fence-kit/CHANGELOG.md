@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- `applyExpectations` `readExpectations` `markExpected` `markInfo` — 想定どおりのお知らせ (`expect:`) を読んでお知らせに当て、
+  当たらない承知をお知らせにする。全フェンス共通 (複数の基板 (`sheets:`) では図全体の承知を全部の枚に当てる)
+- `toroidWindingNote` — L の目安の 1 行と、それが指摘でない情報かどうか
+
 ## [0.33.0] - 2026-11-02
 
 ### Added

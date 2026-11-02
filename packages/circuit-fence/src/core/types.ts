@@ -40,6 +40,10 @@ export type FenceError = {
    * 生の入力なので、出す側には届かない形にしておく (約束 3)。
    */
   readonly token?: string;
+  /** `expect:` で承知したお知らせの理由 (52 の docs/145)。 */
+  readonly expected?: string;
+  /** 指摘ではない知らせ (計算した値など)。 */
+  readonly info?: boolean;
 };
 
 export type Result<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: FenceError };

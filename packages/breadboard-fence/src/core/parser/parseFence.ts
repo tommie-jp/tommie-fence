@@ -27,7 +27,7 @@ const pick = <T extends string>(allowed: readonly T[], value: string | null): T 
 const MAX_YAML_MESSAGE = 120;
 
 /** フェンスの一番外側に書けるキー。読めなかったときの案内はここから作る。 */
-export const TOP_LEVEL_KEYS = ['title', 'points', 'board', 'style', 'parts', 'parts-list', 'lang', 'wires', 'notes'] as const;
+export const TOP_LEVEL_KEYS = ['title', 'points', 'board', 'style', 'parts', 'parts-list', 'lang', 'wires', 'notes', 'expect'] as const;
 
 /**
  * 読んだ結果。**`doc` は必ずある** — YAML が転んでも、読めた所は返す
@@ -174,6 +174,8 @@ function readFence(source: string): ParseResult {
       collectWires(pair.value as ParsedNode | null, { wires, errors, lineOf });
     } else if (key === 'notes') {
       collectNotes(pair.value as ParsedNode | null, { notes, errors, lineOf, source });
+    } else if (key === 'expect') {
+      // 想定どおりのお知らせ。読むのは描いた後 (fence-kit の applyExpectations。52 の docs/145)。
     } else {
       errors.push(
         fenceError(`知らないキーです: ${safeToken(key)} (${TOP_LEVEL_KEYS.join(' / ')} が使えます)`, line, key),

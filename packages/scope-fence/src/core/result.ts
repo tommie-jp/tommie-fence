@@ -1,5 +1,6 @@
+import { applyExpectations } from 'fence-kit';
 import type { Lang } from 'fence-kit';
-import { attachSourceText, shiftErrors } from './errors.ts';
+import { attachSourceText, fenceError, notice, shiftErrors } from './errors.ts';
 import type { Readings } from './model/readings.ts';
 import { renderErrorBanner } from './render/errorHtml.ts';
 import type { FenceError } from './types.ts';
@@ -54,8 +55,11 @@ export function finishResult(input: {
 }): RenderResult {
   const reported = attachSourceText(byLine(input.said), input.source);
   const at = (list: readonly FenceError[]): readonly FenceError[] => shiftErrors(list, input.offset);
-  const errors = at(reported.filter((error) => error.notice !== true));
-  const notices = at(reported.filter((error) => error.notice === true));
+  // `expect:` で承知したお知らせに理由を付ける。当たらない承知もお知らせで言う (52 の docs/145)。
+  const { errors, notices } = applyExpectations(input.source, {
+    errors: at(reported.filter((error) => error.notice !== true)),
+    notices: at(reported.filter((error) => error.notice === true)),
+  }, { error: fenceError, notice }, input.offset);
   return {
     svg: input.svg,
     readings: input.readings,

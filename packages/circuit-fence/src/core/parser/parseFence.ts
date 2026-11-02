@@ -35,7 +35,7 @@ const YAML_HINTS: Readonly<Record<string, string>> = {
 const YAML_POSITION = /\s+at line \d+, column \d+:?\s*$/;
 
 /** フェンスの一番外側に書けるキー。読めなかったときの案内はここから作る。 */
-export const TOP_LEVEL_KEYS = ['title', 'points', 'parts', 'wires', 'notes', 'style'] as const;
+export const TOP_LEVEL_KEYS = ['title', 'points', 'parts', 'wires', 'notes', 'style', 'expect'] as const;
 
 export type FenceDocument = {
   /**
@@ -201,6 +201,8 @@ function readFence(source: string): ParseResult {
           ),
         ),
       );
+    } else if (key === 'expect') {
+      // 想定どおりのお知らせ。読むのは描いた後 (fence-kit の applyExpectations。52 の docs/145)。
     } else {
       errors.push(
         fenceError(`知らないキーです: ${safeToken(key)} (${TOP_LEVEL_KEYS.join(' / ')} が使えます)`, line, null, key),

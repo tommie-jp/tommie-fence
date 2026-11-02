@@ -1,3 +1,4 @@
+import { applyExpectations } from 'fence-kit';
 import { attachSourceText, fenceError } from './errors.ts';
 import { buildCircuit } from './model/circuit.ts';
 import { computeNets } from './model/nets.ts';
@@ -126,6 +127,16 @@ export function compileCircuit(fence: string, options: CompileOptions = {}): Com
     source: doc.source,
   });
 
+  // `expect:` で承知したお知らせに理由を付ける (52 の docs/145)。ERC は check でしか走らないので、
+  // 走らせていないときは当たらない承知を古びたと言わない。
+  const said = applyExpectations(source, {
+    errors: withSource([...errors, ...modelErrors, ...themeErrors]),
+    // 図は組めたが指定が効かなかったところ。行は style の項目に付けられない
+    // ので (どの項目かは文面で分かる) 行なしで出す。
+    notices: withSource([...texMessages.map((message) => fenceError(message, null)), ...notices]),
+    erc: withSource(erc),
+  }, { error: fenceError, notice: fenceError }, 0, options.erc === true);
+
   return {
     tex,
     lineMap,
@@ -133,11 +144,9 @@ export function compileCircuit(fence: string, options: CompileOptions = {}): Com
     theme,
     width: doc.style.width,
     notes,
-    errors: withSource([...errors, ...modelErrors, ...themeErrors]),
-    // 図は組めたが指定が効かなかったところ。行は style の項目に付けられない
-    // ので (どの項目かは文面で分かる) 行なしで出す。
-    notices: withSource([...texMessages.map((message) => fenceError(message, null)), ...notices]),
-    erc: withSource(erc),
+    errors: said.errors,
+    notices: said.notices,
+    erc: said.erc,
     debug: doc.style.debug !== false,
   };
 }

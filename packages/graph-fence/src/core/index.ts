@@ -1,4 +1,4 @@
-import { normalizeNewlines, resolveLang, textWidth } from 'fence-kit';
+import { applyExpectations, normalizeNewlines, resolveLang, textWidth } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import { attachSourceText, fenceError, notice, shiftErrors } from './errors.ts';
 import { linearAxis, logAxis, startsAtZero } from './layout/axis.ts';
@@ -305,8 +305,11 @@ export function renderGraph(input: string, options: RenderOptions = {}): RenderR
 
   const reported = attachSourceText(byLine([...parsed.errors, ...said]), source);
   const at = (list: readonly FenceError[]): readonly FenceError[] => shiftErrors(list, options.offset ?? 0);
-  const errors = at(reported.filter((error) => error.notice !== true));
-  const notices = at(reported.filter((error) => error.notice === true));
+  // `expect:` で承知したお知らせに理由を付ける。当たらない承知もお知らせで言う (52 の docs/145)。
+  const { errors, notices } = applyExpectations(source, {
+    errors: at(reported.filter((error) => error.notice !== true)),
+    notices: at(reported.filter((error) => error.notice === true)),
+  }, { error: fenceError, notice }, options.offset ?? 0);
   return {
     svg,
     readings,

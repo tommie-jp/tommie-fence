@@ -1,4 +1,4 @@
-import { hasSheets, keptSourceLines, renderSheets, resolveLang } from 'fence-kit';
+import { applyExpectations, hasSheets, keptSourceLines, renderSheets, resolveLang } from 'fence-kit';
 import type { Lang, SheetExtras, SheetPoint } from 'fence-kit';
 import { toroidNotices } from './parts/toroidNotices.ts';
 import { attachSourceText, fail, fenceError, notice, ok, safeToken, shiftErrors } from './errors.ts';
@@ -323,8 +323,11 @@ function sheetAnchors(
  */
 function report(errors: readonly FenceError[], source: string, debug: boolean, offset: number) {
   const reported = attachSourceText(errors, source);
-  const hard = reported.filter((error) => error.notice !== true);
-  const notices = reported.filter((error) => error.notice === true);
+  // `expect:` で承知したお知らせに理由を付ける。当たらない承知もお知らせで言う (52 の docs/145)。
+  const { errors: hard, notices } = applyExpectations(source, {
+    errors: reported.filter((error) => error.notice !== true),
+    notices: reported.filter((error) => error.notice === true),
+  }, { error: fenceError, notice });
   // 読めなかった行を先に並べる。直さないと図が出ないのはこちらなので、
   // お知らせに埋もれると探すことになる (CLI の並びとも揃える)。
   const shown = debug ? [...hard, ...notices] : hard;

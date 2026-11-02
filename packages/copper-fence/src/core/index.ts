@@ -1,4 +1,4 @@
-import { normalizeNewlines, textWidth, wireColor, hasSheets, renderSheets } from 'fence-kit';
+import { applyExpectations, hasSheets, normalizeNewlines, renderSheets, textWidth, wireColor } from 'fence-kit';
 import { resolveLang } from 'fence-kit';
 import type { Lang, SheetExtras, SheetPoint } from 'fence-kit';
 import type { Net } from 'fence-kit';
@@ -314,10 +314,13 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
 
   const collected = [...parsed.errors, ...made.errors, ...placeErrors, ...wiring.errors, ...noteErrors, ...langErrors, ...notChecked];
   const reported = attachSourceText(byLine(collected), source);
-  const errors = reported.filter((error) => error.notice !== true);
-  const notices = reported.filter((error) => error.notice === true);
+  // `expect:` で承知したお知らせに理由を付ける。当たらない承知もお知らせで言う (52 の docs/145)。
+  const { errors, notices, erc: ercAt } = applyExpectations(source, {
+    errors: reported.filter((error) => error.notice !== true),
+    notices: reported.filter((error) => error.notice === true),
+    erc: attachSourceText(byLine(erc), source),
+  }, { error: fenceError, notice });
   const at = (list: readonly FenceError[]): readonly FenceError[] => shiftErrors(list, options.offset ?? 0);
-  const ercAt = attachSourceText(byLine(erc), source);
   const shown = style.debug ? [...at(errors), ...at(notices), ...at(ercAt)] : at(errors);
   return {
     svg,

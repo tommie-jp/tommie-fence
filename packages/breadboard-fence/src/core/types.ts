@@ -101,6 +101,10 @@ export type FenceError = {
   readonly at?: { readonly column: number; readonly length: number };
   /** お知らせ (読めているが思ったとおりに出ない)。`style: debug: off` で伏せられる。 */
   readonly notice?: boolean;
+  /** `expect:` で承知したお知らせの理由 (52 の docs/145)。 */
+  readonly expected?: string;
+  /** 指摘ではない知らせ (計算した値など)。 */
+  readonly info?: boolean;
 };
 
 export type Result<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: FenceError };

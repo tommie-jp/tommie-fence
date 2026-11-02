@@ -3,7 +3,7 @@ import { REAL_INK } from './ink.ts';
 import { bodySize, drawBody, transformerCore } from './bodies.ts';
 import {
   TOROID_CORES, formatInductance, lookupToroid, parseToroidValue, tappedTransformerPins, toroidBody, toroidDiameter,
-  toroidInductanceNh, toroidWindingNotes,
+  toroidInductanceNh, toroidWindingNote, toroidWindingNotes,
 } from './toroids.ts';
 
 describe('トロイダルコアの表', () => {
@@ -194,5 +194,14 @@ describe('L の目安の一文', () => {
 
   test('refuses more turns than the part has windings', () => {
     expect(toroidWindingNotes('inductor', 'FT37-43 10t:20t')).toContain('巻線は 1 つ');
+  });
+});
+
+describe('toroidWindingNote', () => {
+  test('L の目安は情報、巻数の書き違いはお知らせ', () => {
+    expect(toroidWindingNote('inductor', 'FT37-43 10t')?.isInfo).toBe(true);
+    expect(toroidWindingNote('inductor', 'FT37-43 10t:20t')?.isInfo).toBe(false);
+    expect(toroidWindingNote('transformer', 'FT37-43 10')?.isInfo).toBe(false);
+    expect(toroidWindingNote('inductor', '4u7')).toBeNull();
   });
 });

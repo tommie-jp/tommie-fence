@@ -12,11 +12,12 @@
 import type { Net } from './nets.ts';
 import { wireColor } from './colors.ts';
 import { isLang, type Lang } from './lang.ts';
+import { applyExpectations } from './expect.ts';
 import { linkColorOf, planLinks } from './sheetLinks.ts';
 import type { LinkLook, SheetPoint, StackLink } from './sheetLinks.ts';
 
 /** 枚の外 (一番外側) に書けるキー。`board` と `style` は枚が書かなかったときの既定になる。 */
-export const SHEET_TOP_KEYS = ['title', 'sheets', 'links', 'board', 'style'] as const;
+export const SHEET_TOP_KEYS = ['title', 'sheets', 'links', 'board', 'style', 'expect'] as const;
 const SHARED_KEYS = ['board', 'style'] as const;
 
 /** フェンスごとに足せる、枚が書かなかったときの既定になるキー (copper の `f:` など)。 */
@@ -187,6 +188,8 @@ export function splitSheets(source: string, extra: SheetOptions = {}): SheetSpli
       }
     } else if (block.key === 'title') {
       figureTitle = unquote(block.rest.replace(/\s+#.*$/, ''));
+    } else if (block.key === 'expect') {
+      // 図全体の承知。枚には写さず、枚を重ねた後で全部の枚の報告に当てる (renderSheets)。
     } else if (sharedKeys.includes(block.key)) {
       if (shared.has(block.key)) {
         problems.push({ message: `${block.key}: が 2 つあります`, line });
@@ -538,7 +541,21 @@ export function renderSheets<E extends SheetError, R extends SheetResult<E>>(
   const first = results[0]?.result;
   const empty = first === undefined ? renderOne('', { offset, stamp: true }) : null;
   const base = (first ?? empty) as R;
-  const extra = [...ownErrors, ...ownNotices];
+  // **図全体の `expect:` は全部の枚の報告に当てる** (枚ごとに当てると、別の枚のお知らせを古びたと言う)。
+  const ercOf = (result: R): readonly E[] => (result as unknown as { erc?: readonly E[] }).erc ?? [];
+  const said = applyExpectations(source, {
+    errors: [...results.flatMap(({ result }) => result.errors), ...ownErrors],
+    notices: [...results.flatMap(({ result }) => result.notices), ...ownNotices],
+    erc: results.flatMap(({ result }) => ercOf(result)),
+  }, {
+    error: (message, line) => kit.makeError(message, line, false),
+    notice: (message, line) => kit.makeError(message, line, true),
+  }, offset);
+  const added = [
+    ...said.errors.slice(results.reduce((sum, { result }) => sum + result.errors.length, 0) + ownErrors.length),
+    ...said.notices.slice(results.reduce((sum, { result }) => sum + result.notices.length, 0) + ownNotices.length),
+  ];
+  const extra = [...ownErrors, ...ownNotices, ...added];
   const svgs = results.map(({ result }) => result.svg);
   const combined: Record<string, unknown> = {
     ...base,
@@ -546,15 +563,15 @@ export function renderSheets<E extends SheetError, R extends SheetResult<E>>(
       ? base.svg
       : stackSheets(svgs, look === undefined ? null : { links: drawn.links, look }) || base.svg,
     netlist: merged.netlist,
-    errors: [...results.flatMap(({ result }) => result.errors), ...ownErrors],
-    notices: [...results.flatMap(({ result }) => result.notices), ...ownNotices],
+    errors: said.errors,
+    notices: said.notices,
     errorHtml: [...results.map(({ result }) => result.errorHtml), extra.length > 0 ? kit.banner(extra) : ''].join(''),
   };
   // 枚の中でだけ使うもの。外へは返さない。
   delete combined.anchors;
   delete combined.look;
   if ('erc' in base) {
-    combined.erc = results.flatMap(({ result }) => (result as unknown as { erc: readonly E[] }).erc);
+    combined.erc = said.erc;
   }
   return combined as R;
 }

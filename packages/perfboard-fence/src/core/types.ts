@@ -19,13 +19,17 @@ export type FenceError = {
   readonly at?: { readonly column: number; readonly length: number };
   /** お知らせ (読めているが思ったとおりに出ない)。 */
   readonly notice?: boolean;
+  /** `expect:` で承知したお知らせの理由 (52 の docs/145)。 */
+  readonly expected?: string;
+  /** 指摘ではない知らせ (計算した値など)。 */
+  readonly info?: boolean;
 };
 
 /**
  * フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。
  * **Phase 0 では語彙を決めるだけ**で、中身の検証は Phase 1 以降。
  */
-export const TOP_LEVEL_KEYS = ['title', 'points', 'unused', 'shorted', 'board', 'style', 'lang', 'parts', 'wires', 'notes'] as const;
+export const TOP_LEVEL_KEYS = ['title', 'points', 'unused', 'shorted', 'board', 'style', 'lang', 'parts', 'wires', 'notes', 'expect'] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
 

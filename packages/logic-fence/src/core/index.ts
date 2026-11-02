@@ -1,6 +1,6 @@
-import { formatSeconds, normalizeNewlines, resolveLang } from 'fence-kit';
+import { applyExpectations, formatSeconds, normalizeNewlines, resolveLang } from 'fence-kit';
 import type { Lang } from 'fence-kit';
-import { attachSourceText, fenceError, shiftErrors } from './errors.ts';
+import { attachSourceText, fenceError, notice, shiftErrors } from './errors.ts';
 import { labelsOf } from './labels.ts';
 import { createLayout } from './layout/screen.ts';
 import type { Readings } from './model/cursors.ts';
@@ -87,8 +87,11 @@ export function renderLogic(input: string, options: RenderOptions = {}): RenderR
 
   const reported = attachSourceText(byLine([...parsed.errors, ...(language.error === null ? [] : [fenceError(language.error, null)]), ...screen.said]), source);
   const at = (list: readonly FenceError[]): readonly FenceError[] => shiftErrors(list, options.offset ?? 0);
-  const errors = at(reported.filter((error) => error.notice !== true));
-  const notices = at(reported.filter((error) => error.notice === true));
+  // `expect:` で承知したお知らせに理由を付ける。当たらない承知もお知らせで言う (52 の docs/145)。
+  const { errors, notices } = applyExpectations(source, {
+    errors: at(reported.filter((error) => error.notice !== true)),
+    notices: at(reported.filter((error) => error.notice === true)),
+  }, { error: fenceError, notice }, options.offset ?? 0);
   return {
     svg,
     readings: screen.readings,

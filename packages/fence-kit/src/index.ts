@@ -12,6 +12,8 @@
  * 配る 2 つ (`fence-kit/shell` と `fence-kit/map.web.js`) だけ (52 の docs/59)。
  */
 export { normalizeNewlines } from './newlines.ts';
+export { applyExpectations, markExpected, markInfo, readExpectations } from './expect.ts';
+export type { ExpectKit, ExpectLists, ExpectProblem, ExpectRead, Expectation, Said } from './expect.ts';
 export { SHEETS_ADVISED, SHEET_TOP_KEYS, hasSheets, mergeNetlists, renderSheets, splitSheets, stackSheets } from './sheets.ts';
 export { linkColorOf } from './sheetLinks.ts';
 export type { LinkLook, SheetPoint } from './sheetLinks.ts';
@@ -55,7 +57,7 @@ export {
 } from './parts/bodies.ts';
 export {
   TAPPED_TRANSFORMER_PINS, TOROID_CORES, formatInductance, lookupToroid, parseToroidValue, tappedTransformerPins,
-  toroidBody, toroidDiameter, toroidInductanceNh, toroidWindingNotes,
+  toroidBody, toroidDiameter, toroidInductanceNh, toroidWindingNote, toroidWindingNotes,
 } from './parts/toroids.ts';
 export type { ToroidCore, ToroidMaterial, ToroidValue } from './parts/toroids.ts';
 export type { TransformerLook } from './parts/bodies.ts';

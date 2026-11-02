@@ -1,4 +1,4 @@
-import { element, normalizeNewlines, num, hasSheets, renderSheets, resolveLang } from 'fence-kit';
+import { applyExpectations, element, hasSheets, normalizeNewlines, num, renderSheets, resolveLang } from 'fence-kit';
 import { attachSourceText } from './errors.ts';
 import { createLayout } from './model/layout.ts';
 import { parseFence } from './parser/parseFence.ts';
@@ -504,8 +504,12 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     ...(language.error === null ? [] : [fenceError(language.error, null)]),
   ];
   const reported = attachSourceText(byLine(collected), source);
-  const errors = reported.filter((error) => error.notice !== true);
-  const notices = reported.filter((error) => error.notice === true);
+  // `expect:` で承知したお知らせに理由を付ける。当たらない承知もお知らせで言う (52 の docs/145)。
+  const { errors, notices, erc: ercAt } = applyExpectations(source, {
+    errors: reported.filter((error) => error.notice !== true),
+    notices: reported.filter((error) => error.notice === true),
+    erc: attachSourceText(byLine(erc), source),
+  }, { error: fenceError, notice });
   // **帯は読めなかったものを先に。** ERC のお知らせはピン 1 本につき 1 件出るので、
   // 行順のまま並べると打ち切りで**直さないと図が出ないほうが消える**。
   //
@@ -516,7 +520,6 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   const at = (list: readonly FenceError[]): readonly FenceError[] => shiftErrors(list, options.offset ?? 0);
   // **図の下の帯と CLI は今までどおり両方を並べる。** 分けて返るようになったのは
   // editor の帯で畳むためで、読み手への見え方を変える理由は無い。
-  const ercAt = attachSourceText(byLine(erc), source);
   const shown = style.debug ? [...at(errors), ...at(notices), ...at(ercAt)] : at(errors);
   // **`points:` で名前を付けた穴**は、枚をまたぐ線 (links) の出る所 (52 の docs/118)。
   const anchors = Object.fromEntries([...points].map(([name, address]) => {

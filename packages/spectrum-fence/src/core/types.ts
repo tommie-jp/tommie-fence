@@ -23,12 +23,16 @@ export type FenceError = {
   readonly at?: { readonly column: number; readonly length: number };
   /** お知らせ (読めているが思ったとおりに出ない)。 */
   readonly notice?: boolean;
+  /** `expect:` で承知したお知らせの理由 (52 の docs/145)。 */
+  readonly expected?: string;
+  /** 指摘ではない知らせ (計算した値など)。 */
+  readonly info?: boolean;
 };
 
 /** フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。 */
 export const TOP_LEVEL_KEYS = [
   'device', 'title', 'sweep', 'center', 'span', 'points', 'samples', 'window', 'rbw', 'atten', 'lna',
-  'ref', 'scale', 'unit', 'floor', 'signal', 'hold', 'data', 'markers', 'notes', 'style', 'lang',
+  'ref', 'scale', 'unit', 'floor', 'signal', 'hold', 'data', 'markers', 'notes', 'style', 'lang', 'expect',
 ] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
@@ -61,6 +65,7 @@ export const KEY_KINDS: Readonly<Record<TopLevelKey, readonly DeviceKind[]>> = {
   notes: ['fft', 'swept'],
   style: ['fft', 'swept'],
   lang: ['fft', 'swept'],
+  expect: ['fft', 'swept'],
 };
 
 export type ThemeName = (typeof THEME_NAMES)[number];

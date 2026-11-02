@@ -180,13 +180,24 @@ const windingName = (index: number, count: number): string => (count === 1 ? '' 
  * 巻数が半分なので L は 1/4。
  */
 export function toroidWindingNotes(type: string, value: string | null | undefined): string | null {
+  return toroidWindingNote(type, value)?.text ?? null;
+}
+
+/**
+ * `toroidWindingNotes` の 1 行と、それが**指摘ではなく計算した値の知らせ (情報)** かどうか。
+ * 巻数の書き違いはお知らせ、L の目安は情報 (52 の docs/145。巻数を書けば必ず出る値なので、
+ * 図ごとに `expect:` で承知させるものではない)。
+ */
+export function toroidWindingNote(
+  type: string, value: string | null | undefined,
+): { readonly text: string; readonly isInfo: boolean } | null {
   const read = parseToroidValue(value);
   if (read === null) return null;
-  if (read.problem !== null) return read.problem;
+  if (read.problem !== null) return { text: read.problem, isInfo: false };
   if (read.turns === null) return null;
   const windings = type === 'inductor' ? 1 : 2;
   const given = read.turns;
-  if (given.length > windings) return `${type} の巻線は ${windings} つです (巻数が ${given.length} つ書かれています)`;
+  if (given.length > windings) return { text: `${type} の巻線は ${windings} つです (巻数が ${given.length} つ書かれています)`, isInfo: false };
   const each = Array.from({ length: windings }, (_, index) => given[index] ?? given[0] ?? 0);
   const parts = each.map((count, index) => {
     const name = windingName(index, windings);
@@ -199,5 +210,5 @@ export function toroidWindingNotes(type: string, value: string | null | undefine
   const tolerance = read.core.tolerancePercent === null
     ? '実物はずれる'
     : `資料の許容差 ±${read.core.tolerancePercent} %`;
-  return `${parts.join('、')}${tapped} (${read.core.model} の AL ${read.core.alNh} nH/回² × 巻数²。${tolerance}。目安)`;
+  return { text: `${parts.join('、')}${tapped} (${read.core.model} の AL ${read.core.alNh} nH/回² × 巻数²。${tolerance}。目安)`, isInfo: true };
 }
