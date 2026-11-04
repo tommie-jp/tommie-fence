@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.80.0] - 2026-11-04
+
+### Changed
+
+- **束ねるフェンスを上げた** (breadboard-fence 0.56.1 / fence-kit 0.35.0 / perfboard-fence 0.54.1)。詳しくは各パッケージの CHANGELOG。
+
 ## [0.79.0] - 2026-11-02
 
 ### Changed

@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.35.0] - 2026-11-04
+
 ### Added
 
 - **`transformerExtent` を足した。** `transformerCore` が実際に描く胴の大きさを返す。トロイダルの輪はピンを囲む箱より
