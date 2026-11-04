@@ -21,6 +21,14 @@ GitHub のようにフェンスが描画されない場所で、書き方と出�
 | [10-smd.md](10-smd.md) | 面実装 — S-Mini (`sot346`) やチップを直付けする、変換基板に載せる (`-dip`、`dip8/sop`) |
 | [11-named-chips.md](11-named-chips.md) | リレー・フォトカプラ・7 セグ (ピンに名前のある DIP 型) |
 | [12-sheets.md](12-sheets.md) | 複数の基板 (`sheets:` と `links:`) |
+| [13-gallery-leads.md](13-gallery-leads.md) | 部品ギャラリー: 穴を並べて置く部品の全種類と全部の姿 (2 ピン・3 ピン・巻き物・スイッチ・USB・端子台・直付けの面実装・縁の SMA) |
+| [14-gallery-chips.md](14-gallery-chips.md) | 部品ギャラリー: ピンの名前の表にある型番を全部 (DIP・1 列・DIP 化キット・変換基板・IC ソケット・型番を書かない DIP と 1 列) |
+| [15-gallery-discretes.md](15-gallery-discretes.md) | 部品ギャラリー: 型番のあるトランジスタ・FET・レギュレータを全部 |
+| [16-gallery-boards.md](16-gallery-boards.md) | 部品ギャラリー: マイコンボード・ピンに名前のある DIP 型・7 セグ・基板の外の機器を全部 |
+
+**部品ギャラリー (13〜16) は表から書き出した物**で、手では直さない。部品の表
+(fence-kit の `pinouts.ts` など) や種類・姿を足したら、`npm run gallery --workspace=perfboard-fence` で書き出し直してから
+`npm run examples --workspace=perfboard-fence` で図を作り直す。書き出し直さないと `src/gallery/gallery.test.ts` が落ちる。
 
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではない。
@@ -36,7 +44,7 @@ GitHub のようにフェンスが描画されない場所で、書き方と出�
 **電源が要る回路は、電源を基板の外の機器 (`device`) として描き、基板の左の外から線でつなぐ。**
 電圧は 5 V が基本で、部品の値は E24 に寄せてある。
 
-**回路図を付けないもの:** [09-usb.md](09-usb.md) は USB コネクタ・SIP・スライドスイッチを穴に並べるだけの治具で、回路図にしても部品の名前の線が並ぶだけなので付けていない。[01-board.md](01-board.md)・02〜05・08・11 は書き方の見本で、回路ではない。
+**回路図を付けないもの:** [09-usb.md](09-usb.md) は USB コネクタ・SIP・スライドスイッチを穴に並べるだけの治具で、回路図にしても部品の名前の線が並ぶだけなので付けていない。[01-board.md](01-board.md)・02〜05・08・11 は書き方の見本で、回路ではない。部品ギャラリー (13〜16) は部品を並べただけで配線していない。
 
 ## 図の付け方
 
