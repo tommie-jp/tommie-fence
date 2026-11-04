@@ -25,6 +25,14 @@
 | [15-wide-dip.md](15-wide-dip.md) | 幅広 DIP (600 mil。AS6C62256 などの 28 ピン SRAM、`dip28/wide`) |
 | [16-sheets.md](16-sheets.md) | 複数のブレッドボード (`sheets:` と `links:`) |
 | [17-soft-fpga-td4.md](17-soft-fpga-td4.md) | Soft-FPGA TD4 (Pico 2 + DIP スイッチ + LED。GitHub のブレッドボード図を描き直したもの) |
+| [18-gallery-leads.md](18-gallery-leads.md) | 部品ギャラリー: 穴を並べて置く部品の全種類と全部の姿 (2 ピン・3 ピン・巻き物・スイッチ・USB・端子台) |
+| [19-gallery-chips.md](19-gallery-chips.md) | 部品ギャラリー: ピンの名前の表にある型番を全部 (DIP・1 列・DIP 化キット・変換基板) |
+| [20-gallery-discretes.md](20-gallery-discretes.md) | 部品ギャラリー: 型番のあるトランジスタ・FET・レギュレータを全部 |
+| [21-gallery-boards.md](21-gallery-boards.md) | 部品ギャラリー: マイコンボード・ピンに名前のある DIP 型・7 セグ・ボード外の機器を全部 |
+
+**部品ギャラリー (18〜21) は表から書き出した物**で、手では直さない。部品の表
+(fence-kit の `pinouts.ts` など) や種類・姿を足したら、`npm run gallery` で書き出し直してから
+`npm run examples` で図を作り直す。書き出し直さないと `src/gallery/gallery.test.ts` が落ちる。
 
 わざと読めなく書いたものは [errors/](errors/) にある。
 図にならない行を含むので `npm run examples` の対象ではなく、
