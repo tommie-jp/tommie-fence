@@ -29,5 +29,8 @@ describe('parts listing in English', () => {
     expect(valueWithRole('SFU455B')).toBe('SFU455B (455 kHz)');
     expect(valueWithRole('SFU455B', 'en')).toBe('SFU455B (455 kHz)');
     expect(partKind('sip3', null, 'SFU455B', 'en')).toBe('ceramic filter');
+    // 周波数の後ろの注 (`(4 素子)`) も、その言語で出す。
+    expect(valueWithRole('CFULA455')).toBe('CFULA455 (455 kHz (4 素子))');
+    expect(valueWithRole('CFULA455', 'en')).toBe('CFULA455 (455 kHz (4 elements))');
   });
 });

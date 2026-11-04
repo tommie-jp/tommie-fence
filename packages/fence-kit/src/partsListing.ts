@@ -52,8 +52,8 @@ export const PARTS_HEADINGS_BY_LANG: Readonly<Record<Lang, readonly [string, str
 /** 種類の欄に、綴り (`sip3`) の代わりに出す呼び名。 */
 const CERAMIC_FILTER: Readonly<Record<Lang, string>> = { ja: 'セラミックフィルター', en: 'ceramic filter' };
 
-/** 型番の働きの表 (pinouts) での書き出し。 */
-const CERAMIC_ROLE = 'セラミックフィルタ';
+/** 型番の働きの表 (pinouts・pinoutRolesEn) での書き出し。 */
+const CERAMIC_ROLE: Readonly<Record<Lang, string>> = { ja: 'セラミックフィルタ', en: 'ceramic filter' };
 
 /**
  * 種類の綴り。姿を書いてあれば添える (`capacitor/ceramic`)。セラミックフィルタの型番
@@ -61,7 +61,7 @@ const CERAMIC_ROLE = 'セラミックフィルタ';
  */
 export function partKind(type: string, variant: string | null, value: string | null, lang: Lang = 'ja'): string {
   const role = value === null || value === '' ? null : lookupRole(value);
-  if (role?.startsWith(CERAMIC_ROLE) === true) return CERAMIC_FILTER[lang];
+  if (role?.startsWith(CERAMIC_ROLE.ja) === true) return CERAMIC_FILTER[lang];
   return variant === null ? type : `${type}/${variant}`;
 }
 
@@ -72,10 +72,11 @@ export function partKind(type: string, variant: string | null, value: string | n
 export function valueWithRole(value: string, lang: Lang = 'ja'): string {
   const jaRole = value === '' ? null : lookupRole(value);
   if (jaRole === null) return value;
+  const role = lookupRole(value, lang) ?? jaRole;
   // セラミックフィルタは種類の欄に呼び名を出すので、値の欄には周波数だけ残す (`SFU455B (455 kHz)`)。
-  // 周波数は言語によらず同じなので、日本語の書き出しから切り出す。
-  const rest = jaRole.startsWith(CERAMIC_ROLE)
-    ? jaRole.slice(CERAMIC_ROLE.length).trim()
-    : lookupRole(value, lang) ?? jaRole;
+  // 周波数の後ろに注 (`(4 素子)`) が付くことがあるので、その言語の書き出しから切り出す。
+  const rest = jaRole.startsWith(CERAMIC_ROLE.ja) && role.startsWith(CERAMIC_ROLE[lang])
+    ? role.slice(CERAMIC_ROLE[lang].length).trim()
+    : role;
   return rest === '' ? value : `${value} (${rest})`;
 }
