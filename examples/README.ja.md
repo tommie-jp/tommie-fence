@@ -16,6 +16,9 @@
 | graph | グラフ 5 本 + わざと壊した例 1 本 | [packages/graph-fence/examples/](../packages/graph-fence/examples/README.md) |
 | logic | 画面 5 本 + わざと壊した例 1 本 | [packages/logic-fence/examples/](../packages/logic-fence/examples/README.md) |
 
+**描ける部品を全部見るなら [部品ギャラリー](parts-gallery.ja.md)** — ブレッドボード・ユニバーサル基板・回路図の 3 つで、
+部品の種類・姿と型番の表にある型番を 1 つ残らず並べたページ 13 本への入口。
+
 どの例も、フェンスの直後に**そのフェンスを描いた図**が貼ってある。
 GitHub のようにフェンスが描画されない場所で、書き方と出力を対で読むためのもの。
 VS Code のプレビュー (`Ctrl+Shift+V`) ではフェンス自体が図になる。

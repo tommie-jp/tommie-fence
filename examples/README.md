@@ -17,6 +17,9 @@ repository root. The prose in them is Japanese; the fences are language-neutral.
 | graph | 5 graphs + 1 deliberately broken | [packages/graph-fence/examples/](../packages/graph-fence/examples/README.md) |
 | logic | 5 screens + 1 deliberately broken | [packages/logic-fence/examples/](../packages/logic-fence/examples/README.md) |
 
+**To see every part the fences can draw, start at the [parts gallery](parts-gallery.md)** — one page leading to
+13 pages that lay out every part type, look and table model on a breadboard, a perfboard and a schematic.
+
 Every example carries **the drawing that fence produces** right after it, so the
 source and the result read as a pair where fences are not rendered (GitHub, for
 one). In the VS Code preview (`Ctrl+Shift+V`) the fence itself becomes the

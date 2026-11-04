@@ -112,7 +112,8 @@ two entry points that run the drag-to-edit map outside VS Code
 
 Each package carries its own reference and a set of worked examples. The prose
 is Japanese; the fences themselves are language-neutral. **[examples/](examples/README.md)
-is the gallery** — every fence next to the drawing it produces.
+is the gallery** — every fence next to the drawing it produces. Every part the fences can draw is
+one click away in the **[parts gallery](examples/parts-gallery.md)** (breadboard, perfboard, schematic).
 
 [![RC low-pass](packages/circuit-fence/examples/out/01-rc-lowpass.png)](examples/README.md)
 

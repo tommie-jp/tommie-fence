@@ -95,6 +95,7 @@ tommie-fence
 文法リファレンスと作例は、パッケージごとに持っている。
 **[examples/](examples/README.ja.md) が入口** —
 どのフェンスにも、そのフェンスを描いた図が並べてある。
+描ける部品を全部見るなら **[部品ギャラリー](examples/parts-gallery.ja.md)** (ブレッドボード・ユニバーサル基板・回路図)。
 
 [![RC ローパス](packages/circuit-fence/examples/out/01-rc-lowpass.png)](examples/README.ja.md)
 

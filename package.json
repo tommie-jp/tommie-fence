@@ -23,6 +23,7 @@
     "docs": "npm run docs --workspaces --if-present",
     "labels": "node scripts/fence-labels.mjs",
     "labels:check": "node --test scripts/fence-labels.test.mjs && node scripts/fence-labels.mjs --check",
-    "check": "npm run labels:check && npm run typecheck && npm run test"
+    "gallery:check": "node --test scripts/gallery-index.test.mjs",
+    "check": "npm run labels:check && npm run gallery:check && npm run typecheck && npm run test"
   }
 }
